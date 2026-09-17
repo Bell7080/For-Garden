@@ -271,6 +271,10 @@ export const SKILL_KO = {
   "skill.breakthrough.effect.ultimate": "피해량의 {percent}%에 해당하는 「{name}」{name!을} {seconds}초 간격으로 {casts} 번 더 시전한다.",
   "skill.breakthrough.effect.ferocity": "[[ferocity|폭주]]가 끝날 때, 폭주 동안 받은 피해량의 {percent}%에 해당하는 보호막을 얻고 넓은 범위의 적에게 {seconds}초 동안 한 번 더 [[taunt|도발]]한다.",
   "skill.breakthrough.effect.passive": "「{name}」{name!이} 발동될 때 모든 아군에게 그 회복량의 {percent}%를 나눈다.",
+  "skill.breakthrough.effect.basic.deepBleed": "일반 공격의 [[bleed|출혈]]이 매초 최대 체력의 {percent}%를 잃는 깊은 출혈로 강화된다. 깊은 출혈 동안 대상이 받는 회복량을 {reduction}% 낮추며, 다른 출혈보다 우선한다.",
+  "skill.breakthrough.effect.ultimate.execution": "궁극기의 피해가 고정 피해로 바뀌며, 적 처치 시 궁극기 게이지를 {energy} 회복한다.",
+  "skill.breakthrough.effect.ferocity.cleavingBasics": "[[ferocity|폭주]] 중 일반 공격이 조금 넓은 범위의 적을 모두 공격한다.",
+  "skill.breakthrough.effect.passive.battleMaidAscension": "최대 체력·방어력·저항력이 {percent}% 증가하고, 적 처치 시 다음 표적에게 다시 돌진한다.",
 
   // ── 정보창이 스킬 쪽지에 주입하는 문맥 사전 ─────────────────────────────
   "skill.keyword.shield.fromMaxHp": "현재 최대 체력에서 {percent}%를 받아 계산한 보호막 수치다.",

@@ -236,7 +236,7 @@ export interface Fighter extends Combatant {
    */
   frenzy: { remaining: number; total: number; attackSpeedPercent: number; sourceId?: string } | null;
   /** 걸려 있는 출혈. 없으면 null이다. */
-  bleed: { remaining: number; total: number; tickIn: number; percent: number; sourceId?: string } | null;
+  bleed: { remaining: number; total: number; tickIn: number; percent: number; sourceId?: string; healingReceivedReductionPercent?: number } | null;
   /**
    * 걸려 있는 중독. 없으면 null이다.
    *
@@ -863,10 +863,13 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
   // 정적 정의를 복제한 전투 스냅샷에만 단순 능력치 증강을 한 번 반영한다.
   const multipliers = side === "player" ? expeditionAugmentStatMultipliers(augmentEffects, def.id) : expeditionAugmentStatMultipliers([], def.id);
   const flatPoints = (stat: "critChance" | "ferocityGain" | "energyGain"): number => side === "player" ? flatStatPoints(augmentEffects, def.id, stat) : 0;
+  const passiveBreakthrough = isBreakthroughSlotOpen(breakthrough, "passive")
+    && def.breakthroughEffects?.passive?.kind === "battleMaidAscension" ? def.breakthroughEffects.passive : undefined;
+  const durability = 1 + (passiveBreakthrough?.durabilityPercent ?? 0) / 100;
   const battleDef: RelicDef = { ...def, stats: { ...def.stats,
-    hp: def.stats.hp * multipliers.maxHpPercent,
-    def: def.stats.def * multipliers.defensePercent,
-    res: def.stats.res * multipliers.resistancePercent,
+    hp: def.stats.hp * multipliers.maxHpPercent * durability,
+    def: def.stats.def * multipliers.defensePercent * durability,
+    res: def.stats.res * multipliers.resistancePercent * durability,
     atk: def.stats.atk * multipliers.attackPowerPercent,
     ap: def.stats.ap * multipliers.spellPowerPercent,
     attackSpeed: def.stats.attackSpeed * multipliers.attackSpeedPercent,
@@ -1310,7 +1313,7 @@ export function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEf
   const potency = sourceId ? findFighter(state, sourceId)?.statusPotencyMultiplier ?? 1 : 1;
   if (effect.kind === "stun") events.push(...applyStun(fighter, effect.seconds * potency, state));
   if (effect.kind === "stagger") events.push(...applyStagger(fighter, effect.seconds * potency, state));
-  if (effect.kind === "bleed") refreshBleed(fighter, effect.seconds * potency, effect.maxHpPercentPerSecond, events, sourceId);
+  if (effect.kind === "bleed") refreshBleed(fighter, effect.seconds * potency, effect.maxHpPercentPerSecond, events, sourceId, effect.healingReceivedReductionPercent);
   if (effect.kind === "poison") {
     // 세기는 바른 쪽에서 나오므로 시전자를 찾지 못하면 바를 것도 없다.
     const attacker = sourceId ? findFighter(state, sourceId) : undefined;
@@ -2123,6 +2126,22 @@ function openedBreakthrough<S extends BreakthroughSlot, T>(
   return effects ? pick(effects) : undefined;
 }
 
+/** 처치 보상은 단일·광역 공격이 같은 경계를 지나며, 다음 표적 돌진도 이곳에서 다시 준비한다. */
+function triggerBreakthroughOnKill(attacker: Fighter, useUltimate: boolean): void {
+  if (useUltimate) {
+    const effect = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
+    const breakthroughRefund = effect?.kind === "execution" ? effect.energyRefundOnKill : 0;
+    attacker.energy = Math.min(ULTIMATE_ENERGY_MAX,
+      attacker.energy + (attacker.def.ultimate.energyRefundOnKill ?? 0) + breakthroughRefund);
+  }
+  const passive = openedBreakthrough(attacker, "passive", (effects) => effects.passive);
+  if (passive?.kind !== "battleMaidAscension" || passive.rechargeOnKill !== true) return;
+  attacker.openingChargeReady = true;
+  attacker.targetId = null;
+  attacker.engaged = false;
+  attacker.retargetIn = 0;
+}
+
 /** 반경 안의 살아 있는 적을 공용 도발 상태로 끌어당긴다. 폭주 진입 도발과 같은 경계를 쓴다. */
 function tauntEnemiesAround(
   fighter: Fighter,
@@ -2146,7 +2165,7 @@ function tauntEnemiesAround(
  */
 function applyBasicBreakthrough(attacker: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
   const effect = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
-  if (!effect || !isFighterAlive(attacker)) return;
+  if (!effect || effect.kind !== "periodicGuard" || !isFighterAlive(attacker)) return;
   const healed = applyHealing(state, attacker, attacker.def.stats[effect.healScalingStat as keyof Stats] * effect.healPercent / 100);
   if (healed > 0) events.push({ kind: "heal", fighterId: attacker.id, amount: healed, source: "passive", effect: { tag: "heal", intensity: 1.2 } });
   tauntEnemiesAround(attacker, effect.tauntRadius, effect.tauntSeconds, state, events);
@@ -2155,7 +2174,7 @@ function applyBasicBreakthrough(attacker: Fighter, state: SkirmishState, events:
 /** 궁극기 돌파의 시계를 켠다. 이미 돌고 있으면 새로 시전한 쪽으로 덮는다. */
 function armUltimateBreakthrough(attacker: Fighter): void {
   const effect = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
-  if (!effect || effect.casts <= 0) return;
+  if (!effect || effect.kind !== "echo" || effect.casts <= 0) return;
   attacker.breakthroughEcho = { nextIn: effect.intervalSeconds, casts: effect.casts };
 }
 
@@ -2170,7 +2189,7 @@ function tickUltimateBreakthrough(fighter: Fighter, dt: number, state: SkirmishS
   if (!echo) return;
   if (!isFighterAlive(fighter)) { fighter.breakthroughEcho = null; return; }
   const effect = openedBreakthrough(fighter, "ultimate", (effects) => effects.ultimate);
-  if (!effect) { fighter.breakthroughEcho = null; return; }
+  if (!effect || effect.kind !== "echo") { fighter.breakthroughEcho = null; return; }
   const nextIn = echo.nextIn - dt;
   if (nextIn > EMERGENCY_RECOVERY.epsilon) { fighter.breakthroughEcho = { ...echo, nextIn }; return; }
   const casts = echo.casts - 1;
@@ -2214,7 +2233,7 @@ function applyFerocityBreakthrough(fighter: Fighter, state: SkirmishState, event
   const taken = fighter.feverDamageTaken;
   fighter.feverDamageTaken = 0;
   const effect = openedBreakthrough(fighter, "ferocity", (effects) => effects.ferocity);
-  if (!effect || !isFighterAlive(fighter) || taken <= 0) return;
+  if (!effect || effect.kind !== "feverBulwark" || !isFighterAlive(fighter) || taken <= 0) return;
   const shield = Math.round(taken * effect.shieldPercentOfDamageTaken / 100);
   if (shield > 0) grantShieldAmount(fighter, fighter, shield, events);
   tauntEnemiesAround(fighter, effect.tauntRadius, effect.tauntSeconds, state, events);
@@ -2229,7 +2248,7 @@ function applyFerocityBreakthrough(fighter: Fighter, state: SkirmishState, event
 function applyPassiveBreakthrough(fighter: Fighter, state: SkirmishState): void {
   const effect = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
   const regeneration = fighter.regeneration;
-  if (!effect || !regeneration) return;
+  if (!effect || effect.kind !== "sharedRecovery" || !regeneration) return;
   for (const ally of state.fighters) {
     if (ally.side !== fighter.side || ally.id === fighter.id || !isFighterAlive(ally)) continue;
     const shared = regeneration.percentPerTick * effect.percent / 100;
@@ -2305,16 +2324,42 @@ function withoutPoison(skill: Skill): Skill {
   return { ...skill, statusEffects: (skill.statusEffects ?? []).filter((effect) => effect.kind !== "poison") };
 }
 
+/** 열린 돌파를 실제 한 타격의 스킬 사본에만 투영해 정적 캐릭터 정의를 보존한다. */
+function breakthroughSkill(attacker: Fighter, useUltimate: boolean): Skill {
+  let skill: Skill = useUltimate ? attacker.def.ultimate : currentBasic(attacker);
+  if (useUltimate) return skill;
+
+  const basic = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
+  if (basic?.kind === "deepBleed") {
+    skill = { ...skill, statusEffects: skill.statusEffects?.map((effect) => effect.kind === "bleed" ? {
+      ...effect,
+      maxHpPercentPerSecond: effect.maxHpPercentPerSecond * basic.bleedMultiplier,
+      healingReceivedReductionPercent: basic.healingReceivedReductionPercent,
+    } : effect) };
+  }
+  const ferocity = openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity);
+  if (attacker.ferocityFever && ferocity?.kind === "cleavingBasics") {
+    skill = { ...skill, targeting: "nearbyEnemies", radius: ferocity.radius };
+  }
+  return skill;
+}
+
+function executionUltimateIsOpen(attacker: Fighter, useUltimate: boolean): boolean {
+  return useUltimate && openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate)?.kind === "execution";
+}
+
 /** 모든 출혈 진입점이 공유하는 단일 슬롯 갱신 규칙이다. 약한 재적용은 강도와 틱 시계를 덮지 않는다. */
-export function refreshBleed(target: Fighter, seconds: number, percent: number, events: SkirmishEvent[], sourceId?: string): void {
+export function refreshBleed(target: Fighter, seconds: number, percent: number, events: SkirmishEvent[], sourceId?: string, healingReceivedReductionPercent = 0): void {
   const remaining = Math.max(target.bleed?.remaining ?? 0, seconds);
+  const stronger = percent >= (target.bleed?.percent ?? 0);
   target.bleed = {
     remaining,
     // 시계의 분모. 더 긴 출혈로 덮이면 그 길이가 곧 새 한 바퀴다.
     total: Math.max(remaining, target.bleed?.total ?? 0, seconds),
     tickIn: target.bleed?.tickIn ?? 1,
     percent: Math.max(target.bleed?.percent ?? 0, percent),
-    sourceId: percent >= (target.bleed?.percent ?? 0) ? sourceId : target.bleed?.sourceId,
+    sourceId: stronger ? sourceId : target.bleed?.sourceId,
+    healingReceivedReductionPercent: stronger ? healingReceivedReductionPercent : target.bleed?.healingReceivedReductionPercent ?? 0,
   };
   events.push({ kind: "bleed", fighterId: target.id, amount: 0, started: true });
 }
@@ -2935,7 +2980,8 @@ function isHealingCancelledByPontus(state: SkirmishState, target: Fighter): bool
 function applyHealing(state: SkirmishState, target: Fighter, requested: number, casterId = target.id): number {
   // 폭주 종료나 폰토스 사망은 별도 상태 정리 없이 이 현재 상태 판정만으로 즉시 차단을 해제한다.
   if (isHealingCancelledByPontus(state, target)) return 0;
-  const reduction = strongestLivingAura(state, target.side, "enemyHealingReceivedReductionPercent");
+  const reduction = Math.max(strongestLivingAura(state, target.side, "enemyHealingReceivedReductionPercent"),
+    target.bleed?.healingReceivedReductionPercent ?? 0);
   const before = target.hp;
   target.hp = Math.min(target.maxHp, target.hp + Math.max(0, requested) * (1 - reduction / 100));
   const actual = target.hp - before;
@@ -3991,6 +4037,8 @@ function tickBleed(fighter: Fighter, dt: number, state: SkirmishState, events: S
     if (!isFighterAlive(fighter)) {
       clearDefeatedStatuses(fighter);
       events.push({ kind: "death", fighterId: fighter.id, sourceId: bleed.sourceId });
+      const source = bleed.sourceId ? findFighter(state, bleed.sourceId) : undefined;
+      if (source) triggerBreakthroughOnKill(source, false);
       state.log.push(`${fighter.def.name} 전투 불능`);
     }
   }
@@ -4087,7 +4135,8 @@ function strike(
   /** 지정 원형 궁극기의 사용자 선택 중심점이다. */
   targetPoint?: { x: number; y: number },
 ): void {
-  const skill: Skill = useUltimate ? attacker.def.ultimate : currentBasic(attacker);
+  const skill = breakthroughSkill(attacker, useUltimate);
+  const executionUltimate = executionUltimateIsOpen(attacker, useUltimate);
   // 순수 회복 궁극기는 fireUltimate의 비공격 분기에서만 실행한다.
   if (!("damageType" in skill) || skill.damageType === undefined || skill.power === undefined) return;
   const combo = !useUltimate ? attacker.def.basic.combo : undefined;
@@ -4108,7 +4157,7 @@ function strike(
     }
     return;
   }
-  const basicAim = useUltimate ? undefined : currentBasic(attacker).targeting;
+  const basicAim = useUltimate ? undefined : skill.targeting;
   if ((useUltimate && attacker.def.ultimate.targeting !== "single") || basicAim === "nearbyEnemies" || basicAim === "splitShot") {
     strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint, comboHit !== undefined && !comboHit.grantActionResources);
     return;
@@ -4161,7 +4210,7 @@ function strike(
     isCritical: critical,
     kind: useUltimate ? "ultimate" as const : "basic" as const,
     // 강화된 한 방만 방어·저항을 지나간다. 속성 상성과 대상 경감은 그대로 거친다.
-    ignoresDefense: empowered,
+    ignoresDefense: empowered || executionUltimate,
   };
   const damageAttacker = { ...attacker, def: offensiveDefinition(attacker) };
   const damageTarget = defensiveDefinition(target, state);
@@ -4322,7 +4371,7 @@ function strike(
     contributionAmount: credited,
     critical,
     // 방어를 지나친 한 방은 종류가 아니라 "고정 피해"로 뜬다 — 전이와 같은 축이다.
-    damageType: empowered ? "true" : damageInput.damageType,
+    damageType: empowered || executionUltimate ? "true" : damageInput.damageType,
     mitigated: resolution.reduced < resolution.raw,
     // 연격 둘째 타부터는 같은 행동의 뒤이은 타격이다(자원을 주지 않는 타격이 곧 그 표식이다).
     ...(comboHit && !comboHit.grantActionResources ? { followUp: true } : {}),
@@ -4383,7 +4432,7 @@ function strike(
 
   // 처치는 두 개체의 규칙이 함께 걸리는 자리다 — 오마카세의 게이지 환급과 다음 식재료 선택.
   if (!isFighterAlive(target)) {
-    if (useUltimate) attacker.energy = Math.min(ULTIMATE_ENERGY_MAX, attacker.energy + (attacker.def.ultimate.energyRefundOnKill ?? 0));
+    triggerBreakthroughOnKill(attacker, useUltimate);
     // 처치한 순간 시계를 0으로 돌려 다음 프레임에 곧바로 다음 표적으로 뛴다.
     if (attacker.def.passive.kind === "gourmetHunt") attacker.huntCooldown = 0;
     triggerCombatAugments(state, attacker, "onKill", events, target);
@@ -4471,7 +4520,8 @@ export function replayLoggedBossAction(state: SkirmishState, relicId: string, ki
  * 복사하므로 앞선 대상이 죽어도 뒤 대상의 피해·흡혈·상태·사망 처리는 빠지지 않는다.
  */
 function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishState, events: SkirmishEvent[], useUltimate: boolean, targetPoint?: { x: number; y: number }, followUp = false, free = false): void {
-  const skill = useUltimate ? attacker.def.ultimate : currentBasic(attacker);
+  const skill = breakthroughSkill(attacker, useUltimate);
+  const executionUltimate = executionUltimateIsOpen(attacker, useUltimate);
   // 비공격 궁극기는 적 대상 범위 처리기에 전달하지 않는다.
   if (!("damageType" in skill) || skill.damageType === undefined || skill.power === undefined) return;
   const ultimate = useUltimate ? attacker.def.ultimate : undefined;
@@ -4547,7 +4597,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
         : undefined;
   if (impactArea) {
     events.push({ kind: "areaImpact", attackerId: attacker.id, ultimate: useUltimate,
-      damageType: supportiveOnly ? undefined : skill.damageType, ...(supportiveOnly ? { supportive: true as const } : {}), area: impactArea });
+      damageType: supportiveOnly ? undefined : executionUltimate ? "true" : skill.damageType, ...(supportiveOnly ? { supportive: true as const } : {}), area: impactArea });
   }
 
   // 돌진은 대상을 고른 뒤 실제로 자리를 옮긴다. 먼저 옮기면 판정 기준선이 이미 지나온 길이 된다.
@@ -4591,7 +4641,8 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     // 같은 배율을 쓰면 가장 많이 칠한 적의 몫이 아무도 칠하지 않은 적에게까지 간다.
     // 폭발형 궁극기의 위력은 총량이 아니라 **겹당 값**이라 그 대상의 겹 수만큼 곱한다.
     const scaled = detonation ? { ...skill, power: (skill.power ?? 0) * (target.overpaint?.stacks ?? 0) } : skill;
-    const damageInput = { ...scaled, isCritical: critical, kind: useUltimate ? "ultimate" as const : "basic" as const };
+    const damageInput = { ...scaled, isCritical: critical, kind: useUltimate ? "ultimate" as const : "basic" as const,
+      ignoresDefense: executionUltimate };
     const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, defensiveDefinition(target, state), damageInput)
       * traitDamageMultiplier(state, attacker, target)));
     const contributionAmount = Math.max(0, computeDamageContribution(damageAttacker, damageInput));
@@ -4637,7 +4688,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     target.dashX = (dx / gap) * SKIRMISH.knockback * 1.4;
     target.dashY = (dy / gap) * SKIRMISH.knockback * 1.4;
     events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: useUltimate ? "ultimate" : "basic", amount, contributionAmount: credited, critical, animate: index === 0,
-      damageType: damageInput.damageType, mitigated: resolution.reduced < resolution.raw, ...(followUp || index > 0 ? { followUp: true } : {}),
+      damageType: executionUltimate ? "true" : damageInput.damageType, mitigated: resolution.reduced < resolution.raw, ...(followUp || index > 0 ? { followUp: true } : {}),
       ...(useUltimate || !attacker.def.basic.cycle ? {} : { basicStep: attacker.basicCycleStep % attacker.def.basic.cycle.length }) });
     if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
 
@@ -4655,6 +4706,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
       clearDefeatedStatuses(target);
       events.push({ kind: "death", fighterId: target.id, sourceId: attacker.id });
       state.log.push(`${target.def.name} 전투 불능`);
+      triggerBreakthroughOnKill(attacker, useUltimate);
       triggerCombatAugments(state, attacker, "onKill", events, target);
     }
     state.log.push(`${attacker.def.name} → ${target.def.name} ${amount}`);

@@ -662,6 +662,8 @@ export type CombatStatusEffect =
       seconds: number;
       /** 매 틱 대상 최대 체력에서 차감하는 비율(%). 방어력을 무시하는 지속 피해다. */
       maxHpPercentPerSecond: number;
+      /** 출혈이 유지되는 동안 대상이 받는 회복량 감소(%). */
+      healingReceivedReductionPercent?: number;
     }
   | {
       /**
@@ -1853,6 +1855,10 @@ export type BasicBreakthrough = {
   tauntRadius: number;
   /** 공용 도발 상태에 넘기는 지속시간(초). */
   tauntSeconds: number;
+} | {
+  kind: "deepBleed";
+  bleedMultiplier: number;
+  healingReceivedReductionPercent: number;
 };
 
 /**
@@ -1870,6 +1876,9 @@ export type UltimateBreakthrough = {
   intervalSeconds: number;
   /** 본 위력의 몇 %로 떨어지는지. */
   powerPercent: number;
+} | {
+  kind: "execution";
+  energyRefundOnKill: number;
 };
 
 /**
@@ -1884,6 +1893,9 @@ export type FerocityBreakthrough = {
   shieldPercentOfDamageTaken: number;
   tauntRadius: number;
   tauntSeconds: number;
+} | {
+  kind: "cleavingBasics";
+  radius: number;
 };
 
 /**
@@ -1896,6 +1908,10 @@ export type PassiveBreakthrough = {
   kind: "sharedRecovery";
   /** 자기 패시브 회복량의 몇 %를 아군에게 나누는지. */
   percent: number;
+} | {
+  kind: "battleMaidAscension";
+  durabilityPercent: number;
+  rechargeOnKill: true;
 };
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */

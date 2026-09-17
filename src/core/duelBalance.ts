@@ -1,4 +1,5 @@
 import { createSkirmish, fireUltimate, isFighterAlive, isPartyFighter, stepSkirmish, type Arena } from "./skirmish";
+import { applyLevelGrowth, BREAKTHROUGH_CAP, relicLevelCap } from "./relicProgression";
 import type { RelicDef } from "./types";
 
 /**
@@ -68,9 +69,9 @@ function partyHpRatio(fighters: ReturnType<typeof createSkirmish>["fighters"], s
  * 자동 발동으로 고정하는 이유는 **개체가 가진 것만** 재기 위해서다 — 아끼는 판단은 사람이
  * 하는 몫이라 여기에 섞으면 같은 개체가 검수자의 손버릇에 따라 다른 세기로 나온다.
  */
-export function simulateDuel(left: RelicDef, right: RelicDef, seed: number): DuelRun {
+function runDuel(left: RelicDef, right: RelicDef, seed: number, leftBreakthrough = 0, rightBreakthrough = 0): DuelRun {
   const rng = createDuelRng(seed);
-  const state = createSkirmish([left], [right], DUEL_ARENA);
+  const state = createSkirmish([left], [right], DUEL_ARENA, {}, { [left.id]: leftBreakthrough }, { enemyBreakthroughs: [rightBreakthrough] });
   while (state.phase === "fight" && state.elapsed < DUEL_LIMIT_SECONDS) {
     stepSkirmish(state, DUEL_STEP_SECONDS, rng);
     if (state.phase !== "fight") break;
@@ -88,6 +89,17 @@ export function simulateDuel(left: RelicDef, right: RelicDef, seed: number): Due
     leftHpRatio: partyHpRatio(state.fighters, "player"),
     rightHpRatio: partyHpRatio(state.fighters, "enemy"),
   };
+}
+
+export function simulateDuel(left: RelicDef, right: RelicDef, seed: number): DuelRun {
+  return runDuel(left, right, seed);
+}
+
+/** 레벨 60·돌파 V의 실제 성장치와 전용 돌파 효과를 모두 켠 한 판이다. */
+export function simulateMaxedDuel(left: RelicDef, right: RelicDef, seed: number): DuelRun {
+  const level = relicLevelCap(BREAKTHROUGH_CAP);
+  const grown = (def: RelicDef): RelicDef => ({ ...def, stats: applyLevelGrowth(def.stats, level, def.rarity) });
+  return runDuel(grown(left), grown(right), seed, BREAKTHROUGH_CAP, BREAKTHROUGH_CAP);
 }
 
 /**

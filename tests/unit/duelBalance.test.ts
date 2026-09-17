@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { duelLeaderboard, duelPair, simulateDuel } from "../../src/core/duelBalance";
+import { duelLeaderboard, duelPair, simulateDuel, simulateMaxedDuel } from "../../src/core/duelBalance";
 import { getRelic, PLAYABLE_RELICS } from "../../src/data/relics";
 
 /** 치명타 순서를 달리하는 재현 가능한 표본 셋. 단일 운 좋은 판을 세기로 오인하지 않는다. */
@@ -8,6 +8,31 @@ const SEEDS = [1, 2, 3] as const;
 const SSR = PLAYABLE_RELICS.filter((relic) => relic.rarity === "SSR");
 
 describe("개체 대 개체 검수", () => {
+  it("은 만렙·돌파 V 토리카가 렉시아를 이기지는 못해도 즉사하지 않고 탱커다운 시간을 번다", () => {
+    const seeds = Array.from({ length: 25 }, (_, index) => index + 1);
+    const runs = seeds.flatMap((seed) => {
+      const forward = simulateMaxedDuel(getRelic("anky"), getRelic("rex"), seed);
+      const reverse = simulateMaxedDuel(getRelic("rex"), getRelic("anky"), seed);
+      return [forward, { ...reverse, winner: reverse.winner === "left" ? "right" as const : reverse.winner === "right" ? "left" as const : null,
+        leftHpRatio: reverse.rightHpRatio, rightHpRatio: reverse.leftHpRatio }];
+    });
+    const average = runs.reduce((sum, run) => sum + run.durationSeconds, 0) / runs.length;
+    const averageLexiaHp = runs.reduce((sum, run) => sum + run.rightHpRatio, 0) / runs.length;
+    const durations = runs.map(({ durationSeconds }) => durationSeconds);
+    const oldLexia = { ...getRelic("rex"), breakthroughEffects: undefined };
+    const baseline = seeds.flatMap((seed) => {
+      const forward = simulateMaxedDuel(getRelic("anky"), oldLexia, seed);
+      const reverse = simulateMaxedDuel(oldLexia, getRelic("anky"), seed);
+      return [forward, { ...reverse, winner: reverse.winner === "left" ? "right" as const : reverse.winner === "right" ? "left" as const : null,
+        leftHpRatio: reverse.rightHpRatio, rightHpRatio: reverse.leftHpRatio }];
+    });
+    const baselineAverage = baseline.reduce((sum, run) => sum + run.durationSeconds, 0) / baseline.length;
+    console.log(`만렙 토리카 vs 렉시아: ${runs.length}판, 토리카 ${runs.filter(({ winner }) => winner === "left").length}승, `
+      + `평균 생존 ${average.toFixed(2)}초 (${Math.min(...durations).toFixed(2)}~${Math.max(...durations).toFixed(2)}초), 렉시아 평균 잔여 체력 ${(averageLexiaHp * 100).toFixed(1)}%, `
+      + `렉시아 전용 돌파 제외 기준 ${baselineAverage.toFixed(2)}초`);
+    expect(runs.every(({ winner }) => winner === "right")).toBe(true);
+    expect(average).toBeGreaterThan(8);
+  });
   it("은 같은 seed와 같은 자리에서 늘 같은 판을 낸다", () => {
     const first = simulateDuel(getRelic("dian"), getRelic("rex"), 7);
     const second = simulateDuel(getRelic("dian"), getRelic("rex"), 7);

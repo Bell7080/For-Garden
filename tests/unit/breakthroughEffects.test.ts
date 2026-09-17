@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createSkirmish, fireUltimate, findFighter, stepSkirmish, tryTriggerEmergencyRecovery, type Arena, type SkirmishState } from "../../src/core/skirmish";
+import { createSkirmish, fireUltimate, findFighter, refreshBleed, stepSkirmish, tryTriggerEmergencyRecovery, type Arena, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
 import { FEROCITY_RULES } from "../../src/core/ferocity";
 import { BREAKTHROUGH_STEPS, isBreakthroughSlotOpen } from "../../src/core/relicProgression";
 import { getRelic, RELICS } from "../../src/data/relics";
@@ -10,6 +10,10 @@ const ARENA: Arena = { left: 0, right: 1_000, top: 0, bottom: 1_600 };
 /** 토리카 한 명과 적 한 명. 돌파 단계만 갈아 끼워 같은 판을 두 번 돌린다. */
 function battle(breakthrough: number): SkirmishState {
   return createSkirmish([getRelic("anky")], [getRelic("amo")], ARENA, {}, { anky: breakthrough });
+}
+
+function lexiaBattle(enemies = ["anky"]): SkirmishState {
+  return createSkirmish([getRelic("rex")], enemies.map(getRelic), ARENA, {}, { rex: BREAKTHROUGH_STEPS.length });
 }
 
 /** 두 몸이 붙어 서로 때릴 수 있도록 같은 자리로 끌어다 놓는다. */
@@ -175,6 +179,17 @@ describe("돌파 효과 문구", () => {
     expect(breakthroughEffectText(torika, "passive")).toContain(torika.passive.name);
   });
 
+  it("는 렉시아 네 슬롯의 강화 수치와 전투 개념을 모두 표시한다", () => {
+    const lexia = getRelic("rex");
+    expect(breakthroughEffectText(lexia, "basic")).toContain("최대 체력의 4%");
+    expect(breakthroughEffectText(lexia, "basic")).toContain("받는 회복량을 40% 낮추며");
+    expect(breakthroughEffectText(lexia, "ultimate")).toContain("고정 피해");
+    expect(breakthroughEffectText(lexia, "ultimate")).toContain("150 회복");
+    expect(breakthroughEffectText(lexia, "ferocity")).toContain("조금 넓은 범위");
+    expect(breakthroughEffectText(lexia, "passive")).toContain("최대 체력·방어력·저항력이 25% 증가");
+    expect(breakthroughEffectText(lexia, "passive")).toContain("다시 돌진");
+  });
+
   it("는 슬롯을 비운 개체에는 문장을 만들지 않는다", () => {
     // 아직 설계하지 않은 개체에 "효과 없음"을 적지 않기 위해 undefined로 남는다.
     const untouched = RELICS.filter((relic) => relic.breakthroughEffects === undefined);
@@ -193,5 +208,65 @@ describe("돌파 효과 문구", () => {
         expect(isBreakthroughSlotOpen(BREAKTHROUGH_STEPS.length, slot), `${relic.name} ${slot}`).toBe(true);
       }
     }
+  });
+});
+
+describe("렉시아 한계 돌파", () => {
+  it("는 몸 능력치 3종을 25% 올리고 기본 공격으로 깊은 출혈을 우선 적용한다", () => {
+    const state = lexiaBattle();
+    engage(state);
+    const lexia = findFighter(state, "player-0")!;
+    const torika = findFighter(state, "enemy-0")!;
+    expect(lexia.maxHp).toBeCloseTo(getRelic("rex").stats.hp * 1.25);
+    expect(lexia.def.stats.def).toBeCloseTo(getRelic("rex").stats.def * 1.25);
+    expect(lexia.def.stats.res).toBeCloseTo(getRelic("rex").stats.res * 1.25);
+    torika.attackCooldown = 999; lexia.attackCooldown = 0;
+    stepSkirmish(state, 0.05, () => 0.99);
+    expect(torika.bleed).toMatchObject({ percent: 4, healingReceivedReductionPercent: 40, sourceId: lexia.id });
+    // 더 약한 출혈은 깊은 출혈의 강도·회복 감소·출처를 덮지 않는다.
+    torika.bleed!.remaining = 1;
+    const events: SkirmishEvent[] = [];
+    refreshBleed(torika, 3, 2, events, "other-source");
+    expect(torika.bleed).toMatchObject({ remaining: 3, percent: 4, healingReceivedReductionPercent: 40, sourceId: lexia.id });
+  });
+
+  it("는 깊은 출혈 중 토리카가 받는 회복량을 40% 낮춘다", () => {
+    const state = lexiaBattle(); engage(state);
+    const lexia = findFighter(state, "player-0")!;
+    const torika = findFighter(state, "enemy-0")!;
+    torika.attackCooldown = 999; lexia.attackCooldown = 0;
+    stepSkirmish(state, 0.05, () => 0.99);
+    torika.bleed!.tickIn = 99; lexia.attackCooldown = 999;
+    torika.hp = torika.maxHp * 0.4;
+    expect(tryTriggerEmergencyRecovery(torika, state)).toBe(true);
+    const before = torika.hp;
+    for (let tick = 0; tick < 5; tick += 1) stepSkirmish(state, 0.25, () => 0.99);
+    expect(torika.hp - before).toBeCloseTo(torika.maxHp * 0.035 * 0.6, 4);
+  });
+
+  it("는 궁극기를 고정 피해로 바꾸고 직접 처치하면 게이지 150을 돌려받는다", () => {
+    const state = lexiaBattle(); engage(state);
+    const lexia = findFighter(state, "player-0")!;
+    const torika = findFighter(state, "enemy-0")!;
+    torika.hp = 1; lexia.energy = lexia.def.ultimate.cost;
+    const hit = fireUltimate(state, lexia.id, () => 0.99).find((event) => event.kind === "attack");
+    expect(hit).toMatchObject({ damageType: "true" });
+    expect(lexia.energy).toBe(150);
+  });
+
+  it("는 폭주 중 일반 공격으로 조금 넓은 범위를 함께 때리고 처치 뒤 돌진을 다시 준비한다", () => {
+    const state = lexiaBattle(["anky", "amo"]);
+    const lexia = findFighter(state, "player-0")!;
+    const enemies = state.fighters.filter((fighter) => fighter.side === "enemy");
+    for (const [index, enemy] of enemies.entries()) {
+      enemy.x = lexia.x + 50 + index * 30; enemy.y = lexia.y; enemy.attackCooldown = 999;
+    }
+    enemies[0].hp = 1;
+    lexia.ferocity = FEROCITY_RULES.max; lexia.ferocityFever = true;
+    lexia.openingChargeReady = false; lexia.attackCooldown = 0;
+    const attacks = stepSkirmish(state, 0.05, () => 0.99)
+      .filter((event) => event.kind === "attack" && event.attackerId === lexia.id && event.skill === "basic");
+    expect(new Set(attacks.map((event) => event.kind === "attack" ? event.targetId : ""))).toEqual(new Set(enemies.map(({ id }) => id)));
+    expect(lexia.openingChargeReady).toBe(true);
   });
 });

@@ -136,6 +136,12 @@ export const RELICS: RelicDef[] = [
     // 치명타 확률 가산은 패시브가 이미 미는 축이라 폭주가 같은 말을 반복했다. 지금은 자기가
     // 남긴 출혈을 조건으로 삼아, 물어뜯은 자리를 다시 무는 것이 곧 확정 치명타다.
     ferocityTrait: { name: "전투의 여왕은 나야.", effectId: "rexBattleQueen", bleedingGuaranteedCritical: true, allDamageLifeStealPoints: 25 },
+    breakthroughEffects: {
+      basic: { kind: "deepBleed", bleedMultiplier: 2, healingReceivedReductionPercent: 40 },
+      ultimate: { kind: "execution", energyRefundOnKill: 150 },
+      ferocity: { kind: "cleavingBasics", radius: 260 },
+      passive: { kind: "battleMaidAscension", durabilityPercent: 25, rechargeOnKill: true },
+    },
     passive: {
       id: "rex-passive",
       name: "전투는 메이드의 소양이기에.",

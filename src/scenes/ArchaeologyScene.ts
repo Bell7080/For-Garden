@@ -29,6 +29,8 @@ import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { COLOR, textStyle } from "../ui/theme";
 import { openRewardPopup, type RewardPopupItem } from "../ui/RewardPopup";
 import { StrataDigEffect } from "../ui/StrataDigEffect";
+import type { ArchaeologyStateResponse } from "../api/contracts";
+import { formatCountdown } from "../core/formatCountdown";
 
 /**
  * 고고학. 하단 탭 첫 슬롯이다.
@@ -46,14 +48,13 @@ type ArchaeologyTab = "strata" | "research";
 /** 화면의 세로 좌표를 한 곳에서 잡는다. */
 const ARCHAEOLOGY = {
   titleY: 185,
-  chargeY: 268,
   boardY: 900,
   /** 라벨 줄은 하단 탭 바로 위에 선다 — 손가락이 가장 잘 닿는 자리다. */
   tabY: BASE_HEIGHT - 268,
   tabWidth: 280,
   tabHeight: 84,
   gridTop: 420,
-  /** 남은 횟수를 말하는 곡괭이의 한 변. */
+  /** 진행 중인 판에서 남은 굴착을 말하는 곡괭이의 한 변. */
   chargeIcon: 46,
   /**
    * 확률 정보 입구.
@@ -106,6 +107,14 @@ export class ArchaeologyScene extends Phaser.Scene {
   private board: StrataBoardView | null = null;
   private charges = 0;
   private chargesMax = 0;
+  /** 서버가 확정한 다음 충전 시각과 응답 순간에 계산한 서버-클라이언트 시계 차이다. */
+  private nextChargeAt: number | null = null;
+  private serverClockOffsetMs = 0;
+  /** 매초 표기만 갱신하는 Phaser 타이머와 현재 빈 판에 붙은 글자다. */
+  private chargeTimer: Phaser.Time.TimerEvent | null = null;
+  private chargeCountdownText: Phaser.GameObjects.Text | null = null;
+  /** 0초 경계에서 서버 확정 조회를 중복으로 보내지 않는다. */
+  private chargeRefreshPending = false;
   /** 갈아 끼우는 몸통. 탭을 바꾸면 통째로 비운다. */
   private view!: Phaser.GameObjects.Container;
   /**
@@ -116,7 +125,6 @@ export class ArchaeologyScene extends Phaser.Scene {
    * 보였다. 줄을 담을 자리를 씬이 갖고 다시 그리기 전에 비운다.
    */
   private tabRow!: Phaser.GameObjects.Container;
-  private chargeText!: Phaser.GameObjects.Text;
   /** 서버 응답을 기다리는 동안 같은 칸을 두 번 누르지 못하게 한다. */
   private digging = false;
   /** 판 전체를 다시 만들지 않고 결과 한 칸만 갈아 끼우기 위한 렌더 경계다. */
@@ -158,13 +166,6 @@ export class ArchaeologyScene extends Phaser.Scene {
     });
 
     this.add.text(60, ARCHAEOLOGY.titleY, t("archaeology.title"), textStyle({ role: "display", size: 52 })).setOrigin(0, 0);
-    // 남은 횟수는 곡괭이 하나와 수 하나다. 「탐사」라고 다시 적지 않는다 — 이 화면에서 곡괭이가
-    // 세는 것은 그것뿐이고, 그림이 이미 무엇을 세는지 말한다.
-    this.add.image(60 + ARCHAEOLOGY.chargeIcon / 2, ARCHAEOLOGY.chargeY + ARCHAEOLOGY.chargeIcon / 2, UI_ICON.pickaxe)
-      .setDisplaySize(ARCHAEOLOGY.chargeIcon, ARCHAEOLOGY.chargeIcon);
-    this.chargeText = this.add.text(60 + ARCHAEOLOGY.chargeIcon + 10, ARCHAEOLOGY.chargeY + ARCHAEOLOGY.chargeIcon / 2, "",
-      textStyle({ role: "display", size: 32, color: COLOR.ink })).setOrigin(0, 0.5);
-
     // **확률 정보는 판이 시작하기 전의 마지막 줄에 선다.** 어느 탭에서도 가려지지 않는 자리라
     // 굴리기 전에 무엇이 나올 수 있는지 읽고 들어갈 수 있다. 상점은 하단 라벨 줄로 내려갔다.
     new RailButton(this, ARCHAEOLOGY.oddsX, ARCHAEOLOGY.oddsY, {
@@ -178,11 +179,14 @@ export class ArchaeologyScene extends Phaser.Scene {
 
     this.view = this.add.container(0, 0);
     this.tabRow = this.add.container(0, 0);
+    // Phaser 시계에 묶어 탭이 백그라운드에 있는 동안 불필요한 브라우저 interval을 남기지 않는다.
+    this.chargeTimer = this.time.addEvent({ delay: 1000, loop: true, callback: () => this.updateChargeCountdown() });
     this.paintTabs();
     new BottomNav(this, "archaeology");
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.digEffects.forEach((effect) => effect.destroy());
       this.digEffects.clear();
+      this.chargeTimer?.destroy(); this.chargeTimer = null; this.chargeCountdownText = null;
       this.strataTiles.clear(); this.strataGrid = null; this.strataHaul = null; this.digging = false;
       setDebugArchaeologyDig(undefined);
     });
@@ -231,17 +235,50 @@ export class ArchaeologyScene extends Phaser.Scene {
   /** 서버에서 지금 상태를 받아 다시 그린다. 씬이 횟수나 판을 스스로 계산하지 않는다. */
   private async refresh(): Promise<void> {
     const state = await gameApi.archaeologyState();
+    this.applyArchaeologyState(state);
+    this.paintView();
+  }
+
+  /** 모든 고고학 응답의 충전·판·서버 시각을 한 원자적 경로로 반영한다. */
+  private applyArchaeologyState(state: ArchaeologyStateResponse): void {
+    const receivedAt = Date.now();
+    const serverTime = Date.parse(state.serverTime);
+    const nextChargeAt = state.nextChargeAt === null ? Number.NaN : Date.parse(state.nextChargeAt);
     this.charges = state.charges;
     this.chargesMax = state.chargesMax;
     this.board = state.board;
-    this.paintView();
+    // 잘못된 서버 시각은 로컬 시각을 서버 시각이라고 추측하지 않고 안전한 정지 상태로 둔다.
+    this.serverClockOffsetMs = Number.isFinite(serverTime) ? serverTime - receivedAt : 0;
+    this.nextChargeAt = Number.isFinite(serverTime) && Number.isFinite(nextChargeAt) ? nextChargeAt : null;
+    this.chargeRefreshPending = false;
+  }
+
+  /** 서버 시계로 남은 시간을 그리며, 경계에 닿았을 때만 서버에 실제 횟수를 다시 묻는다. */
+  private updateChargeCountdown(): void {
+    const text = this.chargeCountdownText;
+    if (text === null || !text.active) return;
+    if (this.charges >= this.chargesMax || this.nextChargeAt === null) {
+      // 최대 충전은 정책상 시간 대신 횟수만 보여 다음 충전이 있다는 오해를 막는다.
+      text.setText(t("archaeology.chargeFull", { charges: this.charges, max: this.chargesMax }));
+      return;
+    }
+    const remainingMs = this.nextChargeAt - (Date.now() + this.serverClockOffsetMs);
+    text.setText(t("archaeology.chargeCountdown", {
+      charges: this.charges,
+      max: this.chargesMax,
+      time: formatCountdown(remainingMs),
+    }));
+    if (remainingMs > 0 || this.chargeRefreshPending) return;
+    // 로컬에서는 횟수를 올리지 않는다. 서버가 충전을 정산한 응답만 apply 메서드로 반영한다.
+    this.chargeRefreshPending = true;
+    void this.refresh().catch(() => { this.chargeRefreshPending = false; });
   }
 
   private paintView(): void {
     // 명시적인 화면 전환에서만 기존 판 경계를 버린다. 한 칸 결과에는 이 메서드를 호출하지 않는다.
     this.strataTiles.clear(); this.strataGrid = null; this.strataHaul = null;
     this.view.removeAll(true);
-    this.chargeText.setText(t("archaeology.charges", { charges: this.charges, max: this.chargesMax }));
+    this.chargeCountdownText = null;
     if (this.tab === "strata") this.paintStrata();
     else this.paintResearch();
   }
@@ -251,13 +288,17 @@ export class ArchaeologyScene extends Phaser.Scene {
   private paintStrata(): void {
     const board = this.board;
     if (board === null) {
-      // 판이 없으면 여는 버튼 하나만 선다. **조회 중·준비 안 됨 같은 상태 문구는 두지 않는다.**
+      // 아이콘 없는 충전 줄은 시작 버튼 바로 위에 두어, 행동과 그 비용을 한 덩어리로 읽게 한다.
+      this.chargeCountdownText = this.add.text(BASE_WIDTH / 2, ARCHAEOLOGY.boardY - 104, "",
+        textStyle({ role: "display", size: 32, color: COLOR.accentText })).setOrigin(0.5);
+      this.view.add(this.chargeCountdownText);
+      this.updateChargeCountdown();
       const button = new Button(this, BASE_WIDTH / 2, ARCHAEOLOGY.boardY, {
         width: 560, height: 132, label: t("archaeology.start"), variant: "primary",
         onClick: () => {
           if (this.charges <= 0) return;
           void gameApi.startStrataRun({ layerId: DEFAULT_STRATA_LAYER_ID, requestId: `strata-${Date.now()}` })
-            .then((state) => { this.charges = state.charges; this.board = state.board; this.paintView(); });
+            .then((state) => { this.applyArchaeologyState(state); this.paintView(); });
         },
       });
       button.setEnabled(this.charges > 0);
@@ -343,9 +384,18 @@ export class ArchaeologyScene extends Phaser.Scene {
     gridLines.strokePath();
     grid.add(gridLines);
 
-    this.view.add(this.add.text(frame.centerX, STRATA_BOARD.top - 34,
+    // 곡괭이는 충전 횟수가 아니라 현재 판에서 실제로 파는 횟수 옆에서만 의미를 갖는다.
+    const digsLabel = this.add.container(frame.centerX, STRATA_BOARD.top - 56);
+    const digsText = this.add.text(ARCHAEOLOGY.chargeIcon / 2 + 8, 0,
       t("archaeology.digsLeft", { digs: board.digsLeft }),
-      textStyle({ role: "display", size: 34, color: COLOR.accentText })).setOrigin(0.5, 1));
+      textStyle({ role: "display", size: 34, color: COLOR.accentText })).setOrigin(0, 0.5);
+    const labelWidth = ARCHAEOLOGY.chargeIcon + 8 + digsText.width;
+    digsLabel.add([
+      this.add.image(-labelWidth / 2 + ARCHAEOLOGY.chargeIcon / 2, 0, UI_ICON.pickaxe)
+        .setDisplaySize(ARCHAEOLOGY.chargeIcon, ARCHAEOLOGY.chargeIcon),
+      digsText.setX(-labelWidth / 2 + ARCHAEOLOGY.chargeIcon + 8),
+    ]);
+    this.view.add(digsLabel);
 
     this.paintStrataHaul(board);
     this.publishDigDebug();
@@ -383,8 +433,7 @@ export class ArchaeologyScene extends Phaser.Scene {
           ? { ...tile, revealed: true, kind: result.tile.kind, amount: result.tile.amount }
           : tile),
       } satisfies StrataBoardView;
-      this.charges = result.charges; this.board = result.board;
-      this.chargeText.setText(t("archaeology.charges", { charges: this.charges, max: this.chargesMax }));
+      this.applyArchaeologyState(result);
       if (result.board === null) {
         // 판이 닫히면 남는 것은 빈 시작 화면이라 갈아 끼울 칸 자체가 없다. 그때만 다시 그린다.
         this.paintView();

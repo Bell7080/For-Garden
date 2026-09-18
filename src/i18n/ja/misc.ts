@@ -62,7 +62,7 @@ export const MISC_JA = {
   "archaeology.chargeCountdown": "{charges}/{max} {time}",
   "archaeology.chargeFull": "{charges}/{max}",
   "archaeology.start": "地層探査を開始",
-  "archaeology.digsLeft": "残り掘削 {digs}",
+  "archaeology.digsCount": "{current}/{max}",
   "archaeology.title": "考 古 学",
 
   "mileage.title": "マイレージショップ",

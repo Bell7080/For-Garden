@@ -66,6 +66,9 @@ export interface StrataBoardView {
   rows: number;
   zones: StrataZone[];
   tiles: StrataTileView[];
+  /** 이 지층에서 한 판에 허용한 총 굴착 횟수다. 남은 횟수와 함께 짧은 진행 표기에 쓴다. */
+  digsMax: number;
+  /** 아직 사용할 수 있는 굴착 횟수다. 0이면 마지막 결과를 확인한 뒤 판을 닫는다. */
   digsLeft: number;
 }
 
@@ -162,12 +165,16 @@ export function isStrataBoardFinished(board: StrataBoard): boolean {
  * 있는지 알 수 있어, 색만 보고 고른다는 규칙이 통째로 무너진다.
  */
 export function strataBoardView(board: StrataBoard): StrataBoardView {
+  const layer = findStrataLayer(board.layerId);
+  // 저장 판은 생성 때 검증되지만 손상된 저장이나 서버 구현 오류를 조용히 화면 숫자로 만들지 않는다.
+  if (layer === undefined) throw new Error("알 수 없는 지층의 탐사판입니다.");
   return {
     layerId: board.layerId,
     art: board.art,
     columns: board.columns,
     rows: board.rows,
     zones: board.zones.map((zone) => ({ ...zone })),
+    digsMax: layer.digs,
     digsLeft: board.digsLeft,
     tiles: board.tiles.map((tile) => tile.revealed
       ? { index: tile.index, zone: tile.zone, revealed: true, kind: tile.kind, amount: tile.amount }

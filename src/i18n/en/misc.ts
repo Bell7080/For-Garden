@@ -57,7 +57,7 @@ export const MISC_EN = {
   "archaeology.chargeCountdown": "{charges}/{max} {time}",
   "archaeology.chargeFull": "{charges}/{max}",
   "archaeology.start": "Begin Strata Survey",
-  "archaeology.digsLeft": "{digs} left to break",
+  "archaeology.digsCount": "{current}/{max}",
   "archaeology.title": "A R C H A E O L O G Y",
   "mileage.title": "Mileage Shop",
   "mileage.owned": "DNA held  {amount}",

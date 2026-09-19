@@ -28,6 +28,34 @@ function validData(): SaveData {
 }
 
 describe("SaveManager", () => {
+  it("v35 현상수배 없는 저장은 1급만 열린 채로 마이그레이션한다", () => {
+    const storage = new MemoryStorage();
+    const legacy = { ...validData(), saveVersion: 35 } as Partial<SaveData>;
+    delete legacy.bounty;
+    storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(legacy));
+    const loaded = new SaveManager(storage).load();
+    // 깬 등급이 없으면 첫 등급만 열린다 — 없는 진행을 꾸며내 다음 등급을 열지 않는다.
+    expect(loaded?.bounty).toEqual({ date: "", entries: 0, clearedTierIds: [] });
+  });
+
+  it("현상수배 진행을 JSON으로 왕복하고 없는 등급·과한 입장 횟수를 거부한다", () => {
+    const storage = new MemoryStorage();
+    const manager = new SaveManager(storage);
+    const session = createDefaultSession();
+    session.bounty = { date: "2026-09-19", entries: 2, clearedTierIds: ["bounty-1", "bounty-2"] };
+    manager.save(session);
+    expect(manager.load()?.bounty).toEqual({ date: "2026-09-19", entries: 2, clearedTierIds: ["bounty-1", "bounty-2"] });
+
+    // 해금 근거가 되는 값이라 손상된 목록을 그대로 받아들이면 잠긴 등급이 열린다.
+    const broken = { ...validData(), bounty: { date: "", entries: 0, clearedTierIds: ["bounty-99"] } };
+    storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(broken));
+    expect(() => new SaveManager(storage).load()).toThrow(SaveDataError);
+
+    const tooMany = { ...validData(), bounty: { date: "", entries: 99, clearedTierIds: [] } };
+    storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(tooMany));
+    expect(() => new SaveManager(storage).load()).toThrow(SaveDataError);
+  });
+
   it("데이터 초기화가 복원할 신규 상태에는 임시 뽑기 테스트 재화를 넉넉히 지급한다", () => {
     // 기본 상태 팩토리를 직접 고정해 첫 설치와 설정의 데이터 초기화가 같은 지급량을 쓰게 한다.
     expect(createDefaultSession().wallet).toMatchObject({ fossil: 90_000, amber: 900 });

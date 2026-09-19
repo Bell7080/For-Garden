@@ -38,6 +38,7 @@ function makeSession(stamina = 100, clearedIndex = -1): Session {
     expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, allTimeBestScore: 0, lastParty: [], run: null },
     cakeOperation: { clearedIndex },
     raid: createEmptyRaidState(),
+    bounty: { date: "", entries: 0, clearedTierIds: [] },
   };
 }
 

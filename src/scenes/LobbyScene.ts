@@ -377,7 +377,7 @@ export class LobbyScene extends Phaser.Scene {
         {
           x: 204, y: -124, width: 392, height: 200, label: t("lobby.sortie.bounty"), labelSize: 38, status: t("lobby.sortie.bounty.status"), split: "right",
           artKey: "content-bounty-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
-          onClick: () => { close(); this.scene.start("sortiePreview", { mode: "bounty" }); },
+          onClick: () => { close(); this.scene.start("bounty"); },
         },
         // 레이드는 일일 던전 아래에서 독립된 전체 폭 콘텐츠로 읽히게 한다.
         {

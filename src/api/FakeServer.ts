@@ -3,6 +3,8 @@ import { BANNERS } from "../data/banners";
 import { RELICS } from "../data/relics";
 import { AD_REWARD_SLOTS, findAdRewardSlot, type AdReward } from "../data/adRewards";
 import { consumeRestorationEntry, normalizeDailyContent } from "../core/dailyContent";
+import { bountyEntriesRemaining, consumeBountyEntry, isBountyTierUnlocked, markBountyTierCleared, normalizeBounty } from "../core/bountyRun";
+import { BOUNTY, getBountyTier } from "../data/bounty";
 import { BREAKTHROUGH_CAP, breakthroughFragmentCost, canBreakThrough, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap, BREAKTHROUGH_GRADE_CAP, breakthroughGrade } from "../core/relicProgression";
 import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond";
 import { MAX_RESEARCH_POINTS, MISSIONS, RESEARCH_REWARD_STAGES, addResearchPoints, applyMissionEvent, claimResearchStages, claimableMissionIds, normalizeMissions, researchPointsForClaim, researchStageClaimId, type MissionPeriod } from "../core/missions";
@@ -17,7 +19,7 @@ import type {
   PurchaseRelicSkinRequest, PurchaseRelicSkinResponse, ClaimInteractionDispatchRequest, ClaimInteractionDispatchResponse, InteractionCitiesResponse, InteractionDispatchResponse, StartInteractionDispatchRequest } from "./contracts";
 import type { ExchangeInteractionOfferRequest, ExchangeInteractionOfferResponse, InteractionExchangeListResponse } from "./contracts";
 import { ProfileModifierManager } from "../managers/ProfileModifierManager";
-import { GameApiError, persistenceFailed, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse, type RechargeStaminaRequest, type RechargeStaminaResponse } from "./contracts";
+import { GameApiError, persistenceFailed, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type EnterBountyRequest, type EnterBountyResponse, type CompleteBountyRequest, type CompleteBountyResponse, type BountyStatusResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse, type RechargeStaminaRequest, type RechargeStaminaResponse } from "./contracts";
 import type { ProductDefinition } from "../data/shopCatalog";
 import { PRODUCTS } from "../data/shopCatalog";
 import type { ProductListResponse, PurchaseProductRequest, PurchaseProductResponse } from "./contracts";
@@ -144,6 +146,10 @@ export class FakeServer implements GameApi {
   private readonly stageAdmissionResults = new Map<string, EnterStageResponse>();
   /** 입장 때 커밋한 요청을 보관하고 완료 정산이 해당 전투의 대기 건 하나만 소비하게 한다. */
   private readonly pendingStageAdmissions = new Map<string, Set<string>>();
+  /** 현상수배 입장 재전송이 스테미나를 두 번 깎지 않게 하는 서버 영수증 표다. */
+  private readonly bountyAdmissionResults = new Map<string, EnterBountyResponse>();
+  /** 입장한 판의 등급. 정산이 영수증 없이 보상을 만들지 못하게 한다. */
+  private readonly pendingBountyRuns = new Map<string, string>();
 
   constructor(
     private readonly state: Session = session,
@@ -1196,6 +1202,77 @@ export class FakeServer implements GameApi {
     this.persist({ ...this.state, dailyContent: nextDaily, wallet: nextWallet });
     this.state.dailyContent = nextDaily; this.state.wallet = nextWallet;
     return { ...this.snapshot(), entriesRemaining: DAILY_RESTORATION.maxEntriesPerUtcDay - nextDaily.restorationEntries, cheesecakeEarned: DAILY_RESTORATION.rewardCheesecake };
+  }
+
+
+  /* ── 현상수배 ─────────────────────────────────────────────────────────────── */
+
+  /** 등급 줄과 오늘 남은 입장 횟수를 서버 날짜 하나로 정규화해 돌려준다. */
+  async getBountyStatus(): Promise<BountyStatusResponse> {
+    await this.delay();
+    const now = this.now();
+    const normalized = normalizeBounty(this.state.bounty, now);
+    // 날짜가 넘어간 몫은 조회에서도 확정해 두 화면이 서로 다른 잔여 횟수를 읽지 않게 한다.
+    this.persist({ ...this.state, bounty: normalized });
+    this.state.bounty = normalized;
+    return { clearedTierIds: [...normalized.clearedTierIds], entriesRemaining: bountyEntriesRemaining(normalized, now), serverTime: now.toISOString() };
+  }
+
+  /**
+   * 세 라운드를 여는 한 번의 입장.
+   *
+   * 스테미나와 일일 횟수는 **여기서만** 나간다. 라운드마다 깎으면 2라운드에서 진 사람이 1.5판
+   * 값을 치른 것이 되고, 화면이 그 차이를 설명할 방법이 없다.
+   */
+  async enterBounty(request: EnterBountyRequest): Promise<EnterBountyResponse> {
+    await this.delay();
+    const cached = this.bountyAdmissionResults.get(request.requestId);
+    if (cached) return structuredClone(cached);
+    if (!request.requestId) throw new GameApiError("INVALID_STATE", "입장 요청 ID가 필요합니다.");
+    let tier; try { tier = getBountyTier(request.tierId); } catch { throw new GameApiError("BOUNTY_TIER_NOT_FOUND", "존재하지 않는 현상수배 등급입니다."); }
+    const now = this.now();
+    const normalized = normalizeBounty(this.state.bounty, now);
+    // 해금은 화면 표시가 아니라 서버가 지키는 값이다 — 직접 진입도 같은 경계에서 막힌다.
+    if (!isBountyTierUnlocked(tier, normalized.clearedTierIds)) throw new GameApiError("BOUNTY_TIER_LOCKED", "아직 열리지 않은 현상수배 등급입니다.");
+    let nextBounty;
+    try { nextBounty = consumeBountyEntry(normalized, now); }
+    catch { throw new GameApiError("BOUNTY_DAILY_LIMIT", "오늘의 현상수배 입장 횟수를 모두 사용했습니다."); }
+    this.settleStaminaNow();
+    const cost = BOUNTY.staminaCost;
+    if (this.state.wallet.stamina < cost) throw new GameApiError("INSUFFICIENT_STAMINA", "스테미나가 부족합니다.");
+    const nextWallet = { ...this.state.wallet, stamina: this.state.wallet.stamina - cost };
+    // 저장이 성공한 뒤에만 공유 참조를 바꿔, 실패해도 지갑이 호출 전 값으로 남게 한다.
+    this.persist({ ...this.state, wallet: nextWallet, bounty: nextBounty });
+    this.state.wallet = nextWallet; this.state.bounty = nextBounty;
+    this.pendingBountyRuns.set(request.requestId, tier.id);
+    const response = { ...this.snapshot(), tierId: tier.id, requestId: request.requestId, staminaSpent: cost, entriesRemaining: bountyEntriesRemaining(nextBounty, now), refundPolicy: "no-refund-after-admission" as const };
+    this.bountyAdmissionResults.set(request.requestId, structuredClone(response));
+    return response;
+  }
+
+  /**
+   * 세 라운드의 결과 확정.
+   *
+   * **한 번이라도 진 판은 보상이 없다.** 그 판단은 코어(`nextBountyStep`)가 이미 했고 여기서는
+   * 그 결과만 받는다. 진 판도 정산을 지나야 영수증이 소비되어, 같은 입장으로 두 번 보상받지
+   * 못한다.
+   */
+  async completeBounty(request: CompleteBountyRequest): Promise<CompleteBountyResponse> {
+    await this.delay();
+    const admittedTierId = this.pendingBountyRuns.get(request.requestId);
+    if (admittedTierId === undefined || admittedTierId !== request.tierId) throw new GameApiError("BOUNTY_ADMISSION_NOT_FOUND", "입장하지 않은 현상수배입니다.");
+    const tier = getBountyTier(request.tierId);
+    const now = this.now();
+    const victory = request.victory && request.clearedRounds >= BOUNTY.roundCount;
+    const firstClear = victory && !this.state.bounty.clearedTierIds.includes(tier.id);
+    const goldEarned = victory ? tier.rewardGold : 0;
+    const nextWallet = { ...this.state.wallet, gold: this.state.wallet.gold + goldEarned };
+    const nextBounty = victory ? markBountyTierCleared(this.state.bounty, tier.id, now) : normalizeBounty(this.state.bounty, now);
+    const nextMissions = applyMissionEvent(this.state.missions, { type: "battle_completed", victory }, now);
+    this.persist({ ...this.state, wallet: nextWallet, bounty: nextBounty, missions: nextMissions });
+    this.state.wallet = nextWallet; this.state.bounty = nextBounty; this.state.missions = nextMissions;
+    this.pendingBountyRuns.delete(request.requestId);
+    return { ...this.snapshot(), tierId: tier.id, victory, clearedRounds: request.clearedRounds, goldEarned, firstClear, clearedTierIds: [...nextBounty.clearedTierIds] };
   }
 
   /** 정적 이벤트에 서버가 판정한 상태를 결합해 클라이언트 시계 의존을 없앤다. */

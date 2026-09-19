@@ -111,6 +111,8 @@ export interface Session {
   runeInventory: RuneInstance[];
   /** 날짜가 바뀔 때 서버 시간 기준으로 교체할 일일 콘텐츠 진행이다. */
   dailyContent: DailyContentState;
+  /** 현상수배의 일일 입장 횟수와 깬 등급이다. 씬은 API 응답으로만 갱신한다. */
+  bounty: BountyState;
   /** 서버 UTC 일자·주차에 묶인 직렬화 가능한 임무 진행과 수령 기록이다. */
   missions: MissionState;
   /** 상품별 현재 제한 주기 키와 구매 횟수다. FakeServer만 갱신한다. */
@@ -233,6 +235,21 @@ export interface DailyContentState {
   claimedRewardIds: string[];
 }
 
+/**
+ * 현상수배 진행.
+ *
+ * 입장 횟수는 UTC 키가 바뀌면 되돌아가지만 **깬 등급은 날짜와 무관하게 남는다** — 다음 등급을
+ * 여는 값이라 하루가 지났다고 잠기면 어제 깬 관문을 다시 깨야 한다.
+ */
+export interface BountyState {
+  /** 서버가 정한 UTC YYYY-MM-DD 키다. */
+  date: string;
+  /** 오늘 실제로 입장해 소비한 횟수다. */
+  entries: number;
+  /** 세 라운드를 모두 이긴 등급 ID다. 다음 등급의 해금 근거다. */
+  clearedTierIds: string[];
+}
+
 /** 관찰 일지에 그대로 표시할 수 있는, 완료된 인터뷰의 최소 스냅샷이다. */
 export interface ObservationRecord {
   date: string;
@@ -298,6 +315,7 @@ export interface SaveData {
   relicFragments: Record<string, number>;
   runeInventory: RuneInstance[];
   dailyContent: DailyContentState;
+  bounty: BountyState;
   missions: MissionState;
   productPurchases: Record<string, { periodKey: string; count: number }>;
   dailyAdRewards: DailyAdRewardState;
@@ -368,6 +386,8 @@ export function createDefaultSession(): Session {
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
     // 첫 단계는 늘 열려 있으므로 아무것도 이기지 않은 상태를 -1로 둔다.
     cakeOperation: { clearedIndex: -1 },
+    // 빈 날짜 키는 첫 현상수배 조회에서 서버와 같은 UTC 날짜로 정규화된다.
+    bounty: { date: "", entries: 0, clearedTierIds: [] },
     // 기간별 연구도와 단계 수령 기록은 임무 수령 기록과 독립적으로 초기화한다.
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [], researchPoints: { daily: 0, weekly: 0 }, claimedResearchStageIds: [] },
     productPurchases: {},

@@ -89,8 +89,10 @@ test("고고학의 두 탭과 고고학 상점을 연다", async ({ page }, test
   await tap(page, 100, 100);
   await page.waitForTimeout(400);
 
-  // 상점은 하단 라벨 줄 셋째 자리다 — 같은 상점 씬이 점원과 배경만 갈아 끼운다.
-  await tapUntil(page, 60 + 280 / 2 + 2 * (280 + 16), tabY, "shop");
+  // 상점 입구는 제목 줄 오른쪽의 버튼이다 — 라벨 줄에는 이 화면의 갈래만 선다.
+  const shopEntry = await page.evaluate(() => window.__PF_DEBUG?.storefrontControls?.archaeology?.shop);
+  expect(shopEntry).toBeTruthy();
+  await tapUntil(page, shopEntry!.x, shopEntry!.y, "shop");
   /*
    * **첫 마디는 저절로 뜬다.**
    *
@@ -113,9 +115,11 @@ test("고고학 상점을 다녀와도 로비 상점은 제 자리로 열린다"
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => scene(page)).toBe("lobby");
 
-  // 먼저 고고학 상점을 열어 **지난 자리를 남긴다.** 입구는 하단 라벨 줄 셋째 자리다.
+  // 먼저 고고학 상점을 열어 **지난 자리를 남긴다.** 입구는 제목 줄 오른쪽의 버튼이다.
   await tapUntil(page, BASE_WIDTH / 10, BASE_HEIGHT - 180 + 90, "archaeology");
-  await tapUntil(page, 60 + 280 / 2 + 2 * (280 + 16), BASE_HEIGHT - 268, "shop");
+  const archaeologyShop = await page.evaluate(() => window.__PF_DEBUG?.storefrontControls?.archaeology?.shop);
+  expect(archaeologyShop).toBeTruthy();
+  await tapUntil(page, archaeologyShop!.x, archaeologyShop!.y, "shop");
   await expect.poll(() => screenTitle(page)).toBe("고고학 상점");
 
   // 우하단 뒤로가기는 들어온 자리로 돌아간다.

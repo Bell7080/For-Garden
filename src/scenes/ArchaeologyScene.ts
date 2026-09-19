@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { t, type TextKey } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { setDebugArchaeologyDig, setDebugScene } from "../debug";
+import { setDebugArchaeologyDig, setDebugScene, setDebugStorefrontControls } from "../debug";
 import { strataBoardHaul, type StrataBoardView } from "../core/strataDig";
 import { findStrataLayer, type StrataRewardKind } from "../data/strataLayers";
 import { ARCHAEOLOGY_SITES, type ArchaeologySiteDefinition } from "../data/archaeologySites";
@@ -46,7 +46,7 @@ import { archaeologyProgressManager } from "../managers/ArchaeologyProgressManag
  * "발굴을 두 군데서 한다"가 되어 어느 쪽을 말하는지 매번 물어야 한다.
  */
 
-/** 두 갈래. 씬 하나 안에서 판만 갈아 끼운다. */
+/** 두 갈래. 씬 하나 안에서 판만 갈아 끼운다 — 화면을 넘기는 상점은 이 줄에 서지 않는다. */
 type ArchaeologyTab = "strata" | "research";
 
 /** 화면의 세로 좌표를 한 곳에서 잡는다. */
@@ -61,13 +61,18 @@ const ARCHAEOLOGY = {
   /** 진행 중인 판에서 남은 굴착을 말하는 곡괭이의 한 변. */
   chargeIcon: 46,
   /**
-   * 확률 정보 입구.
+   * 화면 제목 줄의 오른쪽 — **이 화면의 고정 입구 둘이 나란히 서는 자리다.**
    *
-   * **횟수 줄과 같은 높이의 오른쪽 끝이다.** 그 아래에서 시작하는 판(탐사판·연구대)이 덮지
-   * 않는 마지막 자리다. 예전에는 상점이 여기 섰고, 지금은 하단 라벨 줄의 셋째 자리로 갔다.
+   * 아래에서 시작하는 판(탐사판·연구대·지도)이 어느 탭에서도 덮지 않는 자리라, 굴리기 전에
+   * 무엇이 나올 수 있는지 읽고 들어갈 수 있다. 예전에는 확률만 횟수 줄 높이(262)에 혼자
+   * 섰고 상점은 하단 라벨 줄의 셋째 라벨이었다 — 라벨 줄은 **이 화면의 갈래**를 고르는
+   * 자리인데 셋째만 화면을 통째로 넘겨, 켜진 채로 남지 못하고 돌아오는 길도 라벨이 아니라
+   * 우하단 뒤로가기였다. 화면을 넘기는 입구는 교류의 교환소처럼 판 밖의 버튼이 맡는다.
    */
   oddsX: BASE_WIDTH - 96,
-  oddsY: 262,
+  entryY: 220,
+  /** 상점 버튼 — 확률 돋보기 왼쪽에 서고 오른쪽 끝을 그 칩과 맞춘다. */
+  shopButton: { x: 790, width: 240, height: 86 },
 } as const;
 
 /**
@@ -174,9 +179,27 @@ export class ArchaeologyScene extends Phaser.Scene {
     });
 
     this.add.text(60, ARCHAEOLOGY.titleY, t("archaeology.title"), textStyle({ role: "display", size: 52 })).setOrigin(0, 0);
-    // **확률 정보는 판이 시작하기 전의 마지막 줄에 선다.** 어느 탭에서도 가려지지 않는 자리라
-    // 굴리기 전에 무엇이 나올 수 있는지 읽고 들어갈 수 있다. 상점은 하단 라벨 줄로 내려갔다.
-    new RailButton(this, ARCHAEOLOGY.oddsX, ARCHAEOLOGY.oddsY, {
+    /*
+     * **화면을 넘기는 입구는 제목 줄의 오른쪽에 선다** — 교류의 교환소와 같은 문법이다.
+     *
+     * 하단 라벨 줄은 이 화면의 갈래(탐사·연구)를 고르는 자리라, 거기 선 라벨은 눌러도 이
+     * 화면에 남는다. 상점만 그 줄에서 화면을 통째로 넘기던 때는 셋째 라벨이 켜진 채로 남지
+     * 못해 늘 꺼진 모습이었고, 돌아오는 길도 라벨이 아니라 우하단 뒤로가기였다.
+     */
+    this.add.existing(new Button(this, ARCHAEOLOGY.shopButton.x, ARCHAEOLOGY.entryY, {
+      width: ARCHAEOLOGY.shopButton.width,
+      height: ARCHAEOLOGY.shopButton.height,
+      label: t("archaeology.shop"),
+      icon: "shop",
+      // 같은 상점 씬을 상품표만 바꿔 다시 쓴다 — 새 씬을 만들면 선반·격자·값줄 규칙이
+      // 두 곳이 되고 한쪽만 고치는 사고가 난다.
+      onClick: () => this.scene.start("shop", { storefront: "archaeology", returnScene: "archaeology" }),
+    }));
+    // 자동화도 런타임과 같은 고정 버튼을 누르도록 최소 입력 중심만 공개한다.
+    setDebugStorefrontControls({ archaeology: { shop: { x: ARCHAEOLOGY.shopButton.x, y: ARCHAEOLOGY.entryY } } });
+    // **확률 정보는 그 오른쪽 끝에 선다.** 어느 탭에서도 가려지지 않는 자리라 굴리기 전에
+    // 무엇이 나올 수 있는지 읽고 들어갈 수 있다.
+    new RailButton(this, ARCHAEOLOGY.oddsX, ARCHAEOLOGY.entryY, {
       icon: "magnifier",
       label: t("rune.trait.odds"),
       accent: true,
@@ -202,17 +225,16 @@ export class ArchaeologyScene extends Phaser.Scene {
   }
 
   /**
-   * 좌하단 라벨 석 장. 가방·상점과 같은 한 장(`CategoryTab`)을 쓴다.
+   * 좌하단 라벨 두 장. 가방·상점과 같은 한 장(`CategoryTab`)을 쓴다.
    *
-   * **셋째는 판을 갈아 끼우지 않고 상점으로 건너간다.** 오른쪽 위 아이콘으로 서 있던 때는
-   * 같은 화면의 두 갈래(탐사·연구)와 다른 문법으로 열려, 같은 콘텐츠의 세 갈래가 두 자리에
-   * 나뉘어 있었다. 선택된 채로 남지 않으므로 셋째 라벨은 늘 꺼진 모습이다.
+   * **이 줄에 서는 것은 이 화면의 갈래뿐이다.** 눌러도 화면에 남고 켜진 채로 선다 — 화면을
+   * 넘기는 상점이 셋째로 서 있던 때는 그 하나만 켜지지 못해, 같은 줄의 라벨이 저마다 다른
+   * 문법으로 열렸다. 그 입구는 제목 줄 오른쪽의 버튼으로 나갔다.
    */
   private paintTabs(): void {
-    const tabs: ReadonlyArray<{ key: ArchaeologyTab | "shop"; labelKey: TextKey }> = [
+    const tabs: ReadonlyArray<{ key: ArchaeologyTab; labelKey: TextKey }> = [
       { key: "strata", labelKey: "archaeology.tab.strata" },
       { key: "research", labelKey: "archaeology.tab.research" },
-      { key: "shop", labelKey: "archaeology.shop" },
     ];
     // 옛 라벨을 먼저 지운다. 남겨 두면 누를 때마다 한 겹씩 쌓인다.
     this.tabRow.removeAll(true);
@@ -223,14 +245,8 @@ export class ArchaeologyScene extends Phaser.Scene {
         width: ARCHAEOLOGY.tabWidth,
         height: ARCHAEOLOGY.tabHeight,
         label: t(labelKey),
-        selected: key !== "shop" && this.tab === key,
+        selected: this.tab === key,
         onSelect: () => {
-          if (key === "shop") {
-            // 같은 상점 씬을 상품표만 바꿔 다시 쓴다 — 새 씬을 만들면 선반·격자·값줄 규칙이
-            // 두 곳이 되고 한쪽만 고치는 사고가 난다.
-            this.scene.start("shop", { storefront: "archaeology", returnScene: "archaeology" });
-            return;
-          }
           if (this.tab === key) return;
           this.tab = key;
           this.paintTabs();

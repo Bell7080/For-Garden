@@ -68,7 +68,7 @@ export const MISC_KO = {
   "archaeology.chargeCountdown": "{charges}/{max} {time}",
   "archaeology.chargeFull": "{charges}/{max}",
   "archaeology.start": "지층 탐사 시작",
-  "archaeology.digsLeft": "남은 굴착 {digs}",
+  "archaeology.digsCount": "{current}/{max}",
   "archaeology.title": "고 고 학",
 
   // 마일리지

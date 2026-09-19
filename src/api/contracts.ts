@@ -397,6 +397,7 @@ export interface ArchaeologyStateResponse {
   chargesMax: number;
   /** 다음 한 번이 차는 시각이다. 가득 찼으면 null이다. */
   nextChargeAt: string | null;
+  /** 진행 판의 공개 정보다. `digsMax`는 지층 정의에서 확정한 한 판의 총 굴착 횟수다. */
   board: StrataBoardView | null;
   serverTime: string;
 }

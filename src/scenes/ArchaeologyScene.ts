@@ -132,6 +132,8 @@ export class ArchaeologyScene extends Phaser.Scene {
   private strataGrid: Phaser.GameObjects.Container | null = null;
   /** 판 아래 영수증 줄. 한 칸만 갈아 끼우는 굴착에서도 이 줄은 다시 그린다. */
   private strataHaul: Phaser.GameObjects.Container | null = null;
+  /** 한 칸 결과마다 판 전체를 다시 만들지 않고 남은/총 굴착 횟수만 고치는 글자다. */
+  private strataDigsText: Phaser.GameObjects.Text | null = null;
   /** 씬 종료 때 네트워크와 독립적으로 남아 있을 수 있는 연출을 모두 정리한다. */
   private readonly digEffects = new Set<StrataDigEffect>();
   /** 자동화에는 실제 API 호출 경계를 그대로 세어 한 입력당 한 요청인지 알린다. */
@@ -187,7 +189,7 @@ export class ArchaeologyScene extends Phaser.Scene {
       this.digEffects.forEach((effect) => effect.destroy());
       this.digEffects.clear();
       this.chargeTimer?.destroy(); this.chargeTimer = null; this.chargeCountdownText = null;
-      this.strataTiles.clear(); this.strataGrid = null; this.strataHaul = null; this.digging = false;
+      this.strataTiles.clear(); this.strataGrid = null; this.strataHaul = null; this.strataDigsText = null; this.digging = false;
       setDebugArchaeologyDig(undefined);
     });
     void this.refresh();
@@ -276,7 +278,7 @@ export class ArchaeologyScene extends Phaser.Scene {
 
   private paintView(): void {
     // 명시적인 화면 전환에서만 기존 판 경계를 버린다. 한 칸 결과에는 이 메서드를 호출하지 않는다.
-    this.strataTiles.clear(); this.strataGrid = null; this.strataHaul = null;
+    this.strataTiles.clear(); this.strataGrid = null; this.strataHaul = null; this.strataDigsText = null;
     this.view.removeAll(true);
     this.chargeCountdownText = null;
     if (this.tab === "strata") this.paintStrata();
@@ -387,8 +389,9 @@ export class ArchaeologyScene extends Phaser.Scene {
     // 곡괭이는 충전 횟수가 아니라 현재 판에서 실제로 파는 횟수 옆에서만 의미를 갖는다.
     const digsLabel = this.add.container(frame.centerX, STRATA_BOARD.top - 56);
     const digsText = this.add.text(ARCHAEOLOGY.chargeIcon / 2 + 8, 0,
-      t("archaeology.digsLeft", { digs: board.digsLeft }),
+      t("archaeology.digsCount", { current: board.digsLeft, max: board.digsMax }),
       textStyle({ role: "display", size: 34, color: COLOR.accentText })).setOrigin(0, 0.5);
+    this.strataDigsText = digsText;
     const labelWidth = ARCHAEOLOGY.chargeIcon + 8 + digsText.width;
     digsLabel.add([
       this.add.image(-labelWidth / 2 + ARCHAEOLOGY.chargeIcon / 2, 0, UI_ICON.pickaxe)
@@ -428,6 +431,8 @@ export class ArchaeologyScene extends Phaser.Scene {
        */
       const completedBoard = {
         ...board,
+        // 응답이 판을 닫아도 총 횟수는 직전 공개 모델이 소유하므로 마지막 0/max를 그릴 수 있다.
+        digsMax: result.board?.digsMax ?? board.digsMax,
         digsLeft: result.board?.digsLeft ?? 0,
         tiles: board.tiles.map((tile) => tile.index === result.tile.index
           ? { ...tile, revealed: true, kind: result.tile.kind, amount: result.tile.amount }
@@ -435,7 +440,15 @@ export class ArchaeologyScene extends Phaser.Scene {
       } satisfies StrataBoardView;
       this.applyArchaeologyState(result);
       if (result.board === null) {
-        // 판이 닫히면 남는 것은 빈 시작 화면이라 갈아 끼울 칸 자체가 없다. 그때만 다시 그린다.
+        /*
+         * 마지막 충돌에도 판을 곧바로 치우지 않는다. 선택 칸, 0/총 횟수, 최종 영수증을 먼저
+         * 반영하고 곡괭이가 퇴장한 뒤 짧게 머물러 최종 보상을 눈으로 확인하게 한다.
+         */
+        this.replaceStrataTile(index, completedBoard);
+        this.paintStrataProgress(completedBoard);
+        this.paintStrataHaul(completedBoard);
+        await playback.finished;
+        await this.waitForFinalBoardConfirmation();
         this.paintView();
         const items: RewardPopupItem[] = strataBoardHaul(completedBoard).flatMap(({ kind, amount }) => {
           const icon = rewardTexture(kind);
@@ -443,7 +456,8 @@ export class ArchaeologyScene extends Phaser.Scene {
         });
         openRewardPopup(this, this.popups, { items });
       } else {
-        this.replaceStrataTile(index);
+        this.replaceStrataTile(index, result.board);
+        this.paintStrataProgress(result.board);
         // **판 아래 영수증도 함께 자란다.** 칸 하나만 갈아 끼우면 그 줄이 직전 판에서 멈춘다.
         this.paintStrataHaul(result.board);
       }
@@ -482,8 +496,8 @@ export class ArchaeologyScene extends Phaser.Scene {
   }
 
   /** 서버가 돌려준 결과 중 선택한 칸만 기존 컨테이너 안에서 교체한다. */
-  private replaceStrataTile(index: number): void {
-    const board = this.board; const tileView = this.strataTiles.get(index);
+  private replaceStrataTile(index: number, board: StrataBoardView): void {
+    const tileView = this.strataTiles.get(index);
     const tile = board?.tiles[index];
     if (!board || !tileView || !tile?.revealed) return;
     tileView.removeAll(true);
@@ -494,6 +508,17 @@ export class ArchaeologyScene extends Phaser.Scene {
     const amount = tile.kind === "rune" ? undefined : String(tile.amount ?? 0);
     addFramedIcon(this, tileView, center.x, center.y, Math.min(frame.cellWidth, frame.cellHeight) * 0.82, texture,
       { ...(amount ? { amount } : {}), plain: true });
+  }
+
+  /** 곡괭이 옆의 짧은 진행 표기만 서버 공개 모델의 남은/총 횟수로 갱신한다. */
+  private paintStrataProgress(board: StrataBoardView): void {
+    this.strataDigsText?.setText(t("archaeology.digsCount", { current: board.digsLeft, max: board.digsMax }));
+  }
+
+  /** 마지막 곡괭이가 사라진 뒤 최종 판을 읽을 수 있게 보장하는 짧은 정지다. */
+  private waitForFinalBoardConfirmation(): Promise<void> {
+    const delay = session.settings.accessibility.reduceMotion ? 180 : 420;
+    return new Promise((resolve) => { this.time.delayedCall(delay, resolve); });
   }
 
   /** 성공·실패 뒤 현재도 팔 수 있는 모든 칸에만 입력을 되돌린다. */

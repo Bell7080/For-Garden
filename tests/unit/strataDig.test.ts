@@ -29,6 +29,8 @@ describe("지층 탐사판", () => {
   it("의 화면 판에는 열지 않은 칸의 내용이 담기지 않는다", () => {
     const board = createStrataBoard({ layerId: LAYER.id, random: constant(0.5) });
     const view = strataBoardView(board);
+    // 화면 모델 하나만으로 짧은 `현재/총 횟수` 표기를 완성할 수 있어야 한다.
+    expect(view.digsMax).toBe(LAYER.digs);
     // 담기면 화면을 뜯어보는 것만으로 어디에 무엇이 있는지 알 수 있다.
     for (const tile of view.tiles) {
       expect(tile.kind).toBeUndefined();

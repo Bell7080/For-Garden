@@ -3767,14 +3767,14 @@ function siphonOverpaintHealing(attacker: Fighter, target: Fighter, hpLost: numb
  * 순간 이미 이 개체를 노리던 상대의 추적도 함께 풀어야 실제로 표적에서 벗어난다.
  */
 export function tryTriggerLowHpVanish(fighter: Fighter, state: SkirmishState): boolean {
-  if (fighter.def.passive.kind !== "lowHpVanish" || !isFighterAlive(fighter)
-    || fighter.hp > fighter.maxHp * 0.5 || fighter.passiveTriggered) return false;
-
-  // 표시와 전투가 같은 값을 읽도록 지속 시간을 패시브 정의에서 가져온다.
-  const duration = fighter.def.passive.durationSeconds;
-  if (duration === undefined || duration <= 0) return false;
+  // 경계·시간은 패시브 종류가 아니라 이 계약 하나가 갖는다. 표시와 전투가 같은 값을 읽는다.
+  const plan = fighter.def.passive.lowHpStealth;
+  if (plan === undefined || !isFighterAlive(fighter) || fighter.passiveTriggered) return false;
+  if (fighter.hp > fighter.maxHp * plan.hpPercent / 100 || plan.seconds <= 0) return false;
   fighter.passiveTriggered = true;
-  fighter.stealthFor = Math.max(fighter.stealthFor, duration);
+  fighter.stealthFor = Math.max(fighter.stealthFor, plan.seconds);
+  // 쌓아 둔 집중을 치르고 숨는다 — 숨는 값이 공짜면 그 은신은 도망이 아니라 보상이 된다.
+  if (plan.spendsFocus) fighter.focus = 0;
   for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
   return true;
 }

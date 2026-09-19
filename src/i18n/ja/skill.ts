@@ -136,6 +136,8 @@ export const SKILL_JA = {
   "skill.passive.impactCap.shieldCap": " 一度にまとうシールドは最大体力の{percent}%を超えない。",
   "skill.passive.overpaintSiphon": "すべての味方が[[overpaint|重ね塗り]]された敵に当てると、そのダメージの{percent}%分だけ自分の体力を回復する。標的の[[overpaint|重ね塗り]]が最大まで積まれると、別の敵へ標的を移す。",
   "skill.passive.lowHpVanish": "戦闘ごとに1回、体力が半分以下になると{seconds}秒間[[stealth|隠密]]して標的から外れる。",
+  "skill.passive.lowHpStealth": "戦闘ごとに一度、体力が{percent}%以下になると{seconds}秒間[[stealth|隠密]]する。",
+  "skill.passive.lowHpStealth.focus": "戦闘ごとに一度、体力が{percent}%以下になると[[focus|集中]]をすべて失う代わりに{seconds}秒間[[stealth|隠密]]する。",
   "skill.passive.openingVanish": "戦闘を始めるとき、{seconds}秒間[[stealth|隠密]]状態で入る。",
   "skill.passive.openingStealth": "戦闘を始めるとき、{seconds}秒間[[stealth|隠密]]する。",
   "skill.passive.undyingTalisman": "戦闘ごとに1回、倒れるダメージを受けても死なず、{seconds}秒間[[invulnerable|無敵]]になる代わりに何の行動もできない。その間、最大体力の{percent}%を毎秒分けて回復する。{blast}",

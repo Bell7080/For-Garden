@@ -316,7 +316,8 @@ export function passiveShieldKeyword(passive: Passive, atk?: number): KeywordDef
 export function passiveDescription(passive: Passive, atk?: number): string {
   return [
     passiveOpeningStealthClause(passive), passiveHead(passive, atk),
-    passiveFrenzyDrainClause(passive), passiveTauntHealClause(passive), passiveCriticalClause(passive),
+    passiveFrenzyDrainClause(passive), passiveTauntHealClause(passive),
+    passiveLowHpStealthClause(passive), passiveCriticalClause(passive),
   ].filter(Boolean).join(" ");
 }
 
@@ -349,6 +350,20 @@ function passiveTauntHealClause(passive: Passive): string {
   return t("skill.passive.tauntHeal", {
     percent: passive.tauntHeal.missingHpPercent, count: passive.tauntHeal.maxPerSecond,
   });
+}
+
+/**
+ * 위기에 숨는 공통 절.
+ *
+ * 여는 은신과 같은 이유로 `lowHpStealth` 한 계약만 읽는다. 스테라처럼 **제 머리글이 이미 그
+ * 말을 하는** 종류만 빼 두 번 말하지 않게 한다. 치르는 대가(집중)는 값이 있을 때만 붙는다 —
+ * 무엇을 잃는지가 곧 그 은신을 쓸지 말지를 정하므로 본문이 직접 말한다.
+ */
+function passiveLowHpStealthClause(passive: Passive): string {
+  if (passive.lowHpStealth === undefined || passive.kind === "lowHpVanish") return "";
+  const { hpPercent, seconds, spendsFocus } = passive.lowHpStealth;
+  const key = spendsFocus ? "skill.passive.lowHpStealth.focus" : "skill.passive.lowHpStealth";
+  return t(key, { percent: hpPercent, seconds });
 }
 
 function passiveOpeningStealthClause(passive: Passive): string {

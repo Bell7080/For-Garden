@@ -4277,11 +4277,43 @@ describe("파루아 — 쏘면서 자라는 사거리", () => {
     const state = volleyState();
     const parua = state.fighters.find((fighter) => fighter.def.id === "parua")!;
     expect(parua.focus).toBe(0);
-    run(state, 6);
+    /*
+     * 이 편이 재는 것은 **쌓이는 규칙**뿐이라 파루아를 가득 찬 몸으로 붙잡아 둔다.
+     *
+     * 혼자 셋을 상대하는 자리라 6초면 체력이 40% 아래로 떨어지고, 그때 위기 은신이
+     * 집중을 통째로 치운다(`lowHpStealth.spendsFocus`) — 그 규칙은 바로 아래 편이 따로 잰다.
+     */
+    const healthy = (seconds: number) => {
+      for (let frame = 0; frame < seconds * 60; frame += 1) {
+        stepSkirmish(state, 1 / 60);
+        parua.hp = parua.maxHp;
+      }
+    };
+    healthy(6);
     // 갈래화살 한 발이 셋을 맞히면 겹도 셋 오르므로 초반 몇 번만 쏘면 눈에 띄게 쌓인다.
     expect(parua.focus).toBeGreaterThan(0);
-    run(state, 60);
+    healthy(60);
     expect(parua.focus).toBeLessThanOrEqual(FOCUS.maxStacks);
+  });
+
+  /** 위기 은신은 쌓아 둔 집중을 치르고 숨는다 — 숨는 값이 공짜면 도망이 아니라 보상이 된다. */
+  it("는 체력이 40% 이하가 되면 집중을 모두 잃고 은신한다", () => {
+    const state = volleyState();
+    const parua = state.fighters.find((fighter) => fighter.def.id === "parua")!;
+    const plan = parua.def.passive.lowHpStealth!;
+    expect(plan).toMatchObject({ hpPercent: 40, seconds: 4, spendsFocus: true });
+    // 먼저 가득 찬 몸으로 집중만 쌓아 둔다.
+    for (let frame = 0; frame < 6 * 60; frame += 1) { stepSkirmish(state, 1 / 60); parua.hp = parua.maxHp; }
+    expect(parua.focus).toBeGreaterThan(0);
+    // 경계 바로 위에서는 아직 발동하지 않는다. 스테라와 같은 공용 경계를 그대로 지난다.
+    parua.hp = parua.maxHp * 0.45;
+    expect(tryTriggerLowHpVanish(parua, state)).toBe(false);
+    // 경계에 닿는 순간 집중을 치르고 숨는다.
+    parua.hp = parua.maxHp * 0.4;
+    expect(tryTriggerLowHpVanish(parua, state)).toBe(true);
+    expect(parua.focus).toBe(0);
+    expect(parua.stealthFor).toBeGreaterThan(0);
+    expect(parua.stealthFor).toBeLessThanOrEqual(plan.seconds);
   });
 
   it("는 집중이 쌓이면 실제로 더 멀리서 때린다", () => {

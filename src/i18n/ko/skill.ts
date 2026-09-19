@@ -153,6 +153,8 @@ export const SKILL_KO = {
   "skill.passive.impactCap.shieldCap": " 한 번에 두르는 보호막은 최대 체력의 {percent}%를 넘지 않는다.",
   "skill.passive.overpaintSiphon": "모든 아군이 [[overpaint|덧칠]]된 적을 맞히면 그 피해의 {percent}%만큼 자신의 체력을 회복한다. 표적의 [[overpaint|덧칠]]이 최대로 쌓이면 다른 적으로 표적을 옮긴다.",
   "skill.passive.lowHpVanish": "전투당 한 번, 체력이 절반 이하가 되면 {seconds}초 동안 [[stealth|은신]]해 표적에서 벗어난다.",
+  "skill.passive.lowHpStealth": "전투당 한 번, 체력이 {percent}% 이하가 되면 {seconds}초 동안 [[stealth|은신]]한다.",
+  "skill.passive.lowHpStealth.focus": "전투당 한 번, 체력이 {percent}% 이하가 되면 [[focus|집중]]을 모두 잃는 대신 {seconds}초 동안 [[stealth|은신]]한다.",
   "skill.passive.openingVanish": "전투를 시작할 때 {seconds}초 동안 [[stealth|은신]] 상태로 진입한다.",
   "skill.passive.openingStealth": "전투를 시작할 때 {seconds}초 동안 [[stealth|은신]]한다.",
   "skill.passive.undyingTalisman": "전투당 한 번, 쓰러질 피해를 받으면 죽지 않고 {seconds}초 동안 [[invulnerable|무적]]이 되는 대신 아무 행동도 하지 못한다. 그동안 최대 체력의 {percent}%를 매초 나누어 회복한다.{blast}",

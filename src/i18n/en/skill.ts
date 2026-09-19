@@ -121,6 +121,8 @@ export const SKILL_EN = {
   "skill.passive.impactCap.shieldCap": " A single shield never exceeds {percent}% of max HP.",
   "skill.passive.overpaintSiphon": "Whenever any ally hits an [[overpaint|Overpainted]] enemy, it restores {percent}% of that damage as its own HP. When the target's [[overpaint|Overpaint]] reaches max stacks, it switches to another enemy.",
   "skill.passive.lowHpVanish": "Once per battle, falling to half HP or below grants [[stealth|Stealth]] for {seconds}s, dropping it out of targeting.",
+  "skill.passive.lowHpStealth": "Once per battle, enters [[stealth|Stealth]] for {seconds}s when Health falls to {percent}% or below.",
+  "skill.passive.lowHpStealth.focus": "Once per battle, when Health falls to {percent}% or below, loses all [[focus|Focus]] and enters [[stealth|Stealth]] for {seconds}s.",
   "skill.passive.openingVanish": "Enters battle in [[stealth|Stealth]] for {seconds}s.",
   "skill.passive.openingStealth": "Enters battle in [[stealth|Stealth]] for {seconds}s.",
   "skill.passive.undyingTalisman": "Once per battle, damage that would kill it leaves it alive and [[invulnerable|Invulnerable]] for {seconds}s, but unable to act at all. During that time it restores {percent}% of max HP spread over each second.{blast}",

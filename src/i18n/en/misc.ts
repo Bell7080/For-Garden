@@ -71,6 +71,10 @@ export const MISC_EN = {
   "archaeology.reward.rawStone": "Raw Stone",
   "archaeology.reward.rune": "Rune",
   "archaeology.reward.gold": "Gold",
+  // Keep the rating readable even when the star glyphs cannot be perceived.
+  "archaeology.reward.stars": "{count} stars",
+  "archaeology.reward.veryRare": "Very rare",
+  "archaeology.reward.unavailable": "Unavailable",
   "mileage.title": "Mileage Shop",
   "mileage.owned": "DNA held  {amount}",
   "mileage.comingSoon": "Exchange list in preparation",

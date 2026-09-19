@@ -83,6 +83,10 @@ export const MISC_KO = {
   "archaeology.reward.rawStone": "원석",
   "archaeology.reward.rune": "룬",
   "archaeology.reward.gold": "골드",
+  // 별 문자에만 의미를 맡기지 않도록 화면에 함께 읽히는 등급 문구다.
+  "archaeology.reward.stars": "{count}별",
+  "archaeology.reward.veryRare": "매우 희귀",
+  "archaeology.reward.unavailable": "획득 불가",
 
   // 마일리지
   "mileage.title": "마일리지 상점",

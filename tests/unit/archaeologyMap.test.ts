@@ -1,9 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { archaeologySiteAvailability, clampArchaeologyCamera, isArchaeologyMapDrag, rewardStarRating, strataRewardProbability } from "../../src/core/archaeologyMap";
+import { archaeologySiteAvailability, clampArchaeologyCamera, isArchaeologyMapDrag, rewardExpectationRating, strataRewardExpectedAmount, strataRewardProbability } from "../../src/core/archaeologyMap";
 import { ARCHAEOLOGY_SITES } from "../../src/data/archaeologySites";
-import { findStrataLayer } from "../../src/data/strataLayers";
+import { findStrataLayer, STRATA_REWARD_DISPLAY } from "../../src/data/strataLayers";
 
 describe("archaeology map rules", () => {
+  it("maps internal rewards to explicit player visibility groups", () => {
+    // 빈 흙은 보상처럼 보이지 않고, 내부 연구 아이템은 획득 뒤에만 일반 이름으로 드러난다.
+    expect(STRATA_REWARD_DISPLAY.empty).toEqual({ group: null, preview: false, reveal: false });
+    expect(STRATA_REWARD_DISPLAY.researchItem).toEqual({ group: "researchMaterial", preview: false, reveal: true });
+    expect(STRATA_REWARD_DISPLAY.rawStone.group).toBe("rawStone");
+  });
+
   it("requires both the minimum level and prerequisite completion", () => {
     const archive = ARCHAEOLOGY_SITES[1];
     expect(archaeologySiteAvailability(archive, 5, []).available).toBe(false);
@@ -11,10 +18,20 @@ describe("archaeology map rules", () => {
     expect(archaeologySiteAvailability(archive, 6, ["garden-gate"]).available).toBe(true);
   });
 
-  it("derives preview stars from the layer reward weights", () => {
+  it("derives relative preview stars from weights and quantity ranges", () => {
     const layer = findStrataLayer("surface")!;
     expect(strataRewardProbability(layer, "rawStone")).toBeGreaterThan(strataRewardProbability(layer, "rune"));
-    expect(rewardStarRating(layer, "rawStone")).toBeGreaterThan(rewardStarRating(layer, "rune"));
+    expect(strataRewardExpectedAmount(layer, "rawStone")).toBeGreaterThan(0);
+    expect(rewardExpectationRating(layer, "rawStone").state).toBe("stars");
+    expect(rewardExpectationRating(findStrataLayer("abyss")!, "rawStone").stars).toBe(5);
+  });
+
+  it("does not exaggerate unavailable or sub-one-percent rewards with a minimum star", () => {
+    const layer = findStrataLayer("surface")!;
+    const unavailable = { ...layer, rewards: layer.rewards.map((row) => row.kind === "rune" ? { ...row, weight: { soil: 0, teal: 0, gold: 0, deep: 0 } } : row) };
+    const veryRare = { ...layer, digs: 1, rewards: layer.rewards.map((row) => row.kind === "rune" ? { ...row, weight: { soil: 0.001, teal: 0.001, gold: 0.001, deep: 0.001 } } : row) };
+    expect(rewardExpectationRating(unavailable, "rune", [unavailable])).toEqual({ state: "unavailable", stars: 0 });
+    expect(rewardExpectationRating(veryRare, "rune", [veryRare])).toEqual({ state: "veryRare", stars: 0 });
   });
 
   it("clamps both camera axes to content boundaries", () => {

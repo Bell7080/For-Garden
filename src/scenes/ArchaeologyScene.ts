@@ -6,7 +6,7 @@ import { setDebugArchaeologyDig, setDebugScene } from "../debug";
 import { strataBoardHaul, type StrataBoardView } from "../core/strataDig";
 import { findStrataLayer, type StrataRewardKind } from "../data/strataLayers";
 import { ARCHAEOLOGY_SITES, type ArchaeologySiteDefinition } from "../data/archaeologySites";
-import { rewardStarRating } from "../core/archaeologyMap";
+import { rewardExpectationRating } from "../core/archaeologyMap";
 import { ArchaeologyMapView } from "../ui/ArchaeologyMapView";
 import { session } from "../state/session";
 import { canUpgradeRuneTraitGrade, RUNE_TRAIT_GRADES, RUNE_TRAIT_RULES } from "../core/runeTraits";
@@ -416,7 +416,15 @@ export class ArchaeologyScene extends Phaser.Scene {
     popup.add(this.add.text(0, -238, t(site.nameKey as TextKey), textStyle({ role: "display", size: 42 })).setOrigin(0.5));
     popup.add(this.add.text(0, -170, `${site.board.columns}×${site.board.rows}  ·  ${t("archaeology.map.recommended", { level: site.recommendedLevel })}`, textStyle({ role: "body", size: 28, color: COLOR.inkDim })).setOrigin(0.5));
     const labels: Array<["rawStone" | "rune" | "gold", TextKey]> = [["rawStone", "archaeology.reward.rawStone"], ["rune", "archaeology.reward.rune"], ["gold", "archaeology.reward.gold"]];
-    labels.forEach(([kind, key], index) => popup.add(this.add.text(-300, -92 + index * 54, `${t(key)}  ${"★".repeat(rewardStarRating(layer, kind))}`, textStyle({ role: "body", size: 30, color: COLOR.accentText })).setOrigin(0, 0.5)));
+    labels.forEach(([kind, key], index) => {
+      const rating = rewardExpectationRating(layer, kind);
+      // 별 그림만으로 뜻을 맡기지 않는다. 화면에 퍼센트는 숨기고, 같은 줄의 읽을 수 있는
+      // 「N별」 또는 「매우 희귀」 문구가 시각·색상과 무관하게 상대 기대도를 전달한다.
+      const ratingLabel = rating.state === "stars"
+        ? `${"★".repeat(rating.stars)}  ${t("archaeology.reward.stars", { count: rating.stars })}`
+        : t(rating.state === "veryRare" ? "archaeology.reward.veryRare" : "archaeology.reward.unavailable");
+      popup.add(this.add.text(-300, -92 + index * 54, `${t(key)}  ${ratingLabel}`, textStyle({ role: "body", size: 30, color: COLOR.accentText })).setOrigin(0, 0.5));
+    });
     const reason = state.unlocked ? t("archaeology.map.available") : state.missingLevel > 0
       ? t("archaeology.map.needLevel", { level: site.minimumLevel })
       : t("archaeology.map.needSite", { site: state.missingPrerequisiteIds.map((id) => t(ARCHAEOLOGY_SITES.find((candidate) => candidate.id === id)?.nameKey as TextKey)).join(", ") });

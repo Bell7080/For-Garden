@@ -292,7 +292,14 @@ export class SaveManager {
     // 고고학을 몰랐던 저장은 기본 상태로 시작한다 — 횟수가 가득 차 있고 판은 없다.
     const savedArchaeology = legacy.archaeology && typeof legacy.archaeology === "object"
       ? legacy.archaeology as Partial<SaveData["archaeology"]> : undefined;
-    const archaeology = { ...createArchaeologyState(), ...savedArchaeology };
+    const archaeologyDefaults = createArchaeologyState();
+    const archaeology = {
+      ...archaeologyDefaults,
+      ...savedArchaeology,
+      // 구 저장은 지도 진행 필드가 없으므로 첫 유적만 명시 해금하고 완료 이력은 비운다.
+      unlockedSiteIds: Array.isArray(savedArchaeology?.unlockedSiteIds) ? savedArchaeology.unlockedSiteIds : archaeologyDefaults.unlockedSiteIds,
+      completedSiteIds: Array.isArray(savedArchaeology?.completedSiteIds) ? savedArchaeology.completedSiteIds : archaeologyDefaults.completedSiteIds,
+    };
     const savedExcavation = Number(legacy.saveVersion) >= 18 && legacy.idleExcavation && typeof legacy.idleExcavation === "object"
       ? legacy.idleExcavation as Partial<SaveData["idleExcavation"]> : undefined;
     const excavationDefaults = createIdleExcavationState();

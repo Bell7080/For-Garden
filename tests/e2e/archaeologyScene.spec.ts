@@ -30,6 +30,13 @@ async function tapUntil(page: Page, x: number, y: number, target: string): Promi
   }, { timeout: 30_000 }).toBe(target);
 }
 
+/** 첫 유적 노드의 미리보기를 열고 서버 검증 시작 버튼을 누른다. */
+async function startFirstArchaeologySite(page: Page): Promise<void> {
+  await tap(page, 260, 340 + 820);
+  await page.waitForTimeout(250);
+  await tap(page, BASE_WIDTH / 2 + 190, 1110 + 220);
+}
+
 test("고고학의 두 탭과 고고학 상점을 연다", async ({ page }, testInfo) => {
   test.setTimeout(300_000);
   await startAfterOpening(page, (session) => {
@@ -46,7 +53,7 @@ test("고고학의 두 탭과 고고학 상점을 연다", async ({ page }, test
   await captureGame(page, `test-results/${testInfo.project.name}-archaeology-strata.png`);
 
   // 판을 하나 열고 칸 몇 개를 판다 — 부순 칸에만 아래층과 보상이 드러나는지 보는 자리다.
-  await tap(page, BASE_WIDTH / 2, 900);
+  await startFirstArchaeologySite(page);
   await page.waitForTimeout(1_500);
   for (const [col, row] of [[1, 1], [3, 0], [2, 3], [0, 4]] as const) {
     await tap(page, 340 + col * 100, 430 + row * 178);
@@ -130,7 +137,7 @@ test("지층 한 칸은 타격까지 입력을 잠그고 선택한 결과만 공
   await tapUntil(page, BASE_WIDTH / 10, BASE_HEIGHT - 180 + 90, "archaeology");
 
   // 새 판의 입력면이 실제로 게시될 때까지 기다린 뒤 시작 버튼을 누른다.
-  await tap(page, BASE_WIDTH / 2, 900);
+  await startFirstArchaeologySite(page);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.archaeologyDig?.tiles.length),
     { timeout: 30_000 }).toBeGreaterThan(1);
   const targets = await page.evaluate(() => window.__PF_DEBUG!.archaeologyDig!.tiles.slice(0, 2));
@@ -158,4 +165,27 @@ test("지층 한 칸은 타격까지 입력을 잠그고 선택한 결과만 공
   expect(await page.evaluate(() => window.__PF_DEBUG?.archaeologyDig?.impactIndex)).toBeUndefined();
   // 결과 한 칸만 바뀐 뒤 판의 이음매와 보상 액자가 유지되는지도 같은 회귀에서 남긴다.
   await captureGame(page, `test-results/${testInfo.project.name}-archaeology-dig-effect.png`);
+});
+
+test("유적 지도 이동 → 잠긴 유적 확인 → 열린 유적 미리보기 → 탐사 시작", async ({ page }, testInfo) => {
+  test.setTimeout(300_000);
+  await startAfterOpening(page);
+  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
+  await expect.poll(() => scene(page)).toBe("lobby");
+  await tapUntil(page, BASE_WIDTH / 10, BASE_HEIGHT - 180 + 90, "archaeology");
+  await captureGame(page, `test-results/${testInfo.project.name}-archaeology-map.png`);
+
+  // 오른쪽으로 이어지는 지도를 왼쪽으로 밀어 잠긴 심층 노드까지 본다.
+  await page.mouse.move(850, 760); await page.mouse.down(); await page.mouse.move(300, 760, { steps: 8 }); await page.mouse.up();
+  await tap(page, 670, 340 + 250);
+  await page.waitForTimeout(250);
+  // 잠긴 미리보기의 시작 자리는 입력해도 판이 생기지 않는다.
+  await tap(page, BASE_WIDTH / 2 + 190, 1110 + 220);
+  expect(await page.evaluate(() => window.__PF_DEBUG?.archaeologyDig?.tiles.length ?? 0)).toBe(0);
+  await tap(page, BASE_WIDTH / 2 - 190, 1110 + 220);
+
+  // 지도를 원위치로 되밀고 열린 첫 유적의 미리보기에서 탐사를 시작한다.
+  await page.mouse.move(300, 760); await page.mouse.down(); await page.mouse.move(900, 760, { steps: 8 }); await page.mouse.up();
+  await startFirstArchaeologySite(page);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.archaeologyDig?.tiles.length), { timeout: 30_000 }).toBeGreaterThan(1);
 });

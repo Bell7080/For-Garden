@@ -34,6 +34,8 @@ import { canUpgradeRuneTraitGrade, grantRuneTrait as rollRuneTrait, rerollRuneTr
 import { RUNE_TRAIT_IDS, RUNE_TRAIT_ITEMS } from "../data/runeTraits";
 import { canDigStrataTile, createStrataBoard, digStrataTile as digTile, nextStrataChargeAt, settleStrataCharges, strataBoardView } from "../core/strataDig";
 import { findStrataLayer, STRATA_CHARGE } from "../data/strataLayers";
+import { ARCHAEOLOGY_SITES, findArchaeologySite } from "../data/archaeologySites";
+import { archaeologySiteAvailability } from "../core/archaeologyMap";
 import type { ArchaeologyStateResponse, DigStrataTileRequest, DigStrataTileResponse, GrantRuneTraitRequest, GrantRuneTraitResponse, RerollRuneTraitRequest, RerollRuneTraitResponse, ResolveRuneTraitRerollRequest, ResolveRuneTraitRerollResponse, StartStrataRunRequest, UpgradeRuneTraitRequest, UpgradeRuneTraitResponse } from "./contracts";
 import { findItem } from "../data/items";
 import { staminaCurrencyRecharge } from "../data/staminaRecharge";
@@ -1300,6 +1302,10 @@ export class FakeServer implements GameApi {
       chargesMax: STRATA_CHARGE.max,
       nextChargeAt: chargesUpdatedAt ? nextStrataChargeAt(charges, chargesUpdatedAt) : null,
       board: board ? strataBoardView(board) : null,
+      sites: ARCHAEOLOGY_SITES.map((site) => {
+        const availability = archaeologySiteAvailability(site, this.state.playerResearch.level, this.state.archaeology.completedSiteIds);
+        return { siteId: site.id, unlocked: this.state.archaeology.unlockedSiteIds.includes(site.id) || availability.available, completed: this.state.archaeology.completedSiteIds.includes(site.id), missingLevel: availability.missingLevel, missingPrerequisiteIds: availability.missingPrerequisiteIds };
+      }),
       serverTime: this.now().toISOString(),
     };
   }
@@ -1314,14 +1320,22 @@ export class FakeServer implements GameApi {
   async startStrataRun(request: StartStrataRunRequest): Promise<ArchaeologyStateResponse> {
     await this.delay();
     this.settleStrataChargesNow();
-    if (findStrataLayer(request.layerId) === undefined) throw new GameApiError("STRATA_RUN_NOT_FOUND", "존재하지 않는 지층입니다.");
+    const site = request.siteId ? findArchaeologySite(request.siteId) : undefined;
+    const layerId = site?.layerId ?? request.layerId;
+    if (!layerId || findStrataLayer(layerId) === undefined) throw new GameApiError("STRATA_RUN_NOT_FOUND", "존재하지 않는 지층입니다.");
+    if (request.siteId && !site) throw new GameApiError("STRATA_RUN_NOT_FOUND", "존재하지 않는 유적입니다.");
+    if (site) {
+      // 클라이언트의 unlocked 표시를 신뢰하지 않고 레벨과 완료 이력을 서버 상태로 다시 검증한다.
+      const availability = archaeologySiteAvailability(site, this.state.playerResearch.level, this.state.archaeology.completedSiteIds);
+      if (!availability.available && !this.state.archaeology.unlockedSiteIds.includes(site.id)) throw new GameApiError("STRATA_SITE_LOCKED", "아직 탐사할 수 없는 유적입니다.");
+    }
     // 진행 중인 판이 있으면 새로 열지 않는다 — 횟수를 이미 치른 판이라 덮으면 그 한 번이 사라진다.
     if (this.state.archaeology.board !== null) throw new GameApiError("STRATA_RUN_ACTIVE", "아직 끝나지 않은 탐사가 있습니다.");
     if (this.state.archaeology.charges <= 0) throw new GameApiError("STRATA_NO_CHARGE", "탐사 횟수가 부족합니다.");
     this.state.archaeology.charges -= 1;
     // 가득 찬 상태에서 하나를 쓰는 순간이 곧 다음 충전이 시작되는 시각이다.
     this.state.archaeology.chargesUpdatedAt = this.now().toISOString();
-    this.state.archaeology.board = createStrataBoard({ layerId: request.layerId, random: this.random });
+    this.state.archaeology.board = createStrataBoard({ layerId, siteId: site?.id, random: this.random });
     this.persist(this.state);
     return this.archaeologyDto();
   }
@@ -1354,7 +1368,11 @@ export class FakeServer implements GameApi {
       this.state.wallet[tile.kind] = Math.min(WALLET_CAPS[tile.kind], this.state.wallet[tile.kind] + tile.amount);
     }
     // 판을 다 판 순간 치운다 — 남겨 두면 다음에 들어온 사람이 아무것도 팔 수 없는 판을 본다.
-    if (this.state.archaeology.board && this.state.archaeology.board.digsLeft <= 0) this.state.archaeology.board = null;
+    if (this.state.archaeology.board && this.state.archaeology.board.digsLeft <= 0) {
+      const completedSiteId = this.state.archaeology.board.siteId;
+      if (completedSiteId && !this.state.archaeology.completedSiteIds.includes(completedSiteId)) this.state.archaeology.completedSiteIds.push(completedSiteId);
+      this.state.archaeology.board = null;
+    }
     this.persist(this.state);
     const inventory = await this.getInventory();
     return {

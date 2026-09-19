@@ -891,7 +891,9 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
     clauses.push({ text: t("skill.clause.detonateShallows"), standalone: true });
   }
   if ("shallows" in skill && skill.shallows !== undefined) {
-    clauses.push({ text: t("skill.clause.shallows"), standalone: true });
+    // 주기(4회)만 본문이 적는다 — 스킬마다 다를 수 있는 수라 태그가 못 박으면 거짓말이 된다.
+    // 물이 무엇인지와 강하가 무엇을 하는지는 두 태그가 각각 맡는다(출혈과 같은 규칙).
+    clauses.push({ text: t("skill.clause.shallows", { count: skill.shallows.leapEveryHits }), standalone: true });
   }
   /*
    * 반짝은 **쓰는 개체가 하나뿐인 규칙어**라 무엇이고 다시 맞으면 어떻게 되는지를 태그가 갖고,

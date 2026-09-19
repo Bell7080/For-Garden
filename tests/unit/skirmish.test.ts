@@ -529,7 +529,7 @@ describe("스피나 전투 계약", () => {
     near.x = 460; near.y = 900;
     for (const enemy of [near, far]) enemy.attackCooldown = 99;
     // 멀리 선 적을 판 안에 세워 둔다 — 뛰어들 자리가 실제로 누군가를 붙잡고 있어야 한다.
-    const pool = { x: 400, y: 1300, remaining: 6, total: 6, tickIn: 1 };
+    const pool = { x: 400, y: 1300, remaining: 6, total: 6 };
     far.x = pool.x; far.y = pool.y;
     spino.shallowPools = [pool];
     // 다음 한 대가 곧 네 번째다.
@@ -553,7 +553,7 @@ describe("스피나 전투 계약", () => {
     const { state, spino, target } = readySpino();
     const takeoff = { x: spino.x, y: spino.y };
     // 빈 물로 건너가면 표적에게서 멀어지기만 한다.
-    spino.shallowPools = [{ x: 900, y: 1300, remaining: 6, total: 6, tickIn: 1 }];
+    spino.shallowPools = [{ x: 900, y: 1300, remaining: 6, total: 6 }];
     spino.shallowLeapCount = spino.def.basic.shallows!.leapEveryHits - 1;
     spino.targetId = target.id;
     spino.attackCooldown = 0;
@@ -568,8 +568,8 @@ describe("스피나 전투 계약", () => {
     spino.x = 400; spino.y = 900;
     for (const enemy of [first, second]) enemy.attackCooldown = 99;
     const pools = [
-      { x: 400, y: 700, remaining: 6, total: 6, tickIn: 1 },
-      { x: 400, y: 1300, remaining: 6, total: 6, tickIn: 1 },
+      { x: 400, y: 700, remaining: 6, total: 6 },
+      { x: 400, y: 1300, remaining: 6, total: 6 },
     ];
     spino.shallowPools = pools.map((pool) => ({ ...pool }));
     first.x = pools[0].x; first.y = pools[0].y;
@@ -4064,7 +4064,7 @@ describe("데이", () => {
     const rng = seeded(13);
     fireUltimate(state, deina.id, rng);
     // 시전 순간이 곧 첫 틱이라 남은 시간만 시계에 얹는다 — 전체를 넣으면 같은 초에 두 번 터진다.
-    expect(deina.artChannel).toMatchObject({ total: 5, tickIn: 1 });
+    expect(deina.artChannel).toMatchObject({ total: 5 });
     expect(deina.artChannel!.remaining).toBeCloseTo(4, 5);
 
     // 게이지는 시전한 그 한 번의 몫만 쓴다. 남은 틱이 다시 소비하면 5초짜리가 궁극기 다섯 번이 된다.

@@ -279,7 +279,7 @@ export interface Fighter extends Combatant {
    * 개수를 손으로 못 박지 않는다 — 새 판은 기존 판에서 `minSpacing`만큼 떨어져야 서므로,
    * 적이 몰려 있으면 적게 흩어져 있으면 많이 깔린다.
    */
-  shallowPools: { x: number; y: number; remaining: number; total: number; tickIn: number }[];
+  shallowPools: { x: number; y: number; remaining: number; total: number }[];
   /** 마지막 도약 이후의 기본 공격 행동 수. `leapEveryHits`에 닿으면 여울로 뛴다. */
   shallowLeapCount: number;
   /**
@@ -3403,9 +3403,9 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, even
     const trait = fighter.def.ferocityTrait;
     if (trait.effectId === "stealthLeap") {
       fighter.stealthFor = trait.durationSeconds;
-      leapToLowestHpEnemy(fighter, state, trait.landingDistance);
+      const landedOn = leapToLowestHpEnemy(fighter, state, trait.landingDistance);
       // 내려선 자리가 곧 사냥터다. 도약이 끝난 **뒤에** 고여야 새 자리에 판이 선다.
-      if (trait.landingShallows) placeShallowPool(fighter, state);
+      if (trait.landingShallows) placeShallowPool(fighter, state, landedOn);
       // 이미 스피나를 추적하던 모든 상대도 즉시 대기/재탐색 상태로 돌린다.
       for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
     }
@@ -4142,7 +4142,7 @@ function drainFrenzyDamage(state: SkirmishState, attacker: Fighter, dealt: numbe
  *
  * 난수를 쓰지 않는다 — 같은 판이 같은 자리를 그려야 리플레이가 흔들리지 않는다.
  */
-function placeShallowPool(fighter: Fighter, state: SkirmishState): void {
+function placeShallowPool(fighter: Fighter, state: SkirmishState, around?: Fighter): void {
   const shallows = fighter.def.basic.shallows;
   if (!shallows || !isFighterAlive(fighter)) return;
   const foes = aliveFighters(state, fighter.side === "player" ? "enemy" : "player");
@@ -4167,6 +4167,8 @@ function placeShallowPool(fighter: Fighter, state: SkirmishState): void {
     const score = (wetted(foe) ? 1000 : 0) + engagedBy(foe) * 100 + distance(fighter, foe) / 1000;
     if (score < best) { best = score; chosen = foe; }
   }
+  // 부른 쪽이 자리를 못 박으면 그쪽이 먼저다 — 잠행은 **내려선 자리**에 고여야 그 문장이 참이 된다.
+  if (around && isFighterAlive(around)) chosen = around;
 
   // 고른 적 **너머**로 나간다. 시전자와 겹쳐 서 있으면 방향이 없으므로 그 자리에 고인다.
   const dx = chosen.x - fighter.x;
@@ -4178,12 +4180,10 @@ function placeShallowPool(fighter: Fighter, state: SkirmishState): void {
 
   const near = fighter.shallowPools.find((pool) => Math.hypot(x - pool.x, y - pool.y) < shallows.minSpacing);
   if (near) {
-    // 자리와 시간만 갱신하고 **틱 시계는 그대로 둔다** — 공격할 때마다 되감으면 공속이 빠른
-    // 개체일수록 매초 틱이 영영 오지 않아, 물은 늘 고여 있는데 바닥에 아무것도 그려지지 않는다.
     near.x = x; near.y = y; near.remaining = shallows.seconds; near.total = shallows.seconds;
     return;
   }
-  fighter.shallowPools.push({ x, y, remaining: shallows.seconds, total: shallows.seconds, tickIn: 1 });
+  fighter.shallowPools.push({ x, y, remaining: shallows.seconds, total: shallows.seconds });
 }
 
 /** 이 적이 그 개체의 여울 **어느 하나에라도** 잠겨 있는가. */
@@ -4214,27 +4214,20 @@ function refreshSubmersion(state: SkirmishState): void {
 }
 
 /**
- * 여울들의 시계를 흘리고, 완전히 경과한 매초 판이 있는 자리를 알린다.
+ * 여울들의 시계를 흘리고 마른 판을 걷는다.
  *
- * 판은 피해를 주지 않으므로 사건에 `damageType`을 싣지 않고 걸리는 **상태**를 싣는다 — 색은
- * 머리 위 잠김 칩과 같은 것을 쓴다. 매초 다시 벌어지는 이유는 오래 남는 면이 그동안 SD와
- * 체력 바를 덮기 때문이다(채널링 궁극기와 같은 규칙이다).
+ * **바닥 그림은 사건으로 알리지 않는다.** 예전에는 매초 `areaImpact`를 한 번씩 쏘았는데, 그
+ * 사건은 "여기까지가 범위였다"를 한 번 벌렸다 꺼뜨리는 순간 표시라 1초마다 물이 새로
+ * 고이는 것처럼 깜빡였다 — 여울은 순간이 아니라 **자리에 걸린 지속 상태**다.
+ *
+ * 그래서 보호막 잔량과 같은 규칙을 쓴다: 값은 `Fighter.shallowPools`가 갖고 화면이 **매
+ * 프레임 읽어** 은은하게 깔아 둔다. 사건에 실으면 판이 깔린 동안과 사건이 오는 순간이
+ * 갈려, 화면이 실제로 고여 있는 물과 다른 것을 그린다.
  */
-function tickShallows(fighter: Fighter, dt: number, events: SkirmishEvent[]): void {
-  const def = fighter.def.basic.shallows;
-  if (!def || fighter.shallowPools.length === 0) return;
+function tickShallows(fighter: Fighter, dt: number): void {
+  if (fighter.def.basic.shallows === undefined || fighter.shallowPools.length === 0) return;
   if (!isFighterAlive(fighter)) { fighter.shallowPools = []; return; }
-  for (const pool of fighter.shallowPools) {
-    pool.remaining -= dt;
-    pool.tickIn -= dt;
-    while (pool.tickIn <= EMERGENCY_RECOVERY.epsilon && pool.remaining > -EMERGENCY_RECOVERY.epsilon) {
-      events.push({
-        kind: "areaImpact", attackerId: fighter.id, ultimate: false, status: "submerged",
-        area: { shape: "radial", x: pool.x, y: pool.y, radius: def.radius },
-      });
-      pool.tickIn += 1;
-    }
-  }
+  for (const pool of fighter.shallowPools) pool.remaining -= dt;
   fighter.shallowPools = fighter.shallowPools.filter((pool) => pool.remaining > EMERGENCY_RECOVERY.epsilon);
 }
 
@@ -5660,7 +5653,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       else fighter.traitHaste = { ...fighter.traitHaste, remaining };
     }
     // 여울도 같은 공용 시계로 마른다. 개체를 따라다니지 않으므로 자리는 고인 그대로 둔다.
-    tickShallows(fighter, dt, events);
+    tickShallows(fighter, dt);
     // 도발 회복 예산도 같은 시계로 되찬다.
     refillTauntHealBudget(fighter, dt);
     // 순풍도 같은 공용 시계를 쓴다. 다 흐르면 수치까지 비워 남은 값이 다음 전투로 새지 않게 한다.

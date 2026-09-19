@@ -31,6 +31,7 @@ import type { PuppetCreature, PuppetAsset } from "../puppets/assets";
 import { cancelMotion, flashHit, isHitFlashing, placePuppet, playMotion, spawnPuppet, tintPuppet } from "../puppets/assets";
 import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
+import { statusAreaColor } from "../ui/groundAreas";
 import { Button } from "../ui/Button";
 import { chipPoints, drawGlassFade, drawHairline, drawLayer, HoloBar, HOLO } from "../ui/holo";
 import { PortraitCard } from "../ui/PortraitCard";
@@ -924,6 +925,7 @@ export class BattleScene extends Phaser.Scene {
     const expanded = this.contributionPanel?.state.expanded ?? false;
     if (this.contributionChip && this.contributionChip.isActive() !== expanded) this.contributionChip.setActive(expanded);
     this.syncCombatEffects();
+    this.syncGroundSurfaces();
     // 판이 떠 있는 동안에는 코어 시간만 멈춘다. 화면 tween과 게이지 추격은 그대로 돌아
     // 판을 닫는 순간 값이 점프하지 않는다. lastStepAt은 위에서 이미 지금으로 밀어 두었으므로
     // 다시 흐를 때 멈춰 있던 만큼이 한꺼번에 들어가지 않는다.
@@ -1493,6 +1495,28 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /** 유지형 효과는 모든 Fighter의 현재 상태를 매 프레임 다시 읽어 동기화한다. */
+  /**
+   * 바닥에 고인 여울을 매 프레임 그린다.
+   *
+   * 사건이 아니라 **지금 깔려 있는 판**을 그대로 읽는다(보호막 잔량과 같은 규칙) — 매초
+   * 사건을 쏘던 때는 그 순간에만 그려져 물이 1초마다 새로 고이는 것처럼 깜빡였다.
+   */
+  private syncGroundSurfaces(): void {
+    const surfaces = this.state.fighters.flatMap((fighter) => {
+      const shallows = fighter.def.basic.shallows;
+      if (!shallows) return [];
+      return fighter.shallowPools.map((pool, index) => ({
+        key: `shallows:${fighter.id}:${index}`,
+        x: pool.x,
+        y: pool.y,
+        radius: shallows.radius,
+        // 피해를 주지 않는 판이라 색은 머리 위 잠김 칩과 같은 표를 읽는다.
+        color: statusAreaColor("submerged"),
+      }));
+    });
+    this.effects.syncGroundSurfaces(surfaces, this.time.now / 1000);
+  }
+
   private syncCombatEffects(): void {
     this.combatEffects.sync([...this.views.keys()].map((id) => this.combatEffectTarget(id)).filter((target): target is CombatEffectTarget => Boolean(target)));
   }

@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { allowBurst, AREA_IMPACT, BATTLEFIELD_WASH_HOLD, BATTLEFIELD_WASH_RISE, EFFECT_BUDGET, EFFECT_PRESETS, EFFECT_TAP_COLOR, REACH_STRIKE, SUSTAINED_COMBAT_EFFECT, type BurstSpec, type EffectKind } from "../ui/effectPresets";
+import { allowBurst, AREA_IMPACT, BATTLEFIELD_WASH_HOLD, BATTLEFIELD_WASH_RISE, EFFECT_BUDGET, EFFECT_PRESETS, EFFECT_TAP_COLOR, GROUND_SURFACE, REACH_STRIKE, SUSTAINED_COMBAT_EFFECT, type BurstSpec, type EffectKind } from "../ui/effectPresets";
 import { EFFECT_TEXTURE, ensureEffectTextures } from "../ui/effectTextures";
 import { lashPoints } from "../ui/reachStrikeShape";
 import { flashPolicy, inkBlotPoints, mawTeeth, slashPoints, SIGNATURE_SPECS, type CombatPalette, type SignatureId, type StrokePoint } from "../ui/signatureEffects";
@@ -60,6 +60,22 @@ export interface BurstOptions {
   scale?: number;
   /** 수치 글자가 완전히 사라진 뒤 한 번 불린다. 표시 개수를 세는 곳만 쓴다. */
   onDone?: () => void;
+}
+
+/** 바닥에 머무는 면 하나. 키가 같으면 같은 도형을 다시 쓴다. */
+export interface GroundSurface {
+  key: string;
+  x: number;
+  y: number;
+  radius: number;
+  color: string;
+}
+
+interface SurfaceSlot {
+  graphics: Phaser.GameObjects.Graphics;
+  /** 0에서 1로 녹아들고, 사라질 때 같은 시간에 걸쳐 되돌아간다. */
+  fade: number;
+  last?: GroundSurface;
 }
 
 interface RingSlot {
@@ -127,6 +143,8 @@ export class EffectManager {
   private readonly shakeEnabled: boolean;
   private readonly shakeFactor: number;
   private readonly groundDepth: number;
+  /** 바닥에 머무는 면들. 키는 그 판을 깔아 둔 개체와 판 번호다. */
+  private readonly surfaces = new Map<string, SurfaceSlot>();
   private readonly quality: ReturnType<typeof presentationPolicy>;
   private readonly flashes: ReturnType<typeof flashPolicy>;
   /** 생성 시 받은 설정 스냅샷이며 피해량 텍스트에만 적용한다. */
@@ -239,6 +257,54 @@ export class EffectManager {
         slot.tween = undefined;
       },
     });
+  }
+
+  /**
+   * 바닥에 **머무는** 면들을 지금 상태에 맞춘다. 매 프레임 부른다.
+   *
+   * 여울처럼 자리에 걸린 지속 상태가 쓰는 길이다. 사건으로 알리지 않는 이유는 보호막 잔량과
+   * 같다 — 매초 사건을 쏘면 그 순간에만 그려져 실제로 고여 있는 물과 화면이 갈리고, 순간
+   * 표시(`groundArea`)의 벌어졌다 꺼지는 연출이 되풀이되어 깜빡임으로 읽힌다.
+   *
+   * 키로 맞춰 재사용하므로 판이 그대로면 도형을 다시 만들지 않는다. 사라진 키만 녹아 없어진다.
+   */
+  syncGroundSurfaces(surfaces: readonly GroundSurface[], nowSeconds: number): void {
+    const wanted = new Map(surfaces.map((surface) => [surface.key, surface]));
+    for (const [key, slot] of this.surfaces) {
+      if (!wanted.has(key)) {
+        // 물이 마르면 톡 사라지지 않고 같은 시간에 걸쳐 녹아 없어진다.
+        slot.fade = Math.max(0, slot.fade - 1 / 60 / GROUND_SURFACE.fadeSeconds);
+        if (slot.fade <= 0) { slot.graphics.destroy(); this.surfaces.delete(key); }
+      }
+    }
+    for (const surface of surfaces) {
+      let slot = this.surfaces.get(surface.key);
+      if (!slot) {
+        slot = { graphics: this.scene.add.graphics().setDepth(this.groundDepth), fade: 0 };
+        this.surfaces.set(surface.key, slot);
+      }
+      slot.fade = Math.min(1, slot.fade + 1 / 60 / GROUND_SURFACE.fadeSeconds);
+    }
+    for (const [key, slot] of this.surfaces) {
+      const surface = wanted.get(key);
+      if (!surface && slot.fade <= 0) continue;
+      const shown = surface ?? slot.last;
+      if (!shown) continue;
+      slot.last = shown;
+      const color = Phaser.Display.Color.HexStringToColor(shown.color).color;
+      // 숨은 **진하기로만** 쉰다. 크기를 흔들면 물가의 경계가 움직여 어디까지가 판인지 흐려진다.
+      const breath = 1 + GROUND_SURFACE.breathAmplitude
+        * Math.sin(nowSeconds / GROUND_SURFACE.breathSeconds * Math.PI * 2);
+      const alpha = slot.fade * breath;
+      const points = radialAreaPoints(shown.radius).map((point) => new Phaser.Geom.Point(point.x, point.y));
+      const graphics = slot.graphics.clear().setPosition(shown.x, shown.y).setVisible(true);
+      graphics.fillStyle(COLOR.void, GROUND_SURFACE.backdropAlpha * alpha);
+      graphics.fillPoints(points, true);
+      graphics.fillStyle(color, GROUND_SURFACE.fillAlpha * alpha);
+      graphics.fillPoints(points, true);
+      graphics.lineStyle(GROUND_SURFACE.lineWidth, color, GROUND_SURFACE.lineAlpha * alpha);
+      graphics.strokePoints(points, true);
+    }
   }
 
   /**

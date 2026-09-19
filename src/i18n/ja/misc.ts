@@ -61,7 +61,6 @@ export const MISC_JA = {
   "archaeology.tab.research": "特性研究",
   "archaeology.chargeCountdown": "{charges}/{max} {time}",
   "archaeology.chargeFull": "{charges}/{max}",
-  "archaeology.start": "地層探査を開始",
   "archaeology.digsCount": "{current}/{max}",
   "archaeology.title": "考 古 学",
   "archaeology.site.garden-gate.name": "庭園の関門",

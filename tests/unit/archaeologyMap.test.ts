@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { archaeologySiteAvailability, clampArchaeologyCamera, isArchaeologyMapDrag, rewardExpectationRating, strataRewardExpectedAmount, strataRewardProbability } from "../../src/core/archaeologyMap";
+import { archaeologySiteAvailability, clampArchaeologyCamera, isArchaeologyMapDrag, resolveArchaeologyFocusSite, rewardExpectationRating, strataRewardExpectedAmount, strataRewardProbability } from "../../src/core/archaeologyMap";
 import { ARCHAEOLOGY_SITES } from "../../src/data/archaeologySites";
 import { findStrataLayer, STRATA_REWARD_DISPLAY } from "../../src/data/strataLayers";
 
@@ -41,5 +41,15 @@ describe("archaeology map rules", () => {
   it("distinguishes taps from diagonal drags with cumulative distance", () => {
     expect(isArchaeologyMapDrag({ x: 0, y: 0 }, { x: 5, y: 5 }, 12)).toBe(false);
     expect(isArchaeologyMapDrag({ x: 0, y: 0 }, { x: 10, y: 10 }, 12)).toBe(true);
+  });
+
+  it("restores active, valid selected, then highest unlocked sites in priority order", () => {
+    const states = ARCHAEOLOGY_SITES.map(({ id }, index) => ({ siteId: id, unlocked: index < 2 }));
+    // 진행 판은 잠금 정책이 바뀐 경우에도 이미 지불한 판의 위치를 잃지 않는다.
+    expect(resolveArchaeologyFocusSite(ARCHAEOLOGY_SITES, states, "deep-sanctum", "garden-gate")?.id).toBe("deep-sanctum");
+    expect(resolveArchaeologyFocusSite(ARCHAEOLOGY_SITES, states, undefined, "garden-gate")?.id).toBe("garden-gate");
+    // 삭제된 ID와 다시 잠긴 선택은 현재 가장 높은 해금 유적으로 안전하게 복구한다.
+    expect(resolveArchaeologyFocusSite(ARCHAEOLOGY_SITES, states, undefined, "removed-site")?.id).toBe("sunken-archive");
+    expect(resolveArchaeologyFocusSite(ARCHAEOLOGY_SITES, states, undefined, "deep-sanctum")?.id).toBe("sunken-archive");
   });
 });

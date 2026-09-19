@@ -212,6 +212,8 @@ export interface ArchaeologyState {
   /** 서버가 확정한 유적별 해금/완료 진행이다. 해금은 완료와 분리해 운영 보상에도 쓸 수 있다. */
   unlockedSiteIds: string[];
   completedSiteIds: string[];
+  /** 마지막으로 고른 유적 ID다. 지도 좌표가 아니라 의미 있는 선택만 저장해 카탈로그 이동에 견딘다. */
+  lastSelectedSiteId: string | null;
   /**
    * 재해석해 두고 아직 고르지 않은 특성 후보다.
    *
@@ -223,7 +225,7 @@ export interface ArchaeologyState {
 
 /** 새 계정의 고고학 상태다. 횟수는 가득 찬 채로 시작한다. */
 export function createArchaeologyState(): ArchaeologyState {
-  return { charges: STRATA_CHARGE.max, chargesUpdatedAt: null, board: null, unlockedSiteIds: ["garden-gate"], completedSiteIds: [], pendingReroll: null };
+  return { charges: STRATA_CHARGE.max, chargesUpdatedAt: null, board: null, unlockedSiteIds: ["garden-gate"], completedSiteIds: [], lastSelectedSiteId: null, pendingReroll: null };
 }
 
 /** 서버 시각까지 끝난 구간만 채운다. 시각이 역행하면 기준점을 뒤로 옮기지 않는다. */

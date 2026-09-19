@@ -95,7 +95,6 @@ export const SKILL_JA = {
   "skill.ferocity.shellResolve": "暴走に入った瞬間、自分のすべての状態異常・デバフを消し、[[shell|貝殻]]を{stacks}重得る。暴走中は貝殻の内部クールタイムが{seconds}秒に短縮される。",
   "skill.ferocity.cautery": "攻撃速度が{percent}%増加し、付与していたシールドが同じ量の即時回復に変わる。",
   "skill.ferocity.splitVolley": "暴走中、すべての通常攻撃が[[split-arrow|分かれ矢]]になり、射程が{reach}増加する。",
-  "skill.ferocity.droneOverdrive": "展開したドローンが{count}機増え、通常攻撃がその分だけ多くの敵へ分かれて入る。",
   "skill.ferocity.summonPackFrenzy": "[[summon-kuro|クロ]]と[[summon-shiro|シロ]]が共に暴走し、防御力・抵抗力・[[attack-speed|攻撃速度]]とクリティカル率・すべてのダメージ吸血が一緒に上がる。",
   "skill.ferocity.packBody": "{guard}[[attack-speed|攻撃速度]]が{percent}%上がる。{crit}",
   "skill.ferocity.packBody.guardPercent": "防御力と抵抗力が{percent}%上がり、",

@@ -1113,17 +1113,6 @@ export type FerocityTrait = {
       /** 폭주 동안 더해지는 사거리(px). `fighterReach`가 집중 겹 위에 얹는다. */
       reachBonus: number;
     }
-  | {
-      effectId: "droneOverdrive";
-      /**
-       * 폭주 중 **늘어나는 드론 수**. 갈라지는 화살이 그만큼 많아진다.
-       *
-       * 피해 배율이 아니라 **전개 수**를 올리는 이유는, 이 개체의 정체성이 "한 발이 세다"가
-       * 아니라 "여러 곳을 동시에 누른다"이기 때문이다. 같은 값을 위력으로 주면 폭주 중에만
-       * 다른 개체가 된다.
-       */
-      extraDrones: number;
-    }
   | { effectId: "damageReduction"; reductionPercent: number }
   | {
       /** 토리카 전용 탱커 폭주. 정적 종족값을 바꾸지 않고 전투 계산에만 투영한다. */

@@ -2807,51 +2807,48 @@ export const RELICS: RelicDef[] = [
       ferocityGain: 0,
     },
     /*
-     * 폭주는 **드론을 더 띄운다.** 피해 배율을 주지 않는 이유는 이 개체의 값이 "한 발이 세다"가
-     * 아니라 "여러 곳을 동시에 누른다"이기 때문이다 — 위력으로 주면 폭주 중에만 다른 개체가 된다.
+     * **네 슬롯은 아직 임시다.** 드론 관제라는 정체성을 전투로 옮기려면 전용 메커니즘이 필요한데,
+     * 그 메커니즘은 뒤에 올 드론 개체들과 함께 한 번에 짜는 편이 낫다 — 이 개체 하나를 위해
+     * 계약을 세우면 둘째 개체에서 다시 갈아엎게 된다. 그래서 지금은 **공용 계약만으로** 세운다.
+     *
+     * 프로필·능력치·소속·원화는 확정이고, 여기 넷만 나중에 갈아 끼운다. 다만 임시라도
+     * **직군 계약은 지킨다** — 전사의 자가 수급이 패시브에 있고, 은신은 없다.
      */
-    ferocityTrait: { name: "다 띄워.", effectId: "droneOverdrive", extraDrones: 2 },
+    ferocityTrait: { name: "다 띄워.", effectId: "selfAttackSpeedMultiplier", bonusPercent: 40 },
     passive: {
       id: "morphe-passive",
       name: "요람에서 내려올 생각 없음",
+      /*
+       * 전사 계약이 요구하는 자가 수급이다. 토리카와 같은 공용 계약을 쓰되, 원거리에서 드론만
+       * 내보내는 개체라 값은 그쪽(초당 3.5%·5초)보다 얕게 둔다.
+       */
+      kind: "emergencyRecovery",
+      iconAssetId: "skill-icon-healing",
+      effectType: "healing",
+      value: 2.5,
+      durationSeconds: 5,
       // 전용 분기가 없는 종류라 이 문장이 그대로 화면에 선다.
-      kind: "battleMaidMastery",
-      iconAssetId: "skill-icon-buff",
-      effectType: "buff",
-      value: 0,
+      desc: "전투당 한 번, 체력이 절반 이하가 되면 요람이 5초 동안 매초 최대 체력의 2.5%를 되돌린다.",
       /*
        * 태생 치명타는 전 개체 공통이므로 "왜 이 개체가 치명타형인가"의 답은 늘 패시브에 있다.
-       * 12는 렉시아(25)·디안(20)보다 낮다 — 한 행동이 세 갈래로 판정하므로 같은 값도 더 자주
-       * 터지기 때문이고, 스피나(10)·파루아(12)와 같은 이유의 같은 자리다.
+       * 12는 스피나(10)·파루아(12)와 같은 구간이고 렉시아(25)·디안(20)보다 낮다.
        */
       criticalChancePercent: 12,
-      desc: "전개한 드론이 대신 날아가 싸우므로 본인은 자리를 지킨다.",
     },
     basic: {
       id: "morphe-basic",
       name: "산개 사격",
-      /*
-       * **한 번 쏘면 세 곳으로 갈라진다.** 이 개체의 정체성 전부가 여기 있다 — 드론 세 기가
-       * 각자 다른 적을 맡으므로 단일 대상 기준으로 읽으면 실제 총량이 세 배다.
-       *
-       * 그래서 위력은 단일 딜러 기준으로 적지 않는다. 렉시아의 출혈 송곳니(단일)와 나란히
-       * 두면 안 되고, 파루아의 갈래화살(45, 순환의 한 걸음에서만)과 견주어야 한다 — 이쪽은
-       * **매 공격이** 갈라지므로 그보다도 낮다.
-       */
-      power: 38,
+      // 임시 수치다. 원거리 단일 물리 평타이며, 드론이 대신 나간다는 것은 아직 이름과 원화가 맡는다.
+      power: 95,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
-      targeting: "splitShot",
-      maxTargets: 3,
+      targeting: "single",
     },
     ultimate: {
       id: "morphe-ult",
       name: "전부, 한 점으로",
-      /*
-       * **흩어져 때리던 셋이 한 명에게 모인다.** 평상시가 갈라지는 개체라 궁극기는 그 반대여야
-       * 읽힌다 — 갈래를 늘리는 궁극기였다면 평타와 같은 말을 더 크게 하는 것뿐이다.
-       */
+      // 임시 수치다. 흩어져 있던 드론이 한 명에게 모이는 그림이라 단일 대상 한 방으로 둔다.
       power: 300,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
@@ -2859,15 +2856,6 @@ export const RELICS: RelicDef[] = [
       cost: 120,
       targeting: "single",
       statusEffects: [{ kind: "stagger", seconds: 0.1 }],
-      /*
-       * 전사 계약이 요구하는 자가 수급이다. 렉시아(50)·코마(40)·토비(25)와 같은 공용 계약을
-       * 쓰되, 단일 대상 한 방이라 값은 중간에 둔다.
-       *
-       * 회복을 궁극기에 둔 이유는 이 개체가 **맞지 않는 자리에 있기** 때문이다 — 원거리에서
-       * 드론만 내보내므로 상시 흡혈을 주면 깎이지도 않는 몸이 계속 차오른다. 게이지를 채워야
-       * 도는 한 순간이라야 "버티는 값"이 실제로 치른 값이 된다.
-       */
-      damageHealingPercent: 40,
     },
   },
 

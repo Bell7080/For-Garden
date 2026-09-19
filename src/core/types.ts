@@ -30,7 +30,7 @@ export type ReachTier = "melee" | "mid" | "ranged";
 export type RelicRarity = "R" | "SR" | "SSR";
 
 /** 전신 Puppet 레지스트리의 안정적인 데이터 키다. 파일 번호를 게임 데이터에 직접 노출하지 않는다. */
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "pontos" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "pontos" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
@@ -1112,6 +1112,17 @@ export type FerocityTrait = {
       effectId: "splitVolley";
       /** 폭주 동안 더해지는 사거리(px). `fighterReach`가 집중 겹 위에 얹는다. */
       reachBonus: number;
+    }
+  | {
+      effectId: "droneOverdrive";
+      /**
+       * 폭주 중 **늘어나는 드론 수**. 갈라지는 화살이 그만큼 많아진다.
+       *
+       * 피해 배율이 아니라 **전개 수**를 올리는 이유는, 이 개체의 정체성이 "한 발이 세다"가
+       * 아니라 "여러 곳을 동시에 누른다"이기 때문이다. 같은 값을 위력으로 주면 폭주 중에만
+       * 다른 개체가 된다.
+       */
+      extraDrones: number;
     }
   | { effectId: "damageReduction"; reductionPercent: number }
   | {

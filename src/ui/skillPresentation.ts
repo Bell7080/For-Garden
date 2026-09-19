@@ -262,6 +262,10 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
     return t("skill.ferocity.duoBreakthrough", { percent: trait.allyRegenFromDuoDamagePercent });
   }
 
+  // 늘어나는 것은 위력이 아니라 **전개 수**다. 몇 기가 더 나가는지만 말하면 되고, 그것이
+  // 무엇을 하는지는 기본 공격의 갈래화살이 이미 말한다.
+  if (trait.effectId === "droneOverdrive") return t("skill.ferocity.droneOverdrive", { count: trait.extraDrones });
+
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? ""
     : t("skill.ferocity.splash.speed", { percent: trait.attackSpeedBonusPercent });

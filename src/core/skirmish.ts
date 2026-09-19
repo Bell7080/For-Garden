@@ -3237,6 +3237,12 @@ function resolveTarget(state: SkirmishState, fighter: Fighter, reconsider = fals
   return chosen;
 }
 
+/** 폭주 중 늘어나는 드론 수. 개체 이름이 아니라 `droneOverdrive` 계약 하나를 읽는다. */
+function feverDroneBonus(fighter: Fighter): number {
+  const trait = fighter.def.ferocityTrait;
+  return fighter.ferocityFever && trait.effectId === "droneOverdrive" ? trait.extraDrones : 0;
+}
+
 /** 실제 전투 시작 공격력이 가장 높은 아군의 표적을 무리 사냥 보유자들이 복사한다. 동률은 편성 순서다. */
 export function triggerPackHunt(state: SkirmishState, side: Side): void {
   const allies = state.fighters.filter((fighter) => fighter.side === side && isFighterAlive(fighter));
@@ -4755,7 +4761,9 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
       // 은신은 갈래화살의 최초 단일 표적이 되는 것만 막고, 이미 정해진 광역 판정의 피해는 막지 않는다.
       .filter((fighter) => fighter.side !== attacker.side && isFighterAlive(fighter))
       .sort((a, b) => Math.hypot(a.x - requestedCenter.x, a.y - requestedCenter.y) - Math.hypot(b.x - requestedCenter.x, b.y - requestedCenter.y))
-      .slice(0, Math.max(1, skill.maxTargets ?? 1))
+      // 폭주 중에는 전개한 드론이 늘어 그만큼 더 갈라진다. 위력이 아니라 **수**가 오르는 것이
+      // 이 개체의 폭주라, 여기 한 줄이 그 계약을 그대로 읽는다.
+      .slice(0, Math.max(1, (skill.maxTargets ?? 1) + feverDroneBonus(attacker)))
       .map((fighter) => fighter.id),
   );
   // 이 함수에 들어온 공격은 모두 광역이다. 은신은 단일 추적 회피이지 광역 무적이 아니므로 포함한다.

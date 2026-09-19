@@ -81,6 +81,7 @@ export const SKILL_EN = {
   "skill.ferocity.shellResolve": "On entering Frenzy, clears all of its own status effects and debuffs and gains {stacks} stacks of [[shell|Shell]]. During Frenzy, the internal cooldown of Shell drops to {seconds}s.",
   "skill.ferocity.cautery": "Attack Speed increases by {percent}%, and the shields it grants become instant healing of the same amount.",
   "skill.ferocity.splitVolley": "During Frenzy, every basic attack becomes a [[split-arrow|Split Arrow]] and range increases by {reach}.",
+  "skill.ferocity.droneOverdrive": "Deploys {count} more drones, so basic attacks split across that many additional enemies.",
   "skill.ferocity.summonPackFrenzy": "[[summon-kuro|Kuro]] and [[summon-shiro|Shiro]] enter Frenzy together, raising Defense, Resistance, [[attack-speed|Attack Speed]], Critical Rate and life steal on all damage.",
   "skill.ferocity.packBody": "{guard} [[attack-speed|Attack Speed]] rises by {percent}%. {crit}",
   "skill.ferocity.packBody.guardPercent": "Defense and Resistance rise by {percent}% and",

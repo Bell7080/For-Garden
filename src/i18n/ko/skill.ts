@@ -111,6 +111,7 @@ export const SKILL_KO = {
   "skill.ferocity.shellResolve": "폭주에 들어가는 순간 자신의 모든 상태이상·디버프를 지우고 [[shell|조가비]]를 {stacks}겹 얻는다. 폭주 중 조가비 내부 재사용 대기시간이 {seconds}초로 줄어든다.",
   "skill.ferocity.cautery": "공격 속도가 {percent}% 증가하고, 부여하던 보호막이 같은 양의 즉시 회복으로 바뀐다.",
   "skill.ferocity.splitVolley": "폭주 중 모든 일반 공격이 [[split-arrow|갈래화살]]이 되고 사거리가 {reach} 증가한다.",
+  "skill.ferocity.droneOverdrive": "전개한 드론이 {count}기 늘어, 기본 공격이 그만큼 더 많은 적에게 갈라져 들어간다.",
   "skill.ferocity.summonPackFrenzy": "[[summon-kuro|쿠로]]와 [[summon-shiro|시로]]가 함께 폭주해 방어력·저항력·[[attack-speed|공격 속도]]와 치명타 확률·모든 피해 흡혈이 함께 오른다.",
   "skill.ferocity.packBody": "{guard} [[attack-speed|공격 속도]]가 {percent}% 오른다. {crit}",
   "skill.ferocity.packBody.guardPercent": "방어력과 저항력이 {percent}% 오르고",

@@ -35,7 +35,7 @@ function migrateV12Rune(definitionId: string): RuneInstance {
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 34;
+export const CURRENT_SAVE_VERSION = 35;
 
 /**
  * 과거 적 허스크의 ID를 플레이어블 렐릭 ID로 옮기는 **저장 버전 마이그레이션 전용** 표다.
@@ -292,7 +292,16 @@ export class SaveManager {
     // 고고학을 몰랐던 저장은 기본 상태로 시작한다 — 횟수가 가득 차 있고 판은 없다.
     const savedArchaeology = legacy.archaeology && typeof legacy.archaeology === "object"
       ? legacy.archaeology as Partial<SaveData["archaeology"]> : undefined;
-    const archaeology = { ...createArchaeologyState(), ...savedArchaeology };
+    const archaeologyDefaults = createArchaeologyState();
+    const archaeology = {
+      ...archaeologyDefaults,
+      ...savedArchaeology,
+      // 구 저장은 지도 진행 필드가 없으므로 첫 유적만 명시 해금하고 완료 이력은 비운다.
+      unlockedSiteIds: Array.isArray(savedArchaeology?.unlockedSiteIds) ? savedArchaeology.unlockedSiteIds : archaeologyDefaults.unlockedSiteIds,
+      completedSiteIds: Array.isArray(savedArchaeology?.completedSiteIds) ? savedArchaeology.completedSiteIds : archaeologyDefaults.completedSiteIds,
+      // v35 이전에는 카메라 선택을 저장하지 않았다. 픽셀 좌표 대신 안정적인 유적 ID만 추가한다.
+      lastSelectedSiteId: typeof savedArchaeology?.lastSelectedSiteId === "string" ? savedArchaeology.lastSelectedSiteId : null,
+    };
     const savedExcavation = Number(legacy.saveVersion) >= 18 && legacy.idleExcavation && typeof legacy.idleExcavation === "object"
       ? legacy.idleExcavation as Partial<SaveData["idleExcavation"]> : undefined;
     const excavationDefaults = createIdleExcavationState();
@@ -417,7 +426,7 @@ export class SaveManager {
     const itemInventory = Array.isArray(legacy.itemInventory) ? legacy.itemInventory : [];
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
     if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition } as unknown as SaveData;
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, CURRENT_SAVE_VERSION];
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
     return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition } as unknown as SaveData;
   }

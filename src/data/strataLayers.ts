@@ -19,6 +19,31 @@ export type StrataRewardKind =
   /** 특성 연구에 쓰는 아이템 하나. 어느 아이템인지는 서버가 정한다. */
   | "researchItem";
 
+/** 유적 미리보기가 같은 이름으로 합쳐 보여 주는 플레이어 보상 그룹이다. */
+export type StrataRewardDisplayGroup = "rawStone" | "rune" | "gold" | "fossil" | "amber" | "gems" | "researchMaterial";
+
+/**
+ * 내부 추첨 종류를 플레이어 표시 그룹과 공개 단계에 연결하는 유일한 표다.
+ *
+ * 빈 흙은 보상이 아니므로 어디에도 표시하지 않는다. `researchItem`은 서버가 구체 아이템을
+ * 정하기 전의 내부 묶음이어서 유적 미리보기에서는 숨기되, 실제로 캔 뒤에는 「특성 연구 재료」
+ * 그룹으로 공개한다. 나머지는 미리보기와 결과 양쪽에서 같은 이름을 쓴다.
+ */
+export const STRATA_REWARD_DISPLAY: Readonly<Record<StrataRewardKind, {
+  readonly group: StrataRewardDisplayGroup | null;
+  readonly preview: boolean;
+  readonly reveal: boolean;
+}>> = {
+  empty: { group: null, preview: false, reveal: false },
+  rawStone: { group: "rawStone", preview: true, reveal: true },
+  rune: { group: "rune", preview: true, reveal: true },
+  gold: { group: "gold", preview: true, reveal: true },
+  fossil: { group: "fossil", preview: false, reveal: true },
+  amber: { group: "amber", preview: false, reveal: true },
+  gems: { group: "gems", preview: false, reveal: true },
+  researchItem: { group: "researchMaterial", preview: false, reveal: true },
+};
+
 /**
  * 구역의 색.
  *
@@ -79,6 +104,37 @@ export const STRATA_LAYERS: readonly StrataLayerDefinition[] = [
       // 다이아는 이 콘텐츠의 잭팟이라 흙빛에서도 아주 드물게 나온다 — 심층에만 두면
       // 색이 곧 답이 되어 고르는 일이 사라진다.
       { kind: "gems", weight: { soil: 0.2, teal: 0.4, gold: 1, deep: 3 }, min: 5, max: 20 },
+    ],
+  },
+  // 유적 지도 확장용 판도 같은 보상 계약을 쓴다. 가중치만 달라 미리보기 별점과 실제 추첨이 함께 움직인다.
+  {
+    id: "archive",
+    columns: 6, rows: 5, digs: 9, zones: 4,
+    toneWeight: { soil: 4, teal: 4, gold: 3, deep: 2 },
+    rewards: [
+      { kind: "empty", weight: { soil: 30, teal: 23, gold: 17, deep: 14 }, min: 0, max: 0 },
+      { kind: "gold", weight: { soil: 25, teal: 22, gold: 18, deep: 14 }, min: 600, max: 1_500 },
+      { kind: "rawStone", weight: { soil: 25, teal: 32, gold: 30, deep: 26 }, min: 8, max: 22 },
+      { kind: "fossil", weight: { soil: 10, teal: 12, gold: 14, deep: 14 }, min: 25, max: 70 },
+      { kind: "rune", weight: { soil: 5, teal: 6, gold: 10, deep: 13 }, min: 1, max: 1 },
+      { kind: "researchItem", weight: { soil: 2, teal: 3, gold: 8, deep: 12 }, min: 1, max: 1 },
+      { kind: "amber", weight: { soil: 0, teal: 1, gold: 4, deep: 6 }, min: 1, max: 2 },
+      { kind: "gems", weight: { soil: 0.3, teal: 0.6, gold: 1.4, deep: 3.5 }, min: 5, max: 20 },
+    ],
+  },
+  {
+    id: "abyss",
+    columns: 6, rows: 6, digs: 10, zones: 4,
+    toneWeight: { soil: 2, teal: 3, gold: 4, deep: 5 },
+    rewards: [
+      { kind: "empty", weight: { soil: 25, teal: 20, gold: 15, deep: 12 }, min: 0, max: 0 },
+      { kind: "gold", weight: { soil: 22, teal: 20, gold: 16, deep: 12 }, min: 900, max: 2_000 },
+      { kind: "rawStone", weight: { soil: 28, teal: 34, gold: 34, deep: 30 }, min: 10, max: 26 },
+      { kind: "fossil", weight: { soil: 12, teal: 13, gold: 14, deep: 14 }, min: 30, max: 80 },
+      { kind: "rune", weight: { soil: 7, teal: 9, gold: 13, deep: 17 }, min: 1, max: 1 },
+      { kind: "researchItem", weight: { soil: 3, teal: 5, gold: 9, deep: 13 }, min: 1, max: 1 },
+      { kind: "amber", weight: { soil: 1, teal: 2, gold: 5, deep: 7 }, min: 1, max: 2 },
+      { kind: "gems", weight: { soil: 0.5, teal: 1, gold: 2, deep: 4 }, min: 8, max: 24 },
     ],
   },
 ];

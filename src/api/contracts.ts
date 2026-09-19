@@ -397,11 +397,14 @@ export interface ArchaeologyStateResponse {
   chargesMax: number;
   /** 다음 한 번이 차는 시각이다. 가득 찼으면 null이다. */
   nextChargeAt: string | null;
+  /** 진행 판의 공개 정보다. `digsMax`는 지층 정의에서 확정한 한 판의 총 굴착 횟수다. */
   board: StrataBoardView | null;
+  /** 서버가 현재 연구 레벨과 완료 이력으로 확정한 지도 상태다. */
+  sites: Array<{ siteId: string; unlocked: boolean; completed: boolean; missingLevel: number; missingPrerequisiteIds: string[] }>;
   serverTime: string;
 }
 /** 판을 새로 여는 요청이다. 클라이언트는 지층만 고르고 판 내용은 주장하지 못한다. */
-export interface StartStrataRunRequest { layerId: string; requestId: string; }
+export interface StartStrataRunRequest { siteId?: string; layerId?: string; requestId: string; }
 /** 어느 칸을 팔지만 보낸다. 나온 것은 서버가 정한다. */
 export interface DigStrataTileRequest { tileIndex: number; requestId: string; }
 /** 이번 한 칸의 결과와 그 지급까지 한 영수증으로 확정한다. */
@@ -445,7 +448,7 @@ export interface UpgradeRuneTraitResponse { rune: RuneInstance; items: Inventory
 
 /** UI가 서버 실패 원인을 문구로 바꿀 수 있게 고정한 오류 코드다. */
 export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPEDITION_RUN_NOT_FOUND" | "EXPEDITION_ALREADY_SETTLED" | "EXPEDITION_ALREADY_ACTIVE" | "EXPEDITION_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REQUIRED" | "AD_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REJECTED" | "EXPEDITION_REWARD_NOT_FOUND" | "EXPEDITION_REWARD_NOT_EARNED" | "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INVALID_PURCHASE_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "INVALID_RUNE_SALE" | "RUNE_EQUIPPED" | "RUNE_LOCKED" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_STOREFRONT_MISMATCH" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "ACQUISITION_FLOW_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE"
-  | "STRATA_NO_CHARGE" | "STRATA_RUN_ACTIVE" | "STRATA_RUN_NOT_FOUND" | "STRATA_TILE_UNAVAILABLE"
+  | "STRATA_NO_CHARGE" | "STRATA_RUN_ACTIVE" | "STRATA_RUN_NOT_FOUND" | "STRATA_SITE_LOCKED" | "STRATA_TILE_UNAVAILABLE"
   | "RUNE_TRAIT_NOT_FOUND" | "RUNE_TRAIT_ITEM_INVALID" | "RUNE_TRAIT_MAX_GRADE" | "RUNE_TRAIT_REROLL_PENDING";
 
 /**

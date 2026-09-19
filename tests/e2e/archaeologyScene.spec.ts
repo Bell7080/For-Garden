@@ -186,6 +186,10 @@ test("유적 지도 이동 → 잠긴 유적 확인 → 열린 유적 미리보�
 
   // 지도를 원위치로 되밀고 열린 첫 유적의 미리보기에서 탐사를 시작한다.
   await page.mouse.move(300, 760); await page.mouse.down(); await page.mouse.move(900, 760, { steps: 8 }); await page.mouse.up();
-  await startFirstArchaeologySite(page);
+  await tap(page, 260, 340 + 820);
+  await page.waitForTimeout(250);
+  // 별 모양과 읽을 수 있는 N별 문구가 함께 서는 실제 미리보기를 시각 회귀로 남긴다.
+  await captureGame(page, `test-results/${testInfo.project.name}-archaeology-site-preview.png`);
+  await tap(page, BASE_WIDTH / 2 + 190, 1110 + 220);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.archaeologyDig?.tiles.length), { timeout: 30_000 }).toBeGreaterThan(1);
 });

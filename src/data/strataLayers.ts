@@ -19,6 +19,31 @@ export type StrataRewardKind =
   /** 특성 연구에 쓰는 아이템 하나. 어느 아이템인지는 서버가 정한다. */
   | "researchItem";
 
+/** 유적 미리보기가 같은 이름으로 합쳐 보여 주는 플레이어 보상 그룹이다. */
+export type StrataRewardDisplayGroup = "rawStone" | "rune" | "gold" | "fossil" | "amber" | "gems" | "researchMaterial";
+
+/**
+ * 내부 추첨 종류를 플레이어 표시 그룹과 공개 단계에 연결하는 유일한 표다.
+ *
+ * 빈 흙은 보상이 아니므로 어디에도 표시하지 않는다. `researchItem`은 서버가 구체 아이템을
+ * 정하기 전의 내부 묶음이어서 유적 미리보기에서는 숨기되, 실제로 캔 뒤에는 「특성 연구 재료」
+ * 그룹으로 공개한다. 나머지는 미리보기와 결과 양쪽에서 같은 이름을 쓴다.
+ */
+export const STRATA_REWARD_DISPLAY: Readonly<Record<StrataRewardKind, {
+  readonly group: StrataRewardDisplayGroup | null;
+  readonly preview: boolean;
+  readonly reveal: boolean;
+}>> = {
+  empty: { group: null, preview: false, reveal: false },
+  rawStone: { group: "rawStone", preview: true, reveal: true },
+  rune: { group: "rune", preview: true, reveal: true },
+  gold: { group: "gold", preview: true, reveal: true },
+  fossil: { group: "fossil", preview: false, reveal: true },
+  amber: { group: "amber", preview: false, reveal: true },
+  gems: { group: "gems", preview: false, reveal: true },
+  researchItem: { group: "researchMaterial", preview: false, reveal: true },
+};
+
 /**
  * 구역의 색.
  *

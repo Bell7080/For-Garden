@@ -2,7 +2,6 @@
 export const INTERACTION_EN = {
   "interaction.title": "Exchange",
   "interaction.subtitle": "One team can be sent to each city",
-  "interaction.exchange": "Exchange Post",
   "interaction.dispatched": "Dispatched · {remaining}",
   "interaction.awaitingClaim": "Awaiting claim",
   "interaction.lockedByStage": "Opens after clearing {stage}",
@@ -18,12 +17,4 @@ export const INTERACTION_EN = {
   "interaction.sending": "Sending…",
   "interaction.send": "Dispatch",
   "interaction.rewardTitle": "Exchange Rewards",
-  "interaction.exchange.owned": "Held",
-  "interaction.exchange.required": "Required",
-  "interaction.exchange.result": "Result",
-  "interaction.exchange.remaining": "Exchanges left  {remaining}",
-  "interaction.exchange.busy": "Processing",
-  "interaction.exchange.do": "Exchange",
-  "interaction.exchange.granted": "Cheesecake {amount} granted",
-  "interaction.exchange.failed": "Exchange failed",
 } as const;

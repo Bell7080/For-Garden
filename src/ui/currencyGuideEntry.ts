@@ -39,7 +39,7 @@ export function openCurrencyGuide(host: CurrencyGuideHost, key: WalletItemKey): 
 function applyGuideAction(host: CurrencyGuideHost, action: CurrencyGuideAction): void {
   if (host.onAction) { host.onAction(action); return; }
   // 팝업 목적지(무역)는 그 판을 소유한 화면에서만 열 수 있으므로, 없는 화면에서는 로비로 돌아간다.
-  if (action.kind === "scene") host.scene.scene.start(action.target, action.target === "interaction" ? { openExchange: true } : undefined);
+  if (action.kind === "scene") host.scene.scene.start(action.target);
   else host.scene.scene.start("lobby");
 }
 

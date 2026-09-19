@@ -1,6 +1,5 @@
 import { gameApi } from "../api/FakeServer";
-import type { ClaimInteractionDispatchResponse, ExchangeInteractionOfferResponse, GameApi, InteractionCitiesResponse, InteractionDispatchResponse, InteractionExchangeListResponse } from "../api/contracts";
-import { managerEvents } from "./ManagerEvents";
+import type { ClaimInteractionDispatchResponse, GameApi, InteractionCitiesResponse, InteractionDispatchResponse } from "../api/contracts";
 import { findInteractionCity } from "../data/interactionCities";
 import { saveManager, type SaveManager } from "../state/SaveManager";
 import { session, type InteractionDispatchSnapshot, type Session } from "../state/session";
@@ -40,10 +39,6 @@ export class InteractionManager {
     this.state.readInteractionJournalIds = read;
     return true;
   }
-  /** 교류 교환 목록은 ProductDto 변환 없이 전용 DTO 그대로 검증된 UI 경계에 넘긴다. */
-  async exchangeOffers(): Promise<InteractionExchangeListResponse> { return this.api.getInteractionExchangeOffers(); }
-  /** 한 영수증의 아이템·지갑을 함께 반영하고 같은 tick에 두 갱신 이벤트를 발행한다. */
-  async exchange(offerId: string, quantity: number, requestId: string): Promise<ExchangeInteractionOfferResponse> { const response = await this.api.exchangeInteractionOffer({ offerId, quantity, requestId }); this.state.wallet = { ...response.wallet }; this.state.itemInventory = response.items.filter(({ category }) => category === "consumable" || category === "material").map(({ definitionId, quantity: amount }) => ({ itemId: definitionId, quantity: amount })); this.saves.save(this.state); managerEvents.publish("wallet", { wallet: this.state.wallet }); managerEvents.publishInventory(); return response; }
   /** 서버가 보낸 목록을 통째로 세션 슬롯으로 삼는다 — 씬은 어느 도시가 나가 있는지만 읽는다. */
   private apply<T extends InteractionDispatchResponse>(response: T): T {
     for (const dispatch of response.dispatches) assertDispatch(dispatch);

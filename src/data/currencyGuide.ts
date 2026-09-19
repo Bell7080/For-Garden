@@ -4,7 +4,6 @@ import { registerDataText } from "../i18n";
 /** 안내창이 직접 진행 상태를 바꾸지 않고 바깥 화면에 요청할 수 있는 이동 명령이다. */
 export type CurrencyGuideAction =
   | { readonly kind: "scene"; readonly target: "lab"; readonly label: string }
-  | { readonly kind: "scene"; readonly target: "interaction"; readonly label: string }
   | { readonly kind: "popup"; readonly target: "trade"; readonly label: string };
 
 /** 지갑 재화 한 종류의 세계관 설명과 현재 구현에 근거한 획득·소비 경로다. */
@@ -30,8 +29,8 @@ export const CURRENCY_GUIDE = {
   gold: { key: "gold", name: "골드", lore: "정비와 세공 현장에서 쓰이는 표준 작업 화폐입니다.", sources: ["배치형 자원 발굴", "화석·호박석 연구 부산물", "스테이지·원정 보상"], uses: ["룬 세공", "렐릭 성장과 연구 정비"] },
   stamina: { key: "stamina", name: "스테미나", lore: "조사대가 현장에 진입할 수 있는 작전 여력입니다.", sources: ["일일 광고 보급", "에너지 드링크 사용", "시간 회복"], uses: ["스테이지 전투 진입 계약"] },
   dnaFragments: { key: "dnaFragments", name: "DNA 조각", lore: "복원체의 잠재 구조를 다시 잇는 공용 유전 표본입니다.", sources: ["무역의 복원 재료 교환", "중복 복원 연구"], uses: ["렐릭 돌파 성장", "무역의 표본 반출 계약"], action: { kind: "popup", target: "trade", label: "무역 열기" } },
-  cheesecake: { key: "cheesecake", name: "치즈케이크", lore: "복원체와 신뢰를 쌓는 연구소의 특별 급여입니다.", sources: ["배치형 자원 발굴", "화석·호박석 연구 부산물", "원정·일일 광고 보상", "교류 교환소의 표본 교환"], uses: ["렐릭 급여 성장", "무역의 복원 재료 교환"], action: { kind: "popup", target: "trade", label: "무역 열기" } },
-  rawStone: { key: "rawStone", name: "원석", lore: "지층 깊이 잠들어 있던, 아직 아무도 손대지 않은 광물입니다.", sources: ["고고학의 지층 탐사", "고고학 상점 교환"], uses: ["룬 특성 재해석"] },
+  cheesecake: { key: "cheesecake", name: "치즈케이크", lore: "복원체와 신뢰를 쌓는 연구소의 특별 급여입니다.", sources: ["배치형 자원 발굴", "화석·호박석 연구 부산물", "원정·일일 광고 보상", "교류 파견 보상"], uses: ["렐릭 급여 성장", "무역의 복원 재료 교환"], action: { kind: "popup", target: "trade", label: "무역 열기" } },
+  rawStone: { key: "rawStone", name: "원석", lore: "지층 깊이 잠들어 있던, 아직 아무도 손대지 않은 광물입니다.", sources: ["고고학의 지층 탐사", "고고학 상점 교환", "교류 파견 보상"], uses: ["룬 특성 재해석"] },
 } as const satisfies Record<WalletItemKey, CurrencyGuideEntry>;
 
 /** 외부 입력도 항상 완전성 검사를 통과한 카탈로그에서만 조회한다. */

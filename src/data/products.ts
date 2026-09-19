@@ -104,7 +104,6 @@ export const SHOP_PRODUCTS: readonly ProductDefinition[] = [
   // 값은 젬으로 받고, 같은 젬으로 따로 사는 것보다 더 많이 주는 것이 이 화면의 존재 이유다.
   // 얼마나 더 주는지(가치 %)는 화면이 적지 않고 `tradePackages.ts`의 시세표가 환산한다.
   // 프리미엄(플랫폼 결제)은 여기 오지 않는다 — 유료 묶음은 `premium` storefront가 맡는다.
-  // 교류의 교환소와도 다르다 — 교환소는 파견에서만 나오는 표본을 바꾸는 교류 전용 창구다.
   ...TRADE_PACKAGES,
 ];
 

@@ -155,8 +155,6 @@ export interface DebugState {
     lobby?: { mission: DebugPoint; missionBack: DebugPoint; shop: DebugPoint; trade: DebugPoint; interaction: DebugPoint };
     /** 무역 팝업. 실패 상태에서는 상품 대신 재시도 입력이 생기고 공용 뒤로가기는 계속 남는다. */
     trade?: { products: DebugPoint[]; retry?: DebugPoint; back: DebugPoint };
-    /** 교류 씬에서 교환소를 여는 유일한 고정 입력 중심이다. */
-    interaction?: { exchange: DebugPoint };
     shop?: { back: DebugPoint; tabs: Record<"general" | "enhancement" | "rune", DebugPoint>; cards: DebugPoint[]; drag: { from: DebugPoint; to: DebugPoint } };
     /** 수량 작업판은 ±와 확정을, 패키지 확인판은 확정만 공개한다(고를 것이 수량이 아니다). */
     purchase?: { minus?: DebugPoint; plus?: DebugPoint; confirm: DebugPoint };

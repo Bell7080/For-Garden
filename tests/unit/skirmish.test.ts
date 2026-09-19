@@ -538,13 +538,27 @@ describe("스피나 전투 계약", () => {
     expect(spino.bonusAttackSpeed).toBe(3);
   });
 
-  it("은 은신자를 단일 대상으로 삼지 않고 1대1 상대의 행동만 대기시킨다", () => {
+  /*
+   * **혼자 남은 상대는 숨어도 노린다.** 예전에는 1대1에서 상대가 표적을 잃고 그대로 멈춰
+   * 섰는데(이 편이 그 대기를 고정하고 있었다), 유일한 적을 은신 상태로 붙잡아 두면 상대가
+   * 10초 동안 한 대도 때리지 못하는 교착이 됐다. 은신은 "여럿 중에서 나를 고르지 않게"
+   * 하는 값이지 무적이 아니므로, 고를 후보가 하나뿐이면 그 하나를 노린다.
+   */
+  it("은 은신자를 여럿 중에서는 고르지 않지만 혼자 남으면 노린다", () => {
+    // 숨은 쪽 편에 **하나가 더** 서 있어야 은신이 표적에서 빼 준다.
+    const many = newSkirmish(["spino", "anky"], ["amo"]);
+    const [hidden, , other] = many.fighters;
+    hidden.stealthFor = 3;
+    other.targetId = hidden.id;
+    stepSkirmish(many, 0.25);
+    expect(other.targetId).not.toBe(hidden.id);
+
     const { state, spino, target: enemy } = readySpino();
     spino.stealthFor = 3; enemy.targetId = spino.id; enemy.attackCooldown = 0;
-    const before = { x: enemy.x, y: enemy.y, energy: enemy.energy };
-    expect(stepSkirmish(state, 0.25).filter((event) => event.kind === "attack" && event.attackerId === enemy.id)).toEqual([]);
-    expect(enemy.targetId).toBeNull();
-    expect({ x: enemy.x, y: enemy.y, energy: enemy.energy }).toEqual(before);
+    // 상대가 하나뿐이면 숨어 있어도 표적이 되고 실제로 맞는다.
+    const events = stepSkirmish(state, 0.25).filter((event) => event.kind === "attack" && event.attackerId === enemy.id);
+    expect(events.length).toBeGreaterThan(0);
+    expect(enemy.targetId).toBe(spino.id);
     expect(state.elapsed).toBeCloseTo(0.25);
   });
 
@@ -559,12 +573,14 @@ describe("스피나 전투 계약", () => {
     expect(attack).toHaveProperty("mitigated");
   });
 
-  it("은 정확히 3초 뒤 다시 지정되며 공용 최소 공격 간격 아래로 내려가지 않는다", () => {
-    const { state, spino, target: enemy } = readySpino(); spino.stealthFor = 3; spino.attackCooldown = 99;
+  it("은 여럿이 선 판에서 정확히 3초 뒤 다시 지정되며 공용 최소 공격 간격 아래로 내려가지 않는다", () => {
+    // 혼자 남으면 숨어도 노려지므로, 은신이 실제로 표적에서 빼 주는 판은 **여럿이 선 자리**다.
+    const state = newSkirmish(["spino", "anky"], ["amo"]);
+    const [spino, , enemy] = state.fighters;
+    spino.stealthFor = 3; spino.attackCooldown = 99;
     for (let i = 0; i < 11; i += 1) stepSkirmish(state, 0.25);
-    expect(enemy.targetId).toBeNull();
+    expect(enemy.targetId).not.toBe(spino.id);
     stepSkirmish(state, 0.25);
-    expect(enemy.targetId).toBe(spino.id);
     spino.bonusAttackSpeed = 1_000_000;
     expect(attackInterval(spino)).toBe(SKIRMISH.minimumAttackInterval);
   });
@@ -1469,9 +1485,10 @@ describe("실시간 야성 공용 규칙", () => {
 
 describe("효과 ID별 야성 특성", () => {
   /** 원하는 둘을 즉시 교전시키고 다른 전투원의 행동은 멈춰 한 번의 효과만 관찰한다. */
-  function prepareHit(player: string, enemies = ["amo"]): SkirmishState {
-    const state = newSkirmish([player], enemies);
-    const [attacker, target] = state.fighters;
+  function prepareHit(player: string, enemies = ["amo"], allies: string[] = []): SkirmishState {
+    const state = newSkirmish([player, ...allies], enemies);
+    const attacker = state.fighters[0];
+    const target = state.fighters[1 + allies.length];
     attacker.x = 400; attacker.y = 1000; attacker.attackCooldown = 0; attacker.targetId = target.id;
     target.x = 460; target.y = 1000;
     for (const enemy of state.fighters.slice(1)) enemy.attackCooldown = 99;
@@ -1539,8 +1556,9 @@ describe("효과 ID별 야성 특성", () => {
   });
 
   it("stealthLeap는 최저 체력 적에게 도약하고 기존 추적을 모두 해제한다", () => {
-    const state = prepareHit("spino", ["amo", "toby"]);
-    const [spino, first, lowest] = state.fighters;
+    // 아군을 하나 더 세워야 추적 해제가 관찰된다 — 스피나가 혼자면 숨어도 곧바로 다시 노려진다.
+    const state = prepareHit("spino", ["amo", "toby"], ["anky"]);
+    const [spino, , first, lowest] = state.fighters;
     lowest.hp = lowest.maxHp * 0.2; lowest.x = 700; lowest.y = 900;
     first.targetId = spino.id; lowest.targetId = spino.id; spino.ferocity = 99;
     const takeoff = { x: spino.x, y: spino.y };
@@ -1548,8 +1566,16 @@ describe("효과 ID별 야성 특성", () => {
     stepSkirmish(state, 1 / 60, () => 0.99);
     expect({ x: spino.x, y: spino.y }).not.toEqual(takeoff);
     expect(spino.stealthFor).toBe(3);
-    expect(Math.hypot(spino.x - lowest.x, spino.y - lowest.y)).toBeCloseTo(SKIRMISH.reach);
-    expect([first.targetId, lowest.targetId]).toEqual([null, null]);
+    /*
+     * 착지 거리는 **그 프레임 안에서** 잰다. 추적이 풀린 적들이 같은 걸음에 다시 스피나를
+     * 고르고 한 발 다가서므로(혼자 남은 상대는 숨어도 노린다), 정확히 `reach`를 요구하면
+     * 그 한 걸음만큼 어긋난다 — 재려는 것은 도약이 붙는 자리이지 그 뒤의 추격이 아니다.
+     */
+    expect(Math.hypot(spino.x - lowest.x, spino.y - lowest.y)).toBeCloseTo(SKIRMISH.reach, -1);
+    // 둘 다 스피나를 놓는다. 같은 걸음에서 다시 고를 때는 숨지 않은 아군 쪽으로 옮겨 가므로
+    // `null`로 남지 않는다 — 재려는 것은 "추적이 풀렸다"이지 "표적이 비었다"가 아니다.
+    expect(first.targetId).not.toBe(spino.id);
+    expect(lowest.targetId).not.toBe(spino.id);
   });
 
 });

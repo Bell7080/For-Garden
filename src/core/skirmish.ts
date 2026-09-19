@@ -3217,6 +3217,19 @@ function resolveTarget(state: SkirmishState, fighter: Fighter, reconsider = fals
       bestScore = score;
     }
   }
+  /*
+   * **혼자 남은 상대는 숨어도 노린다.**
+   *
+   * 은신은 "여럿 중에서 나를 고르지 않게" 하는 값이지 무적이 아니다. 고를 후보가 그 하나뿐일
+   * 때까지 걸러 내면 전투가 통째로 멈춘다 — 실측에서 유일한 적을 은신 상태로 붙잡아 두자
+   * 상대는 10초 동안 표적조차 잡지 못하고 한 대도 때리지 않았다. 판정이 끝나는 것이 아니라
+   * 아무 일도 일어나지 않는 교착이라, 마지막 한 명은 숨어도 보인다.
+   *
+   * 몰림·고착 점수는 후보가 하나뿐이라 뜻이 없으므로 다시 재지 않는다.
+   */
+  if (!chosen) {
+    chosen = state.fighters.find((other) => other.side === wanted && other.id !== fighter.id && isFighterAlive(other));
+  }
   // 광란한 개체가 때릴 자기 편을 다 잃으면 제자리에서 자신을 공격한다. 적이 혼자인 보스전에서
   // 광란이 통째로 무효가 되지 않게 하는 것이 이 폴백의 유일한 목적이다.
   if (!chosen && frenzied && isFighterAlive(fighter)) {
@@ -5781,7 +5794,9 @@ export function canFireUltimate(state: SkirmishState, fighter: Fighter): boolean
     return duo !== undefined && isFighterAlive(duo);
   }
   if (fighter.def.ultimate.targeting === "battlefieldAllies") return aliveFighters(state, fighter.side).length > 0;
-  return state.fighters.some((other) => other.side !== fighter.side && isFighterAlive(other) && other.stealthFor <= 0);
+  // 표적 고르기와 같은 규칙이다 — 숨지 않은 상대가 없으면 마지막 한 명을 노린다. 그러지
+  // 않으면 게이지가 가득 찬 궁극기가 은신한 마지막 적 앞에서 영영 나가지 않는다.
+  return state.fighters.some((other) => other.side !== fighter.side && isFighterAlive(other));
 }
 
 /**

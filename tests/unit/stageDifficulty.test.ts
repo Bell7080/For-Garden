@@ -280,7 +280,13 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     const solo = [grown(getRelic("spino"), 11, 3)];
     const winRateAt = (stageId: string) =>
       summarizeStageDifficulty(solo, getStageEnemies(getBattleStage(stageId)), SEEDS, "auto").winRate;
-    expect(winRateAt("1-5")).toBe(1);
+    /*
+     * **혼자 보내면 1-5부터 흔들린다**(1.000 → 0.125). 예전에는 잠행으로 숨는 순간 단독
+     * 정예가 표적을 잃고 그대로 멈춰 서서, 스피나 한 명이 안전하게 깎아 낼 수 있었다.
+     * 혼자 남은 상대는 숨어도 노리게 되면서 그 공짜 시간이 사라졌다 — 편성 칸이 셋인 이유를
+     * 이 줄이 더 분명하게 말한다.
+     */
+    expect(winRateAt("1-5")).toBe(0.125);
     // 2장 끝에서 흔들리고 3장에서는 대부분 진다. 편성 칸이 셋인 이유다 — 혼자 밀 수 있는
     // 구간은 있어도 그 구간이 끝나는 자리가 분명해야 한다.
     expect(winRateAt("2-10")).toBe(0);

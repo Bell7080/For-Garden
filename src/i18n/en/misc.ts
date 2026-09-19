@@ -56,7 +56,6 @@ export const MISC_EN = {
   "archaeology.tab.research": "Trait Research",
   "archaeology.chargeCountdown": "{charges}/{max} {time}",
   "archaeology.chargeFull": "{charges}/{max}",
-  "archaeology.start": "Begin Strata Survey",
   "archaeology.digsCount": "{current}/{max}",
   "archaeology.title": "A R C H A E O L O G Y",
   "archaeology.site.garden-gate.name": "Garden Gate",

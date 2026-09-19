@@ -26,10 +26,12 @@ describe("문구 표", () => {
 
   it("의 키는 화면 이름으로 시작한다", () => {
     // 키가 어느 화면 것인지 읽히지 않으면 표가 커질 때 같은 문구가 두 번 생긴다.
-    // 뒷자리에 `_`를 허용하는 것은 계약 ID를 그대로 이어 붙여 부르는 키 때문이다
-    // (`product.action.${acquisition.kind}` → `platform_payment`). 그 ID를 화면용으로 다시
-    // 지으면 갈래가 늘 때 한쪽만 고치게 된다.
-    for (const key of Object.keys(KO)) expect(key, key).toMatch(/^[a-z][A-Za-z]*\.[A-Za-z0-9._]+$/);
+    // 뒷자리에 `_`와 `-`를 허용하는 것은 계약 ID·정적 데이터 ID를 그대로 이어 붙여 부르는 키
+    // 때문이다 (`product.action.${acquisition.kind}` → `platform_payment`,
+    // `archaeology.site.garden-gate.name`). 그 ID를 화면용으로 다시 지으면 갈래가 늘 때 한쪽만
+    // 고치게 되고, 유적 ID는 저장(해금·완료 목록)에도 들어 있어 바꾸면 저장이 깨진다.
+    // 머리 자리는 그대로 화면 이름 한 낱말이라 어느 화면 것인지는 여전히 읽힌다.
+    for (const key of Object.keys(KO)) expect(key, key).toMatch(/^[a-z][A-Za-z]*\.[A-Za-z0-9._-]+$/);
   });
 
   it("은 아무도 부르지 않는 키를 남기지 않는다", () => {

@@ -67,7 +67,6 @@ export const MISC_KO = {
   "archaeology.tab.research": "특성 연구",
   "archaeology.chargeCountdown": "{charges}/{max} {time}",
   "archaeology.chargeFull": "{charges}/{max}",
-  "archaeology.start": "지층 탐사 시작",
   "archaeology.digsCount": "{current}/{max}",
   "archaeology.title": "고 고 학",
   // 유적 지도 정적 데이터는 이 키만 참조해 표시 문장을 품지 않는다.

@@ -221,7 +221,7 @@ export const SKILL_JA = {
   "skill.clause.energyRefundOnKill": "この攻撃で倒すと必殺技ゲージを{value}取り戻す",
   "skill.clause.periodicCritical": "{every}回目ごとの実際の[[basic-attack|通常攻撃]]は確定クリティカルになる",
   "skill.clause.shallows": "攻撃した場所に[[shallows|浅瀬]]が溜まる",
-  "skill.clause.floodShallows": "その場所に広い[[shallows|浅瀬]]が{seconds}秒間あふれる",
+  "skill.clause.detonateShallows": "溜まっている[[shallows|浅瀬]]がすべてその場で弾ける",
   "skill.clause.shimmerBurst": "[[shimmer|きらっ!]]が消えるときその場で弾け、周囲の敵に[[ap|魔力]]の{percent}%の[[magical-damage|魔法ダメージ]]を与え、そのダメージの{shield}%の防御膜を得る",
   "skill.clause.blinkToLowestDefense": "使用した瞬間、防御力が最も低い敵へ[[teleport|瞬間移動]]してその敵に使う",
   "skill.clause.chargeStartsAtHp": "体力が{percent}%以下になるとチャージを始める",

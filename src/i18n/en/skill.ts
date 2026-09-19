@@ -201,7 +201,7 @@ export const SKILL_EN = {
   "skill.clause.energyRefundOnKill": "refunds {value} Ultimate gauge if this attack kills",
   "skill.clause.periodicCritical": "makes every {every}th actual [[basic-attack|basic attack]] a guaranteed critical",
   "skill.clause.shallows": "leaves [[shallows|Shallows]] pooled where it attacked",
-  "skill.clause.floodShallows": "floods wide [[shallows|Shallows]] there for {seconds}s",
+  "skill.clause.detonateShallows": "every pooled [[shallows|Shallows]] bursts where it lies",
   "skill.clause.shimmerBurst": "when [[shimmer|Sparkle!]] is removed it bursts there, dealing {percent}% of [[ap|Ability Power]] as [[magical-damage|magical damage]] to nearby enemies and granting a shield worth {shield}% of that damage",
   "skill.clause.blinkToLowestDefense": "on use, [[teleport|Teleports]] to the enemy with the lowest Defense and strikes that enemy",
   "skill.clause.chargeStartsAtHp": "starts charging once HP falls to {percent}% or below",

@@ -885,10 +885,10 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
   }
   // 여울은 **쓰는 개체가 하나뿐인 규칙어**라 반경·시간·둔화·확정 연격을 태그가 갖는다.
   // 본문이 그걸 다시 늘어놓으면 한 문장이 그 규칙 하나로 가득 찬다.
-  if ("floodShallows" in skill && skill.floodShallows !== undefined) {
-    // 반경·시간은 태그가 아니라 본문이 적는다 — 같은 규칙어를 쓰는 평타 여울과 값이 다르므로,
-    // 태그가 한쪽 수치를 못 박으면 다른 쪽 설명이 거짓말이 된다(출혈과 같은 이유다).
-    clauses.push({ text: t("skill.clause.floodShallows", { seconds: skill.floodShallows.seconds }), standalone: true });
+  if ("detonateShallows" in skill && skill.detonateShallows !== undefined) {
+    // 몇 곳이 터지는지는 판이 몇 개 깔렸느냐라 데이터에 없다 — 본문은 "깔린 것을 전부"라고만
+    // 말하고, 여울이 무엇인지는 태그가 맡는다.
+    clauses.push({ text: t("skill.clause.detonateShallows"), standalone: true });
   }
   if ("shallows" in skill && skill.shallows !== undefined) {
     clauses.push({ text: t("skill.clause.shallows"), standalone: true });

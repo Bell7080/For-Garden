@@ -242,7 +242,7 @@ export const SKILL_KO = {
   "skill.clause.energyRefundOnKill": "이 공격으로 처치하면 궁극기 게이지를 {value} 돌려받는다",
   "skill.clause.periodicCritical": "매 {every}번째 실제 [[basic-attack|기본 공격]]은 확정 치명타가 된다",
   "skill.clause.shallows": "공격한 자리에 [[shallows|여울]]이 고인다",
-  "skill.clause.floodShallows": "그 자리에 넓은 [[shallows|여울]]이 {seconds}초 동안 범람한다",
+  "skill.clause.detonateShallows": "깔려 있는 [[shallows|여울]]이 모두 그 자리에서 터진다",
   "skill.clause.shimmerBurst": "[[shimmer|반짝!]]이 사라질 때 그 자리에서 터져 주위 적에게 [[ap|주문력]]의 {percent}%만큼 [[magical-damage|마법 피해]]를 입히고, 그 피해의 {shield}%만큼 보호막을 얻는다",
   "skill.clause.blinkToLowestDefense": "쓰는 순간 방어력이 가장 낮은 적에게 [[teleport|순간이동]]해 그 적에게 쓴다",
   "skill.clause.chargeStartsAtHp": "체력이 {percent}% 이하가 되면 충전을 시작한다",

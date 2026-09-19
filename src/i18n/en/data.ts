@@ -487,7 +487,7 @@ export default {
   "keyword.focus.term": "Focus",
   "keyword.focus.description": "One stack builds each time an attack lands, held up to 15 stacks. Each stack raises Attack by 2% and range by 16, and it does not fade during the battle.",
   "keyword.shallows.term": "Shallows",
-  "keyword.shallows.description": "Shallow water pools where a basic attack landed. Only one pool is kept at a time, and each attack refreshes its position and duration. Enemies standing in it move 35% slower and take 20% more damage, and are freed the moment they step out. Striking an enemy in the Shallows always lands a 4-hit Combo.",
+  "keyword.shallows.description": "Every basic attack pools shallow water near an enemy, favouring one no ally is engaging. A pool too close to an existing one refreshes it instead of adding another. Submerged enemies move 35% slower and are freed the moment they step out. Every 4th basic attack teleports to the Shallows holding the most enemies and bursts it, dealing 40% more to those submerged. A burst pool dries up.",
   "keyword.combo.term": "Combo",
   "keyword.combo.description": "A single basic attack action lands several times. Each hit triggers its own on-hit effects and post-hit healing.",
   "keyword.missing-hp.term": "Missing HP",

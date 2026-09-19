@@ -780,14 +780,17 @@ describe("스피나 스킬 표시 계약", () => {
     expect(skillDescription(spino.basic, { damage: 100 })).toBe(
       // 회복 절이 사라지면서 쉼표도 함께 빠진다 — 쉼표는 절이 길 때만 둔다는 문장 규칙 그대로다.
       "적 한 명에게 [[damage-value|100]]의 [[physical-damage|물리 피해]]를 주고 40% 확률로 [[combo|연격]]하여 총 2회 적중한다."
-      // 여울은 쓰는 개체가 하나뿐인 규칙어라 반경·시간·감속·피해 증가·확정 연격을 **태그가**
-      // 갖는다. 본문이 그 수치를 다시 늘어놓으면 한 문장이 이 규칙 하나로 가득 찬다.
+      // 여울은 쓰는 개체가 하나뿐인 규칙어라 자리 규칙·감속·도약 주기·잠긴 적 보너스를
+      // **태그가** 갖는다. 본문이 그 수치를 다시 늘어놓으면 한 문장이 이 규칙 하나로 가득 찬다.
       + " 공격한 자리에 [[shallows|여울]]이 고인다.",
     );
-    expect(spino.basic.shallows).toMatchObject({ radius: 200, seconds: 3, moveSlowPercent: 35, guaranteesCombo: true, submergedHitCount: 4, submergedDamagePercent: 20 });
-    // 궁극기는 사냥터를 연다 — 평타 판보다 넓고 오래가는 범람이 같은 슬롯을 덮는다.
-    expect(spino.ultimate.floodShallows).toMatchObject({ radiusMultiplier: 2.5, seconds: 6 });
-    expect(skillDescription(spino.ultimate)).toContain("넓은 [[shallows|여울]]이 6초 동안 범람한다");
+    expect(spino.basic.shallows).toMatchObject({
+      radius: 200, seconds: 6, moveSlowPercent: 35,
+      behindDistance: 120, minSpacing: 260, leapEveryHits: 4, leapPower: 110, submergedLeapBonusPercent: 40,
+    });
+    // 궁극기는 깔아 둔 물을 회수한다 — 평타로 판을 까는 일과 같은 축에 선다.
+    expect(spino.ultimate.detonateShallows).toMatchObject({ power: 130 });
+    expect(skillDescription(spino.ultimate)).toContain("깔려 있는 [[shallows|여울]]이 모두 그 자리에서 터진다");
     expect(spino.ultimate).toMatchObject({ name: "범람의 포식자", power: 200, attackSpeedPower: 150, statusEffects: [{ kind: "stun", seconds: 3 }] });
     // 능력치를 모르면(대상 없이 도감만 보는 경우) 옛 %-표기로 되돌아간다.
     expect(skillDescription(spino.ultimate)).toContain("현재 [[attack-speed|공격 속도]]의 150%");

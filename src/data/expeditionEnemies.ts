@@ -13,7 +13,7 @@ import { EXPEDITION_COMBAT_BALANCE } from "./expedition";
 export const EXPEDITION_ENEMY_FORMATIONS: Record<ExpeditionNodeType, readonly [string, string, string]> = {
   normal: ["toby", "amo", "ripa"],
   // 정예 조우에는 1장 중간보스 코마를 넣어 영구 적 정의가 원정에서도 실제 편성으로 검증되게 한다.
-  elite: ["amo", "husk-koma", "ripa"],
+  elite: ["amo", "koma", "ripa"],
   horde: ["ripa", "toby", "amo"],
   boss: ["amo", "ripa", "toby"],
   // 비전투 노드는 표시/전투 함수에서 호출하지 않지만 완전한 타입 표를 유지한다.

@@ -19,7 +19,7 @@ function expectCompleteIdentity(relic: RelicDef): void {
 describe("적 및 강화형 캐릭터 정체성", () => {
   it("은 적 전용 캐릭터도 필수 능력치와 스킬을 완전하게 직접 소유한다", () => {
     const enemies = RELICS.filter((relic) => relic.enemyOnly === true);
-    expect(enemies.map(({ id }) => id)).toContain("husk-koma");
+    expect(enemies.map(({ id }) => id)).toContain("koma");
     for (const enemy of enemies) expectCompleteIdentity(enemy);
   });
 

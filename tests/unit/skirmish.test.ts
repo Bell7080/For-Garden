@@ -442,7 +442,7 @@ describe("스피나 전투 계약", () => {
     return { state, spino, target };
   }
 
-  it("은 40% 연격의 두 적중을 독립 사건으로 만들고 각각 공속과 잃은 체력 회복을 쌓는다", () => {
+  it("은 40% 연격의 두 적중을 독립 사건으로 만들고 공속만 쌓으며 회복은 돌리지 않는다", () => {
     const { state, spino } = readySpino();
     spino.hp = spino.maxHp / 2;
     // 연격(0.39), 첫/둘째 치명타 실패 순으로 소비한다.
@@ -450,8 +450,11 @@ describe("스피나 전투 계약", () => {
     const events = stepSkirmish(state, 1 / 60, () => rolls.shift() ?? 0.99);
     expect(events.filter((event) => event.kind === "attack")).toHaveLength(2);
     expect(spino.bonusAttackSpeed).toBe(6);
-    // 연격마다 그 시점의 잃은 체력 5%를 회복하므로 두 번 독립적으로 복리 적용된다.
-    expect(spino.hp).toBeCloseTo(spino.maxHp * (1 - 0.5 * 0.95 * 0.95));
+    // **연격은 더 이상 회복하지 않는다.** 암살자는 보장된 자가 수급을 갖지 않는다는 직군
+    // 계약 때문이고, 그 몫은 여울에 잠긴 적에게 주는 피해로 옮겼다. 한 점도 차오르지
+    // 않아야 하므로 "적게 찬다"가 아니라 **그대로**임을 고정한다.
+    expect(spino.hp).toBe(spino.maxHp / 2);
+    expect(events.some((event) => event.kind === "heal")).toBe(false);
   });
 
   it("은 첫 공격 뒤 발밑에 여울을 남기고, 마르면 판이 사라진다", () => {
@@ -486,19 +489,35 @@ describe("스피나 전투 계약", () => {
     expect(moveSpeed(target)).toBeCloseTo(walked);
   });
 
-  it("은 여울에 잠긴 적에게 연격을 확정으로 넣되 메워 준 한 대는 회복도 공속 누적도 돌리지 않는다", () => {
+  it("은 여울에 잠긴 적에게 연격을 네 번 확정으로 넣되 메워 준 대는 공속 누적을 돌리지 않는다", () => {
     const { state, spino } = readySpino();
     spino.hp = spino.maxHp / 2;
     stepSkirmish(state, 1 / 60, () => 0.99);
     const hp = spino.hp;
     const speed = spino.bonusAttackSpeed;
     spino.attackCooldown = 0;
-    // 연격 판정은 빗나가지만(0.99) 물가에서는 두 번째 이빨이 들어간다.
+    // 연격 판정은 빗나가지만(0.99) 물가에서는 `submergedHitCount`만큼 확정으로 들어간다.
     const events = stepSkirmish(state, 1 / 60, () => 0.99);
-    expect(events.filter((event) => event.kind === "attack")).toHaveLength(2);
-    // 물이 메워 준 몫이라 공속 누적은 한 번(+3)뿐이고 잃은 체력 회복도 한 번만 돈다.
+    expect(events.filter((event) => event.kind === "attack")).toHaveLength(spino.def.basic.shallows!.submergedHitCount);
+    // 물이 메워 준 몫이라 공속 누적은 한 번(+3)뿐이고, 회복은 어느 쪽으로도 돌지 않는다.
     expect(spino.bonusAttackSpeed - speed).toBe(spino.def.passive.value);
-    expect(spino.hp - hp).toBeCloseTo((spino.maxHp - hp) * 0.05);
+    expect(spino.hp).toBe(hp);
+  });
+
+  it("은 여울에 잠긴 적에게만 피해를 20% 더 준다", () => {
+    const dry = readySpino();
+    // 마른 땅에서 낸 첫 한 방이 기준이다 — 물은 이 타격이 나간 **뒤에** 고인다.
+    const dryHit = stepSkirmish(dry.state, 1 / 60, () => 0.99).find((event) => event.kind === "attack")!;
+    const wet = readySpino();
+    stepSkirmish(wet.state, 1 / 60, () => 0.99);
+    // 잠김 판정은 여울의 시계가 흐른 뒤 한 번에 돌므로, 물이 고인 다음 프레임부터 잠긴다.
+    stepSkirmish(wet.state, 1 / 60, () => 0.99);
+    expect(wet.target.submergedIn).not.toBeNull();
+    wet.spino.attackCooldown = 0;
+    const wetHit = stepSkirmish(wet.state, 1 / 60, () => 0.99).find((event) => event.kind === "attack")!;
+    expect(wetHit.amount).toBeGreaterThan(dryHit.amount);
+    // 방어·상성 뒤의 최종 경계에서 한 번만 곱하므로 비율이 그대로 남는다.
+    expect(wetHit.amount / dryHit.amount).toBeCloseTo(1.2, 1);
   });
 
   it("은 확률로 터진 연격까지 물이 갉아먹지 않는다", () => {
@@ -558,8 +577,19 @@ describe("스피나 전투 계약", () => {
     // 실제 피해는 아래 공용 함수에서 방어 적용 후 정수로 반올림하므로, 복합 원피해 산식과 구분한다.
     const equivalentPower = 200 + speed * 150 / spino.def.stats.atk;
     const expected = computeDamage(spino, target, { ...ultimate, power: equivalentPower, kind: "ultimate", isCritical: false });
+    /*
+     * **범람이 먼저 깔리고 그 위에서 문다.** 궁극기가 자리를 잡은 뒤 물을 고이게 하므로 이
+     * 한 방부터 표적이 잠긴 상태이고, 여울의 피해 증가가 그대로 곱해진다 — 사냥터를 열고
+     * 자기가 먼저 무는 것이 이 궁극기의 순서다.
+     */
+    const submerged = Math.round(expected * (1 + spino.def.basic.shallows!.submergedDamagePercent / 100));
     const hit = fireUltimate(state, spino.id).find((event) => event.kind === "attack");
-    expect(hit).toMatchObject({ amount: expected });
+    expect(hit).toMatchObject({ amount: submerged });
+    // 범람한 판은 평타 여울보다 넓고 오래간다.
+    expect(spino.shallows).toMatchObject({
+      radius: spino.def.basic.shallows!.radius * ultimate.floodShallows!.radiusMultiplier,
+      total: ultimate.floodShallows!.seconds,
+    });
     expect(target.stunnedFor).toBe(3);
     expect(spino.energy).toBe(0);
   });

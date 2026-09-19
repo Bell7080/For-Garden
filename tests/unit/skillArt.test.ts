@@ -250,8 +250,14 @@ describe("데이 스킬 표시 계약", () => {
 
   it("의 패시브와 폭주는 구조화 필드에서 문장을 짓는다", () => {
     expect(passiveDescription(deina.passive)).toBe(
-      "[[basic-attack|기본 공격]]을 낼 때마다 아직 때리지 않은 적으로 표적을 바꾼다. 모든 적을 때렸다면 처음부터 다시 돈다."
-      + " 다른 전투원을 그대로 지나가고, 타격하는 순간까지 멈추지 않고 움직이며, 움직이는 동안 매초 궁극기 게이지가 6, [[ferocity|야성]]이 2.5씩 더 찬다.",
+      // "모두 때렸다면 처음부터 다시 돈다"는 걷어 냈다 — 앞 절이 이미 말하는 당연한 귀결이라
+      // 한 줄을 더 읽게 할 뿐이다. 유체화와 멈추지 않는 움직임은 한 문장으로 합쳤다.
+      "[[basic-attack|기본 공격]]을 낼 때마다 아직 때리지 않은 적으로 표적을 바꾼다."
+      + " 멈추지 않고 움직이며 다른 전투원을 그대로 지나간다."
+      + " 움직이는 동안 매초 궁극기 게이지가 6, [[ferocity|야성]]이 2.5씩 더 찬다."
+      // 탱커 계약이 요구하는 생존기다. 초당 상한을 함께 말하지 않으면 폭주가 주위 전부를
+      // 도발하는 개체라 "적이 많을수록 그만큼 찬다"로 읽힌다.
+      + " 적을 [[taunt|도발]]할 때마다 잃은 체력의 5%를 회복한다. 회복은 1초에 2번까지 발동한다.",
     );
     // 폭주의 첫 절이 "때리지 않는다"인 이유는 화면에서 확인할 첫 변화가 그것이기 때문이다.
     // 도발이 그 뒤에 붙는 것이 이 폭주의 핵심이다 — 손을 놓아도 어그로는 꺼지지 않는다.
@@ -435,8 +441,20 @@ describe("렉시아 스킬 표시 계약", () => {
 describe("폰토스 스킬 표시 계약", () => {
   it("의 패시브는 복리 누적률과 체력별 내구력 경계를 모두 명시한다", () => {
     const pontos = RELICS.find((def) => def.id === "pontos")!;
+    /*
+     * 세 수치(복리 누적률 · 체력별 경감 띠 · 무효화 문턱)는 그대로 두되 문장을 줄였다.
+     *
+     * "완전히 경과한" · "선형으로 증가하며" · "그 이하에서는 최대치로 제한된다"는 구현을
+     * 설명하는 말이라 플레이어의 조작을 바꾸지 않는다. 능력치 이름은 규칙어 태그로 걸어
+     * 눌러서 열 수 있게 한다.
+     */
     expect(passiveDescription(pontos.passive)).toBe(
-      "완전히 경과한 매초 기본 [[ap|주문력]]의 2%가 복리로 누적된다. 현재 체력이 최대 체력의 100%에서 50%로 낮아질수록 받는 모든 피해 감소가 50%에서 99%까지 선형으로 증가하며, 그 이하에서는 최대치로 제한된다. 최종 받는 피해가 10 이하인 공격은 무효화한다.",
+      "매초 [[ap|주문력]]이 2%씩 복리로 오른다."
+      + " [[hp|체력]]이 최대의 50%까지 낮아질수록 받는 모든 피해가 50%에서 99%까지 줄고, 10 이하의 피해는 무효가 된다.",
+    );
+    // 폭주도 같은 규칙으로 태그를 건다 — 고정 피해가 무엇인지는 규칙어가 말한다.
+    expect(ferocityTraitDescription(pontos.ferocityTrait)).toBe(
+      "매초 전장의 모든 적에게 최대 [[hp|체력]]의 2%에 해당하는 [[fixed-damage|고정 피해]]를 주고 모든 회복을 막는다.",
     );
   });
 });
@@ -748,19 +766,28 @@ describe("스피나 스킬 표시 계약", () => {
     expect(spino.ferocityTrait).toMatchObject({ name: "잠행", durationSeconds: 3, leapTarget: "lowestHpEnemy", landingDistance: 172 });
     // 잠행의 내부 도약 ID와 별개로 플레이어 설명은 실제 규칙인 순간이동 키워드를 제공한다.
     expect(ferocityTraitDescription(spino.ferocityTrait)).toContain("[[teleport|순간이동]]");
-    expect(ferocityTraitDescription(spino.ferocityTrait)).toContain("3초 동안 [[stealth|은신]]한다");
+    // 잠행은 도약과 여울이 한 동작이다 — 내려선 자리가 곧 사냥터라 문장을 끊지 않는다.
+    expect(ferocityTraitDescription(spino.ferocityTrait)).toContain("3초 동안 [[stealth|은신]]하고");
+    expect(ferocityTraitDescription(spino.ferocityTrait)).toContain("내려선 자리에 [[shallows|여울]]이 고인다");
     expect(spino.passive).toMatchObject({ name: "전투의 환희", kind: "basicHitAttackSpeedStack", value: 3 });
     expect(passiveDescription(spino.passive)).toContain("[[attack-speed|공격 속도]]가 3 증가");
     // 태생 치명타는 전 개체 공통이라, 암살자의 치명타형 정체성을 패시브가 문장으로 말한다.
     expect(passiveDescription(spino.passive)).toContain(`치명타 확률이 ${spino.passive.criticalChancePercent}% 오른다`);
-    expect(spino.basic).toMatchObject({ name: "악어턱 물어뜯기", power: 80, combo: { chancePercent: 40, hitCount: 2, missingHpHealingPercentPerHit: 5 } });
+    // 연격에 달려 있던 회복은 걷어 냈다 — 암살자는 보장된 자가 수급을 갖지 않는다는 직군
+    // 계약 때문이고, 그 몫은 여울에 잠긴 적에게 주는 피해로 옮겼다.
+    expect(spino.basic).toMatchObject({ name: "악어턱 물어뜯기", power: 80, combo: { chancePercent: 40, hitCount: 2 } });
+    expect(spino.basic.combo).not.toHaveProperty("missingHpHealingPercentPerHit");
     expect(skillDescription(spino.basic, { damage: 100 })).toBe(
-      "적 한 명에게 [[damage-value|100]]의 [[physical-damage|물리 피해]]를 주고, 40% 확률로 [[combo|연격]]하여 총 2회 적중한다. "
-      + "매 적중 뒤 [[missing-hp|잃은 체력]]의 5%를 회복한다."
-      // 여울은 쓰는 개체가 하나뿐인 규칙어라 반경·시간·감속·확정 연격을 **태그가** 갖는다.
-      // 본문이 그 수치를 다시 늘어놓으면 한 문장이 이 규칙 하나로 가득 찬다.
+      // 회복 절이 사라지면서 쉼표도 함께 빠진다 — 쉼표는 절이 길 때만 둔다는 문장 규칙 그대로다.
+      "적 한 명에게 [[damage-value|100]]의 [[physical-damage|물리 피해]]를 주고 40% 확률로 [[combo|연격]]하여 총 2회 적중한다."
+      // 여울은 쓰는 개체가 하나뿐인 규칙어라 반경·시간·감속·피해 증가·확정 연격을 **태그가**
+      // 갖는다. 본문이 그 수치를 다시 늘어놓으면 한 문장이 이 규칙 하나로 가득 찬다.
       + " 공격한 자리에 [[shallows|여울]]이 고인다.",
     );
+    expect(spino.basic.shallows).toMatchObject({ radius: 200, seconds: 3, moveSlowPercent: 35, guaranteesCombo: true, submergedHitCount: 4, submergedDamagePercent: 20 });
+    // 궁극기는 사냥터를 연다 — 평타 판보다 넓고 오래가는 범람이 같은 슬롯을 덮는다.
+    expect(spino.ultimate.floodShallows).toMatchObject({ radiusMultiplier: 2.5, seconds: 6 });
+    expect(skillDescription(spino.ultimate)).toContain("넓은 [[shallows|여울]]이 6초 동안 범람한다");
     expect(spino.ultimate).toMatchObject({ name: "범람의 포식자", power: 200, attackSpeedPower: 150, statusEffects: [{ kind: "stun", seconds: 3 }] });
     // 능력치를 모르면(대상 없이 도감만 보는 경우) 옛 %-표기로 되돌아간다.
     expect(skillDescription(spino.ultimate)).toContain("현재 [[attack-speed|공격 속도]]의 150%");
@@ -971,7 +998,7 @@ describe("파치 스킬 표시 계약", () => {
 });
 
 describe("코마 스킬 표시 계약", () => {
-  const koma = () => RELICS.find((def) => def.id === "husk-koma")!;
+  const koma = () => RELICS.find((def) => def.id === "koma")!;
 
   it("의 패시브는 주기와 그 한 방만 말한다", () => {
     const def = koma();

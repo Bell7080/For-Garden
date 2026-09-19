@@ -158,7 +158,12 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   if (trait.effectId === "teamMoveSpeedBonus") return t("skill.ferocity.teamMoveSpeedBonus", { percent: trait.bonusPercent });
   if (trait.effectId === "rexBattleQueen") return t("skill.ferocity.rexBattleQueen", { percent: trait.allDamageLifeStealPoints });
   // 내부 효과명은 저장 호환성을 위해 도약으로 유지하지만, 플레이어에게는 실제 좌표 변경 규칙을 정확히 알린다.
-  if (trait.effectId === "stealthLeap") return t("skill.ferocity.stealthLeap", { seconds: trait.durationSeconds });
+  if (trait.effectId === "stealthLeap") {
+    // 내려선 자리에 물이 고이는지는 같은 문장의 끝에 붙는다 — 도약과 여울이 한 동작이라
+    // 문장을 끊으면 "옮겨 간 다음 따로 깐다"로 읽힌다.
+    const key = trait.landingShallows ? "skill.ferocity.stealthLeap.shallows" : "skill.ferocity.stealthLeap";
+    return t(key, { seconds: trait.durationSeconds });
+  }
   if (trait.effectId === "selfAttackSpeedMultiplier") {
     // 고친 자리에 한 겹 덮는 몫은 손이 빨라지는 것과 다른 축이라 제 절로 선다.
     return trait.healingShieldPercent === undefined
@@ -309,7 +314,46 @@ export function passiveShieldKeyword(passive: Passive, atk?: number): KeywordDef
  * 개체마다 손으로 적으면 수치를 조정한 뒤 옛 문장이 남는다.
  */
 export function passiveDescription(passive: Passive, atk?: number): string {
-  return [passiveHead(passive, atk), passiveCriticalClause(passive)].filter(Boolean).join(" ");
+  return [
+    passiveOpeningStealthClause(passive), passiveHead(passive, atk),
+    passiveFrenzyDrainClause(passive), passiveTauntHealClause(passive), passiveCriticalClause(passive),
+  ].filter(Boolean).join(" ");
+}
+
+/**
+ * 전투를 여는 은신의 공통 절.
+ *
+ * 패시브 종류가 아니라 `openingStealthSeconds` 한 필드를 읽으므로, 같은 시작 은신을 갖는
+ * 개체가 늘어도 문장을 개체마다 다시 적지 않는다. 델로피처럼 **제 머리글이 이미 그 말을
+ * 하는** 종류만 빼 두 번 말하지 않게 한다.
+ */
+/**
+ * 돌려세운 적이 낸 피해를 빨아들이는 공통 절.
+ *
+ * 여는 은신과 같은 이유로 `frenzyLifeStealPercent` 한 필드만 읽는다 — 패시브 종류로 가르면
+ * 같은 수급을 갖는 다음 개체마다 분기를 하나씩 더 만들어야 한다.
+ */
+function passiveFrenzyDrainClause(passive: Passive): string {
+  if (passive.frenzyLifeStealPercent === undefined) return "";
+  return t("skill.passive.frenzyDrain", { percent: passive.frenzyLifeStealPercent });
+}
+
+/**
+ * 도발한 만큼 돌아오는 회복의 공통 절.
+ *
+ * 초당 상한을 함께 적는다 — 폭주가 주위 전부를 매초 도발하는 개체에서 그 수가 없으면
+ * 플레이어가 "적이 많을수록 그만큼 찬다"로 읽고 실제보다 크게 셈한다.
+ */
+function passiveTauntHealClause(passive: Passive): string {
+  if (passive.tauntHeal === undefined) return "";
+  return t("skill.passive.tauntHeal", {
+    percent: passive.tauntHeal.missingHpPercent, count: passive.tauntHeal.maxPerSecond,
+  });
+}
+
+function passiveOpeningStealthClause(passive: Passive): string {
+  if (passive.openingStealthSeconds === undefined || passive.kind === "openingVanish") return "";
+  return t("skill.passive.openingStealth", { seconds: passive.openingStealthSeconds });
 }
 
 /**
@@ -762,8 +806,7 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
   }
   const combo = "combo" in skill ? skill.combo : undefined;
   if (combo) {
-    clauses.push({ text: t("skill.clause.combo", { percent: combo.chancePercent, hits: combo.hitCount }), joinWithComma: true });
-    clauses.push({ text: t("skill.clause.comboHeal", { percent: combo.missingHpHealingPercentPerHit }) });
+    clauses.push({ text: t("skill.clause.combo", { percent: combo.chancePercent, hits: combo.hitCount }) });
   }
   if ("damageHealingPercent" in skill && skill.damageHealingPercent !== undefined) {
     clauses.push({ text: t("skill.clause.damageHealing", { percent: skill.damageHealingPercent }), joinWithComma: true });
@@ -827,6 +870,11 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
   }
   // 여울은 **쓰는 개체가 하나뿐인 규칙어**라 반경·시간·둔화·확정 연격을 태그가 갖는다.
   // 본문이 그걸 다시 늘어놓으면 한 문장이 그 규칙 하나로 가득 찬다.
+  if ("floodShallows" in skill && skill.floodShallows !== undefined) {
+    // 반경·시간은 태그가 아니라 본문이 적는다 — 같은 규칙어를 쓰는 평타 여울과 값이 다르므로,
+    // 태그가 한쪽 수치를 못 박으면 다른 쪽 설명이 거짓말이 된다(출혈과 같은 이유다).
+    clauses.push({ text: t("skill.clause.floodShallows", { seconds: skill.floodShallows.seconds }), standalone: true });
+  }
   if ("shallows" in skill && skill.shallows !== undefined) {
     clauses.push({ text: t("skill.clause.shallows"), standalone: true });
   }

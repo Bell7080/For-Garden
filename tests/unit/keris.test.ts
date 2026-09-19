@@ -55,6 +55,9 @@ describe("저주 전이", () => {
       clearStun(keris);
       park();
       keris.targetId = primary.id;
+      // 이 편이 재는 것은 전이뿐이라 주 표적은 쓰러지지 않아야 한다. 케리스의 공격 속도가
+      // 오르자 3초 안에 토리카가 먼저 죽어, 아래 전이 구간이 통째로 빈 채로 통과했다.
+      primary.hp = primary.maxHp;
       if (primary.curse) primary.curse.stacks = 1;
     }
     expect(neighbour.hp).toBe(untouched);
@@ -63,7 +66,12 @@ describe("저주 전이", () => {
     for (let frame = 0; frame < 60 * 8 && state.phase === "fight"; frame += 1) {
       stepSkirmish(state, 1 / 60, () => 0.99);
       clearStun(keris);
+      // 렉시아도 계속 묶어 둔다. 풀어 두면 케리스에게 파고들어 흡혈로 제 체력을 도로 채우는데,
+      // 아래 판정이 "전이로 깎였는가"를 남은 체력으로 재므로 그 회복이 전이를 통째로 지운다
+      // (실제로 전이가 980 → 956까지 깎은 뒤 8초 끝에 980으로 돌아와 있었다).
+      park();
       keris.targetId = primary.id;
+      primary.hp = primary.maxHp;
       if (primary.curse) primary.curse.stacks = 3;
     }
     // 옆 적은 맞기만 하는 것이 아니라 저주도 함께 받는다 — 이어지는 몫의 값은 그쪽이다.

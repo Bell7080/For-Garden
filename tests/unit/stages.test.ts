@@ -52,13 +52,13 @@ describe("stage enemy design", () => {
     expect(ladder).toEqual([
       { 아모: [4, 0, 1], 토비: [4, 0, 1], 리파: [4, 0, 1] },
       { 아모: [5, 0, 2], 토비: [5, 0, 2], 리파: [5, 0, 2] },
-      { 아모: [6, 0, 2], 토비: [6, 0, 2], 리파: [6, 0, 2] },
-      { 아모: [7, 0, 2], 토비: [7, 0, 2], 리파: [7, 0, 2] },
+      { 아모: [6, 0, 3], 토비: [6, 0, 3], 리파: [6, 0, 3] },
+      { 아모: [7, 0, 4], 토비: [7, 0, 4], 리파: [7, 0, 4] },
       { 토비: [7, 0, 20] },
-      { 아모: [8, 0, 3], 토비: [8, 0, 3], 리파: [8, 0, 3] },
-      { 아모: [9, 0, 3], 토비: [9, 0, 3], 리파: [9, 0, 3] },
+      { 아모: [8, 0, 4], 토비: [8, 0, 4], 리파: [8, 0, 4] },
       { 아모: [9, 0, 4], 토비: [9, 0, 4], 리파: [9, 0, 4] },
-      { 아모: [10, 0, 4], 토비: [10, 0, 4], 리파: [10, 0, 4] },
+      { 아모: [9, 0, 5], 토비: [9, 0, 5], 리파: [9, 0, 5] },
+      { 아모: [10, 0, 5], 토비: [10, 0, 5], 리파: [10, 0, 5] },
       { 코마: [10, 0, 14] },
     ]);
     /*
@@ -166,8 +166,8 @@ describe("stage enemy design", () => {
     // 정예 배율은 그 관문에만 든다. 같은 값이라도 잡졸로 세면 세 배다.
     expect(effectiveEnemyLevel(elite.enemies[0])).toBe(elite.enemies[0].level + 42);
     const mob = battles.find((stage) => stage.id === "1-9")!;
-    expect(mob.enemies[0].ferocityLevel).toBe(4);
-    expect(effectiveEnemyLevel(mob.enemies[0])).toBe(mob.enemies[0].level + 12);
+    expect(mob.enemies[0].ferocityLevel).toBe(5);
+    expect(effectiveEnemyLevel(mob.enemies[0])).toBe(mob.enemies[0].level + 15);
   });
 
   it("야성 추가 레벨은 0 이상의 정수이고 실효 레벨은 관문 순서를 따라 내려가지 않는다", () => {

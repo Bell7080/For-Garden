@@ -95,7 +95,7 @@ export interface ShopStagePresentation {
  * 쓰기 시작하면 자리가 하나 늘 때마다 씬이 길어지고, 점원만 바꾸고 배경을 빠뜨리는 사고가
  * 난다. 한 자리가 갖는 것 전부가 여기 한 줄이다.
  */
-export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology", ShopStagePresentation>> = {
+export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "raid", ShopStagePresentation>> = {
   shop: {
     merchant: SHOP_MERCHANT,
     lineKeys: SHOP_MERCHANT_LINE_KEYS,
@@ -112,9 +112,28 @@ export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology", Sh
     // 자리다. 키가 오비보다 작은 것은 원화가 넓기 때문이지 인물이 작아서가 아니다.
     merchantSpot: { headX: 744, height: 1010 },
   },
+  /**
+   * 레이드 상점도 **프로티아가 맡는다.**
+   *
+   * 전용 점원 원화가 아직 없어서인데, 아무나 세우지 않고 프로티아를 고른 이유는 현장에서
+   * 값을 매기는 연구가라 토벌하고 돌아온 사람과 증표를 주고받는 자리가 어색하지 않기
+   * 때문이다. 전용 원화가 준비되면 이 줄의 `merchant`와 `lineKeys`만 바꾼다.
+   *
+   * 배경만은 레이드 제 것을 쓴다 — 무대 뒤가 고고학 상점과 같으면 같은 가게로 읽힌다.
+   */
+  raid: {
+    merchant: ARCHAEOLOGY_MERCHANT,
+    lineKeys: ARCHAEOLOGY_MERCHANT_LINE_KEYS,
+    background: BACKGROUND.sortieRaid,
+    titleKey: "shop.raid.title",
+    // 같은 원화라 고고학 상점과 같은 자리를 쓴다. 자리는 점원이 정하지 무대가 정하지 않는다.
+    merchantSpot: { headX: 744, height: 1010 },
+  },
 };
 
 /** 무역·프리미엄은 이 씬을 쓰지 않으므로 일반 상점 무대로 떨어뜨린다. */
 export function shopStagePresentation(storefront: ProductStorefront): ShopStagePresentation {
-  return storefront === "archaeology" ? SHOP_STAGE_PRESENTATION.archaeology : SHOP_STAGE_PRESENTATION.shop;
+  if (storefront === "archaeology") return SHOP_STAGE_PRESENTATION.archaeology;
+  if (storefront === "raid") return SHOP_STAGE_PRESENTATION.raid;
+  return SHOP_STAGE_PRESENTATION.shop;
 }

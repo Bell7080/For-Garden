@@ -58,12 +58,15 @@ import type { MotionPlayback } from "../puppets/assets";
 import { ultimatePresentationFor } from "../data/ultimatePresentations";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { anyPopupOpen, PopupLayer } from "../ui/PopupLayer";
-import { battleHeaderText, createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
+import { battleHeaderText, createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, createRaidSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
+import { raidBossDef } from "../core/raid";
+import { RAID_SEASON_BOSS } from "../data/raid";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import { expeditionManager, ExpeditionBossSettlementError, ExpeditionBossSettlementFlow } from "../managers/ExpeditionManager";
 import { settingsManager } from "../managers/SettingsManager";
 import { motionPolicy, type MotionPolicy } from "../core/settings";
-import type { SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse } from "../api/contracts";
+import type { SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse, SubmitRaidDamageResponse } from "../api/contracts";
+import { GameApiError } from "../api/contracts";
 import { currencyRecordToRewardItems } from "../ui/RewardPopup";
 import { BATTLE_CONTROLS, BATTLE_STATUS_LAYOUT } from "../ui/battleStatusLayout";
 import { UnitStatusChips } from "../ui/UnitStatusChips";
@@ -288,6 +291,8 @@ export class BattleScene extends Phaser.Scene {
   private finished = false;
   /** 보스 제출에는 코어가 실제로 낸 공격 종류와 시각만 기록하며 피해 숫자는 넣지 않는다. */
   private bossActions: ExpeditionBossAction[] = [];
+  /** 레이드 제출의 멱등 키. 재시도가 같은 ID를 써야 성공한 제출이 두 번 쌓이지 않는다. */
+  private raidRequestId?: string;
   /** 성공 응답은 결과 UI보다 오래 살아 UI 생성 중단 뒤에도 같은 영수증으로 복구된다. */
   private readonly bossSettlement = new ExpeditionBossSettlementFlow(gameApi, expeditionManager);
   /** 요청 잠금과 실패판 세대를 함께 보관해 연타와 재시도 UI 중첩을 막는다. */
@@ -395,9 +400,12 @@ export class BattleScene extends Phaser.Scene {
     // 원정은 노드 정보창과 같은 정적 편성/레벨 정의를 읽고, 스토리만 스테이지 적을 읽는다.
     const stageEnemies = this.battleInput.mode === "expedition"
       ? getExpeditionNodeEnemies(this.battleInput.nodeType, this.battleInput.floor)
-      : this.battleInput.mode === "expeditionBoss" ? getExpeditionNodeEnemies("boss", 20) : getStageEnemies(stage);
+      : this.battleInput.mode === "expeditionBoss" ? getExpeditionNodeEnemies("boss", 20)
+        // 레이드 보스의 성장은 서버 재현과 **같은 함수**를 지난다. 씬이 레벨을 다시 구하지 않는다.
+        : this.battleInput.mode === "raid" ? [raidBossDef(getRelic(RAID_SEASON_BOSS.relicId))] : getStageEnemies(stage);
     const expeditionConfig = this.battleInput.mode === "expedition" ? createExpeditionSkirmishConfig(this.battleInput, players, stageEnemies)
-      : this.battleInput.mode === "expeditionBoss" ? createExpeditionBossSkirmishConfig(this.battleInput, players, stageEnemies) : null;
+      : this.battleInput.mode === "expeditionBoss" ? createExpeditionBossSkirmishConfig(this.battleInput, players, stageEnemies)
+        : this.battleInput.mode === "raid" ? createRaidSkirmishConfig(players, stageEnemies[0]) : null;
     // 편성이 낀 룬의 특성은 어느 전투에서나 돈다 — 원정 증강과 **같은 계약**을 쓰므로 두 몫이
     // 한 배열에서 만난다. 장착 목록을 읽는 일은 씬이 하고, 효과로 옮기는 일은 코어가 한다.
     const traitEffects = partyRuneTraitEffects(partyIds.map((id) => ({
@@ -410,7 +418,7 @@ export class BattleScene extends Phaser.Scene {
       playerInitialStates: expeditionConfig.playerInitialStates,
       augmentEffects: [...expeditionConfig.augmentEffects, ...traitEffects],
       enemyBodyScale: expeditionConfig.enemyBodyScale,
-      ...(this.battleInput.mode === "expeditionBoss" ? { boss: (expeditionConfig as ReturnType<typeof createExpeditionBossSkirmishConfig>).boss } : {}),
+      ...(this.battleInput.mode === "expeditionBoss" || this.battleInput.mode === "raid" ? { boss: (expeditionConfig as ReturnType<typeof createExpeditionBossSkirmishConfig>).boss } : {}),
     } : {
       // 일반 스테이지의 적도 능력치뿐 아니라 스킬 돌파 효과까지 슬롯별 스냅샷을 사용한다.
       // 능력치 복사본과 같은 formationSlot 순서로 돌파 스킬 스냅샷을 맞춘다.
@@ -430,6 +438,7 @@ export class BattleScene extends Phaser.Scene {
     // 이전 씬의 tween 종료보다 재진입이 빠르더라도 표시 관찰값은 새 전투에서 0부터 시작한다.
     this.healPopups = 0;
     this.bossActions = [];
+    this.raidRequestId = undefined;
     // 이전 전투/환경설정에서 저장한 조작 상태를 새 판의 시작값으로 그대로 복원한다.
     const currentSettings = settingsManager.get();
     const battleSettings = currentSettings.game;
@@ -455,12 +464,12 @@ export class BattleScene extends Phaser.Scene {
     this.effects.setArena(this.state.arena);
 
     // 편성 화면에서 본 6번 전장을 그대로 이어 실제 전투의 공간으로 사용한다.
-    addSceneBackground(this, this.battleInput.mode === "expedition" || this.battleInput.mode === "expeditionBoss" ? BACKGROUND.expeditionField : BACKGROUND.combat, -30);
+    addSceneBackground(this, this.battleInput.mode === "raid" ? BACKGROUND.raidField : this.battleInput.mode === "expedition" || this.battleInput.mode === "expeditionBoss" ? BACKGROUND.expeditionField : BACKGROUND.combat, -30);
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.28).setDepth(-29);
     // 원정 헤더는 스토리 선택 상태를 전혀 읽지 않아 잘못된 모드 진입을 화면에서도 드러낸다.
     this.add.text(42, 48, battleHeaderText(this.battleInput, stage), textStyle({ role: "body", size: 30, color: COLOR.inkDim }));
     this.add.text(BASE_WIDTH / 2, 160, "AUTO BATTLE", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5);
-    if (this.battleInput.mode === "expeditionBoss") this.buildBossScoreHud();
+    if (this.battleInput.mode === "expeditionBoss" || this.battleInput.mode === "raid") this.buildBossScoreHud();
 
     this.buildBattleControls();
 
@@ -522,6 +531,70 @@ export class BattleScene extends Phaser.Scene {
       failureUi.add(new Button(this, BASE_WIDTH / 2, 1140, { width: 460, height: 90, label: t("battle.settle.recoverLobby"), onClick: () => this.recoverBossSettlementToLobby() }));
       this.bossSettlementFailureUi = failureUi;
     }
+  }
+
+
+  /**
+   * 레이드 한 판을 서버에 확정하고 결과판을 연다.
+   *
+   * 원정 정산과 갈라 두는 이유는 **정산할 런이 없기 때문이다** — 레이드는 지도도 잔여 체력도
+   * 없이 한 판이 곧 제출 하나라, 원정의 런 정산 체인을 그대로 태우면 있지도 않은 런을 찾는다.
+   * 실패했을 때의 손짓(같은 요청 ID로 재시도 · 로비로 되돌아가기)은 원정과 같다.
+   */
+  private async submitRaidRun(actions: ExpeditionBossAction[]): Promise<void> {
+    if (!beginBossSettlementAttempt(this.bossSettlementFailureState)) return;
+    this.bossSettlementFailureUi?.destroy(true);
+    this.bossSettlementFailureUi = undefined;
+    // 요청 ID는 한 판에 하나다 — 재시도가 새 ID를 만들면 성공한 제출이 두 번 쌓인다.
+    this.raidRequestId ??= `raid-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
+    try {
+      const result = await gameApi.submitRaidDamage({ requestId: this.raidRequestId, actions });
+      completeBossSettlementAttempt(this.bossSettlementFailureState);
+      this.showRaidResult(result);
+    } catch (error) {
+      console.error("[raid] 피해 제출 실패", error);
+      failBossSettlementAttempt(this.bossSettlementFailureState);
+      const code = error instanceof GameApiError ? error.code : undefined;
+      const reason = code === "RAID_SCORE_REJECTED" ? t("battle.settle.scoreRejected")
+        : code === "PERSISTENCE_FAILED" ? t("battle.settle.persistenceFailed")
+          : t("battle.settle.failed");
+      const failureUi = this.add.container(0, 0).setDepth(5000);
+      failureUi.add(this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.96));
+      failureUi.add(this.add.text(BASE_WIDTH / 2, 850, reason, textStyle({ role: "body", size: 27, color: COLOR.dangerText, align: "center", wrap: BASE_WIDTH - 220 })).setOrigin(0.5));
+      failureUi.add(new Button(this, BASE_WIDTH / 2, 1010, { width: 460, height: 100, label: t("battle.settle.retry"), variant: "primary", onClick: () => void this.submitRaidRun(actions) }));
+      failureUi.add(new Button(this, BASE_WIDTH / 2, 1140, { width: 460, height: 90, label: t("battle.settle.recoverLobby"), onClick: () => this.recoverBossSettlementToLobby() }));
+      this.bossSettlementFailureUi = failureUi;
+    }
+  }
+
+  /**
+   * 레이드 결과판.
+   *
+   * 협력전이라 **가장 크게 서는 수가 이번 판의 피해**이고, 그 아래에 시즌 누적이 한 줄로
+   * 붙는다 — 원정처럼 점수 하나만 남기면 "내가 얼마나 밀었나"와 "우리가 어디까지 왔나"가
+   * 한 수에 뭉쳐 읽힌다.
+   */
+  private showRaidResult(result: SubmitRaidDamageResponse): void {
+    if (this.contributionResult) this.contributionResult = withConfirmedAttackTotal(this.contributionResult, result.runDamage);
+    this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.96).setDepth(5000);
+    const layout = BOSS_RESULT_LAYOUT;
+    this.add.text(layout.title.x, layout.title.y, t("battle.settle.done"), textStyle({ role: "display", size: 60, color: COLOR.accentText })).setOrigin(0.5).setDepth(5001);
+    this.add.text(BASE_WIDTH / 2, layout.score.top + 105, t("raid.result.damage"), textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0.5).setDepth(5001);
+    const damageText = this.add.text(BASE_WIDTH / 2, layout.score.top + 225, result.runDamage.toLocaleString(), textStyle({ role: "display", size: 76, color: "#ffffff", align: "center" })).setOrigin(0.5).setDepth(5001);
+    damageText.setStroke("#000000", 6).setShadow(0, 4, "#000000", 4, false, true);
+    this.add.text(BASE_WIDTH / 2, layout.score.top + 330, t("raid.result.total", { total: result.season.myDamage.toLocaleString() }), textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0.5).setDepth(5001);
+    const popups = new PopupLayer(this, 6000);
+    new Button(this, BASE_WIDTH / 2, layout.lobby.top + layout.lobby.height / 2, { width: layout.lobby.width, height: layout.lobby.height, label: t("battle.settle.toLobby"), variant: "primary", onClick: () => {
+      if (this.bossLeaving) return;
+      this.bossLeaving = true;
+      // 레이드도 성공 제출 뒤에는 Boot가 서버 최신본을 읽고 저장 검증을 거친 뒤 레이드로 되돌린다.
+      this.scene.start("boot", { destination: "raid" });
+    } }).setDepth(5001);
+    setDebugBossResult({ visible: true, lobby: { x: BASE_WIDTH / 2, y: layout.lobby.top + layout.lobby.height / 2 } });
+    const [, contribution] = bossResultUtilityBounds();
+    // 주간 기록 자리는 비운다 — 레이드의 기록은 순위가 아니라 시즌 판이 맡고, 그 판은 레이드
+    // 화면이 이미 갖고 있다. 여기 하나 더 세우면 같은 목록을 두 곳에서 열게 된다.
+    new Button(this, contribution.left + contribution.width / 2, contribution.top + contribution.height / 2, { width: contribution.width, height: contribution.height, label: t("battle.contribution"), fontSize: 27, onClick: () => this.openContributionPopup(popups) }).setDepth(5001);
   }
 
   /** 실패를 성공/포기로 꾸미거나 로컬 런을 지우지 않고 Boot의 서버·저장 재동기화 경계로 나간다. */
@@ -1864,6 +1937,7 @@ export class BattleScene extends Phaser.Scene {
     this.refreshDebug();
     const won = phase === "victory";
     if (this.battleInput.mode === "expeditionBoss") { void this.submitAndSettleBoss(this.battleInput, this.bossActions); return; }
+    if (this.battleInput.mode === "raid") { void this.submitRaidRun(this.bossActions); return; }
     if (this.battleInput.mode === "expedition") { this.finishExpeditionBattle(this.battleInput, won); return; }
     const stage = getBattleStage(session.selectedStageId ?? "1-1");
     if (!won) { this.finishStageDefeat(stage); return; }

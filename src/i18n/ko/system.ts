@@ -34,6 +34,7 @@ export const SYSTEM_KO = {
   "battle.header.stage": "{id} · {name} · 적 {enemies}",
   "battle.header.enemy": "LV.{level}{bonus} · 돌파 {grade}",
   "battle.header.expeditionBoss": "원정 {floor}층 · 불사 관측 보스",
+  "battle.header.raid": "레이드 · 공멸 선봉 토벌",
   "battle.header.expedition": "원정 {floor}층 · {node}",
   "battle.node.normal": "일반 전투",
   "battle.node.elite": "정예 전투",
@@ -47,6 +48,7 @@ export const SYSTEM_KO = {
 
   // ── 상품 획득 ───────────────────────────────────────────────────────────
   "product.action.currency": "교환",
+  "product.action.item": "교환",
   "product.action.platform_payment": "구매",
   "product.action.free": "무료 수령",
   "product.action.rewarded_ad": "광고 보고 받기",
@@ -60,6 +62,7 @@ export const SYSTEM_KO = {
   "product.price.free": "무료",
   "product.price.ad": "광고 · 일 {count}회",
   "product.price.currency": "{amount} {currency}",
+  "product.price.item": "{amount} {item}",
 
   // ── 임시 서버가 보내는 우편·알림 ─────────────────────────────────────────
   "mail.welcome.title": "중앙 연구소 보급품",

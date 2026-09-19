@@ -382,7 +382,8 @@ export class LobbyScene extends Phaser.Scene {
         // 레이드는 일일 던전 아래에서 독립된 전체 폭 콘텐츠로 읽히게 한다.
         {
           y: 152, width: 800, height: 200, label: t("lobby.sortie.raid"), status: t("lobby.sortie.raid.status"),
-          onClick: () => { close(); this.scene.start("sortiePreview", { mode: "raid" }); },
+          // 레이드만 임시 소개 화면을 떠났다 — 실제 시즌 판이 그 자리를 맡는다.
+          onClick: () => { close(); this.scene.start("raid"); },
         },
         // 전용 프리팹이 Content2_001 원화, 주황 출격 위계, 확대 피드백을 한 입력면으로 유지한다.
         // 원정만 SD가 오른쪽에 서고 글자가 왼쪽 아래로 간다 — 20층 보스가 판 밖을 보는 자리다.

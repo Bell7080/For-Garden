@@ -447,7 +447,7 @@ export interface UpgradeRuneTraitRequest { runeInstanceId: string; itemId: strin
 export interface UpgradeRuneTraitResponse { rune: RuneInstance; items: InventoryItemDto[]; }
 
 /** UI가 서버 실패 원인을 문구로 바꿀 수 있게 고정한 오류 코드다. */
-export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPEDITION_RUN_NOT_FOUND" | "EXPEDITION_ALREADY_SETTLED" | "EXPEDITION_ALREADY_ACTIVE" | "EXPEDITION_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REQUIRED" | "AD_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REJECTED" | "EXPEDITION_REWARD_NOT_FOUND" | "EXPEDITION_REWARD_NOT_EARNED" | "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INVALID_PURCHASE_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "INVALID_RUNE_SALE" | "RUNE_EQUIPPED" | "RUNE_LOCKED" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_STOREFRONT_MISMATCH" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "ACQUISITION_FLOW_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE"
+export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPEDITION_RUN_NOT_FOUND" | "EXPEDITION_ALREADY_SETTLED" | "EXPEDITION_ALREADY_ACTIVE" | "EXPEDITION_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REQUIRED" | "AD_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REJECTED" | "RAID_DAILY_LIMIT" | "RAID_SEASON_DEFEATED" | "RAID_SCORE_REJECTED" | "RAID_REWARD_NOT_FOUND" | "RAID_REWARD_NOT_EARNED" | "EXPEDITION_REWARD_NOT_FOUND" | "EXPEDITION_REWARD_NOT_EARNED" | "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INVALID_PURCHASE_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "INVALID_RUNE_SALE" | "RUNE_EQUIPPED" | "RUNE_LOCKED" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_STOREFRONT_MISMATCH" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "ACQUISITION_FLOW_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE"
   | "STRATA_NO_CHARGE" | "STRATA_RUN_ACTIVE" | "STRATA_RUN_NOT_FOUND" | "STRATA_SITE_LOCKED" | "STRATA_TILE_UNAVAILABLE"
   | "RUNE_TRAIT_NOT_FOUND" | "RUNE_TRAIT_ITEM_INVALID" | "RUNE_TRAIT_MAX_GRADE" | "RUNE_TRAIT_REROLL_PENDING";
 
@@ -504,6 +504,48 @@ export interface ClaimExpeditionRewardResponse { weekKey: string; stageId: strin
  */
 export interface ExpeditionLeaderboardEntry { rank: number; playerId: string; displayName: string; score: number; achievedAt: string; isMe: boolean; favoriteRelicId?: string; }
 export interface ExpeditionLeaderboardResponse { weekKey: string; tieBreakPolicy: "earliest-achieved-at"; entries: ExpeditionLeaderboardEntry[]; }
+
+/**
+ * 레이드 — **함께 미는 보스전**의 서버 계약이다.
+ *
+ * 원정 순위표와 모양이 비슷해 보여도 말하는 것이 다르다. 원정은 "내 한 판이 몇 점인가"를
+ * 겨루므로 응답의 주어가 내 기록이고, 레이드는 **보스 한 마리의 남은 체력**이 주어다 —
+ * 그래서 시즌 응답이 먼저 들고 오는 것이 순위가 아니라 `remainingHp`다.
+ */
+export interface RaidContributionEntryDto { rank: number; playerId: string; displayName: string; damage: number; isMe: boolean; favoriteRelicId?: string; }
+/** 누적 기여 단계의 운영 수치와 수령 상태는 서버 스냅샷만 화면의 기준으로 삼는다. */
+export interface RaidRewardStageDto { id: string; threshold: number; reward: { itemId: string; itemName: string; amount: number }; claimed: boolean; }
+/** 시즌 한 번의 전부. 화면은 이 응답만 읽고 남은 체력이나 기여를 다시 계산하지 않는다. */
+export interface RaidSeasonResponse {
+  seasonKey: string;
+  bossRelicId: string;
+  /** 야성을 얹기 전의 **단계**와 레벨이다. 곱한 값은 서버도 화면도 들고 다니지 않는다. */
+  bossLevel: number;
+  bossFerocityLevel: number;
+  bossBreakthrough: number;
+  totalHp: number;
+  /** 참가자 전원이 지금까지 깎아 낸 합이다. */
+  dealtDamage: number;
+  remainingHp: number;
+  defeated: boolean;
+  /** 이번 시즌 내가 민 몫이다. 보상 단계가 읽는 값이기도 하다. */
+  myDamage: number;
+  attemptsUsed: number;
+  attemptsLimit: number;
+  resetsAt: string;
+  rewardStages: RaidRewardStageDto[];
+  /** 처치 보상은 시즌이 끝난 뒤 한 번만 수령할 수 있다. */
+  defeatRewardClaimable: boolean;
+  defeatRewardClaimed: boolean;
+  entries: RaidContributionEntryDto[];
+}
+/** 원정 보스와 **같은 재현 규칙**을 쓴다 — 클라이언트 피해 숫자는 받지 않는다. */
+export interface SubmitRaidDamageRequest { requestId: string; actions: ExpeditionBossAction[]; }
+/** 한 판이 확정된 뒤의 시즌 전체 상태다. 화면은 이 응답으로 그대로 다시 그린다. */
+export interface SubmitRaidDamageResponse { season: RaidSeasonResponse; runDamage: number; endedAtMs: number; }
+/** 달성한 누적 단계 보상을 서버 멱등 기록으로 수령한다. `stageId`가 "defeat"이면 처치 보상이다. */
+export interface ClaimRaidRewardRequest { requestId: string; stageId: string; }
+export interface ClaimRaidRewardResponse extends PlayerStateDto { stageId: string; reward: { itemId: string; itemName: string; amount: number }; alreadyClaimed: boolean; season: RaidSeasonResponse; }
 /** 직접 플레이하지 않고 역대 최고 점수 일부와 절반의 노드 클리어 전리품만 즉시 정산하는 소탕 요청이다. */
 export interface SweepExpeditionRequest { requestId: string; }
 export interface SweepExpeditionResponse extends PlayerStateDto { weekKey: string; scoreGain: number; bestScore: number; cumulativeScore: number; granted: Record<string, number>; playsThisWeek: number; }
@@ -532,6 +574,12 @@ export interface GameApi extends AsyncArenaProfileApi {
   claimExpeditionReward(request: ClaimExpeditionRewardRequest): Promise<ClaimExpeditionRewardResponse>;
   /** 서버가 소유한 주간 순위표를 동점 정책에 따라 조회한다. */
   getExpeditionLeaderboard(limit?: number): Promise<ExpeditionLeaderboardResponse>;
+  /** 시즌 보스의 남은 체력·내 기여·기여 목록을 한 응답으로 조회한다. */
+  getRaidSeason(limit?: number): Promise<RaidSeasonResponse>;
+  /** 동작열을 서버 편성으로 재현하고 그 판의 피해만 시즌 체력에서 깎는다. */
+  submitRaidDamage(request: SubmitRaidDamageRequest): Promise<SubmitRaidDamageResponse>;
+  /** 달성한 기여 단계와 처치 보상을 서버 멱등 기록으로 수령한다. */
+  claimRaidReward(request: ClaimRaidRewardRequest): Promise<ClaimRaidRewardResponse>;
   /** 룬·지갑·스택을 저장 모델 변경 없이 합성해 조회한다. */
   getInventory(): Promise<InventoryResponse>;
   /** 검증·효과·차감·저장을 하나의 서버 처리로 확정한다. */

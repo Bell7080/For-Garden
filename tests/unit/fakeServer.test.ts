@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { FakeServer } from "../../src/api/FakeServer";
 import { breakthroughFragmentCost, BREAKTHROUGH_STEPS, RELIC_LEVEL_CAP } from "../../src/core/relicProgression";
 import { GameApiError } from "../../src/api/contracts";
-import { createInitialPlayerResearchProgress, type Session } from "../../src/state/session";
+import { createEmptyRaidState, createInitialPlayerResearchProgress, type Session } from "../../src/state/session";
 import { createRuneInstance, enhanceRune as applyRuneEnhancement, runeEnhancementIncrease, type RuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { createDefaultSettings } from "../../src/core/settings";
 import { WALLET_CAPS } from "../../src/data/economy";
@@ -51,6 +51,7 @@ function makeSession(fossil = 1000): Session {
     dailyAdRewards: { date: "", claimsBySlot: {}, requestIds: [] },
     // API 테스트의 원정 저장 계약은 빈 상태로 명시한다.
     expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, allTimeBestScore: 0, lastParty: [], run: null },
+    raid: createEmptyRaidState(),
   };
 }
 

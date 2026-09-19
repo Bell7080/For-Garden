@@ -3,7 +3,7 @@ import { breakthroughFragmentCost, breakthroughSlotGrade, BREAKTHROUGH_STEPS, ca
 import { combatPower } from "../../src/core/combatPower";
 import type { RelicProgress, Stats } from "../../src/core/types";
 import { RelicProgressionManager } from "../../src/managers/RelicProgressionManager";
-import { createInitialPlayerResearchProgress, type Session } from "../../src/state/session";
+import { createEmptyRaidState, createInitialPlayerResearchProgress, type Session } from "../../src/state/session";
 import { createRuneInstance, engraveRune, enhanceRune, type RuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { FakeServer } from "../../src/api/FakeServer";
 import { createDefaultSettings } from "../../src/core/settings";
@@ -50,6 +50,7 @@ function makeSession(): Session {
     dailyAdRewards: { date: "", claimsBySlot: {}, requestIds: [] },
     // 성장 테스트는 원정 진행과 독립된 빈 상태를 사용한다.
     expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, allTimeBestScore: 0, lastParty: [], run: null },
+    raid: createEmptyRaidState(),
   };
 }
 

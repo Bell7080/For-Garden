@@ -4,6 +4,7 @@ import { getExpeditionAugment } from "../data/expeditionAugments";
 import type { ExpeditionAugmentEffect } from "./expeditionAugments";
 import { EXPEDITION_COMBAT_BALANCE } from "../data/expedition";
 import { EXPEDITION_BOSS_BALANCE } from "../data/expedition";
+import { RAID_BOSS_BALANCE, RAID_SEASON_BOSS } from "../data/raid";
 import type { BattleStageDef, RelicDef } from "./types";
 import { BREAKTHROUGH_GRADE_ROMAN } from "./relicProgression";
 import type { FighterInitialState, SkirmishBossPhase, SkirmishRelicResult } from "./skirmish";
@@ -76,6 +77,26 @@ export function createExpeditionBossSkirmishConfig(input: ExpeditionBossBattleIn
   };
 }
 
+/**
+ * 레이드도 **같은 불사 보스 계약**을 쓴다 — 다른 것은 제한 시간과 단계 이름뿐이다.
+ *
+ * 판 안에서 보스를 눕히지 않는 이유는 남은 체력의 주인이 시즌이기 때문이다. 한 판은 90초 동안
+ * 민 몫을 재고, 그 뒤 마지막 단계의 처형이 판을 끝낸다.
+ */
+export function createRaidSkirmishConfig(playerDefs: readonly RelicDef[], boss: RelicDef): ExpeditionSkirmishConfig & { boss: { phases: SkirmishBossPhase[]; limitSeconds: number } } {
+  return {
+    playerDefs: [...playerDefs],
+    enemyDefs: [{ ...boss, stats: { ...boss.stats } }],
+    playerInitialStates: playerDefs.map(({ id }) => ({ relicId: id, currentHp: 100, alive: true })),
+    augmentEffects: [],
+    enemyBodyScale: RAID_SEASON_BOSS.bodyScale,
+    boss: {
+      phases: RAID_BOSS_BALANCE.phases.map((phase) => ({ startsAt: phase.startsAtMs / 1_000, damagePerSecond: phase.attackPerSecond, label: phase.label })),
+      limitSeconds: RAID_BOSS_BALANCE.maximumDurationMs / 1_000,
+    },
+  };
+}
+
 /** 불참한 사망자까지 입력 순서로 복원해 매니저가 검증할 완전한 종료 DTO를 만든다. */
 export function expeditionBattleResults(input: ExpeditionBattleInputDto, activeResults: readonly SkirmishRelicResult[]): SkirmishRelicResult[] {
   const byId = new Map(activeResults.map((result) => [result.relicId, result]));
@@ -87,15 +108,25 @@ export interface StageBattleInputDto {
   mode: "stage";
 }
 
-/** 일반 스테이지 진입과 원정 진입을 명시적으로 구분하는 전투 씬 입력 계약이다. */
-export type BattleSceneInputDto = ExpeditionBattleInputDto | ExpeditionBossBattleInputDto | StageBattleInputDto;
+/**
+ * 레이드 진입.
+ *
+ * 편성은 씬이 `session.party`를 읽으므로 입력이 들고 다닐 것이 없다 — 원정처럼 런 도중의 잔여
+ * 체력을 이어받지 않고 늘 온전한 상태로 시작하기 때문이다.
+ */
+export interface RaidBattleInputDto {
+  mode: "raid";
+}
+
+/** 일반 스테이지 진입과 원정·레이드 진입을 명시적으로 구분하는 전투 씬 입력 계약이다. */
+export type BattleSceneInputDto = ExpeditionBattleInputDto | ExpeditionBossBattleInputDto | StageBattleInputDto | RaidBattleInputDto;
 
 /** Phaser가 생략·빈 data 또는 직전 data를 건네도 매 진입의 입력만으로 새 DTO를 만든다. */
 export function normalizeBattleSceneInput(input?: unknown): BattleSceneInputDto {
   // 원정 판별값만 보존하고 나머지는 새 객체로 만들어 직전 원정 필드가 스토리에 섞이지 않게 한다.
   if (typeof input === "object" && input !== null && "mode" in input) {
     const candidate = input as BattleSceneInputDto;
-    if (candidate.mode === "expedition" || candidate.mode === "expeditionBoss") return candidate;
+    if (candidate.mode === "expedition" || candidate.mode === "expeditionBoss" || candidate.mode === "raid") return candidate;
   }
   return { mode: "stage" };
 }
@@ -113,6 +144,7 @@ export function battleHeaderText(input: BattleSceneInputDto, stage: Pick<BattleS
     });
   }
   if (input.mode === "expeditionBoss") return t("battle.header.expeditionBoss", { floor: input.floor });
+  if (input.mode === "raid") return t("battle.header.raid");
   // 노드 유형은 저장/정산용 영문값 대신 플레이어가 구분할 수 있는 전투 명칭으로 표시한다.
   return t("battle.header.expedition", { floor: input.floor, node: t(`battle.node.${input.nodeType}`) });
 }

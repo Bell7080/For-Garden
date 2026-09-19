@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createInitialPlayerResearchProgress, type Session } from "../../src/state/session";
+import { createEmptyRaidState, createInitialPlayerResearchProgress, type Session } from "../../src/state/session";
 import { RelicCollectionManager } from "../../src/managers/RelicCollectionManager";
 import { createDefaultSettings } from "../../src/core/settings";
 import { createArchaeologyState } from "../../src/core/strataDig";
@@ -40,6 +40,7 @@ function makeSession(): Session {
     dailyAdRewards: { date: "", claimsBySlot: {}, requestIds: [] },
     // 수집 테스트는 원정 진행이 없는 새 주간 상태를 사용한다.
     expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, allTimeBestScore: 0, lastParty: [], run: null },
+    raid: createEmptyRaidState(),
   };
 }
 

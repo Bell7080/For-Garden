@@ -8,7 +8,7 @@ import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond
 import { MAX_RESEARCH_POINTS, MISSIONS, RESEARCH_REWARD_STAGES, addResearchPoints, applyMissionEvent, claimResearchStages, claimableMissionIds, normalizeMissions, researchPointsForClaim, researchStageClaimId, type MissionPeriod } from "../core/missions";
 import { DAILY_RESTORATION, getStage } from "../data/stages";
 import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
-import { createInitialRelicProgress, replaceSession, session, type Session } from "../state/session";
+import { createEmptyRaidState, createInitialRelicProgress, replaceSession, session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
 import { INTERACTION_CITIES, findInteractionCity } from "../data/interactionCities";
 import { INTERACTION_EXCHANGE_OFFERS, findInteractionExchangeOffer, type InteractionExchangeOffer } from "../data/interactionExchange";
@@ -38,6 +38,8 @@ import { ARCHAEOLOGY_SITES, findArchaeologySite } from "../data/archaeologySites
 import { archaeologySiteAvailability } from "../core/archaeologyMap";
 import type { ArchaeologyStateResponse, DigStrataTileRequest, DigStrataTileResponse, GrantRuneTraitRequest, GrantRuneTraitResponse, RerollRuneTraitRequest, RerollRuneTraitResponse, ResolveRuneTraitRerollRequest, ResolveRuneTraitRerollResponse, StartStrataRunRequest, UpgradeRuneTraitRequest, UpgradeRuneTraitResponse } from "./contracts";
 import { findItem } from "../data/items";
+import { RAID_BOSS_BALANCE, RAID_CONTRIBUTION_REWARD_STAGES, RAID_DAILY_ATTEMPTS, RAID_DEFEAT_REWARD, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP } from "../data/raid";
+import { mockRaidContributions, raidBossDef, raidContributionBoard, raidEarnedContributionStageIds, raidSeasonElapsedDays, raidSeasonKey, raidSeasonProgress } from "../core/raid";
 import { staminaCurrencyRecharge } from "../data/staminaRecharge";
 import { settleStamina, staminaMaxForPlayer, staminaTiming } from "../core/stamina";
 import { InventoryManager } from "../managers/InventoryManager";
@@ -45,6 +47,7 @@ import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, Enhan
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
 import { excavationHarvestStatus, excavationProductionDisplayModel, excavationStorageLimitSeconds, harvestIdleExcavation, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
 import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest, InventoryResponse, UseConsumableRequest, UseConsumableResponse } from "./contracts";
+import type { ClaimRaidRewardRequest, ClaimRaidRewardResponse, RaidSeasonResponse, SubmitRaidDamageRequest, SubmitRaidDamageResponse } from "./contracts";
 import type { ClaimExpeditionRewardRequest, ClaimExpeditionRewardResponse, CompleteExpeditionNodeRequest, CompleteExpeditionNodeResponse, ExpeditionLeaderboardResponse, ExpeditionWeeklyBestResponse, SettleExpeditionRunRequest, SettleExpeditionRunResponse, SubmitExpeditionBossScoreRequest, SubmitExpeditionBossScoreResponse, SweepExpeditionRequest, SweepExpeditionResponse } from "./contracts";
 import type { EnterStageRequest, EnterStageResponse } from "./contracts";
 import type { ClaimMailRewardsRequest, ClaimMailRewardsResponse, MailDto, MailListResponse, MailRewardDto, MarkMailsReadRequest } from "./contracts";
@@ -110,6 +113,9 @@ export class FakeServer implements GameApi {
   private bossWeek = { weekKey: "", bestScore: 0, cumulativeScore: 0, achievedAt: "", claimedStageIds: [] as string[] };
   private readonly bossSubmissionResults = new Map<string, SubmitExpeditionBossScoreResponse>();
   private readonly bossRewardResults = new Map<string, ClaimExpeditionRewardResponse>();
+  // 레이드도 원정과 같은 멱등 영수증을 쓴다 — 같은 요청 ID가 다시 오면 저장을 건드리지 않는다.
+  private readonly raidSubmissionResults = new Map<string, SubmitRaidDamageResponse>();
+  private readonly raidRewardResults = new Map<string, ClaimRaidRewardResponse>();
   /** 운영 DB의 런 ID/정산 ID 고유 제약과 빠른 원정 주간 카운터를 흉내 낸다. */
   private readonly expeditionSettlementResults = new Map<string, SettleExpeditionRunResponse>();
   /** 운영 DB의 requestId 고유 제약을 흉내 내 동일 노드 재요청을 같은 응답으로 돌린다. */
@@ -362,6 +368,169 @@ export class FakeServer implements GameApi {
   async getExpeditionLeaderboard(limit = 100): Promise<ExpeditionLeaderboardResponse> {
     await this.delay(); this.normalizeBossWeek(this.now()); const entries = this.bossWeek.bestScore > 0 ? [{ rank: 1, playerId: "local-player", displayName: t("profile.defaultName"), score: this.bossWeek.bestScore, achievedAt: this.bossWeek.achievedAt, isMe: true, favoriteRelicId: this.state.favorite }] : [];
     return { weekKey: this.bossWeek.weekKey, tieBreakPolicy: "earliest-achieved-at", entries: entries.slice(0, Math.max(0, limit)) };
+  }
+
+
+  /**
+   * 시즌 경계와 일일 도전 횟수를 **읽기 전에** 정규화한다.
+   *
+   * 주차가 바뀌면 내 몫과 수령 기록이 함께 사라진다 — 시즌이 갖는 값이라 다음 시즌으로
+   * 넘기면 새 보스를 열자마자 보상이 열려 있다. 도전 횟수는 UTC 날짜가 경계다.
+   */
+  private normalizeRaid(now: Date): void {
+    const seasonKey = raidSeasonKey(now);
+    const utcDate = now.toISOString().slice(0, 10);
+    const raid = this.state.raid;
+    const nextSeason = raid.seasonKey === seasonKey
+      ? raid
+      : { ...createEmptyRaidState(), seasonKey, attemptsUsed: raid.attemptsDate === utcDate ? raid.attemptsUsed : 0, attemptsDate: utcDate };
+    const normalized = nextSeason.attemptsDate === utcDate ? nextSeason : { ...nextSeason, attemptsUsed: 0, attemptsDate: utcDate };
+    if (normalized !== raid) { this.state.raid = normalized; this.persist(this.state); }
+  }
+
+  /**
+   * 시즌 한 번의 전부를 한 응답으로 만든다.
+   *
+   * **함께 민 몫은 저장에서 읽지 않고 시즌 키에서 되풀이 계산한다**(`mockRaidContributions`).
+   * 백엔드가 없어 지금은 그것이 다른 참가자를 대신하며, 실서버가 붙으면 이 한 줄이 서버
+   * 집계로 바뀐다 — 그때 화면은 아무것도 고치지 않는다.
+   */
+  private raidSeasonDto(now: Date, limit = 100): RaidSeasonResponse {
+    const seasonKey = raidSeasonKey(now);
+    const raid = this.state.raid;
+    const others = mockRaidContributions(seasonKey, raidSeasonElapsedDays(now));
+    const mine = { playerId: "local-player", displayName: t("profile.defaultName"), damage: raid.myDamage, isMe: true, favoriteRelicId: this.state.favorite };
+    const progress = raidSeasonProgress(others.reduce((sum, { damage }) => sum + damage, 0) + raid.myDamage, RAID_SEASON_TOTAL_HP);
+    const earned = raidEarnedContributionStageIds(raid.myDamage);
+    // 주차 경계는 원정과 같은 월요일 00:00 UTC라 다음 시즌 시작이 곧 이번 시즌의 초기화 시각이다.
+    const resetsAt = new Date(Date.parse(`${seasonKey}T00:00:00.000Z`) + 7 * 86_400_000).toISOString();
+    return {
+      seasonKey,
+      bossRelicId: RAID_SEASON_BOSS.relicId,
+      bossLevel: RAID_SEASON_BOSS.level,
+      bossFerocityLevel: RAID_SEASON_BOSS.ferocityLevel,
+      bossBreakthrough: RAID_SEASON_BOSS.breakthrough,
+      totalHp: progress.totalHp,
+      dealtDamage: progress.dealtDamage,
+      remainingHp: progress.remainingHp,
+      defeated: progress.defeated,
+      myDamage: raid.myDamage,
+      attemptsUsed: raid.attemptsUsed,
+      attemptsLimit: RAID_DAILY_ATTEMPTS,
+      resetsAt,
+      rewardStages: RAID_CONTRIBUTION_REWARD_STAGES.map((stage) => ({
+        id: stage.id, threshold: stage.threshold,
+        reward: { itemId: stage.reward.itemId, itemName: findItem(stage.reward.itemId)?.name ?? stage.reward.itemId, amount: stage.reward.amount },
+        claimed: raid.claimedStageIds.includes(stage.id),
+      })).filter((stage) => earned.includes(stage.id) || !stage.claimed),
+      // 처치 보상은 실제로 눕힌 뒤에만 열리고, 시즌마다 한 번이다.
+      defeatRewardClaimable: progress.defeated && !raid.defeatRewardClaimed,
+      defeatRewardClaimed: raid.defeatRewardClaimed,
+      entries: raidContributionBoard([...others, mine], limit),
+    };
+  }
+
+  /** 화면은 이 응답만 읽고 남은 체력이나 기여 순서를 다시 계산하지 않는다. */
+  async getRaidSeason(limit = 100): Promise<RaidSeasonResponse> {
+    await this.delay(); this.normalizeRaid(this.now());
+    return this.raidSeasonDto(this.now(), limit);
+  }
+
+  /**
+   * 원정 보스와 **같은 재현기**로 한 판을 다시 돌리고 그 피해만 시즌 체력에서 깎는다.
+   *
+   * 클라이언트가 보낸 피해 숫자는 받지 않는다 — 계약에 아예 없다. 다른 것은 제한 시간과 단계
+   * 이름뿐이라 재현 규칙을 하나 더 만들지 않고 `balance`만 레이드 표로 넘긴다.
+   */
+  async submitRaidDamage(request: SubmitRaidDamageRequest): Promise<SubmitRaidDamageResponse> {
+    await this.delay();
+    const cached = this.raidSubmissionResults.get(request.requestId);
+    if (cached) return structuredClone(cached);
+    if (!request.requestId) throw new GameApiError("RAID_SCORE_REJECTED", "피해 제출 요청 ID가 필요합니다.");
+    const now = this.now();
+    this.normalizeRaid(now);
+    if (this.state.raid.attemptsUsed >= RAID_DAILY_ATTEMPTS) throw new GameApiError("RAID_DAILY_LIMIT", "오늘 도전 횟수를 모두 사용했습니다.");
+    // 이미 누운 보스에는 더 밀 것이 없다. 다음 시즌이 열릴 때까지 도전 자체를 막는다.
+    if (this.raidSeasonDto(now).defeated) throw new GameApiError("RAID_SEASON_DEFEATED", "이번 시즌 보스는 이미 토벌되었습니다.");
+
+    let result: ReturnType<typeof resolveExpeditionBossBattle>;
+    try {
+      const progression = new RelicProgressionManager(this.state);
+      const allies = this.state.party.map((id) => {
+        const relic = RELICS.find((entry) => entry.id === id);
+        if (!relic || !this.state.owned.has(id)) throw new Error("INVALID_PARTY");
+        return { ...relic, stats: progression.getFinalStats(id) };
+      });
+      const base = RELICS.find(({ id }) => id === RAID_SEASON_BOSS.relicId);
+      if (!base) throw new Error("INVALID_BOSS_DEFINITION");
+      // 성장은 화면과 **같은 함수**를 지난다. 서버만 따로 계산하면 보여 준 레벨과 갈린다.
+      const boss = raidBossDef(base);
+      result = resolveExpeditionBossBattle({
+        allies, boss, balance: RAID_BOSS_BALANCE,
+        arena: { left: 130, right: 950, top: 600, bottom: 1360 },
+      }, request.actions);
+      if (result.totalDamage > RAID_BOSS_BALANCE.maximumAcceptedScore) throw new Error("ABNORMAL_SCORE");
+    } catch (error) {
+      // 검증 세부 원인은 공격자가 규칙을 역산하지 못하게 공용 거절 코드로만 노출한다.
+      throw new GameApiError("RAID_SCORE_REJECTED", "검증할 수 없거나 비정상적으로 큰 레이드 피해입니다.", { cause: error });
+    }
+
+    const runDamage = Math.max(0, Math.floor(result.totalDamage));
+    const nextState = structuredClone(this.state);
+    nextState.raid.myDamage += runDamage;
+    nextState.raid.attemptsUsed += 1;
+    try {
+      this.persist(nextState);
+    } catch (error) {
+      throw persistenceFailed(error, "error.persist.expeditionScore");
+    }
+    if (this.state === session) replaceSession(nextState);
+    else Object.assign(this.state, nextState);
+    const response: SubmitRaidDamageResponse = { season: this.raidSeasonDto(now), runDamage, endedAtMs: result.endedAtMs };
+    this.raidSubmissionResults.set(request.requestId, response);
+    return structuredClone(response);
+  }
+
+  /**
+   * 기여 단계와 처치 보상을 한 처리 단위로 확정한다.
+   *
+   * 달성 여부와 중복 수령을 **서버가 다시 검사한다** — 화면이 보낸 단계 ID만 믿으면 아직 넘기지
+   * 않은 문턱도 수령된다.
+   */
+  async claimRaidReward(request: ClaimRaidRewardRequest): Promise<ClaimRaidRewardResponse> {
+    await this.delay();
+    const cached = this.raidRewardResults.get(request.requestId);
+    if (cached) return structuredClone(cached);
+    const now = this.now();
+    this.normalizeRaid(now);
+    const season = this.raidSeasonDto(now);
+    const isDefeat = request.stageId === "defeat";
+    const stage = isDefeat ? undefined : RAID_CONTRIBUTION_REWARD_STAGES.find(({ id }) => id === request.stageId);
+    if (!isDefeat && !stage) throw new GameApiError("RAID_REWARD_NOT_FOUND", "존재하지 않는 레이드 보상 단계입니다.");
+    if (isDefeat && !season.defeated) throw new GameApiError("RAID_REWARD_NOT_EARNED", "아직 토벌하지 못한 보스입니다.");
+    if (stage && this.state.raid.myDamage < stage.threshold) throw new GameApiError("RAID_REWARD_NOT_EARNED", "아직 달성하지 못한 기여 단계입니다.");
+
+    const reward = isDefeat ? RAID_DEFEAT_REWARD : stage!.reward;
+    const alreadyClaimed = isDefeat ? this.state.raid.defeatRewardClaimed : this.state.raid.claimedStageIds.includes(stage!.id);
+    if (!alreadyClaimed) {
+      const nextState = structuredClone(this.state);
+      if (isDefeat) nextState.raid.defeatRewardClaimed = true;
+      else nextState.raid.claimedStageIds = [...nextState.raid.claimedStageIds, stage!.id];
+      const stack = nextState.itemInventory.find(({ itemId }) => itemId === reward.itemId);
+      const cap = findItem(reward.itemId)?.maxStack ?? 9_999;
+      if (stack) stack.quantity = Math.min(cap, stack.quantity + reward.amount);
+      else nextState.itemInventory = [...nextState.itemInventory, { itemId: reward.itemId, quantity: Math.min(cap, reward.amount) }];
+      this.persist(nextState);
+      if (this.state === session) replaceSession(nextState);
+      else Object.assign(this.state, nextState);
+    }
+    const response: ClaimRaidRewardResponse = {
+      ...this.snapshot(), stageId: request.stageId, alreadyClaimed,
+      reward: { itemId: reward.itemId, itemName: findItem(reward.itemId)?.name ?? reward.itemId, amount: reward.amount },
+      season: this.raidSeasonDto(now),
+    };
+    this.raidRewardResults.set(request.requestId, response);
+    return structuredClone(response);
   }
 
   /** 정상 종료와 포기를 같은 트랜잭션으로 처리하며 런당 최초 정산만 지갑에 반영한다. */
@@ -1004,13 +1173,25 @@ export class FakeServer implements GameApi {
     if (owningEvent) this.assertEventActive(owningEvent, now);
     if (!this.isVisible(product, now)) throw new GameApiError("PRODUCT_NOT_VISIBLE", "현재 노출 기간이 아닌 상품입니다.");
     // FakeServer는 플랫폼 성공이나 영수증을 만들지 않는다. 유료 지급은 실제 검증 서버의 책임이다.
-    if (product.acquisition.kind !== "currency") throw new GameApiError("ACQUISITION_FLOW_REQUIRED", "상품 획득 방식의 전용 확정 절차가 필요합니다.");
+    if (product.acquisition.kind !== "currency" && product.acquisition.kind !== "item") throw new GameApiError("ACQUISITION_FLOW_REQUIRED", "상품 획득 방식의 전용 확정 절차가 필요합니다.");
     const remaining = this.remaining(product, now);
     if (quantity > remaining) throw new GameApiError("PURCHASE_LIMIT_REACHED", "남은 구매 제한을 초과했습니다.");
     const totalPrice = totalGrantAmount(product.acquisition.amount, quantity);
-    if (!Number.isSafeInteger(totalPrice) || this.state.wallet[product.acquisition.currency] < totalPrice) throw new GameApiError("INSUFFICIENT_CURRENCY", "재화가 부족합니다.");
+    if (!Number.isSafeInteger(totalPrice)) throw new GameApiError("INVALID_PURCHASE_QUANTITY", "구매 수량이 올바르지 않습니다.");
+    // 값은 지갑에서 나가거나 재고에서 나간다. 두 갈래 모두 **지급 전에** 모자람을 먼저 거절해
+    // 부분 차감을 남기지 않는다.
+    const itemCost = product.acquisition.kind === "item" ? product.acquisition : undefined;
+    if (itemCost && (this.state.itemInventory.find(({ itemId }) => itemId === itemCost.itemId)?.quantity ?? 0) < totalPrice) throw new GameApiError("INSUFFICIENT_ITEMS", "아이템 수량이 부족합니다.");
+    if (product.acquisition.kind === "currency" && this.state.wallet[product.acquisition.currency] < totalPrice) throw new GameApiError("INSUFFICIENT_CURRENCY", "재화가 부족합니다.");
 
-    const nextWallet = { ...this.state.wallet, [product.acquisition.currency]: this.state.wallet[product.acquisition.currency] - totalPrice };
+    const currencyCost = product.acquisition.kind === "currency" ? product.acquisition : undefined;
+    const nextWallet = currencyCost
+      ? { ...this.state.wallet, [currencyCost.currency]: this.state.wallet[currencyCost.currency] - totalPrice }
+      : { ...this.state.wallet };
+    // 아이템 값은 교류 교환소와 같은 재고 경계를 지난다 — 다 쓴 칸은 남기지 않고 지운다.
+    let nextItems = itemCost
+      ? this.state.itemInventory.flatMap((entry) => entry.itemId === itemCost.itemId ? (entry.quantity > totalPrice ? [{ ...entry, quantity: entry.quantity - totalPrice }] : []) : [{ ...entry }])
+      : this.state.itemInventory.map((entry) => ({ ...entry }));
     const nextRunes = [...this.state.runeInventory];
     const grantedRunes: RuneInstance[] = [];
     const granted: ProductDefinition["grants"][number][] = [];
@@ -1025,13 +1206,24 @@ export class FakeServer implements GameApi {
         // 응답에는 단위 상품 정의가 아니라 실제 구매 수량이 반영된 확정 총량만 싣는다.
         granted.push({ ...grant, amount: totalGrant });
       }
+      // 아이템 지급도 같은 복제본에서 상한까지 검증한 뒤에만 쓴다. 룬은 여전히 DNA의 명시적
+      // 인스턴스 발급 계약이 맡으므로 여기서 만들지 않는다.
+      if (grant.kind === "item") {
+        const totalGrant = totalGrantAmount(grant.amount, quantity);
+        const cap = findItem(grant.itemId)?.maxStack ?? 9_999;
+        const stack = nextItems.find(({ itemId }) => itemId === grant.itemId);
+        if (!Number.isSafeInteger(totalGrant) || (stack?.quantity ?? 0) + totalGrant > cap) throw new GameApiError("CURRENCY_LIMIT_EXCEEDED", "지급 후 아이템 상한을 초과합니다.");
+        if (stack) stack.quantity += totalGrant;
+        else nextItems = [...nextItems, { itemId: grant.itemId, quantity: totalGrant }];
+        granted.push({ ...grant, amount: totalGrant });
+      }
     }
     const periodKey = this.productPeriodKey(product, now);
     const current = this.state.productPurchases[product.id];
     const count = (current?.periodKey === periodKey ? current.count : 0) + quantity;
     const nextPurchases = { ...this.state.productPurchases, [product.id]: { periodKey, count } };
-    this.persist({ ...this.state, wallet: nextWallet, runeInventory: nextRunes, productPurchases: nextPurchases });
-    this.state.wallet = nextWallet; this.state.runeInventory = nextRunes; this.state.productPurchases = nextPurchases;
+    this.persist({ ...this.state, wallet: nextWallet, runeInventory: nextRunes, itemInventory: nextItems, productPurchases: nextPurchases });
+    this.state.wallet = nextWallet; this.state.runeInventory = nextRunes; this.state.itemInventory = nextItems; this.state.productPurchases = nextPurchases;
     return { ...this.snapshot(), productId, quantity, granted, grantedRunes: grantedRunes.map((rune) => this.cloneRune(rune)), remaining: Math.max(0, product.purchaseLimit - count) };
   }
 

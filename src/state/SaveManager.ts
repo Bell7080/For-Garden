@@ -3,7 +3,7 @@ import { STAGES } from "../data/stages";
 import { BANNERS } from "../data/banners";
 import { BREAKTHROUGH_CAP } from "../core/relicProgression";
 import type { RelicProgress } from "../core/types";
-import { createDefaultSession, createEmptyInteractionProgress, createInitialPlayerResearchProgress, type SaveData, type Session } from "./session";
+import { createDefaultSession, createEmptyInteractionProgress, createInitialPlayerResearchProgress, type RaidState, type SaveData, type Session } from "./session";
 import { PROFILE_MODIFIERS } from "../data/profileModifiers";
 import { assertValidRuneInstance, type RuneInstance } from "../core/runes";
 import { normalizeSettings } from "../core/settings";
@@ -254,6 +254,8 @@ export class SaveManager {
       // 광고 검증 토큰은 제외하고 UTC 일자·횟수·멱등 ID만 독립 복사한다.
       dailyAdRewards: { ...state.dailyAdRewards, claimsBySlot: { ...state.dailyAdRewards.claimsBySlot }, requestIds: [...state.dailyAdRewards.requestIds] },
       expedition: { ...state.expedition, lastParty: [...state.expedition.lastParty], run: state.expedition.run ? cloneExpeditionRun(state.expedition.run) : null },
+      // 레이드는 Set도 중첩 런도 없어 배열 한 줄만 복사하면 된다.
+      raid: { ...state.raid, claimedStageIds: [...state.raid.claimedStageIds] },
     };
     this.validate(data);
     return data;
@@ -361,6 +363,18 @@ export class SaveManager {
     const rawLastParty = Array.isArray(savedExpedition?.lastParty) ? savedExpedition.lastParty : [];
     const lastParty = rawLastParty.filter((id, index) => ownedIds.includes(id) && rawLastParty.indexOf(id) === index).slice(0, 3);
     const expedition = { weekKey: savedExpedition?.weekKey ?? "", playsThisWeek: savedExpedition?.playsThisWeek ?? 0, bestScore: savedExpedition?.bestScore ?? 0, allTimeBestScore: savedExpedition?.allTimeBestScore ?? savedExpedition?.bestScore ?? 0, lastParty, run: normalizeExpeditionRun(savedExpedition?.run, ownedIds) };
+    // **레이드 도입 전 저장은 빈 시즌으로 이관한다.** 모양만 맞추면 되는 이유는 시즌 키가 비면
+    // 첫 조회가 서버 주차로 정규화하며 내 몫을 0에서 시작하기 때문이다 — 예전 저장에 있을 수
+    // 없는 값이라 되살릴 것이 없다.
+    const savedRaid = legacy.raid as Partial<RaidState> | undefined;
+    const raid: RaidState = {
+      seasonKey: typeof savedRaid?.seasonKey === "string" ? savedRaid.seasonKey : "",
+      myDamage: Number.isInteger(savedRaid?.myDamage) && (savedRaid?.myDamage ?? 0) >= 0 ? savedRaid!.myDamage! : 0,
+      attemptsUsed: Number.isInteger(savedRaid?.attemptsUsed) && (savedRaid?.attemptsUsed ?? 0) >= 0 ? savedRaid!.attemptsUsed! : 0,
+      attemptsDate: typeof savedRaid?.attemptsDate === "string" ? savedRaid.attemptsDate : "",
+      claimedStageIds: Array.isArray(savedRaid?.claimedStageIds) ? savedRaid.claimedStageIds.filter((id): id is string => typeof id === "string") : [],
+      defeatRewardClaimed: savedRaid?.defeatRewardClaimed === true,
+    };
     // 교류 도입 전 저장에는 서버 파견이 없으므로 빈 슬롯으로 명시 이관한다.
     const interaction = Number(legacy.saveVersion) >= 30 && legacy.interaction && typeof legacy.interaction === "object" ? structuredClone(legacy.interaction) : createEmptyInteractionProgress();
     // **없어진 도시로 나가 있던 파견은 버린다.** 도시 사다리가 바뀌면 그 id를 가리키던 슬롯이
@@ -425,10 +439,10 @@ export class SaveManager {
     // v20 이전에는 중첩 가방이 없었다. 지갑과 룬은 기존 단일 기준에 남겨 빈 스택만 보충한다.
     const itemInventory = Array.isArray(legacy.itemInventory) ? legacy.itemInventory : [];
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
-    if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition } as unknown as SaveData;
+    if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, raid } as unknown as SaveData;
     const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
-    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition } as unknown as SaveData;
+    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, raid } as unknown as SaveData;
   }
 
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
@@ -496,6 +510,8 @@ export class SaveManager {
     // 삭제/변조된 슬롯과 정적 UTC 제한을 넘긴 저장은 서버 지급 이력으로 신뢰하지 않는다.
     if (!data.dailyAdRewards || typeof data.dailyAdRewards.date !== "string" || !data.dailyAdRewards.claimsBySlot || Object.entries(data.dailyAdRewards.claimsBySlot).some(([id, count]) => !(id in adLimits) || !Number.isInteger(count) || count < 0 || count > adLimits[id]) || !Array.isArray(data.dailyAdRewards.requestIds) || data.dailyAdRewards.requestIds.some((id) => typeof id !== "string" || id.length === 0) || new Set(data.dailyAdRewards.requestIds).size !== data.dailyAdRewards.requestIds.length) fail("일일 광고 수령 정보가 올바르지 않습니다.");
     if (!data.expedition || typeof data.expedition.weekKey !== "string" || !Number.isInteger(data.expedition.playsThisWeek) || data.expedition.playsThisWeek < 0 || !Number.isInteger(data.expedition.bestScore) || data.expedition.bestScore < 0 || !Number.isInteger(data.expedition.allTimeBestScore) || data.expedition.allTimeBestScore < 0 || !Array.isArray(data.expedition.lastParty) || data.expedition.lastParty.length > 3 || new Set(data.expedition.lastParty).size !== data.expedition.lastParty.length || data.expedition.lastParty.some((id) => !data.ownedRelicIds.includes(id)) || (data.expedition.run !== null && normalizeExpeditionRun(data.expedition.run, data.ownedRelicIds) === null)) fail("원정 진행 정보가 올바르지 않습니다.");
+    // 레이드는 내 몫과 수령 기록만 저장하므로 검사도 그 둘의 모양과 부호뿐이다.
+    if (!data.raid || typeof data.raid.seasonKey !== "string" || typeof data.raid.attemptsDate !== "string" || !Number.isInteger(data.raid.myDamage) || data.raid.myDamage < 0 || !Number.isInteger(data.raid.attemptsUsed) || data.raid.attemptsUsed < 0 || !Array.isArray(data.raid.claimedStageIds) || data.raid.claimedStageIds.some((id) => typeof id !== "string" || id.length === 0) || new Set(data.raid.claimedStageIds).size !== data.raid.claimedStageIds.length || typeof data.raid.defeatRewardClaimed !== "boolean") fail("레이드 진행 정보가 올바르지 않습니다.");
   }
 
   private toSession(data: SaveData): Session {
@@ -527,6 +543,7 @@ export class SaveManager {
       productPurchases: Object.fromEntries(Object.entries(data.productPurchases).map(([id, value]) => [id, { ...value }])),
       dailyAdRewards: { ...data.dailyAdRewards, claimsBySlot: { ...data.dailyAdRewards.claimsBySlot }, requestIds: [...data.dailyAdRewards.requestIds] },
       expedition: { ...data.expedition, lastParty: [...data.expedition.lastParty], run: data.expedition.run ? cloneExpeditionRun(data.expedition.run) : null },
+      raid: { ...data.raid, claimedStageIds: [...data.raid.claimedStageIds] },
     };
   }
 }

@@ -119,10 +119,36 @@ export interface Session {
   dailyAdRewards: DailyAdRewardState;
   /** 주간 원정의 편성·진행·기록이다. 씬은 ExpeditionManager를 통해서만 변경한다. */
   expedition: ExpeditionState;
+  /** 주간 레이드 시즌에서 내가 민 몫과 수령 기록이다. */
+  raid: RaidState;
 }
 
 /** 런 도중 저장되는 렐릭 한 기의 생존 스냅샷이다. */
 export interface ExpeditionRelicState { relicId: string; currentHp: number; alive: boolean; }
+
+/**
+ * 레이드 시즌의 내 몫.
+ *
+ * **참가자 전원의 누적은 저장하지 않는다** — 함께 민 사람들의 몫은 서버가 갖고, 백엔드가 없는
+ * 지금은 시즌 키에서 되풀이 계산되는 값(`mockRaidContributions`)이라 저장에 굳히면 다음에 열
+ * 때 두 수가 갈린다. 저장이 갖는 것은 내가 민 몫과 수령 기록뿐이다.
+ */
+export interface RaidState {
+  /** 월요일 00:00 UTC 경계의 시즌 키다. 빈 값은 첫 조회에서 서버 주차로 정규화된다. */
+  seasonKey: string;
+  /** 이번 시즌 내가 누적한 피해다. 기여 보상 단계가 읽는 값이기도 하다. */
+  myDamage: number;
+  /** 일일 도전 횟수와 그 횟수가 귀속된 UTC 날짜다. */
+  attemptsUsed: number;
+  attemptsDate: string;
+  claimedStageIds: string[];
+  defeatRewardClaimed: boolean;
+}
+
+/** 신규 계정과 마이그레이션이 같은 빈 시즌 모양을 공유한다. */
+export function createEmptyRaidState(): RaidState {
+  return { seasonKey: "", myDamage: 0, attemptsUsed: 0, attemptsDate: "", claimedStageIds: [], defeatRewardClaimed: false };
+}
 
 /** 앱 재실행 뒤에도 한 노드 단위로 그대로 이어갈 수 있는 완전한 원정 런이다. */
 export interface ExpeditionRunState {
@@ -255,6 +281,7 @@ export interface SaveData {
   productPurchases: Record<string, { periodKey: string; count: number }>;
   dailyAdRewards: DailyAdRewardState;
   expedition: ExpeditionState;
+  raid: RaidState;
 }
 
 /** 개별 옵션이 없는 소비품·재료만 같은 ID끼리 중첩한다. */
@@ -325,6 +352,8 @@ export function createDefaultSession(): Session {
     dailyAdRewards: { date: "", claimsBySlot: {}, requestIds: [] },
     // 빈 주차 키는 첫 원정 조회에서 서버와 같은 UTC 주차로 정규화된다.
     expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, allTimeBestScore: 0, lastParty: [], run: null },
+    // 빈 시즌 키도 첫 레이드 조회에서 서버와 같은 UTC 주차로 정규화된다.
+    raid: createEmptyRaidState(),
   };
 }
 

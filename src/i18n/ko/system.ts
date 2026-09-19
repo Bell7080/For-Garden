@@ -34,6 +34,7 @@ export const SYSTEM_KO = {
   "battle.header.stage": "{id} · {name} · 적 {enemies}",
   "battle.header.enemy": "LV.{level}{bonus} · 돌파 {grade}",
   "battle.header.expeditionBoss": "원정 {floor}층 · 불사 관측 보스",
+  "battle.header.cake": "치즈케이크 대작전 · {tier} · x{multiplier}",
   "battle.header.expedition": "원정 {floor}층 · {node}",
   "battle.node.normal": "일반 전투",
   "battle.node.elite": "정예 전투",

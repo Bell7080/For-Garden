@@ -4,6 +4,7 @@ import { createDefaultSession, type SaveData } from "../../src/state/session";
 import { createRuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { ExpeditionManager } from "../../src/managers/ExpeditionManager";
 import { EXCAVATION_BASE_STORAGE_SECONDS } from "../../src/core/idleExcavation";
+import { CAKE_OPERATION_TIERS } from "../../src/data/cakeOperation";
 
 /** 저장 왕복과 손상 검증에 쓰는 결정적 신규 룬이다. */
 function testRune(instanceId = "rune-save-1") {
@@ -488,5 +489,29 @@ describe("SaveManager 광고 상태 마이그레이션", () => {
     expect(new SaveManager(storage).load()?.dailyAdRewards).toEqual(source.dailyAdRewards);
     const legacy = validData() as unknown as Record<string, unknown>; legacy.saveVersion = 15; delete legacy.dailyAdRewards;
     expect(new SaveManager(new MemoryStorage()).migrate(legacy).dailyAdRewards).toEqual({ date: "", claimsBySlot: {}, requestIds: [] });
+  });
+
+  /**
+   * 치즈케이크 대작전 해금 단계(v36).
+   *
+   * 옛 저장에는 없던 칸이라 **아직 하나도 이기지 않은 상태**(-1)로 채워야 하고, 손상된 값이
+   * 그대로 들어오면 열리지 않은 단계가 열린다.
+   */
+  it("v35 저장에 대작전 해금 단계를 채우고 범위 밖 값은 좁힌다", () => {
+    const storage = new MemoryStorage(); const source = createDefaultSession();
+    expect(source.cakeOperation).toEqual({ clearedIndex: -1 });
+    source.cakeOperation = { clearedIndex: 2 };
+    new SaveManager(storage).save(source);
+    expect(new SaveManager(storage).load()?.cakeOperation).toEqual({ clearedIndex: 2 });
+
+    const legacy = validData() as unknown as Record<string, unknown>; legacy.saveVersion = 35; delete legacy.cakeOperation;
+    expect(new SaveManager(new MemoryStorage()).migrate(legacy).cakeOperation).toEqual({ clearedIndex: -1 });
+
+    const last = CAKE_OPERATION_TIERS.length - 1;
+    const tampered = validData() as unknown as Record<string, unknown>;
+    tampered.cakeOperation = { clearedIndex: 999 };
+    expect(new SaveManager(new MemoryStorage()).migrate(tampered).cakeOperation).toEqual({ clearedIndex: last });
+    tampered.cakeOperation = { clearedIndex: -50 };
+    expect(new SaveManager(new MemoryStorage()).migrate(tampered).cakeOperation).toEqual({ clearedIndex: -1 });
   });
 });

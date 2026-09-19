@@ -119,6 +119,25 @@ export interface Session {
   dailyAdRewards: DailyAdRewardState;
   /** 주간 원정의 편성·진행·기록이다. 씬은 ExpeditionManager를 통해서만 변경한다. */
   expedition: ExpeditionState;
+  /** 치즈케이크 대작전에서 지금까지 이긴 가장 높은 단계다. 씬은 GameApi를 통해서만 변경한다. */
+  cakeOperation: CakeOperationState;
+}
+
+/**
+ * 물량형 던전의 진행.
+ *
+ * 저장에 남는 것은 **어디까지 이겼나** 하나뿐이다 — 해금도 소탕 허용도 전부 그 한 값에서
+ * 나오므로, 단계별 클리어 표를 따로 들고 다니면 같은 사실을 두 곳이 말하게 된다.
+ */
+export interface CakeOperationState {
+  /**
+   * 이긴 가장 높은 단계의 순번(0부터). 아직 하나도 못 이겼으면 -1이다.
+   *
+   * 단계 ID가 아니라 순번을 저장하는 이유는 해금이 "직전 단계"를 묻기 때문이다 — ID를 두면
+   * 열 때마다 목록에서 자리를 다시 찾아야 하고, 표에서 단계가 하나 사라지면 그 값이 어디도
+   * 가리키지 못한다.
+   */
+  clearedIndex: number;
 }
 
 /** 런 도중 저장되는 렐릭 한 기의 생존 스냅샷이다. */
@@ -227,6 +246,8 @@ export interface SaveData {
   /** 진행 중인 판까지 그대로 담는 JSON 안전 고고학 상태다. */
   archaeology: ArchaeologyState;
   saveVersion: number;
+  /** 물량형 던전 진행. 런타임 상태와 같은 모양이라 변환 없이 오간다. */
+  cakeOperation: CakeOperationState;
   settings: GameSettings;
   completedStoryIds: string[];
   observationRecords: ObservationRecord[];
@@ -318,6 +339,8 @@ export function createDefaultSession(): Session {
     // 신규 계정은 정적 정의 ID가 아니라 서버 지급 계약을 통해 룬 인스턴스를 얻는다.
     runeInventory: [],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
+    // 첫 단계는 늘 열려 있으므로 아무것도 이기지 않은 상태를 -1로 둔다.
+    cakeOperation: { clearedIndex: -1 },
     // 기간별 연구도와 단계 수령 기록은 임무 수령 기록과 독립적으로 초기화한다.
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [], researchPoints: { daily: 0, weekly: 0 }, claimedResearchStageIds: [] },
     productPurchases: {},

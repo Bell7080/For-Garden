@@ -51,6 +51,7 @@ function makeSession(fossil = 1000): Session {
     dailyAdRewards: { date: "", claimsBySlot: {}, requestIds: [] },
     // API 테스트의 원정 저장 계약은 빈 상태로 명시한다.
     expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, allTimeBestScore: 0, lastParty: [], run: null },
+    cakeOperation: { clearedIndex: -1 },
   };
 }
 

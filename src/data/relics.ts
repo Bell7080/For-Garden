@@ -3065,6 +3065,114 @@ export const RELICS: RelicDef[] = [
       statusEffects: [{ kind: "stun", seconds: 5 }],
     },
   },
+  {
+    /**
+     * **레이티아 거대겨울잠쥐.** 치즈케이크 대작전에 떼로 몰려오는 물량형 적이다.
+     *
+     * 물량형이라고 능력치를 깎지 않는다 — 규칙대로 R 띠(2080~2200) 안에 서고, 던전이
+     * 무거워지는 몫은 개체 정의가 아니라 레벨과 야성 단계가 갖는다. 대신 **같은 띠를
+     * 손과 발에 몰아 준다**: 체력·방어는 얇고 공격 속도·이동 속도가 로스터 최상위권이라,
+     * 한 마리는 쉽게 쓰러지는데 여럿이 동시에 달라붙으면 앞줄이 순식간에 녹는다.
+     *
+     * 원화(`enemy_005.zip` · `enemySD_005.zip`)는 아직 저장소에 없어 임시로 코마의 묶음을
+     * 빌린다. 갈아 끼우는 자리는 `assets.ts`의 `RAITIA_PLACEHOLDER_*` 두 상수뿐이다.
+     */
+    id: "raitia",
+    enemyOnly: true,
+    // 이터널 시티로 밀려드는 복원체 무리라 공멸의 침투 임무와 같은 계보에 둔다.
+    squad: "annihilation",
+    name: "레이티아 거대겨울잠쥐",
+    specimenNumber: "207",
+    projectName: "ANNIHILATION SWARM — 과식 개체군",
+    excavationSite: "슬로베니아 카르스트 동굴 퇴적층",
+    fossilRecord: "동굴 퇴적층에서 같은 종의 두개골 수십 점이 한 층에 겹쳐 나왔다. 앞니 법랑질이 비정상적으로 두껍고, 어느 표본에서도 완전히 닳은 흔적이 보이지 않는다.",
+    observationProfile: {
+      originYear: "약 200만 년 전",
+      // E.C.는 무엇이든 갉아 보는 유생기형 인상을 기록하며 실제 생존 햇수로 읽지 않는다.
+      restorationYear: "E.C. 2년",
+      lifeStage: "유체",
+      height: "0.94 m",
+      weight: "21 kg",
+    },
+    catalogSummary: "앞니와 볼주머니가 과하게 복원된 겨울잠쥐 기반 표본.",
+    unlockRecord: { status: "recorded", text: "복원 후 레이티아는 잠들지 않는다. 겨울잠에 들어야 할 시기가 와도 먹기를 멈추지 않고, 볼주머니가 가득 찬 뒤에도 앞니로 계속 갉는다. 한 마리가 먹이를 찾으면 울음이 아니라 앞니 소리로 알리고, 그 소리를 들은 개체들이 같은 자리로 한꺼번에 몰려든다. 먹을 것이 떨어지면 곁에 있는 동료의 볼주머니를 갉기 시작한다." },
+    squadNote: "공멸의 소모 물량. 지시받은 방향으로 한꺼번에 흘러가 통로를 메우고, 앞의 개체가 쓰러진 자리를 뒤의 개체가 그대로 밟고 넘어간다.",
+    researcherTitle: "연구원",
+    rarity: "R",
+    portraitAssetId: "raitia",
+    origin: "겨울잠쥐",
+    // 동굴 퇴적층에서 나온 숲의 설치류라 풀 속성으로 둔다.
+    element: "grass",
+    role: "warrior",
+    // 앞니로 갉는 개체라 붙어야 때린다.
+    reachTier: "melee",
+    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 1.4, efficiencyMultiplier: 1.00 },
+    stats: {
+      // 전투력 2197 — R 띠(2080~2200)의 위쪽이다. 적은 R의 상위권으로 짜되 역할 효율이
+      // 높은 쪽에 몰아 준다는 규칙 그대로, 공격력과 **공속·이속**에 띠를 몰았다.
+      // 주문력은 어느 스킬도 읽지 않는 값이라 낮게 둔다(쓰지 않는 능력치를 높게 적지 않는다).
+      hp: 780,
+      def: 52,
+      res: 46,
+      atk: 170,
+      ap: 20,
+      // 공속·이속만 개체마다 다르게 섞는다. 이 둘이 이 개체의 정체성이라 로스터 최상위권이다 —
+      // 떼로 달려드는 것이 무서운 이유는 한 마리의 세기가 아니라 붙는 속도다.
+      attackSpeed: 140,
+      moveSpeed: 145,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    ferocityTrait: {
+      name: "과식",
+      // 공용 자기 공속 배율을 그대로 쓴다. 떼가 한꺼번에 폭주하면 앞줄이 버티는 시간이
+      // 그만큼 짧아지는 것이 이 던전의 압박이다.
+      effectId: "selfAttackSpeedMultiplier",
+      bonusPercent: 60,
+    },
+    passive: {
+      id: "raitia-passive",
+      name: "갉작갉작",
+      // 같은 상대를 이어서 때리면 출혈을 남기는 공용 계약이다. 떼가 한 명에게 붙으면
+      // 겹이 빨리 차 출혈이 여러 겹으로 겹친다.
+      kind: "bleedStreak",
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      // 세 번이면 공속 140에서 2초 남짓이다 — 붙어 있는 동안만 터지는 보상으로 남는다.
+      value: 3,
+      // **흡혈은 여기서 끌어다 쓴다.** 전 개체 공통값은 0이라(`COMMON_SECONDARY_STATS`)
+      // 태생에 적을 수 없고, 갉아 먹는 것이 곧 이 개체가 버티는 방법이라 읽히는 스킬이 그
+      // 값을 갖는다. 6%는 한 마리로는 거의 티가 나지 않고 떼로 붙었을 때만 보이는 몫이다.
+      lifeStealPoints: 6,
+      desc: "갉은 피해의 6%만큼 체력을 회복한다. 같은 적을 연달아 세 번 때리면 [[bleed|출혈]]을 남긴다.",
+    },
+    basic: {
+      id: "raitia-basic",
+      name: "앞니 갉기",
+      // 공속이 로스터 최상위권이라 한 대의 배율은 낮게 둔다.
+      power: 70,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+    },
+    ultimate: {
+      id: "raitia-ult",
+      name: "볼주머니 쏟기",
+      power: 180,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      cost: 100,
+      // 제 주위만 때린다. 전장 전체를 때리면 떼로 나오는 개체가 서로의 궁극기를 겹쳐
+      // 아군이 한 프레임에 통째로 녹는다.
+      targeting: "nearbyEnemies",
+      radius: 300,
+    },
+  },
 ];
 
 /** 콘텐츠 로드 시 잘못된 형식과 중복 번호를 즉시 실패시켜 저장 데이터와 UI 순서를 보호한다. */

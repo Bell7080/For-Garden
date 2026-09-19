@@ -59,7 +59,8 @@ import type { MotionPlayback } from "../puppets/assets";
 import { ultimatePresentationFor } from "../data/ultimatePresentations";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { anyPopupOpen, PopupLayer } from "../ui/PopupLayer";
-import { battleHeaderText, createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
+import { cakeOperationWaves, getCakeOperationTier } from "../data/cakeOperation";
+import { battleHeaderText, createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type CakeBattleInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import { expeditionManager, ExpeditionBossSettlementError, ExpeditionBossSettlementFlow } from "../managers/ExpeditionManager";
 import { settingsManager } from "../managers/SettingsManager";
@@ -303,6 +304,8 @@ export class BattleScene extends Phaser.Scene {
   private bossScoreScale = 1;
   private bossPhaseLabel?: Phaser.GameObjects.Text;
   private bossBestLabel?: Phaser.GameObjects.Text;
+  /** 지금 몇 번째 무리인가. 물량형 던전에서만 선다. */
+  private waveLabel?: Phaser.GameObjects.Text;
   private spawned = false;
   /** 마지막으로 시뮬레이션을 굴린 실제 시각(ms). */
   private lastStepAt = 0;
@@ -372,6 +375,21 @@ export class BattleScene extends Phaser.Scene {
     this.bossBestLabel = this.add.text(42, 180, t("battle.boss.scoreLine", { normal: 0, boss: 0 }), textStyle({ role: "emphasis", size: 25, color: COLOR.ink })).setDepth(90);
   }
 
+  /**
+   * 지금 몇 번째 무리를 상대하는지 알린다.
+   *
+   * 남은 무리는 **지금 물러설지 궁극기를 아낄지를 바꾸는 정보**라 화면에 세운다. 대신
+   * 전장 한가운데가 아니라 상단에 작게 두고, 새 무리가 설 때만 한 번 커졌다 제자리로
+   * 돌아와 "바뀌었다"를 크기로 말한다 — 가운데에 크게 띄우면 그 순간의 전장이 가린다.
+   */
+  private announceWave(wave: number, total: number): void {
+    const text = t("battle.wave", { wave, total });
+    if (!this.waveLabel) this.waveLabel = this.add.text(BASE_WIDTH / 2, 78, text, textStyle({ role: "display", size: 44, color: COLOR.sortieText })).setOrigin(0.5, 0).setDepth(90);
+    else this.waveLabel.setText(text);
+    this.waveLabel.setScale(1);
+    this.tweens.add({ targets: this.waveLabel, scale: 1.24, duration: 140, yoyo: true, ease: "Quad.easeOut" });
+  }
+
   /** Phaser scene data를 명시 DTO로 받아 일반 스테이지와 원정 결과 경계를 분리한다. */
   init(input?: BattleSceneInputDto): void {
     // 정규화는 Phaser 비의존 코어가 맡아 생략·빈 객체도 매번 새로운 스토리 DTO로 교체한다.
@@ -394,7 +412,10 @@ export class BattleScene extends Phaser.Scene {
     // UI와 같은 성장 계산기의 스냅샷을 복사해 전투가 룬 수치를 다시 계산하지 않게 한다.
     const players = partyIds.map((id) => ({ ...getRelic(id), stats: relicProgression.getFinalStats(id) }));
     // 원정은 노드 정보창과 같은 정적 편성/레벨 정의를 읽고, 스토리만 스테이지 적을 읽는다.
-    const stageEnemies = this.battleInput.mode === "expedition"
+    // 대작전은 무리가 여럿이라 **첫 무리만** 전장에 서고 나머지는 난전의 대기열로 넘어간다.
+    const cakeWaves = this.battleInput.mode === "cake" ? cakeOperationWaves(getCakeOperationTier(this.battleInput.tierId)) : undefined;
+    const stageEnemies = cakeWaves ? cakeWaves[0]
+      : this.battleInput.mode === "expedition"
       ? getExpeditionNodeEnemies(this.battleInput.nodeType, this.battleInput.floor)
       : this.battleInput.mode === "expeditionBoss" ? getExpeditionNodeEnemies("boss", 20) : getStageEnemies(stage);
     const expeditionConfig = this.battleInput.mode === "expedition" ? createExpeditionSkirmishConfig(this.battleInput, players, stageEnemies)
@@ -416,7 +437,8 @@ export class BattleScene extends Phaser.Scene {
       // 일반 스테이지의 적도 능력치뿐 아니라 스킬 돌파 효과까지 슬롯별 스냅샷을 사용한다.
       // 능력치 복사본과 같은 formationSlot 순서로 돌파 스킬 스냅샷을 맞춘다.
       augmentEffects: traitEffects,
-      enemyBreakthroughs: stageEnemyGrowth(stage).map(({ breakthrough }) => breakthrough),
+      ...(cakeWaves ? { waves: cakeWaves.slice(1) } : {}),
+      enemyBreakthroughs: cakeWaves ? stageEnemies.map(() => 0) : stageEnemyGrowth(stage).map(({ breakthrough }) => breakthrough),
       // 정예는 혼자 서는 만큼 몸이 크다. 능력치는 건드리지 않는다 — 세기는 야성 몫이 낸다.
       ...(stage.elite === true ? { enemyBodyScale: STAGE_ELITE.bodyScale } : {}),
     });
@@ -446,7 +468,8 @@ export class BattleScene extends Phaser.Scene {
     this.contributionResult = undefined;
     this.buffPopups = new PopupLayer(this, 2200);
     this.info = new EnemyInfoPopup(this, this.buffPopups);
-    this.enemySnapshots = placedEnemyIndex(this.battleInput, stage, stageEnemies);
+    // 뒤 무리의 적도 정보창이 열리므로 펼친 목록 전체로 스냅샷을 만든다.
+    this.enemySnapshots = placedEnemyIndex(this.battleInput, stage, cakeWaves ? cakeWaves.flat() : stageEnemies);
     this.openBuff = undefined;
     // 파편·파문은 SD보다 앞이되 궁극기 컷인(900)보다는 뒤라 연출을 가리지 않는다.
     // 광역 범위만 배경 원화 위·SD 아래에 깔려 누가 어디 섰는지 가리지 않는다.
@@ -636,10 +659,17 @@ export class BattleScene extends Phaser.Scene {
     refreshPresentationChip();
   }
 
-  /** 여섯을 각자의 시작 자리에 세운다. 전부 준비된 뒤에야 시간이 흐르기 시작한다. */
-  private async spawnFighters(): Promise<void> {
+  /**
+   * 여섯을 각자의 시작 자리에 세운다. 전부 준비된 뒤에야 시간이 흐르기 시작한다.
+   *
+   * 물량형 던전의 다음 무리도 같은 경로로 선다(`initial: false`) — 무리마다 따로 세우면
+   * 그 무리만 입력면·체력 바·폭주 필터 중 하나가 빠진 채 싸운다. 이미 선 전투원은 건너뛰고,
+   * 전투 도중에 부르는 것이라 시간 기준점(`lastStepAt`)은 건드리지 않는다.
+   */
+  private async spawnFighters(initial = true): Promise<void> {
     ensureEffectTextures(this);
     for (const fighter of this.state.fighters) {
+      if (this.views.has(fighter.id)) continue;
       // 표시 배율은 코어 입력에 들어 있으며 씬은 모든 Puppet 부속 표현에 같은 높이만 적용한다.
       const unitHeight = UNIT_HEIGHT * fighter.bodyScale;
       // 외형 선택은 manager/resolver가 소유하고 전투 씬은 진영과 결과 에셋만 배치한다.
@@ -691,6 +721,7 @@ export class BattleScene extends Phaser.Scene {
       this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, statusChips, statusHit, stunShown: false, feverTint, feverStep: -1, feverTinted: false, afterimageShown: false, tint, squashAt: -Infinity, squashDir: 1, spinDir: 1, dead: false });
     }
     this.syncViews();
+    if (!initial) return;
     // 마지막 한 명까지 서고 나서 시간을 흘려야 먼저 뜬 캐릭터만 앞서 달려가지 않는다.
     this.lastStepAt = performance.now();
     this.spawned = true;
@@ -1217,6 +1248,12 @@ export class BattleScene extends Phaser.Scene {
       return undefined;
     }
     if (event.kind === "bloodscent") return undefined;
+    // 다음 무리가 선 순간. 몸은 이미 코어의 fighters 배열에 있으므로 화면만 뒤따라 세운다.
+    if (event.kind === "waveStart") {
+      this.announceWave(event.wave, event.total);
+      void this.spawnFighters(false);
+      return undefined;
+    }
 
     const attacker = this.views.get(event.attackerId);
     const target = this.views.get(event.targetId);
@@ -1889,6 +1926,7 @@ export class BattleScene extends Phaser.Scene {
     const won = phase === "victory";
     if (this.battleInput.mode === "expeditionBoss") { void this.submitAndSettleBoss(this.battleInput, this.bossActions); return; }
     if (this.battleInput.mode === "expedition") { this.finishExpeditionBattle(this.battleInput, won); return; }
+    if (this.battleInput.mode === "cake") { void this.finishCakeOperation(this.battleInput, won); return; }
     const stage = getBattleStage(session.selectedStageId ?? "1-1");
     if (!won) { this.finishStageDefeat(stage); return; }
     void this.finishStageVictory(stage);
@@ -1952,6 +1990,41 @@ export class BattleScene extends Phaser.Scene {
       this.add.rectangle(BASE_WIDTH / 2, 930, BASE_WIDTH, 420, COLOR.void, 0.84).setDepth(100);
       this.add.text(BASE_WIDTH / 2, 900, t("battle.result.saveFailed"), textStyle({ role: "body", size: 30, color: COLOR.ink })).setOrigin(0.5).setDepth(101);
       new Button(this, BASE_WIDTH / 2, 1010, { width: 400, height: 100, label: t("battle.result.retry"), onClick: () => void this.finishStageVictory(stage) }).setDepth(101);
+    }
+  }
+
+  /**
+   * 치즈케이크 대작전 결과.
+   *
+   * **스테미나는 입장에서 이미 빠졌다** — 여기서는 보상만 얹고 해금 단계를 갱신한다. 패배도
+   * 같은 경계를 지나야 승리 전용 보상이 새지 않고, 이긴 판의 배율이 화면에서 다시 곱해지지도
+   * 않는다(`granted`가 이미 확정된 값이다).
+   */
+  private async finishCakeOperation(input: CakeBattleInputDto, won: boolean): Promise<void> {
+    const back = () => this.scene.start("cakeOperation");
+    try {
+      const result = await gameApi.completeCakeOperation({ tierId: input.tierId, requestId: input.requestId, multiplier: input.multiplier, victory: won });
+      if (!this.scene.isActive()) return;
+      const popups = new PopupLayer(this, 2200);
+      const items = currencyRecordToRewardItems(result.granted);
+      new StageCompletePopup(this, popups).open({
+        // 진 판은 받은 것이 없으므로 보상 자리 대신 강해지러 가는 길이 선다.
+        reward: won ? { kind: "loot", items } : {
+          kind: "defeat",
+          actions: [
+            { label: t("stageComplete.toRelics"), onPress: () => this.scene.start("relics") },
+            { label: t("cake.title"), onPress: back },
+          ],
+        },
+        fighters: this.stageCompleteFighters(),
+        onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
+        onConfirm: () => { if (this.scene.isActive()) back(); },
+      });
+    } catch {
+      // 결과 확정만 실패한 자리라 전장으로 되돌리지 않고 같은 요청만 다시 시도하게 한다.
+      this.add.rectangle(BASE_WIDTH / 2, 930, BASE_WIDTH, 420, COLOR.void, 0.84).setDepth(100);
+      this.add.text(BASE_WIDTH / 2, 900, t("battle.result.saveFailed"), textStyle({ role: "body", size: 30, color: COLOR.ink })).setOrigin(0.5).setDepth(101);
+      new Button(this, BASE_WIDTH / 2, 1010, { width: 400, height: 100, label: t("battle.result.retry"), onClick: () => void this.finishCakeOperation(input, won) }).setDepth(101);
     }
   }
 

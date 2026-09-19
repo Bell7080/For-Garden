@@ -70,6 +70,19 @@ export const MISC_KO = {
   "archaeology.start": "지층 탐사 시작",
   "archaeology.digsCount": "{current}/{max}",
   "archaeology.title": "고 고 학",
+  // 유적 지도 정적 데이터는 이 키만 참조해 표시 문장을 품지 않는다.
+  "archaeology.site.garden-gate.name": "정원의 관문",
+  "archaeology.site.sunken-archive.name": "수몰 기록고",
+  "archaeology.site.deep-sanctum.name": "심층 성소",
+  "archaeology.map.recommended": "권장 LV.{level}",
+  "archaeology.map.available": "탐사 가능",
+  "archaeology.map.needLevel": "최소 LV.{level} 필요",
+  "archaeology.map.needSite": "선행 유적 완료 필요: {site}",
+  "archaeology.map.start": "탐사 시작",
+  "archaeology.map.close": "닫기",
+  "archaeology.reward.rawStone": "원석",
+  "archaeology.reward.rune": "룬",
+  "archaeology.reward.gold": "골드",
 
   // 마일리지
   "mileage.title": "마일리지 상점",

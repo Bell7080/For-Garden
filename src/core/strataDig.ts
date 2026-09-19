@@ -33,6 +33,8 @@ export interface StrataZone {
 /** 지금 진행 중인 한 판이다. 저장에 그대로 직렬화된다. */
 export interface StrataBoard {
   layerId: string;
+  /** 어느 지도 유적에서 시작했는지다. 구 저장 판은 없을 수 있어 선택 필드다. */
+  siteId?: string;
   /**
    * 이 판의 겉장 원화 번호(1부터).
    *
@@ -61,6 +63,7 @@ export interface StrataTileView {
 /** 화면이 받는 판이다. 여기에 없는 것은 화면이 알 수 없다. */
 export interface StrataBoardView {
   layerId: string;
+  siteId?: string;
   art: number;
   columns: number;
   rows: number;
@@ -126,7 +129,7 @@ function assignZones(layer: StrataLayerDefinition, random: () => number): { zone
 }
 
 /** 새 판을 만든다. 모든 칸의 내용이 이 순간 정해지고 그 뒤로는 바뀌지 않는다. */
-export function createStrataBoard(input: { layerId: string; random: () => number }): StrataBoard {
+export function createStrataBoard(input: { layerId: string; siteId?: string; random: () => number }): StrataBoard {
   const layer = findStrataLayer(input.layerId);
   if (layer === undefined) throw new Error("알 수 없는 지층입니다.");
   const { zones, zoneOf } = assignZones(layer, input.random);
@@ -138,7 +141,7 @@ export function createStrataBoard(input: { layerId: string; random: () => number
     return { index, zone, kind: row.kind, amount, revealed: false };
   });
   const art = 1 + Math.floor(roll(input.random) * STRATA_ART_COUNT);
-  return { layerId: layer.id, art, columns: layer.columns, rows: layer.rows, tiles, zones, digsLeft: layer.digs };
+  return { layerId: layer.id, ...(input.siteId ? { siteId: input.siteId } : {}), art, columns: layer.columns, rows: layer.rows, tiles, zones, digsLeft: layer.digs };
 }
 
 /** 파기 전에 그 칸을 팔 수 있는지 판정한다. 상태를 바꾸지 않는다. */
@@ -170,6 +173,7 @@ export function strataBoardView(board: StrataBoard): StrataBoardView {
   if (layer === undefined) throw new Error("알 수 없는 지층의 탐사판입니다.");
   return {
     layerId: board.layerId,
+    ...(board.siteId ? { siteId: board.siteId } : {}),
     art: board.art,
     columns: board.columns,
     rows: board.rows,
@@ -205,6 +209,9 @@ export interface ArchaeologyState {
   chargesUpdatedAt: string | null;
   /** 진행 중인 판. 없으면 기록 화면만 선다. */
   board: StrataBoard | null;
+  /** 서버가 확정한 유적별 해금/완료 진행이다. 해금은 완료와 분리해 운영 보상에도 쓸 수 있다. */
+  unlockedSiteIds: string[];
+  completedSiteIds: string[];
   /**
    * 재해석해 두고 아직 고르지 않은 특성 후보다.
    *
@@ -216,7 +223,7 @@ export interface ArchaeologyState {
 
 /** 새 계정의 고고학 상태다. 횟수는 가득 찬 채로 시작한다. */
 export function createArchaeologyState(): ArchaeologyState {
-  return { charges: STRATA_CHARGE.max, chargesUpdatedAt: null, board: null, pendingReroll: null };
+  return { charges: STRATA_CHARGE.max, chargesUpdatedAt: null, board: null, unlockedSiteIds: ["garden-gate"], completedSiteIds: [], pendingReroll: null };
 }
 
 /** 서버 시각까지 끝난 구간만 채운다. 시각이 역행하면 기준점을 뒤로 옮기지 않는다. */

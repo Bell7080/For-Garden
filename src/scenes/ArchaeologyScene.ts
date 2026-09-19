@@ -4,7 +4,10 @@ import { gameApi } from "../api/FakeServer";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugArchaeologyDig, setDebugScene } from "../debug";
 import { strataBoardHaul, type StrataBoardView } from "../core/strataDig";
-import { DEFAULT_STRATA_LAYER_ID, type StrataRewardKind } from "../data/strataLayers";
+import { findStrataLayer, type StrataRewardKind } from "../data/strataLayers";
+import { ARCHAEOLOGY_SITES, type ArchaeologySiteDefinition } from "../data/archaeologySites";
+import { rewardStarRating } from "../core/archaeologyMap";
+import { ArchaeologyMapView } from "../ui/ArchaeologyMapView";
 import { session } from "../state/session";
 import { canUpgradeRuneTraitGrade, RUNE_TRAIT_GRADES, RUNE_TRAIT_RULES } from "../core/runeTraits";
 import { RUNE_TRAIT_ITEMS } from "../data/runeTraits";
@@ -105,6 +108,8 @@ export class ArchaeologyScene extends Phaser.Scene {
   private tab: ArchaeologyTab = "strata";
   /** 지금 그려진 판. 서버 응답을 그대로 들고 있고 씬이 고쳐 쓰지 않는다. */
   private board: StrataBoardView | null = null;
+  /** 서버 확정 해금/완료 상태만 지도에 전달한다. */
+  private siteStates: ArchaeologyStateResponse["sites"] = [];
   private charges = 0;
   private chargesMax = 0;
   /** 서버가 확정한 다음 충전 시각과 응답 순간에 계산한 서버-클라이언트 시계 차이다. */
@@ -249,6 +254,7 @@ export class ArchaeologyScene extends Phaser.Scene {
     this.charges = state.charges;
     this.chargesMax = state.chargesMax;
     this.board = state.board;
+    this.siteStates = state.sites;
     // 잘못된 서버 시각은 로컬 시각을 서버 시각이라고 추측하지 않고 안전한 정지 상태로 둔다.
     this.serverClockOffsetMs = Number.isFinite(serverTime) ? serverTime - receivedAt : 0;
     this.nextChargeAt = Number.isFinite(serverTime) && Number.isFinite(nextChargeAt) ? nextChargeAt : null;
@@ -290,21 +296,16 @@ export class ArchaeologyScene extends Phaser.Scene {
   private paintStrata(): void {
     const board = this.board;
     if (board === null) {
-      // 아이콘 없는 충전 줄은 시작 버튼 바로 위에 두어, 행동과 그 비용을 한 덩어리로 읽게 한다.
-      this.chargeCountdownText = this.add.text(BASE_WIDTH / 2, ARCHAEOLOGY.boardY - 104, "",
+      // 단일 시작 버튼 대신 양축 유적 지도를 세우고, 서버가 확정한 상태를 노드에만 투영한다.
+      this.chargeCountdownText = this.add.text(BASE_WIDTH / 2, 300, "",
         textStyle({ role: "display", size: 32, color: COLOR.accentText })).setOrigin(0.5);
       this.view.add(this.chargeCountdownText);
       this.updateChargeCountdown();
-      const button = new Button(this, BASE_WIDTH / 2, ARCHAEOLOGY.boardY, {
-        width: 560, height: 132, label: t("archaeology.start"), variant: "primary",
-        onClick: () => {
-          if (this.charges <= 0) return;
-          void gameApi.startStrataRun({ layerId: DEFAULT_STRATA_LAYER_ID, requestId: `strata-${Date.now()}` })
-            .then((state) => { this.applyArchaeologyState(state); this.paintView(); });
-        },
+      const map = new ArchaeologyMapView(this, {
+        top: 340, bottom: ARCHAEOLOGY.tabY - 64, sites: ARCHAEOLOGY_SITES, states: this.siteStates,
+        onSelect: (site) => this.openSitePreview(site),
       });
-      button.setEnabled(this.charges > 0);
-      this.view.add(button);
+      this.view.add(map);
       return;
     }
 
@@ -402,6 +403,30 @@ export class ArchaeologyScene extends Phaser.Scene {
 
     this.paintStrataHaul(board);
     this.publishDigDebug();
+  }
+
+  /** 잠긴 노드도 여는 공용 홀로그램 계열 미리보기다. 시작 가능 여부만 서버 상태로 제한한다. */
+  private openSitePreview(site: ArchaeologySiteDefinition): void {
+    const state = this.siteStates.find((entry) => entry.siteId === site.id);
+    const layer = findStrataLayer(site.layerId);
+    if (!state || !layer) return;
+    const popup = this.add.container(BASE_WIDTH / 2, 1110);
+    const panel = this.add.graphics().fillStyle(COLOR.panel, 0.97).fillRoundedRect(-430, -300, 860, 600, 28).lineStyle(3, COLOR.accent, 0.72).strokeRoundedRect(-430, -300, 860, 600, 28);
+    popup.add(panel);
+    popup.add(this.add.text(0, -238, t(site.nameKey as TextKey), textStyle({ role: "display", size: 42 })).setOrigin(0.5));
+    popup.add(this.add.text(0, -170, `${site.board.columns}×${site.board.rows}  ·  ${t("archaeology.map.recommended", { level: site.recommendedLevel })}`, textStyle({ role: "body", size: 28, color: COLOR.inkDim })).setOrigin(0.5));
+    const labels: Array<["rawStone" | "rune" | "gold", TextKey]> = [["rawStone", "archaeology.reward.rawStone"], ["rune", "archaeology.reward.rune"], ["gold", "archaeology.reward.gold"]];
+    labels.forEach(([kind, key], index) => popup.add(this.add.text(-300, -92 + index * 54, `${t(key)}  ${"★".repeat(rewardStarRating(layer, kind))}`, textStyle({ role: "body", size: 30, color: COLOR.accentText })).setOrigin(0, 0.5)));
+    const reason = state.unlocked ? t("archaeology.map.available") : state.missingLevel > 0
+      ? t("archaeology.map.needLevel", { level: site.minimumLevel })
+      : t("archaeology.map.needSite", { site: state.missingPrerequisiteIds.map((id) => t(ARCHAEOLOGY_SITES.find((candidate) => candidate.id === id)?.nameKey as TextKey)).join(", ") });
+    popup.add(this.add.text(0, 96, reason, textStyle({ role: "body", size: 27, color: state.unlocked ? COLOR.accentText : COLOR.dangerText })).setOrigin(0.5));
+    const close = new Button(this, -190, 220, { width: 310, height: 88, label: t("archaeology.map.close"), onClick: () => popup.destroy() });
+    const start = new Button(this, 190, 220, { width: 310, height: 88, label: t("archaeology.map.start"), variant: "primary", onClick: () => {
+      if (!state.unlocked || this.charges <= 0) return;
+      void gameApi.startStrataRun({ siteId: site.id, requestId: `strata-${Date.now()}` }).then((response) => { this.applyArchaeologyState(response); this.paintView(); });
+    } });
+    start.setEnabled(state.unlocked && this.charges > 0); popup.add([close, start]); this.view.add(popup);
   }
 
   /** 서버 처리와 충돌 프레임을 병렬로 기다리고 성공한 결과 칸만 제자리에서 교체한다. */

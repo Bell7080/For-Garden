@@ -6,13 +6,15 @@ import { ARCHAEOLOGY_MAP_LAYOUT, clampArchaeologyMapOffset } from "./archaeology
 import { COLOR } from "./theme";
 
 export interface ArchaeologyMapSiteState { siteId: string; unlocked: boolean; completed: boolean }
-export interface ArchaeologyMapViewOptions { top: number; bottom: number; sites: readonly ArchaeologySiteDefinition[]; states: readonly ArchaeologyMapSiteState[]; activeSiteId?: string; onSelect: (site: ArchaeologySiteDefinition) => void }
+export interface ArchaeologyMapViewOptions { top: number; bottom: number; sites: readonly ArchaeologySiteDefinition[]; states: readonly ArchaeologyMapSiteState[]; focusSiteId?: string; activeSiteId?: string; onSelect: (site: ArchaeologySiteDefinition) => void }
 
 /** 원정의 검증된 포인터 ID/누적 이동 패턴만 재사용하고 콘텐츠 상태는 별도로 소유하는 양축 지도다. */
 export class ArchaeologyMapView extends Phaser.GameObjects.Container {
   private readonly world: Phaser.GameObjects.Container;
   private pointerId?: number; private start = { x: 0, y: 0 }; private lastPoint = { x: 0, y: 0 }; private dragged = false;
   private pressed?: ArchaeologySiteDefinition;
+  /** 생성 프레임의 포인터 입력과 초기 중앙 배치를 섞지 않기 위한 한 프레임짜리 잠금이다. */
+  private restoring = true;
 
   constructor(scene: Phaser.Scene, private readonly options: ArchaeologyMapViewOptions) {
     super(scene, 0, options.top); scene.add.existing(this);
@@ -34,10 +36,18 @@ export class ArchaeologyMapView extends Phaser.GameObjects.Container {
     const surface = scene.add.zone(scene.scale.width / 2, viewportHeight / 2, scene.scale.width, viewportHeight).setInteractive(); surface.on("pointerdown", (p: Phaser.Input.Pointer) => this.begin(p)); this.addAt(surface, 0);
     scene.input.on("pointermove", this.move, this); scene.input.on("pointerup", this.end, this); scene.input.on("gameout", this.cancel, this);
     this.once("destroy", () => { scene.input.off("pointermove", this.move, this); scene.input.off("pointerup", this.end, this); scene.input.off("gameout", this.cancel, this); });
-    const active = options.sites.find((site) => site.id === options.activeSiteId) ?? options.sites[0];
-    this.setOffset(scene.scale.width / 2 - active.x, viewportHeight / 2 - active.y);
+    const focus = options.sites.find((site) => site.id === options.focusSiteId) ?? options.sites[0];
+    // 컨테이너·마스크가 모두 생성된 뒤 딱 한 번 배치한다. 좌표 자체는 저장하지 않고 매 진입 시
+    // 진행 의미에서 다시 계산하므로 해상도/카탈로그 변경 뒤 낡은 픽셀 위치가 복원되지 않는다.
+    const restore = (): void => {
+      if (!this.active) return;
+      this.setOffset(scene.scale.width / 2 - focus.x, viewportHeight / 2 - focus.y);
+      this.restoring = false;
+    };
+    scene.events.once(Phaser.Scenes.Events.POST_UPDATE, restore);
+    this.once("destroy", () => scene.events.off(Phaser.Scenes.Events.POST_UPDATE, restore));
   }
-  private begin(pointer: Phaser.Input.Pointer): void { if (this.pointerId !== undefined) return; this.pointerId = pointer.id; this.start = this.lastPoint = { x: pointer.worldX, y: pointer.worldY }; this.dragged = false; }
+  private begin(pointer: Phaser.Input.Pointer): void { if (this.restoring || this.pointerId !== undefined) return; this.pointerId = pointer.id; this.start = this.lastPoint = { x: pointer.worldX, y: pointer.worldY }; this.dragged = false; }
   private move(pointer: Phaser.Input.Pointer): void { if (pointer.id !== this.pointerId) return; const next = { x: pointer.worldX, y: pointer.worldY }; this.dragged ||= isArchaeologyMapDrag(this.start, next, BUTTON_DRAG_CANCEL_DISTANCE); this.setOffset(this.world.x + next.x - this.lastPoint.x, this.world.y + next.y - this.lastPoint.y); this.lastPoint = next; }
   private end(pointer: Phaser.Input.Pointer): void { if (pointer.id !== this.pointerId) return; const site = this.pressed; const select = !this.dragged && site; this.cancel(); if (select) this.options.onSelect(select); }
   private cancel(): void { this.pointerId = undefined; this.pressed = undefined; this.dragged = false; }

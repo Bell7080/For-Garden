@@ -6,7 +6,7 @@ import { setDebugArchaeologyDig, setDebugScene } from "../debug";
 import { strataBoardHaul, type StrataBoardView } from "../core/strataDig";
 import { findStrataLayer, type StrataRewardKind } from "../data/strataLayers";
 import { ARCHAEOLOGY_SITES, type ArchaeologySiteDefinition } from "../data/archaeologySites";
-import { rewardExpectationRating } from "../core/archaeologyMap";
+import { resolveArchaeologyFocusSite, rewardExpectationRating } from "../core/archaeologyMap";
 import { ArchaeologyMapView } from "../ui/ArchaeologyMapView";
 import { session } from "../state/session";
 import { canUpgradeRuneTraitGrade, RUNE_TRAIT_GRADES, RUNE_TRAIT_RULES } from "../core/runeTraits";
@@ -34,6 +34,7 @@ import { openRewardPopup, type RewardPopupItem } from "../ui/RewardPopup";
 import { StrataDigEffect } from "../ui/StrataDigEffect";
 import type { ArchaeologyStateResponse } from "../api/contracts";
 import { formatCountdown } from "../core/formatCountdown";
+import { archaeologyProgressManager } from "../managers/ArchaeologyProgressManager";
 
 /**
  * 고고학. 하단 탭 첫 슬롯이다.
@@ -255,6 +256,8 @@ export class ArchaeologyScene extends Phaser.Scene {
     this.chargesMax = state.chargesMax;
     this.board = state.board;
     this.siteStates = state.sites;
+    // 구 저장의 진행 판도 다음 지도 복귀 때 같은 유적을 가리키도록 의미 있는 ID로 승격한다.
+    if (state.board?.siteId) archaeologyProgressManager.selectSite(state.board.siteId);
     // 잘못된 서버 시각은 로컬 시각을 서버 시각이라고 추측하지 않고 안전한 정지 상태로 둔다.
     this.serverClockOffsetMs = Number.isFinite(serverTime) ? serverTime - receivedAt : 0;
     this.nextChargeAt = Number.isFinite(serverTime) && Number.isFinite(nextChargeAt) ? nextChargeAt : null;
@@ -301,9 +304,22 @@ export class ArchaeologyScene extends Phaser.Scene {
         textStyle({ role: "display", size: 32, color: COLOR.accentText })).setOrigin(0.5);
       this.view.add(this.chargeCountdownText);
       this.updateChargeCountdown();
+      const focus = resolveArchaeologyFocusSite(
+        ARCHAEOLOGY_SITES,
+        this.siteStates,
+        undefined,
+        session.archaeology.lastSelectedSiteId,
+      );
+      // 삭제되거나 다시 잠긴 선택은 화면에서만 우회하지 않고 안전한 유적으로 저장도 복구한다.
+      if (focus && focus.id !== session.archaeology.lastSelectedSiteId) archaeologyProgressManager.repairSelection(focus.id);
       const map = new ArchaeologyMapView(this, {
         top: 340, bottom: ARCHAEOLOGY.tabY - 64, sites: ARCHAEOLOGY_SITES, states: this.siteStates,
-        onSelect: (site) => this.openSitePreview(site),
+        focusSiteId: focus?.id,
+        onSelect: (site) => {
+          // 서버가 확정한 해금 노드만 마지막 선택으로 남긴다. 잠긴 노드 열람은 진행 선택이 아니다.
+          if (this.siteStates.find(({ siteId }) => siteId === site.id)?.unlocked) archaeologyProgressManager.selectSite(site.id);
+          this.openSitePreview(site);
+        },
       });
       this.view.add(map);
       return;

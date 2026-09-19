@@ -61,6 +61,28 @@ export function archaeologySiteAvailability(site: ArchaeologySiteDefinition, lev
 }
 
 export interface ArchaeologyCamera { x: number; y: number }
+
+export interface ArchaeologyMapSiteState { siteId: string; unlocked: boolean }
+
+/** 진행 판 → 유효한 마지막 선택 → 가장 높은 해금 유적 → 첫 해금 유적 순으로 복원 대상을 고른다. */
+export function resolveArchaeologyFocusSite(
+  sites: readonly ArchaeologySiteDefinition[],
+  states: readonly ArchaeologyMapSiteState[],
+  activeSiteId: string | undefined,
+  lastSelectedSiteId: string | null,
+): ArchaeologySiteDefinition | undefined {
+  const unlockedIds = new Set(states.filter(({ unlocked }) => unlocked).map(({ siteId }) => siteId));
+  // 진행 판은 이미 입장 비용을 치른 서버 상태이므로 잠금 정책이 바뀌어도 가장 먼저 보여 준다.
+  const active = activeSiteId === undefined ? undefined : sites.find(({ id }) => id === activeSiteId);
+  if (active) return active;
+  const selected = lastSelectedSiteId === null ? undefined : sites.find(({ id }) => id === lastSelectedSiteId && unlockedIds.has(id));
+  if (selected) return selected;
+  // 카탈로그 순서는 난이도 순서라는 암묵 규칙 대신 명시적인 해금 레벨로 최고 유적을 판정한다.
+  return sites.filter(({ id }) => unlockedIds.has(id)).reduce<ArchaeologySiteDefinition | undefined>(
+    (best, site) => best === undefined || site.minimumLevel > best.minimumLevel ? site : best,
+    undefined,
+  ) ?? sites[0];
+}
 /** 양축 카메라가 지도 바깥을 노출하지 않도록 닫힌 범위로 제한한다. */
 export function clampArchaeologyCamera(camera: ArchaeologyCamera, viewport: { width: number; height: number }, world: { width: number; height: number }): ArchaeologyCamera {
   return { x: Math.min(0, Math.max(Math.min(0, viewport.width - world.width), camera.x)), y: Math.min(0, Math.max(Math.min(0, viewport.height - world.height), camera.y)) };

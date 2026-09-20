@@ -95,6 +95,12 @@ export class PopupLayer {
   private readonly titleByLayer = new Map<Phaser.GameObjects.Container, string>();
   /** 닫는 연출은 층이 아니라 **판**을 줄이므로, 층마다 제 판을 찾아갈 수 있게 짝을 남긴다. */
   private readonly bodyByLayer = new Map<Phaser.GameObjects.Container, Phaser.GameObjects.Container>();
+  /**
+   * 판 **밖**에 선 공용 뒤로가기. 층의 자식이 아니라 화면에 서므로 층의 입력을 끄는 것만으로는
+   * 꺼지지 않는다 — 닫는 연출이 도는 동안 그 자리에 **눌리는 죽은 버튼**이 남는다. 닫는 순간
+   * 직접 지우려고 층마다 들고 있는다.
+   */
+  private readonly backByLayer = new Map<Phaser.GameObjects.Container, Phaser.GameObjects.GameObject>();
 
   /** 씬 종료 정리를 이미 걸었는지. 첫 팝업을 열 때 한 번만 건다. */
   private shutdownHooked = false;
@@ -233,6 +239,8 @@ export class PopupLayer {
       // 판 밖 우하단이라는 자리 자체가 사라진다. 층이 닫힐 때 같이 지운다.
       const back = new IconButton(this.scene, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => close() })
         .setDepth(POPUP_BACK_BUTTON_DEPTH + this.stack.length * 2);
+      this.backByLayer.set(layer, back);
+      // 층이 연출 없이 통째로 죽는 길(씬 종료)에서도 함께 지운다.
       layer.once(Phaser.GameObjects.Events.DESTROY, () => back.destroy());
     }
     if (options.closeOnBackdrop !== false) {
@@ -349,6 +357,10 @@ export class PopupLayer {
     this.onCloseByLayer.delete(layer);
     const body = this.bodyByLayer.get(layer);
     this.bodyByLayer.delete(layer);
+    // 판 밖의 뒤로가기는 **지금** 지운다 — 연출이 끝나기를 기다리면 그 0.12초 동안 이미 닫힌
+    // 판의 버튼이 화면 우하단에 남아, 아래 화면의 뒤로가기 대신 그것이 눌린다.
+    this.backByLayer.get(layer)?.destroy();
+    this.backByLayer.delete(layer);
     if (body) playPopupClose(this.scene, layer, body, () => layer.destroy());
     else layer.destroy();
     onClose?.();

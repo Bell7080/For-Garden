@@ -9,10 +9,19 @@ import { BASE_WIDTH } from "../../src/config/gameConfig";
 describe("shop catalog", () => {
   it("owns the requested tab order and gives every product a valid category", () => {
     // 탭 순서는 그 자리의 무대표가 갖는다 — 씬이 한 표를 고정으로 그리면 자리가 늘어도
-    // 탭이 늘 「일반·강화·룬」이 된다.
-    expect(shopStagePresentation("shop").tabs.map(({ id }) => id)).toEqual(["general", "enhancement", "rune"]);
+    // 탭이 늘 그대로다.
+    expect(shopStagePresentation("shop").tabs.map(({ id }) => id)).toEqual(["special", "daily", "weekly"]);
     const categories = new Set(shopStagePresentation("shop").tabs.map(({ id }) => id));
     expect(PRODUCTS.every(({ category }) => categories.has(category))).toBe(true);
+    /*
+     * **갈래는 갱신 주기에서 그대로 나온다.** 「무엇을 파나」가 아니라 「언제 돌아오는
+     * 자리인가」로 가르므로, 두 값이 어긋난 상품은 탭에 서 있는 것과 다른 주기로 돌아온다 —
+     * 매주 오는 물건이 「일일」 탭에 서면 매일 들른 손이 허탕을 친다.
+     */
+    for (const { id, category, refresh } of PRODUCTS) {
+      const expected = refresh === "daily" ? "daily" : refresh === "weekly" ? "weekly" : "special";
+      expect(category, id).toBe(expected);
+    }
   });
 
   it("registers every product icon key in the temporary asset table", () => {

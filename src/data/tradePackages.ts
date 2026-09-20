@@ -27,9 +27,15 @@ import { registerDataText } from "../i18n";
  */
 export const TRADE_GEM_RATE: Readonly<Record<ProductCurrency, number>> = {
   gems: 1,
-  // 원석은 고고학 안에서만 도는 재화라 무역 전시대에 올리지 않는다. 시세만 채워 두면
-  // 표가 비지 않으면서도 그 값이 어디에도 쓰이지 않는다 — 올릴 때 다시 재서 고친다.
-  rawStone: 40,
+  /*
+   * **원석은 이제 실제로 값으로 쓰인다** — 고고학 가게가 원석 하나로 값을 받으므로, 「어디에도
+   * 쓰이지 않으니 대충 채워 둔다」던 40을 그대로 두면 그 가게의 값이 전부 거기서 나온다.
+   *
+   * 다시 잰 기준은 **한 판에서 실제로 캐는 양**이다(`strataLayers`의 원석 칸 6~26, 한 판
+   * 8~10회). 화석과 같은 무게(1 젬 = 5개)로 두면 주간 상품 한 장이 한 판 몇 번, 특가 한 장이
+   * 한 주 남짓이 된다. 40이던 때는 같은 상품이 각각 열 배 넘게 비쌌다.
+   */
+  rawStone: 5,
   // 증표 둘도 같은 이유로 전시대에 올리지 않는다 — 젬으로 사면 그 증표가 무엇을 위한
   // 것인지 말하지 못한다. 시세만 채워 표를 비우지 않는다.
   raidSigil: 60,
@@ -94,7 +100,7 @@ export function isTradePackage(product: { storefront: ProductStorefront }): bool
  */
 export const TRADE_PACKAGES: readonly ProductDefinition[] = [
   {
-    id: "trade-cheesecake-supply", storefront: "trade", category: "general", iconKey: "shop-product-supplies",
+    id: "trade-cheesecake-supply", storefront: "trade", category: "weekly", iconKey: "shop-product-supplies",
     name: "치즈케이크 보급", description: "치즈케이크 600개",
     acquisition: { kind: "currency", currency: "gems", amount: 150 },
     grants: [{ kind: "currency", currency: "cheesecake", amount: 600 }],
@@ -102,7 +108,7 @@ export const TRADE_PACKAGES: readonly ProductDefinition[] = [
     visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z",
   },
   {
-    id: "trade-research-grant", storefront: "trade", category: "enhancement", iconKey: "shop-product-enhancement",
+    id: "trade-research-grant", storefront: "trade", category: "weekly", iconKey: "shop-product-enhancement",
     name: "연구 보조금", description: "골드 140,000과 공용 DNA 조각 14개",
     acquisition: { kind: "currency", currency: "gems", amount: 200 },
     grants: [{ kind: "currency", currency: "gold", amount: 140_000 }, { kind: "currency", currency: "dnaFragments", amount: 14 }],
@@ -110,7 +116,7 @@ export const TRADE_PACKAGES: readonly ProductDefinition[] = [
     visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z",
   },
   {
-    id: "trade-excavation-crate", storefront: "trade", category: "general", iconKey: "shop-product-supplies",
+    id: "trade-excavation-crate", storefront: "trade", category: "special", iconKey: "shop-product-supplies",
     name: "발굴 장비 보급함", description: "화석 4,000개와 호박석 20개",
     acquisition: { kind: "currency", currency: "gems", amount: 400 },
     grants: [{ kind: "currency", currency: "fossil", amount: 4_000 }, { kind: "currency", currency: "amber", amount: 20 }],

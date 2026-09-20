@@ -583,7 +583,9 @@ describe("FakeServer", () => {
 
 describe("FakeServer 상품 카탈로그", () => {
   it("UTC 일일 경계가 지나면 구매 제한을 새 주기로 갱신한다", async () => {
-    const state = makeSession(10_000); let now = new Date("2026-08-22T23:59:59Z");
+    // 일반 상점의 값은 골드 하나로 통일되어 있다 — 다섯 장이면 50,000골드다.
+    const state = makeSession(10_000); state.wallet.gold = 60_000;
+    let now = new Date("2026-08-22T23:59:59Z");
     const server = new FakeServer(state, { latencyMs: 0, now: () => now });
     await server.purchaseProduct({ storefront: "shop", productId: "shop-field-supplies", quantity: 5 });
     expect((await server.getProducts("shop")).products.find(({ id }) => id === "shop-field-supplies")?.remaining).toBe(0);

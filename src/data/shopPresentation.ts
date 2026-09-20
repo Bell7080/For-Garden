@@ -105,9 +105,14 @@ export const LOOT_MERCHANT_LINE_KEYS: readonly TextKey[] = [
 ];
 
 /** 상점 화면 한 자리가 갖는 무대. 점원·배경·대사가 한 덩어리로 갈린다. */
-/** 일반·고고학이 함께 쓰는 세 갈래. 같은 상품 계약(`ShopCategory`)을 읽는 자리다. */
+/**
+ * 일반·고고학이 함께 쓰는 세 갈래. 같은 상품 계약(`ShopCategory`)을 읽는 자리다.
+ *
+ * **「무엇을 파나」가 아니라 「언제 돌아오는 자리인가」로 가른다.** 일반·강화·룬이던 때는 룬
+ * 탭에 상품이 한 장뿐이었고, 세 이름 모두 **언제 다시 와야 하는지**를 말하지 못했다.
+ */
 const SHOP_CATEGORY_TABS: readonly { id: string; label: string }[] = [
-  { id: "general", label: "일반" }, { id: "enhancement", label: "강화" }, { id: "rune", label: "룬" },
+  { id: "special", label: "특가" }, { id: "daily", label: "일일" }, { id: "weekly", label: "주간" },
 ];
 
 /** 전리품 상점의 두 갈래. `id`는 상품의 `lootCategory`와 같은 문자열이다. */

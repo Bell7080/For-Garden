@@ -5,7 +5,7 @@ import { productsForShopTab, shopModel } from "../../src/ui/shopModel";
 
 /** 필터 검증에 필요하지 않은 표시 필드는 한 팩토리에서 채워 storefront 의도만 드러낸다. */
 function product(id: string, storefront: ProductStorefront): ProductDto {
-  return { id, storefront, category: "general", iconKey: "shop-product-supplies", name: id, description: id, acquisition: { kind: "currency", currency: "fossil", amount: 1 }, grants: [], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", remaining: 1, purchasable: true };
+  return { id, storefront, category: "special", iconKey: "shop-product-supplies", name: id, description: id, acquisition: { kind: "currency", currency: "fossil", amount: 1 }, grants: [], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", remaining: 1, purchasable: true };
 }
 
 /** 일반 상점 모델이 다른 서버 storefront의 상품을 끌어오지 않는지 고정한다. */
@@ -32,7 +32,8 @@ describe("storefront product models", () => {
   });
 
   it("탭별 상품 필터는 다른 storefront와 다른 분류를 동시에 제외한다", () => {
-    const enhancement = { ...product("shop-enhancement", "shop"), category: "enhancement" as const };
-    expect(productsForShopTab([...mixed, enhancement], "enhancement").map(({ id }) => id)).toEqual(["shop-enhancement"]);
+    // 기본 fixture는 「특가」라, 다른 갈래 하나를 세워 그 탭만 걸러 내는지 본다.
+    const daily = { ...product("shop-daily", "shop"), category: "daily" as const };
+    expect(productsForShopTab([...mixed, daily], "daily").map(({ id }) => id)).toEqual(["shop-daily"]);
   });
 });

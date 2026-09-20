@@ -196,6 +196,14 @@ export class ArchaeologyScene extends Phaser.Scene {
 
   create(): void {
     setDebugScene("archaeology");
+    /*
+     * **Phaser는 씬 인스턴스를 재사용한다.** 필드 초기값(`= false`)은 게임이 씬을 만들 때 딱
+     * 한 번 도는데, 굴착이 도는 중에 화면을 떠나면 이 씬 객체에 `digging = true`가 남을 수
+     * 있다 — 돌아온 판은 첫 손짓부터 되돌아가 **아무 칸도 파이지 않는다.** 한 판의 상태는
+     * 화면을 열 때마다 되돌린다(상점의 첫 마디가 같은 이유로 재진입부터 사라졌다).
+     */
+    this.digging = false;
+    this.chargeRefreshPending = false;
     addSceneBackground(this, BACKGROUND.archaeology);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -20, strength: 0.72 });
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.5).setDepth(-19);

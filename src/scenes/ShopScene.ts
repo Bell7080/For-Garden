@@ -118,6 +118,18 @@ export class ShopScene extends Phaser.Scene {
     // 진입 데이터의 이름은 `returnMenu`이므로 판 이름만 떼어 같은 검증을 지난다.
     this.returnMenu = normalizeLobbyEntry({ menu: data?.returnMenu });
     this.selectedCategory = this.stage.tabs[0]?.id ?? "";
+    /*
+     * **Phaser는 씬 인스턴스를 재사용한다.** 필드 초기값(`= 0`, `= false`)은 게임이 씬을
+     * 만들 때 **딱 한 번** 돌므로, 상점을 한 번 다녀온 뒤로는 `merchantLine`이 1 이상으로
+     * 남아 `tryFirstLine`이 곧바로 되돌아간다 — **두 번째 진입부터는 첫 마디가 영영 서지
+     * 않았다.** 실측에서 재진입은 12초를 기다려도 말이 없었다.
+     *
+     * 한 판의 상태는 `init`에서 되돌린다. 여기가 씬을 열 때마다 도는 유일한 자리다.
+     */
+    this.merchantLine = 0;
+    this.entranceSettled = false;
+    this.merchantReady = false;
+    this.entranceAt = 0;
     consumeSceneEntry(this);
   }
 

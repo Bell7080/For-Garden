@@ -37,7 +37,7 @@ function migrateV12Rune(definitionId: string): RuneInstance {
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 38;
+export const CURRENT_SAVE_VERSION = 39;
 
 /**
  * 과거 적 허스크의 ID를 플레이어블 렐릭 ID로 옮기는 **저장 버전 마이그레이션 전용** 표다.
@@ -353,7 +353,11 @@ export class SaveManager {
     // 중복 합산을 막고, 구조 분해로 구 키가 현재 저장 모델에 남지 않게 한다.
     const { weeds: _legacyWeeds, ...walletWithoutLegacyCurrency } = savedWallet ?? {};
     const legacyCheesecake = typeof _legacyWeeds === "number" ? _legacyWeeds : 0;
-    const wallet = { ...walletWithoutLegacyCurrency, dnaFragments: savedWallet?.dnaFragments ?? 0, cheesecake: savedWallet?.cheesecake ?? legacyCheesecake, rawStone: savedWallet?.rawStone ?? 0, gems: savedWallet?.gems ?? 0, gold: savedWallet?.gold ?? 0, stamina: Math.min(savedWallet?.stamina ?? 0, staminaMaxForResearchLevel(playerResearch.level)) };
+    // v0.150에서 전리품 증표 둘이 지갑으로 옮겨 왔다. 예전 저장은 0에서 시작하되,
+    // **재료 칸에 쌓아 둔 토벌 증표는 그대로 이월한다** — 이미 레이드를 돌아 받아 둔 몫이라
+    // 0으로 밀면 그 사람의 기여가 사라진다.
+    const legacySigils = legacyItemQuantity(legacy, "raid-sigil");
+    const wallet = { ...walletWithoutLegacyCurrency, dnaFragments: savedWallet?.dnaFragments ?? 0, cheesecake: savedWallet?.cheesecake ?? legacyCheesecake, rawStone: savedWallet?.rawStone ?? 0, gems: savedWallet?.gems ?? 0, gold: savedWallet?.gold ?? 0, raidSigil: savedWallet?.raidSigil ?? legacySigils, salvageRecord: savedWallet?.salvageRecord ?? 0, stamina: Math.min(savedWallet?.stamina ?? 0, staminaMaxForResearchLevel(playerResearch.level)) };
     // 구 저장은 로컬 시각을 신뢰하지 않고 첫 서버 요청에서 기준점을 세운다.
     const staminaUpdatedAt = typeof legacy.staminaUpdatedAt === "string" && Number.isFinite(Date.parse(legacy.staminaUpdatedAt)) ? legacy.staminaUpdatedAt : "";
     // 일일 입장 횟수 도입 전 저장은 같은 UTC 키에서 0회로 시작하되 이후 재실행에는 저장값을 유지한다.
@@ -457,10 +461,13 @@ export class SaveManager {
       .filter(([, count]) => (count as number) > 0));
     // 반환 전 폐기 필드를 구조 분해해 현재 저장 JSON에 다시 섞이지 않게 한다.
     // v20 이전에는 중첩 가방이 없었다. 지갑과 룬은 기존 단일 기준에 남겨 빈 스택만 보충한다.
-    const itemInventory = Array.isArray(legacy.itemInventory) ? legacy.itemInventory : [];
+    // 재료 칸에 있던 토벌 증표는 위에서 지갑으로 옮겼으므로 여기서 걷어 낸다 — 남겨 두면
+    // 같은 증표가 가방과 지갑 두 곳에 서고, 검증이 "재화는 가방에 없다"로 저장을 되돌린다.
+    const itemInventory = (Array.isArray(legacy.itemInventory) ? legacy.itemInventory : [])
+      .filter((stack: { itemId?: unknown }) => stack?.itemId !== "raid-sigil");
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
     if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid } as unknown as SaveData;
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, CURRENT_SAVE_VERSION];
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
     return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid } as unknown as SaveData;
   }
@@ -503,6 +510,7 @@ export class SaveManager {
     if (data.selectedStageId !== null && !stageIds.has(data.selectedStageId)) fail("스테이지 ID가 올바르지 않습니다.");
     if (!Array.isArray(data.clearedStageIds) || data.clearedStageIds.some((id) => !stageIds.has(id))) fail("클리어 진행이 올바르지 않습니다.");
     if (!data.wallet || !Number.isFinite(data.wallet.fossil) || data.wallet.fossil < 0 || !Number.isFinite(data.wallet.amber) || data.wallet.amber < 0 || !Number.isInteger(data.wallet.dnaFragments) || data.wallet.dnaFragments < 0 || !Number.isInteger(data.wallet.cheesecake) || data.wallet.cheesecake < 0) fail("재화가 올바르지 않습니다.");
+    if (!Number.isInteger(data.wallet.raidSigil) || data.wallet.raidSigil < 0 || !Number.isInteger(data.wallet.salvageRecord) || data.wallet.salvageRecord < 0) fail("전리품 증표가 올바르지 않습니다.");
     if (!data.gachaPityByGroup || [...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].some((id) => !Number.isInteger(data.gachaPityByGroup[id]?.pullsSinceSsr) || data.gachaPityByGroup[id].pullsSinceSsr < 0 || typeof data.gachaPityByGroup[id].pickupGuaranteed !== "boolean")) fail("배너 그룹 천장 정보가 올바르지 않습니다.");
     if (!data.relicProgress || typeof data.relicProgress !== "object") fail("성장 정보가 없습니다.");
     // 보유 목록과 성장 레코드는 항상 정확히 같은 렐릭 집합이어야 한다.
@@ -582,4 +590,16 @@ export const saveManager = new SaveManager();
 /** 부트 복구 실패 시 호출자가 명시적으로 기본 상태를 선택할 수 있게 한다. */
 export function defaultSessionAfterReset(): Session {
   return createDefaultSession();
+}
+
+/**
+ * 구 저장의 **재료 칸**에 쌓여 있던 수량을 읽는다.
+ *
+ * 재료였던 것이 지갑으로 옮겨 갈 때만 쓴다 — 0으로 밀면 이미 그 콘텐츠를 돌아 받아 둔 몫이
+ * 사라지므로, 옮기는 김에 그대로 이월한다.
+ */
+function legacyItemQuantity(legacy: { itemInventory?: unknown }, itemId: string): number {
+  if (!Array.isArray(legacy.itemInventory)) return 0;
+  const stack = legacy.itemInventory.find((entry: { itemId?: unknown }) => entry?.itemId === itemId) as { quantity?: unknown } | undefined;
+  return Number.isInteger(stack?.quantity) && (stack!.quantity as number) > 0 ? stack!.quantity as number : 0;
 }

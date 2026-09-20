@@ -12,7 +12,9 @@ export type CurrencyIconKey =
   | "currency-amber"
   | "currency-cheesecake"
   | "currency-dna"
-  | "currency-orestone";
+  | "currency-orestone"
+  | "currency-raid-sigil"
+  | "currency-salvage-record";
 
 export const CURRENCY_ICON_ASSETS: ReadonlyArray<readonly [CurrencyIconKey, string]> = [
   ["currency-gems", "/sprites/currency/crystal.webp"],
@@ -23,6 +25,8 @@ export const CURRENCY_ICON_ASSETS: ReadonlyArray<readonly [CurrencyIconKey, stri
   ["currency-cheesecake", "/sprites/currency/cake.webp"],
   ["currency-dna", "/sprites/currency/dna.webp"],
   ["currency-orestone", "/sprites/currency/orestone.webp"],
+  ["currency-raid-sigil", "/sprites/currency/raid-sigil.webp"],
+  ["currency-salvage-record", "/sprites/currency/salvage-record.webp"],
 ];
 
 /** 저장 지갑 키를 실제 구운 WebP 텍스처로 바꾸는 공용 단일 매핑이다. */
@@ -30,4 +34,5 @@ export const CURRENCY_ICON_BY_WALLET = {
   gems: "currency-gems", gold: "currency-gold", stamina: "currency-stamina",
   fossil: "currency-fossil", amber: "currency-amber", cheesecake: "currency-cheesecake",
   dnaFragments: "currency-dna", rawStone: "currency-orestone",
+  raidSigil: "currency-raid-sigil", salvageRecord: "currency-salvage-record",
 } as const satisfies Record<import("../data/items").WalletItemKey, CurrencyIconKey>;

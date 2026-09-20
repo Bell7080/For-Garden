@@ -72,14 +72,14 @@ export const RAID_DAILY_ATTEMPTS = 3;
  * 중복 수령 키다.
  */
 export const RAID_CONTRIBUTION_REWARD_STAGES = [
-  { id: "raid-contrib-50k", threshold: 50_000, reward: { itemId: "raid-sigil", amount: 20 } },
-  { id: "raid-contrib-150k", threshold: 150_000, reward: { itemId: "raid-sigil", amount: 40 } },
-  { id: "raid-contrib-300k", threshold: 300_000, reward: { itemId: "raid-sigil", amount: 60 } },
-  { id: "raid-contrib-600k", threshold: 600_000, reward: { itemId: "raid-sigil", amount: 120 } },
+  { id: "raid-contrib-50k", threshold: 50_000, reward: { currency: "raidSigil", amount: 20 } },
+  { id: "raid-contrib-150k", threshold: 150_000, reward: { currency: "raidSigil", amount: 40 } },
+  { id: "raid-contrib-300k", threshold: 300_000, reward: { currency: "raidSigil", amount: 60 } },
+  { id: "raid-contrib-600k", threshold: 600_000, reward: { currency: "raidSigil", amount: 120 } },
 ] as const;
 
 /** 시즌 보스를 실제로 눕혔을 때 참가자 전원에게 한 번 나가는 몫이다. */
-export const RAID_DEFEAT_REWARD = { itemId: "raid-sigil", amount: 200 } as const;
+export const RAID_DEFEAT_REWARD = { currency: "raidSigil", amount: 200 } as const;
 
 /**
  * 모의 참가자 명단.

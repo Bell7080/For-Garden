@@ -12,8 +12,14 @@ import { findItem } from "./items";
  * 상태를 과장한다.
  */
 export type StaminaRechargeSource =
-  /** 가진 소비품을 그 자리에서 쓴다. 회복량은 아이템 정의가 소유한다. */
-  | { readonly kind: "consumable"; readonly id: string; readonly itemId: string }
+  /**
+   * 가진 소비품을 그 자리에서 쓴다. 회복량은 아이템 정의가 소유한다.
+   *
+   * **한 칸이 여러 소비품을 맡는다**(`itemIds`). 에너지 드링크는 회복량만 다른 같은 물건이라
+   * 칸을 따로 세우면 충전 줄이 넷이 되고, 셋이 균등해야 한다는 규칙도 함께 깨진다 — 칸
+   * 안에서 좌우로 갈아 끼우고, 어느 것을 쓸지는 고른 사람이 정한다. 순서는 **기본이 먼저**다.
+   */
+  | { readonly kind: "consumable"; readonly id: string; readonly itemIds: readonly string[] }
   /** 보유 재화를 정해진 값만큼 깎아 회복한다. 차감과 회복은 서버가 한 처리 단위로 확정한다. */
   | { readonly kind: "currency"; readonly id: string; readonly name: string; readonly currency: "gems"; readonly cost: number; readonly amount: number }
   /** 이미 있는 광고 보상 슬롯을 그대로 쓴다. 회복량·일일 한도는 그 슬롯이 소유한다. */
@@ -26,7 +32,7 @@ export type StaminaRechargeSource =
  * 다이아, 시간을 치르는 광고.
  */
 export const STAMINA_RECHARGE_SOURCES = [
-  { kind: "consumable", id: "stamina-tonic", itemId: "stamina-tonic" },
+  { kind: "consumable", id: "stamina-tonic", itemIds: ["stamina-tonic", "stamina-tonic-large"] },
   { kind: "currency", id: "stamina-gems", name: "긴급 보급", currency: "gems", cost: 30, amount: 60 },
   { kind: "ad", id: "stamina-ad", name: "보급 요청", slotId: "daily-stamina" },
 ] as const satisfies readonly StaminaRechargeSource[];

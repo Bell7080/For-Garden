@@ -4,7 +4,6 @@ import { setDebugProgress } from "../debug";
 import { session } from "../state/session";
 import { drawGlyph } from "./glyphs";
 import { formatCurrency } from "../core/formatCurrency";
-import type { CurrencyIconKey } from "./currencyIcons";
 import { chipPoints, drawGlassFade, drawHairline, drawLayer, HoloBar, HOLO } from "./holo";
 import { addCurrencyChip, CURRENCY_CHIP } from "./CurrencyChip";
 import { COLOR, textStyle } from "./theme";
@@ -13,6 +12,9 @@ import { managerEvents } from "../managers/ManagerEvents";
 import { compactTopBarName, TOP_BAR_LAYOUT } from "./topBarLayout";
 import type { WalletItemKey } from "../data/items";
 import { staminaMaxForPlayer } from "../core/stamina";
+import { TOP_BAR_SLOTS as SLOTS, type CurrencySlot, type TopBarCurrencyContext } from "./topBarSlots";
+
+export type { TopBarCurrencyContext };
 
 /** 상단 줄에는 공개 표시 모델과 공개 동작만 들어오며 인증 비밀을 받을 자리가 없다. */
 export interface TopBarOptions { onSettings?: () => void; onProfile?: (profile: PlayerProfileDisplay) => void; onCurrency?: (currency: WalletItemKey) => void; currencies?: TopBarCurrencyContext; profile?: boolean }
@@ -24,47 +26,7 @@ export interface TopBarOptions { onSettings?: () => void; onProfile?: (profile: 
  * 위에서 아래로 옅어지는 유리면만 둬서 배경 원화가 끊기지 않게 한다.
  */
 /** 상단 줄에 세우는 재화 한 칸. 아이콘과 지갑에서 읽을 값을 함께 정한다. */
-interface CurrencySlot {
-  key: WalletItemKey;
-  icon: CurrencyIconKey;
-  read: () => number;
-  /** 자릿수가 크게 늘어나는 재화만 K·M으로 줄인다. */
-  compact?: boolean;
-  color?: string;
-}
 
-/**
- * 화면별 재화 조합.
- *
- * 로비는 "지금 얼마나 가졌나"(보석·골드·스테미나), 모집은 "무엇으로 뽑을 수 있나"
- * (다이아·화석·호박석)를 묻는다. 화면마다 다른 것을 보여 주되 자리와 생김새는 같다.
- *
- * 도감처럼 **그 화면에서 재화를 쓰지 않는 곳은 아무것도 세우지 않는다**(`none`). 급여에 드는
- * 치즈케이크는 정보창의 급여 버튼이 "가진 수/드는 수"로 직접 말하므로, 위에 또 적으면 같은
- * 값을 두 곳에서 읽게 되고 정작 봐야 할 카드 그리드의 자리만 좁아진다.
- */
-export type TopBarCurrencyContext = "default" | "recruit" | "none" | "archaeology";
-
-const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
-  default: [
-    { key: "gems", icon: "currency-gems", read: () => session.wallet.gems, color: "#cfe6ff" },
-    { key: "gold", icon: "currency-gold", read: () => session.wallet.gold, compact: true, color: "#ffdf9a" },
-    { key: "stamina", icon: "currency-stamina", read: () => session.wallet.stamina, color: "#ffe9a3" },
-  ],
-  recruit: [
-    { key: "gems", icon: "currency-gems", read: () => session.wallet.gems, color: "#cfe6ff" },
-    { key: "fossil", icon: "currency-fossil", read: () => session.wallet.fossil, compact: true, color: "#e6dcc4" },
-    { key: "amber", icon: "currency-amber", read: () => session.wallet.amber, color: "#ffc98a" },
-  ],
-  // 고고학은 제 경제를 갖는다 — 원석이 첫 칸에 서고, 탐사가 함께 캐내는 화석과
-  // 늘 쓰는 골드가 뒤를 잇는다. 스테미나는 이 화면의 조작을 정하지 않으므로 세우지 않는다.
-  archaeology: [
-    { key: "rawStone", icon: "currency-orestone", read: () => session.wallet.rawStone, compact: true, color: "#a9d8e8" },
-    { key: "fossil", icon: "currency-fossil", read: () => session.wallet.fossil, compact: true, color: "#e6dcc4" },
-    { key: "gold", icon: "currency-gold", read: () => session.wallet.gold, compact: true, color: "#ffdf9a" },
-  ],
-  none: [],
-};
 
 /**
  * 재화 한 칸의 크기와 간격.
@@ -174,7 +136,7 @@ export class TopBar {
 
   refresh(): void {
     for (const { slot, text } of this.slots) {
-      const amount = slot.read();
+      const amount = session.wallet[slot.key];
       // 스테미나만 상한과 함께 읽어야 뜻이 서는 재화다. 현재와 최대를 **같은 양식·같은 색**으로
       // 한 덩어리로 적고, 회복 시간처럼 지금 당장 조작을 바꾸지 않는 수는 눌러서 여는 창이 맡는다.
       if (slot.key === "stamina") text.setText(`${amount.toLocaleString()}/${staminaMaxForPlayer(session).toLocaleString()}`);

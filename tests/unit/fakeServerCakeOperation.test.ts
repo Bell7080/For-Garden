@@ -27,7 +27,7 @@ function makeSession(stamina = 100, clearedIndex = -1): Session {
     bookmarked: new Set<string>(),
     gachaPityByGroup: { "standard-fossil": { pullsSinceSsr: 0, pickupGuaranteed: false }, "limited-pickup": { pullsSinceSsr: 0, pickupGuaranteed: false } },
     staminaUpdatedAt: NOW().toISOString(),
-    wallet: { fossil: 0, amber: 0, gems: 0, gold: 0, stamina, dnaFragments: 0, cheesecake: 0, rawStone: 0 },
+    wallet: { fossil: 0, amber: 0, gems: 0, gold: 0, stamina, dnaFragments: 0, cheesecake: 0, rawStone: 0, raidSigil: 0, salvageRecord: 0 },
     relicFragments: {}, relicProgress: Object.fromEntries(["anky", "rex", "dodo"].map((id) => [id, { level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] }])),
     itemInventory: [],
     runeInventory: [],

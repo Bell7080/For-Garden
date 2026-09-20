@@ -34,6 +34,7 @@ export const MISC_JA = {
   "shop.exchangeRemaining": "残り交換 {remaining}/{limit}",
   "shop.exchangeDone": "交換が完了しました。",
   "shop.archaeology.title": "考古学ショップ",
+  "shop.loot.title": "戦利品ショップ",
   "shop.protia.line1": "ゴビから上がってきたばかりだよ。値はもうつけてあるから、値切る気は置いていきな。",
   "shop.protia.line2": "この原石、四層下から出たやつ。その深さならこの値は安いよ。",
   "shop.protia.line3": "狙った特性が欲しい？ それは運じゃなく、金で買うものさ。",

@@ -5,6 +5,12 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import { BATTLE_FIELD_BACKGROUND, battleFieldBackground, BACKGROUND, BACKGROUND_ASSETS } from "../../src/ui/backgroundAssets";
 import { BANNERS } from "../../src/data/banners";
 import { shopStagePresentation } from "../../src/data/shopPresentation";
+import { findItem } from "../../src/data/items";
+import { WALLET_CAPS } from "../../src/data/economy";
+import { currencyGuide } from "../../src/data/currencyGuide";
+import { CURRENCY_ICON_BY_WALLET } from "../../src/ui/currencyIcons";
+import { TOP_BAR_SLOT_KEYS } from "../../src/ui/topBarSlots";
+import { STAMINA_RECHARGE_SOURCES } from "../../src/data/staminaRecharge";
 
 describe("로비로 돌아갈 자리", () => {
   it("는 보낸 판을 그대로 되돌려 준다", () => {
@@ -17,7 +23,7 @@ describe("로비로 돌아갈 자리", () => {
     expect(normalizeLobbyEntry(undefined)).toBeUndefined();
     expect(normalizeLobbyEntry({})).toBeUndefined();
     expect(normalizeLobbyEntry({ menu: "shop" })).toBeUndefined();
-    expect(normalizeLobbyEntry({ storefront: "raid" })).toBeUndefined();
+    expect(normalizeLobbyEntry({ storefront: "loot" })).toBeUndefined();
   });
 });
 
@@ -80,7 +86,7 @@ describe("모집판 배너 원화", () => {
 describe("상점 무대", () => {
   it("은 세 자리가 저마다 다른 점원·배경·대사를 쓴다", () => {
     // 셋이 같은 점원이면 상품표만 바뀐 같은 가게로 읽힌다.
-    const stages = ["shop", "archaeology", "raid"] as const;
+    const stages = ["shop", "archaeology", "loot"] as const;
     const merchants = stages.map((id) => shopStagePresentation(id).merchant.name);
     const backgrounds = stages.map((id) => shopStagePresentation(id).background);
     const lines = stages.map((id) => shopStagePresentation(id).lineKeys[0]);
@@ -91,6 +97,40 @@ describe("상점 무대", () => {
 
   it("은 전리품 상점이 레이드 진입 화면을 무대에 깔지 않는다", () => {
     // 상점과 그 앞 화면이 같은 그림이면 어디로 들어온 것인지 배경이 말하지 못한다.
-    expect(shopStagePresentation("raid").background).not.toBe(BACKGROUND.sortieRaid);
+    expect(shopStagePresentation("loot").background).not.toBe(BACKGROUND.sortieRaid);
+  });
+});
+
+describe("전리품 증표", () => {
+  it("는 지갑 재화이고 상한에 사실상 걸리지 않는다", () => {
+    // 재료 칸에 두었던 때는 `maxStack` 9,999가 걸려 몇 주 안 턴 사람의 몫이 조용히
+    // 버려졌다 — "가끔 들어가 턴다"가 그 상점의 경험이라 상한이 있으면 안 된다.
+    for (const key of ["raidSigil", "salvageRecord"] as const) {
+      expect(findItem(key)?.category, key).toBe("currency");
+      expect(WALLET_CAPS[key], key).toBeGreaterThanOrEqual(9_999_999);
+      expect(CURRENCY_ICON_BY_WALLET[key], key).toBeTruthy();
+      expect(currencyGuide(key).sources.length, key).toBeGreaterThan(0);
+    }
+  });
+
+  it("는 로비에는 서지 않고 전리품 상점에서만 상단 줄에 선다", () => {
+    // 지갑이라고 늘 보이는 것이 아니다 — 평소 조작을 바꾸지 않는 수가 두 칸을 먹으면
+    // 정작 자주 보는 젬·골드·스테미나가 밀린다.
+    const keysOf = (context: keyof typeof TOP_BAR_SLOT_KEYS) => TOP_BAR_SLOT_KEYS[context];
+    expect(keysOf("loot")).toEqual(["raidSigil", "salvageRecord"]);
+    for (const context of ["default", "recruit", "archaeology"] as const) {
+      expect(keysOf(context)).not.toContain("raidSigil");
+      expect(keysOf(context)).not.toContain("salvageRecord");
+    }
+  });
+});
+
+describe("스테미나 충전 칸", () => {
+  it("은 소비품 한 칸이 여러 드링크를 맡아 칸 수가 늘지 않는다", () => {
+    // 셋은 서로 대체재라 균등해야 한다 — 드링크만 둘로 늘리면 줄이 넷이 되고,
+    // 어느 하나가 커 보이면 값을 비교하기 전에 크기가 먼저 답을 정한다.
+    expect(STAMINA_RECHARGE_SOURCES).toHaveLength(3);
+    const tonic = STAMINA_RECHARGE_SOURCES.find((source) => source.kind === "consumable");
+    expect(tonic?.itemIds.length).toBeGreaterThan(1);
   });
 });

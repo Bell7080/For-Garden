@@ -1,5 +1,5 @@
 import type { ProductDto } from "../api/contracts";
-import type { ProductStorefront, ShopCategory } from "../data/products";
+import type { ProductStorefront } from "../data/products";
 
 /**
  * 상점 UI가 **지금 보고 있는 자리**의 상품만 보존하는 순수 표시 모델이다.
@@ -14,6 +14,17 @@ export function shopModel(products: readonly ProductDto[], storefront: ProductSt
 }
 
 /** 하단 탭은 storefront 검증을 통과한 상품 중 선택 분류만 새 배열로 반환한다. */
-export function productsForShopCategory(products: readonly ProductDto[], category: ShopCategory, storefront: ProductStorefront = "shop"): ProductDto[] {
-  return shopModel(products, storefront).filter((product) => product.category === category);
+/**
+ * 지금 열린 탭의 상품만 고른다.
+ *
+ * **어느 필드가 갈래인지는 자리가 정한다** — 일반·고고학은 상품 계약의 `category`(일반·강화·
+ * 룬)를 읽고, 전리품 상점은 `lootCategory`(토벌·인양)를 읽는다. 한 필드로 합치지 않는 이유는
+ * 두 축이 서로 다른 것을 가리키기 때문이다: 하나는 **무엇을 사나**이고 하나는 **무엇으로
+ * 사나**다. 프리미엄이 `premiumCategory`를 따로 둔 것과 같은 갈림이다.
+ */
+export function productsForShopTab(products: readonly ProductDto[], tab: string, storefront: ProductStorefront = "shop"): ProductDto[] {
+  const scoped = shopModel(products, storefront);
+  if (storefront === "loot") return scoped.filter((product) => product.lootCategory === tab);
+  return scoped.filter((product) => product.category === tab);
 }
+

@@ -235,5 +235,5 @@ const BASE_CENTER = { x: 540, y: 960 } as const;
 /** 데이터 키가 화면마다 서로 다른 번역으로 노출되지 않게 한 곳에서 이름을 정한다. */
 function currencyName(currency: Extract<ProductDto["acquisition"], { kind: "currency" }>["currency"]): string {
   // 재화 이름은 공용 표에서 읽는다 — 화면마다 다시 적으면 같은 재화가 두 이름으로 보인다.
-  return t(({ fossil: "currency.fossil", amber: "currency.amber", cheesecake: "currency.cheesecake", dnaFragments: "currency.dnaFragments", gems: "currency.gems", gold: "currency.gold", rawStone: "currency.rawStone" } as const)[currency]);
+  return t(({ fossil: "currency.fossil", amber: "currency.amber", cheesecake: "currency.cheesecake", dnaFragments: "currency.dnaFragments", gems: "currency.gems", gold: "currency.gold", rawStone: "currency.rawStone", raidSigil: "currency.raidSigil", salvageRecord: "currency.salvageRecord" } as const)[currency]);
 }

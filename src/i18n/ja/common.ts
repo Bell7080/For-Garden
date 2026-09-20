@@ -25,6 +25,8 @@ export const COMMON_JA = {
   "role.support": "サポーター",
 
   "currency.rawStone": "原石",
+  "currency.raidSigil": "討伐証票",
+  "currency.salvageRecord": "引き揚げ記録",
   "currency.gold": "ゴールド",
   "currency.gems": "ジェム",
   "currency.fossil": "化石",

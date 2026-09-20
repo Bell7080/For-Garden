@@ -31,6 +31,7 @@ export const MISC_EN = {
   "shop.exchangeRemaining": "Exchanges left {remaining}/{limit}",
   "shop.exchangeDone": "The exchange is complete.",
   "shop.archaeology.title": "Archaeology Shop",
+  "shop.loot.title": "Loot Shop",
   "shop.protia.line1": "Straight up from the Gobi. The prices are already set, so don't bother haggling.",
   "shop.protia.line2": "This raw stone came from four layers down. At that depth, this price is cheap.",
   "shop.protia.line3": "Want the trait you're after? That's not bought with luck. That's bought with money.",

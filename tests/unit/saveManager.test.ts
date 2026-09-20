@@ -28,6 +28,23 @@ function validData(): SaveData {
 }
 
 describe("SaveManager", () => {
+  it("v38 저장의 재료 칸 토벌 증표를 지갑으로 옮기고 가방에서 걷어 낸다", () => {
+    const storage = new MemoryStorage();
+    const legacy = { ...validData(), saveVersion: 38 } as Partial<SaveData>;
+    // 지갑에는 아직 증표 칸이 없고, 재료 칸에 쌓여 있던 예전 저장이다.
+    const { raidSigil: _raid, salvageRecord: _salvage, ...oldWallet } = legacy.wallet!;
+    (legacy as { wallet: unknown }).wallet = oldWallet;
+    legacy.itemInventory = [{ itemId: "raid-sigil", quantity: 140 }, { itemId: "stamina-tonic", quantity: 2 }];
+    storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(legacy));
+
+    const loaded = new SaveManager(storage).load();
+    // 0으로 밀면 이미 레이드를 돌아 받아 둔 몫이 사라진다.
+    expect(loaded?.wallet.raidSigil).toBe(140);
+    expect(loaded?.wallet.salvageRecord).toBe(0);
+    // 남겨 두면 같은 증표가 가방과 지갑 두 곳에 서고, 검증이 저장을 통째로 되돌린다.
+    expect(loaded?.itemInventory.map(({ itemId }) => itemId)).toEqual(["stamina-tonic"]);
+  });
+
   it("v35 현상수배 없는 저장은 1급만 열린 채로 마이그레이션한다", () => {
     const storage = new MemoryStorage();
     const legacy = { ...validData(), saveVersion: 35 } as Partial<SaveData>;

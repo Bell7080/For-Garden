@@ -15,6 +15,10 @@ export const WALLET_CAPS: Readonly<Record<keyof Wallet, number>> = {
   dnaFragments: 99_999,
   cheesecake: 9_999_999,
   rawStone: 9_999_999,
+  // 증표는 가끔 들어가 터는 자리의 몫이라 상한이 사실상 걸리지 않게 둔다 — 몇 주치가
+  // 쌓여도 버려지면 그 상점의 경험 자체가 무너진다.
+  raidSigil: 9_999_999,
+  salvageRecord: 9_999_999,
 };
 
 /** 문서의 월간 무과금 수급 계산이 참조하는 30일/4주 기준 목표 지급량이다. */

@@ -17,8 +17,18 @@ export type ItemIcon =
 /** 정적 아이콘 파일 하나가 빠져도 가방 전체가 그리기를 계속할 수 있게 하는 공용 표식이다. */
 export const ITEM_ICON_FALLBACK = "scroll" as const;
 
-/** 지갑에서만 소유량을 유지하는 재화 키다. */
-export type WalletItemKey = "fossil" | "amber" | "gems" | "gold" | "stamina" | "dnaFragments" | "cheesecake" | "rawStone";
+/**
+ * 지갑에서만 소유량을 유지하는 재화 키다.
+ *
+ * **전리품 증표 둘도 여기 있다.** 한 콘텐츠에서만 도는 교환 재료라 재료 칸에 두었던 때는
+ * `maxStack`(9,999)이 걸려 **몇 주 안 턴 사람의 몫이 조용히 버려졌고**, 상단 줄에 세울
+ * 수도 없었다 — "가끔 들어가서 많이 모였네" 하고 터는 것이 그 상점의 경험이라 상한이
+ * 있으면 안 된다. 지갑이라고 늘 보이는 것은 아니다: 어느 화면에 어느 재화를 세우는지는
+ * `TopBar`의 `SLOTS`가 따로 정하므로, 증표는 전리품 상점과 그 콘텐츠에서만 선다.
+ */
+export type WalletItemKey =
+  | "fossil" | "amber" | "gems" | "gold" | "stamina" | "dnaFragments" | "cheesecake" | "rawStone"
+  | "raidSigil" | "salvageRecord";
 
 /** 소비품 회복이 넘지 못하는 현재 계정의 행동력 상한이다. */
 
@@ -44,14 +54,18 @@ export const ITEMS = [
   { id: "dnaFragments", name: "DNA 조각", description: "복원 연구의 교환 재화입니다.", category: "currency", icon: { kind: "currency", key: "dnaFragments" }, maxStack: 99_999, useEffect: { kind: "none" } },
   { id: "cheesecake", name: "치즈케이크", description: "렐릭에게 급여해 성장시킵니다.", category: "currency", icon: { kind: "currency", key: "cheesecake" }, maxStack: 9_999_999, useEffect: { kind: "none" } },
   { id: "rawStone", name: "원석", description: "지층 탐사로 캐낸 미가공 광물입니다. 룬 특성 재해석에 사용합니다.", category: "currency", icon: { kind: "currency", key: "rawStone" }, maxStack: 9_999_999, useEffect: { kind: "none" } },
-  { id: "stamina-tonic", name: "에너지 드링크", description: "스테미나를 30 회복합니다.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic" }, maxStack: 99, useEffect: { kind: "restore_stamina", amount: 30 } },
+  // 에너지 드링크는 **기본과 쎈 것 둘**이다. 회복량만 다른 같은 물건이라 한 칸에서 좌우로
+  // 갈아 끼우고(`StaminaPopup`), 그래서 둘의 이름도 같은 낱말에 표시만 다르게 붙인다.
+  { id: "stamina-tonic", name: "에너지 드링크", description: "스테미나를 60 회복합니다.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic" }, maxStack: 99, useEffect: { kind: "restore_stamina", amount: 60 } },
+  { id: "stamina-tonic-large", name: "에너지 드링크+", description: "스테미나를 120 회복합니다.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic-large" }, maxStack: 99, useEffect: { kind: "restore_stamina", amount: 120 } },
   { id: "ancient-core", name: "미지의 고대 핵", description: "룬에 특성 한 줄을 새로 부여합니다. 이미 특성이 있으면 지우고 다시 부여합니다.", category: "material", icon: { kind: "glyph", key: "scroll" }, maxStack: 999, useEffect: { kind: "none" } },
   { id: "refined-core", name: "정제된 고대 핵", description: "영웅 이상 등급의 특성을 확정으로 부여합니다.", category: "material", icon: { kind: "glyph", key: "scroll" }, maxStack: 999, useEffect: { kind: "none" } },
   { id: "restoration-crystal", name: "완전 복원 결정", description: "특성의 등급을 한 단계 확정으로 올립니다. 전설 특성에는 사용할 수 없습니다.", category: "material", icon: { kind: "glyph", key: "scroll" }, maxStack: 999, useEffect: { kind: "none" } },
   { id: "rune-dust", name: "룬 가루", description: "룬 연구에 쓰이는 정제 재료입니다.", category: "material", icon: { kind: "asset", key: "item-rune-dust" }, maxStack: 999, useEffect: { kind: "none" } },
-  // 레이드 전용 교환 재료. 지갑 재화로 두지 않은 이유는 상단 줄에 설 자리도, 구운 아이콘도
-  // 없기 때문이다 — 한 콘텐츠에서만 쓰는 교환 재료는 재료 칸이 제자리다.
-  { id: "raid-sigil", name: "토벌 증표", description: "레이드 보스를 밀어낸 몫으로 받는 증표입니다. 레이드 상점에서 교환합니다.", category: "material", icon: { kind: "glyph", key: "scroll" }, maxStack: 9_999, useEffect: { kind: "none" } },
+  // 전리품 상점의 두 증표. 상한을 두지 않는 이유가 곧 지갑에 둔 이유다 — 가끔 들어가 터는
+  // 자리라 몇 주치가 쌓여도 버려지면 안 된다.
+  { id: "raidSigil", name: "토벌 증표", description: "레이드 보스를 밀어낸 몫으로 받는 증표입니다. 전리품 상점에서 교환합니다.", category: "currency", icon: { kind: "currency", key: "raidSigil" }, maxStack: 9_999_999, useEffect: { kind: "none" } },
+  { id: "salvageRecord", name: "인양 기록", description: "수장된 지부에서 건져 올린 것을 적어 둔 기록입니다. 전리품 상점에서 교환합니다.", category: "currency", icon: { kind: "currency", key: "salvageRecord" }, maxStack: 9_999_999, useEffect: { kind: "none" } },
 ] as const satisfies readonly ItemDefinition[];
 
 /** 외부 입력 ID는 반드시 정적 카탈로그를 통과한다. */

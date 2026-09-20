@@ -2,7 +2,7 @@ import { t, type TextKey } from "../i18n";
 import type { AcquisitionResult, GachaPityState, QuantityRewardKind, Wallet } from "../core/gacha";
 import type { RelicProgress, RelicSkinId, Stats } from "../core/types";
 import type { MissionPeriod } from "../core/missions";
-import type { PassBenefitDefinition, PremiumCategory, ProductAcquisition, ProductGrant, ProductRefresh, ProductStorefront, ShopCategory, ShopProductIconKey } from "../data/products";
+import type { PassBenefitDefinition, LootCategory, PremiumCategory, ProductAcquisition, ProductGrant, ProductRefresh, ProductStorefront, ShopCategory, ShopProductIconKey } from "../data/products";
 /** storefront와 상점 카테고리는 클라이언트·서버가 함께 쓰는 공용 계약으로 다시 공개한다. */
 export type { PremiumCategory, ProductStorefront, ShopCategory } from "../data/products";
 import type { DnaExchangeKind } from "../data/economy";
@@ -14,7 +14,7 @@ import type { StrataBoardView } from "../core/strataDig";
 import type { StrataRewardKind } from "../data/strataLayers";
 import type { ExcavationCurrency, IdleExcavationState } from "../core/idleExcavation";
 import type { AdReward } from "../data/adRewards";
-import type { ItemCategory, ItemUseEffect } from "../data/items";
+import type { ItemCategory, ItemUseEffect, WalletItemKey } from "../data/items";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import type { PlayerResearchProgress } from "../state/session";
 import type { AsyncArenaProfileApi } from "./asyncArenaContracts";
@@ -402,7 +402,7 @@ export interface NotificationSignalsResponse { pendingFriendRequestCount: number
 export interface ClaimMissionRewardsResponse extends PlayerStateDto { claimedIds: string[]; claimedResearchStageIds: string[]; rewards: { missionCheesecake: number; researchCheesecake: number; cheesecake: number }; cheesecakeEarned: number; }
 
 /** 상품 목록은 정적 정의에 서버가 계산한 현재 구매 가능 횟수를 결합한다. */
-export interface ProductDto { id: string; storefront: ProductStorefront; category: ShopCategory; premiumCategory?: PremiumCategory; iconKey: ShopProductIconKey; name: string; description: string; acquisition: ProductAcquisition; grants: readonly ProductGrant[]; defaultQuantity: number; passBenefit?: PassBenefitDefinition; purchaseLimit: number; refresh: ProductRefresh; remaining: number; purchasable: boolean; disabledReason?: string; }
+export interface ProductDto { id: string; storefront: ProductStorefront; category: ShopCategory; lootCategory?: LootCategory; premiumCategory?: PremiumCategory; iconKey: ShopProductIconKey; name: string; description: string; acquisition: ProductAcquisition; grants: readonly ProductGrant[]; defaultQuantity: number; passBenefit?: PassBenefitDefinition; purchaseLimit: number; refresh: ProductRefresh; remaining: number; purchasable: boolean; disabledReason?: string; }
 /** 상품 조회 응답은 서버 시각 기준으로 노출 중인 상품만 담는다. */
 export interface ProductListResponse { products: ProductDto[]; serverTime: string; }
 /** 구매 요청은 영속 상품 ID와 사용자가 팝업에서 확정한 묶음 수량을 함께 보낸다. */
@@ -587,7 +587,7 @@ export interface ExpeditionLeaderboardResponse { weekKey: string; tieBreakPolicy
  */
 export interface RaidContributionEntryDto { rank: number; playerId: string; displayName: string; damage: number; isMe: boolean; favoriteRelicId?: string; }
 /** 누적 기여 단계의 운영 수치와 수령 상태는 서버 스냅샷만 화면의 기준으로 삼는다. */
-export interface RaidRewardStageDto { id: string; threshold: number; reward: { itemId: string; itemName: string; amount: number }; claimed: boolean; }
+export interface RaidRewardStageDto { id: string; threshold: number; reward: { currency: WalletItemKey; name: string; amount: number }; claimed: boolean; }
 /** 시즌 한 번의 전부. 화면은 이 응답만 읽고 남은 체력이나 기여를 다시 계산하지 않는다. */
 export interface RaidSeasonResponse {
   seasonKey: string;
@@ -618,7 +618,7 @@ export interface SubmitRaidDamageRequest { requestId: string; actions: Expeditio
 export interface SubmitRaidDamageResponse { season: RaidSeasonResponse; runDamage: number; endedAtMs: number; }
 /** 달성한 누적 단계 보상을 서버 멱등 기록으로 수령한다. `stageId`가 "defeat"이면 처치 보상이다. */
 export interface ClaimRaidRewardRequest { requestId: string; stageId: string; }
-export interface ClaimRaidRewardResponse extends PlayerStateDto { stageId: string; reward: { itemId: string; itemName: string; amount: number }; alreadyClaimed: boolean; season: RaidSeasonResponse; }
+export interface ClaimRaidRewardResponse extends PlayerStateDto { stageId: string; reward: { currency: WalletItemKey; name: string; amount: number }; alreadyClaimed: boolean; season: RaidSeasonResponse; }
 /** 직접 플레이하지 않고 역대 최고 점수 일부와 절반의 노드 클리어 전리품만 즉시 정산하는 소탕 요청이다. */
 export interface SweepExpeditionRequest { requestId: string; }
 export interface SweepExpeditionResponse extends PlayerStateDto { weekKey: string; scoreGain: number; bestScore: number; cumulativeScore: number; granted: Record<string, number>; playsThisWeek: number; }

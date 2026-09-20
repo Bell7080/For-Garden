@@ -8,6 +8,7 @@ import { RAID_ACTIONS, RAID_BOARD, RAID_HP_BAR, raidBoardViewport } from "../../
 import { RANKING_LIST } from "../../src/ui/expeditionRankingLayout";
 import { BASE_HEIGHT } from "../../src/config/gameConfig";
 import { findItem } from "../../src/data/items";
+import { WALLET_CAPS } from "../../src/data/economy";
 import { PRODUCTS } from "../../src/data/shopCatalog";
 import { FakeServer } from "../../src/api/FakeServer";
 import { createDefaultSession, type Session } from "../../src/state/session";
@@ -122,8 +123,12 @@ describe("기여 보상 단계", () => {
     expect([...amounts].sort((a, b) => a - b)).toEqual(amounts);
   });
 
-  it("가 주는 것은 실제로 있는 아이템이다", () => {
-    for (const { reward } of RAID_CONTRIBUTION_REWARD_STAGES) expect(findItem(reward.itemId)).toBeTruthy();
+  it("가 주는 것은 실제로 있는 지갑 재화다", () => {
+    // 증표는 재료가 아니라 지갑 재화다 — 상한에 걸려 몇 주치가 버려지면 안 된다.
+    for (const { reward } of RAID_CONTRIBUTION_REWARD_STAGES) {
+      expect(findItem(reward.currency)?.category).toBe("currency");
+      expect(WALLET_CAPS[reward.currency]).toBeGreaterThan(0);
+    }
   });
 });
 
@@ -184,21 +189,43 @@ describe("재현 표", () => {
   });
 });
 
-describe("레이드 상점", () => {
-  const raidProducts = PRODUCTS.filter(({ storefront }) => storefront === "raid");
+describe("전리품 상점", () => {
+  const lootProducts = PRODUCTS.filter(({ storefront }) => storefront === "loot");
+  /** 탭 하나가 지갑 한 칸을 가리킨다. 그 짝이 이 표다. */
+  const TAB_CURRENCY = { raid: "raidSigil", expedition: "salvageRecord" } as const;
 
-  it("의 값은 전부 토벌 증표다", () => {
-    // 다른 재화로도 살 수 있으면 증표가 무엇을 위한 것인지 말하지 못한다.
-    expect(raidProducts.length).toBeGreaterThan(0);
-    for (const product of raidProducts) {
-      expect(product.acquisition.kind).toBe("item");
-      if (product.acquisition.kind === "item") expect(product.acquisition.itemId).toBe("raid-sigil");
+  it("의 값은 전부 그 탭의 증표다", () => {
+    // 다른 재화로도 살 수 있으면 증표가 무엇을 위한 것인지 말하지 못하고, 탭이 갈린
+    // 의미도 사라진다 — 눌러 보기 전에 무엇으로 사는 자리인지 읽혀야 한다.
+    expect(lootProducts.length).toBeGreaterThan(0);
+    for (const product of lootProducts) {
+      expect(product.lootCategory, product.id).toBeTruthy();
+      expect(product.acquisition.kind, product.id).toBe("currency");
+      if (product.acquisition.kind === "currency") {
+        expect(product.acquisition.currency, product.id).toBe(TAB_CURRENCY[product.lootCategory!]);
+      }
     }
   });
 
+  it("은 두 탭이 모두 차 있고 같은 물건을 두 증표로 팔지 않는다", () => {
+    // 같은 것을 두 증표로 살 수 있으면 싼 쪽만 쓰이고 나머지 탭은 열 이유가 없어진다.
+    for (const tab of Object.keys(TAB_CURRENCY) as (keyof typeof TAB_CURRENCY)[]) {
+      expect(lootProducts.some((product) => product.lootCategory === tab), tab).toBe(true);
+    }
+    const grantsOf = (tab: keyof typeof TAB_CURRENCY) => new Set(
+      lootProducts.filter((p) => p.lootCategory === tab)
+        .flatMap((p) => p.grants.map((g) => (g.kind === "currency" ? g.currency : g.kind === "item" ? g.itemId : g.kind))),
+    );
+    const raid = grantsOf("raid");
+    const shared = [...grantsOf("expedition")].filter((key) => raid.has(key));
+    // DNA 조각 하나만 양쪽에 둔다 — 돌파의 공용 재료라 한쪽에만 두면 그 콘텐츠를 돌지
+    // 않는 사람의 성장이 통째로 막힌다.
+    expect(shared).toEqual(["dnaFragments"]);
+  });
+
   it("이 파는 것과 받는 값이 모두 실제로 있는 것이다", () => {
-    for (const product of raidProducts) {
-      if (product.acquisition.kind === "item") expect(findItem(product.acquisition.itemId)).toBeTruthy();
+    for (const product of lootProducts) {
+      if (product.acquisition.kind === "currency") expect(findItem(product.acquisition.currency), product.id).toBeTruthy();
       for (const grant of product.grants) if (grant.kind === "item") expect(findItem(grant.itemId)).toBeTruthy();
     }
   });
@@ -296,10 +323,10 @@ describe("레이드 서버 경계", () => {
     const server = new FakeServer(state, { latencyMs: 0, now: () => at("2026-09-16T12:00:00Z") });
     const first = await server.claimRaidReward({ requestId: "r4", stageId: stage.id });
     expect(first.alreadyClaimed).toBe(false);
-    expect(state.itemInventory.find(({ itemId }) => itemId === stage.reward.itemId)?.quantity).toBe(stage.reward.amount);
+    expect(state.wallet[stage.reward.currency]).toBe(stage.reward.amount);
     // 같은 요청 ID는 영수증만 돌려주고 재고를 다시 늘리지 않는다.
     await server.claimRaidReward({ requestId: "r4", stageId: stage.id });
-    expect(state.itemInventory.find(({ itemId }) => itemId === stage.reward.itemId)?.quantity).toBe(stage.reward.amount);
+    expect(state.wallet[stage.reward.currency]).toBe(stage.reward.amount);
   });
 
   it("은 도전 횟수를 다 쓴 계정의 제출을 거절한다", async () => {

@@ -162,7 +162,8 @@ export interface DebugState {
     purchase?: { minus?: DebugPoint; plus?: DebugPoint; confirm: DebugPoint };
   };
   /** 상품명·재화 대신 현재 렌더 탭과 스크롤 위치만 관찰하는 표시 계약이다. */
-  shopView?: { category: "general" | "enhancement" | "rune"; scrollY: number; minScrollY: number };
+  /** 탭 갈래는 자리마다 다르다(일반·강화·룬 / 토벌·인양). E2E가 문자열로 대조한다. */
+  shopView?: { category: string; scrollY: number; minScrollY: number };
   /** 연구 결과판에 깔린 칸 수와 그중 열린 칸 수. 결과 내용은 공개하지 않는다. */
   researchBoard?: { slots: number; opened: number };
   /** 지층 판이 실제 게시한 입력점과 요청/타격/공개 순서를 관찰하는 E2E 전용 표시 계약이다. */

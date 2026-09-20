@@ -3,7 +3,6 @@ import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import type { ProductDto, PurchaseProductResponse } from "../api/contracts";
 import { formatCurrency } from "../core/formatCurrency";
-import { SHOP_TABS, type ShopCategory } from "../data/shopCatalog";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene, setDebugShopView, setDebugStorefrontControls } from "../debug";
 import { enableHitOnClick, spawnPuppet } from "../puppets/assets";
@@ -23,7 +22,7 @@ import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { PurchasePopup } from "../ui/PurchasePopup";
 import { session } from "../state/session";
 import { motionPolicy } from "../core/settings";
-import { productsForShopCategory, shopModel } from "../ui/shopModel";
+import { productsForShopTab, shopModel } from "../ui/shopModel";
 import type { ProductStorefront } from "../data/products";
 import { consumeSceneEntry } from "./sceneEntry";
 import { LOBBY_RETURN, normalizeLobbyEntry, type LobbyMenu } from "./lobbyEntry";
@@ -45,8 +44,13 @@ import {
  */
 export class ShopScene extends Phaser.Scene {
   private products: ProductDto[] = [];
-  /** 첫 탭은 카탈로그 순서에서 정해 화면과 데이터의 기본값이 갈리지 않게 한다. */
-  private selectedCategory: ShopCategory = SHOP_TABS[0].id;
+  /**
+   * 지금 열린 목록. 첫 탭은 무대표의 순서에서 정해 화면과 데이터의 기본값이 갈리지 않는다.
+   *
+   * 갈래 값이 자리마다 다르므로(일반·강화·룬 / 토벌·인양) 타입을 좁히지 않는다 — 무대표의
+   * 탭 `id`와 상품이 들고 있는 갈래가 같은 문자열이라는 것이 그 계약이다.
+   */
+  private selectedCategory = "";
   private tabRow?: Phaser.GameObjects.Container;
   private content?: Phaser.GameObjects.Container;
   /**
@@ -110,7 +114,7 @@ export class ShopScene extends Phaser.Scene {
     this.returnScene = data?.returnScene ?? "lobby";
     // 진입 데이터의 이름은 `returnMenu`이므로 판 이름만 떼어 같은 검증을 지난다.
     this.returnMenu = normalizeLobbyEntry({ menu: data?.returnMenu });
-    this.selectedCategory = SHOP_TABS[0].id;
+    this.selectedCategory = this.stage.tabs[0]?.id ?? "";
     consumeSceneEntry(this);
   }
 
@@ -122,6 +126,8 @@ export class ShopScene extends Phaser.Scene {
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.5).setDepth(-19);
     bindCurrencyGuide({ scene: this, popups: this.popups });
     this.topBar = new TopBar(this, 40, {
+      // 어느 재화를 세울지는 자리가 정한다 — 전리품 상점은 값으로 쓰는 증표 둘만 세운다.
+      currencies: this.storefront === "loot" ? "loot" : "default",
       onSettings: () => this.scene.start("settings", { returnScene: this.returnScene }),
       onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency),
     });
@@ -345,7 +351,7 @@ export class ShopScene extends Phaser.Scene {
   /** 현재 서버 상태로 두 줄 격자를 재조립하고 실제 높이에서 스크롤 한계를 계산한다. */
   private renderProducts(): void {
     this.content?.removeAll(true);
-    const visibleProducts = productsForShopCategory(this.products, this.selectedCategory, this.storefront);
+    const visibleProducts = productsForShopTab(this.products, this.selectedCategory, this.storefront);
     // 선반을 먼저 깔고 그 위에 칸을 올린다 — 순서가 뒤집히면 선반이 칸을 가로질러 지나간다.
     const rows = Math.ceil(visibleProducts.length / SHOP_CARD.columns);
     for (let row = 0; row < rows; row += 1) this.addShelf(row);
@@ -444,7 +450,7 @@ export class ShopScene extends Phaser.Scene {
   private createTabs(): void {
     this.tabRow?.destroy();
     this.tabRow = this.add.container(0, 0).setDepth(9);
-    SHOP_TABS.forEach((tab, index) => {
+    this.stage.tabs.forEach((tab, index) => {
       const { x, y } = shopTabSpot(index);
       addCategoryTab(this, this.tabRow, {
         x, y, width: SHOP_TAB_ROW.width, height: SHOP_TAB_ROW.height,
@@ -455,12 +461,12 @@ export class ShopScene extends Phaser.Scene {
   }
 
   /** 런타임 탭 간격과 동일한 계산으로 테스트 입력 중심을 제공한다. */
-  private tabPoints(): Record<ShopCategory, { x: number; y: number }> {
-    return Object.fromEntries(SHOP_TABS.map((tab, index) => [tab.id, shopTabSpot(index)])) as Record<ShopCategory, { x: number; y: number }>;
+  private tabPoints(): Record<string, { x: number; y: number }> {
+    return Object.fromEntries(this.stage.tabs.map((tab, index) => [tab.id, shopTabSpot(index)]));
   }
 
   /** 탭을 바꾸면 이전 스크롤을 버리고 해당 분류의 첫 상품부터 다시 보여 준다. */
-  private selectCategory(category: ShopCategory): void {
+  private selectCategory(category: string): void {
     if (category === this.selectedCategory) return;
     this.selectedCategory = category;
     if (this.content) this.content.y = 0;

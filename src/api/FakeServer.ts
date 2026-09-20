@@ -397,7 +397,7 @@ export class FakeServer implements GameApi {
       resetsAt,
       rewardStages: RAID_CONTRIBUTION_REWARD_STAGES.map((stage) => ({
         id: stage.id, threshold: stage.threshold,
-        reward: { itemId: stage.reward.itemId, itemName: findItem(stage.reward.itemId)?.name ?? stage.reward.itemId, amount: stage.reward.amount },
+        reward: { currency: stage.reward.currency, name: findItem(stage.reward.currency)?.name ?? stage.reward.currency, amount: stage.reward.amount },
         claimed: raid.claimedStageIds.includes(stage.id),
       })).filter((stage) => earned.includes(stage.id) || !stage.claimed),
       // 처치 보상은 실제로 눕힌 뒤에만 열리고, 시즌마다 한 번이다.
@@ -493,17 +493,15 @@ export class FakeServer implements GameApi {
       const nextState = structuredClone(this.state);
       if (isDefeat) nextState.raid.defeatRewardClaimed = true;
       else nextState.raid.claimedStageIds = [...nextState.raid.claimedStageIds, stage!.id];
-      const stack = nextState.itemInventory.find(({ itemId }) => itemId === reward.itemId);
-      const cap = findItem(reward.itemId)?.maxStack ?? 9_999;
-      if (stack) stack.quantity = Math.min(cap, stack.quantity + reward.amount);
-      else nextState.itemInventory = [...nextState.itemInventory, { itemId: reward.itemId, quantity: Math.min(cap, reward.amount) }];
+      // 증표는 지갑 재화라 다른 지급과 같은 상한 경계(`WALLET_CAPS`)를 지난다.
+      nextState.wallet = { ...nextState.wallet, [reward.currency]: Math.min(WALLET_CAPS[reward.currency], nextState.wallet[reward.currency] + reward.amount) };
       this.persist(nextState);
       if (this.state === session) replaceSession(nextState);
       else Object.assign(this.state, nextState);
     }
     const response: ClaimRaidRewardResponse = {
       ...this.snapshot(), stageId: request.stageId, alreadyClaimed,
-      reward: { itemId: reward.itemId, itemName: findItem(reward.itemId)?.name ?? reward.itemId, amount: reward.amount },
+      reward: { currency: reward.currency, name: findItem(reward.currency)?.name ?? reward.currency, amount: reward.amount },
       season: this.raidSeasonDto(now),
     };
     this.raidRewardResults.set(request.requestId, response);

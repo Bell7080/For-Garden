@@ -20,5 +20,5 @@ export const RAID_KO = {
   "raid.reward.claimed": "수령 완료",
   "raid.result.damage": "가한 피해",
   "raid.result.total": "누적 기여",
-  "shop.raid.title": "레이드 상점",
+  "shop.loot.title": "전리품 상점",
 } as const;

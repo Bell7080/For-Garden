@@ -1,16 +1,17 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { PRODUCTS, SHOP_PRODUCT_ICON_ASSETS, SHOP_TABS } from "../../src/data/shopCatalog";
-import { SHOP_STAGE_PRESENTATION } from "../../src/data/shopPresentation";
+import { PRODUCTS, SHOP_PRODUCT_ICON_ASSETS } from "../../src/data/shopCatalog";
+import { SHOP_STAGE_PRESENTATION, shopStagePresentation } from "../../src/data/shopPresentation";
 import { SHOP_DIALOGUE, SHOP_ENTRANCE, SHOP_STAGE, shopDialogueSpot, shopStageSettleMs } from "../../src/ui/shopLayout";
 import { BASE_WIDTH } from "../../src/config/gameConfig";
 
 /** 카탈로그 탭과 상품 메타데이터가 화면 코드 없이 완결되는지 검증한다. */
 describe("shop catalog", () => {
   it("owns the requested tab order and gives every product a valid category", () => {
-    // 기획 순서는 배열 순서 자체이며 상품은 반드시 그중 한 탭에 속해야 한다.
-    expect(SHOP_TABS.map(({ id }) => id)).toEqual(["general", "enhancement", "rune"]);
-    const categories = new Set(SHOP_TABS.map(({ id }) => id));
+    // 탭 순서는 그 자리의 무대표가 갖는다 — 씬이 한 표를 고정으로 그리면 자리가 늘어도
+    // 탭이 늘 「일반·강화·룬」이 된다.
+    expect(shopStagePresentation("shop").tabs.map(({ id }) => id)).toEqual(["general", "enhancement", "rune"]);
+    const categories = new Set(shopStagePresentation("shop").tabs.map(({ id }) => id));
     expect(PRODUCTS.every(({ category }) => categories.has(category))).toBe(true);
   });
 

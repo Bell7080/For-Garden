@@ -218,7 +218,7 @@ export class RaidScene extends Phaser.Scene {
       rows.forEach((stage, index) => {
         const y = top + index * 108 + 54;
         body.add(this.add.text(-340, y, `${stage.threshold.toLocaleString()}`, textStyle({ role: "emphasis", size: 27, color: COLOR.ink })).setOrigin(0, 0.5));
-        body.add(this.add.text(-100, y, `${stage.reward.itemName} ${stage.reward.amount}`, textStyle({ role: "body", size: 25, color: COLOR.inkDim })).setOrigin(0, 0.5));
+        body.add(this.add.text(-100, y, `${stage.reward.name} ${stage.reward.amount}`, textStyle({ role: "body", size: 25, color: COLOR.inkDim })).setOrigin(0, 0.5));
         if (stage.claimed) {
           body.add(this.add.text(340, y, t("raid.reward.claimed"), textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(1, 0.5));
           return;

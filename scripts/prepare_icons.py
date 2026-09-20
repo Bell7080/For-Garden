@@ -55,6 +55,10 @@ ART: dict[str, tuple[str, tuple[float, float, float] | None] | tuple[str, tuple[
     "sprites/currency/energy.webp": ("Photoroom_20260822_113612.png", (0.44, 1.04, 0.52)),
     # 전리품 상점의 두 증표. 색을 밀지 않는다 — 레이드와 원정이 저마다 다른 그림이라 이미
     # 갈려 있고, 지갑의 다른 칸과 달리 상단 줄에 함께 서는 일이 전리품 상점 하나뿐이다.
+    # 스테미나 소비품 둘. 재화가 아니라 **가방에 서는 아이템**이지만 같은 액자를 쓰므로
+    # 같은 규격으로 굽는다 — 화면마다 다른 크기로 서면 액자 규칙이 갈린다.
+    "sprites/items/stamina-tonic.webp": ("에너지드링크60회복.png", None),
+    "sprites/items/stamina-tonic-large.webp": ("에너지드링크+(120회복).png", None),
     "sprites/currency/raid-sigil.webp": ("토벌증표.webp", None),
     "sprites/currency/salvage-record.webp": ("인양기록.webp", None),
 }
@@ -71,6 +75,8 @@ RECENTER: dict[str, float] = {
     "sprites/ui/pickaxe.webp": 0.86,
     # 두 증표 원본은 캔버스를 0.97까지 채워 그대로 넣으면 액자 안에서 혼자 커 보인다 —
     # 기존 재화 아이콘이 0.64~0.82에 들어 있어 그 띠로 되돌린다.
+    "sprites/items/stamina-tonic.webp": 0.78,
+    "sprites/items/stamina-tonic-large.webp": 0.78,
     "sprites/currency/raid-sigil.webp": 0.8,
     "sprites/currency/salvage-record.webp": 0.8,
 }

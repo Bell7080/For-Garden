@@ -30,6 +30,10 @@ export const TRADE_GEM_RATE: Readonly<Record<ProductCurrency, number>> = {
   // 원석은 고고학 안에서만 도는 재화라 무역 전시대에 올리지 않는다. 시세만 채워 두면
   // 표가 비지 않으면서도 그 값이 어디에도 쓰이지 않는다 — 올릴 때 다시 재서 고친다.
   rawStone: 40,
+  // 증표 둘도 같은 이유로 전시대에 올리지 않는다 — 젬으로 사면 그 증표가 무엇을 위한
+  // 것인지 말하지 못한다. 시세만 채워 표를 비우지 않는다.
+  raidSigil: 60,
+  salvageRecord: 60,
   cheesecake: 2,
   fossil: 5,
   gold: 500,

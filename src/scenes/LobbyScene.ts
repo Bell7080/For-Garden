@@ -446,7 +446,7 @@ export class LobbyScene extends Phaser.Scene {
         width: POPUP_SIDE_SLOT.width, height: POPUP_SIDE_SLOT.height,
         label: t("lobby.sortie.shop"), fontSize: 30,
         accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
-        onClick: () => { close(); this.scene.start("shop", { storefront: "raid", returnScene: "lobby", returnMenu: "sortie" }); },
+        onClick: () => { close(); this.scene.start("shop", { storefront: "loot", returnScene: "lobby", returnMenu: "sortie" }); },
       });
       this.sortieShopButton.setDepth(SORTIE_SD_DEPTH + 1);
       // 세워 둔 SD가 가끔 한 번씩 움직인다. 다섯 칸이 동시에 뛰면 무엇을 고르는 화면인지 흐려지므로

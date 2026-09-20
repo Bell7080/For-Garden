@@ -43,8 +43,8 @@ describe("stamina rules", () => {
     state.itemInventory = [{ itemId: "stamina-tonic", quantity: 1 }];
     const api = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-01T00:01:00.000Z") });
     const response = await api.useConsumable({ itemId: "stamina-tonic", quantity: 1 });
-    // 기본 레벨 1의 동적 최대치 122까지 2만 적용하고 나머지 28은 명시적으로 돌려준다.
-    expect(response).toMatchObject({ appliedAmount: 2, overflowAmount: 28, stamina: { current: 122, maximum: 122 } });
+    // 기본 레벨 1의 동적 최대치 122까지 2만 적용하고 나머지 58은 명시적으로 돌려준다.
+    expect(response).toMatchObject({ appliedAmount: 2, overflowAmount: 58, stamina: { current: 122, maximum: 122 } });
   });
 
   it("keeps current stamina on level-up and fills the newly opened space naturally", () => {

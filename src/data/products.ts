@@ -8,10 +8,19 @@ import { TRADE_PACKAGES } from "./tradePackages";
  * 아래가 전시대」라는 규칙이 이미 깊이 박혀 있어, 둘로 갈리면 선반·격자·값줄 규칙이 두 곳이
  * 되고 한쪽만 고치는 사고가 난다.
  */
-export type ProductStorefront = "shop" | "trade" | "premium" | "archaeology" | "raid";
+export type ProductStorefront = "shop" | "trade" | "premium" | "archaeology" | "loot";
 
 /** 일반 인게임 상점과 무역소가 공유하는 안정적인 카테고리 계약이다. */
 export type ShopCategory = "general" | "enhancement" | "rune";
+
+/**
+ * 전리품 상점의 목록 갈래 — **쓰는 증표**로 가른다.
+ *
+ * 일반 상점의 `ShopCategory`(일반·강화·룬)를 그대로 쓰면 한 탭 안에 토벌 증표와 인양 기록을
+ * 함께 세우게 되어, 눌러 보기 전에는 **무엇으로 사는 자리인지** 알 수 없다. 프리미엄이
+ * `PremiumCategory`를 따로 둔 것과 같은 이유다. 탭 하나가 지갑 한 칸을 가리킨다.
+ */
+export type LootCategory = "raid" | "expedition";
 
 /**
  * 지갑에서 원자 차감할 수 있는 인게임 재화만 가격 재화로 인정한다.
@@ -20,7 +29,7 @@ export type ShopCategory = "general" | "enhancement" | "rune";
  * 지급에는 골드가 섞이기 때문이다. 셋 다 서버가 같은 지갑 키를 원자 차감·지급하므로 다른
  * 경로를 만들지 않는다.
  */
-export type ProductCurrency = "fossil" | "amber" | "cheesecake" | "dnaFragments" | "gems" | "gold" | "rawStone";
+export type ProductCurrency = "fossil" | "amber" | "cheesecake" | "dnaFragments" | "gems" | "gold" | "rawStone" | "raidSigil" | "salvageRecord";
 
 /** 가격 숫자와 획득 절차를 분리한 판별 합집합이며 외부 절차의 필수 식별자를 타입으로 강제한다. */
 export type ProductAcquisition =
@@ -85,6 +94,8 @@ export interface PassBenefitDefinition {
 /** 정적 상품은 가격·지급·기본 구매 수량·제한 주기를 빠짐없이 선언한다. */
 export interface ProductDefinition {
   id: string; storefront: ProductStorefront; category: ShopCategory; iconKey: ShopProductIconKey;
+  /** 전리품 상점의 목록 갈래. 그 storefront의 상품만 채운다. */
+  lootCategory?: LootCategory;
   /** 프리미엄 화면의 목록 갈래. 다른 storefront의 상품은 읽지 않는다. */
   premiumCategory?: PremiumCategory;
   name: string; description: string;
@@ -117,13 +128,26 @@ export const SHOP_PRODUCTS: readonly ProductDefinition[] = [
   // **레이드 상점.** 값은 전부 토벌 증표라 레이드를 돈 사람만 살 수 있고, 다른 재화로 사는 길을
   // 두지 않는다 — 젬으로도 살 수 있으면 증표가 무엇을 위한 것인지 말하지 못한다. 제한은 주간이
   // 기본이고, 성장 재료만 매일 열어 꾸준히 도는 사람이 매주 몰아 사지 않게 한다.
-  { id: "raid-cheesecake-ration", storefront: "raid", category: "general", iconKey: "shop-product-supplies", name: "토벌 보급 급여", description: "치즈케이크 400개", acquisition: { kind: "item", itemId: "raid-sigil", amount: 20 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 400 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "raid-gold-bounty", storefront: "raid", category: "general", iconKey: "shop-product-fossil", name: "토벌 포상금", description: "골드 30,000개", acquisition: { kind: "item", itemId: "raid-sigil", amount: 25 }, grants: [{ kind: "currency", currency: "gold", amount: 30000 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "raid-fossil-crate", storefront: "raid", category: "general", iconKey: "shop-product-fossil", name: "토벌 표본 상자", description: "화석 1,500개", acquisition: { kind: "item", itemId: "raid-sigil", amount: 60 }, grants: [{ kind: "currency", currency: "fossil", amount: 1500 }], defaultQuantity: 2, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "raid-dna-supply", storefront: "raid", category: "enhancement", iconKey: "shop-product-enhancement", name: "토벌 복원 보급", description: "DNA 조각 12개", acquisition: { kind: "item", itemId: "raid-sigil", amount: 80 }, grants: [{ kind: "currency", currency: "dnaFragments", amount: 12 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "raid-amber-token", storefront: "raid", category: "enhancement", iconKey: "shop-product-amber", name: "토벌 공훈 호박석", description: "호박석 15개", acquisition: { kind: "item", itemId: "raid-sigil", amount: 150 }, grants: [{ kind: "currency", currency: "amber", amount: 15 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "raid-ancient-core", storefront: "raid", category: "rune", iconKey: "shop-product-rune", name: "토벌 고대 핵", description: "미지의 고대 핵 1개", acquisition: { kind: "item", itemId: "raid-sigil", amount: 120 }, grants: [{ kind: "item", itemId: "ancient-core", name: "미지의 고대 핵", amount: 1 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "raid-refined-core", storefront: "raid", category: "rune", iconKey: "shop-product-rune", name: "토벌 정제 핵", description: "정제된 고대 핵 1개", acquisition: { kind: "item", itemId: "raid-sigil", amount: 300 }, grants: [{ kind: "item", itemId: "refined-core", name: "정제된 고대 핵", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "raid-cheesecake-ration", storefront: "loot", lootCategory: "raid", category: "general", iconKey: "shop-product-supplies", name: "토벌 보급 급여", description: "치즈케이크 400개", acquisition: { kind: "currency", currency: "raidSigil", amount: 20 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 400 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "raid-gold-bounty", storefront: "loot", lootCategory: "raid", category: "general", iconKey: "shop-product-fossil", name: "토벌 포상금", description: "골드 30,000개", acquisition: { kind: "currency", currency: "raidSigil", amount: 25 }, grants: [{ kind: "currency", currency: "gold", amount: 30000 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "raid-fossil-crate", storefront: "loot", lootCategory: "raid", category: "general", iconKey: "shop-product-fossil", name: "토벌 표본 상자", description: "화석 1,500개", acquisition: { kind: "currency", currency: "raidSigil", amount: 60 }, grants: [{ kind: "currency", currency: "fossil", amount: 1500 }], defaultQuantity: 2, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "raid-dna-supply", storefront: "loot", lootCategory: "raid", category: "enhancement", iconKey: "shop-product-enhancement", name: "토벌 복원 보급", description: "DNA 조각 12개", acquisition: { kind: "currency", currency: "raidSigil", amount: 80 }, grants: [{ kind: "currency", currency: "dnaFragments", amount: 12 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "raid-amber-token", storefront: "loot", lootCategory: "raid", category: "enhancement", iconKey: "shop-product-amber", name: "토벌 공훈 호박석", description: "호박석 15개", acquisition: { kind: "currency", currency: "raidSigil", amount: 150 }, grants: [{ kind: "currency", currency: "amber", amount: 15 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "raid-ancient-core", storefront: "loot", lootCategory: "raid", category: "rune", iconKey: "shop-product-rune", name: "토벌 고대 핵", description: "미지의 고대 핵 1개", acquisition: { kind: "currency", currency: "raidSigil", amount: 120 }, grants: [{ kind: "item", itemId: "ancient-core", name: "미지의 고대 핵", amount: 1 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "raid-refined-core", storefront: "loot", lootCategory: "raid", category: "rune", iconKey: "shop-product-rune", name: "토벌 정제 핵", description: "정제된 고대 핵 1개", acquisition: { kind: "currency", currency: "raidSigil", amount: 300 }, grants: [{ kind: "item", itemId: "refined-core", name: "정제된 고대 핵", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  // **인양 탭.** 값은 전부 인양 기록이라 원정을 돈 사람만 살 수 있다.
+  //
+  // **레이드 탭과 품목이 겹치지 않는다** — 같은 것을 두 증표로 살 수 있으면 둘 중 싼 쪽만
+  // 쓰이고 나머지 탭은 열 이유가 없어진다. 그래서 레이드는 **성장 재료**(치즈케이크·골드·
+  // 화석·호박석)와 고대 핵을 맡고, 인양은 **수장된 지부에서 건져 올린 것**(원석·룬 가루·
+  // 복원 결정)과 보급품을 맡는다. DNA 조각 하나만 양쪽에 둔다 — 돌파의 공용 재료라
+  // 한쪽에만 두면 그 콘텐츠를 돌지 않는 사람의 성장이 통째로 막힌다.
+  { id: "loot-salvage-orestone", storefront: "loot", lootCategory: "expedition", category: "general", iconKey: "shop-product-fossil", name: "인양 광물 회수분", description: "원석 800개", acquisition: { kind: "currency", currency: "salvageRecord", amount: 30 }, grants: [{ kind: "currency", currency: "rawStone", amount: 800 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "loot-salvage-tonic", storefront: "loot", lootCategory: "expedition", category: "general", iconKey: "shop-product-supplies", name: "인양 보급 음료", description: "에너지 드링크 3개", acquisition: { kind: "currency", currency: "salvageRecord", amount: 25 }, grants: [{ kind: "item", itemId: "stamina-tonic", name: "에너지 드링크", amount: 3 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "loot-salvage-gems", storefront: "loot", lootCategory: "expedition", category: "general", iconKey: "shop-product-gems", name: "인양 정산 결정", description: "다이아 40개", acquisition: { kind: "currency", currency: "salvageRecord", amount: 120 }, grants: [{ kind: "currency", currency: "gems", amount: 40 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "loot-salvage-dna", storefront: "loot", lootCategory: "expedition", category: "enhancement", iconKey: "shop-product-enhancement", name: "인양 복원 표본", description: "DNA 조각 15개", acquisition: { kind: "currency", currency: "salvageRecord", amount: 90 }, grants: [{ kind: "currency", currency: "dnaFragments", amount: 15 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "loot-salvage-dust", storefront: "loot", lootCategory: "expedition", category: "rune", iconKey: "shop-product-rune", name: "인양 정제 가루", description: "룬 가루 40개", acquisition: { kind: "currency", currency: "salvageRecord", amount: 60 }, grants: [{ kind: "item", itemId: "rune-dust", name: "룬 가루", amount: 40 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "loot-salvage-crystal", storefront: "loot", lootCategory: "expedition", category: "rune", iconKey: "shop-product-rune", name: "인양 복원 결정", description: "완전 복원 결정 1개", acquisition: { kind: "currency", currency: "salvageRecord", amount: 340 }, grants: [{ kind: "item", itemId: "restoration-crystal", name: "완전 복원 결정", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   // **무역은 교환소가 아니라 패키지 전시장이다.** 일반 상점이 화석·호박석으로 보급품을 사는
   // 상시 진열대라면, 무역은 그때그때 운영이 올려 두는 **묶음 하나하나를 전시**하는 자리다 —
   // 값은 젬으로 받고, 같은 젬으로 따로 사는 것보다 더 많이 주는 것이 이 화면의 존재 이유다.

@@ -20,7 +20,7 @@ const starterProgress = { anky: progress(), rex: progress(), spino: progress() }
 /** 기본 편성(토리카·렉시아·스피나)의 시간당 합산. 게이지의 분모를 손으로 적지 않는다. */
 const TOTALS = excavationProductionDisplayModel(["anky", "rex", "spino"], RELICS, starterProgress).totalsPerHour;
 
-const emptyWallet = { fossil: 0, gold: 0, cheesecake: 0, amber: 0, gems: 0, stamina: 0, dnaFragments: 0, rawStone: 0 };
+const emptyWallet = { fossil: 0, gold: 0, cheesecake: 0, amber: 0, gems: 0, stamina: 0, dnaFragments: 0, rawStone: 0, raidSigil: 0, salvageRecord: 0 };
 
 describe("방치 발굴 순수 규칙", () => {
   it("공유 시계 fixture에서 시간대·역행·장기 오프라인·만료 경계를 지킨다", () => {
@@ -142,13 +142,13 @@ describe("방치 발굴 순수 규칙", () => {
 
   it("수확 뒤 네 재화의 소수 부분을 각각 다음 수확으로 이월한다", () => {
     const state = { ...createIdleExcavationState(), unclaimed: { gold: 1.1, cheesecake: 2.2, fossil: 3.3, gems: 4.4 } };
-    const result = harvestIdleExcavation(state, { fossil: 0, gold: 0, cheesecake: 0, amber: 0, gems: 0, stamina: 0, dnaFragments: 0, rawStone: 0 });
+    const result = harvestIdleExcavation(state, { fossil: 0, gold: 0, cheesecake: 0, amber: 0, gems: 0, stamina: 0, dnaFragments: 0, rawStone: 0, raidSigil: 0, salvageRecord: 0 });
     expect(result.state.unclaimed).toEqual({ gold: 0.1, cheesecake: 0.2, fossil: 0.3, gems: 0.4 });
   });
 
   it("네 발굴 재화 모두 지갑 상한까지만 지급한다", () => {
     const state = { ...createIdleExcavationState(), unclaimed: { gold: 2, cheesecake: 2, fossil: 2, gems: 2 } };
-    const wallet = { fossil: WALLET_CAPS.fossil - 1, gold: WALLET_CAPS.gold - 1, cheesecake: WALLET_CAPS.cheesecake - 1, amber: 0, gems: WALLET_CAPS.gems - 1, stamina: 0, dnaFragments: 0, rawStone: 0 };
+    const wallet = { fossil: WALLET_CAPS.fossil - 1, gold: WALLET_CAPS.gold - 1, cheesecake: WALLET_CAPS.cheesecake - 1, amber: 0, gems: WALLET_CAPS.gems - 1, stamina: 0, dnaFragments: 0, rawStone: 0, raidSigil: 0, salvageRecord: 0 };
     expect(harvestIdleExcavation(state, wallet).granted).toEqual({ gold: 1, cheesecake: 1, fossil: 1, gems: 1 });
   });
 
@@ -219,7 +219,7 @@ describe("방치 발굴 순수 규칙", () => {
 
   it("재화별 소수는 이월하고 지갑 상한 밖의 정수는 명시적으로 버린다", () => {
     const state = { ...activeState(), unclaimed: { gold: 2.25, cheesecake: 1.5, fossil: 3.75, gems: 2.9 } };
-    const wallet = { fossil: WALLET_CAPS.fossil - 1, gold: WALLET_CAPS.gold, cheesecake: 0, amber: 0, gems: WALLET_CAPS.gems, stamina: 0, dnaFragments: 0, rawStone: 0 };
+    const wallet = { fossil: WALLET_CAPS.fossil - 1, gold: WALLET_CAPS.gold, cheesecake: 0, amber: 0, gems: WALLET_CAPS.gems, stamina: 0, dnaFragments: 0, rawStone: 0, raidSigil: 0, salvageRecord: 0 };
     const result = harvestIdleExcavation(state, wallet);
     expect(result.granted).toEqual({ gold: 0, cheesecake: 1, fossil: 1, gems: 0 });
     expect(result.discarded).toEqual({ gold: 2, cheesecake: 0, fossil: 2, gems: 2 });
@@ -245,7 +245,7 @@ describe("보관량 게이지", () => {
   it("광고 수확 배율로 정수가 되는 보상은 알리고 성공 수확 뒤 소수 잔량에서는 해제한다", () => {
     const rate = { ...emptyExcavationAmounts(), gems: 0.25 }; const unclaimed = { ...emptyExcavationAmounts(), gems: 0.6 };
     expect(excavationHarvestStatus(unclaimed, rate, 4 * 3600, 2).harvestNotice).toBe(true);
-    const harvested = harvestIdleExcavation({ ...createIdleExcavationState(), unclaimed, pendingHarvestMultiplier: 2 }, { fossil: 0, gold: 0, cheesecake: 0, amber: 0, gems: 0, stamina: 0, dnaFragments: 0, rawStone: 0 });
+    const harvested = harvestIdleExcavation({ ...createIdleExcavationState(), unclaimed, pendingHarvestMultiplier: 2 }, { fossil: 0, gold: 0, cheesecake: 0, amber: 0, gems: 0, stamina: 0, dnaFragments: 0, rawStone: 0, raidSigil: 0, salvageRecord: 0 });
     expect(excavationHarvestStatus(harvested.state.unclaimed, rate, 4 * 3600).harvestNotice).toBe(false);
   });
 
@@ -253,7 +253,7 @@ describe("보관량 게이지", () => {
     const rate = { ...emptyExcavationAmounts(), gold: 10 }; const unclaimed = { ...emptyExcavationAmounts(), gold: 20 };
     expect(excavationHarvestStatus(unclaimed, rate, 8 * 3600).storageFillRatio).toBe(0.25);
     expect(excavationHarvestStatus(unclaimed, rate, 4 * 3600).harvestNotice).toBe(true);
-    const fullWallet = { fossil: 0, gold: WALLET_CAPS.gold, cheesecake: 0, amber: 0, gems: 0, stamina: 0, dnaFragments: 0, rawStone: 0 };
+    const fullWallet = { fossil: 0, gold: WALLET_CAPS.gold, cheesecake: 0, amber: 0, gems: 0, stamina: 0, dnaFragments: 0, rawStone: 0, raidSigil: 0, salvageRecord: 0 };
     const harvested = harvestIdleExcavation({ ...createIdleExcavationState(), unclaimed }, fullWallet);
     expect(harvested.discarded.gold).toBe(20);
     expect(excavationHarvestStatus(harvested.state.unclaimed, rate, 4 * 3600).harvestNotice).toBe(false);

@@ -2,7 +2,6 @@
 export const INTERACTION_KO = {
   "interaction.title": "교류",
   "interaction.subtitle": "도시마다 한 팀씩 보낼 수 있다",
-  "interaction.exchange": "교환소",
   "interaction.dispatched": "파견 중 · {remaining}",
   "interaction.awaitingClaim": "수령 대기",
   "interaction.lockedByStage": "{stage} 클리어로 열린다",
@@ -20,12 +19,4 @@ export const INTERACTION_KO = {
   "interaction.send": "파견 보내기",
   "interaction.rewardTitle": "교류 보상",
 
-  "interaction.exchange.owned": "보유",
-  "interaction.exchange.required": "요구",
-  "interaction.exchange.result": "교환 결과",
-  "interaction.exchange.remaining": "남은 교환 횟수  {remaining}",
-  "interaction.exchange.busy": "처리 중",
-  "interaction.exchange.do": "교환",
-  "interaction.exchange.granted": "치즈케이크 {amount} 지급",
-  "interaction.exchange.failed": "교환 실패",
 } as const;

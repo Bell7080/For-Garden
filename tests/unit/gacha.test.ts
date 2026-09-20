@@ -5,6 +5,7 @@ import { BANNERS } from "../../src/data/banners";
 /** 모든 분기와 난수 소비 순서를 눈으로 추적할 수 있는 최소 3등급 배너다. */
 const banner: Banner = {
   id: "test", pityGroupId: "test-group", name: "시험 발굴", featuredRelicId: "ssr-pick",
+  artKey: "background-recruit-fossil",
   currency: "fossil", costOne: 100, costTen: 900,
   slotRates: { SSR: 0.1, SR: 0.2, R: 0.6, GRAY: 0.1 },
   grayRewards: [{ kind: "gold", min: 10, max: 20, weight: 1 }, { kind: "cheesecake", min: 2, max: 4, weight: 1 }],
@@ -22,8 +23,8 @@ describe("뽑기 비용", () => {
   it("10회 할인과 잔액 경계를 계산한다", () => {
     expect(pullCost(banner, 1)).toBe(100);
     expect(pullCost(banner, 10)).toBe(900);
-    expect(canPull({ fossil: 100, amber: 0, gems: 0, gold: 0, stamina: 0, dnaFragments: 0, cheesecake: 0 , rawStone: 0}, banner, 1)).toBe(true);
-    expect(canPull({ fossil: 99, amber: 999, gems: 0, gold: 0, stamina: 0, dnaFragments: 0, cheesecake: 0 , rawStone: 0}, banner, 1)).toBe(false);
+    expect(canPull({ fossil: 100, amber: 0, gems: 0, gold: 0, stamina: 0, dnaFragments: 0, cheesecake: 0 , rawStone: 0, raidSigil: 0, salvageRecord: 0}, banner, 1)).toBe(true);
+    expect(canPull({ fossil: 99, amber: 999, gems: 0, gold: 0, stamina: 0, dnaFragments: 0, cheesecake: 0 , rawStone: 0, raidSigil: 0, salvageRecord: 0}, banner, 1)).toBe(false);
   });
 });
 
@@ -109,8 +110,8 @@ describe("보장 우선순위와 천장", () => {
 
 describe("재화와 보유 반영", () => {
   it("원본 지갑은 바꾸지 않고 비용만 차감한다", () => {
-    const wallet: Wallet = { fossil: 1000, amber: 5, gems: 0, gold: 0, stamina: 0, dnaFragments: 2, cheesecake: 0 , rawStone: 0};
-    expect(spend(wallet, banner, 1)).toEqual({ fossil: 900, amber: 5, gems: 0, gold: 0, stamina: 0, dnaFragments: 2, cheesecake: 0 , rawStone: 0});
+    const wallet: Wallet = { fossil: 1000, amber: 5, gems: 0, gold: 0, stamina: 0, dnaFragments: 2, cheesecake: 0 , rawStone: 0, raidSigil: 0, salvageRecord: 0};
+    expect(spend(wallet, banner, 1)).toEqual({ fossil: 900, amber: 5, gems: 0, gold: 0, stamina: 0, dnaFragments: 2, cheesecake: 0 , rawStone: 0, raidSigil: 0, salvageRecord: 0});
     expect(wallet.fossil).toBe(1000);
   });
 

@@ -89,11 +89,17 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   // 주위를 한 바퀴 긋고 그 몫을 아군에게 나눠 주는 궁극기라, 한 방의 무게보다 **한 번에
   // 여럿을 벤다**가 읽혀야 한다. 확대는 얕게 두고 흔들림만 광역답게 남긴다.
   terisa: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 1.02, cutInHoldMs: 145, zoomScale: 1.16, zoomMs: 104, cameraShakeIntensity: 0.008 },
+  // 흩어져 있던 드론이 한 점으로 모이는 궁극기다. 본인은 요람에서 움직이지 않으므로 흔들림은
+  // 약하게 두고, 모이는 순간만 확대로 알린다.
+  morphe: { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "left", artworkScale: 0.96, zoomScale: 1.20, zoomMs: 110, cameraShakeIntensity: 0.010 },
   "toby": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", cutInHoldMs: 135, zoomScale: 1.2, zoomMs: 110, cameraShakeIntensity: 0.008 },
   "amo": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, zoomScale: 1.24, zoomMs: 115, cameraShakeIntensity: 0.009 },
   "ripa": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.92, artworkOrigin: { x: 650, y: 770 }, zoomScale: 1.16, cameraShakeIntensity: 0.007 },
   // 코마는 작은 체형의 빠른 선봉이므로 오른쪽에서 깊게 파고드는 짧은 컷인을 사용한다.
   "koma": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.94, zoomScale: 1.22, zoomMs: 105, cameraShakeIntensity: 0.008 },
+  // 작고 빠른 물량 개체라 컷인이 가장 짧고 확대도 얕다 — 한 판에 여럿이 쓰는 궁극기라
+  // 하나하나가 무거우면 그 던전이 연출을 기다리는 시간으로 채워진다.
+  "raitia": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.9, cutInHoldMs: 120, zoomScale: 1.14, zoomMs: 100, cameraShakeIntensity: 0.006 },
   // 넓은 보스 전신은 컷인에서 한 단계 줄이고, 무거운 일격은 SD 확대와 흔들림으로 전달한다.
   pontos: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.82, artworkOrigin: { x: 650, y: 800 }, zoomScale: 1.3, zoomMs: 120, cameraShakeIntensity: 0.014 },
 });

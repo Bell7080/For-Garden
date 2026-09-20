@@ -83,6 +83,24 @@ export const BACK_BUTTON_SIZE = 108;
 export const BACK_SLOT = { x: BASE_WIDTH - 106, y: BASE_HEIGHT - 120 } as const;
 
 /**
+ * 판 **밖** 왼쪽 아래의 곁들임 조작 자리 — 뒤로가기와 마주 보는 한 칸이다.
+ *
+ * 판 옆이 아니라 여기인 이유는 **판 옆에 자리가 없기 때문이다.** 작업판은 980폭이라 화면
+ * 1080 안에서 좌우로 50px씩만 남고, 그 띠에는 라벨 한 글자도 서지 못한다. 반대로 판 밑동
+ * 아래는 340px이 비어 있고 그 오른쪽 끝에 이미 뒤로가기가 서 있어, 같은 높이의 왼쪽 끝은
+ * **이미 화면이 판 밖 조작에 내어 준 줄**이다.
+ *
+ * 뒤로가기와 같은 `y`를 쓰되 생김새는 아이콘이 아니라 라벨 버튼이다 — 나가는 길과 같은
+ * 모양이면 판 밖에 나가는 문이 둘로 보인다.
+ */
+export const POPUP_SIDE_SLOT = { x: 200, y: BASE_HEIGHT - 120, width: 260, height: 96 } as const;
+
+/** 판 밖 곁들임 조작이 뒤로가기를 침범하지 않는지 재는 가로 간격이다. */
+export function popupSideSlotGap(): number {
+  return (BACK_SLOT.x - BACK_BUTTON_SIZE / 2) - (POPUP_SIDE_SLOT.x + POPUP_SIDE_SLOT.width / 2);
+}
+
+/**
  * 팝업이 세우는 판 밖 뒤로가기의 깊이 밑값.
  *
  * 아래 화면이 이미 같은 우하단 자리에 제 뒤로가기를 세워 두었으므로(로비의 가방·무역·발굴은

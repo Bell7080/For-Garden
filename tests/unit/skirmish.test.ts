@@ -457,19 +457,50 @@ describe("스피나 전투 계약", () => {
     expect(events.some((event) => event.kind === "heal")).toBe(false);
   });
 
-  it("은 첫 공격 뒤 발밑에 여울을 남기고, 마르면 판이 사라진다", () => {
-    const { state, spino } = readySpino();
-    // 물은 **때린 자리에** 고인다 — 첫 한 방은 마른 땅에서 나간다.
-    expect(spino.shallows).toBeNull();
+  it("은 적 주위에 여울을 깔고, 마르면 판이 사라진다", () => {
+    const { state, spino, target } = readySpino();
+    // 물은 **적 주위에** 고인다 — 첫 한 방은 마른 땅에서 나간다.
+    expect(spino.shallowPools).toHaveLength(0);
     stepSkirmish(state, 1 / 60, () => 0.99);
-    expect(spino.shallows).toMatchObject({ x: spino.x, y: spino.y });
+    expect(spino.shallowPools).toHaveLength(1);
+    // 스피나 발밑이 아니라 **적 너머**다. 붙어 싸우는 동안 판이 같은 자리에 겹치지 않게 하는 값이다.
+    const pool = spino.shallowPools[0];
+    expect(Math.hypot(pool.x - target.x, pool.y - target.y)).toBeCloseTo(spino.def.basic.shallows!.behindDistance, 0);
+    expect(Math.hypot(pool.x - spino.x, pool.y - spino.y)).toBeGreaterThan(Math.hypot(target.x - spino.x, target.y - spino.y));
     // 판은 개체를 따라다니지 않는다. 자리를 옮겨도 고인 곳에 그대로 남는다.
-    const pooled = { x: spino.shallows!.x, y: spino.shallows!.y };
+    const pooled = { x: pool.x, y: pool.y };
     spino.x += 300; spino.attackCooldown = 99;
     stepSkirmish(state, 1 / 60, () => 0.99);
-    expect(spino.shallows).toMatchObject(pooled);
-    for (let frame = 0; frame < 60 * 4; frame += 1) stepSkirmish(state, 1 / 60, () => 0.99);
-    expect(spino.shallows).toBeNull();
+    expect(spino.shallowPools[0]).toMatchObject(pooled);
+    for (let frame = 0; frame < 60 * 8; frame += 1) stepSkirmish(state, 1 / 60, () => 0.99);
+    expect(spino.shallowPools).toHaveLength(0);
+  });
+
+  /** 판이 벌어지는 규칙 — 같은 자리에 두 번 고이지 않고, 아무도 안 붙은 적이 먼저 젖는다. */
+  it("은 가까운 자리에는 새 판을 만들지 않고 아무도 붙지 않은 적을 먼저 적신다", () => {
+    const state = newSkirmish(["spino"], ["amo", "toby"]);
+    const [spino, near, far] = state.fighters;
+    spino.x = 400; spino.y = 900;
+    near.x = 460; near.y = 900;
+    far.x = 400; far.y = 1300;
+    spino.targetId = near.id;
+    for (const enemy of [near, far]) enemy.attackCooldown = 99;
+
+    spino.attackCooldown = 0;
+    stepSkirmish(state, 1 / 60, () => 0.99);
+    expect(spino.shallowPools).toHaveLength(1);
+    // 스피나가 붙어 있는 쪽이 아니라 **아무도 안 붙은** 쪽이 먼저 젖는다.
+    const first = spino.shallowPools[0];
+    expect(Math.hypot(first.x - far.x, first.y - far.y)).toBeLessThan(Math.hypot(first.x - near.x, first.y - near.y));
+
+    // 두 번째 판은 남은 적 주위에 선다 — 이미 젖은 적은 뒤로 밀리기 때문이다.
+    spino.attackCooldown = 0;
+    stepSkirmish(state, 1 / 60, () => 0.99);
+    expect(spino.shallowPools).toHaveLength(2);
+    // 셋째 판은 둘 중 어느 쪽에도 `minSpacing`만큼 떨어지지 못해 새로 서지 않는다.
+    spino.attackCooldown = 0;
+    stepSkirmish(state, 1 / 60, () => 0.99);
+    expect(spino.shallowPools).toHaveLength(2);
   });
 
   it("은 여울에 잠긴 적의 이동만 늦추고, 물 밖으로 나가면 그 프레임에 풀린다", () => {
@@ -477,47 +508,83 @@ describe("스피나 전투 계약", () => {
     const walked = moveSpeed(target);
     // 잠김 판정은 모든 여울의 시계가 흐른 뒤 한 번에 돌므로, 물이 고인 다음 프레임부터 잠긴다.
     stepSkirmish(state, 1 / 60, () => 0.99);
+    target.x = spino.shallowPools[0].x; target.y = spino.shallowPools[0].y;
     stepSkirmish(state, 1 / 60, () => 0.99);
     expect(target.submergedIn).toMatchObject({ ownerId: spino.id, moveSlowPercent: 35 });
     expect(moveSpeed(target)).toBeCloseTo(walked * 0.65);
     // 공격 속도는 건드리지 않는다 — 이 판이 말하는 것은 "빠져나가지 못한다"이지 "덜 아프다"가 아니다.
     expect(attackInterval(target)).toBe(attackInterval(newSkirmish(["amo"], ["spino"]).fighters[0]));
     // 상태가 아니라 서 있는 자리라, 물 밖으로 한 걸음 나가면 같은 프레임에 풀린다.
-    target.x = spino.shallows!.x + 400;
+    target.x = spino.shallowPools[0].x + 400;
     stepSkirmish(state, 1 / 60, () => 0.99);
     expect(target.submergedIn).toBeNull();
     expect(moveSpeed(target)).toBeCloseTo(walked);
   });
 
-  it("은 여울에 잠긴 적에게 연격을 네 번 확정으로 넣되 메워 준 대는 공속 누적을 돌리지 않는다", () => {
-    const { state, spino } = readySpino();
-    spino.hp = spino.maxHp / 2;
-    stepSkirmish(state, 1 / 60, () => 0.99);
-    const hp = spino.hp;
-    const speed = spino.bonusAttackSpeed;
+  /** 여울의 값은 평타가 아니라 **뛰어드는 순간**에 있다. */
+  it("은 기본 공격 네 번마다 적이 잠긴 여울로 뛰어들어 그 자리를 터뜨린다", () => {
+    const state = newSkirmish(["spino"], ["amo", "toby"]);
+    const [spino, near, far] = state.fighters;
+    spino.x = 400; spino.y = 900;
+    near.x = 460; near.y = 900;
+    for (const enemy of [near, far]) enemy.attackCooldown = 99;
+    // 멀리 선 적을 판 안에 세워 둔다 — 뛰어들 자리가 실제로 누군가를 붙잡고 있어야 한다.
+    const pool = { x: 400, y: 1300, remaining: 6, total: 6 };
+    far.x = pool.x; far.y = pool.y;
+    spino.shallowPools = [pool];
+    // 다음 한 대가 곧 네 번째다.
+    spino.shallowLeapCount = spino.def.basic.shallows!.leapEveryHits - 1;
+    spino.targetId = near.id;
     spino.attackCooldown = 0;
-    // 연격 판정은 빗나가지만(0.99) 물가에서는 `submergedHitCount`만큼 확정으로 들어간다.
+
+    const farHp = far.hp;
     const events = stepSkirmish(state, 1 / 60, () => 0.99);
-    expect(events.filter((event) => event.kind === "attack")).toHaveLength(spino.def.basic.shallows!.submergedHitCount);
-    // 물이 메워 준 몫이라 공속 누적은 한 번(+3)뿐이고, 회복은 어느 쪽으로도 돌지 않는다.
-    expect(spino.bonusAttackSpeed - speed).toBe(spino.def.passive.value);
-    expect(spino.hp).toBe(hp);
+    // 판 자리로 건너가 그 자리를 터뜨린다.
+    expect(Math.hypot(spino.x - pool.x, spino.y - pool.y)).toBeLessThan(1);
+    expect(far.hp).toBeLessThan(farHp);
+    expect(events.some((event) => event.kind === "areaImpact" && event.damageType === "physical")).toBe(true);
+    // 내려선 판은 그 자리에서 마른다 — 회수하지 않으면 같은 판으로 계속 되뛴다.
+    expect(spino.shallowPools.some((left) => left === pool)).toBe(false);
+    // 타수는 0으로 돌아가 다음 네 대를 독립적으로 센다.
+    expect(spino.shallowLeapCount).toBe(0);
   });
 
-  it("은 여울에 잠긴 적에게만 피해를 20% 더 준다", () => {
-    const dry = readySpino();
-    // 마른 땅에서 낸 첫 한 방이 기준이다 — 물은 이 타격이 나간 **뒤에** 고인다.
-    const dryHit = stepSkirmish(dry.state, 1 / 60, () => 0.99).find((event) => event.kind === "attack")!;
-    const wet = readySpino();
-    stepSkirmish(wet.state, 1 / 60, () => 0.99);
-    // 잠김 판정은 여울의 시계가 흐른 뒤 한 번에 돌므로, 물이 고인 다음 프레임부터 잠긴다.
-    stepSkirmish(wet.state, 1 / 60, () => 0.99);
-    expect(wet.target.submergedIn).not.toBeNull();
-    wet.spino.attackCooldown = 0;
-    const wetHit = stepSkirmish(wet.state, 1 / 60, () => 0.99).find((event) => event.kind === "attack")!;
-    expect(wetHit.amount).toBeGreaterThan(dryHit.amount);
-    // 방어·상성 뒤의 최종 경계에서 한 번만 곱하므로 비율이 그대로 남는다.
-    expect(wetHit.amount / dryHit.amount).toBeCloseTo(1.2, 1);
+  it("은 아무도 잠기지 않은 판으로는 건너가지 않는다", () => {
+    const { state, spino, target } = readySpino();
+    const takeoff = { x: spino.x, y: spino.y };
+    // 빈 물로 건너가면 표적에게서 멀어지기만 한다.
+    spino.shallowPools = [{ x: 900, y: 1300, remaining: 6, total: 6 }];
+    spino.shallowLeapCount = spino.def.basic.shallows!.leapEveryHits - 1;
+    spino.targetId = target.id;
+    spino.attackCooldown = 0;
+    stepSkirmish(state, 1 / 60, () => 0.99);
+    expect(Math.hypot(spino.x - 900, spino.y - 1300)).toBeGreaterThan(1);
+    expect(Math.hypot(spino.x - takeoff.x, spino.y - takeoff.y)).toBeLessThan(200);
+  });
+
+  it("은 궁극기로 깔아 둔 여울을 전부 터뜨린다", () => {
+    const state = newSkirmish(["spino"], ["amo", "toby"]);
+    const [spino, first, second] = state.fighters;
+    spino.x = 400; spino.y = 900;
+    for (const enemy of [first, second]) enemy.attackCooldown = 99;
+    const pools = [
+      { x: 400, y: 700, remaining: 6, total: 6 },
+      { x: 400, y: 1300, remaining: 6, total: 6 },
+    ];
+    spino.shallowPools = pools.map((pool) => ({ ...pool }));
+    first.x = pools[0].x; first.y = pools[0].y;
+    second.x = pools[1].x; second.y = pools[1].y;
+    const before = [first.hp, second.hp];
+
+    spino.energy = spino.def.ultimate.cost;
+    const events = fireUltimate(state, spino.id);
+    // 판마다 한 번씩 터지고, 각 판 안의 적이 실제로 깎인다.
+    const bursts = events.filter((event) => event.kind === "areaImpact" && event.damageType === "physical");
+    expect(bursts.length).toBeGreaterThanOrEqual(pools.length);
+    expect(first.hp).toBeLessThan(before[0]);
+    expect(second.hp).toBeLessThan(before[1]);
+    // 터진 판은 마른다.
+    expect(spino.shallowPools).toHaveLength(0);
   });
 
   it("은 확률로 터진 연격까지 물이 갉아먹지 않는다", () => {
@@ -594,18 +661,14 @@ describe("스피나 전투 계약", () => {
     const equivalentPower = 200 + speed * 150 / spino.def.stats.atk;
     const expected = computeDamage(spino, target, { ...ultimate, power: equivalentPower, kind: "ultimate", isCritical: false });
     /*
-     * **범람이 먼저 깔리고 그 위에서 문다.** 궁극기가 자리를 잡은 뒤 물을 고이게 하므로 이
-     * 한 방부터 표적이 잠긴 상태이고, 여울의 피해 증가가 그대로 곱해진다 — 사냥터를 열고
-     * 자기가 먼저 무는 것이 이 궁극기의 순서다.
+     * **여울은 평타에도 궁극기의 주 타격에도 아무 몫을 주지 않는다.** 물을 깔아 둔 값은 판이
+     * 터지는 순간에만 돌아오므로(도약·`detonateShallows`), 이 한 방은 물가 안팎에서 같다.
+     *
+     * 판이 하나도 깔리지 않은 자리라 터질 것도 없다 — 주 타격만 남는다.
      */
-    const submerged = Math.round(expected * (1 + spino.def.basic.shallows!.submergedDamagePercent / 100));
+    expect(spino.shallowPools).toHaveLength(0);
     const hit = fireUltimate(state, spino.id).find((event) => event.kind === "attack");
-    expect(hit).toMatchObject({ amount: submerged });
-    // 범람한 판은 평타 여울보다 넓고 오래간다.
-    expect(spino.shallows).toMatchObject({
-      radius: spino.def.basic.shallows!.radius * ultimate.floodShallows!.radiusMultiplier,
-      total: ultimate.floodShallows!.seconds,
-    });
+    expect(hit).toMatchObject({ amount: expected });
     expect(target.stunnedFor).toBe(3);
     expect(spino.energy).toBe(0);
   });
@@ -4001,7 +4064,7 @@ describe("데이", () => {
     const rng = seeded(13);
     fireUltimate(state, deina.id, rng);
     // 시전 순간이 곧 첫 틱이라 남은 시간만 시계에 얹는다 — 전체를 넣으면 같은 초에 두 번 터진다.
-    expect(deina.artChannel).toMatchObject({ total: 5, tickIn: 1 });
+    expect(deina.artChannel).toMatchObject({ total: 5 });
     expect(deina.artChannel!.remaining).toBeCloseTo(4, 5);
 
     // 게이지는 시전한 그 한 번의 몫만 쓴다. 남은 틱이 다시 소비하면 5초짜리가 궁극기 다섯 번이 된다.

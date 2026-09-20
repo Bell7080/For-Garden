@@ -111,6 +111,8 @@ export interface Session {
   runeInventory: RuneInstance[];
   /** 날짜가 바뀔 때 서버 시간 기준으로 교체할 일일 콘텐츠 진행이다. */
   dailyContent: DailyContentState;
+  /** 현상수배의 일일 입장 횟수와 깬 등급이다. 씬은 API 응답으로만 갱신한다. */
+  bounty: BountyState;
   /** 서버 UTC 일자·주차에 묶인 직렬화 가능한 임무 진행과 수령 기록이다. */
   missions: MissionState;
   /** 상품별 현재 제한 주기 키와 구매 횟수다. FakeServer만 갱신한다. */
@@ -119,10 +121,55 @@ export interface Session {
   dailyAdRewards: DailyAdRewardState;
   /** 주간 원정의 편성·진행·기록이다. 씬은 ExpeditionManager를 통해서만 변경한다. */
   expedition: ExpeditionState;
+  /** 주간 레이드 시즌에서 내가 민 몫과 수령 기록이다. */
+  raid: RaidState;
+  /** 치즈케이크 대작전에서 지금까지 이긴 가장 높은 단계다. 씬은 GameApi를 통해서만 변경한다. */
+  cakeOperation: CakeOperationState;
+}
+
+/**
+ * 물량형 던전의 진행.
+ *
+ * 저장에 남는 것은 **어디까지 이겼나** 하나뿐이다 — 해금도 소탕 허용도 전부 그 한 값에서
+ * 나오므로, 단계별 클리어 표를 따로 들고 다니면 같은 사실을 두 곳이 말하게 된다.
+ */
+export interface CakeOperationState {
+  /**
+   * 이긴 가장 높은 단계의 순번(0부터). 아직 하나도 못 이겼으면 -1이다.
+   *
+   * 단계 ID가 아니라 순번을 저장하는 이유는 해금이 "직전 단계"를 묻기 때문이다 — ID를 두면
+   * 열 때마다 목록에서 자리를 다시 찾아야 하고, 표에서 단계가 하나 사라지면 그 값이 어디도
+   * 가리키지 못한다.
+   */
+  clearedIndex: number;
 }
 
 /** 런 도중 저장되는 렐릭 한 기의 생존 스냅샷이다. */
 export interface ExpeditionRelicState { relicId: string; currentHp: number; alive: boolean; }
+
+/**
+ * 레이드 시즌의 내 몫.
+ *
+ * **참가자 전원의 누적은 저장하지 않는다** — 함께 민 사람들의 몫은 서버가 갖고, 백엔드가 없는
+ * 지금은 시즌 키에서 되풀이 계산되는 값(`mockRaidContributions`)이라 저장에 굳히면 다음에 열
+ * 때 두 수가 갈린다. 저장이 갖는 것은 내가 민 몫과 수령 기록뿐이다.
+ */
+export interface RaidState {
+  /** 월요일 00:00 UTC 경계의 시즌 키다. 빈 값은 첫 조회에서 서버 주차로 정규화된다. */
+  seasonKey: string;
+  /** 이번 시즌 내가 누적한 피해다. 기여 보상 단계가 읽는 값이기도 하다. */
+  myDamage: number;
+  /** 일일 도전 횟수와 그 횟수가 귀속된 UTC 날짜다. */
+  attemptsUsed: number;
+  attemptsDate: string;
+  claimedStageIds: string[];
+  defeatRewardClaimed: boolean;
+}
+
+/** 신규 계정과 마이그레이션이 같은 빈 시즌 모양을 공유한다. */
+export function createEmptyRaidState(): RaidState {
+  return { seasonKey: "", myDamage: 0, attemptsUsed: 0, attemptsDate: "", claimedStageIds: [], defeatRewardClaimed: false };
+}
 
 /** 앱 재실행 뒤에도 한 노드 단위로 그대로 이어갈 수 있는 완전한 원정 런이다. */
 export interface ExpeditionRunState {
@@ -188,6 +235,21 @@ export interface DailyContentState {
   claimedRewardIds: string[];
 }
 
+/**
+ * 현상수배 진행.
+ *
+ * 입장 횟수는 UTC 키가 바뀌면 되돌아가지만 **깬 등급은 날짜와 무관하게 남는다** — 다음 등급을
+ * 여는 값이라 하루가 지났다고 잠기면 어제 깬 관문을 다시 깨야 한다.
+ */
+export interface BountyState {
+  /** 서버가 정한 UTC YYYY-MM-DD 키다. */
+  date: string;
+  /** 오늘 실제로 입장해 소비한 횟수다. */
+  entries: number;
+  /** 세 라운드를 모두 이긴 등급 ID다. 다음 등급의 해금 근거다. */
+  clearedTierIds: string[];
+}
+
 /** 관찰 일지에 그대로 표시할 수 있는, 완료된 인터뷰의 최소 스냅샷이다. */
 export interface ObservationRecord {
   date: string;
@@ -227,6 +289,8 @@ export interface SaveData {
   /** 진행 중인 판까지 그대로 담는 JSON 안전 고고학 상태다. */
   archaeology: ArchaeologyState;
   saveVersion: number;
+  /** 물량형 던전 진행. 런타임 상태와 같은 모양이라 변환 없이 오간다. */
+  cakeOperation: CakeOperationState;
   settings: GameSettings;
   completedStoryIds: string[];
   observationRecords: ObservationRecord[];
@@ -251,10 +315,12 @@ export interface SaveData {
   relicFragments: Record<string, number>;
   runeInventory: RuneInstance[];
   dailyContent: DailyContentState;
+  bounty: BountyState;
   missions: MissionState;
   productPurchases: Record<string, { periodKey: string; count: number }>;
   dailyAdRewards: DailyAdRewardState;
   expedition: ExpeditionState;
+  raid: RaidState;
 }
 
 /** 개별 옵션이 없는 소비품·재료만 같은 ID끼리 중첩한다. */
@@ -309,7 +375,7 @@ export function createDefaultSession(): Session {
     bookmarked: new Set<string>(),
     // 임시 뽑기 테스트 지급: 화석·호박석 배너를 각각 100회의 10연속 복원까지 확인할 수 있다.
     // 정식 경제 밸런스를 적용할 때는 fossil 1,200 / amber 10으로 되돌리고 이 주석도 제거한다.
-    wallet: { fossil: 90_000, amber: 900, gems: 120, gold: 25_400, stamina: 60, dnaFragments: 0, cheesecake: 0, rawStone: STARTER_RUNE_TRAIT_KIT.rawStone },
+    wallet: { fossil: 90_000, amber: 900, gems: 120, gold: 25_400, stamina: 60, dnaFragments: 0, cheesecake: 0, rawStone: STARTER_RUNE_TRAIT_KIT.rawStone, raidSigil: 0, salvageRecord: 0 },
     // 첫 FakeServer 요청이 서버 시각으로 안전하게 초기화한다.
     staminaUpdatedAt: "",
     gachaPityByGroup: Object.fromEntries([...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].map((id) => [id, { pullsSinceSsr: 0, pickupGuaranteed: false }])),
@@ -318,6 +384,10 @@ export function createDefaultSession(): Session {
     // 신규 계정은 정적 정의 ID가 아니라 서버 지급 계약을 통해 룬 인스턴스를 얻는다.
     runeInventory: [],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
+    // 첫 단계는 늘 열려 있으므로 아무것도 이기지 않은 상태를 -1로 둔다.
+    cakeOperation: { clearedIndex: -1 },
+    // 빈 날짜 키는 첫 현상수배 조회에서 서버와 같은 UTC 날짜로 정규화된다.
+    bounty: { date: "", entries: 0, clearedTierIds: [] },
     // 기간별 연구도와 단계 수령 기록은 임무 수령 기록과 독립적으로 초기화한다.
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [], researchPoints: { daily: 0, weekly: 0 }, claimedResearchStageIds: [] },
     productPurchases: {},
@@ -325,6 +395,8 @@ export function createDefaultSession(): Session {
     dailyAdRewards: { date: "", claimsBySlot: {}, requestIds: [] },
     // 빈 주차 키는 첫 원정 조회에서 서버와 같은 UTC 주차로 정규화된다.
     expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, allTimeBestScore: 0, lastParty: [], run: null },
+    // 빈 시즌 키도 첫 레이드 조회에서 서버와 같은 UTC 주차로 정규화된다.
+    raid: createEmptyRaidState(),
   };
 }
 

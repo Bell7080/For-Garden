@@ -3,7 +3,6 @@ import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import type { ProductDto, PurchaseProductResponse } from "../api/contracts";
 import { formatCurrency } from "../core/formatCurrency";
-import { SHOP_TABS, type ShopCategory } from "../data/shopCatalog";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene, setDebugShopView, setDebugStorefrontControls } from "../debug";
 import { enableHitOnClick, spawnPuppet } from "../puppets/assets";
@@ -23,9 +22,10 @@ import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { PurchasePopup } from "../ui/PurchasePopup";
 import { session } from "../state/session";
 import { motionPolicy } from "../core/settings";
-import { productsForShopCategory, shopModel } from "../ui/shopModel";
+import { productsForShopTab, shopModel } from "../ui/shopModel";
 import type { ProductStorefront } from "../data/products";
 import { consumeSceneEntry } from "./sceneEntry";
+import { LOBBY_RETURN, normalizeLobbyEntry, type LobbyMenu } from "./lobbyEntry";
 import { shapeClipMask } from "../ui/popupArt";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import {
@@ -45,8 +45,13 @@ import {
  */
 export class ShopScene extends Phaser.Scene {
   private products: ProductDto[] = [];
-  /** 첫 탭은 카탈로그 순서에서 정해 화면과 데이터의 기본값이 갈리지 않게 한다. */
-  private selectedCategory: ShopCategory = SHOP_TABS[0].id;
+  /**
+   * 지금 열린 목록. 첫 탭은 무대표의 순서에서 정해 화면과 데이터의 기본값이 갈리지 않는다.
+   *
+   * 갈래 값이 자리마다 다르므로(일반·강화·룬 / 토벌·인양) 타입을 좁히지 않는다 — 무대표의
+   * 탭 `id`와 상품이 들고 있는 갈래가 같은 문자열이라는 것이 그 계약이다.
+   */
+  private selectedCategory = "";
   private tabRow?: Phaser.GameObjects.Container;
   private content?: Phaser.GameObjects.Container;
   /**
@@ -94,14 +99,23 @@ export class ShopScene extends Phaser.Scene {
   private stage: ShopStagePresentation = shopStagePresentation("shop");
   /** 우하단 뒤로가기가 돌아갈 화면. 어디서 들어왔는지는 부른 쪽이 안다. */
   private returnScene = "lobby";
+  /**
+   * 로비로 돌아갈 때 다시 열 판.
+   *
+   * 출격판 밖에서 연 상점이 판 없는 로비로 돌아가면, 방금 증표를 쓰고 온 사람이 출격을
+   * 다시 눌러야 원래 보던 자리로 간다. 돌아갈 화면과 **그 화면의 어느 자리**는 다른 값이다.
+   */
+  private returnMenu?: LobbyMenu;
 
   constructor() { super("shop"); }
 
-  init(data?: { storefront?: ProductStorefront; returnScene?: string }): void {
+  init(data?: { storefront?: ProductStorefront; returnScene?: string; returnMenu?: LobbyMenu }): void {
     this.storefront = data?.storefront ?? "shop";
     this.stage = shopStagePresentation(this.storefront);
     this.returnScene = data?.returnScene ?? "lobby";
-    this.selectedCategory = SHOP_TABS[0].id;
+    // 진입 데이터의 이름은 `returnMenu`이므로 판 이름만 떼어 같은 검증을 지난다.
+    this.returnMenu = normalizeLobbyEntry({ menu: data?.returnMenu });
+    this.selectedCategory = this.stage.tabs[0]?.id ?? "";
     consumeSceneEntry(this);
   }
 
@@ -113,12 +127,14 @@ export class ShopScene extends Phaser.Scene {
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.5).setDepth(-19);
     bindCurrencyGuide({ scene: this, popups: this.popups });
     this.topBar = new TopBar(this, 40, {
+      // 어느 재화를 세울지는 자리가 정한다 — 전리품 상점은 값으로 쓰는 증표 둘만 세운다.
+      currencies: this.storefront === "loot" ? "loot" : "default",
       onSettings: () => startScene(this, "settings", { returnScene: this.returnScene }),
       onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency),
     });
     this.add.text(54, 170, t(this.stage.titleKey), textStyle({ role: "display", size: 54 })).setOrigin(0, 0);
     // 목록 컨테이너는 비동기 생성되므로 공용 돌아가기를 그보다 높은 고정 계층에 둔다.
-    addBackButton(this, () => startScene(this, this.returnScene)).setDepth(1000);
+    addBackButton(this, () => startScene(this, this.returnScene, this.returnMenu ? LOBBY_RETURN[this.returnMenu] : undefined)).setDepth(1000);
 
     this.createStage();
     this.createBoard();
@@ -128,7 +144,8 @@ export class ShopScene extends Phaser.Scene {
     this.playEntrance();
     this.publishControls([]);
     // 점원 자산은 별도 표시 데이터에서 고르고 공용 Puppet과 관절 배치 규칙을 그대로 거친다.
-    void this.createMerchant();
+    // **묶음을 못 읽어도 말은 선다** — 실패를 삼키면 점원 쪽 문이 영영 닫혀 첫 마디가 사라진다.
+    void this.createMerchant().catch(() => this.openMerchantGate());
     void this.refresh();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.removeScrollInput();
@@ -185,6 +202,27 @@ export class ShopScene extends Phaser.Scene {
     this.tweens.add({ targets: this.tabRow, alpha: 1, duration: grid.duration, delay: grid.delay });
     // 전시대가 아직 올라오는 중이면 말부터 서지 않는다. 점원 쪽 문과 둘 다 열려야 첫 마디가 뜬다.
     this.time.delayedCall(SHOP_ENTRANCE.dialogue.delay, () => { this.entranceSettled = true; this.tryFirstLine(); });
+    /*
+     * **점원을 기다리는 데에는 한계가 있다.**
+     *
+     * 첫 마디의 문 둘 중 하나는 점원 묶음이 여는데, 그 묶음은 내려받기라 느릴 수도 아예 오지
+     * 못할 수도 있다(ZIP 실패·오프라인). 그때 문이 영영 닫혀 있으면 첫 마디가 통째로
+     * 사라져 **눌러야만 말이 나오는 화면**이 된다 — 실제로 「로딩이 길면 첫 대사가 안 뜬다」로
+     * 읽혔다. 전시대가 다 올라온 뒤로 이만큼 지나면 점원 없이도 말이 선다.
+     */
+    this.time.delayedCall(SHOP_ENTRANCE.dialogue.delay + SHOP_ENTRANCE.dialogue.merchantWait, () => this.openMerchantGate());
+  }
+
+  /**
+   * 점원 쪽 문을 연다.
+   *
+   * 묶음이 도착했을 때와 기다림이 한계에 닿았을 때가 같은 자리로 모인다 — 두 곳에서 따로
+   * 열면 한쪽만 고쳐도 다른 쪽이 옛 규칙으로 남는다. 이미 열려 있으면 아무 일도 하지 않는다.
+   */
+  private openMerchantGate(): void {
+    if (this.merchantReady || !this.scene.isActive()) return;
+    this.merchantReady = true;
+    this.tryFirstLine();
   }
 
   /**
@@ -287,8 +325,7 @@ export class ShopScene extends Phaser.Scene {
      * 대사가 등장 연출이 끝나고 한참 뒤에야 떴다 — 플레이어는 그때 이미 목록을 보고 있어
      * 「대사가 안 뜬다」로 읽혔다. 띠는 왼쪽에서, 점원은 오른쪽에서 같은 순간에 들어온다.
      */
-    this.merchantReady = true;
-    this.tryFirstLine();
+    this.openMerchantGate();
   }
 
   /** 격자 한 계층만 자르는 고정 마스크를 만들어 판 머리글과 탭 입력을 침범하지 않게 한다. */
@@ -318,7 +355,7 @@ export class ShopScene extends Phaser.Scene {
   /** 현재 서버 상태로 두 줄 격자를 재조립하고 실제 높이에서 스크롤 한계를 계산한다. */
   private renderProducts(): void {
     this.content?.removeAll(true);
-    const visibleProducts = productsForShopCategory(this.products, this.selectedCategory, this.storefront);
+    const visibleProducts = productsForShopTab(this.products, this.selectedCategory, this.storefront);
     // 선반을 먼저 깔고 그 위에 칸을 올린다 — 순서가 뒤집히면 선반이 칸을 가로질러 지나간다.
     const rows = Math.ceil(visibleProducts.length / SHOP_CARD.columns);
     for (let row = 0; row < rows; row += 1) this.addShelf(row);
@@ -417,7 +454,7 @@ export class ShopScene extends Phaser.Scene {
   private createTabs(): void {
     this.tabRow?.destroy();
     this.tabRow = this.add.container(0, 0).setDepth(9);
-    SHOP_TABS.forEach((tab, index) => {
+    this.stage.tabs.forEach((tab, index) => {
       const { x, y } = shopTabSpot(index);
       addCategoryTab(this, this.tabRow, {
         x, y, width: SHOP_TAB_ROW.width, height: SHOP_TAB_ROW.height,
@@ -428,12 +465,12 @@ export class ShopScene extends Phaser.Scene {
   }
 
   /** 런타임 탭 간격과 동일한 계산으로 테스트 입력 중심을 제공한다. */
-  private tabPoints(): Record<ShopCategory, { x: number; y: number }> {
-    return Object.fromEntries(SHOP_TABS.map((tab, index) => [tab.id, shopTabSpot(index)])) as Record<ShopCategory, { x: number; y: number }>;
+  private tabPoints(): Record<string, { x: number; y: number }> {
+    return Object.fromEntries(this.stage.tabs.map((tab, index) => [tab.id, shopTabSpot(index)]));
   }
 
   /** 탭을 바꾸면 이전 스크롤을 버리고 해당 분류의 첫 상품부터 다시 보여 준다. */
-  private selectCategory(category: ShopCategory): void {
+  private selectCategory(category: string): void {
     if (category === this.selectedCategory) return;
     this.selectedCategory = category;
     if (this.content) this.content.y = 0;

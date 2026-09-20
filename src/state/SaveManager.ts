@@ -3,7 +3,7 @@ import { STAGES } from "../data/stages";
 import { BANNERS } from "../data/banners";
 import { BREAKTHROUGH_CAP } from "../core/relicProgression";
 import type { RelicProgress } from "../core/types";
-import { createDefaultSession, createEmptyInteractionProgress, createInitialPlayerResearchProgress, type SaveData, type Session } from "./session";
+import { createDefaultSession, createEmptyInteractionProgress, createInitialPlayerResearchProgress, type RaidState, type SaveData, type Session } from "./session";
 import { PROFILE_MODIFIERS } from "../data/profileModifiers";
 import { assertValidRuneInstance, type RuneInstance } from "../core/runes";
 import { normalizeSettings } from "../core/settings";
@@ -12,6 +12,8 @@ import { createIdleExcavationState, EXCAVATION_CURRENCIES, RETROACTIVE_EXCAVATIO
 import { createArchaeologyState } from "../core/strataDig";
 import { findItem } from "../data/items";
 import { EXPEDITION_AUGMENT_IDS, EXPEDITION_REWARD_IDS } from "../data/expedition";
+import { CAKE_OPERATION_TIERS } from "../data/cakeOperation";
+import { BOUNTY, BOUNTY_TIERS } from "../data/bounty";
 import { validateExpeditionMap } from "../core/expeditionMap";
 import type { ExpeditionRunState } from "./session";
 import { staminaMaxForResearchLevel } from "../core/stamina";
@@ -35,7 +37,7 @@ function migrateV12Rune(definitionId: string): RuneInstance {
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 35;
+export const CURRENT_SAVE_VERSION = 39;
 
 /**
  * 과거 적 허스크의 ID를 플레이어블 렐릭 ID로 옮기는 **저장 버전 마이그레이션 전용** 표다.
@@ -247,6 +249,8 @@ export class SaveManager {
       relicFragments: { ...state.relicFragments },
       runeInventory: state.runeInventory.map(cloneRune),
       dailyContent: { ...state.dailyContent, completedIds: [...state.dailyContent.completedIds], claimedRewardIds: [...state.dailyContent.claimedRewardIds] },
+      // 깬 등급 목록도 저장 뒤 호출자가 바꾸지 못하도록 복사한다.
+      bounty: { ...state.bounty, clearedTierIds: [...state.bounty.clearedTierIds] },
       // 임무 진행 객체와 수령 배열도 호출자가 저장 후 바꾸지 못하도록 복사한다.
       missions: { ...state.missions, progress: { ...state.missions.progress }, claimedIds: [...state.missions.claimedIds], researchPoints: { ...state.missions.researchPoints }, claimedResearchStageIds: [...state.missions.claimedResearchStageIds] },
       // 구매 제한도 지급과 같은 저장 단위에 포함해 재실행으로 제한이 풀리지 않게 한다.
@@ -254,6 +258,9 @@ export class SaveManager {
       // 광고 검증 토큰은 제외하고 UTC 일자·횟수·멱등 ID만 독립 복사한다.
       dailyAdRewards: { ...state.dailyAdRewards, claimsBySlot: { ...state.dailyAdRewards.claimsBySlot }, requestIds: [...state.dailyAdRewards.requestIds] },
       expedition: { ...state.expedition, lastParty: [...state.expedition.lastParty], run: state.expedition.run ? cloneExpeditionRun(state.expedition.run) : null },
+      // 레이드는 Set도 중첩 런도 없어 배열 한 줄만 복사하면 된다.
+      raid: { ...state.raid, claimedStageIds: [...state.raid.claimedStageIds] },
+      cakeOperation: { ...state.cakeOperation },
     };
     this.validate(data);
     return data;
@@ -301,6 +308,14 @@ export class SaveManager {
       completedSiteIds: Array.isArray(savedArchaeology?.completedSiteIds) ? savedArchaeology.completedSiteIds : archaeologyDefaults.completedSiteIds,
       // v35 이전에는 카메라 선택을 저장하지 않았다. 픽셀 좌표 대신 안정적인 유적 ID만 추가한다.
       lastSelectedSiteId: typeof savedArchaeology?.lastSelectedSiteId === "string" ? savedArchaeology.lastSelectedSiteId : null,
+      /*
+       * 재사용 대기를 몰랐던 저장은 **아무 자리도 잠기지 않은 채** 시작한다 — 없던 제한을
+       * 소급해 걸면 돌아온 사람이 이유 없이 여섯 시간을 기다린다. 값은 유적 ID → ISO 시각이라
+       * 문자열이 아닌 항목은 조용히 버린다(손상된 저장이 화면의 시계를 흔들지 않게 한다).
+       */
+      siteCooldowns: savedArchaeology?.siteCooldowns && typeof savedArchaeology.siteCooldowns === "object"
+        ? Object.fromEntries(Object.entries(savedArchaeology.siteCooldowns).filter(([, until]) => typeof until === "string"))
+        : {},
     };
     const savedExcavation = Number(legacy.saveVersion) >= 18 && legacy.idleExcavation && typeof legacy.idleExcavation === "object"
       ? legacy.idleExcavation as Partial<SaveData["idleExcavation"]> : undefined;
@@ -338,12 +353,23 @@ export class SaveManager {
     // 중복 합산을 막고, 구조 분해로 구 키가 현재 저장 모델에 남지 않게 한다.
     const { weeds: _legacyWeeds, ...walletWithoutLegacyCurrency } = savedWallet ?? {};
     const legacyCheesecake = typeof _legacyWeeds === "number" ? _legacyWeeds : 0;
-    const wallet = { ...walletWithoutLegacyCurrency, dnaFragments: savedWallet?.dnaFragments ?? 0, cheesecake: savedWallet?.cheesecake ?? legacyCheesecake, rawStone: savedWallet?.rawStone ?? 0, gems: savedWallet?.gems ?? 0, gold: savedWallet?.gold ?? 0, stamina: Math.min(savedWallet?.stamina ?? 0, staminaMaxForResearchLevel(playerResearch.level)) };
+    // v0.150에서 전리품 증표 둘이 지갑으로 옮겨 왔다. 예전 저장은 0에서 시작하되,
+    // **재료 칸에 쌓아 둔 토벌 증표는 그대로 이월한다** — 이미 레이드를 돌아 받아 둔 몫이라
+    // 0으로 밀면 그 사람의 기여가 사라진다.
+    const legacySigils = legacyItemQuantity(legacy, "raid-sigil");
+    const wallet = { ...walletWithoutLegacyCurrency, dnaFragments: savedWallet?.dnaFragments ?? 0, cheesecake: savedWallet?.cheesecake ?? legacyCheesecake, rawStone: savedWallet?.rawStone ?? 0, gems: savedWallet?.gems ?? 0, gold: savedWallet?.gold ?? 0, raidSigil: savedWallet?.raidSigil ?? legacySigils, salvageRecord: savedWallet?.salvageRecord ?? 0, stamina: Math.min(savedWallet?.stamina ?? 0, staminaMaxForResearchLevel(playerResearch.level)) };
     // 구 저장은 로컬 시각을 신뢰하지 않고 첫 서버 요청에서 기준점을 세운다.
     const staminaUpdatedAt = typeof legacy.staminaUpdatedAt === "string" && Number.isFinite(Date.parse(legacy.staminaUpdatedAt)) ? legacy.staminaUpdatedAt : "";
     // 일일 입장 횟수 도입 전 저장은 같은 UTC 키에서 0회로 시작하되 이후 재실행에는 저장값을 유지한다.
     const savedDaily = legacy.dailyContent as Partial<SaveData["dailyContent"]> | undefined;
     const dailyContent = { date: savedDaily?.date ?? "", restorationEntries: savedDaily?.restorationEntries ?? 0, completedIds: savedDaily?.completedIds ?? [], claimedRewardIds: savedDaily?.claimedRewardIds ?? [] };
+    // 물량형 던전 도입 전 저장은 아무것도 이기지 않은 상태로 시작한다 — 첫 단계는 늘 열려 있다.
+    const savedCake = legacy.cakeOperation as Partial<SaveData["cakeOperation"]> | undefined;
+    const cakeClearedIndex = Number.isInteger(savedCake?.clearedIndex) ? Number(savedCake?.clearedIndex) : -1;
+    const cakeOperation = { clearedIndex: Math.min(Math.max(-1, cakeClearedIndex), CAKE_OPERATION_TIERS.length - 1) };
+    // 현상수배 도입(v38) 전 저장은 깬 등급이 없으므로 1급만 열린 채로 시작한다.
+    const savedBounty = legacy.bounty as Partial<SaveData["bounty"]> | undefined;
+    const bounty = { date: savedBounty?.date ?? "", entries: savedBounty?.entries ?? 0, clearedTierIds: savedBounty?.clearedTierIds ?? [] };
     // 임무 도입 전 저장은 기간 키가 비어 있어 다음 서버 접근에서 현재 UTC 기간으로 정규화된다.
     const savedMissions = legacy.missions as Partial<SaveData["missions"]> | undefined;
     // 구버전 저장은 이미 완료된 임무를 다시 연구도로 환산하지 않고 0에서 안전하게 시작한다.
@@ -361,6 +387,18 @@ export class SaveManager {
     const rawLastParty = Array.isArray(savedExpedition?.lastParty) ? savedExpedition.lastParty : [];
     const lastParty = rawLastParty.filter((id, index) => ownedIds.includes(id) && rawLastParty.indexOf(id) === index).slice(0, 3);
     const expedition = { weekKey: savedExpedition?.weekKey ?? "", playsThisWeek: savedExpedition?.playsThisWeek ?? 0, bestScore: savedExpedition?.bestScore ?? 0, allTimeBestScore: savedExpedition?.allTimeBestScore ?? savedExpedition?.bestScore ?? 0, lastParty, run: normalizeExpeditionRun(savedExpedition?.run, ownedIds) };
+    // **레이드 도입 전 저장은 빈 시즌으로 이관한다.** 모양만 맞추면 되는 이유는 시즌 키가 비면
+    // 첫 조회가 서버 주차로 정규화하며 내 몫을 0에서 시작하기 때문이다 — 예전 저장에 있을 수
+    // 없는 값이라 되살릴 것이 없다.
+    const savedRaid = legacy.raid as Partial<RaidState> | undefined;
+    const raid: RaidState = {
+      seasonKey: typeof savedRaid?.seasonKey === "string" ? savedRaid.seasonKey : "",
+      myDamage: Number.isInteger(savedRaid?.myDamage) && (savedRaid?.myDamage ?? 0) >= 0 ? savedRaid!.myDamage! : 0,
+      attemptsUsed: Number.isInteger(savedRaid?.attemptsUsed) && (savedRaid?.attemptsUsed ?? 0) >= 0 ? savedRaid!.attemptsUsed! : 0,
+      attemptsDate: typeof savedRaid?.attemptsDate === "string" ? savedRaid.attemptsDate : "",
+      claimedStageIds: Array.isArray(savedRaid?.claimedStageIds) ? savedRaid.claimedStageIds.filter((id): id is string => typeof id === "string") : [],
+      defeatRewardClaimed: savedRaid?.defeatRewardClaimed === true,
+    };
     // 교류 도입 전 저장에는 서버 파견이 없으므로 빈 슬롯으로 명시 이관한다.
     const interaction = Number(legacy.saveVersion) >= 30 && legacy.interaction && typeof legacy.interaction === "object" ? structuredClone(legacy.interaction) : createEmptyInteractionProgress();
     // **없어진 도시로 나가 있던 파견은 버린다.** 도시 사다리가 바뀌면 그 id를 가리키던 슬롯이
@@ -423,12 +461,15 @@ export class SaveManager {
       .filter(([, count]) => (count as number) > 0));
     // 반환 전 폐기 필드를 구조 분해해 현재 저장 JSON에 다시 섞이지 않게 한다.
     // v20 이전에는 중첩 가방이 없었다. 지갑과 룬은 기존 단일 기준에 남겨 빈 스택만 보충한다.
-    const itemInventory = Array.isArray(legacy.itemInventory) ? legacy.itemInventory : [];
+    // 재료 칸에 있던 토벌 증표는 위에서 지갑으로 옮겼으므로 여기서 걷어 낸다 — 남겨 두면
+    // 같은 증표가 가방과 지갑 두 곳에 서고, 검증이 "재화는 가방에 없다"로 저장을 되돌린다.
+    const itemInventory = (Array.isArray(legacy.itemInventory) ? legacy.itemInventory : [])
+      .filter((stack: { itemId?: unknown }) => stack?.itemId !== "raid-sigil");
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
-    if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition } as unknown as SaveData;
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, CURRENT_SAVE_VERSION];
+    if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid } as unknown as SaveData;
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
-    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition } as unknown as SaveData;
+    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid } as unknown as SaveData;
   }
 
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
@@ -469,6 +510,7 @@ export class SaveManager {
     if (data.selectedStageId !== null && !stageIds.has(data.selectedStageId)) fail("스테이지 ID가 올바르지 않습니다.");
     if (!Array.isArray(data.clearedStageIds) || data.clearedStageIds.some((id) => !stageIds.has(id))) fail("클리어 진행이 올바르지 않습니다.");
     if (!data.wallet || !Number.isFinite(data.wallet.fossil) || data.wallet.fossil < 0 || !Number.isFinite(data.wallet.amber) || data.wallet.amber < 0 || !Number.isInteger(data.wallet.dnaFragments) || data.wallet.dnaFragments < 0 || !Number.isInteger(data.wallet.cheesecake) || data.wallet.cheesecake < 0) fail("재화가 올바르지 않습니다.");
+    if (!Number.isInteger(data.wallet.raidSigil) || data.wallet.raidSigil < 0 || !Number.isInteger(data.wallet.salvageRecord) || data.wallet.salvageRecord < 0) fail("전리품 증표가 올바르지 않습니다.");
     if (!data.gachaPityByGroup || [...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].some((id) => !Number.isInteger(data.gachaPityByGroup[id]?.pullsSinceSsr) || data.gachaPityByGroup[id].pullsSinceSsr < 0 || typeof data.gachaPityByGroup[id].pickupGuaranteed !== "boolean")) fail("배너 그룹 천장 정보가 올바르지 않습니다.");
     if (!data.relicProgress || typeof data.relicProgress !== "object") fail("성장 정보가 없습니다.");
     // 보유 목록과 성장 레코드는 항상 정확히 같은 렐릭 집합이어야 한다.
@@ -490,12 +532,20 @@ export class SaveManager {
     const equipped = Object.values(data.relicProgress).flatMap(({ heartGemSlots }) => heartGemSlots.filter((id): id is string => id !== null));
     if (equipped.some((id) => !runeIds.includes(id)) || new Set(equipped).size !== equipped.length) fail("룬 장착 소유권 또는 중복이 올바르지 않습니다.");
     if (!data.dailyContent || typeof data.dailyContent.date !== "string" || !Number.isInteger(data.dailyContent.restorationEntries) || data.dailyContent.restorationEntries < 0 || data.dailyContent.restorationEntries > 3 || !Array.isArray(data.dailyContent.completedIds) || !Array.isArray(data.dailyContent.claimedRewardIds)) fail("일일 콘텐츠 정보가 올바르지 않습니다.");
+    if (!data.bounty || typeof data.bounty.date !== "string" || !Number.isInteger(data.bounty.entries) || data.bounty.entries < 0 || data.bounty.entries > BOUNTY.maxEntriesPerUtcDay
+      || !Array.isArray(data.bounty.clearedTierIds) || data.bounty.clearedTierIds.some((id) => typeof id !== "string" || !BOUNTY_TIERS.some((tier) => tier.id === id))
+      || new Set(data.bounty.clearedTierIds).size !== data.bounty.clearedTierIds.length) fail("현상수배 진행 정보가 올바르지 않습니다.");
     if (!data.missions || typeof data.missions.dailyKey !== "string" || typeof data.missions.weeklyKey !== "string" || !data.missions.progress || typeof data.missions.progress !== "object" || Object.values(data.missions.progress).some((value) => !Number.isInteger(value) || value < 0) || !Array.isArray(data.missions.claimedIds) || new Set(data.missions.claimedIds).size !== data.missions.claimedIds.length || !data.missions.researchPoints || [data.missions.researchPoints.daily, data.missions.researchPoints.weekly].some((value) => !Number.isInteger(value) || value < 0 || value > 120) || !Array.isArray(data.missions.claimedResearchStageIds) || data.missions.claimedResearchStageIds.some((id) => typeof id !== "string") || new Set(data.missions.claimedResearchStageIds).size !== data.missions.claimedResearchStageIds.length) fail("임무 진행 정보가 올바르지 않습니다.");
     if (!data.productPurchases || typeof data.productPurchases !== "object" || Object.values(data.productPurchases).some((value) => typeof value.periodKey !== "string" || !Number.isInteger(value.count) || value.count < 0)) fail("상품 구매 제한 정보가 올바르지 않습니다.");
     const adLimits = Object.fromEntries(AD_REWARD_SLOTS.map(({ id, dailyLimitUtc }) => [id, dailyLimitUtc]));
     // 삭제/변조된 슬롯과 정적 UTC 제한을 넘긴 저장은 서버 지급 이력으로 신뢰하지 않는다.
     if (!data.dailyAdRewards || typeof data.dailyAdRewards.date !== "string" || !data.dailyAdRewards.claimsBySlot || Object.entries(data.dailyAdRewards.claimsBySlot).some(([id, count]) => !(id in adLimits) || !Number.isInteger(count) || count < 0 || count > adLimits[id]) || !Array.isArray(data.dailyAdRewards.requestIds) || data.dailyAdRewards.requestIds.some((id) => typeof id !== "string" || id.length === 0) || new Set(data.dailyAdRewards.requestIds).size !== data.dailyAdRewards.requestIds.length) fail("일일 광고 수령 정보가 올바르지 않습니다.");
     if (!data.expedition || typeof data.expedition.weekKey !== "string" || !Number.isInteger(data.expedition.playsThisWeek) || data.expedition.playsThisWeek < 0 || !Number.isInteger(data.expedition.bestScore) || data.expedition.bestScore < 0 || !Number.isInteger(data.expedition.allTimeBestScore) || data.expedition.allTimeBestScore < 0 || !Array.isArray(data.expedition.lastParty) || data.expedition.lastParty.length > 3 || new Set(data.expedition.lastParty).size !== data.expedition.lastParty.length || data.expedition.lastParty.some((id) => !data.ownedRelicIds.includes(id)) || (data.expedition.run !== null && normalizeExpeditionRun(data.expedition.run, data.ownedRelicIds) === null)) fail("원정 진행 정보가 올바르지 않습니다.");
+    // 레이드는 내 몫과 수령 기록만 저장하므로 검사도 그 둘의 모양과 부호뿐이다.
+    if (!data.raid || typeof data.raid.seasonKey !== "string" || typeof data.raid.attemptsDate !== "string" || !Number.isInteger(data.raid.myDamage) || data.raid.myDamage < 0 || !Number.isInteger(data.raid.attemptsUsed) || data.raid.attemptsUsed < 0 || !Array.isArray(data.raid.claimedStageIds) || data.raid.claimedStageIds.some((id) => typeof id !== "string" || id.length === 0) || new Set(data.raid.claimedStageIds).size !== data.raid.claimedStageIds.length || typeof data.raid.defeatRewardClaimed !== "boolean") fail("레이드 진행 정보가 올바르지 않습니다.");
+    // 표에 없는 단계까지 이긴 것으로 적힌 저장은 소탕으로 그만큼을 바로 털 수 있어 거절한다.
+    if (!data.cakeOperation || !Number.isInteger(data.cakeOperation.clearedIndex)
+      || data.cakeOperation.clearedIndex < -1 || data.cakeOperation.clearedIndex >= CAKE_OPERATION_TIERS.length) fail("치즈케이크 대작전 진행 정보가 올바르지 않습니다.");
   }
 
   private toSession(data: SaveData): Session {
@@ -523,10 +573,13 @@ export class SaveManager {
       runeInventory: data.runeInventory.map(cloneRune),
       gachaPityByGroup: Object.fromEntries(Object.entries(data.gachaPityByGroup).map(([id, pity]) => [id, { ...pity }])),
       dailyContent: { ...data.dailyContent, completedIds: [...data.dailyContent.completedIds], claimedRewardIds: [...data.dailyContent.claimedRewardIds] },
+      bounty: { ...data.bounty, clearedTierIds: [...data.bounty.clearedTierIds] },
       missions: { ...data.missions, progress: { ...data.missions.progress }, claimedIds: [...data.missions.claimedIds], researchPoints: { ...data.missions.researchPoints }, claimedResearchStageIds: [...data.missions.claimedResearchStageIds] },
       productPurchases: Object.fromEntries(Object.entries(data.productPurchases).map(([id, value]) => [id, { ...value }])),
       dailyAdRewards: { ...data.dailyAdRewards, claimsBySlot: { ...data.dailyAdRewards.claimsBySlot }, requestIds: [...data.dailyAdRewards.requestIds] },
       expedition: { ...data.expedition, lastParty: [...data.expedition.lastParty], run: data.expedition.run ? cloneExpeditionRun(data.expedition.run) : null },
+      raid: { ...data.raid, claimedStageIds: [...data.raid.claimedStageIds] },
+      cakeOperation: { ...data.cakeOperation },
     };
   }
 }
@@ -537,4 +590,16 @@ export const saveManager = new SaveManager();
 /** 부트 복구 실패 시 호출자가 명시적으로 기본 상태를 선택할 수 있게 한다. */
 export function defaultSessionAfterReset(): Session {
   return createDefaultSession();
+}
+
+/**
+ * 구 저장의 **재료 칸**에 쌓여 있던 수량을 읽는다.
+ *
+ * 재료였던 것이 지갑으로 옮겨 갈 때만 쓴다 — 0으로 밀면 이미 그 콘텐츠를 돌아 받아 둔 몫이
+ * 사라지므로, 옮기는 김에 그대로 이월한다.
+ */
+function legacyItemQuantity(legacy: { itemInventory?: unknown }, itemId: string): number {
+  if (!Array.isArray(legacy.itemInventory)) return 0;
+  const stack = legacy.itemInventory.find((entry: { itemId?: unknown }) => entry?.itemId === itemId) as { quantity?: unknown } | undefined;
+  return Number.isInteger(stack?.quantity) && (stack!.quantity as number) > 0 ? stack!.quantity as number : 0;
 }

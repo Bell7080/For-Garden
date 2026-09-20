@@ -24,6 +24,15 @@ export interface Wallet {
    * 말하지 못한다. 아직 가공되지 않은 돌이라는 뜻이 곧 특성 연구(가공)의 그림이다.
    */
   rawStone: number;
+  /**
+   * 전리품 상점의 두 증표 — **토벌**(레이드)과 **인양**(원정).
+   *
+   * 둘을 하나로 합치지 않는 이유는 두 콘텐츠의 순환 주기와 기대 수급이 다르기 때문이다.
+   * 반대로 셋 이상으로 쪼개지도 않았다 — 탭마다 지갑이 갈리면 한 상점 안에서 "이 탭은
+   * 얼마나 모였더라"를 탭 수만큼 다시 읽어야 한다.
+   */
+  raidSigil: number;
+  salvageRecord: number;
 }
 
 /** 배너 비용으로 쓸 수 있는 재화만 허용하고 보상 재료는 제외한다. */
@@ -42,8 +51,16 @@ export interface Banner {
   /** 교체되어도 천장과 픽업 확정을 함께 이월하는 운영 정책 단위다. */
   pityGroupId: string;
   name: string;
-  /** 배너 대표 그림에 쓰며 pickupRelicIds에도 반드시 포함되는 렐릭이다. */
+  /** 픽업 표식과 결과 판정의 기준이며 pickupRelicIds에도 반드시 포함되는 렐릭이다. */
   featuredRelicId: string;
+  /**
+   * 그 배너가 화면에 세우는 **모집 원화**.
+   *
+   * 픽업 렐릭의 전신 Puppet을 가운데 세우던 때는 배너 하나가 개체 하나만 보여 줄 수 있었고,
+   * 셋이 함께 서는 모집 원화를 쓸 방법이 없었다. **배너마다 다른 그림**이어야 넘길 때
+   * 무엇이 바뀌었는지 그림이 먼저 말하므로, 화면이 아니라 배너가 이 값을 갖는다.
+   */
+  artKey: string;
   currency: Currency;
   costOne: number;
   costTen: number;

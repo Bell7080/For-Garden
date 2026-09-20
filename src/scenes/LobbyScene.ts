@@ -21,6 +21,7 @@ import { PopupLayer } from "../ui/PopupLayer";
 import { IdleExcavationPopup } from "../ui/IdleExcavationPopup";
 import { TradePopup } from "../ui/TradePopup";
 import { BACK_SLOT, IconButton } from "../ui/IconButton";
+import { POPUP_SIDE_SLOT } from "../ui/popupGeometry";
 import { UI_ICON } from "../ui/icons";
 import { InventoryPopup } from "../ui/InventoryPopup";
 import { bindNotificationDot } from "../ui/NotificationDot";
@@ -47,6 +48,8 @@ import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import type { CurrencyGuideAction } from "../data/currencyGuide";
 import { powerSavingPolicy } from "../core/settings";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
+import { consumeSceneEntry } from "./sceneEntry";
+import { normalizeLobbyEntry, type LobbyMenu } from "./lobbyEntry";
 
 /**
  * 로비에 선 애착 렐릭의 층.
@@ -121,8 +124,10 @@ export class LobbyScene extends Phaser.Scene {
   private sortieSdPairs: SortieSdPair[] = [];
   private sortieSdTimer?: Phaser.Time.TimerEvent;
   private sortieBackButton?: IconButton;
+  /** 출격판 밖 왼쪽 아래에 서는 전리품 상점 입구. 판과 함께 나고 함께 사라진다. */
+  private sortieShopButton?: Button;
   private idleExcavationPopup?: IdleExcavationPopup;
-  /** 무역은 로비 수명을 보존하는 패키지 레이어다. 교류의 교환소와는 다른 화면이다. */
+  /** 무역은 로비 수명을 보존하는 패키지 레이어다. */
   private tradePopup?: TradePopup;
   private tradeBackButton?: IconButton;
   /** 발굴은 화면 크기의 작업판이므로 팝업 X 대신 로비 좌하단의 공용 아이콘 양식을 쓴다. */
@@ -138,8 +143,22 @@ export class LobbyScene extends Phaser.Scene {
   /** 공개 플레이어 정보창은 닫힐 때 참조까지 비워 다음 입력이 새 입력면 한 장만 만든다. */
   private playerProfilePopup?: PlayerProfilePopup;
 
+  /** 돌아온 사람이 다시 열어야 하는 판. 값은 `create`가 다 세운 뒤에 읽는다. */
+  private returnMenu?: LobbyMenu;
+
   constructor() {
     super("lobby");
+  }
+
+  /**
+   * 돌아온 자리를 받아 두고 **즉시 비운다**.
+   *
+   * 비우지 않으면 Phaser가 지난 진입의 값을 남겨(`consumeSceneEntry` 참고) 로비를 새로
+   * 열 때마다 출격판이 저절로 뜬다.
+   */
+  init(data?: unknown): void {
+    this.returnMenu = normalizeLobbyEntry(data);
+    consumeSceneEntry(this);
   }
 
   create(): void {
@@ -237,6 +256,12 @@ export class LobbyScene extends Phaser.Scene {
       void this.showFavorite().catch((error) => console.error("로비 애착 Puppet 갱신 실패", error));
     });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, unsubscribeSkin);
+
+    // 고른 콘텐츠를 보고 돌아온 사람은 판이 닫힌 로비가 아니라 **고르던 자리**에 선다.
+    // 로비가 다 선 뒤에 여는 이유는 판이 상단 줄·애착 렐릭 위에 얹히는 쪽지이기 때문이다.
+    if (this.returnMenu === "sortie") this.openSortieMenu();
+    else if (this.returnMenu === "duel") this.openPvpMenu();
+
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
@@ -309,8 +334,6 @@ export class LobbyScene extends Phaser.Scene {
   /** 안내 프리팹은 이 콜백만 요청하므로 지갑 변경 없이 구현된 씬·로비 팝업으로만 이동한다. */
   private handleCurrencyAction(action: CurrencyGuideAction): void {
     if (action.kind === "scene" && action.target === "lab") startScene(this, "lab");
-    // 교류 표본 교환은 교류 씬 안의 교환소가 소유하고, 재화끼리 바꾸는 일은 로비의 무역이 맡는다.
-    if (action.kind === "scene" && action.target === "interaction") startScene(this, "interaction", { openExchange: true });
     if (action.kind === "popup" && action.target === "trade") this.openTrade();
   }
 
@@ -376,17 +399,19 @@ export class LobbyScene extends Phaser.Scene {
         {
           x: -204, y: -124, width: 392, height: 200, label: t("lobby.sortie.cake"), labelSize: 38, status: t("lobby.sortie.cake.status"), split: "left",
           artKey: "content-cake-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
-          onClick: () => { close(); startScene(this, "sortiePreview", { mode: "cake" }); },
+          onClick: () => { close(); startScene(this, "cakeOperation"); },
         },
         {
           x: 204, y: -124, width: 392, height: 200, label: t("lobby.sortie.bounty"), labelSize: 38, status: t("lobby.sortie.bounty.status"), split: "right",
           artKey: "content-bounty-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
-          onClick: () => { close(); startScene(this, "sortiePreview", { mode: "bounty" }); },
+          onClick: () => { close(); startScene(this, "bounty"); },
         },
         // 레이드는 일일 던전 아래에서 독립된 전체 폭 콘텐츠로 읽히게 한다.
         {
           y: 152, width: 800, height: 200, label: t("lobby.sortie.raid"), status: t("lobby.sortie.raid.status"),
-          onClick: () => { close(); startScene(this, "sortiePreview", { mode: "raid" }); },
+          artKey: "content-raid-entry",
+          // 레이드만 임시 소개 화면을 떠났다 — 실제 시즌 판이 그 자리를 맡는다.
+          onClick: () => { close(); startScene(this, "raid"); },
         },
         // 전용 프리팹이 Content2_001 원화, 주황 출격 위계, 확대 피드백을 한 입력면으로 유지한다.
         // 원정만 SD가 오른쪽에 서고 글자가 왼쪽 아래로 간다 — 20층 보스가 판 밖을 보는 자리다.
@@ -418,6 +443,17 @@ export class LobbyScene extends Phaser.Scene {
       });
       // 돌아가기는 판 안이 아니라 다른 팝업과 같은 화면 우하단 슬롯에 선다.
       this.sortieBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: close }).setDepth(SORTIE_SD_DEPTH + 1);
+      // 전리품 상점은 **판 밖**에 선다 — 판 안의 칸 다섯은 「어디로 나갈까」를 고르는 자리이고,
+      // 상점은 그 다섯이 떨군 증표를 쓰는 곁들임이라 같은 크기로 끼워 넣으면 여섯 번째
+      // 콘텐츠로 읽힌다. 자리는 뒤로가기와 마주 보는 줄(`POPUP_SIDE_SLOT`)이고, 생김새는
+      // 아이콘이 아니라 라벨 버튼이다 — 같은 모양이면 판 밖에 나가는 문이 둘로 보인다.
+      this.sortieShopButton = new Button(this, POPUP_SIDE_SLOT.x, POPUP_SIDE_SLOT.y, {
+        width: POPUP_SIDE_SLOT.width, height: POPUP_SIDE_SLOT.height,
+        label: t("lobby.sortie.shop"), fontSize: 30,
+        accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
+        onClick: () => { close(); this.scene.start("shop", { storefront: "loot", returnScene: "lobby", returnMenu: "sortie" }); },
+      });
+      this.sortieShopButton.setDepth(SORTIE_SD_DEPTH + 1);
       // 세워 둔 SD가 가끔 한 번씩 움직인다. 다섯 칸이 동시에 뛰면 무엇을 고르는 화면인지 흐려지므로
       // 한 번에 하나만, 그것도 드문드문 재생한다.
       this.sortieSdTimer = this.time.addEvent({ delay: SORTIE_MENU.motionDelay, loop: true, callback: () => {
@@ -477,6 +513,7 @@ export class LobbyScene extends Phaser.Scene {
     this.sortieSdPuppets.clear(); this.sortieSdPairs = [];
     this.sortieSdLayer?.destroy(true); this.sortieSdLayer = undefined;
     this.sortieBackButton?.destroy(); this.sortieBackButton = undefined;
+    this.sortieShopButton?.destroy(); this.sortieShopButton = undefined;
   }
 
   /** 주간 횟수·진행·최고점·빠른 가능 여부를 한 줄의 짧은 원정 상태로 합친다. */
@@ -530,9 +567,8 @@ export class LobbyScene extends Phaser.Scene {
   /**
    * 임무·상점·무역은 왼쪽 콘텐츠 레일에서 위계 순으로 읽히는 한 묶음이다.
    *
-   * **상점과 무역과 교환소는 서로 다른 셋이다.** 상점은 화석·호박석으로 보급품을 **사는** 곳,
-   * 무역은 남는 재화를 모자란 재화로 **바꾸는** 상시 창구, 교환소는 교류 파견에서만 나오는
-   * 표본을 바꾸는 교류 전용 창구다. 앞의 둘만 이 레일에 서고 교환소는 교류 씬 안에 있다.
+   * **상점과 무역은 서로 다른 둘이다.** 상점은 화석·호박석으로 보급품을 **사는** 곳이고,
+   * 무역은 남는 재화를 모자란 재화로 **바꾸는** 상시 창구다. 둘 다 이 레일에 선다.
    * 편의 기능(우편·친구·가방)은 오른쪽 레일로 보내 두 역할을 좌우로 나눈다.
    */
   private buildMissionEntry(): void {

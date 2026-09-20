@@ -13,6 +13,7 @@ export const LOBBY_EN = {
   "lobby.sortie.bounty": "Bounty",
   "lobby.sortie.bounty.status": "3 Tags · Gold",
   "lobby.sortie.raid": "Raid",
+  "lobby.sortie.shop": "Raid Shop",
   "lobby.sortie.raid.status": "Co-op Operation · In Preparation",
   "lobby.expedition.resume": "Resume · {plays} runs · Best {best}",
   "lobby.expedition.weekly": "Weekly {plays} runs · Best {best} · {quick}",

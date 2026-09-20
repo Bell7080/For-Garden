@@ -17,7 +17,7 @@ import { formatCurrency } from "../core/formatCurrency";
 import { PopupLayer } from "./PopupLayer";
 import { addSectionTitle } from "./SectionTitle";
 import { staminaTimerLine } from "./staminaDisplay";
-import { heroStack, POPUP_BEVEL_RATIO, staminaPopupLayout } from "./staminaPopupLayout";
+import { heroStack, POPUP_BEVEL_RATIO, STAMINA_SWAP, staminaPopupLayout } from "./staminaPopupLayout";
 import { COLOR, textStyle } from "./theme";
 
 /**
@@ -51,6 +51,12 @@ const CELL = { frameY: -84, frameSize: 108, gainY: 6, nameY: 48, detailY: 82, bu
 
 export class StaminaPopup {
   private readonly inventory = new InventoryManager(session);
+  /**
+   * 소비품 칸이 지금 가리키는 것.
+   *
+   * 창이 닫혀도 남는다 — 쎈 것을 쓰기로 한 사람은 다음에 열었을 때도 그것을 쓰려 한다.
+   */
+  private tonicIndex = 0;
   private pending = false;
   private message = "";
   private repaint: (() => void) | undefined;
@@ -155,6 +161,7 @@ export class StaminaPopup {
       cost: view.cost, onClick: () => { void this.run(source); },
     }).setEnabled(view.enabled && !full && !this.pending);
     cell.add(button);
+    if (source.kind === "consumable") this.paintSwap(cell, source);
     return cell;
   }
 
@@ -166,10 +173,11 @@ export class StaminaPopup {
     cost?: { icon: "currency-gems"; amount: number; affordable: boolean };
   } {
     if (source.kind === "consumable") {
-      const item = staminaConsumable(source.itemId);
-      const owned = session.itemInventory.find(({ itemId }) => itemId === source.itemId)?.quantity ?? 0;
+      const itemId = this.selectedTonic(source);
+      const item = staminaConsumable(itemId);
+      const owned = session.itemInventory.find((stack) => stack.itemId === itemId)?.quantity ?? 0;
       return {
-        texture: `item-${source.itemId}`,
+        texture: `item-${itemId}`,
         name: item?.definition.name ?? "",
         gain: item?.amount ?? 0,
         detail: "",
@@ -205,12 +213,36 @@ export class StaminaPopup {
     };
   }
 
+  /** 지금 고른 소비품. 목록이 줄어도 범위를 벗어나지 않게 항상 나머지로 돌린다. */
+  private selectedTonic(source: Extract<StaminaRechargeSource, { kind: "consumable" }>): string {
+    const count = source.itemIds.length;
+    return source.itemIds[((this.tonicIndex % count) + count) % count] ?? source.itemIds[0]!;
+  }
+
+  /**
+   * 액자 좌우의 갈아 끼우기.
+   *
+   * **가진 것이 없어도 고를 수 있다.** 0개인 것을 건너뛰면 무엇이 있는지조차 보이지 않아,
+   * 쎈 것을 사러 갈 이유가 화면에서 사라진다 — 고르는 것은 언제나 되고, 못 쓰는 것은
+   * 아래 버튼이 꺼져서 말한다.
+   */
+  private paintSwap(cell: Phaser.GameObjects.Container, source: Extract<StaminaRechargeSource, { kind: "consumable" }>): void {
+    if (source.itemIds.length < 2) return;
+    const step = (delta: number): void => { this.tonicIndex += delta; this.repaint?.(); };
+    for (const [x, label, delta] of [[-STAMINA_SWAP.x, "◀", -1], [STAMINA_SWAP.x, "▶", 1]] as const) {
+      cell.add(new Button(this.scene, x, CELL.frameY, {
+        width: STAMINA_SWAP.size, height: STAMINA_SWAP.size, label, fontSize: STAMINA_SWAP.fontSize,
+        onClick: () => step(delta),
+      }));
+    }
+  }
+
   /** 어느 칸을 눌러도 차감과 회복 확정은 서버가 한 처리 단위로 맡고, 화면은 그 결과만 다시 읽는다. */
   private async run(source: StaminaRechargeSource): Promise<void> {
     if (this.pending) return;
     this.pending = true; this.message = ""; this.repaint?.();
     try {
-      if (source.kind === "consumable") await this.inventory.useConsumable(this.api, source.itemId);
+      if (source.kind === "consumable") await this.inventory.useConsumable(this.api, this.selectedTonic(source));
       else if (source.kind === "currency") await this.inventory.rechargeStamina(this.api, source.id);
       else await this.watchAd(source.slotId);
     } catch {

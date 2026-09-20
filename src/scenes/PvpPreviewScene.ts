@@ -9,6 +9,7 @@ import { PVP_RETURN_SCENE } from "../ui/pvpLayout";
 import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
+import { LOBBY_RETURN } from "./lobbyEntry";
 
 /** 선택 씬이 전달하는 유일한 입력이며 전투·보상·저장 데이터는 의도적으로 받지 않는다. */
 export interface PvpPreviewData { mode: PvpModeId }
@@ -35,7 +36,7 @@ export class PvpPreviewScene extends Phaser.Scene {
     this.add.text(BASE_WIDTH / 2, 760, mode.scope, textStyle({ role: "emphasis", size: 34, color: COLOR.ink, align: "center" })).setOrigin(0.5);
 
     // 상세 화면의 유일한 이탈 입력은 PvP 선택 화면으로 되돌아가는 공용 뒤로가기다.
-    addBackButton(this, () => startScene(this, PVP_RETURN_SCENE.preview));
+    addBackButton(this, () => startScene(this, PVP_RETURN_SCENE.preview, LOBBY_RETURN.duel));
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);

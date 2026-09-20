@@ -23,6 +23,8 @@ export const COMMON_EN = {
   "role.assassin": "Assassin",
   "role.support": "Support",
   "currency.rawStone": "Raw Stone",
+  "currency.raidSigil": "Subjugation Sigil",
+  "currency.salvageRecord": "Salvage Record",
   "currency.gold": "Gold",
   "currency.gems": "Gem",
   "currency.fossil": "Fossil",

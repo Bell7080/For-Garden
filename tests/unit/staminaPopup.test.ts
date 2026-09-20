@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { staminaTimerLine } from "../../src/ui/staminaDisplay";
-import { heroStack, insidePopupBody, staminaPopupLayout } from "../../src/ui/staminaPopupLayout";
+import { heroStack, insidePopupBody, STAMINA_SWAP, staminaPopupLayout } from "../../src/ui/staminaPopupLayout";
 import { STAMINA_RECHARGE_SOURCES, staminaAdSlot, staminaConsumable, staminaCurrencyRecharge } from "../../src/data/staminaRecharge";
 import { STAMINA_REGEN_INTERVAL_MS } from "../../src/core/stamina";
 
@@ -26,9 +26,17 @@ describe("스테미나 창의 순수 규칙", () => {
     expect(STAMINA_RECHARGE_SOURCES.map(({ kind }) => kind)).toEqual(["consumable", "currency", "ad"]);
     for (const source of STAMINA_RECHARGE_SOURCES) {
       if (source.kind === "consumable") {
-        const item = staminaConsumable(source.itemId);
-        expect(item, source.itemId).toBeDefined();
-        expect(item!.amount).toBeGreaterThan(0);
+        // 한 칸이 여러 소비품을 맡으므로 **전부** 실제 회복 효과를 가져야 한다 — 하나라도
+        // 비면 좌우로 넘기다 빈 칸이 뜨고, 고른 사람은 무엇이 잘못됐는지 알 수 없다.
+        expect(source.itemIds.length).toBeGreaterThan(0);
+        for (const itemId of source.itemIds) {
+          const item = staminaConsumable(itemId);
+          expect(item, itemId).toBeDefined();
+          expect(item!.amount).toBeGreaterThan(0);
+        }
+        // 순서는 기본이 먼저다 — 회복량이 작은 것부터 서야 좌우가 세기 순으로 읽힌다.
+        const amounts = source.itemIds.map((itemId) => staminaConsumable(itemId)!.amount);
+        expect([...amounts].sort((a, b) => a - b)).toEqual(amounts);
       } else if (source.kind === "currency") {
         // 서버가 차감할 값은 화면이 아니라 이 표가 소유한다.
         expect(staminaCurrencyRecharge(source.id)).toBe(source);
@@ -91,5 +99,21 @@ describe("스테미나 창의 자리", () => {
     expect(span(withoutTimer, layout.frameSize, 58)).toBeCloseTo(0);
     // 시간 줄이 사라지면 남은 둘은 오히려 아래로 내려와 가운데를 지킨다.
     expect(withoutTimer.frameY).toBeGreaterThan(withTimer.frameY);
+  });
+});
+
+describe("소비품 갈아 끼우기", () => {
+  const layout = staminaPopupLayout(3);
+
+  it("는 좌우 버튼이 칸 밖으로 나가지 않는다", () => {
+    // 92로 잡았던 때는 바깥 끝이 칸 반폭(114.7)을 0.3px 넘었다.
+    const outer = STAMINA_SWAP.x + STAMINA_SWAP.size / 2;
+    expect(outer).toBeLessThan(layout.cell.width / 2);
+  });
+
+  it("는 좌우 버튼이 액자를 덮지 않는다", () => {
+    // 갈아 끼우는 것이 그 그림이라 액자 옆에 붙되, 겹치면 무엇이 바뀌는지 가린다.
+    const inner = STAMINA_SWAP.x - STAMINA_SWAP.size / 2;
+    expect(inner).toBeGreaterThan(108 / 2);
   });
 });

@@ -21,6 +21,7 @@ export const SYSTEM_EN = {
   "battle.header.stage": "{id} · {name} · Enemies {enemies}",
   "battle.header.enemy": "LV.{level}{bonus} · Breakthrough {grade}",
   "battle.header.expeditionBoss": "Expedition Floor {floor} · Undying Observation Boss",
+  "battle.header.cake": "Cheesecake Operation · {tier} · x{multiplier}",
   "battle.header.expedition": "Expedition Floor {floor} · {node}",
   "battle.node.normal": "Normal Battle",
   "battle.node.elite": "Elite Battle",

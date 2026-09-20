@@ -2,13 +2,14 @@ import { describe, expect, it, vi } from "vitest";
 import { FakeServer } from "../../src/api/FakeServer";
 import { breakthroughFragmentCost, BREAKTHROUGH_STEPS, RELIC_LEVEL_CAP } from "../../src/core/relicProgression";
 import { GameApiError } from "../../src/api/contracts";
-import { createInitialPlayerResearchProgress, type Session } from "../../src/state/session";
+import { createEmptyRaidState, createInitialPlayerResearchProgress, type Session } from "../../src/state/session";
 import { createRuneInstance, enhanceRune as applyRuneEnhancement, runeEnhancementIncrease, type RuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { createDefaultSettings } from "../../src/core/settings";
 import { WALLET_CAPS } from "../../src/data/economy";
 import { staminaCurrencyRecharge } from "../../src/data/staminaRecharge";
 import { staminaMaxForPlayer } from "../../src/core/stamina";
 import { createArchaeologyState } from "../../src/core/strataDig";
+import { STRATA_SITE_COOLDOWN_MS } from "../../src/data/strataLayers";
 
 /** API 테스트에서 같은 옵션 구성을 재현하는 보유 룬을 만든다. */
 function makeRune(instanceId = "rune-1"): RuneInstance {
@@ -39,11 +40,12 @@ function makeSession(fossil = 1000): Session {
     bookmarked: new Set<string>(),
     gachaPityByGroup: { "standard-fossil": { pullsSinceSsr: 0, pickupGuaranteed: false }, "limited-pickup": { pullsSinceSsr: 0, pickupGuaranteed: false } },
     staminaUpdatedAt: "",
-    wallet: { fossil, amber: 10, gems: 0, gold: 0, stamina: 0, dnaFragments: 0, cheesecake: 0 , rawStone: 0},
+    wallet: { fossil, amber: 10, gems: 0, gold: 0, stamina: 0, dnaFragments: 0, cheesecake: 0 , rawStone: 0, raidSigil: 0, salvageRecord: 0},
     relicFragments: {}, relicProgress: Object.fromEntries(["anky", "rex", "dodo"].map((id) => [id, { level: id === "anky" ? 2 : 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] }])),
     itemInventory: [],
     runeInventory: [],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
+    bounty: { date: "", entries: 0, clearedTierIds: [] },
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [], researchPoints: { daily: 0, weekly: 0 }, claimedResearchStageIds: [] },
     // 상품 테스트가 아닌 세션도 최신 저장 계약의 빈 구매 이력을 명시한다.
     productPurchases: {},
@@ -51,8 +53,78 @@ function makeSession(fossil = 1000): Session {
     dailyAdRewards: { date: "", claimsBySlot: {}, requestIds: [] },
     // API 테스트의 원정 저장 계약은 빈 상태로 명시한다.
     expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, allTimeBestScore: 0, lastParty: [], run: null },
+    raid: createEmptyRaidState(),
+    cakeOperation: { clearedIndex: -1 },
   };
 }
+
+describe("FakeServer 고고학", () => {
+  /** 한 판을 남김없이 파서 닫는다. 어느 지층이든 횟수를 다 쓰면 판이 닫힌다. */
+  async function digUntilClosed(server: FakeServer): Promise<void> {
+    for (let guard = 0; guard < 64; guard += 1) {
+      const state = await server.archaeologyState();
+      const open = state.board?.tiles.find((tile) => !tile.revealed);
+      if (!state.board || open === undefined) return;
+      await server.digStrataTile({ tileIndex: open.index, requestId: `dig-${guard}` });
+    }
+    throw new Error("판이 닫히지 않았습니다.");
+  }
+
+  it("는 한 번 판 유적을 여섯 시간 동안 다시 열지 않는다", async () => {
+    let now = new Date("2026-03-01T00:00:00Z");
+    const server = new FakeServer(makeSession(), { latencyMs: 0, now: () => now });
+    await server.startStrataRun({ siteId: "garden-gate", requestId: "run-1" });
+    await digUntilClosed(server);
+
+    const closed = await server.archaeologyState();
+    expect(closed.board).toBeNull();
+    // 대기는 해금과 다른 축이다 — 열려 있지만 지금은 못 들어가는 자리다.
+    const gate = closed.sites.find(({ siteId }) => siteId === "garden-gate")!;
+    expect(gate.unlocked).toBe(true);
+    expect(gate.cooldownUntil).toBe(new Date(now.getTime() + STRATA_SITE_COOLDOWN_MS).toISOString());
+    await expect(server.startStrataRun({ siteId: "garden-gate", requestId: "run-2" })).rejects.toBeInstanceOf(GameApiError);
+
+    // 여섯 시간이 지나면 저절로 풀리고, 치른 횟수도 그 사이에 차 있다.
+    now = new Date(now.getTime() + STRATA_SITE_COOLDOWN_MS);
+    const later = await server.archaeologyState();
+    expect(later.sites.find(({ siteId }) => siteId === "garden-gate")!.cooldownUntil).toBeNull();
+    await expect(server.startStrataRun({ siteId: "garden-gate", requestId: "run-3" })).resolves.toBeTruthy();
+  });
+
+  it("의 다른 유적은 함께 잠기지 않아 다섯 번이 여러 자리로 흩어진다", async () => {
+    const now = new Date("2026-03-01T00:00:00Z");
+    const session = makeSession();
+    // 그물망의 다음 갈래는 연구 레벨이 열어 준다. 선행은 첫 판을 끝내며 함께 채워진다.
+    session.playerResearch.level = 20;
+    const server = new FakeServer(session, { latencyMs: 0, now: () => now });
+    await server.startStrataRun({ siteId: "garden-gate", requestId: "run-1" });
+    await digUntilClosed(server);
+    const open = await server.startStrataRun({ siteId: "rust-canal", requestId: "run-2" });
+    expect(open.board).not.toBeNull();
+    expect(open.sites.find(({ siteId }) => siteId === "rust-canal")!.cooldownUntil).toBeNull();
+  });
+
+  it("의 탐사 종료는 아무것도 더 주지 않고 판만 닫는다", async () => {
+    const now = new Date("2026-03-01T00:00:00Z");
+    const session = makeSession();
+    const server = new FakeServer(session, { latencyMs: 0, now: () => now });
+    await server.startStrataRun({ siteId: "garden-gate", requestId: "run-1" });
+    const first = await server.archaeologyState();
+    const tile = first.board!.tiles[0];
+    const dug = await server.digStrataTile({ tileIndex: tile.index, requestId: "dig-1" });
+    const walletAfterDig = { ...dug.wallet };
+
+    const ended = await server.abandonStrataRun({ requestId: "finish-1" });
+    expect(ended.board).toBeNull();
+    // 캔 것은 칸을 팔 때 이미 지갑에 들어갔다 — 여기서 한 번 더 주면 같은 보상이 두 번 들어간다.
+    expect(session.wallet).toEqual(walletAfterDig);
+    // 끝내는 방식이 달라도 그 자리에는 같은 대기가 걸린다.
+    expect(ended.sites.find(({ siteId }) => siteId === "garden-gate")!.cooldownUntil)
+      .toBe(new Date(now.getTime() + STRATA_SITE_COOLDOWN_MS).toISOString());
+    // 진행 중인 판이 없으면 종료도 거절한다.
+    await expect(server.abandonStrataRun({ requestId: "finish-2" })).rejects.toBeInstanceOf(GameApiError);
+  });
+});
 
 describe("FakeServer", () => {
   /** 실제 피해량 없이 각 렐릭의 공용 공속 쿨다운을 만족하는 기본 공격 입력이다. */
@@ -320,6 +392,64 @@ describe("FakeServer", () => {
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-20T23:59:00Z") });
     await expect(server.interactInLobby("anky")).resolves.toMatchObject({ bondXpEarned: 5 });
     await expect(server.interactInLobby("anky")).resolves.toMatchObject({ bondXpEarned: 0 });
+  });
+
+  it("현상수배는 입장 한 번에만 스테미나와 일일 횟수를 쓰고 같은 영수증을 두 번 깎지 않는다", async () => {
+    const state = makeSession();
+    state.wallet.stamina = 100;
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-19T04:00:00Z") });
+
+    const admission = await server.enterBounty({ tierId: "bounty-1", requestId: "run-1" });
+    expect(admission).toMatchObject({ tierId: "bounty-1", staminaSpent: 15, entriesRemaining: 2 });
+    expect(state.wallet.stamina).toBe(85);
+    // 재전송은 최초 영수증을 그대로 돌려줘 스테미나가 두 번 나가지 않는다.
+    await expect(server.enterBounty({ tierId: "bounty-1", requestId: "run-1" })).resolves.toMatchObject({ staminaSpent: 15 });
+    expect(state.wallet.stamina).toBe(85);
+  });
+
+  it("현상수배는 잠긴 등급과 하루 입장 한도를 서버가 막는다", async () => {
+    const state = makeSession();
+    state.wallet.stamina = 100;
+    let now = new Date("2026-09-19T04:00:00Z");
+    const server = new FakeServer(state, { latencyMs: 0, now: () => now });
+
+    // 해금은 화면 표시가 아니라 서버가 지키는 값이다 — 직접 진입도 같은 경계에서 막힌다.
+    await expect(server.enterBounty({ tierId: "bounty-2", requestId: "skip" })).rejects.toMatchObject({ code: "BOUNTY_TIER_LOCKED" });
+
+    for (let index = 0; index < 3; index += 1) await server.enterBounty({ tierId: "bounty-1", requestId: `run-${index}` });
+    await expect(server.enterBounty({ tierId: "bounty-1", requestId: "run-4" })).rejects.toMatchObject({ code: "BOUNTY_DAILY_LIMIT" });
+    now = new Date("2026-09-20T00:00:00Z");
+    await expect(server.enterBounty({ tierId: "bounty-1", requestId: "run-5" })).resolves.toMatchObject({ entriesRemaining: 2 });
+  });
+
+  it("현상수배는 세 라운드를 다 이긴 판에만 골드를 주고 다음 등급을 연다", async () => {
+    const state = makeSession();
+    state.wallet.stamina = 100;
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-19T04:00:00Z") });
+
+    await server.enterBounty({ tierId: "bounty-1", requestId: "lost" });
+    const lost = await server.completeBounty({ tierId: "bounty-1", requestId: "lost", victory: false, clearedRounds: 2 });
+    expect(lost).toMatchObject({ victory: false, goldEarned: 0, clearedTierIds: [] });
+    expect(state.wallet.gold).toBe(0);
+
+    await server.enterBounty({ tierId: "bounty-1", requestId: "won" });
+    const won = await server.completeBounty({ tierId: "bounty-1", requestId: "won", victory: true, clearedRounds: 3 });
+    expect(won).toMatchObject({ victory: true, goldEarned: 3_000, firstClear: true, clearedTierIds: ["bounty-1"] });
+    expect(state.wallet.gold).toBe(3_000);
+    // 영수증은 한 판에 한 번만 소비된다 — 같은 입장으로 두 번 보상받지 못한다.
+    await expect(server.completeBounty({ tierId: "bounty-1", requestId: "won", victory: true, clearedRounds: 3 })).rejects.toMatchObject({ code: "BOUNTY_ADMISSION_NOT_FOUND" });
+    // 입장하지 않은 등급의 정산도 같은 경계에서 막힌다.
+    await expect(server.completeBounty({ tierId: "bounty-2", requestId: "ghost", victory: true, clearedRounds: 3 })).rejects.toMatchObject({ code: "BOUNTY_ADMISSION_NOT_FOUND" });
+  });
+
+  it("현상수배는 세 라운드를 다 치르지 않은 승리 보고를 보상으로 세지 않는다", async () => {
+    const state = makeSession();
+    state.wallet.stamina = 100;
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-19T04:00:00Z") });
+    await server.enterBounty({ tierId: "bounty-1", requestId: "short" });
+    const settled = await server.completeBounty({ tierId: "bounty-1", requestId: "short", victory: true, clearedRounds: 1 });
+    expect(settled).toMatchObject({ victory: false, goldEarned: 0 });
+    expect(state.wallet.gold).toBe(0);
   });
 
   it("일일 복원은 UTC 하루 3회이고 다음 UTC 날짜에만 횟수를 초기화한다", async () => {

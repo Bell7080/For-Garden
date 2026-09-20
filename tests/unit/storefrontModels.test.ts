@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import type { ProductDto, ProductStorefront } from "../../src/api/contracts";
-import { productsForShopCategory, shopModel } from "../../src/ui/shopModel";
+import { productsForShopTab, shopModel } from "../../src/ui/shopModel";
 
 /** 필터 검증에 필요하지 않은 표시 필드는 한 팩토리에서 채워 storefront 의도만 드러낸다. */
 function product(id: string, storefront: ProductStorefront): ProductDto {
@@ -33,6 +33,6 @@ describe("storefront product models", () => {
 
   it("탭별 상품 필터는 다른 storefront와 다른 분류를 동시에 제외한다", () => {
     const enhancement = { ...product("shop-enhancement", "shop"), category: "enhancement" as const };
-    expect(productsForShopCategory([...mixed, enhancement], "enhancement").map(({ id }) => id)).toEqual(["shop-enhancement"]);
+    expect(productsForShopTab([...mixed, enhancement], "enhancement").map(({ id }) => id)).toEqual(["shop-enhancement"]);
   });
 });

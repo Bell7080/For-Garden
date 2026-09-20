@@ -8,7 +8,7 @@
  * 다른 것이 나오고, 「저 구역이 특별해 보인다」는 판단이 아무것도 가리키지 않게 된다.
  */
 
-import { findStrataLayer, STRATA_ART_COUNT, STRATA_CHARGE, type StrataLayerDefinition, type StrataRewardKind, type StrataZoneTone } from "../data/strataLayers";
+import { findStrataLayer, STRATA_ART_COUNT, STRATA_CHARGE, STRATA_SITE_COOLDOWN_MS, type StrataLayerDefinition, type StrataRewardKind, type StrataZoneTone } from "../data/strataLayers";
 import { timeAccrualWindow } from "./timeAccrual";
 import type { RuneTrait } from "./runeTraits";
 
@@ -215,6 +215,14 @@ export interface ArchaeologyState {
   /** 마지막으로 고른 유적 ID다. 지도 좌표가 아니라 의미 있는 선택만 저장해 카탈로그 이동에 견딘다. */
   lastSelectedSiteId: string | null;
   /**
+   * 한 번 판 유적이 다시 열리는 시각이다(유적 ID → ISO 문자열).
+   *
+   * **남은 시간이 아니라 열리는 시각을 적는다** — 남은 시간을 적으면 앱을 껐다 켤 때마다
+   * 누가 그 시간을 줄여 줄지 정해야 하고, 껐던 동안이 흐르지 않은 것으로 읽힌다.
+   * 지난 항목은 정리해도 되고 남아 있어도 되며, 판정은 언제나 지금 시각과의 비교다.
+   */
+  siteCooldowns: Record<string, string>;
+  /**
    * 재해석해 두고 아직 고르지 않은 특성 후보다.
    *
    * 서버가 들고 있는 이유는 **고르기 전에 앱이 꺼져도 원석이 사라지지 않게** 하기 위해서다 —
@@ -225,7 +233,7 @@ export interface ArchaeologyState {
 
 /** 새 계정의 고고학 상태다. 횟수는 가득 찬 채로 시작한다. */
 export function createArchaeologyState(): ArchaeologyState {
-  return { charges: STRATA_CHARGE.max, chargesUpdatedAt: null, board: null, unlockedSiteIds: ["garden-gate"], completedSiteIds: [], lastSelectedSiteId: null, pendingReroll: null };
+  return { charges: STRATA_CHARGE.max, chargesUpdatedAt: null, board: null, unlockedSiteIds: ["garden-gate"], completedSiteIds: [], lastSelectedSiteId: null, siteCooldowns: {}, pendingReroll: null };
 }
 
 /** 서버 시각까지 끝난 구간만 채운다. 시각이 역행하면 기준점을 뒤로 옮기지 않는다. */
@@ -244,4 +252,23 @@ export function settleStrataCharges(charges: number, updatedAt: string | null, n
 export function nextStrataChargeAt(charges: number, updatedAt: string): string | null {
   if (charges >= STRATA_CHARGE.max) return null;
   return new Date(Date.parse(updatedAt) + STRATA_CHARGE.intervalMs).toISOString();
+}
+
+/**
+ * 그 유적이 다시 열리는 시각이다. 이미 지났거나 판 적이 없으면 `null`이다.
+ *
+ * **손상된 값은 조용히 「열려 있음」으로 만들지 않는다** — 읽을 수 없는 시각은 대기가
+ * 통째로 사라지는 쪽이 아니라 지금 막 시작한 것으로 본다.
+ */
+export function strataSiteCooldownUntil(cooldowns: Readonly<Record<string, string>>, siteId: string, now: Date): string | null {
+  const raw = cooldowns[siteId];
+  if (raw === undefined) return null;
+  const until = Date.parse(raw);
+  if (!Number.isFinite(until)) return new Date(now.getTime() + STRATA_SITE_COOLDOWN_MS).toISOString();
+  return until > now.getTime() ? new Date(until).toISOString() : null;
+}
+
+/** 한 판을 끝낸 유적에 재사용 대기를 건다. 끝낸 방식(다 팜·중간 종료)과 무관하게 같은 시간이다. */
+export function beginStrataSiteCooldown(cooldowns: Readonly<Record<string, string>>, siteId: string, now: Date): Record<string, string> {
+  return { ...cooldowns, [siteId]: new Date(now.getTime() + STRATA_SITE_COOLDOWN_MS).toISOString() };
 }

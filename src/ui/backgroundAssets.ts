@@ -32,6 +32,22 @@ export const BACKGROUND = {
    */
   archaeologyShop: "background-archaeology-shop",
   /**
+   * 전리품 상점의 무대 — 증표를 받고 물건을 내어 주는 보급 창고다.
+   *
+   * 레이드 진입 화면(`sortieRaid`)을 무대에 그대로 깔던 때는 상점과 그 앞 화면이 같은
+   * 그림이라 어디로 들어온 것인지 배경이 말하지 못했다. 오비·프로티아의 자리를 가른 것과
+   * 같은 이유다.
+   */
+  lootShop: "background-loot-shop",
+  /**
+   * 연구소 모집판의 **배너 원화**.
+   *
+   * 배경이 아니라 그 배너가 무엇을 뽑는 판인지 말하는 그림이라, 어느 배너가 어느 원화를
+   * 쓰는지는 이 표가 아니라 **배너 데이터**(`Banner.artKey`)가 정한다. 여기 있는 것은
+   * 지금 배너 둘이 함께 쓰는 기본 한 장뿐이다.
+   */
+  recruitFossil: "background-recruit-fossil",
+  /**
    * 지층 탐사판의 **아래층** — 겉장을 부순 칸에 드러나는 맨 흙이다.
    *
    * 겉장 넉 장은 여기 키를 두지 않는다. 판이 들고 있는 번호가 곧 키라
@@ -60,9 +76,8 @@ export const BACKGROUND = {
    * 케이크 대작전·현상수배·레이드의 **전투 필드**다(ContentN_001field).
    *
    * 원정 필드(`expeditionField`)와 같은 자리·같은 세로 규격이고, 콘텐츠마다 다른 장소라 키를
-   * 따로 갖는다. **아직 어느 화면도 읽지 않는다** — 세 콘텐츠의 전투가 아직 없기 때문이다.
-   * 원화가 먼저 준비돼 미리 등록만 해 두었고, 전투를 붙일 때 `addSceneBackground`에 이 키를
-   * 넘기면 된다(경로·해제 규칙은 이미 이 표와 `backgroundResidency.ts`가 갖는다).
+   * 따로 갖는다. 어느 모드가 어느 필드에 서는지는 아래 `BATTLE_FIELD_BACKGROUND` 한 표가
+   * 갖고, 전투 씬은 모드로 그 표를 한 번 읽는다.
    */
   cakeField: "background-cake-field",
   bountyField: "background-bounty-field",
@@ -116,6 +131,8 @@ export const BACKGROUND_ASSETS = [
   // 같은 자리처럼 보여 무엇을 사는 곳인지 배경이 말하지 못했다.
   [BACKGROUND.shop, "sprites/background/background_013.webp"],
   [BACKGROUND.archaeologyShop, "sprites/background/background_015.webp"],
+  [BACKGROUND.lootShop, "sprites/background/background_016.webp"],
+  [BACKGROUND.recruitFossil, "sprites/background/background_017.webp"],
   [BACKGROUND.strataBase, "sprites/background/strata_base.webp"],
   // 겉장은 한 번 탐사할 때마다 그중 한 장이 뽑힌다. 키 이름은 `strataLayerTextureKey`가 짓는다.
   ["background-strata-layer-001", "sprites/background/strata_layer_001.webp"],
@@ -134,8 +151,7 @@ export const BACKGROUND_ASSETS = [
   [BACKGROUND.sortieCake, "sprites/content/Content3_001background.webp"],
   [BACKGROUND.sortieBounty, "sprites/content/Content4_001background.webp"],
   [BACKGROUND.sortieRaid, "sprites/content/Content5_001background.webp"],
-  // 세 콘텐츠의 전투 필드. 쓰는 화면이 생기기 전이지만 경로를 여기 두어야 그 화면이 키 하나만
-  // 넘기면 되고, 부트가 미리 읽지 않으므로 지금 메모리를 차지하지 않는다.
+  // 세 콘텐츠의 전투 필드. 부트가 미리 읽지 않으므로 그 전투에 들어갈 때만 메모리를 차지한다.
   [BACKGROUND.cakeField, "sprites/content/Content3_001field.webp"],
   [BACKGROUND.bountyField, "sprites/content/Content4_001field.webp"],
   [BACKGROUND.raidField, "sprites/content/Content5_001field.webp"],
@@ -157,3 +173,27 @@ export const BACKGROUND_ASSETS = [
  * 들어갈 때 읽는다.
  */
 export const BACKGROUND_BOOT_KEYS: readonly string[] = [BACKGROUND.lobby, BACKGROUND.cardBackdrop];
+
+/**
+ * 전투 모드가 서는 전장 원화.
+ *
+ * **씬이 모드로 분기하지 않는다.** 예전에는 `addSceneBackground` 호출 한 줄에 삼항 연산이
+ * 이어 붙어 있었고, 그래서 모드가 늘 때마다 그 줄이 길어지고 빠뜨린 모드는 조용히 기본
+ * 전장(`combat`)으로 떨어졌다 — 현상수배는 필드 원화가 준비돼 있는데도 **진입 화면 배경**
+ * (`sortieBounty`)을 전장에 깔고 있었고, 케이크 대작전은 스토리와 같은 6번 전장에 섰다.
+ * 콘텐츠마다 다른 장소에서 싸운다는 것이 이 표의 뜻이므로, 새 모드는 여기 한 줄을 더한다.
+ */
+export const BATTLE_FIELD_BACKGROUND = {
+  stage: BACKGROUND.combat,
+  // 원정은 층과 보스가 같은 장소에서 이어지므로 한 원화를 나눠 쓴다.
+  expedition: BACKGROUND.expeditionField,
+  expeditionBoss: BACKGROUND.expeditionField,
+  cake: BACKGROUND.cakeField,
+  bounty: BACKGROUND.bountyField,
+  raid: BACKGROUND.raidField,
+} as const;
+
+/** 진입 데이터가 어떤 모드를 들고 와도 표에 있는 키 하나로 수렴시킨다. */
+export function battleFieldBackground(mode: keyof typeof BATTLE_FIELD_BACKGROUND | string): string {
+  return BATTLE_FIELD_BACKGROUND[mode as keyof typeof BATTLE_FIELD_BACKGROUND] ?? BACKGROUND.combat;
+}

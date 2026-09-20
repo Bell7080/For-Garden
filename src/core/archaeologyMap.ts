@@ -1,9 +1,15 @@
 import type { ArchaeologySiteDefinition } from "../data/archaeologySites";
 import { STRATA_LAYERS, STRATA_REWARD_DISPLAY, type StrataLayerDefinition, type StrataRewardDisplayGroup, type StrataZoneTone } from "../data/strataLayers";
 
-/** 같은 보상 그룹의 최고 유적 대비 기대 수량 비율을 1~5별로 나누는 유일한 표다. */
-export const ARCHAEOLOGY_STAR_RATIO_THRESHOLDS = [0, 0.2, 0.4, 0.6, 0.8] as const;
-/** 한 판에서 한 번이라도 나올 확률이 이 값보다 낮으면 별 대신 희귀 상태로 말한다. */
+/**
+ * 같은 보상 그룹의 최고 유적 대비 기대 수량 비율을 **다섯 칸 중 몇 칸**으로 나누는 유일한 표다.
+ *
+ * 예전에는 이 수가 별의 개수였다. 별 다섯 개는 세어야 알 수 있고 세 줄이 나란히 서면 열다섯
+ * 개가 반짝여 어느 보상이 센지보다 별이 먼저 읽혔다 — 지금은 같은 수가 다섯 칸짜리 게이지의
+ * 채움이라, 세지 않고 길이로 견준다.
+ */
+export const ARCHAEOLOGY_RATING_RATIO_THRESHOLDS = [0, 0.2, 0.4, 0.6, 0.8] as const;
+/** 한 판에서 한 번이라도 나올 확률이 이 값보다 낮으면 칸 대신 희귀 상태로 말한다. */
 export const ARCHAEOLOGY_VERY_RARE_CHANCE = 0.01;
 export type ArchaeologyPreviewReward = Extract<StrataRewardDisplayGroup, "rawStone" | "rune" | "gold">;
 
@@ -40,24 +46,30 @@ export function strataRewardExpectedAmount(layer: StrataLayerDefinition, group: 
   return perDig * Math.max(0, layer.digs);
 }
 
-export type ArchaeologyRewardRating = { readonly state: "unavailable" | "veryRare" | "stars"; readonly stars: 0 | 1 | 2 | 3 | 4 | 5 };
+/** 다섯 칸 게이지의 채움이다. `filled`는 `state`가 `rated`일 때만 뜻이 있다. */
+export type ArchaeologyRewardRating = { readonly state: "unavailable" | "veryRare" | "rated"; readonly filled: 0 | 1 | 2 | 3 | 4 | 5 };
 
-/** 같은 보상끼리 유적 전체 기대량을 비교하며, 0과 1% 미만은 억지로 별 하나를 주지 않는다. */
+/** 같은 보상끼리 유적 전체 기대량을 비교하며, 0과 1% 미만은 억지로 한 칸을 주지 않는다. */
 export function rewardExpectationRating(layer: StrataLayerDefinition, group: ArchaeologyPreviewReward, referenceLayers: readonly StrataLayerDefinition[] = STRATA_LAYERS): ArchaeologyRewardRating {
   const expected = strataRewardExpectedAmount(layer, group);
-  if (expected <= 0) return { state: "unavailable", stars: 0 };
+  if (expected <= 0) return { state: "unavailable", filled: 0 };
   const perRunChance = 1 - ((1 - strataRewardProbability(layer, group)) ** Math.max(0, layer.digs));
-  if (perRunChance < ARCHAEOLOGY_VERY_RARE_CHANCE) return { state: "veryRare", stars: 0 };
+  if (perRunChance < ARCHAEOLOGY_VERY_RARE_CHANCE) return { state: "veryRare", filled: 0 };
   const maximum = Math.max(...referenceLayers.map((candidate) => strataRewardExpectedAmount(candidate, group)), 0);
   const ratio = maximum > 0 ? expected / maximum : 0;
-  const stars = ARCHAEOLOGY_STAR_RATIO_THRESHOLDS.filter((threshold) => ratio > threshold).length as 1 | 2 | 3 | 4 | 5;
-  return { state: "stars", stars };
+  const filled = ARCHAEOLOGY_RATING_RATIO_THRESHOLDS.filter((threshold) => ratio > threshold).length as 1 | 2 | 3 | 4 | 5;
+  return { state: "rated", filled };
 }
 
-/** 레벨과 선행 완료를 모두 서버와 UI가 같은 방식으로 판정한다. */
-export function archaeologySiteAvailability(site: ArchaeologySiteDefinition, level: number, completedSiteIds: readonly string[]): { available: boolean; missingLevel: number; missingPrerequisiteIds: string[] } {
-  const missingPrerequisiteIds = site.prerequisiteSiteIds.filter((id) => !completedSiteIds.includes(id));
-  return { available: level >= site.minimumLevel && missingPrerequisiteIds.length === 0, missingLevel: Math.max(0, site.minimumLevel - level), missingPrerequisiteIds };
+/**
+ * 유적을 여는 조건은 **플레이어 레벨 하나뿐이다.**
+ *
+ * 앞 유적 완료를 함께 보던 때는 재사용 대기가 걸린 자리 하나가 그 뒤 전부를 여섯 시간
+ * 막았다 — 넓힌 그물망이 다시 외길이 된다. 지도의 줄기는 그림이고, 서버와 UI가 함께 읽는
+ * 판정은 이 한 줄이다.
+ */
+export function archaeologySiteAvailability(site: ArchaeologySiteDefinition, level: number): { available: boolean; missingLevel: number } {
+  return { available: level >= site.minimumLevel, missingLevel: Math.max(0, site.minimumLevel - level) };
 }
 
 export interface ArchaeologyCamera { x: number; y: number }
@@ -91,4 +103,34 @@ export function clampArchaeologyCamera(camera: ArchaeologyCamera, viewport: { wi
 /** 버튼과 동일한 누적 거리 기준으로 탭과 팬을 가른다. */
 export function isArchaeologyMapDrag(start: ArchaeologyCamera, end: ArchaeologyCamera, threshold: number): boolean {
   return Math.hypot(end.x - start.x, end.y - start.y) > threshold;
+}
+
+/**
+ * 지도 노드 한 자리의 상태.
+ *
+ * **다섯 가지를 한 낱말로 뭉치지 않는다** — 「못 들어간다」는 이유가 레벨 부족·재사용 대기·
+ * 횟수 부족으로 저마다 다르고, 플레이어가 지금 할 일도 그만큼 다르다(레벨을 올린다 ·
+ * 기다린다 · 다른 자리를 판다). 한 상태로 뭉쳐 두면 화면이 「탐사 불가」 한 마디만 말하게 된다.
+ */
+export type ArchaeologyNodeState = "active" | "available" | "cooling" | "completed" | "locked";
+
+/**
+ * 지금 그 노드가 어떤 자리인지 고른다.
+ *
+ * **진행 중인 판이 무엇보다 먼저다** — 그 자리는 이미 횟수를 치른 자리라 다른 어떤 표시도
+ * 그보다 앞설 수 없다. 대기는 완료보다 앞선다: 완료는 지난 일이고 대기는 지금 막는 것이다.
+ */
+export function archaeologyNodeState(input: {
+  unlocked: boolean;
+  completed: boolean;
+  /** 지금 재사용 대기 중인가. 남은 시간을 재는 일은 부른 쪽이 맡고 여기서는 켜짐/꺼짐만 읽는다. */
+  cooling: boolean;
+  activeSiteId?: string;
+  siteId: string;
+}): ArchaeologyNodeState {
+  if (input.activeSiteId === input.siteId) return "active";
+  if (!input.unlocked) return "locked";
+  if (input.cooling) return "cooling";
+  if (input.completed) return "completed";
+  return "available";
 }

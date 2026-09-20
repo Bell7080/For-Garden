@@ -35,6 +35,8 @@ import {
   PARUA_SD_METADATA,
   SHUTE_PORTRAIT_METADATA,
   SHUTE_SD_METADATA,
+  MORPHE_PORTRAIT_METADATA,
+  MORPHE_SD_METADATA,
   TERISA_PORTRAIT_METADATA,
   TERISA_SD_METADATA,
   METTE_PORTRAIT_METADATA,
@@ -55,6 +57,7 @@ import {
   TIA_SD_METADATA,
   SHOP_CLERK_PORTRAIT_METADATA,
   ARCHAEOLOGY_CLERK_PORTRAIT_METADATA,
+  LOOT_CLERK_PORTRAIT_METADATA,
   TORIKA_PORTRAIT_METADATA,
   TORIKA_SKIN_001_PORTRAIT_METADATA,
   TORIKA_SKIN_001_SD_METADATA,
@@ -178,6 +181,17 @@ export const ARCHAEOLOGY_CLERK_ASSET: PuppetAsset = {
   ...ARCHAEOLOGY_CLERK_PORTRAIT_METADATA,
 };
 
+/**
+ * 전리품 상점 점원의 전신.
+ *
+ * 오비·프로티아와 같은 이유로 `PORTRAIT_ASSETS`에 넣지 않는다 — 도감에 서지 않는 상점 전용
+ * 개체라 상점 표(`shopPresentation.ts`)가 직접 가리킨다.
+ */
+export const LOOT_CLERK_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_shop_loot.zip`,
+  ...LOOT_CLERK_PORTRAIT_METADATA,
+};
+
 /** 토리카 skin001 전신: 기본 외형과 독립 측정한 카드·로비·정보창 배치를 사용한다. */
 export const TORIKA_SKIN_001_ASSET: PuppetAsset = {
   url: `${base}puppets/char_001_skin001.zip`,
@@ -292,6 +306,12 @@ export const PARUA_ASSET: PuppetAsset = {
   ...PARUA_PORTRAIT_METADATA,
 };
 
+/** 22번 전신 일러스트: 모르페(디몰포돈). 요람 의자에 앉은 개체라 실루엣이 크다. */
+export const MORPHE_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_022.zip`,
+  ...MORPHE_PORTRAIT_METADATA,
+};
+
 /** 20번 기본 SD는 디안, `_black`은 쿠로, `_white`는 시로라는 이름 대응을 보존한다. */
 export const DIAN_SD_ASSET: PuppetAsset = { url: `${base}puppets/charSD_020.zip`, ...DIAN_SD_METADATA };
 export const KURO_SD_ASSET: PuppetAsset = { url: `${base}puppets/charSD_020_black.zip`, ...KURO_SD_METADATA };
@@ -357,6 +377,16 @@ export const EXPLORER_ASSET: PuppetAsset = {
 };
 
 /**
+ * **레이티아 거대겨울잠쥐의 임시 원화.** 전용 묶음(`enemy_005.zip` · `enemySD_005.zip`)이
+ * 아직 저장소에 없어, 그때까지 코마의 묶음을 빌려 세운다.
+ *
+ * 색 필터로 다른 개체인 척하지 않는다 — 원화 자체를 빌릴 뿐이고, 갈아 끼우는 자리는 이
+ * 두 상수의 `url`과 알파 경계 한 곳뿐이다. 전용 묶음이 오면 그 값만 실측해 고치고 데이터·
+ * 화면·전투는 손대지 않는다.
+ */
+export const RAITIA_PLACEHOLDER_ASSET: PuppetAsset = { ...EXPLORER_ASSET };
+
+/**
  * 렐릭 데이터가 참조하는 원화 레지스트리. 새 원화는 여기에 한 번 등록한 뒤 데이터 키로 연결한다.
  */
 const PORTRAIT_ASSETS = {
@@ -384,11 +414,13 @@ const PORTRAIT_ASSETS = {
   amo: AMO_ASSET,
   ripa: RIPA_ASSET,
   koma: EXPLORER_ASSET,
+  raitia: RAITIA_PLACEHOLDER_ASSET,
   pontos: PONTOS_ASSET,
   parua: PARUA_ASSET,
   dian: DIAN_ASSET,
   shute: SHUTE_ASSET,
   terisa: TERISA_ASSET,
+  morphe: MORPHE_ASSET,
   // 늑대는 전신 원화가 따로 없다. SD 자체가 온전한 한 마리라 정보창도 같은 묶음을 세운다.
   kuro: KURO_SD_ASSET,
   shiro: SHIRO_SD_ASSET,
@@ -430,6 +462,9 @@ export const EXPLORER_SD_ASSET: PuppetAsset = {
   imageHeight: 1254,
   content: { left: 290, top: 88, right: 1031, bottom: 1197 },
 };
+
+/** 레이티아 전투 SD의 임시 묶음. 전신과 같은 이유로 코마의 SD를 빌린다. */
+export const RAITIA_PLACEHOLDER_SD_ASSET: PuppetAsset = { ...EXPLORER_SD_ASSET };
 
 /** 폰토스 전투 SD. 정사각 원본에서 alpha > 16인 실제 실루엣만 바닥 배치에 사용한다. */
 export const PONTOS_SD_ASSET: PuppetAsset = {
@@ -545,6 +580,12 @@ export const DEINA_SD_ASSET: PuppetAsset = {
   ...DEINA_SD_METADATA,
 };
 
+/** 22번 SD: 모르페. */
+export const MORPHE_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/charSD_022.zip`,
+  ...MORPHE_SD_METADATA,
+};
+
 /** 19번 SD: 테리사. */
 export const TERISA_SD_ASSET: PuppetAsset = {
   url: `${base}puppets/charSD_019.zip`,
@@ -611,6 +652,7 @@ const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
   dian: DIAN_SD_ASSET,
   shute: SHUTE_SD_ASSET,
   terisa: TERISA_SD_ASSET,
+  morphe: MORPHE_SD_ASSET,
   kuro: KURO_SD_ASSET,
   shiro: SHIRO_SD_ASSET,
 };
@@ -626,6 +668,7 @@ export const ENEMY_SD_ASSETS_BY_ID: Readonly<Record<string, PuppetAsset>> = {
   [ENEMY_SD_ASSET_IDS[2]]: ENEMY_SD_ASSETS[1],
   [ENEMY_SD_ASSET_IDS[3]]: ENEMY_SD_ASSETS[2],
   [ENEMY_SD_ASSET_IDS[4]]: EXPLORER_SD_ASSET,
+  [ENEMY_SD_ASSET_IDS[5]]: RAITIA_PLACEHOLDER_SD_ASSET,
 };
 
 /** SD 스킨도 렐릭 ID 아래에만 등록해 다른 렐릭으로 폴백할 수 없게 한다. */

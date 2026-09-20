@@ -2,7 +2,7 @@ import { t, type TextKey } from "../i18n";
 import type { AcquisitionResult, GachaPityState, QuantityRewardKind, Wallet } from "../core/gacha";
 import type { RelicProgress, RelicSkinId, Stats } from "../core/types";
 import type { MissionPeriod } from "../core/missions";
-import type { PassBenefitDefinition, PremiumCategory, ProductAcquisition, ProductGrant, ProductRefresh, ProductStorefront, ShopCategory, ShopProductIconKey } from "../data/products";
+import type { PassBenefitDefinition, LootCategory, PremiumCategory, ProductAcquisition, ProductGrant, ProductRefresh, ProductStorefront, ShopCategory, ShopProductIconKey } from "../data/products";
 /** storefront와 상점 카테고리는 클라이언트·서버가 함께 쓰는 공용 계약으로 다시 공개한다. */
 export type { PremiumCategory, ProductStorefront, ShopCategory } from "../data/products";
 import type { DnaExchangeKind } from "../data/economy";
@@ -14,7 +14,7 @@ import type { StrataBoardView } from "../core/strataDig";
 import type { StrataRewardKind } from "../data/strataLayers";
 import type { ExcavationCurrency, IdleExcavationState } from "../core/idleExcavation";
 import type { AdReward } from "../data/adRewards";
-import type { ItemCategory, ItemUseEffect } from "../data/items";
+import type { ItemCategory, ItemUseEffect, WalletItemKey } from "../data/items";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import type { PlayerResearchProgress } from "../state/session";
 import type { AsyncArenaProfileApi } from "./asyncArenaContracts";
@@ -23,13 +23,6 @@ import type { InteractionDispatchSnapshot } from "../state/session";
 
 /** 도시 조회는 개방 판정과 같은 서버 기준 시각을 제공한다. */
 export interface InteractionCitiesResponse { cities: Array<InteractionCity & { unlocked: boolean }>; serverTime: string; }
-/** ProductDto로 위장하지 않는 교류 교환 전용 표시 행이다. */
-export interface InteractionExchangeOfferDto { id: string; name: string; requiredCityId: string; cost: { itemId: string; itemName: string; amount: number; owned: number }; grants: Array<{ kind: "currency"; currency: keyof Wallet; amount: number } | { kind: "item"; itemId: string; amount: number }>; remaining: number; exchangeLimit: number; unlocked: boolean; }
-export interface InteractionExchangeListResponse { offers: InteractionExchangeOfferDto[]; serverTime: string; }
-/** 멱등 ID와 수량 외에는 클라이언트가 가격이나 보상을 주장할 수 없다. */
-export interface ExchangeInteractionOfferRequest { offerId: string; quantity: number; requestId: string; }
-/** 차감·지급·최종 인벤토리와 지갑을 한 원자 영수증으로 반환한다. */
-export interface ExchangeInteractionOfferResponse { offerId: string; quantity: number; consumed: { itemId: string; amount: number }; granted: InteractionExchangeOfferDto["grants"]; remaining: number; items: InventoryItemDto[]; wallet: Wallet; }
 /** 클라이언트는 선택만 보내고 종료 시각·보상은 보낼 수 없다. */
 export interface StartInteractionDispatchRequest { cityId: string; party: string[]; }
 /**
@@ -225,6 +218,58 @@ export interface PlayerStateDto {
   runeInventory: RuneInventoryDto;
   /** 서버 UTC 날짜로 정규화된 광고 슬롯별 수령 횟수다. 멱등 ID는 공개하지 않는다. */
   dailyAdRewards: { date: string; claimsBySlot: Record<string, number> };
+  /**
+   * 광고 제거 멤버십이 지금 살아 있는가.
+   *
+   * 화면이 권리 ID나 만료 시각을 들고 판단하지 않는다 — 화면은 "쓸 수 있나"만 알면 되고,
+   * 기간 계산은 서버 시각을 가진 쪽에서 한 번만 한다. 클라이언트가 만료를 스스로 셈하면
+   * 기기 시계를 돌려 잠긴 배율을 여는 길이 생긴다.
+   */
+  adFreeMembership: boolean;
+  /** 치즈케이크 대작전에서 이긴 가장 높은 단계의 순번(0부터, 없으면 -1)이다. */
+  cakeOperation: { clearedIndex: number };
+}
+
+/**
+ * 물량형 던전 한 번의 요청. 출격과 소탕이 **같은 계약**을 쓴다.
+ *
+ * 둘이 다른 요청을 쓰면 같은 단계의 값이 두 곳에서 계산되고, 소탕만 규칙이 뒤처진다.
+ * 무엇이 다른지는 `sweep` 한 값뿐이며 그 차이는 "전투를 거치는가"에서 끝난다.
+ */
+export interface CakeOperationRunRequest {
+  tierId: string;
+  /** 1·2는 누구나, 3부터는 광고 제거 멤버십만 쓸 수 있다. */
+  multiplier: number;
+  requestId: string;
+}
+
+/** 입장 영수증. 스테미나는 여기서 한 번만 빠지고 결과 확정에서는 보상만 얹는다. */
+export interface CakeOperationEnterResponse extends PlayerStateDto {
+  tierId: string;
+  requestId: string;
+  multiplier: number;
+  staminaSpent: number;
+  refundPolicy: "no-refund-after-admission";
+}
+
+/** 전투 결과 확정. 패배도 명시해 승리 전용 보상이 새지 않게 한다. */
+export interface CakeOperationCompleteRequest { tierId: string; requestId: string; multiplier: number; victory: boolean; }
+export interface CakeOperationCompleteResponse extends PlayerStateDto {
+  tierId: string;
+  victory: boolean;
+  multiplier: number;
+  /** 이번 처리에서 실제로 늘어난 재화다. 화면이 다시 곱하지 않는다. */
+  granted: Partial<Record<keyof Wallet, number>>;
+  /** 이 판으로 새 단계가 열렸는가. */
+  unlockedNextTier: boolean;
+}
+
+/** 소탕. 스테미나 차감과 보상 지급이 전투 없이 한 처리로 끝난다. */
+export interface CakeOperationSweepResponse extends PlayerStateDto {
+  tierId: string;
+  multiplier: number;
+  staminaSpent: number;
+  granted: Partial<Record<keyof Wallet, number>>;
 }
 
 /** 공개 프로필 API가 확정한 업적 획득 목록과 사용자의 장착 선택이며 모두 ID로만 직렬화한다. */
@@ -357,7 +402,7 @@ export interface NotificationSignalsResponse { pendingFriendRequestCount: number
 export interface ClaimMissionRewardsResponse extends PlayerStateDto { claimedIds: string[]; claimedResearchStageIds: string[]; rewards: { missionCheesecake: number; researchCheesecake: number; cheesecake: number }; cheesecakeEarned: number; }
 
 /** 상품 목록은 정적 정의에 서버가 계산한 현재 구매 가능 횟수를 결합한다. */
-export interface ProductDto { id: string; storefront: ProductStorefront; category: ShopCategory; premiumCategory?: PremiumCategory; iconKey: ShopProductIconKey; name: string; description: string; acquisition: ProductAcquisition; grants: readonly ProductGrant[]; defaultQuantity: number; passBenefit?: PassBenefitDefinition; purchaseLimit: number; refresh: ProductRefresh; remaining: number; purchasable: boolean; disabledReason?: string; }
+export interface ProductDto { id: string; storefront: ProductStorefront; category: ShopCategory; lootCategory?: LootCategory; premiumCategory?: PremiumCategory; iconKey: ShopProductIconKey; name: string; description: string; acquisition: ProductAcquisition; grants: readonly ProductGrant[]; defaultQuantity: number; passBenefit?: PassBenefitDefinition; purchaseLimit: number; refresh: ProductRefresh; remaining: number; purchasable: boolean; disabledReason?: string; }
 /** 상품 조회 응답은 서버 시각 기준으로 노출 중인 상품만 담는다. */
 export interface ProductListResponse { products: ProductDto[]; serverTime: string; }
 /** 구매 요청은 영속 상품 ID와 사용자가 팝업에서 확정한 묶음 수량을 함께 보낸다. */
@@ -399,14 +444,26 @@ export interface ArchaeologyStateResponse {
   nextChargeAt: string | null;
   /** 진행 판의 공개 정보다. `digsMax`는 지층 정의에서 확정한 한 판의 총 굴착 횟수다. */
   board: StrataBoardView | null;
-  /** 서버가 현재 연구 레벨과 완료 이력으로 확정한 지도 상태다. */
-  sites: Array<{ siteId: string; unlocked: boolean; completed: boolean; missingLevel: number; missingPrerequisiteIds: string[] }>;
+  /**
+   * 서버가 현재 연구 레벨로 확정한 지도 상태다. **여는 조건은 레벨뿐이고** 선행 유적은 없다.
+   *
+   * `cooldownUntil`은 그 유적이 다시 열리는 시각이고, 지금 열려 있으면 `null`이다 — 남은
+   * 시간을 내려보내면 응답이 오는 동안 흐른 몫만큼 화면이 늦된 수를 센다.
+   */
+  sites: Array<{ siteId: string; unlocked: boolean; completed: boolean; missingLevel: number; cooldownUntil: string | null }>;
   serverTime: string;
 }
 /** 판을 새로 여는 요청이다. 클라이언트는 지층만 고르고 판 내용은 주장하지 못한다. */
 export interface StartStrataRunRequest { siteId?: string; layerId?: string; requestId: string; }
 /** 어느 칸을 팔지만 보낸다. 나온 것은 서버가 정한다. */
 export interface DigStrataTileRequest { tileIndex: number; requestId: string; }
+/**
+ * 남은 횟수를 버리고 판을 지금 닫는 요청이다.
+ *
+ * 무엇을 받을지는 이미 칸을 팔 때마다 확정되어 있으므로 이 요청은 **아무것도 지급하지
+ * 않는다** — 하는 일은 판을 치우고 그 유적에 재사용 대기를 거는 것뿐이다.
+ */
+export interface AbandonStrataRunRequest { requestId: string; }
 /** 이번 한 칸의 결과와 그 지급까지 한 영수증으로 확정한다. */
 export interface DigStrataTileResponse extends ArchaeologyStateResponse {
   tile: { index: number; kind: StrataRewardKind; amount: number };
@@ -447,9 +504,10 @@ export interface UpgradeRuneTraitRequest { runeInstanceId: string; itemId: strin
 export interface UpgradeRuneTraitResponse { rune: RuneInstance; items: InventoryItemDto[]; }
 
 /** UI가 서버 실패 원인을 문구로 바꿀 수 있게 고정한 오류 코드다. */
-export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPEDITION_RUN_NOT_FOUND" | "EXPEDITION_ALREADY_SETTLED" | "EXPEDITION_ALREADY_ACTIVE" | "EXPEDITION_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REQUIRED" | "AD_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REJECTED" | "EXPEDITION_REWARD_NOT_FOUND" | "EXPEDITION_REWARD_NOT_EARNED" | "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INVALID_PURCHASE_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "INVALID_RUNE_SALE" | "RUNE_EQUIPPED" | "RUNE_LOCKED" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_STOREFRONT_MISMATCH" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "ACQUISITION_FLOW_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE"
-  | "STRATA_NO_CHARGE" | "STRATA_RUN_ACTIVE" | "STRATA_RUN_NOT_FOUND" | "STRATA_SITE_LOCKED" | "STRATA_TILE_UNAVAILABLE"
-  | "RUNE_TRAIT_NOT_FOUND" | "RUNE_TRAIT_ITEM_INVALID" | "RUNE_TRAIT_MAX_GRADE" | "RUNE_TRAIT_REROLL_PENDING";
+export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPEDITION_RUN_NOT_FOUND" | "EXPEDITION_ALREADY_SETTLED" | "EXPEDITION_ALREADY_ACTIVE" | "EXPEDITION_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REQUIRED" | "AD_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REJECTED" | "RAID_DAILY_LIMIT" | "RAID_SEASON_DEFEATED" | "RAID_SCORE_REJECTED" | "RAID_REWARD_NOT_FOUND" | "RAID_REWARD_NOT_EARNED" | "EXPEDITION_REWARD_NOT_FOUND" | "EXPEDITION_REWARD_NOT_EARNED" | "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INVALID_PURCHASE_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "INVALID_RUNE_SALE" | "RUNE_EQUIPPED" | "RUNE_LOCKED" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "BOUNTY_TIER_NOT_FOUND" | "BOUNTY_TIER_LOCKED" | "BOUNTY_DAILY_LIMIT" | "BOUNTY_ADMISSION_NOT_FOUND" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_STOREFRONT_MISMATCH" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "ACQUISITION_FLOW_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE"
+  | "STRATA_NO_CHARGE" | "STRATA_RUN_ACTIVE" | "STRATA_RUN_NOT_FOUND" | "STRATA_SITE_LOCKED" | "STRATA_SITE_COOLING" | "STRATA_TILE_UNAVAILABLE"
+  | "RUNE_TRAIT_NOT_FOUND" | "RUNE_TRAIT_ITEM_INVALID" | "RUNE_TRAIT_MAX_GRADE" | "RUNE_TRAIT_REROLL_PENDING"
+  | "CAKE_TIER_NOT_FOUND" | "CAKE_TIER_LOCKED" | "CAKE_MULTIPLIER_LOCKED";
 
 /**
  * 급여 응답.
@@ -465,6 +523,21 @@ export interface CompleteStageResponse extends PlayerStateDto { stageId: string;
 /** 입장 영수증은 재시도에 그대로 반환되며 확정 뒤 클라이언트 로딩 실패는 자동 환불하지 않는다. */
 export interface EnterStageRequest { stageId: string; requestId: string; }
 export interface EnterStageResponse extends PlayerStateDto { stageId: string; requestId: string; staminaSpent: number; refundPolicy: "no-refund-after-admission"; }
+/**
+ * 현상수배 입장 영수증.
+ *
+ * 세 라운드가 **한 번의 입장**이라 스테미나와 일일 횟수는 여기서 한 번만 나간다. 라운드 사이에
+ * 나가더라도 환불하지 않는 것은 스테이지 입장과 같은 계약이다.
+ */
+export interface EnterBountyRequest { tierId: string; requestId: string; }
+export interface EnterBountyResponse extends PlayerStateDto { tierId: string; requestId: string; staminaSpent: number; entriesRemaining: number; refundPolicy: "no-refund-after-admission"; }
+/** 세 라운드의 결과를 한 번에 확정한다. 진 판도 보내 기록이 이긴 판만의 것이 되지 않게 한다. */
+export interface CompleteBountyRequest { tierId: string; requestId: string; victory: boolean; clearedRounds: number; }
+/** 골드 지급과 등급 해금을 한 처리로 확정하고 화면이 다시 계산하지 않게 결과만 돌려준다. */
+export interface CompleteBountyResponse extends PlayerStateDto { tierId: string; victory: boolean; clearedRounds: number; goldEarned: number; firstClear: boolean; clearedTierIds: string[]; }
+/** 등급 줄과 남은 입장 횟수를 서버 날짜 기준으로 조회한다. */
+export interface BountyStatusResponse { clearedTierIds: string[]; entriesRemaining: number; serverTime: string; }
+
 /** 로비 터치 결과는 중복 여부와 대사 UI가 표시할 유대 변화량을 돌려준다. */
 export interface LobbyInteractionResponse extends PlayerStateDto { relicId: string; bondXpEarned: number; bondLevelsGained: number; }
 /** 일일 입장 소비와 즉시 지급된 프로토타입 보상을 한 응답으로 확정한다. */
@@ -504,16 +577,54 @@ export interface ClaimExpeditionRewardResponse { weekKey: string; stageId: strin
  */
 export interface ExpeditionLeaderboardEntry { rank: number; playerId: string; displayName: string; score: number; achievedAt: string; isMe: boolean; favoriteRelicId?: string; }
 export interface ExpeditionLeaderboardResponse { weekKey: string; tieBreakPolicy: "earliest-achieved-at"; entries: ExpeditionLeaderboardEntry[]; }
+
+/**
+ * 레이드 — **함께 미는 보스전**의 서버 계약이다.
+ *
+ * 원정 순위표와 모양이 비슷해 보여도 말하는 것이 다르다. 원정은 "내 한 판이 몇 점인가"를
+ * 겨루므로 응답의 주어가 내 기록이고, 레이드는 **보스 한 마리의 남은 체력**이 주어다 —
+ * 그래서 시즌 응답이 먼저 들고 오는 것이 순위가 아니라 `remainingHp`다.
+ */
+export interface RaidContributionEntryDto { rank: number; playerId: string; displayName: string; damage: number; isMe: boolean; favoriteRelicId?: string; }
+/** 누적 기여 단계의 운영 수치와 수령 상태는 서버 스냅샷만 화면의 기준으로 삼는다. */
+export interface RaidRewardStageDto { id: string; threshold: number; reward: { currency: WalletItemKey; name: string; amount: number }; claimed: boolean; }
+/** 시즌 한 번의 전부. 화면은 이 응답만 읽고 남은 체력이나 기여를 다시 계산하지 않는다. */
+export interface RaidSeasonResponse {
+  seasonKey: string;
+  bossRelicId: string;
+  /** 야성을 얹기 전의 **단계**와 레벨이다. 곱한 값은 서버도 화면도 들고 다니지 않는다. */
+  bossLevel: number;
+  bossFerocityLevel: number;
+  bossBreakthrough: number;
+  totalHp: number;
+  /** 참가자 전원이 지금까지 깎아 낸 합이다. */
+  dealtDamage: number;
+  remainingHp: number;
+  defeated: boolean;
+  /** 이번 시즌 내가 민 몫이다. 보상 단계가 읽는 값이기도 하다. */
+  myDamage: number;
+  attemptsUsed: number;
+  attemptsLimit: number;
+  resetsAt: string;
+  rewardStages: RaidRewardStageDto[];
+  /** 처치 보상은 시즌이 끝난 뒤 한 번만 수령할 수 있다. */
+  defeatRewardClaimable: boolean;
+  defeatRewardClaimed: boolean;
+  entries: RaidContributionEntryDto[];
+}
+/** 원정 보스와 **같은 재현 규칙**을 쓴다 — 클라이언트 피해 숫자는 받지 않는다. */
+export interface SubmitRaidDamageRequest { requestId: string; actions: ExpeditionBossAction[]; }
+/** 한 판이 확정된 뒤의 시즌 전체 상태다. 화면은 이 응답으로 그대로 다시 그린다. */
+export interface SubmitRaidDamageResponse { season: RaidSeasonResponse; runDamage: number; endedAtMs: number; }
+/** 달성한 누적 단계 보상을 서버 멱등 기록으로 수령한다. `stageId`가 "defeat"이면 처치 보상이다. */
+export interface ClaimRaidRewardRequest { requestId: string; stageId: string; }
+export interface ClaimRaidRewardResponse extends PlayerStateDto { stageId: string; reward: { currency: WalletItemKey; name: string; amount: number }; alreadyClaimed: boolean; season: RaidSeasonResponse; }
 /** 직접 플레이하지 않고 역대 최고 점수 일부와 절반의 노드 클리어 전리품만 즉시 정산하는 소탕 요청이다. */
 export interface SweepExpeditionRequest { requestId: string; }
 export interface SweepExpeditionResponse extends PlayerStateDto { weekKey: string; scoreGain: number; bestScore: number; cumulativeScore: number; granted: Record<string, number>; playsThisWeek: number; }
 
 /** 실제 HTTP API로 교체할 때도 씬이 의존할 단 하나의 통신 인터페이스다. */
 export interface GameApi extends AsyncArenaProfileApi {
-  /** 교류 표본 교환은 일반 상품 카탈로그와 분리해 조회한다. */
-  getInteractionExchangeOffers(): Promise<InteractionExchangeListResponse>;
-  /** 서버 검증 뒤 차감과 지급을 한 처리로 확정한다. */
-  exchangeInteractionOffer(request: ExchangeInteractionOfferRequest): Promise<ExchangeInteractionOfferResponse>;
   getInteractionCities(): Promise<InteractionCitiesResponse>;
   startInteractionDispatch(request: StartInteractionDispatchRequest): Promise<InteractionDispatchResponse>;
   getInteractionDispatch(): Promise<InteractionDispatchResponse>;
@@ -532,6 +643,12 @@ export interface GameApi extends AsyncArenaProfileApi {
   claimExpeditionReward(request: ClaimExpeditionRewardRequest): Promise<ClaimExpeditionRewardResponse>;
   /** 서버가 소유한 주간 순위표를 동점 정책에 따라 조회한다. */
   getExpeditionLeaderboard(limit?: number): Promise<ExpeditionLeaderboardResponse>;
+  /** 시즌 보스의 남은 체력·내 기여·기여 목록을 한 응답으로 조회한다. */
+  getRaidSeason(limit?: number): Promise<RaidSeasonResponse>;
+  /** 동작열을 서버 편성으로 재현하고 그 판의 피해만 시즌 체력에서 깎는다. */
+  submitRaidDamage(request: SubmitRaidDamageRequest): Promise<SubmitRaidDamageResponse>;
+  /** 달성한 기여 단계와 처치 보상을 서버 멱등 기록으로 수령한다. */
+  claimRaidReward(request: ClaimRaidRewardRequest): Promise<ClaimRaidRewardResponse>;
   /** 룬·지갑·스택을 저장 모델 변경 없이 합성해 조회한다. */
   getInventory(): Promise<InventoryResponse>;
   /** 검증·효과·차감·저장을 하나의 서버 처리로 확정한다. */
@@ -549,6 +666,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   startStrataRun(request: StartStrataRunRequest): Promise<ArchaeologyStateResponse>;
   /** 칸 하나를 파고 나온 것을 그 자리에서 지급한다. */
   digStrataTile(request: DigStrataTileRequest): Promise<DigStrataTileResponse>;
+  /** 남은 횟수를 버리고 판을 닫는다. 이미 지급된 것은 그대로 남는다. */
+  abandonStrataRun(request: AbandonStrataRunRequest): Promise<ArchaeologyStateResponse>;
   /** 아이템을 써서 특성을 부여하거나 다시 부여한다. */
   grantRuneTrait(request: GrantRuneTraitRequest): Promise<GrantRuneTraitResponse>;
   /** 원석을 치르고 특성을 재해석한다. 룬은 아직 바뀌지 않는다. */
@@ -589,7 +708,19 @@ export interface GameApi extends AsyncArenaProfileApi {
   /** 잔량 검증과 단 한 번의 차감을 서버 입장 트랜잭션으로 확정한다. */
   enterStage(request: EnterStageRequest): Promise<EnterStageResponse>;
   interactInLobby(relicId: string): Promise<LobbyInteractionResponse>;
+  /** 치즈케이크 대작전 입장. 배율만큼의 스테미나를 한 번에 차감한다. */
+  enterCakeOperation(request: CakeOperationRunRequest): Promise<CakeOperationEnterResponse>;
+  /** 전투 결과 확정. 승리면 배율만큼의 치즈케이크를 얹고 해금 단계를 갱신한다. */
+  completeCakeOperation(request: CakeOperationCompleteRequest): Promise<CakeOperationCompleteResponse>;
+  /** 이미 이긴 단계를 전투 없이 턴다. 차감과 지급이 한 처리다. */
+  sweepCakeOperation(request: CakeOperationRunRequest): Promise<CakeOperationSweepResponse>;
   enterDailyRestoration(): Promise<EnterDailyRestorationResponse>;
+  /** 현상수배 등급 줄과 오늘 남은 입장 횟수를 조회한다. */
+  getBountyStatus(): Promise<BountyStatusResponse>;
+  /** 스테미나와 일일 입장 횟수를 한 처리로 차감하고 세 라운드의 입장을 연다. */
+  enterBounty(request: EnterBountyRequest): Promise<EnterBountyResponse>;
+  /** 세 라운드의 결과를 확정한다. 이긴 판만 골드를 주고 다음 등급을 연다. */
+  completeBounty(request: CompleteBountyRequest): Promise<CompleteBountyResponse>;
   /** 이벤트 목록과 활성 상태는 서버 시각으로만 계산한다. */
   getEvents(): Promise<EventListResponse>;
   /** 종료된 이벤트 전투의 입장을 API 경계에서 차단한다. */

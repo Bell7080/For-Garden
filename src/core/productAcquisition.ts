@@ -1,3 +1,4 @@
+import { findItem } from "../data/items";
 import type { ProductAcquisition, ProductCurrency } from "../data/products";
 import { t } from "../i18n";
 
@@ -9,7 +10,7 @@ export function productActionModel(acquisition: ProductAcquisition, options: { r
   if (options.pending) return { label: t("product.pending"), disabledReason: t("product.pending.reason"), priceText: acquisitionText(acquisition), quantityEnabled: false };
   if (options.remaining <= 0) return { label: actionLabel(acquisition), disabledReason: t(acquisition.kind === "rewarded_ad" ? "product.limit.ad" : "product.limit.claim"), priceText: acquisitionText(acquisition), quantityEnabled: false };
   if (options.available === false) return { label: actionLabel(acquisition), disabledReason: t(acquisition.kind === "rewarded_ad" ? "product.unavailable.ad" : acquisition.kind === "platform_payment" ? "product.unavailable.payment" : "product.unavailable"), priceText: acquisitionText(acquisition), quantityEnabled: false };
-  return { label: actionLabel(acquisition), priceText: acquisitionText(acquisition), quantityEnabled: acquisition.kind === "currency" };
+  return { label: actionLabel(acquisition), priceText: acquisitionText(acquisition), quantityEnabled: acquisition.kind === "currency" || acquisition.kind === "item" };
 }
 
 /** 방식별 동사는 화면 종류와 무관하게 동일하다. */
@@ -22,6 +23,9 @@ function acquisitionText(acquisition: ProductAcquisition): string {
   if (acquisition.kind === "free") return t("product.price.free");
   if (acquisition.kind === "rewarded_ad") return t("product.price.ad", { count: acquisition.dailyLimitUtc });
   if (acquisition.kind === "platform_payment") return acquisition.displayPrice;
+  // 아이템 값은 재화 이름표가 아니라 그 아이템의 이름을 그대로 세운다 — 지갑 키가 아니라서
+  // `currency.*` 표에 이름이 없고, 있는 척 만들면 같은 말이 두 표에 살게 된다.
+  if (acquisition.kind === "item") return t("product.price.item", { amount: acquisition.amount.toLocaleString(), item: findItem(acquisition.itemId)?.name ?? acquisition.itemId });
   return t("product.price.currency", { amount: acquisition.amount.toLocaleString(), currency: currencyName(acquisition.currency) });
 }
 

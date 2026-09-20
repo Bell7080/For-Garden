@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createInitialPlayerResearchProgress, type Session } from "../../src/state/session";
+import { createEmptyRaidState, createInitialPlayerResearchProgress, type Session } from "../../src/state/session";
 import { RelicCollectionManager } from "../../src/managers/RelicCollectionManager";
 import { createDefaultSettings } from "../../src/core/settings";
 import { createArchaeologyState } from "../../src/core/strataDig";
@@ -28,11 +28,12 @@ function makeSession(): Session {
     bookmarked: new Set<string>(),
     gachaPityByGroup: { "standard-fossil": { pullsSinceSsr: 0, pickupGuaranteed: false }, "limited-pickup": { pullsSinceSsr: 0, pickupGuaranteed: false } },
     staminaUpdatedAt: "",
-    wallet: { fossil: 0, amber: 0, gems: 0, gold: 0, stamina: 0, dnaFragments: 0, cheesecake: 0 , rawStone: 0},
+    wallet: { fossil: 0, amber: 0, gems: 0, gold: 0, stamina: 0, dnaFragments: 0, cheesecake: 0 , rawStone: 0, raidSigil: 0, salvageRecord: 0},
     relicFragments: {}, relicProgress: Object.fromEntries(["anky", "rex", "dodo"].map((id) => [id, { level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] }])),
     itemInventory: [],
     runeInventory: [],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
+    bounty: { date: "", entries: 0, clearedTierIds: [] },
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [], researchPoints: { daily: 0, weekly: 0 }, claimedResearchStageIds: [] },
     // 상품 테스트가 아닌 세션도 최신 저장 계약의 빈 구매 이력을 명시한다.
     productPurchases: {},
@@ -40,6 +41,8 @@ function makeSession(): Session {
     dailyAdRewards: { date: "", claimsBySlot: {}, requestIds: [] },
     // 수집 테스트는 원정 진행이 없는 새 주간 상태를 사용한다.
     expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, allTimeBestScore: 0, lastParty: [], run: null },
+    raid: createEmptyRaidState(),
+    cakeOperation: { clearedIndex: -1 },
   };
 }
 

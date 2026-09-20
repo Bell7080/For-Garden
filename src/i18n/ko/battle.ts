@@ -1,5 +1,6 @@
 /** 전투 화면과 결과판의 문구. */
 export const BATTLE_KO = {
+  "battle.wave": "WAVE {wave} / {total}",
   "battle.boss.phase": "관측 · 00:00",
   "battle.boss.scoreLine": "일반 스테이지 {normal}  ·  보스전 {boss}",
   "battle.boss.phaseLine": "{phase}{warning} · {time}",

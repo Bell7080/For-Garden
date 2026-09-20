@@ -26,6 +26,14 @@ export interface StaminaPopupLayout {
   usesRowHeight: number;
 }
 
+/**
+ * 한 칸이 여러 소비품을 맡을 때 액자 좌우에 서는 **갈아 끼우기**.
+ *
+ * Phaser 없는 배치표에 두는 이유는 이 버튼이 **칸 밖으로 삐져나오지 않는지**를 화면을 띄우지
+ * 않고 재기 위해서다 — 처음 잡은 92는 칸 반폭(114.7)보다 바깥 끝이 0.3px 더 나갔다.
+ */
+export const STAMINA_SWAP = { x: 88, size: 46, fontSize: 26 } as const;
+
 const BASE = {
   width: 860,
   /**

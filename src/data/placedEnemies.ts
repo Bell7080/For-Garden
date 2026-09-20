@@ -2,6 +2,8 @@ import type { BattleSceneInputDto } from "../core/expeditionBattle";
 import type { BattleStageDef, RelicDef } from "../core/types";
 import { expeditionEnemyLevel } from "./expeditionEnemies";
 import { stageEnemyGrowth } from "./stages";
+import { getCakeOperationTier } from "./cakeOperation";
+import { getBountyTier } from "./bounty";
 
 /**
  * 전장에 **실제로 선** 적 하나. 정의와 함께 그 자리에서 자란 값을 들고 다닌다.
@@ -28,6 +30,23 @@ export function placedEnemyIndex(
   stage: BattleStageDef,
   enemyDefs: readonly RelicDef[],
 ): Map<string, PlacedEnemy> {
+  // 대작전은 무리를 이어 붙여도 `enemy-<n>`이 이어지므로 **펼친 목록 전체**가 이 표에 든다.
+  // 한 단계가 한 레벨·한 야성 단계를 쓰므로 자리마다 다른 성장이 없다.
+  if (input.mode === "cake") {
+    const tier = getCakeOperationTier(input.tierId);
+    return new Map(enemyDefs.map((def, index) => [`enemy-${index}`, {
+      def, level: tier.enemyLevel, breakthrough: 0,
+      ...(tier.ferocityLevel ? { ferocityLevel: tier.ferocityLevel } : {}),
+    }]));
+  }
+  // 현상수배는 라운드 하나에 정예 하나가 서고, 그 자리의 레벨·야성을 등급 표가 이미 적어 두었다.
+  if (input.mode === "bounty") {
+    const round = getBountyTier(input.tierId).rounds[input.round];
+    return new Map(enemyDefs.map((def, index) => [`enemy-${index}`, {
+      def, level: round.level, breakthrough: 0,
+      ...(round.ferocityLevel ? { ferocityLevel: round.ferocityLevel } : {}),
+    }]));
+  }
   // 원정은 노드 하나가 한 레벨을 쓰고 돌파는 아직 두지 않는다.
   const expeditionLevel = input.mode === "expedition" ? expeditionEnemyLevel(input.nodeType, input.floor)
     : input.mode === "expeditionBoss" ? expeditionEnemyLevel("boss", 20) : undefined;

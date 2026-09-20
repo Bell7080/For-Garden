@@ -122,6 +122,49 @@ export const STRATA_LAYERS: readonly StrataLayerDefinition[] = [
       { kind: "gems", weight: { soil: 0.3, teal: 0.6, gold: 1.4, deep: 3.5 }, min: 5, max: 20 },
     ],
   },
+  /**
+   * 물이 든 수로층.
+   *
+   * 지층이 셋뿐이던 때는 유적이 늘어도 판이 셋 중 하나라, 다른 이름의 유적 넷이 **같은 판**을
+   * 열었다. 판은 좁고 깊게(5×6) 두어 같은 굴착 횟수로도 열지 못한 칸이 더 많이 남고, 물에
+   * 씻긴 자리라 원석과 룬이 흙보다 자주 드러난다.
+   */
+  {
+    id: "canal",
+    columns: 5, rows: 6, digs: 8, zones: 4,
+    toneWeight: { soil: 5, teal: 5, gold: 2, deep: 2 },
+    rewards: [
+      { kind: "empty", weight: { soil: 32, teal: 24, gold: 18, deep: 16 }, min: 0, max: 0 },
+      { kind: "gold", weight: { soil: 26, teal: 22, gold: 18, deep: 14 }, min: 500, max: 1_300 },
+      { kind: "rawStone", weight: { soil: 24, teal: 32, gold: 28, deep: 24 }, min: 7, max: 20 },
+      { kind: "fossil", weight: { soil: 10, teal: 13, gold: 15, deep: 15 }, min: 22, max: 64 },
+      { kind: "rune", weight: { soil: 4, teal: 5, gold: 9, deep: 12 }, min: 1, max: 1 },
+      { kind: "researchItem", weight: { soil: 1.5, teal: 2.5, gold: 8, deep: 12 }, min: 1, max: 1 },
+      { kind: "amber", weight: { soil: 0, teal: 0.5, gold: 3.5, deep: 5.5 }, min: 1, max: 2 },
+      { kind: "gems", weight: { soil: 0.25, teal: 0.5, gold: 1.2, deep: 3.2 }, min: 5, max: 20 },
+    ],
+  },
+  /**
+   * 불에 녹아붙은 용광로층.
+   *
+   * 기록고와 심층 사이를 메운다. 구역 다섯으로 가장 잘게 나뉘어 **색이 가장 복잡한 판**이라,
+   * 같은 굴착 횟수라도 어느 구역을 고를지가 다른 지층보다 더 많이 갈린다.
+   */
+  {
+    id: "furnace",
+    columns: 6, rows: 6, digs: 9, zones: 5,
+    toneWeight: { soil: 3, teal: 3, gold: 5, deep: 3 },
+    rewards: [
+      { kind: "empty", weight: { soil: 28, teal: 22, gold: 16, deep: 13 }, min: 0, max: 0 },
+      { kind: "gold", weight: { soil: 24, teal: 21, gold: 18, deep: 13 }, min: 800, max: 1_800 },
+      { kind: "rawStone", weight: { soil: 26, teal: 33, gold: 32, deep: 28 }, min: 9, max: 24 },
+      { kind: "fossil", weight: { soil: 11, teal: 12, gold: 14, deep: 14 }, min: 28, max: 74 },
+      { kind: "rune", weight: { soil: 6, teal: 8, gold: 11, deep: 15 }, min: 1, max: 1 },
+      { kind: "researchItem", weight: { soil: 2.5, teal: 4, gold: 8.5, deep: 12.5 }, min: 1, max: 1 },
+      { kind: "amber", weight: { soil: 0.5, teal: 1.5, gold: 4.5, deep: 6.5 }, min: 1, max: 2 },
+      { kind: "gems", weight: { soil: 0.4, teal: 0.8, gold: 1.7, deep: 3.8 }, min: 6, max: 22 },
+    ],
+  },
   {
     id: "abyss",
     columns: 6, rows: 6, digs: 10, zones: 4,
@@ -158,6 +201,18 @@ export const STRATA_CHARGE = {
   /** 한 번이 차는 데 걸리는 시간(ms). 세 시간마다 하나다. */
   intervalMs: 3 * 60 * 60 * 1000,
 } as const;
+
+/**
+ * 한 번 파고 난 유적이 다시 열릴 때까지의 시간(ms).
+ *
+ * **다섯 번을 한 자리에 쏟지 못하게 하는 손잡이다.** 횟수만 있고 자리에 제한이 없던 때는
+ * 가장 깊은 유적 하나를 다섯 번 연달아 파는 것이 언제나 최선이라, 지도가 아무리 넓어져도
+ * 실제로 누르는 노드는 하나뿐이었다. 한 자리를 판 뒤 여섯 시간이 잠기면 그 다섯 번은
+ * **서로 다른 다섯 자리**로 흩어진다.
+ *
+ * 충전 간격(3시간)의 두 배다 — 한 바퀴 도는 동안 처음 판 자리가 다시 열린다.
+ */
+export const STRATA_SITE_COOLDOWN_MS = 6 * 60 * 60 * 1000;
 
 /**
  * 겉장 원화의 장수.

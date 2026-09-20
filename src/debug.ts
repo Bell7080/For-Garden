@@ -155,18 +155,26 @@ export interface DebugState {
     lobby?: { mission: DebugPoint; missionBack: DebugPoint; shop: DebugPoint; trade: DebugPoint; interaction: DebugPoint };
     /** 무역 팝업. 실패 상태에서는 상품 대신 재시도 입력이 생기고 공용 뒤로가기는 계속 남는다. */
     trade?: { products: DebugPoint[]; retry?: DebugPoint; back: DebugPoint };
-    /** 교류 씬에서 교환소를 여는 유일한 고정 입력 중심이다. */
-    interaction?: { exchange: DebugPoint };
+    /** 고고학 화면에서 상점으로 넘어가는 유일한 고정 입력 중심이다. */
+    archaeology?: { shop: DebugPoint };
     shop?: { back: DebugPoint; tabs: Record<"general" | "enhancement" | "rune", DebugPoint>; cards: DebugPoint[]; drag: { from: DebugPoint; to: DebugPoint } };
     /** 수량 작업판은 ±와 확정을, 패키지 확인판은 확정만 공개한다(고를 것이 수량이 아니다). */
     purchase?: { minus?: DebugPoint; plus?: DebugPoint; confirm: DebugPoint };
   };
   /** 상품명·재화 대신 현재 렌더 탭과 스크롤 위치만 관찰하는 표시 계약이다. */
-  shopView?: { category: "general" | "enhancement" | "rune"; scrollY: number; minScrollY: number };
+  /** 탭 갈래는 자리마다 다르다(일반·강화·룬 / 토벌·인양). E2E가 문자열로 대조한다. */
+  shopView?: { category: string; scrollY: number; minScrollY: number };
   /** 연구 결과판에 깔린 칸 수와 그중 열린 칸 수. 결과 내용은 공개하지 않는다. */
   researchBoard?: { slots: number; opened: number };
   /** 지층 판이 실제 게시한 입력점과 요청/타격/공개 순서를 관찰하는 E2E 전용 표시 계약이다. */
   archaeologyDig?: { requests: number; active: boolean; impactIndex?: number; revealedIndices: number[]; tiles: Array<DebugPoint & { index: number }> };
+  /**
+   * 유적 지도의 노드가 실제로 선 화면 좌표와 그 상태다.
+   *
+   * 열세 자리가 얽힌 그물망에서 테스트가 좌표를 손으로 적으면, 자리를 한 번 옮기는 것만으로
+   * 여러 편이 동시에 죽는다. 누를 곳은 화면이 알려 준다.
+   */
+  archaeologyMap?: { nodes: Array<DebugPoint & { siteId: string; state: string }> };
 }
 
 /** 자동화에 공개하는 좌표는 누를 중심점 두 숫자만 가진다. */
@@ -245,6 +253,9 @@ export function setDebugResearchBoard(board: DebugState["researchBoard"]): void 
 
 /** Canvas 바깥 테스트가 판의 구현을 복제하지 않고 지층 입력·공개 경계만 읽게 한다. */
 export function setDebugArchaeologyDig(state: DebugState["archaeologyDig"]): void { ensure().archaeologyDig = state; }
+
+/** 지도 노드의 자리와 상태만 알린다. 어느 유적에 무엇이 들었는지는 공개하지 않는다. */
+export function setDebugArchaeologyMap(state: DebugState["archaeologyMap"]): void { ensure().archaeologyMap = state; }
 
 /** 현재 탭을 다시 그릴 때 실제 이미지로 사용한 키만 복사해 이전 렌더의 잔여값을 막는다. */
 export function setDebugInventoryTextureKeys(keys: readonly string[] | undefined): void {

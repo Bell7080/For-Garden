@@ -2,11 +2,13 @@ import Phaser from "phaser";
 import { t, type TextKey } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { setDebugArchaeologyDig, setDebugScene } from "../debug";
+import { setDebugArchaeologyDig, setDebugArchaeologyMap, setDebugScene, setDebugStorefrontControls } from "../debug";
 import { strataBoardHaul, type StrataBoardView } from "../core/strataDig";
 import { findStrataLayer, type StrataRewardKind } from "../data/strataLayers";
 import { ARCHAEOLOGY_SITES, type ArchaeologySiteDefinition } from "../data/archaeologySites";
 import { resolveArchaeologyFocusSite, rewardExpectationRating } from "../core/archaeologyMap";
+import { archaeologySitePopupLayout } from "../ui/archaeologySitePopupLayout";
+import { archaeologyRatingColor, STRATA_ZONE_TONE } from "../ui/strataTones";
 import { ArchaeologyMapView } from "../ui/ArchaeologyMapView";
 import { session } from "../state/session";
 import { canUpgradeRuneTraitGrade, RUNE_TRAIT_GRADES, RUNE_TRAIT_RULES } from "../core/runeTraits";
@@ -18,7 +20,8 @@ import { BottomNav } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
-import { drawVignette } from "../ui/holo";
+import { chipPoints, drawFrameVignette, drawLayer, drawVignette, HOLO, HoloBar } from "../ui/holo";
+import { addSectionTitle } from "../ui/SectionTitle";
 import { addFramedIcon } from "../ui/itemFrame";
 import { KeywordManager } from "../managers/KeywordManager";
 import { PopupLayer } from "../ui/PopupLayer";
@@ -47,28 +50,48 @@ import { playSceneEntrance, startScene } from "../ui/screenTransition";
  * "발굴을 두 군데서 한다"가 되어 어느 쪽을 말하는지 매번 물어야 한다.
  */
 
-/** 두 갈래. 씬 하나 안에서 판만 갈아 끼운다. */
+/** 두 갈래. 씬 하나 안에서 판만 갈아 끼운다 — 화면을 넘기는 상점은 이 줄에 서지 않는다. */
 type ArchaeologyTab = "strata" | "research";
 
 /** 화면의 세로 좌표를 한 곳에서 잡는다. */
 const ARCHAEOLOGY = {
   titleY: 185,
-  boardY: 900,
   /** 라벨 줄은 하단 탭 바로 위에 선다 — 손가락이 가장 잘 닿는 자리다. */
   tabY: BASE_HEIGHT - 268,
   tabWidth: 280,
   tabHeight: 84,
-  gridTop: 420,
-  /** 진행 중인 판에서 남은 굴착을 말하는 곡괭이의 한 변. */
-  chargeIcon: 46,
   /**
-   * 확률 정보 입구.
+   * 화면 제목 줄의 오른쪽 — **이 화면의 고정 입구 둘이 나란히 서는 자리다.**
    *
-   * **횟수 줄과 같은 높이의 오른쪽 끝이다.** 그 아래에서 시작하는 판(탐사판·연구대)이 덮지
-   * 않는 마지막 자리다. 예전에는 상점이 여기 섰고, 지금은 하단 라벨 줄의 셋째 자리로 갔다.
+   * 아래에서 시작하는 판(탐사판·연구대·지도)이 어느 탭에서도 덮지 않는 자리라, 굴리기 전에
+   * 무엇이 나올 수 있는지 읽고 들어갈 수 있다. 예전에는 확률만 횟수 줄 높이(262)에 혼자
+   * 섰고 상점은 하단 라벨 줄의 셋째 라벨이었다 — 라벨 줄은 **이 화면의 갈래**를 고르는
+   * 자리인데 셋째만 화면을 통째로 넘겨, 켜진 채로 남지 못하고 돌아오는 길도 라벨이 아니라
+   * 우하단 뒤로가기였다. 화면을 넘기는 입구는 교류의 교환소처럼 판 밖의 버튼이 맡는다.
    */
   oddsX: BASE_WIDTH - 96,
-  oddsY: 262,
+  entryY: 220,
+  /** 상점 버튼 — 확률 돋보기 왼쪽에 서고 오른쪽 끝을 그 칩과 맞춘다. */
+  shopButton: { x: 790, width: 240, height: 86 },
+  /**
+   * 횟수 판.
+   *
+   * **수만 서 있던 자리를 이름표가 붙은 판이 감싼다.** 지도 위에 `5/5`만 떠 있던 때는 그 수가
+   * 무엇의 수인지 화면이 말하지 않아, 스테미나인지 남은 발굴인지 눌러 보고 알아야 했다.
+   * 판 하나에 곡괭이·이름표·수·다음 충전을 함께 세우면 한 덩어리로 읽힌다.
+   */
+  chargePanel: { y: 352, width: 620, height: 126, icon: 58 },
+  /** 진행 중인 판 위에 서는 남은 발굴 횟수 판. 같은 양식을 조금 줄여 쓴다. */
+  digsPanel: { y: 292, width: 470, height: 104, icon: 46 },
+  /** 판 아래 전리품 줄과 그 아래 중간 종료. 둘 다 판 크기와 무관하게 같은 자리에 선다. */
+  haul: { y: 1372, frame: 116, gap: 152 },
+  /**
+   * 중간 종료.
+   *
+   * **하단 라벨 줄(윗변 1600)에 닿지 않는다** — 1560에 두었을 때는 켜진 라벨이 한 뼘 솟아
+   * 그 판과 겹쳐, 화면을 넘기지 않는 이 버튼이 라벨 줄의 셋째 칸처럼 보였다.
+   */
+  finishButton: { y: 1500, width: 340, height: 84 },
 } as const;
 
 /**
@@ -117,9 +140,12 @@ export class ArchaeologyScene extends Phaser.Scene {
   /** 서버가 확정한 다음 충전 시각과 응답 순간에 계산한 서버-클라이언트 시계 차이다. */
   private nextChargeAt: number | null = null;
   private serverClockOffsetMs = 0;
-  /** 매초 표기만 갱신하는 Phaser 타이머와 현재 빈 판에 붙은 글자다. */
+  /** 매초 표기만 갱신하는 Phaser 타이머와 현재 횟수 판에 붙은 두 글자다. */
   private chargeTimer: Phaser.Time.TimerEvent | null = null;
-  private chargeCountdownText: Phaser.GameObjects.Text | null = null;
+  /** 「3/5」처럼 지금 몇 번 남았는지. */
+  private chargeValueText: Phaser.GameObjects.Text | null = null;
+  /** 그 옆의 다음 충전까지 남은 시간. 가득 차면 「가득 참」만 남는다. */
+  private chargeNoteText: Phaser.GameObjects.Text | null = null;
   /** 0초 경계에서 서버 확정 조회를 중복으로 보내지 않는다. */
   private chargeRefreshPending = false;
   /** 갈아 끼우는 몸통. 탭을 바꾸면 통째로 비운다. */
@@ -175,9 +201,27 @@ export class ArchaeologyScene extends Phaser.Scene {
     });
 
     this.add.text(60, ARCHAEOLOGY.titleY, t("archaeology.title"), textStyle({ role: "display", size: 52 })).setOrigin(0, 0);
-    // **확률 정보는 판이 시작하기 전의 마지막 줄에 선다.** 어느 탭에서도 가려지지 않는 자리라
-    // 굴리기 전에 무엇이 나올 수 있는지 읽고 들어갈 수 있다. 상점은 하단 라벨 줄로 내려갔다.
-    new RailButton(this, ARCHAEOLOGY.oddsX, ARCHAEOLOGY.oddsY, {
+    /*
+     * **화면을 넘기는 입구는 제목 줄의 오른쪽에 선다** — 교류의 교환소와 같은 문법이다.
+     *
+     * 하단 라벨 줄은 이 화면의 갈래(탐사·연구)를 고르는 자리라, 거기 선 라벨은 눌러도 이
+     * 화면에 남는다. 상점만 그 줄에서 화면을 통째로 넘기던 때는 셋째 라벨이 켜진 채로 남지
+     * 못해 늘 꺼진 모습이었고, 돌아오는 길도 라벨이 아니라 우하단 뒤로가기였다.
+     */
+    this.add.existing(new Button(this, ARCHAEOLOGY.shopButton.x, ARCHAEOLOGY.entryY, {
+      width: ARCHAEOLOGY.shopButton.width,
+      height: ARCHAEOLOGY.shopButton.height,
+      label: t("archaeology.shop"),
+      icon: "shop",
+      // 같은 상점 씬을 상품표만 바꿔 다시 쓴다 — 새 씬을 만들면 선반·격자·값줄 규칙이
+      // 두 곳이 되고 한쪽만 고치는 사고가 난다.
+      onClick: () => this.scene.start("shop", { storefront: "archaeology", returnScene: "archaeology" }),
+    }));
+    // 자동화도 런타임과 같은 고정 버튼을 누르도록 최소 입력 중심만 공개한다.
+    setDebugStorefrontControls({ archaeology: { shop: { x: ARCHAEOLOGY.shopButton.x, y: ARCHAEOLOGY.entryY } } });
+    // **확률 정보는 그 오른쪽 끝에 선다.** 어느 탭에서도 가려지지 않는 자리라 굴리기 전에
+    // 무엇이 나올 수 있는지 읽고 들어갈 수 있다.
+    new RailButton(this, ARCHAEOLOGY.oddsX, ARCHAEOLOGY.entryY, {
       icon: "magnifier",
       label: t("rune.trait.odds"),
       accent: true,
@@ -195,7 +239,7 @@ export class ArchaeologyScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.digEffects.forEach((effect) => effect.destroy());
       this.digEffects.clear();
-      this.chargeTimer?.destroy(); this.chargeTimer = null; this.chargeCountdownText = null;
+      this.chargeTimer?.destroy(); this.chargeTimer = null; this.chargeValueText = null; this.chargeNoteText = null;
       this.strataTiles.clear(); this.strataGrid = null; this.strataHaul = null; this.strataDigsText = null; this.digging = false;
       setDebugArchaeologyDig(undefined);
     });
@@ -206,17 +250,16 @@ export class ArchaeologyScene extends Phaser.Scene {
   }
 
   /**
-   * 좌하단 라벨 석 장. 가방·상점과 같은 한 장(`CategoryTab`)을 쓴다.
+   * 좌하단 라벨 두 장. 가방·상점과 같은 한 장(`CategoryTab`)을 쓴다.
    *
-   * **셋째는 판을 갈아 끼우지 않고 상점으로 건너간다.** 오른쪽 위 아이콘으로 서 있던 때는
-   * 같은 화면의 두 갈래(탐사·연구)와 다른 문법으로 열려, 같은 콘텐츠의 세 갈래가 두 자리에
-   * 나뉘어 있었다. 선택된 채로 남지 않으므로 셋째 라벨은 늘 꺼진 모습이다.
+   * **이 줄에 서는 것은 이 화면의 갈래뿐이다.** 눌러도 화면에 남고 켜진 채로 선다 — 화면을
+   * 넘기는 상점이 셋째로 서 있던 때는 그 하나만 켜지지 못해, 같은 줄의 라벨이 저마다 다른
+   * 문법으로 열렸다. 그 입구는 제목 줄 오른쪽의 버튼으로 나갔다.
    */
   private paintTabs(): void {
-    const tabs: ReadonlyArray<{ key: ArchaeologyTab | "shop"; labelKey: TextKey }> = [
+    const tabs: ReadonlyArray<{ key: ArchaeologyTab; labelKey: TextKey }> = [
       { key: "strata", labelKey: "archaeology.tab.strata" },
       { key: "research", labelKey: "archaeology.tab.research" },
-      { key: "shop", labelKey: "archaeology.shop" },
     ];
     // 옛 라벨을 먼저 지운다. 남겨 두면 누를 때마다 한 겹씩 쌓인다.
     this.tabRow.removeAll(true);
@@ -227,14 +270,8 @@ export class ArchaeologyScene extends Phaser.Scene {
         width: ARCHAEOLOGY.tabWidth,
         height: ARCHAEOLOGY.tabHeight,
         label: t(labelKey),
-        selected: key !== "shop" && this.tab === key,
+        selected: this.tab === key,
         onSelect: () => {
-          if (key === "shop") {
-            // 같은 상점 씬을 상품표만 바꿔 다시 쓴다 — 새 씬을 만들면 선반·격자·값줄 규칙이
-            // 두 곳이 되고 한쪽만 고치는 사고가 난다.
-            startScene(this, "shop", { storefront: "archaeology", returnScene: "archaeology" });
-            return;
-          }
           if (this.tab === key) return;
           this.tab = key;
           this.paintTabs();
@@ -270,19 +307,18 @@ export class ArchaeologyScene extends Phaser.Scene {
 
   /** 서버 시계로 남은 시간을 그리며, 경계에 닿았을 때만 서버에 실제 횟수를 다시 묻는다. */
   private updateChargeCountdown(): void {
-    const text = this.chargeCountdownText;
-    if (text === null || !text.active) return;
+    const value = this.chargeValueText;
+    const note = this.chargeNoteText;
+    if (value === null || !value.active) return;
     if (this.charges >= this.chargesMax || this.nextChargeAt === null) {
       // 최대 충전은 정책상 시간 대신 횟수만 보여 다음 충전이 있다는 오해를 막는다.
-      text.setText(t("archaeology.chargeFull", { charges: this.charges, max: this.chargesMax }));
+      value.setText(t("archaeology.chargeFull", { charges: this.charges, max: this.chargesMax }));
+      note?.setText(t("archaeology.charge.full"));
       return;
     }
     const remainingMs = this.nextChargeAt - (Date.now() + this.serverClockOffsetMs);
-    text.setText(t("archaeology.chargeCountdown", {
-      charges: this.charges,
-      max: this.chargesMax,
-      time: formatCountdown(remainingMs),
-    }));
+    value.setText(t("archaeology.chargeCountdown", { charges: this.charges, max: this.chargesMax }));
+    note?.setText(t("archaeology.charge.next", { time: formatCountdown(remainingMs) }));
     if (remainingMs > 0 || this.chargeRefreshPending) return;
     // 로컬에서는 횟수를 올리지 않는다. 서버가 충전을 정산한 응답만 apply 메서드로 반영한다.
     this.chargeRefreshPending = true;
@@ -293,20 +329,46 @@ export class ArchaeologyScene extends Phaser.Scene {
     // 명시적인 화면 전환에서만 기존 판 경계를 버린다. 한 칸 결과에는 이 메서드를 호출하지 않는다.
     this.strataTiles.clear(); this.strataGrid = null; this.strataHaul = null; this.strataDigsText = null;
     this.view.removeAll(true);
-    this.chargeCountdownText = null;
+    this.chargeValueText = null; this.chargeNoteText = null;
+    setDebugArchaeologyMap(undefined);
     if (this.tab === "strata") this.paintStrata();
     else this.paintResearch();
   }
 
   /* ── 지층 탐사 ────────────────────────────────────────────────────────────── */
 
+  /**
+   * 수 하나가 서던 자리를 이름표가 붙은 판으로 감싼다.
+   *
+   * **지도의 탐사 횟수와 판 위의 남은 굴착이 같은 한 장을 쓴다** — 둘 다 「곡괭이를 몇 번 더
+   * 휘두를 수 있나」라 생김새가 갈리면 화면을 옮길 때마다 다른 것으로 읽힌다. 크기만 다르다.
+   */
+  private addCountPanel(spot: { y: number; width: number; height: number; icon: number }, label: string):
+  { value: Phaser.GameObjects.Text; note: Phaser.GameObjects.Text } {
+    const panel = this.add.container(BASE_WIDTH / 2, spot.y);
+    this.view.add(panel);
+    const shape = chipPoints(spot.width, spot.height, { bevel: { topLeft: spot.height * 0.34, bottomRight: spot.height * 0.34 } });
+    panel.add(drawLayer(this, 0, 0, shape, { fill: 0x0b1116, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.8 }));
+    const left = -spot.width / 2;
+    panel.add(this.add.image(left + 30 + spot.icon / 2, 0, UI_ICON.pickaxe).setDisplaySize(spot.icon, spot.icon));
+    const textX = left + 44 + spot.icon;
+    panel.add(this.add.text(textX, -spot.height * 0.2, label,
+      textStyle({ role: "emphasis", size: Math.round(spot.height * 0.21), color: COLOR.inkDim })).setOrigin(0, 0.5));
+    const value = this.add.text(textX, spot.height * 0.22, "",
+      textStyle({ role: "display", size: Math.round(spot.height * 0.3), color: COLOR.accentText })).setOrigin(0, 0.5);
+    // 다음 충전 시각은 **지금 조작을 바꾸지 않는 수**라 이름표보다 작고 흐리게 오른쪽 끝에 붙는다.
+    const note = this.add.text(spot.width / 2 - 26, spot.height * 0.22, "",
+      textStyle({ role: "body", size: Math.round(spot.height * 0.19), color: COLOR.inkDim })).setOrigin(1, 0.5);
+    panel.add([value, note]);
+    return { value, note };
+  }
+
   private paintStrata(): void {
     const board = this.board;
     if (board === null) {
       // 단일 시작 버튼 대신 양축 유적 지도를 세우고, 서버가 확정한 상태를 노드에만 투영한다.
-      this.chargeCountdownText = this.add.text(BASE_WIDTH / 2, 300, "",
-        textStyle({ role: "display", size: 32, color: COLOR.accentText })).setOrigin(0.5);
-      this.view.add(this.chargeCountdownText);
+      const charge = this.addCountPanel(ARCHAEOLOGY.chargePanel, t("archaeology.charge.label"));
+      this.chargeValueText = charge.value; this.chargeNoteText = charge.note;
       this.updateChargeCountdown();
       const focus = resolveArchaeologyFocusSite(
         ARCHAEOLOGY_SITES,
@@ -317,13 +379,21 @@ export class ArchaeologyScene extends Phaser.Scene {
       // 삭제되거나 다시 잠긴 선택은 화면에서만 우회하지 않고 안전한 유적으로 저장도 복구한다.
       if (focus && focus.id !== session.archaeology.lastSelectedSiteId) archaeologyProgressManager.repairSelection(focus.id);
       const map = new ArchaeologyMapView(this, {
-        top: 340, bottom: ARCHAEOLOGY.tabY - 64, sites: ARCHAEOLOGY_SITES, states: this.siteStates,
+        top: ARCHAEOLOGY.chargePanel.y + ARCHAEOLOGY.chargePanel.height / 2 + 24,
+        bottom: ARCHAEOLOGY.tabY - 64,
+        sites: ARCHAEOLOGY_SITES,
+        states: this.siteStates.map((state) => ({
+          ...state,
+          cooldownUntilMs: state.cooldownUntil === null ? null : Date.parse(state.cooldownUntil),
+        })),
         focusSiteId: focus?.id,
         onSelect: (site) => {
           // 서버가 확정한 해금 노드만 마지막 선택으로 남긴다. 잠긴 노드 열람은 진행 선택이 아니다.
           if (this.siteStates.find(({ siteId }) => siteId === site.id)?.unlocked) archaeologyProgressManager.selectSite(site.id);
           this.openSitePreview(site);
         },
+        // 열세 자리가 얽힌 그물망에서 테스트가 좌표를 손으로 적지 않도록 실제 자리를 알린다.
+        onLayout: (nodes) => setDebugArchaeologyMap({ nodes: nodes.map(({ siteId, x, y, state }) => ({ siteId, x, y, state })) }),
       });
       this.view.add(map);
       return;
@@ -351,45 +421,16 @@ export class ArchaeologyScene extends Phaser.Scene {
     grid.add(addBoardImage(this, BACKGROUND.strataBase, (image) => fillWithCrop(image, boardCrop, { centerX: 0, centerY: 0, width: frame.width, height: frame.height })));
     grid.add(this.add.rectangle(0, 0, frame.width, frame.height, COLOR.void, STRATA_BOARD.baseShade));
 
-    // **겉장은 칸마다 같은 원화를 잘라 쓴다.** 조각을 따로 굽지 않으므로 칸 사이에 이음매가
-    // 없고, 부순 칸만 지우면 그 자리에 아래층이 그대로 드러난다.
-    const layerKey = strataLayerTextureKey(board.art);
+    /*
+     * **칸마다 제 컨테이너를 갖는다.** 결과가 들어올 때 판을 통째로 다시 그리면 그 프레임에
+     * 모든 칸이 한 번씩 깜빡이고, 굴착 연출이 도는 중에 그 아래 판이 갈아 끼워진다.
+     * 비어 있는(이미 판) 칸도 자리를 만들어 두어야 그 자리에 결과를 넣을 수 있다.
+     */
     for (const tile of board.tiles) {
-      const crop = strataTileCrop(tile.index, board.columns, board.rows, boardCrop);
-      const center = strataTileCenter(tile.index, board.columns, frame);
-      /*
-       * **칸마다 제 컨테이너를 갖는다.** 결과가 들어올 때 판을 통째로 다시 그리면 그 프레임에
-       * 모든 칸이 한 번씩 깜빡이고, 굴착 연출이 도는 중에 그 아래 판이 갈아 끼워진다.
-       * 비어 있는(이미 판) 칸도 자리를 만들어 두어야 그 자리에 결과를 넣을 수 있다.
-       */
       const tileView = this.add.container(0, 0);
       this.strataTiles.set(tile.index, tileView);
       grid.add(tileView);
-      if (tile.revealed) continue;
-      tileView.add(addBoardImage(this, layerKey, (image) => {
-        // 크롭은 원본 px, 칸은 화면 px이다. 두 좌표계를 한 연산에 섞지 않고 배치표가 환산한다.
-        fillWithCrop(image, crop, { centerX: center.x, centerY: center.y, width: frame.cellWidth, height: frame.cellHeight });
-      }));
-    }
-
-    // 보상은 부순 칸 위에 선다. 액자 없이 그림만 두면 흙 위에 얹힌 그림으로 읽히지 않는다.
-    for (const tile of board.tiles) {
-      const tileView = this.strataTiles.get(tile.index);
-      if (tileView === undefined) continue;
-      const { x, y } = strataTileCenter(tile.index, board.columns, frame);
-      if (tile.revealed) {
-        const texture = tile.kind === undefined ? null : rewardTexture(tile.kind);
-        if (texture === null) continue;
-        // 룬처럼 수가 뜻이 없는 것에는 수를 적지 않는다 — 「1」이 서면 하나를 세는 자리로 읽힌다.
-        const amount = tile.kind === "rune" ? undefined : String(tile.amount ?? 0);
-        addFramedIcon(this, tileView, x, y, Math.min(frame.cellWidth, frame.cellHeight) * 0.82, texture,
-          { ...(amount ? { amount } : {}), plain: true });
-        continue;
-      }
-      const hit = this.add.rectangle(x, y, frame.cellWidth, frame.cellHeight, 0xffffff, 0.001)
-        .setInteractive({ useHandCursor: true });
-      hit.on("pointerup", () => this.dig(tile.index));
-      tileView.add(hit);
+      this.paintStrataTile(tile.index, board, boardCrop);
     }
 
     // 경계는 입력 사각형과 분리된 단 하나의 Graphics가 일괄 그린다. 열린 칸도 같은 선을 공유한다.
@@ -407,54 +448,200 @@ export class ArchaeologyScene extends Phaser.Scene {
     gridLines.strokePath();
     grid.add(gridLines);
 
+    /*
+     * **판 안쪽을 네 변에서 눌러 둔다.** 격자만 그어 두었을 때는 판이 배경 원화 위에 놓인
+     * 한 장이 아니라 화면에 직접 그은 선으로 보였다 — 가장자리가 어두워야 「여기까지가 땅」이
+     * 읽힌다. 같은 도형을 줄여 가며 두르는 `drawInnerVignette`은 6×5처럼 가로로 긴 판에서
+     * 좌우가 더 많이 줄어 검은 줄이 여러 겹 어긋난 잔상으로 남으므로 네 변 그라데이션을 쓴다.
+     */
+    grid.add(drawFrameVignette(this, 0, 0, frame.width, frame.height, { strength: 0.52, spread: 0.26 }));
+
     // 곡괭이는 충전 횟수가 아니라 현재 판에서 실제로 파는 횟수 옆에서만 의미를 갖는다.
-    const digsLabel = this.add.container(frame.centerX, STRATA_BOARD.top - 56);
-    const digsText = this.add.text(ARCHAEOLOGY.chargeIcon / 2 + 8, 0,
-      t("archaeology.digsCount", { current: board.digsLeft, max: board.digsMax }),
-      textStyle({ role: "display", size: 34, color: COLOR.accentText })).setOrigin(0, 0.5);
-    this.strataDigsText = digsText;
-    const labelWidth = ARCHAEOLOGY.chargeIcon + 8 + digsText.width;
-    digsLabel.add([
-      this.add.image(-labelWidth / 2 + ARCHAEOLOGY.chargeIcon / 2, 0, UI_ICON.pickaxe)
-        .setDisplaySize(ARCHAEOLOGY.chargeIcon, ARCHAEOLOGY.chargeIcon),
-      digsText.setX(-labelWidth / 2 + ARCHAEOLOGY.chargeIcon + 8),
-    ]);
-    this.view.add(digsLabel);
+    // 지도의 횟수 판과 **같은 한 장**을 조금 줄여 쓴다.
+    const digs = this.addCountPanel(ARCHAEOLOGY.digsPanel, t("archaeology.digs.label"));
+    this.strataDigsText = digs.value;
+    digs.note.setVisible(false);
+    this.paintStrataProgress(board);
+
+    /*
+     * **중간에 그만둘 수 있다.**
+     *
+     * 판을 여는 데 이미 횟수를 하나 치렀으므로 남은 칸을 다 파지 않고 떠나면 그 판은 영영
+     * 열린 채로 남았다 — 다른 유적을 열 수도 없다(진행 중인 판은 하나뿐이다). 캔 것은 칸을
+     * 팔 때 이미 지갑에 들어갔으니 여기서는 판을 닫기만 한다.
+     */
+    const finish = new Button(this, BASE_WIDTH / 2, ARCHAEOLOGY.finishButton.y, {
+      width: ARCHAEOLOGY.finishButton.width, height: ARCHAEOLOGY.finishButton.height,
+      label: t("archaeology.finish"),
+      onClick: () => { if (!this.digging) void this.finishRun(board); },
+    });
+    this.view.add(this.add.existing(finish));
 
     this.paintStrataHaul(board);
     this.publishDigDebug();
   }
 
-  /** 잠긴 노드도 여는 공용 홀로그램 계열 미리보기다. 시작 가능 여부만 서버 상태로 제한한다. */
+  /**
+   * 칸 한 장을 그린다. 처음 판을 세울 때와 결과 한 칸을 갈아 끼울 때가 **같은 자리**를 지난다.
+   *
+   * 두 곳에서 따로 그리던 때는 갈아 끼운 칸만 구역 색을 잃어, 판 가운데에 색이 빠진 구멍이
+   * 하나씩 늘었다.
+   */
+  private paintStrataTile(index: number, board: StrataBoardView, boardCrop: SourceCropRect): void {
+    const tileView = this.strataTiles.get(index);
+    const tile = board.tiles[index];
+    if (tileView === undefined || tile === undefined) return;
+    tileView.removeAll(true);
+    const frame = strataBoardFrame(board.columns, board.rows, BASE_WIDTH);
+    const center = strataTileCenter(index, board.columns, frame);
+    if (!tile.revealed) {
+      // **겉장은 칸마다 같은 원화를 잘라 쓴다.** 조각을 따로 굽지 않으므로 칸 사이에 이음매가
+      // 없고, 부순 칸만 지우면 그 자리에 아래층이 그대로 드러난다.
+      const crop = strataTileCrop(index, board.columns, board.rows, boardCrop);
+      tileView.add(addBoardImage(this, strataLayerTextureKey(board.art), (image) => {
+        // 크롭은 원본 px, 칸은 화면 px이다. 두 좌표계를 한 연산에 섞지 않고 배치표가 환산한다.
+        fillWithCrop(image, crop, { centerX: center.x, centerY: center.y, width: frame.cellWidth, height: frame.cellHeight });
+      }));
+    }
+    /*
+     * **구역의 색.** 판을 만들 때 이미 구역마다 색이 정해져 있는데(`StrataZone`) 화면이 한
+     * 번도 그리지 않아, 스물다섯 칸이 전부 같은 흙으로 보이고 어디를 파든 같은 선택이었다.
+     * 흙빛은 칠하지 않으므로(`alpha` 0) 특화 구역 셋만 바탕 위로 떠오른다. 부순 칸에도
+     * 그대로 남는다 — 색은 그 칸의 내용이 아니라 **땅의 성질**이다.
+     */
+    const tone = STRATA_ZONE_TONE[board.zones[tile.zone]?.tone ?? "soil"];
+    if (tone.alpha > 0) {
+      tileView.add(this.add.rectangle(center.x, center.y, frame.cellWidth, frame.cellHeight, tone.color, tone.alpha)
+        .setBlendMode(Phaser.BlendModes.ADD));
+    }
+    if (tile.revealed) {
+      // 보상은 부순 칸 위에 선다. 액자 없이 그림만 두면 흙 위에 얹힌 그림으로 읽히지 않는다.
+      const texture = tile.kind === undefined ? null : rewardTexture(tile.kind);
+      if (texture === null) return;
+      // 룬처럼 수가 뜻이 없는 것에는 수를 적지 않는다 — 「1」이 서면 하나를 세는 자리로 읽힌다.
+      const amount = tile.kind === "rune" ? undefined : String(tile.amount ?? 0);
+      addFramedIcon(this, tileView, center.x, center.y, Math.min(frame.cellWidth, frame.cellHeight) * 0.82, texture,
+        { ...(amount ? { amount } : {}), plain: true });
+      return;
+    }
+    const hit = this.add.rectangle(center.x, center.y, frame.cellWidth, frame.cellHeight, 0xffffff, 0.001)
+      .setInteractive({ useHandCursor: true });
+    hit.on("pointerup", () => this.dig(index));
+    tileView.add(hit);
+  }
+
+  /** 남은 횟수를 버리고 판을 닫는다. 이미 캔 것은 그대로 남으므로 영수증만 한 장 띄운다. */
+  private async finishRun(board: StrataBoardView): Promise<void> {
+    this.digging = true;
+    try {
+      const response = await gameApi.abandonStrataRun({ requestId: `strata-finish-${Date.now()}` });
+      this.applyArchaeologyState(response);
+      this.paintView();
+      const items: RewardPopupItem[] = strataBoardHaul(board).flatMap(({ kind, amount }) => {
+        const icon = rewardTexture(kind);
+        return icon === null ? [] : [{ icon, amount }];
+      });
+      if (items.length > 0) openRewardPopup(this, this.popups, { items });
+    } catch {
+      // 서버가 확정하지 않았으면 판을 그대로 둔다. 화면만 닫으면 치른 횟수가 조용히 사라진다.
+    } finally {
+      this.digging = false;
+    }
+  }
+
+  /**
+   * 잠긴 노드도 여는 유적 미리보기.
+   *
+   * **공용 팝업 한 장 위에 선다.** 예전에는 씬이 둥근 사각형을 직접 그려 씬 몸통에 얹었다 —
+   * 화면 어디서나 같은 문법으로 열리는 쪽지가 이 자리에서만 다른 판이었고, 닫는 길도 판 안의
+   * 버튼뿐이라 뒤를 눌러 닫을 수 없었다. 창 높이는 손으로 적지 않고 **보상 줄 수에서 거꾸로**
+   * 구한다(`archaeologySitePopupLayout`).
+   *
+   * **기대 획득은 별이 아니라 다섯 칸 게이지다.** 별 다섯 개가 세 줄이면 열다섯 개가 반짝여
+   * 어느 보상이 센지보다 별이 먼저 읽혔다 — 길이와 색은 세지 않아도 견줄 수 있다.
+   */
   private openSitePreview(site: ArchaeologySiteDefinition): void {
     const state = this.siteStates.find((entry) => entry.siteId === site.id);
     const layer = findStrataLayer(site.layerId);
     if (!state || !layer) return;
-    const popup = this.add.container(BASE_WIDTH / 2, 1110);
-    const panel = this.add.graphics().fillStyle(COLOR.panel, 0.97).fillRoundedRect(-430, -300, 860, 600, 28).lineStyle(3, COLOR.accent, 0.72).strokeRoundedRect(-430, -300, 860, 600, 28);
-    popup.add(panel);
-    popup.add(this.add.text(0, -238, t(site.nameKey as TextKey), textStyle({ role: "display", size: 42 })).setOrigin(0.5));
-    popup.add(this.add.text(0, -170, `${site.board.columns}×${site.board.rows}  ·  ${t("archaeology.map.recommended", { level: site.recommendedLevel })}`, textStyle({ role: "body", size: 28, color: COLOR.inkDim })).setOrigin(0.5));
-    const labels: Array<["rawStone" | "rune" | "gold", TextKey]> = [["rawStone", "archaeology.reward.rawStone"], ["rune", "archaeology.reward.rune"], ["gold", "archaeology.reward.gold"]];
-    labels.forEach(([kind, key], index) => {
-      const rating = rewardExpectationRating(layer, kind);
-      // 별 그림만으로 뜻을 맡기지 않는다. 화면에 퍼센트는 숨기고, 같은 줄의 읽을 수 있는
-      // 「N별」 또는 「매우 희귀」 문구가 시각·색상과 무관하게 상대 기대도를 전달한다.
-      const ratingLabel = rating.state === "stars"
-        ? `${"★".repeat(rating.stars)}  ${t("archaeology.reward.stars", { count: rating.stars })}`
-        : t(rating.state === "veryRare" ? "archaeology.reward.veryRare" : "archaeology.reward.unavailable");
-      popup.add(this.add.text(-300, -92 + index * 54, `${t(key)}  ${ratingLabel}`, textStyle({ role: "body", size: 30, color: COLOR.accentText })).setOrigin(0, 0.5));
+    const rewards: Array<["rawStone" | "rune" | "gold", TextKey]> = [
+      ["rawStone", "archaeology.reward.rawStone"], ["rune", "archaeology.reward.rune"], ["gold", "archaeology.reward.gold"],
+    ];
+    const spot = archaeologySitePopupLayout(rewards.length);
+    const coolingUntil = state.cooldownUntil === null ? null : Date.parse(state.cooldownUntil);
+    const cooling = coolingUntil !== null && Number.isFinite(coolingUntil) && coolingUntil > Date.now();
+    const startable = state.unlocked && !cooling && this.charges > 0;
+
+    this.popups.open({
+      width: spot.width, height: spot.height, title: t(site.nameKey as TextKey),
+      dim: true, closeOnBackdrop: true, hideCloseButton: true,
+    }, (body, close) => {
+      body.add(this.add.text(0, spot.subtitleY,
+        // 굴착 횟수는 「8/8」이 아니라 이름이 붙은 한 마디여야 한다 — 미리보기에는 아직 쓴
+        // 횟수가 없어 같은 수 둘이 마주 보면 무엇을 세는 자리인지 말하지 못한다.
+        `${layer.columns}×${layer.rows}  ·  ${t("archaeology.map.digs", { count: layer.digs })}  ·  ${t("archaeology.map.recommended", { level: site.recommendedLevel })}`,
+        textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0.5));
+
+      // 기대 획득 판. 제목표가 윗변에 걸터앉는 화면 전체의 문법을 그대로 쓴다.
+      const panel = this.add.container(0, spot.panel.y);
+      body.add(panel);
+      const shape = chipPoints(spot.panel.width, spot.panel.height, { bevel: { topLeft: 40, bottomRight: 40 } });
+      panel.add(drawLayer(this, 0, 0, shape, { fill: 0x0b1116, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.6 }));
+      addSectionTitle(this, -spot.panel.width / 2 + 26, -spot.panel.height / 2, t("archaeology.reward.expected"), { size: 28, parent: panel });
+
+      rewards.forEach(([kind, key], index) => {
+        const rating = rewardExpectationRating(layer, kind);
+        const y = spot.rowYs[index] - spot.panel.y;
+        panel.add(this.add.text(spot.labelX, y, t(key), textStyle({ role: "emphasis", size: 29 })).setOrigin(0, 0.5));
+        /*
+         * 게이지는 화면 전체가 쓰는 `HoloBar` 한 장이다 — 칸 넷을 나누는 눈금과 최대치를
+         * 두르는 흰 선이 「다섯 중 몇」을 세지 않고 읽히게 한다.
+         */
+        const bar = new HoloBar(this, spot.gaugeX, y, spot.gauge.width, spot.gauge.height, {
+          color: archaeologyRatingColor(rating.filled), trackAlpha: 0.82, outline: true, ticks: 4,
+        });
+        bar.setValue(rating.filled / 5);
+        panel.add([...bar.objects]);
+        /*
+         * **게이지 하나에 뜻을 맡기지 않는다.** 색과 길이를 읽지 못해도 같은 줄의 글자가
+         * 상대 기대도를 그대로 말한다 — 없는 보상과 아주 드문 보상은 애초에 채울 칸이 없어
+         * 수 대신 그 사실을 적는다.
+         */
+        const label = rating.state === "rated"
+          ? t("archaeology.reward.grade", { count: rating.filled })
+          : t(rating.state === "veryRare" ? "archaeology.reward.veryRare" : "archaeology.reward.unavailable");
+        panel.add(this.add.text(spot.gaugeX, y, label,
+          textStyle({ role: "emphasis", size: 21, color: COLOR.ink })).setOrigin(0.5).setStroke("#05070a", 5));
+      });
+
+      /*
+       * 못 들어가는 이유는 저마다 다르고 지금 할 일도 그만큼 다르다 — 레벨을 올린다,
+       * 기다린다, 횟수가 차기를 기다린다. 한 마디로 뭉치지 않는다.
+       */
+      const reason = cooling
+        ? t("archaeology.map.cooling", { time: formatCountdown((coolingUntil ?? 0) - Date.now()) })
+        : !state.unlocked ? t("archaeology.map.needLevel", { level: site.minimumLevel })
+          : this.charges <= 0 ? t("archaeology.map.noCharge") : t("archaeology.map.available");
+      body.add(this.add.text(0, spot.reasonY, reason,
+        textStyle({ role: "emphasis", size: 27, color: startable ? COLOR.accentText : COLOR.dangerText })).setOrigin(0.5));
+
+      const closeButton = new Button(this, spot.buttonCenters[0], spot.buttonY, {
+        width: spot.buttonWidth, height: spot.buttonHeight, label: t("archaeology.map.close"), onClick: close,
+      });
+      const start = new Button(this, spot.buttonCenters[1], spot.buttonY, {
+        width: spot.buttonWidth, height: spot.buttonHeight, label: t("archaeology.map.start"), variant: "primary",
+        onClick: () => {
+          if (!startable) return;
+          close();
+          void gameApi.startStrataRun({ siteId: site.id, requestId: `strata-${Date.now()}` })
+            .then((response) => { this.applyArchaeologyState(response); this.paintView(); })
+            // 서버가 거절한 시작은 화면이 판을 지어내지 않는다. 지금 상태를 다시 받아 그린다.
+            .catch(() => void this.refresh());
+        },
+      });
+      start.setEnabled(startable);
+      body.add([closeButton, start]);
     });
-    const reason = state.unlocked ? t("archaeology.map.available") : state.missingLevel > 0
-      ? t("archaeology.map.needLevel", { level: site.minimumLevel })
-      : t("archaeology.map.needSite", { site: state.missingPrerequisiteIds.map((id) => t(ARCHAEOLOGY_SITES.find((candidate) => candidate.id === id)?.nameKey as TextKey)).join(", ") });
-    popup.add(this.add.text(0, 96, reason, textStyle({ role: "body", size: 27, color: state.unlocked ? COLOR.accentText : COLOR.dangerText })).setOrigin(0.5));
-    const close = new Button(this, -190, 220, { width: 310, height: 88, label: t("archaeology.map.close"), onClick: () => popup.destroy() });
-    const start = new Button(this, 190, 220, { width: 310, height: 88, label: t("archaeology.map.start"), variant: "primary", onClick: () => {
-      if (!state.unlocked || this.charges <= 0) return;
-      void gameApi.startStrataRun({ siteId: site.id, requestId: `strata-${Date.now()}` }).then((response) => { this.applyArchaeologyState(response); this.paintView(); });
-    } });
-    start.setEnabled(state.unlocked && this.charges > 0); popup.add([close, start]); this.view.add(popup);
   }
 
   /** 서버 처리와 충돌 프레임을 병렬로 기다리고 성공한 결과 칸만 제자리에서 교체한다. */
@@ -516,10 +703,16 @@ export class ArchaeologyScene extends Phaser.Scene {
       }
       this.publishDigDebug(index);
     } catch {
-      // 실패는 서버가 확정하지 않은 상태다. 흙을 그대로 두고 연출 종료 뒤 입력만 복구한다.
+      // 실패는 서버가 확정하지 않은 상태다. 흙을 그대로 두고 입력만 되돌린다.
     } finally {
-      await playback.finished;
-      this.digEffects.delete(effect);
+      /*
+       * **퇴장을 기다리지 않고 손을 돌려준다.**
+       *
+       * 예전에는 여기서 `playback.finished`를 기다렸다 — 결과는 이미 판에 서 있는데 곡괭이가
+       * 화면 밖으로 날아가 사라질 때까지 다음 칸을 누를 수 없어, 여덟 번짜리 한 판에서 그
+       * 기다림만 8초였다. 연출은 제 수명을 스스로 끝내고 씬은 그때 목록에서만 지운다.
+       */
+      void playback.finished.then(() => this.digEffects.delete(effect));
       this.digging = false;
       this.restoreStrataInputs();
       this.publishDigDebug();
@@ -539,28 +732,25 @@ export class ArchaeologyScene extends Phaser.Scene {
     this.strataHaul = row;
     this.view.add(row);
     const haul = strataBoardHaul(board);
-    const haulY = frame.centerY + frame.height / 2 + 62;
+    /*
+     * **액자를 키우고 판 밑변이 아니라 고정된 자리에 세운다.**
+     *
+     * 84px짜리가 판 바로 아래에 붙어 있던 때는, 이 판에서 무엇을 캤는지가 격자의 덤처럼
+     * 읽혔고 판 크기(5×5·6×5·6×6)가 바뀔 때마다 그 줄의 높이도 함께 움직였다. 지금 자리는
+     * 판과 무관한 아래 띠라, 어느 유적에 들어가도 같은 자리에서 같은 크기로 자란다.
+     */
     haul.forEach(({ kind, amount }, index) => {
       const texture = rewardTexture(kind);
       if (texture === null) return;
-      const x = frame.centerX - ((haul.length - 1) * 116) / 2 + index * 116;
-      addFramedIcon(this, row, x, haulY, 84, texture, { amount: String(amount), plain: true });
+      const x = frame.centerX - ((haul.length - 1) * ARCHAEOLOGY.haul.gap) / 2 + index * ARCHAEOLOGY.haul.gap;
+      addFramedIcon(this, row, x, ARCHAEOLOGY.haul.y, ARCHAEOLOGY.haul.frame, texture, { amount: String(amount), plain: true });
     });
   }
 
   /** 서버가 돌려준 결과 중 선택한 칸만 기존 컨테이너 안에서 교체한다. */
   private replaceStrataTile(index: number, board: StrataBoardView): void {
-    const tileView = this.strataTiles.get(index);
-    const tile = board?.tiles[index];
-    if (!board || !tileView || !tile?.revealed) return;
-    tileView.removeAll(true);
-    const texture = tile.kind === undefined ? null : rewardTexture(tile.kind);
-    if (texture === null) return;
     const frame = strataBoardFrame(board.columns, board.rows, BASE_WIDTH);
-    const center = strataTileCenter(index, board.columns, frame);
-    const amount = tile.kind === "rune" ? undefined : String(tile.amount ?? 0);
-    addFramedIcon(this, tileView, center.x, center.y, Math.min(frame.cellWidth, frame.cellHeight) * 0.82, texture,
-      { ...(amount ? { amount } : {}), plain: true });
+    this.paintStrataTile(index, board, coverSourceCrop(STRATA_ART.width, STRATA_ART.height, frame.width, frame.height));
   }
 
   /** 곡괭이 옆의 짧은 진행 표기만 서버 공개 모델의 남은/총 횟수로 갱신한다. */
@@ -570,7 +760,9 @@ export class ArchaeologyScene extends Phaser.Scene {
 
   /** 마지막 곡괭이가 사라진 뒤 최종 판을 읽을 수 있게 보장하는 짧은 정지다. */
   private waitForFinalBoardConfirmation(): Promise<void> {
-    const delay = session.settings.accessibility.reduceMotion ? 180 : 420;
+    // 연출 자체가 절반 아래로 짧아졌으므로 그 뒤의 정지도 함께 줄인다 — 판은 이미 다 서 있고,
+    // 이 정지는 「마지막 한 칸을 눈으로 확인하는」 한 박자일 뿐이다.
+    const delay = session.settings.accessibility.reduceMotion ? 120 : 280;
     return new Promise((resolve) => { this.time.delayedCall(delay, resolve); });
   }
 

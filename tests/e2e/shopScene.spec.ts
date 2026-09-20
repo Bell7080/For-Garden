@@ -90,11 +90,9 @@ test("로비 임무→상점→무역과 교류→교환소의 분리된 진입 
   input = await controls(page); await tap(page, input.trade!.back);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toBeUndefined();
 
-  // 교류 버튼은 새 교류 씬의 유일한 로비 진입점이고, 그 안의 고정 버튼만 교환소를 연다.
+  // 교류 버튼은 교류 씬의 유일한 로비 진입점이다. 씬 안에는 더 이상 교환소가 없고 파견 목록만 선다.
   input = await controls(page); await tap(page, input.lobby!.interaction);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("interaction");
-  input = await controls(page); await tap(page, input.interaction!.exchange);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["교환소"]);
-  // 일반 상점과 교류 교환소가 서로 다른 화면 수명과 제목을 가진 최종 진입 구조를 남긴다.
-  await captureGame(page, `test-results/${testInfo.project.name}-interaction-exchange-entry-1080x1920.png`);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toBeUndefined();
+  await captureGame(page, `test-results/${testInfo.project.name}-interaction-entry-1080x1920.png`);
 });

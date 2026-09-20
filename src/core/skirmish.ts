@@ -460,6 +460,24 @@ export interface SkirmishState {
   initialEvents: SkirmishEvent[];
   /** 보스전에서만 존재하는 누적 피해·생존 시간·단계 상태다. 같은 진행기가 함께 갱신한다. */
   boss?: SkirmishBossState;
+  /** 물량형 던전에서만 존재하는 남은 무리와 지금 몇 번째인가다. */
+  waves?: SkirmishWaveState;
+}
+
+/**
+ * 이어 설 무리의 상태.
+ *
+ * `nextIndex`는 전투원 ID(`enemy-<n>`)를 만드는 자리라 무리를 넘어 이어진다 — 무리마다
+ * 0으로 되돌리면 앞 무리의 시체와 새 무리가 같은 ID를 갖고, 성장 스냅샷을 찾는 표
+ * (`placedEnemyIndex`)가 엉뚱한 개체를 가리킨다.
+ */
+export interface SkirmishWaveState {
+  pending: RelicDef[][];
+  /** 지금 싸우고 있는 무리(1부터). */
+  current: number;
+  total: number;
+  nextIndex: number;
+  bodyScale: number;
 }
 
 /**
@@ -519,6 +537,16 @@ export interface CreateSkirmishOptions {
   enemyBreakthroughs?: readonly number[];
   /** 지정한 적 한 명만 불사이며 아군 전멸만 패배 종료가 되는 보스 규칙을 켠다. */
   boss?: { phases: readonly SkirmishBossPhase[]; limitSeconds: number; fighterId?: string };
+  /**
+   * `enemyDefs` **다음에** 이어 설 무리들. 적이 전멸하면 그 자리에 다음 무리가 서고,
+   * 마지막 무리까지 넘겨야 승리가 된다.
+   *
+   * 편당 다섯이라는 상한은 **한 무리의 상한**이지 한 판의 상한이 아니다 — 물량형 던전은
+   * 그 상한을 늘리는 대신 무리를 이어 붙여 "몰려온다"를 만든다. 아군의 체력·궁극 게이지·
+   * 야성은 무리 사이에 **이어진다**. 무리마다 초기화하면 세 판을 따로 도는 것과 같아져
+   * 한 판을 버텨 내는 던전이 되지 못한다.
+   */
+  waves?: readonly (readonly RelicDef[])[];
 }
 
 /** 씬이 모션·피격 숫자·사망 연출을 붙일 수 있도록 이번 프레임에 일어난 일만 모아 돌려준다. */
@@ -643,6 +671,8 @@ export type SkirmishEvent =
   | { kind: "vandalismBurst"; attackerId: string; fighterId: string; amount: number }
   /** 돌진이 실제로 지나간 선분. 씬은 이 두 점 사이에 자국을 그린다. */
   | { kind: "charge"; fighterId: string; from: { x: number; y: number }; to: { x: number; y: number } }
+  /** 다음 무리가 전장에 선 순간. 씬은 이 사건으로만 웨이브 표시를 바꾼다. */
+  | { kind: "waveStart"; wave: number; total: number; fighterIds: readonly string[] }
   | { kind: "finish"; phase: "victory" | "defeat" };
 
 /** 난전의 손맛을 정하는 값. 전부 여기서만 조정한다. */
@@ -1118,6 +1148,14 @@ export function createSkirmish(
     augmentEffects: options.augmentEffects ?? [],
     initialEvents: [],
     boss: options.boss ? { fighterId: bossFighterId, score: 0, survivedFor: 0, phaseIndex: 0, limitReached: false, phases: options.boss.phases, limitSeconds: options.boss.limitSeconds, damageRemainder: 0, tideWarning: false } : undefined,
+    // 이어 설 무리가 없으면 상태 자체를 두지 않아 기존 한 판 전투의 종료 판정이 그대로 남는다.
+    waves: options.waves?.length ? {
+      pending: options.waves.map((wave) => [...wave]),
+      current: 1,
+      total: options.waves.length + 1,
+      nextIndex: enemies.length,
+      bodyScale: options.enemyBodyScale ?? 1,
+    } : undefined,
   };
   // 지휘형 은신과 무리 치명타는 시간이 아니라 두 늑대의 생존 조건이 소유한다.
   refreshPackGuard(state);
@@ -5494,6 +5532,35 @@ function chargeWolfInto(state: SkirmishState, wolf: Fighter, target: Fighter, ev
   if (!isFighterAlive(target)) { clearDefeatedStatuses(target); events.push({ kind: "death", fighterId: target.id, sourceId: wolf.id }); }
 }
 
+/**
+ * 다음 무리를 전장에 세운다. 세울 무리가 없으면 `false`를 돌려 승리로 넘긴다.
+ *
+ * 쓰러진 앞 무리는 배열에서 지우지 않는다 — 씬이 사망 연출을 재생하는 중이고, 기여도 장부도
+ * 그 줄을 그대로 들고 있어야 결과 화면이 "누가 무엇을 했나"를 잃지 않는다.
+ */
+function spawnNextWave(state: SkirmishState, events: SkirmishEvent[]): boolean {
+  const waves = state.waves;
+  const next = waves?.pending.shift();
+  if (!waves || !next || next.length === 0) return false;
+  const spots = spawnSpots(state.arena, "enemy", next.length);
+  const spawned = next.map((def, offset) => makeFighter(def, "enemy", waves.nextIndex + offset, spots[offset].x, spots[offset].y, 0, 0, waves.bodyScale));
+  waves.nextIndex += spawned.length;
+  waves.current += 1;
+  for (const fighter of spawned) state.contributions[fighter.id] = { attack: { attackPower: 0, abilityPower: 0 }, defense: { armor: 0, resistance: 0, shield: 0 }, healing: 0 };
+  state.fighters.push(...spawned, ...createPackFighters(spawned, state.augmentEffects));
+  // 새 무리도 첫 무리와 같은 시작 단계를 지난다 — 하나라도 빠뜨리면 그 무리만 듀오·무리 사냥이
+  // 열리지 않아 같은 개체가 웨이브에 따라 다르게 싸운다.
+  refreshPackGuard(state);
+  linkDuos(state);
+  assignPackScoutTarget(state);
+  triggerPackHunt(state, "enemy");
+  events.push(...state.fighters.filter((wolf) => wolf.summonOwnerId !== null && spawned.some(({ id }) => id === wolf.summonOwnerId)).map((wolf): SkirmishEvent => ({
+    kind: "packSummon", fighterId: wolf.id, ownerFighterId: wolf.summonOwnerId ?? "", x: wolf.x, y: wolf.y,
+  })));
+  events.push({ kind: "waveStart", wave: waves.current, total: waves.total, fighterIds: spawned.map(({ id }) => id) });
+  return true;
+}
+
 function settle(state: SkirmishState, events: SkirmishEvent[]): void {
   if (state.phase !== "fight") return;
   const playersLeft = aliveFighters(state, "player").filter(isPartyFighter).length;
@@ -5501,8 +5568,12 @@ function settle(state: SkirmishState, events: SkirmishEvent[]): void {
   // 불사 보스는 적 HP와 무관하게 아군 전멸만 정상 종료로 인정한다.
   if (state.boss && playersLeft === 0) state.phase = "defeat";
   else if (state.boss) return;
-  else if (enemiesLeft === 0) state.phase = "victory";
+  // 아군이 먼저 전멸하면 남은 무리와 무관하게 패배다 — 무리를 다 넘겼는지는 그 뒤에 묻는다.
   else if (playersLeft === 0) state.phase = "defeat";
+  else if (enemiesLeft === 0) {
+    if (spawnNextWave(state, events)) return;
+    state.phase = "victory";
+  }
   else return;
   // 종료 스냅샷에 전투 전용 시약/저항 감소가 남아 다음 난전이나 결과 화면의 유효 수치로 새지 않게 한다.
   for (const fighter of state.fighters) {

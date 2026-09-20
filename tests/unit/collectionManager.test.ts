@@ -41,6 +41,7 @@ function makeSession(): Session {
     // 수집 테스트는 원정 진행이 없는 새 주간 상태를 사용한다.
     expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, allTimeBestScore: 0, lastParty: [], run: null },
     raid: createEmptyRaidState(),
+    cakeOperation: { clearedIndex: -1 },
   };
 }
 

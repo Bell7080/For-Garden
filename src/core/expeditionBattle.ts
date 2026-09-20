@@ -9,6 +9,7 @@ import type { BattleStageDef, RelicDef } from "./types";
 import { BREAKTHROUGH_GRADE_ROMAN } from "./relicProgression";
 import type { FighterInitialState, SkirmishBossPhase, SkirmishRelicResult } from "./skirmish";
 import { t } from "../i18n";
+import { getCakeOperationTier } from "../data/cakeOperation";
 
 /** 원정 씬이 전투 씬에 넘기는 직렬화 가능한 입력이다. 전투 씬은 Session 편성을 추측하지 않는다. */
 export interface ExpeditionBattleInputDto {
@@ -119,14 +120,28 @@ export interface RaidBattleInputDto {
 }
 
 /** 일반 스테이지 진입과 원정·레이드 진입을 명시적으로 구분하는 전투 씬 입력 계약이다. */
-export type BattleSceneInputDto = ExpeditionBattleInputDto | ExpeditionBossBattleInputDto | StageBattleInputDto | RaidBattleInputDto;
+/**
+ * 치즈케이크 대작전 입장.
+ *
+ * 스테미나는 **입장에서 이미 빠졌다** — 그 영수증의 `requestId`를 그대로 들고 다녀야 결과
+ * 확정이 같은 판의 것으로 붙는다. 배율은 화면이 다시 정하지 않고 입장이 확정한 값이다.
+ */
+export interface CakeBattleInputDto {
+  mode: "cake";
+  tierId: string;
+  multiplier: number;
+  requestId: string;
+}
+
+/** 일반 스테이지 진입과 원정·레이드·대작전 진입을 명시적으로 구분하는 전투 씬 입력 계약이다. */
+export type BattleSceneInputDto = ExpeditionBattleInputDto | ExpeditionBossBattleInputDto | StageBattleInputDto | RaidBattleInputDto | CakeBattleInputDto;
 
 /** Phaser가 생략·빈 data 또는 직전 data를 건네도 매 진입의 입력만으로 새 DTO를 만든다. */
 export function normalizeBattleSceneInput(input?: unknown): BattleSceneInputDto {
   // 원정 판별값만 보존하고 나머지는 새 객체로 만들어 직전 원정 필드가 스토리에 섞이지 않게 한다.
   if (typeof input === "object" && input !== null && "mode" in input) {
     const candidate = input as BattleSceneInputDto;
-    if (candidate.mode === "expedition" || candidate.mode === "expeditionBoss" || candidate.mode === "raid") return candidate;
+    if (candidate.mode === "expedition" || candidate.mode === "expeditionBoss" || candidate.mode === "raid" || candidate.mode === "cake") return candidate;
   }
   return { mode: "stage" };
 }
@@ -145,6 +160,8 @@ export function battleHeaderText(input: BattleSceneInputDto, stage: Pick<BattleS
   }
   if (input.mode === "expeditionBoss") return t("battle.header.expeditionBoss", { floor: input.floor });
   if (input.mode === "raid") return t("battle.header.raid");
+  // 단계 이름은 데이터 표가 번역까지 갖고 있으므로 씬도 머리글도 그 이름을 그대로 받는다.
+  if (input.mode === "cake") return t("battle.header.cake", { tier: getCakeOperationTier(input.tierId).name, multiplier: input.multiplier });
   // 노드 유형은 저장/정산용 영문값 대신 플레이어가 구분할 수 있는 전투 명칭으로 표시한다.
   return t("battle.header.expedition", { floor: input.floor, node: t(`battle.node.${input.nodeType}`) });
 }

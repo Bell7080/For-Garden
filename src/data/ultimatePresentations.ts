@@ -97,6 +97,9 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   "ripa": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.92, artworkOrigin: { x: 650, y: 770 }, zoomScale: 1.16, cameraShakeIntensity: 0.007 },
   // 코마는 작은 체형의 빠른 선봉이므로 오른쪽에서 깊게 파고드는 짧은 컷인을 사용한다.
   "koma": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.94, zoomScale: 1.22, zoomMs: 105, cameraShakeIntensity: 0.008 },
+  // 작고 빠른 물량 개체라 컷인이 가장 짧고 확대도 얕다 — 한 판에 여럿이 쓰는 궁극기라
+  // 하나하나가 무거우면 그 던전이 연출을 기다리는 시간으로 채워진다.
+  "raitia": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.9, cutInHoldMs: 120, zoomScale: 1.14, zoomMs: 100, cameraShakeIntensity: 0.006 },
   // 넓은 보스 전신은 컷인에서 한 단계 줄이고, 무거운 일격은 SD 확대와 흔들림으로 전달한다.
   pontos: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.82, artworkOrigin: { x: 650, y: 800 }, zoomScale: 1.3, zoomMs: 120, cameraShakeIntensity: 0.014 },
 });

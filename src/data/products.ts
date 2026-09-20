@@ -72,6 +72,14 @@ export interface PassBenefitDefinition {
   instantAdRewards: true;
   usesStandardAdRewardPolicy: true;
   dailyBonus: { currency: "gems"; amount: number };
+  /**
+   * 광고를 없애고, 광고 제거 멤버십 전용 조작을 연다(던전 x3 배율).
+   *
+   * **후원 패스와 다른 축이다.** 후원 패스는 광고를 없애지 않고 광고 슬롯을 같은 보상·한도의
+   * 즉시 수령 슬롯으로 바꿀 뿐이고(`instantAdRewards`), 이쪽은 광고 자체를 걷어 낸다. 둘을 한
+   * 값으로 묶으면 "즉시 받는 것"과 "안 보는 것"이 같은 말이 되어 상품 설명이 서로를 덮는다.
+   */
+  adFree?: true;
 }
 
 /** 정적 상품은 가격·지급·기본 구매 수량·제한 주기를 빠짐없이 선언한다. */

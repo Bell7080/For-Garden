@@ -124,7 +124,7 @@ export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "
   raid: {
     merchant: ARCHAEOLOGY_MERCHANT,
     lineKeys: ARCHAEOLOGY_MERCHANT_LINE_KEYS,
-    background: BACKGROUND.sortieRaid,
+    background: BACKGROUND.lootShop,
     titleKey: "shop.raid.title",
     // 같은 원화라 고고학 상점과 같은 자리를 쓴다. 자리는 점원이 정하지 무대가 정하지 않는다.
     merchantSpot: { headX: 744, height: 1010 },

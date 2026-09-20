@@ -32,6 +32,14 @@ export const BACKGROUND = {
    */
   archaeologyShop: "background-archaeology-shop",
   /**
+   * 전리품 상점의 무대 — 증표를 받고 물건을 내어 주는 보급 창고다.
+   *
+   * 레이드 진입 화면(`sortieRaid`)을 무대에 그대로 깔던 때는 상점과 그 앞 화면이 같은
+   * 그림이라 어디로 들어온 것인지 배경이 말하지 못했다. 오비·프로티아의 자리를 가른 것과
+   * 같은 이유다.
+   */
+  lootShop: "background-loot-shop",
+  /**
    * 지층 탐사판의 **아래층** — 겉장을 부순 칸에 드러나는 맨 흙이다.
    *
    * 겉장 넉 장은 여기 키를 두지 않는다. 판이 들고 있는 번호가 곧 키라
@@ -115,6 +123,7 @@ export const BACKGROUND_ASSETS = [
   // 같은 자리처럼 보여 무엇을 사는 곳인지 배경이 말하지 못했다.
   [BACKGROUND.shop, "sprites/background/background_013.webp"],
   [BACKGROUND.archaeologyShop, "sprites/background/background_015.webp"],
+  [BACKGROUND.lootShop, "sprites/background/background_016.webp"],
   [BACKGROUND.strataBase, "sprites/background/strata_base.webp"],
   // 겉장은 한 번 탐사할 때마다 그중 한 장이 뽑힌다. 키 이름은 `strataLayerTextureKey`가 짓는다.
   ["background-strata-layer-001", "sprites/background/strata_layer_001.webp"],

@@ -62,6 +62,8 @@ const CONTENT_ART_ASSETS = [
   // Content3_001·Content4_001은 같은 출격 선택판의 두 일일 던전을 구별하는 버튼 일러스트다.
   ["content-cake-entry", "sprites/content/Content3_001.webp"],
   ["content-bounty-entry", "sprites/content/Content4_001.webp"],
+  // Content5_001은 그 아래 전체 폭으로 선 레이드 입구의 버튼 일러스트다.
+  ["content-raid-entry", "sprites/content/Content5_001.webp"],
   // journal_001은 관찰 일지 판 안에서 원본 크기를 유지한 채 잘라 쓰는 종이 질감 원화다.
   ["content-observation-journal", "sprites/content/journal_001.webp"],
 ] as const;

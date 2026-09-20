@@ -581,3 +581,15 @@ export const ARCHAEOLOGY_CLERK_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   content: { left: 51, top: 21, right: 1018, bottom: 1412 },
   joints: { center: [550, 384], head: [557, 276], eyes: [[524, 288], [604, 248]], feet: [[631, 1768], [533, 1521]] },
 };
+
+/**
+ * 전리품 상점 점원의 전신.
+ *
+ * 값은 ZIP의 원화 알파 경계와 `puppet.json`의 관절을 실측한 것이다 — 캔버스 크기를 그대로
+ * 적거나 다른 점원의 값을 옮겨 오면 무대 배율이 통째로 틀어진다.
+ */
+export const LOOT_CLERK_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1122, imageHeight: 1402,
+  content: { left: 51, top: 15, right: 1099, bottom: 1358 },
+  joints: { center: [525, 359], head: [566, 244], eyes: [[533, 219], [598, 260]], feet: [[411, 1359], [794, 1254]] },
+};

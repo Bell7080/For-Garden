@@ -404,6 +404,7 @@ export class LobbyScene extends Phaser.Scene {
         // 레이드는 일일 던전 아래에서 독립된 전체 폭 콘텐츠로 읽히게 한다.
         {
           y: 152, width: 800, height: 200, label: t("lobby.sortie.raid"), status: t("lobby.sortie.raid.status"),
+          artKey: "content-raid-entry",
           // 레이드만 임시 소개 화면을 떠났다 — 실제 시즌 판이 그 자리를 맡는다.
           onClick: () => { close(); this.scene.start("raid"); },
         },

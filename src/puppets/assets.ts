@@ -57,6 +57,7 @@ import {
   TIA_SD_METADATA,
   SHOP_CLERK_PORTRAIT_METADATA,
   ARCHAEOLOGY_CLERK_PORTRAIT_METADATA,
+  LOOT_CLERK_PORTRAIT_METADATA,
   TORIKA_PORTRAIT_METADATA,
   TORIKA_SKIN_001_PORTRAIT_METADATA,
   TORIKA_SKIN_001_SD_METADATA,
@@ -178,6 +179,17 @@ export const SHOP_CLERK_ASSET: PuppetAsset = {
 export const ARCHAEOLOGY_CLERK_ASSET: PuppetAsset = {
   url: `${base}puppets/char_shop_archaeology.zip`,
   ...ARCHAEOLOGY_CLERK_PORTRAIT_METADATA,
+};
+
+/**
+ * 전리품 상점 점원의 전신.
+ *
+ * 오비·프로티아와 같은 이유로 `PORTRAIT_ASSETS`에 넣지 않는다 — 도감에 서지 않는 상점 전용
+ * 개체라 상점 표(`shopPresentation.ts`)가 직접 가리킨다.
+ */
+export const LOOT_CLERK_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_shop_loot.zip`,
+  ...LOOT_CLERK_PORTRAIT_METADATA,
 };
 
 /** 토리카 skin001 전신: 기본 외형과 독립 측정한 카드·로비·정보창 배치를 사용한다. */

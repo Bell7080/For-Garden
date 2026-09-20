@@ -53,6 +53,10 @@ ART: dict[str, tuple[str, tuple[float, float, float] | None] | tuple[str, tuple[
     # 상단 재화 줄의 칸들과 같은 결로 보이면 지갑에 있는 것으로 읽힌다.
     "sprites/ui/pickaxe.webp": ("발굴기회아이콘.png", None),
     "sprites/currency/energy.webp": ("Photoroom_20260822_113612.png", (0.44, 1.04, 0.52)),
+    # 전리품 상점의 두 증표. 색을 밀지 않는다 — 레이드와 원정이 저마다 다른 그림이라 이미
+    # 갈려 있고, 지갑의 다른 칸과 달리 상단 줄에 함께 서는 일이 전리품 상점 하나뿐이다.
+    "sprites/currency/raid-sigil.webp": ("토벌증표.webp", None),
+    "sprites/currency/salvage-record.webp": ("인양기록.webp", None),
 }
 
 # 그림이 캔버스 가운데에 있지 않은 원본.
@@ -65,6 +69,10 @@ ART: dict[str, tuple[str, tuple[float, float, float] | None] | tuple[str, tuple[
 RECENTER: dict[str, float] = {
     "sprites/currency/orestone.webp": 0.8,
     "sprites/ui/pickaxe.webp": 0.86,
+    # 두 증표 원본은 캔버스를 0.97까지 채워 그대로 넣으면 액자 안에서 혼자 커 보인다 —
+    # 기존 재화 아이콘이 0.64~0.82에 들어 있어 그 띠로 되돌린다.
+    "sprites/currency/raid-sigil.webp": 0.8,
+    "sprites/currency/salvage-record.webp": 0.8,
 }
 
 # 화면에서 쓰는 가장 큰 크기의 두 배로 굽는다. 더 키우면 파일만 커지고 눈에 보이지 않는다.
@@ -195,20 +203,40 @@ def save_exact(image: Image.Image, target: Path) -> None:
     print(f"{target.relative_to(PUBLIC)}  {target.stat().st_size // 1024} KB")
 
 
+def load(source: str) -> Image.Image | None:
+    """원본이 없으면 건너뛴다.
+
+    **없는 것이 정상이다** — 이 스크립트의 규칙이 「원본은 저장소에 남기지 않는다」라, 한 번
+    구운 그림의 원본은 곧 사라지고 표만 남는다. 없다고 멈추면 **새 아이콘 한 장을 굽기 위해
+    이미 구운 것들의 원본을 전부 다시 모아야** 하고, 그 비용 때문에 아무도 표에 더하지 않는다.
+    건너뛴 것은 이름을 찍어 조용히 지나가지 않게 한다.
+    """
+    path = SOURCE / source
+    if not path.exists():
+        print(f"건너뜀 — 원본 없음: {source}")
+        return None
+    return Image.open(path).convert("RGBA")
+
+
 def main() -> None:
     for out, (source, color) in FLAT.items():
-        save(recolor(Image.open(SOURCE / source).convert("RGBA"), color), PUBLIC / out)
+        art = load(source)
+        if art is not None:
+            save(recolor(art, color), PUBLIC / out)
     # 룬 하트: 등급별 색 넷 × 조각 셋, 그리고 조각 모양 그대로의 빈 자리.
-    heart = Image.open(SOURCE / "Photoroom_20260822_113309.png").convert("RGBA")
-    for rarity, tones in RUNE_TINTS.items():
-        for index, piece in enumerate(rune_pieces(colorize(heart, tones), SIZE)):
-            save_exact(piece, PUBLIC / f"sprites/runes/{rarity}-{index}.webp")
-    for index, piece in enumerate(rune_pieces(heart, SIZE)):
-        save_exact(socket(piece), PUBLIC / f"sprites/runes/empty-{index}.webp")
+    heart = load("Photoroom_20260822_113309.png")
+    if heart is not None:
+        for rarity, tones in RUNE_TINTS.items():
+            for index, piece in enumerate(rune_pieces(colorize(heart, tones), SIZE)):
+                save_exact(piece, PUBLIC / f"sprites/runes/{rarity}-{index}.webp")
+        for index, piece in enumerate(rune_pieces(heart, SIZE)):
+            save_exact(socket(piece), PUBLIC / f"sprites/runes/empty-{index}.webp")
 
     for out, entry in ART.items():
         source, factor = entry[0], entry[1]
-        art = Image.open(SOURCE / source).convert("RGBA")
+        art = load(source)
+        if art is None:
+            continue
         if factor:
             art = shift(art, factor)
         if len(entry) == 3:

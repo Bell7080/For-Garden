@@ -2,6 +2,7 @@ import { registerDataText, type TextKey } from "../i18n";
 import { ARCHAEOLOGY_CLERK_ASSET, LOOT_CLERK_ASSET, SHOP_CLERK_ASSET, type PuppetAsset } from "../puppets/assets";
 import { BACKGROUND } from "../ui/backgroundAssets";
 import type { ProductStorefront } from "./products";
+import type { TopBarCurrencyContext } from "../ui/topBarSlots";
 
 /**
  * 일반 상점 무대에 서는 점원 — **오비**.
@@ -129,6 +130,15 @@ export interface ShopStagePresentation {
    */
   readonly tabs: readonly { id: string; label: string }[];
   /**
+   * 그 자리의 상단 재화 조합.
+   *
+   * **씬이 storefront로 분기하지 않는다**는 이 표의 규칙을 재화 줄도 따른다 — 씬에
+   * `storefront === "loot" ? "loot" : "default"`를 적어 두었더니 자리가 하나 늘 때
+   * 그 삼항이 또 길어졌고, 고고학 가게는 그 분기에 없어 **로비와 같은 조합**(젬·골드·
+   * 스테미나)을 그대로 세우고 있었다.
+   */
+  readonly currencies: TopBarCurrencyContext;
+  /**
    * 그 원화만의 자리 보정.
    *
    * **원화마다 머리 관절이 그림 안에서 다른 자리에 있다.** 무대는 머리 관절을 한 점에 고정하고
@@ -155,6 +165,7 @@ export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "
     background: BACKGROUND.shop,
     titleKey: "shop.title",
     tabs: SHOP_CATEGORY_TABS,
+    currencies: "default",
   },
   archaeology: {
     merchant: ARCHAEOLOGY_MERCHANT,
@@ -162,6 +173,8 @@ export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "
     background: BACKGROUND.archaeologyShop,
     titleKey: "shop.archaeology.title",
     tabs: SHOP_CATEGORY_TABS,
+    // 이 가게에서 조작을 정하는 수는 원석 하나뿐이다.
+    currencies: "archaeologyShop",
     // 머리 관절은 **대사 띠 오른쪽 끝(730)보다 오른쪽**에 있어야 얼굴이 띠에 덮이지 않고,
     // 관절 오른쪽 461px이 화면 안에 들려면 배율이 0.73 아래여야 한다 — 그 둘을 함께 만족하는
     // 자리다. 키가 오비보다 작은 것은 원화가 넓기 때문이지 인물이 작아서가 아니다.
@@ -174,6 +187,7 @@ export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "
     titleKey: "shop.loot.title",
     // 탭 하나가 지갑 한 칸을 가리킨다 — 눌러 보기 전에 무엇으로 사는 자리인지 읽혀야 한다.
     tabs: LOOT_CATEGORY_TABS,
+    currencies: "loot",
     // 프로티아와 등신이 비슷해 같은 자리를 쓴다. 자리는 점원이 정하지 무대가 정하지 않는다.
     merchantSpot: { headX: 744, height: 1010 },
   },

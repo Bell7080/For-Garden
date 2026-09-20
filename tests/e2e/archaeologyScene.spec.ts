@@ -94,6 +94,13 @@ test("고고학의 두 탭과 고고학 상점을 연다", async ({ page }, test
     if (spot === undefined) break;
     await tap(page, spot.x, spot.y);
     await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.archaeologyDig?.active), { timeout: 30_000 }).toBe(false);
+    /*
+     * **실제로 파였는지 센다.** `active`가 false로 돌아오는 것만 보던 때는, 입력이 죽어 아무
+     * 일도 일어나지 않은 회차도 그대로 통과했다 — 특화 구역 칸의 입력면이 첫 굴착 뒤로 영영
+     * 꺼져 있었는데 네 번을 헛눌러도 검사는 초록이었다.
+     */
+    await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.archaeologyDig?.revealedIndices.length),
+      { timeout: 30_000 }).toBe(round + 1);
   }
   await page.waitForTimeout(800);
   await captureGame(page, `test-results/${testInfo.project.name}-archaeology-dug.png`);

@@ -8,6 +8,7 @@ import { drawLayer, HoloBar, slantedRect } from "./holo";
 import { addFramedIcon } from "./itemFrame";
 import { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
+import { CURRENCY_GUIDE_SIZE } from "./currencyGuideLayout";
 
 /**
  * 보유량을 세우는 위쪽 판.
@@ -17,14 +18,6 @@ import { COLOR, textStyle } from "./theme";
  */
 const HERO = { y: -290, width: 660, height: 176, frameSize: 124 } as const;
 
-/**
- * 창의 크기.
- *
- * **밖으로 내보내는 이유는 E2E가 같은 값을 읽어야 하기 때문이다.** 닫기 X의 자리는 이 크기와
- * `POPUP_CLOSE_LAYOUT`에서 나오는데, 스펙이 그 좌표를 손으로 적어 두었더니 창이 커진 뒤로
- * 66px 어긋나 빈 곳을 눌렀고 — 조작은 성공한 채 검사만 조용히 깨졌다.
- */
-export const CURRENCY_GUIDE_SIZE = { width: 780, height: 1020 } as const;
 const TONE = { value: "#ffe9a3" } as const;
 
 /** 획득처와 사용처를 같은 홀로그램 문법으로 보여 주는 공용 읽기 전용 안내창이다. */

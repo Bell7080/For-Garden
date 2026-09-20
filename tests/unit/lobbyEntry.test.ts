@@ -123,6 +123,22 @@ describe("전리품 증표", () => {
       expect(keysOf(context)).not.toContain("salvageRecord");
     }
   });
+
+  it("는 자리마다 무대표가 정하고 씬이 storefront로 분기하지 않는다", () => {
+    /*
+     * 씬에 `storefront === "loot" ? "loot" : "default"`를 적어 두었더니 자리가 하나 늘 때
+     * 그 삼항이 또 길어졌고, **고고학 가게는 그 분기에 없어 로비와 같은 조합**(젬·골드·
+     * 스테미나)을 그대로 세우고 있었다. 어느 자리가 무엇을 세우는지는 눈으로 확인할 수 없어
+     * 이 표가 계약이다.
+     */
+    expect(shopStagePresentation("shop").currencies).toBe("default");
+    expect(shopStagePresentation("loot").currencies).toBe("loot");
+    expect(shopStagePresentation("archaeology").currencies).toBe("archaeologyShop");
+    // 고고학 가게에서 조작을 정하는 수는 원석 하나뿐이다.
+    expect(TOP_BAR_SLOT_KEYS.archaeologyShop).toEqual(["rawStone"]);
+    // 지도 화면은 제 조합을 그대로 갖는다 — 같은 콘텐츠라도 거기서 정하는 것이 다르다.
+    expect(TOP_BAR_SLOT_KEYS.archaeology.length).toBeGreaterThan(1);
+  });
 });
 
 describe("스테미나 충전 칸", () => {

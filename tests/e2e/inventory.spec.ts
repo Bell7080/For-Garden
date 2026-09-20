@@ -5,7 +5,7 @@ import { createRuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { captureGame, tap, tapUntil, waitForDebugState } from "./canvasInput";
 // 레일 자리는 화면이 소유한 배치표에서 읽는다 — 좌표를 스펙에 베껴 두면 줄이 옮겨질 때 조용히 빗나간다.
 import { LOBBY_RAIL_BOUNDS } from "../../src/ui/lobbyLayout";
-import { CURRENCY_GUIDE_SIZE } from "../../src/ui/CurrencyGuidePopup";
+import { CURRENCY_GUIDE_SIZE } from "../../src/ui/currencyGuideLayout";
 import { POPUP_CLOSE_LAYOUT } from "../../src/ui/popupGeometry";
 
 const WIDTH = 1080; const HEIGHT = 1920;

@@ -32,11 +32,11 @@ import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, 
 import { runeEnhancementGoldCost, runeSellValue } from "../data/runes";
 import { canUpgradeRuneTraitGrade, grantRuneTrait as rollRuneTrait, rerollRuneTrait as rollRuneTraitReroll, RUNE_TRAIT_RULES, upgradeRuneTraitGrade, type RuneTrait } from "../core/runeTraits";
 import { RUNE_TRAIT_IDS, RUNE_TRAIT_ITEMS } from "../data/runeTraits";
-import { canDigStrataTile, createStrataBoard, digStrataTile as digTile, nextStrataChargeAt, settleStrataCharges, strataBoardView } from "../core/strataDig";
+import { beginStrataSiteCooldown, canDigStrataTile, createStrataBoard, digStrataTile as digTile, nextStrataChargeAt, settleStrataCharges, strataBoardView, strataSiteCooldownUntil } from "../core/strataDig";
 import { findStrataLayer, STRATA_CHARGE } from "../data/strataLayers";
 import { ARCHAEOLOGY_SITES, findArchaeologySite } from "../data/archaeologySites";
 import { archaeologySiteAvailability } from "../core/archaeologyMap";
-import type { ArchaeologyStateResponse, DigStrataTileRequest, DigStrataTileResponse, GrantRuneTraitRequest, GrantRuneTraitResponse, RerollRuneTraitRequest, RerollRuneTraitResponse, ResolveRuneTraitRerollRequest, ResolveRuneTraitRerollResponse, StartStrataRunRequest, UpgradeRuneTraitRequest, UpgradeRuneTraitResponse } from "./contracts";
+import type { AbandonStrataRunRequest, ArchaeologyStateResponse, DigStrataTileRequest, DigStrataTileResponse, GrantRuneTraitRequest, GrantRuneTraitResponse, RerollRuneTraitRequest, RerollRuneTraitResponse, ResolveRuneTraitRerollRequest, ResolveRuneTraitRerollResponse, StartStrataRunRequest, UpgradeRuneTraitRequest, UpgradeRuneTraitResponse } from "./contracts";
 import { findItem } from "../data/items";
 import { RAID_BOSS_BALANCE, RAID_CONTRIBUTION_REWARD_STAGES, RAID_DAILY_ATTEMPTS, RAID_DEFEAT_REWARD, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP } from "../data/raid";
 import { mockRaidContributions, raidBossDef, raidContributionBoard, raidEarnedContributionStageIds, raidSeasonElapsedDays, raidSeasonKey, raidSeasonProgress } from "../core/raid";
@@ -1679,7 +1679,16 @@ export class FakeServer implements GameApi {
       board: board ? strataBoardView(board) : null,
       sites: ARCHAEOLOGY_SITES.map((site) => {
         const availability = archaeologySiteAvailability(site, this.state.playerResearch.level, this.state.archaeology.completedSiteIds);
-        return { siteId: site.id, unlocked: this.state.archaeology.unlockedSiteIds.includes(site.id) || availability.available, completed: this.state.archaeology.completedSiteIds.includes(site.id), missingLevel: availability.missingLevel, missingPrerequisiteIds: availability.missingPrerequisiteIds };
+        return {
+          siteId: site.id,
+          unlocked: this.state.archaeology.unlockedSiteIds.includes(site.id) || availability.available,
+          completed: this.state.archaeology.completedSiteIds.includes(site.id),
+          missingLevel: availability.missingLevel,
+          missingPrerequisiteIds: availability.missingPrerequisiteIds,
+          // 재사용 대기는 해금과 다른 축이다 — 열려 있지만 지금은 못 들어가는 자리를 화면이
+          // 「잠김」과 같은 말로 부르면 레벨을 올리면 열리는 줄 안다.
+          cooldownUntil: strataSiteCooldownUntil(this.state.archaeology.siteCooldowns, site.id, this.now()),
+        };
       }),
       serverTime: this.now().toISOString(),
     };
@@ -1707,10 +1716,45 @@ export class FakeServer implements GameApi {
     // 진행 중인 판이 있으면 새로 열지 않는다 — 횟수를 이미 치른 판이라 덮으면 그 한 번이 사라진다.
     if (this.state.archaeology.board !== null) throw new GameApiError("STRATA_RUN_ACTIVE", "아직 끝나지 않은 탐사가 있습니다.");
     if (this.state.archaeology.charges <= 0) throw new GameApiError("STRATA_NO_CHARGE", "탐사 횟수가 부족합니다.");
+    // 같은 자리를 연달아 파는 것만 막는다. 대기 중인 유적은 해금 상태와 무관하게 거절한다.
+    if (site && strataSiteCooldownUntil(this.state.archaeology.siteCooldowns, site.id, this.now()) !== null) {
+      throw new GameApiError("STRATA_SITE_COOLING", "아직 다시 탐사할 수 없는 유적입니다.");
+    }
     this.state.archaeology.charges -= 1;
     // 가득 찬 상태에서 하나를 쓰는 순간이 곧 다음 충전이 시작되는 시각이다.
     this.state.archaeology.chargesUpdatedAt = this.now().toISOString();
     this.state.archaeology.board = createStrataBoard({ layerId, siteId: site?.id, random: this.random });
+    this.persist(this.state);
+    return this.archaeologyDto();
+  }
+
+  /**
+   * 판을 치우고 그 유적에 재사용 대기를 건다.
+   *
+   * **다 판 판과 중간에 끝낸 판이 같은 자리를 지난다** — 끝내는 방식마다 따로 적으면 한쪽만
+   * 고쳐도 다른 쪽이 옛 규칙으로 남는다. 완료 이력에도 함께 올린다: 판을 여는 데 이미 횟수를
+   * 한 번 치렀으므로, 중간에 그만둔 것이 선행 조건을 영영 막는 함정이 되면 안 된다.
+   */
+  private closeStrataBoard(siteId: string | undefined): void {
+    if (siteId) {
+      if (!this.state.archaeology.completedSiteIds.includes(siteId)) this.state.archaeology.completedSiteIds.push(siteId);
+      this.state.archaeology.siteCooldowns = beginStrataSiteCooldown(this.state.archaeology.siteCooldowns, siteId, this.now());
+    }
+    this.state.archaeology.board = null;
+  }
+
+  /**
+   * 남은 횟수를 버리고 판을 닫는다.
+   *
+   * **아무것도 지급하지 않는다** — 캔 것은 칸을 팔 때 이미 지갑에 들어갔다. 여기서 한 번 더
+   * 주면 같은 보상이 두 번 들어가고, 화면의 영수증은 그 사실을 말할 방법이 없다.
+   */
+  async abandonStrataRun(_request: AbandonStrataRunRequest): Promise<ArchaeologyStateResponse> {
+    await this.delay();
+    this.settleStrataChargesNow();
+    const board = this.state.archaeology.board;
+    if (board === null) throw new GameApiError("STRATA_RUN_NOT_FOUND", "진행 중인 탐사가 없습니다.");
+    this.closeStrataBoard(board.siteId);
     this.persist(this.state);
     return this.archaeologyDto();
   }
@@ -1744,9 +1788,7 @@ export class FakeServer implements GameApi {
     }
     // 판을 다 판 순간 치운다 — 남겨 두면 다음에 들어온 사람이 아무것도 팔 수 없는 판을 본다.
     if (this.state.archaeology.board && this.state.archaeology.board.digsLeft <= 0) {
-      const completedSiteId = this.state.archaeology.board.siteId;
-      if (completedSiteId && !this.state.archaeology.completedSiteIds.includes(completedSiteId)) this.state.archaeology.completedSiteIds.push(completedSiteId);
-      this.state.archaeology.board = null;
+      this.closeStrataBoard(this.state.archaeology.board.siteId);
     }
     this.persist(this.state);
     const inventory = await this.getInventory();

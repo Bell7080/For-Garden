@@ -127,7 +127,8 @@ export class ShopScene extends Phaser.Scene {
     this.playEntrance();
     this.publishControls([]);
     // 점원 자산은 별도 표시 데이터에서 고르고 공용 Puppet과 관절 배치 규칙을 그대로 거친다.
-    void this.createMerchant();
+    // **묶음을 못 읽어도 말은 선다** — 실패를 삼키면 점원 쪽 문이 영영 닫혀 첫 마디가 사라진다.
+    void this.createMerchant().catch(() => this.openMerchantGate());
     void this.refresh();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.removeScrollInput();
@@ -181,6 +182,27 @@ export class ShopScene extends Phaser.Scene {
     this.tweens.add({ targets: this.tabRow, alpha: 1, duration: grid.duration, delay: grid.delay });
     // 전시대가 아직 올라오는 중이면 말부터 서지 않는다. 점원 쪽 문과 둘 다 열려야 첫 마디가 뜬다.
     this.time.delayedCall(SHOP_ENTRANCE.dialogue.delay, () => { this.entranceSettled = true; this.tryFirstLine(); });
+    /*
+     * **점원을 기다리는 데에는 한계가 있다.**
+     *
+     * 첫 마디의 문 둘 중 하나는 점원 묶음이 여는데, 그 묶음은 내려받기라 느릴 수도 아예 오지
+     * 못할 수도 있다(ZIP 실패·오프라인). 그때 문이 영영 닫혀 있으면 첫 마디가 통째로
+     * 사라져 **눌러야만 말이 나오는 화면**이 된다 — 실제로 「로딩이 길면 첫 대사가 안 뜬다」로
+     * 읽혔다. 전시대가 다 올라온 뒤로 이만큼 지나면 점원 없이도 말이 선다.
+     */
+    this.time.delayedCall(SHOP_ENTRANCE.dialogue.delay + SHOP_ENTRANCE.dialogue.merchantWait, () => this.openMerchantGate());
+  }
+
+  /**
+   * 점원 쪽 문을 연다.
+   *
+   * 묶음이 도착했을 때와 기다림이 한계에 닿았을 때가 같은 자리로 모인다 — 두 곳에서 따로
+   * 열면 한쪽만 고쳐도 다른 쪽이 옛 규칙으로 남는다. 이미 열려 있으면 아무 일도 하지 않는다.
+   */
+  private openMerchantGate(): void {
+    if (this.merchantReady || !this.scene.isActive()) return;
+    this.merchantReady = true;
+    this.tryFirstLine();
   }
 
   /**
@@ -283,8 +305,7 @@ export class ShopScene extends Phaser.Scene {
      * 대사가 등장 연출이 끝나고 한참 뒤에야 떴다 — 플레이어는 그때 이미 목록을 보고 있어
      * 「대사가 안 뜬다」로 읽혔다. 띠는 왼쪽에서, 점원은 오른쪽에서 같은 순간에 들어온다.
      */
-    this.merchantReady = true;
-    this.tryFirstLine();
+    this.openMerchantGate();
   }
 
   /** 격자 한 계층만 자르는 고정 마스크를 만들어 판 머리글과 탭 입력을 침범하지 않게 한다. */

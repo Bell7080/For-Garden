@@ -9,6 +9,7 @@ import { WALLET_CAPS } from "../../src/data/economy";
 import { staminaCurrencyRecharge } from "../../src/data/staminaRecharge";
 import { staminaMaxForPlayer } from "../../src/core/stamina";
 import { createArchaeologyState } from "../../src/core/strataDig";
+import { STRATA_SITE_COOLDOWN_MS } from "../../src/data/strataLayers";
 
 /** API 테스트에서 같은 옵션 구성을 재현하는 보유 룬을 만든다. */
 function makeRune(instanceId = "rune-1"): RuneInstance {
@@ -56,6 +57,74 @@ function makeSession(fossil = 1000): Session {
     cakeOperation: { clearedIndex: -1 },
   };
 }
+
+describe("FakeServer 고고학", () => {
+  /** 한 판을 남김없이 파서 닫는다. 어느 지층이든 횟수를 다 쓰면 판이 닫힌다. */
+  async function digUntilClosed(server: FakeServer): Promise<void> {
+    for (let guard = 0; guard < 64; guard += 1) {
+      const state = await server.archaeologyState();
+      const open = state.board?.tiles.find((tile) => !tile.revealed);
+      if (!state.board || open === undefined) return;
+      await server.digStrataTile({ tileIndex: open.index, requestId: `dig-${guard}` });
+    }
+    throw new Error("판이 닫히지 않았습니다.");
+  }
+
+  it("는 한 번 판 유적을 여섯 시간 동안 다시 열지 않는다", async () => {
+    let now = new Date("2026-03-01T00:00:00Z");
+    const server = new FakeServer(makeSession(), { latencyMs: 0, now: () => now });
+    await server.startStrataRun({ siteId: "garden-gate", requestId: "run-1" });
+    await digUntilClosed(server);
+
+    const closed = await server.archaeologyState();
+    expect(closed.board).toBeNull();
+    // 대기는 해금과 다른 축이다 — 열려 있지만 지금은 못 들어가는 자리다.
+    const gate = closed.sites.find(({ siteId }) => siteId === "garden-gate")!;
+    expect(gate.unlocked).toBe(true);
+    expect(gate.cooldownUntil).toBe(new Date(now.getTime() + STRATA_SITE_COOLDOWN_MS).toISOString());
+    await expect(server.startStrataRun({ siteId: "garden-gate", requestId: "run-2" })).rejects.toBeInstanceOf(GameApiError);
+
+    // 여섯 시간이 지나면 저절로 풀리고, 치른 횟수도 그 사이에 차 있다.
+    now = new Date(now.getTime() + STRATA_SITE_COOLDOWN_MS);
+    const later = await server.archaeologyState();
+    expect(later.sites.find(({ siteId }) => siteId === "garden-gate")!.cooldownUntil).toBeNull();
+    await expect(server.startStrataRun({ siteId: "garden-gate", requestId: "run-3" })).resolves.toBeTruthy();
+  });
+
+  it("의 다른 유적은 함께 잠기지 않아 다섯 번이 여러 자리로 흩어진다", async () => {
+    const now = new Date("2026-03-01T00:00:00Z");
+    const session = makeSession();
+    // 그물망의 다음 갈래는 연구 레벨이 열어 준다. 선행은 첫 판을 끝내며 함께 채워진다.
+    session.playerResearch.level = 20;
+    const server = new FakeServer(session, { latencyMs: 0, now: () => now });
+    await server.startStrataRun({ siteId: "garden-gate", requestId: "run-1" });
+    await digUntilClosed(server);
+    const open = await server.startStrataRun({ siteId: "rust-canal", requestId: "run-2" });
+    expect(open.board).not.toBeNull();
+    expect(open.sites.find(({ siteId }) => siteId === "rust-canal")!.cooldownUntil).toBeNull();
+  });
+
+  it("의 탐사 종료는 아무것도 더 주지 않고 판만 닫는다", async () => {
+    const now = new Date("2026-03-01T00:00:00Z");
+    const session = makeSession();
+    const server = new FakeServer(session, { latencyMs: 0, now: () => now });
+    await server.startStrataRun({ siteId: "garden-gate", requestId: "run-1" });
+    const first = await server.archaeologyState();
+    const tile = first.board!.tiles[0];
+    const dug = await server.digStrataTile({ tileIndex: tile.index, requestId: "dig-1" });
+    const walletAfterDig = { ...dug.wallet };
+
+    const ended = await server.abandonStrataRun({ requestId: "finish-1" });
+    expect(ended.board).toBeNull();
+    // 캔 것은 칸을 팔 때 이미 지갑에 들어갔다 — 여기서 한 번 더 주면 같은 보상이 두 번 들어간다.
+    expect(session.wallet).toEqual(walletAfterDig);
+    // 끝내는 방식이 달라도 그 자리에는 같은 대기가 걸린다.
+    expect(ended.sites.find(({ siteId }) => siteId === "garden-gate")!.cooldownUntil)
+      .toBe(new Date(now.getTime() + STRATA_SITE_COOLDOWN_MS).toISOString());
+    // 진행 중인 판이 없으면 종료도 거절한다.
+    await expect(server.abandonStrataRun({ requestId: "finish-2" })).rejects.toBeInstanceOf(GameApiError);
+  });
+});
 
 describe("FakeServer", () => {
   /** 실제 피해량 없이 각 렐릭의 공용 공속 쿨다운을 만족하는 기본 공격 입력이다. */

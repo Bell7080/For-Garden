@@ -308,6 +308,14 @@ export class SaveManager {
       completedSiteIds: Array.isArray(savedArchaeology?.completedSiteIds) ? savedArchaeology.completedSiteIds : archaeologyDefaults.completedSiteIds,
       // v35 이전에는 카메라 선택을 저장하지 않았다. 픽셀 좌표 대신 안정적인 유적 ID만 추가한다.
       lastSelectedSiteId: typeof savedArchaeology?.lastSelectedSiteId === "string" ? savedArchaeology.lastSelectedSiteId : null,
+      /*
+       * 재사용 대기를 몰랐던 저장은 **아무 자리도 잠기지 않은 채** 시작한다 — 없던 제한을
+       * 소급해 걸면 돌아온 사람이 이유 없이 여섯 시간을 기다린다. 값은 유적 ID → ISO 시각이라
+       * 문자열이 아닌 항목은 조용히 버린다(손상된 저장이 화면의 시계를 흔들지 않게 한다).
+       */
+      siteCooldowns: savedArchaeology?.siteCooldowns && typeof savedArchaeology.siteCooldowns === "object"
+        ? Object.fromEntries(Object.entries(savedArchaeology.siteCooldowns).filter(([, until]) => typeof until === "string"))
+        : {},
     };
     const savedExcavation = Number(legacy.saveVersion) >= 18 && legacy.idleExcavation && typeof legacy.idleExcavation === "object"
       ? legacy.idleExcavation as Partial<SaveData["idleExcavation"]> : undefined;

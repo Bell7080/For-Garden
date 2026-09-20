@@ -8,8 +8,13 @@
 /** 겉장·아래층 원화의 원본 크기(px). */
 export const STRATA_ART = { width: 941, height: 1672 } as const;
 
-/** 판이 놓일 수 있는 화면 좌표의 띠다. */
-export const STRATA_BOARD = { top: 330, bottom: 1580, maxWidth: 1000, baseShade: 0.32 } as const;
+/**
+ * 판이 놓일 수 있는 화면 좌표의 띠다.
+ *
+ * **밑변을 1580에서 1280으로 올렸다.** 판 아래에 전리품 액자 줄과 그 아래 「탐사 종료」가
+ * 서야 하는데, 판이 1580까지 내려오던 때는 그 둘이 설 자리가 하단 라벨 줄(1652)과 겹쳤다.
+ */
+export const STRATA_BOARD = { top: 360, bottom: 1280, maxWidth: 1000, baseShade: 0.32 } as const;
 
 /** 화면에 그리는 판과 셀의 좌표/크기다. 값의 단위는 모두 화면 px이다. */
 export interface StrataBoardFrame {

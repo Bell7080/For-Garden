@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
 import { captureGame, tap } from "./canvasInput";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
+import { archaeologySitePopupLayout } from "../../src/ui/archaeologySitePopupLayout";
 
 /**
  * 고고학 화면과 그 상점의 눈 검사.
@@ -30,11 +31,41 @@ async function tapUntil(page: Page, x: number, y: number, target: string): Promi
   }, { timeout: 30_000 }).toBe(target);
 }
 
+/**
+ * 지도 노드가 실제로 선 자리를 화면에서 읽는다.
+ *
+ * **좌표를 손으로 적지 않는다** — 열세 자리가 얽힌 그물망이라 자리를 한 번 옮기는 것만으로
+ * 여러 편이 동시에 죽는다. 지도가 도착할 때까지 기다렸다가 그중 하나를 고른다.
+ */
+async function mapNode(page: Page, siteId: string): Promise<{ x: number; y: number; state: string }> {
+  const read = (): Promise<{ x: number; y: number; state: string } | undefined> => page.evaluate((id) => {
+    const node = window.__PF_DEBUG?.archaeologyMap?.nodes.find((entry) => entry.siteId === id);
+    return node === undefined ? undefined : { x: node.x, y: node.y, state: node.state };
+  }, siteId);
+  await expect.poll(read, { timeout: 30_000 }).toBeDefined();
+  const node = await read();
+  if (node === undefined) throw new Error(`지도에 ${siteId} 노드가 없습니다.`);
+  return node;
+}
+
 /** 첫 유적 노드의 미리보기를 열고 서버 검증 시작 버튼을 누른다. */
 async function startFirstArchaeologySite(page: Page): Promise<void> {
-  await tap(page, 260, 340 + 820);
-  await page.waitForTimeout(250);
-  await tap(page, BASE_WIDTH / 2 + 190, 1110 + 220);
+  const gate = await mapNode(page, "garden-gate");
+  await tap(page, gate.x, gate.y);
+  await page.waitForTimeout(300);
+  await tapPreviewStart(page);
+}
+
+/** 미리보기 창의 「탐사 시작」. 창 크기는 보상 줄 수에서 자라므로 자리도 그 표에서 읽는다. */
+async function tapPreviewStart(page: Page): Promise<void> {
+  const spot = archaeologySitePopupLayout(3);
+  await tap(page, BASE_WIDTH / 2 + spot.buttonCenters[1], BASE_HEIGHT / 2 + spot.buttonY);
+}
+
+/** 같은 창의 「닫기」. */
+async function tapPreviewClose(page: Page): Promise<void> {
+  const spot = archaeologySitePopupLayout(3);
+  await tap(page, BASE_WIDTH / 2 + spot.buttonCenters[0], BASE_HEIGHT / 2 + spot.buttonY);
 }
 
 test("고고학의 두 탭과 고고학 상점을 연다", async ({ page }, testInfo) => {
@@ -53,11 +84,16 @@ test("고고학의 두 탭과 고고학 상점을 연다", async ({ page }, test
   await captureGame(page, `test-results/${testInfo.project.name}-archaeology-strata.png`);
 
   // 판을 하나 열고 칸 몇 개를 판다 — 부순 칸에만 아래층과 보상이 드러나는지 보는 자리다.
+  // **누를 자리는 화면이 알려 준다.** 격자 좌표를 손으로 적으면 판 규격을 한 번 옮기는 것만으로
+  // 네 번의 입력이 전부 빈 곳을 누른다.
   await startFirstArchaeologySite(page);
-  await page.waitForTimeout(1_500);
-  for (const [col, row] of [[1, 1], [3, 0], [2, 3], [0, 4]] as const) {
-    await tap(page, 340 + col * 100, 430 + row * 178);
-    await page.waitForTimeout(500);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.archaeologyDig?.tiles.length),
+    { timeout: 30_000 }).toBeGreaterThan(1);
+  for (let round = 0; round < 4; round += 1) {
+    const spot = await page.evaluate(() => window.__PF_DEBUG?.archaeologyDig?.tiles[0]);
+    if (spot === undefined) break;
+    await tap(page, spot.x, spot.y);
+    await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.archaeologyDig?.active), { timeout: 30_000 }).toBe(false);
   }
   await page.waitForTimeout(800);
   await captureGame(page, `test-results/${testInfo.project.name}-archaeology-dug.png`);
@@ -153,8 +189,9 @@ test("지층 한 칸은 타격까지 입력을 잠그고 선택한 결과만 공
   await tap(page, targets[1].x, targets[1].y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.archaeologyDig?.requests)).toBe(1);
   /*
-   * **연출이 끝나기를 기다리는 자리는 기본 제한(5초)으로 부족하다.** 시간표 자체는 1.06초지만
-   * (`StrataDigEffect`의 진입·회전·충돌·퇴장 합) Phaser의 Tween과 Timer는 프레임이 돌아야
+   * **연출이 끝나기를 기다리는 자리는 기본 제한(5초)으로 부족하다.** 시간표 자체는 0.45초
+   * 남짓이고(`StrataDigEffect`의 진입·회전·충돌 합 — 퇴장은 더 이상 기다리지 않는다)
+   * 그마저도 Phaser의 Tween과 Timer는 프레임이 돌아야
    * 나아가고, 보이지 않는 창에서 도는 헤드리스 브라우저는 그 프레임을 훨씬 드물게 준다 —
    * 실측에서 입력부터 잠금 해제까지 약 6초였다. 위 입력면 게시를 기다리는 줄이 이미 같은
    * 이유로 30초를 쓰고 있어 같은 값을 준다. 화면을 여는 시간이 아니라 **프레임이 오는 속도**에
@@ -179,21 +216,27 @@ test("유적 지도 이동 → 잠긴 유적 확인 → 열린 유적 미리보�
   await tapUntil(page, BASE_WIDTH / 10, BASE_HEIGHT - 180 + 90, "archaeology");
   await captureGame(page, `test-results/${testInfo.project.name}-archaeology-map.png`);
 
-  // 오른쪽으로 이어지는 지도를 왼쪽으로 밀어 잠긴 심층 노드까지 본다.
+  // 그물망을 왼쪽으로 밀어 잠긴 심층 노드까지 본다. 민 뒤의 자리는 화면이 다시 알려 준다.
   await page.mouse.move(850, 760); await page.mouse.down(); await page.mouse.move(300, 760, { steps: 8 }); await page.mouse.up();
-  await tap(page, 670, 340 + 250);
   await page.waitForTimeout(250);
+  const sanctum = await mapNode(page, "deep-sanctum");
+  expect(sanctum.state).toBe("locked");
+  await tap(page, sanctum.x, sanctum.y);
+  await page.waitForTimeout(300);
   // 잠긴 미리보기의 시작 자리는 입력해도 판이 생기지 않는다.
-  await tap(page, BASE_WIDTH / 2 + 190, 1110 + 220);
+  await tapPreviewStart(page);
   expect(await page.evaluate(() => window.__PF_DEBUG?.archaeologyDig?.tiles.length ?? 0)).toBe(0);
-  await tap(page, BASE_WIDTH / 2 - 190, 1110 + 220);
+  await tapPreviewClose(page);
+  await page.waitForTimeout(250);
 
   // 지도를 원위치로 되밀고 열린 첫 유적의 미리보기에서 탐사를 시작한다.
   await page.mouse.move(300, 760); await page.mouse.down(); await page.mouse.move(900, 760, { steps: 8 }); await page.mouse.up();
-  await tap(page, 260, 340 + 820);
   await page.waitForTimeout(250);
-  // 별 모양과 읽을 수 있는 N별 문구가 함께 서는 실제 미리보기를 시각 회귀로 남긴다.
+  const gate = await mapNode(page, "garden-gate");
+  await tap(page, gate.x, gate.y);
+  await page.waitForTimeout(300);
+  // 다섯 칸 게이지와 읽을 수 있는 N/5 문구가 함께 서는 실제 미리보기를 시각 회귀로 남긴다.
   await captureGame(page, `test-results/${testInfo.project.name}-archaeology-site-preview.png`);
-  await tap(page, BASE_WIDTH / 2 + 190, 1110 + 220);
+  await tapPreviewStart(page);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.archaeologyDig?.tiles.length), { timeout: 30_000 }).toBeGreaterThan(1);
 });

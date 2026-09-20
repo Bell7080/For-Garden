@@ -274,19 +274,14 @@ export interface Fighter extends Combatant {
    */
   volley: { remaining: number; total: number; hitCount: number; attackSpeedPercent: number } | null;
   /**
-   * 발밑에 고인 여울(`BasicAttack.shallows`). 판은 개체당 **한 곳뿐이다.**
+   * 전장에 깔린 여울(`BasicAttack.shallows`). **여러 곳이 동시에 남는다.**
    *
-   * 좌표를 함께 드는 이유는 판이 **개체를 따라다니지 않기 때문이다** — 낸 자리에 그대로 남아
-   * 마른다. 표적을 갈아타 달려가면 스피나만 빠져나오고 판은 뒤에 남아 거기 선 적을 계속 잠근다.
+   * 개수를 손으로 못 박지 않는다 — 새 판은 기존 판에서 `minSpacing`만큼 떨어져야 서므로,
+   * 적이 몰려 있으면 적게 흩어져 있으면 많이 깔린다.
    */
-  /**
-   * 고인 자리와 **그 판 자신의 반경**이다.
-   *
-   * 반경을 정의가 아니라 판이 들고 있는 이유는 궁극기의 범람이 기본 공격보다 훨씬 넓은 판을
-   * 같은 슬롯에 깔기 때문이다 — 정의에서 읽으면 범람한 물도 평타 반경으로 재어, 보여 준
-   * 넓이와 실제로 잠기는 넓이가 갈린다.
-   */
-  shallows: { x: number; y: number; remaining: number; total: number; tickIn: number; radius: number } | null;
+  shallowPools: { x: number; y: number; remaining: number; total: number }[];
+  /** 마지막 도약 이후의 기본 공격 행동 수. `leapEveryHits`에 닿으면 여울로 뛴다. */
+  shallowLeapCount: number;
   /**
    * 도발 회복(`Passive.tauntHeal`)이 이번 초에 쓸 수 있는 남은 횟수다.
    *
@@ -465,6 +460,24 @@ export interface SkirmishState {
   initialEvents: SkirmishEvent[];
   /** 보스전에서만 존재하는 누적 피해·생존 시간·단계 상태다. 같은 진행기가 함께 갱신한다. */
   boss?: SkirmishBossState;
+  /** 물량형 던전에서만 존재하는 남은 무리와 지금 몇 번째인가다. */
+  waves?: SkirmishWaveState;
+}
+
+/**
+ * 이어 설 무리의 상태.
+ *
+ * `nextIndex`는 전투원 ID(`enemy-<n>`)를 만드는 자리라 무리를 넘어 이어진다 — 무리마다
+ * 0으로 되돌리면 앞 무리의 시체와 새 무리가 같은 ID를 갖고, 성장 스냅샷을 찾는 표
+ * (`placedEnemyIndex`)가 엉뚱한 개체를 가리킨다.
+ */
+export interface SkirmishWaveState {
+  pending: RelicDef[][];
+  /** 지금 싸우고 있는 무리(1부터). */
+  current: number;
+  total: number;
+  nextIndex: number;
+  bodyScale: number;
 }
 
 /**
@@ -524,6 +537,16 @@ export interface CreateSkirmishOptions {
   enemyBreakthroughs?: readonly number[];
   /** 지정한 적 한 명만 불사이며 아군 전멸만 패배 종료가 되는 보스 규칙을 켠다. */
   boss?: { phases: readonly SkirmishBossPhase[]; limitSeconds: number; fighterId?: string };
+  /**
+   * `enemyDefs` **다음에** 이어 설 무리들. 적이 전멸하면 그 자리에 다음 무리가 서고,
+   * 마지막 무리까지 넘겨야 승리가 된다.
+   *
+   * 편당 다섯이라는 상한은 **한 무리의 상한**이지 한 판의 상한이 아니다 — 물량형 던전은
+   * 그 상한을 늘리는 대신 무리를 이어 붙여 "몰려온다"를 만든다. 아군의 체력·궁극 게이지·
+   * 야성은 무리 사이에 **이어진다**. 무리마다 초기화하면 세 판을 따로 도는 것과 같아져
+   * 한 판을 버텨 내는 던전이 되지 못한다.
+   */
+  waves?: readonly (readonly RelicDef[])[];
 }
 
 /** 씬이 모션·피격 숫자·사망 연출을 붙일 수 있도록 이번 프레임에 일어난 일만 모아 돌려준다. */
@@ -648,6 +671,8 @@ export type SkirmishEvent =
   | { kind: "vandalismBurst"; attackerId: string; fighterId: string; amount: number }
   /** 돌진이 실제로 지나간 선분. 씬은 이 두 점 사이에 자국을 그린다. */
   | { kind: "charge"; fighterId: string; from: { x: number; y: number }; to: { x: number; y: number } }
+  /** 다음 무리가 전장에 선 순간. 씬은 이 사건으로만 웨이브 표시를 바꾼다. */
+  | { kind: "waveStart"; wave: number; total: number; fighterIds: readonly string[] }
   | { kind: "finish"; phase: "victory" | "defeat" };
 
 /** 난전의 손맛을 정하는 값. 전부 여기서만 조정한다. */
@@ -979,7 +1004,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     bonusAttackSpeed: 0,
     focus: 0,
     volley: null,
-    shallows: null,
+    shallowPools: [],
+    shallowLeapCount: 0,
     tauntHealBudget: def.passive.tauntHeal?.maxPerSecond ?? 0,
     submergedIn: null,
     statusPotencyMultiplier: multipliers.statusPotencyPercent,
@@ -1122,6 +1148,14 @@ export function createSkirmish(
     augmentEffects: options.augmentEffects ?? [],
     initialEvents: [],
     boss: options.boss ? { fighterId: bossFighterId, score: 0, survivedFor: 0, phaseIndex: 0, limitReached: false, phases: options.boss.phases, limitSeconds: options.boss.limitSeconds, damageRemainder: 0, tideWarning: false } : undefined,
+    // 이어 설 무리가 없으면 상태 자체를 두지 않아 기존 한 판 전투의 종료 판정이 그대로 남는다.
+    waves: options.waves?.length ? {
+      pending: options.waves.map((wave) => [...wave]),
+      current: 1,
+      total: options.waves.length + 1,
+      nextIndex: enemies.length,
+      bodyScale: options.enemyBodyScale ?? 1,
+    } : undefined,
   };
   // 지휘형 은신과 무리 치명타는 시간이 아니라 두 늑대의 생존 조건이 소유한다.
   refreshPackGuard(state);
@@ -1153,14 +1187,10 @@ function traitDamageMultiplier(state: SkirmishState, attacker: Fighter, target: 
   attacker.traitStreakStacks = attacker.traitStreakTargetId === target.id ? attacker.traitStreakStacks + 1 : 0;
   attacker.traitStreakTargetId = target.id;
   const targetHpPercent = target.maxHp > 0 ? target.hp / target.maxHp * 100 : 0;
-  // 여울에 잠긴 사냥감에게만 오르는 몫도 같은 최종 경계에서 한 번만 곱한다 — 방어·상성 뒤에
-  // 서므로 "물가에서는 더 아프다"가 무엇으로 때리든 같은 비율로 읽힌다.
-  const shallows = attacker.def.basic.shallows;
-  const submerged = shallows !== undefined && isSubmerged(attacker, target)
-    ? 1 + shallows.submergedDamagePercent / 100 : 1;
+  // 여울은 **평타에 아무 몫도 주지 않는다.** 물을 깔아 둔 값은 도약이 꽂히는 순간에만
+  // 돌아오므로(`submergedLeapBonusPercent`), 여기서 다시 곱하면 같은 판이 두 번 값을 낸다.
   return highHpDamageMultiplier(effects, attacker.def.id, targetHpPercent)
-    * sameTargetStreakMultiplier(effects, attacker.def.id, attacker.traitStreakStacks)
-    * submerged;
+    * sameTargetStreakMultiplier(effects, attacker.def.id, attacker.traitStreakStacks);
 }
 
 /** 현재 전투의 조건부 증강만 안전하게 좁혀 대상 렐릭에 적용되는 항목과 안정적인 키를 돌려준다. */
@@ -2674,7 +2704,8 @@ function clearDefeatedStatuses(fighter: Fighter): void {
   fighter.aftershock = null;
   // 물을 고이게 한 개체가 쓰러지면 판도 함께 마른다 — 주인 없는 판이 남아 계속 잠그면
   // 화면에는 아무도 없는 자리가 혼자 깜빡인다.
-  fighter.shallows = null;
+  fighter.shallowPools = [];
+  fighter.shallowLeapCount = 0;
   fighter.submergedIn = null;
   fighter.regeneration = null;
   fighter.stunnedFor = 0;
@@ -2798,15 +2829,19 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
   }
   // 여울은 개체가 아니라 **자리에** 걸린 값이라 칩이 말할 수 있는 것은 "지금 물이 고여 있다"
   // 까지다. 어느 적이 잠겼는지는 그 적의 머리 위 둔화 칩이 말한다.
-  if (fighter.shallows && fighter.def.basic.shallows) {
+  if (fighter.shallowPools.length > 0 && fighter.def.basic.shallows) {
+    // 판이 여럿이라 시계는 **가장 오래 남은 것**을 든다. 겹 수가 지금 몇 곳에 깔려 있는지를
+    // 말하므로, 도약이 몇 번 남았는지를 이 칩 하나로 읽는다.
+    const longest = fighter.shallowPools.reduce((best, pool) => pool.remaining > best.remaining ? pool : best);
     buffs.push({
       id: `shallows:${fighter.id}`,
       sourceFighterId: fighter.id,
       targetFighterId: fighter.id,
       skillId: fighter.def.basic.id,
       name: "여울",
-      description: `잠긴 적은 둔화되고, 그 적을 때리면 연격이 확정 발동한다`,
-      timing: { kind: "timed", remainingSeconds: fighter.shallows.remaining, totalSeconds: fighter.shallows.total },
+      description: `잠긴 적은 둔화되고, 뛰어들면 그 자리가 터진다`,
+      stacks: fighter.shallowPools.length,
+      timing: { kind: "timed", remainingSeconds: longest.remaining, totalSeconds: longest.total },
     });
   }
   // 집중은 **본인에게 쌓이는 값**이다. 시간이 흘러 사라지지 않으므로 남은 시계를 두지 않고,
@@ -3406,9 +3441,9 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, even
     const trait = fighter.def.ferocityTrait;
     if (trait.effectId === "stealthLeap") {
       fighter.stealthFor = trait.durationSeconds;
-      leapToLowestHpEnemy(fighter, state, trait.landingDistance);
+      const landedOn = leapToLowestHpEnemy(fighter, state, trait.landingDistance);
       // 내려선 자리가 곧 사냥터다. 도약이 끝난 **뒤에** 고여야 새 자리에 판이 선다.
-      if (trait.landingShallows) refreshShallows(fighter);
+      if (trait.landingShallows) placeShallowPool(fighter, state, landedOn);
       // 이미 스피나를 추적하던 모든 상대도 즉시 대기/재탐색 상태로 돌린다.
       for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
     }
@@ -4129,46 +4164,87 @@ function drainFrenzyDamage(state: SkirmishState, attacker: Fighter, dealt: numbe
 }
 
 /**
- * 여울을 발밑에 다시 고이게 한다. **기본 공격 행동 하나마다** 부르며 궁극기는 부르지 않는다.
+ * 여울을 **적 주위에** 고이게 한다. 기본 공격 행동 하나마다 부른다.
  *
- * 이미 고여 있으면 자리와 남은 시간만 갱신하고 **틱 시계는 그대로 둔다** — 공격할 때마다
- * 시계를 되감으면 공속이 빠른 개체일수록 매초 틱이 영영 오지 않아, 물은 늘 고여 있는데
- * 아무도 잠기지 않는다.
+ * 자리를 고르는 규칙이 이 개체의 전부다.
+ *
+ * 1. **아무도 붙지 않은 적을 먼저 고른다.** 아군 누구의 표적도 아닌 적 주위에 물이 서면,
+ *    다음 도약이 그 방치된 쪽으로 파고드는 걸음이 된다 — 표적 발밑에만 고이면 한 명과
+ *    붙어 싸우는 동안 판이 전부 같은 자리에 겹쳐 "전장 곳곳"이 성립하지 않는다.
+ * 2. **이미 물이 있는 적은 뒤로 미룬다.** 같은 적 주위에 두 번 고이면 판이 늘지 않는다.
+ * 3. 고른 적에서 **시전자 반대쪽**으로 `behindDistance`만큼 나간 자리에 고이고, 그 자리는
+ *    언제나 전장 경계 안으로 조여진다 — 벽에 붙은 적 뒤로 물이 새면 아무도 잠기지 않는다.
+ *
+ * 그렇게 잡은 자리가 기존 판과 `minSpacing`보다 가까우면 새로 만들지 않고 **그 판을
+ * 갱신한다.** 판 개수를 손으로 못 박지 않는 이유가 이것이다.
+ *
+ * 난수를 쓰지 않는다 — 같은 판이 같은 자리를 그려야 리플레이가 흔들리지 않는다.
  */
-function refreshShallows(fighter: Fighter, flood?: { radius: number; seconds: number }): void {
+function placeShallowPool(fighter: Fighter, state: SkirmishState, around?: Fighter): void {
   const shallows = fighter.def.basic.shallows;
   if (!shallows || !isFighterAlive(fighter)) return;
-  const seconds = flood?.seconds ?? shallows.seconds;
-  fighter.shallows = {
-    x: fighter.x,
-    y: fighter.y,
-    remaining: seconds,
-    total: seconds,
-    tickIn: fighter.shallows?.tickIn ?? 1,
-    radius: flood?.radius ?? shallows.radius,
-  };
+  const foes = aliveFighters(state, fighter.side === "player" ? "enemy" : "player");
+  if (foes.length === 0) return;
+
+  const engagedBy = (foe: Fighter): number => state.fighters.filter(
+    (mate) => mate.side === fighter.side && isFighterAlive(mate) && mate.targetId === foe.id).length;
+  const wetted = (foe: Fighter): boolean => fighter.shallowPools.some(
+    (pool) => Math.hypot(foe.x - pool.x, foe.y - pool.y) <= shallows.radius);
+
+  /*
+   * 점수는 낮을수록 좋다. **이미 젖은 적을 먼저 밀어낸다**(1000) — 그다음이 붙은 아군 수(100)고,
+   * 동률은 거리다.
+   *
+   * 순서가 거꾸로면 물이 퍼지지 않는다. 젖음을 50으로 두었을 때는 "아무도 안 붙은 적"이 이미
+   * 젖어 있어도(50) 스피나가 붙어 있는 마른 적(100)을 계속 이겨, 같은 자리만 갱신되고 판이
+   * 영영 하나였다. 스피나는 늘 누군가와 붙어 있으므로 그 적은 영영 마른 채로 남는다.
+   */
+  let chosen = foes[0];
+  let best = Infinity;
+  for (const foe of foes) {
+    const score = (wetted(foe) ? 1000 : 0) + engagedBy(foe) * 100 + distance(fighter, foe) / 1000;
+    if (score < best) { best = score; chosen = foe; }
+  }
+  // 부른 쪽이 자리를 못 박으면 그쪽이 먼저다 — 잠행은 **내려선 자리**에 고여야 그 문장이 참이 된다.
+  if (around && isFighterAlive(around)) chosen = around;
+
+  // 고른 적 **너머**로 나간다. 시전자와 겹쳐 서 있으면 방향이 없으므로 그 자리에 고인다.
+  const dx = chosen.x - fighter.x;
+  const dy = chosen.y - fighter.y;
+  const gap = Math.hypot(dx, dy);
+  const inside = (value: number, low: number, high: number): number => Math.min(high, Math.max(low, value));
+  const x = inside(chosen.x + (gap > 1 ? dx / gap : 0) * shallows.behindDistance, state.arena.left, state.arena.right);
+  const y = inside(chosen.y + (gap > 1 ? dy / gap : 0) * shallows.behindDistance, state.arena.top, state.arena.bottom);
+
+  const near = fighter.shallowPools.find((pool) => Math.hypot(x - pool.x, y - pool.y) < shallows.minSpacing);
+  if (near) {
+    near.x = x; near.y = y; near.remaining = shallows.seconds; near.total = shallows.seconds;
+    return;
+  }
+  fighter.shallowPools.push({ x, y, remaining: shallows.seconds, total: shallows.seconds });
 }
 
-/** 이 적이 그 개체의 여울에 잠겨 있는가. 연격 확정과 이동 감속이 같은 판정을 쓴다. */
+/** 이 적이 그 개체의 여울 **어느 하나에라도** 잠겨 있는가. */
 function isSubmerged(fighter: Fighter, target: Fighter): boolean {
-  if (fighter.def.basic.shallows === undefined || !fighter.shallows) return false;
-  return Math.hypot(target.x - fighter.shallows.x, target.y - fighter.shallows.y) <= fighter.shallows.radius;
+  const shallows = fighter.def.basic.shallows;
+  if (shallows === undefined) return false;
+  return fighter.shallowPools.some((pool) => Math.hypot(target.x - pool.x, target.y - pool.y) <= shallows.radius);
 }
 
 /**
  * 지금 누가 어느 여울에 잠겼는지 **매 프레임 다시 잰다.**
  *
  * 상태로 걸어 두지 않는 이유는 이 값이 "걸린 것"이 아니라 **서 있는 자리**이기 때문이다 —
- * 물 밖으로 한 걸음만 나가면 같은 프레임에 풀려야 한다. 판을 여럿이 깔면 가장 깊은 것 하나만
+ * 물 밖으로 한 걸음만 나가면 같은 프레임에 풀려야 한다. 판을 여럿 깔아도 가장 깊은 것 하나만
  * 센다: 물은 겹친다고 두 배로 붙잡지 않는다.
  */
 function refreshSubmersion(state: SkirmishState): void {
   for (const fighter of state.fighters) fighter.submergedIn = null;
   for (const owner of state.fighters) {
     const def = owner.def.basic.shallows;
-    if (!def || !owner.shallows || !isFighterAlive(owner)) continue;
+    if (!def || owner.shallowPools.length === 0 || !isFighterAlive(owner)) continue;
     for (const enemy of aliveFighters(state, owner.side === "player" ? "enemy" : "player")) {
-      if (Math.hypot(enemy.x - owner.shallows.x, enemy.y - owner.shallows.y) > owner.shallows.radius) continue;
+      if (!isSubmerged(owner, enemy)) continue;
       if ((enemy.submergedIn?.moveSlowPercent ?? 0) >= def.moveSlowPercent) continue;
       enemy.submergedIn = { ownerId: owner.id, moveSlowPercent: def.moveSlowPercent };
     }
@@ -4176,27 +4252,94 @@ function refreshSubmersion(state: SkirmishState): void {
 }
 
 /**
- * 여울의 시계를 흘리고, 완전히 경과한 매초 판이 있는 자리를 알린다.
+ * 여울들의 시계를 흘리고 마른 판을 걷는다.
  *
- * 판은 피해를 주지 않으므로 사건에 `damageType`을 싣지 않고 걸리는 **상태**를 싣는다 — 색은
- * 머리 위 잠김 칩과 같은 것을 쓴다. 매초 다시 벌어지는 이유는 오래 남는 면이 그동안 SD와
- * 체력 바를 덮기 때문이다(채널링 궁극기와 같은 규칙이다).
+ * **바닥 그림은 사건으로 알리지 않는다.** 예전에는 매초 `areaImpact`를 한 번씩 쏘았는데, 그
+ * 사건은 "여기까지가 범위였다"를 한 번 벌렸다 꺼뜨리는 순간 표시라 1초마다 물이 새로
+ * 고이는 것처럼 깜빡였다 — 여울은 순간이 아니라 **자리에 걸린 지속 상태**다.
+ *
+ * 그래서 보호막 잔량과 같은 규칙을 쓴다: 값은 `Fighter.shallowPools`가 갖고 화면이 **매
+ * 프레임 읽어** 은은하게 깔아 둔다. 사건에 실으면 판이 깔린 동안과 사건이 오는 순간이
+ * 갈려, 화면이 실제로 고여 있는 물과 다른 것을 그린다.
  */
-function tickShallows(fighter: Fighter, dt: number, events: SkirmishEvent[]): void {
-  const def = fighter.def.basic.shallows;
-  const shallows = fighter.shallows;
-  if (!def || !shallows) return;
-  if (!isFighterAlive(fighter)) { fighter.shallows = null; return; }
-  shallows.remaining -= dt;
-  shallows.tickIn -= dt;
-  while (shallows.tickIn <= EMERGENCY_RECOVERY.epsilon && shallows.remaining > -EMERGENCY_RECOVERY.epsilon) {
-    events.push({
-      kind: "areaImpact", attackerId: fighter.id, ultimate: false, status: "submerged",
-      area: { shape: "radial", x: shallows.x, y: shallows.y, radius: shallows.radius },
-    });
-    shallows.tickIn += 1;
+function tickShallows(fighter: Fighter, dt: number): void {
+  if (fighter.def.basic.shallows === undefined || fighter.shallowPools.length === 0) return;
+  if (!isFighterAlive(fighter)) { fighter.shallowPools = []; return; }
+  for (const pool of fighter.shallowPools) pool.remaining -= dt;
+  fighter.shallowPools = fighter.shallowPools.filter((pool) => pool.remaining > EMERGENCY_RECOVERY.epsilon);
+}
+
+/**
+ * 깔아 둔 여울 한 곳으로 순간이동해 그 자리를 친다. 기본 공격 `leapEveryHits`회마다 부른다.
+ *
+ * **가장 많이 잠겨 있는 판**을 고른다 — 뛰어드는 값이 곧 그 자리에 몇이 갇혀 있느냐이기
+ * 때문이다. 아무도 잠기지 않은 판뿐이면 뛰지 않는다: 빈 물로 건너가면 표적에게서 멀어지기만 한다.
+ *
+ * 내려선 판은 **그 자리에서 마른다.** 회수하지 않으면 같은 판으로 계속 되뛰어, 깔러 다니는
+ * 일이 뜻을 잃는다.
+ */
+function leapToShallowPool(fighter: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const shallows = fighter.def.basic.shallows;
+  if (!shallows || !isFighterAlive(fighter) || fighter.shallowPools.length === 0) return;
+  const foes = aliveFighters(state, fighter.side === "player" ? "enemy" : "player");
+
+  let chosen: (typeof fighter.shallowPools)[number] | undefined;
+  let bestCount = 0;
+  for (const pool of fighter.shallowPools) {
+    const caught = foes.filter((foe) => Math.hypot(foe.x - pool.x, foe.y - pool.y) <= shallows.radius).length;
+    if (caught > bestCount) { bestCount = caught; chosen = pool; }
   }
-  if (shallows.remaining <= EMERGENCY_RECOVERY.epsilon) fighter.shallows = null;
+  if (!chosen) return;
+
+  fighter.x = chosen.x;
+  fighter.y = chosen.y;
+  fighter.dashX = 0; fighter.dashY = 0;
+  burstShallowPool(fighter, chosen, shallows.leapPower, state, events);
+  fighter.shallowPools = fighter.shallowPools.filter((pool) => pool !== chosen);
+  // 뛰어든 자리가 새 표적을 정한다. 그러지 않으면 건너온 뒤에도 옛 상대를 향해 되돌아 걷는다.
+  fighter.targetId = null;
+  fighter.engaged = false;
+}
+
+/**
+ * 판 하나가 터진다. 그 안의 적에게만 들어가고, **그때 잠겨 있던 적은 더 받는다.**
+ *
+ * 도약과 궁극기가 같은 함수를 지나므로 위력만 다르고 판정·색·사건은 하나다.
+ */
+function burstShallowPool(
+  fighter: Fighter,
+  pool: { x: number; y: number },
+  power: number,
+  state: SkirmishState,
+  events: SkirmishEvent[],
+): void {
+  const shallows = fighter.def.basic.shallows;
+  if (!shallows) return;
+  const attacker = { ...fighter, def: offensiveDefinition(fighter) };
+  const foes = aliveFighters(state, fighter.side === "player" ? "enemy" : "player")
+    .filter((foe) => Math.hypot(foe.x - pool.x, foe.y - pool.y) <= shallows.radius);
+  if (foes.length === 0) return;
+  for (const foe of foes) {
+    const input = {
+      power: power * (1 + shallows.submergedLeapBonusPercent / 100),
+      damageType: "physical" as const, scalingStat: "atk" as const, isCritical: false, kind: "basic" as const,
+    };
+    const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(foe, state), input)));
+    const resolution = resolveReceivedDamage(foe, raw);
+    const hpBefore = foe.hp;
+    const shieldBefore = foe.shield.amount; const shieldProviderId = foe.shield.providerId;
+    applyDamage(foe, resolution.applied, events, state);
+    const credited = recordDamageContribution(state, fighter.id, foe, "physical", "atk",
+      computeDamageContribution(attacker, input), resolution, hpBefore, shieldBefore, shieldProviderId);
+    events.push({ kind: "attack", attackerId: fighter.id, targetId: foe.id, skill: "basic", amount: resolution.applied,
+      contributionAmount: credited, critical: false, animate: false, damageType: "physical", mitigated: resolution.reduced < resolution.raw });
+    if (!isFighterAlive(foe)) {
+      clearDefeatedStatuses(foe);
+      events.push({ kind: "death", fighterId: foe.id, sourceId: fighter.id });
+    }
+  }
+  events.push({ kind: "areaImpact", attackerId: fighter.id, ultimate: false, damageType: "physical",
+    area: { shape: "radial", x: pool.x, y: pool.y, radius: shallows.radius } });
 }
 
 /** 한 번 때린다. 궁극기 여부는 호출하는 쪽이 정한다. */
@@ -4228,19 +4371,14 @@ function strike(
   // 이 동안에는 연격을 내므로 두 경로를 같은 자리에서 본다.
   const volley = !useUltimate && attacker.volley ? attacker.volley : undefined;
   if ((combo || volley) && comboHit === undefined) {
-    // 여울에 잠긴 사냥감은 놓치지 않는다 — 확률이 빗나가도 물가에서는 두 번째 이빨이 들어간다.
-    const submerged = combo !== undefined && attacker.def.basic.shallows?.guaranteesCombo === true && isSubmerged(attacker, target);
+
     // 난수 순서는 연격 판정 1회 뒤 실제로 발생한 각 타격의 치명타 순서로 고정한다. 여울이
     // 있어도 **판정 자체는 그대로 굴린다** — 건너뛰면 물에 잠긴 적이 하나 있고 없고에 따라
     // 같은 판의 다른 판정까지 자리가 밀린다. 물이 하는 일은 빗나간 판정을 메우는 것이다.
-    const rolled = volley ? volley.hitCount : (rng() < combo!.chancePercent / 100 ? combo!.hitCount : 1);
-    // 물가에서는 확정으로 **더 많이** 들어간다. 물 밖의 연격(확률 2회)보다 큰 값이라, 사냥감을
-    // 가두는 것 자체가 곧 다단히트가 된다.
-    const submergedHits = attacker.def.basic.shallows?.submergedHitCount ?? combo?.hitCount ?? 1;
-    const hitCount = submerged ? Math.max(rolled, submergedHits) : rolled;
+    const hitCount = volley ? volley.hitCount : (rng() < combo!.chancePercent / 100 ? combo!.hitCount : 1);
     for (let hit = 0; hit < hitCount && isFighterAlive(target); hit += 1) {
       // 확률로 터진 연격은 예전 그대로이고, **물이 메워 준 몫만** 피해만 주는 한 대다.
-      strike(attacker, target, rng, state, events, false, { grantActionResources: hit === 0, waterGranted: hit >= rolled });
+      strike(attacker, target, rng, state, events, false, { grantActionResources: hit === 0 });
     }
     return;
   }
@@ -4291,11 +4429,7 @@ function strike(
   const basePower = attackSpeedPower > 0
     ? skill.power + currentAttackSpeed(attacker) * attackSpeedPower / Math.max(1, attacker.def.stats.atk)
     : skill.power;
-  // 물이 메워 준 대는 얕게 문다. 제 힘으로 문 대는 그대로다 — 타수만 늘리면 화력이 타수에
-  // 비례해 곱해져, 늘어난 이빨이 곧 그만큼의 피해가 된다.
-  const waterPowerPercent = comboHit?.waterGranted === true
-    ? attacker.def.basic.shallows?.submergedExtraHitPowerPercent : undefined;
-  const compositePower = waterPowerPercent === undefined ? basePower : basePower * waterPowerPercent / 100;
+  const compositePower = basePower;
   const damageInput = {
     ...skill,
     power: compositePower,
@@ -5398,6 +5532,35 @@ function chargeWolfInto(state: SkirmishState, wolf: Fighter, target: Fighter, ev
   if (!isFighterAlive(target)) { clearDefeatedStatuses(target); events.push({ kind: "death", fighterId: target.id, sourceId: wolf.id }); }
 }
 
+/**
+ * 다음 무리를 전장에 세운다. 세울 무리가 없으면 `false`를 돌려 승리로 넘긴다.
+ *
+ * 쓰러진 앞 무리는 배열에서 지우지 않는다 — 씬이 사망 연출을 재생하는 중이고, 기여도 장부도
+ * 그 줄을 그대로 들고 있어야 결과 화면이 "누가 무엇을 했나"를 잃지 않는다.
+ */
+function spawnNextWave(state: SkirmishState, events: SkirmishEvent[]): boolean {
+  const waves = state.waves;
+  const next = waves?.pending.shift();
+  if (!waves || !next || next.length === 0) return false;
+  const spots = spawnSpots(state.arena, "enemy", next.length);
+  const spawned = next.map((def, offset) => makeFighter(def, "enemy", waves.nextIndex + offset, spots[offset].x, spots[offset].y, 0, 0, waves.bodyScale));
+  waves.nextIndex += spawned.length;
+  waves.current += 1;
+  for (const fighter of spawned) state.contributions[fighter.id] = { attack: { attackPower: 0, abilityPower: 0 }, defense: { armor: 0, resistance: 0, shield: 0 }, healing: 0 };
+  state.fighters.push(...spawned, ...createPackFighters(spawned, state.augmentEffects));
+  // 새 무리도 첫 무리와 같은 시작 단계를 지난다 — 하나라도 빠뜨리면 그 무리만 듀오·무리 사냥이
+  // 열리지 않아 같은 개체가 웨이브에 따라 다르게 싸운다.
+  refreshPackGuard(state);
+  linkDuos(state);
+  assignPackScoutTarget(state);
+  triggerPackHunt(state, "enemy");
+  events.push(...state.fighters.filter((wolf) => wolf.summonOwnerId !== null && spawned.some(({ id }) => id === wolf.summonOwnerId)).map((wolf): SkirmishEvent => ({
+    kind: "packSummon", fighterId: wolf.id, ownerFighterId: wolf.summonOwnerId ?? "", x: wolf.x, y: wolf.y,
+  })));
+  events.push({ kind: "waveStart", wave: waves.current, total: waves.total, fighterIds: spawned.map(({ id }) => id) });
+  return true;
+}
+
 function settle(state: SkirmishState, events: SkirmishEvent[]): void {
   if (state.phase !== "fight") return;
   const playersLeft = aliveFighters(state, "player").filter(isPartyFighter).length;
@@ -5405,8 +5568,12 @@ function settle(state: SkirmishState, events: SkirmishEvent[]): void {
   // 불사 보스는 적 HP와 무관하게 아군 전멸만 정상 종료로 인정한다.
   if (state.boss && playersLeft === 0) state.phase = "defeat";
   else if (state.boss) return;
-  else if (enemiesLeft === 0) state.phase = "victory";
+  // 아군이 먼저 전멸하면 남은 무리와 무관하게 패배다 — 무리를 다 넘겼는지는 그 뒤에 묻는다.
   else if (playersLeft === 0) state.phase = "defeat";
+  else if (enemiesLeft === 0) {
+    if (spawnNextWave(state, events)) return;
+    state.phase = "victory";
+  }
   else return;
   // 종료 스냅샷에 전투 전용 시약/저항 감소가 남아 다음 난전이나 결과 화면의 유효 수치로 새지 않게 한다.
   for (const fighter of state.fighters) {
@@ -5557,7 +5724,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       else fighter.traitHaste = { ...fighter.traitHaste, remaining };
     }
     // 여울도 같은 공용 시계로 마른다. 개체를 따라다니지 않으므로 자리는 고인 그대로 둔다.
-    tickShallows(fighter, dt, events);
+    tickShallows(fighter, dt);
     // 도발 회복 예산도 같은 시계로 되찬다.
     refillTauntHealBudget(fighter, dt);
     // 순풍도 같은 공용 시계를 쓴다. 다 흐르면 수치까지 비워 남은 값이 다음 전투로 새지 않게 한다.
@@ -5749,9 +5916,21 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       // 빗나가거나 광역으로 여럿을 맞혀도 한 번은 한 번이다.
       if (!firedUltimate) {
         advanceBasicCycle(fighter);
-        // 물은 **때린 자리에** 고인다. 공격 뒤에 갱신하므로 첫 한 방은 마른 땅에서 나가고,
-        // 두 번째부터 발밑이 물가가 된다.
-        refreshShallows(fighter);
+        /*
+         * 물은 **적 주위에** 고인다. 공격 뒤에 깔므로 첫 한 방은 마른 땅에서 나간다.
+         *
+         * 타수가 차면 그 자리로 뛴다 — 깔고 뛰는 순서가 같은 걸음 안에 있어야, 방금 깐 판이
+         * 다음 도약의 후보가 되어 "깔며 나아간다"가 성립한다.
+         */
+        placeShallowPool(fighter, state);
+        const shallowPlan = fighter.def.basic.shallows;
+        if (shallowPlan) {
+          fighter.shallowLeapCount += 1;
+          if (fighter.shallowLeapCount >= shallowPlan.leapEveryHits) {
+            fighter.shallowLeapCount = 0;
+            leapToShallowPool(fighter, state, events);
+          }
+        }
         if (fighter.hastenedAttacksLeft > 0) fighter.hastenedAttacksLeft -= 1;
         // 「한 판 더」의 자기 회복도 행동 하나마다다 — 적중 수로 세면 광역 한 번이 셋을 맞힐 때
         // 세 배로 돌아 같은 폭주가 편성에 따라 다른 무게가 된다.
@@ -5938,13 +6117,15 @@ export function fireUltimate(
   // 자리를 옮기는 것은 끌어당김과 같은 규칙이라 보간 없이 같은 프레임에 선다.
   if (teamUltimate.blinkToLowestDefense === true) blinkToLowestDefenseEnemy(attacker, state);
   /*
-   * **범람.** 자리를 옮기는 규칙(위 순간이동)이 끝난 **뒤에** 고여야 실제로 선 자리에 물이
-   * 찬다. 때리기 전에 깔아 두는 이유는 이 한 방부터 물가에서 나가야 하기 때문이다 — 궁극기가
-   * 사냥터를 열고 그 위에서 자기가 먼저 문다.
+   * **깔아 둔 물을 전부 회수한다.** 주 표적을 치기 **전에** 터뜨리는 이유는, 이 궁극기의 값이
+   * 한 명을 세게 치는 것이 아니라 여울을 몇 곳에 벌려 놓았느냐이기 때문이다 — 먼저 판이
+   * 터지고 그 뒤에 이빨이 들어간다. 판이 하나도 없으면 터뜨릴 것도 없다.
    */
-  const flood = teamUltimate.floodShallows;
-  const floodDef = flood ? attacker.def.basic.shallows : undefined;
-  if (flood && floodDef) refreshShallows(attacker, { radius: floodDef.radius * flood.radiusMultiplier, seconds: flood.seconds });
+  const detonate = teamUltimate.detonateShallows;
+  if (detonate) {
+    for (const pool of [...attacker.shallowPools]) burstShallowPool(attacker, pool, detonate.power, state, events);
+    attacker.shallowPools = [];
+  }
   const target = resolveTarget(state, attacker);
   if (!target) return events;
 

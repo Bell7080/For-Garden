@@ -3,7 +3,7 @@ import { breakthroughFragmentCost, breakthroughSlotGrade, BREAKTHROUGH_STEPS, ca
 import { combatPower } from "../../src/core/combatPower";
 import type { RelicProgress, Stats } from "../../src/core/types";
 import { RelicProgressionManager } from "../../src/managers/RelicProgressionManager";
-import { createInitialPlayerResearchProgress, type Session } from "../../src/state/session";
+import { createEmptyRaidState, createInitialPlayerResearchProgress, type Session } from "../../src/state/session";
 import { createRuneInstance, engraveRune, enhanceRune, type RuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { FakeServer } from "../../src/api/FakeServer";
 import { createDefaultSettings } from "../../src/core/settings";
@@ -43,6 +43,7 @@ function makeSession(): Session {
       rex: { level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] },
     }, relicFragments: {}, itemInventory: [], runeInventory: [testRune("vital-seed"), testRune("fang-core")],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
+    bounty: { date: "", entries: 0, clearedTierIds: [] },
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [], researchPoints: { daily: 0, weekly: 0 }, claimedResearchStageIds: [] },
     // 상품 테스트가 아닌 세션도 최신 저장 계약의 빈 구매 이력을 명시한다.
     productPurchases: {},
@@ -50,6 +51,8 @@ function makeSession(): Session {
     dailyAdRewards: { date: "", claimsBySlot: {}, requestIds: [] },
     // 성장 테스트는 원정 진행과 독립된 빈 상태를 사용한다.
     expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, allTimeBestScore: 0, lastParty: [], run: null },
+    raid: createEmptyRaidState(),
+    cakeOperation: { clearedIndex: -1 },
   };
 }
 

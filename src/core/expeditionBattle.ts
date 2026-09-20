@@ -4,10 +4,14 @@ import { getExpeditionAugment } from "../data/expeditionAugments";
 import type { ExpeditionAugmentEffect } from "./expeditionAugments";
 import { EXPEDITION_COMBAT_BALANCE } from "../data/expedition";
 import { EXPEDITION_BOSS_BALANCE } from "../data/expedition";
+import { RAID_BOSS_BALANCE, RAID_SEASON_BOSS } from "../data/raid";
 import type { BattleStageDef, RelicDef } from "./types";
 import { BREAKTHROUGH_GRADE_ROMAN } from "./relicProgression";
 import type { FighterInitialState, SkirmishBossPhase, SkirmishRelicResult } from "./skirmish";
 import { t } from "../i18n";
+import { getCakeOperationTier } from "../data/cakeOperation";
+import type { BountyBattleInputDto } from "./bountyRun";
+import { getBountyTier } from "../data/bounty";
 
 /** 원정 씬이 전투 씬에 넘기는 직렬화 가능한 입력이다. 전투 씬은 Session 편성을 추측하지 않는다. */
 export interface ExpeditionBattleInputDto {
@@ -76,6 +80,26 @@ export function createExpeditionBossSkirmishConfig(input: ExpeditionBossBattleIn
   };
 }
 
+/**
+ * 레이드도 **같은 불사 보스 계약**을 쓴다 — 다른 것은 제한 시간과 단계 이름뿐이다.
+ *
+ * 판 안에서 보스를 눕히지 않는 이유는 남은 체력의 주인이 시즌이기 때문이다. 한 판은 90초 동안
+ * 민 몫을 재고, 그 뒤 마지막 단계의 처형이 판을 끝낸다.
+ */
+export function createRaidSkirmishConfig(playerDefs: readonly RelicDef[], boss: RelicDef): ExpeditionSkirmishConfig & { boss: { phases: SkirmishBossPhase[]; limitSeconds: number } } {
+  return {
+    playerDefs: [...playerDefs],
+    enemyDefs: [{ ...boss, stats: { ...boss.stats } }],
+    playerInitialStates: playerDefs.map(({ id }) => ({ relicId: id, currentHp: 100, alive: true })),
+    augmentEffects: [],
+    enemyBodyScale: RAID_SEASON_BOSS.bodyScale,
+    boss: {
+      phases: RAID_BOSS_BALANCE.phases.map((phase) => ({ startsAt: phase.startsAtMs / 1_000, damagePerSecond: phase.attackPerSecond, label: phase.label })),
+      limitSeconds: RAID_BOSS_BALANCE.maximumDurationMs / 1_000,
+    },
+  };
+}
+
 /** 불참한 사망자까지 입력 순서로 복원해 매니저가 검증할 완전한 종료 DTO를 만든다. */
 export function expeditionBattleResults(input: ExpeditionBattleInputDto, activeResults: readonly SkirmishRelicResult[]): SkirmishRelicResult[] {
   const byId = new Map(activeResults.map((result) => [result.relicId, result]));
@@ -87,15 +111,41 @@ export interface StageBattleInputDto {
   mode: "stage";
 }
 
-/** 일반 스테이지 진입과 원정 진입을 명시적으로 구분하는 전투 씬 입력 계약이다. */
-export type BattleSceneInputDto = ExpeditionBattleInputDto | ExpeditionBossBattleInputDto | StageBattleInputDto;
+/**
+ * 레이드 진입.
+ *
+ * 편성은 씬이 `session.party`를 읽으므로 입력이 들고 다닐 것이 없다 — 원정처럼 런 도중의 잔여
+ * 체력을 이어받지 않고 늘 온전한 상태로 시작하기 때문이다.
+ */
+export interface RaidBattleInputDto {
+  mode: "raid";
+}
+
+/** 일반 스테이지 진입과 원정·레이드 진입을 명시적으로 구분하는 전투 씬 입력 계약이다. */
+/**
+ * 치즈케이크 대작전 입장.
+ *
+ * 스테미나는 **입장에서 이미 빠졌다** — 그 영수증의 `requestId`를 그대로 들고 다녀야 결과
+ * 확정이 같은 판의 것으로 붙는다. 배율은 화면이 다시 정하지 않고 입장이 확정한 값이다.
+ */
+export interface CakeBattleInputDto {
+  mode: "cake";
+  tierId: string;
+  multiplier: number;
+  requestId: string;
+}
+
+/** 일반 스테이지 진입과 원정·레이드·대작전·현상수배 진입을 명시적으로 구분하는 전투 씬 입력 계약이다. */
+export type BattleSceneInputDto = ExpeditionBattleInputDto | ExpeditionBossBattleInputDto | StageBattleInputDto | RaidBattleInputDto | CakeBattleInputDto | BountyBattleInputDto;
 
 /** Phaser가 생략·빈 data 또는 직전 data를 건네도 매 진입의 입력만으로 새 DTO를 만든다. */
 export function normalizeBattleSceneInput(input?: unknown): BattleSceneInputDto {
   // 원정 판별값만 보존하고 나머지는 새 객체로 만들어 직전 원정 필드가 스토리에 섞이지 않게 한다.
   if (typeof input === "object" && input !== null && "mode" in input) {
     const candidate = input as BattleSceneInputDto;
-    if (candidate.mode === "expedition" || candidate.mode === "expeditionBoss") return candidate;
+    if (candidate.mode === "expedition" || candidate.mode === "expeditionBoss" || candidate.mode === "raid" || candidate.mode === "cake") return candidate;
+    // 현상수배는 라운드 번호까지 있어야 한 판이 이어진다 — 판별값만 남은 입력은 스토리로 돌린다.
+    if (candidate.mode === "bounty" && typeof candidate.tierId === "string" && typeof candidate.requestId === "string") return candidate;
   }
   return { mode: "stage" };
 }
@@ -113,6 +163,16 @@ export function battleHeaderText(input: BattleSceneInputDto, stage: Pick<BattleS
     });
   }
   if (input.mode === "expeditionBoss") return t("battle.header.expeditionBoss", { floor: input.floor });
+  if (input.mode === "raid") return t("battle.header.raid");
+  // 단계 이름은 데이터 표가 번역까지 갖고 있으므로 씬도 머리글도 그 이름을 그대로 받는다.
+  if (input.mode === "cake") return t("battle.header.cake", { tier: getCakeOperationTier(input.tierId).name, multiplier: input.multiplier });
+  // 현상수배는 관문 이름 대신 **몇 번째 라운드인가**가 머리글이다 — 한 판이 세 라운드라 그 수가
+  // 곧 남은 길이다. 등급 이름은 정적 표에서 오고 씬이 적지 않는다.
+  if (input.mode === "bounty") {
+    const tier = getBountyTier(input.tierId);
+    const round = tier.rounds[input.round];
+    return t("battle.header.bounty", { tier: tier.name, round: input.round + 1, total: tier.rounds.length, level: round.level, bonus: round.ferocityLevel ? `+${round.ferocityLevel}` : "" });
+  }
   // 노드 유형은 저장/정산용 영문값 대신 플레이어가 구분할 수 있는 전투 명칭으로 표시한다.
   return t("battle.header.expedition", { floor: input.floor, node: t(`battle.node.${input.nodeType}`) });
 }

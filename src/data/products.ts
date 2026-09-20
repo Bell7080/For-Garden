@@ -8,7 +8,7 @@ import { TRADE_PACKAGES } from "./tradePackages";
  * 아래가 전시대」라는 규칙이 이미 깊이 박혀 있어, 둘로 갈리면 선반·격자·값줄 규칙이 두 곳이
  * 되고 한쪽만 고치는 사고가 난다.
  */
-export type ProductStorefront = "shop" | "trade" | "premium" | "archaeology";
+export type ProductStorefront = "shop" | "trade" | "premium" | "archaeology" | "raid";
 
 /** 일반 인게임 상점과 무역소가 공유하는 안정적인 카테고리 계약이다. */
 export type ShopCategory = "general" | "enhancement" | "rune";
@@ -25,6 +25,13 @@ export type ProductCurrency = "fossil" | "amber" | "cheesecake" | "dnaFragments"
 /** 가격 숫자와 획득 절차를 분리한 판별 합집합이며 외부 절차의 필수 식별자를 타입으로 강제한다. */
 export type ProductAcquisition =
   | { kind: "currency"; currency: ProductCurrency; amount: number }
+  /**
+   * 아이템으로 값을 치르는 상품.
+   *
+   * 레이드 상점이 이 갈래를 쓴다 — 토벌 증표는 한 콘텐츠에서만 도는 교환 재료라 지갑 키를
+   * 새로 만들지 않고 재료 칸에 산다. 차감은 교류 교환소와 **같은 재고 경계**를 지난다.
+   */
+  | { kind: "item"; itemId: string; amount: number }
   | { kind: "platform_payment"; platformProductId: string; displayPrice: string }
   | { kind: "free" }
   | { kind: "rewarded_ad"; slotId: string; dailyLimitUtc: number };
@@ -65,6 +72,14 @@ export interface PassBenefitDefinition {
   instantAdRewards: true;
   usesStandardAdRewardPolicy: true;
   dailyBonus: { currency: "gems"; amount: number };
+  /**
+   * 광고를 없애고, 광고 제거 멤버십 전용 조작을 연다(던전 x3 배율).
+   *
+   * **후원 패스와 다른 축이다.** 후원 패스는 광고를 없애지 않고 광고 슬롯을 같은 보상·한도의
+   * 즉시 수령 슬롯으로 바꿀 뿐이고(`instantAdRewards`), 이쪽은 광고 자체를 걷어 낸다. 둘을 한
+   * 값으로 묶으면 "즉시 받는 것"과 "안 보는 것"이 같은 말이 되어 상품 설명이 서로를 덮는다.
+   */
+  adFree?: true;
 }
 
 /** 정적 상품은 가격·지급·기본 구매 수량·제한 주기를 빠짐없이 선언한다. */
@@ -99,6 +114,16 @@ export const SHOP_PRODUCTS: readonly ProductDefinition[] = [
   { id: "arch-ancient-core", storefront: "archaeology", category: "enhancement", iconKey: "shop-product-enhancement", name: "고대 핵 반출 허가", description: "미지의 고대 핵 1개", acquisition: { kind: "currency", currency: "fossil", amount: 600 }, grants: [{ kind: "item", itemId: "ancient-core", name: "미지의 고대 핵", amount: 1 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "arch-refined-core", storefront: "archaeology", category: "rune", iconKey: "shop-product-rune", name: "정제 핵 반출 허가", description: "정제된 고대 핵 1개", acquisition: { kind: "currency", currency: "amber", amount: 30 }, grants: [{ kind: "item", itemId: "refined-core", name: "정제된 고대 핵", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "arch-restoration-crystal", storefront: "archaeology", category: "rune", iconKey: "shop-product-rune", name: "복원 결정 인가", description: "완전 복원 결정 1개", acquisition: { kind: "currency", currency: "gems", amount: 900 }, grants: [{ kind: "item", itemId: "restoration-crystal", name: "완전 복원 결정", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  // **레이드 상점.** 값은 전부 토벌 증표라 레이드를 돈 사람만 살 수 있고, 다른 재화로 사는 길을
+  // 두지 않는다 — 젬으로도 살 수 있으면 증표가 무엇을 위한 것인지 말하지 못한다. 제한은 주간이
+  // 기본이고, 성장 재료만 매일 열어 꾸준히 도는 사람이 매주 몰아 사지 않게 한다.
+  { id: "raid-cheesecake-ration", storefront: "raid", category: "general", iconKey: "shop-product-supplies", name: "토벌 보급 급여", description: "치즈케이크 400개", acquisition: { kind: "item", itemId: "raid-sigil", amount: 20 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 400 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "raid-gold-bounty", storefront: "raid", category: "general", iconKey: "shop-product-fossil", name: "토벌 포상금", description: "골드 30,000개", acquisition: { kind: "item", itemId: "raid-sigil", amount: 25 }, grants: [{ kind: "currency", currency: "gold", amount: 30000 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "raid-fossil-crate", storefront: "raid", category: "general", iconKey: "shop-product-fossil", name: "토벌 표본 상자", description: "화석 1,500개", acquisition: { kind: "item", itemId: "raid-sigil", amount: 60 }, grants: [{ kind: "currency", currency: "fossil", amount: 1500 }], defaultQuantity: 2, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "raid-dna-supply", storefront: "raid", category: "enhancement", iconKey: "shop-product-enhancement", name: "토벌 복원 보급", description: "DNA 조각 12개", acquisition: { kind: "item", itemId: "raid-sigil", amount: 80 }, grants: [{ kind: "currency", currency: "dnaFragments", amount: 12 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "raid-amber-token", storefront: "raid", category: "enhancement", iconKey: "shop-product-amber", name: "토벌 공훈 호박석", description: "호박석 15개", acquisition: { kind: "item", itemId: "raid-sigil", amount: 150 }, grants: [{ kind: "currency", currency: "amber", amount: 15 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "raid-ancient-core", storefront: "raid", category: "rune", iconKey: "shop-product-rune", name: "토벌 고대 핵", description: "미지의 고대 핵 1개", acquisition: { kind: "item", itemId: "raid-sigil", amount: 120 }, grants: [{ kind: "item", itemId: "ancient-core", name: "미지의 고대 핵", amount: 1 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "raid-refined-core", storefront: "raid", category: "rune", iconKey: "shop-product-rune", name: "토벌 정제 핵", description: "정제된 고대 핵 1개", acquisition: { kind: "item", itemId: "raid-sigil", amount: 300 }, grants: [{ kind: "item", itemId: "refined-core", name: "정제된 고대 핵", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   // **무역은 교환소가 아니라 패키지 전시장이다.** 일반 상점이 화석·호박석으로 보급품을 사는
   // 상시 진열대라면, 무역은 그때그때 운영이 올려 두는 **묶음 하나하나를 전시**하는 자리다 —
   // 값은 젬으로 받고, 같은 젬으로 따로 사는 것보다 더 많이 주는 것이 이 화면의 존재 이유다.

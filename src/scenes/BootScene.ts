@@ -15,7 +15,7 @@ export class BootScene extends Phaser.Scene {
     super("boot");
   }
 
-  create(data?: { destination?: "lobby" }): void {
+  create(data?: { destination?: "lobby" | "raid" }): void {
     setDebugScene("boot");
     let firstRun = false;
     try {
@@ -61,6 +61,8 @@ export class BootScene extends Phaser.Scene {
     // 누른 자리에 답하는 겹은 씬 전환과 무관하게 계속 떠 있어야 하므로 start가 아니라 launch다.
     this.scene.launch(EffectOverlayScene.KEY);
     // 성공 정산 뒤에는 이미 로드된 에셋을 다시 기다리지 않고, 같은 저장 복구 경계를 지난 뒤 로비로 간다.
-    this.scene.start(data?.destination === "lobby" ? "lobby" : "title");
+    // 레이드는 제출 뒤 곧바로 시즌 판으로 되돌아간다 — 한 판 밀고 로비를 거쳐 다시 들어오게
+    // 하면 세 번 도전하는 동안 같은 길을 여섯 번 지난다.
+    this.scene.start(data?.destination === "raid" ? "raid" : data?.destination === "lobby" ? "lobby" : "title");
   }
 }

@@ -15,7 +15,7 @@ export const LOBBY_KO = {
   "lobby.sortie.bounty": "현상수배",
   "lobby.sortie.bounty.status": "태그 3회 · 골드",
   "lobby.sortie.raid": "레이드",
-  "lobby.sortie.raid.status": "협동 작전 · 준비 중",
+  "lobby.sortie.raid.status": "협동 작전 · 주간 시즌",
 
   "lobby.expedition.resume": "이어하기 · {plays}회 · 최고 {best}",
   "lobby.expedition.weekly": "주간 {plays}회 · 최고 {best} · {quick}",

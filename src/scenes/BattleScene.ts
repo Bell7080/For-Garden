@@ -25,12 +25,15 @@ import {
 import { partyRuneTraitEffects } from "../core/runeTraitEffects";
 import { getRelic } from "../data/relics";
 import { getBattleStage, getStageEnemies, stageEnemyGrowth } from "../data/stages";
+import { BOUNTY, bountyRoundEnemy, getBountyTier } from "../data/bounty";
+import { nextBountyStep, type BountyBattleInputDto } from "../core/bountyRun";
 import { STAGE_ELITE } from "../data/stageElite";
 import { getExpeditionNodeEnemies } from "../data/expeditionEnemies";
 import type { PuppetCreature, PuppetAsset } from "../puppets/assets";
 import { cancelMotion, flashHit, isHitFlashing, placePuppet, playMotion, spawnPuppet, tintPuppet } from "../puppets/assets";
 import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
+import { statusAreaColor } from "../ui/groundAreas";
 import { Button } from "../ui/Button";
 import { chipPoints, drawGlassFade, drawHairline, drawLayer, HoloBar, HOLO } from "../ui/holo";
 import { PortraitCard } from "../ui/PortraitCard";
@@ -58,12 +61,16 @@ import type { MotionPlayback } from "../puppets/assets";
 import { ultimatePresentationFor } from "../data/ultimatePresentations";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { anyPopupOpen, PopupLayer } from "../ui/PopupLayer";
-import { battleHeaderText, createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
+import { cakeOperationWaves, getCakeOperationTier } from "../data/cakeOperation";
+import { battleHeaderText, createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, createRaidSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type CakeBattleInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
+import { raidBossDef } from "../core/raid";
+import { RAID_SEASON_BOSS } from "../data/raid";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import { expeditionManager, ExpeditionBossSettlementError, ExpeditionBossSettlementFlow } from "../managers/ExpeditionManager";
 import { settingsManager } from "../managers/SettingsManager";
 import { motionPolicy, type MotionPolicy } from "../core/settings";
-import type { SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse } from "../api/contracts";
+import type { SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse, SubmitRaidDamageResponse } from "../api/contracts";
+import { GameApiError } from "../api/contracts";
 import { currencyRecordToRewardItems } from "../ui/RewardPopup";
 import { BATTLE_CONTROLS, BATTLE_STATUS_LAYOUT } from "../ui/battleStatusLayout";
 import { UnitStatusChips } from "../ui/UnitStatusChips";
@@ -288,6 +295,8 @@ export class BattleScene extends Phaser.Scene {
   private finished = false;
   /** 보스 제출에는 코어가 실제로 낸 공격 종류와 시각만 기록하며 피해 숫자는 넣지 않는다. */
   private bossActions: ExpeditionBossAction[] = [];
+  /** 레이드 제출의 멱등 키. 재시도가 같은 ID를 써야 성공한 제출이 두 번 쌓이지 않는다. */
+  private raidRequestId?: string;
   /** 성공 응답은 결과 UI보다 오래 살아 UI 생성 중단 뒤에도 같은 영수증으로 복구된다. */
   private readonly bossSettlement = new ExpeditionBossSettlementFlow(gameApi, expeditionManager);
   /** 요청 잠금과 실패판 세대를 함께 보관해 연타와 재시도 UI 중첩을 막는다. */
@@ -302,6 +311,8 @@ export class BattleScene extends Phaser.Scene {
   private bossScoreScale = 1;
   private bossPhaseLabel?: Phaser.GameObjects.Text;
   private bossBestLabel?: Phaser.GameObjects.Text;
+  /** 지금 몇 번째 무리인가. 물량형 던전에서만 선다. */
+  private waveLabel?: Phaser.GameObjects.Text;
   private spawned = false;
   /** 마지막으로 시뮬레이션을 굴린 실제 시각(ms). */
   private lastStepAt = 0;
@@ -371,6 +382,21 @@ export class BattleScene extends Phaser.Scene {
     this.bossBestLabel = this.add.text(42, 180, t("battle.boss.scoreLine", { normal: 0, boss: 0 }), textStyle({ role: "emphasis", size: 25, color: COLOR.ink })).setDepth(90);
   }
 
+  /**
+   * 지금 몇 번째 무리를 상대하는지 알린다.
+   *
+   * 남은 무리는 **지금 물러설지 궁극기를 아낄지를 바꾸는 정보**라 화면에 세운다. 대신
+   * 전장 한가운데가 아니라 상단에 작게 두고, 새 무리가 설 때만 한 번 커졌다 제자리로
+   * 돌아와 "바뀌었다"를 크기로 말한다 — 가운데에 크게 띄우면 그 순간의 전장이 가린다.
+   */
+  private announceWave(wave: number, total: number): void {
+    const text = t("battle.wave", { wave, total });
+    if (!this.waveLabel) this.waveLabel = this.add.text(BASE_WIDTH / 2, 78, text, textStyle({ role: "display", size: 44, color: COLOR.sortieText })).setOrigin(0.5, 0).setDepth(90);
+    else this.waveLabel.setText(text);
+    this.waveLabel.setScale(1);
+    this.tweens.add({ targets: this.waveLabel, scale: 1.24, duration: 140, yoyo: true, ease: "Quad.easeOut" });
+  }
+
   /** Phaser scene data를 명시 DTO로 받아 일반 스테이지와 원정 결과 경계를 분리한다. */
   init(input?: BattleSceneInputDto): void {
     // 정규화는 Phaser 비의존 코어가 맡아 생략·빈 객체도 매번 새로운 스토리 DTO로 교체한다.
@@ -386,18 +412,30 @@ export class BattleScene extends Phaser.Scene {
     const stage = getBattleStage(session.selectedStageId ?? "1-1");
     // 적은 스테이지별 임시 레벨 성장치를 적용한 복사본으로 전투에 투입한다.
     // 유대는 정적 RelicDef가 아니라 현재 플레이어의 저장 진행에서 전투 스냅샷으로 넘긴다.
-    const partyIds = this.battleInput.mode === "expedition" || this.battleInput.mode === "expeditionBoss" ? this.battleInput.relics.map(({ relicId }) => relicId) : session.party;
+    // 현상수배는 한 라운드에 한 명만 선다 — 편성 칸의 순서가 곧 나가는 순서다.
+    const partyIds = this.battleInput.mode === "expedition" || this.battleInput.mode === "expeditionBoss" ? this.battleInput.relics.map(({ relicId }) => relicId)
+      : this.battleInput.mode === "bounty" ? [session.party[this.battleInput.round] ?? session.party[0]]
+      : session.party;
     const bonds = Object.fromEntries(partyIds.map((id) => [id, session.relicProgress[id]?.bondLevel ?? 0]));
     // 각성 단계도 같은 방식으로 스냅샷을 넘긴다. 전투 코어는 저장 상태를 직접 읽지 않는다.
     const breakthroughs = Object.fromEntries(partyIds.map((id) => [id, session.relicProgress[id]?.breakthrough ?? 0]));
     // UI와 같은 성장 계산기의 스냅샷을 복사해 전투가 룬 수치를 다시 계산하지 않게 한다.
     const players = partyIds.map((id) => ({ ...getRelic(id), stats: relicProgression.getFinalStats(id) }));
     // 원정은 노드 정보창과 같은 정적 편성/레벨 정의를 읽고, 스토리만 스테이지 적을 읽는다.
-    const stageEnemies = this.battleInput.mode === "expedition"
+    // 대작전은 무리가 여럿이라 **첫 무리만** 전장에 서고 나머지는 난전의 대기열로 넘어간다.
+    const cakeWaves = this.battleInput.mode === "cake" ? cakeOperationWaves(getCakeOperationTier(this.battleInput.tierId)) : undefined;
+    const stageEnemies = cakeWaves ? cakeWaves[0]
+      : this.battleInput.mode === "expedition"
       ? getExpeditionNodeEnemies(this.battleInput.nodeType, this.battleInput.floor)
-      : this.battleInput.mode === "expeditionBoss" ? getExpeditionNodeEnemies("boss", 20) : getStageEnemies(stage);
+      : this.battleInput.mode === "expeditionBoss" ? getExpeditionNodeEnemies("boss", 20)
+        // 레이드 보스의 성장은 서버 재현과 **같은 함수**를 지난다. 씬이 레벨을 다시 구하지 않는다.
+        : this.battleInput.mode === "raid" ? [raidBossDef(getRelic(RAID_SEASON_BOSS.relicId))]
+        // 현상수배의 정예도 스테이지와 같은 성장 경로를 지난다. 전용 배율은 만들지 않는다.
+        : this.battleInput.mode === "bounty" ? [bountyRoundEnemy(getBountyTier(this.battleInput.tierId).rounds[this.battleInput.round])]
+        : getStageEnemies(stage);
     const expeditionConfig = this.battleInput.mode === "expedition" ? createExpeditionSkirmishConfig(this.battleInput, players, stageEnemies)
-      : this.battleInput.mode === "expeditionBoss" ? createExpeditionBossSkirmishConfig(this.battleInput, players, stageEnemies) : null;
+      : this.battleInput.mode === "expeditionBoss" ? createExpeditionBossSkirmishConfig(this.battleInput, players, stageEnemies)
+        : this.battleInput.mode === "raid" ? createRaidSkirmishConfig(players, stageEnemies[0]) : null;
     // 편성이 낀 룬의 특성은 어느 전투에서나 돈다 — 원정 증강과 **같은 계약**을 쓰므로 두 몫이
     // 한 배열에서 만난다. 장착 목록을 읽는 일은 씬이 하고, 효과로 옮기는 일은 코어가 한다.
     const traitEffects = partyRuneTraitEffects(partyIds.map((id) => ({
@@ -410,14 +448,18 @@ export class BattleScene extends Phaser.Scene {
       playerInitialStates: expeditionConfig.playerInitialStates,
       augmentEffects: [...expeditionConfig.augmentEffects, ...traitEffects],
       enemyBodyScale: expeditionConfig.enemyBodyScale,
-      ...(this.battleInput.mode === "expeditionBoss" ? { boss: (expeditionConfig as ReturnType<typeof createExpeditionBossSkirmishConfig>).boss } : {}),
+      ...(this.battleInput.mode === "expeditionBoss" || this.battleInput.mode === "raid" ? { boss: (expeditionConfig as ReturnType<typeof createExpeditionBossSkirmishConfig>).boss } : {}),
     } : {
       // 일반 스테이지의 적도 능력치뿐 아니라 스킬 돌파 효과까지 슬롯별 스냅샷을 사용한다.
       // 능력치 복사본과 같은 formationSlot 순서로 돌파 스킬 스냅샷을 맞춘다.
       augmentEffects: traitEffects,
-      enemyBreakthroughs: stageEnemyGrowth(stage).map(({ breakthrough }) => breakthrough),
+      ...(cakeWaves ? { waves: cakeWaves.slice(1) } : {}),
+      // 현상수배는 정예 하나가 혼자 서므로 스테이지의 슬롯별 돌파 표를 읽지 않는다.
+      enemyBreakthroughs: cakeWaves || this.battleInput.mode === "bounty"
+        ? stageEnemies.map(() => 0)
+        : stageEnemyGrowth(stage).map(({ breakthrough }) => breakthrough),
       // 정예는 혼자 서는 만큼 몸이 크다. 능력치는 건드리지 않는다 — 세기는 야성 몫이 낸다.
-      ...(stage.elite === true ? { enemyBodyScale: STAGE_ELITE.bodyScale } : {}),
+      ...(stage.elite === true || this.battleInput.mode === "bounty" ? { enemyBodyScale: STAGE_ELITE.bodyScale } : {}),
     });
     // 테스트 초기 상태는 코어 생성이 끝난 단 한 경계에서만 적용해 씬 로직과 전투 공식을 오염시키지 않는다.
     this.rng = battleRandom();
@@ -430,6 +472,7 @@ export class BattleScene extends Phaser.Scene {
     // 이전 씬의 tween 종료보다 재진입이 빠르더라도 표시 관찰값은 새 전투에서 0부터 시작한다.
     this.healPopups = 0;
     this.bossActions = [];
+    this.raidRequestId = undefined;
     // 이전 전투/환경설정에서 저장한 조작 상태를 새 판의 시작값으로 그대로 복원한다.
     const currentSettings = settingsManager.get();
     const battleSettings = currentSettings.game;
@@ -445,7 +488,8 @@ export class BattleScene extends Phaser.Scene {
     this.contributionResult = undefined;
     this.buffPopups = new PopupLayer(this, 2200);
     this.info = new EnemyInfoPopup(this, this.buffPopups);
-    this.enemySnapshots = placedEnemyIndex(this.battleInput, stage, stageEnemies);
+    // 뒤 무리의 적도 정보창이 열리므로 펼친 목록 전체로 스냅샷을 만든다.
+    this.enemySnapshots = placedEnemyIndex(this.battleInput, stage, cakeWaves ? cakeWaves.flat() : stageEnemies);
     this.openBuff = undefined;
     // 파편·파문은 SD보다 앞이되 궁극기 컷인(900)보다는 뒤라 연출을 가리지 않는다.
     // 광역 범위만 배경 원화 위·SD 아래에 깔려 누가 어디 섰는지 가리지 않는다.
@@ -455,12 +499,14 @@ export class BattleScene extends Phaser.Scene {
     this.effects.setArena(this.state.arena);
 
     // 편성 화면에서 본 6번 전장을 그대로 이어 실제 전투의 공간으로 사용한다.
-    addSceneBackground(this, this.battleInput.mode === "expedition" || this.battleInput.mode === "expeditionBoss" ? BACKGROUND.expeditionField : BACKGROUND.combat, -30);
+    addSceneBackground(this, this.battleInput.mode === "raid" ? BACKGROUND.raidField
+      : this.battleInput.mode === "expedition" || this.battleInput.mode === "expeditionBoss" ? BACKGROUND.expeditionField
+      : this.battleInput.mode === "bounty" ? BACKGROUND.sortieBounty : BACKGROUND.combat, -30);
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.28).setDepth(-29);
     // 원정 헤더는 스토리 선택 상태를 전혀 읽지 않아 잘못된 모드 진입을 화면에서도 드러낸다.
     this.add.text(42, 48, battleHeaderText(this.battleInput, stage), textStyle({ role: "body", size: 30, color: COLOR.inkDim }));
     this.add.text(BASE_WIDTH / 2, 160, "AUTO BATTLE", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5);
-    if (this.battleInput.mode === "expeditionBoss") this.buildBossScoreHud();
+    if (this.battleInput.mode === "expeditionBoss" || this.battleInput.mode === "raid") this.buildBossScoreHud();
 
     this.buildBattleControls();
 
@@ -522,6 +568,70 @@ export class BattleScene extends Phaser.Scene {
       failureUi.add(new Button(this, BASE_WIDTH / 2, 1140, { width: 460, height: 90, label: t("battle.settle.recoverLobby"), onClick: () => this.recoverBossSettlementToLobby() }));
       this.bossSettlementFailureUi = failureUi;
     }
+  }
+
+
+  /**
+   * 레이드 한 판을 서버에 확정하고 결과판을 연다.
+   *
+   * 원정 정산과 갈라 두는 이유는 **정산할 런이 없기 때문이다** — 레이드는 지도도 잔여 체력도
+   * 없이 한 판이 곧 제출 하나라, 원정의 런 정산 체인을 그대로 태우면 있지도 않은 런을 찾는다.
+   * 실패했을 때의 손짓(같은 요청 ID로 재시도 · 로비로 되돌아가기)은 원정과 같다.
+   */
+  private async submitRaidRun(actions: ExpeditionBossAction[]): Promise<void> {
+    if (!beginBossSettlementAttempt(this.bossSettlementFailureState)) return;
+    this.bossSettlementFailureUi?.destroy(true);
+    this.bossSettlementFailureUi = undefined;
+    // 요청 ID는 한 판에 하나다 — 재시도가 새 ID를 만들면 성공한 제출이 두 번 쌓인다.
+    this.raidRequestId ??= `raid-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
+    try {
+      const result = await gameApi.submitRaidDamage({ requestId: this.raidRequestId, actions });
+      completeBossSettlementAttempt(this.bossSettlementFailureState);
+      this.showRaidResult(result);
+    } catch (error) {
+      console.error("[raid] 피해 제출 실패", error);
+      failBossSettlementAttempt(this.bossSettlementFailureState);
+      const code = error instanceof GameApiError ? error.code : undefined;
+      const reason = code === "RAID_SCORE_REJECTED" ? t("battle.settle.scoreRejected")
+        : code === "PERSISTENCE_FAILED" ? t("battle.settle.persistenceFailed")
+          : t("battle.settle.failed");
+      const failureUi = this.add.container(0, 0).setDepth(5000);
+      failureUi.add(this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.96));
+      failureUi.add(this.add.text(BASE_WIDTH / 2, 850, reason, textStyle({ role: "body", size: 27, color: COLOR.dangerText, align: "center", wrap: BASE_WIDTH - 220 })).setOrigin(0.5));
+      failureUi.add(new Button(this, BASE_WIDTH / 2, 1010, { width: 460, height: 100, label: t("battle.settle.retry"), variant: "primary", onClick: () => void this.submitRaidRun(actions) }));
+      failureUi.add(new Button(this, BASE_WIDTH / 2, 1140, { width: 460, height: 90, label: t("battle.settle.recoverLobby"), onClick: () => this.recoverBossSettlementToLobby() }));
+      this.bossSettlementFailureUi = failureUi;
+    }
+  }
+
+  /**
+   * 레이드 결과판.
+   *
+   * 협력전이라 **가장 크게 서는 수가 이번 판의 피해**이고, 그 아래에 시즌 누적이 한 줄로
+   * 붙는다 — 원정처럼 점수 하나만 남기면 "내가 얼마나 밀었나"와 "우리가 어디까지 왔나"가
+   * 한 수에 뭉쳐 읽힌다.
+   */
+  private showRaidResult(result: SubmitRaidDamageResponse): void {
+    if (this.contributionResult) this.contributionResult = withConfirmedAttackTotal(this.contributionResult, result.runDamage);
+    this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.96).setDepth(5000);
+    const layout = BOSS_RESULT_LAYOUT;
+    this.add.text(layout.title.x, layout.title.y, t("battle.settle.done"), textStyle({ role: "display", size: 60, color: COLOR.accentText })).setOrigin(0.5).setDepth(5001);
+    this.add.text(BASE_WIDTH / 2, layout.score.top + 105, t("raid.result.damage"), textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0.5).setDepth(5001);
+    const damageText = this.add.text(BASE_WIDTH / 2, layout.score.top + 225, result.runDamage.toLocaleString(), textStyle({ role: "display", size: 76, color: "#ffffff", align: "center" })).setOrigin(0.5).setDepth(5001);
+    damageText.setStroke("#000000", 6).setShadow(0, 4, "#000000", 4, false, true);
+    this.add.text(BASE_WIDTH / 2, layout.score.top + 330, t("raid.result.total", { total: result.season.myDamage.toLocaleString() }), textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0.5).setDepth(5001);
+    const popups = new PopupLayer(this, 6000);
+    new Button(this, BASE_WIDTH / 2, layout.lobby.top + layout.lobby.height / 2, { width: layout.lobby.width, height: layout.lobby.height, label: t("battle.settle.toLobby"), variant: "primary", onClick: () => {
+      if (this.bossLeaving) return;
+      this.bossLeaving = true;
+      // 레이드도 성공 제출 뒤에는 Boot가 서버 최신본을 읽고 저장 검증을 거친 뒤 레이드로 되돌린다.
+      this.scene.start("boot", { destination: "raid" });
+    } }).setDepth(5001);
+    setDebugBossResult({ visible: true, lobby: { x: BASE_WIDTH / 2, y: layout.lobby.top + layout.lobby.height / 2 } });
+    const [, contribution] = bossResultUtilityBounds();
+    // 주간 기록 자리는 비운다 — 레이드의 기록은 순위가 아니라 시즌 판이 맡고, 그 판은 레이드
+    // 화면이 이미 갖고 있다. 여기 하나 더 세우면 같은 목록을 두 곳에서 열게 된다.
+    new Button(this, contribution.left + contribution.width / 2, contribution.top + contribution.height / 2, { width: contribution.width, height: contribution.height, label: t("battle.contribution"), fontSize: 27, onClick: () => this.openContributionPopup(popups) }).setDepth(5001);
   }
 
   /** 실패를 성공/포기로 꾸미거나 로컬 런을 지우지 않고 Boot의 서버·저장 재동기화 경계로 나간다. */
@@ -635,10 +745,17 @@ export class BattleScene extends Phaser.Scene {
     refreshPresentationChip();
   }
 
-  /** 여섯을 각자의 시작 자리에 세운다. 전부 준비된 뒤에야 시간이 흐르기 시작한다. */
-  private async spawnFighters(): Promise<void> {
+  /**
+   * 여섯을 각자의 시작 자리에 세운다. 전부 준비된 뒤에야 시간이 흐르기 시작한다.
+   *
+   * 물량형 던전의 다음 무리도 같은 경로로 선다(`initial: false`) — 무리마다 따로 세우면
+   * 그 무리만 입력면·체력 바·폭주 필터 중 하나가 빠진 채 싸운다. 이미 선 전투원은 건너뛰고,
+   * 전투 도중에 부르는 것이라 시간 기준점(`lastStepAt`)은 건드리지 않는다.
+   */
+  private async spawnFighters(initial = true): Promise<void> {
     ensureEffectTextures(this);
     for (const fighter of this.state.fighters) {
+      if (this.views.has(fighter.id)) continue;
       // 표시 배율은 코어 입력에 들어 있으며 씬은 모든 Puppet 부속 표현에 같은 높이만 적용한다.
       const unitHeight = UNIT_HEIGHT * fighter.bodyScale;
       // 외형 선택은 manager/resolver가 소유하고 전투 씬은 진영과 결과 에셋만 배치한다.
@@ -690,6 +807,7 @@ export class BattleScene extends Phaser.Scene {
       this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, statusChips, statusHit, stunShown: false, feverTint, feverStep: -1, feverTinted: false, afterimageShown: false, tint, squashAt: -Infinity, squashDir: 1, spinDir: 1, dead: false });
     }
     this.syncViews();
+    if (!initial) return;
     // 마지막 한 명까지 서고 나서 시간을 흘려야 먼저 뜬 캐릭터만 앞서 달려가지 않는다.
     this.lastStepAt = performance.now();
     this.spawned = true;
@@ -924,6 +1042,7 @@ export class BattleScene extends Phaser.Scene {
     const expanded = this.contributionPanel?.state.expanded ?? false;
     if (this.contributionChip && this.contributionChip.isActive() !== expanded) this.contributionChip.setActive(expanded);
     this.syncCombatEffects();
+    this.syncGroundSurfaces();
     // 판이 떠 있는 동안에는 코어 시간만 멈춘다. 화면 tween과 게이지 추격은 그대로 돌아
     // 판을 닫는 순간 값이 점프하지 않는다. lastStepAt은 위에서 이미 지금으로 밀어 두었으므로
     // 다시 흐를 때 멈춰 있던 만큼이 한꺼번에 들어가지 않는다.
@@ -940,6 +1059,12 @@ export class BattleScene extends Phaser.Scene {
     // battleSpeed는 코어 시간에 여기서 정확히 한 번만 곱한다. 궁극기 연출 배율은 tween/Puppet에만
     // 쓰고 stepSkirmish에 넣지 않으므로 피해량·공격 주기·게이지 충전이 이중 가속되지 않는다.
     const events = stepSkirmish(this.state, dt * this.battleSpeed, this.rng);
+    // **시간을 다 쓴 라운드는 진 것으로 센다.** 1대1은 서로 못 죽이는 조합이 실제로 있어,
+    // 제한이 없으면 그 판이 영영 끝나지 않는다(`BOUNTY.limitSeconds`).
+    if (this.battleInput.mode === "bounty" && this.state.phase === "fight" && this.state.elapsed >= BOUNTY.limitSeconds) {
+      this.finishBattle("defeat");
+      return;
+    }
     if (this.state.boss) {
       const boss = this.state.boss; const phase = boss.phases[boss.phaseIndex];
       const normalScore = expeditionManager.status().run?.normalNodeScoreTotal ?? 0;
@@ -1215,6 +1340,12 @@ export class BattleScene extends Phaser.Scene {
       return undefined;
     }
     if (event.kind === "bloodscent") return undefined;
+    // 다음 무리가 선 순간. 몸은 이미 코어의 fighters 배열에 있으므로 화면만 뒤따라 세운다.
+    if (event.kind === "waveStart") {
+      this.announceWave(event.wave, event.total);
+      void this.spawnFighters(false);
+      return undefined;
+    }
 
     const attacker = this.views.get(event.attackerId);
     const target = this.views.get(event.targetId);
@@ -1493,6 +1624,28 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /** 유지형 효과는 모든 Fighter의 현재 상태를 매 프레임 다시 읽어 동기화한다. */
+  /**
+   * 바닥에 고인 여울을 매 프레임 그린다.
+   *
+   * 사건이 아니라 **지금 깔려 있는 판**을 그대로 읽는다(보호막 잔량과 같은 규칙) — 매초
+   * 사건을 쏘던 때는 그 순간에만 그려져 물이 1초마다 새로 고이는 것처럼 깜빡였다.
+   */
+  private syncGroundSurfaces(): void {
+    const surfaces = this.state.fighters.flatMap((fighter) => {
+      const shallows = fighter.def.basic.shallows;
+      if (!shallows) return [];
+      return fighter.shallowPools.map((pool, index) => ({
+        key: `shallows:${fighter.id}:${index}`,
+        x: pool.x,
+        y: pool.y,
+        radius: shallows.radius,
+        // 피해를 주지 않는 판이라 색은 머리 위 잠김 칩과 같은 표를 읽는다.
+        color: statusAreaColor("submerged"),
+      }));
+    });
+    this.effects.syncGroundSurfaces(surfaces, this.time.now / 1000);
+  }
+
   private syncCombatEffects(): void {
     this.combatEffects.sync([...this.views.keys()].map((id) => this.combatEffectTarget(id)).filter((target): target is CombatEffectTarget => Boolean(target)));
   }
@@ -1864,7 +2017,10 @@ export class BattleScene extends Phaser.Scene {
     this.refreshDebug();
     const won = phase === "victory";
     if (this.battleInput.mode === "expeditionBoss") { void this.submitAndSettleBoss(this.battleInput, this.bossActions); return; }
+    if (this.battleInput.mode === "raid") { void this.submitRaidRun(this.bossActions); return; }
     if (this.battleInput.mode === "expedition") { this.finishExpeditionBattle(this.battleInput, won); return; }
+    if (this.battleInput.mode === "cake") { void this.finishCakeOperation(this.battleInput, won); return; }
+    if (this.battleInput.mode === "bounty") { void this.finishBountyRound(this.battleInput, won); return; }
     const stage = getBattleStage(session.selectedStageId ?? "1-1");
     if (!won) { this.finishStageDefeat(stage); return; }
     void this.finishStageVictory(stage);
@@ -1929,6 +2085,96 @@ export class BattleScene extends Phaser.Scene {
       this.add.text(BASE_WIDTH / 2, 900, t("battle.result.saveFailed"), textStyle({ role: "body", size: 30, color: COLOR.ink })).setOrigin(0.5).setDepth(101);
       new Button(this, BASE_WIDTH / 2, 1010, { width: 400, height: 100, label: t("battle.result.retry"), onClick: () => void this.finishStageVictory(stage) }).setDepth(101);
     }
+  }
+
+  /**
+   * 치즈케이크 대작전 결과.
+   *
+   * **스테미나는 입장에서 이미 빠졌다** — 여기서는 보상만 얹고 해금 단계를 갱신한다. 패배도
+   * 같은 경계를 지나야 승리 전용 보상이 새지 않고, 이긴 판의 배율이 화면에서 다시 곱해지지도
+   * 않는다(`granted`가 이미 확정된 값이다).
+   */
+  private async finishCakeOperation(input: CakeBattleInputDto, won: boolean): Promise<void> {
+    const back = () => this.scene.start("cakeOperation");
+    try {
+      const result = await gameApi.completeCakeOperation({ tierId: input.tierId, requestId: input.requestId, multiplier: input.multiplier, victory: won });
+      if (!this.scene.isActive()) return;
+      const popups = new PopupLayer(this, 2200);
+      const items = currencyRecordToRewardItems(result.granted);
+      new StageCompletePopup(this, popups).open({
+        // 진 판은 받은 것이 없으므로 보상 자리 대신 강해지러 가는 길이 선다.
+        reward: won ? { kind: "loot", items } : {
+          kind: "defeat",
+          actions: [
+            { label: t("stageComplete.toRelics"), onPress: () => this.scene.start("relics") },
+            { label: t("cake.title"), onPress: back },
+          ],
+        },
+        fighters: this.stageCompleteFighters(),
+        onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
+        onConfirm: () => { if (this.scene.isActive()) back(); },
+      });
+    } catch {
+      // 결과 확정만 실패한 자리라 전장으로 되돌리지 않고 같은 요청만 다시 시도하게 한다.
+      this.add.rectangle(BASE_WIDTH / 2, 930, BASE_WIDTH, 420, COLOR.void, 0.84).setDepth(100);
+      this.add.text(BASE_WIDTH / 2, 900, t("battle.result.saveFailed"), textStyle({ role: "body", size: 30, color: COLOR.ink })).setOrigin(0.5).setDepth(101);
+      new Button(this, BASE_WIDTH / 2, 1010, { width: 400, height: 100, label: t("battle.result.retry"), onClick: () => void this.finishCakeOperation(input, won) }).setDepth(101);
+    }
+  }
+
+  /**
+   * 현상수배 한 라운드의 끝.
+   *
+   * **이 판이 이어지는지 끝나는지는 코어가 정한다**(`nextBountyStep`). 씬이 그 판단을 복제하면
+   * "졌는데 다음 라운드가 열렸다"가 생긴다. 이긴 라운드는 결산창 없이 곧바로 다음 라운드로
+   * 이어진다 — 한 판이 세 라운드라, 라운드마다 판을 세우면 받을 것도 없는 영수증을 두 번 더
+   * 닫아야 한다.
+   *
+   * 마지막 라운드와 진 라운드만 서버 정산을 지난다. 골드를 주는 것도 등급을 여는 것도
+   * `completeBounty` 한 처리이며 화면은 그 결과만 그린다.
+   */
+  private async finishBountyRound(input: BountyBattleInputDto, won: boolean): Promise<void> {
+    const step = nextBountyStep(input.round, won);
+    if (step.kind === "next") {
+      this.scene.start("battle", { ...input, round: step.round } satisfies BountyBattleInputDto);
+      return;
+    }
+    const clearedRounds = step.kind === "clear" ? BOUNTY.roundCount : step.round;
+    const fighters = this.stageCompleteFighters();
+    const popups = new PopupLayer(this, 2200);
+    const openContribution = (onClosed: () => void): void => this.openContributionPopup(popups, onClosed);
+    let settled;
+    try {
+      settled = await gameApi.completeBounty({ tierId: input.tierId, requestId: input.requestId, victory: step.kind === "clear", clearedRounds });
+    } catch {
+      // 정산이 늦어도 전장으로 되돌리지 않는다. 같은 영수증으로 다시 시도하게만 한다.
+      if (!this.scene.isActive()) return;
+      this.add.rectangle(BASE_WIDTH / 2, 930, BASE_WIDTH, 420, COLOR.void, 0.84).setDepth(100);
+      this.add.text(BASE_WIDTH / 2, 900, t("battle.result.saveFailed"), textStyle({ role: "body", size: 30, color: COLOR.ink })).setOrigin(0.5).setDepth(101);
+      new Button(this, BASE_WIDTH / 2, 1010, { width: 400, height: 100, label: t("battle.result.retry"), onClick: () => void this.finishBountyRound(input, won) }).setDepth(101);
+      return;
+    }
+    if (!this.scene.isActive()) return;
+    const toBounty = (): void => { this.scene.start("bounty"); };
+    if (step.kind === "clear") {
+      new StageCompletePopup(this, popups).open({
+        reward: { kind: "loot", items: currencyRecordToRewardItems({ gold: settled.goldEarned }) },
+        fighters, onOpenContribution: openContribution, onConfirm: toBounty,
+      });
+      return;
+    }
+    // 진 판에는 받을 것이 없으므로 보상 줄 자리에 **다음에 할 일**이 선다.
+    let chosen = false;
+    const go = (scene: string) => () => { chosen = true; this.scene.start(scene); };
+    new StageCompletePopup(this, popups).open({
+      reward: { kind: "defeat", actions: [
+        { label: t("stageComplete.toResearch"), onPress: go("lab") },
+        { label: t("stageComplete.toRelics"), onPress: go("relics") },
+        { label: t("bounty.result.toBounty"), onPress: go("bounty") },
+      ] },
+      fighters, onOpenContribution: openContribution,
+      onConfirm: () => { if (!chosen && this.scene.isActive()) toBounty(); },
+    });
   }
 
   /**

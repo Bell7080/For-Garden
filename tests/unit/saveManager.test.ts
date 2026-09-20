@@ -4,6 +4,7 @@ import { createDefaultSession, type SaveData } from "../../src/state/session";
 import { createRuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { ExpeditionManager } from "../../src/managers/ExpeditionManager";
 import { EXCAVATION_BASE_STORAGE_SECONDS } from "../../src/core/idleExcavation";
+import { CAKE_OPERATION_TIERS } from "../../src/data/cakeOperation";
 
 /** 저장 왕복과 손상 검증에 쓰는 결정적 신규 룬이다. */
 function testRune(instanceId = "rune-save-1") {
@@ -27,6 +28,34 @@ function validData(): SaveData {
 }
 
 describe("SaveManager", () => {
+  it("v35 현상수배 없는 저장은 1급만 열린 채로 마이그레이션한다", () => {
+    const storage = new MemoryStorage();
+    const legacy = { ...validData(), saveVersion: 35 } as Partial<SaveData>;
+    delete legacy.bounty;
+    storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(legacy));
+    const loaded = new SaveManager(storage).load();
+    // 깬 등급이 없으면 첫 등급만 열린다 — 없는 진행을 꾸며내 다음 등급을 열지 않는다.
+    expect(loaded?.bounty).toEqual({ date: "", entries: 0, clearedTierIds: [] });
+  });
+
+  it("현상수배 진행을 JSON으로 왕복하고 없는 등급·과한 입장 횟수를 거부한다", () => {
+    const storage = new MemoryStorage();
+    const manager = new SaveManager(storage);
+    const session = createDefaultSession();
+    session.bounty = { date: "2026-09-19", entries: 2, clearedTierIds: ["bounty-1", "bounty-2"] };
+    manager.save(session);
+    expect(manager.load()?.bounty).toEqual({ date: "2026-09-19", entries: 2, clearedTierIds: ["bounty-1", "bounty-2"] });
+
+    // 해금 근거가 되는 값이라 손상된 목록을 그대로 받아들이면 잠긴 등급이 열린다.
+    const broken = { ...validData(), bounty: { date: "", entries: 0, clearedTierIds: ["bounty-99"] } };
+    storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(broken));
+    expect(() => new SaveManager(storage).load()).toThrow(SaveDataError);
+
+    const tooMany = { ...validData(), bounty: { date: "", entries: 99, clearedTierIds: [] } };
+    storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(tooMany));
+    expect(() => new SaveManager(storage).load()).toThrow(SaveDataError);
+  });
+
   it("데이터 초기화가 복원할 신규 상태에는 임시 뽑기 테스트 재화를 넉넉히 지급한다", () => {
     // 기본 상태 팩토리를 직접 고정해 첫 설치와 설정의 데이터 초기화가 같은 지급량을 쓰게 한다.
     expect(createDefaultSession().wallet).toMatchObject({ fossil: 90_000, amber: 900 });
@@ -488,5 +517,29 @@ describe("SaveManager 광고 상태 마이그레이션", () => {
     expect(new SaveManager(storage).load()?.dailyAdRewards).toEqual(source.dailyAdRewards);
     const legacy = validData() as unknown as Record<string, unknown>; legacy.saveVersion = 15; delete legacy.dailyAdRewards;
     expect(new SaveManager(new MemoryStorage()).migrate(legacy).dailyAdRewards).toEqual({ date: "", claimsBySlot: {}, requestIds: [] });
+  });
+
+  /**
+   * 치즈케이크 대작전 해금 단계(v36).
+   *
+   * 옛 저장에는 없던 칸이라 **아직 하나도 이기지 않은 상태**(-1)로 채워야 하고, 손상된 값이
+   * 그대로 들어오면 열리지 않은 단계가 열린다.
+   */
+  it("v35 저장에 대작전 해금 단계를 채우고 범위 밖 값은 좁힌다", () => {
+    const storage = new MemoryStorage(); const source = createDefaultSession();
+    expect(source.cakeOperation).toEqual({ clearedIndex: -1 });
+    source.cakeOperation = { clearedIndex: 2 };
+    new SaveManager(storage).save(source);
+    expect(new SaveManager(storage).load()?.cakeOperation).toEqual({ clearedIndex: 2 });
+
+    const legacy = validData() as unknown as Record<string, unknown>; legacy.saveVersion = 35; delete legacy.cakeOperation;
+    expect(new SaveManager(new MemoryStorage()).migrate(legacy).cakeOperation).toEqual({ clearedIndex: -1 });
+
+    const last = CAKE_OPERATION_TIERS.length - 1;
+    const tampered = validData() as unknown as Record<string, unknown>;
+    tampered.cakeOperation = { clearedIndex: 999 };
+    expect(new SaveManager(new MemoryStorage()).migrate(tampered).cakeOperation).toEqual({ clearedIndex: last });
+    tampered.cakeOperation = { clearedIndex: -50 };
+    expect(new SaveManager(new MemoryStorage()).migrate(tampered).cakeOperation).toEqual({ clearedIndex: -1 });
   });
 });

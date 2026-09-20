@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { FakeServer } from "../../src/api/FakeServer";
 import { breakthroughFragmentCost, BREAKTHROUGH_STEPS, RELIC_LEVEL_CAP } from "../../src/core/relicProgression";
 import { GameApiError } from "../../src/api/contracts";
-import { createInitialPlayerResearchProgress, type Session } from "../../src/state/session";
+import { createEmptyRaidState, createInitialPlayerResearchProgress, type Session } from "../../src/state/session";
 import { createRuneInstance, enhanceRune as applyRuneEnhancement, runeEnhancementIncrease, type RuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { createDefaultSettings } from "../../src/core/settings";
 import { WALLET_CAPS } from "../../src/data/economy";
@@ -44,6 +44,7 @@ function makeSession(fossil = 1000): Session {
     itemInventory: [],
     runeInventory: [],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
+    bounty: { date: "", entries: 0, clearedTierIds: [] },
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [], researchPoints: { daily: 0, weekly: 0 }, claimedResearchStageIds: [] },
     // 상품 테스트가 아닌 세션도 최신 저장 계약의 빈 구매 이력을 명시한다.
     productPurchases: {},
@@ -51,6 +52,8 @@ function makeSession(fossil = 1000): Session {
     dailyAdRewards: { date: "", claimsBySlot: {}, requestIds: [] },
     // API 테스트의 원정 저장 계약은 빈 상태로 명시한다.
     expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, allTimeBestScore: 0, lastParty: [], run: null },
+    raid: createEmptyRaidState(),
+    cakeOperation: { clearedIndex: -1 },
   };
 }
 
@@ -302,6 +305,64 @@ describe("FakeServer", () => {
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-20T23:59:00Z") });
     await expect(server.interactInLobby("anky")).resolves.toMatchObject({ bondXpEarned: 5 });
     await expect(server.interactInLobby("anky")).resolves.toMatchObject({ bondXpEarned: 0 });
+  });
+
+  it("현상수배는 입장 한 번에만 스테미나와 일일 횟수를 쓰고 같은 영수증을 두 번 깎지 않는다", async () => {
+    const state = makeSession();
+    state.wallet.stamina = 100;
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-19T04:00:00Z") });
+
+    const admission = await server.enterBounty({ tierId: "bounty-1", requestId: "run-1" });
+    expect(admission).toMatchObject({ tierId: "bounty-1", staminaSpent: 15, entriesRemaining: 2 });
+    expect(state.wallet.stamina).toBe(85);
+    // 재전송은 최초 영수증을 그대로 돌려줘 스테미나가 두 번 나가지 않는다.
+    await expect(server.enterBounty({ tierId: "bounty-1", requestId: "run-1" })).resolves.toMatchObject({ staminaSpent: 15 });
+    expect(state.wallet.stamina).toBe(85);
+  });
+
+  it("현상수배는 잠긴 등급과 하루 입장 한도를 서버가 막는다", async () => {
+    const state = makeSession();
+    state.wallet.stamina = 100;
+    let now = new Date("2026-09-19T04:00:00Z");
+    const server = new FakeServer(state, { latencyMs: 0, now: () => now });
+
+    // 해금은 화면 표시가 아니라 서버가 지키는 값이다 — 직접 진입도 같은 경계에서 막힌다.
+    await expect(server.enterBounty({ tierId: "bounty-2", requestId: "skip" })).rejects.toMatchObject({ code: "BOUNTY_TIER_LOCKED" });
+
+    for (let index = 0; index < 3; index += 1) await server.enterBounty({ tierId: "bounty-1", requestId: `run-${index}` });
+    await expect(server.enterBounty({ tierId: "bounty-1", requestId: "run-4" })).rejects.toMatchObject({ code: "BOUNTY_DAILY_LIMIT" });
+    now = new Date("2026-09-20T00:00:00Z");
+    await expect(server.enterBounty({ tierId: "bounty-1", requestId: "run-5" })).resolves.toMatchObject({ entriesRemaining: 2 });
+  });
+
+  it("현상수배는 세 라운드를 다 이긴 판에만 골드를 주고 다음 등급을 연다", async () => {
+    const state = makeSession();
+    state.wallet.stamina = 100;
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-19T04:00:00Z") });
+
+    await server.enterBounty({ tierId: "bounty-1", requestId: "lost" });
+    const lost = await server.completeBounty({ tierId: "bounty-1", requestId: "lost", victory: false, clearedRounds: 2 });
+    expect(lost).toMatchObject({ victory: false, goldEarned: 0, clearedTierIds: [] });
+    expect(state.wallet.gold).toBe(0);
+
+    await server.enterBounty({ tierId: "bounty-1", requestId: "won" });
+    const won = await server.completeBounty({ tierId: "bounty-1", requestId: "won", victory: true, clearedRounds: 3 });
+    expect(won).toMatchObject({ victory: true, goldEarned: 3_000, firstClear: true, clearedTierIds: ["bounty-1"] });
+    expect(state.wallet.gold).toBe(3_000);
+    // 영수증은 한 판에 한 번만 소비된다 — 같은 입장으로 두 번 보상받지 못한다.
+    await expect(server.completeBounty({ tierId: "bounty-1", requestId: "won", victory: true, clearedRounds: 3 })).rejects.toMatchObject({ code: "BOUNTY_ADMISSION_NOT_FOUND" });
+    // 입장하지 않은 등급의 정산도 같은 경계에서 막힌다.
+    await expect(server.completeBounty({ tierId: "bounty-2", requestId: "ghost", victory: true, clearedRounds: 3 })).rejects.toMatchObject({ code: "BOUNTY_ADMISSION_NOT_FOUND" });
+  });
+
+  it("현상수배는 세 라운드를 다 치르지 않은 승리 보고를 보상으로 세지 않는다", async () => {
+    const state = makeSession();
+    state.wallet.stamina = 100;
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-19T04:00:00Z") });
+    await server.enterBounty({ tierId: "bounty-1", requestId: "short" });
+    const settled = await server.completeBounty({ tierId: "bounty-1", requestId: "short", victory: true, clearedRounds: 1 });
+    expect(settled).toMatchObject({ victory: false, goldEarned: 0 });
+    expect(state.wallet.gold).toBe(0);
   });
 
   it("일일 복원은 UTC 하루 3회이고 다음 UTC 날짜에만 횟수를 초기화한다", async () => {

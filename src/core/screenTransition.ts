@@ -41,12 +41,23 @@ export interface TransitionTiming {
 /**
  * 전환 시간의 단일 출처.
  *
- * **나가는 쪽이 들어오는 쪽보다 짧다.** 볼 일이 끝난 화면을 배웅하는 시간은 그대로
- * 기다림이고, 들어오는 화면만 읽을 짬이 필요하다.
+ * ## 나가는 연출은 두지 않는다
+ *
+ * 한때 씬이 나갈 때도 130ms 동안 어두워지며 가라앉았다. 그러려면 **`scene.start`를 그만큼
+ * 미뤄야 한다** — 곧바로 부르면 나가는 씬이 그 자리에서 죽어 연출이 한 프레임도 그려지지
+ * 않기 때문이다. 그런데 미루는 일을 씬의 시계(`delayedCall`)가 맡으므로, 그 타이머는
+ * **프레임이 돌아야 깨어난다.** 편성에서 전투로 넘어가는 것처럼 그 순간 메인 스레드가 바쁜
+ * 자리에서는 98ms짜리 타이머가 **1.5초 넘게** 늦었다(E2E가 그 자리에서 5초를 기다리다
+ * 실패했고, 실측 로그가 `startScene` → `begin` 사이의 그 간격을 그대로 보여 주었다).
+ *
+ * 즉 나가는 연출은 **화면이 갈리는 일 자체에 상한 없는 기다림을 얹는다.** 손이 이미 다음
+ * 화면을 향한 뒤라 그 시간은 통째로 지연으로만 남는다. 그래서 걷어 냈다 — 들어오는 쪽만으로도
+ * "화면이 갈렸다"는 충분히 말하고, 대가가 없다. 벽시계 타이머로 바꾸는 길도 있었지만, 그러면
+ * 프레임이 긴 자리에서 연출이 끊겨 보일 뿐 기다림은 그대로 남는다.
+ *
+ * **다시 만들지 않는다.** 나가는 연출이 필요해 보이면 먼저 이 지연을 어떻게 없앨지부터 푼다.
  */
 export const TRANSITION = {
-  /** 씬이 나갈 때 — 어두워지며 아주 조금 가라앉는다. */
-  sceneOut: { duration: 130, distance: 18, alpha: 0, scale: 1 },
   /** 씬이 들어올 때 — 한 뼘 아래에서 떠오르며 밝아진다. */
   sceneIn: { duration: 260, distance: 34, alpha: 0, scale: 1 },
   /** 팝업이 열릴 때 — 누른 자리에서 부풀어 오른다. */
@@ -82,18 +93,6 @@ export function transitionTiming(kind: TransitionKind, motion: TransitionMotion)
     scale: 1 - (1 - base.scale) * factor,
   };
 }
-
-/**
- * 나가는 연출에 얼마나 기다렸다 다음 화면을 시작할지.
- *
- * **전환 시간보다 짧게 끊는다.** 나가는 화면이 완전히 사라진 뒤에 다음 씬을 만들면 그 사이
- * 검은 화면이 한 프레임 보이고, 무엇보다 다음 씬이 무거우면 그 준비 시간이 전환 뒤에
- * **더해진다.** 아직 옅게 남아 있을 때 갈아 끼우면 두 화면이 한 번에 겹쳐 지나간다.
- */
-export function sceneHandoffDelay(motion: TransitionMotion): number {
-  return Math.round(transitionTiming("sceneOut", motion).duration * 0.75);
-}
-
 function clamp01(value: number): number {
   if (!Number.isFinite(value)) return 1;
   return Math.min(1, Math.max(0, value));

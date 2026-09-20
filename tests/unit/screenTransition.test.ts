@@ -1,18 +1,26 @@
 import { describe, expect, it } from "vitest";
-import { sceneHandoffDelay, TRANSITION, transitionTiming, type TransitionKind } from "../../src/core/screenTransition";
+import { TRANSITION, transitionTiming, type TransitionKind } from "../../src/core/screenTransition";
 import { motionPolicy } from "../../src/core/settings";
 
-const KINDS: TransitionKind[] = ["sceneOut", "sceneIn", "popupIn", "popupOut"];
+const KINDS: TransitionKind[] = ["sceneIn", "popupIn", "popupOut"];
 
 /** 저장 설정에서 실제로 나오는 배율만 검사한다 — 화면이 임의 값을 지어내지 않는다. */
 const factorFor = (reduceMotion: boolean): number =>
   motionPolicy({ presentation: { screenShake: true, battleUiMotion: "default" }, accessibility: { reduceMotion } }).nonEssentialDistanceFactor;
 
 describe("화면 전환", () => {
-  it("은 나가는 쪽을 들어오는 쪽보다 짧게 둔다", () => {
-    // 볼 일이 끝난 화면을 배웅하는 시간은 그대로 기다림이다.
-    expect(TRANSITION.sceneOut.duration).toBeLessThan(TRANSITION.sceneIn.duration);
+  it("은 닫는 쪽을 여는 쪽보다 짧게 둔다", () => {
+    // 닫는 손은 이미 다음 조작을 하려는 손이라, 사라지는 판을 기다리게 하면 안 된다.
     expect(TRANSITION.popupOut.duration).toBeLessThan(TRANSITION.popupIn.duration);
+  });
+
+  it("에는 씬이 나가는 연출이 없다", () => {
+    /*
+     * 나가는 연출은 `scene.start`를 그만큼 미뤄야 성립하는데, 미루는 일을 씬의 시계가 맡으므로
+     * **프레임이 돌아야** 깨어난다 — 메인 스레드가 바쁜 자리에서 98ms짜리 타이머가 1.5초 넘게
+     * 늦어, 화면이 갈리는 일 자체에 상한 없는 기다림이 얹혔다. 다시 만들려면 그 지연부터 푼다.
+     */
+    expect(Object.keys(TRANSITION)).not.toContain("sceneOut");
   });
 
   it("은 손이 기다린다고 느끼지 않을 만큼만 쓴다", () => {
@@ -27,7 +35,6 @@ describe("화면 전환", () => {
       const timing = transitionTiming(kind, { factor: 0 });
       expect(timing, kind).toEqual({ duration: 0, distance: 0, alpha: 1, scale: 1 });
     }
-    expect(sceneHandoffDelay({ factor: 0 })).toBe(0);
   });
 
   it("은 움직임 감소를 켜면 모든 전환이 함께 줄어든다", () => {
@@ -42,14 +49,6 @@ describe("화면 전환", () => {
       expect(1 - after.scale, kind).toBeLessThanOrEqual(1 - before.scale);
       expect(after.distance, kind).toBeLessThanOrEqual(before.distance);
     }
-  });
-
-  it("은 다음 씬을 나가는 연출이 끝나기 전에 시작한다", () => {
-    // 완전히 사라진 뒤에 갈아 끼우면 그 사이 검은 화면이 한 프레임 보이고, 다음 씬이 무거우면
-    // 그 준비 시간이 전환 뒤에 **더해진다.**
-    const motion = { factor: factorFor(false) };
-    expect(sceneHandoffDelay(motion)).toBeLessThan(transitionTiming("sceneOut", motion).duration);
-    expect(sceneHandoffDelay(motion)).toBeGreaterThan(0);
   });
 
   it("은 망가진 배율을 받아도 화면을 멈춰 세우지 않는다", () => {

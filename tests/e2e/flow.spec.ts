@@ -75,12 +75,26 @@ async function enterParty(page: Page): Promise<void> {
  * 누르면 이미 선 세 명을 도로 내리는 셈이라 0/3이 되고, 출전 버튼은 아무 일도 하지 않는다.
  */
 async function pickParty(page: Page): Promise<void> {
+  /*
+   * **씬 이름이 바뀐 순간과 입력면이 생기는 순간은 다르다.**
+   *
+   * 준비 화면은 카드·SD를 읽어 온 뒤에야 누를 수 있는데, `scene`이 `party`로 바뀌는 것은 그보다
+   * 먼저다. 카드가 서기 전에 누르면 허공을 치고, **여섯 번 중 하나만 빗나가도 해제와 선택이 한
+   * 칸씩 밀려** 3/3이 아닌 채로 끝난다 — 그러면 출전 버튼은 조용히 아무 일도 하지 않고, 실패는
+   * "전투로 안 넘어간다"로만 보여 원인이 편성에 있다는 것이 드러나지 않는다.
+   *
+   * 화면은 직전 편성(없으면 자동 편성)으로 **세 자리를 채운 채** 열리므로, 그 셋이 실제로 선
+   * 것을 준비 신호로 삼는다.
+   */
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.party?.selectedCount)).toBe(3);
   await tap(page, ...LEXIA);
   await tap(page, ...TORIKA);
   await tap(page, ...SEIRA);
   await tap(page, ...TORIKA);
   await tap(page, ...LEXIA);
   await tap(page, ...SEIRA);
+  // 고른 결과가 정말 세 자리인지 여기서 못 박는다 — 빗나간 탭을 다음 단계로 넘기지 않는다.
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.party?.selectedCount)).toBe(3);
 }
 
 async function enterBattle(page: Page): Promise<void> {

@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { motionPolicy } from "../core/settings";
-import { sceneHandoffDelay, transitionTiming, type TransitionMotion } from "../core/screenTransition";
+import { transitionTiming, type TransitionMotion } from "../core/screenTransition";
 import { session } from "../state/session";
 
 /**
@@ -41,37 +41,16 @@ export function playSceneEntrance(scene: Phaser.Scene): void {
 /**
  * 씬을 바꾼다. **`scene.start`를 직접 부르는 자리를 이것으로 바꾼다.**
  *
- * 나가는 연출이 다 끝나기 전에 다음 씬을 시작한다(`sceneHandoffDelay`) — 완전히 사라진 뒤에
- * 갈아 끼우면 그 사이 검은 화면이 한 프레임 보이고, 다음 씬이 무거우면 그 준비 시간이 전환
- * 뒤에 **더해진다.**
+ * 지금 하는 일은 곧바로 갈아 끼우는 것뿐이고, 연출은 **들어오는 쪽**(`playSceneEntrance`)만
+ * 맡는다 — 나가는 연출을 두려면 `scene.start`를 미뤄야 하는데 그 미룸이 화면 전환에 상한 없는
+ * 기다림을 얹는다(이유는 `core/screenTransition.ts`의 `TRANSITION` 머리에 적어 두었다).
  *
- * **이 씬이 이미 나가는 중이면 두 번째 부름은 버린다.** 전환 중에 같은 버튼이 다시 눌리면
- * `scene.start`가 두 번 돌아 `create`가 겹쳐 실행된다.
+ * 그래도 이 함수를 지나게 하는 이유는, 화면이 갈리는 자리가 **한 곳으로 모여 있어야** 다음에
+ * 전환을 손볼 때 쉰다섯 곳을 다시 찾아다니지 않기 때문이다.
  */
 export function startScene(scene: Phaser.Scene, key: string, data?: object): void {
-  if (LEAVING.has(scene)) return;
-  const motion = currentMotion();
-  const timing = transitionTiming("sceneOut", motion);
-  const begin = (): void => { LEAVING.delete(scene); scene.scene.start(key, data); };
-  if (timing.duration === 0) { begin(); return; }
-  LEAVING.add(scene);
-  // **떠나다 만 씬을 그대로 두지 않는다.** 연출이 도는 사이에 다른 길로 화면이 갈리면 예약해 둔
-  // `begin`은 씬과 함께 지워지는데, 표식만 남으면 그 씬은 **다시 들어와도 영영 나가지 못한다**
-  // (다음 `startScene`이 맨 앞에서 되돌아간다). 씬이 내려가는 순간 표식도 함께 뗀다.
-  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => LEAVING.delete(scene));
-  const camera = scene.cameras.main;
-  scene.tweens.add({ targets: camera, alpha: timing.alpha, duration: timing.duration, ease: "Sine.easeIn" });
-  scene.tweens.add({ targets: camera, scrollY: camera.scrollY + timing.distance, duration: timing.duration, ease: "Cubic.easeIn" });
-  scene.time.delayedCall(sceneHandoffDelay(motion), begin);
+  scene.scene.start(key, data);
 }
-
-/**
- * 지금 나가는 중인 씬들.
- *
- * 씬 인스턴스는 재시작해도 **같은 객체**라, 나가는 중인지를 필드에 두면 다음 진입까지 살아남는다.
- * 약한 참조로 들고 있다가 실제로 갈아 끼우는 순간 지운다.
- */
-const LEAVING = new WeakSet<Phaser.Scene>();
 
 /** 팝업 한 장이 열리는 몫. 판은 부풀어 오르고 층 전체가 밝아진다. */
 export function playPopupOpen(

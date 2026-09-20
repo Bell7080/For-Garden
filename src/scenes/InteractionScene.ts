@@ -21,6 +21,7 @@ import { coverCrop } from "../ui/coverCrop";
 import { shapeClipMask } from "../ui/popupArt";
 import { drawGlyph } from "../ui/glyphs";
 import { STAGES } from "../data/stages";
+import { playSceneEntrance, startScene } from "../ui/screenTransition";
 
 /**
  * 여는 조건에 적을 관문 이름.
@@ -97,7 +98,7 @@ export class InteractionScene extends Phaser.Scene {
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.5).setDepth(-27);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -26, strength: 0.7 });
     bindCurrencyGuide({ scene: this, popups: this.popups });
-    new TopBar(this, 40, { currencies: "none", onSettings: () => this.scene.start("settings", { returnScene: "interaction" }) });
+    new TopBar(this, 40, { currencies: "none", onSettings: () => startScene(this, "settings", { returnScene: "interaction" }) });
     this.add.text(52, 150, t("interaction.title"), textStyle({ role: "display", size: 50, color: "#a8ddf5" }));
     this.add.text(56, 216, t("interaction.subtitle"), textStyle({ role: "body", size: 24, color: COLOR.inkDim }));
 
@@ -108,6 +109,9 @@ export class InteractionScene extends Phaser.Scene {
     // 남은 시간은 실시간으로 흐른다. 시계만 도는 동안에는 글자만 갈아 끼우고 층은 그대로 두어
     // 스크롤 위치도, 읽고 있던 원화도 흔들리지 않는다.
     this.time.addEvent({ delay: CLOCK_TICK_MS, loop: true, callback: () => this.tickClock() });
+    // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
+    // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+    playSceneEntrance(this);
   }
 
   /**
@@ -120,7 +124,7 @@ export class InteractionScene extends Phaser.Scene {
     const height = BASE_HEIGHT - INTERACTION_LAYER.viewport.bottom;
     drawGlassFade(this, BASE_WIDTH / 2, BASE_HEIGHT - height / 2, BASE_WIDTH, height, { topAlpha: 0, bottomAlpha: 0.92 }).setDepth(40);
     drawHairline(this, BASE_WIDTH / 2, INTERACTION_LAYER.viewport.bottom, BASE_WIDTH, { color: BLUE, alpha: 0.22 }).setDepth(40);
-    addBackButton(this, () => this.scene.start("lobby")).setDepth(41);
+    addBackButton(this, () => startScene(this, "lobby")).setDepth(41);
   }
 
   /** 층이 흐르는 창. 목록이 창보다 길면 그 안에서만 움직인다. */

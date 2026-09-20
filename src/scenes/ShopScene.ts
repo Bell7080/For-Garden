@@ -27,6 +27,7 @@ import type { ProductStorefront } from "../data/products";
 import { consumeSceneEntry } from "./sceneEntry";
 import { LOBBY_RETURN, normalizeLobbyEntry, type LobbyMenu } from "./lobbyEntry";
 import { shapeClipMask } from "../ui/popupArt";
+import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import {
   SHOP_BOARD, SHOP_CARD, SHOP_ENTRANCE, SHOP_SHELF, SHOP_STAGE, SHOP_TAB_ROW, SHOP_TITLE,
   shopBoardSize, shopCardSpot, shopCardWidth, shopDialogueSpot, shopGridContentHeight, shopGridViewport,
@@ -128,12 +129,12 @@ export class ShopScene extends Phaser.Scene {
     this.topBar = new TopBar(this, 40, {
       // 어느 재화를 세울지는 자리가 정한다 — 전리품 상점은 값으로 쓰는 증표 둘만 세운다.
       currencies: this.storefront === "loot" ? "loot" : "default",
-      onSettings: () => this.scene.start("settings", { returnScene: this.returnScene }),
+      onSettings: () => startScene(this, "settings", { returnScene: this.returnScene }),
       onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency),
     });
     this.add.text(54, 170, t(this.stage.titleKey), textStyle({ role: "display", size: 54 })).setOrigin(0, 0);
     // 목록 컨테이너는 비동기 생성되므로 공용 돌아가기를 그보다 높은 고정 계층에 둔다.
-    addBackButton(this, () => this.scene.start(this.returnScene, this.returnMenu ? LOBBY_RETURN[this.returnMenu] : undefined)).setDepth(1000);
+    addBackButton(this, () => startScene(this, this.returnScene, this.returnMenu ? LOBBY_RETURN[this.returnMenu] : undefined)).setDepth(1000);
 
     this.createStage();
     this.createBoard();
@@ -151,6 +152,9 @@ export class ShopScene extends Phaser.Scene {
       this.stageMask?.destroy(); this.stageMask = undefined;
       this.viewportMask?.destroy(); this.viewportMask = undefined;
     });
+    // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
+    // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+    playSceneEntrance(this);
   }
 
   /** 관성은 프레임 시간에 맞춰 감쇠해 고주사율에서도 같은 거리로 멈춘다. */

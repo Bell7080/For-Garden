@@ -703,7 +703,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   /** 레벨 상한을 한 단계 연다. 재료 차감과 단계 확정을 한 처리로 맡는다. */
   breakThroughRelic(relicId: string): Promise<BreakThroughResponse>;
   /** 패배도 서버에 명시해 승리 전용 보상이 새지 않도록 한다. */
-  completeStage(stageId: string, victory?: boolean): Promise<CompleteStageResponse>;
+  /** `victory`는 선택이 아니다 — 기본값을 두면 인자를 빠뜨린 호출이 조용히 승리로 기록된다. */
+  completeStage(stageId: string, victory: boolean): Promise<CompleteStageResponse>;
   /** 잔량 검증과 단 한 번의 차감을 서버 입장 트랜잭션으로 확정한다. */
   enterStage(request: EnterStageRequest): Promise<EnterStageResponse>;
   interactInLobby(relicId: string): Promise<LobbyInteractionResponse>;

@@ -52,6 +52,7 @@ import { bindFormationDrag, type FormationDragSlot } from "../ui/formationDrag";
 import { FORMATION_DRAG_VISUAL } from "../ui/formationDragVisual";
 import { createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
 import { consumeSceneEntry } from "./sceneEntry";
+import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { LOBBY_RETURN } from "./lobbyEntry";
 
 /** 편성 목록은 어디서나 네 칸이 한 줄이다. 카드 크기와 줄 간격은 폭에서 공용 규칙이 구한다. */
@@ -243,8 +244,11 @@ export class ExpeditionScene extends Phaser.Scene {
     // 화면을 벗어나는 조작은 공용 우하단 슬롯만 사용한다. 편성에서는 한 단계 앞인 기록으로 돌아간다.
     addBackButton(this, () => {
       if (!status.active && this.stage === "preparation") this.scene.restart({ stage: "ranking" });
-      else this.scene.start("lobby", LOBBY_RETURN.sortie);
+      else startScene(this, "lobby", LOBBY_RETURN.sortie);
     });
+    // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
+    // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+    playSceneEntrance(this);
   }
 
   /** 진행 중 원정은 보상·상승 지도·증강·생존 HUD를 서로 겹치지 않는 안전 구역에 배치한다. */
@@ -391,7 +395,7 @@ export class ExpeditionScene extends Phaser.Scene {
     const run = expeditionManager.status().run;
     if (!run) { this.nodeTransitionPending = false; return; }
     const input: ExpeditionBattleInputDto = { mode: "expedition", runId: run.runId, nodeId: node.id, nodeType: node.type as ExpeditionBattleInputDto["nodeType"], floor: node.floor, relics: run.relics.map(({ relicId, currentHp, alive }) => ({ relicId, currentHp, alive })), augments: run.selectedAugments };
-    this.scene.start("battle", input);
+    startScene(this, "battle", input);
   }
 
   /** 서버 제출과 완료 정산의 멱등 키를 먼저 런에 고정한 뒤 불사 보스 전장으로 이동한다. */
@@ -400,7 +404,7 @@ export class ExpeditionScene extends Phaser.Scene {
     const ids = expeditionManager.prepareBossRequests(node.id);
     if (!run || !ids || node.floor !== 20) { this.nodeTransitionPending = false; return; }
     const input: ExpeditionBossBattleInputDto = { mode: "expeditionBoss", runId: run.runId, nodeId: node.id, floor: 20, relics: run.relics.map(({ relicId, currentHp, alive }) => ({ relicId, currentHp, alive })), augments: run.selectedAugments, ...ids };
-    this.scene.start("battle", input);
+    startScene(this, "battle", input);
   }
 
   /** Fake 서버가 정한 보상 DTO를 받은 뒤에만 보물 노드를 완료하며 증강 경로는 열지 않는다. */
@@ -585,7 +589,7 @@ export class ExpeditionScene extends Phaser.Scene {
     this.popups.confirm({ title: t("expedition.abandon.title"), message: t("expedition.abandon.body", { reward: reward.toLocaleString() }), confirmLabel: t("expedition.abandon.confirm"), destructive: true }, async () => {
       const settlement = await gameApi.settleExpeditionRun({ runId: run.runId, settlementId: `${run.runId}:abandon`, outcome: "abandoned" });
       // 지갑 상한 적용 뒤 실제 들어온 양만 영수증에 표시하고 확인 후 로비로 돌아간다.
-      openRewardPopup(this, this.popups, { title: t("expedition.abandon.settle"), items: currencyRecordToRewardItems(settlement.granted), onConfirm: () => this.scene.start("lobby") });
+      openRewardPopup(this, this.popups, { title: t("expedition.abandon.settle"), items: currencyRecordToRewardItems(settlement.granted), onConfirm: () => startScene(this, "lobby") });
     });
   }
 

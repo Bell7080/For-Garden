@@ -31,6 +31,7 @@ import {
   relicGridViewportTop,
 } from "../ui/relicGridLayout";
 import { openElementChartPopup } from "../ui/affinityPopups";
+import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import {
   EMPTY_RELIC_FILTER,
   matchesRelicFilter,
@@ -144,7 +145,7 @@ export class RelicsScene extends Phaser.Scene {
     this.topBar = new TopBar(this, 40, {
       currencies: "none", profile: false,
       // 설정을 닫으면 목록의 현재 정렬 상태를 가진 이 씬 인스턴스로 돌아온다.
-      onSettings: () => this.scene.start("settings", { returnScene: "relics" }),
+      onSettings: () => startScene(this, "settings", { returnScene: "relics" }),
     });
 
     const ownedCount = relicCollection.owned.length;
@@ -190,6 +191,9 @@ export class RelicsScene extends Phaser.Scene {
 
     // 그리드는 BottomNav 경계에서 잘리고 배경 원화는 하단 탭 뒤까지 이어진다.
     new BottomNav(this, "relics");
+    // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
+    // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+    playSceneEntrance(this);
   }
 
   /** 모바일 관성은 프레임 시간으로 감쇠하며, 이동한 프레임마다 카드 내부 마스크도 동기화한다. */

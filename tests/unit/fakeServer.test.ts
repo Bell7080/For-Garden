@@ -354,9 +354,27 @@ describe("FakeServer", () => {
 
   it("메인 스테이지의 최초와 반복 보상을 데이터대로 구분한다", async () => {
     const state = makeSession(); const server = new FakeServer(state, { latencyMs: 0 });
-    await expect(server.completeStage("1-1")).resolves.toMatchObject({ firstClear: true, cheesecakeEarned: 30 });
-    await expect(server.completeStage("1-1")).resolves.toMatchObject({ firstClear: false, cheesecakeEarned: 10 });
+    await expect(server.completeStage("1-1", true)).resolves.toMatchObject({ firstClear: true, cheesecakeEarned: 30 });
+    await expect(server.completeStage("1-1", true)).resolves.toMatchObject({ firstClear: false, cheesecakeEarned: 10 });
     expect(state.wallet.cheesecake).toBe(40);
+  });
+
+  it("재화가 가득 차도 스테이지를 깰 수 있고 넘치는 보상만 깎인다", async () => {
+    // 그냥 더하기만 했을 때는 저장 직전 검사가 상한 초과로 던져, 치즈케이크가 가득 찬 계정은
+    // 클리어 기록도 유대도 임무 진행도 함께 막혔다. 다른 지급 경로처럼 깎아서 준다.
+    const state = makeSession(); state.wallet.cheesecake = WALLET_CAPS.cheesecake;
+    const server = new FakeServer(state, { latencyMs: 0 });
+    await expect(server.completeStage("1-1", true)).resolves.toMatchObject({ firstClear: true, cheesecakeEarned: 0 });
+    expect(state.wallet.cheesecake).toBe(WALLET_CAPS.cheesecake);
+    expect(state.cleared.has("1-1")).toBe(true);
+  });
+
+  it("상한 바로 아래에서는 들어갈 만큼만 지급하고 영수증도 그만큼만 적는다", async () => {
+    const state = makeSession(); state.wallet.cheesecake = WALLET_CAPS.cheesecake - 12;
+    const server = new FakeServer(state, { latencyMs: 0 });
+    // 1-1 최초 클리어 보상은 30이지만 들어갈 자리는 12뿐이다.
+    await expect(server.completeStage("1-1", true)).resolves.toMatchObject({ cheesecakeEarned: 12 });
+    expect(state.wallet.cheesecake).toBe(WALLET_CAPS.cheesecake);
   });
 
   it("승리만 편성 렐릭 유대를 올리고 패배에는 전투 보상을 지급하지 않는다", async () => {

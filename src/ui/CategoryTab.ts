@@ -5,17 +5,21 @@ import { COLOR, textStyle } from "./theme";
 /**
  * 목록을 갈아 끼우는 **전환 라벨** 한 장.
  *
- * 가방의 네 탭과 상점의 세 탭이 같은 손짓으로 같은 일을 한다 — 지금 보는 목록을 통째로 바꾸는
- * 것이라 생김새도 한 곳에서 나온다. 두 화면 모두 목록이 **위**, 라벨이 **아래**라 이 프리팹은
- * 그 방향 하나만 그린다.
+ * 가방의 네 탭과 상점의 세 탭, 환경설정의 다섯 탭이 같은 손짓으로 같은 일을 한다 — 지금 보는
+ * 목록을 통째로 바꾸는 것이라 생김새도 한 곳에서 나온다.
+ *
+ * **방향은 목록이 어디 있느냐가 정한다.** 가방·상점은 목록이 위라 라벨이 아래에 서고, 환경설정은
+ * 제목 아래에 탭이 서고 그 밑으로 내용이 흐른다. 두 경우가 같은 프리팹을 쓰되 솟는 쪽과 강조선이
+ * 걸리는 변만 뒤집힌다(`face`) — 화면마다 제 나름의 탭을 그리면 같은 조작이 어디서는 돌출된
+ * 라벨, 어디서는 맨 글자가 된다. 환경설정이 실제로 그랬다.
  *
  * **서류철 라벨이 아니다.** 네 모서리를 제각각 깎은 종이 탭에 갈색 면을 깔았던 때는 팔레트에
  * 없는 색이 화면에 하나 더 생겼고, 켜진 것과 꺼진 것이 둘 다 판때기라 무엇이 지금 열려 있는지
  * 크기로만 겨우 읽혔다. 지금은 **투영 장비의 스위치**다:
  *
  * - 꺼진 것은 **바닥에 눌린 어두운 유리면**이고 강조선이 없다.
- * - 켜진 것은 **목록 쪽으로 한 뼘 솟고**(`lift`) 윗변에 굵은 강조선이 흐른다 — 그 선이 곧
- *   이 라벨이 여는 목록의 밑변이라, 선 하나로 라벨과 목록이 한 덩어리가 된다.
+ * - 켜진 것은 **목록 쪽으로 한 뼘 솟고**(`lift`) 목록과 맞닿는 변에 굵은 강조선이 흐른다 —
+ *   그 선이 곧 이 라벨이 여는 목록의 경계라, 선 하나로 라벨과 목록이 한 덩어리가 된다.
  * - 켜진 것의 글자 왼쪽에는 **제목표와 같은 빗금**(`/`)이 선다. 판에 제목을 묶는 그 표식을
  *   그대로 써서, 지금 열린 목록의 이름표가 어느 것인지 같은 문법으로 말한다.
  *
@@ -30,9 +34,9 @@ export const CATEGORY_TAB = {
   minScale: 0.66,
   /** 깎임 — 높이에 대한 비율. 판·버튼과 같은 기울기 체계를 쓴다. */
   slantRatio: 0.34,
-  /** 켜진 라벨이 목록 쪽으로 솟는 높이. 밑변은 그대로 두고 윗변만 올라간다. */
+  /** 켜진 라벨이 목록 쪽으로 솟는 높이. 먼 변은 그대로 두고 가까운 변만 올라간다. */
   lift: 10,
-  /** 윗변 강조선의 굵기. 켜진 것만 그린다. */
+  /** 목록과 맞닿는 변에 흐르는 강조선의 굵기. 켜진 것만 그린다. */
   edgeWidth: 5,
   /** 켜진 라벨의 빗금. 제목표(`addSectionTitle`)와 같은 표식이다. */
   mark: { width: 8, heightRatio: 0.44, gap: 12 },
@@ -43,13 +47,18 @@ export const CATEGORY_TAB = {
 
 export interface CategoryTabOptions {
   x: number;
-  /** 라벨 줄의 중심 y. 켜진 라벨은 이 자리를 지키고 윗변만 솟는다. */
+  /** 라벨 줄의 중심 y. 켜진 라벨은 이 자리를 지키고 목록 쪽 변만 솟는다. */
   y: number;
   width: number;
   height: number;
   /** **이미 번역된 글자**다. 키를 넘기면 화면에 `inventory.tab.rune`이 그대로 선다. */
   label: string;
   selected: boolean;
+  /**
+   * 이 라벨이 여는 목록이 어느 쪽에 있는가. 기본은 `"up"`(가방·상점처럼 목록이 위).
+   * `"down"`이면 솟는 쪽과 강조선이 아래로 뒤집힌다(환경설정).
+   */
+  face?: "up" | "down";
   onSelect: () => void;
 }
 
@@ -62,19 +71,20 @@ export function addCategoryTab(
   const { width, height, selected } = options;
   const tab = scene.add.container(options.x, options.y);
 
-  // 켜진 라벨은 **밑변을 그대로 두고 윗변만** 솟는다 — 가운데를 키우면 목록에서 멀어지는
-  // 아래쪽까지 함께 자라 스위치가 아니라 커진 버튼으로 읽힌다.
+  // 켜진 라벨은 **목록에서 먼 변을 그대로 두고 가까운 변만** 솟는다 — 가운데를 키우면 목록에서
+  // 멀어지는 쪽까지 함께 자라 스위치가 아니라 커진 버튼으로 읽힌다.
+  const towardList = options.face === "down" ? 1 : -1;
   const lift = selected ? CATEGORY_TAB.lift : 0;
   const faceHeight = height + lift;
-  const faceY = -lift / 2;
+  const faceY = (lift / 2) * towardList;
   const face = slantedRect(width, faceHeight, Math.round(faceHeight * CATEGORY_TAB.slantRatio));
   tab.add(drawLayer(scene, 0, faceY, face, {
     fill: selected ? 0x1b2836 : 0x080d13,
     alpha: selected ? 0.98 : 0.72,
   }));
   if (selected) {
-    // 윗변의 굵은 강조선 — 이 선이 곧 라벨이 여는 목록의 밑변이다.
-    tab.add(drawShapeEdge(scene, 0, faceY, face, "top", { color: COLOR.accent, alpha: 0.95, width: CATEGORY_TAB.edgeWidth }));
+    // 목록과 맞닿는 변의 굵은 강조선 — 이 선이 곧 라벨이 여는 목록의 경계다.
+    tab.add(drawShapeEdge(scene, 0, faceY, face, towardList < 0 ? "top" : "bottom", { color: COLOR.accent, alpha: 0.95, width: CATEGORY_TAB.edgeWidth }));
   }
 
   const label = scene.add

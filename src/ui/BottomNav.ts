@@ -4,6 +4,7 @@ import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import { drawGlassFade, drawHairline, HOLO } from "./holo";
 import { squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
+import { startScene } from "./screenTransition";
 
 /** 핵심 화면 다섯 개. 로비를 중심으로 고고학과 프리미엄이 양 끝에서 서로 균형을 이룬다. */
 export const NAV_TABS = [
@@ -134,7 +135,7 @@ export class BottomNav {
         // 누르는 동안만 확대해 눌린 자리를 알린다.
         hit.on("pointerdown", () => group.setScale(1.16));
         hit.on("pointerout", () => group.setScale(1));
-        hit.on("pointerup", () => scene.scene.start(tab.scene));
+        hit.on("pointerup", () => startScene(scene, tab.scene));
       }
 
       if (active) {

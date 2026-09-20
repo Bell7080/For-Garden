@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { HoloBar } from "./holo";
+import { SETTINGS_TEXT } from "./settingsLayout";
 import { COLOR, textStyle } from "./theme";
 
 /** 게이지가 놓이는 자리(행 왼쪽 기준). 홈·채움·손잡이가 모두 이 한 값을 따른다. */
@@ -18,10 +19,10 @@ export class SettingsSlider extends Phaser.GameObjects.Container {
 
   constructor(scene: Phaser.Scene, x: number, y: number, label: string, value: number, onChange: (value: number) => void) {
     super(scene, x, y);
-    this.add(scene.add.text(0, 0, label, textStyle({ role: "body", size: 28 })).setOrigin(0, 0.5));
+    this.add(scene.add.text(0, 0, label, textStyle({ role: "body", size: SETTINGS_TEXT.label })).setOrigin(0, 0.5));
     // 좌표는 전부 줄 안쪽 기준이다. 바깥 좌표를 섞으면 스크롤·확대에서 어긋난다.
     this.bar = new HoloBar(scene, BAR.x, 0, BAR.width, BAR.height, { color: COLOR.accent });
-    this.amount = scene.add.text(900, 0, "", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(1, 0.5);
+    this.amount = scene.add.text(900, 0, "", textStyle({ role: "emphasis", size: SETTINGS_TEXT.amount, color: COLOR.accentText })).setOrigin(1, 0.5);
     this.add([...this.bar.objects, this.amount]);
 
     const paint = (next: number): void => {

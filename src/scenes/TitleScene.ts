@@ -18,6 +18,7 @@ import { LOADING_STEPS, refreshTextTextures, runLoadingSteps } from "./loadingSt
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { drawCornerShroud, drawVignette } from "../ui/holo";
 import packageInfo from "../../package.json";
+import { startScene } from "../ui/screenTransition";
 
 /** 타이틀 로고타입(글자 대신 쓰는 그림)의 텍스처 키다. 원본은 1536×1024 비율이다. */
 const TITLE_LOGOTYPE_KEY = "title-logotype";
@@ -397,7 +398,7 @@ export class TitleScene extends Phaser.Scene {
       // 회상은 이 화면의 주된 조작이 아니라 이미 본 사람을 위한 곁길이다. 가운데를 비우고
       // 좌상단에 작게 둬 제목과 배경 원화를 가리지 않는다.
       // 완료 플래그를 지우지 않으므로 선택 보상이 다시 지급되지 않는다.
-      new Button(this, 150, 92, { width: 220, height: 64, label: t("title.replayOpening"), fontSize: 24, onClick: () => this.scene.start("opening") });
+      new Button(this, 150, 92, { width: 220, height: 64, label: t("title.replayOpening"), fontSize: 24, onClick: () => startScene(this, "opening") });
     }
 
     // 회상 버튼이 먼저 눌리도록 화면 전체 히트영역은 가장 아래 깊이에 깔고 pointerup에서 확정한다.
@@ -406,7 +407,7 @@ export class TitleScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .setDepth(-1);
     tapAnywhere.once("pointerup", () => {
-      this.scene.start(storyManager.isCompleted(OPENING_TRAIN.id) ? "lobby" : "opening");
+      startScene(this, storyManager.isCompleted(OPENING_TRAIN.id) ? "lobby" : "opening");
     });
 
     setDebugReady(true);

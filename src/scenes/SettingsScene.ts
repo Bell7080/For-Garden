@@ -19,12 +19,16 @@ import { AccountSaveSync } from "../api/AccountSaveSync";
 import { session } from "../state/session";
 import { openSaveConflictPopup, type SaveConflictChoice } from "../ui/SaveConflictPopup";
 import { PopupLayer } from "../ui/PopupLayer";
+import { SETTINGS_HEAD, SETTINGS_ROW, SETTINGS_SECTION, SETTINGS_SUPPORT, SETTINGS_TEXT, settingsSectionHeight, settingsTabSlot } from "../ui/settingsLayout";
+import { addCategoryTab } from "../ui/CategoryTab";
+import { addSectionTitle } from "../ui/SectionTitle";
 import { validateSettingsReturn, type SettingsEntryData, type SettingsReturnScene } from "./settingsNavigation";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { getRelic } from "../data/relics";
 import { openPolicyDocument, type PolicyPath } from "./policyNavigation";
 import { consumeSceneEntry } from "./sceneEntry";
+import { playSceneEntrance, startScene } from "../ui/screenTransition";
 
 /** 상단 탭은 긴 설정을 의미 단위로 나눠 좁은 화면에서도 한 섹션만 스크롤하게 한다. */
 const TABS = [
@@ -35,16 +39,16 @@ const TABS = [
 type SettingsTab = typeof TABS[number]["id"];
 
 /**
- * 줄 하나가 차지하는 세로와, 그 사이를 가르는 선.
+ * 줄과 줄 사이를 가르는 선.
  *
  * **선은 줄과 줄 사이에 선다.** 예전에는 줄을 하나 쌓은 뒤 곧바로 그 자리에 그어, 다음 줄의
  * 중심과 정확히 같은 높이가 되었다 — 금색 선이 이름 글자를 가로질렀다. 구분선은 앞 줄과 다음
  * 줄의 한가운데(= 줄 간격의 절반 위)에 그어야 두 줄을 가른다.
  *
- * 폭도 줄과 같은 선을 쓴다. 줄의 글과 조작은 화면 90에서 시작해 990에서 끝나므로 선도 그
- * 두 변을 그대로 잇는다 — 선만 안쪽으로 들어가 있으면 어느 줄까지가 한 묶음인지 흐려진다.
+ * 폭도 줄과 같은 선을 쓴다. 줄의 글과 조작은 `SETTINGS_ROW.left`에서 시작해 `right`에서
+ * 끝나므로 선도 그 두 변을 그대로 잇는다 — 선만 안쪽으로 들어가 있으면 어느 줄까지가 한
+ * 묶음인지 흐려진다. 자리와 크기는 순수 배치표(`ui/settingsLayout.ts`)가 갖는다.
  */
-const SETTINGS_ROW = { step: 94, left: 90, right: 990 } as const;
 
 /** 설정 씬은 배치와 입력 연결만 맡고 값 보정·저장·알림은 각 manager/API 경계에 위임한다. */
 export class SettingsScene extends Phaser.Scene {
@@ -67,33 +71,43 @@ export class SettingsScene extends Phaser.Scene {
     // 따라 바뀌면 그 확인이 언어마다 갈리므로 한국어 그대로 둔다.
     setDebugScene("settings", "환경 설정"); addSceneBackground(this, BACKGROUND.lobby);
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.82).setDepth(-20);
-    this.add.text(54, 48, t("settings.title"), textStyle({ role: "display", size: 48 })).setDepth(20);
-    this.add.text(54, 108, "SYSTEM CONFIGURATION", textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setDepth(20);
+    // 제목 아래 `SYSTEM CONFIGURATION`이 한 줄 서 있었다 — 「환경 설정」을 영어로 한 번 더
+    // 풀이할 뿐이라 없어도 조작 결과가 같다. 화면 문구는 행동을 정하는 것만 남긴다.
+    this.add.text(SETTINGS_HEAD.titleX, SETTINGS_HEAD.titleY, t("settings.title"), textStyle({ role: "display", size: SETTINGS_HEAD.titleSize })).setDepth(20);
     this.buildTabs();
-    this.content = this.add.container(0, 286);
+    this.content = this.add.container(0, SETTINGS_HEAD.contentTop);
     const maskShape = this.make.graphics({ x: 0, y: 0 }, false);
-    maskShape.fillStyle(0xffffff).fillRect(34, 276, 1012, 1430);
+    maskShape.fillStyle(0xffffff).fillRect(34, SETTINGS_HEAD.contentTop - 10, 1012, 1430);
     this.content.setMask(maskShape.createGeometryMask()); this.buildRows();
     void accountApi.getState().then(result => { if (result.ok && this.scene.isActive()) { this.accountState = result.value; if (this.activeTab === "support") this.buildRows(); } });
     // 88px 이상 행뿐 아니라 빈 여백도 드래그를 받아 긴 탭의 스크롤이 끊기지 않는다.
-    const zone = this.add.zone(BASE_WIDTH / 2, 990, BASE_WIDTH, 1430).setInteractive({ draggable: true }).setDepth(-1);
+    const zone = this.add.zone(BASE_WIDTH / 2, SETTINGS_HEAD.contentTop + 705, BASE_WIDTH, 1430).setInteractive({ draggable: true }).setDepth(-1);
     zone.on("dragstart", (pointer: Phaser.Input.Pointer) => { this.dragStartY = pointer.y - this.scrollY; });
     zone.on("drag", (pointer: Phaser.Input.Pointer) => this.scrollTo(pointer.y - this.dragStartY));
     this.input.on("wheel", (_p: unknown, _o: unknown, _dx: number, dy: number) => this.scrollTo(this.scrollY - dy));
-    addBackButton(this, () => this.scene.start(this.returnScene, this.returnData)).setDepth(30);
+    addBackButton(this, () => startScene(this, this.returnScene, this.returnData)).setDepth(30);
+    // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
+    // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+    playSceneEntrance(this);
   }
 
-  /** 탭은 화면 폭 안에서 균등 배치하며 96px 높이의 터치 영역을 공유한다. */
+  /**
+   * 탭 줄.
+   *
+   * **맨 글자가 아니라 가방·상점과 같은 전환 라벨이다.** 예전에는 다섯 낱말이 나란히 적혀
+   * 있고 지금 탭만 색이 달랐다 — 같은 일(보는 목록을 통째로 바꾸기)을 하는 조작이 가방에서는
+   * 솟은 라벨이고 여기서는 맨 글자였다. 내용이 **아래로** 흐르는 화면이라 `face: "down"`으로
+   * 뒤집어, 켜진 라벨이 내용 쪽으로 솟고 그 밑변에 강조선이 흐른다.
+   */
   private buildTabs(): void {
-    const width = (BASE_WIDTH - 64) / TABS.length;
     TABS.forEach((tab, index) => {
-      const x = 32 + width * (index + 0.5);
-      const label = this.add.text(x, 210, t(tab.key), textStyle({ role: "emphasis", size: 23, color: tab.id === this.activeTab ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5);
-      const hit = this.add.rectangle(x, 210, width, 96, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerdown", () => label.setScale(1.08));
-      hit.on("pointerup", () => { this.activeTab = tab.id; this.scrollY = 0; this.scene.restart({ tab: tab.id, returnScene: this.returnScene, returnData: this.returnData }); });
+      const slot = settingsTabSlot(index, TABS.length, BASE_WIDTH);
+      addCategoryTab(this, undefined, {
+        x: slot.x, y: SETTINGS_HEAD.tabY, width: slot.width, height: SETTINGS_HEAD.tabHeight,
+        label: t(tab.key), selected: tab.id === this.activeTab, face: "down",
+        onSelect: () => { this.activeTab = tab.id; this.scrollY = 0; this.scene.restart({ tab: tab.id, returnScene: this.returnScene, returnData: this.returnData }); },
+      }).setDepth(20);
     });
-    this.add.rectangle(BASE_WIDTH / 2, 260, BASE_WIDTH - 80, 2, COLOR.accent, 0.28);
   }
 
   /** 재시작으로 탭의 고정 헤더와 확대된 글자까지 깨끗하게 다시 만들되 선택 탭은 유지한다. */
@@ -107,15 +121,42 @@ export class SettingsScene extends Phaser.Scene {
   /** 현재 탭에 종속된 행만 생성해 다른 탭의 입력면이 마스크 뒤에 남지 않게 한다. */
   private buildRows(): void {
     this.content.removeAll(true);
-    const s = settingsManager.get(); let y = 18;
-    let previousPanelBottom = 0;
-    const section = (title: string, height: number): number => {
+    const s = settingsManager.get();
+    // 첫 판이 서는 자리. 배치표가 갖는 이유는 E2E가 같은 값으로 줄을 짚기 때문이다.
+    let y: number = SETTINGS_SECTION.firstTop;
+    let previousPanelBottom = SETTINGS_SECTION.firstTop - SETTINGS_SECTION.gap;
+    /**
+     * 아직 닫지 않은 섹션. 판은 **내용을 다 쌓은 뒤에** 그리므로, 시작한 자리와 그 판이 들어갈
+     * 자식 순서를 들고 있는다.
+     */
+    let openSection: { title: string; top: number; index: number } | undefined;
+    /**
+     * 섹션을 닫고 그제야 판을 그린다.
+     *
+     * **높이를 손으로 적지 않는다.** 예전에는 `section(제목, 1140)`처럼 판 높이가 호출부에
+     * 적혀 있어, 줄을 하나 더하거나 언어가 바뀌어 줄이 늘면 마지막 줄이 판 밖으로 나갔다.
+     * 판은 나중에 그리되 **먼저 넣어 둔 자리**(`index`)에 끼워 줄 뒤로 깔리게 한다 — 컨테이너는
+     * 자식의 depth가 아니라 넣은 순서대로 그린다.
+     */
+    const endSection = (): void => {
       trailingDivider?.destroy(); trailingDivider = undefined;
-      // 앞 섹션의 패널 아래에 안전 여백을 확보해 계정과 데이터 패널의 면·입력 영역이 겹치지 않게 한다.
-      y = Math.max(y, previousPanelBottom + 24);
-      const panel = drawLayer(this, BASE_WIDTH / 2, y + height / 2, slantedRect(980, height, 14), { fill: COLOR.panel, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.42 });
-      previousPanelBottom = y + height;
-      this.content.add(panel); this.content.add(this.add.text(72, y + 24, title, textStyle({ role: "emphasis", size: 32, color: COLOR.accentText }))); y += 88;
+      const open = openSection;
+      if (!open) return;
+      openSection = undefined;
+      const height = settingsSectionHeight(open.top, this.sectionContentBottom(open.index, open.top));
+      const panel = drawLayer(this, BASE_WIDTH / 2, open.top + height / 2, slantedRect(SETTINGS_SECTION.width, height, SETTINGS_SECTION.bevel), { fill: COLOR.panel, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.42 });
+      this.content.addAt(panel, open.index);
+      // 제목은 판 **윗변에 걸터앉는다.** 판 안에 들여놓은 맨 글자였을 때는, 같은 위계의 제목이
+      // 다른 화면에서는 판에 걸터앉고 여기서만 글자로 서서 위계가 갈렸다.
+      this.content.addAt(addSectionTitle(this, SETTINGS_ROW.left - 18, open.top, open.title, { size: SETTINGS_TEXT.section }), open.index + 1);
+      previousPanelBottom = open.top + height;
+    };
+    const section = (title: string): number => {
+      endSection();
+      // 앞 섹션의 판 아래에 안전 여백을 확보해 두 판의 면·입력 영역이 겹치지 않게 한다.
+      y = Math.max(y, previousPanelBottom + SETTINGS_SECTION.gap);
+      openSection = { title, top: y, index: this.content.length };
+      y += SETTINGS_SECTION.headRoom;
       return y;
     };
     // 섹션이 끝나면 마지막 줄 뒤의 선은 가를 것이 없다 — 다음 판을 세울 때 걷어 낸다.
@@ -129,18 +170,18 @@ export class SettingsScene extends Phaser.Scene {
       y += SETTINGS_ROW.step; divider();
     };
     if (this.activeTab === "sound") {
-      section(t("settings.section.sound"), 850);
+      section(t("settings.section.sound"));
       ([["settings.sound.master",'masterVolume'],["settings.sound.music",'musicVolume'],["settings.sound.effects",'effectsVolume'],["settings.sound.voice",'voiceVolume']] as const).forEach(([label,key]) => { this.content.add(new SettingsSlider(this, SETTINGS_ROW.left, y, t(label), s.sound[key], value => settingsManager.update({ sound: { [key]: value } }))); y += SETTINGS_ROW.step; divider(); });
       ([["settings.sound.masterMuted",'masterMuted'],["settings.sound.musicMuted",'musicMuted'],["settings.sound.effectsMuted",'effectsMuted'],["settings.sound.voiceMuted",'voiceMuted']] as const).forEach(([label,key]) => { this.content.add(new SettingsToggle(this,SETTINGS_ROW.left,y,t(label),s.sound[key],value=>settingsManager.update({sound:{[key]:value}}))); y+=SETTINGS_ROW.step; divider(); });
-      section(t("settings.section.vibration"), 560); ([["settings.vibration.all",'enabled'],["settings.vibration.combatHit",'combatHit'],["settings.vibration.ultimate",'ultimate'],["settings.vibration.excavation",'excavationResult'],["settings.vibration.uiInput",'uiInput']] as const).forEach(([a,b]) => toggle(t(a),'vibration',b));
+      section(t("settings.section.vibration")); ([["settings.vibration.all",'enabled'],["settings.vibration.combatHit",'combatHit'],["settings.vibration.ultimate",'ultimate'],["settings.vibration.excavation",'excavationResult'],["settings.vibration.uiInput",'uiInput']] as const).forEach(([a,b]) => toggle(t(a),'vibration',b));
     } else if (this.activeTab === "alerts") {
-      section(t("settings.section.alerts"), 830);
+      section(t("settings.section.alerts"));
       const permission = platformFeedback.getNotificationPermission();
       this.addTextAction(90, y, t(s.notifications.enabled ? "settings.alerts.enabled" : "settings.alerts.confirm"), () => void settingsManager.confirmNotifications().then(() => this.buildRows())); y += 64;
       // 플랫폼 차이는 구현 용어 대신 플레이어가 기대할 수 있는 짧은 상태명으로만 구분한다.
       const scheduling = t(platformFeedback.notificationScheduling === "persistent" ? "settings.alerts.device" : platformFeedback.notificationScheduling === "foreground-only" ? "settings.alerts.foreground" : "settings.alerts.unsupported");
       const permissionLabel = t(permission === "granted" ? "settings.alerts.permissionGranted" : "settings.alerts.permissionNeeded");
-      this.content.add(this.add.text(90, y, t("settings.alerts.status", { scheduling, permission: permissionLabel }), textStyle({ role: "body", size: 22, color: COLOR.inkDim }))); y += 72;
+      this.content.add(this.add.text(90, y, t("settings.alerts.status", { scheduling, permission: permissionLabel }), textStyle({ role: "body", size: SETTINGS_TEXT.note, color: COLOR.inkDim }))); y += 72;
       // 알림 행은 저장과 플랫폼 예약 해제를 함께 처리하는 manager 전용 경계를 통과시킨다.
       ([["settings.alerts.all",'enabled'],["settings.alerts.staminaFull",'staminaFull'],["settings.alerts.dailyMission",'dailyMission'],["settings.alerts.quietHours",'quietHours']] as const).forEach(([label, key]) => {
         this.content.add(new SettingsToggle(this, SETTINGS_ROW.left, y, t(label), s.notifications[key], value => settingsManager.updateNotificationPreferences({ [key]: value })));
@@ -151,7 +192,7 @@ export class SettingsScene extends Phaser.Scene {
       this.content.add(new SettingsSelectRow(this, SETTINGS_ROW.left, y, t("settings.alerts.quietStart"), s.notifications.quietHoursStart, quietTimes, value => void settingsManager.updateNotificationPreferences({ quietHoursStart: value }))); y += SETTINGS_ROW.step; divider();
       this.content.add(new SettingsSelectRow(this, SETTINGS_ROW.left, y, t("settings.alerts.quietEnd"), s.notifications.quietHoursEnd, quietTimes, value => void settingsManager.updateNotificationPreferences({ quietHoursEnd: value }))); y += SETTINGS_ROW.step; divider();
     } else if (this.activeTab === "play") {
-      section(t("settings.section.play"), 1140);
+      section(t("settings.section.play"));
       // 기존 저사양 토글은 품질 선택과 의미가 겹쳐 제거하고, 서로 다른 연출 토글만 남긴다.
       ([["settings.play.screenShake",'screenShake'],["settings.play.damageNumbers",'damageNumbers'],["settings.play.shortenExcavation",'shortenExcavation']] as const).forEach(([a,b]) => toggle(t(a),'presentation',b));
       // 기존 SettingsToggle의 행·강조·입력 피드백을 그대로 쓰며 접근성 선택과 별도 필드로 저장한다.
@@ -181,43 +222,69 @@ export class SettingsScene extends Phaser.Scene {
       },v=>LANGUAGE_NATIVE_NAME[v])); y+=SETTINGS_ROW.step; divider();
       }
     } else if (this.activeTab === "access") {
-      section(t("settings.section.access"), 500);
+      section(t("settings.section.access"));
       this.content.add(new SettingsSelectRow(this,SETTINGS_ROW.left,y,t("settings.access.textScale"),s.accessibility.textScale,[1,1.15,1.3] as const,value=>{ settingsManager.update({accessibility:{textScale:value}}); this.scene.restart({ tab: "access" }); })); y+=SETTINGS_ROW.step; divider();
       // 접근성 선택은 공용 효과·의미 표식 경계에서 소비하며 씬마다 별도 색이나 밝기를 만들지 않는다.
       toggle(t("settings.access.reduceMotion"),'accessibility','reduceMotion'); toggle(t("settings.access.reduceFlashes"),'accessibility','reduceFlashes'); toggle(t("settings.access.colorAssist"),'accessibility','colorAssist');
     } else {
       y = this.buildSupportRows(y, section);
     }
-    trailingDivider?.destroy();
+    // 마지막 섹션의 판은 아직 그려지지 않았다 — 닫아야 선다.
+    endSection();
     this.content.setData("height", y + 70); this.scrollTo(this.scrollY);
   }
 
+  /**
+   * 이 섹션이 실제로 그린 것들의 **가장 아래 끝**.
+   *
+   * 쌓아 올린 `y`는 "다음 줄이 설 자리"라 마지막 줄보다 한 줄 앞서 있고, 지원 탭처럼 줄마다
+   * 다른 만큼 내려가는 곳은 그 차이도 제각각이다 — 그 값을 그대로 판 끝으로 쓰면 판 밑에
+   * 아무것도 없는 자리가 한 뼘 남는다. 세어 두는 대신 **그려 놓은 것을 잰다**: 줄의 보이지
+   * 않는 입력면까지 경계에 들어오므로, 손이 닿는 자리는 언제나 판 안이다.
+   *
+   * 경계는 월드 좌표로 나오는데 이 판은 스크롤하는 컨테이너 안에 있으므로, 컨테이너가 지금
+   * 얼마나 밀려 있는지를 빼서 안쪽 좌표로 되돌린다.
+   */
+  private sectionContentBottom(fromIndex: number, top: number): number {
+    let bottom = top;
+    for (const child of this.content.list.slice(fromIndex)) {
+      const measured = child as unknown as Partial<Phaser.GameObjects.Components.GetBounds>;
+      if (typeof measured.getBounds !== "function") continue;
+      bottom = Math.max(bottom, measured.getBounds().bottom - this.content.y);
+    }
+    return bottom;
+  }
+
   /** 지원·데이터 탭은 계정 연결, 정책 문서, 환경설정 복원과 파괴적 저장 삭제를 한곳에서 구분한다. */
-  private buildSupportRows(y: number, section: (title: string, height: number) => number): number {
-    y = section(t("settings.section.account"), 330);
+  private buildSupportRows(y: number, section: (title: string) => number): number {
+    y = section(t("settings.section.account"));
     const account = this.accountState;
-    this.content.add(this.add.text(90, y, t("settings.account.summary", { kind: t(account.kind === "guest" ? "settings.account.guest" : "settings.account.linked"), provider: account.provider.toUpperCase(), maskedId: account.maskedId }), textStyle({ role: "body", size: 26, color: COLOR.inkDim, lineSpacing: 10 }))); y += 150;
+    this.content.add(this.add.text(90, y, t("settings.account.summary", { kind: t(account.kind === "guest" ? "settings.account.guest" : "settings.account.linked"), provider: account.provider.toUpperCase(), maskedId: account.maskedId }), textStyle({ role: "body", size: SETTINGS_TEXT.note, color: COLOR.inkDim, lineSpacing: 10 }))); y += SETTINGS_SUPPORT.accountSummaryRoom;
     if (account.kind === "guest") { this.addTextAction(90, y, t("settings.account.linkGoogle"), () => void this.login("google")); this.addTextAction(350, y, t("settings.account.linkApple"), () => void this.login("apple")); }
     else { this.addTextAction(90, y, t("settings.account.signOut"), () => this.confirmAccountAction(t("settings.account.signOut"), t("settings.account.signOutNotice"), () => accountApi.logout()), true); }
-    y += 120; y = section(t("settings.section.support"), 844);
-    this.addTextAction(90, y, t("settings.support.clearCache"), () => void this.clearCache()); y += 92;
-    this.addTextAction(90, y, t("settings.support.terms"), () => this.openPolicy("/terms")); y += 92;
-    this.addTextAction(90, y, t("settings.support.privacy"), () => this.openPolicy("/privacy")); y += 92;
+    y += SETTINGS_SUPPORT.accountFootRoom;
+    // 두 번째 판은 **정해진 자리**에서 시작한다. 계정 판이 언어에 따라 길어지면 그때만
+    // 밀려나며(`section`의 `Math.max`), 그 밖에는 줄 자리가 언제나 같아 E2E가 짚을 수 있다.
+    y = Math.max(y, SETTINGS_SUPPORT.sectionTop);
+    y = section(t("settings.section.support"));
+    this.addTextAction(90, y, t("settings.support.clearCache"), () => void this.clearCache()); y += SETTINGS_SUPPORT.actionStep;
+    this.addTextAction(90, y, t("settings.support.terms"), () => this.openPolicy("/terms")); y += SETTINGS_SUPPORT.actionStep;
+    this.addTextAction(90, y, t("settings.support.privacy"), () => this.openPolicy("/privacy")); y += SETTINGS_SUPPORT.actionStep;
     // 환경설정 복원은 일반 강조색으로 두어 위험색을 쓰는 진행 삭제·계정 탈퇴와 시각적으로 구분한다.
-    this.addTextAction(90, y, t("settings.support.resetSettings"), () => this.confirmSettingsReset()); y += 92;
-    this.addTextAction(90, y, t("settings.support.resetSave"), () => this.confirmLocalReset(), true); y += 92;
+    this.addTextAction(90, y, t("settings.support.resetSettings"), () => this.confirmSettingsReset()); y += SETTINGS_SUPPORT.actionStep;
+    this.addTextAction(90, y, t("settings.support.resetSave"), () => this.confirmLocalReset(), true); y += SETTINGS_SUPPORT.actionStep;
     // 스타터 렐릭 추가처럼 저장 마이그레이션이 소급하지 않는 변경을 QA가 재설치 없이 확인하는 임시 진입점이다.
-    this.addTextAction(90, y, t("settings.debug.grantAll"), () => this.grantAllRelics()); y += 92;
+    this.addTextAction(90, y, t("settings.debug.grantAll"), () => this.grantAllRelics()); y += SETTINGS_SUPPORT.actionStep;
     // 한계 돌파는 레벨 상한·파편·치즈케이크 셋이 동시에 맞아야 열리는 조작이라, 재료 없이는
     // 그 화면과 별마다 열리는 개체 효과를 확인할 방법이 없다. 재료만 주고 돌파는 사람이 누른다.
-    this.addTextAction(90, y, t("settings.debug.breakthroughSet"), () => this.grantBreakthroughSet("anky")); y += 92;
+    this.addTextAction(90, y, t("settings.debug.breakthroughSet"), () => this.grantBreakthroughSet("anky")); y += SETTINGS_SUPPORT.actionStep;
     this.addTextAction(90, y, t("settings.support.withdraw"), () => this.confirmAccountAction(t("settings.support.withdraw"), t("settings.support.withdrawNotice"), () => accountApi.requestWithdrawal()), true); y += 110;
     return y;
   }
 
   /** 텍스트형 진입점도 최소 88px 터치 영역과 눌림 확대 규칙을 갖는다. */
   private addTextAction(x: number, y: number, label: string, action: () => void, destructive = false): void {
-    const button = this.add.text(x, y, label, textStyle({ role: "emphasis", size: 27, color: destructive ? COLOR.dangerText : COLOR.accentText })).setOrigin(0, 0.5);
+    const button = this.add.text(x, y, label, textStyle({ role: "emphasis", size: SETTINGS_TEXT.action, color: destructive ? COLOR.dangerText : COLOR.accentText })).setOrigin(0, 0.5);
     const hit = this.add.rectangle(x + 420, y, 840, 88, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => button.setScale(1.08)); hit.on("pointerout", () => button.setScale(1)); hit.on("pointerup", () => { button.setScale(1); if (!this.accountBusy) action(); });
     this.content.add([button, hit]);
@@ -244,7 +311,7 @@ export class SettingsScene extends Phaser.Scene {
   /** 1차 위험 안내 후 2차 최종 확인을 거쳐 로컬 저장만 삭제한다. */
   private confirmLocalReset(): void {
     this.popups.confirm({ title: t("settings.support.resetSave"), message: t("settings.support.resetSaveStep1"), confirmLabel: t("settings.action.next"), destructive: true }, () => {
-      this.popups.confirm({ title: t("settings.support.finalConfirm"), message: t("settings.support.resetSaveStep2"), confirmLabel: t("settings.action.reset"), destructive: true }, () => { saveManager.reset(); this.scene.start("boot"); });
+      this.popups.confirm({ title: t("settings.support.finalConfirm"), message: t("settings.support.resetSaveStep2"), confirmLabel: t("settings.action.reset"), destructive: true }, () => { saveManager.reset(); startScene(this, "boot"); });
     });
   }
 
@@ -282,7 +349,7 @@ export class SettingsScene extends Phaser.Scene {
     const sync = new AccountSaveSync(accountApi, saveManager);
     const requestId = crypto.randomUUID();
     const result = await sync.synchronize(session, (local, remote) => new Promise<SaveConflictChoice>(resolve => openSaveConflictPopup(this, this.popups, local, remote, resolve)), requestId);
-    if (result.ok) { this.scene.start("boot"); return; }
+    if (result.ok) { startScene(this, "boot"); return; }
     this.showAccountFailure(result.code);
   }
 
@@ -294,7 +361,7 @@ export class SettingsScene extends Phaser.Scene {
   /** 전환 중 입력을 잠그고 성공하면 부트의 저장 검증·마이그레이션 경계를 다시 탄다. */
   private async runAccountAction(operation: () => Promise<{ ok: boolean; code?: AccountFailureCode; message?: string }>): Promise<void> {
     this.accountBusy = true; this.input.enabled = false; const result = await operation(); this.accountBusy = false; this.input.enabled = true;
-    if (result.ok) { this.scene.start("boot"); return; }
+    if (result.ok) { startScene(this, "boot"); return; }
     this.showAccountFailure(result.code ?? "network-error");
   }
 

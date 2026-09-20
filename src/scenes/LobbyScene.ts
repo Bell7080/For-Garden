@@ -47,6 +47,7 @@ import { MailPopup } from "../ui/MailPopup";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import type { CurrencyGuideAction } from "../data/currencyGuide";
 import { powerSavingPolicy } from "../core/settings";
+import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { consumeSceneEntry } from "./sceneEntry";
 import { normalizeLobbyEntry, type LobbyMenu } from "./lobbyEntry";
 
@@ -171,7 +172,7 @@ export class LobbyScene extends Phaser.Scene {
 
     this.buildPlaza();
     // 설정 아이콘은 준비 중 토스트가 아니라 등록된 환경 설정 씬으로 곧바로 이동한다.
-    this.topBar = new TopBar(this, 40, { onSettings: () => this.scene.start("settings"), onProfile: (profile) => this.openPlayerProfile(profile), onCurrency: (currency) => this.openCurrencyGuide(currency) });
+    this.topBar = new TopBar(this, 40, { onSettings: () => startScene(this, "settings"), onProfile: (profile) => this.openPlayerProfile(profile), onCurrency: (currency) => this.openCurrencyGuide(currency) });
     this.buildPromo();
     this.buildUtilityRail();
     this.buildMissionEntry();
@@ -215,7 +216,7 @@ export class LobbyScene extends Phaser.Scene {
       tilt: 6,
       accentColor: EXCHANGE_BLUE,
       accentTextColor: "#9fd0f0",
-      onClick: () => this.scene.start("interaction"),
+      onClick: () => startScene(this, "interaction"),
     });
 
     // 발굴 — 출격과 같은 줄에 서지만 크기는 교류와 같다. 왼쪽은 서브 콘텐츠 자리라, 오른쪽의
@@ -260,6 +261,10 @@ export class LobbyScene extends Phaser.Scene {
     // 로비가 다 선 뒤에 여는 이유는 판이 상단 줄·애착 렐릭 위에 얹히는 쪽지이기 때문이다.
     if (this.returnMenu === "sortie") this.openSortieMenu();
     else if (this.returnMenu === "duel") this.openPvpMenu();
+
+    // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
+    // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+    playSceneEntrance(this);
   }
 
   /** TopBar가 건넨 공개 모델만 사용해 공용 레이어 기반 정보창을 연다. */
@@ -317,7 +322,7 @@ export class LobbyScene extends Phaser.Scene {
    * Phaser가 지난 진입의 자리를 그대로 물려준다.
    */
   private openShop(): void {
-    this.scene.start("shop", { storefront: "shop", returnScene: "lobby" });
+    startScene(this, "shop", { storefront: "shop", returnScene: "lobby" });
   }
 
   /** 상단과 가방이 공유하는 안내를 열고, 선택적인 이동만 로비 소유 콜백에서 해석한다. */
@@ -328,7 +333,7 @@ export class LobbyScene extends Phaser.Scene {
 
   /** 안내 프리팹은 이 콜백만 요청하므로 지갑 변경 없이 구현된 씬·로비 팝업으로만 이동한다. */
   private handleCurrencyAction(action: CurrencyGuideAction): void {
-    if (action.kind === "scene" && action.target === "lab") this.scene.start("lab");
+    if (action.kind === "scene" && action.target === "lab") startScene(this, "lab");
     if (action.kind === "popup" && action.target === "trade") this.openTrade();
   }
 
@@ -364,7 +369,7 @@ export class LobbyScene extends Phaser.Scene {
           label: mode.label.replace("\n", " "), labelSize: 38,
           // 무엇을 하는 모드인지 첫 줄만 남긴다. 나머지는 상세가 말한다.
           status: mode.scope.split("\n")[0],
-          onClick: () => { close(); this.scene.start("pvpPreview", { mode: mode.id }); },
+          onClick: () => { close(); startScene(this, "pvpPreview", { mode: mode.id }); },
         }));
       });
       // 돌아가기는 판 안이 아니라 출격과 같은 화면 우하단 슬롯에 선다.
@@ -386,7 +391,7 @@ export class LobbyScene extends Phaser.Scene {
         {
           y: -410, width: 800, height: 220, label: t("lobby.sortie.story"), status: t("lobby.sortie.story.status"), artKey: "content-story-entry",
           accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0", sd: ENEMY_SD_ASSETS[0], sdScale: 0.9,
-          onClick: () => { close(); this.scene.start("stageMap"); },
+          onClick: () => { close(); startScene(this, "stageMap"); },
         },
         // 두 일일 던전은 같은 위계와 같은 폭으로 나란히 놓아 어느 쪽도 기본 선택처럼 보이지 않게 한다.
         // 두 던전은 각자의 전용 원화를 칩 실루엣에 물려 세운다. 같은 그림을 나눠 쓰면 나란히 선
@@ -394,25 +399,25 @@ export class LobbyScene extends Phaser.Scene {
         {
           x: -204, y: -124, width: 392, height: 200, label: t("lobby.sortie.cake"), labelSize: 38, status: t("lobby.sortie.cake.status"), split: "left",
           artKey: "content-cake-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
-          onClick: () => { close(); this.scene.start("cakeOperation"); },
+          onClick: () => { close(); startScene(this, "cakeOperation"); },
         },
         {
           x: 204, y: -124, width: 392, height: 200, label: t("lobby.sortie.bounty"), labelSize: 38, status: t("lobby.sortie.bounty.status"), split: "right",
           artKey: "content-bounty-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
-          onClick: () => { close(); this.scene.start("bounty"); },
+          onClick: () => { close(); startScene(this, "bounty"); },
         },
         // 레이드는 일일 던전 아래에서 독립된 전체 폭 콘텐츠로 읽히게 한다.
         {
           y: 152, width: 800, height: 200, label: t("lobby.sortie.raid"), status: t("lobby.sortie.raid.status"),
           artKey: "content-raid-entry",
           // 레이드만 임시 소개 화면을 떠났다 — 실제 시즌 판이 그 자리를 맡는다.
-          onClick: () => { close(); this.scene.start("raid"); },
+          onClick: () => { close(); startScene(this, "raid"); },
         },
         // 전용 프리팹이 Content2_001 원화, 주황 출격 위계, 확대 피드백을 한 입력면으로 유지한다.
         // 원정만 SD가 오른쪽에 서고 글자가 왼쪽 아래로 간다 — 20층 보스가 판 밖을 보는 자리다.
         {
           y: 443, width: 800, height: 230, status: this.expeditionStatus(status), sdSide: "right", sd: PONTOS_SD_ASSET,
-          onClick: () => { close(); this.scene.start("expedition"); },
+          onClick: () => { close(); startScene(this, "expedition"); },
         },
       ];
       entries.forEach((entry) => {
@@ -547,7 +552,7 @@ export class LobbyScene extends Phaser.Scene {
     const rail = createLobbyUtilityRail({
       openMail: () => this.openMail(),
       // 친구는 더 이상 준비 중 토스트가 아니라 목록과 공개 프로필 화면으로 연결된다.
-      openFriends: () => this.scene.start("friends"),
+      openFriends: () => startScene(this, "friends"),
       // 가방은 씬 전환 없이 현재 로비 위에서 열린다.
       openInventory: () => this.openInventory(),
     });

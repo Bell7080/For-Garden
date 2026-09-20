@@ -992,8 +992,13 @@ export class FakeServer implements GameApi {
     return response;
   }
 
-  /** 승리 결과 확인 시 최초/반복 보상을 판정하고 클리어와 지갑을 함께 저장한다. */
-  async completeStage(stageId: string, victory = true): Promise<CompleteStageResponse> {
+  /**
+   * 승리 결과 확인 시 최초/반복 보상을 판정하고 클리어와 지갑을 함께 저장한다.
+   *
+   * **`victory`에 기본값을 두지 않는다.** `victory = true`였을 때는 인자를 빠뜨린 호출이
+   * 조용히 승리로 기록되었다 — 이긴 판과 진 판을 가르는 값이라 부르는 쪽이 반드시 말해야 한다.
+   */
+  async completeStage(stageId: string, victory: boolean): Promise<CompleteStageResponse> {
     await this.delay();
     let stage;
     const owningEvent = findEventByStageId(stageId);
@@ -1007,8 +1012,16 @@ export class FakeServer implements GameApi {
     const nextCleared = victory ? new Set(this.state.cleared).add(stageId) : new Set(this.state.cleared);
     const pending = this.pendingStageAdmissions.get(stageId);
     const admissionId = pending?.values().next().value as string | undefined;
-    // 스테미나는 입장 커밋에서 이미 차감됐으므로 완료에서는 전투 보상만 다음 지갑에 반영한다.
-    const nextWallet = { ...this.state.wallet, cheesecake: this.state.wallet.cheesecake + cheesecakeEarned };
+    /*
+     * 스테미나는 입장 커밋에서 이미 차감됐으므로 완료에서는 전투 보상만 다음 지갑에 반영한다.
+     *
+     * **상한을 넘는 몫은 깎아서 준다.** 그냥 더하기만 했을 때는 `validateState`가 저장 직전에
+     * `CURRENCY_LIMIT_EXCEEDED`를 던져, 치즈케이크가 가득 찬 계정은 **스테이지를 깰 수 없었다** —
+     * 클리어 기록도 유대 경험치도 임무 진행도 함께 막혔다. 다른 지급 경로(우편·원정·발굴·연구)는
+     * 모두 상한에서 깎아 주므로 여기만 던질 이유가 없다. 실제로 준 만큼만 영수증에 적는다.
+     */
+    const cheesecakeGranted = Math.min(cheesecakeEarned, WALLET_CAPS.cheesecake - this.state.wallet.cheesecake);
+    const nextWallet = { ...this.state.wallet, cheesecake: this.state.wallet.cheesecake + cheesecakeGranted };
     // 승리한 전투에 실제 편성된 세 렐릭에게만 유대 경험치를 지급한다.
     const nextProgress = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, progress]) => [id,
       victory && this.state.party.includes(id) ? grantBondXp(progress, BOND_XP_REWARD.partyVictory).progress : progress]));
@@ -1017,7 +1030,7 @@ export class FakeServer implements GameApi {
     this.state.cleared = nextCleared; this.state.wallet = nextWallet; this.state.relicProgress = nextProgress; this.state.missions = nextMissions;
     if (admissionId) pending?.delete(admissionId);
     if (pending?.size === 0) this.pendingStageAdmissions.delete(stageId);
-    return { ...this.snapshot(), stageId, firstClear, cheesecakeEarned };
+    return { ...this.snapshot(), stageId, firstClear, cheesecakeEarned: cheesecakeGranted };
   }
 
   /* ── 치즈케이크 대작전 ────────────────────────────────────────────────────── */

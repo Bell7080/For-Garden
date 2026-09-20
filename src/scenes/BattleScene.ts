@@ -100,6 +100,7 @@ import type { CurrencyIconKey } from "../ui/currencyIcons";
 import { beginBossSettlementAttempt, bossSettlementRecoveryRoute, completeBossSettlementAttempt, createBossSettlementFailureState, failBossSettlementAttempt } from "../core/bossSettlementFailure";
 import { hasMergedBattleHit, isPlayerUltimateReadyTransition } from "../core/hapticPolicy";
 import { applyBattleTestPreset, battleRandom } from "../testSupport/battleHarness";
+import { playSceneEntrance, startScene } from "../ui/screenTransition";
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -533,6 +534,9 @@ export class BattleScene extends Phaser.Scene {
       this.views.forEach((view) => view.creature.destroy());
       this.views.clear();
       });
+    // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
+    // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+    playSceneEntrance(this);
   }
 
   /** 두 원격 경계를 manager 흐름에 맡기고, 성공하면 전리품을 포함한 최종판을 곧바로 연다. */
@@ -637,7 +641,7 @@ export class BattleScene extends Phaser.Scene {
     if (this.bossLeaving) return;
     this.bossLeaving = true;
     const route = bossSettlementRecoveryRoute();
-    this.scene.start(route.scene, route.data);
+    startScene(this, route.scene, route.data);
   }
 
   /** 서버 총점과 정산 재화를 같은 결과 화면 안의 독립된 위계로 보여 준다. */
@@ -670,7 +674,7 @@ export class BattleScene extends Phaser.Scene {
       if (this.bossLeaving) return;
       this.bossLeaving = true;
       // 성공 정산은 다시 요청하지 않는다. Boot가 서버 최신본을 읽고 저장 검증·마이그레이션을 거친다.
-      this.scene.start("boot", { destination: "lobby" });
+      startScene(this, "boot", { destination: "lobby" });
     } }).setDepth(5001);
     setDebugBossResult({ visible: true, lobby: { x: BASE_WIDTH / 2, y: layout.lobby.top + layout.lobby.height / 2 } });
     const [weekly, contribution] = bossResultUtilityBounds();
@@ -2041,7 +2045,7 @@ export class BattleScene extends Phaser.Scene {
     // 버튼이 닫기를 먼저 부르므로 `onConfirm`이 그 직후에 돈다 — 고른 길과 기본 길이 같은
     // 틱에 두 번 시작되지 않도록, 고른 것이 있으면 기본 길은 서지 않는다.
     let chosen = false;
-    const go = (scene: string) => () => { chosen = true; this.scene.start(scene); };
+    const go = (scene: string) => () => { chosen = true; startScene(this, scene); };
     new StageCompletePopup(this, popups).open({
       reward: {
         kind: "defeat",
@@ -2054,7 +2058,7 @@ export class BattleScene extends Phaser.Scene {
       fighters: this.stageCompleteFighters(),
       onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
       // 버튼을 고르지 않고 판을 닫으면 원래 가던 곳(지도)으로 돌아간다.
-      onConfirm: () => { if (!chosen && this.scene.isActive()) this.scene.start("stageMap"); },
+      onConfirm: () => { if (!chosen && this.scene.isActive()) startScene(this, "stageMap"); },
     });
   }
 
@@ -2067,7 +2071,7 @@ export class BattleScene extends Phaser.Scene {
    */
   private async finishStageVictory(stage: ReturnType<typeof getBattleStage>): Promise<void> {
     try {
-      const result = await gameApi.completeStage(stage.id);
+      const result = await gameApi.completeStage(stage.id, true);
       if (!this.scene.isActive()) return;
       const popups = new PopupLayer(this, 2200);
       const fighters = this.stageCompleteFighters();
@@ -2075,7 +2079,7 @@ export class BattleScene extends Phaser.Scene {
         reward: { kind: "storyClear", cheesecakeEarned: result.cheesecakeEarned, firstClear: result.firstClear },
         fighters,
         onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
-        onConfirm: () => this.scene.start("stageMap"),
+        onConfirm: () => startScene(this, "stageMap"),
       });
     } catch {
       // 승리는 이미 확정됐으므로 전장으로 되돌리지 않고, 같은 저장 요청만 다시 시도하게 한다.
@@ -2215,14 +2219,14 @@ export class BattleScene extends Phaser.Scene {
                 // 않고 같은 판의 보상 줄이 그대로 말한다.
                 items: currencyRecordToRewardItems(settlement.granted),
                 actions: [
-                  { label: t("stageComplete.toResearch"), onPress: () => { chosen = true; this.scene.start("lab"); } },
-                  { label: t("stageComplete.toRelics"), onPress: () => { chosen = true; this.scene.start("relics"); } },
-                  { label: t("stageComplete.toMap"), onPress: () => { chosen = true; this.scene.start("lobby"); } },
+                  { label: t("stageComplete.toResearch"), onPress: () => { chosen = true; startScene(this, "lab"); } },
+                  { label: t("stageComplete.toRelics"), onPress: () => { chosen = true; startScene(this, "relics"); } },
+                  { label: t("stageComplete.toMap"), onPress: () => { chosen = true; startScene(this, "lobby"); } },
                 ],
               },
               fighters: this.stageCompleteFighters(),
               onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
-              onConfirm: () => { if (!chosen && this.scene.isActive()) this.scene.start("lobby"); },
+              onConfirm: () => { if (!chosen && this.scene.isActive()) startScene(this, "lobby"); },
             });
           }).catch(() => undefined);
           return;
@@ -2245,7 +2249,7 @@ export class BattleScene extends Phaser.Scene {
           },
           fighters: this.stageCompleteFighters(),
           onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
-          onConfirm: () => this.scene.start("expedition"),
+          onConfirm: () => startScene(this, "expedition"),
         });
       }).catch(() => undefined);
     }

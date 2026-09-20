@@ -43,6 +43,7 @@ import { createFormationDragVisualController, type FormationDragVisualController
 import { PopupLayer } from "../ui/PopupLayer";
 import { StaminaPopup } from "../ui/StaminaPopup";
 import { partyEntryErrorView } from "./partyEntryError";
+import { playSceneEntrance, startScene } from "../ui/screenTransition";
 
 /**
  * 미리보기 전장.
@@ -253,7 +254,7 @@ export class PartyScene extends Phaser.Scene {
           // 서버가 입장 비용을 확정한 뒤에만 전투로 전환해 같은 요청 재시도에서 중복 차감되지 않게 한다.
           const requestId = globalThis.crypto?.randomUUID?.() ?? `stage-entry-${Date.now()}`;
           await gameApi.enterStage({ stageId: session.selectedStageId!, requestId });
-          this.scene.start("battle", { mode: "stage" });
+          startScene(this, "battle", { mode: "stage" });
         } catch (error) {
           // instanceof 판정이 계약의 런타임 오류 타입을 기준으로 수행됨을 import 수준에서도 명확히 한다.
           const view = partyEntryErrorView(error instanceof GameApiError ? error : undefined);
@@ -264,13 +265,16 @@ export class PartyScene extends Phaser.Scene {
       },
     });
 
-    addBackButton(this, () => this.scene.start("stageMap"));
+    addBackButton(this, () => startScene(this, "stageMap"));
 
     this.info = new CharacterInfoManager(this);
     // 적은 정보창 씬이 아니라 팝업 한 장이다. 스킬 쪽지는 이 층 위에 쌓인다.
     this.enemyInfo = new EnemyInfoPopup(this, new PopupLayer(this, 2200));
     this.bindDeselect();
     this.refresh();
+    // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
+    // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+    playSceneEntrance(this);
   }
 
   /**

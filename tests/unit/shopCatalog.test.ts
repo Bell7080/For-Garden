@@ -10,15 +10,25 @@ describe("shop catalog", () => {
   it("owns the requested tab order and gives every product a valid category", () => {
     // 탭 순서는 그 자리의 무대표가 갖는다 — 씬이 한 표를 고정으로 그리면 자리가 늘어도
     // 탭이 늘 그대로다.
-    expect(shopStagePresentation("shop").tabs.map(({ id }) => id)).toEqual(["special", "daily", "weekly"]);
-    const categories = new Set(shopStagePresentation("shop").tabs.map(({ id }) => id));
-    expect(PRODUCTS.every(({ category }) => categories.has(category))).toBe(true);
+    expect(shopStagePresentation("shop").tabs.map(({ id }) => id)).toEqual(["gold", "gems"]);
+    expect(shopStagePresentation("archaeology").tabs.map(({ id }) => id)).toEqual(["special", "daily", "weekly"]);
     /*
-     * **갈래는 갱신 주기에서 그대로 나온다.** 「무엇을 파나」가 아니라 「언제 돌아오는
-     * 자리인가」로 가르므로, 두 값이 어긋난 상품은 탭에 서 있는 것과 다른 주기로 돌아온다 —
-     * 매주 오는 물건이 「일일」 탭에 서면 매일 들른 손이 허탕을 친다.
+     * **한 상점의 갈래는 그 자리가 무엇으로 가르는지에 달렸다.** 일반 상점은 **내는 재화**로
+     * 가르고(골드 · 젬), 고고학 상점은 **언제 돌아오는 자리인가**로 가른다(특가 · 일일 · 주간).
+     * 어느 쪽이든 상품의 갈래는 제 자리가 세운 탭 안에 있어야 한다 — 없으면 그 상품은 어느
+     * 탭에도 서지 못한 채 카탈로그에만 남는다.
      */
-    for (const { id, category, refresh } of PRODUCTS) {
+    for (const { id, storefront, category } of PRODUCTS) {
+      const stage = storefront === "shop" || storefront === "archaeology" ? shopStagePresentation(storefront) : undefined;
+      if (!stage) continue;
+      expect(stage.tabs.map((tab) => tab.id), id).toContain(category);
+    }
+    /*
+     * **갱신 주기로 가르는 자리에서는 두 값이 어긋나면 안 된다.** 매주 오는 물건이 「일일」
+     * 탭에 서면 매일 들른 손이 허탕을 친다. 재화로 가르는 일반 상점은 이 계약 밖이다.
+     */
+    for (const { id, storefront, category, refresh } of PRODUCTS) {
+      if (storefront === "shop") continue;
       const expected = refresh === "daily" ? "daily" : refresh === "weekly" ? "weekly" : "special";
       expect(category, id).toBe(expected);
     }

@@ -1742,7 +1742,7 @@ export interface Passive {
  * 방치 발굴 생산 재화의 실제 Wallet 저장 키다.
  * UI의 일반 화석은 `fossil`, UI의 다이아는 `gems`에 저장되며 표시 용어를 키로 쓰지 않는다.
  */
-export type ExcavationProductionCurrency = "gold" | "cheesecake" | "fossil" | "gems";
+export type ExcavationProductionCurrency = "gold" | "cheesecake" | "rawStone" | "gems";
 
 /** 전투 능력치와 독립적으로 운영 밸런스를 조정하는 렐릭별 발굴 특화다. */
 export interface ExcavationTrait {

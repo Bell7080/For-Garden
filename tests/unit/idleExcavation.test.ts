@@ -51,15 +51,15 @@ describe("방치 발굴 순수 규칙", () => {
 
   it("서로 다른 자원 특화를 자원별로 합산한다", () => {
     const model = excavationProductionDisplayModel(activeState().assignedRelicIds, RELICS, starterProgress);
-    expect(model.totalsPerHour).toEqual({ gold: 131.25, cheesecake: 2.64, fossil: 1.32, gems: 0 });
-    expect(model.relics.map(({ currency }) => currency)).toEqual(["gold", "fossil", "cheesecake"]);
+    expect(model.totalsPerHour).toEqual({ gold: 131.25, cheesecake: 2.64, rawStone: 1.32, gems: 0 });
+    expect(model.relics.map(({ currency }) => currency)).toEqual(["gold", "rawStone", "cheesecake"]);
   });
 
   it("네 발굴 재화가 실제 렐릭 데이터에서 모두 생산된다", () => {
     const ids = ["anky", "spino", "rex", "dodo"];
     const model = excavationProductionDisplayModel(["anky", "spino", "rex"], RELICS, { anky: progress(), spino: progress(), rex: progress() });
     const diamond = excavationProductionDisplayModel(["dodo", null, null], RELICS, { dodo: progress(50, 4) });
-    expect(new Set([...model.relics.map(({ currency }) => currency), diamond.relics[0].currency])).toEqual(new Set(["gold", "cheesecake", "fossil", "gems"]));
+    expect(new Set([...model.relics.map(({ currency }) => currency), diamond.relics[0].currency])).toEqual(new Set(["gold", "cheesecake", "rawStone", "gems"]));
     // 다이아는 높은 성장에서도 시간당 1개 미만이며 정수 수확 전까지 소수로 남는다.
     expect(diamond.totalsPerHour.gems).toBeLessThan(1);
     expect(ids).toHaveLength(4);
@@ -98,8 +98,8 @@ describe("방치 발굴 순수 규칙", () => {
       gold: [7_000, 13_000],
       // 임무·이벤트가 주는 하루 493개의 25~40%.
       cheesecake: [120, 200],
-      // 임무·이벤트가 주는 하루 277개의 25~40%. 뽑기 한 번이 100이다.
-      fossil: [70, 110],
+      // 지층 탐사 한 판(칸마다 6~26, 8~10회)이 100개 남짓이라 그 한 판 언저리로 묶는다.
+      rawStone: [70, 110],
       // 유료 재화라 무과금 공급을 하루 20개대로 묶는다(스테미나 충전 한 번이 30).
       gems: [15, 35],
     };
@@ -122,40 +122,40 @@ describe("방치 발굴 순수 규칙", () => {
   });
 
   it("빈 슬롯은 생산 상세와 합산에서 제외한다", () => {
-    expect(excavationProductionDisplayModel([null, "rex", null], RELICS, { rex: progress() })).toMatchObject({ relics: [{ relicId: "rex" }], totalsPerHour: { gold: 0, cheesecake: 0, fossil: 1.32, gems: 0 } });
+    expect(excavationProductionDisplayModel([null, "rex", null], RELICS, { rex: progress() })).toMatchObject({ relics: [{ relicId: "rex" }], totalsPerHour: { gold: 0, cheesecake: 0, rawStone: 1.32, gems: 0 } });
   });
 
   it("앱을 종료한 4시간 동안 세 렐릭 생산량을 누적한다", () => {
     const result = settleIdleExcavation(activeState(), new Date("2026-08-20T04:00:00.000Z"), RELICS, starterProgress);
-    expect(result.unclaimed).toEqual({ gold: 525, cheesecake: 10.56, fossil: 5.28, gems: 0 });
+    expect(result.unclaimed).toEqual({ gold: 525, cheesecake: 10.56, rawStone: 5.28, gems: 0 });
   });
 
   it("화석 특화 렐릭의 신규 생산량을 독립적으로 정산한다", () => {
     const state = { ...createIdleExcavationState("2026-08-20T00:00:00.000Z"), assignedRelicIds: ["rex", null, null] as [string, null, null] };
-    expect(settleIdleExcavation(state, new Date("2026-08-20T01:00:00.000Z"), RELICS, { rex: progress() }).unclaimed).toEqual({ gold: 0, cheesecake: 0, fossil: 1.32, gems: 0 });
+    expect(settleIdleExcavation(state, new Date("2026-08-20T01:00:00.000Z"), RELICS, { rex: progress() }).unclaimed).toEqual({ gold: 0, cheesecake: 0, rawStone: 1.32, gems: 0 });
   });
 
   it("다이아 특화 렐릭의 신규 생산량을 독립적으로 정산한다", () => {
     const state = { ...createIdleExcavationState("2026-08-20T00:00:00.000Z"), assignedRelicIds: ["dodo", null, null] as [string, null, null] };
-    expect(settleIdleExcavation(state, new Date("2026-08-20T01:00:00.000Z"), RELICS, { dodo: progress() }).unclaimed).toEqual({ gold: 0, cheesecake: 0, fossil: 0, gems: 0.56 });
+    expect(settleIdleExcavation(state, new Date("2026-08-20T01:00:00.000Z"), RELICS, { dodo: progress() }).unclaimed).toEqual({ gold: 0, cheesecake: 0, rawStone: 0, gems: 0.56 });
   });
 
   it("수확 뒤 네 재화의 소수 부분을 각각 다음 수확으로 이월한다", () => {
-    const state = { ...createIdleExcavationState(), unclaimed: { gold: 1.1, cheesecake: 2.2, fossil: 3.3, gems: 4.4 } };
+    const state = { ...createIdleExcavationState(), unclaimed: { gold: 1.1, cheesecake: 2.2, rawStone: 3.3, gems: 4.4 } };
     const result = harvestIdleExcavation(state, { fossil: 0, gold: 0, cheesecake: 0, amber: 0, gems: 0, stamina: 0, dnaFragments: 0, rawStone: 0, raidSigil: 0, salvageRecord: 0 });
-    expect(result.state.unclaimed).toEqual({ gold: 0.1, cheesecake: 0.2, fossil: 0.3, gems: 0.4 });
+    expect(result.state.unclaimed).toEqual({ gold: 0.1, cheesecake: 0.2, rawStone: 0.3, gems: 0.4 });
   });
 
   it("네 발굴 재화 모두 지갑 상한까지만 지급한다", () => {
-    const state = { ...createIdleExcavationState(), unclaimed: { gold: 2, cheesecake: 2, fossil: 2, gems: 2 } };
-    const wallet = { fossil: WALLET_CAPS.fossil - 1, gold: WALLET_CAPS.gold - 1, cheesecake: WALLET_CAPS.cheesecake - 1, amber: 0, gems: WALLET_CAPS.gems - 1, stamina: 0, dnaFragments: 0, rawStone: 0, raidSigil: 0, salvageRecord: 0 };
-    expect(harvestIdleExcavation(state, wallet).granted).toEqual({ gold: 1, cheesecake: 1, fossil: 1, gems: 1 });
+    const state = { ...createIdleExcavationState(), unclaimed: { gold: 2, cheesecake: 2, rawStone: 2, gems: 2 } };
+    const wallet = { fossil: 0, gold: WALLET_CAPS.gold - 1, cheesecake: WALLET_CAPS.cheesecake - 1, amber: 0, gems: WALLET_CAPS.gems - 1, stamina: 0, dnaFragments: 0, rawStone: WALLET_CAPS.rawStone - 1, raidSigil: 0, salvageRecord: 0 };
+    expect(harvestIdleExcavation(state, wallet).granted).toEqual({ gold: 1, cheesecake: 1, rawStone: 1, gems: 1 });
   });
 
   it("활성 생산 광고는 만료 전 구간에만 1.5배를 적용한다", () => {
     const state = { ...activeState(), activeProductionMultiplier: 1.5, productionMultiplierExpiresAt: "2026-08-20T01:00:00.000Z" };
     const result = settleIdleExcavation(state, new Date("2026-08-20T02:00:00.000Z"), RELICS, starterProgress);
-    expect(result.unclaimed).toEqual({ gold: 328.125, cheesecake: 6.6, fossil: 3.3, gems: 0 });
+    expect(result.unclaimed).toEqual({ gold: 328.125, cheesecake: 6.6, rawStone: 3.3, gems: 0 });
   });
 
   it("활성 보관 광고는 오프라인 생산 상한을 두 배로 늘린다", () => {
@@ -190,7 +190,7 @@ describe("방치 발굴 순수 규칙", () => {
     }
     // 131.25/h × 8h = 1,050. 세 번을 열어도 3,150이 아니라 1,050이다.
     expect(state.unclaimed.gold).toBe(1_050);
-    expect(state.unclaimed.fossil).toBeCloseTo(1.32 * 8, 6);
+    expect(state.unclaimed.rawStone).toBeCloseTo(1.32 * 8, 6);
     // 한도에서 멈추므로 수확 뒤 남는 것은 정수에 못 미친 몫뿐이고 게이지가 실제로 내려간다.
     const before = excavationStorageFillRatio(state.unclaimed, TOTALS, EXCAVATION_BASE_STORAGE_SECONDS);
     const after = harvestIdleExcavation(state, { ...emptyWallet }).state;
@@ -218,19 +218,19 @@ describe("방치 발굴 순수 규칙", () => {
   });
 
   it("재화별 소수는 이월하고 지갑 상한 밖의 정수는 명시적으로 버린다", () => {
-    const state = { ...activeState(), unclaimed: { gold: 2.25, cheesecake: 1.5, fossil: 3.75, gems: 2.9 } };
-    const wallet = { fossil: WALLET_CAPS.fossil - 1, gold: WALLET_CAPS.gold, cheesecake: 0, amber: 0, gems: WALLET_CAPS.gems, stamina: 0, dnaFragments: 0, rawStone: 0, raidSigil: 0, salvageRecord: 0 };
+    const state = { ...activeState(), unclaimed: { gold: 2.25, cheesecake: 1.5, rawStone: 3.75, gems: 2.9 } };
+    const wallet = { fossil: 0, gold: WALLET_CAPS.gold, cheesecake: 0, amber: 0, gems: WALLET_CAPS.gems, stamina: 0, dnaFragments: 0, rawStone: WALLET_CAPS.rawStone - 1, raidSigil: 0, salvageRecord: 0 };
     const result = harvestIdleExcavation(state, wallet);
-    expect(result.granted).toEqual({ gold: 0, cheesecake: 1, fossil: 1, gems: 0 });
-    expect(result.discarded).toEqual({ gold: 2, cheesecake: 0, fossil: 2, gems: 2 });
-    expect(result.state.unclaimed).toEqual({ gold: 0.25, cheesecake: 0.5, fossil: 0.75, gems: 0.9 });
+    expect(result.granted).toEqual({ gold: 0, cheesecake: 1, rawStone: 1, gems: 0 });
+    expect(result.discarded).toEqual({ gold: 2, cheesecake: 0, rawStone: 2, gems: 2 });
+    expect(result.state.unclaimed).toEqual({ gold: 0.25, cheesecake: 0.5, rawStone: 0.75, gems: 0.9 });
   });
 });
 
 describe("보관량 게이지", () => {
   it.each([[0.499, false], [0.5, true], [1, true]] as const)("비율 %s에서 정수 보상과 함께 알림을 판정한다", (ratio, expected) => {
-    const rate = { ...emptyExcavationAmounts(), fossil: 10 };
-    const unclaimed = { ...emptyExcavationAmounts(), fossil: 40 * ratio };
+    const rate = { ...emptyExcavationAmounts(), rawStone: 10 };
+    const unclaimed = { ...emptyExcavationAmounts(), rawStone: 40 * ratio };
     expect(excavationHarvestStatus(unclaimed, rate, 4 * 3600)).toEqual({ storageFillRatio: ratio, harvestNotice: expected });
   });
 
@@ -261,8 +261,8 @@ describe("보관량 게이지", () => {
 
   it("은 경과 시간이 아니라 실제 쌓인 재화량으로 채운 비율을 계산한다", () => {
     // 시간당 10씩 4시간(14400초) 채우면 최대 40이 쌓인다. 20이 쌓였으면 절반이다.
-    const rate = { ...emptyExcavationAmounts(), fossil: 10 };
-    const unclaimed = { ...emptyExcavationAmounts(), fossil: 20 };
+    const rate = { ...emptyExcavationAmounts(), rawStone: 10 };
+    const unclaimed = { ...emptyExcavationAmounts(), rawStone: 20 };
     expect(excavationStorageFillRatio(unclaimed, rate, 4 * 3600)).toBeCloseTo(0.5);
   });
 

@@ -75,7 +75,7 @@ describe("SaveManager", () => {
 
   it("데이터 초기화가 복원할 신규 상태에는 임시 뽑기 테스트 재화를 넉넉히 지급한다", () => {
     // 기본 상태 팩토리를 직접 고정해 첫 설치와 설정의 데이터 초기화가 같은 지급량을 쓰게 한다.
-    expect(createDefaultSession().wallet).toMatchObject({ fossil: 90_000, amber: 900 });
+    expect(createDefaultSession().wallet).toMatchObject({ fossil: 900, amber: 450 });
   });
 
   it("v32 외형 없는 저장도 토리카 기본 해금을 보유하고 손상된 레거시 선택은 폐기한다", () => {
@@ -283,21 +283,21 @@ describe("SaveManager", () => {
     expect(migrated.idleExcavation).toMatchObject({ assignedRelicIds: [null, null, null], lastSettledAt: null, baseStorageSeconds: EXCAVATION_BASE_STORAGE_SECONDS });
   });
 
-  it("v18 발굴을 보존하면서 화석·다이아 키와 미완료 소급 표식을 보충한다", () => {
+  it("v18 발굴을 보존하면서 원석·다이아 키와 미완료 소급 표식을 보충한다", () => {
     const legacy = validData() as unknown as Record<string, unknown>;
     legacy.saveVersion = 18;
     const excavation = legacy.idleExcavation as { unclaimed: Record<string, number>; retroactiveExcavationGrantVersion?: number };
     excavation.unclaimed = { gold: 4.5, cheesecake: 2 };
     delete excavation.retroactiveExcavationGrantVersion;
     const migrated = new SaveManager(new MemoryStorage()).migrate(legacy);
-    expect(migrated.idleExcavation.unclaimed).toEqual({ gold: 4.5, cheesecake: 2, fossil: 0, gems: 0 });
+    expect(migrated.idleExcavation.unclaimed).toEqual({ gold: 4.5, cheesecake: 2, rawStone: 0, gems: 0 });
     expect(migrated.idleExcavation.retroactiveExcavationGrantVersion).toBe(0);
   });
 
   it("발굴 도입 전 v17 저장은 네 미수확 키와 미완료 소급 표식으로 이관한다", () => {
     const legacy = validData() as unknown as Record<string, unknown>; legacy.saveVersion = 17; delete legacy.idleExcavation;
     const migrated = new SaveManager(new MemoryStorage()).migrate(legacy);
-    expect(migrated.idleExcavation.unclaimed).toEqual({ gold: 0, cheesecake: 0, fossil: 0, gems: 0 });
+    expect(migrated.idleExcavation.unclaimed).toEqual({ gold: 0, cheesecake: 0, rawStone: 0, gems: 0 });
     expect(migrated.idleExcavation.retroactiveExcavationGrantVersion).toBe(0);
   });
 

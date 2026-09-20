@@ -448,7 +448,7 @@ test("방치 발굴 편집은 슬롯 이동·중복 방지·빈 편성 취소를
 test("발굴 수확 보상은 0 지급 자원을 제외하고 뒤 입력을 막은 뒤 현황 입력을 복구한다", async ({ page }) => {
   await startAfterOpening(page, (session) => {
     // 서버가 다시 정산해도 보존되는 확정 누적분을 넣어 수확 성공 UI만 안정적으로 검증한다.
-    session.idleExcavation.unclaimed = { gold: 1234, cheesecake: 56, fossil: 0, gems: 0 };
+    session.idleExcavation.unclaimed = { gold: 1234, cheesecake: 56, rawStone: 0, gems: 0 };
     session.idleExcavation.lastSettledAt = new Date().toISOString();
   });
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
@@ -478,7 +478,7 @@ test("발굴 수확 보상은 0 지급 자원을 제외하고 뒤 입력을 막�
 test("발굴 보상 팝업은 최대 네 생산 자원을 한 줄에 표시한다", async ({ page }) => {
   await startAfterOpening(page, (session) => {
     // 네 생산 재화가 모두 양수인 서버 확정분으로 팝업의 최대 한 줄 계약을 검증한다.
-    session.idleExcavation.unclaimed = { gold: 1, cheesecake: 2, fossil: 3, gems: 4 };
+    session.idleExcavation.unclaimed = { gold: 1, cheesecake: 2, rawStone: 3, gems: 4 };
     session.idleExcavation.lastSettledAt = new Date().toISOString();
   });
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);

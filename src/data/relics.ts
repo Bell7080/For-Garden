@@ -118,7 +118,7 @@ export const RELICS: RelicDef[] = [
     // 송곳니로 물어뜯는 근접 물리 딜러.
     reachTier: "melee",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 1.2, efficiencyMultiplier: 1.10 },
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.2, efficiencyMultiplier: 1.10 },
     stats: {
       hp: 980,
       def: 50,
@@ -669,7 +669,7 @@ export const RELICS: RelicDef[] = [
     // 물장구는 붙어야 튄다.
     reachTier: "melee",
     // 물가에서 주워 오는 것이 곧 그 아이의 일이라, 발굴 특화도 화석 회수 쪽에 붙인다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 1.12, efficiencyMultiplier: 1.06 },
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.12, efficiencyMultiplier: 1.06 },
     // 앞으로 뛰어드는 전사지만 피해는 주문력에서 나온다 — 물살 자체가 무기라 공격력이 낮고
     // 주문력이 높으며, 어린 유체라 체력과 방어는 같은 등급의 탱커보다 낮게 잡는다.
     stats: {
@@ -860,7 +860,7 @@ export const RELICS: RelicDef[] = [
     // 붓이 닿는 만큼만 다가간다.
     reachTier: "mid",
     // 그림으로 표본을 기록하는 담당이라 발굴 특화도 화석 회수 쪽에 붙인다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 1.12, efficiencyMultiplier: 1.14 },
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.12, efficiencyMultiplier: 1.14 },
     // 앞에 나서지 못하는 지원가라 화력과 발이 느리고, 대신 오래 서 있도록 체력과 저항이 두껍다.
     stats: {
       hp: 1000,
@@ -954,7 +954,7 @@ export const RELICS: RelicDef[] = [
     // 철거 스윙은 휘두르는 팔 길이가 곧 사거리다.
     reachTier: "melee",
     // 부수고 다니는 개체라 발굴 특화도 화석 회수 쪽에 붙인다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 1.04, efficiencyMultiplier: 1.04 },
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.04, efficiencyMultiplier: 1.04 },
     // 머리로 받는 개체라 방어가 두껍고 발이 빠르다. 주문력을 쓰는 스킬이 하나도 없어 낮게 둔다.
     stats: {
       hp: 1100,
@@ -1379,7 +1379,7 @@ export const RELICS: RelicDef[] = [
     // 아군 앞에 서는 자리라 손이 닿는 거리에서만 싸운다. 날개는 버티는 데 쓴다.
     reachTier: "melee",
     // 하늘에서 내려다보며 넓게 훑는 손이라 발굴 특화는 화석 쪽에 붙인다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 1.24, efficiencyMultiplier: 1.1 },
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.24, efficiencyMultiplier: 1.1 },
     /**
      * **종이 방어에 산더미 체력이다.** 방어력 86·저항력 80은 탱커 중 최저이고 체력 2280은
      * 로스터 최고다(엘라 1500). 다 맞으면서 그보다 빨리 차오르는 것이 이 개체의 값이라,
@@ -1481,7 +1481,7 @@ export const RELICS: RelicDef[] = [
     // 붙어서 밀고 흘리는 권법이라 손이 닿는 거리에서만 싸운다.
     reachTier: "melee",
     // 굳은 몸으로 땅을 다지는 손이라 발굴 특화는 화석 쪽에 붙인다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 1.36, efficiencyMultiplier: 1.14 },
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.36, efficiencyMultiplier: 1.14 },
     // **로스터에서 가장 느리다**(공속 62 · 이속 64). 한 방 한 방이 무거운 대신 그 사이가 길고,
     // 공격력은 탱커답게 절제해 화력이 아니라 버티는 시간이 이 개체의 값이 되게 한다.
     stats: {
@@ -1720,7 +1720,7 @@ export const RELICS: RelicDef[] = [
     // 몸통으로 밀어붙이는 근접 허스크.
     reachTier: "melee",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 1, efficiencyMultiplier: 1.00 },
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1, efficiencyMultiplier: 1.00 },
     // 높은 체력·방어·저항과 느린 공속·이속이라는 기존 방벽 감각을 그대로 살린다.
     // 물리 기본기만큼의 공격력만 남기고 쓰지 않는 주문력은 낮춰, 생존 능력으로 R 띠를 채운다.
     // 치명타·충전 계열은 캐릭터 차별점이 아니므로 COMMON_SECONDARY_STATS와 동일하게 통일한다.
@@ -2088,7 +2088,7 @@ export const RELICS: RelicDef[] = [
     // 활을 켜는 자리는 무대 뒤편이다.
     reachTier: "ranged",
     // 물리형 지원가의 견고함을 운영에서도 드러내도록 화석 생산 특화를 부여했다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 1.2, efficiencyMultiplier: 1.12 },
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.2, efficiencyMultiplier: 1.12 },
     stats: {
       hp: 1260, def: 110, res: 76, atk: 124, ap: 52,
       attackSpeed: 88, moveSpeed: 74, critChance: 10, critDamage: 150,
@@ -2780,7 +2780,7 @@ export const RELICS: RelicDef[] = [
      * (`idleExcavation` 검수 띠), 슈테·도디에 이어 셋째 다이아 특화가 서면 그 띠를 넘는다.
      * 값도 화석 상위 셋(엘라·노도니아·메테)에는 못 미치게 잡아 기존 공급 총량을 건드리지 않는다.
      */
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 1.18, efficiencyMultiplier: 1.10 },
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.18, efficiencyMultiplier: 1.10 },
     /*
      * 전투력 2397로 SSR 띠(2340~2460) 한가운데다.
      *
@@ -2998,7 +2998,7 @@ export const RELICS: RelicDef[] = [
      */
     stunResistancePercent: 50,
     // 적 전용 정의도 RelicDef의 완전한 정적 계약을 지켜 공용 정보창이 예외 없이 표시한다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
     stats: {
       // 일반 SSR의 기본치를 기준으로 HP 약 2.4배, 방어·저항 약 1.7배인 유한한 보스 예산이다.
       // 20층 boss 레벨 25의 48% 성장 적용 뒤에는 HP 4,144 / 방어 266 / 저항 192 / 주문력 148이 된다.

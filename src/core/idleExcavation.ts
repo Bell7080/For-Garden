@@ -7,7 +7,13 @@ import { splitAccrualAt, timeAccrualWindow } from "./timeAccrual";
 export type ExcavationCurrency = ExcavationProductionCurrency;
 
 /** 발굴의 모든 초기화·정산·수확이 공유하는 유일한 재화 키 목록이다. */
-export const EXCAVATION_CURRENCIES = ["gold", "cheesecake", "fossil", "gems"] as const satisfies readonly ExcavationCurrency[];
+/*
+ * **발굴은 화석을 캐지 않는다.** 화석 한 개가 연구 한 번이 된 뒤로는 시간당 1.2개가
+ * 하루 스물아홉 번이라, 배치해 두고 걷는 자리가 연구소를 통째로 대신하게 된다. 대신
+ * 고고학의 원석을 캔다 — 땅에서 나오는 것이 같고, 개수가 자릿수 하나 큰 재화라 시간당
+ * 생산으로 흘려보내기에 맞는다.
+ */
+export const EXCAVATION_CURRENCIES = ["gold", "cheesecake", "rawStone", "gems"] as const satisfies readonly ExcavationCurrency[];
 
 /** 신규 재화 소급 정산을 저장 단위로 한 번만 실행하게 하는 서버 규칙 버전이다. */
 export const RETROACTIVE_EXCAVATION_GRANT_VERSION = 1;
@@ -19,7 +25,7 @@ export const EXCAVATION_HARVEST_NOTICE_RATIO = 0.5;
  * 보관 한도의 기본 시간.
  *
  * **네 시간은 방치형에게 너무 짧았다** — 자고 일어나면 여덟 시간 중 넷은 이미 흘러간 뒤였고,
- * 화석·다이아는 시간당 생산이 0.3 언저리라 그 네 시간이 담을 수 있는 양이 **한 개 남짓**이었다.
+ * 원석·다이아는 시간당 생산이 0.3 언저리라 그 네 시간이 담을 수 있는 양이 **한 개 남짓**이었다.
  * 수확은 정수 단위라 한 번 걷을 때마다 1 미만이 남는데, 한도 자체가 그만한 크기면 남은 몫이
  * 한도의 절반을 차지해 "수확했는데 게이지가 그대로"로 보인다. 여덟 시간이면 어떤 재화든
  * **최소 네 개 분량**을 담아 그 잔량이 한도의 4분의 1 아래로 내려간다
@@ -111,7 +117,7 @@ export const EXCAVATION_GROWTH = { perLevel: 0.02, perBreakthrough: 0.1 } as con
 
 /** UI의 다이아는 희소하므로 일반 재화보다 레벨/돌파 성장률을 낮게 제한한다. */
 const EXCAVATION_GROWTH_BY_CURRENCY: Readonly<Record<ExcavationCurrency, { perLevel: number; perBreakthrough: number }>> = {
-  gold: EXCAVATION_GROWTH, cheesecake: EXCAVATION_GROWTH, fossil: EXCAVATION_GROWTH,
+  gold: EXCAVATION_GROWTH, cheesecake: EXCAVATION_GROWTH, rawStone: EXCAVATION_GROWTH,
   gems: { perLevel: 0.005, perBreakthrough: 0.025 },
 };
 

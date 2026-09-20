@@ -90,8 +90,8 @@ const DEFAULT_STATUS_PUPPET_LOADER: StatusPuppetLoader = { assetFor: (relicId) =
 const EXCAVATION_CURRENCY_ICON: Record<ExcavationCurrency, CurrencyIconKey> = {
   gold: "currency-gold",
   cheesecake: "currency-cheesecake",
-  // UI 명칭 다이아/일반 화석은 실제 Wallet 키 gems/fossil에 대응한다.
-  fossil: "currency-fossil",
+  // UI 명칭 다이아/원석은 실제 Wallet 키 gems/rawStone에 대응한다.
+  rawStone: "currency-orestone",
   gems: "currency-gems",
 };
 

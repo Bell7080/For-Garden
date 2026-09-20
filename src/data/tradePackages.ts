@@ -22,28 +22,37 @@ import { registerDataText } from "../i18n";
  *
  * 패키지마다 "몇 % 가치"를 손으로 적으면, 수치를 조정한 뒤 옛 %가 그대로 남아 화면이 거짓말을
  * 한다. 그래서 %는 데이터에 없고 이 표에서 환산한다. 기준은 이미 서 있는 두 경계다 —
- * 스테미나 충전(젬 30 → 60)과 연구 1회 비용(화석 100 = 호박석 2)이라, 화석 100과 호박석 2가
- * 똑같이 젬 20이 된다. 시세를 고치면 전시 중인 모든 패키지의 %가 함께 움직인다.
+ * 스테미나 충전(젬 30 → 60)과 **연구 한 번**이라, 화석 한 개가 젬 100, 호박석 한 개가 젬 300이다. 시세를 고치면 전시 중인 모든 패키지의 %가 함께 움직인다.
  */
 export const TRADE_GEM_RATE: Readonly<Record<ProductCurrency, number>> = {
   gems: 1,
   /*
-   * **원석은 이제 실제로 값으로 쓰인다** — 고고학 가게가 원석 하나로 값을 받으므로, 「어디에도
-   * 쓰이지 않으니 대충 채워 둔다」던 40을 그대로 두면 그 가게의 값이 전부 거기서 나온다.
+   * **뽑기 한 번이 이 표의 기준점이다.**
    *
-   * 다시 잰 기준은 **한 판에서 실제로 캐는 양**이다(`strataLayers`의 원석 칸 6~26, 한 판
-   * 8~10회). 화석과 같은 무게(1 젬 = 5개)로 두면 주간 상품 한 장이 한 판 몇 번, 특가 한 장이
-   * 한 주 남짓이 된다. 40이던 때는 같은 상품이 각각 열 배 넘게 비쌌다.
+   * 호박석 한 개가 한 번이고 그 값이 젬 300이다. 화석도 한 번(열 개)이지만 **같은 한 번이
+   * 아니다** — 화석은 일반 연구, 호박석은 픽업 연구라 뽑는 것 자체가 다른 물건이다. 두 번을
+   * 같은 값으로 두면 픽업이 공짜가 되어 일반 배너가 열 이유를 잃는다.
+   *
+   * 배수는 지어내지 않고 **두 배너의 SSR 확률**에서 그대로 가져온다(0.01 → 0.03, 정확히 3배).
+   * 그래서 일반 한 번은 젬 100이고, 한 개가 한 번이므로 화석 한 개가 곧 **젬 100**이다.
+   *
+   *   한 번 = 화석 1 = 젬 100 · 열 번 = 화석 10 = 젬 1,000
+   *   한 번 = 호박석 1 = 젬 300 · 열 번 = 호박석 10 = 젬 3,000
+   */
+  amber: 1 / 300,
+  fossil: 1 / 100,
+  /*
+   * 원석은 고고학 안에서만 돌고 한 판에서 수십 개가 나온다(`strataLayers`의 원석 칸 6~26,
+   * 한 판 8~10회). 뽑기 재화와 같은 자리에 두지 않는 이유가 그것이다 — 파서 모으는 재화라
+   * 개수 자체가 자릿수 하나 크다.
    */
   rawStone: 5,
-  // 증표 둘도 같은 이유로 전시대에 올리지 않는다 — 젬으로 사면 그 증표가 무엇을 위한
-  // 것인지 말하지 못한다. 시세만 채워 표를 비우지 않는다.
+  // 증표 둘은 전시대에 올리지 않는다 — 젬으로 사면 그 증표가 무엇을 위한 것인지 말하지 못한다.
+  // 시세만 채워 표를 비우지 않으며, 올릴 때 다시 잰다.
   raidSigil: 60,
   salvageRecord: 60,
   cheesecake: 2,
-  fossil: 5,
   gold: 500,
-  amber: 0.1,
   dnaFragments: 0.2,
 };
 
@@ -117,9 +126,9 @@ export const TRADE_PACKAGES: readonly ProductDefinition[] = [
   },
   {
     id: "trade-excavation-crate", storefront: "trade", category: "special", iconKey: "shop-product-supplies",
-    name: "발굴 장비 보급함", description: "화석 4,000개와 호박석 20개",
+    name: "발굴 장비 보급함", description: "화석 4개와 호박석 2개",
     acquisition: { kind: "currency", currency: "gems", amount: 400 },
-    grants: [{ kind: "currency", currency: "fossil", amount: 4_000 }, { kind: "currency", currency: "amber", amount: 20 }],
+    grants: [{ kind: "currency", currency: "fossil", amount: 4 }, { kind: "currency", currency: "amber", amount: 2 }],
     defaultQuantity: 1, purchaseLimit: 1, refresh: "once",
     visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z",
   },

@@ -105,13 +105,25 @@ export const LOOT_MERCHANT_LINE_KEYS: readonly TextKey[] = [
 ];
 
 /** 상점 화면 한 자리가 갖는 무대. 점원·배경·대사가 한 덩어리로 갈린다. */
+
 /**
- * 일반·고고학이 함께 쓰는 세 갈래. 같은 상품 계약(`ShopCategory`)을 읽는 자리다.
+ * 일반 상점의 두 갈래 — **무엇으로 사는가**.
  *
- * **「무엇을 파나」가 아니라 「언제 돌아오는 자리인가」로 가른다.** 일반·강화·룬이던 때는 룬
- * 탭에 상품이 한 장뿐이었고, 세 이름 모두 **언제 다시 와야 하는지**를 말하지 못했다.
+ * 한 화면에 골드와 젬이 섞여 있으면 카드를 하나씩 눌러 봐야 무엇이 드는지 알 수 있다. 탭이
+ * 지갑 한 칸을 가리키면 그 줄이 곧 「지금 내가 쓸 수 있는 것」이 되므로, **두 탭은 서로 다른
+ * 품목을 판다** — 같은 것을 두 재화로 살 수 있으면 싼 쪽만 쓰이고 나머지 탭은 열 이유가 없다.
  */
-const SHOP_CATEGORY_TABS: readonly { id: string; label: string }[] = [
+const SHOP_CURRENCY_TABS: readonly { id: string; label: string }[] = [
+  { id: "gold", label: "골드" }, { id: "gems", label: "젬" },
+];
+
+/**
+ * 고고학 상점의 세 갈래 — **언제 돌아오는 자리인가**.
+ *
+ * 값이 원석 하나뿐이라 재화로 가를 축이 없다. 상점은 하루에 한 번 들르는 자리라 그 대신
+ * 「언제 다시 와야 하는지」가 먼저 읽혀야 한다.
+ */
+const SHOP_REFRESH_TABS: readonly { id: string; label: string }[] = [
   { id: "special", label: "특가" }, { id: "daily", label: "일일" }, { id: "weekly", label: "주간" },
 ];
 
@@ -169,7 +181,7 @@ export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "
     lineKeys: SHOP_MERCHANT_LINE_KEYS,
     background: BACKGROUND.shop,
     titleKey: "shop.title",
-    tabs: SHOP_CATEGORY_TABS,
+    tabs: SHOP_CURRENCY_TABS,
     currencies: "default",
   },
   archaeology: {
@@ -177,7 +189,7 @@ export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "
     lineKeys: ARCHAEOLOGY_MERCHANT_LINE_KEYS,
     background: BACKGROUND.archaeologyShop,
     titleKey: "shop.archaeology.title",
-    tabs: SHOP_CATEGORY_TABS,
+    tabs: SHOP_REFRESH_TABS,
     // 이 가게에서 조작을 정하는 수는 원석 하나뿐이다.
     currencies: "archaeologyShop",
     // 머리 관절은 **대사 띠 오른쪽 끝(730)보다 오른쪽**에 있어야 얼굴이 띠에 덮이지 않고,
@@ -206,5 +218,5 @@ export function shopStagePresentation(storefront: ProductStorefront): ShopStageP
 }
 
 /** 목록 교체 줄의 이름을 언어별로 덮어쓸 수 있게 등록한다. */
-for (const tab of SHOP_CATEGORY_TABS) registerDataText(tab, "label", `shop.tab.${tab.id}`);
+for (const tab of [...SHOP_CURRENCY_TABS, ...SHOP_REFRESH_TABS]) registerDataText(tab, "label", `shop.tab.${tab.id}`);
 for (const tab of LOOT_CATEGORY_TABS) registerDataText(tab, "label", `shop.loot.tab.${tab.id}`);

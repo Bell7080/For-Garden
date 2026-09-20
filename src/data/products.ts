@@ -12,14 +12,20 @@ export type ProductStorefront = "shop" | "trade" | "premium" | "archaeology" | "
 
 /** 일반 인게임 상점과 무역소가 공유하는 안정적인 카테고리 계약이다. */
 /**
- * 상점 목록을 가르는 세 갈래.
+ * 상품이 어느 탭에 서는가. **탭 목록은 자리마다 다르므로 값도 자리마다 다른 뜻을 갖는다.**
  *
- * **「무엇을 파나」가 아니라 「언제 돌아오는 자리인가」로 가른다.** 예전에는 일반·강화·룬이었는데
- * 룬 탭에는 상품이 한 장뿐이었고, 세 이름 모두 **언제 다시 와야 하는지**를 말하지 못했다.
- * 그 값은 이미 상품이 `refresh`로 들고 있으므로 갈래는 거기서 그대로 나온다 — 두 값이 어긋날
- * 자리를 만들지 않는다(`tests/unit/shopCatalog.test.ts`가 그 일치를 지킨다).
+ * - 일반 상점은 **무엇으로 사는가**로 가른다(`gold`·`gems`). 한 화면에 두 재화가 섞여 있으면
+ *   카드를 하나씩 눌러 봐야 무엇이 드는지 알 수 있고, 탭이 지갑 한 칸을 가리키면 그 줄이
+ *   곧 「지금 내가 쓸 수 있는 것」이 된다. 그래서 **두 탭은 서로 다른 품목을 판다** — 같은
+ *   것을 두 재화로 살 수 있으면 싼 쪽만 쓰이고 나머지 탭은 열 이유가 없어진다.
+ * - 고고학 상점은 값이 원석 하나뿐이라 가를 축이 없다. 대신 **언제 돌아오는 자리인가**로
+ *   가른다(`special`·`daily`·`weekly`). 그 값은 이미 상품이 `refresh`로 들고 있으므로
+ *   거기서 그대로 나온다 — 두 값이 어긋나면 매주 오는 물건이 「일일」 탭에 서서 매일 들른
+ *   손이 허탕을 친다.
+ *
+ * 두 규칙 모두 `tests/unit/shopCatalog.test.ts`가 자리별로 지킨다.
  */
-export type ShopCategory = "special" | "daily" | "weekly";
+export type ShopCategory = "gold" | "gems" | "special" | "daily" | "weekly";
 
 /**
  * 전리품 상점의 목록 갈래 — **쓰는 증표**로 가른다.
@@ -118,12 +124,24 @@ export interface ProductDefinition {
 /** 프로토타입 운영 카탈로그. 실제 차감과 지급은 이 데이터가 아니라 GameApi만 수행한다. */
 export const SHOP_PRODUCTS: readonly ProductDefinition[] = [
   // 일반 탭은 세로 목록 조작을 실제 콘텐츠로 확인할 수 있도록 용도와 가격대가 다른 보급 묶음을 함께 둔다.
-  { id: "shop-field-supplies", storefront: "shop", category: "daily", iconKey: "shop-product-supplies", name: "현장 보급품", description: "현장 활동용 치즈케이크 40개", acquisition: { kind: "currency", currency: "gold", amount: 10000 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 40 }], defaultQuantity: 1, purchaseLimit: 5, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "shop-field-rations", storefront: "shop", category: "weekly", iconKey: "shop-product-supplies", name: "장기 조사 식량", description: "현장 활동용 치즈케이크 80개", acquisition: { kind: "currency", currency: "gold", amount: 19000 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 80 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "shop-recovery-cache", storefront: "shop", category: "weekly", iconKey: "shop-product-supplies", name: "긴급 복원 상자", description: "복원용 치즈케이크 120개", acquisition: { kind: "currency", currency: "gold", amount: 28000 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 120 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "shop-survey-crate", storefront: "shop", category: "special", iconKey: "shop-product-supplies", name: "광역 조사 보급함", description: "대규모 조사용 치즈케이크 200개", acquisition: { kind: "currency", currency: "gold", amount: 40000 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 200 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "shop-night-kit", storefront: "shop", category: "daily", iconKey: "shop-product-supplies", name: "야간 조사 키트", description: "야간 근무용 치즈케이크 60개", acquisition: { kind: "currency", currency: "gold", amount: 14500 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 60 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "shop-enhancement-dna", storefront: "shop", category: "weekly", iconKey: "shop-product-enhancement", name: "강화 DNA 묶음", description: "공용 DNA 조각 10개", acquisition: { kind: "currency", currency: "gold", amount: 40000 }, grants: [{ kind: "currency", currency: "dnaFragments", amount: 10 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "shop-field-supplies", storefront: "shop", category: "gold", iconKey: "shop-product-supplies", name: "현장 보급품", description: "현장 활동용 치즈케이크 40개", acquisition: { kind: "currency", currency: "gold", amount: 10000 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 40 }], defaultQuantity: 1, purchaseLimit: 5, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "shop-field-rations", storefront: "shop", category: "gold", iconKey: "shop-product-supplies", name: "장기 조사 식량", description: "현장 활동용 치즈케이크 80개", acquisition: { kind: "currency", currency: "gold", amount: 19000 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 80 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "shop-recovery-cache", storefront: "shop", category: "gold", iconKey: "shop-product-supplies", name: "긴급 복원 상자", description: "복원용 치즈케이크 120개", acquisition: { kind: "currency", currency: "gold", amount: 28000 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 120 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "shop-survey-crate", storefront: "shop", category: "gold", iconKey: "shop-product-supplies", name: "광역 조사 보급함", description: "대규모 조사용 치즈케이크 200개", acquisition: { kind: "currency", currency: "gold", amount: 40000 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 200 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "shop-night-kit", storefront: "shop", category: "gold", iconKey: "shop-product-supplies", name: "야간 조사 키트", description: "야간 근무용 치즈케이크 60개", acquisition: { kind: "currency", currency: "gold", amount: 14500 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 60 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "shop-enhancement-dna", storefront: "shop", category: "gold", iconKey: "shop-product-enhancement", name: "강화 DNA 묶음", description: "공용 DNA 조각 10개", acquisition: { kind: "currency", currency: "gold", amount: 40000 }, grants: [{ kind: "currency", currency: "dnaFragments", amount: 10 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  /*
+   * **젬 탭은 골드가 못 사는 것만 판다.** 같은 치즈케이크를 두 재화로 팔면 싼 쪽만 쓰이고
+   * 나머지 탭은 열 이유가 없어진다. 재화를 재화로 바꾸는 묶음은 무역 전시대의 몫이므로
+   * 여기는 **소비품**만 선다.
+   *
+   * 값은 지어내지 않고 긴급 보급(`staminaRecharge` — 젬 30에 스테미나 60)에서 끌어온다.
+   * 미리 사 두는 자리가 급할 때 누르는 것보다 비싸면 살 이유가 없으므로 그보다 **싸게** 둔다
+   * (3개 90 → 75 · 2개+ 120 → 96 · 5개+ 300 → 200).
+   */
+  { id: "shop-tonic-pack", storefront: "shop", category: "gems", iconKey: "shop-product-supplies", name: "보급 음료 묶음", description: "에너지 드링크 3개", acquisition: { kind: "currency", currency: "gems", amount: 75 }, grants: [{ kind: "item", itemId: "stamina-tonic", name: "에너지 드링크", amount: 3 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "shop-tonic-large-pack", storefront: "shop", category: "gems", iconKey: "shop-product-supplies", name: "고농축 음료 묶음", description: "에너지 드링크+ 2개", acquisition: { kind: "currency", currency: "gems", amount: 96 }, grants: [{ kind: "item", itemId: "stamina-tonic-large", name: "에너지 드링크+", amount: 2 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "shop-tonic-crate", storefront: "shop", category: "gems", iconKey: "shop-product-supplies", name: "장기 보급 상자", description: "에너지 드링크+ 5개", acquisition: { kind: "currency", currency: "gems", amount: 200 }, grants: [{ kind: "item", itemId: "stamina-tonic-large", name: "에너지 드링크+", amount: 5 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   // **고고학 상점.** 기본 리롤은 언제나 플레이 재화(원석)로 돌아가야 하므로, 여기서 파는 것은
   // 그 바깥의 몫이다 — 원석 자체는 골드로 바꿔 주되 하루 몫으로 끊고, 특성 아이템은 상시
   // 무제한으로 팔지 않는다(무한 과금으로 전설 특성을 완성하는 길을 열지 않는다).
@@ -138,9 +156,9 @@ export const SHOP_PRODUCTS: readonly ProductDefinition[] = [
   // 기본이고, 성장 재료만 매일 열어 꾸준히 도는 사람이 매주 몰아 사지 않게 한다.
   { id: "raid-cheesecake-ration", storefront: "loot", lootCategory: "raid", category: "daily", iconKey: "shop-product-supplies", name: "토벌 보급 급여", description: "치즈케이크 400개", acquisition: { kind: "currency", currency: "raidSigil", amount: 20 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 400 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "raid-gold-bounty", storefront: "loot", lootCategory: "raid", category: "daily", iconKey: "shop-product-fossil", name: "토벌 포상금", description: "골드 30,000개", acquisition: { kind: "currency", currency: "raidSigil", amount: 25 }, grants: [{ kind: "currency", currency: "gold", amount: 30000 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "raid-fossil-crate", storefront: "loot", lootCategory: "raid", category: "weekly", iconKey: "shop-product-fossil", name: "토벌 표본 상자", description: "화석 1,500개", acquisition: { kind: "currency", currency: "raidSigil", amount: 60 }, grants: [{ kind: "currency", currency: "fossil", amount: 1500 }], defaultQuantity: 2, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "raid-fossil-crate", storefront: "loot", lootCategory: "raid", category: "weekly", iconKey: "shop-product-fossil", name: "토벌 표본 상자", description: "화석 15개", acquisition: { kind: "currency", currency: "raidSigil", amount: 60 }, grants: [{ kind: "currency", currency: "fossil", amount: 15 }], defaultQuantity: 2, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "raid-dna-supply", storefront: "loot", lootCategory: "raid", category: "weekly", iconKey: "shop-product-enhancement", name: "토벌 복원 보급", description: "DNA 조각 12개", acquisition: { kind: "currency", currency: "raidSigil", amount: 80 }, grants: [{ kind: "currency", currency: "dnaFragments", amount: 12 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "raid-amber-token", storefront: "loot", lootCategory: "raid", category: "weekly", iconKey: "shop-product-amber", name: "토벌 공훈 호박석", description: "호박석 15개", acquisition: { kind: "currency", currency: "raidSigil", amount: 150 }, grants: [{ kind: "currency", currency: "amber", amount: 15 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "raid-amber-token", storefront: "loot", lootCategory: "raid", category: "weekly", iconKey: "shop-product-amber", name: "토벌 공훈 호박석", description: "호박석 8개", acquisition: { kind: "currency", currency: "raidSigil", amount: 150 }, grants: [{ kind: "currency", currency: "amber", amount: 8 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "raid-ancient-core", storefront: "loot", lootCategory: "raid", category: "weekly", iconKey: "shop-product-rune", name: "토벌 고대 핵", description: "미지의 고대 핵 1개", acquisition: { kind: "currency", currency: "raidSigil", amount: 120 }, grants: [{ kind: "item", itemId: "ancient-core", name: "미지의 고대 핵", amount: 1 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "raid-refined-core", storefront: "loot", lootCategory: "raid", category: "special", iconKey: "shop-product-rune", name: "토벌 정제 핵", description: "정제된 고대 핵 1개", acquisition: { kind: "currency", currency: "raidSigil", amount: 300 }, grants: [{ kind: "item", itemId: "refined-core", name: "정제된 고대 핵", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   // **인양 탭.** 값은 전부 인양 기록이라 원정을 돈 사람만 살 수 있다.

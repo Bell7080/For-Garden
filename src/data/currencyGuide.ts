@@ -23,7 +23,7 @@ export interface CurrencyGuideEntry {
  * 과장하지 않게 하며, 문구 변경도 화면마다 복제하지 않고 이 표 한 곳에서 끝낸다.
  */
 export const CURRENCY_GUIDE = {
-  fossil: { key: "fossil", name: "화석", lore: "복원 가능한 생명의 흔적이 잠든 표본입니다.", sources: ["배치형 자원 발굴", "원정 노드·주간 기록", "교류 파견·후원 패키지"], uses: ["연구소의 화석 연구", "상점의 보급품 구매", "무역의 결정 정제 의뢰"], action: { kind: "scene", target: "lab", label: "연구소로 이동" } },
+  fossil: { key: "fossil", name: "화석", lore: "복원 가능한 생명의 흔적이 잠든 표본입니다.", sources: ["원정 노드·주간 기록", "고고학의 지층 탐사", "교류 파견·후원 패키지"], uses: ["연구소의 화석 연구", "상점의 보급품 구매", "무역의 결정 정제 의뢰"], action: { kind: "scene", target: "lab", label: "연구소로 이동" } },
   amber: { key: "amber", name: "호박석", lore: "희귀한 복원 신호를 온전히 품은 결정입니다.", sources: ["원정의 희귀 보상", "상점 신입 연구원 패키지", "무역의 결정 정제 의뢰"], uses: ["연구소의 한정 호박석 연구", "무역의 보급 전환 계약"], action: { kind: "scene", target: "lab", label: "연구소로 이동" } },
   gems: { key: "gems", name: "젬", lore: "도시의 연구 시설과 보급망이 인정하는 결정 화폐입니다.", sources: ["배치형 자원 발굴", "원정 노드·주간 기록", "연구 후원 일일 보너스"], uses: ["스테미나 충전", "운영 상품 계약"] },
   gold: { key: "gold", name: "골드", lore: "정비와 세공 현장에서 쓰이는 표준 작업 화폐입니다.", sources: ["배치형 자원 발굴", "화석·호박석 연구 부산물", "스테이지·원정 보상"], uses: ["룬 세공", "렐릭 성장과 연구 정비"] },
@@ -32,7 +32,7 @@ export const CURRENCY_GUIDE = {
   cheesecake: { key: "cheesecake", name: "치즈케이크", lore: "복원체와 신뢰를 쌓는 연구소의 특별 급여입니다.", sources: ["배치형 자원 발굴", "화석·호박석 연구 부산물", "원정·일일 광고 보상", "교류 파견 보상"], uses: ["렐릭 급여 성장", "무역의 복원 재료 교환"], action: { kind: "popup", target: "trade", label: "무역 열기" } },
   raidSigil: { key: "raidSigil", name: "토벌 증표", lore: "보스를 밀어낸 몫만큼 발급되는 토벌 증서입니다.", sources: ["레이드 누적 기여 보상", "시즌 보스 토벌 보상"], uses: ["전리품 상점의 토벌 교환"] },
   salvageRecord: { key: "salvageRecord", name: "인양 기록", lore: "수장된 지부에서 무엇을 건졌는지 적어 둔 기록입니다.", sources: ["원정 노드 보상", "원정 주간 기록 보상"], uses: ["전리품 상점의 인양 교환"] },
-  rawStone: { key: "rawStone", name: "원석", lore: "지층 깊이 잠들어 있던, 아직 아무도 손대지 않은 광물입니다.", sources: ["고고학의 지층 탐사", "고고학 상점 교환", "교류 파견 보상"], uses: ["룬 특성 재해석"] },
+  rawStone: { key: "rawStone", name: "원석", lore: "지층 깊이 잠들어 있던, 아직 아무도 손대지 않은 광물입니다.", sources: ["배치형 자원 발굴", "고고학의 지층 탐사", "고고학 상점 교환"], uses: ["룬 특성 재해석"] },
 } as const satisfies Record<WalletItemKey, CurrencyGuideEntry>;
 
 /** 외부 입력도 항상 완전성 검사를 통과한 카탈로그에서만 조회한다. */

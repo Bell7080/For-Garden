@@ -10,7 +10,7 @@ export const SYSTEM_EN = {
   "rune.baseName": "{part} Rune",
   "excavation.auto.balanced": "Balanced",
   "excavation.auto.cheesecake": "Cheesecake",
-  "excavation.auto.fossil": "Fossil",
+  "excavation.auto.rawStone": "Raw Stone",
   "excavation.auto.gold": "Gold",
   "excavation.auto.gems": "Gem",
   "battle.buff.sameTarget": "Holding the same target",

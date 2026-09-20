@@ -2,6 +2,7 @@ import type { BattleSceneInputDto } from "../core/expeditionBattle";
 import type { BattleStageDef, RelicDef } from "../core/types";
 import { expeditionEnemyLevel } from "./expeditionEnemies";
 import { stageEnemyGrowth } from "./stages";
+import { getCakeOperationTier } from "./cakeOperation";
 
 /**
  * 전장에 **실제로 선** 적 하나. 정의와 함께 그 자리에서 자란 값을 들고 다닌다.
@@ -28,6 +29,15 @@ export function placedEnemyIndex(
   stage: BattleStageDef,
   enemyDefs: readonly RelicDef[],
 ): Map<string, PlacedEnemy> {
+  // 대작전은 무리를 이어 붙여도 `enemy-<n>`이 이어지므로 **펼친 목록 전체**가 이 표에 든다.
+  // 한 단계가 한 레벨·한 야성 단계를 쓰므로 자리마다 다른 성장이 없다.
+  if (input.mode === "cake") {
+    const tier = getCakeOperationTier(input.tierId);
+    return new Map(enemyDefs.map((def, index) => [`enemy-${index}`, {
+      def, level: tier.enemyLevel, breakthrough: 0,
+      ...(tier.ferocityLevel ? { ferocityLevel: tier.ferocityLevel } : {}),
+    }]));
+  }
   // 원정은 노드 하나가 한 레벨을 쓰고 돌파는 아직 두지 않는다.
   const expeditionLevel = input.mode === "expedition" ? expeditionEnemyLevel(input.nodeType, input.floor)
     : input.mode === "expeditionBoss" ? expeditionEnemyLevel("boss", 20) : undefined;

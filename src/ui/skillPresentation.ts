@@ -51,6 +51,22 @@ export function recoveryLabel(percent?: number): string | undefined {
 }
 
 /** 어느 캐릭터나 같은 양식으로 피해 수치의 능력치 출처와 적용 배율을 열어 볼 수 있게 한다. */
+/**
+ * 공격력 배율 하나를 **실제 수치 태그**로 환산한다. 능력치를 모르는 자리(도감)에서는 어느
+ * 능력치에서 나오는 배율인지와 함께 %-표기로 되돌아간다.
+ *
+ * 본문이 직접 계산하는 자리는 여기뿐이다 — 스킬의 주 피해는 아이콘 위 라벨과 **같은 값**을
+ * 받아 쓰지만(`stats.damage`), 한 스킬이 내는 **둘째 피해**는 그 라벨이 없어 환산할 곳이 없다.
+ */
+function attackDamageTerm(power: number, stats: SkillDescriptionStats): string {
+  // 주 피해와 **같은 두 키**를 쓴다. 능력치를 알면 실제 수치, 모르면 "공격력의 N%"이고 피해
+  // 종류까지 그 문장이 갖는다 — 절을 따로 지으면 같은 물리 피해가 문장마다 다른 꼴로 선다.
+  const type = t("skill.damageType.physical");
+  return stats.atk === undefined
+    ? t("skill.damage.scaling", { stat: statName("atk"), percent: power, type })
+    : t("skill.damage.value", { amount: Math.round(stats.atk.atk * power / 100), type });
+}
+
 export function damageKeyword(preview?: DamagePreview): KeywordDef | undefined {
   if (preview?.kind !== "scaling") return undefined;
   // 두 능력치가 위력을 나눠 갖는 스킬은 두 축을 함께 말한다. 한쪽만 말하면 실제 수치의
@@ -885,13 +901,27 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
   }
   // 여울은 **쓰는 개체가 하나뿐인 규칙어**라 반경·시간·둔화·확정 연격을 태그가 갖는다.
   // 본문이 그걸 다시 늘어놓으면 한 문장이 그 규칙 하나로 가득 찬다.
-  if ("floodShallows" in skill && skill.floodShallows !== undefined) {
-    // 반경·시간은 태그가 아니라 본문이 적는다 — 같은 규칙어를 쓰는 평타 여울과 값이 다르므로,
-    // 태그가 한쪽 수치를 못 박으면 다른 쪽 설명이 거짓말이 된다(출혈과 같은 이유다).
-    clauses.push({ text: t("skill.clause.floodShallows", { seconds: skill.floodShallows.seconds }), standalone: true });
+  if ("detonateShallows" in skill && skill.detonateShallows !== undefined) {
+    // 몇 곳이 터지는지는 판이 몇 개 깔렸느냐라 데이터에 없다 — 본문은 "깔린 것을 전부"와
+    // **한 판이 내는 피해**까지 말하고, 여울이 무엇인지는 태그가 맡는다.
+    clauses.push({
+      text: t("skill.clause.detonateShallows", { damage: attackDamageTerm(skill.detonateShallows.power, stats) }),
+      standalone: true,
+    });
   }
   if ("shallows" in skill && skill.shallows !== undefined) {
-    clauses.push({ text: t("skill.clause.shallows"), standalone: true });
+    /*
+     * 본문이 적는 것은 **주기와 피해** 둘뿐이다. 주기는 스킬마다 다를 수 있는 수라 태그가 못
+     * 박으면 거짓말이 되고, 피해는 능력치에서 환산해야 실제 수가 나오므로 태그가 가질 수 없다.
+     * 나머지(물이 무엇인지·잠긴 적이 더 받는 몫·터진 판이 마르는 것)는 두 태그가 맡는다.
+     */
+    clauses.push({
+      text: t("skill.clause.shallows", {
+        count: skill.shallows.leapEveryHits,
+        damage: attackDamageTerm(skill.shallows.leapPower, stats),
+      }),
+      standalone: true,
+    });
   }
   /*
    * 반짝은 **쓰는 개체가 하나뿐인 규칙어**라 무엇이고 다시 맞으면 어떻게 되는지를 태그가 갖고,

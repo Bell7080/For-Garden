@@ -372,7 +372,7 @@ export class LobbyScene extends Phaser.Scene {
         {
           x: -204, y: -124, width: 392, height: 200, label: t("lobby.sortie.cake"), labelSize: 38, status: t("lobby.sortie.cake.status"), split: "left",
           artKey: "content-cake-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
-          onClick: () => { close(); this.scene.start("sortiePreview", { mode: "cake" }); },
+          onClick: () => { close(); this.scene.start("cakeOperation"); },
         },
         {
           x: 204, y: -124, width: 392, height: 200, label: t("lobby.sortie.bounty"), labelSize: 38, status: t("lobby.sortie.bounty.status"), split: "right",

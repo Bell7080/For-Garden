@@ -50,6 +50,7 @@ function makeSession(): Session {
     dailyAdRewards: { date: "", claimsBySlot: {}, requestIds: [] },
     // 성장 테스트는 원정 진행과 독립된 빈 상태를 사용한다.
     expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, allTimeBestScore: 0, lastParty: [], run: null },
+    cakeOperation: { clearedIndex: -1 },
   };
 }
 

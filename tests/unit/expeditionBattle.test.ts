@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { getCakeOperationTier } from "../../src/data/cakeOperation";
 import { battleHeaderText, createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../../src/core/expeditionBattle";
 import { createSkirmish, spawnSpots, skirmishRelicResults, type Arena } from "../../src/core/skirmish";
 import { EXPEDITION_COMBAT_BALANCE } from "../../src/data/expedition";
@@ -111,10 +112,26 @@ describe("전투 씬 입력 정규화 회귀", () => {
     expect(normalized).toBe(expedition);
   });
 
+  /** 대작전도 판별 필드를 보내며, 그 입장 영수증의 요청 ID가 전투를 따라가야 결과가 붙는다. */
+  it("대작전 입력은 단계·배율·요청 ID를 그대로 보존한다", () => {
+    const cake = { mode: "cake", tierId: "cake-3", multiplier: 2, requestId: "cake:cake-3:2:1" } as const;
+    expect(normalizeBattleSceneInput(cake)).toBe(cake);
+    // 다음 스토리 진입은 직전 대작전 필드를 물려받지 않는다.
+    const [, next] = transition(cake, undefined);
+    expect(next).toEqual({ mode: "stage" });
+    expect(next).not.toHaveProperty("tierId");
+    expect(next).not.toHaveProperty("requestId");
+  });
+
   it("원정 헤더에 선택된 스토리 이름을 표시하지 않는다", () => {
     // 일반 스테이지 헤더는 단일 공용 레벨 대신 슬롯별 성장 스냅샷을 읽는다.
     const story = { id: "1-5", name: "남아서는 안 되는 이름", enemies: [{ relicId: "a", level: 12, breakthrough: 1 }, { relicId: "b", level: 13, breakthrough: 2 }, { relicId: "c", level: 14, breakthrough: 3 }] } as const;
     expect(battleHeaderText(input("horde"), story)).toBe("원정 1층 · 군집 전투");
     expect(battleHeaderText({ mode: "stage" }, story)).toContain(story.name);
+    // 대작전 머리글도 스토리 이름을 읽지 않고 제 단계 이름과 배율만 말한다.
+    const cakeHeader = battleHeaderText({ mode: "cake", tierId: "cake-3", multiplier: 2, requestId: "r" }, story);
+    expect(cakeHeader).not.toContain(story.name);
+    expect(cakeHeader).toContain(getCakeOperationTier("cake-3").name);
+    expect(cakeHeader).toContain("x2");
   });
 });

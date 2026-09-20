@@ -243,10 +243,10 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     // 땅·물은 정확히 반대다 — 1-5는 그냥 넘고 1-10에서 흔들린다.
     expect(winRateAt("1-5", earthDps)).toBe(1);
     expect(winRateAt("1-10", earthDps)).toBe(0.625);
-    // 물 조합은 스피나가 여울 중심으로 다시 짜이면서 1-10을 더 자주 연다(0.5 → 0.875).
+    // 물 조합은 스피나가 여울 중심으로 다시 짜이면서 1-10을 더 자주 연다(0.5 → 0.75).
     // 여전히 전승은 아니라 **이 관문이 조합을 가린다**는 뜻은 그대로다.
     expect(winRateAt("1-5", waterDps)).toBe(1);
-    expect(winRateAt("1-10", waterDps)).toBe(0.875);
+    expect(winRateAt("1-10", waterDps)).toBe(0.75);
   });
 
   /*

@@ -47,6 +47,9 @@ import { excavationHarvestStatus, excavationProductionDisplayModel, excavationSt
 import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest, InventoryResponse, UseConsumableRequest, UseConsumableResponse } from "./contracts";
 import type { ClaimExpeditionRewardRequest, ClaimExpeditionRewardResponse, CompleteExpeditionNodeRequest, CompleteExpeditionNodeResponse, ExpeditionLeaderboardResponse, ExpeditionWeeklyBestResponse, SettleExpeditionRunRequest, SettleExpeditionRunResponse, SubmitExpeditionBossScoreRequest, SubmitExpeditionBossScoreResponse, SweepExpeditionRequest, SweepExpeditionResponse } from "./contracts";
 import type { EnterStageRequest, EnterStageResponse } from "./contracts";
+import type { CakeOperationCompleteRequest, CakeOperationCompleteResponse, CakeOperationEnterResponse, CakeOperationRunRequest, CakeOperationSweepResponse } from "./contracts";
+import { cakeOperationRunCost, cakeOperationTierIndex, getCakeOperationTier, isCakeTierUnlocked } from "../data/cakeOperation";
+import { applyDungeonMultiplier, isMultiplierUnlocked, normalizeMultiplier } from "../core/dungeonShortcut";
 import type { ClaimMailRewardsRequest, ClaimMailRewardsResponse, MailDto, MailListResponse, MailRewardDto, MarkMailsReadRequest } from "./contracts";
 import { expeditionWeekKey, resolveExpeditionBossBattle } from "../core/expeditionBoss";
 import { EXPEDITION_BOSS_BALANCE, EXPEDITION_CUMULATIVE_REWARD_STAGES, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_POLICY, EXPEDITION_WEEKLY_POLICY, QUICK_EXPEDITION_POLICY } from "../data/expedition";
@@ -101,6 +104,11 @@ export class FakeServer implements GameApi {
   private readonly verifiedTransactions = new Map<string, VerifyPurchaseReceiptResponse>();
   private readonly activationResults = new Map<string, ActivatePassResponse>();
   private readonly entitlements = new Map<string, PassEntitlementDto>();
+  /** 물량형 던전의 멱등 저장소. 입장·결과·소탕이 각자의 요청 ID로 한 번만 확정된다. */
+  private readonly cakeAdmissionResults = new Map<string, CakeOperationEnterResponse>();
+  private readonly cakeCompletionResults = new Map<string, CakeOperationCompleteResponse>();
+  private readonly cakeSweepResults = new Map<string, CakeOperationSweepResponse>();
+  private readonly pendingCakeAdmissions = new Map<string, Set<string>>();
   private readonly instantClaimResults = new Map<string, ClaimInstantAdRewardResponse>();
   private readonly bonusClaimDates = new Map<string, string>();
   /** 실제 서버의 멱등 테이블을 흉내 내며 성공한 발굴 변경 응답만 보관한다. */
@@ -876,6 +884,125 @@ export class FakeServer implements GameApi {
     return { ...this.snapshot(), stageId, firstClear, cheesecakeEarned };
   }
 
+  /* ── 치즈케이크 대작전 ────────────────────────────────────────────────────── */
+
+  /**
+   * 출격·소탕이 **함께 지나는 검문소**.
+   *
+   * 해금·배율·스테미나를 세 메서드가 저마다 확인하면 한 곳만 규칙이 뒤처져도 그 길로 새어
+   * 나간다. 여기서 한 번 확인하고, 통과한 것만 실제 차감으로 넘어간다.
+   */
+  private assertCakeRun(request: CakeOperationRunRequest, now: Date): { tier: ReturnType<typeof getCakeOperationTier>; multiplier: ReturnType<typeof normalizeMultiplier>; staminaCost: number; rewards: Record<string, number> } {
+    if (!request.requestId) throw new GameApiError("INVALID_STATE", "입장 요청 ID가 필요합니다.");
+    let tier; try { tier = getCakeOperationTier(request.tierId); } catch { throw new GameApiError("CAKE_TIER_NOT_FOUND", "존재하지 않는 작전 단계입니다."); }
+    if (!isCakeTierUnlocked(tier.id, this.state.cakeOperation.clearedIndex)) throw new GameApiError("CAKE_TIER_LOCKED", "아직 열리지 않은 작전 단계입니다.");
+    // 표에 없는 배율은 x1로 좁힌다 — 임의의 수를 그대로 곱하면 한 번의 요청이 상한까지 턴다.
+    const multiplier = normalizeMultiplier(request.multiplier);
+    if (!isMultiplierUnlocked(multiplier, this.hasAdFreeMembership(now))) throw new GameApiError("CAKE_MULTIPLIER_LOCKED", "광고 제거 멤버십이 필요한 배율입니다.");
+    const settlement = applyDungeonMultiplier(cakeOperationRunCost(tier), multiplier);
+    this.settleStaminaNow(now);
+    if (this.state.wallet.stamina < settlement.staminaCost) throw new GameApiError("INSUFFICIENT_STAMINA", "스테미나가 부족합니다.");
+    return { tier, multiplier, staminaCost: settlement.staminaCost, rewards: settlement.rewards };
+  }
+
+  /** 지갑 상한을 넘기지 않고 지급하며, 실제로 늘어난 몫만 돌려준다. */
+  private grantCakeRewards(wallet: Session["wallet"], rewards: Record<string, number>): Partial<Record<keyof Session["wallet"], number>> {
+    const granted: Partial<Record<keyof Session["wallet"], number>> = {};
+    for (const [currency, amount] of Object.entries(rewards)) {
+      const key = currency as keyof Session["wallet"];
+      if (!(key in WALLET_CAPS)) continue;
+      const applied = Math.min(amount, WALLET_CAPS[key] - wallet[key]);
+      if (applied <= 0) continue;
+      wallet[key] += applied;
+      granted[key] = applied;
+    }
+    return granted;
+  }
+
+  /** 입장. 배율만큼의 스테미나를 여기서 한 번만 빼고, 보상은 결과 확정이 얹는다. */
+  async enterCakeOperation(request: CakeOperationRunRequest): Promise<CakeOperationEnterResponse> {
+    await this.delay();
+    const cached = this.cakeAdmissionResults.get(request.requestId);
+    if (cached) return structuredClone(cached);
+    const now = this.now();
+    const run = this.assertCakeRun(request, now);
+    const nextWallet = { ...this.state.wallet, stamina: this.state.wallet.stamina - run.staminaCost };
+    // 다른 API와 같이 저장이 성공한 뒤에만 공유 지갑을 교체해, 저장 실패가 잔액을 지우지 않게 한다.
+    this.persist({ ...this.state, wallet: nextWallet });
+    this.state.wallet = nextWallet;
+    const pending = this.pendingCakeAdmissions.get(run.tier.id) ?? new Set<string>();
+    pending.add(request.requestId);
+    this.pendingCakeAdmissions.set(run.tier.id, pending);
+    const response: CakeOperationEnterResponse = {
+      ...this.snapshot(), tierId: run.tier.id, requestId: request.requestId, multiplier: run.multiplier,
+      staminaSpent: run.staminaCost, refundPolicy: "no-refund-after-admission",
+    };
+    this.cakeAdmissionResults.set(request.requestId, structuredClone(response));
+    return response;
+  }
+
+  /**
+   * 결과 확정. **스테미나는 이미 입장에서 빠졌으므로** 여기서는 보상과 해금만 얹는다.
+   *
+   * 배율은 요청이 들고 오지만 실제로 곱하는 값은 입장 때 확인한 것과 같아야 한다 — 그래서
+   * 입장 영수증에 적힌 배율을 우선으로 읽고, 영수증이 없으면(소탕을 거치지 않은 직접 호출)
+   * 요청 값을 같은 경계로 좁힌다.
+   */
+  async completeCakeOperation(request: CakeOperationCompleteRequest): Promise<CakeOperationCompleteResponse> {
+    await this.delay();
+    const cached = this.cakeCompletionResults.get(request.requestId);
+    if (cached) return structuredClone(cached);
+    let tier; try { tier = getCakeOperationTier(request.tierId); } catch { throw new GameApiError("CAKE_TIER_NOT_FOUND", "존재하지 않는 작전 단계입니다."); }
+    const admission = this.cakeAdmissionResults.get(request.requestId);
+    const multiplier = normalizeMultiplier(admission?.multiplier ?? request.multiplier);
+    const settlement = applyDungeonMultiplier(cakeOperationRunCost(tier), multiplier);
+    const nextWallet = { ...this.state.wallet };
+    const granted = request.victory ? this.grantCakeRewards(nextWallet, settlement.rewards) : {};
+    const index = cakeOperationTierIndex(tier.id);
+    const unlockedNextTier = request.victory && index > this.state.cakeOperation.clearedIndex;
+    const nextCake = unlockedNextTier ? { clearedIndex: index } : { ...this.state.cakeOperation };
+    // 승리한 전투에 실제 편성된 렐릭에게만 유대 경험치를 지급한다 — 스토리 전투와 같은 규칙이다.
+    const nextProgress = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, progress]) => [id,
+      request.victory && this.state.party.includes(id) ? grantBondXp(progress, BOND_XP_REWARD.partyVictory).progress : progress]));
+    const nextMissions = applyMissionEvent(this.state.missions, { type: "battle_completed", victory: request.victory }, this.now());
+    this.persist({ ...this.state, wallet: nextWallet, cakeOperation: nextCake, relicProgress: nextProgress, missions: nextMissions });
+    this.state.wallet = nextWallet; this.state.cakeOperation = nextCake; this.state.relicProgress = nextProgress; this.state.missions = nextMissions;
+    const pending = this.pendingCakeAdmissions.get(tier.id);
+    pending?.delete(request.requestId);
+    if (pending?.size === 0) this.pendingCakeAdmissions.delete(tier.id);
+    const response: CakeOperationCompleteResponse = {
+      ...this.snapshot(), tierId: tier.id, victory: request.victory, multiplier, granted, unlockedNextTier,
+    };
+    this.cakeCompletionResults.set(request.requestId, structuredClone(response));
+    return response;
+  }
+
+  /**
+   * 소탕. 전투를 건너뛰는 것이지 **이긴 셈 쳐 주는 것이 아니다** — 이미 이긴 단계만 통과한다.
+   *
+   * 차감과 지급이 한 처리라 입장 영수증을 만들지 않는다. 중간에 끊겨도 스테미나만 빠지고
+   * 보상은 안 들어오는 상태가 생기지 않는다.
+   */
+  async sweepCakeOperation(request: CakeOperationRunRequest): Promise<CakeOperationSweepResponse> {
+    await this.delay();
+    const cached = this.cakeSweepResults.get(request.requestId);
+    if (cached) return structuredClone(cached);
+    const now = this.now();
+    const run = this.assertCakeRun(request, now);
+    // 해금은 "직전 단계까지 이겼나"이고 소탕은 "이 단계를 이겼나"다. 한 칸 차이라 따로 묻는다.
+    if (cakeOperationTierIndex(run.tier.id) > this.state.cakeOperation.clearedIndex) throw new GameApiError("CAKE_TIER_LOCKED", "아직 한 번도 이기지 않은 단계는 소탕할 수 없습니다.");
+    const nextWallet = { ...this.state.wallet, stamina: this.state.wallet.stamina - run.staminaCost };
+    const granted = this.grantCakeRewards(nextWallet, run.rewards);
+    const nextMissions = applyMissionEvent(this.state.missions, { type: "battle_completed", victory: true }, now);
+    this.persist({ ...this.state, wallet: nextWallet, missions: nextMissions });
+    this.state.wallet = nextWallet; this.state.missions = nextMissions;
+    const response: CakeOperationSweepResponse = {
+      ...this.snapshot(), tierId: run.tier.id, multiplier: run.multiplier, staminaSpent: run.staminaCost, granted,
+    };
+    this.cakeSweepResults.set(request.requestId, structuredClone(response));
+    return response;
+  }
+
   /** 서버 UTC 날짜를 기준으로 해당 렐릭의 하루 첫 로비 상호작용만 보상한다. */
   async interactInLobby(relicId: string): Promise<LobbyInteractionResponse> {
     await this.delay();
@@ -1276,7 +1403,23 @@ export class FakeServer implements GameApi {
       missions: this.missionDtos(),
       runeInventory: this.runeInventoryDto(),
       dailyAdRewards: { date: this.state.dailyAdRewards.date, claimsBySlot: { ...this.state.dailyAdRewards.claimsBySlot } },
+      adFreeMembership: this.hasAdFreeMembership(serverNow),
+      cakeOperation: { ...this.state.cakeOperation },
     };
+  }
+
+  /**
+   * 광고 제거 멤버십이 지금 살아 있는가.
+   *
+   * **만료는 서버 시각으로만 잰다.** 화면이 만료 시각을 받아 스스로 셈하면 기기 시계를 돌려
+   * 잠긴 배율을 여는 길이 생기므로, 화면에는 이 불리언 하나만 내보낸다.
+   */
+  private hasAdFreeMembership(now: Date): boolean {
+    return [...this.entitlements.values()].some((entitlement) => {
+      const product = PRODUCTS.find(({ id }) => id === entitlement.productId);
+      if (product?.passBenefit?.adFree !== true) return false;
+      return entitlement.expiresAt === null || now.getTime() < new Date(entitlement.expiresAt).getTime();
+    });
   }
 
 

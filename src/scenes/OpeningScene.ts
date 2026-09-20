@@ -7,6 +7,7 @@ import { storyManager } from "../managers/StoryManager";
 import { drawLayer, slantedRect } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { DialogueLayer } from "../ui/DialogueLayer";
+import { playSceneEntrance, startScene } from "../ui/screenTransition";
 
 /** 정적 오프닝 데이터를 순회하고 완료 후 로비로 넘기는 전용 화면이다. */
 export class OpeningScene extends Phaser.Scene {
@@ -35,6 +36,9 @@ export class OpeningScene extends Phaser.Scene {
     setDebugDialogue(this.flow.current);
     void this.showCurrentNode(this.flow.current);
     setDebugReady(true);
+    // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
+    // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+    playSceneEntrance(this);
   }
 
   private advance(choice?: DialogueChoice): void {
@@ -53,7 +57,7 @@ export class OpeningScene extends Phaser.Scene {
       // 로비의 비동기 Puppet까지 준비되기 전 오프닝의 true를 자동화가 재사용하지 않게 먼저 내린다.
       setDebugReady(false);
       // 로딩을 기다리는 지연이 아니라 현재 pointerup 처리와 DialogueLayer 종료를 다음 Phaser 틱으로 분리한다.
-      this.time.delayedCall(0, () => this.scene.start("lobby"));
+      this.time.delayedCall(0, () => startScene(this, "lobby"));
       return;
     }
     void this.showCurrentNode(result.node!);

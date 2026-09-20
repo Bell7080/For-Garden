@@ -38,6 +38,7 @@ import { cinematicCardArt, cinematicRewards, isCinematicCount } from "../ui/rese
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
 import { formatCurrency } from "../core/formatCurrency";
 import { firstMeetingRelicIds } from "../core/researchPresentation";
+import { playSceneEntrance, startScene } from "../ui/screenTransition";
 
 /** 마일리지 상점 버튼의 황금빛. 다른 버튼과 갈라 놓아 "쌓아 두었다 쓰는 곳"임을 알린다. */
 const MILEAGE_EDGE = 0xf2c744;
@@ -111,7 +112,7 @@ export class LabScene extends Phaser.Scene {
     bindCurrencyGuide({ scene: this, popups: this.popupLayer });
     this.topBar = new TopBar(this, 40, {
       currencies: "recruit",
-      onSettings: () => this.scene.start("settings", { returnScene: "lab" }),
+      onSettings: () => startScene(this, "settings", { returnScene: "lab" }),
       // 연구소의 화석·호박석도 로비의 보석과 같이 눌러서 무엇에 쓰는지 읽을 수 있어야 한다.
       onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popupLayer! }, currency),
     });
@@ -186,6 +187,9 @@ export class LabScene extends Phaser.Scene {
     });
     void this.showcaseRelic();
     this.refresh();
+    // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
+    // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+    playSceneEntrance(this);
   }
 
   /**

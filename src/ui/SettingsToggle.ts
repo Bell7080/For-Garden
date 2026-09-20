@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { drawLayer, slantedRect } from "./holo";
 import { SETTINGS_TOGGLE as T, settingsKnobOffsetX, settingsStateLabelOffsetX, settingsTrackCenterX } from "./settingsToggleLayout";
 import { squeezeTextToWidth } from "./textFit";
+import { SETTINGS_TEXT } from "./settingsLayout";
 import { COLOR, textStyle } from "./theme";
 
 /**
@@ -30,7 +31,7 @@ export class SettingsToggle extends Phaser.GameObjects.Container {
      * 가로로만 누른다.
      */
     this.add(squeezeTextToWidth(
-      scene.add.text(0, 0, label, textStyle({ role: "body", size: 28 })).setOrigin(0, 0.5),
+      scene.add.text(0, 0, label, textStyle({ role: "body", size: SETTINGS_TEXT.label })).setOrigin(0, 0.5),
       settingsTrackCenterX() - T.trackWidth / 2 - 28,
       0.8,
     ));
@@ -40,7 +41,7 @@ export class SettingsToggle extends Phaser.GameObjects.Container {
     this.track.add(drawLayer(scene, 0, 0, slantedRect(T.trackWidth, T.trackHeight), {
       fill: 0x0b0f15, alpha: 0.82, edge: COLOR.accent, edgeAlpha: 0.34,
     }));
-    this.stateText = scene.add.text(settingsStateLabelOffsetX(value), 0, "", textStyle({ role: "emphasis", size: 22 })).setOrigin(0.5);
+    this.stateText = scene.add.text(settingsStateLabelOffsetX(value), 0, "", textStyle({ role: "emphasis", size: SETTINGS_TEXT.state })).setOrigin(0.5);
     this.track.add(this.stateText);
     this.knob = scene.add.container(settingsKnobOffsetX(value), 0);
     this.track.add(this.knob);

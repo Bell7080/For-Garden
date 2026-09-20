@@ -20,6 +20,7 @@ import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
 import { PopupLayer } from "../ui/PopupLayer";
 import { StaminaPopup } from "../ui/StaminaPopup";
 import { gameApi } from "../api/FakeServer";
+import { playSceneEntrance, startScene } from "../ui/screenTransition";
 
 /** 지도가 보이는 세로 구간. 위쪽 제목과 아래쪽 버튼을 침범하지 않는다. */
 const WINDOW = { top: 500, bottom: 1560 } as const;
@@ -110,7 +111,7 @@ export class StageMapScene extends Phaser.Scene {
       width: navigation.next.width, height: navigation.next.height, label: t("stageMap.nextZone"), fontSize: 28,
       onClick: () => this.showChapter(this.currentChapter + 1),
     }).setDepth(CHROME_DEPTH);
-    addBackButton(this, () => this.scene.start("lobby")).setDepth(CHROME_DEPTH);
+    addBackButton(this, () => startScene(this, "lobby")).setDepth(CHROME_DEPTH);
 
     // 적은 정보창 씬이 아니라 팝업 한 장으로 연다 — 유대·급여·룬이 없어 판을 다 쓰면 초라하다.
     this.enemyPopups = new PopupLayer(this, 2200);
@@ -121,6 +122,9 @@ export class StageMapScene extends Phaser.Scene {
     this.buildMap();
     this.enableDragScroll();
     this.select(latest, true);
+    // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
+    // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+    playSceneEntrance(this);
   }
 
   /** 클리어 상황에서 지금 도전할 수 있는 가장 뒤쪽 스테이지. */
@@ -309,7 +313,7 @@ export class StageMapScene extends Phaser.Scene {
   private enterSelected(): void {
     const stage = STAGES.find(({ id }) => id === this.selected);
     if (!stage) return;
-    if (stage.kind === "story") this.scene.start("stageStory", { storyId: stage.storyId });
+    if (stage.kind === "story") startScene(this, "stageStory", { storyId: stage.storyId });
     else {
       // 편성 화면에 들어가기 전 출전 버튼에서 먼저 막아, 부족함을 확인한 사용자가 헛된 편성을 하지 않게 한다.
       if (session.wallet.stamina < CONTENT_STAMINA_COSTS.normalStage) {
@@ -317,7 +321,7 @@ export class StageMapScene extends Phaser.Scene {
         return;
       }
       session.selectedStageId = stage.id;
-      this.scene.start("party");
+      startScene(this, "party");
     }
   }
 

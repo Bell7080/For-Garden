@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { squeezeTextToWidth } from "./textFit";
+import { SETTINGS_TEXT } from "./settingsLayout";
 import { COLOR, textStyle } from "./theme";
 
 /** 줄 하나의 폭과, 이름과 값 사이에 반드시 남기는 틈. */
@@ -9,9 +10,9 @@ const ROW = { width: 900, gap: 28 } as const;
 export class SettingsSelectRow<T extends string | number> extends Phaser.GameObjects.Container {
   constructor(scene: Phaser.Scene, x: number, y: number, label: string, value: T, choices: readonly T[], onChange: (value: T) => void, display: (value: T) => string = String) {
     super(scene, x, y);
-    const name = scene.add.text(0, 0, label, textStyle({ role: "body", size: 28 })).setOrigin(0, 0.5);
+    const name = scene.add.text(0, 0, label, textStyle({ role: "body", size: SETTINGS_TEXT.label })).setOrigin(0, 0.5);
     this.add(name);
-    const shown = scene.add.text(ROW.width, 0, display(value), textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(1, 0.5); this.add(shown);
+    const shown = scene.add.text(ROW.width, 0, display(value), textStyle({ role: "emphasis", size: SETTINGS_TEXT.value, color: COLOR.accentText })).setOrigin(1, 0.5); this.add(shown);
     /*
      * **이름이 값 위로 올라타지 않게 한다.**
      *

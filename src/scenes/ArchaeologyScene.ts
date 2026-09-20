@@ -35,6 +35,7 @@ import { StrataDigEffect } from "../ui/StrataDigEffect";
 import type { ArchaeologyStateResponse } from "../api/contracts";
 import { formatCountdown } from "../core/formatCountdown";
 import { archaeologyProgressManager } from "../managers/ArchaeologyProgressManager";
+import { playSceneEntrance, startScene } from "../ui/screenTransition";
 
 /**
  * 고고학. 하단 탭 첫 슬롯이다.
@@ -169,7 +170,7 @@ export class ArchaeologyScene extends Phaser.Scene {
     // 고고학은 제 경제를 갖는다 — 상단 줄도 원석이 첫 칸이다.
     new TopBar(this, 40, {
       currencies: "archaeology",
-      onSettings: () => this.scene.start("settings", { returnScene: "archaeology" }),
+      onSettings: () => startScene(this, "settings", { returnScene: "archaeology" }),
       onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency),
     });
 
@@ -199,6 +200,9 @@ export class ArchaeologyScene extends Phaser.Scene {
       setDebugArchaeologyDig(undefined);
     });
     void this.refresh();
+    // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
+    // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+    playSceneEntrance(this);
   }
 
   /**
@@ -228,7 +232,7 @@ export class ArchaeologyScene extends Phaser.Scene {
           if (key === "shop") {
             // 같은 상점 씬을 상품표만 바꿔 다시 쓴다 — 새 씬을 만들면 선반·격자·값줄 규칙이
             // 두 곳이 되고 한쪽만 고치는 사고가 난다.
-            this.scene.start("shop", { storefront: "archaeology", returnScene: "archaeology" });
+            startScene(this, "shop", { storefront: "archaeology", returnScene: "archaeology" });
             return;
           }
           if (this.tab === key) return;

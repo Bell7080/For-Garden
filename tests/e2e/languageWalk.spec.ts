@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import { startAfterOpening } from "./openingSave";
 import { captureGame, tap, tapUntil } from "./canvasInput";
+import { settingsTabX } from "../../src/ui/settingsLayout";
 
 /**
  * 언어를 바꾼 채 화면을 차례로 열어 본다.
@@ -77,7 +78,7 @@ test.describe(`${language} 화면 훑기`, () => {
     await tapUntil(page, BASE_WIDTH - 58, 86, async () => (await scene(page)) === "settings");
     await captureGame(page, `${OUT}/${language}/07-settings.png`);
     // 언어 줄은 게임 탭에 있다. 고를 수 있는 언어가 둘 이상일 때만 서므로 여기서 함께 본다.
-    await tap(page, 540, 210);
+    await tap(page, settingsTabX(2, 5, BASE_WIDTH), 176);
     await captureGame(page, `${OUT}/${language}/07b-settings-game.png`);
     await expectNothingClamped(page, `${language} 연구소·프리미엄·환경설정`);
   });

@@ -5,16 +5,14 @@ import { INTERACTION_DEPARTMENT_LABEL, interactionDurationLabel } from "../data/
 import { interactionManager } from "../managers/InteractionManager";
 import { session } from "../state/session";
 import type { InteractionDispatchSnapshot } from "../state/session";
-import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
 import { addSceneBackground, BACKGROUND, useBackgroundTexture } from "../ui/backgrounds";
 import { drawFrameVignette, drawGlassFade, drawHairline, drawLayer, drawShapeOutline, drawVignette, slantedRect } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
-import { setDebugInteractionLayers, setDebugScene, setDebugStorefrontControls } from "../debug";
+import { setDebugInteractionLayers, setDebugScene } from "../debug";
 import { PopupLayer } from "../ui/PopupLayer";
 import { bindCurrencyGuide } from "../ui/currencyGuideEntry";
-import { InteractionExchangePopup } from "../ui/InteractionExchangePopup";
 import { InteractionCityPopup } from "../ui/InteractionCityPopup";
 import { InteractionJournalPopup } from "../ui/InteractionJournalPopup";
 import { INTERACTION_LAYER, interactionLayersHeight, interactionLayerSpot } from "../ui/interactionLayerLayout";
@@ -85,12 +83,10 @@ export class InteractionScene extends Phaser.Scene {
   private cityPopup?: InteractionCityPopup;
   /** 도시 일지는 쪽지에서 열리지만 대사 분기는 씬 위에 서므로 씬이 소유한다. */
   private journalPopup?: InteractionJournalPopup;
-  /** 교환소는 버튼과 재화 안내 자동 이동이 공유하는 한 인스턴스만 유지한다. */
-  private exchangePopup?: InteractionExchangePopup;
 
   constructor() { super("interaction"); }
 
-  create(data: { openExchange?: boolean } = {}): void {
+  create(): void {
     setDebugScene("interaction", t("interaction.title"));
     // TODO(art): 전용 원화 전까지 loadingSteps가 이미 읽는 로비 배경을 임시 사용한다.
     addSceneBackground(this, BACKGROUND.lobby);
@@ -104,12 +100,6 @@ export class InteractionScene extends Phaser.Scene {
     new TopBar(this, 40, { currencies: "none", onSettings: () => this.scene.start("settings", { returnScene: "interaction" }) });
     this.add.text(52, 150, t("interaction.title"), textStyle({ role: "display", size: 50, color: "#a8ddf5" }));
     this.add.text(56, 216, t("interaction.subtitle"), textStyle({ role: "body", size: 24, color: COLOR.inkDim }));
-    // 파견 목록이 다시 그려져도 파괴되지 않는 씬 고정 진입점이라 항상 교환소를 찾을 수 있다.
-    this.add.existing(new Button(this, 875, 185, { width: 300, height: 86, label: t("interaction.exchange"), accentColor: BLUE, onClick: () => this.openExchange() }));
-    // 자동화도 런타임과 같은 고정 버튼을 누르도록 최소 입력 중심만 공개한다.
-    setDebugStorefrontControls({ interaction: { exchange: { x: 875, y: 185 } } });
-    // 재화 안내에서 온 경우에도 별도 팝업 경로를 만들지 않고 같은 공개 진입점을 호출한다.
-    if (data.openExchange) this.openExchange();
 
     this.buildScrollArea();
     this.buildBackArea();
@@ -118,12 +108,6 @@ export class InteractionScene extends Phaser.Scene {
     // 남은 시간은 실시간으로 흐른다. 시계만 도는 동안에는 글자만 갈아 끼우고 층은 그대로 두어
     // 스크롤 위치도, 읽고 있던 원화도 흔들리지 않는다.
     this.time.addEvent({ delay: CLOCK_TICK_MS, loop: true, callback: () => this.tickClock() });
-  }
-
-  /** 버튼과 외부 씬 이동 계약이 공유하는 교환소의 단일 진입점이다. */
-  private openExchange(): void {
-    this.exchangePopup ??= new InteractionExchangePopup(this, this.popups, interactionManager);
-    this.exchangePopup.open();
   }
 
   /**

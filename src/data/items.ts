@@ -52,8 +52,6 @@ export const ITEMS = [
   // 레이드 전용 교환 재료. 지갑 재화로 두지 않은 이유는 상단 줄에 설 자리도, 구운 아이콘도
   // 없기 때문이다 — 한 콘텐츠에서만 쓰는 교환 재료는 재료 칸이 제자리다.
   { id: "raid-sigil", name: "토벌 증표", description: "레이드 보스를 밀어낸 몫으로 받는 증표입니다. 레이드 상점에서 교환합니다.", category: "material", icon: { kind: "glyph", key: "scroll" }, maxStack: 9_999, useEffect: { kind: "none" } },
-  // 교류 표본의 등급 설명은 교환 화면에 반복하지 않고 정적 도감 데이터에만 보존한다.
-  { id: "sr-psychic-sample", name: "SR 심령 샘플", description: "나이트 시티에서 회수한 SR급 교류 표본입니다.", category: "material", icon: { kind: "glyph", key: "scroll" }, maxStack: 999, useEffect: { kind: "none" } },
 ] as const satisfies readonly ItemDefinition[];
 
 /** 외부 입력 ID는 반드시 정적 카탈로그를 통과한다. */

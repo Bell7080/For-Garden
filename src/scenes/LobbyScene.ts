@@ -121,7 +121,7 @@ export class LobbyScene extends Phaser.Scene {
   private sortieSdTimer?: Phaser.Time.TimerEvent;
   private sortieBackButton?: IconButton;
   private idleExcavationPopup?: IdleExcavationPopup;
-  /** 무역은 로비 수명을 보존하는 패키지 레이어다. 교류의 교환소와는 다른 화면이다. */
+  /** 무역은 로비 수명을 보존하는 패키지 레이어다. */
   private tradePopup?: TradePopup;
   private tradeBackButton?: IconButton;
   /** 발굴은 화면 크기의 작업판이므로 팝업 X 대신 로비 좌하단의 공용 아이콘 양식을 쓴다. */
@@ -305,8 +305,6 @@ export class LobbyScene extends Phaser.Scene {
   /** 안내 프리팹은 이 콜백만 요청하므로 지갑 변경 없이 구현된 씬·로비 팝업으로만 이동한다. */
   private handleCurrencyAction(action: CurrencyGuideAction): void {
     if (action.kind === "scene" && action.target === "lab") this.scene.start("lab");
-    // 교류 표본 교환은 교류 씬 안의 교환소가 소유하고, 재화끼리 바꾸는 일은 로비의 무역이 맡는다.
-    if (action.kind === "scene" && action.target === "interaction") this.scene.start("interaction", { openExchange: true });
     if (action.kind === "popup" && action.target === "trade") this.openTrade();
   }
 
@@ -527,9 +525,8 @@ export class LobbyScene extends Phaser.Scene {
   /**
    * 임무·상점·무역은 왼쪽 콘텐츠 레일에서 위계 순으로 읽히는 한 묶음이다.
    *
-   * **상점과 무역과 교환소는 서로 다른 셋이다.** 상점은 화석·호박석으로 보급품을 **사는** 곳,
-   * 무역은 남는 재화를 모자란 재화로 **바꾸는** 상시 창구, 교환소는 교류 파견에서만 나오는
-   * 표본을 바꾸는 교류 전용 창구다. 앞의 둘만 이 레일에 서고 교환소는 교류 씬 안에 있다.
+   * **상점과 무역은 서로 다른 둘이다.** 상점은 화석·호박석으로 보급품을 **사는** 곳이고,
+   * 무역은 남는 재화를 모자란 재화로 **바꾸는** 상시 창구다. 둘 다 이 레일에 선다.
    * 편의 기능(우편·친구·가방)은 오른쪽 레일로 보내 두 역할을 좌우로 나눈다.
    */
   private buildMissionEntry(): void {

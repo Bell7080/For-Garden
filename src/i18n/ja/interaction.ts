@@ -2,7 +2,6 @@
 export const INTERACTION_JA = {
   "interaction.title": "交流",
   "interaction.subtitle": "都市ごとに一チームずつ送れる",
-  "interaction.exchange": "交換所",
   "interaction.dispatched": "派遣中 · {remaining}",
   "interaction.awaitingClaim": "受け取り待ち",
   "interaction.lockedByStage": "{stage} クリアで解放",
@@ -20,12 +19,4 @@ export const INTERACTION_JA = {
   "interaction.send": "派遣する",
   "interaction.rewardTitle": "交流報酬",
 
-  "interaction.exchange.owned": "所持",
-  "interaction.exchange.required": "必要",
-  "interaction.exchange.result": "交換結果",
-  "interaction.exchange.remaining": "残り交換回数  {remaining}",
-  "interaction.exchange.busy": "処理中",
-  "interaction.exchange.do": "交換",
-  "interaction.exchange.granted": "チーズケーキ {amount} を付与",
-  "interaction.exchange.failed": "交換失敗",
 } as const;

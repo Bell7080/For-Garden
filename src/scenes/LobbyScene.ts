@@ -21,6 +21,7 @@ import { PopupLayer } from "../ui/PopupLayer";
 import { IdleExcavationPopup } from "../ui/IdleExcavationPopup";
 import { TradePopup } from "../ui/TradePopup";
 import { BACK_SLOT, IconButton } from "../ui/IconButton";
+import { POPUP_SIDE_SLOT } from "../ui/popupGeometry";
 import { UI_ICON } from "../ui/icons";
 import { InventoryPopup } from "../ui/InventoryPopup";
 import { bindNotificationDot } from "../ui/NotificationDot";
@@ -46,6 +47,8 @@ import { MailPopup } from "../ui/MailPopup";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import type { CurrencyGuideAction } from "../data/currencyGuide";
 import { powerSavingPolicy } from "../core/settings";
+import { consumeSceneEntry } from "./sceneEntry";
+import { normalizeLobbyEntry, type LobbyMenu } from "./lobbyEntry";
 
 /**
  * 로비에 선 애착 렐릭의 층.
@@ -120,6 +123,8 @@ export class LobbyScene extends Phaser.Scene {
   private sortieSdPairs: SortieSdPair[] = [];
   private sortieSdTimer?: Phaser.Time.TimerEvent;
   private sortieBackButton?: IconButton;
+  /** 출격판 밖 왼쪽 아래에 서는 전리품 상점 입구. 판과 함께 나고 함께 사라진다. */
+  private sortieShopButton?: Button;
   private idleExcavationPopup?: IdleExcavationPopup;
   /** 무역은 로비 수명을 보존하는 패키지 레이어다. */
   private tradePopup?: TradePopup;
@@ -137,8 +142,22 @@ export class LobbyScene extends Phaser.Scene {
   /** 공개 플레이어 정보창은 닫힐 때 참조까지 비워 다음 입력이 새 입력면 한 장만 만든다. */
   private playerProfilePopup?: PlayerProfilePopup;
 
+  /** 돌아온 사람이 다시 열어야 하는 판. 값은 `create`가 다 세운 뒤에 읽는다. */
+  private returnMenu?: LobbyMenu;
+
   constructor() {
     super("lobby");
+  }
+
+  /**
+   * 돌아온 자리를 받아 두고 **즉시 비운다**.
+   *
+   * 비우지 않으면 Phaser가 지난 진입의 값을 남겨(`consumeSceneEntry` 참고) 로비를 새로
+   * 열 때마다 출격판이 저절로 뜬다.
+   */
+  init(data?: unknown): void {
+    this.returnMenu = normalizeLobbyEntry(data);
+    consumeSceneEntry(this);
   }
 
   create(): void {
@@ -236,6 +255,11 @@ export class LobbyScene extends Phaser.Scene {
       void this.showFavorite().catch((error) => console.error("로비 애착 Puppet 갱신 실패", error));
     });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, unsubscribeSkin);
+
+    // 고른 콘텐츠를 보고 돌아온 사람은 판이 닫힌 로비가 아니라 **고르던 자리**에 선다.
+    // 로비가 다 선 뒤에 여는 이유는 판이 상단 줄·애착 렐릭 위에 얹히는 쪽지이기 때문이다.
+    if (this.returnMenu === "sortie") this.openSortieMenu();
+    else if (this.returnMenu === "duel") this.openPvpMenu();
   }
 
   /** TopBar가 건넨 공개 모델만 사용해 공용 레이어 기반 정보창을 연다. */
@@ -413,6 +437,17 @@ export class LobbyScene extends Phaser.Scene {
       });
       // 돌아가기는 판 안이 아니라 다른 팝업과 같은 화면 우하단 슬롯에 선다.
       this.sortieBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: close }).setDepth(SORTIE_SD_DEPTH + 1);
+      // 전리품 상점은 **판 밖**에 선다 — 판 안의 칸 다섯은 「어디로 나갈까」를 고르는 자리이고,
+      // 상점은 그 다섯이 떨군 증표를 쓰는 곁들임이라 같은 크기로 끼워 넣으면 여섯 번째
+      // 콘텐츠로 읽힌다. 자리는 뒤로가기와 마주 보는 줄(`POPUP_SIDE_SLOT`)이고, 생김새는
+      // 아이콘이 아니라 라벨 버튼이다 — 같은 모양이면 판 밖에 나가는 문이 둘로 보인다.
+      this.sortieShopButton = new Button(this, POPUP_SIDE_SLOT.x, POPUP_SIDE_SLOT.y, {
+        width: POPUP_SIDE_SLOT.width, height: POPUP_SIDE_SLOT.height,
+        label: t("lobby.sortie.shop"), fontSize: 30,
+        accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
+        onClick: () => { close(); this.scene.start("shop", { storefront: "raid", returnScene: "lobby", returnMenu: "sortie" }); },
+      });
+      this.sortieShopButton.setDepth(SORTIE_SD_DEPTH + 1);
       // 세워 둔 SD가 가끔 한 번씩 움직인다. 다섯 칸이 동시에 뛰면 무엇을 고르는 화면인지 흐려지므로
       // 한 번에 하나만, 그것도 드문드문 재생한다.
       this.sortieSdTimer = this.time.addEvent({ delay: SORTIE_MENU.motionDelay, loop: true, callback: () => {
@@ -472,6 +507,7 @@ export class LobbyScene extends Phaser.Scene {
     this.sortieSdPuppets.clear(); this.sortieSdPairs = [];
     this.sortieSdLayer?.destroy(true); this.sortieSdLayer = undefined;
     this.sortieBackButton?.destroy(); this.sortieBackButton = undefined;
+    this.sortieShopButton?.destroy(); this.sortieShopButton = undefined;
   }
 
   /** 주간 횟수·진행·최고점·빠른 가능 여부를 한 줄의 짧은 원정 상태로 합친다. */

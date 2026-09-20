@@ -17,6 +17,7 @@ import { openRewardPopup, currencyRecordToRewardItems } from "../ui/RewardPopup"
 import { TopBar } from "../ui/TopBar";
 import { chipPoints, drawLayer, drawVignette, slantedRect } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
+import { LOBBY_RETURN } from "./lobbyEntry";
 
 /**
  * **치즈케이크 대작전** — 레이티아 거대겨울잠쥐가 떼로 몰려오는 물량형 던전의 입구.
@@ -63,7 +64,7 @@ export class CakeOperationScene extends Phaser.Scene {
     CAKE_OPERATION_TIERS.forEach((tier, index) => this.buildRow(tier, index));
     this.buildMultiplierChips();
     this.refresh();
-    addBackButton(this, () => this.scene.start("lobby"));
+    addBackButton(this, () => this.scene.start("lobby", LOBBY_RETURN.sortie));
 
     // 멤버십 여부는 서버 시각으로만 정해진다 — 기기 시계를 돌려 x3를 열 수 없게 하기 위해서다.
     void gameApi.getPlayerState().then((state) => {

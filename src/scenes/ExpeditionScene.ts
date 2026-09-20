@@ -52,6 +52,7 @@ import { bindFormationDrag, type FormationDragSlot } from "../ui/formationDrag";
 import { FORMATION_DRAG_VISUAL } from "../ui/formationDragVisual";
 import { createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
 import { consumeSceneEntry } from "./sceneEntry";
+import { LOBBY_RETURN } from "./lobbyEntry";
 
 /** 편성 목록은 어디서나 네 칸이 한 줄이다. 카드 크기와 줄 간격은 폭에서 공용 규칙이 구한다. */
 const ROSTER = formationRosterGrid(BASE_WIDTH - 96);
@@ -242,7 +243,7 @@ export class ExpeditionScene extends Phaser.Scene {
     // 화면을 벗어나는 조작은 공용 우하단 슬롯만 사용한다. 편성에서는 한 단계 앞인 기록으로 돌아간다.
     addBackButton(this, () => {
       if (!status.active && this.stage === "preparation") this.scene.restart({ stage: "ranking" });
-      else this.scene.start("lobby");
+      else this.scene.start("lobby", LOBBY_RETURN.sortie);
     });
   }
 

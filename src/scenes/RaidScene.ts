@@ -18,6 +18,7 @@ import { RANKING_LIST, RANKING_VISIBLE_RANKS, rankingMedal, rankingRowY } from "
 import { chipPoints, drawLayer, drawVignette, HOLO, HoloBar } from "../ui/holo";
 import { RAID_ACTIONS, RAID_BOARD, RAID_BOSS_SPOT, RAID_HEADER, RAID_HP_BAR, RAID_HP_BAR_COLOR, raidBoardViewport } from "../ui/raidLayout";
 import { COLOR, textStyle } from "../ui/theme";
+import { LOBBY_RETURN } from "./lobbyEntry";
 
 /**
  * 레이드 — **함께 미는 보스전**의 화면이다.
@@ -45,7 +46,7 @@ export class RaidScene extends Phaser.Scene {
     addSceneBackground(this, BACKGROUND.sortieRaid);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { strength: 0.72 });
     this.add.text(RAID_HEADER.titleX, RAID_HEADER.titleY, t("raid.title"), textStyle({ role: "display", size: 54, color: COLOR.sortieText })).setOrigin(0, 0);
-    addBackButton(this, () => this.scene.start("lobby"));
+    addBackButton(this, () => this.scene.start("lobby", LOBBY_RETURN.sortie));
     void this.loadBossPortrait();
     void this.refresh();
     // 씬이 다시 시작될 때 원화와 마스크가 남지 않게 한 곳에서 걷는다.
@@ -180,14 +181,14 @@ export class RaidScene extends Phaser.Scene {
   }
 
   /**
-   * 하단 조작 둘.
+   * 하단 조작.
    *
-   * 출격이 주 행동이라 크고 강조색이며, **레이드 상점은 그 왼쪽에 한 뼘 작게** 선다 — 로비가
-   * 서브 콘텐츠와 출격을 크기로 가르는 것과 같은 규칙이다.
+   * **상점은 여기 서지 않는다.** 전리품 상점은 레이드 하나가 아니라 출격 콘텐츠들이 떨군
+   * 증표를 함께 쓰는 자리라, 레이드 안에 두면 원정 증표를 쓰러 레이드를 거쳐 들어가게
+   * 된다. 입구는 출격판 밖 왼쪽 아래(`POPUP_SIDE_SLOT`) 한 곳뿐이다.
    */
   private renderActions(content: Phaser.GameObjects.Container, season: RaidSeasonResponse): void {
-    const { shop, sortie, y } = RAID_ACTIONS;
-    content.add(new Button(this, shop.centerX, y, { width: shop.width, height: shop.height, label: t("raid.shop"), fontSize: 30, onClick: () => this.scene.start("shop", { storefront: "raid", returnScene: "raid" }) }));
+    const { sortie, y } = RAID_ACTIONS;
     // 도전이 남지 않았거나 이미 누운 보스에는 들어갈 수 없다 — 눌러도 아무 일이 없는 칸은
     // 준비 상태를 과장한다.
     const canSortie = !season.defeated && season.attemptsUsed < season.attemptsLimit;

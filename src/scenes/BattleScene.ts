@@ -32,7 +32,7 @@ import { getExpeditionNodeEnemies } from "../data/expeditionEnemies";
 import type { PuppetCreature, PuppetAsset } from "../puppets/assets";
 import { cancelMotion, flashHit, isHitFlashing, placePuppet, playMotion, spawnPuppet, tintPuppet } from "../puppets/assets";
 import { session } from "../state/session";
-import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
+import { addSceneBackground, battleFieldBackground } from "../ui/backgrounds";
 import { statusAreaColor } from "../ui/groundAreas";
 import { Button } from "../ui/Button";
 import { chipPoints, drawGlassFade, drawHairline, drawLayer, HoloBar, HOLO } from "../ui/holo";
@@ -498,10 +498,8 @@ export class BattleScene extends Phaser.Scene {
     // 전장 전체를 때리는 궁극기는 그릴 경계가 없어 가장자리 워시로 알린다. 그 자리를 알려 준다.
     this.effects.setArena(this.state.arena);
 
-    // 편성 화면에서 본 6번 전장을 그대로 이어 실제 전투의 공간으로 사용한다.
-    addSceneBackground(this, this.battleInput.mode === "raid" ? BACKGROUND.raidField
-      : this.battleInput.mode === "expedition" || this.battleInput.mode === "expeditionBoss" ? BACKGROUND.expeditionField
-      : this.battleInput.mode === "bounty" ? BACKGROUND.sortieBounty : BACKGROUND.combat, -30);
+    // 어느 모드가 어느 전장에 서는지는 씬이 아니라 `BATTLE_FIELD_BACKGROUND` 한 표가 갖는다.
+    addSceneBackground(this, battleFieldBackground(this.battleInput.mode), -30);
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.28).setDepth(-29);
     // 원정 헤더는 스토리 선택 상태를 전혀 읽지 않아 잘못된 모드 진입을 화면에서도 드러낸다.
     this.add.text(42, 48, battleHeaderText(this.battleInput, stage), textStyle({ role: "body", size: 30, color: COLOR.inkDim }));

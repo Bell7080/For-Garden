@@ -26,6 +26,7 @@ import { motionPolicy } from "../core/settings";
 import { productsForShopCategory, shopModel } from "../ui/shopModel";
 import type { ProductStorefront } from "../data/products";
 import { consumeSceneEntry } from "./sceneEntry";
+import { LOBBY_RETURN, normalizeLobbyEntry, type LobbyMenu } from "./lobbyEntry";
 import { shapeClipMask } from "../ui/popupArt";
 import {
   SHOP_BOARD, SHOP_CARD, SHOP_ENTRANCE, SHOP_SHELF, SHOP_STAGE, SHOP_TAB_ROW, SHOP_TITLE,
@@ -93,13 +94,22 @@ export class ShopScene extends Phaser.Scene {
   private stage: ShopStagePresentation = shopStagePresentation("shop");
   /** 우하단 뒤로가기가 돌아갈 화면. 어디서 들어왔는지는 부른 쪽이 안다. */
   private returnScene = "lobby";
+  /**
+   * 로비로 돌아갈 때 다시 열 판.
+   *
+   * 출격판 밖에서 연 상점이 판 없는 로비로 돌아가면, 방금 증표를 쓰고 온 사람이 출격을
+   * 다시 눌러야 원래 보던 자리로 간다. 돌아갈 화면과 **그 화면의 어느 자리**는 다른 값이다.
+   */
+  private returnMenu?: LobbyMenu;
 
   constructor() { super("shop"); }
 
-  init(data?: { storefront?: ProductStorefront; returnScene?: string }): void {
+  init(data?: { storefront?: ProductStorefront; returnScene?: string; returnMenu?: LobbyMenu }): void {
     this.storefront = data?.storefront ?? "shop";
     this.stage = shopStagePresentation(this.storefront);
     this.returnScene = data?.returnScene ?? "lobby";
+    // 진입 데이터의 이름은 `returnMenu`이므로 판 이름만 떼어 같은 검증을 지난다.
+    this.returnMenu = normalizeLobbyEntry({ menu: data?.returnMenu });
     this.selectedCategory = SHOP_TABS[0].id;
     consumeSceneEntry(this);
   }
@@ -117,7 +127,7 @@ export class ShopScene extends Phaser.Scene {
     });
     this.add.text(54, 170, t(this.stage.titleKey), textStyle({ role: "display", size: 54 })).setOrigin(0, 0);
     // 목록 컨테이너는 비동기 생성되므로 공용 돌아가기를 그보다 높은 고정 계층에 둔다.
-    addBackButton(this, () => this.scene.start(this.returnScene)).setDepth(1000);
+    addBackButton(this, () => this.scene.start(this.returnScene, this.returnMenu ? LOBBY_RETURN[this.returnMenu] : undefined)).setDepth(1000);
 
     this.createStage();
     this.createBoard();

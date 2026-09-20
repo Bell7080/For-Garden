@@ -11,7 +11,7 @@ import { HOLO } from "./holo";
 import { COLOR } from "./theme";
 
 // 표는 Phaser 없는 모듈이 소유하지만, 부르는 곳 38군데가 한 경로만 알면 되도록 여기서 잇는다.
-export { BACKGROUND, BACKGROUND_ASSETS, BACKGROUND_BOOT_KEYS } from "./backgroundAssets";
+export { BACKGROUND, BACKGROUND_ASSETS, BACKGROUND_BOOT_KEYS, BATTLE_FIELD_BACKGROUND, battleFieldBackground } from "./backgroundAssets";
 
 /** 키 하나로 경로를 찾는 조회표. 늦게 읽는 경로가 이 표만 본다. */
 const BACKGROUND_PATHS: Readonly<Record<string, string>> = Object.fromEntries(BACKGROUND_ASSETS);

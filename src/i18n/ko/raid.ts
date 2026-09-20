@@ -11,7 +11,6 @@ export const RAID_KO = {
   "raid.season.resetsAt": "{date} 초기화",
   "raid.attempts": "남은 도전 {remaining}/{limit}",
   "raid.sortie": "출격",
-  "raid.shop": "레이드 상점",
   "raid.contribution.title": "기여",
   "raid.contribution.mine": "내 기여",
   "raid.contribution.empty": "아직 아무도 밀지 않았습니다",

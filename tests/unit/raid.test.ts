@@ -217,11 +217,9 @@ describe("레이드 배치표", () => {
     expect(RAID_HP_BAR.labelY).toBeLessThan(RAID_HP_BAR.y);
   });
 
-  it("는 출격이 상점보다 크고 둘이 겹치지 않는다", () => {
-    // 로비가 서브 콘텐츠와 출격을 크기로 가르는 것과 같은 규칙이다.
-    expect(RAID_ACTIONS.sortie.width).toBeGreaterThan(RAID_ACTIONS.shop.width);
-    const shopRight = RAID_ACTIONS.shop.centerX + RAID_ACTIONS.shop.width / 2;
-    expect(shopRight).toBeLessThan(RAID_ACTIONS.sortie.centerX - RAID_ACTIONS.sortie.width / 2);
+  it("는 하단 조작이 출격 하나뿐이다", () => {
+    // 전리품 상점은 출격판 밖이 맡는다 — 레이드 안에 두면 원정 증표를 쓰러 레이드를 거친다.
+    expect(Object.keys(RAID_ACTIONS)).toEqual(["y", "sortie"]);
   });
 });
 

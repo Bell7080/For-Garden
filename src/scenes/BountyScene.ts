@@ -22,6 +22,7 @@ import { drawLayer, drawVignette, slantedRect } from "../ui/holo";
 import { PortraitCard } from "../ui/PortraitCard";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { COLOR, textStyle } from "../ui/theme";
+import { LOBBY_RETURN } from "./lobbyEntry";
 
 /**
  * 현상수배 — **정예 셋과 1대1로 세 라운드를 치르는 골드 던전.**
@@ -55,7 +56,7 @@ export class BountyScene extends Phaser.Scene {
     this.pickedSlot = null;
     this.entering = false;
     this.body = this.add.container(0, 0);
-    addBackButton(this, () => this.scene.start("lobby"));
+    addBackButton(this, () => this.scene.start("lobby", LOBBY_RETURN.sortie));
     this.refresh();
     // 서버가 오늘 날짜로 정규화한 해금·잔여 횟수가 도착하면 그때 목록을 다시 세운다.
     void gameApi.getBountyStatus().then((status) => {

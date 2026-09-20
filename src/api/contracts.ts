@@ -445,12 +445,12 @@ export interface ArchaeologyStateResponse {
   /** 진행 판의 공개 정보다. `digsMax`는 지층 정의에서 확정한 한 판의 총 굴착 횟수다. */
   board: StrataBoardView | null;
   /**
-   * 서버가 현재 연구 레벨과 완료 이력으로 확정한 지도 상태다.
+   * 서버가 현재 연구 레벨로 확정한 지도 상태다. **여는 조건은 레벨뿐이고** 선행 유적은 없다.
    *
    * `cooldownUntil`은 그 유적이 다시 열리는 시각이고, 지금 열려 있으면 `null`이다 — 남은
    * 시간을 내려보내면 응답이 오는 동안 흐른 몫만큼 화면이 늦된 수를 센다.
    */
-  sites: Array<{ siteId: string; unlocked: boolean; completed: boolean; missingLevel: number; missingPrerequisiteIds: string[]; cooldownUntil: string | null }>;
+  sites: Array<{ siteId: string; unlocked: boolean; completed: boolean; missingLevel: number; cooldownUntil: string | null }>;
   serverTime: string;
 }
 /** 판을 새로 여는 요청이다. 클라이언트는 지층만 고르고 판 내용은 주장하지 못한다. */

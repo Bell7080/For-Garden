@@ -611,15 +611,12 @@ export class ArchaeologyScene extends Phaser.Scene {
       });
 
       /*
-       * 못 들어가는 이유는 저마다 다르고 지금 할 일도 그만큼 다르다 — 레벨을 올린다, 옆
-       * 유적을 판다, 기다린다, 횟수가 차기를 기다린다. 한 마디로 뭉치지 않는다.
+       * 못 들어가는 이유는 저마다 다르고 지금 할 일도 그만큼 다르다 — 레벨을 올린다,
+       * 기다린다, 횟수가 차기를 기다린다. 한 마디로 뭉치지 않는다.
        */
       const reason = cooling
         ? t("archaeology.map.cooling", { time: formatCountdown((coolingUntil ?? 0) - Date.now()) })
-        : !state.unlocked
-          ? (state.missingLevel > 0
-            ? t("archaeology.map.needLevel", { level: site.minimumLevel })
-            : t("archaeology.map.needSite", { site: state.missingPrerequisiteIds.map((id) => t(ARCHAEOLOGY_SITES.find((candidate) => candidate.id === id)?.nameKey as TextKey)).join(", ") }))
+        : !state.unlocked ? t("archaeology.map.needLevel", { level: site.minimumLevel })
           : this.charges <= 0 ? t("archaeology.map.noCharge") : t("archaeology.map.available");
       body.add(this.add.text(0, spot.reasonY, reason,
         textStyle({ role: "emphasis", size: 27, color: startable ? COLOR.accentText : COLOR.dangerText })).setOrigin(0.5));

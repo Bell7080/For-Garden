@@ -92,7 +92,6 @@ export const MISC_KO = {
   "archaeology.map.recommended": "권장 LV.{level}",
   "archaeology.map.available": "탐사 가능",
   "archaeology.map.needLevel": "최소 LV.{level} 필요",
-  "archaeology.map.needSite": "선행 유적 완료 필요: {site}",
   "archaeology.map.start": "탐사 시작",
   "archaeology.map.close": "닫기",
   // 한 번 판 자리는 여섯 시간 동안 잠긴다. 남은 시간이 곧 그 자리에 갈 수 있는지다.

@@ -61,10 +61,15 @@ export function rewardExpectationRating(layer: StrataLayerDefinition, group: Arc
   return { state: "rated", filled };
 }
 
-/** 레벨과 선행 완료를 모두 서버와 UI가 같은 방식으로 판정한다. */
-export function archaeologySiteAvailability(site: ArchaeologySiteDefinition, level: number, completedSiteIds: readonly string[]): { available: boolean; missingLevel: number; missingPrerequisiteIds: string[] } {
-  const missingPrerequisiteIds = site.prerequisiteSiteIds.filter((id) => !completedSiteIds.includes(id));
-  return { available: level >= site.minimumLevel && missingPrerequisiteIds.length === 0, missingLevel: Math.max(0, site.minimumLevel - level), missingPrerequisiteIds };
+/**
+ * 유적을 여는 조건은 **플레이어 레벨 하나뿐이다.**
+ *
+ * 앞 유적 완료를 함께 보던 때는 재사용 대기가 걸린 자리 하나가 그 뒤 전부를 여섯 시간
+ * 막았다 — 넓힌 그물망이 다시 외길이 된다. 지도의 줄기는 그림이고, 서버와 UI가 함께 읽는
+ * 판정은 이 한 줄이다.
+ */
+export function archaeologySiteAvailability(site: ArchaeologySiteDefinition, level: number): { available: boolean; missingLevel: number } {
+  return { available: level >= site.minimumLevel, missingLevel: Math.max(0, site.minimumLevel - level) };
 }
 
 export interface ArchaeologyCamera { x: number; y: number }
@@ -103,9 +108,9 @@ export function isArchaeologyMapDrag(start: ArchaeologyCamera, end: ArchaeologyC
 /**
  * 지도 노드 한 자리의 상태.
  *
- * **다섯 가지를 한 낱말로 뭉치지 않는다** — 「못 들어간다」는 이유가 잠김·선행 미완·횟수
- * 부족·재사용 대기로 저마다 다르고, 플레이어가 지금 할 일도 그만큼 다르다(레벨을 올린다 ·
- * 옆 유적을 판다 · 기다린다). 한 상태로 뭉쳐 두면 화면이 「탐사 불가」 한 마디만 말하게 된다.
+ * **다섯 가지를 한 낱말로 뭉치지 않는다** — 「못 들어간다」는 이유가 레벨 부족·재사용 대기·
+ * 횟수 부족으로 저마다 다르고, 플레이어가 지금 할 일도 그만큼 다르다(레벨을 올린다 ·
+ * 기다린다 · 다른 자리를 판다). 한 상태로 뭉쳐 두면 화면이 「탐사 불가」 한 마디만 말하게 된다.
  */
 export type ArchaeologyNodeState = "active" | "available" | "cooling" | "completed" | "locked";
 

@@ -11,34 +11,47 @@ describe("archaeology map rules", () => {
     expect(STRATA_REWARD_DISPLAY.rawStone.group).toBe("rawStone");
   });
 
-  it("requires both the minimum level and prerequisite completion", () => {
+  /**
+   * **여는 조건은 레벨 하나뿐이다.**
+   *
+   * 앞 유적 완료를 함께 보던 때는 재사용 대기가 걸린 자리 하나가 그 뒤 전부를 여섯 시간
+   * 막아, 넓힌 그물망이 다시 외길이 되었다. 지도의 줄기는 그림이라 판정에 들어오지 않는다.
+   */
+  it("opens a site on player level alone", () => {
     const archive = ARCHAEOLOGY_SITES.find(({ id }) => id === "sunken-archive")!;
-    expect(archaeologySiteAvailability(archive, 5, []).available).toBe(false);
-    expect(archaeologySiteAvailability(archive, 6, []).missingPrerequisiteIds).toEqual(["collapsed-greenhouse"]);
-    expect(archaeologySiteAvailability(archive, 6, ["collapsed-greenhouse"]).available).toBe(true);
+    expect(archaeologySiteAvailability(archive, 5)).toEqual({ available: false, missingLevel: 1 });
+    expect(archaeologySiteAvailability(archive, 6)).toEqual({ available: true, missingLevel: 0 });
+    // 아직 한 곳도 파지 않았어도 레벨만 넘으면 깊은 자리까지 곧바로 열린다.
+    const seed = ARCHAEOLOGY_SITES.find(({ id }) => id === "first-seed")!;
+    expect(archaeologySiteAvailability(seed, seed.minimumLevel).available).toBe(true);
   });
 
   /**
    * 지도는 **외길이 아니라 그물망**이다.
    *
    * 유적이 늘어도 관문에서 한 줄로만 이어지면 지도가 목록 한 줄이고, 여섯 시간짜리 재사용
-   * 대기가 걸리는 순간 갈 곳이 아예 없어진다. 관문이 여러 갈래로 벌어지는지, 선행이 둘
-   * 이상인 합류점이 있는지, 그리고 **모든 연결과 선행이 실제 유적을 가리키는지**를 함께 본다.
+   * 대기가 걸리는 순간 갈 곳이 아예 없어진다. 관문이 여러 갈래로 벌어지는지, 모든 연결이
+   * 실제 유적을 가리키는지, 그리고 **레벨 사다리가 같은 층에 여러 자리를 두는지**를 본다.
    */
   it("branches into a web instead of a single chain", () => {
     const ids = new Set(ARCHAEOLOGY_SITES.map(({ id }) => id));
     expect(ids.size).toBe(ARCHAEOLOGY_SITES.length);
     for (const site of ARCHAEOLOGY_SITES) {
-      for (const id of [...site.connectionIds, ...site.prerequisiteSiteIds]) expect(ids, `${site.id} → ${id}`).toContain(id);
+      for (const id of site.connectionIds) expect(ids, `${site.id} → ${id}`).toContain(id);
       // 판 미리보기가 실제로 열리는 판과 어긋나지 않는다 — 칸 수는 지층이 소유한다.
       const layer = findStrataLayer(site.layerId)!;
       expect({ columns: layer.columns, rows: layer.rows }, site.id).toEqual(site.board);
     }
     const gate = ARCHAEOLOGY_SITES.find(({ id }) => id === "garden-gate")!;
     expect(gate.connectionIds.length).toBeGreaterThanOrEqual(3);
-    expect(ARCHAEOLOGY_SITES.filter((site) => site.prerequisiteSiteIds.length > 1).length).toBeGreaterThan(0);
     // 같은 판이 나란히 서지 않도록 지층을 섞어 쓴다.
     expect(new Set(ARCHAEOLOGY_SITES.map(({ layerId }) => layerId)).size).toBeGreaterThanOrEqual(4);
+    /*
+     * **한 레벨에 자리가 하나뿐이면 다시 외길이다.** 재사용 대기가 여섯 시간이라, 지금
+     * 레벨에서 열리는 자리가 둘 이상 남아야 그 대기가 「갈 곳이 없다」가 되지 않는다.
+     */
+    const midLevel = 12;
+    expect(ARCHAEOLOGY_SITES.filter((site) => site.minimumLevel <= midLevel).length).toBeGreaterThan(2);
   });
 
   it("derives relative preview gauge fill from weights and quantity ranges", () => {

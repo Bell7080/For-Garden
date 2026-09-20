@@ -84,7 +84,6 @@ export const MISC_JA = {
   "archaeology.map.recommended": "推奨 LV.{level}",
   "archaeology.map.available": "探査可能",
   "archaeology.map.needLevel": "LV.{level}が必要",
-  "archaeology.map.needSite": "先に完了: {site}",
   "archaeology.map.start": "探査開始",
   "archaeology.map.close": "閉じる",
   "archaeology.map.cooling": "再探査まで {time}",

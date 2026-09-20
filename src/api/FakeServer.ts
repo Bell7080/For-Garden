@@ -1678,13 +1678,12 @@ export class FakeServer implements GameApi {
       nextChargeAt: chargesUpdatedAt ? nextStrataChargeAt(charges, chargesUpdatedAt) : null,
       board: board ? strataBoardView(board) : null,
       sites: ARCHAEOLOGY_SITES.map((site) => {
-        const availability = archaeologySiteAvailability(site, this.state.playerResearch.level, this.state.archaeology.completedSiteIds);
+        const availability = archaeologySiteAvailability(site, this.state.playerResearch.level);
         return {
           siteId: site.id,
           unlocked: this.state.archaeology.unlockedSiteIds.includes(site.id) || availability.available,
           completed: this.state.archaeology.completedSiteIds.includes(site.id),
           missingLevel: availability.missingLevel,
-          missingPrerequisiteIds: availability.missingPrerequisiteIds,
           // 재사용 대기는 해금과 다른 축이다 — 열려 있지만 지금은 못 들어가는 자리를 화면이
           // 「잠김」과 같은 말로 부르면 레벨을 올리면 열리는 줄 안다.
           cooldownUntil: strataSiteCooldownUntil(this.state.archaeology.siteCooldowns, site.id, this.now()),
@@ -1709,8 +1708,8 @@ export class FakeServer implements GameApi {
     if (!layerId || findStrataLayer(layerId) === undefined) throw new GameApiError("STRATA_RUN_NOT_FOUND", "존재하지 않는 지층입니다.");
     if (request.siteId && !site) throw new GameApiError("STRATA_RUN_NOT_FOUND", "존재하지 않는 유적입니다.");
     if (site) {
-      // 클라이언트의 unlocked 표시를 신뢰하지 않고 레벨과 완료 이력을 서버 상태로 다시 검증한다.
-      const availability = archaeologySiteAvailability(site, this.state.playerResearch.level, this.state.archaeology.completedSiteIds);
+      // 클라이언트의 unlocked 표시를 신뢰하지 않고 서버가 가진 연구 레벨로 다시 검증한다.
+      const availability = archaeologySiteAvailability(site, this.state.playerResearch.level);
       if (!availability.available && !this.state.archaeology.unlockedSiteIds.includes(site.id)) throw new GameApiError("STRATA_SITE_LOCKED", "아직 탐사할 수 없는 유적입니다.");
     }
     // 진행 중인 판이 있으면 새로 열지 않는다 — 횟수를 이미 치른 판이라 덮으면 그 한 번이 사라진다.

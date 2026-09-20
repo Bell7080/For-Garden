@@ -10,7 +10,10 @@ import { createRuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { ITEMS, type WalletItemKey } from "../../src/data/items";
 import { STARTER_RUNE_TRAIT_KIT } from "../../src/data/runes";
 import { CURRENCY_GUIDE } from "../../src/data/currencyGuide";
-import { ITEM_ICON_ASSETS } from "../../src/ui/itemIcons";
+import { ITEM_ICON_ASSETS, ITEM_RASTER_ICON_ASSETS } from "../../src/ui/itemIcons";
+import { UI_ICON_ASSETS, UI_RASTER_ICON_ASSETS } from "../../src/ui/icons";
+import { EXCAVATION_TRAIT_ICON_ASSETS } from "../../src/ui/excavationIcons";
+import { SKILL_ICON_ASSETS } from "../../src/ui/skillIcons";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -31,12 +34,29 @@ describe("inventory", () => {
     // 교환소는 파견에서만 나오는 표본을 바꾸는 창구라 지갑 재화 안내가 직접 가리키지 않는다.
     expect(targets).not.toContain("scene:interaction");
   });
-  it("모든 정적 item asset이 공용 로딩 표와 실제 임시 SVG에 일대일 대응한다", () => {
+  it("모든 정적 item asset이 공용 로딩 표와 실제 배포 파일에 일대일 대응한다", () => {
     // 정적 정의가 늘 때 로더 등록이나 배포 파일 한쪽만 빠지는 회귀를 빌드 전에 잡는다.
     const definedKeys = ITEMS.flatMap(({ icon }) => icon.kind === "asset" ? [icon.key] : []);
-    const loadedKeys = ITEM_ICON_ASSETS.map(([key]) => key);
-    expect(loadedKeys).toEqual(definedKeys);
-    for (const [, path] of ITEM_ICON_ASSETS) expect(existsSync(resolve("public", path))).toBe(true);
+    const loadedKeys = [...ITEM_ICON_ASSETS, ...ITEM_RASTER_ICON_ASSETS].map(([key]) => key);
+    expect([...loadedKeys].sort()).toEqual([...definedKeys].sort());
+    for (const [, path] of [...ITEM_ICON_ASSETS, ...ITEM_RASTER_ICON_ASSETS]) expect(existsSync(resolve("public", path))).toBe(true);
+  });
+
+  it("SVG로 읽는 표에 구운 WebP가 섞이지 않는다", () => {
+    /*
+     * Phaser의 SVG 처리기는 `<svg>` 루트를 찾지 못하면 **예외를 던지고 아무도 그것을 받지
+     * 않는다** — 로더의 파일 줄이 거기서 끊겨 `complete`가 영영 오지 않고, 그 단계를 기다리던
+     * 타이틀이 **진행률 50%에서 멎어 게임이 시작되지 않는다.** 스테미나 토닉 WebP 두 장이
+     * `ITEM_ICON_ASSETS`에 섞여 실제로 그랬다. 조용히 빈 텍스처가 되는 정도가 아니므로
+     * 확장자를 계약으로 고정한다.
+     */
+    for (const [key, path] of ITEM_ICON_ASSETS) expect(path, key).toMatch(/\.svg$/);
+    for (const [key, path] of UI_ICON_ASSETS) expect(path, key).toMatch(/\.svg$/);
+    for (const [key, path] of EXCAVATION_TRAIT_ICON_ASSETS) expect(path, key).toMatch(/\.svg$/);
+    for (const [key, path] of SKILL_ICON_ASSETS) expect(path, key).toMatch(/\.svg$/);
+    // 반대쪽도 고정한다 — 벡터를 raster 표에 넣으면 파일에 적힌 크기 그대로 구워져 뭉갠다.
+    for (const [key, path] of ITEM_RASTER_ICON_ASSETS) expect(path, key).toMatch(/\.webp$/);
+    for (const [key, path] of UI_RASTER_ICON_ASSETS) expect(path, key).toMatch(/\.webp$/);
   });
   it("스택 아이템을 저장 왕복하며 복사한다", () => {
     const memory = new Map<string, string>();

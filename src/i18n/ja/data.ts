@@ -393,6 +393,7 @@ export default {
   "journal.interaction-doppel-lab-01.body": "外郭研究室の机に伏せて置かれた復元計画書。署名欄は二つあるのに下の欄だけが埋まり、上の欄には「本社確認待ち」の印が斜めに押されている。",
   "shopClerk.obi.name": "オビ",
   "shopClerk.protia.name": "プロティア",
+  "shopClerk.haine.name": "ハイネ",
   "city.night-ward.displayName": "ナイトシティ",
   "city.night-council.displayName": "ナイトシティ",
   "city.abyss-port.displayName": "深海港湾区",

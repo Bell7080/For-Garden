@@ -3,6 +3,8 @@ import { LOBBY_RETURN, normalizeLobbyEntry } from "../../src/scenes/lobbyEntry";
 import { BACK_BUTTON_SIZE, BACK_SLOT, POPUP_SIDE_SLOT, popupSideSlotGap } from "../../src/ui/popupGeometry";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import { BATTLE_FIELD_BACKGROUND, battleFieldBackground, BACKGROUND, BACKGROUND_ASSETS } from "../../src/ui/backgroundAssets";
+import { BANNERS } from "../../src/data/banners";
+import { shopStagePresentation } from "../../src/data/shopPresentation";
 
 describe("로비로 돌아갈 자리", () => {
   it("는 보낸 판을 그대로 되돌려 준다", () => {
@@ -59,5 +61,36 @@ describe("전투 모드별 전장", () => {
   it("는 모르는 모드를 기본 전장으로 수렴시킨다", () => {
     expect(battleFieldBackground("stage")).toBe(BACKGROUND.combat);
     expect(battleFieldBackground("무엇")).toBe(BACKGROUND.combat);
+  });
+});
+
+describe("모집판 배너 원화", () => {
+  it("는 배너마다 제 원화를 갖고 그 키가 적재 표에 있다", () => {
+    // 화면이 한 장을 고정으로 깔면 배너를 넘겨도 그림이 그대로라 무엇이 바뀌었는지
+    // 그림이 말하지 못한다. 어느 배너가 어느 원화인지는 배너 데이터가 갖는다.
+    const paths = new Map<string, string>(BACKGROUND_ASSETS.map(([key, path]) => [key, path]));
+    expect(BANNERS.length).toBeGreaterThan(0);
+    for (const banner of BANNERS) {
+      expect(banner.artKey, banner.id).toBeTruthy();
+      expect(paths.get(banner.artKey), banner.id).toBeTruthy();
+    }
+  });
+});
+
+describe("상점 무대", () => {
+  it("은 세 자리가 저마다 다른 점원·배경·대사를 쓴다", () => {
+    // 셋이 같은 점원이면 상품표만 바뀐 같은 가게로 읽힌다.
+    const stages = ["shop", "archaeology", "raid"] as const;
+    const merchants = stages.map((id) => shopStagePresentation(id).merchant.name);
+    const backgrounds = stages.map((id) => shopStagePresentation(id).background);
+    const lines = stages.map((id) => shopStagePresentation(id).lineKeys[0]);
+    expect(new Set(merchants).size).toBe(stages.length);
+    expect(new Set(backgrounds).size).toBe(stages.length);
+    expect(new Set(lines).size).toBe(stages.length);
+  });
+
+  it("은 전리품 상점이 레이드 진입 화면을 무대에 깔지 않는다", () => {
+    // 상점과 그 앞 화면이 같은 그림이면 어디로 들어온 것인지 배경이 말하지 못한다.
+    expect(shopStagePresentation("raid").background).not.toBe(BACKGROUND.sortieRaid);
   });
 });

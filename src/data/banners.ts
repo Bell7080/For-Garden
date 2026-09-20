@@ -2,6 +2,7 @@ import type { Banner } from "../core/gacha";
 import { registerDataText } from "../i18n";
 import type { RelicRarity } from "../core/types";
 import { PLAYABLE_RELICS } from "./relics";
+import { BACKGROUND } from "../ui/backgroundAssets";
 
 /** 정적 렐릭 희귀도를 기준으로 구성해 등급 결정 후 다른 등급이 섞이지 않게 한다. */
 const POOLS = Object.fromEntries(
@@ -18,6 +19,8 @@ export const PITY_GROUP = { STANDARD: "standard-fossil", LIMITED_PICKUP: "limite
 export const BANNERS: Banner[] = [
   {
     id: "fossil", pityGroupId: PITY_GROUP.STANDARD, name: "화석 연구", featuredRelicId: "anky",
+    // 두 배너가 아직 같은 원화를 쓴다. 전용 원화가 오면 이 줄만 바꾼다.
+    artKey: BACKGROUND.recruitFossil,
     // 연구 방식과 픽업 대상은 각각 기능명·픽업 표식으로 이미 전달하므로 설명형 문구를 노출하지 않는다.
     currency: "fossil", costOne: 100, costTen: 900,
     // 초기의 작은 R 풀을 너무 빨리 소진하지 않도록 대부분을 부산물로 돌린다. 10연 SR 보장은
@@ -32,6 +35,7 @@ export const BANNERS: Banner[] = [
   },
   {
     id: "amber", pityGroupId: PITY_GROUP.LIMITED_PICKUP, name: "호박석 연구", featuredRelicId: "rex",
+    artKey: BACKGROUND.recruitFossil,
     // 재화의 희소도 같은 설계 메모도 배너 카피로 옮기지 않고 운영 데이터와 주석에만 남긴다.
     currency: "amber", costOne: 2, costTen: 18,
     // 비싼 호박석은 화석보다 렐릭 확률을 거의 두 배로 두되, 재화 결과가 여전히 과반이 되게 한다.

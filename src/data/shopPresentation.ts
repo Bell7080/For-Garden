@@ -1,5 +1,5 @@
 import { registerDataText, type TextKey } from "../i18n";
-import { ARCHAEOLOGY_CLERK_ASSET, SHOP_CLERK_ASSET, type PuppetAsset } from "../puppets/assets";
+import { ARCHAEOLOGY_CLERK_ASSET, LOOT_CLERK_ASSET, SHOP_CLERK_ASSET, type PuppetAsset } from "../puppets/assets";
 import { BACKGROUND } from "../ui/backgroundAssets";
 import type { ProductStorefront } from "./products";
 
@@ -68,6 +68,34 @@ export const ARCHAEOLOGY_MERCHANT_LINE_KEYS: readonly TextKey[] = [
   "shop.protia.line4", "shop.protia.line5",
 ];
 
+/**
+ * 전리품 상점 무대에 서는 점원 — **하이네**.
+ *
+ * 토벌과 인양에서 돌아온 사람에게 증표를 받고 물건을 내어 주는 **보급 담당**이다. 장부가
+ * 곧 그의 일이라 세는 것으로 말을 시작하고, 값을 흥정하지 않는다 — 값은 증표 수가 이미
+ * 정해 두었기 때문이다. 돌아온 사람을 매번 다시 보는 자리라 무뚝뚝한 말 끝에 다음에도
+ * 살아 오라는 말이 붙는다.
+ *
+ * 오비·프로티아와 **결이 갈려야 하는 이유**가 여기 있다. 편의점 견습생은 수줍게 권하고,
+ * 사막의 연구가는 값의 근거를 대며, 보급 담당은 **세고 건넨다.** 셋이 같은 말투로 말하면
+ * 상품표만 바뀐 같은 가게로 읽힌다.
+ *
+ * 이름은 둘과 같은 이유로 이 표가 소유한다 — 도감에 서지 않는 상점 전용 개체라
+ * `src/data/relics.ts`에 이름이 없다.
+ */
+export const LOOT_MERCHANT: { readonly name: string; readonly asset: PuppetAsset } = {
+  name: "하이네",
+  asset: LOOT_CLERK_ASSET,
+};
+
+registerDataText(LOOT_MERCHANT, "name", "shopClerk.haine.name");
+
+/** 하이네가 돌아가며 하는 말. 순서만 여기 있고 문장은 `src/i18n`이 갖는다. */
+export const LOOT_MERCHANT_LINE_KEYS: readonly TextKey[] = [
+  "shop.haine.line1", "shop.haine.line2", "shop.haine.line3",
+  "shop.haine.line4", "shop.haine.line5",
+];
+
 /** 상점 화면 한 자리가 갖는 무대. 점원·배경·대사가 한 덩어리로 갈린다. */
 export interface ShopStagePresentation {
   readonly merchant: { readonly name: string; readonly asset: PuppetAsset };
@@ -112,21 +140,12 @@ export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "
     // 자리다. 키가 오비보다 작은 것은 원화가 넓기 때문이지 인물이 작아서가 아니다.
     merchantSpot: { headX: 744, height: 1010 },
   },
-  /**
-   * 레이드 상점도 **프로티아가 맡는다.**
-   *
-   * 전용 점원 원화가 아직 없어서인데, 아무나 세우지 않고 프로티아를 고른 이유는 현장에서
-   * 값을 매기는 연구가라 토벌하고 돌아온 사람과 증표를 주고받는 자리가 어색하지 않기
-   * 때문이다. 전용 원화가 준비되면 이 줄의 `merchant`와 `lineKeys`만 바꾼다.
-   *
-   * 배경만은 레이드 제 것을 쓴다 — 무대 뒤가 고고학 상점과 같으면 같은 가게로 읽힌다.
-   */
   raid: {
-    merchant: ARCHAEOLOGY_MERCHANT,
-    lineKeys: ARCHAEOLOGY_MERCHANT_LINE_KEYS,
+    merchant: LOOT_MERCHANT,
+    lineKeys: LOOT_MERCHANT_LINE_KEYS,
     background: BACKGROUND.lootShop,
     titleKey: "shop.raid.title",
-    // 같은 원화라 고고학 상점과 같은 자리를 쓴다. 자리는 점원이 정하지 무대가 정하지 않는다.
+    // 프로티아와 등신이 비슷해 같은 자리를 쓴다. 자리는 점원이 정하지 무대가 정하지 않는다.
     merchantSpot: { headX: 744, height: 1010 },
   },
 };

@@ -40,6 +40,14 @@ export const BACKGROUND = {
    */
   lootShop: "background-loot-shop",
   /**
+   * 연구소 모집판의 **배너 원화**.
+   *
+   * 배경이 아니라 그 배너가 무엇을 뽑는 판인지 말하는 그림이라, 어느 배너가 어느 원화를
+   * 쓰는지는 이 표가 아니라 **배너 데이터**(`Banner.artKey`)가 정한다. 여기 있는 것은
+   * 지금 배너 둘이 함께 쓰는 기본 한 장뿐이다.
+   */
+  recruitFossil: "background-recruit-fossil",
+  /**
    * 지층 탐사판의 **아래층** — 겉장을 부순 칸에 드러나는 맨 흙이다.
    *
    * 겉장 넉 장은 여기 키를 두지 않는다. 판이 들고 있는 번호가 곧 키라
@@ -124,6 +132,7 @@ export const BACKGROUND_ASSETS = [
   [BACKGROUND.shop, "sprites/background/background_013.webp"],
   [BACKGROUND.archaeologyShop, "sprites/background/background_015.webp"],
   [BACKGROUND.lootShop, "sprites/background/background_016.webp"],
+  [BACKGROUND.recruitFossil, "sprites/background/background_017.webp"],
   [BACKGROUND.strataBase, "sprites/background/strata_base.webp"],
   // 겉장은 한 번 탐사할 때마다 그중 한 장이 뽑힌다. 키 이름은 `strataLayerTextureKey`가 짓는다.
   ["background-strata-layer-001", "sprites/background/strata_layer_001.webp"],

@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
 import type { PuppetCreature } from "../puppets/assets";
-import { BASE_WIDTH } from "../config/gameConfig";
+import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugResearchBoard, setDebugScene } from "../debug";
 import { gameApi } from "../api/FakeServer";
 import { GameApiError, type PullResultDto } from "../api/contracts";
@@ -10,7 +10,6 @@ import { ResearchPresentationController, highestRarity, researchSlotViews } from
 import { BANNERS } from "../data/banners";
 import { getRelic } from "../data/relics";
 import {
-  enableHitOnClick,
   portraitAssetFor,
   spawnPuppet,
 } from "../puppets/assets";
@@ -20,7 +19,7 @@ import { Button } from "../ui/Button";
 import { TopBar } from "../ui/TopBar";
 import { drawLayer, drawRoundedLayer, HOLO, slantedRect, toPoints } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
-import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
+import { addSceneBackground, useBackgroundTexture, BACKGROUND } from "../ui/backgrounds";
 import { CRACK_BRANCHES, FOSSIL_CRACK, crackBranchPoints, fossilShards, shardPoints } from "../ui/fossilCrack";
 import { researchBoardLayout } from "../ui/researchBoardLayout";
 import { ResearchSlotTile } from "../ui/ResearchSlotTile";
@@ -59,9 +58,14 @@ export class LabScene extends Phaser.Scene {
   private pityText!: Phaser.GameObjects.Text;
   private oneButton!: Button;
   private tenButton!: Button;
-  private showcase?: PuppetCreature;
-  /** 빠른 배너 전환 중 늦게 끝난 원화 로딩이 최신 배너를 덮지 못하게 하는 요청 번호. */
-  private showcaseRequest = 0;
+  /**
+   * 지금 배너의 모집 원화.
+   *
+   * 픽업 렐릭의 전신 Puppet을 세우던 자리다 — 배너 하나가 개체 하나만 보여 줄 수 있어
+   * 셋이 함께 선 모집 원화를 쓸 방법이 없었고, 무엇보다 **무거운 ZIP 한 벌을 배너를
+   * 넘길 때마다 새로 읽었다.** 지금은 배너가 가리키는 원화 한 장을 갈아 끼운다.
+   */
+  private showcase?: Phaser.GameObjects.Image;
   /** 연속 터치로 같은 재화가 두 번 결제되는 요청 중복을 클라이언트에서도 막는다. */
   private pullPending = false;
   /** 결과 저장 뒤의 시각 연출만 소유하며, 씬 종료 시 반드시 invalidate/destroy한다. */
@@ -165,7 +169,6 @@ export class LabScene extends Phaser.Scene {
     new BottomNav(this, "lab");
     // 씬을 떠난 뒤 끝나는 비동기 로딩도 무효화하고 현재 Puppet을 정리한다.
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      this.showcaseRequest += 1;
       this.showcase?.destroy();
       this.showcase = undefined;
       this.presentation.invalidate();
@@ -184,7 +187,7 @@ export class LabScene extends Phaser.Scene {
       this.audioScope = undefined;
       this.popupLayer?.closeAll(); this.popupLayer = undefined; this.mileagePopup = undefined;
     });
-    void this.showcaseRelic();
+    this.showcaseRelic();
     this.refresh();
   }
 
@@ -221,28 +224,25 @@ export class LabScene extends Phaser.Scene {
   private switchBanner(delta: number): void {
     this.bannerIndex = (this.bannerIndex + delta + BANNERS.length) % BANNERS.length;
     this.refresh();
-    void this.showcaseRelic();
+    this.showcaseRelic();
   }
 
-  /** 배너 데이터의 픽업 렐릭과 그 렐릭 데이터의 원화를 차례로 따라 대표 그림을 교체한다. */
-  private async showcaseRelic(): Promise<void> {
-    const request = ++this.showcaseRequest;
-    const featured = getRelic(this.banner.featuredRelicId);
-    const nextShowcase = await spawnPuppet(this, portraitAssetFor(featured.portraitAssetId), {
-      x: BASE_WIDTH / 2,
-      groundY: BANNER_FLOOR,
-      height: 860,
-      depth: -20,
-    });
-    // 이미 다른 배너를 골랐다면 방금 완성된 오래된 원화는 화면에 붙이지 않는다.
-    if (request !== this.showcaseRequest) {
-      nextShowcase.destroy();
-      return;
-    }
+  /**
+   * 배너가 가리키는 모집 원화를 세운다.
+   *
+   * **배경 위에 한 겹 더 깐다.** 배경(`addSceneBackground`)은 화면이 살아 있는 동안 한 장을
+   * 붙잡는 자리라 배너를 넘길 때마다 갈아 끼울 것이 아니고, 이 그림은 배너가 바뀌면 함께
+   * 바뀌는 그 배너의 얼굴이다. 원화를 세우는 일은 `useBackgroundTexture`를 지나야 쓰는
+   * 중에 텍스처가 내려가지 않는다 — 직접 `add.image`로 세우면 붙잡히지 않는다.
+   */
+  private showcaseRelic(): void {
     this.showcase?.destroy();
-    this.showcase = nextShowcase;
-    // 배너의 전신 일러스트도 정보창과 동일하게 터치 반응을 준다.
-    enableHitOnClick(this, this.showcase);
+    const image = this.add.image(BASE_WIDTH / 2, BASE_HEIGHT / 2, "__DEFAULT").setDepth(-28).setAlpha(0);
+    this.showcase = image;
+    useBackgroundTexture(this, image, this.banner.artKey, (loaded) => {
+      loaded.setScale(Math.max(BASE_WIDTH / loaded.width, BASE_HEIGHT / loaded.height));
+      this.tweens.add({ targets: loaded, alpha: 1, duration: 160 });
+    });
   }
 
   private async doPull(count: 1 | 10): Promise<void> {

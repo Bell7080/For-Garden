@@ -35,6 +35,8 @@ import {
   PARUA_SD_METADATA,
   SHUTE_PORTRAIT_METADATA,
   SHUTE_SD_METADATA,
+  MORPHE_PORTRAIT_METADATA,
+  MORPHE_SD_METADATA,
   TERISA_PORTRAIT_METADATA,
   TERISA_SD_METADATA,
   METTE_PORTRAIT_METADATA,
@@ -292,6 +294,12 @@ export const PARUA_ASSET: PuppetAsset = {
   ...PARUA_PORTRAIT_METADATA,
 };
 
+/** 22번 전신 일러스트: 모르페(디몰포돈). 요람 의자에 앉은 개체라 실루엣이 크다. */
+export const MORPHE_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_022.zip`,
+  ...MORPHE_PORTRAIT_METADATA,
+};
+
 /** 20번 기본 SD는 디안, `_black`은 쿠로, `_white`는 시로라는 이름 대응을 보존한다. */
 export const DIAN_SD_ASSET: PuppetAsset = { url: `${base}puppets/charSD_020.zip`, ...DIAN_SD_METADATA };
 export const KURO_SD_ASSET: PuppetAsset = { url: `${base}puppets/charSD_020_black.zip`, ...KURO_SD_METADATA };
@@ -389,6 +397,7 @@ const PORTRAIT_ASSETS = {
   dian: DIAN_ASSET,
   shute: SHUTE_ASSET,
   terisa: TERISA_ASSET,
+  morphe: MORPHE_ASSET,
   // 늑대는 전신 원화가 따로 없다. SD 자체가 온전한 한 마리라 정보창도 같은 묶음을 세운다.
   kuro: KURO_SD_ASSET,
   shiro: SHIRO_SD_ASSET,
@@ -545,6 +554,12 @@ export const DEINA_SD_ASSET: PuppetAsset = {
   ...DEINA_SD_METADATA,
 };
 
+/** 22번 SD: 모르페. */
+export const MORPHE_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/charSD_022.zip`,
+  ...MORPHE_SD_METADATA,
+};
+
 /** 19번 SD: 테리사. */
 export const TERISA_SD_ASSET: PuppetAsset = {
   url: `${base}puppets/charSD_019.zip`,
@@ -611,6 +626,7 @@ const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
   dian: DIAN_SD_ASSET,
   shute: SHUTE_SD_ASSET,
   terisa: TERISA_SD_ASSET,
+  morphe: MORPHE_SD_ASSET,
   kuro: KURO_SD_ASSET,
   shiro: SHIRO_SD_ASSET,
 };

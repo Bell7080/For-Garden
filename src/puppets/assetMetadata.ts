@@ -496,6 +496,32 @@ export const SHUTE_SD_METADATA: Omit<PuppetAsset, "url"> = {
 };
 
 /**
+ * 22번 **모르페**(디몰포돈)의 전신.
+ *
+ * **요람 의자에 앉은 개체라 실루엣이 서 있는 개체보다 크다.** 로비 비례는 `눈 → alpha 아래
+ * 경계`로 재는데, 이 원화의 아래 경계는 발끝이 아니라 **의자 밑동**이다 — 같은 1.57 m라도
+ * 서 있는 개체보다 그 거리가 짧으므로 규칙이 배율을 키워 화면에서 더 크게 선다. 의도한
+ * 결과이며, 그래서 머리끝이 y=30까지 올라와 화면 위쪽에 가장 가까이 서는 개체가 된다.
+ *
+ * 발 관절(404,1415)·(511,1427)은 alpha 아래 경계(1408)보다 **아래에** 박혀 있다. 바닥선을
+ * 관절이 아니라 `content.bottom`으로 잡는 규칙이 없었으면 이 개체만 바닥에 파묻혔을 것이다.
+ */
+export const MORPHE_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086,
+  imageHeight: 1448,
+  content: { left: 23, top: 42, right: 1067, bottom: 1408 },
+  /** 로비 세로 비율: 메론 기준. 1.57 m — 눈(378.5)에서 의자 밑동까지를 그 키로 맞춘다. */
+  lobbyZoom: 1.092,
+};
+
+/** 모르페 SD: 중심1·머리1·발1·발2를 프로젝트에서 읽었으며 눈 관절은 없다. */
+export const MORPHE_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 30, top: 13, right: 1225, bottom: 1241 },
+};
+
+/**
  * 19번 테리사(테리지노사우루스) 전신.
  *
  * ZIP 안 WebP의 alpha > 16 경계를 실측했다(36,12–1077,1415). 관절도 같은 좌표계에서 읽어

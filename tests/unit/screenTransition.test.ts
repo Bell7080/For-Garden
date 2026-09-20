@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { TRANSITION, transitionTiming, type TransitionKind } from "../../src/core/screenTransition";
 import { motionPolicy } from "../../src/core/settings";
 
-const KINDS: TransitionKind[] = ["sceneIn", "popupIn", "popupOut"];
+const KINDS: TransitionKind[] = ["sceneIn", "navSwitch", "popupIn", "popupOut"];
 
 /** 저장 설정에서 실제로 나오는 배율만 검사한다 — 화면이 임의 값을 지어내지 않는다. */
 const factorFor = (reduceMotion: boolean): number =>
@@ -21,6 +21,20 @@ describe("화면 전환", () => {
      * 늦어, 화면이 갈리는 일 자체에 상한 없는 기다림이 얹혔다. 다시 만들려면 그 지연부터 푼다.
      */
     expect(Object.keys(TRANSITION)).not.toContain("sceneOut");
+  });
+
+  it("은 화면을 검게 지웠다 밝히지 않는다", () => {
+    /*
+     * 시작 불투명도가 0이면 화면을 옮길 때마다 한 번씩 암전을 지난다. 자주 오가는 손에는
+     * 그것이 전환이 아니라 **번쩍임**으로 읽힌다 — 실제로 그 말을 들었다.
+     */
+    expect(TRANSITION.sceneIn.alpha).toBeGreaterThan(0);
+    expect(TRANSITION.navSwitch.alpha).toBeGreaterThan(TRANSITION.sceneIn.alpha);
+  });
+
+  it("은 핵심 화면 다섯 사이를 일반 전환보다 가볍게 지난다", () => {
+    // 나란히 놓인 자리라 손이 하루에도 수십 번 오간다. 같은 무게로 두면 그만큼 되풀이해 본다.
+    expect(TRANSITION.navSwitch.duration).toBeLessThan(TRANSITION.sceneIn.duration);
   });
 
   it("은 손이 기다린다고 느끼지 않을 만큼만 쓴다", () => {

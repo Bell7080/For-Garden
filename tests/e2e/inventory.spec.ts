@@ -5,8 +5,14 @@ import { createRuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { captureGame, tap, tapUntil, waitForDebugState } from "./canvasInput";
 // 레일 자리는 화면이 소유한 배치표에서 읽는다 — 좌표를 스펙에 베껴 두면 줄이 옮겨질 때 조용히 빗나간다.
 import { LOBBY_RAIL_BOUNDS } from "../../src/ui/lobbyLayout";
+import { CURRENCY_GUIDE_SIZE } from "../../src/ui/CurrencyGuidePopup";
+import { POPUP_CLOSE_LAYOUT } from "../../src/ui/popupGeometry";
 
 const WIDTH = 1080; const HEIGHT = 1920;
+
+/** 재화 안내창의 닫기 X 중심. 창은 화면 한가운데에 선다. */
+const guideCloseX = WIDTH / 2 + CURRENCY_GUIDE_SIZE.width / 2 - POPUP_CLOSE_LAYOUT.centerInset;
+const guideCloseY = HEIGHT / 2 - CURRENCY_GUIDE_SIZE.height / 2 + POPUP_CLOSE_LAYOUT.centerInset;
 
 test("가방은 로비를 유지하고 카테고리 탭과 많은 항목 스크롤 입력을 받는다", async ({ page }) => {
   // 고해상도 WebGL 캡처가 무GPU CI에서도 완료되도록 이 시각 회귀만 여유 시간을 둔다.
@@ -50,7 +56,9 @@ test("가방은 로비를 유지하고 카테고리 탭과 많은 항목 스크�
 
   // 외부 뒤로가기로 닫은 뒤 버튼과 팝업 인스턴스가 함께 정리되어 같은 가방을 다시 열 수 있어야 한다.
   await tap(page, WIDTH - 106, HEIGHT - 120);
-  await tap(page, WIDTH - 106, 1096);
+  // 레일 자리는 배치표에서 읽는다 — 손으로 적어 둔 1096은 레일이 옮겨진 뒤 한 칸(152px)
+  // 어긋나 빈자리를 누르고 있었다.
+  await tap(page, LOBBY_RAIL_BOUNDS.utility.inventory.x, LOBBY_RAIL_BOUNDS.utility.inventory.y);
   await waitForDebugState(page, () => window.__PF_DEBUG?.popupTitles, ["가방"]);
   await captureGame(page, `test-results/${test.info().project.name}-inventory-popup-reopened.png`);
   // 재개방 캡처까지 끝나면 테스트가 만든 팝업은 페이지 종료와 함께 정리된다.
@@ -65,7 +73,9 @@ test("상단과 가방 재화는 같은 안내를 열고 가방 위 안내만 �
   await waitForDebugState(page, () => window.__PF_DEBUG?.storefrontControls?.lobby !== undefined, true);
   await tap(page, 500, 86);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["젬"]);
-  await tap(page, 880, 556);
+  // 안내창은 780×1020 중앙 정렬이라 x 150~930 · y 450~1470을 차지한다. 예전에 적어 둔
+  // (880, 556)은 그 **안쪽**이어서 판이 입력을 삼켰고 배경 닫기가 돌지 않았다.
+  await tap(page, 60, 300);
   // 스택이 비면 관찰값 자체를 지운다(`setDebugPopupTitles`) — 빈 배열이 아니라 없음이다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toBeUndefined();
 
@@ -78,7 +88,9 @@ test("상단과 가방 재화는 같은 안내를 열고 가방 위 안내만 �
   await tap(page, WIDTH / 2 - 312, HEIGHT / 2 - 510);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["가방", "화석"]);
   // 안내 X만 닫으면 아래 가방과 선택된 재화 탭이 그대로 남아야 한다.
-  await tap(page, 880, 556);
+  // X 자리는 창 크기와 공용 배치표에서 구한다 — 손으로 적어 둔 (880, 556)은 창이 커진 뒤
+  // 66px 어긋나 입력면 밖을 눌렀고, 그래서 안내가 닫히지 않았다.
+  await tap(page, guideCloseX, guideCloseY);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["가방"]);
   expect(await page.evaluate(() => window.__PF_DEBUG?.inventoryCategory)).toBe("currency");
   await captureGame(page, `test-results/${test.info().project.name}-currency-guide-stack.png`);

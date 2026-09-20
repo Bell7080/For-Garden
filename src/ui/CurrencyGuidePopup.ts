@@ -16,6 +16,15 @@ import { COLOR, textStyle } from "./theme";
  * 가졌는지 없으면, 쓸지 말지를 정하러 온 손이 창을 닫고 상단 줄을 다시 봐야 한다.
  */
 const HERO = { y: -290, width: 660, height: 176, frameSize: 124 } as const;
+
+/**
+ * 창의 크기.
+ *
+ * **밖으로 내보내는 이유는 E2E가 같은 값을 읽어야 하기 때문이다.** 닫기 X의 자리는 이 크기와
+ * `POPUP_CLOSE_LAYOUT`에서 나오는데, 스펙이 그 좌표를 손으로 적어 두었더니 창이 커진 뒤로
+ * 66px 어긋나 빈 곳을 눌렀고 — 조작은 성공한 채 검사만 조용히 깨졌다.
+ */
+export const CURRENCY_GUIDE_SIZE = { width: 780, height: 1020 } as const;
 const TONE = { value: "#ffe9a3" } as const;
 
 /** 획득처와 사용처를 같은 홀로그램 문법으로 보여 주는 공용 읽기 전용 안내창이다. */
@@ -24,7 +33,7 @@ export class CurrencyGuidePopup {
 
   open(key: WalletItemKey): void {
     const guide = currencyGuide(key);
-    this.popups.open({ width: 780, height: 1020, title: guide.name, dim: true, dimAlpha: 0.34 }, (body, close) => {
+    this.popups.open({ width: CURRENCY_GUIDE_SIZE.width, height: CURRENCY_GUIDE_SIZE.height, title: guide.name, dim: true, dimAlpha: 0.34 }, (body, close) => {
       this.addHolding(body, key);
       // 짧은 세계관 문장은 보유량 아래에만 두고, 실제 판단 정보는 두 구역으로 명확히 가른다.
       body.add(this.scene.add.text(0, -170, guide.lore, textStyle({ role: "body", size: 24, color: COLOR.inkDim, align: "center", wrap: 650 })).setOrigin(0.5));

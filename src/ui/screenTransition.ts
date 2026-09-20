@@ -28,14 +28,53 @@ function currentMotion(): TransitionMotion {
  * 먼저 부르면 그 뒤에 세운 것들이 이미 끝난 트윈 밖에 남아, 화면 절반만 떠오른다.
  */
 export function playSceneEntrance(scene: Phaser.Scene): void {
-  const timing = transitionTiming("sceneIn", currentMotion());
+  // 핵심 화면 다섯 사이를 오간 것이면 그 방향으로 **옆에서** 들어온다.
+  const direction = consumeNavDirection();
+  const timing = transitionTiming(direction ? "navSwitch" : "sceneIn", currentMotion());
   const camera = scene.cameras.main;
-  if (timing.duration === 0) { camera.setAlpha(1); camera.setScroll(camera.scrollX, 0); return; }
+  const baseX = camera.scrollX;
+  if (timing.duration === 0) { camera.setAlpha(1); camera.setScroll(baseX, 0); return; }
   camera.setAlpha(timing.alpha);
-  // 음수 scrollY는 카메라가 그만큼 위를 보는 것이라, 화면의 내용은 그만큼 **아래에서** 시작한다.
-  camera.setScroll(camera.scrollX, -timing.distance);
+  if (direction) {
+    /*
+     * 카메라가 왼쪽을 보면 내용은 그만큼 **오른쪽에서** 시작한다. 오른쪽 탭으로 간 손
+     * (`+1`)에게는 새 화면이 오른쪽에서 밀려 들어오는 것이 맞다.
+     */
+    camera.setScroll(baseX - timing.distance * direction, 0);
+    scene.tweens.add({ targets: camera, scrollX: baseX, duration: timing.duration, ease: "Cubic.easeOut" });
+  } else {
+    // 음수 scrollY는 카메라가 그만큼 위를 보는 것이라, 화면의 내용은 그만큼 **아래에서** 시작한다.
+    camera.setScroll(baseX, -timing.distance);
+    scene.tweens.add({ targets: camera, scrollY: 0, duration: timing.duration, ease: "Cubic.easeOut" });
+  }
   scene.tweens.add({ targets: camera, alpha: 1, duration: timing.duration, ease: "Sine.easeOut" });
-  scene.tweens.add({ targets: camera, scrollY: 0, duration: timing.duration, ease: "Cubic.easeOut" });
+}
+
+/**
+ * 다음 화면이 **어느 쪽에서** 들어올지.
+ *
+ * 들어오는 씬은 제가 어디서 왔는지 모른다 — 그 앞의 화면은 이미 죽었고, Phaser의 진입 데이터로
+ * 넘기려면 다섯 씬이 저마다 `init`에서 그 값을 받아 `playSceneEntrance`까지 들고 가야 한다.
+ * 화면이 갈리는 일을 이 파일 하나가 맡는 이유가 바로 그것이라, 방향도 여기서 들고 있다가
+ * **읽는 순간 비운다.** 비우지 않으면 다음에 다른 길로 들어온 화면까지 옆으로 밀려 들어온다.
+ */
+let pendingNavDirection: -1 | 1 | undefined;
+
+function consumeNavDirection(): -1 | 1 | undefined {
+  const direction = pendingNavDirection;
+  pendingNavDirection = undefined;
+  return direction;
+}
+
+/**
+ * 핵심 화면 다섯 사이를 오간다. 하단 탭과 좌우로 미는 손이 같은 문을 쓴다.
+ *
+ * 방향을 함께 받는 이유는 그것이 **연출이 아니라 자리**이기 때문이다 — 오른쪽 탭으로 갔으면
+ * 새 화면은 오른쪽에서 들어와야 그 화면이 줄의 어디에 있는지 손이 기억한다.
+ */
+export function startNavScene(scene: Phaser.Scene, key: string, direction: -1 | 0 | 1): void {
+  pendingNavDirection = direction === 0 ? undefined : direction;
+  startScene(scene, key);
 }
 
 /**

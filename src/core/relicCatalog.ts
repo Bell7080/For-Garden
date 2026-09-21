@@ -39,9 +39,16 @@ export type RelicCatalogDisclosure =
   | { access: "silhouette"; specimenNumber: string; catalogSummary: string }
   | { access: "full"; specimenNumber: string; projectName: string; origin: string; excavationSite: string; record: string };
 
-/** 미보유 상태에서 이름·기원·발굴 기록이 실수로 UI 모델에 섞이지 않게 하는 순수 경계다. */
+/**
+ * 미보유 상태에서 이름·기원·발굴 기록이 실수로 UI 모델에 섞이지 않게 하는 순수 경계다.
+ *
+ * **적 전용 개체는 보유 여부를 묻지 않는다.** `enemyOnly`는 가챠에도 도감(`PLAYABLE_RELICS`)
+ * 에도 서지 않으므로 「상세 기록은 개체 획득 후 해제됩니다」가 성립하지 않는다 — 영영 해제될
+ * 수 없는 안내를 걸어 두면, 그 개체를 여는 유일한 자리(적 정보창)에서 소속 엠블럼도 관찰
+ * 기록도 끝내 읽을 수 없다. 그 개체를 여는 손은 이미 전장에서 마주친 뒤라 처음부터 공개한다.
+ */
 export function getRelicCatalogDisclosure(def: RelicDef, owned: boolean): RelicCatalogDisclosure {
-  if (!owned) return { access: "silhouette", specimenNumber: def.specimenNumber, catalogSummary: def.catalogSummary };
+  if (!owned && def.enemyOnly !== true) return { access: "silhouette", specimenNumber: def.specimenNumber, catalogSummary: def.catalogSummary };
   return {
     access: "full",
     specimenNumber: def.specimenNumber,

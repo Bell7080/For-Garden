@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
 import { captureGame, tap, waitForDebugState } from "./canvasInput";
+import { ENEMY_INFO } from "../../src/ui/enemyInfoLayout";
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
@@ -36,8 +37,29 @@ test("적을 누르면 정보창을 줄인 팝업이 열린다", async ({ page }
   await tap(page, 540, 300);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["정보창"]);
 
-  // 스킬 액자를 누르면 아군 창과 같은 쪽지가 그 위에 뜬다.
+  /*
+   * 스킬 액자를 누르면 아군 창과 같은 쪽지가 그 위에 뜬다.
+   *
+   * **쪽지는 제목표를 달지 않으므로 `popupTitles`가 세지 않는다** — 그 수로 기다리면 영영
+   * 오지 않는 2를 기다린다. 열렸다는 것은 그림으로 남기고, 닫은 뒤 머리글이 하나로 되돌아오는
+   * 것으로 층이 실제로 쌓였다 풀렸음을 확인한다.
+   */
   await tap(page, BASE_WIDTH / 2 - 8, BASE_HEIGHT / 2 + 424);
-  await waitForDebugState(page, () => window.__PF_DEBUG?.popupTitles?.length, 2);
   await captureGame(page, `test-results/${test.info().project.name}-enemy-skill.png`);
+  await tap(page, 540, 200);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["정보창"]);
+
+  /*
+   * **적에게도 관찰 일지가 열린다.**
+   *
+   * 개체번호·프로젝트·발굴지와 소속 엠블럼은 적 정의에도 온전히 있는데 그것을 여는 문이 아군
+   * 정보창에만 있어, 화면 어디에서도 읽을 수 없었다. 인터뷰 영역만 서지 않는다.
+   */
+  const journal = {
+    x: BASE_WIDTH / 2 + ENEMY_INFO.journalButton.x,
+    y: BASE_HEIGHT / 2 + ENEMY_INFO.journalButton.y,
+  };
+  await tap(page, journal.x, journal.y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles), { timeout: 20_000 }).toEqual(["정보창", "관찰 일지"]);
+  await captureGame(page, `test-results/${test.info().project.name}-enemy-journal.png`);
 });

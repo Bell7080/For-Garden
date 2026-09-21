@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { galleryPortraitPlacement, infoPortraitPlacement } from "./portraitPlacement";
 import { battleAssetFor, placePuppet, portraitAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
+import { setDebugInfoAssetReady } from "../debug";
 import { breakthroughGrade, isBreakthroughSlotOpen, relicLevelCap } from "../core/relicProgression";
 import type { Passive, RelicDef, Skill, Ultimate } from "../core/types";
 import { KeywordManager } from "../managers/KeywordManager";
@@ -14,6 +15,7 @@ import {
   addInfoFerocityBadge, addInfoFigureStand, addInfoMagnifier, addInfoPanel, buildSkillViewModel,
   openBreakthroughStepsPopup, openExtraStatsPopup, openFerocityTraitPopup, paintRarityGem, slotFallbackIcon,
 } from "./info";
+import { addObservationJournalButton, openObservationJournal } from "./ObservationJournal";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
 import { drawFrameVignette, drawGlassFade, drawShapeOutline } from "./holo";
 import { popupArtShape, popupBodyShapeMask } from "./popupArt";
@@ -124,6 +126,10 @@ export class EnemyInfoPopup {
       // 제목표를 이 층으로 끌어올린다 — 판 안에 두면 바로 위의 이름줄 어둠이 `/정보창`과 그
       // 그림자를 함께 눌러 흐려진다. 판과 같은 자리·같은 배율이라 좌표는 그대로 맞는다.
       this.popups.moveTitle(body, chrome);
+      // 아군 정보창과 **같은 검사 계약**을 게시한다 — 두 원화는 ZIP을 내려받아 세우므로 첫
+      // 프레임보다 늦게 도착하고, 그 전에 찍은 그림은 판만 있고 인물이 없다. 같은 창을 보는
+      // 두 화면이 서로 다른 신호를 쓰면 자동화가 한쪽만 기다리게 된다.
+      setDebugInfoAssetReady({ portrait: false, sd: false });
       this.paintHeader(chrome, snapshot);
       this.paintLevel(chrome, snapshot);
       this.paintStats(chrome, snapshot.def);
@@ -133,6 +139,18 @@ export class EnemyInfoPopup {
       this.galleryBody = body;
       this.shownDef = snapshot.def;
       addInfoMagnifier(this.scene, this.popups, chrome, ENEMY_INFO.portraitMagnifier.x, ENEMY_INFO.portraitMagnifier.y, (from) => this.enterGallery(from.onClose, mask));
+      /*
+       * **관찰 일지도 아군 창과 같은 한 장이다.**
+       *
+       * 적 개체도 개체번호·프로젝트·발굴지·복원 후 관찰 기록과 소속 스쿼드를 제 정의에 온전히
+       * 갖고 있는데, 그것을 여는 문이 아군 정보창에만 있어 화면 어디에서도 읽을 수 없었다.
+       * **인터뷰만 세우지 않는다** — 적은 복원해 데려온 개체가 아니라 매일 물어볼 상대가
+       * 아니고, 그 영역을 빈 칸으로 남기느니 통째로 비운다.
+       */
+      addObservationJournalButton({ scene: this.scene, popups: this.popups }, chrome,
+        ENEMY_INFO.journalButton.x, ENEMY_INFO.journalButton.y,
+        (from) => openObservationJournal({ scene: this.scene, popups: this.popups, keywords: this.keywords },
+          { def: snapshot.def, owned: false, interviews: false, from }));
       void this.loadPuppets(snapshot.def, generation, depth + 0.4, depth + 0.7, mask);
     });
   }
@@ -145,6 +163,7 @@ export class EnemyInfoPopup {
   private dispose(): void {
     this.open = false;
     this.generation += 1;
+    setDebugInfoAssetReady(undefined);
     this.gallery?.exit.destroy(); this.gallery = undefined;
     this.galleryBody = undefined;
     this.shownDef = undefined;
@@ -385,6 +404,7 @@ export class EnemyInfoPopup {
       puppet.setAlpha(0);
       this.scene.tweens.add({ targets: puppet, alpha: 1, duration: 220 });
     }
+    setDebugInfoAssetReady({ portrait: true, sd: true });
   }
 }
 

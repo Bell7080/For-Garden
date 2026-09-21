@@ -4,6 +4,10 @@
  * 세 영역은 ① 표본 메타데이터, ② 복원 전의 회색 발굴 기록, ③ 복원 후의 흰 관찰 기록 순서다.
  * 각 높이는 실제 텍스트를 만든 뒤 전달하며, 이 함수는 아래 여백을 누적해 긴 문단도 다음 영역을
  * 침범하지 않게 한다. 화면보다 길면 판을 더 키우지 않고 `scrollable`로 내부 스크롤을 요구한다.
+ *
+ * **③은 통째로 없을 수 있다.** 적은 복원해 데려온 개체가 아니라 매일의 인터뷰가 없다 — 그때
+ * 높이만 0으로 넘기면 구분선과 제목이 그대로 남아 빈 칸이 판 절반을 차지하므로, 세 높이가
+ * 모두 0이면 그 영역의 y를 아예 내주지 않는다(`undefined`).
  */
 export const OBSERVATION_JOURNAL_SIZE = {
   popup: { width: 960, minHeight: 1240, maxHeight: 1780, tilt: -1.2, safeInset: 24 },
@@ -28,10 +32,11 @@ export interface ObservationJournalFlow {
   excavationDividerY: number;
   excavationY: number;
   squadY?: number;
-  observationDividerY: number;
-  observationHeadingY: number;
-  observationY: number;
-  actionY: number;
+  /** 아래 넷은 복원 후 관찰 기록 영역이 설 때만 있다. 없으면 그 영역을 그리지 않는다. */
+  observationDividerY?: number;
+  observationHeadingY?: number;
+  observationY?: number;
+  actionY?: number;
   contentHeight: number;
   popupHeight: number;
   viewportHeight: number;
@@ -50,15 +55,24 @@ export function calculateObservationJournalFlow(heights: ObservationJournalHeigh
   cursor += heights.excavation;
   const squadY = heights.squad > 0 ? cursor + spacing.paragraph : undefined;
   if (squadY !== undefined) cursor = squadY + heights.squad;
-  cursor += spacing.section;
-  const observationDividerY = cursor;
-  cursor += spacing.divider;
-  const observationHeadingY = cursor;
-  cursor += heights.observationHeading + spacing.paragraph;
-  const observationY = cursor;
-  cursor += heights.observation + spacing.section;
-  const actionY = cursor;
-  cursor += heights.action + body.bottom;
+  // 복원 후 관찰 기록이 통째로 없으면 구분선도 긋지 않는다 — 판 아래 절반이 빈 칸으로 남는다.
+  const hasObservation = heights.observationHeading + heights.observation + heights.action > 0;
+  let observationDividerY: number | undefined;
+  let observationHeadingY: number | undefined;
+  let observationY: number | undefined;
+  let actionY: number | undefined;
+  if (hasObservation) {
+    cursor += spacing.section;
+    observationDividerY = cursor;
+    cursor += spacing.divider;
+    observationHeadingY = cursor;
+    cursor += heights.observationHeading + spacing.paragraph;
+    observationY = cursor;
+    cursor += heights.observation + spacing.section;
+    actionY = cursor;
+    cursor += heights.action;
+  }
+  cursor += body.bottom;
   const contentHeight = cursor;
   const popupHeight = Math.min(popup.maxHeight, Math.max(popup.minHeight, contentHeight));
   return {

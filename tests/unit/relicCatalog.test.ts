@@ -221,4 +221,28 @@ describe("relic catalog", () => {
     expect(locked).not.toHaveProperty("record");
     expect(owned).toMatchObject({ access: "full", projectName: relic.projectName, record: relic.unlockRecord.status === "recorded" ? relic.unlockRecord.text : expect.any(String) });
   });
+
+  /**
+   * 적 전용 개체는 **잠글 수 없다.**
+   *
+   * `enemyOnly`는 가챠에도 도감에도 서지 않으므로 「개체 획득 후 해제」가 영영 오지 않는다 —
+   * 보유 규칙을 그대로 걸어 두면 그 개체를 여는 유일한 자리(적 정보창)에서 소속 엠블럼도
+   * 관찰 기록도 끝내 읽히지 않고, 기껏 적어 둔 설정이 데이터에만 남는다.
+   */
+  it("적 전용 개체는 보유 여부와 무관하게 기록을 공개한다", () => {
+    const enemy = RELICS.find((relic) => relic.enemyOnly === true);
+    expect(enemy, "적 전용 개체가 카탈로그에 있어야 한다").toBeDefined();
+    // 도감 격자에는 서지 않으므로 공개해도 미보유 실루엣 규칙과 부딪히지 않는다.
+    expect(PLAYABLE_RELICS.some(({ id }) => id === enemy!.id)).toBe(false);
+    const disclosure = getRelicCatalogDisclosure(enemy!, false);
+    expect(disclosure).toMatchObject({
+      access: "full",
+      specimenNumber: enemy!.specimenNumber,
+      projectName: enemy!.projectName,
+      excavationSite: enemy!.excavationSite,
+    });
+    // 소속 메모와 관찰 기록도 정의에 온전히 있어 일지가 빈 판으로 열리지 않는다.
+    expect(enemy!.squadNote).toBeTruthy();
+    expect(enemy!.unlockRecord.status).toBe("recorded");
+  });
 });

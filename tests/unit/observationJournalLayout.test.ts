@@ -31,7 +31,7 @@ describe("observation journal static layout", () => {
     const flow = calculateObservationJournalFlow({ metadata: 180, excavation: 200, squad: 0, observationHeading: 34, observation: 80, action: 66 });
     // 소속 기록이 없어도 발굴 기록과 흰 관찰 기록 사이 section 여백은 사라지지 않는다.
     expect(flow.squadY).toBeUndefined();
-    expect(flow.observationDividerY - (flow.excavationY + 200)).toBe(OBSERVATION_JOURNAL_SIZE.spacing.section);
+    expect((flow.observationDividerY ?? 0) - (flow.excavationY + 200)).toBe(OBSERVATION_JOURNAL_SIZE.spacing.section);
     expect(flow.popupHeight).toBe(OBSERVATION_JOURNAL_SIZE.popup.minHeight);
     expect(flow.scrollable).toBe(false);
   });
@@ -39,10 +39,31 @@ describe("observation journal static layout", () => {
   it("accumulates a squad record and scrolls instead of exceeding the safe popup", () => {
     const flow = calculateObservationJournalFlow({ metadata: 260, excavation: 920, squad: 180, observationHeading: 40, observation: 740, action: 66 });
     expect(flow.squadY).toBe(flow.excavationY + 920 + OBSERVATION_JOURNAL_SIZE.spacing.paragraph);
-    expect(flow.observationDividerY).toBeGreaterThan((flow.squadY ?? 0) + 180);
+    expect(flow.observationDividerY ?? 0).toBeGreaterThan((flow.squadY ?? 0) + 180);
     expect(flow.popupHeight).toBe(OBSERVATION_JOURNAL_SIZE.popup.maxHeight);
     expect(flow.scrollable).toBe(true);
     expect(flow.contentHeight).toBeGreaterThan(flow.popupHeight);
+  });
+
+  /**
+   * 복원 후 관찰 기록이 통째로 없는 판(적 개체).
+   *
+   * 높이만 0으로 넘겨 두면 구분선과 제목 자리가 그대로 남아 빈 칸이 판 절반을 차지한다 —
+   * 그 영역을 쓰지 않는다는 것은 **자리를 내주지 않는 것**으로 말해야 한다.
+   */
+  it("drops the whole restoration section when there are no interviews", () => {
+    const flow = calculateObservationJournalFlow({ metadata: 260, excavation: 420, squad: 180, observationHeading: 0, observation: 0, action: 0 });
+    expect(flow.observationDividerY).toBeUndefined();
+    expect(flow.observationHeadingY).toBeUndefined();
+    expect(flow.observationY).toBeUndefined();
+    expect(flow.actionY).toBeUndefined();
+    // 소속 문단 끝에서 아래 여백만 남기고 끝난다 — 쓰지 않는 영역의 section·divider 여백까지
+    // 남겨 두면 판 아래가 이유 없이 비어 스크롤만 길어진다.
+    const squadEnd = (flow.squadY ?? 0) + 180;
+    expect(flow.contentHeight).toBe(squadEnd + OBSERVATION_JOURNAL_SIZE.body.bottom);
+    // 짧아도 판은 최소 높이를 지키므로 스크롤이 생기지 않는다.
+    expect(flow.popupHeight).toBe(OBSERVATION_JOURNAL_SIZE.popup.minHeight);
+    expect(flow.scrollable).toBe(false);
   });
 
   it("removes only sentences that repeat exact profile measurements", () => {

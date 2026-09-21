@@ -21,6 +21,27 @@ describe("적 정보 팝업 배치", () => {
     expect(columns[2] + ENEMY_INFO.skills.size / 2).toBeLessThan(ENEMY_INFO.figure.x - 96);
   });
 
+  /**
+   * 관찰 일지 입구.
+   *
+   * 적 개체도 개체번호·프로젝트·발굴지·소속 스쿼드를 제 정의에 온전히 갖고 있는데, 그것을
+   * 여는 문이 아군 정보창에만 있어 화면 어디에서도 읽을 수 없었다. 자리는 원화 돋보기와 같은
+   * 기둥이고, 둘이 겹치지도 이름 블록·스킬 줄을 침범하지도 않아야 한다.
+   */
+  it("은 원화 돋보기 아래 같은 기둥에 관찰 일지 입구를 둔다", () => {
+    const { journalButton, portraitMagnifier, numberY, skills } = ENEMY_INFO;
+    const size = 76;
+    // 같은 x에 세로로 붙어 "더 들여다보는 조작"이 한 덩어리로 읽힌다.
+    expect(journalButton.x).toBe(portraitMagnifier.x);
+    expect(journalButton.y).toBeGreaterThan(portraitMagnifier.y);
+    // 두 조작이 서로 겹치지 않는다.
+    expect(journalButton.y - portraitMagnifier.y).toBeGreaterThan(size);
+    // 위로는 개체번호 줄을, 아래로는 스킬 액자 줄을 침범하지 않는다.
+    expect(journalButton.y - size / 2).toBeGreaterThan(numberY);
+    expect(journalButton.y + size / 2).toBeLessThan(skills.y - skills.size / 2);
+    expect(insideEnemyInfoBody({ x: journalButton.x, y: journalButton.y, width: size, height: size })).toBe(true);
+  });
+
   it("은 오른쪽 칸·스킬 줄이 몸판의 깎인 모서리 안에 든다", () => {
     const { column, levelPanel, statPanel, radar, skills } = ENEMY_INFO;
     // 정보창과 같은 기둥이라 두 칸이 같은 x·같은 폭으로 서고, 둘 다 판 안에 든다.

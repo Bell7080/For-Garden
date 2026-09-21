@@ -58,7 +58,7 @@ export const GLOSSARY = {
   expedition: { note: "수장된 제2·제3지부를 무대로 하는 주간 기록형 콘텐츠.", forms: { ko: "원정", ja: "遠征", en: "Expedition" } },
   interaction: { note: "이터널 바깥 Garden 도시들을 도는 방치형 서브 콘텐츠.", forms: { ko: "교류", ja: "交流", en: "Exchange" } },
   archaeology: { note: "하단 탭 첫 슬롯의 장기 탐사. 로비 왼쪽의 발굴과 다른 콘텐츠다.", forms: { ko: "고고학", ja: "考古学", en: "Archaeology" } },
-  cakeOperation: { note: "레이티아 거대겨울잠쥐가 떼로 몰려오는 치즈케이크 물량형 던전.", forms: { ko: "치즈케이크 대작전", ja: "チーズケーキ大作戦", en: "Cheesecake Operation" } },
+  cakeOperation: { note: "레이티아 다섯 자매가 떼로 몰려오는 치즈케이크 물량형 던전.", forms: { ko: "치즈케이크 대작전", ja: "チーズケーキ大作戦", en: "Cheesecake Operation" } },
   sweep: { note: "이미 이긴 단계를 전투 없이 한 번에 터는 조작. 스킵이라 부르지 않는다.", forms: { ko: "소탕", ja: "掃討", en: "Sweep" } },
   dungeonMultiplier: { note: "한 번에 여러 판의 스테미나와 보상을 함께 치르는 단축 배율. 전투 진행 배속과 다르다.", forms: { ko: "배율", ja: "倍率", en: "Multiplier" } },
   adFreeMembership: { note: "광고를 없애고 던전 3배율을 여는 30일 멤버십 상품.", forms: { ko: "광고 제거 멤버십", ja: "広告除去メンバーシップ", en: "Ad-Free Membership" } },

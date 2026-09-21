@@ -11,7 +11,7 @@ import { RUNE_ICON_ASSETS } from "../ui/runeIcons";
 import { SKILL_ICON_ASSETS } from "../ui/skillIcons";
 import { SKILL_ART_ASSETS } from "../ui/skillArt";
 import { EXCAVATION_TRAIT_ICON_ASSETS } from "../ui/excavationIcons";
-import { ITEM_ICON_ASSETS } from "../ui/itemIcons";
+import { ITEM_ICON_ASSETS, ITEM_RASTER_ICON_ASSETS } from "../ui/itemIcons";
 import { SQUAD_EMBLEM_ASSETS } from "../data/factions";
 import { SHOP_PRODUCT_ICON_ASSETS } from "../data/shopCatalog";
 
@@ -141,6 +141,8 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
         RUNE_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
         // 임시 item SVG도 개별 가방 씬이 아니라 공용 단계에서 크게 구운 뒤 축소해 사용한다.
         ITEM_ICON_ASSETS.forEach(([key, path]) => scene.load.svg(key, path, { width: SVG_BAKE.skill, height: SVG_BAKE.skill }));
+        // 구운 WebP는 SVG 파서에 넣지 않는다 — 루트를 못 찾으면 Phaser가 예외를 던져 로더가 거기서 멎는다.
+        ITEM_RASTER_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
         UI_ICON_ASSETS.forEach(([key, path, size]) => scene.load.svg(key, path, { width: size * SVG_BAKE.uiScale, height: size * SVG_BAKE.uiScale }));
         // 원화로 온 UI 아이콘은 벡터가 아니라 그림 한 장이라 그대로 읽는다.
         UI_RASTER_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));

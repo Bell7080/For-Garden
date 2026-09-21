@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
 import { captureGame, tap } from "./canvasInput";
+import { settingsRowY, settingsTabX } from "../../src/ui/settingsLayout";
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
@@ -9,11 +10,12 @@ const BASE_HEIGHT = 1920;
  * 환경설정의 **언어 행**이 서는 자리.
  *
  * 게임 탭의 행은 위에서부터 같은 간격으로 쌓이고(`SettingsScene.buildRows`) 언어가 마지막
- * 줄이다. 값은 손으로 적되, 한 줄만 어긋나도 **바로 위의 「텍스트 속도」가 대신 눌린다** —
- * 그래도 조작 자체는 성공하므로 검사가 조용히 엉뚱한 행을 통과시킨다. 그래서 아래에서
- * 텍스트 속도가 그대로인지도 함께 본다.
+ * 줄이다. 자리는 손으로 적지 않고 배치표에서 얻는다 — 한 줄만 어긋나도 **바로 위의
+ * 「텍스트 속도」가 대신 눌리는데**, 그래도 조작 자체는 성공하므로 검사가 조용히 엉뚱한 행을
+ * 통과시킨다. 그래서 아래에서 텍스트 속도가 그대로인지도 함께 본다.
  */
-const LANGUAGE_ROW = { x: 800, y: 1332 } as const;
+const LANGUAGE_ROW = { x: 800, y: settingsRowY(10) } as const;
+const GAME_TAB = { x: settingsTabX(2, 5, BASE_WIDTH), y: 176 } as const;
 
 const scene = (page: import("@playwright/test").Page) => page.evaluate(() => window.__PF_DEBUG?.scene);
 const savedGame = (page: import("@playwright/test").Page) => page.evaluate(() =>
@@ -33,7 +35,7 @@ test("환경설정에서 언어를 바꾸면 화면 문구와 정적 데이터�
   await tap(page, BASE_WIDTH - 58, 86);
   await expect.poll(() => scene(page)).toBe("settings");
   // 게임 탭으로 옮긴 뒤 행이 실제로 서기까지 한 프레임을 둔다.
-  await tap(page, 540, 210);
+  await tap(page, GAME_TAB.x, GAME_TAB.y);
   await expect.poll(async () => (await savedGame(page)).language).toBe("ko");
   const before = await savedGame(page);
 

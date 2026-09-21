@@ -6,6 +6,7 @@ import { UI_ICON } from "./icons";
 import { addSectionTitle } from "./SectionTitle";
 import { COLOR, textStyle } from "./theme";
 import { setDebugPopupTitles } from "../debug";
+import { playPopupClose, playPopupOpen } from "./screenTransition";
 import { BACK_SLOT, POPUP_BACK_BUTTON_DEPTH, POPUP_BODY_BEVEL_RATIO, POPUP_CLOSE_LAYOUT, POPUP_TITLE_SIZE, tiltedPopupSize } from "./popupGeometry";
 
 /** 제목 위계는 순수 배치표가 갖고 여기서는 다시 내보내기만 한다. */
@@ -92,6 +93,14 @@ export class PopupLayer {
   private readonly chromeByBody = new Map<Phaser.GameObjects.Container, Phaser.GameObjects.GameObject[]>();
   /** 제목 있는 팝업만 E2E 관찰용으로 기록한다. Canvas 밖에서는 지금 무엇이 열려 있는지 알 방법이 없다. */
   private readonly titleByLayer = new Map<Phaser.GameObjects.Container, string>();
+  /** 닫는 연출은 층이 아니라 **판**을 줄이므로, 층마다 제 판을 찾아갈 수 있게 짝을 남긴다. */
+  private readonly bodyByLayer = new Map<Phaser.GameObjects.Container, Phaser.GameObjects.Container>();
+  /**
+   * 판 **밖**에 선 공용 뒤로가기. 층의 자식이 아니라 화면에 서므로 층의 입력을 끄는 것만으로는
+   * 꺼지지 않는다 — 닫는 연출이 도는 동안 그 자리에 **눌리는 죽은 버튼**이 남는다. 닫는 순간
+   * 직접 지우려고 층마다 들고 있는다.
+   */
+  private readonly backByLayer = new Map<Phaser.GameObjects.Container, Phaser.GameObjects.GameObject>();
 
   /** 씬 종료 정리를 이미 걸었는지. 첫 팝업을 열 때 한 번만 건다. */
   private shutdownHooked = false;
@@ -230,6 +239,8 @@ export class PopupLayer {
       // 판 밖 우하단이라는 자리 자체가 사라진다. 층이 닫힐 때 같이 지운다.
       const back = new IconButton(this.scene, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => close() })
         .setDepth(POPUP_BACK_BUTTON_DEPTH + this.stack.length * 2);
+      this.backByLayer.set(layer, back);
+      // 층이 연출 없이 통째로 죽는 길(씬 종료)에서도 함께 지운다.
       layer.once(Phaser.GameObjects.Events.DESTROY, () => back.destroy());
     }
     if (options.closeOnBackdrop !== false) {
@@ -259,13 +270,12 @@ export class PopupLayer {
     // 배경 원화를 까는 큰 팝업은 내용이 제목 뒤로 들어오므로, 채운 뒤 머리글을 한 번 더 맨 위로 올린다.
     this.raiseChrome(body);
 
-    // 살짝 커지며 떠오른다. 정보창의 다른 판과 같은 등장 방식이다.
-    layer.setAlpha(0);
-    body.setScale(0.96);
-    this.scene.tweens.add({ targets: layer, alpha: 1, duration: 160 });
-    this.scene.tweens.add({ targets: body, scale: 1, duration: 200, ease: "Cubic.Out" });
+    // 살짝 커지며 떠오른다. 시간과 배율은 화면 전체가 함께 읽는 전환표가 갖는다 —
+    // 여기에 숫자를 적어 두면 씬 전환만 움직임 설정을 따르고 팝업만 그대로 남는다.
+    playPopupOpen(this.scene, layer, body);
 
     if (options.title) this.titleByLayer.set(layer, options.title);
+    this.bodyByLayer.set(layer, body);
     this.hookShutdown();
     this.stack.push(layer);
     openLayerCount += 1;
@@ -330,6 +340,13 @@ export class PopupLayer {
     while (this.stack.length > 0) this.closeTop();
   }
 
+  /**
+   * **장부는 지금 닫고, 판만 천천히 보낸다.**
+   *
+   * 사라지는 연출이 끝난 뒤에 스택에서 빼면 그 사이 `closeAll`이 같은 층을 또 닫으려 들고,
+   * `anyPopupOpen`은 이미 없는 판을 열려 있다고 말한다 — 전투는 그동안 멈춰 선다. 세는 일과
+   * 부른 쪽에 알리는 일은 이 호출에서 끝내고, 실제로 지우는 것만 연출 뒤로 미룬다.
+   */
   private close(layer: Phaser.GameObjects.Container): void {
     const index = this.stack.indexOf(layer);
     if (index === -1) return;
@@ -338,7 +355,14 @@ export class PopupLayer {
     this.titleByLayer.delete(layer);
     const onClose = this.onCloseByLayer.get(layer);
     this.onCloseByLayer.delete(layer);
-    layer.destroy();
+    const body = this.bodyByLayer.get(layer);
+    this.bodyByLayer.delete(layer);
+    // 판 밖의 뒤로가기는 **지금** 지운다 — 연출이 끝나기를 기다리면 그 0.12초 동안 이미 닫힌
+    // 판의 버튼이 화면 우하단에 남아, 아래 화면의 뒤로가기 대신 그것이 눌린다.
+    this.backByLayer.get(layer)?.destroy();
+    this.backByLayer.delete(layer);
+    if (body) playPopupClose(this.scene, layer, body, () => layer.destroy());
+    else layer.destroy();
     onClose?.();
     this.publishDebugTitles();
   }

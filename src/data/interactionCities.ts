@@ -105,7 +105,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     description: "밤에도 구조 신호가 끊이지 않는 침수 외곽 의료 구역. 손이 모자라 오래 붙잡지 않는다.",
     unlock: {}, durationMinutes: 30, partySize: { min: 1, max: 3 },
     recommended: { elements: ["wind"], squads: ["gear"], tags: ["night-gear"] },
-    rewards: [{ currency: "gold", amount: 1500, weight: 5, tags: ["night-gear"] }, { currency: "fossil", amount: 90, weight: 2 }, { currency: "rawStone", amount: 120, weight: 1 }],
+    rewards: [{ currency: "gold", amount: 1500, weight: 5, tags: ["night-gear"] }, { currency: "fossil", amount: 1, weight: 2 }, { currency: "rawStone", amount: 120, weight: 1 }],
     clueJournalId: "interaction-night-01", illustration: "background-expedition-ranking",
   },
   {
@@ -121,7 +121,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     description: "도시 끝의 인양조가 고대 화물과 잃어버린 기록을 건져 올린다.",
     unlock: { stageId: "1-7" }, durationMinutes: 60, partySize: { min: 1, max: 3 },
     recommended: { elements: ["water", "wind"], squads: ["gear"], tags: ["salvage"] },
-    rewards: [{ currency: "fossil", amount: 220, weight: 5 }, { currency: "gold", amount: 2600, weight: 2 }, { currency: "rawStone", amount: 240, weight: 1 }],
+    rewards: [{ currency: "fossil", amount: 2, weight: 5 }, { currency: "gold", amount: 2600, weight: 2 }, { currency: "rawStone", amount: 240, weight: 1 }],
     clueJournalId: "interaction-abyss-01", illustration: "background-excavation",
   },
   {
@@ -129,7 +129,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     description: "인양권을 나누는 항만 위원회. 하루를 통째로 비워 두고 다녀와야 한다.",
     unlock: { stageId: "1-10" }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
     recommended: { elements: ["water"], squads: ["gear", "fang"], tags: ["salvage"] },
-    rewards: [{ currency: "fossil", amount: 900, weight: 5 }, { currency: "amber", amount: 2, weight: 1 }, { currency: "rawStone", amount: 2200, weight: 1 }],
+    rewards: [{ currency: "fossil", amount: 9, weight: 5 }, { currency: "amber", amount: 1, weight: 1 }, { currency: "rawStone", amount: 2200, weight: 1 }],
     clueJournalId: "interaction-abyss-02", illustration: "background-archaeology",
   },
   {
@@ -145,7 +145,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     description: "상단주들이 모이는 잿불 회합. 값을 정하는 자리라 밤을 넘긴다.",
     unlock: { stageId: "2-10" }, durationMinutes: 720, partySize: { min: 1, max: 3 },
     recommended: { elements: ["fire", "earth"], squads: ["fang"], tags: ["market"] },
-    rewards: [{ currency: "gold", amount: 14_000, weight: 5 }, { currency: "amber", amount: 3, weight: 1 }, { currency: "rawStone", amount: 1100, weight: 1 }],
+    rewards: [{ currency: "gold", amount: 14_000, weight: 5 }, { currency: "amber", amount: 2, weight: 1 }, { currency: "rawStone", amount: 1100, weight: 1 }],
     clueJournalId: "interaction-ember-02", illustration: "background-sortie-cake",
   },
 ] as const;

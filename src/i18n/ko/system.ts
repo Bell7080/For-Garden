@@ -19,7 +19,7 @@ export const SYSTEM_KO = {
   // ── 발굴 자동 배치 기준 ──────────────────────────────────────────────────
   "excavation.auto.balanced": "골고루",
   "excavation.auto.cheesecake": "치즈케이크",
-  "excavation.auto.fossil": "화석",
+  "excavation.auto.rawStone": "원석",
   "excavation.auto.gold": "골드",
   "excavation.auto.gems": "젬",
 

@@ -10,10 +10,10 @@ import { t } from "../i18n";
  * 한 가지 "가장 좋은 배치"를 강요하지 않는다. 치우친 기준은 그 재화를 캐는 렐릭만 세우고,
  * 균형은 서로 다른 재화를 캐는 셋을 세운다.
  */
-export type ExcavationAutoMode = "balanced" | "cheesecake" | "fossil" | "gold" | "gems";
+export type ExcavationAutoMode = "balanced" | "cheesecake" | "rawStone" | "gold" | "gems";
 
 /** 화면이 화살표로 돌려 가며 고르는 순서다. 목록이 곧 순환 순서라 화면이 따로 적지 않는다. */
-export const EXCAVATION_AUTO_MODES: readonly ExcavationAutoMode[] = ["balanced", "cheesecake", "fossil", "gold", "gems"] as const;
+export const EXCAVATION_AUTO_MODES: readonly ExcavationAutoMode[] = ["balanced", "cheesecake", "rawStone", "gold", "gems"] as const;
 
 /** 기준의 이름. 화면은 이 경계만 읽고 제 문구를 만들지 않는다. */
 export function excavationAutoModeLabel(mode: ExcavationAutoMode): string {
@@ -22,7 +22,7 @@ export function excavationAutoModeLabel(mode: ExcavationAutoMode): string {
 
 /** 치우친 기준이 노리는 재화. 균형에는 없다. */
 const MODE_CURRENCY: Readonly<Record<Exclude<ExcavationAutoMode, "balanced">, ExcavationCurrency>> = {
-  cheesecake: "cheesecake", fossil: "fossil", gold: "gold", gems: "gems",
+  cheesecake: "cheesecake", rawStone: "rawStone", gold: "gold", gems: "gems",
 };
 
 /** 배치 후보 한 명. 정의와 성장만 있으면 생산량이 정해지므로 이름은 보지 않는다. */

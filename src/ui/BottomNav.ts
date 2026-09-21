@@ -4,15 +4,13 @@ import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import { drawGlassFade, drawHairline, HOLO } from "./holo";
 import { squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
+import { startNavScene } from "./screenTransition";
+import { NAV_TABS, navSwipeStep, navTabDirection, neighborNavTab, type NavKey } from "../core/navTabs";
+import { anyPopupOpen } from "./PopupLayer";
 
-/** 핵심 화면 다섯 개. 로비를 중심으로 고고학과 프리미엄이 양 끝에서 서로 균형을 이룬다. */
-export const NAV_TABS = [
-  { key: "archaeology", scene: "archaeology" },
-  { key: "relics", scene: "relics" },
-  { key: "lobby", scene: "lobby" },
-  { key: "lab", scene: "lab" },
-  { key: "premium", scene: "premium" },
-] as const;
+/** 차례와 넘김 규칙은 순수 표가 갖는다. 여기서는 그리기만 한다. */
+export { NAV_TABS };
+export type { NavKey };
 
 /**
  * 탭의 이름.
@@ -23,8 +21,6 @@ export const NAV_TABS = [
 export function navLabel(key: NavKey): string {
   return t(`nav.${key}`);
 }
-
-export type NavKey = (typeof NAV_TABS)[number]["key"];
 
 export const NAV_TOP = BASE_HEIGHT - 180;
 
@@ -134,7 +130,7 @@ export class BottomNav {
         // 누르는 동안만 확대해 눌린 자리를 알린다.
         hit.on("pointerdown", () => group.setScale(1.16));
         hit.on("pointerout", () => group.setScale(1));
-        hit.on("pointerup", () => scene.scene.start(tab.scene));
+        hit.on("pointerup", () => startNavScene(scene, tab.scene, navTabDirection(current, tab.key)));
       }
 
       if (active) {
@@ -146,5 +142,58 @@ export class BottomNav {
         }
       }
     });
+
+    enableNavSwipe(scene, current);
   }
+}
+
+/**
+ * 이번 손짓을 화면이 **제 것으로 가져갔는가**.
+ *
+ * 고고학 지도는 손가락을 따라 상하좌우로 자유롭게 움직인다 — 그 손을 넘김으로 읽으면 지도를
+ * 옆으로 미는 것만으로 화면이 갈려 지도를 볼 수가 없다. 가로 드래그를 제 조작으로 쓰는 것은
+ * 누르기 시작한 자리가 어디인지 스스로 알고 있으므로, **그쪽이 가져간다**고 말하게 한다.
+ */
+let claimed = false;
+
+/** 지금 도는 손짓을 화면이 가져간다. 다음 `pointerdown`에 저절로 풀린다. */
+export function claimNavSwipe(): void {
+  claimed = true;
+}
+
+/**
+ * 좌우로 밀어 옆 화면으로 간다.
+ *
+ * **다섯 화면이 모두 이 막대를 세우므로 여기 한 곳에 건다.** 씬마다 붙이면 화면이 늘 때
+ * 빠뜨리고, 같은 손짓이 어디서는 되고 어디서는 안 되는 일이 생긴다.
+ *
+ * 판이 떠 있는 동안에는 받지 않는다 — 가방이나 무역 작업판 위에서 목록을 훑던 손이 그 판을
+ * 통째로 갈아 치우면 안 된다. 세로로 더 많이 움직인 손도 넘기지 않는다(도감은 세로로 훑는
+ * 목록이라 손이 비스듬히 지나가기 쉽다). 판단은 순수 규칙(`navSwipeStep`)이 한다.
+ */
+function enableNavSwipe(scene: Phaser.Scene, current: NavKey): void {
+  let start: { x: number; y: number } | undefined;
+  let left = false;
+  const onDown = (pointer: Phaser.Input.Pointer): void => {
+    claimed = false;
+    start = anyPopupOpen() ? undefined : { x: pointer.x, y: pointer.y };
+  };
+  const onUp = (pointer: Phaser.Input.Pointer): void => {
+    const from = start;
+    start = undefined;
+    // 이미 넘어가는 중이면 두 번 세지 않는다 — 다음 화면이 뜨기 전의 손까지 받으면 두 칸 건너뛴다.
+    if (!from || left || claimed || anyPopupOpen()) return;
+    const step = navSwipeStep(pointer.x - from.x, pointer.y - from.y);
+    if (step === 0) return;
+    const next = neighborNavTab(current, step);
+    if (!next) return;
+    left = true;
+    startNavScene(scene, next.scene, step);
+  };
+  scene.input.on(Phaser.Input.Events.POINTER_DOWN, onDown);
+  scene.input.on(Phaser.Input.Events.POINTER_UP, onUp);
+  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+    scene.input.off(Phaser.Input.Events.POINTER_DOWN, onDown);
+    scene.input.off(Phaser.Input.Events.POINTER_UP, onUp);
+  });
 }

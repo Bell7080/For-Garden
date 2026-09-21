@@ -20,10 +20,10 @@ import { COLOR, textStyle } from "../ui/theme";
 import { LOBBY_RETURN } from "./lobbyEntry";
 import { prefetchBattlePuppets } from "../puppets/battlePrefetch";
 import { relicCollection } from "../managers/RelicCollectionManager";
-import { CAKE_OPERATION_ENEMY_ID } from "../data/cakeOperation";
+import { CAKE_OPERATION_ENEMY_IDS } from "../data/cakeOperation";
 
 /**
- * **치즈케이크 대작전** — 레이티아 거대겨울잠쥐가 떼로 몰려오는 물량형 던전의 입구.
+ * **치즈케이크 대작전** — 레이티아 다섯 자매가 떼로 몰려오는 물량형 던전의 입구.
  *
  * 화면이 하는 일은 셋뿐이다: 어느 단계로 들어갈지 고르고, 몇 판치를 한 번에 치를지(배율)
  * 고르고, 싸우러 가거나(출격) 전투 없이 털거나(소탕) 한다. 재화 차감과 보상 지급은 화면이
@@ -48,8 +48,9 @@ export class CakeOperationScene extends Phaser.Scene {
   }
 
   create(): void {
-    // 단계를 고르는 동안 전투에 설 SD를 미리 읽는다 — 적은 이 던전 전체가 한 종이다.
-    prefetchBattlePuppets(relicCollection.validParty, [CAKE_OPERATION_ENEMY_ID]);
+    // 단계를 고르는 동안 전투에 설 SD를 미리 읽는다. 다섯 자매는 속성만 다른 같은 몸이지만
+    // **원화는 저마다 다르므로** 다섯을 다 읽어야 한 무리가 통째로 늦게 서지 않는다.
+    prefetchBattlePuppets(relicCollection.validParty, CAKE_OPERATION_ENEMY_IDS);
     setDebugScene("cakeOperation", t("cake.title"));
     this.busy = false;
     this.rows = [];

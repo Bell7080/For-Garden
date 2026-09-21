@@ -30,7 +30,15 @@ export type ReachTier = "melee" | "mid" | "ranged";
 export type RelicRarity = "R" | "SR" | "SSR";
 
 /** 전신 Puppet 레지스트리의 안정적인 데이터 키다. 파일 번호를 게임 데이터에 직접 노출하지 않는다. */
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia" | "pontos" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe";
+/**
+ * 레이티아 다섯 자매의 원화 ID.
+ *
+ * 다섯이 한 표로 묶여 있어야 원화가 오는 날 **빠진 자매 없이** 갈아 끼운다 — 하나씩 적어
+ * 두면 넷만 바꾸고 한 마리가 남의 몸으로 서 있어도 아무도 모른다.
+ */
+export type RaitiaAssetId = "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind";
+
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
@@ -1742,7 +1750,7 @@ export interface Passive {
  * 방치 발굴 생산 재화의 실제 Wallet 저장 키다.
  * UI의 일반 화석은 `fossil`, UI의 다이아는 `gems`에 저장되며 표시 용어를 키로 쓰지 않는다.
  */
-export type ExcavationProductionCurrency = "gold" | "cheesecake" | "fossil" | "gems";
+export type ExcavationProductionCurrency = "gold" | "cheesecake" | "rawStone" | "gems";
 
 /** 전투 능력치와 독립적으로 운영 밸런스를 조정하는 렐릭별 발굴 특화다. */
 export interface ExcavationTrait {

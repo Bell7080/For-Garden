@@ -5,6 +5,7 @@ import { getRelic, PLAYABLE_RELICS, RELICS } from "../../src/data/relics";
 import { effectiveEnemyLevel } from "../../src/core/types";
 import { applyLevelGrowth } from "../../src/core/relicProgression";
 import { RAID_ACTIONS, RAID_BOARD, RAID_HP_BAR, raidBoardViewport } from "../../src/ui/raidLayout";
+import { POPUP_SIDE_SLOT, popupSideSlotGap } from "../../src/ui/popupGeometry";
 import { RANKING_LIST } from "../../src/ui/expeditionRankingLayout";
 import { BASE_HEIGHT } from "../../src/config/gameConfig";
 import { findItem } from "../../src/data/items";
@@ -244,9 +245,19 @@ describe("레이드 배치표", () => {
     expect(RAID_HP_BAR.labelY).toBeLessThan(RAID_HP_BAR.y);
   });
 
-  it("는 하단 조작이 출격 하나뿐이다", () => {
-    // 전리품 상점은 출격판 밖이 맡는다 — 레이드 안에 두면 원정 증표를 쓰러 레이드를 거친다.
-    expect(Object.keys(RAID_ACTIONS)).toEqual(["y", "sortie"]);
+  it("는 상점 입구를 출격 옆이 아니라 판 밖 곁들임 줄에 세운다", () => {
+    /*
+     * 상점이 출격과 같은 크기로 나란히 서면 이 화면의 둘째 콘텐츠로 읽힌다. 자리는 출격판
+     * 밖의 전리품 상점과 **같은 한 칸**(`POPUP_SIDE_SLOT`)이라, 두 화면의 문이 같은 생김새로
+     * 같은 자리에 선다.
+     */
+    expect(RAID_ACTIONS.shop).toBe(POPUP_SIDE_SLOT);
+    // 주 조작과 겹치지 않고, 우하단 공용 뒤로가기 위도 지나지 않는다.
+    expect(RAID_ACTIONS.shop.x + RAID_ACTIONS.shop.width / 2)
+      .toBeLessThan(RAID_ACTIONS.sortie.centerX - RAID_ACTIONS.sortie.width / 2);
+    expect(popupSideSlotGap()).toBeGreaterThan(0);
+    // 목록이 흐르는 창도 덮지 않는다 — 판 밖 줄이라 스크롤을 따라 움직이지 않는다.
+    expect(RAID_BOARD.viewport.bottom).toBeLessThan(RAID_ACTIONS.shop.y - RAID_ACTIONS.shop.height / 2);
   });
 });
 

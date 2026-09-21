@@ -39,8 +39,11 @@ describe("무역 패키지 운영 데이터", () => {
   it("은 시세표로만 값어치를 재고 재화 아닌 지급품은 세지 않는다", () => {
     // 젬 1 = 치즈케이크 2이므로 치즈케이크 600은 젬 300이다.
     expect(tradeGemValue([{ kind: "currency", currency: "cheesecake", amount: 600 }])).toBe(300);
-    // 화석 100과 호박석 2는 연구 1회 비용이 같으므로 젬 값도 같아야 한다.
-    expect(100 / TRADE_GEM_RATE.fossil).toBe(2 / TRADE_GEM_RATE.amber);
+    // 한 개가 곧 연구 한 번이라 시세표의 기준점도 그 한 번이다 — 일반 젬 100, 픽업 젬 300.
+    expect(1 / TRADE_GEM_RATE.fossil).toBe(100);
+    expect(1 / TRADE_GEM_RATE.amber).toBe(300);
+    // 배수는 지어낸 값이 아니라 두 배너의 SSR 확률 차이(0.01 → 0.03)에서 그대로 온다.
+    expect(TRADE_GEM_RATE.fossil / TRADE_GEM_RATE.amber).toBe(3);
     // 시세가 없는 지급품(장식)은 환산하지 않는다 — 세면 가치 %가 부풀려진다.
     expect(tradeGemValue([{ kind: "profile_decoration", decorationId: "patron-monthly", name: "명찰" }])).toBe(0);
     // 재화로 값을 받지 않는 상품은 견줄 기준이 없어 %를 만들지 않는다.

@@ -6,6 +6,7 @@ import { CurrencyGuidePopup } from "./CurrencyGuidePopup";
 import { setCurrencyGuideOpener } from "./itemFrame";
 import type { PopupLayer } from "./PopupLayer";
 import { StaminaPopup } from "./StaminaPopup";
+import { startScene } from "./screenTransition";
 
 /**
  * 재화를 눌러 여는 안내창의 **유일한 경계**.
@@ -39,8 +40,8 @@ export function openCurrencyGuide(host: CurrencyGuideHost, key: WalletItemKey): 
 function applyGuideAction(host: CurrencyGuideHost, action: CurrencyGuideAction): void {
   if (host.onAction) { host.onAction(action); return; }
   // 팝업 목적지(무역)는 그 판을 소유한 화면에서만 열 수 있으므로, 없는 화면에서는 로비로 돌아간다.
-  if (action.kind === "scene") host.scene.scene.start(action.target);
-  else host.scene.scene.start("lobby");
+  if (action.kind === "scene") startScene(host.scene, action.target);
+  else startScene(host.scene, "lobby");
 }
 
 /**

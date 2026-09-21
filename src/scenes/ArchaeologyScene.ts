@@ -38,6 +38,7 @@ import { StrataDigEffect } from "../ui/StrataDigEffect";
 import type { ArchaeologyStateResponse } from "../api/contracts";
 import { formatCountdown } from "../core/formatCountdown";
 import { archaeologyProgressManager } from "../managers/ArchaeologyProgressManager";
+import { playSceneEntrance, startScene } from "../ui/screenTransition";
 
 /**
  * 고고학. 하단 탭 첫 슬롯이다.
@@ -161,6 +162,15 @@ export class ArchaeologyScene extends Phaser.Scene {
   private digging = false;
   /** 판 전체를 다시 만들지 않고 결과 한 칸만 갈아 끼우기 위한 렌더 경계다. */
   private readonly strataTiles = new Map<number, Phaser.GameObjects.Container>();
+  /**
+   * 칸마다의 **입력면**. 칸 컨테이너에서 찾아 쓰지 않고 따로 들고 있는다.
+   *
+   * 예전에는 `list.find(child instanceof Rectangle)`로 골랐는데, **특화 구역 칸에는 색
+   * 사각형이 한 장 더 깔려 있어** 그 자리에서 먼저 걸렸다. 입력을 되돌릴 때 색면에
+   * `setInteractive`를 먹이고 진짜 입력면은 꺼진 채 남아, **한 칸을 판 뒤로 특화 구역 칸이
+   * 전부 눌리지 않았다** — 색이 없는 흙칸만 계속 파여 「나머지가 안 캐진다」로 보였다.
+   */
+  private readonly strataHits = new Map<number, Phaser.GameObjects.Rectangle>();
   private strataGrid: Phaser.GameObjects.Container | null = null;
   /** 판 아래 영수증 줄. 한 칸만 갈아 끼우는 굴착에서도 이 줄은 다시 그린다. */
   private strataHaul: Phaser.GameObjects.Container | null = null;
@@ -186,6 +196,14 @@ export class ArchaeologyScene extends Phaser.Scene {
 
   create(): void {
     setDebugScene("archaeology");
+    /*
+     * **Phaser는 씬 인스턴스를 재사용한다.** 필드 초기값(`= false`)은 게임이 씬을 만들 때 딱
+     * 한 번 도는데, 굴착이 도는 중에 화면을 떠나면 이 씬 객체에 `digging = true`가 남을 수
+     * 있다 — 돌아온 판은 첫 손짓부터 되돌아가 **아무 칸도 파이지 않는다.** 한 판의 상태는
+     * 화면을 열 때마다 되돌린다(상점의 첫 마디가 같은 이유로 재진입부터 사라졌다).
+     */
+    this.digging = false;
+    this.chargeRefreshPending = false;
     addSceneBackground(this, BACKGROUND.archaeology);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -20, strength: 0.72 });
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.5).setDepth(-19);
@@ -195,7 +213,7 @@ export class ArchaeologyScene extends Phaser.Scene {
     // 고고학은 제 경제를 갖는다 — 상단 줄도 원석이 첫 칸이다.
     new TopBar(this, 40, {
       currencies: "archaeology",
-      onSettings: () => this.scene.start("settings", { returnScene: "archaeology" }),
+      onSettings: () => startScene(this, "settings", { returnScene: "archaeology" }),
       onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency),
     });
 
@@ -239,10 +257,13 @@ export class ArchaeologyScene extends Phaser.Scene {
       this.digEffects.forEach((effect) => effect.destroy());
       this.digEffects.clear();
       this.chargeTimer?.destroy(); this.chargeTimer = null; this.chargeValueText = null; this.chargeNoteText = null;
-      this.strataTiles.clear(); this.strataGrid = null; this.strataHaul = null; this.strataDigsText = null; this.digging = false;
+      this.strataTiles.clear(); this.strataHits.clear(); this.strataGrid = null; this.strataHaul = null; this.strataDigsText = null; this.digging = false;
       setDebugArchaeologyDig(undefined);
     });
     void this.refresh();
+    // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
+    // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+    playSceneEntrance(this);
   }
 
   /**
@@ -323,7 +344,7 @@ export class ArchaeologyScene extends Phaser.Scene {
 
   private paintView(): void {
     // 명시적인 화면 전환에서만 기존 판 경계를 버린다. 한 칸 결과에는 이 메서드를 호출하지 않는다.
-    this.strataTiles.clear(); this.strataGrid = null; this.strataHaul = null; this.strataDigsText = null;
+    this.strataTiles.clear(); this.strataHits.clear(); this.strataGrid = null; this.strataHaul = null; this.strataDigsText = null;
     this.view.removeAll(true);
     this.chargeValueText = null; this.chargeNoteText = null;
     setDebugArchaeologyMap(undefined);
@@ -488,6 +509,8 @@ export class ArchaeologyScene extends Phaser.Scene {
     const tile = board.tiles[index];
     if (tileView === undefined || tile === undefined) return;
     tileView.removeAll(true);
+    // 자식을 통째로 버렸으므로 옛 입력면도 함께 잊는다 — 남겨 두면 죽은 객체를 되살리려 든다.
+    this.strataHits.delete(index);
     const frame = strataBoardFrame(board.columns, board.rows, BASE_WIDTH);
     const center = strataTileCenter(index, board.columns, frame);
     if (!tile.revealed) {
@@ -524,6 +547,7 @@ export class ArchaeologyScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true });
     hit.on("pointerup", () => this.dig(index));
     tileView.add(hit);
+    this.strataHits.set(index, hit);
   }
 
   /** 남은 횟수를 버리고 판을 닫는다. 이미 캔 것은 그대로 남으므로 영수증만 한 장 띄운다. */
@@ -645,9 +669,7 @@ export class ArchaeologyScene extends Phaser.Scene {
     if (this.digging) return;
     this.digging = true;
     // 투명 입력면까지 모두 꺼야 빠른 멀티 터치가 다른 칸의 pointerup으로 확정되지 않는다.
-    this.strataTiles.forEach((tile) => tile.list.forEach((child) => {
-      if (child instanceof Phaser.GameObjects.Rectangle && child.input) child.disableInteractive();
-    }));
+    this.strataHits.forEach((hit) => { if (hit.input) hit.disableInteractive(); });
     const board = this.board;
     if (board === null || this.strataGrid === null) { this.digging = false; return; }
     const frame = strataBoardFrame(board.columns, board.rows, BASE_WIDTH);
@@ -768,8 +790,8 @@ export class ArchaeologyScene extends Phaser.Scene {
     if (!board || board.digsLeft <= 0) return;
     board.tiles.forEach((tile) => {
       if (tile.revealed) return;
-      const hit = this.strataTiles.get(tile.index)?.list.find((child) => child instanceof Phaser.GameObjects.Rectangle);
-      if (hit instanceof Phaser.GameObjects.Rectangle) hit.setInteractive({ useHandCursor: true });
+      // 칸 컨테이너를 뒤지지 않는다 — 특화 구역 칸은 색면이 먼저 걸려 진짜 입력면이 꺼진 채 남았다.
+      this.strataHits.get(tile.index)?.setInteractive({ useHandCursor: true });
     });
   }
 

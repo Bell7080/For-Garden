@@ -141,6 +141,17 @@ describe("운영 배너 데이터", () => {
     // 문서와 UI가 같은 정적 운영값을 읽도록 과거 80회 값의 회귀를 막는다.
     expect(BANNERS.every((candidate) => candidate.highestRarityGuarantee === 100)).toBe(true);
   });
+  it("한 개가 한 번이고 묶음 할인을 두지 않는다", () => {
+    /*
+     * 상단 줄의 수가 곧 「몇 번 뽑을 수 있나」여야 한다 — 화석 10이 서 있으면 세어 보지 않고도
+     * 열 번이 읽힌다. 열 번을 싸게 두면 한 번씩 뽑는 손이 손해를 봐 사실상 10연 하나만 남는다.
+     */
+    for (const candidate of BANNERS) {
+      expect(candidate.costOne, candidate.id).toBe(1);
+      expect(candidate.costTen, candidate.id).toBe(candidate.costOne * 10);
+    }
+  });
+
   it("픽업과 대표 렐릭이 해당 등급 풀에 있고 확률 합계가 1이다", () => {
     for (const candidate of BANNERS) {
       expect(Object.values(candidate.slotRates).reduce((sum, rate) => sum + rate, 0)).toBe(1);

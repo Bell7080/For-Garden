@@ -27,6 +27,7 @@ import type { ProductStorefront } from "../data/products";
 import { consumeSceneEntry } from "./sceneEntry";
 import { LOBBY_RETURN, normalizeLobbyEntry, type LobbyMenu } from "./lobbyEntry";
 import { shapeClipMask } from "../ui/popupArt";
+import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import {
   SHOP_BOARD, SHOP_CARD, SHOP_ENTRANCE, SHOP_SHELF, SHOP_STAGE, SHOP_TAB_ROW, SHOP_TITLE,
   shopBoardSize, shopCardSpot, shopCardWidth, shopDialogueSpot, shopGridContentHeight, shopGridViewport,
@@ -105,6 +106,8 @@ export class ShopScene extends Phaser.Scene {
    * 다시 눌러야 원래 보던 자리로 간다. 돌아갈 화면과 **그 화면의 어느 자리**는 다른 값이다.
    */
   private returnMenu?: LobbyMenu;
+  /** 등장 연출이 시작한 **벽시계** 시각. 0이면 아직 시작하지 않았다. */
+  private entranceAt = 0;
 
   constructor() { super("shop"); }
 
@@ -115,6 +118,18 @@ export class ShopScene extends Phaser.Scene {
     // 진입 데이터의 이름은 `returnMenu`이므로 판 이름만 떼어 같은 검증을 지난다.
     this.returnMenu = normalizeLobbyEntry({ menu: data?.returnMenu });
     this.selectedCategory = this.stage.tabs[0]?.id ?? "";
+    /*
+     * **Phaser는 씬 인스턴스를 재사용한다.** 필드 초기값(`= 0`, `= false`)은 게임이 씬을
+     * 만들 때 **딱 한 번** 돌므로, 상점을 한 번 다녀온 뒤로는 `merchantLine`이 1 이상으로
+     * 남아 `tryFirstLine`이 곧바로 되돌아간다 — **두 번째 진입부터는 첫 마디가 영영 서지
+     * 않았다.** 실측에서 재진입은 12초를 기다려도 말이 없었다.
+     *
+     * 한 판의 상태는 `init`에서 되돌린다. 여기가 씬을 열 때마다 도는 유일한 자리다.
+     */
+    this.merchantLine = 0;
+    this.entranceSettled = false;
+    this.merchantReady = false;
+    this.entranceAt = 0;
     consumeSceneEntry(this);
   }
 
@@ -126,14 +141,15 @@ export class ShopScene extends Phaser.Scene {
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.5).setDepth(-19);
     bindCurrencyGuide({ scene: this, popups: this.popups });
     this.topBar = new TopBar(this, 40, {
-      // 어느 재화를 세울지는 자리가 정한다 — 전리품 상점은 값으로 쓰는 증표 둘만 세운다.
-      currencies: this.storefront === "loot" ? "loot" : "default",
-      onSettings: () => this.scene.start("settings", { returnScene: this.returnScene }),
+      // 어느 재화를 세울지는 **무대표가** 정한다. 씬에 삼항으로 적어 두었더니 자리가 늘 때마다
+      // 그 줄이 길어졌고, 고고학 가게는 거기 없어 로비와 같은 조합을 그대로 세우고 있었다.
+      currencies: this.stage.currencies,
+      onSettings: () => startScene(this, "settings", { returnScene: this.returnScene }),
       onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency),
     });
     this.add.text(54, 170, t(this.stage.titleKey), textStyle({ role: "display", size: 54 })).setOrigin(0, 0);
     // 목록 컨테이너는 비동기 생성되므로 공용 돌아가기를 그보다 높은 고정 계층에 둔다.
-    addBackButton(this, () => this.scene.start(this.returnScene, this.returnMenu ? LOBBY_RETURN[this.returnMenu] : undefined)).setDepth(1000);
+    addBackButton(this, () => startScene(this, this.returnScene, this.returnMenu ? LOBBY_RETURN[this.returnMenu] : undefined)).setDepth(1000);
 
     this.createStage();
     this.createBoard();
@@ -151,10 +167,14 @@ export class ShopScene extends Phaser.Scene {
       this.stageMask?.destroy(); this.stageMask = undefined;
       this.viewportMask?.destroy(); this.viewportMask = undefined;
     });
+    // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
+    // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+    playSceneEntrance(this);
   }
 
   /** 관성은 프레임 시간에 맞춰 감쇠해 고주사율에서도 같은 거리로 멈춘다. */
   update(_time: number, delta: number): void {
+    this.openEntranceGates();
     if (!this.pointerDown && Math.abs(this.velocityY) > 4) {
       this.scrollTo((this.content?.y ?? 0) + this.velocityY * Math.min(delta, 34) / 1000);
       this.velocityY *= Math.pow(0.9, delta / 16.67);
@@ -196,17 +216,34 @@ export class ShopScene extends Phaser.Scene {
     this.tweens.add({ targets: this.gridHolder, y: 0, duration: grid.duration, delay: grid.delay, ease: "Cubic.Out" });
     this.tabRow?.setAlpha(0);
     this.tweens.add({ targets: this.tabRow, alpha: 1, duration: grid.duration, delay: grid.delay });
-    // 전시대가 아직 올라오는 중이면 말부터 서지 않는다. 점원 쪽 문과 둘 다 열려야 첫 마디가 뜬다.
-    this.time.delayedCall(SHOP_ENTRANCE.dialogue.delay, () => { this.entranceSettled = true; this.tryFirstLine(); });
     /*
-     * **점원을 기다리는 데에는 한계가 있다.**
+     * **첫 마디의 두 문은 씬 시계가 아니라 벽시계로 연다.**
      *
-     * 첫 마디의 문 둘 중 하나는 점원 묶음이 여는데, 그 묶음은 내려받기라 느릴 수도 아예 오지
-     * 못할 수도 있다(ZIP 실패·오프라인). 그때 문이 영영 닫혀 있으면 첫 마디가 통째로
-     * 사라져 **눌러야만 말이 나오는 화면**이 된다 — 실제로 「로딩이 길면 첫 대사가 안 뜬다」로
-     * 읽혔다. 전시대가 다 올라온 뒤로 이만큼 지나면 점원 없이도 말이 선다.
+     * 예전에는 둘 다 `time.delayedCall`이었다. 그런데 씬 시계는 **프레임이 돌아야** 흐르고,
+     * Phaser는 긴 정지 뒤의 delta를 잘라 내므로(`TimeStep`) 한 번 멎은 만큼이 시계에 통째로
+     * 반영되지 않는다 — 씬 시계가 벽시계보다 영영 뒤처진다. 하필 그 정지를 만드는 것이 점원
+     * 묶음을 읽는 일이라, **점원을 기다려 주는 한계(`merchantWait`)가 정작 필요한 순간에만
+     * 무력해졌다.** 실측에서 최초 진입의 첫 마디가 3초 안전망을 두고도 **10.2초** 뒤에 섰고,
+     * 그때는 이미 목록을 보고 있어 「대사가 안 뜬다」로 읽혔다.
+     *
+     * 벽시계로 재면 멎었던 시간이 그대로 지난 시간이라, 정지가 풀리는 첫 프레임에 문이 열린다.
      */
-    this.time.delayedCall(SHOP_ENTRANCE.dialogue.delay + SHOP_ENTRANCE.dialogue.merchantWait, () => this.openMerchantGate());
+    this.entranceAt = performance.now();
+  }
+
+  /**
+   * 첫 마디의 두 문을 벽시계로 연다. 매 프레임 확인하는 이유는 위 `playEntrance` 주석에 있다.
+   *
+   * 한 번 연 문은 다시 열지 않는다 — `openMerchantGate`가 제자리에서 그것을 지킨다.
+   */
+  private openEntranceGates(): void {
+    if (this.entranceAt === 0) return;
+    const since = performance.now() - this.entranceAt;
+    if (!this.entranceSettled && since >= SHOP_ENTRANCE.dialogue.delay) {
+      this.entranceSettled = true;
+      this.tryFirstLine();
+    }
+    if (since >= SHOP_ENTRANCE.dialogue.delay + SHOP_ENTRANCE.dialogue.merchantWait) this.openMerchantGate();
   }
 
   /**

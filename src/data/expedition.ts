@@ -91,7 +91,7 @@ export const EXPEDITION_REWARD_IDS = ["gold", "fossil", "amber", "gems", "cheese
 export const EXPEDITION_NODE_REWARD_BALANCE = {
   cheesecake: { perNode: { min: 4, max: 12 }, runCap: 180 },
   gold: { perNode: { min: 120, max: 420 }, runCap: 7_500 },
-  fossil: { perNode: { min: 3, max: 12 }, runCap: 220 },
+  fossil: { perNode: { min: 0, max: 1 }, runCap: 1 },
   gems: { perNode: { min: 0, max: 2 }, runCap: 24 },
 } as const;
 
@@ -109,7 +109,7 @@ export const EXPEDITION_COMBAT_REWARD_MULTIPLIERS = {
  */
 export const EXPEDITION_TREASURE_REWARD_BALANCE = {
   gold: { min: 520, max: 900 },
-  fossil: { min: 14, max: 28 },
+  fossil: { min: 1, max: 1 },
   gems: { min: 3, max: 5 },
 } as const;
 
@@ -147,7 +147,7 @@ export const EXPEDITION_CUMULATIVE_REWARD_STAGES = [
   // 저장 호환 ID다. `score-10k`로 바꾸지 않는다.
   { id: "damage-10k", threshold: 10_000, reward: { currency: "gold", amount: 5_000 } },
   // 저장 호환 ID다. `score-50k`로 바꾸지 않는다.
-  { id: "damage-50k", threshold: 50_000, reward: { currency: "fossil", amount: 100 } },
+  { id: "damage-50k", threshold: 50_000, reward: { currency: "fossil", amount: 1 } },
   // 저장 호환 ID다. `score-100k`로 바꾸지 않는다.
   { id: "damage-100k", threshold: 100_000, reward: { currency: "gems", amount: 100 } },
 ] as const;

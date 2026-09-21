@@ -6,6 +6,7 @@ import { addBackButton } from "../ui/IconButton";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { drawHairline, drawLayer, drawVignette, slantedRect } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
+import { playSceneEntrance, startScene } from "../ui/screenTransition";
 
 /** 아직 전투 규칙을 붙이지 않은 신규 출격 콘텐츠가 씬 전환 뒤 공개하는 최소 기획 계약이다. */
 export interface SortiePreviewData {
@@ -44,6 +45,9 @@ export class SortiePreviewScene extends Phaser.Scene {
     this.add.text(160, 790, t("sortie.rewardTitle"), textStyle({ role: "emphasis", size: 27, color: COLOR.sortieText })).setOrigin(0, 0);
     this.add.text(160, 850, content.reward, textStyle({ role: "display", size: 36, color: COLOR.ink })).setOrigin(0, 0);
     this.add.text(BASE_WIDTH / 2, 1230, t("sortie.comingSoon"), textStyle({ role: "body", size: 25, color: COLOR.inkDim })).setOrigin(0.5);
-    addBackButton(this, () => this.scene.start("lobby"));
+    addBackButton(this, () => startScene(this, "lobby"));
+    // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
+    // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+    playSceneEntrance(this);
   }
 }

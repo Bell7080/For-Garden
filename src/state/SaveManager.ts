@@ -18,6 +18,7 @@ import { validateExpeditionMap } from "../core/expeditionMap";
 import type { ExpeditionRunState } from "./session";
 import { staminaMaxForResearchLevel } from "../core/stamina";
 import { findInteractionCity } from "../data/interactionCities";
+import { WALLET_CAPS } from "../data/economy";
 import { INTERACTION_JOURNALS } from "../data/interactionJournals";
 import { defaultUnlockedRelicSkinIds, RELIC_SKINS } from "../data/relicSkins";
 
@@ -37,7 +38,7 @@ function migrateV12Rune(definitionId: string): RuneInstance {
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 39;
+export const CURRENT_SAVE_VERSION = 40;
 
 /**
  * 과거 적 허스크의 ID를 플레이어블 렐릭 ID로 옮기는 **저장 버전 마이그레이션 전용** 표다.
@@ -357,7 +358,16 @@ export class SaveManager {
     // **재료 칸에 쌓아 둔 토벌 증표는 그대로 이월한다** — 이미 레이드를 돌아 받아 둔 몫이라
     // 0으로 밀면 그 사람의 기여가 사라진다.
     const legacySigils = legacyItemQuantity(legacy, "raid-sigil");
-    const wallet = { ...walletWithoutLegacyCurrency, dnaFragments: savedWallet?.dnaFragments ?? 0, cheesecake: savedWallet?.cheesecake ?? legacyCheesecake, rawStone: savedWallet?.rawStone ?? 0, gems: savedWallet?.gems ?? 0, gold: savedWallet?.gold ?? 0, raidSigil: savedWallet?.raidSigil ?? legacySigils, salvageRecord: savedWallet?.salvageRecord ?? 0, stamina: Math.min(savedWallet?.stamina ?? 0, staminaMaxForResearchLevel(playerResearch.level)) };
+    // v40에서 **연구 한 번의 값이 한 개**가 되었다(화석 100 → 1, 호박석 2 → 1). 단위만 바뀌고
+    // 뽑을 수 있는 횟수는 그대로여야 하므로 예전 저장의 잔액을 같은 비율로 나눈다 — 나누지
+    // 않으면 화석 90,000을 든 계정이 9만 번을 뽑는다. 버림이 아니라 올림인 것은 한 번에 못
+    // 미치는 잔액이 조용히 0이 되지 않게 하려는 것이고, 새 상한을 넘지 않게 함께 자른다.
+    const needsPullUnitRescale = (legacy.saveVersion as number | undefined) !== undefined && Number(legacy.saveVersion) < 40;
+    const rescalePullCurrency = (value: number | undefined, divisor: number, cap: number): number | undefined =>
+      value === undefined ? undefined : Math.min(cap, Math.ceil(value / divisor));
+    const rescaledFossil = needsPullUnitRescale ? rescalePullCurrency(savedWallet?.fossil, 100, WALLET_CAPS.fossil) : savedWallet?.fossil;
+    const rescaledAmber = needsPullUnitRescale ? rescalePullCurrency(savedWallet?.amber, 2, WALLET_CAPS.amber) : savedWallet?.amber;
+    const wallet = { ...walletWithoutLegacyCurrency, fossil: rescaledFossil ?? 0, amber: rescaledAmber ?? 0, dnaFragments: savedWallet?.dnaFragments ?? 0, cheesecake: savedWallet?.cheesecake ?? legacyCheesecake, rawStone: savedWallet?.rawStone ?? 0, gems: savedWallet?.gems ?? 0, gold: savedWallet?.gold ?? 0, raidSigil: savedWallet?.raidSigil ?? legacySigils, salvageRecord: savedWallet?.salvageRecord ?? 0, stamina: Math.min(savedWallet?.stamina ?? 0, staminaMaxForResearchLevel(playerResearch.level)) };
     // 구 저장은 로컬 시각을 신뢰하지 않고 첫 서버 요청에서 기준점을 세운다.
     const staminaUpdatedAt = typeof legacy.staminaUpdatedAt === "string" && Number.isFinite(Date.parse(legacy.staminaUpdatedAt)) ? legacy.staminaUpdatedAt : "";
     // 일일 입장 횟수 도입 전 저장은 같은 UTC 키에서 0회로 시작하되 이후 재실행에는 저장값을 유지한다.
@@ -467,7 +477,7 @@ export class SaveManager {
       .filter((stack: { itemId?: unknown }) => stack?.itemId !== "raid-sigil");
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
     if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid } as unknown as SaveData;
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, CURRENT_SAVE_VERSION];
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
     return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid } as unknown as SaveData;
   }

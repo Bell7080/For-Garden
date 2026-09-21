@@ -56,6 +56,8 @@ export class InventoryPopup {
   /** 정렬 선택은 팝업 생명주기 동안 유지하며 변경 렌더는 스크롤을 항상 원점으로 만든다. */
   private sort: InventorySort = { ...DEFAULT_INVENTORY_SORT };
   private maskShape?: Phaser.GameObjects.Rectangle;
+  /** 마스크를 실제로 걸어 둔 컨테이너. 풀 때 이 자리에서 지워야 죽은 마스크가 남지 않는다. */
+  private maskedContent?: Phaser.GameObjects.Container;
   private geometryMask?: Phaser.Display.Masks.GeometryMask;
   /** 중첩 상세 팝업 유무와 무관하게 가방 자체를 닫는 전용 콜백이다. */
   private closePopup?: () => void;
@@ -68,9 +70,19 @@ export class InventoryPopup {
   open(): void {
     if (this.body) return;
     const width = POPUP_WIDTH; const height = POPUP_HEIGHT;
-    this.body = this.popups.open({ width, height, title: t("inventory.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: false, hideCloseButton: true, onClose: () => { this.unsubscribeInventory?.(); this.unsubscribeInventory = undefined; this.destroyMask(); setDebugInventoryCategory(undefined); this.body = undefined; this.view = undefined; this.closePopup = undefined; this.onClose?.(); } }, (body, close) => {
+    this.body = this.popups.open({ width, height, title: t("inventory.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: false, hideCloseButton: true, onClose: () => { this.unsubscribeInventory?.(); this.unsubscribeInventory = undefined; setDebugInventoryCategory(undefined); this.body = undefined; this.view = undefined; this.closePopup = undefined; this.onClose?.(); } }, (body, close) => {
       // 외부 돌아가기 버튼은 stack 최상단이 아니라 이 가방 판을 정확히 가리켜야 한다.
       this.closePopup = close;
+      /*
+       * **마스크는 그것이 자르는 판과 정확히 같은 목숨을 산다.**
+       *
+       * 예전에는 `onClose`에서 부쉈는데, 판은 닫는 연출이 도는 0.12초 동안 아직 살아 **그리는
+       * 중이다.** 그 사이 목록은 이미 죽은 GeometryMask를 가리킨 채 렌더에 들어가
+       * `Cannot read properties of null (reading 'renderWebGL')`로 터졌고, 그 예외는 Phaser가
+       * 다음 프레임을 예약하기 전에 나와 **게임 루프가 통째로 멈췄다** — 화면에는 닫히다 만
+       * 판이 그대로 얼어붙었다(장부는 이미 닫혀 있어 다시 열 수도 없었다).
+       */
+      body.once(Phaser.GameObjects.Events.DESTROY, () => this.destroyMask());
       // 공용 팝업 판과 제목은 보존하고 교체 가능한 내용 전용 컨테이너만 다시 그린다.
       const view = this.scene.add.container(0, 0); this.view = view; body.add(view);
       // 닫기는 LobbyScene의 화면 우하단 공용 버튼 하나가 맡아 팝업에 붙은 중복 버튼을 만들지 않는다.
@@ -107,7 +119,7 @@ export class InventoryPopup {
     const maskBottom = matrix.transformPoint(VIEWPORT.x, VIEWPORT.y + VIEWPORT.height / 2);
     // GeometryMask는 display-list 밖에 있으므로 팝업 컨테이너의 현재 월드 배율까지 반영한다.
     this.maskShape = this.scene.add.rectangle(maskCenter.x, maskCenter.y, Math.hypot(maskRight.x - maskCenter.x, maskRight.y - maskCenter.y) * 2, Math.hypot(maskBottom.x - maskCenter.x, maskBottom.y - maskCenter.y) * 2, 0xffffff).setVisible(false);
-    this.geometryMask = this.maskShape.createGeometryMask(); content.setMask(this.geometryMask); body.add(content);
+    this.geometryMask = this.maskShape.createGeometryMask(); content.setMask(this.geometryMask); this.maskedContent = content; body.add(content);
     visible.forEach((item, index) => this.addCard(content, item, index, textureKeys));
     setDebugInventoryTextureKeys(textureKeys);
     const metrics = inventoryScrollMetrics(visible.length); let offset = 0; let dragY = 0;
@@ -151,9 +163,15 @@ export class InventoryPopup {
     });
   }
 
-  /** GeometryMask와 원본 도형은 컨테이너 자식이 아니므로 둘 다 소유자가 직접 파괴한다. */
+  /**
+   * 마스크를 푼다. GeometryMask와 원본 도형은 컨테이너 자식이 아니라 소유자가 직접 파괴한다.
+   *
+   * **걸어 둔 바로 그 컨테이너에서 지운다.** 마스크는 `view`가 아니라 그 자식인 목록
+   * (`maskedContent`)에 걸려 있어, `view`에서 지우던 때는 목록이 죽은 마스크를 계속 가리켰다.
+   */
   private destroyMask(): void {
-    this.view?.clearMask(true);
+    this.maskedContent?.clearMask(false);
+    this.maskedContent = undefined;
     this.geometryMask?.destroy(); this.geometryMask = undefined;
     this.maskShape?.destroy(); this.maskShape = undefined;
   }

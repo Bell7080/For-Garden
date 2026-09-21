@@ -15,7 +15,7 @@ function makeSession(stamina = 100, clearedIndex = -1): Session {
     interaction: { slots: [null], claimedRequestIds: [] },
     earnedProfileModifierIds: [], equippedProfileModifierIds: [],
     playerResearch: createInitialPlayerResearchProgress(),
-    idleExcavation: { assignedRelicIds: [null, null, null], lastSettledAt: null, unclaimed: { gold: 0, cheesecake: 0, fossil: 0, gems: 0 }, baseStorageSeconds: 14_400, activeProductionMultiplier: 1, storageExtensionExpiresAt: null, retroactiveExcavationGrantVersion: 1 },
+    idleExcavation: { assignedRelicIds: [null, null, null], lastSettledAt: null, unclaimed: { gold: 0, cheesecake: 0, rawStone: 0, gems: 0 }, baseStorageSeconds: 14_400, activeProductionMultiplier: 1, storageExtensionExpiresAt: null, retroactiveExcavationGrantVersion: 1 },
     archaeology: createArchaeologyState(),
     settings: createDefaultSettings(),
     completedStoryIds: new Set(), observationRecords: [],

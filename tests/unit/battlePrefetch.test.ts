@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { BOUNTY_TIERS } from "../../src/data/bounty";
-import { CAKE_OPERATION_ENEMY_ID } from "../../src/data/cakeOperation";
+import { CAKE_OPERATION_ENEMY_IDS } from "../../src/data/cakeOperation";
 import { RAID_SEASON_BOSS } from "../../src/data/raid";
 import { getRelic } from "../../src/data/relics";
 
@@ -53,7 +53,8 @@ describe("전투 SD 미리 읽기", () => {
   });
 
   it("가 가리키는 적은 실제로 있는 개체다", () => {
-    expect(getRelic(CAKE_OPERATION_ENEMY_ID)).toBeTruthy();
+    expect(CAKE_OPERATION_ENEMY_IDS.length).toBeGreaterThan(0);
+    for (const id of CAKE_OPERATION_ENEMY_IDS) expect(getRelic(id), id).toBeTruthy();
     expect(getRelic(RAID_SEASON_BOSS.relicId)).toBeTruthy();
     for (const tier of BOUNTY_TIERS) for (const round of tier.rounds) expect(getRelic(round.relicId), round.relicId).toBeTruthy();
   });

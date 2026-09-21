@@ -14,6 +14,7 @@ import { PortraitCard } from "../ui/PortraitCard";
 import { chipPoints, drawHairline, drawLayer, HOLO } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { InfoManager } from "../ui/info";
+import { playSceneEntrance, startScene } from "../ui/screenTransition";
 
 /** 로비의 친구 버튼에서 진입하는 최소 소셜 화면이며 목록과 프로필을 같은 씬에서 전환한다. */
 export class FriendsScene extends Phaser.Scene {
@@ -35,9 +36,12 @@ export class FriendsScene extends Phaser.Scene {
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.74).setDepth(-29);
     this.title = this.add.text(54, 76, t("friends.title"), textStyle({ role: "display", size: 52 })).setOrigin(0, 0);
     this.summary = this.add.text(BASE_WIDTH - 54, 88, t("friends.syncing"), textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setOrigin(1, 0);
-    addBackButton(this, () => this.scene.start("lobby"));
+    addBackButton(this, () => startScene(this, "lobby"));
     this.info = new InfoManager(this, 1001, "friend");
     void this.loadFriends();
+    // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
+    // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+    playSceneEntrance(this);
   }
 
   /** 서버가 확정한 공개 프로필과 일일 대여 상태를 받은 뒤 목록을 그린다. */

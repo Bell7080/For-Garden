@@ -118,7 +118,7 @@ export const RELICS: RelicDef[] = [
     // 송곳니로 물어뜯는 근접 물리 딜러.
     reachTier: "melee",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 1.2, efficiencyMultiplier: 1.10 },
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.2, efficiencyMultiplier: 1.10 },
     stats: {
       hp: 980,
       def: 50,
@@ -669,7 +669,7 @@ export const RELICS: RelicDef[] = [
     // 물장구는 붙어야 튄다.
     reachTier: "melee",
     // 물가에서 주워 오는 것이 곧 그 아이의 일이라, 발굴 특화도 화석 회수 쪽에 붙인다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 1.12, efficiencyMultiplier: 1.06 },
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.12, efficiencyMultiplier: 1.06 },
     // 앞으로 뛰어드는 전사지만 피해는 주문력에서 나온다 — 물살 자체가 무기라 공격력이 낮고
     // 주문력이 높으며, 어린 유체라 체력과 방어는 같은 등급의 탱커보다 낮게 잡는다.
     stats: {
@@ -860,7 +860,7 @@ export const RELICS: RelicDef[] = [
     // 붓이 닿는 만큼만 다가간다.
     reachTier: "mid",
     // 그림으로 표본을 기록하는 담당이라 발굴 특화도 화석 회수 쪽에 붙인다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 1.12, efficiencyMultiplier: 1.14 },
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.12, efficiencyMultiplier: 1.14 },
     // 앞에 나서지 못하는 지원가라 화력과 발이 느리고, 대신 오래 서 있도록 체력과 저항이 두껍다.
     stats: {
       hp: 1000,
@@ -954,7 +954,7 @@ export const RELICS: RelicDef[] = [
     // 철거 스윙은 휘두르는 팔 길이가 곧 사거리다.
     reachTier: "melee",
     // 부수고 다니는 개체라 발굴 특화도 화석 회수 쪽에 붙인다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 1.04, efficiencyMultiplier: 1.04 },
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.04, efficiencyMultiplier: 1.04 },
     // 머리로 받는 개체라 방어가 두껍고 발이 빠르다. 주문력을 쓰는 스킬이 하나도 없어 낮게 둔다.
     stats: {
       hp: 1100,
@@ -1379,7 +1379,7 @@ export const RELICS: RelicDef[] = [
     // 아군 앞에 서는 자리라 손이 닿는 거리에서만 싸운다. 날개는 버티는 데 쓴다.
     reachTier: "melee",
     // 하늘에서 내려다보며 넓게 훑는 손이라 발굴 특화는 화석 쪽에 붙인다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 1.24, efficiencyMultiplier: 1.1 },
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.24, efficiencyMultiplier: 1.1 },
     /**
      * **종이 방어에 산더미 체력이다.** 방어력 86·저항력 80은 탱커 중 최저이고 체력 2280은
      * 로스터 최고다(엘라 1500). 다 맞으면서 그보다 빨리 차오르는 것이 이 개체의 값이라,
@@ -1481,7 +1481,7 @@ export const RELICS: RelicDef[] = [
     // 붙어서 밀고 흘리는 권법이라 손이 닿는 거리에서만 싸운다.
     reachTier: "melee",
     // 굳은 몸으로 땅을 다지는 손이라 발굴 특화는 화석 쪽에 붙인다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 1.36, efficiencyMultiplier: 1.14 },
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.36, efficiencyMultiplier: 1.14 },
     // **로스터에서 가장 느리다**(공속 62 · 이속 64). 한 방 한 방이 무거운 대신 그 사이가 길고,
     // 공격력은 탱커답게 절제해 화력이 아니라 버티는 시간이 이 개체의 값이 되게 한다.
     stats: {
@@ -1720,7 +1720,7 @@ export const RELICS: RelicDef[] = [
     // 몸통으로 밀어붙이는 근접 허스크.
     reachTier: "melee",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 1, efficiencyMultiplier: 1.00 },
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1, efficiencyMultiplier: 1.00 },
     // 높은 체력·방어·저항과 느린 공속·이속이라는 기존 방벽 감각을 그대로 살린다.
     // 물리 기본기만큼의 공격력만 남기고 쓰지 않는 주문력은 낮춰, 생존 능력으로 R 띠를 채운다.
     // 치명타·충전 계열은 캐릭터 차별점이 아니므로 COMMON_SECONDARY_STATS와 동일하게 통일한다.
@@ -2088,7 +2088,7 @@ export const RELICS: RelicDef[] = [
     // 활을 켜는 자리는 무대 뒤편이다.
     reachTier: "ranged",
     // 물리형 지원가의 견고함을 운영에서도 드러내도록 화석 생산 특화를 부여했다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 1.2, efficiencyMultiplier: 1.12 },
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.2, efficiencyMultiplier: 1.12 },
     stats: {
       hp: 1260, def: 110, res: 76, atk: 124, ap: 52,
       attackSpeed: 88, moveSpeed: 74, critChance: 10, critDamage: 150,
@@ -2780,7 +2780,7 @@ export const RELICS: RelicDef[] = [
      * (`idleExcavation` 검수 띠), 슈테·도디에 이어 셋째 다이아 특화가 서면 그 띠를 넘는다.
      * 값도 화석 상위 셋(엘라·노도니아·메테)에는 못 미치게 잡아 기존 공급 총량을 건드리지 않는다.
      */
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 1.18, efficiencyMultiplier: 1.10 },
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.18, efficiencyMultiplier: 1.10 },
     /*
      * 전투력 2397로 SSR 띠(2340~2460) 한가운데다.
      *
@@ -2998,7 +2998,7 @@ export const RELICS: RelicDef[] = [
      */
     stunResistancePercent: 50,
     // 적 전용 정의도 RelicDef의 완전한 정적 계약을 지켜 공용 정보창이 예외 없이 표시한다.
-    excavationTrait: { primaryCurrency: "fossil", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
     stats: {
       // 일반 SSR의 기본치를 기준으로 HP 약 2.4배, 방어·저항 약 1.7배인 유한한 보스 예산이다.
       // 20층 boss 레벨 25의 48% 성장 적용 뒤에는 HP 4,144 / 방어 266 / 저항 192 / 주문력 148이 된다.
@@ -3067,25 +3067,30 @@ export const RELICS: RelicDef[] = [
   },
   {
     /**
-     * **레이티아 거대겨울잠쥐.** 치즈케이크 대작전에 떼로 몰려오는 물량형 적이다.
+     * **비리아.** 치즈케이크 대작전에 떼로 몰려오는 레이티아 거대겨울잠쥐 다섯 자매 중 하나다.
+     *
+     * 이름은 종명(레이티아 = 로마 속주 라이티아)과 같은 라틴 뿌리에서 따 viridis(초록)로 짓고,
+     * 다섯이 모두 `-아`로 끝나 한배라는 것이 이름만으로 읽히게 했다. 속성을 이름에 그대로
+     * 적지 않는 이유는 그러면 개체가 아니라 색표가 되기 때문이다.
+     *
+     * 다섯은 한배에서 난 같은 몸이라 능력치도 스킬도 같고, **갈리는 것은 속성과 걸음걸이
+     * 뿐이다** — 공속·이속만 개체마다 다르게 섞는다는 규칙 그대로다. 그래서 이 던전에서
+     * 고를 것은 "무엇을 데려갈까"가 아니라 "어느 색에 강한 편성인가"가 된다.
      *
      * 물량형이라고 능력치를 깎지 않는다 — 규칙대로 R 띠(2080~2200) 안에 서고, 던전이
-     * 무거워지는 몫은 개체 정의가 아니라 레벨과 야성 단계가 갖는다. 대신 **같은 띠를
-     * 손과 발에 몰아 준다**: 체력·방어는 얇고 공격 속도·이동 속도가 로스터 최상위권이라,
-     * 한 마리는 쉽게 쓰러지는데 여럿이 동시에 달라붙으면 앞줄이 순식간에 녹는다.
-     *
-     * 원화(`enemy_005.zip` · `enemySD_005.zip`)는 아직 저장소에 없어 임시로 코마의 묶음을
-     * 빌린다. 갈아 끼우는 자리는 `assets.ts`의 `RAITIA_PLACEHOLDER_*` 두 상수뿐이다.
+     * 무거워지는 몫은 개체 정의가 아니라 레벨과 야성 단계가 갖는다.
      */
-    id: "raitia",
+    id: "raitia-grass",
     enemyOnly: true,
+    // 다섯 자매를 도감과 서사에서 한 갈래로 묶는다. 전투 능력치를 물려받는 값이 아니다.
+    identityFamilyId: "raitia",
     // 이터널 시티로 밀려드는 복원체 무리라 공멸의 침투 임무와 같은 계보에 둔다.
     squad: "annihilation",
-    name: "레이티아 거대겨울잠쥐",
+    name: "비리아",
     specimenNumber: "207",
     projectName: "ANNIHILATION SWARM — 과식 개체군",
     excavationSite: "슬로베니아 카르스트 동굴 퇴적층",
-    fossilRecord: "동굴 퇴적층에서 같은 종의 두개골 수십 점이 한 층에 겹쳐 나왔다. 앞니 법랑질이 비정상적으로 두껍고, 어느 표본에서도 완전히 닳은 흔적이 보이지 않는다.",
+    fossilRecord: "동굴 퇴적층에서 같은 종의 두개골 수십 점이 한 층에 겹쳐 나왔다. 그중 다섯 점은 크기와 치열이 거의 같아 한배에서 난 개체로 분류했다.",
     observationProfile: {
       originYear: "약 200만 년 전",
       // E.C.는 무엇이든 갉아 보는 유생기형 인상을 기록하며 실제 생존 햇수로 읽지 않는다.
@@ -3095,31 +3100,30 @@ export const RELICS: RelicDef[] = [
       weight: "21 kg",
     },
     catalogSummary: "앞니와 볼주머니가 과하게 복원된 겨울잠쥐 기반 표본.",
-    unlockRecord: { status: "recorded", text: "복원 후 레이티아는 잠들지 않는다. 겨울잠에 들어야 할 시기가 와도 먹기를 멈추지 않고, 볼주머니가 가득 찬 뒤에도 앞니로 계속 갉는다. 한 마리가 먹이를 찾으면 울음이 아니라 앞니 소리로 알리고, 그 소리를 들은 개체들이 같은 자리로 한꺼번에 몰려든다. 먹을 것이 떨어지면 곁에 있는 동료의 볼주머니를 갉기 시작한다." },
+    unlockRecord: { status: "recorded", text: "복원 후 레이티아는 잠들지 않는다. 겨울잠에 들어야 할 시기가 와도 먹기를 멈추지 않고, 볼주머니가 가득 찬 뒤에도 앞니로 계속 갉는다. 한 마리가 먹이를 찾으면 울음이 아니라 앞니 소리로 알리고, 그 소리를 들은 자매들이 같은 자리로 한꺼번에 몰려든다. 첫째는 갉은 자리에 늘 새순을 흘린다. 볼주머니에서 떨어진 씨가 발자국마다 돋아, 무리가 지나간 길이 초록으로 남는다." },
     squadNote: "공멸의 소모 물량. 지시받은 방향으로 한꺼번에 흘러가 통로를 메우고, 앞의 개체가 쓰러진 자리를 뒤의 개체가 그대로 밟고 넘어간다.",
     researcherTitle: "연구원",
     rarity: "R",
-    portraitAssetId: "raitia",
+    portraitAssetId: "raitia-grass",
     origin: "겨울잠쥐",
-    // 동굴 퇴적층에서 나온 숲의 설치류라 풀 속성으로 둔다.
     element: "grass",
-    role: "warrior",
+    // 앞니로 갉으며 앞줄을 메우는 몸이라 방어형이다. 다섯이 모두 같은 역할을 맡는다.
+    role: "tank",
     // 앞니로 갉는 개체라 붙어야 때린다.
     reachTier: "melee",
     excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 1.4, efficiencyMultiplier: 1.00 },
     stats: {
-      // 전투력 2197 — R 띠(2080~2200)의 위쪽이다. 적은 R의 상위권으로 짜되 역할 효율이
-      // 높은 쪽에 몰아 준다는 규칙 그대로, 공격력과 **공속·이속**에 띠를 몰았다.
-      // 주문력은 어느 스킬도 읽지 않는 값이라 낮게 둔다(쓰지 않는 능력치를 높게 적지 않는다).
-      hp: 780,
-      def: 52,
-      res: 46,
-      atk: 170,
-      ap: 20,
-      // 공속·이속만 개체마다 다르게 섞는다. 이 둘이 이 개체의 정체성이라 로스터 최상위권이다 —
-      // 떼로 달려드는 것이 무서운 이유는 한 마리의 세기가 아니라 붙는 속도다.
-      attackSpeed: 140,
-      moveSpeed: 145,
+      // 다섯이 같은 몸이라 오각형은 한 벌이고, 공속·이속만 자매마다 다르다. 전투력은 전부
+      // R 띠(2080~2200) 안에 든다. 주문력은 어느 스킬도 읽지 않는 값이라 낮게 둔다
+      // (쓰지 않는 능력치를 높게 적지 않는다).
+      hp: 1400,
+      def: 100,
+      res: 92,
+      atk: 90,
+      ap: 18,
+      attackSpeed: 56,
+      moveSpeed: 92,
+      // 부가 능력치는 전 개체 공통값이다(`COMMON_SECONDARY_STATS`).
       critChance: 10,
       critDamage: 150,
       energyGain: 26,
@@ -3134,25 +3138,25 @@ export const RELICS: RelicDef[] = [
       bonusPercent: 60,
     },
     passive: {
-      id: "raitia-passive",
-      name: "갉작갉작",
-      // 같은 상대를 이어서 때리면 출혈을 남기는 공용 계약이다. 떼가 한 명에게 붙으면
-      // 겹이 빨리 차 출혈이 여러 겹으로 겹친다.
-      kind: "bleedStreak",
-      iconAssetId: "skill-icon-physical",
-      effectType: "physical",
-      // 세 번이면 공속 140에서 2초 남짓이다 — 붙어 있는 동안만 터지는 보상으로 남는다.
+      id: "raitia-grass-passive",
+      name: "겨울잠",
+      /*
+       * 겨울잠쥐가 버티는 방법은 숨은 배율이 아니라 **눈에 보이는 회복**이다 — 위험해지면
+       * 한 번 웅크렸다가 다시 일어난다. 공용 계약(`emergencyRecovery`)을 그대로 쓰므로
+       * 새 전투 분기가 늘지 않는다.
+       */
+      kind: "emergencyRecovery",
+      iconAssetId: "skill-icon-healing",
+      effectType: "healing",
       value: 3,
-      // **흡혈은 여기서 끌어다 쓴다.** 전 개체 공통값은 0이라(`COMMON_SECONDARY_STATS`)
-      // 태생에 적을 수 없고, 갉아 먹는 것이 곧 이 개체가 버티는 방법이라 읽히는 스킬이 그
-      // 값을 갖는다. 6%는 한 마리로는 거의 티가 나지 않고 떼로 붙었을 때만 보이는 몫이다.
-      lifeStealPoints: 6,
-      desc: "갉은 피해의 6%만큼 체력을 회복한다. 같은 적을 연달아 세 번 때리면 [[bleed|출혈]]을 남긴다.",
+      durationSeconds: 5,
+      // 전용 분기가 없는 종류라 이 문장이 그대로 화면에 선다.
+      desc: "전투당 한 번, 체력이 절반 이하가 되면 5초 동안 매초 최대 체력의 3%를 회복한다.",
     },
     basic: {
-      id: "raitia-basic",
+      id: "raitia-grass-basic",
       name: "앞니 갉기",
-      // 공속이 로스터 최상위권이라 한 대의 배율은 낮게 둔다.
+      // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
       power: 70,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
@@ -3160,9 +3164,9 @@ export const RELICS: RelicDef[] = [
       targeting: "single",
     },
     ultimate: {
-      id: "raitia-ult",
+      id: "raitia-grass-ult",
       name: "볼주머니 쏟기",
-      power: 180,
+      power: 150,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -3170,7 +3174,455 @@ export const RELICS: RelicDef[] = [
       // 제 주위만 때린다. 전장 전체를 때리면 떼로 나오는 개체가 서로의 궁극기를 겹쳐
       // 아군이 한 프레임에 통째로 녹는다.
       targeting: "nearbyEnemies",
-      radius: 300,
+      radius: 260,
+    },
+  },
+  {
+    /**
+     * **구티아.** 치즈케이크 대작전에 떼로 몰려오는 레이티아 거대겨울잠쥐 다섯 자매 중 하나다.
+     *
+     * 이름은 종명(레이티아 = 로마 속주 라이티아)과 같은 라틴 뿌리에서 따 gutta(물방울)로 짓고,
+     * 다섯이 모두 `-아`로 끝나 한배라는 것이 이름만으로 읽히게 했다. 속성을 이름에 그대로
+     * 적지 않는 이유는 그러면 개체가 아니라 색표가 되기 때문이다.
+     *
+     * 다섯은 한배에서 난 같은 몸이라 능력치도 스킬도 같고, **갈리는 것은 속성과 걸음걸이
+     * 뿐이다** — 공속·이속만 개체마다 다르게 섞는다는 규칙 그대로다. 그래서 이 던전에서
+     * 고를 것은 "무엇을 데려갈까"가 아니라 "어느 색에 강한 편성인가"가 된다.
+     *
+     * 물량형이라고 능력치를 깎지 않는다 — 규칙대로 R 띠(2080~2200) 안에 서고, 던전이
+     * 무거워지는 몫은 개체 정의가 아니라 레벨과 야성 단계가 갖는다.
+     */
+    id: "raitia-water",
+    enemyOnly: true,
+    // 다섯 자매를 도감과 서사에서 한 갈래로 묶는다. 전투 능력치를 물려받는 값이 아니다.
+    identityFamilyId: "raitia",
+    // 이터널 시티로 밀려드는 복원체 무리라 공멸의 침투 임무와 같은 계보에 둔다.
+    squad: "annihilation",
+    name: "구티아",
+    specimenNumber: "208",
+    projectName: "ANNIHILATION SWARM — 과식 개체군",
+    excavationSite: "슬로베니아 카르스트 동굴 퇴적층",
+    fossilRecord: "동굴 퇴적층에서 같은 종의 두개골 수십 점이 한 층에 겹쳐 나왔다. 그중 다섯 점은 크기와 치열이 거의 같아 한배에서 난 개체로 분류했다.",
+    observationProfile: {
+      originYear: "약 200만 년 전",
+      // E.C.는 무엇이든 갉아 보는 유생기형 인상을 기록하며 실제 생존 햇수로 읽지 않는다.
+      restorationYear: "E.C. 2년",
+      lifeStage: "유체",
+      height: "0.94 m",
+      weight: "21 kg",
+    },
+    catalogSummary: "앞니와 볼주머니가 과하게 복원된 겨울잠쥐 기반 표본.",
+    unlockRecord: { status: "recorded", text: "복원 후 레이티아는 잠들지 않는다. 겨울잠에 들어야 할 시기가 와도 먹기를 멈추지 않고, 볼주머니가 가득 찬 뒤에도 앞니로 계속 갉는다. 한 마리가 먹이를 찾으면 울음이 아니라 앞니 소리로 알리고, 그 소리를 들은 자매들이 같은 자리로 한꺼번에 몰려든다. 둘째는 볼주머니가 마르지 않는다. 물을 머금은 채로 갉아 앞니 소리가 둔하게 울리고, 쓰러질 때 품고 있던 물을 한꺼번에 쏟는다." },
+    squadNote: "공멸의 소모 물량. 지시받은 방향으로 한꺼번에 흘러가 통로를 메우고, 앞의 개체가 쓰러진 자리를 뒤의 개체가 그대로 밟고 넘어간다.",
+    researcherTitle: "연구원",
+    rarity: "R",
+    portraitAssetId: "raitia-water",
+    origin: "겨울잠쥐",
+    element: "water",
+    // 앞니로 갉으며 앞줄을 메우는 몸이라 방어형이다. 다섯이 모두 같은 역할을 맡는다.
+    role: "tank",
+    // 앞니로 갉는 개체라 붙어야 때린다.
+    reachTier: "melee",
+    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 1.4, efficiencyMultiplier: 1.00 },
+    stats: {
+      // 다섯이 같은 몸이라 오각형은 한 벌이고, 공속·이속만 자매마다 다르다. 전투력은 전부
+      // R 띠(2080~2200) 안에 든다. 주문력은 어느 스킬도 읽지 않는 값이라 낮게 둔다
+      // (쓰지 않는 능력치를 높게 적지 않는다).
+      hp: 1400,
+      def: 100,
+      res: 92,
+      atk: 90,
+      ap: 18,
+      attackSpeed: 60,
+      moveSpeed: 88,
+      // 부가 능력치는 전 개체 공통값이다(`COMMON_SECONDARY_STATS`).
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    ferocityTrait: {
+      name: "과식",
+      // 공용 자기 공속 배율을 그대로 쓴다. 떼가 한꺼번에 폭주하면 앞줄이 버티는 시간이
+      // 그만큼 짧아지는 것이 이 던전의 압박이다.
+      effectId: "selfAttackSpeedMultiplier",
+      bonusPercent: 60,
+    },
+    passive: {
+      id: "raitia-water-passive",
+      name: "겨울잠",
+      /*
+       * 겨울잠쥐가 버티는 방법은 숨은 배율이 아니라 **눈에 보이는 회복**이다 — 위험해지면
+       * 한 번 웅크렸다가 다시 일어난다. 공용 계약(`emergencyRecovery`)을 그대로 쓰므로
+       * 새 전투 분기가 늘지 않는다.
+       */
+      kind: "emergencyRecovery",
+      iconAssetId: "skill-icon-healing",
+      effectType: "healing",
+      value: 3,
+      durationSeconds: 5,
+      // 전용 분기가 없는 종류라 이 문장이 그대로 화면에 선다.
+      desc: "전투당 한 번, 체력이 절반 이하가 되면 5초 동안 매초 최대 체력의 3%를 회복한다.",
+    },
+    basic: {
+      id: "raitia-water-basic",
+      name: "앞니 갉기",
+      // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
+      power: 70,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+    },
+    ultimate: {
+      id: "raitia-water-ult",
+      name: "볼주머니 쏟기",
+      power: 150,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      cost: 100,
+      // 제 주위만 때린다. 전장 전체를 때리면 떼로 나오는 개체가 서로의 궁극기를 겹쳐
+      // 아군이 한 프레임에 통째로 녹는다.
+      targeting: "nearbyEnemies",
+      radius: 260,
+    },
+  },
+  {
+    /**
+     * **파비아.** 치즈케이크 대작전에 떼로 몰려오는 레이티아 거대겨울잠쥐 다섯 자매 중 하나다.
+     *
+     * 이름은 종명(레이티아 = 로마 속주 라이티아)과 같은 라틴 뿌리에서 따 favilla(잉걸)로 짓고,
+     * 다섯이 모두 `-아`로 끝나 한배라는 것이 이름만으로 읽히게 했다. 속성을 이름에 그대로
+     * 적지 않는 이유는 그러면 개체가 아니라 색표가 되기 때문이다.
+     *
+     * 다섯은 한배에서 난 같은 몸이라 능력치도 스킬도 같고, **갈리는 것은 속성과 걸음걸이
+     * 뿐이다** — 공속·이속만 개체마다 다르게 섞는다는 규칙 그대로다. 그래서 이 던전에서
+     * 고를 것은 "무엇을 데려갈까"가 아니라 "어느 색에 강한 편성인가"가 된다.
+     *
+     * 물량형이라고 능력치를 깎지 않는다 — 규칙대로 R 띠(2080~2200) 안에 서고, 던전이
+     * 무거워지는 몫은 개체 정의가 아니라 레벨과 야성 단계가 갖는다.
+     */
+    id: "raitia-fire",
+    enemyOnly: true,
+    // 다섯 자매를 도감과 서사에서 한 갈래로 묶는다. 전투 능력치를 물려받는 값이 아니다.
+    identityFamilyId: "raitia",
+    // 이터널 시티로 밀려드는 복원체 무리라 공멸의 침투 임무와 같은 계보에 둔다.
+    squad: "annihilation",
+    name: "파비아",
+    specimenNumber: "209",
+    projectName: "ANNIHILATION SWARM — 과식 개체군",
+    excavationSite: "슬로베니아 카르스트 동굴 퇴적층",
+    fossilRecord: "동굴 퇴적층에서 같은 종의 두개골 수십 점이 한 층에 겹쳐 나왔다. 그중 다섯 점은 크기와 치열이 거의 같아 한배에서 난 개체로 분류했다.",
+    observationProfile: {
+      originYear: "약 200만 년 전",
+      // E.C.는 무엇이든 갉아 보는 유생기형 인상을 기록하며 실제 생존 햇수로 읽지 않는다.
+      restorationYear: "E.C. 2년",
+      lifeStage: "유체",
+      height: "0.94 m",
+      weight: "21 kg",
+    },
+    catalogSummary: "앞니와 볼주머니가 과하게 복원된 겨울잠쥐 기반 표본.",
+    unlockRecord: { status: "recorded", text: "복원 후 레이티아는 잠들지 않는다. 겨울잠에 들어야 할 시기가 와도 먹기를 멈추지 않고, 볼주머니가 가득 찬 뒤에도 앞니로 계속 갉는다. 한 마리가 먹이를 찾으면 울음이 아니라 앞니 소리로 알리고, 그 소리를 들은 자매들이 같은 자리로 한꺼번에 몰려든다. 셋째는 앞니가 식지 않는다. 갉는 속도가 빨라 마찰만으로 잉걸이 튀고, 자매들 중 가장 먼저 먹이에 닿는다." },
+    squadNote: "공멸의 소모 물량. 지시받은 방향으로 한꺼번에 흘러가 통로를 메우고, 앞의 개체가 쓰러진 자리를 뒤의 개체가 그대로 밟고 넘어간다.",
+    researcherTitle: "연구원",
+    rarity: "R",
+    portraitAssetId: "raitia-fire",
+    origin: "겨울잠쥐",
+    element: "fire",
+    // 앞니로 갉으며 앞줄을 메우는 몸이라 방어형이다. 다섯이 모두 같은 역할을 맡는다.
+    role: "tank",
+    // 앞니로 갉는 개체라 붙어야 때린다.
+    reachTier: "melee",
+    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 1.4, efficiencyMultiplier: 1.00 },
+    stats: {
+      // 다섯이 같은 몸이라 오각형은 한 벌이고, 공속·이속만 자매마다 다르다. 전투력은 전부
+      // R 띠(2080~2200) 안에 든다. 주문력은 어느 스킬도 읽지 않는 값이라 낮게 둔다
+      // (쓰지 않는 능력치를 높게 적지 않는다).
+      hp: 1400,
+      def: 100,
+      res: 92,
+      atk: 90,
+      ap: 18,
+      attackSpeed: 64,
+      moveSpeed: 96,
+      // 부가 능력치는 전 개체 공통값이다(`COMMON_SECONDARY_STATS`).
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    ferocityTrait: {
+      name: "과식",
+      // 공용 자기 공속 배율을 그대로 쓴다. 떼가 한꺼번에 폭주하면 앞줄이 버티는 시간이
+      // 그만큼 짧아지는 것이 이 던전의 압박이다.
+      effectId: "selfAttackSpeedMultiplier",
+      bonusPercent: 60,
+    },
+    passive: {
+      id: "raitia-fire-passive",
+      name: "겨울잠",
+      /*
+       * 겨울잠쥐가 버티는 방법은 숨은 배율이 아니라 **눈에 보이는 회복**이다 — 위험해지면
+       * 한 번 웅크렸다가 다시 일어난다. 공용 계약(`emergencyRecovery`)을 그대로 쓰므로
+       * 새 전투 분기가 늘지 않는다.
+       */
+      kind: "emergencyRecovery",
+      iconAssetId: "skill-icon-healing",
+      effectType: "healing",
+      value: 3,
+      durationSeconds: 5,
+      // 전용 분기가 없는 종류라 이 문장이 그대로 화면에 선다.
+      desc: "전투당 한 번, 체력이 절반 이하가 되면 5초 동안 매초 최대 체력의 3%를 회복한다.",
+    },
+    basic: {
+      id: "raitia-fire-basic",
+      name: "앞니 갉기",
+      // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
+      power: 70,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+    },
+    ultimate: {
+      id: "raitia-fire-ult",
+      name: "볼주머니 쏟기",
+      power: 150,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      cost: 100,
+      // 제 주위만 때린다. 전장 전체를 때리면 떼로 나오는 개체가 서로의 궁극기를 겹쳐
+      // 아군이 한 프레임에 통째로 녹는다.
+      targeting: "nearbyEnemies",
+      radius: 260,
+    },
+  },
+  {
+    /**
+     * **실리아.** 치즈케이크 대작전에 떼로 몰려오는 레이티아 거대겨울잠쥐 다섯 자매 중 하나다.
+     *
+     * 이름은 종명(레이티아 = 로마 속주 라이티아)과 같은 라틴 뿌리에서 따 silex(부싯돌·자갈)로 짓고,
+     * 다섯이 모두 `-아`로 끝나 한배라는 것이 이름만으로 읽히게 했다. 속성을 이름에 그대로
+     * 적지 않는 이유는 그러면 개체가 아니라 색표가 되기 때문이다.
+     *
+     * 다섯은 한배에서 난 같은 몸이라 능력치도 스킬도 같고, **갈리는 것은 속성과 걸음걸이
+     * 뿐이다** — 공속·이속만 개체마다 다르게 섞는다는 규칙 그대로다. 그래서 이 던전에서
+     * 고를 것은 "무엇을 데려갈까"가 아니라 "어느 색에 강한 편성인가"가 된다.
+     *
+     * 물량형이라고 능력치를 깎지 않는다 — 규칙대로 R 띠(2080~2200) 안에 서고, 던전이
+     * 무거워지는 몫은 개체 정의가 아니라 레벨과 야성 단계가 갖는다.
+     */
+    id: "raitia-earth",
+    enemyOnly: true,
+    // 다섯 자매를 도감과 서사에서 한 갈래로 묶는다. 전투 능력치를 물려받는 값이 아니다.
+    identityFamilyId: "raitia",
+    // 이터널 시티로 밀려드는 복원체 무리라 공멸의 침투 임무와 같은 계보에 둔다.
+    squad: "annihilation",
+    name: "실리아",
+    specimenNumber: "210",
+    projectName: "ANNIHILATION SWARM — 과식 개체군",
+    excavationSite: "슬로베니아 카르스트 동굴 퇴적층",
+    fossilRecord: "동굴 퇴적층에서 같은 종의 두개골 수십 점이 한 층에 겹쳐 나왔다. 그중 다섯 점은 크기와 치열이 거의 같아 한배에서 난 개체로 분류했다.",
+    observationProfile: {
+      originYear: "약 200만 년 전",
+      // E.C.는 무엇이든 갉아 보는 유생기형 인상을 기록하며 실제 생존 햇수로 읽지 않는다.
+      restorationYear: "E.C. 2년",
+      lifeStage: "유체",
+      height: "0.94 m",
+      weight: "21 kg",
+    },
+    catalogSummary: "앞니와 볼주머니가 과하게 복원된 겨울잠쥐 기반 표본.",
+    unlockRecord: { status: "recorded", text: "복원 후 레이티아는 잠들지 않는다. 겨울잠에 들어야 할 시기가 와도 먹기를 멈추지 않고, 볼주머니가 가득 찬 뒤에도 앞니로 계속 갉는다. 한 마리가 먹이를 찾으면 울음이 아니라 앞니 소리로 알리고, 그 소리를 들은 자매들이 같은 자리로 한꺼번에 몰려든다. 넷째는 볼주머니에 자갈을 채운다. 무거워 가장 늦게 도착하지만 앞줄에서 가장 오래 버티고, 자매가 쓰러진 자리를 제 몸으로 메운다." },
+    squadNote: "공멸의 소모 물량. 지시받은 방향으로 한꺼번에 흘러가 통로를 메우고, 앞의 개체가 쓰러진 자리를 뒤의 개체가 그대로 밟고 넘어간다.",
+    researcherTitle: "연구원",
+    rarity: "R",
+    portraitAssetId: "raitia-earth",
+    origin: "겨울잠쥐",
+    element: "earth",
+    // 앞니로 갉으며 앞줄을 메우는 몸이라 방어형이다. 다섯이 모두 같은 역할을 맡는다.
+    role: "tank",
+    // 앞니로 갉는 개체라 붙어야 때린다.
+    reachTier: "melee",
+    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 1.4, efficiencyMultiplier: 1.00 },
+    stats: {
+      // 다섯이 같은 몸이라 오각형은 한 벌이고, 공속·이속만 자매마다 다르다. 전투력은 전부
+      // R 띠(2080~2200) 안에 든다. 주문력은 어느 스킬도 읽지 않는 값이라 낮게 둔다
+      // (쓰지 않는 능력치를 높게 적지 않는다).
+      hp: 1400,
+      def: 100,
+      res: 92,
+      atk: 90,
+      ap: 18,
+      attackSpeed: 50,
+      moveSpeed: 80,
+      // 부가 능력치는 전 개체 공통값이다(`COMMON_SECONDARY_STATS`).
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    ferocityTrait: {
+      name: "과식",
+      // 공용 자기 공속 배율을 그대로 쓴다. 떼가 한꺼번에 폭주하면 앞줄이 버티는 시간이
+      // 그만큼 짧아지는 것이 이 던전의 압박이다.
+      effectId: "selfAttackSpeedMultiplier",
+      bonusPercent: 60,
+    },
+    passive: {
+      id: "raitia-earth-passive",
+      name: "겨울잠",
+      /*
+       * 겨울잠쥐가 버티는 방법은 숨은 배율이 아니라 **눈에 보이는 회복**이다 — 위험해지면
+       * 한 번 웅크렸다가 다시 일어난다. 공용 계약(`emergencyRecovery`)을 그대로 쓰므로
+       * 새 전투 분기가 늘지 않는다.
+       */
+      kind: "emergencyRecovery",
+      iconAssetId: "skill-icon-healing",
+      effectType: "healing",
+      value: 3,
+      durationSeconds: 5,
+      // 전용 분기가 없는 종류라 이 문장이 그대로 화면에 선다.
+      desc: "전투당 한 번, 체력이 절반 이하가 되면 5초 동안 매초 최대 체력의 3%를 회복한다.",
+    },
+    basic: {
+      id: "raitia-earth-basic",
+      name: "앞니 갉기",
+      // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
+      power: 70,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+    },
+    ultimate: {
+      id: "raitia-earth-ult",
+      name: "볼주머니 쏟기",
+      power: 150,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      cost: 100,
+      // 제 주위만 때린다. 전장 전체를 때리면 떼로 나오는 개체가 서로의 궁극기를 겹쳐
+      // 아군이 한 프레임에 통째로 녹는다.
+      targeting: "nearbyEnemies",
+      radius: 260,
+    },
+  },
+  {
+    /**
+     * **벤티아.** 치즈케이크 대작전에 떼로 몰려오는 레이티아 거대겨울잠쥐 다섯 자매 중 하나다.
+     *
+     * 이름은 종명(레이티아 = 로마 속주 라이티아)과 같은 라틴 뿌리에서 따 ventus(바람)로 짓고,
+     * 다섯이 모두 `-아`로 끝나 한배라는 것이 이름만으로 읽히게 했다. 속성을 이름에 그대로
+     * 적지 않는 이유는 그러면 개체가 아니라 색표가 되기 때문이다.
+     *
+     * 다섯은 한배에서 난 같은 몸이라 능력치도 스킬도 같고, **갈리는 것은 속성과 걸음걸이
+     * 뿐이다** — 공속·이속만 개체마다 다르게 섞는다는 규칙 그대로다. 그래서 이 던전에서
+     * 고를 것은 "무엇을 데려갈까"가 아니라 "어느 색에 강한 편성인가"가 된다.
+     *
+     * 물량형이라고 능력치를 깎지 않는다 — 규칙대로 R 띠(2080~2200) 안에 서고, 던전이
+     * 무거워지는 몫은 개체 정의가 아니라 레벨과 야성 단계가 갖는다.
+     */
+    id: "raitia-wind",
+    enemyOnly: true,
+    // 다섯 자매를 도감과 서사에서 한 갈래로 묶는다. 전투 능력치를 물려받는 값이 아니다.
+    identityFamilyId: "raitia",
+    // 이터널 시티로 밀려드는 복원체 무리라 공멸의 침투 임무와 같은 계보에 둔다.
+    squad: "annihilation",
+    name: "벤티아",
+    specimenNumber: "211",
+    projectName: "ANNIHILATION SWARM — 과식 개체군",
+    excavationSite: "슬로베니아 카르스트 동굴 퇴적층",
+    fossilRecord: "동굴 퇴적층에서 같은 종의 두개골 수십 점이 한 층에 겹쳐 나왔다. 그중 다섯 점은 크기와 치열이 거의 같아 한배에서 난 개체로 분류했다.",
+    observationProfile: {
+      originYear: "약 200만 년 전",
+      // E.C.는 무엇이든 갉아 보는 유생기형 인상을 기록하며 실제 생존 햇수로 읽지 않는다.
+      restorationYear: "E.C. 2년",
+      lifeStage: "유체",
+      height: "0.94 m",
+      weight: "21 kg",
+    },
+    catalogSummary: "앞니와 볼주머니가 과하게 복원된 겨울잠쥐 기반 표본.",
+    unlockRecord: { status: "recorded", text: "복원 후 레이티아는 잠들지 않는다. 겨울잠에 들어야 할 시기가 와도 먹기를 멈추지 않고, 볼주머니가 가득 찬 뒤에도 앞니로 계속 갉는다. 한 마리가 먹이를 찾으면 울음이 아니라 앞니 소리로 알리고, 그 소리를 들은 자매들이 같은 자리로 한꺼번에 몰려든다. 다섯째는 볼주머니를 비워 둔다. 가벼운 몸으로 먼저 달려 나가 먹이의 자리를 알리고, 앞니 소리가 가장 멀리 간다." },
+    squadNote: "공멸의 소모 물량. 지시받은 방향으로 한꺼번에 흘러가 통로를 메우고, 앞의 개체가 쓰러진 자리를 뒤의 개체가 그대로 밟고 넘어간다.",
+    researcherTitle: "연구원",
+    rarity: "R",
+    portraitAssetId: "raitia-wind",
+    origin: "겨울잠쥐",
+    element: "wind",
+    // 앞니로 갉으며 앞줄을 메우는 몸이라 방어형이다. 다섯이 모두 같은 역할을 맡는다.
+    role: "tank",
+    // 앞니로 갉는 개체라 붙어야 때린다.
+    reachTier: "melee",
+    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 1.4, efficiencyMultiplier: 1.00 },
+    stats: {
+      // 다섯이 같은 몸이라 오각형은 한 벌이고, 공속·이속만 자매마다 다르다. 전투력은 전부
+      // R 띠(2080~2200) 안에 든다. 주문력은 어느 스킬도 읽지 않는 값이라 낮게 둔다
+      // (쓰지 않는 능력치를 높게 적지 않는다).
+      hp: 1400,
+      def: 100,
+      res: 92,
+      atk: 90,
+      ap: 18,
+      attackSpeed: 58,
+      moveSpeed: 108,
+      // 부가 능력치는 전 개체 공통값이다(`COMMON_SECONDARY_STATS`).
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    ferocityTrait: {
+      name: "과식",
+      // 공용 자기 공속 배율을 그대로 쓴다. 떼가 한꺼번에 폭주하면 앞줄이 버티는 시간이
+      // 그만큼 짧아지는 것이 이 던전의 압박이다.
+      effectId: "selfAttackSpeedMultiplier",
+      bonusPercent: 60,
+    },
+    passive: {
+      id: "raitia-wind-passive",
+      name: "겨울잠",
+      /*
+       * 겨울잠쥐가 버티는 방법은 숨은 배율이 아니라 **눈에 보이는 회복**이다 — 위험해지면
+       * 한 번 웅크렸다가 다시 일어난다. 공용 계약(`emergencyRecovery`)을 그대로 쓰므로
+       * 새 전투 분기가 늘지 않는다.
+       */
+      kind: "emergencyRecovery",
+      iconAssetId: "skill-icon-healing",
+      effectType: "healing",
+      value: 3,
+      durationSeconds: 5,
+      // 전용 분기가 없는 종류라 이 문장이 그대로 화면에 선다.
+      desc: "전투당 한 번, 체력이 절반 이하가 되면 5초 동안 매초 최대 체력의 3%를 회복한다.",
+    },
+    basic: {
+      id: "raitia-wind-basic",
+      name: "앞니 갉기",
+      // 앞에 서서 오래 갉는 몸이라 한 대는 얕다. 무서운 것은 한 마리의 세기가 아니라 수다.
+      power: 70,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+    },
+    ultimate: {
+      id: "raitia-wind-ult",
+      name: "볼주머니 쏟기",
+      power: 150,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      cost: 100,
+      // 제 주위만 때린다. 전장 전체를 때리면 떼로 나오는 개체가 서로의 궁극기를 겹쳐
+      // 아군이 한 프레임에 통째로 녹는다.
+      targeting: "nearbyEnemies",
+      radius: 260,
     },
   },
 ];

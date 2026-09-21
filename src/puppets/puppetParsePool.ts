@@ -79,14 +79,37 @@ function pump(): void {
 }
 
 /**
+ * 일감의 주소를 **문서 기준 절대 주소로** 바꾼다.
+ *
+ * 묶음 주소는 `import.meta.env.BASE_URL`에서 나오는데 이 저장소의 `vite.config.ts`는
+ * `base: "./"`라, 실제 값이 `./puppets/char_001.zip` 같은 **상대 경로**다. 메인 스레드에서는
+ * 문서(`/`)를 기준으로 풀려 맞게 가지만, 일꾼 스크립트는 `/assets/`에 놓이므로 같은 문자열이
+ * 일꾼 안에서는 `/assets/puppets/char_001.zip`으로 풀린다 — 그 주소는 SPA 폴백에 걸려
+ * **200과 함께 `index.html`을 돌려주고**, 일꾼은 그것을 puppet.json으로 읽다 실패한다.
+ *
+ * 실패가 눈에 띄지 않았던 이유는 폴백이 조용하기 때문이다. `loadPuppet`은 `null`을 받으면
+ * 예전 메인 스레드 경로로 되돌아가므로 화면은 멀쩡했고, 대신 **이 일꾼 무리가 하는 일이
+ * 통째로 없었다** — ZIP 해제·puppet.json 파싱·원화 디코드(한 장 400ms 남짓)가 전부 메인
+ * 스레드로 돌아와, 묶음을 읽는 동안 화면이 그만큼 멎었다.
+ *
+ * 그래서 **주소를 넘기기 전에 문서 기준으로 푼다.** 일꾼이 제 위치를 기준으로 다시 풀 여지를
+ * 남기지 않는 것이 이 함수의 전부다.
+ */
+export function resolveWorkerAssetUrl(url: string, documentBase: string): string {
+  return new URL(url, documentBase).href;
+}
+
+/**
  * 묶음 하나를 일꾼에게 맡긴다. 일꾼을 쓸 수 없거나 해석이 실패하면 `null`이다 —
  * 실패를 던지지 않는 것은 부르는 쪽이 예전 경로로 조용히 되돌아가면 되기 때문이다.
  */
 export function parsePuppetOffThread(url: string): Promise<ParsedPuppet | null> {
   if (!supported()) return Promise.resolve(null);
   pool ??= createPool();
+  const base = typeof document !== "undefined" ? document.baseURI : self.location.href;
+  const resolved = resolveWorkerAssetUrl(url, base);
   return new Promise<ParsedPuppet | null>((settle) => {
-    waiting.push({ url, settle });
+    waiting.push({ url: resolved, settle });
     pump();
   });
 }

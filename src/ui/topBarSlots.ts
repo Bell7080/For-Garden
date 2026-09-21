@@ -28,7 +28,7 @@ export interface CurrencySlot {
  * 치즈케이크는 정보창의 급여 버튼이 "가진 수/드는 수"로 직접 말하므로, 위에 또 적으면 같은
  * 값을 두 곳에서 읽게 되고 정작 봐야 할 카드 그리드의 자리만 좁아진다.
  */
-export type TopBarCurrencyContext = "default" | "recruit" | "none" | "archaeology" | "loot";
+export type TopBarCurrencyContext = "default" | "recruit" | "none" | "archaeology" | "archaeologyShop" | "loot";
 
 const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
   default: [
@@ -47,6 +47,16 @@ const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
     { key: "rawStone", icon: "currency-orestone", compact: true, color: "#a9d8e8" },
     { key: "fossil", icon: "currency-fossil", compact: true, color: "#e6dcc4" },
     { key: "gold", icon: "currency-gold", compact: true, color: "#ffdf9a" },
+  ],
+  /**
+   * 고고학 상점.
+   *
+   * **원석 한 칸만 세운다.** 이 자리에서 조작을 정하는 수는 그것 하나뿐이라, 지도 화면처럼
+   * 셋을 세우면 나머지 둘이 칸만 먹고 정작 볼 수를 밀어낸다. 지도(`archaeology`)와 가게가
+   * 다른 조합을 쓰는 것은 같은 콘텐츠라도 **거기서 무엇을 정하느냐가 다르기** 때문이다.
+   */
+  archaeologyShop: [
+    { key: "rawStone", icon: "currency-orestone", compact: true, color: "#a9d8e8" },
   ],
   /**
    * 전리품 상점.
@@ -69,6 +79,7 @@ export const TOP_BAR_SLOT_KEYS: Record<TopBarCurrencyContext, readonly WalletIte
   default: SLOTS.default.map(({ key }) => key),
   recruit: SLOTS.recruit.map(({ key }) => key),
   archaeology: SLOTS.archaeology.map(({ key }) => key),
+  archaeologyShop: SLOTS.archaeologyShop.map(({ key }) => key),
   loot: SLOTS.loot.map(({ key }) => key),
   none: SLOTS.none.map(({ key }) => key),
 };

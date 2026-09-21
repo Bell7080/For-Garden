@@ -2,6 +2,7 @@ import { registerDataText, type TextKey } from "../i18n";
 import { ARCHAEOLOGY_CLERK_ASSET, LOOT_CLERK_ASSET, SHOP_CLERK_ASSET, type PuppetAsset } from "../puppets/assets";
 import { BACKGROUND } from "../ui/backgroundAssets";
 import type { ProductStorefront } from "./products";
+import type { TopBarCurrencyContext } from "../ui/topBarSlots";
 
 /**
  * 일반 상점 무대에 서는 점원 — **오비**.
@@ -104,9 +105,26 @@ export const LOOT_MERCHANT_LINE_KEYS: readonly TextKey[] = [
 ];
 
 /** 상점 화면 한 자리가 갖는 무대. 점원·배경·대사가 한 덩어리로 갈린다. */
-/** 일반·고고학이 함께 쓰는 세 갈래. 같은 상품 계약(`ShopCategory`)을 읽는 자리다. */
-const SHOP_CATEGORY_TABS: readonly { id: string; label: string }[] = [
-  { id: "general", label: "일반" }, { id: "enhancement", label: "강화" }, { id: "rune", label: "룬" },
+
+/**
+ * 일반 상점의 두 갈래 — **무엇으로 사는가**.
+ *
+ * 한 화면에 골드와 젬이 섞여 있으면 카드를 하나씩 눌러 봐야 무엇이 드는지 알 수 있다. 탭이
+ * 지갑 한 칸을 가리키면 그 줄이 곧 「지금 내가 쓸 수 있는 것」이 되므로, **두 탭은 서로 다른
+ * 품목을 판다** — 같은 것을 두 재화로 살 수 있으면 싼 쪽만 쓰이고 나머지 탭은 열 이유가 없다.
+ */
+const SHOP_CURRENCY_TABS: readonly { id: string; label: string }[] = [
+  { id: "gold", label: "골드" }, { id: "gems", label: "젬" },
+];
+
+/**
+ * 고고학 상점의 세 갈래 — **언제 돌아오는 자리인가**.
+ *
+ * 값이 원석 하나뿐이라 재화로 가를 축이 없다. 상점은 하루에 한 번 들르는 자리라 그 대신
+ * 「언제 다시 와야 하는지」가 먼저 읽혀야 한다.
+ */
+const SHOP_REFRESH_TABS: readonly { id: string; label: string }[] = [
+  { id: "special", label: "특가" }, { id: "daily", label: "일일" }, { id: "weekly", label: "주간" },
 ];
 
 /** 전리품 상점의 두 갈래. `id`는 상품의 `lootCategory`와 같은 문자열이다. */
@@ -128,6 +146,15 @@ export interface ShopStagePresentation {
    * 방법이 없었다. `id`는 그 자리의 상품이 들고 있는 갈래 값과 같은 문자열이다.
    */
   readonly tabs: readonly { id: string; label: string }[];
+  /**
+   * 그 자리의 상단 재화 조합.
+   *
+   * **씬이 storefront로 분기하지 않는다**는 이 표의 규칙을 재화 줄도 따른다 — 씬에
+   * `storefront === "loot" ? "loot" : "default"`를 적어 두었더니 자리가 하나 늘 때
+   * 그 삼항이 또 길어졌고, 고고학 가게는 그 분기에 없어 **로비와 같은 조합**(젬·골드·
+   * 스테미나)을 그대로 세우고 있었다.
+   */
+  readonly currencies: TopBarCurrencyContext;
   /**
    * 그 원화만의 자리 보정.
    *
@@ -154,14 +181,17 @@ export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "
     lineKeys: SHOP_MERCHANT_LINE_KEYS,
     background: BACKGROUND.shop,
     titleKey: "shop.title",
-    tabs: SHOP_CATEGORY_TABS,
+    tabs: SHOP_CURRENCY_TABS,
+    currencies: "default",
   },
   archaeology: {
     merchant: ARCHAEOLOGY_MERCHANT,
     lineKeys: ARCHAEOLOGY_MERCHANT_LINE_KEYS,
     background: BACKGROUND.archaeologyShop,
     titleKey: "shop.archaeology.title",
-    tabs: SHOP_CATEGORY_TABS,
+    tabs: SHOP_REFRESH_TABS,
+    // 이 가게에서 조작을 정하는 수는 원석 하나뿐이다.
+    currencies: "archaeologyShop",
     // 머리 관절은 **대사 띠 오른쪽 끝(730)보다 오른쪽**에 있어야 얼굴이 띠에 덮이지 않고,
     // 관절 오른쪽 461px이 화면 안에 들려면 배율이 0.73 아래여야 한다 — 그 둘을 함께 만족하는
     // 자리다. 키가 오비보다 작은 것은 원화가 넓기 때문이지 인물이 작아서가 아니다.
@@ -174,6 +204,7 @@ export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "
     titleKey: "shop.loot.title",
     // 탭 하나가 지갑 한 칸을 가리킨다 — 눌러 보기 전에 무엇으로 사는 자리인지 읽혀야 한다.
     tabs: LOOT_CATEGORY_TABS,
+    currencies: "loot",
     // 프로티아와 등신이 비슷해 같은 자리를 쓴다. 자리는 점원이 정하지 무대가 정하지 않는다.
     merchantSpot: { headX: 744, height: 1010 },
   },
@@ -187,5 +218,5 @@ export function shopStagePresentation(storefront: ProductStorefront): ShopStageP
 }
 
 /** 목록 교체 줄의 이름을 언어별로 덮어쓸 수 있게 등록한다. */
-for (const tab of SHOP_CATEGORY_TABS) registerDataText(tab, "label", `shop.tab.${tab.id}`);
+for (const tab of [...SHOP_CURRENCY_TABS, ...SHOP_REFRESH_TABS]) registerDataText(tab, "label", `shop.tab.${tab.id}`);
 for (const tab of LOOT_CATEGORY_TABS) registerDataText(tab, "label", `shop.loot.tab.${tab.id}`);

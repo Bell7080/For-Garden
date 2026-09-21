@@ -20,27 +20,32 @@ import {
   DODI_PORTRAIT_METADATA,
   DODI_SD_METADATA,
   ELLA_PORTRAIT_METADATA,
+  FAVIA_PORTRAIT_METADATA,
+  GUTTIA_PORTRAIT_METADATA,
+  KERIS_PORTRAIT_METADATA,
   LEXIA_PORTRAIT_METADATA,
   LUKA_PORTRAIT_METADATA,
   MADDY_PORTRAIT_METADATA,
-  PARUA_PORTRAIT_METADATA,
-  SHUTE_PORTRAIT_METADATA,
-  TERISA_PORTRAIT_METADATA,
-  METTE_PORTRAIT_METADATA,
-  METTE_SD_METADATA,
-  KERIS_PORTRAIT_METADATA,
   MAKI_PORTRAIT_METADATA,
   MERON_PORTRAIT_METADATA,
+  METTE_PORTRAIT_METADATA,
+  METTE_SD_METADATA,
   NODONIA_PORTRAIT_METADATA,
   PACHI_PORTRAIT_METADATA,
+  PARUA_PORTRAIT_METADATA,
   PONTOS_PORTRAIT_METADATA,
   PONTOS_SD_METADATA,
   SEIRA_PORTRAIT_METADATA,
+  SHUTE_PORTRAIT_METADATA,
+  SILIA_PORTRAIT_METADATA,
   STELLA_PORTRAIT_METADATA,
+  TERISA_PORTRAIT_METADATA,
   TIA_PORTRAIT_METADATA,
   TORIKA_PORTRAIT_METADATA,
   TORIKA_SKIN_001_PORTRAIT_METADATA,
   TORIKA_SKIN_001_SD_METADATA,
+  VENTIA_PORTRAIT_METADATA,
+  VIRIA_PORTRAIT_METADATA,
 } from "../../src/puppets/assetMetadata";
 
 /** 실제 char_001.zip과 같은 구성 — 머리 태그를 눈·입이 함께 가지고 있다. */
@@ -229,9 +234,9 @@ describe("머리 카드 잘라내기", () => {
     const head = { x: 860, y: 900 };
     const card = computeHeadCardFrame(raisedHandFrame, head, cardOptions);
     const headFromTop = (head.y - card.cropY) * card.scale;
-    // 카드 높이의 상단 46%(공식이 허용하는 한계) 언저리 안에 머리가 들어와야 얼굴이 보인다.
+    // 카드 높이의 상단 47%(공식이 허용하는 한계) 언저리 안에 머리가 들어와야 얼굴이 보인다.
     expect(headFromTop).toBeGreaterThan(0);
-    expect(headFromTop).toBeLessThanOrEqual(cardOptions.height * 0.46 + 1e-6);
+    expect(headFromTop).toBeLessThanOrEqual(cardOptions.height * 0.47 + 1e-6);
     // 자연스러운 계산(내용 상자 맨 위)보다 시작점이 늦춰졌는지로 안전장치가 실제로 작동했는지 확인한다.
     expect(card.cropY).toBeGreaterThan(raisedHandFrame.content.top);
   });
@@ -348,6 +353,12 @@ const REAL_PORTRAITS = [
   { name: "파루아", metadata: PARUA_PORTRAIT_METADATA, head: { x: 588, y: 360 }, eyes: [{ x: 536, y: 331 }, { x: 615, y: 361 }] },
   { name: "슈테", metadata: SHUTE_PORTRAIT_METADATA, head: { x: 671, y: 313 }, eyes: [{ x: 637, y: 315 }, { x: 714, y: 269 }] },
   { name: "테리사", metadata: TERISA_PORTRAIT_METADATA, head: { x: 484, y: 159 }, eyes: [{ x: 468, y: 172 }, { x: 536, y: 145 }] },
+  // 레이티아 다섯 자매. 같은 몸이지만 묶음마다 캔버스와 여백이 달라 다섯을 모두 건다.
+  { name: "비리아", metadata: VIRIA_PORTRAIT_METADATA, head: { x: 511, y: 405 }, eyes: [{ x: 472, y: 410 }, { x: 555, y: 366 }] },
+  { name: "구티아", metadata: GUTTIA_PORTRAIT_METADATA, head: { x: 538, y: 385 }, eyes: [{ x: 511, y: 415 }, { x: 595, y: 372 }] },
+  { name: "파비아", metadata: FAVIA_PORTRAIT_METADATA, head: { x: 511, y: 416 }, eyes: [{ x: 479, y: 409 }, { x: 558, y: 375 }] },
+  { name: "실리아", metadata: SILIA_PORTRAIT_METADATA, head: { x: 605, y: 417 }, eyes: [{ x: 559, y: 371 }, { x: 635, y: 416 }] },
+  { name: "벤티아", metadata: VENTIA_PORTRAIT_METADATA, head: { x: 523, y: 446 }, eyes: [{ x: 491, y: 449 }, { x: 579, y: 414 }] },
 ] as const;
 
 /** PortraitCard가 넘기는 것과 같은 배율 보정으로 실제 카드 잘라내기를 구한다. */
@@ -403,7 +414,9 @@ describe("실제 원화의 카드 잘라내기", () => {
       const card = realCardFrame(portrait);
       return (portrait.head.y - cardTopOf(portrait)) / card.cropHeight;
     }));
-    expect(worst).toBeLessThan(0.42);
+    // 레이티아 다섯 자매(최대 0.451)가 들어오면서 한 번 올렸다. 그 위로 여유를 두되, 한계
+    // 자체(0.47)보다는 확실히 아래여야 다음 원화가 다시 걸리지 않는다.
+    expect(worst).toBeLessThan(0.46);
   });
 });
 

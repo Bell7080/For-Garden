@@ -157,6 +157,8 @@ export interface DebugState {
     trade?: { products: DebugPoint[]; retry?: DebugPoint; back: DebugPoint };
     /** 고고학 화면에서 상점으로 넘어가는 유일한 고정 입력 중심이다. */
     archaeology?: { shop: DebugPoint };
+    /** 레이드 화면의 판 밖 상점 입구. 출격판의 것과 같은 자리를 쓴다. */
+    raid?: { shop: DebugPoint };
     shop?: { back: DebugPoint; tabs: Record<"general" | "enhancement" | "rune", DebugPoint>; cards: DebugPoint[]; drag: { from: DebugPoint; to: DebugPoint } };
     /** 수량 작업판은 ±와 확정을, 패키지 확인판은 확정만 공개한다(고를 것이 수량이 아니다). */
     purchase?: { minus?: DebugPoint; plus?: DebugPoint; confirm: DebugPoint };

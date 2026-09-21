@@ -16,10 +16,10 @@ describe("발굴 자동 배치", () => {
   });
 
   it("치우친 기준은 그 재화를 캐는 렐릭을 먼저 세운다", () => {
-    const fossil = autoAssignExcavation(candidates, "fossil");
-    // 화석을 캐는 렐릭이 하나라도 있으면 첫 자리는 반드시 그 재화다.
-    const anyFossil = RELICS.some((relic) => relic.excavationTrait.primaryCurrency === "fossil");
-    if (anyFossil) expect(currencyOf(fossil[0])).toBe("fossil");
+    const rawStone = autoAssignExcavation(candidates, "rawStone");
+    // 원석을 캐는 렐릭이 하나라도 있으면 첫 자리는 반드시 그 재화다.
+    const anyRawStone = RELICS.some((relic) => relic.excavationTrait.primaryCurrency === "rawStone");
+    if (anyRawStone) expect(currencyOf(rawStone[0])).toBe("rawStone");
   });
 
   it("골고루는 서로 다른 재화를 세운다", () => {

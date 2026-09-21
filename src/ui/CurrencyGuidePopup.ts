@@ -8,6 +8,7 @@ import { drawLayer, HoloBar, slantedRect } from "./holo";
 import { addFramedIcon } from "./itemFrame";
 import { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
+import { CURRENCY_GUIDE_SIZE } from "./currencyGuideLayout";
 
 /**
  * 보유량을 세우는 위쪽 판.
@@ -16,6 +17,7 @@ import { COLOR, textStyle } from "./theme";
  * 가졌는지 없으면, 쓸지 말지를 정하러 온 손이 창을 닫고 상단 줄을 다시 봐야 한다.
  */
 const HERO = { y: -290, width: 660, height: 176, frameSize: 124 } as const;
+
 const TONE = { value: "#ffe9a3" } as const;
 
 /** 획득처와 사용처를 같은 홀로그램 문법으로 보여 주는 공용 읽기 전용 안내창이다. */
@@ -24,7 +26,7 @@ export class CurrencyGuidePopup {
 
   open(key: WalletItemKey): void {
     const guide = currencyGuide(key);
-    this.popups.open({ width: 780, height: 1020, title: guide.name, dim: true, dimAlpha: 0.34 }, (body, close) => {
+    this.popups.open({ width: CURRENCY_GUIDE_SIZE.width, height: CURRENCY_GUIDE_SIZE.height, title: guide.name, dim: true, dimAlpha: 0.34 }, (body, close) => {
       this.addHolding(body, key);
       // 짧은 세계관 문장은 보유량 아래에만 두고, 실제 판단 정보는 두 구역으로 명확히 가른다.
       body.add(this.scene.add.text(0, -170, guide.lore, textStyle({ role: "body", size: 24, color: COLOR.inkDim, align: "center", wrap: 650 })).setOrigin(0.5));

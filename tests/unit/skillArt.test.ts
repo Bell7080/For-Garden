@@ -276,7 +276,8 @@ describe("데이 스킬 표시 계약", () => {
     expect(deina.basic.power).toBeLessThanOrEqual(40);
     // **방어·저항은 로스터 탱커 최저다.** 체력은 노도니아 다음으로 높지만 방어를 곱한 실효
     // 체력은 여전히 넷 중 가장 얇다 — 맞아도 되는 몸이 아니라 한 번 더 달릴 수 있는 몸이다.
-    const allyTanks = RELICS.filter((def) => def.role === "tank" && !["pontos", "amo"].includes(def.id));
+    // 아군 탱커끼리만 견준다. 이름을 손으로 적어 두면 적 탱커가 늘 때마다 그 목록이 낡는다.
+    const allyTanks = RELICS.filter((def) => def.role === "tank" && def.enemyOnly !== true);
     for (const key of ["def", "res"] as const) {
       expect(Math.min(...allyTanks.map((def) => def.stats[key])), `데이 ${key}`).toBe(deina.stats[key]);
     }

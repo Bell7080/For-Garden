@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { EXCAVATION_DISPLAY_LAYOUT, excavationDisplayModel } from "../../src/ui/excavationDisplayModel";
 
 /** 테스트 입력을 짧게 유지하면서 네 재화 키 누락을 타입 단계에서 막는다. */
-const amounts = (gold = 0, cheesecake = 0, fossil = 0, gems = 0) => ({ gold, cheesecake, fossil, gems });
+const amounts = (gold = 0, cheesecake = 0, rawStone = 0, gems = 0) => ({ gold, cheesecake, rawStone, gems });
 
 describe("excavationDisplayModel", () => {
   it("획득도 생산도 없는 재화는 숨긴다", () => {
@@ -10,7 +10,7 @@ describe("excavationDisplayModel", () => {
   });
 
   it("누적 이력이 없어도 현재 생산 중인 재화는 표시한다", () => {
-    expect(excavationDisplayModel(amounts(), amounts(0, 0, 7)).map((item) => item.currency)).toEqual(["fossil"]);
+    expect(excavationDisplayModel(amounts(), amounts(0, 0, 7)).map((item) => item.currency)).toEqual(["rawStone"]);
   });
 
   it("네 항목을 공용 순서와 안전 폭 안에서 중앙 정렬한다", () => {

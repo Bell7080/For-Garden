@@ -28,6 +28,7 @@ import {
   premiumTabSpot, premiumTitleLeft, premiumTitleY,
 } from "../ui/premiumLayout";
 import { consumeSceneEntry } from "./sceneEntry";
+import { playSceneEntrance, startScene } from "../ui/screenTransition";
 
 /**
  * 현금 결제 카탈로그를 인게임 재화 상점과 분리해 소유하는 독립 프리미엄 씬이다.
@@ -74,7 +75,7 @@ export class PremiumScene extends Phaser.Scene {
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.5).setDepth(-19);
     bindCurrencyGuide({ scene: this, popups: this.popups });
     this.topBar = new TopBar(this, 40, {
-      onSettings: () => this.scene.start("settings", { returnScene: "premium", returnData: { section: this.activeSection } }),
+      onSettings: () => startScene(this, "settings", { returnScene: "premium", returnData: { section: this.activeSection } }),
       onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency),
     });
     this.add.text(60, 185, t("shop.premium.title"), textStyle({ role: "display", size: 52 })).setOrigin(0, 0);
@@ -89,6 +90,9 @@ export class PremiumScene extends Phaser.Scene {
       this.removeScrollInput();
       this.viewportMask?.destroy(); this.viewportMask = undefined;
     });
+    // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
+    // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+    playSceneEntrance(this);
   }
 
   /** 관성은 프레임 시간에 맞춰 감쇠해 고주사율에서도 같은 거리로 멈춘다. */

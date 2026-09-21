@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CAKE_OPERATION_ENEMY_ID } from "../../src/data/cakeOperation";
+import { CAKE_OPERATION_ENEMY_IDS } from "../../src/data/cakeOperation";
 import { EXPEDITION_ENEMY_FORMATIONS, FINAL_FLOOR_BOSS_ID } from "../../src/data/expeditionEnemies";
 import { RELICS, getRelic } from "../../src/data/relics";
 import { STAGES } from "../../src/data/stages";
@@ -15,7 +15,7 @@ function referencedEnemyIds(): { stage: Set<string>; expedition: Set<string>; du
   // 최종층 단독 보스는 일반 원정 편성표 밖에서 선택되므로 명시적으로 같은 검수 집합에 합친다.
   expedition.add(FINAL_FLOOR_BOSS_ID);
   // 전용 던전에만 서는 개체도 같은 검수 집합에 넣는다.
-  const dungeon = new Set([CAKE_OPERATION_ENEMY_ID]);
+  const dungeon = new Set<string>(CAKE_OPERATION_ENEMY_IDS);
   return { stage, expedition, dungeon };
 }
 
@@ -23,7 +23,7 @@ function referencedEnemyIds(): { stage: Set<string>; expedition: Set<string>; du
  * 스토리와 원정에 **함께** 서야 하는 개체.
  *
  * 두 콘텐츠를 오가는 공용 악당은 한쪽 표에서 빠지면 그 콘텐츠만 옛 편성으로 남으므로 둘 다
- * 확인한다. 전용 던전에만 서는 개체(치즈케이크 대작전의 레이티아)는 여기 오르지 않는다 —
+ * 확인한다. 전용 던전에만 서는 개체(치즈케이크 대작전의 레이티아 다섯 자매)는 여기 오르지 않는다 —
  * 그 개체를 스토리·원정 표에 억지로 넣으면 편성이 콘텐츠의 성격과 갈린다.
  */
 const SHARED_ENEMY_IDS = ["toby", "amo", "ripa", "koma", "pontos"] as const;

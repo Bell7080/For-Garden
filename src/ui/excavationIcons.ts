@@ -5,7 +5,7 @@ export const EXCAVATION_TRAIT_ICON: Record<ExcavationCurrency, "excavation-trait
   gold: "excavation-trait-gold",
   cheesecake: "excavation-trait-supplies",
   // 전용 선화가 추가되기 전까지 저장 키에 가장 가까운 기존 자원 계열 선화를 재사용한다.
-  fossil: "excavation-trait-gold",
+  rawStone: "excavation-trait-gold",
   gems: "excavation-trait-supplies",
 };
 

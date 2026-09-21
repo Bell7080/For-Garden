@@ -10,6 +10,7 @@ import { drawGlyph } from "./glyphs";
 import { formatCountdown } from "../core/formatCountdown";
 import { t, type TextKey } from "../i18n";
 import { COLOR, textStyle } from "./theme";
+import { claimNavSwipe } from "./BottomNav";
 
 export interface ArchaeologyMapSiteState {
   siteId: string;
@@ -164,7 +165,7 @@ export class ArchaeologyMapView extends Phaser.GameObjects.Container {
   }
 
   private begin(pointer: Phaser.Input.Pointer): void { if (this.restoring || this.pointerId !== undefined) return; this.pointerId = pointer.id; this.start = this.lastPoint = { x: pointer.worldX, y: pointer.worldY }; this.dragged = false; }
-  private move(pointer: Phaser.Input.Pointer): void { if (pointer.id !== this.pointerId) return; const next = { x: pointer.worldX, y: pointer.worldY }; this.dragged ||= isArchaeologyMapDrag(this.start, next, BUTTON_DRAG_CANCEL_DISTANCE); this.setOffset(this.world.x + next.x - this.lastPoint.x, this.world.y + next.y - this.lastPoint.y); this.lastPoint = next; }
+  private move(pointer: Phaser.Input.Pointer): void { if (pointer.id !== this.pointerId) return; claimNavSwipe(); const next = { x: pointer.worldX, y: pointer.worldY }; this.dragged ||= isArchaeologyMapDrag(this.start, next, BUTTON_DRAG_CANCEL_DISTANCE); this.setOffset(this.world.x + next.x - this.lastPoint.x, this.world.y + next.y - this.lastPoint.y); this.lastPoint = next; }
   private end(pointer: Phaser.Input.Pointer): void { if (pointer.id !== this.pointerId) return; const site = this.pressed; const select = !this.dragged && site; this.cancel(); if (select) this.options.onSelect(select); }
   private cancel(): void { this.pointerId = undefined; this.pressed = undefined; this.dragged = false; }
   private setOffset(x: number, y: number): void {

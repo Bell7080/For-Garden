@@ -7,6 +7,7 @@ import { storyManager } from "../managers/StoryManager";
 import { DialogueLayer } from "../ui/DialogueLayer";
 import { drawLayer, slantedRect } from "../ui/holo";
 import { COLOR } from "../ui/theme";
+import { playSceneEntrance, startScene } from "../ui/screenTransition";
 
 /** 지도 서브 노드의 정적 대사를 재생하고 완료 저장 뒤 지도를 새로 만드는 전용 씬이다. */
 export class StageStoryScene extends Phaser.Scene {
@@ -29,6 +30,9 @@ export class StageStoryScene extends Phaser.Scene {
     // DialogueFlow는 최초 표시 잠금으로 시작하므로 Puppet 비동기 준비가 끝난 뒤에만 커서를 연다.
     void this.layer.show(this.flow.current).finally(() => this.flow.markCurrentNodeReady());
     setDebugReady(true);
+    // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
+    // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+    playSceneEntrance(this);
   }
 
   private advance(choice?: DialogueChoice): void {
@@ -37,7 +41,7 @@ export class StageStoryScene extends Phaser.Scene {
     if (result.completed) {
       // StoryManager만 completedStoryIds를 변경하며 새 지도 씬이 해금/완료 표시를 다시 계산한다.
       storyManager.complete(this.story.id);
-      this.scene.start("stageMap");
+      startScene(this, "stageMap");
       return;
     }
     // 후속 노드도 같은 흐름 잠금을 사용해 Puppet 교체와 연속 입력이 경쟁하지 않게 한다.

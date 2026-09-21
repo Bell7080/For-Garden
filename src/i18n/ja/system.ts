@@ -11,7 +11,7 @@ export const SYSTEM_JA = {
 
   "excavation.auto.balanced": "まんべんなく",
   "excavation.auto.cheesecake": "チーズケーキ",
-  "excavation.auto.fossil": "化石",
+  "excavation.auto.rawStone": "原石",
   "excavation.auto.gold": "ゴールド",
   "excavation.auto.gems": "ジェム",
 

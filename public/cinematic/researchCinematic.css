@@ -446,7 +446,17 @@
 .overview[data-count="10"] .card-grade { font-size: 4.6cqw; }
 .overview[data-count="10"] .card-index { font-size: 1.5cqw; }
 .overview[data-count="10"] .card-name { font-size: 2.2cqw; line-height: 1.35; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; max-height: 6cqw; }
-.overview[data-count="10"] .card-art { height: 43%; }
+/*
+ * **칸을 낮추는 것은 액자 칸뿐이다.**
+ *
+ * 열 장짜리 결산 격자는 카드가 작아 액자 줄을 한 뼘 낮춰야 이름이 선다. 그런데 이 줄이
+ * 원화 칸(`card-art-portrait`)까지 함께 낮추던 때는, 카드를 가장자리까지 채우라고 준
+ * `height: 100%`가 43%로 덮이면서 **가로로 납작해진 상자에 세로 원화가 `cover`로 들어가**
+ * 위아래가 잘렸다 — 정수리가 사라지고 그림이 몸통 한가운데에서 시작하는 것으로 보였고,
+ * 이름줄을 위한 어둠도 칸을 따라 카드 중간에서 끊겼다. 중복 파편이 멀쩡했던 것은 그쪽이
+ * 애초에 액자 칸이어서다.
+ */
+.overview[data-count="10"] .card-art-framed { height: 43%; }
 .overview[data-count="10"] .rc-item-amount { font-size: 1.8cqw; -webkit-text-stroke: 0.3cqw #000; }
 .opening .archive-card.collected .rc-item-amount { display: none; }
 .overview[data-count="10"] .card-latin { font-size: 1.5cqw; letter-spacing: 0; }

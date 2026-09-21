@@ -59,8 +59,8 @@ import { normalizeLobbyEntry, type LobbyMenu } from "./lobbyEntry";
  */
 const LOBBY_PORTRAIT_DEPTH = -20;
 
-/** 교류의 강조색. 출격의 주황과 마주 보는 자리라 성격이 다른 색을 쓴다. */
-const EXCHANGE_BLUE = 0x6fa8d6;
+/** 교류의 강조색. 값은 테마 한 곳이 갖는다 — 레이드의 상점 입구도 같은 값을 읽는다. */
+const EXCHANGE_BLUE = COLOR.exchange;
 
 
 /** 출격 선택판의 규격. 판 크기와 SD 층·동작 간격을 한 곳에서만 정한다. */
@@ -390,7 +390,7 @@ export class LobbyScene extends Phaser.Scene {
       const entries: SortieEntry[] = [
         {
           y: -410, width: 800, height: 220, label: t("lobby.sortie.story"), status: t("lobby.sortie.story.status"), artKey: "content-story-entry",
-          accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0", sd: ENEMY_SD_ASSETS[0], sdScale: 0.9,
+          accentColor: EXCHANGE_BLUE, accentTextColor: COLOR.exchangeText, sd: ENEMY_SD_ASSETS[0], sdScale: 0.9,
           onClick: () => { close(); startScene(this, "stageMap"); },
         },
         // 두 일일 던전은 같은 위계와 같은 폭으로 나란히 놓아 어느 쪽도 기본 선택처럼 보이지 않게 한다.

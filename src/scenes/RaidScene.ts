@@ -5,7 +5,7 @@ import { GameApiError } from "../api/contracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { RAID_SEASON_BOSS } from "../data/raid";
 import { getRelic } from "../data/relics";
-import { setDebugScene } from "../debug";
+import { setDebugScene, setDebugStorefrontControls } from "../debug";
 import { t } from "../i18n";
 import { portraitAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { Button } from "../ui/Button";
@@ -19,6 +19,7 @@ import { chipPoints, drawLayer, drawVignette, HOLO, HoloBar } from "../ui/holo";
 import { RAID_ACTIONS, RAID_BOARD, RAID_BOSS_SPOT, RAID_HEADER, RAID_HP_BAR, RAID_HP_BAR_COLOR, raidBoardViewport } from "../ui/raidLayout";
 import { COLOR, textStyle } from "../ui/theme";
 import { LOBBY_RETURN } from "./lobbyEntry";
+import { startScene } from "../ui/screenTransition";
 
 /**
  * 레이드 — **함께 미는 보스전**의 화면이다.
@@ -183,9 +184,14 @@ export class RaidScene extends Phaser.Scene {
   /**
    * 하단 조작.
    *
-   * **상점은 여기 서지 않는다.** 전리품 상점은 레이드 하나가 아니라 출격 콘텐츠들이 떨군
-   * 증표를 함께 쓰는 자리라, 레이드 안에 두면 원정 증표를 쓰러 레이드를 거쳐 들어가게
-   * 된다. 입구는 출격판 밖 왼쪽 아래(`POPUP_SIDE_SLOT`) 한 곳뿐이다.
+   * **주 조작은 출격 하나이고, 상점은 판 밖 곁들임 줄로 물러난다.** 출격판 밖의 전리품 상점과
+   * 같은 자리(`POPUP_SIDE_SLOT`)·같은 라벨 버튼이라 두 화면의 문이 같은 생김새로 선다 —
+   * 출격과 나란히 같은 크기로 세우면 상점이 이 화면의 둘째 콘텐츠로 읽힌다.
+   *
+   * 여기에도 문을 단 것은 **증표를 쓰는 자리가 너무 멀었기 때문이다.** 토벌 증표는 이 화면
+   * 에서만 쌓이는데, 쓰려면 레이드를 나가 로비의 출격판을 다시 열어야 했다. 반대 방향은
+   * 여전히 막혀 있지 않다 — 출격판 밖의 입구가 그대로 남아 원정 증표를 쓰러 레이드를 거칠
+   * 일은 없다.
    */
   private renderActions(content: Phaser.GameObjects.Container, season: RaidSeasonResponse): void {
     const { sortie, y } = RAID_ACTIONS;
@@ -195,6 +201,21 @@ export class RaidScene extends Phaser.Scene {
     this.sortieButton = new Button(this, sortie.centerX, y, { width: sortie.width, height: sortie.height, label: t("raid.sortie"), fontSize: 36, variant: "primary", accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, onClick: () => this.scene.start("battle", { mode: "raid" }) });
     this.sortieButton.setEnabled(canSortie);
     content.add(this.sortieButton);
+    /*
+     * 상점 입구.
+     *
+     * 출격과 같은 `content`에 담는다 — 이 화면은 시즌을 다시 읽을 때마다 `content`를 부수고
+     * 다시 세우므로, 씬에 직접 붙이면 새로 고칠 때마다 같은 버튼이 한 장씩 쌓인다.
+     * 돌아오는 길은 이 화면이라, 사고 나서 다시 보스 앞에 선다.
+     */
+    const { shop } = RAID_ACTIONS;
+    content.add(new Button(this, shop.x, shop.y, {
+      width: shop.width, height: shop.height,
+      label: t("lobby.sortie.shop"), fontSize: 30,
+      accentColor: COLOR.exchange, accentTextColor: COLOR.exchangeText,
+      onClick: () => startScene(this, "shop", { storefront: "loot", returnScene: "raid" }),
+    }));
+    setDebugStorefrontControls({ raid: { shop: { x: shop.x, y: shop.y } } });
   }
 
 

@@ -34,6 +34,7 @@ import { addBreakthroughGradeMark } from "../ui/rarityMark";
 import { addUnitNameplate } from "../ui/unitNameplate";
 import { combatPower } from "../core/combatPower";
 import { formationMembers, tapFormationSlot, tapRosterRelic, toFormationSlots } from "../core/formationSlots";
+import { prefetchBattlePuppets as prefetchBattleSds } from "../puppets/battlePrefetch";
 import { moveFormationSlot } from "../core/formation";
 import { addFormationRemoveChip, addFormationSlotPlate, addFormationSlotSelection } from "../ui/formationSlotChrome";
 import { PARTY_ALLY_PLATE, PARTY_POWER_PLATE, PARTY_PREVIEW, PARTY_PREVIEW_COLUMNS, partyAllyGroundOffset, partyAllyPlateBox, partyAllySlotBox, partyPreviewEnemyColumns } from "../ui/partyPreviewLayout";
@@ -142,6 +143,19 @@ export class PartyScene extends Phaser.Scene {
   private hint!: Phaser.GameObjects.Text;
   /** 자동 배치와 자리별 방향 표식이 함께 참조하는 이번 스테이지의 적 정의다. */
   private enemies: RelicDef[] = [];
+  /**
+   * 지금 편성과 이번 스테이지의 적 SD를 미리 읽는다.
+   *
+   * 편성이 바뀔 때마다 다시 부른다 — 데려갈 개체가 달라지면 읽어 둘 것도 달라지기 때문이다.
+   * 이미 읽은 묶음은 캐시가 걸러 내므로 여러 번 불러도 값이 들지 않는다.
+   */
+  private prefetchBattleSds(): void {
+    prefetchBattleSds(
+      formationMembers(this.picked),
+      this.enemies.map((enemy) => enemy.id),
+    );
+  }
+
   /** 자동 배치 버튼의 실제 중심. `create`에서 한 번 계산해 `refresh`가 그대로 다시 쓴다. */
   private autoButtonPosition = { x: 0, y: 0 };
   private info!: CharacterInfoManager;
@@ -185,6 +199,9 @@ export class PartyScene extends Phaser.Scene {
     this.enemies = getStageEnemies(stage);
     // 손상된 런타임 파티만 보유 목록 기반 자동 편성으로 안전하게 대체한다.
     if (formationMembers(this.picked).length !== 3) this.picked = toFormationSlots(autoPickParty(relicCollection.owned, this.enemies), 3);
+    // **전투에 설 SD를 지금부터 읽는다.** 편성을 고르는 동안이 그대로 로딩 시간이 되므로,
+    // 출격을 누르는 순간에는 대부분 캐시에서 나온다. 기다리지 않으므로 이 화면은 막히지 않는다.
+    this.prefetchBattleSds();
     this.add.text(cx, 70, `${stage.id}  ${stage.name}`, textStyle({ role: "display", size: 46 })).setOrigin(0.5, 0);
     // 성장 스냅샷은 능력치 사본과 **같은 자리 순서**로 넘긴다 — 배열 순서로 넘기면 아모의
     // 레벨이 리파 밑에 적힌다.
@@ -212,6 +229,7 @@ export class PartyScene extends Phaser.Scene {
       fontSize: 26,
       onClick: () => {
         this.picked = toFormationSlots(autoPickParty(relicCollection.owned, this.enemies), 3);
+        this.prefetchBattleSds();
         this.selectedSlot = undefined;
         this.refresh();
       },

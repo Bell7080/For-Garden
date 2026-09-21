@@ -752,31 +752,48 @@ export class BattleScene extends Phaser.Scene {
    */
   private async spawnFighters(initial = true): Promise<void> {
     ensureEffectTextures(this);
-    for (const fighter of this.state.fighters) {
-      if (this.views.has(fighter.id)) continue;
-      // 표시 배율은 코어 입력에 들어 있으며 씬은 모든 Puppet 부속 표현에 같은 높이만 적용한다.
-      const unitHeight = UNIT_HEIGHT * fighter.bodyScale;
-      // 외형 선택은 manager/resolver가 소유하고 전투 씬은 진영과 결과 에셋만 배치한다.
-      const asset = relicAppearanceManager.battleAssetFor(fighter.def.id, fighter.side === "enemy" ? "enemy" : "ally");
-      // 번호별 전용 적 SD도 원화 색을 보존하므로 더 이상 임시 허스크 tint를 입히지 않는다.
-      const tint = 0xffffff;
-      let creature: PuppetCreature;
-      try {
-        creature = await spawnPuppet(this, asset, {
-        x: fighter.x,
-        groundY: fighter.y,
-        height: unitHeight,
-        flipX: fighter.facing < 0,
-        tint,
-        });
-      } catch (error) {
-        // 표시 파일 하나가 깨져도 코어 전투를 멈추지 않는다. 이 Fighter의 화면만 생략한다.
-        console.error(`[battle] Puppet 로드 실패: ${asset.url}`, error);
-        continue;
-      }
-      if (!this.scene.isActive()) {
+    // 번호별 전용 적 SD도 원화 색을 보존하므로 더 이상 임시 허스크 tint를 입히지 않는다.
+    const tint = 0xffffff;
+    // **여섯을 한꺼번에 읽는다.** 루프 안에서 `await`하던 때는 한 마리가 끝나야 다음이
+    // 시작해, 일꾼이 넷이나 떠 있는데도(`puppetParsePool`) 한 명만 일하고 나머지는 놀았다 —
+    // 화면에 SD가 하나씩 쏙, 쏙 나타나던 것이 그 줄 세우기다. 디코드가 한 장에 400ms 남짓이라
+    // 여섯이면 2.4초가 통째로 진입 대기가 됐다. `loadPuppet`은 URL로 **진행 중인 약속까지**
+    // 캐시하므로 같은 묶음을 동시에 불러도 두 번 내려받지 않는다.
+    const spawns = this.state.fighters
+      .filter((fighter) => !this.views.has(fighter.id))
+      .map((fighter) => {
+        // 표시 배율은 코어 입력에 들어 있으며 씬은 모든 Puppet 부속 표현에 같은 높이만 적용한다.
+        const unitHeight = UNIT_HEIGHT * fighter.bodyScale;
+        // 외형 선택은 manager/resolver가 소유하고 전투 씬은 진영과 결과 에셋만 배치한다.
+        const asset = relicAppearanceManager.battleAssetFor(fighter.def.id, fighter.side === "enemy" ? "enemy" : "ally");
+        return spawnPuppet(this, asset, {
+          x: fighter.x,
+          groundY: fighter.y,
+          height: unitHeight,
+          flipX: fighter.facing < 0,
+          tint,
+        })
+          .then((creature) => ({ fighter, asset, unitHeight, creature }))
+          .catch((error: unknown) => {
+            // 표시 파일 하나가 깨져도 코어 전투를 멈추지 않는다. 이 Fighter의 화면만 생략한다.
+            // **한 마리의 실패가 나머지를 함께 지우지 않도록** 약속마다 여기서 삼킨다.
+            console.error(`[battle] Puppet 로드 실패: ${asset.url}`, error);
+            return undefined;
+          });
+      });
+    const ready = await Promise.all(spawns);
+    // 기다리는 동안 씬을 떠났다면 **도착한 전부**를 놓는다 — 하나만 지우면 나머지가 죽은 씬에 남는다.
+    if (!this.scene.isActive()) {
+      ready.forEach((entry) => entry?.creature.destroy());
+      return;
+    }
+    for (const entry of ready) {
+      if (!entry) continue;
+      const { fighter, asset, unitHeight, creature } = entry;
+      // 기다리는 사이에 다른 호출(소환 무리)이 같은 Fighter를 먼저 세웠을 수 있다.
+      if (this.views.has(fighter.id)) {
         creature.destroy();
-        return;
+        continue;
       }
       // Puppet Mesh의 기본 입력 경계는 비동기 생성 시점의 로컬 크기에 묶여 이동·배율 적용 뒤
       // 실제 SD와 어긋날 수 있다. 투명 몸통 영역을 따로 두고 매 프레임 발 위치를 따라가게 한다.

@@ -19,6 +19,8 @@ import { chipPoints, drawLayer, drawVignette, HOLO, HoloBar } from "../ui/holo";
 import { RAID_ACTIONS, RAID_BOARD, RAID_BOSS_SPOT, RAID_HEADER, RAID_HP_BAR, RAID_HP_BAR_COLOR, raidBoardViewport } from "../ui/raidLayout";
 import { COLOR, textStyle } from "../ui/theme";
 import { LOBBY_RETURN } from "./lobbyEntry";
+import { prefetchBattlePuppets } from "../puppets/battlePrefetch";
+import { relicCollection } from "../managers/RelicCollectionManager";
 
 /**
  * 레이드 — **함께 미는 보스전**의 화면이다.
@@ -42,6 +44,8 @@ export class RaidScene extends Phaser.Scene {
   }
 
   create(): void {
+    // 시즌 보스는 하나뿐이라 화면에 들어온 순간 편성과 함께 읽어 둔다.
+    prefetchBattlePuppets(relicCollection.validParty, [RAID_SEASON_BOSS.relicId]);
     setDebugScene("raid");
     addSceneBackground(this, BACKGROUND.sortieRaid);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { strength: 0.72 });

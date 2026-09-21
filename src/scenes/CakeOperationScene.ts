@@ -18,6 +18,9 @@ import { TopBar } from "../ui/TopBar";
 import { chipPoints, drawLayer, drawVignette, slantedRect } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { LOBBY_RETURN } from "./lobbyEntry";
+import { prefetchBattlePuppets } from "../puppets/battlePrefetch";
+import { relicCollection } from "../managers/RelicCollectionManager";
+import { CAKE_OPERATION_ENEMY_ID } from "../data/cakeOperation";
 
 /**
  * **치즈케이크 대작전** — 레이티아 거대겨울잠쥐가 떼로 몰려오는 물량형 던전의 입구.
@@ -45,6 +48,8 @@ export class CakeOperationScene extends Phaser.Scene {
   }
 
   create(): void {
+    // 단계를 고르는 동안 전투에 설 SD를 미리 읽는다 — 적은 이 던전 전체가 한 종이다.
+    prefetchBattlePuppets(relicCollection.validParty, [CAKE_OPERATION_ENEMY_ID]);
     setDebugScene("cakeOperation", t("cake.title"));
     this.busy = false;
     this.rows = [];

@@ -11,15 +11,9 @@
  * 원화를 세운 표시 객체가 살아 있는 동안만 붙잡고 그 객체가 죽으면 놓는다 — 화면이 늘어도
  * 적을 것이 없다.
  *
- * **예외는 나란히 놓인 다섯뿐이다**(`NAV_BACKGROUND`). 그 규칙에도 남겨 두는 장수라는 예산이
- * 하나 있는데, 자리가 그 예산보다 많으면 되돌아오는 걸음이 매번 밖으로 밀려난다. 다섯은
- * 손이 하루에도 수십 번 오가는 자리라 그 밀려남이 곧 탭마다의 암전으로 보였다.
- *
  * Phaser 없는 순수 모듈에 두는 이유는 이 규칙이 눈으로 확인할 수 없는 종류(메모리)라
  * 테스트로만 지킬 수 있기 때문이다.
  */
-
-import { BACKGROUND, NAV_BACKGROUND } from "./backgroundAssets";
 
 /**
  * 쓰는 곳이 사라진 뒤에도 남겨 둘 최대 장수.
@@ -33,18 +27,11 @@ export const BACKGROUND_IDLE_KEEP = 2;
 /**
  * 아무도 쓰지 않아도 내리지 않는 키.
  *
- * 두 가지가 오른다.
- *
- * **카드 뒷배경**은 도감·편성·전투 프로필·연구 결과의 **카드 한 장마다** 깔리므로, 화면을
- * 옮길 때마다 내렸다 올리면 그리드가 뜰 때마다 카드 뒤가 한 번씩 빈다. 6.3MB짜리 한 장이라
+ * 카드 뒷배경은 도감·편성·전투 프로필·연구 결과의 **카드 한 장마다** 깔리므로, 화면을 옮길
+ * 때마다 내렸다 올리면 그리드가 뜰 때마다 카드 뒤가 한 번씩 빈다. 6.3MB짜리 한 장이라
  * 붙잡아 두는 비용이 다시 읽는 값보다 싸다.
- *
- * **핵심 화면 다섯의 배경**은 위 `BACKGROUND_IDLE_KEEP`의 예산으로는 지킬 수가 없다. 그
- * 예산은 둘인데 나란히 놓인 자리는 다섯이라, 되돌아오는 걸음이 거의 매번 밖으로 밀려난다 —
- * 실측에서 열한 번 중 **열 번**이 그랬다. 그 화면에 처음 들어갈 때만 읽고 그 뒤로는 내리지
- * 않는다. 이유와 비용은 `NAV_BACKGROUND` 머리에 적어 두었다.
  */
-export const BACKGROUND_PINNED: readonly string[] = [BACKGROUND.cardBackdrop, ...Object.values(NAV_BACKGROUND)];
+export const BACKGROUND_PINNED: readonly string[] = ["background-card-backdrop"];
 
 /** 지금 무엇이 올라가 있고 무엇이 붙잡혀 있는지. */
 export interface BackgroundResidency {

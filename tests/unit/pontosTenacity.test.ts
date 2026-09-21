@@ -83,11 +83,16 @@ describe("폰토스의 강인함", () => {
 });
 
 describe("폰토스의 받는 피해 감소", () => {
-  it("는 체력이 많이 남았을 때 완만하게 오른다", () => {
-    // 직선이던 때는 체력 75%에서 이미 74.5% 경감이라 초반부터 때릴 맛이 없었다.
+  it("는 온전한 몸에서도 이미 단단하다", () => {
+    // 바닥이 50이던 때는 죽지 않는 벽이 받는 피해의 절반을 그대로 맞았다.
+    const boss = pontos();
+    expect(receivedDamage(boss, 1_000)).toBe(300);
+  });
+
+  it("는 조금만 깎여도 곧바로 붙고 뒤에서 완만해진다", () => {
     const boss = pontos();
     boss.hp = boss.maxHp * 0.75;
-    expect(receivedDamage(boss, 1_000)).toBe(477);
+    expect(receivedDamage(boss, 1_000)).toBe(197); // 경감 80.3%
   });
 
   it("는 체력 절반에서 턱 막히지 않고 끝까지 자란다", () => {
@@ -140,13 +145,20 @@ describe("폰토스전의 원정 점수", () => {
      * 경감이 커지면 깎이는 체력만 줄고 **만들어 낸 기여는 그대로**여야 한다. 그것이 이
      * 고침의 전부다.
      *
-     * 체력을 더 낮추지 않는 이유가 있다 — 경감이 아주 커지면 최종 피해가 무효화 문턱(10)
-     * 아래로 내려가 그 한 방이 *아예 없던 일*이 되고, 그때는 점수도 0이 맞다. 실제 원정의
-     * 폰토스는 무한 체력으로 서므로 그 구간에 들어가지 않는다.
+     * 최종 피해가 무효화 문턱(10) 아래로 내려가는 구간까지 내려도 **점수는 같아야 한다** —
+     * 경감이든 무효화든 죽지 않게 만드는 장치이지 점수를 막는 장치가 아니기 때문이다.
      */
     const healthy = oneHit(1);
-    const wounded = oneHit(0.5);
+    const wounded = oneHit(0.25);
     expect(wounded.score).toBeCloseTo(healthy.score, 6);
-    expect(wounded.hpLost).toBeLessThan(healthy.hpLost);
+    /*
+     * 깎인 체력으로 견주지 않는다 — 그 구간은 최종 피해가 무효화 문턱 아래라 양쪽 다 0이고,
+     * 0과 0을 견주는 검사는 아무것도 지키지 못한다(실제로 그렇게 적었다가 잡았다).
+     * 경감이 정말 커졌는지는 같은 원 피해를 순수 경계에 직접 물어본다.
+     */
+    const boss = pontos();
+    const atFullHp = receivedDamage(boss, 1_000);
+    boss.hp = boss.maxHp * 0.25;
+    expect(receivedDamage(boss, 1_000)).toBeLessThan(atFullHp);
   });
 });

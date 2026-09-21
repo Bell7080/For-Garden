@@ -21,14 +21,6 @@ export const SYSTEM_JA = {
   "battle.buff.ended": "終了",
   "battle.buff.seconds": "{seconds}秒",
 
-  "battle.header.stage": "{id} · {name} · 敵 {enemies}",
-  "battle.header.enemy": "LV.{level}{bonus} · 突破 {grade}",
-  "battle.header.expeditionBoss": "遠征{floor}層 · 不死観測ボス",
-  "battle.header.cake": "チーズケーキ大作戦 · {tier} · x{multiplier}",
-  "battle.header.expedition": "遠征{floor}層 · {node}",
-  "battle.node.normal": "通常戦闘",
-  "battle.node.elite": "精鋭戦闘",
-  "battle.node.horde": "群集戦闘",
 
   "profile.defaultName": "研究員",
   "profile.guest": "ゲスト",

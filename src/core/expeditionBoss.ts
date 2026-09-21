@@ -28,7 +28,12 @@ export interface ExpeditionBossReplayInput {
   /** 생략하면 원정 폰토스 표를 쓴다. 레이드는 제 표를 넘긴다. */
   balance?: BossBattleBalance;
 }
-/** 전멸한 정상 종료만 확정하며 totalDamage는 서버가 행동 로그로 재계산한 대상 경감 전 기여도다. */
+/**
+ * 전멸한 정상 종료만 확정하며 totalDamage는 서버가 행동 로그로 재계산한 **대상 경감 전** 기여도다.
+ *
+ * 누적은 소수까지 그대로 센다 — 타격마다 반올림하면 같은 총 계수의 다단히트가 더 커진다.
+ * 대신 코어 밖으로 나가는 **여기서 한 번만** 반올림해, 점수판과 순위표에는 언제나 정수가 선다.
+ */
 export interface ExpeditionBossResult { totalDamage: number; endedAtMs: number; allAlliesDead: true; bossDefeated: false; remainingHpByAlly: Record<string, number>; }
 
 /** 해당 시각에 활성인 마지막 보스 단계를 찾는다. 일반 단계는 표시만 하고 피해는 폰토스 스킬이 소유한다. */
@@ -120,6 +125,6 @@ export function resolveExpeditionBossBattle(input: ExpeditionBossReplayInput, ac
   }
   while (state.phase === "fight" && cursorMs < balance.maximumDurationMs) { stepSkirmish(state, 0.05, rng); cursorMs += 50; }
   if (state.phase !== "defeat") throw new Error("BOSS_BATTLE_DID_NOT_END_IN_WIPE");
-  return { totalDamage: state.boss?.score ?? 0, endedAtMs: Math.round(state.elapsed * 1_000), allAlliesDead: true, bossDefeated: false,
+  return { totalDamage: Math.round(state.boss?.score ?? 0), endedAtMs: Math.round(state.elapsed * 1_000), allAlliesDead: true, bossDefeated: false,
     remainingHpByAlly: Object.fromEntries(state.fighters.filter(({ side }) => side === "player").map(({ def, hp }) => [def.id, hp])) };
 }

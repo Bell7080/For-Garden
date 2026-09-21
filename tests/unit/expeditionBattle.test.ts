@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { getCakeOperationTier } from "../../src/data/cakeOperation";
-import { battleHeaderText, createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../../src/core/expeditionBattle";
+import * as battleModule from "../../src/core/expeditionBattle";
+import { createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../../src/core/expeditionBattle";
 import { createSkirmish, spawnSpots, skirmishRelicResults, type Arena } from "../../src/core/skirmish";
 import { EXPEDITION_COMBAT_BALANCE } from "../../src/data/expedition";
 import { getRelic } from "../../src/data/relics";
@@ -123,15 +123,12 @@ describe("전투 씬 입력 정규화 회귀", () => {
     expect(next).not.toHaveProperty("requestId");
   });
 
-  it("원정 헤더에 선택된 스토리 이름을 표시하지 않는다", () => {
-    // 일반 스테이지 헤더는 단일 공용 레벨 대신 슬롯별 성장 스냅샷을 읽는다.
-    const story = { id: "1-5", name: "남아서는 안 되는 이름", enemies: [{ relicId: "a", level: 12, breakthrough: 1 }, { relicId: "b", level: 13, breakthrough: 2 }, { relicId: "c", level: 14, breakthrough: 3 }] } as const;
-    expect(battleHeaderText(input("horde"), story)).toBe("원정 1층 · 군집 전투");
-    expect(battleHeaderText({ mode: "stage" }, story)).toContain(story.name);
-    // 대작전 머리글도 스토리 이름을 읽지 않고 제 단계 이름과 배율만 말한다.
-    const cakeHeader = battleHeaderText({ mode: "cake", tierId: "cake-3", multiplier: 2, requestId: "r" }, story);
-    expect(cakeHeader).not.toContain(story.name);
-    expect(cakeHeader).toContain(getCakeOperationTier("cake-3").name);
-    expect(cakeHeader).toContain("x2");
+  it("는 전투 머리글 문구를 더 이상 만들지 않는다", () => {
+    /*
+     * 관문 이름과 적의 레벨·돌파 등급은 **이미 고르고 들어온 화면**이라 싸우는 동안 손이 할
+     * 일을 바꾸지 않는다. 화면에서 걷어 내면서 그 문구를 짓던 함수와 문구 키도 함께 지웠다 —
+     * 부르는 곳 없이 남겨 두면 다음 사람이 되살릴 자리가 된다.
+     */
+    expect(battleModule).not.toHaveProperty("battleHeaderText");
   });
-});
+});;

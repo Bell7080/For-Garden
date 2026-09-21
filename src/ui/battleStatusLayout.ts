@@ -189,3 +189,19 @@ export function unitStatusChipOffsets(count: number): number[] {
   const left = -hpBarWidth / 2;
   return Array.from({ length: count }, (_, index) => left + chipSize / 2 + index * (chipSize + chipGap));
 }
+
+/**
+ * 진행 시간이 서는 자리.
+ *
+ * **화면 맨 위 가운데다.** 전장은 아래쪽 절반에서 벌어지고 프로필 줄이 밑동을 쓰므로, 위
+ * 가운데가 무엇도 가리지 않으면서 눈이 한 번은 지나가는 자리다. 보스 총점·무리 번호도 같은
+ * 열을 쓰던 자리라, 시계가 맨 위에 서고 그 둘은 그 아래로 한 칸씩 내려선다.
+ */
+export const BATTLE_CLOCK_LAYOUT = {
+  x: 1080 / 2,
+  y: 34,
+  size: 46,
+  depth: 90,
+  /** 시계 아래로 내려선 보스 총점·무리 번호가 쓰는 y다. 시계와 같은 열이라 한 표가 갖는다. */
+  headlineY: 104,
+} as const;

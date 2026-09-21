@@ -9,5 +9,4 @@ export const BOUNTY_EN = {
   "bounty.sortie": "Sortie \u00b7 Stamina {stamina}",
   "bounty.result.toBounty": "To Bounty",
 
-  "battle.header.bounty": "{tier} \u00b7 Round {round}/{total} \u00b7 LV.{level}{bonus}",
 } as const;

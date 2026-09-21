@@ -1,17 +1,13 @@
 import type { ExpeditionNodeType } from "./expeditionMap";
+import type { RelicDef } from "./types";
 import type { ExpeditionAugmentSelection } from "./expeditionRewards";
 import { getExpeditionAugment } from "../data/expeditionAugments";
 import type { ExpeditionAugmentEffect } from "./expeditionAugments";
 import { EXPEDITION_COMBAT_BALANCE } from "../data/expedition";
 import { EXPEDITION_BOSS_BALANCE } from "../data/expedition";
 import { RAID_BOSS_BALANCE, RAID_SEASON_BOSS } from "../data/raid";
-import type { BattleStageDef, RelicDef } from "./types";
-import { BREAKTHROUGH_GRADE_ROMAN } from "./relicProgression";
 import type { FighterInitialState, SkirmishBossPhase, SkirmishRelicResult } from "./skirmish";
-import { t } from "../i18n";
-import { getCakeOperationTier } from "../data/cakeOperation";
 import type { BountyBattleInputDto } from "./bountyRun";
-import { getBountyTier } from "../data/bounty";
 
 /** 원정 씬이 전투 씬에 넘기는 직렬화 가능한 입력이다. 전투 씬은 Session 편성을 추측하지 않는다. */
 export interface ExpeditionBattleInputDto {
@@ -148,33 +144,6 @@ export function normalizeBattleSceneInput(input?: unknown): BattleSceneInputDto 
     if (candidate.mode === "bounty" && typeof candidate.tierId === "string" && typeof candidate.requestId === "string") return candidate;
   }
   return { mode: "stage" };
-}
-
-/** 모드별 상단 문구를 분리해 원정 화면이 선택된 스토리 이름을 읽지 않게 한다. */
-export function battleHeaderText(input: BattleSceneInputDto, stage: Pick<BattleStageDef, "id" | "name"> & { enemies: readonly Pick<BattleStageDef["enemies"][number], "level" | "breakthrough" | "ferocityLevel">[] }): string {
-  // 서로 다른 성장 상태도 숨기지 않도록 슬롯 순서대로 간결하게 요약한다.
-  if (input.mode === "stage") {
-    return t("battle.header.stage", {
-      id: stage.id, name: stage.name,
-      // 야성으로 얹힌 몫과 돌파 등급도 머리글에서 갈라 읽힌다 — 한 줄의 문장 모양은 표가 갖는다.
-      enemies: stage.enemies.map(({ level, breakthrough, ferocityLevel }) => t("battle.header.enemy", {
-        level, bonus: ferocityLevel ? `+${ferocityLevel}` : "", grade: BREAKTHROUGH_GRADE_ROMAN[breakthrough] ?? "",
-      })).join(" · "),
-    });
-  }
-  if (input.mode === "expeditionBoss") return t("battle.header.expeditionBoss", { floor: input.floor });
-  if (input.mode === "raid") return t("battle.header.raid");
-  // 단계 이름은 데이터 표가 번역까지 갖고 있으므로 씬도 머리글도 그 이름을 그대로 받는다.
-  if (input.mode === "cake") return t("battle.header.cake", { tier: getCakeOperationTier(input.tierId).name, multiplier: input.multiplier });
-  // 현상수배는 관문 이름 대신 **몇 번째 라운드인가**가 머리글이다 — 한 판이 세 라운드라 그 수가
-  // 곧 남은 길이다. 등급 이름은 정적 표에서 오고 씬이 적지 않는다.
-  if (input.mode === "bounty") {
-    const tier = getBountyTier(input.tierId);
-    const round = tier.rounds[input.round];
-    return t("battle.header.bounty", { tier: tier.name, round: input.round + 1, total: tier.rounds.length, level: round.level, bonus: round.ferocityLevel ? `+${round.ferocityLevel}` : "" });
-  }
-  // 노드 유형은 저장/정산용 영문값 대신 플레이어가 구분할 수 있는 전투 명칭으로 표시한다.
-  return t("battle.header.expedition", { floor: input.floor, node: t(`battle.node.${input.nodeType}`) });
 }
 
 /** 저장 선택을 전투 코어가 소비하는 효과로 바꾸며 비전투 회복 효과는 이 목록에서 제외한다. */

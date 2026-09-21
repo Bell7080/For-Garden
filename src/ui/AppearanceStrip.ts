@@ -490,7 +490,7 @@ export class AppearanceStrip {
     tone: { alpha: number; tint?: number },
     isCurrent: () => boolean,
   ): Promise<void> {
-    const { key, anchors } = await loadPortraitTexture(this.scene, asset);
+    const { key, anchors } = await loadPortraitTexture(this.scene, asset, parent);
     if (!isCurrent()) return;
     const frame = headCardFrame(asset, anchors, {
       width, height,

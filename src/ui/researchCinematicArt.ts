@@ -1,7 +1,7 @@
 import type Phaser from "phaser";
 import type { PortraitAssetId } from "../core/types";
 import { computeFaceFrame, computeHeadCardFrame } from "../puppets/anchors";
-import { loadPortraitTexture, portraitAssetFor } from "../puppets/assets";
+import { portraitAssetFor, withPuppetTexture } from "../puppets/assets";
 import { faceClipShape } from "./faceTexture";
 import { ITEM_FRAME } from "./itemFrame";
 
@@ -59,24 +59,26 @@ export async function bakeCinematicPortrait(
   if (cached) return cached;
   try {
     const asset = portraitAssetFor(portraitAssetId);
-    const { key, anchors } = await loadPortraitTexture(scene, asset);
-    const source = scene.textures.get(key).getSourceImage() as CanvasImageSource;
-    const frame = computeHeadCardFrame(asset, anchors.head, {
-      width,
-      height,
-      fillRatio: 0.56 / ((asset.cardZoom ?? 1) * (asset.portraitZoom ?? 1)),
-      headroom: 0,
-      cardTop: asset.cardTop,
+    // 구워 낸 그림이 제 텍스처를 갖고 원본은 더 쓰지 않으므로, 읽는 동안만 붙잡는다.
+    const url = await withPuppetTexture(scene, asset, ({ key, anchors }) => {
+      const source = scene.textures.get(key).getSourceImage() as CanvasImageSource;
+      const frame = computeHeadCardFrame(asset, anchors.head, {
+        width,
+        height,
+        fillRatio: 0.56 / ((asset.cardZoom ?? 1) * (asset.portraitZoom ?? 1)),
+        headroom: 0,
+        cardTop: asset.cardTop,
+      });
+      const target = canvasOf(width, height);
+      if (!target) return undefined;
+      target.ctx.drawImage(
+        source,
+        frame.cropX, frame.cropY, frame.cropWidth, frame.cropHeight,
+        0, 0, frame.cropWidth * frame.scale, frame.cropHeight * frame.scale,
+      );
+      return encode(target.canvas);
     });
-    const target = canvasOf(width, height);
-    if (!target) return undefined;
-    target.ctx.drawImage(
-      source,
-      frame.cropX, frame.cropY, frame.cropWidth, frame.cropHeight,
-      0, 0, frame.cropWidth * frame.scale, frame.cropHeight * frame.scale,
-    );
-    const url = encode(target.canvas);
-    baked.set(cacheKey, url);
+    if (url) baked.set(cacheKey, url);
     return url;
   } catch {
     // 묶음 하나를 못 읽어도 연출은 멈추지 않는다. 그 칸만 그림 없이 선다.
@@ -101,29 +103,30 @@ export async function bakeCinematicFace(
   if (cached) return cached;
   try {
     const asset = portraitAssetFor(portraitAssetId);
-    const { key, anchors } = await loadPortraitTexture(scene, asset);
-    const source = scene.textures.get(key).getSourceImage() as CanvasImageSource;
-    const face = computeFaceFrame(asset, anchors.head, {
-      size,
-      crop: FACE_CROP / ((asset.cardZoom ?? 1) * (asset.portraitZoom ?? 1)),
-      anchorY: FACE_ANCHOR_Y,
+    const url = await withPuppetTexture(scene, asset, ({ key, anchors }) => {
+      const source = scene.textures.get(key).getSourceImage() as CanvasImageSource;
+      const face = computeFaceFrame(asset, anchors.head, {
+        size,
+        crop: FACE_CROP / ((asset.cardZoom ?? 1) * (asset.portraitZoom ?? 1)),
+        anchorY: FACE_ANCHOR_Y,
+      });
+      const target = canvasOf(size, size);
+      if (!target) return undefined;
+      target.ctx.drawImage(source, face.cropX, face.cropY, face.cropWidth, face.cropWidth, 0, 0, size, size);
+      target.ctx.globalCompositeOperation = "destination-in";
+      target.ctx.beginPath();
+      const shape = faceClipShape(size);
+      for (let index = 0; index < shape.length; index += 2) {
+        const x = shape[index] + size / 2;
+        const y = shape[index + 1] + size / 2;
+        if (index === 0) target.ctx.moveTo(x, y); else target.ctx.lineTo(x, y);
+      }
+      target.ctx.closePath();
+      target.ctx.fill();
+      target.ctx.globalCompositeOperation = "source-over";
+      return encode(target.canvas);
     });
-    const target = canvasOf(size, size);
-    if (!target) return undefined;
-    target.ctx.drawImage(source, face.cropX, face.cropY, face.cropWidth, face.cropWidth, 0, 0, size, size);
-    target.ctx.globalCompositeOperation = "destination-in";
-    target.ctx.beginPath();
-    const shape = faceClipShape(size);
-    for (let index = 0; index < shape.length; index += 2) {
-      const x = shape[index] + size / 2;
-      const y = shape[index + 1] + size / 2;
-      if (index === 0) target.ctx.moveTo(x, y); else target.ctx.lineTo(x, y);
-    }
-    target.ctx.closePath();
-    target.ctx.fill();
-    target.ctx.globalCompositeOperation = "source-over";
-    const url = encode(target.canvas);
-    baked.set(cacheKey, url);
+    if (url) baked.set(cacheKey, url);
     return url;
   } catch {
     return undefined;

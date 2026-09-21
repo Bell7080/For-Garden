@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import type { PortraitAssetId } from "../core/types";
 import { computeFaceFrame } from "../puppets/anchors";
-import { loadPortraitTexture, portraitAssetFor } from "../puppets/assets";
+import { portraitAssetFor, withPuppetTexture } from "../puppets/assets";
 import { bakeFaceTexture, clipRectToShape, faceClipShape } from "./faceTexture";
 import { chipPoints, drawInnerVignette, drawLayer, drawShapeInnerGlow, drawShapeOutline } from "./holo";
 import { ITEM_FRAME } from "./itemFrame";
@@ -79,20 +79,25 @@ export class FaceFrame extends Phaser.GameObjects.Container {
 
   private async loadFace(scene: Phaser.Scene, options: { portraitAssetId: PortraitAssetId; tint?: number }, size: number): Promise<void> {
     const asset = portraitAssetFor(options.portraitAssetId);
-    const { key, anchors } = await loadPortraitTexture(scene, asset);
-    if (this.disposed) return;
-    // 카드 잘라내기가 아니라 **얼굴 전용 정사각 잘라내기**를 쓴다(`computeFaceFrame` 주석 참고).
-    // 등신이 낮아 얼굴이 큰 원화는 카드와 같은 기준(`cardZoom`)으로 되돌려, 같은 액자에 나란히
-    // 서도 얼굴 크기가 개체마다 튀지 않게 한다.
-    const face = computeFaceFrame(asset, anchors.head, {
-      size,
-      crop: FACE_FRAME.crop / ((asset.cardZoom ?? 1) * (asset.portraitZoom ?? 1)),
-      anchorY: FACE_FRAME.anchorY,
+    // **구운 뒤에는 원본을 놓는다.** 원정 순위표는 얼굴 액자를 100줄 세우므로, 판이 사는
+    // 동안 붙잡고 있으면 거기 선 개체의 전신이 전부 GPU에 남는다 — 액자가 실제로 그리는
+    // 것은 `bakeFaceTexture`가 구운 제 텍스처이고 원본은 굽는 그 한 번만 읽는다.
+    const built = await withPuppetTexture(scene, asset, ({ key, anchors }) => {
+      if (this.disposed) return undefined;
+      // 카드 잘라내기가 아니라 **얼굴 전용 정사각 잘라내기**를 쓴다(`computeFaceFrame` 주석 참고).
+      // 등신이 낮아 얼굴이 큰 원화는 카드와 같은 기준(`cardZoom`)으로 되돌려, 같은 액자에 나란히
+      // 서도 얼굴 크기가 개체마다 튀지 않게 한다.
+      const face = computeFaceFrame(asset, anchors.head, {
+        size,
+        crop: FACE_FRAME.crop / ((asset.cardZoom ?? 1) * (asset.portraitZoom ?? 1)),
+        anchorY: FACE_FRAME.anchorY,
+      });
+      // **액자 한 변을 꽉 채우고, 깎인 두 모서리는 구울 때 지운다.** 덮으면 액자 바깥에 검은 뿔이
+      // 남고(v0.105.0까지), 안쪽 정사각에 들이면 얼굴이 작아진다(v0.108.0까지).
+      return bakeFaceTexture(scene, key, size, { x: face.cropX, y: face.cropY, side: face.cropWidth });
     });
-    // **액자 한 변을 꽉 채우고, 깎인 두 모서리는 구울 때 지운다.** 덮으면 액자 바깥에 검은 뿔이
-    // 남고(v0.105.0까지), 안쪽 정사각에 들이면 얼굴이 작아진다(v0.108.0까지).
-    const baked = bakeFaceTexture(scene, key, size, { x: face.cropX, y: face.cropY, side: face.cropWidth });
-    const image = scene.add.image(0, 0, baked).setDisplaySize(size, size);
+    if (!built || this.disposed) return;
+    const image = scene.add.image(0, 0, built).setDisplaySize(size, size);
     if (options.tint) image.setTint(options.tint);
     // 액자를 깐 경우 면 바로 위(1번)에, 그림만 세우는 경우 그대로 맨 앞에 놓는다.
     this.addAt(image, this.length > 0 ? 1 : 0);

@@ -1,6 +1,7 @@
 import type Phaser from "phaser";
 import type { Puppet } from "puppetforge/phaser";
 import type { PortraitAssetId, RaitiaAssetId } from "../core/types";
+import { emptyPuppetResidency, releasePuppet, retainPuppet, type PuppetResidency } from "../core/puppetResidency";
 import { changeDebugPuppetContainers } from "../debug";
 import { ENEMY_SD_ASSET_IDS } from "./enemyAssetIds";
 import {
@@ -769,6 +770,65 @@ const motionCompletions = new WeakMap<PuppetCreature, () => void>();
 const loaded = new Map<string, Promise<Puppet>>();
 
 /**
+ * 지금 GPU에 올라가 있는 묶음과 그것을 쓰는 곳의 수.
+ *
+ * Phaser의 Texture Manager는 게임 하나에 하나뿐이라 씬을 옮겨도 그대로 남는다. 그래서 이
+ * 장부도 모듈 수준에 둔다 — 배경 원화가 같은 이유로 그렇게 한다.
+ */
+let residency: PuppetResidency = emptyPuppetResidency();
+
+/** 묶음 URL → 그 원화가 올라간 텍스처 키. 내릴 때 무엇을 지울지 아는 유일한 자리다. */
+const textureKeys = new Map<string, string>();
+
+/**
+ * 그 묶음을 하나 붙잡는다. 내려간 뒤라도 다음 `loadPuppet`이 ZIP부터 다시 읽으므로 여기서는
+ * 세는 일만 한다.
+ */
+function retainPuppetAsset(url: string): void {
+  residency = retainPuppet(residency, url);
+}
+
+/**
+ * 붙잡은 것 하나를 놓는다. 마지막 하나가 놓이고 idle 자리가 넘치면 **그 묶음을 통째로**
+ * 내린다 — 텍스처만 지우면 일꾼 경로의 `Puppet`에는 다시 올릴 그림이 남아 있지 않아
+ * 그 개체가 다음부터 서지 못한다(`puppetResidency.ts` 머리 주석).
+ */
+function releasePuppetAsset(scene: Phaser.Scene, url: string): void {
+  const next = releasePuppet(residency, url);
+  residency = next.state;
+  for (const evicted of next.evict) {
+    const key = textureKeys.get(evicted);
+    textureKeys.delete(evicted);
+    loaded.delete(evicted);
+    anchorCache.delete(evicted);
+    // 텍스처 키는 ZIP 안의 이름에서 나오므로 서로 다른 묶음이 같은 키를 쓸 수 있다.
+    // 그 경우 한쪽을 내린다고 그림을 지우면 **아직 살아 있는 다른 쪽이 그 자리에서 터진다** —
+    // 장부에 남아 있는 묶음 중 같은 키를 가리키는 것이 하나라도 있으면 그림은 그대로 둔다.
+    if (!key) continue;
+    const shared = [...Object.keys(residency.users), ...residency.idle]
+      .some((url) => textureKeys.get(url) === key);
+    if (!shared) scene.textures.remove(key);
+  }
+}
+
+/**
+ * 이 표시 객체가 사는 동안 그 묶음을 붙잡아 두고, 죽으면 놓는다.
+ *
+ * 붙잡는 일을 부르는 쪽에 맡기지 않고 **원화를 얻는 경로가 반드시 지나가게** 만든 것은,
+ * 화면이 늘 때 한 곳만 빠뜨려도 그 묶음이 영영 GPU에 남거나(놓지 않음) 쓰는 중에
+ * 내려가기(붙잡지 않음) 때문이다.
+ */
+function bindPuppetLifetime(scene: Phaser.Scene, holder: Phaser.GameObjects.GameObject, url: string): void {
+  retainPuppetAsset(url);
+  holder.once("destroy", () => releasePuppetAsset(scene, url));
+}
+
+/** 검사 채널이 읽는 지금의 장부. 화면은 쓰지 않는다. */
+export function puppetResidencySnapshot(): PuppetResidency {
+  return residency;
+}
+
+/**
  * 묶음 하나를 읽는다.
  *
  * **내려받기·ZIP 해제·puppet.json 파싱·원화 디코드는 전부 일꾼이 한다**(`puppetParsePool`).
@@ -898,13 +958,45 @@ export interface PortraitTexture {
  *
  * 도감·편성 그리드처럼 여러 장이 동시에 필요한 곳에서 Mesh를 30개 만들면 GPU draw call이
  * 그만큼 늘어난다. 카드에는 같은 텍스처를 공유하는 정지 이미지만 쓴다.
+ *
+ * **`holder`는 선택이 아니다.** 그 원화는 이 표시 객체가 사는 동안만 GPU에 남고 죽으면
+ * 내려간다 — 붙잡을 곳 없이 키만 받아 가는 길을 열어 두면 도감을 한 번 연 계정이 전신
+ * 스물다섯 장을 끝까지 들고 있게 된다(`core/puppetResidency.ts`).
  */
-export async function loadPortraitTexture(scene: Phaser.Scene, asset: PuppetAsset): Promise<PortraitTexture> {
+export async function loadPortraitTexture(
+  scene: Phaser.Scene,
+  asset: PuppetAsset,
+  holder: Phaser.GameObjects.GameObject,
+): Promise<PortraitTexture> {
+  bindPuppetLifetime(scene, holder, asset.url);
   const template = await loadPuppet(asset);
   // Phaser 구현은 실제 생성 시점에만 읽어 정적 asset 표의 테스트가 DOM을 요구하지 않게 한다.
   const { ensureTexture } = await import("./IndexedPuppetCreature");
   const [key, anchors] = await Promise.all([ensureTexture(scene, template), loadPuppetAnchors(asset)]);
+  textureKeys.set(asset.url, key);
   return { key, anchors };
+}
+
+/**
+ * 원화를 **읽어 쓰는 동안만** 붙잡는다. 캔버스에 구워 낸 뒤로는 원본이 필요 없는 자리
+ * (뽑기 시네마틱의 카드·얼굴 굽기)가 쓴다 — 거기에는 붙잡아 둘 표시 객체가 없고, 구운
+ * 결과가 제 텍스처를 따로 갖는다.
+ */
+export async function withPuppetTexture<T>(
+  scene: Phaser.Scene,
+  asset: PuppetAsset,
+  use: (texture: PortraitTexture) => T | Promise<T>,
+): Promise<T> {
+  retainPuppetAsset(asset.url);
+  try {
+    const template = await loadPuppet(asset);
+    const { ensureTexture } = await import("./IndexedPuppetCreature");
+    const [key, anchors] = await Promise.all([ensureTexture(scene, template), loadPuppetAnchors(asset)]);
+    textureKeys.set(asset.url, key);
+    return await use({ key, anchors });
+  } finally {
+    releasePuppetAsset(scene, asset.url);
+  }
 }
 
 /** 카드 한 장의 잘라내기 상자를 묶음 기준점으로 계산한다. */
@@ -959,18 +1051,33 @@ export async function spawnPuppet(
   asset: PuppetAsset,
   options: SpawnOptions,
 ): Promise<PuppetCreature> {
-  const template = await loadPuppet(asset);
-  // Puppet은 재생 시각·속도·강도를 내부에 보관한다. 같은 인스턴스를 여러 Mesh가 공유하면 한
-  // 캐릭터의 play가 다른 캐릭터를 덮으므로, 정적 프로젝트만 공유하고 재생기는 개체마다 만든다.
-  const { Puppet } = await import("puppetforge/phaser");
-  const puppet = Puppet.fromProject(template.project, template.texture);
-  const { IndexedPuppetCreature } = await import("./IndexedPuppetCreature");
-  const creature = await IndexedPuppetCreature.fromPuppet(scene, puppet);
+  // 세우기 전에 먼저 붙잡는다. 읽는 사이에 다른 곳이 idle 자리를 넘치게 하면 지금 올리려던
+  // 그림이 그 사이에 내려간다.
+  retainPuppetAsset(asset.url);
+  // 세우다 실패하면 놓아 줄 개체가 없다. 그 자리에서 붙잡은 것을 되돌리지 않으면 그 묶음은
+  // 쓰는 곳이 없는데도 영영 내려가지 않는다 — 전투는 실패한 한 마리를 삼키고 넘어간다.
+  let creature: PuppetCreature;
+  try {
+    const template = await loadPuppet(asset);
+    // Puppet은 재생 시각·속도·강도를 내부에 보관한다. 같은 인스턴스를 여러 Mesh가 공유하면 한
+    // 캐릭터의 play가 다른 캐릭터를 덮으므로, 정적 프로젝트만 공유하고 재생기는 개체마다 만든다.
+    const { Puppet } = await import("puppetforge/phaser");
+    const puppet = Puppet.fromProject(template.project, template.texture);
+    const { IndexedPuppetCreature } = await import("./IndexedPuppetCreature");
+    creature = await IndexedPuppetCreature.fromPuppet(scene, puppet);
+  } catch (error) {
+    releasePuppetAsset(scene, asset.url);
+    throw error;
+  }
 
   // Canvas 밖 자동화가 ZIP 파싱 완료를 시간으로 추측하지 않도록 실제 생존 컨테이너만 센다.
   const sceneKey = scene.scene.key;
   changeDebugPuppetContainers(sceneKey, 1);
-  creature.once("destroy", () => changeDebugPuppetContainers(sceneKey, -1));
+  textureKeys.set(asset.url, creature.texture.key);
+  creature.once("destroy", () => {
+    changeDebugPuppetContainers(sceneKey, -1);
+    releasePuppetAsset(scene, asset.url);
+  });
 
   placePuppet(creature, asset, options);
   if (options.tint !== undefined) tintPuppet(creature, options.tint);

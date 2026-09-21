@@ -540,7 +540,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
    */
   private async loadPortrait(): Promise<void> {
     const asset = resolvedPortraitAsset(this.options);
-    const { key, anchors } = await loadPortraitTexture(this.scene, asset);
+    const { key, anchors } = await loadPortraitTexture(this.scene, asset, this);
     if (this.disposed) return;
 
     const { width, height } = this.options;

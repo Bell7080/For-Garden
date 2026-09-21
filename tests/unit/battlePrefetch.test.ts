@@ -52,6 +52,33 @@ describe("전투 SD 미리 읽기", () => {
     expect(helper).not.toMatch(/export async function prefetchBattlePuppets/);
   });
 
+  it("는 로비에서도 도는데, 그 자리는 한 장씩 읽는다", () => {
+    const helper = readFileSync("src/puppets/battlePrefetch.ts", "utf8");
+    const lobby = sceneOf("LobbyScene");
+    // 로비는 한참 머무는 화면이라 그 시간을 쓰지 않으면 출격 뒤의 대기가 거기서 시작한다.
+    expect(lobby).toContain("prefetchIdlePuppets(this, relicCollection.validParty)");
+    // **들어오는 연출이 끝난 뒤에** 시작한다 — 화면이 움직이는 동안 일꾼을 깨우면 연출이 끊긴다.
+    expect(lobby).toContain("TRANSITION.sceneIn.duration");
+
+    const idle = helper.slice(helper.indexOf("export function prefetchIdlePuppets"));
+    // 일꾼이 넷인데 한꺼번에 던지면 로비가 여는 정보창·도감 카드가 그 뒤에 선다.
+    expect(idle).toMatch(/for \(const asset of assets\) \{[\s\S]*await preloadPuppetAssets\(\[asset\]\)/);
+    // 로비를 떠나면 남은 것은 읽지 않는다. 다음 화면의 제 몫 앞에 끼어들면 같은 줄 서기다.
+    expect(idle).toContain('scene.events.once("shutdown"');
+    expect(idle).toMatch(/if \(left\) return;/);
+  });
+
+  it("는 보유 렐릭 전부로 넓히지 않는다", () => {
+    // 일꾼이 돌려주는 `ImageBitmap`은 그 묶음이 **처음 세워질 때까지** 남는다. 미리 읽고 쓰지
+    // 않으면 한 장에 6.5MB가 그대로 붙잡혀, 열아홉을 다 읽으면 120MB가 아무도 보지 않는
+    // 그림이 된다. 거주 규칙은 GPU에 올라간 뒤를 맡으므로 이 앞단은 읽는 양으로 막는다.
+    const helper = readFileSync("src/puppets/battlePrefetch.ts", "utf8");
+    expect(helper).not.toMatch(/owned|catalog|allRelics/);
+    const lobby = sceneOf("LobbyScene");
+    expect(lobby).toContain("prefetchIdlePuppets(this, relicCollection.validParty)");
+    expect(lobby).not.toMatch(/prefetchIdlePuppets\(this, [^)]*owned/);
+  });
+
   it("가 가리키는 적은 실제로 있는 개체다", () => {
     expect(CAKE_OPERATION_ENEMY_IDS.length).toBeGreaterThan(0);
     for (const id of CAKE_OPERATION_ENEMY_IDS) expect(getRelic(id), id).toBeTruthy();

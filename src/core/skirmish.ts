@@ -212,8 +212,15 @@ export interface Fighter extends Combatant {
   stunnedFor: number;
   /** 지금 도는 기절 한 바퀴의 전체 시간(초). 화면의 시계가 읽는 분모다. */
   stunnedTotal: number;
-  /** 남은 경직 시간(초). 기절과 달리 저항·유지 모션 없이 순간적으로만 행동을 끊는다. */
+  /** 남은 경직 시간(초). 짧게 행동을 끊는다. 기절과 **같은 강인함**을 지난다. */
   staggeredFor: number;
+  /**
+   * 군중제어를 받아 내며 쌓인 **강인함**(%). 태생 저항 위에 더해진다.
+   *
+   * 값을 가진 개체만 오른다(`Passive.tenacityPerControlPercent`). 적지 않은 개체는 0에
+   * 머물러 예전처럼 태생 저항만 쓴다.
+   */
+  tenacity: number;
   /** 모든 피해보다 먼저 소모되며 제공자의 안정적인 런타임 ID를 함께 보존하는 보호막이다. */
   shield: { amount: number; providerId: string | null };
   /** 아다지오 정화·보호막의 메테 개체별 남은 쿨타임(초)이다. JSON 직렬화 가능한 숫자다. */
@@ -990,6 +997,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     // 전투 시작 시 모든 행동 가능 상태이며, 기절은 전투 한정 상태라 저장 스냅샷에서 복원하지 않는다.
     stunnedFor: 0,
     stunnedTotal: 0,
+    tenacity: 0,
     staggeredFor: 0,
     // 시작 보호막은 보정된 최대 HP를 기준으로 계산해 최대 체력 증강과 자연스럽게 결합한다.
     shield: { amount: 0, providerId: null },
@@ -1271,11 +1279,44 @@ export function isFighterAlive(fighter: Fighter): boolean {
  * 공용 기절 재적용 경계. 짧은 효과가 이미 남은 긴 효과를 덮지 않도록 둘 중 큰 시간을 보존한다.
  * UI는 시작 사건으로 연출을 열고, 종료 여부는 매 프레임 사건 대신 Fighter의 남은 시간을 읽는다.
  */
+/**
+ * **강인함** — 지금 이 개체가 군중제어를 얼마나 덜 받는가(%).
+ *
+ * 정의에 적힌 태생 저항(`stunResistancePercent`)에 **맞으면서 쌓인 몫**을 더한 값이다.
+ * 100에 닿으면 걸리는 즉시 풀려, 사실상 걸리지 않는다.
+ *
+ * 기절·경직·광란이 **한 경계를 함께 쓴다.** 예전에는 기절만 저항을 지나고 경직은 그대로
+ * 다 들어갔는데, 그러면 "행동을 막는다"는 같은 일을 하는 둘이 서로 다른 규칙을 따른다 —
+ * 제어기를 가진 편성이 기절 대신 경직으로 같은 잠금을 다시 만들 수 있었다.
+ */
+export function controlResistPercent(fighter: Fighter): number {
+  return Math.min(100, Math.max(0, (fighter.def.stunResistancePercent ?? 0) + fighter.tenacity));
+}
+
+/**
+ * 제어를 한 번 받아 낸 만큼 **강인함이 오른다.**
+ *
+ * 맞은 시간이 아니라 **걸린 횟수**로 센다 — 시간으로 세면 긴 제어 하나가 짧은 제어 여럿보다
+ * 유리해져, 제어를 짧게 자주 거는 편성이 오히려 보스를 더 오래 잠근다.
+ *
+ * 값을 가진 개체(`tenacityPerControlPercent`)만 쌓인다. 적지 않은 개체는 예전처럼 태생
+ * 저항만 쓰고 아무것도 달라지지 않는다.
+ */
+function gainTenacity(fighter: Fighter): void {
+  const gain = fighter.def.passive.tenacityPerControlPercent ?? 0;
+  if (gain <= 0) return;
+  const cap = Math.max(0, (fighter.def.passive.maxTenacityPercent ?? 100) - (fighter.def.stunResistancePercent ?? 0));
+  fighter.tenacity = Math.min(cap, fighter.tenacity + gain);
+}
+
 export function applyStun(fighter: Fighter, seconds: number, state?: SkirmishState): SkirmishEvent[] {
   if (!isFighterAlive(fighter) || !Number.isFinite(seconds) || seconds <= 0) return [];
   // 콘텐츠 정의의 저항은 지속 시간만 줄이며 100% 이상은 같은 경계에서 완전 면역으로 처리한다.
-  const resistance = Math.min(100, Math.max(0, fighter.def.stunResistancePercent ?? 0));
+  const resistance = controlResistPercent(fighter);
   const resistedSeconds = seconds * (1 - resistance / 100);
+  // **막아 낸 제어도 받아 낸 것으로 센다.** 걸리자마자 풀리는 구간에 들어선 뒤에도 계속
+  // 맞고 있는 것이라, 여기서 세지 않으면 상한 근처에서 값이 멈춘 것처럼 보인다.
+  gainTenacity(fighter);
   if (resistedSeconds <= 0) return [];
   const wasStunned = fighter.stunnedFor > 0;
   fighter.stunnedFor = Math.max(fighter.stunnedFor, resistedSeconds);
@@ -1290,11 +1331,14 @@ export function clearStun(fighter: Fighter): void {
   fighter.stunnedFor = 0;
 }
 
-/** 경직은 기절 저항을 쓰지 않고 짧은 행동 차단만 갱신한다. */
+/** 경직도 기절과 **같은 강인함**을 지난다. 행동을 막는 일은 하나이므로 규칙도 하나다. */
 export function applyStagger(fighter: Fighter, seconds: number, state?: SkirmishState): SkirmishEvent[] {
   if (!isFighterAlive(fighter) || !Number.isFinite(seconds) || seconds <= 0) return [];
+  const resisted = seconds * (1 - controlResistPercent(fighter) / 100);
+  gainTenacity(fighter);
+  if (resisted <= 0) return [];
   const wasStaggered = fighter.staggeredFor > 0;
-  fighter.staggeredFor = Math.max(fighter.staggeredFor, seconds);
+  fighter.staggeredFor = Math.max(fighter.staggeredFor, resisted);
   const events: SkirmishEvent[] = wasStaggered ? [] : [{ kind: "status", fighterId: fighter.id, status: "stagger", active: true }];
   if (!wasStaggered && state) cleanseControlWithAdagio(state, fighter, events);
   return events;
@@ -2638,10 +2682,14 @@ function isCurseMaxed(target: Fighter): boolean {
  * 폭주 중 기본 공격마다 다시 걸리므로, 연장하면 짧은 상태가 사실상 상시 광란이 된다.
  * 표적은 다음 판정에서 다시 고르도록 비운다 — 남겨 두면 뒤집히기 전의 상대를 계속 때린다.
  */
-function applyFrenzy(target: Fighter, effect: Extract<CombatStatusEffect, { kind: "frenzy" }>, sourceId?: string): void {
+export function applyFrenzy(target: Fighter, effect: Extract<CombatStatusEffect, { kind: "frenzy" }>, sourceId?: string): void {
+  // 광란도 제 편을 때리게 만드는 **행동 방해**라 같은 강인함을 지난다.
+  const seconds = effect.seconds * (1 - controlResistPercent(target) / 100);
+  gainTenacity(target);
+  if (seconds <= 0) return;
   target.frenzy = {
-    remaining: effect.seconds,
-    total: Math.max(effect.seconds, target.frenzy?.total ?? 0),
+    remaining: seconds,
+    total: Math.max(seconds, target.frenzy?.total ?? 0),
     attackSpeedPercent: effect.attackSpeedPercent,
     sourceId: sourceId ?? target.frenzy?.sourceId,
   };
@@ -3950,10 +3998,20 @@ export function resolveReceivedDamage(target: Fighter, rawAmount: number): Recei
     const base = passive.baseDamageReductionPercent ?? 0;
     const maximum = passive.maxDamageReductionPercent ?? base;
     const maximumAt = passive.maxReductionAtHpPercent ?? 0;
-    // 100%→지정 HP 경계를 선형 보간하고, 그 아래는 최대 경감으로 고정한다.
+    /*
+     * **곧은 직선이 아니라 곡선이다.**
+     *
+     * 예전에는 100%→50% 구간을 직선으로 이어 50%에서 상한(99)에 닿았다. 그래서 체력이 조금만
+     * 깎여도 경감이 훌쩍 올라 **초반부터 때릴 맛이 없었고**, 절반 아래로는 아무리 깎아도
+     * 달라지는 것이 없어 거기서 턱 막혔다.
+     *
+     * 지수를 얹으면 체력이 많이 남았을 때는 천천히 오르고 끝에서 가파르게 선다 — 싸우는
+     * 대부분의 시간이 "아직은 들어간다" 쪽에 놓이고, 벽은 정말 끝에서만 선다.
+     */
     const span = Math.max(Number.EPSILON, 100 - maximumAt);
     const progress = Math.min(1, Math.max(0, (100 - hpPercent) / span));
-    reduction = base + (maximum - base) * progress;
+    const curved = Math.pow(progress, Math.max(Number.EPSILON, passive.damageReductionCurve ?? 1));
+    reduction = base + (maximum - base) * curved;
   }
   // 기존 야성 경감도 같은 최종 경계에 합치되 중복 호출 없이 곱연산 한 번으로 확정한다.
   if (target.ferocityFever && target.def.ferocityTrait.effectId === "damageReduction") {
@@ -4133,7 +4191,28 @@ function recordDamageContribution(
     defenseDetail: damageType === "physical" ? "armor" : "resistance",
     preMitigation, postMitigation: resolution.applied, hpBefore, shieldBefore, hpDamage, shieldAbsorbed, shieldProviderId,
   });
-  return hpDamage;
+  /*
+   * **돌려주는 것은 경감 전 기여값이다.**
+   *
+   * 이 값이 가는 곳은 `attack` 사건의 `contributionAmount` 하나뿐이고, 그 필드의 계약은
+   * 선언에 적힌 대로 "방어·저항·속성·대상 경감·무효화 **전**, 공격자가 실제로 만든 점수
+   * 기여값"이다. 그런데 예전에는 실제로 깎인 HP(`hpDamage`)를 돌려주고 있어, 그 사건을
+   * 읽는 **원정 점수**가 계약과 다른 수를 세고 있었다.
+   *
+   * 그 어긋남이 그대로 드러난 자리가 폰토스다. 잃은 체력에 따라 받는 피해가 50~99% 줄어드는
+   * 개체라, 점수가 1,000점 언저리에서 멈추고 아무리 때려도 오르지 않았다 — **경감은 그를
+   * 죽지 않는 보스로 만들기 위한 값이지 점수를 막으라고 있는 값이 아니다.**
+   *
+   * 화면의 기여도 판은 이 반환값을 읽지 않는다. 그쪽은 바로 위 `accumulateDamageContribution`이
+   * 채우는 `state.contributions`를 읽으며, 거기에는 여전히 실제로 깎인 HP가 들어간다 —
+   * "누가 얼마나 깎았나"와 "누가 얼마나 만들어 냈나"는 다른 수다.
+   *
+   * **무효화만은 예외다.** 심해의 압력은 최종 피해가 10 이하인 공격을 *아예 없던 일*로
+   * 만든다(보호막도 안 깎이고 야성도 안 오른다). 경감은 "덜 들어갔다"지만 무효화는
+   * "일어나지 않았다"라, 그 한 방까지 점수로 세면 닿지도 않는 공격을 되풀이하는 것이
+   * 점수가 된다.
+   */
+  return resolution.ignored ? 0 : preMitigation;
 }
 
 /** 걸린 출혈을 1초 간격으로 깎는다. 방어력을 거치지 않는 고정 피해다. */

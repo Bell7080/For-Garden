@@ -1668,6 +1668,23 @@ export interface Passive {
   maxDamageReductionPercent?: number;
   /** 심해 압력 전용: 최대 피해 감소율에 도달하는 현재 체력 비율이다. */
   maxReductionAtHpPercent?: number;
+  /**
+   * 심해 압력 전용: 받는 피해 감소가 자라는 **곡선의 가파름**이다.
+   *
+   * 1이면 곧은 직선이고, 클수록 체력이 많이 남았을 때는 천천히 오르다 끝에서 가파르게 선다.
+   * 직선이던 때는 체력이 조금만 깎여도 경감이 훌쩍 올라 **초반부터 때릴 맛이 없었고**,
+   * 상한에 닿은 뒤로는 아무리 더 깎아도 달라지는 것이 없었다.
+   */
+  damageReductionCurve?: number;
+  /**
+   * **강인함** 전용: 군중제어를 한 번 받아 낼 때마다 오르는 저항(%).
+   *
+   * 맞은 시간이 아니라 **걸린 횟수**로 센다 — 시간으로 세면 긴 제어 하나가 짧은 제어 여럿보다
+   * 유리해져, 제어를 짧게 자주 거는 편성이 오히려 더 오래 잠근다.
+   */
+  tenacityPerControlPercent?: number;
+  /** 강인함이 닿을 수 있는 상한(%). 100이면 그 뒤로는 걸리자마자 풀린다. */
+  maxTenacityPercent?: number;
   /** 고품격 식재료 전용: 다시 표적을 고르고 도약하기까지의 간격(초). 적을 처치하면 즉시 앞당긴다. */
   huntCooldownSeconds?: number;
   /**

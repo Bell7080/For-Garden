@@ -2437,16 +2437,24 @@ describe("폰토스 실전 스킬과 심해 압력", () => {
     expect(simulate(Array.from({ length: 300 }, () => 1 / 60))).toBeCloseTo(baseAp * growth ** 5);
   });
 
-  it("는 HP 100%·75%·50% 경계를 50~99%로 선형 보간하고 50% 아래를 상한 처리한다", () => {
+  it("는 체력이 닳을수록 경감을 곡선으로 올리고 절반에서 막히지 않는다", () => {
+    /*
+     * 직선이던 때는 체력 75%에서 이미 74.5% 경감이라 **초반부터 때릴 맛이 없었고**, 절반
+     * 아래로는 상한(99%)에 붙어 남은 절반을 깎는 내내 수치가 멈춰 보였다. 지수를 얹어
+     * 많이 남았을 때는 천천히 오르고 끝에서 가파르게 서게 했다.
+     */
     const { pontos } = pontosBattle();
     pontos.hp = pontos.maxHp;
     expect(receivedDamage(pontos, 100)).toBe(50);
     pontos.hp = pontos.maxHp * 0.75;
-    expect(receivedDamage(pontos, 100)).toBe(26); // 74.5% 경감 후 25.5를 반올림한다.
+    expect(receivedDamage(pontos, 100)).toBe(48); // 직선이던 때는 26이었다.
     pontos.hp = pontos.maxHp * 0.5;
-    expect(receivedDamage(pontos, 100)).toBe(0);
-    pontos.hp = pontos.maxHp * 0.49;
-    expect(receivedDamage(pontos, 100)).toBe(0); // 99% 경감 뒤 최종 1 피해는 폰토스만 무효화한다.
+    expect(receivedDamage(pontos, 100)).toBe(39); // 절반에서 상한에 닿지 않는다.
+    pontos.hp = pontos.maxHp * 0.25;
+    expect(receivedDamage(pontos, 100)).toBe(24);
+    // 절반 아래에서도 계속 자란다 — 멈추는 자리와 끝나는 자리가 같다.
+    pontos.hp = pontos.maxHp * 0.1;
+    expect(receivedDamage(pontos, 100)).toBe(11);
   });
 
   it("는 최종 10을 무효화하고 11은 적용하되 일반 전투원의 최소 1 피해를 유지한다", () => {

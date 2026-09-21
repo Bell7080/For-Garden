@@ -3029,7 +3029,28 @@ export const RELICS: RelicDef[] = [
       apPercentPerSecond: 2,
       baseDamageReductionPercent: 50,
       maxDamageReductionPercent: 99,
-      maxReductionAtHpPercent: 50,
+      /*
+       * **상한은 체력이 다 닳는 자리에서만 닿는다.**
+       *
+       * 50으로 두던 때는 체력 절반부터 경감이 99에 붙어 그 아래 내내 달라지는 것이 없었다 —
+       * 남은 절반을 깎는 동안 화면의 수치가 멈춰 보였다. 0으로 옮기면 마지막 한 점까지 계속
+       * 자라므로, 벽이 서는 자리와 끝나는 자리가 같아진다.
+       */
+      maxReductionAtHpPercent: 0,
+      /*
+       * 2.2는 "많이 남았을 때는 천천히, 끝에서 가파르게"가 눈에 보이는 가장 낮은 값이다.
+       * 체력 75%에서 52%, 50%에서 61%, 25%에서 76%, 10%에서 89%로 오른다 — 직선이던 때는
+       * 75%에서 이미 74%였다.
+       */
+      damageReductionCurve: 2.2,
+      /*
+       * **강인함.** 제어를 한 번 받아 낼 때마다 8%씩 올라 태생 50%와 합쳐 100%에 닿는다.
+       * 일곱 번이면 상한이라, 제어형 편성은 첫 몇 번의 잠금을 확실히 가져가되 그 뒤로는
+       * 다른 방법으로 싸워야 한다 — 제어 하나로 최종 관문을 통째로 지우지 못하게 하면서도
+       * 제어 개체를 쓸모없게 만들지 않는 선이다.
+       */
+      tenacityPerControlPercent: 8,
+      maxTenacityPercent: 100,
       // 체력 기반 경감과 반올림까지 끝난 최종 받는 피해가 10 이하인 공격만 완전히 무효화한다.
       ignoreDamageAtOrBelow: 10,
       // kind가 abyssalPressure인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을

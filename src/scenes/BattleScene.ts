@@ -33,7 +33,7 @@ import type { PuppetCreature, PuppetAsset } from "../puppets/assets";
 import { cancelMotion, flashHit, isHitFlashing, placePuppet, playMotion, spawnPuppet, tintPuppet } from "../puppets/assets";
 import { session } from "../state/session";
 import { addSceneBackground, battleFieldBackground } from "../ui/backgrounds";
-import { statusAreaColor } from "../ui/groundAreas";
+import { battlefieldWashBands, statusAreaColor } from "../ui/groundAreas";
 import { Button } from "../ui/Button";
 import { chipPoints, drawGlassFade, drawHairline, drawLayer, HoloBar, HOLO } from "../ui/holo";
 import { PortraitCard } from "../ui/PortraitCard";
@@ -211,6 +211,14 @@ function mixTint(base: number, other: number, amount: number): number {
 /** 광역 범위는 배경 원화 위, SD 아래에 깔린다. 앞에 두면 범위가 캐릭터를 덮는다. */
 const DEPTH = { unitBase: -60, hpBar: 200, damage: 300, burst: 320, ground: -28 } as const;
 
+/**
+ * 데스 카운트 워시가 가장 진할 때의 불투명도.
+ *
+ * 섬광 상한(0.6)보다 한참 낮다 — 이것은 한 번 터지고 마는 연출이 아니라 판이 닫힐 때까지
+ * **계속 켜져 있는** 면이라, 같은 세기로 두면 남은 1분 내내 화면이 붉게 덮인다.
+ */
+const DEATH_WASH_ALPHA = 0.22;
+
 interface FighterView {
   creature: PuppetCreature;
   asset: PuppetAsset;
@@ -316,6 +324,8 @@ export class BattleScene extends Phaser.Scene {
   private waveLabel?: Phaser.GameObjects.Text;
   /** 화면 맨 위에서 쉬지 않고 도는 진행 시간. 전투가 끝나면 그 자리에 멈춘다. */
   private clockLabel?: Phaser.GameObjects.Text;
+  /** 데스 카운트가 도는 동안 화면 네 변에서 스며드는 붉은 워시. 한 번 그리고 진하기만 바꾼다. */
+  private deathWash?: Phaser.GameObjects.Graphics;
   private spawned = false;
   /** 마지막으로 시뮬레이션을 굴린 실제 시각(ms). */
   private lastStepAt = 0;
@@ -523,6 +533,7 @@ export class BattleScene extends Phaser.Scene {
       .setOrigin(0.5, 0).setDepth(BATTLE_CLOCK_LAYOUT.depth);
     // 밝은 배경 원화 위에서도 읽히도록 이름줄과 같은 검은 획을 두른다.
     this.clockLabel.setStroke("#000000", 6).setShadow(0, 3, "#000000", 4, false, true);
+    this.buildDeathWash();
     if (this.battleInput.mode === "expeditionBoss" || this.battleInput.mode === "raid") this.buildBossScoreHud();
 
     this.buildBattleControls();
@@ -1102,7 +1113,9 @@ export class BattleScene extends Phaser.Scene {
       const boss = this.state.boss; const phase = boss.phases[boss.phaseIndex];
       const normalScore = expeditionManager.status().run?.normalNodeScoreTotal ?? 0;
       const previousTarget = this.bossScoreTarget;
-      this.bossScoreTarget = normalScore + boss.score;
+      // 코어의 누적은 소수까지 세지만(다단히트 반올림 편향을 막는다) 화면에 서는 것은 점수라
+      // 정수다 — 여기서 반올림하지 않으면 `5,934.48`이 그대로 선다.
+      this.bossScoreTarget = normalScore + Math.round(boss.score);
       const scoreMotion = stepBattleScoreMotion(this.bossScoreShown, this.bossScoreTarget, elapsed);
       this.bossScoreShown = scoreMotion.shown;
       // 새 타격의 크기로 즉시 부풀고, 다음 프레임부터 원래 크기로 가라앉아 강한 공격을 숫자 무게로 보여 준다.
@@ -1125,6 +1138,34 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /**
+   * 데스 카운트의 붉은 워시를 **한 번만** 그려 둔다.
+   *
+   * 전장 전체를 때리는 기술과 **같은 문법**이다(`battlefieldWashBands`) — 화면을 덮는 면을
+   * 깔면 정작 봐야 할 SD와 체력 바가 그 속에 묻히므로, 네 변에서 안쪽으로 스며드는 띠 몇
+   * 겹만 세운다. 다만 그쪽은 한 번 터지고 마는 연출이라 풀에서 꺼내 쓰지만, 이것은 판이
+   * 닫힐 때까지 **켜져 있는 경고등**이라 제 그래픽 하나를 갖는다.
+   *
+   * 매 프레임 다시 그리지 않는다 — 띠 여덟 장을 프레임마다 칠하면 그것이 그대로 프레임
+   * 비용이 된다. 그려 두고 **진하기만** 바꾼다.
+   *
+   * 전장이 아니라 **화면 전체**의 가장자리를 쓴다. 경고는 전장 안의 사건이 아니라 판 전체에
+   * 걸린 것이라, 전장 네모의 변에서만 스미면 그 네모가 어디인지를 먼저 말하게 된다.
+   */
+  private buildDeathWash(): void {
+    const graphics = this.add.graphics().setDepth(DEPTH.hpBar - 1).setAlpha(0).setScrollFactor(0);
+    const short = Math.min(BASE_WIDTH, BASE_HEIGHT);
+    for (const band of battlefieldWashBands()) {
+      const inset = short * band.inset;
+      graphics.fillStyle(COLOR.danger, band.alpha);
+      graphics.fillRect(0, 0, BASE_WIDTH, inset);
+      graphics.fillRect(0, BASE_HEIGHT - inset, BASE_WIDTH, inset);
+      graphics.fillRect(0, 0, inset, BASE_HEIGHT);
+      graphics.fillRect(BASE_WIDTH - inset, 0, inset, BASE_HEIGHT);
+    }
+    this.deathWash = graphics;
+  }
+
+  /**
    * 데스 카운트가 도는 동안 시계를 **경고등처럼** 만든다.
    *
    * **글자 자체가 붉어지고 맥동한다.** 옆에 경고 문구를 세우지 않는 이유는 그것이 지금 손이
@@ -1142,12 +1183,16 @@ export class BattleScene extends Phaser.Scene {
     if (!label) return;
     if (!isDeathClockRunning(this.state.elapsed)) {
       if (label.style.color !== COLOR.ink) label.setColor(COLOR.ink).setScale(1);
+      this.deathWash?.setAlpha(0);
       return;
     }
     label.setColor(COLOR.dangerText);
     const beat = this.motion.nonEssentialDistanceFactor <= 0 ? 0 : (Math.sin(this.state.elapsed * Math.PI * 2) + 1) / 2;
     label.setScale(1 + beat * 0.12 * this.motion.nonEssentialDistanceFactor);
     label.setShadow(0, 3, COLOR.dangerText, 10 + beat * 14, false, true);
+    // **옅게 둔다.** 섬광과 같은 이유다 — 진하면 밝은 배경 원화 위에서 뭉개져 정작 봐야 할
+    // SD와 피해 숫자가 그 속에 묻힌다. 맥동을 끈 사람에게는 가운데 세기로 가만히 켜져 있다.
+    this.deathWash?.setAlpha(DEATH_WASH_ALPHA * (0.6 + beat * 0.4));
   }
 
   /**

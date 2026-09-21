@@ -455,11 +455,22 @@ function passiveHead(passive: Passive, atk?: number): string {
       : t("skill.passive.adagioWeight.shieldAmount", { amount: shield.term });
     return t("skill.passive.adagioWeight", { percent: passive.teamAttackSpeedPercent, shield: shieldText });
   }
-  if (passive.kind === "abyssalPressure") return t("skill.passive.abyssalPressure", {
-    percent: passive.apPercentPerSecond, hpPercent: passive.maxReductionAtHpPercent,
-    base: passive.baseDamageReductionPercent, max: passive.maxDamageReductionPercent,
-    ignore: passive.ignoreDamageAtOrBelow,
-  });
+  if (passive.kind === "abyssalPressure") {
+    /*
+     * **경감이 닿는 체력을 적지 않는다.** 상한에 닿는 자리가 체력이 다 닳는 지점이라
+     * "최대의 0%까지 낮아질수록"이 되어 말이 되지 않는다 — 곡선을 그리는 값이므로 문장은
+     * 어디서 시작해 어디까지 가는지만 말하고, 그 사이의 모양은 수치가 보여 준다.
+     */
+    const pressure = t("skill.passive.abyssalPressure", {
+      percent: passive.apPercentPerSecond,
+      base: passive.baseDamageReductionPercent, max: passive.maxDamageReductionPercent,
+      ignore: passive.ignoreDamageAtOrBelow,
+    });
+    // 강인함은 값을 가진 개체에만 붙는 절이다 — 없는 개체에 빈 문장이 남지 않게 가른다.
+    const gain = passive.tenacityPerControlPercent ?? 0;
+    if (gain <= 0) return pressure;
+    return `${pressure} ${t("skill.passive.abyssalPressure.tenacity", { percent: gain, max: passive.maxTenacityPercent ?? 100 })}`;
+  }
   if (passive.kind === "gourmetHunt") return t("skill.passive.gourmetHunt", {
     cooldown: passive.huntCooldownSeconds, seconds: passive.damageStealthSeconds,
     triggers: passive.damageStealthMaxTriggers,

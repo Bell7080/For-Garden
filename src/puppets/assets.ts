@@ -1,6 +1,6 @@
 import type Phaser from "phaser";
 import type { Puppet } from "puppetforge/phaser";
-import type { PortraitAssetId } from "../core/types";
+import type { PortraitAssetId, RaitiaAssetId } from "../core/types";
 import { changeDebugPuppetContainers } from "../debug";
 import { ENEMY_SD_ASSET_IDS } from "./enemyAssetIds";
 import {
@@ -377,14 +377,23 @@ export const EXPLORER_ASSET: PuppetAsset = {
 };
 
 /**
- * **레이티아 거대겨울잠쥐의 임시 원화.** 전용 묶음(`enemy_005.zip` · `enemySD_005.zip`)이
- * 아직 저장소에 없어, 그때까지 코마의 묶음을 빌려 세운다.
+ * **레이티아 다섯 자매의 임시 원화.** 자매마다 제 묶음(`enemy_005`~`enemy_009.zip` ·
+ * `enemySD_005`~`enemySD_009.zip`)이 따로 오기로 되어 있으나 아직 저장소에 없어, 그때까지
+ * 다섯이 모두 코마의 묶음을 빌려 세운다.
  *
- * 색 필터로 다른 개체인 척하지 않는다 — 원화 자체를 빌릴 뿐이고, 갈아 끼우는 자리는 이
- * 두 상수의 `url`과 알파 경계 한 곳뿐이다. 전용 묶음이 오면 그 값만 실측해 고치고 데이터·
- * 화면·전투는 손대지 않는다.
+ * 색 필터로 다른 개체인 척하지 않는다 — 원화 자체를 빌릴 뿐이다. 묶음이 오면 아래 표의
+ * `url`과 알파 경계만 자매별로 실측해 고치고 데이터·화면·전투는 손대지 않는다.
  */
-export const RAITIA_PLACEHOLDER_ASSET: PuppetAsset = { ...EXPLORER_ASSET };
+const RAITIA_PLACEHOLDER_ASSET: PuppetAsset = { ...EXPLORER_ASSET };
+
+/** 자매별 전신. 지금은 다섯이 같은 값을 보지만 갈아 끼우는 자리는 여기 다섯 줄이다. */
+export const RAITIA_ASSETS: Readonly<Record<RaitiaAssetId, PuppetAsset>> = {
+  "raitia-grass": RAITIA_PLACEHOLDER_ASSET,
+  "raitia-water": RAITIA_PLACEHOLDER_ASSET,
+  "raitia-fire": RAITIA_PLACEHOLDER_ASSET,
+  "raitia-earth": RAITIA_PLACEHOLDER_ASSET,
+  "raitia-wind": RAITIA_PLACEHOLDER_ASSET,
+};
 
 /**
  * 렐릭 데이터가 참조하는 원화 레지스트리. 새 원화는 여기에 한 번 등록한 뒤 데이터 키로 연결한다.
@@ -414,7 +423,7 @@ const PORTRAIT_ASSETS = {
   amo: AMO_ASSET,
   ripa: RIPA_ASSET,
   koma: EXPLORER_ASSET,
-  raitia: RAITIA_PLACEHOLDER_ASSET,
+  ...RAITIA_ASSETS,
   pontos: PONTOS_ASSET,
   parua: PARUA_ASSET,
   dian: DIAN_ASSET,
@@ -463,8 +472,17 @@ export const EXPLORER_SD_ASSET: PuppetAsset = {
   content: { left: 290, top: 88, right: 1031, bottom: 1197 },
 };
 
-/** 레이티아 전투 SD의 임시 묶음. 전신과 같은 이유로 코마의 SD를 빌린다. */
-export const RAITIA_PLACEHOLDER_SD_ASSET: PuppetAsset = { ...EXPLORER_SD_ASSET };
+/** 레이티아 전투 SD의 임시 묶음. 전신과 같은 이유로 다섯 자매가 코마의 SD를 빌린다. */
+const RAITIA_PLACEHOLDER_SD_ASSET: PuppetAsset = { ...EXPLORER_SD_ASSET };
+
+/** 자매별 전투 SD. 전신과 같은 이유·같은 방법으로 다섯 줄이 갈아 끼우는 자리다. */
+export const RAITIA_SD_ASSETS: Readonly<Record<RaitiaAssetId, PuppetAsset>> = {
+  "raitia-grass": RAITIA_PLACEHOLDER_SD_ASSET,
+  "raitia-water": RAITIA_PLACEHOLDER_SD_ASSET,
+  "raitia-fire": RAITIA_PLACEHOLDER_SD_ASSET,
+  "raitia-earth": RAITIA_PLACEHOLDER_SD_ASSET,
+  "raitia-wind": RAITIA_PLACEHOLDER_SD_ASSET,
+};
 
 /** 폰토스 전투 SD. 정사각 원본에서 alpha > 16인 실제 실루엣만 바닥 배치에 사용한다. */
 export const PONTOS_SD_ASSET: PuppetAsset = {
@@ -668,7 +686,7 @@ export const ENEMY_SD_ASSETS_BY_ID: Readonly<Record<string, PuppetAsset>> = {
   [ENEMY_SD_ASSET_IDS[2]]: ENEMY_SD_ASSETS[1],
   [ENEMY_SD_ASSET_IDS[3]]: ENEMY_SD_ASSETS[2],
   [ENEMY_SD_ASSET_IDS[4]]: EXPLORER_SD_ASSET,
-  [ENEMY_SD_ASSET_IDS[5]]: RAITIA_PLACEHOLDER_SD_ASSET,
+  ...RAITIA_SD_ASSETS,
 };
 
 /** SD 스킨도 렐릭 ID 아래에만 등록해 다른 렐릭으로 폴백할 수 없게 한다. */

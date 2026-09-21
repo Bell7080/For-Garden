@@ -5,7 +5,7 @@ import { effectiveEnemyLevel, type RelicDef } from "../core/types";
 import { getRelic } from "./relics";
 
 /**
- * **치즈케이크 대작전** — 레이티아 거대겨울잠쥐가 떼로 몰려오는 물량형 던전.
+ * **치즈케이크 대작전** — 레이티아 다섯 자매가 떼로 몰려오는 물량형 던전.
  *
  * 성장 재화(치즈케이크)를 캐는 자리라 "더 강하게 키운 아군으로 더 높은 단계에 들어간다"가
  * 그대로 순환이 된다. 단계가 오를수록 적이 무거워지고 한 판이 주는 치즈케이크도 늘어난다.
@@ -59,8 +59,20 @@ export const CAKE_OPERATION_TIERS: readonly CakeOperationTier[] = [
   { id: "cake-8", name: "8단계", enemyLevel: 45, ferocityLevel: 7, waves: [5, 5, 5, 5, 5], staminaCost: 20, rewardCheesecake: 150 },
 ];
 
-/** 이 던전에 서는 개체. 한 종뿐이라 표가 아니라 상수 하나다. */
-export const CAKE_OPERATION_ENEMY_ID = "raitia";
+/**
+ * 이 던전에 서는 다섯 자매.
+ *
+ * **순서가 곧 규칙이다** — 무리는 이 차례를 끊지 않고 이어서 채우므로 다섯짜리 무리에는
+ * 자매가 한 명씩 서고, 셋·넷짜리 무리는 다음 무리가 나머지를 이어받는다. 난수를 쓰지 않아
+ * 같은 단계는 늘 같은 얼굴 순서로 몰려온다.
+ *
+ * 다섯이 속성만 다른 같은 몸이라, 이 던전에서 고를 것은 "무엇을 데려갈까"가 아니라 **어느
+ * 색에 강한 편성인가**가 된다. 한 종만 세우던 때는 상성이 한 방향으로 고정되어 편성이 한 번
+ * 정해지면 다시 볼 이유가 없었다.
+ */
+export const CAKE_OPERATION_ENEMY_IDS = [
+  "raitia-grass", "raitia-water", "raitia-fire", "raitia-earth", "raitia-wind",
+] as const;
 
 const BY_ID = new Map(CAKE_OPERATION_TIERS.map((tier) => [tier.id, tier]));
 
@@ -103,11 +115,20 @@ for (const tier of CAKE_OPERATION_TIERS) registerDataText(tier, "name", `cakeOpe
  * 배율(`ferocityBonusLevels`)을 지나 레벨과 같은 성장 공식을 탄다.
  */
 export function cakeOperationWaves(tier: CakeOperationTier): RelicDef[][] {
-  const base = getRelic(CAKE_OPERATION_ENEMY_ID);
   const level = effectiveEnemyLevel({ level: tier.enemyLevel, ferocityLevel: tier.ferocityLevel });
-  const grown: RelicDef = { ...base, stats: applyLevelGrowth(base.stats, level, base.rarity) };
+  // 자매마다 태생 능력치가 같지 않다(공속·이속이 갈린다). 그래서 한 번 키워 돌려쓰지 않고
+  // 다섯을 각자 키워 둔 뒤 차례로 세운다.
+  const grown = CAKE_OPERATION_ENEMY_IDS.map((id) => {
+    const base = getRelic(id);
+    return { ...base, stats: applyLevelGrowth(base.stats, level, base.rarity) } satisfies RelicDef;
+  });
+  let next = 0;
   // 같은 정의를 여러 몸이 나눠 쓰지 않도록 무리마다 능력치 사본을 세운다.
-  return tier.waves.map((count) => Array.from({ length: count }, () => ({ ...grown, stats: { ...grown.stats } })));
+  return tier.waves.map((count) => Array.from({ length: count }, () => {
+    const sister = grown[next % grown.length];
+    next += 1;
+    return { ...sister, stats: { ...sister.stats } };
+  }));
 }
 
 /** 화면이 `LV.n` 옆에 붉은 `+n`으로 갈라 세울 수 있도록 곱하기 전의 단계를 그대로 돌려준다. */

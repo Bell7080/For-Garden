@@ -99,7 +99,13 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   "koma": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.94, zoomScale: 1.22, zoomMs: 105, cameraShakeIntensity: 0.008 },
   // 작고 빠른 물량 개체라 컷인이 가장 짧고 확대도 얕다 — 한 판에 여럿이 쓰는 궁극기라
   // 하나하나가 무거우면 그 던전이 연출을 기다리는 시간으로 채워진다.
-  "raitia": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.9, cutInHoldMs: 120, zoomScale: 1.14, zoomMs: 100, cameraShakeIntensity: 0.006 },
+  // 다섯 자매는 같은 연출을 쓴다 — 같은 몸이 속성만 달리해 몰려오는 것이 이 던전이라,
+  // 컷인까지 갈리면 한 마리가 특별한 개체로 읽힌다. 떼로 터지는 자리라 짧고 얕게 둔다.
+  "raitia-grass": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.9, cutInHoldMs: 120, zoomScale: 1.14, zoomMs: 100, cameraShakeIntensity: 0.006 },
+  "raitia-water": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.9, cutInHoldMs: 120, zoomScale: 1.14, zoomMs: 100, cameraShakeIntensity: 0.006 },
+  "raitia-fire": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.9, cutInHoldMs: 120, zoomScale: 1.14, zoomMs: 100, cameraShakeIntensity: 0.006 },
+  "raitia-earth": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.9, cutInHoldMs: 120, zoomScale: 1.14, zoomMs: 100, cameraShakeIntensity: 0.006 },
+  "raitia-wind": { ...DEFAULT_ULTIMATE_PRESENTATION, enterFrom: "right", artworkScale: 0.9, cutInHoldMs: 120, zoomScale: 1.14, zoomMs: 100, cameraShakeIntensity: 0.006 },
   // 넓은 보스 전신은 컷인에서 한 단계 줄이고, 무거운 일격은 SD 확대와 흔들림으로 전달한다.
   pontos: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.82, artworkOrigin: { x: 650, y: 800 }, zoomScale: 1.3, zoomMs: 120, cameraShakeIntensity: 0.014 },
 });

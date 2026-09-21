@@ -21,8 +21,8 @@ function runToEnd(state: SkirmishState, seconds = 240): SkirmishEvent[] {
 describe("난전 웨이브", () => {
   it("한 무리를 비우면 다음 무리가 서고 마지막 무리에서만 승리가 선다", () => {
     const player = getRelic("rex");
-    const state = createSkirmish([player, player, player], [getRelic("raitia")], ARENA, {}, {}, {
-      waves: [[getRelic("raitia")], [getRelic("raitia")]],
+    const state = createSkirmish([player, player, player], [getRelic("raitia-grass")], ARENA, {}, {}, {
+      waves: [[getRelic("raitia-grass")], [getRelic("raitia-grass")]],
     });
     expect(state.waves?.total).toBe(3);
     const events = runToEnd(state);
@@ -45,7 +45,7 @@ describe("난전 웨이브", () => {
   });
 
   it("무리를 주지 않으면 예전처럼 한 무리로 끝난다", () => {
-    const state = createSkirmish([getRelic("rex")], [getRelic("raitia")], ARENA);
+    const state = createSkirmish([getRelic("rex")], [getRelic("raitia-grass")], ARENA);
     expect(state.waves).toBeUndefined();
     const events = runToEnd(state);
     expect(events.some((event) => event.kind === "waveStart")).toBe(false);

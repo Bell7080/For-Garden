@@ -15,54 +15,64 @@ import {
 } from "./anchors";
 import type { IndexedPuppetCreature } from "./IndexedPuppetCreature";
 import {
+  ARCHAEOLOGY_CLERK_PORTRAIT_METADATA,
   DEINA_PORTRAIT_METADATA,
   DEINA_SD_METADATA,
-  DIAN_PORTRAIT_METADATA,
-  DIAN_SD_METADATA,
   DELOPI_PORTRAIT_METADATA,
   DELOPI_SD_METADATA,
-  ELLA_PORTRAIT_METADATA,
-  ELLA_SD_METADATA,
-  NODONIA_PORTRAIT_METADATA,
-  NODONIA_SD_METADATA,
+  DIAN_PORTRAIT_METADATA,
+  DIAN_SD_METADATA,
   DODI_PORTRAIT_METADATA,
   DODI_SD_METADATA,
-  LEXIA_PORTRAIT_METADATA,
-  LUKA_PORTRAIT_METADATA,
-  MADDY_PORTRAIT_METADATA,
-  PARUA_PORTRAIT_METADATA,
-  MADDY_SD_METADATA,
-  PARUA_SD_METADATA,
-  SHUTE_PORTRAIT_METADATA,
-  SHUTE_SD_METADATA,
-  MORPHE_PORTRAIT_METADATA,
-  MORPHE_SD_METADATA,
-  TERISA_PORTRAIT_METADATA,
-  TERISA_SD_METADATA,
-  METTE_PORTRAIT_METADATA,
-  METTE_SD_METADATA,
-  PONTOS_PORTRAIT_METADATA,
-  PONTOS_SD_METADATA,
-  SEIRA_PORTRAIT_METADATA,
+  ELLA_PORTRAIT_METADATA,
+  ELLA_SD_METADATA,
+  FAVIA_PORTRAIT_METADATA,
+  FAVIA_SD_METADATA,
+  GUTTIA_PORTRAIT_METADATA,
+  GUTTIA_SD_METADATA,
   KERIS_PORTRAIT_METADATA,
   KERIS_SD_METADATA,
+  KURO_SD_METADATA,
+  LEXIA_PORTRAIT_METADATA,
+  LOOT_CLERK_PORTRAIT_METADATA,
+  LUKA_PORTRAIT_METADATA,
+  MADDY_PORTRAIT_METADATA,
+  MADDY_SD_METADATA,
   MAKI_PORTRAIT_METADATA,
   MAKI_SD_METADATA,
   MERON_PORTRAIT_METADATA,
   MERON_SD_METADATA,
+  METTE_PORTRAIT_METADATA,
+  METTE_SD_METADATA,
+  MORPHE_PORTRAIT_METADATA,
+  MORPHE_SD_METADATA,
+  NODONIA_PORTRAIT_METADATA,
+  NODONIA_SD_METADATA,
   PACHI_PORTRAIT_METADATA,
   PACHI_SD_METADATA,
+  PARUA_PORTRAIT_METADATA,
+  PARUA_SD_METADATA,
+  PONTOS_PORTRAIT_METADATA,
+  PONTOS_SD_METADATA,
+  SEIRA_PORTRAIT_METADATA,
+  SHIRO_SD_METADATA,
+  SHOP_CLERK_PORTRAIT_METADATA,
+  SHUTE_PORTRAIT_METADATA,
+  SHUTE_SD_METADATA,
+  SILIA_PORTRAIT_METADATA,
+  SILIA_SD_METADATA,
   STELLA_PORTRAIT_METADATA,
+  TERISA_PORTRAIT_METADATA,
+  TERISA_SD_METADATA,
   TIA_PORTRAIT_METADATA,
   TIA_SD_METADATA,
-  SHOP_CLERK_PORTRAIT_METADATA,
-  ARCHAEOLOGY_CLERK_PORTRAIT_METADATA,
-  LOOT_CLERK_PORTRAIT_METADATA,
   TORIKA_PORTRAIT_METADATA,
   TORIKA_SKIN_001_PORTRAIT_METADATA,
   TORIKA_SKIN_001_SD_METADATA,
-  KURO_SD_METADATA,
-  SHIRO_SD_METADATA,
+  VENTIA_PORTRAIT_METADATA,
+  VENTIA_SD_METADATA,
+  VIRIA_PORTRAIT_METADATA,
+  VIRIA_SD_METADATA,
 } from "./assetMetadata";
 
 /** 기존 호출부가 렌더러 구현을 몰라도 되도록 인게임 Puppet 타입을 한 곳에서 공개한다. */
@@ -377,22 +387,17 @@ export const EXPLORER_ASSET: PuppetAsset = {
 };
 
 /**
- * **레이티아 다섯 자매의 임시 원화.** 자매마다 제 묶음(`enemy_005`~`enemy_009.zip` ·
- * `enemySD_005`~`enemySD_009.zip`)이 따로 오기로 되어 있으나 아직 저장소에 없어, 그때까지
- * 다섯이 모두 코마의 묶음을 빌려 세운다.
+ * **레이티아 다섯 자매의 전신.**
  *
- * 색 필터로 다른 개체인 척하지 않는다 — 원화 자체를 빌릴 뿐이다. 묶음이 오면 아래 표의
- * `url`과 알파 경계만 자매별로 실측해 고치고 데이터·화면·전투는 손대지 않는다.
+ * 다섯이 같은 몸이라도 묶음마다 캔버스와 여백이 다르므로 한 자매의 값을 다른 자매에 옮겨
+ * 적지 않는다 — 실측은 `assetMetadata.ts`가 갖고 여기서는 URL만 붙인다.
  */
-const RAITIA_PLACEHOLDER_ASSET: PuppetAsset = { ...EXPLORER_ASSET };
-
-/** 자매별 전신. 지금은 다섯이 같은 값을 보지만 갈아 끼우는 자리는 여기 다섯 줄이다. */
 export const RAITIA_ASSETS: Readonly<Record<RaitiaAssetId, PuppetAsset>> = {
-  "raitia-grass": RAITIA_PLACEHOLDER_ASSET,
-  "raitia-water": RAITIA_PLACEHOLDER_ASSET,
-  "raitia-fire": RAITIA_PLACEHOLDER_ASSET,
-  "raitia-earth": RAITIA_PLACEHOLDER_ASSET,
-  "raitia-wind": RAITIA_PLACEHOLDER_ASSET,
+  "raitia-grass": { url: `${base}puppets/enemy_005.zip`, ...VIRIA_PORTRAIT_METADATA },
+  "raitia-water": { url: `${base}puppets/enemy_006.zip`, ...GUTTIA_PORTRAIT_METADATA },
+  "raitia-fire": { url: `${base}puppets/enemy_007.zip`, ...FAVIA_PORTRAIT_METADATA },
+  "raitia-earth": { url: `${base}puppets/enemy_008.zip`, ...SILIA_PORTRAIT_METADATA },
+  "raitia-wind": { url: `${base}puppets/enemy_009.zip`, ...VENTIA_PORTRAIT_METADATA },
 };
 
 /**
@@ -472,16 +477,13 @@ export const EXPLORER_SD_ASSET: PuppetAsset = {
   content: { left: 290, top: 88, right: 1031, bottom: 1197 },
 };
 
-/** 레이티아 전투 SD의 임시 묶음. 전신과 같은 이유로 다섯 자매가 코마의 SD를 빌린다. */
-const RAITIA_PLACEHOLDER_SD_ASSET: PuppetAsset = { ...EXPLORER_SD_ASSET };
-
-/** 자매별 전투 SD. 전신과 같은 이유·같은 방법으로 다섯 줄이 갈아 끼우는 자리다. */
+/** 레이티아 다섯 자매의 전투 SD. 전신과 같은 이유로 자매마다 제 실측값을 읽는다. */
 export const RAITIA_SD_ASSETS: Readonly<Record<RaitiaAssetId, PuppetAsset>> = {
-  "raitia-grass": RAITIA_PLACEHOLDER_SD_ASSET,
-  "raitia-water": RAITIA_PLACEHOLDER_SD_ASSET,
-  "raitia-fire": RAITIA_PLACEHOLDER_SD_ASSET,
-  "raitia-earth": RAITIA_PLACEHOLDER_SD_ASSET,
-  "raitia-wind": RAITIA_PLACEHOLDER_SD_ASSET,
+  "raitia-grass": { url: `${base}puppets/enemySD_005.zip`, ...VIRIA_SD_METADATA },
+  "raitia-water": { url: `${base}puppets/enemySD_006.zip`, ...GUTTIA_SD_METADATA },
+  "raitia-fire": { url: `${base}puppets/enemySD_007.zip`, ...FAVIA_SD_METADATA },
+  "raitia-earth": { url: `${base}puppets/enemySD_008.zip`, ...SILIA_SD_METADATA },
+  "raitia-wind": { url: `${base}puppets/enemySD_009.zip`, ...VENTIA_SD_METADATA },
 };
 
 /** 폰토스 전투 SD. 정사각 원본에서 alpha > 16인 실제 실루엣만 바닥 배치에 사용한다. */

@@ -593,3 +593,170 @@ export const LOOT_CLERK_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   content: { left: 51, top: 15, right: 1099, bottom: 1358 },
   joints: { center: [525, 359], head: [566, 244], eyes: [[533, 219], [598, 260]], feet: [[411, 1359], [794, 1254]] },
 };
+
+/*
+ * **레이티아 다섯 자매의 실측값.**
+ *
+ * 전신과 SD 열 묶음을 WebP/PNG 원본 좌표계에서 alpha > 16으로 순회해 경계를 재고, 관절은
+ * 프로젝트의 `중심1`·`머리1`·`눈1/2`·`발1/2`를 그대로 옮겼다. SD 프로젝트에는 눈 관절이
+ * 없으므로 임의 얼굴 좌표를 만들지 않고 `eyes: null`로 남긴다.
+ *
+ * 다섯이 같은 몸이라도 **묶음마다 캔버스와 여백이 다르다** — 불 자매만 캔버스가
+ * 1023×1537이고 나머지는 1086×1448이다. 한 자매의 값을 다른 자매에 옮겨 적으면 그 개체만
+ * 카드·전신 배율이 통째로 틀어진다.
+ */
+
+/** 비리아(raitia-grass) 전신. */
+export const VIRIA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086, imageHeight: 1448,
+  content: { left: 130, top: 41, right: 953, bottom: 1413 },
+  joints: { center: [537, 499], head: [511, 405], eyes: [[472, 410], [555, 366]], feet: [[577, 1843], [54, 1496]] },
+  /*
+   * **등신이 낮고 머리가 큰 원화라 카드에서만 한 뼘 줄인다.**
+   *
+   * `머리1` 관절이 눈높이에 있고 그 위로 머리통과 귀가 실루엣의 4분의 1을 차지해, 기본
+   * 배율에서는 자르기 시작점이 `MAX_HEAD_DROP_RATIO` 한계에 걸려 정수리가 통째로 잘렸다.
+   * 개체별 보정을 새로 만들거나 그 한계를 로스터 전체에 대고 늘리지 않고, 토리카(0.82)와
+   * 같은 자리인 `cardZoom` 하나로 맞춘다. 다섯 자매는 같은 몸이라 **같은 값**을 쓴다.
+   */
+  /*
+   * **카드에서만 쓰는 배율 보정.**
+   *
+   * `머리1` 관절이 눈높이에 있고 그 위로 머리통이 실루엣의 4분의 1을 차지하는 원화라, 기본
+   * 배율에서는 얼굴이 카드 세로 절반 아래로 내려앉는다. 값은 눈대중이 아니라 **두 눈 사이
+   * 거리가 로스터 중앙값(47.1px)에 맞는 배율**로 구했다 — 다섯이 같은 몸이라도 실루엣 폭이
+   * 자매마다 달라(823~992) 같은 값을 쓰면 넓은 쪽만 얼굴이 작아진다.
+   */
+  cardZoom: 0.77,
+};
+
+/** 비리아(raitia-grass) 전투 SD. */
+export const VIRIA_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254, imageHeight: 1254,
+  content: { left: 250, top: 45, right: 992, bottom: 1232 },
+  joints: { center: [634, 618], head: [618, 541], eyes: null, feet: [[729, 1211], [374, 1172]] },
+};
+
+/** 구티아(raitia-water) 전신. */
+export const GUTTIA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086, imageHeight: 1448,
+  content: { left: 67, top: 35, right: 1050, bottom: 1429 },
+  joints: { center: [568, 508], head: [538, 385], eyes: [[511, 415], [595, 372]], feet: [[580, 1596], [32, 1495]] },
+  /*
+   * **등신이 낮고 머리가 큰 원화라 카드에서만 한 뼘 줄인다.**
+   *
+   * `머리1` 관절이 눈높이에 있고 그 위로 머리통과 귀가 실루엣의 4분의 1을 차지해, 기본
+   * 배율에서는 자르기 시작점이 `MAX_HEAD_DROP_RATIO` 한계에 걸려 정수리가 통째로 잘렸다.
+   * 개체별 보정을 새로 만들거나 그 한계를 로스터 전체에 대고 늘리지 않고, 토리카(0.82)와
+   * 같은 자리인 `cardZoom` 하나로 맞춘다. 다섯 자매는 같은 몸이라 **같은 값**을 쓴다.
+   */
+  /*
+   * **카드에서만 쓰는 배율 보정.**
+   *
+   * `머리1` 관절이 눈높이에 있고 그 위로 머리통이 실루엣의 4분의 1을 차지하는 원화라, 기본
+   * 배율에서는 얼굴이 카드 세로 절반 아래로 내려앉는다. 값은 눈대중이 아니라 **두 눈 사이
+   * 거리가 로스터 중앙값(47.1px)에 맞는 배율**로 구했다 — 다섯이 같은 몸이라도 실루엣 폭이
+   * 자매마다 달라(823~992) 같은 값을 쓰면 넓은 쪽만 얼굴이 작아진다.
+   */
+  cardZoom: 0.92,
+};
+
+/** 구티아(raitia-water) 전투 SD. */
+export const GUTTIA_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254, imageHeight: 1254,
+  content: { left: 244, top: 19, right: 1103, bottom: 1229 },
+  joints: { center: [649, 665], head: [611, 539], eyes: null, feet: [[721, 1207], [382, 1188]] },
+};
+
+/** 파비아(raitia-fire) 전신. */
+export const FAVIA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1023, imageHeight: 1537,
+  content: { left: 161, top: 32, right: 937, bottom: 1513 },
+  joints: { center: [541, 514], head: [511, 416], eyes: [[479, 409], [558, 375]], feet: [[533, 1697], [184, 1627]] },
+  /*
+   * **등신이 낮고 머리가 큰 원화라 카드에서만 한 뼘 줄인다.**
+   *
+   * `머리1` 관절이 눈높이에 있고 그 위로 머리통과 귀가 실루엣의 4분의 1을 차지해, 기본
+   * 배율에서는 자르기 시작점이 `MAX_HEAD_DROP_RATIO` 한계에 걸려 정수리가 통째로 잘렸다.
+   * 개체별 보정을 새로 만들거나 그 한계를 로스터 전체에 대고 늘리지 않고, 토리카(0.82)와
+   * 같은 자리인 `cardZoom` 하나로 맞춘다. 다섯 자매는 같은 몸이라 **같은 값**을 쓴다.
+   */
+  /*
+   * **카드에서만 쓰는 배율 보정.**
+   *
+   * `머리1` 관절이 눈높이에 있고 그 위로 머리통이 실루엣의 4분의 1을 차지하는 원화라, 기본
+   * 배율에서는 얼굴이 카드 세로 절반 아래로 내려앉는다. 값은 눈대중이 아니라 **두 눈 사이
+   * 거리가 로스터 중앙값(47.1px)에 맞는 배율**로 구했다 — 다섯이 같은 몸이라도 실루엣 폭이
+   * 자매마다 달라(823~992) 같은 값을 쓰면 넓은 쪽만 얼굴이 작아진다.
+   */
+  cardZoom: 0.79,
+};
+
+/** 파비아(raitia-fire) 전투 SD. */
+export const FAVIA_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254, imageHeight: 1254,
+  content: { left: 216, top: 29, right: 1040, bottom: 1224 },
+  joints: { center: [653, 660], head: [618, 541], eyes: null, feet: [[729, 1211], [460, 1194]] },
+};
+
+/** 실리아(raitia-earth) 전신. */
+export const SILIA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086, imageHeight: 1448,
+  content: { left: 26, top: 32, right: 1018, bottom: 1417 },
+  joints: { center: [568, 508], head: [605, 417], eyes: [[559, 371], [635, 416]], feet: [[970, 1605], [201, 2026]] },
+  /*
+   * **등신이 낮고 머리가 큰 원화라 카드에서만 한 뼘 줄인다.**
+   *
+   * `머리1` 관절이 눈높이에 있고 그 위로 머리통과 귀가 실루엣의 4분의 1을 차지해, 기본
+   * 배율에서는 자르기 시작점이 `MAX_HEAD_DROP_RATIO` 한계에 걸려 정수리가 통째로 잘렸다.
+   * 개체별 보정을 새로 만들거나 그 한계를 로스터 전체에 대고 늘리지 않고, 토리카(0.82)와
+   * 같은 자리인 `cardZoom` 하나로 맞춘다. 다섯 자매는 같은 몸이라 **같은 값**을 쓴다.
+   */
+  /*
+   * **카드에서만 쓰는 배율 보정.**
+   *
+   * `머리1` 관절이 눈높이에 있고 그 위로 머리통이 실루엣의 4분의 1을 차지하는 원화라, 기본
+   * 배율에서는 얼굴이 카드 세로 절반 아래로 내려앉는다. 값은 눈대중이 아니라 **두 눈 사이
+   * 거리가 로스터 중앙값(47.1px)에 맞는 배율**로 구했다 — 다섯이 같은 몸이라도 실루엣 폭이
+   * 자매마다 달라(823~992) 같은 값을 쓰면 넓은 쪽만 얼굴이 작아진다.
+   */
+  cardZoom: 0.99,
+};
+
+/** 실리아(raitia-earth) 전투 SD. */
+export const SILIA_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254, imageHeight: 1254,
+  content: { left: 205, top: 59, right: 1015, bottom: 1213 },
+  joints: { center: [634, 618], head: [657, 534], eyes: null, feet: [[923, 1200], [554, 1183]] },
+};
+
+/** 벤티아(raitia-wind) 전신. */
+export const VENTIA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086, imageHeight: 1448,
+  content: { left: 178, top: 37, right: 1016, bottom: 1424 },
+  joints: { center: [568, 508], head: [523, 446], eyes: [[491, 449], [579, 414]], feet: [[566, 1599], [195, 1533]] },
+  /*
+   * **등신이 낮고 머리가 큰 원화라 카드에서만 한 뼘 줄인다.**
+   *
+   * `머리1` 관절이 눈높이에 있고 그 위로 머리통과 귀가 실루엣의 4분의 1을 차지해, 기본
+   * 배율에서는 자르기 시작점이 `MAX_HEAD_DROP_RATIO` 한계에 걸려 정수리가 통째로 잘렸다.
+   * 개체별 보정을 새로 만들거나 그 한계를 로스터 전체에 대고 늘리지 않고, 토리카(0.82)와
+   * 같은 자리인 `cardZoom` 하나로 맞춘다. 다섯 자매는 같은 몸이라 **같은 값**을 쓴다.
+   */
+  /*
+   * **카드에서만 쓰는 배율 보정.**
+   *
+   * `머리1` 관절이 눈높이에 있고 그 위로 머리통이 실루엣의 4분의 1을 차지하는 원화라, 기본
+   * 배율에서는 얼굴이 카드 세로 절반 아래로 내려앉는다. 값은 눈대중이 아니라 **두 눈 사이
+   * 거리가 로스터 중앙값(47.1px)에 맞는 배율**로 구했다 — 다섯이 같은 몸이라도 실루엣 폭이
+   * 자매마다 달라(823~992) 같은 값을 쓰면 넓은 쪽만 얼굴이 작아진다.
+   */
+  cardZoom: 0.78,
+};
+
+/** 벤티아(raitia-wind) 전투 SD. */
+export const VENTIA_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254, imageHeight: 1254,
+  content: { left: 273, top: 29, right: 1104, bottom: 1219 },
+  joints: { center: [634, 618], head: [618, 541], eyes: null, feet: [[729, 1211], [374, 1172]] },
+};

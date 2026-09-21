@@ -212,7 +212,7 @@ export interface CardFrameOptions {
  * 얼굴보다 한참 높은 장식 때문에 걸리는 원화는 `cardTop`으로 **카드가 잘라도 되는 자리**를
  * 따로 적는다(아래 참고).
  */
-const MAX_HEAD_DROP_RATIO = 0.46;
+const MAX_HEAD_DROP_RATIO = 0.47;
 
 /**
  * 내용 상자 맨 위(`content.top`)에 자르기를 딱 붙이면(headroom 0) 뾰족하거나 갈래진 장식은

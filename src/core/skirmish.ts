@@ -1,4 +1,5 @@
 import { amplifyFerocityGain } from "./bond";
+import { BATTLE_DEATH_CLOCK, deathClockSurvivalMultiplier, deathClockTicksAt } from "./battleClock";
 import type { Combatant } from "./combatTypes";
 import { computeDamage, computeDamageContribution, currentAbilityPower, isCriticalHit } from "./damage";
 // 전투 HUD와 피해 공식이 동일한 현재 주문력 계산을 소비하도록 공용 헬퍼를 다시 노출한다.
@@ -453,6 +454,13 @@ export interface SkirmishState {
   phase: SkirmishPhase;
   /** 전투가 시작된 뒤 흐른 시간(초). */
   elapsed: number;
+  /**
+   * 데스 카운트가 지금까지 몇 번 돌았는가.
+   *
+   * 흐른 시간에서 **매번 다시 세지 않고** 센 횟수를 들고 있는 이유는, 프레임이 길어져 한
+   * 스텝에 여러 초가 지나도 그만큼 빠짐없이 돌아야 하기 때문이다(3배속이 그렇다).
+   */
+  deathClockTicks: number;
   log: string[];
   /** 원정에서만 주입되는 순수 효과 목록이다. 일반 스토리 전투는 빈 배열이다. */
   augmentEffects: readonly ExpeditionAugmentEffect[];
@@ -1144,6 +1152,7 @@ export function createSkirmish(
     arena,
     phase: "fight",
     elapsed: 0,
+    deathClockTicks: 0,
     log: [],
     augmentEffects: options.augmentEffects ?? [],
     initialEvents: [],
@@ -1215,8 +1224,7 @@ export function initializeSkirmishAugments(state: SkirmishState): SkirmishEvent[
     const legacyPercent = expeditionAugmentStatMultipliers(state.augmentEffects, fighter.def.id).initialShieldPercent - 1;
     if (legacyPercent > 0 && fighter.augmentRuntime.legacyShield === undefined) {
       fighter.augmentRuntime.legacyShield = { triggers: 1, lastAt: state.elapsed };
-      const amount = fighter.maxHp * legacyPercent; fighter.shield.amount += amount; fighter.shield.providerId = fighter.id;
-      events.push({ kind: "shieldGranted", fighterId: fighter.id, providerId: fighter.id, amount, remaining: fighter.shield.amount, effect: { tag: "shieldGain", intensity: 1 } });
+      grantShield(state, fighter, fighter.id, fighter.maxHp * legacyPercent, events);
     }
     for (const { effect, key } of triggeredAugments(state, fighter, "battleStart")) {
       if (effect.payload.kind !== "shield" || !consumeAugmentTrigger(state, fighter, key, effect)) continue;
@@ -1227,8 +1235,7 @@ export function initializeSkirmishAugments(state: SkirmishState): SkirmishEvent[
         : effect.limits.target === "lowestHpAlly" ? (lowest ? [lowest] : [])
         : [fighter];
       for (const target of targets) {
-        const amount = target.maxHp * effect.payload.maxHpPercent / 100; target.shield.amount += amount; target.shield.providerId = fighter.id;
-        events.push({ kind: "shieldGranted", fighterId: target.id, providerId: fighter.id, amount, remaining: target.shield.amount, effect: { tag: "shieldGain", intensity: 1 } });
+        grantShield(state, target, fighter.id, target.maxHp * effect.payload.maxHpPercent / 100, events);
       }
     }
   }
@@ -1304,11 +1311,8 @@ function cleanseControlWithAdagio(state: SkirmishState, target: Fighter, events:
   if (!provider) return;
   target.stunnedFor = 0;
   target.staggeredFor = 0;
-  const amount = provider.def.stats.atk * (provider.def.passive.cleanseShieldAttackPercent ?? 0) / 100;
-  target.shield.amount += amount;
-  target.shield.providerId = provider.id;
+  grantShield(state, target, provider.id, provider.def.stats.atk * (provider.def.passive.cleanseShieldAttackPercent ?? 0) / 100, events);
   provider.adagioCooldownRemaining = provider.def.passive.cleanseCooldownSeconds ?? 0;
-  events.push({ kind: "shieldGranted", fighterId: target.id, providerId: provider.id, amount, remaining: target.shield.amount, effect: { tag: "shieldGain", intensity: 1 } });
 }
 
 /** 둔화 재적용. 저주·덧칠과 같은 자리라 슬롯 하나만 두고 중첩만 오른다. 빙결 중에는 걸리지 않는다. */
@@ -1782,13 +1786,37 @@ function currentBasic(attacker: Fighter): BasicAttack {
  * 흡혈과 같은 자리에서 같은 값(과잉 피해를 뺀 실제 HP 손실)을 읽는다 — 때린 만큼 단단해지는
  * 규칙이라 공격력이 곧 생존력이 되고, 그래서 탱커가 공격 능력치를 올릴 이유가 생긴다.
  */
-function grantShieldFromDamage(attacker: Fighter, dealt: number, events: SkirmishEvent[]): void {
+/**
+ * 보호막을 두르는 **유일한 경계**.
+ *
+ * 예전에는 `shield.amount +=`가 아홉 군데에 흩어져 있었다. 그 상태로 데스 카운트의 감쇠를
+ * 걸면 한 곳만 빠뜨려도 **그 수단으로 버티는 편성만 영원히 사는** 구멍이 남는다 — 회복이
+ * `applyHealing` 한 곳을 지나는 것과 같은 이유로 보호막도 한 곳을 지난다.
+ *
+ * `events`를 주지 않으면 사건을 만들지 않는다. 제어 정화나 폭주 돌파처럼 **다른 연출이 그
+ * 순간을 이미 말하고 있는** 자리가 그렇다.
+ */
+function grantShield(
+  state: SkirmishState,
+  target: Fighter,
+  providerId: string,
+  requested: number,
+  events?: SkirmishEvent[],
+  intensity = 1,
+): number {
+  const amount = requested * deathClockSurvivalMultiplier(state.elapsed);
+  // 시들어 0이 된 막은 제공자까지 바꾸지 않는다 — 두르지 못한 것이지 덮어쓴 것이 아니다.
+  if (!(amount > 0)) return 0;
+  target.shield.amount += amount;
+  target.shield.providerId = providerId;
+  events?.push({ kind: "shieldGranted", fighterId: target.id, providerId, amount, remaining: target.shield.amount, effect: { tag: "shieldGain", intensity } });
+  return amount;
+}
+
+function grantShieldFromDamage(attacker: Fighter, dealt: number, events: SkirmishEvent[], state: SkirmishState): void {
   const percent = currentBasicStep(attacker)?.shieldFromDamagePercent ?? 0;
   if (percent <= 0 || dealt <= 0 || !isFighterAlive(attacker)) return;
-  const amount = Math.max(1, Math.round(dealt * percent / 100));
-  attacker.shield.amount += amount;
-  attacker.shield.providerId = attacker.id;
-  events.push({ kind: "shieldGranted", fighterId: attacker.id, providerId: attacker.id, amount, remaining: attacker.shield.amount, effect: { tag: "shieldGain", intensity: 1 } });
+  grantShield(state, attacker, attacker.id, Math.max(1, Math.round(dealt * percent / 100)), events);
 }
 
 /**
@@ -2986,9 +3014,7 @@ function triggerCombatAugments(state: SkirmishState, owner: Fighter, trigger: Ex
     // 보호막은 저체력·치명타 훅에서도 자신에게 걸린다. 전투 시작 몫만 초기화 단계가 맡는다.
     if (payload.kind === "shield") {
       if (trigger === "battleStart" || !consumeAugmentTrigger(state, owner, key, effect)) continue;
-      const amount = owner.maxHp * payload.maxHpPercent / 100;
-      owner.shield.amount += amount; owner.shield.providerId = owner.id;
-      events.push({ kind: "shieldGranted", fighterId: owner.id, providerId: owner.id, amount, remaining: owner.shield.amount, effect: { tag: "shieldGain", intensity: 1 } });
+      grantShield(state, owner, owner.id, owner.maxHp * payload.maxHpPercent / 100, events);
       continue;
     }
     if (payload.kind === "lowHpDefense") {
@@ -3040,7 +3066,9 @@ function applyHealing(state: SkirmishState, target: Fighter, requested: number, 
   const reduction = Math.max(strongestLivingAura(state, target.side, "enemyHealingReceivedReductionPercent"),
     target.bleed?.healingReceivedReductionPercent ?? 0);
   const before = target.hp;
-  target.hp = Math.min(target.maxHp, target.hp + Math.max(0, requested) * (1 - reduction / 100));
+  // 데스 카운트의 감쇠는 보호막과 **같은 배율**을 쓴다. 한쪽만 깎으면 남은 쪽으로 버티는
+  // 편성이 그대로 살아남아, 끝나지 않는 판을 끝내려던 시계가 제 일을 하지 못한다.
+  target.hp = Math.min(target.maxHp, target.hp + Math.max(0, requested) * (1 - reduction / 100) * deathClockSurvivalMultiplier(state.elapsed));
   const actual = target.hp - before;
   // 취소·과잉 회복은 actual이 0이므로 누적되지 않으며, 흡혈·자가 재생은 기본 casterId가 자신이다.
   addContribution(state.contributions, casterId, "healing", actual);
@@ -3054,15 +3082,12 @@ function applyHealing(state: SkirmishState, target: Fighter, requested: number, 
  * 막을 한 겹 얹어야 폭주가 "더 많이 고쳤다"가 아니라 "더 오래 버티게 했다"로 읽힌다.
  * 개체 이름이 아니라 폭주 특성에 적힌 값 하나로 판별한다.
  */
-function grantFeverHealingShield(caster: Fighter, target: Fighter, healed: number, events: SkirmishEvent[]): void {
+function grantFeverHealingShield(caster: Fighter, target: Fighter, healed: number, events: SkirmishEvent[], state: SkirmishState): void {
   const trait = caster.def.ferocityTrait;
   if (!caster.ferocityFever || trait.effectId !== "selfAttackSpeedMultiplier") return;
   const percent = trait.healingShieldPercent ?? 0;
   if (percent <= 0 || healed <= 0 || !isFighterAlive(target)) return;
-  const amount = Math.max(1, Math.round(healed * percent / 100));
-  target.shield.amount += amount;
-  target.shield.providerId = caster.id;
-  events.push({ kind: "shieldGranted", fighterId: target.id, providerId: caster.id, amount, remaining: target.shield.amount, effect: { tag: "shieldGain", intensity: 1 } });
+  grantShield(state, target, caster.id, Math.max(1, Math.round(healed * percent / 100)), events);
 }
 
 /** 현재 HP 절대값이 가장 낮은 생존 아군을 고르며 동률은 fighters의 편성 순서로 확정한다. */
@@ -3470,9 +3495,7 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, even
       // 정화: 살아 있는 채로 걸린 상태이상·디버프만 지운다. 버프·아군이 준 것(순풍·희열 등)은
       // 건드리지 않는다 — "장식이 아니다"가 말하는 것은 스스로 두른 것을 지키는 힘이다.
       cleanseAllDebuffs(fighter);
-      const shield = Math.max(1, Math.round(fighter.maxHp * trait.shieldMaxHpPercent / 100));
-      fighter.shield.amount += shield;
-      fighter.shield.providerId = fighter.id;
+      grantShield(state, fighter, fighter.id, Math.max(1, Math.round(fighter.maxHp * trait.shieldMaxHpPercent / 100)));
     }
     if (trait.effectId === "shellResolve") {
       // 진입 순서는 정화 → 즉시 겹 획득 → 소비다. 먼저 정화해야 방금 얻은 조가비를 정리 경로가
@@ -3563,10 +3586,7 @@ function applyShimmer(attacker: Fighter, target: Fighter, skill: Skill, state: S
     dealt += strikeShimmer(attacker, other, burst.power, state, events);
   }
   if (burst.shieldPercent <= 0 || dealt <= 0 || !isFighterAlive(attacker)) return;
-  const amount = Math.max(1, Math.round(dealt * burst.shieldPercent / 100));
-  attacker.shield.amount += amount;
-  attacker.shield.providerId = attacker.id;
-  events.push({ kind: "shieldGranted", fighterId: attacker.id, providerId: attacker.id, amount, remaining: attacker.shield.amount, effect: { tag: "shieldGain", intensity: 1 } });
+  grantShield(state, attacker, attacker.id, Math.max(1, Math.round(dealt * burst.shieldPercent / 100)), events);
 }
 
 /** 반짝이 내는 추가 마법 피해 한 대. 실제로 깎인 HP를 돌려준다 — 보호막이 먹은 몫은 세지 않는다. */
@@ -3881,6 +3901,33 @@ export function tickRegeneration(fighter: Fighter, dt: number, state?: SkirmishS
   }
   if (regeneration.remaining <= EMERGENCY_RECOVERY.epsilon) fighter.regeneration = null;
   return events;
+}
+
+/**
+ * **데스 카운트** — 3분을 넘긴 판을 스스로 닫게 만든다.
+ *
+ * 규칙과 수치는 `core/battleClock.ts`가 갖고 여기서는 그 시계를 돌리기만 한다. 한 번 돌 때마다
+ * 아군이 최대 체력의 일부를 잃고, 회복·보호막은 `deathClockSurvivalMultiplier`를 통해 함께
+ * 시든다(그 몫은 `applyHealing`과 `grantShield` 두 경계가 읽는다).
+ *
+ * **경감을 지나지 않는다.** 이 피해는 전투의 일부가 아니라 판을 닫는 장치라, 받는 쪽의 방어나
+ * 감쇠로 막히면 그 개체가 있는 편성만 여전히 영원히 산다 — 막을 수 있으면 장치가 아니다.
+ * 다만 보호막은 그대로 먼저 깎인다(`applyDamage`) — 막이 남아 있는 동안은 버티는 것이 맞고,
+ * 그 막 자체가 매초 시들기 때문에 결국 닫힌다.
+ *
+ * **아군만 맞는다.** 양쪽을 함께 깎으면 이기고 있던 판이 적의 죽음으로 끝나 "시간을 넘겨서
+ * 졌다"가 아니라 "버티니까 이겼다"가 된다. 판을 닫는 값이지 승패를 주는 값이 아니다.
+ */
+function tickDeathClock(state: SkirmishState, events: SkirmishEvent[]): void {
+  const due = deathClockTicksAt(state.elapsed);
+  while (state.deathClockTicks < due) {
+    state.deathClockTicks += 1;
+    for (const fighter of aliveFighters(state, "player")) {
+      const amount = Math.max(1, Math.round(fighter.maxHp * BATTLE_DEATH_CLOCK.maxHpDamagePercentPerTick / 100));
+      applyDamage(fighter, amount, events, state);
+      if (!isFighterAlive(fighter)) { clearDefeatedStatuses(fighter); events.push({ kind: "death", fighterId: fighter.id }); }
+    }
+  }
 }
 
 /** 경감 경계의 각 단계를 노출해 적용 피해와 폰토스 전용 무효화를 호출부가 혼동하지 않게 한다. */
@@ -4524,7 +4571,7 @@ function strike(
     applyHealing(state, attacker, dealt * damageHealingRate(attacker, skill, attackingInFever, target) / 100);
   };
   healFromDamage(dealt);
-  if (!useUltimate) grantShieldFromDamage(attacker, dealt, events);
+  if (!useUltimate) grantShieldFromDamage(attacker, dealt, events, state);
   if (!useUltimate) stitchSuture(attacker, targetHpBefore - target.hp, state, events);
   if (!useUltimate) stealthAfterStep(attacker, state);
   // 단일 타격으로 들어와도 같은 계약이 돈다 — 경로가 갈리면 같은 기술이 대상 수에 따라 다른 일을 한다.
@@ -4537,7 +4584,7 @@ function strike(
       // 과잉 피해가 아닌 실제 감소 HP만 회복 원천으로 쓴다.
       const healed = applyHealing(state, ally, (targetHpBefore - target.hp) * attacker.def.basic.lowestHpAllyHealingFromDamagePercent / 100, attacker.id);
       if (healed > 0) events.push({ kind: "heal", fighterId: ally.id, amount: healed, source: "passive", effect: { tag: "heal", intensity: 1 } });
-      grantFeverHealingShield(attacker, ally, healed, events);
+      grantFeverHealingShield(attacker, ally, healed, events, state);
     }
   }
   if (comboHit?.grantActionResources !== false) {
@@ -4879,7 +4926,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     applyHealing(state, attacker, (hpBefore - target.hp) * damageHealingRate(attacker, skill, attackingInFever, target) / 100);
     // 보호막 전환도 같은 값을 읽는다 — 단일과 광역에서 규칙이 갈리면 같은 걸음이 대상 수에
     // 따라 다른 일을 한다.
-    if (!useUltimate) grantShieldFromDamage(attacker, hpBefore - target.hp, events);
+    if (!useUltimate) grantShieldFromDamage(attacker, hpBefore - target.hp, events, state);
     if (!useUltimate) stitchSuture(attacker, hpBefore - target.hp, state, events);
     // 나눠 두르는 몫은 대상마다가 아니라 이 기술의 총량에서 나오므로 여기서 모으기만 한다.
     sharedShieldSource += hpBefore - target.hp;
@@ -4940,7 +4987,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   for (const ally of healingTargets) {
     const healed = applyHealing(state, ally, currentAbilityPower(attacker) * (ultimate?.allyHealingPower ?? 0) / 100, attacker.id);
     if (healed > 0) events.push({ kind: "heal", fighterId: ally.id, amount: healed, source: "passive", effect: { tag: "heal", intensity: 1 } });
-    grantFeverHealingShield(attacker, ally, healed, events);
+    grantFeverHealingShield(attacker, ally, healed, events, state);
   }
   gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state, events);
 }
@@ -5616,6 +5663,8 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     }
   }
 
+  tickDeathClock(state, events);
+
   // 완전히 경과한 초마다 기본 주문력에 같은 비율을 복리 적용한다. bonusAp에는 증가분만 저장해
   // currentAbilityPower가 기본 AP를 정확히 한 번 더하도록 한다.
   for (const fighter of state.fighters) if (fighter.def.passive.kind === "abyssalPressure") {
@@ -6069,10 +6118,7 @@ export function fireUltimate(
     const plan = teamUltimate.selfGuard;
     attacker.energy -= ultimateCost(state, attacker, true);
     // 불러 놓고 그 자리에서 덮는다 — 도발과 보호막이 한 조작에 든다.
-    const shield = Math.max(1, Math.round(attacker.maxHp * plan.shieldMaxHpPercent / 100));
-    attacker.shield.amount += shield;
-    attacker.shield.providerId = attacker.id;
-    events.push({ kind: "shieldGranted", fighterId: attacker.id, providerId: attacker.id, amount: shield, remaining: attacker.shield.amount, effect: { tag: "shieldGain", intensity: 1.5 } });
+    grantShield(state, attacker, attacker.id, Math.max(1, Math.round(attacker.maxHp * plan.shieldMaxHpPercent / 100)), events, 1.5);
     for (const other of state.fighters) {
       if (other.side === attacker.side || !isFighterAlive(other) || distance(attacker, other) > plan.pull.radius) continue;
       // 끌어당김은 보간 없이 같은 프레임에 자리를 옮긴다 — 순간이동과 같은 규칙이라 이동 속도의

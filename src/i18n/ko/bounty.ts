@@ -10,5 +10,4 @@ export const BOUNTY_KO = {
   "bounty.sortie": "출격 · 스테미나 {stamina}",
   "bounty.result.toBounty": "현상수배로",
 
-  "battle.header.bounty": "{tier} · {round}/{total} 라운드 · LV.{level}{bonus}",
 } as const;

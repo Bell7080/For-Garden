@@ -9,5 +9,4 @@ export const BOUNTY_JA = {
   "bounty.sortie": "\u51fa\u6483\u30fb\u30b9\u30bf\u30df\u30ca {stamina}",
   "bounty.result.toBounty": "\u8cde\u91d1\u9996\u3078",
 
-  "battle.header.bounty": "{tier}\u30fb{round}/{total} \u30e9\u30a6\u30f3\u30c9\u30fbLV.{level}{bonus}",
 } as const;

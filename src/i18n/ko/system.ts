@@ -31,15 +31,6 @@ export const SYSTEM_KO = {
   "battle.buff.seconds": "{seconds}초",
 
   // ── 전투 머리글 ─────────────────────────────────────────────────────────
-  "battle.header.stage": "{id} · {name} · 적 {enemies}",
-  "battle.header.enemy": "LV.{level}{bonus} · 돌파 {grade}",
-  "battle.header.expeditionBoss": "원정 {floor}층 · 불사 관측 보스",
-  "battle.header.raid": "레이드 · 공멸 선봉 토벌",
-  "battle.header.cake": "치즈케이크 대작전 · {tier} · x{multiplier}",
-  "battle.header.expedition": "원정 {floor}층 · {node}",
-  "battle.node.normal": "일반 전투",
-  "battle.node.elite": "정예 전투",
-  "battle.node.horde": "군집 전투",
 
   // ── 프로필 ──────────────────────────────────────────────────────────────
   "profile.defaultName": "연구원",

@@ -62,7 +62,7 @@ import { ultimatePresentationFor } from "../data/ultimatePresentations";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { anyPopupOpen, PopupLayer } from "../ui/PopupLayer";
 import { cakeOperationWaves, getCakeOperationTier } from "../data/cakeOperation";
-import { battleHeaderText, createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, createRaidSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type CakeBattleInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
+import { createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, createRaidSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type CakeBattleInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
 import { raidBossDef } from "../core/raid";
 import { RAID_SEASON_BOSS } from "../data/raid";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
@@ -72,7 +72,8 @@ import { motionPolicy, type MotionPolicy } from "../core/settings";
 import type { SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse, SubmitRaidDamageResponse } from "../api/contracts";
 import { GameApiError } from "../api/contracts";
 import { currencyRecordToRewardItems } from "../ui/RewardPopup";
-import { BATTLE_CONTROLS, BATTLE_STATUS_LAYOUT } from "../ui/battleStatusLayout";
+import { BATTLE_CLOCK_LAYOUT, BATTLE_CONTROLS, BATTLE_STATUS_LAYOUT } from "../ui/battleStatusLayout";
+import { formatBattleClock, isDeathClockRunning } from "../core/battleClock";
 import { UnitStatusChips } from "../ui/UnitStatusChips";
 import { openUnitStatusPopup } from "../ui/UnitStatusPopup";
 import { unitStatusViews } from "../ui/unitStatusModel";
@@ -311,9 +312,10 @@ export class BattleScene extends Phaser.Scene {
   private bossScoreTarget = 0;
   private bossScoreScale = 1;
   private bossPhaseLabel?: Phaser.GameObjects.Text;
-  private bossBestLabel?: Phaser.GameObjects.Text;
   /** 지금 몇 번째 무리인가. 물량형 던전에서만 선다. */
   private waveLabel?: Phaser.GameObjects.Text;
+  /** 화면 맨 위에서 쉬지 않고 도는 진행 시간. 전투가 끝나면 그 자리에 멈춘다. */
+  private clockLabel?: Phaser.GameObjects.Text;
   private spawned = false;
   /** 마지막으로 시뮬레이션을 굴린 실제 시각(ms). */
   private lastStepAt = 0;
@@ -373,14 +375,20 @@ export class BattleScene extends Phaser.Scene {
     super("battle");
   }
 
-  /** 중앙에는 런 총점을, 좌측에는 총점을 구성하는 일반 노드·보스 피해 상세를 둔다. */
+  /**
+   * 보스전 머리 자리. **총점 하나와 단계 줄뿐이다.**
+   *
+   * 예전에는 왼쪽에 「일반 스테이지 N · 보스전 M」 줄이 함께 섰는데, 가운데 큰 수가 이미 그
+   * 둘을 더한 값이라 **같은 수를 한 화면에 두 번** 적고 있었다. 나눠 본 값이 필요한 손은
+   * 결과판의 세부 점수(`ExpeditionScoreDetailPopup`)를 연다 — 싸우는 동안 바꿀 수 있는
+   * 것이 없는 수다.
+   */
   private buildBossScoreHud(): void {
     this.bossScoreShown = expeditionManager.status().run?.normalNodeScoreTotal ?? 0;
     this.bossScoreTarget = this.bossScoreShown;
     this.bossScoreScale = 1;
-    this.bossScoreLabel = this.add.text(BASE_WIDTH / 2, 78, this.bossScoreShown.toLocaleString(), textStyle({ role: "display", size: 58, color: COLOR.sortieText })).setOrigin(0.5, 0).setDepth(90);
-    this.bossPhaseLabel = this.add.text(42, 140, t("battle.boss.phase"), textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setDepth(90);
-    this.bossBestLabel = this.add.text(42, 180, t("battle.boss.scoreLine", { normal: 0, boss: 0 }), textStyle({ role: "emphasis", size: 25, color: COLOR.ink })).setDepth(90);
+    this.bossScoreLabel = this.add.text(BASE_WIDTH / 2, BATTLE_CLOCK_LAYOUT.headlineY, this.bossScoreShown.toLocaleString(), textStyle({ role: "display", size: 58, color: COLOR.sortieText })).setOrigin(0.5, 0).setDepth(90);
+    this.bossPhaseLabel = this.add.text(42, 140, "", textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setDepth(90);
   }
 
   /**
@@ -392,7 +400,7 @@ export class BattleScene extends Phaser.Scene {
    */
   private announceWave(wave: number, total: number): void {
     const text = t("battle.wave", { wave, total });
-    if (!this.waveLabel) this.waveLabel = this.add.text(BASE_WIDTH / 2, 78, text, textStyle({ role: "display", size: 44, color: COLOR.sortieText })).setOrigin(0.5, 0).setDepth(90);
+    if (!this.waveLabel) this.waveLabel = this.add.text(BASE_WIDTH / 2, BATTLE_CLOCK_LAYOUT.headlineY, text, textStyle({ role: "display", size: 44, color: COLOR.sortieText })).setOrigin(0.5, 0).setDepth(90);
     else this.waveLabel.setText(text);
     this.waveLabel.setScale(1);
     this.tweens.add({ targets: this.waveLabel, scale: 1.24, duration: 140, yoyo: true, ease: "Quad.easeOut" });
@@ -502,9 +510,19 @@ export class BattleScene extends Phaser.Scene {
     // 어느 모드가 어느 전장에 서는지는 씬이 아니라 `BATTLE_FIELD_BACKGROUND` 한 표가 갖는다.
     addSceneBackground(this, battleFieldBackground(this.battleInput.mode), -30);
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.28).setDepth(-29);
-    // 원정 헤더는 스토리 선택 상태를 전혀 읽지 않아 잘못된 모드 진입을 화면에서도 드러낸다.
-    this.add.text(42, 48, battleHeaderText(this.battleInput, stage), textStyle({ role: "body", size: 30, color: COLOR.inkDim }));
-    this.add.text(BASE_WIDTH / 2, 160, "AUTO BATTLE", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5);
+    /*
+     * **머리글과 「AUTO BATTLE」은 세우지 않는다.**
+     *
+     * 관문 이름과 적의 레벨·돌파 등급은 **이미 고르고 들어온 화면**이라 지금 손이 할 일을
+     * 바꾸지 않고, 자동 전투라는 말은 화면이 저절로 싸우는 것을 보고 있는 사람에게 같은
+     * 말을 한 번 더 한다. 둘 다 "조작 결과가 같은가"를 물으면 같다 — 화면 문구 규칙대로
+     * 세우지 않는다. 대신 그 자리에는 **지금 돌고 있는 것**(진행 시간)만 선다.
+     */
+    this.clockLabel = this.add
+      .text(BATTLE_CLOCK_LAYOUT.x, BATTLE_CLOCK_LAYOUT.y, formatBattleClock(0), textStyle({ role: "display", size: BATTLE_CLOCK_LAYOUT.size, color: COLOR.ink }))
+      .setOrigin(0.5, 0).setDepth(BATTLE_CLOCK_LAYOUT.depth);
+    // 밝은 배경 원화 위에서도 읽히도록 이름줄과 같은 검은 획을 두른다.
+    this.clockLabel.setStroke("#000000", 6).setShadow(0, 3, "#000000", 4, false, true);
     if (this.battleInput.mode === "expeditionBoss" || this.battleInput.mode === "raid") this.buildBossScoreHud();
 
     this.buildBattleControls();
@@ -807,6 +825,16 @@ export class BattleScene extends Phaser.Scene {
           this.openStatusList(fighter.id);
         });
       this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, statusChips, statusHit, stunShown: false, feverTint, feverStep: -1, feverTinted: false, afterimageShown: false, tint, squashAt: -Infinity, squashDir: 1, spinDir: 1, dead: false });
+      /*
+       * **세우자마자 제자리로 보낸다.**
+       *
+       * `UnitHealthBar`는 컨테이너 원점(0, 0)에서 태어나 그 자리에 한 번 그려진다. 그런데 이
+       * 반복문은 전투원마다 **제 Puppet을 기다렸다가**(`await spawnPuppet`) 바를 만들므로,
+       * 자리 맞추기를 반복문 **뒤**에서 한 번만 하면 먼저 만들어진 바가 마지막 묶음이 도착할
+       * 때까지 화면 왼쪽 위 구석에 붙어 있다 — 실제로 전투에 들어갈 때마다 붉은 막대 하나가
+       * 좌상단 모서리에 걸쳐 보였다. 한 명이 설 때마다 맞추면 그 프레임이 생기지 않는다.
+       */
+      this.syncViews();
     }
     this.syncViews();
     if (!initial) return;
@@ -1061,6 +1089,9 @@ export class BattleScene extends Phaser.Scene {
     // battleSpeed는 코어 시간에 여기서 정확히 한 번만 곱한다. 궁극기 연출 배율은 tween/Puppet에만
     // 쓰고 stepSkirmish에 넣지 않으므로 피해량·공격 주기·게이지 충전이 이중 가속되지 않는다.
     const events = stepSkirmish(this.state, dt * this.battleSpeed, this.rng);
+    // 코어가 센 시간을 그대로 적는다. 배속은 이미 위에서 한 번 곱해졌으므로 시계도 그만큼 빨리 돈다.
+    this.clockLabel?.setText(formatBattleClock(this.state.elapsed));
+    this.paintDeathClock();
     // **시간을 다 쓴 라운드는 진 것으로 센다.** 1대1은 서로 못 죽이는 조합이 실제로 있어,
     // 제한이 없으면 그 판이 영영 끝나지 않는다(`BOUNTY.limitSeconds`).
     if (this.battleInput.mode === "bounty" && this.state.phase === "fight" && this.state.elapsed >= BOUNTY.limitSeconds) {
@@ -1078,9 +1109,9 @@ export class BattleScene extends Phaser.Scene {
       this.bossScoreScale = Math.max(1, this.bossScoreScale - elapsed / 260);
       if (this.bossScoreTarget > previousTarget) this.bossScoreScale = Math.max(this.bossScoreScale, 1 + scoreMotion.punch);
       this.bossScoreLabel?.setText(this.bossScoreShown.toLocaleString()).setScale(this.bossScoreScale);
-      this.bossPhaseLabel?.setText(t("battle.boss.phaseLine", { phase: phase.label, warning: boss.tideWarning ? t("battle.boss.tideWarning") : boss.limitReached ? t("battle.boss.limit") : "", time: `${String(Math.floor(boss.survivedFor / 60)).padStart(2, "0")}:${String(Math.floor(boss.survivedFor) % 60).padStart(2, "0")}` }));
-      // 좌측 기존 정보 영역은 총점과 중복하지 않고 런을 이루는 두 점수의 세부값만 짧게 표시한다.
-      this.bossBestLabel?.setText(t("battle.boss.scoreLine", { normal: normalScore.toLocaleString(), boss: boss.score.toLocaleString() }));
+      // **시간은 여기서 적지 않는다** — 화면 맨 위의 시계가 이미 말한다. 이 줄에 남는 것은
+      // 지금 손이 궁극기를 아낄지를 바꾸는 것, 곧 단계와 해일 경고뿐이다.
+      this.bossPhaseLabel?.setText(t("battle.boss.phaseLine", { phase: phase.label, warning: boss.tideWarning ? t("battle.boss.tideWarning") : boss.limitReached ? t("battle.boss.limit") : "" }));
     }
     // 상태 종료와 좌표를 먼저 Puppet에 동기화한 뒤 공격 사건을 재생해야, 기절이 풀린 같은 스텝의
     // 공격 모션을 뒤늦은 idle 전환이 덮어쓰지 않는다.
@@ -1091,6 +1122,32 @@ export class BattleScene extends Phaser.Scene {
     if (this.autoUltimate && !this.finished) this.fireReadyUltimates();
     this.refreshProfiles();
     this.refreshDebug();
+  }
+
+  /**
+   * 데스 카운트가 도는 동안 시계를 **경고등처럼** 만든다.
+   *
+   * **글자 자체가 붉어지고 맥동한다.** 옆에 경고 문구를 세우지 않는 이유는 그것이 지금 손이
+   * 할 일을 바꾸지 않기 때문이다 — 바뀐 것은 "시간이 얼마나 지났나"의 뜻이지 새로운 조작이
+   * 생긴 것이 아니라, 그 뜻을 말해야 하는 것은 시간을 적고 있는 그 글자다.
+   *
+   * 맥동은 `Math.sin`으로 **매 프레임 직접 계산한다.** tween을 걸면 배속·일시정지와 따로 돌아
+   * 3배속에서 전장은 빨라지는데 경고만 제 속도로 뛴다. 코어가 센 시간을 읽으면 언제나 같은
+   * 시간 축에 선다.
+   *
+   * 움직임을 줄인 사람에게는 **맥동하지 않고 붉기만 하다** — 경고를 없애지는 않는다.
+   */
+  private paintDeathClock(): void {
+    const label = this.clockLabel;
+    if (!label) return;
+    if (!isDeathClockRunning(this.state.elapsed)) {
+      if (label.style.color !== COLOR.ink) label.setColor(COLOR.ink).setScale(1);
+      return;
+    }
+    label.setColor(COLOR.dangerText);
+    const beat = this.motion.nonEssentialDistanceFactor <= 0 ? 0 : (Math.sin(this.state.elapsed * Math.PI * 2) + 1) / 2;
+    label.setScale(1 + beat * 0.12 * this.motion.nonEssentialDistanceFactor);
+    label.setShadow(0, 3, COLOR.dangerText, 10 + beat * 14, false, true);
   }
 
   /**

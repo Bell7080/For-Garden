@@ -23,6 +23,8 @@ import { PortraitCard } from "../ui/PortraitCard";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { COLOR, textStyle } from "../ui/theme";
 import { LOBBY_RETURN } from "./lobbyEntry";
+import { prefetchBattlePuppets } from "../puppets/battlePrefetch";
+import { BOUNTY_TIERS } from "../data/bounty";
 
 /**
  * 현상수배 — **정예 셋과 1대1로 세 라운드를 치르는 골드 던전.**
@@ -50,6 +52,8 @@ export class BountyScene extends Phaser.Scene {
   }
 
   create(): void {
+    // 세 라운드의 적이 등급마다 이미 정해져 있으므로 목록을 보는 동안 전부 읽어 둔다.
+    prefetchBattlePuppets(relicCollection.validParty, BOUNTY_TIERS.flatMap((tier) => tier.rounds.map((round) => round.relicId)));
     setDebugScene("bounty");
     addSceneBackground(this, BACKGROUND.sortieBounty);
     drawVignette(this, BASE_WIDTH, this.scale.height, { strength: 0.7 });

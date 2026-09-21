@@ -6,6 +6,8 @@
  * `backgrounds.ts`가, 언제까지 남길지는 `backgroundResidency.ts`가 맡는다.
  */
 
+import type { NavKey } from "../core/navTabs";
+
 /** 화면 용도별 배경 키. 파일 번호와 실제 사용처의 대응을 한 곳에서 관리한다. */
 export const BACKGROUND = {
   lobby: "background-lobby",
@@ -173,6 +175,32 @@ export const BACKGROUND_ASSETS = [
  * 들어갈 때 읽는다.
  */
 export const BACKGROUND_BOOT_KEYS: readonly string[] = [BACKGROUND.lobby, BACKGROUND.cardBackdrop];
+
+/**
+ * 핵심 화면 다섯이 저마다 까는 배경.
+ *
+ * **여기만 표를 두는 이유가 있다.** 원화를 세운 표시 객체가 사는 동안만 붙잡는 규칙은
+ * "화면이 늘어도 적을 것이 없다"는 것이 장점인데, 그 규칙에는 **남겨 두는 장수**(`BACKGROUND_IDLE_KEEP`)
+ * 라는 예산이 하나 있고 그 값은 2다. 그런데 이 다섯은 나란히 놓인 자리라 손이 하루에도 수십 번
+ * 오간다 — **자리가 다섯인데 남는 자리가 둘**이면 되돌아오는 걸음이 거의 매번 예산 밖으로
+ * 밀려난다. 실제로 크로미움에서 다섯 탭을 열한 번 오가며 재 보니 **열 번이 배경을 다시 읽었고**,
+ * 그동안 화면에는 캔버스 클리어색만 남았다가 160ms에 걸쳐 밝아졌다. 탭을 누를 때마다 그
+ * 암전과 카메라 전환이 시차를 두고 겹쳐 도는 것이 곧 "번쩍임"이었다.
+ *
+ * 그래서 이 다섯만 예산에서 빼 `BACKGROUND_PINNED`에 올린다. **부트가 미리 읽지는 않는다** —
+ * 한 장이 25.2MB라 다섯을 로비 전에 올리면 v0.84.1에서 고친 그 문제가 되살아난다. 그 화면에
+ * 처음 들어갈 때 읽고, 그 뒤로는 내리지 않는다.
+ *
+ * **표가 썩지 않게 `NavKey`로 못 박는다.** 값이 아니라 키가 `NAV_TABS`와 같은 집합이라, 여섯
+ * 번째 탭이 생기면 타입이 먼저 막고 `tests/unit/backgroundResidency.test.ts`가 다시 확인한다.
+ */
+export const NAV_BACKGROUND: Readonly<Record<NavKey, string>> = {
+  archaeology: BACKGROUND.archaeology,
+  relics: BACKGROUND.relics,
+  lobby: BACKGROUND.lobby,
+  lab: BACKGROUND.lab,
+  premium: BACKGROUND.premiumShop,
+};
 
 /**
  * 전투 모드가 서는 전장 원화.

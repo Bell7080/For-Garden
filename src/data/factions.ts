@@ -72,8 +72,8 @@ export const SQUADS: Readonly<Record<SquadId, SquadDef>> = {
     // 기록이 열린 세 개체는 적대 관계에서도 주인공의 직책을 그대로 불러 관계의 거리를 드러낸다.
     researcherTitles: ["연구원"],
   },
-  "abyssal-crown": {
-    id: "abyssal-crown", name: "심연 왕관", latin: "Abyssal Crown",
+  "sealed-abyss": {
+    id: "sealed-abyss", name: "봉인된 어비스", latin: "Sealed Abyss",
     duty: "심해 영역 침식 및 압력 폭주",
     allegiance: "enemy", hasEmblem: true,
     // 폰토스의 관계 기록은 봉인 상태라 호칭을 아직 공개하지 않는다.

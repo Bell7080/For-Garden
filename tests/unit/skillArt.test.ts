@@ -1013,6 +1013,54 @@ describe("파치 스킬 표시 계약", () => {
   });
 });
 
+describe("수쿠스이노 스킬 표시 계약", () => {
+  const boss = () => RELICS.find((def) => def.id === "sukusuino")!;
+
+  it("의 패시브는 전용 분기가 없어 문장이 직접 시간과 몫을 적는다", () => {
+    const def = boss();
+    // 「지속 회복」 규칙어로 감싸면 얼마나 오래 얼마씩인지가 눌러 봐도 나오지 않는다 —
+    // 이 패시브가 말해야 하는 것이 그 둘이라 아군 탱커들과 같은 방식으로 본문이 적는다.
+    expect(def.passive.kind).toBe("emergencyRecovery");
+    expect(passiveDescription(def.passive, def.stats.atk)).toBe(
+      "전투당 한 번, 체력이 절반 이하가 되면 6초 동안 매초 최대 체력의 3%를 회복한다.",
+    );
+  });
+
+  it("의 기본 공격은 주기 하나에 출혈과 날려버림을 함께 싣는다", () => {
+    const def = boss();
+    expect(def.basic.statusEffectEvery).toBe(4);
+    // 출혈은 여러 개체가 함께 쓰는 규칙어라 시간·비율을 **본문이** 적고 태그는 그것이
+    // 무엇인지만 말한다. 회복 감소도 그 절에 함께 붙는다.
+    expect(skillDescription(def.basic, { damage: 210 })).toContain("매 4번째 공격마다");
+    expect(skillDescription(def.basic, { damage: 210 })).toContain("[[bleed|출혈]]");
+    expect(skillDescription(def.basic, { damage: 210 })).toContain("[[knockback|날려버린다]]");
+  });
+
+  it("의 궁극기는 지정한 원 안의 적만 말한다", () => {
+    const def = boss();
+    // 전장 전체를 치는 기술이면 서 있는 자리가 답이 되지 않는다. 지정 원은 아군도 함께
+    // 판정하지만 피해를 받는 것은 적뿐이라 본문은 적만 말한다.
+    expect(def.ultimate).toMatchObject({ targeting: "targetedCircle", radius: 300 });
+    expect(skillDescription(def.ultimate, { damage: 400 })).toBe(
+      "지정한 원 안의 모든 적에게 [[damage-value|400]]의 [[physical-damage|물리 피해]]를 주고 2초 동안 [[stun|기절]]시킨다.",
+    );
+  });
+
+  it("의 폭주는 공용 범위 전이 하나로만 짜인다", () => {
+    const trait = boss().ferocityTrait;
+    if (trait.effectId !== "splashDamage") throw new Error("수쿠스이노의 폭주 특성이 아니다");
+    // 보스 전용 배율이나 숨은 보정을 만들지 않는다 — 공용 계약의 수치만 문장이 읽는다.
+    expect(trait).toMatchObject({ damagePercent: 45, radius: 320, attackSpeedBonusPercent: 30 });
+    expect(ferocityTraitDescription(trait).length).toBeGreaterThan(0);
+  });
+
+  it("의 규칙어는 전부 전역 키워드로 정의된다", () => {
+    for (const id of ["bleed", "knockback", "stun", "physical-damage"]) {
+      expect(KEYWORDS.some((keyword) => keyword.id === id), id).toBe(true);
+    }
+  });
+});
+
 describe("코마 스킬 표시 계약", () => {
   const koma = () => RELICS.find((def) => def.id === "koma")!;
 

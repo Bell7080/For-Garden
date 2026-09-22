@@ -5,7 +5,7 @@ import { GameApiError } from "../api/contracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { RAID_SEASON_BOSS } from "../data/raid";
 import { getRelic } from "../data/relics";
-import { setDebugScene, setDebugStorefrontControls } from "../debug";
+import { setDebugRaidStage, setDebugScene, setDebugStorefrontControls } from "../debug";
 import { t } from "../i18n";
 import { portraitAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { Button } from "../ui/Button";
@@ -15,13 +15,27 @@ import { addSectionTitle } from "../ui/SectionTitle";
 import { PopupLayer } from "../ui/PopupLayer";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { RANKING_LIST, RANKING_VISIBLE_RANKS, rankingMedal, rankingRowY } from "../ui/expeditionRankingLayout";
-import { chipPoints, drawLayer, drawVignette, HOLO, HoloBar } from "../ui/holo";
-import { RAID_ACTIONS, RAID_BOARD, RAID_BOSS_SPOT, RAID_HEADER, RAID_HP_BAR, RAID_HP_BAR_COLOR, raidBoardViewport } from "../ui/raidLayout";
+import { chipPoints, drawGlassFade, drawLayer, drawVignette, HOLO, HoloBar } from "../ui/holo";
+import { RAID_ACTIONS, RAID_BOARD, RAID_BOSS_SPOT, RAID_HEADER, RAID_HP_BAR, RAID_HP_BAR_COLOR, RAID_PREPARATION, raidBoardViewport } from "../ui/raidLayout";
 import { COLOR, textStyle } from "../ui/theme";
 import { LOBBY_RETURN } from "./lobbyEntry";
 import { prefetchBattlePuppets } from "../puppets/battlePrefetch";
 import { relicCollection } from "../managers/RelicCollectionManager";
-import { startScene } from "../ui/screenTransition";
+import { relicProgression } from "../managers/RelicProgressionManager";
+import { session } from "../state/session";
+import { PortraitCard } from "../ui/PortraitCard";
+import { addFormationSlotPlate, addFormationSlotSelection } from "../ui/formationSlotChrome";
+import { formationMembers, tapFormationSlot, tapRosterRelic, toFormationSlots } from "../core/formationSlots";
+import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY } from "../ui/portraitGrid";
+import { playSceneEntrance, startScene } from "../ui/screenTransition";
+
+/** 한 씬이 나눠 갖는 두 걸음. 원정의 `ranking`/`preparation`과 같은 문법이다. */
+export type RaidStage = "season" | "preparation";
+
+/** 씬 진입 데이터. 비우면 시즌 판부터 연다. */
+export interface RaidSceneData {
+  stage?: RaidStage;
+}
 
 /**
  * 레이드 — **함께 미는 보스전**의 화면이다.
@@ -39,23 +53,47 @@ export class RaidScene extends Phaser.Scene {
   private content?: Phaser.GameObjects.Container;
   private listMask?: Phaser.GameObjects.Rectangle;
   private sortieButton?: Button;
+  /** 시즌 판인지 편성 단계인지. 원정과 같이 한 씬이 두 걸음을 나눠 갖는다. */
+  private stage: RaidStage = "season";
+  /** 편성 단계에서 고르는 세 자리. 빈 자리는 `null`로 남는다. */
+  private picked: (string | null)[] = [];
+  /** 지금 고른 칸. 목록에서 누른 렐릭이 설 자리다. */
+  private pickedSlot?: number;
+  private startButton?: Button;
+  private rosterMask?: Phaser.GameObjects.Rectangle;
+  private slotLayer?: Phaser.GameObjects.Container;
+  private bossMask?: Phaser.GameObjects.Rectangle;
 
   constructor() {
     super("raid");
   }
 
-  create(): void {
+  create(data?: RaidSceneData): void {
     // 시즌 보스는 하나뿐이라 화면에 들어온 순간 편성과 함께 읽어 둔다.
     prefetchBattlePuppets(relicCollection.validParty, [RAID_SEASON_BOSS.relicId]);
+    this.stage = data?.stage ?? "season";
     setDebugScene("raid");
+    setDebugRaidStage(this.stage);
     addSceneBackground(this, BACKGROUND.sortieRaid);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { strength: 0.72 });
     this.add.text(RAID_HEADER.titleX, RAID_HEADER.titleY, t("raid.title"), textStyle({ role: "display", size: 54, color: COLOR.sortieText })).setOrigin(0, 0);
-    addBackButton(this, () => this.scene.start("lobby", LOBBY_RETURN.sortie));
-    void this.loadBossPortrait();
-    void this.refresh();
     // 씬이 다시 시작될 때 원화와 마스크가 남지 않게 한 곳에서 걷는다.
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.dispose());
+    if (this.stage === "preparation") {
+      // 편성 단계에서 나가는 길은 로비가 아니라 **시즌 판**이다 — 한 걸음 들어온 자리라
+      // 거기서 화면을 통째로 떠나면 방금 본 남은 체력과 기여 목록을 다시 열어야 한다.
+      addBackButton(this, () => this.scene.restart({ stage: "season" }));
+      this.buildPreparation();
+      playSceneEntrance(this);
+      return;
+    }
+    addBackButton(this, () => this.scene.start("lobby", LOBBY_RETURN.sortie));
+    void this.loadBossPortrait();
+    // 원화의 아래 절반이 잠기는 띠. 남은 체력 줄의 배경도 이 한 겹이 함께 맡는다.
+    const fade = RAID_BOSS_SPOT.fade;
+    this.add.existing(drawGlassFade(this, BASE_WIDTH / 2, (fade.top + fade.bottom) / 2, BASE_WIDTH, fade.bottom - fade.top, { bottomAlpha: 0.88 })).setDepth(8);
+    void this.refresh();
+    playSceneEntrance(this);
   }
 
   /**
@@ -67,11 +105,131 @@ export class RaidScene extends Phaser.Scene {
   private async loadBossPortrait(): Promise<void> {
     const asset = portraitAssetFor(RAID_SEASON_BOSS.relicId);
     // 자리는 배치표 하나가 갖는다 — 원정 기록 화면이 폰토스를 세우는 것과 같은 경로다.
-    const puppet = await spawnPuppet(this, asset, { x: RAID_BOSS_SPOT.centerX, groundY: RAID_BOSS_SPOT.bottom, height: RAID_BOSS_SPOT.height, depth: 5 });
+    const puppet = await spawnPuppet(this, asset, { x: RAID_BOSS_SPOT.centerX, groundY: RAID_BOSS_SPOT.groundY, height: RAID_BOSS_SPOT.height, depth: 5 });
     if (!this.scene.isActive()) { puppet.destroy(); return; }
     puppet.disableInteractive();
+    /*
+     * **잠기는 띠 아래로는 아예 서지 않는다.**
+     *
+     * 그라데이션 한 겹만 덮어 두었을 때는 띠가 끝나는 자리부터 다리가 다시 밝아져, 기여 목록의
+     * 반투명 유리 줄 뒤로 비쳤다 — 목록이 흐려지고 화면 아래가 시끄러워진다. 자르는 선은 띠의
+     * 아랫변과 같아서, 눈에는 어둠에 잠겨 사라지는 것으로만 보인다.
+     *
+     * Puppet은 컨테이너 변환을 물려받지 않으므로 마스크도 화면 좌표로 만든다(상점 무대와 같다).
+     */
+    this.bossMask?.destroy();
+    this.bossMask = this.add.rectangle(BASE_WIDTH / 2, RAID_BOSS_SPOT.fade.bottom / 2, BASE_WIDTH, RAID_BOSS_SPOT.fade.bottom, 0xffffff).setVisible(false);
+    puppet.setMask(this.bossMask.createGeometryMask());
     this.bossPortrait?.destroy();
     this.bossPortrait = puppet;
+  }
+
+
+  /**
+   * 편성 단계.
+   *
+   * **원정과 같은 순서다** — 시즌 판의 출격이 이 걸음을 열고, 여기서 전투로 들어간다. 칸은 네
+   * 화면이 함께 쓰는 판 한 장(`addFormationSlotPlate`)이고 목록은 도감·원정과 같은 그리드
+   * 규칙을 쓰므로, 이 메서드가 하는 일은 **자리를 배치표에서 읽어 오는 것**뿐이다.
+   *
+   * 고르는 규칙도 화면이 다시 만들지 않는다 — 칸을 누르는 일과 목록을 누르는 일 모두 순수
+   * 규칙(`tapFormationSlot`·`tapRosterRelic`)을 그대로 지난다.
+   */
+  private buildPreparation(): void {
+    this.picked = toFormationSlots(relicCollection.validParty, 3);
+    this.pickedSlot = undefined;
+    this.add.text(BASE_WIDTH / 2, RAID_PREPARATION.titleY, t("raid.party.title"), textStyle({ role: "emphasis", size: 32, color: COLOR.sortieText })).setOrigin(0.5);
+    this.add.text(BASE_WIDTH / 2, RAID_PREPARATION.hintY, t("raid.party.needThree"), textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0.5);
+    const start = RAID_PREPARATION.start;
+    this.startButton = new Button(this, BASE_WIDTH / 2, start.y, {
+      width: start.width, height: start.height, label: t("raid.party.start"), fontSize: 42,
+      variant: "primary", accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText,
+      onClick: () => this.enterBattle(),
+    });
+    this.buildRoster();
+    this.renderSlots();
+  }
+
+  /** 세 자리. 고른 칸과 서 있는 카드만 갈아 끼우므로 목록은 다시 그리지 않는다. */
+  private renderSlots(): void {
+    this.slotLayer?.destroy(true);
+    const layer = this.add.container(0, 0).setDepth(6);
+    this.slotLayer = layer;
+    const { y, firstX, stepX, width, height } = RAID_PREPARATION.slots;
+    for (let slot = 0; slot < 3; slot += 1) {
+      const box = { x: firstX + slot * stepX, y, width, height };
+      if (this.pickedSlot === slot) addFormationSlotSelection(this, layer, box);
+      const relicId = this.picked[slot];
+      addFormationSlotPlate(this, layer, box, { occupied: relicId !== null, groundOffset: height / 2 - 40, index: slot });
+      if (relicId !== null) {
+        const relic = getRelic(relicId);
+        layer.add(new PortraitCard(this, box.x, box.y - 14, {
+          width: width - 44, height: height - 78, relicId, label: relic.name, rarity: relic.rarity,
+          level: relicProgression.getProgress(relicId).level,
+          breakthroughGrade: relicProgression.getBreakthroughGrade(relicId),
+        }));
+      }
+      const hit = this.add.rectangle(box.x, box.y, width, height, COLOR.void, 0.001).setInteractive({ useHandCursor: true });
+      hit.on(Phaser.Input.Events.POINTER_UP, () => {
+        const tap = tapFormationSlot(this.picked, slot, this.pickedSlot);
+        this.picked = tap.formation;
+        this.pickedSlot = tap.selectedSlot;
+        this.renderSlots();
+      });
+      layer.add(hit);
+    }
+    this.startButton?.setEnabled(formationMembers(this.picked).length === 3);
+  }
+
+  /** 보유 렐릭 목록. 편성판 아래·시작 버튼 위 사이에서만 흐른다. */
+  private buildRoster(): void {
+    const grid = formationRosterGrid(BASE_WIDTH - 96);
+    const owned = [...session.owned].map(getRelic);
+    const view = RAID_PREPARATION.roster;
+    const firstRowY = portraitGridFirstRowY(view.top, grid.cardHeight, PORTRAIT_GRID_MASK_GAP);
+    const content = this.add.container(0, 0).setDepth(4);
+    this.rosterMask = this.add.rectangle(BASE_WIDTH / 2, (view.top + view.bottom) / 2, BASE_WIDTH, view.bottom - view.top, 0xffffff).setVisible(false);
+    content.setMask(this.rosterMask.createGeometryMask());
+    owned.forEach((relic, index) => {
+      const card = new PortraitCard(this, BASE_WIDTH / 2 + formationRosterColumnX(grid, index % grid.columns), firstRowY + Math.floor(index / grid.columns) * grid.rowStep, {
+        width: grid.cardWidth, height: grid.cardHeight, relicId: relic.id, label: relic.name,
+        level: relicProgression.getProgress(relic.id).level, rarity: relic.rarity,
+        breakthroughGrade: relicProgression.getBreakthroughGrade(relic.id),
+        affinity: { element: relic.element, role: relic.role },
+        selectedStyle: "pressed",
+      });
+      card.hit.on(Phaser.Input.Events.POINTER_UP, () => {
+        const tap = tapRosterRelic(this.picked, this.pickedSlot, relic.id);
+        this.picked = tap.formation;
+        this.pickedSlot = tap.selectedSlot;
+        this.renderSlots();
+      });
+      content.add(card);
+    });
+    // 줄이 창보다 길면 그 안에서만 흐른다. 짧으면 minY가 0이라 아무 일도 일어나지 않는다.
+    const rows = Math.ceil(owned.length / grid.columns);
+    const contentHeight = rows > 0 ? PORTRAIT_GRID_MASK_GAP + portraitGridContentHeight(rows, grid.rowStep, grid.cardHeight) : 0;
+    const minY = Math.min(0, (view.bottom - view.top) - contentHeight);
+    let offset = 0; let dragY = 0;
+    const move = (delta: number): void => { offset = Phaser.Math.Clamp(offset + delta, minY, 0); content.y = offset; };
+    const hit = this.add.rectangle(BASE_WIDTH / 2, (view.top + view.bottom) / 2, BASE_WIDTH, view.bottom - view.top, 0xffffff, 0)
+      .setInteractive({ draggable: true }).setDepth(3);
+    hit.on("dragstart", (pointer: Phaser.Input.Pointer) => { dragY = pointer.y; });
+    hit.on("drag", (pointer: Phaser.Input.Pointer) => { move(pointer.y - dragY); dragY = pointer.y; });
+    hit.on("wheel", (_pointer: Phaser.Input.Pointer, _dx: number, dy: number) => move(-dy * 0.65));
+  }
+
+  /**
+   * 전투로 들어간다.
+   *
+   * **편성은 화면이 아니라 매니저가 확정한다** — 그려 둔 뒤에도 보유 상태가 바뀔 수 있으므로
+   * 넘어가기 직전에 다시 검증한다. 거절당하면 그대로 남아 다시 고르게 한다.
+   */
+  private enterBattle(): void {
+    const members = formationMembers(this.picked);
+    if (members.length !== 3) return;
+    if (!relicCollection.setParty(members).ok) { this.renderSlots(); return; }
+    startScene(this, "battle", { mode: "raid" });
   }
 
   /** 서버 스냅샷 하나로 머리글·게이지·목록·조작을 한 번에 다시 그린다. */
@@ -123,7 +281,12 @@ export class RaidScene extends Phaser.Scene {
     content.add(this.add.text(bar.centerX + bar.width / 2, bar.labelY, getRelic(season.bossRelicId).name, textStyle({ role: "display", size: 30, color: COLOR.ink })).setOrigin(1, 0.5));
     // 빈 자리를 짙게 눌러 두고 외곽을 흰 선으로 둘러, 밝은 배경 원화 위에서도 어디까지가 이
     // 게이지인지 보이게 한다 — 읽어야 하는 진행도의 공용 규칙이다.
-    this.hpBar = new HoloBar(this, bar.centerX, bar.y, bar.width, bar.height, { color: RAID_HP_BAR_COLOR, trackAlpha: 0.82, outline: true, ticks: bar.ticks });
+    this.hpBar = new HoloBar(this, bar.centerX, bar.y, bar.width, bar.height, {
+      color: RAID_HP_BAR_COLOR, trackAlpha: 0.82, outline: true, ticks: bar.ticks,
+      // 화면에서 가장 크게 서는 게이지라 그림자 한 겹으로 배경 원화에서 띄우고, 남은 몫
+      // 둘레로만 같은 색 빛이 옅게 번진다 — 양식은 그대로 두고 깊이만 한 겹 더한다.
+      shadow: { offsetY: 7, alpha: 0.6 }, glow: { spread: 7, alpha: 0.26 },
+    });
     this.hpBar.setValue(season.totalHp > 0 ? season.remainingHp / season.totalHp : 0);
     this.hpBar.objects.forEach((object) => object.setDepth(12));
     content.add(this.add.text(bar.centerX - bar.width / 2, bar.valueY, `${season.remainingHp.toLocaleString()} / ${season.totalHp.toLocaleString()}`, textStyle({ role: "display", size: 28, color: COLOR.ink })).setOrigin(0, 0.5));
@@ -202,7 +365,7 @@ export class RaidScene extends Phaser.Scene {
     // 도전이 남지 않았거나 이미 누운 보스에는 들어갈 수 없다 — 눌러도 아무 일이 없는 칸은
     // 준비 상태를 과장한다.
     const canSortie = !season.defeated && season.attemptsUsed < season.attemptsLimit;
-    this.sortieButton = new Button(this, sortie.centerX, y, { width: sortie.width, height: sortie.height, label: t("raid.sortie"), fontSize: 36, variant: "primary", accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, onClick: () => this.scene.start("battle", { mode: "raid" }) });
+    this.sortieButton = new Button(this, sortie.centerX, y, { width: sortie.width, height: sortie.height, label: t("raid.sortie"), fontSize: 36, variant: "primary", accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, onClick: () => this.scene.restart({ stage: "preparation" }) });
     this.sortieButton.setEnabled(canSortie);
     content.add(this.sortieButton);
     /*
@@ -283,6 +446,10 @@ export class RaidScene extends Phaser.Scene {
   private dispose(): void {
     this.listMask?.destroy();
     this.listMask = undefined;
+    this.rosterMask?.destroy();
+    this.rosterMask = undefined;
+    this.bossMask?.destroy();
+    this.bossMask = undefined;
     this.bossPortrait?.destroy();
     this.bossPortrait = undefined;
   }

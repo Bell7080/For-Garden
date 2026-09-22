@@ -71,6 +71,8 @@ import {
   TORIKA_SKIN_001_PORTRAIT_METADATA,
   TORIKA_SKIN_001_SD_METADATA,
   VENTIA_PORTRAIT_METADATA,
+  SUKUSUINO_PORTRAIT_METADATA,
+  SUKUSUINO_SD_METADATA,
   VENTIA_SD_METADATA,
   VIRIA_PORTRAIT_METADATA,
   VIRIA_SD_METADATA,
@@ -393,6 +395,14 @@ export const EXPLORER_ASSET: PuppetAsset = {
  * 다섯이 같은 몸이라도 묶음마다 캔버스와 여백이 다르므로 한 자매의 값을 다른 자매에 옮겨
  * 적지 않는다 — 실측은 `assetMetadata.ts`가 갖고 여기서는 URL만 붙인다.
  */
+/**
+ * **수쿠스이노 전신.** 공멸이 풀어 놓은 폭주 병기이자 첫 시즌의 레이드 보스다.
+ *
+ * 적 전용 번호는 전신(`enemy_0NN`)과 SD(`enemySD_0NN`)가 짝을 이룬다 — 실측은
+ * `assetMetadata.ts`가 갖고 여기서는 URL만 붙인다.
+ */
+export const SUKUSUINO_ASSET: PuppetAsset = { url: `${base}puppets/enemy_010.zip`, ...SUKUSUINO_PORTRAIT_METADATA };
+
 export const RAITIA_ASSETS: Readonly<Record<RaitiaAssetId, PuppetAsset>> = {
   "raitia-grass": { url: `${base}puppets/enemy_005.zip`, ...VIRIA_PORTRAIT_METADATA },
   "raitia-water": { url: `${base}puppets/enemy_006.zip`, ...GUTTIA_PORTRAIT_METADATA },
@@ -431,6 +441,7 @@ const PORTRAIT_ASSETS = {
   koma: EXPLORER_ASSET,
   ...RAITIA_ASSETS,
   pontos: PONTOS_ASSET,
+  sukusuino: SUKUSUINO_ASSET,
   parua: PARUA_ASSET,
   dian: DIAN_ASSET,
   shute: SHUTE_ASSET,
@@ -485,6 +496,12 @@ export const RAITIA_SD_ASSETS: Readonly<Record<RaitiaAssetId, PuppetAsset>> = {
   "raitia-fire": { url: `${base}puppets/enemySD_007.zip`, ...FAVIA_SD_METADATA },
   "raitia-earth": { url: `${base}puppets/enemySD_008.zip`, ...SILIA_SD_METADATA },
   "raitia-wind": { url: `${base}puppets/enemySD_009.zip`, ...VENTIA_SD_METADATA },
+};
+
+/** 수쿠스이노 전투 SD. 전신과 같은 번호 묶음(`enemySD_010`)이다. */
+export const SUKUSUINO_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/enemySD_010.zip`,
+  ...SUKUSUINO_SD_METADATA,
 };
 
 /** 폰토스 전투 SD. 정사각 원본에서 alpha > 16인 실제 실루엣만 바닥 배치에 사용한다. */
@@ -689,6 +706,7 @@ export const ENEMY_SD_ASSETS_BY_ID: Readonly<Record<string, PuppetAsset>> = {
   [ENEMY_SD_ASSET_IDS[2]]: ENEMY_SD_ASSETS[1],
   [ENEMY_SD_ASSET_IDS[3]]: ENEMY_SD_ASSETS[2],
   [ENEMY_SD_ASSET_IDS[4]]: EXPLORER_SD_ASSET,
+  [ENEMY_SD_ASSET_IDS[10]]: SUKUSUINO_SD_ASSET,
   ...RAITIA_SD_ASSETS,
 };
 
@@ -867,7 +885,7 @@ export const PUPPET_PRELOAD_GROUPS: ReadonlyArray<readonly PuppetAsset[]> = [
   // 전신은 PortraitCard와 정보창이 처음 열릴 때 파싱하지 않도록 중앙 전신 단계에 둔다.
   [TORIKA_ASSET, TORIKA_SKIN_001_ASSET, LEXIA_ASSET, SEIRA_ASSET, LUKA_ASSET, PONTOS_ASSET],
   // SD 역시 씬 로더가 아니라 타이틀의 공용 Puppet 단계에서 미리 해석한다.
-  [TORIKA_SD_ASSET, TORIKA_SKIN_001_SD_ASSET, LEXIA_SD_ASSET, SEIRA_SD_ASSET, LUKA_SD_ASSET, ...ENEMY_SD_ASSETS, PONTOS_SD_ASSET, TOBY_ASSET, AMO_ASSET, RIPA_ASSET],
+  [TORIKA_SD_ASSET, TORIKA_SKIN_001_SD_ASSET, LEXIA_SD_ASSET, SEIRA_SD_ASSET, LUKA_SD_ASSET, ...ENEMY_SD_ASSETS, PONTOS_SD_ASSET, SUKUSUINO_SD_ASSET, SUKUSUINO_ASSET, TOBY_ASSET, AMO_ASSET, RIPA_ASSET],
 ];
 
 /**

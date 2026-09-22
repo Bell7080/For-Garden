@@ -44,6 +44,7 @@ import {
   TORIKA_PORTRAIT_METADATA,
   TORIKA_SKIN_001_PORTRAIT_METADATA,
   TORIKA_SKIN_001_SD_METADATA,
+  SUKUSUINO_PORTRAIT_METADATA,
   VENTIA_PORTRAIT_METADATA,
   VIRIA_PORTRAIT_METADATA,
 } from "../../src/puppets/assetMetadata";
@@ -359,6 +360,8 @@ const REAL_PORTRAITS = [
   { name: "파비아", metadata: FAVIA_PORTRAIT_METADATA, head: { x: 511, y: 416 }, eyes: [{ x: 479, y: 409 }, { x: 558, y: 375 }] },
   { name: "실리아", metadata: SILIA_PORTRAIT_METADATA, head: { x: 605, y: 417 }, eyes: [{ x: 559, y: 371 }, { x: 635, y: 416 }] },
   { name: "벤티아", metadata: VENTIA_PORTRAIT_METADATA, head: { x: 523, y: 446 }, eyes: [{ x: 491, y: 449 }, { x: 579, y: 414 }] },
+  // 시즌 보스도 같은 목록에 건다 — 지어낸 프레임만 검사하면 실제 원화가 잘리는 동안에도 통과한다.
+  { name: "수쿠스이노", metadata: SUKUSUINO_PORTRAIT_METADATA, head: { x: 608, y: 267 }, eyes: [{ x: 585, y: 265 }, { x: 637, y: 239 }] },
 ] as const;
 
 /** PortraitCard가 넘기는 것과 같은 배율 보정으로 실제 카드 잘라내기를 구한다. */

@@ -2961,7 +2961,7 @@ export const RELICS: RelicDef[] = [
     // 원정 최종층의 단독 보스. 리바이어던 멜빌레이의 거대한 턱과 심해 포식자 모티브를 담는다.
     id: "pontos",
     enemyOnly: true,
-    squad: "abyssal-crown",
+    squad: "sealed-abyss",
     name: "폰토스",
     specimenNumber: "220",
     projectName: "ABYSSAL CROWN",
@@ -3092,6 +3092,145 @@ export const RELICS: RelicDef[] = [
       // 해일은 좌표와 무관하게 공격 시작 시점의 모든 생존 적을 확정한다.
       targeting: "battlefieldEnemies",
       statusEffects: [{ kind: "stun", seconds: 5 }],
+    },
+  },
+  {
+    /**
+     * **수쿠스이노.** 공멸이 풀어 놓은 폭주 병기이자 첫 시즌의 레이드 보스다.
+     *
+     * 폰토스가 원정 최종층에서 **죽지 않는 벽**으로 서 있다면, 이쪽은 반대로 **여럿이 함께
+     * 미는 표적**이다 — 시즌 하나가 공유 체력 한 줄을 갖고 참가자 전원의 피해가 그 줄을
+     * 깎는다. 그래서 숨은 경감으로 버티지 않는다(그런 벽은 미는 맛이 없다): 체력과 방어로
+     * 두껍게 서고, 시간이 지날수록 **아프게** 만든다.
+     *
+     * 이름은 종명(데이노수쿠스)의 뒤 두 음절을 뒤집어 붙였다. 공멸이 붙인 병기 번호가 아니라
+     * 연구동에서 부르던 호칭이 그대로 굳은 것이라, 다른 공멸 개체(토비·아모·리파·코마)처럼
+     * 사람 이름의 결을 갖는다.
+     */
+    id: "sukusuino",
+    enemyOnly: true,
+    squad: "annihilation",
+    name: "수쿠스이노",
+    specimenNumber: "231",
+    projectName: "ANNIHILATION SIEGE 004",
+    excavationSite: "미국 텍사스 백악기 하천 범람원",
+    fossilRecord: "범람원 사암에서 두개골 하나와 등판 골편 수백 점이 함께 나왔다. 아문 자국이 겹겹이 남은 골편이 많아, 같은 개체가 오랜 기간 반복해서 물어뜯긴 뒤 살아남았다고 기록했다.",
+    observationProfile: {
+      originYear: "약 7,500만 년 전",
+      // E.C.는 오래 눌러 온 힘을 한 번에 풀어 버린 장년기형 인상을 분류하며, 실제 나이가 아니다.
+      restorationYear: "E.C. 16년",
+      lifeStage: "성체",
+      height: "2.41 m",
+      weight: "318 kg",
+    },
+    catalogSummary: "턱과 등판이 과하게 복원된 데이노수쿠스 기반 대형 표본.",
+    unlockRecord: { status: "sealed", reason: "restricted" },
+    // 봉인된 적은 소속만 공개한다. squadNote·researcherTitle은 관계 기록 해제 전까지 넣지 않는다.
+    rarity: "SSR",
+    portraitAssetId: "sukusuino",
+    origin: "데이노수쿠스",
+    element: "grass",
+    role: "warrior",
+    // 물어서 끌고 들어가는 몸이라 근거리다. 사거리가 길면 물지 않고도 이기게 된다.
+    reachTier: "melee",
+    /*
+     * **보스 쪽 성질인 기절 저항을 폰토스와 같은 값으로 갖는다.** 제어를 없애는 값이 아니라
+     * 잠그지 못하게 하는 값이다 — 0이면 제어형 하나가 시즌 보스의 행동을 통째로 지울 수 있고,
+     * 하루 세 판뿐인 도전이 "기절을 가졌나"로 갈린다. 절반으로 줄이면 잠금은 막으면서도
+     * 제어 개체가 보스전에서 쓸모없어지지 않는다.
+     */
+    stunResistancePercent: 50,
+    // 적 전용 정의도 RelicDef의 완전한 정적 계약을 지켜 공용 정보창이 예외 없이 표시한다.
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
+    stats: {
+      /*
+       * **적 전용이라 등급 띠 밖이고, 폰토스와 같은 보스 예산 안에서 모양만 다르다.**
+       *
+       * 폰토스가 주문력으로 전장을 쓸어 담는 벽이라면 이쪽은 **턱 하나로 앞을 부수는 몸**이다.
+       * 그래서 같은 체력대에 서되 주문력을 쓰지 않고(쓰지 않는 능력치를 높게 적지 않는다),
+       * 그 몫을 공격력과 방어에 얹는다. 저항이 얇은 것은 그 반대급부라 마법 딜러가 낼 답이
+       * 남는다 — 레이드는 하루 세 판을 다른 편성으로 돌려 보는 자리다.
+       */
+      hp: 2950,
+      def: 200,
+      res: 96,
+      atk: 196,
+      ap: 0,
+      // 크고 느리다. 한 방이 무거운 대신 그 사이가 길어 "다음 턱"을 읽고 피할 틈이 남는다.
+      attackSpeed: 48,
+      moveSpeed: 52,
+      critChance: 8,
+      critDamage: 150,
+      energyGain: 30,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    /*
+     * **폭주 병기.** 턱이 닫힐 때마다 그 옆까지 함께 찢긴다.
+     *
+     * 공용 범위 전이(`splashDamage`) 하나로 짠다 — 보스 전용 배율이나 숨은 보정을 만들지
+     * 않는다. 셋이 나란히 선 자리에서 단일 타격만 내던 몸이 폭주에 들어가는 순간 줄 전체를
+     * 물어뜯게 되므로, 게이지가 차는 것이 화면에서 그대로 읽힌다.
+     */
+    ferocityTrait: {
+      name: "폭주 병기", effectId: "splashDamage",
+      damagePercent: 45, radius: 320, attackSpeedBonusPercent: 30,
+    },
+    passive: {
+      id: "sukusuino-passive",
+      name: "늪지 재생",
+      kind: "emergencyRecovery",
+      iconAssetId: "skill-icon-buff",
+      effectType: "healing",
+      // 6초 동안 최대 체력의 18%를 되찾는다. 한 번뿐이라 "여기서 한 번 더 민다"의 경계가 된다.
+      value: 3,
+      durationSeconds: 6,
+      // 전용 분기가 없는 종류라 이 문장이 그대로 화면에 선다. 지속 회복을 규칙어로 감싸지
+      // 않는 이유는 아군 탱커들과 같다 — 얼마나 오래 얼마씩인지가 이 패시브의 전부다.
+      desc: "전투당 한 번, 체력이 절반 이하가 되면 6초 동안 매초 최대 체력의 3%를 회복한다.",
+    },
+    basic: {
+      id: "sukusuino-basic",
+      name: "죽음의 회전",
+      // 보스의 한 방이다. 폰토스(100)보다 높고 공속이 낮아 초당 피해로는 비슷한 자리에 선다.
+      power: 140,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+      /*
+       * **네 번째 턱이 몸을 비튼다.** 매 타격마다 물고 흔들면 맞은 쪽이 영영 일어나지 못해
+       * 전투가 아니라 한쪽의 처형이 되고, 주기로 끊으면 플레이어가 "네 번째에 밀린다"를 읽고
+       * 자리를 다시 잡을 수 있다(코마의 세 번째 꼬리와 같은 이유·같은 공용 계약이다).
+       *
+       * 물린 자리가 아물지 않는 것이 이 개체가 다른 공멸과 갈리는 지점이라, 날리는 것과 함께
+       * 회복을 깎는 출혈을 남긴다 — 회복형 편성 하나로 하루 세 판을 같은 방식으로 돌리지
+       * 못하게 하는 손잡이다.
+       */
+      statusEffectEvery: 4,
+      statusEffects: [
+        { kind: "bleed", seconds: 4, maxHpPercentPerSecond: 2, healingReceivedReductionPercent: 30 },
+        { kind: "knockback", seconds: 1, speed: 1500, bounces: 2 },
+      ],
+    },
+    ultimate: {
+      id: "sukusuino-ult",
+      name: "늪의 아가리",
+      // 코마의 통로(190)와 폰토스의 전장 해일(500) 사이다. 원 하나를 지정해 무는 기술이라
+      // 전장 전체를 치지 않고, 그만큼 서 있는 자리가 답이 된다.
+      power: 300,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      cost: 100,
+      /*
+       * **원을 지정해 문다.** 전장 전체를 치는 기술로 두면 편성이 무엇이든 똑같이 맞아 자리를
+       * 옮길 이유가 사라진다 — 바닥에 그려지는 원이 곧 "여기 서 있으면 맞는다"가 되고,
+       * 그 판정 모양을 화면이 그대로 받아 그린다(`areaImpact`).
+       */
+      targeting: "targetedCircle",
+      radius: 300,
+      statusEffects: [{ kind: "stun", seconds: 2 }],
     },
   },
   {

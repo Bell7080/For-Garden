@@ -760,3 +760,31 @@ export const VENTIA_SD_METADATA: Omit<PuppetAsset, "url"> = {
   content: { left: 273, top: 29, right: 1104, bottom: 1219 },
   joints: { center: [634, 618], head: [618, 541], eyes: null, feet: [[729, 1211], [374, 1172]] },
 };
+
+/**
+ * **수쿠스이노 전신.** 공멸이 풀어 놓은 데이노수쿠스 기반 폭주 병기이자 첫 시즌의 레이드 보스다.
+ *
+ * 값은 ZIP 안 WebP의 실제 크기와 alpha > 16 경계를 직접 재서 적었다. 다른 개체의 값을 옮겨
+ * 오면 카드·전신 배율이 통째로 틀어지므로 원화가 바뀌면 같은 방법으로 다시 잰다.
+ */
+export const SUKUSUINO_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086, imageHeight: 1448,
+  content: { left: 15, top: 19, right: 1069, bottom: 1410 },
+  joints: { center: [637, 386], head: [608, 267], eyes: [[585, 265], [637, 239]], feet: [[402, 1719], [858, 1423]] },
+  /*
+   * **몸이 커서 얼굴이 작은 원화라 카드에서만 한 뼘 당긴다.**
+   *
+   * 꼬리까지 실루엣이 1,054px을 차지하는데 두 눈 사이는 57px뿐이라, 기본 배율에서는 카드에
+   * 선 얼굴이 로스터 중앙값의 0.63배로 혼자 작았다 — 한 그리드에 나란히 서는 카드라 그만큼
+   * 덜 중요한 칸으로 읽힌다. 값은 눈대중이 아니라 **두 눈 사이 거리가 그 중앙값 띠 안에
+   * 들어오는 배율**로 구했다(레이티아 다섯의 `cardZoom`과 같은 방법·반대 방향이다).
+   */
+  cardZoom: 1.35,
+};
+
+/** 수쿠스이노 전투 SD. */
+export const SUKUSUINO_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254, imageHeight: 1254,
+  content: { left: 77, top: 52, right: 1171, bottom: 1227 },
+  joints: { center: [658, 617], head: [681, 504], eyes: null, feet: [[880, 1208], [537, 1233]] },
+};

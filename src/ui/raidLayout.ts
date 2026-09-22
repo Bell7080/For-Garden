@@ -7,15 +7,27 @@
  */
 
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { POPUP_SIDE_SLOT } from "./popupGeometry";
+import { BACK_BUTTON_SIZE, BACK_SLOT, POPUP_SIDE_SLOT } from "./popupGeometry";
 
 /**
  * 보스가 서는 자리.
  *
- * 전신 원화는 **머리 관절이 아니라 바닥선**으로 세운다 — 레이드는 그 한 마리만 보는 화면이라
- * 인물이 화면 아래 절반을 차지하고, 위로는 남은 체력 줄이 걸린다.
+ * **원정 기록 화면과 같은 문법이다**(`RANKING.boss`) — 발끝을 화면 아래로 내보내고 크게 세워
+ * 화면 위쪽에 **상반신만** 남긴다. 상자에 맞춰 줄이면 그 한 마리만 보는 화면인데 얼굴보다
+ * 여백이 먼저 읽힌다. 두 화면이 같은 값을 쓰는 이유는 시즌 보스를 세우는 일이 같은 일이기
+ * 때문이고, 다르게 적으면 같은 개체가 원정에서는 크고 레이드에서만 작게 선다.
+ *
+ * 아래 절반은 그리지 않는 것이 아니라 **어둠에 잠긴다**(`fade`) — 자르면 그 선이 가로줄로
+ * 보이고, 그대로 두면 기여 목록의 유리 줄 뒤로 다리가 비쳐 목록이 흐려진다. 검정→투명
+ * 그라데이션 한 겹이 남은 체력 줄의 배경도 함께 맡는다.
  */
-export const RAID_BOSS_SPOT = { centerX: BASE_WIDTH / 2, bottom: 980, height: 720 } as const;
+export const RAID_BOSS_SPOT = {
+  centerX: BASE_WIDTH / 2,
+  groundY: BASE_HEIGHT + 40,
+  height: 1720,
+  /** 원화가 잠기는 띠. 위는 투명, 아래는 짙은 검정이고 아랫변이 목록 윗변에 닿는다. */
+  fade: { top: 760, bottom: 1216 },
+} as const;
 
 /** 남은 체력 게이지. 보스 발밑을 지나 화면 폭을 거의 다 쓴다. */
 export const RAID_HP_BAR = {
@@ -58,8 +70,42 @@ export const RAID_BOARD = {
  */
 export const RAID_ACTIONS = {
   y: BASE_HEIGHT - 132,
-  sortie: { centerX: 716, width: 420, height: 124 },
+  /**
+   * **주 조작은 화면 가운데에 선다.** 오른쪽으로 밀어 두었던 때는 그 자리가 곁들임 줄과
+   * 뒤로가기 사이를 피한 결과였는데, 판 밖 줄은 이 버튼보다 작고 낮은 라벨 버튼이라 나란히
+   * 선 둘 중 무엇이 주 조작인지는 크기가 이미 말한다 — 자리까지 양보하면 화면이 한쪽으로
+   * 쏠려 읽힌다. 좌우 어느 쪽과도 겹치지 않는지는 `raidActionGaps`가 지킨다.
+   */
+  sortie: { centerX: BASE_WIDTH / 2, width: 400, height: 124 },
   shop: POPUP_SIDE_SLOT,
+} as const;
+
+/** 출격이 판 밖 곁들임 줄·우하단 뒤로가기와 벌린 좌우 간격이다. 둘 다 양수여야 한다. */
+export function raidActionGaps(): { shop: number; back: number } {
+  const left = RAID_ACTIONS.sortie.centerX - RAID_ACTIONS.sortie.width / 2;
+  const right = RAID_ACTIONS.sortie.centerX + RAID_ACTIONS.sortie.width / 2;
+  return {
+    shop: left - (POPUP_SIDE_SLOT.x + POPUP_SIDE_SLOT.width / 2),
+    back: (BACK_SLOT.x - BACK_BUTTON_SIZE / 2) - right,
+  };
+}
+
+/**
+ * 편성 단계.
+ *
+ * **원정과 같은 순서다** — 들어가면 시즌 판(보스 전신 + 기여 목록)이 먼저 뜨고, 출격이 편성을
+ * 연다. 눌리는 즉시 전투로 넘어가던 때는 누구를 데려갈지 정할 자리가 없어, 하루 세 번뿐인
+ * 도전을 지난 판의 편성 그대로 치르게 됐다.
+ *
+ * 칸은 네 화면이 함께 쓰는 판 한 장(`addFormationSlotPlate`)이고, 목록은 도감·원정과 같은
+ * 그리드 규칙을 쓴다. 이 표가 갖는 것은 자리뿐이다.
+ */
+export const RAID_PREPARATION = {
+  titleY: 292,
+  slots: { y: 560, firstX: 230, stepX: 310, width: 250, height: 290 },
+  roster: { top: 780, bottom: 1520 },
+  hintY: 1570,
+  start: { y: 1690, width: 560, height: 132 },
 } as const;
 
 /**

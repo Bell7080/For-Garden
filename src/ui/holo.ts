@@ -483,16 +483,24 @@ export class HoloBar {
   private readonly fill: Phaser.GameObjects.Graphics;
   /** 홈도 채움과 같은 생명주기로 제거해 탭 재구성 시 잔상이 남지 않게 한다. */
   private readonly track: Phaser.GameObjects.Graphics;
+  /** 아래로 한 겹 민 검은 복제. 켠 게이지만 갖는다. */
+  private readonly shade?: Phaser.GameObjects.Graphics;
+  /** 채움 둘레로 번지는 같은 색 빛. 채움과 함께 다시 그린다. */
+  private readonly halo?: Phaser.GameObjects.Graphics;
   /** 최대치 테두리와 칸 나눔. 켜지 않은 게이지에는 없다. */
   private readonly frame?: Phaser.GameObjects.Graphics;
   private ratio = 1;
+  /** 빛무리 설정. 켜 두면 채움을 다시 그릴 때 같은 값으로 함께 그린다. */
+  private readonly glow?: { spread?: number; alpha?: number };
   /** 채움이 시작하는 지점(0~1). 대부분의 게이지는 0이고, 막처럼 **덧대는 층만** 옮겨 앉는다. */
   private from = 0;
   private color: number;
 
   /** 복합 UI가 게이지 두 겹을 자신의 컨테이너 생명주기에 함께 묶을 때 쓰는 표시 객체다. */
   get objects(): readonly Phaser.GameObjects.Graphics[] {
-    return this.frame ? [this.track, this.fill, this.frame] : [this.track, this.fill];
+    // 층 순서 그대로 돌려준다 — 그림자 → 홈 → 빛무리 → 채움 → 테두리.
+    return [this.shade, this.track, this.halo, this.fill, this.frame]
+      .filter((object): object is Phaser.GameObjects.Graphics => object !== undefined);
   }
 
   constructor(
@@ -514,13 +522,37 @@ export class HoloBar {
       outline?: boolean;
       /** 칸을 나누는 흰 선의 개수. 얼마나 남았는지를 눈금으로 셈하게 한다. */
       ticks?: number;
+      /**
+       * 같은 모양을 아래로 한 겹 밀어 깐 검은 복제.
+       *
+       * 머리 위 체력 바가 밝은 배경 원화에서 떨어져 나오는 방법(`UnitHealthBar`)과 같은
+       * 것이라 새 양식이 아니다 — 판때기를 받치지 않고 그림자 한 겹으로만 띄운다. 크게 세우는
+       * 게이지(레이드의 남은 체력)만 켠다: 작은 게이지에서는 그 겹이 두께로만 읽힌다.
+       */
+      shadow?: { offsetX?: number; offsetY?: number; alpha?: number };
+      /**
+       * 채움 둘레로 번지는 같은 색 빛.
+       *
+       * 겹쳐 밝아지는 합성이라 **옅게** 깐다 — 진하면 밝은 배경 원화 위에서 하얗게 뭉개져
+       * 정작 읽어야 할 눈금과 수치가 그 속에 묻힌다(이펙트의 섬광과 같은 이유다).
+       */
+      glow?: { spread?: number; alpha?: number };
     },
   ) {
     this.color = options.color;
     const slant = options.slant ?? Math.min(HOLO.slant, height);
+    if (options.shadow) {
+      const { offsetX = 3, offsetY = 6, alpha = 0.55 } = options.shadow;
+      this.shade = scene.add.graphics({ x: x + offsetX, y: y + offsetY });
+      this.shade.fillStyle(0x05070a, alpha);
+      this.shade.fillPoints(toPoints(slantedRect(width, height, slant)), true);
+    }
     this.track = scene.add.graphics({ x, y });
     this.track.fillStyle(0x000000, options.trackAlpha ?? 0.55);
     this.track.fillPoints(toPoints(slantedRect(width, height, slant)), true);
+    // 빛무리는 채움 **아래**에 깔아 단색 플랫한 채움을 덮지 않게 한다.
+    this.halo = options.glow ? scene.add.graphics({ x, y }).setBlendMode(Phaser.BlendModes.ADD) : undefined;
+    this.glow = options.glow;
     this.fill = scene.add.graphics({ x, y });
     // 테두리와 눈금은 채움 위에 얹혀야 채워진 자리에서도 칸이 보인다.
     this.frame = options.outline || options.ticks ? scene.add.graphics({ x, y }) : undefined;
@@ -575,7 +607,24 @@ export class HoloBar {
     const filled = this.width * this.ratio;
     const begin = this.width * this.from;
     this.fill.clear();
+    this.halo?.clear();
     if (filled - begin <= 0) return;
+    if (this.halo && this.glow) {
+      // 채움과 같은 사다리꼴을 사방으로 조금 키워 옅게 한 겹만 깐다.
+      const spread = this.glow.spread ?? 6;
+      const left = -this.width / 2;
+      const s = slant / 2;
+      this.halo.fillStyle(this.color, this.glow.alpha ?? 0.3);
+      this.halo.fillPoints(
+        toPoints([
+          left + begin + s - spread, -this.height / 2 - spread,
+          left + filled + s + spread, -this.height / 2 - spread,
+          left + filled - s + spread, this.height / 2 + spread,
+          left + begin - s - spread, this.height / 2 + spread,
+        ]),
+        true,
+      );
+    }
     this.fill.fillStyle(this.color, 1);
     const left = -this.width / 2;
     const s = slant / 2;
@@ -592,7 +641,9 @@ export class HoloBar {
 
   /** 바를 화면에서 지운다. */
   destroy(): void {
+    this.shade?.destroy();
     this.track.destroy();
+    this.halo?.destroy();
     this.fill.destroy();
     this.frame?.destroy();
   }

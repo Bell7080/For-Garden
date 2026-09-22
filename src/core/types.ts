@@ -9,7 +9,7 @@ export type Side = "player" | "enemy";
  * 없으므로 판별 가능한 id만 둔다. 엠블럼 파일 이름도 이 id와 같다.
  */
 /** 아군 자치 스쿼드와 적대 세력을 함께 식별하는 영구 소속 ID다. */
-export type SquadId = "fang" | "gear" | "eye" | "rune" | "rogue" | "annihilation" | "abyssal-crown";
+export type SquadId = "fang" | "gear" | "eye" | "rune" | "rogue" | "annihilation" | "sealed-abyss";
 
 /** 속성. 다섯 속성은 서로 정확히 두 속성을 이기고 나머지 두 속성에 진다. */
 export type Element = "fire" | "water" | "grass" | "earth" | "wind";
@@ -38,7 +38,7 @@ export type RelicRarity = "R" | "SR" | "SSR";
  */
 export type RaitiaAssetId = "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind";
 
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.

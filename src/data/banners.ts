@@ -19,7 +19,6 @@ export const PITY_GROUP = { STANDARD: "standard-fossil", LIMITED_PICKUP: "limite
 export const BANNERS: Banner[] = [
   {
     id: "fossil", pityGroupId: PITY_GROUP.STANDARD, name: "화석 연구", featuredRelicId: "anky",
-    // 두 배너가 아직 같은 원화를 쓴다. 전용 원화가 오면 이 줄만 바꾼다.
     artKey: BACKGROUND.recruitFossil,
     // 연구 방식과 픽업 대상은 각각 기능명·픽업 표식으로 이미 전달하므로 설명형 문구를 노출하지 않는다.
     /*
@@ -42,7 +41,8 @@ export const BANNERS: Banner[] = [
   },
   {
     id: "amber", pityGroupId: PITY_GROUP.LIMITED_PICKUP, name: "호박석 연구", featuredRelicId: "rex",
-    artKey: BACKGROUND.recruitFossil,
+    // 아직 전용 모집 원화가 없다. 화석 연구의 그림을 돌려 쓰지 않고 비워 두어 연구소 설비
+    // 원화가 서게 한다 — 같은 그림을 두 배너가 쓰면 넘겨도 무엇이 바뀌었는지 말하지 못한다.
     // 재화의 희소도 같은 설계 메모도 배너 카피로 옮기지 않고 운영 데이터와 주석에만 남긴다.
     // 호박석도 한 개가 한 번이다. 값의 차이는 개수가 아니라 재화가 말한다.
     currency: "amber", costOne: 1, costTen: 10,

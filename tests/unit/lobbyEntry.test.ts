@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { LOBBY_RETURN, normalizeLobbyEntry } from "../../src/scenes/lobbyEntry";
 import { BACK_BUTTON_SIZE, BACK_SLOT, POPUP_SIDE_SLOT, popupSideSlotGap } from "../../src/ui/popupGeometry";
@@ -71,15 +72,44 @@ describe("전투 모드별 전장", () => {
 });
 
 describe("모집판 배너 원화", () => {
-  it("는 배너마다 제 원화를 갖고 그 키가 적재 표에 있다", () => {
+  const paths = new Map<string, string>(BACKGROUND_ASSETS.map(([key, path]) => [key, path]));
+
+  it("는 배너가 갖고, 적은 키는 적재 표에 있다", () => {
     // 화면이 한 장을 고정으로 깔면 배너를 넘겨도 그림이 그대로라 무엇이 바뀌었는지
     // 그림이 말하지 못한다. 어느 배너가 어느 원화인지는 배너 데이터가 갖는다.
-    const paths = new Map<string, string>(BACKGROUND_ASSETS.map(([key, path]) => [key, path]));
     expect(BANNERS.length).toBeGreaterThan(0);
     for (const banner of BANNERS) {
-      expect(banner.artKey, banner.id).toBeTruthy();
+      if (banner.artKey === undefined) continue;
       expect(paths.get(banner.artKey), banner.id).toBeTruthy();
     }
+  });
+
+  it("는 두 배너가 같은 그림을 나눠 쓰지 않는다", () => {
+    // 같은 그림을 돌려 쓰면 넘겨도 바뀐 것이 없어 보인다. 전용 원화가 아직 없는 배너는
+    // 빌려 오지 말고 **비워 두어** 연구소 설비 원화가 그 자리를 메우게 한다.
+    const used = BANNERS.map((banner) => banner.artKey).filter((key): key is string => key !== undefined);
+    expect(new Set(used).size, used.join(" · ")).toBe(used.length);
+  });
+
+  it("는 전용 원화가 없을 때만 연구소 설비 원화로 메운다", () => {
+    // 두 장을 겹쳐 두면 들어가는 순간 설비 원화가 먼저 보이고 그 위로 픽업 원화가 덮여
+    // 화면이 한 번 조립되는 과정이 그대로 보인다 — 그래서 배경은 한 장뿐이다.
+    const lab = readFileSync("src/scenes/LabScene.ts", "utf8");
+    expect(lab).toContain("this.banner.artKey ?? BACKGROUND.lab");
+    // 부르지 않는 이유는 주석이 설명하므로, 이름이 아니라 **부르는 자리**가 없어야 한다.
+    expect(lab).not.toMatch(/addSceneBackground\(/);
+    // 그 한 장이 곧 배경이므로 배경 층에 선다.
+    expect(lab).toMatch(/showcase = image;/);
+    expect(lab).toMatch(/"__DEFAULT"\)\.setDepth\(-30\)/);
+  });
+
+  it("는 이미 올라와 있는 그림도 제대로 물린다", () => {
+    // 세우는 쪽은 `__DEFAULT`로 만든 빈 이미지를 넘기므로, 이미 올라와 있다고 `onReady`만
+    // 부르면 그 자리는 텍스처 없이 알파만 1이 된다 — 연구소가 그랬다. 처음 들어갈 때는
+    // 아직 안 읽혀 비동기 길로 가 그림이 떴고, 배너를 넘겼다 돌아오면 빈 판만 남았다.
+    const backgrounds = readFileSync("src/ui/backgrounds.ts", "utf8");
+    const resident = backgrounds.slice(backgrounds.indexOf("if (textures.exists(key)) {"));
+    expect(resident.slice(0, 160)).toContain("image.setTexture(key)");
   });
 });
 

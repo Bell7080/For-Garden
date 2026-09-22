@@ -47,9 +47,12 @@ import { MailPopup } from "../ui/MailPopup";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import type { CurrencyGuideAction } from "../data/currencyGuide";
 import { powerSavingPolicy } from "../core/settings";
+import { TRANSITION } from "../core/screenTransition";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { consumeSceneEntry } from "./sceneEntry";
 import { normalizeLobbyEntry, type LobbyMenu } from "./lobbyEntry";
+import { prefetchIdlePuppets } from "../puppets/battlePrefetch";
+import { relicCollection } from "../managers/RelicCollectionManager";
 
 /**
  * 로비에 선 애착 렐릭의 층.
@@ -265,6 +268,11 @@ export class LobbyScene extends Phaser.Scene {
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
+
+    // 로비는 캐릭터를 보는 화면이라 대개 한참 머문다. 그 시간에 다음 전투가 쓸 SD를 한 장씩
+    // 읽어 두면 출격 → 편성 → 전투로 가는 길이 이미 캐시를 집는다. **들어오는 연출이 끝난
+    // 뒤에 시작한다** — 화면이 움직이는 동안 일꾼을 깨우면 그 연출이 먼저 끊긴다.
+    this.time.delayedCall(TRANSITION.sceneIn.duration, () => prefetchIdlePuppets(this, relicCollection.validParty));
   }
 
   /** TopBar가 건넨 공개 모델만 사용해 공용 레이어 기반 정보창을 연다. */

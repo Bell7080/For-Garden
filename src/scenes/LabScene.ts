@@ -19,7 +19,7 @@ import { Button } from "../ui/Button";
 import { TopBar } from "../ui/TopBar";
 import { drawLayer, drawRoundedLayer, HOLO, slantedRect, toPoints } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
-import { addSceneBackground, useBackgroundTexture, BACKGROUND } from "../ui/backgrounds";
+import { useBackgroundTexture, BACKGROUND } from "../ui/backgrounds";
 import { CRACK_BRANCHES, FOSSIL_CRACK, crackBranchPoints, fossilShards, shardPoints } from "../ui/fossilCrack";
 import { researchBoardLayout } from "../ui/researchBoardLayout";
 import { ResearchSlotTile } from "../ui/ResearchSlotTile";
@@ -107,8 +107,10 @@ export class LabScene extends Phaser.Scene {
     this.popupLayer = new PopupLayer(this, 2400);
 
     const cx = BASE_WIDTH / 2;
-    // 배경 5번의 연구 설비 원화를 쓰고, 얇은 암막으로 기존 청록색 UI 대비를 유지한다.
-    addSceneBackground(this, BACKGROUND.lab);
+    // **배경은 배너가 갖는다.** 연구소 설비 원화를 한 장 깔고 그 위에 모집 원화를 덮던 때는,
+    // 들어가는 순간 설비 원화가 먼저 보이고 그 위로 픽업 원화가 녹아 들어와 화면이 한 번
+    // 조립되는 과정이 그대로 보였다. 지금은 `showcaseRelic`이 세우는 한 장이 곧 배경이고,
+    // 전용 원화가 없는 배너에서만 그 자리를 설비 원화가 메운다.
     this.add.rectangle(cx, 960, BASE_WIDTH, 1920, COLOR.void, 0.34).setDepth(-29);
     this.add.rectangle(cx, BANNER_FLOOR, BASE_WIDTH, 3, COLOR.panelEdge).setDepth(-28);
 
@@ -232,18 +234,22 @@ export class LabScene extends Phaser.Scene {
   }
 
   /**
-   * 배너가 가리키는 모집 원화를 세운다.
+   * 배너가 가리키는 모집 원화를 세운다. **이 한 장이 이 화면의 배경이다.**
    *
-   * **배경 위에 한 겹 더 깐다.** 배경(`addSceneBackground`)은 화면이 살아 있는 동안 한 장을
-   * 붙잡는 자리라 배너를 넘길 때마다 갈아 끼울 것이 아니고, 이 그림은 배너가 바뀌면 함께
-   * 바뀌는 그 배너의 얼굴이다. 원화를 세우는 일은 `useBackgroundTexture`를 지나야 쓰는
-   * 중에 텍스처가 내려가지 않는다 — 직접 `add.image`로 세우면 붙잡히지 않는다.
+   * 화면이 사는 동안 한 장을 붙잡는 `addSceneBackground`를 쓰지 않는 이유는, 이 그림이
+   * 배너를 넘길 때마다 함께 바뀌는 그 배너의 얼굴이기 때문이다. 원화를 세우는 일은
+   * `useBackgroundTexture`를 지나야 쓰는 중에 텍스처가 내려가지 않는다 — 직접 `add.image`로
+   * 세우면 붙잡히지 않는다.
+   *
+   * **전용 원화가 없는 배너만 연구소 설비 원화로 메운다.** 두 장을 겹쳐 두면 들어가는 순간
+   * 설비 원화가 먼저 보이고 그 위로 픽업 원화가 덮여, 화면이 한 번 조립되는 과정이 그대로
+   * 보인다.
    */
   private showcaseRelic(): void {
     this.showcase?.destroy();
-    const image = this.add.image(BASE_WIDTH / 2, BASE_HEIGHT / 2, "__DEFAULT").setDepth(-28).setAlpha(0);
+    const image = this.add.image(BASE_WIDTH / 2, BASE_HEIGHT / 2, "__DEFAULT").setDepth(-30).setAlpha(0);
     this.showcase = image;
-    useBackgroundTexture(this, image, this.banner.artKey, (loaded) => {
+    useBackgroundTexture(this, image, this.banner.artKey ?? BACKGROUND.lab, (loaded) => {
       loaded.setScale(Math.max(BASE_WIDTH / loaded.width, BASE_HEIGHT / loaded.height));
       this.tweens.add({ targets: loaded, alpha: 1, duration: 160 });
     });

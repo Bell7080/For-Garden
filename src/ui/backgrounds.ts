@@ -77,7 +77,12 @@ export function useBackgroundTexture(
     for (const evicted of next.evict) textures.remove(evicted);
   });
 
+  // **이미 올라와 있어도 그림은 물려야 한다.** 세우는 쪽은 `__DEFAULT`로 만든 빈 이미지를
+  // 넘기므로, 여기서 `onReady`만 부르면 그 자리는 텍스처가 없는 채로 알파만 1이 된다 —
+  // 연구소가 그랬다. 처음 들어갈 때는 아직 안 읽혀 아래 비동기 길로 가 그림이 떴고,
+  // 배너를 넘겼다 돌아오면 이미 올라와 있어 이 길로 들어와 빈 판만 남았다.
   if (textures.exists(key)) {
+    image.setTexture(key);
     onReady?.(image);
     return;
   }

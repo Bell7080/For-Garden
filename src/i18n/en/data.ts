@@ -1076,11 +1076,10 @@ export default {
   "relic.sukusuino.observation.lifeStage": "Adult",
   "relic.sukusuino.observation.height": "2.41 m",
   "relic.sukusuino.observation.weight": "318 kg",
-  "relic.sukusuino.passive.name": "Marsh Regeneration",
-  "relic.sukusuino.passive.desc": "Once per battle, when HP drops to half or less, restores 3% of max HP each second for 6 seconds.",
-  "relic.sukusuino.ferocity.name": "Runaway Engine",
-  "relic.sukusuino.basic.name": "Death Roll",
-  "relic.sukusuino.ultimate.name": "Maw of the Marsh",
+  "relic.sukusuino.passive.name": "Healed Osteoderms",
+  "relic.sukusuino.ferocity.name": "Floodsurge",
+  "relic.sukusuino.basic.name": "Deathwheel",
+  "relic.sukusuino.ultimate.name": "Maw of Burial",
   "relic.sukusuino.projectName": "ANNIHILATION SIEGE 004",
 
   // ── Observation interviews ─────────────────────────────────────────────────────────────

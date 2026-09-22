@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import {
   RAID_ACTIONS, RAID_BOARD, RAID_BOSS_SPOT, RAID_HP_BAR, RAID_PREPARATION,
-  raidActionGaps, raidBoardViewport,
+  raidBoardViewport, raidSortieBackGap,
 } from "../../src/ui/raidLayout";
 
 describe("레이드 배치표", () => {
@@ -22,12 +22,11 @@ describe("레이드 배치표", () => {
     expect(RAID_BOSS_SPOT.fade.bottom).toBeLessThanOrEqual(RAID_BOARD.viewport.top);
   });
 
-  it("출격이 화면 가운데에 서고 좌우 어느 쪽과도 겹치지 않는다", () => {
+  it("출격이 화면 가운데에 홀로 서고 뒤로가기를 침범하지 않는다", () => {
+    // 이 줄에 서는 것은 출격 하나뿐이다 — 상점 입구는 로비 출격판 밖 줄이 이미 갖는다.
     expect(RAID_ACTIONS.sortie.centerX).toBe(BASE_WIDTH / 2);
-    // 판 밖 곁들임 줄(전리품 상점)과 우하단 공용 뒤로가기 사이에 실제 여백이 남는다.
-    const gaps = raidActionGaps();
-    expect(gaps.shop).toBeGreaterThan(0);
-    expect(gaps.back).toBeGreaterThan(0);
+    expect(Object.keys(RAID_ACTIONS)).toEqual(["y", "sortie"]);
+    expect(raidSortieBackGap()).toBeGreaterThan(0);
   });
 
   it("기여 목록이 흐르는 창이 하단 조작 위에서 끝난다", () => {

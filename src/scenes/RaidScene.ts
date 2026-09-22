@@ -5,7 +5,7 @@ import { GameApiError } from "../api/contracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { RAID_SEASON_BOSS } from "../data/raid";
 import { getRelic } from "../data/relics";
-import { setDebugRaidStage, setDebugScene, setDebugStorefrontControls } from "../debug";
+import { setDebugRaidStage, setDebugScene } from "../debug";
 import { t } from "../i18n";
 import { portraitAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { Button } from "../ui/Button";
@@ -368,21 +368,6 @@ export class RaidScene extends Phaser.Scene {
     this.sortieButton = new Button(this, sortie.centerX, y, { width: sortie.width, height: sortie.height, label: t("raid.sortie"), fontSize: 36, variant: "primary", accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, onClick: () => this.scene.restart({ stage: "preparation" }) });
     this.sortieButton.setEnabled(canSortie);
     content.add(this.sortieButton);
-    /*
-     * 상점 입구.
-     *
-     * 출격과 같은 `content`에 담는다 — 이 화면은 시즌을 다시 읽을 때마다 `content`를 부수고
-     * 다시 세우므로, 씬에 직접 붙이면 새로 고칠 때마다 같은 버튼이 한 장씩 쌓인다.
-     * 돌아오는 길은 이 화면이라, 사고 나서 다시 보스 앞에 선다.
-     */
-    const { shop } = RAID_ACTIONS;
-    content.add(new Button(this, shop.x, shop.y, {
-      width: shop.width, height: shop.height,
-      label: t("lobby.sortie.shop"), fontSize: 30,
-      accentColor: COLOR.exchange, accentTextColor: COLOR.exchangeText,
-      onClick: () => startScene(this, "shop", { storefront: "loot", returnScene: "raid" }),
-    }));
-    setDebugStorefrontControls({ raid: { shop: { x: shop.x, y: shop.y } } });
   }
 
 

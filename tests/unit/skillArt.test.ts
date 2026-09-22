@@ -1016,14 +1016,22 @@ describe("파치 스킬 표시 계약", () => {
 describe("수쿠스이노 스킬 표시 계약", () => {
   const boss = () => RELICS.find((def) => def.id === "sukusuino")!;
 
-  it("의 패시브는 전용 분기가 없어 문장이 직접 시간과 몫을 적는다", () => {
+  it("의 패시브는 회복이 아니라 보호막과 강인함으로만 버틴다", () => {
     const def = boss();
-    // 「지속 회복」 규칙어로 감싸면 얼마나 오래 얼마씩인지가 눌러 봐도 나오지 않는다 —
-    // 이 패시브가 말해야 하는 것이 그 둘이라 아군 탱커들과 같은 방식으로 본문이 적는다.
-    expect(def.passive.kind).toBe("emergencyRecovery");
-    expect(passiveDescription(def.passive, def.stats.atk)).toBe(
-      "전투당 한 번, 체력이 절반 이하가 되면 6초 동안 매초 최대 체력의 3%를 회복한다.",
-    );
+    /*
+     * **시즌 보스에게 회복을 주지 않는다.** 게이지는 참가자 전원이 이레 동안 함께 깎은
+     * 줄이라, 보스가 제 체력을 되돌리면 어제 민 몫이 오늘 사라진다. 버티기는 규칙 그대로
+     * 눈에 보이는 보호막이고, 혼자 서는 개체라 아군 몫은 0이다.
+     */
+    expect(def.passive.kind).toBe("shellGuard");
+    expect(def.passive.effectType).not.toBe("healing");
+    expect(def.passive.shellGuard?.lowestHpAllyShieldMaxHpPercent).toBe(0);
+    const text = passiveDescription(def.passive, def.stats.atk);
+    expect(text).toContain("[[shell|조가비]]");
+    expect(text).not.toContain("아군");
+    expect(text).not.toContain("회복");
+    // 강인함은 제어를 없애지 않고 잠그지 못하게 한다 — 값을 가진 개체만 이 절을 갖는다.
+    expect(text).toContain("[[crowd-control|군중제어]]");
   });
 
   it("의 기본 공격은 주기 하나에 출혈과 날려버림을 함께 싣는다", () => {

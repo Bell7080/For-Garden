@@ -7,7 +7,7 @@
  */
 
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { BACK_BUTTON_SIZE, BACK_SLOT, POPUP_SIDE_SLOT } from "./popupGeometry";
+import { BACK_BUTTON_SIZE, BACK_SLOT } from "./popupGeometry";
 
 /**
  * 보스가 서는 자리.
@@ -57,37 +57,20 @@ export const RAID_BOARD = {
 /**
  * 하단 조작.
  *
- * **이 줄의 주 조작은 출격 하나뿐이다.** 상점은 그 옆에 같은 크기로 서지 않고 **판 밖
- * 곁들임 줄**(`POPUP_SIDE_SLOT`)로 물러난다 — 출격판의 전리품 상점과 같은 자리·같은
- * 라벨 버튼이라, 두 화면에서 같은 가게로 들어가는 문이 같은 생김새로 선다.
- *
- * 그 문을 여기에도 단 이유는 **증표를 쓰는 자리가 너무 멀었기 때문이다.** 토벌 증표는
- * 이 화면에서만 쌓이는데 쓰러 가려면 레이드를 나가 로비의 출격판을 다시 열어야 했다.
- * 반대로 원정 증표를 쓰러 레이드를 거치게 되지는 않는다 — 출격판 밖의 입구가 그대로
- * 남아 있어 그쪽이 여전히 두 갈래를 함께 여는 문이다.
+ * **이 줄에 서는 것은 출격 하나뿐이다.** 전리품 상점 입구는 로비 출격판 밖 줄이 이미 갖고
+ * 있어, 레이드 화면에도 같은 문을 달아 두면 같은 가게로 들어가는 입구가 둘이 된다 — 증표를
+ * 쓰러 가는 길은 한 자리로 충분하다. 그래서 출격이 화면 가운데를 그대로 쓴다.
  *
  * 우하단은 공용 뒤로가기 자리라 그 위를 지나지 않는다.
  */
 export const RAID_ACTIONS = {
   y: BASE_HEIGHT - 132,
-  /**
-   * **주 조작은 화면 가운데에 선다.** 오른쪽으로 밀어 두었던 때는 그 자리가 곁들임 줄과
-   * 뒤로가기 사이를 피한 결과였는데, 판 밖 줄은 이 버튼보다 작고 낮은 라벨 버튼이라 나란히
-   * 선 둘 중 무엇이 주 조작인지는 크기가 이미 말한다 — 자리까지 양보하면 화면이 한쪽으로
-   * 쏠려 읽힌다. 좌우 어느 쪽과도 겹치지 않는지는 `raidActionGaps`가 지킨다.
-   */
-  sortie: { centerX: BASE_WIDTH / 2, width: 400, height: 124 },
-  shop: POPUP_SIDE_SLOT,
+  sortie: { centerX: BASE_WIDTH / 2, width: 420, height: 124 },
 } as const;
 
-/** 출격이 판 밖 곁들임 줄·우하단 뒤로가기와 벌린 좌우 간격이다. 둘 다 양수여야 한다. */
-export function raidActionGaps(): { shop: number; back: number } {
-  const left = RAID_ACTIONS.sortie.centerX - RAID_ACTIONS.sortie.width / 2;
-  const right = RAID_ACTIONS.sortie.centerX + RAID_ACTIONS.sortie.width / 2;
-  return {
-    shop: left - (POPUP_SIDE_SLOT.x + POPUP_SIDE_SLOT.width / 2),
-    back: (BACK_SLOT.x - BACK_BUTTON_SIZE / 2) - right,
-  };
+/** 출격이 우하단 공용 뒤로가기와 벌린 가로 간격이다. 양수여야 한다. */
+export function raidSortieBackGap(): number {
+  return (BACK_SLOT.x - BACK_BUTTON_SIZE / 2) - (RAID_ACTIONS.sortie.centerX + RAID_ACTIONS.sortie.width / 2);
 }
 
 /**

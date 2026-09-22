@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { RAID_BOSS_BALANCE, RAID_CONTRIBUTION_REWARD_STAGES, RAID_DAILY_ATTEMPTS, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP } from "../../src/data/raid";
+import { RAID_BOSS_BALANCE, RAID_BOSS_HP_SCALE, RAID_CONTRIBUTION_REWARD_STAGES, RAID_DAILY_ATTEMPTS, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP } from "../../src/data/raid";
 import { mockRaidContributions, raidBossDef, raidContributionBoard, raidEarnedContributionStageIds, raidNextContributionStage, raidSeasonElapsedDays, raidSeasonKey, raidSeasonProgress } from "../../src/core/raid";
 import { getRelic, PLAYABLE_RELICS, RELICS } from "../../src/data/relics";
 import { effectiveEnemyLevel } from "../../src/core/types";
+import { STAGE_ELITE } from "../../src/data/stageElite";
 import { applyLevelGrowth } from "../../src/core/relicProgression";
-import { RAID_ACTIONS, RAID_BOARD, RAID_HP_BAR, raidBoardViewport } from "../../src/ui/raidLayout";
-import { POPUP_SIDE_SLOT, popupSideSlotGap } from "../../src/ui/popupGeometry";
+import { RAID_ACTIONS, RAID_BOARD, RAID_HP_BAR, raidBoardViewport, raidSortieBackGap } from "../../src/ui/raidLayout";
 import { RANKING_LIST } from "../../src/ui/expeditionRankingLayout";
-import { BASE_HEIGHT } from "../../src/config/gameConfig";
+import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import { findItem } from "../../src/data/items";
 import { WALLET_CAPS } from "../../src/data/economy";
 import { PRODUCTS } from "../../src/data/shopCatalog";
@@ -152,13 +152,35 @@ describe("레이드 보스", () => {
     expect(RELICS.find(({ id }) => id === RAID_SEASON_BOSS.relicId)).toBeTruthy();
   });
 
-  it("는 스테이지 정예와 같은 문법으로 자란다", () => {
+  it("는 체력을 뺀 넷을 스테이지 정예와 같은 문법으로 기른다", () => {
     // 레이드 전용 배율을 만들지 않는다 — 관문을 조일 손잡이가 둘이 되면 화면에 선 레벨과
     // 실제로 맞는 수치가 갈린다.
     const base = getRelic(RAID_SEASON_BOSS.relicId);
     const level = effectiveEnemyLevel({ level: RAID_SEASON_BOSS.level, ferocityLevel: RAID_SEASON_BOSS.ferocityLevel }, true);
     expect(level).toBe(RAID_SEASON_BOSS.level + RAID_SEASON_BOSS.ferocityLevel * 5);
-    expect(raidBossDef(base).stats.hp).toBeGreaterThanOrEqual(applyLevelGrowth(base.stats, level, base.rarity).hp);
+    const grown = applyLevelGrowth(base.stats, level, base.rarity);
+    for (const key of ["def", "res", "atk", "ap"] as const) expect(raidBossDef(base).stats[key]).toBe(grown[key]);
+  });
+
+  it("의 최대 체력은 시즌 게이지에서 거꾸로 나온다", () => {
+    /*
+     * 시즌 줄과 전장의 줄이 같은 자를 쓰지 않으면, 한 판에서 반을 깎아 놓고 돌아와도 시즌
+     * 게이지가 미동도 하지 않는다 — 체력만 성장이 아니라 게이지에서 나오는 이유다.
+     */
+    const boss = raidBossDef(getRelic(RAID_SEASON_BOSS.relicId));
+    expect(boss.stats.hp).toBe(RAID_SEASON_TOTAL_HP / RAID_BOSS_HP_SCALE);
+    // 한 판이 판 안의 보스를 눕히지는 못하되 눈에 보이게는 밀어야 한다.
+    expect(RAID_BOSS_HP_SCALE).toBeGreaterThan(1);
+    expect(boss.stats.hp).toBeGreaterThan(RAID_CONTRIBUTION_REWARD_STAGES[0].threshold / RAID_DAILY_ATTEMPTS);
+  });
+
+  it("는 일반 적보다 훨씬 크고 느리다", () => {
+    // 셋이 하나를 미는 판이라 보스가 로스터의 걸음으로 움직이면 1대3으로 읽히지 않는다.
+    const base = getRelic(RAID_SEASON_BOSS.relicId);
+    expect(RAID_SEASON_BOSS.bodyScale).toBeGreaterThan(STAGE_ELITE.bodyScale);
+    const speeds = PLAYABLE_RELICS.map(({ stats }) => stats.moveSpeed);
+    expect(base.stats.moveSpeed).toBeLessThan(Math.min(...speeds));
+    expect(base.stats.attackSpeed).toBeLessThan(Math.min(...PLAYABLE_RELICS.map(({ stats }) => stats.attackSpeed)));
   });
 
   it("는 태생 능력치를 손대지 않는다", () => {
@@ -245,19 +267,17 @@ describe("레이드 배치표", () => {
     expect(RAID_HP_BAR.labelY).toBeLessThan(RAID_HP_BAR.y);
   });
 
-  it("는 상점 입구를 출격 옆이 아니라 판 밖 곁들임 줄에 세운다", () => {
+  it("는 하단 줄에 출격 하나만 세운다", () => {
     /*
-     * 상점이 출격과 같은 크기로 나란히 서면 이 화면의 둘째 콘텐츠로 읽힌다. 자리는 출격판
-     * 밖의 전리품 상점과 **같은 한 칸**(`POPUP_SIDE_SLOT`)이라, 두 화면의 문이 같은 생김새로
-     * 같은 자리에 선다.
+     * 상점 입구를 여기에도 달아 두었던 때는 같은 전리품 가게로 들어가는 문이 둘이었다 —
+     * 로비 출격판 밖 줄이 이미 그 문을 갖고 있어, 증표를 쓰러 가는 길이 화면마다 갈렸다.
+     * 그 문이 하나로 돌아오면서 출격이 화면 가운데를 그대로 쓴다.
      */
-    expect(RAID_ACTIONS.shop).toBe(POPUP_SIDE_SLOT);
-    // 주 조작과 겹치지 않고, 우하단 공용 뒤로가기 위도 지나지 않는다.
-    expect(RAID_ACTIONS.shop.x + RAID_ACTIONS.shop.width / 2)
-      .toBeLessThan(RAID_ACTIONS.sortie.centerX - RAID_ACTIONS.sortie.width / 2);
-    expect(popupSideSlotGap()).toBeGreaterThan(0);
-    // 목록이 흐르는 창도 덮지 않는다 — 판 밖 줄이라 스크롤을 따라 움직이지 않는다.
-    expect(RAID_BOARD.viewport.bottom).toBeLessThan(RAID_ACTIONS.shop.y - RAID_ACTIONS.shop.height / 2);
+    expect(Object.keys(RAID_ACTIONS)).toEqual(["y", "sortie"]);
+    expect(RAID_ACTIONS.sortie.centerX).toBe(BASE_WIDTH / 2);
+    // 목록이 흐르는 창을 덮지 않고, 우하단 공용 뒤로가기 위도 지나지 않는다.
+    expect(RAID_BOARD.viewport.bottom).toBeLessThan(RAID_ACTIONS.y - RAID_ACTIONS.sortie.height / 2);
+    expect(raidSortieBackGap()).toBeGreaterThan(0);
   });
 });
 

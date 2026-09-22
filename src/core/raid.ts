@@ -1,4 +1,4 @@
-import { RAID_CONTRIBUTION_REWARD_STAGES, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP } from "../data/raid";
+import { RAID_BOSS_HP_SCALE, RAID_CONTRIBUTION_REWARD_STAGES, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP } from "../data/raid";
 import { expeditionWeekKey } from "./expeditionBoss";
 import { applyBreakthrough, applyLevelGrowth } from "./relicProgression";
 import { effectiveEnemyLevel, type RelicDef } from "./types";
@@ -132,5 +132,14 @@ export function raidSeasonElapsedDays(now: Date): number {
  */
 export function raidBossDef(base: RelicDef): RelicDef {
   const level = effectiveEnemyLevel({ level: RAID_SEASON_BOSS.level, ferocityLevel: RAID_SEASON_BOSS.ferocityLevel }, true);
-  return { ...base, stats: applyBreakthrough(applyLevelGrowth(base.stats, level, base.rarity), RAID_SEASON_BOSS.breakthrough) };
+  const grown = applyBreakthrough(applyLevelGrowth(base.stats, level, base.rarity), RAID_SEASON_BOSS.breakthrough);
+  /*
+   * **최대 체력만 성장이 아니라 시즌 게이지에서 나온다.**
+   *
+   * 나머지 넷(방어·저항·공격·주문력)은 스테이지 정예와 같은 성장을 그대로 지난다 — 세기를
+   * 조이는 손잡이는 여전히 레벨과 야성 하나뿐이다. 체력만 가르는 이유는 그 값이 **세기가
+   * 아니라 단위**이기 때문이다: 시즌 줄과 전장의 줄이 같은 자를 쓰지 않으면, 한 판에서 반을
+   * 깎아 놓고 돌아와도 시즌 게이지가 미동도 하지 않는다.
+   */
+  return { ...base, stats: { ...grown, hp: Math.round(RAID_SEASON_TOTAL_HP / RAID_BOSS_HP_SCALE) } };
 }

@@ -398,10 +398,12 @@ export const EXPLORER_ASSET: PuppetAsset = {
 /**
  * **수쿠스이노 전신.** 공멸이 풀어 놓은 폭주 병기이자 첫 시즌의 레이드 보스다.
  *
- * 적 전용 번호는 전신(`enemy_0NN`)과 SD(`enemySD_0NN`)가 짝을 이룬다 — 실측은
- * `assetMetadata.ts`가 갖고 여기서는 URL만 붙인다.
+ * **레이드 보스는 제 번호 묶음을 쓴다**(`raid_00N` · `raidSD_00N`). 스테이지·던전에 서는 적과
+ * 같은 줄에 번호를 이어 붙이면 시즌마다 늘어나는 보스가 그 줄을 밀어내고, 어느 번호가 어느
+ * 콘텐츠의 것인지 파일 이름만으로는 읽히지 않는다. 실측은 `assetMetadata.ts`가 갖고 여기서는
+ * URL만 붙인다.
  */
-export const SUKUSUINO_ASSET: PuppetAsset = { url: `${base}puppets/enemy_010.zip`, ...SUKUSUINO_PORTRAIT_METADATA };
+export const SUKUSUINO_ASSET: PuppetAsset = { url: `${base}puppets/raid_001.zip`, ...SUKUSUINO_PORTRAIT_METADATA };
 
 export const RAITIA_ASSETS: Readonly<Record<RaitiaAssetId, PuppetAsset>> = {
   "raitia-grass": { url: `${base}puppets/enemy_005.zip`, ...VIRIA_PORTRAIT_METADATA },
@@ -498,9 +500,9 @@ export const RAITIA_SD_ASSETS: Readonly<Record<RaitiaAssetId, PuppetAsset>> = {
   "raitia-wind": { url: `${base}puppets/enemySD_009.zip`, ...VENTIA_SD_METADATA },
 };
 
-/** 수쿠스이노 전투 SD. 전신과 같은 번호 묶음(`enemySD_010`)이다. */
+/** 수쿠스이노 전투 SD. 전신과 같은 레이드 번호 묶음(`raidSD_001`)이다. */
 export const SUKUSUINO_SD_ASSET: PuppetAsset = {
-  url: `${base}puppets/enemySD_010.zip`,
+  url: `${base}puppets/raidSD_001.zip`,
   ...SUKUSUINO_SD_METADATA,
 };
 

@@ -3150,15 +3150,24 @@ export const RELICS: RelicDef[] = [
        * 그래서 같은 체력대에 서되 주문력을 쓰지 않고(쓰지 않는 능력치를 높게 적지 않는다),
        * 그 몫을 공격력과 방어에 얹는다. 저항이 얇은 것은 그 반대급부라 마법 딜러가 낼 답이
        * 남는다 — 레이드는 하루 세 판을 다른 편성으로 돌려 보는 자리다.
+       *
+       * **이 체력은 판에 서지 않는다.** 시즌 보스로 설 때의 최대 체력은 시즌 게이지에서
+       * 나오므로(`raidBossDef` → `RAID_BOSS_HP_SCALE`) 여기 적힌 값은 도감·정보창이 읽는
+       * 태생치이고, 전장에 서는 몸은 그 게이지의 100분의 1이다.
        */
       hp: 2950,
       def: 200,
       res: 96,
       atk: 196,
       ap: 0,
-      // 크고 느리다. 한 방이 무거운 대신 그 사이가 길어 "다음 턱"을 읽고 피할 틈이 남는다.
-      attackSpeed: 48,
-      moveSpeed: 52,
+      /*
+       * **훨씬 크고 훨씬 느리다.** 셋이 하나를 미는 자리라 보스가 로스터의 걸음으로 움직이면
+       * 1대3이 아니라 그냥 한 판 더 붙은 적이 된다 — 로스터 최하(파루아 56)보다도 아래로
+       * 내려 **한 방이 무겁고 그 사이가 긴 몸**으로 세운다. 다음 턱을 읽고 자리를 옮길 틈이
+       * 거기서 나온다.
+       */
+      attackSpeed: 34,
+      moveSpeed: 30,
       critChance: 8,
       critDamage: 150,
       energyGain: 30,
@@ -3166,32 +3175,52 @@ export const RELICS: RelicDef[] = [
       ferocityGain: 0,
     },
     /*
-     * **폭주 병기.** 턱이 닫힐 때마다 그 옆까지 함께 찢긴다.
+     * **범람.** 턱이 닫힐 때마다 그 옆까지 함께 찢긴다.
      *
      * 공용 범위 전이(`splashDamage`) 하나로 짠다 — 보스 전용 배율이나 숨은 보정을 만들지
      * 않는다. 셋이 나란히 선 자리에서 단일 타격만 내던 몸이 폭주에 들어가는 순간 줄 전체를
      * 물어뜯게 되므로, 게이지가 차는 것이 화면에서 그대로 읽힌다.
      */
     ferocityTrait: {
-      name: "폭주 병기", effectId: "splashDamage",
+      name: "범람", effectId: "splashDamage",
       damagePercent: 45, radius: 320, attackSpeedBonusPercent: 30,
     },
+    /*
+     * **아문 등판.** 발굴 기록의 "아문 자국이 겹겹이 남은 골편"이 그대로 규칙이 된 패시브다.
+     *
+     * **회복을 주지 않는다.** 시즌 게이지는 참가자 전원이 이레 동안 함께 깎은 줄이라, 보스가
+     * 제 체력을 되돌리면 어제 민 몫이 오늘 사라진다 — 버티기는 규칙 그대로 **눈에 보이는
+     * 보호막**으로만 짜고(「받는 피해 감소」를 새로 만들지 않는다), 아모의 조가비 계약
+     * (`shellGuard`)을 그대로 쓴다. 보호막은 깎인 게이지를 되돌리지 않고 **다음 한 겹을 미리
+     * 덧대는** 것이라, 한 판에서 얼마나 밀었나가 그대로 남는다.
+     *
+     * 혼자 서는 보스라 아군 몫은 0이다 — 받을 상대가 없는 값을 적어 두면 설명문이 화면에
+     * 없는 일을 말한다.
+     *
+     * 자기 보호막이 **0.5%로 얇은 것은 이 몸의 최대 체력이 시즌 게이지의 100분의 1**이기
+     * 때문이다(`RAID_BOSS_HP_SCALE`). 아모와 같은 6%를 적으면 한 겹이 6,000이라 한 판에서
+     * 민 몫을 통째로 되돌린다.
+     *
+     * **강인함은 제어를 없애지 않고 잠그지 못하게 한다.** 태생 저항 50%에 제어 한 번마다
+     * 6%가 얹혀 100%까지 쌓이므로, 제어형 편성은 첫 몇 번의 잠금을 확실히 가져가되 하루 세
+     * 판을 제어 하나로 끝내지는 못한다.
+     */
     passive: {
       id: "sukusuino-passive",
-      name: "늪지 재생",
-      kind: "emergencyRecovery",
+      name: "아문 등판",
+      kind: "shellGuard",
       iconAssetId: "skill-icon-buff",
-      effectType: "healing",
-      // 6초 동안 최대 체력의 18%를 되찾는다. 한 번뿐이라 "여기서 한 번 더 민다"의 경계가 된다.
-      value: 3,
-      durationSeconds: 6,
-      // 전용 분기가 없는 종류라 이 문장이 그대로 화면에 선다. 지속 회복을 규칙어로 감싸지
-      // 않는 이유는 아군 탱커들과 같다 — 얼마나 오래 얼마씩인지가 이 패시브의 전부다.
-      desc: "전투당 한 번, 체력이 절반 이하가 되면 6초 동안 매초 최대 체력의 3%를 회복한다.",
+      effectType: "buff",
+      value: 0,
+      shellGuard: { maxStacks: 3, durationSeconds: 8, cooldownSeconds: 14, selfShieldMaxHpPercent: 0.5, lowestHpAllyShieldMaxHpPercent: 0 },
+      tenacityPerControlPercent: 6,
+      maxTenacityPercent: 100,
+      // 실제 문구는 shellGuard 수치에서 생성하며, 수동 원문은 의도적으로 비워 둔다.
+      desc: "",
     },
     basic: {
       id: "sukusuino-basic",
-      name: "죽음의 회전",
+      name: "죽음의 물레",
       // 보스의 한 방이다. 폰토스(100)보다 높고 공속이 낮아 초당 피해로는 비슷한 자리에 선다.
       power: 140,
       iconAssetId: "skill-icon-physical",
@@ -3215,7 +3244,7 @@ export const RELICS: RelicDef[] = [
     },
     ultimate: {
       id: "sukusuino-ult",
-      name: "늪의 아가리",
+      name: "수장의 아가리",
       // 코마의 통로(190)와 폰토스의 전장 해일(500) 사이다. 원 하나를 지정해 무는 기술이라
       // 전장 전체를 치지 않고, 그만큼 서 있는 자리가 답이 된다.
       power: 300,

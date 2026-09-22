@@ -1252,11 +1252,10 @@ export default {
   "relic.sukusuino.observation.lifeStage": "成体",
   "relic.sukusuino.observation.height": "2.41 m",
   "relic.sukusuino.observation.weight": "318 kg",
-  "relic.sukusuino.passive.name": "湿地再生",
-  "relic.sukusuino.passive.desc": "戦闘中一度だけ、体力が半分以下になると6秒間、毎秒最大体力の3%を回復する。",
-  "relic.sukusuino.ferocity.name": "暴走兵器",
-  "relic.sukusuino.basic.name": "デスロール",
-  "relic.sukusuino.ultimate.name": "沼の顎",
+  "relic.sukusuino.passive.name": "癒えた背板",
+  "relic.sukusuino.ferocity.name": "氾濫",
+  "relic.sukusuino.basic.name": "死の水車",
+  "relic.sukusuino.ultimate.name": "水葬の顎",
   "relic.sukusuino.projectName": "ANNIHILATION SIEGE 004",
 
   // ── 観察インタビュー ─────────────────────────────────────────────────────────────

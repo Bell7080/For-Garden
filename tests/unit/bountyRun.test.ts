@@ -3,6 +3,7 @@ import { bountyEntriesRemaining, bountyTierProgress, consumeBountyEntry, isBount
 import { BOUNTY, BOUNTY_TIERS, bountyRoundEnemy, getBountyTier } from "../../src/data/bounty";
 import type { BountyState } from "../../src/state/session";
 import { applyLevelGrowth } from "../../src/core/relicProgression";
+import { applyEnemyPresence } from "../../src/data/enemyPresence";
 import { effectiveEnemyLevel } from "../../src/core/types";
 import { getRelic } from "../../src/data/relics";
 
@@ -85,7 +86,8 @@ describe("현상수배 등급 표", () => {
     const round = getBountyTier("bounty-3").rounds[0];
     const base = getRelic(round.relicId);
     const grown = bountyRoundEnemy(round);
-    expect(grown.stats).toEqual(applyLevelGrowth(base.stats, effectiveEnemyLevel(round, true), base.rarity));
+    // 현상수배는 언제나 정예 하나가 혼자 선다 — 자란 능력치 위에 그 자리의 걸음만 얹힌다.
+    expect(grown.stats).toEqual(applyEnemyPresence(applyLevelGrowth(base.stats, effectiveEnemyLevel(round, true), base.rarity), "elite"));
     // 사본만 자란다 — 정적 정의가 함께 오르면 스토리의 같은 개체까지 세진다.
     expect(base.stats).toEqual(getRelic(round.relicId).stats);
   });

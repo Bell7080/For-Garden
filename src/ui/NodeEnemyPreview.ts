@@ -11,7 +11,7 @@ import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addBreakthroughGradeMark } from "./rarityMark";
 import { combatPower } from "../core/combatPower";
 
-import { STAGE_ELITE } from "../data/stageElite";
+import { enemyPresenceBodyScale, enemyPresenceFor } from "../data/enemyPresence";
 import { addStageEliteMark } from "./stageEliteMark";
 import { anchorEnemyPreview, enemyPreviewColumns, enemyPreviewSlotHalfWidth, NODE_ENEMY_PREVIEW, NODE_ENEMY_SITUATION, NODE_ENEMY_SLOT } from "./nodeEnemyPreviewLayout";
 
@@ -103,7 +103,8 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
       const hit = this.scene.add.rectangle(x, ground - 70, compact ? 145 : 230, 300, 0xffffff, 0).setInteractive({ useHandCursor: true });
       // 누른 칸의 성장 상태를 함께 넘긴다 — 화면이 배열 index로 다시 찾으면 순서가 바뀌는 날 어긋난다.
       hit.on("pointerup", () => this.options.onEnemyClick(enemy, growth)); this.add(hit);
-      const sdHeight = (compact ? 158 : NODE_ENEMY_PREVIEW.sdHeight) * (this.options.elite ? STAGE_ELITE.bodyScale : 1);
+      const sdHeight = (compact ? 158 : NODE_ENEMY_PREVIEW.sdHeight)
+        * enemyPresenceBodyScale(enemyPresenceFor(this.options.enemies.length, { elite: this.options.elite === true }));
       void this.spawnEnemy(enemy.id, x, ground, sdHeight, generation);
       // 셋이 아니라 하나가 선 자리라는 것을 머리 위 이름표가 말한다.
       if (this.options.elite) addStageEliteMark(this.scene, this, x, ground - sdHeight - 6, compact ? 22 : 26);

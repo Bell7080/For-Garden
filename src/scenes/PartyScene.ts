@@ -12,7 +12,7 @@ import { bindLongPress } from "../ui/longPressInfo";
 import type { PuppetCreature } from "../puppets/assets";
 import { placePuppet, spawnPuppet } from "../puppets/assets";
 import { getBattleStage, getStageEnemies, stageEnemyGrowth } from "../data/stages";
-import { STAGE_ELITE } from "../data/stageElite";
+import { enemyPresenceBodyScale, enemyPresenceFor } from "../data/enemyPresence";
 import { addStageEliteMark } from "../ui/stageEliteMark";
 import { session } from "../state/session";
 import { gameApi } from "../api/FakeServer";
@@ -312,7 +312,7 @@ export class PartyScene extends Phaser.Scene {
 
     // **몇이 서느냐가 자리를 정한다** — 정예 하나면 가운데 한 칸만 쓴다.
     const enemyColumns = partyPreviewEnemyColumns(enemies.length);
-    const bodyScale = elite ? STAGE_ELITE.bodyScale : 1;
+    const bodyScale = enemyPresenceBodyScale(enemyPresenceFor(enemies.length, { elite }));
     enemies.forEach((def, slot) => {
       const snapshot = growth[slot] ?? { level: 1, breakthrough: 0 };
       const x = enemyColumns[slot] ?? PREVIEW_COLUMNS[slot];

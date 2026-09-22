@@ -1,3 +1,4 @@
+import { applyEnemyPresence } from "../data/enemyPresence";
 import { RAID_BOSS_HP_SCALE, RAID_CONTRIBUTION_REWARD_STAGES, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP } from "../data/raid";
 import { expeditionWeekKey } from "./expeditionBoss";
 import { applyBreakthrough, applyLevelGrowth } from "./relicProgression";
@@ -141,5 +142,7 @@ export function raidBossDef(base: RelicDef): RelicDef {
    * 아니라 단위**이기 때문이다: 시즌 줄과 전장의 줄이 같은 자를 쓰지 않으면, 한 판에서 반을
    * 깎아 놓고 돌아와도 시즌 게이지가 미동도 하지 않는다.
    */
-  return { ...base, stats: { ...grown, hp: Math.round(RAID_SEASON_TOTAL_HP / RAID_BOSS_HP_SCALE) } };
+  // 거대하고 느린 몸은 **레이드라는 자리의 성질**이라 개체의 태생 능력치가 아니라 이 표가 준다.
+  const presence = applyEnemyPresence({ ...grown, hp: Math.round(RAID_SEASON_TOTAL_HP / RAID_BOSS_HP_SCALE) }, "raid");
+  return { ...base, stats: presence };
 }

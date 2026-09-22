@@ -3,6 +3,7 @@ import { effectiveEnemyLevel, type RelicDef } from "../core/types";
 import { registerDataText } from "../i18n";
 import { CONTENT_STAMINA_COSTS } from "./contentCosts";
 import { getRelic } from "./relics";
+import { applyEnemyPresence, enemyPresenceFor } from "./enemyPresence";
 
 /**
  * 현상수배 한 라운드에 서는 정예 하나.
@@ -106,8 +107,13 @@ export function getBountyTier(id: string): BountyTierDef {
  */
 export function bountyRoundEnemy(round: BountyRoundDef): RelicDef {
   const base = getRelic(round.relicId);
-  return { ...base, stats: applyLevelGrowth(base.stats, effectiveEnemyLevel(round, true), base.rarity) };
+  // 현상수배는 언제나 정예 하나가 혼자 선다 — 몸집과 걸음은 그 자리가 갖는다.
+  const grown = applyLevelGrowth(base.stats, effectiveEnemyLevel(round, true), base.rarity);
+  return { ...base, stats: applyEnemyPresence(grown, BOUNTY_PRESENCE) };
 }
+
+/** 현상수배의 무리 유형. 화면과 성장이 같은 값을 읽도록 한 곳에 둔다. */
+export const BOUNTY_PRESENCE = enemyPresenceFor(1, { elite: true });
 
 /** 등급 이름을 언어별로 덮어쓸 수 있게 등록한다. */
 for (const tier of BOUNTY_TIERS) registerDataText(tier, "name", `bounty.tier.${tier.id}.name`);

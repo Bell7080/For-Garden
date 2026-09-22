@@ -5,7 +5,8 @@ import { getExpeditionAugment } from "../data/expeditionAugments";
 import type { ExpeditionAugmentEffect } from "./expeditionAugments";
 import { EXPEDITION_COMBAT_BALANCE } from "../data/expedition";
 import { EXPEDITION_BOSS_BALANCE } from "../data/expedition";
-import { RAID_BOSS_BALANCE, RAID_SEASON_BOSS } from "../data/raid";
+import { RAID_BOSS_BALANCE } from "../data/raid";
+import { enemyPresenceBodyScale } from "../data/enemyPresence";
 import type { FighterInitialState, SkirmishBossPhase, SkirmishRelicResult } from "./skirmish";
 import type { BountyBattleInputDto } from "./bountyRun";
 
@@ -88,7 +89,7 @@ export function createRaidSkirmishConfig(playerDefs: readonly RelicDef[], boss: 
     enemyDefs: [{ ...boss, stats: { ...boss.stats } }],
     playerInitialStates: playerDefs.map(({ id }) => ({ relicId: id, currentHp: 100, alive: true })),
     augmentEffects: [],
-    enemyBodyScale: RAID_SEASON_BOSS.bodyScale,
+    enemyBodyScale: enemyPresenceBodyScale("raid"),
     boss: {
       phases: RAID_BOSS_BALANCE.phases.map((phase) => ({ startsAt: phase.startsAtMs / 1_000, damagePerSecond: phase.attackPerSecond, label: phase.label })),
       limitSeconds: RAID_BOSS_BALANCE.maximumDurationMs / 1_000,

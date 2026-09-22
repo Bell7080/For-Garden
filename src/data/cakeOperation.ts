@@ -3,6 +3,7 @@ import type { DungeonRunCost } from "../core/dungeonShortcut";
 import { applyLevelGrowth } from "../core/relicProgression";
 import { effectiveEnemyLevel, type RelicDef } from "../core/types";
 import { getRelic } from "./relics";
+import { applyEnemyPresence, enemyPresenceFor, type EnemyPresence } from "./enemyPresence";
 
 /**
  * **치즈케이크 대작전** — 레이티아 다섯 자매가 떼로 몰려오는 물량형 던전.
@@ -108,6 +109,17 @@ export function cakeOperationRunCost(tier: CakeOperationTier): DungeonRunCost {
 for (const tier of CAKE_OPERATION_TIERS) registerDataText(tier, "name", `cakeOperation.${tier.id}.name`);
 
 /**
+ * 대작전이 서는 무리 유형.
+ *
+ * **한 화면에 함께 선 수**로 센다 — 무리마다 갈라 두면 한 판 안에서 같은 자매가 둘째 무리에서
+ * 갑자기 커지고, 전투는 무리 전체가 한 크기를 쓴다(`SkirmishWaveState.bodyScale`). 그래서
+ * 가장 큰 무리를 그 판의 성질로 삼는다.
+ */
+export function cakeOperationPresence(tier: CakeOperationTier): EnemyPresence {
+  return enemyPresenceFor(Math.max(...tier.waves));
+}
+
+/**
  * 그 단계의 무리 목록. 첫 무리가 전장에 서고 나머지는 난전의 웨이브 대기열이 된다.
  *
  * 개체는 한 종뿐이라 무리마다 같은 몸을 세우며, **자란 몫은 레벨과 야성 단계뿐이다** —
@@ -123,11 +135,12 @@ export function cakeOperationWaves(tier: CakeOperationTier): RelicDef[][] {
     return { ...base, stats: applyLevelGrowth(base.stats, level, base.rarity) } satisfies RelicDef;
   });
   let next = 0;
+  const presence = cakeOperationPresence(tier);
   // 같은 정의를 여러 몸이 나눠 쓰지 않도록 무리마다 능력치 사본을 세운다.
   return tier.waves.map((count) => Array.from({ length: count }, () => {
     const sister = grown[next % grown.length];
     next += 1;
-    return { ...sister, stats: { ...sister.stats } };
+    return { ...sister, stats: applyEnemyPresence(sister.stats, presence) };
   }));
 }
 

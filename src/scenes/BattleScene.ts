@@ -27,7 +27,7 @@ import { getRelic } from "../data/relics";
 import { getBattleStage, getStageEnemies, stageEnemyGrowth } from "../data/stages";
 import { BOUNTY, bountyRoundEnemy, getBountyTier } from "../data/bounty";
 import { nextBountyStep, type BountyBattleInputDto } from "../core/bountyRun";
-import { STAGE_ELITE } from "../data/stageElite";
+import { enemyPresenceBodyScale, enemyPresenceFor } from "../data/enemyPresence";
 import { getExpeditionNodeEnemies } from "../data/expeditionEnemies";
 import type { PuppetCreature, PuppetAsset } from "../puppets/assets";
 import { cancelMotion, flashHit, isHitFlashing, placePuppet, playMotion, spawnPuppet, tintPuppet } from "../puppets/assets";
@@ -477,8 +477,15 @@ export class BattleScene extends Phaser.Scene {
       enemyBreakthroughs: cakeWaves || this.battleInput.mode === "bounty"
         ? stageEnemies.map(() => 0)
         : stageEnemyGrowth(stage).map(({ breakthrough }) => breakthrough),
-      // 정예는 혼자 서는 만큼 몸이 크다. 능력치는 건드리지 않는다 — 세기는 야성 몫이 낸다.
-      ...(stage.elite === true || this.battleInput.mode === "bounty" ? { enemyBodyScale: STAGE_ELITE.bodyScale } : {}),
+      /*
+       * **몸집은 그 적이 어떤 무리로 섰는가가 정한다**(`ENEMY_PRESENCE`). 혼자 선 정예는 크고,
+       * 넷 이상이 몰려오는 무리는 작다 — 여섯 몸이 보통 크기로 들어차면 전장이 몸으로 덮여
+       * 체력 바와 피해 수치가 그 뒤로 숨는다. 능력치는 건드리지 않는다 — 세기는 야성 몫이 낸다.
+       */
+      enemyBodyScale: enemyPresenceBodyScale(enemyPresenceFor(
+        cakeWaves ? Math.max(...cakeWaves.map(({ length }) => length)) : stageEnemies.length,
+        { elite: stage.elite === true || this.battleInput.mode === "bounty" },
+      )),
     });
     // 테스트 초기 상태는 코어 생성이 끝난 단 한 경계에서만 적용해 씬 로직과 전투 공식을 오염시키지 않는다.
     this.rng = battleRandom();

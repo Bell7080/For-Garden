@@ -3,7 +3,7 @@ import { RAID_BOSS_BALANCE, RAID_BOSS_HP_SCALE, RAID_CONTRIBUTION_REWARD_STAGES,
 import { mockRaidContributions, raidBossDef, raidContributionBoard, raidEarnedContributionStageIds, raidNextContributionStage, raidSeasonElapsedDays, raidSeasonKey, raidSeasonProgress } from "../../src/core/raid";
 import { getRelic, PLAYABLE_RELICS, RELICS } from "../../src/data/relics";
 import { effectiveEnemyLevel } from "../../src/core/types";
-import { STAGE_ELITE } from "../../src/data/stageElite";
+import { ENEMY_PRESENCE, applyEnemyPresence } from "../../src/data/enemyPresence";
 import { applyLevelGrowth } from "../../src/core/relicProgression";
 import { RAID_ACTIONS, RAID_BOARD, RAID_HP_BAR, raidBoardViewport, raidSortieBackGap } from "../../src/ui/raidLayout";
 import { RANKING_LIST } from "../../src/ui/expeditionRankingLayout";
@@ -174,13 +174,21 @@ describe("레이드 보스", () => {
     expect(boss.stats.hp).toBeGreaterThan(RAID_CONTRIBUTION_REWARD_STAGES[0].threshold / RAID_DAILY_ATTEMPTS);
   });
 
-  it("는 일반 적보다 훨씬 크고 느리다", () => {
-    // 셋이 하나를 미는 판이라 보스가 로스터의 걸음으로 움직이면 1대3으로 읽히지 않는다.
+  it("는 무리 유형 하나로 거대하고 느려진다", () => {
+    /*
+     * 셋이 하나를 미는 판이라 보스가 로스터의 걸음으로 움직이면 1대3으로 읽히지 않는다.
+     * 다만 그 몫은 **레이드라는 자리의 성질**이라 개체의 태생 능력치에 적지 않는다 — 적으면
+     * 같은 몸이 도감과 관문에 설 때까지 함께 느려진다.
+     */
     const base = getRelic(RAID_SEASON_BOSS.relicId);
-    expect(RAID_SEASON_BOSS.bodyScale).toBeGreaterThan(STAGE_ELITE.bodyScale);
-    const speeds = PLAYABLE_RELICS.map(({ stats }) => stats.moveSpeed);
-    expect(base.stats.moveSpeed).toBeLessThan(Math.min(...speeds));
-    expect(base.stats.attackSpeed).toBeLessThan(Math.min(...PLAYABLE_RELICS.map(({ stats }) => stats.attackSpeed)));
+    expect(ENEMY_PRESENCE.raid.bodyScale).toBeGreaterThan(ENEMY_PRESENCE.elite.bodyScale);
+    const boss = raidBossDef(base).stats;
+    expect(boss.moveSpeed).toBeLessThan(base.stats.moveSpeed);
+    expect(boss.attackSpeed).toBeLessThan(base.stats.attackSpeed);
+    expect(boss.moveSpeed).toBe(applyEnemyPresence(base.stats, "raid").moveSpeed);
+    expect(boss.attackSpeed).toBe(applyEnemyPresence(base.stats, "raid").attackSpeed);
+    // 전장에 선 몸만 느리고 도감에 서는 태생치는 로스터와 같은 띠에 남는다.
+    expect(base.stats.moveSpeed).toBeGreaterThanOrEqual(Math.min(...PLAYABLE_RELICS.map(({ stats }) => stats.moveSpeed)));
   });
 
   it("는 태생 능력치를 손대지 않는다", () => {

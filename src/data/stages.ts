@@ -1,5 +1,6 @@
 import { applyBreakthrough, applyLevelGrowth } from "../core/relicProgression";
 import { registerDataText } from "../i18n";
+import { applyEnemyPresence, enemyPresenceFor, type EnemyPresence } from "./enemyPresence";
 import { effectiveEnemyLevel, type ChapterDef, type RelicDef, type StageDef, type StageEnemyDef } from "../core/types";
 import { getRelic } from "./relics";
 
@@ -85,7 +86,8 @@ const CHAPTER_ONE_FEROCITY: readonly number[] = [1, 2, 3, 4, 3, 4, 4, 5, 5, 4];
  *
  * **무거워지는 몫은 아래 야성 표 하나에만 있다.** 정예라고 능력치에 배율을 곱하지 않는다 —
  * 곱하는 순간 화면에 선 `LV.n`과 실제로 맞는 수치가 갈리고, 관문을 조일 때 움직일 수가 둘이
- * 된다. 정예 표식이 여는 것은 몸집과 표식뿐이다(`STAGE_ELITE`).
+ * 된다. 정예 표식이 여는 것은 눈에 보이는 것뿐이다 — 몸집과 걸음, 그리고 표식
+ * (`ENEMY_PRESENCE.elite`).
  */
 const CHAPTER_ONE_ELITES: Readonly<Record<number, string>> = { 5: "toby", 10: "koma" };
 
@@ -110,8 +112,13 @@ const CHAPTER_ONE_ELITES: Readonly<Record<number, string>> = { 5: "toby", 10: "k
  *
  * 14단계는 **속성을 맞춰 온 파티만 확실히 넘는 높이**다(실측: 불 딜러 1.000 · 땅 0.625 ·
  * 물 0.500). 관문이 "무엇을 데려왔나"를 처음 묻는 자리라 그 답이 통과 여부로 돌아온다.
+ *
+ * **v0.162.0에서 둘 다 한 뼘 내렸다**(1-5 20 → 19, 1-10 14 → 12). 정예라는 무리 유형 자체가
+ * 공속·이속 5%를 갖게 되어(`ENEMY_PRESENCE.elite`) 같은 야성 단계가 더 무거워졌기 때문이다 —
+ * 그대로 두었을 때는 두 관문이 **모든 조합을 막아** "정예 둘이 서로 다른 답을 요구한다"는
+ * 축이 통째로 사라졌다(1-5 불 0 · 땅 0.875, 1-10 불 0.875). 덜어 낸 뒤 그 축이 그대로 돌아온다.
  */
-const CHAPTER_ONE_ELITE_FEROCITY: Readonly<Record<number, number>> = { 5: 20, 10: 14 };
+const CHAPTER_ONE_ELITE_FEROCITY: Readonly<Record<number, number>> = { 5: 19, 10: 12 };
 
 /**
  * 1장의 적 편성. 정예 관문만 하나가 서고 나머지는 같은 셋이 같은 자리에 선다.
@@ -275,15 +282,27 @@ export function stageEnemyGrowth(stage: Extract<StageDef, { kind: "battle" }>): 
   return [...stage.enemies].sort((a, b) => a.formationSlot - b.formationSlot);
 }
 
+/**
+ * 그 관문의 적이 **어떤 무리로 서는가**.
+ *
+ * 화면(전투·편성 미리보기·노드 정보창)과 성장이 같은 한 줄을 읽어야 미리 본 크기와 실제로
+ * 선 크기가 갈리지 않는다.
+ */
+export function stageEnemyPresence(stage: Extract<StageDef, { kind: "battle" }>): EnemyPresence {
+  return enemyPresenceFor(stage.enemies.length, { elite: stage.elite === true });
+}
+
 /** 플레이어와 같은 레벨→돌파 순서로 성장시키며 영구 캐릭터 정의는 변경하지 않는다. */
 export function getStageEnemies(stage: Extract<StageDef, { kind: "battle" }>): RelicDef[] {
+  const presence = stageEnemyPresence(stage);
   // 배열을 재정렬해도 실제 전투 배치는 formationSlot이라는 데이터 계약을 따른다.
   return stageEnemyGrowth(stage).map((enemy) => {
     const base = getRelic(enemy.relicId);
     // 야성으로 얹힌 몫도 레벨과 **같은 성장 공식**을 지난다 — 스테이지 전용 배율을 만들지 않고,
     // 관문의 무게를 그 수 하나로 움직이기 위해서다.
     const leveled = applyLevelGrowth(base.stats, effectiveEnemyLevel(enemy, stage.elite === true), base.rarity);
-    return { ...base, stats: applyBreakthrough(leveled, enemy.breakthrough) };
+    // 무리 유형은 걸음만 얹는다. 세기는 위 한 줄이 이미 끝냈다.
+    return { ...base, stats: applyEnemyPresence(applyBreakthrough(leveled, enemy.breakthrough), presence) };
   });
 }
 

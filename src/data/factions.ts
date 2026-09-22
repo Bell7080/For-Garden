@@ -75,7 +75,7 @@ export const SQUADS: Readonly<Record<SquadId, SquadDef>> = {
   "abyssal-crown": {
     id: "abyssal-crown", name: "심연 왕관", latin: "Abyssal Crown",
     duty: "심해 영역 침식 및 압력 폭주",
-    allegiance: "enemy", hasEmblem: false,
+    allegiance: "enemy", hasEmblem: true,
     // 폰토스의 관계 기록은 봉인 상태라 호칭을 아직 공개하지 않는다.
     researcherTitles: [],
   },

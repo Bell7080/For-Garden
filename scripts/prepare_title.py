@@ -31,6 +31,7 @@ FACTIONS = {
     "4.png": "rune",                  # 사일런트 룬 (Silent Rune)
     "5.png": "rogue",                 # 쁘띠 로그 (Petit Rogue)
     "annihilation.webp": "annihilation",  # 공멸 (Annihilation) — 적대 세력
+    "봉인된 어비스(파벌아이콘).png": "abyssal-crown",  # 심연 왕관 (Abyssal Crown) — 적대 세력
 }
 # 화면에서 쓰는 가장 큰 크기의 두 배로 굽는다. 원본은 얇은 선화라 과하게 줄이지 않는다.
 FACTION_SIZE = 512

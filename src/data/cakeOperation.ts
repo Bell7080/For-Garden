@@ -3,7 +3,7 @@ import type { DungeonRunCost } from "../core/dungeonShortcut";
 import { applyLevelGrowth } from "../core/relicProgression";
 import { effectiveEnemyLevel, type RelicDef } from "../core/types";
 import { getRelic } from "./relics";
-import { applyEnemyPresence, enemyPresenceFor, type EnemyPresence } from "./enemyPresence";
+import { enemyPresenceFor, type EnemyPresence } from "./enemyPresence";
 
 /**
  * **치즈케이크 대작전** — 레이티아 다섯 자매가 떼로 몰려오는 물량형 던전.
@@ -135,12 +135,11 @@ export function cakeOperationWaves(tier: CakeOperationTier): RelicDef[][] {
     return { ...base, stats: applyLevelGrowth(base.stats, level, base.rarity) } satisfies RelicDef;
   });
   let next = 0;
-  const presence = cakeOperationPresence(tier);
   // 같은 정의를 여러 몸이 나눠 쓰지 않도록 무리마다 능력치 사본을 세운다.
   return tier.waves.map((count) => Array.from({ length: count }, () => {
     const sister = grown[next % grown.length];
     next += 1;
-    return { ...sister, stats: applyEnemyPresence(sister.stats, presence) };
+    return { ...sister, stats: { ...sister.stats } };
   }));
 }
 

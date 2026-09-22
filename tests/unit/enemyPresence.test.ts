@@ -1,24 +1,18 @@
 import { describe, expect, it } from "vitest";
-import {
-  ENEMY_PRESENCE, SWARM_MINIMUM_COUNT, applyEnemyPresence, enemyPresenceBodyScale, enemyPresenceFor,
-} from "../../src/data/enemyPresence";
+import { ENEMY_PRESENCE, SWARM_MINIMUM_COUNT, enemyPresenceBodyScale, enemyPresenceFor } from "../../src/data/enemyPresence";
 import { getStageEnemies, getStage, stageEnemyPresence } from "../../src/data/stages";
 import { cakeOperationPresence, CAKE_OPERATION_TIERS } from "../../src/data/cakeOperation";
 import { getRelic } from "../../src/data/relics";
 
-const GROWTH_KEYS = ["hp", "def", "res", "atk", "ap"] as const;
-
 describe("무리 유형", () => {
-  it("은 눈에 보이는 것만 바꾼다", () => {
-    // 관문의 무게를 조이는 손잡이는 레벨과 야성 단계뿐이다 — 여기서 세기가 움직이면 화면에
-    // 선 `LV.n`과 실제로 맞는 수치가 갈린다.
-    const base = getRelic("toby").stats;
+  it("은 몸집 말고는 아무것도 갖지 않는다", () => {
+    /*
+     * 관문의 무게를 조이는 손잡이는 레벨 축 하나다 — 유형이 수치를 하나라도 만지면 그것이
+     * 두 번째 손잡이가 되고, 같은 태그를 단 다음 개체가 저도 모르게 그 몫을 함께 받는다.
+     * 정예에 공속·이속 5%를 얹어 봤을 때 1장의 정예 둘이 모든 조합을 막은 것이 그 예다.
+     */
     for (const presence of ["normal", "elite", "swarm", "raid"] as const) {
-      const shaped = applyEnemyPresence(base, presence);
-      for (const key of GROWTH_KEYS) expect(shaped[key], `${presence}.${key}`).toBe(base[key]);
-      for (const key of ["critChance", "critDamage", "energyGain", "lifeSteal"] as const) {
-        expect(shaped[key], `${presence}.${key}`).toBe(base[key]);
-      }
+      expect(Object.keys(ENEMY_PRESENCE[presence]), presence).toEqual(["bodyScale"]);
     }
   });
 
@@ -40,17 +34,6 @@ describe("무리 유형", () => {
     expect(enemyPresenceBodyScale("raid")).toBe(raid.bodyScale);
   });
 
-  it("에서 정예만 걸음이 빨라지고 레이드만 느려진다", () => {
-    // 정예는 잘 훈련된 병사라는 인상이고, 레이드는 거대한 것을 마주한다는 인상이다.
-    expect(ENEMY_PRESENCE.elite.attackSpeedPercent).toBeGreaterThan(0);
-    expect(ENEMY_PRESENCE.elite.moveSpeedPercent).toBeGreaterThan(0);
-    expect(ENEMY_PRESENCE.raid.attackSpeedPercent).toBeLessThan(0);
-    expect(ENEMY_PRESENCE.raid.moveSpeedPercent).toBeLessThan(0);
-    // 무리의 값은 빠르기가 아니라 머릿수다.
-    expect(ENEMY_PRESENCE.swarm.attackSpeedPercent).toBe(0);
-    expect(ENEMY_PRESENCE.swarm.moveSpeedPercent).toBe(0);
-  });
-
   it("을 관문과 대작전이 같은 규칙으로 고른다", () => {
     const elite = getStage("1-5");
     if (elite.kind !== "battle") throw new Error("전투 관문이 아니다");
@@ -62,11 +45,13 @@ describe("무리 유형", () => {
     for (const tier of CAKE_OPERATION_TIERS) expect(cakeOperationPresence(tier), tier.id).toBe("swarm");
   });
 
-  it("이 정예 관문의 걸음에 실제로 얹힌다", () => {
+  it("이 성장에는 한 글자도 섞이지 않는다", () => {
+    // 정예 관문의 적은 자란 레벨 그대로다 — 유형은 그리는 크기만 정한다.
     const stage = getStage("1-5");
     if (stage.kind !== "battle") throw new Error("전투 관문이 아니다");
     const [enemy] = getStageEnemies(stage);
     const base = getRelic(stage.enemies[0].relicId).stats;
-    expect(enemy.stats.moveSpeed).toBe(Math.round(base.moveSpeed * (1 + ENEMY_PRESENCE.elite.moveSpeedPercent / 100)));
+    expect(enemy.stats.moveSpeed).toBe(base.moveSpeed);
+    expect(enemy.stats.attackSpeed).toBe(base.attackSpeed);
   });
 });

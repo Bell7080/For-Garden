@@ -1,5 +1,3 @@
-import type { Stats } from "../core/types";
-
 /**
  * 적이 **어떤 무리로 서는가**를 말하는 한 표.
  *
@@ -10,11 +8,16 @@ import type { Stats } from "../core/types";
  * 수쿠스이노가 도감과 관문에 설 때까지 함께 느려지므로 "레이드에서 크고 느리다"가 아니라
  * "이 개체는 원래 느리다"가 되어 버린다.
  *
- * **이 표가 여는 것은 눈에 보이는 것뿐이다 — 몸집과 걸음.** 체력·방어·저항·공격·주문력은
- * 절대 여기서 움직이지 않는다. 관문의 무게를 조이는 손잡이는 여전히 레벨과 야성 단계
- * 하나뿐이고(`CLAUDE.md`의 "스테이지 전용 배율이나 숨은 보정을 만들지 않는다"), 그 수는
- * 화면이 `LV.30` 옆의 붉은 `+2`로 이미 그린다. 공속·이속을 여기 두는 것은 그 둘이 **화면에서
- * 그대로 보이는 움직임**이기 때문이다 — 숨은 보정이 아니라 눈이 먼저 읽는 성질이다.
+ * **이 표가 바꾸는 것은 몸집 하나뿐이다.** 능력치는 단 하나도 여기서 움직이지 않는다 —
+ * 공격 속도·이동 속도까지 포함해서다. 한때 정예에 +5%, 레이드에 −30%를 얹어 봤는데, 정예
+ * 쪽은 **5%만으로 1장의 정예 둘이 모든 조합을 막아** "정예 둘이 서로 다른 답을 요구한다"는
+ * 축이 통째로 사라졌다(1-5 불 0 · 땅 0.875, 1-10 불 0.875). 눈에 보이는 수치라도 **세기를
+ * 바꾸는 순간 그것은 두 번째 난이도 손잡이**이고, 관문을 조일 때 움직일 수가 둘이 되면 화면에
+ * 선 `LV.n`과 실제로 맞는 수치가 갈린다.
+ *
+ * 그래서 걸음이 느린 개체는 **제 태생 능력치로** 느리다(수쿠스이노 공속 34 · 이속 30). 공속·
+ * 이속은 `CLAUDE.md`가 말하는 **그 개체의 정체성**이고, 무리 유형은 그 위에 아무것도 얹지
+ * 않는다. 관문의 무게를 조이는 손잡이는 여전히 레벨 축 하나다.
  */
 export type EnemyPresence = "normal" | "elite" | "swarm" | "raid";
 
@@ -28,33 +31,33 @@ export const SWARM_MINIMUM_COUNT = 4;
 
 export const ENEMY_PRESENCE = {
   /** 관문의 보통 적. 기준이라 아무것도 바꾸지 않는다. */
-  normal: { bodyScale: 1, attackSpeedPercent: 0, moveSpeedPercent: 0 },
+  normal: { bodyScale: 1 },
   /**
-   * **정예.** 혼자 서는 만큼 몸이 크고, 잘 훈련된 병사처럼 손과 발이 조금 빠르다.
+   * **정예.** 혼자 서는 만큼 몸이 크다.
    *
    * 원정 정예 노드의 1.1보다 조금 더 큰 이유는 스토리 전장에는 비교할 다른 적이 하나도 서
-   * 있지 않아, 같은 배율로는 "혼자라서 커 보이는 것"과 구별되지 않기 때문이다. 걸음이 한 뼘
-   * 빠른 것은 세기가 아니라 **인상**이다 — 같은 수치를 가진 잡졸과 나란히 두었을 때 어느
-   * 쪽이 정예인지 서 있는 모습만으로 갈린다.
+   * 있지 않아, 같은 배율로는 "혼자라서 커 보이는 것"과 구별되지 않기 때문이다. 셋 몫을 혼자
+   * 내는 무게는 **그 개체의 레벨 축**이 내고, 이 표는 그것이 정예라는 것만 눈에 보이게 한다.
    */
-  elite: { bodyScale: 1.18, attackSpeedPercent: 5, moveSpeedPercent: 5 },
+  elite: { bodyScale: 1.18 },
   /**
    * **무리.** 넷 이상이 함께 나올 때만 붙는다.
    *
    * 작게 서는 이유는 둘이다 — 여섯 몸이 보통 크기로 들어차면 전장이 몸으로 덮여 체력 바와
    * 피해 수치가 그 뒤로 숨고, 무엇보다 **하나하나가 가벼워 보여야** 떼로 오는 것이 위협이
-   * 된다. 걸음은 건드리지 않는다: 무리의 값은 빠르기가 아니라 머릿수다.
+   * 된다. 무리의 값은 개체의 세기가 아니라 머릿수다.
    */
-  swarm: { bodyScale: 0.8, attackSpeedPercent: 0, moveSpeedPercent: 0 },
+  swarm: { bodyScale: 0.8 },
   /**
    * **레이드.** 셋이 하나를 미는 판이라 **거대한 것을 마주한다**가 첫인상이어야 한다.
    *
    * 정예와 같은 크기로 두던 때는 화면이 "레이드"라고 말하는 것이 남은 체력 줄 하나뿐이었다.
-   * 느린 것은 그 크기의 짝이다 — 한 방이 무겁고 그 사이가 길어야 다음 턱을 읽고 자리를 옮길
-   * 틈이 난다. 이 몫은 **레이드 자리의 성질**이라 개체의 태생 능력치에 적지 않는다.
+   * 느린 걸음은 그 크기의 짝이지만 **여기서 주지 않는다** — 그 개체가 제 태생 공속·이속으로
+   * 느리다(수쿠스이노 34 · 30). 유형이 능력치를 만지기 시작하면 같은 태그를 단 다음 개체가
+   * 저도 모르게 그 몫을 함께 받는다.
    */
-  raid: { bodyScale: 1.9, attackSpeedPercent: -30, moveSpeedPercent: -42 },
-} as const satisfies Record<EnemyPresence, { bodyScale: number; attackSpeedPercent: number; moveSpeedPercent: number }>;
+  raid: { bodyScale: 1.9 },
+} as const satisfies Record<EnemyPresence, { bodyScale: number }>;
 
 /**
  * 전장에 **동시에 서는 수**와 자리의 성질로 무리 유형을 고른다.
@@ -68,23 +71,7 @@ export function enemyPresenceFor(countOnField: number, options: { elite?: boolea
   return countOnField >= SWARM_MINIMUM_COUNT ? "swarm" : "normal";
 }
 
-/**
- * 무리 유형이 바꾸는 **걸음만** 얹는다.
- *
- * 나머지 능력치는 손대지 않는다 — 여기서 체력이나 공격력을 움직이면 화면에 선 `LV.n`과
- * 실제로 맞는 수치가 갈리고, 관문을 조이는 손잡이가 둘이 된다.
- */
-export function applyEnemyPresence(stats: Stats, presence: EnemyPresence): Stats {
-  const { attackSpeedPercent, moveSpeedPercent } = ENEMY_PRESENCE[presence];
-  if (attackSpeedPercent === 0 && moveSpeedPercent === 0) return { ...stats };
-  return {
-    ...stats,
-    attackSpeed: Math.round(stats.attackSpeed * (1 + attackSpeedPercent / 100)),
-    moveSpeed: Math.round(stats.moveSpeed * (1 + moveSpeedPercent / 100)),
-  };
-}
-
-/** 그 무리 유형으로 설 때의 몸 크기다. 전투 계산에 들어가지 않고 그리는 크기만 정한다. */
+/** 그 무리 유형으로 설 때의 몸 크기다. **이 표가 바꾸는 것은 이 값 하나뿐이다.** */
 export function enemyPresenceBodyScale(presence: EnemyPresence): number {
   return ENEMY_PRESENCE[presence].bodyScale;
 }

@@ -13,6 +13,8 @@ export const STATUS_KO = {
 
   "status.shell": "조가비",
   "status.shell.detail": "조가비 {stacks}/{max} · {time} 남음",
+  "status.scar": "흉터",
+  "status.scar.detail": "흉터 {stacks}/{max} · {time} 남음",
   "status.stun": "기절",
   "status.stun.detail": "{time} 남음",
   "status.frozen": "빙결",

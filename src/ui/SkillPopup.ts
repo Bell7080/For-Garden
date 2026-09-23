@@ -4,6 +4,7 @@ import type { KeywordManager } from "../managers/KeywordManager";
 import type { KeywordDef } from "../data/keywords";
 import type { CombatStatusEffect, EffectType, SkillIconAssetId, Ultimate } from "../core/types";
 import { bakeChipArt, chipArtShape } from "./chipArtTexture";
+import { drawGlyph, type GlyphName } from "./glyphs";
 import { drawHairline, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
 import type { PopupLayer } from "./PopupLayer";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
@@ -34,9 +35,19 @@ export interface SkillInfoViewModel {
   art?: string;
   /** 속성·직군을 섞은 필터 색. 흰 실루엣 일러스트에만 입힌다. */
   tint?: number;
+  /**
+   * 그림 파일이 아니라 글리프로 서는 칸(적 정보창의 역할). 있으면 공용 효과 아이콘보다 먼저 쓴다.
+   * 액자 줄에서 누른 칸과 같은 상징이 쪽지에도 서야 어느 칸을 열었는지 이어서 읽힌다.
+   */
+  glyph?: GlyphName;
   effectType: EffectType;
   /** 배율이나 예상 피해처럼 한 줄로 읽는 수치. */
   valueLabel?: string;
+  /**
+   * 요약 줄을 통째로 갈아 끼운다. 기술이 아닌 칸(역할)은 효과 분류·대상·상태가 없어 그 조립이
+   * "강화"처럼 뜻이 다른 말을 세우므로, 그 칸이 말할 한 줄(배율 목록)을 직접 넘긴다.
+   */
+  summary?: string;
   /** 표시 수치를 눌렀을 때 해당 스킬의 능력치 출처와 배율을 설명한다. */
   contextualKeywords?: readonly KeywordDef[];
   /** 뜻풀이 대신 전용 창을 여는 용어. 쿠로·시로처럼 쪽지 한 장으로 다 말할 수 없는 태그가 쓴다. */
@@ -152,6 +163,8 @@ export function openSkillPopup(
       const image = scene.add.image(iconX, iconY, bakeChipArt(scene, art, iconSize, iconSize, ICON_BEVEL)).setDisplaySize(iconSize, iconSize);
       if (skill.tint !== undefined) image.setTint(skill.tint);
       body.add(image);
+    } else if (skill.glyph) {
+      body.add(drawGlyph(scene, skill.glyph, iconX, iconY, iconSize * 0.56, skill.tint ?? 0xffffff));
     } else {
       // 공용 효과 아이콘은 그림이 아니라 상징 하나라 채우지 않고 가운데에 작게 선다.
       const fallback = scene.textures.exists(skill.iconAssetId) ? skill.iconAssetId : FALLBACK_SKILL_ICON;
@@ -186,7 +199,7 @@ export function openSkillPopup(
     body.add(name);
 
     // 효과 분류와 수치는 한 줄에 둔다. 둘 다 "얼마나 세게, 어떤 식으로"를 말한다.
-    const summary = [
+    const summary = skill.summary ?? [
       effectLabel(skill.effectType), skill.valueLabel, targetingLabel(skill.targeting),
       ...((skill.statusEffects ?? []).map(statusEffectLabel)),
       skill.durationSeconds === undefined ? undefined : t("skill.duration", { seconds: skill.durationSeconds }),

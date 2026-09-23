@@ -1,5 +1,5 @@
 import type { DamagePreview } from "../core/damage";
-import type { KeywordDef } from "../data/keywords";
+import { findKeyword, type KeywordDef } from "../data/keywords";
 import type { KeywordTextOptions } from "../managers/KeywordManager";
 import type { BreakthroughSlot } from "../core/relicProgression";
 import type { BasicAttack, BasicAttackStep, CombatStatusEffect, FerocityTrait, Passive, RelicDef, Skill, Stats, Ultimate } from "../core/types";
@@ -408,19 +408,6 @@ function passiveCriticalClause(passive: Passive): string {
   return "";
 }
 
-/**
- * **강인함은 종류가 아니라 값이 있는 개체에만 붙는 절이다.**
- *
- * 전투도 같은 자리를 읽는다(`gainTenacity`는 패시브 종류를 보지 않고
- * `tenacityPerControlPercent` 하나만 본다) — 설명문만 종류로 가르면 실제로는 쌓이는데
- * 화면이 말하지 않는 개체가 생긴다. 없는 개체에 빈 문장이 남지 않도록 값으로 가른다.
- */
-function withTenacity(body: string, passive: Passive): string {
-  const gain = passive.tenacityPerControlPercent ?? 0;
-  if (gain <= 0) return body;
-  return `${body} ${t("skill.passive.tenacity", { percent: gain, max: passive.maxTenacityPercent ?? 100 })}`;
-}
-
 function passiveHead(passive: Passive, atk?: number): string {
   if (passive.kind === "reagentReaction" && passive.reagentReaction !== undefined) {
     // 이름이 아니라 공용 계약을 문장화하므로 다른 캐릭터가 같은 메커니즘을 선언해도 그대로 읽힌다.
@@ -470,16 +457,11 @@ function passiveHead(passive: Passive, atk?: number): string {
   }
   if (passive.kind === "abyssalPressure") {
     /*
-     * **경감이 닿는 체력을 적지 않는다.** 상한에 닿는 자리가 체력이 다 닳는 지점이라
-     * "최대의 0%까지 낮아질수록"이 되어 말이 되지 않는다 — 곡선을 그리는 값이므로 문장은
-     * 어디서 시작해 어디까지 가는지만 말하고, 그 사이의 모양은 수치가 보여 준다.
+     * **경감과 강인함은 여기서 말하지 않는다.** 둘 다 이 개체가 아니라 불사라는 자리의 성질이라
+     * 적 정보창의 역할 칸(`encounterRoleDescription`)이 말한다 — 보스마다 패시브에 같은 문장을
+     * 조금씩 다른 수로 되풀이하지 않는다. 패시브에 남는 것은 이 개체만의 성장이다.
      */
-    const pressure = t("skill.passive.abyssalPressure", {
-      percent: passive.apPercentPerSecond,
-      base: passive.baseDamageReductionPercent, max: passive.maxDamageReductionPercent,
-      ignore: passive.ignoreDamageAtOrBelow,
-    });
-    return withTenacity(pressure, passive);
+    return t("skill.passive.abyssalPressure", { percent: passive.apPercentPerSecond });
   }
   if (passive.kind === "gourmetHunt") return t("skill.passive.gourmetHunt", {
     cooldown: passive.huntCooldownSeconds, seconds: passive.damageStealthSeconds,
@@ -508,21 +490,24 @@ function passiveHead(passive: Passive, atk?: number): string {
   }
   if (passive.kind === "shellGuard" && passive.shellGuard !== undefined) {
     const shell = passive.shellGuard;
+    // 계약은 같아도 겹의 이름은 개체의 것이다 — 아모의 조가비, 수쿠스이노의 흉터.
+    const stack = shell.stackId ?? "shell";
+    const stackName = findKeyword(stack)?.term ?? stack;
     /*
      * **혼자 서는 개체는 아군 절을 말하지 않는다.** 받을 상대가 없는데 "가장 낮은 아군에게"를
      * 적으면 화면이 일어나지 않는 일을 말한다 — 시즌 보스가 그 자리다.
      */
     const body = shell.lowestHpAllyShieldMaxHpPercent > 0
       ? t("skill.passive.shellGuard", {
-        seconds: shell.durationSeconds, stacks: shell.maxStacks,
+        stack, stackName, seconds: shell.durationSeconds, stacks: shell.maxStacks,
         selfPercent: shell.selfShieldMaxHpPercent, allyPercent: shell.lowestHpAllyShieldMaxHpPercent,
         cooldown: shell.cooldownSeconds,
       })
       : t("skill.passive.shellGuard.selfOnly", {
-        seconds: shell.durationSeconds, stacks: shell.maxStacks,
+        stack, stackName, seconds: shell.durationSeconds, stacks: shell.maxStacks,
         selfPercent: shell.selfShieldMaxHpPercent, cooldown: shell.cooldownSeconds,
       });
-    return withTenacity(body, passive);
+    return body;
   }
   if (passive.kind === "tagAndRun") {
     // 세 절이 각각 다른 일을 한다 — 표적을 돌리고, 멈추지 않고, 달린 만큼 찬다. 한 문장에

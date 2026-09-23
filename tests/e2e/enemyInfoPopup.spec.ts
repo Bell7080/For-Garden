@@ -50,6 +50,15 @@ test("적을 누르면 정보창을 줄인 팝업이 열린다", async ({ page }
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["정보창"]);
 
   /*
+   * **폭주 뱃지 위의 역할 칸**을 누르면 같은 쪽지가 그 자리의 배율과 강인함·경감을 말한다.
+   * 쪽지는 제목표가 없으므로 그림으로 남기고, 닫힌 뒤 머리글이 하나로 돌아오는 것만 확인한다.
+   */
+  await tap(page, BASE_WIDTH / 2 + ENEMY_INFO.skills.x, BASE_HEIGHT / 2 + ENEMY_INFO.skills.y + ENEMY_INFO.roleBadgeOffsetY);
+  await captureGame(page, `test-results/${test.info().project.name}-enemy-role.png`);
+  await tap(page, 540, 200);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["정보창"]);
+
+  /*
    * **적에게도 관찰 일지가 열린다.**
    *
    * 개체번호·프로젝트·발굴지와 소속 엠블럼은 적 정의에도 온전히 있는데 그것을 여는 문이 아군

@@ -1,6 +1,12 @@
-import { applyEncounterScaling } from "./levelDesign";
+import { applyEncounterScaling, type EncounterRole } from "./levelDesign";
 import { RAID_BOSS_HP_SCALE, RAID_CONTRIBUTION_REWARD_STAGES, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP, RAID_WORLD_REWARD_STAGES } from "../data/raid";
 import type { RelicDef } from "./types";
+
+/**
+ * 시즌 보스가 서는 자리 — **보스**다. 판 안에서는 눕지 않아도 시즌 체력 한 줄은 끝내 깎여
+ * 죽으므로 불사(경감)가 아니라 보스(강인함)이고, 성장·몸집·적 정보창의 역할 칸이 모두 이 값을 읽는다.
+ */
+export const RAID_BOSS_ROLE: EncounterRole = "boss";
 
 /**
  * 레이드 시즌의 순수 규칙 — Phaser도 저장도 읽지 않는다.
@@ -154,7 +160,7 @@ export function raidReachedWorldStageIds(dealtRatio: number): string[] {
  * 돈다(`effectiveEnemyLevel`). 스테이지 정예와 같은 문법이다.
  */
 function raidBossScaledStats(base: RelicDef): RelicDef["stats"] {
-  return applyEncounterScaling(base.stats, RAID_SEASON_BOSS.level, "endless");
+  return applyEncounterScaling(base.stats, RAID_SEASON_BOSS.level, RAID_BOSS_ROLE);
 }
 
 /**
@@ -178,6 +184,6 @@ export function raidBossDef(base: RelicDef): RelicDef {
    * 체력만 가르는 이유는 그 값이 **세기가 아니라 단위**이기 때문이다: 시즌 줄과 전장의 줄이
    * 같은 자를 쓰지 않으면, 한 판에서 반을 깎아 놓고 돌아와도 시즌 게이지가 미동도 하지 않는다.
    */
-  return { ...base, stats: { ...scaled, hp: Math.round(RAID_SEASON_TOTAL_HP / RAID_BOSS_HP_SCALE) } };
+  return { ...base, encounterRole: RAID_BOSS_ROLE, stats: { ...scaled, hp: Math.round(RAID_SEASON_TOTAL_HP / RAID_BOSS_HP_SCALE) } };
 }
 

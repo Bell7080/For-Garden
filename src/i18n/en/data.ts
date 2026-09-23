@@ -577,6 +577,12 @@ export default {
   "keyword.fixed-damage.description": "Damage that passes through the target's Defense and Resistance as it is. Affinity and damage reduction still apply.",
   "keyword.crowd-control.term": "Crowd Control",
   "keyword.crowd-control.description": "The collective name for effects that stop a target from acting, such as Stun and Stagger.",
+  "keyword.tenacity.term": "Tenacity",
+  "keyword.tenacity.description": "Builds up each time crowd control is shrugged off, shortening control such as Stun and Stagger by that percentage. At its cap, control breaks the moment it lands. Only enemies in spots that must not be locked down, such as bosses, have it.",
+  "keyword.damage-reduction.term": "Damage Reduction",
+  "keyword.damage-reduction.description": "All damage taken shrinks as Health falls. Damage that is tiny after reduction does not land at all. Only enemies in the Undying spot, which never falls, have it.",
+  "keyword.scar.term": "Scar",
+  "keyword.scar.description": "Sucusuino's buff, gained by surviving damage. Consuming max stacks grants itself a shield.",
 
   // ── Relics — Rexia, Torika, Spina, Luka, Dodi, Tia ─────────────────────────────────────────────────────────────
   "relic.rex.excavationSite": "Nemegt Formation Zone 7, Mongolia",

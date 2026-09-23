@@ -56,7 +56,8 @@ import { cakeOperationRunCost, cakeOperationTierIndex, getCakeOperationTier, isC
 import { applyDungeonMultiplier, isMultiplierUnlocked, normalizeMultiplier } from "../core/dungeonShortcut";
 import type { ClaimMailRewardsRequest, ClaimMailRewardsResponse, MailDto, MailListResponse, MailRewardDto, MarkMailsReadRequest } from "./contracts";
 import { expeditionWeekKey, resolveExpeditionBossBattle } from "../core/expeditionBoss";
-import { EXPEDITION_BOSS_BALANCE, EXPEDITION_CUMULATIVE_REWARD_STAGES, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_POLICY, EXPEDITION_WEEKLY_POLICY, QUICK_EXPEDITION_POLICY } from "../data/expedition";
+import { EXPEDITION_BOSS_BALANCE, EXPEDITION_CUMULATIVE_REWARD_STAGES, EXPEDITION_MAP_BALANCE, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_POLICY, EXPEDITION_WEEKLY_POLICY, QUICK_EXPEDITION_POLICY } from "../data/expedition";
+import { expeditionNodeRole } from "../data/expeditionEnemies";
 import { calculateExpeditionNodeRewards, calculateExpeditionRunScore } from "../core/expeditionRewards";
 import { calculateExpeditionNodeScore, expeditionBossDamageScore } from "../core/expeditionScore";
 import { RelicProgressionManager } from "../managers/RelicProgressionManager";
@@ -280,8 +281,11 @@ export class FakeServer implements GameApi {
         // 스킬 계약은 정적 정의에서, 계정별 수치만 서버 성장 스냅샷에서 가져온다.
         return { ...relic, stats: progression.getFinalStats(id) };
       });
-      const boss = RELICS.find(({ id }) => id === "pontos");
-      if (!boss) throw new Error("INVALID_BOSS_DEFINITION");
+      const pontos = RELICS.find(({ id }) => id === "pontos");
+      if (!pontos) throw new Error("INVALID_BOSS_DEFINITION");
+      // 강인함·경감은 개체가 아니라 **그 보스가 선 자리**가 갖는다. 화면의 난전과 같은 자리를
+      // 새겨야 기절 시간과 받는 피해가 재현에서 갈리지 않는다.
+      const boss = { ...pontos, encounterRole: expeditionNodeRole("boss", EXPEDITION_MAP_BALANCE.bossFloor) };
       result = resolveExpeditionBossBattle({
         allies, boss,
         initialHpPercentByRelic: Object.fromEntries(roster.map(({ relicId, currentHp }) => [relicId, currentHp])),

@@ -1,5 +1,5 @@
 import { normalizeMultiplier, type DungeonMultiplier } from "../core/dungeonShortcut";
-import { raidBossDef } from "../core/raid";
+import { RAID_BOSS_ROLE, raidBossDef } from "../core/raid";
 import type { BattleStageDef, RelicDef } from "../core/types";
 import { bountyRoundEnemy, bountyRoundLevel, BOUNTY_ROLE, BOUNTY_TIERS, getBountyTier } from "./bounty";
 import { CAKE_OPERATION_TIERS, cakeOperationEnemies, cakeOperationEnemyDisplayLevel, cakeOperationRole, getCakeOperationTier } from "./cakeOperation";
@@ -71,7 +71,7 @@ export function partyPreview(content: PartyContent, stage: BattleStageDef): Part
   if (content.content === "raid") {
     const def = raidBossDef(getRelic(RAID_SEASON_BOSS.relicId));
     const shown = [{ def, level: RAID_SEASON_BOSS.level, breakthrough: RAID_SEASON_BOSS.breakthrough }];
-    return { shown, all: [def], role: "endless" };
+    return { shown, all: [def], role: RAID_BOSS_ROLE };
   }
   if (content.content === "bounty") {
     const shown = getBountyTier(content.tierId).rounds.map((round, index) => ({

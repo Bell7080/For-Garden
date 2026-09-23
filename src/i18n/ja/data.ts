@@ -747,6 +747,12 @@ export default {
   "keyword.fixed-damage.description": "対象の防御力・抵抗力を素通りしてそのまま入るダメージだ。属性相性と被ダメージ軽減はそのまま通る。",
   "keyword.crowd-control.term": "行動妨害",
   "keyword.crowd-control.description": "気絶や硬直のように、対象の行動を止める効果をまとめて指す言葉だ。",
+  "keyword.tenacity.term": "強靭さ",
+  "keyword.tenacity.description": "行動妨害を受けるたびに蓄積し、その割合だけ気絶・硬直のような制御時間を短くする。上限に達すると、かかった瞬間に解ける。ボスのように封じられてはならない立場の敵だけが持つ。",
+  "keyword.damage-reduction.term": "軽減",
+  "keyword.damage-reduction.description": "体力が削れるほど受けるすべてのダメージが減る。軽減を経たダメージがごく小さければ、まったく入らない。倒れない不死の立場の敵だけが持つ。",
+  "keyword.scar.term": "傷痕",
+  "keyword.scar.description": "ダメージを受けて生き残ったときに積まれるスクスイノのバフだ。最大重複を消費すると自分にシールドを与える。",
 
   // ── レリック — レクシア・トリカ・スピナ ─────────────────────────────────────────────────────────────
   "relic.rex.excavationSite": "モンゴル ネメグト層 第7区域",

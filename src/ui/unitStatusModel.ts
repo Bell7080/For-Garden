@@ -8,7 +8,7 @@ import { t } from "../i18n";
  * 겹 수와 남은 시간을 여기서 한 번만 만들고 둘 다 이 목록만 그린다. Phaser를 들여오지 않아
  * 순서·색·문구를 테스트가 그대로 고정할 수 있다.
  */
-export type UnitStatusId = "packKuro" | "packShiro" | "shell" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism" | "weakpoint" | "shimmer";
+export type UnitStatusId = "packKuro" | "packShiro" | "shell" | "scar" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism" | "weakpoint" | "shimmer";
 
 export interface UnitStatusView {
   /** 같은 상태를 제공자가 여럿 걸 수 있을 때도 HUD 객체를 덮어쓰지 않는 전투 내 키다. */
@@ -41,6 +41,9 @@ export const UNIT_STATUS_COLOR: Readonly<Record<UnitStatusId, number>> = {
   packShiro: 0x4fa8e4,
   // 보호막 시각 효과와 같은 청록 계열을 사용해 조가비 소비 결과가 한 자원으로 읽히게 한다.
   shell: 0x62c6d8,
+  // 수쿠스이노의 흉터. 소비 결과는 같은 보호막이지만 겹 자체는 아문 살갗이라 뼈빛 호박색으로 가른다 —
+  // 같은 청록이면 두 개체가 같은 것을 두르는 것처럼 읽힌다.
+  scar: 0xd49a6a,
   stun: 0xf2c744,
   frozen: 0x6fd0f2,
   frenzy: 0xa8406b,
@@ -103,10 +106,12 @@ export function unitStatusViews(fighter: Fighter, pack: readonly Fighter[] = [])
   if (fighter.shellGuard) {
     const shell = fighter.shellGuard;
     const maxStacks = fighter.def.passive.shellGuard?.maxStacks ?? shell.stacks;
+    // 계약은 같아도 겹의 이름은 개체의 것이다 — 아모의 조가비, 수쿠스이노의 흉터.
+    const id = fighter.def.passive.shellGuard?.stackId ?? "shell";
     views.push({
-      id: "shell", name: t("status.shell"), color: UNIT_STATUS_COLOR.shell, stacks: shell.stacks,
+      id, name: id === "scar" ? t("status.scar") : t("status.shell"), color: UNIT_STATUS_COLOR[id], stacks: shell.stacks,
       remaining: shell.remaining, total: Math.max(shell.total, shell.remaining),
-      detail: t("status.shell.detail", { stacks: shell.stacks, max: maxStacks, time: seconds(shell.remaining) }),
+      detail: t(id === "scar" ? "status.scar.detail" : "status.shell.detail", { stacks: shell.stacks, max: maxStacks, time: seconds(shell.remaining) }),
     });
   }
   if (fighter.stunnedFor > 0) {

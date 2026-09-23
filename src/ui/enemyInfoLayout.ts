@@ -116,6 +116,13 @@ export const ENEMY_INFO = {
   skills: { x: -344, y: 424, size: 150, step: 168 },
   /** 패시브 액자 위에 얹히는 폭주 뱃지. 정보창과 같은 높이 차이를 지킨다. */
   ferocityBadgeOffsetY: -139,
+  /**
+   * 폭주 뱃지 위에 한 칸 더 쌓이는 **역할** 뱃지(적 전용).
+   *
+   * 폭주와 같은 크기(`INFO_BADGE_SIZE`)·같은 간격으로 쌓는다 — 패시브 액자 윗변과 폭주 뱃지
+   * 사이의 틈(16)을 폭주와 역할 사이에도 그대로 둔다. 뱃지 한 변이 96이므로 한 칸 위는 112다.
+   */
+  roleBadgeOffsetY: -139 - 112,
   /** 오른쪽 아래 SD 받침. */
   figure: { x: 248, groundY: 508, height: 196 },
 } as const;

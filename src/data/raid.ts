@@ -31,7 +31,7 @@ import { requiredBreakthroughForLevel } from "../core/levelDesign";
  * 전부 드러나는 유일한 판이다(지금은 네 칸 모두 "없음"이다).
  *
  * **몸집과 걸음은 여기 적지 않는다.** 거대하고 느린 것은 이 개체의 성질이 아니라 **레이드라는
- * 자리의 성질**이라 유형 표(`ENCOUNTER_ROLE.endless`)가 갖는다 — 개체에 적으면 같은 몸이
+ * 자리의 성질**이라 유형 표(`ENCOUNTER_ROLE.boss`)가 갖는다 — 개체에 적으면 같은 몸이
  * 도감과 관문에 설 때까지 함께 느려진다.
  */
 const RAID_SEASON_BOSS_LEVEL = 60;

@@ -1,6 +1,11 @@
 /** 전투에 쓰이는 데이터 모델. 렌더러·Phaser를 전혀 모른다. */
 
+import type { EncounterRole } from "./levelDesign";
+
 export type Side = "player" | "enemy";
+
+/** 「조가비」 계약이 쌓는 겹의 이름. 규칙어 ID와 상태 칩 ID가 같은 값을 쓴다. */
+export type ShellGuardStackId = "shell" | "scar";
 
 /**
  * 소속 자치 스쿼드의 id.
@@ -988,13 +993,13 @@ export type PassiveKind =
   | "undyingTalisman"
   /** 노도니아 전용: 맞을수록 회복 중첩을 쌓는 패시브다. */
   | "painfulElation"
-  /** 아모 전용: 실제 HP 피해를 받고 살아남을 때 조가비를 쌓아 자신과 최저 HP 비율 아군을 보호한다. */
+  /** 실제 HP 피해를 받고 살아남을 때 겹(아모의 조가비 · 수쿠스이노의 흉터)을 쌓아 자신과 최저 HP 비율 아군을 보호한다. */
   | "shellGuard"
   /** 렉시아 전용: 공격 속도·공격력·치명타 확률·치명타 피해를 함께 강화한다. */
   | "battleMaidMastery"
   /** 스피나 전용: 기본 공격의 실제 적중마다 공속을 전투 한정으로 영구 누적한다. */
   | "basicHitAttackSpeedStack"
-  /** 폰토스의 시간 누적 주문력·잃은 체력 경감 규칙을 식별한다. */
+  /** 폰토스의 시간 누적 주문력. 잃은 체력 경감은 패시브가 아니라 불사 자리(`ENCOUNTER_ROLE.endless`)가 갖는다. */
   | "abyssalPressure"
   /** 도디 전용: 제공자 생존 여부로 팀 방어와 적 회복을 동시에 조절한다. */
   | "guardianNestAura"
@@ -1629,7 +1634,7 @@ export interface Passive {
     seconds: number;
   };
   /**
-   * 「조가비」 계약. 실제 HP 피해 처리가 끝나고 아모가 살아 있을 때만 한 겹을 얻으며,
+   * 「조가비」 계약. 실제 HP 피해 처리가 끝나고 개체가 살아 있을 때만 한 겹을 얻으며,
    * 유지 시간은 매 획득마다 갱신된다. 상한에 닿으면 같은 피해 처리의 마지막 단계에서 전부
    * 소비해 자신과 자신을 제외한 생존 아군 중 현재 HP 비율 최저(동률은 편성 순서)를 보호한다.
    */
@@ -1644,6 +1649,13 @@ export interface Passive {
     selfShieldMaxHpPercent: number;
     /** 소비 시 선정된 아군에게 주는 그 아군 최대 체력 비례 보호막(%)이다. */
     lowestHpAllyShieldMaxHpPercent: number;
+    /**
+     * 쌓이는 겹의 **이름**(규칙어 ID이자 머리 위 상태 칩 ID). 없으면 아모의 「조가비」다.
+     *
+     * 계약은 같아도 그 겹이 무엇인지는 개체의 것이다 — 수쿠스이노의 겹은 조가비가 아니라
+     * 물어뜯기고 아문 「흉터」라, 같은 이름을 쓰면 두 개체가 같은 것을 두르는 것처럼 읽힌다.
+     */
+    stackId?: ShellGuardStackId;
   };
   /**
    * 「가봉」 계약. 기본 공격이 깎은 HP를 아군의 보호막으로 옮기는 두 값이다.
@@ -1662,33 +1674,6 @@ export interface Passive {
   maxStacks?: number;
   /** 심해 압력 전용: 완전히 경과한 매초 기본 주문력에 복리로 누적하는 비율이다. */
   apPercentPerSecond?: number;
-  /** 심해 압력 전용: 최대 체력일 때 적용하는 받는 피해 감소율이다. */
-  baseDamageReductionPercent?: number;
-  /** 심해 압력 전용: 저체력 구간에서 제한할 받는 피해 감소율 상한이다. */
-  maxDamageReductionPercent?: number;
-  /** 심해 압력 전용: 최대 피해 감소율에 도달하는 현재 체력 비율이다. */
-  maxReductionAtHpPercent?: number;
-  /**
-   * 심해 압력 전용: 받는 피해 감소가 자라는 **곡선의 가파름**이다.
-   *
-   * 1이면 곧은 직선이다. **1보다 작으면** 체력이 깎이자마자 빠르게 붙었다가 뒤에서
-   * 완만해지고(상한에 부딪히지 않고 닿는다), **1보다 크면** 반대로 한참 낮게 누워 있다
-   * 끝에서 가파르게 선다.
-   *
-   * 어느 쪽을 쓸지는 바닥값(`baseDamageReductionPercent`)이 정한다 — 바닥이 낮으면 1보다
-   * 큰 값이 "초반에는 때릴 맛이 있는" 벽을 만들고, 바닥이 이미 높으면 같은 모양이 도리어
-   * "처음에만 물렁한 벽"이 된다.
-   */
-  damageReductionCurve?: number;
-  /**
-   * **강인함** 전용: 군중제어를 한 번 받아 낼 때마다 오르는 저항(%).
-   *
-   * 맞은 시간이 아니라 **걸린 횟수**로 센다 — 시간으로 세면 긴 제어 하나가 짧은 제어 여럿보다
-   * 유리해져, 제어를 짧게 자주 거는 편성이 오히려 더 오래 잠근다.
-   */
-  tenacityPerControlPercent?: number;
-  /** 강인함이 닿을 수 있는 상한(%). 100이면 그 뒤로는 걸리자마자 풀린다. */
-  maxTenacityPercent?: number;
   /** 고품격 식재료 전용: 다시 표적을 고르고 도약하기까지의 간격(초). 적을 처치하면 즉시 앞당긴다. */
   huntCooldownSeconds?: number;
   /**
@@ -1724,8 +1709,6 @@ export interface Passive {
    * 평범한 적을 때릴 때는 걸리지 않는 선이다.
    */
   concussionShieldCapMaxHpPercent?: number;
-  /** 심해 압력 전용: 모든 경감과 반올림을 마친 최종 HP 피해가 이 값 이하이면 피해를 무효화한다. */
-  ignoreDamageAtOrBelow?: number;
   /** 제공자가 살아 있는 동안 같은 편의 방어력과 저항력에 곱하는 증가율(%). */
   teamDefenseResistancePercent?: number;
   /** 제공자가 살아 있는 동안 반대편이 받는 모든 체력 회복을 줄이는 비율(%). */
@@ -1863,8 +1846,15 @@ export interface RelicDef {
    * 태생 능력치만 주인의 성장에서 파생한 값으로 갈아 끼운다(`SummonDef.scaling`).
    */
   summonOnly?: true;
-  /** 기절 지속 시간을 줄이는 비율(%). 정의하지 않으면 저항이 없고 100 이상이면 면역이다. */
-  stunResistancePercent?: number;
+  /**
+   * 이 적이 **어떤 자리로 섰는가**(잡졸·무리·정예·보스·불사).
+   *
+   * 정적 정의에는 적지 않는다 — 같은 개체도 관문마다 다른 자리에 서기 때문이다. 콘텐츠가 레벨과
+   * 유형 몫을 얹는 그 자리(`applyEncounterScaling`을 부르는 곳)에서 함께 새기고, 전투는 강인함·
+   * 경감을 이 값으로 `ENCOUNTER_ROLE`에서 읽으며 적 정보창의 역할 칸도 같은 값을 그린다.
+   * 아군에게는 없다.
+   */
+  encounterRole?: EncounterRole;
   name: string;
   /** 도감에서 쓰는 개체번호. 앞자리 0을 보존하기 위해 숫자가 아닌 문자열로 저장한다. */
   specimenNumber: string;

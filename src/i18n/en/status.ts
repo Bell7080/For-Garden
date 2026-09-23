@@ -6,6 +6,8 @@ export const STATUS_EN = {
   "status.pack.gone": "Will not stand again",
   "status.shell": "Shell",
   "status.shell.detail": "Shell {stacks}/{max} · {time} left",
+  "status.scar": "Scar",
+  "status.scar.detail": "Scar {stacks}/{max} · {time} left",
   "status.stun": "Stun",
   "status.stun.detail": "{time} left",
   "status.frozen": "Frozen",

@@ -132,7 +132,7 @@ export interface DebugState {
   /** 캔버스 내부 편성 UI의 위치/표시 상태를 모바일 E2E가 읽는 최소 정보다. */
   party?: { autoButton: { x: number; y: number }; visibleAffinityDirections: number; selectedCount?: number; slots?: Array<{ x: number; y: number }> };
   /** 레이드가 시즌 판인지 편성 단계인지. 두 걸음이 같은 씬 이름을 쓰므로 E2E는 이 값으로 가른다. */
-  raidStage?: "list" | "season" | "summon";
+  raidStage?: "list" | "season" | "summon" | "summonReveal";
   /** 원정 준비 슬롯의 실제 입력 중심과 현재 선택 수만 노출하는 모바일 입력 계약이다. */
   expeditionFormation?: { selectedCount: number; slots: Array<{ x: number; y: number }> };
   /** 공용 드래그 표현의 사용자 가시 상태이며 렐릭 ID나 확정 배열은 포함하지 않는다. */

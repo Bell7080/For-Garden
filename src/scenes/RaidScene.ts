@@ -347,6 +347,7 @@ export class RaidScene extends Phaser.Scene {
       setDebugRaidStage("summon");
       playRaidSummonCinematic(this, {
         bossRelicId: result.raid.bossRelicId, difficulty: result.raid.difficulty, level: result.raid.bossLevel, depth: 3000,
+        onReveal: () => setDebugRaidStage("summonReveal"),
         onDone: () => startScene(this, "raid", { raidId: result.raid.id, tab: "active" } satisfies RaidSceneData),
       });
     } catch {

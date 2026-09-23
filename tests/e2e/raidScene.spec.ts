@@ -44,9 +44,10 @@ test("레이드는 목록에서 월드 폭주 판으로 들어가고 출격이 �
   await captureGame(page, `test-results/${test.info().project.name}-raid-difficulty.png`);
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2 - 117); // 첫 줄(쉬움) — 창 높이 474의 위에서 120
   await waitForDebugState(page, () => window.__PF_DEBUG?.raidStage, "summon", { timeout: 20_000 });
-  await page.waitForTimeout(350);
   await captureGame(page, `test-results/${test.info().project.name}-raid-summon-charge.png`);
-  await page.waitForTimeout(2_000);
+  // 봉인이 모이는 시간은 장면 시계라 GPU 없는 컨테이너에서는 벽시계보다 느리다 — 드러남을 기다린다.
+  await waitForDebugState(page, () => window.__PF_DEBUG?.raidStage, "summonReveal", { timeout: 30_000 });
+  await page.waitForTimeout(1_200);
   await captureGame(page, `test-results/${test.info().project.name}-raid-summon-reveal.png`);
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await waitForDebugState(page, () => window.__PF_DEBUG?.raidStage, "season", { timeout: 20_000 });

@@ -75,12 +75,15 @@ export function addRaidLayer(
   scrim.fillRect(-width / 2 + slant / 2, top, width * (art.from + art.fade), height);
   layer.add(scrim);
   // 난이도의 색이 뒷배경을 은은하게 물들인다 — 글이 서는 왼쪽에서 가장 짙고 얼굴 쪽으로 풀린다.
-  // 어둠 위에 얹어야 보인다. 기운 변 밖으로 새지 않게 판 모양으로 가둔다.
+  // 어둠 위에 얹어야 보인다. **마스크가 아니라 도형을 잘라** 판 안에 가둔다 — 층마다 기하 마스크를
+  // 하나 더 걸면 목록 전체가 스텐실을 그만큼 더 그린다. 기운 변은 왼쪽 하나뿐이라 그 삼각형만 따로 칠한다.
   const tone = RAID_DIFFICULTY_TONE[raid.difficulty];
   const wash = scene.add.graphics();
+  const inner = -width / 2 + slant;
+  wash.fillStyle(tone, RAID_LAYER_TONE.washAlpha);
+  wash.fillTriangle(-width / 2, top + height, inner, top, inner, top + height);
   wash.fillGradientStyle(tone, tone, tone, tone, RAID_LAYER_TONE.washAlpha, 0, RAID_LAYER_TONE.washAlpha, 0);
-  wash.fillRect(-width / 2, top, width * RAID_LAYER_TONE.washReach, height);
-  wash.setMask(shapeClipMask(scene, layer, shape));
+  wash.fillRect(inner, top, width * RAID_LAYER_TONE.washReach - slant, height);
   layer.add(wash);
   // 가장자리는 살짝만 누른다 — 네 변 그라데이션이라 기운 변 밖으로 새지 않게 판 모양으로 가둔다.
   layer.add(drawFrameVignette(scene, 0, 0, width, height, { strength: 0.42 }).setMask(shapeClipMask(scene, layer, shape)));

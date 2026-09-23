@@ -14,6 +14,8 @@ export interface RaidSummonCinematicOptions {
   difficulty: RaidDifficulty;
   level: number;
   depth: number;
+  /** 보스가 드러난 순간. 부른 쪽이 검사 채널에 알린다. */
+  onReveal?: () => void;
   /** 드러난 뒤 화면을 누르면 부른다. 연출이 스스로 닫히지 않는다 — 누가 나왔는지 읽을 틈을 준다. */
   onDone: () => void;
 }
@@ -69,7 +71,7 @@ export function playRaidSummonCinematic(scene: Phaser.Scene, options: RaidSummon
     seal.setAngle(sealState.spin);
   };
   drawSeal();
-  const gather = scene.tweens.add({
+  scene.tweens.add({
     targets: sealState, radius: radius * 0.28, spin: 8, duration: intensity.charge, ease: "Cubic.easeIn",
     onUpdate: drawSeal,
   });
@@ -98,7 +100,9 @@ export function playRaidSummonCinematic(scene: Phaser.Scene, options: RaidSummon
   const reveal = (): void => {
     if (revealed) return;
     revealed = true;
-    gather.stop();
+    // 모임이 이미 끝났으면 그 트윈은 사라졌다 — 끝난 트윈을 멈추라고 하면 던지므로 대상으로 걷는다.
+    scene.tweens.killTweensOf(sealState);
+    scene.tweens.killTweensOf(shards);
     tremble.remove(false);
     seal.destroy();
     shards.forEach((piece) => piece.destroy());
@@ -123,6 +127,7 @@ export function playRaidSummonCinematic(scene: Phaser.Scene, options: RaidSummon
       .setOrigin(0.5).setAlpha(0);
     root.add(hint);
     scene.tweens.add({ targets: hint, alpha: 0.72, duration: 300, delay: 700 });
+    options.onReveal?.();
   };
   const charge = scene.time.delayedCall(intensity.charge, reveal);
 

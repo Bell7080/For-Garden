@@ -3,8 +3,6 @@ export const DUNGEON_KO = {
   "dungeon.enemyPower": "적 전투력",
   "dungeon.reward": "보상",
   "dungeon.tier.level": "LV.{level}",
-  // 야성 몫은 곱하기 전의 단계라 레벨 옆에 붉은 `+n`으로 갈라 선다.
-  "dungeon.tier.bonus": "+{bonus}",
   "dungeon.multiplier": "x{value}",
   "dungeon.sortie": "출격",
   "dungeon.sweep": "소탕",

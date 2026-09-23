@@ -3,7 +3,6 @@ export const DUNGEON_EN = {
   "dungeon.enemyPower": "Enemy Combat Power",
   "dungeon.reward": "Reward",
   "dungeon.tier.level": "LV.{level}",
-  "dungeon.tier.bonus": "+{bonus}",
   "dungeon.multiplier": "x{value}",
   "dungeon.sortie": "Sortie",
   "dungeon.sweep": "Sweep",

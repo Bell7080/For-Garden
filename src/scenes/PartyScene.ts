@@ -12,6 +12,7 @@ import { bindLongPress } from "../ui/longPressInfo";
 import type { PuppetCreature } from "../puppets/assets";
 import { placePuppet, spawnPuppet } from "../puppets/assets";
 import { getBattleStage } from "../data/stages";
+import { ENCOUNTER_ROLE } from "../core/levelDesign";
 import { addStageEliteMark } from "../ui/stageEliteMark";
 import { session } from "../state/session";
 import { gameApi } from "../api/FakeServer";
@@ -46,7 +47,6 @@ import { partyEntryErrorView } from "./partyEntryError";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { normalizePartyContent, partyPreview, type PartyContent, type PartyPreview, type PartyPreviewEnemy } from "../data/partyContent";
 import { consumeSceneEntry } from "./sceneEntry";
-import { enemyPresenceBodyScale } from "../data/enemyPresence";
 import { getBountyTier } from "../data/bounty";
 import { getCakeOperationTier } from "../data/cakeOperation";
 import type { BountyBattleInputDto } from "../core/bountyRun";
@@ -332,8 +332,8 @@ export class PartyScene extends Phaser.Scene {
     // 한 줄로 촘촘히 선다.
     const shown = preview.shown;
     const enemyColumns = partyPreviewEnemyColumns(shown.length);
-    const bodyScale = partyPreviewEnemyScale(enemyPresenceBodyScale(preview.presence));
-    const elite = preview.presence === "elite" || preview.presence === "raid";
+    const bodyScale = partyPreviewEnemyScale(ENCOUNTER_ROLE[preview.role].bodyScale);
+    const elite = preview.role !== "normal" && preview.role !== "swarm";
     // 다섯이 한 줄에 서면 칸이 좁아 직군·돌파 표식과 이름줄이 옆 칸을 침범한다. 그 줄은 속성과
     // 이름줄만 남긴다 — 다섯 자매는 속성만 다른 같은 몸이라 속성이 곧 고를 이유다.
     const crowded = shown.length > PARTY_PREVIEW_COLUMNS.length;
@@ -442,13 +442,13 @@ export class PartyScene extends Phaser.Scene {
 
     // 체력은 적지 않는다 — 붙어 볼지 정하는 데 필요한 것은 개체별 수치가 아니라 아래의
     // 두 총 전투력이다. 이름줄은 노드 미리보기와 같은 프리팹을 쓴다(레벨 강조색·이름 흰색).
-    addUnitNameplate(this, undefined, x, ENEMY_ROW + 26, enemy.level, def.name, crowded ? 24 : 30, enemy.ferocityLevel ?? 0);
+    addUnitNameplate(this, undefined, x, ENEMY_ROW + 26, enemy.level, def.name, crowded ? 24 : 30);
     // **적을 누르면 상세가 열린다.** 옆에 물음표를 하나 더 세우면 SD와 표식 사이에 눌러야 할
     // 것이 둘이 되고, 정작 크게 서 있는 SD는 눌러도 아무 일이 없다.
     this.add.rectangle(x, ENEMY_ROW - PREVIEW_HEIGHT / 2, crowded ? 170 : 210, PREVIEW_HEIGHT + 70, 0xffffff, 0)
       .setDepth(4)
       .setInteractive({ useHandCursor: true })
-      .on("pointerup", () => this.enemyInfo.show({ def, level: enemy.level, breakthrough: enemy.breakthrough, ferocityLevel: enemy.ferocityLevel }));
+      .on("pointerup", () => this.enemyInfo.show({ def, level: enemy.level, breakthrough: enemy.breakthrough }));
   }
 
   /** 머리글. 스토리는 관문 번호와 이름, 던전은 콘텐츠 이름과 단계다. */

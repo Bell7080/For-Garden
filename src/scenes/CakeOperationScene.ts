@@ -4,7 +4,7 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
 import { gameApi } from "../api/FakeServer";
 import { session } from "../state/session";
-import { CAKE_OPERATION_TIERS, cakeOperationEnemies, cakeOperationRunCost, cakeOperationTierIndex, isCakeTierUnlocked, type CakeOperationTier } from "../data/cakeOperation";
+import { CAKE_OPERATION_TIERS, cakeOperationEnemies, cakeOperationEnemyDisplayLevel, cakeOperationRunCost, cakeOperationTierIndex, isCakeTierUnlocked, type CakeOperationTier } from "../data/cakeOperation";
 import { applyDungeonMultiplier, isMultiplierUnlocked, normalizeMultiplier, sweepRefusal, type DungeonMultiplier } from "../core/dungeonShortcut";
 import { combatPower } from "../core/combatPower";
 import { DUNGEON_LOBBY } from "../ui/dungeonLobbyLayout";
@@ -114,7 +114,7 @@ export class CakeOperationScene extends Phaser.Scene {
     });
     this.lobby?.render({
       tiers: CAKE_OPERATION_TIERS.map((entry) => ({
-        id: entry.id, name: entry.name, level: entry.enemyLevel, ferocityLevel: entry.ferocityLevel,
+        id: entry.id, name: entry.name, level: cakeOperationEnemyDisplayLevel(entry).level,
         reward: { icon: "currency-cheesecake", amount: entry.rewardCheesecake },
         enemyPower: cakeOperationEnemies(entry).reduce((sum, def) => sum + combatPower(def.stats), 0),
         unlocked: isCakeTierUnlocked(entry.id, clearedIndex),

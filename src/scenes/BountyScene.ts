@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { gameApi } from "../api/FakeServer";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { bountyRoundEnemy, BOUNTY, BOUNTY_TIERS, getBountyTier } from "../data/bounty";
+import { bountyRoundEnemy, bountyRoundLevel, BOUNTY, BOUNTY_TIERS, getBountyTier } from "../data/bounty";
 import { bountyRunCost, bountyTierProgress } from "../core/bountyRun";
 import { applyDungeonMultiplier, isMultiplierUnlocked, normalizeMultiplier, sweepRefusal, type DungeonMultiplier } from "../core/dungeonShortcut";
 import { combatPower } from "../core/combatPower";
@@ -141,9 +141,8 @@ export class BountyScene extends Phaser.Scene {
     this.lobby?.render({
       tiers: rows.map((row) => ({
         id: row.tier.id, name: row.tier.name,
-        // 한 등급의 셋은 같은 레벨로 자라 있고 다른 것은 얼마나 사나운가뿐이다. 줄에는 레벨만
-        // 적고, 라운드마다 다른 야성 단계는 편성 화면의 이름줄이 개체마다 붉게 말한다.
-        level: row.tier.rounds[0].level, ferocityLevel: 0,
+        // 한 등급의 셋은 같은 레벨로 선다.
+        level: bountyRoundLevel(row.tier.rounds[0]),
         faces: row.tier.rounds.map((round) => getRelic(round.relicId).portraitAssetId),
         reward: { icon: "currency-gold", amount: row.tier.rewardGold },
         enemyPower: row.tier.rounds.reduce((sum, round) => sum + combatPower(bountyRoundEnemy(round).stats), 0),

@@ -1,7 +1,7 @@
-import { applyBreakthrough, applyLevelGrowth } from "../core/relicProgression";
+import { applyBreakthrough } from "../core/relicProgression";
 import { registerDataText } from "../i18n";
-import { enemyPresenceFor, type EnemyPresence } from "./enemyPresence";
-import { effectiveEnemyLevel, type ChapterDef, type RelicDef, type StageDef, type StageEnemyDef } from "../core/types";
+import { applyEncounterScaling, encounterEnemyLevel, encounterRoleFor, type EncounterRole } from "../core/levelDesign";
+import { type ChapterDef, type RelicDef, type StageDef, type StageEnemyDef } from "../core/types";
 import { getRelic } from "./relics";
 
 /** 챕터 1의 기본 악당 셋은 영구 캐릭터 ID만 공유하고 성장 상태는 각 스테이지가 소유한다. */
@@ -17,107 +17,42 @@ export const FIXED_STAGE_ENEMIES = ["toby", "amo", "ripa"] as const;
 const STAGE_ENEMY_FORMATION = ["amo", "toby", "ripa"] as const;
 
 /** 스테이지 난이도를 캐릭터 수치가 아닌 공개 성장 축과 검증 가능한 배치로만 표현한다. */
-function enemyGrowth(relicId: string, level: number, breakthrough: number, formationSlot: 0 | 1 | 2, ferocityLevel = 0): StageEnemyDef {
-  return { relicId, level, breakthrough, formationSlot, ...(ferocityLevel > 0 ? { ferocityLevel } : {}) };
+function enemyGrowth(relicId: string, level: number, breakthrough: number, formationSlot: 0 | 1 | 2): StageEnemyDef {
+  return { relicId, level, breakthrough, formationSlot };
 }
 
 /**
- * 1장의 적 사다리 — **자란 레벨과 난폭해진 몫을 나눠 적는다.**
+ * **스토리의 권장 레벨 사다리 — 서른 관문에 하나씩.**
  *
- * 관문이 무거워지는 몫은 두 축에서 온다. `CHAPTER_ONE_LEVELS`는 그 개체가 **얼마나 자랐나**
- * (화면에 흰 `LV.n`), `CHAPTER_ONE_FEROCITY`는 야성으로 **얼마나 난폭해졌나**(그 옆의 붉은
- * `+n`)다. 둘은 같은 성장 공식을 지나므로 전투에서는 합이 곧 그 개체의 레벨이지만, 화면에서는
- * "잡졸이 갑자기 30레벨이 됐다"가 아니라 "같은 개체가 사나워졌다"로 읽힌다.
+ * 그 관문에 닿은 사람이 대략 몇 레벨인가이고, 적 레벨은 여기에 **유형 차 하나**만 더해서
+ * 나온다(`encounterEnemyLevel` — 잡졸 +0, 정예 +3). 예전에는 자란 레벨과 야성 단계 두 표가
+ * 있었고 야성이 잡졸 ×3 · 정예 ×5로 얹혀, 화면의 `LV.7 +20`이 실제로는 107레벨이었다.
  *
- * 합(실효 레벨)은 눈대중이 아니라 `src/core/stageBalance.ts`의 곡선에서 거꾸로 푼다. 스토리
- * 첫 클리어 보상만 받은 **바닥 파티**(토리카·도디·파루아 — SSR을 전제하지 않는다)를 두 갈래
- * (몰아주기·균등)로 세워 둘 다 전승하는 최고 적 레벨(전멸선)을 찾고, 관문 순서에 따라 그
- * 선에 35%에서 100%까지 다가서게 한다. 값을 손으로 고치지 말고 그 선을 다시 재서 이 표를
- * 갈아 끼운다.
+ * **한계 돌파 사다리 위에 놓는다.** 돌파 0의 상한은 20이고 한 단계마다 30·40·50·60으로
+ * 열리므로(`BREAKTHROUGH_STEPS`), 1장은 상한 20 안에서 끝나고 2장 중반부터 1단계, 3장이
+ * 2~3단계를 전제한다 — 상한을 넘는 레벨을 권장으로 적으면 그 관문은 "더 키우면 된다"가
+ * 아니라 **막힌 문**이 된다.
  *
- * **v0.98.0에서 다시 풀었다.** 적 셋이 R 띠의 위쪽으로 올라와(공멸 3인조 2085~2098 → 2186~2187)
- * 같은 레벨이 더 무거워졌고, 전멸선이 그만큼 내려왔다. 실효 레벨의 약 4분의 1을 야성 몫으로
- * 떼어 두 표로 나눴다.
+ * **뒤로 가지 않는다.** 같은 수가 이어지는 구간은 있어도 내려가는 자리는 없다 — 장을 넘는
+ * 순간 적이 약해지면 그때까지 쌓은 긴장이 풀린다.
  */
-const CHAPTER_ONE_LEVELS: readonly number[] = [4, 5, 6, 7, 7, 8, 9, 9, 10, 10];
-
-/**
- * 1장에서 야성으로 얹히는 몫. 관문이 뒤로 갈수록 같은 개체가 더 사나워진다.
- *
- * 정예 관문의 자리(1-5·1-10)는 이 표를 읽지 않는다 — 그 둘은 `CHAPTER_ONE_ELITE_FEROCITY`가 갖는다.
- *
- * **후반 넷(1-6~1-9)을 다시 풀었다.** 3·3·4·4로 두었을 때 이 장은 **정예에서만 무거워지고
- * 잡졸은 처음부터 끝까지 같았다** — 기준 조합(엘라·마키·스테라)의 잔여 체력이 1-1 0.85에서
- * 1-9 0.86으로, 아홉 관문 내내 한 뼘도 움직이지 않았다. 정예 둘(1-5 0.25 · 1-10 0.21)만
- * 벽이고 그 사이는 1장 첫 관문과 같은 무게라, 1-5를 넘은 사람이 1-6에서 **되돌아간 것처럼**
- * 느낀다.
- *
- * 이제 **실효 레벨이 열 관문 내내 한 번도 내려가지 않는다**(레벨 + 야성 단계 × 3):
- * 7 → 11 → 15 → 19 → [1-5 정예] → 20 → 21 → 24 → 25 → [1-10 정예]. 잡졸 구간이 정예를
- * 지난 뒤에도 계속 올라가므로, 1-5를 넘은 사람이 1-6에서 1장 첫 관문으로 되돌아가지 않는다.
- *
- * **더 올리지 못하는 이유는 잡졸이 길이지 관문이 아니기 때문이다.** 세 블렌딩 조합이 모두
- * 전승으로 흘러야 하고(`ELITE_STAGE_IDS` 위 주석), 그중 가장 얇은 앤키+렉시아+루카가 +6에서
- * 무너진다(1-7 승률 0.63 · 1-9 0.875). 잡졸을 정예 높이까지 끌어올리려면 그 계약을 먼저
- * 바꿔야 한다 — 값만 키우면 길이 관문이 된다.
- *
- * **위로는 두 천장이 함께 누른다.** 하나는 2장의 첫 관문으로, 실효 25레벨이라 1-9가 그보다
- * 높으면 장을 넘는 순간 적이 약해진다(`야성 추가 레벨은 … 실효 레벨은 관문 순서를 따라
- * 내려가지 않는다`). 다른 하나는 위의 잡졸 전승 계약이다. 그래서 1-9는 실효 25에 딱 붙어 서고,
- * 그 아래 셋이 20 → 21 → 24로 올라와 1-4(19)와 이어진다.
- */
-const CHAPTER_ONE_FEROCITY: readonly number[] = [1, 2, 3, 4, 3, 4, 4, 5, 5, 4];
-
-/*
- * **이 표가 적는 것도 화면이 세우는 것도 야성 "단계"이고, 능력치에 얹히는 레벨은 그 몇 배다**
- * (`ferocityBonusLevels` — 잡졸 3배, 정예 5배). 한 단계가 한 레벨과 같은 무게였을 때는 관문을
- * 조이는 손잡이가 사실상 레벨 하나뿐이라 1장 전체가 **전원 1레벨로도 밀렸다.**
- *
- * 곱한 값을 데이터나 화면에 세우지 않는다 — `LV.10 +110`은 그 개체가 110레벨만큼 자란 것으로
- * 읽혀, 자란 축이 아닌 야성을 레벨과 나란히 읽게 만든다. 배율은 `getStageEnemies`가 능력치를
- * 구하는 그 한 줄에서만 돈다.
- */
+const STORY_RECOMMENDED_LEVELS: readonly number[] = [
+  7, 8, 10, 11, 13, 15, 16, 18, 19, 20,
+  23, 24, 26, 27, 29, 30, 32, 33, 35, 36,
+  36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
+];
 
 /**
  * **단일 정예 관문.** 그 자리에는 셋 대신 하나가 선다.
  *
- * 원정 지도의 정예 노드와 같은 문법이다 — 여럿 대신 하나가 나오고 그 하나가 더 무겁다.
- * 1-5는 방벽을 뜯고 혼자 남은 토비, 1-10은 공멸 선봉 코마다.
- *
- * **무거워지는 몫은 아래 야성 표 하나에만 있다.** 정예라고 능력치에 배율을 곱하지 않는다 —
- * 곱하는 순간 화면에 선 `LV.n`과 실제로 맞는 수치가 갈리고, 관문을 조일 때 움직일 수가 둘이
- * 된다. 정예 표식이 여는 것은 몸집과 표식뿐이다(`ENEMY_PRESENCE.elite`).
+ * 1-5는 방벽을 뜯고 혼자 남은 토비, 1-10은 공멸 선봉 코마다. **혼자 서는 만큼 무겁다** —
+ * 셋이 나눠 내던 체력을 하나가 대신하는 몫은 유형 표(`ENCOUNTER_ROLE.elite`)가 갖고, 이
+ * 표는 어느 자리가 정예인지만 적는다.
  */
-const CHAPTER_ONE_ELITES: Readonly<Record<number, string>> = { 5: "toby", 10: "koma" };
-
-/**
- * 정예가 홀로 설 때의 야성 몫.
- *
- * 셋이 나눠 내던 화력과 체력을 하나가 대신하므로 잡졸 표(`CHAPTER_ONE_FEROCITY`)보다 훨씬
- * 크다. 값은 눈대중이 아니라 실제 전투로 잰다 — 바닥 파티를 두 갈래로 세워 돌리고, 잔여 체력
- * 평균이 같은 장의 다른 관문과 같은 띠(0.61~0.73)에 들어오는 자리를 고른다.
- *
- * **여기를 더 올려도 관문이 무거워지지는 않는다.** 하나가 셋을 상대하는 자리라 그 하나가 한
- * 번에 때릴 수 있는 것도 하나뿐이고, 그래서 야성을 80까지 올려도 바닥 파티의 잔여 체력이
- * 0.62에서 0.58 언저리로만 움직였다(한 명이 쓰러지고 나머지 둘은 멀쩡한 판이 그대로 남는다).
- * **정예가 실제로 무서워지는 몫은 수치가 아니라 그 개체의 기술이다** — 토비의 「일단 뜯고
- * 본다」가 주위를 통째로 넘기고 코마의 「추락하는 방주」가 통로를 뚫는 것이 그 때문이다.
- * 관문이 가벼워 보이면 이 수를 키우기 전에 그 개체가 몇을 때리는지를 먼저 본다.
- */
-/*
- * **코마를 풀로 옮기면서 1-10을 다시 풀었다.** 22단계(= +110레벨)는 코마가 불이던 때 물·땅
- * 딜러가 1.25배를 주고 0.8배로 맞아 **합쳐 1.56배**로 뚫던 높이다. 풀이 되어 그 이점이 사라지자
- * 같은 높이에서 27개 조합이 전부 0~0.125로 주저앉았다 — 벽이 아니라 길이 끊긴 것이다.
- *
- * 14단계는 **속성을 맞춰 온 파티만 확실히 넘는 높이**다(실측: 불 딜러 1.000 · 땅 0.625 ·
- * 물 0.500). 관문이 "무엇을 데려왔나"를 처음 묻는 자리라 그 답이 통과 여부로 돌아온다.
-
- *
- * **여기에 무리 유형이 얹히지 않는다.** 정예에 공속·이속 5%를 준 적이 있는데, 그것만으로
- * 두 관문이 **모든 조합을 막아** 위 축이 통째로 사라졌다 — 눈에 보이는 수치라도 세기를
- * 바꾸면 그것은 두 번째 손잡이다. 정예가 무거워지는 몫은 이 표 하나가 전부다.
- */
-const CHAPTER_ONE_ELITE_FEROCITY: Readonly<Record<number, number>> = { 5: 20, 10: 14 };
+const CHAPTER_ONE_ELITES: Readonly<Record<number, { relicId: string; recommended: number }>> = {
+  5: { relicId: "toby", recommended: 16 },
+  10: { relicId: "koma", recommended: 14 },
+};
 
 /**
  * 1장의 적 편성. 정예 관문만 하나가 서고 나머지는 같은 셋이 같은 자리에 선다.
@@ -128,39 +63,19 @@ const CHAPTER_ONE_ELITE_FEROCITY: Readonly<Record<number, number>> = { 5: 20, 10
  * 가르치는 자리라, 그 축을 걷어 내고 무게는 레벨과 야성 둘로만 낸다.
  */
 const CHAPTER_ONE_ENEMIES: readonly (readonly StageEnemyDef[])[] =
-  CHAPTER_ONE_LEVELS.map((level, index) => {
+  STORY_RECOMMENDED_LEVELS.slice(0, 10).map((recommended, index) => {
     const chapterOrder = index + 1;
-    const eliteId = CHAPTER_ONE_ELITES[chapterOrder];
+    const elite = CHAPTER_ONE_ELITES[chapterOrder];
     // 홀로 서는 정예는 가운데 자리(1)를 쓴다 — 왼쪽 끝에 세우면 빈 두 자리가 편성 실수처럼 보인다.
-    if (eliteId) return [enemyGrowth(eliteId, level, 0, 1, CHAPTER_ONE_ELITE_FEROCITY[chapterOrder] ?? 0)];
-    const ferocity = CHAPTER_ONE_FEROCITY[index] ?? 0;
-    return STAGE_ENEMY_FORMATION.map((id, slot) => enemyGrowth(id, level, 0, slot as 0 | 1 | 2, ferocity));
+    if (elite) return [enemyGrowth(elite.relicId, encounterEnemyLevel(elite.recommended, "elite"), 0, 1)];
+    return STAGE_ENEMY_FORMATION.map((id, slot) =>
+      enemyGrowth(id, encounterEnemyLevel(recommended, "normal"), 0, slot as 0 | 1 | 2));
   });
 
 /**
  * 스테이지. 지도에서 아래에서 위로 올라가는 순서 그대로다.
  * 적은 셋이 기본이고 **정예 관문만 하나**다(`CHAPTER_ONE_ELITES`).
  */
-/**
- * 2·3장의 적 레벨. 1장과 같은 곡선의 이어짐이며 **레벨은 끝까지 뒤로 가지 않는다.**
- *
- * 같은 레벨이 두세 관문씩 이어지는 구간이 있는 것은 그때 단조 하한이 곡선보다 높기 때문이다 —
- * 바닥 파티의 전멸선은 스토리 보상만으로 자라므로 뒤로 갈수록 천천히 오른다. 곡선을 더 크게
- * 그리려면 적 레벨이 아니라 **스토리 보상**을 키워 파티가 더 빨리 자라게 해야 한다.
- *
- * 마지막 3-10만 곡선의 연장(31 → 32)으로 적었다. 그 관문의 폰토스는 원정 최종층 개체라
- * 바닥 파티가 어떤 레벨에서도 이기지 못해 기준점이 될 수 없고, 스토리에서는 추후 뺀다.
- */
-const LATER_CHAPTER_LEVELS: readonly number[] = [
-  10, 10, 10, 10, 10, 10, 10, 10, 10, 11,
-  12, 13, 14, 14, 15, 15, 16, 17, 17, 18,
-];
-
-/** 2·3장의 야성 몫. 1장과 같은 결로 이어지며 실효 레벨(레벨 + 야성)은 끝까지 뒤로 가지 않는다. */
-const LATER_CHAPTER_FEROCITY: readonly number[] = [
-  5, 5, 5, 6, 6, 6, 6, 7, 7, 7,
-  7, 7, 8, 8, 8, 8, 9, 9, 9, 9,
-];
 
 /**
  * 관문 한 줄(`BattleStageDef.situation`).
@@ -219,8 +134,7 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
      * 관문의 무게는 레벨과 야성 둘로만 낸다.
      */
     const laterChapterEnemies = laterChapterIds.map((relicId, slot) =>
-      enemyGrowth(relicId, LATER_CHAPTER_LEVELS[globalOrder - 10] ?? globalOrder + 1, 0, slot as 0 | 1 | 2, LATER_CHAPTER_FEROCITY[globalOrder - 10] ?? 0),
-    );
+      enemyGrowth(relicId, encounterEnemyLevel(STORY_RECOMMENDED_LEVELS[globalOrder] ?? 1, "normal"), 0, slot as 0 | 1 | 2));
     const enemies = chapter === 1 ? CHAPTER_ONE_ENEMIES[orderIndex] : laterChapterEnemies;
     return {
       kind: "battle",
@@ -287,19 +201,18 @@ export function stageEnemyGrowth(stage: Extract<StageDef, { kind: "battle" }>): 
  * 화면(전투·편성 미리보기·노드 정보창)과 성장이 같은 한 줄을 읽어야 미리 본 크기와 실제로
  * 선 크기가 갈리지 않는다.
  */
-export function stageEnemyPresence(stage: Extract<StageDef, { kind: "battle" }>): EnemyPresence {
-  return enemyPresenceFor(stage.enemies.length, { elite: stage.elite === true });
+export function stageEnemyRole(stage: Extract<StageDef, { kind: "battle" }>): EncounterRole {
+  return encounterRoleFor(stage.enemies.length, { elite: stage.elite === true });
 }
 
 /** 플레이어와 같은 레벨→돌파 순서로 성장시키며 영구 캐릭터 정의는 변경하지 않는다. */
 export function getStageEnemies(stage: Extract<StageDef, { kind: "battle" }>): RelicDef[] {
+  const role = stageEnemyRole(stage);
   // 배열을 재정렬해도 실제 전투 배치는 formationSlot이라는 데이터 계약을 따른다.
   return stageEnemyGrowth(stage).map((enemy) => {
     const base = getRelic(enemy.relicId);
-    // 야성으로 얹힌 몫도 레벨과 **같은 성장 공식**을 지난다 — 스테이지 전용 배율을 만들지 않고,
-    // 관문의 무게를 그 수 하나로 움직이기 위해서다.
-    const leveled = applyLevelGrowth(base.stats, effectiveEnemyLevel(enemy, stage.elite === true), base.rarity);
-    return { ...base, stats: applyBreakthrough(leveled, enemy.breakthrough) };
+    // 레벨로 자라고 유형으로 몫을 받는다. 스테이지 전용 배율은 만들지 않는다.
+    return { ...base, stats: applyBreakthrough(applyEncounterScaling(base.stats, enemy.level, role), enemy.breakthrough) };
   });
 }
 

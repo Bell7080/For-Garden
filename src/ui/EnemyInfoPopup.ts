@@ -37,7 +37,6 @@ export interface EnemyInfoSnapshot {
   level: number;
   breakthrough: number;
   /** 야성으로 얹힌 추가 레벨. 레벨 옆에 작고 붉게 선다. */
-  ferocityLevel?: number;
 }
 
 /** 팝업 몸판 가운데가 화면에서 앉는 자리. 원화와 SD는 컨테이너가 아니라 이 화면 좌표에 선다. */
@@ -278,13 +277,6 @@ export class EnemyInfoPopup {
     panel.add(scene.add
       .text(value.x + value.displayWidth + 14, value.y + value.displayHeight - 4, `/ ${relicLevelCap(snapshot.breakthrough)}`, textStyle({ role: "emphasis", size: 28, color: COLOR.inkDim }))
       .setOrigin(0, 1));
-    const bonus = Math.max(0, snapshot.ferocityLevel ?? 0);
-    if (bonus > 0) {
-      panel.add(scene.add
-        .text(column.width / 2 - 44, 6, `+${bonus}`, textStyle({ role: "display", size: 46, color: COLOR.ferocityHotText }))
-        .setOrigin(1, 0.5)
-        .setShadow(3, 8, "#05070a", 10, false, true));
-    }
   }
 
   /** 능력치 칸 — 정보창과 **같은 오각형·같은 반지름·같은 사거리 줄**이다. */

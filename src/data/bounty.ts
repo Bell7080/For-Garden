@@ -1,9 +1,8 @@
-import { applyLevelGrowth } from "../core/relicProgression";
-import { effectiveEnemyLevel, type RelicDef } from "../core/types";
+import type { RelicDef } from "../core/types";
 import { registerDataText } from "../i18n";
 import { CONTENT_STAMINA_COSTS } from "./contentCosts";
 import { getRelic } from "./relics";
-import { enemyPresenceFor } from "./enemyPresence";
+import { applyEncounterScaling, encounterEnemyLevel, encounterRoleFor } from "../core/levelDesign";
 
 /**
  * 현상수배 한 라운드에 서는 정예 하나.
@@ -15,8 +14,6 @@ import { enemyPresenceFor } from "./enemyPresence";
 export interface BountyRoundDef {
   relicId: string;
   level: number;
-  /** 화면의 붉은 `+n`과 같은 **단계**다. 능력치에 얹히는 몫은 정예 배율이 곱한 값이다. */
-  ferocityLevel: number;
 }
 
 /** 한 번의 현상수배 의뢰. 세 라운드를 모두 이겨야 보상이 나온다. */
@@ -72,21 +69,21 @@ export const BOUNTY = {
 export const BOUNTY_TIERS: readonly BountyTierDef[] = [
   // 1급은 스토리 1장을 막 민 파티(레벨 15 언저리)가 들어서는 자리다.
   { id: "bounty-1", order: 1, name: "현상수배 1급", rewardGold: 3_000, rounds: [
-    { relicId: "toby", level: 5, ferocityLevel: 1 }, { relicId: "amo", level: 5, ferocityLevel: 0 }, { relicId: "koma", level: 5, ferocityLevel: 0 },
+    { relicId: "toby", level: 5 }, { relicId: "amo", level: 5 }, { relicId: "koma", level: 5 },
   ] },
   // 2급부터 레벨 상한(20)을 채운 셋을 요구한다.
   { id: "bounty-2", order: 2, name: "현상수배 2급", rewardGold: 5_000, rounds: [
-    { relicId: "toby", level: 15, ferocityLevel: 1 }, { relicId: "amo", level: 15, ferocityLevel: 0 }, { relicId: "koma", level: 15, ferocityLevel: 0 },
+    { relicId: "toby", level: 15 }, { relicId: "amo", level: 15 }, { relicId: "koma", level: 15 },
   ] },
   { id: "bounty-3", order: 3, name: "현상수배 3급", rewardGold: 8_000, rounds: [
-    { relicId: "toby", level: 25, ferocityLevel: 2 }, { relicId: "amo", level: 25, ferocityLevel: 2 }, { relicId: "koma", level: 25, ferocityLevel: 0 },
+    { relicId: "toby", level: 25 }, { relicId: "amo", level: 25 }, { relicId: "koma", level: 25 },
   ] },
   { id: "bounty-4", order: 4, name: "현상수배 4급", rewardGold: 12_000, rounds: [
-    { relicId: "toby", level: 40, ferocityLevel: 2 }, { relicId: "amo", level: 40, ferocityLevel: 2 }, { relicId: "koma", level: 40, ferocityLevel: 0 },
+    { relicId: "toby", level: 40 }, { relicId: "amo", level: 40 }, { relicId: "koma", level: 40 },
   ] },
   // 5급은 돌파로 상한을 연 만렙 셋의 자리다.
   { id: "bounty-5", order: 5, name: "현상수배 5급", rewardGold: 18_000, rounds: [
-    { relicId: "toby", level: 50, ferocityLevel: 4 }, { relicId: "amo", level: 50, ferocityLevel: 4 }, { relicId: "koma", level: 50, ferocityLevel: 0 },
+    { relicId: "toby", level: 50 }, { relicId: "amo", level: 50 }, { relicId: "koma", level: 50 },
   ] },
 ];
 
@@ -107,11 +104,23 @@ export function getBountyTier(id: string): BountyTierDef {
  */
 export function bountyRoundEnemy(round: BountyRoundDef): RelicDef {
   const base = getRelic(round.relicId);
-  return { ...base, stats: applyLevelGrowth(base.stats, effectiveEnemyLevel(round, true), base.rarity) };
+  return { ...base, stats: applyEncounterScaling(base.stats, bountyRoundLevel(round), BOUNTY_ROLE) };
 }
 
-/** 현상수배는 언제나 정예 하나가 혼자 선다. 화면이 같은 값을 읽도록 그 유형을 한 곳에 둔다. */
-export const BOUNTY_PRESENCE = enemyPresenceFor(1, { elite: true });
+/**
+ * 현상수배의 조우 유형은 **잡졸과 같은 한 몫**이다.
+ *
+ * 이름은 "정예를 사냥한다"이지만 판의 모양은 **1대1 세 판**이라, 편성 하나가 적 하나를 맡는다 —
+ * 유형 배수는 "그 하나가 몇 몫을 하는가"이고 여기서는 한 몫이다. 정예 배수(체력 3.6배)를
+ * 얹었더니 1급 3라운드를 **확실히 이기는 개체가 한 종도 남지 않았다**(`bountyBalance`).
+ * 셋이 하나를 미는 자리에만 그 몫이 붙는다.
+ */
+export const BOUNTY_ROLE = encounterRoleFor(1);
+
+/** 그 라운드에 실제로 서는 레벨 — 권장 레벨에 정예 차 하나만 얹는다. */
+export function bountyRoundLevel(round: BountyRoundDef): number {
+  return encounterEnemyLevel(round.level, BOUNTY_ROLE);
+}
 
 /** 등급 이름을 언어별로 덮어쓸 수 있게 등록한다. */
 for (const tier of BOUNTY_TIERS) registerDataText(tier, "name", `bounty.tier.${tier.id}.name`);

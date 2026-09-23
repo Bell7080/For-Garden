@@ -15,8 +15,8 @@ import { addSectionTitle } from "../ui/SectionTitle";
 import { PopupLayer } from "../ui/PopupLayer";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { RANKING_LIST, RANKING_VISIBLE_RANKS, rankingMedal, rankingRowY } from "../ui/expeditionRankingLayout";
-import { chipPoints, drawGlassFade, drawLayer, drawVignette, HOLO, HoloBar } from "../ui/holo";
-import { RAID_ACTIONS, RAID_BOARD, RAID_BOSS_SPOT, RAID_HEADER, RAID_HP_BAR, RAID_HP_BAR_COLOR, raidBoardViewport } from "../ui/raidLayout";
+import { chipPoints, drawGlassFade, drawLayer, drawVignette, HOLO, HoloBar, slantedRect } from "../ui/holo";
+import { RAID_ACTIONS, RAID_BOARD, RAID_BOARD_PLATE, RAID_BOSS_SPOT, RAID_HEADER, RAID_HP_BAR, RAID_HP_BAR_COLOR, raidBoardViewport } from "../ui/raidLayout";
 import { COLOR, textStyle } from "../ui/theme";
 import { LOBBY_RETURN } from "./lobbyEntry";
 import { prefetchBattlePuppets } from "../puppets/battlePrefetch";
@@ -58,9 +58,24 @@ export class RaidScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.dispose());
     addBackButton(this, () => this.scene.start("lobby", LOBBY_RETURN.sortie));
     void this.loadBossPortrait();
-    // 원화의 아래 절반이 잠기는 띠. 남은 체력 줄의 배경도 이 한 겹이 함께 맡는다.
+    /*
+     * 원화의 아래쪽이 잠기는 띠. 남은 체력 줄의 배경도 이 한 겹이 함께 맡는다.
+     *
+     * **짙게 깔지 않는다.** 0.88로 두었을 때는 띠가 끝나는 선이 화면 한가운데를 가로로 긋고,
+     * 그 자리에서 마스크까지 원화를 끊어 하체가 통째로 잘려 나간 것처럼 보였다. 목록과의
+     * 분리는 아래의 판 한 겹이 맡으므로 이 띠는 잠기는 느낌만 낸다.
+     */
     const fade = RAID_BOSS_SPOT.fade;
-    this.add.existing(drawGlassFade(this, BASE_WIDTH / 2, (fade.top + fade.bottom) / 2, BASE_WIDTH, fade.bottom - fade.top, { bottomAlpha: 0.88 })).setDepth(8);
+    this.add.existing(drawGlassFade(this, BASE_WIDTH / 2, (fade.top + fade.bottom) / 2, BASE_WIDTH, fade.bottom - fade.top, { bottomAlpha: 0.52 })).setDepth(8);
+    /*
+     * **기여 목록은 제 판 위에 선다.** 보스를 끊는 대신 반투명 유리 한 겹을 그 앞에 깔면
+     * 원화는 판 너머로 비치면서도 목록과 분리된다 — 잘라서 만드는 분리는 단면을 남기지만
+     * 겹쳐서 만드는 분리는 깊이를 남긴다.
+     */
+    const plate = RAID_BOARD_PLATE;
+    this.add.existing(drawLayer(this, BASE_WIDTH / 2, (plate.top + plate.bottom) / 2,
+      slantedRect(plate.width, plate.bottom - plate.top), { fill: HOLO.glass, alpha: 0.72, edge: COLOR.accent, edgeAlpha: 0.4 },
+    )).setDepth(9);
     void this.refresh();
     playSceneEntrance(this);
   }
@@ -78,16 +93,16 @@ export class RaidScene extends Phaser.Scene {
     if (!this.scene.isActive()) { puppet.destroy(); return; }
     puppet.disableInteractive();
     /*
-     * **잠기는 띠 아래로는 아예 서지 않는다.**
+     * **화면 밑동까지 온전히 선다.**
      *
-     * 그라데이션 한 겹만 덮어 두었을 때는 띠가 끝나는 자리부터 다리가 다시 밝아져, 기여 목록의
-     * 반투명 유리 줄 뒤로 비쳤다 — 목록이 흐려지고 화면 아래가 시끄러워진다. 자르는 선은 띠의
-     * 아랫변과 같아서, 눈에는 어둠에 잠겨 사라지는 것으로만 보인다.
+     * 띠의 아랫변에서 끊던 때는 그 선과 짙은 그라데이션이 겹쳐 **하체가 통째로 잘려 나간
+     * 것처럼** 보였다. 목록과의 분리는 그 앞에 깔리는 반투명 판(`RAID_BOARD_PLATE`)이 맡으므로
+     * 원화는 자르지 않고, 마스크는 화면 밖으로 나가는 몫만 정리한다.
      *
      * Puppet은 컨테이너 변환을 물려받지 않으므로 마스크도 화면 좌표로 만든다(상점 무대와 같다).
      */
     this.bossMask?.destroy();
-    this.bossMask = this.add.rectangle(BASE_WIDTH / 2, RAID_BOSS_SPOT.fade.bottom / 2, BASE_WIDTH, RAID_BOSS_SPOT.fade.bottom, 0xffffff).setVisible(false);
+    this.bossMask = this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, 0xffffff).setVisible(false);
     puppet.setMask(this.bossMask.createGeometryMask());
     this.bossPortrait?.destroy();
     this.bossPortrait = puppet;

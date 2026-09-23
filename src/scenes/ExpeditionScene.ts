@@ -364,7 +364,7 @@ export class ExpeditionScene extends Phaser.Scene {
       // 선택 세대가 바뀌면 프리팹이 기존 SD와 늦게 끝난 로드 요청을 함께 폐기한다.
       // 원정은 아직 슬롯별 돌파가 없지만 같은 미리보기 계약에 각 슬롯의 성장 상태를 명시한다.
       const growth = enemies.map(() => ({ level, breakthrough: 0 }));
-      this.enemyPreview?.showAt(nodeY, { title: t("expedition.node.title", { floor: node.floor, type: names[node.type] }), growth, enemies, onEnemyClick: (enemy, slot) => this.enemyInfo?.show({ def: enemy, level: slot.level, breakthrough: slot.breakthrough, ferocityLevel: slot.ferocityLevel }) });
+      this.enemyPreview?.showAt(nodeY, { title: t("expedition.node.title", { floor: node.floor, type: names[node.type] }), growth, enemies, onEnemyClick: (enemy, slot) => this.enemyInfo?.show({ def: enemy, level: slot.level, breakthrough: slot.breakthrough }) });
       return;
     }
     this.nodeTransitionPending = true;

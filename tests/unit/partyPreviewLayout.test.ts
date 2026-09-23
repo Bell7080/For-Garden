@@ -12,7 +12,7 @@ import {
   partyPreviewEnemyScale,
   PARTY_PREVIEW_CROWD,
 } from "../../src/ui/partyPreviewLayout";
-import { enemyPresenceBodyScale } from "../../src/data/enemyPresence";
+import { ENCOUNTER_ROLE } from "../../src/core/levelDesign";
 
 /** 아군 SD의 정수리가 서는 줄. 밑판 위로 아무것도 내려오면 안 되는 경계다. */
 const ALLY_HEAD_TOP = PARTY_PREVIEW.allyRow - PARTY_PREVIEW.height;
@@ -99,11 +99,11 @@ describe("콘텐츠 편성 미리보기", () => {
   });
 
   it("레이드 보스는 상한까지만 커져 머리가 화면 제목을 뚫지 않는다", () => {
-    const scale = partyPreviewEnemyScale(enemyPresenceBodyScale("raid"));
+    const scale = partyPreviewEnemyScale(ENCOUNTER_ROLE.endless.bodyScale);
     expect(scale).toBe(PARTY_PREVIEW.maxEnemyScale);
     // 제목(y 70, 46px)의 밑변 아래에 머리 위 표식(28px)까지 들어간다.
     expect(PARTY_PREVIEW.enemyRow - PARTY_PREVIEW.height * scale - 6 - 28).toBeGreaterThan(70 + 46);
     // 정예는 상한보다 작아 그대로 선다.
-    expect(partyPreviewEnemyScale(enemyPresenceBodyScale("elite"))).toBe(enemyPresenceBodyScale("elite"));
+    expect(partyPreviewEnemyScale(ENCOUNTER_ROLE.elite.bodyScale)).toBe(ENCOUNTER_ROLE.elite.bodyScale);
   });
 });

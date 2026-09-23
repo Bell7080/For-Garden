@@ -16,10 +16,8 @@ import { COLOR, textStyle } from "./theme";
 export interface DungeonLobbyTier {
   id: string;
   name: string;
-  /** 줄에 서는 적의 자란 레벨. */
+  /** 줄에 서는 적의 레벨 — 화면에 선 `LV.n`이 곧 그 적이 싸우는 레벨이다. */
   level: number;
-  /** 레벨 옆에 붉게 갈라 서는 야성 **단계**. 곱한 값을 넘기지 않는다. */
-  ferocityLevel: number;
   /** 그 판에 서는 적의 얼굴(현상수배의 세 라운드). 비우면 줄에 얼굴을 세우지 않는다. */
   faces?: readonly PortraitAssetId[];
   /** 한 판(배율 x1)의 보상. */
@@ -89,12 +87,7 @@ export class DungeonLobby {
 
     const left = -width / 2 + padding;
     row.add(scene.add.text(left, -22, tier.name, textStyle({ role: "display", size: 36, color: COLOR.ink })).setOrigin(0, 0.5));
-    const level = scene.add.text(left, 28, t("dungeon.tier.level", { level: tier.level }), textStyle({ role: "emphasis", size: 25, color: COLOR.inkDim })).setOrigin(0, 0.5);
-    row.add(level);
-    // 야성 몫은 곱하기 전의 **단계**이고, 레벨과 갈라 읽히도록 작고 붉게 옆에 선다.
-    if (tier.ferocityLevel > 0) {
-      row.add(scene.add.text(level.x + level.width + 10, 28, t("dungeon.tier.bonus", { bonus: tier.ferocityLevel }), textStyle({ role: "emphasis", size: 22, color: COLOR.ferocityText })).setOrigin(0, 0.5));
-    }
+    row.add(scene.add.text(left, 28, t("dungeon.tier.level", { level: tier.level }), textStyle({ role: "emphasis", size: 25, color: COLOR.inkDim })).setOrigin(0, 0.5));
     tier.faces?.forEach((portraitAssetId, slot, faces) => {
       row.add(new FaceFrame(scene, dungeonRowFaceX(slot, faces.length), 0, { portraitAssetId, size: faceSize }));
     });

@@ -11,7 +11,7 @@ import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addBreakthroughGradeMark } from "./rarityMark";
 import { combatPower } from "../core/combatPower";
 
-import { enemyPresenceBodyScale, enemyPresenceFor } from "../data/enemyPresence";
+import { ENCOUNTER_ROLE, encounterRoleFor } from "../core/levelDesign";
 import { addStageEliteMark } from "./stageEliteMark";
 import { anchorEnemyPreview, enemyPreviewColumns, enemyPreviewSlotHalfWidth, NODE_ENEMY_PREVIEW, NODE_ENEMY_SITUATION, NODE_ENEMY_SLOT } from "./nodeEnemyPreviewLayout";
 
@@ -20,7 +20,7 @@ export interface NodeEnemyPreviewOptions {
   /** 제목 아래 한 줄. 비우면 그 줄을 그리지 않는다 — 서사가 없는 관문은 예전 그대로다. */
   situation?: string;
   /** 렌더된 적과 같은 슬롯 순서의 공개 성장 상태다. */
-  growth: readonly Pick<StageEnemyDef, "level" | "breakthrough" | "ferocityLevel">[];
+  growth: readonly Pick<StageEnemyDef, "level" | "breakthrough">[];
   enemies: readonly RelicDef[];
   /**
    * **단일 정예 조우**인가. 그러면 그 하나가 크게 서고 머리 위에 정예 이름표가 붙는다.
@@ -31,7 +31,7 @@ export interface NodeEnemyPreviewOptions {
   top: number;
   bottom: number;
   depth?: number;
-  onEnemyClick: (enemy: RelicDef, growth: Pick<StageEnemyDef, "level" | "breakthrough" | "ferocityLevel">) => void;
+  onEnemyClick: (enemy: RelicDef, growth: Pick<StageEnemyDef, "level" | "breakthrough">) => void;
 }
 
 /** 스토리와 원정 지도가 공유하는 노드 부착형 적 SD 편성 프리팹이다. */
@@ -99,12 +99,12 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
       addBreakthroughGradeMark(this.scene, this, x + half - 20, badgeTop - 4, compact ? 34 : 42, growth.breakthrough + 1);
       // 카드의 이름줄과 같은 규칙이다 — 레벨은 강조색, 이름은 흰색. 체력은 적지 않는다:
       // 붙어 볼지 정하는 데 필요한 것은 개체별 수치가 아니라 판 아래의 총 전투력 하나다.
-      addUnitNameplate(this.scene, this, x, NODE_ENEMY_SLOT.nameY, growth.level, enemy.name, compact ? 24 : 30, growth.ferocityLevel ?? 0);
+      addUnitNameplate(this.scene, this, x, NODE_ENEMY_SLOT.nameY, growth.level, enemy.name, compact ? 24 : 30);
       const hit = this.scene.add.rectangle(x, ground - 70, compact ? 145 : 230, 300, 0xffffff, 0).setInteractive({ useHandCursor: true });
       // 누른 칸의 성장 상태를 함께 넘긴다 — 화면이 배열 index로 다시 찾으면 순서가 바뀌는 날 어긋난다.
       hit.on("pointerup", () => this.options.onEnemyClick(enemy, growth)); this.add(hit);
       const sdHeight = (compact ? 158 : NODE_ENEMY_PREVIEW.sdHeight)
-        * enemyPresenceBodyScale(enemyPresenceFor(this.options.enemies.length, { elite: this.options.elite === true }));
+        * ENCOUNTER_ROLE[encounterRoleFor(this.options.enemies.length, { elite: this.options.elite === true })].bodyScale;
       void this.spawnEnemy(enemy.id, x, ground, sdHeight, generation);
       // 셋이 아니라 하나가 선 자리라는 것을 머리 위 이름표가 말한다.
       if (this.options.elite) addStageEliteMark(this.scene, this, x, ground - sdHeight - 6, compact ? 22 : 26);

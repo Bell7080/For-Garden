@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { encounterEnemyLevel } from "../../src/core/levelDesign";
 import { normalizePartyContent, partyPreview } from "../../src/data/partyContent";
 import { BOUNTY_TIERS } from "../../src/data/bounty";
 import { CAKE_OPERATION_TIERS } from "../../src/data/cakeOperation";
@@ -20,7 +21,7 @@ describe("편성 화면의 콘텐츠", () => {
     const preview = partyPreview({ content: "bounty", tierId: BOUNTY_TIERS[0].id, multiplier: 1 }, STAGE);
     expect(preview.shown.map(({ round }) => round)).toEqual([1, 2, 3]);
     expect(preview.shown.map(({ def }) => def.id)).toEqual(BOUNTY_TIERS[0].rounds.map(({ relicId }) => relicId));
-    expect(preview.presence).toBe("elite");
+    expect(preview.role).toBe("normal");
   });
 
   it("대작전은 대표 얼굴 다섯만 세우고 몰려오는 수 전부를 따로 든다", () => {
@@ -30,14 +31,14 @@ describe("편성 화면의 콘텐츠", () => {
     expect(new Set(preview.shown.map(({ def }) => def.element)).size).toBe(5);
     expect(preview.all).toHaveLength(tier.enemyCount);
     expect(preview.hordeCount).toBe(tier.enemyCount);
-    expect(preview.presence).toBe("swarm");
+    expect(preview.role).toBe("swarm");
   });
 
   it("레이드는 시즌 보스 하나가 레이드 유형으로 선다", () => {
     const preview = partyPreview({ content: "raid" }, STAGE);
     expect(preview.shown).toHaveLength(1);
     expect(preview.shown[0].def.id).toBe(RAID_SEASON_BOSS.relicId);
-    expect(preview.shown[0].level).toBe(RAID_SEASON_BOSS.level);
-    expect(preview.presence).toBe("raid");
+    expect(preview.shown[0].level).toBe(encounterEnemyLevel(RAID_SEASON_BOSS.level, "endless"));
+    expect(preview.role).toBe("endless");
   });
 });

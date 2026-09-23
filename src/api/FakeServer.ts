@@ -1,3 +1,4 @@
+import { encounterEnemyLevel } from "../core/levelDesign";
 import { canPull, pull, resolveAcquisitions, spend } from "../core/gacha";
 import { BANNERS } from "../data/banners";
 import { RELICS } from "../data/relics";
@@ -386,8 +387,7 @@ export class FakeServer implements GameApi {
     return {
       seasonKey,
       bossRelicId: RAID_SEASON_BOSS.relicId,
-      bossLevel: RAID_SEASON_BOSS.level,
-      bossFerocityLevel: RAID_SEASON_BOSS.ferocityLevel,
+      bossLevel: encounterEnemyLevel(RAID_SEASON_BOSS.level, "endless"),
       bossBreakthrough: RAID_SEASON_BOSS.breakthrough,
       totalHp: progress.totalHp,
       dealtDamage: progress.dealtDamage,

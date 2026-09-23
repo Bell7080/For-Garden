@@ -1,13 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { CAKE_OPERATION_ENEMY_IDS, CAKE_OPERATION_TIERS, cakeOperationRunCost, cakeOperationTierIndex, cakeOperationEnemies, cakeOperationPresence, getCakeOperationTier, isCakeTierUnlocked } from "../../src/data/cakeOperation";
+import { CAKE_OPERATION_ENEMY_IDS, CAKE_OPERATION_TIERS, cakeOperationRunCost, cakeOperationTierIndex, cakeOperationEnemies, getCakeOperationTier, isCakeTierUnlocked, cakeOperationEnemyDisplayLevel, cakeOperationRole } from "../../src/data/cakeOperation";
 import { getRelic } from "../../src/data/relics";
-import { ferocityBonusLevels } from "../../src/core/types";
-import { applyLevelGrowth } from "../../src/core/relicProgression";
+import { applyEncounterScaling } from "../../src/core/levelDesign";
 import { MAX_ENEMY_COUNT } from "../../src/core/skirmish";
 
 describe("치즈케이크 대작전 단계 표", () => {
   it("실효 레벨과 보상이 한 번도 내려가지 않는다", () => {
-    const effective = CAKE_OPERATION_TIERS.map((tier) => tier.enemyLevel + ferocityBonusLevels(tier.ferocityLevel));
+    const effective = CAKE_OPERATION_TIERS.map((tier) => cakeOperationEnemyDisplayLevel(tier).level);
     for (let index = 1; index < CAKE_OPERATION_TIERS.length; index += 1) {
       expect(effective[index], CAKE_OPERATION_TIERS[index].id).toBeGreaterThan(effective[index - 1]);
       expect(CAKE_OPERATION_TIERS[index].rewardCheesecake).toBeGreaterThan(CAKE_OPERATION_TIERS[index - 1].rewardCheesecake);
@@ -26,7 +25,7 @@ describe("치즈케이크 대작전 단계 표", () => {
       expect(tier.enemyCount, tier.id).toBeGreaterThanOrEqual(10);
       expect(tier.enemyCount, tier.id).toBeLessThanOrEqual(MAX_ENEMY_COUNT);
       expect(cakeOperationEnemies(tier), tier.id).toHaveLength(tier.enemyCount);
-      expect(cakeOperationPresence(tier), tier.id).toBe("swarm");
+      expect(cakeOperationRole(tier), tier.id).toBe("swarm");
     }
     // 위로 갈수록 적도 줄지 않는다 — 머릿수가 줄어드는 단계는 사다리가 아니라 옆길이다.
     for (let index = 1; index < CAKE_OPERATION_TIERS.length; index += 1) {
@@ -48,7 +47,7 @@ describe("치즈케이크 대작전 단계 표", () => {
     const tier = getCakeOperationTier("cake-6");
     const enemies = cakeOperationEnemies(tier);
     const base = getRelic(CAKE_OPERATION_ENEMY_IDS[0]);
-    const expected = applyLevelGrowth(base.stats, tier.enemyLevel + ferocityBonusLevels(tier.ferocityLevel), base.rarity);
+    const expected = applyEncounterScaling(base.stats, cakeOperationEnemyDisplayLevel(tier).level, cakeOperationRole(tier));
     expect(enemies[0].stats).toEqual(expected);
     // 같은 몸을 여러 전투원이 나눠 쓰면 한쪽의 피해가 다른 쪽에 묻는다.
     expect(enemies[0].stats).not.toBe(enemies[1].stats);

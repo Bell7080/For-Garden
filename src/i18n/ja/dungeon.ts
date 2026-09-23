@@ -3,7 +3,6 @@ export const DUNGEON_JA = {
   "dungeon.enemyPower": "敵戦闘力",
   "dungeon.reward": "報酬",
   "dungeon.tier.level": "LV.{level}",
-  "dungeon.tier.bonus": "+{bonus}",
   "dungeon.multiplier": "x{value}",
   "dungeon.sortie": "出撃",
   "dungeon.sweep": "掃討",

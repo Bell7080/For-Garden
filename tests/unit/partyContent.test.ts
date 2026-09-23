@@ -13,7 +13,7 @@ describe("편성 화면의 콘텐츠", () => {
   it("정보창에 서는 적의 레벨은 제 돌파 상한을 넘지 않는다", () => {
     // 레이드 보스가 LV.48에 돌파 2(상한 40)로 서 있었다 — 만들 수 없는 성장을 화면이 말했다.
     const contents = [
-      { content: "raid" } as const,
+      ...(["easy", "normal", "hard", "rampage"] as const).map((difficulty) => ({ content: "raid", raidId: `r-${difficulty}`, bossRelicId: RAID_SEASON_BOSS.relicId, difficulty }) as const),
       ...BOUNTY_TIERS.map((tier) => ({ content: "bounty", tierId: tier.id, multiplier: 1 }) as const),
       ...CAKE_OPERATION_TIERS.map((tier) => ({ content: "cake", tierId: tier.id, multiplier: 1 }) as const),
     ];
@@ -28,7 +28,11 @@ describe("편성 화면의 콘텐츠", () => {
     expect(normalizePartyContent(undefined)).toEqual({ content: "stage" });
     expect(normalizePartyContent({ content: "cake", tierId: "없는-단계", multiplier: 2 })).toEqual({ content: "stage" });
     expect(normalizePartyContent({ content: "bounty", tierId: BOUNTY_TIERS[0].id, multiplier: 9 })).toEqual({ content: "bounty", tierId: BOUNTY_TIERS[0].id, multiplier: 1 });
-    expect(normalizePartyContent({ content: "raid" })).toEqual({ content: "raid" });
+    // 레이드는 어느 판인지까지 있어야 한다 — 판 ID나 난이도가 빠지면 어느 체력을 깎을지 모른다.
+    expect(normalizePartyContent({ content: "raid" })).toEqual({ content: "stage" });
+    expect(normalizePartyContent({ content: "raid", raidId: "r1", bossRelicId: "sukusuino", difficulty: "nope" })).toEqual({ content: "stage" });
+    const raid = { content: "raid", raidId: "r1", bossRelicId: "sukusuino", difficulty: "hard" } as const;
+    expect(normalizePartyContent(raid)).toEqual(raid);
   });
 
   it("현상수배는 세 라운드의 정예가 라운드 번호를 달고 선다", () => {
@@ -48,11 +52,12 @@ describe("편성 화면의 콘텐츠", () => {
     expect(preview.role).toBe("swarm");
   });
 
-  it("레이드는 시즌 보스 하나가 레이드 유형으로 선다", () => {
-    const preview = partyPreview({ content: "raid" }, STAGE);
+  it("레이드는 그 판의 보스 하나가 그 난이도의 레벨로 레이드 유형으로 선다", () => {
+    const preview = partyPreview({ content: "raid", raidId: "r1", bossRelicId: RAID_SEASON_BOSS.relicId, difficulty: "normal" }, STAGE);
     expect(preview.shown).toHaveLength(1);
     expect(preview.shown[0].def.id).toBe(RAID_SEASON_BOSS.relicId);
-    expect(preview.shown[0].level).toBe(RAID_SEASON_BOSS.level);
+    expect(preview.shown[0].level).toBe(30);
+    expect(partyPreview({ content: "raid", raidId: "w", bossRelicId: RAID_SEASON_BOSS.relicId, difficulty: "rampage" }, STAGE).shown[0].level).toBe(RAID_SEASON_BOSS.level);
     expect(preview.role).toBe("endless");
   });
 });

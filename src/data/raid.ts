@@ -4,10 +4,15 @@ import { requiredBreakthroughForLevel } from "../core/levelDesign";
 /**
  * 레이드 — **경쟁이 아니라 함께 미는 보스전**이다.
  *
- * 맨 위에 서는 것은 **월드 폭주**다. 시스템만 여는 하루 한 마리이고, 모든 플레이어가 체력 한
- * 줄을 함께 깎는다. **잡지 못해도 된다** — 서버 전체가 깎은 비율마다 모든 플레이어에게 보상이
- * 얹히고(`RAID_WORLD_REWARD_STAGES`), 내 몫은 하루 두 판의 피해 합으로 따로 받는다. 그 아래
- * 친구가 소환한 레이드는 다음 단계에서 붙는다.
+ * 레이드 하나는 **보스 한 마리 + 난이도 + 공유 체력 + 수명**으로 이루어진 판이다. 두 갈래다.
+ *
+ * - **월드 폭주** — 시스템만 여는 하루 한 마리(난이도 `rampage`, 만렙). 모든 플레이어가 체력
+ *   한 줄을 함께 깎고 **잡지 못해도 된다.**
+ * - **소환 레이드** — 토벌권으로 여는 판(쉬움·보통·어려움). 친구 목록 인원끼리 함께 본다.
+ *
+ * 어느 쪽이든 판 하나에 **두 번** 도전하고, 판이 끝나면(토벌되거나 수명이 다하면) **완료 탭에서
+ * 정산을 눌러** 보상을 받는다(`raidSettlement`). 보상은 **참여한 사람만** 받고, 내가 많이 깎을수록
+ * 그리고 판 전체가 많이 깎일수록 커진다. 때린 판마다 그 피해에 비례한 골드는 곧바로 받는다.
  *
  * 원정의 폰토스가 "내 한 판이 몇 점인가"를 겨루는 자리라면, 레이드는 시즌 하나가 **보스 한
  * 마리의 공유 체력**을 갖고 참가자 전원의 피해가 그 한 줄을 깎는다. 그래서 화면이 먼저 말하는
@@ -66,71 +71,76 @@ export const RAID_BOSS_BALANCE = {
 } as const;
 
 /**
- * 월드 폭주 하루치의 공유 체력 — **레전드급**이다.
+ * 난이도 — 레벨·체력·수명·정산이 한 줄이다.
  *
- * 한 판의 피해는 실측으로 0.8만~2.6만(LV40~60 편성, 수쿠스이노 LV60)이고 한 사람이 하루 두 판을
- * 치므로 인당 2~5만이다. 체력은 그 수백 배라 **모두가 함께여야** 비로소 줄이 움직이고, 날마다
- * 다 깎이지 않을 수 있다 — 그것이 의도다. 깎은 비율만큼 모두에게 보상이 얹히므로 못 잡은 날도
- * 헛수고가 아니다.
+ * **레벨은 한계 돌파 사다리 위에 선다**(`requiredBreakthroughForLevel`). 쉬움 20(돌파 0) · 보통
+ * 30(돌파 1: 일반 공격) · 어려움 40(돌파 2: 궁극기) · 폭주 60(돌파 4: 네 칸 전부)이라, 난이도가
+ * 오를 때마다 보스가 돌파로 여는 기술이 하나씩 드러난다(지금은 모두 "없음"이다).
+ *
+ * **체력은 함께 치는 사람 수에서 거꾸로 구한다.** 한 판의 피해는 실측으로 0.8만~2.6만이고 한
+ * 사람이 판마다 두 번 친다. 소환 레이드는 친구 몇 명이 하루 안에 잡을 무게이고, 월드 폭주는
+ * 모두가 함께여야 비로소 줄이 움직이는 **레전드급**이라 날마다 다 깎이지 않을 수 있다.
+ *
+ * **정산**(`settlement`)은 참여한 사람에게만 나간다. `mine`은 내 피해가 `mineTarget`에 닿을수록
+ * 차오르고(두 판의 합), `total`은 판 전체가 깎인 비율만큼, `kill`은 토벌된 판에만 붙는다.
  */
-export const RAID_SEASON_TOTAL_HP = 10_000_000;
+export type RaidDifficulty = "easy" | "normal" | "hard" | "rampage";
+
+export interface RaidDifficultySpec {
+  level: number;
+  totalHp: number;
+  /** 판이 열려 있는 시간. 토벌되면 그 전에 끝난다. */
+  lifetimeHours: number;
+  settlement: { mine: number; mineTarget: number; total: number; kill: number };
+}
+
+export const RAID_DIFFICULTY: Record<RaidDifficulty, RaidDifficultySpec> = {
+  easy: { level: 20, totalHp: 150_000, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 10_000, total: 8, kill: 5 } },
+  normal: { level: 30, totalHp: 300_000, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15_000, total: 14, kill: 8 } },
+  hard: { level: 40, totalHp: 600_000, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22_000, total: 22, kill: 12 } },
+  rampage: { level: 60, totalHp: 10_000_000, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 45_000, total: 60, kill: 30 } },
+};
+
+/** 저장·진입 데이터에서 온 값이 난이도 표에 있는지. 모르는 값은 어느 몸으로 세울지 알 수 없다. */
+export function isRaidDifficulty(value: unknown): value is RaidDifficulty {
+  return typeof value === "string" && Object.prototype.hasOwnProperty.call(RAID_DIFFICULTY, value);
+}
+
+/** 소환권으로 고를 수 있는 난이도. 폭주는 시스템만 연다. */
+export const RAID_SUMMON_DIFFICULTIES = ["easy", "normal", "hard"] as const satisfies readonly RaidDifficulty[];
+
+/** 소환 레이드에 서는 보스 풀. 토벌권은 이 중 하나를 무작위로, 선택 토벌권은 골라서 연다. */
+export const RAID_BOSS_POOL = ["sukusuino"] as const;
+
+/** 두 가지 토벌권. 가방의 재료 아이템이다(`src/data/items.ts`). */
+export const RAID_TICKET_ITEM = "raid-ticket";
+export const RAID_SELECT_TICKET_ITEM = "raid-select-ticket";
+
+/** 월드 폭주가 갖는 공유 체력. 판 안의 몸(`RAID_BOSS_HP_SCALE`)이 이 값을 단위로 삼는다. */
+export const RAID_SEASON_TOTAL_HP = RAID_DIFFICULTY.rampage.totalHp;
 
 /**
- * 시즌 게이지와 **한 판에 서는 보스가 같은 몸**이라는 것을 말하는 배율이다.
+ * 판 안에 서는 보스의 몸은 월드 폭주 줄의 400분의 1이다(2만 5천).
  *
- * 보스의 최대 체력을 태생 성장으로만 구하던 때는 판 안의 몸이 1만이었다. 시즌 줄은 1,000만인데
- * 전장의 줄은 1만이라, 한 판에서 반이나 깎아 놓고 시즌 화면에 돌아오면 게이지가 미동도 하지
- * 않았다 — 두 줄이 **다른 단위**였기 때문이다. 그래서 판에 서는 보스의 체력을 시즌 게이지에서
- * 거꾸로 구한다: 시즌 줄의 100분의 1이 한 판의 보스이고, 그 위에서 깎은 만큼이 그대로 기여다.
- *
- * 400인 이유는 **하루 두 번짜리 도전 한 판이 판 안의 보스를 눕히지 못하되 눈에 보이게는 밀어야**
- * 하기 때문이다. 1(게이지와 같은 몸)이면 한 판의 몫이 줄에서 보이지 않고, 1,000이면 첫 판에
- * 판 안의 보스가 통째로 넘어가 90초를 채울 이유가 사라진다.
- *
- * **100이던 때는 출혈이 아니면 줄이 움직이지 않았다.** 판 안의 몸이 10만이라 출혈 없는 편성은
- * 한 판에 줄의 4~6%만 깎았고, 출혈(최대 체력 비례)만 그 10만을 기준으로 재어 혼자 줄을
- * 비웠다. 비율 피해는 이제 성장 체력에서 재고(`raidBossPercentHpBasis`), 몸은 2만 5천이라
- * 실측으로 편성에 따라 한 판에 줄의 13~27%를 민다(레벨 40 · 돌파 2 파티, 출혈과 타격이 같은 자릿수).
+ * 몸은 세기가 아니라 **단위**다 — 보스는 판 안에서 죽지 않고(공유 체력은 서버가 갖는다) 머리 위
+ * 줄이 얼마나 밀렸는지만 말한다. 난이도마다 몸을 바꾸면 쉬움의 몸이 한 번에 비어 그 줄이 뜻을
+ * 잃으므로, 모든 판이 같은 몸을 쓴다.
  */
 export const RAID_BOSS_HP_SCALE = 400;
 
-/**
- * 하루에 도전할 수 있는 횟수다. UTC 날짜 경계로 초기화한다.
- *
- * **두 판이다.** 내 기여는 그 두 판의 피해 합이고, 한 판만 쳐도 그 몫만큼은 받는다.
- */
-export const RAID_DAILY_ATTEMPTS = 2;
+/** 판 하나에 도전할 수 있는 횟수. 내 기여는 그 두 판의 피해 합이다. */
+export const RAID_ATTEMPTS_PER_RAID = 2;
 
 /**
- * 내 기여 보상 — **오늘 두 판의 피해 합**이 문턱을 넘긴다.
+ * 때린 판마다 곧바로 받는 골드 — **그 판의 피해에 비례한다.**
  *
- * 순위가 아니라 합이 문턱을 넘기는 이유는 협력전이라 늦게 들어온 사람도 같은 길을 걷게 하려는
- * 것이다. 문턱은 한 판 실측(0.8만~2.6만)에서 잡았다 — 첫 문턱은 약한 편성의 한 판이면 넘고,
- * 마지막은 강한 편성이 두 판을 다 쳐야 닿는다. 단계 ID가 서버의 중복 수령 키이며 날마다 새로 열린다.
+ * 정산은 판이 끝나야 열리므로, 한 판을 치고 나온 손에 아무것도 없으면 두 번째 판을 칠 이유가
+ * 화면에서 사라진다. 한 판 2만 피해가 4천 골드다.
  */
-export const RAID_CONTRIBUTION_REWARD_STAGES = [
-  { id: "raid-daily-8k", threshold: 8_000, reward: { currency: "raidSigil", amount: 5 } },
-  { id: "raid-daily-16k", threshold: 16_000, reward: { currency: "raidSigil", amount: 10 } },
-  { id: "raid-daily-28k", threshold: 28_000, reward: { currency: "raidSigil", amount: 15 } },
-  { id: "raid-daily-45k", threshold: 45_000, reward: { currency: "raidSigil", amount: 20 } },
-] as const;
+export const RAID_RUN_GOLD_PER_DAMAGE = 0.2;
 
-/**
- * 월드 진행 보상 — 서버 전체가 깎은 **비율**이 문턱을 넘기면 **모든 플레이어**에게 한 번씩 열린다.
- *
- * 보스를 잡지 못해도 된다는 것이 이 표의 뜻이다. 처치 보상을 따로 두지 않고 마지막 단계(100%)가
- * 그 몫을 맡는다 — 둘을 가르면 "다 깎은 날"에 같은 일로 보상이 두 번 나간다. 참가하지 않은
- * 사람도 받는다: 다 같이 민 결과이고, 오늘 못 친 사람이 내일 다시 들어올 이유가 된다.
- *
- * 하루 합계는 내 기여(최대 50)와 월드 진행(최대 60)을 더해 110이다 — 한 주로 보면 예전 주간
- * 시즌의 몫(약 440)과 비슷해 전리품 상점의 물가를 흔들지 않는다.
- */
-export const RAID_WORLD_REWARD_STAGES = [
-  { id: "raid-world-25", ratio: 0.25, reward: { currency: "raidSigil", amount: 5 } },
-  { id: "raid-world-50", ratio: 0.5, reward: { currency: "raidSigil", amount: 10 } },
-  { id: "raid-world-75", ratio: 0.75, reward: { currency: "raidSigil", amount: 15 } },
-  { id: "raid-world-100", ratio: 1, reward: { currency: "raidSigil", amount: 30 } },
-] as const;
+/** 끝난 판이 완료 탭에 남는 시간. 정산하지 않은 판은 이보다 오래 남는다(받을 것이 있으므로). */
+export const RAID_COMPLETED_KEEP_HOURS = 48;
 
 /**
  * 모의 참가자 명단.

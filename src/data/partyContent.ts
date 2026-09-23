@@ -1,10 +1,10 @@
 import { normalizeMultiplier, type DungeonMultiplier } from "../core/dungeonShortcut";
-import { raidBossDef } from "../core/raid";
+import { raidBossDef, raidBossGrowth } from "../core/raid";
 import type { BattleStageDef, RelicDef } from "../core/types";
 import { bountyRoundEnemy, bountyRoundLevel, BOUNTY_ROLE, BOUNTY_TIERS, getBountyTier } from "./bounty";
 import { CAKE_OPERATION_TIERS, cakeOperationEnemies, cakeOperationEnemyDisplayLevel, cakeOperationRole, getCakeOperationTier } from "./cakeOperation";
 import { requiredBreakthroughForLevel, type EncounterRole } from "../core/levelDesign";
-import { RAID_SEASON_BOSS } from "./raid";
+import { isRaidDifficulty, type RaidDifficulty } from "./raid";
 import { getRelic } from "./relics";
 import { getStageEnemies, stageEnemyGrowth, stageEnemyRole } from "./stages";
 
@@ -18,13 +18,13 @@ import { getStageEnemies, stageEnemyGrowth, stageEnemyRole } from "./stages";
  */
 export type PartySceneData =
   | { content?: "stage" }
-  | { content: "raid" }
+  | { content: "raid"; raidId: string; bossRelicId: string; difficulty: RaidDifficulty }
   | { content: "bounty" | "cake"; tierId: string; multiplier: number };
 
 /** 정규화된 진입. 배율은 표에 있는 값으로 좁혀 둔다. */
 export type PartyContent =
   | { content: "stage" }
-  | { content: "raid" }
+  | { content: "raid"; raidId: string; bossRelicId: string; difficulty: RaidDifficulty }
   | { content: "bounty" | "cake"; tierId: string; multiplier: DungeonMultiplier };
 
 /**
@@ -32,8 +32,11 @@ export type PartyContent =
  * 지난 진입의 값으로 엉뚱한 던전의 편성이 뜨면 안 된다.
  */
 export function normalizePartyContent(input: unknown): PartyContent {
-  const data = (input ?? {}) as Partial<{ content: string; tierId: string; multiplier: number }>;
-  if (data.content === "raid") return { content: "raid" };
+  const data = (input ?? {}) as Partial<{ content: string; tierId: string; multiplier: number; raidId: string; bossRelicId: string; difficulty: string }>;
+  // 레이드는 **어느 판인가**까지 있어야 한다 — 판 ID가 빠진 진입은 어느 체력을 깎을지 모른다.
+  if (data.content === "raid" && typeof data.raidId === "string" && typeof data.bossRelicId === "string" && isRaidDifficulty(data.difficulty)) {
+    return { content: "raid", raidId: data.raidId, bossRelicId: data.bossRelicId, difficulty: data.difficulty };
+  }
   if (data.content === "bounty" && BOUNTY_TIERS.some(({ id }) => id === data.tierId)) {
     return { content: "bounty", tierId: data.tierId as string, multiplier: normalizeMultiplier(data.multiplier) };
   }
@@ -69,8 +72,8 @@ export interface PartyPreview {
  */
 export function partyPreview(content: PartyContent, stage: BattleStageDef): PartyPreview {
   if (content.content === "raid") {
-    const def = raidBossDef(getRelic(RAID_SEASON_BOSS.relicId));
-    const shown = [{ def, level: RAID_SEASON_BOSS.level, breakthrough: RAID_SEASON_BOSS.breakthrough }];
+    const def = raidBossDef(getRelic(content.bossRelicId), content.difficulty);
+    const shown = [{ def, ...raidBossGrowth(content.difficulty) }];
     return { shown, all: [def], role: "endless" };
   }
   if (content.content === "bounty") {

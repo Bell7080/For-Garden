@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { RAID_BOSS_BALANCE, RAID_BOSS_HP_SCALE, RAID_CONTRIBUTION_REWARD_STAGES, RAID_DAILY_ATTEMPTS, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP, RAID_WORLD_REWARD_STAGES } from "../../src/data/raid";
-import { mockRaidContributions, mockRaidWorldDamage, raidBossDef, raidBossPercentHpBasis, raidContributionBoard, raidDayProgress, raidEarnedContributionStageIds, raidNextContributionStage, raidReachedWorldStageIds, raidResetsAt, raidSeasonKey, raidSeasonProgress } from "../../src/core/raid";
+import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_HP_SCALE, RAID_BOSS_POOL, RAID_DIFFICULTY, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM, isRaidDifficulty } from "../../src/data/raid";
+import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidDayProgress, raidResetsAt, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement } from "../../src/core/raid";
 import { getRelic, PLAYABLE_RELICS, RELICS } from "../../src/data/relics";
 import { ENCOUNTER_ROLE, applyEncounterScaling } from "../../src/core/levelDesign";
 
@@ -8,10 +8,9 @@ import { RAID_ACTIONS, RAID_BOARD, RAID_HP_BAR, raidBoardViewport, raidSortieBac
 import { RANKING_LIST } from "../../src/ui/expeditionRankingLayout";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import { findItem } from "../../src/data/items";
-import { WALLET_CAPS } from "../../src/data/economy";
 import { PRODUCTS } from "../../src/data/shopCatalog";
 import { FakeServer } from "../../src/api/FakeServer";
-import { createDefaultSession, type Session } from "../../src/state/session";
+import { createDefaultSession, type RaidInstanceState, type Session } from "../../src/state/session";
 
 /**
  * 서버 경계 테스트가 쓸 독립 세션.
@@ -118,39 +117,105 @@ describe("월드 폭주의 서버 전체 몫", () => {
     expect(ratios.some((ratio) => ratio < 1)).toBe(true);
   });
 
-  it("의 진행 단계는 넘긴 비율만 돌려준다", () => {
-    expect(raidReachedWorldStageIds(0.24)).toEqual([]);
-    expect(raidReachedWorldStageIds(0.5)).toEqual(["raid-world-25", "raid-world-50"]);
-    expect(raidReachedWorldStageIds(1)).toEqual(RAID_WORLD_REWARD_STAGES.map(({ id }) => id));
+});
+
+describe("정산", () => {
+  it("은 참여하지 않은 판에 아무것도 주지 않는다", () => {
+    // 월드 폭주도 예외가 아니다 — 보상은 함께 민 사람의 몫이다.
+    expect(raidSettlement("rampage", 0, 1, true)).toBeUndefined();
+    expect(raidSettlement("easy", 0, 0.5, false)).toBeUndefined();
+  });
+
+  it("은 내가 많이 깎을수록, 판이 많이 깎일수록 커진다", () => {
+    for (const difficulty of Object.keys(RAID_DIFFICULTY) as (keyof typeof RAID_DIFFICULTY)[]) {
+      const target = RAID_DIFFICULTY[difficulty].settlement.mineTarget;
+      const low = raidSettlement(difficulty, target * 0.2, 0.5, false)!.raidSigil;
+      const mine = raidSettlement(difficulty, target, 0.5, false)!.raidSigil;
+      const total = raidSettlement(difficulty, target, 0.9, false)!.raidSigil;
+      expect(mine, difficulty).toBeGreaterThan(low);
+      expect(total, difficulty).toBeGreaterThan(mine);
+      // 토벌된 판에만 붙는 몫이 있다.
+      expect(raidSettlement(difficulty, target, 1, true)!.raidSigil).toBeGreaterThan(raidSettlement(difficulty, target, 1, false)!.raidSigil);
+    }
+  });
+
+  it("의 내 몫은 목표에서 멈춘다", () => {
+    // 한 사람이 끝없이 몫을 늘리면 함께 미는 판이 아니라 혼자 미는 판이 된다.
+    const target = RAID_DIFFICULTY.normal.settlement.mineTarget;
+    expect(raidSettlement("normal", target * 5, 0.5, false)).toEqual(raidSettlement("normal", target, 0.5, false));
+  });
+
+  it("은 조금이라도 쳤으면 한 개는 준다", () => {
+    expect(raidSettlement("easy", 1, 0, false)!.raidSigil).toBeGreaterThanOrEqual(1);
+  });
+
+  it("은 어려운 판일수록 크다", () => {
+    const max = (difficulty: keyof typeof RAID_DIFFICULTY) => {
+      const spec = RAID_DIFFICULTY[difficulty].settlement;
+      return spec.mine + spec.total + spec.kill;
+    };
+    expect(max("normal")).toBeGreaterThan(max("easy"));
+    expect(max("hard")).toBeGreaterThan(max("normal"));
+    expect(max("rampage")).toBeGreaterThan(max("hard"));
+  });
+
+  it("과 따로, 한 판의 골드는 그 판의 피해에 비례한다", () => {
+    expect(raidRunGold(0, 0.2)).toBe(0);
+    expect(raidRunGold(20_000, 0.2)).toBe(4_000);
+    expect(raidRunGold(40_000, 0.2)).toBe(2 * raidRunGold(20_000, 0.2));
   });
 });
 
-describe("기여 보상 단계", () => {
-  it("는 문턱을 넘긴 단계만 돌려준다", () => {
-    const [first, second] = RAID_CONTRIBUTION_REWARD_STAGES;
-    expect(raidEarnedContributionStageIds(first!.threshold - 1)).toEqual([]);
-    expect(raidEarnedContributionStageIds(first!.threshold)).toEqual([first!.id]);
-    expect(raidEarnedContributionStageIds(second!.threshold)).toEqual([first!.id, second!.id]);
+describe("난이도", () => {
+  it("는 쉬움·보통·어려움이 20·30·40레벨이고 폭주가 만렙이다", () => {
+    expect(RAID_SUMMON_DIFFICULTIES.map((difficulty) => RAID_DIFFICULTY[difficulty].level)).toEqual([20, 30, 40]);
+    expect(RAID_DIFFICULTY.rampage.level).toBe(60);
+    // 폭주는 시스템만 연다.
+    expect(RAID_SUMMON_DIFFICULTIES as readonly string[]).not.toContain("rampage");
   });
 
-  it("는 다음 문턱을 알려 주고 다 넘기면 비운다", () => {
-    expect(raidNextContributionStage(0)?.id).toBe(RAID_CONTRIBUTION_REWARD_STAGES[0]!.id);
-    expect(raidNextContributionStage(Number.MAX_SAFE_INTEGER)).toBeUndefined();
+  it("의 돌파는 그 레벨에 닿을 수 있는 칸이다", () => {
+    expect(raidBossGrowth("easy")).toEqual({ level: 20, breakthrough: 0 });
+    expect(raidBossGrowth("rampage")).toEqual({ level: 60, breakthrough: 4 });
   });
 
-  it("는 문턱이 오름차순이고 보상이 줄어들지 않는다", () => {
-    const thresholds = RAID_CONTRIBUTION_REWARD_STAGES.map(({ threshold }) => threshold);
-    expect([...thresholds].sort((a, b) => a - b)).toEqual(thresholds);
-    const amounts = RAID_CONTRIBUTION_REWARD_STAGES.map(({ reward }) => reward.amount);
-    expect([...amounts].sort((a, b) => a - b)).toEqual(amounts);
+  it("는 모르는 값을 받아들이지 않는다", () => {
+    expect(isRaidDifficulty("hard")).toBe(true);
+    expect(isRaidDifficulty("toString")).toBe(false);
+    expect(isRaidDifficulty(undefined)).toBe(false);
   });
 
-  it("가 주는 것은 실제로 있는 지갑 재화다", () => {
-    // 증표는 재료가 아니라 지갑 재화다 — 상한에 걸려 몇 주치가 버려지면 안 된다.
-    for (const { reward } of RAID_CONTRIBUTION_REWARD_STAGES) {
-      expect(findItem(reward.currency)?.category).toBe("currency");
-      expect(WALLET_CAPS[reward.currency]).toBeGreaterThan(0);
-    }
+  it("의 체력은 어려울수록 크다", () => {
+    const hp = RAID_SUMMON_DIFFICULTIES.map((difficulty) => RAID_DIFFICULTY[difficulty].totalHp);
+    expect([...hp].sort((a, b) => a - b)).toEqual(hp);
+    expect(RAID_DIFFICULTY.rampage.totalHp).toBe(RAID_SEASON_TOTAL_HP);
+  });
+
+  it("의 보스 풀은 실제로 있는 개체다", () => {
+    for (const relicId of RAID_BOSS_POOL) expect(RELICS.find(({ id }) => id === relicId), relicId).toBeTruthy();
+  });
+
+  it("의 토벌권 둘은 가방의 재료다", () => {
+    expect(findItem(RAID_TICKET_ITEM)?.category).toBe("material");
+    expect(findItem(RAID_SELECT_TICKET_ITEM)?.category).toBe("material");
+  });
+});
+
+describe("친구 레이드", () => {
+  it("는 같은 날이면 늘 같은 판이다", () => {
+    expect(mockFriendRaids("2026-09-16")).toEqual(mockFriendRaids("2026-09-16"));
+    expect(mockFriendRaids("2026-09-16").length).toBeGreaterThan(0);
+  });
+
+  it("는 소환할 수 있는 난이도로만 선다", () => {
+    for (const raid of mockFriendRaids("2026-09-16")) expect(RAID_SUMMON_DIFFICULTIES as readonly string[]).toContain(raid.difficulty);
+  });
+
+  it("의 다른 참가자 몫은 시간이 갈수록 늘고 총량의 1.3배를 넘지 않는다", () => {
+    const total = RAID_DIFFICULTY.normal.totalHp;
+    expect(mockSummonRaidDamage("r", 0, total)).toBe(0);
+    expect(mockSummonRaidDamage("r", 0.8, total)).toBeGreaterThan(mockSummonRaidDamage("r", 0.3, total));
+    expect(mockSummonRaidDamage("r", 1, total)).toBeLessThanOrEqual(total * 1.3);
   });
 });
 
@@ -170,7 +235,7 @@ describe("월드 폭주의 날짜 경계", () => {
   it("의 보스는 만렙이고 돌파 네 칸이 모두 열린다", () => {
     expect(RAID_SEASON_BOSS.level).toBe(60);
     expect(RAID_SEASON_BOSS.breakthrough).toBe(4);
-    expect(RAID_DAILY_ATTEMPTS).toBe(2);
+    expect(RAID_ATTEMPTS_PER_RAID).toBe(2);
   });
 });
 
@@ -196,7 +261,8 @@ describe("레이드 보스", () => {
     expect(boss.stats.hp).toBe(RAID_SEASON_TOTAL_HP / RAID_BOSS_HP_SCALE);
     // 한 판이 판 안의 보스를 눕히지는 못하되 눈에 보이게는 밀어야 한다.
     expect(RAID_BOSS_HP_SCALE).toBeGreaterThan(1);
-    expect(boss.stats.hp).toBeGreaterThan(RAID_CONTRIBUTION_REWARD_STAGES[0].threshold / RAID_DAILY_ATTEMPTS);
+    // 난이도가 달라도 몸은 같다 — 줄이 얼마나 밀렸는지를 재는 단위라서다.
+    expect(raidBossDef(getRelic(RAID_SEASON_BOSS.relicId), "easy").stats.hp).toBe(boss.stats.hp);
   });
 
   it("의 비율 피해는 시즌 단위가 아니라 성장 체력에서 잰다", () => {
@@ -248,9 +314,9 @@ describe("재현 표", () => {
     expect([...starts].sort((a, b) => a - b)).toEqual(starts);
   });
 
-  it("는 하루 도전 횟수를 한 자리 수로 끊는다", () => {
-    expect(RAID_DAILY_ATTEMPTS).toBeGreaterThan(0);
-    expect(RAID_DAILY_ATTEMPTS).toBeLessThan(10);
+  it("는 판마다 도전 횟수를 한 자리 수로 끊는다", () => {
+    expect(RAID_ATTEMPTS_PER_RAID).toBeGreaterThan(0);
+    expect(RAID_ATTEMPTS_PER_RAID).toBeLessThan(10);
   });
 });
 
@@ -325,98 +391,129 @@ describe("레이드 배치표", () => {
 
 describe("레이드 서버 경계", () => {
   const at = (iso: string) => new Date(iso);
+  const serverAt = (state: Session, iso: string) => new FakeServer(state, { latencyMs: 0, now: () => at(iso) });
+  const instance = (patch: Partial<RaidInstanceState> & { id: string; openedAt: string; endsAt: string }): RaidInstanceState => ({
+    kind: "world", bossRelicId: RAID_SEASON_BOSS.relicId, difficulty: "rampage", summonedByMe: false, myDamage: 0, attemptsUsed: 0, settled: false, ...patch,
+  });
+  const yesterdayWorld = (myDamage: number) => instance({ id: "world-2026-09-15", openedAt: "2026-09-15T00:00:00.000Z", endsAt: "2026-09-16T00:00:00.000Z", myDamage, attemptsUsed: 2 });
 
-  it("은 시즌 응답에 남은 체력과 내 몫을 함께 싣는다", async () => {
-    const server = new FakeServer(makeRaidSession(), { latencyMs: 0, now: () => at("2026-09-16T12:00:00Z") });
-    const season = await server.getRaidSeason();
-    expect(season.seasonKey).toBe("2026-09-16");
-    expect(season.bossRelicId).toBe(RAID_SEASON_BOSS.relicId);
-    expect(season.totalHp).toBe(RAID_SEASON_TOTAL_HP);
-    expect(season.remainingHp).toBe(season.totalHp - season.dealtDamage);
-    expect(season.attemptsLimit).toBe(RAID_DAILY_ATTEMPTS);
+  it("은 오늘의 월드 폭주를 맨 위에, 친구 레이드를 그 아래에 싣는다", async () => {
+    const { raids, tickets } = await serverAt(makeRaidSession(), "2026-09-16T12:00:00Z").getRaids();
+    const world = raids[0]!;
+    expect(world.kind).toBe("world");
+    expect(world.id).toBe("world-2026-09-16");
+    expect(world.bossLevel).toBe(60);
+    expect(world.totalHp).toBe(RAID_SEASON_TOTAL_HP);
+    expect(world.remainingHp).toBe(world.totalHp - world.dealtDamage);
+    expect(raids.some(({ kind, summonerName }) => kind === "summon" && summonerName)).toBe(true);
+    expect(raids.every(({ attemptsLimit }) => attemptsLimit === RAID_ATTEMPTS_PER_RAID)).toBe(true);
+    expect(tickets.normal).toBeGreaterThan(0);
   });
 
-  it("은 보스가 실제로 싸우는 레벨을 그대로 싣는다", async () => {
-    // 화면의 `LV.n`이 곧 이 값이다 — 감춘 배율이 없어야 그 수가 뜻을 갖는다.
-    const server = new FakeServer(makeRaidSession(), { latencyMs: 0, now: () => at("2026-09-16T12:00:00Z") });
-    const season = await server.getRaidSeason();
-    expect(season.bossLevel).toBe(RAID_SEASON_BOSS.level);
+  it("은 참여하지 않은 끝난 판을 세우지 않고 정산도 비운다", async () => {
+    // 완료 탭은 정산할 곳이다 — 받을 것이 없는 판이 끼면 정작 받을 판이 묻힌다.
+    const { raids } = await serverAt(makeRaidSession(), "2026-09-16T12:00:00Z").getRaids();
+    expect(raids.filter(({ status }) => status === "completed")).toEqual([]);
+    expect(raids.every(({ settlement }) => settlement.length === 0)).toBe(true);
   });
 
   it("은 함께 미는 사람들을 기여 목록에 세운다", async () => {
-    const server = new FakeServer(makeRaidSession(), { latencyMs: 0, now: () => at("2026-09-16T12:00:00Z") });
-    const season = await server.getRaidSeason();
-    expect(season.entries.length).toBeGreaterThan(1);
-    expect(season.entries.map(({ damage }) => damage)).toEqual([...season.entries.map(({ damage }) => damage)].sort((a, b) => b - a));
+    const { raids } = await serverAt(makeRaidSession(), "2026-09-16T12:00:00Z").getRaids();
+    const damages = raids[0]!.entries.map(({ damage }) => damage);
+    expect(damages.length).toBeGreaterThan(1);
+    expect(damages).toEqual([...damages].sort((a, b) => b - a));
   });
 
-  it("은 날이 바뀌면 내 몫·도전·수령 기록을 함께 비운다", async () => {
+  it("은 토벌권 한 장으로 판을 열고 그 장을 뺀다", async () => {
+    const server = serverAt(makeRaidSession(), "2026-09-16T12:00:00Z");
+    const before = (await server.getRaids()).tickets.normal;
+    const result = await server.summonRaid({ requestId: "sum1", difficulty: "normal" });
+    expect(result.raid.summonedByMe).toBe(true);
+    expect(result.raid.bossLevel).toBe(30);
+    expect(result.raid.status).toBe("active");
+    expect(result.tickets.normal).toBe(before - 1);
+    // 같은 요청은 두 번 열지 않는다.
+    await server.summonRaid({ requestId: "sum1", difficulty: "normal" });
+    const after = await server.getRaids();
+    expect(after.tickets.normal).toBe(before - 1);
+    expect(after.raids.some(({ id }) => id === result.raid.id)).toBe(true);
+  });
+
+  it("은 선택 토벌권으로 고른 보스를 연다", async () => {
+    const server = serverAt(makeRaidSession(), "2026-09-16T12:00:00Z");
+    const result = await server.summonRaid({ requestId: "sel1", difficulty: "hard", bossRelicId: RAID_BOSS_POOL[0] });
+    expect(result.raid.bossRelicId).toBe(RAID_BOSS_POOL[0]);
+    expect(result.tickets.select).toBe(0);
+    await expect(server.summonRaid({ requestId: "sel2", difficulty: "hard", bossRelicId: RAID_BOSS_POOL[0] }))
+      .rejects.toMatchObject({ code: "RAID_TICKET_SHORTAGE" });
+  });
+
+  it("은 폭주와 풀 밖의 보스를 소환하지 않는다", async () => {
+    const server = serverAt(makeRaidSession(), "2026-09-16T12:00:00Z");
+    await expect(server.summonRaid({ requestId: "x1", difficulty: "rampage" })).rejects.toMatchObject({ code: "RAID_SUMMON_INVALID" });
+    await expect(server.summonRaid({ requestId: "x2", difficulty: "easy", bossRelicId: "anky" })).rejects.toMatchObject({ code: "RAID_SUMMON_INVALID" });
+  });
+
+  it("은 끝나지 않은 판의 정산을 거절한다", async () => {
     const state = makeRaidSession();
-    state.raid = { seasonKey: "2026-09-15", myDamage: 40_000, attemptsUsed: 2, attemptsDate: "2026-09-15", claimedStageIds: ["raid-daily-8k", "raid-world-25"] };
-    const server = new FakeServer(state, { latencyMs: 0, now: () => at("2026-09-16T12:00:00Z") });
-    const season = await server.getRaidSeason();
-    expect(season.myDamage).toBe(0);
-    expect(season.attemptsUsed).toBe(0);
-    expect(season.rewardStages.every(({ claimed }) => !claimed)).toBe(true);
-    expect(season.worldStages.every(({ claimed }) => !claimed)).toBe(true);
+    state.raid = { instances: [instance({ id: "world-2026-09-16", openedAt: "2026-09-16T00:00:00.000Z", endsAt: "2026-09-17T00:00:00.000Z", myDamage: 30_000, attemptsUsed: 2 })] };
+    await expect(serverAt(state, "2026-09-16T01:00:00Z").settleRaid({ requestId: "st0", raidId: "world-2026-09-16" }))
+      .rejects.toMatchObject({ code: "RAID_NOT_ENDED" });
   });
 
-  it("은 월드 진행 보상을 오늘 치지 않은 사람에게도 준다", async () => {
-    // 저녁이면 서버 전체가 적어도 4분의 1은 깎는다 — 참가하지 않아도 그 몫은 모두의 것이다.
+  it("은 끝난 참여 판을 완료로 세우고 정산을 한 번만 지급한다", async () => {
     const state = makeRaidSession();
-    const server = new FakeServer(state, { latencyMs: 0, now: () => at("2026-09-16T20:00:00Z") });
-    const season = await server.getRaidSeason();
-    const stage = season.worldStages.find(({ reached }) => reached)!;
-    expect(stage).toBeDefined();
-    const before = state.wallet[stage.reward.currency];
-    const result = await server.claimRaidReward({ requestId: "w1", stageId: stage.id });
-    expect(result.alreadyClaimed).toBe(false);
-    expect(state.wallet[stage.reward.currency]).toBe(before + stage.reward.amount);
+    state.raid = { instances: [yesterdayWorld(30_000)] };
+    const server = serverAt(state, "2026-09-16T12:00:00Z");
+    const done = (await server.getRaids()).raids.find(({ id }) => id === "world-2026-09-15")!;
+    expect(done.status).toBe("completed");
+    const amount = done.settlement[0]!.amount;
+    expect(amount).toBeGreaterThan(0);
+    const before = state.wallet.raidSigil;
+    const first = await server.settleRaid({ requestId: "st1", raidId: done.id });
+    expect(first.alreadySettled).toBe(false);
+    expect(first.raid.settled).toBe(true);
+    expect(state.wallet.raidSigil).toBe(before + amount);
+    // 같은 요청은 영수증만, 다른 요청은 지급 없이 그렇다고만 말한다.
+    await server.settleRaid({ requestId: "st1", raidId: done.id });
+    const again = await server.settleRaid({ requestId: "st2", raidId: done.id });
+    expect(again.alreadySettled).toBe(true);
+    expect(state.wallet.raidSigil).toBe(before + amount);
   });
 
-  it("은 도달하지 않은 월드 진행 단계를 거절한다", async () => {
-    // 자정 직후에는 아직 아무도 밀지 않았다.
-    const server = new FakeServer(makeRaidSession(), { latencyMs: 0, now: () => at("2026-09-16T00:00:00Z") });
-    await expect(server.claimRaidReward({ requestId: "w2", stageId: "raid-world-100" }))
+  it("은 참여하지 않은 판의 정산을 거절한다", async () => {
+    const state = makeRaidSession();
+    state.raid = { instances: [yesterdayWorld(0)] };
+    await expect(serverAt(state, "2026-09-16T12:00:00Z").settleRaid({ requestId: "st3", raidId: "world-2026-09-15" }))
       .rejects.toMatchObject({ code: "RAID_REWARD_NOT_EARNED" });
   });
 
-  it("은 아직 넘기지 못한 단계의 수령을 거절한다", async () => {
-    const server = new FakeServer(makeRaidSession(), { latencyMs: 0, now: () => at("2026-09-16T12:00:00Z") });
-    await expect(server.claimRaidReward({ requestId: "r1", stageId: RAID_CONTRIBUTION_REWARD_STAGES[0]!.id }))
-      .rejects.toMatchObject({ code: "RAID_REWARD_NOT_EARNED" });
-  });
-
-  it("은 없는 단계를 거절한다", async () => {
-    const server = new FakeServer(makeRaidSession(), { latencyMs: 0, now: () => at("2026-09-16T12:00:00Z") });
-    await expect(server.claimRaidReward({ requestId: "r2", stageId: "raid-contrib-nope" }))
-      .rejects.toMatchObject({ code: "RAID_REWARD_NOT_FOUND" });
-  });
-
-  it("은 달성한 단계를 지급하고 같은 요청을 두 번 쌓지 않는다", async () => {
+  it("은 정산하지 않은 참여 판을 오래 지나도 걷지 않는다", async () => {
+    // 며칠 안 들어온 사람의 몫이 조용히 사라지면 안 된다.
     const state = makeRaidSession();
-    const stage = RAID_CONTRIBUTION_REWARD_STAGES[0]!;
-    state.raid = { seasonKey: "2026-09-16", myDamage: stage.threshold, attemptsUsed: 0, attemptsDate: "2026-09-16", claimedStageIds: [] };
-    const server = new FakeServer(state, { latencyMs: 0, now: () => at("2026-09-16T12:00:00Z") });
-    const first = await server.claimRaidReward({ requestId: "r4", stageId: stage.id });
-    expect(first.alreadyClaimed).toBe(false);
-    expect(state.wallet[stage.reward.currency]).toBe(stage.reward.amount);
-    // 같은 요청 ID는 영수증만 돌려주고 재고를 다시 늘리지 않는다.
-    await server.claimRaidReward({ requestId: "r4", stageId: stage.id });
-    expect(state.wallet[stage.reward.currency]).toBe(stage.reward.amount);
+    state.raid = { instances: [instance({ id: "world-2026-09-10", openedAt: "2026-09-10T00:00:00.000Z", endsAt: "2026-09-11T00:00:00.000Z", myDamage: 10_000, attemptsUsed: 1 })] };
+    const { raids } = await serverAt(state, "2026-09-16T12:00:00Z").getRaids();
+    expect(raids.some(({ id }) => id === "world-2026-09-10")).toBe(true);
   });
 
-  it("은 도전 횟수를 다 쓴 계정의 제출을 거절한다", async () => {
+  it("은 도전 횟수를 다 쓴 판의 제출을 거절한다", async () => {
     const state = makeRaidSession();
-    state.raid = { seasonKey: "2026-09-16", myDamage: 0, attemptsUsed: RAID_DAILY_ATTEMPTS, attemptsDate: "2026-09-16", claimedStageIds: [] };
-    const server = new FakeServer(state, { latencyMs: 0, now: () => at("2026-09-16T12:00:00Z") });
-    await expect(server.submitRaidDamage({ requestId: "s1", actions: [] }))
+    state.raid = { instances: [instance({ id: "world-2026-09-16", openedAt: "2026-09-16T00:00:00.000Z", endsAt: "2026-09-17T00:00:00.000Z", attemptsUsed: RAID_ATTEMPTS_PER_RAID })] };
+    await expect(serverAt(state, "2026-09-16T12:00:00Z").submitRaidDamage({ requestId: "s1", raidId: "world-2026-09-16", actions: [] }))
       .rejects.toMatchObject({ code: "RAID_DAILY_LIMIT" });
   });
 
+  it("은 없는 판과 끝난 판의 제출을 거절한다", async () => {
+    await expect(serverAt(makeRaidSession(), "2026-09-16T12:00:00Z").submitRaidDamage({ requestId: "s3", raidId: "nope", actions: [] }))
+      .rejects.toMatchObject({ code: "RAID_NOT_FOUND" });
+    const state = makeRaidSession();
+    state.raid = { instances: [yesterdayWorld(1)] };
+    await expect(serverAt(state, "2026-09-16T12:00:00Z").submitRaidDamage({ requestId: "s4", raidId: "world-2026-09-15", actions: [] }))
+      .rejects.toMatchObject({ code: "RAID_ENDED" });
+  });
+
   it("은 요청 ID 없는 제출을 거절한다", async () => {
-    const server = new FakeServer(makeRaidSession(), { latencyMs: 0, now: () => at("2026-09-16T12:00:00Z") });
-    await expect(server.submitRaidDamage({ requestId: "", actions: [] }))
+    await expect(serverAt(makeRaidSession(), "2026-09-16T12:00:00Z").submitRaidDamage({ requestId: "", raidId: "world-2026-09-16", actions: [] }))
       .rejects.toMatchObject({ code: "RAID_SCORE_REJECTED" });
   });
 
@@ -424,8 +521,7 @@ describe("레이드 서버 경계", () => {
     // 클라이언트가 보낸 피해 숫자를 받지 않으므로, 재현이 서지 않으면 제출 전체가 거절된다.
     const state = makeRaidSession();
     state.party = [];
-    const server = new FakeServer(state, { latencyMs: 0, now: () => at("2026-09-16T12:00:00Z") });
-    await expect(server.submitRaidDamage({ requestId: "s2", actions: [] }))
+    await expect(serverAt(state, "2026-09-16T12:00:00Z").submitRaidDamage({ requestId: "s2", raidId: "world-2026-09-16", actions: [] }))
       .rejects.toMatchObject({ code: "RAID_SCORE_REJECTED" });
   });
 });

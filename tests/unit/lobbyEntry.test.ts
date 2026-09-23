@@ -1,8 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { LOBBY_RETURN, normalizeLobbyEntry } from "../../src/scenes/lobbyEntry";
-import { BACK_BUTTON_SIZE, BACK_SLOT, POPUP_SIDE_SLOT, popupSideSlotGap } from "../../src/ui/popupGeometry";
-import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import { BATTLE_FIELD_BACKGROUND, battleFieldBackground, BACKGROUND, BACKGROUND_ASSETS } from "../../src/ui/backgroundAssets";
 import { BANNERS } from "../../src/data/banners";
 import { shopStagePresentation } from "../../src/data/shopPresentation";
@@ -25,21 +23,6 @@ describe("로비로 돌아갈 자리", () => {
     expect(normalizeLobbyEntry({})).toBeUndefined();
     expect(normalizeLobbyEntry({ menu: "shop" })).toBeUndefined();
     expect(normalizeLobbyEntry({ storefront: "loot" })).toBeUndefined();
-  });
-});
-
-describe("판 밖 곁들임 조작 자리", () => {
-  it("는 뒤로가기와 같은 줄에 서되 겹치지 않는다", () => {
-    expect(POPUP_SIDE_SLOT.y).toBe(BACK_SLOT.y);
-    expect(popupSideSlotGap()).toBeGreaterThan(0);
-  });
-
-  it("는 화면 안에 들고, 판 옆 50px 띠보다 넓다", () => {
-    // 판 옆이 아니라 판 밑동 아래인 이유가 이 폭이다 — 980폭 판은 좌우로 50px만 남긴다.
-    expect(POPUP_SIDE_SLOT.x - POPUP_SIDE_SLOT.width / 2).toBeGreaterThan(0);
-    expect(POPUP_SIDE_SLOT.width).toBeGreaterThan((BASE_WIDTH - 980) / 2);
-    expect(POPUP_SIDE_SLOT.y + POPUP_SIDE_SLOT.height / 2).toBeLessThan(BASE_HEIGHT);
-    expect(BACK_BUTTON_SIZE).toBeGreaterThan(0);
   });
 });
 

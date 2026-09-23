@@ -64,12 +64,11 @@ import { cakeOperationEnemies, cakeOperationRole, getCakeOperationTier } from ".
 import { battleArena } from "../core/battleArena";
 import { createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, createRaidSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type CakeBattleInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
 import { raidBossDef, raidBossPercentHpBasis } from "../core/raid";
-import { RAID_SEASON_BOSS } from "../data/raid";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import { expeditionManager, ExpeditionBossSettlementError, ExpeditionBossSettlementFlow } from "../managers/ExpeditionManager";
 import { settingsManager } from "../managers/SettingsManager";
 import { motionPolicy, type MotionPolicy } from "../core/settings";
-import type { SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse, SubmitRaidDamageResponse } from "../api/contracts";
+import type { RaidDto, SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse, SubmitRaidDamageResponse } from "../api/contracts";
 import { GameApiError } from "../api/contracts";
 import { currencyRecordToRewardItems } from "../ui/RewardPopup";
 import { BATTLE_CLOCK_LAYOUT, BATTLE_CONTROLS, BATTLE_STATUS_LAYOUT, RAID_BATTLE_HUD } from "../ui/battleStatusLayout";
@@ -418,9 +417,11 @@ export class BattleScene extends Phaser.Scene {
    * 보스 체력은 시즌 줄의 400분의 1 몸이라 그것으로 그리면 두 줄이 다른 단위가 된다.
    */
   private async buildRaidSeasonHud(): Promise<void> {
-    let season: Awaited<ReturnType<typeof gameApi.getRaidSeason>>;
-    try { season = await gameApi.getRaidSeason(1); } catch { return; }
-    if (!this.scene.isActive() || this.raidSeasonHud) return;
+    if (this.battleInput.mode !== "raid") return;
+    const raidId = this.battleInput.raidId;
+    let season: RaidDto | undefined;
+    try { season = (await gameApi.getRaids(1)).raids.find(({ id }) => id === raidId); } catch { return; }
+    if (!season || !this.scene.isActive() || this.raidSeasonHud) return;
     const hud = RAID_BATTLE_HUD;
     const left = hud.centerX - hud.bar.width / 2;
     const right = hud.centerX + hud.bar.width / 2;
@@ -480,13 +481,13 @@ export class BattleScene extends Phaser.Scene {
       ? getExpeditionNodeEnemies(this.battleInput.nodeType, this.battleInput.floor)
       : this.battleInput.mode === "expeditionBoss" ? getExpeditionNodeEnemies("boss", 20)
         // 레이드 보스의 성장은 서버 재현과 **같은 함수**를 지난다. 씬이 레벨을 다시 구하지 않는다.
-        : this.battleInput.mode === "raid" ? [raidBossDef(getRelic(RAID_SEASON_BOSS.relicId))]
+        : this.battleInput.mode === "raid" ? [raidBossDef(getRelic(this.battleInput.bossRelicId), this.battleInput.difficulty)]
         // 현상수배의 정예도 스테이지와 같은 성장 경로를 지난다. 전용 배율은 만들지 않는다.
         : this.battleInput.mode === "bounty" ? [bountyRoundEnemy(getBountyTier(this.battleInput.tierId).rounds[this.battleInput.round])]
         : getStageEnemies(stage);
     const expeditionConfig = this.battleInput.mode === "expedition" ? createExpeditionSkirmishConfig(this.battleInput, players, stageEnemies)
       : this.battleInput.mode === "expeditionBoss" ? createExpeditionBossSkirmishConfig(this.battleInput, players, stageEnemies)
-        : this.battleInput.mode === "raid" ? createRaidSkirmishConfig(players, stageEnemies[0], raidBossPercentHpBasis(getRelic(RAID_SEASON_BOSS.relicId))) : null;
+        : this.battleInput.mode === "raid" ? createRaidSkirmishConfig(players, stageEnemies[0], raidBossPercentHpBasis(getRelic(this.battleInput.bossRelicId), this.battleInput.difficulty)) : null;
     // 편성이 낀 룬의 특성은 어느 전투에서나 돈다 — 원정 증강과 **같은 계약**을 쓰므로 두 몫이
     // 한 배열에서 만난다. 장착 목록을 읽는 일은 씬이 하고, 효과로 옮기는 일은 코어가 한다.
     const traitEffects = partyRuneTraitEffects(partyIds.map((id) => ({
@@ -649,13 +650,15 @@ export class BattleScene extends Phaser.Scene {
    * 실패했을 때의 손짓(같은 요청 ID로 재시도 · 로비로 되돌아가기)은 원정과 같다.
    */
   private async submitRaidRun(actions: ExpeditionBossAction[]): Promise<void> {
+    if (this.battleInput.mode !== "raid") return;
+    const raidId = this.battleInput.raidId;
     if (!beginBossSettlementAttempt(this.bossSettlementFailureState)) return;
     this.bossSettlementFailureUi?.destroy(true);
     this.bossSettlementFailureUi = undefined;
     // 요청 ID는 한 판에 하나다 — 재시도가 새 ID를 만들면 성공한 제출이 두 번 쌓인다.
     this.raidRequestId ??= `raid-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
     try {
-      const result = await gameApi.submitRaidDamage({ requestId: this.raidRequestId, actions });
+      const result = await gameApi.submitRaidDamage({ requestId: this.raidRequestId, raidId, actions });
       completeBossSettlementAttempt(this.bossSettlementFailureState);
       this.showRaidResult(result);
     } catch (error) {
@@ -675,33 +678,32 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /**
-   * 레이드 결과판.
+   * 레이드 결과판 — **스테이지 승리와 같은 결산창**(`StageCompletePopup`)이다.
    *
-   * 협력전이라 **가장 크게 서는 수가 이번 판의 피해**이고, 그 아래에 시즌 누적이 한 줄로
-   * 붙는다 — 원정처럼 점수 하나만 남기면 "내가 얼마나 밀었나"와 "우리가 어디까지 왔나"가
-   * 한 수에 뭉쳐 읽힌다.
+   * 편성 SD와 MVP, 기여도, 그 판의 피해에 비례해 **곧바로 받은** 보상이 한 판에 선다. 판이 끝난
+   * 뒤의 정산은 여기서 주지 않는다 — 레이드가 끝나면 완료 탭에서 따로 받는다. 이번 판의 피해와
+   * 이 레이드에 쌓인 내 몫은 보상 아래 한 줄이 말한다.
    */
   private showRaidResult(result: SubmitRaidDamageResponse): void {
     if (this.contributionResult) this.contributionResult = withConfirmedAttackTotal(this.contributionResult, result.runDamage);
-    this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.96).setDepth(5000);
-    const layout = BOSS_RESULT_LAYOUT;
-    this.add.text(layout.title.x, layout.title.y, t("battle.settle.done"), textStyle({ role: "display", size: 60, color: COLOR.accentText })).setOrigin(0.5).setDepth(5001);
-    this.add.text(BASE_WIDTH / 2, layout.score.top + 105, t("raid.result.damage"), textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0.5).setDepth(5001);
-    const damageText = this.add.text(BASE_WIDTH / 2, layout.score.top + 225, result.runDamage.toLocaleString(), textStyle({ role: "display", size: 76, color: "#ffffff", align: "center" })).setOrigin(0.5).setDepth(5001);
-    damageText.setStroke("#000000", 6).setShadow(0, 4, "#000000", 4, false, true);
-    this.add.text(BASE_WIDTH / 2, layout.score.top + 330, t("raid.result.total", { total: result.season.myDamage.toLocaleString() }), textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0.5).setDepth(5001);
-    const popups = new PopupLayer(this, 6000);
-    new Button(this, BASE_WIDTH / 2, layout.lobby.top + layout.lobby.height / 2, { width: layout.lobby.width, height: layout.lobby.height, label: t("battle.settle.toLobby"), variant: "primary", onClick: () => {
+    const popups = new PopupLayer(this, 2200);
+    const back = (): void => {
       if (this.bossLeaving) return;
       this.bossLeaving = true;
-      // 레이드도 성공 제출 뒤에는 Boot가 서버 최신본을 읽고 저장 검증을 거친 뒤 레이드로 되돌린다.
-      this.scene.start("boot", { destination: "raid" });
-    } }).setDepth(5001);
-    setDebugBossResult({ visible: true, lobby: { x: BASE_WIDTH / 2, y: layout.lobby.top + layout.lobby.height / 2 } });
-    const [, contribution] = bossResultUtilityBounds();
-    // 주간 기록 자리는 비운다 — 레이드의 기록은 순위가 아니라 시즌 판이 맡고, 그 판은 레이드
-    // 화면이 이미 갖고 있다. 여기 하나 더 세우면 같은 목록을 두 곳에서 열게 된다.
-    new Button(this, contribution.left + contribution.width / 2, contribution.top + contribution.height / 2, { width: contribution.width, height: contribution.height, label: t("battle.contribution"), fontSize: 27, onClick: () => this.openContributionPopup(popups) }).setDepth(5001);
+      // 성공 제출 뒤에는 Boot가 서버 최신본을 읽고 저장 검증을 거친 뒤 방금 친 그 판으로 되돌린다.
+      this.scene.start("boot", { destination: "raid", raidId: result.raid.id });
+    };
+    new StageCompletePopup(this, popups).open({
+      reward: {
+        kind: "loot",
+        items: currencyRecordToRewardItems(Object.fromEntries(result.granted.map(({ currency, amount }) => [currency, amount]))),
+        footnote: t("raid.result.footnote", { damage: result.runDamage.toLocaleString(), total: result.raid.myDamage.toLocaleString() }),
+      },
+      fighters: this.stageCompleteFighters(),
+      onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
+      onConfirm: back,
+    });
+    setDebugBossResult({ visible: true, lobby: { x: BASE_WIDTH / 2, y: BASE_HEIGHT / 2 } });
   }
 
   /** 실패를 성공/포기로 꾸미거나 로컬 런을 지우지 않고 Boot의 서버·저장 재동기화 경계로 나간다. */

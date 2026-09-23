@@ -1,5 +1,7 @@
 import { applyEncounterScaling } from "./levelDesign";
-import { RAID_BOSS_HP_SCALE, RAID_CONTRIBUTION_REWARD_STAGES, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP, RAID_WORLD_REWARD_STAGES } from "../data/raid";
+import { RAID_BOSS_HP_SCALE, RAID_DIFFICULTY, RAID_MOCK_PARTICIPANTS, RAID_SEASON_TOTAL_HP, RAID_SUMMON_DIFFICULTIES, RAID_BOSS_POOL, type RaidDifficulty } from "../data/raid";
+import { PREVIEW_FRIENDS } from "../data/friends";
+import { requiredBreakthroughForLevel } from "./levelDesign";
 import type { RelicDef } from "./types";
 
 /**
@@ -84,16 +86,6 @@ export function raidContributionBoard(entries: readonly RaidContributionInput[],
     }));
 }
 
-/** 누적 기여가 넘긴 보상 단계 ID다. 미수령 판정은 서버가 별도로 한다. */
-export function raidEarnedContributionStageIds(cumulativeDamage: number): string[] {
-  return RAID_CONTRIBUTION_REWARD_STAGES.filter(({ threshold }) => cumulativeDamage >= threshold).map(({ id }) => id);
-}
-
-/** 아직 넘기지 못한 다음 단계다. 모두 넘겼으면 undefined를 돌려준다. */
-export function raidNextContributionStage(cumulativeDamage: number) {
-  return RAID_CONTRIBUTION_REWARD_STAGES.find(({ threshold }) => cumulativeDamage < threshold);
-}
-
 /**
  * 시즌 키와 참가자 ID만으로 같은 값을 돌려주는 32비트 해시다.
  *
@@ -141,43 +133,119 @@ export function mockRaidWorldDamage(dayKey: string, dayProgress: number, totalHp
   return Math.floor(totalHp * reach * curve);
 }
 
-/** 서버 전체가 깎은 비율이 넘긴 월드 진행 단계 ID다. 미수령 판정은 서버가 별도로 한다. */
-export function raidReachedWorldStageIds(dealtRatio: number): string[] {
-  return RAID_WORLD_REWARD_STAGES.filter(({ ratio }) => dealtRatio >= ratio).map(({ id }) => id);
+/**
+ * 난이도의 레벨과 그 레벨에 닿는 한계 돌파 — 적도 플레이어와 같은 성장 축을 지난다.
+ *
+ * 난이도가 오를 때마다 돌파가 한 칸씩 열려 보스가 그 칸의 효과를 얻는다(지금은 모두 "없음"이다).
+ */
+export function raidBossGrowth(difficulty: RaidDifficulty): { level: number; breakthrough: number } {
+  const level = RAID_DIFFICULTY[difficulty].level;
+  return { level, breakthrough: requiredBreakthroughForLevel(level) };
 }
 
 /**
- * 시즌 보스의 전투 스냅샷.
+ * 레이드 보스의 전투 스냅샷.
  *
  * **서버와 화면이 같은 함수를 지난다.** 재현하는 쪽과 그려 주는 쪽이 저마다 레벨을 구하면,
- * 보여 준 `LV.70`과 실제로 맞는 수치가 갈린다 — 야성 단계에 배율을 먹이는 일은 이 한 줄에서만
- * 돈다(`effectiveEnemyLevel`). 스테이지 정예와 같은 문법이다.
+ * 보여 준 `LV.n`과 실제로 맞는 수치가 갈린다. 세기의 손잡이는 난이도의 레벨 하나다.
  */
-function raidBossScaledStats(base: RelicDef): RelicDef["stats"] {
-  return applyEncounterScaling(base.stats, RAID_SEASON_BOSS.level, "endless");
+function raidBossScaledStats(base: RelicDef, difficulty: RaidDifficulty): RelicDef["stats"] {
+  return applyEncounterScaling(base.stats, raidBossGrowth(difficulty).level, "endless");
 }
 
 /**
  * 최대 체력 비례 피해(출혈·뇌진탕)가 레이드 보스에게서 재는 체력 — **성장으로 얻은 체력**이다.
  *
- * 판 안의 최대 체력은 시즌 게이지의 단위(`RAID_BOSS_HP_SCALE`)라 성장 체력의 여러 배다. 그
- * 값으로 비율을 재던 때는 출혈 한 번이 판 전체의 타격보다 컸다 — 실측으로 렉시아 편성이 한
- * 판에 출혈 98,000 · 타격 8,700을 냈고, 출혈이 없는 편성은 보스 줄을 거의 움직이지 못했다.
- * 비율 피해는 **그 개체가 얼마나 단단한가**를 재야 하므로 세기의 몫(레벨·유형)에서 잰다.
+ * 판 안의 최대 체력은 공유 체력의 단위(`RAID_BOSS_HP_SCALE`)라 성장 체력의 여러 배다. 그
+ * 값으로 비율을 재던 때는 출혈 한 번이 판 전체의 타격보다 컸다 — 비율 피해는 **그 개체가 얼마나
+ * 단단한가**를 재야 하므로 세기의 몫(레벨·유형)에서 잰다.
  */
-export function raidBossPercentHpBasis(base: RelicDef): number {
-  return Math.max(1, Math.round(raidBossScaledStats(base).hp));
+export function raidBossPercentHpBasis(base: RelicDef, difficulty: RaidDifficulty = "rampage"): number {
+  return Math.max(1, Math.round(raidBossScaledStats(base, difficulty).hp));
 }
 
-export function raidBossDef(base: RelicDef): RelicDef {
-  const scaled = raidBossScaledStats(base);
+export function raidBossDef(base: RelicDef, difficulty: RaidDifficulty = "rampage"): RelicDef {
+  const scaled = raidBossScaledStats(base, difficulty);
   /*
-   * **최대 체력만 성장이 아니라 시즌 게이지에서 나온다.**
-   *
-   * 나머지 넷은 유형 표와 레벨이 그대로 정한다 — 세기를 조이는 손잡이는 여전히 레벨 하나다.
-   * 체력만 가르는 이유는 그 값이 **세기가 아니라 단위**이기 때문이다: 시즌 줄과 전장의 줄이
-   * 같은 자를 쓰지 않으면, 한 판에서 반을 깎아 놓고 돌아와도 시즌 게이지가 미동도 하지 않는다.
+   * **최대 체력만 성장이 아니라 공유 체력의 단위에서 나온다.** 나머지 넷은 유형 표와 레벨이
+   * 그대로 정한다. 체력만 가르는 이유는 그 값이 **세기가 아니라 단위**이기 때문이다 — 난이도마다
+   * 몸을 바꾸면 쉬움의 몸이 한 번에 비어 머리 위 줄이 뜻을 잃는다.
    */
   return { ...base, stats: { ...scaled, hp: Math.round(RAID_SEASON_TOTAL_HP / RAID_BOSS_HP_SCALE) } };
 }
 
+/**
+ * 소환 레이드의 **다른 참가자들**이 지금까지 깎은 몫.
+ *
+ * **백엔드가 생기면 서버 집계로 갈아 끼운다.** 판마다 도달선(총량의 60~130%)이 다르고 수명에
+ * 걸쳐 차오르므로, 어떤 판은 수명 안에 토벌되고 어떤 판은 남는다. 난수를 쓰지 않아 같은 판은
+ * 언제 읽어도 같은 값이다.
+ */
+export function mockSummonRaidDamage(raidId: string, elapsedRatio: number, totalHp: number): number {
+  const reach = 0.6 + seedHash(`${raidId}:reach`) * 0.7;
+  const curve = 1 - (1 - Math.min(1, Math.max(0, elapsedRatio))) ** 2;
+  return Math.floor(totalHp * reach * curve);
+}
+
+/**
+ * 친구가 그날 연 레이드 — 친구 목록 인원끼리 공유하는 판이다.
+ *
+ * **백엔드가 생기면 서버가 내려 주는 친구 소환 목록으로 갈아 끼운다.** 지금은 표본 친구가 하루에
+ * 한 판씩, 날짜와 친구에서 정해지는 난이도로 연다. 연 시각은 친구마다 몇 시간씩 어긋난다.
+ */
+export interface FriendRaidDefinition {
+  id: string;
+  friendId: string;
+  friendName: string;
+  bossRelicId: string;
+  difficulty: RaidDifficulty;
+  openedAt: string;
+}
+
+export function mockFriendRaids(dayKey: string): FriendRaidDefinition[] {
+  const start = Date.parse(`${dayKey}T00:00:00.000Z`);
+  return PREVIEW_FRIENDS.map((friend, index) => {
+    const pick = seedHash(`${dayKey}:${friend.id}:raid`);
+    const difficulty = RAID_SUMMON_DIFFICULTIES[Math.floor(pick * RAID_SUMMON_DIFFICULTIES.length) % RAID_SUMMON_DIFFICULTIES.length];
+    const bossRelicId = RAID_BOSS_POOL[Math.floor(seedHash(`${dayKey}:${friend.id}:boss`) * RAID_BOSS_POOL.length) % RAID_BOSS_POOL.length];
+    return {
+      id: `friend-${friend.id}-${dayKey}`, friendId: friend.id, friendName: friend.displayName,
+      bossRelicId, difficulty, openedAt: new Date(start + (2 + index * 5) * 3_600_000).toISOString(),
+    };
+  });
+}
+
+/**
+ * 소환 레이드의 기여 목록 — 연 사람과 친구들이 다른 참가자의 몫을 나눠 갖는다.
+ *
+ * 친구 몇 명뿐인 판이라 월드 폭주처럼 스물넷을 세우지 않는다. 나눠 갖는 비율은 판과 사람에서
+ * 정해져 같은 판이면 언제 읽어도 같다.
+ */
+export function mockSummonContributions(raidId: string, othersDamage: number): RaidContributionInput[] {
+  const weights = PREVIEW_FRIENDS.map((friend) => 0.5 + seedHash(`${raidId}:${friend.id}`));
+  const sum = weights.reduce((total, weight) => total + weight, 0);
+  return PREVIEW_FRIENDS.map((friend, index) => ({
+    playerId: friend.id, displayName: friend.displayName, favoriteRelicId: friend.favoriteRelic?.relicId,
+    damage: Math.floor(othersDamage * weights[index]! / sum),
+  }));
+}
+
+/**
+ * 끝난 판의 정산 — **참여한 사람만** 받는다.
+ *
+ * 세 몫을 더한다: 내 피해가 목표(`mineTarget`, 두 판의 합)에 닿을수록 차오르는 몫, 판 전체가
+ * 깎인 비율만큼의 몫, 토벌된 판에만 붙는 몫. 내가 많이 깎을수록, 판이 많이 깎일수록 커진다.
+ * 한 번도 치지 않았으면 아무것도 없다(`undefined`).
+ */
+export function raidSettlement(difficulty: RaidDifficulty, myDamage: number, dealtRatio: number, defeated: boolean): { raidSigil: number } | undefined {
+  if (!(myDamage > 0)) return undefined;
+  const spec = RAID_DIFFICULTY[difficulty].settlement;
+  const mine = Math.round(spec.mine * Math.min(1, myDamage / spec.mineTarget));
+  const total = Math.round(spec.total * Math.min(1, Math.max(0, dealtRatio)));
+  return { raidSigil: Math.max(1, mine + total + (defeated ? spec.kill : 0)) };
+}
+
+/** 한 판을 치고 곧바로 받는 골드. 그 판의 피해에 비례한다. */
+export function raidRunGold(runDamage: number, goldPerDamage: number): number {
+  return Math.max(0, Math.floor(runDamage * goldPerDamage));
+}

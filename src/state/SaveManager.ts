@@ -1,9 +1,10 @@
 import { PLAYABLE_RELICS } from "../data/relics";
+import { isRaidDifficulty } from "../data/raid";
 import { STAGES } from "../data/stages";
 import { BANNERS } from "../data/banners";
 import { BREAKTHROUGH_CAP } from "../core/relicProgression";
 import type { RelicProgress } from "../core/types";
-import { createDefaultSession, createEmptyInteractionProgress, createInitialPlayerResearchProgress, type RaidState, type SaveData, type Session } from "./session";
+import { createDefaultSession, createEmptyInteractionProgress, createInitialPlayerResearchProgress, type RaidInstanceState, type RaidState, type SaveData, type Session } from "./session";
 import { PROFILE_MODIFIERS } from "../data/profileModifiers";
 import { assertValidRuneInstance, type RuneInstance } from "../core/runes";
 import { normalizeSettings } from "../core/settings";
@@ -259,8 +260,8 @@ export class SaveManager {
       // 광고 검증 토큰은 제외하고 UTC 일자·횟수·멱등 ID만 독립 복사한다.
       dailyAdRewards: { ...state.dailyAdRewards, claimsBySlot: { ...state.dailyAdRewards.claimsBySlot }, requestIds: [...state.dailyAdRewards.requestIds] },
       expedition: { ...state.expedition, lastParty: [...state.expedition.lastParty], run: state.expedition.run ? cloneExpeditionRun(state.expedition.run) : null },
-      // 레이드는 Set도 중첩 런도 없어 배열 한 줄만 복사하면 된다.
-      raid: { ...state.raid, claimedStageIds: [...state.raid.claimedStageIds] },
+      // 레이드는 판마다 평평한 객체라 판 하나씩 얕게 복사하면 된다.
+      raid: { instances: state.raid.instances.map((instance) => ({ ...instance })) },
       cakeOperation: { ...state.cakeOperation },
     };
     this.validate(data);
@@ -397,19 +398,11 @@ export class SaveManager {
     const rawLastParty = Array.isArray(savedExpedition?.lastParty) ? savedExpedition.lastParty : [];
     const lastParty = rawLastParty.filter((id, index) => ownedIds.includes(id) && rawLastParty.indexOf(id) === index).slice(0, 3);
     const expedition = { weekKey: savedExpedition?.weekKey ?? "", playsThisWeek: savedExpedition?.playsThisWeek ?? 0, bestScore: savedExpedition?.bestScore ?? 0, allTimeBestScore: savedExpedition?.allTimeBestScore ?? savedExpedition?.bestScore ?? 0, lastParty, run: normalizeExpeditionRun(savedExpedition?.run, ownedIds) };
-    // **레이드 도입 전 저장은 빈 시즌으로 이관한다.** 모양만 맞추면 되는 이유는 시즌 키가 비면
-    // 첫 조회가 서버 주차로 정규화하며 내 몫을 0에서 시작하기 때문이다 — 예전 저장에 있을 수
-    // 없는 값이라 되살릴 것이 없다.
-    const savedRaid = legacy.raid as Partial<RaidState> | undefined;
-    const raid: RaidState = {
-      seasonKey: typeof savedRaid?.seasonKey === "string" ? savedRaid.seasonKey : "",
-      myDamage: Number.isInteger(savedRaid?.myDamage) && (savedRaid?.myDamage ?? 0) >= 0 ? savedRaid!.myDamage! : 0,
-      attemptsUsed: Number.isInteger(savedRaid?.attemptsUsed) && (savedRaid?.attemptsUsed ?? 0) >= 0 ? savedRaid!.attemptsUsed! : 0,
-      attemptsDate: typeof savedRaid?.attemptsDate === "string" ? savedRaid.attemptsDate : "",
-      // 주간 시즌 시절의 처치 보상 기록(`defeatRewardClaimed`)은 읽지 않는다 — 월드 폭주는 날짜
-      // 키가 바뀌면 수령 기록을 통째로 비우므로 예전 값은 첫 조회에서 어차피 사라진다.
-      claimedStageIds: Array.isArray(savedRaid?.claimedStageIds) ? savedRaid.claimedStageIds.filter((id): id is string => typeof id === "string") : [],
-    };
+    // **레이드는 판 목록으로 이관한다.** 주간 시즌·하루 한 마리 시절의 저장(`seasonKey`·`myDamage`)은
+    // 판 ID가 없어 어느 판의 몫인지 되살릴 수 없고, 그 몫의 보상은 당시 이미 단계별로 받았다 —
+    // 그래서 빈 목록에서 시작한다. 판 목록이 있는 저장은 모양이 맞는 판만 남긴다.
+    const savedRaid = legacy.raid as { instances?: unknown } | undefined;
+    const raid: RaidState = { instances: Array.isArray(savedRaid?.instances) ? savedRaid.instances.filter(isRaidInstance).map((instance) => ({ ...instance })) : [] };
     // 교류 도입 전 저장에는 서버 파견이 없으므로 빈 슬롯으로 명시 이관한다.
     const interaction = Number(legacy.saveVersion) >= 30 && legacy.interaction && typeof legacy.interaction === "object" ? structuredClone(legacy.interaction) : createEmptyInteractionProgress();
     // **없어진 도시로 나가 있던 파견은 버린다.** 도시 사다리가 바뀌면 그 id를 가리키던 슬롯이
@@ -553,7 +546,7 @@ export class SaveManager {
     if (!data.dailyAdRewards || typeof data.dailyAdRewards.date !== "string" || !data.dailyAdRewards.claimsBySlot || Object.entries(data.dailyAdRewards.claimsBySlot).some(([id, count]) => !(id in adLimits) || !Number.isInteger(count) || count < 0 || count > adLimits[id]) || !Array.isArray(data.dailyAdRewards.requestIds) || data.dailyAdRewards.requestIds.some((id) => typeof id !== "string" || id.length === 0) || new Set(data.dailyAdRewards.requestIds).size !== data.dailyAdRewards.requestIds.length) fail("일일 광고 수령 정보가 올바르지 않습니다.");
     if (!data.expedition || typeof data.expedition.weekKey !== "string" || !Number.isInteger(data.expedition.playsThisWeek) || data.expedition.playsThisWeek < 0 || !Number.isInteger(data.expedition.bestScore) || data.expedition.bestScore < 0 || !Number.isInteger(data.expedition.allTimeBestScore) || data.expedition.allTimeBestScore < 0 || !Array.isArray(data.expedition.lastParty) || data.expedition.lastParty.length > 3 || new Set(data.expedition.lastParty).size !== data.expedition.lastParty.length || data.expedition.lastParty.some((id) => !data.ownedRelicIds.includes(id)) || (data.expedition.run !== null && normalizeExpeditionRun(data.expedition.run, data.ownedRelicIds) === null)) fail("원정 진행 정보가 올바르지 않습니다.");
     // 레이드는 내 몫과 수령 기록만 저장하므로 검사도 그 둘의 모양과 부호뿐이다.
-    if (!data.raid || typeof data.raid.seasonKey !== "string" || typeof data.raid.attemptsDate !== "string" || !Number.isInteger(data.raid.myDamage) || data.raid.myDamage < 0 || !Number.isInteger(data.raid.attemptsUsed) || data.raid.attemptsUsed < 0 || !Array.isArray(data.raid.claimedStageIds) || data.raid.claimedStageIds.some((id) => typeof id !== "string" || id.length === 0) || new Set(data.raid.claimedStageIds).size !== data.raid.claimedStageIds.length) fail("레이드 진행 정보가 올바르지 않습니다.");
+    if (!data.raid || !Array.isArray(data.raid.instances) || !data.raid.instances.every(isRaidInstance) || new Set(data.raid.instances.map(({ id }) => id)).size !== data.raid.instances.length) fail("레이드 진행 정보가 올바르지 않습니다.");
     // 표에 없는 단계까지 이긴 것으로 적힌 저장은 소탕으로 그만큼을 바로 털 수 있어 거절한다.
     if (!data.cakeOperation || !Number.isInteger(data.cakeOperation.clearedIndex)
       || data.cakeOperation.clearedIndex < -1 || data.cakeOperation.clearedIndex >= CAKE_OPERATION_TIERS.length) fail("치즈케이크 대작전 진행 정보가 올바르지 않습니다.");
@@ -589,7 +582,7 @@ export class SaveManager {
       productPurchases: Object.fromEntries(Object.entries(data.productPurchases).map(([id, value]) => [id, { ...value }])),
       dailyAdRewards: { ...data.dailyAdRewards, claimsBySlot: { ...data.dailyAdRewards.claimsBySlot }, requestIds: [...data.dailyAdRewards.requestIds] },
       expedition: { ...data.expedition, lastParty: [...data.expedition.lastParty], run: data.expedition.run ? cloneExpeditionRun(data.expedition.run) : null },
-      raid: { ...data.raid, claimedStageIds: [...data.raid.claimedStageIds] },
+      raid: { instances: data.raid.instances.map((instance) => ({ ...instance })) },
       cakeOperation: { ...data.cakeOperation },
     };
   }
@@ -613,4 +606,26 @@ function legacyItemQuantity(legacy: { itemInventory?: unknown }, itemId: string)
   if (!Array.isArray(legacy.itemInventory)) return 0;
   const stack = legacy.itemInventory.find((entry: { itemId?: unknown }) => entry?.itemId === itemId) as { quantity?: unknown } | undefined;
   return Number.isInteger(stack?.quantity) && (stack!.quantity as number) > 0 ? stack!.quantity as number : 0;
+}
+
+/**
+ * 저장된 레이드 판 하나가 모양을 갖췄는가.
+ *
+ * 판을 다시 세우는 데 필요한 정의(보스·난이도·시각)와 내 몫(피해·도전·정산)이 모두 있어야 한다 —
+ * 하나라도 빠지면 그 판은 목록에서 어떤 상태인지 말할 수 없다.
+ */
+function isRaidInstance(value: unknown): value is RaidInstanceState {
+  if (!value || typeof value !== "object") return false;
+  const raid = value as Partial<RaidInstanceState>;
+  return typeof raid.id === "string" && raid.id.length > 0
+    && (raid.kind === "world" || raid.kind === "summon")
+    && typeof raid.bossRelicId === "string"
+    && isRaidDifficulty(raid.difficulty)
+    && typeof raid.openedAt === "string" && Number.isFinite(Date.parse(raid.openedAt))
+    && typeof raid.endsAt === "string" && Number.isFinite(Date.parse(raid.endsAt))
+    && (raid.summonerName === undefined || typeof raid.summonerName === "string")
+    && typeof raid.summonedByMe === "boolean"
+    && Number.isInteger(raid.myDamage) && raid.myDamage! >= 0
+    && Number.isInteger(raid.attemptsUsed) && raid.attemptsUsed! >= 0
+    && typeof raid.settled === "boolean";
 }

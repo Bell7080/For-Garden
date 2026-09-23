@@ -1,7 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
 import { captureGame, tap, waitForDebugState } from "./canvasInput";
-import { RAID_ACTIONS, RAID_BOSS_SPOT, RAID_LIST } from "../../src/ui/raidLayout";
+import { RAID_ACTIONS, RAID_BOSS_SPOT, RAID_LIST_CHROME, raidLayerStack } from "../../src/ui/raidLayout";
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
@@ -26,7 +26,23 @@ test("레이드는 목록에서 월드 폭주 판으로 들어가고 출격이 �
   await waitForDebugState(page, () => window.__PF_DEBUG?.raidStage, "list", { timeout: 20_000 });
   await page.waitForTimeout(3_000);
   await captureGame(page, `test-results/${test.info().project.name}-raid-list.png`);
-  await tap(page, BASE_WIDTH / 2, RAID_LIST.world.y);
+  // 소환은 난이도를 고르는 창을 연다.
+  await tap(page, RAID_LIST_CHROME.summon.pair.left.centerX, RAID_LIST_CHROME.summon.y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("레이드 소환");
+  await page.waitForTimeout(600);
+  await captureGame(page, `test-results/${test.info().project.name}-raid-summon.png`);
+  await tap(page, 40, 200); // 판 밖을 눌러 닫는다
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles ?? [])).not.toContain("레이드 소환");
+  // 완료 탭 — 끝난 판을 정산하는 자리다.
+  const tabs = RAID_LIST_CHROME.tabs;
+  await tap(page, tabs.left + tabs.width * 1.5 + tabs.gap, tabs.y);
+  await waitForDebugState(page, () => window.__PF_DEBUG?.raidStage, "list", { timeout: 20_000 });
+  await page.waitForTimeout(1_500);
+  await captureGame(page, `test-results/${test.info().project.name}-raid-completed.png`);
+  await tap(page, tabs.left + tabs.width / 2, tabs.y);
+  await page.waitForTimeout(1_500);
+  // 맨 위 층(월드 폭주)의 이름 줄을 누른다 — 보상 줄의 버튼을 피한다.
+  await tap(page, BASE_WIDTH / 2, raidLayerStack(["world"]).centers[0]! - 120);
   await waitForDebugState(page, () => window.__PF_DEBUG?.raidStage, "season", { timeout: 20_000 });
 
   // 보스 전신은 ZIP을 내려받아 세우므로 첫 프레임보다 늦게 도착한다. 원화가 붙을 틈을 준다.

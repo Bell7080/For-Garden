@@ -126,17 +126,22 @@ export function raidBoardViewport(): { height: number; centerY: number } {
  * 레이드 목록 — **층이 쌓이는 판**이다(교류 목록과 같은 문법).
  *
  * 맨 위에는 시스템이 하루 한 마리 여는 **월드 폭주**가 한 겹 더 두른 테두리를 달고 크게 서고,
- * 그 아래로 친구가 소환한 레이드가 쌓인다(다음 단계). 층 하나는 **오른쪽이 보스의 얼굴**,
- * **왼쪽이 이름·도전·보상**, **맨 밑이 남은 체력**이다 — 들어가기 전에 "누구이고, 오늘 몇 번
+ * 그 아래로 친구와 내가 소환한 레이드가 쌓인다. 층 하나는 **오른쪽이 보스의 얼굴**,
+ * **왼쪽이 이름·도전·보상**, **맨 밑이 남은 체력**이다 — 들어가기 전에 "누구이고, 몇 번
  * 남았고, 무엇을 주고, 얼마나 남았나"가 한 장에 선다.
  */
 export const RAID_LIST = {
-  /** 목록이 흐르는 창. 교류 목록과 같은 높이에서 시작하고 우하단 뒤로가기를 침범하지 않는다. */
-  viewport: { top: 292, bottom: BASE_HEIGHT - 250 },
+  /**
+   * 층이 흐르는 창. 위는 머리글(제목·토벌권) 아래에서, 아래는 **켜진 탭이 솟은 윗변**에서
+   * 끝난다 — 그 강조선이 곧 목록의 밑변이라 선 하나로 탭과 목록이 한 덩어리가 된다.
+   */
+  viewport: { top: 262, bottom: 1606 },
   width: BASE_WIDTH - 92,
   slant: 26,
-  /** 월드 폭주 층. 친구 레이드보다 두껍게 서서 "오늘의 한 마리"임을 크기가 먼저 말한다. */
-  world: { height: 460, y: 292 + 230 + 18 },
+  /** 층과 층 사이. 윗변에 걸터앉는 제목표(높이 52)의 절반과 월드 폭주의 바깥 테두리가 든다. */
+  gap: 58,
+  /** 창 윗변에서 첫 층까지 — 첫 층의 제목표와 바깥 테두리가 잘리지 않게 한 뼘 내린다. */
+  firstTop: 44,
   /** 월드 폭주만 두르는 바깥 테두리가 층에서 벌어지는 폭(px). */
   worldRing: 12,
   /** 글이 판 왼쪽 변에서 시작하는 여백. */
@@ -148,10 +153,71 @@ export const RAID_LIST = {
    * `crop`은 실루엣 폭 대비 상자 높이라 작을수록 얼굴이 크게 당겨진다.
    */
   art: { from: 0.34, fade: 0.2, crop: 0.46, headX: 0.52, anchorY: 0.36 },
-  /** 글줄의 자리(판 가운데 기준 y). 판 윗변에는 제목표(`월드 폭주`)가 걸터앉는다. */
-  text: { nameY: -146, levelY: -90, attemptsY: -48 },
-  /** 보상 액자. 오늘 받을 수 있는 증표 전부를 한 칸이 든다. */
-  reward: { y: 44, size: 92 },
-  /** 맨 밑 남은 체력 줄. 판 밑변에서 올라오는 높이와 두께. */
-  hp: { up: 44, height: 26, labelUp: 80 },
+  /**
+   * 층의 두 크기. 월드 폭주가 더 두껍게 서서 "오늘의 한 마리"임을 크기가 먼저 말한다.
+   * 글줄·보상·체력 줄의 자리는 층 가운데 기준 y다.
+   */
+  kinds: {
+    world: {
+      height: 460, nameSize: 58,
+      text: { nameY: -146, levelY: -90, attemptsY: -48 },
+      reward: { y: 44, size: 92 },
+      hp: { up: 44, height: 26, labelUp: 80 },
+    },
+    summon: {
+      height: 360, nameSize: 50,
+      text: { nameY: -112, levelY: -62, attemptsY: -24 },
+      reward: { y: 46, size: 76 },
+      hp: { up: 40, height: 24, labelUp: 76 },
+    },
+  },
+  /** 보상 액자 오른쪽의 두 줄(무엇인가 · 내 기여)과 정산 버튼. 액자 오른쪽 변에서 잰다. */
+  rewardText: { gap: 20, labelUp: 18, valueDown: 18 },
+  settle: { width: 160, height: 66, fromFrame: 300 },
 } as const;
+
+export type RaidLayerKind = keyof typeof RAID_LIST.kinds;
+
+/** 층을 순서대로 쌓았을 때 각 층 가운데의 y(목록 컨테이너 기준)와 목록 전체의 높이. */
+export function raidLayerStack(kinds: readonly RaidLayerKind[]): { centers: number[]; height: number } {
+  const centers: number[] = [];
+  let y = RAID_LIST.viewport.top + RAID_LIST.firstTop;
+  kinds.forEach((kind, index) => {
+    if (index > 0) y += RAID_LIST.gap;
+    const height = RAID_LIST.kinds[kind].height;
+    centers.push(y + height / 2);
+    y += height;
+  });
+  return { centers, height: y - RAID_LIST.viewport.top + RAID_LIST.firstTop };
+}
+
+/**
+ * 목록 화면의 머리와 밑동.
+ *
+ * **머리 오른쪽은 두 토벌권이다** — 소환을 누르기 전에 몇 장 남았는지가 읽혀야 한다. 수만 적지 않고
+ * 그 아이템의 액자에 수량을 겹친다(재화·아이템이 서는 자리의 공용 규칙).
+ *
+ * **밑동은 탭 → 소환 순으로 쌓인다.** 탭은 목록을 갈아 끼우는 전환 라벨이라 목록 바로 밑에 붙고
+ * (`CategoryTab`, 가방·상점과 같은 한 장), 그 아래 소환 줄이 선다. 선택 토벌권이 있을 때만 선택
+ * 소환이 옆에 붙는다 — 없는데 세우면 눌러도 아무 일이 없는 칸이 된다. 우하단은 공용 뒤로가기
+ * 자리라 소환 줄은 그 왼쪽에서 끝난다.
+ */
+export const RAID_LIST_CHROME = {
+  tickets: { y: 164, size: 88, gap: 22, right: BASE_WIDTH - 60 },
+  tabs: { y: 1654, width: 250, height: 76, gap: 14, left: 46 },
+  summon: {
+    y: BACK_SLOT.y,
+    height: 112,
+    /** 선택 토벌권이 없으면 소환 하나가 이 폭으로 선다. */
+    single: { centerX: BASE_WIDTH / 2, width: 440 },
+    /** 둘이 설 때. 소환이 왼쪽, 선택 소환이 오른쪽이다. */
+    pair: { left: { centerX: 262, width: 400 }, right: { centerX: 682, width: 360 } },
+  },
+} as const;
+
+/** 소환 줄의 오른쪽 끝이 우하단 공용 뒤로가기와 벌린 가로 간격이다. 양수여야 한다. */
+export function raidSummonBackGap(): number {
+  const { single, pair } = RAID_LIST_CHROME.summon;
+  const right = Math.max(single.centerX + single.width / 2, pair.right.centerX + pair.right.width / 2);
+  return (BACK_SLOT.x - BACK_BUTTON_SIZE / 2) - right;
+}

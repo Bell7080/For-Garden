@@ -8,10 +8,10 @@ import { portraitAssetFor, withPuppetTexture } from "../puppets/assets";
 import { Button } from "./Button";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { bakeBandTexture } from "./faceTexture";
-import { drawFrameVignette, drawLayer, drawShapeOutline, HoloBar, slantedRect } from "./holo";
+import { drawFrameVignette, drawLayer, drawShapeEdge, drawShapeOutline, HoloBar, slantedRect } from "./holo";
 import { addFramedIcon } from "./itemFrame";
 import { shapeClipMask } from "./popupArt";
-import { RAID_HP_BAR_COLOR, RAID_LIST } from "./raidLayout";
+import { RAID_BOSS_PICK, RAID_DIFFICULTY_TONE, RAID_HP_BAR_COLOR, RAID_LAYER_OWNER, RAID_LAYER_TONE, RAID_LIST } from "./raidLayout";
 import { addSectionTitle } from "./SectionTitle";
 import { shrinkTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
@@ -74,9 +74,18 @@ export function addRaidLayer(
   scrim.fillGradientStyle(COLOR.void, COLOR.void, COLOR.void, COLOR.void, 0.86, 0, 0.86, 0);
   scrim.fillRect(-width / 2 + slant / 2, top, width * (art.from + art.fade), height);
   layer.add(scrim);
+  // 난이도의 색이 뒷배경을 은은하게 물들인다 — 글이 서는 왼쪽에서 가장 짙고 얼굴 쪽으로 풀린다.
+  // 어둠 위에 얹어야 보인다. 기운 변 밖으로 새지 않게 판 모양으로 가둔다.
+  const tone = RAID_DIFFICULTY_TONE[raid.difficulty];
+  const wash = scene.add.graphics();
+  wash.fillGradientStyle(tone, tone, tone, tone, RAID_LAYER_TONE.washAlpha, 0, RAID_LAYER_TONE.washAlpha, 0);
+  wash.fillRect(-width / 2, top, width * RAID_LAYER_TONE.washReach, height);
+  wash.setMask(shapeClipMask(scene, layer, shape));
+  layer.add(wash);
   // 가장자리는 살짝만 누른다 — 네 변 그라데이션이라 기운 변 밖으로 새지 않게 판 모양으로 가둔다.
   layer.add(drawFrameVignette(scene, 0, 0, width, height, { strength: 0.42 }).setMask(shapeClipMask(scene, layer, shape)));
   layer.add(drawShapeOutline(scene, 0, 0, shape, { color: raid.kind === "world" ? COLOR.accent : COLOR.panelEdge, alpha: raid.kind === "world" ? 0.72 : 0.5, width: 3 }));
+  layer.add(drawShapeEdge(scene, 0, 0, shape, "top", { color: tone, alpha: RAID_LAYER_TONE.edgeAlpha, width: RAID_LAYER_TONE.edgeWidth }));
   if (raid.kind === "world") {
     layer.add(drawShapeOutline(scene, 0, 0, slantedRect(width + worldRing * 2, height + worldRing * 2, slant), { color: RAID_HP_BAR_COLOR, alpha: 0.9, width: 4 }));
   }
@@ -91,14 +100,18 @@ export function addRaidLayer(
   // 이름은 글줄이 서는 왼쪽 몫 안에서 끝난다 — 넘치면 얼굴을 덮는다.
   shrinkTextToWidth(name, textWidth);
   layer.add(name);
-  // 레벨 옆에 누가 열었는지가 붙는다. 월드 폭주는 시스템이 여는 판이라 적지 않는다.
+  layer.add(shadowed(scene.add
+    .text(left, text.levelY, t("raid.world.level", { level: raid.bossLevel }), textStyle({ role: "emphasis", size: 28, color: COLOR.accentText }))
+    .setOrigin(0, 0.5)));
+  // 누가 열었는지는 층 윗변 오른쪽 위에 회색으로 비켜 선다 — 이름·레벨 줄에 붙이면 무엇이
+  // 이 판의 정보이고 무엇이 곁들인 말인지가 한 줄에 섞인다. 월드 폭주는 시스템이 여는 판이라 없다.
   const owner = raid.kind === "world" ? undefined
     : raid.summonedByMe ? t("raid.summoner.me") : raid.summonerName ? t("raid.summoner.friend", { name: raid.summonerName }) : undefined;
-  const level = shadowed(scene.add
-    .text(left, text.levelY, owner ? t("raid.layer.levelOwner", { level: raid.bossLevel, owner }) : t("raid.world.level", { level: raid.bossLevel }), textStyle({ role: "emphasis", size: 28, color: COLOR.accentText }))
-    .setOrigin(0, 0.5));
-  shrinkTextToWidth(level, textWidth);
-  layer.add(level);
+  if (owner) {
+    layer.add(shadowed(scene.add
+      .text(width / 2 - slant / 2, top - RAID_LAYER_OWNER.up, owner, textStyle({ role: "body", size: RAID_LAYER_OWNER.size, color: COLOR.inkDim }))
+      .setOrigin(1, 0.5)));
+  }
   const remaining = Math.max(0, raid.attemptsLimit - raid.attemptsUsed);
   layer.add(shadowed(scene.add
     .text(left, text.attemptsY, completed ? t(raid.defeated ? "raid.boss.defeated" : "raid.layer.ended") : t("raid.attempts", { remaining, limit: raid.attemptsLimit }), textStyle({ role: "emphasis", size: 28, color: !completed && remaining > 0 ? COLOR.sortieText : COLOR.inkDim }))
@@ -162,6 +175,47 @@ function addRewardRow(
     width: settle.width, height: settle.height, label: t("raid.settle.button"), fontSize: 28, variant: "primary",
     onClick: handlers.onSettle,
   }));
+}
+
+/**
+ * 선택 소환에서 보스를 고르는 층 — 목록 층과 **같은 문법**(오른쪽을 채운 얼굴 띠, 왼쪽의 이름)을
+ * 줄여 쓴다. 고르기 전에 누구인지가 얼굴로 읽혀야 한다 — 이름만 늘어놓은 버튼은 보스를 한 번도
+ * 본 적 없는 사람에게 아무것도 말하지 않는다.
+ */
+export function addRaidBossPickLayer(
+  scene: Phaser.Scene,
+  parent: Phaser.GameObjects.Container,
+  relicId: string,
+  y: number,
+  onTap: () => void,
+): Phaser.GameObjects.Container {
+  const { width, height, padding } = RAID_BOSS_PICK;
+  const slant = RAID_LIST.slant;
+  const { art } = RAID_LIST;
+  const layer = scene.add.container(0, y);
+  parent.add(layer);
+  const shape = slantedRect(width, height, slant);
+  layer.add(drawLayer(scene, 0, 0, shape, { fill: COLOR.void, alpha: 0.92 }));
+  void loadFaceBand(scene, layer, relicId, width + slant, height, shape, false);
+  const hit = scene.add.rectangle(0, 0, width - slant, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+  hit.on("pointerdown", () => layer.setScale(1.03));
+  hit.on("pointerout", () => layer.setScale(1));
+  hit.on("pointerup", () => { layer.setScale(1); onTap(); });
+  layer.add(hit);
+  const scrim = scene.add.graphics();
+  scrim.fillGradientStyle(COLOR.void, COLOR.void, COLOR.void, COLOR.void, 0.86, 0, 0.86, 0);
+  scrim.fillRect(-width / 2 + slant / 2, -height / 2, width * (art.from + art.fade), height);
+  layer.add(scrim);
+  layer.add(drawFrameVignette(scene, 0, 0, width, height, { strength: 0.42 }).setMask(shapeClipMask(scene, layer, shape)));
+  layer.add(drawShapeOutline(scene, 0, 0, shape, { color: COLOR.accent, alpha: 0.6, width: 3 }));
+  const def = getRelic(relicId);
+  const name = scene.add
+    .text(-width / 2 + slant / 2 + padding, 0, def.name, textStyle({ role: "display", size: 50 }))
+    .setOrigin(0, 0.5)
+    .setShadow(0, 4, "#05070a", 8, false, true);
+  shrinkTextToWidth(name, width * (art.from + art.fade * 0.5) - padding);
+  layer.add(name);
+  return layer;
 }
 
 /**

@@ -33,6 +33,28 @@ test("레이드는 목록에서 월드 폭주 판으로 들어가고 출격이 �
   await captureGame(page, `test-results/${test.info().project.name}-raid-summon.png`);
   await tap(page, 40, 200); // 판 밖을 눌러 닫는다
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles ?? [])).not.toContain("레이드 소환");
+  // 선택 소환 — 보스를 층으로 고르고, 난이도를 고르면 소환 연출이 돈다.
+  await tap(page, RAID_LIST_CHROME.summon.pair.right.centerX, RAID_LIST_CHROME.summon.y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("선택 소환");
+  await page.waitForTimeout(1_500);
+  await captureGame(page, `test-results/${test.info().project.name}-raid-boss-pick.png`);
+  await tap(page, BASE_WIDTH / 2 - 200, BASE_HEIGHT / 2);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles ?? [])).not.toContain("선택 소환");
+  await page.waitForTimeout(600);
+  await captureGame(page, `test-results/${test.info().project.name}-raid-difficulty.png`);
+  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2 - 117); // 첫 줄(쉬움) — 창 높이 474의 위에서 120
+  await waitForDebugState(page, () => window.__PF_DEBUG?.raidStage, "summon", { timeout: 20_000 });
+  await page.waitForTimeout(350);
+  await captureGame(page, `test-results/${test.info().project.name}-raid-summon-charge.png`);
+  await page.waitForTimeout(2_000);
+  await captureGame(page, `test-results/${test.info().project.name}-raid-summon-reveal.png`);
+  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
+  await waitForDebugState(page, () => window.__PF_DEBUG?.raidStage, "season", { timeout: 20_000 });
+  await page.waitForTimeout(1_500);
+  await tap(page, 960, BASE_HEIGHT - 120); // 판에서 목록으로
+  await waitForDebugState(page, () => window.__PF_DEBUG?.raidStage, "list", { timeout: 20_000 });
+  await page.waitForTimeout(2_000);
+  await captureGame(page, `test-results/${test.info().project.name}-raid-list-summoned.png`);
   // 완료 탭 — 끝난 판을 정산하는 자리다.
   const tabs = RAID_LIST_CHROME.tabs;
   await tap(page, tabs.left + tabs.width * 1.5 + tabs.gap, tabs.y);

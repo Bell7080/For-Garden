@@ -15,7 +15,6 @@ export const RAID_KO = {
   "raid.difficulty.rampage": "폭주",
   "raid.summoner.me": "내 소환",
   "raid.summoner.friend": "{name}의 소환",
-  "raid.layer.levelOwner": "LV.{level} · {owner}",
   "raid.layer.ended": "종료",
   "raid.tab.active": "진행 중",
   "raid.tab.completed": "완료",

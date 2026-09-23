@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import {
   RAID_ACTIONS, RAID_BOARD, RAID_BOARD_PLATE, RAID_BOSS_SPOT, RAID_HP_BAR, RAID_LIST, RAID_LIST_CHROME,
-  raidBoardViewport, raidLayerStack, raidSortieBackGap, raidSummonBackGap,
+  RAID_BOSS_PICK, RAID_DIFFICULTY_TONE, RAID_LAYER_OWNER, RAID_SUMMON_INTENSITY, RAID_SUMMON_STAGE,
+  raidBoardViewport, raidBossPickHeight, raidLayerStack, raidSortieBackGap, raidSummonBackGap,
 } from "../../src/ui/raidLayout";
+import { RAID_DIFFICULTY, RAID_SUMMON_DIFFICULTIES } from "../../src/data/raid";
 
 describe("레이드 배치표", () => {
   it("보스는 발끝을 화면 밖으로 내보내고 상반신만 남긴다", () => {
@@ -92,5 +94,39 @@ describe("레이드 배치표", () => {
     // 토벌권은 제목 줄에 서고 목록 창 위에서 끝난다.
     expect(tickets.y + tickets.size / 2).toBeLessThan(RAID_LIST.viewport.top);
     expect(tickets.right).toBeLessThanOrEqual(BASE_WIDTH);
+  });
+
+  it("난이도마다 제 색이 있고 서로 겹치지 않는다", () => {
+    const keys = Object.keys(RAID_DIFFICULTY).sort();
+    expect(Object.keys(RAID_DIFFICULTY_TONE).sort()).toEqual(keys);
+    expect(new Set(Object.values(RAID_DIFFICULTY_TONE)).size).toBe(keys.length);
+    // 폭주는 남은 체력 줄과 같은 붉은빛이다.
+    expect(RAID_DIFFICULTY_TONE.rampage).toBe(0xd2463c);
+  });
+
+  it("소환자 이름은 층 윗변 위, 다음 층 사이의 틈 안에 선다", () => {
+    // 층 사이 틈(gap)보다 높이 올라가면 윗층의 체력 줄을 덮는다.
+    expect(RAID_LAYER_OWNER.up + RAID_LAYER_OWNER.size / 2).toBeLessThan(RAID_LIST.gap);
+  });
+
+  it("소환 연출은 어려운 판일수록 오래 모이고 세게 터진다", () => {
+    const charge = RAID_SUMMON_DIFFICULTIES.map((difficulty) => RAID_SUMMON_INTENSITY[difficulty].charge);
+    const shake = RAID_SUMMON_DIFFICULTIES.map((difficulty) => RAID_SUMMON_INTENSITY[difficulty].shake);
+    expect([...charge].sort((a, b) => a - b)).toEqual(charge);
+    expect([...shake].sort((a, b) => a - b)).toEqual(shake);
+    // 기다림이 되지 않도록 1초 안에 터진다.
+    expect(Math.max(...charge)).toBeLessThanOrEqual(1000);
+  });
+
+  it("소환 연출의 얼굴·이름·난이도 줄이 겹치지 않고 밑동 안내 위에서 끝난다", () => {
+    const { centerY, face, nameY, tagY } = RAID_SUMMON_STAGE;
+    expect(nameY - 33).toBeGreaterThan(centerY + face / 2);
+    expect(tagY - 16).toBeGreaterThan(nameY + 33);
+    expect(tagY + 16).toBeLessThan(BASE_HEIGHT - 130 - 20);
+  });
+
+  it("보스를 고르는 창의 높이는 층 수에서 거꾸로 구한다", () => {
+    expect(raidBossPickHeight(1)).toBe(RAID_BOSS_PICK.top + RAID_BOSS_PICK.height + RAID_BOSS_PICK.bottom);
+    expect(raidBossPickHeight(2) - raidBossPickHeight(1)).toBe(RAID_BOSS_PICK.height + RAID_BOSS_PICK.gap);
   });
 });

@@ -221,3 +221,53 @@ export function raidSummonBackGap(): number {
   const right = Math.max(single.centerX + single.width / 2, pair.right.centerX + pair.right.width / 2);
   return (BACK_SLOT.x - BACK_BUTTON_SIZE / 2) - right;
 }
+
+/**
+ * 난이도의 색.
+ *
+ * 층의 뒷배경을 **은은하게** 물들이고(`RAID_LIST.tone`), 소환 창의 난이도 버튼과 소환 연출의
+ * 파문도 같은 색을 쓴다 — 한 판을 고르는 순간부터 그 판에 들어가기까지 같은 색이 따라와야
+ * "지금 어느 난이도인가"가 글자를 읽기 전에 읽힌다. 쉬움에서 폭주로 갈수록 차가운 색에서
+ * 뜨거운 색으로 간다. 폭주는 남은 체력 줄과 같은 붉은빛이다.
+ */
+export const RAID_DIFFICULTY_TONE = {
+  easy: 0x3fbf8a,
+  normal: 0x4a8fe0,
+  hard: 0xa45be0,
+  rampage: RAID_HP_BAR_COLOR,
+} as const;
+
+/** 층 뒷배경의 물들임 — 글이 서는 왼쪽에서 가장 짙고 얼굴 쪽으로 풀린다. 윗변에 같은 색 선 한 줄. */
+export const RAID_LAYER_TONE = { washAlpha: 0.34, washReach: 0.78, edgeAlpha: 0.85, edgeWidth: 4 } as const;
+
+/** 소환자는 층 윗변 오른쪽 위에 회색 글자로 선다 — 왼쪽의 제목표와 같은 줄, 맞은편이다. */
+export const RAID_LAYER_OWNER = { up: 20, size: 22 } as const;
+
+/**
+ * 소환 연출의 세기 — **어려운 판일수록 오래 모이고 세게 터진다**(뽑기 연출과 같은 규칙).
+ * `charge`는 봉인이 모이는 시간(ms), `shake`는 터지는 순간의 흔들림이다.
+ */
+export const RAID_SUMMON_INTENSITY = {
+  easy: { charge: 620, shake: 0.006, shards: 6 },
+  normal: { charge: 760, shake: 0.009, shards: 8 },
+  hard: { charge: 920, shake: 0.013, shards: 9 },
+  rampage: { charge: 920, shake: 0.013, shards: 9 },
+} as const;
+
+/** 소환 연출의 자리. 봉인이 서는 가운데와, 드러난 보스 얼굴·이름·난이도 줄. */
+export const RAID_SUMMON_STAGE = {
+  centerY: 820,
+  face: 380,
+  nameY: 1110,
+  tagY: 1186,
+  seal: { radius: 250, squash: 0.44 },
+} as const;
+
+/** 선택 소환에서 보스를 고르는 층. 목록 층과 같은 문법을 줄여 쓴다. */
+export const RAID_BOSS_PICK = { width: 820, height: 240, gap: 36, padding: 40, top: 150, bottom: 70 } as const;
+
+/** 보스를 고르는 창의 높이 — 층 수에서 거꾸로 구한다. */
+export function raidBossPickHeight(count: number): number {
+  const { height, gap, top, bottom } = RAID_BOSS_PICK;
+  return top + count * height + Math.max(0, count - 1) * gap + bottom;
+}

@@ -121,3 +121,37 @@ export function raidBoardViewport(): { height: number; centerY: number } {
   const { top, bottom } = RAID_BOARD.viewport;
   return { height: bottom - top, centerY: (top + bottom) / 2 };
 }
+
+/**
+ * 레이드 목록 — **층이 쌓이는 판**이다(교류 목록과 같은 문법).
+ *
+ * 맨 위에는 시스템이 하루 한 마리 여는 **월드 폭주**가 한 겹 더 두른 테두리를 달고 크게 서고,
+ * 그 아래로 친구가 소환한 레이드가 쌓인다(다음 단계). 층 하나는 **오른쪽이 보스의 얼굴**,
+ * **왼쪽이 이름·도전·보상**, **맨 밑이 남은 체력**이다 — 들어가기 전에 "누구이고, 오늘 몇 번
+ * 남았고, 무엇을 주고, 얼마나 남았나"가 한 장에 선다.
+ */
+export const RAID_LIST = {
+  /** 목록이 흐르는 창. 교류 목록과 같은 높이에서 시작하고 우하단 뒤로가기를 침범하지 않는다. */
+  viewport: { top: 292, bottom: BASE_HEIGHT - 250 },
+  width: BASE_WIDTH - 92,
+  slant: 26,
+  /** 월드 폭주 층. 친구 레이드보다 두껍게 서서 "오늘의 한 마리"임을 크기가 먼저 말한다. */
+  world: { height: 460, y: 292 + 230 + 18 },
+  /** 월드 폭주만 두르는 바깥 테두리가 층에서 벌어지는 폭(px). */
+  worldRing: 12,
+  /** 글이 판 왼쪽 변에서 시작하는 여백. */
+  padding: 44,
+  /**
+   * 원화가 서는 자리와 잘라내기.
+   *
+   * `from`(판 폭 대비)부터 오른쪽 끝까지 얼굴이 채우고, 그 왼쪽 가장자리를 `fade`만큼 녹인다.
+   * `crop`은 실루엣 폭 대비 상자 높이라 작을수록 얼굴이 크게 당겨진다.
+   */
+  art: { from: 0.34, fade: 0.2, crop: 0.46, headX: 0.52, anchorY: 0.36 },
+  /** 글줄의 자리(판 가운데 기준 y). 판 윗변에는 제목표(`월드 폭주`)가 걸터앉는다. */
+  text: { nameY: -146, levelY: -90, attemptsY: -48 },
+  /** 보상 액자. 오늘 받을 수 있는 증표 전부를 한 칸이 든다. */
+  reward: { y: 44, size: 92 },
+  /** 맨 밑 남은 체력 줄. 판 밑변에서 올라오는 높이와 두께. */
+  hp: { up: 44, height: 26, labelUp: 80 },
+} as const;

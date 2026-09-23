@@ -148,27 +148,27 @@ export interface CakeOperationState {
 export interface ExpeditionRelicState { relicId: string; currentHp: number; alive: boolean; }
 
 /**
- * 레이드 시즌의 내 몫.
+ * 월드 폭주 하루의 내 몫.
  *
  * **참가자 전원의 누적은 저장하지 않는다** — 함께 민 사람들의 몫은 서버가 갖고, 백엔드가 없는
  * 지금은 시즌 키에서 되풀이 계산되는 값(`mockRaidContributions`)이라 저장에 굳히면 다음에 열
  * 때 두 수가 갈린다. 저장이 갖는 것은 내가 민 몫과 수령 기록뿐이다.
  */
 export interface RaidState {
-  /** 월요일 00:00 UTC 경계의 시즌 키다. 빈 값은 첫 조회에서 서버 주차로 정규화된다. */
+  /** UTC 날짜 키(`YYYY-MM-DD`)다. 빈 값이나 다른 날은 첫 조회에서 오늘로 정규화된다. */
   seasonKey: string;
-  /** 이번 시즌 내가 누적한 피해다. 기여 보상 단계가 읽는 값이기도 하다. */
+  /** 오늘 내가 민 피해(두 판의 합)다. 기여 보상 단계가 읽는 값이기도 하다. */
   myDamage: number;
-  /** 일일 도전 횟수와 그 횟수가 귀속된 UTC 날짜다. */
+  /** 오늘 쓴 도전 횟수와 그 횟수가 귀속된 UTC 날짜다. */
   attemptsUsed: number;
   attemptsDate: string;
+  /** 오늘 수령한 기여 단계·월드 진행 단계의 ID. 두 표의 ID는 겹치지 않는다. */
   claimedStageIds: string[];
-  defeatRewardClaimed: boolean;
 }
 
 /** 신규 계정과 마이그레이션이 같은 빈 시즌 모양을 공유한다. */
 export function createEmptyRaidState(): RaidState {
-  return { seasonKey: "", myDamage: 0, attemptsUsed: 0, attemptsDate: "", claimedStageIds: [], defeatRewardClaimed: false };
+  return { seasonKey: "", myDamage: 0, attemptsUsed: 0, attemptsDate: "", claimedStageIds: [] };
 }
 
 /** 앱 재실행 뒤에도 한 노드 단위로 그대로 이어갈 수 있는 완전한 원정 런이다. */

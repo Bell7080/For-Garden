@@ -25,6 +25,12 @@ import { prefetchBattlePuppets } from "../puppets/battlePrefetch";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import type { PartySceneData } from "../data/partyContent";
+import { addRaidWorldLayer } from "../ui/RaidLayer";
+import { consumeSceneEntry } from "./sceneEntry";
+
+/** 레이드 씬이 여는 자리. 목록(층)과 월드 폭주의 판 둘이다. */
+export type RaidView = "list" | "world";
+export interface RaidSceneData { view?: RaidView }
 
 /**
  * 레이드 — **함께 미는 보스전**의 화면이다.
@@ -50,17 +56,32 @@ export class RaidScene extends Phaser.Scene {
     super("raid");
   }
 
+  /** 이번 진입이 여는 자리. 로비에서 오면 목록, 편성·전투에서 돌아오면 월드 폭주다. */
+  private view: RaidView = "list";
+
+  init(data?: RaidSceneData): void {
+    this.view = data?.view === "world" ? "world" : "list";
+    consumeSceneEntry(this);
+  }
+
   create(): void {
-    // 시즌 보스는 하나뿐이라 화면에 들어온 순간 편성과 함께 읽어 둔다.
+    // 월드 폭주는 하루 한 마리라 화면에 들어온 순간 편성과 함께 읽어 둔다.
     prefetchBattlePuppets(relicCollection.validParty, [RAID_SEASON_BOSS.relicId]);
     setDebugScene("raid");
-    setDebugRaidStage("season");
+    setDebugRaidStage(this.view === "world" ? "season" : "list");
     addSceneBackground(this, BACKGROUND.sortieRaid);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { strength: 0.72 });
-    this.add.text(RAID_HEADER.titleX, RAID_HEADER.titleY, t("raid.title"), textStyle({ role: "display", size: 54, color: COLOR.sortieText })).setOrigin(0, 0);
+    this.add.text(RAID_HEADER.titleX, RAID_HEADER.titleY, t(this.view === "world" ? "raid.world.tag" : "raid.title"), textStyle({ role: "display", size: 54, color: COLOR.sortieText })).setOrigin(0, 0);
     // 씬이 다시 시작될 때 원화와 마스크가 남지 않게 한 곳에서 걷는다.
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.dispose());
-    addBackButton(this, () => startScene(this, "lobby", LOBBY_RETURN.sortie));
+    // 월드 폭주에서 나가는 길은 로비가 아니라 **레이드 목록**이다 — 편성에서 시즌 판으로 돌아오는
+    // 것과 같은 규칙이다(한 단계 앞으로).
+    addBackButton(this, () => this.view === "world" ? startScene(this, "raid") : startScene(this, "lobby", LOBBY_RETURN.sortie));
+    if (this.view === "list") {
+      void this.refreshList();
+      playSceneEntrance(this);
+      return;
+    }
     void this.loadBossPortrait();
     // 시즌 보스를 **출격 전에** 들여다볼 수 있게 원화가 곧 입구다 — 편성 화면까지 가야 스킬과
     // 능력치를 볼 수 있으면, 무엇을 데려갈지 정하는 판단이 편성 화면 한 곳에 몰린다.
@@ -124,6 +145,29 @@ export class RaidScene extends Phaser.Scene {
     this.bossPortrait = puppet;
   }
 
+
+  /**
+   * 레이드 목록 — 층이 쌓이는 판이다.
+   *
+   * 맨 위가 오늘의 월드 폭주이고, 그 아래 친구가 소환한 레이드가 쌓인다(다음 단계). 층을 누르면
+   * 그 레이드의 판(보스 전신·남은 체력·기여)으로 들어간다.
+   */
+  private async refreshList(): Promise<void> {
+    try {
+      const season = await gameApi.getRaidSeason(1);
+      if (!this.scene.isActive()) return;
+      this.resetContent();
+      const content = this.content;
+      if (!content) return;
+      content.add(this.add.text(RAID_HEADER.titleX + 4, RAID_HEADER.seasonY, t("raid.season.resetsAt", { date: season.resetsAt.slice(0, 10) }), textStyle({ role: "body", size: 23, color: COLOR.inkDim })).setOrigin(0, 0));
+      const list = this.add.container(BASE_WIDTH / 2, 0);
+      content.add(list);
+      addRaidWorldLayer(this, list, season, () => startScene(this, "raid", { view: "world" } satisfies RaidSceneData));
+    } catch (error) {
+      if (!this.scene.isActive()) return;
+      this.renderError(error instanceof GameApiError ? error.message : t("raid.contribution.empty"));
+    }
+  }
 
   /** 서버 스냅샷 하나로 머리글·게이지·목록·조작을 한 번에 다시 그린다. */
   private async refresh(): Promise<void> {
@@ -265,40 +309,48 @@ export class RaidScene extends Phaser.Scene {
 
 
   /**
-   * 기여 보상.
+   * 오늘의 보상 — **내 기여**(두 판의 피해 합)와 **월드 진행**(서버 전체가 깎은 비율) 두 묶음이다.
    *
-   * **누적 피해가 문턱을 넘긴 단계만 수령된다** — 화면이 넘겼다고 말해도 서버가 다시 검사하며,
-   * 여기서는 지금 받을 수 있는 것과 다음 문턱까지 얼마가 남았는지만 보여 준다.
+   * 달성은 서버가 다시 검사하며, 여기서는 지금 받을 수 있는 것과 다음 문턱까지 얼마가 남았는지만
+   * 보여 준다. 월드 진행은 오늘 들어오지 않은 사람도 받는다 — 다 같이 민 결과라서다.
    */
   private openRewardPopup(season: RaidSeasonResponse): void {
     const rows = season.rewardStages;
+    const world = season.worldStages;
     const next = rows.find((stage) => season.myDamage < stage.threshold);
+    const rowHeight = 96;
+    const sectionGap = 96;
     // 창 높이는 손으로 적지 않고 전시할 줄 수에서 거꾸로 구한다.
-    const height = 240 + rows.length * 108 + (season.defeatRewardClaimable || season.defeatRewardClaimed ? 108 : 0);
+    const height = 250 + (rows.length + world.length) * rowHeight + sectionGap;
     this.popups.open({ width: 820, height, title: t("raid.reward.title"), dim: true }, (body, close) => {
-      body.add(this.add.text(0, -height / 2 + 108, next
+      let y = -height / 2 + 108;
+      body.add(this.add.text(0, y, next
         ? t("raid.reward.next", { remaining: (next.threshold - season.myDamage).toLocaleString() })
         : t("raid.contribution.mine") + " " + season.myDamage.toLocaleString(),
         textStyle({ role: "body", size: 25, color: COLOR.inkDim })).setOrigin(0.5));
-      const top = -height / 2 + 176;
-      rows.forEach((stage, index) => {
-        const y = top + index * 108 + 54;
-        body.add(this.add.text(-340, y, `${stage.threshold.toLocaleString()}`, textStyle({ role: "emphasis", size: 27, color: COLOR.ink })).setOrigin(0, 0.5));
-        body.add(this.add.text(-100, y, `${stage.reward.name} ${stage.reward.amount}`, textStyle({ role: "body", size: 25, color: COLOR.inkDim })).setOrigin(0, 0.5));
-        if (stage.claimed) {
+      const row = (label: string, reward: { name: string; amount: number }, claimed: boolean, earned: boolean, stageId: string): void => {
+        body.add(this.add.text(-340, y, label, textStyle({ role: "emphasis", size: 27, color: COLOR.ink })).setOrigin(0, 0.5));
+        body.add(this.add.text(-100, y, `${reward.name} ${reward.amount}`, textStyle({ role: "body", size: 25, color: COLOR.inkDim })).setOrigin(0, 0.5));
+        if (claimed) {
           body.add(this.add.text(340, y, t("raid.reward.claimed"), textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(1, 0.5));
           return;
         }
-        const button = new Button(this, 250, y, { width: 176, height: 72, label: t("raid.reward.claim"), fontSize: 26, onClick: () => { close(); void this.claim(stage.id); } });
-        button.setEnabled(season.myDamage >= stage.threshold);
+        const button = new Button(this, 250, y, { width: 176, height: 72, label: t("raid.reward.claim"), fontSize: 26, onClick: () => { close(); void this.claim(stageId); } });
+        button.setEnabled(earned);
         body.add(button);
+      };
+      y += 64;
+      body.add(this.add.text(-340, y, t("raid.reward.mine"), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0.5));
+      rows.forEach((stage) => {
+        y += rowHeight;
+        row(stage.threshold.toLocaleString(), stage.reward, stage.claimed, season.myDamage >= stage.threshold, stage.id);
       });
-      if (season.defeatRewardClaimable || season.defeatRewardClaimed) {
-        const y = top + rows.length * 108 + 54;
-        body.add(this.add.text(-340, y, t("raid.boss.defeated"), textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0, 0.5));
-        if (season.defeatRewardClaimed) body.add(this.add.text(340, y, t("raid.reward.claimed"), textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(1, 0.5));
-        else body.add(new Button(this, 250, y, { width: 176, height: 72, label: t("raid.reward.claim"), fontSize: 26, onClick: () => { close(); void this.claim("defeat"); } }));
-      }
+      y += sectionGap;
+      body.add(this.add.text(-340, y, t("raid.reward.world"), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0.5));
+      world.forEach((stage) => {
+        y += rowHeight;
+        row(t("raid.reward.worldStage", { percent: Math.round(stage.ratio * 100) }), stage.reward, stage.claimed, stage.reached, stage.id);
+      });
     });
   }
 

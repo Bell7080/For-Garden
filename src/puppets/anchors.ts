@@ -299,3 +299,32 @@ export function computeFaceFrame(
     clipsContentTop: clamp(head.y - side * options.anchorY, frame.imageHeight - side) > frame.content.top,
   };
 }
+
+/**
+ * 가로로 긴 판(레이드 층)의 한쪽을 **얼굴 둘레로 꽉 채우는** 잘라내기.
+ *
+ * 얼굴 액자(`computeFaceFrame`)는 정사각이라 층처럼 2:1이 넘는 판에 그대로 늘이면 얼굴이
+ * 찌그러진다. 판의 비율 그대로 상자를 잡되, 높이는 실루엣 폭의 `crop`배로 두어 얼굴과 어깨가
+ * 판 높이를 채우게 하고, 머리 관절이 상자 안에서 `headX`·`anchorY` 자리에 서게 한다. 상자가
+ * 이미지 밖으로 나가면 안으로 밀어 넣는다 — 빈 투명이 판에 남으면 원화가 잘린 것처럼 보인다.
+ */
+export function computeFaceBandFrame(
+  frame: AnchorFrame,
+  head: AnchorPoint,
+  options: { width: number; height: number; crop: number; headX: number; anchorY: number },
+): { cropX: number; cropY: number; cropWidth: number; cropHeight: number } {
+  const contentWidth = frame.content.right - frame.content.left;
+  const aspect = options.width / Math.max(1, options.height);
+  let cropHeight = Math.max(1, contentWidth * options.crop);
+  let cropWidth = cropHeight * aspect;
+  // 이미지보다 넓은 상자는 비율을 지킨 채 줄인다.
+  const shrink = Math.min(1, frame.imageWidth / cropWidth, frame.imageHeight / cropHeight);
+  cropWidth *= shrink; cropHeight *= shrink;
+  const clamp = (value: number, max: number): number => Math.min(Math.max(value, 0), Math.max(max, 0));
+  return {
+    cropX: clamp(head.x - cropWidth * options.headX, frame.imageWidth - cropWidth),
+    cropY: clamp(head.y - cropHeight * options.anchorY, frame.imageHeight - cropHeight),
+    cropWidth,
+    cropHeight,
+  };
+}

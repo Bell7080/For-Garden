@@ -37,9 +37,9 @@ import { findStrataLayer, STRATA_CHARGE } from "../data/strataLayers";
 import { ARCHAEOLOGY_SITES, findArchaeologySite } from "../data/archaeologySites";
 import { archaeologySiteAvailability } from "../core/archaeologyMap";
 import type { AbandonStrataRunRequest, ArchaeologyStateResponse, DigStrataTileRequest, DigStrataTileResponse, GrantRuneTraitRequest, GrantRuneTraitResponse, RerollRuneTraitRequest, RerollRuneTraitResponse, ResolveRuneTraitRerollRequest, ResolveRuneTraitRerollResponse, StartStrataRunRequest, UpgradeRuneTraitRequest, UpgradeRuneTraitResponse } from "./contracts";
-import { findItem } from "../data/items";
-import { RAID_BOSS_BALANCE, RAID_CONTRIBUTION_REWARD_STAGES, RAID_DAILY_ATTEMPTS, RAID_DEFEAT_REWARD, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP } from "../data/raid";
-import { mockRaidContributions, raidBossDef, raidBossPercentHpBasis, raidContributionBoard, raidEarnedContributionStageIds, raidSeasonElapsedDays, raidSeasonKey, raidSeasonProgress } from "../core/raid";
+import { findItem, type WalletItemKey } from "../data/items";
+import { RAID_BOSS_BALANCE, RAID_CONTRIBUTION_REWARD_STAGES, RAID_DAILY_ATTEMPTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP, RAID_WORLD_REWARD_STAGES } from "../data/raid";
+import { mockRaidContributions, mockRaidWorldDamage, raidBossDef, raidBossPercentHpBasis, raidContributionBoard, raidDayProgress, raidEarnedContributionStageIds, raidReachedWorldStageIds, raidResetsAt, raidSeasonKey, raidSeasonProgress } from "../core/raid";
 import { battleArena } from "../core/battleArena";
 import { staminaCurrencyRecharge } from "../data/staminaRecharge";
 import { settleStamina, staminaMaxForPlayer, staminaTiming } from "../core/stamina";
@@ -351,38 +351,36 @@ export class FakeServer implements GameApi {
 
 
   /**
-   * 시즌 경계와 일일 도전 횟수를 **읽기 전에** 정규화한다.
+   * 날짜 경계를 **읽기 전에** 정규화한다.
    *
-   * 주차가 바뀌면 내 몫과 수령 기록이 함께 사라진다 — 시즌이 갖는 값이라 다음 시즌으로
-   * 넘기면 새 보스를 열자마자 보상이 열려 있다. 도전 횟수는 UTC 날짜가 경계다.
+   * 월드 폭주는 하루 한 마리라 날짜가 바뀌면 내 몫·도전 횟수·수령 기록이 함께 비워진다 —
+   * 하루가 갖는 값이라 넘기면 다음 날 보스를 열자마자 어제의 보상이 열려 있다.
    */
   private normalizeRaid(now: Date): void {
     const seasonKey = raidSeasonKey(now);
-    const utcDate = now.toISOString().slice(0, 10);
     const raid = this.state.raid;
-    const nextSeason = raid.seasonKey === seasonKey
-      ? raid
-      : { ...createEmptyRaidState(), seasonKey, attemptsUsed: raid.attemptsDate === utcDate ? raid.attemptsUsed : 0, attemptsDate: utcDate };
-    const normalized = nextSeason.attemptsDate === utcDate ? nextSeason : { ...nextSeason, attemptsUsed: 0, attemptsDate: utcDate };
-    if (normalized !== raid) { this.state.raid = normalized; this.persist(this.state); }
+    if (raid.seasonKey === seasonKey && raid.attemptsDate === seasonKey) return;
+    this.state.raid = { ...createEmptyRaidState(), seasonKey, attemptsDate: seasonKey };
+    this.persist(this.state);
   }
 
   /**
-   * 시즌 한 번의 전부를 한 응답으로 만든다.
+   * 월드 폭주 하루의 전부를 한 응답으로 만든다.
    *
-   * **함께 민 몫은 저장에서 읽지 않고 시즌 키에서 되풀이 계산한다**(`mockRaidContributions`).
-   * 백엔드가 없어 지금은 그것이 다른 참가자를 대신하며, 실서버가 붙으면 이 한 줄이 서버
-   * 집계로 바뀐다 — 그때 화면은 아무것도 고치지 않는다.
+   * **줄은 서버 전체가 깎은 몫이고, 목록은 그중 몇 사람이다.** 백엔드가 없어 지금은 둘 다 날짜
+   * 키에서 되풀이 계산되는 값(`mockRaidWorldDamage`·`mockRaidContributions`)이 대신하며, 실서버가
+   * 붙으면 이 두 줄이 서버 집계로 바뀐다 — 그때 화면은 아무것도 고치지 않는다.
    */
   private raidSeasonDto(now: Date, limit = 100): RaidSeasonResponse {
     const seasonKey = raidSeasonKey(now);
     const raid = this.state.raid;
-    const others = mockRaidContributions(seasonKey, raidSeasonElapsedDays(now));
+    const dayProgress = raidDayProgress(now);
+    const others = mockRaidContributions(seasonKey, dayProgress);
     const mine = { playerId: "local-player", displayName: t("profile.defaultName"), damage: raid.myDamage, isMe: true, favoriteRelicId: this.state.favorite };
-    const progress = raidSeasonProgress(others.reduce((sum, { damage }) => sum + damage, 0) + raid.myDamage, RAID_SEASON_TOTAL_HP);
+    const progress = raidSeasonProgress(mockRaidWorldDamage(seasonKey, dayProgress) + raid.myDamage, RAID_SEASON_TOTAL_HP);
     const earned = raidEarnedContributionStageIds(raid.myDamage);
-    // 주차 경계는 원정과 같은 월요일 00:00 UTC라 다음 시즌 시작이 곧 이번 시즌의 초기화 시각이다.
-    const resetsAt = new Date(Date.parse(`${seasonKey}T00:00:00.000Z`) + 7 * 86_400_000).toISOString();
+    const reached = raidReachedWorldStageIds(progress.totalHp > 0 ? progress.dealtDamage / progress.totalHp : 0);
+    const rewardOf = (reward: { currency: WalletItemKey; amount: number }) => ({ currency: reward.currency, name: findItem(reward.currency)?.name ?? reward.currency, amount: reward.amount });
     return {
       seasonKey,
       bossRelicId: RAID_SEASON_BOSS.relicId,
@@ -395,15 +393,15 @@ export class FakeServer implements GameApi {
       myDamage: raid.myDamage,
       attemptsUsed: raid.attemptsUsed,
       attemptsLimit: RAID_DAILY_ATTEMPTS,
-      resetsAt,
+      resetsAt: raidResetsAt(now),
       rewardStages: RAID_CONTRIBUTION_REWARD_STAGES.map((stage) => ({
-        id: stage.id, threshold: stage.threshold,
-        reward: { currency: stage.reward.currency, name: findItem(stage.reward.currency)?.name ?? stage.reward.currency, amount: stage.reward.amount },
+        id: stage.id, threshold: stage.threshold, reward: rewardOf(stage.reward),
         claimed: raid.claimedStageIds.includes(stage.id),
       })).filter((stage) => earned.includes(stage.id) || !stage.claimed),
-      // 처치 보상은 실제로 눕힌 뒤에만 열리고, 시즌마다 한 번이다.
-      defeatRewardClaimable: progress.defeated && !raid.defeatRewardClaimed,
-      defeatRewardClaimed: raid.defeatRewardClaimed,
+      worldStages: RAID_WORLD_REWARD_STAGES.map((stage) => ({
+        id: stage.id, ratio: stage.ratio, reward: rewardOf(stage.reward),
+        reached: reached.includes(stage.id), claimed: raid.claimedStageIds.includes(stage.id),
+      })),
       entries: raidContributionBoard([...others, mine], limit),
     };
   }
@@ -428,8 +426,8 @@ export class FakeServer implements GameApi {
     const now = this.now();
     this.normalizeRaid(now);
     if (this.state.raid.attemptsUsed >= RAID_DAILY_ATTEMPTS) throw new GameApiError("RAID_DAILY_LIMIT", "오늘 도전 횟수를 모두 사용했습니다.");
-    // 이미 누운 보스에는 더 밀 것이 없다. 다음 시즌이 열릴 때까지 도전 자체를 막는다.
-    if (this.raidSeasonDto(now).defeated) throw new GameApiError("RAID_SEASON_DEFEATED", "이번 시즌 보스는 이미 토벌되었습니다.");
+    // **토벌된 날도 도전을 막지 않는다.** 내 기여는 두 판의 합이라, 늦게 들어온 사람이 줄이 다
+    // 깎였다는 이유로 오늘 몫을 통째로 잃으면 안 된다. 줄은 0에서 멈추고 기여만 쌓인다.
 
     let result: ReturnType<typeof resolveExpeditionBossBattle>;
     try {
@@ -483,18 +481,18 @@ export class FakeServer implements GameApi {
     const now = this.now();
     this.normalizeRaid(now);
     const season = this.raidSeasonDto(now);
-    const isDefeat = request.stageId === "defeat";
-    const stage = isDefeat ? undefined : RAID_CONTRIBUTION_REWARD_STAGES.find(({ id }) => id === request.stageId);
-    if (!isDefeat && !stage) throw new GameApiError("RAID_REWARD_NOT_FOUND", "존재하지 않는 레이드 보상 단계입니다.");
-    if (isDefeat && !season.defeated) throw new GameApiError("RAID_REWARD_NOT_EARNED", "아직 토벌하지 못한 보스입니다.");
+    const stage = RAID_CONTRIBUTION_REWARD_STAGES.find(({ id }) => id === request.stageId);
+    const world = season.worldStages.find(({ id }) => id === request.stageId);
+    if (!stage && !world) throw new GameApiError("RAID_REWARD_NOT_FOUND", "존재하지 않는 레이드 보상 단계입니다.");
+    // 달성은 서버가 다시 판정한다 — 화면이 보낸 ID만 믿으면 아직 넘기지 않은 문턱도 수령된다.
     if (stage && this.state.raid.myDamage < stage.threshold) throw new GameApiError("RAID_REWARD_NOT_EARNED", "아직 달성하지 못한 기여 단계입니다.");
+    if (world && !world.reached) throw new GameApiError("RAID_REWARD_NOT_EARNED", "아직 도달하지 못한 월드 진행 단계입니다.");
 
-    const reward = isDefeat ? RAID_DEFEAT_REWARD : stage!.reward;
-    const alreadyClaimed = isDefeat ? this.state.raid.defeatRewardClaimed : this.state.raid.claimedStageIds.includes(stage!.id);
+    const reward = stage ? stage.reward : RAID_WORLD_REWARD_STAGES.find(({ id }) => id === request.stageId)!.reward;
+    const alreadyClaimed = this.state.raid.claimedStageIds.includes(request.stageId);
     if (!alreadyClaimed) {
       const nextState = structuredClone(this.state);
-      if (isDefeat) nextState.raid.defeatRewardClaimed = true;
-      else nextState.raid.claimedStageIds = [...nextState.raid.claimedStageIds, stage!.id];
+      nextState.raid.claimedStageIds = [...nextState.raid.claimedStageIds, request.stageId];
       // 증표는 지갑 재화라 다른 지급과 같은 상한 경계(`WALLET_CAPS`)를 지난다.
       nextState.wallet = { ...nextState.wallet, [reward.currency]: Math.min(WALLET_CAPS[reward.currency], nextState.wallet[reward.currency] + reward.amount) };
       this.persist(nextState);

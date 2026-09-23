@@ -1,6 +1,5 @@
 import { applyEncounterScaling } from "./levelDesign";
-import { RAID_BOSS_HP_SCALE, RAID_CONTRIBUTION_REWARD_STAGES, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP } from "../data/raid";
-import { expeditionWeekKey } from "./expeditionBoss";
+import { RAID_BOSS_HP_SCALE, RAID_CONTRIBUTION_REWARD_STAGES, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP, RAID_WORLD_REWARD_STAGES } from "../data/raid";
 import type { RelicDef } from "./types";
 
 /**
@@ -11,12 +10,24 @@ import type { RelicDef } from "./types";
  */
 
 /**
- * 시즌 키는 원정 주차와 **같은 경계**(월요일 00:00 UTC)를 쓴다.
+ * 월드 폭주의 키는 **UTC 날짜**다 — 하루 한 마리이므로 도전 횟수와 같은 경계를 쓴다.
  *
- * 주차를 여기서 다시 계산하지 않는 이유는 두 콘텐츠가 서로 다른 날 초기화되면 "이번 주"라는
- * 말이 화면마다 다른 것을 가리키기 때문이다. 경계를 옮길 일이 생기면 그 한 곳만 고친다.
+ * 둘을 다른 경계로 두면 "오늘의 보스"와 "오늘의 도전"이 다른 날을 가리킨다.
  */
-export const raidSeasonKey = expeditionWeekKey;
+export function raidSeasonKey(now: Date): string {
+  return now.toISOString().slice(0, 10);
+}
+
+/** 그날 자정(UTC)부터 지난 비율(0~1). 모의 누적이 하루에 걸쳐 자라는 근거다. */
+export function raidDayProgress(now: Date): number {
+  const start = Date.parse(`${raidSeasonKey(now)}T00:00:00.000Z`);
+  return Math.min(1, Math.max(0, (now.getTime() - start) / 86_400_000));
+}
+
+/** 다음 초기화 시각(다음 날 00:00 UTC). */
+export function raidResetsAt(now: Date): string {
+  return new Date(Date.parse(`${raidSeasonKey(now)}T00:00:00.000Z`) + 86_400_000).toISOString();
+}
 
 /** 시즌 보스의 남은 체력과 처치 여부. 화면은 이 결과만 그린다. */
 export interface RaidSeasonProgress {
@@ -99,28 +110,40 @@ function seedHash(seed: string): number {
 }
 
 /**
- * 함께 밀고 있는 사람들의 누적 피해.
+ * 기여 목록에 서는 사람들의 **오늘** 피해.
  *
- * **백엔드가 생기면 이 함수를 지우고 서버 줄로 갈아 끼운다** — 길드원과 친구가 그 자리에 선다.
- * 지금 이것을 두는 이유는, 협력전의 화면이 말해야 하는 것이 "내 기록"이 아니라 "다 같이 얼마나
- * 밀었나"인데 참가자가 나 하나뿐이면 그 문장이 성립하지 않기 때문이다.
- *
- * 시즌이 하루씩 갈수록 각자의 누적이 자기 `pace`만큼 늘어난다. 하루치 몫에 사람마다 다른
- * 흔들림을 섞어 같은 배율끼리도 순서가 굳지 않게 한다.
+ * **백엔드가 생기면 이 함수를 지우고 서버 줄로 갈아 끼운다.** 하루 두 판을 치므로 인당 몫은
+ * 한 판 실측의 두 배 언저리(`twoRunBase`)이고, 하루의 7할쯤이면 대부분 두 판을 다 친다 — 그래서
+ * 이른 시각에는 목록이 덜 차 있고 저녁이면 굳는다. 사람마다 다른 흔들림을 섞어 같은 배율끼리도
+ * 순서가 날마다 바뀐다.
  */
-export function mockRaidContributions(seasonKey: string, elapsedDays: number, dailyBaseDamage = 60_000): RaidContributionInput[] {
-  const days = Math.min(7, Math.max(0, Math.floor(elapsedDays)) + 1);
+export function mockRaidContributions(dayKey: string, dayProgress: number, twoRunBase = 30_000): RaidContributionInput[] {
+  const played = Math.min(1, Math.max(0.15, dayProgress / 0.7));
   return RAID_MOCK_PARTICIPANTS.map(({ id, displayName, favoriteRelicId, pace }) => {
-    // 흔들림은 0.78~1.22 사이라 같은 pace를 가진 둘도 시즌마다 앞뒤가 바뀐다.
-    const jitter = 0.78 + seedHash(`${seasonKey}:${id}`) * 0.44;
-    return { playerId: id, displayName, favoriteRelicId, damage: Math.floor(dailyBaseDamage * pace * jitter * days) };
+    // 흔들림은 0.78~1.22 사이라 같은 pace를 가진 둘도 날마다 앞뒤가 바뀐다.
+    const jitter = 0.78 + seedHash(`${dayKey}:${id}`) * 0.44;
+    return { playerId: id, displayName, favoriteRelicId, damage: Math.floor(twoRunBase * pace * jitter * played) };
   });
 }
 
-/** 시즌 시작(월요일 00:00 UTC)부터 지난 날수다. 모의 누적이 시간에 따라 자라는 근거다. */
-export function raidSeasonElapsedDays(now: Date): number {
-  const start = Date.parse(`${raidSeasonKey(now)}T00:00:00.000Z`);
-  return Math.max(0, Math.floor((now.getTime() - start) / 86_400_000));
+/**
+ * 목록 밖의 **서버 전체**가 오늘 깎은 몫.
+ *
+ * 기여 목록은 상위 몇 사람만 세우지만 월드 폭주의 줄은 모든 플레이어가 함께 깎는다 — 목록의
+ * 합으로 줄을 그리면 스물넷이 레전드급 체력을 미는 셈이라 날마다 수 퍼센트에서 멈춘다. 그래서
+ * 줄은 **그날의 도달 비율**(총량의 55~110%, 날마다 다르다)을 하루에 걸쳐 채우는 곡선에서 읽는다.
+ * 100%를 넘는 날만 토벌되고, 나머지 날은 깎은 만큼의 보상만 나간다 — 잡지 못해도 되는 보스다.
+ */
+export function mockRaidWorldDamage(dayKey: string, dayProgress: number, totalHp: number = RAID_SEASON_TOTAL_HP): number {
+  const reach = 0.55 + seedHash(`${dayKey}:world`) * 0.55;
+  // 초반에 빨리 밀리고 저녁에 느려지는 곡선이다 — 접속이 몰리는 시간을 흉내 낸다.
+  const curve = 1 - (1 - Math.min(1, Math.max(0, dayProgress))) ** 2;
+  return Math.floor(totalHp * reach * curve);
+}
+
+/** 서버 전체가 깎은 비율이 넘긴 월드 진행 단계 ID다. 미수령 판정은 서버가 별도로 한다. */
+export function raidReachedWorldStageIds(dealtRatio: number): string[] {
+  return RAID_WORLD_REWARD_STAGES.filter(({ ratio }) => dealtRatio >= ratio).map(({ id }) => id);
 }
 
 /**

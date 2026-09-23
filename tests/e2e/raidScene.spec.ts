@@ -1,7 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
 import { captureGame, tap, waitForDebugState } from "./canvasInput";
-import { RAID_ACTIONS, RAID_BOSS_SPOT } from "../../src/ui/raidLayout";
+import { RAID_ACTIONS, RAID_BOSS_SPOT, RAID_LIST } from "../../src/ui/raidLayout";
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
@@ -13,7 +13,7 @@ function scene(page: Page): Promise<string | undefined> {
 /**
  * 레이드는 **시즌 판 → 편성 → 전투** 순서다. 편성은 스토리와 같은 편성 화면(`party`)이 맡는다.
  */
-test("레이드는 시즌 판을 먼저 세우고 출격이 공용 편성 화면을 연다", async ({ page }) => {
+test("레이드는 목록에서 월드 폭주 판으로 들어가고 출격이 공용 편성 화면을 연다", async ({ page }) => {
   await startAfterOpening(page);
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => scene(page)).toBe("lobby");
@@ -22,6 +22,11 @@ test("레이드는 시즌 판을 먼저 세우고 출격이 공용 편성 화면
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("출격");
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2 + 152); // 레이드
   await expect.poll(() => scene(page)).toBe("raid");
+  // 레이드는 먼저 **목록**을 연다 — 맨 위가 오늘의 월드 폭주 층이다.
+  await waitForDebugState(page, () => window.__PF_DEBUG?.raidStage, "list", { timeout: 20_000 });
+  await page.waitForTimeout(3_000);
+  await captureGame(page, `test-results/${test.info().project.name}-raid-list.png`);
+  await tap(page, BASE_WIDTH / 2, RAID_LIST.world.y);
   await waitForDebugState(page, () => window.__PF_DEBUG?.raidStage, "season", { timeout: 20_000 });
 
   // 보스 전신은 ZIP을 내려받아 세우므로 첫 프레임보다 늦게 도착한다. 원화가 붙을 틈을 준다.

@@ -54,7 +54,7 @@ import { APPEARANCE_PANEL } from "./appearancePanelLayout";
 import { COLOR, textStyle } from "./theme";
 import { skillArtFor, skillArtTint, type SkillArtSlot } from "./skillArt";
 import { addSkillIconFrame, skillSlotLabel, type SkillIconFrameOptions, type SkillIconTone } from "./SkillIconFrame";
-import { encounterRoleDescription, encounterRoleGlyph, encounterRoleName, encounterRoleSummary } from "./encounterRolePresentation";
+import { encounterRoleDescription, encounterRoleIcon, encounterRoleName, encounterRoleSummary } from "./encounterRolePresentation";
 import type { EncounterRole } from "../core/levelDesign";
 import { squeezeTextToWidth } from "./textFit";
 import { BREAK_CONFIRM, BREAK_STEPS, breakConfirmHeight, breakthroughStepsLayout } from "./breakthroughLayout";
@@ -2240,7 +2240,7 @@ export function addInfoRoleBadge(
 ): Phaser.GameObjects.Container {
   return addInfoBadge(scene, popups, parent, x, y, {
     slot: "passive",
-    fallbackGlyph: encounterRoleGlyph(role),
+    artKey: encounterRoleIcon(role),
     element: def.element,
     role: def.role,
     label: encounterRoleName(role),
@@ -2287,8 +2287,8 @@ export const INFO_BADGE_SIZE = 96;
 /**
  * 역할 칸의 쪽지 — 스킬 쪽지와 **같은 한 장**이다.
  *
- * 머리에 역할 이름, 요약 줄에 그 자리가 곱하는 배율, 본문에 자리의 성격과 강인함·경감을 적는다.
- * 강인함·경감은 규칙어 태그라 눌러 뜻을 다시 연다.
+ * 머리에 역할 이름, 요약 줄에 그 자리가 곱하는 배율, 본문에 강인함·경감(없으면 그 적의 한마디)을
+ * 적는다. 강인함·경감은 규칙어 태그라 눌러 뜻을 다시 연다.
  */
 export function openEncounterRolePopup(
   scene: Phaser.Scene,
@@ -2301,7 +2301,7 @@ export function openEncounterRolePopup(
     name: encounterRoleName(role),
     kindLabel: t("info.enemy.role"),
     iconAssetId: "skill-icon-buff",
-    glyph: encounterRoleGlyph(role),
+    art: encounterRoleIcon(role),
     tint: ROLE_BADGE_TONE.art,
     effectType: "buff",
     summary: encounterRoleSummary(role),

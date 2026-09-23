@@ -47,6 +47,11 @@ RELICS = {
     "pontos": "pontos",
 }
 
+# 적 정보창의 **역할** 아이콘. 원본 이름은 `:{번호}.png`이고 번호는 잡졸부터 불사까지의 순서다.
+# 스킬 일러스트와 같은 흰 실루엣이라 같은 규칙으로 굽고, 색은 화면이 역할 뱃지의 tint로 입힌다.
+# 이름은 `src/ui/encounterRolePresentation.ts`의 `ENCOUNTER_ROLE_ICON_ASSETS`와 같아야 한다.
+ENCOUNTER_ROLES = {1: "normal", 2: "swarm", 3: "elite", 4: "boss", 5: "endless"}
+
 # 원본의 자리 번호와 스킬 칸. 1 패시브 · 2 일반 공격 · 3 궁극기 · 4 폭주(야성 발현) 순이다.
 SLOTS = {1: "passive", 2: "basic", 3: "ultimate", 4: "ferocity"}
 
@@ -158,9 +163,22 @@ def find(stem: str, slot: int) -> Path:
     raise FileNotFoundError(f"원본을 찾지 못했다: {stem}skill_{slot:03d}")
 
 
+def bake_encounter_roles() -> None:
+    """역할 아이콘을 굽는다. 원본은 구운 뒤 저장소에서 지우므로, 없으면 조용히 건너뛴다."""
+    for number, role in ENCOUNTER_ROLES.items():
+        source = SOURCE / f":{number}.png"
+        if not source.exists():
+            continue
+        target = PUBLIC / "sprites" / "encounter-roles" / f"{role}.webp"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        framed(silhouette(Image.open(source).convert("RGB"))).save(target, "WEBP", quality=92, method=6)
+        print(f"{source.name} -> {target.relative_to(PUBLIC)}")
+
+
 def main() -> None:
     if "--audit" in sys.argv[1:]:
         raise SystemExit(audit())
+    bake_encounter_roles()
     for stem, relic in RELICS.items():
         # 원본은 구운 뒤 저장소에서 지운다. 그래서 이미 구운 개체는 원본이 없는 것이 정상이고,
         # 그때는 조용히 건너뛴다 — 없다고 멈추면 새로 올린 개체 하나를 굽지 못한다.

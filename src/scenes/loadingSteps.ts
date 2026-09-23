@@ -6,6 +6,7 @@ import { loadDataOverlay, loadTextCatalog } from "../i18n";
 import { settingsManager } from "../managers/SettingsManager";
 import { UI_ICON_ASSETS, UI_RASTER_ICON_ASSETS } from "../ui/icons";
 import { AFFINITY_ICON_ASSETS } from "../ui/affinityIcons";
+import { ENCOUNTER_ROLE_ICON_ASSETS } from "../ui/encounterRolePresentation";
 import { CURRENCY_ICON_ASSETS } from "../ui/currencyIcons";
 import { RUNE_ICON_ASSETS } from "../ui/runeIcons";
 import { SKILL_ICON_ASSETS } from "../ui/skillIcons";
@@ -133,6 +134,8 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
         SKILL_ART_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
         // 속성·직군은 이미 구워 둔 WebP라 그대로 읽는다.
         AFFINITY_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
+        // 적 정보창의 역할 아이콘도 스킬 일러스트와 같은 흰 실루엣 WebP다.
+        ENCOUNTER_ROLE_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
         CURRENCY_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));
         // 상품 key는 현재 임시 원화를 가리키며, 최종 그림 교체 위치는 shopCatalog 한곳이다.
         SHOP_PRODUCT_ICON_ASSETS.forEach(([key, path]) => scene.load.image(key, path));

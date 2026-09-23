@@ -4,7 +4,6 @@ import type { KeywordManager } from "../managers/KeywordManager";
 import type { KeywordDef } from "../data/keywords";
 import type { CombatStatusEffect, EffectType, SkillIconAssetId, Ultimate } from "../core/types";
 import { bakeChipArt, chipArtShape } from "./chipArtTexture";
-import { drawGlyph, type GlyphName } from "./glyphs";
 import { drawHairline, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
 import type { PopupLayer } from "./PopupLayer";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
@@ -35,11 +34,6 @@ export interface SkillInfoViewModel {
   art?: string;
   /** 속성·직군을 섞은 필터 색. 흰 실루엣 일러스트에만 입힌다. */
   tint?: number;
-  /**
-   * 그림 파일이 아니라 글리프로 서는 칸(적 정보창의 역할). 있으면 공용 효과 아이콘보다 먼저 쓴다.
-   * 액자 줄에서 누른 칸과 같은 상징이 쪽지에도 서야 어느 칸을 열었는지 이어서 읽힌다.
-   */
-  glyph?: GlyphName;
   effectType: EffectType;
   /** 배율이나 예상 피해처럼 한 줄로 읽는 수치. */
   valueLabel?: string;
@@ -163,8 +157,6 @@ export function openSkillPopup(
       const image = scene.add.image(iconX, iconY, bakeChipArt(scene, art, iconSize, iconSize, ICON_BEVEL)).setDisplaySize(iconSize, iconSize);
       if (skill.tint !== undefined) image.setTint(skill.tint);
       body.add(image);
-    } else if (skill.glyph) {
-      body.add(drawGlyph(scene, skill.glyph, iconX, iconY, iconSize * 0.56, skill.tint ?? 0xffffff));
     } else {
       // 공용 효과 아이콘은 그림이 아니라 상징 하나라 채우지 않고 가운데에 작게 선다.
       const fallback = scene.textures.exists(skill.iconAssetId) ? skill.iconAssetId : FALLBACK_SKILL_ICON;

@@ -25,11 +25,13 @@ export interface SkillIconFrameOptions {
   size: number;
   /** 어느 슬롯의 그림인가. 전용 아트가 없으면 공용 효과 아이콘으로 되돌아간다. */
   slot: SkillArtSlot;
-  /**
-   * 전용 아트를 찾을 렐릭 id. 비우면 그림 파일을 찾지 않는다 — 기술이 아니라 자리를 말하는
-   * 칸(적 정보창의 역할)은 개체의 일러스트가 아니라 글리프 하나로 선다.
-   */
+  /** 전용 아트를 찾을 렐릭 id. `artKey`를 주면 찾지 않는다. */
   relicId?: string;
+  /**
+   * 개체의 스킬 일러스트가 아닌 흰 실루엣 그림의 텍스처 키(적 정보창의 역할 아이콘).
+   * 기술이 아니라 자리를 말하는 칸이라 렐릭 id로 찾지 않고, 굽는 규칙은 스킬 일러스트와 같다.
+   */
+  artKey?: string;
   /** 전용 아트가 없을 때 쓸 공용 아이콘 텍스처 키. */
   fallbackIcon?: string;
   /** 그림 파일이 아니라 글리프로 되돌아가는 자리(폭주). 있으면 `fallbackIcon`보다 먼저 쓴다. */
@@ -114,7 +116,7 @@ export function addSkillIconFrame(scene: Phaser.Scene, options: SkillIconFrameOp
   const inner = chipArtShape(innerSize, innerHeight, SKILL_ICON_FRAME.innerBevel);
   const innerY = -labelRoom / 2.4;
   frame.add(drawLayer(scene, 0, innerY, inner, { fill: tone?.inner ?? 0x05080c, alpha: 1, shadow: false }));
-  const art = options.relicId === undefined ? undefined : skillArtFor(options.relicId, options.slot);
+  const art = options.artKey ?? (options.relicId === undefined ? undefined : skillArtFor(options.relicId, options.slot));
   const hasArt = art !== undefined && scene.textures.exists(art);
   // 그림 자리에 같은 색을 아주 옅게 깔아 아이콘이 색판 위에 앉은 것처럼 보이게 한다. 전용
   // 아트가 없는 개체도 같은 색판을 깐다 — 그림만 공용 아이콘일 뿐 액자는 같은 체계여야 한다.

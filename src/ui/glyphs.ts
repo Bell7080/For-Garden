@@ -16,10 +16,6 @@ export type GlyphName =
   | "expedition-rest"
   | "expedition-treasure"
   | "expedition-boss"
-  | "role-normal"
-  | "role-swarm"
-  | "role-elite"
-  | "role-endless"
   | "shop"
   | "mail"
   | "friends"
@@ -111,27 +107,6 @@ export function drawGlyph(
       // 큰 뿔과 중앙 눈으로 최종 보스를 다른 전투 노드와 즉시 가른다.
       g.strokePoints(points(-r * 0.9, -r * 0.68, -r * 0.45, r * 0.58, 0, r * 0.82, r * 0.45, r * 0.58, r * 0.9, -r * 0.68), false);
       g.strokePoints(points(-r * 0.38, 0, 0, -r * 0.28, r * 0.38, 0, 0, r * 0.28), true);
-      break;
-    /*
-     * 적 정보창의 **역할** 표식 — 계급장처럼 갈매기 수로 몫을 말한다. 원정 지도의 조우 글리프를
-     * 빌리지 않는 이유는 일반 조우의 교차 도구가 작은 칸에서 닫기 X로 읽혔기 때문이다.
-     * 보스는 지도의 보스 뿔을 그대로 쓰고, 불사는 그 뿔 아래에 끝나지 않는 고리를 마름모 둘로 잇는다.
-     */
-    case "role-normal":
-      g.strokePoints(points(-r * 0.72, r * 0.3, 0, -r * 0.42, r * 0.72, r * 0.3), false);
-      break;
-    case "role-swarm":
-      [-0.58, 0, 0.58].forEach((offset) => g.strokePoints(points((offset - 0.28) * r, r * 0.22, offset * r, -r * 0.3, (offset + 0.28) * r, r * 0.22), false));
-      [-0.29, 0.29].forEach((offset) => g.strokePoints(points((offset - 0.28) * r, r * 0.74, offset * r, r * 0.22, (offset + 0.28) * r, r * 0.74), false));
-      break;
-    case "role-elite":
-      g.strokePoints(points(-r * 0.72, 0, 0, -r * 0.72, r * 0.72, 0), false);
-      g.strokePoints(points(-r * 0.72, r * 0.62, 0, -r * 0.1, r * 0.72, r * 0.62), false);
-      break;
-    case "role-endless":
-      g.strokePoints(points(-r * 0.9, -r * 0.86, -r * 0.5, -r * 0.08, 0, r * 0.08, r * 0.5, -r * 0.08, r * 0.9, -r * 0.86), false);
-      g.strokePoints(points(-r * 0.86, r * 0.52, -r * 0.43, r * 0.22, 0, r * 0.52, -r * 0.43, r * 0.82), true);
-      g.strokePoints(points(0, r * 0.52, r * 0.43, r * 0.22, r * 0.86, r * 0.52, r * 0.43, r * 0.82), true);
       break;
     case "page-prev":
       // 홑화살표 — 관찰 기록 목록을 이전 장으로 넘긴다.

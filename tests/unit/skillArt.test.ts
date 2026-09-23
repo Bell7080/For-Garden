@@ -9,7 +9,7 @@ import type { BasicAttack, Skill } from "../../src/core/types";
 import { ELEMENT_TINT, ROLE_TINT, SKILL_ART_ASSETS, SKILL_ART_SLOTS, skillArtFor, skillArtKey, skillArtTint } from "../../src/ui/skillArt";
 import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, elationKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, passiveShieldKeyword, periodicStackKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
 import type { SkillInfoViewModel } from "../../src/ui/SkillPopup";
-import { ENCOUNTER_ROLE_ICON_ASSETS, encounterRoleDescription, encounterRoleIcon, encounterRoleName, encounterRoleSummary } from "../../src/ui/encounterRolePresentation";
+import { ENCOUNTER_ROLE_ICON_ASSETS, encounterRoleDescription, encounterRoleIcon, encounterRoleMultipliers, encounterRoleName } from "../../src/ui/encounterRolePresentation";
 
 /** 구워 둔 스킬 일러스트. 코드가 가리키는 파일이 실제로 있는지 확인한다. */
 const ART_FILES = import.meta.glob("../../public/sprites/skills/*/*.webp");
@@ -451,7 +451,8 @@ describe("폰토스 스킬 표시 계약", () => {
      */
     expect(passiveDescription(pontos.passive)).toBe("매초 [[ap|주문력]]이 2%씩 복리로 오른다.");
     expect(encounterRoleDescription("endless")).toBe(
-      "[[tenacity|강인함]] 50%로 시작해 [[crowd-control|군중제어]]를 받을 때마다 8%씩, 최대 100%까지 오른다."
+      "공격력·주문력 ×2.6   ·   몸집 ×1.45\n"
+      + "[[tenacity|강인함]] 50%로 시작해 [[crowd-control|군중제어]]를 받을 때마다 8%씩, 최대 100%까지 오른다."
       + "\n[[damage-reduction|경감]] 70%로 시작해 [[hp|체력]]이 깎일수록 최대 99%까지 오르고, 10 이하의 피해는 무효가 된다.",
     );
     // 폭주도 같은 규칙으로 태그를 건다 — 고정 피해가 무엇인지는 규칙어가 말한다.
@@ -1349,23 +1350,25 @@ describe("적 정보창 역할 칸 표시 계약", () => {
     expect(ROLES.map(encounterRoleName)).toEqual(["잡졸", "무리", "정예", "보스", "불사"]);
   });
 
-  it("의 요약은 1이 아닌 배율만 적고, 바꾸는 것이 없으면 비운다", () => {
+  it("의 배율 줄은 1이 아닌 배율만 적고, 바꾸는 것이 없으면 비운다", () => {
     /*
      * 바뀌지 않는 값을 늘어놓으면 정작 달라진 한둘이 그 사이에 묻힌다. 수치는 유형 표
      * (`ENCOUNTER_ROLE`)에서 그대로 읽으므로 표를 고치면 이 줄도 함께 움직인다.
      */
-    expect(encounterRoleSummary("normal")).toBe("");
-    expect(encounterRoleSummary("elite")).toBe("체력 ×3.3   ·   공격력·주문력 ×1.5   ·   몸집 ×1.18");
-    expect(encounterRoleSummary("swarm")).toBe("체력 ×0.7   ·   몸집 ×0.8");
+    expect(encounterRoleMultipliers("normal")).toBe("");
+    expect(encounterRoleMultipliers("elite")).toBe("체력 ×3.3   ·   공격력·주문력 ×1.5   ·   몸집 ×1.18");
+    expect(encounterRoleMultipliers("swarm")).toBe("체력 ×0.7   ·   몸집 ×0.8");
     // 보스·불사는 체력을 곱하지 않는다(시즌 게이지 · 불사 계약).
-    expect(encounterRoleSummary("boss")).not.toContain("체력");
+    expect(encounterRoleMultipliers("boss")).not.toContain("체력");
   });
 
-  it("의 본문은 역할을 풀이하지 않고 변경점만, 변경점이 없으면 그 적의 한마디를 세운다", () => {
-    // 역할 이름이 이미 자리를 말한다 — "~하는 자리다" 같은 풀이는 변경점을 한 문단 아래로 민다.
-    for (const role of ROLES) expect(encounterRoleDescription(role), role).not.toContain("자리다");
-    // 강인함·경감이 없는 자리는 대사로 선다.
-    for (const role of ["normal", "swarm", "elite"] as const) expect(encounterRoleDescription(role), role).toMatch(/^“.+”$/);
+  it("의 본문은 역할을 풀이하지 않고 변경점만 적으며, 변경점이 없는 잡졸만 한마디를 세운다", () => {
+    // 역할 이름이 이미 자리를 말한다 — 풀이 문장은 변경점을 한 문단 아래로 민다. 잡졸이 늘 셋인 것도 아니다.
+    for (const role of ROLES) expect(encounterRoleDescription(role), role).not.toMatch(/자리다|셋이/);
+    // 무리·정예는 대사가 아니라 제 배율로 선다.
+    expect(encounterRoleDescription("swarm")).toBe(encounterRoleMultipliers("swarm"));
+    expect(encounterRoleDescription("elite")).toBe(encounterRoleMultipliers("elite"));
+    expect(encounterRoleDescription("normal")).toMatch(/^“.+”$/);
     expect(encounterRoleDescription("boss")).not.toContain("damage-reduction");
   });
 

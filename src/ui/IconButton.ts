@@ -70,7 +70,16 @@ export class IconButton extends Phaser.GameObjects.Container {
 /** 뒤로가기의 고정 자리. 값은 순수 배치표가 갖고 여기서는 다시 내보내기만 한다. */
 export { BACK_SLOT } from "./popupGeometry";
 
+/**
+ * 화면 위에 서는 뒤로가기의 기본 층.
+ *
+ * **화면에 세운 것보다 위, 팝업보다 아래다.** 기본 층(0)에 두었을 때는 화면 밑동까지 서는
+ * 원화(레이드 시즌 보스, 층 5)가 우하단을 덮어 나가는 문이 그 뒤로 사라졌다. 팝업은 2000대에
+ * 서므로 그 아래에 둔다 — 판이 떠 있는 동안에는 판의 뒤로가기(`POPUP_BACK_BUTTON_DEPTH`)가 맡는다.
+ */
+export const BACK_BUTTON_DEPTH = 50;
+
 /** 화면을 벗어나는 유일한 버튼. 자리와 생김새를 씬마다 다시 정하지 않는다. */
 export function addBackButton(scene: Phaser.Scene, onClick: () => void): IconButton {
-  return new IconButton(scene, BACK_SLOT_SPOT.x, BACK_SLOT_SPOT.y, { icon: UI_ICON.back, onClick });
+  return new IconButton(scene, BACK_SLOT_SPOT.x, BACK_SLOT_SPOT.y, { icon: UI_ICON.back, onClick }).setDepth(BACK_BUTTON_DEPTH);
 }

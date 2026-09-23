@@ -56,7 +56,7 @@ export class RaidScene extends Phaser.Scene {
     this.add.text(RAID_HEADER.titleX, RAID_HEADER.titleY, t("raid.title"), textStyle({ role: "display", size: 54, color: COLOR.sortieText })).setOrigin(0, 0);
     // 씬이 다시 시작될 때 원화와 마스크가 남지 않게 한 곳에서 걷는다.
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.dispose());
-    addBackButton(this, () => this.scene.start("lobby", LOBBY_RETURN.sortie));
+    addBackButton(this, () => startScene(this, "lobby", LOBBY_RETURN.sortie));
     void this.loadBossPortrait();
     /*
      * 원화의 아래쪽이 잠기는 띠. 남은 체력 줄의 배경도 이 한 겹이 함께 맡는다.

@@ -74,24 +74,6 @@ export function raidSortieBackGap(): number {
 }
 
 /**
- * 편성 단계.
- *
- * **원정과 같은 순서다** — 들어가면 시즌 판(보스 전신 + 기여 목록)이 먼저 뜨고, 출격이 편성을
- * 연다. 눌리는 즉시 전투로 넘어가던 때는 누구를 데려갈지 정할 자리가 없어, 하루 세 번뿐인
- * 도전을 지난 판의 편성 그대로 치르게 됐다.
- *
- * 칸은 네 화면이 함께 쓰는 판 한 장(`addFormationSlotPlate`)이고, 목록은 도감·원정과 같은
- * 그리드 규칙을 쓴다. 이 표가 갖는 것은 자리뿐이다.
- */
-export const RAID_PREPARATION = {
-  titleY: 292,
-  slots: { y: 560, firstX: 230, stepX: 310, width: 250, height: 290 },
-  roster: { top: 780, bottom: 1520 },
-  hintY: 1570,
-  start: { y: 1690, width: 560, height: 132 },
-} as const;
-
-/**
  * 남은 체력 게이지의 색.
  *
  * 체력 바가 아니라 **깎아 내는 표적**이라 아군 체력의 연두가 아니고, 전장에서 아군이 받는

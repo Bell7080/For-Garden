@@ -9,7 +9,10 @@ import {
   partyAllySlotBox,
   partyPowerPlateBounds,
   partyPreviewEnemyColumns,
+  partyPreviewEnemyScale,
+  PARTY_PREVIEW_CROWD,
 } from "../../src/ui/partyPreviewLayout";
+import { enemyPresenceBodyScale } from "../../src/data/enemyPresence";
 
 /** 아군 SD의 정수리가 서는 줄. 밑판 위로 아무것도 내려오면 안 되는 경계다. */
 const ALLY_HEAD_TOP = PARTY_PREVIEW.allyRow - PARTY_PREVIEW.height;
@@ -69,5 +72,38 @@ describe("스토리 편성 미리보기 배치", () => {
     const pair = partyPreviewEnemyColumns(2);
     expect(pair).toHaveLength(2);
     expect((pair[0] + pair[1]) / 2).toBe(PARTY_PREVIEW_COLUMNS[1]);
+  });
+});
+
+describe("콘텐츠 편성 미리보기", () => {
+  it("물량형 대표 얼굴 다섯은 화면 안에 고르게 서고 서로 겹치지 않는다", () => {
+    const columns = partyPreviewEnemyColumns(5);
+    expect(columns).toHaveLength(5);
+    expect(columns[0]).toBe(PARTY_PREVIEW_CROWD.left);
+    expect(columns[4]).toBe(PARTY_PREVIEW_CROWD.right);
+    const gap = columns[1] - columns[0];
+    for (let index = 1; index < columns.length; index += 1) expect(columns[index] - columns[index - 1]).toBeCloseTo(gap, 6);
+    // 한 얼굴 몫(좁힌 입력면 170)이 옆 얼굴과 겹치지 않는다.
+    expect(gap).toBeGreaterThanOrEqual(170);
+    expect(columns[0] - 85).toBeGreaterThanOrEqual(0);
+    expect(columns[4] + 85).toBeLessThanOrEqual(1080);
+    // 셋 이하는 예전 규칙 그대로다.
+    expect(partyPreviewEnemyColumns(3)).toEqual(PARTY_PREVIEW_COLUMNS);
+    expect(partyPreviewEnemyColumns(1)).toEqual([PARTY_PREVIEW_COLUMNS[1]]);
+  });
+
+  it("한꺼번에 몰려오는 수는 적 이름줄과 전투력 판 사이에 선다", () => {
+    const bounds = partyPowerPlateBounds();
+    expect(PARTY_PREVIEW.hordeCountY - 15).toBeGreaterThan(ENEMY_NAMEPLATE_BOTTOM);
+    expect(PARTY_PREVIEW.hordeCountY + 15).toBeLessThan(bounds.top);
+  });
+
+  it("레이드 보스는 상한까지만 커져 머리가 화면 제목을 뚫지 않는다", () => {
+    const scale = partyPreviewEnemyScale(enemyPresenceBodyScale("raid"));
+    expect(scale).toBe(PARTY_PREVIEW.maxEnemyScale);
+    // 제목(y 70, 46px)의 밑변 아래에 머리 위 표식(28px)까지 들어간다.
+    expect(PARTY_PREVIEW.enemyRow - PARTY_PREVIEW.height * scale - 6 - 28).toBeGreaterThan(70 + 46);
+    // 정예는 상한보다 작아 그대로 선다.
+    expect(partyPreviewEnemyScale(enemyPresenceBodyScale("elite"))).toBe(enemyPresenceBodyScale("elite"));
   });
 });

@@ -4,34 +4,41 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
 import { gameApi } from "../api/FakeServer";
 import { session } from "../state/session";
-import { CAKE_OPERATION_TIERS, cakeOperationRunCost, cakeOperationTierIndex, isCakeTierUnlocked, type CakeOperationTier } from "../data/cakeOperation";
-import { DUNGEON_MULTIPLIERS, applyDungeonMultiplier, isMultiplierUnlocked, sweepRefusal, type DungeonMultiplier } from "../core/dungeonShortcut";
-import { CAKE_ACTION_BUTTON, CAKE_MULTIPLIER_CHIP, CAKE_ROW, CAKE_TITLE, cakeActionButtonX, cakeActionRowY, cakeMultiplierChipX, cakeMultiplierRowY, cakeRowCenterY } from "../ui/cakeOperationLayout";
+import { CAKE_OPERATION_TIERS, cakeOperationEnemies, cakeOperationRunCost, cakeOperationTierIndex, isCakeTierUnlocked, type CakeOperationTier } from "../data/cakeOperation";
+import { applyDungeonMultiplier, isMultiplierUnlocked, normalizeMultiplier, sweepRefusal, type DungeonMultiplier } from "../core/dungeonShortcut";
+import { combatPower } from "../core/combatPower";
+import { DUNGEON_LOBBY } from "../ui/dungeonLobbyLayout";
+import { DungeonLobby } from "../ui/DungeonLobby";
 import { addBackButton } from "../ui/IconButton";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { addSectionTitle } from "../ui/SectionTitle";
-import { addFramedIcon } from "../ui/itemFrame";
-import { Button } from "../ui/Button";
 import { PopupLayer } from "../ui/PopupLayer";
 import { openRewardPopup, currencyRecordToRewardItems } from "../ui/RewardPopup";
 import { TopBar } from "../ui/TopBar";
-import { chipPoints, drawLayer, drawVignette, slantedRect } from "../ui/holo";
-import { COLOR, textStyle } from "../ui/theme";
+import { drawVignette } from "../ui/holo";
 import { LOBBY_RETURN } from "./lobbyEntry";
 import { prefetchBattlePuppets } from "../puppets/battlePrefetch";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { CAKE_OPERATION_ENEMY_IDS } from "../data/cakeOperation";
+import { startScene } from "../ui/screenTransition";
+import type { PartySceneData } from "../data/partyContent";
+import { consumeSceneEntry } from "./sceneEntry";
+
+/** 편성 화면에서 돌아올 때 고른 단계·배율을 그대로 되살린다. */
+export interface CakeOperationSceneData {
+  tierId?: string;
+  multiplier?: number;
+}
 
 /**
- * **치즈케이크 대작전** — 레이티아 다섯 자매가 떼로 몰려오는 물량형 던전의 입구.
+ * **치즈케이크 대작전** — 레이티아 다섯 자매가 한꺼번에 몰려오는 물량형 던전의 입구.
  *
- * 화면이 하는 일은 셋뿐이다: 어느 단계로 들어갈지 고르고, 몇 판치를 한 번에 치를지(배율)
- * 고르고, 싸우러 가거나(출격) 전투 없이 털거나(소탕) 한다. 재화 차감과 보상 지급은 화면이
- * 하지 않고 전부 `GameApi` 경계를 지난다 — 배율을 곱하는 일도 화면이 다시 하지 않고
- * 서버가 확정한 `granted`를 그대로 그린다.
+ * 화면은 현상수배와 같은 입구 한 장(`DungeonLobby`)이다: 단계를 고르고, 몇 판치를 한 번에
+ * 치를지(배율) 고르고, 출격하거나 소탕한다. **출격은 곧바로 전투로 가지 않고 편성 화면을
+ * 연다** — 스토리와 같은 화면에서 몰려올 얼굴을 보고 데려갈 셋을 고른 뒤, 거기서 입장이
+ * 확정된다(스테미나도 그때 나간다).
  *
- * 잠긴 단계와 잠긴 배율은 **조작만 감추고 말은 하지 않는다**. 왜 잠겼는지를 적는 문장은
- * 플레이어가 지금 할 일을 바꾸지 않는다.
+ * 잠긴 단계와 잠긴 배율은 **조작만 감추고 말은 하지 않는다**.
  */
 export class CakeOperationScene extends Phaser.Scene {
   private selectedTierId = CAKE_OPERATION_TIERS[0].id;
@@ -39,36 +46,44 @@ export class CakeOperationScene extends Phaser.Scene {
   private adFreeMembership = false;
   private busy = false;
   private popups!: PopupLayer;
-  private rows: { tier: CakeOperationTier; row: Phaser.GameObjects.Container; mark: Phaser.GameObjects.Graphics; hit: Phaser.GameObjects.Rectangle }[] = [];
-  private multiplierMarks: { chip: Phaser.GameObjects.Container; value: DungeonMultiplier }[] = [];
-  private actionRow?: Phaser.GameObjects.Container;
+  private lobby?: DungeonLobby;
 
   constructor() {
     super("cakeOperation");
   }
 
+  /** 이번 진입이 되살릴 단계·배율. `init`에서 받아 두고 곧바로 비운다(`consumeSceneEntry`). */
+  private entry: CakeOperationSceneData = {};
+
+  init(data?: CakeOperationSceneData): void {
+    this.entry = { ...(data ?? {}) };
+    consumeSceneEntry(this);
+  }
+
   create(): void {
+    const data = this.entry;
     // 단계를 고르는 동안 전투에 설 SD를 미리 읽는다. 다섯 자매는 속성만 다른 같은 몸이지만
     // **원화는 저마다 다르므로** 다섯을 다 읽어야 한 무리가 통째로 늦게 서지 않는다.
     prefetchBattlePuppets(relicCollection.validParty, CAKE_OPERATION_ENEMY_IDS);
     setDebugScene("cakeOperation", t("cake.title"));
     this.busy = false;
-    this.rows = [];
-    this.multiplierMarks = [];
-    this.actionRow = undefined;
-    // 마지막으로 이긴 단계의 다음 칸이 기본 선택이다 — 들어오자마자 고를 것이 이미 골라져 있다.
+    // 편성에서 돌아왔으면 고르던 단계를, 아니면 마지막으로 이긴 단계의 다음 칸을 고른다.
     const next = Math.min(session.cakeOperation.clearedIndex + 1, CAKE_OPERATION_TIERS.length - 1);
-    this.selectedTierId = CAKE_OPERATION_TIERS[Math.max(0, next)].id;
-    this.multiplier = 1;
+    const returning = data?.tierId !== undefined && cakeOperationTierIndex(data.tierId) >= 0 ? data.tierId : undefined;
+    this.selectedTierId = returning ?? CAKE_OPERATION_TIERS[Math.max(0, next)].id;
+    this.multiplier = normalizeMultiplier(data?.multiplier);
 
     addSceneBackground(this, BACKGROUND.sortieCake);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { strength: 0.72 });
     new TopBar(this, 40, { profile: false });
-    addSectionTitle(this, CAKE_TITLE.x, CAKE_TITLE.y, t("cake.title"));
+    addSectionTitle(this, DUNGEON_LOBBY.title.x, DUNGEON_LOBBY.title.y, t("cake.title"));
     this.popups = new PopupLayer(this, 2200);
-
-    CAKE_OPERATION_TIERS.forEach((tier, index) => this.buildRow(tier, index));
-    this.buildMultiplierChips();
+    this.lobby = new DungeonLobby(this, {
+      onSelectTier: (id) => { if (!this.busy) { this.selectedTierId = id; this.refresh(); } },
+      onSelectMultiplier: (value) => { if (!this.busy) { this.multiplier = value; this.refresh(); } },
+      onSortie: () => this.openParty(),
+      onSweep: () => void this.sweep(),
+    });
     this.refresh();
     addBackButton(this, () => this.scene.start("lobby", LOBBY_RETURN.sortie));
 
@@ -80,136 +95,57 @@ export class CakeOperationScene extends Phaser.Scene {
     }).catch(() => undefined);
   }
 
-  /** 단계 한 줄. 이름·레벨·야성 단계가 왼쪽에, 한 판이 주는 치즈케이크가 오른쪽에 선다. */
-  private buildRow(tier: CakeOperationTier, index: number): void {
-    const y = cakeRowCenterY(index);
-    const shape = chipPoints(CAKE_ROW.width, CAKE_ROW.height, { bevel: { topLeft: 26, topRight: 0, bottomRight: 26, bottomLeft: 0 } });
-    const row = this.add.container(BASE_WIDTH / 2, y);
-    row.add(drawLayer(this, 0, 0, shape, { fill: COLOR.panel, alpha: 0.82, edge: COLOR.accent, edgeAlpha: 0.32 }));
-    // 고른 줄은 테두리가 아니라 **더 밝은 윗선**으로 알린다 — 사방을 두르지 않는 화면 규칙이다.
-    const mark = drawLayer(this, 0, 0, shape, { fill: COLOR.accent, alpha: 0.12, edge: COLOR.accent, edgeAlpha: 0.95, edgeWidth: 5 });
-    row.add(mark);
-
-    row.add(this.add.text(-CAKE_ROW.width / 2 + CAKE_ROW.padding, -26, tier.name, textStyle({ role: "display", size: 38, color: COLOR.ink })).setOrigin(0, 0.5));
-    const level = this.add.text(-CAKE_ROW.width / 2 + CAKE_ROW.padding, 28, t("cake.tier.enemy", { level: tier.enemyLevel }), textStyle({ role: "emphasis", size: 26, color: COLOR.inkDim })).setOrigin(0, 0.5);
-    row.add(level);
-    // 야성 몫은 곱하기 전의 **단계**이고, 레벨과 갈라 읽히도록 작고 붉게 옆에 선다.
-    if (tier.ferocityLevel > 0) {
-      row.add(this.add.text(level.x + level.width + 10, 28, t("cake.tier.bonus", { bonus: tier.ferocityLevel }), textStyle({ role: "emphasis", size: 22, color: COLOR.ferocityText })).setOrigin(0, 0.5));
-    }
-    row.add(this.add.text(-CAKE_ROW.width / 2 + CAKE_ROW.padding + 250, 28, t("cake.tier.waves", { waves: tier.waves.length }), textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
-
-    // 한 판(배율 x1)이 주는 값이다. 배율을 먹인 수는 누르는 것 위(버튼)가 말한다.
-    row.add(addFramedIcon(this, undefined, CAKE_ROW.width / 2 - CAKE_ROW.padding - 44, 0, 88, "currency-cheesecake", { amount: String(tier.rewardCheesecake), plain: true }));
-
-    const hit = this.add.rectangle(BASE_WIDTH / 2, y, CAKE_ROW.width, CAKE_ROW.height, 0x000000, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerup", () => {
-      if (this.busy || !isCakeTierUnlocked(tier.id, session.cakeOperation.clearedIndex)) return;
-      this.selectedTierId = tier.id;
-      this.refresh();
-    });
-    this.rows.push({ tier, row, mark, hit });
-  }
-
-  /** x1·x2·x3. 잠긴 칩도 자리는 지키되 눌리지 않고, 왜 잠겼는지는 적지 않는다. */
-  private buildMultiplierChips(): void {
-    const y = cakeMultiplierRowY(CAKE_OPERATION_TIERS.length);
-    DUNGEON_MULTIPLIERS.forEach((value, index) => {
-      const chip = this.add.container(cakeMultiplierChipX(index, DUNGEON_MULTIPLIERS.length), y);
-      chip.add(drawLayer(this, 0, 0, slantedRect(CAKE_MULTIPLIER_CHIP.width, CAKE_MULTIPLIER_CHIP.height, 22), { fill: COLOR.panel, alpha: 0.82, edge: COLOR.accent, edgeAlpha: 0.4 }));
-      chip.add(this.add.text(0, 0, t("cake.multiplier", { value }), textStyle({ role: "display", size: 38, color: COLOR.ink })).setOrigin(0.5));
-      const hit = this.add.rectangle(chip.x, chip.y, CAKE_MULTIPLIER_CHIP.width, CAKE_MULTIPLIER_CHIP.height, 0x000000, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerup", () => {
-        if (this.busy || !isMultiplierUnlocked(value, this.adFreeMembership)) return;
-        this.multiplier = value;
-        this.refresh();
-      });
-      this.multiplierMarks.push({ chip, value });
-    });
+  private selectedTier(): CakeOperationTier {
+    return CAKE_OPERATION_TIERS[cakeOperationTierIndex(this.selectedTierId)];
   }
 
   /** 고른 단계·배율·해금 상태를 한 번에 화면에 반영한다. */
   private refresh(): void {
     const clearedIndex = session.cakeOperation.clearedIndex;
-    // 고른 줄은 밝은 윗선으로, 잠긴 줄은 흐려지고 손을 받지 않는 것으로 알린다.
-    // 왜 잠겼는지를 적는 문장은 세우지 않는다 — 그 글이 없어도 할 수 있는 조작은 같다.
-    this.rows.forEach(({ tier, row, mark, hit }) => {
-      const unlocked = isCakeTierUnlocked(tier.id, clearedIndex);
-      mark.setAlpha(tier.id === this.selectedTierId ? 1 : 0);
-      row.setAlpha(unlocked ? 1 : 0.34);
-      if (unlocked) hit.setInteractive({ useHandCursor: true }); else hit.disableInteractive();
-    });
-    // 멤버십이 없으면 x3는 눌리지 않고 흐리게만 남는다.
     if (!isMultiplierUnlocked(this.multiplier, this.adFreeMembership)) this.multiplier = 1;
-    this.multiplierMarks.forEach(({ chip, value }) => {
-      const unlocked = isMultiplierUnlocked(value, this.adFreeMembership);
-      chip.setAlpha(unlocked ? 1 : 0.34);
-      // 고른 배율은 색이 아니라 크기로 알린다 — 누르면 커지는 화면 규칙 그대로다.
-      chip.setScale(value === this.multiplier ? 1.12 : 1);
-    });
-    this.buildActionRow();
-  }
-
-  /** 출격·소탕 두 조작. 값이 바뀌면 버튼의 비용 표기도 함께 다시 선다. */
-  private buildActionRow(): void {
-    this.actionRow?.destroy(true);
-    const row = this.add.container(0, 0);
-    this.actionRow = row;
-    const tier = CAKE_OPERATION_TIERS[cakeOperationTierIndex(this.selectedTierId)];
+    const tier = this.selectedTier();
     const cost = cakeOperationRunCost(tier);
     const settlement = applyDungeonMultiplier(cost, this.multiplier);
-    const y = cakeActionRowY(CAKE_OPERATION_TIERS.length);
     const affordable = session.wallet.stamina >= settlement.staminaCost;
-
-    const sortie = new Button(this, cakeActionButtonX(0), y, {
-      width: CAKE_ACTION_BUTTON.width, height: CAKE_ACTION_BUTTON.height, label: t("cake.sortie"), variant: "primary",
-      cost: { icon: "currency-stamina", amount: settlement.staminaCost, affordable },
-      onClick: () => void this.enter(tier),
-    });
-    sortie.setEnabled(!this.busy && affordable);
-    row.add(sortie);
-
     const refusal = sweepRefusal({
-      cleared: cakeOperationTierIndex(tier.id) <= session.cakeOperation.clearedIndex,
+      cleared: cakeOperationTierIndex(tier.id) <= clearedIndex,
       multiplier: this.multiplier, adFreeMembership: this.adFreeMembership,
       stamina: session.wallet.stamina, cost,
     });
-    const sweep = new Button(this, cakeActionButtonX(1), y, {
-      width: CAKE_ACTION_BUTTON.width, height: CAKE_ACTION_BUTTON.height, label: t("cake.sweep"),
-      cost: { icon: "currency-stamina", amount: settlement.staminaCost, affordable },
-      onClick: () => void this.sweep(tier),
+    this.lobby?.render({
+      tiers: CAKE_OPERATION_TIERS.map((entry) => ({
+        id: entry.id, name: entry.name, level: entry.enemyLevel, ferocityLevel: entry.ferocityLevel,
+        reward: { icon: "currency-cheesecake", amount: entry.rewardCheesecake },
+        enemyPower: cakeOperationEnemies(entry).reduce((sum, def) => sum + combatPower(def.stats), 0),
+        unlocked: isCakeTierUnlocked(entry.id, clearedIndex),
+      })),
+      selectedId: tier.id,
+      multiplier: this.multiplier,
+      multiplierUnlocked: (value) => isMultiplierUnlocked(value, this.adFreeMembership),
+      staminaCost: settlement.staminaCost,
+      affordable,
+      sortieEnabled: !this.busy && affordable,
+      sweepEnabled: !this.busy && refusal === null,
     });
-    sweep.setEnabled(!this.busy && refusal === null);
-    row.add(sweep);
   }
 
-  /** 입장. 스테미나는 이 경계에서 한 번 빠지고, 그 영수증의 요청 ID가 전투를 따라간다. */
-  private async enter(tier: CakeOperationTier): Promise<void> {
+  /** 출격은 편성 화면을 연다. 입장(스테미나 차감)은 거기서 전투 시작을 누를 때 확정된다. */
+  private openParty(): void {
     if (this.busy) return;
-    this.busy = true;
-    this.refresh();
-    const requestId = `cake:${tier.id}:${this.multiplier}:${Date.now()}`;
-    try {
-      await gameApi.enterCakeOperation({ tierId: tier.id, multiplier: this.multiplier, requestId });
-      if (!this.scene.isActive()) return;
-      this.scene.start("battle", { mode: "cake", tierId: tier.id, multiplier: this.multiplier, requestId });
-    } catch {
-      // 차감이 서지 않았으므로 화면은 있던 자리로 돌아가기만 한다.
-      this.busy = false;
-      if (this.scene.isActive()) this.refresh();
-    }
+    startScene(this, "party", { content: "cake", tierId: this.selectedTierId, multiplier: this.multiplier } satisfies PartySceneData);
   }
 
   /** 소탕. 차감과 지급이 서버에서 한 처리로 끝나고 화면은 영수증만 연다. */
-  private async sweep(tier: CakeOperationTier): Promise<void> {
+  private async sweep(): Promise<void> {
     if (this.busy) return;
     this.busy = true;
     this.refresh();
+    const tier = this.selectedTier();
     const requestId = `cake-sweep:${tier.id}:${this.multiplier}:${Date.now()}`;
     try {
       const result = await gameApi.sweepCakeOperation({ tierId: tier.id, multiplier: this.multiplier, requestId });
       if (!this.scene.isActive()) return;
-      openRewardPopup(this, this.popups, { title: t("cake.sweep.title"), items: currencyRecordToRewardItems(result.granted) });
+      openRewardPopup(this, this.popups, { title: t("dungeon.sweep.title"), items: currencyRecordToRewardItems(result.granted) });
     } catch {
       // 지급이 서지 않았으므로 알릴 것이 없다 — 조작만 되돌린다.
     } finally {

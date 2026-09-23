@@ -11,8 +11,7 @@ import { EnemyInfoPopup } from "../ui/EnemyInfoPopup";
 import { bindLongPress } from "../ui/longPressInfo";
 import type { PuppetCreature } from "../puppets/assets";
 import { placePuppet, spawnPuppet } from "../puppets/assets";
-import { getBattleStage, getStageEnemies, stageEnemyGrowth } from "../data/stages";
-import { enemyPresenceBodyScale, enemyPresenceFor } from "../data/enemyPresence";
+import { getBattleStage } from "../data/stages";
 import { addStageEliteMark } from "../ui/stageEliteMark";
 import { session } from "../state/session";
 import { gameApi } from "../api/FakeServer";
@@ -24,7 +23,7 @@ import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, po
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
 import { drawLayer, HOLO, slantedRect } from "../ui/holo";
-import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
+import { addSceneBackground, battleFieldBackground } from "../ui/backgrounds";
 import { autoPickParty, relicAffinityDirection } from "../core/partyAffinity";
 import type { SetPartyFailureReason } from "../managers/RelicCollectionManager";
 import { AffinityDirection } from "../ui/AffinityDirection";
@@ -37,7 +36,7 @@ import { formationMembers, tapFormationSlot, tapRosterRelic, toFormationSlots } 
 import { prefetchBattlePuppets as prefetchBattleSds } from "../puppets/battlePrefetch";
 import { moveFormationSlot } from "../core/formation";
 import { addFormationRemoveChip, addFormationSlotPlate, addFormationSlotSelection } from "../ui/formationSlotChrome";
-import { PARTY_ALLY_PLATE, PARTY_POWER_PLATE, PARTY_PREVIEW, PARTY_PREVIEW_COLUMNS, partyAllyGroundOffset, partyAllyPlateBox, partyAllySlotBox, partyPreviewEnemyColumns } from "../ui/partyPreviewLayout";
+import { PARTY_ALLY_PLATE, PARTY_POWER_PLATE, PARTY_PREVIEW, PARTY_PREVIEW_COLUMNS, partyAllyGroundOffset, partyAllyPlateBox, partyAllySlotBox, partyPreviewEnemyColumns, partyPreviewEnemyScale } from "../ui/partyPreviewLayout";
 import { bindFormationDrag } from "../ui/formationDrag";
 import { FORMATION_DRAG_VISUAL } from "../ui/formationDragVisual";
 import { createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
@@ -45,6 +44,13 @@ import { PopupLayer } from "../ui/PopupLayer";
 import { StaminaPopup } from "../ui/StaminaPopup";
 import { partyEntryErrorView } from "./partyEntryError";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
+import { normalizePartyContent, partyPreview, type PartyContent, type PartyPreview, type PartyPreviewEnemy } from "../data/partyContent";
+import { consumeSceneEntry } from "./sceneEntry";
+import { enemyPresenceBodyScale } from "../data/enemyPresence";
+import { getBountyTier } from "../data/bounty";
+import { getCakeOperationTier } from "../data/cakeOperation";
+import type { BountyBattleInputDto } from "../core/bountyRun";
+import type { CakeBattleInputDto } from "../core/expeditionBattle";
 
 /**
  * 미리보기 전장.
@@ -114,8 +120,16 @@ interface AllySlot {
  *
  * 위쪽에 이번 전투의 시작 배치를 그대로 축소해 둔다. 어떤 적이 나오는지, 내가 고른 렐릭이
  * 어느 자리에 서는지를 들어가기 전에 SD 그대로 볼 수 있게 하려는 것이다.
+ *
+ * **스토리·레이드·현상수배·치즈케이크 대작전이 이 한 장을 쓴다**(`PartySceneData`). 다른 것은
+ * 위에 서는 적과 전투 시작이 부르는 입장, 그리고 뒤로가기가 돌아가는 입구뿐이다 — 칸·SD·
+ * 목록·자동 배치·전투력 대치선은 전부 같다.
  */
 export class PartyScene extends Phaser.Scene {
+  /** 어느 콘텐츠의 편성인가. `init`에서 받아 두고 진입 데이터는 곧바로 비운다. */
+  private content: PartyContent = { content: "stage" };
+  /** 위 줄에 서는 적과 실제로 서는 적 전부. */
+  private preview!: PartyPreview;
   /** 빈 자리를 `null`로 남기는 고정 세 자리. 빼도 뒤가 당겨지지 않는다. */
   private picked: (string | null)[] = [null, null, null];
   /**
@@ -153,7 +167,8 @@ export class PartyScene extends Phaser.Scene {
   private prefetchBattleSds(): void {
     prefetchBattleSds(
       formationMembers(this.picked),
-      this.enemies.map((enemy) => enemy.id),
+      // 물량형은 같은 자매가 되풀이되므로 대표 얼굴만 읽으면 된다.
+      this.preview.shown.map(({ def }) => def.id),
     );
   }
 
@@ -180,6 +195,11 @@ export class PartyScene extends Phaser.Scene {
     super("party");
   }
 
+  init(data?: unknown): void {
+    this.content = normalizePartyContent(data);
+    consumeSceneEntry(this);
+  }
+
   create(): void {
     setDebugScene("party");
     // 직전 스토리 편성만 복원한다. 원정·발굴은 각 콘텐츠가 소유한 별도 저장 필드를 유지한다.
@@ -190,23 +210,23 @@ export class PartyScene extends Phaser.Scene {
     this.isEnteringBattle = false;
 
     const cx = BASE_WIDTH / 2;
-    // 편성 미리보기와 실제 전투가 같은 6번 전장 원화를 공유해 출전 흐름을 시각적으로 잇는다.
-    addSceneBackground(this, BACKGROUND.combat);
+    // 편성 미리보기와 실제 전투가 같은 전장 원화를 공유해 출전 흐름을 시각적으로 잇는다.
+    // 어느 콘텐츠가 어느 전장에 서는지는 전투와 같은 표(`BATTLE_FIELD_BACKGROUND`)가 갖는다.
+    addSceneBackground(this, battleFieldBackground(this.content.content));
     this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.42).setDepth(-29);
 
     const stage = getBattleStage(session.selectedStageId ?? "1-1");
     // 전투와 같은 함수로 적을 만든다. 여기서만 기본 수치를 읽으면 미리보기의 체력이 실제
-    // 전투보다 낮게 보인다 — 스테이지 레벨 보정은 `getStageEnemies` 한 곳에만 있다.
-    this.enemies = getStageEnemies(stage);
+    // 전투보다 낮게 보인다 — 콘텐츠마다 적을 만드는 곳은 `partyPreview` 한 곳이다.
+    this.preview = partyPreview(this.content, stage);
+    this.enemies = this.preview.all;
     // 손상된 런타임 파티만 보유 목록 기반 자동 편성으로 안전하게 대체한다.
     if (formationMembers(this.picked).length !== 3) this.picked = toFormationSlots(autoPickParty(relicCollection.owned, this.enemies), 3);
     // **전투에 설 SD를 지금부터 읽는다.** 편성을 고르는 동안이 그대로 로딩 시간이 되므로,
     // 출격을 누르는 순간에는 대부분 캐시에서 나온다. 기다리지 않으므로 이 화면은 막히지 않는다.
     this.prefetchBattleSds();
-    this.add.text(cx, 70, `${stage.id}  ${stage.name}`, textStyle({ role: "display", size: 46 })).setOrigin(0.5, 0);
-    // 성장 스냅샷은 능력치 사본과 **같은 자리 순서**로 넘긴다 — 배열 순서로 넘기면 아모의
-    // 레벨이 리파 밑에 적힌다.
-    this.buildPreview(this.enemies, stageEnemyGrowth(stage), stage.elite === true);
+    this.add.text(cx, 70, this.title(stage), textStyle({ role: "display", size: 46 })).setOrigin(0.5, 0);
+    this.buildPreview(this.preview);
     this.buildRoster();
 
     // 그리드 위 우측 — 고르는 손이 그리드에 머무는 동안 곧바로 닿는 자리다. 그리드 오른쪽
@@ -270,9 +290,7 @@ export class PartyScene extends Phaser.Scene {
 
         try {
           // 서버가 입장 비용을 확정한 뒤에만 전투로 전환해 같은 요청 재시도에서 중복 차감되지 않게 한다.
-          const requestId = globalThis.crypto?.randomUUID?.() ?? `stage-entry-${Date.now()}`;
-          await gameApi.enterStage({ stageId: session.selectedStageId!, requestId });
-          startScene(this, "battle", { mode: "stage" });
+          await this.enterBattle();
         } catch (error) {
           // instanceof 판정이 계약의 런타임 오류 타입을 기준으로 수행됨을 import 수준에서도 명확히 한다.
           const view = partyEntryErrorView(error instanceof GameApiError ? error : undefined);
@@ -283,7 +301,7 @@ export class PartyScene extends Phaser.Scene {
       },
     });
 
-    addBackButton(this, () => startScene(this, "stageMap"));
+    addBackButton(this, () => this.leave());
 
     this.info = new CharacterInfoManager(this);
     // 적은 정보창 씬이 아니라 팝업 한 장이다. 스킬 쪽지는 이 층 위에 쌓인다.
@@ -302,7 +320,7 @@ export class PartyScene extends Phaser.Scene {
    * 로마자, 레벨과 이름은 한 줄에 강조색으로. 두 화면이 같은 적을 다른 글로 적으면 같은 값이
    * 어디서는 표식, 어디서는 문장이 된다.
    */
-  private buildPreview(enemies: readonly RelicDef[], growth: readonly { level: number; breakthrough: number; ferocityLevel?: number }[], elite: boolean): void {
+  private buildPreview(preview: PartyPreview): void {
     // 두 줄 사이의 대치선.
     this.add
       .line(0, 0, 120, FRONT_LINE, BASE_WIDTH - 120, FRONT_LINE, COLOR.panelEdge)
@@ -310,34 +328,21 @@ export class PartyScene extends Phaser.Scene {
       .setLineWidth(2)
       .setAlpha(0.45);
 
-    // **몇이 서느냐가 자리를 정한다** — 정예 하나면 가운데 한 칸만 쓴다.
-    const enemyColumns = partyPreviewEnemyColumns(enemies.length);
-    const bodyScale = enemyPresenceBodyScale(enemyPresenceFor(enemies.length, { elite }));
-    enemies.forEach((def, slot) => {
-      const snapshot = growth[slot] ?? { level: 1, breakthrough: 0 };
-      const x = enemyColumns[slot] ?? PREVIEW_COLUMNS[slot];
-      // 받침은 SD(-10)보다 뒤에 둬야 발을 덮지 않는다.
-      this.add.ellipse(x, ENEMY_ROW + 4, 190 * bodyScale, 34, COLOR.void, 0.45).setDepth(-12);
-      void this.standSD(def.id, x, ENEMY_ROW, true, bodyScale);
-      // 셋이 아니라 하나가 선 자리라는 것을 머리 위 이름표가 말한다.
-      if (elite) addStageEliteMark(this, undefined, x, ENEMY_ROW - PREVIEW_HEIGHT * bodyScale - 6, 28).setDepth(3);
-
-      const badgeTop = ENEMY_ROW - PREVIEW_HEIGHT + 34;
-      this.add.existing(new AffinityBadge(this, x - 104, badgeTop, ELEMENT_ICON[def.element], 52, 0.62)).setDepth(3);
-      this.add.existing(new AffinityBadge(this, x - 104, badgeTop + 49, ROLE_ICON[def.role], 38, 0.62)).setDepth(3);
-      const marks = this.add.container(0, 0).setDepth(3);
-      addBreakthroughGradeMark(this, marks, x + 104, badgeTop - 4, 42, snapshot.breakthrough + 1);
-
-      // 체력은 적지 않는다 — 붙어 볼지 정하는 데 필요한 것은 개체별 수치가 아니라 아래의
-      // 두 총 전투력이다. 이름줄은 노드 미리보기와 같은 프리팹을 쓴다(레벨 강조색·이름 흰색).
-      addUnitNameplate(this, undefined, x, ENEMY_ROW + 26, snapshot.level, def.name, 30, snapshot.ferocityLevel ?? 0);
-      // **적을 누르면 상세가 열린다.** 옆에 물음표를 하나 더 세우면 SD와 표식 사이에 눌러야 할
-      // 것이 둘이 되고, 정작 크게 서 있는 SD는 눌러도 아무 일이 없다.
-      this.add.rectangle(x, ENEMY_ROW - PREVIEW_HEIGHT / 2, 210, PREVIEW_HEIGHT + 70, 0xffffff, 0)
-        .setDepth(4)
-        .setInteractive({ useHandCursor: true })
-        .on("pointerup", () => this.enemyInfo.show({ def, level: snapshot.level, breakthrough: snapshot.breakthrough, ferocityLevel: snapshot.ferocityLevel }));
-    });
+    // **몇이 서느냐가 자리를 정한다** — 정예 하나면 가운데 한 칸만 쓰고, 물량형은 다섯 얼굴이
+    // 한 줄로 촘촘히 선다.
+    const shown = preview.shown;
+    const enemyColumns = partyPreviewEnemyColumns(shown.length);
+    const bodyScale = partyPreviewEnemyScale(enemyPresenceBodyScale(preview.presence));
+    const elite = preview.presence === "elite" || preview.presence === "raid";
+    // 다섯이 한 줄에 서면 칸이 좁아 직군·돌파 표식과 이름줄이 옆 칸을 침범한다. 그 줄은 속성과
+    // 이름줄만 남긴다 — 다섯 자매는 속성만 다른 같은 몸이라 속성이 곧 고를 이유다.
+    const crowded = shown.length > PARTY_PREVIEW_COLUMNS.length;
+    shown.forEach((enemy, slot) => this.addPreviewEnemy(enemy, enemyColumns[slot] ?? PREVIEW_COLUMNS[slot], bodyScale, elite, crowded));
+    if (preview.hordeCount !== undefined) {
+      // 대표 얼굴만 세우므로 한꺼번에 몰려오는 수를 따로 말한다. 대치선 판 위, 적 이름줄 아래다.
+      this.add.text(BASE_WIDTH / 2, PARTY_PREVIEW.hordeCountY, t("party.hordeCount", { count: preview.hordeCount }), textStyle({ role: "display", size: 30, color: COLOR.dangerText }))
+        .setOrigin(0.5).setShadow(0, 3, "#05070a", 4, false, true).setDepth(3);
+    }
 
     // **대치선 위에는 두 편의 무게만 남긴다.** 속성 분포는 이미 각 SD의 아이콘이 말하고, "적"과
     // "아군"이라는 이름표는 위아래 자리가 이미 말한다. 대신 어느 쪽이 센지를 한 줄로 가른다.
@@ -408,6 +413,87 @@ export class PartyScene extends Phaser.Scene {
         this.refresh();
       },
     });
+  }
+
+  /** 적 하나. 노드 미리보기와 같은 어휘(속성·직군 왼쪽 위, 돌파 오른쪽 위, 레벨·이름 한 줄)로 선다. */
+  private addPreviewEnemy(enemy: PartyPreviewEnemy, x: number, bodyScale: number, elite: boolean, crowded: boolean): void {
+    const { def } = enemy;
+    // 받침은 SD(-10)보다 뒤에 둬야 발을 덮지 않는다.
+    this.add.ellipse(x, ENEMY_ROW + 4, (crowded ? 150 : 190) * bodyScale, 34, COLOR.void, 0.45).setDepth(-12);
+    void this.standSD(def.id, x, ENEMY_ROW, true, bodyScale);
+    const headY = ENEMY_ROW - PREVIEW_HEIGHT * bodyScale - 6;
+    // 현상수배는 정예마다 **몇 라운드에 서는지**를 머리 위에 적는다 — 아래 같은 열의 아군이 그
+    // 라운드에 나간다. 셋이 아니라 하나가 선 자리(정예)는 머리 위 이름표가 말한다.
+    if (enemy.round !== undefined) {
+      this.add.text(x, headY, t("bounty.formation.round", { round: enemy.round }), textStyle({ role: "display", size: 26, color: COLOR.sortieText }))
+        .setOrigin(0.5, 1).setShadow(0, 3, "#05070a", 4, false, true).setDepth(3);
+    } else if (elite) {
+      addStageEliteMark(this, undefined, x, headY, 28).setDepth(3);
+    }
+
+    const badgeTop = ENEMY_ROW - PREVIEW_HEIGHT + 34;
+    const badgeX = crowded ? x - 66 : x - 104;
+    this.add.existing(new AffinityBadge(this, badgeX, badgeTop, ELEMENT_ICON[def.element], crowded ? 44 : 52, 0.62)).setDepth(3);
+    if (!crowded) {
+      this.add.existing(new AffinityBadge(this, x - 104, badgeTop + 49, ROLE_ICON[def.role], 38, 0.62)).setDepth(3);
+      const marks = this.add.container(0, 0).setDepth(3);
+      addBreakthroughGradeMark(this, marks, x + 104, badgeTop - 4, 42, enemy.breakthrough + 1);
+    }
+
+    // 체력은 적지 않는다 — 붙어 볼지 정하는 데 필요한 것은 개체별 수치가 아니라 아래의
+    // 두 총 전투력이다. 이름줄은 노드 미리보기와 같은 프리팹을 쓴다(레벨 강조색·이름 흰색).
+    addUnitNameplate(this, undefined, x, ENEMY_ROW + 26, enemy.level, def.name, crowded ? 24 : 30, enemy.ferocityLevel ?? 0);
+    // **적을 누르면 상세가 열린다.** 옆에 물음표를 하나 더 세우면 SD와 표식 사이에 눌러야 할
+    // 것이 둘이 되고, 정작 크게 서 있는 SD는 눌러도 아무 일이 없다.
+    this.add.rectangle(x, ENEMY_ROW - PREVIEW_HEIGHT / 2, crowded ? 170 : 210, PREVIEW_HEIGHT + 70, 0xffffff, 0)
+      .setDepth(4)
+      .setInteractive({ useHandCursor: true })
+      .on("pointerup", () => this.enemyInfo.show({ def, level: enemy.level, breakthrough: enemy.breakthrough, ferocityLevel: enemy.ferocityLevel }));
+  }
+
+  /** 머리글. 스토리는 관문 번호와 이름, 던전은 콘텐츠 이름과 단계다. */
+  private title(stage: ReturnType<typeof getBattleStage>): string {
+    const content = this.content;
+    if (content.content === "raid") return t("raid.title");
+    if (content.content === "bounty") return getBountyTier(content.tierId).name;
+    if (content.content === "cake") return `${t("cake.title")}  ${getCakeOperationTier(content.tierId).name}`;
+    return `${stage.id}  ${stage.name}`;
+  }
+
+  /**
+   * 전투 시작이 부르는 입장. **콘텐츠마다 다른 것은 이 한 곳뿐이다.**
+   *
+   * 입장 비용(스테미나·일일 횟수)은 전부 서버가 확정한 뒤에만 전장으로 넘어간다 — 화면이 먼저
+   * 넘어가면 입장이 거절된 판을 싸우게 된다. 레이드는 판이 끝난 뒤 제출에서 도전 횟수를 센다.
+   */
+  private async enterBattle(): Promise<void> {
+    const content = this.content;
+    const requestId = globalThis.crypto?.randomUUID?.() ?? `${content.content}-entry-${Date.now()}`;
+    if (content.content === "raid") {
+      startScene(this, "battle", { mode: "raid" });
+      return;
+    }
+    if (content.content === "bounty") {
+      const admission = await gameApi.enterBounty({ tierId: content.tierId, multiplier: content.multiplier, requestId });
+      startScene(this, "battle", { mode: "bounty", tierId: admission.tierId, round: 0, requestId, multiplier: admission.multiplier } satisfies BountyBattleInputDto);
+      return;
+    }
+    if (content.content === "cake") {
+      const admission = await gameApi.enterCakeOperation({ tierId: content.tierId, multiplier: content.multiplier, requestId });
+      startScene(this, "battle", { mode: "cake", tierId: admission.tierId, multiplier: admission.multiplier, requestId } satisfies CakeBattleInputDto);
+      return;
+    }
+    await gameApi.enterStage({ stageId: session.selectedStageId!, requestId });
+    startScene(this, "battle", { mode: "stage" });
+  }
+
+  /** 뒤로가기는 들어온 입구로 돌아간다. 던전은 고르던 단계·배율을 그대로 되살린다. */
+  private leave(): void {
+    const content = this.content;
+    if (content.content === "raid") startScene(this, "raid");
+    else if (content.content === "bounty") startScene(this, "bounty", { tierId: content.tierId, multiplier: content.multiplier });
+    else if (content.content === "cake") startScene(this, "cakeOperation", { tierId: content.tierId, multiplier: content.multiplier });
+    else startScene(this, "stageMap");
   }
 
   /**

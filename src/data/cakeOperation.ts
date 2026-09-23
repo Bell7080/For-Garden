@@ -13,8 +13,8 @@ import { enemyPresenceFor, type EnemyPresence } from "./enemyPresence";
  *
  * **난이도 손잡이는 둘뿐이다** — 자란 레벨(`enemyLevel`)과 야성 단계(`ferocityLevel`).
  * 스테이지 전용 배율이나 숨은 보정을 만들지 않는다는 규칙 그대로이며, 화면도 `LV.30` 옆에
- * 붉은 `+2`로 그 둘을 갈라 보여 준다. 무리가 몇이고 한 무리가 몇 마리인지(`waves`)는
- * 난이도가 아니라 **이 던전의 성격**이라 단계가 올라도 크게 흔들지 않는다.
+ * 붉은 `+2`로 그 둘을 갈라 보여 준다. 몇 마리가 몰려오는지(`enemyCount`)는 난이도가 아니라
+ * **이 던전의 성격**이라 단계가 올라도 크게 흔들지 않는다.
  */
 
 /** 한 단계의 정적 정의다. 화면도 서버도 이 표 하나만 읽는다. */
@@ -28,12 +28,12 @@ export interface CakeOperationTier {
   /** 야성으로 얹히는 **단계**다. 곱한 값이 아니라 단계를 적는다. */
   ferocityLevel: number;
   /**
-   * 무리마다 몇 마리가 서는가. 배열 길이가 곧 웨이브 수다.
+   * 한 판에 몰려오는 적의 수. **전부 한꺼번에** 맵 끝에서 쏟아져 들어온다.
    *
-   * 한 무리는 다섯을 넘지 못한다 — 난전이 편당 1~5기를 세우는 그 상한이고, 물량은 상한을
-   * 늘리는 대신 무리를 이어 붙여 만든다.
+   * 셋·넷씩 끊어 웨이브로 세우던 때는 "몰려온다"가 아니라 "세 번 나눠 온다"로 읽혔고, 한
+   * 무리를 치우면 잠깐 전장이 비어 물량전의 압박이 끊겼다. 상한은 난전의 `MAX_ENEMY_COUNT`다.
    */
-  waves: readonly number[];
+  enemyCount: number;
   /** 한 판(배율 x1)에 드는 스테미나다. */
   staminaCost: number;
   /** 한 판(배율 x1)을 이겼을 때 받는 치즈케이크다. */
@@ -43,6 +43,11 @@ export interface CakeOperationTier {
 /**
  * 여덟 단계의 사다리.
  *
+ * **적 전부가 한꺼번에 몰려오므로 레벨은 웨이브 시절보다 낮다.** 셋·넷씩 끊어 오던 때의
+ * 레벨을 그대로 두고 한 번에 세웠더니 참조 파티(엘라·마키·스테라)가 제 권장 레벨에서 6단계
+ * 이상을 거의 넘지 못했다. 머릿수는 10에서 15까지만 오른다 — 20을 넘기면 레벨을 아무리
+ * 내려도 수로 밀려 끝나지 않는 판이 된다.
+ *
  * 실효 레벨(레벨 + 야성 단계 × 3)이 한 번도 내려가지 않게 짠다 — 다음 단계가 앞 단계보다
  * 가벼우면 사다리가 아니라 옆길이 된다. 보상은 실효 레벨과 같은 결로 올라가되 **스테미나당
  * 효율이 위로 갈수록 좋아진다**: 그래야 아군을 키울 이유가 생긴다(1단계 3.3 → 8단계 7.5
@@ -50,22 +55,21 @@ export interface CakeOperationTier {
  * 기준으로 잡아, 중간 단계 서너 판이 하루치를 채운다.
  */
 export const CAKE_OPERATION_TIERS: readonly CakeOperationTier[] = [
-  { id: "cake-1", name: "1단계", enemyLevel: 5, ferocityLevel: 0, waves: [3, 3, 4], staminaCost: 6, rewardCheesecake: 20 },
-  { id: "cake-2", name: "2단계", enemyLevel: 10, ferocityLevel: 1, waves: [3, 4, 4], staminaCost: 8, rewardCheesecake: 32 },
-  { id: "cake-3", name: "3단계", enemyLevel: 15, ferocityLevel: 2, waves: [4, 4, 5], staminaCost: 10, rewardCheesecake: 46 },
-  { id: "cake-4", name: "4단계", enemyLevel: 20, ferocityLevel: 3, waves: [4, 5, 5], staminaCost: 12, rewardCheesecake: 62 },
-  { id: "cake-5", name: "5단계", enemyLevel: 26, ferocityLevel: 4, waves: [5, 5, 5], staminaCost: 14, rewardCheesecake: 82 },
-  { id: "cake-6", name: "6단계", enemyLevel: 32, ferocityLevel: 5, waves: [5, 5, 5, 5], staminaCost: 16, rewardCheesecake: 104 },
-  { id: "cake-7", name: "7단계", enemyLevel: 38, ferocityLevel: 6, waves: [5, 5, 5, 5], staminaCost: 18, rewardCheesecake: 128 },
-  { id: "cake-8", name: "8단계", enemyLevel: 45, ferocityLevel: 7, waves: [5, 5, 5, 5, 5], staminaCost: 20, rewardCheesecake: 150 },
+  { id: "cake-1", name: "1단계", enemyLevel: 3, ferocityLevel: 0, enemyCount: 10, staminaCost: 6, rewardCheesecake: 20 },
+  { id: "cake-2", name: "2단계", enemyLevel: 6, ferocityLevel: 1, enemyCount: 10, staminaCost: 8, rewardCheesecake: 32 },
+  { id: "cake-3", name: "3단계", enemyLevel: 8, ferocityLevel: 2, enemyCount: 11, staminaCost: 10, rewardCheesecake: 46 },
+  { id: "cake-4", name: "4단계", enemyLevel: 10, ferocityLevel: 3, enemyCount: 12, staminaCost: 12, rewardCheesecake: 62 },
+  { id: "cake-5", name: "5단계", enemyLevel: 14, ferocityLevel: 4, enemyCount: 13, staminaCost: 14, rewardCheesecake: 82 },
+  { id: "cake-6", name: "6단계", enemyLevel: 16, ferocityLevel: 5, enemyCount: 14, staminaCost: 16, rewardCheesecake: 104 },
+  { id: "cake-7", name: "7단계", enemyLevel: 21, ferocityLevel: 6, enemyCount: 15, staminaCost: 18, rewardCheesecake: 128 },
+  { id: "cake-8", name: "8단계", enemyLevel: 26, ferocityLevel: 7, enemyCount: 15, staminaCost: 20, rewardCheesecake: 150 },
 ];
 
 /**
  * 이 던전에 서는 다섯 자매.
  *
- * **순서가 곧 규칙이다** — 무리는 이 차례를 끊지 않고 이어서 채우므로 다섯짜리 무리에는
- * 자매가 한 명씩 서고, 셋·넷짜리 무리는 다음 무리가 나머지를 이어받는다. 난수를 쓰지 않아
- * 같은 단계는 늘 같은 얼굴 순서로 몰려온다.
+ * **순서가 곧 규칙이다** — 몰려오는 무리는 이 차례를 되풀이해 채우므로 다섯 마리마다 자매가
+ * 한 명씩 선다. 난수를 쓰지 않아 같은 단계는 늘 같은 얼굴 순서로 몰려온다.
  *
  * 다섯이 속성만 다른 같은 몸이라, 이 던전에서 고를 것은 "무엇을 데려갈까"가 아니라 **어느
  * 색에 강한 편성인가**가 된다. 한 종만 세우던 때는 상성이 한 방향으로 고정되어 편성이 한 번
@@ -109,24 +113,19 @@ export function cakeOperationRunCost(tier: CakeOperationTier): DungeonRunCost {
 for (const tier of CAKE_OPERATION_TIERS) registerDataText(tier, "name", `cakeOperation.${tier.id}.name`);
 
 /**
- * 대작전이 서는 무리 유형.
- *
- * **한 화면에 함께 선 수**로 센다 — 무리마다 갈라 두면 한 판 안에서 같은 자매가 둘째 무리에서
- * 갑자기 커지고, 전투는 무리 전체가 한 크기를 쓴다(`SkirmishWaveState.bodyScale`). 그래서
- * 가장 큰 무리를 그 판의 성질로 삼는다.
+ * 대작전이 서는 무리 유형. 한 판의 적 전부가 한 화면에 함께 서므로 그 수가 곧 유형이다.
  */
 export function cakeOperationPresence(tier: CakeOperationTier): EnemyPresence {
-  return enemyPresenceFor(Math.max(...tier.waves));
+  return enemyPresenceFor(tier.enemyCount);
 }
 
 /**
- * 그 단계의 무리 목록. 첫 무리가 전장에 서고 나머지는 난전의 웨이브 대기열이 된다.
+ * 그 단계에 몰려오는 적 전부. 난전은 이 목록을 **한꺼번에** 맵 끝에 세운다.
  *
- * 개체는 한 종뿐이라 무리마다 같은 몸을 세우며, **자란 몫은 레벨과 야성 단계뿐이다** —
- * 스테이지 전용 배율이나 숨은 보정을 만들지 않는다는 규칙 그대로다. 야성 단계는 잡졸
- * 배율(`ferocityBonusLevels`)을 지나 레벨과 같은 성장 공식을 탄다.
+ * 자란 몫은 레벨과 야성 단계뿐이다 — 스테이지 전용 배율이나 숨은 보정을 만들지 않는다는
+ * 규칙 그대로다. 야성 단계는 잡졸 배율(`ferocityBonusLevels`)을 지나 레벨과 같은 성장 공식을 탄다.
  */
-export function cakeOperationWaves(tier: CakeOperationTier): RelicDef[][] {
+export function cakeOperationEnemies(tier: CakeOperationTier): RelicDef[] {
   const level = effectiveEnemyLevel({ level: tier.enemyLevel, ferocityLevel: tier.ferocityLevel });
   // 자매마다 태생 능력치가 같지 않다(공속·이속이 갈린다). 그래서 한 번 키워 돌려쓰지 않고
   // 다섯을 각자 키워 둔 뒤 차례로 세운다.
@@ -134,13 +133,11 @@ export function cakeOperationWaves(tier: CakeOperationTier): RelicDef[][] {
     const base = getRelic(id);
     return { ...base, stats: applyLevelGrowth(base.stats, level, base.rarity) } satisfies RelicDef;
   });
-  let next = 0;
-  // 같은 정의를 여러 몸이 나눠 쓰지 않도록 무리마다 능력치 사본을 세운다.
-  return tier.waves.map((count) => Array.from({ length: count }, () => {
-    const sister = grown[next % grown.length];
-    next += 1;
+  // 같은 정의를 여러 몸이 나눠 쓰지 않도록 개체마다 능력치 사본을 세운다.
+  return Array.from({ length: tier.enemyCount }, (_, index) => {
+    const sister = grown[index % grown.length];
     return { ...sister, stats: { ...sister.stats } };
-  }));
+  });
 }
 
 /** 화면이 `LV.n` 옆에 붉은 `+n`으로 갈라 세울 수 있도록 곱하기 전의 단계를 그대로 돌려준다. */

@@ -27,6 +27,13 @@ export interface ExpeditionBossReplayInput {
   arena: Arena;
   /** 생략하면 원정 폰토스 표를 쓴다. 레이드는 제 표를 넘긴다. */
   balance?: BossBattleBalance;
+  /**
+   * 출혈 같은 최대 체력 비례 피해가 재는 체력. 생략하면 보스 정의의 체력이다.
+   *
+   * 재현은 보스 체력을 한계값으로 바꿔 세우므로 **반드시 정의 쪽 값을 넘겨야 한다** — 그러지
+   * 않으면 출혈 한 틱이 한계값의 2%가 되어 판 전체가 비정상 점수로 거절된다.
+   */
+  percentHpBasis?: number;
 }
 /**
  * 전멸한 정상 종료만 확정하며 totalDamage는 서버가 행동 로그로 재계산한 **대상 경감 전** 기여도다.
@@ -96,7 +103,8 @@ export function resolveExpeditionBossBattle(input: ExpeditionBossReplayInput, ac
   if (initialStates.some(({ currentHp }) => !Number.isFinite(currentHp) || currentHp < 0 || currentHp > 100)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
   const phases = balance.phases.map(({ startsAtMs, attackPerSecond, label }) => ({ startsAt: startsAtMs / 1_000, damagePerSecond: attackPerSecond, label }));
   const state = createSkirmish([...input.allies], [{ ...input.boss, stats: { ...input.boss.stats, hp: Number.MAX_SAFE_INTEGER } }], input.arena, {}, {}, {
-    playerInitialStates: initialStates, augmentEffects: input.augmentEffects, boss: { phases, limitSeconds: balance.maximumDurationMs / 1_000 },
+    playerInitialStates: initialStates, augmentEffects: input.augmentEffects,
+    boss: { phases, limitSeconds: balance.maximumDurationMs / 1_000, percentHpBasis: input.percentHpBasis ?? input.boss.stats.hp },
   });
   // 자동 평타는 제출 로그가 명시적으로 재생하므로 끄고, 폰토스의 AI·폭주·상태 시계만 stepSkirmish로 진행한다.
   for (const fighter of state.fighters) if (fighter.side === "player") fighter.attackCooldown = Number.POSITIVE_INFINITY;

@@ -1,6 +1,5 @@
 /** The battle screen, its chips and the result panel. */
 export const BATTLE_EN = {
-  "battle.wave": "WAVE {wave} / {total}",
   "battle.boss.phaseLine": "{phase}{warning}",
   "battle.boss.tideWarning": " · Tide Warning",
   "battle.boss.limit": " · LIMIT",

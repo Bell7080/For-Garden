@@ -265,6 +265,13 @@ export interface Fighter extends Combatant {
   bonusAp: number;
   /** SkirmishBossState.fighterId와 일치하는 점수전 보스에만 설정되는 불사 경계다. */
   immortal?: boolean;
+  /**
+   * 최대 체력 비례 피해(출혈·뇌진탕)가 비율을 재는 체력. 없으면 최대 체력이다.
+   *
+   * 공유 체력 보스만 갖는다 — 레이드 보스는 판 안의 최대 체력이 시즌 게이지의 단위라
+   * 성장으로 얻은 체력보다 수십 배 크고, 그대로 재면 출혈 2%가 판 전체의 타격보다 컸다.
+   */
+  percentHpBasis?: number;
   /** 기본 공격 실제 적중으로 쌓인 전투 한정 공격 속도다. 저장 모델에는 존재하지 않는다. */
   bonusAttackSpeed: number;
   /**
@@ -475,24 +482,6 @@ export interface SkirmishState {
   initialEvents: SkirmishEvent[];
   /** 보스전에서만 존재하는 누적 피해·생존 시간·단계 상태다. 같은 진행기가 함께 갱신한다. */
   boss?: SkirmishBossState;
-  /** 물량형 던전에서만 존재하는 남은 무리와 지금 몇 번째인가다. */
-  waves?: SkirmishWaveState;
-}
-
-/**
- * 이어 설 무리의 상태.
- *
- * `nextIndex`는 전투원 ID(`enemy-<n>`)를 만드는 자리라 무리를 넘어 이어진다 — 무리마다
- * 0으로 되돌리면 앞 무리의 시체와 새 무리가 같은 ID를 갖고, 성장 스냅샷을 찾는 표
- * (`placedEnemyIndex`)가 엉뚱한 개체를 가리킨다.
- */
-export interface SkirmishWaveState {
-  pending: RelicDef[][];
-  /** 지금 싸우고 있는 무리(1부터). */
-  current: number;
-  total: number;
-  nextIndex: number;
-  bodyScale: number;
 }
 
 /**
@@ -550,18 +539,14 @@ export interface CreateSkirmishOptions {
   enemyBodyScale?: number;
   /** 적 슬롯별 돌파 효과를 스테이지 성장 스냅샷 그대로 전투원에게 전달한다. */
   enemyBreakthroughs?: readonly number[];
-  /** 지정한 적 한 명만 불사이며 아군 전멸만 패배 종료가 되는 보스 규칙을 켠다. */
-  boss?: { phases: readonly SkirmishBossPhase[]; limitSeconds: number; fighterId?: string };
   /**
-   * `enemyDefs` **다음에** 이어 설 무리들. 적이 전멸하면 그 자리에 다음 무리가 서고,
-   * 마지막 무리까지 넘겨야 승리가 된다.
+   * 지정한 적 한 명만 불사이며 아군 전멸만 패배 종료가 되는 보스 규칙을 켠다.
    *
-   * 편당 다섯이라는 상한은 **한 무리의 상한**이지 한 판의 상한이 아니다 — 물량형 던전은
-   * 그 상한을 늘리는 대신 무리를 이어 붙여 "몰려온다"를 만든다. 아군의 체력·궁극 게이지·
-   * 야성은 무리 사이에 **이어진다**. 무리마다 초기화하면 세 판을 따로 도는 것과 같아져
-   * 한 판을 버텨 내는 던전이 되지 못한다.
+   * `percentHpBasis`는 **최대 체력 비례 피해가 재는 체력**이다(`percentHpBasis` 참고). 공유
+   * 체력을 가진 보스는 판 안의 최대 체력이 세기가 아니라 단위라, 그 값으로 비율을 재면 출혈
+   * 하나가 모든 타격을 합친 것보다 커진다. 비우면 그 보스의 최대 체력을 그대로 쓴다.
    */
-  waves?: readonly (readonly RelicDef[])[];
+  boss?: { phases: readonly SkirmishBossPhase[]; limitSeconds: number; fighterId?: string; percentHpBasis?: number };
 }
 
 /** 씬이 모션·피격 숫자·사망 연출을 붙일 수 있도록 이번 프레임에 일어난 일만 모아 돌려준다. */
@@ -686,8 +671,6 @@ export type SkirmishEvent =
   | { kind: "vandalismBurst"; attackerId: string; fighterId: string; amount: number }
   /** 돌진이 실제로 지나간 선분. 씬은 이 두 점 사이에 자국을 그린다. */
   | { kind: "charge"; fighterId: string; from: { x: number; y: number }; to: { x: number; y: number } }
-  /** 다음 무리가 전장에 선 순간. 씬은 이 사건으로만 웨이브 표시를 바꾼다. */
-  | { kind: "waveStart"; wave: number; total: number; fighterIds: readonly string[] }
   | { kind: "finish"; phase: "victory" | "defeat" };
 
 /** 난전의 손맛을 정하는 값. 전부 여기서만 조정한다. */
@@ -1059,14 +1042,44 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
 }
 
 /**
+ * 한 편에 동시에 설 수 있는 적의 상한.
+ *
+ * 아군은 편성 칸이 셋이라 다섯을 넘을 일이 없지만, 물량형 던전(치즈케이크 대작전)은 **한 판의
+ * 적 전부가 한꺼번에** 몰려온다. 무리를 이어 붙이던 때는 한 무리가 다섯에서 끊겨 "몰려온다"가
+ * 아니라 "세 번 나눠 온다"로 읽혔다.
+ */
+export const MAX_ENEMY_COUNT = 25;
+
+/** 한 줄에 서는 적의 수. 다섯을 넘는 무리는 이 폭으로 줄을 나눠 뒤로 쌓는다. */
+const HORDE_ROW = 5;
+/** 무리의 줄 간격. 뒤 줄은 맵 끝 쪽(위)이 아니라 전장 안쪽으로 한 뼘씩 들어선다. */
+const HORDE_ROW_GAP = 64;
+
+/**
  * 시작 진형.
  *
  * 아군은 아래쪽 끝에서 출발한다. 맵을 넓게 쓰면서 위쪽 적진까지 달려 올라가는 그림을 만들기
  * 위해서다. 같은 팀 셋도 한 줄로 세우지 않고 앞뒤로 어긋나게 둔다.
+ *
+ * **다섯을 넘는 적은 맵 끝에 여러 줄로 몰려 선다.** 첫 줄이 맵 끝(`arena.top`)에 서고 다음
+ * 줄은 한 뼘씩 안쪽으로 들어서며, 줄마다 반 칸씩 어긋나 빈틈 없이 한 덩어리로 읽힌다. 맵
+ * 끝보다 위로 쌓지 않는 이유는 그 너머가 땅이 아니라 배경의 벽이라 몸이 떠 보이기 때문이다.
  */
 export function spawnSpots(arena: Arena, side: Side, count = 3): { x: number; y: number }[] {
-  if (!Number.isInteger(count) || count < 1 || count > 5) throw new RangeError("팀 인원은 1~5기여야 합니다.");
+  const limit = side === "enemy" ? MAX_ENEMY_COUNT : 5;
+  if (!Number.isInteger(count) || count < 1 || count > limit) throw new RangeError(`팀 인원은 1~${limit}기여야 합니다.`);
   const width = arena.right - arena.left;
+  if (count > HORDE_ROW) {
+    return Array.from({ length: count }, (_, index) => {
+      const row = Math.floor(index / HORDE_ROW);
+      const inRow = Math.min(HORDE_ROW, count - row * HORDE_ROW);
+      const column = index % HORDE_ROW;
+      // 줄마다 반 칸 어긋난다 — 같은 열에 겹쳐 서면 뒤 줄이 앞 줄 몸에 통째로 가린다.
+      const shift = row % 2 === 0 ? 0 : 0.5 / HORDE_ROW;
+      const ratio = inRow === 1 ? 0.5 : Math.min(0.96, 0.06 + (0.84 * column) / (inRow - 1) + shift);
+      return { x: arena.left + width * ratio, y: arena.top + row * HORDE_ROW_GAP };
+    });
+  }
   // 3기는 기존 좌표를 정확히 보존하고, 나머지는 같은 안전 여백 안에 균등 배치한다.
   const ratios = count === 3 ? [0.08, 0.5, 0.92] : Array.from({ length: count }, (_, index) => count === 1 ? 0.5 : 0.08 + (0.84 * index) / (count - 1));
   const columns = ratios.map((ratio) => arena.left + width * ratio);
@@ -1075,6 +1088,21 @@ export function spawnSpots(arena: Arena, side: Side, count = 3): { x: number; y:
     x,
     y: side === "player" ? arena.bottom + stagger[index] : arena.top - stagger[index],
   }));
+}
+
+/**
+ * 최대 체력 비례 피해가 재는 체력.
+ *
+ * 공유 체력 보스(`Fighter.percentHpBasis`)만 제 기준을 갖고 나머지는 최대 체력이다. 비율 피해를
+ * 만드는 자리가 저마다 `maxHp`를 읽으면 한 곳만 기준을 빠뜨려 그 효과 하나가 보스를 녹인다.
+ */
+export function percentHpBasis(fighter: Pick<Fighter, "maxHp" | "percentHpBasis">): number {
+  return fighter.percentHpBasis ?? fighter.maxHp;
+}
+
+/** 보스를 때린 고정 피해도 점수에 든다 — 체력 줄은 줄었는데 점수가 그대로면 두 수가 갈린다. */
+function scoreBossFixedDamage(state: SkirmishState, target: Fighter, amount: number): void {
+  if (state.boss && target.id === state.boss.fighterId && amount > 0) state.boss.score += amount;
 }
 
 /**
@@ -1131,7 +1159,8 @@ export function createSkirmish(
   playerBreakthroughs: Readonly<Record<string, number>> = {},
   options: CreateSkirmishOptions = {},
 ): SkirmishState {
-  if (playerDefs.length < 1 || playerDefs.length > 5 || enemyDefs.length < 1 || enemyDefs.length > 5) throw new RangeError("난전은 팀별 1~5기를 지원합니다.");
+  if (playerDefs.length < 1 || playerDefs.length > 5) throw new RangeError("아군은 1~5기를 지원합니다.");
+  if (enemyDefs.length < 1 || enemyDefs.length > MAX_ENEMY_COUNT) throw new RangeError(`적은 1~${MAX_ENEMY_COUNT}기를 지원합니다.`);
   if (options.boss && (!options.boss.phases.length || options.boss.limitSeconds <= 0)) throw new RangeError("보스 단계와 리미트는 유효해야 합니다.");
   const playerSpots = spawnSpots(arena, "player", playerDefs.length);
   const enemySpots = spawnSpots(arena, "enemy", enemyDefs.length);
@@ -1147,6 +1176,7 @@ export function createSkirmish(
     const fighter = makeFighter(def, "enemy", i, enemySpots[i].x, enemySpots[i].y, 0, options.enemyBreakthroughs?.[i] ?? 0, options.enemyBodyScale ?? 1);
     // 적 편 전체가 아니라 계약에 지정된 한 개체만 불사 경계를 가진다.
     fighter.immortal = options.boss !== undefined && fighter.id === bossFighterId;
+    if (fighter.immortal && options.boss?.percentHpBasis !== undefined) fighter.percentHpBasis = Math.max(1, options.boss.percentHpBasis);
     return fighter;
   });
   if (options.boss && !enemies.some(({ id }) => id === bossFighterId)) throw new RangeError("보스 전투원 ID는 적 편성에 존재해야 합니다.");
@@ -1165,14 +1195,6 @@ export function createSkirmish(
     augmentEffects: options.augmentEffects ?? [],
     initialEvents: [],
     boss: options.boss ? { fighterId: bossFighterId, score: 0, survivedFor: 0, phaseIndex: 0, limitReached: false, phases: options.boss.phases, limitSeconds: options.boss.limitSeconds, damageRemainder: 0, tideWarning: false } : undefined,
-    // 이어 설 무리가 없으면 상태 자체를 두지 않아 기존 한 판 전투의 종료 판정이 그대로 남는다.
-    waves: options.waves?.length ? {
-      pending: options.waves.map((wave) => [...wave]),
-      current: 1,
-      total: options.waves.length + 1,
-      nextIndex: enemies.length,
-      bodyScale: options.enemyBodyScale ?? 1,
-    } : undefined,
   };
   // 지휘형 은신과 무리 치명타는 시간이 아니라 두 늑대의 생존 조건이 소유한다.
   refreshPackGuard(state);
@@ -1479,8 +1501,9 @@ function applyConcussion(
   // 폭주가 확정 치명타를 얹는다. 판정을 다시 굴리지 않아 날아가는 그림과 수치가 갈리지 않는다.
   const struck = critical || slam !== undefined;
   const percent = struck ? effect.criticalMaxHpPercent : effect.maxHpPercent;
-  const amount = Math.max(1, Math.round(target.maxHp * percent / 100));
+  const amount = Math.max(1, Math.round(percentHpBasis(target) * percent / 100));
   const dealt = applyDamage(target, amount, events, state);
+  scoreBossFixedDamage(state, target, dealt);
   events.push({ kind: "concussion", fighterId: target.id, amount: dealt, critical: struck, sourceId });
   // 울린 만큼을 때린 쪽이 되받아 두른다. 개체 이름이 아니라 패시브의 필드 하나만 읽으므로
   // 다른 개체가 같은 패시브를 갖게 되어도 분기가 늘지 않는다.
@@ -4227,9 +4250,10 @@ function tickBleed(fighter: Fighter, dt: number, state: SkirmishState, events: S
   bleed.remaining -= dt;
   bleed.tickIn -= dt;
   while (bleed.tickIn <= 0 && isFighterAlive(fighter)) {
-    const amount = receivedDamage(fighter, Math.max(1, Math.round((fighter.maxHp * bleed.percent) / 100)));
+    const amount = receivedDamage(fighter, Math.max(1, Math.round((percentHpBasis(fighter) * bleed.percent) / 100)));
     const hpBefore = fighter.hp;
     applyDamage(fighter, amount, events, state);
+    scoreBossFixedDamage(state, fighter, amount);
     // 출혈은 건 공격자가 명확할 때만 고정 피해의 실제 HP 손실을 공격 기여도로 인정한다.
     if (bleed.sourceId) addContribution(state.contributions, bleed.sourceId, "attack", hpBefore - fighter.hp, "attackPower");
     events.push({ kind: "bleed", fighterId: fighter.id, amount, started: false });
@@ -5663,35 +5687,6 @@ function chargeWolfInto(state: SkirmishState, wolf: Fighter, target: Fighter, ev
   if (!isFighterAlive(target)) { clearDefeatedStatuses(target); events.push({ kind: "death", fighterId: target.id, sourceId: wolf.id }); }
 }
 
-/**
- * 다음 무리를 전장에 세운다. 세울 무리가 없으면 `false`를 돌려 승리로 넘긴다.
- *
- * 쓰러진 앞 무리는 배열에서 지우지 않는다 — 씬이 사망 연출을 재생하는 중이고, 기여도 장부도
- * 그 줄을 그대로 들고 있어야 결과 화면이 "누가 무엇을 했나"를 잃지 않는다.
- */
-function spawnNextWave(state: SkirmishState, events: SkirmishEvent[]): boolean {
-  const waves = state.waves;
-  const next = waves?.pending.shift();
-  if (!waves || !next || next.length === 0) return false;
-  const spots = spawnSpots(state.arena, "enemy", next.length);
-  const spawned = next.map((def, offset) => makeFighter(def, "enemy", waves.nextIndex + offset, spots[offset].x, spots[offset].y, 0, 0, waves.bodyScale));
-  waves.nextIndex += spawned.length;
-  waves.current += 1;
-  for (const fighter of spawned) state.contributions[fighter.id] = { attack: { attackPower: 0, abilityPower: 0 }, defense: { armor: 0, resistance: 0, shield: 0 }, healing: 0 };
-  state.fighters.push(...spawned, ...createPackFighters(spawned, state.augmentEffects));
-  // 새 무리도 첫 무리와 같은 시작 단계를 지난다 — 하나라도 빠뜨리면 그 무리만 듀오·무리 사냥이
-  // 열리지 않아 같은 개체가 웨이브에 따라 다르게 싸운다.
-  refreshPackGuard(state);
-  linkDuos(state);
-  assignPackScoutTarget(state);
-  triggerPackHunt(state, "enemy");
-  events.push(...state.fighters.filter((wolf) => wolf.summonOwnerId !== null && spawned.some(({ id }) => id === wolf.summonOwnerId)).map((wolf): SkirmishEvent => ({
-    kind: "packSummon", fighterId: wolf.id, ownerFighterId: wolf.summonOwnerId ?? "", x: wolf.x, y: wolf.y,
-  })));
-  events.push({ kind: "waveStart", wave: waves.current, total: waves.total, fighterIds: spawned.map(({ id }) => id) });
-  return true;
-}
-
 function settle(state: SkirmishState, events: SkirmishEvent[]): void {
   if (state.phase !== "fight") return;
   const playersLeft = aliveFighters(state, "player").filter(isPartyFighter).length;
@@ -5699,12 +5694,8 @@ function settle(state: SkirmishState, events: SkirmishEvent[]): void {
   // 불사 보스는 적 HP와 무관하게 아군 전멸만 정상 종료로 인정한다.
   if (state.boss && playersLeft === 0) state.phase = "defeat";
   else if (state.boss) return;
-  // 아군이 먼저 전멸하면 남은 무리와 무관하게 패배다 — 무리를 다 넘겼는지는 그 뒤에 묻는다.
   else if (playersLeft === 0) state.phase = "defeat";
-  else if (enemiesLeft === 0) {
-    if (spawnNextWave(state, events)) return;
-    state.phase = "victory";
-  }
+  else if (enemiesLeft === 0) state.phase = "victory";
   else return;
   // 종료 스냅샷에 전투 전용 시약/저항 감소가 남아 다음 난전이나 결과 화면의 유효 수치로 새지 않게 한다.
   for (const fighter of state.fighters) {

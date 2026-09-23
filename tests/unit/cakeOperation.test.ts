@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { CAKE_OPERATION_ENEMY_IDS, CAKE_OPERATION_TIERS, cakeOperationRunCost, cakeOperationTierIndex, cakeOperationWaves, getCakeOperationTier, isCakeTierUnlocked } from "../../src/data/cakeOperation";
+import { CAKE_OPERATION_ENEMY_IDS, CAKE_OPERATION_TIERS, cakeOperationRunCost, cakeOperationTierIndex, cakeOperationEnemies, cakeOperationPresence, getCakeOperationTier, isCakeTierUnlocked } from "../../src/data/cakeOperation";
 import { getRelic } from "../../src/data/relics";
 import { ferocityBonusLevels } from "../../src/core/types";
 import { applyLevelGrowth } from "../../src/core/relicProgression";
+import { MAX_ENEMY_COUNT } from "../../src/core/skirmish";
 
 describe("치즈케이크 대작전 단계 표", () => {
   it("실효 레벨과 보상이 한 번도 내려가지 않는다", () => {
@@ -19,14 +20,17 @@ describe("치즈케이크 대작전 단계 표", () => {
     for (let index = 1; index < rate.length; index += 1) expect(rate[index]).toBeGreaterThan(rate[index - 1]);
   });
 
-  /** 한 무리는 난전 상한인 다섯을 넘지 못한다 — 물량은 무리를 이어 붙여 만든다. */
-  it("한 무리는 다섯을 넘지 않고 모든 단계가 여러 무리를 갖는다", () => {
+  /** 한 판의 적 전부가 한꺼번에 몰려온다 — 셋·넷씩 끊어 오는 웨이브가 아니라 물량전이다. */
+  it("모든 단계가 열 마리 이상을 한꺼번에 세우고 난전 상한을 넘지 않는다", () => {
     for (const tier of CAKE_OPERATION_TIERS) {
-      expect(tier.waves.length, tier.id).toBeGreaterThan(1);
-      for (const count of tier.waves) {
-        expect(count, tier.id).toBeGreaterThan(0);
-        expect(count, tier.id).toBeLessThanOrEqual(5);
-      }
+      expect(tier.enemyCount, tier.id).toBeGreaterThanOrEqual(10);
+      expect(tier.enemyCount, tier.id).toBeLessThanOrEqual(MAX_ENEMY_COUNT);
+      expect(cakeOperationEnemies(tier), tier.id).toHaveLength(tier.enemyCount);
+      expect(cakeOperationPresence(tier), tier.id).toBe("swarm");
+    }
+    // 위로 갈수록 적도 줄지 않는다 — 머릿수가 줄어드는 단계는 사다리가 아니라 옆길이다.
+    for (let index = 1; index < CAKE_OPERATION_TIERS.length; index += 1) {
+      expect(CAKE_OPERATION_TIERS[index].enemyCount).toBeGreaterThanOrEqual(CAKE_OPERATION_TIERS[index - 1].enemyCount);
     }
   });
 
@@ -40,31 +44,28 @@ describe("치즈케이크 대작전 단계 표", () => {
     expect(() => getCakeOperationTier("없는-단계")).toThrow();
   });
 
-  it("무리는 레벨과 야성 단계만으로 자라고 무리마다 사본을 세운다", () => {
+  it("무리는 레벨과 야성 단계만으로 자라고 개체마다 사본을 세운다", () => {
     const tier = getCakeOperationTier("cake-6");
-    const waves = cakeOperationWaves(tier);
-    expect(waves.map((wave) => wave.length)).toEqual([...tier.waves]);
+    const enemies = cakeOperationEnemies(tier);
     const base = getRelic(CAKE_OPERATION_ENEMY_IDS[0]);
     const expected = applyLevelGrowth(base.stats, tier.enemyLevel + ferocityBonusLevels(tier.ferocityLevel), base.rarity);
-    expect(waves[0][0].stats).toEqual(expected);
+    expect(enemies[0].stats).toEqual(expected);
     // 같은 몸을 여러 전투원이 나눠 쓰면 한쪽의 피해가 다른 쪽에 묻는다.
-    expect(waves[0][0].stats).not.toBe(waves[0][1].stats);
-    expect(waves[0][0].stats).not.toBe(waves[1][0].stats);
+    expect(enemies[0].stats).not.toBe(enemies[1].stats);
+    expect(enemies[0].stats).not.toBe(enemies[5].stats);
   });
 
-  it("다섯 자매를 차례로 세우고 다음 무리가 그 차례를 이어받는다", () => {
+  it("다섯 자매를 차례로 되풀이해 세운다", () => {
     /*
      * 한 종만 세우면 상성이 한 방향으로 고정되어 편성이 한 번 정해지면 다시 볼 이유가 없다.
-     * 차례를 무리마다 되감지 않는 이유는, 셋짜리 무리만 이어지는 단계에서 늘 같은 세 자매만
-     * 나오게 되기 때문이다.
      */
-    const waves = cakeOperationWaves(getCakeOperationTier("cake-1"));
-    const order = waves.flat().map(({ id }) => id);
+    const enemies = cakeOperationEnemies(getCakeOperationTier("cake-1"));
+    const order = enemies.map(({ id }) => id);
     expect(order.slice(0, 5)).toEqual([...CAKE_OPERATION_ENEMY_IDS]);
     // 다섯이 한 바퀴를 돌면 처음으로 돌아온다.
     expect(order[5]).toBe(CAKE_OPERATION_ENEMY_IDS[0]);
     // 한 단계 안에서 다섯 속성이 모두 나온다 — 그것이 이 던전이 편성을 묻는 방법이다.
-    expect(new Set(waves.flat().map(({ element }) => element)).size).toBe(5);
+    expect(new Set(enemies.map(({ element }) => element)).size).toBe(5);
   });
 
   it("한 판의 값은 배율을 먹이기 전의 값이다", () => {

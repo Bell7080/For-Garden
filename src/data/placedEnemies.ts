@@ -30,7 +30,7 @@ export function placedEnemyIndex(
   stage: BattleStageDef,
   enemyDefs: readonly RelicDef[],
 ): Map<string, PlacedEnemy> {
-  // 대작전은 무리를 이어 붙여도 `enemy-<n>`이 이어지므로 **펼친 목록 전체**가 이 표에 든다.
+  // 대작전은 한 판의 적 전부가 한꺼번에 서므로 목록 전체가 `enemy-<n>` 순서 그대로 이 표에 든다.
   // 한 단계가 한 레벨·한 야성 단계를 쓰므로 자리마다 다른 성장이 없다.
   if (input.mode === "cake") {
     const tier = getCakeOperationTier(input.tierId);

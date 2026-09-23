@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { RAID_BOSS_BALANCE, RAID_BOSS_HP_SCALE, RAID_CONTRIBUTION_REWARD_STAGES, RAID_DAILY_ATTEMPTS, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP } from "../../src/data/raid";
-import { mockRaidContributions, raidBossDef, raidContributionBoard, raidEarnedContributionStageIds, raidNextContributionStage, raidSeasonElapsedDays, raidSeasonKey, raidSeasonProgress } from "../../src/core/raid";
+import { mockRaidContributions, raidBossDef, raidBossPercentHpBasis, raidContributionBoard, raidEarnedContributionStageIds, raidNextContributionStage, raidSeasonElapsedDays, raidSeasonKey, raidSeasonProgress } from "../../src/core/raid";
 import { getRelic, PLAYABLE_RELICS, RELICS } from "../../src/data/relics";
 import { effectiveEnemyLevel } from "../../src/core/types";
 import { ENEMY_PRESENCE } from "../../src/data/enemyPresence";
-import { applyLevelGrowth } from "../../src/core/relicProgression";
+import { applyBreakthrough, applyLevelGrowth } from "../../src/core/relicProgression";
 import { RAID_ACTIONS, RAID_BOARD, RAID_HP_BAR, raidBoardViewport, raidSortieBackGap } from "../../src/ui/raidLayout";
 import { RANKING_LIST } from "../../src/ui/expeditionRankingLayout";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
@@ -172,6 +172,18 @@ describe("레이드 보스", () => {
     // 한 판이 판 안의 보스를 눕히지는 못하되 눈에 보이게는 밀어야 한다.
     expect(RAID_BOSS_HP_SCALE).toBeGreaterThan(1);
     expect(boss.stats.hp).toBeGreaterThan(RAID_CONTRIBUTION_REWARD_STAGES[0].threshold / RAID_DAILY_ATTEMPTS);
+  });
+
+  it("의 비율 피해는 시즌 단위가 아니라 성장 체력에서 잰다", () => {
+    /*
+     * 판 안의 몸은 시즌 게이지의 단위라 성장 체력보다 훨씬 크다. 그 값으로 출혈을 재던 때는
+     * 출혈 한 번이 판 전체의 타격보다 컸다 — 출혈이 없는 편성은 줄을 거의 움직이지 못했다.
+     */
+    const base = getRelic(RAID_SEASON_BOSS.relicId);
+    const basis = raidBossPercentHpBasis(base);
+    const level = RAID_SEASON_BOSS.level + RAID_SEASON_BOSS.ferocityLevel * 5;
+    expect(basis).toBe(Math.round(applyBreakthrough(applyLevelGrowth(base.stats, level, base.rarity), RAID_SEASON_BOSS.breakthrough).hp));
+    expect(basis).toBeLessThan(raidBossDef(base).stats.hp);
   });
 
   it("는 일반 적보다 훨씬 크고, 걸음은 제 태생치가 갖는다", () => {

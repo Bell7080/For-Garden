@@ -11,12 +11,9 @@ function scene(page: Page): Promise<string | undefined> {
 }
 
 /**
- * 레이드는 **시즌 판 → 편성 → 전투** 순서다.
- *
- * 두 걸음이 같은 씬 이름을 쓰므로 어느 걸음인지는 `raidStage`로 가른다 — 좌표만 보고
- * 기다리면 아직 시즌 판인데 편성을 캡처하는 일이 조용히 지나간다.
+ * 레이드는 **시즌 판 → 편성 → 전투** 순서다. 편성은 스토리와 같은 편성 화면(`party`)이 맡는다.
  */
-test("레이드는 시즌 판을 먼저 세우고 출격이 편성을 연다", async ({ page }) => {
+test("레이드는 시즌 판을 먼저 세우고 출격이 공용 편성 화면을 연다", async ({ page }) => {
   await startAfterOpening(page);
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => scene(page)).toBe("lobby");
@@ -31,14 +28,14 @@ test("레이드는 시즌 판을 먼저 세우고 출격이 편성을 연다", a
   await page.waitForTimeout(4_000);
   await captureGame(page, `test-results/${test.info().project.name}-raid-season.png`);
 
-  // 출격은 전투가 아니라 편성 단계를 연다 — 하루 세 번뿐인 도전이라 누구를 데려갈지 먼저 고른다.
+  // 출격은 전투가 아니라 편성 화면을 연다 — 하루 세 번뿐인 도전이라 누구를 데려갈지 먼저 고른다.
   await tap(page, RAID_ACTIONS.sortie.centerX, RAID_ACTIONS.y);
-  await waitForDebugState(page, () => window.__PF_DEBUG?.raidStage, "preparation", { timeout: 20_000 });
-  expect(await scene(page)).toBe("raid");
+  await expect.poll(() => scene(page), { timeout: 20_000 }).toBe("party");
   await page.waitForTimeout(1_500);
   await captureGame(page, `test-results/${test.info().project.name}-raid-party.png`);
 
   // 편성에서 나가는 길은 로비가 아니라 시즌 판이다.
   await tap(page, 960, BASE_HEIGHT - 120);
+  await expect.poll(() => scene(page), { timeout: 20_000 }).toBe("raid");
   await waitForDebugState(page, () => window.__PF_DEBUG?.raidStage, "season", { timeout: 20_000 });
 });

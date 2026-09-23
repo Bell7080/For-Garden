@@ -3,7 +3,7 @@ import { BANNERS } from "../data/banners";
 import { RELICS } from "../data/relics";
 import { AD_REWARD_SLOTS, findAdRewardSlot, type AdReward } from "../data/adRewards";
 import { consumeRestorationEntry, normalizeDailyContent } from "../core/dailyContent";
-import { bountyEntriesRemaining, consumeBountyEntry, isBountyTierUnlocked, markBountyTierCleared, normalizeBounty } from "../core/bountyRun";
+import { bountyEntriesRemaining, bountyRunCost, consumeBountyEntry, isBountyTierUnlocked, markBountyTierCleared, normalizeBounty } from "../core/bountyRun";
 import { BOUNTY, getBountyTier } from "../data/bounty";
 import { BREAKTHROUGH_CAP, breakthroughFragmentCost, canBreakThrough, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap, BREAKTHROUGH_GRADE_CAP, breakthroughGrade } from "../core/relicProgression";
 import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond";
@@ -17,7 +17,7 @@ import { interactionDurationMs, interactionRewardWeights, isInteractionCityUnloc
 import type {
   PurchaseRelicSkinRequest, PurchaseRelicSkinResponse, ClaimInteractionDispatchRequest, ClaimInteractionDispatchResponse, InteractionCitiesResponse, InteractionDispatchResponse, StartInteractionDispatchRequest } from "./contracts";
 import { ProfileModifierManager } from "../managers/ProfileModifierManager";
-import { GameApiError, persistenceFailed, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type EnterBountyRequest, type EnterBountyResponse, type CompleteBountyRequest, type CompleteBountyResponse, type BountyStatusResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse, type RechargeStaminaRequest, type RechargeStaminaResponse } from "./contracts";
+import { GameApiError, persistenceFailed, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type EnterBountyRequest, type EnterBountyResponse, type CompleteBountyRequest, type CompleteBountyResponse, type SweepBountyResponse, type BountyStatusResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse, type RechargeStaminaRequest, type RechargeStaminaResponse } from "./contracts";
 import type { ProductDefinition } from "../data/shopCatalog";
 import { PRODUCTS } from "../data/shopCatalog";
 import type { ProductListResponse, PurchaseProductRequest, PurchaseProductResponse } from "./contracts";
@@ -39,7 +39,8 @@ import { archaeologySiteAvailability } from "../core/archaeologyMap";
 import type { AbandonStrataRunRequest, ArchaeologyStateResponse, DigStrataTileRequest, DigStrataTileResponse, GrantRuneTraitRequest, GrantRuneTraitResponse, RerollRuneTraitRequest, RerollRuneTraitResponse, ResolveRuneTraitRerollRequest, ResolveRuneTraitRerollResponse, StartStrataRunRequest, UpgradeRuneTraitRequest, UpgradeRuneTraitResponse } from "./contracts";
 import { findItem } from "../data/items";
 import { RAID_BOSS_BALANCE, RAID_CONTRIBUTION_REWARD_STAGES, RAID_DAILY_ATTEMPTS, RAID_DEFEAT_REWARD, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP } from "../data/raid";
-import { mockRaidContributions, raidBossDef, raidContributionBoard, raidEarnedContributionStageIds, raidSeasonElapsedDays, raidSeasonKey, raidSeasonProgress } from "../core/raid";
+import { mockRaidContributions, raidBossDef, raidBossPercentHpBasis, raidContributionBoard, raidEarnedContributionStageIds, raidSeasonElapsedDays, raidSeasonKey, raidSeasonProgress } from "../core/raid";
+import { battleArena } from "../core/battleArena";
 import { staminaCurrencyRecharge } from "../data/staminaRecharge";
 import { settleStamina, staminaMaxForPlayer, staminaTiming } from "../core/stamina";
 import { InventoryManager } from "../managers/InventoryManager";
@@ -144,6 +145,7 @@ export class FakeServer implements GameApi {
   private readonly pendingStageAdmissions = new Map<string, Set<string>>();
   /** 현상수배 입장 재전송이 스테미나를 두 번 깎지 않게 하는 서버 영수증 표다. */
   private readonly bountyAdmissionResults = new Map<string, EnterBountyResponse>();
+  private readonly bountySweepResults = new Map<string, SweepBountyResponse>();
   /** 입장한 판의 등급. 정산이 영수증 없이 보상을 만들지 못하게 한다. */
   private readonly pendingBountyRuns = new Map<string, string>();
 
@@ -443,8 +445,9 @@ export class FakeServer implements GameApi {
       // 성장은 화면과 **같은 함수**를 지난다. 서버만 따로 계산하면 보여 준 레벨과 갈린다.
       const boss = raidBossDef(base);
       result = resolveExpeditionBossBattle({
-        allies, boss, balance: RAID_BOSS_BALANCE,
-        arena: { left: 130, right: 950, top: 600, bottom: 1360 },
+        allies, boss, balance: RAID_BOSS_BALANCE, percentHpBasis: raidBossPercentHpBasis(base),
+        // 전장은 화면과 **같은 표**를 읽는다 — 자리가 다르면 사거리·표적이 갈려 재현이 어긋난다.
+        arena: battleArena("raid"),
       }, request.actions);
       if (result.totalDamage > RAID_BOSS_BALANCE.maximumAcceptedScore) throw new Error("ABNORMAL_SCORE");
     } catch (error) {
@@ -1055,7 +1058,7 @@ export class FakeServer implements GameApi {
   }
 
   /** 지갑 상한을 넘기지 않고 지급하며, 실제로 늘어난 몫만 돌려준다. */
-  private grantCakeRewards(wallet: Session["wallet"], rewards: Record<string, number>): Partial<Record<keyof Session["wallet"], number>> {
+  private grantDungeonRewards(wallet: Session["wallet"], rewards: Record<string, number>): Partial<Record<keyof Session["wallet"], number>> {
     const granted: Partial<Record<keyof Session["wallet"], number>> = {};
     for (const [currency, amount] of Object.entries(rewards)) {
       const key = currency as keyof Session["wallet"];
@@ -1106,7 +1109,7 @@ export class FakeServer implements GameApi {
     const multiplier = normalizeMultiplier(admission?.multiplier ?? request.multiplier);
     const settlement = applyDungeonMultiplier(cakeOperationRunCost(tier), multiplier);
     const nextWallet = { ...this.state.wallet };
-    const granted = request.victory ? this.grantCakeRewards(nextWallet, settlement.rewards) : {};
+    const granted = request.victory ? this.grantDungeonRewards(nextWallet, settlement.rewards) : {};
     const index = cakeOperationTierIndex(tier.id);
     const unlockedNextTier = request.victory && index > this.state.cakeOperation.clearedIndex;
     const nextCake = unlockedNextTier ? { clearedIndex: index } : { ...this.state.cakeOperation };
@@ -1141,7 +1144,7 @@ export class FakeServer implements GameApi {
     // 해금은 "직전 단계까지 이겼나"이고 소탕은 "이 단계를 이겼나"다. 한 칸 차이라 따로 묻는다.
     if (cakeOperationTierIndex(run.tier.id) > this.state.cakeOperation.clearedIndex) throw new GameApiError("CAKE_TIER_LOCKED", "아직 한 번도 이기지 않은 단계는 소탕할 수 없습니다.");
     const nextWallet = { ...this.state.wallet, stamina: this.state.wallet.stamina - run.staminaCost };
-    const granted = this.grantCakeRewards(nextWallet, run.rewards);
+    const granted = this.grantDungeonRewards(nextWallet, run.rewards);
     const nextMissions = applyMissionEvent(this.state.missions, { type: "battle_completed", victory: true }, now);
     this.persist({ ...this.state, wallet: nextWallet, missions: nextMissions });
     this.state.wallet = nextWallet; this.state.missions = nextMissions;
@@ -1198,29 +1201,70 @@ export class FakeServer implements GameApi {
    * 스테미나와 일일 횟수는 **여기서만** 나간다. 라운드마다 깎으면 2라운드에서 진 사람이 1.5판
    * 값을 치른 것이 되고, 화면이 그 차이를 설명할 방법이 없다.
    */
+  /**
+   * 입장과 소탕이 함께 지나는 검증. 해금·배율·입장 횟수·스테미나를 **한 곳에서** 확인한다.
+   *
+   * 대작전의 `assertCakeRun`과 같은 모양이다 — 두 던전이 같은 단축 규칙을 쓰므로 거절도 같은
+   * 순서로 선다. 통과하면 차감 뒤의 현상수배 상태까지 돌려주어 호출부가 다시 계산하지 않게 한다.
+   */
+  private assertBountyRun(request: EnterBountyRequest, now: Date) {
+    if (!request.requestId) throw new GameApiError("INVALID_STATE", "입장 요청 ID가 필요합니다.");
+    let tier; try { tier = getBountyTier(request.tierId); } catch { throw new GameApiError("BOUNTY_TIER_NOT_FOUND", "존재하지 않는 현상수배 등급입니다."); }
+    const normalized = normalizeBounty(this.state.bounty, now);
+    // 해금은 화면 표시가 아니라 서버가 지키는 값이다 — 직접 진입도 같은 경계에서 막힌다.
+    if (!isBountyTierUnlocked(tier, normalized.clearedTierIds)) throw new GameApiError("BOUNTY_TIER_LOCKED", "아직 열리지 않은 현상수배 등급입니다.");
+    // 표에 없는 배율은 x1로 좁힌다 — 임의의 수를 그대로 곱하면 한 번의 요청이 상한까지 턴다.
+    const multiplier = normalizeMultiplier(request.multiplier);
+    if (!isMultiplierUnlocked(multiplier, this.hasAdFreeMembership(now))) throw new GameApiError("BOUNTY_MULTIPLIER_LOCKED", "광고 제거 멤버십이 필요한 배율입니다.");
+    let nextBounty;
+    try { nextBounty = consumeBountyEntry(normalized, now, multiplier); }
+    catch { throw new GameApiError("BOUNTY_DAILY_LIMIT", "오늘의 현상수배 입장 횟수를 모두 사용했습니다."); }
+    const settlement = applyDungeonMultiplier(bountyRunCost(tier), multiplier);
+    this.settleStaminaNow(now);
+    if (this.state.wallet.stamina < settlement.staminaCost) throw new GameApiError("INSUFFICIENT_STAMINA", "스테미나가 부족합니다.");
+    return { tier, multiplier, nextBounty, staminaCost: settlement.staminaCost, rewards: settlement.rewards };
+  }
+
   async enterBounty(request: EnterBountyRequest): Promise<EnterBountyResponse> {
     await this.delay();
     const cached = this.bountyAdmissionResults.get(request.requestId);
     if (cached) return structuredClone(cached);
-    if (!request.requestId) throw new GameApiError("INVALID_STATE", "입장 요청 ID가 필요합니다.");
-    let tier; try { tier = getBountyTier(request.tierId); } catch { throw new GameApiError("BOUNTY_TIER_NOT_FOUND", "존재하지 않는 현상수배 등급입니다."); }
     const now = this.now();
-    const normalized = normalizeBounty(this.state.bounty, now);
-    // 해금은 화면 표시가 아니라 서버가 지키는 값이다 — 직접 진입도 같은 경계에서 막힌다.
-    if (!isBountyTierUnlocked(tier, normalized.clearedTierIds)) throw new GameApiError("BOUNTY_TIER_LOCKED", "아직 열리지 않은 현상수배 등급입니다.");
-    let nextBounty;
-    try { nextBounty = consumeBountyEntry(normalized, now); }
-    catch { throw new GameApiError("BOUNTY_DAILY_LIMIT", "오늘의 현상수배 입장 횟수를 모두 사용했습니다."); }
-    this.settleStaminaNow();
-    const cost = BOUNTY.staminaCost;
-    if (this.state.wallet.stamina < cost) throw new GameApiError("INSUFFICIENT_STAMINA", "스테미나가 부족합니다.");
-    const nextWallet = { ...this.state.wallet, stamina: this.state.wallet.stamina - cost };
+    const run = this.assertBountyRun(request, now);
+    const nextWallet = { ...this.state.wallet, stamina: this.state.wallet.stamina - run.staminaCost };
     // 저장이 성공한 뒤에만 공유 참조를 바꿔, 실패해도 지갑이 호출 전 값으로 남게 한다.
-    this.persist({ ...this.state, wallet: nextWallet, bounty: nextBounty });
-    this.state.wallet = nextWallet; this.state.bounty = nextBounty;
-    this.pendingBountyRuns.set(request.requestId, tier.id);
-    const response = { ...this.snapshot(), tierId: tier.id, requestId: request.requestId, staminaSpent: cost, entriesRemaining: bountyEntriesRemaining(nextBounty, now), refundPolicy: "no-refund-after-admission" as const };
+    this.persist({ ...this.state, wallet: nextWallet, bounty: run.nextBounty });
+    this.state.wallet = nextWallet; this.state.bounty = run.nextBounty;
+    this.pendingBountyRuns.set(request.requestId, run.tier.id);
+    const response = {
+      ...this.snapshot(), tierId: run.tier.id, requestId: request.requestId, multiplier: run.multiplier, staminaSpent: run.staminaCost,
+      entriesRemaining: bountyEntriesRemaining(run.nextBounty, now), refundPolicy: "no-refund-after-admission" as const,
+    };
     this.bountyAdmissionResults.set(request.requestId, structuredClone(response));
+    return response;
+  }
+
+  /**
+   * 소탕. 전투를 건너뛰는 것이지 **이긴 셈 쳐 주는 것이 아니다** — 이미 세 라운드를 모두 이긴
+   * 등급만 통과한다. 입장 횟수는 배율만큼 쓰고, 차감과 지급이 한 처리라 영수증을 만들지 않는다.
+   */
+  async sweepBounty(request: EnterBountyRequest): Promise<SweepBountyResponse> {
+    await this.delay();
+    const cached = this.bountySweepResults.get(request.requestId);
+    if (cached) return structuredClone(cached);
+    const now = this.now();
+    const run = this.assertBountyRun(request, now);
+    if (!run.nextBounty.clearedTierIds.includes(run.tier.id)) throw new GameApiError("BOUNTY_TIER_LOCKED", "아직 한 번도 이기지 않은 등급은 소탕할 수 없습니다.");
+    const nextWallet = { ...this.state.wallet, stamina: this.state.wallet.stamina - run.staminaCost };
+    const granted = this.grantDungeonRewards(nextWallet, run.rewards);
+    const nextMissions = applyMissionEvent(this.state.missions, { type: "battle_completed", victory: true }, now);
+    this.persist({ ...this.state, wallet: nextWallet, bounty: run.nextBounty, missions: nextMissions });
+    this.state.wallet = nextWallet; this.state.bounty = run.nextBounty; this.state.missions = nextMissions;
+    const response: SweepBountyResponse = {
+      ...this.snapshot(), tierId: run.tier.id, multiplier: run.multiplier, staminaSpent: run.staminaCost,
+      entriesRemaining: bountyEntriesRemaining(run.nextBounty, now), granted,
+    };
+    this.bountySweepResults.set(request.requestId, structuredClone(response));
     return response;
   }
 
@@ -1239,14 +1283,17 @@ export class FakeServer implements GameApi {
     const now = this.now();
     const victory = request.victory && request.clearedRounds >= BOUNTY.roundCount;
     const firstClear = victory && !this.state.bounty.clearedTierIds.includes(tier.id);
-    const goldEarned = victory ? tier.rewardGold : 0;
-    const nextWallet = { ...this.state.wallet, gold: this.state.wallet.gold + goldEarned };
+    // 배율은 요청이 아니라 **입장 영수증**에서 읽는다 — 정산 요청만 바꿔 보상을 부풀리지 못한다.
+    const multiplier = normalizeMultiplier(this.bountyAdmissionResults.get(request.requestId)?.multiplier ?? 1);
+    const nextWallet = { ...this.state.wallet };
+    const granted = victory ? this.grantDungeonRewards(nextWallet, applyDungeonMultiplier(bountyRunCost(tier), multiplier).rewards) : {};
+    const goldEarned = granted.gold ?? 0;
     const nextBounty = victory ? markBountyTierCleared(this.state.bounty, tier.id, now) : normalizeBounty(this.state.bounty, now);
     const nextMissions = applyMissionEvent(this.state.missions, { type: "battle_completed", victory }, now);
     this.persist({ ...this.state, wallet: nextWallet, bounty: nextBounty, missions: nextMissions });
     this.state.wallet = nextWallet; this.state.bounty = nextBounty; this.state.missions = nextMissions;
     this.pendingBountyRuns.delete(request.requestId);
-    return { ...this.snapshot(), tierId: tier.id, victory, clearedRounds: request.clearedRounds, goldEarned, firstClear, clearedTierIds: [...nextBounty.clearedTierIds] };
+    return { ...this.snapshot(), tierId: tier.id, victory, clearedRounds: request.clearedRounds, multiplier, goldEarned, firstClear, clearedTierIds: [...nextBounty.clearedTierIds] };
   }
 
   /** 정적 이벤트에 서버가 판정한 상태를 결합해 클라이언트 시계 의존을 없앤다. */

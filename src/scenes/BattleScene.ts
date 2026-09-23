@@ -15,7 +15,6 @@ import {
   renderPose,
   stepSkirmish,
   teamHp,
-  type Arena,
   type Fighter,
   type ActiveCombatBuff,
   type SkirmishEvent,
@@ -61,9 +60,10 @@ import type { MotionPlayback } from "../puppets/assets";
 import { ultimatePresentationFor } from "../data/ultimatePresentations";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { anyPopupOpen, PopupLayer } from "../ui/PopupLayer";
-import { cakeOperationWaves, getCakeOperationTier } from "../data/cakeOperation";
+import { cakeOperationEnemies, cakeOperationPresence, getCakeOperationTier } from "../data/cakeOperation";
+import { battleArena } from "../core/battleArena";
 import { createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, createRaidSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type CakeBattleInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
-import { raidBossDef } from "../core/raid";
+import { raidBossDef, raidBossPercentHpBasis } from "../core/raid";
 import { RAID_SEASON_BOSS } from "../data/raid";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import { expeditionManager, ExpeditionBossSettlementError, ExpeditionBossSettlementFlow } from "../managers/ExpeditionManager";
@@ -72,7 +72,8 @@ import { motionPolicy, type MotionPolicy } from "../core/settings";
 import type { SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse, SubmitRaidDamageResponse } from "../api/contracts";
 import { GameApiError } from "../api/contracts";
 import { currencyRecordToRewardItems } from "../ui/RewardPopup";
-import { BATTLE_CLOCK_LAYOUT, BATTLE_CONTROLS, BATTLE_STATUS_LAYOUT } from "../ui/battleStatusLayout";
+import { BATTLE_CLOCK_LAYOUT, BATTLE_CONTROLS, BATTLE_STATUS_LAYOUT, RAID_BATTLE_HUD } from "../ui/battleStatusLayout";
+import { RAID_HP_BAR_COLOR } from "../ui/raidLayout";
 import { formatBattleClock, isDeathClockRunning } from "../core/battleClock";
 import { UnitStatusChips } from "../ui/UnitStatusChips";
 import { openUnitStatusPopup } from "../ui/UnitStatusPopup";
@@ -109,7 +110,6 @@ import { playSceneEntrance, startScene } from "../ui/screenTransition";
  * 아군은 아래쪽 끝에서 출발해 위쪽 적진까지 달려 올라간다. 아래 프로필 판과 위 정보 글자를
  * 침범하지 않는 선에서 최대한 넓게 잡아 난전이 한 자리에 뭉치지 않게 한다.
  */
-const ARENA: Arena = { left: 130, right: 950, top: 600, bottom: 1360 };
 
 /**
  * 쓰러진 SD가 튕겨 다니는 값.
@@ -320,8 +320,11 @@ export class BattleScene extends Phaser.Scene {
   private bossScoreTarget = 0;
   private bossScoreScale = 1;
   private bossPhaseLabel?: Phaser.GameObjects.Text;
-  /** 지금 몇 번째 무리인가. 물량형 던전에서만 선다. */
-  private waveLabel?: Phaser.GameObjects.Text;
+  /**
+   * 레이드의 시즌 줄. 들어올 때 서버가 확정한 남은 체력에서 이번 판의 점수만큼 매 프레임
+   * 깎아 그린다 — 조회가 도착하기 전에는 세우지 않는다(조회 중을 글로 말하지 않는다).
+   */
+  private raidSeasonHud?: { bar: HoloBar; value: Phaser.GameObjects.Text; remaining: number; total: number; shown: number };
   /** 화면 맨 위에서 쉬지 않고 도는 진행 시간. 전투가 끝나면 그 자리에 멈춘다. */
   private clockLabel?: Phaser.GameObjects.Text;
   /** 데스 카운트가 도는 동안 화면 네 변에서 스며드는 붉은 워시. 한 번 그리고 진하기만 바꾼다. */
@@ -397,23 +400,52 @@ export class BattleScene extends Phaser.Scene {
     this.bossScoreShown = expeditionManager.status().run?.normalNodeScoreTotal ?? 0;
     this.bossScoreTarget = this.bossScoreShown;
     this.bossScoreScale = 1;
-    this.bossScoreLabel = this.add.text(BASE_WIDTH / 2, BATTLE_CLOCK_LAYOUT.headlineY, this.bossScoreShown.toLocaleString(), textStyle({ role: "display", size: 58, color: COLOR.sortieText })).setOrigin(0.5, 0).setDepth(90);
-    this.bossPhaseLabel = this.add.text(42, 140, "", textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setDepth(90);
+    const raid = this.battleInput.mode === "raid";
+    this.bossScoreLabel = this.add.text(BASE_WIDTH / 2, raid ? RAID_BATTLE_HUD.scoreY : BATTLE_CLOCK_LAYOUT.headlineY, this.bossScoreShown.toLocaleString(), textStyle({ role: "display", size: 58, color: COLOR.sortieText })).setOrigin(0.5, 0).setDepth(90);
+    this.bossPhaseLabel = this.add.text(raid ? RAID_BATTLE_HUD.phaseX : 42, raid ? RAID_BATTLE_HUD.phaseY : 140, "", textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setDepth(90);
+    if (raid) {
+      // 시계는 시즌 줄 아래로 내려선다 — 맨 위는 남은 체력의 자리다.
+      this.clockLabel?.setY(RAID_BATTLE_HUD.clockY);
+      void this.buildRaidSeasonHud();
+    }
   }
 
   /**
-   * 지금 몇 번째 무리를 상대하는지 알린다.
+   * 시즌 보스의 남은 체력 줄. **레이드 화면의 줄과 같은 양식**(색·외곽·눈금·그림자)이다.
    *
-   * 남은 무리는 **지금 물러설지 궁극기를 아낄지를 바꾸는 정보**라 화면에 세운다. 대신
-   * 전장 한가운데가 아니라 상단에 작게 두고, 새 무리가 설 때만 한 번 커졌다 제자리로
-   * 돌아와 "바뀌었다"를 크기로 말한다 — 가운데에 크게 띄우면 그 순간의 전장이 가린다.
+   * 줄이 깎이는 몫은 코어의 보스 점수(`SkirmishBossState.score`)다 — 판이 끝나면 서버에 제출되는
+   * 바로 그 값이라, 싸우는 동안 본 줄과 시즌 화면에 돌아가 보는 줄이 같은 자를 쓴다. 판 안의
+   * 보스 체력은 시즌 줄의 400분의 1 몸이라 그것으로 그리면 두 줄이 다른 단위가 된다.
    */
-  private announceWave(wave: number, total: number): void {
-    const text = t("battle.wave", { wave, total });
-    if (!this.waveLabel) this.waveLabel = this.add.text(BASE_WIDTH / 2, BATTLE_CLOCK_LAYOUT.headlineY, text, textStyle({ role: "display", size: 44, color: COLOR.sortieText })).setOrigin(0.5, 0).setDepth(90);
-    else this.waveLabel.setText(text);
-    this.waveLabel.setScale(1);
-    this.tweens.add({ targets: this.waveLabel, scale: 1.24, duration: 140, yoyo: true, ease: "Quad.easeOut" });
+  private async buildRaidSeasonHud(): Promise<void> {
+    let season: Awaited<ReturnType<typeof gameApi.getRaidSeason>>;
+    try { season = await gameApi.getRaidSeason(1); } catch { return; }
+    if (!this.scene.isActive() || this.raidSeasonHud) return;
+    const hud = RAID_BATTLE_HUD;
+    const left = hud.centerX - hud.bar.width / 2;
+    const right = hud.centerX + hud.bar.width / 2;
+    const stroke = (text: Phaser.GameObjects.Text): Phaser.GameObjects.Text => text.setStroke("#000000", 5).setShadow(0, 3, "#000000", 4, false, true).setDepth(hud.depth);
+    stroke(this.add.text(left, hud.labelY, t("raid.boss.remaining"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
+    stroke(this.add.text(right, hud.labelY, getRelic(season.bossRelicId).name, textStyle({ role: "display", size: 28, color: COLOR.ink })).setOrigin(1, 0.5));
+    const bar = new HoloBar(this, hud.centerX, hud.bar.y, hud.bar.width, hud.bar.height, {
+      color: RAID_HP_BAR_COLOR, trackAlpha: 0.82, outline: true, ticks: hud.bar.ticks,
+      shadow: { offsetY: 6, alpha: 0.6 }, glow: { spread: 6, alpha: 0.24 },
+    });
+    bar.objects.forEach((object) => object.setDepth(hud.depth));
+    const value = stroke(this.add.text(left, hud.valueY, "", textStyle({ role: "display", size: 24, color: COLOR.ink })).setOrigin(0, 0.5));
+    this.raidSeasonHud = { bar, value, remaining: season.remainingHp, total: season.totalHp, shown: -1 };
+    this.paintRaidSeasonHud();
+  }
+
+  /** 시즌 줄을 지금 점수만큼 깎아 그린다. 수가 바뀐 프레임에만 글자를 다시 굽는다. */
+  private paintRaidSeasonHud(): void {
+    const hud = this.raidSeasonHud;
+    if (!hud) return;
+    const remaining = Math.max(0, hud.remaining - Math.round(this.state.boss?.score ?? 0));
+    if (remaining === hud.shown) return;
+    hud.shown = remaining;
+    hud.bar.setValue(hud.total > 0 ? remaining / hud.total : 0);
+    hud.value.setText(`${remaining.toLocaleString()} / ${hud.total.toLocaleString()}`);
   }
 
   /** Phaser scene data를 명시 DTO로 받아 일반 스테이지와 원정 결과 경계를 분리한다. */
@@ -441,9 +473,9 @@ export class BattleScene extends Phaser.Scene {
     // UI와 같은 성장 계산기의 스냅샷을 복사해 전투가 룬 수치를 다시 계산하지 않게 한다.
     const players = partyIds.map((id) => ({ ...getRelic(id), stats: relicProgression.getFinalStats(id) }));
     // 원정은 노드 정보창과 같은 정적 편성/레벨 정의를 읽고, 스토리만 스테이지 적을 읽는다.
-    // 대작전은 무리가 여럿이라 **첫 무리만** 전장에 서고 나머지는 난전의 대기열로 넘어간다.
-    const cakeWaves = this.battleInput.mode === "cake" ? cakeOperationWaves(getCakeOperationTier(this.battleInput.tierId)) : undefined;
-    const stageEnemies = cakeWaves ? cakeWaves[0]
+    // 대작전은 한 판의 적 **전부가 한꺼번에** 맵 끝에서 몰려온다.
+    const cakeTier = this.battleInput.mode === "cake" ? getCakeOperationTier(this.battleInput.tierId) : undefined;
+    const stageEnemies = cakeTier ? cakeOperationEnemies(cakeTier)
       : this.battleInput.mode === "expedition"
       ? getExpeditionNodeEnemies(this.battleInput.nodeType, this.battleInput.floor)
       : this.battleInput.mode === "expeditionBoss" ? getExpeditionNodeEnemies("boss", 20)
@@ -454,7 +486,7 @@ export class BattleScene extends Phaser.Scene {
         : getStageEnemies(stage);
     const expeditionConfig = this.battleInput.mode === "expedition" ? createExpeditionSkirmishConfig(this.battleInput, players, stageEnemies)
       : this.battleInput.mode === "expeditionBoss" ? createExpeditionBossSkirmishConfig(this.battleInput, players, stageEnemies)
-        : this.battleInput.mode === "raid" ? createRaidSkirmishConfig(players, stageEnemies[0]) : null;
+        : this.battleInput.mode === "raid" ? createRaidSkirmishConfig(players, stageEnemies[0], raidBossPercentHpBasis(getRelic(RAID_SEASON_BOSS.relicId))) : null;
     // 편성이 낀 룬의 특성은 어느 전투에서나 돈다 — 원정 증강과 **같은 계약**을 쓰므로 두 몫이
     // 한 배열에서 만난다. 장착 목록을 읽는 일은 씬이 하고, 효과로 옮기는 일은 코어가 한다.
     const traitEffects = partyRuneTraitEffects(partyIds.map((id) => ({
@@ -462,7 +494,7 @@ export class BattleScene extends Phaser.Scene {
       runes: relicProgression.getProgress(id).heartGemSlots
         .flatMap((instanceId) => instanceId === null ? [] : session.runeInventory.filter((rune) => rune.instanceId === instanceId)),
     })));
-    this.state = createSkirmish(expeditionConfig?.playerDefs ?? players, expeditionConfig?.enemyDefs ?? stageEnemies, ARENA, bonds, breakthroughs, expeditionConfig ? {
+    this.state = createSkirmish(expeditionConfig?.playerDefs ?? players, expeditionConfig?.enemyDefs ?? stageEnemies, battleArena(this.battleInput.mode), bonds, breakthroughs, expeditionConfig ? {
       // 원정 입력 모델이 HP·증강·크기까지 만들고 씬은 공용 난전을 연결하기만 한다.
       playerInitialStates: expeditionConfig.playerInitialStates,
       augmentEffects: [...expeditionConfig.augmentEffects, ...traitEffects],
@@ -472,9 +504,8 @@ export class BattleScene extends Phaser.Scene {
       // 일반 스테이지의 적도 능력치뿐 아니라 스킬 돌파 효과까지 슬롯별 스냅샷을 사용한다.
       // 능력치 복사본과 같은 formationSlot 순서로 돌파 스킬 스냅샷을 맞춘다.
       augmentEffects: traitEffects,
-      ...(cakeWaves ? { waves: cakeWaves.slice(1) } : {}),
       // 현상수배는 정예 하나가 혼자 서므로 스테이지의 슬롯별 돌파 표를 읽지 않는다.
-      enemyBreakthroughs: cakeWaves || this.battleInput.mode === "bounty"
+      enemyBreakthroughs: cakeTier || this.battleInput.mode === "bounty"
         ? stageEnemies.map(() => 0)
         : stageEnemyGrowth(stage).map(({ breakthrough }) => breakthrough),
       /*
@@ -482,8 +513,8 @@ export class BattleScene extends Phaser.Scene {
        * 넷 이상이 몰려오는 무리는 작다 — 여섯 몸이 보통 크기로 들어차면 전장이 몸으로 덮여
        * 체력 바와 피해 수치가 그 뒤로 숨는다. 능력치는 건드리지 않는다 — 세기는 야성 몫이 낸다.
        */
-      enemyBodyScale: enemyPresenceBodyScale(enemyPresenceFor(
-        cakeWaves ? Math.max(...cakeWaves.map(({ length }) => length)) : stageEnemies.length,
+      enemyBodyScale: enemyPresenceBodyScale(cakeTier ? cakeOperationPresence(cakeTier) : enemyPresenceFor(
+        stageEnemies.length,
         { elite: stage.elite === true || this.battleInput.mode === "bounty" },
       )),
     });
@@ -499,6 +530,7 @@ export class BattleScene extends Phaser.Scene {
     this.healPopups = 0;
     this.bossActions = [];
     this.raidRequestId = undefined;
+    this.raidSeasonHud = undefined;
     // 이전 전투/환경설정에서 저장한 조작 상태를 새 판의 시작값으로 그대로 복원한다.
     const currentSettings = settingsManager.get();
     const battleSettings = currentSettings.game;
@@ -514,8 +546,7 @@ export class BattleScene extends Phaser.Scene {
     this.contributionResult = undefined;
     this.buffPopups = new PopupLayer(this, 2200);
     this.info = new EnemyInfoPopup(this, this.buffPopups);
-    // 뒤 무리의 적도 정보창이 열리므로 펼친 목록 전체로 스냅샷을 만든다.
-    this.enemySnapshots = placedEnemyIndex(this.battleInput, stage, cakeWaves ? cakeWaves.flat() : stageEnemies);
+    this.enemySnapshots = placedEnemyIndex(this.battleInput, stage, stageEnemies);
     this.openBuff = undefined;
     // 파편·파문은 SD보다 앞이되 궁극기 컷인(900)보다는 뒤라 연출을 가리지 않는다.
     // 광역 범위만 배경 원화 위·SD 아래에 깔려 누가 어디 섰는지 가리지 않는다.
@@ -784,13 +815,11 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /**
-   * 여섯을 각자의 시작 자리에 세운다. 전부 준비된 뒤에야 시간이 흐르기 시작한다.
+   * 전투원 전부를 각자의 시작 자리에 세운다. 전부 준비된 뒤에야 시간이 흐르기 시작한다.
    *
-   * 물량형 던전의 다음 무리도 같은 경로로 선다(`initial: false`) — 무리마다 따로 세우면
-   * 그 무리만 입력면·체력 바·폭주 필터 중 하나가 빠진 채 싸운다. 이미 선 전투원은 건너뛰고,
-   * 전투 도중에 부르는 것이라 시간 기준점(`lastStepAt`)은 건드리지 않는다.
+   * 물량형 던전의 무리도 여기서 한꺼번에 선다 — 적이 열다섯이어도 같은 경로다.
    */
-  private async spawnFighters(initial = true): Promise<void> {
+  private async spawnFighters(): Promise<void> {
     ensureEffectTextures(this);
     // 번호별 전용 적 SD도 원화 색을 보존하므로 더 이상 임시 허스크 tint를 입히지 않는다.
     const tint = 0xffffff;
@@ -871,7 +900,6 @@ export class BattleScene extends Phaser.Scene {
      * 사라졌다. 여기에 기다리는 일을 새로 끼우지 않는다.
      */
     this.syncViews();
-    if (!initial) return;
     // 마지막 한 명까지 서고 나서 시간을 흘려야 먼저 뜬 캐릭터만 앞서 달려가지 않는다.
     this.lastStepAt = performance.now();
     this.spawned = true;
@@ -1148,6 +1176,7 @@ export class BattleScene extends Phaser.Scene {
       // **시간은 여기서 적지 않는다** — 화면 맨 위의 시계가 이미 말한다. 이 줄에 남는 것은
       // 지금 손이 궁극기를 아낄지를 바꾸는 것, 곧 단계와 해일 경고뿐이다.
       this.bossPhaseLabel?.setText(t("battle.boss.phaseLine", { phase: phase.label, warning: boss.tideWarning ? t("battle.boss.tideWarning") : boss.limitReached ? t("battle.boss.limit") : "" }));
+      this.paintRaidSeasonHud();
     }
     // 상태 종료와 좌표를 먼저 Puppet에 동기화한 뒤 공격 사건을 재생해야, 기절이 풀린 같은 스텝의
     // 공격 모션을 뒤늦은 idle 전환이 덮어쓰지 않는다.
@@ -1467,12 +1496,6 @@ export class BattleScene extends Phaser.Scene {
       return undefined;
     }
     if (event.kind === "bloodscent") return undefined;
-    // 다음 무리가 선 순간. 몸은 이미 코어의 fighters 배열에 있으므로 화면만 뒤따라 세운다.
-    if (event.kind === "waveStart") {
-      this.announceWave(event.wave, event.total);
-      void this.spawnFighters(false);
-      return undefined;
-    }
 
     const attacker = this.views.get(event.attackerId);
     const target = this.views.get(event.targetId);

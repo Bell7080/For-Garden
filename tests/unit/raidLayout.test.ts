@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import {
-  RAID_ACTIONS, RAID_BOARD, RAID_BOSS_SPOT, RAID_HP_BAR, RAID_PREPARATION,
+  RAID_ACTIONS, RAID_BOARD, RAID_BOSS_SPOT, RAID_HP_BAR,
   raidBoardViewport, raidSortieBackGap,
 } from "../../src/ui/raidLayout";
 
@@ -35,17 +35,4 @@ describe("레이드 배치표", () => {
     expect(RAID_BOARD.viewport.bottom).toBeLessThan(RAID_ACTIONS.y - RAID_ACTIONS.sortie.height / 2);
   });
 
-  it("편성 단계가 제목 · 세 칸 · 목록 · 시작 버튼 순서로 쌓인다", () => {
-    const { titleY, slots, roster, hintY, start } = RAID_PREPARATION;
-    expect(titleY).toBeLessThan(slots.y - slots.height / 2);
-    // 목록은 편성판 아래에서 시작해 안내 문구 위에서 끝난다.
-    expect(roster.top).toBeGreaterThanOrEqual(slots.y + slots.height / 2);
-    expect(roster.bottom).toBeLessThan(hintY);
-    expect(hintY).toBeLessThan(start.y - start.height / 2);
-    // 시작 버튼은 화면 안에 온전히 든다.
-    expect(start.y + start.height / 2).toBeLessThan(BASE_HEIGHT);
-    // 세 칸이 같은 간격으로 서고 양 끝이 화면 안이다.
-    expect(slots.firstX - slots.width / 2).toBeGreaterThan(0);
-    expect(slots.firstX + slots.stepX * 2 + slots.width / 2).toBeLessThan(BASE_WIDTH);
-  });
 });

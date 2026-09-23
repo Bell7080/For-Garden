@@ -1,6 +1,5 @@
 /** 전투 화면과 결과판의 일본어 표. */
 export const BATTLE_JA = {
-  "battle.wave": "WAVE {wave} / {total}",
   "battle.boss.phaseLine": "{phase}{warning}",
   "battle.boss.tideWarning": " · 高潮の予兆",
   "battle.boss.limit": " · LIMIT",

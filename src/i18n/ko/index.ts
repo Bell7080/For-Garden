@@ -31,8 +31,9 @@ import { SKILL_KO } from "./skill";
 import { SYSTEM_KO } from "./system";
 import { RAID_KO } from "./raid";
 import { BOUNTY_KO } from "./bounty";
+import { DUNGEON_KO } from "./dungeon";
 
-export const KO = { ...SETTINGS_KO, ...LOBBY_KO, ...COMMON_KO, ...INFO_KO, ...STATUS_KO, ...LAB_KO, ...EXPEDITION_KO, ...BATTLE_KO, ...CAKE_OPERATION_KO, ...EXCAVATION_KO, ...AUGMENT_KO, ...FRIENDS_KO, ...RUNE_KO, ...PARTY_KO, ...EXPEDITION_REWARD_KO, ...SAVE_CONFLICT_KO, ...INTERACTION_KO, ...SHOP_KO, ...MISSIONS_KO, ...INVENTORY_KO, ...MISC_KO, ...SKILL_KO, ...SYSTEM_KO, ...RAID_KO, ...BOUNTY_KO } as const;
+export const KO = { ...SETTINGS_KO, ...LOBBY_KO, ...COMMON_KO, ...INFO_KO, ...STATUS_KO, ...LAB_KO, ...EXPEDITION_KO, ...BATTLE_KO, ...CAKE_OPERATION_KO, ...EXCAVATION_KO, ...AUGMENT_KO, ...FRIENDS_KO, ...RUNE_KO, ...PARTY_KO, ...EXPEDITION_REWARD_KO, ...SAVE_CONFLICT_KO, ...INTERACTION_KO, ...SHOP_KO, ...MISSIONS_KO, ...INVENTORY_KO, ...MISC_KO, ...SKILL_KO, ...SYSTEM_KO, ...RAID_KO, ...BOUNTY_KO, ...DUNGEON_KO } as const;
 
 /** 화면이 고를 수 있는 문구 키. 한국어 표에 없는 키는 타입에서 막힌다. */
 export type TextKey = keyof typeof KO;

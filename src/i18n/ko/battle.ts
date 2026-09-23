@@ -1,6 +1,5 @@
 /** 전투 화면과 결과판의 문구. */
 export const BATTLE_KO = {
-  "battle.wave": "WAVE {wave} / {total}",
   "battle.boss.phaseLine": "{phase}{warning}",
   "battle.boss.tideWarning": " · 해일 예고",
   "battle.boss.limit": " · LIMIT",

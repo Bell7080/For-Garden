@@ -1,6 +1,7 @@
 import { BOUNTY, BOUNTY_TIERS, getBountyTier, type BountyTierDef } from "../data/bounty";
 import type { BountyState } from "../state/session";
 import { utcDateKey } from "./dailyContent";
+import type { DungeonRunCost } from "./dungeonShortcut";
 
 /**
  * 현상수배 한 판의 **진행 규칙**.
@@ -20,6 +21,8 @@ export interface BountyBattleInputDto {
   round: BountyRoundIndex;
   /** 입장 영수증. 세 라운드가 한 판임을 정산 경계가 확인한다. */
   requestId: string;
+  /** 입장이 확정한 배율. 보상을 곱하는 일은 서버가 영수증에서 다시 읽는다. */
+  multiplier: number;
 }
 
 /** 한 라운드가 끝난 뒤 갈 수 있는 곳은 셋뿐이다. */
@@ -63,10 +66,22 @@ export function normalizeBounty(state: BountyState, serverNow: Date): BountyStat
 }
 
 /** 입장 한 번을 소비한다. 스테미나 차감과 함께 API가 한 처리로 확정한다. */
-export function consumeBountyEntry(state: BountyState, serverNow: Date): BountyState {
+/**
+ * 오늘 입장 횟수를 `count`만큼 쓴다. **배율 x2는 두 판**이라 횟수도 둘을 쓴다.
+ *
+ * 배율이 횟수를 하나만 쓰면 하루 세 판이라는 상한이 배율만큼 늘어나, 배율이 시간을 아끼는
+ * 단축이 아니라 보상을 늘리는 수단이 된다. 남은 횟수보다 큰 배율은 통째로 거절한다.
+ */
+export function consumeBountyEntry(state: BountyState, serverNow: Date, count = 1): BountyState {
   const normalized = normalizeBounty(state, serverNow);
-  if (normalized.entries >= BOUNTY.maxEntriesPerUtcDay) throw new RangeError("오늘의 현상수배 입장 횟수를 모두 사용했습니다.");
-  return { ...normalized, entries: normalized.entries + 1 };
+  if (!Number.isInteger(count) || count < 1) throw new RangeError("입장 횟수는 1 이상의 정수여야 합니다.");
+  if (normalized.entries + count > BOUNTY.maxEntriesPerUtcDay) throw new RangeError("오늘의 현상수배 입장 횟수를 모두 사용했습니다.");
+  return { ...normalized, entries: normalized.entries + count };
+}
+
+/** 단축 규칙(`dungeonShortcut`)이 읽는 한 판의 값. 배율을 곱하는 일은 거기서만 한다. */
+export function bountyRunCost(tier: BountyTierDef): DungeonRunCost {
+  return { staminaCost: BOUNTY.staminaCost, rewards: { gold: tier.rewardGold } };
 }
 
 /** 세 라운드를 모두 이긴 등급만 다음 등급을 연다. 두 번째 클리어는 목록을 늘리지 않는다. */

@@ -27,7 +27,7 @@ export const INVENTORY_EN = {
   "stamina.nextRecovery": "{time} until the next recovery",
   "sortie.cake.name": "Cake Operation",
   "sortie.cake.kind": "Swarm Dungeon",
-  "sortie.cake.goal": "Defeat 3 waves of incoming enemies",
+  "sortie.cake.goal": "Defeat the horde rushing in all at once",
   "sortie.cake.reward": "Growth Materials",
   "sortie.bounty.name": "Bounty",
   "sortie.bounty.kind": "Tag Match",

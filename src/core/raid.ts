@@ -130,9 +130,25 @@ export function raidSeasonElapsedDays(now: Date): number {
  * 보여 준 `LV.70`과 실제로 맞는 수치가 갈린다 — 야성 단계에 배율을 먹이는 일은 이 한 줄에서만
  * 돈다(`effectiveEnemyLevel`). 스테이지 정예와 같은 문법이다.
  */
-export function raidBossDef(base: RelicDef): RelicDef {
+function raidBossGrownStats(base: RelicDef): RelicDef["stats"] {
   const level = effectiveEnemyLevel({ level: RAID_SEASON_BOSS.level, ferocityLevel: RAID_SEASON_BOSS.ferocityLevel }, true);
-  const grown = applyBreakthrough(applyLevelGrowth(base.stats, level, base.rarity), RAID_SEASON_BOSS.breakthrough);
+  return applyBreakthrough(applyLevelGrowth(base.stats, level, base.rarity), RAID_SEASON_BOSS.breakthrough);
+}
+
+/**
+ * 최대 체력 비례 피해(출혈·뇌진탕)가 레이드 보스에게서 재는 체력 — **성장으로 얻은 체력**이다.
+ *
+ * 판 안의 최대 체력은 시즌 게이지의 단위(`RAID_BOSS_HP_SCALE`)라 성장 체력의 여러 배다. 그
+ * 값으로 비율을 재던 때는 출혈 한 번이 판 전체의 타격보다 컸다 — 실측으로 렉시아 편성이 한
+ * 판에 출혈 98,000 · 타격 8,700을 냈고, 출혈이 없는 편성은 보스 줄을 거의 움직이지 못했다.
+ * 비율 피해는 **그 개체가 얼마나 단단한가**를 재야 하므로 세기의 몫(성장)에서 잰다.
+ */
+export function raidBossPercentHpBasis(base: RelicDef): number {
+  return Math.max(1, Math.round(raidBossGrownStats(base).hp));
+}
+
+export function raidBossDef(base: RelicDef): RelicDef {
+  const grown = raidBossGrownStats(base);
   /*
    * **최대 체력만 성장이 아니라 시즌 게이지에서 나온다.**
    *

@@ -29,7 +29,7 @@ export const INVENTORY_JA = {
 
   "sortie.cake.name": "ケーキ大作戦",
   "sortie.cake.kind": "物量ダンジョン",
-  "sortie.cake.goal": "押し寄せる敵を3ウェーブ撃破",
+  "sortie.cake.goal": "一斉に押し寄せる敵をすべて撃破",
   "sortie.cake.reward": "育成素材",
   "sortie.bounty.name": "賞金首",
   "sortie.bounty.kind": "タグマッチ",

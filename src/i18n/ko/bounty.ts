@@ -2,12 +2,8 @@
 export const BOUNTY_KO = {
   "bounty.title": "현상수배",
   "bounty.entries": "남은 입장 {remaining}/{max}",
-  "bounty.cleared": "토벌 완료",
-  // 등급 줄의 정예 하나가 선 자리. 자란 레벨과 야성으로 얹힌 몫을 갈라 적는다.
-  "bounty.round.level": "LV.{level}{bonus}",
-  "bounty.formation.title": "출전 순서",
+  // 편성 미리보기에서 정예 하나가 몇 번째 라운드에 서는지 알린다.
   "bounty.formation.round": "{round}라운드",
-  "bounty.sortie": "출격 · 스테미나 {stamina}",
   "bounty.result.toBounty": "현상수배로",
 
 } as const;

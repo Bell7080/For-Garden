@@ -29,7 +29,7 @@ export const INVENTORY_KO = {
 
   "sortie.cake.name": "케이크 대작전",
   "sortie.cake.kind": "물량 던전",
-  "sortie.cake.goal": "몰려오는 적을 3웨이브 처치",
+  "sortie.cake.goal": "한꺼번에 몰려오는 적을 모두 처치",
   "sortie.cake.reward": "성장 재화",
   "sortie.bounty.name": "현상수배",
   "sortie.bounty.kind": "태그 매치",

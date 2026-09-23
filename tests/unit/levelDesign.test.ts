@@ -9,7 +9,7 @@ import { CHAPTERS, getStageEnemies } from "../../src/data/stages";
 import { getRelic } from "../../src/data/relics";
 import { applyLevelGrowth } from "../../src/core/relicProgression";
 import { BOUNTY_TIERS, bountyRoundEnemy } from "../../src/data/bounty";
-import { CAKE_OPERATION_TIERS, cakeOperationWaves } from "../../src/data/cakeOperation";
+import { CAKE_OPERATION_TIERS, cakeOperationEnemies } from "../../src/data/cakeOperation";
 import { getExpeditionEncounterEnemies } from "../../src/data/expeditionEnemies";
 import type { BattleStageDef, RelicDef } from "../../src/core/types";
 
@@ -95,8 +95,8 @@ const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole,
   ["스토리 1-10 정예", 20, () => getStageEnemies(battleStage("1-10")), "elite", 16.2, 0.23],
   ["현상수배 1단계", 12, () => [bountyRoundEnemy(BOUNTY_TIERS[0].rounds[0])], "elite", 5.4, 0.93],
   ["현상수배 5단계", 45, () => [bountyRoundEnemy(BOUNTY_TIERS[4].rounds[0])], "elite", 8.4, 0.78],
-  ["대작전 1단계 1파", 10, () => cakeOperationWaves(CAKE_OPERATION_TIERS[0])[0], "swarm", 18.6, 0.94],
-  ["대작전 8단계 1파", 50, () => cakeOperationWaves(CAKE_OPERATION_TIERS[7])[0], "swarm", 41.0, 0.99],
+  ["대작전 1단계", 10, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[0]), "swarm", 37.2, 0.95],
+  ["대작전 8단계", 50, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", 89.3, 0.61],
   ["원정 일반 3층", 20, () => getExpeditionEncounterEnemies("normal", 3), "normal", 8.6, 0.95],
   ["원정 정예 10층", 35, () => getExpeditionEncounterEnemies("elite", 10), "elite", 8.8, 0.97],
   ["원정 무리 15층", 45, () => getExpeditionEncounterEnemies("horde", 15), "swarm", 9.2, 0.94],
@@ -117,7 +117,7 @@ describe("콘텐츠별 전투 시간 실측", () => {
      * 이행 전 상태를 **이 한 줄이 기록한다.** 스토리는 잡졸이 흐르고 정예에서 확 깎이는 모양이
      * 이미 잡혀 있고(다만 정예의 전투 시간은 아직 짧다), 나머지 셋은 유형이 시간으로 구별되지
      * 않는다 — 원정은 일반·정예·무리가 전부 9초이고, 현상수배는 정예 하나가 5초에 죽으며,
-     * 대작전은 한 파에 41초가 걸리는데 체력이 0.99 남는다.
+     * 대작전은 열다섯이 한꺼번에 몰려와 한 판이 1분을 넘긴다.
      */
     const onTarget = AUDIT.filter(([, , , role, ttk, hp]) => isEncounterOnTarget(role, { ttkSeconds: ttk, remainingHp: hp }));
     expect(onTarget.map(([label]) => label)).toEqual(["스토리 1-1", "스토리 1-9"]);

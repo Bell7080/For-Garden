@@ -3153,7 +3153,7 @@ export const RELICS: RelicDef[] = [
        *
        * **이 체력은 판에 서지 않는다.** 시즌 보스로 설 때의 최대 체력은 시즌 게이지에서
        * 나오므로(`raidBossDef` → `RAID_BOSS_HP_SCALE`) 여기 적힌 값은 도감·정보창이 읽는
-       * 태생치이고, 전장에 서는 몸은 그 게이지의 100분의 1이다.
+       * 태생치이고, 전장에 서는 몸은 그 게이지의 400분의 1이다.
        */
       hp: 2950,
       def: 200,
@@ -3200,9 +3200,9 @@ export const RELICS: RelicDef[] = [
      * 혼자 서는 보스라 아군 몫은 0이다 — 받을 상대가 없는 값을 적어 두면 설명문이 화면에
      * 없는 일을 말한다.
      *
-     * 자기 보호막이 **0.5%로 얇은 것은 이 몸의 최대 체력이 시즌 게이지의 100분의 1**이기
-     * 때문이다(`RAID_BOSS_HP_SCALE`). 아모와 같은 6%를 적으면 한 겹이 6,000이라 한 판에서
-     * 민 몫을 통째로 되돌린다.
+     * 자기 보호막이 **2%로 얇은 것은 이 몸의 최대 체력이 시즌 게이지의 400분의 1**이기
+     * 때문이다(`RAID_BOSS_HP_SCALE`). 아모와 같은 6%를 적으면 한 겹이 1,500이라 한 판에서
+     * 민 몫을 크게 되돌린다. 한 겹 500은 100분의 1 몸에 0.5%를 두던 때와 같은 두께다.
      *
      * **강인함은 제어를 없애지 않고 잠그지 못하게 한다.** 태생 저항 50%에 제어 한 번마다
      * 6%가 얹혀 100%까지 쌓이므로, 제어형 편성은 첫 몇 번의 잠금을 확실히 가져가되 하루 세
@@ -3215,7 +3215,7 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
       value: 0,
-      shellGuard: { maxStacks: 3, durationSeconds: 8, cooldownSeconds: 14, selfShieldMaxHpPercent: 0.5, lowestHpAllyShieldMaxHpPercent: 0 },
+      shellGuard: { maxStacks: 3, durationSeconds: 8, cooldownSeconds: 14, selfShieldMaxHpPercent: 2, lowestHpAllyShieldMaxHpPercent: 0 },
       tenacityPerControlPercent: 6,
       maxTenacityPercent: 100,
       // 실제 문구는 shellGuard 수치에서 생성하며, 수동 원문은 의도적으로 비워 둔다.

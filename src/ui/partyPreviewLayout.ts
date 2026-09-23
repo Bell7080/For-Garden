@@ -18,7 +18,13 @@ export const PARTY_PREVIEW_COLUMNS = [270, 540, 810] as const;
  * 빠뜨린 셋"으로 읽힌다. 노드 미리보기(`enemyPreviewColumns`)가 이미 같은 규칙을 쓴다.
  */
 export function partyPreviewEnemyColumns(count: number): readonly number[] {
-  if (count >= PARTY_PREVIEW_COLUMNS.length) return PARTY_PREVIEW_COLUMNS;
+  // 물량형(대작전)의 대표 얼굴은 셋을 넘는다. 그때는 아군 세 칸에 맞추지 않고 화면 폭을 고르게
+  // 나눠 촘촘히 세운다 — 세 칸에 억지로 넣으면 넷째부터 겹쳐 선다.
+  if (count > PARTY_PREVIEW_COLUMNS.length) {
+    const { left, right } = PARTY_PREVIEW_CROWD;
+    return Array.from({ length: count }, (_, index) => left + ((right - left) * index) / (count - 1));
+  }
+  if (count === PARTY_PREVIEW_COLUMNS.length) return PARTY_PREVIEW_COLUMNS;
   const center = PARTY_PREVIEW_COLUMNS[1];
   const gap = PARTY_PREVIEW_COLUMNS[1] - PARTY_PREVIEW_COLUMNS[0];
   return Array.from({ length: Math.max(1, count) }, (_, index) => center + (index - (count - 1) / 2) * gap);
@@ -34,7 +40,25 @@ export const PARTY_PREVIEW = {
   height: 210,
   /** 자리 입력면·선택 밑판이 쓰는 칸 폭. */
   slotWidth: 210,
+  /**
+   * 물량형에서 한꺼번에 몰려오는 수가 서는 줄. 적 이름줄 아래·전투력 판 위다 — 대표 얼굴만
+   * 세우므로 그 수가 없으면 다섯이 오는 판으로 읽힌다.
+   */
+  hordeCountY: 503,
+  /**
+   * 미리보기 적의 몸집 상한. 레이드 보스(1.9배)를 그대로 세우면 머리가 화면 제목을 뚫는다 —
+   * 전장의 크기는 전투 화면이 말하고, 여기서는 "혼자 선 큰 적"까지만 읽히면 된다.
+   */
+  maxEnemyScale: 1.25,
 } as const;
+
+/** 대표 얼굴이 셋을 넘을 때 쓰는 가로 범위(첫 얼굴 · 마지막 얼굴의 중심). */
+export const PARTY_PREVIEW_CROWD = { left: 150, right: 930 } as const;
+
+/** 미리보기에 세울 적의 몸집. 전투의 무리 유형 배율을 그대로 읽되 상한만 둔다. */
+export function partyPreviewEnemyScale(bodyScale: number): number {
+  return Math.min(bodyScale, PARTY_PREVIEW.maxEnemyScale);
+}
 
 export interface PreviewBox {
   x: number;

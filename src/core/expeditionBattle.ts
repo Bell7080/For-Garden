@@ -83,7 +83,7 @@ export function createExpeditionBossSkirmishConfig(input: ExpeditionBossBattleIn
  * 판 안에서 보스를 눕히지 않는 이유는 남은 체력의 주인이 시즌이기 때문이다. 한 판은 90초 동안
  * 민 몫을 재고, 그 뒤 마지막 단계의 처형이 판을 끝낸다.
  */
-export function createRaidSkirmishConfig(playerDefs: readonly RelicDef[], boss: RelicDef): ExpeditionSkirmishConfig & { boss: { phases: SkirmishBossPhase[]; limitSeconds: number } } {
+export function createRaidSkirmishConfig(playerDefs: readonly RelicDef[], boss: RelicDef, percentHpBasis: number): ExpeditionSkirmishConfig & { boss: { phases: SkirmishBossPhase[]; limitSeconds: number; percentHpBasis: number } } {
   return {
     playerDefs: [...playerDefs],
     enemyDefs: [{ ...boss, stats: { ...boss.stats } }],
@@ -93,6 +93,8 @@ export function createRaidSkirmishConfig(playerDefs: readonly RelicDef[], boss: 
     boss: {
       phases: RAID_BOSS_BALANCE.phases.map((phase) => ({ startsAt: phase.startsAtMs / 1_000, damagePerSecond: phase.attackPerSecond, label: phase.label })),
       limitSeconds: RAID_BOSS_BALANCE.maximumDurationMs / 1_000,
+      // 출혈 같은 비율 피해는 시즌 단위가 아니라 성장 체력에서 잰다(`raidBossPercentHpBasis`).
+      percentHpBasis,
     },
   };
 }

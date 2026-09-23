@@ -30,7 +30,7 @@ describe("적 정보 팝업 배치", () => {
    */
   it("은 원화 돋보기 위 같은 기둥에 관찰 일지 입구를 둔다", () => {
     const { journalButton, portraitMagnifier, numberY, skills } = ENEMY_INFO;
-    const size = 76;
+    const size = journalButton.size;
     // 같은 x에 세로로 붙어 "더 들여다보는 조작"이 한 덩어리로 읽힌다. 순서는 아군 정보창과 같이
     // 일지가 위, 돋보기가 아래다.
     expect(journalButton.x).toBe(portraitMagnifier.x);
@@ -41,6 +41,8 @@ describe("적 정보 팝업 배치", () => {
     expect(journalButton.y - size / 2).toBeGreaterThan(numberY);
     expect(portraitMagnifier.y + size / 2).toBeLessThan(skills.y - skills.size / 2);
     expect(insideEnemyInfoBody({ x: journalButton.x, y: journalButton.y, width: size, height: size })).toBe(true);
+    // 아군 정보창의 뱃지 줄과 같이 칩의 왼쪽 변이 글줄 선에 맞는다 — 깎인 모서리 쪽으로 내밀지 않는다.
+    expect(journalButton.x - size / 2).toBe(ENEMY_INFO.left);
   });
 
   it("은 레벨 칸의 제목표를 이름·뱃지 줄 아래에 둔다", () => {

@@ -61,8 +61,9 @@ describe("observation journal static layout", () => {
     // 남겨 두면 판 아래가 이유 없이 비어 스크롤만 길어진다.
     const squadEnd = (flow.squadY ?? 0) + 180;
     expect(flow.contentHeight).toBe(squadEnd + OBSERVATION_JOURNAL_SIZE.body.bottom);
-    // 짧아도 판은 최소 높이를 지키므로 스크롤이 생기지 않는다.
-    expect(flow.popupHeight).toBe(OBSERVATION_JOURNAL_SIZE.popup.minHeight);
+    // 그 영역이 없으면 최소 높이를 지키지 않고 내용이 끝나는 자리에서 끊는다 — 적 정보창에서
+    // 연 일지가 판 아래 절반을 빈 칸으로 남겼다.
+    expect(flow.popupHeight).toBe(flow.contentHeight);
     expect(flow.scrollable).toBe(false);
   });
 
@@ -71,14 +72,15 @@ describe("observation journal static layout", () => {
     expect(withoutRepeatedProfileDetails(record, "1.63 m", "54 kg")).toBe("몸무게 이야기는 싫어한다. 관찰을 이어 갔다.");
   });
 
-  it("reserves expanded body padding and a button tall enough for the 30px choice label", () => {
+  it("reserves expanded body padding and a button tall enough for the 35px choice label", () => {
     const layout = OBSERVATION_JOURNAL_SIZE;
     // 본문 폭과 좌우 여백은 한 계약이며 선택 면도 그 본문을 침범하지 않는다.
     expect(layout.body.width + layout.body.paddingX * 2).toBe(layout.popup.width);
     expect(layout.choice.width).toBeLessThanOrEqual(layout.body.width);
     expect(layout.choice.height).toBeGreaterThanOrEqual(layout.font.large * 2);
     expect(layout.spacing.choiceGap).toBeGreaterThan(0);
-    expect(layout.font).toMatchObject({ small: 26, question: 27, regular: 28, large: 30, title: 30 });
+    // 모바일에서 읽히는 크기 — 26~30이던 때는 폰 화면에서 문단이 작은 글씨 덩어리로 보였다.
+    expect(layout.font).toMatchObject({ small: 30, question: 31, regular: 33, large: 35, title: 36 });
   });
 
   it.each([0.5, 1, 2])("keeps a 130%% squad emblem and its cloned shadows clear for aspect ratio %s", (aspectRatio) => {

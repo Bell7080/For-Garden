@@ -116,6 +116,18 @@ export const RAID_BOSS_POOL = ["sukusuino"] as const;
 export const RAID_TICKET_ITEM = "raid-ticket";
 export const RAID_SELECT_TICKET_ITEM = "raid-select-ticket";
 
+/**
+ * 임시 지급: 토벌권을 만져 볼 수 있게 부트마다 이 수까지 채운다(룬 특성 임시 지급과 같은 자리).
+ *
+ * 새 계정의 기본 가방에만 넣었을 때는 **이미 저장이 있는 계정이 한 장도 받지 못해** 소환 버튼이
+ * 꺼진 채 섰고, 소환 연출을 볼 길이 없었다. 정식 수급(전리품 상점·보상)이 붙으면 이 표와
+ * 부트의 한 줄을 함께 지운다.
+ */
+export const RAID_TICKET_TEST_KIT = [
+  { itemId: RAID_TICKET_ITEM, quantity: 3 },
+  { itemId: RAID_SELECT_TICKET_ITEM, quantity: 1 },
+] as const;
+
 /** 월드 폭주가 갖는 공유 체력. 판 안의 몸(`RAID_BOSS_HP_SCALE`)이 이 값을 단위로 삼는다. */
 export const RAID_SEASON_TOTAL_HP = RAID_DIFFICULTY.rampage.totalHp;
 

@@ -13,9 +13,14 @@ export const OBSERVATION_JOURNAL_SIZE = {
   popup: { width: 960, minHeight: 1240, maxHeight: 1780, tilt: -1.2, safeInset: 24 },
   body: { width: 820, paddingX: 70, top: 112, bottom: 92 },
   art: { inset: 12 },
-  font: { small: 26, question: 27, regular: 28, large: 30, title: 30 },
-  spacing: { line: 14, compactLine: 10, section: 48, divider: 28, paragraph: 30, choiceGap: 16 },
-  choice: { width: 800, height: 66, bevel: 14 },
+  /**
+   * 글자 크기. **모바일에서 읽히는 크기가 기준이다** — 관찰 일지는 훑는 목록이 아니라 앉아서 읽는
+   * 글이라, 26~30으로 두었을 때는 폰 화면에서 문단이 작은 글씨 덩어리로 보였다. 판을 키우지 않고
+   * 글자만 키우며, 길어진 만큼은 판 안의 스크롤이 맡는다(`scrollable`).
+   */
+  font: { small: 30, question: 31, regular: 33, large: 35, title: 36 },
+  spacing: { line: 16, compactLine: 12, section: 48, divider: 28, paragraph: 30, choiceGap: 16 },
+  choice: { width: 800, height: 76, bevel: 14 },
 } as const;
 
 export interface ObservationJournalHeights {
@@ -74,7 +79,9 @@ export function calculateObservationJournalFlow(heights: ObservationJournalHeigh
   }
   cursor += body.bottom;
   const contentHeight = cursor;
-  const popupHeight = Math.min(popup.maxHeight, Math.max(popup.minHeight, contentHeight));
+  // 최소 높이는 복원 후 관찰 기록이 설 때만 지킨다 — 그 영역이 없는 판(적·미보유)에 걸면 판
+  // 아래 절반이 통째로 빈 칸으로 남는다. 그때는 내용이 끝나는 자리에서 끊는다.
+  const popupHeight = Math.min(popup.maxHeight, hasObservation ? Math.max(popup.minHeight, contentHeight) : contentHeight);
   return {
     metadataY, excavationDividerY, excavationY, squadY, observationDividerY, observationHeadingY,
     observationY, actionY, contentHeight, popupHeight,

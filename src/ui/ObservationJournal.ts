@@ -68,9 +68,10 @@ export function addObservationJournalButton(
   x: number,
   y: number,
   open: (from: JournalSource) => void,
+  /** 칩 한 변. 기본은 아군 정보창의 뱃지 줄과 같은 76이다. */
+  size = 76,
 ): Phaser.GameObjects.Container {
   const { scene, popups } = deps;
-  const size = 76;
   const container = scene.add.container(x, y);
   container.add(drawLayer(scene, 0, 0, chipPoints(size, size, {
     bevel: { topLeft: size * 0.3, topRight: 0, bottomRight: size * 0.3, bottomLeft: 0 },
@@ -88,9 +89,15 @@ export function addObservationJournalButton(
   return container;
 }
 
-/** 부른 자리를 팝업 옵션으로 옮긴다. */
-function anchorOf(from: JournalSource): { anchor: { x: number; y: number }; onClose: () => void } {
-  return { anchor: { x: from.x, y: from.y }, onClose: from.onClose };
+/**
+ * 일지는 누른 자리에 얹지 않고 **화면 가운데**에 선다.
+ *
+ * 판 폭이 960이라 누른 칩 위·아래 어디에 얹어도 화면을 거의 다 덮고, 칩이 판 위쪽에 있는 적
+ * 정보창에서는 "칩 아래"로 밀려난 판이 화면 위로 잘려 제목표가 윗변 밖에 걸렸다. 부른 칩은
+ * 여전히 판이 떠 있는 동안 눌린 크기를 유지하고 닫히면 돌아온다(`onClose`).
+ */
+function sourceOf(from: JournalSource): { onClose: () => void } {
+  return { onClose: from.onClose };
 }
 
 /** 기존 관찰 일지 엠블럼 대비 30% 확대. 배율을 분리해 기준 크기와 의도를 함께 보존한다. */
@@ -147,20 +154,20 @@ export function openObservationHistory(deps: ObservationJournalDeps, def: RelicD
   const entry = history[index];
   // 이 레이어는 눌린 자리 위에 얹히는 쪽지가 아니라 따로 읽는 기록판이다. 관찰 일지와
   // 같은 자리에 겹쳐 열면 두 판의 닫기 X가 거의 포개져 헷갈린다 — 화면 가운데 그대로 둔다.
-  popups.open({ width: 820, height: 620, title: t("info.journal.history") }, (body, close) => {
+  popups.open({ width: 820, height: 720, title: t("info.journal.history") }, (body, close) => {
     if (!entry) {
-      body.add(scene.add.text(0, 0, t("info.journal.noInterview"), textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
+      body.add(scene.add.text(0, 0, t("info.journal.noInterview"), textStyle({ role: "body", size: 28, color: COLOR.inkDim })).setOrigin(0.5));
       return;
     }
     const goTo = (next: number): void => { close(); openObservationHistory(deps, def, from, next); };
     // 날짜·성향 태그는 부가 정보라 옅게, 실제 문답·발견 습성은 잘 보여야 하는 관찰 내용이라
     // 희다 — 관찰 일지 본문과 같은 색 규칙을 그대로 잇는다.
     body.add(scene.add
-      .text(0, -246, `${entry.date}  ·  #${entry.personalityTag}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim, align: "center" }))
+      .text(0, -296, `${entry.date}  ·  #${entry.personalityTag}`, textStyle({ role: "body", size: 26, color: COLOR.inkDim, align: "center" }))
       .setOrigin(0.5, 0));
     const copy = t("info.journal.historyEntry", { question: entry.question, answer: entry.answer, habit: entry.discoveredHabit });
     body.add(scene.add
-      .text(0, -196, copy, textStyle({ role: "body", size: 26, color: COLOR.ink, lineSpacing: 10, align: "center", wrap: 720 }))
+      .text(0, -246, copy, textStyle({ role: "body", size: 31, color: COLOR.ink, lineSpacing: 12, align: "center", wrap: 720 }))
       .setOrigin(0.5, 0));
     addHistoryPager(scene, body, history.length, index, goTo);
   });
@@ -175,7 +182,7 @@ function addHistoryPager(
   goTo: (next: number) => void,
 ): void {
   // 목록은 최신(1)에서 과거로 갈수록 페이지가 커진다. 화살표는 그 순서를 그대로 따라간다.
-  const pagerY = 240;
+  const pagerY = 290;
   const hasNewer = index > 0;
   const hasOlder = index < total - 1;
   body.add(drawGlyph(scene, "page-prev", -300, pagerY, 40, hasNewer ? COLOR.inkHex : COLOR.inkDimHex, hasNewer ? 1 : 0.35));
@@ -184,7 +191,7 @@ function addHistoryPager(
     hit.on("pointerup", () => goTo(index - 1));
     body.add(hit);
   }
-  body.add(scene.add.text(0, pagerY, `${index + 1} / ${total}`, textStyle({ role: "emphasis", size: 24, color: COLOR.ink })).setOrigin(0.5));
+  body.add(scene.add.text(0, pagerY, `${index + 1} / ${total}`, textStyle({ role: "emphasis", size: 28, color: COLOR.ink })).setOrigin(0.5));
   body.add(drawGlyph(scene, "page-next", 300, pagerY, 40, hasOlder ? COLOR.inkHex : COLOR.inkDimHex, hasOlder ? 1 : 0.35));
   if (hasOlder) {
     const hit = scene.add.rectangle(300, pagerY, 90, 90, 0xffffff, 0).setInteractive({ useHandCursor: true });
@@ -263,7 +270,7 @@ export function openObservationJournal(deps: ObservationJournalDeps, options: Ob
     observationHeading: observationHeading?.height ?? 0, observation: (observation?.height ?? 0) + historyLinkHeight, action: actionHeight,
   });
 
-  popups.open({ width: journal.popup.width, height: flow.popupHeight, title: t("info.journal.title"), titleSize: journal.font.title, tilt: journal.popup.tilt, ...anchorOf(from) }, (body, close) => {
+  popups.open({ width: journal.popup.width, height: flow.popupHeight, title: t("info.journal.title"), titleSize: journal.font.title, tilt: journal.popup.tilt, ...sourceOf(from) }, (body, close) => {
     const artWidth = journal.popup.width - journal.art.inset * 2;
     const artHeight = flow.popupHeight - journal.art.inset * 2;
     if (scene.textures.exists("content-observation-journal")) {

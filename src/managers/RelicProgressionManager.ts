@@ -1,3 +1,4 @@
+import { RAID_TICKET_TEST_KIT } from "../data/raid";
 import { calculateFinalStats, breakthroughGrade, remainingBreakthroughCost } from "../core/relicProgression";
 import type { RelicProgress, Stats } from "../core/types";
 import { getRelic } from "../data/relics";
@@ -77,6 +78,20 @@ export class RelicProgressionManager {
       else if (owned.quantity < quantity) owned.quantity = quantity;
     }
     this.state.wallet = wallet;
+    this.state.itemInventory = items;
+    this.persistSharedSession();
+  }
+
+  /** 임시 지급: 두 토벌권을 하한까지 채운다. 정식 수급이 붙으면 이 메서드와 부트의 호출을 함께 지운다. */
+  grantRaidTicketTestKit(): void {
+    const items = this.state.itemInventory.map((entry) => ({ ...entry }));
+    let changed = false;
+    for (const { itemId, quantity } of RAID_TICKET_TEST_KIT) {
+      const owned = items.find((entry) => entry.itemId === itemId);
+      if (!owned) { items.push({ itemId, quantity }); changed = true; }
+      else if (owned.quantity < quantity) { owned.quantity = quantity; changed = true; }
+    }
+    if (!changed) return;
     this.state.itemInventory = items;
     this.persistSharedSession();
   }

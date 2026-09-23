@@ -150,7 +150,8 @@ export class EnemyInfoPopup {
       addObservationJournalButton({ scene: this.scene, popups: this.popups }, chrome,
         ENEMY_INFO.journalButton.x, ENEMY_INFO.journalButton.y,
         (from) => openObservationJournal({ scene: this.scene, popups: this.popups, keywords: this.keywords },
-          { def: snapshot.def, owned: false, interviews: false, from }));
+          { def: snapshot.def, owned: false, interviews: false, from }),
+        ENEMY_INFO.journalButton.size);
       void this.loadPuppets(snapshot.def, generation, depth + 0.4, depth + 0.7, mask);
     });
   }

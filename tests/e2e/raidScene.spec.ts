@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
+import { ENEMY_INFO } from "../../src/ui/enemyInfoLayout";
 import { captureGame, tap, waitForDebugState } from "./canvasInput";
 import { RAID_ACTIONS, RAID_BOSS_SPOT, RAID_LIST_CHROME, raidLayerStack } from "../../src/ui/raidLayout";
 
@@ -78,6 +79,12 @@ test("레이드는 목록에서 월드 폭주 판으로 들어가고 출격이 �
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles), { timeout: 15_000 }).toContain("정보창");
   await page.waitForTimeout(2_500);
   await captureGame(page, `test-results/${test.info().project.name}-raid-boss-info.png`);
+  // 적 정보창의 관찰 일지 — 이름 블록 아래 줄, 글줄 선에 맞춘 칩이다.
+  await tap(page, BASE_WIDTH / 2 + ENEMY_INFO.journalButton.x, BASE_HEIGHT / 2 + ENEMY_INFO.journalButton.y);
+  await page.waitForTimeout(1_500);
+  await captureGame(page, `test-results/${test.info().project.name}-raid-boss-journal.png`);
+  await tap(page, 960, BASE_HEIGHT - 120);
+  await page.waitForTimeout(800);
   await tap(page, 960, BASE_HEIGHT - 120);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles ?? [])).not.toContain("정보창");
 

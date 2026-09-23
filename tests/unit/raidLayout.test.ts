@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import {
-  RAID_ACTIONS, RAID_BOARD, RAID_BOARD_PLATE, RAID_BOSS_SPOT, RAID_HP_BAR,
+  RAID_ACTIONS, RAID_BOARD, RAID_BOARD_PLATE, RAID_BOSS_SPOT, RAID_HP_BAR, RAID_LIST,
   raidBoardViewport, raidSortieBackGap,
 } from "../../src/ui/raidLayout";
 
@@ -41,5 +41,20 @@ describe("레이드 배치표", () => {
     expect(RAID_BOARD.titleX).toBe((1080 - RAID_BOARD_PLATE.width) / 2);
     // 제목표(높이 52)가 남은 체력 수치 줄과 겹치지 않는다.
     expect(RAID_BOARD.titleY - 26).toBeGreaterThan(RAID_HP_BAR.valueY + 14);
+  });
+  it("목록의 월드 폭주 층은 창 안에 서고 글줄·보상·체력 줄이 겹치지 않는다", () => {
+    const { viewport, world, worldRing, text, reward, hp } = RAID_LIST;
+    // 바깥 테두리와 윗변의 제목표(높이 52)까지 창 안이다.
+    expect(world.y - world.height / 2 - worldRing - 26).toBeGreaterThanOrEqual(viewport.top - 30);
+    expect(world.y + world.height / 2 + worldRing).toBeLessThan(viewport.bottom);
+    const half = world.height / 2;
+    // 이름(58px)은 윗변 제목표 아래에서 시작하고, 줄끼리 순서대로 내려간다.
+    expect(text.nameY - 29).toBeGreaterThan(-half + 26);
+    expect(text.levelY).toBeGreaterThan(text.nameY + 29);
+    expect(text.attemptsY).toBeGreaterThan(text.levelY + 14);
+    // 보상 액자는 도전 줄 아래, 체력 이름표 위에 선다.
+    expect(reward.y - reward.size / 2).toBeGreaterThan(text.attemptsY + 14);
+    expect(reward.y + reward.size / 2).toBeLessThan(half - hp.labelUp - 12);
+    expect(half - hp.labelUp + 12).toBeLessThan(half - hp.up - hp.height / 2);
   });
 });

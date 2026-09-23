@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { RAID_BOSS_BALANCE, RAID_BOSS_HP_SCALE, RAID_CONTRIBUTION_REWARD_STAGES, RAID_DAILY_ATTEMPTS, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP } from "../../src/data/raid";
-import { mockRaidContributions, raidBossDef, raidBossPercentHpBasis, raidContributionBoard, raidEarnedContributionStageIds, raidNextContributionStage, raidSeasonElapsedDays, raidSeasonKey, raidSeasonProgress } from "../../src/core/raid";
+import { RAID_BOSS_BALANCE, RAID_BOSS_HP_SCALE, RAID_CONTRIBUTION_REWARD_STAGES, RAID_DAILY_ATTEMPTS, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP, RAID_WORLD_REWARD_STAGES } from "../../src/data/raid";
+import { mockRaidContributions, mockRaidWorldDamage, raidBossDef, raidBossPercentHpBasis, raidContributionBoard, raidDayProgress, raidEarnedContributionStageIds, raidNextContributionStage, raidReachedWorldStageIds, raidResetsAt, raidSeasonKey, raidSeasonProgress } from "../../src/core/raid";
 import { getRelic, PLAYABLE_RELICS, RELICS } from "../../src/data/relics";
 import { ENCOUNTER_ROLE, applyEncounterScaling } from "../../src/core/levelDesign";
 
@@ -23,7 +23,7 @@ function makeRaidSession(): Session {
   return createDefaultSession();
 }
 
-describe("레이드 시즌 진행도", () => {
+describe("월드 폭주 진행도", () => {
   it("는 남은 체력이 0 아래로 내려가지 않는다", () => {
     const progress = raidSeasonProgress(RAID_SEASON_TOTAL_HP * 2, RAID_SEASON_TOTAL_HP);
     expect(progress.remainingHp).toBe(0);
@@ -72,18 +72,18 @@ describe("기여 목록", () => {
 describe("모의 참가자", () => {
   it("는 같은 시즌이면 언제 읽어도 같은 값을 돌려준다", () => {
     // 난수를 쓰면 화면을 다시 열 때마다 1등이 바뀌어 목록이 아무것도 말하지 못한다.
-    expect(mockRaidContributions("2026-09-14", 3)).toEqual(mockRaidContributions("2026-09-14", 3));
+    expect(mockRaidContributions("2026-09-14", 0.4)).toEqual(mockRaidContributions("2026-09-14", 0.4));
   });
 
   it("는 시즌이 다르면 순서가 굳지 않는다", () => {
-    const first = raidContributionBoard(mockRaidContributions("2026-09-14", 6)).map(({ playerId }) => playerId);
-    const second = raidContributionBoard(mockRaidContributions("2026-10-05", 6)).map(({ playerId }) => playerId);
+    const first = raidContributionBoard(mockRaidContributions("2026-09-14", 1)).map(({ playerId }) => playerId);
+    const second = raidContributionBoard(mockRaidContributions("2026-10-05", 1)).map(({ playerId }) => playerId);
     expect(first).not.toEqual(second);
   });
 
-  it("는 날이 갈수록 누적이 늘어난다", () => {
+  it("는 하루가 갈수록 오늘 몫이 늘어난다", () => {
     const early = mockRaidContributions("2026-09-14", 0)[0]!.damage;
-    const late = mockRaidContributions("2026-09-14", 6)[0]!.damage;
+    const late = mockRaidContributions("2026-09-14", 0.9)[0]!.damage;
     expect(late).toBeGreaterThan(early);
   });
 
@@ -93,13 +93,35 @@ describe("모의 참가자", () => {
     for (const { favoriteRelicId } of RAID_MOCK_PARTICIPANTS) expect(playable).toContain(favoriteRelicId);
   });
 
-  it("는 한 주 동안 시즌 체력을 눕힐 만큼은 밀되 하루 만에 끝내지 않는다", () => {
-    // 너무 낮으면 화요일에 끝나 남은 닷새가 빈 화면이 되고, 너무 높으면 처치 보상이 한 번도
-    // 나가지 않는다. 이 둘이 곧 `RAID_SEASON_TOTAL_HP`를 정한 근거다.
-    const firstDay = mockRaidContributions("2026-09-14", 0).reduce((sum, { damage }) => sum + damage, 0);
-    const fullWeek = mockRaidContributions("2026-09-14", 6).reduce((sum, { damage }) => sum + damage, 0);
-    expect(firstDay).toBeLessThan(RAID_SEASON_TOTAL_HP);
-    expect(fullWeek).toBeGreaterThan(RAID_SEASON_TOTAL_HP * 0.5);
+  it("의 오늘 몫은 두 판 실측과 같은 자릿수다", () => {
+    // 한 판 실측이 0.8만~2.6만이라 하루 두 판의 합이 수십만이면 목록이 거짓말을 한다.
+    for (const { damage } of mockRaidContributions("2026-09-14", 1)) {
+      expect(damage).toBeGreaterThan(10_000);
+      expect(damage).toBeLessThan(60_000);
+    }
+  });
+});
+
+describe("월드 폭주의 서버 전체 몫", () => {
+  it("은 하루 동안 자라고 날마다 도달선이 다르다", () => {
+    expect(mockRaidWorldDamage("2026-09-14", 0)).toBe(0);
+    expect(mockRaidWorldDamage("2026-09-14", 0.8)).toBeGreaterThan(mockRaidWorldDamage("2026-09-14", 0.3));
+    const ends = ["2026-09-14", "2026-09-15", "2026-09-16", "2026-09-17", "2026-09-18"].map((day) => mockRaidWorldDamage(day, 1));
+    expect(new Set(ends).size).toBeGreaterThan(1);
+  });
+
+  it("은 잡지 못하는 날이 있되 절반은 넘긴다 — 깎은 만큼 보상이 얹힌다", () => {
+    // 도달선은 총량의 55~110%라 대부분의 날 월드 진행 보상의 절반 이상이 열린다.
+    const days = Array.from({ length: 30 }, (_, index) => `2026-10-${String(index + 1).padStart(2, "0")}`);
+    const ratios = days.map((day) => mockRaidWorldDamage(day, 1) / RAID_SEASON_TOTAL_HP);
+    expect(Math.min(...ratios)).toBeGreaterThanOrEqual(0.5);
+    expect(ratios.some((ratio) => ratio < 1)).toBe(true);
+  });
+
+  it("의 진행 단계는 넘긴 비율만 돌려준다", () => {
+    expect(raidReachedWorldStageIds(0.24)).toEqual([]);
+    expect(raidReachedWorldStageIds(0.5)).toEqual(["raid-world-25", "raid-world-50"]);
+    expect(raidReachedWorldStageIds(1)).toEqual(RAID_WORLD_REWARD_STAGES.map(({ id }) => id));
   });
 });
 
@@ -132,17 +154,23 @@ describe("기여 보상 단계", () => {
   });
 });
 
-describe("시즌 경계", () => {
-  it("는 원정과 같은 월요일 00:00 UTC다", () => {
-    // 두 콘텐츠가 다른 날 초기화되면 "이번 주"가 화면마다 다른 것을 가리킨다.
-    expect(raidSeasonKey(new Date("2026-09-19T12:00:00Z"))).toBe("2026-09-14");
-    expect(raidSeasonKey(new Date("2026-09-14T00:00:00Z"))).toBe("2026-09-14");
-    expect(raidSeasonKey(new Date("2026-09-13T23:59:59Z"))).toBe("2026-09-07");
+describe("월드 폭주의 날짜 경계", () => {
+  it("는 UTC 날짜이고 다음 날 00:00에 초기화된다", () => {
+    // 하루 한 마리라 도전 횟수와 같은 경계를 쓴다 — 다르면 "오늘의 보스"와 "오늘의 도전"이 갈린다.
+    expect(raidSeasonKey(new Date("2026-09-19T12:00:00Z"))).toBe("2026-09-19");
+    expect(raidSeasonKey(new Date("2026-09-19T23:59:59Z"))).toBe("2026-09-19");
+    expect(raidResetsAt(new Date("2026-09-19T12:00:00Z"))).toBe("2026-09-20T00:00:00.000Z");
   });
 
-  it("의 지난 날수는 시즌 시작에서 잰다", () => {
-    expect(raidSeasonElapsedDays(new Date("2026-09-14T00:00:00Z"))).toBe(0);
-    expect(raidSeasonElapsedDays(new Date("2026-09-19T12:00:00Z"))).toBe(5);
+  it("의 하루 진행은 0~1이다", () => {
+    expect(raidDayProgress(new Date("2026-09-19T00:00:00Z"))).toBe(0);
+    expect(raidDayProgress(new Date("2026-09-19T12:00:00Z"))).toBeCloseTo(0.5);
+  });
+
+  it("의 보스는 만렙이고 돌파 네 칸이 모두 열린다", () => {
+    expect(RAID_SEASON_BOSS.level).toBe(60);
+    expect(RAID_SEASON_BOSS.breakthrough).toBe(4);
+    expect(RAID_DAILY_ATTEMPTS).toBe(2);
   });
 });
 
@@ -301,7 +329,7 @@ describe("레이드 서버 경계", () => {
   it("은 시즌 응답에 남은 체력과 내 몫을 함께 싣는다", async () => {
     const server = new FakeServer(makeRaidSession(), { latencyMs: 0, now: () => at("2026-09-16T12:00:00Z") });
     const season = await server.getRaidSeason();
-    expect(season.seasonKey).toBe("2026-09-14");
+    expect(season.seasonKey).toBe("2026-09-16");
     expect(season.bossRelicId).toBe(RAID_SEASON_BOSS.relicId);
     expect(season.totalHp).toBe(RAID_SEASON_TOTAL_HP);
     expect(season.remainingHp).toBe(season.totalHp - season.dealtDamage);
@@ -322,24 +350,35 @@ describe("레이드 서버 경계", () => {
     expect(season.entries.map(({ damage }) => damage)).toEqual([...season.entries.map(({ damage }) => damage)].sort((a, b) => b - a));
   });
 
-  it("은 주차가 바뀌면 내 몫과 수령 기록을 비운다", async () => {
+  it("은 날이 바뀌면 내 몫·도전·수령 기록을 함께 비운다", async () => {
     const state = makeRaidSession();
-    state.raid = { seasonKey: "2026-09-07", myDamage: 500_000, attemptsUsed: 3, attemptsDate: "2026-09-10", claimedStageIds: ["raid-contrib-50k"], defeatRewardClaimed: true };
+    state.raid = { seasonKey: "2026-09-15", myDamage: 40_000, attemptsUsed: 2, attemptsDate: "2026-09-15", claimedStageIds: ["raid-daily-8k", "raid-world-25"] };
     const server = new FakeServer(state, { latencyMs: 0, now: () => at("2026-09-16T12:00:00Z") });
     const season = await server.getRaidSeason();
     expect(season.myDamage).toBe(0);
     expect(season.attemptsUsed).toBe(0);
     expect(season.rewardStages.every(({ claimed }) => !claimed)).toBe(true);
-    expect(season.defeatRewardClaimed).toBe(false);
+    expect(season.worldStages.every(({ claimed }) => !claimed)).toBe(true);
   });
 
-  it("은 날이 바뀌면 도전 횟수만 되돌리고 시즌 누적은 지킨다", async () => {
+  it("은 월드 진행 보상을 오늘 치지 않은 사람에게도 준다", async () => {
+    // 저녁이면 서버 전체가 적어도 4분의 1은 깎는다 — 참가하지 않아도 그 몫은 모두의 것이다.
     const state = makeRaidSession();
-    state.raid = { seasonKey: "2026-09-14", myDamage: 120_000, attemptsUsed: 3, attemptsDate: "2026-09-15", claimedStageIds: [], defeatRewardClaimed: false };
-    const server = new FakeServer(state, { latencyMs: 0, now: () => at("2026-09-16T12:00:00Z") });
+    const server = new FakeServer(state, { latencyMs: 0, now: () => at("2026-09-16T20:00:00Z") });
     const season = await server.getRaidSeason();
-    expect(season.attemptsUsed).toBe(0);
-    expect(season.myDamage).toBe(120_000);
+    const stage = season.worldStages.find(({ reached }) => reached)!;
+    expect(stage).toBeDefined();
+    const before = state.wallet[stage.reward.currency];
+    const result = await server.claimRaidReward({ requestId: "w1", stageId: stage.id });
+    expect(result.alreadyClaimed).toBe(false);
+    expect(state.wallet[stage.reward.currency]).toBe(before + stage.reward.amount);
+  });
+
+  it("은 도달하지 않은 월드 진행 단계를 거절한다", async () => {
+    // 자정 직후에는 아직 아무도 밀지 않았다.
+    const server = new FakeServer(makeRaidSession(), { latencyMs: 0, now: () => at("2026-09-16T00:00:00Z") });
+    await expect(server.claimRaidReward({ requestId: "w2", stageId: "raid-world-100" }))
+      .rejects.toMatchObject({ code: "RAID_REWARD_NOT_EARNED" });
   });
 
   it("은 아직 넘기지 못한 단계의 수령을 거절한다", async () => {
@@ -354,16 +393,10 @@ describe("레이드 서버 경계", () => {
       .rejects.toMatchObject({ code: "RAID_REWARD_NOT_FOUND" });
   });
 
-  it("은 눕히지 못한 보스의 처치 보상을 거절한다", async () => {
-    const server = new FakeServer(makeRaidSession(), { latencyMs: 0, now: () => at("2026-09-14T00:00:00Z") });
-    await expect(server.claimRaidReward({ requestId: "r3", stageId: "defeat" }))
-      .rejects.toMatchObject({ code: "RAID_REWARD_NOT_EARNED" });
-  });
-
   it("은 달성한 단계를 지급하고 같은 요청을 두 번 쌓지 않는다", async () => {
     const state = makeRaidSession();
     const stage = RAID_CONTRIBUTION_REWARD_STAGES[0]!;
-    state.raid = { seasonKey: "2026-09-14", myDamage: stage.threshold, attemptsUsed: 0, attemptsDate: "2026-09-16", claimedStageIds: [], defeatRewardClaimed: false };
+    state.raid = { seasonKey: "2026-09-16", myDamage: stage.threshold, attemptsUsed: 0, attemptsDate: "2026-09-16", claimedStageIds: [] };
     const server = new FakeServer(state, { latencyMs: 0, now: () => at("2026-09-16T12:00:00Z") });
     const first = await server.claimRaidReward({ requestId: "r4", stageId: stage.id });
     expect(first.alreadyClaimed).toBe(false);
@@ -375,7 +408,7 @@ describe("레이드 서버 경계", () => {
 
   it("은 도전 횟수를 다 쓴 계정의 제출을 거절한다", async () => {
     const state = makeRaidSession();
-    state.raid = { seasonKey: "2026-09-14", myDamage: 0, attemptsUsed: RAID_DAILY_ATTEMPTS, attemptsDate: "2026-09-16", claimedStageIds: [], defeatRewardClaimed: false };
+    state.raid = { seasonKey: "2026-09-16", myDamage: 0, attemptsUsed: RAID_DAILY_ATTEMPTS, attemptsDate: "2026-09-16", claimedStageIds: [] };
     const server = new FakeServer(state, { latencyMs: 0, now: () => at("2026-09-16T12:00:00Z") });
     await expect(server.submitRaidDamage({ requestId: "s1", actions: [] }))
       .rejects.toMatchObject({ code: "RAID_DAILY_LIMIT" });

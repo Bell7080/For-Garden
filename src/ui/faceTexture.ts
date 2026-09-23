@@ -101,3 +101,50 @@ export function clipRectToShape(
   }
   return polygon;
 }
+
+/**
+ * 가로로 긴 판 하나를 **판 실루엣대로** 굽는다 — 원화는 판의 오른쪽을 채우고 왼쪽으로 스며든다.
+ *
+ * 레이드 층처럼 목록으로 흐르는 판은 기하 마스크를 쓸 수 없다(컨테이너 이동을 물려받지 않는다).
+ * 얼굴 액자와 같은 이유로 **굽는다**: 원화를 `from`(판 폭 대비)부터 오른쪽 끝까지 그리고,
+ * 판 도형(`shape`, 판 가운데가 0인 좌표)만 남긴 뒤 왼쪽 가장자리를 `fade` 폭만큼 투명으로 녹인다 —
+ * 글이 서는 왼쪽은 판의 어둠이 받치고, 얼굴은 오른쪽에서 판을 꽉 채운다.
+ */
+export function bakeBandTexture(
+  scene: Phaser.Scene,
+  sourceKey: string,
+  size: { width: number; height: number },
+  crop: { cropX: number; cropY: number; cropWidth: number; cropHeight: number },
+  options: { shape: readonly number[]; from: number; fade: number },
+): string {
+  const width = Math.round(size.width);
+  const height = Math.round(size.height);
+  const key = `band:${sourceKey}:${width}x${height}:${Math.round(crop.cropX)}:${Math.round(crop.cropY)}:${Math.round(crop.cropWidth)}:${options.from}:${options.fade}`;
+  if (scene.textures.exists(key)) return key;
+  const source = scene.textures.get(sourceKey).getSourceImage();
+  const canvas = scene.textures.createCanvas(key, width, height);
+  if (!canvas) return sourceKey;
+  const ctx = canvas.getContext();
+  ctx.clearRect(0, 0, width, height);
+  const left = Math.round(width * options.from);
+  ctx.drawImage(source as CanvasImageSource, crop.cropX, crop.cropY, crop.cropWidth, crop.cropHeight, left, 0, width - left, height);
+  // 판 밖으로 나간 자리를 **덮지 않고 지운다**(얼굴 액자와 같은 규칙).
+  ctx.globalCompositeOperation = "destination-in";
+  ctx.beginPath();
+  for (let index = 0; index < options.shape.length; index += 2) {
+    const x = options.shape[index] + width / 2;
+    const y = options.shape[index + 1] + height / 2;
+    if (index === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fill();
+  // 왼쪽 가장자리를 녹인다 — 원화가 판 한가운데에서 세로로 뚝 끊기면 붙인 사진처럼 보인다.
+  const gradient = ctx.createLinearGradient(left, 0, left + width * options.fade, 0);
+  gradient.addColorStop(0, "rgba(0,0,0,0)");
+  gradient.addColorStop(1, "rgba(0,0,0,1)");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
+  ctx.globalCompositeOperation = "source-over";
+  canvas.refresh();
+  return key;
+}

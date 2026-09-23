@@ -594,7 +594,12 @@ export interface ExpeditionLeaderboardResponse { weekKey: string; tieBreakPolicy
 export interface RaidContributionEntryDto { rank: number; playerId: string; displayName: string; damage: number; isMe: boolean; favoriteRelicId?: string; }
 /** 누적 기여 단계의 운영 수치와 수령 상태는 서버 스냅샷만 화면의 기준으로 삼는다. */
 export interface RaidRewardStageDto { id: string; threshold: number; reward: { currency: WalletItemKey; name: string; amount: number }; claimed: boolean; }
-/** 시즌 한 번의 전부. 화면은 이 응답만 읽고 남은 체력이나 기여를 다시 계산하지 않는다. */
+/**
+ * 서버 전체가 깎은 비율로 열리는 월드 진행 보상 한 칸. **참가하지 않은 플레이어도** 받는다.
+ * `reached`는 서버가 판정하며 화면은 비율을 다시 계산하지 않는다.
+ */
+export interface RaidWorldStageDto { id: string; ratio: number; reward: { currency: WalletItemKey; name: string; amount: number }; reached: boolean; claimed: boolean; }
+/** 월드 폭주 하루의 전부. 화면은 이 응답만 읽고 남은 체력이나 기여를 다시 계산하지 않는다. */
 export interface RaidSeasonResponse {
   seasonKey: string;
   bossRelicId: string;
@@ -606,22 +611,21 @@ export interface RaidSeasonResponse {
   dealtDamage: number;
   remainingHp: number;
   defeated: boolean;
-  /** 이번 시즌 내가 민 몫이다. 보상 단계가 읽는 값이기도 하다. */
+  /** 오늘 내가 민 몫(두 판의 피해 합)이다. 기여 보상 단계가 읽는 값이기도 하다. */
   myDamage: number;
   attemptsUsed: number;
   attemptsLimit: number;
   resetsAt: string;
   rewardStages: RaidRewardStageDto[];
-  /** 처치 보상은 시즌이 끝난 뒤 한 번만 수령할 수 있다. */
-  defeatRewardClaimable: boolean;
-  defeatRewardClaimed: boolean;
+  /** 서버 전체가 깎은 비율로 열리는 보상. 마지막 칸(100%)이 곧 토벌 보상이다. */
+  worldStages: RaidWorldStageDto[];
   entries: RaidContributionEntryDto[];
 }
 /** 원정 보스와 **같은 재현 규칙**을 쓴다 — 클라이언트 피해 숫자는 받지 않는다. */
 export interface SubmitRaidDamageRequest { requestId: string; actions: ExpeditionBossAction[]; }
 /** 한 판이 확정된 뒤의 시즌 전체 상태다. 화면은 이 응답으로 그대로 다시 그린다. */
 export interface SubmitRaidDamageResponse { season: RaidSeasonResponse; runDamage: number; endedAtMs: number; }
-/** 달성한 누적 단계 보상을 서버 멱등 기록으로 수령한다. `stageId`가 "defeat"이면 처치 보상이다. */
+/** 달성한 기여 단계나 월드 진행 단계를 서버 멱등 기록으로 수령한다. 두 표의 ID는 겹치지 않는다. */
 export interface ClaimRaidRewardRequest { requestId: string; stageId: string; }
 export interface ClaimRaidRewardResponse extends PlayerStateDto { stageId: string; reward: { currency: WalletItemKey; name: string; amount: number }; alreadyClaimed: boolean; season: RaidSeasonResponse; }
 /** 직접 플레이하지 않고 역대 최고 점수 일부와 절반의 노드 클리어 전리품만 즉시 정산하는 소탕 요청이다. */

@@ -490,7 +490,8 @@ export class PartyScene extends Phaser.Scene {
   /** 뒤로가기는 들어온 입구로 돌아간다. 던전은 고르던 단계·배율을 그대로 되살린다. */
   private leave(): void {
     const content = this.content;
-    if (content.content === "raid") startScene(this, "raid");
+    // 레이드 편성에서 나가는 길은 목록이 아니라 그 판(월드 폭주)이다 — 한 단계 앞이다.
+    if (content.content === "raid") startScene(this, "raid", { view: "world" });
     else if (content.content === "bounty") startScene(this, "bounty", { tierId: content.tierId, multiplier: content.multiplier });
     else if (content.content === "cake") startScene(this, "cakeOperation", { tierId: content.tierId, multiplier: content.multiplier });
     else startScene(this, "stageMap");

@@ -4,6 +4,11 @@ import { requiredBreakthroughForLevel } from "../core/levelDesign";
 /**
  * 레이드 — **경쟁이 아니라 함께 미는 보스전**이다.
  *
+ * 맨 위에 서는 것은 **월드 폭주**다. 시스템만 여는 하루 한 마리이고, 모든 플레이어가 체력 한
+ * 줄을 함께 깎는다. **잡지 못해도 된다** — 서버 전체가 깎은 비율마다 모든 플레이어에게 보상이
+ * 얹히고(`RAID_WORLD_REWARD_STAGES`), 내 몫은 하루 두 판의 피해 합으로 따로 받는다. 그 아래
+ * 친구가 소환한 레이드는 다음 단계에서 붙는다.
+ *
  * 원정의 폰토스가 "내 한 판이 몇 점인가"를 겨루는 자리라면, 레이드는 시즌 하나가 **보스 한
  * 마리의 공유 체력**을 갖고 참가자 전원의 피해가 그 한 줄을 깎는다. 그래서 화면이 먼저 말하는
  * 것은 내 순위가 아니라 **얼마나 남았나**이고, 목록은 순위표가 아니라 기여 목록이다.
@@ -22,11 +27,14 @@ import { requiredBreakthroughForLevel } from "../core/levelDesign";
  * `LV.n`과 실제로 맞는 수치가 갈리기 때문이다. **여기 적힌 수가 곧 화면에 서는 레벨이다** —
  * 유형이 레벨을 얹던 때(`endless` +8)는 40이라 적어 두고 48이 서 있었다.
  *
+ * **월드 폭주는 만렙(60)이다.** 돌파 네 칸이 모두 열리는 자리라, 보스가 한계 돌파로 얻는 기술이
+ * 전부 드러나는 유일한 판이다(지금은 네 칸 모두 "없음"이다).
+ *
  * **몸집과 걸음은 여기 적지 않는다.** 거대하고 느린 것은 이 개체의 성질이 아니라 **레이드라는
  * 자리의 성질**이라 유형 표(`ENCOUNTER_ROLE.endless`)가 갖는다 — 개체에 적으면 같은 몸이
  * 도감과 관문에 설 때까지 함께 느려진다.
  */
-const RAID_SEASON_BOSS_LEVEL = 48;
+const RAID_SEASON_BOSS_LEVEL = 60;
 
 export const RAID_SEASON_BOSS = {
   relicId: "sukusuino",
@@ -58,14 +66,12 @@ export const RAID_BOSS_BALANCE = {
 } as const;
 
 /**
- * 시즌 하나가 갖는 공유 체력.
+ * 월드 폭주 하루치의 공유 체력 — **레전드급**이다.
  *
- * **눈대중이 아니라 주 단위 총량에서 거꾸로 구한다.** 참가자 한 명이 하루 세 판(`DAILY_ATTEMPTS`)을
- * 돌고 한 판이 평균 2만 피해라면 하루 6만, 이레면 42만이다. 모의 참가자 스물넷이 같은 속도로
- * 밀면 주당 약 1,000만이므로, 그 언저리에 두면 **주 후반에 처치되는 무게**가 된다.
- *
- * 너무 낮으면 화요일에 끝나 남은 닷새가 빈 화면이 되고, 너무 높으면 끝내 못 잡아 처치 보상이
- * 한 번도 나가지 않는다. 실제 평균 피해가 쌓이면 이 값 하나만 다시 조정한다.
+ * 한 판의 피해는 실측으로 0.8만~2.6만(LV40~60 편성, 수쿠스이노 LV60)이고 한 사람이 하루 두 판을
+ * 치므로 인당 2~5만이다. 체력은 그 수백 배라 **모두가 함께여야** 비로소 줄이 움직이고, 날마다
+ * 다 깎이지 않을 수 있다 — 그것이 의도다. 깎은 비율만큼 모두에게 보상이 얹히므로 못 잡은 날도
+ * 헛수고가 아니다.
  */
 export const RAID_SEASON_TOTAL_HP = 10_000_000;
 
@@ -77,7 +83,7 @@ export const RAID_SEASON_TOTAL_HP = 10_000_000;
  * 않았다 — 두 줄이 **다른 단위**였기 때문이다. 그래서 판에 서는 보스의 체력을 시즌 게이지에서
  * 거꾸로 구한다: 시즌 줄의 100분의 1이 한 판의 보스이고, 그 위에서 깎은 만큼이 그대로 기여다.
  *
- * 400인 이유는 **하루 세 번짜리 도전 한 판이 판 안의 보스를 눕히지 못하되 눈에 보이게는 밀어야**
+ * 400인 이유는 **하루 두 번짜리 도전 한 판이 판 안의 보스를 눕히지 못하되 눈에 보이게는 밀어야**
  * 하기 때문이다. 1(게이지와 같은 몸)이면 한 판의 몫이 줄에서 보이지 않고, 1,000이면 첫 판에
  * 판 안의 보스가 통째로 넘어가 90초를 채울 이유가 사라진다.
  *
@@ -88,25 +94,43 @@ export const RAID_SEASON_TOTAL_HP = 10_000_000;
  */
 export const RAID_BOSS_HP_SCALE = 400;
 
-/** 하루에 도전할 수 있는 횟수다. UTC 날짜 경계로 초기화한다. */
-export const RAID_DAILY_ATTEMPTS = 3;
+/**
+ * 하루에 도전할 수 있는 횟수다. UTC 날짜 경계로 초기화한다.
+ *
+ * **두 판이다.** 내 기여는 그 두 판의 피해 합이고, 한 판만 쳐도 그 몫만큼은 받는다.
+ */
+export const RAID_DAILY_ATTEMPTS = 2;
 
 /**
- * 개인 누적 기여 보상.
+ * 내 기여 보상 — **오늘 두 판의 피해 합**이 문턱을 넘긴다.
  *
- * 순위가 아니라 **누적 피해**가 문턱을 넘긴다 — 협력전이라 늦게 들어온 사람도 같은 길을 걷게
- * 하려는 것이고, 등수로 끊으면 상위권이 굳은 뒤에는 밀 이유가 사라진다. 단계 ID가 서버의
- * 중복 수령 키다.
+ * 순위가 아니라 합이 문턱을 넘기는 이유는 협력전이라 늦게 들어온 사람도 같은 길을 걷게 하려는
+ * 것이다. 문턱은 한 판 실측(0.8만~2.6만)에서 잡았다 — 첫 문턱은 약한 편성의 한 판이면 넘고,
+ * 마지막은 강한 편성이 두 판을 다 쳐야 닿는다. 단계 ID가 서버의 중복 수령 키이며 날마다 새로 열린다.
  */
 export const RAID_CONTRIBUTION_REWARD_STAGES = [
-  { id: "raid-contrib-50k", threshold: 50_000, reward: { currency: "raidSigil", amount: 20 } },
-  { id: "raid-contrib-150k", threshold: 150_000, reward: { currency: "raidSigil", amount: 40 } },
-  { id: "raid-contrib-300k", threshold: 300_000, reward: { currency: "raidSigil", amount: 60 } },
-  { id: "raid-contrib-600k", threshold: 600_000, reward: { currency: "raidSigil", amount: 120 } },
+  { id: "raid-daily-8k", threshold: 8_000, reward: { currency: "raidSigil", amount: 5 } },
+  { id: "raid-daily-16k", threshold: 16_000, reward: { currency: "raidSigil", amount: 10 } },
+  { id: "raid-daily-28k", threshold: 28_000, reward: { currency: "raidSigil", amount: 15 } },
+  { id: "raid-daily-45k", threshold: 45_000, reward: { currency: "raidSigil", amount: 20 } },
 ] as const;
 
-/** 시즌 보스를 실제로 눕혔을 때 참가자 전원에게 한 번 나가는 몫이다. */
-export const RAID_DEFEAT_REWARD = { currency: "raidSigil", amount: 200 } as const;
+/**
+ * 월드 진행 보상 — 서버 전체가 깎은 **비율**이 문턱을 넘기면 **모든 플레이어**에게 한 번씩 열린다.
+ *
+ * 보스를 잡지 못해도 된다는 것이 이 표의 뜻이다. 처치 보상을 따로 두지 않고 마지막 단계(100%)가
+ * 그 몫을 맡는다 — 둘을 가르면 "다 깎은 날"에 같은 일로 보상이 두 번 나간다. 참가하지 않은
+ * 사람도 받는다: 다 같이 민 결과이고, 오늘 못 친 사람이 내일 다시 들어올 이유가 된다.
+ *
+ * 하루 합계는 내 기여(최대 50)와 월드 진행(최대 60)을 더해 110이다 — 한 주로 보면 예전 주간
+ * 시즌의 몫(약 440)과 비슷해 전리품 상점의 물가를 흔들지 않는다.
+ */
+export const RAID_WORLD_REWARD_STAGES = [
+  { id: "raid-world-25", ratio: 0.25, reward: { currency: "raidSigil", amount: 5 } },
+  { id: "raid-world-50", ratio: 0.5, reward: { currency: "raidSigil", amount: 10 } },
+  { id: "raid-world-75", ratio: 0.75, reward: { currency: "raidSigil", amount: 15 } },
+  { id: "raid-world-100", ratio: 1, reward: { currency: "raidSigil", amount: 30 } },
+] as const;
 
 /**
  * 모의 참가자 명단.

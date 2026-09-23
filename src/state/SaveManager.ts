@@ -406,8 +406,9 @@ export class SaveManager {
       myDamage: Number.isInteger(savedRaid?.myDamage) && (savedRaid?.myDamage ?? 0) >= 0 ? savedRaid!.myDamage! : 0,
       attemptsUsed: Number.isInteger(savedRaid?.attemptsUsed) && (savedRaid?.attemptsUsed ?? 0) >= 0 ? savedRaid!.attemptsUsed! : 0,
       attemptsDate: typeof savedRaid?.attemptsDate === "string" ? savedRaid.attemptsDate : "",
+      // 주간 시즌 시절의 처치 보상 기록(`defeatRewardClaimed`)은 읽지 않는다 — 월드 폭주는 날짜
+      // 키가 바뀌면 수령 기록을 통째로 비우므로 예전 값은 첫 조회에서 어차피 사라진다.
       claimedStageIds: Array.isArray(savedRaid?.claimedStageIds) ? savedRaid.claimedStageIds.filter((id): id is string => typeof id === "string") : [],
-      defeatRewardClaimed: savedRaid?.defeatRewardClaimed === true,
     };
     // 교류 도입 전 저장에는 서버 파견이 없으므로 빈 슬롯으로 명시 이관한다.
     const interaction = Number(legacy.saveVersion) >= 30 && legacy.interaction && typeof legacy.interaction === "object" ? structuredClone(legacy.interaction) : createEmptyInteractionProgress();
@@ -552,7 +553,7 @@ export class SaveManager {
     if (!data.dailyAdRewards || typeof data.dailyAdRewards.date !== "string" || !data.dailyAdRewards.claimsBySlot || Object.entries(data.dailyAdRewards.claimsBySlot).some(([id, count]) => !(id in adLimits) || !Number.isInteger(count) || count < 0 || count > adLimits[id]) || !Array.isArray(data.dailyAdRewards.requestIds) || data.dailyAdRewards.requestIds.some((id) => typeof id !== "string" || id.length === 0) || new Set(data.dailyAdRewards.requestIds).size !== data.dailyAdRewards.requestIds.length) fail("일일 광고 수령 정보가 올바르지 않습니다.");
     if (!data.expedition || typeof data.expedition.weekKey !== "string" || !Number.isInteger(data.expedition.playsThisWeek) || data.expedition.playsThisWeek < 0 || !Number.isInteger(data.expedition.bestScore) || data.expedition.bestScore < 0 || !Number.isInteger(data.expedition.allTimeBestScore) || data.expedition.allTimeBestScore < 0 || !Array.isArray(data.expedition.lastParty) || data.expedition.lastParty.length > 3 || new Set(data.expedition.lastParty).size !== data.expedition.lastParty.length || data.expedition.lastParty.some((id) => !data.ownedRelicIds.includes(id)) || (data.expedition.run !== null && normalizeExpeditionRun(data.expedition.run, data.ownedRelicIds) === null)) fail("원정 진행 정보가 올바르지 않습니다.");
     // 레이드는 내 몫과 수령 기록만 저장하므로 검사도 그 둘의 모양과 부호뿐이다.
-    if (!data.raid || typeof data.raid.seasonKey !== "string" || typeof data.raid.attemptsDate !== "string" || !Number.isInteger(data.raid.myDamage) || data.raid.myDamage < 0 || !Number.isInteger(data.raid.attemptsUsed) || data.raid.attemptsUsed < 0 || !Array.isArray(data.raid.claimedStageIds) || data.raid.claimedStageIds.some((id) => typeof id !== "string" || id.length === 0) || new Set(data.raid.claimedStageIds).size !== data.raid.claimedStageIds.length || typeof data.raid.defeatRewardClaimed !== "boolean") fail("레이드 진행 정보가 올바르지 않습니다.");
+    if (!data.raid || typeof data.raid.seasonKey !== "string" || typeof data.raid.attemptsDate !== "string" || !Number.isInteger(data.raid.myDamage) || data.raid.myDamage < 0 || !Number.isInteger(data.raid.attemptsUsed) || data.raid.attemptsUsed < 0 || !Array.isArray(data.raid.claimedStageIds) || data.raid.claimedStageIds.some((id) => typeof id !== "string" || id.length === 0) || new Set(data.raid.claimedStageIds).size !== data.raid.claimedStageIds.length) fail("레이드 진행 정보가 올바르지 않습니다.");
     // 표에 없는 단계까지 이긴 것으로 적힌 저장은 소탕으로 그만큼을 바로 털 수 있어 거절한다.
     if (!data.cakeOperation || !Number.isInteger(data.cakeOperation.clearedIndex)
       || data.cakeOperation.clearedIndex < -1 || data.cakeOperation.clearedIndex >= CAKE_OPERATION_TIERS.length) fail("치즈케이크 대작전 진행 정보가 올바르지 않습니다.");

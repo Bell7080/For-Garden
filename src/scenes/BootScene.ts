@@ -63,6 +63,8 @@ export class BootScene extends Phaser.Scene {
     // 성공 정산 뒤에는 이미 로드된 에셋을 다시 기다리지 않고, 같은 저장 복구 경계를 지난 뒤 로비로 간다.
     // 레이드는 제출 뒤 곧바로 시즌 판으로 되돌아간다 — 한 판 밀고 로비를 거쳐 다시 들어오게
     // 하면 세 번 도전하는 동안 같은 길을 여섯 번 지난다.
-    this.scene.start(data?.destination === "raid" ? "raid" : data?.destination === "lobby" ? "lobby" : "title");
+    // 레이드는 목록이 아니라 방금 친 그 판(월드 폭주)으로 돌아간다.
+    if (data?.destination === "raid") this.scene.start("raid", { view: "world" });
+    else this.scene.start(data?.destination === "lobby" ? "lobby" : "title");
   }
 }

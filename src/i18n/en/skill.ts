@@ -229,6 +229,7 @@ export const SKILL_EN = {
   "skill.breakthrough.ultimate": "Ultimate Upgrade",
   "skill.breakthrough.ferocity": "Frenzy Upgrade",
   "skill.breakthrough.passive": "Passive Upgrade",
+  "skill.breakthrough.effect.none": "None",
   "skill.breakthrough.effect.basic": "When \"{trigger}\" triggers, restores HP equal to {percent}% of {stat} and Taunts enemies in a wide area for {seconds}s.",
   "skill.breakthrough.effect.ultimate": "Casts \"{name}\" {casts} more times at {seconds}s intervals, each at {percent}% of the damage.",
   "skill.breakthrough.effect.ferocity": "When Frenzy ends, gains a shield equal to {percent}% of the damage taken during Frenzy and Taunts enemies in a wide area once more for {seconds}s.",

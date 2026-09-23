@@ -276,3 +276,23 @@ describe("도달 가능한 성장 자리", () => {
     expect(isGrowthReachable(1, BREAKTHROUGH_CAP + 1)).toBe(false);
   });
 });
+
+describe("\"없음\"이라는 한계 돌파 효과", () => {
+  it("는 표에는 서지만 강화로 치지 않는다 — 보스는 네 칸 모두 없음이다", async () => {
+    const { breakthroughEnhances } = await import("../../src/core/relicProgression");
+    const { getRelic } = await import("../../src/data/relics");
+    const { breakthroughEffectText } = await import("../../src/ui/skillPresentation");
+    for (const id of ["sukusuino", "pontos"]) {
+      const def = getRelic(id);
+      for (const slot of ["basic", "ultimate", "ferocity", "passive"] as const) {
+        // 규칙으로 못 박지 않고 효과 하나로 둔다 — 이 자리에 다른 효과를 넣으면 그대로 바뀐다.
+        expect(def.breakthroughEffects?.[slot]?.kind, `${id} ${slot}`).toBe("none");
+        expect(breakthroughEnhances(def, BREAKTHROUGH_CAP, slot), `${id} ${slot}`).toBe(false);
+        expect(breakthroughEffectText(def, slot)).toBe("없음");
+      }
+    }
+    // 아직 설계하지 않은 빈 슬롯은 예전대로 열리면 강화로 읽힌다.
+    expect(breakthroughEnhances({}, BREAKTHROUGH_CAP, "basic")).toBe(true);
+    expect(breakthroughEnhances({}, 0, "basic")).toBe(false);
+  });
+});

@@ -3093,6 +3093,12 @@ export const RELICS: RelicDef[] = [
       targeting: "battlefieldEnemies",
       statusEffects: [{ kind: "stun", seconds: 5 }],
     },
+    /*
+     * **한계 돌파 효과는 네 칸 모두 "없음"이다.** 보스는 돌파 없이도 충분히 세고, 돌파 단계는 레벨
+     * 상한을 맞추려고 들고 있을 뿐이다. 칸을 비워 두지 않고 "없음"으로 적어 두는 이유는 그것이
+     * 정해 둔 효과이기 때문이다 — 나중에 이 자리에 다른 효과를 넣으면 그대로 바뀐다.
+     */
+    breakthroughEffects: { basic: { kind: "none" }, ultimate: { kind: "none" }, ferocity: { kind: "none" }, passive: { kind: "none" } },
   },
   {
     /**
@@ -3264,6 +3270,12 @@ export const RELICS: RelicDef[] = [
       radius: 300,
       statusEffects: [{ kind: "stun", seconds: 2 }],
     },
+    /*
+     * **한계 돌파 효과는 네 칸 모두 "없음"이다.** 보스는 돌파 없이도 충분히 세고, 돌파 단계는 레벨
+     * 상한을 맞추려고 들고 있을 뿐이다. 칸을 비워 두지 않고 "없음"으로 적어 두는 이유는 그것이
+     * 정해 둔 효과이기 때문이다 — 나중에 이 자리에 다른 효과를 넣으면 그대로 바뀐다.
+     */
+    breakthroughEffects: { basic: { kind: "none" }, ultimate: { kind: "none" }, ferocity: { kind: "none" }, passive: { kind: "none" } },
   },
   {
     /**

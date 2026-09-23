@@ -251,6 +251,7 @@ export const SKILL_JA = {
   "skill.breakthrough.ultimate": "必殺技 強化",
   "skill.breakthrough.ferocity": "暴走 強化",
   "skill.breakthrough.passive": "パッシブ 強化",
+  "skill.breakthrough.effect.none": "なし",
   "skill.breakthrough.effect.basic": "「{trigger}」発動時、{stat}の{percent}%に当たる[[hp|体力]]を回復し、広い範囲の敵を{seconds}秒間[[taunt|挑発]]する。",
   "skill.breakthrough.effect.basicValue": "「{trigger}」発動時、{heal}だけ[[hp|体力]]を回復し、広い範囲の敵を{seconds}秒間[[taunt|挑発]]する。",
   "skill.breakthrough.effect.ultimate": "ダメージ量の{percent}%に当たる「{name}」を{seconds}秒間隔で{casts}回多く発動する。",

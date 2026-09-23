@@ -3,7 +3,7 @@ import { galleryPortraitPlacement, infoPortraitPlacement } from "./portraitPlace
 import { battleAssetFor, enableHitOnClick, placePuppet, playMotion, portraitAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugInfoAssetReady } from "../debug";
-import { breakthroughGrade, isBreakthroughSlotOpen, relicLevelCap } from "../core/relicProgression";
+import { breakthroughEnhances, breakthroughGrade, relicLevelCap } from "../core/relicProgression";
 import type { Passive, RelicDef, Skill, Ultimate } from "../core/types";
 import { KeywordManager } from "../managers/KeywordManager";
 import { AffinityBadge } from "./AffinityBadge";
@@ -330,7 +330,7 @@ export class EnemyInfoPopup {
         fallbackIcon: slotFallbackIcon(def, entry.slot),
         element: def.element, role: def.role, label: entry.label,
         // 강조는 돌파로 자란 칸만 갖는다 — 아군 창과 같은 규칙이다.
-        enhanced: isBreakthroughSlotOpen(snapshot.breakthrough, entry.slot),
+        enhanced: breakthroughEnhances(def, snapshot.breakthrough, entry.slot),
       }));
       const hit = this.scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerdown", () => container.setScale(1.08));
@@ -344,7 +344,7 @@ export class EnemyInfoPopup {
       // 패시브 위에만 이 개체의 피버 발현을 작게 얹는다. 야성은 벌이 아니라 상이라는 표시다.
       if (index === 0) {
         addInfoFerocityBadge(this.scene, this.popups, chrome, container.x, container.y + ENEMY_INFO.ferocityBadgeOffsetY, def, (from) => {
-          const breakthroughEffect = isBreakthroughSlotOpen(snapshot.breakthrough, "ferocity") ? breakthroughEffectText(def, "ferocity", def.stats) : undefined;
+          const breakthroughEffect = breakthroughEnhances(def, snapshot.breakthrough, "ferocity") ? breakthroughEffectText(def, "ferocity", def.stats) : undefined;
           openFerocityTraitPopup(this.scene, this.popups, this.keywords, def, { ...from, x: SCREEN_CENTER.x + from.x, y: SCREEN_CENTER.y + from.y }, { breakthroughEffect });
         });
       }
@@ -359,7 +359,7 @@ export class EnemyInfoPopup {
   ): void {
     const { def, breakthrough } = snapshot;
     // 적도 돌파로 스킬에 효과가 붙는다. 열린 등급의 몫만 노란 줄로 선다.
-    const breakthroughEffect = isBreakthroughSlotOpen(breakthrough, entry.slot) ? breakthroughEffectText(def, entry.slot, def.stats) : undefined;
+    const breakthroughEffect = breakthroughEnhances(def, breakthrough, entry.slot) ? breakthroughEffectText(def, entry.slot, def.stats) : undefined;
     openSkillPopup(this.scene, this.popups, this.keywords, buildSkillViewModel({
       def, breakthrough, kindLabel: entry.label, skill: entry.skill, gaugeCost: entry.gaugeCost, slot: entry.slot,
       breakthroughEffect,

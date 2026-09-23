@@ -1136,8 +1136,11 @@ export function breakthroughSlotLabel(slot: BreakthroughSlot): string {
 export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, stats?: Stats): string | undefined {
   const effects = def.breakthroughEffects;
   if (!effects) return undefined;
+  // "없음"도 정해 둔 효과 하나다 — 비워 둔 슬롯(아직 설계하지 않은 자리)과 달리 표에 그대로 적는다.
+  if (effects[slot]?.kind === "none") return t("skill.breakthrough.effect.none");
   if (slot === "basic" && effects.basic) {
     const effect = effects.basic;
+    if (effect.kind === "none") return undefined;
     if (effect.kind === "deepBleed") {
       const bleed = def.basic.statusEffects?.find((status) => status.kind === "bleed");
       return t("skill.breakthrough.effect.basic.deepBleed", {
@@ -1159,6 +1162,7 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
   }
   if (slot === "ultimate" && effects.ultimate) {
     const effect = effects.ultimate;
+    if (effect.kind === "none") return undefined;
     if (effect.kind === "execution") return t("skill.breakthrough.effect.ultimate.execution", { energy: trim(effect.energyRefundOnKill) });
     // 피해량의 몇 %는 **명중 시점의 상대값**이라 실제 수로 바꾸지 않는다(대상마다 달라진다).
     return t("skill.breakthrough.effect.ultimate", {
@@ -1168,12 +1172,14 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
   }
   if (slot === "ferocity" && effects.ferocity) {
     const effect = effects.ferocity;
+    if (effect.kind === "none") return undefined;
     if (effect.kind === "cleavingBasics") return t("skill.breakthrough.effect.ferocity.cleavingBasics");
     return t("skill.breakthrough.effect.ferocity", {
       percent: trim(effect.shieldPercentOfDamageTaken), seconds: trim(effect.tauntSeconds),
     });
   }
   if (slot === "passive" && effects.passive) {
+    if (effects.passive.kind === "none") return undefined;
     if (effects.passive.kind === "battleMaidAscension") {
       return t("skill.breakthrough.effect.passive.battleMaidAscension", { percent: trim(effects.passive.durabilityPercent) });
     }

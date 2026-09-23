@@ -274,6 +274,7 @@ export const SKILL_KO = {
   "skill.breakthrough.ultimate": "궁극기 강화",
   "skill.breakthrough.ferocity": "폭주 강화",
   "skill.breakthrough.passive": "패시브 강화",
+  "skill.breakthrough.effect.none": "없음",
   "skill.breakthrough.effect.basic": "「{trigger}」 발동 시 {stat}의 {percent}%에 해당하는 [[hp|체력]]을 회복하고 넓은 범위의 적을 {seconds}초 동안 [[taunt|도발]]한다.",
   "skill.breakthrough.effect.basicValue": "「{trigger}」 발동 시 {heal}만큼 [[hp|체력]]을 회복하고 넓은 범위의 적을 {seconds}초 동안 [[taunt|도발]]한다.",
   "skill.breakthrough.effect.ultimate": "피해량의 {percent}%에 해당하는 「{name}」{name!을} {seconds}초 간격으로 {casts} 번 더 시전한다.",

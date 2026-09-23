@@ -1964,6 +1964,19 @@ export interface BreakthroughEffects {
 }
 
 /**
+ * **"없음"이라는 돌파 효과.**
+ *
+ * 슬롯을 비워 두는 것(`undefined`)과 다르다 — 비워 둔 슬롯은 "아직 설계하지 않은 자리"라 정보창이
+ * 어느 기술이 달라질지를 말하지만, 이 값은 **그 자리의 효과가 정해졌고 그것이 없음**이라는 뜻이다.
+ * 보스(수쿠스이노·폰토스)처럼 돌파 없이도 충분히 센 개체가 쓴다. 규칙으로 못 박지 않고 효과
+ * 하나로 두는 이유는, 언제든 이 자리에 다른 효과를 넣어 바꿀 수 있어야 하기 때문이다.
+ * 전투는 아무것도 하지 않고, 화면은 표에 "없음"을 적되 액자에 `+`를 달지 않는다.
+ */
+export interface BreakthroughNone {
+  kind: "none";
+}
+
+/**
  * 기본 공격 돌파.
  *
  * `periodicGuard`는 **주기가 채워지는 한 방**(토리카의 「세 개의 뿔」)에만 얹힌다. 평타마다
@@ -1984,7 +1997,7 @@ export type BasicBreakthrough = {
   kind: "deepBleed";
   bleedMultiplier: number;
   healingReceivedReductionPercent: number;
-};
+} | BreakthroughNone;
 
 /**
  * 궁극기 돌파.
@@ -2004,7 +2017,7 @@ export type UltimateBreakthrough = {
 } | {
   kind: "execution";
   energyRefundOnKill: number;
-};
+} | BreakthroughNone;
 
 /**
  * 폭주 돌파.
@@ -2021,7 +2034,7 @@ export type FerocityBreakthrough = {
 } | {
   kind: "cleavingBasics";
   radius: number;
-};
+} | BreakthroughNone;
 
 /**
  * 패시브 돌파.
@@ -2037,7 +2050,7 @@ export type PassiveBreakthrough = {
   kind: "battleMaidAscension";
   durabilityPercent: number;
   rechargeOnKill: true;
-};
+} | BreakthroughNone;
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */
 interface StageBase {

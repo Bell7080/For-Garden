@@ -57,7 +57,7 @@ import { addSkillIconFrame, skillSlotLabel, type SkillIconTone } from "./SkillIc
 import { squeezeTextToWidth } from "./textFit";
 import { BREAK_CONFIRM, BREAK_STEPS, breakConfirmHeight, breakthroughStepsLayout } from "./breakthroughLayout";
 import { gameApi } from "../api/FakeServer";
-import { BREAKTHROUGH_STEPS, breakthroughFragmentCost, type BreakthroughStep, canBreakThrough, canFeedRelic, FEED_UNIT, isBreakthroughSlotOpen, nextBreakthrough, relicExpToNext, relicLevelCap, breakthroughGrade } from "../core/relicProgression";
+import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, type BreakthroughStep, canBreakThrough, canFeedRelic, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap, breakthroughGrade } from "../core/relicProgression";
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
@@ -1719,7 +1719,7 @@ export class InfoManager {
         // **강조는 돌파로 자란 칸만 갖는다.** 예전에는 궁극기 한 칸이 무조건 노란빛이었는데,
         // 그 색이 아무 상태도 말하지 않아 세 칸의 위계만 이유 없이 갈라 놓았다. 공개 프로필은
         // 그쪽 돌파 단계를 모르므로 강조하지 않는다.
-        enhanced: !this.publicProfile && isBreakthroughSlotOpen(breakthrough, slot),
+        enhanced: !this.publicProfile && breakthroughEnhances(def, breakthrough, slot),
       }));
       const hit = this.scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerdown", () => container.setScale(1.08));
@@ -1757,7 +1757,7 @@ export class InfoManager {
     const finalDef = { ...def, stats: relicProgression.getFinalStats(def.id) };
     const breakthrough = relicProgression.getProgress(def.id).breakthrough;
     openFerocityTraitPopup(this.scene, this.popups, this.keywords, finalDef, from, {
-      breakthroughEffect: this.publicProfile || !isBreakthroughSlotOpen(breakthrough, "ferocity")
+      breakthroughEffect: this.publicProfile || !breakthroughEnhances(def, breakthrough, "ferocity")
         ? undefined : breakthroughEffectText(def, "ferocity", finalDef.stats),
     });
   }
@@ -1770,7 +1770,7 @@ export class InfoManager {
     const breakthrough = relicProgression.getProgress(def.id).breakthrough;
     // **열린 돌파 등급의 몫만 넘긴다.** 아직 뚫지 않은 단계의 효과를 쪽지에 적으면 지금 싸우는
     // 이 개체가 하지 않는 일을 말하게 된다 — 무엇이 열리는지는 등급 돋보기가 여는 표가 맡는다.
-    const breakthroughEffect = slot && !this.publicProfile && isBreakthroughSlotOpen(breakthrough, slot)
+    const breakthroughEffect = slot && !this.publicProfile && breakthroughEnhances(def, breakthrough, slot)
       ? breakthroughEffectText(def, slot, finalDef.stats) : undefined;
     return buildSkillViewModel({
       def: finalDef, breakthrough, kindLabel, skill, gaugeCost, slot,
@@ -2278,7 +2278,8 @@ export function openBreakthroughStepsPopup(
         label: skillSlotLabel(entry.slot),
         // 이미 뚫은 줄은 정보창 아래 액자 줄과 **같은 얼굴**로 선다(강조색 + 이름 뒤의 `+`) —
         // 두 자리가 같은 것을 다르게 말하면 표를 읽고 돌아와 다시 맞춰 봐야 한다.
-        enhanced: reached,
+        // "없음"으로 정해 둔 자리는 뚫었어도 `+`를 달지 않는다 — 달라진 것이 없다.
+        enhanced: reached && def.breakthroughEffects?.[entry.slot]?.kind !== "none",
         // 액자는 그 줄의 주제라 안 열린 줄에서도 어느 기술인지 알아볼 수 있어야 한다.
         dimAlpha: reached ? undefined : BREAK_STEPS.lockedIconAlpha,
       });

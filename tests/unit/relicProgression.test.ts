@@ -278,11 +278,15 @@ describe("도달 가능한 성장 자리", () => {
 });
 
 describe("\"없음\"이라는 한계 돌파 효과", () => {
-  it("는 표에는 서지만 강화로 치지 않는다 — 보스는 네 칸 모두 없음이다", async () => {
+  it("는 표에는 서지만 강화로 치지 않는다 — 적 전용 개체는 네 칸 모두 없음이다", async () => {
     const { breakthroughEnhances } = await import("../../src/core/relicProgression");
     const { getRelic } = await import("../../src/data/relics");
     const { breakthroughEffectText } = await import("../../src/ui/skillPresentation");
-    for (const id of ["sukusuino", "pontos"]) {
+    // 적 전용 개체는 전부 "없음"이다 — 레벨 상한을 맞추려고 돌파 단계를 들고 있을 뿐이다.
+    const { RELICS } = await import("../../src/data/relics");
+    const enemyIds = RELICS.filter((relic) => relic.enemyOnly).map(({ id }) => id);
+    expect(enemyIds).toEqual(expect.arrayContaining(["sukusuino", "pontos", "toby", "koma"]));
+    for (const id of enemyIds) {
       const def = getRelic(id);
       for (const slot of ["basic", "ultimate", "ferocity", "passive"] as const) {
         // 규칙으로 못 박지 않고 효과 하나로 둔다 — 이 자리에 다른 효과를 넣으면 그대로 바뀐다.

@@ -1682,6 +1682,8 @@ export const RELICS: RelicDef[] = [
        */
       damageHealingPercent: 25,
     },
+    // 한계 돌파 효과는 네 칸 모두 "없음"이다 — 정해 둔 효과라 나중에 이 자리에 다른 효과를 넣으면 그대로 바뀐다.
+    breakthroughEffects: { basic: { kind: "none" }, ultimate: { kind: "none" }, ferocity: { kind: "none" }, passive: { kind: "none" } },
   },
   {
     id: "amo",
@@ -1778,6 +1780,8 @@ export const RELICS: RelicDef[] = [
       // 피해 없이 기존 끌어당김·도발·자기 보호막 경로를 재사용하고 마지막에 조가비 쿨다운만 초기화한다.
       selfGuard: { tauntSeconds: 5, pull: { radius: 420, distance: 150 }, shieldMaxHpPercent: 25, resetShellGuardCooldown: true },
     },
+    // 한계 돌파 효과는 네 칸 모두 "없음"이다 — 정해 둔 효과라 나중에 이 자리에 다른 효과를 넣으면 그대로 바뀐다.
+    breakthroughEffects: { basic: { kind: "none" }, ultimate: { kind: "none" }, ferocity: { kind: "none" }, passive: { kind: "none" } },
   },
   {
     id: "ripa",
@@ -1903,6 +1907,8 @@ export const RELICS: RelicDef[] = [
       // 2겹은 이미 묻은 1겹과 합쳐 반응한다는 입력 순서를 화면의 세 칸과 일치시킨다.
       reagentStacks: 2,
     },
+    // 한계 돌파 효과는 네 칸 모두 "없음"이다 — 정해 둔 효과라 나중에 이 자리에 다른 효과를 넣으면 그대로 바뀐다.
+    breakthroughEffects: { basic: { kind: "none" }, ultimate: { kind: "none" }, ferocity: { kind: "none" }, passive: { kind: "none" } },
   },
   {
     // 코마는 1-10에서만 처음 등장하지만 스테이지 전용 보정이 아닌 독립 영구 캐릭터다.
@@ -2057,6 +2063,8 @@ export const RELICS: RelicDef[] = [
       // 주고받는 총량에서 언제나 지는 쪽이 된다.
       damageHealingPercent: 40,
     },
+    // 한계 돌파 효과는 네 칸 모두 "없음"이다 — 정해 둔 효과라 나중에 이 자리에 다른 효과를 넣으면 그대로 바뀐다.
+    breakthroughEffects: { basic: { kind: "none" }, ultimate: { kind: "none" }, ferocity: { kind: "none" }, passive: { kind: "none" } },
   },
   {
     // 신규 저장 키 `mette`는 표시명이나 에셋 번호와 분리한 안정적인 내부 ID다.
@@ -3388,6 +3396,8 @@ export const RELICS: RelicDef[] = [
       targeting: "nearbyEnemies",
       radius: 260,
     },
+    // 한계 돌파 효과는 네 칸 모두 "없음"이다 — 정해 둔 효과라 나중에 이 자리에 다른 효과를 넣으면 그대로 바뀐다.
+    breakthroughEffects: { basic: { kind: "none" }, ultimate: { kind: "none" }, ferocity: { kind: "none" }, passive: { kind: "none" } },
   },
   {
     /**
@@ -3500,6 +3510,8 @@ export const RELICS: RelicDef[] = [
       targeting: "nearbyEnemies",
       radius: 260,
     },
+    // 한계 돌파 효과는 네 칸 모두 "없음"이다 — 정해 둔 효과라 나중에 이 자리에 다른 효과를 넣으면 그대로 바뀐다.
+    breakthroughEffects: { basic: { kind: "none" }, ultimate: { kind: "none" }, ferocity: { kind: "none" }, passive: { kind: "none" } },
   },
   {
     /**
@@ -3612,6 +3624,8 @@ export const RELICS: RelicDef[] = [
       targeting: "nearbyEnemies",
       radius: 260,
     },
+    // 한계 돌파 효과는 네 칸 모두 "없음"이다 — 정해 둔 효과라 나중에 이 자리에 다른 효과를 넣으면 그대로 바뀐다.
+    breakthroughEffects: { basic: { kind: "none" }, ultimate: { kind: "none" }, ferocity: { kind: "none" }, passive: { kind: "none" } },
   },
   {
     /**
@@ -3724,6 +3738,8 @@ export const RELICS: RelicDef[] = [
       targeting: "nearbyEnemies",
       radius: 260,
     },
+    // 한계 돌파 효과는 네 칸 모두 "없음"이다 — 정해 둔 효과라 나중에 이 자리에 다른 효과를 넣으면 그대로 바뀐다.
+    breakthroughEffects: { basic: { kind: "none" }, ultimate: { kind: "none" }, ferocity: { kind: "none" }, passive: { kind: "none" } },
   },
   {
     /**
@@ -3836,6 +3852,8 @@ export const RELICS: RelicDef[] = [
       targeting: "nearbyEnemies",
       radius: 260,
     },
+    // 한계 돌파 효과는 네 칸 모두 "없음"이다 — 정해 둔 효과라 나중에 이 자리에 다른 효과를 넣으면 그대로 바뀐다.
+    breakthroughEffects: { basic: { kind: "none" }, ultimate: { kind: "none" }, ferocity: { kind: "none" }, passive: { kind: "none" } },
   },
 ];
 

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { requiredBreakthroughForLevel } from "../core/levelDesign";
 import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import { GameApiError, type AdSlotOperationsDto } from "../api/contracts";
@@ -39,7 +40,7 @@ import { expeditionEnemyLevel, getExpeditionEncounterEnemies } from "../data/exp
 import { formatCurrency } from "../core/formatCurrency";
 import { drawInnerVignette } from "../ui/holo";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
-import { EnemyInfoPopup } from "../ui/EnemyInfoPopup";
+import { addEnemyPortraitTap, EnemyInfoPopup } from "../ui/EnemyInfoPopup";
 import { bindLongPress } from "../ui/longPressInfo";
 import { groundedPortraitBounds } from "../ui/portraitPlacement";
 import { NodeEnemyPreview } from "../ui/NodeEnemyPreview";
@@ -79,7 +80,7 @@ const FORMATION = { y: 540, firstX: 230, stepX: 310, width: 250, height: 290, gr
 const RANKING = {
   // 얼굴이 제목 줄 바로 아래에서 시작하도록 위쪽 여백은 그대로 두고, 발끝은 화면 아래 UI 뒤로
   // 숨을 만큼 크게 세운다.
-  boss: { groundY: BASE_HEIGHT + 40, height: 1720 },
+  boss: { groundY: BASE_HEIGHT + 40, height: 1720, tap: { top: 280, bottom: 1300, width: 620 } },
   score: { y: 1470, width: 900, height: 190 },
   utility: { y: 1610, width: 330, height: 82, gap: 24 },
   actions: { y: 1800, height: 130, sortieWidth: 460, sweepWidth: 250, gap: 24 },
@@ -362,8 +363,9 @@ export class ExpeditionScene extends Phaser.Scene {
       const enemies = getExpeditionEncounterEnemies(node.type, node.floor);
       this.selectedNode = node; this.startButton?.setEnabled(true);
       // 선택 세대가 바뀌면 프리팹이 기존 SD와 늦게 끝난 로드 요청을 함께 폐기한다.
-      // 원정은 아직 슬롯별 돌파가 없지만 같은 미리보기 계약에 각 슬롯의 성장 상태를 명시한다.
-      const growth = enemies.map(() => ({ level, breakthrough: 0 }));
+      // 원정은 슬롯별 돌파가 없어 그 레벨에 닿는 데 필요한 단계를 쓴다 — 0으로 두면 20을 넘는
+      // 층에서 정보창이 상한보다 높은 레벨을 세운다.
+      const growth = enemies.map(() => ({ level, breakthrough: requiredBreakthroughForLevel(level) }));
       this.enemyPreview?.showAt(nodeY, { title: t("expedition.node.title", { floor: node.floor, type: names[node.type] }), growth, enemies, onEnemyClick: (enemy, slot) => this.enemyInfo?.show({ def: enemy, level: slot.level, breakthrough: slot.breakthrough }) });
       return;
     }
@@ -601,6 +603,13 @@ export class ExpeditionScene extends Phaser.Scene {
    */
   private buildRanking(status = expeditionManager.status()): void {
     void this.loadBossPortrait();
+    // 이번 주 보스를 출격 전에 들여다보는 입구 — 지도의 보스 노드가 여는 창과 같은 레벨·같은
+    // 정의를 쓴다(`handleNodeSelection`). 두 곳이 따로 정하면 같은 보스가 두 수치로 선다.
+    const bossInfo = new EnemyInfoPopup(this, new PopupLayer(this, 2200));
+    const bossLevel = 20;
+    addEnemyPortraitTap(this, RANKING.boss.tap, () => this.bossPortrait, () => bossInfo.show({
+      def: getExpeditionEncounterEnemies("boss", 20)[0], level: bossLevel, breakthrough: requiredBreakthroughForLevel(bossLevel),
+    }));
     this.renderMyScore(t("expedition.syncing"));
     void this.refreshMyScore();
 

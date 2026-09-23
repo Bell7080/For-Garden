@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { galleryPortraitPlacement, infoPortraitPlacement } from "./portraitPlacement";
-import { battleAssetFor, placePuppet, portraitAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
+import { battleAssetFor, enableHitOnClick, placePuppet, playMotion, portraitAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugInfoAssetReady } from "../debug";
 import { breakthroughGrade, isBreakthroughSlotOpen, relicLevelCap } from "../core/relicProgression";
@@ -21,6 +21,7 @@ import { drawFrameVignette, drawGlassFade, drawShapeOutline } from "./holo";
 import { popupArtShape, popupBodyShapeMask } from "./popupArt";
 import { addBreakthroughGradeMark } from "./rarityMark";
 import { addSectionTitle } from "./SectionTitle";
+import { shrinkTextToWidth } from "./textFit";
 import { addSkillIconFrame, skillSlotLabel } from "./SkillIconFrame";
 import { openSkillPopup } from "./SkillPopup";
 import { breakthroughEffectText } from "./skillPresentation";
@@ -233,9 +234,14 @@ export class EnemyInfoPopup {
     chrome.add([rarityGlow, rarityText]);
     paintRarityGem(rarityText, rarityGlow, def.rarity);
     // 이름은 같은 글자를 검게 한 겹 어긋나게 깔아 그림자를 만든다. 흐린 그림자보다 또렷하다.
-    chrome.add(scene.add.text(ENEMY_INFO.left + 6, ENEMY_INFO.nameY + 8, def.name, textStyle({ role: "display", size: 84, color: "#05070a" })).setOrigin(0, 0.5).setAlpha(0.85));
+    const shadow = scene.add.text(ENEMY_INFO.left + 6, ENEMY_INFO.nameY + 8, def.name, textStyle({ role: "display", size: 84, color: "#05070a" })).setOrigin(0, 0.5).setAlpha(0.85);
     const name = scene.add.text(ENEMY_INFO.left, ENEMY_INFO.nameY, def.name, textStyle({ role: "display", size: 84 })).setOrigin(0, 0.5);
-    chrome.add(name);
+    // 이름과 뱃지 둘이 돌파 등급 표식 앞에서 끝나도록 이름만 줄인다. 뱃지를 줄이면 속성·직군이
+    // 개체마다 다른 크기로 서고, 그대로 두면 긴 이름이 뱃지를 오른쪽 기둥 위로 밀어낸다.
+    const { badge } = ENEMY_INFO;
+    shrinkTextToWidth(name, ENEMY_INFO.nameRight - ENEMY_INFO.left - (badge.gap + badge.element + 12 + badge.role));
+    shadow.setFontSize(name.style.fontSize);
+    chrome.add([shadow, name]);
     chrome.add(scene.add.text(ENEMY_INFO.left + 4, ENEMY_INFO.numberY, `NO.${def.specimenNumber}   ${def.origin}`, textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
     // 이름 폭이 개체마다 다르므로 뱃지 자리도 그릴 때마다 이름 끝에서 다시 잡는다.
     const badgeLeft = ENEMY_INFO.left + name.width + ENEMY_INFO.badge.gap;
@@ -396,6 +402,9 @@ export class EnemyInfoPopup {
       puppet.setAlpha(0);
       this.scene.tweens.add({ targets: puppet, alpha: 1, duration: 220 });
     }
+    // SD는 아군 정보창과 같이 **누르면 한 번 튄다** — 같은 받침에 선 SD가 한쪽 창에서만 반응하면
+    // 적 창의 SD가 그림으로 읽힌다.
+    enableHitOnClick(this.scene, figure);
     setDebugInfoAssetReady({ portrait: true, sd: true });
   }
 }
@@ -404,5 +413,31 @@ export class EnemyInfoPopup {
 function addAffinityTap(scene: Phaser.Scene, x: number, y: number, size: number, onTap: () => void): Phaser.GameObjects.Rectangle {
   const hit = scene.add.rectangle(x, y, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
   hit.on("pointerup", onTap);
+  return hit;
+}
+
+/**
+ * 화면에 크게 선 적 원화를 누르면 그 적의 정보창을 연다(레이드 시즌 보스 · 원정 기록 화면).
+ *
+ * 입력은 원화가 아니라 **상반신 둘레의 투명한 면**이 받는다 — 화면 밑동까지 서는 원화를 통째로
+ * 입력으로 두면 그 앞의 목록·조작 뒤에 비친 다리까지 눌린다. 면은 원화(층 5) 바로 위, 그 앞의
+ * 판·버튼보다 아래에 서므로 버튼과 목록이 먼저 손을 받는다. 누르면 정보창의 인물과 같이 한 번
+ * 튀고 창이 열린다.
+ */
+export function addEnemyPortraitTap(
+  scene: Phaser.Scene,
+  zone: { top: number; bottom: number; width: number },
+  portrait: () => PuppetCreature | undefined,
+  onTap: () => void,
+): Phaser.GameObjects.Rectangle {
+  const hit = scene.add
+    .rectangle(BASE_WIDTH / 2, (zone.top + zone.bottom) / 2, zone.width, zone.bottom - zone.top, 0xffffff, 0)
+    .setDepth(6)
+    .setInteractive({ useHandCursor: true });
+  hit.on("pointerup", () => {
+    const creature = portrait();
+    if (creature) playMotion(scene, creature, "hit");
+    onTap();
+  });
   return hit;
 }

@@ -3,7 +3,7 @@ import { raidBossDef } from "../core/raid";
 import type { BattleStageDef, RelicDef } from "../core/types";
 import { bountyRoundEnemy, bountyRoundLevel, BOUNTY_ROLE, BOUNTY_TIERS, getBountyTier } from "./bounty";
 import { CAKE_OPERATION_TIERS, cakeOperationEnemies, cakeOperationEnemyDisplayLevel, cakeOperationRole, getCakeOperationTier } from "./cakeOperation";
-import type { EncounterRole } from "../core/levelDesign";
+import { requiredBreakthroughForLevel, type EncounterRole } from "../core/levelDesign";
 import { RAID_SEASON_BOSS } from "./raid";
 import { getRelic } from "./relics";
 import { getStageEnemies, stageEnemyGrowth, stageEnemyRole } from "./stages";
@@ -75,7 +75,7 @@ export function partyPreview(content: PartyContent, stage: BattleStageDef): Part
   }
   if (content.content === "bounty") {
     const shown = getBountyTier(content.tierId).rounds.map((round, index) => ({
-      def: bountyRoundEnemy(round), level: bountyRoundLevel(round), breakthrough: 0, round: index + 1,
+      def: bountyRoundEnemy(round), level: bountyRoundLevel(round), breakthrough: requiredBreakthroughForLevel(bountyRoundLevel(round)), round: index + 1,
     }));
     return { shown, all: shown.map(({ def }) => def), role: BOUNTY_ROLE };
   }
@@ -84,7 +84,7 @@ export function partyPreview(content: PartyContent, stage: BattleStageDef): Part
     const all = cakeOperationEnemies(tier);
     // 다섯 자매가 차례로 되풀이되므로 앞의 다섯이 곧 이 판의 얼굴 전부다.
     const level = cakeOperationEnemyDisplayLevel(tier).level;
-    const shown = all.slice(0, 5).map((def) => ({ def, level, breakthrough: 0 }));
+    const shown = all.slice(0, 5).map((def) => ({ def, level, breakthrough: requiredBreakthroughForLevel(level) }));
     return { shown, all, role: cakeOperationRole(tier), hordeCount: all.length };
   }
   const all = getStageEnemies(stage);

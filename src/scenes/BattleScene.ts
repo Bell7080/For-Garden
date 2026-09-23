@@ -504,9 +504,10 @@ export class BattleScene extends Phaser.Scene {
       // 일반 스테이지의 적도 능력치뿐 아니라 스킬 돌파 효과까지 슬롯별 스냅샷을 사용한다.
       // 능력치 복사본과 같은 formationSlot 순서로 돌파 스킬 스냅샷을 맞춘다.
       augmentEffects: traitEffects,
-      // 현상수배는 정예 하나가 혼자 서므로 스테이지의 슬롯별 돌파 표를 읽지 않는다.
+      // 대작전·현상수배는 스테이지의 슬롯별 돌파 표를 읽지 않고, 정보창과 같은 배치 표
+      // (`placedEnemyIndex`)의 돌파를 쓴다 — 두 곳이 따로 정하면 창이 말한 돌파 효과가 전투에 없다.
       enemyBreakthroughs: cakeTier || this.battleInput.mode === "bounty"
-        ? stageEnemies.map(() => 0)
+        ? [...placedEnemyIndex(this.battleInput, stage, stageEnemies).values()].map(({ breakthrough }) => breakthrough)
         : stageEnemyGrowth(stage).map(({ breakthrough }) => breakthrough),
       /*
        * **몸집은 그 적이 어떤 유형으로 섰는가가 정한다**(`ENCOUNTER_ROLE`). 혼자 선 정예는 크고,

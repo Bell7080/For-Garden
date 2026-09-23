@@ -5,7 +5,7 @@ import { BOUNTY_TIERS } from "../../src/data/bounty";
 import { CAKE_OPERATION_TIERS } from "../../src/data/cakeOperation";
 import {
   DUNGEON_LOBBY, dungeonActionButtonX, dungeonActionFitsAboveBackButton, dungeonListBottom, dungeonMultiplierChipX,
-  dungeonRowCenterY, dungeonRowFaceX, dungeonSummaryTop,
+  dungeonRowCenterY, dungeonRowFaceX, dungeonSummaryTitleTop, dungeonSummaryTop,
 } from "../../src/ui/dungeonLobbyLayout";
 
 describe("던전 입구 배치표", () => {
@@ -21,6 +21,8 @@ describe("던전 입구 배치표", () => {
   it("가장 긴 목록도 요약 판 위에서 끝나고 아래 세 줄은 서로 겹치지 않는다", () => {
     const longest = Math.max(CAKE_OPERATION_TIERS.length, BOUNTY_TIERS.length);
     expect(dungeonListBottom(longest)).toBeLessThan(dungeonSummaryTop());
+    // 판 윗변에 걸터앉는 제목표(적 전투력·보상)도 목록 줄에 닿지 않는다.
+    expect(dungeonListBottom(longest)).toBeLessThan(dungeonSummaryTitleTop());
     const summaryBottom = DUNGEON_LOBBY.summary.y + DUNGEON_LOBBY.summary.height / 2;
     const chipTop = DUNGEON_LOBBY.multiplier.y - DUNGEON_LOBBY.multiplier.chipHeight / 2;
     const chipBottom = DUNGEON_LOBBY.multiplier.y + DUNGEON_LOBBY.multiplier.chipHeight / 2;

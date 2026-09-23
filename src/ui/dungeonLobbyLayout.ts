@@ -37,8 +37,12 @@ export const DUNGEON_LOBBY = {
    *
    * 현상수배 아래에 서던 "출전 순서" 자리를 이 판이 맡는다. 순서는 편성 화면이 이미 적과 나란히
    * 보여 주므로 입구에서는 **들어갈지 말지를 정하는 두 수**만 남긴다.
+   *
+   * 두 이름표는 판 안의 회색 글자가 아니라 **판 윗변에 걸터앉는 제목표**다(`addSectionTitle`) —
+   * 다른 판의 제목과 같은 위계라 같은 양식으로 선다. 그 표가 판 위로 반 뼘 솟으므로 목록은
+   * 그 끝(`dungeonSummaryTitleTop`)보다 위에서 끝난다.
    */
-  summary: { y: 1368, width: 920, height: 136 },
+  summary: { y: 1378, width: 920, height: 136, titleGap: 24 },
   multiplier: { y: 1508, chipWidth: 150, chipHeight: 92, gap: 22 },
   action: { y: 1650, width: 400, height: 116, gap: 32 },
 } as const;
@@ -58,6 +62,11 @@ export function dungeonListBottom(count: number): number {
 /** 요약 판의 윗변. 목록은 그보다 위에서 끝나야 한다. */
 export function dungeonSummaryTop(): number {
   return DUNGEON_LOBBY.summary.y - DUNGEON_LOBBY.summary.height / 2;
+}
+
+/** 요약 판의 제목표가 솟는 끝. 제목표(글자 34 → 높이 52)가 윗변 4px 위에 걸터앉는다. */
+export function dungeonSummaryTitleTop(): number {
+  return dungeonSummaryTop() - 4 - Math.round(34 * 1.52) / 2;
 }
 
 /** 배율 칩 `index`의 중심 x. 칩 묶음은 화면 가운데에 선다. */

@@ -28,18 +28,30 @@ describe("적 정보 팝업 배치", () => {
    * 여는 문이 아군 정보창에만 있어 화면 어디에서도 읽을 수 없었다. 자리는 원화 돋보기와 같은
    * 기둥이고, 둘이 겹치지도 이름 블록·스킬 줄을 침범하지도 않아야 한다.
    */
-  it("은 원화 돋보기 아래 같은 기둥에 관찰 일지 입구를 둔다", () => {
+  it("은 원화 돋보기 위 같은 기둥에 관찰 일지 입구를 둔다", () => {
     const { journalButton, portraitMagnifier, numberY, skills } = ENEMY_INFO;
     const size = 76;
-    // 같은 x에 세로로 붙어 "더 들여다보는 조작"이 한 덩어리로 읽힌다.
+    // 같은 x에 세로로 붙어 "더 들여다보는 조작"이 한 덩어리로 읽힌다. 순서는 아군 정보창과 같이
+    // 일지가 위, 돋보기가 아래다.
     expect(journalButton.x).toBe(portraitMagnifier.x);
-    expect(journalButton.y).toBeGreaterThan(portraitMagnifier.y);
+    expect(journalButton.y).toBeLessThan(portraitMagnifier.y);
     // 두 조작이 서로 겹치지 않는다.
-    expect(journalButton.y - portraitMagnifier.y).toBeGreaterThan(size);
+    expect(portraitMagnifier.y - journalButton.y).toBeGreaterThan(size);
     // 위로는 개체번호 줄을, 아래로는 스킬 액자 줄을 침범하지 않는다.
     expect(journalButton.y - size / 2).toBeGreaterThan(numberY);
-    expect(journalButton.y + size / 2).toBeLessThan(skills.y - skills.size / 2);
+    expect(portraitMagnifier.y + size / 2).toBeLessThan(skills.y - skills.size / 2);
     expect(insideEnemyInfoBody({ x: journalButton.x, y: journalButton.y, width: size, height: size })).toBe(true);
+  });
+
+  it("은 레벨 칸의 제목표를 이름·뱃지 줄 아래에 둔다", () => {
+    // 이름이 긴 개체는 뱃지가 오른쪽 기둥 위까지 밀려 `/레벨` 제목표가 속성·직군을 덮었다.
+    const { nameY, badge, levelPanel, nameRight, gradeRow, statPanel, figure } = ENEMY_INFO;
+    const titleHalf = Math.round(34 * 1.52) / 2;
+    expect(levelPanel.top - 4 - titleHalf).toBeGreaterThan(nameY + badge.element / 2);
+    // 이름과 뱃지가 끝나는 선은 돌파 등급 표식 앞이다.
+    expect(nameRight).toBeLessThan(gradeRow.x - gradeRow.size / 2);
+    // 능력치 칸을 내린 만큼 SD의 머리 위에 걸리지 않는다.
+    expect(statPanel.top + statPanel.height).toBeLessThan(figure.groundY - figure.height);
   });
 
   it("은 오른쪽 칸·스킬 줄이 몸판의 깎인 모서리 안에 든다", () => {

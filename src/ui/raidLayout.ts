@@ -34,6 +34,13 @@ export const RAID_BOSS_SPOT = {
    * 그 위에 깔리는 반투명 판(`RAID_BOARD_PLATE`)이 맡는다.
    */
   fade: { top: 760, bottom: 1216 },
+  /**
+   * 원화를 누르면 적 정보창이 열리는 자리 — 상반신 둘레만 받는다.
+   *
+   * 원화 전체를 입력으로 두면 체력 줄·기여 목록 뒤의 다리까지 눌려, 목록을 끌다 창이 뜬다.
+   * 머리글 줄과 남은 체력 이름표 사이에서 끝낸다.
+   */
+  tap: { top: 280, bottom: 940, width: 620 },
 } as const;
 
 /** 남은 체력 게이지. 보스 발밑을 지나 화면 폭을 거의 다 쓴다. */
@@ -59,17 +66,22 @@ export const RAID_HP_BAR = {
  * 기여 목록이 앉는 **반투명 판 한 겹.**
  *
  * 보스를 끊지 않고도 목록을 배경에서 떼어 놓는 방법이다 — 원화는 이 판 아래로 계속 서 있고,
- * 유리면 너머로 비쳐 "그 앞에 목록이 떠 있다"로 읽힌다. 제목표가 윗변에 걸터앉으므로 판은
- * 그보다 한 뼘 위에서 시작한다.
+ * 유리면 너머로 비쳐 "그 앞에 목록이 떠 있다"로 읽힌다.
+ *
+ * **제목표는 판 안이 아니라 윗변에 걸터앉는다**(`RAID_BOARD.titleY`) — 정보창의 칸·팝업 머리글과
+ * 같은 문법이다. 판 안쪽에 들여 세우던 때는 같은 위계의 제목이 이 화면에서만 맨 글자처럼 섰다.
  */
 export const RAID_BOARD_PLATE = {
-  top: 1134,
+  top: 1150,
   bottom: BASE_HEIGHT - 206,
   width: BASE_WIDTH - 56,
 } as const;
 
 export const RAID_BOARD = {
-  titleY: 1168,
+  /** 판 윗변에 걸터앉는 제목표의 가운데. 정보창의 칸 제목과 같이 윗변에서 4px 위다. */
+  titleY: RAID_BOARD_PLATE.top - 4,
+  /** 제목표의 왼쪽 끝 — 판의 왼쪽 변이다. */
+  titleX: (BASE_WIDTH - RAID_BOARD_PLATE.width) / 2,
   viewport: { top: 1216, bottom: BASE_HEIGHT - 232 },
   centerX: BASE_WIDTH / 2,
 } as const;

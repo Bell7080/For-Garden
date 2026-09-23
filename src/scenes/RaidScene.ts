@@ -13,9 +13,11 @@ import { FaceFrame } from "../ui/FaceFrame";
 import { addBackButton } from "../ui/IconButton";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { PopupLayer } from "../ui/PopupLayer";
+import { addEnemyPortraitTap, EnemyInfoPopup } from "../ui/EnemyInfoPopup";
+import { raidBossDef } from "../core/raid";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { RANKING_LIST, RANKING_VISIBLE_RANKS, rankingMedal, rankingRowY } from "../ui/expeditionRankingLayout";
-import { chipPoints, drawGlassFade, drawLayer, drawVignette, HOLO, HoloBar, slantedRect } from "../ui/holo";
+import { chipPoints, drawGlassFade, drawLayer, drawShapeEdge, drawVignette, HOLO, HoloBar, slantedRect } from "../ui/holo";
 import { RAID_ACTIONS, RAID_BOARD, RAID_BOARD_PLATE, RAID_BOSS_SPOT, RAID_HEADER, RAID_HP_BAR, RAID_HP_BAR_COLOR, raidBoardViewport } from "../ui/raidLayout";
 import { COLOR, textStyle } from "../ui/theme";
 import { LOBBY_RETURN } from "./lobbyEntry";
@@ -41,6 +43,8 @@ export class RaidScene extends Phaser.Scene {
   private listMask?: Phaser.GameObjects.Rectangle;
   private sortieButton?: Button;
   private bossMask?: Phaser.GameObjects.Rectangle;
+  /** 원화를 누르면 여는 적 정보창. 보상 창과 같은 층 위에 얹힌다. */
+  private bossInfo?: EnemyInfoPopup;
 
   constructor() {
     super("raid");
@@ -58,6 +62,12 @@ export class RaidScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.dispose());
     addBackButton(this, () => startScene(this, "lobby", LOBBY_RETURN.sortie));
     void this.loadBossPortrait();
+    // 시즌 보스를 **출격 전에** 들여다볼 수 있게 원화가 곧 입구다 — 편성 화면까지 가야 스킬과
+    // 능력치를 볼 수 있으면, 무엇을 데려갈지 정하는 판단이 편성 화면 한 곳에 몰린다.
+    this.bossInfo = new EnemyInfoPopup(this, new PopupLayer(this, 2200));
+    addEnemyPortraitTap(this, RAID_BOSS_SPOT.tap, () => this.bossPortrait, () => this.bossInfo?.show({
+      def: raidBossDef(getRelic(RAID_SEASON_BOSS.relicId)), level: RAID_SEASON_BOSS.level, breakthrough: RAID_SEASON_BOSS.breakthrough,
+    }));
     /*
      * 원화의 아래쪽이 잠기는 띠. 남은 체력 줄의 배경도 이 한 겹이 함께 맡는다.
      *
@@ -72,10 +82,16 @@ export class RaidScene extends Phaser.Scene {
      * 원화는 판 너머로 비치면서도 목록과 분리된다 — 잘라서 만드는 분리는 단면을 남기지만
      * 겹쳐서 만드는 분리는 깊이를 남긴다.
      */
+    /*
+     * 판은 정보창의 칸(`addInfoPanel`)과 같은 남색 유리다. 채움 자리에 투명도 값(`HOLO.glass`)을
+     * 색으로 넘기던 때는 그 수가 0x000000으로 읽혀 이 판만 새까맣게 섰다.
+     */
     const plate = RAID_BOARD_PLATE;
+    const plateShape = slantedRect(plate.width, plate.bottom - plate.top);
     this.add.existing(drawLayer(this, BASE_WIDTH / 2, (plate.top + plate.bottom) / 2,
-      slantedRect(plate.width, plate.bottom - plate.top), { fill: HOLO.glass, alpha: 0.72, edge: COLOR.accent, edgeAlpha: 0.4 },
+      plateShape, { fill: 0x0b0f15, alpha: 0.6, edge: COLOR.accent, edgeAlpha: 0.4 },
     )).setDepth(9);
+    this.add.existing(drawShapeEdge(this, BASE_WIDTH / 2, (plate.top + plate.bottom) / 2, plateShape, "bottom", { color: COLOR.accent, alpha: 0.22, inset: 10 })).setDepth(9);
     void this.refresh();
     playSceneEntrance(this);
   }
@@ -177,7 +193,7 @@ export class RaidScene extends Phaser.Scene {
    * 높이로 서면 같은 정보가 두 양식으로 읽힌다. 다만 여기서 세는 것은 점수가 아니라 피해다.
    */
   private renderBoard(content: Phaser.GameObjects.Container, entries: readonly RaidContributionEntryDto[]): void {
-    content.add(addSectionTitle(this, RAID_BOARD.centerX - RANKING_LIST.rowWidth / 2, RAID_BOARD.titleY, t("raid.contribution.title")));
+    content.add(addSectionTitle(this, RAID_BOARD.titleX, RAID_BOARD.titleY, t("raid.contribution.title")));
     if (entries.length === 0) {
       content.add(this.add.text(RAID_BOARD.centerX, RAID_BOARD.viewport.top + 80, t("raid.contribution.empty"), textStyle({ role: "body", size: 25, color: COLOR.inkDim })).setOrigin(0.5));
       return;

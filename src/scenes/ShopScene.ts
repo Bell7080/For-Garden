@@ -452,7 +452,18 @@ export class ShopScene extends Phaser.Scene {
         short: session.wallet[product.acquisition.currency] < product.acquisition.amount,
       });
     }
-    const hit = this.add.rectangle(0, 0, width, SHOP_CARD.height, 0xffffff, 0).setInteractive({ useHandCursor: product.purchasable });
+    /*
+     * **창 밖으로 흘러간 칸은 손을 받지 않는다.** GeometryMask는 그리기만 자르므로, 위로 흘러가
+     * 가려진 칸의 입력면이 무대 위에 그대로 남아 점원을 누른 손을 가로챘다(카드가 점원보다 위
+     * 층이다). 누른 뒤에 거부하는 것으로는 모자라다 — 맨 위 입력이 이미 그 칸이라 점원에게 손이
+     * 가지 않는다. 그래서 적중 판정 자체가 마스크와 같은 창 경계를 본다.
+     */
+    const hit = this.add.rectangle(0, 0, width, SHOP_CARD.height, 0xffffff, 0).setInteractive({
+      hitArea: new Phaser.Geom.Rectangle(0, 0, width, SHOP_CARD.height),
+      hitAreaCallback: (area: Phaser.Geom.Rectangle, x: number, y: number) =>
+        Phaser.Geom.Rectangle.Contains(area, x, y) && this.insideViewport(this.input.activePointer),
+      useHandCursor: product.purchasable,
+    });
     hit.on("pointerdown", () => card.setScale(1.04));
     hit.on("pointerout", () => card.setScale(1));
     hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {

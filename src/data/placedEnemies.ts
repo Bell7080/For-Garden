@@ -4,6 +4,7 @@ import { expeditionEnemyLevel } from "./expeditionEnemies";
 import { stageEnemyGrowth } from "./stages";
 import { cakeOperationEnemyDisplayLevel, getCakeOperationTier } from "./cakeOperation";
 import { bountyRoundLevel, getBountyTier } from "./bounty";
+import { requiredBreakthroughForLevel } from "../core/levelDesign";
 
 /**
  * 전장에 **실제로 선** 적 하나. 정의와 함께 그 자리에서 자란 값을 들고 다닌다.
@@ -32,28 +33,31 @@ export function placedEnemyIndex(
   // 한 단계가 한 레벨·한 야성 단계를 쓰므로 자리마다 다른 성장이 없다.
   if (input.mode === "cake") {
     const tier = getCakeOperationTier(input.tierId);
+    const level = cakeOperationEnemyDisplayLevel(tier).level;
     return new Map(enemyDefs.map((def, index) => [`enemy-${index}`, {
-      def, level: cakeOperationEnemyDisplayLevel(tier).level, breakthrough: 0,
+      def, level, breakthrough: requiredBreakthroughForLevel(level),
     }]));
   }
   // 현상수배는 라운드 하나에 정예 하나가 서고, 그 자리의 레벨·야성을 등급 표가 이미 적어 두었다.
   if (input.mode === "bounty") {
     const round = getBountyTier(input.tierId).rounds[input.round];
+    const level = bountyRoundLevel(round);
     return new Map(enemyDefs.map((def, index) => [`enemy-${index}`, {
-      def, level: bountyRoundLevel(round), breakthrough: 0,
+      def, level, breakthrough: requiredBreakthroughForLevel(level),
     }]));
   }
-  // 원정은 노드 하나가 한 레벨을 쓰고 돌파는 아직 두지 않는다.
+  // 원정은 노드 하나가 한 레벨을 쓰고, 돌파는 그 레벨에 닿는 데 필요한 단계다.
   const expeditionLevel = input.mode === "expedition" ? expeditionEnemyLevel(input.nodeType, input.floor)
     : input.mode === "expeditionBoss" ? expeditionEnemyLevel("boss", 20) : undefined;
   // 스토리만 적별 성장 정의를 갖는다. 성장 사본과 같은 formationSlot 순서로 짝을 맞춘다.
   const placed = expeditionLevel === undefined ? stageEnemyGrowth(stage) : undefined;
   return new Map(enemyDefs.map((def, index) => {
     const growth = placed?.[index];
+    const level = growth?.level ?? expeditionLevel ?? 1;
     return [`enemy-${index}`, {
       def,
-      level: growth?.level ?? expeditionLevel ?? 1,
-      breakthrough: growth?.breakthrough ?? 0,
+      level,
+      breakthrough: growth?.breakthrough ?? requiredBreakthroughForLevel(level),
     }];
   }));
 }

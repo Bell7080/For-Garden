@@ -1,4 +1,5 @@
 import { registerDataText } from "../i18n";
+import { requiredBreakthroughForLevel } from "../core/levelDesign";
 
 /**
  * 레이드 — **경쟁이 아니라 함께 미는 보스전**이다.
@@ -25,10 +26,16 @@ import { registerDataText } from "../i18n";
  * 자리의 성질**이라 유형 표(`ENCOUNTER_ROLE.endless`)가 갖는다 — 개체에 적으면 같은 몸이
  * 도감과 관문에 설 때까지 함께 느려진다.
  */
+const RAID_SEASON_BOSS_LEVEL = 48;
+
 export const RAID_SEASON_BOSS = {
   relicId: "sukusuino",
-  level: 48,
-  breakthrough: 2,
+  level: RAID_SEASON_BOSS_LEVEL,
+  /**
+   * **돌파는 레벨에서 나온다**(`requiredBreakthroughForLevel`). 2로 적어 두었을 때는 정보창이
+   * `48 / 40`을 세워 상한을 넘긴 레벨을 말했다 — 적도 플레이어와 같은 성장 축을 지나야 한다.
+   */
+  breakthrough: requiredBreakthroughForLevel(RAID_SEASON_BOSS_LEVEL),
 } as const;
 
 /**

@@ -8,6 +8,7 @@ import { Button } from "./Button";
 import type { CurrencyIconKey } from "./currencyIcons";
 import { DUNGEON_LOBBY, dungeonActionButtonX, dungeonMultiplierChipX, dungeonRowCenterY, dungeonRowFaceX } from "./dungeonLobbyLayout";
 import { FaceFrame } from "./FaceFrame";
+import { addSectionTitle } from "./SectionTitle";
 import { chipPoints, drawLayer, HOLO, slantedRect } from "./holo";
 import { addFramedIcon } from "./itemFrame";
 import { COLOR, textStyle } from "./theme";
@@ -117,17 +118,22 @@ export class DungeonLobby {
     const panel = scene.add.container(BASE_WIDTH / 2, y);
     panel.add(drawLayer(scene, 0, 0, slantedRect(width, height, 26), { fill: COLOR.panel, alpha: HOLO.glass, edge: COLOR.panelEdge, edgeAlpha: 0.85 }));
     const half = width / 2;
+    const divider = 40;
+    // 두 이름표는 판 윗변에 걸터앉는 제목표다 — 판 안의 회색 글자로 두면 같은 위계의 제목이
+    // 이 판에서만 맨 글자가 된다. 값은 그 아래 판 가운데 높이로 내려선다.
+    const titleY = -height / 2 - 4;
+    addSectionTitle(scene, -half, titleY, t("dungeon.enemyPower"), { parent: panel });
+    const valueY = 10;
     // 왼쪽 절반 — 적 전투력.
-    panel.add(scene.add.text(-half + 48, -30, t("dungeon.enemyPower"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
-    panel.add(scene.add.text(-half + 48, 20, tier.enemyPower.toLocaleString(), textStyle({ role: "display", size: 46, color: COLOR.dangerText })).setOrigin(0, 0.5));
+    panel.add(scene.add.text(-half + 48, valueY, tier.enemyPower.toLocaleString(), textStyle({ role: "display", size: 46, color: COLOR.dangerText })).setOrigin(0, 0.5));
     // 가운데를 가르는 얇은 선 — 두 수가 한 문장으로 읽히지 않게 한다.
-    panel.add(scene.add.rectangle(40, 0, 2, height - 44, COLOR.panelEdge, 0.6));
-    // 오른쪽 절반 — 보상(배율을 먹인 값).
-    panel.add(scene.add.text(88, -30, t("dungeon.reward"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
+    panel.add(scene.add.rectangle(divider, 0, 2, height - 44, COLOR.panelEdge, 0.6));
+    // 오른쪽 절반 — 보상(배율을 먹인 값). 제목표는 가르는 선 바로 오른쪽에서 시작한다.
+    addSectionTitle(scene, divider + DUNGEON_LOBBY.summary.titleGap, titleY, t("dungeon.reward"), { parent: panel });
     const size = 88;
-    panel.add(addFramedIcon(scene, undefined, half - 48 - size / 2, 4, size, tier.reward.icon, { amount: formatCurrency(tier.reward.amount * multiplier) }));
+    panel.add(addFramedIcon(scene, undefined, half - 48 - size / 2, valueY, size, tier.reward.icon, { amount: formatCurrency(tier.reward.amount * multiplier) }));
     if (multiplier > 1) {
-      panel.add(scene.add.text(88, 22, t("dungeon.multiplier", { value: multiplier }), textStyle({ role: "display", size: 34, color: COLOR.accentText })).setOrigin(0, 0.5));
+      panel.add(scene.add.text(divider + 48, valueY, t("dungeon.multiplier", { value: multiplier }), textStyle({ role: "display", size: 34, color: COLOR.accentText })).setOrigin(0, 0.5));
     }
     this.layer.add(panel);
   }

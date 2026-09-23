@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import {
-  RAID_ACTIONS, RAID_BOARD, RAID_BOSS_SPOT, RAID_HP_BAR,
+  RAID_ACTIONS, RAID_BOARD, RAID_BOARD_PLATE, RAID_BOSS_SPOT, RAID_HP_BAR,
   raidBoardViewport, raidSortieBackGap,
 } from "../../src/ui/raidLayout";
 
@@ -35,4 +35,11 @@ describe("레이드 배치표", () => {
     expect(RAID_BOARD.viewport.bottom).toBeLessThan(RAID_ACTIONS.y - RAID_ACTIONS.sortie.height / 2);
   });
 
+  it("기여 목록의 제목표는 판 윗변에 걸터앉는다", () => {
+    // 판 안에 들여 세우던 때는 같은 위계의 제목이 이 화면에서만 맨 글자처럼 섰다.
+    expect(RAID_BOARD.titleY).toBe(RAID_BOARD_PLATE.top - 4);
+    expect(RAID_BOARD.titleX).toBe((1080 - RAID_BOARD_PLATE.width) / 2);
+    // 제목표(높이 52)가 남은 체력 수치 줄과 겹치지 않는다.
+    expect(RAID_BOARD.titleY - 26).toBeGreaterThan(RAID_HP_BAR.valueY + 14);
+  });
 });

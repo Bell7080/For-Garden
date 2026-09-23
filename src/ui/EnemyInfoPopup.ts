@@ -12,8 +12,8 @@ import { openElementPopup, openRolePopup } from "./affinityPopups";
 import { addPopupBackgroundImage, BACKGROUND } from "./backgrounds";
 import { ENEMY_INFO, enemyInfoPanelCenterY, enemyInfoSkillColumns } from "./enemyInfoLayout";
 import {
-  addInfoFerocityBadge, addInfoFigureStand, addInfoMagnifier, addInfoPanel, buildSkillViewModel,
-  openBreakthroughStepsPopup, openExtraStatsPopup, openFerocityTraitPopup, paintRarityGem, slotFallbackIcon,
+  addInfoFerocityBadge, addInfoFigureStand, addInfoMagnifier, addInfoPanel, addInfoRoleBadge, buildSkillViewModel,
+  openBreakthroughStepsPopup, openEncounterRolePopup, openExtraStatsPopup, openFerocityTraitPopup, paintRarityGem, slotFallbackIcon,
 } from "./info";
 import { addObservationJournalButton, openObservationJournal } from "./ObservationJournal";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
@@ -347,6 +347,17 @@ export class EnemyInfoPopup {
           const breakthroughEffect = breakthroughEnhances(def, snapshot.breakthrough, "ferocity") ? breakthroughEffectText(def, "ferocity", def.stats) : undefined;
           openFerocityTraitPopup(this.scene, this.popups, this.keywords, def, { ...from, x: SCREEN_CENTER.x + from.x, y: SCREEN_CENTER.y + from.y }, { breakthroughEffect });
         });
+        /*
+         * **그 위에 역할(잡졸·무리·정예·보스·불사)이 같은 크기로 선다.** 자리가 곱하는 배율과
+         * 보스·불사가 갖는 강인함·경감은 개체의 패시브가 아니라 이 칸이 말한다. 자리를 새기지
+         * 않은 정의(도감처럼 전장에 서지 않은 개체)에는 세우지 않는다.
+         */
+        const role = def.encounterRole;
+        if (role !== undefined) {
+          addInfoRoleBadge(this.scene, this.popups, chrome, container.x, container.y + ENEMY_INFO.roleBadgeOffsetY, def, role, (from) => {
+            openEncounterRolePopup(this.scene, this.popups, this.keywords, role, { ...from, x: SCREEN_CENTER.x + from.x, y: SCREEN_CENTER.y + from.y });
+          });
+        }
       }
     });
   }

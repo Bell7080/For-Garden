@@ -7,6 +7,7 @@ import { EXPEDITION_COMBAT_BALANCE } from "../data/expedition";
 import { EXPEDITION_BOSS_BALANCE } from "../data/expedition";
 import { isRaidDifficulty, RAID_BOSS_BALANCE, type RaidDifficulty } from "../data/raid";
 import { ENCOUNTER_ROLE } from "./levelDesign";
+import { RAID_BOSS_ROLE } from "./raid";
 import type { FighterInitialState, SkirmishBossPhase, SkirmishRelicResult } from "./skirmish";
 import type { BountyBattleInputDto } from "./bountyRun";
 
@@ -69,7 +70,7 @@ export function createExpeditionBossSkirmishConfig(input: ExpeditionBossBattleIn
     enemyDefs: [{ ...boss, stats: { ...boss.stats } }],
     playerInitialStates: input.relics.filter(({ relicId }) => activeIds.has(relicId)),
     augmentEffects: expeditionBattleEffects(input.augments),
-    enemyBodyScale: ENCOUNTER_ROLE.boss.bodyScale,
+    enemyBodyScale: ENCOUNTER_ROLE.endless.bodyScale,
     boss: {
       phases: EXPEDITION_BOSS_BALANCE.phases.map((phase) => ({ startsAt: phase.startsAtMs / 1_000, damagePerSecond: phase.attackPerSecond, label: phase.label })),
       limitSeconds: EXPEDITION_BOSS_BALANCE.maximumDurationMs / 1_000,
@@ -89,7 +90,7 @@ export function createRaidSkirmishConfig(playerDefs: readonly RelicDef[], boss: 
     enemyDefs: [{ ...boss, stats: { ...boss.stats } }],
     playerInitialStates: playerDefs.map(({ id }) => ({ relicId: id, currentHp: 100, alive: true })),
     augmentEffects: [],
-    enemyBodyScale: ENCOUNTER_ROLE.endless.bodyScale,
+    enemyBodyScale: ENCOUNTER_ROLE[RAID_BOSS_ROLE].bodyScale,
     boss: {
       phases: RAID_BOSS_BALANCE.phases.map((phase) => ({ startsAt: phase.startsAtMs / 1_000, damagePerSecond: phase.attackPerSecond, label: phase.label })),
       limitSeconds: RAID_BOSS_BALANCE.maximumDurationMs / 1_000,

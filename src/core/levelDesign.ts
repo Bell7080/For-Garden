@@ -29,10 +29,51 @@ export type EncounterRole =
   | "swarm"
   /** 정예. **단일 딜과 유지력이 있는가**를 묻는다. 혼자 서서 셋을 상대하는 관문이다. */
   | "elite"
-  /** 보스. 편성과 기믹 대응을 묻는다. 콘텐츠를 닫는 자리다. */
+  /**
+   * 보스(레이드). 여럿이 함께 미는 표적이다 — 판 안에서는 눕지 않지만 시즌 체력 한 줄은 끝내
+   * 깎여 **죽는다.** 그래서 잠기지 않을 **강인함**만 갖고 경감은 갖지 않는다.
+   */
   | "boss"
-  /** 불사 보스(원정 20층·레이드). 눕히는 것이 아니라 **제한 시간 안에 얼마나 밀었나**를 잰다. */
+  /**
+   * 불사(원정 20층). 눕히는 것이 아니라 **제한 시간 안에 얼마나 밀었나**를 잰다. 죽지 않는
+   * 벽이라 **강인함**에 더해 깎일수록 커지는 **경감**을 갖는다.
+   */
   | "endless";
+
+/**
+ * **강인함** — 군중제어를 받아 낼수록 덜 받는 성질.
+ *
+ * 한때 보스마다 패시브에 태생 저항·쌓이는 몫·상한을 따로 적었다(폰토스 +8 · 수쿠스이노 +6).
+ * 보스가 늘 때마다 같은 문장과 조금씩 다른 수가 복사되므로 **자리(유형)가 갖는다.**
+ */
+export interface EncounterTenacity {
+  /** 판을 시작할 때부터 갖는 몫(%). */
+  basePercent: number;
+  /** 제어를 한 번 받아 낼 때마다 더해지는 몫(%). 시간이 아니라 **횟수**로 센다. */
+  perControlPercent: number;
+  /** 태생 몫과 쌓인 몫을 합친 상한(%). 100이면 걸리자마자 풀린다. */
+  maxPercent: number;
+}
+
+/**
+ * **경감** — 체력이 깎일수록 받는 모든 피해가 줄어드는 성질. 죽지 않는 자리만 갖는다.
+ *
+ * 최종 피해에 곱하는 감쇠는 뚫을 방법이 없어 개체에 새로 만들지 않는다(`CLAUDE.md` 7번).
+ * 이것은 그 규칙의 **유일한 예외**이며, 개체가 아니라 불사라는 자리가 갖고 적 정보창의
+ * 역할 칸이 그대로 말한다.
+ */
+export interface EncounterDamageReduction {
+  /** 온전한 몸에서의 경감(%). */
+  basePercent: number;
+  /** 상한(%). */
+  maxPercent: number;
+  /** 상한에 닿는 체력 비율(%). 0이면 마지막 한 점까지 계속 자란다. */
+  maxAtHpPercent: number;
+  /** 오르는 모양. 1보다 작으면 깎이자마자 붙고 뒤에서 완만해진다. */
+  curve: number;
+  /** 경감과 반올림을 모두 지난 최종 피해가 이 값 이하이면 무효가 된다. */
+  ignoreAtOrBelow: number;
+}
 
 export interface EncounterRoleSpec {
   /** 전장에 서는 수. 파티는 셋이다. */
@@ -43,10 +84,14 @@ export interface EncounterRoleSpec {
   hpMultiplier: number;
   /** 그 하나가 때리는 몫. 한 번에 하나만 때리므로 체력 몫보다 훨씬 작다. */
   attackMultiplier: number;
-  /** 목표 전투 시간(초). `endless`는 제한 시간이 곧 길이라 두지 않는다. */
+  /** 목표 전투 시간(초). 판 안에서 눕지 않는 `boss`·`endless`는 제한 시간이 곧 길이라 두지 않는다. */
   ttkSeconds: readonly [number, number] | null;
   /** 싸움이 끝난 뒤 파티에 남아야 하는 체력 비율. */
   remainingHp: readonly [number, number];
+  /** 그 자리가 갖는 강인함. 없으면 제어가 그대로 다 들어간다. */
+  tenacity?: EncounterTenacity;
+  /** 그 자리가 갖는 경감. 죽지 않는 자리만 갖는다. */
+  damageReduction?: EncounterDamageReduction;
 }
 
 /**
@@ -94,15 +139,40 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
     ttkSeconds: [18, 32], remainingHp: [0.20, 0.60],
   },
   boss: {
-    count: 1, bodyScale: 1.45,
-    hpMultiplier: 6.5, attackMultiplier: 2.6,
-    ttkSeconds: [40, 80], remainingHp: [0.10, 0.45],
-  },
-  endless: {
-    // 판 안에서 눕지 않는다. 체력은 시즌 게이지가 정하므로 이 표가 곱하지 않는다.
+    /*
+     * **레이드의 자리다.** 시즌 하나가 공유 체력 한 줄을 갖고 참가자 전원의 피해가 그 줄을
+     * 깎는다 — 판 안의 체력은 시즌 게이지에서 나오므로(`raidBossDef`) 이 표가 곱하지 않는다.
+     * 비율 피해(출혈)의 기준 체력(`raidBossPercentHpBasis`)도 이 배수를 지나므로 1에서 움직이면
+     * 레이드 점수가 통째로 흔들린다.
+     *
+     * 판 안에서 눕지 않으니 목표 시간은 두지 않고 제한 시간이 곧 길이다.
+     */
     count: 1, bodyScale: 1.9,
     hpMultiplier: 1, attackMultiplier: 2.6,
     ttkSeconds: null, remainingHp: [0.05, 0.45],
+    /*
+     * 태생 50%에 제어 한 번마다 6%. 하루 두 판을 제어 하나로 잠가 끝내지 못하게 하되, 첫 몇
+     * 번의 잠금은 확실히 가져가게 하는 선이다.
+     */
+    tenacity: { basePercent: 50, perControlPercent: 6, maxPercent: 100 },
+  },
+  endless: {
+    // 판 안에서 눕지 않는다(`SkirmishState.boss`의 불사 계약). 체력은 세기가 아니라 점수를 재는
+    // 자라 이 표가 곱하지 않는다.
+    count: 1, bodyScale: 1.45,
+    hpMultiplier: 1, attackMultiplier: 2.6,
+    ttkSeconds: null, remainingHp: [0.05, 0.45],
+    /*
+     * 태생 50%에 제어 한 번마다 8% — 일곱 번이면 상한이다. 제어 하나로 최종 관문을 통째로
+     * 지우지 못하게 하면서도 제어 개체를 쓸모없게 만들지 않는다.
+     */
+    tenacity: { basePercent: 50, perControlPercent: 8, maxPercent: 100 },
+    /*
+     * **바닥부터 높다.** 50이던 때는 온전한 몸으로 선 폰토스가 받는 피해의 절반을 그대로
+     * 맞았다 — 체력이 무한인 자리라 사실상 "절반만 아픈 벽"이었다. 곡선(0.75)은 1보다 작아
+     * 체력 75%에서 80%, 50%에서 87%, 25%에서 93%로 붙고 끝에서 상한에 **부딪히지 않고 닿는다.**
+     */
+    damageReduction: { basePercent: 70, maxPercent: 99, maxAtHpPercent: 0, curve: 0.75, ignoreAtOrBelow: 10 },
   },
 };
 

@@ -104,7 +104,7 @@ export function getBountyTier(id: string): BountyTierDef {
  */
 export function bountyRoundEnemy(round: BountyRoundDef): RelicDef {
   const base = getRelic(round.relicId);
-  return { ...base, stats: applyEncounterScaling(base.stats, bountyRoundLevel(round), BOUNTY_ROLE) };
+  return { ...base, encounterRole: BOUNTY_ROLE, stats: applyEncounterScaling(base.stats, bountyRoundLevel(round), BOUNTY_ROLE) };
 }
 
 /**

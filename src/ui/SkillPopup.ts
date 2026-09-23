@@ -37,6 +37,11 @@ export interface SkillInfoViewModel {
   effectType: EffectType;
   /** 배율이나 예상 피해처럼 한 줄로 읽는 수치. */
   valueLabel?: string;
+  /**
+   * 요약 줄을 통째로 갈아 끼운다. 기술이 아닌 칸(역할)은 효과 분류·대상·상태가 없어 그 조립이
+   * "강화"처럼 뜻이 다른 말을 세우므로, 그 칸이 말할 한 줄(배율 목록)을 직접 넘긴다.
+   */
+  summary?: string;
   /** 표시 수치를 눌렀을 때 해당 스킬의 능력치 출처와 배율을 설명한다. */
   contextualKeywords?: readonly KeywordDef[];
   /** 뜻풀이 대신 전용 창을 여는 용어. 쿠로·시로처럼 쪽지 한 장으로 다 말할 수 없는 태그가 쓴다. */
@@ -186,7 +191,7 @@ export function openSkillPopup(
     body.add(name);
 
     // 효과 분류와 수치는 한 줄에 둔다. 둘 다 "얼마나 세게, 어떤 식으로"를 말한다.
-    const summary = [
+    const summary = skill.summary ?? [
       effectLabel(skill.effectType), skill.valueLabel, targetingLabel(skill.targeting),
       ...((skill.statusEffects ?? []).map(statusEffectLabel)),
       skill.durationSeconds === undefined ? undefined : t("skill.duration", { seconds: skill.durationSeconds }),

@@ -72,7 +72,7 @@ export function getExpeditionNodeEnemies(type: ExpeditionNodeType, floor: number
   const role = expeditionNodeRole(type, floor);
   return ids.map((id) => {
     const enemy = getRelic(id);
-    return { ...enemy, stats: applyEncounterScaling(enemy.stats, level, role) };
+    return { ...enemy, encounterRole: role, stats: applyEncounterScaling(enemy.stats, level, role) };
   });
 }
 

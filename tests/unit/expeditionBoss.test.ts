@@ -5,7 +5,8 @@ import { getRelic } from "../../src/data/relics";
 const ARENA = { left: 130, right: 950, top: 600, bottom: 1360 };
 /** 검증기 입력도 클라이언트와 같은 렐릭·폰토스 정의를 직접 참조한다. */
 function replayInput(initialHp = 100) {
-  return { allies: [getRelic("rex")], boss: getRelic("pontos"), arena: ARENA, initialHpPercentByRelic: { rex: initialHp } };
+  // 서버 재현과 같이 불사 자리를 새긴다 — 강인함·경감은 개체가 아니라 그 자리가 갖는다.
+  return { allies: [getRelic("rex")], boss: { ...getRelic("pontos"), encounterRole: "endless" as const }, arena: ARENA, initialHpPercentByRelic: { rex: initialHp } };
 }
 
 /** 매초 기본 공격하는 결정론적 입력을 만들어 점수 계산 자체가 난수에 기대지 않게 한다. */

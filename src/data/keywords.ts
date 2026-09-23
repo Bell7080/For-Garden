@@ -293,6 +293,24 @@ export const KEYWORDS: readonly KeywordDef[] = [
     id: "crowd-control", term: "군중제어", kind: "rule",
     description: "기절·경직처럼 대상의 행동을 막는 효과를 통틀어 부르는 말이다.",
   },
+  {
+    /*
+     * 보스·불사 **자리**가 갖는 성질이다(`ENCOUNTER_ROLE[role].tenacity`). 자리마다 수치가 달라
+     * 태그는 무엇인지만 말하고, 얼마인지는 적 정보창의 역할 칸이 그 자리의 값으로 적는다.
+     */
+    id: "tenacity", term: "강인함", kind: "rule",
+    description: "군중제어를 받아 낼 때마다 쌓여, 그 비율만큼 기절·경직 같은 제어 시간을 줄인다. 상한에 닿으면 걸리자마자 풀린다. 보스처럼 잠기면 안 되는 자리의 적만 갖는다.",
+  },
+  {
+    // 불사 자리만 갖는다(`ENCOUNTER_ROLE.endless.damageReduction`). 수치는 역할 칸이 적는다.
+    id: "damage-reduction", term: "경감", kind: "rule",
+    description: "체력이 깎일수록 받는 모든 피해가 줄어든다. 경감을 지난 피해가 아주 작으면 아예 들어가지 않는다. 쓰러지지 않는 불사 자리의 적만 갖는다.",
+  },
+  {
+    // 아모의 조가비와 같은 겹 계약(`shellGuard`)이지만 겹의 이름은 이 개체의 것이다.
+    id: "scar", term: "흉터", kind: "buff",
+    description: "피해를 받고 살아남을 때 쌓이는 수쿠스이노의 버프다. 최대 중첩을 소비하면 자신에게 보호막을 준다.",
+  },
 ];
 
 /** 저장된 id를 검증하면서 정의를 얻는다. 없는 키워드는 링크로 만들지 않는다. */

@@ -29,15 +29,21 @@ describe("스킬 아이콘 액자", () => {
     }
   });
 
-  it("폭주 뱃지는 제 나름의 판·비네트·테두리를 다시 그리지 않는다", () => {
+  it("폭주·역할 뱃지는 제 나름의 판·비네트·테두리를 다시 그리지 않는다", () => {
     /*
      * 뱃지는 옆에 나란히 선 스킬 액자 셋과 **같은 한 장**이고 다른 것은 색과 크기뿐이다.
      * 제 나름으로 그리던 때는 안쪽 칸이 없고 층 순서가 갈려 혼자 다른 양식으로 읽혔다.
+     * 폭주와 역할은 같은 뱃지 기둥에 쌓이므로 **한 함수**(`addInfoBadge`)가 둘을 함께 세운다.
      */
     const text = source("../../src/ui/info.ts");
-    const start = text.indexOf("export function addInfoFerocityBadge(");
+    for (const name of ["export function addInfoFerocityBadge(", "export function addInfoRoleBadge("]) {
+      const at = text.indexOf(name);
+      expect(at, name).toBeGreaterThan(-1);
+      expect(text.slice(at, text.indexOf("\n}\n", at)), name).toContain("addInfoBadge(scene, popups, parent, x, y, {");
+    }
+    const start = text.indexOf("function addInfoBadge(");
     expect(start).toBeGreaterThan(-1);
-    const body = text.slice(start, text.indexOf("\nexport function", start + 1));
+    const body = text.slice(start, text.indexOf("\n}\n", start));
     expect(body).toContain("addSkillIconFrame(scene, {");
     for (const forbidden of ["drawLayer(", "drawInnerVignette(", "drawShapeOutline(", "chipArtShape(", "bakeChipArt("]) {
       expect(body, `뱃지가 ${forbidden}으로 다시 그리고 있다`).not.toContain(forbidden);

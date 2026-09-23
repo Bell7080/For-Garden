@@ -127,7 +127,7 @@ export function cakeOperationEnemies(tier: CakeOperationTier): RelicDef[] {
   // 다섯을 각자 키워 둔 뒤 차례로 세운다.
   const grown = CAKE_OPERATION_ENEMY_IDS.map((id) => {
     const base = getRelic(id);
-    return { ...base, stats: applyEncounterScaling(base.stats, level, role) } satisfies RelicDef;
+    return { ...base, encounterRole: role, stats: applyEncounterScaling(base.stats, level, role) } satisfies RelicDef;
   });
   // 같은 정의를 여러 몸이 나눠 쓰지 않도록 개체마다 능력치 사본을 세운다.
   return Array.from({ length: tier.enemyCount }, (_, index) => {

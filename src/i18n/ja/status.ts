@@ -8,6 +8,8 @@ export const STATUS_JA = {
 
   "status.shell": "貝殻",
   "status.shell.detail": "貝殻 {stacks}/{max} · 残り {time}",
+  "status.scar": "傷痕",
+  "status.scar.detail": "傷痕 {stacks}/{max} · 残り {time}",
   "status.stun": "気絶",
   "status.stun.detail": "残り {time}",
   "status.frozen": "氷結",

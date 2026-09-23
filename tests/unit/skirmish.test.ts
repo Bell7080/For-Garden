@@ -414,7 +414,8 @@ describe("원정 증강 전투 훅", () => {
 
   it("은 기절 payload가 기존 100% 저항 판정과 UI 사건 경로를 우회하지 않는다", () => {
     const effect: ExpeditionAugmentEffect = { kind: "triggered", trigger: "onBasicHit", payload: { kind: "status", status: { kind: "stun", seconds: 2 } }, limits: { maxTriggers: 1, cooldownSeconds: 0, maxStacks: 1, target: "hitTarget" }, scope: { kind: "all" } };
-    const { state, foe } = augmented(effect); foe.def = { ...foe.def, stunResistancePercent: 100 };
+    // 강인함이 100%에 닿은 적이다 — 걸리자마자 풀린다.
+    const { state, foe } = augmented(effect); foe.tenacity = 100;
     const events = stepSkirmish(state, 1 / 60); expect(foe.stunnedFor).toBe(0); expect(events.some(({ kind }) => kind === "status")).toBe(false);
   });
 
@@ -1053,7 +1054,8 @@ describe("단일 난전의 원정 보스 옵션", () => {
   });
 
   it("는 폰토스가 완전 무효화한 공격에서 HP·보호막·야성만 지우고 점수는 남긴다", () => {
-    const state = createSkirmish([getRelic("anky")], [getRelic("pontos")], ARENA, {}, {}, {
+    // 경감·무효화는 폰토스가 아니라 불사 자리가 갖는다 — 원정 20층과 같은 자리를 새긴다.
+    const state = createSkirmish([getRelic("anky")], [{ ...getRelic("pontos"), encounterRole: "endless" }], ARENA, {}, {}, {
       boss: { phases: [{ startsAt: 0, damagePerSecond: 0, label: "관측" }], limitSeconds: 1 },
     });
     const [ally, boss] = state.fighters;
@@ -1107,7 +1109,7 @@ describe("단일 난전의 원정 보스 옵션", () => {
       return { ...relic, stats: applyLevelGrowth(relic.stats, 20, relic.rarity) };
     });
     const basePontos = getRelic("pontos");
-    const pontos = { ...basePontos, stats: applyLevelGrowth(basePontos.stats, 25, basePontos.rarity) };
+    const pontos = { ...basePontos, encounterRole: "endless" as const, stats: applyLevelGrowth(basePontos.stats, 25, basePontos.rarity) };
     const state = createSkirmish(party, [pontos], ARENA);
     let firstUltimateAt: number | undefined;
     let survivorsAt30 = 0;
@@ -1426,14 +1428,15 @@ describe("기절 상태", () => {
   it("는 저항으로 지속 시간을 줄이고 100% 면역과 해제를 같은 Fighter 상태에 반영한다", () => {
     const state = stunnedDuel();
     const foe = state.fighters[1];
-    // 정적 콘텐츠 계약만 복제해 실제 캐릭터 밸런스를 바꾸지 않고 50% 저항 경계를 검증한다.
-    foe.def = { ...foe.def, stunResistancePercent: 50 };
+    // 보스 자리(태생 강인함 50%)를 새겨 실제 캐릭터 밸런스를 바꾸지 않고 50% 저항 경계를 검증한다.
+    foe.def = { ...foe.def, encounterRole: "boss" };
     expect(applyStun(foe, 2)).toHaveLength(1);
     expect(foe.stunnedFor).toBe(1);
     clearStun(foe);
     expect(foe.stunnedFor).toBe(0);
 
-    foe.def = { ...foe.def, stunResistancePercent: 100 };
+    // 쌓인 몫까지 합쳐 100%에 닿으면 면역이다.
+    foe.tenacity = 50;
     expect(applyStun(foe, 2)).toEqual([]);
     expect(foe.stunnedFor).toBe(0);
   });
@@ -2372,6 +2375,8 @@ describe("폰토스 실전 스킬과 심해 압력", () => {
   function pontosBattle() {
     const state = newSkirmish(["anky", "rex", "dodo"], ["pontos"]);
     const pontos = state.fighters[3];
+    // 경감·강인함은 원정 20층이라는 불사 자리가 갖는다. 실전과 같은 자리를 새긴다.
+    pontos.def = { ...pontos.def, encounterRole: "endless" };
     for (const fighter of state.fighters) { fighter.x = 400; fighter.y = 900; fighter.attackCooldown = 999; }
     return { state, pontos, allies: state.fighters.slice(0, 3) };
   }
@@ -2420,7 +2425,9 @@ describe("폰토스 실전 스킬과 심해 압력", () => {
     pontos.def = { ...pontos.def, element: "earth", stats: { ...pontos.def.stats, ap: 120, critChance: 0 } };
     allies.forEach((ally, index) => {
       ally.x = index === 0 ? ARENA.left : ARENA.right;
-      ally.def = { ...ally.def, element: "earth", stats: { ...ally.def.stats, res: 0 }, stunResistancePercent: index * 50 };
+      // 강인함 0% · 50%(보스 자리) · 100%(쌓인 몫까지 상한)으로 셋을 가른다.
+      ally.def = { ...ally.def, element: "earth", stats: { ...ally.def.stats, res: 0 }, ...(index === 1 ? { encounterRole: "boss" as const } : {}) };
+      if (index === 2) ally.tenacity = 100;
     });
     pontos.energy = pontos.def.ultimate.cost;
     const attacks = fireUltimate(state, pontos.id, () => 0.99).filter((event) => event.kind === "attack");

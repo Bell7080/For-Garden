@@ -215,7 +215,7 @@ export function getStageEnemies(stage: Extract<StageDef, { kind: "battle" }>): R
   return stageEnemyGrowth(stage).map((enemy) => {
     const base = getRelic(enemy.relicId);
     // 레벨로 자라고 유형으로 몫을 받는다. 스테이지 전용 배율은 만들지 않는다.
-    return { ...base, stats: applyBreakthrough(applyEncounterScaling(base.stats, enemy.level, role), enemy.breakthrough) };
+    return { ...base, encounterRole: role, stats: applyBreakthrough(applyEncounterScaling(base.stats, enemy.level, role), enemy.breakthrough) };
   });
 }
 

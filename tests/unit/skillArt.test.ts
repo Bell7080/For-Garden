@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import ts from "typescript";
 import PREPARE_ICONS from "../../scripts/prepare_icons.py?raw";
@@ -8,6 +9,7 @@ import type { BasicAttack, Skill } from "../../src/core/types";
 import { ELEMENT_TINT, ROLE_TINT, SKILL_ART_ASSETS, SKILL_ART_SLOTS, skillArtFor, skillArtKey, skillArtTint } from "../../src/ui/skillArt";
 import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, elationKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, passiveShieldKeyword, periodicStackKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
 import type { SkillInfoViewModel } from "../../src/ui/SkillPopup";
+import { ENCOUNTER_ROLE_ICON_ASSETS, encounterRoleDescription, encounterRoleIcon, encounterRoleMultipliers, encounterRoleName } from "../../src/ui/encounterRolePresentation";
 
 /** 구워 둔 스킬 일러스트. 코드가 가리키는 파일이 실제로 있는지 확인한다. */
 const ART_FILES = import.meta.glob("../../public/sprites/skills/*/*.webp");
@@ -440,21 +442,18 @@ describe("렉시아 스킬 표시 계약", () => {
 });
 
 describe("폰토스 스킬 표시 계약", () => {
-  it("의 패시브는 복리 누적률·경감 띠·무효화 문턱·강인함을 모두 명시한다", () => {
+  it("의 패시브는 이 개체만의 성장만 말하고 경감·강인함은 불사 역할 칸이 말한다", () => {
     const pontos = RELICS.find((def) => def.id === "pontos")!;
     /*
-     * 수치는 그대로 두되 문장을 줄였다. "완전히 경과한" · "선형으로 증가하며" · "그 이하에서는
-     * 최대치로 제한된다"는 구현을 설명하는 말이라 플레이어의 조작을 바꾸지 않는다. 능력치
-     * 이름은 규칙어 태그로 걸어 눌러서 열 수 있게 한다.
-     *
-     * **경감이 상한에 닿는 체력도 적지 않는다.** 그 자리가 체력이 다 닳는 지점이라
-     * "최대의 0%까지 낮아질수록"이 되어 말이 되지 않는다 — 곡선이므로 문장은 어디서 시작해
-     * 어디까지 가는지만 말한다.
+     * 경감과 강인함은 폰토스가 아니라 **불사 자리**의 성질이다. 보스가 늘 때마다 패시브에 같은
+     * 문장이 조금씩 다른 수로 복사되던 것을 걷어 내고, 적 정보창의 역할 칸이 유형 표에서 읽어
+     * 한 번만 말한다(`encounterRoleDescription`).
      */
-    expect(passiveDescription(pontos.passive)).toBe(
-      "매초 [[ap|주문력]]이 2%씩 복리로 오른다."
-      + " [[hp|체력]]이 낮아질수록 받는 모든 피해가 70%에서 99%까지 줄고, 10 이하의 피해는 무효가 된다."
-      + " [[crowd-control|군중제어]]에 걸릴 때마다 강인함이 8% 올라 100%까지 쌓이고, 그만큼 제어 시간이 줄어든다.",
+    expect(passiveDescription(pontos.passive)).toBe("매초 [[ap|주문력]]이 2%씩 복리로 오른다.");
+    expect(encounterRoleDescription("endless")).toBe(
+      "공격력·주문력 ×2.6   ·   몸집 ×1.45\n"
+      + "[[tenacity|강인함]] 50%로 시작해 [[crowd-control|군중제어]]를 받을 때마다 8%씩, 최대 100%까지 오른다."
+      + "\n[[damage-reduction|경감]] 70%로 시작해 [[hp|체력]]이 깎일수록 최대 99%까지 오르고, 10 이하의 피해는 무효가 된다.",
     );
     // 폭주도 같은 규칙으로 태그를 건다 — 고정 피해가 무엇인지는 규칙어가 말한다.
     expect(ferocityTraitDescription(pontos.ferocityTrait)).toBe(
@@ -1016,7 +1015,7 @@ describe("파치 스킬 표시 계약", () => {
 describe("수쿠스이노 스킬 표시 계약", () => {
   const boss = () => RELICS.find((def) => def.id === "sukusuino")!;
 
-  it("의 패시브는 회복이 아니라 보호막과 강인함으로만 버틴다", () => {
+  it("의 패시브는 회복이 아니라 제 이름의 겹(흉터)과 보호막으로만 버틴다", () => {
     const def = boss();
     /*
      * **시즌 보스에게 회복을 주지 않는다.** 게이지는 참가자 전원이 이레 동안 함께 깎은
@@ -1027,11 +1026,15 @@ describe("수쿠스이노 스킬 표시 계약", () => {
     expect(def.passive.effectType).not.toBe("healing");
     expect(def.passive.shellGuard?.lowestHpAllyShieldMaxHpPercent).toBe(0);
     const text = passiveDescription(def.passive, def.stats.atk);
-    expect(text).toContain("[[shell|조가비]]");
+    // 계약은 아모와 같아도 겹의 이름은 이 개체의 것이다 — 조가비가 아니라 흉터다.
+    expect(text).toContain("[[scar|흉터]]를 한 겹");
+    expect(text).not.toContain("조가비");
     expect(text).not.toContain("아군");
     expect(text).not.toContain("회복");
-    // 강인함은 제어를 없애지 않고 잠그지 못하게 한다 — 값을 가진 개체만 이 절을 갖는다.
-    expect(text).toContain("[[crowd-control|군중제어]]");
+    // 강인함은 패시브가 아니라 보스 역할 칸이 말한다.
+    expect(text).not.toContain("[[crowd-control|군중제어]]");
+    expect(encounterRoleDescription("boss")).toContain("[[tenacity|강인함]] 50%로 시작해 [[crowd-control|군중제어]]를 받을 때마다 6%씩");
+    expect(encounterRoleDescription("boss")).not.toContain("damage-reduction");
   });
 
   it("의 기본 공격은 주기 하나에 출혈과 날려버림을 함께 싣는다", () => {
@@ -1332,5 +1335,57 @@ describe("슈테 스킬 표시 계약", () => {
     // 터뜨리는 것이 누구인지도 본문이 아니라 듀오 태그가 말한다.
     expect(weakpoint.description).toContain("[[duo|듀오]]");
     expect(skillDescription(shute.basic, { damage: 86 })).not.toContain(`${effect.burstPower}%`);
+  });
+});
+
+describe("적 정보창 역할 칸 표시 계약", () => {
+  const ROLES = ["normal", "swarm", "elite", "boss", "endless"] as const;
+
+  it("은 다섯 자리를 모두 이름과 문장으로 세운다", () => {
+    for (const role of ROLES) {
+      expect(encounterRoleName(role), role).not.toMatch(/^info\./);
+      expect(encounterRoleDescription(role), role).not.toContain("{");
+      expect(encounterRoleDescription(role), role).not.toBe("");
+    }
+    expect(ROLES.map(encounterRoleName)).toEqual(["잡졸", "무리", "정예", "보스", "불사"]);
+  });
+
+  it("의 배율 줄은 1이 아닌 배율만 적고, 바꾸는 것이 없으면 비운다", () => {
+    /*
+     * 바뀌지 않는 값을 늘어놓으면 정작 달라진 한둘이 그 사이에 묻힌다. 수치는 유형 표
+     * (`ENCOUNTER_ROLE`)에서 그대로 읽으므로 표를 고치면 이 줄도 함께 움직인다.
+     */
+    expect(encounterRoleMultipliers("normal")).toBe("");
+    expect(encounterRoleMultipliers("elite")).toBe("체력 ×3.3   ·   공격력·주문력 ×1.5   ·   몸집 ×1.18");
+    expect(encounterRoleMultipliers("swarm")).toBe("체력 ×0.7   ·   몸집 ×0.8");
+    // 보스·불사는 체력을 곱하지 않는다(시즌 게이지 · 불사 계약).
+    expect(encounterRoleMultipliers("boss")).not.toContain("체력");
+  });
+
+  it("의 본문은 역할을 풀이하지 않고 변경점만 적으며, 변경점이 없는 잡졸만 한마디를 세운다", () => {
+    // 역할 이름이 이미 자리를 말한다 — 풀이 문장은 변경점을 한 문단 아래로 민다. 잡졸이 늘 셋인 것도 아니다.
+    for (const role of ROLES) expect(encounterRoleDescription(role), role).not.toMatch(/자리다|셋이/);
+    // 무리·정예는 대사가 아니라 제 배율로 선다.
+    expect(encounterRoleDescription("swarm")).toBe(encounterRoleMultipliers("swarm"));
+    expect(encounterRoleDescription("elite")).toBe(encounterRoleMultipliers("elite"));
+    expect(encounterRoleDescription("normal")).toMatch(/^“.+”$/);
+    expect(encounterRoleDescription("boss")).not.toContain("damage-reduction");
+  });
+
+  it("의 아이콘은 구운 흰 실루엣 다섯 장을 가리킨다", () => {
+    expect(ENCOUNTER_ROLE_ICON_ASSETS.map(([key]) => key)).toEqual(ROLES.map(encounterRoleIcon));
+    for (const [, path] of ENCOUNTER_ROLE_ICON_ASSETS) {
+      expect(existsSync(new URL(`../../public${path}`, import.meta.url)), path).toBe(true);
+    }
+  });
+
+  it("은 강인함·경감을 규칙어 태그로 걸고 그 태그는 수치를 갖지 않는다", () => {
+    // 여러 자리가 함께 쓰는 규칙어라 얼마인지는 역할 칸이 그 자리의 값으로 적는다(출혈과 같은 규칙).
+    for (const id of ["tenacity", "damage-reduction"]) {
+      const keyword = KEYWORDS.find((entry) => entry.id === id);
+      expect(keyword, id).toBeDefined();
+      expect(keyword!.description, id).not.toMatch(/\d+%/);
+    }
+    expect(KEYWORDS.find(({ id }) => id === "scar")?.term).toBe("흉터");
   });
 });

@@ -52,12 +52,14 @@ describe("편성 화면의 콘텐츠", () => {
     expect(preview.role).toBe("swarm");
   });
 
-  it("레이드는 그 판의 보스 하나가 그 난이도의 레벨로 레이드 유형으로 선다", () => {
+  it("레이드는 그 판의 보스 하나가 그 난이도의 레벨로 보스 유형으로 선다", () => {
     const preview = partyPreview({ content: "raid", raidId: "r1", bossRelicId: RAID_SEASON_BOSS.relicId, difficulty: "normal" }, STAGE);
     expect(preview.shown).toHaveLength(1);
     expect(preview.shown[0].def.id).toBe(RAID_SEASON_BOSS.relicId);
     expect(preview.shown[0].level).toBe(30);
     expect(partyPreview({ content: "raid", raidId: "w", bossRelicId: RAID_SEASON_BOSS.relicId, difficulty: "rampage" }, STAGE).shown[0].level).toBe(RAID_SEASON_BOSS.level);
-    expect(preview.role).toBe("endless");
+    // 판 안에서 눕지 않아도 공유 체력은 끝내 깎여 죽는다 — 불사가 아니라 보스(강인함만)다.
+    expect(preview.role).toBe("boss");
+    expect(preview.shown[0].def.encounterRole).toBe("boss");
   });
 });

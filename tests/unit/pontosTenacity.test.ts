@@ -10,19 +10,66 @@ import {
   type Fighter,
 } from "../../src/core/skirmish";
 import { getRelic } from "../../src/data/relics";
+import { ENCOUNTER_ROLE } from "../../src/core/levelDesign";
+import { getExpeditionNodeEnemies } from "../../src/data/expeditionEnemies";
+import { raidBossDef } from "../../src/core/raid";
 
 const ARENA = { left: 0, right: 600, top: 0, bottom: 1_000 };
 
+/**
+ * 원정 20층에 선 폰토스. 강인함·경감은 개체가 아니라 **불사 자리**가 갖으므로, 실전과 같이
+ * 자리를 새긴 정의로 세운다.
+ */
 function pontos(): Fighter {
-  const state = createSkirmish([getRelic("anky")], [getRelic("pontos")], ARENA);
+  const state = createSkirmish([getRelic("anky")], [{ ...getRelic("pontos"), encounterRole: "endless" }], ARENA);
   return state.fighters[1];
 }
 
-describe("폰토스의 강인함", () => {
-  it("은 태생 저항에서 시작해 제어를 받아 낼 때마다 오른다", () => {
+describe("자리가 갖는 강인함·경감", () => {
+  it("은 개체가 아니라 그 적이 선 자리에서 온다", () => {
+    // 같은 폰토스라도 자리를 새기지 않으면(도감 정의) 아무것도 갖지 않는다.
+    const bare = createSkirmish([getRelic("anky")], [getRelic("pontos")], ARENA).fighters[1];
+    applyStun(bare, 1);
+    expect(controlResistPercent(bare)).toBe(0);
+    expect(receivedDamage(bare, 1_000)).toBeGreaterThan(300);
+  });
+
+  it("은 원정 20층과 레이드가 실제로 서는 정의에 새겨진다", () => {
+    // 콘텐츠가 레벨·유형 몫을 얹는 그 자리에서 함께 새긴다 — 화면과 전투가 같은 값을 읽는다.
+    expect(getExpeditionNodeEnemies("boss", 20)[0].encounterRole).toBe("endless");
+    expect(raidBossDef(getRelic("sukusuino")).encounterRole).toBe("boss");
+    expect(getExpeditionNodeEnemies("normal", 3)[0].encounterRole).toBe("normal");
+  });
+
+  it("에서 보스는 강인함만, 불사는 강인함과 경감을 함께 갖는다", () => {
+    // 보스(레이드)는 시즌 체력 한 줄이 끝내 깎여 죽는다 — 경감을 두면 준 피해가 곧 점수인 판이 무너진다.
+    expect(ENCOUNTER_ROLE.boss.tenacity).toBeDefined();
+    expect(ENCOUNTER_ROLE.boss.damageReduction).toBeUndefined();
+    expect(ENCOUNTER_ROLE.endless.tenacity).toBeDefined();
+    expect(ENCOUNTER_ROLE.endless.damageReduction).toBeDefined();
+    for (const role of ["normal", "swarm", "elite"] as const) {
+      expect(ENCOUNTER_ROLE[role].tenacity, role).toBeUndefined();
+      expect(ENCOUNTER_ROLE[role].damageReduction, role).toBeUndefined();
+    }
+  });
+
+  it("은 레이드 보스에게 경감 없이 강인함만 준다", () => {
+    const state = createSkirmish([getRelic("anky")], [raidBossDef(getRelic("sukusuino"))], ARENA);
+    const boss = state.fighters[1];
+    expect(controlResistPercent(boss)).toBe(ENCOUNTER_ROLE.boss.tenacity!.basePercent);
+    applyStun(boss, 1);
+    expect(controlResistPercent(boss)).toBe(ENCOUNTER_ROLE.boss.tenacity!.basePercent + ENCOUNTER_ROLE.boss.tenacity!.perControlPercent);
+    // 받는 피해는 줄지 않는다.
+    boss.hp = boss.maxHp * 0.25;
+    expect(receivedDamage(boss, 1_000)).toBe(1_000);
+  });
+});
+
+describe("불사 자리의 강인함", () => {
+  it("은 태생 몫에서 시작해 제어를 받아 낼 때마다 오른다", () => {
     const boss = pontos();
-    // 정의가 적은 태생 저항이 출발선이다. 쌓인 몫은 그 위에 얹힌다.
-    expect(controlResistPercent(boss)).toBe(getRelic("pontos").stunResistancePercent);
+    // 자리가 정한 태생 몫이 출발선이다. 쌓인 몫은 그 위에 얹힌다.
+    expect(controlResistPercent(boss)).toBe(ENCOUNTER_ROLE.endless.tenacity!.basePercent);
     applyStun(boss, 1);
     expect(controlResistPercent(boss)).toBe(58);
     applyStun(boss, 1);
@@ -82,7 +129,7 @@ describe("폰토스의 강인함", () => {
   });
 });
 
-describe("폰토스의 받는 피해 감소", () => {
+describe("불사 자리의 경감", () => {
   it("는 온전한 몸에서도 이미 단단하다", () => {
     // 바닥이 50이던 때는 죽지 않는 벽이 받는 피해의 절반을 그대로 맞았다.
     const boss = pontos();
@@ -111,7 +158,7 @@ describe("폰토스의 받는 피해 감소", () => {
 describe("폰토스전의 원정 점수", () => {
   /** 불사 보스를 세우고 아군이 한 번 때리게 한 뒤, 점수와 실제로 깎인 체력을 함께 돌려준다. */
   function oneHit(bossHpRatio: number) {
-    const state = createSkirmish([getRelic("anky")], [getRelic("pontos")], ARENA, {}, {}, {
+    const state = createSkirmish([getRelic("anky")], [{ ...getRelic("pontos"), encounterRole: "endless" }], ARENA, {}, {}, {
       boss: { phases: [{ startsAt: 0, damagePerSecond: 0, label: "관측" }], limitSeconds: 1_000 },
     });
     const [ally, boss] = state.fighters;

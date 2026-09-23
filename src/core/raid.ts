@@ -1,8 +1,14 @@
-import { applyEncounterScaling } from "./levelDesign";
+import { applyEncounterScaling, type EncounterRole } from "./levelDesign";
 import { RAID_BOSS_HP_SCALE, RAID_DIFFICULTY, RAID_MOCK_PARTICIPANTS, RAID_SEASON_TOTAL_HP, RAID_SUMMON_DIFFICULTIES, RAID_BOSS_POOL, type RaidDifficulty } from "../data/raid";
 import { PREVIEW_FRIENDS } from "../data/friends";
 import { requiredBreakthroughForLevel } from "./levelDesign";
 import type { RelicDef } from "./types";
+
+/**
+ * 시즌 보스가 서는 자리 — **보스**다. 판 안에서는 눕지 않아도 시즌 체력 한 줄은 끝내 깎여
+ * 죽으므로 불사(경감)가 아니라 보스(강인함)이고, 성장·몸집·적 정보창의 역할 칸이 모두 이 값을 읽는다.
+ */
+export const RAID_BOSS_ROLE: EncounterRole = "boss";
 
 /**
  * 레이드 시즌의 순수 규칙 — Phaser도 저장도 읽지 않는다.
@@ -150,7 +156,7 @@ export function raidBossGrowth(difficulty: RaidDifficulty): { level: number; bre
  * 보여 준 `LV.n`과 실제로 맞는 수치가 갈린다. 세기의 손잡이는 난이도의 레벨 하나다.
  */
 function raidBossScaledStats(base: RelicDef, difficulty: RaidDifficulty): RelicDef["stats"] {
-  return applyEncounterScaling(base.stats, raidBossGrowth(difficulty).level, "endless");
+  return applyEncounterScaling(base.stats, raidBossGrowth(difficulty).level, RAID_BOSS_ROLE);
 }
 
 /**
@@ -171,7 +177,7 @@ export function raidBossDef(base: RelicDef, difficulty: RaidDifficulty = "rampag
    * 그대로 정한다. 체력만 가르는 이유는 그 값이 **세기가 아니라 단위**이기 때문이다 — 난이도마다
    * 몸을 바꾸면 쉬움의 몸이 한 번에 비어 머리 위 줄이 뜻을 잃는다.
    */
-  return { ...base, stats: { ...scaled, hp: Math.round(RAID_SEASON_TOTAL_HP / RAID_BOSS_HP_SCALE) } };
+  return { ...base, encounterRole: RAID_BOSS_ROLE, stats: { ...scaled, hp: Math.round(RAID_SEASON_TOTAL_HP / RAID_BOSS_HP_SCALE) } };
 }
 
 /**

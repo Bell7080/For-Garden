@@ -52,7 +52,8 @@ function fightAndLog(party: readonly string[], seed: number): ExpeditionBossActi
 function verify(party: readonly string[], actions: readonly ExpeditionBossAction[]): number {
   const result = resolveExpeditionBossBattle({
     allies: party.map((id) => RELICS.find((relic) => relic.id === id)!),
-    boss: RELICS.find(({ id }) => id === "pontos")!,
+    // 서버와 같이 불사 자리를 새긴다 — 강인함·경감은 개체가 아니라 그 자리가 갖는다.
+    boss: { ...RELICS.find(({ id }) => id === "pontos")!, encounterRole: "endless" },
     initialHpPercentByRelic: Object.fromEntries(party.map((id) => [id, 100])),
     augmentEffects: [], arena: ARENA,
   }, actions);

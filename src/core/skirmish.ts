@@ -6,6 +6,7 @@ import { computeDamage, computeDamageContribution, currentAbilityPower, isCritic
 export { currentAbilityPower } from "./damage";
 import { drainFerocityFever, FEROCITY_RULES } from "./ferocity";
 import { isBreakthroughSlotOpen, type BreakthroughSlot } from "./relicProgression";
+import { ENCOUNTER_ROLE, type EncounterDamageReduction, type EncounterTenacity } from "./levelDesign";
 import { augmentAppliesTo, bleedOnAttackEffect, conditionalAttackPowerMultiplier, expeditionAugmentStatMultipliers, flatStatPoints, highHpDamageMultiplier, sameTargetStreakMultiplier, type ExpeditionAugmentEffect, type ExpeditionAugmentTrigger, type ExpeditionTriggeredEffect } from "./expeditionAugments";
 import type { BasicAttack, BasicAttackStep, BreakthroughEffects, CombatStatusEffect, FerocityTrait, ReachTier, RelicDef, Side, Skill, Stats, TeamBuff } from "./types";
 import { ULTIMATE_ENERGY_MAX } from "./ultimate";
@@ -215,10 +216,10 @@ export interface Fighter extends Combatant {
   /** 남은 경직 시간(초). 짧게 행동을 끊는다. 기절과 **같은 강인함**을 지난다. */
   staggeredFor: number;
   /**
-   * 군중제어를 받아 내며 쌓인 **강인함**(%). 태생 저항 위에 더해진다.
+   * 군중제어를 받아 내며 쌓인 **강인함**(%). 자리의 태생 몫 위에 더해진다.
    *
-   * 값을 가진 개체만 오른다(`Passive.tenacityPerControlPercent`). 적지 않은 개체는 0에
-   * 머물러 예전처럼 태생 저항만 쓴다.
+   * 강인함을 가진 자리(`ENCOUNTER_ROLE[role].tenacity`)에 선 적만 오른다. 그 밖의 개체는
+   * 0에 머물러 제어가 그대로 다 들어간다.
    */
   tenacity: number;
   /** 모든 피해보다 먼저 소모되며 제공자의 안정적인 런타임 ID를 함께 보존하는 보호막이다. */
@@ -1301,10 +1302,22 @@ export function isFighterAlive(fighter: Fighter): boolean {
  * 공용 기절 재적용 경계. 짧은 효과가 이미 남은 긴 효과를 덮지 않도록 둘 중 큰 시간을 보존한다.
  * UI는 시작 사건으로 연출을 열고, 종료 여부는 매 프레임 사건 대신 Fighter의 남은 시간을 읽는다.
  */
+/** 그 개체가 선 자리가 갖는 강인함. 아군과 자리를 새기지 않은 개체는 없다. */
+export function encounterTenacity(fighter: Fighter): EncounterTenacity | undefined {
+  const role = fighter.def.encounterRole;
+  return role === undefined ? undefined : ENCOUNTER_ROLE[role].tenacity;
+}
+
+/** 그 개체가 선 자리가 갖는 경감. 죽지 않는 자리(불사)만 갖는다. */
+export function encounterDamageReduction(fighter: Fighter): EncounterDamageReduction | undefined {
+  const role = fighter.def.encounterRole;
+  return role === undefined ? undefined : ENCOUNTER_ROLE[role].damageReduction;
+}
+
 /**
  * **강인함** — 지금 이 개체가 군중제어를 얼마나 덜 받는가(%).
  *
- * 정의에 적힌 태생 저항(`stunResistancePercent`)에 **맞으면서 쌓인 몫**을 더한 값이다.
+ * 자리가 정한 태생 몫(`EncounterTenacity.basePercent`)에 **맞으면서 쌓인 몫**을 더한 값이다.
  * 100에 닿으면 걸리는 즉시 풀려, 사실상 걸리지 않는다.
  *
  * 기절·경직·광란이 **한 경계를 함께 쓴다.** 예전에는 기절만 저항을 지나고 경직은 그대로
@@ -1312,7 +1325,7 @@ export function isFighterAlive(fighter: Fighter): boolean {
  * 제어기를 가진 편성이 기절 대신 경직으로 같은 잠금을 다시 만들 수 있었다.
  */
 export function controlResistPercent(fighter: Fighter): number {
-  return Math.min(100, Math.max(0, (fighter.def.stunResistancePercent ?? 0) + fighter.tenacity));
+  return Math.min(100, Math.max(0, (encounterTenacity(fighter)?.basePercent ?? 0) + fighter.tenacity));
 }
 
 /**
@@ -1321,14 +1334,14 @@ export function controlResistPercent(fighter: Fighter): number {
  * 맞은 시간이 아니라 **걸린 횟수**로 센다 — 시간으로 세면 긴 제어 하나가 짧은 제어 여럿보다
  * 유리해져, 제어를 짧게 자주 거는 편성이 오히려 보스를 더 오래 잠근다.
  *
- * 값을 가진 개체(`tenacityPerControlPercent`)만 쌓인다. 적지 않은 개체는 예전처럼 태생
- * 저항만 쓰고 아무것도 달라지지 않는다.
+ * 강인함을 가진 자리에 선 개체만 쌓인다. 개체 정의가 아니라 자리가 값을 갖는 이유는 보스가
+ * 늘 때마다 같은 규칙과 조금씩 다른 수가 패시브마다 복사되기 때문이다.
  */
 function gainTenacity(fighter: Fighter): void {
-  const gain = fighter.def.passive.tenacityPerControlPercent ?? 0;
-  if (gain <= 0) return;
-  const cap = Math.max(0, (fighter.def.passive.maxTenacityPercent ?? 100) - (fighter.def.stunResistancePercent ?? 0));
-  fighter.tenacity = Math.min(cap, fighter.tenacity + gain);
+  const plan = encounterTenacity(fighter);
+  if (!plan || plan.perControlPercent <= 0) return;
+  const cap = Math.max(0, plan.maxPercent - plan.basePercent);
+  fighter.tenacity = Math.min(cap, fighter.tenacity + plan.perControlPercent);
 }
 
 export function applyStun(fighter: Fighter, seconds: number, state?: SkirmishState): SkirmishEvent[] {
@@ -4001,7 +4014,7 @@ function tickDeathClock(state: SkirmishState, events: SkirmishEvent[]): void {
   }
 }
 
-/** 경감 경계의 각 단계를 노출해 적용 피해와 폰토스 전용 무효화를 호출부가 혼동하지 않게 한다. */
+/** 경감 경계의 각 단계를 노출해 적용 피해와 불사 자리의 무효화를 호출부가 혼동하지 않게 한다. */
 export interface ReceivedDamageResult {
   raw: number;
   reduced: number;
@@ -4009,18 +4022,15 @@ export interface ReceivedDamageResult {
   ignored: boolean;
 }
 
-/** 폰토스의 잃은 체력 경감과 최종 피해 무효화를 판별하는 순수 피해 경계다. */
+/** 불사 자리의 잃은 체력 경감과 최종 피해 무효화를 판별하는 순수 피해 경계다. */
 export function resolveReceivedDamage(target: Fighter, rawAmount: number): ReceivedDamageResult {
   // 불멸로 버티는 동안은 무엇을 맞아도 들어가지 않는다. 경감표 앞에 두는 이유는 이것이
   // 비율이 아니라 **아예 없던 일**이기 때문이다 — 무효 처리라 보호막도 깎이지 않는다.
   if (target.undying) return { raw: rawAmount, reduced: 0, applied: 0, ignored: true };
-  const passive = target.def.passive;
+  const plan = encounterDamageReduction(target);
   let reduction = 0;
-  if (passive.kind === "abyssalPressure") {
+  if (plan) {
     const hpPercent = target.maxHp <= 0 ? 100 : Math.min(100, Math.max(0, target.hp / target.maxHp * 100));
-    const base = passive.baseDamageReductionPercent ?? 0;
-    const maximum = passive.maxDamageReductionPercent ?? base;
-    const maximumAt = passive.maxReductionAtHpPercent ?? 0;
     /*
      * **곧은 직선이 아니라 곡선이다.**
      *
@@ -4032,10 +4042,10 @@ export function resolveReceivedDamage(target: Fighter, rawAmount: number): Recei
      * 완만해지고, 크면 반대다. 어느 쪽이든 상한에 **부딪히는 것이 아니라 닿게** 만드는 것이
      * 목적이라, 구간 끝까지 계속 자란다.
      */
-    const span = Math.max(Number.EPSILON, 100 - maximumAt);
+    const span = Math.max(Number.EPSILON, 100 - plan.maxAtHpPercent);
     const progress = Math.min(1, Math.max(0, (100 - hpPercent) / span));
-    const curved = Math.pow(progress, Math.max(Number.EPSILON, passive.damageReductionCurve ?? 1));
-    reduction = base + (maximum - base) * curved;
+    const curved = Math.pow(progress, Math.max(Number.EPSILON, plan.curve));
+    reduction = plan.basePercent + (plan.maxPercent - plan.basePercent) * curved;
   }
   // 기존 야성 경감도 같은 최종 경계에 합치되 중복 호출 없이 곱연산 한 번으로 확정한다.
   if (target.ferocityFever && target.def.ferocityTrait.effectId === "damageReduction") {
@@ -4049,8 +4059,8 @@ export function resolveReceivedDamage(target: Fighter, rawAmount: number): Recei
   // 그래야 방어 관통·고정 피해가 그대로 지나가고, 수치가 커질수록 수익이 줄어든다.
   const softened = Math.max(1, Math.round(amplified * (1 - Math.min(100, Math.max(0, reduction)) / 100)));
   const reduced = applyImpactCap(target, softened);
-  // 일반 전투원의 최소 1 피해는 그대로 두고, 구조화 필드가 있는 심해 압력만 최종 반올림 뒤 무효화한다.
-  const ignored = passive.kind === "abyssalPressure" && reduced <= (passive.ignoreDamageAtOrBelow ?? -1);
+  // 일반 전투원의 최소 1 피해는 그대로 두고, 경감을 가진 자리만 최종 반올림 뒤 무효화한다.
+  const ignored = plan !== undefined && reduced <= plan.ignoreAtOrBelow;
   return { raw: rawAmount, reduced, applied: ignored ? 0 : reduced, ignored };
 }
 

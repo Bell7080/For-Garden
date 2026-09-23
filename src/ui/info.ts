@@ -53,7 +53,9 @@ import { appearanceEntries } from "./appearanceModel";
 import { APPEARANCE_PANEL } from "./appearancePanelLayout";
 import { COLOR, textStyle } from "./theme";
 import { skillArtFor, skillArtTint, type SkillArtSlot } from "./skillArt";
-import { addSkillIconFrame, skillSlotLabel, type SkillIconTone } from "./SkillIconFrame";
+import { addSkillIconFrame, skillSlotLabel, type SkillIconFrameOptions, type SkillIconTone } from "./SkillIconFrame";
+import { encounterRoleDescription, encounterRoleIcon, encounterRoleName } from "./encounterRolePresentation";
+import type { EncounterRole } from "../core/levelDesign";
 import { squeezeTextToWidth } from "./textFit";
 import { BREAK_CONFIRM, BREAK_STEPS, breakConfirmHeight, breakthroughStepsLayout } from "./breakthroughLayout";
 import { gameApi } from "../api/FakeServer";
@@ -2191,14 +2193,7 @@ export function addInfoFerocityBadge(
   def: RelicDef,
   onOpen: (from: PopupSource) => void,
 ): Phaser.GameObjects.Container {
-  // 스킬 아이콘의 자식으로 두면 아이콘을 눌러 커질 때 뱃지까지 함께 커져, 패시브를 눌렀는데
-  // 야성까지 눌린 것처럼 보인다. 자리만 아이콘 위로 잡고 층은 따로 세운다.
-  // 스킬 아이콘(150)보다는 작게 두되, 그림이 무엇인지 알아볼 만큼은 키운다. 너무 작으면
-  // 폭주 일러스트가 점처럼 뭉갠다.
-  const badgeSize = 96;
-  const badge = scene.add.container(x, y);
-  badge.add(addSkillIconFrame(scene, {
-    size: badgeSize,
+  return addInfoBadge(scene, popups, parent, x, y, {
     slot: "ferocity",
     relicId: def.id,
     // 전용 아트가 없는 개체는 공용 효과 아이콘이 아니라 야성 글리프로 되돌아간다 — 이 칸이
@@ -2208,7 +2203,66 @@ export function addInfoFerocityBadge(
     role: def.role,
     label: t("info.skill.ferocity"),
     tone: FEROCITY_BADGE_TONE,
-  }));
+  }, onOpen);
+}
+
+/**
+ * 역할 뱃지의 색 — 폭주 뱃지와 **같은 한 장·같은 크기**이고 색만 다르다.
+ *
+ * 붉은빛은 야성의 색이라 그대로 쓰면 이 칸도 야성으로 읽힌다. 역할은 개체가 아니라 그 적이 선
+ * **자리**를 말하므로 속성·직군 색도 얹지 않고, 장비 표식 같은 차가운 강철빛으로 물러선다.
+ */
+const ROLE_BADGE_TONE: SkillIconTone = {
+  plate: 0x1f2833,
+  inner: 0x080d13,
+  edge: 0xa9bfd4,
+  art: 0xdde8f3,
+  label: "#dde8f3",
+  labelStroke: "#0a1016",
+  glow: { color: 0x3a5068, strength: 0.3, height: 0.6 },
+};
+
+/**
+ * 적 정보창의 **역할 칸** — 폭주 뱃지 위에 같은 크기로 선다.
+ *
+ * 잡졸·무리·정예·보스·불사는 기술이 아니라 그 적이 **어떤 자리로 섰는가**라 스킬 액자 줄에 끼우지
+ * 않고, 액자 줄 위의 뱃지 기둥에 폭주와 나란히 쌓는다. 아군에게는 자리가 없어 이 칸도 없다.
+ */
+export function addInfoRoleBadge(
+  scene: Phaser.Scene,
+  popups: PopupLayer,
+  parent: Phaser.GameObjects.Container,
+  x: number,
+  y: number,
+  def: RelicDef,
+  role: EncounterRole,
+  onOpen: (from: PopupSource) => void,
+): Phaser.GameObjects.Container {
+  return addInfoBadge(scene, popups, parent, x, y, {
+    slot: "passive",
+    artKey: encounterRoleIcon(role),
+    element: def.element,
+    role: def.role,
+    label: encounterRoleName(role),
+    tone: ROLE_BADGE_TONE,
+  }, onOpen);
+}
+
+/** 패시브 위 뱃지 기둥의 한 칸. 폭주와 역할이 같은 크기·같은 눌림을 쓰도록 한 곳에서 세운다. */
+function addInfoBadge(
+  scene: Phaser.Scene,
+  popups: PopupLayer,
+  parent: Phaser.GameObjects.Container,
+  x: number,
+  y: number,
+  frame: Omit<SkillIconFrameOptions, "size">,
+  onOpen: (from: PopupSource) => void,
+): Phaser.GameObjects.Container {
+  // 스킬 아이콘의 자식으로 두면 아이콘을 눌러 커질 때 뱃지까지 함께 커져, 패시브를 눌렀는데
+  // 야성까지 눌린 것처럼 보인다. 자리만 아이콘 위로 잡고 층은 따로 세운다.
+  const badgeSize = INFO_BADGE_SIZE;
+  const badge = scene.add.container(x, y);
+  badge.add(addSkillIconFrame(scene, { ...frame, size: badgeSize }));
   // 입력 영역도 뱃지 크기에 딱 맞춘다. 넓게 잡으면 아래 아이콘의 터치를 가로챈다.
   const hit = scene.add.rectangle(0, 0, badgeSize, badgeSize, 0xffffff, 0).setInteractive({ useHandCursor: true });
   hit.on("pointerdown", () => badge.setScale(1.1));
@@ -2222,6 +2276,39 @@ export function addInfoFerocityBadge(
   return badge;
 }
 
+/**
+ * 패시브 위 뱃지(폭주·역할)의 한 변.
+ *
+ * 스킬 아이콘(150)보다는 작게 두되, 그림이 무엇인지 알아볼 만큼은 키운다. 너무 작으면 폭주
+ * 일러스트가 점처럼 뭉갠다.
+ */
+export const INFO_BADGE_SIZE = 96;
+
+/**
+ * 역할 칸의 쪽지 — 스킬 쪽지와 **같은 한 장**이다.
+ *
+ * 머리에 역할 이름, 본문에 그 자리가 바꾸는 것(배율·강인함·경감)을 한 줄씩 적고, 바꾸는 것이
+ * 없으면(잡졸) 그 적의 한마디를 세운다. 강인함·경감은 규칙어 태그라 눌러 뜻을 다시 연다.
+ */
+export function openEncounterRolePopup(
+  scene: Phaser.Scene,
+  popups: PopupLayer,
+  keywords: KeywordManager,
+  role: EncounterRole,
+  from: PopupSource,
+): void {
+  openSkillPopup(scene, popups, keywords, {
+    name: encounterRoleName(role),
+    kindLabel: t("info.enemy.role"),
+    iconAssetId: "skill-icon-buff",
+    art: encounterRoleIcon(role),
+    tint: ROLE_BADGE_TONE.art,
+    effectType: "buff",
+    // 요약 줄은 비운다 — 배율까지 본문이 한 줄씩 말하므로 위에 한 번 더 세우면 같은 수가 두 번 선다.
+    summary: "",
+    description: encounterRoleDescription(role),
+  }, from);
+}
 
 export function openBreakthroughStepsPopup(
   scene: Phaser.Scene,

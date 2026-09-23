@@ -77,7 +77,8 @@ describe("레벨 디자인 키트", () => {
     for (let i = 1; i < ladder.length; i += 1) {
       const previous = ENCOUNTER_ROLE[ladder[i - 1]];
       const current = ENCOUNTER_ROLE[ladder[i]];
-      expect(current.ttkSeconds![0]).toBeGreaterThanOrEqual(previous.ttkSeconds![0]);
+      // 판 안에서 눕지 않는 자리(보스·불사)는 제한 시간이 곧 길이라 목표 시간이 없다.
+      if (current.ttkSeconds !== null) expect(current.ttkSeconds[0]).toBeGreaterThanOrEqual(previous.ttkSeconds![0]);
       expect(current.remainingHp[1]).toBeLessThan(previous.remainingHp[1]);
     }
     expect(isEncounterOnTarget("normal", { ttkSeconds: 13, remainingHp: 0.85 })).toBe(true);

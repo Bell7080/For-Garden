@@ -3,7 +3,7 @@ import { raidBossDef } from "../core/raid";
 import type { BattleStageDef, RelicDef } from "../core/types";
 import { bountyRoundEnemy, bountyRoundLevel, BOUNTY_ROLE, BOUNTY_TIERS, getBountyTier } from "./bounty";
 import { CAKE_OPERATION_TIERS, cakeOperationEnemies, cakeOperationEnemyDisplayLevel, cakeOperationRole, getCakeOperationTier } from "./cakeOperation";
-import { encounterEnemyLevel, type EncounterRole } from "../core/levelDesign";
+import type { EncounterRole } from "../core/levelDesign";
 import { RAID_SEASON_BOSS } from "./raid";
 import { getRelic } from "./relics";
 import { getStageEnemies, stageEnemyGrowth, stageEnemyRole } from "./stages";
@@ -70,7 +70,7 @@ export interface PartyPreview {
 export function partyPreview(content: PartyContent, stage: BattleStageDef): PartyPreview {
   if (content.content === "raid") {
     const def = raidBossDef(getRelic(RAID_SEASON_BOSS.relicId));
-    const shown = [{ def, level: encounterEnemyLevel(RAID_SEASON_BOSS.level, "endless"), breakthrough: RAID_SEASON_BOSS.breakthrough }];
+    const shown = [{ def, level: RAID_SEASON_BOSS.level, breakthrough: RAID_SEASON_BOSS.breakthrough }];
     return { shown, all: [def], role: "endless" };
   }
   if (content.content === "bounty") {

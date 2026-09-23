@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  ENCOUNTER_ROLE, ENEMY_LEVEL_GROWTH_PERCENT, applyEncounterScaling, encounterEnemyLevel,
+  ENCOUNTER_ROLE, ENEMY_LEVEL_GROWTH_PERCENT, applyEncounterScaling,
   enemyLevelMultiplier, isEncounterOnTarget, requiredBreakthroughForLevel, type EncounterRole,
 } from "../../src/core/levelDesign";
 import { BREAKTHROUGH_STEPS, RELIC_LEVEL_CAP, applyLevelGrowth } from "../../src/core/relicProgression";
@@ -15,13 +15,18 @@ import type { BattleStageDef, RelicDef } from "../../src/core/types";
 const ROLES = ["normal", "swarm", "elite", "boss", "endless"] as const satisfies readonly EncounterRole[];
 
 describe("레벨 디자인 키트", () => {
-  it("의 유형 차는 잡졸에서 보스로 갈수록 커지되 작게 남는다", () => {
-    // 플레이어는 곱셈을 해독하지 않고 "내 레벨과 비슷하네 / 셋 위네"만 읽는다.
-    const offsets = ROLES.map((role) => ENCOUNTER_ROLE[role].levelOffset);
-    expect(offsets).toEqual([...offsets].sort((a, b) => a - b));
-    expect(ENCOUNTER_ROLE.normal.levelOffset).toBe(0);
-    expect(Math.max(...offsets)).toBeLessThanOrEqual(10);
-    expect(encounterEnemyLevel(12, "elite")).toBe(12 + ENCOUNTER_ROLE.elite.levelOffset);
+  it("의 유형은 레벨을 건드리지 않는다", () => {
+    /*
+     * 유형마다 레벨을 얹던 때(잡졸 +0 · 무리 +1 · 정예 +3)는 같은 사다리 위에서 정예 자리만
+     * 솟았다가 다음 관문에서 도로 내려앉았다 — 1-5가 LV.19인데 1-6이 LV.15였다. 사다리를
+     * 오르는 사람에게 그 내리막은 "여기부터 약해진다"로 읽힌다. 레벨은 콘텐츠 사다리 하나가
+     * 정하고, 유형은 체력·공격 배수로만 말한다.
+     */
+    for (const role of ROLES) {
+      expect(Object.keys(ENCOUNTER_ROLE[role]), role).not.toContain("levelOffset");
+      const base = getRelic("toby").stats;
+      expect(applyEncounterScaling(base, 12, role).def).toBe(applyEncounterScaling(base, 12, "normal").def);
+    }
   });
 
   it("은 세기의 몫을 레벨이 아니라 유형 배수로 낸다", () => {
@@ -116,18 +121,18 @@ function battleStage(id: string): BattleStageDef {
 
 /** [이름, 권장 파티 레벨, 적, 그 조우의 역할, 실측 전투 시간(초), 실측 잔여 체력] */
 const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole, number, number][] = [
-  ["스토리 1-1", 5, () => getStageEnemies(battleStage("1-1")), "normal", 13.1, 0.84],
-  ["스토리 1-9", 14, () => getStageEnemies(battleStage("1-9")), "normal", 14.0, 0.84],
-  ["스토리 1-5 정예", 10, () => getStageEnemies(battleStage("1-5")), "elite", 15.4, 0.55],
-  ["스토리 1-10 정예", 15, () => getStageEnemies(battleStage("1-10")), "elite", 31.1, 0.29],
+  ["스토리 1-1", 5, () => getStageEnemies(battleStage("1-1")), "normal", 13.9, 0.81],
+  ["스토리 1-9", 14, () => getStageEnemies(battleStage("1-9")), "normal", 13.5, 0.86],
+  ["스토리 1-5 정예", 10, () => getStageEnemies(battleStage("1-5")), "elite", 12.5, 0.63],
+  ["스토리 1-10 정예", 15, () => getStageEnemies(battleStage("1-10")), "elite", 27.8, 0.34],
   ["스토리 3-9", 44, () => getStageEnemies(battleStage("3-9")), "normal", 14.3, 0.93],
-  ["현상수배 1단계", 5, () => [bountyRoundEnemy(BOUNTY_TIERS[0].rounds[0])], "normal", 5.4, 0.87],
+  ["현상수배 1단계", 5, () => [bountyRoundEnemy(BOUNTY_TIERS[0].rounds[0])], "normal", 5.4, 0.92],
   ["현상수배 5단계", 50, () => [bountyRoundEnemy(BOUNTY_TIERS[4].rounds[0])], "normal", 7.2, 0.89],
-  ["대작전 1단계", 5, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[0]), "swarm", 31.1, 0.85],
-  ["대작전 8단계", 45, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", 71.0, 0.65],
+  ["대작전 1단계", 5, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[0]), "swarm", 31.5, 0.83],
+  ["대작전 8단계", 45, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", 65.4, 0.64],
   ["원정 일반 5층", 10, () => getExpeditionEncounterEnemies("normal", 5), "normal", 13.9, 0.95],
-  ["원정 정예 10층", 20, () => getExpeditionEncounterEnemies("elite", 10), "elite", 34.0, 0.14],
-  ["원정 무리 15층", 30, () => getExpeditionEncounterEnemies("horde", 15), "swarm", 15.5, 0.77],
+  ["원정 정예 10층", 20, () => getExpeditionEncounterEnemies("elite", 10), "elite", 23.3, 0.50],
+  ["원정 무리 15층", 30, () => getExpeditionEncounterEnemies("horde", 15), "swarm", 16.2, 0.70],
 ];
 
 describe("콘텐츠별 전투 시간 실측", () => {
@@ -143,15 +148,15 @@ describe("콘텐츠별 전투 시간 실측", () => {
   it("은 아직 목표 띠에 다 들어오지 않았고, 어디가 남았는지 이 줄이 기록한다", () => {
     /*
      * 잡졸은 전 콘텐츠가 자리를 잡았고(13~14초에 한 뼘씩 깎이며 흐른다), 큰 무리도 들어왔다.
-     * **장을 닫는 정예(SSR 코마)는 띠 안에 들어왔다** — 31초를 싸우고 파티가 3분의 1만 남는다.
-     * 남은 자리는 셋이다: R 토비가 선 1-5는 같은 유형인데도 15초에 끝나 덜 아프고(개체의
+     * **정예 둘이 띠 안에 들어왔다** — 유형 차를 걷어 내며 배수를 다시 재자(×3.3 · ×1.5)
+     * 장을 닫는 코마가 28초에 파티를 3분의 1만 남기고, 원정 10층 정예도 23초/절반으로 들어왔다.
+     * 남은 자리는 셋이다: R 토비가 선 1-5는 같은 유형인데도 12초에 끝나 덜 아프고(개체의
      * 등급이 결과를 가른다), 현상수배는 1대1이라 한 몫짜리 조우이며, 대작전은 웨이브 없이
-     * 열~열다섯이 한꺼번에 몰려와 한 판이 무리 띠(한 파 기준)보다 길다. 원정 정예는 아직
-     * 재측정이 남았다.
+     * 열~열다섯이 한꺼번에 몰려와 한 판이 무리 띠(한 파 기준)보다 길다.
      */
     const offTarget = AUDIT.filter(([, , , role, ttk, hp]) => !isEncounterOnTarget(role, { ttkSeconds: ttk, remainingHp: hp }));
     expect(offTarget.map(([label]) => label)).toEqual([
-      "스토리 1-5 정예", "현상수배 1단계", "현상수배 5단계", "대작전 1단계", "대작전 8단계", "원정 정예 10층",
+      "스토리 1-5 정예", "현상수배 1단계", "현상수배 5단계", "대작전 1단계", "대작전 8단계",
     ]);
   });
 });

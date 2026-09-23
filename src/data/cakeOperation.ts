@@ -2,7 +2,7 @@ import { registerDataText } from "../i18n";
 import type { DungeonRunCost } from "../core/dungeonShortcut";
 import type { RelicDef } from "../core/types";
 import { getRelic } from "./relics";
-import { applyEncounterScaling, encounterEnemyLevel, encounterRoleFor, type EncounterRole } from "../core/levelDesign";
+import { applyEncounterScaling, encounterRoleFor, type EncounterRole } from "../core/levelDesign";
 
 /**
  * **치즈케이크 대작전** — 레이티아 다섯 자매가 떼로 몰려오는 물량형 던전.
@@ -10,10 +10,10 @@ import { applyEncounterScaling, encounterEnemyLevel, encounterRoleFor, type Enco
  * 성장 재화(치즈케이크)를 캐는 자리라 "더 강하게 키운 아군으로 더 높은 단계에 들어간다"가
  * 그대로 순환이 된다. 단계가 오를수록 적이 무거워지고 한 판이 주는 치즈케이크도 늘어난다.
  *
- * **난이도 손잡이는 권장 레벨(`enemyLevel`) 하나다** — 적 레벨은 거기에 무리 유형의 차를 더한
- * 값이고(`encounterEnemyLevel`), 스테이지 전용 배율이나 숨은 보정을 만들지 않는다. 몇 마리가
- * 몰려오는지(`enemyCount`)는 난이도가 아니라 **이 던전의 성격**이라 단계가 올라도 크게 흔들지
- * 않는다.
+ * **난이도 손잡이는 하나뿐이다** — 그 단계의 레벨(`enemyLevel`)이다.
+ * 스테이지 전용 배율이나 숨은 보정을 만들지 않는다는 규칙 그대로라, 화면에 선 `LV.n`이 곧
+ * 그 개체가 싸우는 레벨이다. 몇 마리가 몰려오는지(`enemyCount`)는 난이도가 아니라 **이 던전의
+ * 성격**이라 단계가 올라도 크게 흔들지 않는다.
  */
 
 /** 한 단계의 정적 정의다. 화면도 서버도 이 표 하나만 읽는다. */
@@ -122,7 +122,7 @@ export function cakeOperationRole(tier: CakeOperationTier): EncounterRole {
  */
 export function cakeOperationEnemies(tier: CakeOperationTier): RelicDef[] {
   const role = cakeOperationRole(tier);
-  const level = encounterEnemyLevel(tier.enemyLevel, role);
+  const level = tier.enemyLevel;
   // 자매마다 태생 능력치가 같지 않다(공속·이속이 갈린다). 그래서 한 번 키워 돌려쓰지 않고
   // 다섯을 각자 키워 둔 뒤 차례로 세운다.
   const grown = CAKE_OPERATION_ENEMY_IDS.map((id) => {
@@ -136,7 +136,7 @@ export function cakeOperationEnemies(tier: CakeOperationTier): RelicDef[] {
   });
 }
 
-/** 화면에 서는 `LV.n` — 권장 레벨에 무리 유형의 차를 더한, 실제로 싸우는 레벨이다. */
+/** 화면에 서는 `LV.n` — 그 단계의 레벨이 곧 실제로 싸우는 레벨이다. */
 export function cakeOperationEnemyDisplayLevel(tier: CakeOperationTier): { level: number } {
-  return { level: encounterEnemyLevel(tier.enemyLevel, cakeOperationRole(tier)) };
+  return { level: tier.enemyLevel };
 }

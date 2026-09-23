@@ -8,8 +8,9 @@ import type { Stats } from "./types";
  * 있게 옮긴 것이다. Phaser를 읽지 않으므로 데이터·검수·화면이 같은 표를 지난다.
  *
  * **축은 둘뿐이다.**
- * 1. **레벨** — 그 관문이 얼마나 무거운가. 콘텐츠 사다리가 권장 레벨을 갖고, 적 레벨은
- *    `권장 레벨 + 유형 차` 하나로 나온다. 화면에 선 `LV.n`이 그 개체가 실제로 싸우는 레벨이다.
+ * 1. **레벨** — 그 관문이 얼마나 무거운가. 콘텐츠 사다리 하나가 갖고 **적 레벨이 곧 그 수다**.
+ *    화면에 선 `LV.n`이 그 개체가 실제로 싸우는 레벨이고, 유형은 이 수를 건드리지 않는다 —
+ *    유형마다 레벨을 얹으면 정예 자리에서 솟았다가 다음 관문에서 도로 내려앉는다.
  * 2. **유형** — 그 하나가 **몇 몫을 하는가**. 정예는 혼자 서므로 셋 몫을 해야 하고, 무리는
  *    다섯이 서므로 하나가 반 몫이다. 이 배수는 난이도 손잡이가 아니라 **머릿수를 대신하는
  *    정규화**라 관문마다 움직이지 않는다 — 조이는 것은 언제나 레벨 하나다.
@@ -38,8 +39,6 @@ export interface EncounterRoleSpec {
   count: number;
   /** 그리는 크기. 전투 계산에 들어가지 않는다. */
   bodyScale: number;
-  /** 권장 레벨 대비 몇 레벨 위인가. **작게 둔다** — 세기의 몫은 아래 두 배수가 낸다. */
-  levelOffset: number;
   /** 그 하나가 버티는 몫. 머릿수를 대신하는 정규화라 관문마다 움직이지 않는다. */
   hpMultiplier: number;
   /** 그 하나가 때리는 몫. 한 번에 하나만 때리므로 체력 몫보다 훨씬 작다. */
@@ -58,12 +57,14 @@ export interface EncounterRoleSpec {
  * 서는 개체는 한 번에 하나만 때리므로 체력과 같은 배수를 주면 맞는 쪽이 즉사한다(실측에서
  * 정예에 3배를 주자 파티가 8초에 전멸했다).
  *
- * `levelOffset`을 작게 두는 이유는 **화면의 수를 읽히게 하려는 것**이다. 정예가 권장 레벨보다
- * 셋 위라면 "조금 위"라고 바로 읽히지만, 예전처럼 백 레벨 위라면 그 수는 아무것도 말하지 않는다.
+ * **유형은 레벨을 건드리지 않는다.** 한때 잡졸 +0 · 무리 +1 · 정예 +3처럼 유형마다 레벨을
+ * 얹었는데, 그러면 같은 사다리 위에서 정예 자리만 솟았다가 다음 관문에서 도로 내려앉는다 —
+ * 1-5가 LV.19인데 1-6이 LV.15였다. 사다리를 오르는 사람에게 그 내리막은 "여기부터 약해진다"로
+ * 읽히므로, **레벨은 콘텐츠 사다리 하나만 정하고** 유형은 아래 두 배수로만 말한다.
  */
 export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
   normal: {
-    count: 3, bodyScale: 1, levelOffset: 0,
+    count: 3, bodyScale: 1,
     hpMultiplier: 1, attackMultiplier: 1,
     ttkSeconds: [10, 16], remainingHp: [0.72, 0.95],
   },
@@ -75,24 +76,31 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
      * 남는 체력이 0.9여도 다섯 파를 지나면 절반 아래로 내려간다 — 한 판 전체로 재면 같은
      * 표가 한 파짜리 조우에는 너무 가혹해진다.
      */
-    count: 5, bodyScale: 0.8, levelOffset: 1,
+    count: 5, bodyScale: 0.8,
     hpMultiplier: 0.7, attackMultiplier: 1,
     ttkSeconds: [14, 28], remainingHp: [0.55, 0.95],
   },
   elite: {
-    // **혼자 서는 자리다.** 셋이 나눠 내던 체력을 하나가 대신하므로 그만큼 두껍다.
-    count: 1, bodyScale: 1.18, levelOffset: 3,
-    hpMultiplier: 3.6, attackMultiplier: 1.55,
+    /*
+     * **혼자 서는 자리다.** 셋이 나눠 내던 체력을 하나가 대신하므로 그만큼 두껍다.
+     *
+     * 유형 차(+3)를 걷어 내고 정예가 잡졸과 같은 사다리 위에 서면서 두 배수를 다시 쟀다 —
+     * 정예 관문은 그 장의 끝에 서므로 사다리가 이미 높고, 거기에 ×3.6·×1.55를 그대로 얹자
+     * 대표 조합이 여덟 판 모두 전멸했다. 레벨이 아니라 이 두 수가 세기의 손잡이라는 말은
+     * **레벨이 움직이면 여기도 다시 잰다**는 뜻이다.
+     */
+    count: 1, bodyScale: 1.18,
+    hpMultiplier: 3.3, attackMultiplier: 1.5,
     ttkSeconds: [18, 32], remainingHp: [0.20, 0.60],
   },
   boss: {
-    count: 1, bodyScale: 1.45, levelOffset: 5,
+    count: 1, bodyScale: 1.45,
     hpMultiplier: 6.5, attackMultiplier: 2.6,
     ttkSeconds: [40, 80], remainingHp: [0.10, 0.45],
   },
   endless: {
     // 판 안에서 눕지 않는다. 체력은 시즌 게이지가 정하므로 이 표가 곱하지 않는다.
-    count: 1, bodyScale: 1.9, levelOffset: 8,
+    count: 1, bodyScale: 1.9,
     hpMultiplier: 1, attackMultiplier: 2.6,
     ttkSeconds: null, remainingHp: [0.05, 0.45],
   },
@@ -112,17 +120,6 @@ export const ENEMY_LEVEL_GROWTH_PERCENT = 2;
 export function enemyLevelMultiplier(level: number): number {
   if (!Number.isInteger(level) || level < 1) throw new RangeError("적 레벨은 1 이상의 정수여야 합니다.");
   return 1 + (level - 1) * ENEMY_LEVEL_GROWTH_PERCENT / 100;
-}
-
-/**
- * 그 조우에 세울 적 레벨.
- *
- * **권장 레벨은 콘텐츠 사다리가 갖는다**(스토리 관문 순서·원정 층·대작전 단계…). 이 함수는
- * 거기에 유형 차 하나만 더한다 — 콘텐츠마다 다른 방언을 만들지 않기 위해서다.
- */
-export function encounterEnemyLevel(recommendedLevel: number, role: EncounterRole): number {
-  if (!Number.isInteger(recommendedLevel) || recommendedLevel < 1) throw new RangeError("권장 레벨은 1 이상의 정수여야 합니다.");
-  return Math.max(1, recommendedLevel + ENCOUNTER_ROLE[role].levelOffset);
 }
 
 /**

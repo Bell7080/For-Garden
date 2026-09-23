@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { encounterEnemyLevel } from "../../src/core/levelDesign";
 import { normalizePartyContent, partyPreview } from "../../src/data/partyContent";
 import { BOUNTY_TIERS } from "../../src/data/bounty";
 import { CAKE_OPERATION_TIERS } from "../../src/data/cakeOperation";
@@ -38,7 +37,7 @@ describe("편성 화면의 콘텐츠", () => {
     const preview = partyPreview({ content: "raid" }, STAGE);
     expect(preview.shown).toHaveLength(1);
     expect(preview.shown[0].def.id).toBe(RAID_SEASON_BOSS.relicId);
-    expect(preview.shown[0].level).toBe(encounterEnemyLevel(RAID_SEASON_BOSS.level, "endless"));
+    expect(preview.shown[0].level).toBe(RAID_SEASON_BOSS.level);
     expect(preview.role).toBe("endless");
   });
 });

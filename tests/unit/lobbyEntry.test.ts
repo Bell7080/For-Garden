@@ -163,3 +163,19 @@ describe("스테미나 충전 칸", () => {
     expect(tonic?.itemIds.length).toBeGreaterThan(1);
   });
 });
+
+describe("돌아와 다시 여는 판", () => {
+  it("은 제 등장 연출 없이 화면 진입과 함께 선다", () => {
+    /*
+     * 판이 제 연출(옅어졌다 떠오르기)을 따로 돌리면 화면 진입과 판 등장이 두 박자로 갈려,
+     * 로비가 먼저 보이고 판이 뒤늦게 열리는 것 — **로비로 튕겼다가 판이 다시 열리는 것**으로
+     * 읽혔다. 눈으로만 보이는 일이라 소스의 모양으로 지킨다.
+     */
+    const lobby = readFileSync("src/scenes/LobbyScene.ts", "utf8");
+    expect(lobby).toContain('this.returnMenu === "sortie") this.openSortieMenu(true)');
+    expect(lobby).toContain('this.returnMenu === "duel") this.openPvpMenu(true)');
+    expect(lobby.match(/hideCloseButton: true, instant,/g)?.length).toBe(2);
+    const popup = readFileSync("src/ui/PopupLayer.ts", "utf8");
+    expect(popup).toContain("if (options.instant) { layer.setAlpha(1); body.setScale(1); }");
+  });
+});

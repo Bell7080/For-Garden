@@ -268,8 +268,10 @@ export class LobbyScene extends Phaser.Scene {
 
     // 고른 콘텐츠를 보고 돌아온 사람은 판이 닫힌 로비가 아니라 **고르던 자리**에 선다.
     // 로비가 다 선 뒤에 여는 이유는 판이 상단 줄·애착 렐릭 위에 얹히는 쪽지이기 때문이다.
-    if (this.returnMenu === "sortie") this.openSortieMenu();
-    else if (this.returnMenu === "duel") this.openPvpMenu();
+    // 판은 제 등장 연출 없이 **완성된 채로** 서서 화면 진입과 한 번에 들어온다 — 따로 떠오르면
+    // 로비가 먼저 보이고 판이 뒤늦게 열려, 로비로 튕겼다가 판이 다시 열리는 것처럼 읽혔다.
+    if (this.returnMenu === "sortie") this.openSortieMenu(true);
+    else if (this.returnMenu === "duel") this.openPvpMenu(true);
 
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
@@ -371,10 +373,10 @@ export class LobbyScene extends Phaser.Scene {
    * 출격이 이미 같은 일을 판 한 장으로 한다 — 두 입구가 서로 다른 물건처럼 열리면 무엇이 더
    * 큰 콘텐츠인지 화면 구조가 먼저 말해 버린다. 같은 프리팹·같은 돌아가기 자리를 쓴다.
    */
-  private openPvpMenu(): void {
+  private openPvpMenu(instant = false): void {
     if (!this.popupLayer || this.popupLayer.isOpen) return;
     const panel = PVP_MENU.panel;
-    this.popupLayer.open({ width: panel.width, height: panel.height, title: t("lobby.duel"), titleSize: 34, dim: true, dimAlpha: 0.24, closeOnBackdrop: false, hideCloseButton: true, onClose: () => this.clearSortieChrome() }, (body, close) => {
+    this.popupLayer.open({ width: panel.width, height: panel.height, title: t("lobby.duel"), titleSize: 34, dim: true, dimAlpha: 0.24, closeOnBackdrop: false, hideCloseButton: true, instant, onClose: () => this.clearSortieChrome() }, (body, close) => {
       PVP_MODES.forEach((mode, index) => {
         const y = PVP_MENU.firstY + index * PVP_MENU.stepY;
         body.add(new ExpeditionEntryButton(this, 0, y, {
@@ -392,13 +394,13 @@ export class LobbyScene extends Phaser.Scene {
   }
 
   /** 출격의 잔잔한 콘텐츠 선택판을 열고 우하단 공용 돌아가기로만 닫는다. */
-  private openSortieMenu(): void {
+  private openSortieMenu(instant = false): void {
     if (!this.popupLayer || this.popupLayer.isOpen) return;
     const status = expeditionManager.status();
     // 다섯 콘텐츠가 저마다 원화와 SD를 세우므로 판을 한 뼘 키워 서로 붙어 보이지 않게 한다.
     const panel = SORTIE_MENU.panel;
     // 일반 작업판보다 암전을 옅게 해 로비의 애착 렐릭이 뒤에서 계속 보이도록 한다.
-    this.popupLayer.open({ width: panel.width, height: panel.height, title: t("lobby.sortie.title"), titleSize: 34, dim: true, dimAlpha: SORTIE_MENU.dimAlpha, closeOnBackdrop: false, hideCloseButton: true, onClose: () => this.clearSortieChrome() }, (body, close) => {
+    this.popupLayer.open({ width: panel.width, height: panel.height, title: t("lobby.sortie.title"), titleSize: 34, dim: true, dimAlpha: SORTIE_MENU.dimAlpha, closeOnBackdrop: false, hideCloseButton: true, instant, onClose: () => this.clearSortieChrome() }, (body, close) => {
       // Puppet은 컨테이너 변환을 물려받지 않으므로 원점에 선 전용 레이어에 화면 좌표로 세운다.
       this.sortieSdLayer = this.add.container(0, 0).setName("sortie-entry-sd").setDepth(SORTIE_SD_DEPTH);
       const entries: SortieEntry[] = [

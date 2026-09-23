@@ -55,6 +55,15 @@ export interface PopupOptions {
   anchor?: { x: number; y: number };
   /** 닫힐 때 부르는 콜백. 누른 버튼이 눌린 상태를 되돌릴 때 쓴다. */
   onClose?: () => void;
+  /**
+   * 제 등장 연출 없이 **완성된 채로** 선다.
+   *
+   * 화면이 들어오는 순간 함께 서야 하는 판(다른 화면에서 돌아와 다시 여는 로비의 출격판)만 켠다.
+   * 그 판이 제 연출을 또 돌리면 화면 진입과 판 등장이 두 박자로 갈려, **로비가 먼저 보이고 판이
+   * 뒤늦게 떠오르는 것**으로 읽혔다 — 로비로 한 번 튕겼다가 판이 다시 열리는 것처럼 보였다.
+   * 화면 진입은 카메라 하나가 움직이므로 판도 그 안에서 함께 들어온다.
+   */
+  instant?: boolean;
 }
 
 /**
@@ -272,7 +281,8 @@ export class PopupLayer {
 
     // 살짝 커지며 떠오른다. 시간과 배율은 화면 전체가 함께 읽는 전환표가 갖는다 —
     // 여기에 숫자를 적어 두면 씬 전환만 움직임 설정을 따르고 팝업만 그대로 남는다.
-    playPopupOpen(this.scene, layer, body);
+    if (options.instant) { layer.setAlpha(1); body.setScale(1); }
+    else playPopupOpen(this.scene, layer, body);
 
     if (options.title) this.titleByLayer.set(layer, options.title);
     this.bodyByLayer.set(layer, body);

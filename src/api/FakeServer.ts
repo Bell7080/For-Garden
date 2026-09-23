@@ -10,7 +10,7 @@ import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond
 import { MAX_RESEARCH_POINTS, MISSIONS, RESEARCH_REWARD_STAGES, addResearchPoints, applyMissionEvent, claimResearchStages, claimableMissionIds, normalizeMissions, researchPointsForClaim, researchStageClaimId, type MissionPeriod } from "../core/missions";
 import { DAILY_RESTORATION, getStage } from "../data/stages";
 import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
-import { createEmptyRaidState, createInitialRelicProgress, replaceSession, session, type Session } from "../state/session";
+import { createInitialRelicProgress, replaceSession, session, type RaidInstanceState, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
 import { INTERACTION_CITIES, findInteractionCity } from "../data/interactionCities";
 import { interactionDurationMs, interactionRewardWeights, isInteractionCityUnlocked, isInteractionDispatchComplete, validateInteractionFormation, type InteractionMemberTraits } from "../core/interactionDispatch";
@@ -38,8 +38,8 @@ import { ARCHAEOLOGY_SITES, findArchaeologySite } from "../data/archaeologySites
 import { archaeologySiteAvailability } from "../core/archaeologyMap";
 import type { AbandonStrataRunRequest, ArchaeologyStateResponse, DigStrataTileRequest, DigStrataTileResponse, GrantRuneTraitRequest, GrantRuneTraitResponse, RerollRuneTraitRequest, RerollRuneTraitResponse, ResolveRuneTraitRerollRequest, ResolveRuneTraitRerollResponse, StartStrataRunRequest, UpgradeRuneTraitRequest, UpgradeRuneTraitResponse } from "./contracts";
 import { findItem, type WalletItemKey } from "../data/items";
-import { RAID_BOSS_BALANCE, RAID_CONTRIBUTION_REWARD_STAGES, RAID_DAILY_ATTEMPTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP, RAID_WORLD_REWARD_STAGES } from "../data/raid";
-import { mockRaidContributions, mockRaidWorldDamage, raidBossDef, raidBossPercentHpBasis, raidContributionBoard, raidDayProgress, raidEarnedContributionStageIds, raidReachedWorldStageIds, raidResetsAt, raidSeasonKey, raidSeasonProgress } from "../core/raid";
+import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_COMPLETED_KEEP_HOURS, RAID_DIFFICULTY, RAID_RUN_GOLD_PER_DAMAGE, RAID_SEASON_BOSS, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM } from "../data/raid";
+import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonContributions, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement } from "../core/raid";
 import { battleArena } from "../core/battleArena";
 import { staminaCurrencyRecharge } from "../data/staminaRecharge";
 import { settleStamina, staminaMaxForPlayer, staminaTiming } from "../core/stamina";
@@ -48,7 +48,7 @@ import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, Enhan
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
 import { excavationHarvestStatus, excavationProductionDisplayModel, excavationStorageLimitSeconds, harvestIdleExcavation, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
 import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest, InventoryResponse, UseConsumableRequest, UseConsumableResponse } from "./contracts";
-import type { ClaimRaidRewardRequest, ClaimRaidRewardResponse, RaidSeasonResponse, SubmitRaidDamageRequest, SubmitRaidDamageResponse } from "./contracts";
+import type { RaidDto, RaidListResponse, RaidRewardDto, SettleRaidRequest, SettleRaidResponse, SubmitRaidDamageRequest, SubmitRaidDamageResponse, SummonRaidRequest, SummonRaidResponse } from "./contracts";
 import type { ClaimExpeditionRewardRequest, ClaimExpeditionRewardResponse, CompleteExpeditionNodeRequest, CompleteExpeditionNodeResponse, ExpeditionLeaderboardResponse, ExpeditionWeeklyBestResponse, SettleExpeditionRunRequest, SettleExpeditionRunResponse, SubmitExpeditionBossScoreRequest, SubmitExpeditionBossScoreResponse, SweepExpeditionRequest, SweepExpeditionResponse } from "./contracts";
 import type { EnterStageRequest, EnterStageResponse } from "./contracts";
 import type { CakeOperationCompleteRequest, CakeOperationCompleteResponse, CakeOperationEnterResponse, CakeOperationRunRequest, CakeOperationSweepResponse } from "./contracts";
@@ -123,7 +123,8 @@ export class FakeServer implements GameApi {
   private readonly bossRewardResults = new Map<string, ClaimExpeditionRewardResponse>();
   // 레이드도 원정과 같은 멱등 영수증을 쓴다 — 같은 요청 ID가 다시 오면 저장을 건드리지 않는다.
   private readonly raidSubmissionResults = new Map<string, SubmitRaidDamageResponse>();
-  private readonly raidRewardResults = new Map<string, ClaimRaidRewardResponse>();
+  private readonly raidSettleResults = new Map<string, SettleRaidResponse>();
+  private readonly raidSummonResults = new Map<string, SummonRaidResponse>();
   /** 운영 DB의 런 ID/정산 ID 고유 제약과 빠른 원정 주간 카운터를 흉내 낸다. */
   private readonly expeditionSettlementResults = new Map<string, SettleExpeditionRunResponse>();
   /** 운영 DB의 requestId 고유 제약을 흉내 내 동일 노드 재요청을 같은 응답으로 돌린다. */
@@ -355,72 +356,164 @@ export class FakeServer implements GameApi {
 
 
   /**
-   * 날짜 경계를 **읽기 전에** 정규화한다.
+   * 지금 볼 수 있는 레이드의 **정의**를 모은다 — 내 몫과 무관한 판의 뼈대다.
    *
-   * 월드 폭주는 하루 한 마리라 날짜가 바뀌면 내 몫·도전 횟수·수령 기록이 함께 비워진다 —
-   * 하루가 갖는 값이라 넘기면 다음 날 보스를 열자마자 어제의 보상이 열려 있다.
+   * 오늘·어제의 월드 폭주와 친구가 연 판은 날짜 키에서 되풀이 세우고(백엔드가 생기면 서버 목록),
+   * 내가 연 판과 이미 들어간 판은 저장에 남은 것을 그 위에 겹친다. 같은 ID면 저장이 이긴다 —
+   * 거기에 내가 민 몫과 정산 여부가 있다.
+   */
+  private raidInstances(now: Date): RaidInstanceState[] {
+    const byId = new Map<string, RaidInstanceState>();
+    const today = raidSeasonKey(now);
+    const yesterday = raidSeasonKey(new Date(now.getTime() - 86_400_000));
+    for (const day of [yesterday, today]) {
+      const opened = Date.parse(`${day}T00:00:00.000Z`);
+      byId.set(`world-${day}`, {
+        id: `world-${day}`, kind: "world", bossRelicId: RAID_SEASON_BOSS.relicId, difficulty: "rampage",
+        openedAt: new Date(opened).toISOString(), endsAt: new Date(opened + 86_400_000).toISOString(),
+        summonedByMe: false, myDamage: 0, attemptsUsed: 0, settled: false,
+      });
+      for (const friend of mockFriendRaids(day)) {
+        const openedAt = Date.parse(friend.openedAt);
+        if (openedAt > now.getTime()) continue;
+        byId.set(friend.id, {
+          id: friend.id, kind: "summon", bossRelicId: friend.bossRelicId, difficulty: friend.difficulty,
+          openedAt: friend.openedAt, endsAt: new Date(openedAt + RAID_DIFFICULTY[friend.difficulty].lifetimeHours * 3_600_000).toISOString(),
+          summonerName: friend.friendName, summonedByMe: false, myDamage: 0, attemptsUsed: 0, settled: false,
+        });
+      }
+    }
+    for (const stored of this.state.raid.instances) byId.set(stored.id, { ...stored });
+    return [...byId.values()];
+  }
+
+  /** 그 판을 **다른 참가자들**이 지금까지 깎은 몫. 월드 폭주는 서버 전체, 소환 레이드는 친구들이다. */
+  private raidOthersDamage(instance: RaidInstanceState, now: Date): number {
+    const spec = RAID_DIFFICULTY[instance.difficulty];
+    const opened = Date.parse(instance.openedAt);
+    const elapsed = Math.min(1, Math.max(0, (now.getTime() - opened) / (spec.lifetimeHours * 3_600_000)));
+    return instance.kind === "world"
+      ? mockRaidWorldDamage(instance.openedAt.slice(0, 10), elapsed, spec.totalHp)
+      : mockSummonRaidDamage(instance.id, elapsed, spec.totalHp);
+  }
+
+  /**
+   * 끝난 판을 목록에서 걷는다 — **받을 것이 남은 판은 걷지 않는다.**
+   *
+   * 끝난 지 `RAID_COMPLETED_KEEP_HOURS`가 지난 판은 정산했거나 참여하지 않았으면 지운다. 정산하지
+   * 않은 참여 판은 받을 때까지 남는다 — 며칠 안 들어온 사람의 몫이 조용히 사라지면 안 된다.
    */
   private normalizeRaid(now: Date): void {
-    const seasonKey = raidSeasonKey(now);
-    const raid = this.state.raid;
-    if (raid.seasonKey === seasonKey && raid.attemptsDate === seasonKey) return;
-    this.state.raid = { ...createEmptyRaidState(), seasonKey, attemptsDate: seasonKey };
+    const keepMs = RAID_COMPLETED_KEEP_HOURS * 3_600_000;
+    const kept = this.state.raid.instances.filter((instance) => {
+      const ended = now.getTime() - Date.parse(instance.endsAt) > keepMs;
+      return !ended || (instance.myDamage > 0 && !instance.settled);
+    });
+    if (kept.length === this.state.raid.instances.length) return;
+    this.state.raid = { instances: kept };
     this.persist(this.state);
   }
 
-  /**
-   * 월드 폭주 하루의 전부를 한 응답으로 만든다.
-   *
-   * **줄은 서버 전체가 깎은 몫이고, 목록은 그중 몇 사람이다.** 백엔드가 없어 지금은 둘 다 날짜
-   * 키에서 되풀이 계산되는 값(`mockRaidWorldDamage`·`mockRaidContributions`)이 대신하며, 실서버가
-   * 붙으면 이 두 줄이 서버 집계로 바뀐다 — 그때 화면은 아무것도 고치지 않는다.
-   */
-  private raidSeasonDto(now: Date, limit = 100): RaidSeasonResponse {
-    const seasonKey = raidSeasonKey(now);
-    const raid = this.state.raid;
-    const dayProgress = raidDayProgress(now);
-    const others = mockRaidContributions(seasonKey, dayProgress);
-    const mine = { playerId: "local-player", displayName: t("profile.defaultName"), damage: raid.myDamage, isMe: true, favoriteRelicId: this.state.favorite };
-    const progress = raidSeasonProgress(mockRaidWorldDamage(seasonKey, dayProgress) + raid.myDamage, RAID_SEASON_TOTAL_HP);
-    const earned = raidEarnedContributionStageIds(raid.myDamage);
-    const reached = raidReachedWorldStageIds(progress.totalHp > 0 ? progress.dealtDamage / progress.totalHp : 0);
-    const rewardOf = (reward: { currency: WalletItemKey; amount: number }) => ({ currency: reward.currency, name: findItem(reward.currency)?.name ?? reward.currency, amount: reward.amount });
+  /** 한 판의 응답. 화면은 이 값만 읽고 상태·정산을 다시 계산하지 않는다. */
+  private raidDto(instance: RaidInstanceState, now: Date, limit = 100): RaidDto {
+    const spec = RAID_DIFFICULTY[instance.difficulty];
+    const others = this.raidOthersDamage(instance, now);
+    const progress = raidSeasonProgress(others + instance.myDamage, spec.totalHp);
+    const completed = progress.defeated || now.getTime() >= Date.parse(instance.endsAt);
+    const growth = raidBossGrowth(instance.difficulty);
+    const rewardOf = (currency: WalletItemKey, amount: number): RaidRewardDto => ({ currency, name: findItem(currency)?.name ?? currency, amount });
+    // 진행 중인 판도 **지금까지의 몫**을 싣는다 — 층이 "끝나면 이만큼"을 미리 말한다. 받는 것은
+    // 끝난 뒤의 정산 한 번뿐이다(`settleRaid`가 상태를 다시 본다).
+    const settlement = instance.myDamage > 0 ? raidSettlement(instance.difficulty, instance.myDamage, progress.totalHp > 0 ? progress.dealtDamage / progress.totalHp : 0, progress.defeated) : undefined;
+    const board = instance.kind === "world"
+      ? mockRaidContributions(instance.openedAt.slice(0, 10), Math.min(1, Math.max(0, (now.getTime() - Date.parse(instance.openedAt)) / 86_400_000)))
+      : mockSummonContributions(instance.id, others);
+    const mine = { playerId: "local-player", displayName: t("profile.defaultName"), damage: instance.myDamage, isMe: true, favoriteRelicId: this.state.favorite };
     return {
-      seasonKey,
-      bossRelicId: RAID_SEASON_BOSS.relicId,
-      bossLevel: RAID_SEASON_BOSS.level,
-      bossBreakthrough: RAID_SEASON_BOSS.breakthrough,
-      totalHp: progress.totalHp,
-      dealtDamage: progress.dealtDamage,
-      remainingHp: progress.remainingHp,
-      defeated: progress.defeated,
-      myDamage: raid.myDamage,
-      attemptsUsed: raid.attemptsUsed,
-      attemptsLimit: RAID_DAILY_ATTEMPTS,
-      resetsAt: raidResetsAt(now),
-      rewardStages: RAID_CONTRIBUTION_REWARD_STAGES.map((stage) => ({
-        id: stage.id, threshold: stage.threshold, reward: rewardOf(stage.reward),
-        claimed: raid.claimedStageIds.includes(stage.id),
-      })).filter((stage) => earned.includes(stage.id) || !stage.claimed),
-      worldStages: RAID_WORLD_REWARD_STAGES.map((stage) => ({
-        id: stage.id, ratio: stage.ratio, reward: rewardOf(stage.reward),
-        reached: reached.includes(stage.id), claimed: raid.claimedStageIds.includes(stage.id),
-      })),
-      entries: raidContributionBoard([...others, mine], limit),
+      id: instance.id, kind: instance.kind, bossRelicId: instance.bossRelicId, difficulty: instance.difficulty,
+      bossLevel: growth.level, bossBreakthrough: growth.breakthrough,
+      summonerName: instance.summonerName, summonedByMe: instance.summonedByMe,
+      totalHp: progress.totalHp, dealtDamage: progress.dealtDamage, remainingHp: progress.remainingHp, defeated: progress.defeated,
+      status: completed ? "completed" : "active", openedAt: instance.openedAt, endsAt: instance.endsAt,
+      myDamage: instance.myDamage, attemptsUsed: instance.attemptsUsed, attemptsLimit: RAID_ATTEMPTS_PER_RAID,
+      settled: instance.settled,
+      settlement: settlement ? [rewardOf("raidSigil", settlement.raidSigil)] : [],
+      entries: raidContributionBoard([...board, mine], limit),
     };
   }
 
-  /** 화면은 이 응답만 읽고 남은 체력이나 기여 순서를 다시 계산하지 않는다. */
-  async getRaidSeason(limit = 100): Promise<RaidSeasonResponse> {
-    await this.delay(); this.normalizeRaid(this.now());
-    return this.raidSeasonDto(this.now(), limit);
+  private raidTickets(): RaidListResponse["tickets"] {
+    const count = (itemId: string) => this.state.itemInventory.find((entry) => entry.itemId === itemId)?.quantity ?? 0;
+    return { normal: count(RAID_TICKET_ITEM), select: count(RAID_SELECT_TICKET_ITEM) };
   }
 
   /**
-   * 원정 보스와 **같은 재현기**로 한 판을 다시 돌리고 그 피해만 시즌 체력에서 깎는다.
+   * 레이드 목록 — 진행 중인 판 전부와, **참여한** 끝난 판.
    *
-   * 클라이언트가 보낸 피해 숫자는 받지 않는다 — 계약에 아예 없다. 다른 것은 제한 시간과 단계
-   * 이름뿐이라 재현 규칙을 하나 더 만들지 않고 `balance`만 레이드 표로 넘긴다.
+   * 끝난 판 중 참여하지 않은 것은 세우지 않는다 — 완료 탭은 정산할 곳이라, 받을 것이 없는 판이
+   * 끼면 정작 받을 판이 그 사이에 묻힌다. 순서는 월드 폭주가 맨 위, 그다음 곧 끝나는 판부터다.
+   */
+  async getRaids(limit = 100): Promise<RaidListResponse> {
+    await this.delay();
+    const now = this.now();
+    this.normalizeRaid(now);
+    const raids = this.raidInstances(now).map((instance) => this.raidDto(instance, now, limit))
+      .filter((raid) => raid.status === "active" || raid.myDamage > 0)
+      .sort((a, b) => (a.status === b.status ? 0 : a.status === "active" ? -1 : 1)
+        || (a.kind === b.kind ? 0 : a.kind === "world" ? -1 : 1)
+        || (a.status === "active" ? Date.parse(a.endsAt) - Date.parse(b.endsAt) : Date.parse(b.endsAt) - Date.parse(a.endsAt)));
+    return { raids, tickets: this.raidTickets() };
+  }
+
+  /**
+   * 토벌권 한 장으로 판을 연다.
+   *
+   * 토벌권은 보스를 풀에서 고르고, 선택 토벌권은 사람이 고른다. 폭주는 시스템만 열므로 받지
+   * 않는다. 차감과 판 생성은 한 처리 단위다 — 판만 생기고 토벌권이 남으면 무한히 연다.
+   */
+  async summonRaid(request: SummonRaidRequest): Promise<SummonRaidResponse> {
+    await this.delay();
+    const cached = this.raidSummonResults.get(request.requestId);
+    if (cached) return structuredClone(cached);
+    if (!request.requestId) throw new GameApiError("RAID_SUMMON_INVALID", "소환 요청 ID가 필요합니다.");
+    if (!(RAID_SUMMON_DIFFICULTIES as readonly string[]).includes(request.difficulty)) throw new GameApiError("RAID_SUMMON_INVALID", "소환할 수 없는 난이도입니다.");
+    const select = request.bossRelicId !== undefined;
+    if (select && !(RAID_BOSS_POOL as readonly string[]).includes(request.bossRelicId!)) throw new GameApiError("RAID_SUMMON_INVALID", "소환할 수 없는 보스입니다.");
+    const ticketId = select ? RAID_SELECT_TICKET_ITEM : RAID_TICKET_ITEM;
+    const stack = this.state.itemInventory.find((entry) => entry.itemId === ticketId);
+    if (!stack || stack.quantity <= 0) throw new GameApiError("RAID_TICKET_SHORTAGE", "토벌권이 부족합니다.");
+    const now = this.now();
+    const bossRelicId = select ? request.bossRelicId! : RAID_BOSS_POOL[Math.floor(this.random() * RAID_BOSS_POOL.length) % RAID_BOSS_POOL.length];
+    const instance: RaidInstanceState = {
+      id: `summon-${request.requestId}`, kind: "summon", bossRelicId, difficulty: request.difficulty,
+      openedAt: now.toISOString(), endsAt: new Date(now.getTime() + RAID_DIFFICULTY[request.difficulty].lifetimeHours * 3_600_000).toISOString(),
+      summonedByMe: true, myDamage: 0, attemptsUsed: 0, settled: false,
+    };
+    const nextState = structuredClone(this.state);
+    nextState.itemInventory = nextState.itemInventory.flatMap((entry) => entry.itemId === ticketId ? (entry.quantity > 1 ? [{ ...entry, quantity: entry.quantity - 1 }] : []) : [entry]);
+    nextState.raid = { instances: [...nextState.raid.instances, instance] };
+    this.commitRaidState(nextState);
+    const response: SummonRaidResponse = { ...this.snapshot(), raid: this.raidDto(instance, now), tickets: this.raidTickets() };
+    this.raidSummonResults.set(request.requestId, response);
+    return structuredClone(response);
+  }
+
+  /** 레이드 경계가 바꾼 상태를 한 번에 확정한다. 공유 세션이면 갈아 끼우고, 아니면 덮어쓴다. */
+  private commitRaidState(nextState: Session): void {
+    try {
+      this.persist(nextState);
+    } catch (error) {
+      throw persistenceFailed(error, "error.persist.expeditionScore");
+    }
+    if (this.state === session) replaceSession(nextState);
+    else Object.assign(this.state, nextState);
+  }
+
+  /**
+   * 원정 보스와 **같은 재현기**로 한 판을 다시 돌리고 그 피해만 그 레이드의 체력에서 깎는다.
+   *
+   * 클라이언트가 보낸 피해 숫자는 받지 않는다 — 계약에 아예 없다. 한 판을 확정하면 그 피해에
+   * 비례한 골드를 곧바로 준다(`RAID_RUN_GOLD_PER_DAMAGE`). 정산은 판이 끝난 뒤 따로다.
    */
   async submitRaidDamage(request: SubmitRaidDamageRequest): Promise<SubmitRaidDamageResponse> {
     await this.delay();
@@ -429,9 +522,10 @@ export class FakeServer implements GameApi {
     if (!request.requestId) throw new GameApiError("RAID_SCORE_REJECTED", "피해 제출 요청 ID가 필요합니다.");
     const now = this.now();
     this.normalizeRaid(now);
-    if (this.state.raid.attemptsUsed >= RAID_DAILY_ATTEMPTS) throw new GameApiError("RAID_DAILY_LIMIT", "오늘 도전 횟수를 모두 사용했습니다.");
-    // **토벌된 날도 도전을 막지 않는다.** 내 기여는 두 판의 합이라, 늦게 들어온 사람이 줄이 다
-    // 깎였다는 이유로 오늘 몫을 통째로 잃으면 안 된다. 줄은 0에서 멈추고 기여만 쌓인다.
+    const instance = this.raidInstances(now).find(({ id }) => id === request.raidId);
+    if (!instance) throw new GameApiError("RAID_NOT_FOUND", "존재하지 않는 레이드입니다.");
+    if (this.raidDto(instance, now).status !== "active") throw new GameApiError("RAID_ENDED", "이미 끝난 레이드입니다.");
+    if (instance.attemptsUsed >= RAID_ATTEMPTS_PER_RAID) throw new GameApiError("RAID_DAILY_LIMIT", "이 레이드의 도전 횟수를 모두 사용했습니다.");
 
     let result: ReturnType<typeof resolveExpeditionBossBattle>;
     try {
@@ -441,12 +535,12 @@ export class FakeServer implements GameApi {
         if (!relic || !this.state.owned.has(id)) throw new Error("INVALID_PARTY");
         return { ...relic, stats: progression.getFinalStats(id) };
       });
-      const base = RELICS.find(({ id }) => id === RAID_SEASON_BOSS.relicId);
+      const base = RELICS.find(({ id }) => id === instance.bossRelicId);
       if (!base) throw new Error("INVALID_BOSS_DEFINITION");
       // 성장은 화면과 **같은 함수**를 지난다. 서버만 따로 계산하면 보여 준 레벨과 갈린다.
-      const boss = raidBossDef(base);
       result = resolveExpeditionBossBattle({
-        allies, boss, balance: RAID_BOSS_BALANCE, percentHpBasis: raidBossPercentHpBasis(base),
+        allies, boss: raidBossDef(base, instance.difficulty), balance: RAID_BOSS_BALANCE,
+        percentHpBasis: raidBossPercentHpBasis(base, instance.difficulty),
         // 전장은 화면과 **같은 표**를 읽는다 — 자리가 다르면 사거리·표적이 갈려 재현이 어긋난다.
         arena: battleArena("raid"),
       }, request.actions);
@@ -457,58 +551,49 @@ export class FakeServer implements GameApi {
     }
 
     const runDamage = Math.max(0, Math.floor(result.totalDamage));
+    const gold = raidRunGold(runDamage, RAID_RUN_GOLD_PER_DAMAGE);
+    const updated: RaidInstanceState = { ...instance, myDamage: instance.myDamage + runDamage, attemptsUsed: instance.attemptsUsed + 1 };
     const nextState = structuredClone(this.state);
-    nextState.raid.myDamage += runDamage;
-    nextState.raid.attemptsUsed += 1;
-    try {
-      this.persist(nextState);
-    } catch (error) {
-      throw persistenceFailed(error, "error.persist.expeditionScore");
-    }
-    if (this.state === session) replaceSession(nextState);
-    else Object.assign(this.state, nextState);
-    const response: SubmitRaidDamageResponse = { season: this.raidSeasonDto(now), runDamage, endedAtMs: result.endedAtMs };
+    nextState.raid = { instances: [...nextState.raid.instances.filter(({ id }) => id !== updated.id), updated] };
+    nextState.wallet = { ...nextState.wallet, gold: Math.min(WALLET_CAPS.gold, nextState.wallet.gold + gold) };
+    this.commitRaidState(nextState);
+    const response: SubmitRaidDamageResponse = {
+      ...this.snapshot(), raid: this.raidDto(updated, now), runDamage, endedAtMs: result.endedAtMs,
+      granted: gold > 0 ? [{ currency: "gold", name: findItem("gold")?.name ?? "gold", amount: gold }] : [],
+    };
     this.raidSubmissionResults.set(request.requestId, response);
     return structuredClone(response);
   }
 
   /**
-   * 기여 단계와 처치 보상을 한 처리 단위로 확정한다.
+   * 끝난 판의 정산 — 참여한 판만, 한 번만.
    *
-   * 달성 여부와 중복 수령을 **서버가 다시 검사한다** — 화면이 보낸 단계 ID만 믿으면 아직 넘기지
-   * 않은 문턱도 수령된다.
+   * 몫은 서버가 다시 계산한다(`raidSettlement`) — 화면이 보여 준 값을 믿으면 끝나지 않은 판도
+   * 정산된다. 같은 요청 ID는 영수증만 돌려주고, 이미 정산한 판은 지급 없이 그렇다고만 말한다.
    */
-  async claimRaidReward(request: ClaimRaidRewardRequest): Promise<ClaimRaidRewardResponse> {
+  async settleRaid(request: SettleRaidRequest): Promise<SettleRaidResponse> {
     await this.delay();
-    const cached = this.raidRewardResults.get(request.requestId);
+    const cached = this.raidSettleResults.get(request.requestId);
     if (cached) return structuredClone(cached);
     const now = this.now();
     this.normalizeRaid(now);
-    const season = this.raidSeasonDto(now);
-    const stage = RAID_CONTRIBUTION_REWARD_STAGES.find(({ id }) => id === request.stageId);
-    const world = season.worldStages.find(({ id }) => id === request.stageId);
-    if (!stage && !world) throw new GameApiError("RAID_REWARD_NOT_FOUND", "존재하지 않는 레이드 보상 단계입니다.");
-    // 달성은 서버가 다시 판정한다 — 화면이 보낸 ID만 믿으면 아직 넘기지 않은 문턱도 수령된다.
-    if (stage && this.state.raid.myDamage < stage.threshold) throw new GameApiError("RAID_REWARD_NOT_EARNED", "아직 달성하지 못한 기여 단계입니다.");
-    if (world && !world.reached) throw new GameApiError("RAID_REWARD_NOT_EARNED", "아직 도달하지 못한 월드 진행 단계입니다.");
-
-    const reward = stage ? stage.reward : RAID_WORLD_REWARD_STAGES.find(({ id }) => id === request.stageId)!.reward;
-    const alreadyClaimed = this.state.raid.claimedStageIds.includes(request.stageId);
-    if (!alreadyClaimed) {
+    const instance = this.raidInstances(now).find(({ id }) => id === request.raidId);
+    if (!instance) throw new GameApiError("RAID_NOT_FOUND", "존재하지 않는 레이드입니다.");
+    const dto = this.raidDto(instance, now);
+    if (dto.status !== "completed") throw new GameApiError("RAID_NOT_ENDED", "아직 끝나지 않은 레이드입니다.");
+    if (dto.settlement.length === 0) throw new GameApiError("RAID_REWARD_NOT_EARNED", "참여하지 않은 레이드입니다.");
+    const alreadySettled = instance.settled;
+    if (!alreadySettled) {
       const nextState = structuredClone(this.state);
-      nextState.raid.claimedStageIds = [...nextState.raid.claimedStageIds, request.stageId];
-      // 증표는 지갑 재화라 다른 지급과 같은 상한 경계(`WALLET_CAPS`)를 지난다.
-      nextState.wallet = { ...nextState.wallet, [reward.currency]: Math.min(WALLET_CAPS[reward.currency], nextState.wallet[reward.currency] + reward.amount) };
-      this.persist(nextState);
-      if (this.state === session) replaceSession(nextState);
-      else Object.assign(this.state, nextState);
+      nextState.raid = { instances: nextState.raid.instances.map((entry) => entry.id === instance.id ? { ...entry, settled: true } : entry) };
+      for (const reward of dto.settlement) {
+        nextState.wallet = { ...nextState.wallet, [reward.currency]: Math.min(WALLET_CAPS[reward.currency], nextState.wallet[reward.currency] + reward.amount) };
+      }
+      this.commitRaidState(nextState);
     }
-    const response: ClaimRaidRewardResponse = {
-      ...this.snapshot(), stageId: request.stageId, alreadyClaimed,
-      reward: { currency: reward.currency, name: findItem(reward.currency)?.name ?? reward.currency, amount: reward.amount },
-      season: this.raidSeasonDto(now),
-    };
-    this.raidRewardResults.set(request.requestId, response);
+    const settled = this.raidInstances(now).find(({ id }) => id === request.raidId) ?? { ...instance, settled: true };
+    const response: SettleRaidResponse = { ...this.snapshot(), raid: this.raidDto(settled, now), granted: alreadySettled ? [] : dto.settlement, alreadySettled };
+    this.raidSettleResults.set(request.requestId, response);
     return structuredClone(response);
   }
 

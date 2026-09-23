@@ -50,7 +50,7 @@ import { consumeSceneEntry } from "./sceneEntry";
 import { getBountyTier } from "../data/bounty";
 import { getCakeOperationTier } from "../data/cakeOperation";
 import type { BountyBattleInputDto } from "../core/bountyRun";
-import type { CakeBattleInputDto } from "../core/expeditionBattle";
+import type { CakeBattleInputDto, RaidBattleInputDto } from "../core/expeditionBattle";
 
 /**
  * 미리보기 전장.
@@ -470,7 +470,7 @@ export class PartyScene extends Phaser.Scene {
     const content = this.content;
     const requestId = globalThis.crypto?.randomUUID?.() ?? `${content.content}-entry-${Date.now()}`;
     if (content.content === "raid") {
-      startScene(this, "battle", { mode: "raid" });
+      startScene(this, "battle", { mode: "raid", raidId: content.raidId, bossRelicId: content.bossRelicId, difficulty: content.difficulty } satisfies RaidBattleInputDto);
       return;
     }
     if (content.content === "bounty") {
@@ -490,8 +490,8 @@ export class PartyScene extends Phaser.Scene {
   /** 뒤로가기는 들어온 입구로 돌아간다. 던전은 고르던 단계·배율을 그대로 되살린다. */
   private leave(): void {
     const content = this.content;
-    // 레이드 편성에서 나가는 길은 목록이 아니라 그 판(월드 폭주)이다 — 한 단계 앞이다.
-    if (content.content === "raid") startScene(this, "raid", { view: "world" });
+    // 레이드 편성에서 나가는 길은 목록이 아니라 고른 그 판이다 — 한 단계 앞이다.
+    if (content.content === "raid") startScene(this, "raid", { raidId: content.raidId });
     else if (content.content === "bounty") startScene(this, "bounty", { tierId: content.tierId, multiplier: content.multiplier });
     else if (content.content === "cake") startScene(this, "cakeOperation", { tierId: content.tierId, multiplier: content.multiplier });
     else startScene(this, "stageMap");

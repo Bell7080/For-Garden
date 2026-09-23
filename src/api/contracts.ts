@@ -1,4 +1,5 @@
 import { t, type TextKey } from "../i18n";
+import type { RaidDifficulty } from "../data/raid";
 import type { AcquisitionResult, GachaPityState, QuantityRewardKind, Wallet } from "../core/gacha";
 import type { RelicProgress, RelicSkinId, Stats } from "../core/types";
 import type { MissionPeriod } from "../core/missions";
@@ -504,7 +505,7 @@ export interface UpgradeRuneTraitRequest { runeInstanceId: string; itemId: strin
 export interface UpgradeRuneTraitResponse { rune: RuneInstance; items: InventoryItemDto[]; }
 
 /** UI가 서버 실패 원인을 문구로 바꿀 수 있게 고정한 오류 코드다. */
-export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPEDITION_RUN_NOT_FOUND" | "EXPEDITION_ALREADY_SETTLED" | "EXPEDITION_ALREADY_ACTIVE" | "EXPEDITION_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REQUIRED" | "AD_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REJECTED" | "RAID_DAILY_LIMIT" | "RAID_SEASON_DEFEATED" | "RAID_SCORE_REJECTED" | "RAID_REWARD_NOT_FOUND" | "RAID_REWARD_NOT_EARNED" | "EXPEDITION_REWARD_NOT_FOUND" | "EXPEDITION_REWARD_NOT_EARNED" | "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INVALID_PURCHASE_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "INVALID_RUNE_SALE" | "RUNE_EQUIPPED" | "RUNE_LOCKED" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "BOUNTY_TIER_NOT_FOUND" | "BOUNTY_TIER_LOCKED" | "BOUNTY_DAILY_LIMIT" | "BOUNTY_ADMISSION_NOT_FOUND" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_STOREFRONT_MISMATCH" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "ACQUISITION_FLOW_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE"
+export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPEDITION_RUN_NOT_FOUND" | "EXPEDITION_ALREADY_SETTLED" | "EXPEDITION_ALREADY_ACTIVE" | "EXPEDITION_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REQUIRED" | "AD_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REJECTED" | "RAID_DAILY_LIMIT" | "RAID_SCORE_REJECTED" | "RAID_REWARD_NOT_EARNED" | "RAID_NOT_FOUND" | "RAID_ENDED" | "RAID_NOT_ENDED" | "RAID_SUMMON_INVALID" | "RAID_TICKET_SHORTAGE" | "EXPEDITION_REWARD_NOT_FOUND" | "EXPEDITION_REWARD_NOT_EARNED" | "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INVALID_PURCHASE_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "BANNER_NOT_FOUND" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "INVALID_RUNE_SALE" | "RUNE_EQUIPPED" | "RUNE_LOCKED" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "BOUNTY_TIER_NOT_FOUND" | "BOUNTY_TIER_LOCKED" | "BOUNTY_DAILY_LIMIT" | "BOUNTY_ADMISSION_NOT_FOUND" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_STOREFRONT_MISMATCH" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "ACQUISITION_FLOW_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE"
   | "STRATA_NO_CHARGE" | "STRATA_RUN_ACTIVE" | "STRATA_RUN_NOT_FOUND" | "STRATA_SITE_LOCKED" | "STRATA_SITE_COOLING" | "STRATA_TILE_UNAVAILABLE"
   | "RUNE_TRAIT_NOT_FOUND" | "RUNE_TRAIT_ITEM_INVALID" | "RUNE_TRAIT_MAX_GRADE" | "RUNE_TRAIT_REROLL_PENDING"
   | "CAKE_TIER_NOT_FOUND" | "CAKE_TIER_LOCKED" | "CAKE_MULTIPLIER_LOCKED" | "BOUNTY_MULTIPLIER_LOCKED";
@@ -592,42 +593,54 @@ export interface ExpeditionLeaderboardResponse { weekKey: string; tieBreakPolicy
  * 그래서 시즌 응답이 먼저 들고 오는 것이 순위가 아니라 `remainingHp`다.
  */
 export interface RaidContributionEntryDto { rank: number; playerId: string; displayName: string; damage: number; isMe: boolean; favoriteRelicId?: string; }
-/** 누적 기여 단계의 운영 수치와 수령 상태는 서버 스냅샷만 화면의 기준으로 삼는다. */
-export interface RaidRewardStageDto { id: string; threshold: number; reward: { currency: WalletItemKey; name: string; amount: number }; claimed: boolean; }
+/** 정산·한 판 보상의 한 줄. 화면은 이 값을 액자에 그대로 세운다. */
+export interface RaidRewardDto { currency: WalletItemKey; name: string; amount: number; }
 /**
- * 서버 전체가 깎은 비율로 열리는 월드 진행 보상 한 칸. **참가하지 않은 플레이어도** 받는다.
- * `reached`는 서버가 판정하며 화면은 비율을 다시 계산하지 않는다.
+ * 레이드 한 판의 전부. 화면은 이 값만 읽고 남은 체력·상태·정산을 다시 계산하지 않는다.
+ *
+ * `status`는 서버가 정한다 — 토벌됐거나 수명이 다했으면 `completed`다. 끝난 판은 완료 탭에 서고,
+ * 참여했으면 `settlement`에 **지금까지의 몫**이 실린다(진행 중이면 예상치, 참여하지 않았으면 비어 있다).
+ * 받는 것은 끝난 뒤 정산 한 번뿐이다.
  */
-export interface RaidWorldStageDto { id: string; ratio: number; reward: { currency: WalletItemKey; name: string; amount: number }; reached: boolean; claimed: boolean; }
-/** 월드 폭주 하루의 전부. 화면은 이 응답만 읽고 남은 체력이나 기여를 다시 계산하지 않는다. */
-export interface RaidSeasonResponse {
-  seasonKey: string;
+export interface RaidDto {
+  id: string;
+  kind: "world" | "summon";
   bossRelicId: string;
-  /** 그 보스가 실제로 싸우는 레벨이다. 화면의 `LV.n`이 곧 이 값이다. */
+  difficulty: RaidDifficulty;
+  /** 그 보스가 실제로 싸우는 레벨·돌파다. 화면의 `LV.n`이 곧 이 값이다. */
   bossLevel: number;
   bossBreakthrough: number;
+  /** 소환 레이드를 연 사람. 내가 열었으면 `summonedByMe`만 켜진다. */
+  summonerName?: string;
+  summonedByMe: boolean;
   totalHp: number;
   /** 참가자 전원이 지금까지 깎아 낸 합이다. */
   dealtDamage: number;
   remainingHp: number;
   defeated: boolean;
-  /** 오늘 내가 민 몫(두 판의 피해 합)이다. 기여 보상 단계가 읽는 값이기도 하다. */
+  status: "active" | "completed";
+  openedAt: string;
+  endsAt: string;
+  /** 이 판에서 내가 민 몫(두 판의 합)이다. */
   myDamage: number;
   attemptsUsed: number;
   attemptsLimit: number;
-  resetsAt: string;
-  rewardStages: RaidRewardStageDto[];
-  /** 서버 전체가 깎은 비율로 열리는 보상. 마지막 칸(100%)이 곧 토벌 보상이다. */
-  worldStages: RaidWorldStageDto[];
+  settled: boolean;
+  settlement: RaidRewardDto[];
   entries: RaidContributionEntryDto[];
 }
+/** 레이드 목록. 두 토벌권이 몇 장 남았는지도 함께 싣는다(목록 머리에 선다). */
+export interface RaidListResponse { raids: RaidDto[]; tickets: { normal: number; select: number } }
+/** 토벌권 한 장으로 판을 연다. `bossRelicId`는 선택 토벌권일 때만 받는다. */
+export interface SummonRaidRequest { requestId: string; difficulty: RaidDifficulty; bossRelicId?: string; }
+export interface SummonRaidResponse extends PlayerStateDto { raid: RaidDto; tickets: RaidListResponse["tickets"]; }
 /** 원정 보스와 **같은 재현 규칙**을 쓴다 — 클라이언트 피해 숫자는 받지 않는다. */
-export interface SubmitRaidDamageRequest { requestId: string; actions: ExpeditionBossAction[]; }
-/** 한 판이 확정된 뒤의 시즌 전체 상태다. 화면은 이 응답으로 그대로 다시 그린다. */
-export interface SubmitRaidDamageResponse { season: RaidSeasonResponse; runDamage: number; endedAtMs: number; }
-/** 달성한 기여 단계나 월드 진행 단계를 서버 멱등 기록으로 수령한다. 두 표의 ID는 겹치지 않는다. */
-export interface ClaimRaidRewardRequest { requestId: string; stageId: string; }
-export interface ClaimRaidRewardResponse extends PlayerStateDto { stageId: string; reward: { currency: WalletItemKey; name: string; amount: number }; alreadyClaimed: boolean; season: RaidSeasonResponse; }
+export interface SubmitRaidDamageRequest { requestId: string; raidId: string; actions: ExpeditionBossAction[]; }
+/** 한 판이 확정된 뒤의 그 레이드 상태와, 그 판의 피해에 비례해 곧바로 지급된 것이다. */
+export interface SubmitRaidDamageResponse extends PlayerStateDto { raid: RaidDto; runDamage: number; endedAtMs: number; granted: RaidRewardDto[]; }
+/** 끝난 판의 정산. 참여한 판만, 한 번만 받는다. */
+export interface SettleRaidRequest { requestId: string; raidId: string; }
+export interface SettleRaidResponse extends PlayerStateDto { raid: RaidDto; granted: RaidRewardDto[]; alreadySettled: boolean; }
 /** 직접 플레이하지 않고 역대 최고 점수 일부와 절반의 노드 클리어 전리품만 즉시 정산하는 소탕 요청이다. */
 export interface SweepExpeditionRequest { requestId: string; }
 export interface SweepExpeditionResponse extends PlayerStateDto { weekKey: string; scoreGain: number; bestScore: number; cumulativeScore: number; granted: Record<string, number>; playsThisWeek: number; }
@@ -652,12 +665,14 @@ export interface GameApi extends AsyncArenaProfileApi {
   claimExpeditionReward(request: ClaimExpeditionRewardRequest): Promise<ClaimExpeditionRewardResponse>;
   /** 서버가 소유한 주간 순위표를 동점 정책에 따라 조회한다. */
   getExpeditionLeaderboard(limit?: number): Promise<ExpeditionLeaderboardResponse>;
-  /** 시즌 보스의 남은 체력·내 기여·기여 목록을 한 응답으로 조회한다. */
-  getRaidSeason(limit?: number): Promise<RaidSeasonResponse>;
-  /** 동작열을 서버 편성으로 재현하고 그 판의 피해만 시즌 체력에서 깎는다. */
+  /** 지금 볼 수 있는 레이드(오늘의 월드 폭주·친구 레이드·내가 연 판·끝난 판)와 토벌권 수를 조회한다. */
+  getRaids(limit?: number): Promise<RaidListResponse>;
+  /** 토벌권 한 장을 써서 친구와 함께 칠 판을 연다. 선택 토벌권이면 보스를 고른다. */
+  summonRaid(request: SummonRaidRequest): Promise<SummonRaidResponse>;
+  /** 동작열을 서버 편성으로 재현하고 그 판의 피해만 그 레이드의 체력에서 깎는다. */
   submitRaidDamage(request: SubmitRaidDamageRequest): Promise<SubmitRaidDamageResponse>;
-  /** 달성한 기여 단계와 처치 보상을 서버 멱등 기록으로 수령한다. */
-  claimRaidReward(request: ClaimRaidRewardRequest): Promise<ClaimRaidRewardResponse>;
+  /** 끝난 판의 정산을 서버 멱등 기록으로 수령한다. 참여한 판만, 한 번만. */
+  settleRaid(request: SettleRaidRequest): Promise<SettleRaidResponse>;
   /** 룬·지갑·스택을 저장 모델 변경 없이 합성해 조회한다. */
   getInventory(): Promise<InventoryResponse>;
   /** 검증·효과·차감·저장을 하나의 서버 처리로 확정한다. */

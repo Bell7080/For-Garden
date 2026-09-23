@@ -5,7 +5,7 @@ import { getExpeditionAugment } from "../data/expeditionAugments";
 import type { ExpeditionAugmentEffect } from "./expeditionAugments";
 import { EXPEDITION_COMBAT_BALANCE } from "../data/expedition";
 import { EXPEDITION_BOSS_BALANCE } from "../data/expedition";
-import { RAID_BOSS_BALANCE } from "../data/raid";
+import { isRaidDifficulty, RAID_BOSS_BALANCE, type RaidDifficulty } from "../data/raid";
 import { ENCOUNTER_ROLE } from "./levelDesign";
 import { RAID_BOSS_ROLE } from "./raid";
 import type { FighterInitialState, SkirmishBossPhase, SkirmishRelicResult } from "./skirmish";
@@ -119,6 +119,10 @@ export interface StageBattleInputDto {
  */
 export interface RaidBattleInputDto {
   mode: "raid";
+  /** 어느 판의 체력을 깎는가. 월드 폭주든 친구가 연 판이든 같은 입력이다. */
+  raidId: string;
+  bossRelicId: string;
+  difficulty: RaidDifficulty;
 }
 
 /** 일반 스테이지 진입과 원정·레이드 진입을 명시적으로 구분하는 전투 씬 입력 계약이다. */
@@ -143,7 +147,9 @@ export function normalizeBattleSceneInput(input?: unknown): BattleSceneInputDto 
   // 원정 판별값만 보존하고 나머지는 새 객체로 만들어 직전 원정 필드가 스토리에 섞이지 않게 한다.
   if (typeof input === "object" && input !== null && "mode" in input) {
     const candidate = input as BattleSceneInputDto;
-    if (candidate.mode === "expedition" || candidate.mode === "expeditionBoss" || candidate.mode === "raid" || candidate.mode === "cake") return candidate;
+    if (candidate.mode === "expedition" || candidate.mode === "expeditionBoss" || candidate.mode === "cake") return candidate;
+    // 레이드는 판 ID까지 있어야 한다 — 판별값만 남은 입력은 어느 체력을 깎을지 모른다.
+    if (candidate.mode === "raid" && typeof candidate.raidId === "string" && typeof candidate.bossRelicId === "string" && isRaidDifficulty(candidate.difficulty)) return candidate;
     // 현상수배는 라운드 번호까지 있어야 한 판이 이어진다 — 판별값만 남은 입력은 스토리로 돌린다.
     if (candidate.mode === "bounty" && typeof candidate.tierId === "string" && typeof candidate.requestId === "string") return candidate;
   }

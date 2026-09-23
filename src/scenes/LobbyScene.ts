@@ -21,7 +21,6 @@ import { PopupLayer } from "../ui/PopupLayer";
 import { IdleExcavationPopup } from "../ui/IdleExcavationPopup";
 import { TradePopup } from "../ui/TradePopup";
 import { BACK_SLOT, IconButton } from "../ui/IconButton";
-import { POPUP_SIDE_SLOT } from "../ui/popupGeometry";
 import { UI_ICON } from "../ui/icons";
 import { InventoryPopup } from "../ui/InventoryPopup";
 import { bindNotificationDot } from "../ui/NotificationDot";
@@ -67,7 +66,15 @@ const EXCHANGE_BLUE = COLOR.exchange;
 
 
 /** 출격 선택판의 규격. 판 크기와 SD 층·동작 간격을 한 곳에서만 정한다. */
-const SORTIE_MENU = { panel: { width: 980, height: 1240 }, motionDelay: 2600 } as const;
+/**
+ * 출격 선택판.
+ *
+ * `shopTab`은 판 **밑변 가운데에 반쯤 걸친** 전리품 상점 라벨이다. 화면 밑동 왼쪽(판 밖 곁들임
+ * 줄)에 두었을 때는 판에서 너무 멀어 보이지 않았다 — 판에 걸터앉으면 이 판에 딸린 곁들임으로
+ * 읽히면서도 다섯 칸과는 다른 줄에 서서 여섯 번째 콘텐츠로 읽히지 않는다.
+ * `dimAlpha`는 뒤 로비를 은은하게만 눌러 판을 떼어 놓는다 — 짙으면 애착 렐릭이 사라진다.
+ */
+const SORTIE_MENU = { panel: { width: 980, height: 1240 }, motionDelay: 2600, shopTab: { width: 300, height: 84 }, dimAlpha: 0.42 } as const;
 /**
  * 결투 선택판.
  *
@@ -128,7 +135,6 @@ export class LobbyScene extends Phaser.Scene {
   private sortieSdTimer?: Phaser.Time.TimerEvent;
   private sortieBackButton?: IconButton;
   /** 출격판 밖 왼쪽 아래에 서는 전리품 상점 입구. 판과 함께 나고 함께 사라진다. */
-  private sortieShopButton?: Button;
   private idleExcavationPopup?: IdleExcavationPopup;
   /** 무역은 로비 수명을 보존하는 패키지 레이어다. */
   private tradePopup?: TradePopup;
@@ -392,7 +398,7 @@ export class LobbyScene extends Phaser.Scene {
     // 다섯 콘텐츠가 저마다 원화와 SD를 세우므로 판을 한 뼘 키워 서로 붙어 보이지 않게 한다.
     const panel = SORTIE_MENU.panel;
     // 일반 작업판보다 암전을 옅게 해 로비의 애착 렐릭이 뒤에서 계속 보이도록 한다.
-    this.popupLayer.open({ width: panel.width, height: panel.height, title: t("lobby.sortie.title"), titleSize: 34, dim: true, dimAlpha: 0.24, closeOnBackdrop: false, hideCloseButton: true, onClose: () => this.clearSortieChrome() }, (body, close) => {
+    this.popupLayer.open({ width: panel.width, height: panel.height, title: t("lobby.sortie.title"), titleSize: 34, dim: true, dimAlpha: SORTIE_MENU.dimAlpha, closeOnBackdrop: false, hideCloseButton: true, onClose: () => this.clearSortieChrome() }, (body, close) => {
       // Puppet은 컨테이너 변환을 물려받지 않으므로 원점에 선 전용 레이어에 화면 좌표로 세운다.
       this.sortieSdLayer = this.add.container(0, 0).setName("sortie-entry-sd").setDepth(SORTIE_SD_DEPTH);
       const entries: SortieEntry[] = [
@@ -451,17 +457,16 @@ export class LobbyScene extends Phaser.Scene {
       });
       // 돌아가기는 판 안이 아니라 다른 팝업과 같은 화면 우하단 슬롯에 선다.
       this.sortieBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: close }).setDepth(SORTIE_SD_DEPTH + 1);
-      // 전리품 상점은 **판 밖**에 선다 — 판 안의 칸 다섯은 「어디로 나갈까」를 고르는 자리이고,
-      // 상점은 그 다섯이 떨군 증표를 쓰는 곁들임이라 같은 크기로 끼워 넣으면 여섯 번째
-      // 콘텐츠로 읽힌다. 자리는 뒤로가기와 마주 보는 줄(`POPUP_SIDE_SLOT`)이고, 생김새는
-      // 아이콘이 아니라 라벨 버튼이다 — 같은 모양이면 판 밖에 나가는 문이 둘로 보인다.
-      this.sortieShopButton = new Button(this, POPUP_SIDE_SLOT.x, POPUP_SIDE_SLOT.y, {
-        width: POPUP_SIDE_SLOT.width, height: POPUP_SIDE_SLOT.height,
+      // 전리품 상점은 판 **밑변 가운데에 반쯤 걸친 라벨**이다 — 판 안의 칸 다섯은 「어디로
+      // 나갈까」를 고르는 자리이고, 상점은 그 다섯이 떨군 증표를 쓰는 곁들임이라 같은 크기로
+      // 끼워 넣으면 여섯 번째 콘텐츠로 읽힌다. 판에 딸려 함께 여닫히도록 판(`body`)에 넣는다.
+      // 생김새는 아이콘이 아니라 라벨 버튼이다 — 같은 모양이면 판 밖에 나가는 문이 둘로 보인다.
+      body.add(new Button(this, 0, panel.height / 2, {
+        width: SORTIE_MENU.shopTab.width, height: SORTIE_MENU.shopTab.height,
         label: t("lobby.sortie.shop"), fontSize: 30,
         accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
-        onClick: () => { close(); this.scene.start("shop", { storefront: "loot", returnScene: "lobby", returnMenu: "sortie" }); },
-      });
-      this.sortieShopButton.setDepth(SORTIE_SD_DEPTH + 1);
+        onClick: () => { close(); startScene(this, "shop", { storefront: "loot", returnScene: "lobby", returnMenu: "sortie" }); },
+      }));
       // 세워 둔 SD가 가끔 한 번씩 움직인다. 다섯 칸이 동시에 뛰면 무엇을 고르는 화면인지 흐려지므로
       // 한 번에 하나만, 그것도 드문드문 재생한다.
       this.sortieSdTimer = this.time.addEvent({ delay: SORTIE_MENU.motionDelay, loop: true, callback: () => {
@@ -521,7 +526,6 @@ export class LobbyScene extends Phaser.Scene {
     this.sortieSdPuppets.clear(); this.sortieSdPairs = [];
     this.sortieSdLayer?.destroy(true); this.sortieSdLayer = undefined;
     this.sortieBackButton?.destroy(); this.sortieBackButton = undefined;
-    this.sortieShopButton?.destroy(); this.sortieShopButton = undefined;
   }
 
   /** 주간 횟수·진행·최고점·빠른 가능 여부를 한 줄의 짧은 원정 상태로 합친다. */

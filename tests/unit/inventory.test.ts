@@ -113,8 +113,8 @@ describe("inventory", () => {
     const state = createDefaultSession(); const inventory = new InventoryManager(state);
     expect(inventory.list("currency").find(({ id }) => id === "gold")?.quantity).toBe(state.wallet.gold);
     expect(inventory.list("consumable")).toHaveLength(1);
-    // 재료 칸은 룬 특성을 만져 보게 하는 임시 지급뿐이다. 그 표를 지우면 이 줄도 함께 0으로 돌아간다.
-    expect(inventory.list("material")).toHaveLength(STARTER_RUNE_TRAIT_KIT.items.length);
+    // 재료 칸은 룬 특성을 만져 보게 하는 임시 지급과 처음 쥐여 주는 두 토벌권뿐이다.
+    expect(inventory.list("material")).toHaveLength(STARTER_RUNE_TRAIT_KIT.items.length + 2);
     expect(inventoryScrollMetrics(4).minY).toBe(0); expect(inventoryScrollMetrics(20)).toEqual({ contentHeight: 1040, minY: 0 });
   });
 

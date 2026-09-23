@@ -1,5 +1,6 @@
 /** 씬 사이를 오가는 런타임 상태다. JSON 경계에서는 반드시 SaveData로 변환한다. */
 
+import type { RaidDifficulty } from "../data/raid";
 import type { GachaPityState, Wallet } from "../core/gacha";
 import type { RelicProgress, RelicSkinId } from "../core/types";
 import { BANNERS } from "../data/banners";
@@ -148,27 +149,36 @@ export interface CakeOperationState {
 export interface ExpeditionRelicState { relicId: string; currentHp: number; alive: boolean; }
 
 /**
- * 월드 폭주 하루의 내 몫.
+ * 내가 들어간 레이드 한 판의 몫.
  *
- * **참가자 전원의 누적은 저장하지 않는다** — 함께 민 사람들의 몫은 서버가 갖고, 백엔드가 없는
- * 지금은 시즌 키에서 되풀이 계산되는 값(`mockRaidContributions`)이라 저장에 굳히면 다음에 열
- * 때 두 수가 갈린다. 저장이 갖는 것은 내가 민 몫과 수령 기록뿐이다.
+ * **다른 참가자의 몫은 저장하지 않는다** — 서버가 갖고, 백엔드가 없는 지금은 판의 ID와 시각에서
+ * 되풀이 계산되는 값이라 저장에 굳히면 다음에 열 때 두 수가 갈린다. 저장이 갖는 것은 **판을
+ * 다시 세우는 데 필요한 정의**(보스·난이도·시각)와 내가 민 몫·도전 횟수·정산 여부뿐이다.
  */
-export interface RaidState {
-  /** UTC 날짜 키(`YYYY-MM-DD`)다. 빈 값이나 다른 날은 첫 조회에서 오늘로 정규화된다. */
-  seasonKey: string;
-  /** 오늘 내가 민 피해(두 판의 합)다. 기여 보상 단계가 읽는 값이기도 하다. */
+export interface RaidInstanceState {
+  id: string;
+  kind: "world" | "summon";
+  bossRelicId: string;
+  difficulty: RaidDifficulty;
+  openedAt: string;
+  endsAt: string;
+  /** 소환 레이드를 연 사람의 이름. 내가 열었으면 비운다(`summonedByMe`). */
+  summonerName?: string;
+  summonedByMe: boolean;
+  /** 이 판에서 내가 민 피해의 합(최대 두 판). 정산이 읽는 값이다. */
   myDamage: number;
-  /** 오늘 쓴 도전 횟수와 그 횟수가 귀속된 UTC 날짜다. */
   attemptsUsed: number;
-  attemptsDate: string;
-  /** 오늘 수령한 기여 단계·월드 진행 단계의 ID. 두 표의 ID는 겹치지 않는다. */
-  claimedStageIds: string[];
+  settled: boolean;
 }
 
-/** 신규 계정과 마이그레이션이 같은 빈 시즌 모양을 공유한다. */
+/** 레이드 진행. 내가 열었거나 들어간 판만 남는다. */
+export interface RaidState {
+  instances: RaidInstanceState[];
+}
+
+/** 신규 계정과 마이그레이션이 같은 빈 모양을 공유한다. */
 export function createEmptyRaidState(): RaidState {
-  return { seasonKey: "", myDamage: 0, attemptsUsed: 0, attemptsDate: "", claimedStageIds: [] };
+  return { instances: [] };
 }
 
 /** 앱 재실행 뒤에도 한 노드 단위로 그대로 이어갈 수 있는 완전한 원정 런이다. */
@@ -360,7 +370,14 @@ export function createDefaultSession(): Session {
     playerResearch: createInitialPlayerResearchProgress(),
     // 특성 아이템 셋도 임시 지급이다 — 특성이 비어 있는 시작 룬에 부여해 보고, 부여된 특성의
     // 등급을 올려 보는 길이 지층 탐사 없이도 열려 있어야 한다. 정식 수급이 붙으면 함께 지운다.
-    itemInventory: [{ itemId: "stamina-tonic", quantity: 3 }, ...STARTER_RUNE_TRAIT_KIT.items.map((entry) => ({ ...entry }))],
+    // 토벌권은 친구 레이드를 여는 입장권이다. 처음 들어온 사람이 레이드 목록의 소환을 한 번은
+    // 눌러 볼 수 있게 몇 장 쥐여 준다 — 그 뒤로는 전리품 상점에서 증표로 바꾼다.
+    itemInventory: [
+      { itemId: "stamina-tonic", quantity: 3 },
+      { itemId: "raid-ticket", quantity: 3 },
+      { itemId: "raid-select-ticket", quantity: 1 },
+      ...STARTER_RUNE_TRAIT_KIT.items.map((entry) => ({ ...entry })),
+    ],
     // 서버 첫 조회가 현재 시각을 기준점으로 확정하며 기본 보관 시간은 서버 상수가 정한다.
     idleExcavation: createIdleExcavationState(),
     archaeology: createArchaeologyState(),

@@ -30,7 +30,7 @@ export const CURRENCY_GUIDE = {
   stamina: { key: "stamina", name: "스테미나", lore: "조사대가 현장에 진입할 수 있는 작전 여력입니다.", sources: ["일일 광고 보급", "에너지 드링크 사용", "시간 회복"], uses: ["스테이지 전투 진입 계약"] },
   dnaFragments: { key: "dnaFragments", name: "DNA 조각", lore: "복원체의 잠재 구조를 다시 잇는 공용 유전 표본입니다.", sources: ["무역의 복원 재료 교환", "중복 복원 연구"], uses: ["렐릭 돌파 성장", "무역의 표본 반출 계약"], action: { kind: "popup", target: "trade", label: "무역 열기" } },
   cheesecake: { key: "cheesecake", name: "치즈케이크", lore: "복원체와 신뢰를 쌓는 연구소의 특별 급여입니다.", sources: ["배치형 자원 발굴", "화석·호박석 연구 부산물", "원정·일일 광고 보상", "교류 파견 보상"], uses: ["렐릭 급여 성장", "무역의 복원 재료 교환"], action: { kind: "popup", target: "trade", label: "무역 열기" } },
-  raidSigil: { key: "raidSigil", name: "토벌 증표", lore: "보스를 밀어낸 몫만큼 발급되는 토벌 증서입니다.", sources: ["레이드 누적 기여 보상", "시즌 보스 토벌 보상"], uses: ["전리품 상점의 토벌 교환"] },
+  raidSigil: { key: "raidSigil", name: "토벌 증표", lore: "보스를 밀어낸 몫만큼 발급되는 토벌 증서입니다.", sources: ["끝난 레이드의 정산", "레이드 토벌 몫"], uses: ["전리품 상점의 토벌 교환"] },
   salvageRecord: { key: "salvageRecord", name: "인양 기록", lore: "수장된 지부에서 무엇을 건졌는지 적어 둔 기록입니다.", sources: ["원정 노드 보상", "원정 주간 기록 보상"], uses: ["전리품 상점의 인양 교환"] },
   rawStone: { key: "rawStone", name: "원석", lore: "지층 깊이 잠들어 있던, 아직 아무도 손대지 않은 광물입니다.", sources: ["배치형 자원 발굴", "고고학의 지층 탐사", "고고학 상점 교환"], uses: ["룬 특성 재해석"] },
 } as const satisfies Record<WalletItemKey, CurrencyGuideEntry>;

@@ -1,4 +1,4 @@
-import { applyEncounterScaling, encounterEnemyLevel } from "./levelDesign";
+import { applyEncounterScaling } from "./levelDesign";
 import { RAID_BOSS_HP_SCALE, RAID_CONTRIBUTION_REWARD_STAGES, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP } from "../data/raid";
 import { expeditionWeekKey } from "./expeditionBoss";
 import type { RelicDef } from "./types";
@@ -131,7 +131,7 @@ export function raidSeasonElapsedDays(now: Date): number {
  * 돈다(`effectiveEnemyLevel`). 스테이지 정예와 같은 문법이다.
  */
 export function raidBossDef(base: RelicDef): RelicDef {
-  const level = encounterEnemyLevel(RAID_SEASON_BOSS.level, "endless");
+  const level = RAID_SEASON_BOSS.level;
   const scaled = applyEncounterScaling(base.stats, level, "endless");
   /*
    * **최대 체력만 성장이 아니라 시즌 게이지에서 나온다.**

@@ -2,13 +2,13 @@ import type { RelicDef } from "../core/types";
 import { registerDataText } from "../i18n";
 import { CONTENT_STAMINA_COSTS } from "./contentCosts";
 import { getRelic } from "./relics";
-import { applyEncounterScaling, encounterEnemyLevel, encounterRoleFor } from "../core/levelDesign";
+import { applyEncounterScaling, encounterRoleFor } from "../core/levelDesign";
 
 /**
  * 현상수배 한 라운드에 서는 정예 하나.
  *
  * 스테이지의 `StageEnemyDef`와 같은 축을 쓴다 — **자란 레벨**과 **야성으로 난폭해진 단계**뿐이고
- * 전용 능력치 배율은 없다(`CLAUDE.md`의 "스테이지 난이도는 개체 정의가 아니라 `ferocityLevel`로
+ * 전용 능력치 배율은 없다(`CLAUDE.md`의 "스테이지 난이도는 개체 정의가 아니라 그 관문의 레벨로
  * 조인다"). 자리는 하나뿐이라 `formationSlot`을 적지 않는다.
  */
 export interface BountyRoundDef {
@@ -48,12 +48,12 @@ export const BOUNTY = {
 /**
  * 등급 사다리.
  *
- * **한 등급 안의 셋은 같은 레벨로 자라 있고, 다른 것은 얼마나 사나운가뿐이다.** 관문을 조이는
- * 손잡이를 `ferocityLevel` 하나로 두기 위해서다.
+ * **한 등급 안의 셋은 같은 레벨로 자라 있고, 다른 것은 누가 서는가뿐이다.** 관문을 조이는
+ * 손잡이를 그 등급의 레벨 하나로 두기 위해서다.
  *
  * 라운드 순서는 **토비 → 아모 → 코마**다. 1대1 실측에서 코마가 같은 레벨의 다른 둘보다 훨씬
  * 무거워(레벨 20 파티 기준 확실히 이기는 개체가 실효 15에서 토비 15종 · 아모 13종 · 코마
- * 6종), 그 하나가 마지막 라운드의 벽이 된다. **코마에는 야성을 얹지 않는다** — 자란 레벨만으로
+ * 6종), 그 하나가 마지막 라운드의 벽이 된다. **코마에 얹는 것은 아무것도 없다** — 자란 레벨만으로
  * 이미 나머지 둘의 몫을 한다.
  *
  * 값은 눈대중이 아니라 `tests/unit/bountyBalance.test.ts`가 `duelBalance`로 다시 잰다. 보유
@@ -99,8 +99,8 @@ export function getBountyTier(id: string): BountyTierDef {
 /**
  * 그 라운드의 정예를 **전투에 서는 성장 사본**으로 만든다.
  *
- * 스테이지와 같은 경로를 쓴다 — 야성으로 얹힌 몫도 레벨과 같은 성장 공식을 지나고, 정예 배율은
- * `effectiveEnemyLevel`이 한 줄에서만 돈다. 정적 정의는 바꾸지 않는다.
+ * 스테이지와 같은 경로를 쓴다 — 레벨 성장과 유형 배수를 `applyEncounterScaling`이 한 줄에서만
+ * 돌린다. 정적 정의는 바꾸지 않는다.
  */
 export function bountyRoundEnemy(round: BountyRoundDef): RelicDef {
   const base = getRelic(round.relicId);
@@ -119,7 +119,7 @@ export const BOUNTY_ROLE = encounterRoleFor(1);
 
 /** 그 라운드에 실제로 서는 레벨 — 권장 레벨에 정예 차 하나만 얹는다. */
 export function bountyRoundLevel(round: BountyRoundDef): number {
-  return encounterEnemyLevel(round.level, BOUNTY_ROLE);
+  return round.level;
 }
 
 /** 등급 이름을 언어별로 덮어쓸 수 있게 등록한다. */

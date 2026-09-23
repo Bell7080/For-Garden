@@ -2,7 +2,7 @@ import { registerDataText } from "../i18n";
 import type { DungeonRunCost } from "../core/dungeonShortcut";
 import type { RelicDef } from "../core/types";
 import { getRelic } from "./relics";
-import { applyEncounterScaling, encounterEnemyLevel, encounterRoleFor, type EncounterRole } from "../core/levelDesign";
+import { applyEncounterScaling, encounterRoleFor, type EncounterRole } from "../core/levelDesign";
 
 /**
  * **치즈케이크 대작전** — 레이티아 다섯 자매가 떼로 몰려오는 물량형 던전.
@@ -10,9 +10,9 @@ import { applyEncounterScaling, encounterEnemyLevel, encounterRoleFor, type Enco
  * 성장 재화(치즈케이크)를 캐는 자리라 "더 강하게 키운 아군으로 더 높은 단계에 들어간다"가
  * 그대로 순환이 된다. 단계가 오를수록 적이 무거워지고 한 판이 주는 치즈케이크도 늘어난다.
  *
- * **난이도 손잡이는 둘뿐이다** — 자란 레벨(`enemyLevel`)과 야성 단계(`ferocityLevel`).
- * 스테이지 전용 배율이나 숨은 보정을 만들지 않는다는 규칙 그대로이며, 화면도 `LV.30` 옆에
- * 붉은 `+2`로 그 둘을 갈라 보여 준다. 무리가 몇이고 한 무리가 몇 마리인지(`waves`)는
+ * **난이도 손잡이는 하나뿐이다** — 그 단계의 레벨(`enemyLevel`)이다.
+ * 스테이지 전용 배율이나 숨은 보정을 만들지 않는다는 규칙 그대로라, 화면에 선 `LV.n`이 곧
+ * 그 개체가 싸우는 레벨이다. 무리가 몇이고 한 무리가 몇 마리인지(`waves`)는
  * 난이도가 아니라 **이 던전의 성격**이라 단계가 올라도 크게 흔들지 않는다.
  */
 
@@ -125,7 +125,7 @@ export function cakeOperationRole(tier: CakeOperationTier): EncounterRole {
  */
 export function cakeOperationWaves(tier: CakeOperationTier): RelicDef[][] {
   const role = cakeOperationRole(tier);
-  const level = encounterEnemyLevel(tier.enemyLevel, role);
+  const level = tier.enemyLevel;
   // 자매마다 태생 능력치가 같지 않다(공속·이속이 갈린다). 그래서 한 번 키워 돌려쓰지 않고
   // 다섯을 각자 키워 둔 뒤 차례로 세운다.
   const grown = CAKE_OPERATION_ENEMY_IDS.map((id) => {
@@ -143,5 +143,5 @@ export function cakeOperationWaves(tier: CakeOperationTier): RelicDef[][] {
 
 /** 화면이 `LV.n` 옆에 붉은 `+n`으로 갈라 세울 수 있도록 곱하기 전의 단계를 그대로 돌려준다. */
 export function cakeOperationEnemyDisplayLevel(tier: CakeOperationTier): { level: number } {
-  return { level: encounterEnemyLevel(tier.enemyLevel, cakeOperationRole(tier)) };
+  return { level: tier.enemyLevel };
 }

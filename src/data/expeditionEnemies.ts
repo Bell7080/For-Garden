@@ -1,4 +1,4 @@
-import { applyEncounterScaling, encounterEnemyLevel, encounterRoleFor, type EncounterRole } from "../core/levelDesign";
+import { applyEncounterScaling, encounterRoleFor, type EncounterRole } from "../core/levelDesign";
 import type { ExpeditionNodeType } from "../core/expeditionMap";
 import type { RelicDef } from "../core/types";
 import { getRelic } from "./relics";
@@ -40,7 +40,7 @@ export function expeditionNodeRole(type: ExpeditionNodeType, floor: number): Enc
   return encounterRoleFor(type === "horde" ? ENCOUNTER_HORDE_COUNT : 3, { elite: type === "elite" });
 }
 
-/** 원정의 권장 레벨 사다리 — 층이 곧 그 자리다. 유형 차는 위 표가 얹는다. */
+/** 원정의 권장 레벨 사다리 — 층이 곧 그 자리다. 유형은 레벨을 건드리지 않는다. */
 export function expeditionRecommendedLevel(floor: number): number {
   return Math.max(1, Math.round(floor * EXPEDITION_LEVEL_PER_FLOOR));
 }
@@ -51,9 +51,15 @@ const EXPEDITION_LEVEL_PER_FLOOR = 2;
 /** 무리 노드에 서는 수. 유형을 고르는 자리와 실제로 세우는 자리가 같은 값을 읽는다. */
 const ENCOUNTER_HORDE_COUNT = 5;
 
-/** 층과 조우 난도를 함께 반영한 표시/전투 공용 적 레벨이다. */
-export function expeditionEnemyLevel(type: ExpeditionNodeType, floor: number): number {
-  return encounterEnemyLevel(expeditionRecommendedLevel(floor), expeditionNodeRole(type, floor));
+/**
+ * 표시/전투 공용 적 레벨.
+ *
+ * **노드 종류가 레벨을 바꾸지 않는다.** 정예에 +3을 얹던 때는 10층 정예가 LV.23인데 11층
+ * 일반이 LV.22라, 한 층을 올라가는 동안 수가 뒤로 갔다. 층이 곧 레벨이고 그 노드가 얼마나
+ * 무거운지는 유형 배수(`ENCOUNTER_ROLE`)가 말한다.
+ */
+export function expeditionEnemyLevel(_type: ExpeditionNodeType, floor: number): number {
+  return expeditionRecommendedLevel(floor);
 }
 
 /** 정보창과 실제 난전이 같은 ID·레벨·속성 정의를 소비하도록 성장 적용 사본을 만든다. */

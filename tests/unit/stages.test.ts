@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ENCOUNTER_ROLE, encounterEnemyLevel, requiredBreakthroughForLevel } from "../../src/core/levelDesign";
+import { requiredBreakthroughForLevel } from "../../src/core/levelDesign";
 
 import { getRelic } from "../../src/data/relics";
 import { CHAPTERS, DAILY_RESTORATION, FIXED_STAGE_ENEMIES, SIDE_STORY_STAGE, STAGES, getStage, getStageEnemies } from "../../src/data/stages";
@@ -56,12 +56,12 @@ describe("stage enemy design", () => {
       { 아모: [8, 0], 토비: [8, 0], 리파: [8, 0] },
       { 아모: [10, 0], 토비: [10, 0], 리파: [10, 0] },
       { 아모: [11, 0], 토비: [11, 0], 리파: [11, 0] },
-      { 토비: [19, 0] },
+      { 토비: [13, 0] },
       { 아모: [15, 0], 토비: [15, 0], 리파: [15, 0] },
       { 아모: [16, 0], 토비: [16, 0], 리파: [16, 0] },
       { 아모: [18, 0], 토비: [18, 0], 리파: [18, 0] },
       { 아모: [19, 0], 토비: [19, 0], 리파: [19, 0] },
-      { 코마: [17, 0] },
+      { 코마: [20, 0] },
     ]);
     /*
      * **레벨은 관문을 따라 내려가지 않는다.** 1-10까지 마지막 관문이 직전보다 쉬운 구간이
@@ -155,13 +155,12 @@ describe("stage enemy design", () => {
     const elite = battles.find((stage) => stage.id === "1-10")!;
     expect(elite.elite).toBe(true);
     /*
-     * **정예의 권장 레벨은 잡졸 사다리와 따로 적는다.** 혼자 서는 자리라 세우는 개체의 등급이
-     * 결과를 크게 가르기 때문이다 — SSR 코마는 같은 레벨에서도 R 토비보다 훨씬 무겁다. 그
-     * 조정은 숨은 배율이 아니라 **화면에 `LV.n`으로 그대로 서는 레벨**이다.
+     * **정예도 잡졸과 같은 사다리 위에 선다.** 혼자 서는 자리라 무겁지만 그 몫은 유형 배수가
+     * 갖는다 — 정예에만 제 권장 레벨을 따로 적던 때는 1-5가 LV.19인데 바로 다음 1-6이
+     * LV.15로 내려앉아, 사다리를 오르는 동안 수가 뒤로 갔다.
      */
-    expect(elite.enemies[0].level).toBe(14 + ENCOUNTER_ROLE.elite.levelOffset);
     const mob = battles.find((stage) => stage.id === "1-9")!;
-    expect(encounterEnemyLevel(mob.enemies[0].level, "normal")).toBe(mob.enemies[0].level);
+    expect(elite.enemies[0].level).toBeGreaterThanOrEqual(mob.enemies[0].level);
   });
 
   it("적 레벨은 한계 돌파로 닿을 수 있는 자리에만 선다", () => {
@@ -232,10 +231,9 @@ describe("stage enemy design", () => {
     const ceiling: Record<number, number> = { 1: 0, 2: 2, 3: 3 };
     for (const stage of battles) {
       if (stage.kind !== "battle" || stage.chapter === undefined) continue;
-      const role = stage.elite === true ? "elite" : "normal";
       for (const enemy of stage.enemies) {
-        const recommended = enemy.level - ENCOUNTER_ROLE[role].levelOffset;
-        expect(requiredBreakthroughForLevel(recommended), `${stage.id} 권장 LV.${recommended}`)
+        // 적 레벨이 곧 그 관문의 권장 레벨이다 — 유형이 얹는 차가 없다.
+        expect(requiredBreakthroughForLevel(enemy.level), `${stage.id} 권장 LV.${enemy.level}`)
           .toBeLessThanOrEqual(ceiling[stage.chapter] ?? BREAKTHROUGH_CAP);
       }
     }

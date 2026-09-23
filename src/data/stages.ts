@@ -1,6 +1,6 @@
 import { applyBreakthrough } from "../core/relicProgression";
 import { registerDataText } from "../i18n";
-import { applyEncounterScaling, encounterEnemyLevel, encounterRoleFor, type EncounterRole } from "../core/levelDesign";
+import { applyEncounterScaling, encounterRoleFor, type EncounterRole } from "../core/levelDesign";
 import { type ChapterDef, type RelicDef, type StageDef, type StageEnemyDef } from "../core/types";
 import { getRelic } from "./relics";
 
@@ -24,9 +24,10 @@ function enemyGrowth(relicId: string, level: number, breakthrough: number, forma
 /**
  * **스토리의 권장 레벨 사다리 — 서른 관문에 하나씩.**
  *
- * 그 관문에 닿은 사람이 대략 몇 레벨인가이고, 적 레벨은 여기에 **유형 차 하나**만 더해서
- * 나온다(`encounterEnemyLevel` — 잡졸 +0, 정예 +3). 예전에는 자란 레벨과 야성 단계 두 표가
- * 있었고 야성이 잡졸 ×3 · 정예 ×5로 얹혀, 화면의 `LV.7 +20`이 실제로는 107레벨이었다.
+ * 그 관문에 닿은 사람이 대략 몇 레벨인가이고, **적 레벨이 곧 이 수다.** 예전에는 자란 레벨과
+ * 야성 단계 두 표가 있었고 야성이 잡졸 ×3 · 정예 ×5로 얹혀, 화면의 `LV.7 +20`이 실제로는
+ * 107레벨이었다. 그다음에는 유형마다 레벨을 얹었는데 그것도 같은 병이었다 — 1-5 정예가
+ * LV.19인데 1-6 잡졸이 LV.15라, 사다리를 오르는 동안 수가 뒤로 갔다.
  *
  * **한계 돌파 사다리 위에 놓는다.** 돌파 0의 상한은 20이고 한 단계마다 30·40·50·60으로
  * 열리므로(`BREAKTHROUGH_STEPS`), 1장은 상한 20 안에서 끝나고 2장 중반부터 1단계, 3장이
@@ -34,7 +35,9 @@ function enemyGrowth(relicId: string, level: number, breakthrough: number, forma
  * 아니라 **막힌 문**이 된다.
  *
  * **뒤로 가지 않는다.** 같은 수가 이어지는 구간은 있어도 내려가는 자리는 없다 — 장을 넘는
- * 순간 적이 약해지면 그때까지 쌓은 긴장이 풀린다.
+ * 순간이든 정예 관문을 지난 순간이든, 적 레벨이 내려가면 그때까지 쌓은 긴장이 풀린다.
+ * **정예 관문도 이 한 사다리를 그대로 쓴다**(`CHAPTER_ONE_ELITES`) — 그 자리가 무거운 것은
+ * 혼자 서기 때문이고, 그 몫은 레벨이 아니라 유형 배수가 갖는다.
  */
 const STORY_RECOMMENDED_LEVELS: readonly number[] = [
   7, 8, 10, 11, 13, 15, 16, 18, 19, 20,
@@ -47,11 +50,12 @@ const STORY_RECOMMENDED_LEVELS: readonly number[] = [
  *
  * 1-5는 방벽을 뜯고 혼자 남은 토비, 1-10은 공멸 선봉 코마다. **혼자 서는 만큼 무겁다** —
  * 셋이 나눠 내던 체력을 하나가 대신하는 몫은 유형 표(`ENCOUNTER_ROLE.elite`)가 갖고, 이
- * 표는 어느 자리가 정예인지만 적는다.
+ * 표는 **어느 자리에 누가 서는지만** 적는다. 레벨은 위 사다리 그대로다 — 정예에만 제
+ * 권장 레벨을 따로 적던 때는 1-5가 LV.19, 바로 다음 1-6이 LV.15로 내려앉았다.
  */
-const CHAPTER_ONE_ELITES: Readonly<Record<number, { relicId: string; recommended: number }>> = {
-  5: { relicId: "toby", recommended: 16 },
-  10: { relicId: "koma", recommended: 14 },
+const CHAPTER_ONE_ELITES: Readonly<Record<number, string>> = {
+  5: "toby",
+  10: "koma",
 };
 
 /**
@@ -65,11 +69,10 @@ const CHAPTER_ONE_ELITES: Readonly<Record<number, { relicId: string; recommended
 const CHAPTER_ONE_ENEMIES: readonly (readonly StageEnemyDef[])[] =
   STORY_RECOMMENDED_LEVELS.slice(0, 10).map((recommended, index) => {
     const chapterOrder = index + 1;
-    const elite = CHAPTER_ONE_ELITES[chapterOrder];
+    const eliteId = CHAPTER_ONE_ELITES[chapterOrder];
     // 홀로 서는 정예는 가운데 자리(1)를 쓴다 — 왼쪽 끝에 세우면 빈 두 자리가 편성 실수처럼 보인다.
-    if (elite) return [enemyGrowth(elite.relicId, encounterEnemyLevel(elite.recommended, "elite"), 0, 1)];
-    return STAGE_ENEMY_FORMATION.map((id, slot) =>
-      enemyGrowth(id, encounterEnemyLevel(recommended, "normal"), 0, slot as 0 | 1 | 2));
+    if (eliteId) return [enemyGrowth(eliteId, recommended, 0, 1)];
+    return STAGE_ENEMY_FORMATION.map((id, slot) => enemyGrowth(id, recommended, 0, slot as 0 | 1 | 2));
   });
 
 /**
@@ -134,7 +137,7 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
      * 관문의 무게는 레벨과 야성 둘로만 낸다.
      */
     const laterChapterEnemies = laterChapterIds.map((relicId, slot) =>
-      enemyGrowth(relicId, encounterEnemyLevel(STORY_RECOMMENDED_LEVELS[globalOrder] ?? 1, "normal"), 0, slot as 0 | 1 | 2));
+      enemyGrowth(relicId, STORY_RECOMMENDED_LEVELS[globalOrder] ?? 1, 0, slot as 0 | 1 | 2));
     const enemies = chapter === 1 ? CHAPTER_ONE_ENEMIES[orderIndex] : laterChapterEnemies;
     return {
       kind: "battle",

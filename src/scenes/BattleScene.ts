@@ -478,7 +478,7 @@ export class BattleScene extends Phaser.Scene {
         ? stageEnemies.map(() => 0)
         : stageEnemyGrowth(stage).map(({ breakthrough }) => breakthrough),
       /*
-       * **몸집은 그 적이 어떤 무리로 섰는가가 정한다**(`ENEMY_PRESENCE`). 혼자 선 정예는 크고,
+       * **몸집은 그 적이 어떤 무리로 섰는가가 정한다**(`ENCOUNTER_ROLE`). 혼자 선 정예는 크고,
        * 넷 이상이 몰려오는 무리는 작다 — 여섯 몸이 보통 크기로 들어차면 전장이 몸으로 덮여
        * 체력 바와 피해 수치가 그 뒤로 숨는다. 능력치는 건드리지 않는다 — 세기는 야성 몫이 낸다.
        */

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { bountyEntriesRemaining, bountyTierProgress, consumeBountyEntry, isBountyTierUnlocked, markBountyTierCleared, nextBountyStep, normalizeBounty } from "../../src/core/bountyRun";
 import { BOUNTY, BOUNTY_ROLE, BOUNTY_TIERS, bountyRoundEnemy, bountyRoundLevel, getBountyTier } from "../../src/data/bounty";
-import { ENCOUNTER_ROLE, applyEncounterScaling } from "../../src/core/levelDesign";
+import { applyEncounterScaling } from "../../src/core/levelDesign";
 import type { BountyState } from "../../src/state/session";
 import { getRelic } from "../../src/data/relics";
 
@@ -89,11 +89,10 @@ describe("현상수배 등급 표", () => {
     expect(base.stats).toEqual(getRelic(round.relicId).stats);
   });
 
-  it("은 등급 표가 적는 수를 권장 레벨 그대로 둔다", () => {
-    // 적 레벨은 여기에 정예 차 하나만 얹어 나온다(`bountyRoundLevel`). 곱한 값을 데이터에
-    // 적으면 화면에 선 수와 실제로 싸우는 수가 갈린다.
+  it("은 등급 표가 적는 수를 그대로 싸운다", () => {
+    // 표의 수에 무엇도 얹지 않는다 — 곱하거나 더하면 화면에 선 수와 실제로 싸우는 수가 갈린다.
     for (const tier of BOUNTY_TIERS) {
-      for (const round of tier.rounds) expect(bountyRoundLevel(round)).toBe(round.level + ENCOUNTER_ROLE[BOUNTY_ROLE].levelOffset);
+      for (const round of tier.rounds) expect(bountyRoundLevel(round)).toBe(round.level);
     }
   });
 });

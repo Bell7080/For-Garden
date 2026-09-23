@@ -302,7 +302,7 @@ export class PartyScene extends Phaser.Scene {
    * 로마자, 레벨과 이름은 한 줄에 강조색으로. 두 화면이 같은 적을 다른 글로 적으면 같은 값이
    * 어디서는 표식, 어디서는 문장이 된다.
    */
-  private buildPreview(enemies: readonly RelicDef[], growth: readonly { level: number; breakthrough: number; ferocityLevel?: number }[], elite: boolean): void {
+  private buildPreview(enemies: readonly RelicDef[], growth: readonly { level: number; breakthrough: number }[], elite: boolean): void {
     // 두 줄 사이의 대치선.
     this.add
       .line(0, 0, 120, FRONT_LINE, BASE_WIDTH - 120, FRONT_LINE, COLOR.panelEdge)

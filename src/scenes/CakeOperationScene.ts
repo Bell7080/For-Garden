@@ -80,7 +80,7 @@ export class CakeOperationScene extends Phaser.Scene {
     }).catch(() => undefined);
   }
 
-  /** 단계 한 줄. 이름·레벨·야성 단계가 왼쪽에, 한 판이 주는 치즈케이크가 오른쪽에 선다. */
+  /** 단계 한 줄. 이름과 레벨이 왼쪽에, 한 판이 주는 치즈케이크가 오른쪽에 선다. */
   private buildRow(tier: CakeOperationTier, index: number): void {
     const y = cakeRowCenterY(index);
     const shape = chipPoints(CAKE_ROW.width, CAKE_ROW.height, { bevel: { topLeft: 26, topRight: 0, bottomRight: 26, bottomLeft: 0 } });

@@ -29,7 +29,7 @@ export function placedEnemyIndex(
   enemyDefs: readonly RelicDef[],
 ): Map<string, PlacedEnemy> {
   // 대작전은 무리를 이어 붙여도 `enemy-<n>`이 이어지므로 **펼친 목록 전체**가 이 표에 든다.
-  // 한 단계가 한 레벨·한 야성 단계를 쓰므로 자리마다 다른 성장이 없다.
+  // 한 단계가 한 레벨을 쓰므로 자리마다 다른 성장이 없다.
   if (input.mode === "cake") {
     const tier = getCakeOperationTier(input.tierId);
     return new Map(enemyDefs.map((def, index) => [`enemy-${index}`, {

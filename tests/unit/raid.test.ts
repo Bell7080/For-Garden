@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { RAID_BOSS_BALANCE, RAID_BOSS_HP_SCALE, RAID_CONTRIBUTION_REWARD_STAGES, RAID_DAILY_ATTEMPTS, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP } from "../../src/data/raid";
 import { mockRaidContributions, raidBossDef, raidContributionBoard, raidEarnedContributionStageIds, raidNextContributionStage, raidSeasonElapsedDays, raidSeasonKey, raidSeasonProgress } from "../../src/core/raid";
 import { getRelic, PLAYABLE_RELICS, RELICS } from "../../src/data/relics";
-import { ENCOUNTER_ROLE, applyEncounterScaling, encounterEnemyLevel } from "../../src/core/levelDesign";
+import { ENCOUNTER_ROLE, applyEncounterScaling } from "../../src/core/levelDesign";
 
 import { RAID_ACTIONS, RAID_BOARD, RAID_HP_BAR, raidBoardViewport, raidSortieBackGap } from "../../src/ui/raidLayout";
 import { RANKING_LIST } from "../../src/ui/expeditionRankingLayout";
@@ -155,7 +155,7 @@ describe("레이드 보스", () => {
     // 레이드 전용 배율을 만들지 않는다 — 관문을 조일 손잡이가 둘이 되면 화면에 선 레벨과
     // 실제로 맞는 수치가 갈린다.
     const base = getRelic(RAID_SEASON_BOSS.relicId);
-    const scaled = applyEncounterScaling(base.stats, encounterEnemyLevel(RAID_SEASON_BOSS.level, "endless"), "endless");
+    const scaled = applyEncounterScaling(base.stats, RAID_SEASON_BOSS.level, "endless");
     for (const key of ["def", "res", "atk", "ap"] as const) expect(raidBossDef(base).stats[key]).toBe(scaled[key]);
   });
 
@@ -300,7 +300,7 @@ describe("레이드 서버 경계", () => {
     // 화면의 `LV.n`이 곧 이 값이다 — 감춘 배율이 없어야 그 수가 뜻을 갖는다.
     const server = new FakeServer(makeRaidSession(), { latencyMs: 0, now: () => at("2026-09-16T12:00:00Z") });
     const season = await server.getRaidSeason();
-    expect(season.bossLevel).toBe(encounterEnemyLevel(RAID_SEASON_BOSS.level, "endless"));
+    expect(season.bossLevel).toBe(RAID_SEASON_BOSS.level);
   });
 
   it("은 함께 미는 사람들을 기여 목록에 세운다", async () => {

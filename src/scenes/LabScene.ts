@@ -246,12 +246,25 @@ export class LabScene extends Phaser.Scene {
    * 보인다.
    */
   private showcaseRelic(): void {
-    this.showcase?.destroy();
-    const image = this.add.image(BASE_WIDTH / 2, BASE_HEIGHT / 2, "__DEFAULT").setDepth(-30).setAlpha(0);
+    // **앞 배너의 원화는 새 원화가 다 선 뒤에 걷는다.** 먼저 지우면 새 원화가 녹아 드는 0.16초
+    // 동안 화면 뒤가 통째로 비어, 배너를 넘길 때마다 검게 한 번 깜빡였다.
+    const previous = this.showcase;
+    const image = this.add.image(BASE_WIDTH / 2, BASE_HEIGHT / 2, "__DEFAULT").setDepth(-29).setAlpha(0);
     this.showcase = image;
     useBackgroundTexture(this, image, this.banner.artKey ?? BACKGROUND.lab, (loaded) => {
+      if (this.showcase !== loaded) { loaded.destroy(); return; }
       loaded.setScale(Math.max(BASE_WIDTH / loaded.width, BASE_HEIGHT / loaded.height));
-      this.tweens.add({ targets: loaded, alpha: 1, duration: 160 });
+      // 같은 원화로 다시 세우는 것이면(뽑기를 마치고 돌아올 때) 녹여 들이지 않는다.
+      if (previous?.active && previous.texture.key === loaded.texture.key) {
+        loaded.setAlpha(1);
+        previous.destroy();
+        loaded.setDepth(-30);
+        return;
+      }
+      this.tweens.add({
+        targets: loaded, alpha: 1, duration: 160,
+        onComplete: () => { if (previous?.active) previous.destroy(); loaded.setDepth(-30); },
+      });
     });
   }
 

@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import type { PuppetCreature } from "../puppets/assets";
+import type { PuppetAsset, PuppetCreature } from "../puppets/assets";
 import { powerSavingPolicy } from "../core/settings";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { Combatant } from "../core/combatTypes";
@@ -468,6 +468,9 @@ export class InfoManager {
   private portrait?: PuppetCreature;
   private portraitWanted = false;
   private portraitRequest = 0;
+  /** 지금 선 전신·SD가 어느 원화인가. 같은 원화면 다시 열 때 새로 세우지 않는다. */
+  private portraitUrl?: string;
+  private figureUrl?: string;
   /**
    * 원화가 정보창에서 서 있어야 할 제자리.
    *
@@ -1647,12 +1650,22 @@ export class InfoManager {
     this.favoriteBadge.paint(owned && session.favorite === def!.id, owned);
   }
 
-  private async loadPortrait(def: RelicDef): Promise<void> {
-    const request = ++this.portraitRequest;
-    // 외형 선택은 manager/resolver가 소유한다. 공개 프로필은 로컬 장착 상태 대신 DTO 값만 사용한다.
-    const asset = this.publicProfile
+  /** 외형 선택은 manager/resolver가 소유한다. 공개 프로필은 로컬 장착 상태 대신 DTO 값만 사용한다. */
+  private portraitAssetOf(def: RelicDef): PuppetAsset {
+    return this.publicProfile
       ? portraitAssetForSkin(def.portraitAssetId, this.publicProfile.equippedSkinId)
       : relicAppearanceManager.portraitAssetFor(def.id);
+  }
+
+  private figureAssetOf(def: RelicDef): PuppetAsset {
+    return this.publicProfile
+      ? (sdAssetForSkin(def.id, this.publicProfile.equippedSkinId) ?? battleAssetFor(def.id))
+      : relicAppearanceManager.battleAssetFor(def.id);
+  }
+
+  private async loadPortrait(def: RelicDef): Promise<void> {
+    const request = ++this.portraitRequest;
+    const asset = this.portraitAssetOf(def);
     const portrait = await spawnPuppet(this.scene, asset, {
       // 지도와 전투의 CharacterInfoManager가 모두 이 경로를 써서 폰토스 보정도 동일하다.
       ...infoPortraitPlacement(asset, PORTRAIT_FOCUS),
@@ -1663,6 +1676,7 @@ export class InfoManager {
     if (request !== this.portraitRequest) { portrait.destroy(); return; }
     this.portrait?.destroy();
     this.portrait = portrait;
+    this.portraitUrl = asset.url;
     setDebugInfoAssetReady({ portrait: true });
     // 세운 그 자리가 곧 제자리다. 전신 감상은 여기로만 되돌아온다.
     this.portraitHome = { x: portrait.x, y: portrait.y, scale: portrait.scaleX };
@@ -1676,9 +1690,7 @@ export class InfoManager {
 
   private async loadFigure(def: RelicDef): Promise<void> {
     const request = ++this.figureRequest;
-    const asset = this.publicProfile
-      ? (sdAssetForSkin(def.id, this.publicProfile.equippedSkinId) ?? battleAssetFor(def.id))
-      : relicAppearanceManager.battleAssetFor(def.id);
+    const asset = this.figureAssetOf(def);
     // 관련 SD도 공개 DTO 또는 로컬 manager가 결정한 결과만 그린다.
     const figure = await spawnPuppet(this.scene, asset, {
       x: FIGURE.x,
@@ -1691,6 +1703,7 @@ export class InfoManager {
     if (request !== this.figureRequest) { figure.destroy(); return; }
     this.figure?.destroy();
     this.figure = figure;
+    this.figureUrl = asset.url;
     setDebugInfoAssetReady({ sd: true });
     enableHitOnClick(this.scene, figure);
     figure.setVisible(this.portraitWanted && this.root.visible);
@@ -1875,11 +1888,18 @@ export class InfoManager {
     this.portraitWanted = owned;
     // 이전 인물의 완료값을 지워 새 원화·SD가 모두 교체된 순간만 관찰하게 한다.
     setDebugInfoAssetReady(owned ? { portrait: false, sd: false } : undefined);
-    this.portrait?.setVisible(false);
-    this.figure?.setVisible(false);
+    // **이미 선 그 원화면 다시 세우지 않는다.** 같은 개체를 닫았다 다시 열거나 창 안의 조작(급여·
+    // 돌파·즐겨찾기)으로 다시 그릴 때마다 전신과 SD를 새로 읽어 녹여 들이면, 인물이 사라졌다
+    // 다시 떠올라 **창이 새로고침된 것처럼** 읽혔다. 외형을 바꾼 때만 URL이 달라져 새로 세운다.
+    const keepPortrait = owned && this.portrait?.active === true && this.portraitUrl === this.portraitAssetOf(def).url;
+    const keepFigure = owned && this.figure?.active === true && this.figureUrl === this.figureAssetOf(def).url;
+    if (!keepPortrait) this.portrait?.setVisible(false);
+    if (!keepFigure) this.figure?.setVisible(false);
     if (owned) {
-      void this.loadPortrait(def);
-      void this.loadFigure(def);
+      if (keepPortrait) { this.portraitRequest += 1; this.portrait?.setVisible(this.portraitWanted).setAlpha(1); setDebugInfoAssetReady({ portrait: true }); }
+      else void this.loadPortrait(def);
+      if (keepFigure) { this.figureRequest += 1; this.figure?.setVisible(this.portraitWanted); setDebugInfoAssetReady({ sd: true }); }
+      else void this.loadFigure(def);
     }
     this.root.setVisible(true);
     this.chrome.setVisible(true);

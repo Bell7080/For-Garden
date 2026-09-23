@@ -53,7 +53,7 @@ import { bindFormationDrag, type FormationDragSlot } from "../ui/formationDrag";
 import { FORMATION_DRAG_VISUAL } from "../ui/formationDragVisual";
 import { createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
 import { consumeSceneEntry } from "./sceneEntry";
-import { playSceneEntrance, startScene } from "../ui/screenTransition";
+import { playSceneEntrance, startScene, restartScene } from "../ui/screenTransition";
 import { LOBBY_RETURN } from "./lobbyEntry";
 
 /** 편성 목록은 어디서나 네 칸이 한 줄이다. 카드 크기와 줄 간격은 폭에서 공용 규칙이 구한다. */
@@ -244,7 +244,7 @@ export class ExpeditionScene extends Phaser.Scene {
 
     // 화면을 벗어나는 조작은 공용 우하단 슬롯만 사용한다. 편성에서는 한 단계 앞인 기록으로 돌아간다.
     addBackButton(this, () => {
-      if (!status.active && this.stage === "preparation") this.scene.restart({ stage: "ranking" });
+      if (!status.active && this.stage === "preparation") restartScene(this, { stage: "ranking" });
       else startScene(this, "lobby", LOBBY_RETURN.sortie);
     });
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
@@ -374,7 +374,7 @@ export class ExpeditionScene extends Phaser.Scene {
       this.popups.confirm({ title: t("expedition.node.rest"), message: t("expedition.node.restBody"), confirmLabel: t("expedition.node.restConfirm") }, () => {
         this.nodeTransitionPending = true;
         // 매니저의 단일 저장이 실패하면 잠금을 풀 뿐, 부분 회복 상태는 존재하지 않는다.
-        if (expeditionManager.completeRestNode(node.id)) this.scene.restart();
+        if (expeditionManager.completeRestNode(node.id)) restartScene(this);
         else this.nodeTransitionPending = false;
       });
       this.nodeTransitionPending = false;
@@ -389,7 +389,7 @@ export class ExpeditionScene extends Phaser.Scene {
     this.nodeTransitionPending = true;
     if (node.type === "boss") { this.enterBossBattle(node); return; }
     const pending = expeditionManager.beginAugmentReward(node.id, node.type);
-    if (pending) this.scene.restart(); else this.enterBattle(node);
+    if (pending) restartScene(this); else this.enterBattle(node);
   }
 
   /** 선택이 모두 저장된 바로 그 노드로 진입해, 후보 확정 뒤 다른 지도 노드를 누를 틈을 만들지 않는다. */
@@ -416,7 +416,7 @@ export class ExpeditionScene extends Phaser.Scene {
     try {
       // 보상 필드가 없는 완료 계약이므로 재화 종류나 수량을 위조할 수 없다.
       await gameApi.completeExpeditionNode({ requestId: `${run.runId}:${node.id}`, runId: run.runId, nodeId: node.id, relicHp: run.relics.map(({ currentHp }) => currentHp) });
-      this.scene.restart();
+      restartScene(this);
     } catch { this.nodeTransitionPending = false; }
   }
 
@@ -434,7 +434,7 @@ export class ExpeditionScene extends Phaser.Scene {
       // 확정은 UI가 Session을 쓰지 않고 매니저의 후보·대상·중첩 검증을 반드시 통과한다.
       if (!expeditionManager.chooseAugment(selection)) { this.nodeTransitionPending = false; return; }
       const next = expeditionManager.status().run?.pendingAugmentReward;
-      if (next) this.scene.restart();
+      if (next) restartScene(this);
       else this.enterBattle(node);
     } }).open();
   }
@@ -628,7 +628,7 @@ export class ExpeditionScene extends Phaser.Scene {
       width: actions.sortieWidth, height: actions.height, label: t("expedition.sortie"),
       sub: t("expedition.weekly.plays", { plays: status.playsThisWeek, max: EXPEDITION_WEEKLY_POLICY.maxPlaysPerWeek }), fontSize: 40,
       variant: "primary", accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText,
-      onClick: () => this.scene.restart({ stage: "preparation" }),
+      onClick: () => restartScene(this, { stage: "preparation" }),
     }).setEnabled(status.canStartRun).setDepth(12);
     // 소탕은 원정 기회를 그대로 소비하므로 남은 횟수와 참조할 역대 최고점이 모두 있어야 누를 수 있다.
     this.sweepButton = new Button(this, sweepX, actions.y, { width: actions.sweepWidth, height: actions.height, label: t("expedition.sweep"), fontSize: 32, onClick: () => this.confirmSweep() }).setDepth(12);
@@ -699,7 +699,7 @@ export class ExpeditionScene extends Phaser.Scene {
     try {
       const requestId = globalThis.crypto?.randomUUID?.() ?? `expedition-sweep-${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const result = await gameApi.sweepExpedition({ requestId });
-      openRewardPopup(this, this.popups, { title: t("expedition.sweep.done"), items: currencyRecordToRewardItems(result.granted), onConfirm: () => this.scene.restart() });
+      openRewardPopup(this, this.popups, { title: t("expedition.sweep.done"), items: currencyRecordToRewardItems(result.granted), onConfirm: () => restartScene(this) });
     } catch (error) {
       const code = error instanceof GameApiError ? error.code : undefined;
       const message: Partial<Record<string, string>> = {
@@ -843,7 +843,7 @@ export class ExpeditionScene extends Phaser.Scene {
     const result = expeditionManager.prepareDevelopmentBossShortcut(relicIds);
     if (result.ok) {
       // 재시작 뒤 실제 보스 노드를 눌러 적 미리보기를 확인하고, 기존 enterBossBattle 출격 DTO로 진입한다.
-      this.scene.restart();
+      restartScene(this);
       return;
     }
     this.hint?.setText(result.reason === "developmentOnly" ? t("expedition.devOnly") : this.failureMessage(result.reason));
@@ -1072,7 +1072,7 @@ export class ExpeditionScene extends Phaser.Scene {
     const result = expeditionManager.start(formationMembers(this.selected));
     if (result.ok) {
       // 성공 결과는 이미 저장까지 완료되었으므로 같은 씬을 다시 그려 이어하기 상태로 전환한다.
-      this.scene.restart();
+      restartScene(this);
       return;
     }
     this.hint.setText(this.failureMessage(result.reason));

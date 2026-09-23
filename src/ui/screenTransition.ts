@@ -28,6 +28,13 @@ function currentMotion(): TransitionMotion {
  * 먼저 부르면 그 뒤에 세운 것들이 이미 끝난 트윈 밖에 남아, 화면 절반만 떠오른다.
  */
 export function playSceneEntrance(scene: Phaser.Scene): void {
+  // 같은 화면을 **다시 그린 것**이면 들어오는 연출을 돌리지 않는다(`restartScene`).
+  if (pendingRefreshKey !== undefined && pendingRefreshKey === scene.scene.key) {
+    pendingRefreshKey = undefined;
+    pendingNavDirection = undefined;
+    scene.cameras.main.setAlpha(1);
+    return;
+  }
   // 핵심 화면 다섯 사이를 오간 것이면 그 방향으로 **옆에서** 들어온다.
   const direction = consumeNavDirection();
   const timing = transitionTiming(direction ? "navSwitch" : "sceneIn", currentMotion());
@@ -88,8 +95,28 @@ export function startNavScene(scene: Phaser.Scene, key: string, direction: -1 | 
  * 전환을 손볼 때 쉰다섯 곳을 다시 찾아다니지 않기 때문이다.
  */
 export function startScene(scene: Phaser.Scene, key: string, data?: object): void {
+  pendingRefreshKey = undefined;
   scene.scene.start(key, data);
 }
+
+/**
+ * 같은 화면을 새 데이터로 **다시 그린다** — 탭을 바꾸거나 서버 응답으로 판을 갈아 끼울 때.
+ *
+ * `scene.restart`를 직접 부르면 `create` 끝의 `playSceneEntrance`가 들어오는 연출을 또 돌려,
+ * 탭 하나를 눌렀을 뿐인데 화면이 한 뼘 아래에서 다시 떠오르며 **새로고침된 것처럼** 읽혔다
+ * (환경설정 탭·원정 지도가 그랬다). 같은 씬 안에서 **다른 자리로 가는** 것(레이드 목록 → 판)은
+ * 화면이 실제로 바뀌므로 `startScene`을 쓰고 연출을 그대로 둔다.
+ */
+export function restartScene(scene: Phaser.Scene, data?: object): void {
+  pendingRefreshKey = scene.scene.key;
+  scene.scene.restart(data);
+}
+
+/**
+ * 다시 그리는 중인 화면의 키. `playSceneEntrance`가 **읽는 순간 비운다** — 비우지 않으면 한참 뒤
+ * 다른 길로 그 화면에 들어왔을 때도 연출이 빠진다. 다른 화면으로 가는 `startScene`도 비운다.
+ */
+let pendingRefreshKey: string | undefined;
 
 /** 팝업 한 장이 열리는 몫. 판은 부풀어 오르고 층 전체가 밝아진다. */
 export function playPopupOpen(

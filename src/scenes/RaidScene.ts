@@ -35,6 +35,12 @@ import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
 import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
 import { consumeSceneEntry } from "./sceneEntry";
 
+/**
+ * 지난번에 받은 레이드 목록. 씬이 다시 설 때 이것으로 먼저 그려 빈 목록이 한 박자 서지 않게 한다.
+ * 화면이 들고 있을 뿐 판정에는 쓰지 않는다 — 조작은 전부 서버 응답을 다시 받는다.
+ */
+let lastRaidList: RaidListResponse | undefined;
+
 /** 목록의 두 탭. 진행 중인 판을 치고, 끝난 판을 정산한다. */
 export type RaidListTab = "active" | "completed";
 
@@ -83,6 +89,7 @@ export class RaidScene extends Phaser.Scene {
 
   private raidId?: string;
   private tab: RaidListTab = "active";
+  private tabRow?: Phaser.GameObjects.Container;
 
   init(data?: RaidSceneData): void {
     this.raidId = typeof data?.raidId === "string" ? data.raidId : undefined;
@@ -175,15 +182,8 @@ export class RaidScene extends Phaser.Scene {
     drawGlassFade(this, BASE_WIDTH / 2, BASE_HEIGHT - fadeHeight / 2, BASE_WIDTH, fadeHeight, { topAlpha: 0, bottomAlpha: 0.9 }).setDepth(38);
     drawHairline(this, BASE_WIDTH / 2, bottom, BASE_WIDTH, { color: COLOR.accent, alpha: 0.18 }).setDepth(38);
 
-    const tabs = RAID_LIST_CHROME.tabs;
-    (["active", "completed"] as const).forEach((tab, index) => {
-      addCategoryTab(this, undefined, {
-        x: tabs.left + tabs.width / 2 + index * (tabs.width + tabs.gap), y: tabs.y,
-        width: tabs.width, height: tabs.height,
-        label: t(`raid.tab.${tab}`), selected: this.tab === tab,
-        onSelect: () => { if (this.tab !== tab) startScene(this, "raid", { tab } satisfies RaidSceneData); },
-      }).setDepth(40);
-    });
+    this.tabRow = this.add.container(0, 0).setDepth(40);
+    this.renderTabs();
 
     const inViewport = (pointer: Phaser.Input.Pointer): boolean => pointer.worldY >= top && pointer.worldY <= bottom;
     let dragging = false; let origin = 0; let startY = 0;
@@ -218,16 +218,51 @@ export class RaidScene extends Phaser.Scene {
    * 진행 중 탭에는 칠 수 있는 판 전부가, 완료 탭에는 **참여한** 끝난 판이 선다(서버가 거른다). 층을
    * 누르면 그 레이드의 판으로 들어가고, 끝난 판의 정산은 층의 버튼이 곧바로 받는다.
    */
+  /**
+   * 두 탭. **탭을 바꿔도 화면을 다시 시작하지 않는다** — 씬을 새로 세우면 목록이 서버 응답을
+   * 기다리는 동안 비었다가 다시 차, 탭 하나에 화면 전체가 새로고침된 것처럼 깜빡였다. 이미 받은
+   * 목록을 그 탭으로 다시 거르기만 한다.
+   */
+  private renderTabs(): void {
+    const row = this.tabRow;
+    if (!row) return;
+    row.removeAll(true);
+    const tabs = RAID_LIST_CHROME.tabs;
+    (["active", "completed"] as const).forEach((tab, index) => {
+      addCategoryTab(this, row, {
+        x: tabs.left + tabs.width / 2 + index * (tabs.width + tabs.gap), y: tabs.y,
+        width: tabs.width, height: tabs.height,
+        label: t(`raid.tab.${tab}`), selected: this.tab === tab,
+        onSelect: () => {
+          if (this.tab === tab) return;
+          this.tab = tab;
+          this.scrollY = 0;
+          this.renderTabs();
+          if (lastRaidList) this.renderList(lastRaidList);
+        },
+      });
+    });
+  }
+
   private async refreshList(): Promise<void> {
+    // 지난번에 받은 목록이 있으면 **먼저 그것으로 세운다** — 판에서 목록으로 돌아올 때마다 빈
+    // 목록이 한 박자 섰다가 차오르면 화면이 새로 열리는 것처럼 읽힌다. 새 응답이 오면 다시 그린다
+    // (얼굴 띠는 구운 텍스처를 그대로 쓰므로 다시 그려도 깜빡이지 않는다).
+    if (lastRaidList) this.renderList(lastRaidList);
     let response: RaidListResponse;
     try {
       response = await gameApi.getRaids(1);
     } catch (error) {
       if (!this.scene.isActive()) return;
-      this.renderError();
+      if (!lastRaidList) this.renderError();
       return;
     }
     if (!this.scene.isActive()) return;
+    lastRaidList = response;
+    this.renderList(response);
+  }
+
+  private renderList(response: RaidListResponse): void {
     this.resetContent();
     // 목록에서는 머리의 토벌권과 밑동의 소환 줄이 이 층에 선다 — 밑동의 어둠·탭보다 위다.
     this.content?.setDepth(41);

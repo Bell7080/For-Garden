@@ -236,6 +236,16 @@ async function loadFaceBand(
   dimmed: boolean,
 ): Promise<void> {
   const { art } = RAID_LIST;
+  // 이미 구운 띠면 기다리지도, 녹여 들이지도 않는다 — 탭을 바꾸거나 목록을 다시 그릴 때마다
+  // 얼굴이 빈 층에서 스며 나오면 화면이 새로고침된 것처럼 읽힌다.
+  const cacheKey = `${relicId}:${Math.round(width)}:${Math.round(height)}`;
+  const cached = BAKED_BAND_KEYS.get(cacheKey);
+  if (cached && scene.textures.exists(cached)) {
+    const image = scene.add.image(0, 0, cached);
+    if (dimmed) image.setTint(0x6a6f78);
+    layer.addAt(image, 1);
+    return;
+  }
   const asset = portraitAssetFor(getRelic(relicId).portraitAssetId);
   const artWidth = Math.round(width * (1 - art.from));
   const key = await withPuppetTexture(scene, asset, ({ key: source, anchors }) => {
@@ -247,10 +257,15 @@ async function loadFaceBand(
     });
     return bakeBandTexture(scene, source, { width, height }, crop, { shape, from: art.from, fade: art.fade });
   });
-  if (!key || !layer.active) return;
+  if (!key) return;
+  BAKED_BAND_KEYS.set(cacheKey, key);
+  if (!layer.active) return;
   const image = scene.add.image(0, 0, key).setAlpha(0);
   if (dimmed) image.setTint(0x6a6f78);
   // 판 면 바로 위(1번)에 선다 — 입력면·어둠·테두리·글은 그 위에 남는다.
   layer.addAt(image, 1);
   scene.tweens.add({ targets: image, alpha: 1, duration: 200 });
 }
+
+/** 개체·판 크기 → 구운 얼굴 띠 텍스처 키. 구운 캔버스는 전역에 남으므로 씬을 넘어 쓴다. */
+const BAKED_BAND_KEYS = new Map<string, string>();

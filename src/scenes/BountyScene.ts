@@ -4,7 +4,7 @@ import { BASE_WIDTH } from "../config/gameConfig";
 import { bountyTierProgress, type BountyBattleInputDto, type BountyRoundIndex } from "../core/bountyRun";
 import { formatCurrency } from "../core/formatCurrency";
 import { moveFormationSlot } from "../core/formation";
-import { BOUNTY, type BountyTierDef } from "../data/bounty";
+import { BOUNTY, type BountyTierDef, bountyRoundLevel } from "../data/bounty";
 import { getRelic } from "../data/relics";
 import { setDebugScene } from "../debug";
 import { t } from "../i18n";
@@ -126,7 +126,7 @@ export class BountyScene extends Phaser.Scene {
       if (!unlocked) face.setAlpha(0.45);
       row.add(face);
       row.add(this.add.text(width / 2 - faceFirstX + roundIndex * faceGap - faceGap * 2, faceSize / 2 + 14,
-        t("bounty.round.level", { level: round.level, bonus: round.ferocityLevel ? `+${round.ferocityLevel}` : "" }),
+        t("bounty.round.level", { level: bountyRoundLevel(round) }),
         textStyle({ role: "emphasis", size: 22, color: unlocked ? COLOR.inkDim : COLOR.inkDim })).setOrigin(0.5, 0));
     });
 

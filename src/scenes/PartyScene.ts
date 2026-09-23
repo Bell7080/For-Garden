@@ -12,7 +12,7 @@ import { bindLongPress } from "../ui/longPressInfo";
 import type { PuppetCreature } from "../puppets/assets";
 import { placePuppet, spawnPuppet } from "../puppets/assets";
 import { getBattleStage, getStageEnemies, stageEnemyGrowth } from "../data/stages";
-import { enemyPresenceBodyScale, enemyPresenceFor } from "../data/enemyPresence";
+import { ENCOUNTER_ROLE, encounterRoleFor } from "../core/levelDesign";
 import { addStageEliteMark } from "../ui/stageEliteMark";
 import { session } from "../state/session";
 import { gameApi } from "../api/FakeServer";
@@ -312,7 +312,7 @@ export class PartyScene extends Phaser.Scene {
 
     // **몇이 서느냐가 자리를 정한다** — 정예 하나면 가운데 한 칸만 쓴다.
     const enemyColumns = partyPreviewEnemyColumns(enemies.length);
-    const bodyScale = enemyPresenceBodyScale(enemyPresenceFor(enemies.length, { elite }));
+    const bodyScale = ENCOUNTER_ROLE[encounterRoleFor(enemies.length, { elite })].bodyScale;
     enemies.forEach((def, slot) => {
       const snapshot = growth[slot] ?? { level: 1, breakthrough: 0 };
       const x = enemyColumns[slot] ?? PREVIEW_COLUMNS[slot];
@@ -330,13 +330,13 @@ export class PartyScene extends Phaser.Scene {
 
       // 체력은 적지 않는다 — 붙어 볼지 정하는 데 필요한 것은 개체별 수치가 아니라 아래의
       // 두 총 전투력이다. 이름줄은 노드 미리보기와 같은 프리팹을 쓴다(레벨 강조색·이름 흰색).
-      addUnitNameplate(this, undefined, x, ENEMY_ROW + 26, snapshot.level, def.name, 30, snapshot.ferocityLevel ?? 0);
+      addUnitNameplate(this, undefined, x, ENEMY_ROW + 26, snapshot.level, def.name, 30);
       // **적을 누르면 상세가 열린다.** 옆에 물음표를 하나 더 세우면 SD와 표식 사이에 눌러야 할
       // 것이 둘이 되고, 정작 크게 서 있는 SD는 눌러도 아무 일이 없다.
       this.add.rectangle(x, ENEMY_ROW - PREVIEW_HEIGHT / 2, 210, PREVIEW_HEIGHT + 70, 0xffffff, 0)
         .setDepth(4)
         .setInteractive({ useHandCursor: true })
-        .on("pointerup", () => this.enemyInfo.show({ def, level: snapshot.level, breakthrough: snapshot.breakthrough, ferocityLevel: snapshot.ferocityLevel }));
+        .on("pointerup", () => this.enemyInfo.show({ def, level: snapshot.level, breakthrough: snapshot.breakthrough }));
     });
 
     // **대치선 위에는 두 편의 무게만 남긴다.** 속성 분포는 이미 각 SD의 아이콘이 말하고, "적"과

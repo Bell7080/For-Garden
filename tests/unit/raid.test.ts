@@ -2,9 +2,8 @@ import { describe, expect, it } from "vitest";
 import { RAID_BOSS_BALANCE, RAID_BOSS_HP_SCALE, RAID_CONTRIBUTION_REWARD_STAGES, RAID_DAILY_ATTEMPTS, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP } from "../../src/data/raid";
 import { mockRaidContributions, raidBossDef, raidContributionBoard, raidEarnedContributionStageIds, raidNextContributionStage, raidSeasonElapsedDays, raidSeasonKey, raidSeasonProgress } from "../../src/core/raid";
 import { getRelic, PLAYABLE_RELICS, RELICS } from "../../src/data/relics";
-import { effectiveEnemyLevel } from "../../src/core/types";
-import { ENEMY_PRESENCE } from "../../src/data/enemyPresence";
-import { applyLevelGrowth } from "../../src/core/relicProgression";
+import { ENCOUNTER_ROLE, applyEncounterScaling, encounterEnemyLevel } from "../../src/core/levelDesign";
+
 import { RAID_ACTIONS, RAID_BOARD, RAID_HP_BAR, raidBoardViewport, raidSortieBackGap } from "../../src/ui/raidLayout";
 import { RANKING_LIST } from "../../src/ui/expeditionRankingLayout";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
@@ -152,14 +151,12 @@ describe("레이드 보스", () => {
     expect(RELICS.find(({ id }) => id === RAID_SEASON_BOSS.relicId)).toBeTruthy();
   });
 
-  it("는 체력을 뺀 넷을 스테이지 정예와 같은 문법으로 기른다", () => {
+  it("는 체력을 뺀 넷을 공용 유형 표로 기른다", () => {
     // 레이드 전용 배율을 만들지 않는다 — 관문을 조일 손잡이가 둘이 되면 화면에 선 레벨과
     // 실제로 맞는 수치가 갈린다.
     const base = getRelic(RAID_SEASON_BOSS.relicId);
-    const level = effectiveEnemyLevel({ level: RAID_SEASON_BOSS.level, ferocityLevel: RAID_SEASON_BOSS.ferocityLevel }, true);
-    expect(level).toBe(RAID_SEASON_BOSS.level + RAID_SEASON_BOSS.ferocityLevel * 5);
-    const grown = applyLevelGrowth(base.stats, level, base.rarity);
-    for (const key of ["def", "res", "atk", "ap"] as const) expect(raidBossDef(base).stats[key]).toBe(grown[key]);
+    const scaled = applyEncounterScaling(base.stats, encounterEnemyLevel(RAID_SEASON_BOSS.level, "endless"), "endless");
+    for (const key of ["def", "res", "atk", "ap"] as const) expect(raidBossDef(base).stats[key]).toBe(scaled[key]);
   });
 
   it("의 최대 체력은 시즌 게이지에서 거꾸로 나온다", () => {
@@ -177,11 +174,11 @@ describe("레이드 보스", () => {
   it("는 일반 적보다 훨씬 크고, 걸음은 제 태생치가 갖는다", () => {
     /*
      * 셋이 하나를 미는 판이라 보스가 로스터의 걸음으로 움직이면 1대3으로 읽히지 않는다.
-     * 다만 그 느린 걸음은 **그 개체의 정체성**이라 제 정의가 갖고, 무리 유형은 몸집만 키운다 —
-     * 유형이 능력치를 만지면 같은 태그를 단 다음 개체가 저도 모르게 그 몫을 함께 받는다.
+     * 다만 그 느린 걸음은 **그 개체의 정체성**이라 제 정의가 갖는다 — 유형이 바꾸는 것은
+     * 몸집과 체력·공격의 몫뿐이고 공속·이속은 건드리지 않는다.
      */
     const base = getRelic(RAID_SEASON_BOSS.relicId);
-    expect(ENEMY_PRESENCE.raid.bodyScale).toBeGreaterThan(ENEMY_PRESENCE.elite.bodyScale);
+    expect(ENCOUNTER_ROLE.endless.bodyScale).toBeGreaterThan(ENCOUNTER_ROLE.elite.bodyScale);
     expect(base.stats.moveSpeed).toBeLessThan(Math.min(...PLAYABLE_RELICS.map(({ stats }) => stats.moveSpeed)));
     const boss = raidBossDef(base).stats;
     expect(boss.moveSpeed).toBe(base.stats.moveSpeed);
@@ -299,12 +296,11 @@ describe("레이드 서버 경계", () => {
     expect(season.attemptsLimit).toBe(RAID_DAILY_ATTEMPTS);
   });
 
-  it("은 야성을 얹기 전의 단계를 그대로 싣는다", async () => {
-    // 곱한 값을 응답에 담으면 화면이 그 개체가 110레벨만큼 자란 것으로 읽는다.
+  it("은 보스가 실제로 싸우는 레벨을 그대로 싣는다", async () => {
+    // 화면의 `LV.n`이 곧 이 값이다 — 감춘 배율이 없어야 그 수가 뜻을 갖는다.
     const server = new FakeServer(makeRaidSession(), { latencyMs: 0, now: () => at("2026-09-16T12:00:00Z") });
     const season = await server.getRaidSeason();
-    expect(season.bossLevel).toBe(RAID_SEASON_BOSS.level);
-    expect(season.bossFerocityLevel).toBe(RAID_SEASON_BOSS.ferocityLevel);
+    expect(season.bossLevel).toBe(encounterEnemyLevel(RAID_SEASON_BOSS.level, "endless"));
   });
 
   it("은 함께 미는 사람들을 기여 목록에 세운다", async () => {

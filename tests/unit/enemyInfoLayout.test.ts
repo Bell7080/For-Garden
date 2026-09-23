@@ -71,7 +71,6 @@ describe("적 정보 팝업 배치", () => {
       expect(snapshot?.def).toBe(enemies[index]);
       expect(snapshot?.level).toBe(enemy.level);
       expect(snapshot?.breakthrough).toBe(enemy.breakthrough);
-      expect(snapshot?.ferocityLevel ?? 0).toBe(enemy.ferocityLevel ?? 0);
     });
   });
 
@@ -79,8 +78,8 @@ describe("적 정보 팝업 배치", () => {
     const stage = getBattleStage("1-1");
     const enemies = getStageEnemies(stage);
     const placed = placedEnemyIndex({ mode: "expedition", nodeType: "elite", floor: 7 } as never, stage, enemies);
-    // 층 7 · 정예(+3). 스테이지의 레벨 표를 섞어 읽지 않는다.
-    expect(placed.get("enemy-0")?.level).toBe(10);
+    // 층 7의 권장 레벨(14)에 정예 차(+3). 스테이지의 레벨 표를 섞어 읽지 않는다.
+    expect(placed.get("enemy-0")?.level).toBe(17);
     expect(placed.get("enemy-0")?.breakthrough).toBe(0);
   });
 });

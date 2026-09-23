@@ -2,7 +2,6 @@
 export const CAKE_OPERATION_EN = {
   "cake.title": "Cheesecake Operation",
   "cake.tier.enemy": "LV.{level}",
-  "cake.tier.bonus": "+{bonus}",
   "cake.tier.waves": "{waves} waves",
   "cake.multiplier": "x{value}",
   "cake.sortie": "Sortie",

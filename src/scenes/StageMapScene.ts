@@ -306,7 +306,7 @@ export class StageMapScene extends Phaser.Scene {
       situation: stage.situation,
       // 전투 전에도 전투와 동일한 공용 적 정보창으로 연결한다.
       // 미리보기가 그 칸의 성장 상태를 함께 넘긴다 — 화면이 배열에서 다시 찾지 않는다.
-      onEnemyClick: (enemy, growth) => this.info.show({ def: enemy, level: growth.level, breakthrough: growth.breakthrough, ferocityLevel: growth.ferocityLevel }),
+      onEnemyClick: (enemy, growth) => this.info.show({ def: enemy, level: growth.level, breakthrough: growth.breakthrough }),
     });
   }
 

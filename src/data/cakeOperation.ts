@@ -1,9 +1,8 @@
 import { registerDataText } from "../i18n";
 import type { DungeonRunCost } from "../core/dungeonShortcut";
-import { applyLevelGrowth } from "../core/relicProgression";
-import { effectiveEnemyLevel, type RelicDef } from "../core/types";
+import type { RelicDef } from "../core/types";
 import { getRelic } from "./relics";
-import { enemyPresenceFor, type EnemyPresence } from "./enemyPresence";
+import { applyEncounterScaling, encounterEnemyLevel, encounterRoleFor, type EncounterRole } from "../core/levelDesign";
 
 /**
  * **치즈케이크 대작전** — 레이티아 다섯 자매가 떼로 몰려오는 물량형 던전.
@@ -25,8 +24,6 @@ export interface CakeOperationTier {
   name: string;
   /** 몰려오는 개체의 자란 레벨이다. */
   enemyLevel: number;
-  /** 야성으로 얹히는 **단계**다. 곱한 값이 아니라 단계를 적는다. */
-  ferocityLevel: number;
   /**
    * 무리마다 몇 마리가 서는가. 배열 길이가 곧 웨이브 수다.
    *
@@ -50,14 +47,14 @@ export interface CakeOperationTier {
  * 기준으로 잡아, 중간 단계 서너 판이 하루치를 채운다.
  */
 export const CAKE_OPERATION_TIERS: readonly CakeOperationTier[] = [
-  { id: "cake-1", name: "1단계", enemyLevel: 5, ferocityLevel: 0, waves: [3, 3, 4], staminaCost: 6, rewardCheesecake: 20 },
-  { id: "cake-2", name: "2단계", enemyLevel: 10, ferocityLevel: 1, waves: [3, 4, 4], staminaCost: 8, rewardCheesecake: 32 },
-  { id: "cake-3", name: "3단계", enemyLevel: 15, ferocityLevel: 2, waves: [4, 4, 5], staminaCost: 10, rewardCheesecake: 46 },
-  { id: "cake-4", name: "4단계", enemyLevel: 20, ferocityLevel: 3, waves: [4, 5, 5], staminaCost: 12, rewardCheesecake: 62 },
-  { id: "cake-5", name: "5단계", enemyLevel: 26, ferocityLevel: 4, waves: [5, 5, 5], staminaCost: 14, rewardCheesecake: 82 },
-  { id: "cake-6", name: "6단계", enemyLevel: 32, ferocityLevel: 5, waves: [5, 5, 5, 5], staminaCost: 16, rewardCheesecake: 104 },
-  { id: "cake-7", name: "7단계", enemyLevel: 38, ferocityLevel: 6, waves: [5, 5, 5, 5], staminaCost: 18, rewardCheesecake: 128 },
-  { id: "cake-8", name: "8단계", enemyLevel: 45, ferocityLevel: 7, waves: [5, 5, 5, 5, 5], staminaCost: 20, rewardCheesecake: 150 },
+  { id: "cake-1", name: "1단계", enemyLevel: 5, waves: [3, 3, 4], staminaCost: 6, rewardCheesecake: 20 },
+  { id: "cake-2", name: "2단계", enemyLevel: 10, waves: [3, 4, 4], staminaCost: 8, rewardCheesecake: 32 },
+  { id: "cake-3", name: "3단계", enemyLevel: 15, waves: [4, 4, 5], staminaCost: 10, rewardCheesecake: 46 },
+  { id: "cake-4", name: "4단계", enemyLevel: 20, waves: [4, 5, 5], staminaCost: 12, rewardCheesecake: 62 },
+  { id: "cake-5", name: "5단계", enemyLevel: 26, waves: [5, 5, 5], staminaCost: 14, rewardCheesecake: 82 },
+  { id: "cake-6", name: "6단계", enemyLevel: 32, waves: [5, 5, 5, 5], staminaCost: 16, rewardCheesecake: 104 },
+  { id: "cake-7", name: "7단계", enemyLevel: 38, waves: [5, 5, 5, 5], staminaCost: 18, rewardCheesecake: 128 },
+  { id: "cake-8", name: "8단계", enemyLevel: 45, waves: [5, 5, 5, 5, 5], staminaCost: 20, rewardCheesecake: 150 },
 ];
 
 /**
@@ -115,8 +112,8 @@ for (const tier of CAKE_OPERATION_TIERS) registerDataText(tier, "name", `cakeOpe
  * 갑자기 커지고, 전투는 무리 전체가 한 크기를 쓴다(`SkirmishWaveState.bodyScale`). 그래서
  * 가장 큰 무리를 그 판의 성질로 삼는다.
  */
-export function cakeOperationPresence(tier: CakeOperationTier): EnemyPresence {
-  return enemyPresenceFor(Math.max(...tier.waves));
+export function cakeOperationRole(tier: CakeOperationTier): EncounterRole {
+  return encounterRoleFor(Math.max(...tier.waves));
 }
 
 /**
@@ -127,12 +124,13 @@ export function cakeOperationPresence(tier: CakeOperationTier): EnemyPresence {
  * 배율(`ferocityBonusLevels`)을 지나 레벨과 같은 성장 공식을 탄다.
  */
 export function cakeOperationWaves(tier: CakeOperationTier): RelicDef[][] {
-  const level = effectiveEnemyLevel({ level: tier.enemyLevel, ferocityLevel: tier.ferocityLevel });
+  const role = cakeOperationRole(tier);
+  const level = encounterEnemyLevel(tier.enemyLevel, role);
   // 자매마다 태생 능력치가 같지 않다(공속·이속이 갈린다). 그래서 한 번 키워 돌려쓰지 않고
   // 다섯을 각자 키워 둔 뒤 차례로 세운다.
   const grown = CAKE_OPERATION_ENEMY_IDS.map((id) => {
     const base = getRelic(id);
-    return { ...base, stats: applyLevelGrowth(base.stats, level, base.rarity) } satisfies RelicDef;
+    return { ...base, stats: applyEncounterScaling(base.stats, level, role) } satisfies RelicDef;
   });
   let next = 0;
   // 같은 정의를 여러 몸이 나눠 쓰지 않도록 무리마다 능력치 사본을 세운다.
@@ -144,6 +142,6 @@ export function cakeOperationWaves(tier: CakeOperationTier): RelicDef[][] {
 }
 
 /** 화면이 `LV.n` 옆에 붉은 `+n`으로 갈라 세울 수 있도록 곱하기 전의 단계를 그대로 돌려준다. */
-export function cakeOperationEnemyDisplayLevel(tier: CakeOperationTier): { level: number; ferocityLevel: number } {
-  return { level: tier.enemyLevel, ferocityLevel: tier.ferocityLevel };
+export function cakeOperationEnemyDisplayLevel(tier: CakeOperationTier): { level: number } {
+  return { level: encounterEnemyLevel(tier.enemyLevel, cakeOperationRole(tier)) };
 }

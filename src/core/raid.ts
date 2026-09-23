@@ -1,7 +1,7 @@
+import { applyEncounterScaling, encounterEnemyLevel } from "./levelDesign";
 import { RAID_BOSS_HP_SCALE, RAID_CONTRIBUTION_REWARD_STAGES, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP } from "../data/raid";
 import { expeditionWeekKey } from "./expeditionBoss";
-import { applyBreakthrough, applyLevelGrowth } from "./relicProgression";
-import { effectiveEnemyLevel, type RelicDef } from "./types";
+import type { RelicDef } from "./types";
 
 /**
  * 레이드 시즌의 순수 규칙 — Phaser도 저장도 읽지 않는다.
@@ -131,15 +131,15 @@ export function raidSeasonElapsedDays(now: Date): number {
  * 돈다(`effectiveEnemyLevel`). 스테이지 정예와 같은 문법이다.
  */
 export function raidBossDef(base: RelicDef): RelicDef {
-  const level = effectiveEnemyLevel({ level: RAID_SEASON_BOSS.level, ferocityLevel: RAID_SEASON_BOSS.ferocityLevel }, true);
-  const grown = applyBreakthrough(applyLevelGrowth(base.stats, level, base.rarity), RAID_SEASON_BOSS.breakthrough);
+  const level = encounterEnemyLevel(RAID_SEASON_BOSS.level, "endless");
+  const scaled = applyEncounterScaling(base.stats, level, "endless");
   /*
    * **최대 체력만 성장이 아니라 시즌 게이지에서 나온다.**
    *
-   * 나머지 넷(방어·저항·공격·주문력)은 스테이지 정예와 같은 성장을 그대로 지난다 — 세기를
-   * 조이는 손잡이는 여전히 레벨과 야성 하나뿐이다. 체력만 가르는 이유는 그 값이 **세기가
-   * 아니라 단위**이기 때문이다: 시즌 줄과 전장의 줄이 같은 자를 쓰지 않으면, 한 판에서 반을
-   * 깎아 놓고 돌아와도 시즌 게이지가 미동도 하지 않는다.
+   * 나머지 넷은 유형 표와 레벨이 그대로 정한다 — 세기를 조이는 손잡이는 여전히 레벨 하나다.
+   * 체력만 가르는 이유는 그 값이 **세기가 아니라 단위**이기 때문이다: 시즌 줄과 전장의 줄이
+   * 같은 자를 쓰지 않으면, 한 판에서 반을 깎아 놓고 돌아와도 시즌 게이지가 미동도 하지 않는다.
    */
-  return { ...base, stats: { ...grown, hp: Math.round(RAID_SEASON_TOTAL_HP / RAID_BOSS_HP_SCALE) } };
+  return { ...base, stats: { ...scaled, hp: Math.round(RAID_SEASON_TOTAL_HP / RAID_BOSS_HP_SCALE) } };
 }
+

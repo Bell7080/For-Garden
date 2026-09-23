@@ -592,9 +592,8 @@ export interface RaidRewardStageDto { id: string; threshold: number; reward: { c
 export interface RaidSeasonResponse {
   seasonKey: string;
   bossRelicId: string;
-  /** 야성을 얹기 전의 **단계**와 레벨이다. 곱한 값은 서버도 화면도 들고 다니지 않는다. */
+  /** 그 보스가 실제로 싸우는 레벨이다. 화면의 `LV.n`이 곧 이 값이다. */
   bossLevel: number;
-  bossFerocityLevel: number;
   bossBreakthrough: number;
   totalHp: number;
   /** 참가자 전원이 지금까지 깎아 낸 합이다. */

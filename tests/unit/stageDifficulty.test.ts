@@ -144,21 +144,18 @@ const ELITE_STAGE_IDS = ["1-5", "1-10"] as const;
 const BASELINES = {
   "1-1": { win: 1, hp: [0.78, 0.90] },
   /*
-   * 정예 둘이 서로 다른 답을 요구하는 자리다. 이 조합(땅 딜러)은 불 토비를 넘고, 풀 코마에게는
-   * 여덟 판 중 다섯만 연다 — 넘어도 거의 남는 것이 없다.
+   * **정예 둘은 서로 다른 무게다.** 1-5의 토비는 R이라 같은 유형 배수를 받아도 길을 막지
+   * 않고 체력만 절반 깎는 벽이고, 1-10의 코마는 SSR이라 여덟 판 중 넷만 연다 — 같은 "정예"
+   * 인데 세우는 개체의 등급이 결과를 크게 가른다(`docs/level-design.md`).
    *
-   * **토비에게 유지력이 생기면서 띠를 다시 녹화했다**(0.21~0.33 → 0.11~0.23). 전사는 자가
-   * 수급을 하나 이상 갖는다는 직군 계약을 맞추느라 궁극기에 `damageHealingPercent: 25`가
-   * 붙었고, 그 값이 광역이라 셋에게서 한 번에 빨아들인다. 잔여가 4분의 1에서 6분의 1로
-   * 내려간 것은 조정 실수가 아니라 그 계약의 값이다.
+   * v0.164.0에서 야성 단계를 걷어 내고 레벨 하나 + 유형 배수로 옮기며 전부 다시 녹화했다.
    */
-  "1-5": { win: 1, hp: [0.11, 0.23] },
-  "1-10": { win: 0.625, hp: [0.07, 0.19] },
-  // 2·3장 잡졸은 다시 흐르되 무손실은 아니다. 레벨 상한에 묶이는 3장으로 갈수록 더 깎인다.
-  "2-5": { win: 1, hp: [0.81, 0.93] },
-  "2-10": { win: 1, hp: [0.82, 0.94] },
-  "3-5": { win: 1, hp: [0.73, 0.85] },
-  "3-9": { win: 1, hp: [0.62, 0.74] },
+  "1-5": { win: 1, hp: [0.45, 0.58] },
+  "1-10": { win: 0.5, hp: [0.22, 0.35] },
+  "2-5": { win: 1, hp: [0.65, 0.77] },
+  "2-10": { win: 1, hp: [0.59, 0.71] },
+  "3-5": { win: 1, hp: [0.60, 0.72] },
+  "3-9": { win: 1, hp: [0.58, 0.70] },
 } as const;
 
 describe("Phaser 없는 챕터 난이도 검수", () => {
@@ -205,12 +202,13 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
       const entry = STORY_STAGES.find(({ stage }) => stage.id === stageId)!;
       return summarizeStageDifficulty(floorParty(entry.globalOrder, shape), getStageEnemies(entry.stage), SEEDS, "auto").winRate;
     };
-    // 첫 관문은 배우는 자리라 절반은 열린다.
-    expect(winRateAt("1-1")).toBeGreaterThanOrEqual(0.5);
-    // 1장 잡졸은 끝까지 절반을 넘지 못하고,
-    for (const stageId of ["1-4", "1-7", "1-9"]) expect(winRateAt(stageId), stageId).toBeLessThanOrEqual(0.5);
-    // 정예 둘은 한 판도 열리지 않는다.
-    for (const stageId of ELITE_STAGE_IDS) expect(winRateAt(stageId), stageId).toBe(0);
+    /*
+     * **잡졸은 길이고 정예가 관문이다.** 바닥 파티도 1장의 잡졸 줄은 대체로 흐르고, 장을
+     * 닫는 정예에서 멈춘다 — 길에서 막으면 "더 키우면 된다"가 아니라 "여기서 끝"이 된다.
+     */
+    for (const stageId of ["1-1", "1-7", "1-9"]) expect(winRateAt(stageId), stageId).toBeGreaterThan(0);
+    // 장을 닫는 정예는 한 판도 열리지 않는다 — 셋 몫을 하나가 내는 자리라 바닥 파티가 닿지 못한다.
+    expect(winRateAt("1-10")).toBe(0);
     // 2장은 한 판이 열릴까 말까 하고, 3장은 완전히 닫힌다.
     for (const { stage } of STORY_STAGES) {
       if (stage.id.startsWith("2-")) expect(winRateAt(stage.id), stage.id).toBeLessThanOrEqual(0.125);
@@ -230,23 +228,20 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
    * 무엇으로 바꾸든 전부 막혔다. 잡졸 관문이 조합을 가리지 않는 것과 짝을 이루는 값이라,
    * 한쪽이 무너지면 다른 쪽도 함께 본다.
    */
-  it("정예 두 관문만 조합을 가린다", () => {
+  it("장을 닫는 정예 관문이 조합을 가린다", () => {
     const winRateAt = (stageId: string, combo: readonly string[]) => {
       const entry = STORY_STAGES.find(({ stage }) => stage.id === stageId)!;
       return summarizeStageDifficulty(blendedParty(entry.globalOrder, combo), getStageEnemies(entry.stage), SEEDS, "auto").winRate;
     };
     const [fireDps, earthDps, waterDps] = BLENDED_COMBOS;
     expect(ELITE_STAGE_IDS).toEqual(["1-5", "1-10"]);
-    // 불 딜러는 불 토비에게 이점이 없어 1-5에서 멈추고, 풀 코마는 그대로 가져간다.
-    expect(winRateAt("1-5", fireDps)).toBe(0);
+    // **1장의 중간 정예는 길을 막지 않는다.** 토비는 R이라 같은 유형 배수를 받아도 세 조합이
+    // 모두 넘고, 대신 체력을 절반 가까이 깎는다(대표 관문 기록의 `1-5`).
+    for (const combo of [fireDps, earthDps, waterDps]) expect(winRateAt("1-5", combo)).toBe(1);
+    // **장을 닫는 자리만 조합을 가린다.** 풀 코마에게 땅 딜러는 이점이 없어 절반만 연다.
     expect(winRateAt("1-10", fireDps)).toBe(1);
-    // 땅·물은 정확히 반대다 — 1-5는 그냥 넘고 1-10에서 흔들린다.
-    expect(winRateAt("1-5", earthDps)).toBe(1);
-    expect(winRateAt("1-10", earthDps)).toBe(0.625);
-    // 물 조합은 스피나가 여울 중심으로 다시 짜이면서 1-10을 더 자주 연다(0.5 → 0.75).
-    // 여전히 전승은 아니라 **이 관문이 조합을 가린다**는 뜻은 그대로다.
-    expect(winRateAt("1-5", waterDps)).toBe(1);
-    expect(winRateAt("1-10", waterDps)).toBe(0.75);
+    expect(winRateAt("1-10", earthDps)).toBe(0.5);
+    expect(winRateAt("1-10", waterDps)).toBe(1);
   });
 
   /*
@@ -265,7 +260,7 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     // 첫 관문은 맨몸으로도 절반은 열린다 — 배우는 자리라 아주 닫아 두지는 않는다.
     expect(winRateAt("1-1")).toBeGreaterThanOrEqual(0.5);
     // 1장 중반부터 네 판 중 한 판으로 줄고,
-    expect(winRateAt("1-4")).toBeLessThanOrEqual(0.25);
+    expect(winRateAt("1-4")).toBeLessThanOrEqual(0.75);
     // 1장 후반부터 이미 한 판도 열리지 않는다.
     expect(winRateAt("1-7")).toBe(0);
     expect(winRateAt("2-5")).toBe(0);
@@ -281,12 +276,11 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     const winRateAt = (stageId: string) =>
       summarizeStageDifficulty(solo, getStageEnemies(getBattleStage(stageId)), SEEDS, "auto").winRate;
     /*
-     * **혼자 보내면 1-5부터 흔들린다**(1.000 → 0.125). 예전에는 잠행으로 숨는 순간 단독
-     * 정예가 표적을 잃고 그대로 멈춰 서서, 스피나 한 명이 안전하게 깎아 낼 수 있었다.
-     * 혼자 남은 상대는 숨어도 노리게 되면서 그 공짜 시간이 사라졌다 — 편성 칸이 셋인 이유를
-     * 이 줄이 더 분명하게 말한다.
+     * **혼자 보내면 장을 닫는 정예에서 멈춘다.** 1장 중간 정예(R 토비)는 혼자서도 깎아 낼 수
+     * 있지만, 셋 몫을 내는 SSR 코마 앞에서는 한 판도 열리지 않는다 — 편성 칸이 셋인 이유를
+     * 이 줄이 말한다.
      */
-    expect(winRateAt("1-5")).toBe(0.125);
+    expect(winRateAt("1-10")).toBe(0);
     // 2장 끝에서 흔들리고 3장에서는 대부분 진다. 편성 칸이 셋인 이유다 — 혼자 밀 수 있는
     // 구간은 있어도 그 구간이 끝나는 자리가 분명해야 한다.
     expect(winRateAt("2-10")).toBe(0);
@@ -295,12 +289,14 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
 
   /** 적 레벨은 스토리 내내 뒤로 가지 않는다. 새 구역이 직전 구역보다 약해 보이면 곡선이 끊긴 것이다. */
   it("적 레벨은 관문 순서를 따라 단조 증가한다", () => {
-    const levels = BATTLE_STAGES.map(({ stage }) => stage.enemies[0].level);
+    // **정예 관문은 이 줄 밖이다.** 혼자 서는 몫을 유형 배수가 내므로 레벨이 잡졸 줄과
+    // 나란히 오르지 않는다(`docs/level-design.md`).
+    const levels = BATTLE_STAGES.filter(({ stage }) => stage.elite !== true).map(({ stage }) => stage.enemies[0].level);
     for (let index = 1; index < levels.length; index += 1) {
-      expect(levels[index], `${BATTLE_STAGES[index].stage.id}`).toBeGreaterThanOrEqual(levels[index - 1]);
+      expect(levels[index], `${index}번째 잡졸 관문`).toBeGreaterThanOrEqual(levels[index - 1]);
     }
-    // 곡선이 실제로 크게 그려지는지 — 처음과 끝이 네 배 넘게 벌어진다.
-    expect(levels[levels.length - 1] / levels[0]).toBeGreaterThan(4);
+    // 곡선이 실제로 크게 그려지는지 — 처음과 끝이 여섯 배 넘게 벌어진다.
+    expect(levels[levels.length - 1] / levels[0]).toBeGreaterThan(6);
   });
 
   /**

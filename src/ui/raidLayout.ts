@@ -25,7 +25,14 @@ export const RAID_BOSS_SPOT = {
   centerX: BASE_WIDTH / 2,
   groundY: BASE_HEIGHT + 40,
   height: 1720,
-  /** 원화가 잠기는 띠. 위는 투명, 아래는 짙은 검정이고 아랫변이 목록 윗변에 닿는다. */
+  /**
+   * 원화가 잠기는 띠. 위는 투명하고 아래로 갈수록 어두워진다.
+   *
+   * **자르지 않는다.** 예전에는 이 띠의 아랫변에서 마스크가 원화를 끊었는데, 짙게 깔린 띠와
+   * 그 선이 겹쳐 **하체가 통째로 잘려 나간 것처럼** 보였다 — 화면 한가운데를 가로로 긋는
+   * 선이 하나 더 생긴 셈이다. 지금은 보스가 화면 밑동까지 온전히 서고, 목록과의 분리는
+   * 그 위에 깔리는 반투명 판(`RAID_BOARD_PLATE`)이 맡는다.
+   */
   fade: { top: 760, bottom: 1216 },
 } as const;
 
@@ -48,6 +55,19 @@ export const RAID_HP_BAR = {
  * 순위표와 **같은 줄 규격**(`RANKING_LIST`)을 쓰되 자리만 이 화면에 맞춘다 — 같은 모양의
  * 목록이 화면마다 다른 줄 높이로 서면 같은 정보가 두 양식으로 읽힌다.
  */
+/**
+ * 기여 목록이 앉는 **반투명 판 한 겹.**
+ *
+ * 보스를 끊지 않고도 목록을 배경에서 떼어 놓는 방법이다 — 원화는 이 판 아래로 계속 서 있고,
+ * 유리면 너머로 비쳐 "그 앞에 목록이 떠 있다"로 읽힌다. 제목표가 윗변에 걸터앉으므로 판은
+ * 그보다 한 뼘 위에서 시작한다.
+ */
+export const RAID_BOARD_PLATE = {
+  top: 1134,
+  bottom: BASE_HEIGHT - 206,
+  width: BASE_WIDTH - 56,
+} as const;
+
 export const RAID_BOARD = {
   titleY: 1168,
   viewport: { top: 1216, bottom: BASE_HEIGHT - 232 },

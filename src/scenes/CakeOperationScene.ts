@@ -94,9 +94,6 @@ export class CakeOperationScene extends Phaser.Scene {
     const level = this.add.text(-CAKE_ROW.width / 2 + CAKE_ROW.padding, 28, t("cake.tier.enemy", { level: tier.enemyLevel }), textStyle({ role: "emphasis", size: 26, color: COLOR.inkDim })).setOrigin(0, 0.5);
     row.add(level);
     // 야성 몫은 곱하기 전의 **단계**이고, 레벨과 갈라 읽히도록 작고 붉게 옆에 선다.
-    if (tier.ferocityLevel > 0) {
-      row.add(this.add.text(level.x + level.width + 10, 28, t("cake.tier.bonus", { bonus: tier.ferocityLevel }), textStyle({ role: "emphasis", size: 22, color: COLOR.ferocityText })).setOrigin(0, 0.5));
-    }
     row.add(this.add.text(-CAKE_ROW.width / 2 + CAKE_ROW.padding + 250, 28, t("cake.tier.waves", { waves: tier.waves.length }), textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
 
     // 한 판(배율 x1)이 주는 값이다. 배율을 먹인 수는 누르는 것 위(버튼)가 말한다.

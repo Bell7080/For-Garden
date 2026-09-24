@@ -805,7 +805,6 @@ export class PartyScene extends Phaser.Scene {
       addFormationSlotPlate(this, plate, partyAllyPlateBox(i), {
         accent: COLOR.ally, occupied: Boolean(id), index: i, groundOffset: partyAllyGroundOffset(),
         recommendedRoles: settingsManager.get().game.formationRoleHint ? RECOMMENDED_SLOT_ROLES[i] : undefined,
-        recommendedRolesLayer: chrome,
       });
       // 빼는 표식은 **고른 자리에 누군가 서 있을 때만** 선다. 늘 세워 두면 세 자리 위에 붉은
       // 표식이 셋 늘어서 SD보다 먼저 읽힌다.

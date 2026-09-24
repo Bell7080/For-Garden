@@ -177,6 +177,7 @@ export const MISC_EN = {
   "rune.chanceSuccess": "Success {percent}%",
   "rune.chanceFail": "Failure {percent}%",
   "formation.emptySlot": "Empty\n{index}",
+  "formation.roleHint": "Suggested Class",
   "relics.sort.id": "By Number",
   "relics.sort.rarity": "By Rarity",
   "relics.sort.power": "By Combat Power",

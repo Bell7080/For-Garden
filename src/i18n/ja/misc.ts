@@ -188,6 +188,7 @@ export const MISC_JA = {
   "rune.chanceSuccess": "成功 {percent}%",
   "rune.chanceFail": "失敗 {percent}%",
   "formation.emptySlot": "空きスロット\n{index}",
+  "formation.roleHint": "おすすめクラス",
 
   "relics.sort.id": "個体番号順",
   "relics.sort.rarity": "レアリティ順",

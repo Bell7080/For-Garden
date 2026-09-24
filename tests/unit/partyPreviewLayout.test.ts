@@ -109,11 +109,13 @@ describe("콘텐츠 편성 미리보기", () => {
   });
 });
 
-describe("편성 칸의 추천 직군 표", () => {
-  it("판 윗변에 걸치되 위의 전투력 판과 닿지 않는다", () => {
-    const tagTop = PARTY_ALLY_PLATE.top + FORMATION_ROLE_HINT.offsetY - FORMATION_ROLE_HINT.height / 2;
-    expect(tagTop).toBeGreaterThan(partyPowerPlateBounds().bottom);
-    // 윗변에 걸쳐 있어야 칸 판에 딸린 표로 읽힌다.
-    expect(tagTop).toBeLessThan(PARTY_ALLY_PLATE.top);
+describe("편성 칸의 추천 직군", () => {
+  it("빈 칸 판 안에 들어가고 은은하다", () => {
+    const plate = partyAllyPlateBox(0);
+    const hint = FORMATION_ROLE_HINT;
+    expect(hint.fontSize + hint.lineGap + hint.iconSize).toBeLessThan(plate.height - 40);
+    // 양옆 칸은 아이콘 둘이 선다.
+    expect(2 * hint.iconSize + hint.gap).toBeLessThan(plate.width - 40);
+    expect(hint.alpha).toBeLessThan(0.8);
   });
 });

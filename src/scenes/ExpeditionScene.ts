@@ -952,7 +952,6 @@ export class ExpeditionScene extends Phaser.Scene {
         accent: COLOR.sortie, occupied: Boolean(relicId), index, groundOffset: FORMATION.groundOffset,
         // 원정도 전투 편성이라 같은 추천 직군 표를 세운다. 끄기는 공용 편성 화면의 버튼이 정한다.
         recommendedRoles: settingsManager.get().game.formationRoleHint ? RECOMMENDED_SLOT_ROLES[index] : undefined,
-        recommendedRolesLayer: chrome,
       });
       if (relicId) this.standFormationPuppet(relicId, x, generation);
       // 공용 슬롯 면은 SD보다 위에서 입력을 맡고, SD 자체는 계속 비대화형으로 둔다.

@@ -208,6 +208,7 @@ export const MISC_KO = {
   "rune.chanceSuccess": "성공 {percent}%",
   "rune.chanceFail": "실패 {percent}%",
   "formation.emptySlot": "빈 슬롯\n{index}",
+  "formation.roleHint": "추천 직군",
 
   // 도감
   "relics.sort.id": "개체번호순",

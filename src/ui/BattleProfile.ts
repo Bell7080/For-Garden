@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
-import type { RelicDef, SkillIconAssetId } from "../core/types";
+import type { RelicDef, RelicSkinId, SkillIconAssetId } from "../core/types";
+import { portraitAssetForSkin } from "../puppets/assets";
 import type { ActiveCombatBuff } from "../core/skirmish";
 import type { BattleUiMotion } from "../core/settings";
 import { COLOR, textStyle } from "./theme";
@@ -44,6 +45,11 @@ export interface BattleProfileOptions {
   readOnly: boolean;
   dead?: boolean;
   sub?: string;
+  /**
+   * 굳혀 둔 외형(원정). `undefined`면 지금 입은 외형을 읽고, `null`이면 기본 외형이다 — 원정은
+   * 떠날 때 입은 옷으로 싸우므로 도중에 갈아입어도 카드가 따라 바뀌지 않는다.
+   */
+  skinId?: RelicSkinId | null;
   /** 전투 HUD 움직임만 줄이며 체력 색과 피해 잔상은 그대로 둔다. */
   battleUiMotion?: BattleUiMotion;
 }
@@ -80,6 +86,7 @@ export class BattleProfile extends Phaser.GameObjects.Container {
     this.sweep = scene.add.rectangle(-125, 0, 34, 320, COLOR.accent, 0).setAngle(18).setDepth(2);
     this.card = new PortraitCard(scene, 0, 0, {
       width: L.cardWidth, height: L.cardHeight, relicId: options.relic.id,
+      asset: options.skinId === undefined ? undefined : portraitAssetForSkin(options.relic.portraitAssetId, options.skinId ?? undefined),
       label: options.relic.name, level: options.level,
       sub: options.sub, rarity: options.relic.rarity, breakthroughGrade: options.breakthroughGrade,
     });

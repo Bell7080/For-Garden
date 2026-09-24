@@ -3,6 +3,7 @@
 import type { RaidDifficulty } from "../data/raid";
 import type { GachaPityState, Wallet } from "../core/gacha";
 import type { RelicProgress, RelicSkinId } from "../core/types";
+import type { ExpeditionRelicSnapshot } from "../core/expeditionSnapshot";
 import { BANNERS } from "../data/banners";
 import { STAGES } from "../data/stages";
 import { isStageUnlockedByProgress } from "../core/stageProgress";
@@ -146,7 +147,13 @@ export interface CakeOperationState {
 }
 
 /** 런 도중 저장되는 렐릭 한 기의 생존 스냅샷이다. */
-export interface ExpeditionRelicState { relicId: string; currentHp: number; alive: boolean; }
+export interface ExpeditionRelicState {
+  relicId: string;
+  currentHp: number;
+  alive: boolean;
+  /** 출발 시점의 성장. 이 필드가 생기기 전의 런은 불러올 때 채운다(`ExpeditionManager.status`). */
+  snapshot?: ExpeditionRelicSnapshot;
+}
 
 /**
  * 내가 들어간 레이드 한 판의 몫.

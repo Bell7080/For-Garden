@@ -1338,10 +1338,7 @@ export class InfoManager {
   private openBreakthroughSteps(_from: PopupSource): void {
     const def = this.currentDef;
     if (!def) return;
-    const grade = this.publicProfile
-      ? Math.max(1, this.publicProfile.breakthroughGrade)
-      : breakthroughGrade(relicProgression.getProgress(def.id).breakthrough);
-    openBreakthroughStepsPopup(this.scene, this.popups, this.keywords, def, grade, relicProgression.getFinalStats(def.id));
+    openBreakthroughStepsPopup(this.scene, this.popups, this.keywords, def, breakthroughGrade(this.shownBreakthrough(def)), this.shownStats(def));
   }
 
 
@@ -1542,7 +1539,7 @@ export class InfoManager {
   private openExtraStats(from: PopupSource): void {
     const def = this.currentDef;
     if (!def) return;
-    openExtraStatsPopup(this.scene, this.popups, def, relicProgression.getFinalStats(def.id), from);
+    openExtraStatsPopup(this.scene, this.popups, def, this.shownStats(def), from);
   }
 
   /** 추가 외형이 있는 렐릭에게만 공용 외형 선택 진입점을 세운다. */
@@ -1714,7 +1711,7 @@ export class InfoManager {
   /** 원화 아래 스킬 아이콘 세 개. 누르면 정형 팝업이 뜬다. */
   private buildSkillIcons(def: RelicDef): void {
     for (const icon of this.skillIcons.splice(0)) icon.destroy();
-    const breakthrough = this.publicProfile ? 0 : relicProgression.getProgress(def.id).breakthrough;
+    const breakthrough = this.shownBreakthrough(def);
     this.skillIconsKey = this.skillIconsKeyOf(def);
     const entries: [string, Skill, number | undefined, SkillArtSlot][] = [
       [t("info.skill.passive"), { ...def.passive, power: def.passive.value, damageType: "physical" } as unknown as Skill, undefined, "passive"],
@@ -1735,9 +1732,9 @@ export class InfoManager {
         role: def.role,
         label: kindLabel,
         // **강조는 돌파로 자란 칸만 갖는다.** 예전에는 궁극기 한 칸이 무조건 노란빛이었는데,
-        // 그 색이 아무 상태도 말하지 않아 세 칸의 위계만 이유 없이 갈라 놓았다. 공개 프로필은
-        // 그쪽 돌파 단계를 모르므로 강조하지 않는다.
-        enhanced: !this.publicProfile && breakthroughEnhances(def, breakthrough, slot),
+        // 그 색이 아무 상태도 말하지 않아 세 칸의 위계만 이유 없이 갈라 놓았다. 공개 프로필·원정
+        // 스냅샷은 그쪽이 알려 준 돌파 등급으로 가른다.
+        enhanced: breakthroughEnhances(def, breakthrough, slot),
       }));
       const hit = this.scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerdown", () => container.setScale(1.08));
@@ -1760,7 +1757,20 @@ export class InfoManager {
   }
 
   private skillIconsKeyOf(def: RelicDef): string {
-    return `${def.id}:${this.publicProfile ? "public" : relicProgression.getProgress(def.id).breakthrough}`;
+    return `${def.id}:${this.publicProfile ? "public:" : ""}${this.shownBreakthrough(def)}`;
+  }
+
+  /**
+   * 이 창이 보여 주는 돌파 단계와 능력치. 공개 프로필(친구)과 원정 스냅샷은 **그쪽이 알려 준 값**을,
+   * 내 렐릭은 지금 성장을 읽는다. 창 안의 모든 칸이 이 둘을 지나야 한 창에서 두 값이 섞이지 않는다
+   * — 예전에는 친구 창의 스킬 쪽지가 내 렐릭의 능력치로 수치를 적었다.
+   */
+  private shownBreakthrough(def: RelicDef): number {
+    return this.publicProfile ? Math.max(0, this.publicProfile.breakthroughGrade - 1) : relicProgression.getProgress(def.id).breakthrough;
+  }
+
+  private shownStats(def: RelicDef): Stats {
+    return this.publicProfile ? { ...this.publicProfile.stats } : relicProgression.getFinalStats(def.id);
   }
 
   /**
@@ -1776,10 +1786,10 @@ export class InfoManager {
 
   /** 개체별 폭주 발현 설명. 야성 규칙 자체는 강조된 말을 눌러 다시 열 수 있다. */
   private openFerocityTrait(def: RelicDef, from: PopupSource): void {
-    const finalDef = { ...def, stats: relicProgression.getFinalStats(def.id) };
-    const breakthrough = relicProgression.getProgress(def.id).breakthrough;
+    const finalDef = { ...def, stats: this.shownStats(def) };
+    const breakthrough = this.shownBreakthrough(def);
     openFerocityTraitPopup(this.scene, this.popups, this.keywords, finalDef, from, {
-      breakthroughEffect: this.publicProfile || !breakthroughEnhances(def, breakthrough, "ferocity")
+      breakthroughEffect: !breakthroughEnhances(def, breakthrough, "ferocity")
         ? undefined : breakthroughEffectText(def, "ferocity", finalDef.stats),
     });
   }
@@ -1788,11 +1798,11 @@ export class InfoManager {
   private skillViewModel(kindLabel: string, skill: Skill | Passive, gaugeCost?: number, slot?: SkillArtSlot): SkillInfoViewModel {
     // 레벨·돌파·장착 룬을 모두 반영한 정의를 넘겨 74 같은 기본치가 성장 후에 남지 않게 한다.
     const def = this.currentDef!;
-    const finalDef = { ...def, stats: relicProgression.getFinalStats(def.id) };
-    const breakthrough = relicProgression.getProgress(def.id).breakthrough;
+    const finalDef = { ...def, stats: this.shownStats(def) };
+    const breakthrough = this.shownBreakthrough(def);
     // **열린 돌파 등급의 몫만 넘긴다.** 아직 뚫지 않은 단계의 효과를 쪽지에 적으면 지금 싸우는
     // 이 개체가 하지 않는 일을 말하게 된다 — 무엇이 열리는지는 등급 돋보기가 여는 표가 맡는다.
-    const breakthroughEffect = slot && !this.publicProfile && breakthroughEnhances(def, breakthrough, slot)
+    const breakthroughEffect = slot && breakthroughEnhances(def, breakthrough, slot)
       ? breakthroughEffectText(def, slot, finalDef.stats) : undefined;
     return buildSkillViewModel({
       def: finalDef, breakthrough, kindLabel, skill, gaugeCost, slot,
@@ -1939,9 +1949,7 @@ export class InfoManager {
    */
   private paintStars(def: RelicDef): void {
     this.starRow.removeAll(true);
-    const stars = this.publicProfile
-      ? Math.max(1, this.publicProfile.breakthroughGrade)
-      : breakthroughGrade(relicProgression.getProgress(def.id).breakthrough);
+    const stars = breakthroughGrade(this.shownBreakthrough(def));
     addBreakthroughGradeMark(this.scene, this.starRow, 0, 0, STAR_SIZE * 2, stars);
   }
 
@@ -1962,9 +1970,9 @@ export class InfoManager {
     }
     // 공개 프로필은 필요한 표시용 기본값도 DTO로부터 만들며 플레이어 저장을 건드리지 않는다.
     const progress: RelicProgress = this.publicProfile
-      ? { level: this.publicProfile.level, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] }
+      ? { level: this.publicProfile.level, exp: 0, breakthrough: this.shownBreakthrough(def), bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] }
       : relicProgression.getProgress(def.id);
-    const finalStats = this.publicProfile?.stats ?? relicProgression.getFinalStats(def.id);
+    const finalStats = this.shownStats(def);
     const cap = relicLevelCap(progress.breakthrough);
     const maxed = progress.level >= cap;
 

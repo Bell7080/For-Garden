@@ -8,6 +8,7 @@ import type { ExpeditionMapNode } from "../core/expeditionMap";
 import { getRelic } from "../data/relics";
 import { setDebugExpeditionFormation, setDebugFormationDragVisual, setDebugScene } from "../debug";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
+import { showExpeditionRelic } from "../ui/expeditionRelicInfo";
 import { expeditionManager, type StartExpeditionFailure } from "../managers/ExpeditionManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { session } from "../state/session";
@@ -516,12 +517,14 @@ export class ExpeditionScene extends Phaser.Scene {
     relics.forEach((state, index) => {
       const def = getRelic(state.relicId); const x = BATTLE_PROFILE_LAYOUT.expedition.centersX[index];
       const hpRatio = Math.max(0, Math.min(100, state.currentHp)) / 100;
-      const maxHp = Math.round(relicProgression.getFinalStats(def.id).hp);
+      // 지도는 **떠날 때 굳힌 모습**을 그린다 — 도중에 키워도 이 런의 체력·레벨·등급·외형은 그대로다.
+      const frozen = expeditionManager.snapshotFor(def.id);
+      const maxHp = Math.round(frozen.stats.hp);
       const currentHp = state.alive ? Math.round(maxHp * hpRatio) : 0;
       // 지도는 카드·게이지·글자를 개별 축소하지 않고 전투와 같은 한 칸을 그대로 세운다.
       // 생존은 노란 발광으로 알리지 않는다 — 그 발광은 전투에서 "궁극기가 찼다"는 뜻이다.
       const profile = new BattleProfile(this, x, BATTLE_PROFILE_LAYOUT.expedition.centerY, {
-        relic: def, level: relicProgression.getProgress(def.id).level, breakthroughGrade: relicProgression.getBreakthroughGrade(def.id),
+        relic: def, level: frozen.level, breakthroughGrade: frozen.breakthrough + 1, skinId: frozen.skinId,
         currentHp, maxHp, ferocity: 0, active: false, readOnly: true, dead: !state.alive,
       }).setScale(BATTLE_PROFILE_LAYOUT.expedition.scale);
       // 지도 HUD의 칸도 편성 그리드와 같은 꾹 누름으로 상세를 연다. 증강 대상 고르기는
@@ -531,7 +534,7 @@ export class ExpeditionScene extends Phaser.Scene {
       profile.setAugmentBadges(personal[state.relicId] ?? [], () => this.openAugmentDetails(augments));
       profile.card.hit.setInteractive({ useHandCursor: true });
       bindLongPress(this, profile.card.hit, {
-        onLongPress: () => this.ally().showRelic(def),
+        onLongPress: () => showExpeditionRelic(this, def.id, { portraitDepth: 1001, baseDepth: 1000 }),
         // 짧은 탭은 지금 무엇이 붙어 있는지를 연다. 꾹 누르면 예전처럼 상세 정보창이다.
         onTap: augments.length > 0 ? () => this.openAugmentDetails(augments) : undefined,
         depth: 1200,

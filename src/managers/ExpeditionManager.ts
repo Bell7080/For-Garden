@@ -5,7 +5,9 @@ import type { ExpeditionNodeType } from "../core/expeditionMap";
 import type { SkirmishRelicResult } from "../core/skirmish";
 import { EXPEDITION_AUGMENT_IDS, EXPEDITION_REST_RULES, EXPEDITION_WEEKLY_POLICY } from "../data/expedition";
 import { saveManager, type SaveManager } from "../state/SaveManager";
-import { session, type ExpeditionRunState, type Session } from "../state/session";
+import { captureExpeditionRelicSnapshot, isExpeditionRelicSnapshot, type ExpeditionRelicSnapshot } from "../core/expeditionSnapshot";
+import { getRelic } from "../data/relics";
+import { createInitialRelicProgress, session, type ExpeditionRunState, type Session } from "../state/session";
 import { GameApiError, type ApiErrorCode, type GameApi, type SettleExpeditionRunResponse, type SubmitExpeditionBossScoreResponse } from "../api/contracts";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import { t } from "../i18n";
@@ -59,6 +61,7 @@ export class ExpeditionManager {
     // 이전 버전이 성공 정산 뒤 settled 런을 남긴 저장도 활성 진행으로 복구하지 않는다.
     // 정리 저장까지 수행해 다음 앱 실행부터는 새 run 계약만 남긴다.
     if (this.state.expedition.run?.settled) this.commit({ ...this.state.expedition, run: null });
+    this.backfillSnapshots();
     const run = this.state.expedition.run;
     const copy = run ? structuredClone(run) : null;
     return { ...this.state.expedition, run: copy, active: copy ? { relicIds: copy.relics.map(({ relicId }) => relicId) as [string, string, string], score: copy.runScore } : null, quickAvailable: this.state.expedition.bestScore > 0 && run === null, canStartRun: this.state.expedition.playsThisWeek < EXPEDITION_WEEKLY_POLICY.maxPlaysPerWeek };
@@ -75,7 +78,7 @@ export class ExpeditionManager {
     const weekKey = expeditionWeekKey(this.serverNow());
     const mapSeed = `${weekKey}:${this.state.expedition.playsThisWeek + 1}`;
     const map = generateExpeditionMap({ seed: mapSeed, random: seededRandom(mapSeed) });
-    const run: ExpeditionRunState = { runId: `run:${mapSeed}`, weekKey, mapSeed, nodes: map.nodes, currentNodeId: null, visitedNodeIds: [], relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true })) as ExpeditionRunState["relics"], selectedAugmentIds: [], selectedAugments: [], pendingAugmentReward: null, pendingRewards: {}, lastNodeRewards: null, bossDamage: 0, normalNodeScoreTotal: 0, bossDamageScore: 0, runScore: 0, bestScore: 0, settled: false, settlementId: null, bossSubmissionId: null, bossSettlementId: null };
+    const run: ExpeditionRunState = { runId: `run:${mapSeed}`, weekKey, mapSeed, nodes: map.nodes, currentNodeId: null, visitedNodeIds: [], relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true, snapshot: this.capture(relicId) })) as ExpeditionRunState["relics"], selectedAugmentIds: [], selectedAugments: [], pendingAugmentReward: null, pendingRewards: {}, lastNodeRewards: null, bossDamage: 0, normalNodeScoreTotal: 0, bossDamageScore: 0, runScore: 0, bestScore: 0, settled: false, settlementId: null, bossSubmissionId: null, bossSettlementId: null };
     // 출발 검증의 단일 경계에서 런과 마지막 원정 편성을 같은 저장으로 확정한다.
     this.commit({ ...this.state.expedition, lastParty: [...relicIds], run });
     return { ok: true, run: structuredClone(run) };
@@ -109,7 +112,7 @@ export class ExpeditionManager {
     const run: ExpeditionRunState = {
       runId, weekKey, mapSeed, nodes: map.nodes, currentNodeId: reached.id,
       visitedNodeIds: route.slice(0, -1).map(({ id }) => id),
-      relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true })) as ExpeditionRunState["relics"],
+      relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true, snapshot: this.capture(relicId) })) as ExpeditionRunState["relics"],
       selectedAugmentIds: [], selectedAugments: [], pendingAugmentReward: null,
       pendingRewards: {}, lastNodeRewards: null, bossDamage: 0, normalNodeScoreTotal: 0, bossDamageScore: 0, runScore: 0, bestScore: 0,
       settled: false, settlementId: null,
@@ -250,6 +253,32 @@ export class ExpeditionManager {
 
   // 종료와 포기는 로컬 쓰기 메서드를 두지 않는다. 호출자는 GameApi.settleExpeditionRun만 사용해
   // 임시 보상 이전과 완료 표식이 서로 갈라지는 부분 저장을 만들 수 없게 한다.
+
+  /**
+   * 이 렐릭이 지금 싸울 모습. 진행 중인 런에 있으면 **떠날 때 굳힌 값**이고, 아니면 지금 성장이다.
+   * 전투·지도·서버 재현·정보창이 모두 이 한 곳을 지나므로 둘이 다른 값을 읽지 않는다.
+   */
+  snapshotFor(relicId: string): ExpeditionRelicSnapshot {
+    const frozen = this.state.expedition.run?.relics.find((relic) => relic.relicId === relicId)?.snapshot;
+    return structuredClone(frozen ?? this.capture(relicId));
+  }
+
+  private capture(relicId: string): ExpeditionRelicSnapshot {
+    const progress = this.state.relicProgress[relicId] ?? createInitialRelicProgress();
+    return captureExpeditionRelicSnapshot(getRelic(relicId), progress, this.state.runeInventory, this.state.equippedRelicSkinIds[relicId]);
+  }
+
+  /**
+   * 스냅샷이 생기기 전에 떠난 런(또는 손상된 스냅샷)은 **지금** 굳힌다. 그 뒤로는 바뀌지 않는다 —
+   * 거슬러 올라가 떠난 날의 값을 알 방법이 없으므로, 적어도 남은 층만큼은 한 모습으로 싸운다.
+   */
+  private backfillSnapshots(): void {
+    const run = this.state.expedition.run;
+    if (!run || run.relics.every((relic) => isExpeditionRelicSnapshot(relic.snapshot))) return;
+    const next = structuredClone(run);
+    next.relics.forEach((relic) => { if (!isExpeditionRelicSnapshot(relic.snapshot)) relic.snapshot = this.capture(relic.relicId); });
+    this.commit({ ...this.state.expedition, run: next });
+  }
 
   private commit(expedition: Session["expedition"]): void { this.state.expedition = expedition; this.saves.save(this.state); }
   private normalizeWeek(): void { const weekKey = expeditionWeekKey(this.serverNow()); if (this.state.expedition.weekKey !== weekKey) this.commit({ ...this.state.expedition, weekKey, playsThisWeek: 0, bestScore: 0 }); }

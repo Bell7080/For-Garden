@@ -40,4 +40,17 @@ describe("성장 변화의 즉시 반영", () => {
     expect(relics).toContain("relicSkinManager.equippedFor(id)");
     expect(relics).toContain('this.sortMode === "power" ? combatPower(relicProgression.getFinalStats(id))');
   });
+
+  it("원정은 떠날 때의 모습으로 싸우고 지도·정보창도 그 모습을 읽는다", () => {
+    const battle = read("src/scenes/BattleScene.ts");
+    expect(battle).toContain("expeditionManager.snapshotFor(id)");
+    expect(battle).toContain("stats: frozen?.get(id)?.stats ?? relicProgression.getFinalStats(id)");
+    expect(battle).toContain("runes: frozen?.get(id)?.runes ??");
+    expect(battle).toContain("showExpeditionRelic(this, fighter.def.id)");
+    const map = read("src/scenes/ExpeditionScene.ts");
+    expect(map).toContain("const frozen = expeditionManager.snapshotFor(def.id);");
+    expect(map).toContain("showExpeditionRelic(this, def.id");
+    // 서버 재현도 같은 값으로 싸워야 점수가 갈리지 않는다.
+    expect(read("src/api/FakeServer.ts")).toContain("isExpeditionRelicSnapshot(entry.snapshot)");
+  });
 });

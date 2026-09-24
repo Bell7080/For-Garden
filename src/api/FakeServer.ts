@@ -61,6 +61,7 @@ import { expeditionNodeRole } from "../data/expeditionEnemies";
 import { calculateExpeditionNodeRewards, calculateExpeditionRunScore } from "../core/expeditionRewards";
 import { calculateExpeditionNodeScore, expeditionBossDamageScore } from "../core/expeditionScore";
 import { RelicProgressionManager } from "../managers/RelicProgressionManager";
+import { isExpeditionRelicSnapshot } from "../core/expeditionSnapshot";
 import { expeditionBattleEffects } from "../core/expeditionBattle";
 import { settingsManager } from "../managers/SettingsManager";
 import { nextUtcDay } from "../core/notificationSchedule";
@@ -276,11 +277,14 @@ export class FakeServer implements GameApi {
       const roster = run?.relics ?? this.state.party.map((relicId) => ({ relicId, currentHp: 100, alive: true }));
       const effects = expeditionBattleEffects(run?.selectedAugments ?? []);
       const progression = new RelicProgressionManager(this.state);
-      const allies = roster.map(({ relicId: id }) => {
-        const relic = RELICS.find((entry) => entry.id === id);
+      const allies = roster.map((entry) => {
+        const id = entry.relicId;
+        const relic = RELICS.find((candidate) => candidate.id === id);
         if (!relic || !this.state.owned.has(id)) throw new Error("INVALID_PARTY");
-        // 스킬 계약은 정적 정의에서, 계정별 수치만 서버 성장 스냅샷에서 가져온다.
-        return { ...relic, stats: progression.getFinalStats(id) };
+        // 스킬 계약은 정적 정의에서, 계정별 수치는 **떠날 때 굳힌 스냅샷**에서 가져온다 — 화면의
+        // 전투가 그 값으로 싸웠으므로 재현도 같은 값이어야 점수가 갈리지 않는다.
+        const frozen = "snapshot" in entry && isExpeditionRelicSnapshot(entry.snapshot) ? entry.snapshot : undefined;
+        return { ...relic, stats: frozen ? { ...frozen.stats } : progression.getFinalStats(id) };
       });
       const pontos = RELICS.find(({ id }) => id === "pontos");
       if (!pontos) throw new Error("INVALID_BOSS_DEFINITION");

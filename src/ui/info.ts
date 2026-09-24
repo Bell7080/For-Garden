@@ -462,6 +462,8 @@ export class InfoManager {
   private statRadar?: StatRadar;
   private readonly gemSlots: GemSlot[] = [];
   private readonly skillIcons: Phaser.GameObjects.Container[] = [];
+  /** 스킬 액자를 마지막으로 그린 개체·돌파 단계. 돌파로 `+`가 붙는 순간을 가려 다시 그린다. */
+  private skillIconsKey = "";
 
   private currentDef?: RelicDef;
   private ownedNow = true;
@@ -1713,6 +1715,7 @@ export class InfoManager {
   private buildSkillIcons(def: RelicDef): void {
     for (const icon of this.skillIcons.splice(0)) icon.destroy();
     const breakthrough = this.publicProfile ? 0 : relicProgression.getProgress(def.id).breakthrough;
+    this.skillIconsKey = this.skillIconsKeyOf(def);
     const entries: [string, Skill, number | undefined, SkillArtSlot][] = [
       [t("info.skill.passive"), { ...def.passive, power: def.passive.value, damageType: "physical" } as unknown as Skill, undefined, "passive"],
       [t("info.skill.basic"), def.basic, undefined, "basic"],
@@ -1754,6 +1757,10 @@ export class InfoManager {
       this.chrome.add(container);
       this.skillIcons.push(container);
     });
+  }
+
+  private skillIconsKeyOf(def: RelicDef): string {
+    return `${def.id}:${this.publicProfile ? "public" : relicProgression.getProgress(def.id).breakthrough}`;
   }
 
   /**
@@ -1946,6 +1953,13 @@ export class InfoManager {
     // 돌파하고 파문이 터져도 로마자는 `I`에 머물렀다 — 올라간 것이 바로 그 글자인데 연출만
     // 돌고 표기는 창을 닫았다 열어야 바뀌었다.
     this.paintStars(def);
+    // **스킬 액자의 `+`도 같다.** 돌파가 연 칸만 강조되는데 액자는 창을 열 때만 세워서, 돌파가
+    // 확정돼도 `+`는 창을 닫았다 열어야 붙었다. 단계가 바뀐 때만 다시 세워 급여 때마다 액자가
+    // 새로 그려지지 않게 한다.
+    if (this.skillIconsKey !== this.skillIconsKeyOf(def)) {
+      this.buildSkillIcons(def);
+      for (const icon of this.skillIcons) icon.setVisible(this.ownedNow);
+    }
     // 공개 프로필은 필요한 표시용 기본값도 DTO로부터 만들며 플레이어 저장을 건드리지 않는다.
     const progress: RelicProgress = this.publicProfile
       ? { level: this.publicProfile.level, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] }

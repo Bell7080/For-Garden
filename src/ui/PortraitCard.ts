@@ -209,6 +209,14 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   private backdrop?: Phaser.GameObjects.Image;
   private readonly nameText?: Phaser.GameObjects.Text;
   private readonly subText?: Phaser.GameObjects.Text;
+  /** 레벨 숫자와 그 위 태그. 급여로 레벨이 오르면 카드를 다시 세우지 않고 이 둘만 고친다. */
+  private levelText?: Phaser.GameObjects.Text;
+  private levelTag?: Phaser.GameObjects.Text;
+  /** 돌파 등급 표식이 앉는 칸. 한계 돌파가 확정되면 이 안만 다시 칠한다. */
+  private gradeMark?: Phaser.GameObjects.Container;
+  private gradeSpot?: { x: number; y: number; size: number };
+  private shownLevel?: number;
+  private shownGrade?: number;
   private readonly options: PortraitCardOptions;
   private readonly bodyHeight: number;
   private readonly overhang: number;
@@ -377,6 +385,9 @@ export class PortraitCard extends Phaser.GameObjects.Container {
           .setOrigin(0, 1)
           .setAlpha(0.8);
         this.add([levelTag, levelText]);
+        this.levelText = levelText;
+        this.levelTag = levelTag;
+        this.shownLevel = options.level;
         nameLeft = -width / 2 + inset + Math.max(levelText.width, levelTag.width) + nameSize * 0.42;
       }
 
@@ -440,7 +451,10 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     // 왼쪽 위는 크게 깎여 나가므로, 표식은 덜 깎인 오른쪽 위에 붙인다. 등급을 아는 카드는
     // 개체번호 대신 로마자 등급이 그 자리에 선다 — 카드에서 궁금한 것은 번호가 아니라 등급이다.
     if (options.breakthroughGrade !== undefined && !options.locked) {
-      addBreakthroughGradeMark(scene, this, width / 2 - CHIP_INSET - 22, -height / 2 + 34, Math.min(46, width / 6), options.breakthroughGrade);
+      this.gradeSpot = { x: width / 2 - CHIP_INSET - 22, y: -height / 2 + 34, size: Math.min(46, width / 6) };
+      this.gradeMark = scene.add.container(0, 0);
+      this.add(this.gradeMark);
+      this.paintGrade(options.breakthroughGrade);
     } else if (options.badge) {
       this.add(
         scene.add
@@ -743,6 +757,34 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   setSub(text: string): this {
     this.subText?.setText(text);
     return this;
+  }
+
+  /**
+   * 급여·한계 돌파로 바뀐 레벨과 돌파 등급을 **그 자리에서** 고친다.
+   *
+   * 카드는 목록을 세울 때 한 번 그려지므로, 정보창에서 레벨을 올리거나 돌파를 확정하고 닫아도
+   * 목록의 카드는 옛 값을 들고 있었다. 카드를 통째로 다시 세우면 원화를 다시 읽어 깜빡이므로
+   * 숫자와 표식만 갈아 끼운다. 바뀐 것이 없으면 아무것도 하지 않는다.
+   */
+  setProgress(level: number | undefined, breakthroughGrade: number | undefined): this {
+    if (level !== undefined && this.levelText && level !== this.shownLevel) {
+      this.shownLevel = level;
+      this.levelText.setText(`${level}`);
+      // 자리 수가 늘면 숫자 폭이 넓어지므로 이름이 그 뒤로 밀려야 두 글자가 겹치지 않는다.
+      if (this.nameText && this.levelTag) {
+        const nameSize = Number.parseFloat(String(this.nameText.style.fontSize)) || 0;
+        this.nameText.setX(this.levelText.x + Math.max(this.levelText.width, this.levelTag.width) + nameSize * 0.42);
+      }
+    }
+    if (breakthroughGrade !== undefined && this.gradeMark && breakthroughGrade !== this.shownGrade) this.paintGrade(breakthroughGrade);
+    return this;
+  }
+
+  private paintGrade(grade: number): void {
+    if (!this.gradeMark || !this.gradeSpot) return;
+    this.shownGrade = grade;
+    this.gradeMark.removeAll(true);
+    addBreakthroughGradeMark(this.scene, this.gradeMark, this.gradeSpot.x, this.gradeSpot.y, this.gradeSpot.size, grade);
   }
 
 }

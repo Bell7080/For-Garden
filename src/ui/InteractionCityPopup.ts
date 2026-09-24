@@ -432,7 +432,16 @@ export class InteractionCityPopup {
           for (const [relicId, card] of this.rosterCards) card.setSelected(this.party.includes(relicId));
         },
         allowTap: () => this.gridDragMoved <= GRID_DRAG_SLOP,
-        onLongPress: () => this.info().showRelic(relic),
+        onLongPress: () => {
+          // 창에서 급여·한계 돌파를 하고 닫으면 목록 카드의 레벨·돌파 등급을 곧바로 고친다.
+          const info = this.info();
+          info.onClose = () => {
+            for (const [relicId, shown] of this.rosterCards) {
+              if (shown.active) shown.setProgress(relicProgression.getProgress(relicId).level, relicProgression.getBreakthroughGrade(relicId));
+            }
+          };
+          info.showRelic(relic);
+        },
         depth: SD_DEPTH + 2,
       });
       grid.add(card);

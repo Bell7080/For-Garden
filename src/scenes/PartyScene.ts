@@ -304,6 +304,9 @@ export class PartyScene extends Phaser.Scene {
     addBackButton(this, () => this.leave());
 
     this.info = new CharacterInfoManager(this);
+    // 정보창에서 급여·한계 돌파를 하고 닫으면 목록 카드·자리의 레벨과 돌파 등급, 전투력을 곧바로
+    // 고친다. 창을 닫고 편성을 다시 열어야 바뀌면 방금 한 조작이 먹었는지 알 수 없다.
+    this.info.onClose = () => this.refresh();
     // 적은 정보창 씬이 아니라 팝업 한 장이다. 스킬 쪽지는 이 층 위에 쌓인다.
     this.enemyInfo = new EnemyInfoPopup(this, new PopupLayer(this, 2200));
     this.bindDeselect();
@@ -725,6 +728,7 @@ export class PartyScene extends Phaser.Scene {
       const chosen = at >= 0;
       entry.card.setSelected(chosen);
       entry.card.setSub(chosen ? t("party.slot", { index: at + 1 }) : entry.role);
+      entry.card.setProgress(relicProgression.getProgress(id).level, relicProgression.getBreakthroughGrade(id));
     }
 
     const plate = this.slotPlate;

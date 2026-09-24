@@ -169,7 +169,11 @@ export class ExpeditionScene extends Phaser.Scene {
 
   /** 기록·편성·지도 어느 화면에서 꾹 눌러도 같은 아군 창 하나를 쓴다. */
   private ally(): CharacterInfoManager {
-    if (!this.allyInfo) this.allyInfo = new CharacterInfoManager(this, 1001);
+    if (!this.allyInfo) {
+      this.allyInfo = new CharacterInfoManager(this, 1001);
+      // 창에서 급여·한계 돌파를 하고 닫으면 편성 목록 카드의 레벨·돌파 등급을 곧바로 고친다.
+      this.allyInfo.onClose = () => this.syncRosterProgress();
+    }
     return this.allyInfo;
   }
   /** 전투 노드 선택은 모달 대신 지도에 붙는 공용 SD 편성판 하나만 갱신한다. */
@@ -1054,6 +1058,13 @@ export class ExpeditionScene extends Phaser.Scene {
     this.selected = result.formation;
     this.selectedSlot = result.selectedSlot;
     this.refreshPreparationSelection();
+  }
+
+  /** 목록 카드의 레벨·돌파 등급을 지금 값으로 맞춘다. 카드를 다시 세우지 않는다. */
+  private syncRosterProgress(): void {
+    this.cards.forEach((card, id) => {
+      if (card.active) card.setProgress(relicProgression.getProgress(id).level, relicProgression.getBreakthroughGrade(id));
+    });
   }
 
   /** 카드, SD, 인원수와 시작 가능 상태를 한 프레임의 동일한 선택 배열로 갱신한다. */

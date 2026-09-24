@@ -368,7 +368,11 @@ export class RelicsScene extends Phaser.Scene {
       relicCollection.catalog.map(({ id }) => {
         if (!relicCollection.owns(id)) return id;
         const progress = relicProgression.getProgress(id);
-        return `${id}:${progress.level}:${progress.breakthrough}`;
+        // 카드 원화는 입은 외형을 따르고, 전투력순이면 룬 하나로도 줄 순서가 바뀐다. 둘 다 창에서
+        // 바꿀 수 있으므로 함께 센다 — 빠지면 외형을 갈아입고 닫아도 격자는 옛 옷을 입고 있다.
+        const skin = relicSkinManager.equippedFor(id) ?? "";
+        const power = this.sortMode === "power" ? combatPower(relicProgression.getFinalStats(id)) : "";
+        return `${id}:${progress.level}:${progress.breakthrough}:${skin}:${power}`;
       }),
     ]);
   }

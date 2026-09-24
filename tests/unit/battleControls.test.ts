@@ -1,15 +1,28 @@
 import { describe, expect, it } from "vitest";
 import {
-  nextBattleSpeed, scaleUltimateCutInDurations, scaleUltimateDuration, shouldWaitForUltimatePresentation, ultimatePresentationTiming,
+  battleSpeedTier, nextBattleSpeed, usableBattleSpeed, scaleUltimateCutInDurations, scaleUltimateDuration, shouldWaitForUltimatePresentation, ultimatePresentationTiming,
   ULTIMATE_CUT_IN_MIN_VISIBLE_MS, ULTIMATE_MIN_DURATION_MS, ULTIMATE_RECOVERY_RATIO,
 } from "../../src/core/battleControls";
 
 /** 배속 버튼이 허용된 세 단계 밖으로 벗어나지 않는지 검증한다. */
 describe("전투 배속", () => {
-  it("1배속에서 2·3배속을 거쳐 다시 1배속으로 순환한다", () => {
-    expect(nextBattleSpeed(1)).toBe(2);
-    expect(nextBattleSpeed(2)).toBe(3);
-    expect(nextBattleSpeed(3)).toBe(1);
+  it("누구나 1 → 1.5 → 2배속을 돌고 다시 1배속으로 온다", () => {
+    expect(nextBattleSpeed(1, false)).toBe(1.5);
+    expect(nextBattleSpeed(1.5, false)).toBe(2);
+    expect(nextBattleSpeed(2, false)).toBe(1);
+  });
+
+  it("3배속은 멤버십이 있을 때만 줄에 든다", () => {
+    expect(nextBattleSpeed(2, true)).toBe(3);
+    expect(nextBattleSpeed(3, true)).toBe(1);
+    // 멤버십이 끝난 뒤 저장에 남은 3은 열린 것 중 가장 빠른 2로 내린다.
+    expect(usableBattleSpeed(3, false)).toBe(2);
+    expect(usableBattleSpeed(3, true)).toBe(3);
+    expect(nextBattleSpeed(3, false)).toBe(1);
+  });
+
+  it("배속 칩의 켜짐 세기는 단계마다 오른다", () => {
+    expect([1, 1.5, 2, 3].map((speed) => battleSpeedTier(speed as 1 | 1.5 | 2 | 3))).toEqual([0, 1, 2, 3]);
   });
 });
 

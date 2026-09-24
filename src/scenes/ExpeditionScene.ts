@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import { RECOMMENDED_SLOT_ROLES } from "../core/partyAffinity";
+import { settingsManager } from "../managers/SettingsManager";
 import { requiredBreakthroughForLevel } from "../core/levelDesign";
 import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
@@ -947,6 +949,9 @@ export class ExpeditionScene extends Phaser.Scene {
       // 화면만 깎은 칩을 **빈 칸에만** 깔아, 같은 세 자리가 발굴·파견과 다른 판 위에 섰다.
       addFormationSlotPlate(this, layer, box, {
         accent: COLOR.sortie, occupied: Boolean(relicId), index, groundOffset: FORMATION.groundOffset,
+        // 원정도 전투 편성이라 같은 추천 직군 표를 세운다. 끄기는 공용 편성 화면의 버튼이 정한다.
+        recommendedRoles: settingsManager.get().game.formationRoleHint ? RECOMMENDED_SLOT_ROLES[index] : undefined,
+        recommendedRolesLayer: chrome,
       });
       if (relicId) this.standFormationPuppet(relicId, x, generation);
       // 공용 슬롯 면은 SD보다 위에서 입력을 맡고, SD 자체는 계속 비대화형으로 둔다.

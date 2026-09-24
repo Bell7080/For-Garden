@@ -25,7 +25,8 @@ import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
 import { drawLayer, HOLO, slantedRect } from "../ui/holo";
 import { addSceneBackground, battleFieldBackground } from "../ui/backgrounds";
-import { autoPickParty, relicAffinityDirection } from "../core/partyAffinity";
+import { autoPickParty, RECOMMENDED_SLOT_ROLES, relicAffinityDirection } from "../core/partyAffinity";
+import { settingsManager } from "../managers/SettingsManager";
 import type { SetPartyFailureReason } from "../managers/RelicCollectionManager";
 import { AffinityDirection } from "../ui/AffinityDirection";
 import { AffinityBadge } from "../ui/AffinityBadge";
@@ -252,6 +253,21 @@ export class PartyScene extends Phaser.Scene {
         this.picked = toFormationSlots(autoPickParty(relicCollection.owned, this.enemies), 3);
         this.prefetchBattleSds();
         this.selectedSlot = undefined;
+        this.refresh();
+      },
+    });
+    // **추천 직군 표를 끄는 버튼은 자동 배치 바로 왼쪽**, 한 뼘 작게 선다. 같은 줄에 두어야 "편성을
+    // 돕는 조작"이 한 덩어리로 읽히고, 더 작아야 자동 배치가 이 줄의 주 조작으로 남는다.
+    const hintButtonWidth = 180;
+    const hintLabel = (): string => t(settingsManager.get().game.formationRoleHint ? "party.roleHint.hide" : "party.roleHint.show");
+    const hintButton = new Button(this, this.autoButtonPosition.x - autoButtonWidth / 2 - 16 - hintButtonWidth / 2, this.autoButtonPosition.y, {
+      width: hintButtonWidth,
+      height: autoButtonHeight - 8,
+      label: hintLabel(),
+      fontSize: 22,
+      onClick: () => {
+        settingsManager.update({ game: { formationRoleHint: !settingsManager.get().game.formationRoleHint } });
+        hintButton.setLabel(hintLabel());
         this.refresh();
       },
     });
@@ -783,6 +799,8 @@ export class PartyScene extends Phaser.Scene {
       // 다른 색 유리가 되어, 판이 아니라 칠이 바뀐 것처럼 보인다.
       addFormationSlotPlate(this, plate, partyAllyPlateBox(i), {
         accent: COLOR.ally, occupied: Boolean(id), index: i, groundOffset: partyAllyGroundOffset(),
+        recommendedRoles: settingsManager.get().game.formationRoleHint ? RECOMMENDED_SLOT_ROLES[i] : undefined,
+        recommendedRolesLayer: chrome,
       });
       // 빼는 표식은 **고른 자리에 누군가 서 있을 때만** 선다. 늘 세워 두면 세 자리 위에 붉은
       // 표식이 셋 늘어서 SD보다 먼저 읽힌다.

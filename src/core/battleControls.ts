@@ -1,11 +1,48 @@
-/** 플레이어가 순환할 수 있는 고정 전투 배속이다. 임의 배율은 리플레이 시간축을 복잡하게 만든다. */
-export const BATTLE_SPEEDS = [1, 2, 3] as const;
+/**
+ * 플레이어가 순환할 수 있는 고정 전투 배속이다. 임의 배율은 리플레이 시간축을 복잡하게 만든다.
+ *
+ * **1 → 1.5 → 2가 누구에게나 열린 줄이고, 3배속은 멤버십 전용이다**(`MEMBER_BATTLE_SPEEDS`).
+ * 멤버십 여부는 서버 시각으로만 정해지는 `adFreeMembership` 하나를 읽는다 — 던전의 x3 배율을
+ * 잠그는 것과 같은 값이라, 두 곳이 서로 다른 "유료"를 말하지 않는다.
+ */
+export const BATTLE_SPEEDS = [1, 1.5, 2, 3] as const;
 export type BattleSpeed = (typeof BATTLE_SPEEDS)[number];
 
-/** 마지막 3배속 다음에는 다시 1배속으로 돌아간다. */
-export function nextBattleSpeed(current: BattleSpeed): BattleSpeed {
-  const index = BATTLE_SPEEDS.indexOf(current);
-  return BATTLE_SPEEDS[(index + 1) % BATTLE_SPEEDS.length];
+/** 멤버십 없이 순환하는 배속. */
+export const FREE_BATTLE_SPEEDS: readonly BattleSpeed[] = [1, 1.5, 2];
+/** 멤버십이 있어야 열리는 배속. */
+export const MEMBER_BATTLE_SPEEDS: readonly BattleSpeed[] = [3];
+
+/** 지금 이 사람이 고를 수 있는 배속들. */
+export function availableBattleSpeeds(member: boolean): readonly BattleSpeed[] {
+  return member ? BATTLE_SPEEDS : FREE_BATTLE_SPEEDS;
+}
+
+/**
+ * 저장된 배속을 지금 쓸 수 있는 값으로 맞춘다.
+ *
+ * 멤버십이 끝난 뒤에도 저장에 3이 남아 있을 수 있다. 그때는 1로 떨구지 않고 **열린 것 중 가장
+ * 빠른 값**으로 내린다 — 멤버십이 끝났다고 전투가 갑자기 1배속이 되면 손이 먼저 놀란다.
+ */
+export function usableBattleSpeed(speed: BattleSpeed, member: boolean): BattleSpeed {
+  const open = availableBattleSpeeds(member);
+  if (open.includes(speed)) return speed;
+  return [...open].reverse().find((value) => value <= speed) ?? open[0];
+}
+
+/** 열린 배속 줄의 다음 값. 마지막 다음은 다시 1배속이다. */
+export function nextBattleSpeed(current: BattleSpeed, member: boolean): BattleSpeed {
+  const open = availableBattleSpeeds(member);
+  const index = open.indexOf(usableBattleSpeed(current, member));
+  return open[(index + 1) % open.length];
+}
+
+/**
+ * 배속 칩이 켜진 연출을 얼마나 세게 두르나. 1배속은 꺼진 상태(0)이고 단계가 오를수록 강하다.
+ * 칩은 이 수만 읽고 배속 값을 다시 해석하지 않는다.
+ */
+export function battleSpeedTier(speed: BattleSpeed): 0 | 1 | 2 | 3 {
+  return speed >= 3 ? 3 : speed >= 2 ? 2 : speed > 1 ? 1 : 0;
 }
 
 /** 궁극기만의 화면 연출 시간축이다. 코어 전투 시간에는 절대로 전달하지 않는다. */

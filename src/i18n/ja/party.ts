@@ -1,6 +1,8 @@
 /** 스토리 편성 화면의 일본어 표. */
 export const PARTY_JA = {
   "party.autoPlace": "自動配置",
+  "party.roleHint.hide": "推奨を隠す",
+  "party.roleHint.show": "推奨を表示",
   "party.start": "戦闘開始",
   "party.saveFailed": "パーティの保存に失敗した。保存領域を確認してもう一度お試しください。",
   "party.longPressHint": "長押しで詳細情報",

@@ -50,7 +50,7 @@ import { EnemyInfoPopup } from "../ui/EnemyInfoPopup";
 import { placedEnemyIndex, type PlacedEnemy } from "../data/placedEnemies";
 import { UltimateCutIn } from "../ui/UltimateCutIn";
 import {
-  nextBattleSpeed, scaleUltimateDuration, shouldWaitForUltimatePresentation, ultimatePresentationTiming, ULTIMATE_RECOVERY_RATIO,
+  battleSpeedTier, nextBattleSpeed, usableBattleSpeed, scaleUltimateDuration, shouldWaitForUltimatePresentation, ultimatePresentationTiming, ULTIMATE_RECOVERY_RATIO,
   type BattleSpeed,
 } from "../core/battleControls";
 import { ControlChip } from "../ui/ControlChip";
@@ -335,6 +335,8 @@ export class BattleScene extends Phaser.Scene {
   private lastStepAt = 0;
   /** 시뮬레이션 시간에만 곱하는 현재 전투 배속이다. */
   private battleSpeed: BattleSpeed = 1;
+  /** 3배속을 열 수 있는가. 서버가 답하기 전에는 닫힌 것으로 둔다. */
+  private battleMember = false;
   /** E2E가 Canvas의 짧은 회복 표시 수명을 관찰하기 위한 개수이며 게임 상태에는 관여하지 않는다. */
   private healPopups = 0;
   /** 켜져 있으면 게이지가 찬 아군 궁극기를 다음 프레임에 자동 발동한다. */
@@ -547,7 +549,10 @@ export class BattleScene extends Phaser.Scene {
     const battleSettings = currentSettings.game;
     // 전투 시작 시 하나의 최종 정책 스냅샷을 모든 HUD와 카메라 연출에 동일하게 전달한다.
     this.motion = motionPolicy(currentSettings);
-    this.battleSpeed = battleSettings.battleSpeed;
+    // 멤버십은 서버에 물어야 알 수 있어 **닫힌 쪽에서 시작한다** — 저장에 3이 있으면 답이 올 때까지
+    // 2로 싸우다가 멤버십이 확인되는 순간 3으로 돌아간다(`resolveBattleMembership`).
+    this.battleMember = false;
+    this.battleSpeed = usableBattleSpeed(battleSettings.battleSpeed, false);
     this.autoUltimate = battleSettings.autoUltimate;
     this.ultimateSequenceActive = false;
     this.ultimateSequence = createUltimateSequenceState();
@@ -780,10 +785,10 @@ export class BattleScene extends Phaser.Scene {
       label: t("battle.chip.speed", { speed: this.battleSpeed }),
       width,
       onClick: () => {
-        this.battleSpeed = nextBattleSpeed(this.battleSpeed);
+        this.battleSpeed = nextBattleSpeed(this.battleSpeed, this.battleMember);
         // 판이 바뀌거나 앱을 다시 열어도 마지막 선택을 유지하도록 공용 저장 경계를 통과한다.
         settingsManager.update({ game: { battleSpeed: this.battleSpeed } });
-        this.speedChip.setLabel(t("battle.chip.speed", { speed: this.battleSpeed })).setActive(this.battleSpeed > 1);
+        this.refreshSpeedChip();
         this.refreshDebug();
       },
     });
@@ -821,9 +826,36 @@ export class BattleScene extends Phaser.Scene {
     // 전장 아래쪽에 서므로 SD·체력 바보다 앞에 둔다.
     for (const chip of [this.speedChip, this.autoChip, this.presentationChip, this.contributionChip]) chip.setDepth(BATTLE_CONTROLS.depth);
     // 복원된 값도 첫 클릭 전부터 켜짐 색으로 읽히게 한다.
-    this.speedChip.setActive(this.battleSpeed > 1);
+    this.refreshSpeedChip();
     this.autoChip.setActive(this.autoUltimate);
     refreshPresentationChip();
+    this.resolveBattleMembership();
+  }
+
+  /** 배속 칩의 글자와 켜짐 세기. 단계가 오를수록 테두리를 도는 빛이 강해진다. */
+  private refreshSpeedChip(): void {
+    const tier = battleSpeedTier(this.battleSpeed);
+    this.speedChip.setLabel(t("battle.chip.speed", { speed: this.battleSpeed })).setActive(tier > 0, tier);
+  }
+
+  /**
+   * 3배속을 열지 서버에 묻는다. 던전 x3 배율과 같은 `adFreeMembership` 하나를 읽는다.
+   *
+   * 저장에 3이 남아 있던 사람은 답이 오는 대로 3배속으로 돌아간다. 답이 오지 않으면 닫힌 채다 —
+   * 성공을 흉내 내어 여는 길을 두지 않는다.
+   */
+  private resolveBattleMembership(): void {
+    const saved = settingsManager.get().game.battleSpeed;
+    void gameApi.getPlayerState().then((state) => {
+      if (!this.scene.isActive() || !this.speedChip) return;
+      this.battleMember = state.adFreeMembership;
+      const usable = usableBattleSpeed(saved, this.battleMember);
+      if (usable !== this.battleSpeed && usable === saved) {
+        this.battleSpeed = usable;
+        this.refreshSpeedChip();
+        this.refreshDebug();
+      }
+    }).catch(() => undefined);
   }
 
   /**

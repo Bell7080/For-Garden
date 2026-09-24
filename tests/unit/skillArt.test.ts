@@ -1356,7 +1356,7 @@ describe("적 정보창 역할 칸 표시 계약", () => {
      * (`ENCOUNTER_ROLE`)에서 그대로 읽으므로 표를 고치면 이 줄도 함께 움직인다.
      */
     expect(encounterRoleMultipliers("normal")).toBe("");
-    expect(encounterRoleMultipliers("elite")).toBe("체력 ×3.3   ·   공격력·주문력 ×1.1   ·   몸집 ×1.18");
+    expect(encounterRoleMultipliers("elite")).toBe("체력 ×3.3   ·   공격력·주문력 ×1.2   ·   몸집 ×1.18");
     expect(encounterRoleMultipliers("swarm")).toBe("체력 ×0.7   ·   몸집 ×0.8");
     // 보스·불사는 체력을 곱하지 않는다(시즌 게이지 · 불사 계약).
     expect(encounterRoleMultipliers("boss")).not.toContain("체력");

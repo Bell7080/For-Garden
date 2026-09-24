@@ -119,8 +119,8 @@ describe("한계 돌파 — 폭주(별 IV)", () => {
       ended = !torika.ferocityFever;
     }
     expect(ended).toBe(true);
-    // 400의 30%가 보호막으로 남는다.
-    expect(torika.shield.amount).toBe(120);
+    // 400의 50%가 보호막으로 남는다.
+    expect(torika.shield.amount).toBe(200);
     expect(enemy.taunted?.sourceId).toBe(torika.id);
   });
 

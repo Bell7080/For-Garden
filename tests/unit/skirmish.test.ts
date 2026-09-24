@@ -856,11 +856,11 @@ describe("메테 전투 계약", () => {
     expect(currentAttackSpeed(ally, state)).toBe(ally.def.stats.attackSpeed + 25);
   });
 
-  it("는 새 기절·경직을 즉시 정화하고 메테 공격력 200% 보호막을 개체별 7초마다 부여한다", () => {
+  it("는 새 기절·경직을 즉시 정화하고 메테 공격력 320% 보호막을 개체별 7초마다 부여한다", () => {
     const { state, mette, ally } = metteBattle();
     const first = applyStun(ally, 2, state);
     expect(ally.stunnedFor).toBe(0);
-    expect(ally.shield.amount).toBe(mette.def.stats.atk * 2);
+    expect(ally.shield.amount).toBe(mette.def.stats.atk * 3.2);
     expect(first).toContainEqual(expect.objectContaining({ kind: "shieldGranted", providerId: mette.id }));
     expect(mette.adagioCooldownRemaining).toBe(7);
 
@@ -878,13 +878,13 @@ describe("메테 전투 계약", () => {
     const [first, second, ally] = state.fighters;
     ally.shield = { amount: 10, providerId: ally.id };
     const firstEvents = applyStun(ally, 1, state);
-    expect(firstEvents).toContainEqual(expect.objectContaining({ kind: "shieldGranted", providerId: first.id, remaining: 10 + first.def.stats.atk * 2 }));
+    expect(firstEvents).toContainEqual(expect.objectContaining({ kind: "shieldGranted", providerId: first.id, remaining: 10 + first.def.stats.atk * 3.2 }));
     expect(first.adagioCooldownRemaining).toBe(7);
     expect(second.adagioCooldownRemaining).toBe(0);
 
     applyStagger(ally, 0.1, state);
     // 두 번째 메테도 자기 공격력의 200%를 기존 총량에 더한다.
-    expect(ally.shield.amount).toBe(10 + first.def.stats.atk * 2 + second.def.stats.atk * 2);
+    expect(ally.shield.amount).toBe(10 + first.def.stats.atk * 3.2 + second.def.stats.atk * 3.2);
     expect(second.adagioCooldownRemaining).toBe(7);
   });
 
@@ -3679,7 +3679,7 @@ describe("엘라의 프로젝트 TALISMAN", () => {
     const state = arena();
     const ella = state.fighters[0];
     const trait = getRelic("ella").ferocityTrait;
-    expect(trait).toMatchObject({ effectId: "adamantBody", shieldMaxHpPercent: 15, hastenedAttacks: 3, attackSpeedPercent: 150 });
+    expect(trait).toMatchObject({ effectId: "adamantBody", shieldMaxHpPercent: 25, hastenedAttacks: 3, attackSpeedPercent: 150 });
     const calmInterval = attackInterval(ella);
 
     ella.ferocity = 100; ella.ferocityFever = true;
@@ -4341,7 +4341,7 @@ describe("아모 조가비 전투 계약", () => {
     expect(events).not.toContainEqual(expect.objectContaining({ kind: "shieldGranted", fighterId: second.id }));
   });
 
-  it("혼자 남으면 자기 보호막만 주고 궁극기는 도발·25% 보호막 뒤 내부 쿨다운을 초기화한다", () => {
+  it("혼자 남으면 자기 보호막만 주고 궁극기는 도발·35% 보호막 뒤 내부 쿨다운을 초기화한다", () => {
     const state = createSkirmish([getRelic("amo")], [getRelic("rex")], ARENA);
     const [amo, enemy] = state.fighters;
     amo.shellGuard = { stacks: 2, remaining: 6, total: 6 };
@@ -4351,7 +4351,7 @@ describe("아모 조가비 전투 계약", () => {
     enemy.x = amo.x + 100; enemy.y = amo.y;
     const before = amo.shield.amount;
     const events = fireUltimate(state, amo.id);
-    expect(amo.shield.amount - before).toBe(Math.round(amo.maxHp * 0.25));
+    expect(amo.shield.amount - before).toBe(Math.round(amo.maxHp * 0.35));
     expect(enemy.taunted?.sourceId).toBe(amo.id);
     expect(amo.shellGuardCooldownRemaining).toBe(0);
     expect(events).toContainEqual(expect.objectContaining({ kind: "shieldGranted", fighterId: amo.id }));

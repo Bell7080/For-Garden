@@ -299,7 +299,7 @@ describe("엘라 스킬 표시 계약", () => {
     expect(ella.basic.desc).toBeUndefined();
     expect(skillDescription(ella.basic, { cycleDamage: [64, 84, 108] })).toBe([
       "다음 3가지를 차례로 반복한다.",
-      "「점(粘)」 자신의 주위 모든 적에게 [[damage-value|64]]의 [[physical-damage|물리 피해]]를 주고, 입힌 피해의 50%만큼 보호막을 얻는다.",
+      "「점(粘)」 자신의 주위 모든 적에게 [[damage-value|64]]의 [[physical-damage|물리 피해]]를 주고, 입힌 피해의 80%만큼 보호막을 얻는다.",
       "「화(化)」 자신의 주위 모든 적에게 [[damage-value|84]]의 [[physical-damage|물리 피해]]를 주고 [[stagger|경직]]시킨다.",
       "「발(發)」 자신의 주위 모든 적에게 [[damage-value|108]]의 [[physical-damage|물리 피해]]를 주고 [[pull|끌어당긴다]].",
     ].join("\n"));
@@ -316,11 +316,11 @@ describe("엘라 스킬 표시 계약", () => {
 
   it("의 인·불멸·금강불괴는 구조화 계약에서 문장을 짓는다", () => {
     // 불러 놓고 그 자리에서 덮는다 — 도발과 보호막이 한 조작에 든다.
-    expect(ella.ultimate.selfGuard).toMatchObject({ tauntSeconds: 5, shieldMaxHpPercent: 25 });
+    expect(ella.ultimate.selfGuard).toMatchObject({ tauntSeconds: 5, shieldMaxHpPercent: 35 });
     expect(skillDescription(ella.ultimate, { maxHp: ella.stats.hp }))
-      .toBe("주위 모든 적을 [[pull|끌어당겨]] 5초 동안 [[taunt|도발]]하고, [[shield-value|375]]만큼 보호막을 얻는다.");
+      .toBe("주위 모든 적을 [[pull|끌어당겨]] 5초 동안 [[taunt|도발]]하고, [[shield-value|525]]만큼 보호막을 얻는다.");
     // 능력치를 모르는 자리(도감)에서만 비율로 되돌아간다.
-    expect(skillDescription(ella.ultimate)).toContain("최대 체력의 25%만큼 보호막");
+    expect(skillDescription(ella.ultimate)).toContain("최대 체력의 35%만큼 보호막");
     // 버티는 궁극기가 최종 피해 감쇠를 쓰지 않는 것은 그대로다 — 뚫을 창이 있으면 뚫려야 한다.
     expect(skillDescription(ella.ultimate)).not.toContain("받는 피해가");
 
@@ -328,11 +328,11 @@ describe("엘라 스킬 표시 계약", () => {
       "전투당 한 번, 쓰러질 피해를 받으면 죽지 않고 4초 동안 [[invulnerable|무적]]이 되는 대신 아무 행동도 하지 못한다."
       + " 그동안 최대 체력의 30%를 매초 나누어 회복한다. 이때 주위 적을 [[knockback|날려버린다]].",
     );
-    expect(ella.ferocityTrait).toMatchObject({ effectId: "adamantBody", shieldMaxHpPercent: 15, hastenedAttacks: 3, attackSpeedPercent: 150 });
+    expect(ella.ferocityTrait).toMatchObject({ effectId: "adamantBody", shieldMaxHpPercent: 25, hastenedAttacks: 3, attackSpeedPercent: 150 });
     expect(ferocityTraitDescription(ella.ferocityTrait, { attack: ella.stats.atk, defense: ella.stats.def, maxHp: ella.stats.hp }))
-      .toBe("[[shield-value|225]]만큼 보호막을 얻는다. 이후 [[basic-attack|기본 공격]] 3회 동안 [[attack-speed|공격 속도]]가 150% 오른다.");
+      .toBe("[[shield-value|375]]만큼 보호막을 얻는다. 이후 [[basic-attack|기본 공격]] 3회 동안 [[attack-speed|공격 속도]]가 150% 오른다.");
     expect(ferocityTraitDescription(ella.ferocityTrait, { attack: ella.stats.atk, defense: ella.stats.def }))
-      .toContain("최대 체력의 15%만큼 보호막");
+      .toContain("최대 체력의 25%만큼 보호막");
   });
 });
 
@@ -380,9 +380,9 @@ describe("메테 스킬 표시 계약", () => {
     expect(ferocityTraitDescription(mette.ferocityTrait, { attack: 200, defense: 0 })).toBe(
       "폭주 중 아군 기본 공격 적중마다 [[damage-value|100]]의 피해량을 가진 [[mette-staccato|스타카토]]가 추가로 발동한다.",
     );
-    expect(passiveShieldKeyword(mette.passive, 200)).toMatchObject({ id: "shield-value", term: "400" });
+    expect(passiveShieldKeyword(mette.passive, 200)).toMatchObject({ id: "shield-value", term: "640" });
     expect(passiveDescription(mette.passive, 200)).toBe(
-      "생존 중 아군 [[attack-speed|공격 속도]]를 20% 높인다. 아군이 [[crowd-control|군중제어]]에 걸리면 즉시 정화하고 [[shield-value|400]] 보호막을 부여한다.",
+      "생존 중 아군 [[attack-speed|공격 속도]]를 20% 높인다. 아군이 [[crowd-control|군중제어]]에 걸리면 즉시 정화하고 [[shield-value|640]] 보호막을 부여한다.",
     );
   });
 
@@ -413,7 +413,7 @@ describe("도디 스킬 표시 계약", () => {
 
   it("의 야성 발현은 배속 환산 괄호 없이 상승률만 말한다", () => {
     const dodo = RELICS.find((def) => def.id === "dodo")!;
-    expect(ferocityTraitDescription(dodo.ferocityTrait)).toBe("공격 속도가 50% 증가하고, 회복시킨 양의 25%만큼 그 아군에게 보호막을 덧씌운다.");
+    expect(ferocityTraitDescription(dodo.ferocityTrait)).toBe("공격 속도가 50% 증가하고, 회복시킨 양의 40%만큼 그 아군에게 보호막을 덧씌운다.");
   });
 
   it("의 일반 공격은 묘사 대신 대상·피해·회복 비율을 말한다", () => {
@@ -476,7 +476,7 @@ describe("티아 스킬 표시 계약", () => {
     // 능력치를 모르는 자리에서도 어느 능력치에서 나오는 배율인지 말한다.
     expect(skillDescription(def.basic)).toBe(
       `적 한 명에게 주문력의 ${def.basic.power}% [[magical-damage|마법 피해]]를 준다.`
-      + " [[shimmer|반짝!]]이 사라질 때 그 자리에서 터져 주위 적에게 [[ap|주문력]]의 50%만큼 [[magical-damage|마법 피해]]를 입히고, 그 피해의 25%만큼 보호막을 얻는다.",
+      + " [[shimmer|반짝!]]이 사라질 때 그 자리에서 터져 주위 적에게 [[ap|주문력]]의 50%만큼 [[magical-damage|마법 피해]]를 입히고, 그 피해의 40%만큼 보호막을 얻는다.",
     );
   });
 
@@ -501,7 +501,7 @@ describe("티아 스킬 표시 계약", () => {
     );
     // 남기는 것은 패시브, 지워질 때 터지는 것은 그 타격을 낸 스킬이다.
     expect(def.passive.kind).toBe("shimmerMark");
-    expect(def.basic.shimmerBurst).toMatchObject({ power: 50, radius: 260, shieldPercent: 25 });
+    expect(def.basic.shimmerBurst).toMatchObject({ power: 50, radius: 260, shieldPercent: 40 });
     expect(def.ultimate.shimmerBurst).toBeUndefined();
     expect(passiveDescription(def.passive)).toBe(
       `적을 타격하면 [[shimmer|반짝!]] 표식을 부여하고 [[ap|주문력]]의 ${def.passive.value}% [[magical-damage|마법 피해]]를 추가로 입힌다.`,
@@ -963,8 +963,8 @@ describe("파치 스킬 표시 계약", () => {
     // 전부다. 막의 크기는 맞은 쪽 최대 체력에서 나오는 값이라 미리 환산하지 못해 %로 남는다.
     expect(passiveDescription(def.passive, def.stats.atk)).toBe(
       "한 번에 받는 피해가 최대 체력의 40%를 넘지 않는다."
-      + " [[concussion|뇌진탕]]이 입힌 피해의 40%만큼 보호막을 얻는다."
-      + " 한 번에 두르는 보호막은 최대 체력의 25%를 넘지 않는다.",
+      + " [[concussion|뇌진탕]]이 입힌 피해의 60%만큼 보호막을 얻는다."
+      + " 한 번에 두르는 보호막은 최대 체력의 35%를 넘지 않는다.",
     );
   });
 
@@ -1173,7 +1173,7 @@ describe("아모 조가비 표시 계약", () => {
     expect(amo.basic.name).toBe("껍질로 쿵");
     expect(amo.ultimate.name).toBe("다들 내 뒤로!");
     expect(passiveDescription(amo.passive)).toContain("[[shell|조가비]]");
-    expect(passiveDescription(amo.passive)).toContain("최대 체력의 6%");
+    expect(passiveDescription(amo.passive)).toContain("최대 체력의 10%");
     expect(ferocityTraitDescription(amo.ferocityTrait)).toContain("조가비]]를 3겹");
     expect(skillDescription(amo.ultimate)).toContain("조가비]] 내부 재사용 대기시간을 초기화");
   });
@@ -1268,7 +1268,7 @@ describe("테리사 표시 계약", () => {
     expect(skillDescription(terisa.basic, { cycleDamage: [64, 64, 46] })).toBe([
       "다음 3가지를 차례로 반복한다.",
       "「겉감」 적 한 명에게 [[damage-value|64]]의 [[physical-damage|물리 피해]]를 주고, 0.5초 동안 [[stealth|은신]]한다.",
-      "「안감」 적 한 명에게 [[damage-value|64]]의 [[physical-damage|물리 피해]]를 주고, 입힌 피해의 30%만큼 보호막을 얻는다.",
+      "「안감」 적 한 명에게 [[damage-value|64]]의 [[physical-damage|물리 피해]]를 주고, 입힌 피해의 50%만큼 보호막을 얻는다.",
       "「엇갈려 자르기」 자신의 주위 모든 적에게 [[damage-value|46]]의 [[physical-damage|물리 피해]]를 준다.",
     ].join("\n"));
     // 전투 엔진의 반경(px)은 문장에 새지 않고 대상 범위 문구로만 나온다.

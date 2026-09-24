@@ -14,13 +14,12 @@
  */
 export const ITEM_ICON_ASSETS = [
   ["item-rune-dust", "sprites/items/rune-dust.svg"],
-  // 토벌권 둘은 원화가 오기 전까지 임시 SVG다 — 오면 WebP로 구워 아래 표로 옮긴다.
-  ["item-raid-ticket", "sprites/items/raid-ticket.svg"],
-  ["item-raid-select-ticket", "sprites/items/raid-select-ticket.svg"],
 ] as const;
 
 /** 이미 구워 둔 WebP로 오는 아이콘. 벡터가 아니라 그림 한 장이라 그대로 읽는다. */
 export const ITEM_RASTER_ICON_ASSETS = [
   ["item-stamina-tonic", "sprites/items/stamina-tonic.webp"],
   ["item-stamina-tonic-large", "sprites/items/stamina-tonic-large.webp"],
+  ["item-raid-ticket", "sprites/items/raid-ticket.webp"],
+  ["item-raid-select-ticket", "sprites/items/raid-select-ticket.webp"],
 ] as const;

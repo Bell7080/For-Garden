@@ -38,8 +38,8 @@ import { ARCHAEOLOGY_SITES, findArchaeologySite } from "../data/archaeologySites
 import { archaeologySiteAvailability } from "../core/archaeologyMap";
 import type { AbandonStrataRunRequest, ArchaeologyStateResponse, DigStrataTileRequest, DigStrataTileResponse, GrantRuneTraitRequest, GrantRuneTraitResponse, RerollRuneTraitRequest, RerollRuneTraitResponse, ResolveRuneTraitRerollRequest, ResolveRuneTraitRerollResponse, StartStrataRunRequest, UpgradeRuneTraitRequest, UpgradeRuneTraitResponse } from "./contracts";
 import { findItem, type WalletItemKey } from "../data/items";
-import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_COMPLETED_KEEP_HOURS, RAID_DIFFICULTY, RAID_RUN_GOLD_PER_DAMAGE, RAID_SEASON_BOSS, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM } from "../data/raid";
-import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonContributions, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement } from "../core/raid";
+import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_COMPLETED_KEEP_HOURS, RAID_DIFFICULTY, RAID_RUN_GOLD_PER_DAMAGE, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM } from "../data/raid";
+import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonContributions, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../core/raid";
 import { battleArena } from "../core/battleArena";
 import { staminaCurrencyRecharge } from "../data/staminaRecharge";
 import { settleStamina, staminaMaxForPlayer, staminaMaxForResearchLevel, staminaTiming } from "../core/stamina";
@@ -374,7 +374,7 @@ export class FakeServer implements GameApi {
     for (const day of [yesterday, today]) {
       const opened = Date.parse(`${day}T00:00:00.000Z`);
       byId.set(`world-${day}`, {
-        id: `world-${day}`, kind: "world", bossRelicId: RAID_SEASON_BOSS.relicId, difficulty: "rampage",
+        id: `world-${day}`, kind: "world", bossRelicId: raidWorldBossId(day), difficulty: "rampage",
         openedAt: new Date(opened).toISOString(), endsAt: new Date(opened + 86_400_000).toISOString(),
         summonedByMe: false, myDamage: 0, attemptsUsed: 0, settled: false,
       });
@@ -473,25 +473,29 @@ export class FakeServer implements GameApi {
   /**
    * 토벌권 한 장으로 판을 연다.
    *
-   * 토벌권은 보스를 풀에서 고르고, 선택 토벌권은 사람이 고른다. 폭주는 시스템만 열므로 받지
-   * 않는다. 차감과 판 생성은 한 처리 단위다 — 판만 생기고 토벌권이 남으면 무한히 연다.
+   * 토벌권은 보스와 난이도를 함께 굴리고(`rollRaidSummon`), 선택 토벌권은 둘 다 사람이 고른다.
+   * 폭주는 시스템만 열므로 받지 않는다. 차감과 판 생성은 한 처리 단위다 — 판만 생기고 토벌권이 남으면 무한히 연다.
    */
   async summonRaid(request: SummonRaidRequest): Promise<SummonRaidResponse> {
     await this.delay();
     const cached = this.raidSummonResults.get(request.requestId);
     if (cached) return structuredClone(cached);
     if (!request.requestId) throw new GameApiError("RAID_SUMMON_INVALID", "소환 요청 ID가 필요합니다.");
-    if (!(RAID_SUMMON_DIFFICULTIES as readonly string[]).includes(request.difficulty)) throw new GameApiError("RAID_SUMMON_INVALID", "소환할 수 없는 난이도입니다.");
     const select = request.bossRelicId !== undefined;
+    // 토벌권은 아무것도 고르지 않고 선택 토벌권은 둘 다 고른다 — 한쪽만 온 요청은 어느 쪽인지 모른다.
+    if (select !== (request.difficulty !== undefined)) throw new GameApiError("RAID_SUMMON_INVALID", "소환 요청이 올바르지 않습니다.");
+    if (select && !(RAID_SUMMON_DIFFICULTIES as readonly string[]).includes(request.difficulty!)) throw new GameApiError("RAID_SUMMON_INVALID", "소환할 수 없는 난이도입니다.");
     if (select && !(RAID_BOSS_POOL as readonly string[]).includes(request.bossRelicId!)) throw new GameApiError("RAID_SUMMON_INVALID", "소환할 수 없는 보스입니다.");
     const ticketId = select ? RAID_SELECT_TICKET_ITEM : RAID_TICKET_ITEM;
     const stack = this.state.itemInventory.find((entry) => entry.itemId === ticketId);
     if (!stack || stack.quantity <= 0) throw new GameApiError("RAID_TICKET_SHORTAGE", "토벌권이 부족합니다.");
     const now = this.now();
-    const bossRelicId = select ? request.bossRelicId! : RAID_BOSS_POOL[Math.floor(this.random() * RAID_BOSS_POOL.length) % RAID_BOSS_POOL.length];
+    const { bossRelicId, difficulty } = select
+      ? { bossRelicId: request.bossRelicId!, difficulty: request.difficulty! }
+      : rollRaidSummon(this.random(), this.random());
     const instance: RaidInstanceState = {
-      id: `summon-${request.requestId}`, kind: "summon", bossRelicId, difficulty: request.difficulty,
-      openedAt: now.toISOString(), endsAt: new Date(now.getTime() + RAID_DIFFICULTY[request.difficulty].lifetimeHours * 3_600_000).toISOString(),
+      id: `summon-${request.requestId}`, kind: "summon", bossRelicId, difficulty,
+      openedAt: now.toISOString(), endsAt: new Date(now.getTime() + RAID_DIFFICULTY[difficulty].lifetimeHours * 3_600_000).toISOString(),
       summonedByMe: true, myDamage: 0, attemptsUsed: 0, settled: false,
     };
     const nextState = structuredClone(this.state);

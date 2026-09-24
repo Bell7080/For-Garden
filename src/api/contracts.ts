@@ -631,8 +631,13 @@ export interface RaidDto {
 }
 /** 레이드 목록. 두 토벌권이 몇 장 남았는지도 함께 싣는다(목록 머리에 선다). */
 export interface RaidListResponse { raids: RaidDto[]; tickets: { normal: number; select: number } }
-/** 토벌권 한 장으로 판을 연다. `bossRelicId`는 선택 토벌권일 때만 받는다. */
-export interface SummonRaidRequest { requestId: string; difficulty: RaidDifficulty; bossRelicId?: string; }
+/**
+ * 토벌권 한 장으로 판을 연다.
+ *
+ * **토벌권은 아무것도 고르지 않는다** — 보스와 난이도를 서버가 굴린다. **선택 토벌권**만
+ * `bossRelicId`와 `difficulty`를 함께 받는다. 한쪽만 온 요청은 거절한다.
+ */
+export interface SummonRaidRequest { requestId: string; bossRelicId?: string; difficulty?: RaidDifficulty; }
 export interface SummonRaidResponse extends PlayerStateDto { raid: RaidDto; tickets: RaidListResponse["tickets"]; }
 /** 원정 보스와 **같은 재현 규칙**을 쓴다 — 클라이언트 피해 숫자는 받지 않는다. */
 export interface SubmitRaidDamageRequest { requestId: string; raidId: string; actions: ExpeditionBossAction[]; }

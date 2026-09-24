@@ -2,7 +2,9 @@ import { test, expect, type Page } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
 import { ENEMY_INFO } from "../../src/ui/enemyInfoLayout";
 import { captureGame, tap, waitForDebugState } from "./canvasInput";
-import { RAID_ACTIONS, RAID_BOSS_SPOT, RAID_LIST_CHROME, raidLayerStack } from "../../src/ui/raidLayout";
+import { RAID_ACTIONS, RAID_BOSS_PICK, RAID_BOSS_SPOT, RAID_DIFFICULTY_PICK, RAID_LIST_CHROME, raidBossPickHeight, raidLayerStack, raidPickHeight } from "../../src/ui/raidLayout";
+import { RAID_BOSS_POOL } from "../../src/data/raid";
+import { getRelic } from "../../src/data/relics";
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
@@ -27,23 +29,19 @@ test("레이드는 목록에서 월드 폭주 판으로 들어가고 출격이 �
   await waitForDebugState(page, () => window.__PF_DEBUG?.raidStage, "list", { timeout: 20_000 });
   await page.waitForTimeout(3_000);
   await captureGame(page, `test-results/${test.info().project.name}-raid-list.png`);
-  // 소환은 난이도를 고르는 창을 연다.
-  await tap(page, RAID_LIST_CHROME.summon.pair.left.centerX, RAID_LIST_CHROME.summon.y);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("레이드 소환");
-  await page.waitForTimeout(600);
-  await captureGame(page, `test-results/${test.info().project.name}-raid-summon.png`);
-  await tap(page, 40, 200); // 판 밖을 눌러 닫는다
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles ?? [])).not.toContain("레이드 소환");
-  // 선택 소환 — 보스를 층으로 고르고, 난이도를 고르면 소환 연출이 돈다.
-  await tap(page, RAID_LIST_CHROME.summon.pair.right.centerX, RAID_LIST_CHROME.summon.y);
+  // 선택 소환 — 보스가 층으로 늘어서고, 하나를 누르면 그 위에 난이도 층 창이 겹쳐 뜬다.
+  await tap(page, RAID_LIST_CHROME.summon.select.centerX, RAID_LIST_CHROME.summon.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("선택 소환");
   await page.waitForTimeout(1_500);
   await captureGame(page, `test-results/${test.info().project.name}-raid-boss-pick.png`);
-  await tap(page, BASE_WIDTH / 2 - 200, BASE_HEIGHT / 2);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles ?? [])).not.toContain("선택 소환");
-  await page.waitForTimeout(600);
+  const bossPickHeight = raidBossPickHeight(RAID_BOSS_POOL.length);
+  await tap(page, BASE_WIDTH / 2 - 200, BASE_HEIGHT / 2 - bossPickHeight / 2 + RAID_BOSS_PICK.top + RAID_BOSS_PICK.height / 2);
+  const bossName = getRelic(RAID_BOSS_POOL[0]).name;
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles ?? [])).toContain(bossName);
+  await page.waitForTimeout(1_500);
   await captureGame(page, `test-results/${test.info().project.name}-raid-difficulty.png`);
-  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2 - 117); // 첫 줄(쉬움) — 창 높이 474의 위에서 120
+  const difficultyHeight = raidPickHeight(RAID_DIFFICULTY_PICK, 3);
+  await tap(page, BASE_WIDTH / 2 - 200, BASE_HEIGHT / 2 - difficultyHeight / 2 + RAID_DIFFICULTY_PICK.top + RAID_DIFFICULTY_PICK.height / 2); // 첫 층(쉬움)
   await waitForDebugState(page, () => window.__PF_DEBUG?.raidStage, "summon", { timeout: 20_000 });
   await captureGame(page, `test-results/${test.info().project.name}-raid-summon-charge.png`);
   // 봉인이 모이는 시간은 장면 시계라 GPU 없는 컨테이너에서는 벽시계보다 느리다 — 드러남을 기다린다.

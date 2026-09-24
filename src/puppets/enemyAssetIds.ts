@@ -5,4 +5,4 @@
  * 길은 같으므로 이 목록에 함께 선다 — 갈라 두면 화면이 "레이드면 다른 함수"를 알아야 한다.
  */
 export const ENEMY_SD_ASSET_IDS = ["pontos", "toby", "amo", "ripa", "koma",
-  "raitia-grass", "raitia-water", "raitia-fire", "raitia-earth", "raitia-wind", "sukusuino"] as const;
+  "raitia-grass", "raitia-water", "raitia-fire", "raitia-earth", "raitia-wind", "sukusuino", "taboa"] as const;

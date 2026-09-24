@@ -1,17 +1,20 @@
 import Phaser from "phaser";
 import type { RaidDto } from "../api/contracts";
-import { RAID_DIFFICULTY } from "../data/raid";
+import { RAID_DIFFICULTY, RAID_SUMMON_DIFFICULTIES, type RaidDifficulty } from "../data/raid";
+import { formatCurrency } from "../core/formatCurrency";
 import { getRelic } from "../data/relics";
 import { t } from "../i18n";
 import { computeFaceBandFrame } from "../puppets/anchors";
 import { portraitAssetFor, withPuppetTexture } from "../puppets/assets";
+import { AffinityBadge } from "./AffinityBadge";
+import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { Button } from "./Button";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { bakeBandTexture } from "./faceTexture";
 import { drawFrameVignette, drawLayer, drawShapeEdge, drawShapeOutline, HoloBar, slantedRect } from "./holo";
 import { addFramedIcon } from "./itemFrame";
 import { shapeClipMask } from "./popupArt";
-import { RAID_BOSS_PICK, RAID_DIFFICULTY_TONE, RAID_HP_BAR_COLOR, RAID_LAYER_OWNER, RAID_LAYER_TONE, RAID_LIST } from "./raidLayout";
+import { RAID_BOSS_PICK, RAID_DIFFICULTY_PICK, RAID_DIFFICULTY_TONE, RAID_HP_BAR_COLOR, RAID_LAYER_OWNER, RAID_LAYER_TONE, RAID_LIST } from "./raidLayout";
 import { addSectionTitle } from "./SectionTitle";
 import { shrinkTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
@@ -96,7 +99,6 @@ export function addRaidLayer(
   // 판 윗변에 걸터앉는 제목표가 이 층이 무엇인지 말한다 — 다른 판의 제목과 같은 한 모양이다.
   addSectionTitle(scene, -width / 2 + slant / 2, top - 4, raidTagLabel(raid), { parent: layer });
   const textWidth = width * (art.from + art.fade * 0.5) - padding;
-  const shadowed = (object: Phaser.GameObjects.Text, blur = 5): Phaser.GameObjects.Text => object.setShadow(0, 2, "#05070a", blur, false, true);
   const name = shadowed(scene.add
     .text(left, text.nameY, getRelic(raid.bossRelicId).name, textStyle({ role: "display", size: spec.nameSize }))
     .setOrigin(0, 0.5), 8);
@@ -181,9 +183,58 @@ function addRewardRow(
 }
 
 /**
- * 선택 소환에서 보스를 고르는 층 — 목록 층과 **같은 문법**(오른쪽을 채운 얼굴 띠, 왼쪽의 이름)을
- * 줄여 쓴다. 고르기 전에 누구인지가 얼굴로 읽혀야 한다 — 이름만 늘어놓은 버튼은 보스를 한 번도
- * 본 적 없는 사람에게 아무것도 말하지 않는다.
+ * 고르는 창의 층 뼈대 — 목록 층과 **같은 문법**이다. 판 → 얼굴 띠 → 입력면 → 왼쪽 어둠 → 색
+ * 물들임 → 가장자리 누르기 → 외곽선 → 윗변의 색 선 → 제목표 순으로 쌓는다.
+ *
+ * 목록 층과 달리 누르면 **판 전체가 한 뼘 커진다** — 여기서는 층 자체가 고르는 버튼이다.
+ */
+function addPickLayerBase(
+  scene: Phaser.Scene,
+  parent: Phaser.GameObjects.Container,
+  options: { relicId: string; y: number; width: number; height: number; tone: number; washAlpha: number; tag: string; onTap: () => void },
+): Phaser.GameObjects.Container {
+  const { width, height, tone, washAlpha } = options;
+  const slant = RAID_LIST.slant;
+  const { art } = RAID_LIST;
+  const layer = scene.add.container(0, options.y);
+  parent.add(layer);
+  const shape = slantedRect(width, height, slant);
+  const top = -height / 2;
+  layer.add(drawLayer(scene, 0, 0, shape, { fill: COLOR.void, alpha: 0.92 }));
+  void loadFaceBand(scene, layer, options.relicId, width + slant, height, shape, false);
+  const hit = scene.add.rectangle(0, 0, width - slant, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+  hit.on("pointerdown", () => layer.setScale(1.03));
+  hit.on("pointerout", () => layer.setScale(1));
+  hit.on("pointerup", () => { layer.setScale(1); options.onTap(); });
+  layer.add(hit);
+  const scrim = scene.add.graphics();
+  scrim.fillGradientStyle(COLOR.void, COLOR.void, COLOR.void, COLOR.void, 0.86, 0, 0.86, 0);
+  scrim.fillRect(-width / 2 + slant / 2, top, width * (art.from + art.fade), height);
+  layer.add(scrim);
+  // 색은 목록 층과 같이 **도형을 잘라** 판 안에 가둔다(기운 왼쪽 변은 삼각형 하나로 따로 칠한다).
+  const wash = scene.add.graphics();
+  const inner = -width / 2 + slant;
+  wash.fillStyle(tone, washAlpha);
+  wash.fillTriangle(-width / 2, top + height, inner, top, inner, top + height);
+  wash.fillGradientStyle(tone, tone, tone, tone, washAlpha, 0, washAlpha, 0);
+  wash.fillRect(inner, top, width * RAID_LAYER_TONE.washReach - slant, height);
+  layer.add(wash);
+  layer.add(drawFrameVignette(scene, 0, 0, width, height, { strength: 0.42 }).setMask(shapeClipMask(scene, layer, shape)));
+  layer.add(drawShapeOutline(scene, 0, 0, shape, { color: COLOR.panelEdge, alpha: 0.5, width: 3 }));
+  layer.add(drawShapeEdge(scene, 0, 0, shape, "top", { color: tone, alpha: RAID_LAYER_TONE.edgeAlpha, width: RAID_LAYER_TONE.edgeWidth }));
+  addSectionTitle(scene, -width / 2 + slant / 2, top - 4, options.tag, { parent: layer });
+  return layer;
+}
+
+const shadowed = (object: Phaser.GameObjects.Text, blur = 5): Phaser.GameObjects.Text => object.setShadow(0, 2, "#05070a", blur, false, true);
+
+/**
+ * 선택 소환의 첫 창 — **보스 한 마리가 층 하나**다.
+ *
+ * 얼굴이 오른쪽을 채우고, 왼쪽에 이름·속성·직군과 **소환할 수 있는 레벨 폭**이 선다. 제목표는
+ * 그 개체의 종이다 — 이름은 판 안에서 크게 말하므로 같은 말을 두 번 적지 않는다. 난이도는
+ * 여기서 고르지 않는다(다음 창의 몫이다). 층 색은 강조색 하나다 — 난이도 색을 여기서 쓰면
+ * 아직 고르지 않은 난이도를 말하게 된다.
  */
 export function addRaidBossPickLayer(
   scene: Phaser.Scene,
@@ -192,32 +243,69 @@ export function addRaidBossPickLayer(
   y: number,
   onTap: () => void,
 ): Phaser.GameObjects.Container {
-  const { width, height, padding } = RAID_BOSS_PICK;
-  const slant = RAID_LIST.slant;
-  const { art } = RAID_LIST;
-  const layer = scene.add.container(0, y);
-  parent.add(layer);
-  const shape = slantedRect(width, height, slant);
-  layer.add(drawLayer(scene, 0, 0, shape, { fill: COLOR.void, alpha: 0.92 }));
-  void loadFaceBand(scene, layer, relicId, width + slant, height, shape, false);
-  const hit = scene.add.rectangle(0, 0, width - slant, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-  hit.on("pointerdown", () => layer.setScale(1.03));
-  hit.on("pointerout", () => layer.setScale(1));
-  hit.on("pointerup", () => { layer.setScale(1); onTap(); });
-  layer.add(hit);
-  const scrim = scene.add.graphics();
-  scrim.fillGradientStyle(COLOR.void, COLOR.void, COLOR.void, COLOR.void, 0.86, 0, 0.86, 0);
-  scrim.fillRect(-width / 2 + slant / 2, -height / 2, width * (art.from + art.fade), height);
-  layer.add(scrim);
-  layer.add(drawFrameVignette(scene, 0, 0, width, height, { strength: 0.42 }).setMask(shapeClipMask(scene, layer, shape)));
-  layer.add(drawShapeOutline(scene, 0, 0, shape, { color: COLOR.accent, alpha: 0.6, width: 3 }));
+  const spec = RAID_BOSS_PICK;
   const def = getRelic(relicId);
-  const name = scene.add
-    .text(-width / 2 + slant / 2 + padding, 0, def.name, textStyle({ role: "display", size: 50 }))
-    .setOrigin(0, 0.5)
-    .setShadow(0, 4, "#05070a", 8, false, true);
-  shrinkTextToWidth(name, width * (art.from + art.fade * 0.5) - padding);
+  const layer = addPickLayerBase(scene, parent, {
+    relicId, y, width: spec.width, height: spec.height, tone: COLOR.accent, washAlpha: RAID_LAYER_TONE.washAlpha, tag: def.origin, onTap,
+  });
+  const left = -spec.width / 2 + RAID_LIST.slant / 2 + spec.padding;
+  const textWidth = spec.width * (RAID_LIST.art.from + RAID_LIST.art.fade * 0.5) - spec.padding;
+  const name = shadowed(scene.add.text(left, spec.nameY, def.name, textStyle({ role: "display", size: spec.nameSize })).setOrigin(0, 0.5), 8);
+  shrinkTextToWidth(name, textWidth);
   layer.add(name);
+  // 속성·직군 — 정보창·적 정보창과 같은 뱃지다. 무엇으로 상대할지가 이름 다음으로 읽혀야 한다.
+  const elementX = left + spec.badge.element / 2;
+  layer.add(new AffinityBadge(scene, elementX, spec.badgeY, ELEMENT_ICON[def.element], spec.badge.element));
+  layer.add(new AffinityBadge(scene, elementX + spec.badge.element / 2 + spec.badge.gap + spec.badge.role / 2, spec.badgeY + 4, ROLE_ICON[def.role], spec.badge.role));
+  const levels = RAID_SUMMON_DIFFICULTIES.map((difficulty) => RAID_DIFFICULTY[difficulty].level);
+  layer.add(shadowed(scene.add
+    .text(left, spec.levelsY, t("raid.pick.levels", { min: Math.min(...levels), max: Math.max(...levels) }), textStyle({ role: "emphasis", size: 28, color: COLOR.accentText }))
+    .setOrigin(0, 0.5)));
+  return layer;
+}
+
+/**
+ * 선택 소환의 둘째 창 — **난이도 하나가 층 하나**다. 고른 보스의 얼굴 위를 그 난이도의 색이
+ * 짙게 물들인다(쉬움 초록 · 보통 파랑 · 어려움 보라). 목록의 층과 같은 색이라, 연 판이 목록에
+ * 섰을 때 여기서 고른 것과 같은 색으로 읽힌다.
+ *
+ * 왼쪽에는 그 판의 무게가 선다 — 레벨, 함께 깎을 체력, 참여하면 받을 수 있는 최대 정산. 모두
+ * 고르는 순간에 비교해야 하는 값이다.
+ */
+export function addRaidDifficultyPickLayer(
+  scene: Phaser.Scene,
+  parent: Phaser.GameObjects.Container,
+  relicId: string,
+  difficulty: RaidDifficulty,
+  y: number,
+  onTap: () => void,
+): Phaser.GameObjects.Container {
+  const spec = RAID_DIFFICULTY_PICK;
+  const def = getRelic(relicId);
+  const table = RAID_DIFFICULTY[difficulty];
+  const layer = addPickLayerBase(scene, parent, {
+    relicId, y, width: spec.width, height: spec.height, tone: RAID_DIFFICULTY_TONE[difficulty], washAlpha: spec.washAlpha,
+    tag: t(`raid.difficulty.${difficulty}`), onTap,
+  });
+  const left = -spec.width / 2 + RAID_LIST.slant / 2 + spec.padding;
+  const textWidth = spec.width * (RAID_LIST.art.from + RAID_LIST.art.fade * 0.5) - spec.padding;
+  const name = shadowed(scene.add.text(left, spec.nameY, def.name, textStyle({ role: "display", size: spec.nameSize })).setOrigin(0, 0.5), 8);
+  shrinkTextToWidth(name, textWidth);
+  layer.add(name);
+  layer.add(shadowed(scene.add
+    .text(left, spec.levelY, t("raid.world.level", { level: table.level }), textStyle({ role: "emphasis", size: 30, color: COLOR.accentText }))
+    .setOrigin(0, 0.5)));
+  const { settlement } = table;
+  addFramedIcon(scene, layer, left + spec.reward.size / 2, spec.reward.y, spec.reward.size, CURRENCY_ICON_BY_WALLET.raidSigil, {
+    amount: (settlement.mine + settlement.total + settlement.kill).toLocaleString(),
+  });
+  const textX = left + spec.reward.size + spec.rewardText.gap;
+  layer.add(shadowed(scene.add
+    .text(textX, spec.reward.y - spec.rewardText.labelUp, t("raid.settle.max"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim }))
+    .setOrigin(0, 0.5)));
+  layer.add(shadowed(scene.add
+    .text(textX, spec.reward.y + spec.rewardText.valueDown, t("raid.pick.hp", { hp: formatCurrency(table.totalHp) }), textStyle({ role: "body", size: 23, color: COLOR.ink }))
+    .setOrigin(0, 0.5)));
   return layer;
 }
 

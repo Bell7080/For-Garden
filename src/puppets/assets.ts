@@ -73,6 +73,8 @@ import {
   VENTIA_PORTRAIT_METADATA,
   SUKUSUINO_PORTRAIT_METADATA,
   SUKUSUINO_SD_METADATA,
+  TABOA_PORTRAIT_METADATA,
+  TABOA_SD_METADATA,
   VENTIA_SD_METADATA,
   VIRIA_PORTRAIT_METADATA,
   VIRIA_SD_METADATA,
@@ -405,6 +407,9 @@ export const EXPLORER_ASSET: PuppetAsset = {
  */
 export const SUKUSUINO_ASSET: PuppetAsset = { url: `${base}puppets/raid_001.zip`, ...SUKUSUINO_PORTRAIT_METADATA };
 
+/** **타보아 전신.** 둘째 레이드 보스다(`raid_002`). */
+export const TABOA_ASSET: PuppetAsset = { url: `${base}puppets/raid_002.zip`, ...TABOA_PORTRAIT_METADATA };
+
 export const RAITIA_ASSETS: Readonly<Record<RaitiaAssetId, PuppetAsset>> = {
   "raitia-grass": { url: `${base}puppets/enemy_005.zip`, ...VIRIA_PORTRAIT_METADATA },
   "raitia-water": { url: `${base}puppets/enemy_006.zip`, ...GUTTIA_PORTRAIT_METADATA },
@@ -444,6 +449,7 @@ const PORTRAIT_ASSETS = {
   ...RAITIA_ASSETS,
   pontos: PONTOS_ASSET,
   sukusuino: SUKUSUINO_ASSET,
+  taboa: TABOA_ASSET,
   parua: PARUA_ASSET,
   dian: DIAN_ASSET,
   shute: SHUTE_ASSET,
@@ -504,6 +510,12 @@ export const RAITIA_SD_ASSETS: Readonly<Record<RaitiaAssetId, PuppetAsset>> = {
 export const SUKUSUINO_SD_ASSET: PuppetAsset = {
   url: `${base}puppets/raidSD_001.zip`,
   ...SUKUSUINO_SD_METADATA,
+};
+
+/** 타보아 전투 SD. 전신과 같은 레이드 번호 묶음(`raidSD_002`)이다. */
+export const TABOA_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/raidSD_002.zip`,
+  ...TABOA_SD_METADATA,
 };
 
 /** 폰토스 전투 SD. 정사각 원본에서 alpha > 16인 실제 실루엣만 바닥 배치에 사용한다. */
@@ -709,6 +721,7 @@ export const ENEMY_SD_ASSETS_BY_ID: Readonly<Record<string, PuppetAsset>> = {
   [ENEMY_SD_ASSET_IDS[3]]: ENEMY_SD_ASSETS[2],
   [ENEMY_SD_ASSET_IDS[4]]: EXPLORER_SD_ASSET,
   [ENEMY_SD_ASSET_IDS[10]]: SUKUSUINO_SD_ASSET,
+  [ENEMY_SD_ASSET_IDS[11]]: TABOA_SD_ASSET,
   ...RAITIA_SD_ASSETS,
 };
 

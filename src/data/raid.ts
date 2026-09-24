@@ -18,10 +18,11 @@ import { requiredBreakthroughForLevel } from "../core/levelDesign";
  * 마리의 공유 체력**을 갖고 참가자 전원의 피해가 그 한 줄을 깎는다. 그래서 화면이 먼저 말하는
  * 것은 내 순위가 아니라 **얼마나 남았나**이고, 목록은 순위표가 아니라 기여 목록이다.
  *
- * 보스는 **수쿠스이노**다. 이 콘텐츠를 위해 만든 첫 전용 개체이고, 공멸이 풀어 놓은 폭주
+ * 첫 보스는 **수쿠스이노**다. 이 콘텐츠를 위해 만든 첫 전용 개체이고, 공멸이 풀어 놓은 폭주
  * 병기라 "함께 밀어야 하는 표적"이라는 자리와 설정이 맞물린다. 코마가 이 자리를 임시로
  * 맡던 때는 1장 마지막 관문의 중간보스가 시즌 보스를 겸해, 한 얼굴이 두 콘텐츠에서 서로
- * 다른 무게로 섰다 — 폰토스를 쓰지 않는 이유와 같다.
+ * 다른 무게로 섰다 — 폰토스를 쓰지 않는 이유와 같다. 둘째는 **타보아**이고, 두 보스가
+ * 풀(`RAID_BOSS_POOL`)에서 번갈아 선다.
  */
 
 /**
@@ -109,8 +110,11 @@ export function isRaidDifficulty(value: unknown): value is RaidDifficulty {
 /** 소환권으로 고를 수 있는 난이도. 폭주는 시스템만 연다. */
 export const RAID_SUMMON_DIFFICULTIES = ["easy", "normal", "hard"] as const satisfies readonly RaidDifficulty[];
 
-/** 소환 레이드에 서는 보스 풀. 토벌권은 이 중 하나를 무작위로, 선택 토벌권은 골라서 연다. */
-export const RAID_BOSS_POOL = ["sukusuino"] as const;
+/**
+ * 레이드에 서는 보스 풀. **토벌권은 보스와 난이도를 모두 서버가 굴리고**, 선택 토벌권은 둘 다
+ * 사람이 고른다. 월드 폭주도 이 풀을 하루씩 돌아가며 세운다(`raidWorldBossId`).
+ */
+export const RAID_BOSS_POOL = ["sukusuino", "taboa"] as const;
 
 /** 두 가지 토벌권. 가방의 재료 아이템이다(`src/data/items.ts`). */
 export const RAID_TICKET_ITEM = "raid-ticket";

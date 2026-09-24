@@ -110,6 +110,7 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   pontos: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.82, artworkOrigin: { x: 650, y: 800 }, zoomScale: 1.3, zoomMs: 120, cameraShakeIntensity: 0.014 },
   // 시즌 보스도 폰토스와 같은 무게로 선다 — 화면을 더 흔들지 않고 원화만 크게 당긴다.
   sukusuino: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.88, artworkOrigin: { x: 637, y: 386 }, zoomScale: 1.28, zoomMs: 120, cameraShakeIntensity: 0.014 },
+  taboa: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.9, artworkOrigin: { x: 566, y: 269 }, zoomScale: 1.26, zoomMs: 120, cameraShakeIntensity: 0.012 },
 });
 
 /** 표에 아직 없는 ID는 공용 기본값을 반환해 콘텐츠 추가가 전투를 깨뜨리지 않게 한다. */

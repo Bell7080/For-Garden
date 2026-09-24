@@ -15,7 +15,9 @@ import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addBreakthroughGradeMark, RARITY_TONE } from "./rarityMark";
 import { drawGlyph } from "./glyphs";
-import { enableHitOnClick, spawnPuppet } from "../puppets/assets";
+import { enableHitOnClick, spawnPuppet, withPuppetTexture } from "../puppets/assets";
+import { computeFaceBandFrame } from "../puppets/anchors";
+import { bakeBandTexture } from "./faceTexture";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { powerSavingPolicy } from "../core/settings";
 import { session } from "../state/session";
@@ -189,6 +191,10 @@ export class PlayerProfilePopup {
     const panel = chipPoints(showcase.width, height, { bevel: { topLeft: 40, topRight: 0, bottomRight: 40, bottomLeft: 0 } });
     // 판은 윗변 한 줄만 그 개체의 희귀도 색으로 긋는다 — 사방을 겹겹이 두르면 무대가 액자 속 액자가 된다.
     body.add(drawLayer(this.scene, 0, centerY, panel, { fill: 0x0a0f16, alpha: 0.9, edge: tone, edgeAlpha: 0.8, edgeWidth: 3 }));
+    // 판 위에 그 개체의 전신을 **얼굴 위주로** 은은하게 깐다 — 바닥과 SD보다 뒤다(순서를 먼저 잡아 둔다).
+    const backdrop = this.scene.add.container(0, centerY);
+    body.add(backdrop);
+    if (favorite) void this.bakeShowcaseBackdrop(backdrop, favorite.relicId, panel, height);
     body.add(this.drawGridFloor(frame.color, centerY, height));
     addSectionTitle(this.scene, -showcase.width / 2, showcase.titleY + 18, t("profile.section.favorite"), { parent: body, size: 26 });
 
@@ -233,6 +239,32 @@ export class PlayerProfilePopup {
       body.add(this.scene.add.text(info.left + 18, y, t(labelKey), textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
       body.add(this.scene.add.text(info.left + rowWidth - 18, y, value, textStyle({ role: "display", size: 28, color: index === 2 ? COLOR.accentText : COLOR.ink })).setOrigin(1, 0.5));
     });
+  }
+
+  /**
+   * 애착 렐릭의 전신을 얼굴 위주로 잘라 판 실루엣대로 구워 깐다.
+   *
+   * **판을 채우되 은은하게** 선다(`showcase.backdrop.alpha`) — 앞에 선 SD와 수치가 먼저 읽혀야
+   * 하므로 그림은 분위기만 남긴다. SD가 서는 왼쪽은 녹여 두어 두 몸이 겹쳐 뭉개지지 않게 한다.
+   * 구운 뒤 원본은 놓는다(`withPuppetTexture`) — 카드가 그리는 것은 구운 제 텍스처뿐이다.
+   */
+  private async bakeShowcaseBackdrop(backdrop: Phaser.GameObjects.Container, relicId: string, panel: readonly number[], height: number): Promise<void> {
+    const { showcase } = PLAYER_PROFILE_LAYOUT;
+    const spec = showcase.backdrop;
+    const asset = relicAppearanceManager.portraitAssetFor(relicId);
+    const key = await withPuppetTexture(this.scene, asset, ({ key: source, anchors }) => {
+      if (!backdrop.active) return undefined;
+      const crop = computeFaceBandFrame(asset, anchors.head, {
+        width: showcase.width, height,
+        crop: spec.crop / ((asset.cardZoom ?? 1) * (asset.portraitZoom ?? 1)),
+        headX: spec.headX, anchorY: spec.anchorY,
+      });
+      return bakeBandTexture(this.scene, source, { width: showcase.width, height }, crop, { shape: panel, from: 0, fade: spec.fade });
+    }).catch(() => undefined);
+    if (!key || !backdrop.active) return;
+    const image = this.scene.add.image(0, 0, key).setAlpha(0);
+    backdrop.add(image);
+    this.scene.tweens.add({ targets: image, alpha: spec.alpha, duration: 260 });
   }
 
   /**

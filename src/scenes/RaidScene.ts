@@ -19,7 +19,7 @@ import { RANKING_LIST, RANKING_VISIBLE_RANKS, rankingMedal, rankingRowY } from "
 import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawShapeEdge, drawVignette, HOLO, HoloBar, slantedRect } from "../ui/holo";
 import {
   RAID_ACTIONS, RAID_BOARD, RAID_BOARD_PLATE, RAID_BOSS_SPOT, RAID_HEADER, RAID_HP_BAR, RAID_HP_BAR_COLOR, RAID_LIST, RAID_LIST_CHROME,
-  RAID_BOSS_PICK, RAID_DIFFICULTY_TONE, raidBoardViewport, raidBossPickHeight, raidLayerStack,
+  RAID_BOSS_PICK, RAID_DIFFICULTY_PICK, raidBoardViewport, raidBossPickHeight, raidLayerStack, raidPickHeight,
 } from "../ui/raidLayout";
 import { COLOR, textStyle } from "../ui/theme";
 import { LOBBY_RETURN } from "./lobbyEntry";
@@ -27,7 +27,7 @@ import { prefetchBattlePuppets } from "../puppets/battlePrefetch";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import type { PartySceneData } from "../data/partyContent";
-import { addRaidBossPickLayer, addRaidLayer, raidTagLabel } from "../ui/RaidLayer";
+import { addRaidBossPickLayer, addRaidDifficultyPickLayer, addRaidLayer, raidTagLabel } from "../ui/RaidLayer";
 import { playRaidSummonCinematic } from "../ui/RaidSummonCinematic";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { addFramedIcon } from "../ui/itemFrame";
@@ -302,67 +302,61 @@ export class RaidScene extends Phaser.Scene {
   }
 
   /**
-   * 밑동의 소환 줄. 선택 토벌권이 있을 때만 선택 소환이 옆에 붙는다 — 없는데 세우면 눌러도
-   * 아무 일이 없는 칸이 된다. 토벌권이 없으면 소환이 꺼진 채 선다(무엇으로 여는지는 남긴다).
+   * 밑동의 소환 줄 — **선택 소환(왼쪽)과 소환(오른쪽)이 같은 양식으로 나란히 선다.** 그 토벌권이
+   * 없으면 그 버튼만 꺼진 채 선다(자리를 비우면 버튼 수에 따라 줄이 흔들린다).
+   *
+   * 소환은 **누르면 곧바로** 토벌권을 쓴다 — 보스도 난이도도 서버가 굴린다. 고르고 싶은 손은
+   * 선택 소환이 맡는다.
    */
   private renderSummonRow(tickets: RaidListResponse["tickets"]): void {
     const content = this.content;
     if (!content) return;
-    const { y, height, single, pair } = RAID_LIST_CHROME.summon;
-    const withSelect = tickets.select > 0;
-    const main = withSelect ? pair.left : single;
-    const summon = new Button(this, main.centerX, y, {
-      width: main.width, height, label: t("raid.summon.button"), fontSize: 34, variant: "primary",
-      accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText,
-      onClick: () => this.openSummonPopup(false),
-    });
-    summon.setEnabled(tickets.normal > 0);
-    content.add(summon);
-    if (!withSelect) return;
-    content.add(new Button(this, pair.right.centerX, y, {
-      width: pair.right.width, height, label: t("raid.summon.select"), fontSize: 30,
-      onClick: () => this.openSummonPopup(true),
-    }));
+    const { y, height, fontSize, select, normal } = RAID_LIST_CHROME.summon;
+    const button = (slot: { centerX: number; width: number }, label: string, enabled: boolean, onClick: () => void): void => {
+      const entry = new Button(this, slot.centerX, y, {
+        width: slot.width, height, label, fontSize, variant: "primary",
+        accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, onClick,
+      });
+      entry.setEnabled(enabled);
+      content.add(entry);
+    };
+    button(select, t("raid.summon.select"), tickets.select > 0, () => this.openBossPickPopup());
+    button(normal, t("raid.summon.button"), tickets.normal > 0, () => void this.summon(undefined));
   }
 
   /**
-   * 소환 창. 선택 토벌권이면 먼저 **보스를 층으로 고르고**(얼굴이 보여야 누구를 부를지 정한다),
-   * 그다음 난이도를 고른다. 난이도 버튼은 그 난이도의 색을 입는다 — 목록의 층과 같은 색이다.
+   * 선택 소환의 첫 창 — 보스가 **층**으로 늘어선다(목록의 층과 같은 문법). 하나를 누르면 이 창을
+   * 닫지 않고 그 위에 난이도 창이 겹쳐 뜬다 — 난이도를 보다 보스를 바꾸고 싶은 손이 한 번에
+   * 돌아온다.
    */
-  private openSummonPopup(select: boolean): void {
-    if (this.busy) return;
-    if (select) this.openBossPickPopup();
-    else this.openDifficultyPopup(undefined);
-  }
-
-  /** 선택 소환의 첫 걸음 — 보스를 목록 층과 같은 문법의 층으로 고른다. */
   private openBossPickPopup(): void {
+    if (this.busy) return;
     const bosses = [...RAID_BOSS_POOL];
     const height = raidBossPickHeight(bosses.length);
     this.popups.open({ width: RAID_BOSS_PICK.width + 80, height, title: t("raid.summon.select"), dim: true, closeOnBackdrop: true }, (body, close) => {
       let y = -height / 2 + RAID_BOSS_PICK.top + RAID_BOSS_PICK.height / 2;
       bosses.forEach((relicId) => {
-        addRaidBossPickLayer(this, body, relicId, y, () => { close(); this.openDifficultyPopup(relicId); });
+        addRaidBossPickLayer(this, body, relicId, y, () => this.openDifficultyPopup(relicId, close));
         y += RAID_BOSS_PICK.height + RAID_BOSS_PICK.gap;
       });
     });
   }
 
-  /** 난이도를 고르면 곧바로 연다. `bossRelicId`가 있으면 선택 토벌권을 쓴다. */
-  private openDifficultyPopup(bossRelicId: string | undefined): void {
-    const rowGap = 118;
-    const height = 120 + RAID_SUMMON_DIFFICULTIES.length * rowGap;
-    const title = bossRelicId ? getRelic(bossRelicId).name : t("raid.summon.title");
-    this.popups.open({ width: 760, height, title, dim: true, closeOnBackdrop: true }, (body, close) => {
-      let y = -height / 2 + 120;
+  /**
+   * 선택 소환의 둘째 창 — 고른 보스의 얼굴 위에 **난이도마다 제 색**을 입힌 층이 선다. 고르면
+   * 두 창을 함께 닫고 곧바로 연다.
+   */
+  private openDifficultyPopup(bossRelicId: string, closeBossPick: () => void): void {
+    const height = raidPickHeight(RAID_DIFFICULTY_PICK, RAID_SUMMON_DIFFICULTIES.length);
+    this.popups.open({ width: RAID_DIFFICULTY_PICK.width + 80, height, title: getRelic(bossRelicId).name, dim: true, dimAlpha: 0.35, closeOnBackdrop: true }, (body, close) => {
+      let y = -height / 2 + RAID_DIFFICULTY_PICK.top + RAID_DIFFICULTY_PICK.height / 2;
       RAID_SUMMON_DIFFICULTIES.forEach((difficulty: RaidDifficulty) => {
-        body.add(new Button(this, 0, y, {
-          width: 560, height: 96, fontSize: 30, variant: "primary",
-          accentColor: RAID_DIFFICULTY_TONE[difficulty], accentTextColor: COLOR.ink,
-          label: t("raid.summon.difficulty", { difficulty: t(`raid.difficulty.${difficulty}`), level: RAID_DIFFICULTY[difficulty].level }),
-          onClick: () => { close(); void this.summon(difficulty, bossRelicId); },
-        }));
-        y += rowGap;
+        addRaidDifficultyPickLayer(this, body, bossRelicId, difficulty, y, () => {
+          close();
+          closeBossPick();
+          void this.summon({ bossRelicId, difficulty });
+        });
+        y += RAID_DIFFICULTY_PICK.height + RAID_DIFFICULTY_PICK.gap;
       });
     });
   }
@@ -372,12 +366,12 @@ export class RaidScene extends Phaser.Scene {
    * 서버가 정하므로(토벌권은 무작위) 연출은 응답을 받은 뒤에야 누가 나올지 안다. 연출을 닫으면
    * 연 판으로 들어간다.
    */
-  private async summon(difficulty: RaidDifficulty, bossRelicId: string | undefined): Promise<void> {
+  private async summon(select: { bossRelicId: string; difficulty: RaidDifficulty } | undefined): Promise<void> {
     if (this.busy) return;
     this.busy = true;
     const requestId = globalThis.crypto?.randomUUID?.() ?? `raid-summon-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     try {
-      const result = await gameApi.summonRaid({ requestId, difficulty, bossRelicId });
+      const result = await gameApi.summonRaid({ requestId, ...select });
       if (!this.scene.isActive()) return;
       setDebugRaidStage("summon");
       playRaidSummonCinematic(this, {

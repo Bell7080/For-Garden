@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { arrangeByRole, autoPickParty, elementDistribution, partyAffinitySummary, relicAffinityDirection } from "../../src/core/partyAffinity";
-import { getRelic } from "../../src/data/relics";
+import { arrangeByRole, autoPickParty, RECOMMENDED_SLOT_ROLES, elementDistribution, partyAffinitySummary, relicAffinityDirection } from "../../src/core/partyAffinity";
+import { getRelic, PLAYABLE_RELICS } from "../../src/data/relics";
 
 /** Phaser 없이 편성 추천과 화면 요약이 같은 속성 공식을 쓰는지 검증한다. */
 describe("파티 속성 미리보기", () => {
@@ -49,5 +49,18 @@ describe("파티 속성 미리보기", () => {
 
   it("적 목록이 비었으면 중립이다", () => {
     expect(relicAffinityDirection(getRelic("rex"), [])).toBe("neutral");
+  });
+});
+
+describe("편성 칸의 추천 직군", () => {
+  it("가운데는 탱커·전사, 양옆은 암살자·지원가를 함께 추천한다", () => {
+    expect(RECOMMENDED_SLOT_ROLES).toEqual([["assassin", "support"], ["tank", "warrior"], ["assassin", "support"]]);
+  });
+
+  it("자동 배치가 세우는 자리와 어긋나지 않는다", () => {
+    // 추천 표가 말하는 자리에 자동 배치가 실제로 그 직군을 세워야 둘이 서로 다른 말을 하지 않는다.
+    const pick = (role: string) => PLAYABLE_RELICS.find((relic) => relic.role === role)!;
+    const arranged = arrangeByRole([pick("support"), pick("tank"), pick("assassin")]);
+    arranged.forEach((relic, slot) => expect(RECOMMENDED_SLOT_ROLES[slot], relic.id).toContain(relic.role));
   });
 });

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { FORMATION_ROLE_HINT } from "../../src/ui/formationSlotStyle";
 import {
   PARTY_ALLY_PLATE,
   PARTY_POWER_PLATE,
@@ -105,5 +106,14 @@ describe("콘텐츠 편성 미리보기", () => {
     expect(PARTY_PREVIEW.enemyRow - PARTY_PREVIEW.height * scale - 6 - 28).toBeGreaterThan(70 + 46);
     // 정예는 상한보다 작아 그대로 선다.
     expect(partyPreviewEnemyScale(ENCOUNTER_ROLE.elite.bodyScale)).toBe(ENCOUNTER_ROLE.elite.bodyScale);
+  });
+});
+
+describe("편성 칸의 추천 직군 표", () => {
+  it("판 윗변에 걸치되 위의 전투력 판과 닿지 않는다", () => {
+    const tagTop = PARTY_ALLY_PLATE.top + FORMATION_ROLE_HINT.offsetY - FORMATION_ROLE_HINT.height / 2;
+    expect(tagTop).toBeGreaterThan(partyPowerPlateBounds().bottom);
+    // 윗변에 걸쳐 있어야 칸 판에 딸린 표로 읽힌다.
+    expect(tagTop).toBeLessThan(PARTY_ALLY_PLATE.top);
   });
 });

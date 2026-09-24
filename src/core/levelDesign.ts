@@ -136,11 +136,13 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
      *
      * 검수를 실제 전장 크기(`battleArena("stage")`)로 옮기며 공격 몫을 ×1.5 → ×1.1로 다시 쟀다
      * (v0.172.6). 넓은 틀에서는 혼자 선 정예가 후열까지 걸어가는 동안 원거리가 공짜로 쏘았는데,
-     * 실제 전장은 그 거리가 짧아 ×1.5로는 대표 조합이 1-10을 한 판도 열지 못했다. 체력 몫은
+     * 실제 전장은 그 거리가 짧아 ×1.5로는 대표 조합이 1-10을 한 판도 열지 못했다.
+     * v0.172.7에서 ×1.2로 한 뼘 올렸다 — 1-10이 장을 닫는 **벽**이 되어 권장 레벨 파티가 한 번
+     * 막히고 뽑기·강화로 돌아가게 한다. ×1.3부터는 원정 10층 정예까지 8판 중 1판만 열려 멈췄다. 체력 몫은
      * 결과를 거의 바꾸지 않아(×2.4~×3.3 사이에서 같은 판이 났다) 그대로 둔다.
      */
     count: 1, bodyScale: 1.18,
-    hpMultiplier: 3.3, attackMultiplier: 1.1,
+    hpMultiplier: 3.3, attackMultiplier: 1.2,
     ttkSeconds: [18, 32], remainingHp: [0.20, 0.60],
   },
   boss: {

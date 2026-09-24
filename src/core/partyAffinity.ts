@@ -79,6 +79,19 @@ const LEFT_PRIORITY: Readonly<Record<RelicDef["role"], number>> = { assassin: 0,
  * 튼튼한 몸을 세워야 한 명이 먼저 쓰러지는 일이 줄어든다. 같은 직군끼리는 들어온 순서를 지킨다.
  * 셋이 아니면(빈 자리가 섞인 편성 등) 순서를 건드리지 않는다.
  */
+/**
+ * 편성 칸마다 추천하는 직군 — `arrangeByRole`이 세우는 자리를 화면에 미리 보여 주는 표다.
+ *
+ * 가운데(2번)는 한 걸음 앞으로 나선 자리라 탱커·전사, 양옆(1·3번)은 비켜 선 자리라 암살자·지원가다.
+ * 자동 배치는 암살자를 왼쪽, 지원가를 오른쪽에 먼저 세우지만 **추천은 양옆에 같은 둘을 적는다** —
+ * 셋 중 둘이 딜러이거나 지원가가 둘이면 어느 쪽에 서도 되는 자리이기 때문이다.
+ */
+export const RECOMMENDED_SLOT_ROLES: readonly (readonly RelicDef["role"][])[] = [
+  ["assassin", "support"],
+  ["tank", "warrior"],
+  ["assassin", "support"],
+];
+
 export function arrangeByRole<T extends Pick<RelicDef, "role">>(members: readonly T[]): T[] {
   if (members.length !== 3) return [...members];
   const indexed = members.map((member, index) => ({ member, index }));

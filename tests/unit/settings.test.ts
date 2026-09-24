@@ -200,3 +200,15 @@ describe("settings", () => {
     manager.update({ notifications: { enabled: true } }); await expect(manager.scheduleNotification(request)).resolves.toBeNull(); expect(denied.scheduleNotification).not.toHaveBeenCalled();
   });
 });
+
+describe("편성 추천 직군 표시", () => {
+  it("새 계정과 필드가 없던 저장은 켜진 쪽이고, 끈 값은 저장을 오간다", () => {
+    expect(normalizeSettings({}).game.formationRoleHint).toBe(true);
+    expect(normalizeSettings({ game: { formationRoleHint: false } }).game.formationRoleHint).toBe(false);
+    expect(normalizeSettings({ game: { formationRoleHint: "no" } }).game.formationRoleHint).toBe(true);
+  });
+
+  it("1.5배속을 저장이 받아들인다", () => {
+    expect(normalizeSettings({ game: { battleSpeed: 1.5 } }).game.battleSpeed).toBe(1.5);
+  });
+});

@@ -1,9 +1,10 @@
 import type { GameSettings } from "../state/session";
 import { DEFAULT_LANGUAGE, normalizeLanguage } from "./language";
+import { BATTLE_SPEEDS } from "./battleControls";
 
 /** Phaser나 저장소 없이도 서버·테스트가 함께 쓸 수 있는 설정 허용값이다. */
-// 실제 전투 조작의 1→2→3배 순환과 저장 허용값을 같은 표로 맞춘다.
-export const BATTLE_SPEEDS = [1, 2, 3] as const;
+// 실제 전투 조작의 배속 순환과 저장 허용값을 같은 표로 맞춘다 — 표는 `battleControls.ts` 하나가 갖는다.
+export { BATTLE_SPEEDS } from "./battleControls";
 export const TEXT_SPEEDS = [0.5, 1, 2] as const;
 /** 글자가 화면을 밀어내지 않는 범위에서 제공하는 공용 텍스트 배율이다. */
 export const TEXT_SCALES = [1, 1.15, 1.3] as const;
@@ -148,7 +149,7 @@ export function createDefaultSettings(): GameSettings {
     // 현재 대사는 보이스의 보조 자막이 아니라 필수 진행 정보이므로 숨김 설정을 제공하지 않는다.
     accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
-    game: { battleSpeed: 1, autoUltimate: false, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE },
+    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE },
     // 이름을 적어 두지 않는다 — 저장에 굳으면 언어를 바꿔도 그 줄만 옛 언어로 남는다.
     // 빈 값은 화면이 부를 때 `profile.guest`로 메운다.
     account: { provider: "guest", displayId: "" },
@@ -178,6 +179,8 @@ export function normalizeSettings(value: unknown): GameSettings {
     // 구버전의 subtitles 값은 필수 본문을 감추는 잘못된 의미라 저장 모델로 이관하지 않고 폐기한다.
     accessibility: { textScale: allowed(x.textScale, TEXT_SCALES, d.accessibility.textScale), reduceMotion: bool(x.reduceMotion, d.accessibility.reduceMotion), reduceFlashes: bool(x.reduceFlashes, d.accessibility.reduceFlashes), colorAssist: bool(x.colorAssist, d.accessibility.colorAssist) },
     game: { battleSpeed: allowed(g.battleSpeed, BATTLE_SPEEDS, d.game.battleSpeed), autoUltimate: bool(g.autoUltimate, d.game.autoUltimate),
+      // 필드가 없던 저장은 켜진 쪽으로 이관한다 — 처음 편성하는 사람에게 필요한 안내다.
+      formationRoleHint: bool(g.formationRoleHint, d.game.formationRoleHint),
       // 새 필드가 없을 때만 옛 `컷인 끄기`를 `전체 궁극 연출 스킵`으로 승격한다. 명시된 새 값이 언제나 우선한다.
       skipUltimatePresentation: typeof g.skipUltimatePresentation === "boolean" ? g.skipUltimatePresentation : p.ultimateCutIn === false,
       textSpeed: allowed(g.textSpeed, TEXT_SPEEDS, d.game.textSpeed),

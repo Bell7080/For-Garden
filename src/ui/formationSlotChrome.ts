@@ -2,7 +2,11 @@ import Phaser from "phaser";
 import { t } from "../i18n";
 import { drawGlyph } from "./glyphs";
 import { chipPoints, drawLayer, HOLO, slantedRect } from "./holo";
-import { FORMATION_SLOT_PLATE } from "./formationSlotStyle";
+import { FORMATION_ROLE_HINT, FORMATION_SLOT_PLATE } from "./formationSlotStyle";
+import { AffinityBadge } from "./AffinityBadge";
+import { ROLE_ICON } from "./affinityIcons";
+import { squeezeTextToWidth } from "./textFit";
+import type { Role } from "../core/types";
 import { COLOR, textStyle } from "./theme";
 
 /**
@@ -87,6 +91,13 @@ export interface FormationSlotPlateOptions {
   index: number;
   /** 판 중심에서 SD가 발을 딛는 줄까지의 거리. */
   groundOffset: number;
+  /** 이 자리에 추천하는 직군. 전투 편성만 넘긴다(`FORMATION_ROLE_HINT`). */
+  recommendedRoles?: readonly Role[];
+  /**
+   * 추천 직군 표를 세울 층. **SD보다 앞 층을 넘긴다** — 칸 판과 같은 층에 두면 머리가 크게 솟은
+   * 원화(토리카의 후드 뿔)가 가운데 표를 덮어 글자가 읽히지 않았다. 없으면 판과 같은 층이다.
+   */
+  recommendedRolesLayer?: Phaser.GameObjects.Container;
 }
 
 /** 칸 하나의 밑판과 그 위의 발밑 그림자(또는 빈 자리 번호)를 그린다. */
@@ -102,6 +113,7 @@ export function addFormationSlotPlate(
     edge: COLOR.inkDimHex,
     edgeAlpha: FORMATION_SLOT_PLATE.edgeAlpha,
   }));
+  if (options.recommendedRoles && options.recommendedRoles.length > 0) addRecommendedRoleTag(scene, options.recommendedRolesLayer ?? parent, box, options.recommendedRoles);
   if (options.occupied) {
     // 사방 테두리나 입체 받침 대신 얇은 홀로그램 투영 그림자만 발 아래에 둔다.
     parent.add(scene.add.ellipse(
@@ -116,4 +128,31 @@ export function addFormationSlotPlate(
   }
   const style = textStyle({ role: "emphasis", size: FORMATION_SLOT_PLATE.emptyFontSize, color: COLOR.inkDim, align: "center" });
   parent.add(scene.add.text(box.x, box.y, t("formation.emptySlot", { index: options.index + 1 }), style).setOrigin(0.5));
+}
+
+/** 칸 판 윗변에 걸터앉는 추천 직군 이름표 — 직군 아이콘과 이름이 한 줄로 선다. */
+function addRecommendedRoleTag(
+  scene: Phaser.Scene,
+  parent: Phaser.GameObjects.Container,
+  box: FormationSlotBox,
+  roles: readonly Role[],
+): void {
+  const spec = FORMATION_ROLE_HINT;
+  const tag = scene.add.container(box.x, box.y - box.height / 2 + spec.offsetY).setName("formation-role-hint");
+  const label = scene.add.text(0, 0, roles.map((role) => t(`role.${role}`)).join(" · "), textStyle({ role: "emphasis", size: spec.fontSize, color: COLOR.ink })).setOrigin(0, 0.5);
+  const iconsWidth = roles.length * spec.iconSize + (roles.length - 1) * spec.gap;
+  // 낱말 길이는 언어가 정하므로 칸 폭을 넘지 않게 글자만 가로로 누른다.
+  squeezeTextToWidth(label, box.width - spec.pad * 2 - iconsWidth - spec.gap, 0.7);
+  const width = Math.min(box.width, spec.pad * 2 + iconsWidth + spec.gap + label.displayWidth);
+  tag.add(drawLayer(scene, 0, 0, slantedRect(width, spec.height), {
+    fill: COLOR.panel, alpha: spec.alpha, edge: COLOR.accent, edgeAlpha: 0.7,
+  }));
+  let x = -width / 2 + spec.pad + spec.iconSize / 2;
+  for (const role of roles) {
+    tag.add(new AffinityBadge(scene, x, 0, ROLE_ICON[role], spec.iconSize, 0.4));
+    x += spec.iconSize + spec.gap;
+  }
+  label.setX(x - spec.iconSize / 2);
+  tag.add(label);
+  parent.add(tag);
 }

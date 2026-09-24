@@ -1,6 +1,8 @@
 /** Formation: choosing the three who go out. */
 export const PARTY_EN = {
   "party.autoPlace": "Auto Place",
+  "party.roleHint.hide": "Hide Roles",
+  "party.roleHint.show": "Show Roles",
   "party.start": "Start Battle",
   "party.saveFailed": "Could not save the party. Check your storage space and try again.",
   "party.longPressHint": "Press and hold for details",

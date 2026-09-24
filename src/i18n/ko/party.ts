@@ -1,6 +1,8 @@
 /** 스토리 편성 화면의 문구. */
 export const PARTY_KO = {
   "party.autoPlace": "자동 배치",
+  "party.roleHint.hide": "추천 끄기",
+  "party.roleHint.show": "추천 켜기",
   "party.start": "전투 시작",
   "party.saveFailed": "파티 저장에 실패했다. 저장 공간을 확인한 뒤 다시 시도해 주세요.",
   "party.longPressHint": "꾹 누르면 상세 정보",

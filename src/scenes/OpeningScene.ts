@@ -1,15 +1,20 @@
 import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { DialogueFlow, type DialogueChoice } from "../core/dialogue";
+import { DialogueFlow, dialogueStandingOrder, type DialogueChoice } from "../core/dialogue";
 import { OPENING_TRAIN } from "../data/dialogues/openingTrain";
 import { bindDebugReadyLifecycle, setDebugDialogue, setDebugReady, setDebugScene } from "../debug";
 import { storyManager } from "../managers/StoryManager";
-import { drawLayer, slantedRect } from "../ui/holo";
-import { COLOR, textStyle } from "../ui/theme";
+import { COLOR } from "../ui/theme";
 import { DialogueLayer } from "../ui/DialogueLayer";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
+import { playStoryTitleCard } from "../ui/StoryTitleCard";
 
-/** 정적 오프닝 데이터를 순회하고 완료 후 로비로 넘기는 전용 화면이다. */
+/**
+ * 정적 오프닝 데이터를 순회하고 완료 후 로비로 넘기는 전용 화면이다.
+ *
+ * 들어오면 검은 화면에서 제목과 부제가 열렸다 걷히고(`playStoryTitleCard`), 그 뒤에 미리 서
+ * 있던 열차 객차가 드러나며 첫 대사가 시작된다. 제목표가 도는 동안 뒤에 설 스탠딩을 읽어 둔다.
+ */
 export class OpeningScene extends Phaser.Scene {
   private flow = new DialogueFlow(OPENING_TRAIN);
   private layer?: DialogueLayer;
@@ -25,20 +30,27 @@ export class OpeningScene extends Phaser.Scene {
     this.flow = new DialogueFlow(OPENING_TRAIN);
     this.transitioningToLobby = false;
     setDebugScene("opening");
-    // 임시 배경 자산을 만들지 않고 기존 색 토큰으로 야간 열차 창과 실내를 암시한다.
-    this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void);
-    drawLayer(this, BASE_WIDTH / 2, 560, slantedRect(880, 720), {
-      fill: 0x141920, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.25,
-    });
-    this.add.text(BASE_WIDTH / 2, 250, "NIGHT TRAIN · ETERNAL CITY LINE", textStyle({ role: "body", size: 25, color: COLOR.inkDim })).setOrigin(0.5);
-    this.layer = new DialogueLayer(this, (choice) => this.advance(choice));
-    // 첫 노드 정보를 먼저 게시하되 DialogueFlow 잠금은 Puppet 비동기 표시가 끝날 때까지 유지한다.
+    // 배경 원화가 도착하기 전과 원화가 없는 빌드에서도 빈 캔버스가 아니라 어두운 판이 선다.
+    this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void).setDepth(-40);
+    this.layer = new DialogueLayer(this, (choice) => this.advance(choice), { backdrop: OPENING_TRAIN.backdrop });
+    this.layer.prefetch(dialogueStandingOrder(OPENING_TRAIN));
+    // 첫 노드 정보를 먼저 게시하되 DialogueFlow 잠금은 제목표와 Puppet 표시가 끝날 때까지 유지한다.
     setDebugDialogue(this.flow.current);
-    void this.showCurrentNode(this.flow.current);
+    void this.openStory();
     setDebugReady(true);
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
+  }
+
+  /** 제목표가 걷힌 뒤에 첫 대사를 연다. 막 뒤에서 글이 먼저 흘러가지 않게 한다. */
+  private async openStory(): Promise<void> {
+    if (OPENING_TRAIN.titleCard) {
+      await playStoryTitleCard(this, OPENING_TRAIN.titleCard);
+      // 제목표가 도는 사이 씬이 닫혔으면 첫 대사를 열지 않는다.
+      if (!this.scene.isActive()) return;
+    }
+    await this.showCurrentNode(this.flow.current);
   }
 
   private advance(choice?: DialogueChoice): void {

@@ -8,7 +8,7 @@ vi.mock("../../src/puppets/IndexedPuppetCreature", () => ({
 import { createDefaultSession } from "../../src/state/session";
 import { RelicAppearanceManager } from "../../src/managers/RelicAppearanceManager";
 import { TORIKA_ASSET, TORIKA_SD_ASSET, TORIKA_SKIN_001_ASSET, TORIKA_SKIN_001_SD_ASSET } from "../../src/puppets/assets";
-import DIALOGUE_SOURCE from "../../src/ui/DialogueLayer.ts?raw";
+import DIALOGUE_SOURCE from "../../src/ui/DialogueStage.ts?raw";
 
 /** 전신과 SD가 manager가 전달한 동일 장착 ID를 소비하는지 고정하는 회귀 테스트다. */
 describe("장착 외형 resolver 일관성", () => {
@@ -36,7 +36,7 @@ describe("장착 외형 resolver 일관성", () => {
   });
 
   it("스토리 고정 토리카는 세션 resolver 대신 정적 기본 전신을 사용한다", () => {
-    // 서사 연출은 플레이어 대표/편성 외형과 다른 고정 캐스팅이므로 DialogueLayer의 표를 직접 고정한다.
+    // 서사 연출은 플레이어 대표/편성 외형과 다른 고정 캐스팅이므로 이야기 무대(DialogueStage)의 표를 직접 고정한다.
     expect(DIALOGUE_SOURCE).toContain("torika: TORIKA_ASSET");
     expect(DIALOGUE_SOURCE).not.toContain("relicAppearanceManager.portraitAssetFor");
   });

@@ -104,6 +104,11 @@ export const BACKGROUND = {
    * 씬 진입 직후 이 키로 직접 읽는다.
    */
   title: "background-title",
+  /**
+   * 1장 오프닝의 무대 — 이터널 시티로 향하는 수송 열차 객차 안이다. 창 너머로 도시가 보인다.
+   * 이야기 무대가 어느 원화를 쓰는지는 `dialogueStageLayout.ts`의 `DIALOGUE_BACKDROP`이 정한다.
+   */
+  storyTrain: "background-story-train",
 } as const;
 
 /**
@@ -163,6 +168,7 @@ export const BACKGROUND_ASSETS = [
   // 타이틀은 TitleScene이 직접 먼저 읽지만(그 화면이 곧 로딩 화면이다) 경로가 이 표에 있어야
   // 로비로 넘어간 뒤 25MB를 내리고, 되돌아왔을 때 다시 읽을 수 있다.
   [BACKGROUND.title, "sprites/background/background_011.webp"],
+  [BACKGROUND.storyTrain, "sprites/background/story_train.webp"],
 ] as const;
 
 /**

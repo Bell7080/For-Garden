@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
+import { OPENING_TRAIN } from "../../src/data/dialogues/openingTrain";
 import { canvasBox, captureGame, gamePoint, tap, tapUntil, waitForDebugState } from "./canvasInput";
 import { ExpeditionManager } from "../../src/managers/ExpeditionManager";
 import { EXPEDITION_LAYOUT, expeditionNodePosition, focusExpeditionFloor } from "../../src/ui/expeditionLayout";
@@ -91,6 +92,9 @@ test("색각 보조 표식은 1080×1920 편성 카드와 상성 앵커에서 �
 });
 
 test("세로형 첫 방문은 오프닝을 끝내고 중복 입력 없이 로비로 한 번 전환한다", async ({ page }) => {
+  // 오프닝은 서른다섯 마디에 제목표·폭파 연출과 일곱 명의 전신을 거친다. GPU 없는 컨테이너에서는
+  // 한 편이 6분 넘게 걸려 기본 시간(4분) 안에 끝나지 않는다.
+  test.setTimeout(480_000);
   const consoleErrors: string[] = [];
   page.on("console", (msg) => {
     if (msg.type() === "error") consoleErrors.push(msg.text());
@@ -118,13 +122,12 @@ test("세로형 첫 방문은 오프닝을 끝내고 중복 입력 없이 로비
   await expect
     .poll(() => page.evaluate(() => window.__PF_DEBUG?.scene))
     .toBe("opening");
-  // 타이틀 진입 pointer가 Puppet 비동기 로딩보다 먼저 재사용돼도 첫 ID와 원문은 그대로여야 한다.
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.dialogue)).toEqual({
-    nodeId: "wake",
-    body: "연구원님, 곧 이터널 시티에 도착해요.",
-  });
+  // 타이틀 진입 pointer가 제목표·Puppet 비동기 로딩보다 먼저 재사용돼도 첫 ID와 원문은 그대로여야 한다.
+  // 본문은 기기 언어를 따라 번역되므로 한국어 원문과 견주지 않고, 첫 노드의 본문이 비지 않았는지만 본다.
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.dialogue?.nodeId)).toBe(OPENING_TRAIN.startNodeId);
+  expect(await page.evaluate(() => window.__PF_DEBUG?.dialogue?.body)).toBeTruthy();
   // 첫 전신 ZIP 파싱이 끝나 입력 잠금이 풀릴 시간을 저사양 모바일 실행에도 보장한다.
-  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.OpeningScene ?? 0) >= 1, true, { timeout: 60_000 });
+  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.opening ?? 0) >= 1, true, { timeout: 60_000 });
 
   // 디버그 계약의 실제 대입을 감시해 중복 로비 진입과 ready 전환의 선후를 함께 검증한다.
   await page.evaluate(() => {
@@ -147,15 +150,38 @@ test("세로형 첫 방문은 오프닝을 끝내고 중복 입력 없이 로비
     Object.defineProperty(debug, "__transitionEvents", { configurable: true, get: () => [...transitionEvents] });
   });
 
-  // wake → window → 선택 → 분기 응답 → arrival → end까지 실제 Canvas 입력으로 진행한다.
-  await tapGame(page, BASE_WIDTH / 2, 1500); await waitForDebugState(page, () => window.__PF_DEBUG?.dialogue?.nodeId, "window");
-  await tapGame(page, BASE_WIDTH / 2, 1500); await waitForDebugState(page, () => window.__PF_DEBUG?.dialogue?.nodeId, "answer");
-  await tapGame(page, BASE_WIDTH / 2, 1050); await waitForDebugState(page, () => window.__PF_DEBUG?.dialogue?.nodeId, "warm");
-  await tapGame(page, BASE_WIDTH / 2, 1500); await waitForDebugState(page, () => window.__PF_DEBUG?.dialogue?.nodeId, "arrival");
-  await tapGame(page, BASE_WIDTH / 2, 1500); await waitForDebugState(page, () => window.__PF_DEBUG?.dialogue?.nodeId, "end");
+  // 첫 노드부터 마지막 노드까지 실제 Canvas 입력으로 진행한다. 노드 ID를 손으로 적지 않고
+  // 데이터의 흐름을 그대로 따라간다 — 대사를 고칠 때마다 이 목록을 다시 적지 않게 한다.
+  // 첫 입력은 타이핑을 끝내기만 하므로, 노드가 바뀔 때까지 판을 거듭 누른다. 선택지 노드는
+  // 판을 한 번 눌러 선택지를 띄운 뒤 첫 선택지를 고른다.
+  const lastNodeId = OPENING_TRAIN.nodes.find((node) => !node.nextId && !node.choices?.length && OPENING_TRAIN.nodes.some((other) => other.nextId === node.id))!.id;
+  const walked: string[] = [];
+  for (let step = 0; step < OPENING_TRAIN.nodes.length + 4; step += 1) {
+    const nodeId = await page.evaluate(() => window.__PF_DEBUG?.dialogue?.nodeId ?? "");
+    if (nodeId === lastNodeId) break;
+    walked.push(nodeId);
+    const hasChoices = (OPENING_TRAIN.nodes.find(({ id }) => id === nodeId)?.choices?.length ?? 0) > 0;
+    await tapUntil(page, BASE_WIDTH / 2, hasChoices ? 1050 : 1500, async () => (await page.evaluate(() => window.__PF_DEBUG?.dialogue?.nodeId)) !== nodeId, {
+      attempts: 40,
+      gapMs: 250,
+    });
+  }
+  expect(walked[0]).toBe(OPENING_TRAIN.startNodeId);
+  await waitForDebugState(page, () => window.__PF_DEBUG?.dialogue?.nodeId, lastNodeId);
 
   // 마지막 노드 입력은 같은 순간 여러 번 보내 완료 저장/전환 멱등 경계를 직접 압박한다.
-  for (let input = 0; input < 5; input += 1) await tapGame(page, BASE_WIDTH / 2, 1500);
+  // 공용 `tap`은 누를 때마다 쉬고, `page.mouse.click`도 한 번마다 브라우저를 오가므로 느린
+  // 기기에서는 그 사이에 프레임이 돌아 뒤쪽 입력이 이미 선 로비의 버튼에 떨어진다. 다섯 번을
+  // **한 작업 안에서** 보내 그 사이에 어떤 프레임도 끼지 않는 정말 "같은 순간"의 입력으로 만든다.
+  const finalPoint = gamePoint(await canvasBox(page), BASE_WIDTH / 2, 1500);
+  await page.evaluate(({ x, y }) => {
+    const canvas = document.querySelector("canvas")!;
+    for (let input = 0; input < 5; input += 1) {
+      for (const type of ["mousedown", "mouseup"]) {
+        canvas.dispatchEvent(new MouseEvent(type, { clientX: x, clientY: y, button: 0, buttons: type === "mousedown" ? 1 : 0, bubbles: true, cancelable: true }));
+      }
+    }
+  }, finalPoint);
   // 최종 입력 직후에는 오프닝 준비 상태가 먼저 내려가고, Puppet 초기화가 끝나야 로비가 준비된다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.ready)).toBe(false);
   await expect.poll(() => page.evaluate(() => ({ scene: window.__PF_DEBUG?.scene, ready: window.__PF_DEBUG?.ready })), { timeout: 15_000 }).toEqual({ scene: "lobby", ready: true });

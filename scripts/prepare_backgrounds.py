@@ -28,6 +28,11 @@ BACKGROUND_TARGET = PUBLIC / "sprites" / "background"
 CONTENT_TARGET = PUBLIC / "sprites" / "content"
 QUALITY = 84
 
+# 이야기 무대 원화의 원본 이름 → 구운 이름. 한글 이름을 경로에 남기지 않는다.
+STORY_BACKGROUNDS = {
+    "오프닝스토리배경열차": "story_train",
+}
+
 
 def bake(source: Path, target: Path) -> None:
     """크기는 그대로 두고 압축만 바꾼 뒤 원본을 지운다."""
@@ -51,7 +56,10 @@ def main() -> None:
     # 뒷배경도 "발굴판 *"에 걸리므로 겉장 목록은 **번호로 시작하는 것만** 본다. 함께 구우면
     # 무작위로 뽑히는 겉장이 다섯 장이 되어 아래층이 겉장으로 한 번씩 깔린다.
     strata_layers = sorted(sources(PUBLIC, "발굴판 [0-9]*") | sources(BACKGROUND_TARGET, "발굴판 [0-9]*"))
-    if not backgrounds and not contents and not interactions and not strata_base and not strata_layers:
+    stories = sorted(
+        path for stem in STORY_BACKGROUNDS for path in sources(PUBLIC, stem) | sources(BACKGROUND_TARGET, stem)
+    )
+    if not backgrounds and not contents and not interactions and not strata_base and not strata_layers and not stories:
         print("구울 원본이 없다. public/background_00N.png 또는 public/ContentN_00M.png를 올린 뒤 다시 실행한다.")
         return
     for source in backgrounds:
@@ -66,6 +74,8 @@ def main() -> None:
     for source in strata_layers:
         number = "".join(ch for ch in source.stem if ch.isdigit()) or "1"
         bake(source, BACKGROUND_TARGET / f"strata_layer_{number.zfill(3)}.webp")
+    for source in stories:
+        bake(source, BACKGROUND_TARGET / f"{STORY_BACKGROUNDS[source.stem]}.webp")
 
 
 if __name__ == "__main__":

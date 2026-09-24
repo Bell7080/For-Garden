@@ -1503,7 +1503,7 @@ export default {
   "dialogue.opening-train.veil.speaker": "???",
   "dialogue.opening-train.veil.body": "見つけた。Gardenが送り込んだ研究員。",
   "dialogue.opening-train.order.speaker": "???",
-  "dialogue.opening-train.order.body": "目標の回収作戦を開始する。研究員は生かしたまま連れていく。……方舟ごと落とせ。",
+  "dialogue.opening-train.order.body": "目標の回収作戦を開始する。研究員を必ず捕らえろ。……方舟ごと落とせ。",
   "dialogue.opening-train.blast.body": "ドガァァァン――！！",
   "dialogue.opening-train.aftermath.speaker": "トリカ",
   "dialogue.opening-train.aftermath.body": "けほっ、けほっ……研究員さん、大丈夫ですか！？ 列車が……線路の外に落ちちゃいました……！",

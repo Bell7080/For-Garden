@@ -6,7 +6,7 @@ import { registerDialogueTexts } from "./registerDialogue";
  *
  * `docs/lore.md` §6의 수송 열차 피습을 그대로 무대에 올린다. 이터널 시티로 향하는 열차 안에서
  * 호위를 맡은 쁘띠 로그 셋(토리카·도디·파루아)이 연구원을 처음 만나고, 경보와 함께 검은 베일을
- * 쓴 공멸의 선봉(코마)이 연구원을 산 채로 데려가는 **목표 회수** 작전을 선언한 뒤 열차가 폭파된다. 부서진 선로 위에서 공멸의 우당탕탕
+ * 쓴 공멸의 선봉(코마)이 연구원을 반드시 사로잡는 **목표 회수** 작전을 선언한 뒤 열차가 폭파된다. 부서진 선로 위에서 공멸의 우당탕탕
  * 삼인조(토비·아모·리파)가 연구원을 노리고 달려드는 데서 끝나 **곧바로 1-1로 이어진다** —
  * 1-1의 적 편성이 바로 이 셋이고, 그 관문의 상황 한 줄이 「불타는 객차에서 빠져나왔다」다.
  *
@@ -71,7 +71,7 @@ export const OPENING_TRAIN: DialogueStory = {
     { id: "sense", speaker: "파루아", body: "…앞에서 뭔가 와. 하나가 아니야.", standing: "parua", act: "tremble", nextId: "guard" },
     { id: "guard", speaker: "토리카", body: "연구원님, 제 뒤로 오세요! 무슨 일이 있어도 제가 막을게요!", standing: "torika", act: "hop", nextId: "veil" },
     { id: "veil", speaker: "???", body: "찾았다. Garden이 내려보낸 연구원.", standing: "koma", cast: [{ id: "koma", slot: "center", veiled: true }], cue: "rumble", nextId: "order" },
-    { id: "order", speaker: "???", body: "목표 회수 작전을 개시한다. 연구원은 산 채로 데려간다. …방주째로 떨어뜨려.", standing: "koma", act: "nod", nextId: "blast" },
+    { id: "order", speaker: "???", body: "목표 회수 작전을 개시한다. 연구원을 반드시 사로잡아라. …방주째로 떨어뜨려.", standing: "koma", act: "nod", nextId: "blast" },
 
     // ── 폭파: 열차에서 전장으로 ──────────────────────────────────────
     { id: "blast", speaker: "", body: "콰아아아앙!!", cast: [], cue: "explosion", backdrop: "battlefield", nextId: "aftermath" },

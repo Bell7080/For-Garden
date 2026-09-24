@@ -150,7 +150,7 @@ export const MISC_EN = {
   "profile.edit.error.tooLong": "Up to {max} characters",
   "profile.edit.error.invalidCharacter": "Contains characters that can't be used",
   "profile.levelUp.title": "Researcher Level Up",
-  "profile.levelUp.stamina": "Max Stamina +{amount}",
+  "profile.levelUp.stamina": "Stamina fully restored · Max +{amount}",
   "profile.levelUp.frame": "New frame \"{name}\"",
   "profile.levelUp.unlock": "New content \"{content}\"",
   "profile.unset": "Unset",

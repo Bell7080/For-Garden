@@ -157,7 +157,7 @@ export const MISC_JA = {
   "profile.edit.error.tooLong": "{max}文字まで入力できます",
   "profile.edit.error.invalidCharacter": "使用できない文字が含まれています",
   "profile.levelUp.title": "研究員レベルアップ",
-  "profile.levelUp.stamina": "スタミナ上限 +{amount}",
+  "profile.levelUp.stamina": "スタミナ全回復 · 上限 +{amount}",
   "profile.levelUp.frame": "新しいフレーム「{name}」",
   "profile.levelUp.unlock": "新コンテンツ「{content}」",
   "profile.unset": "未設定",

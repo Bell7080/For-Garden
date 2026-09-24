@@ -42,7 +42,7 @@ import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_COMPLET
 import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonContributions, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement } from "../core/raid";
 import { battleArena } from "../core/battleArena";
 import { staminaCurrencyRecharge } from "../data/staminaRecharge";
-import { settleStamina, staminaMaxForPlayer, staminaTiming } from "../core/stamina";
+import { settleStamina, staminaMaxForPlayer, staminaMaxForResearchLevel, staminaTiming } from "../core/stamina";
 import { InventoryManager } from "../managers/InventoryManager";
 import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, MarkRuneRequest, MarkRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse } from "./contracts";
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
@@ -2137,12 +2137,15 @@ export class FakeServer implements GameApi {
   /**
    * 스테미나를 쓰는 **모든** 경계가 지나는 한 곳 — 쓴 만큼 연구원 경험치가 오른다(`playerLevel.ts`).
    *
-   * 레벨이 올라도 스테미나를 직접 채우지 않는다 — 상한만 넓어지고 늘어난 자리는 자연 회복이
-   * 채운다(`stamina.ts`의 레벨업 규칙). 여기서 한 번 더 채우면 두 규칙이 서로 다른 말을 한다.
+   * **레벨이 오르면 스테미나를 새 상한까지 채운다**(명일방주·블루 아카이브와 같다). 레벨업이 "더
+   * 싸울 수 있다"로 읽혀야 한다 — 상한만 넓히고 비워 두면 오른 순간이 "이제 못 한다"로 읽힌다.
+   * 이미 상한을 넘겨 가진 몫(토닉 등)은 깎지 않는다.
    */
   private spendStamina(cost: number): { wallet: Session["wallet"]; playerResearch: Session["playerResearch"] } {
     const grant = grantPlayerExperience(this.state.playerResearch, playerExpForStamina(cost));
-    return { wallet: { ...this.state.wallet, stamina: this.state.wallet.stamina - cost }, playerResearch: grant.progress };
+    const remaining = this.state.wallet.stamina - cost;
+    const stamina = grant.levelsGained > 0 ? Math.max(remaining, staminaMaxForResearchLevel(grant.progress.level)) : remaining;
+    return { wallet: { ...this.state.wallet, stamina }, playerResearch: grant.progress };
   }
 
   private persist(next: Session): void {

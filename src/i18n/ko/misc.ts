@@ -175,7 +175,7 @@ export const MISC_KO = {
   "profile.edit.error.tooLong": "{max}자까지 쓸 수 있습니다",
   "profile.edit.error.invalidCharacter": "쓸 수 없는 글자가 있습니다",
   "profile.levelUp.title": "연구원 레벨 상승",
-  "profile.levelUp.stamina": "스테미나 상한 +{amount}",
+  "profile.levelUp.stamina": "스테미나 최대치 회복 · 상한 +{amount}",
   "profile.levelUp.frame": "새 테두리 「{name}」",
   "profile.levelUp.unlock": "새 콘텐츠 「{content}」",
   "profile.unset": "미지정",

@@ -1,18 +1,15 @@
 import { createSkirmish, fireUltimate, isFighterAlive, stepSkirmish, type Arena, type SkirmishEvent } from "./skirmish";
 import type { FighterContribution } from "./battleContribution";
 import type { RelicDef } from "./types";
+import { battleArena } from "./battleArena";
 
 /**
- * 모바일 전장의 비율만 재현하는 검수용 좌표다. Phaser 카메라나 Scene 상태는 필요하지 않다.
- *
- * **실제 스토리 전장(`battleArena("stage")` — 130~950 × 600~1360)보다 넓다.** 전장이 넓으면
- * 근접 개체가 붙기까지 더 오래 걷고 원거리 개체는 그만큼 공짜로 쏘므로, 같은 편성·같은 적이라도
- * 결과가 크게 갈린다 — 1-1(적 LV7)을 기본 편성 레벨 1로 24판 돌렸을 때 이 좌표는 승률 92%·남는
- * 체력 7%, 실제 전장은 100%·48%였다(v0.172.4 조사). 레벨 사다리와 유형 배수가 모두 이 좌표로
- * 맞춰져 있어, 실제 전장으로 바꾸면 검수 18편이 한꺼번에 기준을 벗어난다 — **바꿀 때는 사다리를
- * 함께 다시 푼다.** 그 전까지 이 검수는 실제보다 어렵게 읽힌다.
+ * 검수는 **실제 스토리 전장과 같은 좌표**에서 돈다(`battleArena("stage")`). 전장이 넓으면 근접
+ * 개체가 붙기까지 더 오래 걷고 원거리 개체는 그만큼 공짜로 쏘므로, 따로 넓은 틀을 쓰던 때는
+ * 같은 1-1이 검수에서는 남는 체력 7%, 실제 판에서는 48%로 갈렸다(v0.172.6에서 맞췄다).
+ * 다른 모드를 재는 검수는 그 모드의 전장을 넘긴다.
  */
-export const STAGE_DIFFICULTY_ARENA: Arena = { left: 90, right: 990, top: 420, bottom: 1_520 };
+export const STAGE_DIFFICULTY_ARENA: Arena = battleArena("stage");
 
 /** 한 판이 영원히 교착해도 검수 작업이 끝나도록 두는 명시적인 제한이다. */
 export const STAGE_DIFFICULTY_LIMIT_SECONDS = 120;
@@ -127,9 +124,10 @@ function enemyContribution(def: FighterContribution, relicId: string): EnemyCont
 /** Phaser를 만들지 않고 순수 난전 진행기에 고정 seed와 궁극기 입력만 공급해 한 판을 재생한다. */
 export function simulateStageDifficultyRun(
   players: readonly RelicDef[], enemies: readonly RelicDef[], seed: number, control: DifficultyControl,
+  arena: Arena = STAGE_DIFFICULTY_ARENA,
 ): StageDifficultyRun {
   const rng = createDifficultyRng(seed);
-  const state = createSkirmish([...players], [...enemies], STAGE_DIFFICULTY_ARENA);
+  const state = createSkirmish([...players], [...enemies], arena);
   let firstDefeat: FirstDefeatMetric | null = null;
   let ultimateUses = 0;
   // 30Hz는 코어 내부의 작은 적분과 함께 충분히 안정적이며 대량 검수를 빠르게 끝낸다.
@@ -164,9 +162,10 @@ function range(values: readonly number[]): { min: number; mean: number; max: num
 /** 한 입력 정책을 여러 고정 난수열로 검수한다. 단일 운 좋은 판을 기준 결과로 오인하지 않는다. */
 export function summarizeStageDifficulty(
   players: readonly RelicDef[], enemies: readonly RelicDef[], seeds: readonly number[], control: DifficultyControl,
+  arena: Arena = STAGE_DIFFICULTY_ARENA,
 ): StageDifficultySummary {
   if (seeds.length === 0) throw new RangeError("난이도 검수 seed는 하나 이상이어야 합니다.");
-  const runs = seeds.map((seed) => simulateStageDifficultyRun(players, enemies, seed, control));
+  const runs = seeds.map((seed) => simulateStageDifficultyRun(players, enemies, seed, control, arena));
   return {
     control, winRate: runs.filter(({ won }) => won).length / runs.length,
     durationSeconds: range(runs.map(({ durationSeconds }) => durationSeconds)),

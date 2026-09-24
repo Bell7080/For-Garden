@@ -142,21 +142,23 @@ const ELITE_STAGE_IDS = ["1-5", "1-10"] as const;
  * 반드시 걸리게 한다.
  */
 const BASELINES = {
-  "1-1": { win: 1, hp: [0.78, 0.90] },
+  "1-1": { win: 1, hp: [0.83, 0.95] },
   /*
    * **정예 둘은 서로 다른 무게다.** 1-5의 토비는 R이라 같은 유형 배수를 받아도 길을 막지
-   * 않고 체력만 절반 깎는 벽이고, 1-10의 코마는 SSR이라 여덟 판 중 넷만 연다 — 같은 "정예"
+   * 않고 체력을 한 뼘 깎을 뿐이고, 1-10의 코마는 SSR이라 여덟 판 중 여섯만 연다 — 같은 "정예"
    * 인데 세우는 개체의 등급이 결과를 크게 가른다(`docs/level-design.md`).
    *
    * v0.164.0에서 야성 단계를 걷어 내고 레벨 하나 + 유형 배수로 옮기며 전부 다시 녹화했고,
    * v0.165.0에서 유형 차(+3)까지 걷어 내 정예가 잡졸과 같은 사다리 위에 서면서 다시 녹화했다.
+   * v0.172.6에서 검수를 실제 전장 크기로 옮기고(정예 공격 몫 ×1.1, 1장 사다리 한 뼘) 다시 녹화했다 —
+   * 잡졸 관문의 잔여 체력이 한꺼번에 오른 것은 전장이 좁아 후열이 덜 맞기 때문이다.
    */
-  "1-5": { win: 1, hp: [0.57, 0.69] },
-  "1-10": { win: 0.75, hp: [0.32, 0.44] },
-  "2-5": { win: 1, hp: [0.65, 0.77] },
-  "2-10": { win: 1, hp: [0.59, 0.71] },
-  "3-5": { win: 1, hp: [0.60, 0.72] },
-  "3-9": { win: 1, hp: [0.58, 0.70] },
+  "1-5": { win: 1, hp: [0.83, 0.95] },
+  "1-10": { win: 0.75, hp: [0.38, 0.50] },
+  "2-5": { win: 1, hp: [0.88, 1] },
+  "2-10": { win: 1, hp: [0.89, 1] },
+  "3-5": { win: 1, hp: [0.81, 0.93] },
+  "3-9": { win: 1, hp: [0.80, 0.92] },
 } as const;
 
 describe("Phaser 없는 챕터 난이도 검수", () => {
@@ -237,7 +239,7 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     const [fireDps, earthDps, waterDps] = BLENDED_COMBOS;
     expect(ELITE_STAGE_IDS).toEqual(["1-5", "1-10"]);
     // **1장의 중간 정예는 길을 막지 않는다.** 토비는 R이라 같은 유형 배수를 받아도 세 조합이
-    // 모두 넘고, 대신 체력을 절반 가까이 깎는다(대표 관문 기록의 `1-5`).
+    // 모두 넘는다(대표 관문 기록의 `1-5`).
     for (const combo of [fireDps, earthDps, waterDps]) expect(winRateAt("1-5", combo)).toBe(1);
     // **장을 닫는 자리만 조합을 가린다.** 풀 코마에게 땅 딜러는 이점이 없어 여덟 판 중 여섯만 연다.
     expect(winRateAt("1-10", fireDps)).toBe(1);
@@ -350,8 +352,9 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     // 파루아 쪽으로 옮겨 갔다: 붙어서 같은 적을 계속 때리는 손이 이제 두 대마다 주위까지
     // 함께 적신다.
     expect(pairs.map((pair) => pair.map(({ id }) => id))).toEqual([["dodo", "tia"], ["dodo", "parua"], ["tia", "parua"]]);
-    expect(parties.favorable.map(({ id }) => id)).toEqual(["anky", "dodo", "tia"]);
-    expect(parties.unfavorable.map(({ id }) => id)).toEqual(["anky", "dodo", "parua"]);
+    // 실제 전장 크기로 옮기자(v0.172.6) 붙어서 싸우는 거리가 짧아져 도디·티아가 최악으로 내려앉았다.
+    expect(parties.favorable.map(({ id }) => id)).toEqual(["anky", "tia", "parua"]);
+    expect(parties.unfavorable.map(({ id }) => id)).toEqual(["anky", "dodo", "tia"]);
   });
 
   it("장 목표와 허용 조정 순서를 전용 배율 없이 공개한다", () => {

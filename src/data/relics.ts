@@ -3240,6 +3240,138 @@ export const RELICS: RelicDef[] = [
   },
   {
     /**
+     * **타보아.** 공멸이 풀어 놓은 둘째 폭주 병기이자 레이드 보스다.
+     *
+     * 수쿠스이노가 **한 방이 무거운 턱**이라면 이쪽은 **감아 들어가 놓지 않는 몸**이다. 한 번
+     * 문 상대를 풀어 주지 않고 조일수록 손이 빨라지며(패시브), 감긴 쪽은 점점 굼떠진다(기본기).
+     * 그래서 같은 보스 자리에 서도 "다음 턱을 읽고 비킨다"가 아니라 "감기기 전에 끊는다"가 답이
+     * 되어, 하루 두 판을 같은 편성으로 돌리지 못하게 한다.
+     *
+     * 이름은 종명(티타노보아)의 뒤 두 음절에 첫 음절을 붙여 줄였다 — 수쿠스이노처럼 연구동에서
+     * 부르던 호칭이 그대로 굳은 것이다.
+     */
+    id: "taboa",
+    enemyOnly: true,
+    squad: "annihilation",
+    name: "타보아",
+    specimenNumber: "232",
+    projectName: "ANNIHILATION SIEGE 005",
+    excavationSite: "콜롬비아 세레혼 탄광 팔레오세 지층",
+    fossilRecord: "노천 탄광의 석탄층 사이에서 척추뼈 수십 점이 한 줄로 이어진 채 나왔다. 뼈의 굵기로 잰 몸길이가 지금의 어느 뱀보다 길어, 그 몸을 데울 만큼 뜨거웠던 열대의 기온까지 함께 추정되었다.",
+    observationProfile: {
+      originYear: "약 6,000만 년 전",
+      // E.C.는 느긋하게 웃으면서도 감은 것을 놓지 않는 성체형 인상을 분류하며, 실제 나이가 아니다.
+      restorationYear: "E.C. 17년",
+      lifeStage: "성체",
+      height: "1.72 m",
+      weight: "146 kg",
+    },
+    catalogSummary: "꼬리와 비늘 외투가 과하게 복원된 티타노보아 기반 대형 표본.",
+    unlockRecord: { status: "sealed", reason: "restricted" },
+    // 봉인된 적은 소속만 공개한다. squadNote·researcherTitle은 관계 기록 해제 전까지 넣지 않는다.
+    rarity: "SSR",
+    portraitAssetId: "taboa",
+    origin: "티타노보아",
+    element: "fire",
+    role: "warrior",
+    // 감아서 조이는 몸이라 근거리다.
+    reachTier: "melee",
+    // 강인함은 수쿠스이노와 같이 보스 자리(`ENCOUNTER_ROLE.boss`)가 갖는다.
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
+    stats: {
+      /*
+       * **수쿠스이노와 같은 보스 예산 안에서 모양만 다르다.** 방어를 덜어 저항에 얹었다 —
+       * 물리로 미는 편성이 수쿠스이노보다 쉽게 뚫고, 마법 딜러는 반대로 조금 더 오래 친다. 두
+       * 보스가 서로 다른 편성을 부르게 하는 손잡이다. 주문력은 쓰는 스킬이 없어 0이다.
+       *
+       * 체력은 판에 서지 않는다 — 시즌 보스로 설 때의 몸은 시즌 게이지에서 나온다
+       * (`raidBossDef` → `RAID_BOSS_HP_SCALE`).
+       */
+      hp: 2800,
+      def: 164,
+      res: 140,
+      atk: 198,
+      ap: 0,
+      /*
+       * 수쿠스이노보다 빠르지만 여전히 로스터 아래쪽이다. 한 대는 가볍고 그 사이가 짧아, 조일수록
+       * 빨라지는 패시브가 "시간이 지날수록 아프다"를 대신 말한다.
+       */
+      attackSpeed: 44,
+      moveSpeed: 40,
+      critChance: 8,
+      critDamage: 150,
+      energyGain: 30,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    /*
+     * **열대의 체온.** 그 몸을 데우던 뜨거운 기온이 돌아오면 조이는 손이 한층 빨라진다.
+     *
+     * 공속 축 폭주의 공용 계약(`selfAttackSpeedMultiplier`) 하나로 짠다 — 패시브의 겹과 곱해져
+     * 폭주가 곧 "가장 빨리 감기는 순간"으로 읽힌다.
+     */
+    ferocityTrait: { name: "열대의 체온", effectId: "selfAttackSpeedMultiplier", bonusPercent: 40 },
+    /*
+     * **조여 드는 똬리.** 감은 채로 때릴수록 공격 속도가 쌓인다(토비·스피나와 같은 공용 계약).
+     *
+     * **회복을 주지 않는다** — 시즌 게이지는 참가자 전원이 함께 깎은 줄이라 되돌리면 어제 민 몫이
+     * 사라진다(수쿠스이노와 같은 이유). 버티는 대신 **점점 아파진다**.
+     */
+    passive: {
+      id: "taboa-passive",
+      name: "조여 드는 똬리",
+      kind: "basicHitAttackSpeedStack",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      value: 3,
+      maxStacks: 10,
+      // 전용 분기(`passiveDescription`)가 이 종류의 문장을 짓는다. 이 원문은 표시되지 않는 데이터
+      // 문서용 사본이라, 고칠 때는 그 분기도 함께 본다.
+      desc: "기본 공격이 적중할 때마다 이번 전투 동안 공격 속도가 증가한다.",
+    },
+    basic: {
+      id: "taboa-basic",
+      name: "옥죄기",
+      power: 120,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+      /*
+       * **감긴 쪽이 굼떠진다.** 둔화(공용 규칙어)를 쌓아 공격·이동 속도를 함께 깎는다 — 한 명이
+       * 오래 붙잡히면 그 개체의 몫이 눈에 띄게 줄어, 누구를 앞에 세울지가 답이 된다.
+       */
+      statusEffects: [{ kind: "chill", speedPercentPerStack: 8, maxStacks: 3 }],
+    },
+    ultimate: {
+      id: "taboa-ult",
+      name: "열대의 똬리",
+      // 수쿠스이노의 지정 원(300)보다 약간 낮다. 제 주위를 통째로 감는 기술이라 붙어 선 근거리
+      // 편성이 가장 크게 맞는다.
+      power: 260,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      cost: 100,
+      /*
+       * **제 주위를 감는다.** 원을 멀리 지정하는 수쿠스이노와 달리 몸 둘레가 곧 범위라, 붙어
+       * 선 근거리가 맞고 멀리 선 후열은 빠진다 — 두 보스가 위협하는 자리가 갈린다.
+       */
+      targeting: "nearbyEnemies",
+      radius: 340,
+      statusEffects: [{ kind: "stun", seconds: 1.5 }],
+      /*
+       * **감고 나면 비늘을 한 겹 여민다.** 회복은 참가자 전원이 함께 민 시즌 게이지를 되돌리므로
+       * 주지 않고, 그 판 안에서만 남는 보호막을 **궁극기 때만, 조금** 두른다 — 몸이 시즌 줄의
+       * 400분의 1이라 3%는 한 겹 750으로, 한두 대 더 치게 만드는 정도다.
+       */
+      selfShieldMaxHpPercent: 3,
+    },
+    // 수쿠스이노와 같은 이유로 네 칸 모두 "없음"이다.
+    breakthroughEffects: { basic: { kind: "none" }, ultimate: { kind: "none" }, ferocity: { kind: "none" }, passive: { kind: "none" } },
+  },
+  {
+    /**
      * **비리아.** 치즈케이크 대작전에 떼로 몰려오는 레이티아 거대겨울잠쥐 다섯 자매 중 하나다.
      *
      * 이름은 종명(레이티아 = 로마 속주 라이티아)과 같은 라틴 뿌리에서 따 viridis(초록)로 짓고,

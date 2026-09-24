@@ -788,3 +788,27 @@ export const SUKUSUINO_SD_METADATA: Omit<PuppetAsset, "url"> = {
   content: { left: 77, top: 52, right: 1171, bottom: 1227 },
   joints: { center: [658, 617], head: [681, 504], eyes: null, feet: [[880, 1208], [537, 1233]] },
 };
+
+/**
+ * **타보아 전신.** 공멸이 풀어 놓은 티타노보아 기반 폭주 병기이자 둘째 레이드 보스다.
+ *
+ * 값은 ZIP 안 WebP의 실제 크기와 alpha > 16 경계를 직접 재서 적었다. 수쿠스이노와 캔버스
+ * 크기가 같아도 여백과 관절이 다르므로 그 값을 옮겨 오지 않는다.
+ */
+export const TABOA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086, imageHeight: 1448,
+  content: { left: 26, top: 21, right: 1055, bottom: 1421 },
+  joints: { center: [566, 269], head: [520, 184], eyes: [[498, 188], [551, 147]], feet: [[909, 1904], [421, 1544]] },
+  /*
+   * **꼬리가 캔버스를 가로질러 얼굴이 작아지는 원화라 카드에서만 한 뼘 당긴다.** 수쿠스이노와
+   * 같은 방법(두 눈 사이 거리가 로스터 중앙값 띠에 드는 배율)으로 구했다.
+   */
+  cardZoom: 1.15,
+};
+
+/** 타보아 전투 SD. */
+export const TABOA_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254, imageHeight: 1254,
+  content: { left: 119, top: 13, right: 1135, bottom: 1241 },
+  joints: { center: [648, 560], head: [572, 472], eyes: null, feet: [[509, 1262], [734, 1251]] },
+};

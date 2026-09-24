@@ -17,7 +17,7 @@ import { session } from "../state/session";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { TopBar } from "../ui/TopBar";
-import { drawLayer, drawRoundedLayer, HOLO, slantedRect, toPoints } from "../ui/holo";
+import { drawLayer, HOLO, slantedRect, toPoints } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { useBackgroundTexture, BACKGROUND } from "../ui/backgrounds";
 import { CRACK_BRANCHES, FOSSIL_CRACK, crackBranchPoints, fossilShards, shardPoints } from "../ui/fossilCrack";
@@ -26,6 +26,9 @@ import { ResearchSlotTile } from "../ui/ResearchSlotTile";
 import { firstMeetingLine } from "../data/relicFirstMeetings";
 import { audioManager, type AudioScope } from "../managers/AudioManager";
 import { PopupLayer } from "../ui/PopupLayer";
+import { ResearchPullButton } from "../ui/ResearchPullButton";
+import { addRatesLink, addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
+import { LAB_CHROME } from "../ui/labLayout";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { MileagePopup } from "../ui/MileagePopup";
 import { settingsManager } from "../managers/SettingsManager";
@@ -39,12 +42,6 @@ import { formatCurrency } from "../core/formatCurrency";
 import { firstMeetingRelicIds } from "../core/researchPresentation";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 
-/** 마일리지 상점 버튼의 황금빛. 다른 버튼과 갈라 놓아 "쌓아 두었다 쓰는 곳"임을 알린다. */
-const MILEAGE_EDGE = 0xf2c744;
-
-/** 배너 그림이 서는 바닥. */
-const BANNER_FLOOR = 1240;
-
 /**
  * 연구소 — 화석과 호박석으로 렐릭을 복원하는 기존 연구 시설이다.
  *
@@ -56,9 +53,12 @@ export class LabScene extends Phaser.Scene {
   private bannerIndex = 0;
   private bannerName!: Phaser.GameObjects.Text;
   private pickupText!: Phaser.GameObjects.Text;
+  private pityLabel!: Phaser.GameObjects.Text;
   private pityText!: Phaser.GameObjects.Text;
-  private oneButton!: Button;
-  private tenButton!: Button;
+  private pityUnit!: Phaser.GameObjects.Text;
+  private pityNote!: Phaser.GameObjects.Text;
+  private oneButton!: ResearchPullButton;
+  private tenButton!: ResearchPullButton;
   /**
    * 지금 배너의 모집 원화.
    *
@@ -111,8 +111,9 @@ export class LabScene extends Phaser.Scene {
     // 들어가는 순간 설비 원화가 먼저 보이고 그 위로 픽업 원화가 녹아 들어와 화면이 한 번
     // 조립되는 과정이 그대로 보였다. 지금은 `showcaseRelic`이 세우는 한 장이 곧 배경이고,
     // 전용 원화가 없는 배너에서만 그 자리를 설비 원화가 메운다.
-    this.add.rectangle(cx, 960, BASE_WIDTH, 1920, COLOR.void, 0.34).setDepth(-29);
-    this.add.rectangle(cx, BANNER_FLOOR, BASE_WIDTH, 3, COLOR.panelEdge).setDepth(-28);
+    // 원화를 탁하게 덮는 막과 가로선을 깔지 않는다 — 모집 원화가 곧 이 화면이라 그 위에 한 겹을
+    // 더 두르면 밝은 파스텔이 잿빛으로 가라앉는다. 양옆만 눌러 가운데로 눈이 가게 한다.
+    this.drawSideVignette();
 
     // 모집 화면은 "무엇으로 뽑을 수 있나"를 묻는다. 상단 줄도 다이아·화석·호박석으로 바꾼다.
     bindCurrencyGuide({ scene: this, popups: this.popupLayer });
@@ -122,16 +123,15 @@ export class LabScene extends Phaser.Scene {
       // 연구소의 화석·호박석도 로비의 보석과 같이 눌러서 무엇에 쓰는지 읽을 수 있어야 한다.
       onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popupLayer! }, currency),
     });
-    this.addMileageButton(BASE_WIDTH - 246, 178);
+    // 마일리지 상점은 로비 상점과 같은 아이콘 칩으로 왼쪽 중상단에 선다(고고학 상점과 같은 자리).
+    addSideShopButton(this, SIDE_SHOP.screen.x, SIDE_SHOP.screen.y, SIDE_SHOP.screen.size, t("lab.mileageShop.short"), () => this.openMileageShop());
+    addRatesLink(this, LAB_CHROME.rates.x, LAB_CHROME.rates.y, t("lab.rates"), () => this.showRates());
 
-    this.bannerName = this.add.text(cx, 170, "", textStyle({ role: "display", size: 44 })).setOrigin(0.5, 0);
-    // 기능을 풀어 쓴 개발 메모 대신 현재 픽업처럼 선택에 필요한 정보만 제목 아래에 남긴다.
-    this.pickupText = this.add.text(cx, 250, "", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5, 0);
-    // 기존 Button/패널 토큰을 재사용해 확률 정보가 별도 웹 UI처럼 보이지 않게 한다.
-    new Button(this, cx, 390, {
-      width: 300, height: 82, label: t("lab.rates"), fontSize: 28,
-      onClick: () => this.showRates(),
-    });
+    this.bannerName = this.add.text(cx, 170, "", textStyle({ role: "display", size: 44 })).setOrigin(0.5, 0)
+      .setShadow(0, 3, "#05070a", 8, false, true);
+    // 픽업이 있는 배너에만 선다 — 화석 연구는 기본 연구라 이 줄이 비어 있다.
+    this.pickupText = this.add.text(cx, 250, "", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5, 0)
+      .setShadow(0, 2, "#05070a", 6, false, true);
 
     // 배너 전환.
     new Button(this, 100, 700, {
@@ -149,24 +149,14 @@ export class LabScene extends Phaser.Scene {
       onClick: () => this.switchBanner(1),
     });
 
-    this.oneButton = new Button(this, 300, NAV_TOP - 250, {
-      width: 440,
-      height: 150,
-      label: t("lab.pull.one"),
-      sub: "",
-      fontSize: 36,
-      onClick: () => this.doPull(1),
+    this.oneButton = new ResearchPullButton(this, 300, LAB_CHROME.pull.y, {
+      ...LAB_CHROME.pull.size, label: t("lab.pull.one"), tone: LAB_CHROME.pull.oneTone, onClick: () => void this.doPull(1),
     });
-    this.tenButton = new Button(this, 780, NAV_TOP - 250, {
-      width: 440,
-      height: 150,
-      label: t("lab.pull.ten"),
-      sub: "",
-      fontSize: 36,
-      onClick: () => this.doPull(10),
+    this.tenButton = new ResearchPullButton(this, 780, LAB_CHROME.pull.y, {
+      ...LAB_CHROME.pull.size, label: t("lab.pull.ten"), tone: LAB_CHROME.pull.tenTone, onClick: () => void this.doPull(10),
     });
 
-    this.pityText = this.add.text(cx, NAV_TOP - 355, "", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5);
+    this.addPityPlate(cx);
 
     // 캐릭터 획득 연구와 마일리지는 연구소에 남고, 배치형 자원 발굴은 로비 기능으로 분리한다.
     new BottomNav(this, "lab");
@@ -197,34 +187,42 @@ export class LabScene extends Phaser.Scene {
     playSceneEntrance(this);
   }
 
+  /** 마일리지 상점 — 임시 목록은 연구소 위에 머물며 유료 상점 씬으로 이동하지 않는다. */
+  private openMileageShop(): void {
+    if (!this.popupLayer) return;
+    this.mileagePopup ??= new MileagePopup(this, this.popupLayer, () => { this.mileagePopup = undefined; });
+    this.mileagePopup.open();
+  }
+
+  /** 양옆만 누르는 비네트. 위아래는 상단 줄과 하단 탭이 제 그라데이션을 이미 갖는다. */
+  private drawSideVignette(): void {
+    const { band, strength } = LAB_CHROME.vignette;
+    const g = this.add.graphics().setDepth(-29);
+    g.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, strength, 0, strength, 0);
+    g.fillRect(0, 0, band, BASE_HEIGHT);
+    g.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, strength, 0, strength);
+    g.fillRect(BASE_WIDTH - band, 0, band, BASE_HEIGHT);
+  }
+
   /**
-   * 마일리지 상점.
+   * SSR 확정까지 남은 수 — 버튼 바로 위, 수가 크게 선 판 한 장.
    *
-   * 뽑을 때마다 쌓이는 마일리지를 쓰는 자리라 상단 재화 바로 아래에 붙는다. 다른 버튼과
-   * 달리 황금빛 홀로그램인 이유는, 모집 화면에서 유일하게 "쌓아 두었다가 쓰는" 곳이기
-   * 때문이다 — 색이 곧 그 성격을 알린다.
+   * 글 한 줄로 두던 때는 밝은 원화 위에서 노란 글자가 묻혔다. 판을 깔되 **아래로 떨어지는 검은
+   * 복제 한 겹**(그림자)과 윗변의 강조선만 두르고, 남은 수만 크게 세운다.
    */
-  private addMileageButton(x: number, y: number): void {
-    const width = 300;
-    const height = 70;
-    const container = this.add.container(x, y);
-    // 상단 재화 줄과 같은 둥근 면이다. 바로 아래에 붙는 버튼이라 모양이 갈리면 따로 논다.
-    container.add(drawRoundedLayer(this, 0, 0, width, height, { fill: 0x2a2110, alpha: 0.95, radius: height / 2 }));
-    const ring = this.add.graphics();
-    ring.lineStyle(3, MILEAGE_EDGE, 0.95);
-    ring.strokeRoundedRect(-width / 2, -height / 2, width, height, height / 2);
-    container.add(ring);
-    container.add(this.add.text(0, 0, t("lab.mileageShop"), textStyle({ role: "display", size: 28, color: "#ffe9a3" })).setOrigin(0.5));
-    const hit = this.add.rectangle(x, y, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerdown", () => container.setScale(1.06));
-    hit.on("pointerout", () => container.setScale(1));
-    hit.on("pointerup", () => {
-      container.setScale(1);
-      // 임시 마일리지 목록은 연구소 탭 위에 머물며 유료 상점 씬으로 이동하지 않는다.
-      if (!this.popupLayer) return;
-      this.mileagePopup ??= new MileagePopup(this, this.popupLayer, () => { this.mileagePopup = undefined; });
-      this.mileagePopup.open();
-    });
+  private addPityPlate(cx: number): void {
+    const { y, width, height } = LAB_CHROME.pity;
+    const shape = slantedRect(width, height, 22);
+    const plate = this.add.container(cx, y);
+    plate.add(drawLayer(this, 6, 8, shape, { fill: 0x000000, alpha: 0.45, shadow: false }));
+    plate.add(drawLayer(this, 0, 0, shape, { fill: 0x10151d, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.95, edgeWidth: 3 }));
+    this.pityLabel = this.add.text(0, 0, "", textStyle({ role: "emphasis", size: 26, color: COLOR.ink })).setOrigin(0, 0.5);
+    this.pityText = this.add.text(0, -2, "", textStyle({ role: "display", size: 44, color: COLOR.accentText })).setOrigin(0, 0.5)
+      .setShadow(0, 3, "#05070a", 6, false, true);
+    this.pityUnit = this.add.text(0, 2, "", textStyle({ role: "emphasis", size: 26, color: COLOR.ink })).setOrigin(0, 0.5);
+    this.pityNote = this.add.text(0, height / 2 + 26, "", textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(0.5)
+      .setShadow(0, 2, "#05070a", 6, false, true);
+    plate.add([this.pityLabel, this.pityText, this.pityUnit, this.pityNote]);
   }
 
   private switchBanner(delta: number): void {
@@ -693,16 +691,25 @@ export class LabScene extends Phaser.Scene {
     const banner = this.banner;
     this.bannerName.setText(banner.name);
     const pickupNames = Object.values(banner.pickupRelicIds).flat().map((id) => getRelic(id).name);
-    this.pickupText.setText(`PICK UP  ${pickupNames.join(" · ")}`);
+    this.pickupText.setText(pickupNames.length > 0 ? `PICK UP  ${pickupNames.join(" · ")}` : "");
     const currentPity = session.gachaPityByGroup[banner.pityGroupId] ?? { pullsSinceSsr: 0, pickupGuaranteed: false };
-    this.pityText.setText(t("lab.pityLine", { left: Math.max(0, banner.highestRarityGuarantee - currentPity.pullsSinceSsr), pickup: currentPity.pickupGuaranteed ? t("lab.pityLine.pickup") : "" }));
+    // 판 안의 세 조각(말 · 수 · 단위)을 한 덩어리로 재서 가운데에 놓는다.
+    this.pityLabel.setText(t("lab.pity.label"));
+    this.pityText.setText(String(Math.max(0, banner.highestRarityGuarantee - currentPity.pullsSinceSsr)));
+    this.pityUnit.setText(t("lab.pity.unit"));
+    const gap = 12;
+    const total = this.pityLabel.width + gap + this.pityText.width + 6 + this.pityUnit.width;
+    this.pityLabel.setX(-total / 2);
+    this.pityText.setX(this.pityLabel.x + this.pityLabel.width + gap);
+    this.pityUnit.setX(this.pityText.x + this.pityText.width + 6);
+    this.pityNote.setText(currentPity.pickupGuaranteed && pickupNames.length > 0 ? t("lab.pity.pickupNext") : "");
 
-    const unit = t(banner.currency === "fossil" ? "lab.currency.fossil" : "lab.currency.amber");
+    const icon = CURRENCY_ICON_BY_WALLET[banner.currency];
     this.oneButton
-      .setSub(`${unit} ${pullCost(banner, 1)}`)
+      .setCost(icon, pullCost(banner, 1), canPull(session.wallet, banner, 1))
       .setEnabled(!this.pullPending && canPull(session.wallet, banner, 1));
     this.tenButton
-      .setSub(`${unit} ${pullCost(banner, 10)}`)
+      .setCost(icon, pullCost(banner, 10), canPull(session.wallet, banner, 10))
       .setEnabled(!this.pullPending && canPull(session.wallet, banner, 10));
   }
 }

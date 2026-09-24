@@ -12,6 +12,8 @@ export const EFFECT_TEXTURE = {
   shard: "fx-shard",
   /** 가운데가 진하고 가장자리로 사라지는 흰 원. 섬광·폭주 발광이 함께 쓴다. */
   glow: "fx-glow",
+  /** 회복의 굵은 십자. 흰 한 장을 구워 초록으로 물들여 쓴다. */
+  cross: "fx-cross",
 } as const;
 
 /** 파편 텍스처 한 변의 크기. 배율로 줄여 쓰므로 실제 화면 크기보다 넉넉하게 굽는다. */
@@ -59,8 +61,31 @@ function bakeGlow(scene: Phaser.Scene): void {
   canvas.refresh();
 }
 
+const CROSS_SIZE = 96;
+
+/**
+ * 회복의 굵은 십자 — 바깥에 옅은 한 겹을 두르고 속을 꽉 채운다.
+ *
+ * 가는 `+`는 3배속에서 한 프레임에 읽히지 않는다. 팔 두께를 한 변의 3분의 1로 두고 끝을 곧게
+ * 자른다(둥근 끝은 화면의 각진 결과 어긋난다).
+ */
+function bakeCross(scene: Phaser.Scene): void {
+  const graphics = scene.make.graphics({ x: 0, y: 0 }, false);
+  const plus = (arm: number, thick: number, alpha: number): void => {
+    const c = CROSS_SIZE / 2;
+    graphics.fillStyle(0xffffff, alpha);
+    graphics.fillRect(c - thick / 2, c - arm, thick, arm * 2);
+    graphics.fillRect(c - arm, c - thick / 2, arm * 2, thick);
+  };
+  plus(46, 40, 0.28);
+  plus(40, 30, 1);
+  graphics.generateTexture(EFFECT_TEXTURE.cross, CROSS_SIZE, CROSS_SIZE);
+  graphics.destroy();
+}
+
 /** 이펙트 그림을 준비한다. 이미 구워져 있으면 아무것도 하지 않으므로 씬마다 불러도 된다. */
 export function ensureEffectTextures(scene: Phaser.Scene): void {
   if (!scene.textures.exists(EFFECT_TEXTURE.shard)) bakeShard(scene);
   if (!scene.textures.exists(EFFECT_TEXTURE.glow)) bakeGlow(scene);
+  if (!scene.textures.exists(EFFECT_TEXTURE.cross)) bakeCross(scene);
 }

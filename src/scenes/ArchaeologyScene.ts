@@ -17,6 +17,7 @@ import type { RuneInstance } from "../core/runes";
 import { addResearchBench, type ResearchBenchAction } from "../ui/ResearchBench";
 import { addSceneBackground, BACKGROUND, useBackgroundTexture } from "../ui/backgrounds";
 import { BottomNav } from "../ui/BottomNav";
+import { addRatesLink, addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
 import { Button } from "../ui/Button";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
@@ -25,7 +26,6 @@ import { addSectionTitle } from "../ui/SectionTitle";
 import { addFramedIcon } from "../ui/itemFrame";
 import { KeywordManager } from "../managers/KeywordManager";
 import { PopupLayer } from "../ui/PopupLayer";
-import { RailButton } from "../ui/RailButton";
 import { openRuneTraitReroll } from "../ui/RuneTraitPopup";
 import { openRuneTraitOdds } from "../ui/RuneTraitOddsPopup";
 import { coverSourceCrop, STRATA_ART, STRATA_BOARD, strataBoardFrame, strataCropPlacement, strataLayerTextureKey, strataTileCenter, strataTileCrop, type ScreenRect, type SourceCropRect } from "../ui/strataBoardLayout";
@@ -61,18 +61,13 @@ const ARCHAEOLOGY = {
   tabWidth: 280,
   tabHeight: 84,
   /**
-   * 화면 제목 줄의 오른쪽 — **이 화면의 고정 입구 둘이 나란히 서는 자리다.**
+   * 확률 정보 — 제목 바로 아래의 **작고 흐린 글줄**이다(연구소와 같은 한 벌, `addRatesLink`).
    *
-   * 아래에서 시작하는 판(탐사판·연구대·지도)이 어느 탭에서도 덮지 않는 자리라, 굴리기 전에
-   * 무엇이 나올 수 있는지 읽고 들어갈 수 있다. 예전에는 확률만 횟수 줄 높이(262)에 혼자
-   * 섰고 상점은 하단 라벨 줄의 셋째 라벨이었다 — 라벨 줄은 **이 화면의 갈래**를 고르는
-   * 자리인데 셋째만 화면을 통째로 넘겨, 켜진 채로 남지 못하고 돌아오는 길도 라벨이 아니라
-   * 우하단 뒤로가기였다. 화면을 넘기는 입구는 교류의 교환소처럼 판 밖의 버튼이 맡는다.
+   * 황금빛 아이콘 칩으로 제목 줄 오른쪽에 세우던 때는 이 화면에서 가장 눈에 띄는 조작이 확률
+   * 정보였다 — 누르면 열리는 정보일 뿐 고르는 조작이 아니다. 상점은 그 자리를 떠나 연구소의
+   * 마일리지 상점과 **같은 자리·같은 아이콘 칩**(`SIDE_SHOP.screen`)에 선다.
    */
-  oddsX: BASE_WIDTH - 96,
-  entryY: 220,
-  /** 상점 버튼 — 확률 돋보기 왼쪽에 서고 오른쪽 끝을 그 칩과 맞춘다. */
-  shopButton: { x: 790, width: 240, height: 86 },
+  rates: { x: 58, y: 262 },
   /**
    * 횟수 판.
    *
@@ -219,33 +214,18 @@ export class ArchaeologyScene extends Phaser.Scene {
 
     this.add.text(60, ARCHAEOLOGY.titleY, t("archaeology.title"), textStyle({ role: "display", size: 52 })).setOrigin(0, 0);
     /*
-     * **화면을 넘기는 입구는 제목 줄의 오른쪽에 선다** — 교류의 교환소와 같은 문법이다.
-     *
-     * 하단 라벨 줄은 이 화면의 갈래(탐사·연구)를 고르는 자리라, 거기 선 라벨은 눌러도 이
-     * 화면에 남는다. 상점만 그 줄에서 화면을 통째로 넘기던 때는 셋째 라벨이 켜진 채로 남지
-     * 못해 늘 꺼진 모습이었고, 돌아오는 길도 라벨이 아니라 우하단 뒤로가기였다.
+     * 상점은 화면을 통째로 넘기는 입구라 하단 라벨 줄(이 화면의 갈래)에 두지 않는다. 연구소의
+     * 마일리지 상점과 같은 자리·같은 아이콘 칩이다(`SIDE_SHOP.screen`) — 같은 상점 씬을 상품표만
+     * 바꿔 다시 쓴다(새 씬을 만들면 선반·격자·값줄 규칙이 두 곳이 된다).
      */
-    this.add.existing(new Button(this, ARCHAEOLOGY.shopButton.x, ARCHAEOLOGY.entryY, {
-      width: ARCHAEOLOGY.shopButton.width,
-      height: ARCHAEOLOGY.shopButton.height,
-      label: t("archaeology.shop"),
-      icon: "shop",
-      // 같은 상점 씬을 상품표만 바꿔 다시 쓴다 — 새 씬을 만들면 선반·격자·값줄 규칙이
-      // 두 곳이 되고 한쪽만 고치는 사고가 난다.
-      onClick: () => this.scene.start("shop", { storefront: "archaeology", returnScene: "archaeology" }),
-    }));
+    const shopSlot = SIDE_SHOP.screen;
+    addSideShopButton(this, shopSlot.x, shopSlot.y, shopSlot.size, t("archaeology.shop"),
+      () => startScene(this, "shop", { storefront: "archaeology", returnScene: "archaeology" }));
     // 자동화도 런타임과 같은 고정 버튼을 누르도록 최소 입력 중심만 공개한다.
-    setDebugStorefrontControls({ archaeology: { shop: { x: ARCHAEOLOGY.shopButton.x, y: ARCHAEOLOGY.entryY } } });
-    // **확률 정보는 그 오른쪽 끝에 선다.** 어느 탭에서도 가려지지 않는 자리라 굴리기 전에
-    // 무엇이 나올 수 있는지 읽고 들어갈 수 있다.
-    new RailButton(this, ARCHAEOLOGY.oddsX, ARCHAEOLOGY.entryY, {
-      icon: "magnifier",
-      label: t("rune.trait.odds"),
-      accent: true,
-      // **누른 자리에 붙이지 않는다** — 표 두 장이 든 큰 판이라 위로 붙이면 제목·횟수 줄을
-      // 덮는다. 한동안 머무는 판은 화면 가운데에 서고 우하단 뒤로가기로 닫는다.
-      onClick: () => openRuneTraitOdds({ scene: this, popups: this.popups }),
-    });
+    setDebugStorefrontControls({ archaeology: { shop: { x: shopSlot.x, y: shopSlot.y } } });
+    // **누른 자리에 붙이지 않는다** — 표 두 장이 든 큰 판이라 위로 붙이면 제목·횟수 줄을 덮는다.
+    // 한동안 머무는 판은 화면 가운데에 서고 우하단 뒤로가기로 닫는다.
+    addRatesLink(this, ARCHAEOLOGY.rates.x, ARCHAEOLOGY.rates.y, t("rune.trait.odds"), () => openRuneTraitOdds({ scene: this, popups: this.popups }));
 
     this.view = this.add.container(0, 0);
     this.tabRow = this.add.container(0, 0);

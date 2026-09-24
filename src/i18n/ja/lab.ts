@@ -1,9 +1,12 @@
 /** 연구소 화면의 일본어 표. */
 export const LAB_JA = {
   "lab.rates": "確率情報",
+  "lab.mileageShop.short": "マイレージ",
+  "lab.pity.label": "SSR確定まで",
+  "lab.pity.unit": "回",
+  "lab.pity.pickupNext": "次のSSRはピックアップ確定",
   "lab.pull.one": "1回研究",
   "lab.pull.ten": "10回研究",
-  "lab.mileageShop": "マイレージショップ",
   "lab.networkError": "通信に失敗しました。もう一度お試しください。",
 
   "lab.policy.title": "研究確率 · 保証ポリシー",
@@ -34,8 +37,4 @@ export const LAB_JA = {
   "lab.result.tapTile": "マスを押して確認",
   "lab.result.tapToReturn": "画面を押して戻る",
 
-  "lab.pityLine": "SSR確定まで {left}回{pickup}",
-  "lab.pityLine.pickup": " · 次のSSRはピックアップ確定",
-  "lab.currency.fossil": "化石",
-  "lab.currency.amber": "琥珀",
 } as const;

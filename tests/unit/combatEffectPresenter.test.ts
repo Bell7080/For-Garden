@@ -6,12 +6,14 @@ import type { EffectManager, SustainedEffectTarget } from "../../src/managers/Ef
 class EffectManagerSpy {
   synced: readonly SustainedEffectTarget[] = [];
   removed: string[] = [];
+  auras: readonly { id: string; shield: number; maxHp: number }[] = [];
+  syncShieldAuras(targets: readonly { id: string; shield: number; maxHp: number }[]): void { this.auras = targets; }
   syncSustained(targets: readonly SustainedEffectTarget[]): void { this.synced = targets; }
   removeSustainedForFighter(id: string): void { this.removed.push(id); }
 }
 
 const target = (overrides: Partial<CombatEffectTarget> = {}): CombatEffectTarget => ({
-  id: "ally-1", x: 120, y: 300, height: 100, alive: true, effectTint: 0xaabbcc,
+  id: "ally-1", x: 120, y: 300, height: 100, alive: true, effectTint: 0xaabbcc, shield: 0, maxHp: 1000,
   activeEffects: [{ id: "luka-passive:luka-1:ally-1", tag: "lukaSharedTargetHasteActive", aimTargetId: "enemy-1" }],
   ...overrides,
 });
@@ -34,5 +36,12 @@ describe("CombatEffectPresenter 유지 효과 매핑", () => {
     expect(spy.synced).toEqual([]);
     presenter.remove("ally-1");
     expect(spy.removed).toEqual(["ally-1"]);
+  });
+
+  it("보호막 잔량은 살아 있는 전투원만 두르는 원으로 넘긴다", () => {
+    const spy = new EffectManagerSpy();
+    const presenter = new CombatEffectPresenter(spy as unknown as EffectManager);
+    presenter.sync([target({ shield: 250 }), target({ id: "gone", alive: false, shield: 400 })]);
+    expect(spy.auras.map(({ id, shield, maxHp }) => ({ id, shield, maxHp }))).toEqual([{ id: "ally-1", shield: 250, maxHp: 1000 }]);
   });
 });

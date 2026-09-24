@@ -198,9 +198,11 @@ export function raidLayerStack(kinds: readonly RaidLayerKind[]): { centers: numb
  * 그 아이템의 액자에 수량을 겹친다(재화·아이템이 서는 자리의 공용 규칙).
  *
  * **밑동은 탭 → 소환 순으로 쌓인다.** 탭은 목록을 갈아 끼우는 전환 라벨이라 목록 바로 밑에 붙고
- * (`CategoryTab`, 가방·상점과 같은 한 장), 그 아래 소환 줄이 선다. 선택 토벌권이 있을 때만 선택
- * 소환이 옆에 붙는다 — 없는데 세우면 눌러도 아무 일이 없는 칸이 된다. 우하단은 공용 뒤로가기
- * 자리라 소환 줄은 그 왼쪽에서 끝난다.
+ * (`CategoryTab`, 가방·상점과 같은 한 장), 그 아래 소환 줄이 선다. **소환 둘은 같은 크기·같은
+ * 양식으로 나란히 선다** — 선택 소환이 왼쪽, 소환이 오른쪽이다. 둘은 같은 손짓(토벌권 한 장)의
+ * 두 갈래라 한쪽만 작거나 흐리면 덜 중요한 조작처럼 읽힌다. 그 토벌권이 없으면 그 버튼만
+ * 꺼진 채 선다 — 자리를 비우면 버튼이 하나일 때와 둘일 때 줄이 흔들린다. 우하단은 공용
+ * 뒤로가기 자리라 소환 줄은 그 왼쪽에서 끝난다.
  */
 export const RAID_LIST_CHROME = {
   tickets: { y: 164, size: 88, gap: 22, right: BASE_WIDTH - 60 },
@@ -208,18 +210,17 @@ export const RAID_LIST_CHROME = {
   summon: {
     y: BACK_SLOT.y,
     height: 112,
-    /** 선택 토벌권이 없으면 소환 하나가 이 폭으로 선다. */
-    single: { centerX: BASE_WIDTH / 2, width: 440 },
-    /** 둘이 설 때. 소환이 왼쪽, 선택 소환이 오른쪽이다. */
-    pair: { left: { centerX: 262, width: 400 }, right: { centerX: 682, width: 360 } },
+    fontSize: 32,
+    /** 선택 소환(왼쪽)과 소환(오른쪽). 폭이 같다. */
+    select: { centerX: 252, width: 380 },
+    normal: { centerX: 672, width: 380 },
   },
 } as const;
 
 /** 소환 줄의 오른쪽 끝이 우하단 공용 뒤로가기와 벌린 가로 간격이다. 양수여야 한다. */
 export function raidSummonBackGap(): number {
-  const { single, pair } = RAID_LIST_CHROME.summon;
-  const right = Math.max(single.centerX + single.width / 2, pair.right.centerX + pair.right.width / 2);
-  return (BACK_SLOT.x - BACK_BUTTON_SIZE / 2) - right;
+  const { normal } = RAID_LIST_CHROME.summon;
+  return (BACK_SLOT.x - BACK_BUTTON_SIZE / 2) - (normal.centerX + normal.width / 2);
 }
 
 /**
@@ -263,11 +264,40 @@ export const RAID_SUMMON_STAGE = {
   seal: { radius: 250, squash: 0.44 },
 } as const;
 
-/** 선택 소환에서 보스를 고르는 층. 목록 층과 같은 문법을 줄여 쓴다. */
-export const RAID_BOSS_PICK = { width: 820, height: 240, gap: 36, padding: 40, top: 150, bottom: 70 } as const;
+/**
+ * 선택 소환의 두 창 — **보스를 고르는 층**과 그 위에 겹쳐 뜨는 **난이도 층**이다.
+ *
+ * 둘 다 목록의 층과 같은 문법(오른쪽을 채운 얼굴 띠, 왼쪽의 글, 윗변에 걸터앉는 제목표)을
+ * 쓴다. 버튼 줄이나 얼굴 카드로 세우던 때는 "누구를 부를지"와 "얼마나 세게"가 한 창의 버튼
+ * 색으로만 갈렸다 — 층으로 세우면 고르기 전에 얼굴과 그 판의 무게가 먼저 읽힌다.
+ *
+ * 창의 높이는 층 수에서 거꾸로 구한다(`raidPickHeight`). 층 사이 `gap`에는 다음 층의 제목표가
+ * 든다(목록과 같다).
+ */
+export const RAID_BOSS_PICK = {
+  width: 820, height: 280, gap: 62, padding: 44, top: 150, bottom: 70,
+  nameY: -54, nameSize: 54,
+  /** 이름 아래 속성·직군 — 정보창과 같은 뱃지를 줄여 쓴다. */
+  badgeY: 26, badge: { element: 62, role: 48, gap: 18 },
+  levelsY: 92,
+} as const;
 
-/** 보스를 고르는 창의 높이 — 층 수에서 거꾸로 구한다. */
+export const RAID_DIFFICULTY_PICK = {
+  width: 820, height: 250, gap: 62, padding: 44, top: 150, bottom: 70,
+  nameY: -72, nameSize: 44, levelY: -24,
+  /** 최대 정산 액자와 그 오른쪽 두 줄(무엇인가 · 보스 체력). */
+  reward: { y: 56, size: 84 },
+  rewardText: { gap: 18, labelUp: 18, valueDown: 18 },
+  /** 난이도 층은 그 색으로 판을 한층 짙게 물들인다 — 이 창에서는 색이 곧 고르는 대상이다. */
+  washAlpha: 0.5,
+} as const;
+
+/** 층을 쌓는 창의 높이 — 층 수에서 거꾸로 구한다. */
+export function raidPickHeight(spec: { height: number; gap: number; top: number; bottom: number }, count: number): number {
+  return spec.top + count * spec.height + Math.max(0, count - 1) * spec.gap + spec.bottom;
+}
+
+/** 보스를 고르는 창의 높이. */
 export function raidBossPickHeight(count: number): number {
-  const { height, gap, top, bottom } = RAID_BOSS_PICK;
-  return top + count * height + Math.max(0, count - 1) * gap + bottom;
+  return raidPickHeight(RAID_BOSS_PICK, count);
 }

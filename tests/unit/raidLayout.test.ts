@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import {
   RAID_ACTIONS, RAID_BOARD, RAID_BOARD_PLATE, RAID_BOSS_SPOT, RAID_HP_BAR, RAID_LIST, RAID_LIST_CHROME,
-  RAID_BOSS_PICK, RAID_DIFFICULTY_TONE, RAID_LAYER_OWNER, RAID_SUMMON_INTENSITY, RAID_SUMMON_STAGE,
-  raidBoardViewport, raidBossPickHeight, raidLayerStack, raidSortieBackGap, raidSummonBackGap,
+  RAID_BOSS_PICK, RAID_DIFFICULTY_PICK, RAID_DIFFICULTY_TONE, RAID_LAYER_OWNER, RAID_SUMMON_INTENSITY, RAID_SUMMON_STAGE,
+  raidBoardViewport, raidBossPickHeight, raidLayerStack, raidPickHeight, raidSortieBackGap, raidSummonBackGap,
 } from "../../src/ui/raidLayout";
 import { RAID_DIFFICULTY, RAID_SUMMON_DIFFICULTIES } from "../../src/data/raid";
 
@@ -88,9 +88,11 @@ describe("레이드 배치표", () => {
     expect(summon.y - summon.height / 2).toBeGreaterThan(tabs.y + tabs.height / 2);
     expect(summon.y + summon.height / 2).toBeLessThan(BASE_HEIGHT);
     expect(raidSummonBackGap()).toBeGreaterThan(0);
-    // 둘이 설 때 서로 겹치지 않고 화면 왼쪽 밖으로 나가지 않는다.
-    expect(summon.pair.left.centerX - summon.pair.left.width / 2).toBeGreaterThan(0);
-    expect(summon.pair.left.centerX + summon.pair.left.width / 2).toBeLessThan(summon.pair.right.centerX - summon.pair.right.width / 2);
+    // 선택 소환이 왼쪽, 소환이 오른쪽이고 같은 크기다. 서로 겹치지 않고 화면 왼쪽 밖으로 나가지 않는다.
+    expect(summon.select.width).toBe(summon.normal.width);
+    expect(summon.select.centerX).toBeLessThan(summon.normal.centerX);
+    expect(summon.select.centerX - summon.select.width / 2).toBeGreaterThan(0);
+    expect(summon.select.centerX + summon.select.width / 2).toBeLessThan(summon.normal.centerX - summon.normal.width / 2);
     // 토벌권은 제목 줄에 서고 목록 창 위에서 끝난다.
     expect(tickets.y + tickets.size / 2).toBeLessThan(RAID_LIST.viewport.top);
     expect(tickets.right).toBeLessThanOrEqual(BASE_WIDTH);
@@ -128,5 +130,27 @@ describe("레이드 배치표", () => {
   it("보스를 고르는 창의 높이는 층 수에서 거꾸로 구한다", () => {
     expect(raidBossPickHeight(1)).toBe(RAID_BOSS_PICK.top + RAID_BOSS_PICK.height + RAID_BOSS_PICK.bottom);
     expect(raidBossPickHeight(2) - raidBossPickHeight(1)).toBe(RAID_BOSS_PICK.height + RAID_BOSS_PICK.gap);
+    expect(raidPickHeight(RAID_DIFFICULTY_PICK, 3)).toBe(RAID_DIFFICULTY_PICK.top + 3 * RAID_DIFFICULTY_PICK.height + 2 * RAID_DIFFICULTY_PICK.gap + RAID_DIFFICULTY_PICK.bottom);
+  });
+
+  it.each([["보스", RAID_BOSS_PICK], ["난이도", RAID_DIFFICULTY_PICK]] as const)("%s 층 사이 틈에 다음 층의 제목표가 든다", (_name, spec) => {
+    // 제목표(높이 52)의 윗절반이 윗층의 밑변을 넘지 않아야 한다 — 목록의 층 사이와 같은 규칙이다.
+    expect(spec.gap).toBeGreaterThanOrEqual(RAID_LIST.gap);
+  });
+
+  it("보스 층의 이름·뱃지·레벨 줄이 판 안에서 겹치지 않는다", () => {
+    const { height, nameY, nameSize, badgeY, badge, levelsY } = RAID_BOSS_PICK;
+    expect(nameY - nameSize / 2).toBeGreaterThan(-height / 2);
+    expect(badgeY - badge.element / 2).toBeGreaterThan(nameY + nameSize / 2 - 8);
+    expect(levelsY - 14).toBeGreaterThan(badgeY + badge.element / 2);
+    expect(levelsY + 14).toBeLessThan(height / 2);
+  });
+
+  it("난이도 층의 이름·레벨·보상 줄이 판 안에서 겹치지 않는다", () => {
+    const { height, nameY, nameSize, levelY, reward } = RAID_DIFFICULTY_PICK;
+    expect(nameY - nameSize / 2).toBeGreaterThan(-height / 2);
+    expect(levelY - 14).toBeGreaterThan(nameY + nameSize / 2 - 8);
+    expect(reward.y - reward.size / 2).toBeGreaterThan(levelY + 14);
+    expect(reward.y + reward.size / 2).toBeLessThan(height / 2);
   });
 });

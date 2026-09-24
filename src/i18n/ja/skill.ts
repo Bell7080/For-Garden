@@ -205,6 +205,7 @@ export const SKILL_JA = {
   "skill.clause.reagent": "[[reagent|試薬]]を{stacks}重付与する",
   "skill.clause.combo": "{percent}%の確率で[[combo|連撃]]して計{hits}回命中する",
   "skill.clause.damageHealing": "与えたダメージの{percent}%分の体力を回復する",
+  "skill.clause.selfShield": "自身は{shield}のシールドを得る",
   "skill.clause.damageHealingIfFrozen": "[[frozen|氷結]]状態の敵に与えたダメージなら、そのうち{percent}%分の体力を回復する",
   "skill.clause.shieldFromDamage": "与えたダメージの{percent}%分のシールドを得る",
   "skill.clause.selfStealth": "{seconds}秒間[[stealth|隠密]]する",

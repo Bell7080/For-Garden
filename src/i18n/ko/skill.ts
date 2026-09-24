@@ -226,6 +226,7 @@ export const SKILL_KO = {
   "skill.clause.reagent": "[[reagent|시약]]을 {stacks}겹 부여한다",
   "skill.clause.combo": "{percent}% 확률로 [[combo|연격]]하여 총 {hits}회 적중한다",
   "skill.clause.damageHealing": "입힌 피해의 {percent}%만큼 체력을 회복한다",
+  "skill.clause.selfShield": "자신은 {shield}만큼 보호막을 얻는다",
   "skill.clause.damageHealingIfFrozen": "[[frozen|빙결]] 상태의 적에게 입힌 피해라면 그중 {percent}%만큼 체력을 회복한다",
   "skill.clause.shieldFromDamage": "입힌 피해의 {percent}%만큼 보호막을 얻는다",
   "skill.clause.selfStealth": "{seconds}초 동안 [[stealth|은신]]한다",

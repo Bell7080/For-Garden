@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { CAKE_OPERATION_ENEMY_IDS } from "../../src/data/cakeOperation";
 import { EXPEDITION_ENEMY_FORMATIONS, FINAL_FLOOR_BOSS_ID } from "../../src/data/expeditionEnemies";
 import { RELICS, getRelic } from "../../src/data/relics";
-import { RAID_SEASON_BOSS } from "../../src/data/raid";
+import { RAID_BOSS_POOL } from "../../src/data/raid";
 import { STAGES } from "../../src/data/stages";
 import { ULTIMATE_PRESENTATIONS } from "../../src/data/ultimatePresentations";
 import { ENEMY_SD_ASSET_IDS } from "../../src/puppets/enemyAssetIds";
@@ -17,8 +17,8 @@ function referencedEnemyIds(): { stage: Set<string>; expedition: Set<string>; du
   expedition.add(FINAL_FLOOR_BOSS_ID);
   // 전용 던전에만 서는 개체도 같은 검수 집합에 넣는다.
   const dungeon = new Set<string>(CAKE_OPERATION_ENEMY_IDS);
-  // 시즌 보스는 편성표가 아니라 시즌 정의 하나가 가리키므로 같은 검수 집합에 함께 넣는다.
-  dungeon.add(RAID_SEASON_BOSS.relicId);
+  // 레이드 보스는 편성표가 아니라 보스 풀이 가리키므로 같은 검수 집합에 함께 넣는다.
+  for (const id of RAID_BOSS_POOL) dungeon.add(id);
   return { stage, expedition, dungeon };
 }
 

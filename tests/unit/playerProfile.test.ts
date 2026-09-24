@@ -35,8 +35,8 @@ describe("player profile display", () => {
     // 애착 무대는 레벨·돌파·유대·전투력을 함께 싣고, 스토리 진행은 깬 수와 전체 수를 함께 싣는다.
     expect(hidden.competitiveStats.favoriteRelic).toMatchObject({ level: 1, breakthroughGrade: 1, rarity: "SSR" });
     expect(hidden.competitiveStats.favoriteRelic!.power).toBeGreaterThan(0);
-    expect(hidden.competitiveStats.storyProgress.cleared).toBe(2);
-    expect(hidden.collection.owned).toBeGreaterThan(0);
+    expect(hidden.competitiveStats.storyProgress!.cleared).toBe(2);
+    expect(hidden.collection!.owned).toBeGreaterThan(0);
     expect(hidden.competitiveStats.arenaTier).toBeUndefined();
     const ranked = await loadPlayerProfileDisplay(state, { getAsyncArenaServerState: async () => ({ seasonTierId: "amber-2", activeDefenseSnapshotId: null, weekly: { weekId: "w", score: 1, wins: 0, losses: 0, updatedAt: "now" }, dailyAttempts: { utcDate: "today", used: 0, limit: 5 }, seasonReward: { seasonId: "s", finalTier: null, rewards: [], claimStatus: "not_eligible" } }) });
     expect(ranked.competitiveStats.arenaTier).toEqual({ tierId: "amber-2", displayName: "amber-2" });

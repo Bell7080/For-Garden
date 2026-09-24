@@ -26,6 +26,28 @@ export function raidSeasonKey(now: Date): string {
   return now.toISOString().slice(0, 10);
 }
 
+/**
+ * 그날의 월드 폭주에 서는 보스 — 풀을 **하루씩 차례로** 돈다.
+ *
+ * 무작위로 굴리면 같은 보스가 며칠씩 이어질 수 있어 "오늘은 누구인가"가 매일 바뀐다는 약속이
+ * 흐려진다. 날짜에서 바로 구하므로 서버와 화면이 같은 답을 낸다.
+ */
+export function raidWorldBossId(dayKey: string): string {
+  const day = Math.floor(Date.parse(`${dayKey}T00:00:00.000Z`) / 86_400_000);
+  return RAID_BOSS_POOL[((day % RAID_BOSS_POOL.length) + RAID_BOSS_POOL.length) % RAID_BOSS_POOL.length];
+}
+
+/**
+ * 토벌권 한 장이 여는 판 — **보스와 난이도를 함께 굴린다.** `roll`은 [0, 1) 난수 두 개다.
+ *
+ * 토벌권은 아무것도 고르지 않는 손이다. 보스만 굴리고 난이도를 묻던 때는 누르자마자 창이 떠
+ * 「바로 연다」가 되지 않았다 — 고르고 싶으면 선택 토벌권이 그 몫을 맡는다.
+ */
+export function rollRaidSummon(bossRoll: number, difficultyRoll: number): { bossRelicId: string; difficulty: RaidDifficulty } {
+  const pick = <T>(list: readonly T[], roll: number): T => list[Math.min(list.length - 1, Math.max(0, Math.floor(roll * list.length)))]!;
+  return { bossRelicId: pick(RAID_BOSS_POOL, bossRoll), difficulty: pick(RAID_SUMMON_DIFFICULTIES, difficultyRoll) };
+}
+
 /** 그날 자정(UTC)부터 지난 비율(0~1). 모의 누적이 하루에 걸쳐 자라는 근거다. */
 export function raidDayProgress(now: Date): number {
   const start = Date.parse(`${raidSeasonKey(now)}T00:00:00.000Z`);

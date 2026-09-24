@@ -1,9 +1,12 @@
 /** 연구소(화석 연구) 화면의 문구. */
 export const LAB_KO = {
   "lab.rates": "확률 정보",
+  "lab.mileageShop.short": "마일리지",
+  "lab.pity.label": "SSR 확정까지",
+  "lab.pity.unit": "회",
+  "lab.pity.pickupNext": "다음 SSR 픽업 확정",
   "lab.pull.one": "1회 연구",
   "lab.pull.ten": "10회 연구",
-  "lab.mileageShop": "마일리지 상점",
   "lab.networkError": "통신에 실패했습니다. 다시 시도해 주세요.",
 
   "lab.policy.title": "연구 확률 · 보장 정책",
@@ -34,8 +37,6 @@ export const LAB_KO = {
   "lab.result.tapTile": "칸을 눌러 확인",
   "lab.result.tapToReturn": "화면을 눌러 돌아가기",
 
-  "lab.pityLine": "SSR 확정까지 {left}회{pickup}",
-  "lab.pityLine.pickup": " · 다음 SSR 픽업 확정",
   // 시네마틱은 세계관 안의 명칭과 조작 라벨만 세운다 — 진행 상태·안내 문장은 두지 않는다.
   "lab.cinematic.skip": "SKIP",
   "lab.cinematic.resource": "재화",
@@ -43,6 +44,4 @@ export const LAB_KO = {
   "lab.cinematic.specimenName": "UNKNOWN ORGANISM",
   "lab.cinematic.specimenNote": "FOSSIL / AMBER",
 
-  "lab.currency.fossil": "화석",
-  "lab.currency.amber": "호박석",
 } as const;

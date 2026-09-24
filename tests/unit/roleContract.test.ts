@@ -50,6 +50,7 @@ function skillSustains(skill: Skill): boolean {
     || any.shieldPercent !== undefined
     || any.selfBulwark !== undefined
     || any.selfGuard !== undefined
+    || any.selfShieldMaxHpPercent !== undefined
     || (Array.isArray(any.steps) && any.steps.some((step: Record<string, unknown>) =>
       step.shieldFromDamagePercent !== undefined || step.shieldMaxHpPercent !== undefined));
 }

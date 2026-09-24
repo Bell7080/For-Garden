@@ -29,7 +29,8 @@ test("로비 프로필 칩은 공개 정보창을 열고 공용 닫기로 정리
 });
 
 test("프로필 얼굴을 누르면 사진·테두리 선택창이 뜨고 라벨로 목록을 갈아 끼운다", async ({ page }) => {
-  await startAfterOpening(page);
+  // 한 줄 소개가 서 있는 카드를 찍는다 — 비어 있으면 그 줄의 글꼴을 볼 수 없다.
+  await startAfterOpening(page, (session) => { session.playerCard.bio = "오늘도 화석 먼지 속에서 인사드려요!"; });
   await tap(page, WIDTH / 2, HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await tap(page, 176, 86);

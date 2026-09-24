@@ -64,8 +64,8 @@ export const ITEMS = [
   { id: "rune-dust", name: "룬 가루", description: "룬 연구에 쓰이는 정제 재료입니다.", category: "material", icon: { kind: "asset", key: "item-rune-dust" }, maxStack: 999, useEffect: { kind: "none" } },
   // 레이드를 여는 두 토벌권. 소모하는 입장권이라 지갑이 아니라 가방의 재료다 — 상단 줄에 늘
   // 서는 재화가 아니고, 레이드 목록 머리에서만 몇 장 남았는지 말한다.
-  { id: "raid-ticket", name: "토벌권", description: "친구와 함께 치는 레이드를 엽니다. 보스는 무작위로 정해집니다.", category: "material", icon: { kind: "asset", key: "item-raid-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
-  { id: "raid-select-ticket", name: "선택 토벌권", description: "친구와 함께 치는 레이드를 엽니다. 보스를 골라서 엽니다.", category: "material", icon: { kind: "asset", key: "item-raid-select-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "raid-ticket", name: "토벌권", description: "친구와 함께 치는 레이드를 엽니다. 보스와 난이도는 무작위로 정해집니다.", category: "material", icon: { kind: "asset", key: "item-raid-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "raid-select-ticket", name: "선택 토벌권", description: "친구와 함께 치는 레이드를 엽니다. 보스와 난이도를 골라서 엽니다.", category: "material", icon: { kind: "asset", key: "item-raid-select-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
   // 전리품 상점의 두 증표. 상한을 두지 않는 이유가 곧 지갑에 둔 이유다 — 가끔 들어가 터는
   // 자리라 몇 주치가 쌓여도 버려지면 안 된다.
   { id: "raidSigil", name: "토벌 증표", description: "레이드 보스를 밀어낸 몫으로 받는 증표입니다. 전리품 상점에서 교환합니다.", category: "currency", icon: { kind: "currency", key: "raidSigil" }, maxStack: 9_999_999, useEffect: { kind: "none" } },

@@ -61,6 +61,9 @@ ART: dict[str, tuple[str, tuple[float, float, float] | None] | tuple[str, tuple[
     "sprites/items/stamina-tonic-large.webp": ("에너지드링크+(120회복).png", None),
     "sprites/currency/raid-sigil.webp": ("토벌증표.webp", None),
     "sprites/currency/salvage-record.webp": ("인양기록.webp", None),
+    # 토벌권 둘. 가방의 재료지만 레이드 목록 머리에 액자로 서므로 같은 규격으로 굽는다.
+    "sprites/items/raid-ticket.webp": ("토벌권.webp", None),
+    "sprites/items/raid-select-ticket.webp": ("선택 토벌권.webp", None),
 }
 
 # 그림이 캔버스 가운데에 있지 않은 원본.
@@ -79,6 +82,9 @@ RECENTER: dict[str, float] = {
     "sprites/items/stamina-tonic-large.webp": 0.78,
     "sprites/currency/raid-sigil.webp": 0.8,
     "sprites/currency/salvage-record.webp": 0.8,
+    # 토벌권은 가로로 긴 표라 긴 변을 조금 더 채운다 — 0.8이면 세로가 얇아 액자 안에서 작아 보인다.
+    "sprites/items/raid-ticket.webp": 0.86,
+    "sprites/items/raid-select-ticket.webp": 0.86,
 }
 
 # 화면에서 쓰는 가장 큰 크기의 두 배로 굽는다. 더 키우면 파일만 커지고 눈에 보이지 않는다.

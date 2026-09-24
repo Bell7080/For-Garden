@@ -15,7 +15,9 @@ import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addBreakthroughGradeMark, RARITY_TONE } from "./rarityMark";
 import { drawGlyph } from "./glyphs";
-import { enableHitOnClick, spawnPuppet } from "../puppets/assets";
+import { battleAssetFor, enableHitOnClick, portraitAssetForSkin, sdAssetForSkin, spawnPuppet, withPuppetTexture } from "../puppets/assets";
+import { computeFaceBandFrame } from "../puppets/anchors";
+import { bakeBandTexture } from "./faceTexture";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { powerSavingPolicy } from "../core/settings";
 import { session } from "../state/session";
@@ -62,6 +64,8 @@ export class PlayerProfilePopup {
     private readonly onClose: () => void,
     /** 자기 카드에만 온다 — 각 요소를 누르면 그 요소만 고치는 창이 열린다. 친구 카드에는 없다. */
     private readonly editors?: ProfileEditors,
+    /** 친구 카드: 머리글과, 애착 렐릭을 눌렀을 때 여는 읽기 전용 정보창. */
+    private readonly options: { title?: string; onFavorite?: () => void } = {},
   ) {}
 
   open(options: { instant?: boolean } = {}): void {
@@ -69,7 +73,7 @@ export class PlayerProfilePopup {
     this.opened = true;
     setDebugPlayerProfileOpen(true);
     const layout = PLAYER_PROFILE_LAYOUT;
-    this.layer.open({ ...layout.popup, title: t("profile.title"), dim: true, closeOnBackdrop: true, instant: options.instant, onClose: () => {
+    this.layer.open({ ...layout.popup, title: this.options.title ?? t("profile.title"), dim: true, closeOnBackdrop: true, instant: options.instant, onClose: () => {
       this.opened = false; setDebugPlayerProfileOpen(false); this.onClose();
     } }, (body) => {
       const frame = profileFrameOrDefault(this.profile.frameId);
@@ -137,8 +141,15 @@ export class PlayerProfilePopup {
       void navigator.clipboard?.writeText(this.profile.displayId).then(() => uid.setText(t("profile.uidCopied")), () => undefined);
       this.scene.time.delayedCall(1200, () => { if (uid.active) uid.setText(t("profile.uid", { uid: this.profile.displayId })); });
     });
-    body.add(this.scene.add.text(header.textRight, header.uidY, t("profile.researchDays", { days: this.profile.researchDays.toLocaleString() }), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(1, 0.5));
+    if (this.profile.researchDays !== undefined) {
+      body.add(this.scene.add.text(header.textRight, header.uidY, t("profile.researchDays", { days: this.profile.researchDays.toLocaleString() }), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(1, 0.5));
+    }
 
+    // 친구 카드는 경험치를 공개하지 않는다 — 그 자리에 마지막 접속 한 줄이 선다.
+    if (this.profile.lastActive !== undefined) {
+      body.add(this.scene.add.text(left, header.expValueY - 12, t("profile.lastActive", { time: this.profile.lastActive }), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0.5));
+      return;
+    }
     const width = header.textRight - left;
     const bar = new HoloBar(this.scene, left + width / 2, header.expY, width, header.expHeight, { color: frame.color, trackAlpha: 0.85, outline: true, ticks: 9 }).addTo(body);
     bar.setValue(this.profile.levelCapped ? 1 : profileProgressRatio(this.profile.experience, this.profile.experienceToNext));
@@ -155,8 +166,12 @@ export class PlayerProfilePopup {
     const { bio } = PLAYER_PROFILE_LAYOUT;
     const shape = slantedRect(bio.width, bio.height, 18);
     body.add(drawLayer(this.scene, 0, bio.y, shape, { fill: 0x0c1118, alpha: 0.78, edge: frame.color, edgeAlpha: 0.5 }));
-    body.add(this.scene.add.text(-bio.width / 2 + 34, bio.y - 6, "“", textStyle({ role: "display", size: 58, color: hex(frame.color) })).setOrigin(0, 0.5).setAlpha(0.8));
-    if (this.profile.bio) body.add(this.scene.add.text(0, bio.y, this.profile.bio, textStyle({ role: "body", size: 28, color: COLOR.ink, wrap: bio.width - 140 })).setOrigin(0.5));
+    // 인사말은 **말하는 한 줄**이라 본문 글꼴이 아니라 강조 글꼴로 세우고, 따옴표도 같은 글자 안에 둔다 —
+    // 큰 따옴표를 따로 세우면 그 한 글자만 다른 크기·굵기로 떠 판 구석의 얼룩처럼 읽혔다.
+    if (this.profile.bio) {
+      body.add(this.scene.add.text(0, bio.y, t("profile.bio.quoted", { bio: this.profile.bio }), textStyle({ role: "emphasis", size: 30, color: COLOR.ink, wrap: bio.width - 140 }))
+        .setOrigin(0.5).setShadow(0, 2, "#05070a", 4, false, true));
+    }
     if (this.editors) {
       body.add(drawGlyph(this.scene, "edit", bio.width / 2 - 44, bio.y, 26, COLOR.accent, 0.8));
       this.bindEdit(body, undefined, 0, bio.y, bio.width, bio.height, this.editors.bio);
@@ -189,6 +204,10 @@ export class PlayerProfilePopup {
     const panel = chipPoints(showcase.width, height, { bevel: { topLeft: 40, topRight: 0, bottomRight: 40, bottomLeft: 0 } });
     // 판은 윗변 한 줄만 그 개체의 희귀도 색으로 긋는다 — 사방을 겹겹이 두르면 무대가 액자 속 액자가 된다.
     body.add(drawLayer(this.scene, 0, centerY, panel, { fill: 0x0a0f16, alpha: 0.9, edge: tone, edgeAlpha: 0.8, edgeWidth: 3 }));
+    // 판 위에 그 개체의 전신을 **얼굴 위주로** 은은하게 깐다 — 바닥과 SD보다 뒤다(순서를 먼저 잡아 둔다).
+    const backdrop = this.scene.add.container(0, centerY);
+    body.add(backdrop);
+    if (favorite) void this.bakeShowcaseBackdrop(backdrop, favorite.relicId, favorite.skinId, panel, height);
     body.add(this.drawGridFloor(frame.color, centerY, height));
     addSectionTitle(this.scene, -showcase.width / 2, showcase.titleY + 18, t("profile.section.favorite"), { parent: body, size: 26 });
 
@@ -202,7 +221,11 @@ export class PlayerProfilePopup {
     body.add(this.scene.add.ellipse(showcase.sd.x, showcase.sd.groundY, 150, 28, 0x000000, 0.45));
     const stage = this.scene.add.container(0, 0);
     body.add(stage);
-    void spawnPuppet(this.scene, relicAppearanceManager.sdAssetFor(favorite.relicId), {
+    // 친구 카드는 서버가 공개한 외형을, 자기 카드는 제 장착을 읽는다.
+    const sdAsset = favorite.skinId !== undefined
+      ? sdAssetForSkin(favorite.relicId, favorite.skinId) ?? battleAssetFor(favorite.relicId)
+      : relicAppearanceManager.sdAssetFor(favorite.relicId);
+    void spawnPuppet(this.scene, sdAsset, {
       x: showcase.sd.x, groundY: showcase.sd.groundY, height: showcase.sd.height, depth: 0,
     }).then((puppet) => {
       if (!stage.active) { puppet.destroy(); return; }
@@ -212,6 +235,12 @@ export class PlayerProfilePopup {
       this.scene.tweens.add({ targets: puppet, alpha: 1, duration: 260 });
       enableHitOnClick(this.scene, puppet);
     }).catch(() => undefined);
+    if (this.options.onFavorite) {
+      // 친구의 애착 렐릭은 SD 자리를 누르면 읽기 전용 정보창이 열린다.
+      const hit = this.scene.add.rectangle(showcase.sd.x, showcase.sd.groundY - showcase.sd.height / 2, 300, showcase.sd.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      hit.on("pointerup", () => this.options.onFavorite?.());
+      body.add(hit);
+    }
 
     const { info } = showcase;
     const relic = getRelic(favorite.relicId);
@@ -223,7 +252,7 @@ export class PlayerProfilePopup {
 
     const rows: [TextKey, string][] = [
       ["profile.favorite.level", `LV.${favorite.level}`],
-      ["profile.favorite.bond", `${favorite.bondLevel}`],
+      ...(favorite.bondLevel !== undefined ? [["profile.favorite.bond", `${favorite.bondLevel}`] as [TextKey, string]] : []),
       ["profile.favorite.power", favorite.power.toLocaleString()],
     ];
     const rowWidth = showcase.width / 2 - info.left - 36;
@@ -231,8 +260,34 @@ export class PlayerProfilePopup {
       const y = info.firstRowY + index * info.rowGap;
       body.add(drawLayer(this.scene, info.left + rowWidth / 2, y, slantedRect(rowWidth, 46, 12), { fill: 0x121a24, alpha: 0.85, shadow: false }));
       body.add(this.scene.add.text(info.left + 18, y, t(labelKey), textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
-      body.add(this.scene.add.text(info.left + rowWidth - 18, y, value, textStyle({ role: "display", size: 28, color: index === 2 ? COLOR.accentText : COLOR.ink })).setOrigin(1, 0.5));
+      body.add(this.scene.add.text(info.left + rowWidth - 18, y, value, textStyle({ role: "display", size: 28, color: index === rows.length - 1 ? COLOR.accentText : COLOR.ink })).setOrigin(1, 0.5));
     });
+  }
+
+  /**
+   * 애착 렐릭의 전신을 얼굴 위주로 잘라 판 실루엣대로 구워 깐다.
+   *
+   * **판을 채우되 은은하게** 선다(`showcase.backdrop.alpha`) — 앞에 선 SD와 수치가 먼저 읽혀야
+   * 하므로 그림은 분위기만 남긴다. SD가 서는 왼쪽은 녹여 두어 두 몸이 겹쳐 뭉개지지 않게 한다.
+   * 구운 뒤 원본은 놓는다(`withPuppetTexture`) — 카드가 그리는 것은 구운 제 텍스처뿐이다.
+   */
+  private async bakeShowcaseBackdrop(backdrop: Phaser.GameObjects.Container, relicId: string, skinId: string | null | undefined, panel: readonly number[], height: number): Promise<void> {
+    const { showcase } = PLAYER_PROFILE_LAYOUT;
+    const spec = showcase.backdrop;
+    const asset = skinId !== undefined ? portraitAssetForSkin(getRelic(relicId).portraitAssetId, skinId) : relicAppearanceManager.portraitAssetFor(relicId);
+    const key = await withPuppetTexture(this.scene, asset, ({ key: source, anchors }) => {
+      if (!backdrop.active) return undefined;
+      const crop = computeFaceBandFrame(asset, anchors.head, {
+        width: showcase.width, height,
+        crop: spec.crop / ((asset.cardZoom ?? 1) * (asset.portraitZoom ?? 1)),
+        headX: spec.headX, anchorY: spec.anchorY,
+      });
+      return bakeBandTexture(this.scene, source, { width: showcase.width, height }, crop, { shape: panel, from: 0, fade: spec.fade });
+    }).catch(() => undefined);
+    if (!key || !backdrop.active) return;
+    const image = this.scene.add.image(0, 0, key).setAlpha(0);
+    backdrop.add(image);
+    this.scene.tweens.add({ targets: image, alpha: spec.alpha, duration: 260 });
   }
 
   /**
@@ -274,19 +329,21 @@ export class PlayerProfilePopup {
     const { records } = PLAYER_PROFILE_LAYOUT;
     addSectionTitle(this.scene, -PLAYER_PROFILE_LAYOUT.showcase.width / 2, records.titleY, t("profile.section.records"), { parent: body, size: 26 });
     const stats = this.profile.competitiveStats;
+    const story = stats.storyProgress;
+    const collection = this.profile.collection;
+    // 공개하지 않은 기록은 칸째 뺀다 — 0이나 "기록 없음"으로 채우면 없는 기록을 있는 것처럼 말한다.
     const tiles: { labelKey: TextKey; value: string; sub?: string; progress?: number }[] = [
       {
         labelKey: "profile.record.story",
         value: stats.highestStage ? compactProfileText(stats.highestStage.displayValue, 12) : t("profile.noRecord"),
-        sub: `${stats.storyProgress.cleared} / ${stats.storyProgress.total}`,
-        progress: profileProgressRatio(stats.storyProgress.cleared, stats.storyProgress.total),
+        ...(story ? { sub: `${story.cleared} / ${story.total}`, progress: profileProgressRatio(story.cleared, story.total) } : {}),
       },
-      { labelKey: "profile.record.expedition", value: stats.expedition.score.toLocaleString() },
-      {
-        labelKey: "profile.record.collection",
-        value: `${this.profile.collection.owned} / ${this.profile.collection.total}`,
-        progress: profileProgressRatio(this.profile.collection.owned, this.profile.collection.total),
-      },
+      ...(stats.expedition ? [{ labelKey: "profile.record.expedition" as TextKey, value: stats.expedition.score.toLocaleString() }] : []),
+      ...(collection ? [{
+        labelKey: "profile.record.collection" as TextKey,
+        value: `${collection.owned} / ${collection.total}`,
+        progress: profileProgressRatio(collection.owned, collection.total),
+      }] : []),
       { labelKey: "profile.arenaTier", value: stats.arenaTier?.displayName ?? t("profile.record.unranked") },
     ];
     tiles.forEach((tile, index) => {

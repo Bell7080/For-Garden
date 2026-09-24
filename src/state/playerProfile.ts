@@ -34,10 +34,16 @@ export interface PlayerProfileDisplay {
   avatar: { relicId: string; portraitAssetId: PortraitAssetId } | null;
   avatarAssetKey?: string;
   representativeRelic: string;
-  /** 연구 개시일부터 며칠째인가. */
-  researchDays: number;
+  /** 연구 개시일부터 며칠째인가. 친구 카드는 공개하지 않아 비어 있다. */
+  researchDays?: number;
   competitiveStats: PlayerCompetitiveStats;
-  collection: { owned: number; total: number };
+  /** 도감 수집. 친구 카드는 공개하지 않아 비어 있다(그 칸이 서지 않는다). */
+  collection?: { owned: number; total: number };
+  /**
+   * **친구 카드에만 온다** — 마지막 접속. 경험치는 본인만 보는 값이라 친구 카드에서는 경험치 줄
+   * 자리에 이 한 줄이 선다.
+   */
+  lastActive?: string;
   /** 레벨 잠금을 켰을 때만 서는 다음 개방 콘텐츠. */
   nextUnlock?: { contentId: ContentId; level: number };
   equippedModifiers: PublicProfileModifier[];
@@ -49,7 +55,10 @@ export interface FavoriteRelicShowcase {
   portraitAssetId: PortraitAssetId;
   level: number;
   breakthroughGrade: number;
-  bondLevel: number;
+  /** 유대는 본인만 보는 값이라 친구 카드에서는 비어 있다(그 줄이 서지 않는다). */
+  bondLevel?: number;
+  /** 입고 있는 외형. 친구 카드는 서버가 공개한 외형을, 자기 카드는 비워 두고 제 장착을 읽는다. */
+  skinId?: string | null;
   rarity: RelicRarity;
   element: Element;
   role: Role;
@@ -60,9 +69,10 @@ export interface PlayerCompetitiveStats {
   favoriteRelic: FavoriteRelicShowcase | null;
   arenaTier?: { tierId: string; displayName: string };
   highestStage: { stageId: string; displayValue: string } | null;
-  /** 스토리 진행 — 깬 관문 수와 전체 관문 수. */
-  storyProgress: { cleared: number; total: number };
-  expedition: { label: string; score: number };
+  /** 스토리 진행 — 깬 관문 수와 전체 관문 수. 친구 카드는 최고 관문만 공개해 비어 있다. */
+  storyProgress?: { cleared: number; total: number };
+  /** 원정 최고. 공개하지 않은 친구는 비어 있다(그 칸이 서지 않는다). */
+  expedition?: { label: string; score: number };
 }
 
 export interface PublicProfileModifier {
@@ -135,4 +145,48 @@ export function profileAvatarContent(profile: PlayerProfileDisplay, hasTexture: 
   return profile.avatarAssetKey && hasTexture(profile.avatarAssetKey)
     ? { assetKey: profile.avatarAssetKey, fallback }
     : { fallback };
+}
+
+/**
+ * 친구의 공개 헤더를 **같은 플레이어 카드**로 그리는 표시 모델.
+ *
+ * 친구 창이 제 나름의 프로필을 따로 그리던 때는 같은 "한 사람의 카드"가 자기와 친구에서 다른
+ * 양식이었다. 공개하지 않은 값(경험치·유대·도감·연구 일수)은 **0으로 채우지 않고 비운다** —
+ * 카드가 그 칸을 세우지 않으므로 없는 기록을 "0"이라 말하지 않는다.
+ */
+export function friendProfileDisplay(friend: {
+  displayName: string; level: number; uid: string; frameId: string; status: string; lastActive: string; avatarRelicId?: string;
+  equippedModifiers: readonly PublicProfileModifier[];
+  favoriteRelic: { relicId: string; equippedSkinId?: string | null; level: number; breakthroughGrade: number; stats: Parameters<typeof combatPower>[0] };
+  competitiveStats: { highestStage?: { stageId: string; displayValue: string }; arenaTier?: { tierId: string; displayName: string }; expeditionScore?: number };
+}): PlayerProfileDisplay {
+  const relic = RELICS.find(({ id }) => id === friend.favoriteRelic.relicId);
+  const favorite: FavoriteRelicShowcase | null = relic ? {
+    relicId: relic.id, displayName: relic.name, portraitAssetId: relic.portraitAssetId,
+    level: friend.favoriteRelic.level, breakthroughGrade: friend.favoriteRelic.breakthroughGrade,
+    skinId: friend.favoriteRelic.equippedSkinId ?? null,
+    rarity: relic.rarity, element: relic.element, role: relic.role, power: combatPower(friend.favoriteRelic.stats),
+  } : null;
+  const avatarRelic = RELICS.find(({ id }) => id === (friend.avatarRelicId ?? friend.favoriteRelic.relicId));
+  const stats = friend.competitiveStats;
+  return {
+    displayName: friend.displayName,
+    level: friend.level,
+    experience: 0,
+    experienceToNext: 0,
+    levelCapped: friend.level >= PLAYER_LEVEL_CAP,
+    displayId: friend.uid,
+    bio: friend.status,
+    frameId: profileFrameOrDefault(friend.frameId).id,
+    avatar: avatarRelic ? { relicId: avatarRelic.id, portraitAssetId: avatarRelic.portraitAssetId } : null,
+    representativeRelic: favorite?.displayName ?? t("profile.noFavorite"),
+    lastActive: friend.lastActive,
+    competitiveStats: {
+      favoriteRelic: favorite,
+      ...(stats.arenaTier ? { arenaTier: { ...stats.arenaTier } } : {}),
+      highestStage: stats.highestStage ? { ...stats.highestStage } : null,
+      ...(stats.expeditionScore !== undefined ? { expedition: { label: t("profile.expeditionBest"), score: stats.expeditionScore } } : {}),
+    },
+    equippedModifiers: friend.equippedModifiers.map((modifier) => ({ ...modifier })),
+  };
 }

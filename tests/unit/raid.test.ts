@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_HP_SCALE, RAID_BOSS_POOL, RAID_DIFFICULTY, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM, isRaidDifficulty } from "../../src/data/raid";
-import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidDayProgress, raidResetsAt, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement } from "../../src/core/raid";
+import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidDayProgress, raidResetsAt, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../../src/core/raid";
 import { getRelic, PLAYABLE_RELICS, RELICS } from "../../src/data/relics";
 import { ENCOUNTER_ROLE, applyEncounterScaling } from "../../src/core/levelDesign";
 
@@ -189,6 +189,18 @@ describe("난이도", () => {
     const hp = RAID_SUMMON_DIFFICULTIES.map((difficulty) => RAID_DIFFICULTY[difficulty].totalHp);
     expect([...hp].sort((a, b) => a - b)).toEqual(hp);
     expect(RAID_DIFFICULTY.rampage.totalHp).toBe(RAID_SEASON_TOTAL_HP);
+  });
+
+  it("의 토벌권은 보스와 난이도를 모두 굴려 풀 전체에 닿는다", () => {
+    expect(rollRaidSummon(0, 0)).toEqual({ bossRelicId: RAID_BOSS_POOL[0], difficulty: RAID_SUMMON_DIFFICULTIES[0] });
+    expect(rollRaidSummon(0.9999, 0.9999)).toEqual({ bossRelicId: RAID_BOSS_POOL.at(-1), difficulty: RAID_SUMMON_DIFFICULTIES.at(-1) });
+  });
+
+  it("의 월드 폭주는 풀을 하루씩 차례로 돈다", () => {
+    const days = ["2026-09-16", "2026-09-17", "2026-09-18", "2026-09-19"].map(raidWorldBossId);
+    expect(new Set(days)).toEqual(new Set(RAID_BOSS_POOL));
+    expect(days[0]).not.toBe(days[1]);
+    expect(days[0]).toBe(days[RAID_BOSS_POOL.length]);
   });
 
   it("의 보스 풀은 실제로 있는 개체다", () => {
@@ -427,13 +439,16 @@ describe("레이드 서버 경계", () => {
   it("은 토벌권 한 장으로 판을 열고 그 장을 뺀다", async () => {
     const server = serverAt(makeRaidSession(), "2026-09-16T12:00:00Z");
     const before = (await server.getRaids()).tickets.normal;
-    const result = await server.summonRaid({ requestId: "sum1", difficulty: "normal" });
+    const result = await server.summonRaid({ requestId: "sum1" });
     expect(result.raid.summonedByMe).toBe(true);
-    expect(result.raid.bossLevel).toBe(30);
+    // 토벌권은 보스와 난이도를 서버가 함께 굴린다 — 무엇이 나왔든 풀과 소환 난이도 안이다.
+    expect(RAID_BOSS_POOL as readonly string[]).toContain(result.raid.bossRelicId);
+    expect(RAID_SUMMON_DIFFICULTIES as readonly string[]).toContain(result.raid.difficulty);
+    expect(result.raid.bossLevel).toBe(RAID_DIFFICULTY[result.raid.difficulty].level);
     expect(result.raid.status).toBe("active");
     expect(result.tickets.normal).toBe(before - 1);
     // 같은 요청은 두 번 열지 않는다.
-    await server.summonRaid({ requestId: "sum1", difficulty: "normal" });
+    await server.summonRaid({ requestId: "sum1" });
     const after = await server.getRaids();
     expect(after.tickets.normal).toBe(before - 1);
     expect(after.raids.some(({ id }) => id === result.raid.id)).toBe(true);
@@ -450,7 +465,10 @@ describe("레이드 서버 경계", () => {
 
   it("은 폭주와 풀 밖의 보스를 소환하지 않는다", async () => {
     const server = serverAt(makeRaidSession(), "2026-09-16T12:00:00Z");
-    await expect(server.summonRaid({ requestId: "x1", difficulty: "rampage" })).rejects.toMatchObject({ code: "RAID_SUMMON_INVALID" });
+    await expect(server.summonRaid({ requestId: "x1", bossRelicId: RAID_BOSS_POOL[0], difficulty: "rampage" })).rejects.toMatchObject({ code: "RAID_SUMMON_INVALID" });
+    // 토벌권은 아무것도 고르지 않고 선택 토벌권은 둘 다 고른다 — 한쪽만 온 요청은 거절한다.
+    await expect(server.summonRaid({ requestId: "x3", difficulty: "easy" })).rejects.toMatchObject({ code: "RAID_SUMMON_INVALID" });
+    await expect(server.summonRaid({ requestId: "x4", bossRelicId: RAID_BOSS_POOL[0] })).rejects.toMatchObject({ code: "RAID_SUMMON_INVALID" });
     await expect(server.summonRaid({ requestId: "x2", difficulty: "easy", bossRelicId: "anky" })).rejects.toMatchObject({ code: "RAID_SUMMON_INVALID" });
   });
 

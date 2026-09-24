@@ -31,6 +31,11 @@ export const PLAYER_PROFILE_LAYOUT = {
     sd: { x: -214, groundY: 76, height: 330 },
     info: { left: 22, rarityY: -262, nameY: -214, badgeY: -150, firstRowY: -78, rowGap: 58 },
     grid: { horizonY: -40, rows: 6, columns: 9 },
+    /**
+     * 판 뒤에 깔리는 전신 — 얼굴을 판의 오른쪽 가운데쯤에 두고(`headX`), 왼쪽(SD 자리)은
+     * `fade`만큼 녹인다. `crop`은 실루엣 폭 대비 상자 높이라 작을수록 얼굴이 크게 당겨진다.
+     */
+    backdrop: { alpha: 0.26, crop: 0.62, headX: 0.62, anchorY: 0.32, fade: 0.55 },
   },
   records: { titleY: 184, firstY: 286, rowGap: 168, columnX: 222, width: 426, height: 150 },
   nextUnlock: { y: 600 },
@@ -72,7 +77,7 @@ export function avatarPickerHeight(photoCount: number, frameCount: number): numb
 }
 
 /** 한 줄 입력 창(닉네임·한 줄 소개). */
-export const TEXT_EDITOR = { width: 900, height: 470, fieldY: -40, noteY: 26, saveY: 130, field: { width: 800, height: 84 }, save: { width: 300, height: 80 } } as const;
+export const TEXT_EDITOR = { width: 900, height: 470, noticeY: -118, fieldY: -40, noteY: 26, saveY: 130, field: { width: 800, height: 84 }, save: { width: 300, height: 80 } } as const;
 
 /** 수식어 고르기 — 세 줄 격자, 높이는 얻은 수에서 구한다. */
 export const MODIFIER_PICKER = { width: 900, top: 150, columns: 3, cell: { width: 262, height: 64 }, gap: 18, saveGap: 110, save: { width: 300, height: 80 }, bottomPad: 80 } as const;

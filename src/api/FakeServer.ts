@@ -61,6 +61,7 @@ import { expeditionNodeRole } from "../data/expeditionEnemies";
 import { calculateExpeditionNodeRewards, calculateExpeditionRunScore } from "../core/expeditionRewards";
 import { calculateExpeditionNodeScore, expeditionBossDamageScore } from "../core/expeditionScore";
 import { RelicProgressionManager } from "../managers/RelicProgressionManager";
+import { grantPlayerExperience, playerExpForStamina } from "../core/playerLevel";
 import { isExpeditionRelicSnapshot } from "../core/expeditionSnapshot";
 import { expeditionBattleEffects } from "../core/expeditionBattle";
 import { settingsManager } from "../managers/SettingsManager";
@@ -1072,11 +1073,11 @@ export class FakeServer implements GameApi {
     this.settleStaminaNow();
     const cost = CONTENT_STAMINA_COSTS.normalStage;
     if (this.state.wallet.stamina < cost) throw new GameApiError("INSUFFICIENT_STAMINA", "스테미나가 부족합니다.");
-    const nextWallet = { ...this.state.wallet, stamina: this.state.wallet.stamina - cost };
+    const { wallet: nextWallet, playerResearch: nextResearch } = this.spendStamina(cost);
     // 가챠·성장 API처럼 다음 상태를 먼저 저장해야 저장 실패 시 공유 메모리 지갑이 호출 전 값으로 보존된다.
-    this.persist({ ...this.state, wallet: nextWallet });
+    this.persist({ ...this.state, wallet: nextWallet, playerResearch: nextResearch });
     // 영속화가 성공한 뒤에만 공유 참조를 교체해 응답 스냅샷도 실제로 확정된 잔액을 기준으로 만든다.
-    this.state.wallet = nextWallet;
+    this.state.wallet = nextWallet; this.state.playerResearch = nextResearch;
     const pending = this.pendingStageAdmissions.get(request.stageId) ?? new Set<string>();
     pending.add(request.requestId);
     this.pendingStageAdmissions.set(request.stageId, pending);
@@ -1168,10 +1169,10 @@ export class FakeServer implements GameApi {
     if (cached) return structuredClone(cached);
     const now = this.now();
     const run = this.assertCakeRun(request, now);
-    const nextWallet = { ...this.state.wallet, stamina: this.state.wallet.stamina - run.staminaCost };
+    const { wallet: nextWallet, playerResearch: nextResearch } = this.spendStamina(run.staminaCost);
     // 다른 API와 같이 저장이 성공한 뒤에만 공유 지갑을 교체해, 저장 실패가 잔액을 지우지 않게 한다.
-    this.persist({ ...this.state, wallet: nextWallet });
-    this.state.wallet = nextWallet;
+    this.persist({ ...this.state, wallet: nextWallet, playerResearch: nextResearch });
+    this.state.wallet = nextWallet; this.state.playerResearch = nextResearch;
     const pending = this.pendingCakeAdmissions.get(run.tier.id) ?? new Set<string>();
     pending.add(request.requestId);
     this.pendingCakeAdmissions.set(run.tier.id, pending);
@@ -1233,11 +1234,11 @@ export class FakeServer implements GameApi {
     const run = this.assertCakeRun(request, now);
     // 해금은 "직전 단계까지 이겼나"이고 소탕은 "이 단계를 이겼나"다. 한 칸 차이라 따로 묻는다.
     if (cakeOperationTierIndex(run.tier.id) > this.state.cakeOperation.clearedIndex) throw new GameApiError("CAKE_TIER_LOCKED", "아직 한 번도 이기지 않은 단계는 소탕할 수 없습니다.");
-    const nextWallet = { ...this.state.wallet, stamina: this.state.wallet.stamina - run.staminaCost };
+    const { wallet: nextWallet, playerResearch: nextResearch } = this.spendStamina(run.staminaCost);
     const granted = this.grantDungeonRewards(nextWallet, run.rewards);
     const nextMissions = applyMissionEvent(this.state.missions, { type: "battle_completed", victory: true }, now);
-    this.persist({ ...this.state, wallet: nextWallet, missions: nextMissions });
-    this.state.wallet = nextWallet; this.state.missions = nextMissions;
+    this.persist({ ...this.state, wallet: nextWallet, playerResearch: nextResearch, missions: nextMissions });
+    this.state.wallet = nextWallet; this.state.playerResearch = nextResearch; this.state.missions = nextMissions;
     const response: CakeOperationSweepResponse = {
       ...this.snapshot(), tierId: run.tier.id, multiplier: run.multiplier, staminaSpent: run.staminaCost, granted,
     };
@@ -1321,10 +1322,10 @@ export class FakeServer implements GameApi {
     if (cached) return structuredClone(cached);
     const now = this.now();
     const run = this.assertBountyRun(request, now);
-    const nextWallet = { ...this.state.wallet, stamina: this.state.wallet.stamina - run.staminaCost };
+    const { wallet: nextWallet, playerResearch: nextResearch } = this.spendStamina(run.staminaCost);
     // 저장이 성공한 뒤에만 공유 참조를 바꿔, 실패해도 지갑이 호출 전 값으로 남게 한다.
-    this.persist({ ...this.state, wallet: nextWallet, bounty: run.nextBounty });
-    this.state.wallet = nextWallet; this.state.bounty = run.nextBounty;
+    this.persist({ ...this.state, wallet: nextWallet, playerResearch: nextResearch, bounty: run.nextBounty });
+    this.state.wallet = nextWallet; this.state.playerResearch = nextResearch; this.state.bounty = run.nextBounty;
     this.pendingBountyRuns.set(request.requestId, run.tier.id);
     const response = {
       ...this.snapshot(), tierId: run.tier.id, requestId: request.requestId, multiplier: run.multiplier, staminaSpent: run.staminaCost,
@@ -1345,11 +1346,11 @@ export class FakeServer implements GameApi {
     const now = this.now();
     const run = this.assertBountyRun(request, now);
     if (!run.nextBounty.clearedTierIds.includes(run.tier.id)) throw new GameApiError("BOUNTY_TIER_LOCKED", "아직 한 번도 이기지 않은 등급은 소탕할 수 없습니다.");
-    const nextWallet = { ...this.state.wallet, stamina: this.state.wallet.stamina - run.staminaCost };
+    const { wallet: nextWallet, playerResearch: nextResearch } = this.spendStamina(run.staminaCost);
     const granted = this.grantDungeonRewards(nextWallet, run.rewards);
     const nextMissions = applyMissionEvent(this.state.missions, { type: "battle_completed", victory: true }, now);
-    this.persist({ ...this.state, wallet: nextWallet, bounty: run.nextBounty, missions: nextMissions });
-    this.state.wallet = nextWallet; this.state.bounty = run.nextBounty; this.state.missions = nextMissions;
+    this.persist({ ...this.state, wallet: nextWallet, playerResearch: nextResearch, bounty: run.nextBounty, missions: nextMissions });
+    this.state.wallet = nextWallet; this.state.playerResearch = nextResearch; this.state.bounty = run.nextBounty; this.state.missions = nextMissions;
     const response: SweepBountyResponse = {
       ...this.snapshot(), tierId: run.tier.id, multiplier: run.multiplier, staminaSpent: run.staminaCost,
       entriesRemaining: bountyEntriesRemaining(run.nextBounty, now), granted,
@@ -2133,6 +2134,17 @@ export class FakeServer implements GameApi {
   }
 
   /** 주입 어댑터를 우선 사용하고, 없으면 공유 세션만 브라우저에 저장해 독립 테스트 부작용을 막는다. */
+  /**
+   * 스테미나를 쓰는 **모든** 경계가 지나는 한 곳 — 쓴 만큼 연구원 경험치가 오른다(`playerLevel.ts`).
+   *
+   * 레벨이 올라도 스테미나를 직접 채우지 않는다 — 상한만 넓어지고 늘어난 자리는 자연 회복이
+   * 채운다(`stamina.ts`의 레벨업 규칙). 여기서 한 번 더 채우면 두 규칙이 서로 다른 말을 한다.
+   */
+  private spendStamina(cost: number): { wallet: Session["wallet"]; playerResearch: Session["playerResearch"] } {
+    const grant = grantPlayerExperience(this.state.playerResearch, playerExpForStamina(cost));
+    return { wallet: { ...this.state.wallet, stamina: this.state.wallet.stamina - cost }, playerResearch: grant.progress };
+  }
+
   private persist(next: Session): void {
     // 모든 쓰기 API가 공유하는 마지막 경계에서 음수·상한·중복을 저장 전에 차단한다.
     this.validateState(next);

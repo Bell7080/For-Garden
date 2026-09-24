@@ -4,6 +4,8 @@ import type { RaidDifficulty } from "../data/raid";
 import type { GachaPityState, Wallet } from "../core/gacha";
 import type { RelicProgress, RelicSkinId } from "../core/types";
 import type { ExpeditionRelicSnapshot } from "../core/expeditionSnapshot";
+import { playerExpToNext } from "../core/playerLevel";
+import { DEFAULT_PROFILE_FRAME_ID } from "../data/profileFrames";
 import { BANNERS } from "../data/banners";
 import { STAGES } from "../data/stages";
 import { isStageUnlockedByProgress } from "../core/stageProgress";
@@ -58,7 +60,31 @@ export interface PlayerResearchProgress {
 
 /** 신규 계정과 구버전 저장 마이그레이션이 공유하는 명시적인 연구 진행 시작점이다. */
 export function createInitialPlayerResearchProgress(): PlayerResearchProgress {
-  return { level: 1, experience: 0, experienceToNext: 100 };
+  return { level: 1, experience: 0, experienceToNext: playerExpToNext(1) };
+}
+
+/**
+ * 플레이어 카드 — 다른 사람에게 보이는 이 계정의 얼굴.
+ *
+ * 닉네임·한 줄 소개·테두리는 플레이어가 고르고, UID와 연구 개시일은 계정이 처음 설 때 한 번
+ * 정해진 뒤 바뀌지 않는다. 바꾸는 일은 `PlayerCardManager` 한 곳이 검증한 뒤 저장한다.
+ */
+export interface PlayerCardState {
+  /** 숫자 아홉 자리 공개 ID. 비어 있으면 부트가 한 번 발급한다. */
+  uid: string;
+  /** 비어 있으면 기본 호칭(`profile.defaultName`)으로 선다. */
+  nickname: string;
+  /** 한 줄 소개. 비어 있으면 그 줄을 비워 둔다. */
+  bio: string;
+  frameId: string;
+  /** 프로필 사진으로 세운 렐릭. 비었거나 보유하지 않은 개체면 애착 렐릭의 얼굴이 선다. */
+  avatarRelicId: string;
+  /** 연구 개시일(ISO). 비어 있으면 부트가 그날로 채운다. */
+  createdAt: string;
+}
+
+export function createEmptyPlayerCard(): PlayerCardState {
+  return { uid: "", nickname: "", bio: "", frameId: DEFAULT_PROFILE_FRAME_ID, avatarRelicId: "", createdAt: "" };
 }
 
 export interface Session {
@@ -76,6 +102,7 @@ export interface Session {
   equippedProfileModifierIds: string[];
   /** 서버 응답으로 확정된 계정 전체 연구 진행이며 씬은 수치를 직접 계산하거나 변경하지 않는다. */
   playerResearch: PlayerResearchProgress;
+  playerCard: PlayerCardState;
   /** 룬·지갑과 분리된 중첩 아이템. 0개 행은 저장하지 않는다. */
   itemInventory: ItemStack[];
   /** 서버 정산 전용 방치 발굴 상태다. 씬은 이 객체를 직접 변경하지 않는다. */
@@ -299,6 +326,7 @@ export interface SaveData {
   equippedProfileModifierIds: string[];
   /** 서버 확정 연구 진행을 앱 재실행 뒤에도 동일하게 복원하는 JSON 안전 스냅샷이다. */
   playerResearch: PlayerResearchProgress;
+  playerCard: PlayerCardState;
   /** 정적 아이템 ID와 양만 저장하는 JSON 안전 스택이다. */
   itemInventory: ItemStack[];
   /** 서버와 동기화할 수 있는 순수 JSON 발굴 상태다. */
@@ -375,6 +403,7 @@ export function createDefaultSession(): Session {
     equippedProfileModifierIds: [],
     // 첫 서버 동기화 전에도 프로필이 명시적인 레벨 1 진행을 표시하도록 한다.
     playerResearch: createInitialPlayerResearchProgress(),
+    playerCard: createEmptyPlayerCard(),
     // 특성 아이템 셋도 임시 지급이다 — 특성이 비어 있는 시작 룬에 부여해 보고, 부여된 특성의
     // 등급을 올려 보는 길이 지층 탐사 없이도 열려 있어야 한다. 정식 수급이 붙으면 함께 지운다.
     // 토벌권은 친구 레이드를 여는 입장권이다. 처음 들어온 사람이 레이드 목록의 소환을 한 번은

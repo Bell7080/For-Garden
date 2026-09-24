@@ -1,3 +1,4 @@
+import { playerExpToNext } from "../../src/core/playerLevel";
 import { describe, expect, it } from "vitest";
 import { CURRENT_SAVE_VERSION, SAVE_STORAGE_KEY, SaveDataError, SaveManager } from "../../src/state/SaveManager";
 import { createDefaultSession, type SaveData } from "../../src/state/session";
@@ -197,12 +198,12 @@ describe("SaveManager", () => {
     const legacy = validData() as unknown as Record<string, unknown>;
     legacy.saveVersion = 24;
     delete legacy.playerResearch;
-    expect(new SaveManager(new MemoryStorage()).migrate(legacy).playerResearch).toEqual({ level: 1, experience: 0, experienceToNext: 100 });
+    expect(new SaveManager(new MemoryStorage()).migrate(legacy).playerResearch).toEqual({ level: 1, experience: 0, experienceToNext: playerExpToNext(1) });
   });
 
   it("플레이어 연구 진행을 왕복하고 완료되지 않은 레벨 구간만 허용한다", () => {
     const storage = new MemoryStorage(); const source = createDefaultSession();
-    source.playerResearch = { level: 4, experience: 80, experienceToNext: 150 };
+    source.playerResearch = { level: 4, experience: 80, experienceToNext: playerExpToNext(4) };
     const manager = new SaveManager(storage); manager.save(source);
     expect(manager.load()?.playerResearch).toEqual(source.playerResearch);
     const invalid = validData(); invalid.playerResearch.experience = invalid.playerResearch.experienceToNext;

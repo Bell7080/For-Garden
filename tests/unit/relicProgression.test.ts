@@ -3,7 +3,7 @@ import { breakthroughFragmentCost, breakthroughSlotGrade, BREAKTHROUGH_STEPS, ca
 import { combatPower } from "../../src/core/combatPower";
 import type { RelicProgress, Stats } from "../../src/core/types";
 import { RelicProgressionManager } from "../../src/managers/RelicProgressionManager";
-import { createEmptyRaidState, createInitialPlayerResearchProgress, type Session } from "../../src/state/session";
+import { createEmptyRaidState, createInitialPlayerResearchProgress, createEmptyPlayerCard, type Session } from "../../src/state/session";
 import { createRuneInstance, engraveRune, enhanceRune, type RuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { FakeServer } from "../../src/api/FakeServer";
 import { createDefaultSettings } from "../../src/core/settings";
@@ -30,6 +30,7 @@ function makeSession(): Session {
     // 수식어 manager 테스트가 아닌 세션은 빈 ID 목록을 명시한다.
     earnedProfileModifierIds: [], equippedProfileModifierIds: [],
     playerResearch: createInitialPlayerResearchProgress(),
+    playerCard: createEmptyPlayerCard(),
     // 성장 테스트용 세션에도 직렬화 가능한 기본 발굴 상태를 둔다.
     idleExcavation: { assignedRelicIds: [null, null, null], lastSettledAt: null, unclaimed: { gold: 0, cheesecake: 0, rawStone: 0, gems: 0 }, baseStorageSeconds: 14_400, activeProductionMultiplier: 1, storageExtensionExpiresAt: null, retroactiveExcavationGrantVersion: 1 },
     archaeology: createArchaeologyState(),

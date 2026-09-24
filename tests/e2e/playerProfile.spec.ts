@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
-import { PLAYER_PROFILE_LAYOUT } from "../../src/ui/playerProfileLayout";
+import { AVATAR_PICKER, avatarPickerHeight, PLAYER_PROFILE_LAYOUT } from "../../src/ui/playerProfileLayout";
+import { PROFILE_FRAMES } from "../../src/data/profileFrames";
 import { POPUP_CLOSE_LAYOUT } from "../../src/ui/popupGeometry";
 import { captureGame, tap } from "./canvasInput";
 
@@ -25,4 +26,25 @@ test("로비 프로필 칩은 공개 정보창을 열고 공용 닫기로 정리
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.playerProfileOpen)).toBeUndefined();
   await tap(page, 176, 86);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.playerProfileOpen)).toBe(true);
+});
+
+test("프로필 얼굴을 누르면 사진·테두리 선택창이 뜨고 라벨로 목록을 갈아 끼운다", async ({ page }) => {
+  await startAfterOpening(page);
+  await tap(page, WIDTH / 2, HEIGHT / 2);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await tap(page, 176, 86);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.playerProfileOpen)).toBe(true);
+  // 애착 렐릭의 SD는 비동기로 선다. 무대가 채워질 틈을 준 뒤 찍는다.
+  await page.waitForTimeout(2500);
+  await captureGame(page, `test-results/${test.info().project.name}-player-profile-card.png`);
+  const { avatar } = PLAYER_PROFILE_LAYOUT.header;
+  await tap(page, WIDTH / 2 + avatar.x, HEIGHT / 2 + avatar.y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles?.includes("프로필 꾸미기"))).toBe(true);
+  await page.waitForTimeout(800);
+  await captureGame(page, `test-results/${test.info().project.name}-player-profile-photo.png`);
+  // 시작 편성의 보유 렐릭 수(6)로 창 높이를 구해 테두리 라벨 자리를 얻는다.
+  const top = HEIGHT / 2 - avatarPickerHeight(6, PROFILE_FRAMES.length) / 2;
+  await tap(page, WIDTH / 2 + (AVATAR_PICKER.tabs.width + AVATAR_PICKER.tabs.gap) / 2, top + AVATAR_PICKER.tabs.y);
+  await page.waitForTimeout(800);
+  await captureGame(page, `test-results/${test.info().project.name}-player-profile-frames.png`);
 });

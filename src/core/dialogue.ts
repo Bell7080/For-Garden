@@ -51,6 +51,14 @@ export type DialogueAct =
  */
 export type DialogueCue = "rumble" | "alarm" | "explosion" | "impact";
 
+/**
+ * 무대를 떠나는 방식. 적지 않으면 그 자리에서 옅어진다.
+ *
+ * `blastOff`는 쓰러진 SD가 튕겨 날아가 별이 되는 전투의 퇴장과 같은 문법이다 — 한 방 맞고
+ * 하늘로 날아가며 "두고 보자~"를 외치는 우당탕탕 퇴장을 대사 화면에서도 그대로 읽히게 한다.
+ */
+export type DialogueLeave = "blastOff";
+
 /** 이야기의 배경. 키와 원화의 대응은 `dialogueStageLayout.ts`의 표가 갖는다. */
 export type DialogueBackdrop = "train" | "battlefield";
 
@@ -84,6 +92,8 @@ export interface DialogueNode {
   cast?: readonly DialogueCastMember[];
   act?: DialogueAct;
   cue?: DialogueCue;
+  /** 이 노드에서 무대를 떠나는 사람이 어떻게 나가는가. `cast`로 빠진 사람에게만 걸린다. */
+  leave?: DialogueLeave;
   /** 이 노드에서 배경을 바꾼다. `explosion`과 함께 적으면 섬광 속에서 갈린다. */
   backdrop?: DialogueBackdrop;
   nextId?: string;

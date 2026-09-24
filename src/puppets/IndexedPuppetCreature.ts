@@ -195,6 +195,11 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
    * program과 버퍼를 그대로 두고 행렬·색·알파만 갈아 끼우므로 겹 하나가 draw 한 번이다.
    */
   private afterimages: readonly { dx: number; dy: number; alpha: number }[] = [];
+  /**
+   * 동작을 그 자리에서 멈춘다. 멈춘 동안의 시간은 버린다 — 풀면 멈춘 프레임에서 그대로 이어지고
+   * 지나간 만큼을 한꺼번에 따라잡지 않는다(따라잡으면 풀리는 순간 자세가 툭 튄다).
+   */
+  private animationFrozen = false;
 
   private constructor(scene: Phaser.Scene, puppet: Puppet, textureKey: string) {
     super(scene, 0, 0, textureKey);
@@ -238,6 +243,18 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     return this;
   }
 
+  /**
+   * 동작 재생을 잠깐 멈추거나 다시 잇는다.
+   *
+   * 대사 화면의 몸짓(통통 뛰기·흔들기)은 몸 전체를 옮기는 연출이라, 그 사이에도 idle이 흐르면
+   * 몸이 뛰는 동안 팔다리가 따로 흔들려 한 동작으로 읽히지 않는다. 몸짓 동안만 멈췄다가 끝나면
+   * 멈춘 자리에서 이어 간다.
+   */
+  setAnimationFrozen(frozen: boolean): this {
+    this.animationFrozen = frozen;
+    return this;
+  }
+
   /** 전투 개체는 호출하지 않는 opt-in 장식 예산 경계다. */
   setDecorativeUpdateFactor(factor: number): this {
     this.decorativeUpdateFactor = Phaser.Math.Clamp(factor, 0, 1);
@@ -261,6 +278,8 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     this.lastLoopTime = loop.time;
     // 브라우저 비가시성은 저장된 절전과 별도 정지이며 hidden delta를 임의 애니메이션으로 따라잡지 않는다.
     if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+    // 멈춘 동안은 시간만 흘려보낸다. 위에서 벽시계를 먼저 갱신했으므로 풀린 뒤 따라잡지 않는다.
+    if (this.animationFrozen) return;
     this.decorativeUpdateCredit += this.decorativeUpdateFactor;
     if (this.decorativeUpdateCredit < 1) return;
     this.decorativeUpdateCredit -= 1;

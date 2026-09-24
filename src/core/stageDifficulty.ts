@@ -2,7 +2,16 @@ import { createSkirmish, fireUltimate, isFighterAlive, stepSkirmish, type Arena,
 import type { FighterContribution } from "./battleContribution";
 import type { RelicDef } from "./types";
 
-/** 모바일 전장의 비율만 재현하는 검수용 좌표다. Phaser 카메라나 Scene 상태는 필요하지 않다. */
+/**
+ * 모바일 전장의 비율만 재현하는 검수용 좌표다. Phaser 카메라나 Scene 상태는 필요하지 않다.
+ *
+ * **실제 스토리 전장(`battleArena("stage")` — 130~950 × 600~1360)보다 넓다.** 전장이 넓으면
+ * 근접 개체가 붙기까지 더 오래 걷고 원거리 개체는 그만큼 공짜로 쏘므로, 같은 편성·같은 적이라도
+ * 결과가 크게 갈린다 — 1-1(적 LV7)을 기본 편성 레벨 1로 24판 돌렸을 때 이 좌표는 승률 92%·남는
+ * 체력 7%, 실제 전장은 100%·48%였다(v0.172.2 조사). 레벨 사다리와 유형 배수가 모두 이 좌표로
+ * 맞춰져 있어, 실제 전장으로 바꾸면 검수 18편이 한꺼번에 기준을 벗어난다 — **바꿀 때는 사다리를
+ * 함께 다시 푼다.** 그 전까지 이 검수는 실제보다 어렵게 읽힌다.
+ */
 export const STAGE_DIFFICULTY_ARENA: Arena = { left: 90, right: 990, top: 420, bottom: 1_520 };
 
 /** 한 판이 영원히 교착해도 검수 작업이 끝나도록 두는 명시적인 제한이다. */

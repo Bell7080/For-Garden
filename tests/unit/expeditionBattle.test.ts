@@ -110,6 +110,9 @@ describe("전투 씬 입력 정규화 회귀", () => {
     // 오프닝이 곧장 1-1로 들어온 판은 끝난 뒤 로비로 나간다.
     expect(normalizeBattleSceneInput({ mode: "stage", exitTo: "lobby" })).toEqual({ mode: "stage", exitTo: "lobby" });
     expect(normalizeBattleSceneInput({ mode: "stage", exitTo: "somewhere" })).toEqual({ mode: "stage" });
+    // 이긴 판에 이어지는 막도 함께 넘어온다.
+    expect(normalizeBattleSceneInput({ mode: "stage", exitTo: "lobby", epilogueStoryId: "opening-retreat" }))
+      .toEqual({ mode: "stage", exitTo: "lobby", epilogueStoryId: "opening-retreat" });
   });
 
   it("스토리 → 원정 순서에서는 새 원정 DTO를 그대로 보존한다", () => {

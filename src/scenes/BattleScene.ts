@@ -2235,7 +2235,12 @@ export class BattleScene extends Phaser.Scene {
         reward: { kind: "storyClear", cheesecakeEarned: result.cheesecakeEarned, firstClear: result.firstClear },
         fighters,
         onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
-        onConfirm: () => startScene(this, this.stageExit()),
+        onConfirm: () => {
+          // 이긴 판에 이어지는 이야기가 있으면 그것을 거쳐 나간다(오프닝 1-1 → 공멸 삼인조의 퇴각).
+          const epilogue = this.battleInput.mode === "stage" ? this.battleInput.epilogueStoryId : undefined;
+          if (epilogue) startScene(this, "stageStory", { storyId: epilogue, exitTo: this.stageExit() });
+          else startScene(this, this.stageExit());
+        },
       });
     } catch {
       // 승리는 이미 확정됐으므로 전장으로 되돌리지 않고, 같은 저장 요청만 다시 시도하게 한다.

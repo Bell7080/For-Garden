@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { DialogueFlow, dialogueStandingOrder, type DialogueChoice } from "../core/dialogue";
 import { gameApi } from "../api/FakeServer";
+import { OPENING_RETREAT } from "../data/dialogues/openingRetreat";
 import { OPENING_TRAIN } from "../data/dialogues/openingTrain";
 import { FIXED_STAGE_ENEMIES } from "../data/stages";
 import { prefetchBattlePuppets } from "../puppets/battlePrefetch";
@@ -101,7 +102,8 @@ export class OpeningScene extends Phaser.Scene {
       await gameApi.enterStage({ stageId, requestId });
       if (!this.scene.isActive()) return;
       session.selectedStageId = stageId;
-      startScene(this, "battle", { mode: "stage", exitTo: "lobby" });
+      // 이기면 공멸 삼인조가 날아가는 막을 거쳐 로비로 나간다.
+      startScene(this, "battle", { mode: "stage", exitTo: "lobby", epilogueStoryId: OPENING_RETREAT.id });
     } catch (error) {
       console.error("오프닝 뒤 1-1 입장 실패", error);
       if (this.scene.isActive()) startScene(this, "lobby");

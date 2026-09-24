@@ -15,10 +15,13 @@ export class StageStoryScene extends Phaser.Scene {
   private story!: DialogueStory;
   private flow!: DialogueFlow;
   private layer?: DialogueLayer;
+  /** 이야기가 끝나면 갈 곳. 지도에서 연 곁 이야기는 지도로, 전투 뒤에 이어진 막은 넘겨준 곳으로 간다. */
+  private exitTo = "stageMap";
 
   constructor() { super("stageStory"); }
 
-  create(data: { storyId: string }): void {
+  create(data: { storyId: string; exitTo?: "lobby" | "stageMap" }): void {
+    this.exitTo = data.exitTo ?? "stageMap";
     // 대사 씬도 다른 ready 소유 씬과 같은 시작/종료 초기화 규칙을 사용한다.
     bindDebugReadyLifecycle(this.events);
     this.story = getRecollectionStory(data.storyId);
@@ -55,7 +58,7 @@ export class StageStoryScene extends Phaser.Scene {
     if (result.completed) {
       // StoryManager만 completedStoryIds를 변경하며 새 지도 씬이 해금/완료 표시를 다시 계산한다.
       storyManager.complete(this.story.id);
-      startScene(this, "stageMap");
+      startScene(this, this.exitTo);
       return;
     }
     // 후속 노드도 같은 흐름 잠금을 사용해 Puppet 교체와 연속 입력이 경쟁하지 않게 한다.

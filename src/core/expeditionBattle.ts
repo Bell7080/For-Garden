@@ -116,6 +116,11 @@ export interface StageBattleInputDto {
    * 한 번도 본 적 없는 지도로 떨어지면 오프닝에서 이어지던 흐름이 거기서 끊긴다.
    */
   exitTo?: "lobby";
+  /**
+   * 이기면 결과판을 닫은 뒤 곧장 이어지는 짧은 이야기. 그 이야기가 끝나면 `exitTo`로 간다.
+   * 오프닝에서 들어온 1-1만 쓴다(공멸 삼인조의 퇴각). 지면 이야기 없이 곧장 나간다.
+   */
+  epilogueStoryId?: string;
 }
 
 /**
@@ -160,7 +165,11 @@ export function normalizeBattleSceneInput(input?: unknown): BattleSceneInputDto 
     // 현상수배는 라운드 번호까지 있어야 한 판이 이어진다 — 판별값만 남은 입력은 스토리로 돌린다.
     if (candidate.mode === "bounty" && typeof candidate.tierId === "string" && typeof candidate.requestId === "string") return candidate;
     // 스토리는 돌아갈 곳 하나만 이어받는다. 모르는 값은 기본 길(지도)로 수렴시킨다.
-    if (candidate.mode === "stage" && candidate.exitTo === "lobby") return { mode: "stage", exitTo: "lobby" };
+    if (candidate.mode === "stage" && candidate.exitTo === "lobby") {
+      return typeof candidate.epilogueStoryId === "string"
+        ? { mode: "stage", exitTo: "lobby", epilogueStoryId: candidate.epilogueStoryId }
+        : { mode: "stage", exitTo: "lobby" };
+    }
   }
   return { mode: "stage" };
 }

@@ -17,14 +17,14 @@ import { registerDialogueTexts } from "./registerDialogue";
  */
 
 /** 열차 안 쁘띠 로그 셋의 자리. 말하는 사람만 바뀌므로 한 번 정해 두고 되풀이해 쓴다. */
-const ROGUE_TRIO: readonly DialogueCastMember[] = [
+export const ROGUE_TRIO: readonly DialogueCastMember[] = [
   { id: "dodi", slot: "left" },
   { id: "torika", slot: "center" },
   { id: "parua", slot: "right" },
 ];
 
 /** 공멸 삼인조. 앞에 서는 토비가 가운데, 뒤를 막는 아모와 숨어 있던 리파가 양옆이다. */
-const RAID_TRIO: readonly DialogueCastMember[] = [
+export const RAID_TRIO: readonly DialogueCastMember[] = [
   { id: "amo", slot: "left" },
   { id: "toby", slot: "center" },
   { id: "ripa", slot: "right" },
@@ -88,9 +88,9 @@ export const OPENING_TRAIN: DialogueStory = {
     // ── 맞서는 쁘띠 로그 ──────────────────────────────────────────
     { id: "refuse", speaker: "토리카", body: "싫어요! 연구원님은… 우리 대장님이에요. 한 발짝도 못 지나가요!", standing: "torika", cast: ROGUE_TRIO, act: "hop", cue: "impact", nextId: "brave" },
     { id: "brave", speaker: "도디", body: "무, 무섭지만… 대장님을 지킨 첫 기록은 제가 쓸 거예요!", standing: "dodi", act: "tremble", nextId: "aim" },
-    { id: "aim", speaker: "파루아", body: "…화살은 준비됐어. 대장님, 신호만 줘.", standing: "parua", act: "nod", nextId: "command" },
-    { id: "command", speaker: "연구원", body: "쁘띠 로그, 전투 개시!", cue: "impact", nextId: "end" },
-    { id: "end", speaker: "토리카", body: "네, 대장님!", standing: "torika", act: "hop" },
+    { id: "aim", speaker: "파루아", body: "…화살은 준비됐어. 언제든지.", standing: "parua", act: "nod", nextId: "end" },
+    // 전투를 여는 외침은 토리카 한 마디뿐이다 — 곧바로 1-1이 시작되므로 구호를 길게 늘이지 않는다.
+    { id: "end", speaker: "토리카", body: "대장님은 제 뒤에 계세요. …전투 개시!", standing: "torika", act: "hop", cue: "impact" },
   ],
 };
 

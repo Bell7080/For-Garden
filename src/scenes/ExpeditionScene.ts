@@ -928,6 +928,7 @@ export class ExpeditionScene extends Phaser.Scene {
     // 않았다고 읽었다.
     setDebugExpeditionFormation({
       selectedCount: formationMembers(this.selected).length,
+      selectedSlot: this.selectedSlot,
       slots: [0, 1, 2].map((index) => ({ x: FORMATION.firstX + index * FORMATION.stepX, y: FORMATION.y })),
     });
     const generation = ++this.formationGeneration;
@@ -1083,7 +1084,7 @@ export class ExpeditionScene extends Phaser.Scene {
     this.startButton?.setSub(`${count} / 3`).setEnabled(count === 3);
     this.hint.setText(count === 3 ? t("expedition.party.ready") : t("expedition.party.needThree"));
     // Canvas 밖 모바일 E2E에는 렐릭 정보 없이 실제 슬롯 입력 중심과 표시 인원수만 공개한다.
-    setDebugExpeditionFormation({ selectedCount: count, slots: [0, 1, 2].map((index) => ({ x: FORMATION.firstX + index * FORMATION.stepX, y: FORMATION.y })) });
+    setDebugExpeditionFormation({ selectedCount: count, selectedSlot: this.selectedSlot, slots: [0, 1, 2].map((index) => ({ x: FORMATION.firstX + index * FORMATION.stepX, y: FORMATION.y })) });
   }
 
   /** 선택 배열을 직접 저장하지 않고 매니저의 검증 완료 상태 전이만 요청한다. */

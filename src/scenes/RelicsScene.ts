@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { BASE_WIDTH } from "../config/gameConfig";
-import { setDebugRelicScroll, setDebugScene } from "../debug";
+import { setDebugGridCards, setDebugGridOffset, setDebugRelicScroll, setDebugScene } from "../debug";
 import { RELIC_SORT_MODES, SORT_DEFAULT_DESCENDING, sortRelicsBy, type RelicSortMode } from "../core/relicSort";
 import { combatPower } from "../core/combatPower";
 import type { RelicDef } from "../core/types";
@@ -63,6 +63,8 @@ const SORT_ORDER = RELIC_SORT_MODES;
 const sortLabel = (mode: SortMode): string => t(`relics.sort.${mode === "number" ? "id" : mode}`);
 
 export class RelicsScene extends Phaser.Scene {
+  /** 격자 카드의 스크롤 전 자리 — E2E가 좌표 대신 읽는다(`setDebugGridCards`). */
+  private debugCards: Record<string, { x: number; y: number }> = {};
   private info!: CharacterInfoManager;
   /** 필터 판이 사는 층. 조작 줄 위에 얹히는 쪽지라 화면을 새로 열지 않는다. */
   private popups!: PopupLayer;
@@ -125,6 +127,7 @@ export class RelicsScene extends Phaser.Scene {
 
   create(): void {
     setDebugScene("relics");
+    this.debugCards = {};
     this.cards.clear();
     this.content = this.add.container(0, 0);
     // 화면 좌표에 고정된 마스크는 콘텐츠가 움직여도 제목·탭 영역을 절대 침범하지 않는다.
@@ -288,6 +291,8 @@ export class RelicsScene extends Phaser.Scene {
 
   /** 카드 한 장. 자리는 부르는 쪽이 정하고 여기서는 생김새와 입력만 맞춘다. */
   private placeCard(relic: RelicDef, x: number, y: number, cardW: number, cardH: number, introIndex: number): void {
+    this.debugCards[relic.id] = { x, y };
+    setDebugGridCards("relics", this.debugCards, this.content?.y ?? 0);
     {
       const owned = relicCollection.owns(relic.id);
 
@@ -416,6 +421,7 @@ export class RelicsScene extends Phaser.Scene {
       this.viewportMask?.destroy();
       this.viewportMask = undefined;
       setDebugRelicScroll(undefined);
+      setDebugGridCards("relics", undefined);
     });
   }
 
@@ -424,6 +430,7 @@ export class RelicsScene extends Phaser.Scene {
     this.content.y = Phaser.Math.Clamp(y, this.minScrollY, 0);
     if (this.content.y === this.minScrollY || this.content.y === 0) this.velocityY = 0;
     this.syncCardMasks();
+    setDebugGridOffset("relics", this.content.y);
     setDebugRelicScroll({ y: this.content.y, minY: this.minScrollY, maxY: 0, enabled: this.scrollEnabled(), viewportTop: VIEWPORT_TOP, viewportBottom: VIEWPORT_BOTTOM });
   }
 

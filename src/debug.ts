@@ -66,6 +66,12 @@ export interface DebugState {
   popupTitles?: string[];
   /** PuppetForge 조립이 끝나 실제 컨테이너가 살아 있는 수다. E2E 관찰 전용이며 편성 규칙에는 입력되지 않는다. */
   puppetContainers?: Record<string, number>;
+  /**
+   * 목록 격자(도감·편성 보유 목록)에 선 카드의 **스크롤 전 자리**와 지금 스크롤 몫. 화면 좌표는
+   * `y + offsetY`다. 스펙이 카드 자리를 손으로 적으면 보유 목록이나 격자 칸 수가 바뀔 때마다
+   * 엉뚱한 카드를 눌러 조용히 어긋난다(도감의 메테 자리가 그랬다).
+   */
+  gridCards?: Partial<Record<"relics" | "party", { offsetY: number; cards: Record<string, { x: number; y: number }> }>>;
   /** 정보창의 원화와 비교 SD가 각각 실제 컨테이너로 교체됐는지 나타내는 읽기 전용 표시 상태다. */
   infoAssetReady?: { portrait: boolean; sd: boolean };
   /** WebGL 복구 사건과 그 뒤 실제 post-render 수를 기록하는 수명 주기 관찰값이다. */
@@ -132,11 +138,15 @@ export interface DebugState {
   mailPopup?: { open: boolean; unreadCount: number; claimableCount: number };
   owned?: string[];
   /** 캔버스 내부 편성 UI의 위치/표시 상태를 모바일 E2E가 읽는 최소 정보다. */
-  party?: { autoButton: { x: number; y: number }; visibleAffinityDirections: number; selectedCount?: number; slots?: Array<{ x: number; y: number }> };
+  party?: { autoButton: { x: number; y: number }; visibleAffinityDirections: number; selectedCount?: number; slots?: Array<{ x: number; y: number }>; selectedSlot?: number };
   /** 레이드가 시즌 판인지 편성 단계인지. 두 걸음이 같은 씬 이름을 쓰므로 E2E는 이 값으로 가른다. */
   raidStage?: "list" | "season" | "summon" | "summonReveal";
   /** 원정 준비 슬롯의 실제 입력 중심과 현재 선택 수만 노출하는 모바일 입력 계약이다. */
-  expeditionFormation?: { selectedCount: number; slots: Array<{ x: number; y: number }> };
+  /**
+   * `selectedSlot`은 지금 고른 칸이다. 칸은 한 번 누르면 **고르고**, 고른 칸을 한 번 더 누르면 **뺀다**
+   * (`tapFormationSlot`) — E2E가 두 걸음을 각각 확인하려면 고른 칸이 보여야 한다.
+   */
+  expeditionFormation?: { selectedCount: number; slots: Array<{ x: number; y: number }>; selectedSlot?: number };
   /** 공용 드래그 표현의 사용자 가시 상태이며 렐릭 ID나 확정 배열은 포함하지 않는다. */
   formationDragVisual?: { owner: "party" | "expedition" | "excavation"; hovered?: number; replacementVisible: boolean };
   /** 설정 왕복 E2E가 프리미엄 화면의 표시 섹션까지 복원됐는지 확인하는 최소 상태다. */
@@ -307,7 +317,24 @@ export function setDebugInfoOpen(open: boolean): void {
   if (!open) ensure().infoAssetReady = undefined;
 }
 
-/** 비동기 Puppet 생성/파괴 결과만 세며 저장이나 편성 상태를 읽거나 바꾸지 않는다. */
+/** 격자 카드 자리를 알린다. 스크롤이 바뀌면 `offsetY`만 갈아 끼운다. */
+export function setDebugGridCards(scene: "relics" | "party", cards: Record<string, { x: number; y: number }> | undefined, offsetY = 0): void {
+  const state = ensure(); const grids = state.gridCards ?? (state.gridCards = {});
+  if (!cards) { delete grids[scene]; return; }
+  grids[scene] = { offsetY, cards };
+}
+
+export function setDebugGridOffset(scene: "relics" | "party", offsetY: number): void {
+  const grid = ensure().gridCards?.[scene];
+  if (grid) grid.offsetY = offsetY;
+}
+
+/**
+ * 비동기 Puppet 생성/파괴 결과만 세며 저장이나 편성 상태를 읽거나 바꾸지 않는다.
+ *
+ * **키는 씬 키(`lobby`·`expedition`)다 — 클래스 이름이 아니다.** 스펙 몇 곳이 `ExpeditionScene`으로
+ * 읽어 수가 영원히 0으로 보였고, 기다리던 검사가 시간만 채우고 실패했다.
+ */
 export function changeDebugPuppetContainers(scene: string, delta: number): void {
   const state = ensure(); const counts = state.puppetContainers ?? (state.puppetContainers = {});
   counts[scene] = Math.max(0, (counts[scene] ?? 0) + delta);

@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
-import { setDebugParty, setDebugScene } from "../debug";
+import { setDebugGridCards, setDebugGridOffset, setDebugParty, setDebugScene } from "../debug";
 import type { RelicDef } from "../core/types";
 import { getRelic } from "../data/relics";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
@@ -623,6 +623,10 @@ export class PartyScene extends Phaser.Scene {
 
     // 보유한 렐릭만 편성할 수 있다.
     const roster = relicCollection.owned;
+    // 카드 자리를 Canvas 밖에 알린다 — 스펙이 보유 순서와 격자 칸 수를 손으로 셈하지 않게 한다.
+    setDebugGridCards("party", Object.fromEntries(roster.map((relic, i) => [relic.id, {
+      x: rosterColumnX(i % cols), y: startY + Math.floor(i / cols) * rowStep,
+    }])), this.rosterScrollY);
     roster.forEach((relic, i) => {
       const x = rosterColumnX(i % cols);
       const y = startY + Math.floor(i / cols) * rowStep;
@@ -700,6 +704,7 @@ export class PartyScene extends Phaser.Scene {
 
   private scrollRosterTo(value: number): void {
     this.rosterScrollY = Phaser.Math.Clamp(value, this.rosterMinScroll, 0);
+    setDebugGridOffset("party", this.rosterScrollY);
     this.rosterContent?.setY(this.rosterScrollY);
     this.syncRosterCardMasks();
   }
@@ -821,6 +826,7 @@ export class PartyScene extends Phaser.Scene {
       selectedCount: members.length,
       // 입력면 중심을 공개해 E2E가 SD 로딩이나 하드코딩 좌표에 의존하지 않게 한다.
       slots: PREVIEW_COLUMNS.map((x) => ({ x, y: ALLY_ROW - PREVIEW_HEIGHT / 2 })),
+      selectedSlot: this.selectedSlot,
     });
     this.hint.setText(members.length === 3 ? t("party.ready") : t("party.needMore", { count: 3 - members.length }));
   }

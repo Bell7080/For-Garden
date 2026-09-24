@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { clearFormationSlot, gridCardPoint, placeInFormationSlot } from "./formationSlotTap";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import { startAfterOpening } from "./openingSave";
 import { captureGame, tap as tapGame, tapUntil, waitForDebugState } from "./canvasInput";
@@ -25,11 +26,13 @@ test("도디·메테의 도감 전신과 루카 포함 편성·전투 SD 에셋�
   // 로비는 이름이 바뀐 뒤에도 하단 탭의 입력면을 마저 만든다 — 될 때까지 다시 누른다.
   await tapUntil(page, BASE_WIDTH * 0.3, BASE_HEIGHT - 90, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "relics");
 
-  // 개체번호순 기본 도감에서 도디는 첫 카드, 메테는 기본 보유 구역의 여섯 번째 카드다.
-  await tapUntil(page, 200, 620, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === true);
+  // 카드 자리는 도감이 내놓는 값을 읽는다 — 기본 보유와 격자 칸 수가 바뀔 때마다 고정 좌표가 어긋났다.
+  const dodi = await gridCardPoint(page, "relics", "dodo");
+  await tapUntil(page, dodi.x, dodi.y, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === true);
   await captureGame(page, `test-results/${testInfo.project.name}-asset-dodi-catalog-fullbody.png`);
   await tapGame(page, BASE_WIDTH - 106, BASE_HEIGHT - 120);
-  await tapUntil(page, 880, 1094, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === true);
+  const mette = await gridCardPoint(page, "relics", "mette");
+  await tapUntil(page, mette.x, mette.y, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === true);
   await captureGame(page, `test-results/${testInfo.project.name}-asset-mette-catalog-fullbody.png`);
   await tapGame(page, BASE_WIDTH - 106, BASE_HEIGHT - 120);
 
@@ -38,11 +41,11 @@ test("도디·메테의 도감 전신과 루카 포함 편성·전투 SD 에셋�
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await openParty(page);
   // 준비 화면은 직전 편성을 복원해 세 명이 이미 서 있다 — 먼저 내려야 원하는 셋을 순서대로 세울 수 있다.
-  // 보유 순서는 토리카·렉시아·스피나·루카·도디·메테이고, 그리드는 다섯 칸마다 줄이 바뀐다.
-  for (const [x, y] of [[116, 1080], [328, 1080], [540, 1080]] as const) await tapGame(page, x, y);
-  for (const [x, y] of [[964, 1080], [116, 1324], [752, 1080]] as const) await tapGame(page, x, y);
+  // 칸은 한 번 누르면 고르고 한 번 더 누르면 빠진다. 세울 때는 칸을 고른 뒤 목록 카드를 누른다.
+  for (const index of [0, 1, 2]) await clearFormationSlot(page, "party", index);
+  for (const [index, relicId] of [[0, "dodo"], [1, "mette"], [2, "luka"]] as const) await placeInFormationSlot(page, index, relicId);
   // 비동기 조립 결과로 PartyScene에 세 SD 컨테이너가 실제 생길 때까지 기다린다.
-  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.PartyScene ?? 0) >= 3, true, { timeout: 60_000 });
+  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.party ?? 0) >= 3, true, { timeout: 60_000 });
   await captureGame(page, `test-results/${testInfo.project.name}-asset-dodi-mette-luka-party-sd.png`);
   await tapGame(page, BASE_WIDTH / 2, 1700);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("battle");
@@ -60,14 +63,15 @@ test("토리카 기본 외형에서 스킨을 장착해 도감·로비·편성·
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await tapUntil(page, BASE_WIDTH * 0.3, BASE_HEIGHT - 90, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "relics");
 
-  // 개체번호순 보유 구역의 둘째 칸(도디 001 다음)이 토리카 014다. 열은 `relicGridColumnX`가 정한다.
-  await tapUntil(page, 411, 620, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === true);
+  // 토리카(anky) 카드 자리는 도감이 내놓는 값을 읽는다.
+  const torika = await gridCardPoint(page, "relics", "anky");
+  await tapUntil(page, torika.x, torika.y, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === true);
   // 외형 칩은 오른쪽 기둥 가운데에 선다(`appearanceButtonX()` = 991, `APPEARANCE_BUTTON.y`).
   // 칩은 정보창이 그 개체를 다 읽은 뒤에야 보이므로 열릴 때까지 눌러 본다.
   await tapUntil(page, 991, 1580, async () => ((await page.evaluate(() => window.__PF_DEBUG?.popupTitles)) ?? []).includes("외형"));
   // 두 resolver Puppet이 비동기 addAt으로 카드에 조립된 뒤, 각 카드의 선택 배율을 물려받으면서도
   // 카드 중심(x=0)과 공용 바닥선에 나란히 선 완성 상태를 시각 회귀로 남긴다.
-  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.RelicsScene ?? 0) >= 3, true, { timeout: 60_000 });
+  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.relics ?? 0) >= 3, true, { timeout: 60_000 });
   await captureGame(page, `test-results/${testInfo.project.name}-torika-appearance-default.png`);
 
   // 띠의 둘째 칸(여름방학 토리카)을 고른 뒤 **판 밑동의** 장착 버튼으로 manager 경계를 호출한다.
@@ -85,11 +89,11 @@ test("토리카 기본 외형에서 스킨을 장착해 도감·로비·편성·
   await tapUntil(page, BASE_WIDTH - 106, BASE_HEIGHT - 120, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === false);
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT - 90);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
-  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.LobbyScene ?? 0) >= 1, true, { timeout: 60_000 });
+  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.lobby ?? 0) >= 1, true, { timeout: 60_000 });
   await captureGame(page, `test-results/${testInfo.project.name}-torika-skin001-lobby-fullbody.png`);
 
   await openParty(page);
-  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.PartyScene ?? 0) >= 3, true, { timeout: 60_000 });
+  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.party ?? 0) >= 3, true, { timeout: 60_000 });
   await captureGame(page, `test-results/${testInfo.project.name}-torika-skin001-party-sd.png`);
   await tapGame(page, BASE_WIDTH / 2, 1700);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("battle");
@@ -101,7 +105,7 @@ test("토리카 기본 외형에서 스킨을 장착해 도감·로비·편성·
   await page.waitForFunction(() => window.__PF_DEBUG?.ready === true);
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
-  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.LobbyScene ?? 0) >= 1, true, { timeout: 60_000 });
+  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.lobby ?? 0) >= 1, true, { timeout: 60_000 });
   await captureGame(page, `test-results/${testInfo.project.name}-torika-skin001-restored-lobby-fullbody.png`);
 });
 
@@ -115,6 +119,6 @@ test("스킨 ZIP 하나가 실패해도 타이틀과 기본 토리카 외형으�
   await captureGame(page, `test-results/${testInfo.project.name}-skin-zip-failure-title-continues.png`);
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
-  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.LobbyScene ?? 0) >= 1, true, { timeout: 60_000 });
+  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.lobby ?? 0) >= 1, true, { timeout: 60_000 });
   await captureGame(page, `test-results/${testInfo.project.name}-skin-zip-failure-default-torika.png`);
 });

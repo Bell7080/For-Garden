@@ -30,7 +30,7 @@ test("컨텍스트를 잃었다 되찾아도 죽은 GL program으로 그리지 �
   await tap(page, center.x, center.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   // 애착 렐릭 Puppet이 실제로 설 때까지 기다린다. 서 있지 않으면 잃을 것도 없어 검사가 헛돈다.
-  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.LobbyScene ?? 0) >= 1, true, { timeout: 60_000 });
+  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.lobby ?? 0) >= 1, true, { timeout: 60_000 });
 
   const restored = await page.evaluate(async () => {
     const canvas = document.querySelector("canvas") as HTMLCanvasElement;

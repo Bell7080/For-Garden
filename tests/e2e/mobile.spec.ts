@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
+import { clearFormationSlot } from "./formationSlotTap";
 import { OPENING_TRAIN } from "../../src/data/dialogues/openingTrain";
 import { canvasBox, captureGame, gamePoint, tap, tapUntil, waitForDebugState } from "./canvasInput";
 import { ExpeditionManager } from "../../src/managers/ExpeditionManager";
@@ -216,16 +217,18 @@ test("출격 선택판에서 원정대 3기를 골라 진행 중 상태로 저�
   await tapGame(page, BASE_WIDTH / 2, 1403);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
   // 원정의 첫 화면은 주간 기록이다. 순위와 기록 보상을 먼저 보고 출격으로 편성을 연다.
-  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.ExpeditionScene ?? 0) >= 1, true, { timeout: 60_000 });
+  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.expedition ?? 0) >= 1, true, { timeout: 60_000 });
   await captureGame(page, `test-results/${test.info().project.name}-expedition-ranking.png`);
   // 기록 원경과 별개로 합성된 순위 팝업(도시 원경 + 옅은 필드)을 실제 캔버스에 남긴다.
-  await tapGame(page, 363, 1610);
+  // 기록 화면은 들어오는 연출(카메라 이동) 동안 손을 받지 않을 수 있어, 판이 열릴 때까지 누른다.
+  const popupOpen = async (): Promise<boolean> => page.evaluate(() => (window.__PF_DEBUG?.popupTitles?.length ?? 0) > 0);
+  await tapUntil(page, 363, 1610, popupOpen);
   await waitForDebugState(page, () => (window.__PF_DEBUG?.popupTitles?.length ?? 0) > 0, true);
   await captureGame(page, `test-results/${test.info().project.name}-expedition-ranking-popup.png`);
   // 닫힌 팝업의 우하단 공용 뒤로가기로 기록 화면에 복귀한다.
   await tapGame(page, RANKING_BACK.x, RANKING_BACK.y);
   await waitForDebugState(page, () => window.__PF_DEBUG?.popupTitles, undefined);
-  await tapGame(page, 717, 1610);
+  await tapUntil(page, 717, 1610, popupOpen);
   await waitForDebugState(page, () => (window.__PF_DEBUG?.popupTitles?.length ?? 0) > 0, true);
   await captureGame(page, `test-results/${test.info().project.name}-expedition-reward-popup.png`);
   // 기록 보상 판은 고를 것이 없는 읽기 판이라 판 바깥을 눌러 닫는다.
@@ -235,7 +238,7 @@ test("출격 선택판에서 원정대 3기를 골라 진행 중 상태로 저�
   // 하단 출격 버튼이 편성 단계를 연다. 씬 재시작과 SD 로딩을 기다린 뒤 카드를 누른다.
   // 기록 화면의 판들이 닫히고 나서야 출격이 드러난다 — 편성이 열릴 때까지 다시 누른다.
   await tapUntil(page, BASE_WIDTH / 2, 1800, async () => (await page.evaluate(() => window.__PF_DEBUG?.expeditionFormation)) !== undefined);
-  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.ExpeditionScene ?? 0) >= (window.__PF_DEBUG?.expeditionFormation?.selectedCount ?? 3), true, { timeout: 60_000 });
+  await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.expedition ?? 0) >= (window.__PF_DEBUG?.expeditionFormation?.selectedCount ?? 3), true, { timeout: 60_000 });
   await captureGame(page, `test-results/${test.info().project.name}-expedition-preparation.png`);
 
   // 복원된 세 기 중 가운데 슬롯을 직접 해제하면 카드·SD·인원수·버튼 상태가 함께 2기로 바뀐다.
@@ -243,9 +246,7 @@ test("출격 선택판에서 원정대 3기를 골라 진행 중 상태로 저�
   // 공용 표현은 대상 네모칸과 자리 내주는 SD 고스트를 포인터를 든 동안 동시에 유지한다.
   const expeditionSlots = (await page.evaluate(() => window.__PF_DEBUG?.expeditionFormation?.slots))!;
   await inspectFormationDrag(page, expeditionSlots[0], expeditionSlots[1], "expedition");
-  const formationSlot = (await page.evaluate(() => window.__PF_DEBUG?.expeditionFormation?.slots[1]))!;
-  await tapGame(page, formationSlot.x, formationSlot.y);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.expeditionFormation?.selectedCount)).toBe(2);
+  await clearFormationSlot(page, "expeditionFormation", 1);
   // 빠진 렐릭의 보유 카드를 다시 눌러 세 기로 복구한 뒤 실제 시작 저장까지 이어 간다.
   //
   // **어느 카드가 빠졌는지는 앞선 드래그가 정한다** — 자리를 바꾼 뒤 하나를 내렸으므로 고정
@@ -661,12 +662,10 @@ test("가로로 눕히면 세로로 돌려달라는 안내가 뜬다", async ({ 
 test("모바일 편성 상단의 자동 배치 버튼과 자리별 상성 화살표가 표시된다", async ({ page }) => {
   await enterParty(page);
   // 준비 화면은 빈 상태로 열리지 않는다 — 직전 편성을 복원하거나 자동 편성으로 채운다. 자동
-  // 배치가 화살표를 세우는 것을 보려면 먼저 비워야 한다. 자리를 누르면 그 한 명만 빠진다.
-  for (let remaining = 3; remaining > 0; remaining -= 1) {
-    const slot = (await page.evaluate(() => window.__PF_DEBUG?.party?.slots?.[0]))!;
-    await tapGame(page, slot.x, slot.y);
-    await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.party?.selectedCount)).toBe(remaining - 1);
-  }
+  // 배치가 화살표를 세우는 것을 보려면 먼저 비워야 한다. 칸은 한 번 누르면 고르고 한 번 더
+  // 누르면 그 한 명만 빠진다.
+  for (const index of [0, 1, 2]) await clearFormationSlot(page, "party", index);
+  expect(await page.evaluate(() => window.__PF_DEBUG?.party?.selectedCount)).toBe(0);
   const before = await page.evaluate(() => window.__PF_DEBUG?.party);
 
   // 버튼 중심은 그리드 위 우측 — 그리드 오른쪽 경계에 붙고, 그리드 윗변 바로 위에 뜬다.
@@ -679,10 +678,8 @@ test("모바일 편성 상단의 자동 배치 버튼과 자리별 상성 화살
   await tapGame(page, before!.autoButton.x, before!.autoButton.y);
   // 고정 시작 보유·1-1 적 조합에서는 자동 편성 셋 모두 유리하거나 불리해 중립이 없다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.party?.visibleAffinityDirections)).toBe(3);
-  // SD 로딩과 무관한 슬롯 입력면을 누르면 그 화면 자리 하나만 즉시 빠진다.
-  const secondSlot = (await page.evaluate(() => window.__PF_DEBUG?.party?.slots?.[1]))!;
-  await tapGame(page, secondSlot.x, secondSlot.y);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.party?.selectedCount)).toBe(2);
+  // SD 로딩과 무관한 슬롯 입력면으로 고르고 한 번 더 누르면 그 화면 자리 하나만 빠진다.
+  await clearFormationSlot(page, "party", 1);
   await captureGame(page, `test-results/${test.info().project.name}-party-affinity-arrows.png`);
 });
 

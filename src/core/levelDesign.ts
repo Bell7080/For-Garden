@@ -133,9 +133,14 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
      * 정예 관문은 그 장의 끝에 서므로 사다리가 이미 높고, 거기에 ×3.6·×1.55를 그대로 얹자
      * 대표 조합이 여덟 판 모두 전멸했다. 레벨이 아니라 이 두 수가 세기의 손잡이라는 말은
      * **레벨이 움직이면 여기도 다시 잰다**는 뜻이다.
+     *
+     * 검수를 실제 전장 크기(`battleArena("stage")`)로 옮기며 공격 몫을 ×1.5 → ×1.1로 다시 쟀다
+     * (v0.172.6). 넓은 틀에서는 혼자 선 정예가 후열까지 걸어가는 동안 원거리가 공짜로 쏘았는데,
+     * 실제 전장은 그 거리가 짧아 ×1.5로는 대표 조합이 1-10을 한 판도 열지 못했다. 체력 몫은
+     * 결과를 거의 바꾸지 않아(×2.4~×3.3 사이에서 같은 판이 났다) 그대로 둔다.
      */
     count: 1, bodyScale: 1.18,
-    hpMultiplier: 3.3, attackMultiplier: 1.5,
+    hpMultiplier: 3.3, attackMultiplier: 1.1,
     ttkSeconds: [18, 32], remainingHp: [0.20, 0.60],
   },
   boss: {

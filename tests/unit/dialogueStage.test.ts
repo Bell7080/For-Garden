@@ -192,3 +192,41 @@ describe("다른 이야기", () => {
     }
   });
 });
+
+describe("1-1 뒤의 막 — 공멸 삼인조의 퇴각", () => {
+  it("은 전장에서 삼인조로 시작해, 날아가 별이 된 뒤 쁘띠 로그 셋이 마무리한다", async () => {
+    const { OPENING_RETREAT } = await import("../../src/data/dialogues/openingRetreat");
+    expect(OPENING_RETREAT.backdrop).toBe("battlefield");
+    const byId = new Map(OPENING_RETREAT.nodes.map((node) => [node.id, node]));
+    const order: DialogueNode[] = [];
+    for (let node = byId.get(OPENING_RETREAT.startNodeId); node; node = node.nextId ? byId.get(node.nextId) : undefined) order.push(node);
+    expect(order).toHaveLength(OPENING_RETREAT.nodes.length);
+    const ids = (cast: readonly DialogueCastMember[] | undefined) => (cast ?? []).map(({ id }) => id).sort();
+    expect(ids(order[0].cast)).toEqual(["amo", "ripa", "toby"]);
+    // 날아가는 퇴장은 무대를 비우는 마디에 걸린다 — 빠지는 사람에게만 걸리는 방식이라서다.
+    const away = order.find((node) => node.leave === "blastOff")!;
+    expect(away.cast).toEqual([]);
+    const after = order.slice(order.indexOf(away) + 1);
+    expect(ids(after[0].cast)).toEqual(["dodi", "parua", "torika"]);
+    for (const node of after) if (node.standing) expect(["torika", "dodi", "parua"]).toContain(node.standing);
+  });
+
+  it("은 전투 입력이 넘긴 막으로 찾을 수 있다", async () => {
+    const { OPENING_RETREAT } = await import("../../src/data/dialogues/openingRetreat");
+    const { getRecollectionStory } = await import("../../src/data/dialogues/recollections");
+    expect(getRecollectionStory(OPENING_RETREAT.id)).toBe(OPENING_RETREAT);
+  });
+});
+
+describe("장면 연출의 층", () => {
+  it("경보와 섬광은 대사판 위에 서고, 화면을 덮는 층은 진동 폭보다 넉넉히 화면 밖으로 뻗는다", async () => {
+    const source = (await import("../../src/ui/DialogueStage.ts?raw")).default;
+    const depth = /const DEPTH = \{[^}]*alarm: (\d+), flash: (\d+)/.exec(source)!;
+    // 대사판(600) 아래에 두면 판의 짙은 유리가 아래쪽만 눌러 화면이 위아래로 갈려 보였다.
+    expect(Number(depth[1])).toBeGreaterThan(600);
+    expect(Number(depth[2])).toBeGreaterThan(600);
+    const { DIALOGUE_OVERSCAN, DIALOGUE_CUES } = await import("../../src/ui/dialogueStageLayout");
+    const maxShake = Math.max(...Object.values(DIALOGUE_CUES).map(({ shakeIntensity }) => shakeIntensity)) * 1920;
+    expect(DIALOGUE_OVERSCAN).toBeGreaterThan(maxShake);
+  });
+});

@@ -109,6 +109,18 @@ export function expeditionBattleResults(input: ExpeditionBattleInputDto, activeR
 /** 스토리 출격도 판별 필드를 반드시 보내 원정 입력과 같은 명시적 계약을 지킨다. */
 export interface StageBattleInputDto {
   mode: "stage";
+  /**
+   * 결과판을 닫은 뒤 돌아갈 곳. 비우면 지도다.
+   *
+   * 오프닝은 지도를 거치지 않고 곧장 1-1로 들어오므로, 끝난 뒤에도 지도가 아니라 로비로 나간다 —
+   * 한 번도 본 적 없는 지도로 떨어지면 오프닝에서 이어지던 흐름이 거기서 끊긴다.
+   */
+  exitTo?: "lobby";
+  /**
+   * 이기면 결과판을 닫은 뒤 곧장 이어지는 짧은 이야기. 그 이야기가 끝나면 `exitTo`로 간다.
+   * 오프닝에서 들어온 1-1만 쓴다(공멸 삼인조의 퇴각). 지면 이야기 없이 곧장 나간다.
+   */
+  epilogueStoryId?: string;
 }
 
 /**
@@ -152,6 +164,12 @@ export function normalizeBattleSceneInput(input?: unknown): BattleSceneInputDto 
     if (candidate.mode === "raid" && typeof candidate.raidId === "string" && typeof candidate.bossRelicId === "string" && isRaidDifficulty(candidate.difficulty)) return candidate;
     // 현상수배는 라운드 번호까지 있어야 한 판이 이어진다 — 판별값만 남은 입력은 스토리로 돌린다.
     if (candidate.mode === "bounty" && typeof candidate.tierId === "string" && typeof candidate.requestId === "string") return candidate;
+    // 스토리는 돌아갈 곳 하나만 이어받는다. 모르는 값은 기본 길(지도)로 수렴시킨다.
+    if (candidate.mode === "stage" && candidate.exitTo === "lobby") {
+      return typeof candidate.epilogueStoryId === "string"
+        ? { mode: "stage", exitTo: "lobby", epilogueStoryId: candidate.epilogueStoryId }
+        : { mode: "stage", exitTo: "lobby" };
+    }
   }
   return { mode: "stage" };
 }

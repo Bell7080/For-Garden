@@ -12,6 +12,15 @@ import { BACKGROUND } from "./backgroundAssets";
  * (`tests/unit/dialogueStage.test.ts`).
  */
 
+/**
+ * 화면 전체를 덮는 층이 화면 밖으로 더 뻗는 폭.
+ *
+ * 진동은 카메라를 흔들므로, 화면에 딱 맞춘 층은 흔들리는 순간 가장자리에 덮이지 않은 띠가
+ * 드러난다 — 하단 대사판이 끝나는 자리에서 배경이 한 줄 새어 나와 "아래만 하얗게 번쩍"했다.
+ * 진동의 최대 폭(화면 높이의 3%, 약 58px)보다 넉넉하게 둔다.
+ */
+export const DIALOGUE_OVERSCAN = 96;
+
 /** 대사판의 윗변. 판 자체의 모양은 `DialogueLayer`가 그린다. */
 export const DIALOGUE_PANEL_TOP = 1270;
 
@@ -102,6 +111,25 @@ export const DIALOGUE_ENTRANCE = {
   exitMs: 180,
   /** 이미 선 사람이 다른 자리로 옮겨 갈 때. */
   moveMs: 280,
+} as const;
+
+/**
+ * 날아가는 퇴장(`blastOff`). 한 번 움찔 눌렸다가 오른쪽 위로 빙글빙글 날아가며 작아지고,
+ * 사라진 자리에서 작은 마름모 하나가 반짝인다 — 전투에서 쓰러진 SD가 "별이 되는" 것과 같다.
+ * 셋이 함께 나갈 때는 조금씩 어긋나 떠나야 한 덩어리로 뭉쳐 보이지 않는다(`staggerMs`).
+ */
+export const DIALOGUE_BLAST_OFF = {
+  crouchMs: 110,
+  crouchDy: 36,
+  flyMs: 820,
+  /** 날아가는 끝점. 머리 관절 기준 변위이며 화면 위쪽 밖으로 나간다. */
+  dx: 380,
+  dy: -1100,
+  spinTurns: 2.5,
+  endScale: 0.18,
+  staggerMs: 120,
+  twinkleMs: 420,
+  twinkleSize: 46,
 } as const;
 
 /** 스탠딩 연출 한 걸음 — 기준 자리에서의 변위와 그 자리까지 가는 시간. */

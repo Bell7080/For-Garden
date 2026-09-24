@@ -46,17 +46,45 @@ export function partyAffinitySummary(allies: readonly RelicDef[], enemies: reado
 }
 
 /**
- * 적 전체를 향한 속성 배율 합이 높은 순서로 자동 편성한다.
- * 점수가 같으면 보유 목록 순서를 지켜 결과가 매번 바뀌지 않으며, 직업은 숨은 보정에 쓰지 않는다.
+ * 적 전체를 향한 속성 배율 합이 높은 순서로 **누구를** 데려갈지 고르고, 직군으로 **어디에** 세울지
+ * 정한다(`arrangeByRole`). 점수가 같으면 보유 목록 순서를 지켜 결과가 매번 바뀌지 않으며, 직군은
+ * 고르는 데에는 쓰지 않는다 — 숨은 보정이 아니라 자리만 정한다.
  */
 export function autoPickParty(roster: readonly RelicDef[], enemies: readonly RelicDef[], size = 3): string[] {
-  return roster
+  const picked = roster
     .map((relic, index) => ({
-      id: relic.id,
+      relic,
       index,
       score: enemies.reduce((sum, enemy) => sum + elementMultiplier(effectiveElement(relic), effectiveElement(enemy)), 0),
     }))
     .sort((left, right) => right.score - left.score || left.index - right.index)
     .slice(0, Math.max(0, size))
-    .map(({ id }) => id);
+    .map(({ relic }) => relic);
+  return arrangeByRole(picked).map(({ id }) => id);
+}
+
+/**
+ * 가운데 자리에 먼저 설 직군. 가운데(2번)는 한 걸음 앞으로 나선 자리라(`spawnSpots`의 stagger)
+ * 적과 가장 먼저 부딪힌다 — 탱커가 서야 뒤를 받치고, 없으면 전사가 앞을 맡는다.
+ */
+const CENTER_PRIORITY: Readonly<Record<RelicDef["role"], number>> = { tank: 0, warrior: 1, assassin: 2, support: 3 };
+
+/** 남은 둘 중 왼쪽(1번)에 먼저 설 직군. 암살자가 파고드는 쪽, 지원가가 뒤를 받치는 오른쪽(3번)이다. */
+const LEFT_PRIORITY: Readonly<Record<RelicDef["role"], number>> = { assassin: 0, warrior: 1, tank: 2, support: 3 };
+
+/**
+ * 셋의 자리를 직군으로 정한다 — **가운데에 탱커·전사, 양옆에 암살자·지원가.**
+ *
+ * 1·3번은 옆으로 비켜 선 자리라 적이 먼저 닿지 않는다. 약한 몸을 거기 두고 앞으로 나선 가운데에
+ * 튼튼한 몸을 세워야 한 명이 먼저 쓰러지는 일이 줄어든다. 같은 직군끼리는 들어온 순서를 지킨다.
+ * 셋이 아니면(빈 자리가 섞인 편성 등) 순서를 건드리지 않는다.
+ */
+export function arrangeByRole<T extends Pick<RelicDef, "role">>(members: readonly T[]): T[] {
+  if (members.length !== 3) return [...members];
+  const indexed = members.map((member, index) => ({ member, index }));
+  const center = [...indexed].sort((a, b) => CENTER_PRIORITY[a.member.role] - CENTER_PRIORITY[b.member.role] || a.index - b.index)[0];
+  const [left, right] = indexed
+    .filter((entry) => entry !== center)
+    .sort((a, b) => LEFT_PRIORITY[a.member.role] - LEFT_PRIORITY[b.member.role] || a.index - b.index);
+  return [left.member, center.member, right.member];
 }

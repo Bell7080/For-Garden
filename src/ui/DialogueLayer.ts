@@ -1,12 +1,12 @@
 import Phaser from "phaser";
-import { BASE_WIDTH } from "../config/gameConfig";
+import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { DialogueBackdrop, DialogueChoice, DialogueNode, DialogueStandingAsset } from "../core/dialogue";
 import { DialoguePlaybackClock } from "../core/dialoguePlayback";
 import { settingsManager } from "../managers/SettingsManager";
 import { Button } from "./Button";
 import { DIALOGUE_BUBBLE } from "./dialogueBubbleLayout";
 import { DialogueStage } from "./DialogueStage";
-import { DIALOGUE_PANEL_TOP } from "./dialogueStageLayout";
+import { DIALOGUE_OVERSCAN, DIALOGUE_PANEL_TOP } from "./dialogueStageLayout";
 import { drawGlassFade, drawHairline } from "./holo";
 import { addSectionTitle } from "./SectionTitle";
 import { COLOR, textStyle } from "./theme";
@@ -55,7 +55,11 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
     this.stage = new DialogueStage(scene, options.backdrop);
     // 대사판도 테두리를 두르지 않는다. 아래로 짙어지는 유리면과 윗선 한 줄로만 자리를 잡는다.
     // 스탠딩이 잠기는 어둠은 무대(`DialogueStage`)가 깔므로 판 자체는 옅게 시작한다.
-    const glass = drawGlassFade(scene, BASE_WIDTH / 2, PANEL_TOP + 300, BASE_WIDTH, 620, { topAlpha: 0.2, bottomAlpha: 0.95 });
+    // 판은 화면 밑동을 넘어 좌우·아래로 더 뻗는다 — 예전에는 1880에서 끝나 밑의 40px이 비었고,
+    // 진동이 오면 그 틈과 화면 가장자리가 드러났다.
+    const glassTop = PANEL_TOP - 10;
+    const glassHeight = BASE_HEIGHT + DIALOGUE_OVERSCAN - glassTop;
+    const glass = drawGlassFade(scene, BASE_WIDTH / 2, glassTop + glassHeight / 2, BASE_WIDTH + DIALOGUE_OVERSCAN * 2, glassHeight, { topAlpha: 0.2, bottomAlpha: 0.95 });
     // 윗선은 옅게만 둔다. 짙으면 어둠에 잠겨 가던 몸을 그 줄이 다시 가로로 자른 것처럼 보인다.
     const topLine = drawHairline(scene, BASE_WIDTH / 2, PANEL_TOP - 10, BASE_WIDTH, { color: COLOR.accent, alpha: 0.14 });
     const blocker = scene.add.rectangle(BASE_WIDTH / 2, PANEL_TOP + 290, BASE_WIDTH, 620, 0xffffff, 0);

@@ -6,6 +6,7 @@ import {
   type DialogueBackdrop,
   type DialogueCastMember,
   type DialogueCue,
+  type DialogueLeave,
   type DialogueNode,
   type DialogueStandingAsset,
 } from "../core/dialogue";
@@ -30,11 +31,13 @@ import { addSceneBackground, ensureBackgroundTexture } from "./backgrounds";
 import {
   DIALOGUE_ACTS,
   DIALOGUE_ALARM,
+  DIALOGUE_BLAST_OFF,
   DIALOGUE_BACKDROP,
   DIALOGUE_CUES,
   DIALOGUE_ENTRANCE,
   DIALOGUE_EXPLOSION,
   DIALOGUE_FOCUS,
+  DIALOGUE_OVERSCAN,
   DIALOGUE_STAGE_CUT,
   DIALOGUE_STAGE_FADE,
   DIALOGUE_STANDING_FRAME,
@@ -77,8 +80,19 @@ interface StageMember {
   act?: Phaser.Tweens.TweenChain;
 }
 
-/** 무대 층. 배경 < 스탠딩 < 몸이 잠기는 어둠 < 화면 연출 < 대사판(600) 순서다. */
-const DEPTH = { backdrop: -30, vignette: -29, fade: 540, alarm: 560, flash: 580 } as const;
+/**
+ * 무대 층. 배경 < 스탠딩 < 몸이 잠기는 어둠 < 대사판(600) < 경보 < 선택지(610) < 섬광 순서다.
+ *
+ * **경보와 섬광은 대사판 위에 선다.** 대사판 아래에 두었을 때는 판의 짙은 유리가 그 둘을
+ * 눌러, 경보의 붉은 테두리가 아래쪽에서만 흐릿하게 끊기고 섬광은 위쪽만 하얘져 화면이 위아래로
+ * 갈려 보였다. 경보는 가장자리만 물들이므로 판 위에 올라도 글을 덮지 않는다.
+ */
+const DEPTH = { backdrop: -30, vignette: -29, fade: 540, alarm: 605, flash: 650 } as const;
+
+/** 화면을 통째로 덮는 사각형. 진동에 가장자리가 드러나지 않도록 화면 밖으로 넉넉히 뻗는다. */
+function fullScreenRect(scene: Phaser.Scene, color: number, alpha: number): Phaser.GameObjects.Rectangle {
+  return scene.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH + DIALOGUE_OVERSCAN * 2, BASE_HEIGHT + DIALOGUE_OVERSCAN * 2, color, alpha);
+}
 
 /**
  * 이야기 무대 — 배경과 그 위에 선 스탠딩, 그리고 장면 전체에 일어나는 연출을 맡는다.
@@ -115,12 +129,15 @@ export class DialogueStage {
   private drawFade(): void {
     const { color, start, knee, kneeAlpha, end, endAlpha } = DIALOGUE_STAGE_FADE;
     const fade = this.scene.add.graphics().setDepth(DEPTH.fade);
+    // 좌우와 밑동은 화면 밖까지 뻗는다 — 진동에 가장자리가 드러나지 않게.
+    const left = -DIALOGUE_OVERSCAN;
+    const width = BASE_WIDTH + DIALOGUE_OVERSCAN * 2;
     fade.fillGradientStyle(color, color, color, color, 0, 0, kneeAlpha, kneeAlpha);
-    fade.fillRect(0, start, BASE_WIDTH, knee - start);
+    fade.fillRect(left, start, width, knee - start);
     fade.fillGradientStyle(color, color, color, color, kneeAlpha, kneeAlpha, endAlpha, endAlpha);
-    fade.fillRect(0, knee, BASE_WIDTH, end - knee);
+    fade.fillRect(left, knee, width, end - knee);
     fade.fillStyle(color, endAlpha);
-    fade.fillRect(0, end, BASE_WIDTH, BASE_HEIGHT - end);
+    fade.fillRect(left, end, width, BASE_HEIGHT + DIALOGUE_OVERSCAN - end);
   }
 
   /** 배경 원화가 있는 무대인가. 없으면 그 이야기를 연 씬이 제 판을 깐다. */
@@ -163,7 +180,8 @@ export class DialogueStage {
     const next = resolveDialogueCast(this.cast, node);
     this.cast = next;
     const nextIds = new Set(next.map(({ id }) => id));
-    for (const [id, member] of this.members) if (!nextIds.has(id)) this.dismiss(member);
+    let leaving = 0;
+    for (const [id, member] of this.members) if (!nextIds.has(id)) this.dismiss(member, node.leave, leaving++);
 
     const arrivals = next.filter(({ id }) => !this.members.has(id));
     for (const entry of next) {
@@ -222,13 +240,74 @@ export class DialogueStage {
   }
 
   /** 무대를 떠나는 사람. 곧바로 장부에서 빼 다음 노드가 같은 사람을 다시 세울 수 있게 한다. */
-  private dismiss(member: StageMember): void {
+  private dismiss(member: StageMember, leave?: DialogueLeave, order = 0): void {
     this.members.delete(member.id);
-    member.act?.stop();
+    this.stopAct(member);
     const { creature } = member;
     if (!this.scene.tweens || !creature.active) { creature.destroy(); return; }
     this.scene.tweens.killTweensOf(creature);
+    if (leave === "blastOff") { this.blastOff(member, order); return; }
     this.scene.tweens.add({ targets: creature, alpha: 0, duration: DIALOGUE_ENTRANCE.exitMs, onComplete: () => creature.destroy() });
+  }
+
+  /**
+   * 날아가는 퇴장. 움찔 눌렸다가 오른쪽 위로 빙글빙글 날아가며 작아지고, 사라진 자리에서
+   * 마름모 하나가 반짝인다. 몸짓이 도는 동안은 idle을 멈춰 날아가는 몸이 한 덩어리로 읽힌다.
+   * 움직임 줄이기를 켜면 거리와 회전을 줄인다 — 퇴장 자체는 이야기의 한 박자라 없애지 않는다.
+   */
+  private blastOff(member: StageMember, order: number): void {
+    const { creature } = member;
+    const spec = DIALOGUE_BLAST_OFF;
+    const factor = this.distanceFactor();
+    creature.setAnimationFrozen(true);
+    // 날아가는 몸은 대사판 윗선에서 자르지 않는다 — 화면 위로 나가는 길이라 잘릴 자리가 없고,
+    // 원점 둘레로 도는 동안 마스크에 걸리면 몸이 반쪽씩 깜빡인다.
+    creature.clearMask();
+    const startScale = creature.scaleX;
+    const targetX = creature.x + spec.dx * factor;
+    const targetY = creature.y + spec.dy * factor;
+    this.scene.tweens.chain({
+      targets: creature,
+      delay: order * spec.staggerMs,
+      tweens: [
+        { y: creature.y + spec.crouchDy * factor, duration: spec.crouchMs, ease: "Quad.Out" },
+        {
+          x: targetX,
+          y: targetY,
+          rotation: Math.PI * 2 * spec.spinTurns * factor,
+          scale: startScale * spec.endScale,
+          duration: spec.flyMs,
+          ease: "Cubic.In",
+        },
+      ],
+      onComplete: () => {
+        creature.destroy();
+        if (!this.terminated) this.twinkle(Phaser.Math.Clamp(targetX, 60, BASE_WIDTH - 60), 90 + order * 40);
+      },
+    });
+  }
+
+  /** 날아간 자리에서 한 번 반짝이는 마름모. 동그라미가 아니라 좌우를 어긋나게 깎은 마름모다. */
+  private twinkle(x: number, y: number): void {
+    const spec = DIALOGUE_BLAST_OFF;
+    const star = this.scene.add.graphics({ x, y }).setDepth(DEPTH.flash + 1).setBlendMode(Phaser.BlendModes.ADD);
+    const size = spec.twinkleSize;
+    star.fillStyle(0xfff4d6, 1);
+    star.fillPoints([
+      new Phaser.Math.Vector2(0, -size),
+      new Phaser.Math.Vector2(size * 0.34, -size * 0.06),
+      new Phaser.Math.Vector2(0, size * 0.9),
+      new Phaser.Math.Vector2(-size * 0.3, size * 0.04),
+    ], true);
+    star.setScale(0.2).setAlpha(1);
+    this.scene.tweens.chain({
+      targets: star,
+      tweens: [
+        { scale: 1, duration: spec.twinkleMs * 0.4, ease: "Back.Out" },
+        { scale: 0.1, alpha: 0, duration: spec.twinkleMs * 0.6, ease: "Quad.In" },
+      ],
+      onComplete: () => star.destroy(),
+    });
   }
 
   /** 이미 선 사람의 자리·크기·베일을 다음 노드에 맞춘다. 머리는 늘 같은 줄에 남는다. */
@@ -246,8 +325,7 @@ export class DialogueStage {
     if (Math.abs(baseX - member.baseX) < 0.5 && Math.abs(baseY - member.baseY) < 0.5 && Math.abs(scale - member.creature.scaleX) < 1e-4) return;
     member.baseX = baseX;
     member.baseY = baseY;
-    member.act?.stop();
-    member.act = undefined;
+    this.stopAct(member);
     this.scene.tweens.killTweensOf(member.creature);
     this.scene.tweens.add({
       targets: member.creature,
@@ -290,10 +368,13 @@ export class DialogueStage {
 
   /** 제자리에서 시작해 제자리로 끝나는 몸짓. 앞 몸짓이 남아 있으면 끊고 제자리에서 다시 시작한다. */
   private playAct(member: StageMember, act: DialogueAct): void {
-    member.act?.stop();
+    this.stopAct(member);
     const { creature } = member;
     creature.setPosition(member.baseX, member.baseY);
     const factor = this.distanceFactor();
+    // 몸짓 동안은 idle을 그 자리에서 멈춘다 — 몸이 뛰는 동안 팔다리까지 따로 흔들리면 한 동작으로
+    // 읽히지 않는다. 끝나면 멈춘 프레임에서 그대로 이어 간다(`stopAct`가 풀어 준다).
+    creature.setAnimationFrozen(true);
     member.act = this.scene.tweens.chain({
       targets: creature,
       tweens: DIALOGUE_ACTS[act].map((step) => ({
@@ -302,8 +383,20 @@ export class DialogueStage {
         duration: step.ms,
         ease: step.ease,
       })),
-      onComplete: () => { if (creature.active) creature.setPosition(member.baseX, member.baseY); },
+      onComplete: () => {
+        member.act = undefined;
+        if (!creature.active) return;
+        creature.setPosition(member.baseX, member.baseY);
+        creature.setAnimationFrozen(false);
+      },
     });
+  }
+
+  /** 도는 몸짓을 끊는다. 멈춰 둔 idle도 함께 풀어, 끊긴 몸짓이 인물을 굳혀 두지 않게 한다. */
+  private stopAct(member: StageMember): void {
+    member.act?.stop();
+    member.act = undefined;
+    if (member.creature.active) member.creature.setAnimationFrozen(false);
   }
 
   /** 배경을 갈아 끼운다. 새 원화가 도착하면 옛것을 걷는다 — 그 사이에 빈 판이 보이지 않게 한다. */
@@ -341,9 +434,7 @@ export class DialogueStage {
   /** 옅은 흰 막. 번쩍임 줄이기를 켜면 절반 아래로 누른다. */
   private flash(alpha: number, inMs: number, outMs: number): Phaser.GameObjects.Rectangle {
     const reduce = settingsManager.get().accessibility.reduceFlashes;
-    const veil = this.scene.add
-      .rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, 0xffffff, 0)
-      .setDepth(DEPTH.flash);
+    const veil = fullScreenRect(this.scene, 0xffffff, 0).setDepth(DEPTH.flash);
     const peak = reduce ? Math.min(alpha, 0.45) : alpha;
     this.scene.tweens.chain({
       targets: veil,
@@ -365,13 +456,21 @@ export class DialogueStage {
   private startAlarm(): void {
     if (this.alarm) return;
     const band = this.scene.add.graphics().setDepth(DEPTH.alarm).setAlpha(0);
-    const layers = 8;
+    // 네 변에서 안쪽으로 **매끄럽게** 사라지는 띠. 예전에는 선을 여러 겹 둘러 계단진 줄무늬로
+    // 보였다. 띠는 화면 밖(`DIALOGUE_OVERSCAN`)에서 시작해 진동에도 가장자리가 비지 않는다.
+    const color = DIALOGUE_ALARM.color;
     const thickness = DIALOGUE_ALARM.thickness;
-    for (let index = 0; index < layers; index += 1) {
-      const inset = (thickness / layers) * index;
-      band.lineStyle(thickness / layers + 1, DIALOGUE_ALARM.color, (1 - index / layers) * 0.9);
-      band.strokeRect(inset, inset, BASE_WIDTH - inset * 2, BASE_HEIGHT - inset * 2);
-    }
+    const o = DIALOGUE_OVERSCAN;
+    const w = BASE_WIDTH + o * 2;
+    const h = BASE_HEIGHT + o * 2;
+    band.fillGradientStyle(color, color, color, color, 1, 1, 0, 0);
+    band.fillRect(-o, -o, w, thickness + o);
+    band.fillGradientStyle(color, color, color, color, 0, 0, 1, 1);
+    band.fillRect(-o, BASE_HEIGHT - thickness, w, thickness + o);
+    band.fillGradientStyle(color, color, color, color, 1, 0, 1, 0);
+    band.fillRect(-o, -o, thickness + o, h);
+    band.fillGradientStyle(color, color, color, color, 0, 1, 0, 1);
+    band.fillRect(BASE_WIDTH - thickness, -o, thickness + o, h);
     const repeat = motionPolicy(settingsManager.get()).nonEssentialRepeatFactor > 0 ? -1 : 0;
     const tween = this.scene.tweens.add({
       targets: band,
@@ -403,15 +502,13 @@ export class DialogueStage {
     this.shake(spec.shakeMs, spec.shakeIntensity);
     this.burstShards();
     const reduce = settingsManager.get().accessibility.reduceFlashes;
-    const veil = this.scene.add
-      .rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, reduce ? 0x2a1712 : 0xffffff, 0)
-      .setDepth(DEPTH.flash);
+    const veil = fullScreenRect(this.scene, reduce ? 0x2a1712 : 0xffffff, 0).setDepth(DEPTH.flash);
     await this.tweenTo(veil, { fillAlpha: 1 }, DIALOGUE_EXPLOSION.whiteInMs, "Quad.Out");
     if (this.terminated) return;
     this.stopAlarm();
     for (const member of [...this.members.values()]) {
       this.members.delete(member.id);
-      member.act?.stop();
+      this.stopAct(member);
       member.creature.destroy();
     }
     this.cast = [];

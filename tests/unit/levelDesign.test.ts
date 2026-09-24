@@ -5,6 +5,7 @@ import {
 } from "../../src/core/levelDesign";
 import { BREAKTHROUGH_STEPS, RELIC_LEVEL_CAP, applyLevelGrowth } from "../../src/core/relicProgression";
 import { summarizeStageDifficulty } from "../../src/core/stageDifficulty";
+import { battleArena, type BattleArenaMode } from "../../src/core/battleArena";
 import { CHAPTERS, getStageEnemies, stageEnemyRole } from "../../src/data/stages";
 import { getRelic } from "../../src/data/relics";
 import { BOUNTY_TIERS, bountyRoundEnemy } from "../../src/data/bounty";
@@ -109,8 +110,9 @@ function referenceParty(level: number): RelicDef[] {
   });
 }
 
-function measure(playerLevel: number, enemies: readonly RelicDef[]): { ttkSeconds: number; remainingHp: number } {
-  const report = summarizeStageDifficulty(referenceParty(playerLevel), [...enemies], SEEDS, "auto");
+/** 콘텐츠마다 실제로 서는 전장에서 잰다 — 전장이 넓으면 붙기까지 걷는 시간만큼 결과가 갈린다. */
+function measure(playerLevel: number, enemies: readonly RelicDef[], mode: BattleArenaMode): { ttkSeconds: number; remainingHp: number } {
+  const report = summarizeStageDifficulty(referenceParty(playerLevel), [...enemies], SEEDS, "auto", battleArena(mode));
   return { ttkSeconds: report.durationSeconds.mean, remainingHp: report.playerHpRatio.mean };
 }
 
@@ -120,25 +122,25 @@ function battleStage(id: string): BattleStageDef {
   return stage;
 }
 
-/** [이름, 권장 파티 레벨, 적, 그 조우의 역할, 실측 전투 시간(초), 실측 잔여 체력] */
-const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole, number, number][] = [
-  ["스토리 1-1", 5, () => getStageEnemies(battleStage("1-1")), "normal", 13.9, 0.81],
-  ["스토리 1-9", 14, () => getStageEnemies(battleStage("1-9")), "normal", 13.5, 0.86],
-  ["스토리 1-5 정예", 10, () => getStageEnemies(battleStage("1-5")), "elite", 12.5, 0.63],
-  ["스토리 1-10 정예", 15, () => getStageEnemies(battleStage("1-10")), "elite", 27.8, 0.34],
-  ["스토리 3-9", 44, () => getStageEnemies(battleStage("3-9")), "normal", 14.3, 0.93],
-  ["현상수배 1단계", 5, () => [bountyRoundEnemy(BOUNTY_TIERS[0].rounds[0])], "normal", 5.4, 0.92],
-  ["현상수배 5단계", 50, () => [bountyRoundEnemy(BOUNTY_TIERS[4].rounds[0])], "normal", 7.2, 0.89],
-  ["대작전 1단계", 5, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[0]), "swarm", 31.5, 0.83],
-  ["대작전 8단계", 45, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", 65.4, 0.64],
-  ["원정 일반 5층", 10, () => getExpeditionEncounterEnemies("normal", 5), "normal", 13.9, 0.95],
-  ["원정 정예 10층", 20, () => getExpeditionEncounterEnemies("elite", 10), "elite", 23.3, 0.50],
-  ["원정 무리 15층", 30, () => getExpeditionEncounterEnemies("horde", 15), "swarm", 16.2, 0.70],
+/** [이름, 권장 파티 레벨, 적, 그 조우의 역할, 전장, 실측 전투 시간(초), 실측 잔여 체력] */
+const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole, BattleArenaMode, number, number][] = [
+  ["스토리 1-1", 5, () => getStageEnemies(battleStage("1-1")), "normal", "stage", 13.3, 0.88],
+  ["스토리 1-9", 14, () => getStageEnemies(battleStage("1-9")), "normal", "stage", 16.9, 0.87],
+  ["스토리 1-5 정예", 10, () => getStageEnemies(battleStage("1-5")), "elite", "stage", 12.2, 0.88],
+  ["스토리 1-10 정예", 15, () => getStageEnemies(battleStage("1-10")), "elite", "stage", 32.7, 0.43],
+  ["스토리 3-9", 44, () => getStageEnemies(battleStage("3-9")), "normal", "stage", 20.1, 0.85],
+  ["현상수배 1단계", 5, () => [bountyRoundEnemy(BOUNTY_TIERS[0].rounds[0])], "normal", "bounty", 5.6, 0.83],
+  ["현상수배 5단계", 50, () => [bountyRoundEnemy(BOUNTY_TIERS[4].rounds[0])], "normal", "bounty", 8.2, 0.74],
+  ["대작전 1단계", 5, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[0]), "swarm", "cake", 27.2, 0.82],
+  ["대작전 8단계", 45, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", "cake", 59.6, 0.65],
+  ["원정 일반 5층", 10, () => getExpeditionEncounterEnemies("normal", 5), "normal", "expedition", 14.3, 0.96],
+  ["원정 정예 10층", 20, () => getExpeditionEncounterEnemies("elite", 10), "elite", "expedition", 29.1, 0.53],
+  ["원정 무리 15층", 30, () => getExpeditionEncounterEnemies("horde", 15), "swarm", "expedition", 14.1, 0.76],
 ];
 
 describe("콘텐츠별 전투 시간 실측", () => {
-  it.each(AUDIT)("%s", (_label, playerLevel, enemies, _role, ttk, hp) => {
-    const measured = measure(playerLevel, enemies());
+  it.each(AUDIT)("%s", (_label, playerLevel, enemies, _role, mode, ttk, hp) => {
+    const measured = measure(playerLevel, enemies(), mode);
     // 띠보다 좁게 고정한다 — 다음 조정이 반드시 여기 걸리게 하려는 기록이다.
     expect(measured.ttkSeconds).toBeGreaterThan(ttk - 2);
     expect(measured.ttkSeconds).toBeLessThan(ttk + 2);
@@ -148,16 +150,19 @@ describe("콘텐츠별 전투 시간 실측", () => {
 
   it("은 아직 목표 띠에 다 들어오지 않았고, 어디가 남았는지 이 줄이 기록한다", () => {
     /*
-     * 잡졸은 전 콘텐츠가 자리를 잡았고(13~14초에 한 뼘씩 깎이며 흐른다), 큰 무리도 들어왔다.
-     * **정예 둘이 띠 안에 들어왔다** — 유형 차를 걷어 내며 배수를 다시 재자(×3.3 · ×1.5)
-     * 장을 닫는 코마가 28초에 파티를 3분의 1만 남기고, 원정 10층 정예도 23초/절반으로 들어왔다.
-     * 남은 자리는 셋이다: R 토비가 선 1-5는 같은 유형인데도 12초에 끝나 덜 아프고(개체의
-     * 등급이 결과를 가른다), 현상수배는 1대1이라 한 몫짜리 조우이며, 대작전은 웨이브 없이
-     * 열~열다섯이 한꺼번에 몰려와 한 판이 무리 띠(한 파 기준)보다 길다.
+     * **v0.172.6에서 검수를 실제 전장 크기로 옮겨 다시 쟀다.** 넓은 틀에서 재던 때와 방향이
+     * 엇갈렸다 — 잡졸은 더 가볍고 길어졌고(붙기까지 걷는 거리가 짧아 후열이 덜 맞는다), 혼자
+     * 서는 정예는 훨씬 무거워졌다(후열까지 금방 닿는다). 정예 공격 몫을 ×1.1로 낮춰 1-10과
+     * 원정 10층을 띠에 들였다.
+     * 남은 자리: 잡졸 셋(1-9·3-9는 목표보다 몇 초 길고, 원정 5층은 거의 다치지 않는다),
+     * R 토비가 선 1-5(12초에 끝나 덜 아프다 — 누가 서는가의 문제다), 코마가 선 1-10(목표보다
+     * 1초 남짓 길다), 현상수배 둘(1대1이라 한 몫짜리 조우), 대작전 8단계(열다섯이 한꺼번에
+     * 몰려와 한 판이 무리 띠보다 길다).
      */
-    const offTarget = AUDIT.filter(([, , , role, ttk, hp]) => !isEncounterOnTarget(role, { ttkSeconds: ttk, remainingHp: hp }));
+    const offTarget = AUDIT.filter(([, , , role, , ttk, hp]) => !isEncounterOnTarget(role, { ttkSeconds: ttk, remainingHp: hp }));
     expect(offTarget.map(([label]) => label)).toEqual([
-      "스토리 1-5 정예", "현상수배 1단계", "현상수배 5단계", "대작전 1단계", "대작전 8단계",
+      "스토리 1-9", "스토리 1-5 정예", "스토리 1-10 정예", "스토리 3-9",
+      "현상수배 1단계", "현상수배 5단계", "대작전 8단계", "원정 일반 5층",
     ]);
   });
 });

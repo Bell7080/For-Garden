@@ -91,7 +91,7 @@ test("색각 보조 표식은 1080×1920 편성 카드와 상성 앵커에서 �
   await captureGame(page, `test-results/${test.info().project.name}-color-assist-party-1080x1920.png`);
 });
 
-test("세로형 첫 방문은 오프닝을 끝내고 중복 입력 없이 로비로 한 번 전환한다", async ({ page }) => {
+test("세로형 첫 방문은 오프닝을 끝내고 중복 입력 없이 1-1 전투로 한 번 전환한다", async ({ page }) => {
   // 오프닝은 서른다섯 마디에 제목표·폭파 연출과 일곱 명의 전신을 거친다. GPU 없는 컨테이너에서는
   // 한 편이 6분 넘게 걸려 기본 시간(4분) 안에 끝나지 않는다.
   test.setTimeout(480_000);
@@ -129,24 +129,24 @@ test("세로형 첫 방문은 오프닝을 끝내고 중복 입력 없이 로비
   // 첫 전신 ZIP 파싱이 끝나 입력 잠금이 풀릴 시간을 저사양 모바일 실행에도 보장한다.
   await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.opening ?? 0) >= 1, true, { timeout: 60_000 });
 
-  // 디버그 계약의 실제 대입을 감시해 중복 로비 진입과 ready 전환의 선후를 함께 검증한다.
+  // 디버그 계약의 실제 대입을 감시해 중복 전투 진입과 ready 전환의 선후를 함께 검증한다.
   await page.evaluate(() => {
     const debug = window.__PF_DEBUG!;
     let scene = debug.scene;
     let ready = debug.ready;
-    let lobbyEntries = 0;
+    let battleEntries = 0;
     const transitionEvents: string[] = [];
     Object.defineProperty(debug, "scene", {
       configurable: true,
       get: () => scene,
-      set: (next: string) => { scene = next; transitionEvents.push(`scene:${next}`); if (next === "lobby") lobbyEntries += 1; },
+      set: (next: string) => { scene = next; transitionEvents.push(`scene:${next}`); if (next === "battle") battleEntries += 1; },
     });
     Object.defineProperty(debug, "ready", {
       configurable: true,
       get: () => ready,
       set: (next: boolean) => { ready = next; transitionEvents.push(`ready:${next}`); },
     });
-    Object.defineProperty(debug, "__lobbyEntries", { configurable: true, get: () => lobbyEntries });
+    Object.defineProperty(debug, "__battleEntries", { configurable: true, get: () => battleEntries });
     Object.defineProperty(debug, "__transitionEvents", { configurable: true, get: () => [...transitionEvents] });
   });
 
@@ -171,7 +171,7 @@ test("세로형 첫 방문은 오프닝을 끝내고 중복 입력 없이 로비
 
   // 마지막 노드 입력은 같은 순간 여러 번 보내 완료 저장/전환 멱등 경계를 직접 압박한다.
   // 공용 `tap`은 누를 때마다 쉬고, `page.mouse.click`도 한 번마다 브라우저를 오가므로 느린
-  // 기기에서는 그 사이에 프레임이 돌아 뒤쪽 입력이 이미 선 로비의 버튼에 떨어진다. 다섯 번을
+  // 기기에서는 그 사이에 프레임이 돌아 뒤쪽 입력이 이미 선 다음 화면의 버튼에 떨어진다. 다섯 번을
   // **한 작업 안에서** 보내 그 사이에 어떤 프레임도 끼지 않는 정말 "같은 순간"의 입력으로 만든다.
   const finalPoint = gamePoint(await canvasBox(page), BASE_WIDTH / 2, 1500);
   await page.evaluate(({ x, y }) => {
@@ -182,14 +182,15 @@ test("세로형 첫 방문은 오프닝을 끝내고 중복 입력 없이 로비
       }
     }
   }, finalPoint);
-  // 최종 입력 직후에는 오프닝 준비 상태가 먼저 내려가고, Puppet 초기화가 끝나야 로비가 준비된다.
+  // 처음 보는 오프닝은 로비를 거치지 않고 곧장 1-1 전투로 들어간다(대본이 그 대치로 끝난다).
+  // 최종 입력 직후에는 오프닝 준비 상태가 먼저 내려가고, 입장 확정 뒤에 전투가 선다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.ready)).toBe(false);
-  await expect.poll(() => page.evaluate(() => ({ scene: window.__PF_DEBUG?.scene, ready: window.__PF_DEBUG?.ready })), { timeout: 15_000 }).toEqual({ scene: "lobby", ready: true });
-  expect(await page.evaluate(() => (window.__PF_DEBUG as typeof window.__PF_DEBUG & { __lobbyEntries?: number })?.__lobbyEntries)).toBe(1);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene), { timeout: 30_000 }).toBe("battle");
+  expect(await page.evaluate(() => (window.__PF_DEBUG as typeof window.__PF_DEBUG & { __battleEntries?: number })?.__battleEntries)).toBe(1);
   const transitionEvents = await page.evaluate(() => (window.__PF_DEBUG as typeof window.__PF_DEBUG & { __transitionEvents?: string[] })?.__transitionEvents ?? []);
-  // 첫 ready:false가 lobby 게시보다 앞서고, ready:true는 lobby 게시 뒤에 와야 한다.
-  expect(transitionEvents.indexOf("ready:false")).toBeLessThan(transitionEvents.indexOf("scene:lobby"));
-  expect(transitionEvents.lastIndexOf("ready:true")).toBeGreaterThan(transitionEvents.indexOf("scene:lobby"));
+  // 첫 ready:false가 전투 게시보다 앞서고, 로비를 한 번도 지나지 않는다.
+  expect(transitionEvents.indexOf("ready:false")).toBeLessThan(transitionEvents.indexOf("scene:battle"));
+  expect(transitionEvents).not.toContain("scene:lobby");
 
   expect(consoleErrors, `콘솔 에러 발생: ${consoleErrors.join(", ")}`).toEqual([]);
 });

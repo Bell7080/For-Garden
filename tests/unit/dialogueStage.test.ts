@@ -9,6 +9,7 @@ import {
   DIALOGUE_BACKDROP,
   DIALOGUE_PANEL_TOP,
   DIALOGUE_STAGE_CUT,
+  DIALOGUE_STAGE_FADE,
   DIALOGUE_STAGE_CROWD,
   DIALOGUE_STANDING_FRAME,
   dialogueStageSpot,
@@ -19,9 +20,17 @@ import DIALOGUE_LAYER_SOURCE from "../../src/ui/DialogueLayer.ts?raw";
 const BASE_WIDTH = 1080;
 
 describe("이야기 무대 자리표", () => {
-  it("는 몸을 대사판 윗선에서 자른다", () => {
-    // 판이 반투명이라 그 아래로 다리가 비치면 판 위의 글이 흐려진다 — 상점의 전시대와 같은 규칙이다.
-    expect(DIALOGUE_STAGE_CUT).toBeLessThanOrEqual(DIALOGUE_PANEL_TOP);
+  it("는 몸을 칼같이 자르지 않고 어둠에 잠기게 한다", () => {
+    // 대사판 윗선에서 자르던 때는 허리가 수평으로 잘린 단면이 반투명 판 위로 그대로 보였다.
+    // 어둠은 판보다 위에서 시작해, 실제로 잘라 내는 선에서는 거의 불투명해야 한다.
+    const { start, knee, kneeAlpha, end, endAlpha } = DIALOGUE_STAGE_FADE;
+    expect(start).toBeLessThan(DIALOGUE_PANEL_TOP - 200);
+    expect(start).toBeLessThan(knee);
+    expect(knee).toBeLessThan(end);
+    expect(kneeAlpha).toBeLessThan(endAlpha);
+    expect(endAlpha).toBeGreaterThanOrEqual(0.95);
+    expect(DIALOGUE_STAGE_CUT).toBe(end);
+    expect(DIALOGUE_STAGE_CUT).toBeGreaterThan(DIALOGUE_PANEL_TOP);
     expect(DIALOGUE_LAYER_SOURCE).toContain("DIALOGUE_PANEL_TOP");
     expect(DIALOGUE_STANDING_FRAME.headY).toBeLessThan(DIALOGUE_STAGE_CUT / 2);
   });

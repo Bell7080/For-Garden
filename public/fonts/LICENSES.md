@@ -4,4 +4,4 @@
 원본 라이선스 전문은 각 배포처에 있다.
 
 - **NEXON Kart** (ko·en·th) — NEXON, 무료 상업 이용
-- **FG Sans JP** (ja) — LINE Seed JP — LY Corporation, SIL OFL 1.1
+- **FG Sans JP** (ja) — LINE Seed JP — LY Corporation, SIL OFL 1.1 (새 번역에 들어온 글자는 같은 글꼴의 npm 배포판 @fontsource/line-seed-jp에서 보충)

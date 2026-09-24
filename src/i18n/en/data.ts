@@ -1490,7 +1490,7 @@ export default {
   "dialogue.opening-train.veil.speaker": "???",
   "dialogue.opening-train.veil.body": "Found you. The researcher Garden sent down.",
   "dialogue.opening-train.order.speaker": "???",
-  "dialogue.opening-train.order.body": "Commencing the gene specimen retrieval operation. ...Bring down the whole ark.",
+  "dialogue.opening-train.order.body": "Commencing the target retrieval operation. Take the researcher alive. ...Bring down the whole ark.",
   "dialogue.opening-train.blast.body": "KA-BOOOOM!!",
   "dialogue.opening-train.aftermath.speaker": "Torika",
   "dialogue.opening-train.aftermath.body": "Cough, cough... Researcher, are you all right?! The train... it fell off the tracks...!",

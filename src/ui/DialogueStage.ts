@@ -36,6 +36,7 @@ import {
   DIALOGUE_EXPLOSION,
   DIALOGUE_FOCUS,
   DIALOGUE_STAGE_CUT,
+  DIALOGUE_STAGE_FADE,
   DIALOGUE_STANDING_FRAME,
   DIALOGUE_STANDING_ZOOM,
   dialogueStageSpot,
@@ -76,8 +77,8 @@ interface StageMember {
   act?: Phaser.Tweens.TweenChain;
 }
 
-/** 무대 층. 배경 < 스탠딩 < 화면 연출 < 대사판(600) 순서다. */
-const DEPTH = { backdrop: -30, vignette: -29, alarm: 560, flash: 580 } as const;
+/** 무대 층. 배경 < 스탠딩 < 몸이 잠기는 어둠 < 화면 연출 < 대사판(600) 순서다. */
+const DEPTH = { backdrop: -30, vignette: -29, fade: 540, alarm: 560, flash: 580 } as const;
 
 /**
  * 이야기 무대 — 배경과 그 위에 선 스탠딩, 그리고 장면 전체에 일어나는 연출을 맡는다.
@@ -86,9 +87,10 @@ const DEPTH = { backdrop: -30, vignette: -29, alarm: 560, flash: 580 } as const;
  * (`DIALOGUE_ACTS`의 통통·부들부들·끄덕). 말하는 사람은 밝게 한 층 앞으로 서고 나머지는
  * 한 톤 가라앉는다.
  *
- * **몸은 대사판 윗선에서 잘린다.** 상점이 점원을 세우는 것과 같은 문법이라, 머리 관절을
- * 무대에 고정해 상반신만 남기고 대사판이 반투명이어도 그 아래로 다리가 비치지 않게 한다.
- * Puppet은 컨테이너 변환을 물려받지 않으므로 화면 좌표의 기하 마스크 한 장을 모두가 함께 쓴다.
+ * **몸은 어둠에 잠긴다.** 대사판 윗선에서 칼같이 자르지 않고, 판보다 한참 위에서 옅게 시작해
+ * 판 안쪽에서 거의 불투명해지는 어둠을 스탠딩 위에 깐다. 실제로 잘라 내는 선은 그 어둠이 다
+ * 짙어진 자리라 단면이 보이지 않는다. Puppet은 컨테이너 변환을 물려받지 않으므로 화면 좌표의
+ * 기하 마스크 한 장을 모두가 함께 쓴다.
  */
 export class DialogueStage {
   private readonly members = new Map<DialogueStandingAsset, StageMember>();
@@ -104,8 +106,21 @@ export class DialogueStage {
     this.maskGraphics = scene.make.graphics({ x: 0, y: 0 }, false);
     this.maskGraphics.fillStyle(0xffffff, 1).fillRect(0, 0, BASE_WIDTH, DIALOGUE_STAGE_CUT);
     this.mask = this.maskGraphics.createGeometryMask();
+    this.drawFade();
     if (backdrop) this.setBackdrop(backdrop);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.terminate());
+  }
+
+  /** 스탠딩이 잠겨 드는 어둠. 두 구간 그라데이션 + 그 아래 화면 밑동까지 한 장. */
+  private drawFade(): void {
+    const { color, start, knee, kneeAlpha, end, endAlpha } = DIALOGUE_STAGE_FADE;
+    const fade = this.scene.add.graphics().setDepth(DEPTH.fade);
+    fade.fillGradientStyle(color, color, color, color, 0, 0, kneeAlpha, kneeAlpha);
+    fade.fillRect(0, start, BASE_WIDTH, knee - start);
+    fade.fillGradientStyle(color, color, color, color, kneeAlpha, kneeAlpha, endAlpha, endAlpha);
+    fade.fillRect(0, knee, BASE_WIDTH, end - knee);
+    fade.fillStyle(color, endAlpha);
+    fade.fillRect(0, end, BASE_WIDTH, BASE_HEIGHT - end);
   }
 
   /** 배경 원화가 있는 무대인가. 없으면 그 이야기를 연 씬이 제 판을 깐다. */

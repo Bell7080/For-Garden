@@ -5,9 +5,8 @@ import { BACKGROUND } from "./backgroundAssets";
 /**
  * 이야기 무대의 자리표.
  *
- * **위는 스탠딩이 선 무대, 아래는 대사판이다.** 상점과 같은 문법이다 — 스탠딩은 머리 관절을
- * 무대에 고정해 **상반신만** 보이게 세우고, 남는 몸은 대사판 윗선에서 잘라 낸다. 대사판이
- * 반투명 유리라 그 아래로 다리가 비치면 판 위의 글이 흐려지고 "덜 그려진 것"처럼 보인다.
+ * **위는 스탠딩이 선 무대, 아래는 대사판이다.** 스탠딩은 머리 관절을 무대에 고정해 **상반신이
+ * 주로 보이게** 세우고, 남는 몸은 대사판 쪽으로 짙어지는 어둠(`DIALOGUE_STAGE_FADE`)에 잠긴다.
  *
  * Phaser 없는 모듈에 두는 이유는 화면과 회귀 테스트가 같은 값을 읽어야 하기 때문이다
  * (`tests/unit/dialogueStage.test.ts`).
@@ -16,8 +15,34 @@ import { BACKGROUND } from "./backgroundAssets";
 /** 대사판의 윗변. 판 자체의 모양은 `DialogueLayer`가 그린다. */
 export const DIALOGUE_PANEL_TOP = 1270;
 
-/** 스탠딩이 잘리는 선 — 대사판 윗선과 같은 자리다. */
-export const DIALOGUE_STAGE_CUT = DIALOGUE_PANEL_TOP - 10;
+/**
+ * 스탠딩의 몸이 **잠겨 드는** 어둠.
+ *
+ * 대사판 윗선에서 몸을 칼같이 자르던 때는 반투명 판 위로 허리·허벅지가 수평으로 잘린 단면이
+ * 그대로 보여 인위적이었다. 지금은 판보다 한참 위에서 어둠이 옅게 시작해 판 윗선 언저리에서
+ * 짙어지고, 판 안쪽에서 거의 불투명해진다 — 몸은 그 속으로 스르륵 가라앉아 어디서 끝나는지
+ * 보이지 않는다. 두 구간으로 나눠 **아래로 갈수록 빨리 짙어지게** 한다(한 줄 직선이면 시작선이
+ * 띠처럼 보인다). 배경도 같은 어둠에 함께 잠겨, 인물만 오려 붙인 것처럼 보이지 않는다.
+ */
+export const DIALOGUE_STAGE_FADE = {
+  color: 0x07080c,
+  /** 어둠이 시작하는 줄. 여기서는 완전히 투명하다. */
+  start: DIALOGUE_PANEL_TOP - 400,
+  /** 꺾이는 줄과 그 자리의 진하기. */
+  knee: DIALOGUE_PANEL_TOP - 40,
+  kneeAlpha: 0.5,
+  /** 거의 불투명해지는 줄. 그 아래로는 화면 밑동까지 같은 진하기로 깔린다. */
+  end: DIALOGUE_PANEL_TOP + 230,
+  endAlpha: 0.97,
+} as const;
+
+/**
+ * 스탠딩을 실제로 잘라 내는 선 — 어둠이 거의 불투명해진 자리다.
+ *
+ * 여기보다 위에서 자르면 잘린 단면이 어둠 사이로 비치고, 자르지 않으면 발끝이 판 밑동의 글
+ * 뒤로 흐릿하게 남는다.
+ */
+export const DIALOGUE_STAGE_CUT = DIALOGUE_STAGE_FADE.end;
 
 /** 자리마다 가운데에서 어느 쪽으로 비켜 서는가. */
 const SLOT_SIDE: Readonly<Record<DialogueStageSlot, -1 | 0 | 1>> = { left: -1, center: 0, right: 1 };

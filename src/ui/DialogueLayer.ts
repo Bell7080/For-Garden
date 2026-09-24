@@ -54,9 +54,10 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
     this.ownerScene = scene;
     this.stage = new DialogueStage(scene, options.backdrop);
     // 대사판도 테두리를 두르지 않는다. 아래로 짙어지는 유리면과 윗선 한 줄로만 자리를 잡는다.
-    // 스탠딩의 몸이 이 윗선에서 잘리므로 윗부분도 조금 짙게 깔아 잘린 자리가 판 속으로 잠기게 한다.
-    const glass = drawGlassFade(scene, BASE_WIDTH / 2, PANEL_TOP + 300, BASE_WIDTH, 620, { topAlpha: 0.45, bottomAlpha: 0.95 });
-    const topLine = drawHairline(scene, BASE_WIDTH / 2, PANEL_TOP - 10, BASE_WIDTH, { color: COLOR.accent, alpha: 0.3 });
+    // 스탠딩이 잠기는 어둠은 무대(`DialogueStage`)가 깔므로 판 자체는 옅게 시작한다.
+    const glass = drawGlassFade(scene, BASE_WIDTH / 2, PANEL_TOP + 300, BASE_WIDTH, 620, { topAlpha: 0.2, bottomAlpha: 0.95 });
+    // 윗선은 옅게만 둔다. 짙으면 어둠에 잠겨 가던 몸을 그 줄이 다시 가로로 자른 것처럼 보인다.
+    const topLine = drawHairline(scene, BASE_WIDTH / 2, PANEL_TOP - 10, BASE_WIDTH, { color: COLOR.accent, alpha: 0.14 });
     const blocker = scene.add.rectangle(BASE_WIDTH / 2, PANEL_TOP + 290, BASE_WIDTH, 620, 0xffffff, 0);
     blocker.setInteractive({ useHandCursor: true }).on("pointerup", () => {
       // 선택지가 떠 있을 때 패널 탭으로 분기를 건너뛰지 않는다.

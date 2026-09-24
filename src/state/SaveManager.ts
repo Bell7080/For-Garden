@@ -4,6 +4,8 @@ import { STAGES } from "../data/stages";
 import { BANNERS } from "../data/banners";
 import { BREAKTHROUGH_CAP } from "../core/relicProgression";
 import type { RelicProgress } from "../core/types";
+import { normalizePlayerCard } from "../core/playerCard";
+import { normalizePlayerLevel } from "../core/playerLevel";
 import { createDefaultSession, createEmptyInteractionProgress, createInitialPlayerResearchProgress, type RaidInstanceState, type RaidState, type SaveData, type Session } from "./session";
 import { PROFILE_MODIFIERS } from "../data/profileModifiers";
 import { assertValidRuneInstance, type RuneInstance } from "../core/runes";
@@ -228,6 +230,7 @@ export class SaveManager {
       equippedProfileModifierIds: [...state.equippedProfileModifierIds],
       // 서버 확정 연구 진행을 값 복사해 저장 뒤 런타임 변경과 저장 DTO를 분리한다.
       playerResearch: { ...state.playerResearch },
+      playerCard: { ...state.playerCard },
       itemInventory: state.itemInventory.map((stack) => ({ ...stack })),
       idleExcavation: { ...state.idleExcavation, assignedRelicIds: [...state.idleExcavation.assignedRelicIds], unclaimed: { ...state.idleExcavation.unclaimed } },
       // 진행 중인 판까지 통째로 복사한다 — 얕게 담으면 저장 뒤의 한 번 더 판 칸이 이미 쓴
@@ -293,9 +296,12 @@ export class SaveManager {
     const earnedProfileModifierIds = Array.isArray(legacy.earnedProfileModifierIds) ? legacy.earnedProfileModifierIds : [];
     const equippedProfileModifierIds = Array.isArray(legacy.equippedProfileModifierIds) ? legacy.equippedProfileModifierIds : [];
     // v25 이전에는 프로필 임시 상수만 있었으므로 모든 기존 저장을 레벨 1, 경험치 0으로 명시 이관한다.
+    // 요구 경험치는 저장값이 아니라 늘 공식에서 다시 구한다 — 곡선을 고쳐도 옛 저장이 옛 요구치를 들고 있지 않게.
     const playerResearch = Number(legacy.saveVersion) >= 25 && legacy.playerResearch && typeof legacy.playerResearch === "object"
-      ? { ...(legacy.playerResearch as SaveData["playerResearch"]) }
+      ? normalizePlayerLevel(legacy.playerResearch as SaveData["playerResearch"])
       : createInitialPlayerResearchProgress();
+    // 플레이어 카드 도입 전 저장은 빈 카드로 이관한다. UID·개시일은 부트가 한 번 채운다.
+    const playerCard = normalizePlayerCard(legacy.playerCard);
     // v18 이전에는 기준 시각이 없으므로 현재 시각을 꾸며 넣지 않는다. v18은 기존 기준 시각과
     // 편성을 보존하되 신규 키를 0으로 보충하고, 서버가 소급 정산할 일회성 버전만 미완료로 둔다.
     // 고고학을 몰랐던 저장은 기본 상태로 시작한다 — 횟수가 가득 차 있고 판은 없다.
@@ -470,10 +476,10 @@ export class SaveManager {
     const itemInventory = (Array.isArray(legacy.itemInventory) ? legacy.itemInventory : [])
       .filter((stack: { itemId?: unknown }) => stack?.itemId !== "raid-sigil");
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
-    if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid } as unknown as SaveData;
+    if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid } as unknown as SaveData;
     const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
-    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid } as unknown as SaveData;
+    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid } as unknown as SaveData;
   }
 
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
@@ -494,6 +500,7 @@ export class SaveManager {
     if (!interaction || !Array.isArray(interaction.slots) || interaction.slots.length > INTERACTION_SLOT_LIMIT || new Set(interaction.slots.filter((slot): slot is NonNullable<typeof slot> => slot !== null).map(slot => slot.dispatchId)).size !== interaction.slots.filter(slot => slot !== null).length || !Array.isArray(interaction.claimedRequestIds) || interaction.claimedRequestIds.some(id => typeof id !== "string") || interaction.slots.some(slot => slot !== null && (typeof slot.dispatchId !== "string" || typeof slot.cityId !== "string" || !Array.isArray(slot.party) || slot.party.length < 1 || slot.party.length > 3 || new Set(slot.party).size !== slot.party.length || slot.party.some(id => !data.ownedRelicIds.includes(id)) || !Number.isFinite(Date.parse(slot.startedAt)) || !Number.isFinite(Date.parse(slot.completesAt)) || Date.parse(slot.completesAt) <= Date.parse(slot.startedAt) || typeof slot.claimed !== "boolean"))) fail("교류 진행이 올바르지 않습니다.");
     // 레벨 구간 경험치는 음수가 될 수 없고 다음 요구량 미만이어야 레벨업 미반영 상태를 차단한다.
     if (typeof data.staminaUpdatedAt !== "string" || (data.staminaUpdatedAt !== "" && !Number.isFinite(Date.parse(data.staminaUpdatedAt)))) fail("스테미나 정산 시각이 올바르지 않습니다.");
+    if (!data.playerCard || typeof data.playerCard !== "object" || JSON.stringify(data.playerCard) !== JSON.stringify(normalizePlayerCard(data.playerCard))) fail("플레이어 카드가 올바르지 않습니다.");
     if (!data.playerResearch || !Number.isInteger(data.playerResearch.level) || data.playerResearch.level < 1 || !Number.isInteger(data.playerResearch.experience) || data.playerResearch.experience < 0 || !Number.isInteger(data.playerResearch.experienceToNext) || data.playerResearch.experienceToNext <= 0 || data.playerResearch.experience >= data.playerResearch.experienceToNext) fail("플레이어 연구 진행이 올바르지 않습니다.");
     if (!excavation || !Array.isArray(excavation.assignedRelicIds) || excavation.assignedRelicIds.length !== 3 || excavation.assignedRelicIds.some((id) => id !== null && (!relicIds.has(id) || !data.ownedRelicIds.includes(id))) || excavation.assignedRelicIds.filter(Boolean).length !== new Set(excavation.assignedRelicIds.filter(Boolean)).size || (excavation.lastSettledAt !== null && !Number.isFinite(Date.parse(excavation.lastSettledAt))) || !excavation.unclaimed || EXCAVATION_CURRENCIES.some((currency) => !Number.isFinite(excavation.unclaimed[currency]) || excavation.unclaimed[currency] < 0) || !Number.isInteger(excavation.retroactiveExcavationGrantVersion) || excavation.retroactiveExcavationGrantVersion < 0 || excavation.retroactiveExcavationGrantVersion > RETROACTIVE_EXCAVATION_GRANT_VERSION || !Number.isFinite(excavation.baseStorageSeconds) || excavation.baseStorageSeconds <= 0 || !Number.isFinite(excavation.activeProductionMultiplier) || excavation.activeProductionMultiplier <= 0 || (excavation.storageExtensionExpiresAt !== null && !Number.isFinite(Date.parse(excavation.storageExtensionExpiresAt)))) fail("발굴 상태가 올바르지 않습니다.");
     if (data.saveVersion !== CURRENT_SAVE_VERSION || !Array.isArray(data.ownedRelicIds) || data.ownedRelicIds.some((id) => !relicIds.has(id))) fail("존재하지 않는 렐릭 ID가 있습니다.");
@@ -565,6 +572,7 @@ export class SaveManager {
       equippedProfileModifierIds: [...data.equippedProfileModifierIds],
       // 검증된 저장 DTO와 런타임 세션이 연구 진행 객체를 공유하지 않도록 복사한다.
       playerResearch: { ...data.playerResearch },
+      playerCard: { ...data.playerCard },
       itemInventory: data.itemInventory.map((stack) => ({ ...stack })),
       idleExcavation: { ...data.idleExcavation, assignedRelicIds: [...data.idleExcavation.assignedRelicIds], unclaimed: { ...data.idleExcavation.unclaimed } },
       archaeology: structuredClone(data.archaeology ?? createArchaeologyState()),

@@ -41,7 +41,13 @@ import { ENEMY_SD_ASSETS, PONTOS_SD_ASSET, playMotion, type PuppetAsset } from "
 import { loadOwnedPuppet } from "../ui/statusPuppetLoad";
 import { PlayerProfilePopup } from "../ui/PlayerProfilePopup";
 import { profileModifierManager } from "../managers/ProfileModifierManager";
-import type { PlayerProfileDisplay } from "../state/playerProfile";
+import { playerProfileDisplay, type PlayerProfileDisplay } from "../state/playerProfile";
+import { openAvatarPicker, openBioEditor, openModifierPicker, openNicknameEditor } from "../ui/PlayerProfileEditors";
+import { contentNameKey } from "../ui/PlayerProfilePopup";
+import { managerEvents } from "../managers/ManagerEvents";
+import { PROFILE_FRAMES } from "../data/profileFrames";
+import { contentUnlockedBetween } from "../core/contentUnlock";
+import { staminaMaxForResearchLevel } from "../core/stamina";
 import { MailPopup } from "../ui/MailPopup";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import type { CurrencyGuideAction } from "../data/currencyGuide";
@@ -60,6 +66,8 @@ import { relicCollection } from "../managers/RelicCollectionManager";
  * 깔려 배경과 인물을 한 번에 누른다 — 배경만 누르면 인물이 혼자 밝게 떠 오려 붙인 것으로 보인다.
  */
 const LOBBY_PORTRAIT_DEPTH = -20;
+/** 마지막으로 알린 연구원 레벨. 앱을 켠 뒤 처음 선 로비가 기준을 잡고, 그 뒤로 오른 만큼만 알린다. */
+let announcedPlayerLevel: number | undefined;
 
 /** 교류의 강조색. 값은 테마 한 곳이 갖는다 — 레이드의 상점 입구도 같은 값을 읽는다. */
 const EXCHANGE_BLUE = COLOR.exchange;
@@ -272,6 +280,8 @@ export class LobbyScene extends Phaser.Scene {
     // 로비가 먼저 보이고 판이 뒤늦게 열려, 로비로 튕겼다가 판이 다시 열리는 것처럼 읽혔다.
     if (this.returnMenu === "sortie") this.openSortieMenu(true);
     else if (this.returnMenu === "duel") this.openPvpMenu(true);
+    // 되돌아간 판이 없을 때만 레벨업을 알린다 — 판 위에 겹치면 둘 다 반쯤 가린다.
+    if (!this.returnMenu) this.announcePlayerLevel();
 
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
@@ -284,20 +294,59 @@ export class LobbyScene extends Phaser.Scene {
   }
 
   /** TopBar가 건넨 공개 모델만 사용해 공용 레이어 기반 정보창을 연다. */
-  private openPlayerProfile(profile: PlayerProfileDisplay): void {
+  private openPlayerProfile(_profile?: PlayerProfileDisplay, instant = false): void {
     if (!this.popupLayer || this.playerProfilePopup) return;
     // TopBar의 즉시 모델 대신 manager가 서버 확정 티어를 합친 뒤 연다. 실패하면 가짜 티어 없이 로컬 기록만 표시한다.
-    void loadPlayerProfileDisplay(session, gameApi).catch(() => profile).then((resolved) => {
+    void loadPlayerProfileDisplay(session, gameApi).catch(() => playerProfileDisplay(session, profileModifierManager.equipped())).then((resolved) => {
       if (!this.popupLayer || this.playerProfilePopup) return;
-      this.playerProfilePopup = new PlayerProfilePopup(this, this.popupLayer, resolved, () => { this.playerProfilePopup = undefined; }, () => {
-        // 임시 선택 UI를 씬에 복제하지 않고 manager의 검증/저장 경계를 통해 다음 획득 조합으로 교체한다.
-        const earned = profileModifierManager.earned().map(({ id }) => id);
-        const current = profileModifierManager.equipped().map(({ id }) => id);
-        const start = earned.length ? (earned.indexOf(current[0] ?? "") + 1) % earned.length : 0;
-        profileModifierManager.equip(earned.slice(start, start + 3));
+      const layer = this.popupLayer;
+      // 고칠 것을 카드에서 바로 누른다. 그 요소만 고치는 창이 카드를 닫은 자리에 서고, 닫히면 카드가 새 값으로 다시 선다.
+      const edit = (open: (done: () => void) => void) => () => {
         this.playerProfilePopup?.close();
+        this.time.delayedCall(0, () => open(() => {
+          // 상단 줄의 이름·얼굴·수식어도 같은 모델로 바뀐다 — 카드만 바뀌고 줄은 옛 값이면 저장이 반쯤 된 것처럼 읽힌다.
+          managerEvents.publish("publicProfile", { profile: playerProfileDisplay(session, profileModifierManager.equipped()) });
+          this.time.delayedCall(0, () => this.openPlayerProfile(undefined, true));
+        }));
+      };
+      this.playerProfilePopup = new PlayerProfilePopup(this, layer, resolved, () => { this.playerProfilePopup = undefined; }, {
+        avatar: edit((done) => openAvatarPicker(this, layer, done)),
+        nickname: edit((done) => openNicknameEditor(this, layer, done)),
+        bio: edit((done) => openBioEditor(this, layer, done)),
+        ...(profileModifierManager.earned().length > 0 ? { modifiers: edit((done) => openModifierPicker(this, layer, done)) } : {}),
       });
-      this.playerProfilePopup.open();
+      this.playerProfilePopup.open({ instant });
+    });
+  }
+
+  /**
+   * 로비에 들어올 때 연구원 레벨이 올랐으면 한 번 알린다.
+   *
+   * 스테미나를 쓰는 곳은 편성·던전·전투 곳곳이라 그 자리마다 창을 띄우면 전투 흐름을 끊는다.
+   * 로비는 모든 길이 돌아오는 자리라 여기서 한 번 모아 알린다 — 몇 레벨이 올랐는지, 스테미나
+   * 상한이 얼마나 넓어졌는지, 그 사이에 열린 테두리와 콘텐츠를 한 장에.
+   */
+  private announcePlayerLevel(): void {
+    const level = session.playerResearch.level;
+    const previous = announcedPlayerLevel;
+    announcedPlayerLevel = level;
+    if (previous === undefined || level <= previous || !this.popupLayer) return;
+    const frames = PROFILE_FRAMES.filter((frame) => frame.unlockLevel > previous && frame.unlockLevel <= level);
+    const unlocks = contentUnlockedBetween(previous, level);
+    const lines = [
+      t("profile.levelUp.stamina", { amount: staminaMaxForResearchLevel(level) - staminaMaxForResearchLevel(previous) }),
+      ...frames.map((frame) => t("profile.levelUp.frame", { name: frame.displayName })),
+      ...unlocks.map((entry) => t("profile.levelUp.unlock", { content: t(contentNameKey(entry.id)) })),
+    ];
+    const height = 360 + lines.length * 52;
+    this.popupLayer.open({ width: 760, height, title: t("profile.levelUp.title"), dim: true, closeOnBackdrop: true }, (body) => {
+      const top = -height / 2;
+      body.add(this.add.text(-40, top + 150, `LV.${previous}`, textStyle({ role: "display", size: 44, color: COLOR.inkDim })).setOrigin(1, 0.5));
+      body.add(this.add.text(0, top + 150, "›", textStyle({ role: "display", size: 52, color: COLOR.accentText })).setOrigin(0.5));
+      const next = this.add.text(40, top + 150, `LV.${level}`, textStyle({ role: "display", size: 72, color: COLOR.accentText })).setOrigin(0, 0.5).setScale(0.6);
+      body.add(next);
+      this.tweens.add({ targets: next, scale: 1, duration: 420, ease: "Back.easeOut" });
+      lines.forEach((line, index) => body.add(this.add.text(0, top + 250 + index * 52, line, textStyle({ role: "emphasis", size: 26, color: COLOR.ink })).setOrigin(0.5)));
     });
   }
 

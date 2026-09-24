@@ -29,7 +29,9 @@ import { nextBountyStep, type BountyBattleInputDto } from "../core/bountyRun";
 import { ENCOUNTER_ROLE, encounterRoleFor } from "../core/levelDesign";
 import { getExpeditionNodeEnemies } from "../data/expeditionEnemies";
 import type { PuppetCreature, PuppetAsset } from "../puppets/assets";
-import { cancelMotion, flashHit, isHitFlashing, placePuppet, playMotion, spawnPuppet, tintPuppet } from "../puppets/assets";
+import type { ExpeditionRelicSnapshot } from "../core/expeditionSnapshot";
+import { showExpeditionRelic } from "../ui/expeditionRelicInfo";
+import { battleAssetFor, cancelMotion, flashHit, isHitFlashing, placePuppet, playMotion, sdAssetForSkin, spawnPuppet, tintPuppet } from "../puppets/assets";
 import { session } from "../state/session";
 import { addSceneBackground, battleFieldBackground } from "../ui/backgrounds";
 import { battlefieldWashBands, statusAreaColor } from "../ui/groundAreas";
@@ -359,6 +361,8 @@ export class BattleScene extends Phaser.Scene {
    * 세워 둔 적을 눌러도 1돌파 상한 20으로 읽혔다.
    */
   private enemySnapshots = new Map<string, PlacedEnemy>();
+  /** 원정 전투에서만 선다 — 떠날 때 굳힌 아군의 모습. 그 밖의 전투는 비어 있고 지금 성장을 읽는다. */
+  private frozenRelics?: Map<string, ExpeditionRelicSnapshot>;
   /** 꾹 눌러 처음 열 때만 만들어지는 아군 창. 만들기 전에는 멈춤 판단에서도 없는 셈이다. */
   private allyInfoRef?: InfoManager;
   /** 버프 상세도 전투 씬의 한 PopupLayer에 쌓아 입력·닫기 순서를 통일한다. */
@@ -468,11 +472,16 @@ export class BattleScene extends Phaser.Scene {
     const partyIds = this.battleInput.mode === "expedition" || this.battleInput.mode === "expeditionBoss" ? this.battleInput.relics.map(({ relicId }) => relicId)
       : this.battleInput.mode === "bounty" ? [session.party[this.battleInput.round] ?? session.party[0]]
       : session.party;
-    const bonds = Object.fromEntries(partyIds.map((id) => [id, session.relicProgress[id]?.bondLevel ?? 0]));
+    // **원정은 떠난 순간의 모습으로 싸운다**(`ExpeditionRelicSnapshot`). 스무 층 도중에 급여·돌파·
+    // 룬·외형을 바꿔도 이 런의 전투는 출발할 때 굳힌 값만 읽는다. 그 밖의 전투는 지금 성장이다.
+    const expeditionMode = this.battleInput.mode === "expedition" || this.battleInput.mode === "expeditionBoss";
+    this.frozenRelics = expeditionMode ? new Map(partyIds.map((id) => [id, expeditionManager.snapshotFor(id)])) : undefined;
+    const frozen = this.frozenRelics;
+    const bonds = Object.fromEntries(partyIds.map((id) => [id, frozen?.get(id)?.bondLevel ?? session.relicProgress[id]?.bondLevel ?? 0]));
     // 각성 단계도 같은 방식으로 스냅샷을 넘긴다. 전투 코어는 저장 상태를 직접 읽지 않는다.
-    const breakthroughs = Object.fromEntries(partyIds.map((id) => [id, session.relicProgress[id]?.breakthrough ?? 0]));
+    const breakthroughs = Object.fromEntries(partyIds.map((id) => [id, frozen?.get(id)?.breakthrough ?? session.relicProgress[id]?.breakthrough ?? 0]));
     // UI와 같은 성장 계산기의 스냅샷을 복사해 전투가 룬 수치를 다시 계산하지 않게 한다.
-    const players = partyIds.map((id) => ({ ...getRelic(id), stats: relicProgression.getFinalStats(id) }));
+    const players = partyIds.map((id) => ({ ...getRelic(id), stats: frozen?.get(id)?.stats ?? relicProgression.getFinalStats(id) }));
     // 원정은 노드 정보창과 같은 정적 편성/레벨 정의를 읽고, 스토리만 스테이지 적을 읽는다.
     // 대작전은 한 판의 적 **전부가 한꺼번에** 맵 끝에서 몰려온다.
     const cakeTier = this.battleInput.mode === "cake" ? getCakeOperationTier(this.battleInput.tierId) : undefined;
@@ -492,7 +501,7 @@ export class BattleScene extends Phaser.Scene {
     // 한 배열에서 만난다. 장착 목록을 읽는 일은 씬이 하고, 효과로 옮기는 일은 코어가 한다.
     const traitEffects = partyRuneTraitEffects(partyIds.map((id) => ({
       relicId: id,
-      runes: relicProgression.getProgress(id).heartGemSlots
+      runes: frozen?.get(id)?.runes ?? relicProgression.getProgress(id).heartGemSlots
         .flatMap((instanceId) => instanceId === null ? [] : session.runeInventory.filter((rune) => rune.instanceId === instanceId)),
     })));
     this.state = createSkirmish(expeditionConfig?.playerDefs ?? players, expeditionConfig?.enemyDefs ?? stageEnemies, battleArena(this.battleInput.mode), bonds, breakthroughs, expeditionConfig ? {
@@ -837,7 +846,10 @@ export class BattleScene extends Phaser.Scene {
         // 표시 배율은 코어 입력에 들어 있으며 씬은 모든 Puppet 부속 표현에 같은 높이만 적용한다.
         const unitHeight = UNIT_HEIGHT * fighter.bodyScale;
         // 외형 선택은 manager/resolver가 소유하고 전투 씬은 진영과 결과 에셋만 배치한다.
-        const asset = relicAppearanceManager.battleAssetFor(fighter.def.id, fighter.side === "enemy" ? "enemy" : "ally");
+        const frozenSkin = fighter.side === "enemy" ? undefined : this.frozenRelics?.get(fighter.def.id);
+        const asset = frozenSkin
+          ? sdAssetForSkin(fighter.def.id, frozenSkin.skinId ?? undefined) ?? battleAssetFor(fighter.def.id)
+          : relicAppearanceManager.battleAssetFor(fighter.def.id, fighter.side === "enemy" ? "enemy" : "ally");
         return spawnPuppet(this, asset, {
           x: fighter.x,
           groundY: fighter.y,
@@ -925,7 +937,8 @@ export class BattleScene extends Phaser.Scene {
       const x = 190 + index * 350;
       // 세 화면은 같은 프리팹을 쓰며 전투 씬은 실시간 입력만 연결한다.
       const prefab = new BattleProfile(this, x, 1620, {
-        relic: fighter.def, level: relicProgression.getProgress(fighter.def.id).level, breakthroughGrade: fighter.breakthrough + 1,
+        relic: fighter.def, level: this.frozenRelics?.get(fighter.def.id)?.level ?? relicProgression.getProgress(fighter.def.id).level, breakthroughGrade: fighter.breakthrough + 1,
+        skinId: this.frozenRelics?.get(fighter.def.id)?.skinId,
         currentHp: fighter.hp, maxHp: fighter.maxHp, ferocity: fighter.ferocity,
         active: false, readOnly: false, sub: fighter.def.ultimate.name,
         battleUiMotion: this.motion.effectiveBattleUiMotion,
@@ -947,7 +960,10 @@ export class BattleScene extends Phaser.Scene {
         onTap: () => this.useUltimate(fighter),
         onLongPress: () => {
           card.setScale(profileScale(this.ultimateCharged(fighter)));
-          this.allyInfo().showRelic(fighter.def);
+          // 원정은 떠날 때의 모습을 읽기 전용으로 연다. 도중에 급여·돌파를 할 길을 열어 두지 않는다.
+          // 떠 있는 동안 전투가 멈추도록 그 창을 붙잡아 둔다(`simulationPaused`).
+          if (this.frozenRelics) this.allyInfoRef = showExpeditionRelic(this, fighter.def.id);
+          else this.allyInfo().showRelic(fighter.def);
         },
         depth: 1500,
       });

@@ -8,6 +8,7 @@ import type { ExpeditionMapNode } from "../core/expeditionMap";
 import { getRelic } from "../data/relics";
 import { setDebugExpeditionFormation, setDebugFormationDragVisual, setDebugScene } from "../debug";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
+import { showExpeditionRelic } from "../ui/expeditionRelicInfo";
 import { expeditionManager, type StartExpeditionFailure } from "../managers/ExpeditionManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { session } from "../state/session";
@@ -53,7 +54,7 @@ import { bindFormationDrag, type FormationDragSlot } from "../ui/formationDrag";
 import { FORMATION_DRAG_VISUAL } from "../ui/formationDragVisual";
 import { createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
 import { consumeSceneEntry } from "./sceneEntry";
-import { playSceneEntrance, startScene } from "../ui/screenTransition";
+import { playSceneEntrance, startScene, restartScene } from "../ui/screenTransition";
 import { LOBBY_RETURN } from "./lobbyEntry";
 
 /** 편성 목록은 어디서나 네 칸이 한 줄이다. 카드 크기와 줄 간격은 폭에서 공용 규칙이 구한다. */
@@ -169,7 +170,11 @@ export class ExpeditionScene extends Phaser.Scene {
 
   /** 기록·편성·지도 어느 화면에서 꾹 눌러도 같은 아군 창 하나를 쓴다. */
   private ally(): CharacterInfoManager {
-    if (!this.allyInfo) this.allyInfo = new CharacterInfoManager(this, 1001);
+    if (!this.allyInfo) {
+      this.allyInfo = new CharacterInfoManager(this, 1001);
+      // 창에서 급여·한계 돌파를 하고 닫으면 편성 목록 카드의 레벨·돌파 등급을 곧바로 고친다.
+      this.allyInfo.onClose = () => this.syncRosterProgress();
+    }
     return this.allyInfo;
   }
   /** 전투 노드 선택은 모달 대신 지도에 붙는 공용 SD 편성판 하나만 갱신한다. */
@@ -244,7 +249,7 @@ export class ExpeditionScene extends Phaser.Scene {
 
     // 화면을 벗어나는 조작은 공용 우하단 슬롯만 사용한다. 편성에서는 한 단계 앞인 기록으로 돌아간다.
     addBackButton(this, () => {
-      if (!status.active && this.stage === "preparation") this.scene.restart({ stage: "ranking" });
+      if (!status.active && this.stage === "preparation") restartScene(this, { stage: "ranking" });
       else startScene(this, "lobby", LOBBY_RETURN.sortie);
     });
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
@@ -374,7 +379,7 @@ export class ExpeditionScene extends Phaser.Scene {
       this.popups.confirm({ title: t("expedition.node.rest"), message: t("expedition.node.restBody"), confirmLabel: t("expedition.node.restConfirm") }, () => {
         this.nodeTransitionPending = true;
         // 매니저의 단일 저장이 실패하면 잠금을 풀 뿐, 부분 회복 상태는 존재하지 않는다.
-        if (expeditionManager.completeRestNode(node.id)) this.scene.restart();
+        if (expeditionManager.completeRestNode(node.id)) restartScene(this);
         else this.nodeTransitionPending = false;
       });
       this.nodeTransitionPending = false;
@@ -389,7 +394,7 @@ export class ExpeditionScene extends Phaser.Scene {
     this.nodeTransitionPending = true;
     if (node.type === "boss") { this.enterBossBattle(node); return; }
     const pending = expeditionManager.beginAugmentReward(node.id, node.type);
-    if (pending) this.scene.restart(); else this.enterBattle(node);
+    if (pending) restartScene(this); else this.enterBattle(node);
   }
 
   /** 선택이 모두 저장된 바로 그 노드로 진입해, 후보 확정 뒤 다른 지도 노드를 누를 틈을 만들지 않는다. */
@@ -416,7 +421,7 @@ export class ExpeditionScene extends Phaser.Scene {
     try {
       // 보상 필드가 없는 완료 계약이므로 재화 종류나 수량을 위조할 수 없다.
       await gameApi.completeExpeditionNode({ requestId: `${run.runId}:${node.id}`, runId: run.runId, nodeId: node.id, relicHp: run.relics.map(({ currentHp }) => currentHp) });
-      this.scene.restart();
+      restartScene(this);
     } catch { this.nodeTransitionPending = false; }
   }
 
@@ -434,7 +439,7 @@ export class ExpeditionScene extends Phaser.Scene {
       // 확정은 UI가 Session을 쓰지 않고 매니저의 후보·대상·중첩 검증을 반드시 통과한다.
       if (!expeditionManager.chooseAugment(selection)) { this.nodeTransitionPending = false; return; }
       const next = expeditionManager.status().run?.pendingAugmentReward;
-      if (next) this.scene.restart();
+      if (next) restartScene(this);
       else this.enterBattle(node);
     } }).open();
   }
@@ -512,12 +517,14 @@ export class ExpeditionScene extends Phaser.Scene {
     relics.forEach((state, index) => {
       const def = getRelic(state.relicId); const x = BATTLE_PROFILE_LAYOUT.expedition.centersX[index];
       const hpRatio = Math.max(0, Math.min(100, state.currentHp)) / 100;
-      const maxHp = Math.round(relicProgression.getFinalStats(def.id).hp);
+      // 지도는 **떠날 때 굳힌 모습**을 그린다 — 도중에 키워도 이 런의 체력·레벨·등급·외형은 그대로다.
+      const frozen = expeditionManager.snapshotFor(def.id);
+      const maxHp = Math.round(frozen.stats.hp);
       const currentHp = state.alive ? Math.round(maxHp * hpRatio) : 0;
       // 지도는 카드·게이지·글자를 개별 축소하지 않고 전투와 같은 한 칸을 그대로 세운다.
       // 생존은 노란 발광으로 알리지 않는다 — 그 발광은 전투에서 "궁극기가 찼다"는 뜻이다.
       const profile = new BattleProfile(this, x, BATTLE_PROFILE_LAYOUT.expedition.centerY, {
-        relic: def, level: relicProgression.getProgress(def.id).level, breakthroughGrade: relicProgression.getBreakthroughGrade(def.id),
+        relic: def, level: frozen.level, breakthroughGrade: frozen.breakthrough + 1, skinId: frozen.skinId,
         currentHp, maxHp, ferocity: 0, active: false, readOnly: true, dead: !state.alive,
       }).setScale(BATTLE_PROFILE_LAYOUT.expedition.scale);
       // 지도 HUD의 칸도 편성 그리드와 같은 꾹 누름으로 상세를 연다. 증강 대상 고르기는
@@ -527,7 +534,7 @@ export class ExpeditionScene extends Phaser.Scene {
       profile.setAugmentBadges(personal[state.relicId] ?? [], () => this.openAugmentDetails(augments));
       profile.card.hit.setInteractive({ useHandCursor: true });
       bindLongPress(this, profile.card.hit, {
-        onLongPress: () => this.ally().showRelic(def),
+        onLongPress: () => showExpeditionRelic(this, def.id, { portraitDepth: 1001, baseDepth: 1000 }),
         // 짧은 탭은 지금 무엇이 붙어 있는지를 연다. 꾹 누르면 예전처럼 상세 정보창이다.
         onTap: augments.length > 0 ? () => this.openAugmentDetails(augments) : undefined,
         depth: 1200,
@@ -628,7 +635,7 @@ export class ExpeditionScene extends Phaser.Scene {
       width: actions.sortieWidth, height: actions.height, label: t("expedition.sortie"),
       sub: t("expedition.weekly.plays", { plays: status.playsThisWeek, max: EXPEDITION_WEEKLY_POLICY.maxPlaysPerWeek }), fontSize: 40,
       variant: "primary", accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText,
-      onClick: () => this.scene.restart({ stage: "preparation" }),
+      onClick: () => restartScene(this, { stage: "preparation" }),
     }).setEnabled(status.canStartRun).setDepth(12);
     // 소탕은 원정 기회를 그대로 소비하므로 남은 횟수와 참조할 역대 최고점이 모두 있어야 누를 수 있다.
     this.sweepButton = new Button(this, sweepX, actions.y, { width: actions.sweepWidth, height: actions.height, label: t("expedition.sweep"), fontSize: 32, onClick: () => this.confirmSweep() }).setDepth(12);
@@ -699,7 +706,7 @@ export class ExpeditionScene extends Phaser.Scene {
     try {
       const requestId = globalThis.crypto?.randomUUID?.() ?? `expedition-sweep-${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const result = await gameApi.sweepExpedition({ requestId });
-      openRewardPopup(this, this.popups, { title: t("expedition.sweep.done"), items: currencyRecordToRewardItems(result.granted), onConfirm: () => this.scene.restart() });
+      openRewardPopup(this, this.popups, { title: t("expedition.sweep.done"), items: currencyRecordToRewardItems(result.granted), onConfirm: () => restartScene(this) });
     } catch (error) {
       const code = error instanceof GameApiError ? error.code : undefined;
       const message: Partial<Record<string, string>> = {
@@ -843,7 +850,7 @@ export class ExpeditionScene extends Phaser.Scene {
     const result = expeditionManager.prepareDevelopmentBossShortcut(relicIds);
     if (result.ok) {
       // 재시작 뒤 실제 보스 노드를 눌러 적 미리보기를 확인하고, 기존 enterBossBattle 출격 DTO로 진입한다.
-      this.scene.restart();
+      restartScene(this);
       return;
     }
     this.hint?.setText(result.reason === "developmentOnly" ? t("expedition.devOnly") : this.failureMessage(result.reason));
@@ -1056,6 +1063,13 @@ export class ExpeditionScene extends Phaser.Scene {
     this.refreshPreparationSelection();
   }
 
+  /** 목록 카드의 레벨·돌파 등급을 지금 값으로 맞춘다. 카드를 다시 세우지 않는다. */
+  private syncRosterProgress(): void {
+    this.cards.forEach((card, id) => {
+      if (card.active) card.setProgress(relicProgression.getProgress(id).level, relicProgression.getBreakthroughGrade(id));
+    });
+  }
+
   /** 카드, SD, 인원수와 시작 가능 상태를 한 프레임의 동일한 선택 배열로 갱신한다. */
   private refreshPreparationSelection(): void {
     this.renderFormationPreview();
@@ -1072,7 +1086,7 @@ export class ExpeditionScene extends Phaser.Scene {
     const result = expeditionManager.start(formationMembers(this.selected));
     if (result.ok) {
       // 성공 결과는 이미 저장까지 완료되었으므로 같은 씬을 다시 그려 이어하기 상태로 전환한다.
-      this.scene.restart();
+      restartScene(this);
       return;
     }
     this.hint.setText(this.failureMessage(result.reason));

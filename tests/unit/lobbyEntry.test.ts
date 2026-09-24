@@ -83,7 +83,9 @@ describe("모집판 배너 원화", () => {
     expect(lab).not.toMatch(/addSceneBackground\(/);
     // 그 한 장이 곧 배경이므로 배경 층에 선다.
     expect(lab).toMatch(/showcase = image;/);
-    expect(lab).toMatch(/"__DEFAULT"\)\.setDepth\(-30\)/);
+    // 새 원화는 앞 배너 원화 바로 위(-29)에서 녹아 들고, 다 서면 배경 층(-30)으로 내려앉는다.
+    expect(lab).toMatch(/"__DEFAULT"\)\.setDepth\(-29\)/);
+    expect(lab).toMatch(/loaded\.setDepth\(-30\)/);
   });
 
   it("는 이미 올라와 있는 그림도 제대로 물린다", () => {
@@ -176,6 +178,6 @@ describe("돌아와 다시 여는 판", () => {
     expect(lobby).toContain('this.returnMenu === "duel") this.openPvpMenu(true)');
     expect(lobby.match(/hideCloseButton: true, instant,/g)?.length).toBe(2);
     const popup = readFileSync("src/ui/PopupLayer.ts", "utf8");
-    expect(popup).toContain("if (options.instant) { layer.setAlpha(1); body.setScale(1); }");
+    expect(popup).toContain("if (options.instant || refreshed) { layer.setAlpha(1); body.setScale(1); }");
   });
 });

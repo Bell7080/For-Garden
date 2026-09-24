@@ -14,6 +14,9 @@ describe("player profile display", () => {
     // 프로필은 임시 상수가 아니라 서버 경계를 통해 세션에 확정된 연구 진행을 읽는다.
     state.playerResearch = { level: 7, experience: 45, experienceToNext: 180 };
     expect(playerProfileDisplay(state)).toMatchObject({ displayName: "연구원", level: 7, experience: 45, experienceToNext: 180, displayId: "PUBLIC-072", representativeRelic: "렉시아" });
+    // 닉네임·UID가 서면 그것이 앞선다.
+    state.playerCard = { ...state.playerCard, nickname: "화석사냥꾼", uid: "123456789", bio: "오늘도 발굴" };
+    expect(playerProfileDisplay(state)).toMatchObject({ displayName: "화석사냥꾼", displayId: "123456789", bio: "오늘도 발굴" });
     // 표시 모델 계약에는 토큰이나 내부 계정 식별자를 추가할 수 없다.
     expect(Object.keys(playerProfileDisplay(state))).not.toContain("token");
   });
@@ -29,6 +32,11 @@ describe("player profile display", () => {
     state.favorite = "rex"; state.cleared = new Set(["1-3", "1-1"]); state.expedition.allTimeBestScore = 4321; state.expedition.bestScore = 9999;
     const hidden = await loadPlayerProfileDisplay(state, { getAsyncArenaServerState: async () => null });
     expect(hidden.competitiveStats).toMatchObject({ favoriteRelic: { relicId: "rex", displayName: "렉시아", portraitAssetId: "lexia" }, highestStage: { stageId: "1-3" }, expedition: { label: "역대 최고", score: 4321 } });
+    // 애착 무대는 레벨·돌파·유대·전투력을 함께 싣고, 스토리 진행은 깬 수와 전체 수를 함께 싣는다.
+    expect(hidden.competitiveStats.favoriteRelic).toMatchObject({ level: 1, breakthroughGrade: 1, rarity: "SSR" });
+    expect(hidden.competitiveStats.favoriteRelic!.power).toBeGreaterThan(0);
+    expect(hidden.competitiveStats.storyProgress.cleared).toBe(2);
+    expect(hidden.collection.owned).toBeGreaterThan(0);
     expect(hidden.competitiveStats.arenaTier).toBeUndefined();
     const ranked = await loadPlayerProfileDisplay(state, { getAsyncArenaServerState: async () => ({ seasonTierId: "amber-2", activeDefenseSnapshotId: null, weekly: { weekId: "w", score: 1, wins: 0, losses: 0, updatedAt: "now" }, dailyAttempts: { utcDate: "today", used: 0, limit: 5 }, seasonReward: { seasonId: "s", finalTier: null, rewards: [], claimStatus: "not_eligible" } }) });
     expect(ranked.competitiveStats.arenaTier).toEqual({ tierId: "amber-2", displayName: "amber-2" });
@@ -48,9 +56,21 @@ describe("player profile display", () => {
 
   it("긴 헤더 문자열과 수식어 한 줄의 bounds를 순수 상수로 제한한다", () => {
     expect(compactProfileText("아주긴플레이어이름이팝업을넘지않습니다", 10)).toBe("아주긴플레이어이름…");
-    const chipsWidth = PLAYER_PROFILE_LAYOUT.modifiers.width * 3 + PLAYER_PROFILE_LAYOUT.modifiers.gap * 2;
-    expect(chipsWidth).toBeLessThan(PLAYER_PROFILE_LAYOUT.popup.width - 100);
-    expect(PLAYER_PROFILE_LAYOUT.header.bottom).toBeLessThan(PLAYER_PROFILE_LAYOUT.rows.firstY);
+    const L = PLAYER_PROFILE_LAYOUT;
+    // 수식어 세 칸이 이름 줄의 오른쪽 끝을 넘지 않는다.
+    const chipsWidth = L.modifiers.width * 3 + L.modifiers.gap * 2;
+    expect(L.header.textLeft + chipsWidth).toBeLessThanOrEqual(L.header.textRight);
+    // 누구인가 → 한 줄 소개 → 애착 무대 → 기록 → 다음 개방 줄이 위에서 아래로 겹치지 않고 쌓인다.
+    expect(L.header.levelChip.y + L.header.levelChip.height / 2).toBeLessThan(L.bio.y - L.bio.height / 2);
+    expect(L.bio.y + L.bio.height / 2).toBeLessThan(L.showcase.titleY);
+    expect(L.showcase.bottom).toBeLessThan(L.records.titleY);
+    const recordsBottom = L.records.firstY + L.records.rowGap + L.records.height / 2;
+    expect(recordsBottom).toBeLessThan(L.nextUnlock.y - 20);
+    expect(L.nextUnlock.y + 20).toBeLessThan(L.popup.height / 2 - 40);
+    // 얼굴 테두리의 장식(얼굴의 약 30% 바깥)까지 판 안에 든다.
+    expect(L.header.avatar.y - L.header.avatar.size * 0.65).toBeGreaterThan(-L.popup.height / 2);
+    // 기록 두 열이 무대 폭 안에 든다.
+    expect(L.records.columnX + L.records.width / 2).toBeLessThanOrEqual(L.showcase.width / 2);
   });
 
   it("1080px 상단에서 긴 이름을 줄이고 프로필과 세 재화 칸 사이를 띄운다", () => {

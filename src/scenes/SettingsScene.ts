@@ -28,7 +28,7 @@ import { relicProgression } from "../managers/RelicProgressionManager";
 import { getRelic } from "../data/relics";
 import { openPolicyDocument, type PolicyPath } from "./policyNavigation";
 import { consumeSceneEntry } from "./sceneEntry";
-import { playSceneEntrance, startScene } from "../ui/screenTransition";
+import { playSceneEntrance, startScene, restartScene } from "../ui/screenTransition";
 
 /** 상단 탭은 긴 설정을 의미 단위로 나눠 좁은 화면에서도 한 섹션만 스크롤하게 한다. */
 const TABS = [
@@ -105,7 +105,7 @@ export class SettingsScene extends Phaser.Scene {
       addCategoryTab(this, undefined, {
         x: slot.x, y: SETTINGS_HEAD.tabY, width: slot.width, height: SETTINGS_HEAD.tabHeight,
         label: t(tab.key), selected: tab.id === this.activeTab, face: "down",
-        onSelect: () => { this.activeTab = tab.id; this.scrollY = 0; this.scene.restart({ tab: tab.id, returnScene: this.returnScene, returnData: this.returnData }); },
+        onSelect: () => { this.activeTab = tab.id; this.scrollY = 0; restartScene(this, { tab: tab.id, returnScene: this.returnScene, returnData: this.returnData }); },
       }).setDepth(20);
     });
   }
@@ -218,12 +218,12 @@ export class SettingsScene extends Phaser.Scene {
         settingsManager.update({game:{language:v}});
         // 글꼴 스택과 문구 표가 함께 바뀌므로, 둘 다 도착한 뒤에 다시 그린다. Phaser Text는 그린
         // 순간의 글꼴로 텍스처를 굳으니 받기 전에 그리면 대체 글꼴 상태로 남는다.
-        void Promise.all([loadGameFonts(v), loadTextCatalog(v), loadDataOverlay(v)]).then(()=>{ if (this.scene.isActive()) this.scene.restart({ tab: "play", returnScene: this.returnScene, returnData: this.returnData }); });
+        void Promise.all([loadGameFonts(v), loadTextCatalog(v), loadDataOverlay(v)]).then(()=>{ if (this.scene.isActive()) restartScene(this, { tab: "play", returnScene: this.returnScene, returnData: this.returnData }); });
       },v=>LANGUAGE_NATIVE_NAME[v])); y+=SETTINGS_ROW.step; divider();
       }
     } else if (this.activeTab === "access") {
       section(t("settings.section.access"));
-      this.content.add(new SettingsSelectRow(this,SETTINGS_ROW.left,y,t("settings.access.textScale"),s.accessibility.textScale,[1,1.15,1.3] as const,value=>{ settingsManager.update({accessibility:{textScale:value}}); this.scene.restart({ tab: "access" }); })); y+=SETTINGS_ROW.step; divider();
+      this.content.add(new SettingsSelectRow(this,SETTINGS_ROW.left,y,t("settings.access.textScale"),s.accessibility.textScale,[1,1.15,1.3] as const,value=>{ settingsManager.update({accessibility:{textScale:value}}); restartScene(this, { tab: "access" }); })); y+=SETTINGS_ROW.step; divider();
       // 접근성 선택은 공용 효과·의미 표식 경계에서 소비하며 씬마다 별도 색이나 밝기를 만들지 않는다.
       toggle(t("settings.access.reduceMotion"),'accessibility','reduceMotion'); toggle(t("settings.access.reduceFlashes"),'accessibility','reduceFlashes'); toggle(t("settings.access.colorAssist"),'accessibility','colorAssist');
     } else {
@@ -304,7 +304,7 @@ export class SettingsScene extends Phaser.Scene {
     this.popups.confirm({ title: t("settings.support.resetSettings"), message: t("settings.support.resetSettingsBody"), confirmLabel: t("settings.action.reset") }, () => {
       settingsManager.reset();
       // 현재 반환 경로도 함께 넘겨 초기화 뒤 뒤로가기가 사용자가 들어온 화면을 그대로 가리키게 한다.
-      this.scene.restart({ tab: "support", returnScene: this.returnScene, returnData: this.returnData });
+      restartScene(this, { tab: "support", returnScene: this.returnScene, returnData: this.returnData });
     });
   }
 

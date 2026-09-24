@@ -74,6 +74,12 @@ export interface PopupOptions {
  * 위에 있는 것부터 닫히고, 마지막 한 장이 닫히면 어두운 막도 함께 사라진다.
  */
 /**
+ * 닫힌 판이 같은 제목으로 다시 열릴 때 "갈아 끼우기"로 보는 창(ms). 서버 응답을 기다렸다 다시
+ * 여는 갱신까지 품되, 사람이 닫았다가 다시 여는 손보다는 짧다.
+ */
+const REFRESH_WINDOW_MS = 450;
+
+/**
  * 지금 화면에 떠 있는 팝업 장 수. 씬이 아니라 이 경계가 세는 이유는, 팝업 레이어가 화면마다
  * 그때그때 새로 만들어져 씬이 제 층을 전부 알지 못하기 때문이다. 전투는 이 값으로 코어 시간만
  * 멈춘다 — 판이 떠 있는 동안 뒤에서 전투가 굴러가면 읽는 사이에 판이 갈린다.
@@ -102,6 +108,8 @@ export class PopupLayer {
   private readonly chromeByBody = new Map<Phaser.GameObjects.Container, Phaser.GameObjects.GameObject[]>();
   /** 제목 있는 팝업만 E2E 관찰용으로 기록한다. Canvas 밖에서는 지금 무엇이 열려 있는지 알 방법이 없다. */
   private readonly titleByLayer = new Map<Phaser.GameObjects.Container, string>();
+  /** 방금 닫혀 사라지는 중인 판 — 같은 제목으로 곧바로 다시 열리면 갈아 끼우기로 본다. */
+  private readonly closingByTitle = new Map<string, { layer: Phaser.GameObjects.Container; body?: Phaser.GameObjects.Container; at: number }>();
   /** 닫는 연출은 층이 아니라 **판**을 줄이므로, 층마다 제 판을 찾아갈 수 있게 짝을 남긴다. */
   private readonly bodyByLayer = new Map<Phaser.GameObjects.Container, Phaser.GameObjects.Container>();
   /**
@@ -281,7 +289,11 @@ export class PopupLayer {
 
     // 살짝 커지며 떠오른다. 시간과 배율은 화면 전체가 함께 읽는 전환표가 갖는다 —
     // 여기에 숫자를 적어 두면 씬 전환만 움직임 설정을 따르고 팝업만 그대로 남는다.
-    if (options.instant) { layer.setAlpha(1); body.setScale(1); }
+    // **같은 판을 방금 닫았다가 다시 여는 것이면 갈아 끼우기다**(`takeRefreshedLayer`). 닫히는 판은
+    // 곧바로 걷고 새 판은 완성된 채로 선다 — 둘 다 제 연출을 돌리면 판이 꺼졌다 다시 떠올라
+    // 화면이 새로고침된 것처럼 깜빡인다.
+    const refreshed = this.takeRefreshedLayer(options.title);
+    if (options.instant || refreshed) { layer.setAlpha(1); body.setScale(1); }
     else playPopupOpen(this.scene, layer, body);
 
     if (options.title) this.titleByLayer.set(layer, options.title);
@@ -357,11 +369,34 @@ export class PopupLayer {
    * `anyPopupOpen`은 이미 없는 판을 열려 있다고 말한다 — 전투는 그동안 멈춰 선다. 세는 일과
    * 부른 쪽에 알리는 일은 이 호출에서 끝내고, 실제로 지우는 것만 연출 뒤로 미룬다.
    */
+  /**
+   * 방금 닫힌 같은 제목의 판을 **지금** 걷고, 그런 판이 있었는지 돌려준다.
+   *
+   * 팝업을 새 값으로 다시 그리는 가장 흔한 길이 "닫고 같은 판을 다시 연다"라(기록판 넘기기·관찰
+   * 인터뷰 완료·목록 갱신), 그 두 호출이 붙어 오면 여는 쪽이 이것으로 알아챈다. 사람이 닫았다가
+   * 다시 여는 손은 이 창(`REFRESH_WINDOW_MS`)보다 늦으므로 섞이지 않는다.
+   */
+  private takeRefreshedLayer(title: string | undefined): boolean {
+    if (title === undefined) return false;
+    const closing = this.closingByTitle.get(title);
+    if (!closing) return false;
+    this.closingByTitle.delete(title);
+    if (performance.now() - closing.at > REFRESH_WINDOW_MS) return false;
+    if (closing.layer.active) {
+      this.scene.tweens.killTweensOf(closing.layer);
+      if (closing.body) this.scene.tweens.killTweensOf(closing.body);
+      closing.layer.destroy();
+    }
+    return true;
+  }
+
   private close(layer: Phaser.GameObjects.Container): void {
     const index = this.stack.indexOf(layer);
     if (index === -1) return;
     this.stack.splice(index, 1);
     openLayerCount -= 1;
+    const closedTitle = this.titleByLayer.get(layer);
+    if (closedTitle !== undefined) this.closingByTitle.set(closedTitle, { layer, body: this.bodyByLayer.get(layer), at: performance.now() });
     this.titleByLayer.delete(layer);
     const onClose = this.onCloseByLayer.get(layer);
     this.onCloseByLayer.delete(layer);

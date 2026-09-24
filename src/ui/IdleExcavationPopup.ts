@@ -5,6 +5,7 @@ import { motionPolicy, powerSavingPolicy } from "../core/settings";
 import { clampExcavationStorage, emptyExcavationAmounts, EXCAVATION_CURRENCIES, excavationProductionDisplayModel, excavationStorageCapacity, excavationStorageFillRatio, excavationStorageLimitSeconds, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
 import { tapFormationSlot, tapRosterRelic } from "../core/formationSlots";
 import { RELICS } from "../data/relics";
+import type { RelicDef } from "../core/types";
 import { placePuppet, spawnPuppet, type PuppetAsset, type PuppetCreature } from "../puppets/assets";
 import { session } from "../state/session";
 import { setDebugExcavationAdOffers, setDebugFormationDragVisual, setDebugIdleExcavationControls, setDebugIdleExcavationPopup, setDebugIdleExcavationSdReady, setDebugIdleExcavationSlots } from "../debug";
@@ -479,6 +480,25 @@ export class IdleExcavationPopup {
     return sceneInfoManager(this.scene, { key: "excavation-relic", portraitDepth: 2601, baseDepth: 2600 });
   }
 
+  /**
+   * 꾹 눌러 연 정보창에서 급여·한계 돌파를 하고 닫으면 목록 카드의 레벨·돌파 등급과 시간당
+   * 생산량을 곧바로 고친다. 생산량은 레벨과 돌파에서 나오므로 두 값과 함께 움직여야 한다.
+   */
+  private openRelicInfo(relic: RelicDef): void {
+    const info = this.info();
+    info.onClose = () => this.syncRosterProgress();
+    info.showRelic(relic);
+  }
+
+  private syncRosterProgress(): void {
+    for (const [relicId, card] of this.rosterCards) {
+      if (!card.active) continue;
+      const progress = session.relicProgress[relicId];
+      const detail = excavationProductionDisplayModel([relicId, null, null], RELICS, session.relicProgress).relics[0];
+      card.setProgress(progress?.level ?? 1, (progress?.breakthrough ?? 0) + 1).setSub(formatRate(detail?.totalPerHour ?? 0));
+    }
+  }
+
   /** 보유한 렐릭과 그 성장만 넘긴다 — 무엇을 세울지는 순수 규칙이 정한다. */
   private autoCandidates(): ExcavationCandidate[] {
     return RELICS.filter((relic) => session.owned.has(relic.id)).map((def) => ({
@@ -549,7 +569,7 @@ export class IdleExcavationPopup {
           else this.paintSlotSelection();
         },
         allowTap: () => this.gridDragMoved <= GRID_DRAG_SLOP,
-        onLongPress: () => this.info().showRelic(relic),
+        onLongPress: () => this.openRelicInfo(relic),
         // 팝업 판(2000) 위에 게이지가 보여야 한다.
         depth: 2400,
       });

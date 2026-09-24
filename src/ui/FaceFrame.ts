@@ -78,6 +78,16 @@ export class FaceFrame extends Phaser.GameObjects.Container {
   }
 
   private async loadFace(scene: Phaser.Scene, options: { portraitAssetId: PortraitAssetId; tint?: number }, size: number): Promise<void> {
+    // **이미 구운 얼굴이면 기다리지 않고 그 자리에서 세운다.** 목록을 다시 그릴 때마다(던전 단계를
+    // 고르거나 탭을 바꿀 때) 원본을 새로 읽는 비동기 길을 타면, 액자가 한 프레임 빈 채로 섰다가
+    // 얼굴이 톡 들어와 **화면이 새로고침된 것처럼** 깜빡였다. 구운 텍스처는 전역에 남으므로
+    // 개체·크기로 그 키를 기억해 두면 된다.
+    const cacheKey = `${options.portraitAssetId}:${Math.round(size)}`;
+    const cached = BAKED_FACE_KEYS.get(cacheKey);
+    if (cached && scene.textures.exists(cached)) {
+      this.placeFace(scene, cached, size, options.tint);
+      return;
+    }
     const asset = portraitAssetFor(options.portraitAssetId);
     // **구운 뒤에는 원본을 놓는다.** 원정 순위표는 얼굴 액자를 100줄 세우므로, 판이 사는
     // 동안 붙잡고 있으면 거기 선 개체의 전신이 전부 GPU에 남는다 — 액자가 실제로 그리는
@@ -96,9 +106,15 @@ export class FaceFrame extends Phaser.GameObjects.Container {
       // 남고(v0.105.0까지), 안쪽 정사각에 들이면 얼굴이 작아진다(v0.108.0까지).
       return bakeFaceTexture(scene, key, size, { x: face.cropX, y: face.cropY, side: face.cropWidth });
     });
-    if (!built || this.disposed) return;
-    const image = scene.add.image(0, 0, built).setDisplaySize(size, size);
-    if (options.tint) image.setTint(options.tint);
+    if (!built) return;
+    BAKED_FACE_KEYS.set(cacheKey, built);
+    if (this.disposed) return;
+    this.placeFace(scene, built, size, options.tint);
+  }
+
+  private placeFace(scene: Phaser.Scene, key: string, size: number, tint: number | undefined): void {
+    const image = scene.add.image(0, 0, key).setDisplaySize(size, size);
+    if (tint) image.setTint(tint);
     // 액자를 깐 경우 면 바로 위(1번)에, 그림만 세우는 경우 그대로 맨 앞에 놓는다.
     this.addAt(image, this.length > 0 ? 1 : 0);
   }
@@ -116,6 +132,9 @@ export class FaceFrame extends Phaser.GameObjects.Container {
  * 절반보다 살짝 아래에 두면 머리카락이 위로, 턱·어깨가 아래로 들어와 얼굴이 칸 가운데에 온다.
  */
 const FACE_FRAME = { crop: 0.34, anchorY: 0.52 } as const;
+
+/** 개체·크기 → 구운 얼굴 텍스처 키. 구운 캔버스는 전역 TextureManager에 남으므로 씬을 넘어 쓴다. */
+const BAKED_FACE_KEYS = new Map<string, string>();
 
 /**
  * 파편의 결 — **일렁이는 물낯에 든 유리 한 조각**이다.

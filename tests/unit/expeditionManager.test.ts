@@ -119,11 +119,13 @@ describe("ExpeditionManager", () => {
       { relicId: "rex", currentHp: 40, alive: true },
       { relicId: "spino", currentHp: 0, alive: false },
     ])).toBe(true);
-    expect(state.expedition.run!.relics).toEqual([
+    expect(state.expedition.run!.relics.map(({ relicId, currentHp, alive }) => ({ relicId, currentHp, alive }))).toEqual([
       { relicId: "anky", currentHp: 100, alive: true },
       { relicId: "rex", currentHp: 72, alive: true },
       { relicId: "spino", currentHp: 0, alive: false },
     ]);
+    // 체력이 바뀌어도 떠날 때 굳힌 모습은 그대로 따라간다.
+    expect(state.expedition.run!.relics.every(({ snapshot }) => snapshot !== undefined)).toBe(true);
     expect(save).toHaveBeenCalledTimes(1);
   });
 
@@ -217,5 +219,36 @@ describe("ExpeditionManager", () => {
     expect(manager.prepareBossRequests(boss.id)).toEqual(before);
     expect(manager.prepareBossRequests(boss.id)).toEqual(before);
     expect(new Set([state.expedition.run!.bossSubmissionId]).size).toBe(1);
+  });
+
+  it("원정은 떠날 때의 성장을 굳혀 두고 도중의 급여·돌파·룬·외형을 반영하지 않는다", () => {
+    const state = createDefaultSession(); const save = vi.fn();
+    const manager = new ExpeditionManager(state, { save }, () => new Date("2026-08-25T12:00:00Z"));
+    expect(manager.start(["anky", "rex", "spino"]).ok).toBe(true);
+    const before = manager.snapshotFor("anky");
+    // 떠난 뒤 성장을 바꾼다.
+    state.relicProgress.anky = { ...state.relicProgress.anky, level: before.level + 10, breakthrough: 2, heartGemSlots: [null, null, null] };
+    state.equippedRelicSkinIds.anky = "changed-skin" as never;
+    const after = manager.snapshotFor("anky");
+    expect(after.level).toBe(before.level);
+    expect(after.breakthrough).toBe(before.breakthrough);
+    expect(after.stats).toEqual(before.stats);
+    expect(after.skinId).toBe(before.skinId);
+    // 런이 없으면 지금 성장을 읽는다 — 편성 화면은 바로 바뀐다.
+    state.expedition.run = null;
+    expect(manager.snapshotFor("anky").level).toBe(before.level + 10);
+  });
+
+  it("스냅샷이 없던 런은 불러올 때 한 번 굳힌다", () => {
+    const state = createDefaultSession(); const save = vi.fn();
+    const manager = new ExpeditionManager(state, { save }, () => new Date("2026-08-25T12:00:00Z"));
+    manager.start(["anky", "rex", "spino"]);
+    state.expedition.run!.relics.forEach((relic) => { delete relic.snapshot; });
+    manager.status();
+    expect(state.expedition.run!.relics.every(({ snapshot }) => snapshot !== undefined)).toBe(true);
+    const level = state.expedition.run!.relics[0].snapshot!.level;
+    state.relicProgress.anky = { ...state.relicProgress.anky, level: level + 5 };
+    manager.status();
+    expect(manager.snapshotFor("anky").level).toBe(level);
   });
 });

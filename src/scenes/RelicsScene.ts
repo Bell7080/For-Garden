@@ -84,6 +84,8 @@ export class RelicsScene extends Phaser.Scene {
    * 들어갔다 나온 손이 매번 그 연출을 다시 본다.
    */
   private playIntro = true;
+  /** 지금 격자가 그려진 값(`gridSignature`). 정보창을 닫을 때 바뀐 것이 없으면 다시 세우지 않는다. */
+  private shownSignature = "";
   /** 카드·구분선·미보유 제목을 함께 움직이고 한 번에 잘라 내는 유일한 콘텐츠 계층이다. */
   private content!: Phaser.GameObjects.Container;
   private viewportMask?: Phaser.GameObjects.Graphics;
@@ -180,7 +182,10 @@ export class RelicsScene extends Phaser.Scene {
 
     this.info = new CharacterInfoManager(this);
     // 정보창 안에서 애착·즐겨찾기가 바뀔 수 있으므로 닫힐 때 표시와 정렬을 함께 다시 맞춘다.
-    this.info.onClose = () => this.refresh();
+    // 정보창을 닫을 때마다 격자를 통째로 다시 세우면 카드 원화가 모두 빠졌다 다시 들어와,
+    // 캐릭터 한 명을 들여다보고 나올 때마다 도감이 새로고침된 것처럼 깜빡였다. 격자에 서는 값이
+    // 실제로 바뀐 때만 다시 세운다(`gridSignature`).
+    this.info.onClose = () => { if (this.gridSignature() !== this.shownSignature) this.refresh(); };
     // 서버가 재화 차감을 확정한 직후 정보창과 상단 줄이 같은 세션 지갑을 다시 읽는다.
     this.info.onWalletChange = () => this.topBar.refresh();
     // manager 사건을 받으면 열린 정보창 뒤의 도감 카드도 같은 resolver 결과로 즉시 재조립한다.
@@ -352,14 +357,39 @@ export class RelicsScene extends Phaser.Scene {
   }
 
   /** 정보창 변경을 반영해 카드 표식과 즐겨찾기 우선순위를 한 번에 다시 구성한다. */
+  /**
+   * 격자에 서는 값 전부 — 순서를 바꾸는 즐겨찾기·애착과, 카드에 적히는 레벨·돌파 등급.
+   * 이것이 그대로면 다시 세울 것이 없다.
+   */
+  private gridSignature(): string {
+    return JSON.stringify([
+      session.favorite,
+      [...session.bookmarked].sort(),
+      relicCollection.catalog.map(({ id }) => {
+        if (!relicCollection.owns(id)) return id;
+        const progress = relicProgression.getProgress(id);
+        // 카드 원화는 입은 외형을 따르고, 전투력순이면 룬 하나로도 줄 순서가 바뀐다. 둘 다 창에서
+        // 바꿀 수 있으므로 함께 센다 — 빠지면 외형을 갈아입고 닫아도 격자는 옛 옷을 입고 있다.
+        const skin = relicSkinManager.equippedFor(id) ?? "";
+        const power = this.sortMode === "power" ? combatPower(relicProgression.getFinalStats(id)) : "";
+        return `${id}:${progress.level}:${progress.breakthrough}:${skin}:${power}`;
+      }),
+    ]);
+  }
+
   private refresh(intro = false): void {
     this.playIntro = intro;
-    // 카드 자체를 다시 만들지 않으면 새 즐겨찾기 표식만 바뀌고 기존 좌표는 그대로 남는다.
-    for (const card of this.cards.values()) card.destroy();
+    this.shownSignature = this.gridSignature();
+    // **새 격자를 먼저 세우고 옛 격자를 걷는다.** 카드 원화는 그 카드가 사는 동안만 붙잡히므로
+    // (`loadPortraitTexture`), 옛 카드를 먼저 지우면 붙잡는 이가 잠깐 0이 되어 원화가 내려갔다가
+    // 다시 읽혀 격자 전체가 빈 칸으로 깜빡인다. 새 카드가 먼저 붙잡아 두면 같은 원화를 그대로 쓴다.
+    const previousCards = [...this.cards.values()];
     this.cards.clear();
-    // 정렬 전 콘텐츠 자식을 모두 없애 이전 장식·카드 입력면·마스크 참조가 남지 않게 한다.
-    this.content.removeAll(true);
+    const previousChildren = [...this.content.list];
+    this.content.removeAll(false);
     this.buildGrid();
+    for (const card of previousCards) card.destroy();
+    for (const child of previousChildren) child.destroy();
     for (const [id, card] of this.cards) {
       card.setSelected(relicCollection.owns(id) && id === session.favorite);
     }

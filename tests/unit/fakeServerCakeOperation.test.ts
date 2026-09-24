@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FakeServer } from "../../src/api/FakeServer";
-import { createEmptyRaidState, createInitialPlayerResearchProgress, type Session } from "../../src/state/session";
+import { createEmptyRaidState, createInitialPlayerResearchProgress, createEmptyPlayerCard, type Session } from "../../src/state/session";
 import { createDefaultSettings } from "../../src/core/settings";
 import { createArchaeologyState } from "../../src/core/strataDig";
 import { CAKE_OPERATION_TIERS, getCakeOperationTier } from "../../src/data/cakeOperation";
@@ -15,6 +15,7 @@ function makeSession(stamina = 100, clearedIndex = -1): Session {
     interaction: { slots: [null], claimedRequestIds: [] },
     earnedProfileModifierIds: [], equippedProfileModifierIds: [],
     playerResearch: createInitialPlayerResearchProgress(),
+    playerCard: createEmptyPlayerCard(),
     idleExcavation: { assignedRelicIds: [null, null, null], lastSettledAt: null, unclaimed: { gold: 0, cheesecake: 0, rawStone: 0, gems: 0 }, baseStorageSeconds: 14_400, activeProductionMultiplier: 1, storageExtensionExpiresAt: null, retroactiveExcavationGrantVersion: 1 },
     archaeology: createArchaeologyState(),
     settings: createDefaultSettings(),

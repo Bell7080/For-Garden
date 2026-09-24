@@ -304,6 +304,9 @@ export class PartyScene extends Phaser.Scene {
     addBackButton(this, () => this.leave());
 
     this.info = new CharacterInfoManager(this);
+    // 정보창에서 급여·한계 돌파를 하고 닫으면 목록 카드·자리의 레벨과 돌파 등급, 전투력을 곧바로
+    // 고친다. 창을 닫고 편성을 다시 열어야 바뀌면 방금 한 조작이 먹었는지 알 수 없다.
+    this.info.onClose = () => this.refresh();
     // 적은 정보창 씬이 아니라 팝업 한 장이다. 스킬 쪽지는 이 층 위에 쌓인다.
     this.enemyInfo = new EnemyInfoPopup(this, new PopupLayer(this, 2200));
     this.bindDeselect();
@@ -725,6 +728,7 @@ export class PartyScene extends Phaser.Scene {
       const chosen = at >= 0;
       entry.card.setSelected(chosen);
       entry.card.setSub(chosen ? t("party.slot", { index: at + 1 }) : entry.role);
+      entry.card.setProgress(relicProgression.getProgress(id).level, relicProgression.getBreakthroughGrade(id));
     }
 
     const plate = this.slotPlate;
@@ -733,13 +737,31 @@ export class PartyScene extends Phaser.Scene {
     plate?.removeAll(true);
     chrome?.removeAll(true);
     marks?.removeAll(true);
+    // **자리를 바꾼 SD는 새로 세우지 않고 옮긴다.** 두 칸을 맞바꿀 때마다 둘 다 지우고 다시 읽으면
+    // 두 SD가 사라졌다 톡 튀어나와 편성 화면이 새로고침된 것처럼 깜빡였다. 자리를 떠난 SD를 먼저
+    // 모아 두고, 그 렐릭이 선 새 칸으로 옮긴다. 아무 데도 가지 않은 것만 걷는다.
+    const moving = new Map<string, { creature: PuppetCreature; from: number }>();
     this.allySlots.forEach((slot, i) => {
       const id = this.picked[i] ?? undefined;
+      if (!slot.creature || !slot.currentId || slot.currentId === id) return;
+      moving.set(slot.currentId, { creature: slot.creature, from: i });
+      slot.creature = undefined;
+      slot.request += 1;
+    });
+    this.allySlots.forEach((slot, i) => {
+      const id = this.picked[i] ?? undefined;
+      const moved = id !== undefined && slot.currentId !== id ? moving.get(id) : undefined;
+      if (moved) {
+        moving.delete(id!);
+        moved.creature.x += PREVIEW_COLUMNS[i] - PREVIEW_COLUMNS[moved.from];
+        slot.creature = moved.creature;
+        slot.request += 1;
+      }
       const standing = slot.creature !== undefined;
       // 빈 슬롯 및 전체 관계가 상쇄된 중립은 텍스트 대신 표식 자체를 완전히 숨긴다.
       slot.affinityDirection.setDirection(id ? relicAffinityDirection(getRelic(id), this.enemies) : "neutral");
       // 이미 그 렐릭이 서 있으면 다시 세우지 않는다.
-      if (!id || !standing || slot.currentId !== id) void this.fillAllySlot(slot, i, id);
+      if (!moved && (!id || !standing || slot.currentId !== id)) void this.fillAllySlot(slot, i, id);
       slot.currentId = id;
 
       // **아군도 적과 같은 어휘로 선다** — 속성·직군은 왼쪽 위 아이콘, 돌파는 오른쪽 위 로마자,
@@ -766,6 +788,8 @@ export class PartyScene extends Phaser.Scene {
       // 표식이 셋 늘어서 SD보다 먼저 읽힌다.
       if (i === this.selectedSlot && id) addFormationRemoveChip(this, chrome, box, () => this.tapSlot(i, "clear"));
     });
+    // 편성에서 빠진 렐릭의 SD만 걷는다.
+    for (const { creature } of moving.values()) creature.destroy();
 
     // 어느 편이 센지는 두 수가 마주 보는 것으로 말한다. 표시·정렬 전용 값이라 전투에는 쓰지 않는다.
     this.enemyPowerText?.setText(t("party.enemyPower", { power: this.enemies.reduce((sum, def) => sum + combatPower(def.stats), 0).toLocaleString() }));

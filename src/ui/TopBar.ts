@@ -4,7 +4,8 @@ import { setDebugProgress } from "../debug";
 import { session } from "../state/session";
 import { drawGlyph } from "./glyphs";
 import { formatCurrency } from "../core/formatCurrency";
-import { chipPoints, drawGlassFade, drawHairline, drawLayer, HoloBar, HOLO } from "./holo";
+import { drawGlassFade, drawHairline, HoloBar } from "./holo";
+import { ProfileAvatar } from "./ProfileAvatar";
 import { addCurrencyChip, CURRENCY_CHIP } from "./CurrencyChip";
 import { COLOR, textStyle } from "./theme";
 import { playerProfileDisplay, profileAvatarContent, type PlayerProfileDisplay } from "../state/playerProfile";
@@ -55,6 +56,9 @@ export class TopBar {
   private profileExperience?: HoloBar;
   /** 클릭과 manager 이벤트가 항상 같은 최신 공개 스냅샷을 보도록 TopBar가 모델을 소유한다. */
   private profile?: PlayerProfileDisplay;
+  private avatar?: Phaser.GameObjects.Container;
+  private avatarSize = 84;
+  private avatarKey?: string;
 
   constructor(scene: Phaser.Scene, y = 40, options: TopBarOptions = {}) {
     drawGlassFade(scene, BASE_WIDTH / 2, y + 30, BASE_WIDTH, 150, { topAlpha: 0.92, bottomAlpha: 0 });
@@ -107,12 +111,10 @@ export class TopBar {
     this.profile = profile;
     const size = 84;
     const chip = scene.add.container(0, 0);
-    chip.add(drawLayer(scene, x + size / 2, y + size / 2, chipPoints(size, size, {
-      bevel: { topLeft: size * 0.3, topRight: 0, bottomRight: size * 0.3, bottomLeft: 0 },
-    }), { fill: 0x1f2632, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.55 }));
-    const avatar = profileAvatarContent(profile, (key) => scene.textures.exists(key));
-    if (avatar.assetKey) chip.add(scene.add.image(x + size / 2, y + size / 2, avatar.assetKey).setDisplaySize(size - 10, size - 10));
-    else chip.add(scene.add.text(x + size / 2, y + size / 2, avatar.fallback, textStyle({ role: "display", size: 40, color: COLOR.accentText })).setOrigin(0.5));
+    // 얼굴 칸은 프로필 카드와 같다 — 애착 렐릭의 얼굴에 고른 테두리 색. 바뀌면 이 칸만 다시 세운다.
+    this.avatar = scene.add.container(x + size / 2, y + size / 2);
+    chip.add(this.avatar);
+    this.avatarSize = size;
     const contentLeft = x + size + TOP_BAR_LAYOUT.profile.contentGap;
     const contentRight = TOP_BAR_LAYOUT.profile.maxRight;
     // 첫 줄은 요청된 이름과 레벨만 양끝에 맞춘다. 공개 ID는 상세 팝업에서만 보여 정보 위계를 지킨다.
@@ -134,6 +136,20 @@ export class TopBar {
     }
   }
 
+  private paintAvatar(profile: PlayerProfileDisplay): void {
+    const avatar = this.avatar;
+    if (!avatar) return;
+    const key = `${profile.avatar?.portraitAssetId ?? ""}:${profile.frameId}:${profile.displayName}`;
+    if (key === this.avatarKey) return;
+    this.avatarKey = key;
+    avatar.removeAll(true);
+    // 프로필 카드와 **같은 한 장**(`ProfileAvatar`)을 작게 세운다 — 테두리 장식이 칸 밖으로 조금 나오므로 얼굴은 한 뼘 작게.
+    avatar.add(new ProfileAvatar(avatar.scene, 0, 0, {
+      size: Math.round(this.avatarSize * 0.78), frameId: profile.frameId,
+      portraitAssetId: profile.avatar?.portraitAssetId, fallback: profileAvatarContent(profile, () => false).fallback,
+    }));
+  }
+
   refresh(): void {
     for (const { slot, text } of this.slots) {
       const amount = session.wallet[slot.key];
@@ -148,9 +164,10 @@ export class TopBar {
   /** 공개 이벤트 한 번으로 최신 모델과 상단의 이름·레벨·경험치·대표 수식어를 함께 교체한다. */
   private refreshProfile(profile: PlayerProfileDisplay): void {
     this.profile = profile;
+    this.paintAvatar(profile);
     this.profileName?.setText(compactTopBarName(profile.displayName));
     this.profileDetail?.setText(`LV.${Math.max(1, profile.level).toLocaleString()}`);
-    this.profileExperience?.setValue(profile.experience / Math.max(1, profile.experienceToNext));
+    this.profileExperience?.setValue(profile.levelCapped ? 1 : profile.experience / Math.max(1, profile.experienceToNext));
     // 상단에는 대표 하나만 노출하고 전체 장착 목록은 PlayerProfilePopup에 남겨 재화와 충돌하지 않는다.
     this.profileModifier?.setText(profile.equippedModifiers[0] ? `〈${profile.equippedModifiers[0].displayName}〉` : "");
   }

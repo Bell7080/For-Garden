@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createEmptyRaidState, createInitialPlayerResearchProgress, type Session } from "../../src/state/session";
+import { createEmptyRaidState, createInitialPlayerResearchProgress, createEmptyPlayerCard, type Session } from "../../src/state/session";
 import { RelicCollectionManager } from "../../src/managers/RelicCollectionManager";
 import { createDefaultSettings } from "../../src/core/settings";
 import { createArchaeologyState } from "../../src/core/strataDig";
@@ -15,6 +15,7 @@ function makeSession(): Session {
     // 수식어 manager 테스트가 아닌 세션은 빈 ID 목록을 명시한다.
     earnedProfileModifierIds: [], equippedProfileModifierIds: [],
     playerResearch: createInitialPlayerResearchProgress(),
+    playerCard: createEmptyPlayerCard(),
     // 이 테스트는 발굴을 다루지 않지만 최신 Session 계약의 빈 서버 정산 상태를 명시한다.
     idleExcavation: { assignedRelicIds: [null, null, null], lastSettledAt: null, unclaimed: { gold: 0, cheesecake: 0, rawStone: 0, gems: 0 }, baseStorageSeconds: 14_400, activeProductionMultiplier: 1, storageExtensionExpiresAt: null, retroactiveExcavationGrantVersion: 1 },
     archaeology: createArchaeologyState(),

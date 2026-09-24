@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import type { PuppetCreature } from "../puppets/assets";
+import type { PuppetAsset, PuppetCreature } from "../puppets/assets";
 import { powerSavingPolicy } from "../core/settings";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { Combatant } from "../core/combatTypes";
@@ -462,12 +462,17 @@ export class InfoManager {
   private statRadar?: StatRadar;
   private readonly gemSlots: GemSlot[] = [];
   private readonly skillIcons: Phaser.GameObjects.Container[] = [];
+  /** 스킬 액자를 마지막으로 그린 개체·돌파 단계. 돌파로 `+`가 붙는 순간을 가려 다시 그린다. */
+  private skillIconsKey = "";
 
   private currentDef?: RelicDef;
   private ownedNow = true;
   private portrait?: PuppetCreature;
   private portraitWanted = false;
   private portraitRequest = 0;
+  /** 지금 선 전신·SD가 어느 원화인가. 같은 원화면 다시 열 때 새로 세우지 않는다. */
+  private portraitUrl?: string;
+  private figureUrl?: string;
   /**
    * 원화가 정보창에서 서 있어야 할 제자리.
    *
@@ -1333,10 +1338,7 @@ export class InfoManager {
   private openBreakthroughSteps(_from: PopupSource): void {
     const def = this.currentDef;
     if (!def) return;
-    const grade = this.publicProfile
-      ? Math.max(1, this.publicProfile.breakthroughGrade)
-      : breakthroughGrade(relicProgression.getProgress(def.id).breakthrough);
-    openBreakthroughStepsPopup(this.scene, this.popups, this.keywords, def, grade, relicProgression.getFinalStats(def.id));
+    openBreakthroughStepsPopup(this.scene, this.popups, this.keywords, def, breakthroughGrade(this.shownBreakthrough(def)), this.shownStats(def));
   }
 
 
@@ -1537,7 +1539,7 @@ export class InfoManager {
   private openExtraStats(from: PopupSource): void {
     const def = this.currentDef;
     if (!def) return;
-    openExtraStatsPopup(this.scene, this.popups, def, relicProgression.getFinalStats(def.id), from);
+    openExtraStatsPopup(this.scene, this.popups, def, this.shownStats(def), from);
   }
 
   /** 추가 외형이 있는 렐릭에게만 공용 외형 선택 진입점을 세운다. */
@@ -1647,12 +1649,22 @@ export class InfoManager {
     this.favoriteBadge.paint(owned && session.favorite === def!.id, owned);
   }
 
-  private async loadPortrait(def: RelicDef): Promise<void> {
-    const request = ++this.portraitRequest;
-    // 외형 선택은 manager/resolver가 소유한다. 공개 프로필은 로컬 장착 상태 대신 DTO 값만 사용한다.
-    const asset = this.publicProfile
+  /** 외형 선택은 manager/resolver가 소유한다. 공개 프로필은 로컬 장착 상태 대신 DTO 값만 사용한다. */
+  private portraitAssetOf(def: RelicDef): PuppetAsset {
+    return this.publicProfile
       ? portraitAssetForSkin(def.portraitAssetId, this.publicProfile.equippedSkinId)
       : relicAppearanceManager.portraitAssetFor(def.id);
+  }
+
+  private figureAssetOf(def: RelicDef): PuppetAsset {
+    return this.publicProfile
+      ? (sdAssetForSkin(def.id, this.publicProfile.equippedSkinId) ?? battleAssetFor(def.id))
+      : relicAppearanceManager.battleAssetFor(def.id);
+  }
+
+  private async loadPortrait(def: RelicDef): Promise<void> {
+    const request = ++this.portraitRequest;
+    const asset = this.portraitAssetOf(def);
     const portrait = await spawnPuppet(this.scene, asset, {
       // 지도와 전투의 CharacterInfoManager가 모두 이 경로를 써서 폰토스 보정도 동일하다.
       ...infoPortraitPlacement(asset, PORTRAIT_FOCUS),
@@ -1663,6 +1675,7 @@ export class InfoManager {
     if (request !== this.portraitRequest) { portrait.destroy(); return; }
     this.portrait?.destroy();
     this.portrait = portrait;
+    this.portraitUrl = asset.url;
     setDebugInfoAssetReady({ portrait: true });
     // 세운 그 자리가 곧 제자리다. 전신 감상은 여기로만 되돌아온다.
     this.portraitHome = { x: portrait.x, y: portrait.y, scale: portrait.scaleX };
@@ -1676,9 +1689,7 @@ export class InfoManager {
 
   private async loadFigure(def: RelicDef): Promise<void> {
     const request = ++this.figureRequest;
-    const asset = this.publicProfile
-      ? (sdAssetForSkin(def.id, this.publicProfile.equippedSkinId) ?? battleAssetFor(def.id))
-      : relicAppearanceManager.battleAssetFor(def.id);
+    const asset = this.figureAssetOf(def);
     // 관련 SD도 공개 DTO 또는 로컬 manager가 결정한 결과만 그린다.
     const figure = await spawnPuppet(this.scene, asset, {
       x: FIGURE.x,
@@ -1691,6 +1702,7 @@ export class InfoManager {
     if (request !== this.figureRequest) { figure.destroy(); return; }
     this.figure?.destroy();
     this.figure = figure;
+    this.figureUrl = asset.url;
     setDebugInfoAssetReady({ sd: true });
     enableHitOnClick(this.scene, figure);
     figure.setVisible(this.portraitWanted && this.root.visible);
@@ -1699,7 +1711,8 @@ export class InfoManager {
   /** 원화 아래 스킬 아이콘 세 개. 누르면 정형 팝업이 뜬다. */
   private buildSkillIcons(def: RelicDef): void {
     for (const icon of this.skillIcons.splice(0)) icon.destroy();
-    const breakthrough = this.publicProfile ? 0 : relicProgression.getProgress(def.id).breakthrough;
+    const breakthrough = this.shownBreakthrough(def);
+    this.skillIconsKey = this.skillIconsKeyOf(def);
     const entries: [string, Skill, number | undefined, SkillArtSlot][] = [
       [t("info.skill.passive"), { ...def.passive, power: def.passive.value, damageType: "physical" } as unknown as Skill, undefined, "passive"],
       [t("info.skill.basic"), def.basic, undefined, "basic"],
@@ -1719,9 +1732,9 @@ export class InfoManager {
         role: def.role,
         label: kindLabel,
         // **강조는 돌파로 자란 칸만 갖는다.** 예전에는 궁극기 한 칸이 무조건 노란빛이었는데,
-        // 그 색이 아무 상태도 말하지 않아 세 칸의 위계만 이유 없이 갈라 놓았다. 공개 프로필은
-        // 그쪽 돌파 단계를 모르므로 강조하지 않는다.
-        enhanced: !this.publicProfile && breakthroughEnhances(def, breakthrough, slot),
+        // 그 색이 아무 상태도 말하지 않아 세 칸의 위계만 이유 없이 갈라 놓았다. 공개 프로필·원정
+        // 스냅샷은 그쪽이 알려 준 돌파 등급으로 가른다.
+        enhanced: breakthroughEnhances(def, breakthrough, slot),
       }));
       const hit = this.scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerdown", () => container.setScale(1.08));
@@ -1743,6 +1756,23 @@ export class InfoManager {
     });
   }
 
+  private skillIconsKeyOf(def: RelicDef): string {
+    return `${def.id}:${this.publicProfile ? "public:" : ""}${this.shownBreakthrough(def)}`;
+  }
+
+  /**
+   * 이 창이 보여 주는 돌파 단계와 능력치. 공개 프로필(친구)과 원정 스냅샷은 **그쪽이 알려 준 값**을,
+   * 내 렐릭은 지금 성장을 읽는다. 창 안의 모든 칸이 이 둘을 지나야 한 창에서 두 값이 섞이지 않는다
+   * — 예전에는 친구 창의 스킬 쪽지가 내 렐릭의 능력치로 수치를 적었다.
+   */
+  private shownBreakthrough(def: RelicDef): number {
+    return this.publicProfile ? Math.max(0, this.publicProfile.breakthroughGrade - 1) : relicProgression.getProgress(def.id).breakthrough;
+  }
+
+  private shownStats(def: RelicDef): Stats {
+    return this.publicProfile ? { ...this.publicProfile.stats } : relicProgression.getFinalStats(def.id);
+  }
+
   /**
    * 패시브 아이콘 위에 붙는 야성(피버) 뱃지.
    *
@@ -1756,10 +1786,10 @@ export class InfoManager {
 
   /** 개체별 폭주 발현 설명. 야성 규칙 자체는 강조된 말을 눌러 다시 열 수 있다. */
   private openFerocityTrait(def: RelicDef, from: PopupSource): void {
-    const finalDef = { ...def, stats: relicProgression.getFinalStats(def.id) };
-    const breakthrough = relicProgression.getProgress(def.id).breakthrough;
+    const finalDef = { ...def, stats: this.shownStats(def) };
+    const breakthrough = this.shownBreakthrough(def);
     openFerocityTraitPopup(this.scene, this.popups, this.keywords, finalDef, from, {
-      breakthroughEffect: this.publicProfile || !breakthroughEnhances(def, breakthrough, "ferocity")
+      breakthroughEffect: !breakthroughEnhances(def, breakthrough, "ferocity")
         ? undefined : breakthroughEffectText(def, "ferocity", finalDef.stats),
     });
   }
@@ -1768,11 +1798,11 @@ export class InfoManager {
   private skillViewModel(kindLabel: string, skill: Skill | Passive, gaugeCost?: number, slot?: SkillArtSlot): SkillInfoViewModel {
     // 레벨·돌파·장착 룬을 모두 반영한 정의를 넘겨 74 같은 기본치가 성장 후에 남지 않게 한다.
     const def = this.currentDef!;
-    const finalDef = { ...def, stats: relicProgression.getFinalStats(def.id) };
-    const breakthrough = relicProgression.getProgress(def.id).breakthrough;
+    const finalDef = { ...def, stats: this.shownStats(def) };
+    const breakthrough = this.shownBreakthrough(def);
     // **열린 돌파 등급의 몫만 넘긴다.** 아직 뚫지 않은 단계의 효과를 쪽지에 적으면 지금 싸우는
     // 이 개체가 하지 않는 일을 말하게 된다 — 무엇이 열리는지는 등급 돋보기가 여는 표가 맡는다.
-    const breakthroughEffect = slot && !this.publicProfile && breakthroughEnhances(def, breakthrough, slot)
+    const breakthroughEffect = slot && breakthroughEnhances(def, breakthrough, slot)
       ? breakthroughEffectText(def, slot, finalDef.stats) : undefined;
     return buildSkillViewModel({
       def: finalDef, breakthrough, kindLabel, skill, gaugeCost, slot,
@@ -1875,11 +1905,18 @@ export class InfoManager {
     this.portraitWanted = owned;
     // 이전 인물의 완료값을 지워 새 원화·SD가 모두 교체된 순간만 관찰하게 한다.
     setDebugInfoAssetReady(owned ? { portrait: false, sd: false } : undefined);
-    this.portrait?.setVisible(false);
-    this.figure?.setVisible(false);
+    // **이미 선 그 원화면 다시 세우지 않는다.** 같은 개체를 닫았다 다시 열거나 창 안의 조작(급여·
+    // 돌파·즐겨찾기)으로 다시 그릴 때마다 전신과 SD를 새로 읽어 녹여 들이면, 인물이 사라졌다
+    // 다시 떠올라 **창이 새로고침된 것처럼** 읽혔다. 외형을 바꾼 때만 URL이 달라져 새로 세운다.
+    const keepPortrait = owned && this.portrait?.active === true && this.portraitUrl === this.portraitAssetOf(def).url;
+    const keepFigure = owned && this.figure?.active === true && this.figureUrl === this.figureAssetOf(def).url;
+    if (!keepPortrait) this.portrait?.setVisible(false);
+    if (!keepFigure) this.figure?.setVisible(false);
     if (owned) {
-      void this.loadPortrait(def);
-      void this.loadFigure(def);
+      if (keepPortrait) { this.portraitRequest += 1; this.portrait?.setVisible(this.portraitWanted).setAlpha(1); setDebugInfoAssetReady({ portrait: true }); }
+      else void this.loadPortrait(def);
+      if (keepFigure) { this.figureRequest += 1; this.figure?.setVisible(this.portraitWanted); setDebugInfoAssetReady({ sd: true }); }
+      else void this.loadFigure(def);
     }
     this.root.setVisible(true);
     this.chrome.setVisible(true);
@@ -1912,9 +1949,7 @@ export class InfoManager {
    */
   private paintStars(def: RelicDef): void {
     this.starRow.removeAll(true);
-    const stars = this.publicProfile
-      ? Math.max(1, this.publicProfile.breakthroughGrade)
-      : breakthroughGrade(relicProgression.getProgress(def.id).breakthrough);
+    const stars = breakthroughGrade(this.shownBreakthrough(def));
     addBreakthroughGradeMark(this.scene, this.starRow, 0, 0, STAR_SIZE * 2, stars);
   }
 
@@ -1926,11 +1961,18 @@ export class InfoManager {
     // 돌파하고 파문이 터져도 로마자는 `I`에 머물렀다 — 올라간 것이 바로 그 글자인데 연출만
     // 돌고 표기는 창을 닫았다 열어야 바뀌었다.
     this.paintStars(def);
+    // **스킬 액자의 `+`도 같다.** 돌파가 연 칸만 강조되는데 액자는 창을 열 때만 세워서, 돌파가
+    // 확정돼도 `+`는 창을 닫았다 열어야 붙었다. 단계가 바뀐 때만 다시 세워 급여 때마다 액자가
+    // 새로 그려지지 않게 한다.
+    if (this.skillIconsKey !== this.skillIconsKeyOf(def)) {
+      this.buildSkillIcons(def);
+      for (const icon of this.skillIcons) icon.setVisible(this.ownedNow);
+    }
     // 공개 프로필은 필요한 표시용 기본값도 DTO로부터 만들며 플레이어 저장을 건드리지 않는다.
     const progress: RelicProgress = this.publicProfile
-      ? { level: this.publicProfile.level, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] }
+      ? { level: this.publicProfile.level, exp: 0, breakthrough: this.shownBreakthrough(def), bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] }
       : relicProgression.getProgress(def.id);
-    const finalStats = this.publicProfile?.stats ?? relicProgression.getFinalStats(def.id);
+    const finalStats = this.shownStats(def);
     const cap = relicLevelCap(progress.breakthrough);
     const maxed = progress.level >= cap;
 

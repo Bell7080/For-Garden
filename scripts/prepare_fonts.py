@@ -65,7 +65,7 @@ SOURCES = {
         500: "LINESeedJP_TTF_Rg.ttf",   # 획/H 0.115
         700: "LINESeedJP_TTF_Bd.ttf",   # 획/H 0.184
         800: "LINESeedJP_TTF_Eb.ttf",   # 획/H 0.254
-    }, "LINE Seed JP — LY Corporation, SIL OFL 1.1"),
+    }, "LINE Seed JP — LY Corporation, SIL OFL 1.1 (새 번역에 들어온 글자는 같은 글꼴의 npm 배포판 @fontsource/line-seed-jp에서 보충)"),
     "zh-Hant": ("FG Sans TC", "fg-tc", {
         500: "LINESeedTW_TTF_Rg.ttf",
         700: "LINESeedTW_TTF_Bd.ttf",

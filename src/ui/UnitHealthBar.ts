@@ -27,6 +27,8 @@ const BAR = {
   /** 머리 위 상태 칩 줄이 이 폭의 왼쪽 끝부터 붙으므로 폭은 배치표 한 곳이 갖는다. */
   width: BATTLE_STATUS_LAYOUT.hpBarWidth,
   height: 11,
+  /** 막이 아무리 얇아도 바 위에 서는 최소 폭(px). 그보다 좁으면 두른 줄도 모른다. */
+  shieldMinWidth: 10,
   /** `/` 기울기. 몸통·복제·칸 나눔이 모두 같은 각을 쓴다. */
   slant: 7,
   /**
@@ -122,7 +124,7 @@ export class UnitHealthBar extends Phaser.GameObjects.Container {
     }
     // 막은 체력 **오른쪽으로 이어 붙고**, 체력이 가득해 자리가 없으면 바의 오른쪽 끝을 덮는다.
     // 아래에 깔던 때는 멀쩡할 때 두른 막이 통째로 보이지 않았다(반짝!·조가비가 그랬다).
-    const band = unitShieldBand(this.health.shown, this.health.shield);
+    const band = unitShieldBand(this.health.shown, this.health.shield, BAR.shieldMinWidth / width);
     if (band.end - band.start > 0.001) this.paintBand(width * band.start, width * band.end, COLOR.shieldFill, 1);
     // 칸을 나누는 흰 선. 얼마나 깎였는지를 눈금으로 셈할 수 있게 한다.
     this.graph.lineStyle(2, 0xffffff, 0.5);

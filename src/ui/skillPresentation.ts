@@ -888,6 +888,14 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
       : t("skill.clause.allyHealing.amount", { amount: heal.term });
     clauses.push({ text: t("skill.clause.allyHealing", { heal: healText }), joinWithComma: true });
   }
+  if ("selfShieldMaxHpPercent" in skill && skill.selfShieldMaxHpPercent !== undefined) {
+    // 주어가 시전자로 바뀌는 절이라 제 문장으로 선다. 능력치를 알면 실제 값으로, 모르면 비율로 적는다.
+    const percent = skill.selfShieldMaxHpPercent;
+    const shield = stats.maxHp === undefined
+      ? t("skill.sentence.selfGuard.shieldPercent", { percent })
+      : `[[shield-value|${Math.round(stats.maxHp * percent / 100)}]]`;
+    clauses.push({ text: t("skill.clause.selfShield", { shield }), standalone: true });
+  }
   if (skill.allyEnergyGain !== undefined) {
     clauses.push({ text: t("skill.clause.allyEnergy", { value: skill.allyEnergyGain }), standalone: true });
   }

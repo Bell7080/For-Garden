@@ -10,6 +10,9 @@ export interface CombatEffectTarget {
   activeEffects: readonly ActiveCombatDisplayEffect[];
   /** 속성·직군 혼합색은 UI의 단일 규칙인 `skillArtTint()`에서 계산해 주입한다. */
   effectTint: number;
+  /** 지금 두른 보호막 잔량과 최대 체력 — 몸을 두르는 푸른 원의 두께를 정한다. */
+  shield: number;
+  maxHp: number;
 }
 
 /**
@@ -18,8 +21,9 @@ export interface CombatEffectTarget {
  */
 const TRANSIENT_EFFECT = {
   heal: { method: "heal", color: COLOR.hpFill },
-  shieldGain: { method: "shieldGain", color: COLOR.energy },
-  shieldHit: { method: "shieldHit", color: COLOR.energy },
+  // 머리 위 체력 바의 보호막 칸과 같은 푸른빛이라 원과 게이지가 한 자원으로 읽힌다.
+  shieldGain: { method: "shieldGain", color: COLOR.shieldFill },
+  shieldHit: { method: "shieldHit", color: COLOR.shieldFill },
   shieldBreak: { method: "shieldBreak", color: COLOR.danger },
   stealthEnter: { method: "stealthEnter", color: COLOR.inkDimHex },
   stealthExit: { method: "stealthExit", color: COLOR.inkDimHex },
@@ -46,6 +50,9 @@ export class CombatEffectPresenter {
 
   /** 유지형 표시는 타이머가 아니라 매 프레임 코어가 준 활성 목록으로 생성·이동·회수한다. */
   sync(targets: readonly CombatEffectTarget[]): void {
+    this.effects.syncShieldAuras(targets.filter((target) => target.alive).map((target) => ({
+      id: target.id, x: target.x, y: target.y, height: target.height, shield: target.shield, maxHp: target.maxHp, color: COLOR.shieldFill,
+    })));
     const byId = new Map(targets.map((target) => [target.id, target]));
     this.effects.syncSustained(targets.flatMap((target) => target.alive ? target.activeEffects.map((effect) => {
       const aim = effect.aimTargetId ? byId.get(effect.aimTargetId) : undefined;

@@ -185,6 +185,7 @@ export const SKILL_EN = {
   "skill.clause.reagent": "applies {stacks} stacks of [[reagent|Reagent]]",
   "skill.clause.combo": "has a {percent}% chance to [[combo|Combo]] for {hits} total hits",
   "skill.clause.damageHealing": "restores HP equal to {percent}% of the damage dealt",
+  "skill.clause.selfShield": "The user gains a shield equal to {shield}",
   "skill.clause.damageHealingIfFrozen": "restores HP equal to {percent}% of that damage when it was dealt to a [[frozen|Frozen]] enemy",
   "skill.clause.shieldFromDamage": "gains a shield equal to {percent}% of the damage dealt",
   "skill.clause.selfStealth": "enters [[stealth|Stealth]] for {seconds}s",

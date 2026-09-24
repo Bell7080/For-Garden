@@ -51,6 +51,18 @@ export function shieldTransition(before: number, after: number): CombatEffectTag
   return undefined;
 }
 
+/**
+ * 회복·보호막 연출의 세기 — **받는 쪽 최대 체력의 몇 %가 들어왔나**에서 나온다(10%가 1).
+ *
+ * 호출부마다 1·1.2·1.65 같은 수를 손으로 적던 때는 매초 2%씩 도는 재생과 체력 절반을 채우는
+ * 큰 회복이 같은 무게로 터져, 무엇이 큰 회복인지 화면이 말하지 못했다. 비율로 재면 재생은
+ * 조금씩, 큰 회복은 쏟아지듯 선다. `weight`는 궁극기처럼 **같은 양이라도 무게가 다른** 자리만 쓴다.
+ */
+export function restoreCueIntensity(amount: number, maxHp: number, weight = 1): number {
+  const ratio = maxHp > 0 ? Math.max(0, amount) / maxHp : 0;
+  return Math.min(4, Math.max(0.1, ratio / 0.1)) * weight;
+}
+
 /** 상한에 막힌 0 회복은 표시 사건을 만들지 않는다. */
 export function healedAmount(before: number, after: number): number {
   return Math.max(0, after - before);

@@ -3360,6 +3360,12 @@ export const RELICS: RelicDef[] = [
       targeting: "nearbyEnemies",
       radius: 340,
       statusEffects: [{ kind: "stun", seconds: 1.5 }],
+      /*
+       * **감고 나면 비늘을 한 겹 여민다.** 회복은 참가자 전원이 함께 민 시즌 게이지를 되돌리므로
+       * 주지 않고, 그 판 안에서만 남는 보호막을 **궁극기 때만, 조금** 두른다 — 몸이 시즌 줄의
+       * 400분의 1이라 3%는 한 겹 750으로, 한두 대 더 치게 만드는 정도다.
+       */
+      selfShieldMaxHpPercent: 3,
     },
     // 수쿠스이노와 같은 이유로 네 칸 모두 "없음"이다.
     breakthroughEffects: { basic: { kind: "none" }, ultimate: { kind: "none" }, ferocity: { kind: "none" }, passive: { kind: "none" } },

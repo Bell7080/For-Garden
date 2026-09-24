@@ -1789,7 +1789,8 @@ export class BattleScene extends Phaser.Scene {
       if (buff.skillId === "luka-passive") activeEffects.push({ id: buff.id, tag: "lukaSharedTargetHasteActive", aimTargetId: view.fighter.targetId ?? undefined });
     }
     return { id, x: view.fighter.x, y: view.fighter.y, height: UNIT_HEIGHT * view.fighter.bodyScale,
-      activeEffects, effectTint: skillArtTint(view.fighter.def.element, view.fighter.def.role), alive: !view.dead && isFighterAlive(view.fighter) };
+      activeEffects, effectTint: skillArtTint(view.fighter.def.element, view.fighter.def.role), alive: !view.dead && isFighterAlive(view.fighter),
+      shield: view.fighter.shield.amount, maxHp: view.fighter.maxHp };
   }
 
   /** 유지형 효과는 모든 Fighter의 현재 상태를 매 프레임 다시 읽어 동기화한다. */
@@ -2163,6 +2164,9 @@ export class BattleScene extends Phaser.Scene {
       // 상태의 실제 소유자는 src/core/skirmish.ts다. 디버그 모델도 씬 타이머 없이 같은 값만 읽는다.
       stunned: this.state.fighters.filter((fighter) => fighter.stunnedFor > 0).map((fighter) => fighter.def.name),
       healPopups: this.healPopups,
+      // 막이 머리 위 바에 서는지 E2E가 잔량 비율로 확인한다.
+      shields: this.state.fighters.filter((fighter) => fighter.shield.amount > 0)
+        .map((fighter) => ({ name: fighter.def.name, ratio: Math.round(fighter.shield.amount / fighter.maxHp * 1000) / 1000 })),
       // 숨겨진 피해 사건이 Phaser Text 풀을 만들지 않았는지 Canvas 밖 E2E가 확인하는 진단값이다.
       allocatedNumberCount: this.effects.allocatedNumberCount,
       contributionPanel: this.contributionPanel?.state,

@@ -12,7 +12,7 @@ import type { BasicAttack, BasicAttackStep, BreakthroughEffects, CombatStatusEff
 import { ULTIMATE_ENERGY_MAX } from "./ultimate";
 import { deriveSummonStats } from "./summonStats";
 import { combatPower } from "./combatPower";
-import { stealthTransition, type CombatEffectCue } from "./combatEffects";
+import { restoreCueIntensity, stealthTransition, type CombatEffectCue } from "./combatEffects";
 import {
   accumulateDamageContribution, addContribution, contributionOwnerId, contributionSnapshot, createBattleContributions, type BattleContributionRow, type BattleContributions,
   type ContributionCategory,
@@ -1520,7 +1520,7 @@ function applyConcussion(
   events.push({ kind: "concussion", fighterId: target.id, amount: dealt, critical: struck, sourceId });
   // 울린 만큼을 때린 쪽이 되받아 두른다. 개체 이름이 아니라 패시브의 필드 하나만 읽으므로
   // 다른 개체가 같은 패시브를 갖게 되어도 분기가 늘지 않는다.
-  if (attacker) grantConcussionShield(attacker, dealt, events);
+  if (attacker) grantConcussionShield(state, attacker, dealt, events);
   if (!isFighterAlive(target)) {
     clearDefeatedStatuses(target);
     events.push({ kind: "death", fighterId: target.id, sourceId });
@@ -1536,13 +1536,13 @@ function applyConcussion(
  * 상한 패시브는 큰 한 방만 누르므로 그 사이의 잔타를 버틸 자원이 없었다. 막은 그 몫이다.
  * 대상이 쓰러진 타격에서도 두른다 — 이미 울린 피해라, 마지막 한 방만 값이 없어질 이유가 없다.
  */
-function grantConcussionShield(attacker: Fighter, dealt: number, events: SkirmishEvent[]): void {
+function grantConcussionShield(state: SkirmishState, attacker: Fighter, dealt: number, events: SkirmishEvent[]): void {
   const passive = attacker.def.passive;
   const percent = passive.concussionShieldPercent ?? 0;
   if (percent <= 0 || dealt <= 0 || !isFighterAlive(attacker)) return;
   // 상한은 자기 최대 체력에서 잰다 — 맞은 쪽 체력이 무한한 불사 보스에서도 막이 무한해지지 않는다.
   const cap = attacker.maxHp * (passive.concussionShieldCapMaxHpPercent ?? 100) / 100;
-  grantShieldAmount(attacker, attacker, Math.max(1, Math.round(Math.min(dealt * percent / 100, cap))), events);
+  grantShield(state, attacker, attacker.id, Math.max(1, Math.round(Math.min(dealt * percent / 100, cap))), events);
 }
 
 /** 지금 폭주 중이라 날려버림을 얹는 개체인가. 파치의 폭주만 이 특성을 갖는다. */
@@ -1631,7 +1631,7 @@ function applyButcher(
   if (feast && dealt > 0) {
     for (const ally of aliveFighters(state, attacker.side)) {
       const healed = applyHealing(state, ally, dealt * feast.healPercent / 100, attacker.id);
-      if (healed > 0) events.push({ kind: "heal", fighterId: ally.id, amount: healed, source: "passive", effect: { tag: "heal", intensity: 1 } });
+      pushHeal(events, ally, healed, "passive");
     }
   }
   if (!isFighterAlive(target)) {
@@ -1882,15 +1882,35 @@ function grantShield(
   providerId: string,
   requested: number,
   events?: SkirmishEvent[],
-  intensity = 1,
+  weight = 1,
 ): number {
   const amount = requested * deathClockSurvivalMultiplier(state.elapsed);
   // 시들어 0이 된 막은 제공자까지 바꾸지 않는다 — 두르지 못한 것이지 덮어쓴 것이 아니다.
   if (!(amount > 0)) return 0;
   target.shield.amount += amount;
   target.shield.providerId = providerId;
-  events?.push({ kind: "shieldGranted", fighterId: target.id, providerId, amount, remaining: target.shield.amount, effect: { tag: "shieldGain", intensity } });
+  events?.push({ kind: "shieldGranted", fighterId: target.id, providerId, amount, remaining: target.shield.amount,
+    effect: { tag: "shieldGain", intensity: restoreCueIntensity(amount, target.maxHp, weight) } });
   return amount;
+}
+
+/** 기술을 쓴 순간 제 몸에 두르는 막(`selfShieldMaxHpPercent`). 궁극기를 치른 자리에서만 부른다. */
+function grantCastShield(attacker: Fighter, skill: Skill, state: SkirmishState, events: SkirmishEvent[]): void {
+  const percent = skill.selfShieldMaxHpPercent ?? 0;
+  if (percent <= 0 || !isFighterAlive(attacker)) return;
+  grantShield(state, attacker, attacker.id, Math.max(1, Math.round(attacker.maxHp * percent / 100)), events);
+}
+
+/**
+ * 회복 사건을 싣는 **유일한 자리** — 보호막의 `grantShield`와 짝이다.
+ *
+ * 체력을 채우는 일은 `applyHealing`이 한 곳에서 하고(폰토스 차단·회복 감소·상한), 그 결과를
+ * 화면에 알리는 사건은 여기서만 만든다. 스무 곳 남짓이 사건을 손으로 적던 때는 세기가
+ * 자리마다 1·1.2·1.65로 제각각이라 양과 무관하게 같은 무게로 터졌다.
+ */
+function pushHeal(events: SkirmishEvent[], target: Fighter, amount: number, source: "passive" | "ultimate" | "ferocity", weight = 1): void {
+  if (!(amount > 0)) return;
+  events.push({ kind: "heal", fighterId: target.id, amount, source, effect: { tag: "heal", intensity: restoreCueIntensity(amount, target.maxHp, weight) } });
 }
 
 function grantShieldFromDamage(attacker: Fighter, dealt: number, events: SkirmishEvent[], state: SkirmishState): void {
@@ -1922,17 +1942,9 @@ function gainElation(target: Fighter): void {
   };
 }
 
-/** 기존 보호막 사건과 제공자 슬롯을 함께 갱신해 방어 기여도와 화면 효과가 같은 원천을 보게 한다. */
-function grantProvidedShield(provider: Fighter, target: Fighter, percent: number, events: SkirmishEvent[]): void {
-  grantShieldAmount(provider, target, Math.max(1, Math.round(target.maxHp * percent / 100)), events);
-}
-
-/** 최대 체력 비율이 아니라 **이미 정해진 값**을 그대로 두르는 자리. 비율 쪽도 같은 경계를 지난다. */
-function grantShieldAmount(provider: Fighter, target: Fighter, amount: number, events: SkirmishEvent[]): void {
-  if (amount <= 0) return;
-  target.shield.amount += amount;
-  target.shield.providerId = provider.id;
-  events.push({ kind: "shieldGranted", fighterId: target.id, providerId: provider.id, amount, remaining: target.shield.amount, effect: { tag: "shieldGain", intensity: 1 } });
+/** 제공자의 몫을 **받는 쪽 최대 체력의 비율**로 두르는 자리. 값만 구하고 두르는 일은 `grantShield`가 한다. */
+function grantProvidedShield(state: SkirmishState, provider: Fighter, target: Fighter, percent: number, events: SkirmishEvent[]): void {
+  grantShield(state, target, provider.id, Math.max(1, Math.round(target.maxHp * percent / 100)), events);
 }
 
 /**
@@ -1978,10 +1990,10 @@ function stitchSuture(attacker: Fighter, dealt: number, state: SkirmishState, ev
   if (amount <= 0) return;
   if (attacker.ferocityFever && attacker.def.ferocityTrait.effectId === "cautery") {
     const healed = applyHealing(state, ally, amount, attacker.id);
-    if (healed > 0) events.push({ kind: "heal", fighterId: ally.id, amount: healed, source: "passive", effect: { tag: "heal", intensity: 1 } });
+    pushHeal(events, ally, healed, "passive");
     return;
   }
-  grantShieldAmount(attacker, ally, amount, events);
+  grantShield(state, ally, attacker.id, amount, events);
 }
 
 /**
@@ -1995,7 +2007,7 @@ function shareShieldFromDamage(attacker: Fighter, percent: number | undefined, d
   const allies = aliveFighters(state, attacker.side);
   if (allies.length === 0) return;
   const share = Math.round(dealt * percent / 100 / allies.length);
-  for (const ally of allies) grantShieldAmount(attacker, ally, share, events);
+  for (const ally of allies) grantShield(state, ally, attacker.id, share, events);
 }
 
 /** 조가비 상한 소비는 겹을 먼저 비우고 쿨다운을 건 뒤 보호막을 준다. 보호막 후속 피해가 같은 발동을 재귀 호출하지 않게 하는 순서다. */
@@ -2005,11 +2017,11 @@ function consumeShellGuard(fighter: Fighter, state: SkirmishState, events: Skirm
   fighter.shellGuard = null;
   const fever = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "shellResolve" ? fighter.def.ferocityTrait : undefined;
   fighter.shellGuardCooldownRemaining = fever?.shellCooldownSecondsDuringFever ?? plan.cooldownSeconds;
-  grantProvidedShield(fighter, fighter, plan.selfShieldMaxHpPercent, events);
+  grantProvidedShield(state, fighter, fighter, plan.selfShieldMaxHpPercent, events);
   // 자신은 후보에서 빼며 filter/find 순서를 유지해 HP 비율 동률을 기존 편성 배열 순서로 결정한다.
   const ally = state.fighters.filter((candidate) => candidate.id !== fighter.id && candidate.side === fighter.side && isFighterAlive(candidate))
     .reduce<Fighter | undefined>((best, candidate) => !best || candidate.hp / candidate.maxHp < best.hp / best.maxHp ? candidate : best, undefined);
-  if (ally) grantProvidedShield(fighter, ally, plan.lowestHpAllyShieldMaxHpPercent, events);
+  if (ally) grantProvidedShield(state, fighter, ally, plan.lowestHpAllyShieldMaxHpPercent, events);
 }
 
 /** 실제 HP 감소가 끝난 뒤 살아남은 대상만 겹을 받는다. 같은 타격에서 사망·불멸 판정 전 조가비가 끼어들지 않는다. */
@@ -2032,7 +2044,7 @@ function tickElationRegen(fighter: Fighter, dt: number, state: SkirmishState, ev
   if (tickIn > 0) { fighter.elation = { ...elation, tickIn }; return; }
   fighter.elation = { ...elation, tickIn: tickIn + 1 };
   const amount = applyHealing(state, fighter, fighter.maxHp * elation.stacks * elation.regenPercentPerStack / 100, fighter.id);
-  if (amount > 0) events.push({ kind: "heal", fighterId: fighter.id, amount, source: "passive", effect: { tag: "heal", intensity: 1 } });
+  pushHeal(events, fighter, amount, "passive");
 }
 
 /** 재피격으로 갱신되지 않은 희열의 유지 시간을 줄이고, 만료되면 모든 겹을 제거한다. */
@@ -2081,7 +2093,7 @@ function tickBulwark(fighter: Fighter, dt: number, state: SkirmishState, events:
     if (tickIn > 0) { fighter.bulwark = { ...bulwark, remaining, tickIn }; return; }
     fighter.bulwark = { ...bulwark, remaining, tickIn: tickIn + 1 };
     const healed = applyHealing(state, fighter, fighter.maxHp * bulwark.regenPercentPerSecond / 100, fighter.id);
-    if (healed > 0) events.push({ kind: "heal", fighterId: fighter.id, amount: healed, source: "ultimate", effect: { tag: "heal", intensity: 1.65 } });
+    pushHeal(events, fighter, healed, "ultimate", 1.65);
     return;
   }
   fighter.bulwark = null;
@@ -2097,7 +2109,7 @@ function healClimaxBasic(attacker: Fighter, state: SkirmishState, events: Skirmi
   const trait = attacker.def.ferocityTrait;
   if (!attacker.ferocityFever || trait.effectId !== "climax") return;
   const amount = applyHealing(state, attacker, (attacker.maxHp - attacker.hp) * trait.missingHpPercentPerBasic / 100, attacker.id);
-  if (amount > 0) events.push({ kind: "heal", fighterId: attacker.id, amount, source: "ferocity", effect: { tag: "heal", intensity: 1.2 } });
+  pushHeal(events, attacker, amount, "ferocity", 1.2);
 }
 
 /**
@@ -2115,7 +2127,7 @@ function tickFerocityRegen(fighter: Fighter, dt: number, state: SkirmishState, e
   while (fighter.ferocityRegenTickIn <= EMERGENCY_RECOVERY.epsilon) {
     const missing = (fighter.maxHp - fighter.hp) * trait.missingHpRegenPercentPerSecond;
     const amount = applyHealing(state, fighter, missing / 100, fighter.id);
-    if (amount > 0) events.push({ kind: "heal", fighterId: fighter.id, amount, source: "ferocity", effect: { tag: "heal", intensity: 1.2 } });
+    pushHeal(events, fighter, amount, "ferocity", 1.2);
     fighter.ferocityRegenTickIn += 1;
   }
 }
@@ -2327,7 +2339,7 @@ function applyBasicBreakthrough(attacker: Fighter, state: SkirmishState, events:
   const effect = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
   if (!effect || effect.kind !== "periodicGuard" || !isFighterAlive(attacker)) return;
   const healed = applyHealing(state, attacker, attacker.def.stats[effect.healScalingStat as keyof Stats] * effect.healPercent / 100);
-  if (healed > 0) events.push({ kind: "heal", fighterId: attacker.id, amount: healed, source: "passive", effect: { tag: "heal", intensity: 1.2 } });
+  pushHeal(events, attacker, healed, "passive", 1.2);
   tauntEnemiesAround(attacker, effect.tauntRadius, effect.tauntSeconds, state, events);
 }
 
@@ -2395,7 +2407,7 @@ function applyFerocityBreakthrough(fighter: Fighter, state: SkirmishState, event
   const effect = openedBreakthrough(fighter, "ferocity", (effects) => effects.ferocity);
   if (!effect || effect.kind !== "feverBulwark" || !isFighterAlive(fighter) || taken <= 0) return;
   const shield = Math.round(taken * effect.shieldPercentOfDamageTaken / 100);
-  if (shield > 0) grantShieldAmount(fighter, fighter, shield, events);
+  if (shield > 0) grantShield(state, fighter, fighter.id, shield, events);
   tauntEnemiesAround(fighter, effect.tauntRadius, effect.tauntSeconds, state, events);
 }
 
@@ -2617,7 +2629,7 @@ function applyReagentOnHit(attacker: Fighter, target: Fighter, stacks: number | 
   }, null);
   if (ally) {
     const amount = applyHealing(state, ally, ally.maxHp * contract.lowestHpAllyHealMaxHpPercent / 100, attacker.id);
-    if (amount > 0) events.push({ kind: "heal", fighterId: ally.id, amount, source: "passive", effect: { tag: "heal", intensity: 1 } });
+    pushHeal(events, ally, amount, "passive");
   }
 }
 
@@ -3124,7 +3136,7 @@ function triggerCombatAugments(state: SkirmishState, owner: Fighter, trigger: Ex
       applyCombatStatusEffect(target, payload.status, events, state, owner.id);
     } else if (payload.kind === "heal" && consumeAugmentTrigger(state, owner, key, effect)) {
       const amount = applyHealing(state, target, target.maxHp * payload.maxHpPercent / 100, owner.id);
-      if (amount > 0) events.push({ kind: "heal", fighterId: target.id, amount, source: "passive", effect: { tag: "heal", intensity: 1 } });
+      pushHeal(events, target, amount, "passive");
     }
   }
 }
@@ -3518,7 +3530,7 @@ function tickTailwind(fighter: Fighter, dt: number, state: SkirmishState): Skirm
   while (fighter.tailwindTickIn <= EMERGENCY_RECOVERY.epsilon) {
     const amount = applyHealing(state, fighter, fighter.maxHp * percent / 100);
     // 최대 HP에서 발생한 0 회복은 UI에 숫자를 띄울 실제 사건이 아니므로 생략한다.
-    if (amount > 0) events.push({ kind: "heal", fighterId: fighter.id, amount, source: "passive", effect: { tag: "heal", intensity: 1 } });
+    pushHeal(events, fighter, amount, "passive");
     fighter.tailwindTickIn += EMERGENCY_RECOVERY.tickSeconds;
   }
   return events;
@@ -3567,7 +3579,7 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, even
     if (trait.effectId === "vanguardCharge") {
       const missing = Math.max(0, fighter.maxHp - fighter.hp);
       const shield = Math.round(missing * trait.missingHpShieldPercent / 100);
-      if (shield > 0) grantShieldAmount(fighter, fighter, shield, events);
+      if (shield > 0) grantShield(state, fighter, fighter.id, shield, events);
     }
     if (trait.effectId === "duoBreakthrough") launchDuoBreakthrough(fighter, trait, state, events);
     // 마키는 폭주 진입 직후 세 번의 칼질을 회복과 폭딜로 바꾼다. 이전 폭주의 잔여치는 덮어쓴다.
@@ -3908,7 +3920,7 @@ function siphonOverpaintHealing(attacker: Fighter, target: Fighter, hpLost: numb
   const painter = aliveFighters(state, attacker.side).find((ally) => ally.def.passive.kind === "overpaintSiphon");
   if (!painter) return;
   const amount = applyHealing(state, attacker, hpLost * painter.def.passive.value / 100, painter.id);
-  if (amount > 0) events.push({ kind: "heal", fighterId: attacker.id, amount, source: "passive", effect: { tag: "heal", intensity: 1 } });
+  pushHeal(events, attacker, amount, "passive");
 }
 
 /**
@@ -3980,7 +3992,7 @@ export function tickRegeneration(fighter: Fighter, dt: number, state?: SkirmishS
     const requested = fighter.maxHp * regeneration.percentPerTick / 100;
     const amount = state ? applyHealing(state, fighter, requested) : (fighter.hp = Math.min(fighter.maxHp, fighter.hp + requested)) - before;
     // 최대 HP에서 발생한 0 회복은 UI에 숫자를 띄울 실제 사건이 아니므로 생략한다.
-    if (amount > 0) events.push({ kind: "heal", fighterId: fighter.id, amount, source: "passive", effect: { tag: "heal", intensity: 1 } });
+    pushHeal(events, fighter, amount, "passive");
     regeneration.tickIn += EMERGENCY_RECOVERY.tickSeconds;
   }
   if (regeneration.remaining <= EMERGENCY_RECOVERY.epsilon) fighter.regeneration = null;
@@ -4297,7 +4309,7 @@ function healOnTaunt(state: SkirmishState, sourceId: string, events: SkirmishEve
   const missing = source.maxHp - source.hp;
   if (missing <= 0) return;
   const healed = applyHealing(state, source, missing * heal.missingHpPercent / 100);
-  if (healed > 0) events.push({ kind: "heal", fighterId: source.id, amount: healed, source: "passive", effect: { tag: "heal", intensity: 1 } });
+  pushHeal(events, source, healed, "passive");
 }
 
 /** 도발 회복 예산을 시간으로 되채운다. 상한은 그 표가 적은 초당 횟수 그대로다. */
@@ -4325,7 +4337,7 @@ function drainFrenzyDamage(state: SkirmishState, attacker: Fighter, dealt: numbe
   const percent = source.def.passive.frenzyLifeStealPercent;
   if (percent === undefined) return;
   const healed = applyHealing(state, source, dealt * percent / 100);
-  if (healed > 0) events.push({ kind: "heal", fighterId: source.id, amount: healed, source: "passive", effect: { tag: "heal", intensity: 1 } });
+  pushHeal(events, source, healed, "passive");
 }
 
 /**
@@ -4701,12 +4713,12 @@ function strike(
     if (ally) {
       // 과잉 피해가 아닌 실제 감소 HP만 회복 원천으로 쓴다.
       const healed = applyHealing(state, ally, (targetHpBefore - target.hp) * attacker.def.basic.lowestHpAllyHealingFromDamagePercent / 100, attacker.id);
-      if (healed > 0) events.push({ kind: "heal", fighterId: ally.id, amount: healed, source: "passive", effect: { tag: "heal", intensity: 1 } });
+      pushHeal(events, ally, healed, "passive");
       grantFeverHealingShield(attacker, ally, healed, events, state);
     }
   }
   if (comboHit?.grantActionResources !== false) {
-    if (useUltimate) attacker.energy -= ultimateCost(state, attacker, true);
+    if (useUltimate) { attacker.energy -= ultimateCost(state, attacker, true); grantCastShield(attacker, skill, state, events); }
     else gainEnergy(attacker, state);
     // 아군 전체 충전은 시전자 자신의 충전과 같은 경계에서, 한 공격 행동에 한 번만 나눠 준다.
     grantAllyEnergy(attacker, skill, state);
@@ -5000,7 +5012,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   // 치른 한 번의 몫이라 그 자원을 다시 세지 않는다 — 여기서 다시 세면 두 번 찍는 궁극기가
   // 궁극기 두 번이 된다.
   if (!free) {
-    if (useUltimate) attacker.energy -= ultimateCost(state, attacker, true);
+    if (useUltimate) { attacker.energy -= ultimateCost(state, attacker, true); grantCastShield(attacker, skill, state, events); }
     else gainEnergy(attacker, state);
     grantAllyEnergy(attacker, skill, state);
     grantDuoCharge(attacker, skill, state, events);
@@ -5104,7 +5116,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   // 혼합 궁극기의 회복은 같은 원 경계(거리 <= 반경)를 공유하며 주문력 200% 같은 정적 계수를 읽는다.
   for (const ally of healingTargets) {
     const healed = applyHealing(state, ally, currentAbilityPower(attacker) * (ultimate?.allyHealingPower ?? 0) / 100, attacker.id);
-    if (healed > 0) events.push({ kind: "heal", fighterId: ally.id, amount: healed, source: "passive", effect: { tag: "heal", intensity: 1 } });
+    pushHeal(events, ally, healed, "passive");
     grantFeverHealingShield(attacker, ally, healed, events, state);
   }
   gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state, events);
@@ -5406,7 +5418,7 @@ function triggerDuoBreakthroughRegen(state: SkirmishState, attacker: Fighter, hp
     if (trait.effectId !== "duoBreakthrough" || !shute.ferocityFever || !isFighterAlive(shute) || shute.duoId !== attacker.id) continue;
     for (const ally of aliveFighters(state, shute.side)) {
       const amount = applyHealing(state, ally, hpLost * trait.allyRegenFromDuoDamagePercent / 100, shute.id);
-      if (amount > 0) events.push({ kind: "heal", fighterId: ally.id, amount, source: "passive", effect: { tag: "heal", intensity: 1 } });
+      pushHeal(events, ally, amount, "passive");
     }
   }
 }
@@ -5435,7 +5447,7 @@ function triggerWeakpoint(state: SkirmishState, attacker: Fighter, target: Fight
     contributionAmount: credited, critical: false, animate: false, damageType: "magical", mitigated: resolution.reduced < resolution.raw });
   // 회복은 표식을 터뜨린 듀오가 받는다. 앞에 나선 사람이 그만큼 버티는 구조다.
   const healed = applyHealing(state, attacker, resolution.applied * mark.duoHealPercent / 100, spotter.id);
-  if (healed > 0) events.push({ kind: "heal", fighterId: attacker.id, amount: healed, source: "passive", effect: { tag: "heal", intensity: 1 } });
+  pushHeal(events, attacker, healed, "passive");
 }
 
 /**
@@ -6164,7 +6176,7 @@ export function fireUltimate(
     attacker.energy -= ultimateCost(state, attacker, true);
     for (const ally of aliveFighters(state, attacker.side)) {
       const amount = applyHealing(state, ally, (ally.maxHp - ally.hp) * teamUltimate.healing.percent / 100, attacker.id);
-      if (amount > 0) events.push({ kind: "heal", fighterId: ally.id, amount, source: "ultimate", effect: { tag: "heal", intensity: 1.65 } });
+      pushHeal(events, ally, amount, "ultimate", 1.65);
     }
     attacker.attackCooldown = attackInterval(attacker, state);
     return events;

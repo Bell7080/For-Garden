@@ -109,9 +109,10 @@ export function setUnitShield(state: UnitHealthBarState, amount: number, maxHp: 
  * 코어는 들고 있는데 화면은 아무 말도 하지 않았다. 바의 오른쪽 끝은 **피해가 가장 먼저 먹는
  * 자리**라 거기에 막을 얹으면 "체력보다 먼저 깎이는 한 겹"이 그대로 그림이 된다.
  */
-export function unitShieldBand(shown: number, shield: number): { start: number; end: number } {
-  const width = clamp01(shield);
-  if (width <= 0) return { start: 0, end: 0 };
+export function unitShieldBand(shown: number, shield: number, minWidth = 0): { start: number; end: number } {
+  if (!(shield > 0)) return { start: 0, end: 0 };
+  // 얇은 막도 한 뼘은 선다 — 최대 체력의 2%짜리 막은 바 위에서 1~2px이라 두른 줄도 모른다.
+  const width = clamp01(Math.max(shield, minWidth));
   const filled = clamp01(shown);
   // 자리가 남으면 체력 바로 뒤에서 시작하고, 모자라면 그만큼 왼쪽으로 물러서 끝에 붙인다.
   const start = Math.max(0, Math.min(filled, 1 - width));

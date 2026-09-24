@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { allowBurst, AREA_IMPACT, BATTLEFIELD_WASH_HOLD, BATTLEFIELD_WASH_RISE, EFFECT_BUDGET, EFFECT_PRESETS, EFFECT_TAP_COLOR, GROUND_SURFACE, REACH_STRIKE, SUSTAINED_COMBAT_EFFECT, type BurstSpec, type EffectKind } from "../ui/effectPresets";
 import { EFFECT_TEXTURE, ensureEffectTextures } from "../ui/effectTextures";
+import { healVisual, SHIELD_AURA_SHAPE, shieldAuraStyle, shieldGainVisual } from "../ui/restoreEffects";
 import { lashPoints } from "../ui/reachStrikeShape";
 import { flashPolicy, inkBlotPoints, mawTeeth, slashPoints, SIGNATURE_SPECS, type CombatPalette, type SignatureId, type StrokePoint } from "../ui/signatureEffects";
 import { damagePopupStyle, risingAlpha, shouldShowDamagePopup, type DamagePopupRequest } from "../ui/damageNumbers";
@@ -159,6 +160,10 @@ export class EffectManager {
   private readonly lastAt = new Map<EffectKind, number>();
   /** 같은 전투원의 복수 제공자 효과를 보존하는 런타임 Fighter ID + 효과 ID 복합 키다. */
   private readonly sustained = new Map<string, SustainedSlot>();
+  /** 회복 십자 풀. 파문과 같은 이유로 다시 쓴다. */
+  private readonly crosses: Phaser.GameObjects.Image[] = [];
+  /** 몸을 두른 보호막. 전투원마다 한 장이고 두께 단계가 바뀐 프레임에만 다시 그린다. */
+  private readonly shieldAuras = new Map<string, { graphics: Phaser.GameObjects.Graphics; key: string }>();
   private frame = -1;
   private openedThisFrame = 0;
 
@@ -601,15 +606,11 @@ export class EffectManager {
   combat(method: CombatVisualMethod, x: number, y: number, options: { color: number; intensity: number }): void {
     const scale = Math.max(0.7, options.intensity);
     if (method === "heal") {
-      // 회복은 위로 뜨는 녹색 조각과 몸 안쪽에서 끝나는 작은 파동이다.
-      this.burst("heal", x, y, { color: options.color, scale });
-      this.openRing(x, y, 54 * scale, 300, 5, options.color);
+      this.healBurst(x, y, options.intensity, options.color);
       return;
     }
     if (method === "shieldGain") {
-      // 새 막은 푸른 각형 막 두 겹이 차례로 형성된다.
-      this.openRing(x, y, 104 * scale, 360, 8, options.color);
-      this.openRing(x, y, 128 * scale, 420, 4, options.color, 70);
+      this.shieldPulse(x, y, options.intensity, options.color);
       return;
     }
     if (method === "shieldHit") { this.openRing(x, y, 94 * scale, 180, 7, options.color); return; }
@@ -627,6 +628,105 @@ export class EffectManager {
     else {
       this.openRing(x, y, 108 * scale, 320, 6, options.color);
       this.openFlash(x, y, 54 * scale, 260, 0.3, options.color);
+    }
+  }
+
+  /**
+   * 회복 — 몸에서 은은한 초록 기운이 번지고 굵은 십자가 위로 솟는다. 양이 많을수록 기운이 넓고
+   * 진해지며 십자가 여럿 차례로 솟는다(`healVisual`). 매초 도는 재생은 작은 십자 하나뿐이다.
+   */
+  private healBurst(x: number, y: number, intensity: number, color: number): void {
+    const now = this.rollFrame();
+    if (!allowBurst("heal", now, this.lastAt.get("heal"), this.openedThisFrame)) return;
+    this.lastAt.set("heal", now);
+    this.openedThisFrame += 1;
+    const visual = healVisual(intensity);
+    this.openFlash(x, y + 10, visual.glowSize, visual.lifeMs * 0.7, visual.glowAlpha, color);
+    const count = Math.max(1, Math.round(visual.crosses * this.quality.particleRatio));
+    for (let index = 0; index < count; index += 1) {
+      // 난수 없이 몸 둘레에 고르게 벌린다 — 같은 회복이 늘 같은 그림을 그린다.
+      const lane = count === 1 ? 0 : (index / (count - 1)) * 2 - 1;
+      const size = visual.crossSize * (index % 2 === 0 ? 1 : 0.72);
+      this.openCross(x + lane * visual.spread, y + 18 - Math.abs(lane) * 14, size, visual.rise, visual.lifeMs, index * visual.staggerMs, color);
+    }
+  }
+
+  private openCross(x: number, y: number, size: number, rise: number, ms: number, delay: number, color: number): void {
+    let image = this.crosses.find((candidate) => !candidate.visible);
+    if (!image) {
+      if (this.crosses.length >= EFFECT_BUDGET.maxRings) return;
+      image = this.scene.add.image(0, 0, EFFECT_TEXTURE.cross).setVisible(false);
+      this.crosses.push(image);
+    }
+    const cross = image.setPosition(x, y).setTint(color).setDepth(this.depth).setAlpha(0).setDisplaySize(size * 0.4, size * 0.4).setVisible(true);
+    this.scene.tweens.add({
+      targets: cross, delay, duration: ms, y: y - rise, ease: "Quad.Out",
+      displayWidth: size, displayHeight: size,
+      onUpdate: (tween) => { const p = tween.progress; cross.setAlpha(p < 0.2 ? p / 0.2 : 1 - ((p - 0.2) / 0.8) ** 2); },
+      onComplete: () => cross.setVisible(false),
+    });
+  }
+
+  /** 보호막이 덮이는 순간 — 몸을 두르는 푸른 원이 바깥에서 조여 든다. 두꺼운 막일수록 굵고 진하다. */
+  private shieldPulse(x: number, y: number, intensity: number, color: number): void {
+    const visual = shieldGainVisual(intensity);
+    for (let ring = 0; ring < visual.rings; ring += 1) {
+      const slot = this.acquireRing();
+      slot.openedAt = this.scene.time.now;
+      const graphics = slot.graphics.clear().setPosition(x, y).setAlpha(1).setDepth(this.depth).setVisible(true);
+      const state = { t: 0 };
+      slot.tween = this.scene.tweens.add({
+        targets: state, t: 1, delay: ring * 90, duration: 420, ease: "Cubic.Out",
+        onUpdate: () => {
+          // 크게 벌어진 원이 몸 둘레로 조여 들며 굵어진다 — 막이 몸에 붙는 순간이다.
+          const scale = 1.5 - state.t * 0.5;
+          graphics.clear();
+          graphics.lineStyle(visual.width * (0.5 + state.t * 0.5), color, visual.alpha * (1 - state.t * 0.6));
+          graphics.strokeEllipse(0, 0, 150 * scale, 190 * scale);
+        },
+        onComplete: () => { graphics.clear().setVisible(false); slot.tween = undefined; },
+      });
+    }
+    this.openFlash(x, y, 150, 300, visual.glowAlpha, color);
+  }
+
+  /**
+   * 몸을 두른 보호막 — 잔량이 있는 동안 늘 서는 푸른 원이다(`shieldAuraStyle`).
+   *
+   * 사건이 아니라 **잔량**을 따라가므로 매 프레임 목록을 받아 자리만 옮기고, 두께 단계가 바뀐
+   * 프레임에만 다시 그린다. 목록에서 빠진 전투원(막이 다 깎였거나 쓰러졌다)은 곧바로 걷는다.
+   */
+  syncShieldAuras(targets: readonly { id: string; x: number; y: number; height: number; shield: number; maxHp: number; color: number }[]): void {
+    const seen = new Set<string>();
+    for (const target of targets) {
+      const style = shieldAuraStyle(target.shield, target.maxHp);
+      if (!style) continue;
+      seen.add(target.id);
+      let aura = this.shieldAuras.get(target.id);
+      if (!aura) {
+        aura = { graphics: this.scene.add.graphics().setDepth(this.depth - 1), key: "" };
+        this.shieldAuras.set(target.id, aura);
+      }
+      const width = target.height * SHIELD_AURA_SHAPE.widthRatio;
+      const height = target.height * SHIELD_AURA_SHAPE.heightRatio;
+      const key = `${style.level}:${Math.round(width)}:${Math.round(height)}`;
+      if (aura.key !== key) {
+        aura.key = key;
+        aura.graphics.clear();
+        aura.graphics.fillStyle(target.color, style.fillAlpha);
+        aura.graphics.fillEllipse(0, 0, width, height);
+        aura.graphics.lineStyle(style.width, target.color, style.alpha);
+        aura.graphics.strokeEllipse(0, 0, width, height);
+        // 안쪽에 가는 흰 선 한 줄 — 막의 두께가 선 두 줄 사이의 폭으로 읽힌다.
+        aura.graphics.lineStyle(1.5, 0xffffff, style.alpha * 0.5);
+        aura.graphics.strokeEllipse(0, 0, width - style.width * 2.4, height - style.width * 2.4);
+      }
+      aura.graphics.setPosition(target.x, target.y - target.height * 0.5).setVisible(true);
+    }
+    for (const [id, aura] of this.shieldAuras) {
+      if (seen.has(id)) continue;
+      aura.graphics.destroy();
+      this.shieldAuras.delete(id);
     }
   }
 
@@ -945,6 +1045,10 @@ export class EffectManager {
     this.numbers.length = 0;
     this.bullets.forEach((slot) => { slot.tween?.stop(); slot.image.destroy(); });
     this.bullets.length = 0;
+    this.crosses.forEach((image) => { this.scene.tweens.killTweensOf(image); image.destroy(); });
+    this.crosses.length = 0;
+    this.shieldAuras.forEach((aura) => aura.graphics.destroy());
+    this.shieldAuras.clear();
     this.lastAt.clear();
   }
 }

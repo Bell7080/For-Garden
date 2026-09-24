@@ -36,9 +36,6 @@ const EXCEPTIONS: Readonly<Record<string, string>> = {
   "raitia-fire:taunt": "떼로 서서 통로를 메우는 것이 어그로라, 자매마다 도발을 들면 앞줄 표적이 매 초 갈린다",
   "raitia-earth:taunt": "떼로 서서 통로를 메우는 것이 어그로라, 자매마다 도발을 들면 앞줄 표적이 매 초 갈린다",
   "raitia-wind:taunt": "떼로 서서 통로를 메우는 것이 어그로라, 자매마다 도발을 들면 앞줄 표적이 매 초 갈린다",
-  // 레이드 보스는 회복하면 참가자 전원이 함께 민 시즌 게이지를 되돌린다. 수쿠스이노는 흉터 보호막으로
-  // 버티지만, 타보아는 버티는 대신 **점점 빨라지는** 쪽으로 짰다(조여 드는 똬리).
-  "taboa:sustain": "레이드 보스라 회복으로 시즌 게이지를 되돌리지 않고, 버티는 대신 조일수록 빨라진다",
 };
 
 const has = (id: string, requirement: string): boolean => EXCEPTIONS[`${id}:${requirement}`] !== undefined;
@@ -53,6 +50,7 @@ function skillSustains(skill: Skill): boolean {
     || any.shieldPercent !== undefined
     || any.selfBulwark !== undefined
     || any.selfGuard !== undefined
+    || any.selfShieldMaxHpPercent !== undefined
     || (Array.isArray(any.steps) && any.steps.some((step: Record<string, unknown>) =>
       step.shieldFromDamagePercent !== undefined || step.shieldMaxHpPercent !== undefined));
 }

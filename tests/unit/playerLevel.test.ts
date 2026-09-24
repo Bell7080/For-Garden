@@ -82,7 +82,7 @@ describe("플레이어 카드", () => {
   });
 
   it("손상된 카드는 기본값으로 강등한다", () => {
-    expect(normalizePlayerCard({ uid: "abc", nickname: "가", bio: 3, frameId: "gone", createdAt: "nope" })).toEqual({ uid: "", nickname: "", bio: "", frameId: PROFILE_FRAMES[0].id, avatarRelicId: "", createdAt: "" });
+    expect(normalizePlayerCard({ uid: "abc", nickname: "가", bio: 3, frameId: "gone", createdAt: "nope" })).toEqual({ uid: "", nickname: "", bio: "", frameId: PROFILE_FRAMES[0].id, avatarRelicId: "", createdAt: "", nicknameChangedAt: "" });
     expect(researchDays("2026-09-01T00:00:00.000Z", new Date("2026-09-03T12:00:00.000Z"))).toBe(3);
   });
 
@@ -106,6 +106,24 @@ describe("플레이어 카드", () => {
     expect(manager.setAvatar("pontos")).toEqual({ ok: false, reason: "notOwned" });
     expect(manager.setAvatar("rex")).toEqual({ ok: true });
     expect(state.playerCard.avatarRelicId).toBe("rex");
+  });
+
+  it("닉네임은 처음 정하는 것은 자유롭고, 바꾸는 것은 이레에 한 번이다", () => {
+    const state = createDefaultSession(); const saves = { save: vi.fn() };
+    const manager = new PlayerCardManager(state, saves);
+    const day = (offset: number) => new Date(Date.parse("2026-09-24T00:00:00.000Z") + offset * 86_400_000);
+    // 처음 정하는 이름은 세지 않는다 — 곧바로 한 번 더 바꿀 수 있다.
+    expect(manager.setNickname("화석사냥꾼", day(0))).toEqual({ ok: true });
+    expect(state.playerCard.nicknameChangedAt).toBe("");
+    expect(manager.nicknameLockedUntil(day(0))).toBeUndefined();
+    expect(manager.setNickname("호박석", day(0))).toEqual({ ok: true });
+    // 바꾼 뒤로는 이레가 지나야 한다. 같은 이름을 다시 적는 것은 바꾼 것이 아니다.
+    expect(manager.nicknameLockedUntil(day(1))?.toISOString()).toBe(day(7).toISOString());
+    expect(manager.setNickname("원석", day(6))).toEqual({ ok: false, reason: "nicknameCooldown" });
+    expect(manager.setNickname("호박석", day(6))).toEqual({ ok: true });
+    expect(state.playerCard.nickname).toBe("호박석");
+    expect(manager.setNickname("원석", day(7))).toEqual({ ok: true });
+    expect(normalizePlayerCard({ nickname: "원석", nicknameChangedAt: "nope" }).nicknameChangedAt).toBe("");
   });
 
   it("테두리마다 장식의 생김새가 다르다", () => {

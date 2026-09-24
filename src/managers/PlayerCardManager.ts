@@ -1,9 +1,9 @@
-import { cleanBio, cleanNickname, createPlayerUid, nicknameProblem, type NicknameProblem } from "../core/playerCard";
+import { cleanBio, cleanNickname, createPlayerUid, nicknameLockedUntil, nicknameProblem, type NicknameProblem } from "../core/playerCard";
 import { findProfileFrame, isProfileFrameUnlocked, PROFILE_FRAMES, type ProfileFrameDefinition } from "../data/profileFrames";
 import { saveManager, type SaveManager } from "../state/SaveManager";
 import { session, type PlayerCardState, type Session } from "../state/session";
 
-export type PlayerCardResult = { ok: true } | { ok: false; reason: NicknameProblem | "frameLocked" | "unknownFrame" | "notOwned" };
+export type PlayerCardResult = { ok: true } | { ok: false; reason: NicknameProblem | "nicknameCooldown" | "frameLocked" | "unknownFrame" | "notOwned" };
 
 /**
  * 플레이어 카드(닉네임·한 줄 소개·테두리·UID)를 바꾸는 유일한 경계.
@@ -23,16 +23,23 @@ export class PlayerCardManager {
     this.commit({ ...card, uid: card.uid || createPlayerUid(random), createdAt: card.createdAt || now.toISOString() });
   }
 
-  setNickname(value: string): PlayerCardResult {
-    const problem = nicknameProblem(value);
-    if (problem) return { ok: false, reason: problem };
-    this.commit({ ...this.state.playerCard, nickname: cleanNickname(value) });
-    return { ok: true };
+  /** 다음에 닉네임을 바꿀 수 있는 시각. 지금 바꿀 수 있으면 `undefined`다. */
+  nicknameLockedUntil(now: Date = new Date()): Date | undefined {
+    return nicknameLockedUntil(this.state.playerCard, now);
   }
 
-  /** 닉네임을 비우면 기본 호칭으로 선다. */
-  clearNickname(): PlayerCardResult {
-    this.commit({ ...this.state.playerCard, nickname: "" });
+  /**
+   * 닉네임은 이레에 한 번 바꾼다(처음 정하는 이름은 세지 않는다). 같은 이름을 다시 적는 것은
+   * 바꾼 것이 아니라 아무 일도 없는 것이다.
+   */
+  setNickname(value: string, now: Date = new Date()): PlayerCardResult {
+    const problem = nicknameProblem(value);
+    if (problem) return { ok: false, reason: problem };
+    const card = this.state.playerCard;
+    const nickname = cleanNickname(value);
+    if (nickname === card.nickname) return { ok: true };
+    if (nicknameLockedUntil(card, now)) return { ok: false, reason: "nicknameCooldown" };
+    this.commit({ ...card, nickname, nicknameChangedAt: card.nickname === "" ? card.nicknameChangedAt : now.toISOString() });
     return { ok: true };
   }
 

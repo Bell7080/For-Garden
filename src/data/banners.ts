@@ -36,7 +36,9 @@ export const BANNERS: Banner[] = [
       { kind: "gold", min: 1_000, max: 3_000, weight: 3 },
       { kind: "cheesecake", min: 5, max: 15, weight: 1 },
     ],
-    relicPools: POOLS, pickupRelicIds: { SR: ["anky"] }, pickupRate: 0.5,
+    // **화석 연구는 픽업이 없는 기본 연구다.** 픽업을 세우면 상시 연구가 한정 연구처럼 읽히고,
+    // 호박석 연구의 픽업이 무엇이 다른지 말하지 못한다.
+    relicPools: POOLS, pickupRelicIds: {}, pickupRate: 0,
     highestRarityGuarantee: 100,
   },
   {

@@ -136,6 +136,10 @@ interface TextEditorOptions {
   /** 문제가 있으면 그 문장을 돌려준다. 저장하지 않고 그 자리에 붉게 적는다. */
   validate?: (value: string) => string | undefined;
   save: (value: string) => void;
+  /** 입력 칸 위에 서는 주의 한 줄(닉네임의 변경 주기). 비우면 그 줄이 없다. */
+  notice?: string;
+  /** 지금은 고칠 수 없으면 그 이유 — 저장이 꺼지고 이 문장이 붉게 선다. */
+  locked?: string;
 }
 
 /** 한 줄을 고치는 창 — 입력 칸, 글자 수, 저장. 누른 요소만 고친다. */
@@ -149,15 +153,22 @@ function openTextEditor(scene: Phaser.Scene, layer: PopupLayer, options: TextEdi
     });
     paint(options.value);
     body.add([field, count, error]);
-    body.add(new Button(scene, 0, TEXT_EDITOR.saveY, {
+    if (options.notice) {
+      body.add(scene.add.text(-TEXT_EDITOR.field.width / 2, TEXT_EDITOR.noticeY, options.notice, textStyle({ role: "body", size: 22, color: COLOR.accentText })).setOrigin(0, 0.5));
+    }
+    if (options.locked) error.setText(options.locked);
+    const save = new Button(scene, 0, TEXT_EDITOR.saveY, {
       ...TEXT_EDITOR.save, label: t("profile.edit.save"), fontSize: 28, variant: "primary",
       onClick: () => {
+        if (options.locked) return;
         const problem = options.validate?.(field.value);
         if (problem) { error.setText(problem); return; }
         options.save(field.value);
         close();
       },
-    }));
+    });
+    save.setEnabled(!options.locked);
+    body.add(save);
   });
 }
 
@@ -168,16 +179,19 @@ const NICKNAME_PROBLEM: Record<string, TextKey> = {
 };
 
 export function openNicknameEditor(scene: Phaser.Scene, layer: PopupLayer, onDone: () => void): void {
+  const lockedUntil = playerCardManager.nicknameLockedUntil();
   openTextEditor(scene, layer, {
     titleKey: "profile.edit.nickname",
     value: playerCardManager.card.nickname,
     maxGlyphs: NICKNAME_MAX_LENGTH,
-    // 비워 두면 기본 호칭으로 선다. 무언가 적었으면 규칙을 통과해야 한다.
+    notice: t("profile.edit.nicknameCooldown"),
+    locked: lockedUntil ? t("profile.edit.nicknameLocked", { time: lockedUntil.toLocaleString() }) : undefined,
+    // 비워 둘 수 없다 — 비웠다 다시 적는 것이 「처음 정하는 이름」이 되어 주기를 비껴간다.
     validate: (value) => {
-      const problem = value.trim() === "" ? undefined : nicknameProblem(value);
+      const problem = nicknameProblem(value);
       return problem ? t(NICKNAME_PROBLEM[problem], { min: NICKNAME_MIN_LENGTH, max: NICKNAME_MAX_LENGTH }) : undefined;
     },
-    save: (value) => { if (value.trim() === "") playerCardManager.clearNickname(); else playerCardManager.setNickname(value); },
+    save: (value) => { playerCardManager.setNickname(value); },
   }, onDone);
 }
 

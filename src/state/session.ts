@@ -81,10 +81,12 @@ export interface PlayerCardState {
   avatarRelicId: string;
   /** 연구 개시일(ISO). 비어 있으면 부트가 그날로 채운다. */
   createdAt: string;
+  /** 마지막으로 닉네임을 **바꾼** 시각(ISO). 처음 정한 이름은 남기지 않는다(`nicknameLockedUntil`). */
+  nicknameChangedAt: string;
 }
 
 export function createEmptyPlayerCard(): PlayerCardState {
-  return { uid: "", nickname: "", bio: "", frameId: DEFAULT_PROFILE_FRAME_ID, avatarRelicId: "", createdAt: "" };
+  return { uid: "", nickname: "", bio: "", frameId: DEFAULT_PROFILE_FRAME_ID, avatarRelicId: "", createdAt: "", nicknameChangedAt: "" };
 }
 
 export interface Session {

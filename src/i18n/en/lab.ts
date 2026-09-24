@@ -1,9 +1,12 @@
 /** The Research Lab: fossil research and its results. */
 export const LAB_EN = {
   "lab.rates": "Rate Details",
+  "lab.mileageShop.short": "Mileage",
+  "lab.pity.label": "SSR guaranteed in",
+  "lab.pity.unit": "pulls",
+  "lab.pity.pickupNext": "Next SSR is the pickup",
   "lab.pull.one": "Research x1",
   "lab.pull.ten": "Research x10",
-  "lab.mileageShop": "Mileage Shop",
   "lab.networkError": "The request failed. Please try again.",
   "lab.policy.title": "Research Rates · Guarantee Policy",
   "lab.policy.grayReward": "Gray Reward",
@@ -30,8 +33,4 @@ export const LAB_EN = {
   "lab.result.openAll": "Open All",
   "lab.result.tapTile": "Tap a tile to reveal",
   "lab.result.tapToReturn": "Tap the screen to go back",
-  "lab.pityLine": "{left} pulls to an SSR guarantee{pickup}",
-  "lab.pityLine.pickup": " · The next SSR is the pickup",
-  "lab.currency.fossil": "Fossil",
-  "lab.currency.amber": "Amber",
 } as const;

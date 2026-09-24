@@ -77,7 +77,7 @@ export function avatarPickerHeight(photoCount: number, frameCount: number): numb
 }
 
 /** 한 줄 입력 창(닉네임·한 줄 소개). */
-export const TEXT_EDITOR = { width: 900, height: 470, fieldY: -40, noteY: 26, saveY: 130, field: { width: 800, height: 84 }, save: { width: 300, height: 80 } } as const;
+export const TEXT_EDITOR = { width: 900, height: 470, noticeY: -118, fieldY: -40, noteY: 26, saveY: 130, field: { width: 800, height: 84 }, save: { width: 300, height: 80 } } as const;
 
 /** 수식어 고르기 — 세 줄 격자, 높이는 얻은 수에서 구한다. */
 export const MODIFIER_PICKER = { width: 900, top: 150, columns: 3, cell: { width: 262, height: 64 }, gap: 18, saveGap: 110, save: { width: 300, height: 80 }, bottomPad: 80 } as const;

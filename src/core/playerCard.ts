@@ -49,6 +49,25 @@ export function createPlayerUid(random: () => number): string {
   return uid;
 }
 
+/**
+ * 닉네임은 **이레에 한 번** 바꾼다. 친구 목록·레이드 기여 목록·결투장에서 다른 사람이 나를 알아보는
+ * 이름이라, 수시로 바뀌면 어제 함께 민 사람이 오늘 누구인지 알 수 없다.
+ *
+ * **처음 정하는 이름은 세지 않는다** — 기본 호칭으로 서 있던 계정이 이름을 처음 적는 것은
+ * 바꾸는 것이 아니라 정하는 것이다. 바꾼 시각만 남기고(`nicknameChangedAt`) 다음에 열리는 시각은
+ * 늘 이 규칙에서 다시 구한다.
+ */
+export const NICKNAME_CHANGE_COOLDOWN_MS = 7 * 86_400_000;
+
+/** 다음에 닉네임을 바꿀 수 있는 시각. 지금 바꿀 수 있으면 `undefined`다. */
+export function nicknameLockedUntil(card: Pick<PlayerCardState, "nickname" | "nicknameChangedAt">, now: Date): Date | undefined {
+  if (card.nickname === "") return undefined;
+  const changed = Date.parse(card.nicknameChangedAt);
+  if (!Number.isFinite(changed)) return undefined;
+  const until = changed + NICKNAME_CHANGE_COOLDOWN_MS;
+  return until > now.getTime() ? new Date(until) : undefined;
+}
+
 /** 저장에서 읽은 카드를 규칙 안으로 되돌린다. 규칙 밖의 값은 버리고 기본값으로 강등한다. */
 export function normalizePlayerCard(value: unknown): PlayerCardState {
   const raw = (value && typeof value === "object" ? value : {}) as Partial<PlayerCardState>;
@@ -60,6 +79,7 @@ export function normalizePlayerCard(value: unknown): PlayerCardState {
     frameId: typeof raw.frameId === "string" && findProfileFrame(raw.frameId) ? raw.frameId : DEFAULT_PROFILE_FRAME_ID,
     avatarRelicId: typeof raw.avatarRelicId === "string" && RELICS.some(({ id }) => id === raw.avatarRelicId) ? raw.avatarRelicId : "",
     createdAt: typeof raw.createdAt === "string" && Number.isFinite(Date.parse(raw.createdAt)) ? raw.createdAt : "",
+    nicknameChangedAt: typeof raw.nicknameChangedAt === "string" && Number.isFinite(Date.parse(raw.nicknameChangedAt)) ? raw.nicknameChangedAt : "",
   };
 }
 

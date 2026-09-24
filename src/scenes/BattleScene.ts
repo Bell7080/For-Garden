@@ -2179,6 +2179,11 @@ export class BattleScene extends Phaser.Scene {
     void this.finishStageVictory(stage);
   }
 
+  /** 스토리 결과판을 닫은 뒤의 기본 길. 오프닝에서 곧장 들어온 판은 로비로 나간다. */
+  private stageExit(): string {
+    return this.battleInput.mode === "stage" && this.battleInput.exitTo === "lobby" ? "lobby" : "stageMap";
+  }
+
   /**
    * 패배 결과 화면.
    *
@@ -2208,8 +2213,8 @@ export class BattleScene extends Phaser.Scene {
       },
       fighters: this.stageCompleteFighters(),
       onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
-      // 버튼을 고르지 않고 판을 닫으면 원래 가던 곳(지도)으로 돌아간다.
-      onConfirm: () => { if (!chosen && this.scene.isActive()) startScene(this, "stageMap"); },
+      // 버튼을 고르지 않고 판을 닫으면 원래 가던 곳(지도, 오프닝에서 왔으면 로비)으로 돌아간다.
+      onConfirm: () => { if (!chosen && this.scene.isActive()) startScene(this, this.stageExit()); },
     });
   }
 
@@ -2230,7 +2235,7 @@ export class BattleScene extends Phaser.Scene {
         reward: { kind: "storyClear", cheesecakeEarned: result.cheesecakeEarned, firstClear: result.firstClear },
         fighters,
         onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
-        onConfirm: () => startScene(this, "stageMap"),
+        onConfirm: () => startScene(this, this.stageExit()),
       });
     } catch {
       // 승리는 이미 확정됐으므로 전장으로 되돌리지 않고, 같은 저장 요청만 다시 시도하게 한다.

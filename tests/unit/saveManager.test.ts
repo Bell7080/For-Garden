@@ -127,6 +127,9 @@ describe("SaveManager", () => {
   it("v31의 저장된 허스크 참조를 신규 렐릭 ID로 바꾸고 중복 없이 현행 버전으로 재저장한다", () => {
     const storage = new MemoryStorage();
     const source = createDefaultSession();
+    // 옛 저장은 세 자리가 모두 허스크로 바뀌던 시절의 편성이다 — 기본 편성이 바뀌어도 이 검사의
+    // 전제가 흔들리지 않도록 편성을 직접 적는다.
+    source.party = ["anky", "rex", "spino"];
     // 실제 원정 런을 먼저 만들어 맵처럼 이번 변경과 무관한 계약은 그대로 유효하게 유지한다.
     new ExpeditionManager(source, new SaveManager(storage), () => new Date("2026-08-25T12:00:00Z")).start(["anky", "rex", "spino"]);
     const legacy = JSON.parse(storage.getItem(SAVE_STORAGE_KEY)!) as unknown as Record<string, any>;

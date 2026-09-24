@@ -106,6 +106,12 @@ describe("전투 씬 입력 정규화 회귀", () => {
     expect(normalizeBattleSceneInput(supplied)).not.toBe(supplied);
   });
 
+  it("스토리 전투는 돌아갈 곳(로비) 하나만 이어받고 모르는 값은 지도로 수렴시킨다", () => {
+    // 오프닝이 곧장 1-1로 들어온 판은 끝난 뒤 로비로 나간다.
+    expect(normalizeBattleSceneInput({ mode: "stage", exitTo: "lobby" })).toEqual({ mode: "stage", exitTo: "lobby" });
+    expect(normalizeBattleSceneInput({ mode: "stage", exitTo: "somewhere" })).toEqual({ mode: "stage" });
+  });
+
   it("스토리 → 원정 순서에서는 새 원정 DTO를 그대로 보존한다", () => {
     const expedition = input("elite");
     const [, normalized] = transition({ mode: "stage" }, expedition);

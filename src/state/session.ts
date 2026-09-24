@@ -51,8 +51,11 @@ const STARTER_RELICS = ["anky", "rex", "spino", "luka", "dodo", "mette", "parua"
  *
  * 오프닝이 끝나면 곧장 1-1로 들어가는데, 대본에서 공멸 삼인조와 맞선 것이 이 셋이다 — 다른
  * 셋이 전장에 서면 방금 본 장면과 싸우는 사람이 갈린다(`docs/lore.md` §6의 기본 지급 3인방).
+ *
+ * 자리는 자동 편성과 같은 규칙(`arrangeByRole`)을 따른다 — 가운데에 탱커 토리카, 왼쪽에 암살자
+ * 파루아, 오른쪽에 지원가 도디다.
  */
-const STARTER_PARTY = ["anky", "dodo", "parua"];
+const STARTER_PARTY = ["parua", "anky", "dodo"];
 
 /** 서버가 확정해 저장하고 프로필 UI가 그대로 표시하는 JSON 안전 플레이어 연구 진행이다. */
 export interface PlayerResearchProgress {

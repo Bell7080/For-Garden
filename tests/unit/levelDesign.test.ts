@@ -127,14 +127,14 @@ const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole,
   ["스토리 1-1", 5, () => getStageEnemies(battleStage("1-1")), "normal", "stage", 13.3, 0.88],
   ["스토리 1-9", 14, () => getStageEnemies(battleStage("1-9")), "normal", "stage", 16.9, 0.87],
   ["스토리 1-5 정예", 10, () => getStageEnemies(battleStage("1-5")), "elite", "stage", 12.2, 0.88],
-  ["스토리 1-10 정예", 15, () => getStageEnemies(battleStage("1-10")), "elite", "stage", 32.7, 0.43],
+  ["스토리 1-10 정예", 15, () => getStageEnemies(battleStage("1-10")), "elite", "stage", 40.2, 0.50],
   ["스토리 3-9", 44, () => getStageEnemies(battleStage("3-9")), "normal", "stage", 20.1, 0.85],
   ["현상수배 1단계", 5, () => [bountyRoundEnemy(BOUNTY_TIERS[0].rounds[0])], "normal", "bounty", 5.6, 0.83],
   ["현상수배 5단계", 50, () => [bountyRoundEnemy(BOUNTY_TIERS[4].rounds[0])], "normal", "bounty", 8.2, 0.74],
   ["대작전 1단계", 5, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[0]), "swarm", "cake", 27.2, 0.82],
   ["대작전 8단계", 45, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", "cake", 59.6, 0.65],
   ["원정 일반 5층", 10, () => getExpeditionEncounterEnemies("normal", 5), "normal", "expedition", 14.3, 0.96],
-  ["원정 정예 10층", 20, () => getExpeditionEncounterEnemies("elite", 10), "elite", "expedition", 29.1, 0.53],
+  ["원정 정예 10층", 20, () => getExpeditionEncounterEnemies("elite", 10), "elite", "expedition", 32.3, 0.53],
   ["원정 무리 15층", 30, () => getExpeditionEncounterEnemies("horde", 15), "swarm", "expedition", 14.1, 0.76],
 ];
 
@@ -158,11 +158,14 @@ describe("콘텐츠별 전투 시간 실측", () => {
      * R 토비가 선 1-5(12초에 끝나 덜 아프다 — 누가 서는가의 문제다), 코마가 선 1-10(목표보다
      * 1초 남짓 길다), 현상수배 둘(1대1이라 한 몫짜리 조우), 대작전 8단계(열다섯이 한꺼번에
      * 몰려와 한 판이 무리 띠보다 길다).
+     * **v0.174.2에서 아군 보호막을 키우자 정예 둘이 다시 길어졌다**(1-10 32.7 → 40.2초, 원정
+     * 10층 29.1 → 32.3초). 막이 피해를 먼저 받아 맞으며 차는 충전이 줄고, 지던 판이 버티다 이기는
+     * 판으로 바뀌어 평균이 늘었다. 원정 10층이 띠 밖으로 나갔다 — 다음 정예 조정에서 함께 본다.
      */
     const offTarget = AUDIT.filter(([, , , role, , ttk, hp]) => !isEncounterOnTarget(role, { ttkSeconds: ttk, remainingHp: hp }));
     expect(offTarget.map(([label]) => label)).toEqual([
       "스토리 1-9", "스토리 1-5 정예", "스토리 1-10 정예", "스토리 3-9",
-      "현상수배 1단계", "현상수배 5단계", "대작전 8단계", "원정 일반 5층",
+      "현상수배 1단계", "현상수배 5단계", "대작전 8단계", "원정 일반 5층", "원정 정예 10층",
     ]);
   });
 });

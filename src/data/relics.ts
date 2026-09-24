@@ -258,7 +258,7 @@ export const RELICS: RelicDef[] = [
       ultimate: { kind: "echo", casts: 2, intervalSeconds: 1.5, powerPercent: 25 },
       // 폭주가 끝나는 순간 그동안 받은 피해의 30%가 보호막으로 남는다. 폭주 중에 주면 이미
       // 단단한 시간만 더 단단해지고, 끝난 뒤 가장 약해지는 자리를 메우지 못한다.
-      ferocity: { kind: "feverBulwark", shieldPercentOfDamageTaken: 30, tauntRadius: 320, tauntSeconds: 2 },
+      ferocity: { kind: "feverBulwark", shieldPercentOfDamageTaken: 50, tauntRadius: 320, tauntSeconds: 2 },
       // 「온화한 방패」가 돌 때 그 회복의 25%를 모든 아군이 함께 받는다. 자기 패시브의 조건을
       // 그대로 타므로 새 발동 조건이 늘지 않는다.
       passive: { kind: "sharedRecovery", percent: 25 },
@@ -599,7 +599,7 @@ export const RELICS: RelicDef[] = [
     // 손이 빨라지는 몫은 절반으로 줄이고, 그만큼을 고친 자리에 한 겹 덮는 쪽으로 옮겼다 —
     // 속도만 두 배가 되면 폭주가 "더 많이 고쳤다"까지만 말하고, 이미 가득 찬 아군에게는
     // 아무 일도 하지 않는다.
-    ferocityTrait: { name: "인비저블 썸띵?", effectId: "selfAttackSpeedMultiplier", bonusPercent: 50, healingShieldPercent: 25 },
+    ferocityTrait: { name: "인비저블 썸띵?", effectId: "selfAttackSpeedMultiplier", bonusPercent: 50, healingShieldPercent: 40 },
     passive: {
       id: "dodo-passive",
       name: "연구원님, 이것 좀 보세요!",
@@ -721,7 +721,7 @@ export const RELICS: RelicDef[] = [
       targeting: "single",
       // 반짝이 묻은 적을 때리면 그 자리에서 터뜨려 주위까지 함께 적시고, 그 피해의 일부를
       // 제 몸에 두른다.
-      shimmerBurst: { power: 50, radius: 260, shieldPercent: 25 },
+      shimmerBurst: { power: 50, radius: 260, shieldPercent: 40 },
     },
     ultimate: {
       id: "tia-ult",
@@ -994,9 +994,9 @@ export const RELICS: RelicDef[] = [
       impactCapMaxHpPercent: 40,
       // 뇌진탕이 깎은 만큼을 안전모가 되받아 두른다. 큰 한 방은 상한이 누르고, 그 사이의
       // 잔타는 이 막이 받는다.
-      concussionShieldPercent: 40,
+      concussionShieldPercent: 60,
       // 평범한 적에게는 걸리지 않는 선이다. 체력이 무한한 불사 보스를 때릴 때만 막을 붙잡는다.
-      concussionShieldCapMaxHpPercent: 25,
+      concussionShieldCapMaxHpPercent: 35,
       desc: "한 방에 받는 피해가 최대 체력의 40%를 넘지 않는다. 뇌진탕이 입힌 피해의 40%만큼 보호막을 얻으며, 한 번에 두르는 보호막은 최대 체력의 25%를 넘지 않는다.",
     },
     basic: {
@@ -1499,7 +1499,7 @@ export const RELICS: RelicDef[] = [
       ferocityGain: 0,
     },
     // 굳는 순간 몸이 한 겹 덮이고, 그 상태로 권을 딱 한 바퀴(발경 3연) 몰아친다.
-    ferocityTrait: { name: "금강불괴(金剛不壞)", effectId: "adamantBody", shieldMaxHpPercent: 15, hastenedAttacks: 3, attackSpeedPercent: 150 },
+    ferocityTrait: { name: "금강불괴(金剛不壞)", effectId: "adamantBody", shieldMaxHpPercent: 25, hastenedAttacks: 3, attackSpeedPercent: 150 },
     passive: {
       // kind가 undyingTalisman인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
@@ -1534,7 +1534,7 @@ export const RELICS: RelicDef[] = [
        * 이 개체는 보호막으로 버티고, 회복은 노도니아의 축이다.
        */
       cycle: [
-        { name: "점(粘)", power: 80, targeting: "nearbyEnemies", radius: 150, shieldFromDamagePercent: 50 },
+        { name: "점(粘)", power: 80, targeting: "nearbyEnemies", radius: 150, shieldFromDamagePercent: 80 },
         { name: "화(化)", power: 105, targeting: "nearbyEnemies", radius: 190, statusEffects: [{ kind: "stagger", seconds: 0.1 }] },
         { name: "발(發)", power: 135, targeting: "nearbyEnemies", radius: 240, pull: { distance: 90 } },
       ],
@@ -1552,7 +1552,7 @@ export const RELICS: RelicDef[] = [
       selfGuard: {
         tauntSeconds: 5,
         pull: { radius: 420, distance: 150 },
-        shieldMaxHpPercent: 25,
+        shieldMaxHpPercent: 35,
       },
     },
   },
@@ -1758,7 +1758,7 @@ export const RELICS: RelicDef[] = [
       effectType: "buff",
       value: 0,
       // 요청 수치의 절반인 자기 6%·아군 3%로 시작해 R 탱커의 반복 보호막 과잉을 막는다.
-      shellGuard: { maxStacks: 3, durationSeconds: 6, cooldownSeconds: 6, selfShieldMaxHpPercent: 6, lowestHpAllyShieldMaxHpPercent: 3 },
+      shellGuard: { maxStacks: 3, durationSeconds: 6, cooldownSeconds: 6, selfShieldMaxHpPercent: 10, lowestHpAllyShieldMaxHpPercent: 5 },
       // 실제 문구는 shellGuard 수치에서 생성하며, 수동 원문은 의도적으로 비워 둔다.
       desc: "",
     },
@@ -1778,7 +1778,7 @@ export const RELICS: RelicDef[] = [
       cost: 100,
       targeting: "self",
       // 피해 없이 기존 끌어당김·도발·자기 보호막 경로를 재사용하고 마지막에 조가비 쿨다운만 초기화한다.
-      selfGuard: { tauntSeconds: 5, pull: { radius: 420, distance: 150 }, shieldMaxHpPercent: 25, resetShellGuardCooldown: true },
+      selfGuard: { tauntSeconds: 5, pull: { radius: 420, distance: 150 }, shieldMaxHpPercent: 35, resetShellGuardCooldown: true },
     },
     // 한계 돌파 효과는 네 칸 모두 "없음"이다 — 정해 둔 효과라 나중에 이 자리에 다른 효과를 넣으면 그대로 바뀐다.
     breakthroughEffects: { basic: { kind: "none" }, ultimate: { kind: "none" }, ferocity: { kind: "none" }, passive: { kind: "none" } },
@@ -2110,7 +2110,7 @@ export const RELICS: RelicDef[] = [
     passive: {
       id: "mette-passive", name: "아다지오의 무게", kind: "adagioWeight",
       iconAssetId: "skill-icon-buff", effectType: "buff", value: 20,
-      teamAttackSpeedPercent: 20, cleanseShieldAttackPercent: 200, cleanseCooldownSeconds: 7,
+      teamAttackSpeedPercent: 20, cleanseShieldAttackPercent: 320, cleanseCooldownSeconds: 7,
       // kind가 adagioWeight인 패시브는 passiveDescription()이 실제 능력치로 다시 문장을 만들므로
       // 이 원문은 데이터 문서화용일 뿐 화면에는 쓰이지 않는다.
       desc: "생존 중 아군 공격 속도를 20% 높인다. 아군이 군중제어에 걸리면 즉시 정화하고 공격력 200% 보호막을 부여한다.",
@@ -2369,7 +2369,7 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    ferocityTrait: { name: "모피", effectId: "furCoat", cleanseAllOnEntry: true, shieldMaxHpPercent: 15, defenseResistancePercent: 100 },
+    ferocityTrait: { name: "모피", effectId: "furCoat", cleanseAllOnEntry: true, shieldMaxHpPercent: 25, defenseResistancePercent: 100 },
     passive: {
       // kind가 frostboundDominion인 패시브는 passiveDescription()이 구조화 필드로 문장을 만드므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
@@ -2504,7 +2504,7 @@ export const RELICS: RelicDef[] = [
          * 0.5초인 이유는 표적을 흩기에는 충분하고 한 대를 통째로 거르기에는 짧기 때문이다.
          */
         { name: "겉감", power: 55, selfStealthSeconds: 0.5 },
-        { name: "안감", power: 55, shieldFromDamagePercent: 30 },
+        { name: "안감", power: 55, shieldFromDamagePercent: 50 },
         { name: "엇갈려 자르기", power: 40, targeting: "nearbyEnemies", radius: 150 },
       ],
     },
@@ -2521,7 +2521,7 @@ export const RELICS: RelicDef[] = [
       radius: 200,
       // 한 번에 여럿을 벨수록 팀이 두꺼워지는 것이 이 궁극기의 전부다. 그래서 적 한가운데로
       // 파고들 이유가 생기고, 그것이 이 지원가가 근거리인 두 번째 이유다.
-      allyShieldFromDamagePercent: 60,
+      allyShieldFromDamagePercent: 90,
     },
   },
   {

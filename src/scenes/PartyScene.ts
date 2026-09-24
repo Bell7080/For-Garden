@@ -626,7 +626,7 @@ export class PartyScene extends Phaser.Scene {
     // 카드 자리를 Canvas 밖에 알린다 — 스펙이 보유 순서와 격자 칸 수를 손으로 셈하지 않게 한다.
     setDebugGridCards("party", Object.fromEntries(roster.map((relic, i) => [relic.id, {
       x: rosterColumnX(i % cols), y: startY + Math.floor(i / cols) * rowStep,
-    }])), this.rosterScrollY);
+    }])), this.rosterScrollY, ROSTER_VIEWPORT);
     roster.forEach((relic, i) => {
       const x = rosterColumnX(i % cols);
       const y = startY + Math.floor(i / cols) * rowStep;

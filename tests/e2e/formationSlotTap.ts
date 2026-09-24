@@ -1,5 +1,5 @@
 import { expect, type Page } from "@playwright/test";
-import { tap } from "./canvasInput";
+import { canvasBox, gamePoint, tap } from "./canvasInput";
 
 type FormationDebugKey = "party" | "expeditionFormation";
 
@@ -34,11 +34,24 @@ export async function clearFormationSlot(page: Page, key: FormationDebugKey, ind
  */
 export async function gridCardPoint(page: Page, scene: "relics" | "party", relicId: string): Promise<{ x: number; y: number }> {
   await expect.poll(() => page.evaluate(([name, id]) => Boolean(window.__PF_DEBUG?.gridCards?.[name as "relics" | "party"]?.cards[id]), [scene, relicId])).toBe(true);
-  return page.evaluate(([name, id]) => {
+  const read = () => page.evaluate(([name, id]) => {
     const grid = window.__PF_DEBUG!.gridCards![name as "relics" | "party"]!;
     const card = grid.cards[id];
     return { x: card.x, y: card.y + grid.offsetY };
   }, [scene, relicId]);
+  let point = await read();
+  // 목록은 창보다 길 수 있다 — 카드가 창 가장자리 밖이면 목록을 굴려 데려온다. 창 경계는 화면이 내놓는 값이다.
+  const view = await page.evaluate((name) => window.__PF_DEBUG!.gridCards![name as "relics" | "party"]!, scene);
+  const margin = 150;
+  const box = await canvasBox(page);
+  const middle = gamePoint(box, 540, (view.viewportTop + view.viewportBottom) / 2);
+  for (let attempt = 0; attempt < 12 && (point.y > view.viewportBottom - margin || point.y < view.viewportTop + margin); attempt += 1) {
+    await page.mouse.move(middle.x, middle.y);
+    await page.mouse.wheel(0, point.y > view.viewportBottom - margin ? 300 : -300);
+    await page.waitForTimeout(150);
+    point = await read();
+  }
+  return point;
 }
 
 /** 편성 칸 하나를 고른 뒤 목록 카드를 눌러 그 자리에 세운다. */

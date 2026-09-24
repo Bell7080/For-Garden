@@ -292,7 +292,7 @@ export class RelicsScene extends Phaser.Scene {
   /** 카드 한 장. 자리는 부르는 쪽이 정하고 여기서는 생김새와 입력만 맞춘다. */
   private placeCard(relic: RelicDef, x: number, y: number, cardW: number, cardH: number, introIndex: number): void {
     this.debugCards[relic.id] = { x, y };
-    setDebugGridCards("relics", this.debugCards, this.content?.y ?? 0);
+    setDebugGridCards("relics", this.debugCards, this.content?.y ?? 0, { top: VIEWPORT_TOP, bottom: VIEWPORT_BOTTOM });
     {
       const owned = relicCollection.owns(relic.id);
 

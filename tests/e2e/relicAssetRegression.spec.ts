@@ -18,6 +18,8 @@ async function openParty(page: Page): Promise<void> {
 }
 
 test("도디·메테의 도감 전신과 루카 포함 편성·전투 SD 에셋을 한 흐름에서 고정한다", async ({ page }, testInfo) => {
+  // 도감 전신 둘·편성 SD 셋·전투 SD 여섯을 한 편에서 조립한다 — 기본 240초로는 모자란다.
+  test.setTimeout(420_000);
   await startAfterOpening(page);
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");

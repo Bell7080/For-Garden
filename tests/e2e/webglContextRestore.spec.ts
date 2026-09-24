@@ -41,6 +41,10 @@ test("컨텍스트를 잃었다 되찾아도 죽은 GL program으로 그리지 �
     const lost = new Promise((resolve) => canvas.addEventListener("webglcontextlost", resolve, { once: true }));
     ext.loseContext();
     await lost;
+    // **사건 배달이 끝난 다음 턴에 되살린다.** 약속의 뒷부분은 리스너 하나가 끝난 직후의 마이크로태스크라
+    // 아직 배달 도중이고, 브라우저는 배달을 다 마친 뒤에야 `preventDefault`를 보고 복구를 허락한다 — 그
+    // 전에 부르면 "context restoration not allowed"로 거부되어 복구 사건이 영영 오지 않는다.
+    await new Promise((resolve) => setTimeout(resolve, 0));
     ext.restoreContext();
     return true;
   });

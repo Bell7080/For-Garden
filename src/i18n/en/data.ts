@@ -1497,7 +1497,7 @@ export default {
   "dialogue.opening-train.sorry.speaker": "Dodi",
   "dialogue.opening-train.sorry.body": "Ah, s-sorry! I was just so happy to meet them...!",
   "dialogue.opening-train.parua.speaker": "Parua",
-  "dialogue.opening-train.parua.body": "...Parua. Watching our backs is my job.",
+  "dialogue.opening-train.parua.body": "I'm Parua. Watching our backs is my job.",
   "dialogue.opening-train.sniff.speaker": "Parua",
   "dialogue.opening-train.sniff.body": "But it's strange. You smell different from the other researchers. ...Can I take a closer look?",
   "dialogue.opening-train.scold.speaker": "Torika",

@@ -55,6 +55,19 @@ export interface UltimatePresentationTiming {
 
 const ULTIMATE_BASE_RATE = 2.25;
 const ULTIMATE_RATE_CAP = 3.25;
+/**
+ * **모든 전투는 전원이 서고 나서 잠깐 숨을 고른 뒤 시작한다**(실제 시간, 배속과 무관).
+ * SD와 체력 바가 서는 그 프레임에 곧바로 시간을 흘리던 때는 전장을 한 번 훑어볼 틈도 없이
+ * 양쪽이 부딪혀 어지럽게 읽혔다. 배속을 곱하지 않는 이유는 이 틈이 전투가 아니라 **보는 사람의
+ * 몫**이기 때문이다 — 3배속을 켠 손도 전장이 어떻게 섰는지는 한 번 본다.
+ */
+export const BATTLE_OPENING_HOLD_MS = 900;
+
+/** 전원이 선 시각에서 전투가 실제로 흐르기 시작하는 시각. */
+export function battleFightStartsAt(spawnedAt: number): number {
+  return spawnedAt + BATTLE_OPENING_HOLD_MS;
+}
+
 export const ULTIMATE_MIN_DURATION_MS = 24;
 /** 진입·이름 노출·퇴장을 합쳐 두세 프레임짜리 섬광으로 축소되지 않게 하는 컷인 전체 하한이다. */
 export const ULTIMATE_CUT_IN_MIN_VISIBLE_MS = 96;

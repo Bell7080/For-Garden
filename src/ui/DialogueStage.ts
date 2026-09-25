@@ -38,6 +38,7 @@ import {
   DIALOGUE_EXPLOSION,
   DIALOGUE_FOCUS,
   DIALOGUE_OVERSCAN,
+  DIALOGUE_SLOT_ORDER,
   DIALOGUE_STAGE_CUT,
   DIALOGUE_STAGE_FADE,
   DIALOGUE_STANDING_FRAME,
@@ -180,15 +181,22 @@ export class DialogueStage {
     const next = resolveDialogueCast(this.cast, node);
     this.cast = next;
     const nextIds = new Set(next.map(({ id }) => id));
-    let leaving = 0;
-    for (const [id, member] of this.members) if (!nextIds.has(id)) this.dismiss(member, node.leave, leaving++);
+    // 떠나는 사람은 **자리 순서**(왼쪽 → 가운데 → 오른쪽)로 센다. 장부 순서는 원화가 도착한
+    // 순서라 판마다 달라, 셋이 함께 날아가는 막이 매번 다른 차례로 흩어졌다.
+    const leavers = [...this.members.values()]
+      .filter(({ id }) => !nextIds.has(id))
+      .sort((a, b) => DIALOGUE_SLOT_ORDER[a.slot] - DIALOGUE_SLOT_ORDER[b.slot]);
+    leavers.forEach((member, index) => this.dismiss(member, node.leave, index, leavers.length));
 
     const arrivals = next.filter(({ id }) => !this.members.has(id));
     for (const entry of next) {
       const member = this.members.get(entry.id);
       if (member) this.rearrange(member, entry, next.length);
     }
-    await Promise.all(arrivals.map((entry) => this.summon(entry, next.length, isCurrent)));
+    // **다 도착한 뒤 한꺼번에 들어온다.** 원화마다 도착 시각이 달라, 도착하는 대로 미끄러져
+    // 들어오면 함께 등장하는 셋이 제각각 쏙, 쏙 섰다.
+    const entrances = await Promise.all(arrivals.map((entry) => this.summon(entry, next.length, isCurrent)));
+    for (const enter of entrances) enter?.();
     if (!isCurrent()) return;
 
     this.focus(node.standing);
@@ -198,8 +206,11 @@ export class DialogueStage {
     }
   }
 
-  /** 한 명을 세운다. 자기 자리 바깥쪽에서 미끄러져 들어온다. */
-  private async summon(entry: DialogueCastMember, castSize: number, isCurrent: () => boolean): Promise<void> {
+  /**
+   * 한 명을 세운다. 원화를 기다려 보이지 않게 세워 두고, **들어오는 움직임은 돌려준다** —
+   * 부르는 쪽이 함께 선 사람 모두가 도착한 뒤 한꺼번에 튼다.
+   */
+  private async summon(entry: DialogueCastMember, castSize: number, isCurrent: () => boolean): Promise<(() => void) | undefined> {
     const asset = STANDING_ASSETS[entry.id];
     const spot = dialogueStageSpot(entry.slot, castSize);
     const zoom = (DIALOGUE_STANDING_ZOOM[entry.id] ?? 1) * spot.zoom;
@@ -213,12 +224,12 @@ export class DialogueStage {
     } catch (error) {
       // 원화 한 장이 없다고 이야기가 멈추지 않는다. 그 사람만 서지 않고 대사는 이어진다.
       console.error("대사 스탠딩 표시 실패", entry.id, error);
-      return;
+      return undefined;
     }
     // 기다리는 사이 노드가 바뀌었거나 같은 사람이 이미 섰으면 늦게 온 쪽을 버린다.
     if (this.terminated || !isCurrent() || this.members.has(entry.id) || !this.cast.some(({ id }) => id === entry.id)) {
       creature.destroy();
-      return;
+      return undefined;
     }
     const member: StageMember = {
       id: entry.id,
@@ -236,17 +247,20 @@ export class DialogueStage {
     const from = entry.slot === "left" ? -1 : entry.slot === "right" ? 1 : 0;
     const slide = DIALOGUE_ENTRANCE.slide * this.distanceFactor();
     creature.setAlpha(0).setX(member.baseX + from * slide).setY(member.baseY + (from === 0 ? slide * 0.4 : 0));
-    this.scene.tweens.add({ targets: creature, x: member.baseX, y: member.baseY, alpha: 1, duration: DIALOGUE_ENTRANCE.enterMs, ease: "Cubic.Out" });
+    return () => {
+      if (this.terminated || !creature.active) return;
+      this.scene.tweens.add({ targets: creature, x: member.baseX, y: member.baseY, alpha: 1, duration: DIALOGUE_ENTRANCE.enterMs, ease: "Cubic.Out" });
+    };
   }
 
   /** 무대를 떠나는 사람. 곧바로 장부에서 빼 다음 노드가 같은 사람을 다시 세울 수 있게 한다. */
-  private dismiss(member: StageMember, leave?: DialogueLeave, order = 0): void {
+  private dismiss(member: StageMember, leave?: DialogueLeave, order = 0, total = 1): void {
     this.members.delete(member.id);
     this.stopAct(member);
     const { creature } = member;
     if (!this.scene.tweens || !creature.active) { creature.destroy(); return; }
     this.scene.tweens.killTweensOf(creature);
-    if (leave === "blastOff") { this.blastOff(member, order); return; }
+    if (leave === "blastOff") { this.blastOff(member, order, total); return; }
     this.scene.tweens.add({ targets: creature, alpha: 0, duration: DIALOGUE_ENTRANCE.exitMs, onComplete: () => creature.destroy() });
   }
 
@@ -255,16 +269,18 @@ export class DialogueStage {
    * 마름모 하나가 반짝인다. 몸짓이 도는 동안은 idle을 멈춰 날아가는 몸이 한 덩어리로 읽힌다.
    * 움직임 줄이기를 켜면 거리와 회전을 줄인다 — 퇴장 자체는 이야기의 한 박자라 없애지 않는다.
    */
-  private blastOff(member: StageMember, order: number): void {
+  private blastOff(member: StageMember, order: number, total: number): void {
     const { creature } = member;
     const spec = DIALOGUE_BLAST_OFF;
     const factor = this.distanceFactor();
+    // 함께 날아가는 사람들은 **한 점으로 모인다** — 저마다 제 자리에서 같은 방향으로 날면
+    // 왼쪽 사람이 가운데를 가로질러 서로 엇갈렸다. 모인 자리에서 별 하나가 반짝인다.
     creature.setAnimationFrozen(true);
     // 날아가는 몸은 대사판 윗선에서 자르지 않는다 — 화면 위로 나가는 길이라 잘릴 자리가 없고,
     // 원점 둘레로 도는 동안 마스크에 걸리면 몸이 반쪽씩 깜빡인다.
     creature.clearMask();
     const startScale = creature.scaleX;
-    const targetX = creature.x + spec.dx * factor;
+    const targetX = BASE_WIDTH / 2 + spec.convergeX * factor;
     const targetY = creature.y + spec.dy * factor;
     this.scene.tweens.chain({
       targets: creature,
@@ -282,7 +298,8 @@ export class DialogueStage {
       ],
       onComplete: () => {
         creature.destroy();
-        if (!this.terminated) this.twinkle(Phaser.Math.Clamp(targetX, 60, BASE_WIDTH - 60), 90 + order * 40);
+        // 별은 마지막 사람이 닿을 때 한 번만 — 셋이 하나의 별이 된다.
+        if (!this.terminated && order === total - 1) this.twinkle(Phaser.Math.Clamp(targetX, 60, BASE_WIDTH - 60), spec.twinkleY);
       },
     });
   }
@@ -524,33 +541,46 @@ export class DialogueStage {
     });
   }
 
-  /** 가운데에서 사방으로 튀는 마름모 파편. 흰 막보다 위에 그려 폭파의 첫 순간을 말한다. */
+  /**
+   * 폭파의 첫 순간. 바닥에 눌린 마름모 충격파 한 겹과 흩어진 잔해를 **그래픽 한 장**에 그려 두고
+   * 한 tween으로 키우며 옅어지게 한다 — 조각마다 객체와 tween을 세우지 않는다. 흰 막보다 위에
+   * 그려 막이 덮기 전의 한 프레임에도 터진 자리가 읽힌다.
+   */
   private burstShards(): void {
-    const cx = BASE_WIDTH / 2;
-    const cy = 720;
-    const distance = DIALOGUE_EXPLOSION.shardDistance * this.distanceFactor();
-    for (const { angle, scale } of explosionShards()) {
-      const shard = this.scene.add.graphics({ x: cx, y: cy }).setDepth(DEPTH.flash + 1).setBlendMode(Phaser.BlendModes.ADD);
-      // 좌우 꼭짓점 높이를 어긋나게 깎은 납작한 마름모. 반듯한 대칭은 보석처럼 보인다.
-      shard.fillStyle(0xffe2b8, 0.95);
-      shard.fillPoints([
-        new Phaser.Math.Vector2(0, -30 * scale),
-        new Phaser.Math.Vector2(64 * scale, -4 * scale),
-        new Phaser.Math.Vector2(0, 26 * scale),
-        new Phaser.Math.Vector2(-58 * scale, 6 * scale),
-      ], true);
+    const spec = DIALOGUE_EXPLOSION;
+    const reach = spec.waveRadius * this.distanceFactor();
+    const burst = this.scene.add.graphics({ x: BASE_WIDTH / 2, y: 720 }).setDepth(DEPTH.flash + 1).setBlendMode(Phaser.BlendModes.ADD);
+    const point = (x: number, y: number) => new Phaser.Math.Vector2(x, y);
+    // 충격파: 좌우 꼭짓점 높이를 어긋나게 깎은 납작한 마름모의 윤곽. 정원을 그리면 바닥에 누운
+    // 파문이 아니라 화면 앞에 세운 고리로 보인다.
+    const h = reach * spec.waveSquash;
+    burst.lineStyle(14, 0xffd9a8, 0.55);
+    burst.strokePoints([point(0, -h), point(reach, -h * 0.08), point(0, h), point(-reach * 0.94, h * 0.1)], true, true);
+    burst.lineStyle(4, 0xfff4e2, 0.9);
+    burst.strokePoints([point(0, -h), point(reach, -h * 0.08), point(0, h), point(-reach * 0.94, h * 0.1)], true, true);
+    // 잔해: 저마다 다른 거리에 놓인 작은 마름모. 세로는 충격파와 같은 만큼 눌러 같은 바닥에 선다.
+    burst.fillStyle(0xffe2b8, 0.95);
+    for (const { angle, reach: ratio, scale } of explosionShards()) {
       const rad = Phaser.Math.DegToRad(angle);
-      shard.setRotation(rad);
-      this.scene.tweens.add({
-        targets: shard,
-        x: cx + Math.cos(rad) * distance * (0.6 + scale * 0.4),
-        y: cy + Math.sin(rad) * distance * (0.6 + scale * 0.4),
-        alpha: 0,
-        duration: DIALOGUE_EXPLOSION.shardMs,
-        ease: "Cubic.Out",
-        onComplete: () => shard.destroy(),
-      });
+      const cx = Math.cos(rad) * reach * ratio;
+      const cy = Math.sin(rad) * reach * ratio * spec.waveSquash;
+      const size = spec.shardSize * scale;
+      burst.fillPoints([
+        point(cx, cy - size * 0.9),
+        point(cx + size * 1.2, cy - size * 0.1),
+        point(cx, cy + size * 0.8),
+        point(cx - size * 1.05, cy + size * 0.12),
+      ], true);
     }
+    burst.setScale(spec.startScale);
+    this.scene.tweens.add({
+      targets: burst,
+      scale: 1,
+      alpha: 0,
+      duration: spec.burstMs,
+      ease: "Cubic.Out",
+      onComplete: () => burst.destroy(),
+    });
   }
 
   private distanceFactor(): number {

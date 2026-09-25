@@ -1,6 +1,7 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
-  battleSpeedTier, nextBattleSpeed, usableBattleSpeed, scaleUltimateCutInDurations, scaleUltimateDuration, shouldWaitForUltimatePresentation, ultimatePresentationTiming,
+  BATTLE_OPENING_HOLD_MS, battleFightStartsAt, battleSpeedTier, nextBattleSpeed, usableBattleSpeed, scaleUltimateCutInDurations, scaleUltimateDuration, shouldWaitForUltimatePresentation, ultimatePresentationTiming,
   ULTIMATE_CUT_IN_MIN_VISIBLE_MS, ULTIMATE_MIN_DURATION_MS, ULTIMATE_RECOVERY_RATIO,
 } from "../../src/core/battleControls";
 
@@ -59,5 +60,21 @@ describe("궁극기 연출 시간축", () => {
     expect(shouldWaitForUltimatePresentation(true, true)).toBe(false);
     expect(shouldWaitForUltimatePresentation(true, false)).toBe(true);
     expect(shouldWaitForUltimatePresentation(false, true)).toBe(true);
+  });
+});
+
+describe("전투 시작 전의 숨 고르기", () => {
+  it("은 전원이 선 뒤 전장을 한 번 볼 만큼만 둔다", () => {
+    expect(BATTLE_OPENING_HOLD_MS).toBeGreaterThanOrEqual(600);
+    expect(BATTLE_OPENING_HOLD_MS).toBeLessThanOrEqual(1500);
+    expect(battleFightStartsAt(1000)).toBe(1000 + BATTLE_OPENING_HOLD_MS);
+  });
+
+  it("은 모든 전투가 같은 한 곳을 지난다 — 모드로 가르지 않는다", () => {
+    const scene = readFileSync("src/scenes/BattleScene.ts", "utf8");
+    // 전원이 선 시각에서 시작 시각을 구하고, 그 전에는 코어 시간도 수동 궁극기도 흐르지 않는다.
+    expect(scene).toMatch(/this\.fightStartsAt = battleFightStartsAt\(/);
+    expect(scene).toMatch(/if \(now < this\.fightStartsAt\)/);
+    expect(scene).toMatch(/performance\.now\(\) < this\.fightStartsAt/);
   });
 });

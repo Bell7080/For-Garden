@@ -68,11 +68,15 @@ describe("이야기 무대 자리표", () => {
     }
   });
 
-  it("의 폭파 파편은 난수 없이 사방으로 고르게 튄다", () => {
-    const shards = explosionShards(12);
-    expect(shards).toEqual(explosionShards(12));
+  it("의 폭파 잔해는 난수 없이 사방으로 흩어지되 한 원 위에 늘어서지 않는다", () => {
+    const shards = explosionShards();
+    expect(shards).toEqual(explosionShards());
     const quadrants = new Set(shards.map(({ angle }) => Math.floor((((angle % 360) + 360) % 360) / 90)));
     expect(quadrants.size).toBe(4);
+    // 같은 거리에 고르게 서면 한 tween으로 커질 때 가시 돋친 공처럼 보인다.
+    expect(new Set(shards.map(({ reach }) => reach)).size).toBeGreaterThan(3);
+    // 조각 수는 한 자리 수로 끊는다 — 잔뜩 흩뿌리면 큰 기술이 무엇인지 읽히지 않는다.
+    expect(shards.length).toBeLessThan(10);
   });
 
   it("의 배경은 모두 원화 표에 있다", () => {

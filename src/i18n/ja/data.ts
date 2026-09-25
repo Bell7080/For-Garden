@@ -1510,7 +1510,7 @@ export default {
   "dialogue.opening-train.sorry.speaker": "ドディ",
   "dialogue.opening-train.sorry.body": "あっ、ご、ごめんなさい！ うれしすぎてつい……！",
   "dialogue.opening-train.parua.speaker": "パルア",
-  "dialogue.opening-train.parua.body": "……パルア。後ろを見張るのが、わたしの役目。",
+  "dialogue.opening-train.parua.body": "わたしはパルア。後ろを見張るのが役目。",
   "dialogue.opening-train.sniff.speaker": "パルア",
   "dialogue.opening-train.sniff.body": "でも変なの。研究員さんからは、ほかの研究員とちがうにおいがする。……もう少し近くで見てもいい？",
   "dialogue.opening-train.scold.speaker": "トリカ",

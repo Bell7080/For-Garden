@@ -118,18 +118,23 @@ export const DIALOGUE_ENTRANCE = {
  * 사라진 자리에서 작은 마름모 하나가 반짝인다 — 전투에서 쓰러진 SD가 "별이 되는" 것과 같다.
  * 셋이 함께 나갈 때는 조금씩 어긋나 떠나야 한 덩어리로 뭉쳐 보이지 않는다(`staggerMs`).
  */
+/** 무대 자리의 왼쪽부터 순서. 여럿이 함께 떠날 때 이 순서로 차례를 센다. */
+export const DIALOGUE_SLOT_ORDER: Readonly<Record<DialogueStageSlot, number>> = { left: 0, center: 1, right: 2 };
+
 export const DIALOGUE_BLAST_OFF = {
   crouchMs: 110,
   crouchDy: 36,
   flyMs: 820,
-  /** 날아가는 끝점. 머리 관절 기준 변위이며 화면 위쪽 밖으로 나간다. */
-  dx: 380,
+  /** 함께 날아가는 사람들이 모이는 가로 자리(화면 가운데에서의 변위). 세로는 제 자리에서 `dy`만큼 오른다. */
+  convergeX: 300,
   dy: -1100,
   spinTurns: 2.5,
   endScale: 0.18,
-  staggerMs: 120,
-  twinkleMs: 420,
-  twinkleSize: 46,
+  /** 떠나는 차례의 어긋남. 크면 셋이 따로 날아가는 것으로 읽혀 함께 날아간 한 덩어리가 풀린다. */
+  staggerMs: 70,
+  twinkleMs: 520,
+  twinkleSize: 64,
+  twinkleY: 110,
 } as const;
 
 /** 스탠딩 연출 한 걸음 — 기준 자리에서의 변위와 그 자리까지 가는 시간. */
@@ -228,23 +233,39 @@ export const DIALOGUE_ALARM = {
 /**
  * 폭파. 하얗게 덮는 사이에 배경과 무대를 갈아 끼우고, 걷히면서 전장이 드러난다.
  *
- * 파편은 동그라미가 아니라 **납작한 마름모**이고 발밑으로 쏟아지지 않고 사방으로 튄다 —
- * 전장 이펙트와 같은 문법이다. 난수를 쓰지 않아 같은 폭파가 늘 같은 그림을 그린다.
+ * 첫 순간은 **바닥에 눌린 마름모 충격파 한 겹과 흩어지는 잔해 몇 조각**이다. 같은 크기의
+ * 파편 열두 개를 원 위에 고르게 세워 한꺼번에 밀어내던 때는 가운데에서 **가시 돋친 공**이
+ * 부풀어 오르는 것으로 보였고, 조각마다 그래픽 한 장·tween 하나라 폭파 한 번이 열두 개를
+ * 새로 만들었다. 지금은 충격파와 잔해를 **그래픽 한 장에 그려 한 tween으로 키운다** — 잔해는
+ * 저마다 다른 거리(`reach`)에 놓여 있어 함께 커져도 반듯한 별이 되지 않는다. 난수를 쓰지 않아
+ * 같은 폭파가 늘 같은 그림을 그린다.
  */
 export const DIALOGUE_EXPLOSION = {
   whiteInMs: 110,
   holdMs: 280,
   whiteOutMs: 760,
-  shardCount: 12,
-  shardDistance: 760,
-  shardMs: 620,
+  shardCount: 7,
+  /** 충격파가 다 퍼졌을 때의 가로 반지름. 세로는 `waveSquash`만큼 눌려 바닥에 눕는다. */
+  waveRadius: 620,
+  waveSquash: 0.42,
+  /** 잔해 조각의 기본 크기(다 퍼졌을 때). */
+  shardSize: 26,
+  burstMs: 640,
+  /** 퍼지기 시작하는 배율. 0에서 키우면 첫 프레임에 아무것도 보이지 않는다. */
+  startScale: 0.16,
 } as const;
 
-/** 파편 하나의 방향(도)·크기 배율. 원 위에 고르게 놓되 크기를 어긋나게 해 반듯한 별이 되지 않게 한다. */
-export function explosionShards(count: number = DIALOGUE_EXPLOSION.shardCount): readonly { angle: number; scale: number }[] {
+/**
+ * 잔해 조각 하나의 방향(도)·거리 비율·크기 배율. 각도도 거리도 어긋나게 흩어 두어 한 tween으로
+ * 함께 커져도 원 위에 늘어선 별 모양이 되지 않는다.
+ */
+export function explosionShards(count: number = DIALOGUE_EXPLOSION.shardCount): readonly { angle: number; reach: number; scale: number }[] {
+  const reaches = [0.92, 0.58, 0.78, 0.46, 1, 0.66, 0.84];
+  const scales = [1, 0.7, 0.86, 0.6, 0.94, 0.74];
   return Array.from({ length: count }, (_, index) => ({
-    angle: (360 / count) * index + (index % 2 === 0 ? 7 : -9),
-    scale: [1, 0.62, 0.86, 0.5][index % 4],
+    angle: (360 / count) * index + [11, -17, 23, -6, 14, -21, 4][index % 7],
+    reach: reaches[index % reaches.length],
+    scale: scales[index % scales.length],
   }));
 }
 

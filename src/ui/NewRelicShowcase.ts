@@ -37,7 +37,9 @@ import { COLOR, textStyle } from "./theme";
 import {
   SHOWCASE_COMPOSITION,
   SHOWCASE_INFO,
+  SHOWCASE_OVERSCAN,
   SHOWCASE_SIZE,
+  SHOWCASE_TAP_LOCK_MS,
   SHOWCASE_VOICE,
   showcaseDots,
   showcaseSparkles,
@@ -53,6 +55,14 @@ export interface NewRelicShowcaseOptions {
 
 const W = SHOWCASE_SIZE.width;
 const H = SHOWCASE_SIZE.height;
+/** 화면을 덮는 층의 크기 — 흔들려도 가장자리가 드러나지 않게 화면 밖으로 더 뻗는다. */
+const OW = W + SHOWCASE_OVERSCAN * 2;
+const OH = H + SHOWCASE_OVERSCAN * 2;
+
+/** 화면 밖까지 뻗는 비네트. 흔들릴 때 가장자리의 어둠이 끊겨 보이지 않게 한다. */
+function overscanVignette(scene: Phaser.Scene, strength: number): Phaser.GameObjects.Graphics {
+  return drawVignette(scene, OW, OH, { strength, depth: 0 }).setPosition(-SHOWCASE_OVERSCAN, -SHOWCASE_OVERSCAN);
+}
 
 /** 등급색 한 벌. 큰 면은 칩 색, 글자 발광은 halo를 쓴다. */
 function toneOf(rarity: keyof typeof RARITY_TONE): { chip: number; halo: number } {
@@ -78,6 +88,8 @@ class NewRelicShowcase {
   private readonly tone: { chip: number; halo: number };
   private readonly puppets: PuppetCreature[] = [];
   private phase: "voice" | "stage" | "closed" = "voice";
+  /** 이 시각(실제 시간) 전에 들어온 누름은 버린다. 막이 바뀔 때마다 다시 잡는다. */
+  private tapLockedUntil = performance.now() + SHOWCASE_TAP_LOCK_MS.voice;
   private voiceTimer?: Phaser.Time.TimerEvent;
   private hint?: Phaser.GameObjects.Text;
   /** 전신. 등장 때 옆에서 밀려 들어오는 것은 이 한 장뿐이다. */
@@ -120,10 +132,10 @@ class NewRelicShowcase {
 
   private buildVoice(line: string): void {
     const { scene, voice } = this;
-    voice.add(scene.add.rectangle(W / 2, H / 2, W, H, COLOR.void, 1));
+    voice.add(scene.add.rectangle(W / 2, H / 2, OW, OH, COLOR.void, 1));
     // 빈 화면이라도 판때기가 아니라 공간이다 — 등급색이 가운데에서 옅게 번지고 점 무늬가 흐른다.
     voice.add(this.band(W / 2, SHOWCASE_VOICE.y, W * 1.6, 520, 0, 0.1));
-    voice.add(drawVignette(scene, W, H, { strength: 0.85, depth: 0 }));
+    voice.add(overscanVignette(scene, 0.85));
 
     const text = scene.add
       .text(W / 2, SHOWCASE_VOICE.y, t("lab.showcase.quote", { line }), textStyle({ role: "emphasis", size: this.composition.voiceSize, align: "center", wrap: SHOWCASE_VOICE.wrap }))
@@ -169,12 +181,14 @@ class NewRelicShowcase {
     const def = getRelic(this.relicId);
     const I = SHOWCASE_INFO;
 
-    stage.add(scene.add.rectangle(W / 2, H / 2, W, H, COLOR.void, 1));
+    stage.add(scene.add.rectangle(W / 2, H / 2, OW, OH, COLOR.void, 1));
     // 정보창과 같은 배경 원화를 깔되 등급색으로 물들여 눌러 둔다 — 원화가 인물보다 먼저 읽히면 안 된다.
     const backdrop = addSceneBackground(scene, BACKGROUND.info, 0).setAlpha(0.42);
+    // 원화도 화면 밖까지 키운다 — 흔들릴 때 그 너머가 비지 않게.
+    backdrop.setScale(backdrop.scaleX * (OH / H), backdrop.scaleY * (OH / H));
     backdrop.setTint(this.tone.chip);
     stage.add(backdrop);
-    stage.add(scene.add.rectangle(W / 2, H / 2, W, H, COLOR.void, 0.38));
+    stage.add(scene.add.rectangle(W / 2, H / 2, OW, OH, COLOR.void, 0.38));
 
     const band = composition.band;
     stage.add(this.band(W / 2, band.y, W * 1.9, band.height, band.angle, band.alpha));
@@ -188,12 +202,12 @@ class NewRelicShowcase {
         .setAlpha(0.1);
       stage.add(mark);
     }
-    stage.add(drawVignette(scene, W, H, { strength: 0.7, depth: 0 }));
+    stage.add(overscanVignette(scene, 0.7));
 
     // 밑동을 눌러 글이 원화 위에서 읽히게 한다. 판때기가 아니라 어둠이다.
     const fadeHeight = I.fade.bottom - I.fade.top;
-    info.add(drawGlassFade(scene, W / 2, I.fade.top + fadeHeight / 2, W, fadeHeight, { topAlpha: 0, bottomAlpha: 0.97 }));
-    info.add(drawGlassFade(scene, W / 2, 110, W, 220, { topAlpha: 0.7, bottomAlpha: 0 }));
+    info.add(drawGlassFade(scene, W / 2, I.fade.top + (fadeHeight + SHOWCASE_OVERSCAN) / 2, OW, fadeHeight + SHOWCASE_OVERSCAN, { topAlpha: 0, bottomAlpha: 0.97 }));
+    info.add(drawGlassFade(scene, W / 2, 110 - SHOWCASE_OVERSCAN / 2, OW, 220 + SHOWCASE_OVERSCAN, { topAlpha: 0.7, bottomAlpha: 0 }));
 
     const pieces = this.pieces;
     const code = scene.add
@@ -279,6 +293,7 @@ class NewRelicShowcase {
   }
 
   private tap(): void {
+    if (performance.now() < this.tapLockedUntil) return;
     if (this.phase === "voice") { this.enterStage(); return; }
     if (this.phase === "stage") this.close();
   }
@@ -287,6 +302,7 @@ class NewRelicShowcase {
   private enterStage(): void {
     if (this.phase !== "voice") return;
     this.phase = "stage";
+    this.tapLockedUntil = performance.now() + SHOWCASE_TAP_LOCK_MS.stage;
     setDebugRelicShowcase({ relicId: this.relicId, phase: "stage" });
     this.voiceTimer?.remove();
     const { scene, composition } = this;
@@ -294,7 +310,7 @@ class NewRelicShowcase {
     const flashes = flashPolicy(this.options.reduceFlashes);
 
     // 섬광은 무대 위 한 겹. 등급색이 섞인 흰빛이 화면을 덮었다가 걷힌다.
-    const flash = scene.add.rectangle(W / 2, H / 2, W, H, 0xffffff, 0.001).setDepth(this.options.depth + 6);
+    const flash = scene.add.rectangle(W / 2, H / 2, OW, OH, 0xffffff, 0.001).setDepth(this.options.depth + 6);
     flash.setBlendMode(Phaser.BlendModes.ADD);
     flash.setFillStyle(Phaser.Display.Color.IntegerToColor(this.tone.halo).lighten(40).color, 1);
     flash.setAlpha(0.95 * flashes.alphaRatio);

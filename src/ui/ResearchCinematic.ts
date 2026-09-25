@@ -381,7 +381,11 @@ export class ResearchCinematic {
     if (!this.introduce || this.introduced.has(index)) return;
     this.introduced.add(index);
     this.introducing = true;
-    this.root.style.visibility = "hidden";
+    // `visibility`로 숨기지 않는다 — 카드 층(`.cards.opening`·`.overview`)이 제 `visibility: visible`을
+    // 들고 있어 부모가 숨어도 카드만 그대로 떠, 소개 장면이 카드 **아래**에 깔렸다. 판 전체를
+    // 투명하게 하고 손도 통과시켜 그 아래 캔버스(소개 장면)가 받게 한다.
+    this.root.style.opacity = "0";
+    this.root.style.pointerEvents = "none";
     await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
     if (!this.closed) this.game.input.enabled = true;
     try {
@@ -390,7 +394,8 @@ export class ResearchCinematic {
       this.introducing = false;
       if (!this.closed) {
         this.game.input.enabled = false;
-        this.root.style.visibility = "";
+        this.root.style.opacity = "";
+        this.root.style.pointerEvents = "";
       }
     }
   }

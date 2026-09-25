@@ -18,6 +18,16 @@ import type { RelicRarity } from "../core/types";
 
 export const SHOWCASE_SIZE = { width: 1080, height: 1920 } as const;
 
+/**
+ * 화면을 덮는 층이 화면 밖으로 더 뻗는 폭.
+ *
+ * 등장 순간의 흔들림은 카메라를 흔드므로, 화면에 딱 맞춘 층은 흔들리는 순간 가장자리에 빈 띠를
+ * 드러낸다 — 화면보다 넓은 등급색 띠만 그 너머로 삐져나와 옆 테두리가 샛노랗게 번쩍였다. 어둠·
+ * 배경 원화·비네트·섬광·밑동 어둠이 모두 이만큼 더 뻗는다. 흔들림(SSR 0.8% ≈ 9px)과 등장 때
+ * 무대가 부풀었다 가라앉는 몫을 넉넉히 덮는다(대사 화면의 `DIALOGUE_OVERSCAN`과 같은 이유다).
+ */
+export const SHOWCASE_OVERSCAN = 64;
+
 /** 목소리 막. 대사가 번지는 자리와 박자다. */
 export const SHOWCASE_VOICE = {
   y: 900,
@@ -29,6 +39,15 @@ export const SHOWCASE_VOICE = {
   /** 대사 밑으로 뻗는 한 줄. */
   line: { width: 420, gap: 70, ms: 520 },
 } as const;
+
+/**
+ * 한 막이 **최소한 서 있는 시간**. 그 전에 들어온 손은 받지 않는다.
+ *
+ * 카드를 넘기려고 다다닥 두드리던 손이 그대로 들어오면 목소리와 등장이 한꺼번에 넘어가 장면을
+ * 한 번도 보지 못한다. 한 번의 누름은 한 막만 넘기고, 막이 바뀐 직후의 누름은 버린다. 시간은
+ * 씬 시계가 아니라 실제 시간이다 — 바쁜 기기에서 씬 시계가 늦으면 잠금이 끝없이 늘어난다.
+ */
+export const SHOWCASE_TAP_LOCK_MS = { voice: 700, stage: 1200 } as const;
 
 /** 등장 막에서 모든 등급이 같이 쓰는 정보 자리. */
 export const SHOWCASE_INFO = {

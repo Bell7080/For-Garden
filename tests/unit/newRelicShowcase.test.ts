@@ -5,7 +5,9 @@ import { FIRST_MEETING_FALLBACK, firstMeetingLine } from "../../src/data/relicFi
 import {
   SHOWCASE_COMPOSITION,
   SHOWCASE_INFO,
+  SHOWCASE_OVERSCAN,
   SHOWCASE_SIZE,
+  SHOWCASE_TAP_LOCK_MS,
   showcaseDots,
   showcaseSparkles,
 } from "../../src/ui/newRelicShowcaseLayout";
@@ -78,6 +80,35 @@ describe("새로 만난 렐릭의 소개 장면", () => {
       expect(spark.y).toBeLessThan(SHOWCASE_SIZE.height);
     }
     expect(showcaseSparkles(9)).toEqual(sparks);
+  });
+});
+
+describe("다다닥 누름이 장면을 날려 버리지 않는다", () => {
+  it("막마다 최소한 서 있는 시간이 있고, 등장 막은 섬광·밀려 들어오기가 끝날 만큼 길다", () => {
+    expect(SHOWCASE_TAP_LOCK_MS.voice).toBeGreaterThanOrEqual(500);
+    expect(SHOWCASE_TAP_LOCK_MS.stage).toBeGreaterThanOrEqual(1000);
+    const source = readFileSync("src/ui/NewRelicShowcase.ts", "utf8");
+    const tap = source.slice(source.indexOf("  private tap(): void {"));
+    // 잠금 검사가 막을 넘기는 어느 분기보다도 먼저 선다.
+    expect(tap.indexOf("tapLockedUntil")).toBeLessThan(tap.indexOf("enterStage"));
+  });
+
+  it("흔들려도 가장자리가 드러나지 않는다 — 화면을 덮는 층은 흔들림보다 넓게 뻗는다", () => {
+    const shake = SHOWCASE_COMPOSITION.SSR.shake!;
+    // Phaser 카메라 흔들림은 화면 크기에 강도를 곱한 만큼 움직인다.
+    expect(SHOWCASE_OVERSCAN).toBeGreaterThan(SHOWCASE_SIZE.width * shake.intensity * 2);
+    const source = readFileSync("src/ui/NewRelicShowcase.ts", "utf8");
+    // 화면 크기 그대로(W, H) 까는 덮개가 다시 생기면 잡는다.
+    expect(source).not.toMatch(/rectangle\(W \/ 2, H \/ 2, W, H, COLOR\.void/);
+    expect(source).not.toMatch(/drawVignette\(scene, W, H/);
+  });
+
+  it("3D 판은 visibility가 아니라 투명도로 숨긴다 — 카드 층이 제 visible로 뚫고 나온다", () => {
+    const source = readFileSync("src/ui/ResearchCinematic.ts", "utf8");
+    const intro = source.slice(source.indexOf("  private async runIntroduction("));
+    expect(intro).toContain('style.opacity = "0"');
+    expect(intro).toContain('style.pointerEvents = "none"');
+    expect(intro).not.toContain('style.visibility = "hidden"');
   });
 });
 

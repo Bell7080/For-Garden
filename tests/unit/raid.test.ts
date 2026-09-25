@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_HP_SCALE, RAID_BOSS_POOL, RAID_DIFFICULTY, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM, isRaidDifficulty } from "../../src/data/raid";
-import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidDayProgress, raidResetsAt, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../../src/core/raid";
+import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_DIFFICULTY, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM, isRaidDifficulty } from "../../src/data/raid";
+import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidKillProgress, raidKillTicks, raidDayProgress, raidResetsAt, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../../src/core/raid";
 import { getRelic, PLAYABLE_RELICS, RELICS } from "../../src/data/relics";
 import { ENCOUNTER_ROLE, applyEncounterScaling } from "../../src/core/levelDesign";
 
@@ -264,17 +264,36 @@ describe("레이드 보스", () => {
     for (const key of ["def", "res", "atk", "ap"] as const) expect(raidBossDef(base).stats[key]).toBe(scaled[key]);
   });
 
-  it("의 최대 체력은 시즌 게이지에서 거꾸로 나온다", () => {
+  it("의 최대 체력은 그 난이도의 몸이고, 공유 게이지는 그 몸을 처치 수만큼 쌓은 것이다", () => {
     /*
-     * 시즌 줄과 전장의 줄이 같은 자를 쓰지 않으면, 한 판에서 반을 깎아 놓고 돌아와도 시즌
-     * 게이지가 미동도 하지 않는다 — 체력만 성장이 아니라 게이지에서 나오는 이유다.
+     * 머리 위 체력 바 한 줄을 비우면 공유 게이지가 정확히 한 칸(`1 / kills`) 줄어야 두 줄이 같은
+     * 단위로 읽힌다. 모든 난이도가 같은 몸이던 때는 보통과 어려움의 체력 바가 똑같이 섰다.
      */
-    const boss = raidBossDef(getRelic(RAID_SEASON_BOSS.relicId));
-    expect(boss.stats.hp).toBe(RAID_SEASON_TOTAL_HP / RAID_BOSS_HP_SCALE);
-    // 한 판이 판 안의 보스를 눕히지는 못하되 눈에 보이게는 밀어야 한다.
-    expect(RAID_BOSS_HP_SCALE).toBeGreaterThan(1);
-    // 난이도가 달라도 몸은 같다 — 줄이 얼마나 밀렸는지를 재는 단위라서다.
-    expect(raidBossDef(getRelic(RAID_SEASON_BOSS.relicId), "easy").stats.hp).toBe(boss.stats.hp);
+    const base = getRelic(RAID_SEASON_BOSS.relicId);
+    const order = ["easy", "normal", "hard", "rampage"] as const;
+    for (const difficulty of order) {
+      const spec = RAID_DIFFICULTY[difficulty];
+      expect(raidBossDef(base, difficulty).stats.hp).toBe(spec.bodyHp);
+      expect(spec.totalHp).toBe(spec.bodyHp * spec.kills);
+    }
+    // 난이도가 오를수록 몸도, 잡아야 하는 횟수도 줄지 않는다 — 몸은 적어도 두 배씩 단단해진다.
+    for (let index = 1; index < order.length; index++) {
+      const lower = RAID_DIFFICULTY[order[index - 1]]; const upper = RAID_DIFFICULTY[order[index]];
+      expect(upper.bodyHp).toBeGreaterThanOrEqual(lower.bodyHp * 2);
+      expect(upper.kills).toBeGreaterThanOrEqual(lower.kills);
+    }
+    expect(RAID_SEASON_TOTAL_HP).toBe(RAID_DIFFICULTY.rampage.totalHp);
+  });
+
+  it("의 처치 수는 몸 한 줄 단위로 버림해 센다", () => {
+    const { bodyHp, kills } = RAID_DIFFICULTY.easy;
+    expect(raidKillProgress(0, "easy")).toEqual({ done: 0, kills, bodyHp });
+    expect(raidKillProgress(bodyHp - 1, "easy").done).toBe(0);
+    expect(raidKillProgress(bodyHp * 2 + 5, "easy").done).toBe(2);
+    expect(raidKillProgress(bodyHp * (kills + 3), "easy").done).toBe(kills);
+    // 한 칸이 한 번 처치다. 칸이 너무 촘촘하면(월드 폭주) 기본 칸으로 되돌아간다.
+    expect(raidKillTicks(6, 7)).toBe(5);
+    expect(raidKillTicks(40, 7)).toBe(7);
   });
 
   it("의 비율 피해는 시즌 단위가 아니라 성장 체력에서 잰다", () => {

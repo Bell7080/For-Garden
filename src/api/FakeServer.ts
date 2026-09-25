@@ -39,7 +39,7 @@ import { archaeologySiteAvailability } from "../core/archaeologyMap";
 import type { AbandonStrataRunRequest, ArchaeologyStateResponse, DigStrataTileRequest, DigStrataTileResponse, GrantRuneTraitRequest, GrantRuneTraitResponse, RerollRuneTraitRequest, RerollRuneTraitResponse, ResolveRuneTraitRerollRequest, ResolveRuneTraitRerollResponse, StartStrataRunRequest, UpgradeRuneTraitRequest, UpgradeRuneTraitResponse } from "./contracts";
 import { findItem, type WalletItemKey } from "../data/items";
 import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_COMPLETED_KEEP_HOURS, RAID_DIFFICULTY, RAID_RUN_GOLD_PER_DAMAGE, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM } from "../data/raid";
-import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonContributions, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../core/raid";
+import { mockFriendRaids, mockRaidContributions, raidKillProgress, mockRaidWorldDamage, mockSummonContributions, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../core/raid";
 import { battleArena } from "../core/battleArena";
 import { staminaCurrencyRecharge } from "../data/staminaRecharge";
 import { settleStamina, staminaMaxForPlayer, staminaMaxForResearchLevel, staminaTiming } from "../core/stamina";
@@ -63,6 +63,8 @@ import { calculateExpeditionNodeScore, expeditionBossDamageScore } from "../core
 import { RelicProgressionManager } from "../managers/RelicProgressionManager";
 import { grantPlayerExperience, playerExpForStamina } from "../core/playerLevel";
 import { isExpeditionRelicSnapshot } from "../core/expeditionSnapshot";
+import { partyRuneTraitEffects } from "../core/runeTraitEffects";
+import type { ExpeditionAugmentEffect } from "../core/expeditionAugments";
 import { expeditionBattleEffects } from "../core/expeditionBattle";
 import { settingsManager } from "../managers/SettingsManager";
 import { nextUtcDay } from "../core/notificationSchedule";
@@ -291,7 +293,9 @@ export class FakeServer implements GameApi {
       // 아래 저장 및 상태 반영 오류는 이 블록 밖에서 PERSISTENCE_FAILED로 전파한다.
       if (request.runId && (!run || run.runId !== request.runId || !run.nodes.some(({ id, type }) => id === request.nodeId && type === "boss"))) throw new Error("INVALID_RUN");
       const roster = run?.relics ?? this.state.party.map((relicId) => ({ relicId, currentHp: 100, alive: true }));
-      const effects = expeditionBattleEffects(run?.selectedAugments ?? []);
+      // 원정은 떠날 때 굳힌 스냅샷의 유대·돌파·룬으로 싸운다 — 화면의 전투와 같은 값이다.
+      const growth = this.partyBattleGrowth(roster.map((entry) => ({ relicId: entry.relicId, snapshot: "snapshot" in entry && isExpeditionRelicSnapshot(entry.snapshot) ? entry.snapshot : undefined })));
+      const effects = [...expeditionBattleEffects(run?.selectedAugments ?? []), ...growth.traitEffects];
       const progression = new RelicProgressionManager(this.state);
       const allies = roster.map((entry) => {
         const id = entry.relicId;
@@ -310,7 +314,7 @@ export class FakeServer implements GameApi {
       result = resolveExpeditionBossBattle({
         allies, boss,
         initialHpPercentByRelic: Object.fromEntries(roster.map(({ relicId, currentHp }) => [relicId, currentHp])),
-        augmentEffects: effects,
+        augmentEffects: effects, bondLevels: growth.bondLevels, breakthroughs: growth.breakthroughs,
         // 서버와 BattleScene이 공유하는 논리 전장 크기다.
         arena: { left: 130, right: 950, top: 600, bottom: 1360 },
       }, request.actions);
@@ -441,6 +445,7 @@ export class FakeServer implements GameApi {
     const progress = raidSeasonProgress(others + instance.myDamage, spec.totalHp);
     const completed = progress.defeated || now.getTime() >= Date.parse(instance.endsAt);
     const growth = raidBossGrowth(instance.difficulty);
+    const killProgress = raidKillProgress(progress.dealtDamage, instance.difficulty);
     const rewardOf = (currency: WalletItemKey, amount: number): RaidRewardDto => ({ currency, name: findItem(currency)?.name ?? currency, amount });
     // 진행 중인 판도 **지금까지의 몫**을 싣는다 — 층이 "끝나면 이만큼"을 미리 말한다. 받는 것은
     // 끝난 뒤의 정산 한 번뿐이다(`settleRaid`가 상태를 다시 본다).
@@ -453,6 +458,7 @@ export class FakeServer implements GameApi {
       id: instance.id, kind: instance.kind, bossRelicId: instance.bossRelicId, difficulty: instance.difficulty,
       bossLevel: growth.level, bossBreakthrough: growth.breakthrough,
       summonerName: instance.summonerName, summonedByMe: instance.summonedByMe,
+      bossBodyHp: killProgress.bodyHp, kills: killProgress.kills, killsDone: killProgress.done,
       totalHp: progress.totalHp, dealtDamage: progress.dealtDamage, remainingHp: progress.remainingHp, defeated: progress.defeated,
       status: completed ? "completed" : "active", openedAt: instance.openedAt, endsAt: instance.endsAt,
       myDamage: instance.myDamage, attemptsUsed: instance.attemptsUsed, attemptsLimit: RAID_ATTEMPTS_PER_RAID,
@@ -534,6 +540,24 @@ export class FakeServer implements GameApi {
   }
 
   /**
+   * 보스 재현이 편성에 새기는 계정별 값 — 유대·한계 돌파·낀 룬의 특성.
+   *
+   * `BattleScene`이 난전을 세울 때 넘기는 것과 같은 셋이다. 스냅샷이 있으면(원정) 그 값을, 없으면
+   * 지금 성장을 읽는다. 한쪽만 빠져도 재현과 화면이 다른 편성으로 싸운다.
+   */
+  private partyBattleGrowth(entries: ReadonlyArray<{ relicId: string; snapshot?: { bondLevel: number; breakthrough: number; runes: RuneInstance[] } }>): {
+    bondLevels: Record<string, number>; breakthroughs: Record<string, number>; traitEffects: ExpeditionAugmentEffect[];
+  } {
+    const equippedRunes = (relicId: string): RuneInstance[] => (this.state.relicProgress[relicId]?.heartGemSlots ?? [])
+      .flatMap((instanceId) => instanceId === null ? [] : this.state.runeInventory.filter((rune) => rune.instanceId === instanceId));
+    return {
+      bondLevels: Object.fromEntries(entries.map(({ relicId, snapshot }) => [relicId, snapshot?.bondLevel ?? this.state.relicProgress[relicId]?.bondLevel ?? 0])),
+      breakthroughs: Object.fromEntries(entries.map(({ relicId, snapshot }) => [relicId, snapshot?.breakthrough ?? this.state.relicProgress[relicId]?.breakthrough ?? 0])),
+      traitEffects: partyRuneTraitEffects(entries.map(({ relicId, snapshot }) => ({ relicId, runes: snapshot?.runes ?? equippedRunes(relicId) }))),
+    };
+  }
+
+  /**
    * 원정 보스와 **같은 재현기**로 한 판을 다시 돌리고 그 피해만 그 레이드의 체력에서 깎는다.
    *
    * 클라이언트가 보낸 피해 숫자는 받지 않는다 — 계약에 아예 없다. 한 판을 확정하면 그 피해에
@@ -559,14 +583,20 @@ export class FakeServer implements GameApi {
         if (!relic || !this.state.owned.has(id)) throw new Error("INVALID_PARTY");
         return { ...relic, stats: progression.getFinalStats(id) };
       });
+      // 유대·돌파·룬 특성도 화면의 난전과 **같은 값**을 새긴다. 룬 특성(전투 시작 가속 등)이 재현에서만
+      // 빠지면 실제 판의 평타가 "너무 빠르다"가 되어 제출 전체가 거절된다.
+      const growth = this.partyBattleGrowth(this.state.party.map((relicId) => ({ relicId })));
       const base = RELICS.find(({ id }) => id === instance.bossRelicId);
       if (!base) throw new Error("INVALID_BOSS_DEFINITION");
       // 성장은 화면과 **같은 함수**를 지난다. 서버만 따로 계산하면 보여 준 레벨과 갈린다.
       result = resolveExpeditionBossBattle({
         allies, boss: raidBossDef(base, instance.difficulty), balance: RAID_BOSS_BALANCE,
         percentHpBasis: raidBossPercentHpBasis(base, instance.difficulty),
+        augmentEffects: growth.traitEffects, bondLevels: growth.bondLevels, breakthroughs: growth.breakthroughs,
         // 전장은 화면과 **같은 표**를 읽는다 — 자리가 다르면 사거리·표적이 갈려 재현이 어긋난다.
         arena: battleArena("raid"),
+        // 레이드의 몸은 쓰러진다 — 다 깎은 판은 그 자리에서 끝나고, 재현도 그 끝을 받는다.
+        bossKillable: true,
       }, request.actions);
       if (result.totalDamage > RAID_BOSS_BALANCE.maximumAcceptedScore) throw new Error("ABNORMAL_SCORE");
     } catch (error) {
@@ -574,7 +604,9 @@ export class FakeServer implements GameApi {
       throw new GameApiError("RAID_SCORE_REJECTED", "검증할 수 없거나 비정상적으로 큰 레이드 피해입니다.", { cause: error });
     }
 
-    const runDamage = Math.max(0, Math.floor(result.totalDamage));
+    // **한 판이 깎는 것은 몸 한 줄까지다.** 쓰러진 몸 너머로 넘친 몫까지 공유 게이지에 들이면 처치
+    // 한 번이 한 칸이라는 단위가 깨진다(점수는 경감 전 기여라 몸보다 클 수 있다).
+    const runDamage = Math.min(RAID_DIFFICULTY[instance.difficulty].bodyHp, Math.max(0, Math.floor(result.totalDamage)));
     const gold = raidRunGold(runDamage, RAID_RUN_GOLD_PER_DAMAGE);
     const updated: RaidInstanceState = { ...instance, myDamage: instance.myDamage + runDamage, attemptsUsed: instance.attemptsUsed + 1 };
     const nextState = structuredClone(this.state);

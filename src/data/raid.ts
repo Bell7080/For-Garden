@@ -89,17 +89,36 @@ export type RaidDifficulty = "easy" | "normal" | "hard" | "rampage";
 
 export interface RaidDifficultySpec {
   level: number;
+  /**
+   * **판 안에 서는 보스 한 마리의 최대 체력** — 머리 위 체력 바가 곧 이 값이다.
+   *
+   * 난이도마다 두 배씩 단단해진다. 모든 판이 같은 몸(2만 5천)을 쓰던 때는 보통과 어려움의 체력
+   * 바가 똑같이 서서, 레벨 차이(+15% 남짓)만으로는 무엇이 어려워졌는지 화면이 말하지 못했다.
+   */
+  bodyHp: number;
+  /**
+   * **이 판을 토벌하려면 보스를 몇 번 쓰러뜨려야 하나.** 공유 체력은 `bodyHp × kills`에서 나온다 —
+   * 따로 적어 두면 머리 위 바 한 줄이 공유 게이지의 몇 칸인지 아무도 말할 수 없다.
+   */
+  kills: number;
+  /** 공유 체력. `bodyHp × kills`로만 만든다(`raidDifficulty`). */
   totalHp: number;
   /** 판이 열려 있는 시간. 토벌되면 그 전에 끝난다. */
   lifetimeHours: number;
   settlement: { mine: number; mineTarget: number; total: number; kill: number };
 }
 
+const raidDifficulty = (spec: Omit<RaidDifficultySpec, "totalHp">): RaidDifficultySpec => ({ ...spec, totalHp: spec.bodyHp * spec.kills });
+
+/*
+ * 한 번 처치 = 공유 게이지의 `1 / kills`다. 쉬움은 여섯 번(한 칸 16.7%), 보통 여덟 번, 어려움 열 번,
+ * 월드 폭주는 마흔 번이라 한 사람이 혼자 잡는 판이 아니다. 몸은 쉬움 2만 5천 → 5만 → 10만 → 25만.
+ */
 export const RAID_DIFFICULTY: Record<RaidDifficulty, RaidDifficultySpec> = {
-  easy: { level: 20, totalHp: 150_000, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 10_000, total: 8, kill: 5 } },
-  normal: { level: 30, totalHp: 300_000, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15_000, total: 14, kill: 8 } },
-  hard: { level: 40, totalHp: 600_000, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22_000, total: 22, kill: 12 } },
-  rampage: { level: 60, totalHp: 10_000_000, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 45_000, total: 60, kill: 30 } },
+  easy: raidDifficulty({ level: 20, bodyHp: 25_000, kills: 6, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 10_000, total: 8, kill: 5 } }),
+  normal: raidDifficulty({ level: 30, bodyHp: 50_000, kills: 8, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15_000, total: 14, kill: 8 } }),
+  hard: raidDifficulty({ level: 40, bodyHp: 100_000, kills: 10, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22_000, total: 22, kill: 12 } }),
+  rampage: raidDifficulty({ level: 60, bodyHp: 250_000, kills: 40, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 45_000, total: 60, kill: 30 } }),
 };
 
 /** 저장·진입 데이터에서 온 값이 난이도 표에 있는지. 모르는 값은 어느 몸으로 세울지 알 수 없다. */
@@ -132,17 +151,9 @@ export const RAID_TICKET_TEST_KIT = [
   { itemId: RAID_SELECT_TICKET_ITEM, quantity: 1 },
 ] as const;
 
-/** 월드 폭주가 갖는 공유 체력. 판 안의 몸(`RAID_BOSS_HP_SCALE`)이 이 값을 단위로 삼는다. */
+/** 월드 폭주가 갖는 공유 체력. */
 export const RAID_SEASON_TOTAL_HP = RAID_DIFFICULTY.rampage.totalHp;
 
-/**
- * 판 안에 서는 보스의 몸은 월드 폭주 줄의 400분의 1이다(2만 5천).
- *
- * 몸은 세기가 아니라 **단위**다 — 보스는 판 안에서 죽지 않고(공유 체력은 서버가 갖는다) 머리 위
- * 줄이 얼마나 밀렸는지만 말한다. 난이도마다 몸을 바꾸면 쉬움의 몸이 한 번에 비어 그 줄이 뜻을
- * 잃으므로, 모든 판이 같은 몸을 쓴다.
- */
-export const RAID_BOSS_HP_SCALE = 400;
 
 /** 판 하나에 도전할 수 있는 횟수. 내 기여는 그 두 판의 피해 합이다. */
 export const RAID_ATTEMPTS_PER_RAID = 2;

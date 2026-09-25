@@ -70,6 +70,14 @@ const ULTIMATE_RATE_CAP = 3.25;
  */
 export const BATTLE_OPENING_HOLD_MS = 900;
 
+/**
+ * **끝난 전투도 결과판을 곧바로 띄우지 않는다**(실제 시간, 배속과 무관). 마지막 한 방이 들어간
+ * 그 프레임에 판이 덮이던 때는 누가 쓰러졌는지·어떻게 끝났는지를 볼 틈 없이 화면이 갈렸다.
+ * 여는 숨 고르기(`BATTLE_OPENING_HOLD_MS`)와 같은 이유로, 이 틈도 전투가 아니라 **보는 사람의 몫**이다.
+ * 코어 시간은 이미 멈췄고, 쓰러지는 연출과 게이지만 제 속도로 마저 흐른다.
+ */
+export const BATTLE_CLOSING_HOLD_MS = 1_400;
+
 /** 전원이 선 시각에서 전투가 실제로 흐르기 시작하는 시각. */
 export function battleFightStartsAt(spawnedAt: number): number {
   return spawnedAt + BATTLE_OPENING_HOLD_MS;

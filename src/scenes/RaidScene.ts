@@ -13,7 +13,7 @@ import { addBackButton } from "../ui/IconButton";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { PopupLayer } from "../ui/PopupLayer";
 import { addEnemyPortraitTap, EnemyInfoPopup } from "../ui/EnemyInfoPopup";
-import { raidBossDef, raidBossGrowth } from "../core/raid";
+import { raidBossDef, raidBossGrowth, raidKillTicks } from "../core/raid";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { RANKING_LIST, RANKING_VISIBLE_RANKS, rankingMedal, rankingRowY } from "../ui/expeditionRankingLayout";
 import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawShapeEdge, drawVignette, HOLO, HoloBar, slantedRect } from "../ui/holo";
@@ -476,12 +476,15 @@ export class RaidScene extends Phaser.Scene {
    */
   private renderHpBar(content: Phaser.GameObjects.Container, raid: RaidDto): void {
     const bar = RAID_HP_BAR;
-    content.add(this.add.text(bar.centerX - bar.width / 2, bar.labelY, raid.defeated ? t("raid.boss.defeated") : t("raid.boss.remaining"), textStyle({ role: "emphasis", size: 25, color: raid.defeated ? COLOR.accentText : COLOR.inkDim })).setOrigin(0, 0.5));
+    const hpLabel = this.add.text(bar.centerX - bar.width / 2, bar.labelY, raid.defeated ? t("raid.boss.defeated") : t("raid.boss.remaining"), textStyle({ role: "emphasis", size: 25, color: raid.defeated ? COLOR.accentText : COLOR.inkDim })).setOrigin(0, 0.5);
+    content.add(hpLabel);
+    // 게이지 한 칸이 보스 한 번 처치다 — 남은 체력 숫자만으로는 몇 번 더 잡으면 끝나는지 읽히지 않는다.
+    content.add(this.add.text(hpLabel.x + hpLabel.width + 18, bar.labelY, t("raid.boss.kills", { done: raid.killsDone, kills: raid.kills }), textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setOrigin(0, 0.5));
     content.add(this.add.text(bar.centerX + bar.width / 2, bar.labelY, t("raid.detail.name", { name: getRelic(raid.bossRelicId).name, level: raid.bossLevel }), textStyle({ role: "display", size: 30, color: COLOR.ink })).setOrigin(1, 0.5));
     // 빈 자리를 짙게 눌러 두고 외곽을 흰 선으로 둘러, 밝은 배경 원화 위에서도 어디까지가 이
     // 게이지인지 보이게 한다 — 읽어야 하는 진행도의 공용 규칙이다.
     this.hpBar = new HoloBar(this, bar.centerX, bar.y, bar.width, bar.height, {
-      color: RAID_HP_BAR_COLOR, trackAlpha: 0.82, outline: true, ticks: bar.ticks,
+      color: RAID_HP_BAR_COLOR, trackAlpha: 0.82, outline: true, ticks: raidKillTicks(raid.kills, bar.ticks),
       // 화면에서 가장 크게 서는 게이지라 그림자 한 겹으로 배경 원화에서 띄우고, 남은 몫
       // 둘레로만 같은 색 빛이 옅게 번진다 — 양식은 그대로 두고 깊이만 한 겹 더한다.
       shadow: { offsetY: 7, alpha: 0.6 }, glow: { spread: 7, alpha: 0.26 },

@@ -613,6 +613,11 @@ export interface RaidDto {
   /** 소환 레이드를 연 사람. 내가 열었으면 `summonedByMe`만 켜진다. */
   summonerName?: string;
   summonedByMe: boolean;
+  /** 판 안에 서는 보스 한 마리의 체력 — 공유 게이지의 한 칸이다(`RaidDifficultySpec.bodyHp`). */
+  bossBodyHp: number;
+  /** 토벌까지 보스를 쓰러뜨려야 하는 횟수와 지금까지 쓰러뜨린 몫(버림). */
+  kills: number;
+  killsDone: number;
   totalHp: number;
   /** 참가자 전원이 지금까지 깎아 낸 합이다. */
   dealtDamage: number;

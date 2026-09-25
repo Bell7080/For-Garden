@@ -34,6 +34,17 @@ export interface ExpeditionBossReplayInput {
    * 않으면 출혈 한 틱이 한계값의 2%가 되어 판 전체가 비정상 점수로 거절된다.
    */
   percentHpBasis?: number;
+  /**
+   * 편성의 유대 레벨·한계 돌파 단계. 화면의 난전이 이 값으로 싸우므로 재현도 같은 값이어야 한다 —
+   * 비워 두면 돌파가 여는 기술과 유대의 야성 가속이 재현에서만 빠져 점수가 갈린다.
+   */
+  bondLevels?: Readonly<Record<string, number>>;
+  breakthroughs?: Readonly<Record<string, number>>;
+  /**
+   * **보스가 쓰러질 수 있는 판인가**(레이드). 켜면 보스를 정의의 체력 그대로 세우고, 쓰러뜨려 이긴
+   * 판도 정상 종료로 받는다. 끄면(원정 폰토스) 예전처럼 한계 체력으로 세워 전멸만 받는다.
+   */
+  bossKillable?: boolean;
 }
 /**
  * 전멸한 정상 종료만 확정하며 totalDamage는 서버가 행동 로그로 재계산한 **대상 경감 전** 기여도다.
@@ -41,7 +52,8 @@ export interface ExpeditionBossReplayInput {
  * 누적은 소수까지 그대로 센다 — 타격마다 반올림하면 같은 총 계수의 다단히트가 더 커진다.
  * 대신 코어 밖으로 나가는 **여기서 한 번만** 반올림해, 점수판과 순위표에는 언제나 정수가 선다.
  */
-export interface ExpeditionBossResult { totalDamage: number; endedAtMs: number; allAlliesDead: true; bossDefeated: false; remainingHpByAlly: Record<string, number>; }
+/** 원정 폰토스는 늘 전멸로 끝난다. 레이드처럼 쓰러질 수 있는 보스만 `bossDefeated`가 켜진다. */
+export interface ExpeditionBossResult { totalDamage: number; endedAtMs: number; allAlliesDead: boolean; bossDefeated: boolean; remainingHpByAlly: Record<string, number>; }
 
 /** 해당 시각에 활성인 마지막 보스 단계를 찾는다. 일반 단계는 표시만 하고 피해는 폰토스 스킬이 소유한다. */
 export function expeditionBossPhaseAt(elapsedMs: number) {
@@ -68,11 +80,19 @@ export function expeditionWeekKey(now: Date): string {
 function fastestAttackInterval(fighter: Fighter, state: Parameters<typeof attackInterval>[1], basicCount: number): number {
   const stack = fighter.def.passive.kind === "basicHitAttackSpeedStack" ? fighter.def.passive.value : 0;
   const hitCount = fighter.def.basic.combo?.hitCount ?? 1;
-  const bonusBefore = fighter.bonusAttackSpeed; const feverBefore = fighter.ferocityFever;
+  const bonusBefore = fighter.bonusAttackSpeed; const feverBefore = fighter.ferocityFever; const chillBefore = fighter.chill;
+  const hastenedBefore = fighter.hastenedAttacksLeft;
   fighter.bonusAttackSpeed = Math.max(bonusBefore, basicCount * hitCount * stack);
   fighter.ferocityFever = true;
+  // 금강불괴는 폭주가 **켜지는 순간** 빠른 평타 몇 번을 채워 준다. 재현에서 폭주가 켜지지 않았다면
+  // 그 수가 0이라 폭주를 가정해도 빨라지지 않고, 실제 판의 빠른 평타가 거절되었다(엘라).
+  fighter.hastenedAttacksLeft = Math.max(1, hastenedBefore);
+  // **둔화는 한계에서 뺀다.** 느려지게만 하는 상태라 빼도 한계가 느슨해질 뿐인데, 재현은 보스의
+  // 공격 순서가 실제 판과 조금씩 달라 둔화가 걸린 순간이 어긋난다. 그대로 두면 실제 판에서는
+  // 풀려 있던 평타가 재현에서 "너무 빠르다"가 되어 타보아 레이드가 거의 매번 거절되었다.
+  fighter.chill = null;
   const interval = attackInterval(fighter, state);
-  fighter.bonusAttackSpeed = bonusBefore; fighter.ferocityFever = feverBefore;
+  fighter.bonusAttackSpeed = bonusBefore; fighter.ferocityFever = feverBefore; fighter.chill = chillBefore; fighter.hastenedAttacksLeft = hastenedBefore;
   // **아군이 걸어 주는 공속 오라도 한계에 넣는다.** 무리 사냥·아다지오는 제공자가 살아 있고
   // 같은 표적을 볼 때만 켜지는데, 재현은 자리와 표적이 실제 판과 다르므로 그 순간에 꺼져 있을
   // 수 있다. 그러면 편성이 실제로 낼 수 있었던 속도보다 느린 값이 기준이 되어, 규칙대로 싸운
@@ -102,15 +122,19 @@ export function resolveExpeditionBossBattle(input: ExpeditionBossReplayInput, ac
   const initialStates = input.allies.map(({ id }) => ({ relicId: id, currentHp: input.initialHpPercentByRelic?.[id] ?? 100, alive: (input.initialHpPercentByRelic?.[id] ?? 100) > 0 }));
   if (initialStates.some(({ currentHp }) => !Number.isFinite(currentHp) || currentHp < 0 || currentHp > 100)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
   const phases = balance.phases.map(({ startsAtMs, attackPerSecond, label }) => ({ startsAt: startsAtMs / 1_000, damagePerSecond: attackPerSecond, label }));
-  const state = createSkirmish([...input.allies], [{ ...input.boss, stats: { ...input.boss.stats, hp: Number.MAX_SAFE_INTEGER } }], input.arena, {}, {}, {
+  const killable = input.bossKillable === true;
+  const bossHp = killable ? input.boss.stats.hp : Number.MAX_SAFE_INTEGER;
+  const state = createSkirmish([...input.allies], [{ ...input.boss, stats: { ...input.boss.stats, hp: bossHp } }], input.arena, input.bondLevels ?? {}, input.breakthroughs ?? {}, {
     playerInitialStates: initialStates, augmentEffects: input.augmentEffects,
-    boss: { phases, limitSeconds: balance.maximumDurationMs / 1_000, percentHpBasis: input.percentHpBasis ?? input.boss.stats.hp },
+    boss: { phases, limitSeconds: balance.maximumDurationMs / 1_000, percentHpBasis: input.percentHpBasis ?? input.boss.stats.hp, endsOnKill: killable },
   });
   // 자동 평타는 제출 로그가 명시적으로 재생하므로 끄고, 폰토스의 AI·폭주·상태 시계만 stepSkirmish로 진행한다.
   for (const fighter of state.fighters) if (fighter.side === "player") fighter.attackCooldown = Number.POSITIVE_INFINITY;
   // 같은 행동이 다시 준비되는 시각을 그 행동을 재생한 **그 순간의 상태**로 못 박는다.
   const readyAt = new Map<string, number>(); const basicCount = new Map<string, number>(); let cursorMs = 0;
   for (const action of actions) {
+    // 보스를 쓰러뜨려 판이 끝났으면 그 뒤의 행동은 없다 — 재현이 실제 판보다 먼저 끝났을 뿐이다.
+    if (state.phase !== "fight") break;
     if (!Number.isInteger(action.elapsedMs) || action.elapsedMs < cursorMs || action.elapsedMs > balance.maximumDurationMs) throw new Error("INVALID_BOSS_BATTLE_INPUT");
     while (cursorMs < action.elapsedMs && state.phase === "fight") { const slice = Math.min(50, action.elapsedMs - cursorMs); stepSkirmish(state, slice / 1_000, rng); cursorMs += slice; }
     const fighter = state.fighters.find(({ side, def }) => side === "player" && def.id === action.actorId);
@@ -132,7 +156,8 @@ export function resolveExpeditionBossBattle(input: ExpeditionBossReplayInput, ac
     readyAt.set(key, action.elapsedMs + (action.kind === "basic" ? intervalMs : fighter.def.ultimate.cost / Math.max(1, fighter.def.stats.energyGain) * intervalMs));
   }
   while (state.phase === "fight" && cursorMs < balance.maximumDurationMs) { stepSkirmish(state, 0.05, rng); cursorMs += 50; }
-  if (state.phase !== "defeat") throw new Error("BOSS_BATTLE_DID_NOT_END_IN_WIPE");
-  return { totalDamage: Math.round(state.boss?.score ?? 0), endedAtMs: Math.round(state.elapsed * 1_000), allAlliesDead: true, bossDefeated: false,
+  const bossDefeated = killable && state.phase === "victory";
+  if (state.phase !== "defeat" && !bossDefeated) throw new Error("BOSS_BATTLE_DID_NOT_END_IN_WIPE");
+  return { totalDamage: Math.round(state.boss?.score ?? 0), endedAtMs: Math.round(state.elapsed * 1_000), allAlliesDead: !bossDefeated, bossDefeated,
     remainingHpByAlly: Object.fromEntries(state.fighters.filter(({ side }) => side === "player").map(({ def, hp }) => [def.id, hp])) };
 }

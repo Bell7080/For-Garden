@@ -67,7 +67,7 @@ export const MISSIONS: readonly MissionDefinition[] = [
   { id: "daily-harvest", period: "daily", title: "발굴 수확 1회", target: 1, reward: { currency: "gems", amount: 10 }, researchPoints: 20, event: "excavation_harvested" },
   { id: "weekly-daily", period: "weekly", title: "일일 임무 20회 완료", target: 20, reward: { currency: "gems", amount: 50 }, researchPoints: 150, event: "daily_mission_claimed" },
   { id: "weekly-battle", period: "weekly", title: "전투 승리 20회", target: 20, reward: { currency: "gold", amount: 30_000 }, researchPoints: 100, event: "battle_completed" },
-  { id: "weekly-excavate", period: "weekly", title: "연구소 캐릭터 연구 10회", target: 10, reward: { currency: "fossil", amount: 150 }, researchPoints: 100, event: "relic_research_completed" },
+  { id: "weekly-excavate", period: "weekly", title: "연구소 캐릭터 연구 10회", target: 10, reward: { currency: "fossil", amount: 1 }, researchPoints: 100, event: "relic_research_completed" },
   { id: "weekly-stamina", period: "weekly", title: "스테미나 600 사용", target: 600, reward: { currency: "cheesecake", amount: 150 }, researchPoints: 100, event: "stamina_spent" },
   { id: "weekly-dispatch", period: "weekly", title: "교류 파견 5회", target: 5, reward: { currency: "dnaFragments", amount: 10 }, researchPoints: 100, event: "interaction_dispatched" },
   { id: "weekly-salary", period: "weekly", title: "급여 10회", target: 10, reward: { currency: "cheesecake", amount: 100 }, researchPoints: 50, event: "salary_given" },
@@ -93,23 +93,29 @@ export interface ResearchRewardStage {
 /*
  * **단계 보상은 한 가지 재화로 채우지 않는다.** 여섯 칸이 전부 치즈케이크였을 때는 게이지를
  * 채워도 무엇을 향해 가는지가 그림에서 읽히지 않았다. 앞 칸은 흔한 것(골드·치즈케이크),
- * 뒤로 갈수록 귀한 것(다이아·화석·DNA)이고 **마지막 칸이 가장 크다** — 게이지 끝의 액자가
- * 그 기간의 목표가 된다.
+ * 뒤로 갈수록 귀한 것(다이아·DNA)이고 **마지막 칸이 화석**이다 — 게이지 끝의 액자가 그 기간의
+ * 목표가 된다.
+ *
+ * **한 칸에는 보상 하나만 둔다.** 둘을 두면 두 번째가 액자 구석에 작게 붙는데, 그것이 무엇인지
+ * 읽히지 않았다(마디 사이가 좁아 액자를 나란히 세울 수도 없다).
+ *
+ * **화석 하나가 연구 한 번이다**(`TRADE_GEM_RATE` — 젬 100). 수를 크게 적으면 임무 하나가 연구
+ * 수십 번이 된다 — 일일 목표가 1개, 주간 목표가 5개다.
  */
 export const RESEARCH_REWARD_STAGES: Readonly<Record<MissionPeriod, readonly ResearchRewardStage[]>> = {
   daily: [
     { id: "research-20", threshold: 20, rewards: [{ currency: "gold", amount: 10_000 }] },
     { id: "research-40", threshold: 40, rewards: [{ currency: "cheesecake", amount: 30 }] },
     { id: "research-60", threshold: 60, rewards: [{ currency: "gems", amount: 20 }] },
-    { id: "research-80", threshold: 80, rewards: [{ currency: "fossil", amount: 30 }] },
-    { id: "research-100", threshold: 100, rewards: [{ currency: "gems", amount: 50 }, { currency: "cheesecake", amount: 50 }] },
+    { id: "research-80", threshold: 80, rewards: [{ currency: "gems", amount: 30 }] },
+    { id: "research-100", threshold: 100, rewards: [{ currency: "fossil", amount: 1 }] },
   ],
   weekly: [
     { id: "research-100", threshold: 100, rewards: [{ currency: "gold", amount: 50_000 }] },
     { id: "research-200", threshold: 200, rewards: [{ currency: "cheesecake", amount: 150 }] },
     { id: "research-300", threshold: 300, rewards: [{ currency: "gems", amount: 100 }] },
     { id: "research-400", threshold: 400, rewards: [{ currency: "dnaFragments", amount: 20 }] },
-    { id: "research-500", threshold: 500, rewards: [{ currency: "gems", amount: 300 }, { currency: "fossil", amount: 150 }] },
+    { id: "research-500", threshold: 500, rewards: [{ currency: "fossil", amount: 5 }] },
   ],
 };
 

@@ -16,9 +16,13 @@ import type { PopupLayer } from "./PopupLayer";
 import { POPUP_TITLE_SIZE } from "./PopupLayer";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { COLOR, textStyle } from "./theme";
+import { addSectionTitle } from "./SectionTitle";
+import { fitTextToBox } from "./textFit";
+import { shapeClipMask } from "./popupArt";
+import { CurrencyGuidePopup } from "./CurrencyGuidePopup";
 import { setDebugMailPopup } from "../debug";
 import { managerEvents } from "../managers/ManagerEvents";
-import { isMailExpired, MAIL_POPUP_LAYOUT, mailListRows, mailRemaining, mailRewardSlots, mailRewardX, mailTabOf, mailTabX, sortMails, type MailTab } from "./mailPopupLayout";
+import { isMailExpired, MAIL_DETAIL_LAYOUT, mailDetailRail, MAIL_POPUP_LAYOUT, mailListRows, mailRemaining, mailRewardSlots, mailRewardX, mailTabOf, mailTabX, sortMails, type MailTab } from "./mailPopupLayout";
 
 const TABS: readonly MailTab[] = ["reward", "notice"];
 
@@ -177,12 +181,16 @@ export class MailPopup {
       parent.add(addItemFrame(this.scene, x, stripY, rewards.size, { color: 0x68717d, outlineAlpha: 0.6 }));
       parent.add(this.scene.add.text(x, stripY, `+${overflow}`, textStyle({ role: "display", size: 30, color: COLOR.inkDim })).setOrigin(0.5));
     }
-    const actionX = card.width / 2 - 96;
-    if (!dim) {
-      parent.add(new Button(this.scene, actionX, stripY, { width: 140, height: 84, label: t("mail.claim"), variant: "primary", fontSize: 26, onClick: () => void this.claim([mail.id]) }));
-    } else {
-      parent.add(this.scene.add.text(actionX, stripY, t(expired ? "mail.state.expired" : "mail.state.claimed"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
-    }
+    // 받기 버튼은 줄에 두지 않는다 — 우편을 눌러 펼친 판에서 글을 읽고 받는다. 줄은 상태만 말한다.
+    if (dim) parent.add(this.scene.add.text(card.width / 2 - 96, stripY, t(expired ? "mail.state.expired" : "mail.state.claimed"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
+    this.addOpenHit(parent, mail, y, height);
+  }
+
+  /** 카드 전체가 우편을 펼치는 입력면이다. 끌어서 흘린 손은 펼치지 않는다. */
+  private addOpenHit(parent: Phaser.GameObjects.Container, mail: MailDto, y: number, height: number): void {
+    const hit = this.scene.add.rectangle(0, y, MAIL_POPUP_LAYOUT.card.width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerup", (pointer: Phaser.Input.Pointer) => { if (pointer.getDistance() < 24) void this.openMail(mail); });
+    parent.add(hit);
   }
 
   /** 안내 한 장 — 본문 첫 줄만 미리 보이고 누르면 글 전체가 열린다. */
@@ -200,26 +208,104 @@ export class MailPopup {
       while (text.length > 1 && preview.width > room) { text = text.slice(0, -1); preview.setText(`${text}…`); }
     }
     parent.add(preview);
-    const hit = this.scene.add.rectangle(0, y, card.width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerup", (pointer: Phaser.Input.Pointer) => { if (pointer.getDistance() < 24) void this.openNotice(mail); });
-    parent.add(hit);
+    this.addOpenHit(parent, mail, y, height);
   }
 
-  /** 안내 글 전체. 여는 순간 읽음으로 확정한다. */
-  private async openNotice(mail: MailDto): Promise<void> {
-    const width = 900; const bodyWidth = width - 120;
-    const measure = this.scene.add.text(0, 0, mail.body, textStyle({ role: "body", size: 27, wrap: bodyWidth, lineSpacing: 10 })).setVisible(false);
-    const height = Math.min(1500, Math.max(560, measure.height + 330));
-    measure.destroy();
-    const date = mail.sentAt.slice(0, 10);
-    this.popups.open({ width, height, title: t("mail.notice.heading"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.6 }, (body) => {
-      const top = -height / 2 + 70;
-      body.add(this.scene.add.text(-width / 2 + 60, top, mail.title, textStyle({ role: "display", size: 36, color: COLOR.ink, wrap: bodyWidth })).setOrigin(0, 0));
-      body.add(this.scene.add.text(-width / 2 + 60, top + 64, `${mail.sender}  ·  ${date}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0));
-      const rule = this.scene.add.graphics(); rule.lineStyle(2, COLOR.accent, 0.5).lineBetween(-width / 2 + 60, top + 112, width / 2 - 60, top + 112); body.add(rule);
-      body.add(this.scene.add.text(-width / 2 + 60, top + 140, mail.body, textStyle({ role: "body", size: 27, color: COLOR.ink, wrap: bodyWidth, lineSpacing: 10 })).setOrigin(0, 0));
+  /**
+   * 우편 한 통을 펼친다 — **위가 글, 아래가 첨부**다. 여는 순간 읽음으로 확정한다.
+   *
+   * 첨부는 줄에 받기 버튼을 두지 않고 여기서 받는다 — 무엇을 왜 받는지 읽고 나서 받게 하려는
+   * 것이다. 첨부가 많으면 그 줄만 옆으로 흐르고, 액자를 누르면 그 재화·아이템의 안내가 열린다.
+   */
+  private async openMail(mail: MailDto): Promise<void> {
+    const L = MAIL_DETAIL_LAYOUT;
+    const nowMs = this.result ? Date.parse(this.result.serverTime) : Date.now();
+    const expired = isMailExpired(mail, nowMs);
+    const claimable = mail.rewards.length > 0 && !mail.claimed && !expired;
+    const left = -L.width / 2 + L.padX;
+    const textWidth = L.width - L.padX * 2;
+    const hasRewards = mail.rewards.length > 0;
+    let close: (() => void) | undefined;
+    this.popups.open({ width: L.width, height: L.height, title: t(hasRewards ? "mail.tab.reward" : "mail.notice.heading"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.6, closeOnBackdrop: true }, (body, closePopup) => {
+      close = closePopup;
+      body.add(this.scene.add.text(left, L.titleY, mail.title, textStyle({ role: "display", size: 36, color: COLOR.ink, wrap: textWidth })).setOrigin(0, 0.5));
+      body.add(this.scene.add.text(left, L.metaY, `${mail.sender}  ·  ${mail.sentAt.slice(0, 10)}  ·  ${this.expiryLabel(mail, nowMs)}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
+      const rule = this.scene.add.graphics(); rule.lineStyle(2, COLOR.accent, 0.5).lineBetween(left, L.ruleY, -left, L.ruleY); body.add(rule);
+      const bodyBottom = hasRewards ? L.body.bottom : L.height / 2 - 70;
+      const text = this.scene.add.text(left, L.body.top, mail.body, textStyle({ role: "body", size: 27, color: COLOR.ink, wrap: textWidth, lineSpacing: 10 })).setOrigin(0, 0);
+      fitTextToBox(text, { width: textWidth, height: bodyBottom - L.body.top });
+      body.add(text);
+      if (!hasRewards) return;
+      addSectionTitle(this.scene, left - 20, L.attachTitleY, t("mail.attachments", { count: mail.rewards.length }), { size: 26, parent: body });
+      this.addDetailRail(body, mail.rewards, expired || mail.claimed);
+      if (claimable) {
+        body.add(new Button(this.scene, 0, L.claim.y, { width: L.claim.width, height: L.claim.height, label: t("mail.claim"), variant: "primary", onClick: () => { close?.(); void this.claim([mail.id]); } }));
+      } else {
+        body.add(this.scene.add.text(0, L.claim.y, t(expired ? "mail.state.expired" : "mail.state.claimed"), textStyle({ role: "emphasis", size: 28, color: COLOR.inkDim })).setOrigin(0.5));
+      }
     });
     if (!mail.read) await this.manager.read(mail.id);
+  }
+
+  /**
+   * 펼친 판의 첨부 줄 — **끌면 흐르고 누르면 그 액자의 안내가 열린다.**
+   *
+   * 액자마다 입력면을 두지 않고 한 면이 둘을 함께 맡는다 — 줄 위를 덮는 끌기 면이 액자의 손짓을
+   * 삼키지 않게, 얼마나 끌었는지로 누름과 끌기를 가른다(교류의 보상 줄과 같은 방법이다).
+   * 마스크는 흐르지 않는 틀(`holder`)을 따라가므로 판이 떠오르는 동안에도 어긋나지 않는다.
+   */
+  private addDetailRail(body: Phaser.GameObjects.Container, rewards: readonly MailRewardDto[], dim: boolean): void {
+    const L = MAIL_DETAIL_LAYOUT;
+    const layout = mailDetailRail(rewards.length);
+    const holder = this.scene.add.container(0, L.rail.y);
+    const rail = this.scene.add.container(0, 0);
+    holder.add(rail); body.add(holder);
+    const frames = rewards.map((reward, index) => addFramedIcon(this.scene, rail, layout.xs[index], 0, L.rail.size, mailRewardTexture(reward), {
+      amount: formatCurrency(reward.amount), plain: true, iconAlpha: dim ? 0.45 : 1, color: dim ? 0x68717d : undefined,
+    }));
+    const halfView = layout.viewWidth / 2;
+    const half = L.rail.size / 2 + 12;
+    rail.setMask(shapeClipMask(this.scene, holder, [-halfView - 8, -half, halfView + 8, -half, halfView + 8, half, -halfView - 8, half]));
+    const overflow = Math.max(0, layout.contentWidth - layout.viewWidth);
+    const hit = this.scene.add.rectangle(0, 0, layout.viewWidth + 16, L.rail.size + 24, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    holder.add(hit);
+    let downX = 0; let originX = 0; let moved = 0; let dragging = false;
+    const frameAt = (pointer: Phaser.Input.Pointer): number => {
+      const local = holder.getWorldTransformMatrix().applyInverse(pointer.x, pointer.y);
+      return frames.findIndex((frame) => Math.abs(local.x - rail.x - frame.x) <= L.rail.size / 2);
+    };
+    hit.on("pointerdown", (pointer: Phaser.Input.Pointer) => { dragging = true; downX = pointer.x; originX = rail.x; moved = 0; frames[frameAt(pointer)]?.setScale(1.08); });
+    const release = (): void => { dragging = false; frames.forEach((frame) => frame.setScale(1)); };
+    hit.on("pointermove", (pointer: Phaser.Input.Pointer) => {
+      if (!dragging || !pointer.isDown) return;
+      moved = Math.max(moved, Math.abs(pointer.x - downX));
+      if (moved > 12) frames.forEach((frame) => frame.setScale(1));
+      if (overflow > 0) rail.setX(Phaser.Math.Clamp(originX + (pointer.x - downX) / Math.max(0.01, holder.getWorldTransformMatrix().scaleX), -overflow, 0));
+    });
+    hit.on("pointerout", release);
+    hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      const index = moved <= 12 ? frameAt(pointer) : -1;
+      release();
+      const reward = rewards[index];
+      if (reward) this.openRewardNote(reward);
+    });
+    // 넘치면 오른쪽 끝을 어둠으로 눌러 "더 있다"를 말한다.
+    if (overflow > 0) {
+      const fade = this.scene.add.graphics();
+      fade.fillGradientStyle(0x05070a, 0x05070a, 0x05070a, 0x05070a, 0, 0.85, 0, 0.85);
+      fade.fillRect(halfView - 60, -half, 68, half * 2);
+      holder.add(fade);
+    }
+  }
+
+  /** 첨부 액자 하나의 안내 — 재화는 공용 재화 안내, 아이템은 제 이름과 설명 한 장. */
+  private openRewardNote(reward: MailRewardDto): void {
+    if (reward.kind === "currency") { new CurrencyGuidePopup(this.scene, this.popups).open(reward.currency); return; }
+    const item = findItem(reward.itemId);
+    if (!item) return;
+    this.popups.open({ width: 620, height: 320, title: item.name, dim: true, dimAlpha: 0.3, closeOnBackdrop: true }, (body) => {
+      body.add(this.scene.add.text(0, 10, item.description, textStyle({ role: "body", size: 25, color: COLOR.ink, align: "center", wrap: 520 })).setOrigin(0.5));
+    });
   }
 
   /** 하단 줄 — 우편·안내 라벨과, 지금 탭이 할 수 있는 일괄 조작 하나. */
@@ -231,7 +317,7 @@ export class MailPopup {
     const nowMs = Date.parse(this.result.serverTime);
     TABS.forEach((tab, index) => {
       const pending = this.result!.mails.filter((mail) => mailTabOf(mail) === tab && !isMailExpired(mail, nowMs) && (tab === "reward" ? !mail.claimed : !mail.read)).length;
-      const label = addCategoryTab(this.scene, footer, { x: mailTabX(index), y: layout.y, width: layout.tab.width, height: layout.tab.height, label: t(tab === "reward" ? "mail.tab.reward" : "mail.tab.notice"), selected: tab === this.tab, onSelect: () => this.select(tab) });
+      const label = addCategoryTab(this.scene, footer, { x: mailTabX(index), y: layout.tabY, width: layout.tab.width, height: layout.tab.height, label: t(tab === "reward" ? "mail.tab.reward" : "mail.tab.notice"), selected: tab === this.tab, onSelect: () => this.select(tab) });
       if (pending > 0) {
         const badge = this.scene.add.text(layout.tab.width / 2 - 14, -layout.tab.height / 2 + 4, `${pending}`, textStyle({ role: "display", size: 20, color: "#1a1206" })).setOrigin(0.5);
         const plate = this.scene.add.graphics({ x: badge.x, y: badge.y });
@@ -243,8 +329,8 @@ export class MailPopup {
     const claimable = this.manager.claimableIds(this.result);
     const unreadNotices = this.result.mails.filter((mail) => mailTabOf(mail) === "notice" && !mail.read).map(({ id }) => id);
     const action = this.tab === "reward"
-      ? new Button(this.scene, layout.action.x, layout.y, { width: layout.action.width, height: layout.action.height, label: t("mail.claimAll"), variant: "primary", onClick: () => void this.claim(claimable) })
-      : new Button(this.scene, layout.action.x, layout.y, { width: layout.action.width, height: layout.action.height, label: t("mail.readAll"), onClick: () => void this.readAll(unreadNotices) });
+      ? new Button(this.scene, layout.action.x, layout.action.y, { width: layout.action.width, height: layout.action.height, label: t("mail.claimAll"), variant: "primary", onClick: () => void this.claim(claimable) })
+      : new Button(this.scene, layout.action.x, layout.action.y, { width: layout.action.width, height: layout.action.height, label: t("mail.readAll"), onClick: () => void this.readAll(unreadNotices) });
     if ((this.tab === "reward" ? claimable : unreadNotices).length === 0) action.setEnabled(false);
     footer.add(action);
   }

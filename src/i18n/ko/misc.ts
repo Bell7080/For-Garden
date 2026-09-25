@@ -126,6 +126,7 @@ export const MISC_KO = {
   "mail.tab.reward": "우편",
   "mail.tab.notice": "안내",
   "mail.claim": "받기",
+  "mail.attachments": "첨부 {count}",
   "mail.readAll": "모두 읽음",
   "mail.daysLeft": "{days}일 남음",
   "mail.hoursLeft": "{hours}:{minutes} 남음",

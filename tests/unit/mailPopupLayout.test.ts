@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { MailDto } from "../../src/api/contracts";
-import { MAIL_POPUP_LAYOUT, mailListRows, mailRewardSlots, mailRewardX, mailTabOf, mailTabX, sortMails } from "../../src/ui/mailPopupLayout";
+import { MAIL_DETAIL_LAYOUT, mailDetailRail, MAIL_POPUP_LAYOUT, mailListRows, mailRewardSlots, mailRewardX, mailTabOf, mailTabX, sortMails } from "../../src/ui/mailPopupLayout";
 
 const mail = (overrides: Partial<MailDto>): MailDto => ({ id: "m", title: "t", sender: "s", body: "b", sentAt: "2026-08-01T00:00:00Z", expiresAt: null, read: false, claimed: false, rewards: [], ...overrides });
 const gold = { kind: "currency", currency: "gold", amount: 1 } as const;
@@ -30,19 +30,32 @@ describe("우편함 배치", () => {
     expect(MAIL_POPUP_LAYOUT.rewards.maxVisible).toBeGreaterThanOrEqual(5);
   });
 
-  it("첨부 줄은 카드 안에서 받기 버튼 앞에서 끝난다", () => {
+  it("첨부 줄은 카드 안에서 끝난다 — 줄에는 받기 버튼을 두지 않는다", () => {
     const { card, rewards } = MAIL_POPUP_LAYOUT;
-    const lastRight = mailRewardX(rewards.maxVisible - 1) + rewards.size / 2;
-    const buttonLeft = card.width / 2 - 96 - 70;
     expect(mailRewardX(0) - rewards.size / 2).toBeGreaterThan(-card.width / 2);
-    expect(lastRight).toBeLessThan(buttonLeft);
+    expect(mailRewardX(rewards.maxVisible - 1) + rewards.size / 2).toBeLessThan(card.width / 2 - 30);
   });
 
-  it("목록 줄은 카드 높이와 간격으로 흐르고, 하단 줄은 목록 창 아래에 선다", () => {
+  it("목록 아래에 라벨이, 그 아래 가운데에 일괄 조작이 선다", () => {
     const rows = mailListRows("reward", 3);
     const { card, viewport, footer } = MAIL_POPUP_LAYOUT;
     expect(rows.centers).toEqual([card.rewardHeight / 2, card.rewardHeight * 1.5 + card.gap, card.rewardHeight * 2.5 + card.gap * 2]);
-    expect(footer.y - footer.tab.height / 2).toBeGreaterThan(viewport.bottom);
-    expect(mailTabX(1) + footer.tab.width / 2).toBeLessThan(footer.action.x - footer.action.width / 2);
+    expect(footer.tabY - footer.tab.height / 2).toBeGreaterThan(viewport.bottom);
+    expect(footer.action.y - footer.action.height / 2).toBeGreaterThan(footer.tabY + footer.tab.height / 2);
+    expect(footer.action.x).toBe(0);
+    expect(mailTabX(0) + mailTabX(1)).toBe(0);
+  });
+
+  it("펼친 판은 글 → 첨부 → 받기 차례이고, 첨부가 적으면 가운데로 모이고 많으면 흐른다", () => {
+    const L = MAIL_DETAIL_LAYOUT;
+    expect(L.body.bottom).toBeLessThan(L.attachTitleY - 26);
+    expect(L.rail.y - L.rail.size / 2).toBeGreaterThan(L.attachTitleY + 20);
+    expect(L.claim.y - L.claim.height / 2).toBeGreaterThan(L.rail.y + L.rail.size / 2);
+    expect(L.claim.y + L.claim.height / 2).toBeLessThan(L.height / 2);
+    const few = mailDetailRail(2);
+    expect(few.xs[0] + few.xs[1]).toBeCloseTo(0);
+    const many = mailDetailRail(9);
+    expect(many.contentWidth).toBeGreaterThan(many.viewWidth);
+    expect(many.xs[0] - L.rail.size / 2).toBeCloseTo(-many.viewWidth / 2);
   });
 });

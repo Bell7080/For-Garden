@@ -81,6 +81,38 @@ export function damageKeyword(preview?: DamagePreview): KeywordDef | undefined {
 }
 
 /**
+ * 합공의 수치 태그 ID. 축과 위력마다 따로 둔다.
+ *
+ * 한 문장에 수치가 넷(합공 물리·마법, 혼자 남았을 때 물리·마법) 서는데 모두 `damage-value`
+ * 하나를 가리키면, 어느 수를 눌러도 첫 수의 산식("공격력의 45%")이 열려 나머지 셋은 제 설명과
+ * 다른 말을 듣는다. ID를 가르면 같은 값을 가진 수만 같은 쪽지를 연다.
+ */
+function dualStrikeValueId(stat: "atk" | "ap", percent: number): string {
+  return `damage-value-${stat}-${percent}`;
+}
+
+/** 합공 본문의 수치 태그가 여는 쪽지. 본문과 같은 ID·같은 값에서 짓는다. */
+export function dualStrikeDamageKeywords(skill: DescribedSkill, stats: { atk?: number; ap?: number }): KeywordDef[] {
+  if (!("dualStrike" in skill) || skill.dualStrike === undefined) return [];
+  const dual = skill.dualStrike;
+  const entries: Array<["atk" | "ap", number]> = [
+    ["atk", dual.attackPercent], ["ap", dual.abilityPercent],
+    ["atk", dual.aloneAlternatePercent], ["ap", dual.aloneAlternatePercent],
+  ];
+  const keywords = new Map<string, KeywordDef>();
+  for (const [stat, percent] of entries) {
+    const base = stats[stat];
+    if (base === undefined) continue;
+    const id = dualStrikeValueId(stat, percent);
+    keywords.set(id, {
+      id, term: String(Math.round(base * percent / 100)), kind: "rule",
+      description: t("skill.keyword.damage.single", { stat: statName(stat), percent }),
+    });
+  }
+  return [...keywords.values()];
+}
+
+/**
  * 이름을 가진 주기 스택(토리카의 「세 개의 뿔」)의 태그 정의.
  *
  * 본문은 "한 겹 쌓는다"까지만 말하고, 몇 타마다 터지는지·무엇이 얹히는지는 눌러서 읽는다.
@@ -667,19 +699,19 @@ export function skillDescription(
   // 합공은 한 행동에 두 축이 함께 들어간다. 하나로 합친 위력이 없으므로 정형 문장을 따로 짓는다.
   if ("dualStrike" in skill && skill.dualStrike !== undefined) {
     const dual = skill.dualStrike;
-    const physical = (percent: number): string => stats.atk === undefined
-      ? t("skill.value.scaling", { stat: statName("atk"), percent })
-      : `[[damage-value|${Math.round(stats.atk.atk * percent / 100)}]]`;
-    const magical = (percent: number): string => stats.ap === undefined
-      ? t("skill.value.scaling", { stat: statName("ap"), percent })
-      : `[[damage-value|${Math.round(stats.ap * percent / 100)}]]`;
+    const value = (stat: "atk" | "ap", percent: number): string => {
+      const base = stat === "atk" ? stats.atk?.atk : stats.ap;
+      return base === undefined
+        ? t("skill.value.scaling", { stat: statName(stat), percent })
+        : `[[${dualStrikeValueId(stat, percent)}|${Math.round(base * percent / 100)}]]`;
+    };
     /*
      * 순서는 **합공 → 혼자 남았을 때 → 마무리**다. 혼자 남은 한 방도 합공을 바꿔 치는 형태라
      * 합공 바로 뒤에 서야 하고, 마무리는 둘 중 무엇이든 대신하므로 맨 뒤다. 혼자 남은 몫도
      * 실제 수치로 보여 준다 — 위력(%)으로만 두면 위 문장과 단위가 갈린다.
      */
-    return t("skill.sentence.dualStrike", { physical: physical(dual.attackPercent), magical: magical(dual.abilityPercent) })
-      + ` ${t("skill.sentence.dualStrike.alone", { physical: physical(dual.aloneAlternatePercent), magical: magical(dual.aloneAlternatePercent) })}`
+    return t("skill.sentence.dualStrike", { physical: value("atk", dual.attackPercent), magical: value("ap", dual.abilityPercent) })
+      + ` ${t("skill.sentence.dualStrike.alone", { physical: value("atk", dual.aloneAlternatePercent), magical: value("ap", dual.aloneAlternatePercent) })}`
       + finisherClause(skill.finisher);
   }
   // 무리를 통째로 던지는 궁극기. 지휘자 자신은 때리지 않고 늑대의 돌진과 마무리가 전부다.

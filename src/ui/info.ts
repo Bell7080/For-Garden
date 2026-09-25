@@ -63,7 +63,7 @@ import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, typ
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
-import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, elationKeyword, passiveShieldKeyword, periodicStackKeyword, skillDescription } from "./skillPresentation";
+import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, dualStrikeDamageKeywords, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, elationKeyword, passiveShieldKeyword, periodicStackKeyword, skillDescription } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
 import { deriveSummonStats } from "../core/summonStats";
 import { galleryPortraitPlacement, INFO_PORTRAIT_FOCUS, infoPortraitPlacement } from "./portraitPlacement";
@@ -2756,6 +2756,8 @@ export function buildSkillViewModel(options: {
     contextualKeywords: [
       ...summonTags,
       ...breakthroughTags,
+      // 합공은 수치마다 제 산식을 연다. `damageDetail`은 첫 수의 산식 하나뿐이다.
+      ...dualStrikeDamageKeywords(skill as Skill, { atk: attacker?.def.stats.atk, ap: attacker?.def.stats.ap }),
       damageDetail, shieldDetail, healDetail,
       "kind" in skill ? undefined : periodicStackKeyword(skill as Skill),
       // 「고통의 희열」은 패시브 본문이 직접 가리키는 태그라 그 쪽지에도 함께 실린다.

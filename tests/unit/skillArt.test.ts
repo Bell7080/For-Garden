@@ -7,7 +7,7 @@ import { FOCUS } from "../../src/core/skirmish";
 import { KEYWORDS } from "../../src/data/keywords";
 import type { BasicAttack, Skill } from "../../src/core/types";
 import { ELEMENT_TINT, ROLE_TINT, SKILL_ART_ASSETS, SKILL_ART_SLOTS, skillArtFor, skillArtKey, skillArtTint } from "../../src/ui/skillArt";
-import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, elationKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, passiveShieldKeyword, periodicStackKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
+import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, dualStrikeDamageKeywords, elationKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, passiveShieldKeyword, periodicStackKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
 import type { SkillInfoViewModel } from "../../src/ui/SkillPopup";
 import { ENCOUNTER_ROLE_ICON_ASSETS, encounterRoleDescription, encounterRoleIcon, encounterRoleMultipliers, encounterRoleName } from "../../src/ui/encounterRolePresentation";
 
@@ -654,8 +654,9 @@ describe("스킬 설명문 양식 계약", () => {
           expect(body).toMatch(/\d+% 위력/);
           continue;
         }
-        // 그다음이 피해다. 실제 수치를 알 수 있으면 조회 가능한 태그로 보여 준다.
-        expect(body).toContain("[[damage-value|");
+        // 그다음이 피해다. 실제 수치를 알 수 있으면 조회 가능한 태그로 보여 준다(합공은 수치마다
+        // 제 산식을 여는 ID를 쓴다).
+        expect(body).toMatch(/\[\[damage-value(-(atk|ap)-\d+)?\|/);
         // 되찍는 궁극기만 그 사이에 횟수가 선다 — 위력이 총량이 아니라 한 번의 값이기 때문이다.
         expect(body).toMatch(/\[\[(physical|magical)-damage\|(물리|마법) 피해\]\]를( 동시에| \d+번)? (준다|주고)/);
       }
@@ -693,7 +694,19 @@ describe("스킬 설명문 양식 계약", () => {
     const basic = skillDescription(dian.basic, stats);
     // 합공은 두 축을 각각 실제 수치로 보여 준다 — 하나로 합치면 방어와 저항이 다르게 깎는 것이 숨는다.
     // 혼자 남은 한 방도 두 축이라 모두 넷이다.
-    expect(basic.match(/\[\[damage-value\|/g)).toHaveLength(4);
+    expect(basic.match(/\[\[damage-value-(atk|ap)-\d+\|/g)).toHaveLength(4);
+    /*
+     * **수치마다 제 산식이 열린다.** 넷이 한 ID를 가리키면 어느 수를 눌러도 첫 수의 산식
+     * (공격력의 45%)이 열려, 71·40이 제 설명과 다른 말을 들었다.
+     */
+    const tags = dualStrikeDamageKeywords(dian.basic, { atk: 160, ap: 158 });
+    for (const match of basic.matchAll(/\[\[(damage-value-[a-z]+-\d+)\|(\d+)\]\]/g)) {
+      const tag = tags.find(({ id }) => id === match[1]);
+      expect(tag, match[1]).toBeDefined();
+      expect(tag!.term).toBe(match[2]);
+    }
+    expect(tags.find(({ id }) => id === "damage-value-ap-45")!.description).toBe("현재 주문력에서 45%를 받아 계산한 피해 수치다.");
+    expect(tags.find(({ id }) => id === "damage-value-atk-25")!.description).toBe("현재 공격력에서 25%를 받아 계산한 피해 수치다.");
     expect(basic).toContain("동시에 준다");
     /*
      * **마무리는 언제 무는가만 말한다.** 남은 체력 비례 몫은 「목덜미」, 문턱이 오르는 몫은
@@ -703,7 +716,7 @@ describe("스킬 설명문 양식 계약", () => {
     expect(basic).not.toContain("남은 체력의");
     expect(basic).not.toContain("[[bloodscent|");
     // 혼자 남은 한 방도 합공과 같은 단위(실제 수치)로 선다. 위력 %만 두면 위아래 문장의 단위가 갈린다.
-    expect(basic).toContain("대신 [[damage-value|40]]의 물리 피해와 [[damage-value|40]]의 마법 피해를 번갈아 준다.");
+    expect(basic).toContain("대신 [[damage-value-atk-25|40]]의 물리 피해와 [[damage-value-ap-25|40]]의 마법 피해를 번갈아 준다.");
     // 순서는 합공 → 혼자 남았을 때 → 마무리다. 마무리는 둘 중 무엇이든 대신한다.
     expect(basic.indexOf("번갈아")).toBeLessThan(basic.indexOf("[[nape|"));
 

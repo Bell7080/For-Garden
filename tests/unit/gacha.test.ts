@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { calculateBannerExpectations, canPull, determineGrade, pull, pullCost, resolveAcquisitions, spend, type Banner, type Wallet } from "../../src/core/gacha";
-import { BANNERS } from "../../src/data/banners";
+import { BANNERS, LIMITED_RELIC_IDS, PITY_GROUP } from "../../src/data/banners";
+import { PLAYABLE_RELICS } from "../../src/data/relics";
 
 /** 모든 분기와 난수 소비 순서를 눈으로 추적할 수 있는 최소 3등급 배너다. */
 const banner: Banner = {
@@ -159,6 +160,22 @@ describe("운영 배너 데이터", () => {
       const allPools = Object.values(candidate.relicPools).flat();
       expect(allPools).toContain(candidate.featuredRelicId);
       for (const ids of Object.values(candidate.pickupRelicIds)) for (const id of ids) expect(allPools).toContain(id);
+    }
+  });
+
+  it("한정 렐릭은 상시 풀에 없고, 픽업으로 세운 배너에서만 나온다", () => {
+    /*
+     * 픽업 개체가 상시에도 있으면 픽업은 확률을 조금 올린 것일 뿐이다. 픽업이 끝난 한정 개체는
+     * 복각이나 상시 합류 전까지 어느 배너의 일반 칸에도 섞이지 않는다.
+     */
+    const playable = new Set(PLAYABLE_RELICS.map(({ id }) => id));
+    for (const id of LIMITED_RELIC_IDS) expect(playable.has(id), id).toBe(true);
+    for (const candidate of BANNERS) {
+      const pickups = new Set(Object.values(candidate.pickupRelicIds).flat());
+      for (const id of Object.values(candidate.relicPools).flat()) {
+        if (LIMITED_RELIC_IDS.has(id)) expect(pickups.has(id), `${candidate.id}:${id}`).toBe(true);
+      }
+      if (candidate.pityGroupId === PITY_GROUP.STANDARD) expect(pickups.size, candidate.id).toBe(0);
     }
   });
 

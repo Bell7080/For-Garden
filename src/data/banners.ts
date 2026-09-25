@@ -4,13 +4,37 @@ import type { RelicRarity } from "../core/types";
 import { PLAYABLE_RELICS } from "./relics";
 import { BACKGROUND } from "../ui/backgroundAssets";
 
-/** 정적 렐릭 희귀도를 기준으로 구성해 등급 결정 후 다른 등급이 섞이지 않게 한다. */
-const POOLS = Object.fromEntries(
+/**
+ * **한정 렐릭 — 상시 풀(화석 연구)에 서지 않는다.**
+ *
+ * 픽업으로 세운 개체는 그 픽업에서만 얻는다. 상시에도 함께 두면 픽업은 「확률을 조금 올린 것」일
+ * 뿐이라 호박석을 모을 이유가 되지 못한다. 픽업이 끝난 개체도 이 목록에 남아 상시에 섞이지
+ * 않으며, **다시 얻는 길은 둘뿐이다** — 복각 배너의 픽업으로 다시 세우거나, 이 목록에서 빼서
+ * 상시에 합류시킨다. 픽업 중이 아닌 한정 개체는 다른 픽업 배너의 일반 SSR 칸에도 섞이지 않는다.
+ *
+ * 간판(렉시아·스피나)은 여기에 넣지 않는다 — 놓친 사람이 게임의 얼굴을 영영 갖지 못한다.
+ */
+export const LIMITED_RELIC_IDS: ReadonlySet<string> = new Set(["dian"]);
+
+/** 정적 렐릭 희귀도를 기준으로 구성해 등급 결정 후 다른 등급이 섞이지 않게 한다. 한정 개체는 뺀다. */
+const STANDARD_POOLS = Object.fromEntries(
   (["R", "SR", "SSR"] satisfies RelicRarity[]).map((rarity) => [
     rarity,
-    PLAYABLE_RELICS.filter((relic) => relic.rarity === rarity).map((relic) => relic.id),
+    PLAYABLE_RELICS.filter((relic) => relic.rarity === rarity && !LIMITED_RELIC_IDS.has(relic.id)).map((relic) => relic.id),
   ]),
 ) as Record<RelicRarity, string[]>;
+
+/** 픽업 배너의 풀: 상시 풀 위에 **이번에 세운** 한정 픽업만 더한다. */
+function pickupPools(pickups: Partial<Record<RelicRarity, string[]>>): Record<RelicRarity, string[]> {
+  return Object.fromEntries(
+    Object.entries(STANDARD_POOLS).map(([rarity, ids]) => [
+      rarity,
+      [...ids, ...(pickups[rarity as RelicRarity] ?? []).filter((id) => !ids.includes(id))],
+    ]),
+  ) as Record<RelicRarity, string[]>;
+}
+
+const AMBER_PICKUP = { SSR: ["dian"] } as const satisfies Partial<Record<RelicRarity, string[]>>;
 
 /** 교체 배너가 같은 값을 쓰면 천장과 픽업 확정이 이월되는 명시적 운영 그룹이다. */
 export const PITY_GROUP = { STANDARD: "standard-fossil", LIMITED_PICKUP: "limited-pickup" } as const;
@@ -38,7 +62,7 @@ export const BANNERS: Banner[] = [
     ],
     // **화석 연구는 픽업이 없는 기본 연구다.** 픽업을 세우면 상시 연구가 한정 연구처럼 읽히고,
     // 호박석 연구의 픽업이 무엇이 다른지 말하지 못한다.
-    relicPools: POOLS, pickupRelicIds: {}, pickupRate: 0,
+    relicPools: STANDARD_POOLS, pickupRelicIds: {}, pickupRate: 0,
     highestRarityGuarantee: 100,
   },
   {
@@ -56,7 +80,7 @@ export const BANNERS: Banner[] = [
       { kind: "gold", min: 3_000, max: 8_000, weight: 2 },
       { kind: "cheesecake", min: 15, max: 30, weight: 1 },
     ],
-    relicPools: POOLS, pickupRelicIds: { SSR: ["dian"] }, pickupRate: 0.5,
+    relicPools: pickupPools(AMBER_PICKUP), pickupRelicIds: { SSR: [...AMBER_PICKUP.SSR] }, pickupRate: 0.5,
     highestRarityGuarantee: 100,
   },
 ];

@@ -24,7 +24,7 @@ const MULTIPLIER = {
 const CHART = { width: 700, height: 800, radius: 212, icon: 92, centerY: 26 } as const;
 /** 속성 쪽지. 아이콘·이름 아래로 유리·불리 두 줄이 선다. */
 const DETAIL = { width: 620, height: 520, icon: 128, rowIcon: 70 } as const;
-const ROLE_NOTE = { width: 600, height: 430, icon: 128 } as const;
+const ROLE_NOTE = { width: 640, icon: 128 } as const;
 
 /**
  * 속성 상성표.
@@ -86,13 +86,20 @@ export function openElementPopup(scene: Phaser.Scene, popups: PopupLayer, elemen
  * 정하고 그것들은 제 칸이 이미 말하고 있다.
  */
 export function openRolePopup(scene: Phaser.Scene, popups: PopupLayer, role: Role, anchor?: { x: number; y: number }): void {
+  // 판 높이는 설명이 실제로 차지한 높이에서 거꾸로 구한다 — 언어마다 줄 수가 다르다.
+  const style = textStyle({ role: "body", size: 26, color: COLOR.ink, align: "center", wrap: ROLE_NOTE.width - 110, lineSpacing: 8 });
+  const probe = scene.add.text(0, 0, t(`role.desc.${role}`), style).setVisible(false);
+  const textHeight = probe.height;
+  probe.destroy();
+  const iconTop = 76;
+  const height = iconTop + ROLE_NOTE.icon + 36 + textHeight + 60;
   popups.open(
-    { width: ROLE_NOTE.width, height: ROLE_NOTE.height, title: t(`role.${role}`), closeOnBackdrop: true, hideCloseButton: true, ...(anchor ? { anchor } : {}) },
+    { width: ROLE_NOTE.width, height, title: t(`role.${role}`), closeOnBackdrop: true, hideCloseButton: true, ...(anchor ? { anchor } : {}) },
     (body) => {
-      body.add(new AffinityBadge(scene, 0, -ROLE_NOTE.height / 2 + 136, ROLE_ICON[role], ROLE_NOTE.icon, 0.55));
+      body.add(new AffinityBadge(scene, 0, -height / 2 + iconTop + ROLE_NOTE.icon / 2, ROLE_ICON[role], ROLE_NOTE.icon, 0.55));
       body.add(scene.add
-        .text(0, 78, t(`role.desc.${role}`), textStyle({ role: "body", size: 26, color: COLOR.ink, align: "center", wrap: ROLE_NOTE.width - 120 }))
-        .setOrigin(0.5));
+        .text(0, -height / 2 + iconTop + ROLE_NOTE.icon + 36, t(`role.desc.${role}`), style)
+        .setOrigin(0.5, 0));
     },
   );
 }

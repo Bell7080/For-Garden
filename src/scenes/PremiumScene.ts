@@ -28,7 +28,7 @@ import {
   premiumTabSpot, premiumTitleLeft, premiumTitleY,
 } from "../ui/premiumLayout";
 import { consumeSceneEntry } from "./sceneEntry";
-import { playSceneEntrance, startScene } from "../ui/screenTransition";
+import { playSceneEntrance, startScene, slideTabPage } from "../ui/screenTransition";
 import { pressIn, pressOut } from "../ui/pressFeedback";
 
 /**
@@ -201,10 +201,13 @@ export class PremiumScene extends Phaser.Scene {
   /** 라벨을 바꾸면 이전 스크롤을 버리고 그 갈래의 첫 상품부터 다시 보여 준다. */
   private selectCategory(category: PremiumCategory): void {
     if (category === this.selectedCategory) return;
+    const indexOf = (id: PremiumCategory): number => PREMIUM_TABS.findIndex((tab) => tab.id === id);
+    const from = indexOf(this.selectedCategory);
     this.selectedCategory = category;
     if (this.content) this.content.y = 0;
     this.createTabs();
     this.renderProducts();
+    if (this.content) slideTabPage(this, [this.content], from, indexOf(category));
   }
 
   /** 격자가 흐르는 창 안의 손인지. 마스크와 같은 값을 읽어 보이는 것과 눌리는 것을 맞춘다. */

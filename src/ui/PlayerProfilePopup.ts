@@ -160,17 +160,26 @@ export class PlayerProfilePopup {
       textStyle({ role: "emphasis", size: 22, color: COLOR.ink })).setOrigin(1, 0.5));
   }
 
-  /** 한 줄 소개. 따옴표 사이에 서는 그 사람의 말이라 본문 글꼴이다. 비었으면 줄을 세우지 않는다. */
+  /**
+   * 한 줄 소개. 따옴표는 글자가 아니라 **판의 장식**이다 — 왼쪽 위에 여는 따옴표, 오른쪽 아래에 닫는
+   * 따옴표가 테두리 색으로 판에 찍혀, 비어 있어도 "누군가의 말이 설 자리"로 읽힌다. 글자에 따옴표를
+   * 붙이면 소개가 짧을 때 가운데에 작은 기호 둘만 모여 판의 장식과 겹쳐 보인다. 비었으면 남의 카드는
+   * 줄을 세우지 않는다.
+   */
   private buildBio(body: Phaser.GameObjects.Container, frame: ProfileFrameDefinition): void {
     // 남의 카드에서 빈 소개는 줄째 비운다. 자기 카드는 빈 줄도 세워 둬야 눌러서 적을 자리가 있다.
     if (!this.profile.bio && !this.editors) return;
     const { bio } = PLAYER_PROFILE_LAYOUT;
     const shape = slantedRect(bio.width, bio.height, 18);
     body.add(drawLayer(this.scene, 0, bio.y, shape, { fill: 0x0c1118, alpha: 0.78, edge: frame.color, edgeAlpha: 0.5 }));
-    // 인사말은 **말하는 한 줄**이라 본문 글꼴이 아니라 강조 글꼴로 세우고, 따옴표도 같은 글자 안에 둔다 —
-    // 큰 따옴표를 따로 세우면 그 한 글자만 다른 크기·굵기로 떠 판 구석의 얼룩처럼 읽혔다.
+    const { quote } = bio;
+    // 닫는 따옴표는 연필이 서는 자기 카드에서는 그 왼쪽으로 물러난다.
+    const closeX = bio.width / 2 - (this.editors ? quote.inset + 58 : quote.inset);
+    const mark = (x: number, y: number, glyph: string, originX: number): Phaser.GameObjects.Text =>
+      this.scene.add.text(x, y, glyph, textStyle({ role: "display", size: quote.size, color: hex(frame.color) })).setOrigin(originX, 0.5).setAlpha(quote.alpha);
+    body.add([mark(-bio.width / 2 + quote.inset, bio.y + quote.openY, "\u201C", 0), mark(closeX, bio.y + quote.closeY, "\u201D", 1)]);
     if (this.profile.bio) {
-      body.add(this.scene.add.text(0, bio.y, t("profile.bio.quoted", { bio: this.profile.bio }), textStyle({ role: "emphasis", size: 30, color: COLOR.ink, wrap: bio.width - 140 }))
+      body.add(this.scene.add.text(0, bio.y, this.profile.bio, textStyle({ role: "emphasis", size: 30, color: COLOR.ink, wrap: bio.width - 160 }))
         .setOrigin(0.5).setShadow(0, 2, "#05070a", 4, false, true));
     }
     if (this.editors) {

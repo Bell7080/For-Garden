@@ -9,7 +9,9 @@ import { latinEcho } from "../ui/latinEcho";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { RailButton } from "../ui/RailButton";
-import { addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
+import { addSectionTitle } from "../ui/SectionTitle";
+import { drawGlyph } from "../ui/glyphs";
+import { POPUP_BODY_BEVEL_RATIO } from "../ui/popupGeometry";
 import { TopBar } from "../ui/TopBar";
 import { chipPoints, drawLayer, drawVignette, HOLO } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
@@ -18,7 +20,7 @@ import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { gameApi } from "../api/FakeServer";
 import { loadPlayerProfileDisplay } from "../managers/PlayerProfileManager";
 import { bondDialogue } from "../data/bonds";
-import { PopupLayer } from "../ui/PopupLayer";
+import { PopupLayer, POPUP_TITLE_SIZE } from "../ui/PopupLayer";
 import { IdleExcavationPopup } from "../ui/IdleExcavationPopup";
 import { TradePopup } from "../ui/TradePopup";
 import { BACK_SLOT, IconButton } from "../ui/IconButton";
@@ -59,6 +61,7 @@ import { consumeSceneEntry } from "./sceneEntry";
 import { normalizeLobbyEntry, type LobbyMenu } from "./lobbyEntry";
 import { prefetchIdlePuppets } from "../puppets/battlePrefetch";
 import { relicCollection } from "../managers/RelicCollectionManager";
+import { pressIn, pressOut } from "../ui/pressFeedback";
 
 /**
  * 로비에 선 애착 렐릭의 층.
@@ -78,10 +81,22 @@ const EXCHANGE_BLUE = COLOR.exchange;
 /**
  * 출격 선택판.
  *
- * 전리품 상점은 스토리 칸 오른쪽 위에 걸친 꼬리표다(`SIDE_SHOP.sortie`).
+ * 전리품 상점은 출격판 밑에 제 제목을 단 판으로 따로 선다(`SORTIE_MENU.shop`).
  * `dimAlpha`는 뒤 로비를 은은하게만 눌러 판을 떼어 놓는다 — 짙으면 애착 렐릭이 사라진다.
  */
-const SORTIE_MENU = { panel: { width: 980, height: 1240 }, motionDelay: 2600, dimAlpha: 0.42 } as const;
+/**
+ * 출격 선택판.
+ *
+ * **상점은 콘텐츠 칸과 한 판에 섞지 않는다.** 스토리 칸 모서리에 황금 칩으로 걸어 두던 때는 어디에
+ * 속한 것인지 애매했다 — 판 밑에 한 뼘 띄워 **제 제목을 단 판**(`shop`)을 따로 세우고 거기에 상점을
+ * 한 줄씩 담는다. 그 자리를 내려고 본판을 `panel.offsetY`만큼 올린다(칸끼리의 자리는 그대로).
+ */
+const SORTIE_MENU = {
+  panel: { width: 980, height: 1240, offsetY: -80 },
+  shop: { gap: 32, height: 180, titleSize: 30, rowGap: 16, row: { width: 800, height: 104 } },
+  motionDelay: 2600,
+  dimAlpha: 0.42,
+} as const;
 /**
  * 결투 선택판.
  *
@@ -424,7 +439,7 @@ export class LobbyScene extends Phaser.Scene {
   private openPvpMenu(instant = false): void {
     if (!this.popupLayer || this.popupLayer.isOpen) return;
     const panel = PVP_MENU.panel;
-    this.popupLayer.open({ width: panel.width, height: panel.height, title: t("lobby.duel"), titleSize: 34, dim: true, dimAlpha: 0.24, closeOnBackdrop: false, hideCloseButton: true, instant, onClose: () => this.clearSortieChrome() }, (body, close) => {
+    this.popupLayer.open({ width: panel.width, height: panel.height, title: t("lobby.duel"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.24, closeOnBackdrop: false, hideCloseButton: true, instant, onClose: () => this.clearSortieChrome() }, (body, close) => {
       PVP_MODES.forEach((mode, index) => {
         const y = PVP_MENU.firstY + index * PVP_MENU.stepY;
         body.add(new ExpeditionEntryButton(this, 0, y, {
@@ -448,7 +463,8 @@ export class LobbyScene extends Phaser.Scene {
     // 다섯 콘텐츠가 저마다 원화와 SD를 세우므로 판을 한 뼘 키워 서로 붙어 보이지 않게 한다.
     const panel = SORTIE_MENU.panel;
     // 일반 작업판보다 암전을 옅게 해 로비의 애착 렐릭이 뒤에서 계속 보이도록 한다.
-    this.popupLayer.open({ width: panel.width, height: panel.height, title: t("lobby.sortie.title"), titleSize: 34, dim: true, dimAlpha: SORTIE_MENU.dimAlpha, closeOnBackdrop: false, hideCloseButton: true, instant, onClose: () => this.clearSortieChrome() }, (body, close) => {
+    const panelY = BASE_HEIGHT / 2 + panel.offsetY;
+    this.popupLayer.open({ width: panel.width, height: panel.height, y: panelY, title: t("lobby.sortie.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: SORTIE_MENU.dimAlpha, closeOnBackdrop: false, hideCloseButton: true, instant, onClose: () => this.clearSortieChrome() }, (body, close) => {
       // Puppet은 컨테이너 변환을 물려받지 않으므로 원점에 선 전용 레이어에 화면 좌표로 세운다.
       this.sortieSdLayer = this.add.container(0, 0).setName("sortie-entry-sd").setDepth(SORTIE_SD_DEPTH);
       const entries: SortieEntry[] = [
@@ -498,7 +514,7 @@ export class LobbyScene extends Phaser.Scene {
         const spot = sortieEntrySdSpot(entry.width, entry.height, sdSide ?? "left");
         void this.spawnSortieSd(entry.sd, {
           x: BASE_WIDTH / 2 + x + spot.x,
-          groundY: BASE_HEIGHT / 2 + entry.y + spot.groundY,
+          groundY: panelY + entry.y + spot.groundY,
           height: Math.round(spot.height * (entry.sdScale ?? 1)),
           shadowOffsetX: spot.shadowOffsetX,
           shadowOffsetY: spot.shadowOffsetY,
@@ -507,14 +523,10 @@ export class LobbyScene extends Phaser.Scene {
       });
       // 돌아가기는 판 안이 아니라 다른 팝업과 같은 화면 우하단 슬롯에 선다.
       this.sortieBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: close }).setDepth(SORTIE_SD_DEPTH + 1);
-      // 전리품 상점은 **스토리 칸 오른쪽 위에 걸친 꼬리표**다 — 연구소·고고학의 상점과 같은 황금빛
-      // 아이콘 칩(`addSideShopButton`)이다. 판 안의 칸 다섯은 「어디로 나갈까」를 고르는 자리라
-      // 같은 크기로 끼워 넣으면 여섯 번째 콘텐츠로 읽히므로, 작게 칸 모서리에 달아 곁들임으로 둔다.
-      // 판과 함께 여닫히도록 판(`body`)에 넣는다.
-      const shopTag = SIDE_SHOP.sortie;
-      body.add(addSideShopButton(this, shopTag.x, shopTag.y, shopTag.size, t("lobby.sortie.shopShort"), () => {
-        close(); startScene(this, "shop", { storefront: "loot", returnScene: "lobby", returnMenu: "sortie" });
-      }));
+      // 상점은 본판 밑의 제 판에 선다. 판과 함께 여닫히도록 본판(`body`)에 넣는다.
+      this.addSortieShopPanel(body, [
+        { label: t("shop.loot.title"), onClick: () => { close(); startScene(this, "shop", { storefront: "loot", returnScene: "lobby", returnMenu: "sortie" }); } },
+      ]);
       // 세워 둔 SD가 가끔 한 번씩 움직인다. 다섯 칸이 동시에 뛰면 무엇을 고르는 화면인지 흐려지므로
       // 한 번에 하나만, 그것도 드문드문 재생한다.
       this.sortieSdTimer = this.time.addEvent({ delay: SORTIE_MENU.motionDelay, loop: true, callback: () => {
@@ -525,6 +537,41 @@ export class LobbyScene extends Phaser.Scene {
         playMotion(this, pair.body, motion);
         if (pair.shadow) playMotion(this, pair.shadow, motion);
       } });
+    });
+  }
+
+  /**
+   * 출격판 밑의 상점 판 — 본판과 같은 몸판·같은 제목표를 한 뼘 띄워 세우고, 상점을 한 줄씩 담는다.
+   *
+   * 줄은 황금빛 상점 표식 · 이름 · 화살표만 선다. 로비·연구소의 상점 칩과 같은 금색이라 「사러 간다」가
+   * 화면마다 같은 색으로 읽히고, 원화가 없어 위의 콘텐츠 칸보다 낮고 조용하다. 상점이 늘면 줄을 더하면
+   * 되고 판 높이는 줄 수에서 나온다.
+   */
+  private addSortieShopPanel(body: Phaser.GameObjects.Container, shops: readonly { label: string; onClick: () => void }[]): void {
+    const { panel, shop } = SORTIE_MENU;
+    const height = shop.height + (shops.length - 1) * (shop.row.height + shop.rowGap);
+    const centerY = panel.height / 2 + shop.gap + height / 2;
+    const unit = Math.min(panel.width, height);
+    const shape = chipPoints(panel.width, height, { bevel: { topLeft: unit * POPUP_BODY_BEVEL_RATIO, topRight: 0, bottomRight: unit * POPUP_BODY_BEVEL_RATIO, bottomLeft: 0 } });
+    body.add(drawLayer(this, 0, centerY, shape, { fill: 0x0b0f15, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.6 }));
+    // 판의 빈 곳을 누른 손이 뒤로 새지 않게 막는다(팝업 몸판과 같은 이유).
+    body.add(this.add.rectangle(0, centerY, panel.width, height, 0xffffff, 0).setInteractive());
+    addSectionTitle(this, -panel.width / 2 + unit * 0.1, centerY - height / 2, t("lobby.sortie.shopTitle"), { size: shop.titleSize, parent: body });
+    const firstY = centerY - height / 2 + shop.height / 2 + 10;
+    shops.forEach((entry, index) => {
+      const row = this.add.container(0, firstY + index * (shop.row.height + shop.rowGap));
+      const rowShape = chipPoints(shop.row.width, shop.row.height, { bevel: { topLeft: shop.row.height * 0.3, topRight: 0, bottomRight: shop.row.height * 0.3, bottomLeft: 0 } });
+      row.add(drawLayer(this, 0, 0, rowShape, { fill: 0x2a2418, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.8 }));
+      const left = -shop.row.width / 2;
+      row.add(drawGlyph(this, "shop", left + 72, 0, 50, COLOR.accent, 1, 3));
+      row.add(this.add.text(left + 128, 0, entry.label, textStyle({ role: "display", size: 34, color: COLOR.accentText })).setOrigin(0, 0.5));
+      row.add(drawGlyph(this, "page-next", shop.row.width / 2 - 50, 0, 32, COLOR.accent, 0.9, 3));
+      const hit = this.add.rectangle(0, 0, shop.row.width, shop.row.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      hit.on("pointerdown", () => pressIn(row));
+      hit.on("pointerout", () => pressOut(row, "normal", { pop: false }));
+      hit.on("pointerup", () => { pressOut(row); entry.onClick(); });
+      row.add(hit);
+      body.add(row);
     });
   }
 

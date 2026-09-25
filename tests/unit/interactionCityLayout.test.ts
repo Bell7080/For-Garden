@@ -17,24 +17,27 @@ const FRAME = INTERACTION_CITY_REWARD_FRAME;
 const halfLine = (size: number): number => size / 2;
 
 describe("도시 쪽지의 안내 줄", () => {
-  it("은 위에서 아래로 구분선 · 소요 시간 · 돌아오는 것 차례다", () => {
-    expect(ROWS.divider).toBeLessThan(ROWS.duration);
-    expect(ROWS.duration).toBeLessThan(ROWS.rewardLabel);
+  it("은 위에서 아래로 특화 · 예상 보상 · 액자 · 범위 차례다", () => {
+    expect(ROWS.specialty).toBeLessThan(ROWS.rewardLabel);
     expect(ROWS.rewardLabel).toBeLessThan(ROWS.rewardFrames);
+    expect(ROWS.rewardFrames).toBeLessThan(ROWS.rewardRange);
   });
 
-  it("은 설명과 구분선이 겹치지 않는다 — 설명이 두 줄로 늘어나도 남는다", () => {
+  it("은 설명과 특화 줄이 겹치지 않는다 — 설명이 두 줄로 늘어나도 남는다", () => {
     const descriptionTop = INTERACTION_CITY_LOWER.top + INTERACTION_CITY_BRIEF_ART.height + INTERACTION_CITY_BRIEF_ART.descriptionGap;
     const descriptionBottom = descriptionTop + INTERACTION_CITY_BRIEF_ART.descriptionSize * 2 * 1.35;
-    expect(INTERACTION_CITY_LOWER.bottom + ROWS.divider).toBeGreaterThan(descriptionBottom);
+    expect(INTERACTION_CITY_LOWER.bottom + ROWS.specialty - INTERACTION_CITY_BRIEF_TEXT.badge / 2).toBeGreaterThan(descriptionBottom);
   });
 
-  it("은 소요 시간과 돌아오는 것 이름표가 한 뼘 떨어져 선다", () => {
-    // 둘이 같은 줄에 겹쳐 두 문장이 서로를 갉아먹던 자리다. 닿지 않는 것만으로는 모자라 —
-    // 글자 한 줄만큼은 벌어져야 두 정보로 읽힌다.
-    const durationBottom = ROWS.duration + halfLine(INTERACTION_CITY_BRIEF_TEXT.duration);
-    const labelTop = ROWS.rewardLabel - halfLine(INTERACTION_CITY_BRIEF_TEXT.rewardLabel);
-    expect(labelTop - durationBottom).toBeGreaterThanOrEqual(INTERACTION_CITY_BRIEF_TEXT.rewardLabel / 2);
+  it("은 특화 줄과 예상 보상 제목표가 한 뼘 떨어져 선다", () => {
+    const specialtyBottom = ROWS.specialty + INTERACTION_CITY_BRIEF_TEXT.badge / 2;
+    const labelTop = ROWS.rewardLabel - halfLine(INTERACTION_CITY_BRIEF_TEXT.rewardLabel * 1.52);
+    expect(labelTop - specialtyBottom).toBeGreaterThanOrEqual(0);
+  });
+
+  it("은 범위 글자가 액자 밑에 붙고 조작 위에서 끝난다", () => {
+    expect(ROWS.rewardRange - halfLine(INTERACTION_CITY_BRIEF_TEXT.range)).toBeGreaterThanOrEqual(ROWS.rewardFrames + FRAME.size / 2);
+    expect(INTERACTION_CITY_LOWER.bottom + ROWS.rewardRange + halfLine(INTERACTION_CITY_BRIEF_TEXT.range)).toBeLessThan(INTERACTION_CITY_ACTION.y - INTERACTION_CITY_ACTION.height / 2);
   });
 
   it("은 이름표가 액자에 깔리지 않는다", () => {

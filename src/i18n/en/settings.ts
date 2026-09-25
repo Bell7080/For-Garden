@@ -1,5 +1,6 @@
 /** The settings screen: sound, alerts, play, accessibility, support. */
 export const SETTINGS_EN = {
+  "settings.picker.confirm": "Confirm",
   "settings.title": "Settings",
   "settings.tab.sound": "Sound",
   "settings.tab.alerts": "Alerts",

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { slideTabPage } from "./screenTransition";
 import { t, type TextKey } from "../i18n";
 import { BIO_MAX_LENGTH, NICKNAME_MAX_LENGTH, NICKNAME_MIN_LENGTH, nicknameProblem } from "../core/playerCard";
 import { playerCardManager } from "../managers/PlayerCardManager";
@@ -58,7 +59,7 @@ export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone:
       ([["photo", "profile.picker.photo"], ["frame", "profile.picker.frame"]] as const).forEach(([id, labelKey], index) => {
         addCategoryTab(scene, tabs, {
           x: (index - 0.5) * (width + gap), y: 0, width, height: tabHeight, label: t(labelKey), selected: tab === id, face: "down",
-          onSelect: () => { if (tab === id) return; tab = id; paintTabs(); paintList(); },
+          onSelect: () => { if (tab === id) return; const from = 1 - index; tab = id; paintTabs(); paintList(); slideTabPage(scene, [list], from, index); },
         });
       });
     };

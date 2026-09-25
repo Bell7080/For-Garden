@@ -84,8 +84,8 @@ describe("모집판 배너 원화", () => {
     // 그 한 장이 곧 배경이므로 배경 층에 선다.
     expect(lab).toMatch(/showcase = image;/);
     // 새 원화는 앞 배너 원화 바로 위(-29)에서 녹아 들고, 다 서면 배경 층(-30)으로 내려앉는다.
-    expect(lab).toMatch(/"__DEFAULT"\)\.setDepth\(-29\)/);
-    expect(lab).toMatch(/loaded\.setDepth\(-30\)/);
+    expect(lab).toMatch(/"__DEFAULT"\)\.setDepth\(LAB_CHROME\.depth\.incomingArt\)/);
+    expect(lab).toMatch(/loaded\.setDepth\(LAB_CHROME\.depth\.art\)/);
   });
 
   it("는 이미 올라와 있는 그림도 제대로 물린다", () => {

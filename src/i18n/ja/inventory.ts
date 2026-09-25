@@ -1,19 +1,19 @@
 /** 가방·스테미나 창·출격 미리보기의 일본어 표. */
 export const INVENTORY_JA = {
-  "inventory.rune.equipped": "装着 · {name}",
   "inventory.title": "バッグ",
   "inventory.tab.rune": "ルーン",
   "inventory.tab.currency": "通貨",
   "inventory.tab.consumable": "消費アイテム",
   "inventory.tab.material": "素材",
+  "inventory.rune.count": "所持",
   "inventory.sort.acquired": "取得順",
   "inventory.sort.rarity": "ランク",
   "inventory.sort.part": "部位",
   "inventory.sort.craft": "研磨",
   "inventory.sort.equipped": "装着",
-  "inventory.itemDetail": "{description}\n\n所持 {quantity}",
-  "inventory.useConfirm": "アイテムを1個使用しますか？",
-  "inventory.use": "使用",
+  "inventory.guide.held": "所持",
+  "inventory.guide.effect": "効果",
+  "inventory.useButton": "使用する",
   "inventory.useDone": "使用完了",
   "inventory.staminaGained": "スタミナ +{amount}",
 

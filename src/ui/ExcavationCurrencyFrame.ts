@@ -3,6 +3,8 @@ import { formatCurrency } from "../core/formatCurrency";
 import { chipPoints, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
 import type { CurrencyIconKey } from "./currencyIcons";
 import { COLOR, textStyle } from "./theme";
+import { currencyGuideForIcon } from "./itemFrame";
+import { pressIn, pressOut } from "./pressFeedback";
 
 /** 액자 한 칸의 규격. 보상 팝업의 액자와 같은 실루엣·같은 외곽선을 쓴다. */
 const FRAME = { size: 128, icon: 100, bevel: 28 } as const;
@@ -37,6 +39,15 @@ export class ExcavationCurrencyFrame extends Phaser.GameObjects.Container {
     this.rateText = scene.add.text(0, 68, "0/H", textStyle({ role: "emphasis", size: 20, color: COLOR.inkDim })).setOrigin(0.5);
     this.rateText.setShadow(0, 2, "#000000", 3, false, true);
     this.add(this.rateText);
+    // 누르면 그 재화의 안내창이 열린다 — 가방·보상 액자와 같은 그림은 같은 일을 한다.
+    const openGuide = currencyGuideForIcon(scene, iconKey);
+    if (openGuide) {
+      const hit = scene.add.rectangle(0, -18, FRAME.size, FRAME.size, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      hit.on("pointerdown", () => pressIn(this));
+      hit.on("pointerout", () => pressOut(this, "normal", { pop: false }));
+      hit.on("pointerup", () => { pressOut(this); openGuide(); });
+      this.add(hit);
+    }
   }
 
   /** 틱에서는 프리팹을 재생성하지 않고 두 숫자 텍스처만 갱신한다. */

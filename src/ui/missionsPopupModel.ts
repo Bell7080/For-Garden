@@ -26,3 +26,26 @@ export class MissionClaimController {
     finally { unique.forEach((id) => this.pending.delete(id)); }
   }
 }
+
+/**
+ * 그 기간이 다음에 초기화되기까지 남은 시간. 일일은 다음 UTC 자정, 주간은 다음 UTC 월요일
+ * 자정이다 — 서버의 `missionPeriodKeys`와 같은 경계를 쓴다.
+ */
+export function missionResetRemainingMs(period: MissionPeriod, now: Date): number {
+  const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+  if (period === "weekly") {
+    // 다음 날 자정에서부터 월요일까지 더 간다. 오늘이 일요일이면 곧 월요일이다.
+    const daysToMonday = (8 - next.getUTCDay()) % 7;
+    next.setUTCDate(next.getUTCDate() + daysToMonday);
+  }
+  return Math.max(0, next.getTime() - now.getTime());
+}
+
+/** 남은 시간을 `1일 04:12:09`·`04:12:09`로 적는다. 일 수는 언어와 무관한 약자 없이 수만 붙인다. */
+export function formatResetRemaining(ms: number): string {
+  const total = Math.floor(ms / 1000);
+  const days = Math.floor(total / 86_400);
+  const pad = (value: number): string => String(value).padStart(2, "0");
+  const clock = `${pad(Math.floor((total % 86_400) / 3600))}:${pad(Math.floor((total % 3600) / 60))}:${pad(total % 60)}`;
+  return days > 0 ? `${days}D ${clock}` : clock;
+}

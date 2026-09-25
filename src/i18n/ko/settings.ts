@@ -8,6 +8,7 @@
  * (`tests/unit/i18n.test.ts`가 검사한다) — 번역이 자리를 새로 만들면 그 값은 영영 채워지지 않는다.
  */
 export const SETTINGS_KO = {
+  "settings.picker.confirm": "확인",
   "settings.title": "환경 설정",
 
   "settings.tab.sound": "사운드",

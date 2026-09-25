@@ -1,5 +1,6 @@
 /** 환경설정 화면의 일본어 표. 키와 자리 표시는 한국어 표와 같아야 한다. */
 export const SETTINGS_JA = {
+  "settings.picker.confirm": "決定",
   "settings.title": "環境設定",
 
   "settings.tab.sound": "サウンド",

@@ -1,24 +1,18 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { drawGlyph } from "./glyphs";
-import { chipPoints, drawLayer, drawShapeEdge, slantedRect, toPoints } from "./holo";
+import { chipPoints, drawLayer, slantedRect, toPoints } from "./holo";
+import { CONTROL_BAR as BAR, SortControl, type SortOption } from "./SortControl";
 import { COLOR, textStyle } from "./theme";
 import {
   RELIC_AFFINITY_BUTTON,
   RELIC_CONTROL_ROW,
-  RELIC_SORT_MENU,
   relicAffinityButtonY,
   relicControlSpots,
-  relicSortMenuHeight,
-  relicSortMenuRowY,
 } from "./relicGridLayout";
 import { pressIn, pressOut } from "./pressFeedback";
 
-/** 정렬 목록 한 줄. 화면이 아니라 부르는 쪽이 기준과 이름을 함께 넘긴다. */
-export interface SortOption<T extends string> {
-  readonly id: T;
-  readonly label: string;
-}
+export type { SortOption };
 
 export interface RelicControlBarOptions<T extends string> {
   readonly sortOptions: readonly SortOption<T>[];
@@ -36,7 +30,6 @@ export interface RelicControlBarOptions<T extends string> {
   readonly filterCount: number;
 }
 
-const BAR = { fill: 0x080d13, alpha: 0.86 } as const;
 /** 글자가 깜빡이는 주기. 손이 지금 이 칸에 있다는 것만 말하면 되므로 느리게 둔다. */
 const CARET = { width: 4, duration: 520 } as const;
 
@@ -55,20 +48,14 @@ export class RelicControlBar {
   private readonly placeholder: Phaser.GameObjects.Text;
   private readonly caret: Phaser.GameObjects.Rectangle;
   private caretTween?: Phaser.Tweens.Tween;
-  private readonly sortLabel: Phaser.GameObjects.Text;
-  /** 방향 칩의 화살표. 뒤집을 때 다시 그리지 않고 회전만 시킨다. */
-  private readonly sortArrow: Phaser.GameObjects.Container;
-  private descending: boolean;
-  private menu?: Phaser.GameObjects.Container;
+  /** 정렬 기준 + 방향 — 룬 가방과 같은 한 장(`SortControl`). */
+  private readonly sort: SortControl<string>;
   private readonly filterBadge: Phaser.GameObjects.Container;
   private readonly filterCountText: Phaser.GameObjects.Text;
-  private sortMode: string;
 
   constructor(private readonly scene: Phaser.Scene, private readonly options: RelicControlBarOptions<string>) {
     const spots = relicControlSpots();
     const { y, height } = RELIC_CONTROL_ROW;
-    this.sortMode = options.sortMode;
-    this.descending = options.descending;
 
     // ── 필터 ──────────────────────────────────────────────────────────────
     const filter = scene.add.container(spots.filter.x, y);
@@ -158,43 +145,12 @@ export class RelicControlBar {
     const searchHit = scene.add.rectangle(spots.search.x, y, spots.search.width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     searchHit.on("pointerup", () => this.input.focus());
 
-    // ── 정렬 ──────────────────────────────────────────────────────────────
-    const sortShape = slantedRect(spots.sort.width, height, 16);
-    const sort = scene.add.container(spots.sort.x, y);
-    sort.add(drawLayer(scene, 0, 0, sortShape, { fill: BAR.fill, alpha: BAR.alpha }));
-    sort.add(drawShapeEdge(scene, 0, 0, sortShape, "top", { color: COLOR.accent, alpha: 0.6, width: 3 }));
-    this.sortLabel = scene.add
-      .text(-spots.sort.width / 2 + 30, 0, this.labelOf(this.sortMode), textStyle({ role: "display", size: 27, color: COLOR.accentText }))
-      .setOrigin(0, 0.5);
-    sort.add(this.sortLabel);
-    sort.add(drawGlyph(scene, "caret-down", spots.sort.width / 2 - 32, 2, 26, COLOR.accent, 0.9, 3));
-    const sortHit = scene.add.rectangle(0, 0, spots.sort.width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    sortHit.on("pointerdown", () => pressIn(sort));
-    sortHit.on("pointerout", () => pressOut(sort, "normal", { pop: false }));
-    sortHit.on("pointerup", () => { pressOut(sort); this.toggleMenu(spots.sort.x, y, spots.sort.width); });
-    sort.add(sortHit);
-
-    // ── 정렬 방향 ─────────────────────────────────────────────────────────
-    // **목록 이름과 따로 선다.** 한 칸에 두면 누를 때마다 기준을 고르는 것인지 방향을 뒤집는
-    // 것인지 손이 알 수 없다. 화살표가 아래를 가리키면 큰 값이 먼저다.
-    const dirShape = slantedRect(spots.sortDir.width, height, 16);
-    const direction = scene.add.container(spots.sortDir.x, y);
-    direction.add(drawLayer(scene, 0, 0, dirShape, { fill: BAR.fill, alpha: BAR.alpha }));
-    this.sortArrow = scene.add.container(0, 0);
-    this.sortArrow.add(drawGlyph(scene, "sort-arrow", 0, 0, 36, COLOR.accent, 0.95, 3));
-    direction.add(this.sortArrow);
-    this.paintDirection();
-    const dirHit = scene.add.rectangle(0, 0, spots.sortDir.width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    dirHit.on("pointerdown", () => pressIn(direction));
-    dirHit.on("pointerout", () => pressOut(direction, "normal", { pop: false }));
-    dirHit.on("pointerup", () => {
-      pressOut(direction);
-      this.closeMenu();
-      this.descending = !this.descending;
-      this.paintDirection();
-      options.onDirection(this.descending);
+    // ── 정렬 · 방향 ───────────────────────────────────────────────────────
+    this.sort = new SortControl(scene, {
+      x: spots.sort.x, y, height, sortWidth: spots.sort.width, dirWidth: spots.sortDir.width, gap: RELIC_CONTROL_ROW.gap,
+      sortOptions: options.sortOptions, sortMode: options.sortMode, descending: options.descending,
+      onSort: options.onSort, onDirection: options.onDirection,
     });
-    direction.add(dirHit);
 
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.destroy());
   }
@@ -206,13 +162,7 @@ export class RelicControlBar {
    * 고른 기준이 아니라 직전 방향이 남긴 결과다 — 기준을 고르는 손은 방향까지 고른 적이 없다.
    */
   setDirection(descending: boolean): void {
-    this.descending = descending;
-    this.paintDirection();
-  }
-
-  /** 화살표는 다시 그리지 않고 뒤집기만 한다 — 같은 그림이라 뜻이 흔들리지 않는다. */
-  private paintDirection(): void {
-    this.sortArrow.setAngle(this.descending ? 0 : 180);
+    this.sort.setDirection(descending);
   }
 
   /** 걸린 조건 수를 다시 적는다. 0이면 표식 자체가 사라진다. */
@@ -243,60 +193,8 @@ export class RelicControlBar {
     this.caretTween = this.scene.tweens.add({ targets: this.caret, alpha: 0.1, duration: CARET.duration, yoyo: true, repeat: -1 });
   }
 
-  private labelOf(mode: string): string {
-    return this.options.sortOptions.find((option) => option.id === mode)?.label ?? "";
-  }
-
-  /**
-   * 정렬 목록을 펼치고 접는다.
-   *
-   * 판은 버튼 **바로 아래**에 오른쪽 변을 맞춰 붙는다 — 화면 가운데에 띄우면 무엇을 눌러서
-   * 열린 판인지 끊어진다. 바깥을 누르면 고르지 않고 닫힌다.
-   */
-  private toggleMenu(x: number, y: number, width: number): void {
-    if (this.menu) { this.closeMenu(); return; }
-    const options = this.options.sortOptions;
-    const height = relicSortMenuHeight(options.length);
-    const menu = this.scene.add.container(x, y + RELIC_CONTROL_ROW.height / 2 + 10 + height / 2).setDepth(60);
-
-    // 바깥을 눌러 닫는 막. 판보다 먼저 깔아 목록이 그 위에 선다.
-    const screen = this.scene.scale;
-    const backdrop = this.scene.add
-      .rectangle(screen.width / 2 - menu.x, screen.height / 2 - menu.y, screen.width, screen.height, 0x000000, 0)
-      .setInteractive();
-    backdrop.on("pointerup", () => this.closeMenu());
-    menu.add(backdrop);
-
-    const shape = chipPoints(width, height, { bevel: { topLeft: width * 0.12, topRight: 0, bottomRight: width * 0.12, bottomLeft: 0 } });
-    menu.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x0b0f15, alpha: 0.97, edge: COLOR.accent, edgeAlpha: 0.6 }));
-
-    options.forEach((option, index) => {
-      const rowY = relicSortMenuRowY(index, options.length);
-      const on = option.id === this.sortMode;
-      // 지금 기준은 판이 아니라 **크기와 강조색**으로 알린다 — 밑줄 상자를 세우면 목록 안에
-      // 또 하나의 판이 생긴다.
-      const label = this.scene.add
-        .text(0, rowY, option.label, textStyle({ role: "display", size: on ? 30 : 26, color: on ? COLOR.accentText : COLOR.inkDim }))
-        .setOrigin(0.5);
-      menu.add(label);
-      if (on) menu.add(drawShapeEdge(this.scene, 0, rowY, slantedRect(width - RELIC_SORT_MENU.padding * 2, RELIC_SORT_MENU.rowHeight, 12), "bottom", { color: COLOR.accent, alpha: 0.5, width: 3, inset: 30 }));
-      const hit = this.scene.add.rectangle(0, rowY, width - RELIC_SORT_MENU.padding * 2, RELIC_SORT_MENU.rowHeight, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerup", () => {
-        this.closeMenu();
-        if (option.id === this.sortMode) return;
-        this.sortMode = option.id;
-        this.sortLabel.setText(option.label);
-        this.options.onSort(option.id);
-      });
-      menu.add(hit);
-    });
-
-    this.menu = menu;
-  }
-
   private closeMenu(): void {
-    this.menu?.destroy();
-    this.menu = undefined;
+    this.sort.closeMenu();
   }
 
   private destroy(): void {

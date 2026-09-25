@@ -50,7 +50,7 @@ import { EnemyInfoPopup } from "../ui/EnemyInfoPopup";
 import { placedEnemyIndex, type PlacedEnemy } from "../data/placedEnemies";
 import { UltimateCutIn } from "../ui/UltimateCutIn";
 import {
-  battleFightStartsAt, battleSpeedTier, nextBattleSpeed, usableBattleSpeed, scaleUltimateDuration, shouldWaitForUltimatePresentation, ultimatePresentationTiming, ULTIMATE_RECOVERY_RATIO,
+  BATTLE_CLOSING_HOLD_MS, battleFightStartsAt, battleSpeedTier, nextBattleSpeed, usableBattleSpeed, scaleUltimateDuration, shouldWaitForUltimatePresentation, ultimatePresentationTiming, ULTIMATE_RECOVERY_RATIO,
   type BattleSpeed,
 } from "../core/battleControls";
 import { ControlChip } from "../ui/ControlChip";
@@ -65,7 +65,7 @@ import { anyPopupOpen, PopupLayer } from "../ui/PopupLayer";
 import { cakeOperationEnemies, cakeOperationRole, getCakeOperationTier } from "../data/cakeOperation";
 import { battleArena } from "../core/battleArena";
 import { createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, createRaidSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type CakeBattleInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
-import { raidBossDef, raidBossPercentHpBasis } from "../core/raid";
+import { raidBossDef, raidBossPercentHpBasis, raidKillTicks } from "../core/raid";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import { expeditionManager, ExpeditionBossSettlementError, ExpeditionBossSettlementFlow } from "../managers/ExpeditionManager";
 import { settingsManager } from "../managers/SettingsManager";
@@ -304,6 +304,9 @@ export class BattleScene extends Phaser.Scene {
   private views = new Map<string, FighterView>();
   private profiles: ProfileView[] = [];
   private finished = false;
+  /** 끝난 판이 결과판을 여는 실제 시각과, 그때 부를 일. 숨 고르기가 끝나기 전 씬을 떠나면 버린다. */
+  private closingAt = 0;
+  private pendingResult?: () => void;
   /** 보스 제출에는 코어가 실제로 낸 공격 종류와 시각만 기록하며 피해 숫자는 넣지 않는다. */
   private bossActions: ExpeditionBossAction[] = [];
   /** 레이드 제출의 멱등 키. 재시도가 같은 ID를 써야 성공한 제출이 두 번 쌓이지 않는다. */
@@ -325,7 +328,7 @@ export class BattleScene extends Phaser.Scene {
    * 레이드의 시즌 줄. 들어올 때 서버가 확정한 남은 체력에서 이번 판의 점수만큼 매 프레임
    * 깎아 그린다 — 조회가 도착하기 전에는 세우지 않는다(조회 중을 글로 말하지 않는다).
    */
-  private raidSeasonHud?: { bar: HoloBar; value: Phaser.GameObjects.Text; remaining: number; total: number; shown: number };
+  private raidSeasonHud?: { bar: HoloBar; value: Phaser.GameObjects.Text; kills: Phaser.GameObjects.Text; remaining: number; total: number; bodyHp: number; killCount: number; shown: number };
   /** 화면 맨 위에서 쉬지 않고 도는 진행 시간. 전투가 끝나면 그 자리에 멈춘다. */
   private clockLabel?: Phaser.GameObjects.Text;
   /** 데스 카운트가 도는 동안 화면 네 변에서 스며드는 붉은 워시. 한 번 그리고 진하기만 바꾼다. */
@@ -434,15 +437,16 @@ export class BattleScene extends Phaser.Scene {
     const left = hud.centerX - hud.bar.width / 2;
     const right = hud.centerX + hud.bar.width / 2;
     const stroke = (text: Phaser.GameObjects.Text): Phaser.GameObjects.Text => text.setStroke("#000000", 5).setShadow(0, 3, "#000000", 4, false, true).setDepth(hud.depth);
-    stroke(this.add.text(left, hud.labelY, t("raid.boss.remaining"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
+    const hpLabel = stroke(this.add.text(left, hud.labelY, t("raid.boss.remaining"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
+    const kills = stroke(this.add.text(hpLabel.x + hpLabel.width + 16, hud.labelY, "", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0.5));
     stroke(this.add.text(right, hud.labelY, getRelic(season.bossRelicId).name, textStyle({ role: "display", size: 28, color: COLOR.ink })).setOrigin(1, 0.5));
     const bar = new HoloBar(this, hud.centerX, hud.bar.y, hud.bar.width, hud.bar.height, {
-      color: RAID_HP_BAR_COLOR, trackAlpha: 0.82, outline: true, ticks: hud.bar.ticks,
+      color: RAID_HP_BAR_COLOR, trackAlpha: 0.82, outline: true, ticks: raidKillTicks(season.kills, hud.bar.ticks),
       shadow: { offsetY: 6, alpha: 0.6 }, glow: { spread: 6, alpha: 0.24 },
     });
     bar.objects.forEach((object) => object.setDepth(hud.depth));
     const value = stroke(this.add.text(left, hud.valueY, "", textStyle({ role: "display", size: 24, color: COLOR.ink })).setOrigin(0, 0.5));
-    this.raidSeasonHud = { bar, value, remaining: season.remainingHp, total: season.totalHp, shown: -1 };
+    this.raidSeasonHud = { bar, value, kills, remaining: season.remainingHp, total: season.totalHp, bodyHp: season.bossBodyHp, killCount: season.kills, shown: -1 };
     this.paintRaidSeasonHud();
   }
 
@@ -450,11 +454,15 @@ export class BattleScene extends Phaser.Scene {
   private paintRaidSeasonHud(): void {
     const hud = this.raidSeasonHud;
     if (!hud) return;
-    const remaining = Math.max(0, hud.remaining - Math.round(this.state.boss?.score ?? 0));
+    // 한 판이 깎는 것은 몸 한 줄까지다 — 서버도 그 이상을 공유 게이지에 들이지 않는다.
+    const remaining = Math.max(0, hud.remaining - Math.min(hud.bodyHp, Math.round(this.state.boss?.score ?? 0)));
     if (remaining === hud.shown) return;
     hud.shown = remaining;
     hud.bar.setValue(hud.total > 0 ? remaining / hud.total : 0);
     hud.value.setText(`${remaining.toLocaleString()} / ${hud.total.toLocaleString()}`);
+    // 머리 위 체력 바 한 줄을 비울 때마다 이 수가 하나 오른다 — 두 줄이 같은 단위다.
+    const done = Math.min(hud.killCount, Math.floor(Math.max(0, hud.total - remaining) / Math.max(1, hud.bodyHp)));
+    hud.kills.setText(t("raid.boss.kills", { done, kills: hud.killCount }));
   }
 
   /** Phaser scene data를 명시 DTO로 받아 일반 스테이지와 원정 결과 경계를 분리한다. */
@@ -540,6 +548,7 @@ export class BattleScene extends Phaser.Scene {
     this.profiles = [];
     this.allyInfoRef = undefined;
     this.finished = false;
+    this.pendingResult = undefined;
     this.spawned = false;
     this.fightStartsAt = Infinity;
     // 이전 씬의 tween 종료보다 재진입이 빠르더라도 표시 관찰값은 새 전투에서 0부터 시작한다.
@@ -1180,7 +1189,8 @@ export class BattleScene extends Phaser.Scene {
    * 흐른다. 갑자기 벌어진 공백은 코어가 상한을 두고 잘라 낸다.
    */
   update(): void {
-    if (!this.spawned || this.finished) return;
+    if (!this.spawned) return;
+    if (this.finished) { this.holdClosing(); return; }
     const now = performance.now();
     const elapsed = now - this.lastStepAt;
     const dt = elapsed / 1000;
@@ -2233,6 +2243,31 @@ export class BattleScene extends Phaser.Scene {
     this.profiles.forEach((profile) => this.setUltimateReady(profile, false));
     this.syncViews();
     this.refreshDebug();
+    // 결과판은 숨을 한 번 고른 뒤에 연다(`BATTLE_CLOSING_HOLD_MS`). 판정·정산 입력은 위에서 이미 굳혔다.
+    this.closingAt = performance.now() + BATTLE_CLOSING_HOLD_MS;
+    this.pendingResult = () => this.openBattleResult(phase);
+  }
+
+  /**
+   * 끝난 뒤의 숨 고르기. 코어 시간은 더 흐르지 않고, 쓰러지는 연출·게이지 추격만 제 속도로 마저
+   * 돌다가 시간이 되면 결과판을 연다. 씬의 시계 타이머가 아니라 매 프레임 실제 시각을 보므로
+   * 그 틈이 프레임 사정에 따라 늘어나지 않는다.
+   */
+  private holdClosing(): void {
+    const now = performance.now();
+    const elapsed = now - this.lastStepAt;
+    this.lastStepAt = now;
+    this.stepMeters(elapsed);
+    this.syncCombatEffects();
+    this.refreshProfiles();
+    if (!this.pendingResult || now < this.closingAt) return;
+    const open = this.pendingResult;
+    this.pendingResult = undefined;
+    open();
+  }
+
+  /** 숨 고르기가 끝난 뒤 모드별 결과판으로 넘어간다. */
+  private openBattleResult(phase: "victory" | "defeat"): void {
     const won = phase === "victory";
     if (this.battleInput.mode === "expeditionBoss") { void this.submitAndSettleBoss(this.battleInput, this.bossActions); return; }
     if (this.battleInput.mode === "raid") { void this.submitRaidRun(this.bossActions); return; }

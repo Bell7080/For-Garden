@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { POPUP_TITLE_SIZE } from "./popupGeometry";
 import { t } from "../i18n";
 import { BASE_WIDTH } from "../config/gameConfig";
 import { runeDisplayName, runePartLabel, runeRarityLabel, type RuneInstance, type RuneStatKey } from "../core/runes";
@@ -75,7 +76,7 @@ function openRunePicker(options: { scene: Phaser.Scene; popups: PopupLayer; onPi
   const rows = Math.max(1, Math.ceil(runes.length / columns));
   const width = columns * PICKER.cellWidth + 96;
   const height = Math.min(1700, PICKER.headerHeight + (rows - 1) * PICKER.cellHeight + PICKER.cardHeight / 2 + 48);
-  popups.open({ width, height, title: t("archaeology.bench.pick"), dim: true, backButton: true }, (body, close) => {
+  popups.open({ width, height, title: t("archaeology.bench.pick"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, backButton: true }, (body, close) => {
     const top = -height / 2;
     const firstX = -((columns - 1) * PICKER.cellWidth) / 2;
     runes.forEach((rune, order) => {

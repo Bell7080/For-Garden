@@ -105,9 +105,21 @@ export function isTradePackage(product: { storefront: ProductStorefront }): bool
  * 검수 장부(시세표 기준 환산):
  * - `trade-cheesecake-supply`: 젬 150 → 치즈케이크 600 = 젬 300 → **200%**
  * - `trade-research-grant`: 젬 200 → 골드 140,000(젬 280) + DNA 14(젬 70) = 젬 350 → **175%**
- * - `trade-excavation-crate`: 젬 400 → 화석 4,000(젬 800) + 호박석 20(젬 200) = 젬 1,000 → **250%**
+ * - `trade-excavation-crate`: 젬 400 → 화석 4(젬 400) + 호박석 2(젬 600) = 젬 1,000 → **250%**
+ * - `trade-daily-bundle`: 젬 50 → 골드 40,000(젬 80) + 치즈케이크 60(젬 30) = 젬 110 → **220%**
+ *
+ * **전시 순서는 한 번뿐인 것 → 주간 → 매일이다.** 가장 후한 것이 맨 위에 서야 화면을 연 순간
+ * 무엇이 특가인지가 읽힌다. 매일 하나는 작지만 매일 들어올 이유가 된다.
  */
 export const TRADE_PACKAGES: readonly ProductDefinition[] = [
+  {
+    id: "trade-excavation-crate", storefront: "trade", category: "special", iconKey: "shop-product-supplies",
+    name: "발굴 장비 보급함", description: "화석 4개와 호박석 2개",
+    acquisition: { kind: "currency", currency: "gems", amount: 400 },
+    grants: [{ kind: "currency", currency: "fossil", amount: 4 }, { kind: "currency", currency: "amber", amount: 2 }],
+    defaultQuantity: 1, purchaseLimit: 1, refresh: "once",
+    visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z",
+  },
   {
     id: "trade-cheesecake-supply", storefront: "trade", category: "weekly", iconKey: "shop-product-supplies",
     name: "치즈케이크 보급", description: "치즈케이크 600개",
@@ -125,11 +137,11 @@ export const TRADE_PACKAGES: readonly ProductDefinition[] = [
     visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z",
   },
   {
-    id: "trade-excavation-crate", storefront: "trade", category: "special", iconKey: "shop-product-supplies",
-    name: "발굴 장비 보급함", description: "화석 4개와 호박석 2개",
-    acquisition: { kind: "currency", currency: "gems", amount: 400 },
-    grants: [{ kind: "currency", currency: "fossil", amount: 4 }, { kind: "currency", currency: "amber", amount: 2 }],
-    defaultQuantity: 1, purchaseLimit: 1, refresh: "once",
+    id: "trade-daily-bundle", storefront: "trade", category: "daily", iconKey: "shop-product-supplies",
+    name: "오늘의 특가 꾸러미", description: "골드 40,000과 치즈케이크 60개",
+    acquisition: { kind: "currency", currency: "gems", amount: 50 },
+    grants: [{ kind: "currency", currency: "gold", amount: 40_000 }, { kind: "currency", currency: "cheesecake", amount: 60 }],
+    defaultQuantity: 1, purchaseLimit: 1, refresh: "daily",
     visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z",
   },
 ];

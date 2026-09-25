@@ -8,7 +8,7 @@ function dispatch(cityId: string, over: Partial<InteractionDispatchSnapshot> = {
   return {
     dispatchId: `d-${cityId}`, cityId, startedAt: new Date(NOW - 60_000).toISOString(),
     completesAt: new Date(NOW + 60_000).toISOString(), party: ["anky"], rewardSeed: "s",
-    reward: { currency: "gold", amount: 10 }, claimed: false, ...over,
+    rewards: [{ currency: "gold", amount: 10 }], claimed: false, ...over,
   };
 }
 

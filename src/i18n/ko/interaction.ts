@@ -7,7 +7,11 @@ export const INTERACTION_KO = {
   "interaction.lockedByStage": "{stage} 클리어로 열린다",
 
   "interaction.journal": "도시 일지",
-  "interaction.returning": "돌아오는 것",
+  "interaction.expected": "예상 보상",
+  "interaction.specialty": "특화",
+  "interaction.specialtyMatch": "특화 {count}",
+  "interaction.awayOverlay": "파견 중",
+  "interaction.sendSub": "{count} / 3  ·  보상 ×{factor}",
   "interaction.autoPlace": "자동 배치",
   "interaction.noRelics": "보낼 수 있는 렐릭이 없다",
   "interaction.ownedRelics": "보유 렐릭",

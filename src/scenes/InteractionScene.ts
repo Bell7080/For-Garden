@@ -7,7 +7,7 @@ import { session } from "../state/session";
 import type { InteractionDispatchSnapshot } from "../state/session";
 import { addBackButton } from "../ui/IconButton";
 import { addSceneBackground, BACKGROUND, useBackgroundTexture } from "../ui/backgrounds";
-import { drawFrameVignette, drawGlassFade, drawHairline, drawLayer, drawShapeOutline, drawVignette, slantedRect } from "../ui/holo";
+import { drawFrameVignette, drawGlassFade, drawHairline, drawLayer, drawShapeOutline, drawVignette, slantedRect, toPoints } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
 import { setDebugInteractionLayers, setDebugScene } from "../debug";
@@ -16,7 +16,7 @@ import { bindCurrencyGuide } from "../ui/currencyGuideEntry";
 import { InteractionCityPopup } from "../ui/InteractionCityPopup";
 import { InteractionJournalPopup } from "../ui/InteractionJournalPopup";
 import { INTERACTION_LAYER, interactionLayersHeight, interactionLayerSpot } from "../ui/interactionLayerLayout";
-import { interactionLayerViews, interactionRemainingLabel, type InteractionLayerView } from "../ui/interactionLayerModel";
+import { interactionArtFit, interactionLayerViews, interactionRemainingLabel, type InteractionLayerView } from "../ui/interactionLayerModel";
 import { coverCrop } from "../ui/coverCrop";
 import { shapeClipMask } from "../ui/popupArt";
 import { drawGlyph } from "../ui/glyphs";
@@ -77,6 +77,9 @@ export class InteractionScene extends Phaser.Scene {
   private layers?: Phaser.GameObjects.Container;
   /** 지금 그려 둔 층 목록이 무엇이었는지. 상태가 바뀐 순간에만 다시 그린다. */
   private layerSignature = "";
+  /** 층마다 세워 둔 컨테이너와 그 상태. 바뀐 층만 갈아 끼우는 데 쓴다. */
+  private layerNodes: Phaser.GameObjects.Container[] = [];
+  private layerSignatures: string[] = [];
   /** 초마다 글자만 갈아 끼우는 남은 시간 줄. 층 순서와 같은 자리에 들어간다. */
   private remainingLabels: (Phaser.GameObjects.Text | undefined)[] = [];
   private layerMask?: Phaser.GameObjects.Graphics;
@@ -205,7 +208,7 @@ export class InteractionScene extends Phaser.Scene {
    * 매초 다시 세우고 스크롤도 함께 흔들린다.
    */
   private static signature(views: readonly InteractionLayerView[]): string {
-    return views.map((view) => `${view.city.id}:${view.state}:${view.dispatch?.dispatchId ?? ""}`).join("|");
+    return views.map((view) => InteractionScene.layerSignature(view)).join("|");
   }
 
   /** 초가 흐른 결과. 상태가 바뀐 순간에만 다시 그리고, 그 밖에는 시계 글자만 갈아 끼운다. */
@@ -219,20 +222,46 @@ export class InteractionScene extends Phaser.Scene {
     });
   }
 
-  /** 서버가 확정한 파견 목록만 읽어 층 상태를 다시 그린다. */
+  /**
+   * 서버가 확정한 파견 목록만 읽어 층 상태를 다시 그린다.
+   *
+   * **바뀐 층만 갈아 끼운다.** 파견 하나를 보내거나 받을 때마다 목록 전체를 새로 세우면 모든
+   * 층의 원화가 빠졌다 다시 들어와 화면이 통째로 번쩍인다. 층 수가 같으면 층마다 상태를 견주어
+   * 달라진 자리만 새로 세우고 — 새 것을 먼저 세우고 옛 것을 걷는다 — 나머지는 그대로 둔다.
+   */
   private drawLayers(): void {
     const container = this.layers;
     if (!container) return;
-    container.removeAll(true);
     const views = this.currentViews();
-    this.remainingLabels = [];
-    views.forEach((view, index) => container.add(this.buildLayer(view, index)));
+    const signatures = views.map((view) => InteractionScene.layerSignature(view));
+    const reusable = this.layerNodes.length === views.length && this.layerNodes.every((node) => node.active);
+    if (reusable) {
+      views.forEach((view, index) => {
+        if (this.layerSignatures[index] === signatures[index]) return;
+        const previous = this.layerNodes[index];
+        this.remainingLabels[index] = undefined;
+        const next = this.buildLayer(view, index);
+        container.addAt(next, container.getIndex(previous));
+        previous.destroy();
+        this.layerNodes[index] = next;
+      });
+    } else {
+      container.removeAll(true);
+      this.remainingLabels = [];
+      this.layerNodes = views.map((view, index) => { const layer = this.buildLayer(view, index); container.add(layer); return layer; });
+    }
+    this.layerSignatures = signatures;
     this.layerSignature = InteractionScene.signature(views);
 
     const viewportHeight = INTERACTION_LAYER.viewport.bottom - INTERACTION_LAYER.viewport.top;
     const contentBottom = INTERACTION_LAYER.firstY + interactionLayersHeight(views.length) - INTERACTION_LAYER.height / 2;
     this.minScroll = Math.min(0, viewportHeight + INTERACTION_LAYER.viewport.top - contentBottom - 40);
     this.scrollTo(this.scrollY);
+  }
+
+  /** 층 하나의 상태 — 이 줄이 그대로면 그 층을 다시 세울 이유가 없다. */
+  private static layerSignature(view: InteractionLayerView): string {
+    return `${view.city.id}:${view.state}:${view.dispatch?.dispatchId ?? ""}`;
   }
 
   /**
@@ -271,22 +300,39 @@ export class InteractionScene extends Phaser.Scene {
     // 원화도 목록이 그려지는 순간에는 올라와 있지 않아, 물어보고 세우면 카드는 늘 빈 판이었다.
     const art = this.add.image(0, 0, "__DEFAULT").setAlpha(0);
     layer.add(art);
+    // 좌우 장식 띠는 원화가 모자랄 때만 세운다(`interactionArtFit`). 원화보다 먼저 깔아 두고
+    // 원화가 도착하는 순간 채울 수 있으면 걷어 낸다.
+    const sideDecor = this.buildSideDecor(width, height, slant, artWidth, locked ? COLOR.inkDimHex : view.state === "done" ? 0xe0a83e : BLUE);
+    layer.add(sideDecor);
+    // 이미 올라와 있는 원화는 **기다리지 않고 그 자리에서 선다** — 층을 갈아 끼울 때마다 0에서
+    // 다시 밝아지면 그 층만 한 번 번쩍인다. 처음 도착하는 원화만 옅게 녹아 든다.
+    const alreadyLoaded = this.textures.exists(view.city.illustration);
     useBackgroundTexture(this, art, view.city.illustration, (loaded) => {
-      const crop = coverCrop(loaded.width, loaded.height, artWidth, height);
+      const fit = interactionArtFit(loaded.width, loaded.height, width, height, slant);
+      const crop = coverCrop(loaded.width, loaded.height, fit.width, height);
       loaded.setScale(crop.scale);
       loaded.setCrop(crop.cropX, crop.cropY, crop.cropWidth, crop.cropHeight);
-      this.tweens.add({ targets: loaded, alpha: locked ? ART_LOCKED_ALPHA : ART_ALPHA, duration: 160 });
+      if (fit.mode === "fill") {
+        // 평행사변형 전체를 덮고 판 실루엣으로 잘라 낸다 — 좌우 삼각형까지 그림이 찬다.
+        loaded.setMask(shapeClipMask(this, layer, shape));
+        sideDecor.setVisible(false);
+      }
+      const alpha = locked ? ART_LOCKED_ALPHA : ART_ALPHA;
+      if (alreadyLoaded) loaded.setAlpha(alpha);
+      else this.tweens.add({ targets: loaded, alpha, duration: 160 });
     });
 
     // 글이 서는 아래쪽만 어둠이 올라온다. 카드 전체를 누르면 원화가 잿빛이 된다.
-    layer.add(this.buildReadoutBand(artWidth, height, bottom, tone));
+    // 띠와 가장자리 누르기는 판 전체 폭으로 깔고 판 실루엣으로 잘라 낸다 — 원화가 좌우 삼각형까지
+    // 차는 층에서 그 자리만 밝게 남지 않게 한다.
+    layer.add(this.buildReadoutBand(width + slant, height, bottom, tone).setMask(shapeClipMask(this, layer, shape)));
 
     // **가장자리는 살짝만 누른다.** 강하게 누르면 원화의 본질이 흐려진다 — 카드 하나를 버튼으로
     // 떼어 놓을 만큼만 남긴다.
     // 가장자리 누르기는 네 변의 그라데이션 넉 장이라 판의 도형을 모른다 — 기운 변 밖으로
     // 검은 띠가 새지 않도록 카드와 같은 실루엣으로 잘라 둔다(목록이 흐르므로 마스크는 카드의
     // 지금 월드 행렬을 매 프레임 따라간다).
-    layer.add(drawFrameVignette(this, 0, 0, artWidth, height, { strength: FRAME_VIGNETTE })
+    layer.add(drawFrameVignette(this, 0, 0, width + slant, height, { strength: FRAME_VIGNETTE })
       .setMask(shapeClipMask(this, layer, shape)));
 
     // **이 판만 사방 테두리를 두른다.** 화면의 판때기는 윗변 한 줄이 원칙이지만, 여기는 원화
@@ -327,6 +373,39 @@ export class InteractionScene extends Phaser.Scene {
       layer.add(hit);
     }
     return layer;
+  }
+
+  /**
+   * 원화가 모자라 좌우 삼각형을 채우지 못할 때 그 자리를 메우는 장식.
+   *
+   * 빈 삼각형은 덜 그려진 판으로 읽힌다. 판의 강조색으로 **기운 변과 나란한 빗금**을 촘촘히 긋고
+   * 안쪽 경계에 얇은 선 하나를 둬, 원화를 끼운 액자의 테처럼 보이게 한다. 빗금은 판의 기울기를
+   * 그대로 따라가 새 결을 만들지 않는다.
+   */
+  private buildSideDecor(width: number, height: number, slant: number, artWidth: number, tone: number): Phaser.GameObjects.Graphics {
+    const decor = this.add.graphics();
+    const hw = width / 2; const hh = height / 2; const s = slant / 2;
+    const artHalf = artWidth / 2;
+    const sides = [
+      // 왼쪽: 판의 왼쪽 기운 변과 원화의 왼쪽 세로 변 사이.
+      [-hw + s, -hh, -artHalf, -hh, -artHalf, hh, -hw - s, hh],
+      // 오른쪽: 원화의 오른쪽 세로 변과 판의 오른쪽 기운 변 사이.
+      [artHalf, -hh, hw + s, -hh, hw - s, hh, artHalf, hh],
+    ];
+    for (const points of sides) {
+      decor.fillStyle(0x0b1622, 0.95).fillPoints(toPoints(points), true);
+    }
+    // 가로 결 — 글이 서는 아래 띠(`buildReadoutBand`)와 같은 투영면의 결이라 새 무늬를 만들지 않는다.
+    decor.lineStyle(2, tone, 0.3);
+    for (let y = -hh + 10; y < hh; y += 12) {
+      const t = (y + hh) / height;
+      decor.lineBetween(-hw + s - slant * t + 3, y, -artHalf - 3, y);
+      decor.lineBetween(artHalf + 3, y, hw + s - slant * t - 3, y);
+    }
+    decor.lineStyle(2, tone, 0.7);
+    decor.lineBetween(-artHalf, -hh, -artHalf, hh);
+    decor.lineBetween(artHalf, -hh, artHalf, hh);
+    return decor;
   }
 
   /**

@@ -6,6 +6,7 @@ import { BREAKTHROUGH_CAP } from "../core/relicProgression";
 import type { RelicProgress } from "../core/types";
 import { normalizePlayerCard } from "../core/playerCard";
 import { normalizePlayerLevel } from "../core/playerLevel";
+import { maxResearchPoints } from "../core/missions";
 import { createDefaultSession, createEmptyInteractionProgress, createInitialPlayerResearchProgress, type RaidInstanceState, type RaidState, type SaveData, type Session } from "./session";
 import { PROFILE_MODIFIERS } from "../data/profileModifiers";
 import { assertValidRuneInstance, type RuneInstance } from "../core/runes";
@@ -42,6 +43,19 @@ function migrateV12Rune(definitionId: string): RuneInstance {
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
 export const CURRENT_SAVE_VERSION = 40;
+
+/**
+ * 연구도는 기간마다 상한이 다르다(일일 100 · 주간 500). 상한이 120 하나이던 때의 저장은 일일
+ * 120을 들고 있을 수 있어, 불러오는 자리에서 새 상한으로 자른다 — 넘는 몫은 이미 그 기간의
+ * 마지막 단계에 닿은 값이라 잘라도 받을 것이 사라지지 않는다.
+ */
+function clampResearchPoints(saved: Partial<Record<"daily" | "weekly", number>> | undefined): Record<"daily" | "weekly", number> {
+  const clamp = (period: "daily" | "weekly"): number => {
+    const value = saved?.[period];
+    return typeof value === "number" && Number.isFinite(value) ? Math.min(maxResearchPoints(period), Math.max(0, Math.floor(value))) : 0;
+  };
+  return { daily: clamp("daily"), weekly: clamp("weekly") };
+}
 
 /**
  * 과거 적 허스크의 ID를 플레이어블 렐릭 ID로 옮기는 **저장 버전 마이그레이션 전용** 표다.
@@ -390,7 +404,7 @@ export class SaveManager {
     // 임무 도입 전 저장은 기간 키가 비어 있어 다음 서버 접근에서 현재 UTC 기간으로 정규화된다.
     const savedMissions = legacy.missions as Partial<SaveData["missions"]> | undefined;
     // 구버전 저장은 이미 완료된 임무를 다시 연구도로 환산하지 않고 0에서 안전하게 시작한다.
-    const missions = { dailyKey: savedMissions?.dailyKey ?? "", weeklyKey: savedMissions?.weeklyKey ?? "", progress: savedMissions?.progress ?? {}, claimedIds: savedMissions?.claimedIds ?? [], researchPoints: savedMissions?.researchPoints ?? { daily: 0, weekly: 0 }, claimedResearchStageIds: savedMissions?.claimedResearchStageIds ?? [] };
+    const missions = { dailyKey: savedMissions?.dailyKey ?? "", weeklyKey: savedMissions?.weeklyKey ?? "", progress: savedMissions?.progress ?? {}, claimedIds: savedMissions?.claimedIds ?? [], researchPoints: clampResearchPoints(savedMissions?.researchPoints), claimedResearchStageIds: savedMissions?.claimedResearchStageIds ?? [] };
     // 상품 도입 전 저장에는 구매 이력이 없으므로 빈 기록으로 안전하게 시작한다.
     const productPurchases = legacy.productPurchases && typeof legacy.productPurchases === "object" ? legacy.productPurchases : {};
     // v16 이전 저장은 광고를 한 번도 받지 않은 상태에서 안전하게 시작한다.
@@ -418,7 +432,14 @@ export class SaveManager {
     if (Array.isArray(interactionSlots)) {
       (interaction as { slots: unknown[] }).slots = interactionSlots.map((slot) => {
         const cityId = slot && typeof slot === "object" ? (slot as { cityId?: unknown }).cityId : undefined;
-        return typeof cityId === "string" && findInteractionCity(cityId) === undefined ? null : slot;
+        if (typeof cityId === "string" && findInteractionCity(cityId) === undefined) return null;
+        // 파견 한 건이 한 줄만 가져오던 때(`reward`)의 저장은 그 한 줄을 목록으로 옮긴다 — 이미
+        // 굴려 둔 결과라 다시 굴리지 않는다.
+        if (slot && typeof slot === "object" && !Array.isArray((slot as { rewards?: unknown }).rewards)) {
+          const { reward, ...rest } = slot as { reward?: { currency: string; amount: number } };
+          return { ...rest, rewards: reward && typeof reward.amount === "number" && reward.amount > 0 ? [{ currency: reward.currency, amount: reward.amount }] : [] };
+        }
+        return slot;
       });
     }
     // v12는 정적 정의 ID를 소유권과 슬롯에 함께 썼다. 결정적 ID로 인스턴스를 만들고 모든 슬롯을 같은 표로 치환한다.
@@ -546,7 +567,7 @@ export class SaveManager {
     if (!data.bounty || typeof data.bounty.date !== "string" || !Number.isInteger(data.bounty.entries) || data.bounty.entries < 0 || data.bounty.entries > BOUNTY.maxEntriesPerUtcDay
       || !Array.isArray(data.bounty.clearedTierIds) || data.bounty.clearedTierIds.some((id) => typeof id !== "string" || !BOUNTY_TIERS.some((tier) => tier.id === id))
       || new Set(data.bounty.clearedTierIds).size !== data.bounty.clearedTierIds.length) fail("현상수배 진행 정보가 올바르지 않습니다.");
-    if (!data.missions || typeof data.missions.dailyKey !== "string" || typeof data.missions.weeklyKey !== "string" || !data.missions.progress || typeof data.missions.progress !== "object" || Object.values(data.missions.progress).some((value) => !Number.isInteger(value) || value < 0) || !Array.isArray(data.missions.claimedIds) || new Set(data.missions.claimedIds).size !== data.missions.claimedIds.length || !data.missions.researchPoints || [data.missions.researchPoints.daily, data.missions.researchPoints.weekly].some((value) => !Number.isInteger(value) || value < 0 || value > 120) || !Array.isArray(data.missions.claimedResearchStageIds) || data.missions.claimedResearchStageIds.some((id) => typeof id !== "string") || new Set(data.missions.claimedResearchStageIds).size !== data.missions.claimedResearchStageIds.length) fail("임무 진행 정보가 올바르지 않습니다.");
+    if (!data.missions || typeof data.missions.dailyKey !== "string" || typeof data.missions.weeklyKey !== "string" || !data.missions.progress || typeof data.missions.progress !== "object" || Object.values(data.missions.progress).some((value) => !Number.isInteger(value) || value < 0) || !Array.isArray(data.missions.claimedIds) || new Set(data.missions.claimedIds).size !== data.missions.claimedIds.length || !data.missions.researchPoints || (["daily", "weekly"] as const).some((period) => { const value = data.missions.researchPoints[period]; return !Number.isInteger(value) || value < 0 || value > maxResearchPoints(period); }) || !Array.isArray(data.missions.claimedResearchStageIds) || data.missions.claimedResearchStageIds.some((id) => typeof id !== "string") || new Set(data.missions.claimedResearchStageIds).size !== data.missions.claimedResearchStageIds.length) fail("임무 진행 정보가 올바르지 않습니다.");
     if (!data.productPurchases || typeof data.productPurchases !== "object" || Object.values(data.productPurchases).some((value) => typeof value.periodKey !== "string" || !Number.isInteger(value.count) || value.count < 0)) fail("상품 구매 제한 정보가 올바르지 않습니다.");
     const adLimits = Object.fromEntries(AD_REWARD_SLOTS.map(({ id, dailyLimitUtc }) => [id, dailyLimitUtc]));
     // 삭제/변조된 슬롯과 정적 UTC 제한을 넘긴 저장은 서버 지급 이력으로 신뢰하지 않는다.

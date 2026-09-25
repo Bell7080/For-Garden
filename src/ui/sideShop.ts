@@ -15,8 +15,6 @@ import { pressIn, pressOut } from "./pressFeedback";
 export const SIDE_SHOP = {
   /** 연구소·고고학 — 화면 왼쪽 중상단. 두 화면이 같은 자리에 세운다. */
   screen: { x: 84, y: 430, size: 104 },
-  /** 출격판 — 스토리 칸 오른쪽 위에 걸친 꼬리표(판 기준 좌표). */
-  sortie: { x: 446, y: -472, size: 92 },
 } as const;
 
 export function addSideShopButton(scene: Phaser.Scene, x: number, y: number, size: number, label: string, onClick: () => void): RailButton {

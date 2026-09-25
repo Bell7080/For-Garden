@@ -1,10 +1,16 @@
 import type { Wallet } from "../core/gacha";
 import { registerDataText } from "../i18n";
-import type { Element } from "../core/types";
+import type { Element, Role } from "../core/types";
 import type { SquadId } from "./factions";
 
-/** 교류 보상의 한 행이다. weight는 확률이 아니라 같은 표 안에서의 상대 가중치다. */
-export interface InteractionRewardEntry { readonly currency: keyof Wallet; readonly amount: number; readonly weight: number; readonly tags?: readonly string[]; }
+/**
+ * 교류 보상의 한 줄 — **셋이 특화 없이 갔을 때** 돌아오는 범위다.
+ *
+ * 한 번의 수확이 줄 하나를 뽑던 때는 무엇이 올지가 운이라, 편성을 잘 짜도 돌아오는 것이 달라지지
+ * 않았다. 지금은 **모든 줄이 함께** 오고 편성이 그 양을 움직인다(`interactionYieldFactor`).
+ * `min`이 0인 줄은 안 올 수도 있는 귀한 것이다.
+ */
+export interface InteractionRewardRange { readonly currency: keyof Wallet; readonly min: number; readonly max: number; }
 
 /**
  * 도시에서 상대하는 창구.
@@ -41,7 +47,11 @@ export interface InteractionCity {
    */
   readonly durationMinutes: number;
   readonly partySize: { readonly min: 1; readonly max: 3 };
-  readonly recommended: { readonly elements: readonly Element[]; readonly squads: readonly SquadId[]; readonly tags: readonly string[] };
+  /**
+   * 그 도시의 특화 — 속성·직군·스쿼드. 한 명이 여기 맞는 칸마다 수확이 늘어난다
+   * (`interactionYieldFactor`). 자동 배치도 맞는 칸이 많은 이부터 세운다.
+   */
+  readonly specialty: { readonly elements: readonly Element[]; readonly roles: readonly Role[]; readonly squads: readonly SquadId[] };
   /**
    * 뽑기표. 한 번의 수확이 이 중 한 줄만 뽑는다.
    *
@@ -53,7 +63,7 @@ export interface InteractionCity {
    * 환산하면 짧은 창구(`exchange`)가 분당 0.1젬, 긴 창구(`council`)가 분당 0.037젬이라,
    * 원석 40개/젬을 곱해 분당 4개·1.5개로 잡고 파견 시간을 곱했다. 시간을 고치면 이 값도 함께 다시 잡는다.
    */
-  readonly rewards: readonly InteractionRewardEntry[]; readonly clueJournalId: string;
+  readonly rewards: readonly InteractionRewardRange[]; readonly clueJournalId: string;
   /**
    * 팝업 상단에 세우는 원화의 배경 키.
    *
@@ -86,8 +96,8 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     id: "doppel-parlor", displayName: "도플 · 중앙 연구소 응접실", department: "exchange",
     description: "도플의 중앙 연구소 한쪽에 딸린 응접실. 손님을 앉혀 두고 연구 일지를 한 장씩 내어 준다.",
     unlock: {}, durationMinutes: 10, partySize: { min: 1, max: 3 },
-    recommended: { elements: ["water"], squads: ["rune"], tags: ["garden"] },
-    rewards: [{ currency: "gold", amount: 600, weight: 6 }, { currency: "cheesecake", amount: 1, weight: 2 }, { currency: "rawStone", amount: 40, weight: 1 }],
+    specialty: { elements: ["water"], roles: ["support"], squads: ["rune"] },
+    rewards: [{ currency: "gold", min: 300, max: 800 }, { currency: "cheesecake", min: 0, max: 2 }, { currency: "rawStone", min: 0, max: 30 }],
     clueJournalId: "interaction-doppel-01", illustration: "background-interaction-doppel-parlor",
   },
   {
@@ -96,56 +106,56 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     id: "doppel-lab", displayName: "도플 · 중앙 연구소 외곽 연구실", department: "council",
     description: "중앙 연구소 안쪽의 외곽 연구실. 복원 계획서에 결재가 한 번 더 필요해 오래 기다려야 한다.",
     unlock: {}, durationMinutes: 240, partySize: { min: 1, max: 3 },
-    recommended: { elements: ["water", "grass"], squads: ["rune"], tags: ["garden"] },
-    rewards: [{ currency: "gold", amount: 4200, weight: 5 }, { currency: "gems", amount: 8, weight: 1 }, { currency: "rawStone", amount: 360, weight: 1 }],
+    specialty: { elements: ["water", "grass"], roles: ["support"], squads: ["rune"] },
+    rewards: [{ currency: "gold", min: 2_000, max: 5_000 }, { currency: "gems", min: 0, max: 8 }, { currency: "rawStone", min: 0, max: 300 }],
     clueJournalId: "interaction-doppel-lab-01", illustration: "background-interaction-doppel-lab",
   },
   {
     id: "night-ward", displayName: "나이트 시티", department: "exchange",
     description: "밤에도 구조 신호가 끊이지 않는 침수 외곽 의료 구역. 손이 모자라 오래 붙잡지 않는다.",
     unlock: {}, durationMinutes: 30, partySize: { min: 1, max: 3 },
-    recommended: { elements: ["wind"], squads: ["gear"], tags: ["night-gear"] },
-    rewards: [{ currency: "gold", amount: 1500, weight: 5, tags: ["night-gear"] }, { currency: "fossil", amount: 1, weight: 2 }, { currency: "rawStone", amount: 120, weight: 1 }],
+    specialty: { elements: ["wind"], roles: ["assassin"], squads: ["gear"] },
+    rewards: [{ currency: "gold", min: 800, max: 1_800 }, { currency: "fossil", min: 0, max: 1 }, { currency: "rawStone", min: 0, max: 100 }],
     clueJournalId: "interaction-night-01", illustration: "background-expedition-ranking",
   },
   {
     id: "night-council", displayName: "나이트 시티", department: "council",
     description: "구조 기록을 넘겨받는 야간 관제탑. 협정 한 줄에 밤이 통째로 든다.",
     unlock: { stageId: "1-4" }, durationMinutes: 480, partySize: { min: 1, max: 3 },
-    recommended: { elements: ["wind", "fire"], squads: ["gear"], tags: ["night-gear"] },
-    rewards: [{ currency: "gold", amount: 9000, weight: 5 }, { currency: "gems", amount: 16, weight: 1, tags: ["wind"] }, { currency: "rawStone", amount: 720, weight: 1 }],
+    specialty: { elements: ["wind", "fire"], roles: ["tank"], squads: ["gear"] },
+    rewards: [{ currency: "gold", min: 4_500, max: 10_000 }, { currency: "gems", min: 0, max: 16 }, { currency: "rawStone", min: 0, max: 600 }],
     clueJournalId: "interaction-night-02", illustration: "background-expedition-field",
   },
   {
     id: "abyss-port", displayName: "심해 항만구", department: "exchange",
     description: "도시 끝의 인양조가 고대 화물과 잃어버린 기록을 건져 올린다.",
     unlock: { stageId: "1-7" }, durationMinutes: 60, partySize: { min: 1, max: 3 },
-    recommended: { elements: ["water", "wind"], squads: ["gear"], tags: ["salvage"] },
-    rewards: [{ currency: "fossil", amount: 2, weight: 5 }, { currency: "gold", amount: 2600, weight: 2 }, { currency: "rawStone", amount: 240, weight: 1 }],
+    specialty: { elements: ["water", "wind"], roles: ["warrior"], squads: ["gear"] },
+    rewards: [{ currency: "fossil", min: 1, max: 2 }, { currency: "gold", min: 800, max: 2_600 }, { currency: "rawStone", min: 0, max: 200 }],
     clueJournalId: "interaction-abyss-01", illustration: "background-excavation",
   },
   {
     id: "abyss-council", displayName: "심해 항만구", department: "council",
     description: "인양권을 나누는 항만 위원회. 하루를 통째로 비워 두고 다녀와야 한다.",
     unlock: { stageId: "1-10" }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
-    recommended: { elements: ["water"], squads: ["gear", "fang"], tags: ["salvage"] },
-    rewards: [{ currency: "fossil", amount: 9, weight: 5 }, { currency: "amber", amount: 1, weight: 1 }, { currency: "rawStone", amount: 2200, weight: 1 }],
+    specialty: { elements: ["water"], roles: ["tank"], squads: ["gear", "fang"] },
+    rewards: [{ currency: "fossil", min: 4, max: 9 }, { currency: "amber", min: 0, max: 1 }, { currency: "rawStone", min: 0, max: 1_800 }],
     clueJournalId: "interaction-abyss-02", illustration: "background-archaeology",
   },
   {
     id: "ember-market", displayName: "잿불 시장구", department: "exchange",
     description: "무너진 화력 발전소 아래 선 노천 시장. 재고가 도는 동안만 문이 열린다.",
     unlock: { stageId: "2-5" }, durationMinutes: 120, partySize: { min: 1, max: 3 },
-    recommended: { elements: ["fire"], squads: ["fang"], tags: ["market"] },
-    rewards: [{ currency: "gold", amount: 5200, weight: 6 }, { currency: "cheesecake", amount: 6, weight: 2 }, { currency: "rawStone", amount: 480, weight: 1 }],
+    specialty: { elements: ["fire"], roles: ["assassin"], squads: ["fang"] },
+    rewards: [{ currency: "gold", min: 2_600, max: 6_000 }, { currency: "cheesecake", min: 2, max: 6 }, { currency: "rawStone", min: 0, max: 400 }],
     clueJournalId: "interaction-ember-01", illustration: "background-shop",
   },
   {
     id: "ember-council", displayName: "잿불 시장구", department: "council",
     description: "상단주들이 모이는 잿불 회합. 값을 정하는 자리라 밤을 넘긴다.",
     unlock: { stageId: "2-10" }, durationMinutes: 720, partySize: { min: 1, max: 3 },
-    recommended: { elements: ["fire", "earth"], squads: ["fang"], tags: ["market"] },
-    rewards: [{ currency: "gold", amount: 14_000, weight: 5 }, { currency: "amber", amount: 2, weight: 1 }, { currency: "rawStone", amount: 1100, weight: 1 }],
+    specialty: { elements: ["fire", "earth"], roles: ["warrior"], squads: ["fang"] },
+    rewards: [{ currency: "gold", min: 7_000, max: 15_000 }, { currency: "amber", min: 0, max: 2 }, { currency: "rawStone", min: 0, max: 900 }],
     clueJournalId: "interaction-ember-02", illustration: "background-sortie-cake",
   },
 ] as const;

@@ -27,7 +27,7 @@ import type { ProductStorefront } from "../data/products";
 import { consumeSceneEntry } from "./sceneEntry";
 import { LOBBY_RETURN, normalizeLobbyEntry, type LobbyMenu } from "./lobbyEntry";
 import { shapeClipMask } from "../ui/popupArt";
-import { playSceneEntrance, startScene } from "../ui/screenTransition";
+import { playSceneEntrance, startScene, slideTabPage } from "../ui/screenTransition";
 import {
   SHOP_BOARD, SHOP_CARD, SHOP_ENTRANCE, SHOP_SHELF, SHOP_STAGE, SHOP_TAB_ROW, SHOP_TITLE,
   shopBoardSize, shopCardSpot, shopCardWidth, shopDialogueSpot, shopGridContentHeight, shopGridViewport,
@@ -517,10 +517,13 @@ export class ShopScene extends Phaser.Scene {
   /** 탭을 바꾸면 이전 스크롤을 버리고 해당 분류의 첫 상품부터 다시 보여 준다. */
   private selectCategory(category: string): void {
     if (category === this.selectedCategory) return;
+    const indexOf = (id: string): number => this.stage.tabs.findIndex((tab) => tab.id === id);
+    const from = indexOf(this.selectedCategory);
     this.selectedCategory = category;
     if (this.content) this.content.y = 0;
     this.createTabs();
     this.renderProducts();
+    if (this.content) slideTabPage(this, [this.content], from, indexOf(category));
   }
 
   /** 휠과 포인터 드래그를 같은 세로 위치 경계로 모은다. */

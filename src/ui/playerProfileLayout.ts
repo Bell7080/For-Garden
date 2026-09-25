@@ -8,10 +8,14 @@
 export const PLAYER_PROFILE_LAYOUT = {
   popup: { width: 960, height: 1480 },
   header: {
-    avatar: { x: -318, y: -586, size: 200 },
+    /**
+     * 테두리 장식은 가운데에서 `size × PROFILE_FRAME_REACH`까지 뻗는다. 그 상자가 팝업 몸판(왼쪽 위가
+     * 깎였다)·제목표 띠·이름줄 안쪽에 들도록 자리를 잡는다 — `tests/unit/profileFrameGeometry.test.ts`.
+     */
+    avatar: { x: -314, y: -582, size: 180 },
     /** 아바타 밑변에 반쯤 걸친 레벨 칩. */
-    levelChip: { y: -474, width: 150, height: 52 },
-    textLeft: -186,
+    levelChip: { y: -472, width: 150, height: 52 },
+    textLeft: -176,
     textRight: 430,
     nameY: -654,
     modifierY: -598,
@@ -21,7 +25,12 @@ export const PLAYER_PROFILE_LAYOUT = {
     expValueY: -470,
   },
   modifiers: { width: 170, height: 44, gap: 12 },
-  bio: { y: -398, width: 880, height: 76 },
+  /** 한 줄 소개 판. 따옴표 둘은 판의 장식이라 판 양 끝에 위아래로 엇갈려 찍힌다. */
+  bio: { y: -398, width: 880, height: 76, quote: {
+    size: 64, inset: 30, alpha: 0.85,
+    /** 따옴표 글리프는 글자 상자 위쪽에 붙어 있어 상자 가운데를 맞추면 판 위로 뜬다 — 상자를 내려 잡는다. */
+    openY: 4, closeY: 30,
+  } },
   showcase: {
     titleY: -330,
     top: -312,

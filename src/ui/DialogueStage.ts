@@ -282,10 +282,14 @@ export class DialogueStage {
     const startScale = creature.scaleX;
     const targetX = BASE_WIDTH / 2 + spec.convergeX * factor;
     const targetY = creature.y + spec.dy * factor;
+    // 차례의 어긋남은 체인의 `delay`가 아니라 **제자리에 머무는 첫 걸음**으로 준다. Phaser의
+    // TweenChain은 `delay`를 주면 시작 대기 상태에서 영영 빠져나오지 못해, 차례가 0인 한 명
+    // (왼쪽 아모)만 날아가고 나머지는 배경에 그대로 남았다.
+    const wait = order * spec.staggerMs;
     this.scene.tweens.chain({
       targets: creature,
-      delay: order * spec.staggerMs,
       tweens: [
+        ...(wait > 0 ? [{ y: creature.y, duration: wait }] : []),
         { y: creature.y + spec.crouchDy * factor, duration: spec.crouchMs, ease: "Quad.Out" },
         {
           x: targetX,

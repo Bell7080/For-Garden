@@ -12,7 +12,7 @@ describe("FakeServer interaction API", () => {
     now = new Date(dispatch.completesAt); const before = state.wallet.gold;
     const first = await server.claimInteractionDispatch({ dispatchId: dispatch.dispatchId, requestId: "claim-1" });
     const second = await server.claimInteractionDispatch({ dispatchId: dispatch.dispatchId, requestId: "claim-1" });
-    expect(state.wallet.gold - before).toBe(first.granted.amount); expect(second).toEqual(first);
+    expect(state.wallet.gold - before).toBe(first.granted.find(({ currency }) => currency === "gold")?.amount ?? 0); expect(second).toEqual(first);
   });
 
   it("여러 도시에 함께 나가되 같은 도시와 같은 렐릭은 두 번 나가지 않는다", async () => {
@@ -25,5 +25,18 @@ describe("FakeServer interaction API", () => {
     expect(both.dispatches).toHaveLength(2);
     await expect(server.startInteractionDispatch({ cityId: "doppel-parlor", party: ["spino"] })).rejects.toThrow();
     await expect(server.startInteractionDispatch({ cityId: "abyss-port", party: ["anky"] })).rejects.toThrow();
+  });
+
+  it("돌아올 것은 출발할 때 표의 모든 줄에서 굴리고, 수령하면 그 목록 그대로 들어온다", async () => {
+    let now = new Date("2026-09-03T00:00:00.000Z"); const state = createDefaultSession();
+    // 가장 높은 쪽으로 굴린다 — 「0~n」인 귀한 줄도 비지 않는다.
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0.999, now: () => now });
+    const [dispatch] = (await server.startInteractionDispatch({ cityId: "doppel-parlor", party: ["anky", "rex", "spino"] })).dispatches;
+    expect(dispatch.rewards.map(({ currency }) => currency)).toEqual(["gold", "cheesecake", "rawStone"]);
+    // 그 도시의 교류 파견 임무도 함께 센다.
+    expect(state.missions.progress["weekly-dispatch"]).toBe(1);
+    now = new Date(dispatch.completesAt);
+    const claim = await server.claimInteractionDispatch({ dispatchId: dispatch.dispatchId, requestId: "all-lines" });
+    expect(claim.granted).toEqual(dispatch.rewards);
   });
 });

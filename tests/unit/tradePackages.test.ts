@@ -6,8 +6,8 @@ import { insidePopupBody } from "../../src/ui/staminaPopupLayout";
 import { tradePackageViews } from "../../src/ui/tradePopupModel";
 
 describe("무역 패키지 운영 데이터", () => {
-  it("은 초기 3종을 젬으로만 받고 값보다 많이 준다", () => {
-    expect(TRADE_PACKAGES).toHaveLength(3);
+  it("은 네 종을 젬으로만 받고 값보다 많이 준다", () => {
+    expect(TRADE_PACKAGES).toHaveLength(4);
     for (const pack of TRADE_PACKAGES) {
       expect(pack.storefront).toBe("trade");
       // 무역은 프리미엄이 아니다 — 플랫폼 결제는 이 전시장에 오지 않는다.
@@ -19,7 +19,7 @@ describe("무역 패키지 운영 데이터", () => {
       expect(pack.defaultQuantity).toBe(1);
     }
     // 검수 장부의 환산값이 시세표와 어긋나면 화면의 가치 %가 거짓이 된다.
-    expect(TRADE_PACKAGES.map((pack) => tradePackageValuePercent(pack.acquisition, pack.grants))).toEqual([200, 175, 250]);
+    expect(TRADE_PACKAGES.map((pack) => tradePackageValuePercent(pack.acquisition, pack.grants))).toEqual([250, 200, 175, 220]);
   });
 
   it("은 계정당 1~3회 제한과 갱신 주기로만 운영된다", () => {
@@ -68,7 +68,7 @@ describe("무역 패키지 운영 데이터", () => {
 describe("무역 전시장 표시 계약", () => {
   const dto = (overrides: Partial<ReturnType<typeof baseDto>> = {}) => ({ ...baseDto(), ...overrides });
   function baseDto() {
-    return { ...TRADE_PACKAGES[0], remaining: 3, purchasable: true, disabledReason: undefined as string | undefined };
+    return { ...TRADE_PACKAGES.find(({ id }) => id === "trade-cheesecake-supply")!, remaining: 3, purchasable: true, disabledReason: undefined as string | undefined };
   }
 
   it("은 카드가 계산하지 않도록 가치·제한·액자를 만들어 넘긴다", () => {
@@ -76,6 +76,8 @@ describe("무역 전시장 표시 계약", () => {
     expect(view).toMatchObject({
       id: "trade-cheesecake-supply", name: "치즈케이크 보급", valueLabel: "가치 200%",
       cost: { currency: "gems", amount: 150 }, limitLabel: "주간 3회 · 3회 남음", soldOut: false,
+      // 원가는 받는 것을 따로 샀을 때의 젬 값이다 — 값 줄 옆에 그어 지운 채 선다.
+      refresh: "weekly", tag: "주간 특가", originalCost: 300,
     });
     expect(view.grants).toEqual([{ currency: "cheesecake", amount: 600 }]);
   });

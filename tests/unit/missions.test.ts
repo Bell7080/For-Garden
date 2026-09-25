@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addResearchPoints, applyMissionEvent, researchPointsForClaim, claimResearchStages, MISSIONS, missionPeriodKeys, normalizeMissions, type MissionState } from "../../src/core/missions";
+import { addResearchPoints, maxResearchPoints, applyMissionEvent, researchPointsForClaim, claimResearchStages, MISSIONS, missionPeriodKeys, normalizeMissions, type MissionState } from "../../src/core/missions";
 
 /** 기간 경계 테스트가 공유하는 직렬화 가능한 진행 스냅샷이다. */
 const progressed = (): MissionState => ({
@@ -32,7 +32,7 @@ describe("mission rules", () => {
     state = applyMissionEvent(state, { type: "battle_completed", victory: false }, now);
     expect(state.progress).toEqual({});
     for (let count = 0; count < 8; count += 1) state = applyMissionEvent(state, { type: "battle_completed", victory: true }, now);
-    expect(state.progress).toMatchObject({ "daily-battle": 1, "weekly-battle": 5 });
+    expect(state.progress).toMatchObject({ "daily-battle": 1, "weekly-battle": 8 });
   });
 
   it("연구소 캐릭터 연구 이벤트만 기존 발굴 저장 ID의 임무를 올린다", () => {
@@ -61,6 +61,24 @@ describe("mission rules", () => {
     const state: MissionState = { dailyKey: "2026-08-20", weeklyKey: "2026-08-17", progress: {}, claimedIds: [], researchPoints: { daily: 80, weekly: 0 }, claimedResearchStageIds: [] };
     const first = claimResearchStages(state, "daily");
     expect(first.claimedStageIds).toEqual(["research-20", "research-40", "research-60", "research-80"]);
-    expect(claimResearchStages(first.state, "daily").cheesecakeEarned).toBe(0);
+    // 단계 보상은 한 재화로 채우지 않는다 — 골드·치즈케이크·다이아·화석이 한 번씩 들어온다.
+    expect(first.rewards.map(({ currency }) => currency)).toEqual(["gold", "cheesecake", "gems", "fossil"]);
+    expect(claimResearchStages(first.state, "daily").rewards).toEqual([]);
+  });
+
+  it("주간 연구도는 주간 표를 쓰고, 일일 임무 수령 수를 주간 임무가 센다", () => {
+    const now = new Date("2026-08-20T12:00:00Z");
+    const base: MissionState = { dailyKey: "2026-08-20", weeklyKey: "2026-08-17", progress: {}, claimedIds: [], researchPoints: { daily: 0, weekly: 300 }, claimedResearchStageIds: [] };
+    expect(claimResearchStages(base, "weekly").claimedStageIds).toEqual(["research-100", "research-200", "research-300"]);
+    const next = applyMissionEvent(base, { type: "daily_mission_claimed", count: 3 }, now);
+    expect(next.progress["weekly-daily"]).toBe(3);
+    expect(applyMissionEvent(base, { type: "stamina_spent", amount: 900 }, now).progress).toMatchObject({ "daily-stamina": 60, "weekly-stamina": 600 });
+  });
+
+  it("일일은 하나를 빠뜨려도, 주간도 하나를 빠뜨려도 마지막 단계에 닿는다", () => {
+    for (const period of ["daily", "weekly"] as const) {
+      const points = MISSIONS.filter((mission) => mission.period === period).map((mission) => mission.researchPoints).sort((a, b) => a - b);
+      expect(points.slice(1).reduce((sum, value) => sum + value, 0)).toBeGreaterThanOrEqual(maxResearchPoints(period));
+    }
   });
 });

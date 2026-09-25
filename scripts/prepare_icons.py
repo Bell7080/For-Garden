@@ -40,7 +40,7 @@ FLAT = {
 ART: dict[str, tuple[str, tuple[float, float, float] | None] | tuple[str, tuple[float, float, float] | None, float]] = {
     "sprites/currency/gold.webp": ("Photoroom_20260822_113125.png", None),
     "sprites/currency/crystal.webp": ("Photoroom_20260822_113155.png", None),
-    # 치즈케이크는 v0.175.0에 더 귀여운 원화로 바꿨다. 급여 버튼·가방·보상이 모두 이 한 장을 읽는다.
+    # 치즈케이크는 v0.177.0에 더 귀여운 원화로 바꿨다. 급여 버튼·가방·보상이 모두 이 한 장을 읽는다.
     "sprites/currency/cake.webp": ("새 치즈케이크.webp", None),
     # 화석·호박석은 v0.174.8에 원화를 새로 받았다. 새 원화는 둘이 이미 푸른 결정과 붉은 호박으로
     # 갈려 있어 **색을 밀지 않는다** — 예전 원화에 쓰던 채도 빼기·노란 쪽 밀기는 누런빛끼리

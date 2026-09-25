@@ -11,6 +11,13 @@ const NAV_TOP = BASE_HEIGHT - 180;
  */
 export const LAB_CHROME = {
   vignette: { band: 260, strength: 0.55 },
+  /**
+   * 배경 층 순서 — **비네트는 녹아 드는 원화보다 늘 위다.** 비네트와 녹아 드는 원화가 같은
+   * 깊이(-29)였을 때는 나중에 세운 원화가 비네트를 덮고 올라오다 녹기가 끝나는 순간 -30으로
+   * 내려가, 비네트가 한 박자 늦게 **툭** 켜졌다. 다른 탭은 원화와 비네트가 처음부터 같은 순서로
+   * 서서 함께 밝아진다.
+   */
+  depth: { art: -30, incomingArt: -29, vignette: -28 },
   rates: { x: 36, y: 180 },
   pull: { y: NAV_TOP - 240, size: { width: 420, height: 150 }, oneTone: 0x7cc7ef, tenTone: 0xf58fb4 },
   pity: { y: NAV_TOP - 440, width: 560, height: 84 },

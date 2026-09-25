@@ -1368,7 +1368,7 @@ export class InfoManager {
     const pickerHeight = Math.min(BASE_HEIGHT - 120, RUNE_PICKER.headerHeight + (rows - 1) * RUNE_PICKER.cellHeight + RUNE_PICKER.cardHeight / 2 + 48);
     // 룬을 다루는 판은 모두 **판 밖 우하단의 공용 뒤로가기**로 닫는다. 가방 → 쪽지 → 세공이
     // 이어지는 흐름에서 닫는 자리가 판마다 달라지면 한 손짓으로 물러날 수 없다.
-    this.popups.open({ width: pickerWidth, height: pickerHeight, title: t("info.rune.bag", { part: runePartLabel(index as RunePart) }), dim: true, backButton: true }, (body, close) => {
+    this.popups.open({ width: pickerWidth, height: pickerHeight, title: t("info.rune.bag", { part: runePartLabel(index as RunePart) }), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, backButton: true }, (body, close) => {
       const top = -pickerHeight / 2;
       // 비우기는 격자 위 한 줄이다. 룬 카드와 섞이면 실수로 누르기 쉽다.
       body.add(drawLayer(this.scene, 0, top + 128, slantedRect(pickerWidth - 96, 66, 12), { fill: 0x141a22, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.3 }));

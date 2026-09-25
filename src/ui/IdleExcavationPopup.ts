@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { UI_ICON } from "./icons";
 import { POPUP_TITLE_SIZE } from "./popupGeometry";
 import { t } from "../i18n";
 import type { AdOperationsConfigResponse, AdPresentationResult, AdSlotOperationsDto, GameApi, HarvestExcavationResponse, IdleExcavationResponse } from "../api/contracts";
@@ -426,6 +427,8 @@ export class IdleExcavationPopup {
       // 4순위 보조 혜택: 광고는 primary와 거리를 두고 더 낮고 작은 보조 버튼으로만 제안한다.
       const button = new Button(this.scene, index === 0 ? -205 : 205, 385, {
         width: 350, height: 78, label: offer.label, sub: offer.usage, fontSize: 27, subFontSize: 17,
+        // 광고를 보고 받는 자리라는 것은 스테미나 광고 칸과 같은 그림이 말한다.
+        art: UI_ICON.ad,
         // 생산은 청록/푸른 강조, 보관은 보라 강조와 어두운 호박 면으로 기존 토큰의 채도를 따른다.
         accentColor: production ? COLOR.excavationProduction : COLOR.excavationStorage,
         fill: production ? COLOR.panel : COLOR.excavationStorageFill,

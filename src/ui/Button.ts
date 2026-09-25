@@ -64,6 +64,11 @@ export interface ButtonOptions {
   /** 라벨 왼쪽에 붙는 선 아이콘. */
   icon?: GlyphName;
   /**
+   * 라벨 왼쪽에 붙는 **그림** 아이콘(구운 텍스처 키). 선 아이콘(`icon`)과 자리가 같고, 비용 표기처럼
+   * 검은 그림자를 한 겹 깔아 앉힌다 — 버튼 판 안에 액자를 넣으면 판이 두 겹이 되므로 액자는 쓰지 않는다.
+   */
+  art?: string;
+  /**
    * 라벨 오른쪽에 박는 비용.
    *
    * "얼마가 드는가"는 버튼 밖의 안내문이 아니라 **누르는 것 위**에 있어야 한다. 재화 이름은
@@ -172,6 +177,16 @@ export class Button extends Phaser.GameObjects.Container {
       const total = iconSize + gap + label.width;
       label.setX(-total / 2 + iconSize + gap + label.width / 2);
       plate.add(drawGlyph(scene, opts.icon, -total / 2 + iconSize / 2, hasSub ? -14 : 0, iconSize, primary ? accent : 0xd8d5cf));
+    } else if (opts.art) {
+      // 그림은 선 아이콘보다 한 뼘 크게 선다 — 여백을 둔 캔버스라 같은 크기면 작게 읽힌다.
+      const artSize = iconSize * 1.3;
+      const gap = fontSize * 0.4;
+      const total = artSize + gap + label.width;
+      label.setX(-total / 2 + artSize + gap + label.width / 2);
+      const artX = -total / 2 + artSize / 2;
+      const artY = hasSub ? -14 : 0;
+      plate.add(scene.add.image(artX + 3, artY + 4, opts.art).setDisplaySize(artSize, artSize).setTint(0x05070a).setAlpha(0.55));
+      plate.add(scene.add.image(artX, artY, opts.art).setDisplaySize(artSize, artSize));
     }
     if (opts.cost) {
       // 라벨과 비용을 한 덩어리로 보고 판 가운데에 세운다. 값이 길어져도 덩어리째 가운데다.

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { staminaTimerLine } from "../../src/ui/staminaDisplay";
-import { heroStack, insidePopupBody, STAMINA_SWAP, staminaPopupLayout } from "../../src/ui/staminaPopupLayout";
+import { heroStack, insidePopupBody, STAMINA_CELL, STAMINA_SWAP, staminaPopupLayout } from "../../src/ui/staminaPopupLayout";
 import { STAMINA_RECHARGE_SOURCES, staminaAdSlot, staminaConsumable, staminaCurrencyRecharge } from "../../src/data/staminaRecharge";
 import { STAMINA_REGEN_INTERVAL_MS } from "../../src/core/stamina";
 
@@ -115,5 +115,25 @@ describe("소비품 갈아 끼우기", () => {
     // 갈아 끼우는 것이 그 그림이라 액자 옆에 붙되, 겹치면 무엇이 바뀌는지 가린다.
     const inner = STAMINA_SWAP.x - STAMINA_SWAP.size / 2;
     expect(inner).toBeGreaterThan(108 / 2);
+  });
+});
+
+describe("충전 칸 한 장의 세로 자리", () => {
+  it("액자 → 회복량 → 이름 → 남은 횟수 → 버튼이 서로 겹치지 않고 칸 안에 든다", () => {
+    // 「3/3 남음」 줄이 버튼 윗변에 걸쳐 덮이던 회귀다. 글줄은 글자 크기만큼의 높이를 차지한다고 본다.
+    const c = STAMINA_CELL;
+    const rows = [
+      { top: c.frameY - c.frameSize / 2, bottom: c.frameY + c.frameSize / 2 },
+      { top: c.gainY - c.gainSize * 0.6, bottom: c.gainY + c.gainSize * 0.6 },
+      { top: c.nameY - c.nameSize * 0.6, bottom: c.nameY + c.nameSize * 0.6 },
+      { top: c.detailY - c.detailSize * 0.6, bottom: c.detailY + c.detailSize * 0.6 },
+      { top: c.buttonY - c.buttonHeight / 2, bottom: c.buttonY + c.buttonHeight / 2 },
+    ];
+    for (let index = 1; index < rows.length; index++) expect(rows[index].top).toBeGreaterThanOrEqual(rows[index - 1].bottom);
+    const half = staminaPopupLayout(3).cell.height / 2;
+    expect(rows[0].top).toBeGreaterThanOrEqual(-half);
+    expect(rows[rows.length - 1].bottom).toBeLessThanOrEqual(half);
+    // 갈아 끼우는 화살표는 액자 밖에 선다.
+    expect(STAMINA_SWAP.x - STAMINA_SWAP.size / 2).toBeGreaterThan(c.frameSize / 2);
   });
 });

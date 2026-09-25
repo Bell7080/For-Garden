@@ -21,6 +21,7 @@ import { fitTextToBox } from "./textFit";
 import { shapeClipMask } from "./popupArt";
 import { CurrencyGuidePopup } from "./CurrencyGuidePopup";
 import { setDebugMailPopup } from "../debug";
+import { pressIn, pressOut } from "./pressFeedback";
 import { managerEvents } from "../managers/ManagerEvents";
 import { isMailExpired, MAIL_DETAIL_LAYOUT, mailDetailRail, MAIL_POPUP_LAYOUT, mailListRows, mailRemaining, mailRewardSlots, mailRewardX, mailTabOf, mailTabX, sortMails, type MailTab } from "./mailPopupLayout";
 
@@ -270,22 +271,24 @@ export class MailPopup {
     const hit = this.scene.add.rectangle(0, 0, layout.viewWidth + 16, L.rail.size + 24, 0xffffff, 0).setInteractive({ useHandCursor: true });
     holder.add(hit);
     let downX = 0; let originX = 0; let moved = 0; let dragging = false;
+    let pressed: (typeof frames)[number] | undefined;
     const frameAt = (pointer: Phaser.Input.Pointer): number => {
       const local = holder.getWorldTransformMatrix().applyInverse(pointer.x, pointer.y);
       return frames.findIndex((frame) => Math.abs(local.x - rail.x - frame.x) <= L.rail.size / 2);
     };
-    hit.on("pointerdown", (pointer: Phaser.Input.Pointer) => { dragging = true; downX = pointer.x; originX = rail.x; moved = 0; frames[frameAt(pointer)]?.setScale(1.08); });
-    const release = (): void => { dragging = false; frames.forEach((frame) => frame.setScale(1)); };
+    hit.on("pointerdown", (pointer: Phaser.Input.Pointer) => { dragging = true; downX = pointer.x; originX = rail.x; moved = 0; pressed = frames[frameAt(pointer)]; if (pressed) pressIn(pressed); });
+    // 누른 액자만 제 크기로 돌아온다. 끌었거나 빠져나간 손은 튀지 않는다.
+    const release = (tapped = false): void => { dragging = false; if (pressed) pressOut(pressed, "normal", { pop: tapped }); pressed = undefined; };
     hit.on("pointermove", (pointer: Phaser.Input.Pointer) => {
       if (!dragging || !pointer.isDown) return;
       moved = Math.max(moved, Math.abs(pointer.x - downX));
-      if (moved > 12) frames.forEach((frame) => frame.setScale(1));
+      if (moved > 12 && pressed) { pressOut(pressed, "normal", { pop: false }); pressed = undefined; }
       if (overflow > 0) rail.setX(Phaser.Math.Clamp(originX + (pointer.x - downX) / Math.max(0.01, holder.getWorldTransformMatrix().scaleX), -overflow, 0));
     });
-    hit.on("pointerout", release);
+    hit.on("pointerout", () => release());
     hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
       const index = moved <= 12 ? frameAt(pointer) : -1;
-      release();
+      release(index >= 0);
       const reward = rewards[index];
       if (reward) this.openRewardNote(reward);
     });

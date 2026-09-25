@@ -180,6 +180,8 @@ export default {
   "mission.weekly-stamina.title": "スタミナ 600 使用",
   "mission.weekly-dispatch.title": "交流派遣 5回",
   "mission.weekly-salary.title": "給餌 10回",
+  "mission.daily-dispatch.title": "交流派遣 1回",
+  "mission.weekly-harvest.title": "採掘の収穫 5回",
   "mission.weekly-excavate.title": "研究所でのキャラクター研究 10回",
 
   // ── ステージ・チャプター・通貨・アイテム・運営データ ─────────────────────

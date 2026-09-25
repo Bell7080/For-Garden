@@ -51,8 +51,8 @@ export interface MissionDefinition {
 /*
  * **일일은 가볍게, 주간은 한 주를 돌았는가를 센다.**
  *
- * 일일 여섯 개가 20씩 — 다섯만 끝내도 연구도가 100에 닿는다. 하나쯤 빠뜨려도 마지막 단계까지
- * 가게 둔 것이다. 주간은 일일을 한 번 더 세지 않고, 한 주에 걸쳐야 끝나는 양(전투 20회·스테미나
+ * 일일 일곱 개가 20씩 — 다섯만 끝내도 연구도가 100에 닿는다. 둘쯤 빠뜨려도 마지막 단계까지
+ * 가게 둔 것이다. 목록이 창보다 길어 아래로 흐른다. 주간은 일일을 한 번 더 세지 않고, 한 주에 걸쳐야 끝나는 양(전투 20회·스테미나
  * 600)과 **일일 임무를 며칠 끝냈는가**를 센다. 여섯 개 합이 600이라 역시 하나쯤 남겨도 500에
  * 닿는다.
  *
@@ -65,12 +65,14 @@ export const MISSIONS: readonly MissionDefinition[] = [
   { id: "daily-lobby", period: "daily", title: "로비 교류 1회", target: 1, reward: { currency: "gold", amount: 3_000 }, researchPoints: 20, event: "lobby_interaction" },
   { id: "daily-stamina", period: "daily", title: "스테미나 60 사용", target: 60, reward: { currency: "cheesecake", amount: 30 }, researchPoints: 20, event: "stamina_spent" },
   { id: "daily-harvest", period: "daily", title: "발굴 수확 1회", target: 1, reward: { currency: "gems", amount: 10 }, researchPoints: 20, event: "excavation_harvested" },
+  { id: "daily-dispatch", period: "daily", title: "교류 파견 1회", target: 1, reward: { currency: "gold", amount: 3_000 }, researchPoints: 20, event: "interaction_dispatched" },
   { id: "weekly-daily", period: "weekly", title: "일일 임무 20회 완료", target: 20, reward: { currency: "gems", amount: 50 }, researchPoints: 150, event: "daily_mission_claimed" },
   { id: "weekly-battle", period: "weekly", title: "전투 승리 20회", target: 20, reward: { currency: "gold", amount: 30_000 }, researchPoints: 100, event: "battle_completed" },
   { id: "weekly-excavate", period: "weekly", title: "연구소 캐릭터 연구 10회", target: 10, reward: { currency: "fossil", amount: 1 }, researchPoints: 100, event: "relic_research_completed" },
   { id: "weekly-stamina", period: "weekly", title: "스테미나 600 사용", target: 600, reward: { currency: "cheesecake", amount: 150 }, researchPoints: 100, event: "stamina_spent" },
   { id: "weekly-dispatch", period: "weekly", title: "교류 파견 5회", target: 5, reward: { currency: "dnaFragments", amount: 10 }, researchPoints: 100, event: "interaction_dispatched" },
   { id: "weekly-salary", period: "weekly", title: "급여 10회", target: 10, reward: { currency: "cheesecake", amount: 100 }, researchPoints: 50, event: "salary_given" },
+  { id: "weekly-harvest", period: "weekly", title: "발굴 수확 5회", target: 5, reward: { currency: "gems", amount: 30 }, researchPoints: 50, event: "excavation_harvested" },
 ];
 
 /**

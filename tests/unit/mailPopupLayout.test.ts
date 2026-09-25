@@ -43,7 +43,9 @@ describe("우편함 배치", () => {
     expect(footer.tabY - footer.tab.height / 2).toBeGreaterThan(viewport.bottom);
     expect(footer.action.y - footer.action.height / 2).toBeGreaterThan(footer.tabY + footer.tab.height / 2);
     expect(footer.action.x).toBe(0);
-    expect(mailTabX(0) + mailTabX(1)).toBe(0);
+    // 라벨은 판 왼쪽에 붙어 선다.
+    expect(mailTabX(0) - footer.tab.width / 2).toBe(footer.tab.left);
+    expect(footer.tabY - footer.tab.height / 2 - viewport.bottom).toBeGreaterThanOrEqual(20);
   });
 
   it("펼친 판은 글 → 첨부 → 받기 차례이고, 첨부가 적으면 가운데로 모이고 많으면 흐른다", () => {

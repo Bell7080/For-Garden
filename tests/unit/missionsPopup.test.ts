@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import type { ClaimMissionRewardsResponse, MissionDto } from "../../src/api/contracts";
 import { MissionClaimController, missionDisplayModel } from "../../src/ui/missionsPopupModel";
-import { boundsIntersect, MISSIONS_POPUP_LAYOUT, missionsTabX, researchTrackLayout } from "../../src/ui/missionsPopupLayout";
-import { RESEARCH_REWARD_STAGES } from "../../src/core/missions";
+import { boundsIntersect, MISSIONS_POPUP_LAYOUT, missionListContentHeight, missionRowY, missionsTabX, researchTrackLayout } from "../../src/ui/missionsPopupLayout";
+import { MISSIONS, RESEARCH_REWARD_STAGES } from "../../src/core/missions";
 import { formatResetRemaining, missionResetRemainingMs } from "../../src/ui/missionsPopupModel";
 import { BACK_BUTTON_SIZE, BACK_SLOT } from "../../src/ui/popupGeometry";
 
@@ -35,27 +35,35 @@ describe("MissionsPopup 영역 배치", () => {
     track.frameBounds.slice(1).forEach((frame, index) => expect(boundsIntersect(frame, track.frameBounds[index])).toBe(false));
   });
 
-  it("연구도 무대 → 임무 여섯 줄 → 하단 줄이 겹치지 않고 판 안에 선다", () => {
+  it("연구도 무대 → 흐르는 임무 창 → 한 뼘 띄운 라벨 → 모두 받기 순이고 판 안에 선다", () => {
     const { research, list, footer } = MISSIONS_POPUP_LAYOUT;
-    const panelBottom = research.panelY + research.panelHeight / 2;
-    expect(list.firstCardY - list.cardHeight / 2).toBeGreaterThan(panelBottom);
-    const lastCardBottom = list.firstCardY + 5 * list.cardGap + list.cardHeight / 2;
-    expect(footer.tabY - footer.tab.height / 2).toBeGreaterThan(lastCardBottom);
-    // 기간 라벨이 위, 모두 받기가 그 아래다.
+    expect(list.top).toBeGreaterThan(research.panelY + research.panelHeight / 2);
+    // 라벨과 목록 창 사이에 보호 여백이 있다.
+    expect(footer.tabY - footer.tab.height / 2 - list.bottom).toBeGreaterThanOrEqual(20);
     expect(footer.claim.y - footer.claim.height / 2).toBeGreaterThan(footer.tabY + footer.tab.height / 2);
     expect(footer.claim.y + footer.claim.height / 2).toBeLessThan(popupHeight / 2);
     expect(research.panelY - research.panelHeight / 2).toBeGreaterThan(-popupHeight / 2 + 40);
   });
 
-  it("모두 받기는 가운데에 서고, 기간 라벨은 그 위에 좌우 대칭으로 서며 뒤로가기 자리를 피한다", () => {
+  it("일일·주간 모두 창보다 긴 목록이라 아래로 흐른다", () => {
+    const { list } = MISSIONS_POPUP_LAYOUT;
+    for (const period of ["daily", "weekly"] as const) {
+      const count = MISSIONS.filter((mission) => mission.period === period).length;
+      expect(missionListContentHeight(count)).toBeGreaterThan(list.bottom - list.top);
+    }
+    expect(missionRowY(0) - list.cardHeight / 2).toBeGreaterThanOrEqual(0);
+  });
+
+  it("모두 받기는 가운데에 서고, 기간 라벨은 그 위 왼쪽에 붙어 서며 뒤로가기 자리를 피한다", () => {
     const { footer } = MISSIONS_POPUP_LAYOUT;
     // 팝업 원점은 화면 가운데다 — 뒤로가기의 화면 좌표를 본문 좌표로 옮겨 비교한다.
     const back = { left: BACK_SLOT.x - 540 - BACK_BUTTON_SIZE / 2, top: BACK_SLOT.y - 960 - BACK_BUTTON_SIZE / 2, right: BACK_SLOT.x - 540 + BACK_BUTTON_SIZE / 2, bottom: BACK_SLOT.y - 960 + BACK_BUTTON_SIZE / 2 };
     const claim = { left: footer.claim.x - footer.claim.width / 2, top: footer.claim.y - footer.claim.height / 2, right: footer.claim.x + footer.claim.width / 2, bottom: footer.claim.y + footer.claim.height / 2 };
     expect(footer.claim.x).toBe(0);
     expect(boundsIntersect(claim, back)).toBe(false);
-    expect(missionsTabX(0) + missionsTabX(1)).toBe(0);
-    expect(missionsTabX(1) + footer.tab.width / 2).toBeLessThan(popupWidth / 2);
+    expect(missionsTabX(0) - footer.tab.width / 2).toBe(footer.tab.left);
+    expect(footer.tab.left).toBeGreaterThan(-popupWidth / 2);
+    expect(missionsTabX(1)).toBeLessThan(0);
   });
 
   it("단계 보상은 한 칸에 하나뿐이다 — 구석에 붙은 두 번째 액자는 무엇인지 읽히지 않았다", () => {

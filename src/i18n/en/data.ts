@@ -1363,6 +1363,8 @@ export default {
   "mission.weekly-stamina.title": "Use 600 Stamina",
   "mission.weekly-dispatch.title": "Send 5 Exchange dispatches",
   "mission.weekly-salary.title": "Feed relics 10 times",
+  "mission.daily-dispatch.title": "Send 1 Exchange dispatch",
+  "mission.weekly-harvest.title": "Harvest Excavation 5 times",
   "mission.weekly-excavate.title": "Research a character at the Research Lab 10 times",
 
   // ── relic reactions ─────────────────────────────────────────────────────────────

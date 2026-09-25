@@ -16,7 +16,8 @@ import { RewardFrame } from "./RewardFrame";
 import { openRewardPopup } from "./RewardPopup";
 import { COLOR, textStyle } from "./theme";
 import { MissionClaimController, missionDisplayModel, missionResetRemainingMs, formatResetRemaining } from "./missionsPopupModel";
-import { MISSIONS_POPUP_LAYOUT, missionsTabX, researchTrackLayout } from "./missionsPopupLayout";
+import { MISSIONS_POPUP_LAYOUT, missionListContentHeight, missionRowY, missionsTabX, researchTrackLayout } from "./missionsPopupLayout";
+import { shapeClipMask } from "./popupArt";
 
 const PERIODS: readonly MissionPeriod[] = ["daily", "weekly"];
 
@@ -46,6 +47,12 @@ export class MissionsPopup {
   private resetText?: Phaser.GameObjects.Text;
   private resetTimer?: Phaser.Time.TimerEvent;
   private bars: HoloBar[] = [];
+  /** 흐르는 목록과 그 줄들. 줄 하나가 컨테이너 하나라 창 밖으로 나간 줄을 통째로 감춘다. */
+  private scrollContent?: Phaser.GameObjects.Container;
+  private rows: Phaser.GameObjects.Container[] = [];
+  private scroll = 0;
+  private minScroll = 0;
+  private scrollPeriod?: MissionPeriod;
   private readonly claims: MissionClaimController;
   private readonly api: GameApi;
 
@@ -77,22 +84,73 @@ export class MissionsPopup {
     this.render(); setDebugMissionsPeriod(this.period);
   }
 
-  private destroyContent(): void { this.bars.forEach((bar) => bar.destroy()); this.bars = []; this.list?.destroy(); this.list = undefined; this.resetText = undefined; }
+  private destroyContent(): void { this.bars.forEach((bar) => bar.destroy()); this.bars = []; this.list?.destroy(); this.list = undefined; this.scrollContent = undefined; this.rows = []; this.resetText = undefined; }
 
   private render(): void {
+    // 같은 기간을 다시 그릴 때(수령 직후)는 보던 자리를 지킨다 — 받기 한 번에 목록이 맨 위로 튀지 않게.
+    const keepScroll = this.scrollPeriod === this.period ? this.scroll : 0;
     this.destroyContent(); if (!this.body) return;
     this.list = this.scene.add.container(0, 0); this.body.add(this.list);
     this.renderResearch();
-    this.missions.filter((mission) => mission.period === this.period).forEach((raw, index) => this.renderMission(raw, index));
+    const missions = this.missions.filter((mission) => mission.period === this.period);
+    this.rows = [];
+    const content = this.buildScrollList(missions.length);
+    missions.forEach((raw, index) => this.renderMission(content, raw, index));
+    this.scrollPeriod = this.period;
+    this.applyScroll(keepScroll);
     this.renderFooter();
   }
 
+  /**
+   * 임무 목록 창 — 연구도 무대 아래에서 기간 라벨 한 뼘 위까지만 보이고 그 안에서 흐른다.
+   *
+   * 마스크는 흐르지 않는 틀(`frame`)을 따라가므로 판이 떠오르는 동안에도 어긋나지 않는다. 창 밖으로
+   * 완전히 나간 줄은 감춘다 — 마스크는 그림만 자르고 입력은 막지 않아, 감추지 않으면 위의 연구도
+   * 무대를 누른 손이 그 뒤에 숨은 받기를 누른다.
+   */
+  private buildScrollList(count: number): Phaser.GameObjects.Container {
+    const { list } = MISSIONS_POPUP_LAYOUT;
+    const frame = this.scene.add.container(0, list.top);
+    this.list!.add(frame);
+    const viewHeight = list.bottom - list.top;
+    const half = list.cardWidth / 2 + 20;
+    const drag = this.scene.add.rectangle(0, viewHeight / 2, half * 2, viewHeight, 0xffffff, 0).setInteractive({ draggable: true });
+    frame.add(drag);
+    const content = this.scene.add.container(0, 0);
+    frame.add(content);
+    content.setMask(shapeClipMask(this.scene, frame, [-half, 0, half, 0, half, viewHeight, -half, viewHeight]));
+    this.scrollContent = content;
+    this.minScroll = Math.min(0, viewHeight - missionListContentHeight(count));
+    let lastY = 0;
+    drag.on("dragstart", (pointer: Phaser.Input.Pointer) => { lastY = pointer.y; });
+    drag.on("drag", (pointer: Phaser.Input.Pointer) => {
+      const scale = frame.getWorldTransformMatrix().scaleY || 1;
+      this.applyScroll(this.scroll + (pointer.y - lastY) / scale); lastY = pointer.y;
+    });
+    drag.on("wheel", (_pointer: Phaser.Input.Pointer, _dx: number, dy: number) => this.applyScroll(this.scroll - dy * 0.65));
+    return content;
+  }
+
+  private applyScroll(value: number): void {
+    const content = this.scrollContent; if (!content?.active) return;
+    const { list } = MISSIONS_POPUP_LAYOUT;
+    this.scroll = Phaser.Math.Clamp(value, this.minScroll, 0);
+    content.y = this.scroll;
+    const viewHeight = list.bottom - list.top;
+    for (const row of this.rows) {
+      const top = row.y + this.scroll - list.cardHeight / 2;
+      row.setVisible(top + list.cardHeight > 0 && top < viewHeight);
+    }
+  }
+
   /** 임무 한 줄 — 왼쪽에 이름과 달성 게이지, 오른쪽에 보상 액자와 수령 버튼. */
-  private renderMission(raw: MissionDto, index: number): void {
-    const list = this.list; if (!list) return;
+  private renderMission(content: Phaser.GameObjects.Container, raw: MissionDto, index: number): void {
     const { list: layout } = MISSIONS_POPUP_LAYOUT;
     const mission = missionDisplayModel(raw);
-    const y = layout.firstCardY + index * layout.cardGap;
+    // 줄 하나가 제 컨테이너를 갖는다 — 안쪽 좌표는 줄 가운데가 0이다.
+    const list = this.scene.add.container(0, missionRowY(index));
+    content.add(list); this.rows.push(list);
+    const y = 0;
     const halfW = layout.cardWidth / 2;
     const shape = chipPoints(layout.cardWidth, layout.cardHeight, { bevel: { topLeft: 28, topRight: 0, bottomRight: 28, bottomLeft: 0 } });
     const tone = mission.claimable ? COLOR.missionClaim : mission.claimed ? 0x68717d : COLOR.accent;

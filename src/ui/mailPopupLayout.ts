@@ -10,7 +10,7 @@ import type { MailDto } from "../api/contracts";
 export const MAIL_POPUP_LAYOUT = {
   popup: { widthInset: 70, heightInset: 210 },
   /** 목록이 흐르는 창. 하단 줄 위에서 끝난다. */
-  viewport: { top: -772, bottom: 606, width: 940 },
+  viewport: { top: -772, bottom: 580, width: 940 },
   card: {
     width: 920,
     gap: 18,
@@ -30,9 +30,9 @@ export const MAIL_POPUP_LAYOUT = {
    * 오른쪽 아래 구석은 판 밖 뒤로가기의 자리라 비워 둔다.
    */
   footer: {
-    tabY: 662,
-    tab: { width: 210, height: 84, gap: 12 },
-    action: { x: 0, y: 778, width: 380, height: 92 },
+    tabY: 648,
+    tab: { width: 210, height: 76, gap: 12, left: -470 },
+    action: { x: 0, y: 772, width: 380, height: 92 },
   },
 } as const;
 
@@ -85,8 +85,8 @@ export function mailRewardX(index: number): number {
 /** 하단 탭 하나의 중심 x. */
 export function mailTabX(index: number): number {
   const { tab } = MAIL_POPUP_LAYOUT.footer;
-  // 라벨 둘이 판 가운데를 기준으로 좌우 대칭으로 선다 — 아래 일괄 조작과 같은 축이다.
-  return (index - 0.5) * (tab.width + tab.gap);
+  // 라벨은 판 왼쪽에 붙어 선다 — 가방·상점·임무의 전환 라벨과 같은 자리다.
+  return tab.left + tab.width / 2 + index * (tab.width + tab.gap);
 }
 
 /** 남은 기한을 `D-3`·`12:04`처럼 짧게 적는 데 쓰는 수. 하루가 안 남으면 시·분이다. */

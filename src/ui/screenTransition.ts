@@ -166,3 +166,28 @@ function disableInput(object: Phaser.GameObjects.GameObject): void {
   const container = object as Phaser.GameObjects.Container;
   if (Array.isArray(container.list)) for (const child of container.list) disableInput(child);
 }
+
+/**
+ * 라벨 탭으로 목록을 갈아 끼운 뒤, 새 목록을 **탭이 선 쪽에서** 밀어 넣는다(`TRANSITION.tabPage`).
+ *
+ * 화면마다 제 나름으로 움직이면 같은 조작이 어디서는 툭 갈리고 어디서는 미끄러진다 — 라벨 탭을
+ * 쓰는 모든 화면이 이 함수 하나를 부른다. 옮기는 것은 **목록을 담은 판 하나**다. 판에 마스크가
+ * 걸려 있으면 마스크는 제자리라 목록이 창 안에서 미끄러져 들어온다. 같은 탭을 다시 눌렀으면
+ * (`from === to`) 아무것도 하지 않는다. 연달아 누르면 앞의 움직임을 끊고 제자리에서 다시 시작한다.
+ */
+export function slideTabPage(scene: Phaser.Scene, targets: readonly (Phaser.GameObjects.Components.Transform & Phaser.GameObjects.Components.AlphaSingle & Phaser.GameObjects.GameObject)[], from: number, to: number): void {
+  if (from === to || from < 0 || to < 0) return;
+  const timing = transitionTiming("tabPage", currentMotion());
+  const direction = Math.sign(to - from);
+  for (const target of targets) {
+    const restX = (target.getData("tabRestX") as number | undefined) ?? target.x;
+    target.setData("tabRestX", restX);
+    scene.tweens.killTweensOf(target);
+    target.x = restX;
+    target.alpha = 1;
+    if (timing.duration === 0) continue;
+    target.x = restX + direction * timing.distance;
+    target.alpha = timing.alpha;
+    scene.tweens.add({ targets: target, x: restX, alpha: 1, duration: timing.duration, ease: "Cubic.easeOut" });
+  }
+}

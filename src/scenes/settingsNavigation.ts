@@ -9,6 +9,8 @@ export interface SettingsEntryData {
   /** 반환 데이터는 씬별 허용 필드만 담으며 SettingsScene 진입 시 다시 검증한다. */
   returnData?: { section: PremiumSection };
   tab?: "sound" | "alerts" | "play" | "access" | "support";
+  /** 탭을 바꿔 다시 세울 때 떠난 탭의 자리 — 새 내용이 그쪽 반대편에서 밀려 들어온다(`slideTabPage`). */
+  slideFrom?: number;
 }
 
 const RETURN_SCENES: readonly SettingsReturnScene[] = ["lobby", "interaction", "archaeology", "relics", "lab", "premium"];

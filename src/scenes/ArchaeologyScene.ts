@@ -38,7 +38,7 @@ import { StrataDigEffect } from "../ui/StrataDigEffect";
 import type { ArchaeologyStateResponse } from "../api/contracts";
 import { formatCountdown } from "../core/formatCountdown";
 import { archaeologyProgressManager } from "../managers/ArchaeologyProgressManager";
-import { playSceneEntrance, startScene } from "../ui/screenTransition";
+import { playSceneEntrance, startScene, slideTabPage } from "../ui/screenTransition";
 
 /**
  * 고고학. 하단 탭 첫 슬롯이다.
@@ -270,9 +270,11 @@ export class ArchaeologyScene extends Phaser.Scene {
         selected: this.tab === key,
         onSelect: () => {
           if (this.tab === key) return;
+          const from = tabs.findIndex((tab) => tab.key === this.tab);
           this.tab = key;
           this.paintTabs();
           this.paintView();
+          slideTabPage(this, [this.view], from, index);
         },
       });
     });

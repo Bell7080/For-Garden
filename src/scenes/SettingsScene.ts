@@ -29,7 +29,7 @@ import { relicProgression } from "../managers/RelicProgressionManager";
 import { getRelic } from "../data/relics";
 import { openPolicyDocument, type PolicyPath } from "./policyNavigation";
 import { consumeSceneEntry } from "./sceneEntry";
-import { playSceneEntrance, startScene, restartScene } from "../ui/screenTransition";
+import { playSceneEntrance, startScene, restartScene, slideTabPage } from "../ui/screenTransition";
 
 /** 상단 탭은 긴 설정을 의미 단위로 나눠 좁은 화면에서도 한 섹션만 스크롤하게 한다. */
 const TABS = [
@@ -63,6 +63,7 @@ export class SettingsScene extends Phaser.Scene {
   /** 검증을 마친 반환 경로만 보관해 탭 재시작 뒤에도 원래 화면을 잃지 않는다. */
   private returnScene: SettingsReturnScene = "lobby";
   private returnData?: SettingsEntryData["returnData"];
+  private slideFrom?: number;
 
   constructor() { super("settings"); }
 
@@ -90,6 +91,8 @@ export class SettingsScene extends Phaser.Scene {
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
+    // 탭을 바꿔 다시 선 것이면 화면 진입 대신 내용만 탭 쪽에서 밀려 들어온다 — 가방·상점과 같은 문법.
+    if (this.slideFrom !== undefined) slideTabPage(this, [this.content], this.slideFrom, TABS.findIndex(({ id }) => id === this.activeTab));
   }
 
   /**
@@ -106,7 +109,12 @@ export class SettingsScene extends Phaser.Scene {
       addCategoryTab(this, undefined, {
         x: slot.x, y: SETTINGS_HEAD.tabY, width: slot.width, height: SETTINGS_HEAD.tabHeight,
         label: t(tab.key), selected: tab.id === this.activeTab, face: "down",
-        onSelect: () => { this.activeTab = tab.id; this.scrollY = 0; restartScene(this, { tab: tab.id, returnScene: this.returnScene, returnData: this.returnData }); },
+        onSelect: () => {
+          if (tab.id === this.activeTab) return;
+          const slideFrom = TABS.findIndex(({ id }) => id === this.activeTab);
+          this.activeTab = tab.id; this.scrollY = 0;
+          restartScene(this, { tab: tab.id, returnScene: this.returnScene, returnData: this.returnData, slideFrom });
+        },
       }).setDepth(20);
     });
   }
@@ -114,6 +122,7 @@ export class SettingsScene extends Phaser.Scene {
   /** 재시작으로 탭의 고정 헤더와 확대된 글자까지 깨끗하게 다시 만들되 선택 탭은 유지한다. */
   init(data: SettingsEntryData): void {
     if (data?.tab && TABS.some(tab => tab.id === data.tab)) this.activeTab = data.tab;
+    this.slideFrom = typeof data?.slideFrom === "number" ? data.slideFrom : undefined;
     const route = validateSettingsReturn(data);
     this.returnScene = route.returnScene; this.returnData = route.returnData;
     consumeSceneEntry(this);
@@ -190,8 +199,8 @@ export class SettingsScene extends Phaser.Scene {
       });
       // 기존 선택 행의 눌림·강조 양식을 재사용하며 30분 단위의 유효 HH:mm 값만 저장한다.
       const quietTimes = Array.from({ length: 48 }, (_, index) => `${String(Math.floor(index / 2)).padStart(2, "0")}:${index % 2 ? "30" : "00"}`);
-      this.content.add(new SettingsSelectRow(this, SETTINGS_ROW.left, y, t("settings.alerts.quietStart"), s.notifications.quietHoursStart, quietTimes, value => void settingsManager.updateNotificationPreferences({ quietHoursStart: value }))); y += SETTINGS_ROW.step; divider();
-      this.content.add(new SettingsSelectRow(this, SETTINGS_ROW.left, y, t("settings.alerts.quietEnd"), s.notifications.quietHoursEnd, quietTimes, value => void settingsManager.updateNotificationPreferences({ quietHoursEnd: value }))); y += SETTINGS_ROW.step; divider();
+      this.content.add(new SettingsSelectRow(this,this.popups, SETTINGS_ROW.left, y, t("settings.alerts.quietStart"), s.notifications.quietHoursStart, quietTimes, value => void settingsManager.updateNotificationPreferences({ quietHoursStart: value }), String, "clock")); y += SETTINGS_ROW.step; divider();
+      this.content.add(new SettingsSelectRow(this,this.popups, SETTINGS_ROW.left, y, t("settings.alerts.quietEnd"), s.notifications.quietHoursEnd, quietTimes, value => void settingsManager.updateNotificationPreferences({ quietHoursEnd: value }), String, "clock")); y += SETTINGS_ROW.step; divider();
     } else if (this.activeTab === "play") {
       section(t("settings.section.play"));
       // 기존 저사양 토글은 품질 선택과 의미가 겹쳐 제거하고, 서로 다른 연출 토글만 남긴다.
@@ -200,22 +209,22 @@ export class SettingsScene extends Phaser.Scene {
       toggle(t("settings.play.powerSaving"),'presentation','powerSaving');
       // 홀로그램 선택 행의 강조색·눌림 확대를 그대로 재사용한다.
       const qualityKeys = { high: "settings.play.quality.high", balanced: "settings.play.quality.balanced", low: "settings.play.quality.low" } as const;
-      this.content.add(new SettingsSelectRow(this,SETTINGS_ROW.left,y,t("settings.play.graphicsQuality"),s.presentation.graphicsQuality,['high','balanced','low'] as const,v=>settingsManager.update({presentation:{graphicsQuality:v}}),v=>t(qualityKeys[v]))); y+=SETTINGS_ROW.step; divider();
-      this.content.add(new SettingsSelectRow(this,SETTINGS_ROW.left,y,t("settings.play.frameRateLimit"),s.presentation.frameRateLimit,[30,60] as const,v=>settingsManager.update({presentation:{frameRateLimit:v}}),v=>`${v} FPS`)); y+=SETTINGS_ROW.step; divider();
+      this.content.add(new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,t("settings.play.graphicsQuality"),s.presentation.graphicsQuality,['high','balanced','low'] as const,v=>settingsManager.update({presentation:{graphicsQuality:v}}),v=>t(qualityKeys[v]))); y+=SETTINGS_ROW.step; divider();
+      this.content.add(new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,t("settings.play.frameRateLimit"),s.presentation.frameRateLimit,[30,60] as const,v=>settingsManager.update({presentation:{frameRateLimit:v}}),v=>`${v} FPS`)); y+=SETTINGS_ROW.step; divider();
       // 기존 선택 행의 크기 반응과 강조색을 재사용하고 저장값만 안정적인 영문 ID로 유지한다.
       const motionKeys = { default: "settings.play.motion.default", reduced: "settings.play.motion.reduced", off: "settings.play.motion.off" } as const;
-      this.content.add(new SettingsSelectRow(this,SETTINGS_ROW.left,y,t("settings.play.battleUiMotion"),s.presentation.battleUiMotion,['default','reduced','off'] as const,v=>settingsManager.update({presentation:{battleUiMotion:v}}),v=>t(motionKeys[v]))); y+=SETTINGS_ROW.step; divider();
+      this.content.add(new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,t("settings.play.battleUiMotion"),s.presentation.battleUiMotion,['default','reduced','off'] as const,v=>settingsManager.update({presentation:{battleUiMotion:v}}),v=>t(motionKeys[v]))); y+=SETTINGS_ROW.step; divider();
       // 인게임 배속 칩과 같은 1·2·3배 선택지를 보여 주며 SettingsManager가 즉시 저장한다.
-      this.content.add(new SettingsSelectRow(this,SETTINGS_ROW.left,y,t("settings.play.battleSpeed"),s.game.battleSpeed,FREE_BATTLE_SPEEDS,v=>settingsManager.update({game:{battleSpeed:v}}))); y+=SETTINGS_ROW.step; divider();
+      this.content.add(new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,t("settings.play.battleSpeed"),s.game.battleSpeed,FREE_BATTLE_SPEEDS,v=>settingsManager.update({game:{battleSpeed:v}}))); y+=SETTINGS_ROW.step; divider();
       toggle(t("settings.play.autoUltimate"),'game','autoUltimate');
-      this.content.add(new SettingsSelectRow(this,SETTINGS_ROW.left,y,t("settings.play.textSpeed"),s.game.textSpeed,[0.5,1,2] as const,v=>settingsManager.update({game:{textSpeed:v}}))); y+=SETTINGS_ROW.step; divider();
+      this.content.add(new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,t("settings.play.textSpeed"),s.game.textSpeed,[0.5,1,2] as const,v=>settingsManager.update({game:{textSpeed:v}}))); y+=SETTINGS_ROW.step; divider();
       // 목록·표기는 core/language.ts 한 표가 갖는다. 각 언어는 제 이름으로 서야 지금 화면을
       // 읽지 못하는 사람도 제 언어를 찾는다.
       //
       // 고를 수 있는 언어가 하나뿐이면 줄 자체를 세우지 않는다 — 눌러도 아무 일이 없는 조작은
       // 준비 상태를 과장한다. 번역이 들어와 `SELECTABLE_LANGUAGE_IDS`가 늘면 저절로 나타난다.
       if (SELECTABLE_LANGUAGE_IDS.length > 1) {
-      this.content.add(new SettingsSelectRow(this,SETTINGS_ROW.left,y,t("settings.play.language"),s.game.language,SELECTABLE_LANGUAGE_IDS,v=>{
+      this.content.add(new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,t("settings.play.language"),s.game.language,SELECTABLE_LANGUAGE_IDS,v=>{
         settingsManager.update({game:{language:v}});
         // 글꼴 스택과 문구 표가 함께 바뀌므로, 둘 다 도착한 뒤에 다시 그린다. Phaser Text는 그린
         // 순간의 글꼴로 텍스처를 굳으니 받기 전에 그리면 대체 글꼴 상태로 남는다.
@@ -224,7 +233,7 @@ export class SettingsScene extends Phaser.Scene {
       }
     } else if (this.activeTab === "access") {
       section(t("settings.section.access"));
-      this.content.add(new SettingsSelectRow(this,SETTINGS_ROW.left,y,t("settings.access.textScale"),s.accessibility.textScale,[1,1.15,1.3] as const,value=>{ settingsManager.update({accessibility:{textScale:value}}); restartScene(this, { tab: "access" }); })); y+=SETTINGS_ROW.step; divider();
+      this.content.add(new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,t("settings.access.textScale"),s.accessibility.textScale,[1,1.15,1.3] as const,value=>{ settingsManager.update({accessibility:{textScale:value}}); restartScene(this, { tab: "access" }); })); y+=SETTINGS_ROW.step; divider();
       // 접근성 선택은 공용 효과·의미 표식 경계에서 소비하며 씬마다 별도 색이나 밝기를 만들지 않는다.
       toggle(t("settings.access.reduceMotion"),'accessibility','reduceMotion'); toggle(t("settings.access.reduceFlashes"),'accessibility','reduceFlashes'); toggle(t("settings.access.colorAssist"),'accessibility','colorAssist');
     } else {

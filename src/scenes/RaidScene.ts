@@ -25,7 +25,7 @@ import { COLOR, textStyle } from "../ui/theme";
 import { LOBBY_RETURN } from "./lobbyEntry";
 import { prefetchBattlePuppets } from "../puppets/battlePrefetch";
 import { relicCollection } from "../managers/RelicCollectionManager";
-import { playSceneEntrance, startScene } from "../ui/screenTransition";
+import { playSceneEntrance, startScene, slideTabPage } from "../ui/screenTransition";
 import type { PartySceneData } from "../data/partyContent";
 import { addRaidBossPickLayer, addRaidDifficultyPickLayer, addRaidLayer, raidTagLabel } from "../ui/RaidLayer";
 import { playRaidSummonCinematic } from "../ui/RaidSummonCinematic";
@@ -235,10 +235,12 @@ export class RaidScene extends Phaser.Scene {
         label: t(`raid.tab.${tab}`), selected: this.tab === tab,
         onSelect: () => {
           if (this.tab === tab) return;
+          const from = this.tab === "active" ? 0 : 1;
           this.tab = tab;
           this.scrollY = 0;
           this.renderTabs();
           if (lastRaidList) this.renderList(lastRaidList);
+          if (this.layers) slideTabPage(this, [this.layers], from, index);
         },
       });
     });

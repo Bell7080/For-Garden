@@ -40,6 +40,11 @@ export interface ExpeditionBossReplayInput {
    */
   bondLevels?: Readonly<Record<string, number>>;
   breakthroughs?: Readonly<Record<string, number>>;
+  /**
+   * **보스가 쓰러질 수 있는 판인가**(레이드). 켜면 보스를 정의의 체력 그대로 세우고, 쓰러뜨려 이긴
+   * 판도 정상 종료로 받는다. 끄면(원정 폰토스) 예전처럼 한계 체력으로 세워 전멸만 받는다.
+   */
+  bossKillable?: boolean;
 }
 /**
  * 전멸한 정상 종료만 확정하며 totalDamage는 서버가 행동 로그로 재계산한 **대상 경감 전** 기여도다.
@@ -47,7 +52,8 @@ export interface ExpeditionBossReplayInput {
  * 누적은 소수까지 그대로 센다 — 타격마다 반올림하면 같은 총 계수의 다단히트가 더 커진다.
  * 대신 코어 밖으로 나가는 **여기서 한 번만** 반올림해, 점수판과 순위표에는 언제나 정수가 선다.
  */
-export interface ExpeditionBossResult { totalDamage: number; endedAtMs: number; allAlliesDead: true; bossDefeated: false; remainingHpByAlly: Record<string, number>; }
+/** 원정 폰토스는 늘 전멸로 끝난다. 레이드처럼 쓰러질 수 있는 보스만 `bossDefeated`가 켜진다. */
+export interface ExpeditionBossResult { totalDamage: number; endedAtMs: number; allAlliesDead: boolean; bossDefeated: boolean; remainingHpByAlly: Record<string, number>; }
 
 /** 해당 시각에 활성인 마지막 보스 단계를 찾는다. 일반 단계는 표시만 하고 피해는 폰토스 스킬이 소유한다. */
 export function expeditionBossPhaseAt(elapsedMs: number) {
@@ -116,15 +122,19 @@ export function resolveExpeditionBossBattle(input: ExpeditionBossReplayInput, ac
   const initialStates = input.allies.map(({ id }) => ({ relicId: id, currentHp: input.initialHpPercentByRelic?.[id] ?? 100, alive: (input.initialHpPercentByRelic?.[id] ?? 100) > 0 }));
   if (initialStates.some(({ currentHp }) => !Number.isFinite(currentHp) || currentHp < 0 || currentHp > 100)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
   const phases = balance.phases.map(({ startsAtMs, attackPerSecond, label }) => ({ startsAt: startsAtMs / 1_000, damagePerSecond: attackPerSecond, label }));
-  const state = createSkirmish([...input.allies], [{ ...input.boss, stats: { ...input.boss.stats, hp: Number.MAX_SAFE_INTEGER } }], input.arena, input.bondLevels ?? {}, input.breakthroughs ?? {}, {
+  const killable = input.bossKillable === true;
+  const bossHp = killable ? input.boss.stats.hp : Number.MAX_SAFE_INTEGER;
+  const state = createSkirmish([...input.allies], [{ ...input.boss, stats: { ...input.boss.stats, hp: bossHp } }], input.arena, input.bondLevels ?? {}, input.breakthroughs ?? {}, {
     playerInitialStates: initialStates, augmentEffects: input.augmentEffects,
-    boss: { phases, limitSeconds: balance.maximumDurationMs / 1_000, percentHpBasis: input.percentHpBasis ?? input.boss.stats.hp },
+    boss: { phases, limitSeconds: balance.maximumDurationMs / 1_000, percentHpBasis: input.percentHpBasis ?? input.boss.stats.hp, endsOnKill: killable },
   });
   // 자동 평타는 제출 로그가 명시적으로 재생하므로 끄고, 폰토스의 AI·폭주·상태 시계만 stepSkirmish로 진행한다.
   for (const fighter of state.fighters) if (fighter.side === "player") fighter.attackCooldown = Number.POSITIVE_INFINITY;
   // 같은 행동이 다시 준비되는 시각을 그 행동을 재생한 **그 순간의 상태**로 못 박는다.
   const readyAt = new Map<string, number>(); const basicCount = new Map<string, number>(); let cursorMs = 0;
   for (const action of actions) {
+    // 보스를 쓰러뜨려 판이 끝났으면 그 뒤의 행동은 없다 — 재현이 실제 판보다 먼저 끝났을 뿐이다.
+    if (state.phase !== "fight") break;
     if (!Number.isInteger(action.elapsedMs) || action.elapsedMs < cursorMs || action.elapsedMs > balance.maximumDurationMs) throw new Error("INVALID_BOSS_BATTLE_INPUT");
     while (cursorMs < action.elapsedMs && state.phase === "fight") { const slice = Math.min(50, action.elapsedMs - cursorMs); stepSkirmish(state, slice / 1_000, rng); cursorMs += slice; }
     const fighter = state.fighters.find(({ side, def }) => side === "player" && def.id === action.actorId);
@@ -146,7 +156,8 @@ export function resolveExpeditionBossBattle(input: ExpeditionBossReplayInput, ac
     readyAt.set(key, action.elapsedMs + (action.kind === "basic" ? intervalMs : fighter.def.ultimate.cost / Math.max(1, fighter.def.stats.energyGain) * intervalMs));
   }
   while (state.phase === "fight" && cursorMs < balance.maximumDurationMs) { stepSkirmish(state, 0.05, rng); cursorMs += 50; }
-  if (state.phase !== "defeat") throw new Error("BOSS_BATTLE_DID_NOT_END_IN_WIPE");
-  return { totalDamage: Math.round(state.boss?.score ?? 0), endedAtMs: Math.round(state.elapsed * 1_000), allAlliesDead: true, bossDefeated: false,
+  const bossDefeated = killable && state.phase === "victory";
+  if (state.phase !== "defeat" && !bossDefeated) throw new Error("BOSS_BATTLE_DID_NOT_END_IN_WIPE");
+  return { totalDamage: Math.round(state.boss?.score ?? 0), endedAtMs: Math.round(state.elapsed * 1_000), allAlliesDead: !bossDefeated, bossDefeated,
     remainingHpByAlly: Object.fromEntries(state.fighters.filter(({ side }) => side === "player").map(({ def, hp }) => [def.id, hp])) };
 }

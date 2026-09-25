@@ -50,7 +50,7 @@ import { EnemyInfoPopup } from "../ui/EnemyInfoPopup";
 import { placedEnemyIndex, type PlacedEnemy } from "../data/placedEnemies";
 import { UltimateCutIn } from "../ui/UltimateCutIn";
 import {
-  battleFightStartsAt, battleSpeedTier, nextBattleSpeed, usableBattleSpeed, scaleUltimateDuration, shouldWaitForUltimatePresentation, ultimatePresentationTiming, ULTIMATE_RECOVERY_RATIO,
+  BATTLE_CLOSING_HOLD_MS, battleFightStartsAt, battleSpeedTier, nextBattleSpeed, usableBattleSpeed, scaleUltimateDuration, shouldWaitForUltimatePresentation, ultimatePresentationTiming, ULTIMATE_RECOVERY_RATIO,
   type BattleSpeed,
 } from "../core/battleControls";
 import { ControlChip } from "../ui/ControlChip";
@@ -304,6 +304,9 @@ export class BattleScene extends Phaser.Scene {
   private views = new Map<string, FighterView>();
   private profiles: ProfileView[] = [];
   private finished = false;
+  /** 끝난 판이 결과판을 여는 실제 시각과, 그때 부를 일. 숨 고르기가 끝나기 전 씬을 떠나면 버린다. */
+  private closingAt = 0;
+  private pendingResult?: () => void;
   /** 보스 제출에는 코어가 실제로 낸 공격 종류와 시각만 기록하며 피해 숫자는 넣지 않는다. */
   private bossActions: ExpeditionBossAction[] = [];
   /** 레이드 제출의 멱등 키. 재시도가 같은 ID를 써야 성공한 제출이 두 번 쌓이지 않는다. */
@@ -451,7 +454,8 @@ export class BattleScene extends Phaser.Scene {
   private paintRaidSeasonHud(): void {
     const hud = this.raidSeasonHud;
     if (!hud) return;
-    const remaining = Math.max(0, hud.remaining - Math.round(this.state.boss?.score ?? 0));
+    // 한 판이 깎는 것은 몸 한 줄까지다 — 서버도 그 이상을 공유 게이지에 들이지 않는다.
+    const remaining = Math.max(0, hud.remaining - Math.min(hud.bodyHp, Math.round(this.state.boss?.score ?? 0)));
     if (remaining === hud.shown) return;
     hud.shown = remaining;
     hud.bar.setValue(hud.total > 0 ? remaining / hud.total : 0);
@@ -544,6 +548,7 @@ export class BattleScene extends Phaser.Scene {
     this.profiles = [];
     this.allyInfoRef = undefined;
     this.finished = false;
+    this.pendingResult = undefined;
     this.spawned = false;
     this.fightStartsAt = Infinity;
     // 이전 씬의 tween 종료보다 재진입이 빠르더라도 표시 관찰값은 새 전투에서 0부터 시작한다.
@@ -1182,7 +1187,8 @@ export class BattleScene extends Phaser.Scene {
    * 흐른다. 갑자기 벌어진 공백은 코어가 상한을 두고 잘라 낸다.
    */
   update(): void {
-    if (!this.spawned || this.finished) return;
+    if (!this.spawned) return;
+    if (this.finished) { this.holdClosing(); return; }
     const now = performance.now();
     const elapsed = now - this.lastStepAt;
     const dt = elapsed / 1000;
@@ -2235,6 +2241,31 @@ export class BattleScene extends Phaser.Scene {
     this.profiles.forEach((profile) => this.setUltimateReady(profile, false));
     this.syncViews();
     this.refreshDebug();
+    // 결과판은 숨을 한 번 고른 뒤에 연다(`BATTLE_CLOSING_HOLD_MS`). 판정·정산 입력은 위에서 이미 굳혔다.
+    this.closingAt = performance.now() + BATTLE_CLOSING_HOLD_MS;
+    this.pendingResult = () => this.openBattleResult(phase);
+  }
+
+  /**
+   * 끝난 뒤의 숨 고르기. 코어 시간은 더 흐르지 않고, 쓰러지는 연출·게이지 추격만 제 속도로 마저
+   * 돌다가 시간이 되면 결과판을 연다. 씬의 시계 타이머가 아니라 매 프레임 실제 시각을 보므로
+   * 그 틈이 프레임 사정에 따라 늘어나지 않는다.
+   */
+  private holdClosing(): void {
+    const now = performance.now();
+    const elapsed = now - this.lastStepAt;
+    this.lastStepAt = now;
+    this.stepMeters(elapsed);
+    this.syncCombatEffects();
+    this.refreshProfiles();
+    if (!this.pendingResult || now < this.closingAt) return;
+    const open = this.pendingResult;
+    this.pendingResult = undefined;
+    open();
+  }
+
+  /** 숨 고르기가 끝난 뒤 모드별 결과판으로 넘어간다. */
+  private openBattleResult(phase: "victory" | "defeat"): void {
     const won = phase === "victory";
     if (this.battleInput.mode === "expeditionBoss") { void this.submitAndSettleBoss(this.battleInput, this.bossActions); return; }
     if (this.battleInput.mode === "raid") { void this.submitRaidRun(this.bossActions); return; }

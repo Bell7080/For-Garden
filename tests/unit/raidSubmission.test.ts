@@ -77,4 +77,42 @@ describe("레이드 피해 제출 왕복", () => {
     expect(primary.length).toBeGreaterThan(0);
     expect(new Set(primary).size).toBe(primary.length);
   });
+
+  it("레이드 보스를 쓰러뜨리면 그 자리에서 이기고, 서버 재현도 그 끝을 받는다", () => {
+    // 몸을 작게 세워 한 판 안에 쓰러뜨린다 — 규칙은 몸의 크기와 무관하다.
+    const party = ["anky", "dodo", "parua"].map((id) => RELICS.find((relic) => relic.id === id)!);
+    const base = RELICS.find(({ id }) => id === "sukusuino")!;
+    const boss = { ...raidBossDef(base, "easy"), stats: { ...raidBossDef(base, "easy").stats, hp: 800 } };
+    const basis = raidBossPercentHpBasis(base, "easy");
+    const config = createRaidSkirmishConfig(party, boss, basis);
+    expect(config.boss.endsOnKill).toBe(true);
+    const state = createSkirmish(config.playerDefs, config.enemyDefs, battleArena("raid"), {}, {}, { playerInitialStates: config.playerInitialStates, boss: config.boss });
+    const actions: ExpeditionBossAction[] = [];
+    for (let frame = 0; frame < 60_000 && state.phase === "fight"; frame++) {
+      for (const event of stepSkirmish(state, 1 / 60, () => 0.5)) {
+        if (event.kind !== "attack") continue;
+        const attacker = state.fighters.find(({ id }) => id === event.attackerId);
+        const target = state.fighters.find(({ id }) => id === event.targetId);
+        if (attacker?.side !== "player" || target?.side !== "enemy" || event.animate === false || event.followUp === true) continue;
+        const kind = event.skill === "staccato" || event.skill === "shimmer" || event.skill === "weakpoint" ? "basic" : event.skill === "transfer" ? "ultimate" : event.skill;
+        actions.push({ elapsedMs: Math.round((event.at ?? state.elapsed) * 1_000), actorId: attacker.def.id, kind });
+      }
+    }
+    expect(state.phase).toBe("victory");
+    // 제한 시간(90초)까지 서 있지 않고 쓰러뜨린 그 자리에서 끝났다.
+    expect(state.elapsed * 1_000).toBeLessThan(RAID_BOSS_BALANCE.phases[RAID_BOSS_BALANCE.phases.length - 1].startsAtMs);
+    const result = resolveExpeditionBossBattle({ allies: party, boss, balance: RAID_BOSS_BALANCE, percentHpBasis: basis, arena: battleArena("raid"), bossKillable: true }, actions);
+    expect(result.bossDefeated).toBe(true);
+  });
+
+  it("원정 폰토스처럼 쓰러지지 않는 보스는 여전히 전멸만이 끝이다", () => {
+    const party = [RELICS.find((relic) => relic.id === "anky")!];
+    const base = RELICS.find(({ id }) => id === "sukusuino")!;
+    const boss = { ...raidBossDef(base, "easy"), stats: { ...raidBossDef(base, "easy").stats, hp: 50 } };
+    const state = createSkirmish(party, [boss], battleArena("raid"), {}, {}, {
+      boss: { phases: [{ startsAt: 0, damagePerSecond: 0, label: "p" }, { startsAt: 20, damagePerSecond: 1_000_000_000, label: "q" }], limitSeconds: 30 },
+    });
+    for (let frame = 0; frame < 3_000 && state.phase === "fight"; frame++) stepSkirmish(state, 1 / 60, () => 0.5);
+    expect(state.phase).toBe("defeat");
+  });
 });

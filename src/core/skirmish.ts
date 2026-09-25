@@ -525,6 +525,12 @@ export interface SkirmishBossState {
   damageRemainder: number;
   /** 다음 시간 단계의 해일이 임박했음을 HUD에 전달한다. */
   tideWarning: boolean;
+  /**
+   * **보스를 쓰러뜨리면 그 자리에서 판이 끝나는가**(레이드). 원정 폰토스는 불사 자리라 눕지 않고
+   * 전멸만이 끝이지만, 레이드의 몸은 공유 게이지의 한 칸이라 다 깎으면 그 판은 이긴 것이다 —
+   * 쓰러진 보스 앞에서 90초 제한이 다할 때까지 서 있게 두면 처치가 처치로 읽히지 않는다.
+   */
+  endsOnKill: boolean;
 }
 
 /** 원정 저장 상태를 전투 시작 값으로 옮길 때 쓰는 렐릭별 스냅샷이다. currentHp는 0~100 비율이다. */
@@ -547,7 +553,7 @@ export interface CreateSkirmishOptions {
    * 체력을 가진 보스는 판 안의 최대 체력이 세기가 아니라 단위라, 그 값으로 비율을 재면 출혈
    * 하나가 모든 타격을 합친 것보다 커진다. 비우면 그 보스의 최대 체력을 그대로 쓴다.
    */
-  boss?: { phases: readonly SkirmishBossPhase[]; limitSeconds: number; fighterId?: string; percentHpBasis?: number };
+  boss?: { phases: readonly SkirmishBossPhase[]; limitSeconds: number; fighterId?: string; percentHpBasis?: number; endsOnKill?: boolean };
 }
 
 /** 씬이 모션·피격 숫자·사망 연출을 붙일 수 있도록 이번 프레임에 일어난 일만 모아 돌려준다. */
@@ -1176,8 +1182,9 @@ export function createSkirmish(
   const enemies = enemyDefs.map((def, i) => {
     const fighter = makeFighter(def, "enemy", i, enemySpots[i].x, enemySpots[i].y, 0, options.enemyBreakthroughs?.[i] ?? 0, options.enemyBodyScale ?? 1);
     // 적 편 전체가 아니라 계약에 지정된 한 개체만 불사 경계를 가진다.
-    fighter.immortal = options.boss !== undefined && fighter.id === bossFighterId;
-    if (fighter.immortal && options.boss?.percentHpBasis !== undefined) fighter.percentHpBasis = Math.max(1, options.boss.percentHpBasis);
+    // 쓰러지면 판이 끝나는 보스(레이드)는 불사가 아니다 — 체력이 0에 닿는 순간이 곧 처치다.
+    fighter.immortal = options.boss !== undefined && options.boss.endsOnKill !== true && fighter.id === bossFighterId;
+    if (options.boss !== undefined && fighter.id === bossFighterId && options.boss.percentHpBasis !== undefined) fighter.percentHpBasis = Math.max(1, options.boss.percentHpBasis);
     return fighter;
   });
   if (options.boss && !enemies.some(({ id }) => id === bossFighterId)) throw new RangeError("보스 전투원 ID는 적 편성에 존재해야 합니다.");
@@ -1195,7 +1202,7 @@ export function createSkirmish(
     log: [],
     augmentEffects: options.augmentEffects ?? [],
     initialEvents: [],
-    boss: options.boss ? { fighterId: bossFighterId, score: 0, survivedFor: 0, phaseIndex: 0, limitReached: false, phases: options.boss.phases, limitSeconds: options.boss.limitSeconds, damageRemainder: 0, tideWarning: false } : undefined,
+    boss: options.boss ? { fighterId: bossFighterId, score: 0, survivedFor: 0, phaseIndex: 0, limitReached: false, phases: options.boss.phases, limitSeconds: options.boss.limitSeconds, damageRemainder: 0, tideWarning: false, endsOnKill: options.boss.endsOnKill === true } : undefined,
   };
   // 지휘형 은신과 무리 치명타는 시간이 아니라 두 늑대의 생존 조건이 소유한다.
   refreshPackGuard(state);
@@ -5720,6 +5727,7 @@ function settle(state: SkirmishState, events: SkirmishEvent[]): void {
   const enemiesLeft = aliveFighters(state, "enemy").filter(isPartyFighter).length;
   // 불사 보스는 적 HP와 무관하게 아군 전멸만 정상 종료로 인정한다.
   if (state.boss && playersLeft === 0) state.phase = "defeat";
+  else if (state.boss && state.boss.endsOnKill && enemiesLeft === 0) state.phase = "victory";
   else if (state.boss) return;
   else if (playersLeft === 0) state.phase = "defeat";
   else if (enemiesLeft === 0) state.phase = "victory";

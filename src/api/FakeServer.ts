@@ -580,6 +580,8 @@ export class FakeServer implements GameApi {
         augmentEffects: growth.traitEffects, bondLevels: growth.bondLevels, breakthroughs: growth.breakthroughs,
         // 전장은 화면과 **같은 표**를 읽는다 — 자리가 다르면 사거리·표적이 갈려 재현이 어긋난다.
         arena: battleArena("raid"),
+        // 레이드의 몸은 쓰러진다 — 다 깎은 판은 그 자리에서 끝나고, 재현도 그 끝을 받는다.
+        bossKillable: true,
       }, request.actions);
       if (result.totalDamage > RAID_BOSS_BALANCE.maximumAcceptedScore) throw new Error("ABNORMAL_SCORE");
     } catch (error) {
@@ -587,7 +589,9 @@ export class FakeServer implements GameApi {
       throw new GameApiError("RAID_SCORE_REJECTED", "검증할 수 없거나 비정상적으로 큰 레이드 피해입니다.", { cause: error });
     }
 
-    const runDamage = Math.max(0, Math.floor(result.totalDamage));
+    // **한 판이 깎는 것은 몸 한 줄까지다.** 쓰러진 몸 너머로 넘친 몫까지 공유 게이지에 들이면 처치
+    // 한 번이 한 칸이라는 단위가 깨진다(점수는 경감 전 기여라 몸보다 클 수 있다).
+    const runDamage = Math.min(RAID_DIFFICULTY[instance.difficulty].bodyHp, Math.max(0, Math.floor(result.totalDamage)));
     const gold = raidRunGold(runDamage, RAID_RUN_GOLD_PER_DAMAGE);
     const updated: RaidInstanceState = { ...instance, myDamage: instance.myDamage + runDamage, attemptsUsed: instance.attemptsUsed + 1 };
     const nextState = structuredClone(this.state);

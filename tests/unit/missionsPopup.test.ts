@@ -112,3 +112,18 @@ describe("MissionsPopup 수령 입력", () => {
     expect(claimMissionRewards).toHaveBeenCalledWith([]);
   });
 });
+
+describe("MissionsPopup 줄 순서", () => {
+  it("받을 것 → 달성도 높은 것 → 받은 것 순이고, 같은 무리는 데이터 순서를 지킨다", async () => {
+    const { orderMissions } = await import("../../src/ui/missionsPopupModel");
+    const list = [
+      mission({ id: "claimed", progress: 1, target: 1, claimed: true }),
+      mission({ id: "low", progress: 1, target: 10 }),
+      mission({ id: "ready-a", progress: 1, target: 1 }),
+      mission({ id: "high", progress: 8, target: 10 }),
+      mission({ id: "ready-b", progress: 3, target: 3 }),
+      mission({ id: "zero", progress: 0, target: 5 }),
+    ];
+    expect(orderMissions(list).map(({ id }) => id)).toEqual(["ready-a", "ready-b", "high", "low", "zero", "claimed"]);
+  });
+});

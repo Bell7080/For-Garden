@@ -49,3 +49,21 @@ export function formatResetRemaining(ms: number): string {
   const clock = `${pad(Math.floor((total % 86_400) / 3600))}:${pad(Math.floor((total % 3600) / 60))}:${pad(total % 60)}`;
   return days > 0 ? `${days}D ${clock}` : clock;
 }
+
+/**
+ * 임무 줄의 순서 — **받을 것 → 달성도가 높은 것 → 받은 것.**
+ *
+ * 흐르는 목록이라 아래로 내려야 보이는 줄이 생긴다. 다 한 것과 거의 다 한 것이 위에 모여야 손이
+ * 스크롤을 덜 하고, 이미 받은 줄은 더 할 일이 없어 맨 아래로 가라앉는다. 같은 무리 안에서는
+ * 데이터 순서를 지킨다 — 달성도가 같다고 줄이 매번 뒤섞이면 어디 있던지 다시 찾아야 한다.
+ */
+export function orderMissions<T extends MissionDto>(missions: readonly T[]): T[] {
+  const rank = (mission: T): number => {
+    const model = missionDisplayModel(mission);
+    return model.claimable ? 0 : model.claimed ? 2 : 1;
+  };
+  return missions
+    .map((mission, index) => ({ mission, index, rank: rank(mission), ratio: missionDisplayModel(mission).ratio }))
+    .sort((a, b) => a.rank - b.rank || (a.rank === 1 ? b.ratio - a.ratio : 0) || a.index - b.index)
+    .map(({ mission }) => mission);
+}

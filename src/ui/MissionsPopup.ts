@@ -7,6 +7,7 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { MissionPeriod } from "../core/missions";
 import { notificationManager } from "../managers/NotificationManager";
 import { session } from "../state/session";
+import { motionPolicy } from "../core/settings";
 import { Button } from "./Button";
 import { addCategoryTab } from "./CategoryTab";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
@@ -15,7 +16,7 @@ import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
 import { RewardFrame } from "./RewardFrame";
 import { openRewardPopup } from "./RewardPopup";
 import { COLOR, textStyle } from "./theme";
-import { MissionClaimController, missionDisplayModel, missionResetRemainingMs, formatResetRemaining } from "./missionsPopupModel";
+import { MissionClaimController, missionDisplayModel, orderMissions, missionResetRemainingMs, formatResetRemaining } from "./missionsPopupModel";
 import { MISSIONS_POPUP_LAYOUT, missionListContentHeight, missionRowY, missionsTabX, researchTrackLayout } from "./missionsPopupLayout";
 import { shapeClipMask } from "./popupArt";
 
@@ -53,6 +54,8 @@ export class MissionsPopup {
   private scroll = 0;
   private minScroll = 0;
   private scrollPeriod?: MissionPeriod;
+  /** 줄마다 지금 서 있는 자리(임무 ID → y). 다시 그릴 때 줄이 여기서 새 자리로 옮겨 간다. */
+  private rowPositions = new Map<string, number>();
   private readonly claims: MissionClaimController;
   private readonly api: GameApi;
 
@@ -92,13 +95,32 @@ export class MissionsPopup {
     this.destroyContent(); if (!this.body) return;
     this.list = this.scene.add.container(0, 0); this.body.add(this.list);
     this.renderResearch();
-    const missions = this.missions.filter((mission) => mission.period === this.period);
+    const inData = this.missions.filter((mission) => mission.period === this.period);
+    const missions = orderMissions(inData);
     this.rows = [];
     const content = this.buildScrollList(missions.length);
     missions.forEach((raw, index) => this.renderMission(content, raw, index));
+    // **줄이 제자리를 찾아 스르륵 옮겨 간다.** 처음 열 때는 데이터 순서의 자리에서, 받은 뒤에는
+    // 방금 서 있던 자리에서 출발한다 — 순서가 뚝 바뀌면 방금 받은 임무가 어디로 갔는지 놓친다.
+    const from = this.scrollPeriod === this.period ? this.rowPositions : new Map(inData.map((mission, index) => [mission.id, missionRowY(index)]));
+    this.rowPositions = new Map(missions.map((mission, index) => [mission.id, missionRowY(index)]));
     this.scrollPeriod = this.period;
     this.applyScroll(keepScroll);
+    this.animateRows(missions.map(({ id }) => id), from);
     this.renderFooter();
+  }
+
+  /** 옮겨 가는 동안에는 모든 줄을 보이고, 다 옮긴 뒤 창 밖 줄을 다시 감춘다. */
+  private animateRows(ids: readonly string[], from: ReadonlyMap<string, number>): void {
+    const factor = motionPolicy(session.settings).nonEssentialDistanceFactor;
+    const moving = this.rows.map((row, index) => ({ row, start: from.get(ids[index]) ?? row.y })).filter(({ row, start }) => Math.abs(start - row.y) > 1);
+    if (moving.length === 0 || factor === 0) return;
+    for (const { row, start } of moving) {
+      const target = row.y;
+      row.setY(start).setVisible(true);
+      this.scene.tweens.add({ targets: row, y: target, duration: 420, delay: 80, ease: "Cubic.InOut", onComplete: () => this.applyScroll(this.scroll) });
+    }
+    for (const row of this.rows) row.setVisible(true);
   }
 
   /**

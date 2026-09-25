@@ -42,7 +42,9 @@ export const BANNERS: Banner[] = [
     highestRarityGuarantee: 100,
   },
   {
-    id: "amber", pityGroupId: PITY_GROUP.LIMITED_PICKUP, name: "호박석 연구", featuredRelicId: "rex",
+    id: "amber", pityGroupId: PITY_GROUP.LIMITED_PICKUP, name: "호박석 연구", featuredRelicId: "dian",
+    // 첫 픽업은 간판(렉시아·스피나)이 아니라 쁘띠 로그의 유일한 SSR 디안이다 — 간판을 픽업에
+    // 가두면 놓친 사람이 게임의 얼굴을 영영 못 갖는다. 근거는 docs/live-ops-bm.md.
     // 아직 전용 모집 원화가 없다. 화석 연구의 그림을 돌려 쓰지 않고 비워 두어 연구소 설비
     // 원화가 서게 한다 — 같은 그림을 두 배너가 쓰면 넘겨도 무엇이 바뀌었는지 말하지 못한다.
     // 재화의 희소도 같은 설계 메모도 배너 카피로 옮기지 않고 운영 데이터와 주석에만 남긴다.
@@ -54,7 +56,7 @@ export const BANNERS: Banner[] = [
       { kind: "gold", min: 3_000, max: 8_000, weight: 2 },
       { kind: "cheesecake", min: 15, max: 30, weight: 1 },
     ],
-    relicPools: POOLS, pickupRelicIds: { SSR: ["rex"] }, pickupRate: 0.5,
+    relicPools: POOLS, pickupRelicIds: { SSR: ["dian"] }, pickupRate: 0.5,
     highestRarityGuarantee: 100,
   },
 ];

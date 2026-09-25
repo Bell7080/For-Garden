@@ -71,7 +71,7 @@ import { relicSkinManager } from "../managers/RelicSkinManager";
 import { pressIn, pressOut } from "./pressFeedback";
 import { FeedTapEffect } from "./feedTapEffect";
 import { settingsManager } from "../managers/SettingsManager";
-import { FEED_TAP } from "./feedTapStyle";
+import { FEED_TAP, feedHoldDelay } from "./feedTapStyle";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -283,8 +283,6 @@ type BreakthroughCost =
 
 /** 이만큼 누르고 있으면 한 번에 급여 팝업이 열린다(ms). */
 const FEED_HOLD_MS = 420;
-/** 꾹 누르고 있을 때 되풀이해 먹이는 간격. 두드리는 손보다 조금 느려 연타가 더 빠른 길로 남는다. */
-const FEED_REPEAT_MS = 180;
 
 /** 옆 캐릭터로 넘어가는 데 필요한 가로 이동(px). */
 const SWIPE_DISTANCE = 110;
@@ -784,11 +782,19 @@ export class InfoManager {
       repeated = false;
       served = false;
       serveOnce();
+      // **꾹 누르면 점점 빨라진다**(`feedHoldDelay`) — 한 박자씩 같은 간격으로 먹이던 때는 누르고
+      // 있어도 두드리는 것보다 느렸다. 한 번 먹일 때마다 다음 간격을 새로 잡는다.
       this.feedHold?.remove();
-      this.feedHold = this.scene.time.addEvent({ delay: FEED_REPEAT_MS, loop: true, callback: () => {
-        repeated = true;
-        serveOnce();
-      } });
+      let repeat = 0;
+      const schedule = (): void => {
+        this.feedHold = this.scene.time.delayedCall(feedHoldDelay(repeat), () => {
+          repeat += 1;
+          repeated = true;
+          serveOnce();
+          if (heldFrom !== 0 && container.active) schedule();
+        });
+      };
+      schedule();
     });
     const release = (opened: boolean): void => {
       pressOut(container, "feed", { pop: opened });
@@ -1186,7 +1192,7 @@ export class InfoManager {
       // 달라지므로, 남겨 두기만 하고 값을 그대로 두면 화면이 거짓말을 한다.
       hit.on("pointerup", () => {
         pressOut(option, "feed");
-        burst.from({ x: body.x + bx, y: body.y + 12 - 40 }).tap();
+        burst.from({ x: body.x + bx, y: body.y + 12 - 40 }).feast(levels >= 10 ? FEED_TAP.pieces.tenLevels : FEED_TAP.pieces.level);
         settingsManager.haptic("uiTap");
         // 버튼으로 두드려 쌓인 몫이 먼저 나가야 이 칸이 셈한 값이 맞는다.
         void this.flushFeeds().then(() => this.feedLevels(levels)).then(repaint);

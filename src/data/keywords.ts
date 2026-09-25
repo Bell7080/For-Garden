@@ -11,7 +11,22 @@ import { registerDataText } from "../i18n";
  * 설명문에서는 `[[keyword-id]]` 또는 `[[keyword-id|보여 줄 말]]`로 표시한다.
  */
 /** 쪽지 머리에 뜨는 분류. 값은 표기가 아니라 문구 표가 읽는 ID다. */
-export type KeywordKind = "debuff" | "buff" | "state" | "rule";
+export type KeywordKind = "debuff" | "buff" | "state" | "rule" | "summon";
+
+/**
+ * 쪽지 본문 아래에 이어지는 한 칸. 머리(분류 + 이름)와 본문이 짝을 이룬다.
+ *
+ * 소환수처럼 **제 기술을 가진 몸**을 가리키는 용어는 한 문단으로 뭉치면 기술 이름과 효과가
+ * 한 줄에 섞여 읽히지 않는다 — 스킬 쪽지와 같은 순서(분류 → 이름 → 효과)로 칸을 나눈다.
+ */
+export interface KeywordSection {
+  /** 칸의 분류(일반 공격·궁극기·폭주). 이미 번역된 문자열이다. */
+  label: string;
+  /** 그 칸의 기술 이름. */
+  name: string;
+  /** 효과 본문. 규칙어 태그를 그대로 쓸 수 있다. */
+  text: string;
+}
 
 export interface KeywordDef {
   id: string;
@@ -25,6 +40,8 @@ export interface KeywordDef {
    */
   kind: KeywordKind;
   description: string;
+  /** 본문 아래에 칸으로 이어 세울 내용. 정적 사전은 쓰지 않고, 문맥 사전만 채운다. */
+  sections?: readonly KeywordSection[];
 }
 
 export const KEYWORDS: readonly KeywordDef[] = [
@@ -257,7 +274,7 @@ export const KEYWORDS: readonly KeywordDef[] = [
      * **언제 얻고 무엇이 오르는가**만 둔다 — 수치를 못 박으면 둘째 지휘자가 생기는 순간
      * 한쪽 설명이 거짓말이 된다.
      */
-    description: "표적이 쓰러지거나 [[nape|목덜미]]가 들어갈 때마다 한 겹 얻는다. 겹마다 지휘자의 일반 공격 피해가 커지고 목덜미가 열리는 체력 문턱이 함께 오른다. 상한에 닿으면 더 쌓이지 않고 전투가 끝나면 사라진다.",
+    description: "표적이 쓰러지거나 [[nape|목덜미]]를 물 때마다 한 겹 얻는다. 겹마다 지휘자의 일반 공격 피해가 커지고 목덜미가 열리는 체력 문턱이 함께 오른다. 상한에 닿으면 더 쌓이지 않고 전투가 끝나면 사라진다.",
   },
   {
     id: "nape",

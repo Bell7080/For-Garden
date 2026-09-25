@@ -65,6 +65,7 @@ import type { PublicRelicProfileDto } from "../api/contracts";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
 import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, elationKeyword, passiveShieldKeyword, periodicStackKeyword, skillDescription } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
+import { deriveSummonStats } from "../core/summonStats";
 import { galleryPortraitPlacement, INFO_PORTRAIT_FOCUS, infoPortraitPlacement } from "./portraitPlacement";
 import { skinsForRelic } from "../data/relicSkins";
 import { relicSkinManager } from "../managers/RelicSkinManager";
@@ -1885,6 +1886,7 @@ export class InfoManager {
     openFerocityTraitPopup(this.scene, this.popups, this.keywords, finalDef, from, {
       breakthroughEffect: !breakthroughEnhances(def, breakthrough, "ferocity")
         ? undefined : breakthroughEffectText(def, "ferocity", finalDef.stats),
+      summonTags: this.summonKeywordTags(),
     });
   }
 
@@ -1916,16 +1918,44 @@ export class InfoManager {
     if (!this.capabilities.showSummons || !this.ownedNow) return [];
     const owner = this.currentDef;
     const scent = owner?.passive.bloodscent;
-    const tags: KeywordDef[] = summons.map(({ def, growthStat }) => ({
-      id: `summon-${def.id}`,
-      term: def.name,
-      kind: "rule" as const,
-      description: t("skill.keyword.summon.description", {
-        owner: owner?.name ?? t("skill.keyword.summon.owner"),
-        stat: t(growthStat === "atk" ? "skill.stat.atk" : "skill.stat.ap"),
-        basic: def.basic.name, ultimate: def.ultimate.name,
-      }),
-    }));
+    // 늑대의 수치는 지휘자가 **지금** 가진 능력치에서 파생한다 — 정적 정의의 태생값을 적으면
+    // 디안을 키운 뒤에도 쪽지 속 늑대만 1레벨로 남는다.
+    const ownerStats = owner === undefined ? undefined : this.shownStats(owner);
+    const tags: KeywordDef[] = summons.map((summon) => {
+      const { def, growthStat, resummon } = summon;
+      const stats = ownerStats === undefined ? def.stats : deriveSummonStats(ownerStats, summon);
+      const described = (skill: Skill): string => skillDescription(skill, {
+        ap: stats.ap, atk: { atk: stats.atk, attackSpeed: stats.attackSpeed },
+        damage: skill.power === undefined ? undefined
+          : Math.round((skill.scalingStat === "ap" ? stats.ap : stats.atk) * skill.power / 100),
+      });
+      return {
+        id: `summon-${def.id}`,
+        term: def.name,
+        kind: "summon" as const,
+        description: t("skill.keyword.summon.description", {
+          owner: owner?.name ?? t("skill.keyword.summon.owner"),
+          stat: t(growthStat === "atk" ? "skill.stat.atk" : "skill.stat.ap"),
+          resummon: resummon?.enabled
+            ? t("skill.keyword.summon.resummon", { seconds: resummon.cooldownSeconds, percent: resummon.hpPercent })
+            : "",
+        }),
+        /*
+         * 늑대는 제 기술을 가진 몸이라 한 문단으로 뭉치지 않는다. 스킬 쪽지와 같은 순서(분류 →
+         * 이름 → 효과)로 칸을 나눠, 기술 이름만 늘어놓고 무엇을 하는지는 말하지 않던 쪽지를 고친다.
+         */
+        sections: [
+          { label: t("info.skill.basic"), name: def.basic.name, text: described(def.basic) },
+          { label: t("info.skill.ultimate"), name: def.ultimate.name, text: described(def.ultimate) },
+          ...(def.ferocityTrait === undefined ? [] : [{
+            label: t("info.skill.ferocity"), name: def.ferocityTrait.name,
+            text: ferocityTraitDescription(def.ferocityTrait, {
+              attack: stats.atk, defense: stats.def, maxHp: stats.hp, abilityPower: stats.ap,
+            }),
+          }]),
+        ],
+      };
+    });
     // 겹당 수치와 상한은 지휘자마다 다를 수 있으므로 전역 사전이 아니라 그 창이 데이터에서 만든다.
     // 겹당 수치와 상한, 문턱 증가폭은 지휘자마다 다르므로 전역 사전이 아니라 그 정의에서 만든다.
     const finisher = owner?.basic.finisher;
@@ -2599,7 +2629,7 @@ export function openFerocityTraitPopup(
   /** 레벨·돌파·룬까지 반영한 정의. 창이 다시 성장시키지 않는다. */
   def: RelicDef,
   from: PopupSource,
-  options: { breakthroughEffect?: string } = {},
+  options: { breakthroughEffect?: string; summonTags?: readonly KeywordDef[] } = {},
 ): void {
   // 피해 수치가 있는 폭주만 현재 능력치로 환산한다. 토리카의 새 탱커 계약은 자체 실제값을 그대로 보여 준다.
   const { atk: attack, def: defense, ap: abilityPower } = def.stats;
@@ -2610,7 +2640,8 @@ export function openFerocityTraitPopup(
     : attackPercent !== undefined ? Math.round(attack * attackPercent / 100)
     : undefined;
   const damageSourceLabel = t(defensePercent !== undefined ? "skill.stat.def" : "skill.stat.atk");
-  const contextualKeywords: KeywordDef[] = [];
+  // 무리를 함께 폭주시키는 지휘자는 **무엇이 오르는지를 늑대 쪽지가 말한다.** 이름을 눌러 열 수 있어야 한다.
+  const contextualKeywords: KeywordDef[] = [...(options.summonTags ?? [])];
   // 금강불괴가 덮는 막도 퍼센트가 아니라 실제로 덮이는 값으로 보여 준다.
   if (def.ferocityTrait.effectId === "adamantBody") contextualKeywords.push({
     id: "shield-value", term: String(Math.round(def.stats.hp * def.ferocityTrait.shieldMaxHpPercent / 100)), kind: "rule",

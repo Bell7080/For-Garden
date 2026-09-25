@@ -120,18 +120,16 @@ function withoutKeywordTags(text: string): string {
 /**
  * 마무리 한 절.
  *
- * 문턱이 겹으로 자라므로 고정 문장을 적을 수 없다 — 지금 값과 겹당 증가를 함께 말한다.
+ * **무엇이 얼마나 들어가는지는 말하지 않는다.** 남은 체력 비례 몫은 「목덜미」 태그가, 문턱이
+ * 겹마다 오르는 몫은 「피 냄새」 태그가 갖는다 — 쓰는 개체가 하나뿐인 규칙어라 태그가 수치를
+ * 갖고, 본문은 **언제 무는가**만 적는다. 여기서 다시 적으면 한 쪽지에 같은 수가 두 번 선다.
  */
 function finisherClause(finisher: BasicAttack["finisher"]): string {
   if (finisher === undefined) return "";
-  const bite = t("skill.finisher.bite", { percent: finisher.remainingHpPercent });
+  const bite = t("skill.finisher.bite");
   // 문턱이 100이면 조건 자체가 없다. "100% 이하"라고 적으면 없는 조건을 찾게 만든다.
   if (finisher.thresholdPercent >= 100) return ` ${t("skill.finisher.always", { bite })}`;
-  // 문턱이 자라는 것은 주어가 바뀌는 절이라 제 문장으로 세운다.
-  const grows = finisher.thresholdPerStack > 0
-    ? ` ${t("skill.finisher.grows", { percent: finisher.thresholdPerStack })}`
-    : "";
-  return ` ${t("skill.finisher.threshold", { percent: finisher.thresholdPercent, bite })}${grows}`;
+  return ` ${t("skill.finisher.threshold", { percent: finisher.thresholdPercent, bite })}`;
 }
 
 /** 요약과 본문이 같은 동적 키워드 사전을 쓰도록 순수 레이아웃 옵션을 한 경계에서 결합한다. */
@@ -669,15 +667,20 @@ export function skillDescription(
   // 합공은 한 행동에 두 축이 함께 들어간다. 하나로 합친 위력이 없으므로 정형 문장을 따로 짓는다.
   if ("dualStrike" in skill && skill.dualStrike !== undefined) {
     const dual = skill.dualStrike;
-    const physical = stats.atk === undefined
-      ? t("skill.value.scaling", { stat: statName("atk"), percent: dual.attackPercent })
-      : `[[damage-value|${Math.round(stats.atk.atk * dual.attackPercent / 100)}]]`;
-    const magical = stats.ap === undefined
-      ? t("skill.value.scaling", { stat: statName("ap"), percent: dual.abilityPercent })
-      : `[[damage-value|${Math.round(stats.ap * dual.abilityPercent / 100)}]]`;
-    return t("skill.sentence.dualStrike", { physical, magical })
-      + finisherClause(skill.finisher)
-      + ` ${t("skill.sentence.dualStrike.alone", { percent: dual.aloneAlternatePercent })}`;
+    const physical = (percent: number): string => stats.atk === undefined
+      ? t("skill.value.scaling", { stat: statName("atk"), percent })
+      : `[[damage-value|${Math.round(stats.atk.atk * percent / 100)}]]`;
+    const magical = (percent: number): string => stats.ap === undefined
+      ? t("skill.value.scaling", { stat: statName("ap"), percent })
+      : `[[damage-value|${Math.round(stats.ap * percent / 100)}]]`;
+    /*
+     * 순서는 **합공 → 혼자 남았을 때 → 마무리**다. 혼자 남은 한 방도 합공을 바꿔 치는 형태라
+     * 합공 바로 뒤에 서야 하고, 마무리는 둘 중 무엇이든 대신하므로 맨 뒤다. 혼자 남은 몫도
+     * 실제 수치로 보여 준다 — 위력(%)으로만 두면 위 문장과 단위가 갈린다.
+     */
+    return t("skill.sentence.dualStrike", { physical: physical(dual.attackPercent), magical: magical(dual.abilityPercent) })
+      + ` ${t("skill.sentence.dualStrike.alone", { physical: physical(dual.aloneAlternatePercent), magical: magical(dual.aloneAlternatePercent) })}`
+      + finisherClause(skill.finisher);
   }
   // 무리를 통째로 던지는 궁극기. 지휘자 자신은 때리지 않고 늑대의 돌진과 마무리가 전부다.
   if ("packAssault" in skill && skill.packAssault !== undefined) {

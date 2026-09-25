@@ -2,7 +2,33 @@ import Phaser from "phaser";
 import { parseKeywordText, type KeywordDef } from "../data/keywords";
 import { t } from "../i18n";
 import type { PopupLayer } from "../ui/PopupLayer";
+import { drawHairline } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
+
+/**
+ * 용어 쪽지의 자리. 폭과 여백만 정하고 **높이는 적지 않는다** — 쌓인 글에서 거꾸로 구한다.
+ *
+ * 높이를 360으로 못 박아 두었을 때는 본문이 네 줄을 넘는 용어(소환수·피 냄새)가 판 밑변
+ * 밖으로 흘렀다. 짧은 용어가 갑자기 작아지지 않도록 예전 높이는 하한으로만 남긴다.
+ */
+const KEYWORD_NOTE = {
+  width: 720,
+  minHeight: 360,
+  /** 판 왼쪽 안쪽 여백. 글 폭은 좌우 여백을 뺀 값이다. */
+  inset: 52,
+  textWidth: 610,
+  /** 판 윗변에서 분류 줄까지. 제목표가 윗변에 걸터앉으므로 그만큼 내려선다. */
+  kindTop: 74,
+  /** 분류 줄에서 본문까지. */
+  descriptionGap: 48,
+  size: 26,
+  lineSpacing: 8,
+  /** 칸 사이: 구분선 위 여백 · 구분선에서 칸 머리까지 · 칸 머리에서 본문까지. */
+  sectionGap: 30,
+  sectionHeadTop: 24,
+  sectionBodyGap: 44,
+  bottomPad: 56,
+} as const;
 
 /** 글줄을 만들 때 필요한 값. 크기와 폭만 주면 줄바꿈은 매니저가 맡는다. */
 export interface KeywordTextOptions {
@@ -65,7 +91,7 @@ export class KeywordManager {
             label.setPosition(x, y);
           }
           container.add(label);
-          if (segment.keyword) this.decorateKeyword(container, label, segment.keyword, options.keywordActions);
+          if (segment.keyword) this.decorateKeyword(container, label, segment.keyword, options.keywordActions, options.contextualKeywords);
           x += label.width;
         }
       });
@@ -82,6 +108,7 @@ export class KeywordManager {
     label: Phaser.GameObjects.Text,
     keyword: KeywordDef,
     actions?: Readonly<Record<string, () => void>>,
+    contextualKeywords?: readonly KeywordDef[],
   ): void {
     const underline = this.scene.add.graphics();
     underline.lineStyle(2, COLOR.accent, 0.85);
@@ -94,22 +121,56 @@ export class KeywordManager {
     const open = actions?.[keyword.id];
     hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
       if (open) open();
-      else this.explain(keyword, { x: pointer.worldX, y: pointer.worldY - 20 });
+      // 쪽지 안의 태그도 같은 문맥 사전을 읽는다 — 그래야 「피 냄새」 안의 「목덜미」가 전역의
+      // 뭉뚱그린 문장이 아니라 이 개체의 실제 수치로 열린다.
+      else this.explain(keyword, { x: pointer.worldX, y: pointer.worldY - 20 }, contextualKeywords);
     });
     container.add(hit);
   }
 
-  /** 용어 하나를 설명하는 작은 팝업. 스킬 팝업 위에 한 겹 더 쌓인다. */
-  explain(keyword: KeywordDef, anchor?: { x: number; y: number }): void {
-    this.popups.open({ width: 720, height: 360, title: keyword.term, anchor }, (body) => {
-      body.add(
+  /**
+   * 용어 하나를 설명하는 작은 팝업. 스킬 팝업 위에 한 겹 더 쌓인다.
+   *
+   * 칸(`sections`)이 있으면 본문 아래에 스킬 쪽지와 같은 순서(분류 → 이름 → 효과)로 이어 세운다.
+   * 글을 먼저 다 세워 높이를 재고, 그 높이로 판을 연다.
+   */
+  explain(keyword: KeywordDef, anchor?: { x: number; y: number }, contextualKeywords?: readonly KeywordDef[]): void {
+    const note = KEYWORD_NOTE;
+    const text = { width: note.textWidth, size: note.size, lineSpacing: note.lineSpacing, contextualKeywords };
+    // 원점은 분류 줄의 왼쪽 위다. 판을 열기 전에 세워 두고 높이를 잰 뒤 판 안으로 옮긴다.
+    const content = this.scene.add.container(0, 0);
+    content.add(
+      this.scene.add
+        .text(0, 0, t(`skill.keywordKind.${keyword.kind}`), textStyle({ role: "emphasis", size: 22, color: COLOR.accentText }))
+        .setOrigin(0, 0),
+    );
+    const description = this.layout(keyword.description, text);
+    description.setPosition(0, note.descriptionGap);
+    content.add(description);
+    let bottom = description.y + description.height;
+    for (const section of keyword.sections ?? []) {
+      const lineY = bottom + note.sectionGap;
+      // 구분선은 판 가운데를 기준으로 긋는다. 원점이 왼쪽 여백만큼 밀려 있으므로 그만큼 되돌린다.
+      content.add(drawHairline(this.scene, note.width / 2 - note.inset, lineY, note.width - 96, { color: COLOR.accent, alpha: 0.28 }));
+      const headY = lineY + note.sectionHeadTop;
+      const label = this.scene.add
+        .text(0, headY, section.label, textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim }))
+        .setOrigin(0, 0.5);
+      content.add(label);
+      content.add(
         this.scene.add
-          .text(-720 / 2 + 52, -360 / 2 + 74, t(`skill.keywordKind.${keyword.kind}`), textStyle({ role: "emphasis", size: 22, color: COLOR.accentText }))
-          .setOrigin(0, 0),
+          .text(label.width + 14, headY, section.name, textStyle({ role: "display", size: 28 }))
+          .setOrigin(0, 0.5),
       );
-      const description = this.layout(keyword.description, { width: 610, size: 26, lineSpacing: 8 });
-      description.setPosition(-720 / 2 + 52, -360 / 2 + 122);
-      body.add(description);
+      const body = this.layout(section.text, text);
+      body.setPosition(0, headY + note.sectionBodyGap - note.size / 2);
+      content.add(body);
+      bottom = body.y + body.height;
+    }
+    const height = Math.max(note.minHeight, Math.ceil(note.kindTop + bottom + note.bottomPad));
+    this.popups.open({ width: note.width, height, title: keyword.term, anchor }, (body) => {
+      content.setPosition(-note.width / 2 + note.inset, -height / 2 + note.kindTop);
+      body.add(content);
     });
   }
 }

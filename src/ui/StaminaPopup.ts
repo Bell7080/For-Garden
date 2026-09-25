@@ -17,7 +17,8 @@ import { formatCurrency } from "../core/formatCurrency";
 import { PopupLayer } from "./PopupLayer";
 import { addSectionTitle } from "./SectionTitle";
 import { staminaTimerLine } from "./staminaDisplay";
-import { heroStack, POPUP_BEVEL_RATIO, STAMINA_SWAP, staminaPopupLayout } from "./staminaPopupLayout";
+import { heroStack, POPUP_BEVEL_RATIO, STAMINA_CELL, STAMINA_SWAP, staminaPopupLayout } from "./staminaPopupLayout";
+import { UI_ICON } from "./icons";
 import { COLOR, textStyle } from "./theme";
 
 /**
@@ -47,7 +48,7 @@ const TONE = { value: "#ffe9a3", timer: COLOR.inkDim } as const;
  * 이제 액자를 키우고 그 아래에 `+30`을 크게 세우며, 가진 수는 가방 칸과 같은 양식으로 **액자
  * 우하단**에 겹친다 — 같은 "얼마나 가졌나"가 화면마다 다른 자리에 서지 않게 한다.
  */
-const CELL = { frameY: -84, frameSize: 108, gainY: 6, nameY: 48, detailY: 82, buttonY: 112, buttonHeight: 62, padX: 14 } as const;
+const CELL = STAMINA_CELL;
 
 export class StaminaPopup {
   private readonly inventory = new InventoryManager(session);
@@ -152,10 +153,10 @@ export class StaminaPopup {
       });
     }
     // 회복량은 이 칸의 이유다. 이름보다 크게, 스테미나와 같은 색으로 세운다.
-    cell.add(this.scene.add.text(0, CELL.gainY, `+${view.gain}`, textStyle({ role: "display", size: 40, color: TONE.value }))
+    cell.add(this.scene.add.text(0, CELL.gainY, `+${view.gain}`, textStyle({ role: "display", size: CELL.gainSize, color: TONE.value }))
       .setOrigin(0.5).setShadow(0, 3, "#05070a", 4, false, true));
-    cell.add(this.scene.add.text(0, CELL.nameY, view.name, textStyle({ role: "emphasis", size: 22 })).setOrigin(0.5));
-    if (view.detail) cell.add(this.scene.add.text(0, CELL.detailY, view.detail, textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(0.5));
+    cell.add(this.scene.add.text(0, CELL.nameY, view.name, textStyle({ role: "emphasis", size: CELL.nameSize })).setOrigin(0.5));
+    if (view.detail) cell.add(this.scene.add.text(0, CELL.detailY, view.detail, textStyle({ role: "body", size: CELL.detailSize, color: COLOR.inkDim })).setOrigin(0.5));
     const button = new Button(this.scene, 0, CELL.buttonY, {
       width: width - CELL.padX * 2, height: CELL.buttonHeight, label: view.label, fontSize: 24, variant: "primary",
       cost: view.cost, onClick: () => { void this.run(source); },
@@ -203,7 +204,9 @@ export class StaminaPopup {
     const used = session.dailyAdRewards.claimsBySlot[source.slotId] ?? 0;
     const limit = ad?.slot.dailyLimitUtc ?? 0;
     return {
-      texture: CURRENCY_ICON_BY_WALLET.stamina,
+      // 광고 칸은 스테미나 그림이 아니라 **광고를 보는 자리의 얼굴**이다 — 회복량(+N)이 이미
+      // 스테미나를 말하므로, 액자까지 스테미나면 이 칸이 무엇으로 채우는 칸인지 읽히지 않는다.
+      texture: UI_ICON.ad,
       name: source.name,
       gain: ad?.amount ?? 0,
       // 남은 횟수는 다음에 누를 수 있는지를 정하므로 이름 아래 한 줄로 남긴다.

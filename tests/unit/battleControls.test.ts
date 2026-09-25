@@ -1,25 +1,32 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
-  BATTLE_OPENING_HOLD_MS, battleFightStartsAt, battleSpeedTier, nextBattleSpeed, usableBattleSpeed, scaleUltimateCutInDurations, scaleUltimateDuration, shouldWaitForUltimatePresentation, ultimatePresentationTiming,
+  BATTLE_OPENING_HOLD_MS, MEMBER_BATTLE_SPEED_GATE_ENABLED, availableBattleSpeeds, battleFightStartsAt, battleSpeedTier, nextBattleSpeed, usableBattleSpeed, scaleUltimateCutInDurations, scaleUltimateDuration, shouldWaitForUltimatePresentation, ultimatePresentationTiming,
   ULTIMATE_CUT_IN_MIN_VISIBLE_MS, ULTIMATE_MIN_DURATION_MS, ULTIMATE_RECOVERY_RATIO,
 } from "../../src/core/battleControls";
 
 /** 배속 버튼이 허용된 세 단계 밖으로 벗어나지 않는지 검증한다. */
 describe("전투 배속", () => {
-  it("누구나 1 → 1.5 → 2배속을 돌고 다시 1배속으로 온다", () => {
-    expect(nextBattleSpeed(1, false)).toBe(1.5);
-    expect(nextBattleSpeed(1.5, false)).toBe(2);
-    expect(nextBattleSpeed(2, false)).toBe(1);
+  it("잠금이 켜지면 누구나 1 → 1.5 → 2배속을 돌고 다시 1배속으로 온다", () => {
+    expect(nextBattleSpeed(1, false, true)).toBe(1.5);
+    expect(nextBattleSpeed(1.5, false, true)).toBe(2);
+    expect(nextBattleSpeed(2, false, true)).toBe(1);
   });
 
-  it("3배속은 멤버십이 있을 때만 줄에 든다", () => {
-    expect(nextBattleSpeed(2, true)).toBe(3);
-    expect(nextBattleSpeed(3, true)).toBe(1);
+  it("잠금이 켜지면 3배속은 멤버십이 있을 때만 줄에 든다", () => {
+    expect(nextBattleSpeed(2, true, true)).toBe(3);
+    expect(nextBattleSpeed(3, true, true)).toBe(1);
     // 멤버십이 끝난 뒤 저장에 남은 3은 열린 것 중 가장 빠른 2로 내린다.
-    expect(usableBattleSpeed(3, false)).toBe(2);
-    expect(usableBattleSpeed(3, true)).toBe(3);
-    expect(nextBattleSpeed(3, false)).toBe(1);
+    expect(usableBattleSpeed(3, false, true)).toBe(2);
+    expect(usableBattleSpeed(3, true, true)).toBe(3);
+    expect(nextBattleSpeed(3, false, true)).toBe(1);
+  });
+
+  it("시험 기간에는 잠금을 꺼 두어 멤버십 없이도 3배속까지 돈다", () => {
+    expect(MEMBER_BATTLE_SPEED_GATE_ENABLED).toBe(false);
+    expect(availableBattleSpeeds(false)).toEqual([1, 1.5, 2, 3]);
+    expect(nextBattleSpeed(2, false)).toBe(3);
+    expect(usableBattleSpeed(3, false)).toBe(3);
   });
 
   it("배속 칩의 켜짐 세기는 단계마다 오른다", () => {

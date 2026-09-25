@@ -13,9 +13,16 @@ export const FREE_BATTLE_SPEEDS: readonly BattleSpeed[] = [1, 1.5, 2];
 /** 멤버십이 있어야 열리는 배속. */
 export const MEMBER_BATTLE_SPEEDS: readonly BattleSpeed[] = [3];
 
-/** 지금 이 사람이 고를 수 있는 배속들. */
-export function availableBattleSpeeds(member: boolean): readonly BattleSpeed[] {
-  return member ? BATTLE_SPEEDS : FREE_BATTLE_SPEEDS;
+/**
+ * **3배속을 멤버십으로 잠그는지.** 시험 기간이라 지금은 꺼 두어 누구나 3배속까지 쓴다 —
+ * 잠금 규칙과 멤버십 판정은 그대로 두고 이 값 하나만 켜면 다시 잠긴다(`CONTENT_LEVEL_GATES_ENABLED`와
+ * 같은 방식). 켜기 전까지 화면·설정·저장 모두 네 단계를 받는다.
+ */
+export const MEMBER_BATTLE_SPEED_GATE_ENABLED = false;
+
+/** 지금 이 사람이 고를 수 있는 배속들. `gated`는 테스트가 잠긴 상태를 따로 확인할 때만 넘긴다. */
+export function availableBattleSpeeds(member: boolean, gated: boolean = MEMBER_BATTLE_SPEED_GATE_ENABLED): readonly BattleSpeed[] {
+  return member || !gated ? BATTLE_SPEEDS : FREE_BATTLE_SPEEDS;
 }
 
 /**
@@ -24,16 +31,16 @@ export function availableBattleSpeeds(member: boolean): readonly BattleSpeed[] {
  * 멤버십이 끝난 뒤에도 저장에 3이 남아 있을 수 있다. 그때는 1로 떨구지 않고 **열린 것 중 가장
  * 빠른 값**으로 내린다 — 멤버십이 끝났다고 전투가 갑자기 1배속이 되면 손이 먼저 놀란다.
  */
-export function usableBattleSpeed(speed: BattleSpeed, member: boolean): BattleSpeed {
-  const open = availableBattleSpeeds(member);
+export function usableBattleSpeed(speed: BattleSpeed, member: boolean, gated: boolean = MEMBER_BATTLE_SPEED_GATE_ENABLED): BattleSpeed {
+  const open = availableBattleSpeeds(member, gated);
   if (open.includes(speed)) return speed;
   return [...open].reverse().find((value) => value <= speed) ?? open[0];
 }
 
 /** 열린 배속 줄의 다음 값. 마지막 다음은 다시 1배속이다. */
-export function nextBattleSpeed(current: BattleSpeed, member: boolean): BattleSpeed {
-  const open = availableBattleSpeeds(member);
-  const index = open.indexOf(usableBattleSpeed(current, member));
+export function nextBattleSpeed(current: BattleSpeed, member: boolean, gated: boolean = MEMBER_BATTLE_SPEED_GATE_ENABLED): BattleSpeed {
+  const open = availableBattleSpeeds(member, gated);
+  const index = open.indexOf(usableBattleSpeed(current, member, gated));
   return open[(index + 1) % open.length];
 }
 

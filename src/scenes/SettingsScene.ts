@@ -1,4 +1,4 @@
-import { FREE_BATTLE_SPEEDS } from "../core/battleControls";
+import { availableBattleSpeeds } from "../core/battleControls";
 import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
@@ -206,7 +206,7 @@ export class SettingsScene extends Phaser.Scene {
       const motionKeys = { default: "settings.play.motion.default", reduced: "settings.play.motion.reduced", off: "settings.play.motion.off" } as const;
       this.content.add(new SettingsSelectRow(this,SETTINGS_ROW.left,y,t("settings.play.battleUiMotion"),s.presentation.battleUiMotion,['default','reduced','off'] as const,v=>settingsManager.update({presentation:{battleUiMotion:v}}),v=>t(motionKeys[v]))); y+=SETTINGS_ROW.step; divider();
       // 인게임 배속 칩과 같은 1·2·3배 선택지를 보여 주며 SettingsManager가 즉시 저장한다.
-      this.content.add(new SettingsSelectRow(this,SETTINGS_ROW.left,y,t("settings.play.battleSpeed"),s.game.battleSpeed,FREE_BATTLE_SPEEDS,v=>settingsManager.update({game:{battleSpeed:v}}))); y+=SETTINGS_ROW.step; divider();
+      this.content.add(new SettingsSelectRow(this,SETTINGS_ROW.left,y,t("settings.play.battleSpeed"),s.game.battleSpeed,availableBattleSpeeds(false),v=>settingsManager.update({game:{battleSpeed:v}}))); y+=SETTINGS_ROW.step; divider();
       toggle(t("settings.play.autoUltimate"),'game','autoUltimate');
       this.content.add(new SettingsSelectRow(this,SETTINGS_ROW.left,y,t("settings.play.textSpeed"),s.game.textSpeed,[0.5,1,2] as const,v=>settingsManager.update({game:{textSpeed:v}}))); y+=SETTINGS_ROW.step; divider();
       // 목록·표기는 core/language.ts 한 표가 갖는다. 각 언어는 제 이름으로 서야 지금 화면을

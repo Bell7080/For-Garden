@@ -163,3 +163,39 @@ export function settingsRowY(index: number): number {
 export function settingsTabX(index: number, count: number, screenWidth: number): number {
   return settingsTabSlot(index, count, screenWidth).x;
 }
+
+/**
+ * 고르는 창 — 선택지 목록과 시각 바퀴.
+ *
+ * 목록 창의 높이는 손으로 적지 않고 **선택지 수**에서 구한다(언어가 늘면 줄도 는다). 시각 창은 바퀴
+ * 두 개가 다섯 칸씩 보이고 그 아래 「확인」이 선다.
+ */
+export const SETTINGS_PICKER = {
+  width: 640,
+  /** 제목표 띠 아래에서 첫 줄이 시작하는 거리. */
+  top: 76,
+  bottom: 52,
+  row: { width: 540, height: 96, gap: 12 },
+  clock: {
+    height: 720,
+    centerY: -52,
+    rowHeight: 86,
+    fontSize: 54,
+    columnWidth: 200,
+    /** 두 바퀴가 가운데 `:`에서 떨어진 거리. */
+    columnGap: 124,
+    bandWidth: 480,
+    confirm: { width: 320, height: 88, bottom: 52 },
+  },
+} as const;
+
+export function settingsChoicePickerHeight(count: number): number {
+  const { top, bottom, row } = SETTINGS_PICKER;
+  return top + count * row.height + Math.max(0, count - 1) * row.gap + bottom;
+}
+
+/** 목록 창 안에서 N번째 줄의 세로 중심(창 가운데 기준). */
+export function settingsChoiceRowY(index: number, count: number): number {
+  const { top, row } = SETTINGS_PICKER;
+  return -settingsChoicePickerHeight(count) / 2 + top + row.height / 2 + index * (row.height + row.gap);
+}

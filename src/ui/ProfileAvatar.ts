@@ -2,12 +2,11 @@ import Phaser from "phaser";
 import type { PortraitAssetId } from "../core/types";
 import { profileFrameOrDefault, type ProfileFrameDefinition } from "../data/profileFrames";
 import { FaceFrame } from "./FaceFrame";
-import { chipPoints, drawLayer, toPoints } from "./holo";
+import { chipPoints, drawLayer } from "./holo";
+import { bevelSquare, bladePoints, diamondPoints, PROFILE_FRAME_BEVEL, PROFILE_FRAME_PAD, profileFrameShapes, type FramePoint } from "./profileFrameGeometry";
 import { textStyle } from "./theme";
 
 const hex = (color: number): string => `#${color.toString(16).padStart(6, "0")}`;
-/** 얼굴 칩의 깎인 모서리 비율. 얼굴 액자(`ITEM_FRAME`)와 같은 결로 둔다. */
-const BEVEL = 0.24;
 
 export interface ProfileAvatarOptions {
   size: number;
@@ -30,9 +29,9 @@ export class ProfileAvatar extends Phaser.GameObjects.Container {
     super(scene, x, y);
     const frame = profileFrameOrDefault(options.frameId);
     const size = options.size;
-    const pad = size * 0.07;
+    const pad = size * PROFILE_FRAME_PAD;
     const outer = size + pad * 2;
-    const shape = chipPoints(outer, outer, { bevel: { topLeft: outer * BEVEL, topRight: 0, bottomRight: outer * BEVEL, bottomLeft: 0 } });
+    const shape = chipPoints(outer, outer, { bevel: { topLeft: outer * PROFILE_FRAME_BEVEL, topRight: 0, bottomRight: outer * PROFILE_FRAME_BEVEL, bottomLeft: 0 } });
     this.add(drawLayer(scene, 0, 0, shape, { fill: frame.wash, alpha: 0.96 }));
     if (options.portraitAssetId) {
       this.add(new FaceFrame(scene, 0, 0, { portraitAssetId: options.portraitAssetId, size, color: frame.color }));
@@ -43,126 +42,56 @@ export class ProfileAvatar extends Phaser.GameObjects.Container {
   }
 }
 
-/** 테두리 한 장을 그린다 — 바탕 선 두 겹 위에 그 테두리의 장식을 얹는다. */
+/** 테두리 한 장을 그린다 — 모양은 `profileFrameShapes`가 정하고 여기서는 칠하기만 한다. */
 export function drawFrameOrnament(scene: Phaser.Scene, size: number, frame: ProfileFrameDefinition): Phaser.GameObjects.Container {
   const root = scene.add.container(0, 0);
-  const pad = size * 0.07;
-  const outer = size + pad * 2;
-  const bevelShape = (side: number): number[] => chipPoints(side, side, { bevel: { topLeft: side * BEVEL, topRight: 0, bottomRight: side * BEVEL, bottomLeft: 0 } });
-  const rank = ["plain", "bracket", "gem", "wing", "vine", "crown"].indexOf(frame.style);
+  const shapes = profileFrameShapes(size, frame.style);
+  const pts = (points: readonly FramePoint[]): Phaser.Geom.Point[] => points.map((p) => new Phaser.Geom.Point(p.x, p.y));
+  const toneColor = (tone: "frame" | "white" | "light"): number => (tone === "white" ? 0xffffff : tone === "light" ? 0xffe9a8 : frame.color);
 
   // 빛 — 레벨이 오를수록 테두리 밖으로 번지는 빛이 한 겹씩 짙어진다. 겹쳐 밝아지는 합성이라 옅게.
-  if (rank >= 2) {
+  if (shapes.glow.length > 0) {
     const glow = scene.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
-    for (let band = 0; band < 4; band += 1) {
-      glow.lineStyle(size * 0.03, frame.color, (0.05 + rank * 0.012) * (1 - band / 4));
-      glow.strokePoints(toPoints(bevelShape(outer + size * 0.04 * (band + 1))), true);
+    for (const ring of shapes.glow) {
+      glow.lineStyle(ring.width, toneColor(ring.tone), ring.alpha);
+      glow.strokePoints(pts(bevelSquare(ring.side)), true);
     }
     root.add(glow);
   }
 
   const g = scene.add.graphics();
   root.add(g);
-  // 바탕 테두리 — 굵은 색 선 한 줄과 그 안쪽의 가는 흰 선.
-  g.lineStyle(size * 0.05, frame.color, 1);
-  g.strokePoints(toPoints(bevelShape(outer)), true);
-  g.lineStyle(Math.max(1.5, size * 0.012), 0xffffff, 0.45);
-  g.strokePoints(toPoints(bevelShape(outer - size * 0.07)), true);
-  if (frame.style === "crown") {
-    // 가장 높은 테두리만 바깥에 한 겹 더 두른다.
-    g.lineStyle(Math.max(2, size * 0.018), frame.color, 0.7);
-    g.strokePoints(toPoints(bevelShape(outer + size * 0.1)), true);
+  // 깃·잎은 테두리 선보다 먼저 — 뿌리가 선 밑으로 숨어 선에서 돋아난 것처럼 선다.
+  for (const blade of shapes.blades) {
+    const points = bladePoints(blade);
+    g.fillStyle(frame.color, 0.95);
+    g.fillPoints(pts(points), true);
+    g.lineStyle(Math.max(1, size * 0.006), 0xffffff, 0.5);
+    g.lineBetween(points[0].x, points[0].y, points[2].x, points[2].y);
   }
-
-  const half = outer / 2;
-  const diamond = (x: number, y: number, w: number, h: number, fill = frame.color): void => {
-    g.fillStyle(fill, 1);
-    g.fillPoints([new Phaser.Geom.Point(x, y - h), new Phaser.Geom.Point(x + w, y), new Phaser.Geom.Point(x, y + h), new Phaser.Geom.Point(x - w, y)], true);
+  for (const ring of shapes.rings) {
+    g.lineStyle(ring.width, toneColor(ring.tone), ring.alpha);
+    g.strokePoints(pts(bevelSquare(ring.side)), true);
+  }
+  for (const stroke of shapes.strokes) {
+    g.lineStyle(stroke.width, frame.color, 1);
+    g.strokePoints(pts(stroke.points), false);
+  }
+  if (shapes.crown) {
+    g.fillStyle(frame.color, 1);
+    g.fillPoints(pts(shapes.crown), true);
+    g.lineStyle(Math.max(1.5, size * 0.01), 0xffe9a8, 0.9);
+    g.strokePoints(pts(shapes.crown), true);
+  }
+  for (const diamond of shapes.diamonds) {
+    const { x, y, w, h } = diamond;
+    g.fillStyle(toneColor(diamond.tone), 1);
+    g.fillPoints(pts(diamondPoints(diamond)), true);
     // 윗 절반에만 흰빛을 얹어 보석처럼 세운다.
     g.fillStyle(0xffffff, 0.55);
-    g.fillPoints([new Phaser.Geom.Point(x, y - h * 0.8), new Phaser.Geom.Point(x + w * 0.5, y - h * 0.1), new Phaser.Geom.Point(x - w * 0.5, y - h * 0.1)], true);
+    g.fillPoints(pts([{ x, y: y - h * 0.8 }, { x: x + w * 0.5, y: y - h * 0.1 }, { x: x - w * 0.5, y: y - h * 0.1 }]), true);
     g.lineStyle(Math.max(1, size * 0.008), 0x05070a, 0.8);
-    g.strokePoints([new Phaser.Geom.Point(x, y - h), new Phaser.Geom.Point(x + w, y), new Phaser.Geom.Point(x, y + h), new Phaser.Geom.Point(x - w, y)], true);
-  };
-  const blade = (x: number, y: number, angle: number, length: number, width: number): void => {
-    // 한쪽 끝이 뾰족한 잎·깃 한 장.
-    const cos = Math.cos(angle); const sin = Math.sin(angle);
-    const tip = new Phaser.Geom.Point(x + cos * length, y + sin * length);
-    const mid = (t: number, side: number): Phaser.Geom.Point => new Phaser.Geom.Point(x + cos * length * t - sin * width * side, y + sin * length * t + cos * width * side);
-    g.fillStyle(frame.color, 0.95);
-    g.fillPoints([new Phaser.Geom.Point(x, y), mid(0.45, 1), tip, mid(0.45, -1)], true);
-    g.lineStyle(Math.max(1, size * 0.006), 0xffffff, 0.5);
-    g.lineBetween(x, y, tip.x, tip.y);
-  };
-
-  switch (frame.style) {
-    case "plain":
-      break;
-    case "bracket": {
-      // 네 모서리 밖의 ㄱ자 괄호 — 조준경처럼 얼굴을 붙잡는다.
-      const reach = half + size * 0.08;
-      const arm = size * 0.22;
-      g.lineStyle(size * 0.035, frame.color, 1);
-      for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]] as const) {
-        g.lineBetween(sx * reach, sy * reach, sx * reach - sx * arm, sy * reach);
-        g.lineBetween(sx * reach, sy * reach, sx * reach, sy * reach - sy * arm);
-      }
-      break;
-    }
-    case "gem": {
-      // 네 변 가운데에 보석, 깎이지 않은 두 모서리에 작은 보석.
-      const w = size * 0.075; const h = size * 0.11;
-      diamond(0, -half, w * 1.2, h * 1.2);
-      diamond(0, half, w, h);
-      diamond(-half, 0, w, h);
-      diamond(half, 0, w, h);
-      diamond(half, -half, w * 0.6, h * 0.6);
-      diamond(-half, half, w * 0.6, h * 0.6);
-      break;
-    }
-    case "wing": {
-      // 좌우로 펼친 깃 세 장씩 + 윗변의 보석.
-      for (const side of [-1, 1] as const) {
-        const baseX = side * (half - size * 0.02);
-        [-0.5, -0.1, 0.3].forEach((spread, index) => {
-          const angle = (side < 0 ? Math.PI : 0) + side * spread;
-          blade(baseX, -size * 0.1 + index * size * 0.12, angle, size * (0.42 - index * 0.08), size * 0.07);
-        });
-      }
-      diamond(0, -half, size * 0.08, size * 0.12);
-      break;
-    }
-    case "vine": {
-      // 깎이지 않은 두 모서리에서 뻗는 잎 무리와 윗변·밑변의 보석.
-      for (const [cx, cy, base] of [[half, -half, -Math.PI / 4], [-half, half, (Math.PI * 3) / 4]] as const) {
-        [-0.7, 0, 0.7].forEach((offset, index) => blade(cx, cy, base + offset, size * (index === 1 ? 0.28 : 0.2), size * 0.055));
-      }
-      diamond(0, -half, size * 0.07, size * 0.1);
-      diamond(0, half, size * 0.07, size * 0.1);
-      break;
-    }
-    case "crown": {
-      // 윗변 위의 왕관 — 다섯 봉우리, 봉우리마다 보석.
-      const baseY = -half - size * 0.02;
-      const width = size * 0.56;
-      const peaks = [0.16, 0.3, 0.2, 0.3, 0.16].map((h) => h * size);
-      const points: Phaser.Geom.Point[] = [new Phaser.Geom.Point(-width / 2, baseY)];
-      peaks.forEach((h, index) => {
-        const x = -width / 2 + (width * (index + 0.5)) / peaks.length;
-        points.push(new Phaser.Geom.Point(x - width / peaks.length / 2 + 2, baseY - h * 0.45));
-        points.push(new Phaser.Geom.Point(x, baseY - h));
-      });
-      points.push(new Phaser.Geom.Point(width / 2, baseY - peaks[4] * 0.45), new Phaser.Geom.Point(width / 2, baseY));
-      g.fillStyle(frame.color, 1);
-      g.fillPoints(points, true);
-      g.lineStyle(Math.max(1.5, size * 0.01), 0xffe9a8, 0.9);
-      g.strokePoints(points, true);
-      peaks.forEach((h, index) => diamond(-width / 2 + (width * (index + 0.5)) / peaks.length, baseY - h, size * 0.03, size * 0.045, 0xffe9a8));
-      diamond(-half, 0, size * 0.08, size * 0.12);
-      diamond(half, 0, size * 0.08, size * 0.12);
-      diamond(0, half, size * 0.1, size * 0.13);
-      break;
-    }
+    g.strokePoints(pts(diamondPoints(diamond)), true);
   }
   return root;
 }

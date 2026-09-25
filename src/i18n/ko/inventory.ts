@@ -1,19 +1,19 @@
 /** 가방·스테미나 창·출격 미리보기의 문구. */
 export const INVENTORY_KO = {
-  "inventory.rune.equipped": "장착 · {name}",
   "inventory.title": "가방",
   "inventory.tab.rune": "룬",
   "inventory.tab.currency": "재화",
   "inventory.tab.consumable": "소비품",
   "inventory.tab.material": "재료",
+  "inventory.rune.count": "보유",
   "inventory.sort.acquired": "획득순",
   "inventory.sort.rarity": "등급",
   "inventory.sort.part": "부위",
   "inventory.sort.craft": "세공",
   "inventory.sort.equipped": "장착",
-  "inventory.itemDetail": "{description}\n\n보유 {quantity}",
-  "inventory.useConfirm": "아이템을 1개 사용하시겠습니까?",
-  "inventory.use": "사용",
+  "inventory.guide.held": "보유",
+  "inventory.guide.effect": "효과",
+  "inventory.useButton": "사용하기",
   "inventory.useDone": "사용 완료",
   "inventory.staminaGained": "스테미나 +{amount}",
 

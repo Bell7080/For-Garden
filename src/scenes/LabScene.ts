@@ -197,7 +197,7 @@ export class LabScene extends Phaser.Scene {
   /** 양옆만 누르는 비네트. 위아래는 상단 줄과 하단 탭이 제 그라데이션을 이미 갖는다. */
   private drawSideVignette(): void {
     const { band, strength } = LAB_CHROME.vignette;
-    const g = this.add.graphics().setDepth(-29);
+    const g = this.add.graphics().setDepth(LAB_CHROME.depth.vignette);
     g.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, strength, 0, strength, 0);
     g.fillRect(0, 0, band, BASE_HEIGHT);
     g.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, strength, 0, strength);
@@ -247,7 +247,7 @@ export class LabScene extends Phaser.Scene {
     // **앞 배너의 원화는 새 원화가 다 선 뒤에 걷는다.** 먼저 지우면 새 원화가 녹아 드는 0.16초
     // 동안 화면 뒤가 통째로 비어, 배너를 넘길 때마다 검게 한 번 깜빡였다.
     const previous = this.showcase;
-    const image = this.add.image(BASE_WIDTH / 2, BASE_HEIGHT / 2, "__DEFAULT").setDepth(-29).setAlpha(0);
+    const image = this.add.image(BASE_WIDTH / 2, BASE_HEIGHT / 2, "__DEFAULT").setDepth(LAB_CHROME.depth.incomingArt).setAlpha(0);
     this.showcase = image;
     useBackgroundTexture(this, image, this.banner.artKey ?? BACKGROUND.lab, (loaded) => {
       if (this.showcase !== loaded) { loaded.destroy(); return; }
@@ -256,12 +256,12 @@ export class LabScene extends Phaser.Scene {
       if (previous?.active && previous.texture.key === loaded.texture.key) {
         loaded.setAlpha(1);
         previous.destroy();
-        loaded.setDepth(-30);
+        loaded.setDepth(LAB_CHROME.depth.art);
         return;
       }
       this.tweens.add({
         targets: loaded, alpha: 1, duration: 160,
-        onComplete: () => { if (previous?.active) previous.destroy(); loaded.setDepth(-30); },
+        onComplete: () => { if (previous?.active) previous.destroy(); loaded.setDepth(LAB_CHROME.depth.art); },
       });
     });
   }

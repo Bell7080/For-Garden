@@ -4,9 +4,9 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugResearchBoard, setDebugScene } from "../debug";
 import { gameApi } from "../api/FakeServer";
 import { GameApiError, type PullResultDto } from "../api/contracts";
-import { canPull, pullCost, type Banner, type ResearchGrade } from "../core/gacha";
+import { bannerAcceptsCount, bannerGuaranteePending, bannerPullsRemaining, canPull, pullCost, type Banner, type GachaPityState, type ResearchGrade } from "../core/gacha";
 import { ResearchPresentationController, highestRarity, researchSlotViews } from "../core/researchPresentation";
-import { BANNERS } from "../data/banners";
+import { BANNERS, LIMITED_RELIC_IDS } from "../data/banners";
 import { getRelic } from "../data/relics";
 import { session } from "../state/session";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
@@ -24,7 +24,9 @@ import { audioManager, type AudioScope } from "../managers/AudioManager";
 import { PopupLayer } from "../ui/PopupLayer";
 import { ResearchPullButton } from "../ui/ResearchPullButton";
 import { addRatesLink, addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
-import { LAB_CHROME } from "../ui/labLayout";
+import { LAB_CHROME, LAB_TITLE } from "../ui/labLayout";
+import { addBannerArrow, addBannerTitle, drawBannerPages } from "../ui/LabBannerTitle";
+import { BANNER_TONE, bannerPresentation, bannerTags, bannerTenDiscountPercent } from "../ui/labBannerPresentation";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { MileagePopup } from "../ui/MileagePopup";
 import { settingsManager } from "../managers/SettingsManager";
@@ -46,8 +48,15 @@ import { playSceneEntrance, startScene } from "../ui/screenTransition";
 export class LabScene extends Phaser.Scene {
   private topBar!: TopBar;
   private bannerIndex = 0;
-  private bannerName!: Phaser.GameObjects.Text;
-  private pickupText!: Phaser.GameObjects.Text;
+  /** 지금 배너의 제목 블록. 배너나 라벨이 바뀔 때만 다시 세운다(`bannerTitleKey`). */
+  private bannerTitle?: Phaser.GameObjects.Container;
+  private bannerTitleKey = "";
+  /** 지금 원화를 세운 배너. 목록이 줄어 배너가 바뀌면 원화도 갈아 끼운다. */
+  private shownBannerId = "";
+  private bannerPages!: Phaser.GameObjects.Graphics;
+  /** 10연 할인 표식. 할인이 있는 배너에서만 선다. */
+  private discountBadge!: Phaser.GameObjects.Container;
+  private discountText!: Phaser.GameObjects.Text;
   private pityLabel!: Phaser.GameObjects.Text;
   private pityText!: Phaser.GameObjects.Text;
   private pityUnit!: Phaser.GameObjects.Text;
@@ -92,8 +101,21 @@ export class LabScene extends Phaser.Scene {
     super("lab");
   }
 
+  /**
+   * 지금 목록에 서는 배너. 횟수 제한 배너(첫 복원 연구)는 다 쓰면 목록에서 사라진다.
+   * 순서는 데이터 순서 그대로다 — 첫 복원 연구가 맨 앞이라 처음 들어온 사람이 먼저 만난다.
+   */
+  private get banners(): Banner[] {
+    return BANNERS.filter((banner) => bannerPullsRemaining(banner, this.pityOf(banner)) > 0);
+  }
+
   private get banner(): Banner {
-    return BANNERS[this.bannerIndex];
+    const list = this.banners;
+    return list[Math.min(this.bannerIndex, list.length - 1)];
+  }
+
+  private pityOf(banner: Banner): GachaPityState | undefined {
+    return session.gachaPityByGroup[banner.pityGroupId];
   }
 
   create(): void {
@@ -124,27 +146,10 @@ export class LabScene extends Phaser.Scene {
     addSideShopButton(this, SIDE_SHOP.screen.x, SIDE_SHOP.screen.y, SIDE_SHOP.screen.size, t("lab.mileageShop.short"), () => this.openMileageShop());
     addRatesLink(this, LAB_CHROME.rates.x, LAB_CHROME.rates.y, t("lab.rates"), () => this.showRates());
 
-    this.bannerName = this.add.text(cx, 170, "", textStyle({ role: "display", size: 44 })).setOrigin(0.5, 0)
-      .setShadow(0, 3, "#05070a", 8, false, true);
-    // 픽업이 있는 배너에만 선다 — 화석 연구는 기본 연구라 이 줄이 비어 있다.
-    this.pickupText = this.add.text(cx, 250, "", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5, 0)
-      .setShadow(0, 2, "#05070a", 6, false, true);
-
-    // 배너 전환.
-    new Button(this, 100, 700, {
-      width: 110,
-      height: 110,
-      label: "◀",
-      fontSize: 40,
-      onClick: () => this.switchBanner(-1),
-    });
-    new Button(this, BASE_WIDTH - 100, 700, {
-      width: 110,
-      height: 110,
-      label: "▶",
-      fontSize: 40,
-      onClick: () => this.switchBanner(1),
-    });
+    // 배너 전환 — 판때기가 아니라 옅은 유리 위의 꺾쇠(`addBannerArrow`).
+    addBannerArrow(this, LAB_TITLE.arrow.x, LAB_TITLE.arrow.y, -1, () => this.switchBanner(-1));
+    addBannerArrow(this, BASE_WIDTH - LAB_TITLE.arrow.x, LAB_TITLE.arrow.y, 1, () => this.switchBanner(1));
+    this.bannerPages = this.add.graphics({ x: cx, y: LAB_TITLE.pages.y });
 
     this.oneButton = new ResearchPullButton(this, 300, LAB_CHROME.pull.y, {
       ...LAB_CHROME.pull.size, label: t("lab.pull.one"), tone: LAB_CHROME.pull.oneTone, onClick: () => void this.doPull(1),
@@ -154,6 +159,7 @@ export class LabScene extends Phaser.Scene {
     });
 
     this.addPityPlate(cx);
+    this.addDiscountBadge();
 
     // 캐릭터 획득 연구와 마일리지는 연구소에 남고, 배치형 자원 발굴은 로비 기능으로 분리한다.
     new BottomNav(this, "lab");
@@ -222,10 +228,45 @@ export class LabScene extends Phaser.Scene {
     plate.add([this.pityLabel, this.pityText, this.pityUnit, this.pityNote]);
   }
 
+  /**
+   * 10연 할인 표식 — 10회 버튼의 오른쪽 위 모서리에 걸린 붉은 딱지.
+   *
+   * 값은 버튼 안의 재화 그림 + 수가 이미 말하므로 여기서는 얼마나 싼지만 말한다.
+   */
+  private addDiscountBadge(): void {
+    const { width, height } = LAB_TITLE.discount;
+    const badge = this.add.container(0, 0).setDepth(5);
+    badge.add(drawLayer(this, 3, 4, slantedRect(width, height, 12), { fill: 0x000000, alpha: 0.45, shadow: false }));
+    badge.add(drawLayer(this, 0, 0, slantedRect(width, height, 12), { fill: 0xd9463b, alpha: 0.98, edge: 0xffffff, edgeAlpha: 0.6, shadow: false }));
+    this.discountText = this.add.text(0, 0, "", textStyle({ role: "display", size: 28, color: COLOR.ink })).setOrigin(0.5);
+    badge.add(this.discountText);
+    badge.setAngle(-6);
+    this.discountBadge = badge;
+  }
+
+  /** 제목 블록 — 배너나 라벨이 바뀐 때만 다시 세운다(반짝이 트윈을 매번 새로 걸지 않는다). */
+  private syncBannerTitle(banner: Banner, pity: GachaPityState | undefined): void {
+    const presentation = bannerPresentation(banner);
+    const pickupIds = Object.values(banner.pickupRelicIds).flat();
+    const tags = bannerTags(banner, pity, pickupIds.map((id) => getRelic(id).name), pickupIds.some((id) => LIMITED_RELIC_IDS.has(id)));
+    const key = `${banner.id}|${tags.map((tag) => `${tag.key}:${JSON.stringify(tag.params ?? {})}`).join(",")}`;
+    if (key === this.bannerTitleKey && this.bannerTitle?.active) return;
+    this.bannerTitleKey = key;
+    this.bannerTitle?.destroy();
+    // 픽업 배너의 제목은 그 렐릭의 이름이다 — 이벤트 이름은 부제로 선다(`BannerTitleSource`).
+    const titleText = presentation?.title.kind === "pickup"
+      ? pickupIds.map((id) => getRelic(id).name).join(" · ")
+      : presentation ? t(presentation.title.key) : banner.name;
+    this.bannerTitle = presentation
+      ? addBannerTitle(this, presentation, titleText, tags, { reduceMotion: settingsManager.get().accessibility.reduceMotion, depth: 4 })
+      : undefined;
+  }
+
   private switchBanner(delta: number): void {
-    this.bannerIndex = (this.bannerIndex + delta + BANNERS.length) % BANNERS.length;
+    const count = this.banners.length;
+    this.bannerIndex = (Math.min(this.bannerIndex, count - 1) + delta + count) % count;
+    // 원화는 `refresh`가 배너가 바뀐 것을 보고 갈아 끼운다.
     this.refresh();
-    this.showcaseRelic();
   }
 
   /**
@@ -241,6 +282,7 @@ export class LabScene extends Phaser.Scene {
    * 보인다.
    */
   private showcaseRelic(): void {
+    this.shownBannerId = this.banner.id;
     // **앞 배너의 원화는 새 원화가 다 선 뒤에 걷는다.** 먼저 지우면 새 원화가 녹아 드는 0.16초
     // 동안 화면 뒤가 통째로 비어, 배너를 넘길 때마다 검게 한 번 깜빡였다.
     const previous = this.showcase;
@@ -265,7 +307,7 @@ export class LabScene extends Phaser.Scene {
 
   private async doPull(count: 1 | 10): Promise<void> {
     const banner = this.banner;
-    if (this.pullPending || !canPull(session.wallet, banner, count)) return;
+    if (this.pullPending || !canPull(session.wallet, banner, count, this.pityOf(banner))) return;
 
     this.pullPending = true;
     this.refresh();
@@ -311,6 +353,8 @@ export class LabScene extends Phaser.Scene {
     const pity = session.gachaPityByGroup[banner.pityGroupId] ?? { pullsSinceSsr: 0, pickupGuaranteed: false };
     // 확률뿐 아니라 현재 계정 상태와 배너 교체 정책, 중복 환산까지 한 화면에서 확인시킨다.
     const policy = [
+      // 횟수 제한 배너(첫 복원 연구)는 한도와 한 번뿐인 확정을 가장 먼저 말한다.
+      ...(banner.pullLimit !== undefined ? [t("lab.policy.limit", { limit: banner.pullLimit })] : []),
       t("lab.policy.pity", { since: pity.pullsSinceSsr, left: Math.max(0, banner.highestRarityGuarantee - pity.pullsSinceSsr) }),
       t("lab.policy.pickup", { state: t(pity.pickupGuaranteed ? "lab.policy.pickupOn" : "lab.policy.pickupOff") }),
       t("lab.policy.pickupRate", { percent: (banner.pickupRate * 100).toFixed(0) }),
@@ -686,13 +730,25 @@ export class LabScene extends Phaser.Scene {
 
   private refresh(): void {
     const banner = this.banner;
-    this.bannerName.setText(banner.name);
-    const pickupNames = Object.values(banner.pickupRelicIds).flat().map((id) => getRelic(id).name);
-    this.pickupText.setText(pickupNames.length > 0 ? `PICK UP  ${pickupNames.join(" · ")}` : "");
-    const currentPity = session.gachaPityByGroup[banner.pityGroupId] ?? { pullsSinceSsr: 0, pickupGuaranteed: false };
-    // 판 안의 세 조각(말 · 수 · 단위)을 한 덩어리로 재서 가운데에 놓는다.
-    this.pityLabel.setText(t("lab.pity.label"));
-    this.pityText.setText(String(Math.max(0, banner.highestRarityGuarantee - currentPity.pullsSinceSsr)));
+    const pity = this.pityOf(banner);
+    // 첫 복원 연구를 다 써서 목록에서 사라졌으면 그 자리의 배너로 원화도 갈아 끼운다.
+    if (this.shownBannerId !== banner.id) this.showcaseRelic();
+    this.syncBannerTitle(banner, pity);
+    const pages = this.banners;
+    drawBannerPages(this.bannerPages, pages.length, pages.indexOf(banner), BANNER_TONE[bannerPresentation(banner)?.tone ?? "standard"].accent);
+
+    const pickupNames = Object.values(banner.pickupRelicIds).flat();
+    const currentPity = pity ?? { pullsSinceSsr: 0, pickupGuaranteed: false };
+    /*
+     * 판 안의 세 조각(말 · 수 · 단위)을 한 덩어리로 재서 가운데에 놓는다.
+     *
+     * 횟수 제한 배너는 천장이 곧 한도라 "SSR 확정까지"와 "남은 연구"가 같은 수다. 확정을 이미
+     * 받았으면(그 전에 SSR이 나왔으면) 남은 연구 수만 말한다.
+     */
+    const limited = banner.pullLimit !== undefined;
+    const pending = bannerGuaranteePending(banner, pity);
+    this.pityLabel.setText(t(limited && !pending ? "lab.pity.remaining" : "lab.pity.label"));
+    this.pityText.setText(String(limited ? bannerPullsRemaining(banner, pity) : Math.max(0, banner.highestRarityGuarantee - currentPity.pullsSinceSsr)));
     this.pityUnit.setText(t("lab.pity.unit"));
     const gap = 12;
     const total = this.pityLabel.width + gap + this.pityText.width + 6 + this.pityUnit.width;
@@ -701,12 +757,24 @@ export class LabScene extends Phaser.Scene {
     this.pityUnit.setX(this.pityText.x + this.pityText.width + 6);
     this.pityNote.setText(currentPity.pickupGuaranteed && pickupNames.length > 0 ? t("lab.pity.pickupNext") : "");
 
+    /*
+     * 10연 전용 배너는 1회 버튼을 세우지 않고 10회 버튼을 가운데로 옮긴다 — 누를 수 없는 버튼을
+     * 꺼진 채 세워 두면 왜 안 되는지 묻게 된다.
+     */
     const icon = CURRENCY_ICON_BY_WALLET[banner.currency];
+    const oneOpen = bannerAcceptsCount(banner, 1, pity) || !banner.tenOnly;
+    this.oneButton.setVisible(!banner.tenOnly);
+    this.tenButton.setX(banner.tenOnly ? BASE_WIDTH / 2 : 780);
     this.oneButton
-      .setCost(icon, pullCost(banner, 1), canPull(session.wallet, banner, 1))
-      .setEnabled(!this.pullPending && canPull(session.wallet, banner, 1));
+      .setCost(icon, pullCost(banner, 1), canPull(session.wallet, banner, 1, pity))
+      .setEnabled(oneOpen && !this.pullPending && canPull(session.wallet, banner, 1, pity));
     this.tenButton
-      .setCost(icon, pullCost(banner, 10), canPull(session.wallet, banner, 10))
-      .setEnabled(!this.pullPending && canPull(session.wallet, banner, 10));
+      .setCost(icon, pullCost(banner, 10), canPull(session.wallet, banner, 10, pity))
+      .setEnabled(!this.pullPending && canPull(session.wallet, banner, 10, pity));
+
+    const discount = bannerTenDiscountPercent(banner);
+    this.discountBadge.setVisible(discount > 0);
+    this.discountText.setText(t("lab.pull.discount", { percent: discount }));
+    this.discountBadge.setPosition(this.tenButton.x + LAB_TITLE.discount.dx, LAB_CHROME.pull.y + LAB_TITLE.discount.dy);
   }
 }

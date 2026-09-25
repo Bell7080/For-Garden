@@ -453,9 +453,25 @@ describe("SaveManager", () => {
 
     const loaded = new SaveManager(storage).load()!;
     expect(loaded.gachaPityByGroup).toEqual({
+      welcome: { pullsSinceSsr: 0, pickupGuaranteed: false },
       "standard-fossil": { pullsSinceSsr: 12, pickupGuaranteed: false },
       "limited-pickup": { pullsSinceSsr: 0, pickupGuaranteed: false },
     });
+  });
+
+  it("v40 저장은 첫 복원 연구 그룹을 새로 받고, 누적 횟수는 저장·복원을 오가도 남는다", () => {
+    const storage = new MemoryStorage();
+    const data = validData() as unknown as Record<string, unknown> & { gachaPityByGroup: Record<string, unknown> };
+    data.saveVersion = 40;
+    delete data.gachaPityByGroup.welcome;
+    storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(data));
+    const manager = new SaveManager(storage);
+    const loaded = manager.load()!;
+    expect(loaded.gachaPityByGroup.welcome).toEqual({ pullsSinceSsr: 0, pickupGuaranteed: false });
+
+    loaded.gachaPityByGroup.welcome = { pullsSinceSsr: 20, pickupGuaranteed: false, totalPulls: 20 };
+    manager.save(loaded);
+    expect(new SaveManager(storage).load()!.gachaPityByGroup.welcome.totalPulls).toBe(20);
   });
 
   it("같은 그룹의 교체 배너는 저장된 천장과 픽업 확정을 함께 이어받는다", () => {

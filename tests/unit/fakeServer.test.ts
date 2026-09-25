@@ -491,6 +491,35 @@ describe("FakeServer", () => {
     await expect(server.enterDailyRestoration()).resolves.toMatchObject({ entriesRemaining: 2, cheesecakeEarned: 40 });
     expect(state.dailyContent).toMatchObject({ date: "2026-08-21", restorationEntries: 1 });
   });
+  it("첫 복원 연구는 10연만 받고 화석 8개를 쓰며, 누적 50회를 넘기지 않는다", async () => {
+    const state = makeSession();
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0.9 });
+    // 1회는 받지 않는다 — 화면이 버튼을 감춰도 요청은 올 수 있다.
+    await expect(server.pullRelics({ bannerId: "welcome", count: 1 })).rejects.toMatchObject({ code: "BANNER_LIMIT_REACHED" });
+
+    await server.pullRelics({ bannerId: "welcome", count: 10 });
+    expect(state.wallet.fossil).toBe(1000 - 8);
+    expect(state.gachaPityByGroup.welcome.totalPulls).toBe(10);
+    // 상시 천장과 섞이지 않는다.
+    expect(state.gachaPityByGroup["standard-fossil"].pullsSinceSsr).toBe(0);
+
+    for (let i = 0; i < 4; i += 1) await server.pullRelics({ bannerId: "welcome", count: 10 });
+    expect(state.gachaPityByGroup.welcome.totalPulls).toBe(50);
+    await expect(server.pullRelics({ bannerId: "welcome", count: 10 })).rejects.toMatchObject({ code: "BANNER_LIMIT_REACHED" });
+  });
+
+  it("첫 복원 연구는 50회 안에 SSR을 한 장 확정하고, 그 SSR은 네 종 중 하나다", async () => {
+    const state = makeSession();
+    // 0.9는 늘 회색이라 자연 SSR이 없다 — 50번째에 천장이 SSR을 강제한다.
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0.9 });
+    const ssr: string[] = [];
+    for (let i = 0; i < 5; i += 1) {
+      const response = await server.pullRelics({ bannerId: "welcome", count: 10 });
+      for (const result of response.results) if (result.type === "relic" && ["rex", "spino", "ella", "mette"].includes(result.relicId)) ssr.push(result.relicId);
+    }
+    expect(ssr).toHaveLength(1);
+  });
+
   it("서버 안에서 비용과 결과를 함께 확정한다", async () => {
     const state = makeSession();
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });

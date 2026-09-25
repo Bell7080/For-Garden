@@ -30,3 +30,29 @@ export function labPityGap(): number {
   return pullTop - noteBottom;
 }
 
+
+/**
+ * 모집판 제목 블록과 넘김 조작의 자리.
+ *
+ * 제목은 상단 재화 줄 바로 아래에서 시작하고, 왼쪽 위의 확률 글줄(`rates`)과 곁 상점 칩을 피하도록
+ * 폭을 좁혀 가운데에 선다. 화살표는 판때기가 아니라 옅은 유리 위의 꺾쇠이고, 몇 번째 배너인지는
+ * 버튼과 하단 탭 사이의 마름모 줄이 말한다.
+ */
+export const LAB_TITLE = {
+  x: 540,
+  eyebrowY: 186,
+  titleY: 256,
+  tagY: 348,
+  /** 부제(픽업 개체의 수식어)는 제목 글자 밑변에서 이만큼 아래에 선다. */
+  subtitleGap: 22,
+  subtitleFont: 30,
+  maxWidth: 760,
+  tagHeight: 46,
+  tagFont: 24,
+  tagPadX: 22,
+  tagGap: 12,
+  arrow: { x: 54, y: 760, width: 70, height: 128, stroke: 5 },
+  pages: { y: NAV_TOP - 62, gap: 34, size: 9 },
+  /** 10연 할인 표식 — 10회 버튼의 오른쪽 위 모서리에 걸린다. */
+  discount: { dx: 150, dy: -78, width: 116, height: 50 },
+} as const;

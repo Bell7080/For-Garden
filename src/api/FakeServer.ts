@@ -1,4 +1,4 @@
-import { canPull, pull, resolveAcquisitions, spend } from "../core/gacha";
+import { bannerAcceptsCount, canPull, pull, resolveAcquisitions, spend } from "../core/gacha";
 import { BANNERS } from "../data/banners";
 import { RELICS } from "../data/relics";
 import { AD_REWARD_SLOTS, findAdRewardSlot, type AdReward } from "../data/adRewards";
@@ -1028,12 +1028,17 @@ export class FakeServer implements GameApi {
 
     const banner = BANNERS.find((candidate) => candidate.id === request.bannerId);
     if (!banner) throw new GameApiError("BANNER_NOT_FOUND", "존재하지 않는 배너입니다.");
-    if (!canPull(this.state.wallet, banner, request.count)) {
+    const currentPity = this.state.gachaPityByGroup[banner.pityGroupId] ?? { pullsSinceSsr: 0, pickupGuaranteed: false };
+    // 10연 전용·계정당 횟수 제한은 재화보다 먼저 본다 — 화면이 버튼을 감춰도 요청은 올 수 있다.
+    if (!bannerAcceptsCount(banner, request.count, currentPity)) {
+      throw new GameApiError("BANNER_LIMIT_REACHED", "이 연구는 더 진행할 수 없습니다.");
+    }
+    if (!canPull(this.state.wallet, banner, request.count, currentPity)) {
       throw new GameApiError("INSUFFICIENT_CURRENCY", "재화가 부족합니다.");
     }
 
     // 원본을 전혀 건드리지 않은 복제 상태에서 비용·천장·보유 결과를 모두 먼저 계산한다.
-    const pulled = pull(banner, request.count, this.state.gachaPityByGroup[banner.pityGroupId] ?? { pullsSinceSsr: 0, pickupGuaranteed: false }, this.random);
+    const pulled = pull(banner, request.count, currentPity, this.random);
     const breakthroughGradeById = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, value]) => [id, breakthroughGrade(value.breakthrough)]));
     const relicSlots = pulled.slots.filter((slot) => slot.kind === "relic");
     const outcome = resolveAcquisitions(this.state.owned, this.state.relicFragments, relicSlots.map((slot) => slot.relicId), breakthroughGradeById, BREAKTHROUGH_GRADE_CAP);
@@ -1049,7 +1054,9 @@ export class FakeServer implements GameApi {
     for (const slot of pulled.slots) if (slot.kind === "currency") {
       nextWallet[slot.currency] = Math.min(WALLET_CAPS[slot.currency], nextWallet[slot.currency] + slot.amount);
     }
-    const nextPity = { ...this.state.gachaPityByGroup, [banner.pityGroupId]: pulled.pity };
+    // 횟수 제한 배너만 누적 횟수를 센다(`GachaPityState.totalPulls`). 다른 그룹의 모양은 그대로 둔다.
+    const groupPity = banner.pullLimit === undefined ? pulled.pity : { ...pulled.pity, totalPulls: (currentPity.totalPulls ?? 0) + request.count };
+    const nextPity = { ...this.state.gachaPityByGroup, [banner.pityGroupId]: groupPity };
     // 연구소의 캐릭터 연구 성공만 임무로 환산하며 방치 발굴 수확과 섞지 않는다.
     const nextMissions = applyMissionEvent(this.state.missions, { type: "relic_research_completed", count: request.count }, this.now());
     const nextState: Session = { ...this.state, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, relicFragments: outcome.fragmentsById, gachaPityByGroup: nextPity, missions: nextMissions };

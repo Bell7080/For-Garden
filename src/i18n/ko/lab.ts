@@ -39,6 +39,25 @@ export const LAB_KO = {
   // 새로 만난 렐릭의 소개 장면 — 그 개체의 한마디를 묶는 따옴표만 표가 갖는다.
   "lab.showcase.quote": "“{line}”",
 
+  // 모집판의 제목과 표식 — 배너마다 무엇을 뽑는 판인지를 이름표와 라벨로 말한다.
+  "lab.banner.welcome.eyebrow": "WELCOME RESEARCH",
+  "lab.banner.welcome.title": "첫 복원 연구",
+  "lab.banner.fossil.eyebrow": "STANDARD RESEARCH",
+  "lab.banner.fossil.title": "화석 연구",
+  "lab.banner.amber.eyebrow": "LIMITED PICK UP",
+  "lab.banner.amber.subtitle": "우당탕탕 늑대 카페 알바생",
+  "lab.tag.standard": "상시 연구",
+  "lab.tag.limited": "기간 한정",
+  "lab.tag.once": "계정당 1회",
+  "lab.tag.pickup": "PICK UP",
+  "lab.tag.limitedRelic": "한정 렐릭",
+  "lab.tag.tenGuarantee": "10회 연구 SR 이상 확정",
+  "lab.tag.ssrGuarantee": "{count}회 안에 SSR 확정",
+  "lab.tag.remaining": "남은 연구 {left} / {total}",
+  "lab.pull.discount": "-{percent}%",
+  "lab.pity.remaining": "남은 연구",
+  "lab.policy.limit": "계정당 {limit}회 · 10회 연구만 · {limit}회 안에 SSR 1회 확정",
+
   // 시네마틱은 세계관 안의 명칭과 조작 라벨만 세운다 — 진행 상태·안내 문장은 두지 않는다.
   "lab.cinematic.skip": "SKIP",
   "lab.cinematic.resource": "재화",

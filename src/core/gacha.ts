@@ -81,6 +81,20 @@ export interface Banner {
   pickupRate: number;
   /** 이 횟수째에도 SSR이 없으면 해당 슬롯의 다른 보장보다 우선해 SSR을 강제한다. */
   highestRarityGuarantee: number;
+  /**
+   * 계정당 뽑을 수 있는 총 횟수. 없으면 제한이 없다.
+   *
+   * 첫 복원 연구(50회)처럼 한 번만 여는 배너가 쓴다. 그 배너는 제 천장 그룹을 따로 쓰므로
+   * 누적 횟수는 그 그룹의 `GachaPityState.totalPulls`가 센다. 다 쓰면 목록에서 사라진다.
+   */
+  pullLimit?: number;
+  /**
+   * 10회 연구만 연다. 할인이 걸린 1회성 배너가 쓴다.
+   *
+   * 상시 배너는 "한 개가 한 번"이라 묶음 할인을 두지 않는다 — 두면 한 번씩 뽑는 손이 손해라
+   * 10연만 남는다. 할인은 10연만 여는 배너에만 둔다.
+   */
+  tenOnly?: boolean;
 }
 
 /** 천장·10연 보정을 제외한 독립 슬롯 기준의 배너 기대값이다. */
@@ -133,14 +147,40 @@ export interface PullResult {
 export interface GachaPityState {
   pullsSinceSsr: number;
   pickupGuaranteed: boolean;
+  /** 이 그룹에서 지금까지 뽑은 총 횟수. 횟수 제한이 있는 배너만 센다(`Banner.pullLimit`). */
+  totalPulls?: number;
 }
 
 export function pullCost(banner: Banner, count: number): number {
   return count === 10 ? banner.costTen : banner.costOne * count;
 }
 
-export function canPull(wallet: Wallet, banner: Banner, count: number): boolean {
-  return wallet[banner.currency] >= pullCost(banner, count);
+/** 횟수 제한이 있는 배너에서 남은 횟수. 제한이 없으면 무한이다. */
+export function bannerPullsRemaining(banner: Banner, pity: GachaPityState | undefined): number {
+  if (banner.pullLimit === undefined) return Number.POSITIVE_INFINITY;
+  return Math.max(0, banner.pullLimit - (pity?.totalPulls ?? 0));
+}
+
+/** 이 배너가 지금 이 횟수를 받는가 — 10연 전용·남은 횟수만 본다. 재화는 `canPull`이 본다. */
+export function bannerAcceptsCount(banner: Banner, count: number, pity: GachaPityState | undefined): boolean {
+  if (banner.tenOnly && count !== 10) return false;
+  return count <= bannerPullsRemaining(banner, pity);
+}
+
+/**
+ * 횟수 제한 배너의 SSR 확정이 아직 남아 있는가.
+ *
+ * 그 배너의 확정은 **한 번뿐**이다 — 그 전에 SSR이 나오면 천장이 0으로 돌아가 남은 횟수로는
+ * 다시 닿지 못한다. SSR이 한 번이라도 나왔다면 미획득 횟수가 총 횟수보다 작다.
+ */
+export function bannerGuaranteePending(banner: Banner, pity: GachaPityState | undefined): boolean {
+  if (banner.pullLimit === undefined) return true;
+  const total = pity?.totalPulls ?? 0;
+  return (pity?.pullsSinceSsr ?? 0) === total && total < banner.pullLimit;
+}
+
+export function canPull(wallet: Wallet, banner: Banner, count: number, pity?: GachaPityState): boolean {
+  return wallet[banner.currency] >= pullCost(banner, count) && bannerAcceptsCount(banner, count, pity);
 }
 
 /** 0 이상 1 미만이라는 RNG 계약을 방어적으로 배열 인덱스에 맞춘다. */

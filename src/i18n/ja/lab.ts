@@ -39,4 +39,23 @@ export const LAB_JA = {
   // 새로 만난 렐릭의 소개 장면 — 그 개체의 한마디를 묶는 따옴표만 표가 갖는다.
   "lab.showcase.quote": "「{line}」",
 
+  // 모집판의 제목과 표식 — 배너마다 무엇을 뽑는 판인지를 이름표와 라벨로 말한다.
+  "lab.banner.welcome.eyebrow": "WELCOME RESEARCH",
+  "lab.banner.welcome.title": "はじめての復元研究",
+  "lab.banner.fossil.eyebrow": "STANDARD RESEARCH",
+  "lab.banner.fossil.title": "化石研究",
+  "lab.banner.amber.eyebrow": "LIMITED PICK UP",
+  "lab.banner.amber.subtitle": "ドタバタ狼カフェのアルバイト",
+  "lab.tag.standard": "常設研究",
+  "lab.tag.limited": "期間限定",
+  "lab.tag.once": "アカウント1回限り",
+  "lab.tag.pickup": "PICK UP",
+  "lab.tag.limitedRelic": "限定レリック",
+  "lab.tag.tenGuarantee": "10回研究でSR以上確定",
+  "lab.tag.ssrGuarantee": "{count}回以内にSSR確定",
+  "lab.tag.remaining": "残り研究 {left} / {total}",
+  "lab.pull.discount": "-{percent}%",
+  "lab.pity.remaining": "残り研究",
+  "lab.policy.limit": "アカウントごとに{limit}回・10回研究のみ・{limit}回以内にSSR1回確定",
+
 } as const;

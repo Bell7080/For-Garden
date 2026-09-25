@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { calculateBannerExpectations, canPull, determineGrade, pull, pullCost, resolveAcquisitions, spend, type Banner, type Wallet } from "../../src/core/gacha";
-import { BANNERS, LIMITED_RELIC_IDS, PITY_GROUP } from "../../src/data/banners";
+import { bannerAcceptsCount, bannerGuaranteePending, bannerPullsRemaining, calculateBannerExpectations, canPull, determineGrade, pull, pullCost, resolveAcquisitions, spend, type Banner, type Wallet } from "../../src/core/gacha";
+import { BANNERS, LIMITED_RELIC_IDS, PITY_GROUP, WELCOME_SSR_POOL } from "../../src/data/banners";
 import { PLAYABLE_RELICS } from "../../src/data/relics";
 
 /** 모든 분기와 난수 소비 순서를 눈으로 추적할 수 있는 최소 3등급 배너다. */
@@ -138,9 +138,12 @@ describe("재화와 보유 반영", () => {
 });
 
 describe("운영 배너 데이터", () => {
-  it("모든 운영 배너의 SSR 천장은 100회다", () => {
+  it("상시·픽업 배너의 SSR 천장은 100회이고, 횟수 제한 배너는 천장이 곧 한도다", () => {
     // 문서와 UI가 같은 정적 운영값을 읽도록 과거 80회 값의 회귀를 막는다.
-    expect(BANNERS.every((candidate) => candidate.highestRarityGuarantee === 100)).toBe(true);
+    for (const candidate of BANNERS) {
+      // 첫 복원 연구: 천장을 한도와 같게 두어야 "그 횟수 안에 SSR 확정"이 된다.
+      expect(candidate.highestRarityGuarantee, candidate.id).toBe(candidate.pullLimit ?? 100);
+    }
   });
   it("한 개가 한 번이고 묶음 할인을 두지 않는다", () => {
     /*
@@ -149,8 +152,34 @@ describe("운영 배너 데이터", () => {
      */
     for (const candidate of BANNERS) {
       expect(candidate.costOne, candidate.id).toBe(1);
-      expect(candidate.costTen, candidate.id).toBe(candidate.costOne * 10);
+      // 할인은 10연만 여는 배너에만 둔다 — 한 번씩 뽑는 손이 손해를 볼 일이 없다.
+      if (candidate.tenOnly) expect(candidate.costTen, candidate.id).toBeLessThan(candidate.costOne * 10);
+      else expect(candidate.costTen, candidate.id).toBe(candidate.costOne * 10);
     }
+  });
+
+  it("첫 복원 연구: 네 직군 SSR 한 명씩, 한정 개체 없음, 50회·10연 전용·20% 할인", () => {
+    const welcome = BANNERS.find((candidate) => candidate.id === "welcome")!;
+    expect(welcome.relicPools.SSR).toEqual([...WELCOME_SSR_POOL]);
+    const roles = WELCOME_SSR_POOL.map((id) => PLAYABLE_RELICS.find((relic) => relic.id === id)!.role);
+    expect(new Set(roles)).toEqual(new Set(["warrior", "assassin", "tank", "support"]));
+    for (const id of Object.values(welcome.relicPools).flat()) expect(LIMITED_RELIC_IDS.has(id), id).toBe(false);
+    expect(welcome).toMatchObject({ pullLimit: 50, tenOnly: true, costTen: 8, pityGroupId: PITY_GROUP.WELCOME });
+    // 자기 천장 그룹을 혼자 쓴다 — 상시·픽업 카운터와 섞이지 않는다.
+    expect(BANNERS.filter((candidate) => candidate.pityGroupId === PITY_GROUP.WELCOME)).toHaveLength(1);
+  });
+
+  it("횟수 제한 배너의 남은 횟수·받는 횟수·확정 남음", () => {
+    const welcome = BANNERS.find((candidate) => candidate.id === "welcome")!;
+    const fossil = BANNERS.find((candidate) => candidate.id === "fossil")!;
+    expect(bannerPullsRemaining(fossil, undefined)).toBe(Number.POSITIVE_INFINITY);
+    expect(bannerPullsRemaining(welcome, { pullsSinceSsr: 20, pickupGuaranteed: false, totalPulls: 20 })).toBe(30);
+    expect(bannerAcceptsCount(welcome, 1, undefined)).toBe(false);
+    expect(bannerAcceptsCount(welcome, 10, { pullsSinceSsr: 45, pickupGuaranteed: false, totalPulls: 45 })).toBe(false);
+    expect(bannerAcceptsCount(welcome, 10, { pullsSinceSsr: 40, pickupGuaranteed: false, totalPulls: 40 })).toBe(true);
+    // SSR이 한 번도 안 나왔으면 확정이 남아 있고, 나왔으면(미획득 수 < 총 횟수) 끝났다.
+    expect(bannerGuaranteePending(welcome, { pullsSinceSsr: 20, pickupGuaranteed: false, totalPulls: 20 })).toBe(true);
+    expect(bannerGuaranteePending(welcome, { pullsSinceSsr: 3, pickupGuaranteed: false, totalPulls: 20 })).toBe(false);
   });
 
   it("픽업과 대표 렐릭이 해당 등급 풀에 있고 확률 합계가 1이다", () => {
@@ -183,6 +212,8 @@ describe("운영 배너 데이터", () => {
     // 범위는 economy-design.md의 독립 슬롯 목표를 허용 오차와 함께 기계적으로 고정한다.
     const targets = {
       fossil: { relicRPlus: [0.169, 0.171], gold: [1_244, 1_246], cheesecake: [2.07, 2.08] },
+      // 첫 복원 연구는 확률·회색 보상이 화석 연구와 같다. 다른 것은 풀·값·한도·확정뿐이다.
+      welcome: { relicRPlus: [0.169, 0.171], gold: [1_244, 1_246], cheesecake: [2.07, 2.08] },
       amber: { relicRPlus: [0.329, 0.331], gold: [2_456, 2_458], cheesecake: [5.02, 5.03] },
     } as const;
 

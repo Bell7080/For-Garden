@@ -37,10 +37,41 @@ function pickupPools(pickups: Partial<Record<RelicRarity, string[]>>): Record<Re
 const AMBER_PICKUP = { SSR: ["dian"] } as const satisfies Partial<Record<RelicRarity, string[]>>;
 
 /** 교체 배너가 같은 값을 쓰면 천장과 픽업 확정이 이월되는 명시적 운영 그룹이다. */
-export const PITY_GROUP = { STANDARD: "standard-fossil", LIMITED_PICKUP: "limited-pickup" } as const;
+export const PITY_GROUP = { WELCOME: "welcome", STANDARD: "standard-fossil", LIMITED_PICKUP: "limited-pickup" } as const;
+
+/**
+ * 첫 복원 연구의 SSR 풀 — 네 직군이 한 명씩이다.
+ *
+ * 간판 둘(렉시아·스피나)과 기본 편성(토리카·도디·파루아)에 없는 탱커·지원가를 메우는 둘을
+ * 골랐다. 누가 나와도 지금 편성의 한 자리를 곧바로 채운다. 풀 안의 확률은 균등하다 — 간판에
+ * 가중치를 주면 "렉시아가 안 나왔다"가 곧 실패로 읽힌다. 한정 개체는 여기 서지 않는다.
+ */
+export const WELCOME_SSR_POOL = ["rex", "spino", "ella", "mette"] as const;
 
 /** 연구소의 화석 연구 운영값. 천장(100회)은 개별 배너가 아니라 pityGroupId별로 누적된다. */
 export const BANNERS: Banner[] = [
+  {
+    /*
+     * **첫 복원 연구** — 계정당 50회, 10연만, 화석 8개(20% 할인), 50회 안에 SSR 한 장 확정.
+     *
+     * 화석 연구에 덮는 할인이 아니라 따로 선 배너다. 풀(네 종)·천장 그룹·값이 모두 달라 한
+     * 화면에 섞으면 무엇의 확률이고 무엇의 천장인지 읽히지 않는다. 천장을 한도와 같은 50으로
+     * 두면 "50회 안에 확정"이 되고, 그 전에 SSR이 나오면 천장이 0으로 돌아가 남은 횟수로는 다시
+     * 닿지 못하므로 확정은 저절로 한 번뿐이다. 다 쓰면 목록에서 사라진다. 기획은
+     * `docs/live-ops-bm.md` §2. 전용 모집 원화는 아직 없어 연구소 설비 원화가 선다.
+     */
+    id: "welcome", pityGroupId: PITY_GROUP.WELCOME, name: "첫 복원 연구", featuredRelicId: "rex",
+    currency: "fossil", costOne: 1, costTen: 8, tenOnly: true, pullLimit: 50,
+    // 확률과 회색 보상은 화석 연구와 같다. 다른 것은 풀·값·한도·확정뿐이다.
+    slotRates: { R: 0.12, SR: 0.04, SSR: 0.01, GRAY: 0.83 },
+    grayRewards: [
+      { kind: "gold", min: 1_000, max: 3_000, weight: 3 },
+      { kind: "cheesecake", min: 5, max: 15, weight: 1 },
+    ],
+    relicPools: { ...STANDARD_POOLS, SSR: [...WELCOME_SSR_POOL] },
+    pickupRelicIds: {}, pickupRate: 0,
+    highestRarityGuarantee: 50,
+  },
   {
     id: "fossil", pityGroupId: PITY_GROUP.STANDARD, name: "화석 연구", featuredRelicId: "anky",
     artKey: BACKGROUND.recruitFossil,
@@ -69,8 +100,7 @@ export const BANNERS: Banner[] = [
     id: "amber", pityGroupId: PITY_GROUP.LIMITED_PICKUP, name: "호박석 연구", featuredRelicId: "dian",
     // 첫 픽업은 간판(렉시아·스피나)이 아니라 쁘띠 로그의 유일한 SSR 디안이다 — 간판을 픽업에
     // 가두면 놓친 사람이 게임의 얼굴을 영영 못 갖는다. 근거는 docs/live-ops-bm.md.
-    // 아직 전용 모집 원화가 없다. 화석 연구의 그림을 돌려 쓰지 않고 비워 두어 연구소 설비
-    // 원화가 서게 한다 — 같은 그림을 두 배너가 쓰면 넘겨도 무엇이 바뀌었는지 말하지 못한다.
+    artKey: BACKGROUND.recruitDian,
     // 재화의 희소도 같은 설계 메모도 배너 카피로 옮기지 않고 운영 데이터와 주석에만 남긴다.
     // 호박석도 한 개가 한 번이다. 값의 차이는 개수가 아니라 재화가 말한다.
     currency: "amber", costOne: 1, costTen: 10,

@@ -35,4 +35,23 @@ export const LAB_EN = {
 
   // 새로 만난 렐릭의 소개 장면 — 그 개체의 한마디를 묶는 따옴표만 표가 갖는다.
   "lab.showcase.quote": "“{line}”",
+
+  // 모집판의 제목과 표식 — 배너마다 무엇을 뽑는 판인지를 이름표와 라벨로 말한다.
+  "lab.banner.welcome.eyebrow": "WELCOME RESEARCH",
+  "lab.banner.welcome.title": "First Restoration Research",
+  "lab.banner.fossil.eyebrow": "STANDARD RESEARCH",
+  "lab.banner.fossil.title": "Fossil Research",
+  "lab.banner.amber.eyebrow": "LIMITED PICK UP",
+  "lab.banner.amber.subtitle": "The Clumsy Part-Timer of the Wolf Café",
+  "lab.tag.standard": "Standard Research",
+  "lab.tag.limited": "Limited Time",
+  "lab.tag.once": "Once per Account",
+  "lab.tag.pickup": "PICK UP",
+  "lab.tag.limitedRelic": "Limited Relic",
+  "lab.tag.tenGuarantee": "SR+ Guaranteed in Research x10",
+  "lab.tag.ssrGuarantee": "SSR Guaranteed within {count}",
+  "lab.tag.remaining": "Research Left {left} / {total}",
+  "lab.pull.discount": "-{percent}%",
+  "lab.pity.remaining": "Research Left",
+  "lab.policy.limit": "{limit} per account · Research x10 only · 1 SSR guaranteed within {limit}",
 } as const;

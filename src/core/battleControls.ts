@@ -13,9 +13,16 @@ export const FREE_BATTLE_SPEEDS: readonly BattleSpeed[] = [1, 1.5, 2];
 /** 멤버십이 있어야 열리는 배속. */
 export const MEMBER_BATTLE_SPEEDS: readonly BattleSpeed[] = [3];
 
-/** 지금 이 사람이 고를 수 있는 배속들. */
-export function availableBattleSpeeds(member: boolean): readonly BattleSpeed[] {
-  return member ? BATTLE_SPEEDS : FREE_BATTLE_SPEEDS;
+/**
+ * **3배속을 멤버십으로 잠그는지.** 시험 기간이라 지금은 꺼 두어 누구나 3배속까지 쓴다 —
+ * 잠금 규칙과 멤버십 판정은 그대로 두고 이 값 하나만 켜면 다시 잠긴다(`CONTENT_LEVEL_GATES_ENABLED`와
+ * 같은 방식). 켜기 전까지 화면·설정·저장 모두 네 단계를 받는다.
+ */
+export const MEMBER_BATTLE_SPEED_GATE_ENABLED = false;
+
+/** 지금 이 사람이 고를 수 있는 배속들. `gated`는 테스트가 잠긴 상태를 따로 확인할 때만 넘긴다. */
+export function availableBattleSpeeds(member: boolean, gated: boolean = MEMBER_BATTLE_SPEED_GATE_ENABLED): readonly BattleSpeed[] {
+  return member || !gated ? BATTLE_SPEEDS : FREE_BATTLE_SPEEDS;
 }
 
 /**
@@ -24,16 +31,16 @@ export function availableBattleSpeeds(member: boolean): readonly BattleSpeed[] {
  * 멤버십이 끝난 뒤에도 저장에 3이 남아 있을 수 있다. 그때는 1로 떨구지 않고 **열린 것 중 가장
  * 빠른 값**으로 내린다 — 멤버십이 끝났다고 전투가 갑자기 1배속이 되면 손이 먼저 놀란다.
  */
-export function usableBattleSpeed(speed: BattleSpeed, member: boolean): BattleSpeed {
-  const open = availableBattleSpeeds(member);
+export function usableBattleSpeed(speed: BattleSpeed, member: boolean, gated: boolean = MEMBER_BATTLE_SPEED_GATE_ENABLED): BattleSpeed {
+  const open = availableBattleSpeeds(member, gated);
   if (open.includes(speed)) return speed;
   return [...open].reverse().find((value) => value <= speed) ?? open[0];
 }
 
 /** 열린 배속 줄의 다음 값. 마지막 다음은 다시 1배속이다. */
-export function nextBattleSpeed(current: BattleSpeed, member: boolean): BattleSpeed {
-  const open = availableBattleSpeeds(member);
-  const index = open.indexOf(usableBattleSpeed(current, member));
+export function nextBattleSpeed(current: BattleSpeed, member: boolean, gated: boolean = MEMBER_BATTLE_SPEED_GATE_ENABLED): BattleSpeed {
+  const open = availableBattleSpeeds(member, gated);
+  const index = open.indexOf(usableBattleSpeed(current, member, gated));
   return open[(index + 1) % open.length];
 }
 
@@ -55,6 +62,19 @@ export interface UltimatePresentationTiming {
 
 const ULTIMATE_BASE_RATE = 2.25;
 const ULTIMATE_RATE_CAP = 3.25;
+/**
+ * **모든 전투는 전원이 서고 나서 잠깐 숨을 고른 뒤 시작한다**(실제 시간, 배속과 무관).
+ * SD와 체력 바가 서는 그 프레임에 곧바로 시간을 흘리던 때는 전장을 한 번 훑어볼 틈도 없이
+ * 양쪽이 부딪혀 어지럽게 읽혔다. 배속을 곱하지 않는 이유는 이 틈이 전투가 아니라 **보는 사람의
+ * 몫**이기 때문이다 — 3배속을 켠 손도 전장이 어떻게 섰는지는 한 번 본다.
+ */
+export const BATTLE_OPENING_HOLD_MS = 900;
+
+/** 전원이 선 시각에서 전투가 실제로 흐르기 시작하는 시각. */
+export function battleFightStartsAt(spawnedAt: number): number {
+  return spawnedAt + BATTLE_OPENING_HOLD_MS;
+}
+
 export const ULTIMATE_MIN_DURATION_MS = 24;
 /** 진입·이름 노출·퇴장을 합쳐 두세 프레임짜리 섬광으로 축소되지 않게 하는 컷인 전체 하한이다. */
 export const ULTIMATE_CUT_IN_MIN_VISIBLE_MS = 96;

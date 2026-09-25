@@ -24,6 +24,11 @@ export const SHOP_PRODUCT_ICON_ASSETS: ReadonlyArray<readonly [ShopProductIconKe
   ["shop-product-gems", "/sprites/currency/crystal.webp"],
   ["shop-product-amber", "/sprites/currency/amber.webp"],
   ["shop-product-fossil", "/sprites/currency/fossil.webp"],
+  // 룬 특성 재료는 가방의 그 아이템과 같은 그림으로 판다 — 상품 칸만 다른 그림이면 산 것이 가방에서
+  // 무엇으로 서는지 알 수 없다.
+  ["shop-product-ancient-core", "/sprites/items/ancient-core.webp"],
+  ["shop-product-refined-core", "/sprites/items/refined-core.webp"],
+  ["shop-product-restoration-crystal", "/sprites/items/restoration-crystal.webp"],
 ];
 
 const LEGACY_PRODUCTS: readonly ProductDefinition[] = [

@@ -69,6 +69,17 @@ export function canUpgradeRuneTraitGrade(trait: RuneTrait): boolean {
   return nextRuneTraitGrade(trait.grade) !== undefined;
 }
 
+/**
+ * 하한을 보장하는 확정 부여(`minimumGrade`)가 이 룬에 **나아지는 일인지** 판정한다.
+ *
+ * 특성이 이미 그 하한 이상이면 쓰지 않는다 — 같은 영웅 위에 영웅 이상 확정을 쓰면 잘해야 같은
+ * 등급의 다른 특성이고 전설을 노리는 값으로는 재해석보다 비싸다. 누를 이유가 없는 칸을 세우면
+ * 아이템만 새어 나간다. 화면과 서버가 같은 판정을 읽는다.
+ */
+export function canGrantRuneTraitAtLeast(trait: RuneTrait | undefined, minimumGrade: RuneTraitGrade): boolean {
+  return trait === undefined || RUNE_TRAIT_GRADES.indexOf(trait.grade) < RUNE_TRAIT_GRADES.indexOf(minimumGrade);
+}
+
 /** 주입된 [0, 1) 난수로 목록에서 하나를 고른다. 범위를 벗어난 난수는 조용히 통과시키지 않는다. */
 function pick<T>(pool: readonly T[], random: number): T {
   if (pool.length === 0) throw new RangeError("특성 풀이 비어 있습니다.");
@@ -126,11 +137,16 @@ export function rerollRuneTrait(input: { trait: RuneTrait; traitIds: readonly st
   };
 }
 
-/** 등급 확정 상승 아이템의 결과다. 특성 종류는 그대로 두고 등급만 한 단계 올린다. */
+/**
+ * 등급 확정 상승 아이템의 결과다. 특성 종류는 그대로 두고 **곧장 전설로** 올린다.
+ *
+ * 한 단계씩 올리던 때는 공급이 가장 드문 아이템이 고급 특성에서는 희귀 한 칸밖에 되지 않아,
+ * 재해석 몇 번이면 닿는 자리를 사는 값이었다. 전설 확정이어야 「이 특성을 끝까지 쓰겠다」를
+ * 정하는 한 번의 선택이 된다. 천장은 더 오를 곳이 없으므로 0으로 돌린다.
+ */
 export function upgradeRuneTraitGrade(trait: RuneTrait): RuneTrait {
-  const higher = nextRuneTraitGrade(trait.grade);
-  if (higher === undefined) throw new Error("전설 특성은 더 올릴 수 없습니다.");
-  return { ...trait, grade: higher, upgradeMisses: 0 };
+  if (nextRuneTraitGrade(trait.grade) === undefined) throw new Error("전설 특성은 더 올릴 수 없습니다.");
+  return { ...trait, grade: RUNE_TRAIT_GRADES[RUNE_TRAIT_GRADES.length - 1], upgradeMisses: 0 };
 }
 
 /** 저장 불변 조건을 검사하고 위반 시 원인을 담은 오류를 던진다. */

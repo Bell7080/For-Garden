@@ -11,7 +11,7 @@ import { archaeologySitePopupLayout } from "../ui/archaeologySitePopupLayout";
 import { archaeologyRatingColor, STRATA_ZONE_TONE } from "../ui/strataTones";
 import { ArchaeologyMapView } from "../ui/ArchaeologyMapView";
 import { session } from "../state/session";
-import { canUpgradeRuneTraitGrade, RUNE_TRAIT_GRADES, RUNE_TRAIT_RULES } from "../core/runeTraits";
+import { canGrantRuneTraitAtLeast, canUpgradeRuneTraitGrade, RUNE_TRAIT_RULES } from "../core/runeTraits";
 import { RUNE_TRAIT_ITEMS } from "../data/runeTraits";
 import type { RuneInstance } from "../core/runes";
 import { addResearchBench, type ResearchBenchAction } from "../ui/ResearchBench";
@@ -826,8 +826,9 @@ export class ArchaeologyScene extends Phaser.Scene {
    * **재해석이 맨 위다.** 이 화면에서 되풀이하는 조작이 그것뿐이고, 아래 셋은 아이템이 있을
    * 때만 한 번씩 누르는 일이다.
    *
-   * **영웅 이상 확정 부여는 영웅 이하에서만 선다.** 전설 특성 위에 세우면 눌러서 등급을
-   * 떨어뜨리는 버튼이 되고, 눌러도 나아지지 않는 칸은 준비 상태를 과장한다.
+   * **영웅 이상 확정 부여는 영웅 아래에서만 선다**(`canGrantRuneTraitAtLeast`). 영웅 위에 세우면
+   * 잘해야 같은 등급의 다른 특성이고, 전설 위에서는 등급을 떨어뜨리는 버튼이 된다 — 눌러도
+   * 나아지지 않는 칸은 준비 상태를 과장한다.
    */
   private traitActions(rune: RuneInstance): ResearchBenchAction[] {
     const owned = (itemId: string): number => session.itemInventory.find((stack) => stack.itemId === itemId)?.quantity ?? 0;
@@ -860,8 +861,8 @@ export class ArchaeologyScene extends Phaser.Scene {
       });
     }
 
-    // 확정 부여가 보장하는 등급(영웅)보다 이미 위면 세우지 않는다.
-    if (trait === undefined || RUNE_TRAIT_GRADES.indexOf(trait.grade) <= RUNE_TRAIT_GRADES.indexOf(grantHigh.minimumGrade)) {
+    // 확정 부여가 보장하는 등급(영웅)에 이미 닿았으면 세우지 않는다.
+    if (canGrantRuneTraitAtLeast(trait, grantHigh.minimumGrade)) {
       actions.push({
         labelKey: "rune.traitAction.grantHigh",
         enabled: owned(grantHigh.itemId) > 0,

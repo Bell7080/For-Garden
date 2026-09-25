@@ -50,7 +50,7 @@ import { EnemyInfoPopup } from "../ui/EnemyInfoPopup";
 import { placedEnemyIndex, type PlacedEnemy } from "../data/placedEnemies";
 import { UltimateCutIn } from "../ui/UltimateCutIn";
 import {
-  battleSpeedTier, nextBattleSpeed, usableBattleSpeed, scaleUltimateDuration, shouldWaitForUltimatePresentation, ultimatePresentationTiming, ULTIMATE_RECOVERY_RATIO,
+  battleFightStartsAt, battleSpeedTier, nextBattleSpeed, usableBattleSpeed, scaleUltimateDuration, shouldWaitForUltimatePresentation, ultimatePresentationTiming, ULTIMATE_RECOVERY_RATIO,
   type BattleSpeed,
 } from "../core/battleControls";
 import { ControlChip } from "../ui/ControlChip";
@@ -331,6 +331,8 @@ export class BattleScene extends Phaser.Scene {
   /** 데스 카운트가 도는 동안 화면 네 변에서 스며드는 붉은 워시. 한 번 그리고 진하기만 바꾼다. */
   private deathWash?: Phaser.GameObjects.Graphics;
   private spawned = false;
+  /** 전원이 선 뒤 숨을 고르고 코어 시간이 흐르기 시작하는 실제 시각(ms, `battleFightStartsAt`). */
+  private fightStartsAt = Infinity;
   /** 마지막으로 시뮬레이션을 굴린 실제 시각(ms). */
   private lastStepAt = 0;
   /** 시뮬레이션 시간에만 곱하는 현재 전투 배속이다. */
@@ -539,6 +541,7 @@ export class BattleScene extends Phaser.Scene {
     this.allyInfoRef = undefined;
     this.finished = false;
     this.spawned = false;
+    this.fightStartsAt = Infinity;
     // 이전 씬의 tween 종료보다 재진입이 빠르더라도 표시 관찰값은 새 전투에서 0부터 시작한다.
     this.healPopups = 0;
     this.bossActions = [];
@@ -949,6 +952,8 @@ export class BattleScene extends Phaser.Scene {
     this.syncViews();
     // 마지막 한 명까지 서고 나서 시간을 흘려야 먼저 뜬 캐릭터만 앞서 달려가지 않는다.
     this.lastStepAt = performance.now();
+    // 서자마자 부딪히지 않는다 — 전장을 한 번 훑어볼 틈을 둔다(모든 전투 공통).
+    this.fightStartsAt = battleFightStartsAt(this.lastStepAt);
     this.spawned = true;
   }
 
@@ -1018,7 +1023,7 @@ export class BattleScene extends Phaser.Scene {
   /** 카드를 눌렀을 때. 조건이 맞지 않으면 코어가 아무것도 바꾸지 않는다. */
   private useUltimate(fighter: Fighter): void {
     // 수동 입력은 연출 중 큐에 넣지 않는다. 연타가 다음 궁극기로 예약되는 오해를 막는다.
-    if (this.finished || !this.spawned || this.ultimateSequenceActive || !canFireUltimate(this.state, fighter)) return;
+    if (this.finished || !this.spawned || performance.now() < this.fightStartsAt || this.ultimateSequenceActive || !canFireUltimate(this.state, fighter)) return;
     if (enqueueUltimate(this.ultimateSequence, fighter.id)) void this.pumpUltimateQueue();
   }
 
@@ -1189,6 +1194,12 @@ export class BattleScene extends Phaser.Scene {
     // 판이 떠 있는 동안에는 코어 시간만 멈춘다. 화면 tween과 게이지 추격은 그대로 돌아
     // 판을 닫는 순간 값이 점프하지 않는다. lastStepAt은 위에서 이미 지금으로 밀어 두었으므로
     // 다시 흐를 때 멈춰 있던 만큼이 한꺼번에 들어가지 않는다.
+    // 전원이 선 뒤의 숨 고르기. 화면과 관찰값은 그대로 따라가고 코어 시간만 아직 흐르지 않는다.
+    if (now < this.fightStartsAt) {
+      this.refreshProfiles();
+      this.refreshDebug();
+      return;
+    }
     if (this.simulationPaused()) {
       // 멈춘 동안에도 화면과 관찰값은 지금 상태를 말해야 한다. 여기서 그냥 돌아가면 프로필과
       // `__PF_DEBUG.battle`이 **판이 열리기 직전 값으로 얼어붙어**, 판이 눈앞에 펼쳐져 있는데도

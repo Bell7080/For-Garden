@@ -22,4 +22,7 @@ export const ITEM_RASTER_ICON_ASSETS = [
   ["item-stamina-tonic-large", "sprites/items/stamina-tonic-large.webp"],
   ["item-raid-ticket", "sprites/items/raid-ticket.webp"],
   ["item-raid-select-ticket", "sprites/items/raid-select-ticket.webp"],
+  ["item-ancient-core", "sprites/items/ancient-core.webp"],
+  ["item-refined-core", "sprites/items/refined-core.webp"],
+  ["item-restoration-crystal", "sprites/items/restoration-crystal.webp"],
 ] as const;

@@ -61,7 +61,7 @@ export const OPENING_TRAIN: DialogueStory = {
     // ── 파루아: 도디를 붙잡으며 연구원에게 흥미를 ───────────────────────
     { id: "halt", speaker: "???", body: "도디. 너무 가까워. 연구원님이 뒤로 기울어지고 있어.", standing: "parua", cast: ROGUE_TRIO, act: "lean", nextId: "sorry" },
     { id: "sorry", speaker: "도디", body: "앗, 죄, 죄송해요! 너무 반가워서 그만…!", standing: "dodi", act: "recoil", nextId: "parua" },
-    { id: "parua", speaker: "파루아", body: "…파루아. 뒤를 살피는 게 내 일이야.", standing: "parua", act: "nod", nextId: "sniff" },
+    { id: "parua", speaker: "파루아", body: "나는 파루아. 뒤를 살피는 게 내 일이야.", standing: "parua", act: "nod", nextId: "sniff" },
     { id: "sniff", speaker: "파루아", body: "그런데 이상해. 연구원님한테서는 다른 연구원들이랑 다른 냄새가 나. …조금만 더 가까이 봐도 돼?", standing: "parua", act: "lean", nextId: "scold" },
     { id: "scold", speaker: "토리카", body: "파루아까지! 연구원님 곤란하시잖아!", standing: "torika", act: "shake", nextId: "quake" },
 

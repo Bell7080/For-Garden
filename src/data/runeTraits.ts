@@ -93,9 +93,9 @@ export const RUNE_TRAIT_DEFS: readonly RuneTraitDefinition[] = [
 export const RUNE_TRAIT_ITEMS = {
   /** 무작위 특성 하나. 이미 특성이 있으면 지우고 다시 부여한다. */
   grant: { itemId: "ancient-core", minimumGrade: "uncommon" },
-  /** 영웅 이상 확정. 매우 드물게만 공급한다. */
+  /** 영웅 이상 확정. 매우 드물게만 공급한다. 특성이 이미 영웅 이상이면 쓰지 않는다(`canGrantRuneTraitAtLeast`). */
   grantHigh: { itemId: "refined-core", minimumGrade: "epic" },
-  /** 등급만 한 단계 확정 상승. 전설에는 쓸 수 없다. */
+  /** 특성 종류는 두고 등급을 **전설로** 확정 상승. 이미 전설이면 쓸 수 없다. */
   upgrade: { itemId: "restoration-crystal" },
 } as const;
 

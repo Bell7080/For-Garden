@@ -41,10 +41,13 @@ ART: dict[str, tuple[str, tuple[float, float, float] | None] | tuple[str, tuple[
     "sprites/currency/gold.webp": ("Photoroom_20260822_113125.png", None),
     "sprites/currency/crystal.webp": ("Photoroom_20260822_113155.png", None),
     "sprites/currency/cake.webp": ("Photoroom_20260822_113222.png", None),
-    "sprites/currency/amber.webp": ("Photoroom_20260822_113236.png", (1.06, 0.99, 0.62)),
-    # 화석은 채도만 덜어 낸다. 색을 밀면 광물이 아니라 얼음이 되고, 그대로 두면 호박석의
-    # 누런빛과 섞인다. 회색 쪽으로 살짝 빼는 정도가 돌빛에 가장 가깝다.
-    "sprites/currency/fossil.webp": ("Photoroom_20260822_113252.png", None, 0.55),
+    # 화석·호박석은 v0.174.8에 원화를 새로 받았다. 새 원화는 둘이 이미 푸른 결정과 붉은 호박으로
+    # 갈려 있어 **색을 밀지 않는다** — 예전 원화에 쓰던 채도 빼기·노란 쪽 밀기는 누런빛끼리
+    # 섞이던 옛 그림의 몫이었다. 대신 캔버스를 거의 꽉 채워 그려져 있어 여백을 되돌린다(RECENTER).
+    "sprites/currency/amber.webp": ("호박석.webp", None),
+    "sprites/currency/fossil.webp": ("화석.webp", None),
+    # DNA 조각은 원화 크기(1254) 그대로 올라와 있었다 — 같은 규격(256)으로 굽는다.
+    "sprites/currency/dna.webp": ("DNA조각.webp", None),
     "sprites/currency/heart.webp": ("Photoroom_20260822_113309.png", None),
     # 고고학의 원석. 화석은 채도를 덜어 낸 회갈색이라 같은 돌빛에 머물면 상단 재화 줄에서
     # 두 칸이 같은 그림으로 보인다 — 원석은 **청록 쪽으로** 조금 밀어 갈라 놓는다.
@@ -64,6 +67,10 @@ ART: dict[str, tuple[str, tuple[float, float, float] | None] | tuple[str, tuple[
     # 토벌권 둘. 가방의 재료지만 레이드 목록 머리에 액자로 서므로 같은 규격으로 굽는다.
     "sprites/items/raid-ticket.webp": ("토벌권.webp", None),
     "sprites/items/raid-select-ticket.webp": ("선택 토벌권.webp", None),
+    # 룬 특성 재료 셋. 임시 글리프(두루마리)로 서 있던 자리다.
+    "sprites/items/ancient-core.webp": ("미지의 고대핵.png", None),
+    "sprites/items/refined-core.webp": ("정제된 고대핵.webp", None),
+    "sprites/items/restoration-crystal.webp": ("완전 복원 결정.webp", None),
 }
 
 # 그림이 캔버스 가운데에 있지 않은 원본.
@@ -85,6 +92,15 @@ RECENTER: dict[str, float] = {
     # 토벌권은 가로로 긴 표라 긴 변을 조금 더 채운다 — 0.8이면 세로가 얇아 액자 안에서 작아 보인다.
     "sprites/items/raid-ticket.webp": 0.86,
     "sprites/items/raid-select-ticket.webp": 0.86,
+    # 새 화석·호박석은 캔버스의 0.9 넘게 채워, 그대로 넣으면 상단 재화 줄에서 둘만 혼자 컸다 —
+    # 기존 재화(0.64~0.82)의 띠로 되돌린다. 둘은 네모진 덩어리라 알파 상자를 거의 꽉 채워, 같은
+    # 비율이면 동전·보석보다 무겁게 보인다 — 그만큼 조금 더 작게 앉힌다.
+    "sprites/currency/fossil.webp": 0.74,
+    "sprites/currency/amber.webp": 0.74,
+    "sprites/currency/dna.webp": 0.72,
+    "sprites/items/ancient-core.webp": 0.82,
+    "sprites/items/refined-core.webp": 0.82,
+    "sprites/items/restoration-crystal.webp": 0.82,
 }
 
 # 화면에서 쓰는 가장 큰 크기의 두 배로 굽는다. 더 키우면 파일만 커지고 눈에 보이지 않는다.

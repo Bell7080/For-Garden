@@ -44,3 +44,11 @@ describe("급여 한 번의 손맛", () => {
     expect(FEED_TAP.sparkle.count).toBeLessThanOrEqual(3);
   });
 });
+
+describe("누름 연출의 정리", () => {
+  it("은 tween을 `remove()`가 아니라 `stop()`으로 멈춘다 — `TweenChain.remove()`는 인자 없이 부르면 터져 게임 루프가 멈춘다", () => {
+    const source = readFileSync("src/ui/pressFeedback.ts", "utf8").replace(/\/\*\*[\s\S]*?\*\//g, "");
+    expect(source).not.toMatch(/tween\??\.remove\(\)/);
+    expect(source).toMatch(/tween\?\.stop\(\)/);
+  });
+});

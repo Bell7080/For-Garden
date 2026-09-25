@@ -28,7 +28,7 @@ function stateOf(target: Pressable): PressState {
     state = created;
     STATES.set(target, created);
     // 판이 닫히는 사이 도는 tween이 죽은 객체를 붙잡지 않게 한다.
-    target.once(Phaser.GameObjects.Events.DESTROY, () => { created.tween?.remove(); created.tween = undefined; });
+    target.once(Phaser.GameObjects.Events.DESTROY, () => stop(created));
   }
   return state;
 }
@@ -37,8 +37,14 @@ function reduced(): boolean {
   return motionPolicy(settingsManager.get()).nonEssentialRepeatFactor === 0;
 }
 
+/**
+ * 도는 연출을 멈춘다. **`remove()`가 아니라 `stop()`이다** — `TweenChain.remove(tween)`은 "사슬에서 이
+ * 자식을 빼라"는 뜻이라 인자 없이 부르면 `undefined.setRemovedState`로 터진다. 씬이 바뀌며 버튼이
+ * 부서지는 순간(튕김 사슬이 아직 도는 중) 그 예외가 셧다운을 끊어 게임 루프가 통째로 멈췄다.
+ * `stop()`은 이미 끝났거나 부서진 연출에도 안전하다.
+ */
 function stop(state: PressState): void {
-  state.tween?.remove();
+  state.tween?.stop();
   state.tween = undefined;
 }
 

@@ -4,7 +4,7 @@ import { t } from "../i18n";
 import type { GameApi, MissionDto, ClaimMissionRewardsResponse, MissionListResponse, ResearchRewardStageDto } from "../api/contracts";
 import { gameApi } from "../api/FakeServer";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import type { MissionPeriod, MissionReward } from "../core/missions";
+import type { MissionPeriod } from "../core/missions";
 import { notificationManager } from "../managers/NotificationManager";
 import { session } from "../state/session";
 import { Button } from "./Button";
@@ -191,7 +191,8 @@ export class MissionsPopup {
     const threshold = this.scene.add.text(x, layout.thresholdY, `${stage.threshold}`, textStyle({ role: "emphasis", size: 21, color: stage.achieved ? "#ffcf7a" : COLOR.inkDim })).setOrigin(0.5, 0);
     list.add(threshold);
 
-    const [primary, ...extra] = stage.rewards;
+    // 한 칸에는 보상 하나만 둔다(`RESEARCH_REWARD_STAGES`) — 두 번째를 구석에 작게 붙이면 무엇인지 읽히지 않는다.
+    const [primary] = stage.rewards;
     if (!primary) return;
     const frameSize = last ? layout.frameSize + 12 : layout.frameSize;
     const state = stage.claimed ? "claimed" : claimable ? "claimable" : "normal";
@@ -206,12 +207,6 @@ export class MissionsPopup {
     const frame = new RewardFrame(this.scene, x, layout.frameY, { icon: CURRENCY_ICON_BY_WALLET[primary.currency], amount: primary.amount, size: frameSize, state, onClick });
     if (!stage.achieved) frame.setAlpha(0.72);
     list.add(frame);
-    // 두 번째 보상은 액자 오른쪽 위에 작은 곁들임으로 붙는다 — 마디 사이가 좁아 액자를 나란히 세우면 옆 마디를 덮는다.
-    extra.slice(0, 1).forEach((reward: MissionReward) => {
-      const mini = new RewardFrame(this.scene, x + frameSize / 2 - 4, layout.frameY - frameSize / 2 + 4, { icon: CURRENCY_ICON_BY_WALLET[reward.currency], amount: reward.amount, size: 58, state, onClick });
-      if (!stage.achieved) mini.setAlpha(0.72);
-      list.add(mini);
-    });
   }
 
   /** 하단 줄 — 기간 전환 라벨 둘과 일괄 수령. 기간을 바꿔도 같은 자리를 지킨다. */
@@ -222,7 +217,7 @@ export class MissionsPopup {
     const { footer: layout } = MISSIONS_POPUP_LAYOUT;
     PERIODS.forEach((period, index) => {
       const pending = this.claimableCount(period);
-      const tab = addCategoryTab(this.scene, footer, { x: missionsTabX(index), y: layout.y, width: layout.tab.width, height: layout.tab.height, label: t(period === "daily" ? "missions.tab.daily" : "missions.tab.weekly"), selected: period === this.period, onSelect: () => this.select(period) });
+      const tab = addCategoryTab(this.scene, footer, { x: missionsTabX(index), y: layout.tabY, width: layout.tab.width, height: layout.tab.height, label: t(period === "daily" ? "missions.tab.daily" : "missions.tab.weekly"), selected: period === this.period, onSelect: () => this.select(period) });
       // 다른 기간에 받을 것이 남아 있으면 라벨 오른쪽 위에 호박빛 점이 선다.
       if (pending > 0) {
         const dot = this.scene.add.graphics({ x: layout.tab.width / 2 - 16, y: -layout.tab.height / 2 + 8 });
@@ -232,7 +227,7 @@ export class MissionsPopup {
       }
     });
     const claimable = this.claimableCount(this.period);
-    const claim = new Button(this.scene, layout.claim.x, layout.y, { width: layout.claim.width, height: layout.claim.height, label: t("missions.claimAll"), variant: "primary", onClick: () => void this.claimAll() });
+    const claim = new Button(this.scene, layout.claim.x, layout.claim.y, { width: layout.claim.width, height: layout.claim.height, label: t("missions.claimAll"), variant: "primary", onClick: () => void this.claimAll() });
     if (claimable === 0) claim.setEnabled(false);
     footer.add(claim);
   }

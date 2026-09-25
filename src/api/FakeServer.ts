@@ -172,7 +172,7 @@ export class FakeServer implements GameApi {
     this.mails = [
       { id: "launch-gift", title: t("mail.launch.title"), sender: t("mail.launch.sender"), body: t("mail.launch.body"), sentAt: "2026-08-30T00:00:00.000Z", expiresAt: "2099-12-31T23:59:59.000Z", read: false, claimed: false, rewards: [
         { kind: "currency", currency: "gems", amount: 300 }, { kind: "currency", currency: "gold", amount: 50_000 }, { kind: "currency", currency: "cheesecake", amount: 200 },
-        { kind: "currency", currency: "fossil", amount: 30 }, { kind: "currency", currency: "amber", amount: 10 }, { kind: "currency", currency: "dnaFragments", amount: 20 },
+        { kind: "currency", currency: "fossil", amount: 3 }, { kind: "currency", currency: "amber", amount: 1 }, { kind: "currency", currency: "dnaFragments", amount: 20 },
         { kind: "item", itemId: "stamina-tonic", amount: 3 }, { kind: "item", itemId: "ancient-core", amount: 2 },
       ] },
       { id: "update-notice", title: t("mail.update.title"), sender: t("mail.update.sender"), body: t("mail.update.body"), sentAt: "2026-08-30T00:00:00.000Z", expiresAt: null, read: false, claimed: false, rewards: [] },

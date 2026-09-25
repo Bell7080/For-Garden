@@ -22,12 +22,15 @@ export const MISSIONS_POPUP_LAYOUT = {
     /** 마지막 마디의 액자 오른쪽 위에 붙는 곁들임 액자(58)의 반폭까지 비워 둔다. */
     endpointGap: 34,
   },
-  list: { firstCardY: -350, cardGap: 186, cardWidth: 920, cardHeight: 162 },
-  /** 하단 줄. 오른쪽 아래 구석은 판 밖 뒤로가기의 자리라 비워 둔다. */
+  list: { firstCardY: -352, cardGap: 176, cardWidth: 920, cardHeight: 156 },
+  /**
+   * 하단 두 줄 — 기간 전환 라벨이 위, **모두 받기가 그 아래 가운데**다. 받기는 이 판의 주 조작이라
+   * 가운데에 서고, 오른쪽 아래 구석은 판 밖 뒤로가기의 자리라 비워 둔다.
+   */
   footer: {
-    y: 770,
-    tab: { width: 210, height: 84, firstX: -372, gap: 12 },
-    claim: { x: 150, width: 330, height: 92 },
+    tabY: 662,
+    tab: { width: 210, height: 84, gap: 12 },
+    claim: { x: 0, y: 778, width: 380, height: 92 },
   },
 } as const;
 
@@ -79,7 +82,8 @@ export function researchTrackLayout(popupWidth: number, thresholds: readonly num
 /** 하단 기간 탭 하나의 중심. */
 export function missionsTabX(index: number): number {
   const { tab } = MISSIONS_POPUP_LAYOUT.footer;
-  return tab.firstX + index * (tab.width + tab.gap);
+  // 라벨 둘이 판 가운데를 기준으로 좌우 대칭으로 선다 — 아래 받기 버튼과 같은 축이다.
+  return (index - 0.5) * (tab.width + tab.gap);
 }
 
 /** 두 bounds가 변까지 맞닿는 경우를 포함해 실제 면적이 교차하는지 판정한다. */

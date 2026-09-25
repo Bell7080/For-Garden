@@ -10,7 +10,7 @@ import type { MailDto } from "../api/contracts";
 export const MAIL_POPUP_LAYOUT = {
   popup: { widthInset: 70, heightInset: 210 },
   /** 목록이 흐르는 창. 하단 줄 위에서 끝난다. */
-  viewport: { top: -772, bottom: 700, width: 940 },
+  viewport: { top: -772, bottom: 606, width: 940 },
   card: {
     width: 920,
     gap: 18,
@@ -25,10 +25,14 @@ export const MAIL_POPUP_LAYOUT = {
    * 무엇인지는 적어도 다섯 칸은 보여야 읽힌다.
    */
   rewards: { size: 92, gap: 10, maxVisible: 7 },
+  /**
+   * 하단 두 줄 — 우편·안내 라벨이 위, **일괄 조작이 그 아래 가운데**다(임무와 같은 자리).
+   * 오른쪽 아래 구석은 판 밖 뒤로가기의 자리라 비워 둔다.
+   */
   footer: {
-    y: 770,
-    tab: { width: 210, height: 84, firstX: -372, gap: 12 },
-    action: { x: 150, width: 330, height: 92 },
+    tabY: 662,
+    tab: { width: 210, height: 84, gap: 12 },
+    action: { x: 0, y: 778, width: 380, height: 92 },
   },
 } as const;
 
@@ -81,7 +85,8 @@ export function mailRewardX(index: number): number {
 /** 하단 탭 하나의 중심 x. */
 export function mailTabX(index: number): number {
   const { tab } = MAIL_POPUP_LAYOUT.footer;
-  return tab.firstX + index * (tab.width + tab.gap);
+  // 라벨 둘이 판 가운데를 기준으로 좌우 대칭으로 선다 — 아래 일괄 조작과 같은 축이다.
+  return (index - 0.5) * (tab.width + tab.gap);
 }
 
 /** 남은 기한을 `D-3`·`12:04`처럼 짧게 적는 데 쓰는 수. 하루가 안 남으면 시·분이다. */
@@ -89,4 +94,34 @@ export function mailRemaining(expiresAt: string | null, nowMs: number): { days: 
   if (!expiresAt) return undefined;
   const left = Math.max(0, Date.parse(expiresAt) - nowMs);
   return { days: Math.floor(left / 86_400_000), hours: Math.floor((left % 86_400_000) / 3_600_000), minutes: Math.floor((left % 3_600_000) / 60_000) };
+}
+
+/**
+ * 우편 한 통을 펼친 판. **위가 글, 아래가 첨부**다 — 무엇을 왜 받는지 읽고 나서 받는다.
+ *
+ * 높이를 글 길이에서 구하지 않고 고정하는 이유는 받기 버튼이 늘 같은 자리에 서야 하기 때문이다.
+ * 글이 길면 판을 키우지 않고 글자를 줄인다(`fitTextToBox`). 첨부가 판보다 많으면 그 줄만
+ * 옆으로 흐른다.
+ */
+export const MAIL_DETAIL_LAYOUT = {
+  width: 900,
+  height: 1180,
+  padX: 60,
+  titleY: -510,
+  metaY: -452,
+  ruleY: -412,
+  body: { top: -382, bottom: 140 },
+  attachTitleY: 196,
+  rail: { y: 304, size: 116, gap: 16 },
+  claim: { y: 466, width: 380, height: 96 },
+} as const;
+
+/** 첨부 칸 하나의 x(줄 원점 기준, 흐른 몫 제외)와 줄 전체 폭. */
+export function mailDetailRail(count: number): { xs: number[]; contentWidth: number; viewWidth: number } {
+  const { width, padX, rail } = MAIL_DETAIL_LAYOUT;
+  const viewWidth = width - padX * 2;
+  const contentWidth = count * rail.size + Math.max(0, count - 1) * rail.gap;
+  // 넘치지 않으면 가운데로 모은다 — 왼쪽에 붙이면 오른쪽이 빈 칸처럼 보인다.
+  const start = contentWidth <= viewWidth ? -contentWidth / 2 : -viewWidth / 2;
+  return { xs: Array.from({ length: count }, (_, index) => start + rail.size / 2 + index * (rail.size + rail.gap)), contentWidth, viewWidth };
 }

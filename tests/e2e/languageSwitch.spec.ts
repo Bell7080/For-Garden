@@ -1,7 +1,8 @@
 import { test, expect } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
 import { captureGame, tap } from "./canvasInput";
-import { settingsRowY, settingsTabX } from "../../src/ui/settingsLayout";
+import { settingsChoiceRowY, settingsRowY, settingsTabX } from "../../src/ui/settingsLayout";
+import { SELECTABLE_LANGUAGE_IDS } from "../../src/core/language";
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
@@ -39,7 +40,11 @@ test("환경설정에서 언어를 바꾸면 화면 문구와 정적 데이터�
   await expect.poll(async () => (await savedGame(page)).language).toBe("ko");
   const before = await savedGame(page);
 
+  // 줄을 누르면 고르는 창이 화면 가운데에 열린다 — 거기서 영어 줄을 누른다.
   await tap(page, LANGUAGE_ROW.x, LANGUAGE_ROW.y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles?.length ?? 0)).toBe(1);
+  await page.waitForTimeout(300);
+  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2 + settingsChoiceRowY(SELECTABLE_LANGUAGE_IDS.indexOf("en"), SELECTABLE_LANGUAGE_IDS.length));
   // 글꼴·문구 표·데이터 덮어쓰기가 모두 도착한 뒤에야 씬이 다시 선다.
   await expect.poll(async () => (await savedGame(page)).language, { timeout: 15_000 }).toBe("en");
   // 한 줄 위의 「텍스트 속도」를 잘못 누른 것이 아님을 못 박는다.

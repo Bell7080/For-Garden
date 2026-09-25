@@ -71,6 +71,9 @@ ART: dict[str, tuple[str, tuple[float, float, float] | None] | tuple[str, tuple[
     "sprites/items/ancient-core.webp": ("미지의 고대핵.png", None),
     "sprites/items/refined-core.webp": ("정제된 고대핵.webp", None),
     "sprites/items/restoration-crystal.webp": ("완전 복원 결정.webp", None),
+    # 광고 보상 표. 재화가 아니라 **광고를 보고 받는 자리**의 얼굴이다 — 스테미나 충전의 광고 칸,
+    # 발굴·빠른 원정의 광고 버튼이 같은 그림을 쓴다.
+    "sprites/ui/ad.webp": ("ad.webp", None),
 }
 
 # 그림이 캔버스 가운데에 있지 않은 원본.
@@ -101,6 +104,8 @@ RECENTER: dict[str, float] = {
     "sprites/items/ancient-core.webp": 0.82,
     "sprites/items/refined-core.webp": 0.82,
     "sprites/items/restoration-crystal.webp": 0.82,
+    # 토벌권처럼 가로로 긴 표라 긴 변을 조금 더 채운다.
+    "sprites/ui/ad.webp": 0.86,
 }
 
 # 화면에서 쓰는 가장 큰 크기의 두 배로 굽는다. 더 키우면 파일만 커지고 눈에 보이지 않는다.

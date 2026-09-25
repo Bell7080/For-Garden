@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { UI_ICON } from "../ui/icons";
 import { RECOMMENDED_SLOT_ROLES } from "../core/partyAffinity";
 import { settingsManager } from "../managers/SettingsManager";
 import { requiredBreakthroughForLevel } from "../core/levelDesign";
@@ -875,7 +876,7 @@ export class ExpeditionScene extends Phaser.Scene {
       // 주 행동과 떨어진 낮고 작은 중립 버튼으로 위계를 명확히 나눈다. 버튼이 보상과 남은
       // 횟수를 직접 말하므로 별도 상태 문구를 두지 않는다.
       this.quickButton?.destroy();
-      this.quickButton = new Button(this, 230, 1800, { width: 340, height: 84, label: slot.displayText, sub: t("expedition.quick.sub", { gold: expected.toLocaleString(), remaining: dailyRemaining }), fontSize: 25, subFontSize: 18, onClick: () => void this.claimQuickExpedition(slot) });
+      this.quickButton = new Button(this, 230, 1800, { width: 340, height: 84, label: slot.displayText, sub: t("expedition.quick.sub", { gold: expected.toLocaleString(), remaining: dailyRemaining }), fontSize: 25, subFontSize: 18, art: UI_ICON.ad, onClick: () => void this.claimQuickExpedition(slot) });
     } catch { /* 조회 실패는 그 자리를 비운다. 실패했다는 말은 플레이어가 할 일을 바꾸지 않는다. */ }
   }
 

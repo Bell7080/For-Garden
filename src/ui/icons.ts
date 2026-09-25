@@ -5,6 +5,8 @@ export const UI_ICON = {
   bag: "ui-icon-bag",
   /** 지층 탐사의 남은 횟수를 말하는 곡괭이. 재화가 아니라 조작 횟수다. */
   pickaxe: "ui-icon-pickaxe",
+  /** 광고를 보고 받는 자리의 얼굴 — 스테미나 광고 칸, 발굴·빠른 원정의 광고 버튼이 같은 그림이다. */
+  ad: "ui-icon-ad",
 } as const;
 
 export type UiIconKey = (typeof UI_ICON)[keyof typeof UI_ICON];
@@ -29,4 +31,5 @@ export const UI_ICON_ASSETS: ReadonlyArray<readonly [UiIconKey, string, number]>
  */
 export const UI_RASTER_ICON_ASSETS: ReadonlyArray<readonly [UiIconKey, string]> = [
   [UI_ICON.pickaxe, "sprites/ui/pickaxe.webp"],
+  [UI_ICON.ad, "sprites/ui/ad.webp"],
 ];

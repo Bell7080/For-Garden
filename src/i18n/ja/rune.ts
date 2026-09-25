@@ -73,7 +73,7 @@ export const RUNE_JA = {
   "rune.traitAction.grant": "特性付与",
   "rune.traitAction.grantHigh": "英雄以上確定付与",
   "rune.traitAction.reroll": "再解釈",
-  "rune.traitAction.upgrade": "等級確定上昇",
+  "rune.traitAction.upgrade": "伝説確定上昇",
   "rune.traitReroll.title": "再解釈の結果",
   "rune.traitReroll.current": "現在",
   "rune.traitReroll.candidate": "新しい特性",

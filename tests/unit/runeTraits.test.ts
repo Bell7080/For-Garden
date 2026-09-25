@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   canUpgradeRuneTraitGrade, grantRuneTrait, nextRuneTraitGrade, rerollRuneTrait,
-  RUNE_TRAIT_GRADES, RUNE_TRAIT_RULES, upgradeRuneTraitGrade, type RuneTrait,
+  RUNE_TRAIT_GRADES, RUNE_TRAIT_RULES, upgradeRuneTraitGrade, canGrantRuneTraitAtLeast, type RuneTrait,
 } from "../../src/core/runeTraits";
 import { RUNE_TRAIT_DEFS, RUNE_TRAIT_IDS, runeTraitValue } from "../../src/data/runeTraits";
 import { runeTraitCombatEffects } from "../../src/core/runeTraitEffects";
@@ -57,6 +57,20 @@ describe("룬 특성", () => {
     expect(canUpgradeRuneTraitGrade(trait)).toBe(false);
     expect(rerollRuneTrait({ trait, traitIds: RUNE_TRAIT_IDS, random: scripted([0, 0.5]) }).upgraded).toBe(false);
     expect(() => upgradeRuneTraitGrade(trait)).toThrow();
+  });
+
+  it("의 완전 복원 결정은 어느 등급에서든 곧장 전설로 올린다", () => {
+    for (const grade of ["uncommon", "rare", "epic"] as const) {
+      const upgraded = upgradeRuneTraitGrade({ id: "pursuit", grade, upgradeMisses: 7 });
+      expect(upgraded).toEqual({ id: "pursuit", grade: "legendary", upgradeMisses: 0 });
+    }
+  });
+
+  it("의 영웅 이상 확정 부여는 이미 영웅 이상인 특성에는 쓰지 않는다", () => {
+    expect(canGrantRuneTraitAtLeast(undefined, "epic")).toBe(true);
+    expect(canGrantRuneTraitAtLeast({ id: "pursuit", grade: "rare", upgradeMisses: 0 }, "epic")).toBe(true);
+    expect(canGrantRuneTraitAtLeast({ id: "pursuit", grade: "epic", upgradeMisses: 0 }, "epic")).toBe(false);
+    expect(canGrantRuneTraitAtLeast({ id: "pursuit", grade: "legendary", upgradeMisses: 0 }, "epic")).toBe(false);
   });
 
   it("의 수치는 등급이 오를수록 세진다", () => {

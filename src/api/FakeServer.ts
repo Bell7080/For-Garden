@@ -30,7 +30,7 @@ import type { EventDefinition } from "../data/events/types";
 import type { EnterEventStageResponse, EventListResponse } from "./contracts";
 import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, runePartLabel, type RunePart, engraveRune as applyRuneEngraving, enhanceRune as applyRuneEnhancement, runeEnhancementAttempts, runeEnhancementIncrease, type RuneInstance, type RuneRarity } from "../core/runes";
 import { runeEnhancementGoldCost, runeSellValue } from "../data/runes";
-import { canUpgradeRuneTraitGrade, grantRuneTrait as rollRuneTrait, rerollRuneTrait as rollRuneTraitReroll, RUNE_TRAIT_RULES, upgradeRuneTraitGrade, type RuneTrait } from "../core/runeTraits";
+import { canGrantRuneTraitAtLeast, canUpgradeRuneTraitGrade, grantRuneTrait as rollRuneTrait, rerollRuneTrait as rollRuneTraitReroll, RUNE_TRAIT_RULES, upgradeRuneTraitGrade, type RuneTrait } from "../core/runeTraits";
 import { RUNE_TRAIT_IDS, RUNE_TRAIT_ITEMS } from "../data/runeTraits";
 import { beginStrataSiteCooldown, canDigStrataTile, createStrataBoard, digStrataTile as digTile, nextStrataChargeAt, settleStrataCharges, strataBoardView, strataSiteCooldownUntil } from "../core/strataDig";
 import { findStrataLayer, STRATA_CHARGE } from "../data/strataLayers";
@@ -1972,6 +1972,11 @@ export class FakeServer implements GameApi {
     const current = this.ownedRune(request.runeInstanceId);
     const entry = [RUNE_TRAIT_ITEMS.grant, RUNE_TRAIT_ITEMS.grantHigh].find(({ itemId }) => itemId === request.itemId);
     if (!entry) throw new GameApiError("RUNE_TRAIT_ITEM_INVALID", "특성을 부여할 수 있는 아이템이 아닙니다.");
+    // 확정 부여는 이미 그 하한에 닿은 특성에 쓰지 않는다 — 화면이 버튼을 세우지 않는 것과 같은 판정이다.
+    // 일반 부여(하한 고급)는 모든 특성이 이미 그 위라 이 검사를 지나지 않는다.
+    if (entry === RUNE_TRAIT_ITEMS.grantHigh && !canGrantRuneTraitAtLeast(current.trait, entry.minimumGrade)) {
+      throw new GameApiError("RUNE_TRAIT_GRADE_REACHED", "이미 그 등급 이상의 특성입니다.");
+    }
     this.consumeTraitItem(entry.itemId);
     const trait = rollRuneTrait({ traitIds: RUNE_TRAIT_IDS, minimumGrade: entry.minimumGrade, random: this.random });
     const rune: RuneInstance = { ...current, trait };

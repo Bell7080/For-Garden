@@ -73,7 +73,7 @@ export const RUNE_KO = {
   "rune.traitAction.grant": "특성 부여",
   "rune.traitAction.grantHigh": "영웅 이상 확정 부여",
   "rune.traitAction.reroll": "재해석",
-  "rune.traitAction.upgrade": "등급 확정 상승",
+  "rune.traitAction.upgrade": "전설 확정 상승",
   "rune.traitReroll.title": "재해석 결과",
   "rune.traitReroll.current": "기존",
   "rune.traitReroll.candidate": "새 특성",

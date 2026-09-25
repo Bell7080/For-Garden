@@ -71,7 +71,7 @@ export const RUNE_EN = {
   "rune.traitAction.grant": "Grant Trait",
   "rune.traitAction.grantHigh": "Guaranteed Epic+",
   "rune.traitAction.reroll": "Reinterpret",
-  "rune.traitAction.upgrade": "Guaranteed Grade Up",
+  "rune.traitAction.upgrade": "Guaranteed Legendary",
   "rune.traitReroll.title": "Reinterpretation",
   "rune.traitReroll.current": "Current",
   "rune.traitReroll.candidate": "New trait",

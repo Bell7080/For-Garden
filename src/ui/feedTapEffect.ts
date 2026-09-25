@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { motionPolicy } from "../core/settings";
 import { settingsManager } from "../managers/SettingsManager";
-import { FEED_TAP, feedComboVisible, feedTapDrift } from "./feedTapStyle";
+import { FEED_TAP, feedArcPoint, feedBurstPath, feedComboVisible } from "./feedTapStyle";
 import { textStyle } from "./theme";
 
 /**
@@ -33,49 +33,75 @@ export class FeedTapEffect {
     return this;
   }
 
-  /** 한 번 먹였다. 연속 수를 세고 조각을 띄운다. */
+  /** 한 번 먹였다. 연속 수를 세고 조각 몇 개를 흩뿌린다. */
   tap(): void {
     const now = this.scene.time.now;
     this.streak = now - this.lastTapAt <= FEED_TAP.combo.resetMs ? this.streak + 1 : 1;
     this.lastTapAt = now;
-    const calm = motionPolicy(settingsManager.get()).nonEssentialRepeatFactor === 0;
-    if (!calm) this.launchCake();
+    const calm = this.calm();
+    if (!calm) this.burst(FEED_TAP.pieces.tap);
     this.paintCombo(calm);
   }
 
-  private launchCake(): void {
-    if (this.live >= FEED_TAP.maxLiveCakes) return;
-    const spec = FEED_TAP.cake;
-    const drift = feedTapDrift(this.streak);
-    const cake = this.scene.add.image(this.origin.x, this.origin.y, "currency-cheesecake").setDisplaySize(spec.size, spec.size);
-    const base = cake.scaleX;
-    cake.setScale(base * 0.4).setRotation(0);
-    this.host.add(cake);
-    this.live += 1;
-    this.scene.tweens.add({
-      targets: cake,
-      x: this.origin.x + drift,
-      y: this.origin.y - spec.rise,
-      rotation: Math.sign(drift) * spec.tilt,
-      duration: spec.ms,
-      ease: "Cubic.Out",
-    });
-    this.scene.tweens.chain({
-      targets: cake,
-      tweens: [
-        { scale: base * 1.1, duration: spec.ms * 0.28, ease: "Back.Out" },
-        { scale: base * 0.7, alpha: 0, duration: spec.ms * 0.72, ease: "Quad.In" },
-      ],
-      onComplete: () => { cake.destroy(); this.live -= 1; },
-    });
-    this.sparkle(this.origin.x + drift * 0.5, this.origin.y - spec.rise * 0.45);
+  /**
+   * 한꺼번에 많이 먹였다(1레벨·10레벨). 조각을 물결로 나눠 퐝퐝 흩뿌린다 — 한 번에 다 띄우면
+   * 한 덩어리로 뭉쳐 몇 개인지 읽히지 않는다.
+   */
+  feast(pieces: number): void {
+    if (this.calm()) return;
+    const { size, gapMs } = FEED_TAP.wave;
+    for (let start = 0, wave = 0; start < pieces; start += size, wave += 1) {
+      const count = Math.min(size, pieces - start);
+      const streak = this.streak + wave;
+      if (wave === 0) { this.burst(count, streak); continue; }
+      this.scene.time.delayedCall(wave * gapMs, () => { if (this.host.active) this.burst(count, streak); });
+    }
   }
 
-  /** 조각이 지나는 자리에 작은 마름모 셋이 위로 흩어진다. 방향은 연속 수로 돌려 난수를 쓰지 않는다. */
-  private sparkle(x: number, y: number): void {
+  private calm(): boolean {
+    return motionPolicy(settingsManager.get()).nonEssentialRepeatFactor === 0;
+  }
+
+  /** 조각 `count`개를 부채꼴 포물선으로 띄운다. 떨어지는 자리에서 팡 터진다. */
+  private burst(count: number, streak = this.streak): void {
+    for (let index = 0; index < count; index += 1) this.launchCake(feedBurstPath(index, count, streak), index);
+  }
+
+  private launchCake(path: { dx: number; dy: number; peak: number }, index: number): void {
+    if (this.live >= FEED_TAP.maxLiveCakes) return;
+    const spec = FEED_TAP.cake;
+    const { x: ox, y: oy } = this.origin;
+    const cake = this.scene.add.image(ox, oy, "currency-cheesecake").setDisplaySize(spec.size, spec.size);
+    const base = cake.scaleX;
+    cake.setScale(base * 0.5);
+    this.host.add(cake);
+    this.live += 1;
+    const spin = Math.sign(path.dx || 1) * spec.spin;
+    const flight = { t: 0 };
+    // 조각마다 조금씩 늦게 떠 한 점에서 한꺼번에 튀어나가지 않는다.
+    this.scene.tweens.add({
+      targets: flight,
+      t: 1,
+      delay: index * 18,
+      duration: spec.ms,
+      ease: "Linear",
+      onUpdate: () => {
+        const point = feedArcPoint(path, flight.t);
+        cake.setPosition(ox + point.x, oy + point.y).setRotation(spin * flight.t).setScale(base * (0.5 + Math.min(1, flight.t * 3) * 0.55));
+      },
+      onComplete: () => {
+        // 떨어진 자리에서 한 번 부풀었다 사라진다 — 그 순간이 "먹였다"의 팡이다.
+        this.sparkle(cake.x, cake.y, index);
+        this.scene.tweens.add({ targets: cake, scale: base * 1.5, alpha: 0, duration: 150, ease: "Quad.Out", onComplete: () => { cake.destroy(); this.live -= 1; } });
+      },
+    });
+  }
+
+  /** 떨어진 자리에서 작은 마름모 셋이 위로 흩어진다. 방향은 순번으로 돌려 난수를 쓰지 않는다. */
+  private sparkle(x: number, y: number, seed: number): void {
     const spec = FEED_TAP.sparkle;
     for (let index = 0; index < spec.count; index += 1) {
-      const angle = -Math.PI / 2 + (index - 1) * 0.9 + (this.streak % 3) * 0.2;
+      const angle = -Math.PI / 2 + (index - 1) * 0.9 + (seed % 3) * 0.2;
       const size = spec.size * (index === 1 ? 1 : 0.7);
       const gem = this.scene.add.graphics({ x, y }).setBlendMode(Phaser.BlendModes.ADD);
       gem.fillStyle(spec.color, 0.95);

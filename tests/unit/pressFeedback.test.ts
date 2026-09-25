@@ -2,7 +2,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PRESS_FEEDBACK } from "../../src/ui/pressFeedbackStyle";
-import { FEED_TAP, feedComboVisible, feedTapDrift } from "../../src/ui/feedTapStyle";
+import { FEED_TAP, feedArcPoint, feedBurstPath, feedComboVisible, feedHoldDelay } from "../../src/ui/feedTapStyle";
 
 function sources(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -31,16 +31,37 @@ describe("누르는 손맛", () => {
 });
 
 describe("급여 한 번의 손맛", () => {
-  it("의 조각은 난수 없이 좌우로 번갈아 비껴 뜬다", () => {
-    const drifts = Array.from({ length: 6 }, (_, index) => feedTapDrift(index));
-    expect(drifts).toEqual(Array.from({ length: 6 }, (_, index) => feedTapDrift(index + FEED_TAP.cake.drift.length)));
-    expect(drifts.some((value) => value < 0) && drifts.some((value) => value > 0)).toBe(true);
+  it("의 조각은 난수 없이 부채꼴로 벌어지고, 떨어지는 자리는 출발점보다 위다", () => {
+    const paths = Array.from({ length: 3 }, (_, index) => feedBurstPath(index, 3, 1));
+    expect(paths).toEqual(Array.from({ length: 3 }, (_, index) => feedBurstPath(index, 3, 1)));
+    expect(paths.some((path) => path.dx < 0) && paths.some((path) => path.dx > 0)).toBe(true);
+    for (const path of paths) {
+      expect(path.dy).toBeLessThan(0);
+      // 포물선 꼭대기는 출발점보다 높이 솟고, 끝은 착지점에 닿는다.
+      expect(feedArcPoint(path, 0.5).y).toBeLessThan(path.dy);
+      expect(feedArcPoint(path, 1)).toEqual({ x: path.dx, y: path.dy });
+    }
+    // 이어 누른 조각은 부채꼴이 비틀려 같은 자리에 겹치지 않는다.
+    expect(feedBurstPath(0, 3, 0).dx).not.toBe(feedBurstPath(0, 3, 1).dx);
   });
 
-  it("의 연속 표시는 두 번째 누름부터 서고, 조각 수에는 상한이 있다", () => {
+  it("은 많이 먹일수록 많이 터진다 — 한 번 < 1레벨 < 10레벨", () => {
+    const { tap, level, tenLevels } = FEED_TAP.pieces;
+    expect(tap).toBeLessThan(level);
+    expect(level).toBeLessThan(tenLevels);
+    expect(tenLevels).toBeLessThanOrEqual(FEED_TAP.maxLiveCakes);
+  });
+
+  it("은 꾹 누를수록 빨라져 하한에서 멈춘다", () => {
+    const delays = Array.from({ length: 40 }, (_, index) => feedHoldDelay(index));
+    delays.slice(1).forEach((delay, index) => expect(delay).toBeLessThanOrEqual(delays[index]));
+    expect(delays[0]).toBe(FEED_TAP.hold.startMs);
+    expect(delays.at(-1)).toBe(FEED_TAP.hold.minMs);
+  });
+
+  it("의 연속 표시는 두 번째 누름부터 서고, 반짝임은 셋을 넘지 않는다", () => {
     expect(feedComboVisible(1)).toBe(false);
     expect(feedComboVisible(2)).toBe(true);
-    expect(FEED_TAP.maxLiveCakes).toBeLessThan(10);
     expect(FEED_TAP.sparkle.count).toBeLessThanOrEqual(3);
   });
 });

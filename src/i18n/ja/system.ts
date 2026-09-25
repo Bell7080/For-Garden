@@ -42,6 +42,12 @@ export const SYSTEM_JA = {
   "product.price.ad": "広告 · 1日{count}回",
   "product.price.currency": "{amount} {currency}",
 
+  "mail.launch.title": "開拓支援の補給箱",
+  "mail.launch.sender": "研究支援局",
+  "mail.launch.body": "エターナルシティへようこそ。調査に必要な物資をお送りします。",
+  "mail.update.title": "ミッション・メールボックス整備のお知らせ",
+  "mail.update.sender": "都市管理局",
+  "mail.update.body": "ミッション記録とメールボックスが新しくなりました。\n\n· 研究度の段階報酬にダイヤと化石が加わりました。\n· ウィークリーミッションは一週間かけて達成する目標になりました。\n· メールボックスは報酬のあるメールと読むお知らせに分かれました。\n\nいつも調査活動にご協力いただきありがとうございます。",
   "mail.welcome.title": "中央研究所の補給品",
   "mail.welcome.sender": "研究支援局",
   "mail.welcome.body": "新しい調査活動のための補給品です。",

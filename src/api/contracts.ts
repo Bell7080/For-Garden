@@ -2,7 +2,7 @@ import { t, type TextKey } from "../i18n";
 import type { RaidDifficulty } from "../data/raid";
 import type { AcquisitionResult, GachaPityState, QuantityRewardKind, Wallet } from "../core/gacha";
 import type { RelicProgress, RelicSkinId, Stats } from "../core/types";
-import type { MissionPeriod } from "../core/missions";
+import type { MissionPeriod, MissionReward } from "../core/missions";
 import type { PassBenefitDefinition, LootCategory, PremiumCategory, ProductAcquisition, ProductGrant, ProductRefresh, ProductStorefront, ShopCategory, ShopProductIconKey } from "../data/products";
 /** storefront와 상점 카테고리는 클라이언트·서버가 함께 쓰는 공용 계약으로 다시 공개한다. */
 export type { PremiumCategory, ProductStorefront, ShopCategory } from "../data/products";
@@ -35,7 +35,7 @@ export interface StartInteractionDispatchRequest { cityId: string; party: string
 export interface InteractionDispatchResponse { dispatches: InteractionDispatchSnapshot[]; serverTime: string; }
 /** 수령 재전송을 한 지급으로 묶는 멱등 요청이다. */
 export interface ClaimInteractionDispatchRequest { dispatchId: string; requestId: string; }
-export interface ClaimInteractionDispatchResponse extends InteractionDispatchResponse { granted: { currency: keyof Wallet; amount: number }; alreadyClaimed: boolean; wallet: Wallet; }
+export interface ClaimInteractionDispatchResponse extends InteractionDispatchResponse { granted: { currency: keyof Wallet; amount: number }[]; alreadyClaimed: boolean; wallet: Wallet; }
 
 /** 정적 표시 메타데이터를 중복 전송하지 않고 서버 보유량과 인스턴스만 전달하는 인벤토리 조회 행이다. */
 export interface InventoryItemDto { id: string; definitionId: string; category: ItemCategory; quantity: number; rune?: RuneInstance; }
@@ -391,16 +391,16 @@ export interface ClaimInstantAdRewardRequest { entitlementId: string; slotId: st
 export interface ClaimInstantAdRewardResponse extends ClaimAdRewardResponse { entitlement: PassEntitlementDto; dailyBonus?: { currency: "gems"; amount: number }; }
 
 /** 임무 화면에 필요한 진행·보상·수령 상태를 한 행으로 전달한다. */
-export interface MissionDto { id: string; period: MissionPeriod; title: string; progress: number; target: number; rewardCheesecake: number; researchPoints: number; claimed: boolean; }
+export interface MissionDto { id: string; period: MissionPeriod; title: string; progress: number; target: number; reward: MissionReward; researchPoints: number; claimed: boolean; }
 /** 연구도 마디는 정적 보상과 서버가 확정한 달성·수령 상태를 함께 전달한다. */
-export interface ResearchRewardStageDto { id: string; threshold: number; rewardCheesecake: number; achieved: boolean; claimed: boolean; }
+export interface ResearchRewardStageDto { id: string; threshold: number; rewards: MissionReward[]; achieved: boolean; claimed: boolean; }
 export interface PeriodResearchDto { points: number; maxPoints: number; stages: ResearchRewardStageDto[]; }
 /** 목록 응답은 로비 배지에서 바로 쓸 미수령 개수를 포함한다. */
 export interface MissionListResponse { missions: MissionDto[]; claimableCount: number; research: Record<MissionPeriod, PeriodResearchDto>; }
 /** 받은 편지함 데이터가 없는 화면이 상태를 추측하지 않도록 마련한 명시적 서버 계약이다. */
 export interface NotificationSignalsResponse { pendingFriendRequestCount: number; unseenEventCount: number; unreadMailCount: number; }
 /** 일괄 또는 선택 수령 뒤 지급 총액과 최신 상태를 반환한다. */
-export interface ClaimMissionRewardsResponse extends PlayerStateDto { claimedIds: string[]; claimedResearchStageIds: string[]; rewards: { missionCheesecake: number; researchCheesecake: number; cheesecake: number }; cheesecakeEarned: number; }
+export interface ClaimMissionRewardsResponse extends PlayerStateDto { claimedIds: string[]; claimedResearchStageIds: string[]; /** 임무·연구도 단계가 각각 준 것과 그 합(같은 재화는 한 줄). 상한에 깎인 뒤의 실제 지급분이다. */ rewards: { mission: MissionReward[]; research: MissionReward[] }; granted: MissionReward[]; }
 
 /** 상품 목록은 정적 정의에 서버가 계산한 현재 구매 가능 횟수를 결합한다. */
 export interface ProductDto { id: string; storefront: ProductStorefront; category: ShopCategory; lootCategory?: LootCategory; premiumCategory?: PremiumCategory; iconKey: ShopProductIconKey; name: string; description: string; acquisition: ProductAcquisition; grants: readonly ProductGrant[]; defaultQuantity: number; passBenefit?: PassBenefitDefinition; purchaseLimit: number; refresh: ProductRefresh; remaining: number; purchasable: boolean; disabledReason?: string; }
@@ -613,6 +613,11 @@ export interface RaidDto {
   /** 소환 레이드를 연 사람. 내가 열었으면 `summonedByMe`만 켜진다. */
   summonerName?: string;
   summonedByMe: boolean;
+  /** 판 안에 서는 보스 한 마리의 체력 — 공유 게이지의 한 칸이다(`RaidDifficultySpec.bodyHp`). */
+  bossBodyHp: number;
+  /** 토벌까지 보스를 쓰러뜨려야 하는 횟수와 지금까지 쓰러뜨린 몫(버림). */
+  kills: number;
+  killsDone: number;
   totalHp: number;
   /** 참가자 전원이 지금까지 깎아 낸 합이다. */
   dealtDamage: number;

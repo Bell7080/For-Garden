@@ -106,6 +106,16 @@ export interface FramedIconOptions extends ItemFrameOptions {
 }
 
 /**
+ * 그 그림이 재화면 안내창을 여는 손을 돌려준다. 액자를 `addFramedIcon`으로 세우지 않는 전용
+ * 프리팹(발굴 현황의 재화 칸)도 같은 그림이면 같은 일을 하게 한다.
+ */
+export function currencyGuideForIcon(scene: Phaser.Scene, textureKey: string): (() => void) | undefined {
+  const wallet = WALLET_BY_ICON[textureKey];
+  const open = currencyGuideOpeners.get(scene);
+  return wallet && open ? () => open(wallet) : undefined;
+}
+
+/**
  * 액자 + 그림 + (있으면) 수량까지 한 번에 세우는 공용 프리팹.
  *
  * **재화나 아이템 그림이 서는 자리는 어디서나 이 한 장을 쓴다.** 수량은 액자 **우하단**에

@@ -57,6 +57,12 @@ export const SYSTEM_KO = {
   "product.price.item": "{amount} {item}",
 
   // ── 임시 서버가 보내는 우편·알림 ─────────────────────────────────────────
+  "mail.launch.title": "개척 지원 보급 상자",
+  "mail.launch.sender": "연구지원국",
+  "mail.launch.body": "이터널 시티 도착을 환영합니다. 조사에 필요한 물자를 함께 보냅니다.",
+  "mail.update.title": "임무·우편함 정비 안내",
+  "mail.update.sender": "도시관리국",
+  "mail.update.body": "임무 기록과 우편함이 새 단장을 마쳤습니다.\n\n· 연구도 단계 보상에 다이아와 화석이 더해졌습니다.\n· 주간 임무는 한 주에 걸쳐 끝나는 목표로 바뀌었습니다.\n· 우편함은 받을 것이 든 우편과 읽을 안내로 나뉘었습니다.\n\n조사 활동에 늘 감사드립니다.",
   "mail.welcome.title": "중앙 연구소 보급품",
   "mail.welcome.sender": "연구지원국",
   "mail.welcome.body": "새로운 조사 활동을 위한 보급품입니다.",

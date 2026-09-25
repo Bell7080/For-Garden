@@ -1,11 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import type { ClaimMissionRewardsResponse, MissionDto } from "../../src/api/contracts";
 import { MissionClaimController, missionDisplayModel } from "../../src/ui/missionsPopupModel";
-import { boundsIntersect, MISSIONS_POPUP_LAYOUT, missionsPopupCollisionBounds, researchTrackLayout } from "../../src/ui/missionsPopupLayout";
+import { boundsIntersect, MISSIONS_POPUP_LAYOUT, missionsTabX, researchTrackLayout } from "../../src/ui/missionsPopupLayout";
+import { formatResetRemaining, missionResetRemainingMs } from "../../src/ui/missionsPopupModel";
+import { BACK_BUTTON_SIZE, BACK_SLOT } from "../../src/ui/popupGeometry";
 
 /** UI 수령 테스트에는 서버 확정 필드 중 분기에서 읽는 값만 작은 계약 더블로 만든다. */
-const response = (claimedIds: string[], cheesecakeEarned = 20): ClaimMissionRewardsResponse => ({ claimedIds, cheesecakeEarned } as ClaimMissionRewardsResponse);
-const mission = (overrides: Partial<MissionDto> = {}): MissionDto => ({ id: "daily-one", period: "daily", title: "한 번 완료", progress: 1, target: 1, rewardCheesecake: 20, researchPoints: 20, claimed: false, ...overrides });
+const response = (claimedIds: string[], amount = 20): ClaimMissionRewardsResponse => ({ claimedIds, granted: [{ currency: "cheesecake", amount }] } as unknown as ClaimMissionRewardsResponse);
+const mission = (overrides: Partial<MissionDto> = {}): MissionDto => ({ id: "daily-one", period: "daily", title: "한 번 완료", progress: 1, target: 1, reward: { currency: "cheesecake", amount: 20 }, researchPoints: 20, claimed: false, ...overrides });
 
 describe("MissionsPopup 표시 모델", () => {
   it("목표 0을 안전하게 표시하고 진행률을 100%에서 제한한다", () => {
@@ -15,32 +17,49 @@ describe("MissionsPopup 표시 모델", () => {
 });
 
 describe("MissionsPopup 영역 배치", () => {
-  it("최소·최대 임계값 액자와 게이지 bounds가 팝업 안전 영역 안에 머문다", () => {
-    const track = researchTrackLayout(1080 - MISSIONS_POPUP_LAYOUT.popup.widthInset, [20, 40, 60, 80, 100, 120]);
+  const popupWidth = 1080 - MISSIONS_POPUP_LAYOUT.popup.widthInset;
+  const popupHeight = 1920 - MISSIONS_POPUP_LAYOUT.popup.heightInset;
+
+  it("게이지는 0에서 시작하고 마디는 제 비율 자리에, 양끝 액자는 안전 영역 안에 선다", () => {
+    const track = researchTrackLayout(popupWidth, [20, 40, 60, 80, 100]);
     const insideSafeWidth = (bounds: { left: number; right: number }): boolean => bounds.left >= track.safeBounds.left && bounds.right <= track.safeBounds.right;
-    // 극단 액자를 명시적으로 검사해 프레임 크기나 외곽선이 커질 때 좌우 돌출을 회귀로 잡는다.
     expect(insideSafeWidth(track.frameBounds[0])).toBe(true);
     expect(insideSafeWidth(track.frameBounds.at(-1)!)).toBe(true);
     expect(insideSafeWidth(track.barBounds)).toBe(true);
-    // HoloBar는 중심 좌표를 받지만 라벨은 실제 왼쪽 경계에서 시작해야 한다.
-    expect(track.barX).toBe((track.barBounds.left + track.barBounds.right) / 2);
-    expect(track.labelX).toBe(track.barBounds.left);
-    // 기울어진 HoloBar의 실제 좌우 돌출까지 포함한 bounds도 양끝 보상 액자보다 안쪽에 남는다.
-    expect(track.barBounds.left).toBeGreaterThan(track.frameBounds[0].left);
-    expect(track.barBounds.right).toBeLessThan(track.frameBounds.at(-1)!.right);
+    expect(track.barX).toBe(track.barLeft + track.barWidth / 2);
+    // 첫 마디가 왼쪽 끝에 붙으면 "처음부터 하나는 받은 것"처럼 읽힌다.
+    expect(track.stageXs[0]).toBeCloseTo(track.barLeft + track.barWidth * 0.2);
+    expect(track.stageXs.at(-1)).toBeCloseTo(track.barLeft + track.barWidth);
+    // 이웃한 마디의 액자가 겹치지 않는다.
+    track.frameBounds.slice(1).forEach((frame, index) => expect(boundsIntersect(frame, track.frameBounds[index])).toBe(false));
   });
 
-  it("보상 액자의 외곽선 반지름까지 포함한 bounds가 일일·주간 탭과 교차하지 않는다", () => {
-    const { tabs, researchFrames } = missionsPopupCollisionBounds();
-    // 양 끝 액자를 양쪽 탭 모두와 비교해 향후 크기나 기준점 변경도 즉시 회귀로 드러낸다.
-    expect(researchFrames.every((frame) => tabs.every((tab) => !boundsIntersect(frame, tab)))).toBe(true);
+  it("연구도 무대 → 임무 여섯 줄 → 하단 줄이 겹치지 않고 판 안에 선다", () => {
+    const { research, list, footer } = MISSIONS_POPUP_LAYOUT;
+    const panelBottom = research.panelY + research.panelHeight / 2;
+    expect(list.firstCardY - list.cardHeight / 2).toBeGreaterThan(panelBottom);
+    const lastCardBottom = list.firstCardY + 5 * list.cardGap + list.cardHeight / 2;
+    expect(footer.y - footer.tab.height / 2).toBeGreaterThan(lastCardBottom);
+    expect(footer.y + footer.tab.height / 2).toBeLessThan(popupHeight / 2);
+    expect(research.panelY - research.panelHeight / 2).toBeGreaterThan(-popupHeight / 2 + 40);
   });
 
-  it("연구도 라벨과 첫 임무 카드 사이에 고정 여백을 둔다", () => {
-    const { research, list } = MISSIONS_POPUP_LAYOUT;
-    const labelBaseline = research.barY + research.labelOffsetY;
-    const firstCardTop = list.firstCardY - list.cardHeight / 2;
-    expect(firstCardTop - labelBaseline).toBeGreaterThanOrEqual(50);
+  it("하단 줄은 판 밖 뒤로가기 자리를 피한다", () => {
+    const { footer } = MISSIONS_POPUP_LAYOUT;
+    // 팝업 원점은 화면 가운데다 — 뒤로가기의 화면 좌표를 본문 좌표로 옮겨 비교한다.
+    const back = { left: BACK_SLOT.x - 540 - BACK_BUTTON_SIZE / 2, top: BACK_SLOT.y - 960 - BACK_BUTTON_SIZE / 2, right: BACK_SLOT.x - 540 + BACK_BUTTON_SIZE / 2, bottom: BACK_SLOT.y - 960 + BACK_BUTTON_SIZE / 2 };
+    const claim = { left: footer.claim.x - footer.claim.width / 2, top: footer.y - footer.claim.height / 2, right: footer.claim.x + footer.claim.width / 2, bottom: footer.y + footer.claim.height / 2 };
+    expect(boundsIntersect(claim, back)).toBe(false);
+    expect(missionsTabX(1) + footer.tab.width / 2).toBeLessThan(claim.left);
+    expect(missionsTabX(0) - footer.tab.width / 2).toBeGreaterThan(-popupWidth / 2);
+  });
+
+  it("초기화까지 남은 시간은 일일은 UTC 자정, 주간은 UTC 월요일 자정이다", () => {
+    const thursdayNoon = new Date("2026-08-20T12:00:00Z");
+    expect(missionResetRemainingMs("daily", thursdayNoon)).toBe(12 * 3_600_000);
+    expect(missionResetRemainingMs("weekly", thursdayNoon)).toBe((3 * 24 + 12) * 3_600_000);
+    expect(missionResetRemainingMs("weekly", new Date("2026-08-23T23:00:00Z"))).toBe(3_600_000);
+    expect(formatResetRemaining((3 * 24 + 12) * 3_600_000 + 5_000)).toBe("3D 12:00:05");
   });
 });
 

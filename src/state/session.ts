@@ -390,7 +390,11 @@ export interface SaveData {
 export interface ItemStack { itemId: string; quantity: number; }
 
 /** 서버가 확정한 결과는 수령 전 재접속에도 바뀌지 않도록 파견과 함께 저장한다. */
-export interface InteractionDispatchSnapshot { dispatchId: string; cityId: string; startedAt: string; completesAt: string; party: string[]; rewardSeed: string; reward: { currency: keyof Wallet; amount: number }; claimed: boolean; }
+/**
+ * 나가 있는 파견 한 건. **돌아올 것은 출발 순간 서버가 모두 굴려 둔다**(`rewards`) — 편성과 시각이
+ * 그때 정해지므로 결과도 그때 정해져야 도착을 기다리는 동안 값이 흔들리지 않는다.
+ */
+export interface InteractionDispatchSnapshot { dispatchId: string; cityId: string; startedAt: string; completesAt: string; party: string[]; rewardSeed: string; rewards: { currency: keyof Wallet; amount: number }[]; claimed: boolean; }
 /** 배열 계약은 이후 파견 슬롯 확장 때 저장 모양을 깨뜨리지 않는다. */
 export interface InteractionProgress { slots: Array<InteractionDispatchSnapshot | null>; claimedRequestIds: string[]; }
 /** 신규 계정과 마이그레이션이 같은 빈 슬롯 모양을 공유한다. */

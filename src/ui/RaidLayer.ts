@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import type { RaidDto } from "../api/contracts";
 import { RAID_DIFFICULTY, RAID_SUMMON_DIFFICULTIES, type RaidDifficulty } from "../data/raid";
 import { formatCurrency } from "../core/formatCurrency";
+import { raidKillTicks } from "../core/raid";
 import { getRelic } from "../data/relics";
 import { t } from "../i18n";
 import { computeFaceBandFrame } from "../puppets/anchors";
@@ -29,6 +30,48 @@ export interface RaidLayerHandlers {
 /** 층 윗변에 걸터앉는 제목표. 월드 폭주는 그 이름, 소환 레이드는 난이도다. */
 export function raidTagLabel(raid: RaidDto): string {
   return raid.kind === "world" ? t("raid.world.tag") : t(`raid.difficulty.${raid.difficulty}`);
+}
+
+/**
+ * 층 뒷배경의 세 겹 — 글이 서는 왼쪽의 어둠, 난이도 색, 가장자리 누르기.
+ *
+ * **셋 다 기운 변을 따른다.** `slantedRect`는 왼쪽 변이 아래 `-w/2 - slant/2`에서 위 `-w/2 + slant/2`로
+ * 기운 평행사변형인데, 예전에는 어둠이 곧은 사각형으로 서서 왼쪽 아래 모서리에 밝은 틈이 남았고,
+ * 색은 삼각형을 반 칸(`slant/2`) 오른쪽에 그어 변을 따라 색이 빠진 띠가 섰으며, 가장자리 누르기는
+ * 판 폭(`w`)만 덮어 기운 두 모서리가 눌리지 않았다. 판이 기울어 있는데 뒷배경만 곧게 서 있었다.
+ *
+ * 색은 **마스크가 아니라 도형을 잘라** 판 안에 가둔다 — 층마다 기하 마스크를 하나 더 걸면 목록
+ * 전체가 스텐실을 그만큼 더 그린다. 가장자리 누르기만 네 변 그라데이션이라 판 모양 마스크를 쓴다.
+ */
+function paintSlantedBacking(
+  scene: Phaser.Scene,
+  layer: Phaser.GameObjects.Container,
+  shape: readonly number[],
+  options: { width: number; height: number; slant: number; tone: number; washAlpha: number },
+): void {
+  const { width, height, slant, tone, washAlpha } = options;
+  const { art } = RAID_LIST;
+  const top = -height / 2;
+  const bottom = top + height;
+  // 기운 왼쪽 변: 아래 끝이 바깥, 위 끝이 안쪽이다. 그 사이 삼각형을 먼저 칠하고 사각형을 잇는다.
+  const outer = -width / 2 - slant / 2;
+  const inner = -width / 2 + slant / 2;
+  const fillLeft = (graphics: Phaser.GameObjects.Graphics, color: number, alpha: number, reach: number): void => {
+    graphics.fillStyle(color, alpha);
+    graphics.fillTriangle(outer, bottom, inner, top, inner, bottom);
+    graphics.fillGradientStyle(color, color, color, color, alpha, 0, alpha, 0);
+    graphics.fillRect(inner, top, reach, height);
+  };
+  // 글이 서는 왼쪽만 어둠이 올라온다. 얼굴 쪽까지 누르면 누구인지가 흐려진다.
+  const scrim = scene.add.graphics();
+  fillLeft(scrim, COLOR.void, 0.86, width * (art.from + art.fade));
+  layer.add(scrim);
+  // 난이도의 색이 뒷배경을 은은하게 물들인다 — 글이 서는 왼쪽에서 가장 짙고 얼굴 쪽으로 풀린다.
+  const wash = scene.add.graphics();
+  fillLeft(wash, tone, washAlpha, width * RAID_LAYER_TONE.washReach - slant / 2);
+  layer.add(wash);
+  // 가장자리는 살짝만 누른다. 판의 가로 폭은 `w + slant`라 그만큼 덮어야 기운 두 모서리도 눌린다.
+  layer.add(drawFrameVignette(scene, 0, 0, width + slant, height, { strength: 0.42 }).setMask(shapeClipMask(scene, layer, shape)));
 }
 
 /**
@@ -72,28 +115,16 @@ export function addRaidLayer(
   hit.on("pointerout", () => layer.setScale(1));
   hit.on("pointerup", () => { layer.setScale(1); handlers.onTap(); });
   layer.add(hit);
-  // 글이 서는 왼쪽만 어둠이 올라온다. 얼굴 쪽까지 누르면 누구인지가 흐려진다.
-  const scrim = scene.add.graphics();
-  scrim.fillGradientStyle(COLOR.void, COLOR.void, COLOR.void, COLOR.void, 0.86, 0, 0.86, 0);
-  scrim.fillRect(-width / 2 + slant / 2, top, width * (art.from + art.fade), height);
-  layer.add(scrim);
-  // 난이도의 색이 뒷배경을 은은하게 물들인다 — 글이 서는 왼쪽에서 가장 짙고 얼굴 쪽으로 풀린다.
-  // 어둠 위에 얹어야 보인다. **마스크가 아니라 도형을 잘라** 판 안에 가둔다 — 층마다 기하 마스크를
-  // 하나 더 걸면 목록 전체가 스텐실을 그만큼 더 그린다. 기운 변은 왼쪽 하나뿐이라 그 삼각형만 따로 칠한다.
+  // 글이 서는 왼쪽의 어둠과 난이도 색, 가장자리 누르기 — 기운 변을 그대로 따른다.
   const tone = RAID_DIFFICULTY_TONE[raid.difficulty];
-  const wash = scene.add.graphics();
-  const inner = -width / 2 + slant;
-  wash.fillStyle(tone, RAID_LAYER_TONE.washAlpha);
-  wash.fillTriangle(-width / 2, top + height, inner, top, inner, top + height);
-  wash.fillGradientStyle(tone, tone, tone, tone, RAID_LAYER_TONE.washAlpha, 0, RAID_LAYER_TONE.washAlpha, 0);
-  wash.fillRect(inner, top, width * RAID_LAYER_TONE.washReach - slant, height);
-  layer.add(wash);
-  // 가장자리는 살짝만 누른다 — 네 변 그라데이션이라 기운 변 밖으로 새지 않게 판 모양으로 가둔다.
-  layer.add(drawFrameVignette(scene, 0, 0, width, height, { strength: 0.42 }).setMask(shapeClipMask(scene, layer, shape)));
+  paintSlantedBacking(scene, layer, shape, { width, height, slant, tone, washAlpha: RAID_LAYER_TONE.washAlpha });
   layer.add(drawShapeOutline(scene, 0, 0, shape, { color: raid.kind === "world" ? COLOR.accent : COLOR.panelEdge, alpha: raid.kind === "world" ? 0.72 : 0.5, width: 3 }));
   layer.add(drawShapeEdge(scene, 0, 0, shape, "top", { color: tone, alpha: RAID_LAYER_TONE.edgeAlpha, width: RAID_LAYER_TONE.edgeWidth }));
   if (raid.kind === "world") {
-    layer.add(drawShapeOutline(scene, 0, 0, slantedRect(width + worldRing * 2, height + worldRing * 2, slant), { color: RAID_HP_BAR_COLOR, alpha: 0.9, width: 4 }));
+    // 바깥 테두리는 층의 기운 변과 **평행**해야 한다. 같은 `slant`로 높이만 키우면 변의 기울기가
+    // 달라져, 두 선의 틈이 위에서는 넓고 아래에서는 좁게 벌어졌다 — 기울기(slant / height)를 지킨다.
+    const ringHeight = height + worldRing * 2;
+    layer.add(drawShapeOutline(scene, 0, 0, slantedRect(width + worldRing * 2, ringHeight, slant * ringHeight / height), { color: RAID_HP_BAR_COLOR, alpha: 0.9, width: 4 }));
   }
 
   // 판 윗변에 걸터앉는 제목표가 이 층이 무엇인지 말한다 — 다른 판의 제목과 같은 한 모양이다.
@@ -127,12 +158,17 @@ export function addRaidLayer(
   // 맨 밑은 참가자 전원이 함께 깎는 남은 체력이다. 잡지 못해도 되는 판이라 게이지가 비지 않은 채
   // 끝나는 날이 있다 — 그래서 수치는 남은 몫이 아니라 **남은 비율**로 짧게 선다.
   const barWidth = width - slant - padding * 2;
-  const bar = new HoloBar(scene, 0, height / 2 - hp.up, barWidth, hp.height, { color: RAID_HP_BAR_COLOR, trackAlpha: 0.82, outline: true, ticks: 7 });
+  const bar = new HoloBar(scene, 0, height / 2 - hp.up, barWidth, hp.height, { color: RAID_HP_BAR_COLOR, trackAlpha: 0.82, outline: true, ticks: raidKillTicks(raid.kills, 7) });
   bar.setValue(raid.totalHp > 0 ? raid.remainingHp / raid.totalHp : 0);
   bar.objects.forEach((object) => layer.add(object));
   const percent = raid.totalHp > 0 ? Math.ceil(raid.remainingHp / raid.totalHp * 100) : 0;
-  layer.add(shadowed(scene.add
+  const hpLabel = shadowed(scene.add
     .text(-barWidth / 2, height / 2 - hp.labelUp, raid.defeated ? t("raid.boss.defeated") : t("raid.boss.remaining"), textStyle({ role: "emphasis", size: 24, color: raid.defeated ? COLOR.accentText : COLOR.inkDim }))
+    .setOrigin(0, 0.5));
+  layer.add(hpLabel);
+  // 한 칸이 보스 한 번 처치다. 남은 비율만으로는 몇 번 더 잡으면 끝나는지 읽히지 않는다.
+  layer.add(shadowed(scene.add
+    .text(hpLabel.x + hpLabel.width + 16, height / 2 - hp.labelUp, t("raid.boss.kills", { done: raid.killsDone, kills: raid.kills }), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText }))
     .setOrigin(0, 0.5)));
   layer.add(shadowed(scene.add
     .text(barWidth / 2, height / 2 - hp.labelUp, t("raid.world.percent", { percent }), textStyle({ role: "display", size: 30, color: COLOR.ink }))
@@ -195,7 +231,6 @@ function addPickLayerBase(
 ): Phaser.GameObjects.Container {
   const { width, height, tone, washAlpha } = options;
   const slant = RAID_LIST.slant;
-  const { art } = RAID_LIST;
   const layer = scene.add.container(0, options.y);
   parent.add(layer);
   const shape = slantedRect(width, height, slant);
@@ -207,19 +242,8 @@ function addPickLayerBase(
   hit.on("pointerout", () => layer.setScale(1));
   hit.on("pointerup", () => { layer.setScale(1); options.onTap(); });
   layer.add(hit);
-  const scrim = scene.add.graphics();
-  scrim.fillGradientStyle(COLOR.void, COLOR.void, COLOR.void, COLOR.void, 0.86, 0, 0.86, 0);
-  scrim.fillRect(-width / 2 + slant / 2, top, width * (art.from + art.fade), height);
-  layer.add(scrim);
-  // 색은 목록 층과 같이 **도형을 잘라** 판 안에 가둔다(기운 왼쪽 변은 삼각형 하나로 따로 칠한다).
-  const wash = scene.add.graphics();
-  const inner = -width / 2 + slant;
-  wash.fillStyle(tone, washAlpha);
-  wash.fillTriangle(-width / 2, top + height, inner, top, inner, top + height);
-  wash.fillGradientStyle(tone, tone, tone, tone, washAlpha, 0, washAlpha, 0);
-  wash.fillRect(inner, top, width * RAID_LAYER_TONE.washReach - slant, height);
-  layer.add(wash);
-  layer.add(drawFrameVignette(scene, 0, 0, width, height, { strength: 0.42 }).setMask(shapeClipMask(scene, layer, shape)));
+  // 목록 층과 같은 한 벌이다 — 어둠·색·가장자리 누르기가 기운 변을 그대로 따른다.
+  paintSlantedBacking(scene, layer, shape, { width, height, slant, tone, washAlpha });
   layer.add(drawShapeOutline(scene, 0, 0, shape, { color: COLOR.panelEdge, alpha: 0.5, width: 3 }));
   layer.add(drawShapeEdge(scene, 0, 0, shape, "top", { color: tone, alpha: RAID_LAYER_TONE.edgeAlpha, width: RAID_LAYER_TONE.edgeWidth }));
   addSectionTitle(scene, -width / 2 + slant / 2, top - 4, options.tag, { parent: layer });
@@ -304,7 +328,7 @@ export function addRaidDifficultyPickLayer(
     .text(textX, spec.reward.y - spec.rewardText.labelUp, t("raid.settle.max"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim }))
     .setOrigin(0, 0.5)));
   layer.add(shadowed(scene.add
-    .text(textX, spec.reward.y + spec.rewardText.valueDown, t("raid.pick.hp", { hp: formatCurrency(table.totalHp) }), textStyle({ role: "body", size: 23, color: COLOR.ink }))
+    .text(textX, spec.reward.y + spec.rewardText.valueDown, t("raid.pick.hp", { hp: formatCurrency(table.bodyHp), kills: table.kills }), textStyle({ role: "body", size: 23, color: COLOR.ink }))
     .setOrigin(0, 0.5)));
   return layer;
 }

@@ -20,7 +20,7 @@ import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { gameApi } from "../api/FakeServer";
 import { loadPlayerProfileDisplay } from "../managers/PlayerProfileManager";
 import { bondDialogue } from "../data/bonds";
-import { PopupLayer } from "../ui/PopupLayer";
+import { PopupLayer, POPUP_TITLE_SIZE } from "../ui/PopupLayer";
 import { IdleExcavationPopup } from "../ui/IdleExcavationPopup";
 import { TradePopup } from "../ui/TradePopup";
 import { BACK_SLOT, IconButton } from "../ui/IconButton";
@@ -438,7 +438,7 @@ export class LobbyScene extends Phaser.Scene {
   private openPvpMenu(instant = false): void {
     if (!this.popupLayer || this.popupLayer.isOpen) return;
     const panel = PVP_MENU.panel;
-    this.popupLayer.open({ width: panel.width, height: panel.height, title: t("lobby.duel"), titleSize: 34, dim: true, dimAlpha: 0.24, closeOnBackdrop: false, hideCloseButton: true, instant, onClose: () => this.clearSortieChrome() }, (body, close) => {
+    this.popupLayer.open({ width: panel.width, height: panel.height, title: t("lobby.duel"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.24, closeOnBackdrop: false, hideCloseButton: true, instant, onClose: () => this.clearSortieChrome() }, (body, close) => {
       PVP_MODES.forEach((mode, index) => {
         const y = PVP_MENU.firstY + index * PVP_MENU.stepY;
         body.add(new ExpeditionEntryButton(this, 0, y, {
@@ -463,7 +463,7 @@ export class LobbyScene extends Phaser.Scene {
     const panel = SORTIE_MENU.panel;
     // 일반 작업판보다 암전을 옅게 해 로비의 애착 렐릭이 뒤에서 계속 보이도록 한다.
     const panelY = BASE_HEIGHT / 2 + panel.offsetY;
-    this.popupLayer.open({ width: panel.width, height: panel.height, y: panelY, title: t("lobby.sortie.title"), titleSize: 34, dim: true, dimAlpha: SORTIE_MENU.dimAlpha, closeOnBackdrop: false, hideCloseButton: true, instant, onClose: () => this.clearSortieChrome() }, (body, close) => {
+    this.popupLayer.open({ width: panel.width, height: panel.height, y: panelY, title: t("lobby.sortie.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: SORTIE_MENU.dimAlpha, closeOnBackdrop: false, hideCloseButton: true, instant, onClose: () => this.clearSortieChrome() }, (body, close) => {
       // Puppet은 컨테이너 변환을 물려받지 않으므로 원점에 선 전용 레이어에 화면 좌표로 세운다.
       this.sortieSdLayer = this.add.container(0, 0).setName("sortie-entry-sd").setDepth(SORTIE_SD_DEPTH);
       const entries: SortieEntry[] = [

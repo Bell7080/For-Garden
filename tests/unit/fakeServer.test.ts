@@ -574,22 +574,22 @@ describe("FakeServer", () => {
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-20T12:00:00Z") });
     await expect(server.claimMissionRewards(["daily-battle"])).rejects.toMatchObject({ code: "MISSION_NOT_COMPLETE" });
     await server.completeStage("1-1", true);
-    await expect(server.claimMissionRewards(["daily-battle"])).resolves.toMatchObject({ claimedIds: ["daily-battle"], cheesecakeEarned: 30 });
+    await expect(server.claimMissionRewards(["daily-battle"])).resolves.toMatchObject({ claimedIds: ["daily-battle"], granted: [{ currency: "gold", amount: 15_000 }] });
     // 보상 수령 표시와 수식어 획득 ID가 같은 서버 확정 상태에 남는다.
     expect(state.earnedProfileModifierIds).toEqual(["field-pioneer"]);
-    const afterFirstClaim = state.wallet.cheesecake;
+    const afterFirstClaim = state.wallet.gold;
     await expect(server.claimMissionRewards(["daily-battle"])).rejects.toMatchObject({ code: "MISSION_ALREADY_CLAIMED" });
-    expect(state.wallet.cheesecake).toBe(afterFirstClaim);
+    expect(state.wallet.gold).toBe(afterFirstClaim);
   });
 
   it("임무와 새 연구도 단계를 한 처리로 지급하고 단계 재요청은 0원으로 멱등 처리한다", async () => {
     const state = makeSession(); const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-20T12:00:00Z") });
     await server.completeStage("1-1", true);
     const claimed = await server.claimMissionRewards(["daily-battle"]);
-    expect(claimed).toMatchObject({ claimedIds: ["daily-battle"], claimedResearchStageIds: ["daily:research-20"], rewards: { missionCheesecake: 20, researchCheesecake: 10, cheesecake: 30 } });
-    const before = state.wallet.cheesecake;
-    await expect(server.claimMissionRewards([], "daily", ["research-20"])).resolves.toMatchObject({ cheesecakeEarned: 0, claimedResearchStageIds: [] });
-    expect(state.wallet.cheesecake).toBe(before);
+    expect(claimed).toMatchObject({ claimedIds: ["daily-battle"], claimedResearchStageIds: ["daily:research-20"], rewards: { mission: [{ currency: "gold", amount: 5_000 }], research: [{ currency: "gold", amount: 10_000 }] } });
+    const before = state.wallet.gold;
+    await expect(server.claimMissionRewards([], "daily", ["research-20"])).resolves.toMatchObject({ granted: [], claimedResearchStageIds: [] });
+    expect(state.wallet.gold).toBe(before);
   });
 
   it("발굴·급여·로비 성공을 각 API 경계에서 임무에 한 번 반영한다", async () => {

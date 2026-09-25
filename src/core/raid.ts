@@ -1,5 +1,5 @@
 import { applyEncounterScaling, type EncounterRole } from "./levelDesign";
-import { RAID_BOSS_HP_SCALE, RAID_DIFFICULTY, RAID_MOCK_PARTICIPANTS, RAID_SEASON_TOTAL_HP, RAID_SUMMON_DIFFICULTIES, RAID_BOSS_POOL, type RaidDifficulty } from "../data/raid";
+import { RAID_DIFFICULTY, RAID_MOCK_PARTICIPANTS, RAID_SEASON_TOTAL_HP, RAID_SUMMON_DIFFICULTIES, RAID_BOSS_POOL, type RaidDifficulty } from "../data/raid";
 import { PREVIEW_FRIENDS } from "../data/friends";
 import { requiredBreakthroughForLevel } from "./levelDesign";
 import type { RelicDef } from "./types";
@@ -75,6 +75,26 @@ export function raidSeasonProgress(dealtDamage: number, totalHp: number = RAID_S
   const dealt = Math.max(0, Math.floor(dealtDamage));
   const remainingHp = Math.max(0, total - dealt);
   return { totalHp: total, dealtDamage: dealt, remainingHp, remainingRatio: total > 0 ? remainingHp / total : 0, defeated: total > 0 && dealt >= total };
+}
+
+/**
+ * 공유 게이지를 **보스 처치 횟수**로 읽는다 — 한 번 처치가 머리 위 체력 바 한 줄(`bodyHp`)이다.
+ *
+ * 남은 체력 숫자만으로는 "몇 번 더 잡으면 끝나나"가 읽히지 않는다. 처치는 버림으로 센다 —
+ * 반쯤 민 몸을 한 번으로 세면 토벌되지 않은 판이 다 잡은 것처럼 읽힌다.
+ */
+export function raidKillProgress(dealtDamage: number, difficulty: RaidDifficulty): { done: number; kills: number; bodyHp: number } {
+  const { bodyHp, kills } = RAID_DIFFICULTY[difficulty];
+  return { done: Math.min(kills, Math.floor(Math.max(0, dealtDamage) / bodyHp)), kills, bodyHp };
+}
+
+/**
+ * 공유 게이지의 칸 수 — 한 칸이 보스 한 번 처치다. 칸이 너무 촘촘해지면(월드 폭주 40번) 칸이 아니라
+ * 무늬로 읽히므로 그때는 게이지의 기본 칸을 쓰고, 처치 수는 글자가 말한다.
+ */
+export const RAID_KILL_TICK_LIMIT = 12;
+export function raidKillTicks(kills: number, fallback: number): number {
+  return kills >= 2 && kills <= RAID_KILL_TICK_LIMIT ? kills - 1 : fallback;
 }
 
 /** 기여 목록 한 줄. 순위는 경쟁이 아니라 **얼마나 밀었나**의 정렬 결과다. */
@@ -184,7 +204,7 @@ function raidBossScaledStats(base: RelicDef, difficulty: RaidDifficulty): RelicD
 /**
  * 최대 체력 비례 피해(출혈·뇌진탕)가 레이드 보스에게서 재는 체력 — **성장으로 얻은 체력**이다.
  *
- * 판 안의 최대 체력은 공유 체력의 단위(`RAID_BOSS_HP_SCALE`)라 성장 체력의 여러 배다. 그
+ * 판 안의 최대 체력은 공유 게이지의 한 칸(`RaidDifficultySpec.bodyHp`)이라 성장 체력의 여러 배다. 그
  * 값으로 비율을 재던 때는 출혈 한 번이 판 전체의 타격보다 컸다 — 비율 피해는 **그 개체가 얼마나
  * 단단한가**를 재야 하므로 세기의 몫(레벨·유형)에서 잰다.
  */
@@ -195,11 +215,11 @@ export function raidBossPercentHpBasis(base: RelicDef, difficulty: RaidDifficult
 export function raidBossDef(base: RelicDef, difficulty: RaidDifficulty = "rampage"): RelicDef {
   const scaled = raidBossScaledStats(base, difficulty);
   /*
-   * **최대 체력만 성장이 아니라 공유 체력의 단위에서 나온다.** 나머지 넷은 유형 표와 레벨이
-   * 그대로 정한다. 체력만 가르는 이유는 그 값이 **세기가 아니라 단위**이기 때문이다 — 난이도마다
-   * 몸을 바꾸면 쉬움의 몸이 한 번에 비어 머리 위 줄이 뜻을 잃는다.
+   * **최대 체력만 성장이 아니라 난이도의 몸(`bodyHp`)에서 나온다.** 나머지 넷은 유형 표와 레벨이
+   * 그대로 정한다. 그 몸 하나가 공유 게이지의 한 칸이라, 머리 위 체력 바를 한 번 비우면 공유
+   * 게이지가 정확히 `1 / kills`만큼 줄어든다 — 두 줄이 같은 단위를 쓴다.
    */
-  return { ...base, encounterRole: RAID_BOSS_ROLE, stats: { ...scaled, hp: Math.round(RAID_SEASON_TOTAL_HP / RAID_BOSS_HP_SCALE) } };
+  return { ...base, encounterRole: RAID_BOSS_ROLE, stats: { ...scaled, hp: RAID_DIFFICULTY[difficulty].bodyHp } };
 }
 
 /**

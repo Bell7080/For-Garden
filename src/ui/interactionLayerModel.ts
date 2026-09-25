@@ -80,16 +80,34 @@ export function interactionRemainingLabel(remainingMs: number): string {
 }
 
 /**
- * 자동 배치 — **지금 보낼 수 있는 렐릭 중 가장 센 순서**.
+ * 자동 배치 — **그 도시에 맞는 이부터, 같으면 센 순서로.**
  *
- * 교류에는 발굴의 생산 특화 같은 개체별 기준이 없다. 그래서 "무엇을 많이 캘까"가 아니라
- * "누가 갈 수 있나"만 남고, 그중에서는 전투력이 유일하게 비교 가능한 값이다. 동률은 ID 순으로
- * 끊어 같은 편성이 늘 같은 결과를 낸다 — 누를 때마다 순서가 바뀌면 자동이 아니라 난수다.
+ * 도시마다 특화 속성·직군·스쿼드가 있고 맞는 칸이 많을수록 더 많이 가져온다
+ * (`interactionYieldFactor`). 그래서 맞는 칸 수(`specialty`)가 먼저이고, 같은 수끼리만 전투력으로
+ * 가른다. 동률은 ID 순으로 끊어 같은 편성이 늘 같은 결과를 낸다 — 누를 때마다 순서가 바뀌면
+ * 자동이 아니라 난수다.
  */
 export function autoAssignInteractionParty(
-  candidates: readonly { id: string; power: number }[],
+  candidates: readonly { id: string; power: number; specialty?: number }[],
   size: number,
 ): (string | null)[] {
-  const sorted = [...candidates].sort((a, b) => b.power - a.power || a.id.localeCompare(b.id));
+  const sorted = [...candidates].sort((a, b) => (b.specialty ?? 0) - (a.specialty ?? 0) || b.power - a.power || a.id.localeCompare(b.id));
   return Array.from({ length: size }, (_, index) => sorted[index]?.id ?? null);
+}
+
+/**
+ * 층 원화를 기울어진 액자에 **어떻게 채울지**.
+ *
+ * 판은 기울어진 평행사변형이라 좌우에 삼각형이 생기는데, 원화를 그 안쪽 네모로만 넣으면 그
+ * 삼각형이 비어 그림이 좌우에서 잘린 것처럼 보인다.
+ *
+ * - `fill` — 원본이 충분히 커서 **평행사변형 전체를 덮도록 키워도 확대가 되지 않으면**(배율 1
+ *   이하) 그만큼 넓혀 채우고 판 실루엣으로 잘라 낸다.
+ * - `frame` — 원본이 모자라 넓히면 확대되어 흐려지는 경우, 원화는 안쪽 네모에 두고 좌우
+ *   삼각형은 **장식 띠**가 메운다. 흐린 그림보다 의도한 장식이 낫다.
+ */
+export function interactionArtFit(sourceWidth: number, sourceHeight: number, frameWidth: number, frameHeight: number, slant: number): { mode: "fill" | "frame"; width: number } {
+  const full = frameWidth + slant;
+  const scale = Math.max(full / Math.max(1, sourceWidth), frameHeight / Math.max(1, sourceHeight));
+  return scale <= 1 ? { mode: "fill", width: full } : { mode: "frame", width: frameWidth - slant };
 }

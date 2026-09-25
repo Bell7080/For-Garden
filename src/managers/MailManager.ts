@@ -12,6 +12,9 @@ export class MailManager {
   /** 우편을 펼친 순간 서버 읽음 상태까지 확정한다. */
   async read(mailId: string): Promise<MailListResponse> { if (!mailId) throw new Error("MAIL_ID_REQUIRED"); const result = await this.api.markMailsRead({ mailIds: [mailId] }); this.assertList(result); this.publishMail(result); return structuredClone(result); }
 
+  /** 안내 여럿을 한 번에 읽음으로 확정한다. */
+  async readAll(mailIds: readonly string[]): Promise<MailListResponse> { const ids = [...new Set(mailIds)].filter(Boolean); if (!ids.length) throw new Error("MAIL_ID_REQUIRED"); const result = await this.api.markMailsRead({ mailIds: ids }); this.assertList(result); this.publishMail(result); return structuredClone(result); }
+
   /** 단일 수령도 일괄 수령과 같은 멱등 계약을 사용한다. */
   async claim(mailIds: readonly string[], requestId: string = crypto.randomUUID()): Promise<ClaimMailRewardsResponse> {
     const result = await this.api.claimMailRewards({ requestId, mailIds: [...new Set(mailIds)] }); this.assertList(result);

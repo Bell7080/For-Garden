@@ -34,6 +34,12 @@ export interface ExpeditionBossReplayInput {
    * 않으면 출혈 한 틱이 한계값의 2%가 되어 판 전체가 비정상 점수로 거절된다.
    */
   percentHpBasis?: number;
+  /**
+   * 편성의 유대 레벨·한계 돌파 단계. 화면의 난전이 이 값으로 싸우므로 재현도 같은 값이어야 한다 —
+   * 비워 두면 돌파가 여는 기술과 유대의 야성 가속이 재현에서만 빠져 점수가 갈린다.
+   */
+  bondLevels?: Readonly<Record<string, number>>;
+  breakthroughs?: Readonly<Record<string, number>>;
 }
 /**
  * 전멸한 정상 종료만 확정하며 totalDamage는 서버가 행동 로그로 재계산한 **대상 경감 전** 기여도다.
@@ -68,11 +74,19 @@ export function expeditionWeekKey(now: Date): string {
 function fastestAttackInterval(fighter: Fighter, state: Parameters<typeof attackInterval>[1], basicCount: number): number {
   const stack = fighter.def.passive.kind === "basicHitAttackSpeedStack" ? fighter.def.passive.value : 0;
   const hitCount = fighter.def.basic.combo?.hitCount ?? 1;
-  const bonusBefore = fighter.bonusAttackSpeed; const feverBefore = fighter.ferocityFever;
+  const bonusBefore = fighter.bonusAttackSpeed; const feverBefore = fighter.ferocityFever; const chillBefore = fighter.chill;
+  const hastenedBefore = fighter.hastenedAttacksLeft;
   fighter.bonusAttackSpeed = Math.max(bonusBefore, basicCount * hitCount * stack);
   fighter.ferocityFever = true;
+  // 금강불괴는 폭주가 **켜지는 순간** 빠른 평타 몇 번을 채워 준다. 재현에서 폭주가 켜지지 않았다면
+  // 그 수가 0이라 폭주를 가정해도 빨라지지 않고, 실제 판의 빠른 평타가 거절되었다(엘라).
+  fighter.hastenedAttacksLeft = Math.max(1, hastenedBefore);
+  // **둔화는 한계에서 뺀다.** 느려지게만 하는 상태라 빼도 한계가 느슨해질 뿐인데, 재현은 보스의
+  // 공격 순서가 실제 판과 조금씩 달라 둔화가 걸린 순간이 어긋난다. 그대로 두면 실제 판에서는
+  // 풀려 있던 평타가 재현에서 "너무 빠르다"가 되어 타보아 레이드가 거의 매번 거절되었다.
+  fighter.chill = null;
   const interval = attackInterval(fighter, state);
-  fighter.bonusAttackSpeed = bonusBefore; fighter.ferocityFever = feverBefore;
+  fighter.bonusAttackSpeed = bonusBefore; fighter.ferocityFever = feverBefore; fighter.chill = chillBefore; fighter.hastenedAttacksLeft = hastenedBefore;
   // **아군이 걸어 주는 공속 오라도 한계에 넣는다.** 무리 사냥·아다지오는 제공자가 살아 있고
   // 같은 표적을 볼 때만 켜지는데, 재현은 자리와 표적이 실제 판과 다르므로 그 순간에 꺼져 있을
   // 수 있다. 그러면 편성이 실제로 낼 수 있었던 속도보다 느린 값이 기준이 되어, 규칙대로 싸운
@@ -102,7 +116,7 @@ export function resolveExpeditionBossBattle(input: ExpeditionBossReplayInput, ac
   const initialStates = input.allies.map(({ id }) => ({ relicId: id, currentHp: input.initialHpPercentByRelic?.[id] ?? 100, alive: (input.initialHpPercentByRelic?.[id] ?? 100) > 0 }));
   if (initialStates.some(({ currentHp }) => !Number.isFinite(currentHp) || currentHp < 0 || currentHp > 100)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
   const phases = balance.phases.map(({ startsAtMs, attackPerSecond, label }) => ({ startsAt: startsAtMs / 1_000, damagePerSecond: attackPerSecond, label }));
-  const state = createSkirmish([...input.allies], [{ ...input.boss, stats: { ...input.boss.stats, hp: Number.MAX_SAFE_INTEGER } }], input.arena, {}, {}, {
+  const state = createSkirmish([...input.allies], [{ ...input.boss, stats: { ...input.boss.stats, hp: Number.MAX_SAFE_INTEGER } }], input.arena, input.bondLevels ?? {}, input.breakthroughs ?? {}, {
     playerInitialStates: initialStates, augmentEffects: input.augmentEffects,
     boss: { phases, limitSeconds: balance.maximumDurationMs / 1_000, percentHpBasis: input.percentHpBasis ?? input.boss.stats.hp },
   });

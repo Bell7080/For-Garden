@@ -3044,7 +3044,9 @@ export function attackInterval(fighter: Fighter, state?: SkirmishState): number 
       // 공격 속도 +20%는 공격 간격 -20%와 다르므로 증가된 속도로 간격을 나눈다.
       ? 1 / (1 + trait.attackSpeedBonusPercent / 100)
       : fighter.ferocityFever && trait.effectId === "packBody"
-        ? 1 + trait.attackSpeedPercent / 100
+        // 공격 속도 +50%다 — 간격에 1.5를 곱하면 폭주한 늑대가 오히려 느려지고, 폭주를 한계로 삼는
+        // 보스 제출 검증이 늑대의 평상시 평타를 "너무 빠르다"로 거절한다. 다른 자기 가속과 같은 역수다.
+        ? 1 / (1 + trait.attackSpeedPercent / 100)
       : fighter.ferocityFever && trait.effectId === "selfAttackSpeedMultiplier"
         // +100%는 공격 속도 x2이고, 속도의 역수인 공격 간격은 정확히 50%가 된다.
         ? 1 / (1 + trait.bonusPercent / 100)
@@ -5609,9 +5611,11 @@ function packStrike(attacker: Fighter, target: Fighter, state: SkirmishState, ev
   if (openings && finisher) {
     dealtTotal = strikeFinisher(attacker, target, state, events, finisher, axes, amplify, useUltimate);
   } else {
-    for (const axis of axes) {
-      dealtTotal += commanderAxisHit(attacker, target, state, events, { ...axis, power: axis.power * amplify }, useUltimate);
-    }
+    // **두 축은 한 행동이다.** 둘째 축을 `followUp`으로 표시하지 않으면 같은 밀리초에 평타가 두 번
+    // 기록되어, 보스·레이드 제출의 재사용 대기 검증이 규칙대로 싸운 디안 편성을 통째로 거절했다.
+    axes.forEach((axis, index) => {
+      dealtTotal += commanderAxisHit(attacker, target, state, events, { ...axis, power: axis.power * amplify }, useUltimate, index > 0);
+    });
   }
 
   if (dealtTotal > 0 && !isFighterAlive(target)) gainBloodscent(attacker, events);
@@ -5628,6 +5632,7 @@ function commanderAxisHit(
   events: SkirmishEvent[],
   axis: { power: number; damageType: "physical" | "magical"; scalingStat: "atk" | "ap" },
   useUltimate: boolean,
+  followUp = false,
 ): number {
   const input = { power: axis.power, damageType: axis.damageType, scalingStat: axis.scalingStat, kind: useUltimate ? "ultimate" as const : "basic" as const, isCritical: false };
   const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(target, state), input)));
@@ -5636,7 +5641,7 @@ function commanderAxisHit(
   const hpBefore = target.hp; const shieldBefore = target.shield.amount; const provider = target.shield.providerId;
   const dealt = applyDamage(target, resolution.applied, events, state);
   const credited = recordDamageContribution(state, attacker.id, target, axis.damageType, axis.scalingStat, contribution, resolution, hpBefore, shieldBefore, provider);
-  events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: useUltimate ? "ultimate" : "basic", amount: resolution.applied, contributionAmount: credited, critical: false, damageType: axis.damageType });
+  events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: useUltimate ? "ultimate" : "basic", amount: resolution.applied, contributionAmount: credited, critical: false, damageType: axis.damageType, ...(followUp ? { followUp: true } : {}) });
   if (!isFighterAlive(target)) { clearDefeatedStatuses(target); events.push({ kind: "death", fighterId: target.id, sourceId: attacker.id }); }
   return dealt;
 }

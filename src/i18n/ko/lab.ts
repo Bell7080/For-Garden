@@ -30,12 +30,14 @@ export const LAB_KO = {
   "lab.resonance.SR": "청록과 보랏빛이 교차한다",
   "lab.resonance.R": "회청색 파장이 감지된다",
   "lab.resonance.GRAY": "중립 파장이 응결한다",
-  "lab.standingFailed": "[{name} 스탠딩을 불러오지 못했습니다]",
 
   "lab.result.title": "연구 결과",
   "lab.result.openAll": "모두 열기",
   "lab.result.tapTile": "칸을 눌러 확인",
   "lab.result.tapToReturn": "화면을 눌러 돌아가기",
+
+  // 새로 만난 렐릭의 소개 장면 — 그 개체의 한마디를 묶는 따옴표만 표가 갖는다.
+  "lab.showcase.quote": "“{line}”",
 
   // 시네마틱은 세계관 안의 명칭과 조작 라벨만 세운다 — 진행 상태·안내 문장은 두지 않는다.
   "lab.cinematic.skip": "SKIP",

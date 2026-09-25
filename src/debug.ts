@@ -187,6 +187,8 @@ export interface DebugState {
   shopView?: { category: string; scrollY: number; minScrollY: number };
   /** 연구 결과판에 깔린 칸 수와 그중 열린 칸 수. 결과 내용은 공개하지 않는다. */
   researchBoard?: { slots: number; opened: number };
+  /** 새로 만난 렐릭의 소개 장면. 캔버스 안이라 DOM으로는 떠 있는지 알 수 없다. */
+  relicShowcase?: { relicId: string; phase: "voice" | "stage" };
   /** 지층 판이 실제 게시한 입력점과 요청/타격/공개 순서를 관찰하는 E2E 전용 표시 계약이다. */
   archaeologyDig?: { requests: number; active: boolean; impactIndex?: number; revealedIndices: number[]; tiles: Array<DebugPoint & { index: number }> };
   /**
@@ -271,6 +273,7 @@ export function setDebugMailPopup(state: DebugState["mailPopup"]): void { ensure
 
 /** 뒤집힌 칸이 몇 장 남았는지만 알린다. 어느 칸에 무엇이 들었는지는 열기 전까지 공개하지 않는다. */
 export function setDebugResearchBoard(board: DebugState["researchBoard"]): void { ensure().researchBoard = board; }
+export function setDebugRelicShowcase(showcase: DebugState["relicShowcase"]): void { ensure().relicShowcase = showcase; }
 
 /** Canvas 바깥 테스트가 판의 구현을 복제하지 않고 지층 입력·공개 경계만 읽게 한다. */
 export function setDebugArchaeologyDig(state: DebugState["archaeologyDig"]): void { ensure().archaeologyDig = state; }

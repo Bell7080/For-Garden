@@ -158,6 +158,16 @@ EXPORT_TAIL = (
     "if(k<L){this.revealStep=\"tier\";this.revealTarget=t+d*(.6*(k+1)/(L+1)+.002);return}"
     'if(s<.86){this.revealStep="flip";this.revealTarget=t+d*.9;return}'
     'this.revealStep="next";this.revealTarget=i+1<r.length?t+d+1e-4:this.deck.duration+1};'
+    # 다음 한 걸음이 무엇일지 **넘기지 않고** 본다. 새로 만난 렐릭의 카드는 뒤집히기 직전에
+    # 소개 장면이 먼저 돌아야 하므로, 화면이 "다음 걸음이 그 카드의 뒤집기인가"를 미리 알아야
+    # 한다. 계산은 위 한 걸음과 같다 — 화면에서 다시 셈하면 두 곳이 갈린다.
+    "xo.prototype.peekReveal=function(){"
+    'if(this.destroyed||this.phase!=="reveal")return;'
+    "var r=this.rewards,e=this.revealTarget!==void 0?this.revealTarget:this.phaseTime,t=0,i=0,d=0;"
+    "for(;i<r.length;i++){d=this.reduced?.45:ft[r[i].rarity].duration;if(e<t+d-1e-6)break;t+=d}"
+    "if(i>=r.length)return;"
+    "var L=ft[r[i].rarity].level,s=(e-t)/d,k=Math.min(L,Math.floor(Math.max(0,s)*(L+1)/.6));"
+    'return{index:i,step:k<L?"tier":s<.86?"flip":"next"}};'
     # 건너뛰기는 연출을 지우는 것이 아니라 **결산으로 곧장 간다**.
     "xo.prototype.skipToResult=function(){"
     'if(this.destroyed||this.phase==="result")return;'

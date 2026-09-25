@@ -30,11 +30,13 @@ export const LAB_JA = {
   "lab.resonance.SR": "青緑と紫が交差する",
   "lab.resonance.R": "灰青色の波長を検知した",
   "lab.resonance.GRAY": "中立の波長が凝結する",
-  "lab.standingFailed": "[{name}の立ち絵を読み込めませんでした]",
 
   "lab.result.title": "研究結果",
   "lab.result.openAll": "すべて開く",
   "lab.result.tapTile": "マスを押して確認",
   "lab.result.tapToReturn": "画面を押して戻る",
+
+  // 새로 만난 렐릭의 소개 장면 — 그 개체의 한마디를 묶는 따옴표만 표가 갖는다.
+  "lab.showcase.quote": "「{line}」",
 
 } as const;

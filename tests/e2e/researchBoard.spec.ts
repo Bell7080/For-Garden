@@ -15,6 +15,33 @@ const NAV_TOP = BASE_HEIGHT - 180;
  */
 const CRACK_TIMEOUT = 120_000;
 
+/** 새로 만난 렐릭의 소개 장면이 떠 있는가. */
+function showcase(page: Page): Promise<{ relicId: string; phase: string } | undefined> {
+  return page.evaluate(() => window.__PF_DEBUG?.relicShowcase);
+}
+
+/**
+ * 기다리던 상태가 될 때까지 누른다. 새로 만난 렐릭이면 칸이 열리기 **전에** 소개 장면이 먼저
+ * 서므로, 장면이 떠 있는 동안의 누름은 그 장면을 넘긴다(목소리 → 등장 → 닫기). 막마다 한 장씩
+ * 캡처를 남긴다 — 눈으로 검수하는 자리다.
+ */
+async function tapThrough(page: Page, x: number, y: number, done: () => Promise<boolean>): Promise<void> {
+  const captured = new Set<string>();
+  await tapUntil(page, x, y, async () => {
+    const shown = await showcase(page);
+    if (shown) {
+      const key = `${shown.relicId}-${shown.phase}`;
+      if (!captured.has(key)) {
+        captured.add(key);
+        await page.waitForTimeout(shown.phase === "stage" ? 2_500 : 1_500);
+        await captureGame(page, `test-results/${test.info().project.name}-relic-showcase-${key}.png`);
+      }
+      return false;
+    }
+    return done();
+  }, { attempts: 30, gapMs: 3_000 });
+}
+
 /** 열린 칸 수만 읽는다. 어느 칸에 무엇이 들었는지는 화면이 공개하지 않는다. */
 function board(page: Page): Promise<{ slots: number; opened: number } | undefined> {
   return page.evaluate(() => window.__PF_DEBUG?.researchBoard);
@@ -33,11 +60,12 @@ test("10연 결과는 뒤집힌 칸으로 깔리고 눌러야 열린다", async 
 
   // 칸 하나를 누르면 그 칸만 열린다. 자리는 화면이 쓰는 배치표에서 그대로 읽는다.
   const layout = researchBoardLayout(10, BASE_WIDTH);
-  await tap(page, layout.cells[0].x, layout.cells[0].y);
+  await tapThrough(page, layout.cells[0].x, layout.cells[0].y, async () => ((await board(page))?.opened ?? 0) >= 1);
   await expect.poll(() => board(page), { timeout: 30_000 }).toMatchObject({ opened: 1 });
 
-  // 남은 칸은 한 번에 열 수 있다. 첫 대면이 떠 있으면 그 누름이 먼저 연출을 넘긴다.
-  await tapUntil(page, BASE_WIDTH - 150, 100, async () => (await board(page))?.opened === 10, { attempts: 12, gapMs: 4_000 });
+  // 남은 칸은 한 번에 열 수 있다. 새로 만난 렐릭이 남아 있으면 그 소개가 먼저 차례로 돌고, 그
+  // 장면이 떠 있는 동안의 누름은 장면을 넘긴다.
+  await tapThrough(page, BASE_WIDTH - 150, 100, async () => (await board(page))?.opened === 10);
   await captureGame(page, `test-results/${test.info().project.name}-research-board-opened.png`);
 
   // 다 열린 뒤에는 확인 버튼이 아니라 화면 아무 곳이나 눌러 돌아간다.
@@ -54,9 +82,8 @@ test("한 장은 가운데에 크게 한 칸만 깔린다", async ({ page }) => 
 
   await expect.poll(() => board(page), { timeout: CRACK_TIMEOUT }).toEqual({ slots: 1, opened: 0 });
   const layout = researchBoardLayout(1, BASE_WIDTH);
-  await tap(page, layout.cells[0].x, layout.cells[0].y);
+  await tapThrough(page, layout.cells[0].x, layout.cells[0].y, async () => ((await board(page))?.opened ?? 0) >= 1);
   await expect.poll(() => board(page), { timeout: 30_000 }).toEqual({ slots: 1, opened: 1 });
-  // 신규였다면 이 자리에 첫 대면이 서 있고, 아니면 열린 칸 하나가 가운데에 남는다.
   await captureGame(page, `test-results/${test.info().project.name}-research-board-single.png`);
 
   // 한 칸뿐이라 그 칸을 여는 순간 판이 끝난다. 화면을 누르면 연구소로 돌아간다.

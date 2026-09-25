@@ -28,9 +28,11 @@ export const LAB_EN = {
   "lab.resonance.SR": "Teal and violet cross over",
   "lab.resonance.R": "A gray-blue wavelength is detected",
   "lab.resonance.GRAY": "A neutral wavelength condenses",
-  "lab.standingFailed": "[Could not load the {name} artwork]",
   "lab.result.title": "Research Results",
   "lab.result.openAll": "Open All",
   "lab.result.tapTile": "Tap a tile to reveal",
   "lab.result.tapToReturn": "Tap the screen to go back",
+
+  // 새로 만난 렐릭의 소개 장면 — 그 개체의 한마디를 묶는 따옴표만 표가 갖는다.
+  "lab.showcase.quote": "“{line}”",
 } as const;

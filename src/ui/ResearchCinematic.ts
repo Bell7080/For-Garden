@@ -42,6 +42,8 @@ interface CinematicInstance {
   revealIndex?: number;
   /** 한 걸음 넘긴다. 공개 단계에서는 등급 한 칸 → 뒤집기 → 다음 칸 순서다. */
   advance(): void;
+  /** 다음 한 걸음이 무엇일지 넘기지 않고 본다. 공개 단계가 아니면 비어 있다. */
+  peekReveal?(): { index: number; step: "tier" | "flip" | "next" } | undefined;
   /** 남은 연출을 건너뛰고 **결산 화면으로 곧장** 간다. 판을 지우지 않는다. */
   skipToResult(): void;
   destroy(): void;
@@ -74,6 +76,11 @@ export interface ResearchCinematicOptions {
   art: readonly CinematicCardArt[];
   reducedMotion: boolean;
   text: ResearchCinematicText;
+  /**
+   * 새로 만난 렐릭의 카드가 **뒤집히기 직전에** 부른다. 판은 그동안 숨고 게임이 손을 받는다.
+   * 약속이 풀리면 판이 돌아와 그 카드를 뒤집는다.
+   */
+  introduce?: (index: number) => Promise<void>;
 }
 
 let assetPromise: Promise<CinematicBundle> | undefined;
@@ -225,11 +232,17 @@ export class ResearchCinematic {
    * 액자도 서기 전이라, 화면만 보고 바꾸면 늦게 도착한 원화가 파편을 덮어쓴다.
    */
   private readonly shattered = new Set<number>();
+  /** 소개 장면을 이미 본 새 렐릭 칸. 같은 개체를 두 번 소개하지 않는다. */
+  private readonly introduced = new Set<number>();
+  /** 소개 장면이 도는 동안에는 판이 손을 받지 않는다. */
+  private introducing = false;
+  private readonly introduce?: (index: number) => Promise<void>;
 
   private constructor(bundle: CinematicBundle, options: ResearchCinematicOptions) {
     this.canvas = options.canvas;
     this.game = options.scene.game;
     this.art = options.art;
+    this.introduce = options.introduce;
     bundle.text.gray = options.text.gray;
     /*
      * **게임의 입력을 끈다.**
@@ -334,8 +347,52 @@ export class ResearchCinematic {
    * 누르면 닫힌다. 보상은 이미 서버가 확정했으므로 건너뛴다고 달라지는 것은 없다.
    */
   skip(): void {
+    if (this.introducing) return;
     if (this.phase === "result") { this.close(); return; }
+    void this.skipAfterIntroductions();
+  }
+
+  /**
+   * 건너뛰어도 **아직 소개하지 않은 새 렐릭은 먼저 차례로 소개한다.** 결산 격자에서 처음 보는
+   * 얼굴이 카드 한 장으로만 지나가면 "새로 왔다"가 읽히지 않는다.
+   */
+  private async skipAfterIntroductions(): Promise<void> {
+    for (const index of this.pendingIntroductions()) {
+      await this.runIntroduction(index);
+      if (this.closed) return;
+    }
     this.instance.skipToResult();
+  }
+
+  /** 아직 소개하지 않은 새 렐릭 칸. 카드 순서대로다. */
+  private pendingIntroductions(): number[] {
+    if (!this.introduce) return [];
+    return this.art.flatMap((slot, index) => (slot.frame === "portrait" && !this.introduced.has(index) ? [index] : []));
+  }
+
+  /**
+   * 소개 장면 한 번.
+   *
+   * 판을 숨기고 게임에 손을 돌려준다 — 장면은 Phaser가 그리고(원화가 Puppet이다) 누르는 것도
+   * 그 장면이 받는다. 입력은 지금 도는 사건이 지나간 **다음에** 켠다. 곧바로 켜면 판을 누른 그
+   * 한 번이 window까지 흘러가 막 뜬 장면을 넘겨 버린다.
+   */
+  private async runIntroduction(index: number): Promise<void> {
+    if (!this.introduce || this.introduced.has(index)) return;
+    this.introduced.add(index);
+    this.introducing = true;
+    this.root.style.visibility = "hidden";
+    await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
+    if (!this.closed) this.game.input.enabled = true;
+    try {
+      await this.introduce(index);
+    } finally {
+      this.introducing = false;
+      if (!this.closed) {
+        this.game.input.enabled = false;
+        this.root.style.visibility = "";
+      }
+    }
   }
 
   close(): void {
@@ -377,7 +434,18 @@ export class ResearchCinematic {
    * **등급 한 칸 → 뒤집기 → 다음 칸** 순서다. 결산에서는 판을 닫는다.
    */
   private tap(): void {
+    if (this.introducing) return;
     if (this.phase === "result") { this.close(); return; }
+    const next = this.instance.peekReveal?.();
+    if (next?.step === "flip" && this.art[next.index]?.frame === "portrait" && !this.introduced.has(next.index) && this.introduce) {
+      // 새로 만난 렐릭 — 카드를 뒤집기 **전에** 먼저 소개하고, 돌아와서 뒤집는다.
+      void this.runIntroduction(next.index).then(() => {
+        if (this.closed) return;
+        this.instance.advance();
+        this.scheduleShatter();
+      });
+      return;
+    }
     this.instance.advance();
     this.scheduleShatter();
   }

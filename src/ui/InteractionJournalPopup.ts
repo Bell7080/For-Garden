@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { POPUP_TITLE_SIZE } from "./popupGeometry";
 import { t } from "../i18n";
 import { journalsForCity, type InteractionJournal } from "../data/interactionJournals";
 import type { InteractionManager } from "../managers/InteractionManager";
@@ -28,7 +29,7 @@ export class InteractionJournalPopup {
   /** 발견된 제목만 목록에 만들고 미발견 행은 원문 대신 잠금 상태로 남긴다. */
   open(cityId: string): void {
     const journals = journalsForCity(cityId);
-    this.popups.open({ width: 900, height: 980, title: t("journal.city.title"), dim: true, closeOnBackdrop: true, backButton: true }, (body) => {
+    this.popups.open({ width: 900, height: 980, title: t("journal.city.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: true, backButton: true }, (body) => {
       if (journals.length === 0) {
         body.add(this.scene.add.text(0, 0, t("journal.city.empty"), textStyle({ role: "body", size: 28, color: "#8d97a5" })).setOrigin(0.5));
         return;
@@ -53,7 +54,7 @@ export class InteractionJournalPopup {
   private openJournal(journal: InteractionJournal): void {
     this.manager.markJournalRead(journal.id);
     if (journal.body) {
-      this.popups.open({ width: 860, height: 620, title: journal.title, dim: true, closeOnBackdrop: true, backButton: true }, (body) => body.add(this.scene.add.text(-360, -170, journal.body!, textStyle({ role: "body", size: 30, wrap: 720, lineSpacing: 12 }))));
+      this.popups.open({ width: 860, height: 620, title: journal.title, titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: true, backButton: true }, (body) => body.add(this.scene.add.text(-360, -170, journal.body!, textStyle({ role: "body", size: 30, wrap: 720, lineSpacing: 12 }))));
       return;
     }
     const story = journal.dialogueStory;

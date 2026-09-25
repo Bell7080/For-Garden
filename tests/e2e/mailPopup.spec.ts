@@ -1,18 +1,32 @@
 import { expect, test } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
 import { tap, tapUntil } from "./canvasInput";
-// 레일 자리는 화면이 소유한 배치표에서 읽는다 — 좌표를 스펙에 베껴 두면 줄이 옮겨질 때 조용히 빗나간다.
+// 자리는 화면이 소유한 배치표에서 읽는다 — 좌표를 스펙에 베껴 두면 줄이 옮겨질 때 조용히 빗나간다.
 import { LOBBY_RAIL_BOUNDS } from "../../src/ui/lobbyLayout";
+import { MAIL_POPUP_LAYOUT, mailListRows, mailTabX } from "../../src/ui/mailPopupLayout";
 
 const BASE = { width: 1080, height: 1920 } as const;
-test("우편 점에서 우편함을 열어 보상을 받고 재화 증가와 점 해제를 확인한다", async ({ page }) => {
+test("우편함은 우편과 안내로 갈리고, 우편을 받으면 재화가 늘고 안내를 열면 읽음이 된다", async ({ page }) => {
   await startAfterOpening(page); await tap(page, BASE.width / 2, BASE.height / 2); await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   const goldBefore = await page.evaluate(() => window.__PF_DEBUG?.wallet?.gold);
-  // 우편은 오른쪽 레일의 첫 행이며 초기 미읽음 데이터가 알림 점을 켠다.
-  await tapUntil(page, LOBBY_RAIL_BOUNDS.utility.mail.x, LOBBY_RAIL_BOUNDS.utility.mail.y, async () => Boolean(await page.evaluate(() => window.__PF_DEBUG?.mailPopup?.open))); await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.mailPopup)).toMatchObject({ open: true, unreadCount: 2, claimableCount: 1 });
-  // 첫 행의 공용 RewardFrame을 눌러 단일 수령하고 TopBar와 알림 집계를 함께 갱신한다.
-  await tap(page, BASE.width / 2 - 80, BASE.height / 2 - 570); await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.wallet?.gold)).toBe((goldBefore ?? 0) + 1200);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.mailPopup)).toMatchObject({ unreadCount: 1, claimableCount: 0 });
-  // 남은 무첨부 안내 행을 열람하면 마지막 우편 점도 해제된다.
-  await tap(page, BASE.width / 2 - 80, BASE.height / 2 - 570 + 280); await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.mailPopup?.unreadCount)).toBe(0);
+  await tapUntil(page, LOBBY_RAIL_BOUNDS.utility.mail.x, LOBBY_RAIL_BOUNDS.utility.mail.y, async () => Boolean(await page.evaluate(() => window.__PF_DEBUG?.mailPopup?.open)));
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.mailPopup)).toMatchObject({ open: true, unreadCount: 4, claimableCount: 2 });
+  await page.screenshot({ path: `test-results/${test.info().project.name}-mail-reward.png` });
+  const { viewport, card, rewards, footer } = MAIL_POPUP_LAYOUT;
+  // 맨 위 우편(개척 지원 보급 상자)의 받기 — 첨부 줄과 같은 높이, 카드 오른쪽 끝.
+  const firstRow = viewport.top + mailListRows("reward", 1).centers[0];
+  const stripY = firstRow + card.rewardHeight / 2 - 30 - rewards.size / 2;
+  await tap(page, BASE.width / 2 + card.width / 2 - 96, BASE.height / 2 + stripY);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.wallet?.gold)).toBe((goldBefore ?? 0) + 50_000);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.mailPopup)).toMatchObject({ claimableCount: 1 });
+  // 영수증은 화면 아무 곳이나 눌러 닫는다.
+  await tap(page, BASE.width / 2, BASE.height / 2);
+  // 안내 탭으로 옮겨 맨 위 안내를 열면 읽음이 된다.
+  await tap(page, BASE.width / 2 + mailTabX(1), BASE.height / 2 + footer.y);
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-mail-notice.png` });
+  const unread = await page.evaluate(() => window.__PF_DEBUG?.mailPopup?.unreadCount ?? 0);
+  await tap(page, BASE.width / 2, BASE.height / 2 + viewport.top + mailListRows("notice", 1).centers[0]);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.mailPopup?.unreadCount)).toBe(unread - 1);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-mail-notice-open.png` });
 });

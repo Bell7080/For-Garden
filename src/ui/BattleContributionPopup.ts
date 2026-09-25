@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { POPUP_TITLE_SIZE } from "./popupGeometry";
 import { t } from "../i18n";
 import type { BattleContributionResult, ContributionCategory } from "../core/battleContribution";
 import { getRelic } from "../data/relics";
@@ -32,7 +33,7 @@ export class BattleContributionPopup {
     /** 판 밖(화면 좌표)에 세운 것들. 팝업이 닫힐 때 함께 거둔다. */
     const closers: Array<() => void> = [];
     this.popups.open({
-      width, height, title: t("contribution.title"), titleSize: 34, dim: true, dimAlpha: 0.36,
+      width, height, title: t("contribution.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.36,
       closeOnBackdrop: false, hideCloseButton: true,
       onClose: () => { for (const dispose of closers) dispose(); closers.length = 0; onClosed?.(); },
     }, (body, close) => {

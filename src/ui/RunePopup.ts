@@ -211,7 +211,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
     ? keywords.layout(traitView.description, { width: panel.width - panel.trait.inset * 2, size: panel.trait.bodySize, color: COLOR.ink })
     : undefined;
   const layout = runeNoteLayout(stats.length, traitBody ? Math.max(1, traitBody.getBounds().height) : 0);
-  popups.open({ width: panel.width, height: layout.height, title: t("rune.title"), y: panel.centerY, dim: true, backButton: true, onClose: options.onClose }, (body, close) => {
+  popups.open({ width: panel.width, height: layout.height, title: t("rune.title"), titleSize: POPUP_TITLE_SIZE.workboard, y: panel.centerY, dim: true, backButton: true, onClose: options.onClose }, (body, close) => {
     const top = -layout.height / 2;
     // 판매 버튼은 자물쇠 칩이 다시 칠할 대상이라 먼저 만들고, 자리는 아래 버튼 줄에서 정한다.
     const sell = new Button(scene, 0, 0, {

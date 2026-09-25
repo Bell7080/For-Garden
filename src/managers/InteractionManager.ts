@@ -18,7 +18,7 @@ export class InteractionManager {
   async cities(): Promise<InteractionCitiesResponse> { const response = await this.api.getInteractionCities(); if (!Number.isFinite(Date.parse(response.serverTime)) || response.cities.some(city => !findInteractionCity(city.id))) throw new Error("교류 도시 응답이 올바르지 않습니다."); return response; }
   async refresh(): Promise<InteractionDispatchResponse> { return this.apply(await this.api.getInteractionDispatch()); }
   async start(cityId: string, party: string[]): Promise<InteractionDispatchResponse> { return this.apply(await this.api.startInteractionDispatch({ cityId, party: [...party] })); }
-  async claim(dispatchId: string, requestId: string): Promise<ClaimInteractionDispatchResponse> { const cityId = this.state.interaction.slots[0]?.cityId; const response = await this.api.claimInteractionDispatch({ dispatchId, requestId }); this.apply(response); this.state.wallet = { ...response.wallet }; if (cityId) this.discoverJournal(findInteractionCity(cityId)!.clueJournalId); this.saves.save(this.state); return response; }
+  async claim(dispatchId: string, requestId: string): Promise<ClaimInteractionDispatchResponse> { const cityId = this.state.interaction.slots.find((slot) => slot?.dispatchId === dispatchId)?.cityId; const response = await this.api.claimInteractionDispatch({ dispatchId, requestId }); this.apply(response); this.state.wallet = { ...response.wallet }; if (cityId) this.discoverJournal(findInteractionCity(cityId)!.clueJournalId); this.saves.save(this.state); return response; }
   /** 신규 해금과 중복 대체를 수행하는 유일한 경계다. 완전 소진된 도시는 별도 중복 아이템을 주지 않는다. */
   discoverJournal(candidateId: string): JournalDiscoveryResolution {
     const journal = findInteractionJournal(candidateId);

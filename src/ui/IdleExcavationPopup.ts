@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { POPUP_TITLE_SIZE } from "./popupGeometry";
 import { t } from "../i18n";
 import type { AdOperationsConfigResponse, AdPresentationResult, AdSlotOperationsDto, GameApi, HarvestExcavationResponse, IdleExcavationResponse } from "../api/contracts";
 import { motionPolicy, powerSavingPolicy } from "../core/settings";
@@ -185,7 +186,7 @@ export class IdleExcavationPopup {
   /** 연타는 기존 한 장을 유지하며 닫기는 저장되지 않은 draft를 버린다. */
   open(): void {
     if (this.body) return;
-    this.body = this.popups.open({ width: PANEL.width, height: PANEL.height, title: t("excavation.title"), titleSize: 34, dim: true, closeOnBackdrop: false, hideCloseButton: true, onClose: () => this.dispose() }, (body, close) => {
+    this.body = this.popups.open({ width: PANEL.width, height: PANEL.height, title: t("excavation.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: false, hideCloseButton: true, onClose: () => this.dispose() }, (body, close) => {
       this.closeAction = close;
       body.setName("idle-excavation-popup");
       this.showMessage(t("excavation.settling"), "loading");
@@ -288,12 +289,9 @@ export class IdleExcavationPopup {
     this.editTitle = undefined;
     if (editable) {
       this.editTitle = addSectionTitle(this.scene, -380, STATUS_HERO.headerY, this.editTitleText(), { size: 23, parent: upper });
-    } else {
-      // 진행 문구는 일반 강조, 배치 수는 같은 행의 얇은 보조 정보로 두어 제목 위계를 만들지 않는다.
-      upper.add(this.scene.add.text(-360, STATUS_HERO.headerY, this.saving ? t("excavation.harvesting") : t("excavation.running"), textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0, 0.5));
-      upper.add(this.scene.add.text(-160, STATUS_HERO.headerY, t("excavation.placed", { count: formation.filter(Boolean).length }), textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0, 0.5));
+      upper.add(drawHairline(this.scene, 0, -535, 760, { color: COLOR.accent, alpha: 0.42 }));
     }
-    upper.add(drawHairline(this.scene, 0, -535, 760, { color: COLOR.accent, alpha: 0.42 }));
+    // 현황에는 머리 줄을 세우지 않는다. 「발굴 진행 중 · 배치 n/3」은 칸 셋이 이미 그대로 보여 준다.
     this.addSlots(upper, formation, editable);
     this.syncStatusSD(formation);
   }
@@ -350,8 +348,8 @@ export class IdleExcavationPopup {
       frame.setValues(item.unclaimed, item.rate); content.add(frame);
       return { ...item, frame, previousAmount: Math.floor(item.unclaimed) };
     });
-    const availability = this.scene.add.text(0, 145, "", textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(0.5);
-    content.add(availability);
+    // 판의 이름은 설명 문장이 아니라 판 윗변에 걸터앉은 제목표가 맡는다.
+    addSectionTitle(this.scene, -STATUS_SUMMARY.width / 2 + 10, STATUS_SUMMARY.y - STATUS_SUMMARY.height / 2, t("excavation.accumulated"), { size: 26, parent: content });
     const refreshEstimate = (): void => {
       // 서버 응답 이후의 로컬 경과분만 더하는 표시용 예상치이며 정산 기준 시각은 절대 갱신하지 않는다.
       const elapsedHours = Math.max(0, Date.now() - baseServerMs) / 3_600_000;
@@ -372,12 +370,6 @@ export class IdleExcavationPopup {
       // 창을 열어 둔 사이 정수 1개가 쌓이는 순간에도 새 조회 없이 버튼 상태만 정확히 갱신한다.
       const harvestable = EXCAVATION_CURRENCIES.some((currency) => Math.floor(liveAmounts[currency]) > 0);
       harvestButton?.setEnabled(harvestable && !this.saving);
-      // 비활성 이유를 누적 0 또는 가장 빠른 재화의 다음 정수 생산 시각으로 짧게 설명한다.
-      const seconds = EXCAVATION_CURRENCIES.map((currency) => (
-        rate[currency] > 0 ? Math.max(0, Math.ceil((1 - liveAmounts[currency]) / rate[currency] * 3600)) : Number.POSITIVE_INFINITY
-      ));
-      const next = Math.min(...seconds);
-      availability.setText(harvestable ? t("excavation.readyToHarvest") : Number.isFinite(next) ? t("excavation.nextHarvest", { minutes: Math.max(1, Math.ceil(next / 60)) }) : t("excavation.needRelics"));
       // 실제로 쌓인 재화량 자체를 보관 한도와 비교한다 — 경과 시간 기준으로 계산하면 창을 열
       // 때마다 서버 정산이 일어나 기준 시각이 현재로 밀리면서 게이지가 늘 0%로 보였다.
       const limitSeconds = excavationStorageLimitSeconds(response.excavation, new Date());
@@ -391,8 +383,10 @@ export class IdleExcavationPopup {
     content.add(drawHairline(this.scene, 0, 180, 760, { color: COLOR.accent, alpha: 0.25 }));
     const result = this.harvestResult;
     const discarded = result ? EXCAVATION_CURRENCIES.reduce((sum, currency) => sum + result.discarded[currency], 0) : 0;
-    const notice = this.harvestError ?? (discarded > 0 ? t("excavation.harvestCapped") : result ? t("excavation.harvestDone") : t("excavation.emptySlotNote"));
-    content.add(this.scene.add.text(0, 250, notice, textStyle({ role: "body", size: 21, color: discarded > 0 || this.harvestError ? COLOR.dangerText : COLOR.inkDim, align: "center" })).setOrigin(0.5));
+    // 알릴 것은 **잘못된 일뿐이다** — 수확 실패와 지갑 상한 손실. 잘 된 수확은 영수증이 말하고,
+    // 빈 칸의 규칙 같은 설명은 조작을 바꾸지 않으므로 세우지 않는다.
+    const notice = this.harvestError ?? (discarded > 0 ? t("excavation.harvestCapped") : undefined);
+    if (notice) content.add(this.scene.add.text(0, 250, notice, textStyle({ role: "body", size: 21, color: COLOR.dangerText, align: "center" })).setOrigin(0.5));
     this.addAdOffers(content, response.serverTime);
     // 5순위 주요 행동: 별도 편성 버튼은 없애고, 하단 전체 폭은 수확 primary 하나에만 준다.
     harvestButton = new Button(this.scene, 0, BOTTOM_ACTION.y, { width: 520, height: 98, label: this.saving ? t("excavation.harvestBusy") : t("excavation.harvest"), variant: "primary", onClick: () => void this.harvest() });

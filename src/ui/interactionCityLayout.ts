@@ -24,7 +24,7 @@ export const INTERACTION_CITY_LOWER = { left: -415, right: 415, top: -72, bottom
  * 액자를 키운 것은 **눌러서 재화 안내를 여는 자리**이기도 하기 때문이다 — 엄지가 닿아야 하는
  * 칸이 작으면 옆 칸까지 함께 눌린다. 품목이 늘면 판을 키우지 않고 이 줄만 가로로 흐른다.
  */
-export const INTERACTION_CITY_REWARD_FRAME = { size: 104, gap: 20 } as const;
+export const INTERACTION_CITY_REWARD_FRAME = { size: 96, gap: 28 } as const;
 
 /**
  * 안내 원화 한 장과 그 아래 설명이 갖는 자리.
@@ -32,19 +32,19 @@ export const INTERACTION_CITY_REWARD_FRAME = { size: 104, gap: 20 } as const;
  * 원화를 낮춘 것은 아래 네 줄이 서로를 밟지 않을 만큼의 자리를 내주기 위해서다 — 판을 키우면
  * 위 칸의 파견대와 아래 조작이 함께 밀린다.
  */
-export const INTERACTION_CITY_BRIEF_ART = { height: 200, descriptionGap: 26, descriptionSize: 25 } as const;
+export const INTERACTION_CITY_BRIEF_ART = { height: 164, descriptionGap: 20, descriptionSize: 24 } as const;
 
 /**
  * 아래 칸 안내의 세로 차례 — **아래 칸 밑변에서부터 위로 재는 값**이다.
  *
- * 예전에는 "돌아오는 것" 이름표가 소요 시간과 **같은 줄에 겹쳐** 두 문장이 서로를 갉아먹었다.
- * 화면에서 눈대중으로 몇 픽셀씩 옮기지 않도록 네 줄의 차례를 한 표로 두고, 줄 사이가 실제로
- * 벌어지는지는 `tests/unit/interactionCityLayout.test.ts`가 지킨다.
+ * 위에서부터 **특화**(속성·직군·스쿼드 한 줄) → **예상 보상** 제목표(오른쪽에 소요 시간) →
+ * 보상 액자 → 액자마다의 범위 순이다. 화면에서 눈대중으로 몇 픽셀씩 옮기지 않도록 차례를 한
+ * 표로 두고, 줄 사이가 실제로 벌어지는지는 `tests/unit/interactionCityLayout.test.ts`가 지킨다.
  */
-export const INTERACTION_CITY_BRIEF_ROWS = { divider: -186, duration: -152, rewardLabel: -112, rewardFrames: -30 } as const;
+export const INTERACTION_CITY_BRIEF_ROWS = { specialty: -196, rewardLabel: -140, rewardFrames: -66, rewardRange: -4 } as const;
 
 /** 안내 줄의 글자 크기. 줄이 서로를 밟지 않는지 재려면 높이도 같은 표에서 나와야 한다. */
-export const INTERACTION_CITY_BRIEF_TEXT = { duration: 26, rewardLabel: 22 } as const;
+export const INTERACTION_CITY_BRIEF_TEXT = { duration: 26, rewardLabel: 26, specialty: 22, range: 22, badge: 46 } as const;
 
 /**
  * 아래 칸이 무엇을 보여 주든 주요 조작은 같은 높이에 선다. 발굴과 같은 자리다.

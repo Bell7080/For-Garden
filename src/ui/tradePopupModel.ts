@@ -1,7 +1,8 @@
 import type { ProductDto } from "../api/contracts";
 import { t } from "../i18n";
 import type { ProductCurrency } from "../data/products";
-import { tradePackageLimitLabel, tradePackageValuePercent } from "../data/tradePackages";
+import { tradeGemValue, tradePackageLimitLabel, tradePackageValuePercent } from "../data/tradePackages";
+import type { ProductRefresh } from "../data/products";
 
 /** 무역 UI가 서버 응답을 다시 방어해 trade storefront 상품만 보존한다. */
 export function tradePopupModel(products: readonly ProductDto[]): ProductDto[] {
@@ -26,6 +27,15 @@ export interface TradePackageView {
   cost?: TradePackageAmount;
   grants: readonly TradePackageAmount[];
   limitLabel: string;
+  /** 갱신 주기 — 카드 머리의 꼬리표와 카드 색이 이 값에서 나온다. */
+  refresh: ProductRefresh;
+  /** 꼬리표 글자(`계정당 한정`·`주간 특가`·`오늘의 특가`). */
+  tag: string;
+  /**
+   * 받는 것을 같은 재화로 따로 샀을 때의 값. 값 줄 옆에 **그어 지운 원가**로 서서 "이만큼
+   * 싸다"를 숫자 둘의 차이로 보인다. 값과 같은 재화로 환산할 수 없으면 비운다.
+   */
+  originalCost?: number;
   /** 남은 횟수가 없거나 서버가 막은 상품. 카드는 눌리지 않고 눌러 둔 채로 남는다. */
   soldOut: boolean;
   disabledReason?: string;
@@ -43,6 +53,10 @@ export function tradePackageViews(products: readonly ProductDto[]): TradePackage
       // 재화가 아닌 지급품(룬·장식)은 아직 이 전시장에 없다. 생기면 액자 그림만 늘린다.
       grants: product.grants.flatMap((grant) => grant.kind === "currency" ? [{ currency: grant.currency, amount: grant.amount }] : []),
       limitLabel: tradePackageLimitLabel(product.refresh, product.purchaseLimit, product.remaining),
+      refresh: product.refresh,
+      tag: t(`trade.tag.${product.refresh}`),
+      // 시세표가 젬 기준이라 값이 젬일 때만 같은 단위의 원가를 세운다.
+      originalCost: product.acquisition.kind === "currency" && product.acquisition.currency === "gems" && percent !== undefined ? Math.round(tradeGemValue(product.grants)) : undefined,
       soldOut: !product.purchasable || product.remaining <= 0,
       disabledReason: product.disabledReason,
     };

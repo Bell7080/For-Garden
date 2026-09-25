@@ -1,6 +1,12 @@
 import Phaser from "phaser";
+import { POPUP_TITLE_SIZE } from "./popupGeometry";
 import { t } from "../i18n";
-import { INTERACTION_DEPARTMENT_LABEL, interactionDurationLabel } from "../data/interactionCities";
+import { INTERACTION_DEPARTMENT_LABEL, interactionDurationLabel, type InteractionCity } from "../data/interactionCities";
+import { interactionRewardRange, interactionSpecialtyMatches, interactionYieldFactor } from "../core/interactionDispatch";
+import { SQUADS, squadEmblemKey } from "../data/factions";
+import { AffinityBadge } from "./AffinityBadge";
+import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
+import { addSectionTitle } from "./SectionTitle";
 import { addFramedIcon } from "./itemFrame";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import type { WalletItemKey } from "../data/items";
@@ -23,7 +29,7 @@ import {
 } from "./portraitGrid";
 import { addFormationRemoveChip, addFormationSlotPlate, addFormationSlotSelection } from "./formationSlotChrome";
 import { addPopupBackgroundImage, type PopupBackgroundImage } from "./backgrounds";
-import { chipPoints, drawLayer, drawHairline, HOLO } from "./holo";
+import { chipPoints, drawLayer, HOLO } from "./holo";
 import {
   INTERACTION_CITY_ACTION,
   INTERACTION_CITY_BRIEF_ART,
@@ -39,7 +45,7 @@ import type { PopupLayer } from "./PopupLayer";
 import { POPUP_BODY_BEVEL_RATIO } from "./popupGeometry";
 import { COLOR, textStyle } from "./theme";
 import { currencyRecordToRewardItems, openRewardPopup } from "./RewardPopup";
-import { interactionRemainingLabel, relicsAwayOnInteraction, autoAssignInteractionParty, type InteractionLayerView } from "./interactionLayerModel";
+import { interactionRemainingLabel, relicsAwayOnInteraction, autoAssignInteractionParty, interactionLayerViews, type InteractionLayerView } from "./interactionLayerModel";
 import { combatPower } from "../core/combatPower";
 import { tapFormationSlot, tapRosterRelic, toFormationSlots, formationMembers } from "../core/formationSlots";
 import { bindLongPress } from "./longPressInfo";
@@ -127,6 +133,8 @@ export class InteractionCityPopup {
   private clock?: Phaser.Time.TimerEvent;
   /** 지금 서버 시각. 씬이 서버와 맞춰 둔 시계를 그대로 받는다. */
   private now: () => number = () => Date.now();
+  /** 다른 도시에 나가 있는 카드의 남은 시간 글자와 그 파견이 끝나는 시각. 시계가 글자만 갈아 끼운다. */
+  private awayClocks: { text: Phaser.GameObjects.Text; completesAt: number }[] = [];
   /** 세워 둔 SD가 제자리에서 뛰는 tween. 그 SD를 버릴 때 함께 멈춘다. */
   private readonly hops = new Map<string, Phaser.Tweens.Tween>();
   private onChanged?: () => void;
@@ -149,7 +157,7 @@ export class InteractionCityPopup {
     const title = `${view.city.displayName} ${INTERACTION_DEPARTMENT_LABEL[view.city.department]}`;
     // 오른쪽 위 X 대신 **화면과 같은 우하단 뒤로가기**를 쓴다. 이 쪽지는 읽고 마는 쪽지가 아니라
     // 편성을 세우고 보내는 작업판이라, 닫는 손이 화면의 다른 작업판과 같은 자리에 있어야 한다.
-    this.body = this.popups.open({ width: PANEL.width, height: PANEL.height, title, titleSize: 34, dim: true, closeOnBackdrop: true, backButton: true, onClose: () => this.dispose() }, (body) => {
+    this.body = this.popups.open({ width: PANEL.width, height: PANEL.height, title, titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: true, backButton: true, onClose: () => this.dispose() }, (body) => {
       body.setName("interaction-city-popup");
       // **판 뒤에는 그 도시의 원화가 은은하게 깔린다.** 빈 남색 판 위에 칸과 글만 서면 어느
       // 도시의 쪽지인지 제목 한 줄로만 읽힌다. 아래 칸이 또렷하게 세우는 그 원화를 판 전체에
@@ -263,10 +271,34 @@ export class InteractionCityPopup {
   /** 초가 흐른 결과. 다녀온 순간에만 판 전체를 다시 그리고 그 밖에는 시계 글자만 갈아 끼운다. */
   private tickClock(): void {
     const view = this.view;
-    if (!view || !this.body || view.state !== "away") return;
+    if (!view || !this.body) return;
+    for (const { text, completesAt } of this.awayClocks) {
+      if (text.active) text.setText(interactionRemainingLabel(Math.max(0, completesAt - this.now())));
+    }
+    if (view.state !== "away") return;
     const remaining = this.remainingMs(view);
-    if (remaining <= 0) { this.onChanged?.(); return; }
+    // 다녀온 순간에는 판을 닫지 않고 **그 자리에서** 수령 대기로 넘어간다.
+    if (remaining <= 0) { this.adoptLatestView(); this.onChanged?.(); return; }
     this.remainingLabel?.setText(t("interaction.dispatched", { remaining: interactionRemainingLabel(remaining) }));
+  }
+
+  /** 세션의 파견 목록에서 이 도시의 지금 상태를 다시 읽어 판을 그 상태로 갈아 끼운다. */
+  private adoptLatestView(): void {
+    const cityId = this.view?.city.id;
+    if (!cityId) return;
+    const dispatches = session.interaction.slots.filter((slot): slot is InteractionDispatchSnapshot => slot !== null);
+    const next = interactionLayerViews(session.cleared, dispatches, this.now()).find((view) => view.city.id === cityId);
+    if (!next) return;
+    this.view = next;
+    if (next.state !== "idle") this.party = toFormationSlots(next.dispatch?.party ?? [], 3);
+    this.editing = false;
+    this.selectedSlot = undefined;
+    this.render();
+  }
+
+  /** 지금 세운 편성의 특성. 예상 보상과 보내기 버튼의 배율이 같은 값을 읽는다. */
+  private partyTraits(): { element: import("../core/types").Element; role: import("../core/types").Role; squad: import("../data/factions").SquadId }[] {
+    return formationMembers(this.party).flatMap((id) => { const relic = RELICS.find((candidate) => candidate.id === id); return relic ? [{ element: relic.element, role: relic.role, squad: relic.squad }] : []; });
   }
 
   /** 아래 칸 — 이 도시가 어떤 곳이고 얼마나 걸리며 무엇이 돌아오는가. */
@@ -291,21 +323,55 @@ export class InteractionCityPopup {
 
     const left = LOWER.left + 10;
     parent.add(this.scene.add.text(left, artY + artHeight / 2 + BRIEF_ART.descriptionGap, view.city.description, textStyle({ role: "body", size: BRIEF_ART.descriptionSize })).setWordWrapWidth(LOWER.right - LOWER.left - 20));
-    parent.add(drawHairline(this.scene, 0, LOWER.bottom + BRIEF_ROWS.divider, LOWER.right - LOWER.left - 40, { color: BLUE, alpha: 0.32 }));
-    parent.add(this.scene.add.text(left, LOWER.bottom + BRIEF_ROWS.duration, interactionDurationLabel(view.city.durationMinutes), textStyle({ role: "emphasis", size: BRIEF_TEXT.duration, color: COLOR.accentText })).setOrigin(0, 0.5));
+    this.renderSpecialty(parent, view.city, LOWER.bottom + BRIEF_ROWS.specialty);
 
-    // **돌아오는 것은 글이 아니라 액자다.** 재화 이름을 늘어놓으면 무엇이 오는지 읽어야 알지만,
-    // 액자 한 줄은 훑기만 해도 보인다. 품목이 늘면 판을 키우지 않고 **가로로 흐른다** — 판이
-    // 커지면 위 칸의 파견대와 아래 조작이 함께 밀린다.
-    parent.add(this.scene.add.text(left, LOWER.bottom + BRIEF_ROWS.rewardLabel, t("interaction.returning"), textStyle({ role: "emphasis", size: BRIEF_TEXT.rewardLabel, color: COLOR.inkDim })).setOrigin(0, 0.5));
+    // **돌아오는 것은 정해진 값이 아니라 범위다.** 제목표가 판의 이름을 말하고, 오른쪽 끝에 소요
+    // 시간이 선다. 범위는 지금 세운 편성으로 구한다 — 인원이 적거나 특화가 없으면 줄어든다.
+    const titleY = LOWER.bottom + BRIEF_ROWS.rewardLabel;
+    addSectionTitle(this.scene, LOWER.left, titleY, t("interaction.expected"), { size: BRIEF_TEXT.rewardLabel, parent });
+    parent.add(this.scene.add.text(LOWER.right - 10, titleY, interactionDurationLabel(view.city.durationMinutes), textStyle({ role: "emphasis", size: BRIEF_TEXT.duration, color: COLOR.accentText })).setOrigin(1, 0.5));
+    const traits = this.partyTraits();
+    // 아무도 세우지 않았으면 셋이 특화 없이 간 기준을 보여 준다 — 0으로 적으면 갈 이유가 사라진다.
+    const factor = traits.length > 0 ? interactionYieldFactor(view.city, traits) : 1;
     const rail = this.scene.add.container(0, LOWER.bottom + BRIEF_ROWS.rewardFrames);
     parent.add(rail);
     const step = REWARD_FRAME.size + REWARD_FRAME.gap;
     const startX = LOWER.left + 10 + REWARD_FRAME.size / 2;
-    const frames = view.city.rewards.map((entry, index) => addFramedIcon(this.scene, rail, startX + index * step, 0, REWARD_FRAME.size, CURRENCY_ICON_BY_WALLET[entry.currency], {
-      amount: formatCurrency(entry.amount),
-    }));
+    const frames = view.city.rewards.map((entry, index) => {
+      const range = interactionRewardRange(entry, factor);
+      const x = startX + index * step;
+      const frame = addFramedIcon(this.scene, rail, x, 0, REWARD_FRAME.size, CURRENCY_ICON_BY_WALLET[entry.currency], { plain: true });
+      const label = range.min === range.max ? formatCurrency(range.max) : `${formatCurrency(range.min)}~${formatCurrency(range.max)}`;
+      rail.add(this.scene.add.text(x, BRIEF_ROWS.rewardRange - BRIEF_ROWS.rewardFrames, label, textStyle({ role: "emphasis", size: BRIEF_TEXT.range, color: range.min === 0 ? "#a8ddf5" : COLOR.ink })).setOrigin(0.5).setShadow(0, 2, "#000000", 4, true, true));
+      return frame;
+    });
     this.attachRewardRail(parent, rail, view.city.rewards, frames);
+  }
+
+  /**
+   * 특화 한 줄 — 이 도시에 맞는 속성·직군·스쿼드.
+   *
+   * 글로 「물 속성·지원가」라고 적으면 목록의 카드와 대조해야 하지만, 카드 구석의 뱃지와 같은
+   * 그림이 서면 훑는 눈이 바로 짝을 찾는다. 스쿼드만 그림이 없는 자리를 이름이 맡는다.
+   */
+  private renderSpecialty(parent: Phaser.GameObjects.Container, city: InteractionCity, y: number): void {
+    const size = BRIEF_TEXT.badge;
+    const caption = this.scene.add.text(LOWER.left + 10, y, t("interaction.specialty"), textStyle({ role: "emphasis", size: BRIEF_TEXT.specialty, color: "#a8ddf5" })).setOrigin(0, 0.5);
+    parent.add(caption);
+    let x = caption.x + caption.width + 22 + size / 2;
+    for (const element of city.specialty.elements) { parent.add(new AffinityBadge(this.scene, x, y, ELEMENT_ICON[element], size, 0.6)); x += size + 8; }
+    for (const role of city.specialty.roles) { parent.add(new AffinityBadge(this.scene, x, y, ROLE_ICON[role], size * 0.86, 0.6)); x += size + 8; }
+    x += 6 - size / 2;
+    for (const squad of city.specialty.squads) {
+      const key = squadEmblemKey(squad);
+      if (this.scene.textures.exists(key)) {
+        parent.add(this.scene.add.image(x + size / 2, y, key).setDisplaySize(size, size));
+        x += size + 6;
+      }
+      const name = this.scene.add.text(x, y, SQUADS[squad].name, textStyle({ role: "emphasis", size: BRIEF_TEXT.specialty, color: COLOR.ink })).setOrigin(0, 0.5);
+      parent.add(name);
+      x += name.width + 18;
+    }
   }
 
   /**
@@ -378,9 +444,17 @@ export class InteractionCityPopup {
     this.rosterHint = undefined;
     parent.removeAll(true);
 
-    const away = relicsAwayOnInteraction(session.interaction.slots.filter((slot): slot is InteractionDispatchSnapshot => slot !== null));
-    const roster = RELICS.filter((relic) => session.owned.has(relic.id) && !away.has(relic.id));
+    const dispatches = session.interaction.slots.filter((slot): slot is InteractionDispatchSnapshot => slot !== null);
+    const away = relicsAwayOnInteraction(dispatches);
+    // **나가 있는 렐릭도 목록에 남긴다** — 지우면 어디 갔는지, 언제 돌아오는지를 화면이 말하지
+    // 못한다. 고를 수 있는 이가 먼저 서고, 나가 있는 이는 뒤에서 덮인 채 남은 시간을 든다.
+    const owned = RELICS.filter((relic) => session.owned.has(relic.id));
+    const available = owned.filter((relic) => !away.has(relic.id));
+    const roster = [...available, ...owned.filter((relic) => away.has(relic.id))];
+    const awayUntil = new Map<string, number>();
+    for (const dispatch of dispatches) if (!dispatch.claimed) for (const id of dispatch.party) awayUntil.set(id, Date.parse(dispatch.completesAt));
     this.rosterCards.clear();
+    this.awayClocks = [];
 
     this.rosterHint = this.scene.add.text(LOWER.left + 10, LOWER.top - 42, this.rosterHintText(), textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0.5);
     parent.add(this.rosterHint);
@@ -389,8 +463,9 @@ export class InteractionCityPopup {
     parent.add(new Button(this.scene, LOWER.right - 90, LOWER.top - 42, {
       width: 170, height: 52, fontSize: 22, label: t("interaction.autoPlace"), accentColor: BLUE,
       onClick: () => {
+        // 그 도시에 맞는 칸이 많은 이부터 세운다 — 같은 수끼리만 전투력으로 가른다.
         this.party = toFormationSlots(autoAssignInteractionParty(
-          roster.map((relic) => ({ id: relic.id, power: combatPower(relicProgression.getFinalStats(relic.id)) })),
+          available.map((relic) => ({ id: relic.id, power: combatPower(relicProgression.getFinalStats(relic.id)), specialty: interactionSpecialtyMatches(view.city, relic) })),
           view.city.partySize.max,
         ), 3);
         this.selectedSlot = undefined;
@@ -409,17 +484,27 @@ export class InteractionCityPopup {
       const progress = relicProgression.getProgress(relic.id);
       const x = formationRosterColumnX(ROSTER, index % ROSTER.columns);
       const y = portraitGridFirstRowY(0, ROSTER.cardHeight, PORTRAIT_GRID_MASK_GAP) + Math.floor(index / ROSTER.columns) * ROSTER.rowStep;
+      const matches = interactionSpecialtyMatches(view.city, relic);
       const card = new PortraitCard(this.scene, x, y, {
         width: ROSTER.cardWidth, height: ROSTER.cardHeight, relicId: relic.id,
         label: relic.name, level: progress.level, rarity: relic.rarity, breakthroughGrade: relicProgression.getBreakthroughGrade(relic.id),
         affinity: { element: relic.element, role: relic.role },
+        // 그 도시에 맞는 칸이 있으면 이름 아래에 몇 칸인지 선다 — 누가 더 가져올지가 카드에서 읽힌다.
+        ...(matches > 0 ? { sub: t("interaction.specialtyMatch", { count: matches }), subStyle: "accent" as const } : {}),
         // 이미 자리에 나가 있는 카드는 떠오르지 않고 눌려 들어간다.
         selectedStyle: "pressed",
       });
       card.setSelected(this.party.includes(relic.id));
       this.rosterCards.set(relic.id, card);
+      const until = awayUntil.get(relic.id);
+      if (until !== undefined) {
+        const clock = card.setAwayOverlay(t("interaction.awayOverlay"), interactionRemainingLabel(Math.max(0, until - this.now())));
+        this.awayClocks.push({ text: clock, completesAt: until });
+      }
       bindLongPress(this.scene, card.hit, {
         onTap: () => {
+          // 다른 도시에 나가 있는 이는 고를 수 없다 — 덮개와 남은 시간이 이미 그 이유를 말한다.
+          if (until !== undefined) return;
           // 이미 어느 칸에 선 렐릭이면 옮기지 않고 그 칸을 고른다.
           const result = tapRosterRelic(this.party, this.selectedSlot, relic.id);
           this.party = result.formation;
@@ -481,7 +566,9 @@ export class InteractionCityPopup {
     const send = new Button(this.scene, this.editing ? ACTION.primaryX : 0, ACTION.y, {
       width: this.editing ? ACTION.editingWidth : ACTION.width, height: this.editing ? ACTION.editingHeight : ACTION.height,
       label: this.busy ? t("interaction.sending") : t("interaction.send"),
-      sub: `${picked.length} / 3`, variant: "primary", accentColor: BLUE, accentTextColor: "#d9f3ff",
+      // 몇 명이 섰는지와 그 편성이 가져올 몫을 한 줄에 — 빈 자리가 얼마를 잃는지 누르기 전에 보인다.
+      sub: picked.length > 0 ? t("interaction.sendSub", { count: picked.length, factor: interactionYieldFactor(view.city, this.partyTraits()).toFixed(2) }) : `0 / 3`,
+      variant: "primary", accentColor: BLUE, accentTextColor: "#d9f3ff",
       onClick: () => void this.start(view),
     });
     send.setEnabled(!this.busy && picked.length >= view.city.partySize.min);
@@ -633,6 +720,7 @@ export class InteractionCityPopup {
     this.backdrop?.destroy(); this.backdrop = undefined;
     this.clock?.remove(false); this.clock = undefined;
     this.remainingLabel = undefined;
+    this.awayClocks = [];
     for (const tween of this.hops.values()) tween.stop();
     this.hops.clear();
     for (const puppet of this.puppets.values()) puppet.destroy();
@@ -656,7 +744,11 @@ export class InteractionCityPopup {
       // 보내는 순간에만 한 번 뛴다 — 서버가 답하는 동안 배웅이 지나가므로 기다림이 늘지 않는다.
       const farewell = this.hopFarewell();
       await Promise.all([this.manager.start(view.city.id, party), farewell]);
-      this.popups.closeAll();
+      // **판을 닫지 않는다.** 보낸 뒤 목록으로 튕겨 나가면 방금 보낸 파견이 어떻게 되었는지
+      // 확인하려고 그 층을 다시 눌러야 한다. 같은 판이 그 자리에서 「나가 있음」으로 바뀌고,
+      // 뒤의 목록만 조용히 맞춘다.
+      this.busy = false;
+      this.adoptLatestView();
       this.onChanged?.();
     } finally { this.busy = false; }
   }
@@ -666,10 +758,15 @@ export class InteractionCityPopup {
     const jumps = [...this.puppets].map(([relicId, puppet]) => new Promise<void>((resolve) => {
       this.stopHop(relicId);
       const tween = startPuppetHop(this.scene, puppet, Math.max(0, this.party.indexOf(relicId)), { once: true });
-      tween.once(Phaser.Tweens.Events.TWEEN_COMPLETE, () => { this.stopHop(relicId); resolve(); });
+      // 끝나든 도중에 멈추든 배웅은 끝난 것이다 — 멈춘 tween은 `complete`를 내지 않아, 그것만
+      // 기다리면 보내기가 「보내는 중」에서 영영 풀리지 않는다.
+      const done = (): void => { if (this.hops.get(relicId) === tween) this.hops.delete(relicId); resolve(); };
+      tween.once(Phaser.Tweens.Events.TWEEN_COMPLETE, done);
+      tween.once(Phaser.Tweens.Events.TWEEN_STOP, done);
       this.hops.set(relicId, tween);
     }));
-    await Promise.all(jumps);
+    // 연출은 손을 붙잡지 않는다 — 어떤 이유로든 늦으면 기다리지 않고 넘어간다.
+    await Promise.race([Promise.all(jumps), new Promise<void>((resolve) => setTimeout(resolve, 1600))]);
   }
 
   private async claim(dispatch: InteractionDispatchSnapshot | undefined): Promise<void> {
@@ -682,7 +779,7 @@ export class InteractionCityPopup {
       // 영수증은 공용 표기 한 장이 그린다 — 재화 키를 아이콘으로 바꾸는 표도 그쪽이 갖는다.
       openRewardPopup(this.scene, this.popups, {
         title: t("interaction.rewardTitle"),
-        items: currencyRecordToRewardItems({ [response.granted.currency]: response.granted.amount }),
+        items: currencyRecordToRewardItems(Object.fromEntries(response.granted.map(({ currency, amount }) => [currency, amount]))),
       });
     } finally { this.busy = false; }
   }

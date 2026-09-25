@@ -7,7 +7,11 @@ export const INTERACTION_JA = {
   "interaction.lockedByStage": "{stage} クリアで解放",
 
   "interaction.journal": "都市日誌",
-  "interaction.returning": "持ち帰るもの",
+  "interaction.expected": "予想報酬",
+  "interaction.specialty": "得意",
+  "interaction.specialtyMatch": "得意 {count}",
+  "interaction.awayOverlay": "派遣中",
+  "interaction.sendSub": "{count} / 3  ·  報酬 ×{factor}",
   "interaction.autoPlace": "自動配置",
   "interaction.noRelics": "送れるレリックがいない",
   "interaction.ownedRelics": "所持レリック",

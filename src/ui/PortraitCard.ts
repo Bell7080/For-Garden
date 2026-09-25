@@ -3,7 +3,7 @@ import type { Element, PortraitAssetId, RelicRarity, Role } from "../core/types"
 import { headCardFrame, loadPortraitTexture, portraitAssetFor, type PuppetAsset } from "../puppets/assets";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { mixWhite } from "../puppets/tints";
-import { chipPoints, HOLO } from "./holo";
+import { chipPoints, HOLO, toPoints } from "./holo";
 import { BACKGROUND } from "./backgrounds";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
@@ -410,22 +410,14 @@ export class PortraitCard extends Phaser.GameObjects.Container {
         // 그림이 차지하는 만큼만 띄운다.
         const currencyIconLead = subIconSize * 0.78;
         const subLeft = nameLeft + (options.subIcon ? (currencyRow ? currencyIconLead : subIconSize + 7) : 0);
-        // **재화 줄만 얇은 띠 하나를 뒤에 깐다.** 획 둘레를 두껍게 두르면 글자가 뭉개지고, 그렇다고
-        // 얇게만 두르면 노란 골드가 노란 옷 위에서 그대로 묻힌다. 글자 뒤로 낮게 깔린 어둠 한 겹이
-        // 대비를 원화와 무관하게 만들어 준다 — 카드 이름줄이 그라데이션 어둠 위에 앉는 것과 같다.
-        if (currencyRow) {
-          const bandTop = subBottom - subIconSize - 4;
-          const band = scene.add.graphics();
-          band.fillStyle(0x05070a, 0.5);
-          band.fillRect(-width / 2, bandTop, width, subIconSize + 10);
-          band.setMask(this.portraitMask.createGeometryMask());
-          this.add(band);
-        }
+        // **재화 줄은 띠를 깔지 않고 글자 둘레에만 그림자를 번지게 한다.** 카드 폭 전체를 가로지르는
+        // 검은 띠를 깔았을 때는 그 네모가 원화 위에 또렷한 선으로 남아 카드가 두 조각으로 갈려 보였다.
+        // 대비는 글자 자신이 진다 — 획 둘레로 어둠이 번지면 노란 골드도 노란 옷 위에서 떨어져 나온다.
         this.subText = scene.add
           .text(subLeft, currencyRow ? subBottom : baseline + 10, options.sub, textStyle({ role: "emphasis", size: subFontSize, color: currencyRow ? COLOR.ink : COLOR.accentText }))
           .setOrigin(0, currencyRow ? 1 : 0);
-        // 띠가 대비를 맡으므로 획 둘레는 **얕고 얇게**만 두른다 — 두꺼우면 획 사이가 메워진다.
-        if (currencyRow) this.subText.setStroke("#05070a", 2).setShadow(0, 1, "#05070a", 2, true, true);
+        // 획은 얇게 두르고(두꺼우면 획 사이가 메워진다) 그 밖으로 흐린 그림자를 넓게 번지게 한다.
+        if (currencyRow) this.subText.setStroke("#05070a", 3).setShadow(0, 2, "#000000", 10, true, true);
         this.add(this.subText);
         if (options.subIcon && scene.textures.exists(options.subIcon)) {
           const iconY = currencyRow ? subBottom - subIconSize / 2 + 2 : baseline + 10 + subIconSize / 2;
@@ -727,6 +719,25 @@ export class PortraitCard extends Phaser.GameObjects.Container {
         .setPosition(decomposed.translateX, decomposed.translateY + this.maskOffsetY * decomposed.scaleY)
         .setScale(decomposed.scaleX, decomposed.scaleY);
     }
+  }
+
+  /**
+   * 다른 곳에 나가 있어 지금은 고를 수 없는 카드 — **지우지 않고 덮는다.**
+   *
+   * 목록에서 빼 버리면 그 렐릭이 어디 갔는지, 언제 돌아오는지 화면이 말하지 못한다. 몸통 위에
+   * 반투명 검정을 한 겹 덮고 그 위에 푸른 글씨로 이유와 남은 시간을 세운다. 돌려받는 글자는
+   * 부른 쪽이 초마다 시간만 갈아 끼운다.
+   */
+  setAwayOverlay(label: string, remaining: string): Phaser.GameObjects.Text {
+    const veil = this.scene.add.graphics();
+    veil.fillStyle(0x05070a, 0.66);
+    veil.fillPoints(toPoints(this.chipShape), true);
+    const title = this.scene.add.text(0, -20, label, textStyle({ role: "display", size: Math.round(this.bodyHeight * 0.13), color: "#8fd3f5" })).setOrigin(0.5);
+    title.setShadow(0, 2, "#000000", 6, true, true);
+    const clock = this.scene.add.text(0, 22, remaining, textStyle({ role: "emphasis", size: Math.round(this.bodyHeight * 0.11), color: "#8fd3f5" })).setOrigin(0.5);
+    clock.setShadow(0, 2, "#000000", 6, true, true);
+    this.add([veil, title, clock]);
+    return clock;
   }
 
   /**

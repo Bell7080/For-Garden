@@ -7,13 +7,13 @@ import { bountyEntriesRemaining, bountyRunCost, consumeBountyEntry, isBountyTier
 import { BOUNTY, getBountyTier } from "../data/bounty";
 import { BREAKTHROUGH_CAP, breakthroughFragmentCost, canBreakThrough, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap, BREAKTHROUGH_GRADE_CAP, breakthroughGrade } from "../core/relicProgression";
 import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond";
-import { MAX_RESEARCH_POINTS, MISSIONS, RESEARCH_REWARD_STAGES, addResearchPoints, applyMissionEvent, claimResearchStages, claimableMissionIds, normalizeMissions, researchPointsForClaim, researchStageClaimId, type MissionPeriod } from "../core/missions";
+import { MISSIONS, RESEARCH_REWARD_STAGES, maxResearchPoints, mergeMissionRewards, type MissionReward, addResearchPoints, applyMissionEvent, claimResearchStages, claimableMissionIds, normalizeMissions, researchPointsForClaim, researchStageClaimId, type MissionPeriod } from "../core/missions";
 import { DAILY_RESTORATION, getStage } from "../data/stages";
 import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
 import { createInitialRelicProgress, replaceSession, session, type RaidInstanceState, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
 import { INTERACTION_CITIES, findInteractionCity } from "../data/interactionCities";
-import { interactionDurationMs, interactionRewardWeights, isInteractionCityUnlocked, isInteractionDispatchComplete, validateInteractionFormation, type InteractionMemberTraits } from "../core/interactionDispatch";
+import { interactionDurationMs, isInteractionCityUnlocked, isInteractionDispatchComplete, rollInteractionRewards, validateInteractionFormation, type InteractionMemberTraits } from "../core/interactionDispatch";
 import type {
   PurchaseRelicSkinRequest, PurchaseRelicSkinResponse, ClaimInteractionDispatchRequest, ClaimInteractionDispatchResponse, InteractionCitiesResponse, InteractionDispatchResponse, StartInteractionDispatchRequest } from "./contracts";
 import { ProfileModifierManager } from "../managers/ProfileModifierManager";
@@ -168,6 +168,12 @@ export class FakeServer implements GameApi {
     this.notificationScheduler = options.notificationScheduler ?? (state === session ? settingsManager : undefined);
     // 절대 시각을 고정해 테스트와 개발 빌드에서 내용·순서가 언제나 같게 한다.
     this.mails = [
+      { id: "launch-gift", title: t("mail.launch.title"), sender: t("mail.launch.sender"), body: t("mail.launch.body"), sentAt: "2026-08-30T00:00:00.000Z", expiresAt: "2099-12-31T23:59:59.000Z", read: false, claimed: false, rewards: [
+        { kind: "currency", currency: "gems", amount: 300 }, { kind: "currency", currency: "gold", amount: 50_000 }, { kind: "currency", currency: "cheesecake", amount: 200 },
+        { kind: "currency", currency: "fossil", amount: 30 }, { kind: "currency", currency: "amber", amount: 10 }, { kind: "currency", currency: "dnaFragments", amount: 20 },
+        { kind: "item", itemId: "stamina-tonic", amount: 3 }, { kind: "item", itemId: "ancient-core", amount: 2 },
+      ] },
+      { id: "update-notice", title: t("mail.update.title"), sender: t("mail.update.sender"), body: t("mail.update.body"), sentAt: "2026-08-30T00:00:00.000Z", expiresAt: null, read: false, claimed: false, rewards: [] },
       { id: "welcome-supply", title: t("mail.welcome.title"), sender: t("mail.welcome.sender"), body: t("mail.welcome.body"), sentAt: "2026-08-29T00:00:00.000Z", expiresAt: "2099-12-31T23:59:59.000Z", read: false, claimed: false, rewards: [{ kind: "currency", currency: "gold", amount: 1200 }] },
       { id: "field-notice", title: t("mail.notice.title"), sender: t("mail.notice.sender"), body: t("mail.notice.body"), sentAt: "2026-08-28T00:00:00.000Z", expiresAt: null, read: false, claimed: false, rewards: [] },
       { id: "archive-gift", title: t("mail.archive.title"), sender: t("mail.archive.sender"), body: t("mail.archive.body"), sentAt: "2026-08-27T00:00:00.000Z", expiresAt: null, read: true, claimed: true, rewards: [{ kind: "currency", currency: "gems", amount: 10 }] },
@@ -175,9 +181,9 @@ export class FakeServer implements GameApi {
     ];
   }
 
-  /** 이름 대신 렐릭 정적 태그만 파견 규칙 입력으로 투영한다. */
+  /** 이름 대신 렐릭의 정적 특성(속성·직군·스쿼드)만 파견 규칙 입력으로 투영한다. */
   private interactionTraits(ids: readonly string[]): InteractionMemberTraits[] {
-    return ids.map(id => { const relic = RELICS.find(candidate => candidate.id === id)!; return { id, element: relic.element, squad: relic.squad, tags: relic.squad === "gear" ? ["night-gear"] : [] }; });
+    return ids.map(id => { const relic = RELICS.find(candidate => candidate.id === id)!; return { id, element: relic.element, role: relic.role, squad: relic.squad }; });
   }
 
   async getInteractionCities(): Promise<InteractionCitiesResponse> { await this.delay(); return { cities: INTERACTION_CITIES.map(city => ({ ...city, unlocked: isInteractionCityUnlocked(city, this.state.cleared) })), serverTime: this.now().toISOString() }; }
@@ -199,16 +205,18 @@ export class FakeServer implements GameApi {
     const away = new Set(this.state.interaction.slots.flatMap((slot) => slot && !slot.claimed ? slot.party : []));
     if (request.party.some((id) => away.has(id))) throw new GameApiError("INVALID_STATE", "이미 파견 중인 렐릭입니다.");
     const error = validateInteractionFormation(request.party, this.state.owned); if (error) throw new GameApiError("INVALID_STATE", `교류 편성이 올바르지 않습니다: ${error}`);
-    const now = this.now(); const traits = this.interactionTraits(request.party); const weights = interactionRewardWeights(city.rewards, traits); const roll = this.random() * weights.reduce((a, b) => a + b, 0);
-    let cursor = 0; const rewardIndex = Math.max(0, weights.findIndex(weight => (cursor += weight) > roll)); const reward = city.rewards[rewardIndex];
+    const now = this.now(); const traits = this.interactionTraits(request.party);
+    // 돌아올 것은 출발하는 순간 모두 굴려 둔다 — 인원과 특화가 그 양을 정한다.
+    const rewards = rollInteractionRewards(city, traits, this.random);
     // **같은 시각에 두 곳으로 나가도 id가 겹치지 않아야 한다.** 시각과 난수만으로 만들면 시계가
     // 멈춘 테스트나 같은 밀리초의 연속 출발에서 같은 id가 나오고, 그러면 수령이 엉뚱한 파견을
     // 집는다. 계정 안에서 증가하는 번호를 함께 넣는다.
     const sequence = `${now.getTime()}-${Math.floor(this.random() * 1e9)}-${(this.interactionSequence += 1)}`;
-    const dispatch = { dispatchId: `interaction-${sequence}`, cityId: city.id, startedAt: now.toISOString(), completesAt: new Date(now.getTime() + interactionDurationMs(city, traits)).toISOString(), party: [...request.party], rewardSeed: sequence, reward: { currency: reward.currency, amount: reward.amount }, claimed: false };
+    const dispatch = { dispatchId: `interaction-${sequence}`, cityId: city.id, startedAt: now.toISOString(), completesAt: new Date(now.getTime() + interactionDurationMs(city)).toISOString(), party: [...request.party], rewardSeed: sequence, rewards, claimed: false };
     // 수령이 끝난 자리를 먼저 재사용하고, 없으면 새 자리를 잇는다.
     const free = this.state.interaction.slots.findIndex((slot) => slot === null || slot.claimed);
     if (free >= 0) this.state.interaction.slots[free] = dispatch; else this.state.interaction.slots.push(dispatch);
+    this.state.missions = applyMissionEvent(this.state.missions, { type: "interaction_dispatched" }, now);
     saveManager.save(this.state); return this.interactionDispatchResponse();
   }
 
@@ -218,8 +226,15 @@ export class FakeServer implements GameApi {
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "교류 수령 요청 ID가 필요합니다.");
     const now = this.now(); const dispatch = this.state.interaction.slots.find((slot) => slot?.dispatchId === request.dispatchId) ?? null;
     if (!dispatch || dispatch.dispatchId !== request.dispatchId || !isInteractionDispatchComplete(dispatch.completesAt, now.getTime())) throw new GameApiError("INVALID_STATE", "완료된 교류 파견이 아닙니다.");
-    const alreadyClaimed = dispatch.claimed; if (!alreadyClaimed) { this.state.wallet[dispatch.reward.currency] += dispatch.reward.amount; dispatch.claimed = true; this.state.interaction.claimedRequestIds.push(request.requestId); }
-    const response = { ...this.interactionDispatchResponse(), serverTime: now.toISOString(), granted: alreadyClaimed ? { ...dispatch.reward, amount: 0 } : { ...dispatch.reward }, alreadyClaimed, wallet: { ...this.state.wallet } };
+    const alreadyClaimed = dispatch.claimed;
+    // 상한을 넘기는 몫은 던지지 않고 깎아서 준다 — 영수증도 실제로 들어간 양만 싣는다.
+    const granted = alreadyClaimed ? [] : dispatch.rewards.map(({ currency, amount }) => {
+      const applied = Math.max(0, Math.min(amount, WALLET_CAPS[currency] - this.state.wallet[currency]));
+      this.state.wallet[currency] += applied;
+      return { currency, amount: applied };
+    });
+    if (!alreadyClaimed) { dispatch.claimed = true; this.state.interaction.claimedRequestIds.push(request.requestId); }
+    const response = { ...this.interactionDispatchResponse(), serverTime: now.toISOString(), granted, alreadyClaimed, wallet: { ...this.state.wallet } };
     this.interactionClaimResults.set(request.requestId, structuredClone(response)); saveManager.save(this.state); return response;
   }
 
@@ -842,8 +857,12 @@ export class FakeServer implements GameApi {
     if (cached) return { ...cached, excavation: this.cloneExcavation(cached.excavation), wallet: { ...cached.wallet }, granted: { ...cached.granted }, discarded: { ...cached.discarded }, remaining: { ...cached.remaining } };
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "수확 요청 ID가 필요합니다.");
     const now = this.now(); const settled = settleIdleExcavation(this.state.idleExcavation, now, RELICS, this.state.relicProgress);
-    const result = harvestIdleExcavation(settled, this.state.wallet); const nextState = { ...this.state, idleExcavation: result.state, wallet: result.wallet };
-    this.persist(nextState); this.state.idleExcavation = result.state; this.state.wallet = result.wallet;
+    const result = harvestIdleExcavation(settled, this.state.wallet);
+    // 실제로 걷어 들인 것이 있을 때만 수확 임무를 센다 — 빈 손으로 누른 것은 수확이 아니다.
+    const harvested = Object.values(result.granted).some((amount) => (amount ?? 0) > 0);
+    const nextMissions = harvested ? applyMissionEvent(this.state.missions, { type: "excavation_harvested" }, now) : this.state.missions;
+    const nextState = { ...this.state, idleExcavation: result.state, wallet: result.wallet, missions: nextMissions };
+    this.persist(nextState); this.state.idleExcavation = result.state; this.state.wallet = result.wallet; this.state.missions = nextMissions;
     // 응답의 기준 시각·잔량·지갑은 같은 persist가 성공한 바로 그 트랜잭션 스냅샷이다.
     const response = { ...this.idleExcavationResponse(result.state, now), wallet: { ...result.wallet }, granted: { ...result.granted }, discarded: { ...result.discarded }, remaining: { ...result.state.unclaimed } };
     this.excavationHarvestResults.set(request.requestId, response); return response;
@@ -1077,11 +1096,11 @@ export class FakeServer implements GameApi {
     this.settleStaminaNow();
     const cost = CONTENT_STAMINA_COSTS.normalStage;
     if (this.state.wallet.stamina < cost) throw new GameApiError("INSUFFICIENT_STAMINA", "스테미나가 부족합니다.");
-    const { wallet: nextWallet, playerResearch: nextResearch } = this.spendStamina(cost);
+    const { wallet: nextWallet, playerResearch: nextResearch, missions: spentMissions } = this.spendStamina(cost);
     // 가챠·성장 API처럼 다음 상태를 먼저 저장해야 저장 실패 시 공유 메모리 지갑이 호출 전 값으로 보존된다.
-    this.persist({ ...this.state, wallet: nextWallet, playerResearch: nextResearch });
+    this.persist({ ...this.state, wallet: nextWallet, playerResearch: nextResearch, missions: spentMissions });
     // 영속화가 성공한 뒤에만 공유 참조를 교체해 응답 스냅샷도 실제로 확정된 잔액을 기준으로 만든다.
-    this.state.wallet = nextWallet; this.state.playerResearch = nextResearch;
+    this.state.wallet = nextWallet; this.state.playerResearch = nextResearch; this.state.missions = spentMissions;
     const pending = this.pendingStageAdmissions.get(request.stageId) ?? new Set<string>();
     pending.add(request.requestId);
     this.pendingStageAdmissions.set(request.stageId, pending);
@@ -1173,10 +1192,10 @@ export class FakeServer implements GameApi {
     if (cached) return structuredClone(cached);
     const now = this.now();
     const run = this.assertCakeRun(request, now);
-    const { wallet: nextWallet, playerResearch: nextResearch } = this.spendStamina(run.staminaCost);
+    const { wallet: nextWallet, playerResearch: nextResearch, missions: spentMissions } = this.spendStamina(run.staminaCost);
     // 다른 API와 같이 저장이 성공한 뒤에만 공유 지갑을 교체해, 저장 실패가 잔액을 지우지 않게 한다.
-    this.persist({ ...this.state, wallet: nextWallet, playerResearch: nextResearch });
-    this.state.wallet = nextWallet; this.state.playerResearch = nextResearch;
+    this.persist({ ...this.state, wallet: nextWallet, playerResearch: nextResearch, missions: spentMissions });
+    this.state.wallet = nextWallet; this.state.playerResearch = nextResearch; this.state.missions = spentMissions;
     const pending = this.pendingCakeAdmissions.get(run.tier.id) ?? new Set<string>();
     pending.add(request.requestId);
     this.pendingCakeAdmissions.set(run.tier.id, pending);
@@ -1238,9 +1257,9 @@ export class FakeServer implements GameApi {
     const run = this.assertCakeRun(request, now);
     // 해금은 "직전 단계까지 이겼나"이고 소탕은 "이 단계를 이겼나"다. 한 칸 차이라 따로 묻는다.
     if (cakeOperationTierIndex(run.tier.id) > this.state.cakeOperation.clearedIndex) throw new GameApiError("CAKE_TIER_LOCKED", "아직 한 번도 이기지 않은 단계는 소탕할 수 없습니다.");
-    const { wallet: nextWallet, playerResearch: nextResearch } = this.spendStamina(run.staminaCost);
+    const { wallet: nextWallet, playerResearch: nextResearch, missions: spentMissions } = this.spendStamina(run.staminaCost);
     const granted = this.grantDungeonRewards(nextWallet, run.rewards);
-    const nextMissions = applyMissionEvent(this.state.missions, { type: "battle_completed", victory: true }, now);
+    const nextMissions = applyMissionEvent(spentMissions, { type: "battle_completed", victory: true }, now);
     this.persist({ ...this.state, wallet: nextWallet, playerResearch: nextResearch, missions: nextMissions });
     this.state.wallet = nextWallet; this.state.playerResearch = nextResearch; this.state.missions = nextMissions;
     const response: CakeOperationSweepResponse = {
@@ -1326,10 +1345,10 @@ export class FakeServer implements GameApi {
     if (cached) return structuredClone(cached);
     const now = this.now();
     const run = this.assertBountyRun(request, now);
-    const { wallet: nextWallet, playerResearch: nextResearch } = this.spendStamina(run.staminaCost);
+    const { wallet: nextWallet, playerResearch: nextResearch, missions: spentMissions } = this.spendStamina(run.staminaCost);
     // 저장이 성공한 뒤에만 공유 참조를 바꿔, 실패해도 지갑이 호출 전 값으로 남게 한다.
-    this.persist({ ...this.state, wallet: nextWallet, playerResearch: nextResearch, bounty: run.nextBounty });
-    this.state.wallet = nextWallet; this.state.playerResearch = nextResearch; this.state.bounty = run.nextBounty;
+    this.persist({ ...this.state, wallet: nextWallet, playerResearch: nextResearch, missions: spentMissions, bounty: run.nextBounty });
+    this.state.wallet = nextWallet; this.state.playerResearch = nextResearch; this.state.missions = spentMissions; this.state.bounty = run.nextBounty;
     this.pendingBountyRuns.set(request.requestId, run.tier.id);
     const response = {
       ...this.snapshot(), tierId: run.tier.id, requestId: request.requestId, multiplier: run.multiplier, staminaSpent: run.staminaCost,
@@ -1350,9 +1369,9 @@ export class FakeServer implements GameApi {
     const now = this.now();
     const run = this.assertBountyRun(request, now);
     if (!run.nextBounty.clearedTierIds.includes(run.tier.id)) throw new GameApiError("BOUNTY_TIER_LOCKED", "아직 한 번도 이기지 않은 등급은 소탕할 수 없습니다.");
-    const { wallet: nextWallet, playerResearch: nextResearch } = this.spendStamina(run.staminaCost);
+    const { wallet: nextWallet, playerResearch: nextResearch, missions: spentMissions } = this.spendStamina(run.staminaCost);
     const granted = this.grantDungeonRewards(nextWallet, run.rewards);
-    const nextMissions = applyMissionEvent(this.state.missions, { type: "battle_completed", victory: true }, now);
+    const nextMissions = applyMissionEvent(spentMissions, { type: "battle_completed", victory: true }, now);
     this.persist({ ...this.state, wallet: nextWallet, playerResearch: nextResearch, bounty: run.nextBounty, missions: nextMissions });
     this.state.wallet = nextWallet; this.state.playerResearch = nextResearch; this.state.bounty = run.nextBounty; this.state.missions = nextMissions;
     const response: SweepBountyResponse = {
@@ -1442,26 +1461,36 @@ export class FakeServer implements GameApi {
       if (normalized.claimedIds.includes(id)) throw new GameApiError("MISSION_ALREADY_CLAIMED", "이미 수령한 임무입니다.");
       if ((normalized.progress[id] ?? 0) < mission.target) throw new GameApiError("MISSION_NOT_COMPLETE", "완료하지 않은 임무입니다.");
     }
-    const missionCheesecake = uniqueIds.reduce((sum, id) => sum + (MISSIONS.find((mission) => mission.id === id)?.rewardCheesecake ?? 0), 0);
+    const missionRewards = mergeMissionRewards(uniqueIds.map((id) => MISSIONS.find((mission) => mission.id === id)!.reward));
     // **연구도는 수령이 올린다.** 완료하는 순간 저 혼자 차오르면 보상을 받는 손에는 아무 일도
     // 일어나지 않아 두 값이 따로 논다. 그래서 이 자리에서 먼저 더한 뒤, 그 오른 값으로 단계
     // 보상을 판정한다 — 일괄 수령이 게이지를 채우고 그 단계 보상까지 한 번에 주게 하려는 것이다.
     let nextMissions = addResearchPoints({ ...normalized, claimedIds: [...normalized.claimedIds, ...uniqueIds] }, researchPointsForClaim(uniqueIds));
+    // 일일 임무를 받은 수는 주간 임무 하나가 센다 — 같은 수령 안에서 확정해야 두 기록이 갈리지 않는다.
+    const dailyClaims = uniqueIds.filter((id) => MISSIONS.find((mission) => mission.id === id)?.period === "daily").length;
+    if (dailyClaims > 0) nextMissions = applyMissionEvent(nextMissions, { type: "daily_mission_claimed", count: dailyClaims }, this.now());
     const periods = researchPeriod ? [researchPeriod] : [...new Set(uniqueIds.map((id) => MISSIONS.find((mission) => mission.id === id)?.period).filter((period): period is MissionPeriod => period !== undefined))];
     const claimedResearchStageIds: string[] = [];
-    let researchCheesecake = 0;
+    const researchRewards: MissionReward[] = [];
     for (const period of periods) {
       const result = claimResearchStages(nextMissions, period, researchPeriod === period ? researchStageIds : undefined);
-      nextMissions = result.state; researchCheesecake += result.cheesecakeEarned;
+      nextMissions = result.state; researchRewards.push(...result.rewards);
       claimedResearchStageIds.push(...result.claimedStageIds.map((id) => researchStageClaimId(period, id)));
     }
-    const cheesecakeEarned = missionCheesecake + researchCheesecake;
-    const nextWallet = { ...this.state.wallet, cheesecake: this.state.wallet.cheesecake + cheesecakeEarned };
+    // 상한을 넘기는 몫은 던지지 않고 깎아서 준다 — 영수증도 실제로 들어간 양만 싣는다.
+    const nextWallet = { ...this.state.wallet };
+    const credit = (rewards: readonly MissionReward[]): MissionReward[] => rewards.map(({ currency, amount }) => {
+      const applied = Math.max(0, Math.min(amount, WALLET_CAPS[currency] - nextWallet[currency]));
+      nextWallet[currency] += applied;
+      return { currency, amount: applied };
+    });
+    const mission = credit(missionRewards);
+    const research = credit(mergeMissionRewards(researchRewards));
     // 임무/업적 보상과 그 조건으로 열린 수식어를 같은 nextState와 단 한 번의 persist로 확정한다.
     const nextState = ProfileModifierManager.applyRewardReceipt({ ...this.state, missions: nextMissions, wallet: nextWallet }, { claimedIds: uniqueIds, claimedResearchStageIds });
     this.persist(nextState);
     this.state.missions = nextMissions; this.state.wallet = nextWallet; this.state.earnedProfileModifierIds = nextState.earnedProfileModifierIds;
-    return { ...this.snapshot(), claimedIds: uniqueIds, claimedResearchStageIds, rewards: { missionCheesecake, researchCheesecake, cheesecake: cheesecakeEarned }, cheesecakeEarned };
+    return { ...this.snapshot(), claimedIds: uniqueIds, claimedResearchStageIds, rewards: { mission, research }, granted: mergeMissionRewards([...mission, ...research]) };
   }
 
   /** 서버 시각의 노출 기간과 현재 제한 주기를 반영해 공용 카탈로그를 조회한다. */
@@ -2129,8 +2158,8 @@ export class FakeServer implements GameApi {
   /** 두 탭이 같은 스냅샷을 그리도록 기간별 연구도와 마디 상태를 한 응답에 묶는다. */
   private missionListDto(normalized = normalizeMissions(this.state.missions, this.now())): MissionListResponse {
     const research = Object.fromEntries((["daily", "weekly"] as const).map((period) => [period, {
-      points: normalized.researchPoints[period], maxPoints: MAX_RESEARCH_POINTS,
-      stages: RESEARCH_REWARD_STAGES.map((stage) => ({ ...stage, achieved: normalized.researchPoints[period] >= stage.threshold, claimed: normalized.claimedResearchStageIds.includes(researchStageClaimId(period, stage.id)) })),
+      points: normalized.researchPoints[period], maxPoints: maxResearchPoints(period),
+      stages: RESEARCH_REWARD_STAGES[period].map((stage) => ({ ...stage, rewards: stage.rewards.map((reward) => ({ ...reward })), achieved: normalized.researchPoints[period] >= stage.threshold, claimed: normalized.claimedResearchStageIds.includes(researchStageClaimId(period, stage.id)) })),
     }])) as MissionListResponse["research"];
     const stageClaimable = Object.values(research).reduce((sum, value) => sum + value.stages.filter((stage) => stage.achieved && !stage.claimed).length, 0);
     return { missions: this.missionDtos(), claimableCount: claimableMissionIds(normalized).length + stageClaimable, research };
@@ -2150,11 +2179,13 @@ export class FakeServer implements GameApi {
    * 싸울 수 있다"로 읽혀야 한다 — 상한만 넓히고 비워 두면 오른 순간이 "이제 못 한다"로 읽힌다.
    * 이미 상한을 넘겨 가진 몫(토닉 등)은 깎지 않는다.
    */
-  private spendStamina(cost: number): { wallet: Session["wallet"]; playerResearch: Session["playerResearch"] } {
+  private spendStamina(cost: number): { wallet: Session["wallet"]; playerResearch: Session["playerResearch"]; missions: Session["missions"] } {
     const grant = grantPlayerExperience(this.state.playerResearch, playerExpForStamina(cost));
     const remaining = this.state.wallet.stamina - cost;
     const stamina = grant.levelsGained > 0 ? Math.max(remaining, staminaMaxForResearchLevel(grant.progress.level)) : remaining;
-    return { wallet: { ...this.state.wallet, stamina }, playerResearch: grant.progress };
+    // 스테미나 임무도 이 한 곳에서만 센다 — 입장 API마다 적으면 새 입장이 빠뜨린다.
+    const missions = applyMissionEvent(this.state.missions, { type: "stamina_spent", amount: cost }, this.now());
+    return { wallet: { ...this.state.wallet, stamina }, playerResearch: grant.progress, missions };
   }
 
   private persist(next: Session): void {

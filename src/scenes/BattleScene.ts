@@ -65,7 +65,7 @@ import { anyPopupOpen, PopupLayer } from "../ui/PopupLayer";
 import { cakeOperationEnemies, cakeOperationRole, getCakeOperationTier } from "../data/cakeOperation";
 import { battleArena } from "../core/battleArena";
 import { createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, createRaidSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type CakeBattleInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
-import { raidBossDef, raidBossPercentHpBasis } from "../core/raid";
+import { raidBossDef, raidBossPercentHpBasis, raidKillTicks } from "../core/raid";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import { expeditionManager, ExpeditionBossSettlementError, ExpeditionBossSettlementFlow } from "../managers/ExpeditionManager";
 import { settingsManager } from "../managers/SettingsManager";
@@ -325,7 +325,7 @@ export class BattleScene extends Phaser.Scene {
    * 레이드의 시즌 줄. 들어올 때 서버가 확정한 남은 체력에서 이번 판의 점수만큼 매 프레임
    * 깎아 그린다 — 조회가 도착하기 전에는 세우지 않는다(조회 중을 글로 말하지 않는다).
    */
-  private raidSeasonHud?: { bar: HoloBar; value: Phaser.GameObjects.Text; remaining: number; total: number; shown: number };
+  private raidSeasonHud?: { bar: HoloBar; value: Phaser.GameObjects.Text; kills: Phaser.GameObjects.Text; remaining: number; total: number; bodyHp: number; killCount: number; shown: number };
   /** 화면 맨 위에서 쉬지 않고 도는 진행 시간. 전투가 끝나면 그 자리에 멈춘다. */
   private clockLabel?: Phaser.GameObjects.Text;
   /** 데스 카운트가 도는 동안 화면 네 변에서 스며드는 붉은 워시. 한 번 그리고 진하기만 바꾼다. */
@@ -434,15 +434,16 @@ export class BattleScene extends Phaser.Scene {
     const left = hud.centerX - hud.bar.width / 2;
     const right = hud.centerX + hud.bar.width / 2;
     const stroke = (text: Phaser.GameObjects.Text): Phaser.GameObjects.Text => text.setStroke("#000000", 5).setShadow(0, 3, "#000000", 4, false, true).setDepth(hud.depth);
-    stroke(this.add.text(left, hud.labelY, t("raid.boss.remaining"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
+    const hpLabel = stroke(this.add.text(left, hud.labelY, t("raid.boss.remaining"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
+    const kills = stroke(this.add.text(hpLabel.x + hpLabel.width + 16, hud.labelY, "", textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0.5));
     stroke(this.add.text(right, hud.labelY, getRelic(season.bossRelicId).name, textStyle({ role: "display", size: 28, color: COLOR.ink })).setOrigin(1, 0.5));
     const bar = new HoloBar(this, hud.centerX, hud.bar.y, hud.bar.width, hud.bar.height, {
-      color: RAID_HP_BAR_COLOR, trackAlpha: 0.82, outline: true, ticks: hud.bar.ticks,
+      color: RAID_HP_BAR_COLOR, trackAlpha: 0.82, outline: true, ticks: raidKillTicks(season.kills, hud.bar.ticks),
       shadow: { offsetY: 6, alpha: 0.6 }, glow: { spread: 6, alpha: 0.24 },
     });
     bar.objects.forEach((object) => object.setDepth(hud.depth));
     const value = stroke(this.add.text(left, hud.valueY, "", textStyle({ role: "display", size: 24, color: COLOR.ink })).setOrigin(0, 0.5));
-    this.raidSeasonHud = { bar, value, remaining: season.remainingHp, total: season.totalHp, shown: -1 };
+    this.raidSeasonHud = { bar, value, kills, remaining: season.remainingHp, total: season.totalHp, bodyHp: season.bossBodyHp, killCount: season.kills, shown: -1 };
     this.paintRaidSeasonHud();
   }
 
@@ -455,6 +456,9 @@ export class BattleScene extends Phaser.Scene {
     hud.shown = remaining;
     hud.bar.setValue(hud.total > 0 ? remaining / hud.total : 0);
     hud.value.setText(`${remaining.toLocaleString()} / ${hud.total.toLocaleString()}`);
+    // 머리 위 체력 바 한 줄을 비울 때마다 이 수가 하나 오른다 — 두 줄이 같은 단위다.
+    const done = Math.min(hud.killCount, Math.floor(Math.max(0, hud.total - remaining) / Math.max(1, hud.bodyHp)));
+    hud.kills.setText(t("raid.boss.kills", { done, kills: hud.killCount }));
   }
 
   /** Phaser scene data를 명시 DTO로 받아 일반 스테이지와 원정 결과 경계를 분리한다. */

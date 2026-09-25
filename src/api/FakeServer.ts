@@ -39,7 +39,7 @@ import { archaeologySiteAvailability } from "../core/archaeologyMap";
 import type { AbandonStrataRunRequest, ArchaeologyStateResponse, DigStrataTileRequest, DigStrataTileResponse, GrantRuneTraitRequest, GrantRuneTraitResponse, RerollRuneTraitRequest, RerollRuneTraitResponse, ResolveRuneTraitRerollRequest, ResolveRuneTraitRerollResponse, StartStrataRunRequest, UpgradeRuneTraitRequest, UpgradeRuneTraitResponse } from "./contracts";
 import { findItem, type WalletItemKey } from "../data/items";
 import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_COMPLETED_KEEP_HOURS, RAID_DIFFICULTY, RAID_RUN_GOLD_PER_DAMAGE, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM } from "../data/raid";
-import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonContributions, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../core/raid";
+import { mockFriendRaids, mockRaidContributions, raidKillProgress, mockRaidWorldDamage, mockSummonContributions, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../core/raid";
 import { battleArena } from "../core/battleArena";
 import { staminaCurrencyRecharge } from "../data/staminaRecharge";
 import { settleStamina, staminaMaxForPlayer, staminaMaxForResearchLevel, staminaTiming } from "../core/stamina";
@@ -430,6 +430,7 @@ export class FakeServer implements GameApi {
     const progress = raidSeasonProgress(others + instance.myDamage, spec.totalHp);
     const completed = progress.defeated || now.getTime() >= Date.parse(instance.endsAt);
     const growth = raidBossGrowth(instance.difficulty);
+    const killProgress = raidKillProgress(progress.dealtDamage, instance.difficulty);
     const rewardOf = (currency: WalletItemKey, amount: number): RaidRewardDto => ({ currency, name: findItem(currency)?.name ?? currency, amount });
     // 진행 중인 판도 **지금까지의 몫**을 싣는다 — 층이 "끝나면 이만큼"을 미리 말한다. 받는 것은
     // 끝난 뒤의 정산 한 번뿐이다(`settleRaid`가 상태를 다시 본다).
@@ -442,6 +443,7 @@ export class FakeServer implements GameApi {
       id: instance.id, kind: instance.kind, bossRelicId: instance.bossRelicId, difficulty: instance.difficulty,
       bossLevel: growth.level, bossBreakthrough: growth.breakthrough,
       summonerName: instance.summonerName, summonedByMe: instance.summonedByMe,
+      bossBodyHp: killProgress.bodyHp, kills: killProgress.kills, killsDone: killProgress.done,
       totalHp: progress.totalHp, dealtDamage: progress.dealtDamage, remainingHp: progress.remainingHp, defeated: progress.defeated,
       status: completed ? "completed" : "active", openedAt: instance.openedAt, endsAt: instance.endsAt,
       myDamage: instance.myDamage, attemptsUsed: instance.attemptsUsed, attemptsLimit: RAID_ATTEMPTS_PER_RAID,

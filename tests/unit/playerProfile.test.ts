@@ -3,6 +3,7 @@ import { createDefaultSession } from "../../src/state/session";
 import { playerProfileDisplay, profileAvatarContent } from "../../src/state/playerProfile";
 import { validateEquippedProfileModifiers } from "../../src/managers/PlayerProfileManager";
 import { compactProfileText, PLAYER_PROFILE_LAYOUT } from "../../src/ui/playerProfileLayout";
+import { PROFILE_FRAME_REACH } from "../../src/ui/profileFrameGeometry";
 import { compactTopBarName, TOP_BAR_LAYOUT } from "../../src/ui/topBarLayout";
 import { highestClearedStage } from "../../src/core/stageProgress";
 import { STAGES } from "../../src/data/stages";
@@ -67,8 +68,8 @@ describe("player profile display", () => {
     const recordsBottom = L.records.firstY + L.records.rowGap + L.records.height / 2;
     expect(recordsBottom).toBeLessThan(L.nextUnlock.y - 20);
     expect(L.nextUnlock.y + 20).toBeLessThan(L.popup.height / 2 - 40);
-    // 얼굴 테두리의 장식(얼굴의 약 30% 바깥)까지 판 안에 든다.
-    expect(L.header.avatar.y - L.header.avatar.size * 0.65).toBeGreaterThan(-L.popup.height / 2);
+    // 얼굴 테두리의 장식까지 판 안에 든다 — 도형 하나하나의 검사는 profileFrameGeometry.test.ts가 맡는다.
+    expect(L.header.avatar.y - L.header.avatar.size * PROFILE_FRAME_REACH).toBeGreaterThan(-L.popup.height / 2);
     // 기록 두 열이 무대 폭 안에 든다.
     expect(L.records.columnX + L.records.width / 2).toBeLessThanOrEqual(L.showcase.width / 2);
   });

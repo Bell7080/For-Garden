@@ -19,7 +19,7 @@ import { COLOR, textStyle } from "./theme";
 import { addSectionTitle } from "./SectionTitle";
 import { fitTextToBox } from "./textFit";
 import { shapeClipMask } from "./popupArt";
-import { CurrencyGuidePopup } from "./CurrencyGuidePopup";
+import { openCurrencyGuide, openItemGuide } from "./currencyGuideEntry";
 import { openRewardPopup } from "./RewardPopup";
 import { setDebugMailPopup } from "../debug";
 import { pressIn, pressOut } from "./pressFeedback";
@@ -302,14 +302,11 @@ export class MailPopup {
     }
   }
 
-  /** 첨부 액자 하나의 안내 — 재화는 공용 재화 안내, 아이템은 제 이름과 설명 한 장. */
+  /** 첨부 액자 하나의 안내 — 가방과 같은 창이다. 재화는 재화 안내, 재료·소비품은 아이템 안내. */
   private openRewardNote(reward: MailRewardDto): void {
-    if (reward.kind === "currency") { new CurrencyGuidePopup(this.scene, this.popups).open(reward.currency); return; }
+    if (reward.kind === "currency") { openCurrencyGuide({ scene: this.scene, popups: this.popups }, reward.currency); return; }
     const item = findItem(reward.itemId);
-    if (!item) return;
-    this.popups.open({ width: 620, height: 320, title: item.name, dim: true, dimAlpha: 0.3, closeOnBackdrop: true }, (body) => {
-      body.add(this.scene.add.text(0, 10, item.description, textStyle({ role: "body", size: 25, color: COLOR.ink, align: "center", wrap: 520 })).setOrigin(0.5));
-    });
+    if (item) openItemGuide({ scene: this.scene, popups: this.popups }, item);
   }
 
   /** 하단 줄 — 우편·안내 라벨과, 지금 탭이 할 수 있는 일괄 조작 하나. */

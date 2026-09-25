@@ -3,7 +3,10 @@ import { gameApi } from "../api/FakeServer";
 import type { CurrencyGuideAction } from "../data/currencyGuide";
 import type { WalletItemKey } from "../data/items";
 import { CurrencyGuidePopup } from "./CurrencyGuidePopup";
-import { setCurrencyGuideOpener } from "./itemFrame";
+import { setCurrencyGuideOpener, setItemGuideOpener } from "./itemFrame";
+import { ItemGuidePopup } from "./ItemGuidePopup";
+import { session } from "../state/session";
+import type { ItemDefinition } from "../data/items";
 import type { PopupLayer } from "./PopupLayer";
 import { StaminaPopup } from "./StaminaPopup";
 import { startScene } from "./screenTransition";
@@ -53,4 +56,14 @@ function applyGuideAction(host: CurrencyGuideHost, action: CurrencyGuideAction):
  */
 export function bindCurrencyGuide(host: CurrencyGuideHost): void {
   setCurrencyGuideOpener(host.scene, (key) => openCurrencyGuide(host, key));
+  setItemGuideOpener(host.scene, (definition) => openItemGuide(host, definition));
+}
+
+/**
+ * 재료·소비품 안내 — 가방에서 여는 것과 **같은 창**이다(`ItemGuidePopup`). 보유 수는 지금 가방에서
+ * 읽고, 「사용하기」는 가방에서만 선다(쓰는 일은 가방의 몫이고 영수증·우편은 보여 주기만 한다).
+ */
+export function openItemGuide(host: Pick<CurrencyGuideHost, "scene" | "popups">, definition: ItemDefinition): void {
+  const quantity = session.itemInventory.find(({ itemId }) => itemId === definition.id)?.quantity ?? 0;
+  new ItemGuidePopup(host.scene, host.popups).open({ definition, quantity });
 }

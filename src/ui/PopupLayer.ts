@@ -201,7 +201,10 @@ export class PopupLayer {
     const anchored = this.anchorPosition(options, screen);
     const cx = anchored?.x ?? options.x ?? screen.width / 2;
     const cy = anchored?.y ?? options.y ?? screen.height / 2;
-    const layer = this.scene.add.container(0, 0).setDepth(this.depth + this.stack.length * 2);
+    // 새 층은 **이미 열린 어느 층보다도 위**에 선다. 영수증처럼 제 층을 스스로 끌어올린 판(`RewardPopup`)
+    // 위에서 액자를 눌러 안내창을 열면, 순번만으로 정한 깊이는 그 판 아래로 깔려 보이지 않았다.
+    const layerDepth = Math.max(this.depth + this.stack.length * 2, ...this.stack.map((open) => open.depth + 2));
+    const layer = this.scene.add.container(0, 0).setDepth(layerDepth);
 
     // 바깥을 눌러 닫을 수 있게 투명한 판을 깐다. 명시한 강도는 중첩 암전이 과해지는 것을 막는다.
     const dimAlpha = options.dim ? Phaser.Math.Clamp(options.dimAlpha ?? 0.55, 0, 1) : 0;

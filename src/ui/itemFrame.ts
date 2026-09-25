@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import type { WalletItemKey } from "../data/items";
+import { ITEMS, type ItemDefinition, type WalletItemKey } from "../data/items";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { chipPoints, drawInnerVignette, drawShapeOutline, drawLayer } from "./holo";
 import { COLOR, textStyle } from "./theme";
@@ -22,6 +22,33 @@ const currencyGuideOpeners = new WeakMap<Phaser.Scene, (key: WalletItemKey) => v
 const WALLET_BY_ICON = Object.fromEntries(
   Object.entries(CURRENCY_ICON_BY_WALLET).map(([wallet, icon]) => [icon, wallet as WalletItemKey]),
 ) as Readonly<Record<string, WalletItemKey>>;
+
+/**
+ * 재료·소비품 그림을 누르면 무엇이 열리는가. 재화와 같은 이유로 씬마다 한 번만 건다 — 가방에서는
+ * 열리던 미지핵 안내가 우편·영수증에서는 이름 한 줄짜리 쪽지로 떠, 같은 그림이 두 양식이었다.
+ */
+const itemGuideOpeners = new WeakMap<Phaser.Scene, (definition: ItemDefinition) => void>();
+
+/** 그림 키에서 아이템 정의로 되짚는 표. 재화 그림을 쓰는 아이템은 재화 쪽이 맡으므로 빼 둔다. */
+let itemByIcon: Readonly<Record<string, ItemDefinition>> | undefined;
+function itemForIcon(textureKey: string): ItemDefinition | undefined {
+  itemByIcon ??= Object.fromEntries(ITEMS.flatMap((item) => item.icon.kind === "asset" ? [[item.icon.key, item] as const] : []));
+  return itemByIcon[textureKey];
+}
+
+/** 씬 하나가 제 아이템 안내창을 등록한다. `src/ui/currencyGuideEntry.ts`가 유일한 호출자다. */
+export function setItemGuideOpener(scene: Phaser.Scene, open: (definition: ItemDefinition) => void): void {
+  itemGuideOpeners.set(scene, open);
+}
+
+/** 그 그림이 재화든 아이템이든 안내창을 여는 손을 돌려준다. 어느 쪽도 아니면 비운다. */
+export function guideForIcon(scene: Phaser.Scene, textureKey: string): (() => void) | undefined {
+  const currency = currencyGuideForIcon(scene, textureKey);
+  if (currency) return currency;
+  const item = itemForIcon(textureKey);
+  const open = itemGuideOpeners.get(scene);
+  return item && open ? () => open(item) : undefined;
+}
 
 /** 씬 하나가 제 재화 안내창을 등록한다. `src/ui/currencyGuideEntry.ts`가 유일한 호출자다. */
 export function setCurrencyGuideOpener(scene: Phaser.Scene, open: (key: WalletItemKey) => void): void {
@@ -155,15 +182,14 @@ export function addFramedIcon(
       .setStroke("#000000", 6)
       .setShadow(2, 3, "#000000", 2, false, true));
   }
-  // 재화 그림이면 그 자리에서 안내창이 열린다 — 어느 화면에서 보든 같은 그림은 같은 일을 한다.
-  const wallet = WALLET_BY_ICON[textureKey];
-  const openGuide = currencyGuideOpeners.get(scene);
-  if (wallet && openGuide && !options.plain) {
+  // 재화·아이템 그림이면 그 자리에서 안내창이 열린다 — 어느 화면에서 보든 같은 그림은 같은 일을 한다.
+  const openGuide = options.plain ? undefined : guideForIcon(scene, textureKey);
+  if (openGuide) {
     const hit = scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
     // 누르면 커진다 — 눌린 상태를 색이 아니라 크기로 알리는 화면 전체의 규칙이다.
     hit.on("pointerdown", () => pressIn(holder));
     hit.on("pointerout", () => pressOut(holder, "normal", { pop: false }));
-    hit.on("pointerup", () => { pressOut(holder); openGuide(wallet); });
+    hit.on("pointerup", () => { pressOut(holder); openGuide(); });
     holder.add(hit);
   }
   if (parent) parent.add(holder);

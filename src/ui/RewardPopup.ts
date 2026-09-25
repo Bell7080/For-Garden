@@ -49,7 +49,8 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
   }
 
   // 팝업 중심은 기준 게임 화면 중심이며 E2E에는 내용 대신 표시 칸 수와 확인 입력점만 알린다.
-  setDebugRewardPopup(true, items.length, { x: BASE_WIDTH / 2, y: BASE_HEIGHT / 2 });
+  // 확인 입력점은 액자 줄 **아래**다 — 가운데를 누르면 한 칸짜리 영수증에서는 그 액자의 안내창이 열린다.
+  setDebugRewardPopup(true, items.length, { x: BASE_WIDTH / 2, y: BASE_HEIGHT / 2 + 140 });
   // 확인 안내는 팝업 안이 아니라 화면 하단에 둔다. "어디를 눌러도 넘어간다"는 말은 팝업 밖의 말이다.
   let hint: Phaser.GameObjects.Text | undefined;
   popups.open({
@@ -120,6 +121,8 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
       strip.x = Phaser.Math.Clamp(stripX + delta, -overflow / 2, overflow / 2);
     });
     hit.on("pointerup", () => { if (!dragged) close(); });
-    body.add(hit);
+    // 닫는 판은 **맨 아래**에 깐다 — 위에 덮으면 액자가 손을 받지 못해, 무엇을 받았는지 눌러 볼
+    // 수 없었다. 액자는 제 안내창(`addFramedIcon`)을 열고, 그 밖의 자리는 여전히 영수증을 닫는다.
+    body.addAt(hit, 0);
   });
 }

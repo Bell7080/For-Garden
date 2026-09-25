@@ -10,5 +10,5 @@ export const MISSIONS_EN = {
   "missions.rewardTitle": "Mission Rewards",
   "missions.researchCaption": "Research",
   "missions.resetIn": "Resets in {time}",
-  "missions.claim": "Claim",
+  "missions.state.complete": "Complete",
 } as const;

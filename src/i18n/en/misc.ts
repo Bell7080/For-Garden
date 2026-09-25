@@ -109,6 +109,7 @@ export const MISC_EN = {
   "mail.tab.reward": "Mail",
   "mail.tab.notice": "Notices",
   "mail.claim": "Claim",
+  "mail.rewardTitle": "Mail Rewards",
   "mail.attachments": "Attachments {count}",
   "mail.readAll": "Mark All Read",
   "mail.daysLeft": "{days}d left",

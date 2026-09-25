@@ -112,6 +112,7 @@ export const MISC_JA = {
   "mail.tab.reward": "メール",
   "mail.tab.notice": "お知らせ",
   "mail.claim": "受取",
+  "mail.rewardTitle": "メール報酬",
   "mail.attachments": "添付 {count}",
   "mail.readAll": "すべて既読",
   "mail.daysLeft": "残り{days}日",

@@ -20,6 +20,7 @@ import { addSectionTitle } from "./SectionTitle";
 import { fitTextToBox } from "./textFit";
 import { shapeClipMask } from "./popupArt";
 import { CurrencyGuidePopup } from "./CurrencyGuidePopup";
+import { openRewardPopup } from "./RewardPopup";
 import { setDebugMailPopup } from "../debug";
 import { pressIn, pressOut } from "./pressFeedback";
 import { managerEvents } from "../managers/ManagerEvents";
@@ -349,6 +350,12 @@ export class MailPopup {
   }
 
   /** 서버 영수증 반영 뒤 지갑·점·상단 표시를 같은 흐름에서 갱신한다. */
-  private async claim(ids: string[]): Promise<void> { if (!ids.length) return; await this.manager.claim(ids); }
+  /** 받은 것은 임무·발굴과 같은 영수증으로 알린다 — 지갑 숫자만 슬쩍 바뀌면 무엇이 들어왔는지 모른다. */
+  private async claim(ids: string[]): Promise<void> {
+    if (!ids.length) return;
+    const result = await this.manager.claim(ids);
+    const items = result.granted.map((reward) => ({ icon: mailRewardTexture(reward), amount: reward.amount })).filter(({ icon, amount }) => icon && amount > 0);
+    if (items.length) openRewardPopup(this.scene, this.popups, { title: t("mail.rewardTitle"), items });
+  }
   private async readAll(ids: string[]): Promise<void> { if (!ids.length) return; await this.manager.readAll(ids); }
 }

@@ -28,6 +28,9 @@ const CREAM = 0xfff6e4;
 export class ResearchPullButton extends Phaser.GameObjects.Container {
   private readonly face: Phaser.GameObjects.Container;
   private readonly icon: Phaser.GameObjects.Image;
+  /** 그림 뒤에 까는 검은 복제 둘 — 크림빛 면 위에서 화석·호박석의 윤곽을 떼어 낸다. */
+  private readonly iconRim: Phaser.GameObjects.Image;
+  private readonly iconShadow: Phaser.GameObjects.Image;
   private readonly amount: Phaser.GameObjects.Text;
   private enabled = true;
 
@@ -63,9 +66,15 @@ export class ResearchPullButton extends Phaser.GameObjects.Container {
     }
     this.face.add(sparkle);
     this.face.add(scene.add.text(0, -height * 0.16, options.label, textStyle({ role: "display", size: Math.round(height * 0.27), color: hex(INK) })).setOrigin(0.5));
-    this.icon = scene.add.image(0, height * 0.2, "__DEFAULT").setDisplaySize(height * 0.3, height * 0.3);
-    this.amount = scene.add.text(0, height * 0.2, "", textStyle({ role: "display", size: Math.round(height * 0.2), color: hex(INK) })).setOrigin(0, 0.5);
-    this.face.add([this.icon, this.amount]);
+    // **드는 재화 그림은 크게, 검은 복제를 깔아 세운다.** 밝은 크림빛 면 위에서 호박석의 노란 결과
+    // 화석의 옅은 돌빛이 면과 같은 밝기라 작게 두면 윤곽이 녹았다 — 판을 받치지 않고(버튼 안에 판이
+    // 두 겹이 된다) 아래로 민 그림자와 한 뼘 큰 옅은 테두리로만 떼어 낸다.
+    const iconY = height * 0.23;
+    this.iconShadow = scene.add.image(0, iconY + 4, "__DEFAULT").setTintFill(0x2a1c10).setAlpha(0.42);
+    this.iconRim = scene.add.image(0, iconY, "__DEFAULT").setTintFill(0x2a1c10).setAlpha(0.5);
+    this.icon = scene.add.image(0, iconY, "__DEFAULT");
+    this.amount = scene.add.text(0, iconY, "", textStyle({ role: "display", size: Math.round(height * 0.2), color: hex(INK) })).setOrigin(0, 0.5);
+    this.face.add([this.iconShadow, this.iconRim, this.icon, this.amount]);
     this.add(this.face);
 
     const hit = scene.add.rectangle(0, depth / 2, width, height + depth, 0xffffff, 0).setInteractive({ useHandCursor: true });
@@ -81,13 +90,17 @@ export class ResearchPullButton extends Phaser.GameObjects.Container {
 
   /** 드는 재화 그림과 수. 모자라면 수가 붉어져 왜 못 누르는지 값 자체가 말한다. */
   setCost(iconKey: string, amount: number, affordable: boolean): this {
-    const size = this.options.height * 0.3;
+    const size = this.options.height * 0.42;
     this.icon.setTexture(iconKey).setDisplaySize(size, size);
+    this.iconRim.setTexture(iconKey).setDisplaySize(size * 1.1, size * 1.1);
+    this.iconShadow.setTexture(iconKey).setDisplaySize(size, size);
     this.amount.setText(`× ${amount.toLocaleString()}`).setColor(affordable ? hex(INK) : "#d2463c");
     // 그림과 수를 한 덩어리로 가운데에 세운다.
-    const gap = 8;
+    const gap = 6;
     const total = size + gap + this.amount.width;
     this.icon.setX(-total / 2 + size / 2);
+    this.iconRim.setX(this.icon.x);
+    this.iconShadow.setX(this.icon.x + 3);
     this.amount.setX(-total / 2 + size + gap);
     return this;
   }

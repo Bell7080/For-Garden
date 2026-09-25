@@ -10,5 +10,5 @@ export const MISSIONS_JA = {
   "missions.rewardTitle": "ミッション報酬",
   "missions.researchCaption": "研究度",
   "missions.resetIn": "リセットまで {time}",
-  "missions.claim": "受取",
+  "missions.state.complete": "達成",
 } as const;

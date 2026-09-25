@@ -9,6 +9,6 @@ export const MISSIONS_KO = {
   "missions.state.inProgress": "진행 중",
   "missions.researchCaption": "연구도",
   "missions.resetIn": "초기화까지 {time}",
-  "missions.claim": "받기",
+  "missions.state.complete": "달성",
   "missions.rewardTitle": "임무 보상",
 } as const;

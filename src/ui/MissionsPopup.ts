@@ -9,6 +9,7 @@ import { notificationManager } from "../managers/NotificationManager";
 import { session } from "../state/session";
 import { motionPolicy } from "../core/settings";
 import { Button } from "./Button";
+import { squeezeTextToWidth } from "./textFit";
 import { addCategoryTab } from "./CategoryTab";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { chipPoints, drawLayer, drawShapeEdge, HoloBar, HOLO, slantedRect, toPoints } from "./holo";
@@ -22,7 +23,7 @@ import { shapeClipMask } from "./popupArt";
 
 const PERIODS: readonly MissionPeriod[] = ["daily", "weekly"];
 
-/** 게이지 마디와 알림 점이 함께 쓰는 마름모. 동그라미를 쓰지 않는다(화면 전체의 규칙). */
+/** 탭 라벨의 알림 점. 동그라미를 쓰지 않는다(화면 전체의 규칙). */
 function diamond(size: number): Phaser.Geom.Point[] {
   return toPoints([0, -size, size, 0, 0, size, -size, 0]);
 }
@@ -165,7 +166,13 @@ export class MissionsPopup {
     }
   }
 
-  /** 임무 한 줄 — 왼쪽에 이름과 달성 게이지, 오른쪽에 보상 액자와 수령 버튼. */
+  /**
+   * 임무 한 줄 — 왼쪽에 이름과 달성 게이지, **오른쪽 끝에 보상 액자**.
+   *
+   * 받기 버튼을 따로 두지 않는다. 받을 것은 액자 자체이고, 달성한 임무의 액자가 숨 쉬며 부른다 —
+   * 버튼과 액자가 나란히 서면 같은 조작을 두 곳이 말한다. 상태 한 마디(진행 중·달성·수령 완료)는
+   * 이름 줄의 오른쪽 끝에 작게 선다.
+   */
   private renderMission(content: Phaser.GameObjects.Container, raw: MissionDto, index: number): void {
     const { list: layout } = MISSIONS_POPUP_LAYOUT;
     const mission = missionDisplayModel(raw);
@@ -185,33 +192,42 @@ export class MissionsPopup {
     stripe.fillPoints(toPoints(slantedRect(10, layout.cardHeight - 52, 8)), true);
     list.add(stripe);
 
+    const rewardSize = 112;
+    const rewardX = halfW - 26 - rewardSize / 2;
+    const textRight = rewardX - rewardSize / 2 - 26;
     const left = -halfW + 58;
+    const stateLabel = mission.claimed ? t("missions.state.claimed") : mission.claimable ? t("missions.state.complete") : t("missions.state.inProgress");
+    const state = this.scene.add.text(textRight, y - 30, stateLabel, textStyle({ role: "emphasis", size: 22, color: mission.claimable ? "#ffcf7a" : COLOR.inkDim })).setOrigin(1, 0.5);
     const title = this.scene.add.text(left, y - 30, mission.title, textStyle({ role: "emphasis", size: 30, color: mission.claimed ? COLOR.inkDim : COLOR.ink })).setOrigin(0, 0.5);
-    const points = this.scene.add.text(left + title.width + 18, y - 30, t("missions.researchPoints", { points: mission.researchPoints }), textStyle({ role: "emphasis", size: 21, color: mission.claimed ? COLOR.inkDim : COLOR.accentText })).setOrigin(0, 0.5);
-    list.add([title, points]);
-    const barWidth = 440;
+    const points = this.scene.add.text(0, y - 30, t("missions.researchPoints", { points: mission.researchPoints }), textStyle({ role: "emphasis", size: 21, color: mission.claimed ? COLOR.inkDim : COLOR.accentText })).setOrigin(0, 0.5);
+    // 이름이 길면 상태 글자를 덮지 않도록 이름만 가로로 누른다.
+    squeezeTextToWidth(title, Math.max(120, state.x - state.displayWidth - 24 - points.width - 18 - left));
+    points.setX(left + title.displayWidth + 18);
+    list.add([title, points, state]);
+    const progress = this.scene.add.text(textRight, y + 30, mission.progressLabel, textStyle({ role: "emphasis", size: 24, color: mission.claimed ? COLOR.inkDim : COLOR.ink })).setOrigin(1, 0.5);
+    const barWidth = Math.max(200, progress.x - progress.width - 20 - left);
     // 달성도는 카드 면 위에서도 또렷해야 한다. 빈 자리는 짙은 검정으로 눌러 두고 최대치는
     // 흰 선으로 둘러, 채움이 옅어도 "어디까지가 이 게이지인가"가 먼저 읽힌다.
     const bar = new HoloBar(this.scene, left + barWidth / 2, y + 30, barWidth, 20, { color: mission.claimable || mission.claimed ? COLOR.missionClaim : COLOR.accent, trackAlpha: 0.86, outline: true }).addTo(list);
     bar.setValue(mission.ratio); this.bars.push(bar);
-    const progress = this.scene.add.text(left + barWidth + 20, y + 30, mission.progressLabel, textStyle({ role: "emphasis", size: 24, color: mission.claimed ? COLOR.inkDim : COLOR.ink })).setOrigin(0, 0.5);
     list.add(progress);
 
-    const reward = new RewardFrame(this.scene, 222, y, { icon: CURRENCY_ICON_BY_WALLET[mission.reward.currency], amount: mission.reward.amount, size: 104, state: mission.state, onClick: mission.claimable ? () => void this.claimOne(mission.id) : undefined });
+    // 액자를 한 겹 감싸 숨 쉬게 한다 — 눌림 피드백은 액자 자신의 배율을 쓰므로 맥동과 싸우지 않는다.
+    const holder = this.scene.add.container(rewardX, y);
+    list.add(holder);
+    if (mission.claimable) {
+      const halo = this.scene.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
+      halo.fillStyle(COLOR.missionClaim, 0.4).fillPoints(toPoints(chipPoints(rewardSize + 24, rewardSize + 24, { bevel: { topLeft: rewardSize * 0.28, topRight: 0, bottomRight: rewardSize * 0.28, bottomLeft: 0 } })), true);
+      holder.add(halo);
+      this.scene.tweens.add({ targets: halo, alpha: { from: 0.3, to: 1 }, duration: 700, yoyo: true, repeat: -1, ease: "Sine.InOut" });
+    }
+    const reward = new RewardFrame(this.scene, 0, 0, { icon: CURRENCY_ICON_BY_WALLET[mission.reward.currency], amount: mission.reward.amount, size: rewardSize, state: mission.state, onClick: mission.claimable ? () => void this.claimOne(mission.id) : undefined });
     // **아직 못 받는 보상은 반투명하다.** 받을 수 있는 것과 같은 진하기로 서 있으면 "지금
     // 누를 수 있는가"를 액자가 아니라 글자로 세어야 한다.
     if (!mission.claimable && !mission.claimed) reward.setAlpha(0.55);
-    list.add(reward);
-
-    // 수령 칸 — 받을 수 있으면 누르는 판, 아니면 상태 한 마디만 흐리게 선다.
-    const actionX = halfW - 92;
-    if (mission.claimable) {
-      const claim = new Button(this.scene, actionX, y, { width: 136, height: 74, label: t("missions.claim"), variant: "primary", fontSize: 26, onClick: () => void this.claimOne(mission.id) });
-      list.add(claim);
-      this.scene.tweens.add({ targets: claim, scale: { from: 1, to: 1.06 }, duration: 620, yoyo: true, repeat: -1, ease: "Sine.InOut" });
-    } else {
-      const state = this.scene.add.text(actionX, y, mission.claimed ? t("missions.state.claimed") : t("missions.state.inProgress"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0.5);
-      list.add(state);
+    holder.add(reward);
+    if (mission.claimable && motionPolicy(session.settings).nonEssentialDistanceFactor > 0) {
+      this.scene.tweens.add({ targets: holder, scale: { from: 1, to: 1.08 }, duration: 620, yoyo: true, repeat: -1, ease: "Sine.InOut" });
     }
   }
 
@@ -263,10 +279,13 @@ export class MissionsPopup {
     const list = this.list; if (!list) return;
     const { research: layout } = MISSIONS_POPUP_LAYOUT;
     const claimable = stage.achieved && !stage.claimed;
+    // 마디는 게이지를 가로지르는 빗금 하나다(`/`) — 체력 바의 칸 나눔과 같은 문법이라, 마름모
+    // 알을 박으면 게이지 위에 다른 종류의 표식이 하나 더 생긴다. 검은 획을 먼저 깔아 밝은 채움
+    // 위에서도 떨어져 보이게 하고, 넘은 마디만 호박빛으로 칠한다.
     const node = this.scene.add.graphics({ x, y: layout.barY });
-    const size = 17;
-    node.fillStyle(0x05070a, 0.9).fillPoints(diamond(size + 3), true);
-    node.fillStyle(stage.achieved ? COLOR.missionClaim : 0x3a4250, 1).fillPoints(diamond(size), true);
+    const half = layout.barHeight / 2 + 8;
+    node.lineStyle(10, 0x05070a, 0.9).lineBetween(-half * 0.42, half, half * 0.42, -half);
+    node.lineStyle(5, stage.achieved ? COLOR.missionClaim : 0xffffff, stage.achieved ? 1 : 0.86).lineBetween(-half * 0.42, half, half * 0.42, -half);
     list.add(node);
     const threshold = this.scene.add.text(x, layout.thresholdY, `${stage.threshold}`, textStyle({ role: "emphasis", size: 21, color: stage.achieved ? "#ffcf7a" : COLOR.inkDim })).setOrigin(0.5, 0);
     list.add(threshold);
@@ -284,9 +303,15 @@ export class MissionsPopup {
       list.add(halo);
       this.scene.tweens.add({ targets: halo, alpha: { from: 0.35, to: 1 }, duration: 700, yoyo: true, repeat: -1, ease: "Sine.InOut" });
     }
-    const frame = new RewardFrame(this.scene, x, layout.frameY, { icon: CURRENCY_ICON_BY_WALLET[primary.currency], amount: primary.amount, size: frameSize, state, onClick });
+    const holder = this.scene.add.container(x, layout.frameY);
+    list.add(holder);
+    const frame = new RewardFrame(this.scene, 0, 0, { icon: CURRENCY_ICON_BY_WALLET[primary.currency], amount: primary.amount, size: frameSize, state, onClick });
     if (!stage.achieved) frame.setAlpha(0.72);
-    list.add(frame);
+    holder.add(frame);
+    // 열린 마디는 임무 액자와 같은 박자로 숨 쉰다 — 임무를 받는 손과 따로, 여기서 받는다.
+    if (claimable && motionPolicy(session.settings).nonEssentialDistanceFactor > 0) {
+      this.scene.tweens.add({ targets: holder, scale: { from: 1, to: 1.08 }, duration: 620, yoyo: true, repeat: -1, ease: "Sine.InOut" });
+    }
   }
 
   /** 하단 줄 — 기간 전환 라벨 둘과 일괄 수령. 기간을 바꿔도 같은 자리를 지킨다. */
@@ -324,7 +349,12 @@ export class MissionsPopup {
     this.resetText.setText(t("missions.resetIn", { time: formatResetRemaining(missionResetRemainingMs(this.period, new Date())) }));
   }
 
-  private async claimOne(id: string): Promise<void> { const result = await this.claims.claim([id]); if (result) await this.applyClaim(result); }
+  /**
+   * 임무 하나는 **그 임무의 보상만** 받는다. 연구도가 올라 마디가 열려도 여기서 함께 주지 않는다 —
+   * 열린 마디는 제 액자가 숨 쉬며 따로 부르고, 누르면 그때 받는다. 한 번 누른 손에 두 보상이 섞여
+   * 들어오면 무엇을 받았는지 읽히지 않는다. 모두 받기만 둘을 함께 걷는다.
+   */
+  private async claimOne(id: string): Promise<void> { const result = await this.claims.claim([id], this.period, []); if (result) await this.applyClaim(result); }
   private async claimAll(): Promise<void> {
     const ids = this.missions.filter((mission) => mission.period === this.period).map(missionDisplayModel).filter((mission) => mission.claimable).map((mission) => mission.id);
     const result = await this.claims.claim(ids, this.period); if (result) await this.applyClaim(result);

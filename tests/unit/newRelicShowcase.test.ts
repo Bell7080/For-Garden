@@ -44,6 +44,9 @@ describe("새로 만난 렐릭의 소개 장면", () => {
     const { width, height } = SHOWCASE_SIZE;
     const I = SHOWCASE_INFO;
     expect(I.radar.x + I.radar.radius).toBeLessThan(width);
+    // 오각형을 받치는 판도 화면 안에 든다.
+    expect(I.radar.x + I.radar.plate.width / 2).toBeLessThanOrEqual(width);
+    expect(I.radar.y + I.radar.plate.height / 2).toBeLessThan(I.hintY);
     expect(I.radar.y + I.radar.radius).toBeLessThan(height);
     expect(I.hintY).toBeLessThan(height);
     // 이름 블록은 밑동의 어둠 안에 든다 — 밝은 원화 위에서 글자가 떠 보이지 않는다.

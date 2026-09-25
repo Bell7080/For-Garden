@@ -33,7 +33,7 @@ export const SHOWCASE_VOICE = {
 /** 등장 막에서 모든 등급이 같이 쓰는 정보 자리. */
 export const SHOWCASE_INFO = {
   /** 화면 밑동을 눌러 글이 원화 위에서 읽히게 하는 어둠. */
-  fade: { top: 1180, bottom: SHOWCASE_SIZE.height },
+  fade: { top: 1100, bottom: SHOWCASE_SIZE.height },
   left: 72,
   code: { y: 118, size: 24 },
   rarity: { y: 1392, size: 76 },
@@ -41,7 +41,7 @@ export const SHOWCASE_INFO = {
   origin: { y: 1568, size: 28 },
   badges: { y: 1664, element: 88, role: 66, gap: 22 },
   squad: { size: 74 },
-  radar: { x: 858, y: 1600, radius: 104 },
+  radar: { x: 850, y: 1610, radius: 100, plate: { width: 380, height: 340 } },
   sd: { x: 188, groundY: 1236, height: 290 },
   hintY: SHOWCASE_SIZE.height - 70,
   /** 정보 조각이 하나씩 밀려 들어오는 간격. */
@@ -82,7 +82,7 @@ export const SHOWCASE_COMPOSITION: Record<RelicRarity, ShowcaseComposition> = {
     sparkles: 9,
     flashes: 2,
     shake: { ms: 420, intensity: 0.008 },
-    voiceSize: 60,
+    voiceSize: 66,
   },
   SR: {
     portrait: { x: 610, y: 930, height: 1880 },
@@ -93,7 +93,7 @@ export const SHOWCASE_COMPOSITION: Record<RelicRarity, ShowcaseComposition> = {
     watermark: false,
     sparkles: 4,
     flashes: 1,
-    voiceSize: 54,
+    voiceSize: 60,
   },
   R: {
     portrait: { x: 600, y: 950, height: 1780 },
@@ -104,7 +104,7 @@ export const SHOWCASE_COMPOSITION: Record<RelicRarity, ShowcaseComposition> = {
     watermark: false,
     sparkles: 0,
     flashes: 1,
-    voiceSize: 52,
+    voiceSize: 58,
   },
 };
 

@@ -26,7 +26,7 @@ import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addSceneBackground, BACKGROUND } from "./backgrounds";
 import { addFactionMark } from "./FactionMark";
-import { drawGlassFade, drawHairline, drawVignette } from "./holo";
+import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawVignette, HOLO } from "./holo";
 import { addInfoFigureStand, paintRarityGem } from "./info";
 import { infoPortraitPlacement } from "./portraitPlacement";
 import { RARITY_TONE } from "./rarityMark";
@@ -192,7 +192,7 @@ class NewRelicShowcase {
 
     // 밑동을 눌러 글이 원화 위에서 읽히게 한다. 판때기가 아니라 어둠이다.
     const fadeHeight = I.fade.bottom - I.fade.top;
-    info.add(drawGlassFade(scene, W / 2, I.fade.top + fadeHeight / 2, W, fadeHeight, { topAlpha: 0, bottomAlpha: 0.94 }));
+    info.add(drawGlassFade(scene, W / 2, I.fade.top + fadeHeight / 2, W, fadeHeight, { topAlpha: 0, bottomAlpha: 0.97 }));
     info.add(drawGlassFade(scene, W / 2, 110, W, 220, { topAlpha: 0.7, bottomAlpha: 0 }));
 
     const pieces = this.pieces;
@@ -218,6 +218,12 @@ class NewRelicShowcase {
     const squad = addFactionMark(scene, roleX + I.badges.role / 2 + I.badges.gap + I.squad.size / 2, I.badges.y, def.squad, { size: I.squad.size });
     if (squad) pieces.push(squad);
 
+    // 오각형은 원화 위에 서므로 어두운 유리 한 장을 받친다 — 드레스·무기 같은 밝은 결 위에서
+    // 축 이름과 수치가 묻히지 않게 한다. 판은 다른 판과 같은 깎인 칩이고 테두리를 두르지 않는다.
+    const plate = drawLayer(scene, I.radar.x, I.radar.y, chipPoints(I.radar.plate.width, I.radar.plate.height, {
+      bevel: { topLeft: 34, bottomRight: 34 },
+    }), { fill: 0x0b0e13, alpha: Math.max(HOLO.glass, 0.72), edge: this.tone.halo, edgeAlpha: 0.55 });
+    pieces.push(plate);
     const radar = new StatRadar(scene, I.radar.x, I.radar.y, I.radar.radius, {
       size: 20,
       colors: Object.fromEntries(Object.entries(STAT_TONE).map(([key, color]) => [key, `#${color.toString(16).padStart(6, "0")}`])),

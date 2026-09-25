@@ -14,6 +14,7 @@ import {
   relicFilterChipWidth,
   relicFilterPopupLayout,
 } from "./relicGridLayout";
+import { pressIn, pressOut } from "./pressFeedback";
 
 const ELEMENTS: readonly Element[] = ["fire", "water", "grass", "earth", "wind"];
 const ROLES: readonly Role[] = ["warrior", "tank", "assassin", "support"];
@@ -87,10 +88,10 @@ export function openRelicFilterPopup(
         reset.add(drawLayer(scene, 0, 0, slantedRect(300, height, 16), { fill: 0x241a1e, alpha: 0.96, edge: 0xe23a46, edgeAlpha: 0.7 }));
         reset.add(scene.add.text(0, 0, t("relics.filter.reset"), textStyle({ role: "emphasis", size: 25, color: "#f1a3ab" })).setOrigin(0.5));
         const hit = scene.add.rectangle(0, 0, 300, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-        hit.on("pointerdown", () => reset.setScale(1.08));
-        hit.on("pointerout", () => reset.setScale(1));
+        hit.on("pointerdown", () => pressIn(reset));
+        hit.on("pointerout", () => pressOut(reset, "normal", { pop: false }));
         hit.on("pointerup", () => {
-          reset.setScale(1);
+          pressOut(reset);
           close();
           // 검색 글은 그대로 둔다 — 여기서 지우는 것은 이 판이 보여 준 세 축뿐이다.
           onChange({ ...EMPTY_RELIC_FILTER, query: current().query });

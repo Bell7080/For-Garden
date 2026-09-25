@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { drawLayer, drawShapeEdge, slantedRect, toPoints } from "./holo";
 import { COLOR, textStyle } from "./theme";
+import { pressIn, pressOut } from "./pressFeedback";
 
 /**
  * 목록을 갈아 끼우는 **전환 라벨** 한 장.
@@ -41,8 +42,6 @@ export const CATEGORY_TAB = {
   /** 켜진 라벨의 빗금. 제목표(`addSectionTitle`)와 같은 표식이다. */
   mark: { width: 8, heightRatio: 0.44, gap: 12 },
   selectedScale: 1.06,
-  pressedScale: 1.06,
-  selectedPressedScale: 1.12,
 } as const;
 
 export interface CategoryTabOptions {
@@ -116,9 +115,10 @@ export function addCategoryTab(
   tab.setScale(restingScale);
   // 글자가 아니라 면 전체가 입력을 받아 가장자리에서도 같은 눌림과 결과를 준다.
   const hit = scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-  hit.on("pointerdown", () => tab.setScale(selected ? CATEGORY_TAB.selectedPressedScale : CATEGORY_TAB.pressedScale));
-  hit.on("pointerout", () => tab.setScale(restingScale));
-  hit.on("pointerup", () => { tab.setScale(restingScale); options.onSelect(); });
+  // 눌림은 공용 연출 하나가 맡는다 — 켜진 라벨도 제 크기(`restingScale`)에서 눌렸다 돌아온다.
+  hit.on("pointerdown", () => pressIn(tab));
+  hit.on("pointerout", () => pressOut(tab, "normal", { pop: false }));
+  hit.on("pointerup", () => { pressOut(tab); options.onSelect(); });
   tab.add(hit);
   if (parent) parent.add(tab);
   return tab;

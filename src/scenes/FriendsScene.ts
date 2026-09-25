@@ -17,6 +17,7 @@ import { PopupLayer } from "../ui/PopupLayer";
 import { ProfileAvatar } from "../ui/ProfileAvatar";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { COLOR, PROFILE_MODIFIER_RARITY_COLOR, textStyle } from "../ui/theme";
+import { pressIn, pressOut } from "../ui/pressFeedback";
 
 const hex = (color: number): string => `#${color.toString(16).padStart(6, "0")}`;
 
@@ -87,9 +88,9 @@ export class FriendsScene extends Phaser.Scene {
       row.add(this.add.text(textX, 36, t("profile.bio.quoted", { bio: friend.status }), textStyle({ role: "emphasis", size: 25, color: COLOR.ink })).setOrigin(0, 0.5));
       row.add(this.add.text(FRIEND_ROW.width / 2 - 40, 80, friend.lastActive, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(1, 0.5));
       const hit = this.add.rectangle(0, 0, FRIEND_ROW.width, FRIEND_ROW.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerdown", () => row.setScale(1.02));
-      hit.on("pointerout", () => row.setScale(1));
-      hit.on("pointerup", () => { row.setScale(1); this.openProfile(friend); });
+      hit.on("pointerdown", () => pressIn(row));
+      hit.on("pointerout", () => pressOut(row, "normal", { pop: false }));
+      hit.on("pointerup", () => { pressOut(row); this.openProfile(friend); });
       row.add(hit);
       this.content?.add(row);
     });

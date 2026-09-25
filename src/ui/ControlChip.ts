@@ -5,6 +5,7 @@ import { CONTROL_CHIP_ACTIVE, perimeterPoint, type ControlChipTierLevel } from "
 import { drawGlyph, type GlyphName } from "./glyphs";
 import { chipPoints, drawLayer, HOLO } from "./holo";
 import { COLOR, textStyle } from "./theme";
+import { pressIn, pressOut } from "./pressFeedback";
 
 export interface ControlChipOptions {
   /** 조작 의미를 나타내는 공용 선 아이콘이다. */
@@ -54,9 +55,9 @@ export class ControlChip extends Phaser.GameObjects.Container {
 
     // 투명 입력면은 터치에서 깎인 모서리를 빗나가도 안정적으로 눌리게 한다.
     const hit = scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerdown", () => this.setScale(1.08));
-    hit.on("pointerout", () => this.setScale(1));
-    hit.on("pointerup", () => { this.setScale(1); options.onClick(); });
+    hit.on("pointerdown", () => pressIn(this));
+    hit.on("pointerout", () => pressOut(this, "normal", { pop: false }));
+    hit.on("pointerup", () => { pressOut(this); options.onClick(); });
     this.add(hit);
     this.once(Phaser.GameObjects.Events.DESTROY, () => this.stopSpin());
     scene.add.existing(this);

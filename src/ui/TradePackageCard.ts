@@ -7,6 +7,7 @@ import { addFramedIcon } from "./itemFrame";
 import type { TradePackageCardMetrics } from "./tradePackageLayout";
 import type { TradePackageView } from "./tradePopupModel";
 import { COLOR, textStyle } from "./theme";
+import { pressIn, pressOut } from "./pressFeedback";
 
 /** 로컬 좌표 도형을 지금의 월드 좌표로 옮긴다. 팝업 안에서 마스크가 엉뚱한 자리에 남지 않게 한다. */
 function worldPoints(matrix: Phaser.GameObjects.Components.TransformMatrix, flat: readonly number[]): Phaser.Geom.Point[] {
@@ -43,7 +44,6 @@ const CARD = {
   badge: { width: 176, height: 54, alpha: 0.26 },
   /** 소진된 패키지는 지우지 않고 눌러 둔다 — 다음 갱신에 무엇이 돌아오는지 남아야 한다. */
   soldOutAlpha: 0.52,
-  pressScale: 1.03,
 } as const;
 
 export interface TradePackageCardOptions {
@@ -149,9 +149,9 @@ export class TradePackageCard extends Phaser.GameObjects.Container {
     if (!view.soldOut) {
       const hit = scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
       this.add(hit);
-      hit.on("pointerdown", () => this.setScale(CARD.pressScale));
-      hit.on("pointerout", () => this.setScale(1));
-      hit.on("pointerup", () => { this.setScale(1); options.onClick(); });
+      hit.on("pointerdown", () => pressIn(this));
+      hit.on("pointerout", () => pressOut(this, "normal", { pop: false }));
+      hit.on("pointerup", () => { pressOut(this); options.onClick(); });
     }
     scene.add.existing(this);
   }

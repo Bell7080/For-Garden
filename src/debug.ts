@@ -100,6 +100,11 @@ export interface DebugState {
   runeNoteCraft?: DebugPoint;
   /** 정보창 급여 버튼의 중심. 레벨 칸의 줄 구성에 따라 자리가 달라진다. */
   feedButton?: DebugPoint;
+  /**
+   * 급여 버튼이 받아 준 누름 수와 서버가 확정한 급여 수. 연타가 헛손질 없이 모두 먹여졌는지를
+   * 화면이 아니라 값으로 확인한다 — 두드리는 사이 요청이 돌고 있어도 둘은 결국 같아야 한다.
+   */
+  feedTaps?: { served: number; confirmed: number };
   /** 정보창이 지금 그린 룬 조각 셋. 조각을 누르기 전에 실제로 칠해졌는지 확인하는 용도다. */
   infoGemSlots?: (string | null)[];
   battle?: DebugBattle;
@@ -436,6 +441,13 @@ export function setDebugRuneNoteCraft(point: { x: number; y: number } | undefine
  * 좌표를 스펙에 적어 두면 칸이 한 줄만 바뀌어도 버튼 위가 아닌 곳을 눌러, 실패는 "성장 팝업이
  * 안 뜬다"로만 보인다 — 실제로는 급여가 아예 일어나지 않은 것이다.
  */
+/** 급여 누름·확정 수를 더한다. 정보창이 새로 열리면 0부터 센다. */
+export function addDebugFeedTaps(served: number, confirmed: number): void {
+  const state = ensure();
+  const current = state.feedTaps ?? { served: 0, confirmed: 0 };
+  state.feedTaps = { served: current.served + served, confirmed: current.confirmed + confirmed };
+}
+
 export function setDebugFeedButton(point: { x: number; y: number } | undefined): void {
   ensure().feedButton = point;
 }

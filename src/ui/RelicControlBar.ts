@@ -12,6 +12,7 @@ import {
   relicSortMenuHeight,
   relicSortMenuRowY,
 } from "./relicGridLayout";
+import { pressIn, pressOut } from "./pressFeedback";
 
 /** 정렬 목록 한 줄. 화면이 아니라 부르는 쪽이 기준과 이름을 함께 넘긴다. */
 export interface SortOption<T extends string> {
@@ -85,10 +86,10 @@ export class RelicControlBar {
     this.filterBadge.add([badgePlate, this.filterCountText]);
     filter.add(this.filterBadge);
     const filterHit = scene.add.rectangle(0, 0, spots.filter.width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    filterHit.on("pointerdown", () => filter.setScale(1.08));
-    filterHit.on("pointerout", () => filter.setScale(1));
+    filterHit.on("pointerdown", () => pressIn(filter));
+    filterHit.on("pointerout", () => pressOut(filter, "normal", { pop: false }));
     filterHit.on("pointerup", () => {
-      filter.setScale(1);
+      pressOut(filter);
       this.closeMenu();
       // 판의 머리글이 조작 줄 바로 밑에 붙지 않도록 한 뼘 띄운다 — 붙으면 `/필터`가 검색
       // 칸에 얹혀 두 줄이 한 덩어리로 읽힌다.
@@ -106,10 +107,10 @@ export class RelicControlBar {
     affinity.add(drawLayer(scene, 0, 0, affinityShape, { fill: BAR.fill, alpha: BAR.alpha }));
     affinity.add(drawGlyph(scene, "affinity", 0, 1, 40, COLOR.accent, 0.95, 3));
     const affinityHit = scene.add.rectangle(0, 0, spots.filter.width, RELIC_AFFINITY_BUTTON.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    affinityHit.on("pointerdown", () => affinity.setScale(1.08));
-    affinityHit.on("pointerout", () => affinity.setScale(1));
+    affinityHit.on("pointerdown", () => pressIn(affinity));
+    affinityHit.on("pointerout", () => pressOut(affinity, "normal", { pop: false }));
     affinityHit.on("pointerup", () => {
-      affinity.setScale(1);
+      pressOut(affinity);
       this.closeMenu();
       options.onAffinity({ x: spots.filter.x, y: affinityY + RELIC_AFFINITY_BUTTON.height / 2 + 26 });
     });
@@ -168,9 +169,9 @@ export class RelicControlBar {
     sort.add(this.sortLabel);
     sort.add(drawGlyph(scene, "caret-down", spots.sort.width / 2 - 32, 2, 26, COLOR.accent, 0.9, 3));
     const sortHit = scene.add.rectangle(0, 0, spots.sort.width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    sortHit.on("pointerdown", () => sort.setScale(1.05));
-    sortHit.on("pointerout", () => sort.setScale(1));
-    sortHit.on("pointerup", () => { sort.setScale(1); this.toggleMenu(spots.sort.x, y, spots.sort.width); });
+    sortHit.on("pointerdown", () => pressIn(sort));
+    sortHit.on("pointerout", () => pressOut(sort, "normal", { pop: false }));
+    sortHit.on("pointerup", () => { pressOut(sort); this.toggleMenu(spots.sort.x, y, spots.sort.width); });
     sort.add(sortHit);
 
     // ── 정렬 방향 ─────────────────────────────────────────────────────────
@@ -184,10 +185,10 @@ export class RelicControlBar {
     direction.add(this.sortArrow);
     this.paintDirection();
     const dirHit = scene.add.rectangle(0, 0, spots.sortDir.width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    dirHit.on("pointerdown", () => direction.setScale(1.08));
-    dirHit.on("pointerout", () => direction.setScale(1));
+    dirHit.on("pointerdown", () => pressIn(direction));
+    dirHit.on("pointerout", () => pressOut(direction, "normal", { pop: false }));
     dirHit.on("pointerup", () => {
-      direction.setScale(1);
+      pressOut(direction);
       this.closeMenu();
       this.descending = !this.descending;
       this.paintDirection();

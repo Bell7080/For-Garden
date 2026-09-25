@@ -20,6 +20,7 @@ import { formatCurrency } from "../core/formatCurrency";
 import { managerEvents } from "../managers/ManagerEvents";
 import { CurrencyGuidePopup } from "./CurrencyGuidePopup";
 import type { CurrencyGuideAction } from "../data/currencyGuide";
+import { pressIn, pressOut } from "./pressFeedback";
 
 const CATEGORIES: readonly { id: ItemCategory; labelKey: TextKey }[] = [
   { id: "rune", labelKey: "inventory.tab.rune" }, { id: "currency", labelKey: "inventory.tab.currency" }, { id: "consumable", labelKey: "inventory.tab.consumable" }, { id: "material", labelKey: "inventory.tab.material" },
@@ -157,8 +158,9 @@ export class InventoryPopup {
       const selected = this.sort.key === key; const node = this.scene.add.container(-300 + index * 150, -620).setScale(selected ? 1.12 : 1);
       node.add(this.scene.add.text(0, 0, `${t(labelKey)}${selected ? (this.sort.direction === "asc" ? " ↑" : " ↓") : ""}`, textStyle({ role: "emphasis", size: 20, color: selected ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
       const hit = this.scene.add.rectangle(0, 0, 130, 54, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerdown", () => node.setScale(1.16));
-      hit.on("pointerup", () => { this.sort = { key, direction: selected && this.sort.direction === "asc" ? "desc" : "asc" }; this.render(body); });
+      hit.on("pointerdown", () => pressIn(node));
+      hit.on("pointerout", () => pressOut(node, "normal", { pop: false }));
+      hit.on("pointerup", () => { pressOut(node); this.sort = { key, direction: selected && this.sort.direction === "asc" ? "desc" : "asc" }; this.render(body); });
       node.add(hit); body.add(node);
     });
   }

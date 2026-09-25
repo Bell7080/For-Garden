@@ -7,6 +7,7 @@ import { COLOR, textStyle } from "./theme";
 import { startNavScene } from "./screenTransition";
 import { NAV_TABS, navSwipeStep, navTabDirection, neighborNavTab, type NavKey } from "../core/navTabs";
 import { anyPopupOpen } from "./PopupLayer";
+import { pressIn, pressOut } from "./pressFeedback";
 
 /** 차례와 넘김 규칙은 순수 표가 갖는다. 여기서는 그리기만 한다. */
 export { NAV_TABS };
@@ -127,9 +128,9 @@ export class BottomNav {
         .rectangle(x, NAV_TOP + 90, step - 8, 160, 0xffffff, 0)
         .setInteractive({ useHandCursor: true });
       if (!active) {
-        // 누르는 동안만 확대해 눌린 자리를 알린다.
-        hit.on("pointerdown", () => group.setScale(1.16));
-        hit.on("pointerout", () => group.setScale(1));
+        // 누르는 동안 공용 눌림 연출로 눌린 자리를 알린다.
+        hit.on("pointerdown", () => pressIn(group));
+        hit.on("pointerout", () => pressOut(group, "normal", { pop: false }));
         hit.on("pointerup", () => startNavScene(scene, tab.scene, navTabDirection(current, tab.key)));
       }
 

@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { drawGlyph } from "./glyphs";
 import { RailButton } from "./RailButton";
 import { COLOR, textStyle } from "./theme";
+import { pressIn, pressOut } from "./pressFeedback";
 
 /**
  * 화면 곁에 붙는 **상점 아이콘**과 **확률 정보 링크** — 연구소·고고학·출격판이 같은 한 벌을 쓴다.
@@ -30,9 +31,9 @@ export function addRatesLink(scene: Phaser.Scene, x: number, y: number, label: s
   link.add(text);
   const width = 30 + text.width + 8;
   const hit = scene.add.rectangle(width / 2, 0, width + 16, 48, 0xffffff, 0).setInteractive({ useHandCursor: true });
-  hit.on("pointerdown", () => link.setScale(1.08));
-  hit.on("pointerout", () => link.setScale(1));
-  hit.on("pointerup", () => { link.setScale(1); onClick(); });
+  hit.on("pointerdown", () => pressIn(link));
+  hit.on("pointerout", () => pressOut(link, "normal", { pop: false }));
+  hit.on("pointerup", () => { pressOut(link); onClick(); });
   link.add(hit);
   return link;
 }

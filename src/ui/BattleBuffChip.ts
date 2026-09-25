@@ -7,6 +7,7 @@ import { battleBuffStackSpot } from "./battleStatusLayout";
 import { COLOR, textStyle } from "./theme";
 import { session } from "../state/session";
 import { addColorAssistMark, COLOR_ASSIST_LAYOUT } from "./colorAssist";
+import { pressIn, pressOut } from "./pressFeedback";
 
 /** 전투 프로필에 붙는 작은 버프 액자. 진행 Graphics는 생성 후 지우고 다시 그려 재사용한다. */
 export class BattleBuffChip extends Phaser.GameObjects.Container {
@@ -30,10 +31,11 @@ export class BattleBuffChip extends Phaser.GameObjects.Container {
     // 보이는 56px 액자보다 입력판을 넓혀 최소 64px 터치 영역을 확보한다.
     this.hit = scene.add.rectangle(0, 0, Math.max(64, size), Math.max(64, size), 0xffffff, 0).setInteractive({ useHandCursor: true });
     // 진행 정보는 모든 움직임 설정에서 유지하고, reduced/off는 눌림 장식의 크기만 줄인다.
-    const pressedScale = motion === "default" ? 1.1 : motion === "reduced" ? 1.04 : 1;
-    this.hit.on("pointerdown", (_p: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => { event.stopPropagation(); this.setScale(pressedScale); });
-    this.hit.on("pointerup", (_p: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => { event.stopPropagation(); this.setScale(1); onPress(); });
-    this.hit.on("pointerout", () => this.setScale(1));
+    // 전투 UI 움직임을 끈 사람에게는 눌림 장식도 세우지 않는다. 나머지는 공용 눌림 연출이다.
+    const pressable = motion !== "off";
+    this.hit.on("pointerdown", (_p: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => { event.stopPropagation(); if (pressable) pressIn(this); });
+    this.hit.on("pointerup", (_p: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => { event.stopPropagation(); pressOut(this); onPress(); });
+    this.hit.on("pointerout", () => pressOut(this, "normal", { pop: false }));
     this.add([drawShapeOutline(scene, 0, 0, shape, { color: tint, alpha: 0.9, width: 2 }), this.hit]);
     // 겹치는 값(주기 타격의 몇 대째)은 칩을 여러 장 세우지 않고 **우하단 숫자 하나**가 말한다.
     // 머리 위 상태 칩과 같은 자리·같은 규칙을 쓴다.

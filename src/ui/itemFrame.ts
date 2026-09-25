@@ -3,6 +3,7 @@ import type { WalletItemKey } from "../data/items";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { chipPoints, drawInnerVignette, drawShapeOutline, drawLayer } from "./holo";
 import { COLOR, textStyle } from "./theme";
+import { pressIn, pressOut } from "./pressFeedback";
 
 /**
  * 그 화면에서 재화 액자를 누르면 무엇이 열리는가.
@@ -150,9 +151,9 @@ export function addFramedIcon(
   if (wallet && openGuide && !options.plain) {
     const hit = scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
     // 누르면 커진다 — 눌린 상태를 색이 아니라 크기로 알리는 화면 전체의 규칙이다.
-    hit.on("pointerdown", () => holder.setScale(1.08));
-    hit.on("pointerout", () => holder.setScale(1));
-    hit.on("pointerup", () => { holder.setScale(1); openGuide(wallet); });
+    hit.on("pointerdown", () => pressIn(holder));
+    hit.on("pointerout", () => pressOut(holder, "normal", { pop: false }));
+    hit.on("pointerup", () => { pressOut(holder); openGuide(wallet); });
     holder.add(hit);
   }
   if (parent) parent.add(holder);

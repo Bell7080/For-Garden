@@ -16,6 +16,7 @@ import { runeStatLabel } from "./RunePopup";
 import { runeTraitView } from "./runeTraitPresentation";
 import { addSectionTitle } from "./SectionTitle";
 import { COLOR, textStyle } from "./theme";
+import { pressIn, pressOut } from "./pressFeedback";
 
 /**
  * 특성 연구대.
@@ -82,9 +83,9 @@ function openRunePicker(options: { scene: Phaser.Scene; popups: PopupLayer; onPi
       const y = top + PICKER.headerHeight + Math.floor(order / columns) * PICKER.cellHeight;
       const card = addRuneCard(scene, x, y, PICKER.cardWidth, PICKER.cardHeight, rune);
       const hit = scene.add.rectangle(0, 0, PICKER.cardWidth, PICKER.cardHeight, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerdown", () => card.setScale(1.06));
-      hit.on("pointerout", () => card.setScale(1));
-      hit.on("pointerup", () => { card.setScale(1); close(); options.onPick(rune); });
+      hit.on("pointerdown", () => pressIn(card));
+      hit.on("pointerout", () => pressOut(card, "normal", { pop: false }));
+      hit.on("pointerup", () => { pressOut(card); close(); options.onPick(rune); });
       card.add(hit);
       body.add(card);
     });

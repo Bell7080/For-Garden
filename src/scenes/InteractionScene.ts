@@ -22,6 +22,7 @@ import { shapeClipMask } from "../ui/popupArt";
 import { drawGlyph } from "../ui/glyphs";
 import { STAGES } from "../data/stages";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
+import { pressIn, pressOut } from "../ui/pressFeedback";
 
 /**
  * 여는 조건에 적을 관문 이름.
@@ -320,9 +321,9 @@ export class InteractionScene extends Phaser.Scene {
 
     if (!locked) {
       const hit = this.add.rectangle(0, 0, artWidth, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerdown", () => layer.setScale(1.02));
-      hit.on("pointerout", () => layer.setScale(1));
-      hit.on("pointerup", () => { layer.setScale(1); this.openCity(view); });
+      hit.on("pointerdown", () => pressIn(layer));
+      hit.on("pointerout", () => pressOut(layer, "normal", { pop: false }));
+      hit.on("pointerup", () => { pressOut(layer); this.openCity(view); });
       layer.add(hit);
     }
     return layer;

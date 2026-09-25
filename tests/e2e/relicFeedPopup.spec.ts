@@ -78,3 +78,24 @@ test("긴 누르기 반복 급여는 손을 뗀 뒤 팝업을 한 장만 연다"
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["한 번에 급여"]);
   expect(await page.evaluate(() => window.__PF_DEBUG?.popupTitles?.length)).toBe(1);
 });
+
+test("급여 버튼을 연달아 두드리면 누른 것을 하나도 버리지 않고 모두 먹인다", async ({ page }) => {
+  await page.waitForTimeout(900);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.feedButton !== undefined), { timeout: 15_000 }).toBe(true);
+  const spot = (await page.evaluate(() => window.__PF_DEBUG!.feedButton!))!;
+  const feed = await gamePointOf(page, spot.x, spot.y);
+  const taps = 8;
+  // 서버 응답(가짜 지연)보다 빠르게 두드린다 — 예전에는 요청이 도는 동안의 누름이 버려졌다.
+  for (let index = 0; index < taps; index += 1) {
+    await page.mouse.click(feed.x, feed.y);
+    await page.waitForTimeout(60);
+  }
+  // 누른 것은 하나도 버려지지 않는다 — 두드린 수와 서버가 확정한 수가 같다. 느린 환경에서는 두드리는
+  // 사이에 손이 쉰 것으로 보여 쪽지가 열리고 다음 누름이 그 뒤판에 먹히므로, 누른 횟수 자체는 세지 않는다.
+  await expect
+    .poll(async () => {
+      const count = await page.evaluate(() => window.__PF_DEBUG?.feedTaps);
+      return count !== undefined && count.served > 0 && count.served === count.confirmed;
+    }, { timeout: 30_000 })
+    .toBe(true);
+});

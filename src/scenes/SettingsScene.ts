@@ -30,6 +30,7 @@ import { getRelic } from "../data/relics";
 import { openPolicyDocument, type PolicyPath } from "./policyNavigation";
 import { consumeSceneEntry } from "./sceneEntry";
 import { playSceneEntrance, startScene, restartScene } from "../ui/screenTransition";
+import { pressIn, pressOut } from "../ui/pressFeedback";
 
 /** 상단 탭은 긴 설정을 의미 단위로 나눠 좁은 화면에서도 한 섹션만 스크롤하게 한다. */
 const TABS = [
@@ -287,7 +288,7 @@ export class SettingsScene extends Phaser.Scene {
   private addTextAction(x: number, y: number, label: string, action: () => void, destructive = false): void {
     const button = this.add.text(x, y, label, textStyle({ role: "emphasis", size: SETTINGS_TEXT.action, color: destructive ? COLOR.dangerText : COLOR.accentText })).setOrigin(0, 0.5);
     const hit = this.add.rectangle(x + 420, y, 840, 88, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerdown", () => button.setScale(1.08)); hit.on("pointerout", () => button.setScale(1)); hit.on("pointerup", () => { button.setScale(1); if (!this.accountBusy) action(); });
+    hit.on("pointerdown", () => pressIn(button)); hit.on("pointerout", () => pressOut(button, "normal", { pop: false })); hit.on("pointerup", () => { pressOut(button); if (!this.accountBusy) action(); });
     this.content.add([button, hit]);
   }
 

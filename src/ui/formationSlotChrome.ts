@@ -8,6 +8,7 @@ import { ROLE_ICON } from "./affinityIcons";
 import { squeezeTextToWidth } from "./textFit";
 import type { Role } from "../core/types";
 import { COLOR, textStyle } from "./theme";
+import { pressIn, pressOut } from "./pressFeedback";
 
 /**
  * 편성 자리의 겉치레 — 고른 칸과 빼는 표식.
@@ -75,9 +76,9 @@ export function addFormationRemoveChip(
   }), { fill: 0x1a0f12, alpha: HOLO.glass, edge: COLOR.danger, edgeAlpha: 0.8 }));
   chip.add(drawGlyph(scene, "remove", 0, 0, size * 0.62, COLOR.danger));
   const hit = scene.add.rectangle(0, 0, size + 16, size + 16, 0xffffff, 0).setInteractive({ useHandCursor: true });
-  hit.on("pointerdown", () => chip.setScale(1.12));
-  hit.on("pointerout", () => chip.setScale(1));
-  hit.on("pointerup", () => { chip.setScale(1); onRemove(); });
+  hit.on("pointerdown", () => pressIn(chip));
+  hit.on("pointerout", () => pressOut(chip, "normal", { pop: false }));
+  hit.on("pointerup", () => { pressOut(chip); onRemove(); });
   chip.add(hit);
   parent.add(chip);
 }

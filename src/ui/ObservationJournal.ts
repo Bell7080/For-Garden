@@ -15,6 +15,7 @@ import { OBSERVATION_INTERVIEW_LAYOUT, observationInterviewPanelState, type Obse
 import { calculateObservationJournalFlow, OBSERVATION_JOURNAL_SIZE, withoutRepeatedProfileDetails } from "./observationJournalLayout";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
+import { pressIn, pressOut } from "./pressFeedback";
 
 /**
  * 관찰 일지 — **개체 하나를 설명하는 유일한 판이다.**
@@ -78,11 +79,11 @@ export function addObservationJournalButton(
   }), { fill: 0x121820, alpha: HOLO.glass }));
   container.add(drawGlyph(scene, "scroll", 0, 0, size * 0.54, 0xd8c7a0));
   const hit = scene.add.rectangle(0, 0, size + 12, size + 12, 0xffffff, 0).setInteractive({ useHandCursor: true });
-  hit.on("pointerdown", () => container.setScale(1.12));
-  hit.on("pointerout", () => { if (!popups.isOpen) container.setScale(1); });
+  hit.on("pointerdown", () => pressIn(container));
+  hit.on("pointerout", () => { if (!popups.isOpen) pressOut(container, "normal", { pop: false }); });
   hit.on("pointerup", () => {
-    container.setScale(1.12);
-    open({ x, y: y + size / 2, onClose: () => container.setScale(1) });
+    pressIn(container);
+    open({ x, y: y + size / 2, onClose: () => pressOut(container) });
   });
   container.add(hit);
   parent.add(container);
@@ -358,19 +359,19 @@ function addInterviewTrigger(
   let interviewState: ObservationInterviewPanelState = { open: false, completedToday: !canStart };
   if (canStart) {
     const hit = scene.add.rectangle(0, 0, interview.trigger.width, interview.trigger.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerdown", () => trigger.setScale(1.06)); hit.on("pointerout", () => { if (!interviewState.open) trigger.setScale(1); });
+    hit.on("pointerdown", () => pressIn(trigger)); hit.on("pointerout", () => { if (!interviewState.open) pressOut(trigger, "normal", { pop: false }); });
     hit.on("pointerup", () => {
-      trigger.setScale(1); if (interviewState.open) { popups.closeTop(); return; }
+      pressOut(trigger); if (interviewState.open) { popups.closeTop(); return; }
       interviewState = observationInterviewPanelState(interviewState, "toggle");
       const question = observationQuestionForRelicAndDate(def.id, utcDate);
-      popups.open({ ...interview.popup, title: t("info.interview.title"), closeOnBackdrop: false, dim: true, dimAlpha: 0.25, onClose: () => { interviewState = observationInterviewPanelState(interviewState, "close"); trigger.setScale(1); } }, (panel, closeInterview) => {
+      popups.open({ ...interview.popup, title: t("info.interview.title"), closeOnBackdrop: false, dim: true, dimAlpha: 0.25, onClose: () => { interviewState = observationInterviewPanelState(interviewState, "close"); pressOut(trigger); } }, (panel, closeInterview) => {
         panel.add(scene.add.text(interview.question.x, interview.question.y, question.prompt, textStyle({ role: "emphasis", size: journal.font.question, color: COLOR.accentText, wrap: interview.question.width })).setOrigin(0, 0));
         question.choices.forEach((choice, index) => {
           const choiceButton = scene.add.container(0, interview.choice.firstY + index * interview.choice.step);
           choiceButton.add(drawLayer(scene, 0, 0, slantedRect(interview.choice.width, interview.choice.height, interview.choice.bevel), { fill: 0x141a22, alpha: 0.94, edge: COLOR.accent, edgeAlpha: 0.42 }));
           choiceButton.add(scene.add.text(0, 0, choice.label, textStyle({ role: "emphasis", size: journal.font.large })).setOrigin(0.5));
           const choiceHit = scene.add.rectangle(0, 0, interview.choice.width, interview.choice.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-          choiceHit.on("pointerdown", () => choiceButton.setScale(1.06)); choiceHit.on("pointerout", () => choiceButton.setScale(1));
+          choiceHit.on("pointerdown", () => pressIn(choiceButton)); choiceHit.on("pointerout", () => pressOut(choiceButton, "normal", { pop: false }));
           // 답을 고르면 그 기록이 실린 일지를 곧바로 다시 연다 — 닫고 찾아 들어오게 하지 않는다.
           choiceHit.on("pointerup", () => { observations.complete(def.id, utcDate, choice.id); interviewState = observationInterviewPanelState(interviewState, "complete"); closeInterview(); close(); openObservationJournal(deps, { def, owned: true, interviews: true, from }); });
           choiceButton.add(choiceHit); panel.add(choiceButton);

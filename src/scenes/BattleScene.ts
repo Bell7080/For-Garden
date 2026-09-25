@@ -988,7 +988,9 @@ export class BattleScene extends Phaser.Scene {
       // 위로 머리가 빠져나오는 윗부분처럼 그림이 없는 투명한 자리까지 검게 칠해져, 카드
       // 밖에 검은 부채꼴이 떠 있는 것처럼 보인다.
       card.hit.on("pointerdown", () => {
-        // 기존 입력 규칙대로 누른 순간만 추가 확대하고, 잠금 카드는 반응하지 않는다.
+        // 공용 눌림 연출(`pressFeedback`)의 **유일한 예외**다. 이 카드는 배율을 바꿀 때마다 기하 마스크를
+        // `syncMask`로 다시 맞춰야 해서, 배율이 tween으로 흐르면 그 사이 마스크가 원화에서 어긋난다.
+        // 그래서 누른 순간 한 번에 커지고, 잠금 카드는 반응하지 않는다.
         if (!this.ultimateSequenceActive && canFireUltimate(this.state, fighter)) card.setScale(1.14);
       });
       card.hit.on("pointerout", () => card.setScale(profileScale(this.ultimateCharged(fighter))));

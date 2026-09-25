@@ -11,6 +11,7 @@ import { PortraitCard } from "./PortraitCard";
 import { RARITY_TONE } from "./rarityMark";
 import { COLOR } from "./theme";
 import { formatCurrency } from "../core/formatCurrency";
+import { pressIn, pressOut } from "./pressFeedback";
 
 /** 뒤집힌 칸에 쓰는 화석 조각 그림. 아직 깨지 않은 표본이라 결과 대신 이 실루엣만 선다. */
 const FACE_DOWN_ICON = "currency-fossil";
@@ -79,10 +80,10 @@ export class ResearchSlotTile extends Phaser.GameObjects.Container {
     this.add(this.back);
 
     this.hit = scene.add.rectangle(0, 0, options.width, options.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    this.hit.on("pointerdown", () => { if (!this.revealed) this.back.setScale(1.08); });
-    this.hit.on("pointerout", () => this.back.setScale(1));
+    this.hit.on("pointerdown", () => { if (!this.revealed) pressIn(this.back); });
+    this.hit.on("pointerout", () => pressOut(this.back, "normal", { pop: false }));
     this.hit.on("pointerup", () => {
-      this.back.setScale(1);
+      pressOut(this.back);
       if (!this.revealed) onOpen(this);
     });
     this.add(this.hit);

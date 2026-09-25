@@ -9,6 +9,7 @@ import { addFramedIcon } from "./itemFrame";
 import { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { CURRENCY_GUIDE_SIZE } from "./currencyGuideLayout";
+import { pressIn, pressOut } from "./pressFeedback";
 
 /**
  * 보유량을 세우는 위쪽 판.
@@ -38,9 +39,9 @@ export class CurrencyGuidePopup {
         button.add(drawLayer(this.scene, 0, 0, slantedRect(310, 72, 16), { fill: 0x273646, alpha: 0.98, edge: COLOR.accent, edgeAlpha: 0.8 }));
         button.add(this.scene.add.text(0, 0, guide.action.label, textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setOrigin(0.5));
         const hit = this.scene.add.rectangle(0, 0, 310, 72, 0xffffff, 0).setInteractive({ useHandCursor: true });
-        hit.on("pointerdown", () => button.setScale(1.1));
-        hit.on("pointerout", () => button.setScale(1));
-        hit.on("pointerup", () => { button.setScale(1); close(); this.onAction?.(guide.action!); });
+        hit.on("pointerdown", () => pressIn(button));
+        hit.on("pointerout", () => pressOut(button, "normal", { pop: false }));
+        hit.on("pointerup", () => { pressOut(button); close(); this.onAction?.(guide.action!); });
         button.add(hit); body.add(button);
       }
     });

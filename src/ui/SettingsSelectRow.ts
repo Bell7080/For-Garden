@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { squeezeTextToWidth } from "./textFit";
 import { SETTINGS_TEXT } from "./settingsLayout";
 import { COLOR, textStyle } from "./theme";
+import { pressIn, pressOut } from "./pressFeedback";
 
 /** 줄 하나의 폭과, 이름과 값 사이에 반드시 남기는 틈. */
 const ROW = { width: 900, gap: 28 } as const;
@@ -25,9 +26,9 @@ export class SettingsSelectRow<T extends string | number> extends Phaser.GameObj
     fitName();
     // 기존 행의 홀로그램 강조색과 눌림 확대를 그대로 두고 표시 문구만 선택적으로 번역한다.
     const hit = scene.add.rectangle(450, 0, ROW.width, 88, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerdown", () => this.setScale(1.03));
+    hit.on("pointerdown", () => pressIn(this));
     hit.on("pointerup", () => {
-      this.setScale(1);
+      pressOut(this);
       value = choices[(choices.indexOf(value) + 1) % choices.length];
       shown.setText(display(value));
       fitName();

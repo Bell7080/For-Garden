@@ -21,6 +21,7 @@ import { bakeBandTexture } from "./faceTexture";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { powerSavingPolicy } from "../core/settings";
 import { session } from "../state/session";
+import { pressIn, pressOut } from "./pressFeedback";
 
 /** 희귀도는 theme 의미 토큰 표만 거치므로 DTO가 임의 색 문자열을 주입할 수 없다. */
 function modifierColor(modifier: PublicProfileModifier): number {
@@ -178,13 +179,12 @@ export class PlayerProfilePopup {
     }
   }
 
-  /** 누를 수 있는 요소 위에 투명한 입력면을 얹고, 누르는 동안 그 요소를 살짝 키운다. */
-  private bindEdit(body: Phaser.GameObjects.Container, target: Phaser.GameObjects.Components.Transform | undefined, x: number, y: number, width: number, height: number, onTap: () => void): void {
+  /** 누를 수 있는 요소 위에 투명한 입력면을 얹고, 누르는 동안 그 요소가 공용 눌림 연출로 눌린다. */
+  private bindEdit(body: Phaser.GameObjects.Container, target: (Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Transform) | undefined, x: number, y: number, width: number, height: number, onTap: () => void): void {
     const hit = this.scene.add.rectangle(x, y, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    const baseScale = target?.scaleX ?? 1;
-    hit.on("pointerdown", () => target?.setScale(baseScale * 1.05));
-    hit.on("pointerout", () => target?.setScale(baseScale));
-    hit.on("pointerup", () => { target?.setScale(baseScale); onTap(); });
+    hit.on("pointerdown", () => { if (target) pressIn(target); });
+    hit.on("pointerout", () => { if (target) pressOut(target, "normal", { pop: false }); });
+    hit.on("pointerup", () => { if (target) pressOut(target); onTap(); });
     body.add(hit);
   }
 

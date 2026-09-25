@@ -14,6 +14,7 @@ import { compactTopBarName, TOP_BAR_LAYOUT } from "./topBarLayout";
 import type { WalletItemKey } from "../data/items";
 import { staminaMaxForPlayer } from "../core/stamina";
 import { TOP_BAR_SLOTS as SLOTS, type CurrencySlot, type TopBarCurrencyContext } from "./topBarSlots";
+import { pressIn, pressOut } from "./pressFeedback";
 
 export type { TopBarCurrencyContext };
 
@@ -82,9 +83,9 @@ export class TopBar {
     settings.add(drawGlyph(scene, "settings", 0, 0, 42, 0xc9ccd2));
     if (options.onSettings) {
       const hit = scene.add.rectangle(BASE_WIDTH - 58, y + 46, 84, 84, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerdown", () => settings.setScale(1.12));
-      hit.on("pointerout", () => settings.setScale(1));
-      hit.on("pointerup", () => { settings.setScale(1); options.onSettings?.(); });
+      hit.on("pointerdown", () => pressIn(settings));
+      hit.on("pointerout", () => pressOut(settings, "normal", { pop: false }));
+      hit.on("pointerup", () => { pressOut(settings); options.onSettings?.(); });
     } else settings.setAlpha(0.38);
 
     this.refresh();
@@ -128,10 +129,10 @@ export class TopBar {
     if (onProfile) {
       // 얼굴과 두 텍스트를 하나의 넓은 입력면으로 묶고 기존 홀로그램 규칙대로 눌렀을 때 확대한다.
       const hit = scene.add.rectangle(176, y + size / 2, 344, 96, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerdown", () => chip.setScale(1.07));
-      hit.on("pointerout", () => chip.setScale(1));
+      hit.on("pointerdown", () => pressIn(chip));
+      hit.on("pointerout", () => pressOut(chip, "normal", { pop: false }));
       // 생성 시 profile 인자를 캡처하지 않고 이벤트로 교체된 최신 멤버 모델을 넘긴다.
-      hit.on("pointerup", () => { chip.setScale(1); if (this.profile) onProfile(this.profile); });
+      hit.on("pointerup", () => { pressOut(chip); if (this.profile) onProfile(this.profile); });
       chip.add(hit);
     }
   }

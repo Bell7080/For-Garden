@@ -6,7 +6,7 @@ import type { Combatant } from "../core/combatTypes";
 import { runePartLabel, runeRarityLabel, type RunePart } from "../core/runes";
 import { previewSkillDamage } from "../core/damage";
 import type { BasicAttack, Element, RelicDef, RelicProgress, RelicRarity, Role, Passive, Skill, SkillIconAssetId, Stats, Ultimate } from "../core/types";
-import { setDebugFeedButton, setDebugInfoAssetReady, setDebugInfoGemSlots, setDebugInfoOpen } from "../debug";
+import { setDebugFeedButton, setDebugInfoAssetReady, setDebugInfoGemSlots, setDebugInfoOpen, addDebugFeedTaps } from "../debug";
 import { formatCurrency } from "../core/formatCurrency";
 import { RELICS } from "../data/relics";
 import { KeywordManager } from "../managers/KeywordManager";
@@ -68,6 +68,10 @@ import type { KeywordDef } from "../data/keywords";
 import { galleryPortraitPlacement, INFO_PORTRAIT_FOCUS, infoPortraitPlacement } from "./portraitPlacement";
 import { skinsForRelic } from "../data/relicSkins";
 import { relicSkinManager } from "../managers/RelicSkinManager";
+import { pressIn, pressOut } from "./pressFeedback";
+import { FeedTapEffect } from "./feedTapEffect";
+import { settingsManager } from "../managers/SettingsManager";
+import { FEED_TAP } from "./feedTapStyle";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -279,6 +283,8 @@ type BreakthroughCost =
 
 /** 이만큼 누르고 있으면 한 번에 급여 팝업이 열린다(ms). */
 const FEED_HOLD_MS = 420;
+/** 꾹 누르고 있을 때 되풀이해 먹이는 간격. 두드리는 손보다 조금 느려 연타가 더 빠른 길로 남는다. */
+const FEED_REPEAT_MS = 180;
 
 /** 옆 캐릭터로 넘어가는 데 필요한 가로 이동(px). */
 const SWIPE_DISTANCE = 110;
@@ -501,6 +507,18 @@ export class InfoManager {
   /** 값이 바뀔 때마다 아이콘과 수를 다시 가운데로 모은다. */
   private feedCostLayout?: () => void;
   private feedHold?: Phaser.Time.TimerEvent;
+  /**
+   * 손을 쉬면 여러 레벨 쪽지를 여는 타이머. 다시 누르면 취소된다.
+   *
+   * **씬 시계가 아니라 벽시계로 잰다.** 씬 타이머는 프레임이 돌아야 흐르므로 메인 스레드가 바쁜
+   * 자리에서는 0.7초가 몇 초로 늘어나, 손을 쉬었는데도 쪽지가 한참 뒤에 떴다.
+   */
+  private feedBulkTimer?: ReturnType<typeof setTimeout>;
+  /** 아직 서버로 보내지 않은 급여 횟수. 도는 요청이 끝나면 한 번에 보낸다. */
+  private feedQueue = 0;
+  private feedInFlight = 0;
+  private feedQueueRelicId?: string;
+  private feedFlushing?: Promise<void>;
   private feeding = false;
   /** A feed note is a singleton; this also bridges the async feed lock and popup creation. */
   private feedPopupOpen = false;
@@ -739,50 +757,62 @@ export class InfoManager {
     this.feedCostLayout = row.layout;
     container.add(row.container);
     const hit = this.scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    // 누를 때마다 치즈케이크 한 조각이 튀어 오르고 연속 수(×N)가 선다. 버튼의 자식이라 함께 사라진다.
+    const tapEffect = new FeedTapEffect(this.scene, container, { x: 0, y: -height / 2 + 10 }, { x: width / 2 - 36, y: -height / 2 - 30 });
     let heldFrom = 0;
-    let feedStarted: Promise<boolean> | undefined;
     let repeated = false;
+    let served = false;
+    /**
+     * **한 번 누르면 한 번 먹인다 — 서버 응답을 기다리지 않는다.** 예전에는 요청이 도는 동안 들어온
+     * 누름을 버려, 빠르게 두드리면 절반 넘게 헛손질이 됐다. 이제 누름은 줄(`feedQueue`)에 쌓이고,
+     * 도는 요청이 끝나면 그동안 쌓인 만큼을 **한 번의 요청**으로 보낸다. 줄에 넣기 전에 지갑과 상한을
+     * 지금 줄까지 셈해 막으므로 가진 것보다 많이 두드려도 헛조각이 뜨지 않는다.
+     */
+    const serveOnce = (): void => {
+      if (!this.canQueueFeed()) return;
+      served = true;
+      addDebugFeedTaps(1, 0);
+      tapEffect.tap();
+      settingsManager.haptic("uiTap");
+      this.enqueueFeed(1);
+    };
     hit.on("pointerdown", () => {
-      // The first serving belongs to pointerdown for both gestures.  Only pointerup decides whether the
-      // gesture was a tap or a hold, after this server-confirmed request has completed.
-      if (this.feeding || this.feedPopupOpen) return;
-      container.setScale(1.04);
+      if (this.feedPopupOpen) return;
+      this.cancelFeedBulk();
+      pressIn(container, "feed");
       heldFrom = this.scene.time.now;
       repeated = false;
-      feedStarted = this.feed(1);
-      this.feedHold = this.scene.time.addEvent({ delay: 260, loop: true, callback: () => {
+      served = false;
+      serveOnce();
+      this.feedHold?.remove();
+      this.feedHold = this.scene.time.addEvent({ delay: FEED_REPEAT_MS, loop: true, callback: () => {
         repeated = true;
-        void this.feed(1);
+        serveOnce();
       } });
     });
-    const release = async (opened: boolean): Promise<void> => {
-      container.setScale(1);
-      // **제스처의 소유권을 기다리기 전에 먼저 가져온다.** `pointerup`과 `pointerout`이 잇달아
-      // 오면 둘 다 이 함수로 들어오는데, 예전에는 뒤에 온 쪽이 앞선 호출이 서버 응답을 기다리는
-      // 동안 `heldFrom`을 0으로 지웠다. 그래서 짧은 탭은 급여가 실제로 성사되고도 성장 팝업을
-      // 열지 못했다 — 조건이 이미 0이 된 값을 읽었기 때문이다.
+    const release = (opened: boolean): void => {
+      pressOut(container, "feed", { pop: opened });
+      // **제스처의 소유권을 먼저 가져온다.** `pointerup`과 `pointerupoutside`가 잇달아 와도 한 번만 처리한다.
       const startedAt = heldFrom;
       heldFrom = 0;
-      if (startedAt === 0) return;
-      const held = this.scene.time.now - startedAt;
       this.feedHold?.remove();
       this.feedHold = undefined;
-      const started = feedStarted;
-      feedStarted = undefined;
-      // The response is the only proof that EXP changed.  Waiting here also keeps rapid releases behind the
-      // existing `feeding` lock, so several notes cannot be stacked while the network is slow.
-      const changed = await started;
-      const wasHold = repeated || held >= FEED_HOLD_MS;
-      // A short successful tap offers the next currently-valid growth action immediately.  A hold keeps its
-      // repeat behavior and opens the same singleton only after the hand has been released.
-      if (opened && (wasHold || changed)) this.openFeedBulk(x, y + height / 2);
+      if (startedAt === 0 || !opened || !served) return;
+      const wasHold = repeated || this.scene.time.now - startedAt >= FEED_HOLD_MS;
+      // 한 번에 여러 레벨을 채우는 쪽지는 **손이 쉴 때** 연다. 누를 때마다 열면 그 판이 버튼 위를 덮어
+      // 연타가 거기서 끊긴다. 꾹 누른 손은 이미 멈춘 손이라 곧바로 연다.
+      this.cancelFeedBulk();
+      const relicId = this.currentDef?.id;
+      this.feedBulkTimer = setTimeout(() => {
+        this.feedBulkTimer = undefined;
+        // 기다리는 사이 창이 닫혔거나 옆 렐릭으로 넘어갔으면 열지 않는다.
+        if (!container.active || !this.scene.sys.isActive() || this.currentDef?.id !== relicId) return;
+        void this.flushFeeds().then(() => { if (heldFrom === 0 && container.active) this.openFeedBulk(x, y + height / 2); });
+      }, wasHold ? 0 : FEED_TAP.bulkIdleMs);
     };
-    hit.on("pointerup", () => void release(true));
-    // 손을 **뗀 자리**로 판단한다. `pointerout`으로 취소하면 급여가 레벨을 올려 판이 다시 그려질
-    // 때 그 사건이 먼저 도착해, 아직 누르고 있는 제스처를 취소로 삼켜 버린다 — 그래서 급여는
-    // 성사되는데 성장 팝업만 뜨지 않는 일이 생겼다(레벨업이 걸리는 회차에만 나타나 흔들렸다).
-    // 벗어남은 되풀이 급여만 멈추고, 열지 말지는 실제로 떼는 순간에 정한다.
-    hit.on("pointerupoutside", () => void release(false));
+    hit.on("pointerup", () => release(true));
+    // 손을 **뗀 자리**로 판단한다. 벗어남은 되풀이 급여만 멈추고, 쪽지를 열지 말지는 떼는 순간에 정한다.
+    hit.on("pointerupoutside", () => release(false));
     hit.on("pointerout", () => { this.feedHold?.remove(); this.feedHold = undefined; });
     container.add(hit);
     attach(panel, container);
@@ -818,11 +848,11 @@ export class InfoManager {
     const cost = this.scene.add.container(0, BREAK_BUTTON.costY);
     container.add([label, cost]);
     const hit = this.scene.add.rectangle(0, 0, BREAK_BUTTON.width + 8, BREAK_BUTTON.height + 12, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerdown", () => container.setScale(1.08));
-    hit.on("pointerout", () => { if (!this.popups.isOpen) container.setScale(1); });
+    hit.on("pointerdown", () => pressIn(container));
+    hit.on("pointerout", () => { if (!this.popups.isOpen) pressOut(container, "normal", { pop: false }); });
     hit.on("pointerup", () => {
-      container.setScale(1.08);
-      this.openBreakthrough({ x, y: y + 60, onClose: () => container.setScale(1) });
+      pressIn(container);
+      this.openBreakthrough({ x, y: y + 60, onClose: () => pressOut(container) });
     });
     container.add(hit);
     attach(panel, container);
@@ -1129,27 +1159,40 @@ export class InfoManager {
     // 상한에 닿는 순간 쪽지가 스스로 닫힌다 — 더 먹일 수 없는 판에 남아 있을 이유가 없고,
     // 다음에 할 일(한계 돌파)은 별 옆의 버튼이 제 자리에서 말한다.
     if (progress.level >= relicLevelCap(progress.breakthrough)) { close(); return; }
-    {
-      ([[t("info.feed.one"), 1], [t("info.feed.ten"), 10]] as const).forEach(([label, levels], index) => {
-        const bx = index === 0 ? -118 : 118;
-        const cost = this.feedsForLevels(levels) * FEED_UNIT.cheesecake;
-        const enough = session.wallet.cheesecake >= cost;
-        body.add(drawLayer(this.scene, bx, 12, slantedRect(212, 116, 14), { fill: 0x3d2f12, alpha: 0.92, edge: FEED_AMBER, edgeAlpha: enough ? 0.8 : 0.3 }));
-        body.add(this.scene.add.text(bx, -22, label, textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
-        // 버튼과 같은 값줄이다. 여기서 바뀌는 것은 오른쪽 수(한 번에 나가는 양)뿐이다.
-        const price = feedCostRow(this.scene, bx, 32, 184, 48, 28);
-        price.text.setText(formatCurrency(session.wallet.cheesecake) + "/" + formatCurrency(cost));
-        price.text.setColor(enough ? FEED_TEXT : COLOR.dangerText);
-        price.layout();
-        body.add(price.container);
-        if (!enough) return;
-        const hit = this.scene.add.rectangle(bx, 12, 212, 116, 0xffffff, 0).setInteractive({ useHandCursor: true });
-        // 먹인 뒤 쪽지를 닫지 않고 같은 판을 다시 적는다 — 레벨이 올라 다음 한 레벨의 값이
-        // 달라지므로, 남겨 두기만 하고 값을 그대로 두면 화면이 거짓말을 한다.
-        hit.on("pointerup", () => { void this.feedLevels(levels).then(repaint); });
-        body.add(hit);
+    // 조각은 판 **바깥** 겹에서 터진다 — 먹일 때마다 판을 다시 적으므로(`removeAll`) 판 안에 두면
+    // 날아가던 조각이 다시 그리는 순간 함께 지워진다.
+    const host = body.parentContainer ?? body;
+    const burst = new FeedTapEffect(this.scene, host, { x: body.x, y: body.y });
+    ([[t("info.feed.one"), 1], [t("info.feed.ten"), 10]] as const).forEach(([label, levels], index) => {
+      const bx = index === 0 ? -118 : 118;
+      const cost = this.feedsForLevels(levels) * FEED_UNIT.cheesecake;
+      const enough = session.wallet.cheesecake >= cost;
+      // 칸 하나를 한 덩어리로 묶어야 눌림이 판·이름·값줄을 함께 누른다.
+      const option = this.scene.add.container(bx, 12);
+      option.add(drawLayer(this.scene, 0, 0, slantedRect(212, 116, 14), { fill: 0x3d2f12, alpha: 0.92, edge: FEED_AMBER, edgeAlpha: enough ? 0.8 : 0.3 }));
+      option.add(this.scene.add.text(0, -34, label, textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
+      // 버튼과 같은 값줄이다. 여기서 바뀌는 것은 오른쪽 수(한 번에 나가는 양)뿐이다.
+      const price = feedCostRow(this.scene, 0, 20, 184, 48, 28);
+      price.text.setText(formatCurrency(session.wallet.cheesecake) + "/" + formatCurrency(cost));
+      price.text.setColor(enough ? FEED_TEXT : COLOR.dangerText);
+      price.layout();
+      option.add(price.container);
+      body.add(option);
+      if (!enough) return;
+      const hit = this.scene.add.rectangle(0, 0, 212, 116, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      hit.on("pointerdown", () => pressIn(option, "feed"));
+      hit.on("pointerout", () => pressOut(option, "feed", { pop: false }));
+      // 먹인 뒤 쪽지를 닫지 않고 같은 판을 다시 적는다 — 레벨이 올라 다음 한 레벨의 값이
+      // 달라지므로, 남겨 두기만 하고 값을 그대로 두면 화면이 거짓말을 한다.
+      hit.on("pointerup", () => {
+        pressOut(option, "feed");
+        burst.from({ x: body.x + bx, y: body.y + 12 - 40 }).tap();
+        settingsManager.haptic("uiTap");
+        // 버튼으로 두드려 쌓인 몫이 먼저 나가야 이 칸이 셈한 값이 맞는다.
+        void this.flushFeeds().then(() => this.feedLevels(levels)).then(repaint);
       });
-    }
+      option.add(hit);
+    });
   }
 
   /** 지금 레벨에서 목표 레벨까지 필요한 급여 횟수. 팝업의 소모량 표기와 실제 요청이 같은 값을 쓴다. */
@@ -1168,6 +1211,50 @@ export class InfoManager {
     return Math.max(1, need);
   }
 
+  /**
+   * 지금 한 번 더 줄에 넣을 수 있는지. 이미 줄에 쌓인 몫까지 **치즈케이크와 레벨 상한 양쪽**으로 셈한다 —
+   * 서버도 넘치는 몫을 깎아 주지만, 화면이 먼저 막아야 먹이지도 않은 조각이 뜨지 않는다.
+   */
+  private canQueueFeed(): boolean {
+    const def = this.currentDef;
+    if (!def || !this.ownedNow) return false;
+    const progress = relicProgression.getProgress(def.id);
+    const queued = this.feedQueue + (this.feeding ? this.feedInFlight : 0);
+    if (session.wallet.cheesecake < (queued + 1) * FEED_UNIT.cheesecake) return false;
+    const cap = relicLevelCap(progress.breakthrough);
+    if (progress.level >= cap) return false;
+    return queued < this.feedsForLevels(cap - progress.level);
+  }
+
+  private cancelFeedBulk(): void {
+    if (this.feedBulkTimer !== undefined) clearTimeout(this.feedBulkTimer);
+    this.feedBulkTimer = undefined;
+  }
+
+  private enqueueFeed(count: number): void {
+    // 줄은 한 렐릭의 것이다. 쌓인 채로 옆 렐릭으로 넘어가면 그 몫이 엉뚱한 렐릭에게 먹여지므로 버린다.
+    const relicId = this.currentDef?.id;
+    if (relicId !== this.feedQueueRelicId) { this.feedQueue = 0; this.feedQueueRelicId = relicId; }
+    this.feedQueue += count;
+    void this.flushFeeds();
+  }
+
+  /** 줄을 비운다. 요청이 도는 중이면 그 요청이 끝난 뒤 이어서 보낸다. */
+  private async flushFeeds(): Promise<void> {
+    if (this.feedFlushing) return this.feedFlushing;
+    this.feedFlushing = (async () => {
+      while (this.feedQueue > 0) {
+        if (this.currentDef?.id !== this.feedQueueRelicId) { this.feedQueue = 0; break; }
+        const count = this.feedQueue;
+        this.feedQueue = 0;
+        this.feedInFlight = count;
+        await this.feed(count);
+        this.feedInFlight = 0;
+      }
+    })().finally(() => { this.feedFlushing = undefined; });
+    return this.feedFlushing;
+  }
+
   /** 필요한 급여 횟수를 한 번에 요청한다. */
   private async feedLevels(levels: number): Promise<void> {
     await this.feed(this.feedsForLevels(levels));
@@ -1182,7 +1269,8 @@ export class InfoManager {
     this.feeding = true;
     let changed = false;
     try {
-      await gameApi.feedRelic(def.id, feeds);
+      const response = await gameApi.feedRelic(def.id, feeds);
+      addDebugFeedTaps(0, response.feeds);
       const after = relicProgression.getProgress(def.id);
       changed = after.level > before.level || after.exp > before.exp;
       // 정보창과 상단 줄 모두 확정된 단일 세션 지갑을 읽도록 성공 직후 알린다.
@@ -1296,10 +1384,10 @@ export class InfoManager {
         const holder = equippedRelicName(rune.instanceId);
         const card = addRuneCard(this.scene, x, y, RUNE_PICKER.cardWidth, RUNE_PICKER.cardHeight, rune, { dimmed: holder !== undefined });
         const hit = this.scene.add.rectangle(0, 0, RUNE_PICKER.cardWidth, RUNE_PICKER.cardHeight, 0xffffff, 0).setInteractive({ useHandCursor: true });
-        hit.on("pointerdown", () => card.setScale(1.06));
-        hit.on("pointerout", () => { if (!this.popups.isOpen) card.setScale(1); });
+        hit.on("pointerdown", () => pressIn(card));
+        hit.on("pointerout", () => { if (!this.popups.isOpen) pressOut(card, "normal", { pop: false }); });
         hit.on("pointerup", () => {
-          card.setScale(1);
+          pressOut(card);
           // 가방에서도 곧바로 끼우지 않고 쪽지를 먼저 연다. 무엇을 끼우는지 보고 고르게 한다.
           openRuneInfoPopup(this.scene, this.popups, {
             runeInstanceId: rune.instanceId,
@@ -1551,12 +1639,12 @@ export class InfoManager {
     }), { fill: 0x121820, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.4 }));
     container.add(drawGlyph(this.scene, "costume", 0, 0, size * 0.54, 0xd2d6dc));
     const hit = this.scene.add.rectangle(0, 0, size + 10, size + 10, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerdown", () => container.setScale(1.12));
-    hit.on("pointerout", () => { if (!this.popups.isOpen) container.setScale(1); });
+    hit.on("pointerdown", () => pressIn(container));
+    hit.on("pointerout", () => { if (!this.popups.isOpen) pressOut(container, "normal", { pop: false }); });
     hit.on("pointerup", () => {
       const def = this.currentDef;
-      if (!def || skinsForRelic(def.id).length === 0) { container.setScale(1); return; }
-      this.openAppearancePanel(def, () => container.setScale(1));
+      if (!def || skinsForRelic(def.id).length === 0) { pressOut(container); return; }
+      this.openAppearancePanel(def, () => pressOut(container));
     });
     container.add(hit);
     this.chrome.add(container);
@@ -1737,15 +1825,15 @@ export class InfoManager {
         enhanced: breakthroughEnhances(def, breakthrough, slot),
       }));
       const hit = this.scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerdown", () => container.setScale(1.08));
-      hit.on("pointerout", () => { if (!this.popups.isOpen) container.setScale(1); });
+      hit.on("pointerdown", () => pressIn(container));
+      hit.on("pointerout", () => { if (!this.popups.isOpen) pressOut(container, "normal", { pop: false }); });
       hit.on("pointerup", () => {
         // 팝업이 떠 있는 동안 아이콘은 눌린 채로 남는다. 어디서 나온 쪽지인지 보이게 한다.
-        container.setScale(1.08);
+        pressIn(container);
         openSkillPopup(this.scene, this.popups, this.keywords, this.skillViewModel(kindLabel, skill, gaugeCost, slot), {
           x: container.x,
           y: container.y - size / 2,
-          onClose: () => container.setScale(1),
+          onClose: () => pressOut(container),
         });
       });
       container.add(hit);
@@ -2167,11 +2255,11 @@ export function addInfoMagnifier(
   // 안 된다. 대신 작아진 만큼 선은 굵게 줘야 형태가 뭉개지지 않는다.
   container.add(drawGlyph(scene, "magnifier", 0, 0, 30, 0xb9c0ca, 0.42, 4));
   const hit = scene.add.rectangle(x, y, 78, 78, 0xffffff, 0).setInteractive({ useHandCursor: true });
-  hit.on("pointerdown", () => container.setScale(1.15));
-  hit.on("pointerout", () => { if (!popups.isOpen) container.setScale(1); });
+  hit.on("pointerdown", () => pressIn(container));
+  hit.on("pointerout", () => { if (!popups.isOpen) pressOut(container, "normal", { pop: false }); });
   hit.on("pointerup", () => {
-    container.setScale(1.15);
-    onClick({ x, y: y - 26, onClose: () => container.setScale(1) });
+    pressIn(container);
+    onClick({ x, y: y - 26, onClose: () => pressOut(container) });
   });
   if (intoPanel) attach(parent, container, hit);
   else parent.add([container, hit]);
@@ -2307,11 +2395,11 @@ function addInfoBadge(
   badge.add(addSkillIconFrame(scene, { ...frame, size: badgeSize }));
   // 입력 영역도 뱃지 크기에 딱 맞춘다. 넓게 잡으면 아래 아이콘의 터치를 가로챈다.
   const hit = scene.add.rectangle(0, 0, badgeSize, badgeSize, 0xffffff, 0).setInteractive({ useHandCursor: true });
-  hit.on("pointerdown", () => badge.setScale(1.1));
-  hit.on("pointerout", () => { if (!popups.isOpen) badge.setScale(1); });
+  hit.on("pointerdown", () => pressIn(badge));
+  hit.on("pointerout", () => { if (!popups.isOpen) pressOut(badge, "normal", { pop: false }); });
   hit.on("pointerup", () => {
-    badge.setScale(1.1);
-    onOpen({ x, y: y - badgeSize / 2 - 12, onClose: () => badge.setScale(1) });
+    pressIn(badge);
+    onOpen({ x, y: y - badgeSize / 2 - 12, onClose: () => pressOut(badge) });
   });
   badge.add(hit);
   parent.add(badge);

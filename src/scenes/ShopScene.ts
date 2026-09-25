@@ -34,6 +34,7 @@ import {
   shopShelfWidth, shopShelfY, shopTabSpot, shopTitleLeft, shopTitleY,
   shopStageSettleMs,
 } from "../ui/shopLayout";
+import { pressIn, pressOut } from "../ui/pressFeedback";
 
 /**
  * 일반 상품과 성장 재화를 취급하는 독립 상점 씬이다.
@@ -464,10 +465,10 @@ export class ShopScene extends Phaser.Scene {
         Phaser.Geom.Rectangle.Contains(area, x, y) && this.insideViewport(this.input.activePointer),
       useHandCursor: product.purchasable,
     });
-    hit.on("pointerdown", () => card.setScale(1.04));
-    hit.on("pointerout", () => card.setScale(1));
+    hit.on("pointerdown", () => pressIn(card));
+    hit.on("pointerout", () => pressOut(card, "normal", { pop: false }));
     hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
-      card.setScale(1);
+      pressOut(card);
       // GeometryMask는 그리기만 자르므로 격자 밖의 숨은 칸 입력도 같은 창 경계에서 거부한다.
       if (!this.insideViewport(pointer)) return;
       // 스크롤 드래그가 끝난 손을 구매 탭으로 오인하지 않는다.

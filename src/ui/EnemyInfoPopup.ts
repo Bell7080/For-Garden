@@ -30,6 +30,7 @@ import { StatRadar } from "./StatRadar";
 import { reachLabel, STAT_TONE } from "./statTones";
 import { COLOR, textStyle } from "./theme";
 import { t } from "../i18n";
+import { pressIn, pressOut } from "./pressFeedback";
 
 /** 그 적이 실제로 서 있는 상태. 화면이 레벨 보정을 다시 하지 않고 배치된 값을 그대로 받는다. */
 export interface EnemyInfoSnapshot {
@@ -334,11 +335,11 @@ export class EnemyInfoPopup {
         enhanced: breakthroughEnhances(def, snapshot.breakthrough, entry.slot),
       }));
       const hit = this.scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerdown", () => container.setScale(1.08));
-      hit.on("pointerout", () => { if (!this.popups.isOpen) container.setScale(1); });
+      hit.on("pointerdown", () => pressIn(container));
+      hit.on("pointerout", () => { if (!this.popups.isOpen) pressOut(container, "normal", { pop: false }); });
       hit.on("pointerup", () => {
-        container.setScale(1.08);
-        this.openSkill(snapshot, entry, { x: SCREEN_CENTER.x + container.x, y: SCREEN_CENTER.y + container.y - size / 2, onClose: () => container.setScale(1) });
+        pressIn(container);
+        this.openSkill(snapshot, entry, { x: SCREEN_CENTER.x + container.x, y: SCREEN_CENTER.y + container.y - size / 2, onClose: () => pressOut(container) });
       });
       container.add(hit);
       chrome.add(container);

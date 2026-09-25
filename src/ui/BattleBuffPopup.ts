@@ -8,6 +8,7 @@ import { chipPoints, drawHairline, drawInnerVignette, drawLayer, drawShapeOutlin
 import { COLOR, textStyle } from "./theme";
 import { FALLBACK_SKILL_ICON } from "./skillIcons";
 import { skillArtFor, skillArtTint, type SkillArtSlot } from "./skillArt";
+import { pressIn, pressOut } from "./pressFeedback";
 
 export interface BattleBuffPopupController {
   /** 전투는 팝업 뒤에서도 계속되므로 씬의 최신 코어 스냅샷으로 시간과 상태를 갱신한다. */
@@ -32,8 +33,8 @@ export function openBattleBuffListPopup(scene: Phaser.Scene, popups: PopupLayer,
       const name = scene.add.text(-278, y - 18, buff.name, textStyle({ role: "display", size: 27 })).setOrigin(0, 0);
       const meta = scene.add.text(250, y - 14, battleBuffTimingLabel(buff.timing), textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(1, 0);
       const hit = scene.add.rectangle(0, y, 660, 68, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerdown", () => hit.setScale(1.03));
-      hit.on("pointerout", () => hit.setScale(1));
+      hit.on("pointerdown", () => pressIn(hit));
+      hit.on("pointerout", () => pressOut(hit, "normal", { pop: false }));
       hit.on("pointerup", () => { close(); onSelect(buff); });
       content.add([marker, name, meta, hit]);
       if (index < items.length - 1) content.add(drawHairline(scene, 0, y + 39, 620, { color: COLOR.accent, alpha: 0.2 }));

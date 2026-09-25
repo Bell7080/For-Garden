@@ -5,6 +5,7 @@ import type { CurrencyIconKey } from "./currencyIcons";
 import { COLOR, textStyle } from "./theme";
 import { session } from "../state/session";
 import { addColorAssistMark, COLOR_ASSIST_LAYOUT } from "./colorAssist";
+import { pressIn, pressOut } from "./pressFeedback";
 
 /** 보상 액자의 상태색은 수령 가능/완료/진행 중을 카드와 같은 언어로 표현한다. */
 export type RewardFrameState = "normal" | "claimable" | "claimed";
@@ -30,8 +31,8 @@ export class RewardFrame extends Phaser.GameObjects.Container {
     // 읽기 전용 결과도 눌림 확대 피드백은 유지하되 포인터 모양은 실제 행동이 있을 때만 바꾼다.
     {
       const hit = scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: !!options.onClick });
-      hit.on("pointerdown", () => this.setScale(1.08)); hit.on("pointerout", () => this.setScale(1));
-      hit.on("pointerup", () => { this.setScale(1); options.onClick?.(); }); this.add(hit);
+      hit.on("pointerdown", () => pressIn(this)); hit.on("pointerout", () => pressOut(this, "normal", { pop: false }));
+      hit.on("pointerup", () => { pressOut(this); options.onClick?.(); }); this.add(hit);
     }
   }
 }

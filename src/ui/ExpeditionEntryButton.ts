@@ -3,6 +3,7 @@ import { t } from "../i18n";
 import { chipPoints, drawFrameVignette, drawLayer, drawShapeOutline, HOLO } from "./holo";
 import { COLOR, textStyle } from "./theme";
 import { shapeClipMask } from "./popupArt";
+import { pressIn, pressOut } from "./pressFeedback";
 
 /** 로컬 좌표 도형을 지금의 월드 좌표로 옮긴다. 팝업 안에서 마스크가 엉뚱한 자리에 남지 않게 한다. */
 function worldPoints(matrix: Phaser.GameObjects.Components.TransformMatrix, flat: readonly number[]): Phaser.Geom.Point[] {
@@ -175,8 +176,8 @@ export class ExpeditionEntryButton extends Phaser.GameObjects.Container {
     // 투명 입력면 하나가 그림과 글자를 함께 확대해 공용 Button과 같은 눌림 피드백을 낸다.
     const hit = scene.add.rectangle(0, 0, options.width, options.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     this.add(hit);
-    hit.on("pointerdown", () => this.setScale(1.08));
-    hit.on("pointerout", () => this.setScale(1));
-    hit.on("pointerup", () => { this.setScale(1); options.onClick(); });
+    hit.on("pointerdown", () => pressIn(this));
+    hit.on("pointerout", () => pressOut(this, "normal", { pop: false }));
+    hit.on("pointerup", () => { pressOut(this); options.onClick(); });
   }
 }

@@ -3,6 +3,7 @@ import type { CurrencyIconKey } from "./currencyIcons";
 import type { WalletItemKey } from "../data/items";
 import { drawRoundedLayer } from "./holo";
 import { COLOR, textStyle } from "./theme";
+import { pressIn, pressOut } from "./pressFeedback";
 
 /**
  * 재화 한 칸.
@@ -72,9 +73,9 @@ export function addCurrencyChip(
   if (options.currency && options.onClick) {
     // 투명 입력면은 보이는 칩 전체와 일치하고 눌림은 칸 하나를 통째로 키워 알린다.
     const hit = scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerdown", () => chip.setScale(1.08));
-    hit.on("pointerout", () => chip.setScale(1));
-    hit.on("pointerup", () => { chip.setScale(1); options.onClick?.(options.currency!); });
+    hit.on("pointerdown", () => pressIn(chip));
+    hit.on("pointerout", () => pressOut(chip, "normal", { pop: false }));
+    hit.on("pointerup", () => { pressOut(chip); options.onClick?.(options.currency!); });
     chip.add(hit);
   }
   return value;

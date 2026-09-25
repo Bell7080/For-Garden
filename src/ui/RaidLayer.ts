@@ -18,6 +18,7 @@ import { RAID_BOSS_PICK, RAID_DIFFICULTY_PICK, RAID_DIFFICULTY_TONE, RAID_HP_BAR
 import { addSectionTitle } from "./SectionTitle";
 import { shrinkTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
+import { pressIn, pressOut } from "./pressFeedback";
 
 export interface RaidLayerHandlers {
   /** 층을 눌렀을 때. 목록을 끌던 손이면 부른 쪽이 거른다. */
@@ -68,9 +69,9 @@ export function addRaidLayer(
   void loadFaceBand(scene, layer, raid.bossRelicId, width + slant, height, shape, completed);
   // 입력면은 판 바로 위에 깐다 — 그 위에 서는 정산 버튼이 먼저 손을 받는다.
   const hit = scene.add.rectangle(0, 0, width - slant, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-  hit.on("pointerdown", () => layer.setScale(1.02));
-  hit.on("pointerout", () => layer.setScale(1));
-  hit.on("pointerup", () => { layer.setScale(1); handlers.onTap(); });
+  hit.on("pointerdown", () => pressIn(layer));
+  hit.on("pointerout", () => pressOut(layer, "normal", { pop: false }));
+  hit.on("pointerup", () => { pressOut(layer); handlers.onTap(); });
   layer.add(hit);
   // 글이 서는 왼쪽만 어둠이 올라온다. 얼굴 쪽까지 누르면 누구인지가 흐려진다.
   const scrim = scene.add.graphics();
@@ -203,9 +204,9 @@ function addPickLayerBase(
   layer.add(drawLayer(scene, 0, 0, shape, { fill: COLOR.void, alpha: 0.92 }));
   void loadFaceBand(scene, layer, options.relicId, width + slant, height, shape, false);
   const hit = scene.add.rectangle(0, 0, width - slant, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-  hit.on("pointerdown", () => layer.setScale(1.03));
-  hit.on("pointerout", () => layer.setScale(1));
-  hit.on("pointerup", () => { layer.setScale(1); options.onTap(); });
+  hit.on("pointerdown", () => pressIn(layer));
+  hit.on("pointerout", () => pressOut(layer, "normal", { pop: false }));
+  hit.on("pointerup", () => { pressOut(layer); options.onTap(); });
   layer.add(hit);
   const scrim = scene.add.graphics();
   scrim.fillGradientStyle(COLOR.void, COLOR.void, COLOR.void, COLOR.void, 0.86, 0, 0.86, 0);

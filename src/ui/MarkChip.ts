@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { drawGlyph, type GlyphName } from "./glyphs";
 import { chipPoints, drawLayer, HOLO } from "./holo";
+import { pressIn, pressOut } from "./pressFeedback";
 
 /**
  * 켜고 끄는 작은 표식 칩.
@@ -37,9 +38,9 @@ export function addMarkChip(scene: Phaser.Scene, parent: Phaser.GameObjects.Cont
   let mark = drawGlyph(scene, options.glyph, 0, 0, size * 0.5, MARK_CHIP_OFF);
   container.add(mark);
   const hit = scene.add.rectangle(0, 0, size + 12, size + 12, 0xffffff, 0).setInteractive({ useHandCursor: true });
-  hit.on("pointerdown", () => container.setScale(1.12));
-  hit.on("pointerout", () => container.setScale(1));
-  hit.on("pointerup", () => { container.setScale(1); options.onToggle(); });
+  hit.on("pointerdown", () => pressIn(container));
+  hit.on("pointerout", () => pressOut(container, "normal", { pop: false }));
+  hit.on("pointerup", () => { pressOut(container); options.onToggle(); });
   container.add(hit);
   parent.add(container);
   return {

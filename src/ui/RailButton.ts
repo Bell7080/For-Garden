@@ -3,6 +3,7 @@ import { drawGlyph, type GlyphName } from "./glyphs";
 import { chipPoints, drawLayer, HOLO } from "./holo";
 import { COLOR, textStyle } from "./theme";
 import { UI_ICON, type UiIconKey } from "./icons";
+import { pressIn, pressOut } from "./pressFeedback";
 
 export interface RailButtonOptions {
   /** 작은 선 glyph와 로딩된 전용 SVG가 동일한 카드 경로를 공유한다. */
@@ -46,10 +47,10 @@ export class RailButton extends Phaser.GameObjects.Container {
     );
 
     const hit = scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerdown", () => this.setScale(1.1));
-    hit.on("pointerout", () => this.setScale(1));
+    hit.on("pointerdown", () => pressIn(this));
+    hit.on("pointerout", () => pressOut(this, "normal", { pop: false }));
     hit.on("pointerup", () => {
-      this.setScale(1);
+      pressOut(this);
       options.onClick();
     });
     this.add(hit);

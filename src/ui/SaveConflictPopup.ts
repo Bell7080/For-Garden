@@ -3,6 +3,7 @@ import { t } from "../i18n";
 import type { ProgressSummary } from "../api/AccountApi";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
+import { pressIn, pressOut } from "./pressFeedback";
 
 export type SaveConflictChoice = "local" | "remote" | "cancel";
 
@@ -17,7 +18,7 @@ export function openSaveConflictPopup(scene: Phaser.Scene, popups: PopupLayer, l
     summary(-220, t("saveConflict.local"), local); summary(220, t("saveConflict.remote"), remote);
     const choice = (x: number, label: string, value: SaveConflictChoice): void => {
       const button = scene.add.text(x, 205, label, textStyle({ role: "emphasis", size: 26, color: value === "cancel" ? COLOR.inkDim : COLOR.accentText })).setOrigin(0.5).setInteractive({ useHandCursor: true });
-      button.on("pointerdown", () => button.setScale(1.1)); button.on("pointerout", () => button.setScale(1));
+      button.on("pointerdown", () => pressIn(button)); button.on("pointerout", () => pressOut(button, "normal", { pop: false }));
       button.on("pointerup", () => { close(); resolve(value); }); body.add(button);
     };
     choice(-245, t("saveConflict.useLocal"), "local"); choice(0, t("saveConflict.cancel"), "cancel"); choice(245, t("saveConflict.useRemote"), "remote");

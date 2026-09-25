@@ -16,6 +16,7 @@ import { ProfileAvatar } from "./ProfileAvatar";
 import { AVATAR_PICKER, avatarPickerHeight, compactProfileText, MODIFIER_PICKER, modifierPickerHeight, TEXT_EDITOR } from "./playerProfileLayout";
 import { session } from "../state/session";
 import { playerProfileDisplay, profileAvatarContent } from "../state/playerProfile";
+import { pressIn, pressOut } from "./pressFeedback";
 
 const hex = (color: number): string => `#${color.toString(16).padStart(6, "0")}`;
 
@@ -79,10 +80,10 @@ export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone:
             item.add(drawShapeOutline(scene, 0, 0, shape, { color: COLOR.accent, alpha: 1, width: 5 }));
           }
           const hit = scene.add.rectangle(0, 0, cell, cell, 0xffffff, 0).setInteractive({ useHandCursor: true });
-          hit.on("pointerdown", () => item.setScale(1.06));
-          hit.on("pointerout", () => item.setScale(1));
+          hit.on("pointerdown", () => pressIn(item));
+          hit.on("pointerout", () => pressOut(item, "normal", { pop: false }));
           hit.on("pointerup", () => {
-            item.setScale(1);
+            pressOut(item);
             if (chosen) return;
             playerCardManager.setAvatar(relic.id);
             paintPreview(); paintList();

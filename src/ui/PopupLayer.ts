@@ -8,6 +8,7 @@ import { COLOR, textStyle } from "./theme";
 import { setDebugPopupTitles } from "../debug";
 import { playPopupClose, playPopupOpen } from "./screenTransition";
 import { BACK_SLOT, POPUP_BACK_BUTTON_DEPTH, POPUP_BODY_BEVEL_RATIO, POPUP_CLOSE_LAYOUT, POPUP_TITLE_SIZE, tiltedPopupSize } from "./popupGeometry";
+import { pressIn, pressOut } from "./pressFeedback";
 
 /** 제목 위계는 순수 배치표가 갖고 여기서는 다시 내보내기만 한다. */
 export { POPUP_TITLE_SIZE };
@@ -180,8 +181,8 @@ export class PopupLayer {
       body.add(this.scene.add.text(-350, -75, options.message, textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setWordWrapWidth(700));
       const addAction = (x: number, label: string, color: string, action: () => void): void => {
         const button = this.scene.add.text(x, 105, label, textStyle({ role: "emphasis", size: 28, color })).setOrigin(0.5).setInteractive({ useHandCursor: true });
-        button.on("pointerdown", () => button.setScale(1.1));
-        button.on("pointerout", () => button.setScale(1));
+        button.on("pointerdown", () => pressIn(button));
+        button.on("pointerout", () => pressOut(button, "normal", { pop: false }));
         button.on("pointerup", action);
         body.add(button);
       };
@@ -243,8 +244,8 @@ export class PopupLayer {
         mark.lineBetween(13, -13, -13, 13);
         closeButton.add(mark);
         const hit = this.scene.add.rectangle(width / 2 - POPUP_CLOSE_LAYOUT.centerInset, -height / 2 + POPUP_CLOSE_LAYOUT.centerInset, POPUP_CLOSE_LAYOUT.hitSize, POPUP_CLOSE_LAYOUT.hitSize, 0xffffff, 0).setInteractive({ useHandCursor: true });
-        hit.on("pointerdown", () => closeButton.setScale(1.15));
-        hit.on("pointerout", () => closeButton.setScale(1));
+        hit.on("pointerdown", () => pressIn(closeButton));
+        hit.on("pointerout", () => pressOut(closeButton, "normal", { pop: false }));
         hit.on("pointerup", () => close());
         body.add([closeButton, hit]);
         closeButton.setDepth(1000); hit.setDepth(1000);

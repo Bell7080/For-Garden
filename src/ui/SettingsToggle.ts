@@ -4,6 +4,7 @@ import { SETTINGS_TOGGLE as T, settingsKnobOffsetX, settingsStateLabelOffsetX, s
 import { squeezeTextToWidth } from "./textFit";
 import { SETTINGS_TEXT } from "./settingsLayout";
 import { COLOR, textStyle } from "./theme";
+import { pressIn, pressOut } from "./pressFeedback";
 
 /**
  * 설정 스위치 한 줄.
@@ -49,13 +50,13 @@ export class SettingsToggle extends Phaser.GameObjects.Container {
 
     const hit = scene.add.rectangle(450, 0, 900, 88, 0xffffff, 0).setInteractive({ useHandCursor: true });
     // 누르면 커진다 — 눌린 상태를 색이 아니라 크기로 알리는 화면 전체의 규칙이다.
-    hit.on("pointerdown", () => this.track.setScale(1.06));
-    hit.on("pointerout", () => this.track.setScale(1));
+    hit.on("pointerdown", () => pressIn(this.track));
+    hit.on("pointerout", () => pressOut(this.track, "normal", { pop: false }));
     let pending = false;
     hit.on("pointerup", async () => {
       // 플랫폼 예약 취소처럼 비동기 변경이 끝나기 전에는 같은 행의 중복 입력을 조용히 무시한다.
       if (pending) return;
-      this.track.setScale(1);
+      pressOut(this.track);
       this.value = !this.value;
       this.paint();
       pending = true;

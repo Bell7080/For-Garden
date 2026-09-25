@@ -6,7 +6,6 @@ export const INVENTORY_TAB_LAYOUT = {
   gap: 8,
   centerY: 590,
   selectedScale: 1.1,
-  pressedScale: 1.08,
 } as const;
 
 /** 탭 줄이 팝업 가운데를 기준으로 좌우 대칭을 유지하도록 로컬 중심점을 계산한다. */

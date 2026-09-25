@@ -47,6 +47,7 @@ import { CurrencyGuidePopup } from "./CurrencyGuidePopup";
 import { startPuppetHop } from "./puppetHop";
 import { loadOwnedPuppet } from "./statusPuppetLoad";
 import { sceneInfoManager, type InfoManager } from "./info";
+import { pressIn, pressOut } from "./pressFeedback";
 
 /**
  * 도시 한 곳의 쪽지 — **발굴 배치와 같은 구조**다.
@@ -341,12 +342,14 @@ export class InteractionCityPopup {
     };
     hit.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
       dragging = true; downX = pointer.x; originX = rail.x; moved = 0;
-      frames[frameAt(pointer)]?.setScale(1.1);
+      const pressed = frames[frameAt(pointer)];
+      if (pressed) pressIn(pressed);
     });
-    const release = (): void => { dragging = false; for (const frame of frames) frame.setScale(1); };
+    // 끌어서 넘긴 손은 튕기지 않는다 — 누르지 않은 액자가 눌린 것처럼 튀면 무엇을 골랐는지 헷갈린다.
+    const release = (tapped = false): void => { dragging = false; for (const frame of frames) pressOut(frame, "normal", { pop: tapped }); };
     hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
       const index = moved <= REWARD_TAP_SLOP ? frameAt(pointer) : -1;
-      release();
+      release(index >= 0);
       const entry = rewards[index];
       // **액자를 누르면 그 재화의 안내가 열린다.** 무엇이 돌아오는지 보고 "그게 어디에 쓰이더라"를
       // 묻는 손이 상단 재화 줄까지 되돌아가지 않게 한다 — 재화 그림이 선 자리는 어디서나 같은

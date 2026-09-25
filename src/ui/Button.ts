@@ -4,6 +4,8 @@ import type { CurrencyIconKey } from "./currencyIcons";
 import { chipPoints, drawLayer, HOLO, perspectiveRect, slantedRect } from "./holo";
 import { COLOR, textStyle } from "./theme";
 import { settingsManager } from "../managers/SettingsManager";
+import { pressIn, pressOut } from "./pressFeedback";
+import type { PressTier } from "./pressFeedbackStyle";
 
 /** 버튼 탭과 스크롤 드래그를 구분하는 공용 게임 좌표 거리다. */
 export const BUTTON_DRAG_CANCEL_DISTANCE = 24;
@@ -57,6 +59,8 @@ export interface ButtonOptions {
   subFontSize?: number;
   fontSize?: number;
   fill?: number;
+  /** 눌림 세기. 적지 않으면 `variant: "primary"`(출격·전투 시작)는 `primary`, 나머지는 `normal`이다. */
+  pressTier?: PressTier;
   /** 라벨 왼쪽에 붙는 선 아이콘. */
   icon?: GlyphName;
   /**
@@ -113,6 +117,7 @@ export class Button extends Phaser.GameObjects.Container {
   constructor(scene: Phaser.Scene, x: number, y: number, opts: ButtonOptions) {
     super(scene, x, y);
     const primary = opts.variant === "primary";
+    const pressTier: PressTier = opts.pressTier ?? (primary ? "primary" : "normal");
     const { width, height } = opts;
     const accent = opts.accentColor ?? COLOR.accent;
     const accentText = opts.accentTextColor ?? (opts.accentColor === undefined ? COLOR.accentText : COLOR.ink);
@@ -206,7 +211,8 @@ export class Button extends Phaser.GameObjects.Container {
       if (pointer.id !== this.pressedPointerId) return;
       const shouldClick = this.enabledState && !this.pressDragged;
       this.pressedPointerId = undefined;
-      this.setScale(1);
+      // 눌린 것이 실제로 확정될 때만 튕긴다 — 끌어서 취소한 손이 튀면 눌린 것으로 읽힌다.
+      pressOut(this, pressTier, { pop: shouldClick });
       if (shouldClick) {
         // 활성 상태에서 드래그 없이 탭이 확정된 공용 입력 경계에서만 한 번 울린다.
         settingsManager.haptic("uiTap");
@@ -216,14 +222,14 @@ export class Button extends Phaser.GameObjects.Container {
     const cancelPress = (): void => {
       this.pressedPointerId = undefined;
       this.pressDragged = false;
-      this.setScale(1);
+      pressOut(this, pressTier, { pop: false });
     };
     const trackPressMove = (pointer: Phaser.Input.Pointer): void => {
       if (pointer.id !== this.pressedPointerId) return;
       // 경계를 살짝 벗어나도 작은 이동이면 유지하고, 누적 거리가 임계값을 넘으면 실제 드래그로 취소한다.
       if (Phaser.Math.Distance.Between(this.pressX, this.pressY, pointer.worldX, pointer.worldY) > BUTTON_DRAG_CANCEL_DISTANCE) {
         this.pressDragged = true;
-        this.setScale(1);
+        pressOut(this, pressTier, { pop: false });
       }
     };
 
@@ -234,7 +240,7 @@ export class Button extends Phaser.GameObjects.Container {
       this.pressX = pointer.worldX;
       this.pressY = pointer.worldY;
       this.pressDragged = false;
-      this.setScale(1.05);
+      pressIn(this, pressTier);
     });
     scene.input.on("pointermove", trackPressMove);
     // 전역 pointerup을 받아 버튼 경계의 작은 이동도 클릭으로 인정하되 시작 포인터 ID는 반드시 일치시킨다.

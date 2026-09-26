@@ -1,6 +1,6 @@
 # 버전 관리
 
-현재 버전: **v0.186.0**
+현재 버전: **v0.186.1**
 
 `VERSION.md`와 `package.json`의 `version`은 항상 같은 값을 쓰고, 타이틀(로딩) 화면 좌측
 하단 표기는 그 값을 그대로 읽는다. 화면에 손으로 적어 두지 않는다.
@@ -31,6 +31,19 @@
   그 이전의 초기 프로토타입 단계는 `v0.1.0` 항목 하나로 묶었다.
 
 ## 변경 이력
+
+## v0.186.1 — 2026-09-26
+
+**디안·늑대 개편(v0.185.0~v0.186.0)이 바꾼 문구를 아홉 언어에 따라 옮긴다.** 그 개편은 한국어·영어·일본어만
+고쳐, 번체·간체·태국어·베트남어·인도네시아어·스페인어·포르투갈어·독일어·러시아어에서는 새 소환수 정보창
+문구 11키와 목덜미·무리 명령 절이 한국어로 섰고, 없어진 피의 냄새·연격 문장이 옛 설명으로 남아 있었다.
+
+- 새 키: `info.summon.*` 11개, `skill.clause.nape`·`skill.clause.commandsPack`.
+- 바뀐 값: 디안 패시브(`skill.passive.summonCommander`·`relic.dian.passive.desc`), 쿠로·시로의 성장
+  기준(`relic.kuro/shiro.passive.desc`·`skill.keyword.summon.description`), 무리 폭주
+  (`skill.ferocity.packBody`), 목덜미 규칙어(`keyword.nape.description`).
+- 걷어 낸 키: 피의 냄새(`bloodscent`) 규칙어와 옛 목덜미·이중 타격·무리 돌격 문장 등 원고에만 남아 있던 17키.
+- 원고(`i18n-src`)를 고쳐 다시 구웠고, 새 글자는 없어 글꼴은 그대로다.
 
 ## v0.186.0 — 2026-09-26
 

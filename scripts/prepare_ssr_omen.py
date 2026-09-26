@@ -58,6 +58,37 @@ PATCHES: list[tuple[str, str, int]] = [
         1,
     ),
     ("if(this.elapsed>=Gi){this.finish(\"completed\");return}", "if(this.elapsed>=OE){this.finish(\"completed\");return}", 1),
+    # ── 짧고 굵게 ─────────────────────────────────────────────────────────────
+    # 2초 안에 끝나므로 원본의 느긋한 깨짐으로는 과격함이 남지 않는다. 울릴 때마다 카메라가
+    # 한 계단씩 파고들고(두두둥) 그 순간 한 번 더 찍어 누르며, 파편은 더 많이·더 멀리·더 빨리 튄다.
+    # 1. 두두둥 — 울림마다 계단식으로 다가서고, 울리는 순간 한 번 더 파고든다. 터지면 확 물러나
+    #    날아오는 조각을 받는다.
+    (
+        "this.camera.position.z=8-(this.reduced?0:Rt(2.8,3.65,n)*.23)+Rt(3.65,4,n)*.3",
+        "this.camera.position.z=8-(this.reduced?0:Rt(.65,.73,n)*.5+Rt(1.65,1.73,n)*.55+Rt(2.75,2.83,n)*.65+o*.45)"
+        "+Rt(3.65,3.92,n)*(this.reduced?.3:1.5)",
+        1,
+    ),
+    # 2. 울림의 흔들림을 두 배 넘게.
+    ("let c=!t&&!this.reduced?o*.055*this.intensity:0", "let c=!t&&!this.reduced?o*.13*this.intensity:0", 1),
+    # 3. 금이 갈 때 판이 더 크게 벌어진다.
+    ("u=m*(t?.044:.075)", "u=m*(t?.044:.12)", 1),
+    # 4. 터진 판은 훨씬 빨리 날아가고 더 세게 돈다.
+    (
+        "velocity:new D(v[0]*.62+(e()-.5)*2,v[1]*.62+(e()-.5)*2,2+e()*3)",
+        "velocity:new D(v[0]*1.1+(e()-.5)*3.4,v[1]*1.1+(e()-.5)*3.4,3.5+e()*5)",
+        1,
+    ),
+    ("f=this.reduced?d*.5:d+d*d*.6", "f=this.reduced?d*.5:d*1.7+d*d*2.4", 1),
+    ("f*(this.reduced?.08:.7)", "f*(this.reduced?.08:1.6)", 1),
+    # 5. 부스러기는 두 배로, 더 크게, 더 멀리.
+    ("this.chips=new fs(a,o,210)", "this.chips=new fs(a,o,420)", 1),
+    ("S<210", "S<420", 1),
+    ("w=(S<45?.65:S<110?1.65:S<170?2.75:3.65)", "w=(S<60?.65:S<150?1.65:S<260?2.75:3.65)", 1),
+    ("velocity:new D((e()-.5)*1.5,(e()-.5)*2,.5+e()*1.5)", "velocity:new D((e()-.5)*4,(e()-.5)*4.6,1.2+e()*3.4)", 1),
+    ("size:.012+e()*.055", "size:.016+e()*.08", 1),
+    # 6. 불티도 두 배 빠르게 흩어진다.
+    ("vec3 p=position+aVelocity*t;", "vec3 p=position+aVelocity*t*2.1;", 1),
     # 소리는 게임의 효과음 볼륨을 따른다.
     ("this.sound=new Ml,", "this.sound=new Ml,this.sound.volume=t.volume??1,", 1),
     ("this.master.gain.value=.52", "this.master.gain.value=.52*(this.volume??1)", 1),

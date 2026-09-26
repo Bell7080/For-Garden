@@ -9,6 +9,66 @@
 "Wahrscheinlichkeiten",
 "Шансы"
 ],
+"lab.rates.basis": [
+"{banner} · 每次研究概率",
+"{banner} · อัตราต่อการวิจัย 1 ครั้ง",
+"{banner} · Tỉ lệ mỗi lần Nghiên cứu",
+"{banner} · Peluang per 1 Riset",
+"{banner} · Probabilidad por Investigación",
+"{banner} · Chance por Pesquisa",
+"{banner} · Chance pro Forschung",
+"{banner} · Шанс за одно Исследование"
+],
+"lab.rates.tier.gray": [
+"杂货",
+"ของทั่วไป",
+"Tạp hóa",
+"Lain-lain",
+"Varios",
+"Diversos",
+"Sonstiges",
+"Прочее"
+],
+"lab.rates.percent": [
+"{percent}%",
+"{percent}%",
+"{percent}%",
+"{percent}%",
+"{percent}%",
+"{percent}%",
+"{percent}%",
+"{percent}%"
+],
+"lab.rates.range": [
+"{min}~{max}",
+"{min}~{max}",
+"{min}~{max}",
+"{min}~{max}",
+"{min}~{max}",
+"{min}~{max}",
+"{min}~{max}",
+"{min}~{max}"
+],
+"lab.rates.pickup": [
+"Pick Up!",
+"Pick Up!",
+"Pick Up!",
+"Pick Up!",
+"Pick Up!",
+"Pick Up!",
+"Pick Up!",
+"Pick Up!"
+],
+"lab.rates.rules": [
+"保底规则",
+"กฎการการันตี",
+"Quy tắc bảo đảm",
+"Aturan jaminan",
+"Reglas de garantía",
+"Regras de garantia",
+"Garantieregeln",
+"Правила гарантии"
+],
 "lab.mileageShop.short": [
 "里程",
 "ไมล์",
@@ -79,36 +139,6 @@
 "Die Anfrage ist fehlgeschlagen. Bitte erneut versuchen.",
 "Запрос не удался. Повторите попытку."
 ],
-"lab.policy.title": [
-"研究概率 · 保底规则",
-"อัตราการวิจัย · นโยบายการันตี",
-"Tỉ lệ Nghiên cứu · Chính sách bảo đảm",
-"Peluang Riset · Kebijakan Jaminan",
-"Probabilidades de Investigación · Garantías",
-"Chances de Pesquisa · Política de garantia",
-"Forschungsraten · Garantieregeln",
-"Шансы исследования · Правила гарантии"
-],
-"lab.policy.grayReward": [
-"灰色奖励",
-"รางวัลสีเทา",
-"Thưởng xám",
-"Hadiah Abu-abu",
-"Recompensa gris",
-"Recompensa cinza",
-"Graue Belohnung",
-"Серая награда"
-],
-"lab.policy.rate": [
-"{rarity}  {percent}%",
-"{rarity}  {percent}%",
-"{rarity}  {percent}%",
-"{rarity}  {percent}%",
-"{rarity}  {percent}%",
-"{rarity}  {percent}%",
-"{rarity}  {percent}%",
-"{rarity}  {percent}%"
-],
 "lab.policy.pity": [
 "距上次SSR已{since}次 · 还需{left}次保底",
 "ผ่านมา {since} ครั้งหลัง SSR ล่าสุด · อีก {left} ครั้งการันตี",
@@ -159,26 +189,6 @@
 "SSR-Pickup-Chance {percent}% · Bei Fehlschlag ist das nächste SSR das Pickup",
 "Шанс избранного среди SSR {percent}% · При промахе следующий SSR — избранный"
 ],
-"lab.policy.group": [
-"继承组  {group}",
-"กลุ่มสืบทอด  {group}",
-"Nhóm kế thừa  {group}",
-"Grup Terbawa  {group}",
-"Grupo de arrastre  {group}",
-"Grupo de transferência  {group}",
-"Übertragungsgruppe  {group}",
-"Группа переноса  {group}"
-],
-"lab.policy.groupNote": [
-"保底与UP保底会继承到同组的轮替卡池",
-"การันตีและการันตีเรทอัปจะสืบทอดไปยังแบนเนอร์หมุนเวียนในกลุ่มเดียวกัน",
-"Bảo đảm và bảo đảm tăng tỉ lệ được giữ khi đổi sang banner cùng nhóm",
-"Jaminan dan jaminan pickup terbawa ke banner bergilir dalam grup yang sama",
-"La garantía y la garantía de destacado se mantienen en los banners rotativos del mismo grupo",
-"A garantia e a garantia de destaque passam para os banners rotativos do mesmo grupo",
-"Garantie und Pickup-Garantie gehen auf wechselnde Banner derselben Gruppe über",
-"Гарантия и гарантия избранного переносятся на сменные баннеры той же группы"
-],
 "lab.policy.tenGuarantee": [
 "10连最后一格必为SR以上（SSR保底优先）",
 "ช่องสุดท้ายของ 10 ครั้งคือ SR ขึ้นไป (การันตี SSR มาก่อน)",
@@ -208,16 +218,6 @@
 "Após a Ruptura de grau V, duplicatas dão +1 Fragmento de DNA",
 "Nach Durchbruch-Stufe V geben Duplikate +1 DNA-Splitter",
 "После прорыва V повторы дают +1 фрагмент ДНК"
-],
-"lab.confirm": [
-"确认",
-"ยืนยัน",
-"Xác nhận",
-"Konfirmasi",
-"Confirmar",
-"Confirmar",
-"Bestätigen",
-"Подтвердить"
 ],
 "lab.skipAll": [
 "全部跳过",

@@ -6,6 +6,9 @@ import { captureGame, drag, longPress, tap, tapUntil } from "./canvasInput";
 // 때마다 여기만 옛 자리를 두드린다.
 import { BATTLE_CONTROLS } from "../../src/ui/battleStatusLayout";
 import { CONTRIBUTION_TOGGLE } from "../../src/ui/battleContributionLayout";
+import { LAB_CHROME, LAB_TITLE } from "../../src/ui/labLayout";
+import { gachaRatesTierScreenY } from "../../src/ui/gachaRatesLayout";
+import { BACK_SLOT } from "../../src/ui/popupGeometry";
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
@@ -392,14 +395,25 @@ test("연구소에서 화석을 사용하면 렐릭 연구 결과가 뜬다", as
   await captureGame(page, `test-results/${test.info().project.name}-lab-pull-result.png`);
 });
 
-test("연구소 연구 확률 정보에서 현재 천장과 픽업·이월·중복 정책을 함께 확인한다", async ({ page }) => {
+test("연구소 확률표는 등급 줄을 눌러 세부 확률을 펼치고, 세 배너 모두 같은 표를 쓴다", async ({ page }) => {
   await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
   await startAfterOpening(page);
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await tap(page, (BASE_WIDTH * 7) / 10, BASE_HEIGHT - 180 + 90);
   await expect.poll(() => scene(page)).toBe("lab");
 
-  // 확률 정보 버튼의 팝업이 기준 모바일 화면에서 잘리지 않는지 회귀 이미지로 남긴다.
-  await tap(page, BASE_WIDTH / 2, 390);
-  await captureGame(page, `test-results/${test.info().project.name}-lab-rates-policy.png`);
+  const titles = (): Promise<string[] | undefined> => page.evaluate(() => window.__PF_DEBUG?.popupTitles);
+  for (let banner = 0; banner < 3; banner += 1) {
+    await tap(page, LAB_CHROME.rates.x + 60, LAB_CHROME.rates.y);
+    await expect.poll(async () => (await titles())?.length ?? 0).toBe(1);
+    // 처음에는 SSR이 펼쳐져 있다. 세 배너의 표가 모두 잘리지 않는지 회귀 이미지로 남긴다.
+    await captureGame(page, `test-results/${test.info().project.name}-lab-rates-${banner}-ssr.png`);
+    // SSR을 접고 잡화를 펼친다 — 윗변이 고정이라 등급 줄의 자리는 배치표가 그대로 말한다.
+    await tap(page, BASE_WIDTH / 2, gachaRatesTierScreenY(0, null, 0));
+    await tap(page, BASE_WIDTH / 2, gachaRatesTierScreenY(3, null, 0));
+    await captureGame(page, `test-results/${test.info().project.name}-lab-rates-${banner}-gray.png`);
+    await tap(page, BACK_SLOT.x, BACK_SLOT.y);
+    await expect.poll(async () => (await titles())?.length ?? 0).toBe(0);
+    await tap(page, BASE_WIDTH - LAB_TITLE.arrow.x, LAB_TITLE.arrow.y);
+  }
 });

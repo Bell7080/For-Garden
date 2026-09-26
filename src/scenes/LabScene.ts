@@ -12,7 +12,7 @@ import { session } from "../state/session";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { TopBar } from "../ui/TopBar";
-import { drawLayer, HOLO, slantedRect, toPoints } from "../ui/holo";
+import { drawLayer, slantedRect, toPoints } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { useBackgroundTexture, BACKGROUND } from "../ui/backgrounds";
 import { CRACK_BRANCHES, FOSSIL_CRACK, crackBranchPoints, fossilShards, shardPoints } from "../ui/fossilCrack";
@@ -23,6 +23,7 @@ import { preloadSsrOmen, warmSsrOmen } from "../ui/SsrOmenCinematic";
 import { exposeShowcasePreview } from "../testSupport/showcaseHarness";
 import { audioManager, type AudioScope } from "../managers/AudioManager";
 import { PopupLayer } from "../ui/PopupLayer";
+import { openGachaRates } from "../ui/GachaRatesPopup";
 import { ResearchPullButton } from "../ui/ResearchPullButton";
 import { addRatesLink, addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
 import { LAB_CHROME, LAB_TITLE } from "../ui/labLayout";
@@ -342,39 +343,12 @@ export class LabScene extends Phaser.Scene {
     this.time.delayedCall(1800, () => notice.destroy());
   }
 
-  /** 배너에 선언된 조건부 픽업 확률과 등급 확률을 읽기 전용 패널로 보여 준다. */
+  /** 등급 네 줄을 눌러 펼치는 확률표(`GachaRatesPopup`). 숫자는 배너 정의에서 그대로 셈한다. */
   private showRates(): void {
+    if (!this.popupLayer) return;
     const banner = this.banner;
-    const cx = BASE_WIDTH / 2;
-    const overlay = this.add.container(0, 0).setDepth(850);
-    const shade = this.add.rectangle(cx, 960, BASE_WIDTH, 1920, COLOR.void, 0.9).setInteractive();
-    const panel = drawLayer(this, cx, 840, slantedRect(860, 980), {
-      fill: 0x141920, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.3,
-    });
-    overlay.add([shade, panel]);
-    overlay.add(this.add.text(cx, 390, t("lab.policy.title"), textStyle({ role: "display", size: 42 })).setOrigin(0.5));
-    const rates = (["SSR", "SR", "R", "GRAY"] as const)
-      .map((rarity) => t("lab.policy.rate", { rarity: rarity === "GRAY" ? t("lab.policy.grayReward") : rarity, percent: (banner.slotRates[rarity] * 100).toFixed(1) }))
-      .join("\n");
-    overlay.add(this.add.text(cx, 475, rates, textStyle({ role: "body", size: 30, align: "center", lineSpacing: 14 })).setOrigin(0.5, 0));
     const pity = session.gachaPityByGroup[banner.pityGroupId] ?? { pullsSinceSsr: 0, pickupGuaranteed: false };
-    // 확률뿐 아니라 현재 계정 상태와 배너 교체 정책, 중복 환산까지 한 화면에서 확인시킨다.
-    const policy = [
-      // 횟수 제한 배너(첫 복원 연구)는 한도와 한 번뿐인 확정을 가장 먼저 말한다.
-      ...(banner.pullLimit !== undefined ? [t("lab.policy.limit", { limit: banner.pullLimit })] : []),
-      t("lab.policy.pity", { since: pity.pullsSinceSsr, left: Math.max(0, banner.highestRarityGuarantee - pity.pullsSinceSsr) }),
-      t("lab.policy.pickup", { state: t(pity.pickupGuaranteed ? "lab.policy.pickupOn" : "lab.policy.pickupOff") }),
-      t("lab.policy.pickupRate", { percent: (banner.pickupRate * 100).toFixed(0) }),
-      t("lab.policy.group", { group: banner.pityGroupId }),
-      t("lab.policy.groupNote"),
-      t("lab.policy.tenGuarantee"),
-      t("lab.policy.duplicate"),
-      t("lab.policy.duplicateMax"),
-    ].join("\n");
-    overlay.add(this.add.text(cx, 700, policy, textStyle({ role: "body", size: 25, color: COLOR.inkDim, align: "center", lineSpacing: 13, wrap: 760 })).setOrigin(0.5, 0));
-    const close = new Button(this, cx, 1190, { width: 320, height: 100, label: t("lab.confirm"), fontSize: 32, onClick: () => overlay.destroy() });
-    overlay.add(close);
-    shade.on("pointerdown", () => overlay.destroy());
+    openGachaRates({ scene: this, popups: this.popupLayer, banner, pity });
   }
 
   /** 현재 단계의 자동 진행을 기다린다. 탭하면 이 Promise만 끝나고 다음 상태로 넘어간다. */

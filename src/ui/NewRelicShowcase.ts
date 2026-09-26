@@ -186,16 +186,20 @@ class NewRelicShowcase {
     this.playOmen();
   }
 
-  /** 팡 — 3D 전조의 섬광 정점. 같은 빛이 대사 막 위에서 걷히며 곧바로 이어진다. */
+  /**
+   * 팡 — 3D 전조의 섬광 정점. 대사 막이 곧바로 열리고, 그 위에서 무대가 감속하며 천천히 걷힌다 —
+   * 흩어지는 조각이 거의 멈춘 채로 옅어지는 동안 대사가 번져, 두 막이 끊기지 않고 이어진다.
+   */
   private burstToVoice(): void {
     if (this.phase !== "omen") return;
+    this.omen3d?.stop();
     const flashes = flashPolicy(this.options.reduceFlashes);
     const bright = Phaser.Display.Color.IntegerToColor(this.tone.halo).lighten(35).color;
     const flash = this.scene.add.rectangle(W / 2, H / 2, OW, OH, bright, 1)
       .setDepth(this.options.depth + 6)
       .setBlendMode(Phaser.BlendModes.ADD)
-      .setAlpha(0.9 * flashes.alphaRatio);
-    this.scene.tweens.add({ targets: flash, alpha: 0, duration: this.options.reduceMotion ? 160 : 420, ease: "Quad.easeOut", onComplete: () => flash.destroy() });
+      .setAlpha(0.55 * flashes.alphaRatio);
+    this.scene.tweens.add({ targets: flash, alpha: 0, duration: this.options.reduceMotion ? 160 : 900, ease: "Sine.easeOut", onComplete: () => flash.destroy() });
     this.enterVoice();
   }
 
@@ -316,7 +320,8 @@ class NewRelicShowcase {
   private stopOmen(immediate: boolean): void {
     for (const timer of this.omenTimers.splice(0)) timer.remove();
     for (const running of this.omenTweens.splice(0)) running.stop();
-    this.omen3d?.stop();
+    // 누르거나 닫을 때는 곧바로 걷는다. 섬광 뒤의 느린 걷힘은 `burstToVoice`가 이미 시작했다.
+    this.omen3d?.stop(true);
     this.omen3d = undefined;
     this.omenCover?.destroy();
     this.omenCover = undefined;

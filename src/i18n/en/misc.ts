@@ -219,6 +219,7 @@ export const MISC_EN = {
   "title.saveRecovered": "The save data could not be verified, so a safe initial state was restored.",
   "title.subtitle": "Restoration Research City for Extinct Animals",
   "title.replayOpening": "Replay Opening",
+  "opening.devSkip": "Skip (Dev)",
   "nav.archaeology": "Archaeology",
   "nav.relics": "Relics",
   "nav.lobby": "Lobby",

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { RESEARCH_PRESENTATION_STAGES, ResearchPresentationController, firstMeetingRelicIds, highestRarity } from "../../src/core/researchPresentation";
+import { RESEARCH_PRESENTATION_STAGES, ResearchPresentationController, firstMeetingRelicIds, highestRarity, showcaseRelicIds } from "../../src/core/researchPresentation";
 
 describe("연구소 획득 연구 연출 상태", () => {
   it("단계를 순서대로 넘기고 전체 건너뛰기는 카드로 간다", () => {
@@ -44,5 +44,18 @@ describe("연구소 획득 연구 연출 상태", () => {
       .toEqual(["rex", "anky"]);
     // 수량형 슬롯은 첫 대면 후보에서 구조적으로 제외된다.
     expect(firstMeetingRelicIds([{ type: "currency", currency: "gold", amount: 10, grade: "GRAY" }])).toEqual([]);
+  });
+
+  it("소개 장면은 새 렐릭과 모든 SSR에 돈다 — SSR은 중복이어도 매번", () => {
+    const rarity: Record<string, "R" | "SR" | "SSR"> = { rex: "SSR", anky: "R", spino: "SR", lexia: "SSR" };
+    const slot = (relicId: string, kind: "new" | "fragment" | "overflow") => ({ type: "relic" as const, relicId, kind, fragments: 1, overflowFragments: kind === "overflow" ? 1 : 0 });
+    expect(showcaseRelicIds([
+      slot("anky", "new"),
+      slot("spino", "fragment"),
+      slot("rex", "fragment"),
+      { type: "currency", currency: "gold", amount: 10, grade: "GRAY" },
+      slot("lexia", "overflow"),
+      slot("rex", "fragment"),
+    ], (id) => rarity[id])).toEqual(["anky", undefined, "rex", undefined, "lexia", undefined]);
   });
 });

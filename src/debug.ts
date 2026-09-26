@@ -188,7 +188,7 @@ export interface DebugState {
   /** 연구 결과판에 깔린 칸 수와 그중 열린 칸 수. 결과 내용은 공개하지 않는다. */
   researchBoard?: { slots: number; opened: number };
   /** 새로 만난 렐릭의 소개 장면. 캔버스 안이라 DOM으로는 떠 있는지 알 수 없다. */
-  relicShowcase?: { relicId: string; phase: "voice" | "stage" };
+  relicShowcase?: { relicId: string; phase: "omen" | "voice" | "stage" };
   /** 지층 판이 실제 게시한 입력점과 요청/타격/공개 순서를 관찰하는 E2E 전용 표시 계약이다. */
   archaeologyDig?: { requests: number; active: boolean; impactIndex?: number; revealedIndices: number[]; tiles: Array<DebugPoint & { index: number }> };
   /**

@@ -13,6 +13,15 @@ import { COLOR } from "../ui/theme";
 import { DialogueLayer } from "../ui/DialogueLayer";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { playStoryTitleCard } from "../ui/StoryTitleCard";
+import { Button } from "../ui/Button";
+import { t } from "../i18n";
+
+/**
+ * 개발자용 임시 건너뛰기. 켜 두면 오프닝 상단에 버튼이 서고, 누르면 오프닝을 완료로 저장한 뒤
+ * 1-1 전투까지 건너뛰고 곧장 로비로 간다. 1-1 클리어는 주지 않는다(지도에서 그대로 칠 수 있다).
+ * 정식 빌드 전에 `false`로 끄거나 버튼째 걷어 낸다.
+ */
+const OPENING_DEV_SKIP_ENABLED = true;
 
 /**
  * 정적 오프닝 데이터를 순회하고, 끝나면 곧장 1-1 전투로 넘기는 전용 화면이다.
@@ -46,10 +55,35 @@ export class OpeningScene extends Phaser.Scene {
     // 첫 노드 정보를 먼저 게시하되 DialogueFlow 잠금은 제목표와 Puppet 표시가 끝날 때까지 유지한다.
     setDebugDialogue(this.flow.current);
     void this.openStory();
+    if (OPENING_DEV_SKIP_ENABLED) this.addDevSkip();
     setDebugReady(true);
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
+  }
+
+  /** 개발자용 임시 건너뛰기 — 제목표·대사판보다 위에 선다. */
+  private addDevSkip(): void {
+    new Button(this, BASE_WIDTH - 150, 72, {
+      width: 240,
+      height: 64,
+      label: t("opening.devSkip"),
+      fontSize: 22,
+      onClick: () => this.skipToLobby(),
+    }).setDepth(2000);
+  }
+
+  /** 오프닝을 완료로 저장하고 1-1 전투 없이 로비로 간다. */
+  private skipToLobby(): void {
+    if (this.transitioningOut) return;
+    this.transitioningOut = true;
+    try {
+      if (!storyManager.isCompleted(OPENING_TRAIN.id)) storyManager.complete(OPENING_TRAIN.id);
+    } catch (error) {
+      console.error("오프닝 완료 저장 실패", error);
+    }
+    setDebugReady(false);
+    this.time.delayedCall(0, () => startScene(this, "lobby"));
   }
 
   /** 제목표가 걷힌 뒤에 첫 대사를 연다. 막 뒤에서 글이 먼저 흘러가지 않게 한다. */

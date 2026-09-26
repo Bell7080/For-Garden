@@ -81,6 +81,11 @@ export interface ResearchCinematicOptions {
    * 약속이 풀리면 판이 돌아와 그 카드를 뒤집는다.
    */
   introduce?: (index: number) => Promise<void>;
+  /**
+   * 소개 장면을 돌릴 칸. 적지 않으면 새로 만난 렐릭(원화 카드) 칸이다 — SSR은 중복이어도
+   * 소개하므로 씬이 `showcaseRelicIds`에서 골라 넘긴다.
+   */
+  introduceSlots?: readonly number[];
 }
 
 let assetPromise: Promise<CinematicBundle> | undefined;
@@ -237,12 +242,15 @@ export class ResearchCinematic {
   /** 소개 장면이 도는 동안에는 판이 손을 받지 않는다. */
   private introducing = false;
   private readonly introduce?: (index: number) => Promise<void>;
+  private readonly introduceSlots: ReadonlySet<number>;
 
   private constructor(bundle: CinematicBundle, options: ResearchCinematicOptions) {
     this.canvas = options.canvas;
     this.game = options.scene.game;
     this.art = options.art;
     this.introduce = options.introduce;
+    this.introduceSlots = new Set(options.introduceSlots
+      ?? options.art.flatMap((slot, index) => (slot.frame === "portrait" ? [index] : [])));
     bundle.text.gray = options.text.gray;
     /*
      * **게임의 입력을 끈다.**
@@ -367,7 +375,7 @@ export class ResearchCinematic {
   /** 아직 소개하지 않은 새 렐릭 칸. 카드 순서대로다. */
   private pendingIntroductions(): number[] {
     if (!this.introduce) return [];
-    return this.art.flatMap((slot, index) => (slot.frame === "portrait" && !this.introduced.has(index) ? [index] : []));
+    return this.art.flatMap((_, index) => (this.introduceSlots.has(index) && !this.introduced.has(index) ? [index] : []));
   }
 
   /**
@@ -442,7 +450,7 @@ export class ResearchCinematic {
     if (this.introducing) return;
     if (this.phase === "result") { this.close(); return; }
     const next = this.instance.peekReveal?.();
-    if (next?.step === "flip" && this.art[next.index]?.frame === "portrait" && !this.introduced.has(next.index) && this.introduce) {
+    if (next?.step === "flip" && this.introduceSlots.has(next.index) && !this.introduced.has(next.index) && this.introduce) {
       // 새로 만난 렐릭 — 카드를 뒤집기 **전에** 먼저 소개하고, 돌아와서 뒤집는다.
       void this.runIntroduction(next.index).then(() => {
         if (this.closed) return;

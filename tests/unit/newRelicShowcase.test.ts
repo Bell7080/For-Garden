@@ -5,9 +5,12 @@ import { FIRST_MEETING_FALLBACK, firstMeetingLine } from "../../src/data/relicFi
 import {
   SHOWCASE_COMPOSITION,
   SHOWCASE_INFO,
+  SHOWCASE_OMEN,
   SHOWCASE_OVERSCAN,
+  SHOWCASE_SQUAD,
   SHOWCASE_SIZE,
   SHOWCASE_TAP_LOCK_MS,
+  omenStrikes,
   showcaseDots,
   showcaseSparkles,
 } from "../../src/ui/newRelicShowcaseLayout";
@@ -40,6 +43,35 @@ describe("새로 만난 렐릭의 소개 장면", () => {
     expect(ssr.rays).toBeGreaterThan(0);
     expect(ssr.watermark).toBe(true);
     expect(ssr.shake).toBeDefined();
+  });
+
+  it("전조는 SSR만 갖고, 첫 줄이 가운데를 가른 뒤 나머지가 몰아친다", () => {
+    expect(SHOWCASE_COMPOSITION.SSR.omen).toBe(true);
+    expect(SHOWCASE_COMPOSITION.SR.omen).toBe(false);
+    expect(SHOWCASE_COMPOSITION.R.omen).toBe(false);
+    const strikes = omenStrikes();
+    expect(strikes[0]).toMatchObject({ dy: 0, angle: 0, delay: 0 });
+    // 핑… 핑핑핑 — 첫 줄 뒤의 쉼이 나머지 줄 사이보다 길다.
+    expect(strikes[1].delay).toBeGreaterThan(strikes[2].delay - strikes[1].delay);
+    for (const strike of strikes) {
+      // 세로로 좁게 모여야 한 점으로 모이는 긴장이 남는다.
+      expect(Math.abs(strike.dy)).toBeLessThan(100);
+      expect(Math.abs(strike.angle)).toBeLessThan(12);
+    }
+    expect(omenStrikes()).toEqual(strikes);
+    expect(SHOWCASE_OMEN.y).toBeGreaterThan(0);
+    expect(SHOWCASE_OMEN.y).toBeLessThan(SHOWCASE_SIZE.height);
+  });
+
+  it("소속 스쿼드는 뒷배경 왼쪽 위에 크게 깔리고 정보 블록과 겹치지 않는다", () => {
+    const S = SHOWCASE_SQUAD;
+    expect(S.x - S.size / 2).toBeGreaterThan(0);
+    expect(S.y - S.size / 2).toBeGreaterThan(SHOWCASE_INFO.code.y);
+    expect(S.x).toBeLessThan(SHOWCASE_SIZE.width / 2);
+    // 이름은 엠블럼 아래, 밑동 정보 블록과 SD보다 위에 선다.
+    expect(S.name.y).toBeGreaterThan(S.y + S.size / 2 - 40);
+    expect(S.latin.y).toBeLessThan(SHOWCASE_INFO.sd.groundY - SHOWCASE_INFO.sd.height);
+    expect(S.alpha).toBeLessThan(0.4);
   });
 
   it("정보 조각은 화면 안에 선다", () => {

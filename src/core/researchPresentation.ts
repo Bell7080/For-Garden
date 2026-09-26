@@ -43,6 +43,27 @@ export function researchSlotViews(
   });
 }
 
+/**
+ * 칸마다 소개 장면을 돌릴 개체. 없으면 `undefined`다.
+ *
+ * 새로 만난 렐릭은 등급과 무관하게 돌고, **SSR은 중복(파편·DNA로 넘친 것 포함)이어도 매번** 돈다 —
+ * SSR은 몇 번째로 만나든 그 한 장이 뽑기의 절정이라, 파편 액자 한 장으로만 지나가면 뽑은 순간이
+ * 읽히지 않는다. 같은 10연 안에서 같은 개체가 두 번 나오면 첫 칸만 돈다.
+ */
+export function showcaseRelicIds(
+  results: readonly PullResultDto[],
+  rarityOf: (relicId: string) => RelicRarity,
+): (string | undefined)[] {
+  const seen = new Set<string>();
+  return results.map((result) => {
+    if (result.type !== "relic") return undefined;
+    if (result.kind !== "new" && rarityOf(result.relicId) !== "SSR") return undefined;
+    if (seen.has(result.relicId)) return undefined;
+    seen.add(result.relicId);
+    return result.relicId;
+  });
+}
+
 const RARITY_WEIGHT: Record<ResearchGrade, number> = { GRAY: 0, R: 1, SR: 2, SSR: 3 };
 
 /** 서버가 준 렐릭의 등급만 비교한다. 이 함수는 난수를 쓰거나 결과를 다시 추첨하지 않는다. */

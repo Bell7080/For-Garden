@@ -1,3 +1,5 @@
+import { runeSellValue } from "../data/runes";
+import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import Phaser from "phaser";
 import { t, type TextKey } from "../i18n";
 import type { GameApi } from "../api/contracts";
@@ -217,7 +219,14 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
     const sell = new Button(scene, 0, 0, {
       width: RUNE_NOTE_BUTTONS.sellWidth, height: RUNE_NOTE_BUTTONS.sellHeight, label: t("rune.sell"), fontSize: 22,
       accentColor: RUNE_NOTE_BUTTONS.sellAccent, accentTextColor: RUNE_NOTE_BUTTONS.sellText,
-      onClick: () => { void new InventoryManager(session).sellRunes(options.api ?? gameApi, [rune.instanceId]).then(() => close()); },
+      // 판매는 되돌릴 수 없어 공용 확인 창이 한 번 묻는다 — 받을 골드가 보유 줄로 선다.
+      onClick: () => popups.confirm({
+        title: t("rune.sell.title"),
+        message: t("rune.sell.message"),
+        balance: { iconKey: CURRENCY_ICON_BY_WALLET.gold, before: session.wallet.gold, after: session.wallet.gold + runeSellValue(rune) },
+        confirmLabel: t("rune.sell"),
+        destructive: true,
+      }, () => { void new InventoryManager(session).sellRunes(options.api ?? gameApi, [rune.instanceId]).then(() => close()); }),
     });
     // 잠금과 즐겨찾기는 **머리글 아래 왼쪽 위**에 작은 칩 두 장으로 선다. 무엇을 가진
     // 룬인지 읽기 전에 "골라 둔 것인가"가 먼저 보이는 자리이고, 판매를 막는 자물쇠가

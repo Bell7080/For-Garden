@@ -95,3 +95,23 @@ test("상단과 가방 재화는 같은 안내를 열고 가방 위 안내만 �
   expect(await page.evaluate(() => window.__PF_DEBUG?.inventoryCategory)).toBe("currency");
   await captureGame(page, `test-results/${test.info().project.name}-currency-guide-stack.png`);
 });
+
+test("기한이 있는 병은 가방 칸 왼쪽 위에 붉은 표식(7D · 24H · 60M)이 선다", async ({ page }) => {
+  test.setTimeout(240_000);
+  const now = Date.now();
+  const at = (ms: number): string => new Date(now + ms).toISOString();
+  await startAfterOpening(page, (state) => {
+    state.itemInventory = [
+      { itemId: "stamina-tonic", quantity: 3, lots: [{ quantity: 1, expiresAt: at(7 * 86_400_000) }, { quantity: 2, expiresAt: at(8 * 86_400_000) }] },
+      { itemId: "stamina-tonic-large", quantity: 1, lots: [{ quantity: 1, expiresAt: at(50 * 60_000) }] },
+    ];
+  });
+  await tap(page, WIDTH / 2, HEIGHT / 2);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await tapUntil(page, LOBBY_RAIL_BOUNDS.utility.inventory.x, LOBBY_RAIL_BOUNDS.utility.inventory.y, async () => (await page.evaluate(() => window.__PF_DEBUG?.inventoryCategory)) !== undefined);
+  const position = inventoryCategoryTabPosition(2);
+  await tap(page, WIDTH / 2 + position.x, HEIGHT / 2 + position.y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.inventoryCategory)).toBe("consumable");
+  await page.setViewportSize({ width: WIDTH, height: HEIGHT });
+  await captureGame(page, `test-results/${test.info().project.name}-inventory-expiry-tags.png`);
+});

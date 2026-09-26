@@ -6,7 +6,7 @@ export const INFO_RU = {
   "info.summon.title": "Призыв",
   "info.summon.owner": "Призыв: {owner}",
   "info.summon.growth": "Основа роста",
-  "info.summon.growthSource": "{stat}: {owner}",
+  "info.summon.growthSource": "{owner}: {stat}",
   "info.summon.growth.follows": "{stat} · ОЗ · защ. · сопр.",
   "info.summon.resummon": "Повторный призыв",
   "info.summon.resummonValue": "{seconds} с",

@@ -2,7 +2,8 @@ import Phaser from "phaser";
 import { gameApi } from "../api/FakeServer";
 import type { RaidContributionEntryDto, RaidDto, RaidListResponse } from "../api/contracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { RAID_BOSS_POOL, RAID_DIFFICULTY, RAID_SUMMON_DIFFICULTIES, type RaidDifficulty } from "../data/raid";
+import { RAID_BOSS_POOL, RAID_DIFFICULTY, RAID_SUMMON_DIFFICULTIES, raidRunStamina, type RaidDifficulty } from "../data/raid";
+import { session } from "../state/session";
 import { getRelic } from "../data/relics";
 import { setDebugRaidStage, setDebugScene } from "../debug";
 import { t } from "../i18n";
@@ -581,8 +582,12 @@ export class RaidScene extends Phaser.Scene {
     }
     // 도전이 남지 않았으면 들어갈 수 없다 — 눌러도 아무 일이 없는 칸은 준비 상태를 과장한다.
     const canSortie = raid.attemptsUsed < raid.attemptsLimit;
+    // 한 판의 스테미나는 입구의 출격이 먼저 말한다 — 던전 입구와 같은 비용 표기다. 모자라도 편성은
+    // 열 수 있고, 입장이 거절되면 편성 화면이 스테미나 창을 연다.
+    const stamina = raidRunStamina(raid.difficulty);
     this.sortieButton = new Button(this, sortie.centerX, y, {
       ...common, label: t("raid.sortie"),
+      cost: { icon: "currency-stamina", amount: stamina, affordable: session.wallet.stamina >= stamina },
       onClick: () => startScene(this, "party", { content: "raid", raidId: raid.id, bossRelicId: raid.bossRelicId, difficulty: raid.difficulty } satisfies PartySceneData),
     });
     this.sortieButton.setEnabled(canSortie);

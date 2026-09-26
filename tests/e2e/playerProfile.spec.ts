@@ -49,3 +49,21 @@ test("프로필 얼굴을 누르면 사진·테두리 선택창이 뜨고 라벨
   await page.waitForTimeout(800);
   await captureGame(page, `test-results/${test.info().project.name}-player-profile-frames.png`);
 });
+
+test("레벨 칩은 레벨별 개방 가지나무를, 경험치 줄은 얼마 중 얼마인지 말풍선을 연다", async ({ page }) => {
+  await startAfterOpening(page, (session) => { session.playerResearch = { level: 12, experience: 120, experienceToNext: 273 }; });
+  await tap(page, WIDTH / 2, HEIGHT / 2);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await tap(page, 176, 86);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.playerProfileOpen)).toBe(true);
+  await page.waitForTimeout(800);
+  const { header } = PLAYER_PROFILE_LAYOUT;
+  // 경험치 줄의 가운데를 누르면 줄 위로 말풍선이 뜬다.
+  await tap(page, WIDTH / 2 + (header.textLeft + header.textRight) / 2, HEIGHT / 2 + header.expY);
+  await page.waitForTimeout(400);
+  await captureGame(page, `test-results/${test.info().project.name}-player-profile-exp-tooltip.png`);
+  await tap(page, WIDTH / 2 + header.avatar.x, HEIGHT / 2 + header.levelChip.y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles?.includes("레벨별 개방"))).toBe(true);
+  await page.waitForTimeout(800);
+  await captureGame(page, `test-results/${test.info().project.name}-player-level-tree.png`);
+});

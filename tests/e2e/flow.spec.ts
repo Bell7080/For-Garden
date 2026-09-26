@@ -6,6 +6,9 @@ import { captureGame, drag, longPress, tap, tapUntil } from "./canvasInput";
 // 때마다 여기만 옛 자리를 두드린다.
 import { BATTLE_CONTROLS } from "../../src/ui/battleStatusLayout";
 import { CONTRIBUTION_TOGGLE } from "../../src/ui/battleContributionLayout";
+import { LAB_CHROME, LAB_TITLE } from "../../src/ui/labLayout";
+import { gachaRatesTierScreenY } from "../../src/ui/gachaRatesLayout";
+import { BACK_SLOT } from "../../src/ui/popupGeometry";
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
@@ -49,8 +52,8 @@ function infoOpen(page: Page) {
 }
 
 /** 타이틀에서 편성 화면까지 들어간다. */
-async function enterParty(page: Page): Promise<void> {
-  await startAfterOpening(page);
+async function enterParty(page: Page, prepare?: Parameters<typeof startAfterOpening>[1]): Promise<void> {
+  await startAfterOpening(page, prepare);
 
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2); // 타이틀 → 로비
   await expect.poll(() => scene(page)).toBe("lobby");
@@ -97,10 +100,10 @@ async function pickParty(page: Page): Promise<void> {
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.party?.selectedCount)).toBe(3);
 }
 
-async function enterBattle(page: Page): Promise<void> {
+async function enterBattle(page: Page, prepare?: Parameters<typeof startAfterOpening>[1]): Promise<void> {
   // 테스트 빌드의 명시적 창구에 고정 seed를 넣어 전투 사건 순서가 실행마다 흔들리지 않게 한다.
   await page.evaluate(() => { window.__PF_BATTLE_TEST__ ??= { seed: 0x5eed }; });
-  await enterParty(page);
+  await enterParty(page, prepare);
   await pickParty(page);
   await tap(page, BASE_WIDTH / 2, 1700); // 전투 시작
   await expect.poll(() => scene(page)).toBe("battle");
@@ -192,6 +195,19 @@ test("일반 전투 결과의 기여도 세 분류를 확인하고 닫은 뒤 �
   // 눌러도 지도로 넘어간다.
   await tap(page, BASE_WIDTH - 106, BASE_HEIGHT - 120); await tap(page, BASE_WIDTH / 2, 790);
   await expect.poll(() => scene(page)).toBe("stageMap");
+});
+
+test("전투 결과판에 연구원 경험치가 차오르고 레벨이 오르면 에너지 드링크+가 선다", async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
+  await page.addInitScript(() => { window.__PF_BATTLE_TEST__ = { seed: 0x5eed, preset: "result" }; });
+  // 한 판(스테미나 6)이면 레벨이 오르도록 요구치 바로 아래에서 시작한다.
+  await enterBattle(page, (session) => { session.playerResearch = { level: 4, experience: 100, experienceToNext: 103 }; });
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.rewardPopup), { timeout: 15_000 }).toBe(true);
+  // 줄이 끝까지 찼다가 다시 차오르는 연출이 끝난 뒤에 찍는다.
+  await page.waitForTimeout(2500);
+  await captureGame(page, `test-results/${testInfo.project.name}-battle-result-player-exp-1080x1920.png`);
+  const bottles = await page.evaluate(() => JSON.parse(localStorage.getItem("eternal-city.local-save") ?? "null")?.itemInventory?.find((entry: { itemId: string }) => entry.itemId === "stamina-tonic-large")?.quantity ?? 0);
+  expect(bottles).toBeGreaterThanOrEqual(1);
 });
 
 test("전투 시작의 빠른 연속 탭은 한 번만 진입하고 유효 편성을 보존한다", async ({ page }) => {
@@ -379,14 +395,41 @@ test("연구소에서 화석을 사용하면 렐릭 연구 결과가 뜬다", as
   await captureGame(page, `test-results/${test.info().project.name}-lab-pull-result.png`);
 });
 
-test("연구소 연구 확률 정보에서 현재 천장과 픽업·이월·중복 정책을 함께 확인한다", async ({ page }) => {
+test("연구 재화가 모자라면 버튼 옆에 젬으로 채우는 값이 서고, 누르면 확인 창이 먼저 묻는다", async ({ page }) => {
+  await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
+  await startAfterOpening(page, (session) => { session.wallet.fossil = 1; session.wallet.gems = 5_000; });
+  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
+  await tap(page, (BASE_WIDTH * 7) / 10, BASE_HEIGHT - 180 + 90);
+  await expect.poll(() => scene(page)).toBe("lab");
+  // 첫 복원 연구(10연 전용)를 넘겨 화석 연구로 간다 — 1회는 화석 1, 10회는 화석 1 + 젬 2,700이다.
+  await tap(page, BASE_WIDTH - LAB_TITLE.arrow.x, LAB_TITLE.arrow.y);
+  await captureGame(page, `test-results/${test.info().project.name}-lab-pull-gem-cost.png`);
+  await tap(page, 780, LAB_CHROME.pull.y);
+  await expect.poll(async () => (await page.evaluate(() => window.__PF_DEBUG?.popupTitles))?.length ?? 0).toBe(1);
+  await captureGame(page, `test-results/${test.info().project.name}-lab-pull-gem-confirm.png`);
+  // 확인 전에는 아무것도 빠지지 않았다.
+  expect(await page.evaluate(() => window.__PF_DEBUG?.wallet?.fossil)).toBe(1);
+});
+
+test("연구소 확률표는 등급 줄을 눌러 세부 확률을 펼치고, 세 배너 모두 같은 표를 쓴다", async ({ page }) => {
   await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
   await startAfterOpening(page);
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await tap(page, (BASE_WIDTH * 7) / 10, BASE_HEIGHT - 180 + 90);
   await expect.poll(() => scene(page)).toBe("lab");
 
-  // 확률 정보 버튼의 팝업이 기준 모바일 화면에서 잘리지 않는지 회귀 이미지로 남긴다.
-  await tap(page, BASE_WIDTH / 2, 390);
-  await captureGame(page, `test-results/${test.info().project.name}-lab-rates-policy.png`);
+  const titles = (): Promise<string[] | undefined> => page.evaluate(() => window.__PF_DEBUG?.popupTitles);
+  for (let banner = 0; banner < 3; banner += 1) {
+    await tap(page, LAB_CHROME.rates.x + 60, LAB_CHROME.rates.y);
+    await expect.poll(async () => (await titles())?.length ?? 0).toBe(1);
+    // 처음에는 SSR이 펼쳐져 있다. 세 배너의 표가 모두 잘리지 않는지 회귀 이미지로 남긴다.
+    await captureGame(page, `test-results/${test.info().project.name}-lab-rates-${banner}-ssr.png`);
+    // SSR을 접고 잡화를 펼친다 — 윗변이 고정이라 등급 줄의 자리는 배치표가 그대로 말한다.
+    await tap(page, BASE_WIDTH / 2, gachaRatesTierScreenY(0, null, 0));
+    await tap(page, BASE_WIDTH / 2, gachaRatesTierScreenY(3, null, 0));
+    await captureGame(page, `test-results/${test.info().project.name}-lab-rates-${banner}-gray.png`);
+    await tap(page, BACK_SLOT.x, BACK_SLOT.y);
+    await expect.poll(async () => (await titles())?.length ?? 0).toBe(0);
+    await tap(page, BASE_WIDTH - LAB_TITLE.arrow.x, LAB_TITLE.arrow.y);
+  }
 });

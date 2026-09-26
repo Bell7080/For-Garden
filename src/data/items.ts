@@ -41,6 +41,11 @@ export interface ItemDefinition {
   readonly icon: ItemIcon;
   readonly maxStack: number;
   readonly useEffect: ItemUseEffect;
+  /**
+   * 받은 뒤 사라지기까지의 기본 날수(1~7). 있으면 가방이 받은 묶음마다 기한을 따로 센다
+   * (`src/core/itemLots.ts`). 지급하는 자리가 날수를 따로 정하면(`expiresInDays`) 그 값이 앞선다.
+   */
+  readonly expiresInDays?: number;
 }
 
 /** 초기 인벤토리 카탈로그. 룬은 인스턴스 데이터이므로 가상 정의 한 행으로 표시한다. */
@@ -56,8 +61,8 @@ export const ITEMS = [
   { id: "rawStone", name: "원석", description: "지층 탐사로 캐낸 미가공 광물입니다. 룬 특성 재해석에 사용합니다.", category: "currency", icon: { kind: "currency", key: "rawStone" }, maxStack: 9_999_999, useEffect: { kind: "none" } },
   // 에너지 드링크는 **기본과 쎈 것 둘**이다. 회복량만 다른 같은 물건이라 한 칸에서 좌우로
   // 갈아 끼우고(`StaminaPopup`), 그래서 둘의 이름도 같은 낱말에 표시만 다르게 붙인다.
-  { id: "stamina-tonic", name: "에너지 드링크", description: "스테미나를 60 회복합니다.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic" }, maxStack: 99, useEffect: { kind: "restore_stamina", amount: 60 } },
-  { id: "stamina-tonic-large", name: "에너지 드링크+", description: "스테미나를 120 회복합니다.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic-large" }, maxStack: 99, useEffect: { kind: "restore_stamina", amount: 120 } },
+  { id: "stamina-tonic", name: "에너지 드링크", description: "스테미나를 60 회복합니다.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic" }, maxStack: 999, expiresInDays: 7, useEffect: { kind: "restore_stamina", amount: 60 } },
+  { id: "stamina-tonic-large", name: "에너지 드링크+", description: "스테미나를 120 회복합니다.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic-large" }, maxStack: 999, expiresInDays: 7, useEffect: { kind: "restore_stamina", amount: 120 } },
   { id: "ancient-core", name: "미지의 고대 핵", description: "룬에 특성 한 줄을 새로 부여합니다. 이미 특성이 있으면 지우고 다시 부여합니다.", category: "material", icon: { kind: "asset", key: "item-ancient-core" }, maxStack: 999, useEffect: { kind: "none" } },
   { id: "refined-core", name: "정제된 고대 핵", description: "영웅 이상 등급의 특성을 확정으로 부여합니다. 이미 영웅 이상인 특성에는 사용할 수 없습니다.", category: "material", icon: { kind: "asset", key: "item-refined-core" }, maxStack: 999, useEffect: { kind: "none" } },
   { id: "restoration-crystal", name: "완전 복원 결정", description: "특성의 종류는 그대로 두고 등급을 전설로 확정 상승시킵니다. 이미 전설인 특성에는 사용할 수 없습니다.", category: "material", icon: { kind: "asset", key: "item-restoration-crystal" }, maxStack: 999, useEffect: { kind: "none" } },

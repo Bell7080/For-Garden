@@ -8,6 +8,8 @@ export const RUNE_ES = {
   "rune.nameTitle": "Nombre de la Runa",
   "rune.nameSaved": "Se guardó el nombre.",
   "rune.sell": "Vender",
+  "rune.sell.title": "Vender runa",
+  "rune.sell.message": "Vender esta runa. Una runa vendida no se puede recuperar.",
   "rune.craft": "Tallar",
   "rune.craftTitle": "Tallado de Runa",
   "rune.unequip": "Quitar",

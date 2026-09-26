@@ -8,7 +8,7 @@ describe("expedition score detail model", () => {
     const receipt = {
       weekKey: "2026-08-31", score: 38_000, normalNodeScoreTotal: 25_655,
       bossDamageScore: 12_345, runScore: 38_000, bestScore: 38_000,
-      cumulativeScore: 92_000, improved: true, endedAtMs: 90_000,
+      bossSalvage: 12, improved: true, endedAtMs: 90_000,
       rankBefore: 7, rankAfter: 3,
     } satisfies SubmitExpeditionBossScoreResponse;
 

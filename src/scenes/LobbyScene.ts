@@ -51,6 +51,8 @@ import { managerEvents } from "../managers/ManagerEvents";
 import { PROFILE_FRAMES } from "../data/profileFrames";
 import { contentUnlockedBetween } from "../core/contentUnlock";
 import { staminaMaxForResearchLevel } from "../core/stamina";
+import { PLAYER_LEVEL_UP_REWARD } from "../core/playerLevel";
+import { findItem } from "../data/items";
 import { MailPopup } from "../ui/MailPopup";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import type { CurrencyGuideAction } from "../data/currencyGuide";
@@ -349,6 +351,8 @@ export class LobbyScene extends Phaser.Scene {
     const unlocks = contentUnlockedBetween(previous, level);
     const lines = [
       t("profile.levelUp.stamina", { amount: staminaMaxForResearchLevel(level) - staminaMaxForResearchLevel(previous) }),
+      // 스테미나를 채우는 대신 레벨마다 주는 병 — 가방에 들어갔다는 것을 레벨과 함께 말한다.
+      t("profile.levelUp.drink", { item: findItem(PLAYER_LEVEL_UP_REWARD.itemId)?.name ?? "", count: (level - previous) * PLAYER_LEVEL_UP_REWARD.quantity }),
       ...frames.map((frame) => t("profile.levelUp.frame", { name: frame.displayName })),
       ...unlocks.map((entry) => t("profile.levelUp.unlock", { content: t(contentNameKey(entry.id)) })),
     ];
@@ -623,9 +627,9 @@ export class LobbyScene extends Phaser.Scene {
     this.sortieBackButton?.destroy(); this.sortieBackButton = undefined;
   }
 
-  /** 주간 횟수·진행·최고점·빠른 가능 여부를 한 줄의 짧은 원정 상태로 합친다. */
+  /** 오늘의 횟수·진행·주간 최고점·빠른 가능 여부를 한 줄의 짧은 원정 상태로 합친다. */
   private expeditionStatus(status = expeditionManager.status()): string {
-    const plays = status.playsThisWeek;
+    const plays = status.playsToday;
     const best = status.bestScore.toLocaleString();
     if (status.active) return t("lobby.expedition.resume", { plays, best });
     const quick = t(status.quickAvailable ? "lobby.expedition.quickReady" : "lobby.expedition.quickLocked");

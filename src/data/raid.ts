@@ -159,6 +159,18 @@ export const RAID_SEASON_TOTAL_HP = RAID_DIFFICULTY.rampage.totalHp;
 export const RAID_ATTEMPTS_PER_RAID = 2;
 
 /**
+ * 레이드 한 판의 스테미나 — 입장에서 도전 한 번과 함께 빠진다.
+ *
+ * **모든 레이드가 같은 값이다**(`RAID_RUN_STAMINA`). 난이도·레벨로 값을 가르던 때는 같은 "한 판 더"가
+ * 판마다 다른 값이라 치기 전에 셈을 해야 했다 — 레이드의 무게는 도전 횟수(판마다 두 번)가 이미 정한다.
+ */
+export const RAID_RUN_STAMINA = 10;
+
+export function raidRunStamina(_difficulty?: RaidDifficulty): number {
+  return RAID_RUN_STAMINA;
+}
+
+/**
  * 때린 판마다 곧바로 받는 골드 — **그 판의 피해에 비례한다.**
  *
  * 정산은 판이 끝나야 열리므로, 한 판을 치고 나온 손에 아무것도 없으면 두 번째 판을 칠 이유가

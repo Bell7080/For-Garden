@@ -3,7 +3,7 @@ export const EXPEDITION_REWARD_KO = {
   "expeditionReward.title": "기록 보상",
   "expeditionReward.none": "아직 열린 보상 단계가 없습니다",
   "expeditionReward.refresh": "새로고침",
-  "expeditionReward.summary": "주간 누적 원정 점수 {cumulative}  ·  주간 최고 점수 {best}",
+  "expeditionReward.summary": "주간 최고 점수 {best}",
   "expeditionReward.claimed": "이미 수령한 보상",
   "expeditionReward.claimedAmount": "{amount} 수령 완료",
   "expeditionReward.loadFailed": "기록 보상을 불러오지 못했습니다.",

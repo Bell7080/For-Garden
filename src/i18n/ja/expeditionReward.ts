@@ -3,7 +3,7 @@ export const EXPEDITION_REWARD_JA = {
   "expeditionReward.title": "記録報酬",
   "expeditionReward.none": "まだ解放された報酬段階はありません",
   "expeditionReward.refresh": "更新",
-  "expeditionReward.summary": "週間累計遠征スコア {cumulative}  ·  週間最高スコア {best}",
+  "expeditionReward.summary": "週間最高スコア {best}",
   "expeditionReward.claimed": "受け取り済みの報酬",
   "expeditionReward.claimedAmount": "{amount} 受け取り完了",
   "expeditionReward.loadFailed": "記録報酬を読み込めませんでした。",

@@ -45,6 +45,9 @@ export const SYSTEM_JA = {
   "product.price.item": "{amount} {item}",
 
   "mail.launch.title": "開拓支援の補給箱",
+  "mail.expeditionRank.title": "週間遠征ランキング報酬",
+  "mail.expeditionRank.sender": "水没支部調査団",
+  "mail.expeditionRank.body": "先週の遠征最高スコア{score}点で{rank}位になりました。引き揚げた分をお送りします。",
   "mail.launch.sender": "研究支援局",
   "mail.launch.body": "エターナルシティへようこそ。調査に必要な物資をお送りします。",
   "mail.update.title": "ミッション・メールボックス整備のお知らせ",

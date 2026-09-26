@@ -1,6 +1,9 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { chipPoints, drawLayer, drawShapeEdge, HOLO } from "./holo";
+import { Button } from "./Button";
+import { addFramedIcon } from "./itemFrame";
+import { CONFIRM_DIALOG, confirmButtonXs, confirmDialogHeight, confirmPlateHeight } from "./confirmDialogLayout";
 import { IconButton } from "./IconButton";
 import { UI_ICON } from "./icons";
 import { addSectionTitle } from "./SectionTitle";
@@ -12,6 +15,18 @@ import { pressIn, pressOut } from "./pressFeedback";
 
 /** 제목 위계는 순수 배치표가 갖고 여기서는 다시 내보내기만 한다. */
 export { POPUP_TITLE_SIZE };
+
+/** 확인 창에 서는 것. `costs`는 치를 것을 액자로, `balance`는 그 재화가 지금 얼마에서 얼마가 되는지다. */
+export interface ConfirmOptions {
+  title: string;
+  message: string;
+  confirmLabel: string;
+  destructive?: boolean;
+  /** 취소 버튼 글자. `false`면 알리기만 하는 창이라 버튼 하나만 선다. */
+  cancelLabel?: string | false;
+  costs?: readonly { iconKey: string; amount: number; short?: boolean }[];
+  balance?: { iconKey: string; before: number; after: number };
+}
 
 /** 팝업 한 장을 여는 데 필요한 것. 내용은 콜백이 컨테이너에 직접 채운다. */
 export interface PopupOptions {
@@ -175,20 +190,100 @@ export class PopupLayer {
     return this.depth;
   }
 
-  /** 파괴적 동작이 화면마다 제각각 구현되지 않도록 같은 팝업 위에 확인/취소를 제공한다. */
-  confirm(options: { title: string; message: string; confirmLabel: string; destructive?: boolean }, onConfirm: () => void): void {
-    this.open({ width: 820, height: 390, title: options.title, dim: true, closeOnBackdrop: false }, (body, close) => {
-      body.add(this.scene.add.text(-350, -75, options.message, textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setWordWrapWidth(700));
-      const addAction = (x: number, label: string, color: string, action: () => void): void => {
-        const button = this.scene.add.text(x, 105, label, textStyle({ role: "emphasis", size: 28, color })).setOrigin(0.5).setInteractive({ useHandCursor: true });
-        button.on("pointerdown", () => pressIn(button));
-        button.on("pointerout", () => pressOut(button, "normal", { pop: false }));
-        button.on("pointerup", action);
-        body.add(button);
-      };
-      addAction(-150, t("popup.cancel"), COLOR.inkDim, close);
-      addAction(150, options.confirmLabel, options.destructive ? "#ff8c88" : COLOR.accentText, () => { close(); onConfirm(); });
+  /**
+   * **확인 창 한 벌** — 되돌릴 수 없는 조작(젬 쓰기·포기·초기화) 앞에서 한 번 묻는다.
+   *
+   * 몸판 안에 **문장을 담는 유리 판**을 한 겹 더 깔아 무엇을 묻는지가 판 안에서 또렷이 읽히고,
+   * 치를 것이 있으면 그 판 안에 **액자로** 선다(`costs` — 글로 「젬 2,700개」라 적으면 값이 문장에 묻힌다).
+   * 버튼은 맨 글자가 아니라 **제 판을 가진 버튼 둘**이다 — 왼쪽 취소는 옅은 유리, 오른쪽 확정은 강조 판이고
+   * 파괴적 조작이면 확정 판과 안쪽 판 윗변이 붉다. 알리기만 하는 창은 `cancelLabel: false`로 버튼 하나만 선다.
+   * 오른쪽 위 X는 두지 않는다 — 취소 버튼이 그 몫이고, 한 창에 닫는 길이 둘이면 무엇이 취소인지 흐려진다.
+   * 자리와 창 높이는 `confirmDialogLayout.ts`가 쌓인 내용에서 거꾸로 구한다.
+   */
+  confirm(options: ConfirmOptions, onConfirm: () => void = () => undefined): void {
+    const L = CONFIRM_DIALOG;
+    const plateWidth = L.width - L.plateInset * 2;
+    const message = this.scene.add.text(0, 0, options.message, textStyle({ role: "body", size: L.messageSize, color: COLOR.ink, align: "center", lineSpacing: L.messageLineSpacing, wrap: plateWidth - 72 })).setOrigin(0.5, 0);
+    const costs = options.costs ?? [];
+    const content = { messageHeight: message.height, costs: costs.length > 0, balance: options.balance !== undefined };
+    const height = confirmDialogHeight(content);
+    const single = options.cancelLabel === false;
+    const tone = options.destructive ? COLOR.danger : COLOR.accent;
+
+    this.open({ width: L.width, height, title: options.title, dim: true, dimAlpha: L.dimAlpha, closeOnBackdrop: false, hideCloseButton: true }, (body, close) => {
+      const plateHeight = confirmPlateHeight(content);
+      const plateTop = -height / 2 + L.topRoom;
+      const plateY = plateTop + plateHeight / 2;
+      // 안쪽 판은 몸판과 같은 비율로 깎는다 — 네모로 두면 몸판의 빗변을 넘어 창 밖으로 삐져나온다.
+      const unit = Math.min(plateWidth, plateHeight) * POPUP_BODY_BEVEL_RATIO;
+      const plateShape = chipPoints(plateWidth, plateHeight, { bevel: { topLeft: unit, topRight: 0, bottomRight: unit, bottomLeft: 0 } });
+      body.add(drawLayer(this.scene, 0, plateY, plateShape, { fill: 0x121821, alpha: 0.92, edge: tone, edgeAlpha: options.destructive ? 0.9 : 0.55 }));
+
+      let y = plateTop + L.platePadY;
+      body.add(message.setPosition(0, y));
+      y += message.height;
+      if (costs.length > 0) {
+        y += L.costGap;
+        const total = costs.length * L.costIcon + (costs.length - 1) * L.costSpacing;
+        costs.forEach((cost, index) => {
+          const x = -total / 2 + L.costIcon / 2 + index * (L.costIcon + L.costSpacing);
+          const frame = addFramedIcon(this.scene, body, x, y + L.costIcon / 2, L.costIcon, cost.iconKey, { amount: `×${cost.amount.toLocaleString()}` });
+          if (cost.short) frame.setAlpha(0.55);
+        });
+        y += L.costIcon;
+      }
+      if (options.balance) {
+        y += L.balanceGap;
+        body.add(this.addBalanceRow(y + L.balanceHeight / 2, options.balance));
+      }
+
+      const buttonY = plateTop + plateHeight + L.buttonRoom;
+      const xs = confirmButtonXs(single ? 1 : 2);
+      const common = { width: L.button.width, height: L.button.height, fontSize: L.button.fontSize };
+      if (!single) {
+        body.add(new Button(this.scene, xs[0], buttonY, { ...common, label: typeof options.cancelLabel === "string" ? options.cancelLabel : t("popup.cancel"), onClick: close }));
+      }
+      body.add(new Button(this.scene, xs[xs.length - 1], buttonY, {
+        ...common,
+        label: options.confirmLabel,
+        variant: "primary",
+        // 확정 판만 제 색으로 물들이고 양 끝에 점을 흩는다 — 두 버튼이 같은 어두운 판이면 어느 쪽이
+        // 진행인지 글자를 읽어야 안다. 파괴적 조작은 같은 자리가 붉다.
+        fill: options.destructive ? CONFIRM_DIALOG.destructiveFill : CONFIRM_DIALOG.confirmFill,
+        decorDots: true,
+        ...(options.destructive ? { accentColor: COLOR.danger, accentTextColor: COLOR.ink } : {}),
+        onClick: () => { close(); onConfirm(); },
+      }));
     });
+  }
+
+  /**
+   * 보유 줄 — `보유 [그림] 5,000 → 2,300`을 한 덩어리로 가운데에 세운다.
+   *
+   * 수는 값 글자(`display`)라 흐린 곁말보다 먼저 읽히고, 그림은 버튼 안의 비용 표기처럼 검은 복제를
+   * 깔아 앉힌다(액자를 두면 위의 값 액자와 같은 무게가 되어 무엇을 치르는지가 흐려진다). 줄어드는 쪽은
+   * 붉게, 늘어나는 쪽은 강조색으로 남는 수를 칠한다.
+   */
+  private addBalanceRow(y: number, balance: NonNullable<ConfirmOptions["balance"]>): Phaser.GameObjects.Container {
+    const L = CONFIRM_DIALOG;
+    const row = this.scene.add.container(0, y);
+    const label = this.scene.add.text(0, 0, t("popup.balance"), textStyle({ role: "emphasis", size: L.balanceLabelSize, color: COLOR.inkDim })).setOrigin(0, 0.5);
+    const shadow = this.scene.add.image(0, 4, balance.iconKey).setDisplaySize(L.balanceIcon, L.balanceIcon).setTint(0x05070a).setAlpha(0.55);
+    const icon = this.scene.add.image(0, 0, balance.iconKey).setDisplaySize(L.balanceIcon, L.balanceIcon);
+    const before = this.scene.add.text(0, 0, balance.before.toLocaleString(), textStyle({ role: "display", size: L.balanceValueSize, color: COLOR.ink })).setOrigin(0, 0.5);
+    const arrow = this.scene.add.text(0, 0, "→", textStyle({ role: "display", size: L.balanceValueSize, color: COLOR.inkDim })).setOrigin(0, 0.5);
+    const afterColor = balance.after < balance.before ? COLOR.dangerText : COLOR.accentText;
+    const after = this.scene.add.text(0, 0, balance.after.toLocaleString(), textStyle({ role: "display", size: L.balanceValueSize, color: afterColor })).setOrigin(0, 0.5);
+    const gap = 14;
+    const total = label.width + gap * 1.6 + L.balanceIcon + gap * 0.6 + before.width + gap + arrow.width + gap + after.width;
+    let x = -total / 2;
+    label.setX(x); x += label.width + gap * 1.6;
+    shadow.setX(x + L.balanceIcon / 2 + 3); icon.setX(x + L.balanceIcon / 2); x += L.balanceIcon + gap * 0.6;
+    before.setX(x); x += before.width + gap;
+    arrow.setX(x); x += arrow.width + gap;
+    after.setX(x);
+    row.add([label, shadow, icon, before, arrow, after]);
+    return row;
   }
 
   /** 팝업 한 장을 연다. `build`는 판 가운데를 원점으로 하는 컨테이너를 받는다. */

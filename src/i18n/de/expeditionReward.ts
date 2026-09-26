@@ -3,7 +3,7 @@ export const EXPEDITION_REWARD_DE = {
   "expeditionReward.title": "Rekordbelohnungen",
   "expeditionReward.none": "Noch keine Belohnungsstufe freigeschaltet",
   "expeditionReward.refresh": "Aktualisieren",
-  "expeditionReward.summary": "Wöchentliche Expedition-Gesamtpunkte {cumulative}  ·  Wochenbestwert {best}",
+  "expeditionReward.summary": "Wochenbestwert {best}",
   "expeditionReward.claimed": "Bereits abgeholt",
   "expeditionReward.claimedAmount": "{amount} abgeholt",
   "expeditionReward.loadFailed": "Die Rekordbelohnungen konnten nicht geladen werden.",

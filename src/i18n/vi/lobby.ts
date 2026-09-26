@@ -16,7 +16,7 @@ export const LOBBY_VI = {
   "lobby.sortie.shopTitle": "Cửa hàng",
   "lobby.sortie.raid.status": "Tác chiến hợp lực · Đang chuẩn bị",
   "lobby.expedition.resume": "Tiếp tục · {plays} lượt · Cao nhất {best}",
-  "lobby.expedition.weekly": "Tuần {plays} lượt · Cao nhất {best} · {quick}",
+  "lobby.expedition.weekly": "Hôm nay {plays} · Cao nhất {best} · {quick}",
   "lobby.expedition.quickReady": "Nhanh sẵn sàng",
   "lobby.expedition.quickLocked": "Nhanh bị khóa",
   "lobby.rail.mission": "Nhiệm vụ",

@@ -34,20 +34,22 @@ describe("ExpeditionManager", () => {
     const state = createDefaultSession();
     const setup = new ExpeditionManager(state, { save: vi.fn() }, () => new Date("2026-08-23T12:00:00Z"));
     setup.start(["anky", "rex", "spino"]);
-    state.expedition = { ...state.expedition, weekKey: "2026-08-17", playsThisWeek: 4, bestScore: 9200 };
+    state.expedition = { ...state.expedition, weekKey: "2026-08-17", dayKey: "2026-08-23", playsToday: 1, bestScore: 9200, bestAchievedAt: "2026-08-20T00:00:00Z" };
     if (state.expedition.run) state.expedition.run.bestScore = 300;
     const manager = new ExpeditionManager(state, { save: vi.fn() }, () => new Date("2026-08-25T12:00:00Z"));
 
     const status = manager.status();
-    expect(status.playsThisWeek).toBe(0);
+    expect(status.playsToday).toBe(0);
     expect(status.bestScore).toBe(0);
+    // 지난주 최고 기록은 지워지지 않고 순위 보상 대기로 옮겨 간다.
+    expect(state.expedition.pendingRankReward).toEqual({ weekKey: "2026-08-17", score: 9200, achievedAt: "2026-08-20T00:00:00Z" });
     expect(status.run?.bestScore).toBe(300);
     expect(manager.start(["anky", "rex", "spino"])).toEqual({ ok: false, reason: "alreadyActive" });
   });
 
   it("exposes quick expedition only after a weekly score and without active progress", () => {
     const state = createDefaultSession();
-    state.expedition = { weekKey: "2026-08-24", playsThisWeek: 1, bestScore: 1200, allTimeBestScore: 1200, lastParty: [], run: null };
+    state.expedition = { weekKey: "2026-08-24", dayKey: "2026-08-25", playsToday: 0, bestScore: 1200, bestAchievedAt: "", claimedRewardStageIds: [], pendingRankReward: null, allTimeBestScore: 1200, lastParty: [], run: null };
     const manager = new ExpeditionManager(state, { save: vi.fn() }, () => new Date("2026-08-25T12:00:00Z"));
     expect(manager.status().quickAvailable).toBe(true);
   });
@@ -68,20 +70,22 @@ describe("ExpeditionManager", () => {
     expect(manager.start(["anky", "rex", "spino"]).ok).toBe(true);
   });
 
-  it("이번 주 원정 기회를 2회 모두 쓰면 새 원정을 시작할 수 없다", () => {
+  it("원정은 하루 한 번이고 날이 바뀌면 다시 열린다", () => {
     const state = createDefaultSession();
-    const manager = new ExpeditionManager(state, { save: vi.fn() }, () => new Date("2026-08-25T12:00:00Z"));
-    expect(manager.status().canStartRun).toBe(true);
-
-    state.expedition.playsThisWeek = 1;
+    let now = new Date("2026-08-25T12:00:00Z");
+    const manager = new ExpeditionManager(state, { save: vi.fn() }, () => now);
     expect(manager.status().canStartRun).toBe(true);
     expect(manager.start(["anky", "rex", "spino"]).ok).toBe(true);
 
-    // 활성 런을 비워 다음 시도가 alreadyActive가 아니라 주간 한도로 막히는지 본다.
+    // 활성 런을 비워 다음 시도가 alreadyActive가 아니라 하루 한도로 막히는지 본다.
     state.expedition.run = null;
-    state.expedition.playsThisWeek = 2;
+    state.expedition.playsToday = 1;
     expect(manager.status().canStartRun).toBe(false);
-    expect(manager.start(["anky", "rex", "spino"])).toEqual({ ok: false, reason: "weeklyLimitReached" });
+    expect(manager.start(["anky", "rex", "spino"])).toEqual({ ok: false, reason: "dailyLimitReached" });
+
+    now = new Date("2026-08-26T00:10:00Z");
+    expect(manager.status().canStartRun).toBe(true);
+    expect(manager.status().playsToday).toBe(0);
   });
 
   it("heals and completes a rest node in one save so retry cannot heal twice", () => {

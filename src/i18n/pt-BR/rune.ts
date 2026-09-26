@@ -8,6 +8,8 @@ export const RUNE_PT_BR = {
   "rune.nameTitle": "Nome da Runa",
   "rune.nameSaved": "O nome foi salvo.",
   "rune.sell": "Vender",
+  "rune.sell.title": "Vender runa",
+  "rune.sell.message": "Vender esta runa. Uma runa vendida não pode ser recuperada.",
   "rune.craft": "Lapidar",
   "rune.craftTitle": "Lapidação de Runa",
   "rune.unequip": "Remover",

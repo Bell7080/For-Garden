@@ -85,7 +85,7 @@ import { registerDataText } from "../i18n";
 export const EXPEDITION_AUGMENT_IDS = EXPEDITION_AUGMENTS.map(({ id }) => id);
 
 /** 노드 완료 전까지 런 안에 보류할 수 있는 보상 종류다. */
-export const EXPEDITION_REWARD_IDS = ["gold", "fossil", "amber", "gems", "cheesecake"] as const;
+export const EXPEDITION_REWARD_IDS = ["gold", "fossil", "amber", "gems", "cheesecake", "salvageRecord"] as const;
 
 /** 노드 완료 재화의 서버 추첨 범위와 한 런 누적 상한이다. */
 export const EXPEDITION_NODE_REWARD_BALANCE = {
@@ -93,7 +93,24 @@ export const EXPEDITION_NODE_REWARD_BALANCE = {
   gold: { perNode: { min: 120, max: 420 }, runCap: 7_500 },
   fossil: { perNode: { min: 0, max: 1 }, runCap: 1 },
   gems: { perNode: { min: 0, max: 2 }, runCap: 24 },
+  /**
+   * 인양 기록 — 노드를 넘을 때마다 **소소하게** 쌓인다. 전리품 상점의 재화라 한 판에 몇 개라도 손에
+   * 쥐어져야 원정을 돌 이유가 상점까지 이어진다. 큰 몫은 폰토스 피해와 주간 보상이 맡는다.
+   */
+  salvageRecord: { perNode: { min: 2, max: 5 }, runCap: 90 },
 } as const;
+
+/**
+ * 폰토스에게 넣은 피해가 주는 인양 기록 — 원정 점수(피해 점수)에 비례한다.
+ *
+ * 폰토스 전은 쓰러뜨리는 싸움이 아니라 얼마나 깊이 긁었는가의 싸움이라, 그 깊이가 점수뿐 아니라
+ * 손에 남는 것으로도 돌아와야 한다. 평균적인 한 판(피해 점수 4만 안팎)이 40개 남짓이다.
+ */
+export const EXPEDITION_BOSS_SALVAGE = { perScore: 1 / 1_000, cap: 200 } as const;
+
+export function expeditionBossSalvage(bossDamageScore: number): number {
+  return Math.max(0, Math.min(EXPEDITION_BOSS_SALVAGE.cap, Math.floor(Math.max(0, bossDamageScore) * EXPEDITION_BOSS_SALVAGE.perScore)));
+}
 
 /** 일반·정예·무리는 같은 기초 표에 배율만 적용해 난이도 대비 보상을 비교할 수 있게 한다. */
 export const EXPEDITION_COMBAT_REWARD_MULTIPLIERS = {
@@ -111,6 +128,7 @@ export const EXPEDITION_TREASURE_REWARD_BALANCE = {
   gold: { min: 520, max: 900 },
   fossil: { min: 1, max: 1 },
   gems: { min: 3, max: 5 },
+  salvageRecord: { min: 6, max: 10 },
 } as const;
 
 /** 빠른 원정은 서버가 보유한 유효 최고 점수의 이 비율만 보상 점수로 환산한다. */
@@ -131,38 +149,80 @@ export const EXPEDITION_BOSS_BALANCE = {
   ],
 } as const;
 
+/** 최고 점수 보상 길과 순위 보상이 줄 수 있는 재화. 모두 지갑 칸이다. */
+export type ExpeditionRewardCurrency = "gold" | "fossil" | "gems" | "salvageRecord" | "cheesecake" | "dnaFragments" | "amber";
+
 /**
- * 주간 누적 원정 점수 보상은 이 표 하나만 읽으며 단계 ID가 서버의 중복 수령 키가 된다.
+ * 이번 주 **한 판 최고 점수**가 여는 보상 길 — 단계 ID가 서버의 중복 수령 키다.
  *
- * `damage-*` ID는 예전 "누적 피해" 명칭으로 저장된 수령 기록과의 호환을 위해 유지한다. 새 ID로
- * 즉시 바꾸면 같은 단계가 미수령으로 되살아날 수 있으므로, 영구 저장 마이그레이션을 제공하기
- * 전에는 표시명과 문서에서만 정확한 "주간 누적 원정 점수" 용어를 사용한다.
+ * 누적 점수(두세 판의 합)는 걷어 냈다 — 몇 번 들어왔는지를 셀 뿐 얼마나 잘 싸웠는지를 말하지 못했다.
+ * 최고 점수 하나로 여는 대신 **잘게 쪼개** 스물네 마디를 둔다: 첫 판이 곧바로 여러 마디를 열고,
+ * 기록을 조금씩 넘길 때마다 한두 마디가 더 열린다. 보상은 한 재화로 채우지 않는다 — 인양 기록이
+ * 뼈대이고 골드·치즈케이크·DNA 조각·화석·호박석·보석이 사이사이에 선다.
  *
- * 현재 한 판 점수는 일반 노드 점수 + 폰토스 피해 점수로 확정됐고, 주간 플레이 상한은 2회다.
- * 10,000은 첫 정상 노드들에서 보상 길을 알리는 초반 문턱, 50,000은 평균적인 1회 진행 목표,
- * 100,000은 평균 50,000점인 플레이를 주 2회 마치는 목표로 재검토해 유지한다. 실제 평균 점수가
- * 쌓이면 이 표의 세 threshold만 다시 조정하며 화면이나 서버에 별도 보상 표를 만들지 않는다.
+ * 평균적인 한 판이 5만 점 안팎(노드 점수 몇천 + 폰토스 피해 점수)이라 그 언저리에 마디가 촘촘하고,
+ * 20만 점은 끝까지 키운 편성의 목표다.
  */
-export const EXPEDITION_CUMULATIVE_REWARD_STAGES = [
-  // 저장 호환 ID다. `score-10k`로 바꾸지 않는다.
-  { id: "damage-10k", threshold: 10_000, reward: { currency: "gold", amount: 5_000 } },
-  // 저장 호환 ID다. `score-50k`로 바꾸지 않는다.
-  { id: "damage-50k", threshold: 50_000, reward: { currency: "fossil", amount: 1 } },
-  // 저장 호환 ID다. `score-100k`로 바꾸지 않는다.
-  { id: "damage-100k", threshold: 100_000, reward: { currency: "gems", amount: 100 } },
-] as const;
+export const EXPEDITION_BEST_SCORE_REWARD_STAGES: readonly { id: string; threshold: number; reward: { currency: ExpeditionRewardCurrency; amount: number } }[] = [
+  { id: "best-2k", threshold: 2_000, reward: { currency: "salvageRecord", amount: 10 } },
+  { id: "best-4k", threshold: 4_000, reward: { currency: "gold", amount: 3_000 } },
+  { id: "best-6k", threshold: 6_000, reward: { currency: "salvageRecord", amount: 10 } },
+  { id: "best-8k", threshold: 8_000, reward: { currency: "cheesecake", amount: 30 } },
+  { id: "best-10k", threshold: 10_000, reward: { currency: "salvageRecord", amount: 15 } },
+  { id: "best-13k", threshold: 13_000, reward: { currency: "dnaFragments", amount: 5 } },
+  { id: "best-16k", threshold: 16_000, reward: { currency: "salvageRecord", amount: 15 } },
+  { id: "best-20k", threshold: 20_000, reward: { currency: "gems", amount: 20 } },
+  { id: "best-24k", threshold: 24_000, reward: { currency: "salvageRecord", amount: 20 } },
+  { id: "best-28k", threshold: 28_000, reward: { currency: "gold", amount: 6_000 } },
+  { id: "best-33k", threshold: 33_000, reward: { currency: "salvageRecord", amount: 20 } },
+  { id: "best-38k", threshold: 38_000, reward: { currency: "fossil", amount: 1 } },
+  { id: "best-44k", threshold: 44_000, reward: { currency: "salvageRecord", amount: 25 } },
+  { id: "best-50k", threshold: 50_000, reward: { currency: "gems", amount: 40 } },
+  { id: "best-57k", threshold: 57_000, reward: { currency: "salvageRecord", amount: 25 } },
+  { id: "best-65k", threshold: 65_000, reward: { currency: "cheesecake", amount: 60 } },
+  { id: "best-74k", threshold: 74_000, reward: { currency: "salvageRecord", amount: 30 } },
+  { id: "best-84k", threshold: 84_000, reward: { currency: "dnaFragments", amount: 10 } },
+  { id: "best-95k", threshold: 95_000, reward: { currency: "salvageRecord", amount: 30 } },
+  { id: "best-110k", threshold: 110_000, reward: { currency: "amber", amount: 1 } },
+  { id: "best-125k", threshold: 125_000, reward: { currency: "salvageRecord", amount: 40 } },
+  { id: "best-145k", threshold: 145_000, reward: { currency: "gems", amount: 60 } },
+  { id: "best-170k", threshold: 170_000, reward: { currency: "salvageRecord", amount: 50 } },
+  { id: "best-200k", threshold: 200_000, reward: { currency: "fossil", amount: 2 } },
+];
 
 /** 주차는 월요일 00:00 UTC에 초기화하며 동점은 최고 점수를 먼저 달성한 기록이 앞선다. */
-export const EXPEDITION_WEEKLY_POLICY = { resetWeekdayUtc: 1, resetHourUtc: 0, tieBreak: "earliest-achieved-at", maxPlaysPerWeek: 2 } as const;
+export const EXPEDITION_WEEKLY_POLICY = { resetWeekdayUtc: 1, resetHourUtc: 0, tieBreak: "earliest-achieved-at" } as const;
+
+/** 원정은 **하루 한 번** 떠난다(UTC 날짜). 소탕도 그 한 번을 쓴다. */
+export const EXPEDITION_DAILY_POLICY = { maxPlaysPerDay: 1 } as const;
 
 /**
- * 소탕은 직접 플레이하지 않고 지금까지의 최고 기록 일부만 즉시 정산한다.
- *
- * 주간 달성도(누적 점수 단계 보상)는 문턱을 처음 넘는 순간에만 지급되므로, 같은 주에 소탕을
- * 반복해도 이미 넘은 문턱에는 의미가 없다 — 그래도 막지 않는 이유는 아직 넘지 못한 다음 문턱을
- * 향해 누적 점수를 계속 쌓을 수 있기 때문이다. 소탕도 원정 한 판으로 세어 주간 횟수를 소비한다.
+ * 주간 순위 보상 — 한 주가 끝나면 그 주 최고 점수의 순위로 우편을 보낸다(`pendingRankReward`).
+ * `upTo`까지의 순위가 그 줄의 보상을 받고, 마지막 줄은 기록을 남긴 모두의 몫이다. 인양 기록과
+ * 보석을 함께 준다 — 순위가 상점 재화까지 끌고 가야 주마다 기록을 다시 쓸 이유가 된다.
  */
-export const EXPEDITION_SWEEP_POLICY = { allTimeBestScoreRatio: 0.8, lootRatio: 0.5 } as const;
+export const EXPEDITION_WEEKLY_RANK_REWARDS: readonly { upTo: number | null; rewards: Partial<Record<ExpeditionRewardCurrency, number>> }[] = [
+  { upTo: 1, rewards: { gems: 500, salvageRecord: 400 } },
+  { upTo: 3, rewards: { gems: 400, salvageRecord: 320 } },
+  { upTo: 10, rewards: { gems: 300, salvageRecord: 250 } },
+  { upTo: 50, rewards: { gems: 200, salvageRecord: 180 } },
+  { upTo: 100, rewards: { gems: 150, salvageRecord: 130 } },
+  { upTo: null, rewards: { gems: 80, salvageRecord: 80 } },
+];
+
+export function expeditionRankRewards(rank: number): Partial<Record<ExpeditionRewardCurrency, number>> {
+  const row = EXPEDITION_WEEKLY_RANK_REWARDS.find(({ upTo }) => upTo === null || rank <= upTo) ?? EXPEDITION_WEEKLY_RANK_REWARDS.at(-1)!;
+  return { ...row.rewards };
+}
+
+/**
+ * 소탕은 직접 싸우지 않고 **노드 클리어 보상의 75%**만 한꺼번에 받는다.
+ *
+ * 기준은 한 판을 끝까지 돌며 노드마다 쌓이는 몫(`EXPEDITION_NODE_REWARD_BALANCE`의 `runCap`)이고,
+ * **보물 전리품과 폰토스 피해의 인양 기록은 빠진다** — 그 둘은 지도를 직접 걸은 사람의 몫이다.
+ * 점수도 남기지 않는다(최고 기록은 싸운 판만의 것이다). 하루 한 번의 기회를 쓴다.
+ */
+export const EXPEDITION_SWEEP_POLICY = { nodeRewardRatio: 0.75 } as const;
 
 /** 보스 단계 이름을 언어별로 덮어쓸 수 있게 등록한다. */
 EXPEDITION_BOSS_BALANCE.phases.forEach((phase, index) => registerDataText(phase, "label", `expedition.phase.${index}`));

@@ -8,6 +8,8 @@ export const RUNE_ID = {
   "rune.nameTitle": "Nama Rune",
   "rune.nameSaved": "Nama telah disimpan.",
   "rune.sell": "Jual",
+  "rune.sell.title": "Jual Rune",
+  "rune.sell.message": "Jual Rune ini. Rune yang terjual tidak bisa dikembalikan.",
   "rune.craft": "Asah",
   "rune.craftTitle": "Asah Rune",
   "rune.unequip": "Lepas",

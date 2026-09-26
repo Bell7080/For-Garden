@@ -18,7 +18,7 @@ export const LOBBY_JA = {
   "lobby.sortie.raid.status": "協力作戦 · 準備中",
 
   "lobby.expedition.resume": "つづきから · {plays}回 · 最高 {best}",
-  "lobby.expedition.weekly": "週間 {plays}回 · 最高 {best} · {quick}",
+  "lobby.expedition.weekly": "本日 {plays}回 · 最高 {best} · {quick}",
   "lobby.expedition.quickReady": "クイック可",
   "lobby.expedition.quickLocked": "クイック不可",
 

@@ -1,15 +1,15 @@
 /** 원정 화면(주간 기록·지도·결과)의 문구. */
 export const EXPEDITION_KO = {
   "expedition.weekly.title": "주간 원정",
-  "expedition.weekly.summary": "이번 주 {plays}회  ·  주간 최고 점수 {best}",
-  "expedition.weekly.cumulative": "주간 누적 점수 {score}",
+  "expedition.weekly.summary": "오늘 {plays}/{max}회  ·  주간 최고 점수 {best}",
+  "expedition.weekly.best": "주간 최고 점수 {score}",
   "expedition.weekly.myBest": "내 주간 최고 점수",
   "expedition.weekly.rank": "주간 {rank}위",
+  "expedition.weekly.rankReward": "주간 보상 · 보석 {gems} · 인양 기록 {salvage}",
   "expedition.weekly.unranked": "미등재",
-  "expedition.weekly.cumulativeLine": "주간 누적 원정 점수 {score}",
   "expedition.weekly.rolled": "주차가 바뀌었습니다. 다시 들어와 주세요.",
   "expedition.weekly.loadFailed": "기록을 불러오지 못했습니다",
-  "expedition.weekly.plays": "이번 주 {plays} / {max}회",
+  "expedition.weekly.plays": "오늘 {plays} / {max}회",
 
   "expedition.sortie": "출  격",
   "expedition.sweep": "소  탕",
@@ -40,7 +40,7 @@ export const EXPEDITION_KO = {
   "expedition.augment.applyAll": "전체 적용",
 
   "expedition.sweep.title": "소탕",
-  "expedition.sweep.body": "역대 최고 점수의 80%를 주간 기록에, 노드 클리어 전리품의 50%를 즉시 지급합니다.\n이번 주 원정 기회 1회를 사용하며 되돌릴 수 없습니다.",
+  "expedition.sweep.body": "노드 클리어 보상의 75%를 즉시 받습니다. 보물 전리품·폰토스 인양 기록·점수는 남지 않습니다.\n오늘의 원정 기회 1회를 사용하며 되돌릴 수 없습니다.",
   "expedition.sweep.confirm": "소탕하기",
   "expedition.sweep.done": "소탕 완료",
   "expedition.sweep.noBaseline": "소탕할 기준 점수가 없습니다",
@@ -53,8 +53,8 @@ export const EXPEDITION_KO = {
   "expedition.party.start": "원정 시작",
   "expedition.party.ownedOnly": "보유 렐릭만 선택할 수 있습니다",
   "expedition.party.distinct": "서로 다른 렐릭 3기를 선택하세요",
-
-  "expedition.noPlaysLeft": "이번 주 원정 기회를 모두 사용했습니다",
+  "expedition.noPlaysLeft": "오늘의 원정 기회를 모두 사용했습니다",
+  "expedition.treasure.title": "전리품 획득",
   "expedition.runInProgress": "진행 중인 원정이 있습니다",
   "expedition.devOnly": "개발 빌드에서만 사용할 수 있습니다",
 

@@ -1,12 +1,102 @@
 {
-"expeditionReward.title": ["记录奖励", "รางวัลสถิติ", "Thưởng kỷ lục", "Hadiah Rekor", "Recompensas de récord", "Recompensas de recorde", "Rekordbelohnungen", "Награды за рекорд"],
-"expeditionReward.none": ["尚未开放任何奖励阶段", "ยังไม่มีขั้นรางวัลที่เปิด", "Chưa có mốc thưởng nào mở", "Belum ada tahap hadiah yang terbuka", "Aún no se ha abierto ningún nivel de recompensa", "Nenhum nível de recompensa foi aberto ainda", "Noch keine Belohnungsstufe freigeschaltet", "Ни один уровень наград ещё не открыт"],
-"expeditionReward.refresh": ["刷新", "รีเฟรช", "Làm mới", "Muat Ulang", "Actualizar", "Atualizar", "Aktualisieren", "Обновить"],
-"expeditionReward.summary": ["本周远征累计分数 {cumulative}  ·  本周最佳 {best}", "คะแนนออกสำรวจสะสมสัปดาห์นี้ {cumulative}  ·  สูงสุดสัปดาห์นี้ {best}", "Tổng điểm Viễn chinh tuần {cumulative}  ·  Cao nhất tuần {best}", "Total skor Ekspedisi mingguan {cumulative}  ·  Terbaik mingguan {best}", "Puntuación total de Expedición semanal {cumulative}  ·  Mejor semanal {best}", "Pontuação total da Expedição na semana {cumulative}  ·  Melhor da semana {best}", "Wöchentliche Expedition-Gesamtpunkte {cumulative}  ·  Wochenbestwert {best}", "Сумма очков экспедиции за неделю {cumulative}  ·  Лучший за неделю {best}"],
-"expeditionReward.claimed": ["已领取", "รับแล้ว", "Đã nhận", "Sudah diklaim", "Ya reclamado", "Já resgatado", "Bereits abgeholt", "Уже получено"],
-"expeditionReward.claimedAmount": ["已领取 {amount}", "รับแล้ว {amount}", "Đã nhận {amount}", "{amount} diklaim", "{amount} reclamado", "{amount} resgatado", "{amount} abgeholt", "Получено: {amount}"],
-"expeditionReward.loadFailed": ["无法读取记录奖励。", "โหลดรางวัลสถิติไม่ได้", "Không thể tải thưởng kỷ lục.", "Tidak dapat memuat hadiah rekor.", "No se pudieron cargar las recompensas de récord.", "Não foi possível carregar as recompensas de recorde.", "Die Rekordbelohnungen konnten nicht geladen werden.", "Не удалось загрузить награды за рекорд."],
-"expeditionReward.notEnough": ["分数不足。请确认最新进度。", "คะแนนไม่พอ ตรวจสอบความคืบหน้าล่าสุด", "Không đủ điểm. Hãy kiểm tra tiến trình mới nhất.", "Skor tidak cukup. Periksa progres terbaru.", "Puntuación insuficiente. Revisa tu progreso más reciente.", "Pontuação insuficiente. Confira seu progresso mais recente.", "Nicht genug Punkte. Prüfe deinen aktuellen Fortschritt.", "Недостаточно очков. Проверьте последний прогресс."],
-"expeditionReward.stageClosed": ["周期已更替，或该奖励阶段已关闭。", "สัปดาห์เปลี่ยนแล้ว หรือขั้นรางวัลนี้ปิดแล้ว", "Tuần đã đổi hoặc mốc thưởng này đã đóng.", "Minggu telah berganti atau tahap hadiah ini sudah ditutup.", "La semana cambió o este nivel de recompensa ya cerró.", "A semana mudou ou este nível de recompensa foi encerrado.", "Die Woche hat gewechselt oder diese Belohnungsstufe ist geschlossen.", "Неделя сменилась, или этот уровень наград закрыт."],
-"expeditionReward.weekRolled": ["周期已更替。请重新确认记录。", "สัปดาห์เปลี่ยนแล้ว ตรวจสอบสถิติอีกครั้ง", "Tuần đã đổi. Hãy xem lại kỷ lục.", "Minggu telah berganti. Periksa rekor lagi.", "La semana cambió. Vuelve a revisar el récord.", "A semana mudou. Confira o recorde novamente.", "Die Woche hat gewechselt. Prüfe den Rekord erneut.", "Неделя сменилась. Проверьте рекорд ещё раз."]
+"expeditionReward.title": [
+"记录奖励",
+"รางวัลสถิติ",
+"Thưởng kỷ lục",
+"Hadiah Rekor",
+"Recompensas de récord",
+"Recompensas de recorde",
+"Rekordbelohnungen",
+"Награды за рекорд"
+],
+"expeditionReward.none": [
+"尚未开放任何奖励阶段",
+"ยังไม่มีขั้นรางวัลที่เปิด",
+"Chưa có mốc thưởng nào mở",
+"Belum ada tahap hadiah yang terbuka",
+"Aún no se ha abierto ningún nivel de recompensa",
+"Nenhum nível de recompensa foi aberto ainda",
+"Noch keine Belohnungsstufe freigeschaltet",
+"Ни один уровень наград ещё не открыт"
+],
+"expeditionReward.refresh": [
+"刷新",
+"รีเฟรช",
+"Làm mới",
+"Muat Ulang",
+"Actualizar",
+"Atualizar",
+"Aktualisieren",
+"Обновить"
+],
+"expeditionReward.summary": [
+"本周最高分 {best}",
+"คะแนนสูงสุดประจำสัปดาห์ {best}",
+"Cao nhất tuần {best}",
+"Terbaik mingguan {best}",
+"Mejor semanal {best}",
+"Melhor semanal {best}",
+"Wochenbestwert {best}",
+"Лучшее за неделю {best}"
+],
+"expeditionReward.claimed": [
+"已领取",
+"รับแล้ว",
+"Đã nhận",
+"Sudah diklaim",
+"Ya reclamado",
+"Já resgatado",
+"Bereits abgeholt",
+"Уже получено"
+],
+"expeditionReward.claimedAmount": [
+"已领取 {amount}",
+"รับแล้ว {amount}",
+"Đã nhận {amount}",
+"{amount} diklaim",
+"{amount} reclamado",
+"{amount} resgatado",
+"{amount} abgeholt",
+"Получено: {amount}"
+],
+"expeditionReward.loadFailed": [
+"无法读取记录奖励。",
+"โหลดรางวัลสถิติไม่ได้",
+"Không thể tải thưởng kỷ lục.",
+"Tidak dapat memuat hadiah rekor.",
+"No se pudieron cargar las recompensas de récord.",
+"Não foi possível carregar as recompensas de recorde.",
+"Die Rekordbelohnungen konnten nicht geladen werden.",
+"Не удалось загрузить награды за рекорд."
+],
+"expeditionReward.notEnough": [
+"分数不足。请确认最新进度。",
+"คะแนนไม่พอ ตรวจสอบความคืบหน้าล่าสุด",
+"Không đủ điểm. Hãy kiểm tra tiến trình mới nhất.",
+"Skor tidak cukup. Periksa progres terbaru.",
+"Puntuación insuficiente. Revisa tu progreso más reciente.",
+"Pontuação insuficiente. Confira seu progresso mais recente.",
+"Nicht genug Punkte. Prüfe deinen aktuellen Fortschritt.",
+"Недостаточно очков. Проверьте последний прогресс."
+],
+"expeditionReward.stageClosed": [
+"周期已更替，或该奖励阶段已关闭。",
+"สัปดาห์เปลี่ยนแล้ว หรือขั้นรางวัลนี้ปิดแล้ว",
+"Tuần đã đổi hoặc mốc thưởng này đã đóng.",
+"Minggu telah berganti atau tahap hadiah ini sudah ditutup.",
+"La semana cambió o este nivel de recompensa ya cerró.",
+"A semana mudou ou este nível de recompensa foi encerrado.",
+"Die Woche hat gewechselt oder diese Belohnungsstufe ist geschlossen.",
+"Неделя сменилась, или этот уровень наград закрыт."
+],
+"expeditionReward.weekRolled": [
+"周期已更替。请重新确认记录。",
+"สัปดาห์เปลี่ยนแล้ว ตรวจสอบสถิติอีกครั้ง",
+"Tuần đã đổi. Hãy xem lại kỷ lục.",
+"Minggu telah berganti. Periksa rekor lagi.",
+"La semana cambió. Vuelve a revisar el récord.",
+"A semana mudou. Confira o recorde novamente.",
+"Die Woche hat gewechselt. Prüfe den Rekord erneut.",
+"Неделя сменилась. Проверьте рекорд ещё раз."
+]
 }

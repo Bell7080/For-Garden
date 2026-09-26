@@ -1051,7 +1051,7 @@ export default {
   "relic.dian.observation.height": "1,34 m",
   "relic.dian.observation.weight": "29 kg",
   "relic.dian.passive.name": "Canh gác của thủ lĩnh",
-  "relic.dian.passive.desc": "Khi bắt đầu trận, triệu hồi Kuro và Shiro. Khi cả hai còn sống, nó vào Tàng hình. Chỉ cần một con gục, Tàng hình vỡ.",
+  "relic.dian.passive.desc": "Khi bắt đầu trận, triệu hồi Kuro và Shiro. Khi cả hai còn sống, vào Tàng hình. Chỉ cần một con gục, Tàng hình tan.",
   "relic.dian.ferocity.name": "Bầy sói",
   "relic.dian.basic.name": "Xông lên!",
   "relic.dian.ultimate.name": "Đánh vào điểm yếu!",

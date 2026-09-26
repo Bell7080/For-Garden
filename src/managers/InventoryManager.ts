@@ -1,3 +1,4 @@
+import { isValidLotStack } from "../core/itemLots";
 import type { Wallet } from "../core/gacha";
 import type { ClaimAdRewardRequest, ClaimAdRewardResponse, EngraveRuneResponse, EnhanceRuneResponse, GameApi, InventoryItemDto, RechargeStaminaResponse, RenameRuneResponse, SellRunesResponse, UseConsumableResponse } from "../api/contracts";
 import type { RuneInstance, RuneStatKey } from "../core/runes";
@@ -102,7 +103,8 @@ export class InventoryManager {
         const walletKey = definition.id as WalletItemKey;
         walletKeys.add(walletKey); wallet[walletKey] = item.quantity;
       } else {
-        stacks.push({ itemId: definition.id, quantity: item.quantity });
+        if (item.lots && !isValidLotStack({ itemId: definition.id, quantity: item.quantity, lots: item.lots })) throw new Error("INVALID_INVENTORY_RESPONSE");
+        stacks.push({ itemId: definition.id, quantity: item.quantity, ...(item.lots ? { lots: item.lots.map((lot) => ({ ...lot })) } : {}) });
       }
     }
     const requiredWalletKeys = ITEMS.filter(({ category }) => category === "currency").map(({ id }) => id as WalletItemKey);

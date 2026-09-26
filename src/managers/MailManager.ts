@@ -20,7 +20,7 @@ export class MailManager {
     const result = await this.api.claimMailRewards({ requestId, mailIds: [...new Set(mailIds)] }); this.assertList(result);
     // 서버 확정 스냅샷만 반영하며 UI가 보상 합계를 직접 더하지 않는다.
     this.state.wallet = { ...result.wallet };
-    this.state.itemInventory = result.items.filter(({ category }) => category === "consumable" || category === "material").map(({ definitionId, quantity }) => ({ itemId: definitionId, quantity }));
+    this.state.itemInventory = result.items.filter(({ category }) => category === "consumable" || category === "material").map(({ definitionId, quantity, lots }) => ({ itemId: definitionId, quantity, ...(lots ? { lots: lots.map((lot) => ({ ...lot })) } : {}) }));
     // 한 확정 영수증에서 지갑·가방·우편·알림을 동기 발행해 후속 API 조회로 시점이 갈리지 않게 한다.
     this.events.publish("wallet", { wallet: this.state.wallet }); this.events.publishInventory(); this.publishMail(result);
     return structuredClone(result);

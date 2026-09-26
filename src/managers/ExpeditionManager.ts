@@ -3,7 +3,8 @@ import { applyExpeditionAfterBattleHeal, applyExpeditionRest, expeditionAfterBat
 import { calculateExpeditionRunScore, expeditionRewardRandom, expeditionRewardRule, generateExpeditionAugmentOffers, validateExpeditionAugmentChoice, type ExpeditionAugmentSelection } from "../core/expeditionRewards";
 import type { ExpeditionNodeType } from "../core/expeditionMap";
 import type { SkirmishRelicResult } from "../core/skirmish";
-import { EXPEDITION_AUGMENT_IDS, EXPEDITION_REST_RULES, EXPEDITION_WEEKLY_POLICY } from "../data/expedition";
+import { EXPEDITION_AUGMENT_IDS, EXPEDITION_DAILY_POLICY, EXPEDITION_REST_RULES } from "../data/expedition";
+import { expeditionDayKey, normalizeExpeditionState, rollExpeditionPeriods } from "../core/expeditionPeriods";
 import { saveManager, type SaveManager } from "../state/SaveManager";
 import { captureExpeditionRelicSnapshot, isExpeditionRelicSnapshot, type ExpeditionRelicSnapshot } from "../core/expeditionSnapshot";
 import { getRelic } from "../data/relics";
@@ -15,18 +16,20 @@ import { t } from "../i18n";
 /** UI가 소비하는 원정 요약이며 변경 가능한 Session 참조는 노출하지 않는다. */
 export interface ExpeditionStatus {
   weekKey: string;
-  playsThisWeek: number;
+  /** 오늘 떠난 판 수. 원정은 하루 한 번이다(`EXPEDITION_DAILY_POLICY`). 소탕도 같은 한 번을 쓴다. */
+  playsToday: number;
+  /** 이번 주 한 판 최고 점수. */
   bestScore: number;
   /** 주간과 무관한 역대 최고 점수다. 소탕 가능 여부와 예상 지급량을 화면이 미리 보여줄 때 쓴다. */
   allTimeBestScore: number;
   active: { relicIds: [string, string, string]; score: number } | null;
   run: ExpeditionRunState | null;
   quickAvailable: boolean;
-  /** 이번 주에 원정을 더 시작할 수 있는지다. 소탕도 같은 횟수를 소비한다. */
+  /** 오늘 원정을 더 시작할 수 있는지다. 소탕도 같은 횟수를 소비한다. */
   canStartRun: boolean;
 }
 
-export type StartExpeditionFailure = "exactlyThree" | "duplicate" | "notOwned" | "alreadyActive" | "weeklyLimitReached";
+export type StartExpeditionFailure = "exactlyThree" | "duplicate" | "notOwned" | "alreadyActive" | "dailyLimitReached";
 export type StartExpeditionResult = { ok: true; run: ExpeditionRunState } | { ok: false; reason: StartExpeditionFailure };
 export type DevelopmentBossShortcutFailure = StartExpeditionFailure | "developmentOnly";
 export type DevelopmentBossShortcutResult = { ok: true; run: ExpeditionRunState } | { ok: false; reason: DevelopmentBossShortcutFailure };
@@ -64,19 +67,21 @@ export class ExpeditionManager {
     this.backfillSnapshots();
     const run = this.state.expedition.run;
     const copy = run ? structuredClone(run) : null;
-    return { ...this.state.expedition, run: copy, active: copy ? { relicIds: copy.relics.map(({ relicId }) => relicId) as [string, string, string], score: copy.runScore } : null, quickAvailable: this.state.expedition.bestScore > 0 && run === null, canStartRun: this.state.expedition.playsThisWeek < EXPEDITION_WEEKLY_POLICY.maxPlaysPerWeek };
+    const { weekKey, playsToday, bestScore, allTimeBestScore } = this.state.expedition;
+    return { weekKey, playsToday, bestScore, allTimeBestScore, run: copy, active: copy ? { relicIds: copy.relics.map(({ relicId }) => relicId) as [string, string, string], score: copy.runScore } : null, quickAvailable: this.state.expedition.bestScore > 0 && run === null, canStartRun: playsToday < EXPEDITION_DAILY_POLICY.maxPlaysPerDay };
   }
 
   /** 정확히 세 보유 렐릭을 검증하고 서버 주간 키가 포함된 결정적 맵을 생성한다. */
   start(relicIds: readonly string[]): StartExpeditionResult {
     this.normalizeWeek();
     if (this.state.expedition.run) return { ok: false, reason: "alreadyActive" };
-    if (this.state.expedition.playsThisWeek >= EXPEDITION_WEEKLY_POLICY.maxPlaysPerWeek) return { ok: false, reason: "weeklyLimitReached" };
+    if (this.state.expedition.playsToday >= EXPEDITION_DAILY_POLICY.maxPlaysPerDay) return { ok: false, reason: "dailyLimitReached" };
     if (relicIds.length !== 3) return { ok: false, reason: "exactlyThree" };
     if (new Set(relicIds).size !== 3) return { ok: false, reason: "duplicate" };
     if (relicIds.some((id) => !this.state.owned.has(id))) return { ok: false, reason: "notOwned" };
     const weekKey = expeditionWeekKey(this.serverNow());
-    const mapSeed = `${weekKey}:${this.state.expedition.playsThisWeek + 1}`;
+    // 하루 한 판이라 지도는 그날의 날짜로 굳는다 — 같은 날 다시 떠날 일이 없다.
+    const mapSeed = `${expeditionDayKey(this.serverNow())}:1`;
     const map = generateExpeditionMap({ seed: mapSeed, random: seededRandom(mapSeed) });
     const run: ExpeditionRunState = { runId: `run:${mapSeed}`, weekKey, mapSeed, nodes: map.nodes, currentNodeId: null, visitedNodeIds: [], relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true, snapshot: this.capture(relicId) })) as ExpeditionRunState["relics"], selectedAugmentIds: [], selectedAugments: [], pendingAugmentReward: null, pendingRewards: {}, lastNodeRewards: null, bossDamage: 0, normalNodeScoreTotal: 0, bossDamageScore: 0, runScore: 0, bestScore: 0, settled: false, settlementId: null, bossSubmissionId: null, bossSettlementId: null };
     // 출발 검증의 단일 경계에서 런과 마지막 원정 편성을 같은 저장으로 확정한다.
@@ -97,7 +102,7 @@ export class ExpeditionManager {
     if (relicIds.some((id) => !this.state.owned.has(id))) return { ok: false, reason: "notOwned" };
 
     const weekKey = expeditionWeekKey(this.serverNow());
-    const mapSeed = `${weekKey}:${this.state.expedition.playsThisWeek + 1}:dev-boss`;
+    const mapSeed = `${expeditionDayKey(this.serverNow())}:${this.state.expedition.playsToday + 1}:dev-boss`;
     const map = generateExpeditionMap({ seed: mapSeed, random: seededRandom(mapSeed) });
     const boss = map.nodes.find(({ type, floor }) => type === "boss" && floor === 20)!;
     // 보스에서 역으로 한 갈래만 골라 방문 순서를 만들면 지도 전체의 연결은 보존하면서 19층 도달 상태가 된다.
@@ -281,7 +286,15 @@ export class ExpeditionManager {
   }
 
   private commit(expedition: Session["expedition"]): void { this.state.expedition = expedition; this.saves.save(this.state); }
-  private normalizeWeek(): void { const weekKey = expeditionWeekKey(this.serverNow()); if (this.state.expedition.weekKey !== weekKey) this.commit({ ...this.state.expedition, weekKey, playsThisWeek: 0, bestScore: 0 }); }
+  /**
+   * 하루·주 주기를 넘긴다. 서버와 **같은 함수**(`rollExpeditionPeriods`)라, 어느 쪽이 먼저 주를 넘기든
+   * 지난주 최고 기록은 순위 보상 대기로 옮겨 간다 — 여기서 0으로 지우기만 하면 그 주의 보상이 사라진다.
+   */
+  private normalizeWeek(): void {
+    const current = normalizeExpeditionState(this.state.expedition);
+    const next = rollExpeditionPeriods(current, this.serverNow());
+    if (next !== current || !("dayKey" in this.state.expedition)) this.commit(next);
+  }
 }
 
 export const expeditionManager = new ExpeditionManager();

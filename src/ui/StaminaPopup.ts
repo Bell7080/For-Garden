@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
+import { remainingDetail, soonestItemExpiry } from "./itemExpiry";
 import type { AdPresentationResult, GameApi } from "../api/contracts";
 import { completedAdToken } from "../data/adRewards";
 import { currencyGuide } from "../data/currencyGuide";
@@ -159,7 +160,7 @@ export class StaminaPopup {
     if (view.detail) cell.add(this.scene.add.text(0, CELL.detailY, view.detail, textStyle({ role: "body", size: CELL.detailSize, color: COLOR.inkDim })).setOrigin(0.5));
     const button = new Button(this.scene, 0, CELL.buttonY, {
       width: width - CELL.padX * 2, height: CELL.buttonHeight, label: view.label, fontSize: 24, variant: "primary",
-      cost: view.cost, onClick: () => { void this.run(source); },
+      cost: view.cost, onClick: () => this.request(source),
     }).setEnabled(view.enabled && !full && !this.pending);
     cell.add(button);
     if (source.kind === "consumable") this.paintSwap(cell, source);
@@ -181,7 +182,8 @@ export class StaminaPopup {
         texture: `item-${itemId}`,
         name: item?.definition.name ?? "",
         gain: item?.amount ?? 0,
-        detail: "",
+        // 기한이 있는 병은 가장 먼저 사라질 묶음을 한 마디로 말한다 — 먼저 쓸 이유가 된다.
+        detail: ((expiry) => expiry ? t("inventory.guide.expiry", { count: expiry.count, time: remainingDetail(expiry.expiresAt) }) : "")(soonestItemExpiry(itemId)),
         owned,
         label: t("stamina.spend"),
         enabled: item !== undefined && owned > 0,
@@ -238,6 +240,23 @@ export class StaminaPopup {
         onClick: () => step(delta),
       }));
     }
+  }
+
+  /**
+   * 젬으로 채우는 칸만 한 번 묻는다 — 되돌릴 수 없는 재화라 공용 확인 창(`PopupLayer.confirm`)이
+   * 치를 젬을 액자로, 남는 젬을 보유 줄로 세운다. 병·광고는 그 자리에서 곧바로 쓴다.
+   */
+  private request(source: StaminaRechargeSource): void {
+    if (this.pending) return;
+    if (source.kind !== "currency") { void this.run(source); return; }
+    const held = session.wallet[source.currency];
+    this.popups.confirm({
+      title: t("stamina.gemTitle"),
+      message: t("stamina.gemMessage", { amount: source.amount }),
+      costs: [{ iconKey: CURRENCY_ICON_BY_WALLET[source.currency], amount: source.cost }],
+      balance: { iconKey: CURRENCY_ICON_BY_WALLET[source.currency], before: held, after: held - source.cost },
+      confirmLabel: t("stamina.recharge"),
+    }, () => { void this.run(source); });
   }
 
   /** 어느 칸을 눌러도 차감과 회복 확정은 서버가 한 처리 단위로 맡고, 화면은 그 결과만 다시 읽는다. */

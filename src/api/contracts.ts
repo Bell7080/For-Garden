@@ -18,6 +18,9 @@ import type { AdReward } from "../data/adRewards";
 import type { ItemCategory, ItemUseEffect, WalletItemKey } from "../data/items";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import type { PlayerResearchProgress } from "../state/session";
+import type { PlayerExpReceipt } from "../core/playerLevel";
+import type { ItemLot } from "../core/itemLots";
+import type { ExpeditionRewardCurrency } from "../data/expedition";
 import type { AsyncArenaProfileApi } from "./asyncArenaContracts";
 import type { InteractionCity } from "../data/interactionCities";
 import type { InteractionDispatchSnapshot } from "../state/session";
@@ -38,14 +41,16 @@ export interface ClaimInteractionDispatchRequest { dispatchId: string; requestId
 export interface ClaimInteractionDispatchResponse extends InteractionDispatchResponse { granted: { currency: keyof Wallet; amount: number }[]; alreadyClaimed: boolean; wallet: Wallet; }
 
 /** 정적 표시 메타데이터를 중복 전송하지 않고 서버 보유량과 인스턴스만 전달하는 인벤토리 조회 행이다. */
-export interface InventoryItemDto { id: string; definitionId: string; category: ItemCategory; quantity: number; rune?: RuneInstance; }
+/** 기한이 있는 아이템(에너지 드링크)은 받은 묶음마다 사라지는 시각을 `lots`로 싣는다. */
+export interface InventoryItemDto { id: string; definitionId: string; category: ItemCategory; quantity: number; rune?: RuneInstance; lots?: ItemLot[]; }
 /** 지갑은 조회 순간 표시 행으로만 합성된다. */
 export interface InventoryResponse { items: InventoryItemDto[]; }
 
 /** 우편 첨부물은 지갑 재화 또는 중첩 아이템만 허용해 임의 서버 명령이 클라이언트에 들어오지 않게 한다. */
 export type MailRewardDto =
   | { kind: "currency"; currency: keyof Wallet; amount: number }
-  | { kind: "item"; itemId: string; amount: number };
+  /** `expiresInDays`는 기한이 있는 아이템을 받은 날로부터 며칠 두는가(1~7). 없으면 아이템의 기본 날수다. */
+  | { kind: "item"; itemId: string; amount: number; expiresInDays?: number };
 /** 목록 한 행이 표시와 행동 가능 여부를 모두 판단할 수 있는 서버 확정 우편 스냅샷이다. */
 export interface MailDto { id: string; title: string; sender: string; body: string; sentAt: string; expiresAt: string | null; read: boolean; claimed: boolean; rewards: MailRewardDto[]; }
 /** 클라이언트 시계 대신 같은 응답의 서버 시각으로 만료를 판단한다. */
@@ -242,6 +247,7 @@ export interface CakeOperationEnterResponse extends PlayerStateDto {
   tierId: string;
   requestId: string;
   staminaSpent: number;
+  playerExp: PlayerExpReceipt;
   refundPolicy: "no-refund-after-admission";
 }
 
@@ -275,6 +281,8 @@ export interface DungeonSweepResponse extends PlayerStateDto {
   staminaSpent: number;
   ticketsSpent: number;
   granted: Partial<Record<keyof Wallet, number>>;
+  /** 쓴 스테미나가 올린 연구원 경험치. 레벨이 올랐으면 받은 병까지 함께 싣는다. */
+  playerExp: PlayerExpReceipt;
 }
 
 /** 공개 프로필 API가 확정한 업적 획득 목록과 사용자의 장착 선택이며 모두 ID로만 직렬화한다. */
@@ -509,7 +517,7 @@ export interface UpgradeRuneTraitRequest { runeInstanceId: string; itemId: strin
 export interface UpgradeRuneTraitResponse { rune: RuneInstance; items: InventoryItemDto[]; }
 
 /** UI가 서버 실패 원인을 문구로 바꿀 수 있게 고정한 오류 코드다. */
-export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPEDITION_RUN_NOT_FOUND" | "EXPEDITION_ALREADY_SETTLED" | "EXPEDITION_ALREADY_ACTIVE" | "EXPEDITION_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REQUIRED" | "AD_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REJECTED" | "RAID_DAILY_LIMIT" | "RAID_SCORE_REJECTED" | "RAID_REWARD_NOT_EARNED" | "RAID_NOT_FOUND" | "RAID_ENDED" | "RAID_NOT_ENDED" | "RAID_SUMMON_INVALID" | "RAID_TICKET_SHORTAGE" | "EXPEDITION_REWARD_NOT_FOUND" | "EXPEDITION_REWARD_NOT_EARNED" | "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INVALID_PURCHASE_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "BANNER_NOT_FOUND" | "BANNER_LIMIT_REACHED" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "INVALID_RUNE_SALE" | "RUNE_EQUIPPED" | "RUNE_LOCKED" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "BOUNTY_TIER_NOT_FOUND" | "BOUNTY_TIER_LOCKED" | "BOUNTY_ADMISSION_NOT_FOUND" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_STOREFRONT_MISMATCH" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "ACQUISITION_FLOW_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE"
+export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPEDITION_RUN_NOT_FOUND" | "EXPEDITION_ALREADY_SETTLED" | "EXPEDITION_ALREADY_ACTIVE" | "EXPEDITION_DAILY_LIMIT" | "EXPEDITION_SCORE_REQUIRED" | "AD_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REJECTED" | "RAID_DAILY_LIMIT" | "RAID_NOT_ENTERED" | "RAID_SCORE_REJECTED" | "RAID_REWARD_NOT_EARNED" | "RAID_NOT_FOUND" | "RAID_ENDED" | "RAID_NOT_ENDED" | "RAID_SUMMON_INVALID" | "RAID_TICKET_SHORTAGE" | "EXPEDITION_REWARD_NOT_FOUND" | "EXPEDITION_REWARD_NOT_EARNED" | "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INVALID_PURCHASE_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "BANNER_NOT_FOUND" | "BANNER_LIMIT_REACHED" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "INVALID_RUNE_SALE" | "RUNE_EQUIPPED" | "RUNE_LOCKED" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "BOUNTY_TIER_NOT_FOUND" | "BOUNTY_TIER_LOCKED" | "BOUNTY_ADMISSION_NOT_FOUND" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_STOREFRONT_MISMATCH" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "ACQUISITION_FLOW_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE"
   | "STRATA_NO_CHARGE" | "STRATA_RUN_ACTIVE" | "STRATA_RUN_NOT_FOUND" | "STRATA_SITE_LOCKED" | "STRATA_SITE_COOLING" | "STRATA_TILE_UNAVAILABLE"
   | "RUNE_TRAIT_NOT_FOUND" | "RUNE_TRAIT_ITEM_INVALID" | "RUNE_TRAIT_MAX_GRADE" | "RUNE_TRAIT_GRADE_REACHED" | "RUNE_TRAIT_REROLL_PENDING"
   | "CAKE_TIER_NOT_FOUND" | "CAKE_TIER_LOCKED" | "DUNGEON_NOT_CLEARED" | "SWEEP_TICKET_SHORTAGE";
@@ -527,7 +535,7 @@ export interface BreakThroughResponse extends PlayerStateDto { relicId: string; 
 export interface CompleteStageResponse extends PlayerStateDto { stageId: string; firstClear: boolean; cheesecakeEarned: number; }
 /** 입장 영수증은 재시도에 그대로 반환되며 확정 뒤 클라이언트 로딩 실패는 자동 환불하지 않는다. */
 export interface EnterStageRequest { stageId: string; requestId: string; }
-export interface EnterStageResponse extends PlayerStateDto { stageId: string; requestId: string; staminaSpent: number; refundPolicy: "no-refund-after-admission"; }
+export interface EnterStageResponse extends PlayerStateDto { stageId: string; requestId: string; staminaSpent: number; playerExp: PlayerExpReceipt; refundPolicy: "no-refund-after-admission"; }
 /**
  * 현상수배 입장 영수증.
  *
@@ -535,7 +543,7 @@ export interface EnterStageResponse extends PlayerStateDto { stageId: string; re
  * 나가더라도 환불하지 않는 것은 스테이지 입장과 같은 계약이다.
  */
 export interface EnterBountyRequest { tierId: string; requestId: string; }
-export interface EnterBountyResponse extends PlayerStateDto { tierId: string; requestId: string; staminaSpent: number; refundPolicy: "no-refund-after-admission"; }
+export interface EnterBountyResponse extends PlayerStateDto { tierId: string; requestId: string; staminaSpent: number; playerExp: PlayerExpReceipt; refundPolicy: "no-refund-after-admission"; }
 /** 세 라운드의 결과를 한 번에 확정한다. 진 판도 보내 기록이 이긴 판만의 것이 되지 않게 한다. */
 export interface CompleteBountyRequest { tierId: string; requestId: string; victory: boolean; clearedRounds: number; }
 /** 골드 지급과 등급 해금을 한 처리로 확정하고 화면이 다시 계산하지 않게 결과만 돌려준다. */
@@ -562,17 +570,21 @@ export interface SubmitExpeditionBossScoreResponse {
   /** 이번 폰토스 전투에서 확정된 피해 점수만 담는다. */ bossDamageScore: number;
   /** 이번 런에서 폰토스 전까지 확정된 일반 노드 점수 합이다. */ normalNodeScoreTotal: number;
   /** 이번 한 판의 최종 점수로 normalNodeScoreTotal + bossDamageScore다. */ runScore: number;
-  /** 이번 주 한 판 최고 점수다. */ bestScore: number;
-  /** 주간 보상 트랙에 반영된 모든 확정 점수의 합이다. */ cumulativeScore: number;
+  /** 이번 주 한 판 최고 점수다. 판의 점수를 합치지 않는다. */ bestScore: number;
+  /** 폰토스에게 넣은 피해로 이번 판 전리품에 더해진 인양 기록(`expeditionBossSalvage`)이다. */ bossSalvage: number;
   improved: boolean; endedAtMs: number; rankBefore: number | null; rankAfter: number;
 }
 /** 주간 최고 점수와 월요일 00:00 UTC 초기화 경계를 함께 전달한다. */
 /** 운영 보상 수치와 수령 상태는 서버 스냅샷만 화면의 기준으로 삼는다. */
-export interface ExpeditionRewardStageDto { id: string; threshold: number; reward: { currency: "gold" | "fossil" | "gems"; amount: number }; claimed: boolean; }
-export interface ExpeditionWeeklyBestResponse { weekKey: string; bestScore: number; cumulativeScore: number; resetsAt: string; rewardStages: ExpeditionRewardStageDto[]; }
+export interface ExpeditionRewardStageDto { id: string; threshold: number; reward: { currency: ExpeditionRewardCurrency; amount: number }; claimed: boolean; }
+/**
+ * 이번 주 한 판 최고 점수와 그 점수가 여는 보상 길. 누적 점수는 없다 — 판의 점수를 합치지 않는다.
+ * `rank`·`rankRewards`는 지금 순위와 주가 끝나면 받을 순위 보상이다(기록이 없으면 비어 있다).
+ */
+export interface ExpeditionWeeklyBestResponse { weekKey: string; bestScore: number; resetsAt: string; rewardStages: ExpeditionRewardStageDto[]; rank: number | null; rankRewards: Partial<Record<ExpeditionRewardCurrency, number>>; }
 /** 누적 단계는 정적 표 ID로 요청하고 실제 서버가 달성 및 기존 수령을 다시 검사한다. */
 export interface ClaimExpeditionRewardRequest { requestId: string; stageId: string; }
-export interface ClaimExpeditionRewardResponse { weekKey: string; stageId: string; claimedStageIds: string[]; reward: { currency: "gold" | "fossil" | "gems"; amount: number }; alreadyClaimed: boolean; wallet: PlayerStateDto["wallet"]; }
+export interface ClaimExpeditionRewardResponse { weekKey: string; stageId: string; claimedStageIds: string[]; reward: { currency: ExpeditionRewardCurrency; amount: number }; alreadyClaimed: boolean; wallet: PlayerStateDto["wallet"]; }
 /** 동점은 최고 점수 달성 시각이 빠른 이용자를 우선하며 그 뒤 안정적인 playerId 순으로 정렬한다. */
 /**
  * 순위 한 줄.
@@ -642,7 +654,18 @@ export interface RaidListResponse { raids: RaidDto[]; tickets: { normal: number;
  */
 export interface SummonRaidRequest { requestId: string; bossRelicId?: string; difficulty?: RaidDifficulty; }
 export interface SummonRaidResponse extends PlayerStateDto { raid: RaidDto; tickets: RaidListResponse["tickets"]; }
-/** 원정 보스와 **같은 재현 규칙**을 쓴다 — 클라이언트 피해 숫자는 받지 않는다. */
+/**
+ * 레이드 한 판의 **입장**. 스테미나와 도전 한 번을 여기서 함께 쓴다(`raidRunStamina`).
+ *
+ * 도전을 제출에서 세던 때는 입장에 값이 없어, 판을 열어 보고 마음에 들지 않으면 나가는 길이
+ * 공짜였다. 다른 콘텐츠처럼 입장이 비용을 확정하고, 제출은 그 입장 영수증(`requestId`)으로만 받는다.
+ */
+export interface EnterRaidRequest { requestId: string; raidId: string; }
+export interface EnterRaidResponse extends PlayerStateDto { raid: RaidDto; requestId: string; staminaSpent: number; playerExp: PlayerExpReceipt; refundPolicy: "no-refund-after-admission"; }
+/**
+ * 원정 보스와 **같은 재현 규칙**을 쓴다 — 클라이언트 피해 숫자는 받지 않는다.
+ * `requestId`는 그 판의 **입장 영수증**이다 — 입장하지 않은 판의 피해는 받지 않는다.
+ */
 export interface SubmitRaidDamageRequest { requestId: string; raidId: string; actions: ExpeditionBossAction[]; }
 /** 한 판이 확정된 뒤의 그 레이드 상태와, 그 판의 피해에 비례해 곧바로 지급된 것이다. */
 export interface SubmitRaidDamageResponse extends PlayerStateDto { raid: RaidDto; runDamage: number; endedAtMs: number; granted: RaidRewardDto[]; }
@@ -651,7 +674,8 @@ export interface SettleRaidRequest { requestId: string; raidId: string; }
 export interface SettleRaidResponse extends PlayerStateDto { raid: RaidDto; granted: RaidRewardDto[]; alreadySettled: boolean; }
 /** 직접 플레이하지 않고 역대 최고 점수 일부와 절반의 노드 클리어 전리품만 즉시 정산하는 소탕 요청이다. */
 export interface SweepExpeditionRequest { requestId: string; }
-export interface SweepExpeditionResponse extends PlayerStateDto { weekKey: string; scoreGain: number; bestScore: number; cumulativeScore: number; granted: Record<string, number>; playsThisWeek: number; }
+/** 소탕은 점수를 남기지 않고 노드 클리어 보상의 몫만 준다(`EXPEDITION_SWEEP_POLICY`). */
+export interface SweepExpeditionResponse extends PlayerStateDto { weekKey: string; granted: Record<string, number>; playsToday: number; }
 
 /** 실제 HTTP API로 교체할 때도 씬이 의존할 단 하나의 통신 인터페이스다. */
 export interface GameApi extends AsyncArenaProfileApi {
@@ -677,6 +701,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   getRaids(limit?: number): Promise<RaidListResponse>;
   /** 토벌권 한 장을 써서 친구와 함께 칠 판을 연다. 선택 토벌권이면 보스를 고른다. */
   summonRaid(request: SummonRaidRequest): Promise<SummonRaidResponse>;
+  /** 스테미나와 도전 한 번을 함께 쓰고 그 판에 들어간다. */
+  enterRaid(request: EnterRaidRequest): Promise<EnterRaidResponse>;
   /** 동작열을 서버 편성으로 재현하고 그 판의 피해만 그 레이드의 체력에서 깎는다. */
   submitRaidDamage(request: SubmitRaidDamageRequest): Promise<SubmitRaidDamageResponse>;
   /** 끝난 판의 정산을 서버 멱등 기록으로 수령한다. 참여한 판만, 한 번만. */

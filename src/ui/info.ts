@@ -1,3 +1,4 @@
+import { Button } from "./Button";
 import Phaser from "phaser";
 import type { PuppetAsset, PuppetCreature } from "../puppets/assets";
 import { powerSavingPolicy } from "../core/settings";
@@ -1023,22 +1024,15 @@ export class InfoManager {
 
       const ready = canBreakThrough(def.rarity, progress, held, session.wallet.cheesecake);
       const actionY = top + BREAK_CONFIRM.actionY;
-      body.add(drawLayer(this.scene, 0, actionY, slantedRect(420, 88, 16), {
-        fill: ready ? 0x2d2440 : 0x161a20,
-        alpha: ready ? 0.98 : 0.7,
-        edge: BREAK_EDGE,
-        edgeAlpha: ready ? 1 : 0.25,
-      }));
-      body.add(this.scene.add.text(0, actionY, t("info.breakthrough.do"), textStyle({ role: "display", size: 34, color: ready ? COLOR.ink : COLOR.inkDim })).setOrigin(0.5));
+      // 확정은 확인 창(`PopupLayer.confirm`)과 같은 **제 판을 가진 강조 버튼**이다 — 판 하나에 투명한
+      // 입력면을 얹어 두던 때는 눌려도 손맛이 없었고 다른 확정 버튼과 다른 물건으로 읽혔다.
       // 열리는 효과를 여기 적지 않는다 — 등급 돋보기가 여는 표와 그 기술의 스킬 쪽지가 이미
       // 말하고(돌파로 붙은 줄은 노란 글씨로 선다), 이 창은 드는 것과 확정만 맡는다.
-      if (!ready) return;
-      const hit = this.scene.add.rectangle(0, actionY, 420, 88, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerup", () => {
-        close();
-        void this.breakThrough();
-      });
-      body.add(hit);
+      body.add(new Button(this.scene, 0, actionY, {
+        width: BREAK_CONFIRM.action.width, height: BREAK_CONFIRM.action.height, label: t("info.breakthrough.do"), fontSize: 34,
+        variant: "primary", fill: 0x2d2440, decorDots: true, accentColor: BREAK_EDGE, accentTextColor: COLOR.ink,
+        onClick: () => { close(); void this.breakThrough(); },
+      }).setEnabled(ready));
     });
   }
 

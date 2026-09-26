@@ -304,7 +304,7 @@ export class SettingsScene extends Phaser.Scene {
   /** 캐시는 진행 저장과 분리해 Cache Storage의 다운로드 자산만 지운다. */
   private async clearCache(): Promise<void> {
     if ("caches" in globalThis) await Promise.all((await caches.keys()).map(key => caches.delete(key)));
-    this.popups.confirm({ title: t("settings.support.cacheCleared"), message: t("settings.support.cacheClearedBody"), confirmLabel: t("settings.action.confirm") }, () => undefined);
+    this.popups.confirm({ title: t("settings.support.cacheCleared"), message: t("settings.support.cacheClearedBody"), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
   }
 
   /** 정책은 새 탭을 우선 사용하되 팝업 차단 시 같은 탭으로 이동해 문서 접근을 보장한다. */
@@ -329,7 +329,7 @@ export class SettingsScene extends Phaser.Scene {
   /** 별 다섯까지 남은 재료를 한 번에 넣고 실제로 지급한 수만 알린다. */
   private grantBreakthroughSet(relicId: string): void {
     if (!session.owned.has(relicId)) {
-      this.popups.confirm({ title: t("settings.debug.breakthroughTitle"), message: t("settings.debug.needOwned"), confirmLabel: t("settings.action.confirm") }, () => undefined);
+      this.popups.confirm({ title: t("settings.debug.breakthroughTitle"), message: t("settings.debug.needOwned"), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
       return;
     }
     const granted = relicProgression.grantBreakthroughSetForDebug(relicId);
@@ -340,13 +340,14 @@ export class SettingsScene extends Phaser.Scene {
         ? t("settings.debug.granted", { name, fragments: granted.fragments, cheesecake: granted.cheesecake.toLocaleString() })
         : t("settings.debug.alreadyMax"),
       confirmLabel: t("settings.action.confirm"),
-    }, () => undefined);
+      cancelLabel: false,
+    });
   }
 
   /** 미보유 렐릭만 채워 넣고 몇 명이 새로 늘었는지만 짧게 알린다. */
   private grantAllRelics(): void {
     const grantedCount = relicCollection.grantAllForDebug();
-    this.popups.confirm({ title: t("settings.debug.grantAll"), message: grantedCount > 0 ? t("settings.debug.grantedRelics", { count: grantedCount }) : t("settings.debug.alreadyAll"), confirmLabel: t("settings.action.confirm") }, () => undefined);
+    this.popups.confirm({ title: t("settings.debug.grantAll"), message: grantedCount > 0 ? t("settings.debug.grantedRelics", { count: grantedCount }) : t("settings.debug.alreadyAll"), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
   }
 
   /** 인증 성공 뒤 해시를 비교하고, 게스트의 로컬 선택은 서버 멱등 병합으로만 처리한다. */
@@ -379,7 +380,7 @@ export class SettingsScene extends Phaser.Scene {
   /** 서버 계약의 실패 코드를 플레이어용 문구로 한곳에서 바꾼다. */
   private showAccountFailure(code: AccountFailureCode): void {
     const keys: Record<AccountFailureCode, TextKey> = { unsupported: "settings.account.unsupported", cancelled: "settings.account.cancelled", "network-error": "settings.account.network", "guest-merge-unavailable": "settings.account.mergeBlocked", "conflict-cancelled": "settings.account.conflictCancelled", "save-conflict": "settings.account.stale", "invalid-remote-save": "settings.account.unavailable" };
-    this.popups.confirm({ title: t("settings.account.notice"), message: t(keys[code]), confirmLabel: t("settings.action.confirm") }, () => undefined);
+    this.popups.confirm({ title: t("settings.account.notice"), message: t(keys[code]), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
   }
 
   /** 현재 탭 높이만 기준으로 콘텐츠를 움직여 다른 탭 영역으로 새지 않게 한다. */

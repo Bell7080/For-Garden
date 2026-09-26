@@ -62,7 +62,8 @@ export type ProductAcquisition =
 /** API 경계에서 확정할 수 있는 상품 지급 항목이다. */
 export type ProductGrant =
   | { kind: "currency"; currency: ProductCurrency; amount: number }
-  | { kind: "item"; itemId: string; name: string; amount: number }
+  /** `expiresInDays` — 기한이 있는 아이템을 받은 날로부터 며칠 두는가(1~7). 없으면 아이템의 기본 날수. */
+  | { kind: "item"; itemId: string; name: string; amount: number; expiresInDays?: number }
   | { kind: "rune"; name: string; amount: number; rarity: "uncommon" | "rare" | "epic" | "legendary"; part: 0 | 1 | 2 }
   | { kind: "profile_decoration"; decorationId: string; name: string };
 
@@ -140,7 +141,7 @@ export const SHOP_PRODUCTS: readonly ProductDefinition[] = [
    * 미리 사 두는 자리가 급할 때 누르는 것보다 비싸면 살 이유가 없으므로 그보다 **싸게** 둔다
    * (3개 90 → 75 · 2개+ 120 → 96 · 5개+ 300 → 200).
    */
-  { id: "shop-tonic-pack", storefront: "shop", category: "gems", iconKey: "shop-product-supplies", name: "보급 음료 묶음", description: "에너지 드링크 3개", acquisition: { kind: "currency", currency: "gems", amount: 75 }, grants: [{ kind: "item", itemId: "stamina-tonic", name: "에너지 드링크", amount: 3 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "shop-tonic-pack", storefront: "shop", category: "gems", iconKey: "shop-product-supplies", name: "보급 음료 묶음", description: "에너지 드링크 3개", acquisition: { kind: "currency", currency: "gems", amount: 75 }, grants: [{ kind: "item", itemId: "stamina-tonic", name: "에너지 드링크", amount: 3, expiresInDays: 3 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "shop-tonic-large-pack", storefront: "shop", category: "gems", iconKey: "shop-product-supplies", name: "고농축 음료 묶음", description: "에너지 드링크+ 2개", acquisition: { kind: "currency", currency: "gems", amount: 96 }, grants: [{ kind: "item", itemId: "stamina-tonic-large", name: "에너지 드링크+", amount: 2 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "shop-tonic-crate", storefront: "shop", category: "gems", iconKey: "shop-product-supplies", name: "장기 보급 상자", description: "에너지 드링크+ 5개", acquisition: { kind: "currency", currency: "gems", amount: 200 }, grants: [{ kind: "item", itemId: "stamina-tonic-large", name: "에너지 드링크+", amount: 5 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   // **고고학 상점.** 기본 리롤은 언제나 플레이 재화(원석)로 돌아가야 하므로, 여기서 파는 것은
@@ -170,7 +171,7 @@ export const SHOP_PRODUCTS: readonly ProductDefinition[] = [
   // 복원 결정)과 보급품을 맡는다. DNA 조각 하나만 양쪽에 둔다 — 돌파의 공용 재료라
   // 한쪽에만 두면 그 콘텐츠를 돌지 않는 사람의 성장이 통째로 막힌다.
   { id: "loot-salvage-orestone", storefront: "loot", lootCategory: "expedition", category: "daily", iconKey: "shop-product-fossil", name: "인양 광물 회수분", description: "원석 800개", acquisition: { kind: "currency", currency: "salvageRecord", amount: 30 }, grants: [{ kind: "currency", currency: "rawStone", amount: 800 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "loot-salvage-tonic", storefront: "loot", lootCategory: "expedition", category: "daily", iconKey: "shop-product-supplies", name: "인양 보급 음료", description: "에너지 드링크 3개", acquisition: { kind: "currency", currency: "salvageRecord", amount: 25 }, grants: [{ kind: "item", itemId: "stamina-tonic", name: "에너지 드링크", amount: 3 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "loot-salvage-tonic", storefront: "loot", lootCategory: "expedition", category: "daily", iconKey: "shop-product-supplies", name: "인양 보급 음료", description: "에너지 드링크 3개", acquisition: { kind: "currency", currency: "salvageRecord", amount: 25 }, grants: [{ kind: "item", itemId: "stamina-tonic", name: "에너지 드링크", amount: 3, expiresInDays: 3 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "loot-salvage-gems", storefront: "loot", lootCategory: "expedition", category: "weekly", iconKey: "shop-product-gems", name: "인양 정산 결정", description: "다이아 40개", acquisition: { kind: "currency", currency: "salvageRecord", amount: 120 }, grants: [{ kind: "currency", currency: "gems", amount: 40 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "loot-salvage-dna", storefront: "loot", lootCategory: "expedition", category: "weekly", iconKey: "shop-product-enhancement", name: "인양 복원 표본", description: "DNA 조각 15개", acquisition: { kind: "currency", currency: "salvageRecord", amount: 90 }, grants: [{ kind: "currency", currency: "dnaFragments", amount: 15 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "loot-salvage-dust", storefront: "loot", lootCategory: "expedition", category: "weekly", iconKey: "shop-product-rune", name: "인양 정제 가루", description: "룬 가루 40개", acquisition: { kind: "currency", currency: "salvageRecord", amount: 60 }, grants: [{ kind: "item", itemId: "rune-dust", name: "룬 가루", amount: 40 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },

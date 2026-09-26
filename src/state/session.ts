@@ -5,6 +5,7 @@ import type { GachaPityState, Wallet } from "../core/gacha";
 import type { RelicProgress, RelicSkinId } from "../core/types";
 import type { ExpeditionRelicSnapshot } from "../core/expeditionSnapshot";
 import { playerExpToNext } from "../core/playerLevel";
+import { lotExpiresAt, type ItemLot } from "../core/itemLots";
 import { DEFAULT_PROFILE_FRAME_ID } from "../data/profileFrames";
 import { BANNERS } from "../data/banners";
 import { STAGES } from "../data/stages";
@@ -277,8 +278,17 @@ export interface ExpeditionRunState {
 /** 주간 교체와 이어하기를 한 경계에서 판정하기 위한 공개 원정 상태다. */
 export interface ExpeditionState {
   weekKey: string;
-  playsThisWeek: number;
+  /** 하루 한 판을 세는 UTC 날짜. 날이 바뀌면 `playsToday`가 0으로 돌아간다. */
+  dayKey: string;
+  playsToday: number;
+  /** 이번 주 **한 판** 최고 점수. 판의 점수를 합치지 않는다. */
   bestScore: number;
+  /** 그 최고 점수를 처음 달성한 시각 — 순위 동점을 가른다. */
+  bestAchievedAt: string;
+  /** 이번 주 최고 점수 보상 길에서 받은 마디. 주가 바뀌면 비워진다. */
+  claimedRewardStageIds: string[];
+  /** 지난주 기록이 받을 순위 보상. 우편으로 받으면 비워진다(`rollExpeditionPeriods`). */
+  pendingRankReward: { weekKey: string; score: number; achievedAt: string } | null;
   /** 주간과 무관하게 지금까지 달성한 가장 높은 점수다. 소탕이 이 값의 비율만 참조한다. */
   allTimeBestScore: number;
   /** 마지막으로 성공 출발한 원정 전용 편성이다. 스토리 파티·발굴 배치와 서로 덮어쓰지 않는다. */
@@ -387,7 +397,11 @@ export interface SaveData {
 }
 
 /** 개별 옵션이 없는 소비품·재료만 같은 ID끼리 중첩한다. */
-export interface ItemStack { itemId: string; quantity: number; }
+/**
+ * 가방 한 칸. 기한이 있는 아이템(에너지 드링크)만 받은 묶음마다 사라지는 시각을 `lots`로 들고,
+ * 그때 `quantity`는 늘 묶음의 합이다(`src/core/itemLots.ts`).
+ */
+export interface ItemStack { itemId: string; quantity: number; lots?: ItemLot[]; }
 
 /** 서버가 확정한 결과는 수령 전 재접속에도 바뀌지 않도록 파견과 함께 저장한다. */
 /**
@@ -431,7 +445,8 @@ export function createDefaultSession(): Session {
     // 토벌권은 친구 레이드를 여는 입장권이다. 처음 들어온 사람이 레이드 목록의 소환을 한 번은
     // 눌러 볼 수 있게 몇 장 쥐여 준다 — 그 뒤로는 전리품 상점에서 증표로 바꾼다.
     itemInventory: [
-      { itemId: "stamina-tonic", quantity: 3 },
+      // 시작 병도 기한이 있다 — 기한 없는 병이 섞이면 가방이 무엇이 언제 사라지는지 말하지 못한다.
+      { itemId: "stamina-tonic", quantity: 3, lots: [{ quantity: 3, expiresAt: lotExpiresAt(new Date(), 7) }] },
       { itemId: "raid-ticket", quantity: 3 },
       { itemId: "raid-select-ticket", quantity: 1 },
       ...STARTER_RUNE_TRAIT_KIT.items.map((entry) => ({ ...entry })),
@@ -469,7 +484,7 @@ export function createDefaultSession(): Session {
     // 검증 토큰은 일회성 서버 입력이므로 신규 저장에는 일일 카운터만 둔다.
     dailyAdRewards: { date: "", claimsBySlot: {}, requestIds: [] },
     // 빈 주차 키는 첫 원정 조회에서 서버와 같은 UTC 주차로 정규화된다.
-    expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, allTimeBestScore: 0, lastParty: [], run: null },
+    expedition: { weekKey: "", dayKey: "", playsToday: 0, bestScore: 0, bestAchievedAt: "", claimedRewardStageIds: [], pendingRankReward: null, allTimeBestScore: 0, lastParty: [], run: null },
     // 빈 시즌 키도 첫 레이드 조회에서 서버와 같은 UTC 주차로 정규화된다.
     raid: createEmptyRaidState(),
   };

@@ -5,7 +5,7 @@ export const INFO_ID = {
   "info.enemy.title": "Info",
   "info.summon.title": "Panggilan",
   "info.summon.owner": "Panggilan {owner}",
-  "info.summon.growth": "Dasar Pertumbuhan",
+  "info.summon.growth": "Sumber Pertumbuhan",
   "info.summon.growthSource": "{stat} {owner}",
   "info.summon.growth.follows": "{stat} · HP · Pert. · Res.",
   "info.summon.resummon": "Panggil Ulang",

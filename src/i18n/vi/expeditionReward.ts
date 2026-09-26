@@ -3,7 +3,7 @@ export const EXPEDITION_REWARD_VI = {
   "expeditionReward.title": "Thưởng kỷ lục",
   "expeditionReward.none": "Chưa có mốc thưởng nào mở",
   "expeditionReward.refresh": "Làm mới",
-  "expeditionReward.summary": "Tổng điểm Viễn chinh tuần {cumulative}  ·  Cao nhất tuần {best}",
+  "expeditionReward.summary": "Cao nhất tuần {best}",
   "expeditionReward.claimed": "Đã nhận",
   "expeditionReward.claimedAmount": "Đã nhận {amount}",
   "expeditionReward.loadFailed": "Không thể tải thưởng kỷ lục.",

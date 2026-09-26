@@ -4,7 +4,7 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugResearchBoard, setDebugScene } from "../debug";
 import { gameApi } from "../api/FakeServer";
 import { GameApiError, type PullResultDto } from "../api/contracts";
-import { bannerAcceptsCount, bannerGuaranteePending, bannerPullsRemaining, canPull, pullCost, type Banner, type GachaPityState, type ResearchGrade } from "../core/gacha";
+import { bannerAcceptsCount, bannerGuaranteePending, bannerPullsRemaining, canPull, pullCost, pullPayment, type Banner, type GachaPityState, type ResearchGrade } from "../core/gacha";
 import { ResearchPresentationController, highestRarity, researchSlotViews, showcaseRelicIds } from "../core/researchPresentation";
 import { BANNERS, LIMITED_RELIC_IDS } from "../data/banners";
 import { getRelic } from "../data/relics";
@@ -12,7 +12,7 @@ import { session } from "../state/session";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { TopBar } from "../ui/TopBar";
-import { drawLayer, HOLO, slantedRect, toPoints } from "../ui/holo";
+import { drawLayer, slantedRect, toPoints } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { useBackgroundTexture, BACKGROUND } from "../ui/backgrounds";
 import { CRACK_BRANCHES, FOSSIL_CRACK, crackBranchPoints, fossilShards, shardPoints } from "../ui/fossilCrack";
@@ -23,7 +23,8 @@ import { preloadSsrOmen, warmSsrOmen } from "../ui/SsrOmenCinematic";
 import { exposeShowcasePreview } from "../testSupport/showcaseHarness";
 import { audioManager, type AudioScope } from "../managers/AudioManager";
 import { PopupLayer } from "../ui/PopupLayer";
-import { ResearchPullButton } from "../ui/ResearchPullButton";
+import { openGachaRates } from "../ui/GachaRatesPopup";
+import { ResearchPullButton, type ResearchPullCostPart } from "../ui/ResearchPullButton";
 import { addRatesLink, addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
 import { LAB_CHROME, LAB_TITLE } from "../ui/labLayout";
 import { addBannerArrow, addBannerTitle, drawBannerPages } from "../ui/LabBannerTitle";
@@ -155,10 +156,10 @@ export class LabScene extends Phaser.Scene {
     this.bannerPages = this.add.graphics({ x: cx, y: LAB_TITLE.pages.y });
 
     this.oneButton = new ResearchPullButton(this, 300, LAB_CHROME.pull.y, {
-      ...LAB_CHROME.pull.size, label: t("lab.pull.one"), tone: LAB_CHROME.pull.oneTone, onClick: () => void this.doPull(1),
+      ...LAB_CHROME.pull.size, label: t("lab.pull.one"), tone: LAB_CHROME.pull.oneTone, onClick: () => this.requestPull(1),
     });
     this.tenButton = new ResearchPullButton(this, 780, LAB_CHROME.pull.y, {
-      ...LAB_CHROME.pull.size, label: t("lab.pull.ten"), tone: LAB_CHROME.pull.tenTone, onClick: () => void this.doPull(10),
+      ...LAB_CHROME.pull.size, label: t("lab.pull.ten"), tone: LAB_CHROME.pull.tenTone, onClick: () => this.requestPull(10),
     });
 
     this.addPityPlate(cx);
@@ -312,6 +313,26 @@ export class LabScene extends Phaser.Scene {
     });
   }
 
+  /**
+   * 연구 버튼을 누른 손. **젬이 드는 연구는 한 번 더 묻는다** — 연구 재화가 모자라 젬으로 채우는
+   * 몫이 있으면 무엇을 얼마나 쓰는지 확인 창이 먼저 말한다. 젬은 되돌릴 수 없는 재화라 버튼 옆의
+   * 값만 보고 곧바로 빠져나가면 안 된다.
+   */
+  private requestPull(count: 1 | 10): void {
+    const banner = this.banner;
+    if (this.pullPending || !canPull(session.wallet, banner, count, this.pityOf(banner))) return;
+    const payment = pullPayment(session.wallet, banner, count);
+    if (payment.gems <= 0 || !this.popupLayer) { void this.doPull(count); return; }
+    // 치를 것은 문장이 아니라 액자가 말한다 — 문장에 수를 또 적으면 같은 값을 한 창에 두 번 읽는다.
+    this.popupLayer.confirm({
+      title: t("lab.pull.gemTitle"),
+      message: t("lab.pull.gemMessage", { currency: t(`currency.${banner.currency}`), count }),
+      costs: pullCostParts(banner, count),
+      balance: { iconKey: CURRENCY_ICON_BY_WALLET.gems, before: session.wallet.gems, after: session.wallet.gems - payment.gems },
+      confirmLabel: t("lab.pull.gemConfirm"),
+    }, () => { void this.doPull(count); });
+  }
+
   private async doPull(count: 1 | 10): Promise<void> {
     const banner = this.banner;
     if (this.pullPending || !canPull(session.wallet, banner, count, this.pityOf(banner))) return;
@@ -342,39 +363,12 @@ export class LabScene extends Phaser.Scene {
     this.time.delayedCall(1800, () => notice.destroy());
   }
 
-  /** 배너에 선언된 조건부 픽업 확률과 등급 확률을 읽기 전용 패널로 보여 준다. */
+  /** 등급 네 줄을 눌러 펼치는 확률표(`GachaRatesPopup`). 숫자는 배너 정의에서 그대로 셈한다. */
   private showRates(): void {
+    if (!this.popupLayer) return;
     const banner = this.banner;
-    const cx = BASE_WIDTH / 2;
-    const overlay = this.add.container(0, 0).setDepth(850);
-    const shade = this.add.rectangle(cx, 960, BASE_WIDTH, 1920, COLOR.void, 0.9).setInteractive();
-    const panel = drawLayer(this, cx, 840, slantedRect(860, 980), {
-      fill: 0x141920, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.3,
-    });
-    overlay.add([shade, panel]);
-    overlay.add(this.add.text(cx, 390, t("lab.policy.title"), textStyle({ role: "display", size: 42 })).setOrigin(0.5));
-    const rates = (["SSR", "SR", "R", "GRAY"] as const)
-      .map((rarity) => t("lab.policy.rate", { rarity: rarity === "GRAY" ? t("lab.policy.grayReward") : rarity, percent: (banner.slotRates[rarity] * 100).toFixed(1) }))
-      .join("\n");
-    overlay.add(this.add.text(cx, 475, rates, textStyle({ role: "body", size: 30, align: "center", lineSpacing: 14 })).setOrigin(0.5, 0));
     const pity = session.gachaPityByGroup[banner.pityGroupId] ?? { pullsSinceSsr: 0, pickupGuaranteed: false };
-    // 확률뿐 아니라 현재 계정 상태와 배너 교체 정책, 중복 환산까지 한 화면에서 확인시킨다.
-    const policy = [
-      // 횟수 제한 배너(첫 복원 연구)는 한도와 한 번뿐인 확정을 가장 먼저 말한다.
-      ...(banner.pullLimit !== undefined ? [t("lab.policy.limit", { limit: banner.pullLimit })] : []),
-      t("lab.policy.pity", { since: pity.pullsSinceSsr, left: Math.max(0, banner.highestRarityGuarantee - pity.pullsSinceSsr) }),
-      t("lab.policy.pickup", { state: t(pity.pickupGuaranteed ? "lab.policy.pickupOn" : "lab.policy.pickupOff") }),
-      t("lab.policy.pickupRate", { percent: (banner.pickupRate * 100).toFixed(0) }),
-      t("lab.policy.group", { group: banner.pityGroupId }),
-      t("lab.policy.groupNote"),
-      t("lab.policy.tenGuarantee"),
-      t("lab.policy.duplicate"),
-      t("lab.policy.duplicateMax"),
-    ].join("\n");
-    overlay.add(this.add.text(cx, 700, policy, textStyle({ role: "body", size: 25, color: COLOR.inkDim, align: "center", lineSpacing: 13, wrap: 760 })).setOrigin(0.5, 0));
-    const close = new Button(this, cx, 1190, { width: 320, height: 100, label: t("lab.confirm"), fontSize: 32, onClick: () => overlay.destroy() });
-    overlay.add(close);
-    shade.on("pointerdown", () => overlay.destroy());
+    openGachaRates({ scene: this, popups: this.popupLayer, banner, pity });
   }
 
   /** 현재 단계의 자동 진행을 기다린다. 탭하면 이 Promise만 끝나고 다음 상태로 넘어간다. */
@@ -778,15 +772,14 @@ export class LabScene extends Phaser.Scene {
      * 10연 전용 배너는 1회 버튼을 세우지 않고 10회 버튼을 가운데로 옮긴다 — 누를 수 없는 버튼을
      * 꺼진 채 세워 두면 왜 안 되는지 묻게 된다.
      */
-    const icon = CURRENCY_ICON_BY_WALLET[banner.currency];
     const oneOpen = bannerAcceptsCount(banner, 1, pity) || !banner.tenOnly;
     this.oneButton.setVisible(!banner.tenOnly);
     this.tenButton.setX(banner.tenOnly ? BASE_WIDTH / 2 : 780);
     this.oneButton
-      .setCost(icon, pullCost(banner, 1), canPull(session.wallet, banner, 1, pity))
+      .setCost(pullCostParts(banner, 1))
       .setEnabled(oneOpen && !this.pullPending && canPull(session.wallet, banner, 1, pity));
     this.tenButton
-      .setCost(icon, pullCost(banner, 10), canPull(session.wallet, banner, 10, pity))
+      .setCost(pullCostParts(banner, 10))
       .setEnabled(!this.pullPending && canPull(session.wallet, banner, 10, pity));
 
     const discount = bannerTenDiscountPercent(banner);
@@ -794,4 +787,14 @@ export class LabScene extends Phaser.Scene {
     this.discountText.setText(t("lab.pull.discount", { percent: discount }));
     this.discountBadge.setPosition(this.tenButton.x + LAB_TITLE.discount.dx, LAB_CHROME.pull.y + LAB_TITLE.discount.dy);
   }
+}
+
+/** 연구 버튼에 세울 값 조각 — 가진 연구 재화 몫과 모자라 젬으로 채우는 몫. */
+function pullCostParts(banner: Banner, count: number): ResearchPullCostPart[] {
+  const payment = pullPayment(session.wallet, banner, count);
+  const parts: ResearchPullCostPart[] = [];
+  // 연구 재화가 하나도 없으면 그 조각은 세우지 않는다(「화석 ×0」은 읽을 필요 없는 수다).
+  if (payment.tickets > 0 || payment.gems === 0) parts.push({ iconKey: CURRENCY_ICON_BY_WALLET[banner.currency], amount: payment.gems === 0 ? pullCost(banner, count) : payment.tickets });
+  if (payment.gems > 0) parts.push({ iconKey: CURRENCY_ICON_BY_WALLET.gems, amount: payment.gems, short: !payment.affordable });
+  return parts;
 }

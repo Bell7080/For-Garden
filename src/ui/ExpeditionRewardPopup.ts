@@ -7,6 +7,7 @@ import { session } from "../state/session";
 import { Button } from "./Button";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
 import { RewardFrame } from "./RewardFrame";
+import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { expeditionRewardTrackFillY, expeditionRewardTrackHeight, expeditionRewardTrackNodes, REWARD_TRACK } from "./expeditionRewardTrack";
 import { chipPoints, drawLayer } from "./holo";
 import { COLOR, textStyle } from "./theme";
@@ -110,7 +111,7 @@ export class ExpeditionRewardPopup {
       return;
     }
     // 보상 기준인 합계와 랭킹 기준인 한 판 최고를 완전한 이름으로 적어 서로 바꿔 읽지 않게 한다.
-    content.add(this.scene.add.text(0, top + 96, t("expeditionReward.summary", { cumulative: snapshot.cumulativeScore.toLocaleString(), best: snapshot.bestScore.toLocaleString() }), textStyle({ role: "display", size: 27, color: COLOR.accentText })).setOrigin(0.5));
+    content.add(this.scene.add.text(0, top + 96, t("expeditionReward.summary", { best: snapshot.bestScore.toLocaleString() }), textStyle({ role: "display", size: 27, color: COLOR.accentText })).setOrigin(0.5));
     if (this.message) content.add(this.scene.add.text(0, top + 140, this.message, textStyle({ role: "emphasis", size: 22, color: COLOR.sortieText })).setOrigin(0.5));
 
     // 창은 판 안의 고정된 사각이고, 길만 그 안에서 흐른다.
@@ -118,16 +119,16 @@ export class ExpeditionRewardPopup {
     const track = this.scene.add.container(0, 0);
     this.track = track;
     content.add(track);
-    this.buildTrack(track, snapshot.rewardStages, snapshot.cumulativeScore, viewTop, view);
+    this.buildTrack(track, snapshot.rewardStages, snapshot.bestScore, viewTop, view);
     this.attachScroll(content, viewTop, view);
   }
 
   /** 길·마디·가지·보상 액자를 한 번에 세운다. 좌표는 순수 규칙이 준 높이를 뒤집어 쓴다. */
-  private buildTrack(track: Phaser.GameObjects.Container, stages: readonly ExpeditionRewardStageDto[], cumulative: number, viewTop: number, view: number): void {
+  private buildTrack(track: Phaser.GameObjects.Container, stages: readonly ExpeditionRewardStageDto[], best: number, viewTop: number, view: number): void {
     const thresholds = stages.map(({ threshold }) => threshold);
     const nodes = expeditionRewardTrackNodes(stages.length);
     const height = expeditionRewardTrackHeight(stages.length);
-    const fill = expeditionRewardTrackFillY(cumulative, thresholds);
+    const fill = expeditionRewardTrackFillY(best, thresholds);
     // 길 바닥을 창 아래에 맞춘다. 위로 자라므로 화면 y는 부호를 뒤집는다.
     const base = viewTop + view;
     const at = (y: number): number => base - y;
@@ -145,7 +146,7 @@ export class ExpeditionRewardPopup {
 
     nodes.forEach((node) => {
       const stage = stages[node.index];
-      const reached = cumulative >= stage.threshold;
+      const reached = best >= stage.threshold;
       const claimable = reached && !stage.claimed;
       const y = at(node.y);
       const branchX = node.side === "right" ? REWARD_TRACK.branch : -REWARD_TRACK.branch;
@@ -163,7 +164,8 @@ export class ExpeditionRewardPopup {
       marker.strokePoints(diamond, true);
       track.add(marker);
       track.add(this.scene.add.text(node.side === "right" ? -34 : 34, y, stage.threshold.toLocaleString(), textStyle({ role: "display", size: 27, color: reached ? COLOR.ink : COLOR.inkDim })).setOrigin(node.side === "right" ? 1 : 0, 0.5).setShadow(3, 4, "#04060a", 0, true, true));
-      const icon = `currency-${stage.reward.currency}` as "currency-gold" | "currency-fossil" | "currency-gems";
+      // 보상은 한 재화로 채우지 않는다(인양 기록·골드·보석…). 지갑 칸 → 그림은 공용 표 하나가 정한다.
+      const icon = CURRENCY_ICON_BY_WALLET[stage.reward.currency];
       const frame = new RewardFrame(this.scene, branchX, y, { icon, amount: stage.reward.amount, size: 132, state: stage.claimed ? "claimed" : claimable ? "claimable" : "normal", onClick: claimable ? () => { if (this.dragMoved <= DRAG_SLOP) void this.claim(stage.id); } : undefined });
       track.add(frame);
     });
@@ -172,7 +174,7 @@ export class ExpeditionRewardPopup {
     const cursorY = at(Math.max(fill, 40));
     const cursor = this.scene.add.container(0, cursorY);
     cursor.add(drawLayer(this.scene, -128, 0, chipPoints(196, 56, { bevel: { topLeft: 16, bottomRight: 16 } }), { fill: 0x0b0f15, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.9 }));
-    cursor.add(this.scene.add.text(-128, 0, cumulative.toLocaleString(), textStyle({ role: "display", size: 27, color: COLOR.accentText })).setOrigin(0.5));
+    cursor.add(this.scene.add.text(-128, 0, best.toLocaleString(), textStyle({ role: "display", size: 27, color: COLOR.accentText })).setOrigin(0.5));
     const tail = this.scene.add.graphics();
     tail.lineStyle(3, 0xffffff, 0.9);
     tail.lineBetween(-30, cursorY, 0, cursorY);

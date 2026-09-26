@@ -234,7 +234,7 @@ export const SKILL_RU = {
   "skill.keyword.damage.bonus": "Доп. урон, рассчитанный из {percent}% текущей {stat}.",
   "skill.keyword.staccato.term": "Стаккато",
   "skill.keyword.staccato.description": "Дополнительный магический удар, как [[basic-attack|обычная атака]] Метте. [[stagger|Ошеломляет]] задетую цель.",
-  "skill.keyword.summon.description": "Призыв ближнего боя: атака и скорость зависят от {stat} ({owner}), а ОЗ, защита и сопротивление — от атаки и силы магии вместе. Сам выбирает цели и применяет ульту по своей шкале.{resummon}",
+  "skill.keyword.summon.description": "Призыв ближнего боя: {stat}, ОЗ, защита и сопротивление зависят от {stat} ({owner}). Сам выбирает цели и применяет ульту по своей шкале.{resummon}",
   "skill.keyword.summon.resummon": " Павший поднимается через {seconds} с с {percent}% макс. ОЗ.",
   "skill.keyword.summon.owner": "командира",
   "skill.ferocity.valueLabel": "Черта ярости",

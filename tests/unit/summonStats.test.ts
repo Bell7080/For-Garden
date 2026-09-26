@@ -17,29 +17,23 @@ function dianSummon(id: "kuro" | "shiro") {
 }
 
 describe("디안 귀속 소환수 능력치", () => {
-  it("은 쿠로의 공격과 속도가 공격력만, 몸은 공격력과 주문력을 함께 따른다", () => {
+  it("은 쿠로의 공격력·체력·방어·저항이 디안 공격력만 따르고 주문력은 건드리지 않는다", () => {
     const kuro = dianSummon("kuro");
     const base = deriveSummonStats(FINAL_STATS, kuro);
-    const moreAp = deriveSummonStats({ ...FINAL_STATS, ap: 300 }, kuro);
-    // 주문력을 키워도 때리는 손과 속도는 그대로다.
-    expect(moreAp.atk).toBe(base.atk);
-    expect(moreAp.attackSpeed).toBe(base.attackSpeed);
-    expect(moreAp.ap).toBe(0);
-    // 몸은 두꺼워진다 — 주인이 어느 축을 키워도 앞에 선 방패가 같이 자란다.
-    expect(moreAp.hp).toBeGreaterThan(base.hp);
-    expect(moreAp.def).toBeGreaterThan(base.def);
-    expect(moreAp.res).toBeGreaterThan(base.res);
+    const moreAtk = deriveSummonStats({ ...FINAL_STATS, atk: 260 }, kuro);
+    for (const key of ["atk", "hp", "def", "res"] as const) expect(moreAtk[key], key).toBeGreaterThan(base[key]);
+    // 주문력 변화는 쿠로의 어떤 능력치에도 닿지 않는다.
+    expect(deriveSummonStats({ ...FINAL_STATS, ap: 9999 }, kuro)).toEqual(base);
+    expect(base.ap).toBe(0);
   });
 
-  it("은 시로의 공격과 속도가 주문력만, 몸은 공격력과 주문력을 함께 따른다", () => {
+  it("은 시로의 주문력·체력·방어·저항이 디안 주문력만 따르고 공격력은 건드리지 않는다", () => {
     const shiro = dianSummon("shiro");
     const base = deriveSummonStats(FINAL_STATS, shiro);
-    const moreAtk = deriveSummonStats({ ...FINAL_STATS, atk: 400 }, shiro);
-    expect(moreAtk.ap).toBe(base.ap);
-    expect(moreAtk.attackSpeed).toBe(base.attackSpeed);
-    expect(moreAtk.atk).toBe(0);
-    expect(moreAtk.hp).toBeGreaterThan(base.hp);
-    expect(moreAtk.def).toBeGreaterThan(base.def);
+    const moreAp = deriveSummonStats({ ...FINAL_STATS, ap: 210 }, shiro);
+    for (const key of ["ap", "hp", "def", "res"] as const) expect(moreAp[key], key).toBeGreaterThan(base[key]);
+    expect(deriveSummonStats({ ...FINAL_STATS, atk: 9999 }, shiro)).toEqual(base);
+    expect(base.atk).toBe(0);
   });
 
   it("은 디안의 태생값에서 정의의 태생 능력치를 그대로 낸다", () => {
@@ -53,16 +47,17 @@ describe("디안 귀속 소환수 능력치", () => {
     }
   });
 
-  it("은 반올림 뒤 공속·이속 상한을 적용하고 입력을 변경하지 않는다", () => {
+  it("은 공격 속도·이동 속도를 올리지 않고 늑대 정의의 값을 그대로 쓰며 입력을 변경하지 않는다", () => {
     const kuro = dianSummon("kuro");
-    const owner = { ...FINAL_STATS, atk: 10_000 };
+    const owner = { ...FINAL_STATS, atk: 10_000, attackSpeed: 300, moveSpeed: 300 };
     const snapshot = structuredClone(owner);
     const result = deriveSummonStats(owner, kuro);
-    expect(result.attackSpeed).toBe(kuro.scaling.attackSpeedCap);
-    expect(result.moveSpeed).toBe(kuro.scaling.moveSpeedCap);
+    expect(result.attackSpeed).toBe(kuro.def.stats.attackSpeed);
+    expect(result.moveSpeed).toBe(kuro.def.stats.moveSpeed);
     expect(owner).toEqual(snapshot);
     expect(result).not.toBe(owner);
   });
+
 
   it("은 양 진영의 쌍둥이 소환 ID를 각각 유일하게 만든다", () => {
     const ids = (["player", "enemy"] as const).flatMap((side) =>

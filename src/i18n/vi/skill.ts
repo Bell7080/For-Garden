@@ -234,7 +234,7 @@ export const SKILL_VI = {
   "skill.keyword.damage.bonus": "Sát thương thêm tính từ {percent}% {stat} hiện tại.",
   "skill.keyword.staccato.term": "Staccato",
   "skill.keyword.staccato.description": "Một đòn phép thêm giống hệt [[basic-attack|đòn đánh thường]] của Mette. Nó làm mục tiêu trúng đòn [[stagger|Khựng]].",
-  "skill.keyword.summon.description": "Triệu hồi cận chiến: tấn công và tốc độ dựa trên {stat} của {owner}, còn HP, Thủ và Kháng dựa trên Công và Phép cộng lại. Tự chọn mục tiêu và dùng Tuyệt kỹ bằng thanh của riêng nó.{resummon}",
+  "skill.keyword.summon.description": "Triệu hồi cận chiến có {stat}, HP, Thủ và Kháng dựa trên {stat} của {owner}. Tự chọn mục tiêu và dùng Tuyệt kỹ bằng thanh của riêng nó.{resummon}",
   "skill.keyword.summon.resummon": " Khi gục, nó đứng dậy sau {seconds} giây với {percent}% HP tối đa.",
   "skill.keyword.summon.owner": "chỉ huy",
   "skill.ferocity.valueLabel": "Đặc tính Dã tính",

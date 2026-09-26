@@ -234,7 +234,7 @@ export const SKILL_ES = {
   "skill.keyword.damage.bonus": "Daño adicional calculado con el {percent}% de {stat} actual.",
   "skill.keyword.staccato.term": "Staccato",
   "skill.keyword.staccato.description": "Un golpe mágico adicional idéntico al [[basic-attack|ataque básico]] de Mette. Hace [[stagger|Tambalearse]] al objetivo que alcanza.",
-  "skill.keyword.summon.description": "Invocación cuerpo a cuerpo: su ofensiva y velocidad siguen {stat} de {owner}, y sus PV, Defensa y Resistencia siguen Ataque y Poder mágico juntos. Elige sus propios objetivos y usa su Definitiva con su propio medidor.{resummon}",
+  "skill.keyword.summon.description": "Invocación cuerpo a cuerpo cuyos {stat}, PV, Defensa y Resistencia dependen de {stat} de {owner}. Elige sus propios objetivos y usa su Definitiva con su propio medidor.{resummon}",
   "skill.keyword.summon.resummon": " Si cae, se levanta tras {seconds} s con el {percent}% de sus PV máx.",
   "skill.keyword.summon.owner": "el comandante",
   "skill.ferocity.valueLabel": "Rasgo de Ferocidad",

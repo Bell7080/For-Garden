@@ -234,7 +234,7 @@ export const SKILL_EN = {
   "skill.keyword.damage.bonus": "Extra damage calculated from {percent}% of the current {stat}.",
   "skill.keyword.staccato.term": "Staccato",
   "skill.keyword.staccato.description": "An extra magical hit identical to Mette's [[basic-attack|basic attack]]. It [[stagger|Staggers]] the target it lands on.",
-  "skill.keyword.summon.description": "A melee summon whose offense and speed follow {owner}'s {stat}, while its HP, Defense and Resistance follow Attack and Ability Power together. It picks its own targets and uses its Ultimate on its own gauge.{resummon}",
+  "skill.keyword.summon.description": "A melee summon whose {stat}, HP, Defense and Resistance are set by {owner}'s {stat}. It picks its own targets and uses its Ultimate on its own gauge.{resummon}",
   "skill.keyword.summon.resummon": " When it falls, it stands back up after {seconds}s with {percent}% of its max HP.",
   "skill.keyword.summon.owner": "the commander",
   "skill.ferocity.valueLabel": "Ferocity Trait",

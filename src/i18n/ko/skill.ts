@@ -280,7 +280,7 @@ export const SKILL_KO = {
   "skill.keyword.damage.bonus": "현재 {stat}에서 {percent}%를 받아 계산한 추가 피해 수치다.",
   "skill.keyword.staccato.term": "스타카토",
   "skill.keyword.staccato.description": "메테의 [[basic-attack|기본 공격]]과 같은 마법 추가타다. 적중한 대상을 [[stagger|경직]]시킨다.",
-  "skill.keyword.summon.description": "{owner}의 {stat}{stat!이} 공격과 속도를, 공격력과 주문력이 함께 체력·방어력·저항력을 정하는 근거리 소환수다. 스스로 표적을 고르고 제 게이지로 궁극기를 쓴다.{resummon}",
+  "skill.keyword.summon.description": "{owner}의 {stat}{stat!이} {stat}·체력·방어력·저항력을 정하는 근거리 소환수다. 스스로 표적을 고르고 제 게이지로 궁극기를 쓴다.{resummon}",
   "skill.keyword.summon.resummon": " 쓰러지면 {seconds}초 뒤 최대 체력의 {percent}%로 다시 선다.",
   "skill.keyword.summon.owner": "지휘자",
   "skill.ferocity.valueLabel": "야성 발현",

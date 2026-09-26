@@ -95,5 +95,14 @@
 "info.story.1": ["第1话 · 初次问候", "ตอนที่ 1 · คำทักทายแรก", "Tập 1 · Lời chào đầu", "Ep. 1 · Salam Pertama", "Ep. 1 · Primer saludo", "Ep. 1 · Primeira saudação", "Ep. 1 · Erster Gruß", "Эп. 1 · Первое приветствие"],
 "info.story.2": ["第2话 · 围栏之夜", "ตอนที่ 2 · ค่ำคืนในคอก", "Tập 2 · Đêm trong chuồng", "Ep. 2 · Malam di Kandang", "Ep. 2 · Noche en el recinto", "Ep. 2 · Noite no recinto", "Ep. 2 · Nacht im Gehege", "Эп. 2 · Ночь в вольере"],
 "info.story.3": ["第3话 · 旧记忆的碎片", "ตอนที่ 3 · เศษเสี้ยวความทรงจำเก่า", "Tập 3 · Mảnh ký ức xưa", "Ep. 3 · Serpihan Kenangan Lama", "Ep. 3 · Un fragmento de viejos recuerdos", "Ep. 3 · Um fragmento de velhas memórias", "Ep. 3 · Ein Splitter alter Erinnerung", "Эп. 3 · Осколок старой памяти"],
-"info.story.4": ["第4话 · 永恒之城的尽头", "ตอนที่ 4 · สุดปลายนครนิรันดร์", "Tập 4 · Tận cùng Thành phố Vĩnh Hằng", "Ep. 4 · Ujung Kota Abadi", "Ep. 4 · El fin de la Ciudad Eterna", "Ep. 4 · O fim da Cidade Eterna", "Ep. 4 · Das Ende der Ewigen Stadt", "Эп. 4 · Край Вечного города"]
+"info.story.4": ["第4话 · 永恒之城的尽头", "ตอนที่ 4 · สุดปลายนครนิรันดร์", "Tập 4 · Tận cùng Thành phố Vĩnh Hằng", "Ep. 4 · Ujung Kota Abadi", "Ep. 4 · El fin de la Ciudad Eterna", "Ep. 4 · O fim da Cidade Eterna", "Ep. 4 · Das Ende der Ewigen Stadt", "Эп. 4 · Край Вечного города"],
+"info.summon.title": ["召唤物", "สัตว์อัญเชิญ", "Triệu hồi", "Panggilan", "Invocación", "Invocação", "Beschwörung", "Призыв"],
+"info.summon.owner": ["{owner}的召唤物", "สัตว์อัญเชิญของ{owner}", "Triệu hồi của {owner}", "Panggilan {owner}", "Invocación de {owner}", "Invocação de {owner}", "Beschwörung von {owner}", "Призыв: {owner}"],
+"info.summon.growth": ["成长基准", "ฐานการเติบโต", "Nền tăng trưởng", "Dasar Pertumbuhan", "Base de crecimiento", "Base de crescimento", "Wachstumsquelle", "Основа роста"],
+"info.summon.growthSource": ["{owner}的{stat}", "{stat}ของ{owner}", "{stat} của {owner}", "{stat} {owner}", "{stat} de {owner}", "{stat} de {owner}", "{stat} von {owner}", "{stat}: {owner}"],
+"info.summon.growth.follows": ["{stat}·生命·防御·抗性", "{stat} · HP · ป้องกัน · ต้านทาน", "{stat} · HP · Thủ · Kháng", "{stat} · HP · Pert. · Res.", "{stat} · PV · Def. · Res.", "{stat} · PV · Def. · Res.", "{stat} · LP · Vert. · Wid.", "{stat} · ОЗ · защ. · сопр."],
+"info.summon.resummon": ["再召唤", "อัญเชิญใหม่", "Triệu hồi lại", "Panggil Ulang", "Reinvocación", "Reinvocação", "Neubeschwörung", "Повторный призыв"],
+"info.summon.resummonValue": ["{seconds}秒", "{seconds} วิ", "{seconds} giây", "{seconds} dtk", "{seconds} s", "{seconds} s", "{seconds} s", "{seconds} с"],
+"info.summon.resummonHp": ["生命{percent}%", "HP {percent}%", "Máu {percent}%", "HP {percent}%", "PV {percent}%", "PV {percent}%", "Leben {percent}%", "ОЗ {percent}%"],
+"info.summon.resummonNone": ["无", "ไม่มี", "Không", "Tidak ada", "Ninguna", "Nenhuma", "Keine", "Нет"]
 }

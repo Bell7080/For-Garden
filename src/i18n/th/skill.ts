@@ -234,7 +234,7 @@ export const SKILL_TH = {
   "skill.keyword.damage.bonus": "ความเสียหายเพิ่มเติมที่คำนวณจาก {percent}% ของ{stat}ปัจจุบัน",
   "skill.keyword.staccato.term": "สตัคคาโต",
   "skill.keyword.staccato.description": "การโจมตีเวทเพิ่มเติมที่เหมือนกับ[[basic-attack|การโจมตีปกติ]]ของเมเทะ ทำให้เป้าหมายที่โดน[[stagger|ชะงัก]]",
-  "skill.keyword.summon.description": "สัตว์อัญเชิญระยะประชิดที่การโจมตีและความเร็วตาม{stat}ของ{owner} ส่วน HP พลังป้องกัน และต้านทานตามพลังโจมตีและพลังเวทรวมกัน เลือกเป้าหมายเองและใช้ท่าไม้ตายด้วยเกจของตัวเอง{resummon}",
+  "skill.keyword.summon.description": "สัตว์อัญเชิญระยะประชิดที่{stat} HP พลังป้องกัน และต้านทานกำหนดจาก{stat}ของ{owner} เลือกเป้าหมายเองและใช้ท่าไม้ตายด้วยเกจของตัวเอง{resummon}",
   "skill.keyword.summon.resummon": " เมื่อล้มจะลุกขึ้นใหม่หลัง {seconds} วินาทีด้วย HP {percent}% ของสูงสุด",
   "skill.keyword.summon.owner": "ผู้บัญชาการ",
   "skill.ferocity.valueLabel": "คุณลักษณะความดุร้าย",

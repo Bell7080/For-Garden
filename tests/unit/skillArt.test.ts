@@ -706,8 +706,9 @@ describe("스킬 설명문 양식 계약", () => {
       const body = passiveDescription(wolf.passive, wolf.stats.atk);
       expect(body, id).toContain("디안이 전투 시작 시 불러내는 귀속 소환수다");
       expect(body, id).toContain(`디안의 ${axis}이`);
-      // 몸(체력·방어·저항)은 두 축을 함께 따른다.
-      expect(body, id).toContain("디안의 공격력과 주문력이 함께 체력·방어력·저항력을 정한다");
+      // 한 축이 그 축과 몸(체력·방어·저항)을 정한다. 속도는 따라 오르지 않아 적지 않는다.
+      expect(body, id).toContain(`디안의 ${axis}이 ${id === "kuro" ? "쿠로" : "시로"}의 ${axis}·체력·방어력·저항력을 정한다`);
+      expect(body, id).not.toContain("속도");
       // 폭주는 같은 값이 함께 오르므로 한 번만 말하고, 방어·저항은 실제로 오르는 값으로 보여 준다.
       const fever = ferocityTraitDescription(wolf.ferocityTrait, { attack: wolf.stats.atk, defense: wolf.stats.def });
       expect(fever, id).toMatch(/^방어력과 저항력이 \d+씩 오르고 \[\[attack-speed\|공격 속도\]\]가 50% 오른다\.$/);

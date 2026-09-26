@@ -234,7 +234,7 @@ export const SKILL_DE = {
   "skill.keyword.damage.bonus": "Zusatzschaden, berechnet aus {percent}% {stat}.",
   "skill.keyword.staccato.term": "Staccato",
   "skill.keyword.staccato.description": "Ein zusätzlicher magischer Treffer, identisch mit Mettes [[basic-attack|Normalangriff]]. Er lässt das getroffene Ziel [[stagger|taumeln]].",
-  "skill.keyword.summon.description": "Eine Nahkampf-Beschwörung: Angriff und Tempo folgen {stat} von {owner}, LP, Verteidigung und Widerstand folgen Angriff und Zauberkraft zusammen. Sie wählt eigene Ziele und setzt ihre Ultimativ mit eigener Ladung ein.{resummon}",
+  "skill.keyword.summon.description": "Eine Nahkampf-Beschwörung, deren {stat}, LP, Verteidigung und Widerstand von {stat} von {owner} abhängen. Sie wählt eigene Ziele und setzt ihre Ultimativ mit eigener Ladung ein.{resummon}",
   "skill.keyword.summon.resummon": " Fällt sie, steht sie nach {seconds} s mit {percent}% ihres max. Lebens wieder auf.",
   "skill.keyword.summon.owner": "des Anführers",
   "skill.ferocity.valueLabel": "Wildheitsmerkmal",

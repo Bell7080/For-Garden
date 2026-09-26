@@ -234,7 +234,7 @@ export const SKILL_ZH_HANS = {
   "skill.keyword.damage.bonus": "以当前{stat}的{percent}%计算的额外伤害。",
   "skill.keyword.staccato.term": "断奏",
   "skill.keyword.staccato.description": "与梅特的[[basic-attack|普通攻击]]相同的追加魔法打击。会使命中的目标[[stagger|硬直]]。",
-  "skill.keyword.summon.description": "攻击与速度取决于{owner}的{stat}，生命、防御力与抗性取决于攻击力与法术强度之和的近战召唤物。自行选择目标，并以自身能量使用必杀技。{resummon}",
+  "skill.keyword.summon.description": "{stat}、生命、防御力与抗性均由{owner}的{stat}决定的近战召唤物。自行选择目标，并以自身能量使用必杀技。{resummon}",
   "skill.keyword.summon.resummon": "倒下后{seconds}秒以最大生命{percent}%重新站起。",
   "skill.keyword.summon.owner": "指挥者",
   "skill.ferocity.valueLabel": "野性特性",

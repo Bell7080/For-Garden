@@ -254,7 +254,7 @@ export const SKILL_JA = {
   "skill.keyword.damage.bonus": "現在の{stat}から{percent}%を受けて計算した追加ダメージ数値だ。",
   "skill.keyword.staccato.term": "スタッカート",
   "skill.keyword.staccato.description": "メテの[[basic-attack|通常攻撃]]と同じ魔法の追加打だ。命中した対象を[[stagger|硬直]]させる。",
-  "skill.keyword.summon.description": "攻撃と速度は{owner}の{stat}に、体力・防御力・抵抗力は攻撃力と魔力の両方に従う近距離召喚獣だ。自ら標的を選び、自分のゲージで必殺技を使う。{resummon}",
+  "skill.keyword.summon.description": "{owner}の{stat}が{stat}・体力・防御力・抵抗力を決める近距離召喚獣だ。自ら標的を選び、自分のゲージで必殺技を使う。{resummon}",
   "skill.keyword.summon.resummon": "倒れると{seconds}秒後に最大体力の{percent}%で再び立つ。",
   "skill.keyword.summon.owner": "指揮者",
   "skill.ferocity.valueLabel": "野性発現",

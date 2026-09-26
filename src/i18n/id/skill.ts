@@ -234,7 +234,7 @@ export const SKILL_ID = {
   "skill.keyword.damage.bonus": "Kerusakan tambahan yang dihitung dari {percent}% {stat} saat ini.",
   "skill.keyword.staccato.term": "Staccato",
   "skill.keyword.staccato.description": "Serangan magis tambahan yang sama dengan [[basic-attack|serangan dasar]] Mette. Membuat target yang terkena [[stagger|Goyah]].",
-  "skill.keyword.summon.description": "Panggilan jarak dekat: serangan dan kecepatannya mengikuti {stat} milik {owner}, sedangkan HP, Pertahanan, dan Resistensinya mengikuti Serangan dan Kekuatan Magis bersama. Ia memilih target sendiri dan memakai Ultimate dengan gauge-nya sendiri.{resummon}",
+  "skill.keyword.summon.description": "Panggilan jarak dekat yang {stat}, HP, Pertahanan, dan Resistensinya ditentukan oleh {stat} milik {owner}. Ia memilih target sendiri dan memakai Ultimate dengan gauge-nya sendiri.{resummon}",
   "skill.keyword.summon.resummon": " Saat tumbang, ia bangkit lagi setelah {seconds} dtk dengan {percent}% HP maksnya.",
   "skill.keyword.summon.owner": "komandan",
   "skill.ferocity.valueLabel": "Sifat Keganasan",

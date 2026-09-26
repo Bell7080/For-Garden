@@ -96,4 +96,19 @@ describe("적 정보 팝업 배치", () => {
     expect(placed.get("enemy-0")?.level).toBe(14);
     expect(placed.get("enemy-0")?.breakthrough).toBe(0);
   });
+
+  it("은 전신이 없는 쿠로·시로를 SD 하나로 왼쪽 기둥에 크게 세우되 칸·액자·일지를 덮지 않는다", async () => {
+    const { KURO_SD_METADATA, SHIRO_SD_METADATA } = await import("../../src/puppets/assetMetadata");
+    const { soloFigure, column, journalButton, skills, ferocityBadgeOffsetY } = ENEMY_INFO;
+    for (const { content } of [KURO_SD_METADATA, SHIRO_SD_METADATA]) {
+      const scale = soloFigure.height / (content.bottom - content.top);
+      const halfWidth = (content.right - content.left) * scale / 2;
+      // 가로가 넓은 늑대가 능력치 칸의 왼쪽 변 앞에서 멈추고 판 왼쪽 밖으로 나가지 않는다.
+      expect(soloFigure.x + halfWidth).toBeLessThan(column.x - column.width / 2);
+      expect(soloFigure.x - halfWidth).toBeGreaterThan(-ENEMY_INFO.width / 2);
+      // 머리는 관찰 일지 칩 아래, 받침 글자(발밑 +32~+50)는 폭주 뱃지 윗변 위에서 끝난다.
+      expect(soloFigure.groundY - soloFigure.height).toBeGreaterThan(journalButton.y + journalButton.size / 2);
+      expect(soloFigure.groundY + 50).toBeLessThan(skills.y + ferocityBadgeOffsetY - 96 / 2);
+    }
+  });
 });

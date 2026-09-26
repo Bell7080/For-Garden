@@ -135,11 +135,14 @@ export class EnemyInfoPopup {
       this.paintLevel(chrome, snapshot);
       this.paintStats(chrome, snapshot.def);
       this.paintSkills(chrome, snapshot);
-      addInfoFigureStand(this.scene, chrome, ENEMY_INFO.figure.x, ENEMY_INFO.figure.groundY);
-      // 아군 창과 같은 돋보기 — 원화를 통째로 보는 입구다. 판이 열려 있는 동안에만 살아 있다.
+      const solo = sdOnly(snapshot.def);
+      const stand = solo ? ENEMY_INFO.soloFigure : ENEMY_INFO.figure;
+      addInfoFigureStand(this.scene, chrome, stand.x, stand.groundY);
       this.galleryBody = body;
       this.shownDef = snapshot.def;
-      addInfoMagnifier(this.scene, this.popups, chrome, ENEMY_INFO.portraitMagnifier.x, ENEMY_INFO.portraitMagnifier.y, (from) => this.enterGallery(from.onClose, mask));
+      // 아군 창과 같은 돋보기 — 원화를 통째로 보는 입구다. 판이 열려 있는 동안에만 살아 있다.
+      // 전신이 없는 몸은 볼 원화가 없으므로 입구도 세우지 않는다.
+      if (!solo) addInfoMagnifier(this.scene, this.popups, chrome, ENEMY_INFO.portraitMagnifier.x, ENEMY_INFO.portraitMagnifier.y, (from) => this.enterGallery(from.onClose, mask));
       /*
        * **관찰 일지도 아군 창과 같은 한 장이다.**
        *
@@ -387,6 +390,7 @@ export class EnemyInfoPopup {
    * 않으므로 자리도 마스크도 화면 좌표로 잡는다.
    */
   private async loadPuppets(def: RelicDef, generation: number, portraitDepth: number, figureDepth: number, mask: Phaser.Display.Masks.GeometryMask): Promise<void> {
+    if (sdOnly(def)) { await this.loadSoloFigure(def, generation, portraitDepth, mask); return; }
     const asset = portraitAssetFor(def.portraitAssetId);
     const [portrait, figure] = await Promise.all([
       spawnPuppet(this.scene, asset, {
@@ -420,6 +424,36 @@ export class EnemyInfoPopup {
     enableHitOnClick(this.scene, figure);
     setDebugInfoAssetReady({ portrait: true, sd: true });
   }
+
+  /**
+   * 전신이 없는 몸은 SD 하나를 왼쪽 기둥에 크게 세운다(`ENEMY_INFO.soloFigure`).
+   *
+   * 칸·액자보다 **아래 층**(전신 자리의 층)에 둔다 — 크게 선 몸이 폭주 뱃지나 능력치 칸을
+   * 덮지 않게 하려는 것이다. 받침에 선 SD와 같이 누르면 한 번 튄다.
+   */
+  private async loadSoloFigure(def: RelicDef, generation: number, depth: number, mask: Phaser.Display.Masks.GeometryMask): Promise<void> {
+    const { soloFigure } = ENEMY_INFO;
+    const figure = await spawnPuppet(this.scene, battleAssetFor(def.id), {
+      x: SCREEN_CENTER.x + soloFigure.x,
+      groundY: SCREEN_CENTER.y + soloFigure.groundY,
+      height: soloFigure.height,
+      depth,
+    });
+    if (generation !== this.generation || !this.open) { figure.destroy(); return; }
+    this.figure?.destroy();
+    this.figure = figure;
+    figure.disableInteractive();
+    figure.setMask(mask);
+    figure.setAlpha(0);
+    this.scene.tweens.add({ targets: figure, alpha: 1, duration: 220 });
+    enableHitOnClick(this.scene, figure);
+    setDebugInfoAssetReady({ portrait: true, sd: true });
+  }
+}
+
+/** 전신 원화가 따로 없고 SD 묶음이 곧 그 몸인 개체인가. 이름이 아니라 묶음으로 가른다. */
+function sdOnly(def: RelicDef): boolean {
+  return portraitAssetFor(def.portraitAssetId) === battleAssetFor(def.id);
 }
 
 /** 표식 위에 얹는 투명한 입력면. 뱃지 자체는 발광을 겹친 그림이라 입력을 받지 않는다. */

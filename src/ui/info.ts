@@ -66,6 +66,7 @@ import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../cor
 import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, dualStrikeDamageKeywords, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, elationKeyword, passiveShieldKeyword, periodicStackKeyword, skillDescription } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
 import { deriveSummonStats } from "../core/summonStats";
+import { EnemyInfoPopup } from "./EnemyInfoPopup";
 import { galleryPortraitPlacement, INFO_PORTRAIT_FOCUS, infoPortraitPlacement } from "./portraitPlacement";
 import { skinsForRelic } from "../data/relicSkins";
 import { relicSkinManager } from "../managers/RelicSkinManager";
@@ -431,6 +432,8 @@ export class InfoManager {
   private readonly column: Phaser.GameObjects.Container;
   private readonly popups: PopupLayer;
   private readonly keywords: KeywordManager;
+  /** 쿠로·시로 태그가 여는 그 몸의 정보창. 처음 누를 때 한 번 세운다. */
+  private summonInfo?: EnemyInfoPopup;
 
   private readonly rarityText: Phaser.GameObjects.Text;
   /** 등급 글자 뒤에 깔리는 같은 모양의 발광. 보석처럼 스스로 빛나 보이게 한다. */
@@ -1886,7 +1889,7 @@ export class InfoManager {
     openFerocityTraitPopup(this.scene, this.popups, this.keywords, finalDef, from, {
       breakthroughEffect: !breakthroughEnhances(def, breakthrough, "ferocity")
         ? undefined : breakthroughEffectText(def, "ferocity", finalDef.stats),
-      summonTags: this.summonKeywordTags(),
+      summonTags: this.summonKeywordTags(), summonActions: this.summonActions(),
     });
   }
 
@@ -1902,7 +1905,7 @@ export class InfoManager {
       ? breakthroughEffectText(def, slot, finalDef.stats) : undefined;
     return buildSkillViewModel({
       def: finalDef, breakthrough, kindLabel, skill, gaugeCost, slot,
-      summonTags: this.summonKeywordTags(), breakthroughEffect,
+      summonTags: this.summonKeywordTags(), summonActions: this.summonActions(), breakthroughEffect,
     });
   }
 
@@ -1978,6 +1981,27 @@ export class InfoManager {
       });
     }
     return tags;
+  }
+
+  /**
+   * 쿠로·시로 태그를 누르면 뜻풀이 쪽지가 아니라 **그 몸의 정보창**(SD·스킬 액자·오각형)을 연다.
+   *
+   * 늑대는 완전한 `RelicDef`를 가진 몸이라 적 정보창과 같은 한 장(`EnemyInfoPopup`)에 선다 —
+   * 소환수 전용 화면을 다시 만들면 스킬 액자·폭주 뱃지·능력치 상세가 그 창에서만 옛 모습으로
+   * 남는다. 능력치는 지휘자가 **지금** 가진 능력치에서 파생하고, 레벨·돌파는 늑대가 따로 갖지
+   * 않으므로 지휘자의 값을 그대로 적는다. 감추는 문맥에서는 태그 자체가 없어 여기도 비어 있다.
+   */
+  private summonActions(): Readonly<Record<string, () => void>> | undefined {
+    const owner = this.currentDef;
+    const summons = owner?.summons ?? [];
+    if (!owner || summons.length === 0 || !this.capabilities.showSummons || !this.ownedNow) return undefined;
+    const ownerStats = this.shownStats(owner);
+    const level = this.publicProfile ? this.publicProfile.level : relicProgression.getProgress(owner.id).level;
+    const breakthrough = this.shownBreakthrough(owner);
+    return Object.fromEntries(summons.map((summon) => [`summon-${summon.def.id}`, () => {
+      this.summonInfo ??= new EnemyInfoPopup(this.scene, this.popups);
+      this.summonInfo.show({ def: { ...summon.def, stats: deriveSummonStats(ownerStats, summon) }, level, breakthrough });
+    }]));
   }
 
   /** 도감은 보유 여부를 전달해 정적 기록과 성장 정보의 잠금을 한곳에서 적용한다. */
@@ -2629,7 +2653,7 @@ export function openFerocityTraitPopup(
   /** 레벨·돌파·룬까지 반영한 정의. 창이 다시 성장시키지 않는다. */
   def: RelicDef,
   from: PopupSource,
-  options: { breakthroughEffect?: string; summonTags?: readonly KeywordDef[] } = {},
+  options: { breakthroughEffect?: string; summonTags?: readonly KeywordDef[]; summonActions?: Readonly<Record<string, () => void>> } = {},
 ): void {
   // 피해 수치가 있는 폭주만 현재 능력치로 환산한다. 토리카의 새 탱커 계약은 자체 실제값을 그대로 보여 준다.
   const { atk: attack, def: defense, ap: abilityPower } = def.stats;
@@ -2667,6 +2691,7 @@ export function openFerocityTraitPopup(
     effectType: "buff",
     valueLabel: t("skill.ferocity.valueLabel"),
     contextualKeywords: contextualKeywords.length > 0 ? contextualKeywords : undefined,
+    keywordActions: options.summonActions,
     // 폭주도 돌파가 효과를 붙이는 슬롯이라 같은 노란 줄을 얻는다.
     breakthroughEffect: options.breakthroughEffect,
     // 설명 수치는 전투가 읽는 특성 필드에서 생성해 정적 문구와 실제 효과가 갈라지지 않는다.
@@ -2685,6 +2710,8 @@ export function buildSkillViewModel(options: {
   slot?: SkillArtSlot;
   /** 지휘자의 귀속 소환수 설명. 감추는 문맥(미보유 도감)은 빈 배열을 넘긴다. */
   summonTags?: readonly KeywordDef[];
+  /** 소환수 태그를 눌렀을 때 뜻풀이 대신 여는 그 몸의 정보창. 태그 ID가 키다. */
+  summonActions?: Readonly<Record<string, () => void>>;
   /** 한계 돌파로 이 슬롯에 붙은 효과를 노란 줄로 함께 세울지. 열린 돌파 등급의 몫만 넘긴다. */
   breakthroughEffect?: string;
 }): SkillInfoViewModel {
@@ -2768,6 +2795,7 @@ export function buildSkillViewModel(options: {
         description: t("skill.keyword.shield.fromMaxHp", { percent: skill.selfGuard.shieldMaxHpPercent }),
       },
     ].filter((item): item is KeywordDef => item !== undefined),
+    keywordActions: options.summonActions,
     // 정적 문장에서 수치를 재해석하지 않고 전투 정의를 그대로 팝업에 넘긴다.
     targeting: "targeting" in skill ? skill.targeting as Ultimate["targeting"] : undefined,
     statusEffects: "statusEffects" in skill ? skill.statusEffects : undefined,

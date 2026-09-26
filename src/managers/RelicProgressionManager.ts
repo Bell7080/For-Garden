@@ -1,4 +1,5 @@
 import { RAID_TICKET_TEST_KIT } from "../data/raid";
+import { previewCompletedRaids, RAID_HISTORY_PREVIEW_PREFIX } from "../core/raid";
 import { calculateFinalStats, breakthroughGrade, remainingBreakthroughCost } from "../core/relicProgression";
 import type { RelicProgress, Stats } from "../core/types";
 import { getRelic } from "../data/relics";
@@ -93,6 +94,17 @@ export class RelicProgressionManager {
     }
     if (!changed) return;
     this.state.itemInventory = items;
+    this.persistSharedSession();
+  }
+
+  /**
+   * 임시 지급: 완료 탭을 확인할 끝난 레이드 표본을 넣는다(`previewCompletedRaids`). 표본이 하나라도
+   * 남아 있으면 건드리지 않는다 — 정산한 뒤 다시 채우면 받은 판이 도로 받을 판이 된다. 정식 기록이
+   * 붙으면 이 메서드와 부트의 호출을 함께 지운다.
+   */
+  grantRaidHistoryTestKit(now: Date = new Date()): void {
+    if (this.state.raid.instances.some(({ id }) => id.startsWith(RAID_HISTORY_PREVIEW_PREFIX))) return;
+    this.state.raid = { instances: [...this.state.raid.instances, ...previewCompletedRaids(now)] };
     this.persistSharedSession();
   }
 

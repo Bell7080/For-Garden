@@ -61,6 +61,14 @@ test("레이드는 목록에서 월드 폭주 판으로 들어가고 출격이 �
   await waitForDebugState(page, () => window.__PF_DEBUG?.raidStage, "list", { timeout: 20_000 });
   await page.waitForTimeout(1_500);
   await captureGame(page, `test-results/${test.info().project.name}-raid-completed.png`);
+  // 머리 오른쪽의 토벌권을 누르면 가방과 같은 안내창이 뜬다.
+  const ticket = RAID_LIST_CHROME.tickets;
+  await tap(page, ticket.right - ticket.size / 2, ticket.y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles ?? [])).toContain("토벌권");
+  await page.waitForTimeout(800);
+  await captureGame(page, `test-results/${test.info().project.name}-raid-ticket-guide.png`);
+  await tap(page, 960, BASE_HEIGHT - 120);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles ?? [])).not.toContain("토벌권");
   await tap(page, tabs.left + tabs.width / 2, tabs.y);
   await page.waitForTimeout(1_500);
   // 맨 위 층(월드 폭주)의 이름 줄을 누른다 — 보상 줄의 버튼을 피한다.

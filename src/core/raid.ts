@@ -3,6 +3,7 @@ import { RAID_DIFFICULTY, RAID_MOCK_PARTICIPANTS, RAID_SEASON_TOTAL_HP, RAID_SUM
 import { PREVIEW_FRIENDS } from "../data/friends";
 import { requiredBreakthroughForLevel } from "./levelDesign";
 import type { RelicDef } from "./types";
+import type { RaidInstanceState } from "../state/session";
 
 /**
  * 시즌 보스가 서는 자리 — **보스**다. 판 안에서는 눕지 않아도 시즌 체력 한 줄은 끝내 깎여
@@ -296,4 +297,39 @@ export function raidSettlement(difficulty: RaidDifficulty, myDamage: number, dea
 /** 한 판을 치고 곧바로 받는 골드. 그 판의 피해에 비례한다. */
 export function raidRunGold(runDamage: number, goldPerDamage: number): number {
   return Math.max(0, Math.floor(runDamage * goldPerDamage));
+}
+
+/** 임시 표본의 ID 머리. 이 머리를 가진 판이 저장에 하나라도 있으면 다시 넣지 않는다. */
+export const RAID_HISTORY_PREVIEW_PREFIX = "preview-done-";
+
+/**
+ * 임시 표본: **완료 탭을 확인할 끝난 판 넷.** 정식 레이드 기록이 쌓이기 전에는 완료 탭이 늘 비어
+ * 정산 층이 어떻게 서는지 볼 수 없다. 토벌한 판 · 시간이 다 된 판 · 월드 폭주 · 이미 정산한 판을
+ * 하나씩 둔다. 토벌 여부는 다른 참가자의 몫(`mockSummonRaidDamage`)이 ID에서 정해지므로 ID를
+ * 그 결과에 맞춰 골랐다 — `slain-1`은 체력을 넘기고 `expired-2`는 절반 남짓에서 멈춘다.
+ *
+ * 시각은 지금을 기준으로 한다 — 끝난 지 오래된 정산한 판은 목록에서 걷히기 때문이다.
+ * 정식 기록이 붙으면 이 함수와 매니저의 `grantRaidHistoryTestKit`을 함께 지운다.
+ */
+export function previewCompletedRaids(now: Date): RaidInstanceState[] {
+  const hours = (value: number): string => new Date(now.getTime() - value * 3_600_000).toISOString();
+  const friend = (index: number): string | undefined => PREVIEW_FRIENDS[index % PREVIEW_FRIENDS.length]?.displayName;
+  return [
+    {
+      id: `${RAID_HISTORY_PREVIEW_PREFIX}slain-1`, kind: "summon", bossRelicId: "sukusuino", difficulty: "hard",
+      openedAt: hours(27), endsAt: hours(3), summonedByMe: true, myDamage: 26_400, attemptsUsed: 2, settled: false,
+    },
+    {
+      id: `${RAID_HISTORY_PREVIEW_PREFIX}expired-2`, kind: "summon", bossRelicId: "taboa", difficulty: "normal",
+      openedAt: hours(34), endsAt: hours(10), summonerName: friend(0), summonedByMe: false, myDamage: 8_700, attemptsUsed: 1, settled: false,
+    },
+    {
+      id: `${RAID_HISTORY_PREVIEW_PREFIX}world`, kind: "world", bossRelicId: RAID_BOSS_POOL[0], difficulty: "rampage",
+      openedAt: hours(30), endsAt: hours(6), summonedByMe: false, myDamage: 41_500, attemptsUsed: 2, settled: false,
+    },
+    {
+      id: `${RAID_HISTORY_PREVIEW_PREFIX}settled`, kind: "summon", bossRelicId: "taboa", difficulty: "easy",
+      openedAt: hours(40), endsAt: hours(16), summonerName: friend(1), summonedByMe: false, myDamage: 12_000, attemptsUsed: 2, settled: true,
+    },
+  ];
 }

@@ -34,6 +34,9 @@ import { addFramedIcon } from "../ui/itemFrame";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
 import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
 import { consumeSceneEntry } from "./sceneEntry";
+import { findItem } from "../data/items";
+import { openItemGuide } from "../ui/currencyGuideEntry";
+import { pressIn, pressOut } from "../ui/pressFeedback";
 
 /**
  * 지난번에 받은 레이드 목록. 씬이 다시 설 때 이것으로 먼저 그려 빈 목록이 한 박자 서지 않게 한다.
@@ -297,9 +300,20 @@ export class RaidScene extends Phaser.Scene {
     const content = this.content;
     if (!content) return;
     const { y, size, gap, right } = RAID_LIST_CHROME.tickets;
-    const entries = [["item-raid-select-ticket", tickets.select], ["item-raid-ticket", tickets.normal]] as const;
-    entries.forEach(([key, count], index) => {
-      addFramedIcon(this, content, right - size / 2 - index * (size + gap), y, size, key, { amount: count.toLocaleString(), plain: true });
+    // 오른쪽부터 선다 — 밑동의 소환 줄과 같은 순서(선택 토벌권 왼쪽 · 토벌권 오른쪽)로 읽히게 한다.
+    const entries = [["item-raid-ticket", "raid-ticket", tickets.normal], ["item-raid-select-ticket", "raid-select-ticket", tickets.select]] as const;
+    entries.forEach(([key, itemId, count], index) => {
+      const frame = addFramedIcon(this, content, right - size / 2 - index * (size + gap), y, size, key, { amount: count.toLocaleString(), plain: true });
+      const definition = findItem(itemId);
+      if (!definition) return;
+      // 누르면 가방에서 여는 것과 같은 안내창이 뜬다 — 무엇으로 무엇을 여는지는 그 창이 말한다.
+      frame.setSize(size, size).setInteractive({ useHandCursor: true })
+        .on(Phaser.Input.Events.POINTER_DOWN, () => pressIn(frame))
+        .on(Phaser.Input.Events.POINTER_OUT, () => pressOut(frame, "normal", { pop: false }))
+        .on(Phaser.Input.Events.POINTER_UP, () => {
+          pressOut(frame);
+          if (!this.busy) openItemGuide({ scene: this, popups: this.popups }, definition);
+        });
     });
   }
 

@@ -6,7 +6,8 @@ import type { SkirmishState } from "../core/skirmish";
  */
 interface BattleTestConfig {
   seed: number;
-  preset?: "result";
+  /** `result`는 다음 타격으로 끝나는 판, `ultimate`는 아군 궁극기가 찬 채로 여는 판(컷인 캡처용)이다. */
+  preset?: "result" | "ultimate";
 }
 
 declare global {
@@ -35,7 +36,13 @@ export function battleRandom(): () => number {
 
 /** 결과 팝업 E2E만 다음 유효 타격으로 끝나게 하며 전투 공식은 전혀 바꾸지 않는다. */
 export function applyBattleTestPreset(state: SkirmishState): void {
-  if (testConfig()?.preset !== "result") return;
+  const preset = testConfig()?.preset;
+  if (preset === "ultimate") {
+    // 궁극기 컷인을 실제로 여는 E2E만 아군 게이지를 채워 둔다. 전투 공식은 건드리지 않는다.
+    for (const fighter of state.fighters) if (fighter.side === "player") fighter.energy = fighter.def.ultimate.cost;
+    return;
+  }
+  if (preset !== "result") return;
   for (const fighter of state.fighters) {
     // 양쪽을 전장 중앙에 붙이고 아군의 다음 공격만 열어 결과 방향과 도달 시점을 함께 고정한다.
     fighter.x = (state.arena.left + state.arena.right) / 2;

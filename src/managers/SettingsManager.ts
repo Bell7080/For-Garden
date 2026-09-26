@@ -25,6 +25,13 @@ export class SettingsManager extends EventTarget {
   syncRuntime(game: Phaser.Game): void { this.runtimeGame = game; applyFrameRateLimit(game, this.get().presentation.frameRateLimit); }
 
   /** 섹션 단위 부분 변경을 합친 뒤 보정·저장·이벤트를 항상 같은 순서로 수행한다. */
+  /** 던전 입구에서 고른 단계를 기억한다. 같은 값이면 저장하지 않는다. */
+  rememberDungeonTier(dungeon: "bounty" | "cake", tierId: string): void {
+    const current = this.get().game.dungeonTiers;
+    if (current[dungeon] === tierId) return;
+    this.update({ game: { dungeonTiers: { ...current, [dungeon]: tierId } } });
+  }
+
   update(patch: { [K in keyof GameSettings]?: Partial<GameSettings[K]> }): GameSettings {
     const merged = Object.fromEntries(Object.entries(this.get()).map(([key, value]) => [key, { ...value, ...(patch[key as keyof GameSettings] ?? {}) }])) as unknown as GameSettings;
     this.state.settings = normalizeSettings(merged);

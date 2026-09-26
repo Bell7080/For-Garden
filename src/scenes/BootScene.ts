@@ -1,5 +1,6 @@
 import { playerCardManager } from "../managers/PlayerCardManager";
 import Phaser from "phaser";
+import type { RaidBattleInputDto } from "../core/expeditionBattle";
 import { setDebugScene } from "../debug";
 import { defaultSessionAfterReset, saveManager } from "../state/SaveManager";
 import { replaceSession, session } from "../state/session";
@@ -16,7 +17,7 @@ export class BootScene extends Phaser.Scene {
     super("boot");
   }
 
-  create(data?: { destination?: "lobby" | "raid"; raidId?: string }): void {
+  create(data?: { destination?: "lobby" | "raid" | "raidBattle"; raidId?: string; raidBattle?: RaidBattleInputDto }): void {
     setDebugScene("boot");
     let firstRun = false;
     try {
@@ -44,6 +45,10 @@ export class BootScene extends Phaser.Scene {
     relicProgression.grantRuneTraitTestKit();
     // 임시 지급: 이미 저장이 있는 계정도 레이드를 소환해 볼 수 있게 토벌권을 하한까지 채운다.
     relicProgression.grantRaidTicketTestKit();
+    // 임시 지급: 레이드 완료 탭이 어떻게 서는지 볼 수 있게 끝난 판 표본을 넣는다.
+    relicProgression.grantRaidHistoryTestKit();
+    // 임시 지급: 광고 SDK가 없는 웹 빌드에서도 소탕을 만져 볼 수 있게 소탕권을 하한까지 채운다.
+    relicProgression.grantSweepTicketTestKit();
     // 공개 UID와 연구 개시일은 계정이 처음 설 때 한 번만 정해진다. 이전 저장도 여기서 채운다.
     playerCardManager.ensureIdentity();
     // 저장에서 복원한 접근성 배율을 어떤 씬도 생성되기 전에 공용 텍스트 계층에 반영한다.
@@ -69,7 +74,9 @@ export class BootScene extends Phaser.Scene {
     // 레이드는 제출 뒤 곧바로 시즌 판으로 되돌아간다 — 한 판 밀고 로비를 거쳐 다시 들어오게
     // 하면 세 번 도전하는 동안 같은 길을 여섯 번 지난다.
     // 레이드는 목록이 아니라 방금 친 그 판으로 돌아간다.
-    if (data?.destination === "raid") this.scene.start("raid", { raidId: data.raidId });
+    // 「다시 하기」는 목록도 판도 거치지 않고 같은 판의 전장으로 곧장 들어간다.
+    if (data?.destination === "raidBattle" && data.raidBattle) this.scene.start("battle", data.raidBattle);
+    else if (data?.destination === "raid") this.scene.start("raid", { raidId: data.raidId });
     else this.scene.start(data?.destination === "lobby" ? "lobby" : "title");
   }
 }

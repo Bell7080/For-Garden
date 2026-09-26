@@ -758,5 +758,35 @@
 "Pesquise um personagem no Laboratório de Pesquisa 10 vezes",
 "Erforsche 10-mal einen Charakter im Forschungslabor",
 "Проведите исследование персонажа в исследовательской лаборатории 10 раз"
+],
+"item.sweep-ticket.name": [
+"扫荡券",
+"ตั๋วกวาดล้าง",
+"Vé càn quét",
+"Tiket Sapu",
+"Ticket de barrido",
+"Tíquete de varredura",
+"Säuberungsticket",
+"Билет зачистки"
+],
+"item.sweep-ticket.description": [
+"不经战斗，对已通关的地下城阶段扫荡一次。",
+"กวาดล้างด่านดันเจี้ยนที่ผ่านแล้วหนึ่งครั้งโดยไม่ต้องต่อสู้",
+"Càn quét một lần màn hầm ngục đã vượt qua mà không cần chiến đấu.",
+"Menyapu sekali tahap dungeon yang sudah dimenangkan tanpa bertarung.",
+"Hace un barrido de una etapa de mazmorra ya superada, una vez, sin combatir.",
+"Faz uma varredura de uma etapa de masmorra já vencida, uma vez, sem batalha.",
+"Führt eine Säuberung einer bereits gewonnenen Dungeon-Stufe einmal ohne Kampf durch.",
+"Один раз проводит зачистку уже пройденного этапа подземелья без боя."
+],
+"adReward.sweep-tickets.text": [
+"扫荡券 5",
+"ตั๋วกวาดล้าง 5",
+"Vé càn quét 5",
+"Tiket Sapu 5",
+"Ticket de barrido 5",
+"Tíquete de varredura 5",
+"Säuberungsticket 5",
+"Билет зачистки 5"
 ]
 }

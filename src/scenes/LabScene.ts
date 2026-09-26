@@ -5,7 +5,7 @@ import { setDebugResearchBoard, setDebugScene } from "../debug";
 import { gameApi } from "../api/FakeServer";
 import { GameApiError, type PullResultDto } from "../api/contracts";
 import { bannerAcceptsCount, bannerGuaranteePending, bannerPullsRemaining, canPull, pullCost, type Banner, type GachaPityState, type ResearchGrade } from "../core/gacha";
-import { ResearchPresentationController, highestRarity, researchSlotViews } from "../core/researchPresentation";
+import { ResearchPresentationController, highestRarity, researchSlotViews, showcaseRelicIds } from "../core/researchPresentation";
 import { BANNERS, LIMITED_RELIC_IDS } from "../data/banners";
 import { getRelic } from "../data/relics";
 import { session } from "../state/session";
@@ -19,6 +19,7 @@ import { CRACK_BRANCHES, FOSSIL_CRACK, crackBranchPoints, fossilShards, shardPoi
 import { researchBoardLayout } from "../ui/researchBoardLayout";
 import { ResearchSlotTile } from "../ui/ResearchSlotTile";
 import { playNewRelicShowcase } from "../ui/NewRelicShowcase";
+import { preloadSsrOmen, warmSsrOmen } from "../ui/SsrOmenCinematic";
 import { exposeShowcasePreview } from "../testSupport/showcaseHarness";
 import { audioManager, type AudioScope } from "../managers/AudioManager";
 import { PopupLayer } from "../ui/PopupLayer";
@@ -89,6 +90,8 @@ export class LabScene extends Phaser.Scene {
   private mileagePopup?: MileagePopup;
   /** 결과판에 깔린 칸들. 몇 칸이 남았는지가 안내 문구와 화면 터치의 뜻을 정한다. */
   private boardTiles: ResearchSlotTile[] = [];
+  /** 칸을 열기 전에 소개 장면을 돌릴 개체 — 새 렐릭과 모든 SSR(`showcaseRelicIds`). */
+  private boardShowcase = new Map<ResearchSlotTile, string>();
   private boardHint?: Phaser.GameObjects.Text;
   private boardOpenAll?: Button;
   private boardLayer?: Phaser.GameObjects.Container;
@@ -171,6 +174,7 @@ export class LabScene extends Phaser.Scene {
       this.finishStage?.();
       this.boardTap = undefined;
       this.boardTiles = [];
+      this.boardShowcase = new Map();
       this.boardHint = undefined;
       this.boardOpenAll = undefined;
       this.boardLayer = undefined;
@@ -185,6 +189,9 @@ export class LabScene extends Phaser.Scene {
     });
     this.showcaseRelic();
     this.refresh();
+    // SSR 전조 무대를 손이 노는 동안 미리 세운다 — 첫 SSR이 뜨는 순간 셰이더 컴파일이 몰려
+    // 화면이 멎지 않게. 들어오는 연출이 끝난 뒤에 세워 그 연출을 끊지 않는다.
+    this.time.delayedCall(900, () => void warmSsrOmen(this.game, settingsManager.get().accessibility.reduceMotion));
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
@@ -460,6 +467,8 @@ export class LabScene extends Phaser.Scene {
    * 돌려주는 값은 "시네마틱이 실제로 연출을 맡았는가"다. 거짓이면 씬은 예전 연출을 재생한다.
    */
   private async playCinematic(results: PullResultDto[], request: number): Promise<boolean> {
+    // SSR이 든 판이면 전조 무대를 미리 읽어 둔다 — 카드가 뒤집힐 때쯤이면 도착해 있다.
+    if (results.some((result) => result.type === "relic" && getRelic(result.relicId).rarity === "SSR")) void preloadSsrOmen()?.catch(() => undefined);
     if (!researchCinematicEnabled() || !isCinematicCount(results.length)) return false;
     const preferences = settingsManager.get();
     const views = researchSlotViews(results, (relicId) => getRelic(relicId).rarity);
@@ -475,15 +484,17 @@ export class LabScene extends Phaser.Scene {
       icon: (kind) => CURRENCY_ICON_BY_WALLET[kind],
       amount: (value) => formatCurrency(value),
     });
+    const showcase = showcaseRelicIds(results, (relicId) => getRelic(relicId).rarity);
     const cinematic = await ResearchCinematic.open({
       canvas: this.game.canvas,
       scene: this,
       rewards,
       art,
       reducedMotion: preferences.accessibility.reduceMotion,
+      introduceSlots: showcase.flatMap((relicId, index) => (relicId ? [index] : [])),
       introduce: async (index) => {
-        const view = views[index];
-        if (view?.kind === "relic" && this.presentation.isCurrent(request)) await this.introduceRelic(view.relicId);
+        const relicId = showcase[index];
+        if (relicId && this.presentation.isCurrent(request)) await this.introduceRelic(relicId);
       },
       text: {
         skip: t("lab.cinematic.skip"),
@@ -634,6 +645,8 @@ export class LabScene extends Phaser.Scene {
     this.boardRequest = request;
     this.boardLayer = layer;
     const views = researchSlotViews(results, (relicId) => getRelic(relicId).rarity);
+    const showcase = showcaseRelicIds(results, (relicId) => getRelic(relicId).rarity);
+    this.boardShowcase = new Map();
     this.boardTiles = views.map((view, index) => {
       const cell = board.cells[index];
       return new ResearchSlotTile(this, cell.x, cell.y, {
@@ -643,6 +656,7 @@ export class LabScene extends Phaser.Scene {
         frameSize: board.frameSize,
       }, (tile) => void this.openSlot(tile));
     });
+    this.boardTiles.forEach((tile, index) => { const relicId = showcase[index]; if (relicId) this.boardShowcase.set(tile, relicId); });
     for (const tile of this.boardTiles) { content.add(tile); tile.syncMasks(); }
 
     const hint = this.add
@@ -665,15 +679,17 @@ export class LabScene extends Phaser.Scene {
   /**
    * 남은 칸을 한 번에 연다.
    *
-   * 아직 열지 않은 칸에 **새로 만난 렐릭**이 있으면 그 소개가 먼저 차례로 돈다 — 한꺼번에
-   * 열린 판에서 처음 보는 얼굴이 카드 한 장으로만 지나가면 "새로 왔다"가 읽히지 않는다.
+   * 아직 열지 않은 칸에 **새로 만난 렐릭이나 SSR**이 있으면 그 소개가 먼저 차례로 돈다 — 한꺼번에
+   * 열린 판에서 그 얼굴이 카드 한 장으로만 지나가면 뽑은 순간이 읽히지 않는다.
    */
   private async openEverySlot(): Promise<void> {
     if (this.showcasing) return;
     const request = this.boardRequest;
-    for (const tile of this.boardTiles.filter((candidate) => !candidate.opened && candidate.view.kind === "relic")) {
+    for (const tile of this.boardTiles) {
+      const relicId = this.boardShowcase.get(tile);
+      if (tile.opened || !relicId) continue;
       if (!this.presentation.isCurrent(request)) return;
-      await this.introduceRelic(tile.view.kind === "relic" ? tile.view.relicId : "");
+      await this.introduceRelic(relicId);
     }
     if (!this.presentation.isCurrent(request)) return;
     for (const tile of this.boardTiles) tile.reveal(true);
@@ -690,9 +706,10 @@ export class LabScene extends Phaser.Scene {
   private async openSlot(tile: ResearchSlotTile): Promise<void> {
     // 소개 장면이 도는 동안 들어온 터치는 그 장면의 몫이므로 칸을 열지 않는다.
     if (this.finishStage || this.showcasing || tile.opened) return;
-    if (tile.view.kind === "relic") {
+    const relicId = this.boardShowcase.get(tile);
+    if (relicId) {
       const request = this.boardRequest;
-      await this.introduceRelic(tile.view.relicId);
+      await this.introduceRelic(relicId);
       if (!this.presentation.isCurrent(request)) return;
     }
     if (!tile.reveal()) return;

@@ -11,6 +11,11 @@
  * 전신이 화면 밖까지 크게 오른쪽으로 비켜 서고, 비스듬한 황금 띠와 빛줄기·세로 표식이 깔리며,
  * 섬광이 두 번 치고 화면이 흔들린다. SR·R은 가운데에 반듯하게 서고 가로 띠 하나만 깐다.
  *
+ * **SSR은 목소리보다 먼저 전조가 한 장 든다**(`SHOWCASE_OMEN`) — 화면이 샤락 닫히며 어두워지고,
+ * 가운데에 황금 줄이 핑, 핑핑핑 그어진 뒤 화석처럼 쩍 갈라지며 목소리 막이 열린다. 카드가
+ * 무엇인지 보이기 전에 "이번 것은 다르다"가 먼저 읽혀야 한다. 새로 만난 개체가 아니어도 SSR이면
+ * 매번 돈다.
+ *
  * Phaser 없이 읽히도록 값만 둔다 — 화면과 회귀 테스트가 같은 표를 읽어야 자리가 갈리지 않는다.
  */
 
@@ -47,7 +52,103 @@ export const SHOWCASE_VOICE = {
  * 한 번도 보지 못한다. 한 번의 누름은 한 막만 넘기고, 막이 바뀐 직후의 누름은 버린다. 시간은
  * 씬 시계가 아니라 실제 시간이다 — 바쁜 기기에서 씬 시계가 늦으면 잠금이 끝없이 늘어난다.
  */
-export const SHOWCASE_TAP_LOCK_MS = { voice: 700, stage: 1200 } as const;
+export const SHOWCASE_TAP_LOCK_MS = { omen: 450, voice: 700, stage: 1200 } as const;
+
+/**
+ * 소속 스쿼드 — 뱃지 줄에 끼우지 않고 **무대 뒷배경 왼쪽 위에 크게, 반투명하게** 깐다.
+ *
+ * 속성·직군 옆에 같은 크기로 세우면 세 표식이 같은 무게로 읽혀, 전투 규칙(속성·직군)과 서사
+ * (소속)가 한 줄에 섞인다. 뒤에 깔면 "어느 무리에서 온 개체인가"가 장면의 배경으로 읽힌다.
+ * 전신이 오른쪽에 서므로 왼쪽 위가 비어 있고, SSR의 세로 표식(왼쪽 가장자리)은 피한다.
+ */
+export const SHOWCASE_SQUAD = {
+  x: 330,
+  y: 420,
+  /** 엠블럼 긴 변. */
+  size: 540,
+  alpha: 0.2,
+  /** 엠블럼 아래에 깔리는 스쿼드 이름과 라틴 표기. */
+  name: { y: 760, size: 68, alpha: 0.34, room: 400 },
+  latin: { y: 832, size: 28, alpha: 0.3 },
+  /** 무대가 선 뒤 조금 늦게 떠오른다. */
+  delayMs: 180,
+  fadeMs: 700,
+} as const;
+
+/**
+ * SSR 전조 — 목소리 막보다 먼저 드는 한 장.
+ *
+ * 1. **샤락** — 위아래 검은 막이 가운데로 닫힌다.
+ * 2. **핑, 핑핑핑** — 가운데에 황금 줄이 그어지고(첫 줄), 조금씩 비껴 여러 줄이 뒤따른다.
+ * 3. **쩍** — 줄이 모인 자리에서 화석처럼 균열이 번지고, 섬광과 함께 마름모 조각이 튄다.
+ *
+ * 시간은 전부 이 표에 있다. 누르면(잠금 뒤) 곧바로 목소리 막으로 넘어간다.
+ */
+export const SHOWCASE_OMEN = {
+  /** 줄과 균열이 서는 세로 자리 — 목소리 대사가 번질 자리와 같다. */
+  y: SHOWCASE_VOICE.y,
+  curtainMs: 230,
+  /** 막이 닫힌 뒤 첫 줄이 그어지기까지. */
+  firstStrikeMs: 300,
+  /** 줄 하나가 좌우로 뻗는 시간. */
+  strikeMs: 95,
+  /** 줄 사이 간격. 첫 줄 뒤에 잠깐 쉬었다가 나머지가 몰아친다(핑…핑핑핑). */
+  pauseAfterFirstMs: 260,
+  strikeGapMs: 105,
+  /** 줄 두께 — 가운데 심지와 그 둘레의 빛. */
+  core: 4,
+  glow: 26,
+  /** 마지막 줄 뒤 균열이 번지기까지. */
+  crackDelayMs: 220,
+  crackMs: 180,
+  crackSize: 760,
+  /** 균열이 선 뒤 터지기까지 버티는 시간. */
+  crackHoldMs: 260,
+  /** 터진 뒤 목소리 막이 열리기까지. */
+  burstMs: 420,
+  shards: 11,
+  shardSpread: 820,
+  shardSize: 54,
+  /** 줄마다 작게 흔든다. 터질 때만 크게. */
+  strikeShake: { ms: 70, intensity: 0.003 },
+  burstShake: { ms: 220, intensity: 0.005 },
+  /** 움직임 줄이기에서 전조가 서 있는 시간. */
+  reducedHoldMs: 700,
+} as const;
+
+export interface OmenStrike {
+  /** 가운데 줄에서 벗어난 세로 거리. */
+  dy: number;
+  /** 기울기(도). */
+  angle: number;
+  /** 화면 폭 대비 길이. */
+  length: number;
+  /** 첫 줄 기준 지연. */
+  delay: number;
+  /** 가운데에서 비켜 난 가로 자리. */
+  dx: number;
+}
+
+/**
+ * 전조의 황금 줄. 첫 줄은 정확히 가운데를 가로지르고, 나머지는 조금씩 비껴 몰아친다.
+ *
+ * 난수를 쓰지 않는다 — 같은 SSR은 늘 같은 그림으로 긋는다. 줄이 가운데에서 멀리 흩어지면
+ * 한 점으로 모이는 긴장이 풀리므로 세로로는 좁게, 기울기는 작게 둔다.
+ */
+export function omenStrikes(count = 5): OmenStrike[] {
+  const strikes: OmenStrike[] = [{ dy: 0, angle: 0, length: 1.3, delay: 0, dx: 0 }];
+  for (let index = 1; index < count; index += 1) {
+    const side = index % 2 === 0 ? 1 : -1;
+    strikes.push({
+      dy: side * (18 + ((index * 23) % 50)),
+      angle: side * (2.5 + ((index * 7) % 6)) * (index % 3 === 0 ? -1 : 1),
+      length: 0.7 + ((index * 13) % 5) / 10,
+      delay: SHOWCASE_OMEN.pauseAfterFirstMs + (index - 1) * SHOWCASE_OMEN.strikeGapMs,
+      dx: side * ((index * 41) % 120),
+    });
+  }
+  return strikes;
+}
 
 /** 등장 막에서 모든 등급이 같이 쓰는 정보 자리. */
 export const SHOWCASE_INFO = {
@@ -59,7 +160,6 @@ export const SHOWCASE_INFO = {
   name: { y: 1486, size: 104 },
   origin: { y: 1568, size: 28 },
   badges: { y: 1664, element: 88, role: 66, gap: 22 },
-  squad: { size: 74 },
   radar: { x: 850, y: 1610, radius: 100, plate: { width: 380, height: 340 } },
   sd: { x: 188, groundY: 1236, height: 290 },
   hintY: SHOWCASE_SIZE.height - 70,
@@ -88,6 +188,8 @@ export interface ShowcaseComposition {
   shake?: { ms: number; intensity: number };
   /** 대사 글자 크기. */
   voiceSize: number;
+  /** 목소리보다 먼저 드는 전조(`SHOWCASE_OMEN`). SSR만. */
+  omen: boolean;
 }
 
 export const SHOWCASE_COMPOSITION: Record<RelicRarity, ShowcaseComposition> = {
@@ -100,8 +202,10 @@ export const SHOWCASE_COMPOSITION: Record<RelicRarity, ShowcaseComposition> = {
     watermark: true,
     sparkles: 9,
     flashes: 2,
-    shake: { ms: 420, intensity: 0.008 },
+    // 전조가 이미 지반을 흔들었으므로 등장은 짧게 한 번만 울린다.
+    shake: { ms: 240, intensity: 0.0035 },
     voiceSize: 66,
+    omen: true,
   },
   SR: {
     portrait: { x: 610, y: 930, height: 1880 },
@@ -113,6 +217,7 @@ export const SHOWCASE_COMPOSITION: Record<RelicRarity, ShowcaseComposition> = {
     sparkles: 4,
     flashes: 1,
     voiceSize: 60,
+    omen: false,
   },
   R: {
     portrait: { x: 600, y: 950, height: 1780 },
@@ -124,6 +229,7 @@ export const SHOWCASE_COMPOSITION: Record<RelicRarity, ShowcaseComposition> = {
     sparkles: 0,
     flashes: 1,
     voiceSize: 58,
+    omen: false,
   },
 };
 

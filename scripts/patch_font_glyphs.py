@@ -138,6 +138,10 @@ def patch(language: str, folder: Path) -> None:
                 if table.isUnicode():
                     table.cmap[code] = name
             added.append(chr(code))
+        if not added:
+            # 원본에도 없는 글자만 남았다면 다시 저장하지 않는다 — 압축만 달라진 파일이 변경으로 남는다.
+            print(f"  {target_path.name}: 더할 수 있는 글자 없음")
+            continue
         target.flavor = "woff2"
         target.save(target_path)
         print(f"  {target_path.name}: +{len(added)}자 {''.join(added)}  ({target_path.stat().st_size / 1024:.0f}KB)")

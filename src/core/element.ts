@@ -59,3 +59,8 @@ export function elementMultiplier(attacker: EffectiveElement, defender: Effectiv
 export function effectiveElement(relic: RelicDef): EffectiveElement {
   return relic.passive.elementOverride ?? relic.element;
 }
+
+/** 속성 목록에서 겹치는 것을 빼고 처음 나오는 순서를 지킨다. 적 무리의 속성 뱃지가 쓴다. */
+export function distinctElements(elements: readonly Element[]): Element[] {
+  return [...new Set(elements)];
+}

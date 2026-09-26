@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { dungeonRunStamina } from "../../src/core/dungeonShortcut";
 import { CAKE_OPERATION_ENEMY_IDS, CAKE_OPERATION_TIERS, cakeOperationRunCost, cakeOperationTierIndex, cakeOperationEnemies, getCakeOperationTier, isCakeTierUnlocked, cakeOperationEnemyDisplayLevel, cakeOperationRole } from "../../src/data/cakeOperation";
 import { getRelic } from "../../src/data/relics";
 import { applyEncounterScaling } from "../../src/core/levelDesign";
@@ -15,7 +16,7 @@ describe("치즈케이크 대작전 단계 표", () => {
 
   /** 아군을 키울 이유가 사다리에 있어야 한다 — 위로 갈수록 스테미나당 효율이 좋아진다. */
   it("스테미나당 효율이 위 단계로 갈수록 좋아진다", () => {
-    const rate = CAKE_OPERATION_TIERS.map((tier) => tier.rewardCheesecake / tier.staminaCost);
+    const rate = CAKE_OPERATION_TIERS.map((tier) => tier.rewardCheesecake / cakeOperationRunCost(tier).staminaCost);
     for (let index = 1; index < rate.length; index += 1) expect(rate[index]).toBeGreaterThan(rate[index - 1]);
   });
 
@@ -67,8 +68,8 @@ describe("치즈케이크 대작전 단계 표", () => {
     expect(new Set(enemies.map(({ element }) => element)).size).toBe(5);
   });
 
-  it("한 판의 값은 배율을 먹이기 전의 값이다", () => {
+  it("한 판의 값은 레벨 사다리의 스테미나와 그 단계의 보상이다", () => {
     const tier = getCakeOperationTier("cake-3");
-    expect(cakeOperationRunCost(tier)).toEqual({ staminaCost: tier.staminaCost, rewards: { cheesecake: tier.rewardCheesecake } });
+    expect(cakeOperationRunCost(tier)).toEqual({ staminaCost: dungeonRunStamina(tier.enemyLevel), rewards: { cheesecake: tier.rewardCheesecake } });
   });
 });

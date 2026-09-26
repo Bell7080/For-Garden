@@ -53,25 +53,39 @@ describe("SaveManager", () => {
     storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(legacy));
     const loaded = new SaveManager(storage).load();
     // 깬 등급이 없으면 첫 등급만 열린다 — 없는 진행을 꾸며내 다음 등급을 열지 않는다.
-    expect(loaded?.bounty).toEqual({ date: "", entries: 0, clearedTierIds: [] });
+    expect(loaded?.bounty).toEqual({ clearedTierIds: [] });
   });
 
-  it("현상수배 진행을 JSON으로 왕복하고 없는 등급·과한 입장 횟수를 거부한다", () => {
+  it("현상수배 진행을 JSON으로 왕복하고 없는 등급을 거부한다", () => {
     const storage = new MemoryStorage();
     const manager = new SaveManager(storage);
     const session = createDefaultSession();
-    session.bounty = { date: "2026-09-19", entries: 2, clearedTierIds: ["bounty-1", "bounty-2"] };
+    session.bounty = { clearedTierIds: ["bounty-1", "bounty-2"] };
     manager.save(session);
-    expect(manager.load()?.bounty).toEqual({ date: "2026-09-19", entries: 2, clearedTierIds: ["bounty-1", "bounty-2"] });
+    expect(manager.load()?.bounty).toEqual({ clearedTierIds: ["bounty-1", "bounty-2"] });
 
     // 해금 근거가 되는 값이라 손상된 목록을 그대로 받아들이면 잠긴 등급이 열린다.
-    const broken = { ...validData(), bounty: { date: "", entries: 0, clearedTierIds: ["bounty-99"] } };
+    const broken = { ...validData(), bounty: { clearedTierIds: ["bounty-99"] } };
     storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(broken));
     expect(() => new SaveManager(storage).load()).toThrow(SaveDataError);
+  });
 
-    const tooMany = { ...validData(), bounty: { date: "", entries: 99, clearedTierIds: [] } };
-    storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(tooMany));
-    expect(() => new SaveManager(storage).load()).toThrow(SaveDataError);
+  /** 하루 입장 제한을 걷어 내며 날짜·횟수가 저장에서 빠졌다 — 예전 저장은 깬 등급만 옮긴다. */
+  it("하루 입장 기록이 남은 예전 현상수배 저장은 깬 등급만 남기고 불러온다", () => {
+    const storage = new MemoryStorage();
+    const legacy = { ...validData(), bounty: { date: "2026-09-19", entries: 3, clearedTierIds: ["bounty-1"] } };
+    storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(legacy));
+    expect(new SaveManager(storage).load()?.bounty).toEqual({ clearedTierIds: ["bounty-1"] });
+  });
+
+  it("던전에서 마지막으로 고른 단계를 설정에 남기고, 예전 설정은 빈 값으로 채운다", () => {
+    const storage = new MemoryStorage();
+    const manager = new SaveManager(storage);
+    const session = createDefaultSession();
+    expect(session.settings.game.dungeonTiers).toEqual({ bounty: "", cake: "" });
+    session.settings.game.dungeonTiers = { bounty: "bounty-2", cake: "cake-3" };
+    manager.save(session);
+    expect(manager.load()?.settings.game.dungeonTiers).toEqual({ bounty: "bounty-2", cake: "cake-3" });
   });
 
   it("데이터 초기화가 복원할 신규 상태에는 임시 뽑기 테스트 재화를 넉넉히 지급한다", () => {

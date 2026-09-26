@@ -1,6 +1,5 @@
 import type { RelicDef } from "../core/types";
 import { registerDataText } from "../i18n";
-import { CONTENT_STAMINA_COSTS } from "./contentCosts";
 import { getRelic } from "./relics";
 import { applyEncounterScaling, encounterRoleFor } from "../core/levelDesign";
 
@@ -22,7 +21,11 @@ export interface BountyTierDef {
   /** 1부터 오르는 등급. 바로 앞 등급을 깨야 열린다. */
   order: number;
   name: string;
-  /** 세 라운드를 모두 이겼을 때 받는 골드. */
+  /**
+   * 세 라운드를 모두 이겼을 때 받는 골드. **스테미나 하나당 골드**가 등급마다 오른다 — 하루 세 번
+   * 제한을 걷어 내며 스테미나가 사다리를 따르게 되자, 예전 값(스테미나 15 고정)의 1당 효율
+   * (200 · 333 · 533 · 800 · 1,200)을 그대로 지키도록 새 스테미나에 맞춰 다시 셌다.
+   */
   rewardGold: number;
   rounds: readonly [BountyRoundDef, BountyRoundDef, BountyRoundDef];
 }
@@ -30,9 +33,9 @@ export interface BountyTierDef {
 /**
  * 콘텐츠 전체가 공유하는 운영 상수.
  *
- * **한 판이 곧 세 라운드다.** 스테미나는 등급과 무관하게 입장 한 번에 한 번만 나가고, 더 높은
- * 등급일수록 같은 값에 더 많은 골드가 돌아온다 — 그래야 "더 강하게 키워 더 높은 등급으로"가
- * 비용이 아니라 이득으로 읽힌다.
+ * **한 판이 곧 세 라운드다.** 스테미나는 입장 한 번에 한 번만 나가고, 그 값은 등급이 아니라 **그
+ * 등급의 레벨**이 정한다(`dungeonRunStamina` — 치즈케이크 대작전과 같은 사다리). 하루 입장 제한은
+ * 두지 않는다 — 스테미나를 녹이는 던전이라 횟수까지 잠그면 같은 판을 두 번 막는다.
  *
  * `limitSeconds`는 **무승부를 패배로 확정하는 선**이다. 1대1은 서로 못 죽이는 조합이 실제로
  * 있어(아모처럼 버티는 정예 상대로 화력이 모자란 개체), 제한이 없으면 그 판이 영영 끝나지
@@ -40,8 +43,6 @@ export interface BountyTierDef {
  */
 export const BOUNTY = {
   roundCount: 3,
-  staminaCost: CONTENT_STAMINA_COSTS.bountyRun,
-  maxEntriesPerUtcDay: 3,
   limitSeconds: 60,
 } as const;
 
@@ -68,21 +69,21 @@ export const BOUNTY = {
  */
 export const BOUNTY_TIERS: readonly BountyTierDef[] = [
   // 1급은 스토리 1장을 막 민 파티(레벨 15 언저리)가 들어서는 자리다.
-  { id: "bounty-1", order: 1, name: "현상수배 1급", rewardGold: 3_000, rounds: [
+  { id: "bounty-1", order: 1, name: "현상수배 1급", rewardGold: 1_200, rounds: [
     { relicId: "toby", level: 5 }, { relicId: "amo", level: 5 }, { relicId: "koma", level: 5 },
   ] },
   // 2급부터 레벨 상한(20)을 채운 셋을 요구한다.
-  { id: "bounty-2", order: 2, name: "현상수배 2급", rewardGold: 5_000, rounds: [
+  { id: "bounty-2", order: 2, name: "현상수배 2급", rewardGold: 3_300, rounds: [
     { relicId: "toby", level: 15 }, { relicId: "amo", level: 15 }, { relicId: "koma", level: 15 },
   ] },
-  { id: "bounty-3", order: 3, name: "현상수배 3급", rewardGold: 8_000, rounds: [
+  { id: "bounty-3", order: 3, name: "현상수배 3급", rewardGold: 6_400, rounds: [
     { relicId: "toby", level: 25 }, { relicId: "amo", level: 25 }, { relicId: "koma", level: 25 },
   ] },
-  { id: "bounty-4", order: 4, name: "현상수배 4급", rewardGold: 12_000, rounds: [
+  { id: "bounty-4", order: 4, name: "현상수배 4급", rewardGold: 14_400, rounds: [
     { relicId: "toby", level: 40 }, { relicId: "amo", level: 40 }, { relicId: "koma", level: 40 },
   ] },
   // 5급은 돌파로 상한을 연 만렙 셋의 자리다.
-  { id: "bounty-5", order: 5, name: "현상수배 5급", rewardGold: 18_000, rounds: [
+  { id: "bounty-5", order: 5, name: "현상수배 5급", rewardGold: 26_400, rounds: [
     { relicId: "toby", level: 50 }, { relicId: "amo", level: 50 }, { relicId: "koma", level: 50 },
   ] },
 ];

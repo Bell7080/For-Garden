@@ -25,7 +25,9 @@ import { partyRuneTraitEffects } from "../core/runeTraitEffects";
 import { getRelic } from "../data/relics";
 import { getBattleStage, getStageEnemies, stageEnemyGrowth } from "../data/stages";
 import { BOUNTY, bountyRoundEnemy, getBountyTier } from "../data/bounty";
-import { nextBountyStep, type BountyBattleInputDto } from "../core/bountyRun";
+import { bountyRunCost, isBountyTierUnlocked, nextBountyStep, type BountyBattleInputDto } from "../core/bountyRun";
+import type { PartyContent } from "../data/partyContent";
+import { enterContentBattle } from "./contentBattleEntry";
 import { ENCOUNTER_ROLE, encounterRoleFor } from "../core/levelDesign";
 import { getExpeditionNodeEnemies } from "../data/expeditionEnemies";
 import type { PuppetCreature, PuppetAsset } from "../puppets/assets";
@@ -62,9 +64,9 @@ import type { MotionPlayback } from "../puppets/assets";
 import { ultimatePresentationFor } from "../data/ultimatePresentations";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { anyPopupOpen, PopupLayer } from "../ui/PopupLayer";
-import { cakeOperationEnemies, cakeOperationRole, getCakeOperationTier } from "../data/cakeOperation";
+import { cakeOperationEnemies, cakeOperationRole, cakeOperationRunCost, getCakeOperationTier, isCakeTierUnlocked } from "../data/cakeOperation";
 import { battleArena } from "../core/battleArena";
-import { createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, createRaidSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type CakeBattleInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
+import { createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, createRaidSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type CakeBattleInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto, type RaidBattleInputDto } from "../core/expeditionBattle";
 import { raidBossDef, raidBossPercentHpBasis, raidKillTicks } from "../core/raid";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import { expeditionManager, ExpeditionBossSettlementError, ExpeditionBossSettlementFlow } from "../managers/ExpeditionManager";
@@ -719,12 +721,25 @@ export class BattleScene extends Phaser.Scene {
       // 성공 제출 뒤에는 Boot가 서버 최신본을 읽고 저장 검증을 거친 뒤 방금 친 그 판으로 되돌린다.
       this.scene.start("boot", { destination: "raid", raidId: result.raid.id });
     };
+    // 도전이 남은 판이면 「다시 하기」로 곧바로 한 판 더 간다. 같은 부트 재동기화를 지나 서버 최신본을
+    // 읽은 뒤 전장으로 들어간다 — 방금 제출한 몫이 반영된 체력으로 다시 선다.
+    const input = this.battleInput;
+    const again = input.mode === "raid" && result.raid.status === "active" && result.raid.attemptsUsed < result.raid.attemptsLimit;
+    const replay = again ? {
+      label: t("stageComplete.replay"),
+      onPress: () => {
+        if (this.bossLeaving) return;
+        this.bossLeaving = true;
+        this.scene.start("boot", { destination: "raidBattle", raidBattle: { mode: "raid", raidId: input.raidId, bossRelicId: input.bossRelicId, difficulty: input.difficulty } satisfies RaidBattleInputDto });
+      },
+    } : undefined;
     new StageCompletePopup(this, popups).open({
       reward: {
         kind: "loot",
         items: currencyRecordToRewardItems(Object.fromEntries(result.granted.map(({ currency, amount }) => [currency, amount]))),
         footnote: t("raid.result.footnote", { damage: result.runDamage.toLocaleString(), total: result.raid.myDamage.toLocaleString() }),
       },
+      replay,
       fighters: this.stageCompleteFighters(),
       onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
       onConfirm: back,
@@ -1072,7 +1087,7 @@ export class BattleScene extends Phaser.Scene {
       const skipPresentation = settingsManager.get().game.skipUltimatePresentation;
       // 컷인·확대·공격·복귀가 이 한 계산값을 공유한다. 전투 배속과 스킵을 단계마다 다시
       // 해석하면 서로 다른 시간축이 생기므로 pump 진입 시 한 번만 고정한다.
-      const timing = ultimatePresentationTiming(this.battleSpeed, skipPresentation);
+      const timing = ultimatePresentationTiming(skipPresentation);
       if (!skipPresentation) {
         // 전투 카드 잠금과 별개로 기여도 판은 컷인이 실제로 덮는 동안에만 입력을 멈춘다.
         this.contributionPanel?.setInputLocked(true);
@@ -2358,24 +2373,31 @@ export class BattleScene extends Phaser.Scene {
    * 않는다(`granted`가 이미 확정된 값이다).
    */
   private async finishCakeOperation(input: CakeBattleInputDto, won: boolean): Promise<void> {
-    const back = () => this.scene.start("cakeOperation");
+    // 입구로 돌아갈 때는 고르던 단계를 넘긴다 — 빠지면 매번 단계를 다시 골라야 한다.
+    const back = () => this.scene.start("cakeOperation", { tierId: input.tierId });
     try {
-      const result = await gameApi.completeCakeOperation({ tierId: input.tierId, requestId: input.requestId, multiplier: input.multiplier, victory: won });
+      const result = await gameApi.completeCakeOperation({ tierId: input.tierId, requestId: input.requestId, victory: won });
       if (!this.scene.isActive()) return;
       const popups = new PopupLayer(this, 2200);
       const items = currencyRecordToRewardItems(result.granted);
+      // 버튼이 닫기를 먼저 부르지 않지만 닫힘이 기본 길(`onConfirm`)을 부르므로, 고른 길이 있으면 기본 길은 서지 않는다.
+      let chosen = false;
+      const go = (run: () => void) => () => { chosen = true; run(); };
+      const replayable = isCakeTierUnlocked(input.tierId, session.cakeOperation.clearedIndex)
+        && session.wallet.stamina >= cakeOperationRunCost(getCakeOperationTier(input.tierId)).staminaCost;
       new StageCompletePopup(this, popups).open({
         // 진 판은 받은 것이 없으므로 보상 자리 대신 강해지러 가는 길이 선다.
         reward: won ? { kind: "loot", items } : {
           kind: "defeat",
           actions: [
-            { label: t("stageComplete.toRelics"), onPress: () => this.scene.start("relics") },
-            { label: t("cake.title"), onPress: back },
+            { label: t("stageComplete.toRelics"), onPress: go(() => this.scene.start("relics")) },
+            { label: t("cake.title"), onPress: go(back) },
           ],
         },
+        replay: replayable ? { label: t("stageComplete.replay"), onPress: go(() => this.replayContent({ content: "cake", tierId: input.tierId }, back)) } : undefined,
         fighters: this.stageCompleteFighters(),
         onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
-        onConfirm: () => { if (this.scene.isActive()) back(); },
+        onConfirm: () => { if (!chosen && this.scene.isActive()) back(); },
       });
     } catch {
       // 결과 확정만 실패한 자리라 전장으로 되돌리지 않고 같은 요청만 다시 시도하게 한다.
@@ -2383,6 +2405,14 @@ export class BattleScene extends Phaser.Scene {
       this.add.text(BASE_WIDTH / 2, 900, t("battle.result.saveFailed"), textStyle({ role: "body", size: 30, color: COLOR.ink })).setOrigin(0.5).setDepth(101);
       new Button(this, BASE_WIDTH / 2, 1010, { width: 400, height: 100, label: t("battle.result.retry"), onClick: () => void this.finishCakeOperation(input, won) }).setDepth(101);
     }
+  }
+
+  /**
+   * 「다시 하기」 — 편성 화면과 **같은 입장**(`enterContentBattle`)을 지나 곧바로 다음 판으로 간다.
+   * 입장이 거절되면(그 사이 스테미나가 모자라졌다든가) 전장에 남지 않고 입구로 돌아간다.
+   */
+  private replayContent(content: PartyContent, fallback: () => void): void {
+    void enterContentBattle(this, content).catch(() => { if (this.scene.isActive()) fallback(); });
   }
 
   /**
@@ -2418,24 +2448,30 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
     if (!this.scene.isActive()) return;
-    const toBounty = (): void => { this.scene.start("bounty"); };
+    // 입구로 돌아갈 때는 고르던 등급을 넘긴다.
+    const toBounty = (): void => { this.scene.start("bounty", { tierId: input.tierId }); };
+    let chosen = false;
+    const go = (run: () => void) => () => { chosen = true; run(); };
+    const bountyTier = getBountyTier(input.tierId);
+    const replayable = isBountyTierUnlocked(bountyTier, settled.clearedTierIds) && session.wallet.stamina >= bountyRunCost(bountyTier).staminaCost;
+    const replay = replayable ? { label: t("stageComplete.replay"), onPress: go(() => this.replayContent({ content: "bounty", tierId: input.tierId }, toBounty)) } : undefined;
     if (step.kind === "clear") {
       new StageCompletePopup(this, popups).open({
         reward: { kind: "loot", items: currencyRecordToRewardItems({ gold: settled.goldEarned }) },
-        fighters, onOpenContribution: openContribution, onConfirm: toBounty,
+        replay, fighters, onOpenContribution: openContribution,
+        onConfirm: () => { if (!chosen && this.scene.isActive()) toBounty(); },
       });
       return;
     }
-    // 진 판에는 받을 것이 없으므로 보상 줄 자리에 **다음에 할 일**이 선다.
-    let chosen = false;
-    const go = (scene: string) => () => { chosen = true; this.scene.start(scene); };
+    // 진 판에는 받을 것이 없으므로 보상 줄 자리에 **다음에 할 일**이 선다. 입구로 가는 줄은 판을
+    // 닫는 기본 길과 같아 「다시 하기」가 서면 그 자리를 넘긴다(넷이면 판 밑으로 넘친다).
     new StageCompletePopup(this, popups).open({
       reward: { kind: "defeat", actions: [
-        { label: t("stageComplete.toResearch"), onPress: go("lab") },
-        { label: t("stageComplete.toRelics"), onPress: go("relics") },
-        { label: t("bounty.result.toBounty"), onPress: go("bounty") },
+        { label: t("stageComplete.toResearch"), onPress: go(() => this.scene.start("lab")) },
+        { label: t("stageComplete.toRelics"), onPress: go(() => this.scene.start("relics")) },
+        ...(replay ? [] : [{ label: t("bounty.result.toBounty"), onPress: go(toBounty) }]),
       ] },
-      fighters, onOpenContribution: openContribution,
+      replay, fighters, onOpenContribution: openContribution,
       onConfirm: () => { if (!chosen && this.scene.isActive()) toBounty(); },
     });
   }

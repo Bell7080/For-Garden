@@ -43,7 +43,13 @@ export interface GameSettings {
     battleSpeed: 1 | 1.5 | 2 | 3; autoUltimate: boolean;
     /** 전투 편성 칸에 추천 직군을 세우는가. 편성 화면의 끄기 버튼이 뒤집는다. */
     formationRoleHint: boolean;
-    skipUltimatePresentation: boolean; textSpeed: 0.5 | 1 | 2; language: LanguageId };
+    skipUltimatePresentation: boolean; textSpeed: 0.5 | 1 | 2; language: LanguageId;
+    /**
+     * 던전 입구에서 마지막으로 고른 단계 ID(비었으면 아직 고른 적 없음). 파밍하러 들어올 때마다
+     * 한 칸 내려 고르지 않게 한다. 서버 진행이 아니라 화면 선호라 여기 둔다 — 없는 ID는 입구가
+     * 열린 가장 높은 단계로 되돌린다.
+     */
+    dungeonTiers: { bounty: string; cake: string } };
   account: { provider: "guest" | "google" | "apple"; displayId: string };
 }
 
@@ -298,16 +304,10 @@ export interface DailyContentState {
 }
 
 /**
- * 현상수배 진행.
- *
- * 입장 횟수는 UTC 키가 바뀌면 되돌아가지만 **깬 등급은 날짜와 무관하게 남는다** — 다음 등급을
- * 여는 값이라 하루가 지났다고 잠기면 어제 깬 관문을 다시 깨야 한다.
+ * 현상수배 진행 — **깬 등급**뿐이다. 하루 입장 제한을 걷어 내며 날짜와 횟수는 저장에서 빠졌다
+ * (예전 저장의 두 값은 불러올 때 버린다). 깬 등급은 다음 등급을 여는 값이라 날짜와 무관하게 남는다.
  */
 export interface BountyState {
-  /** 서버가 정한 UTC YYYY-MM-DD 키다. */
-  date: string;
-  /** 오늘 실제로 입장해 소비한 횟수다. */
-  entries: number;
   /** 세 라운드를 모두 이긴 등급 ID다. 다음 등급의 해금 근거다. */
   clearedTierIds: string[];
 }
@@ -462,7 +462,7 @@ export function createDefaultSession(): Session {
     // 첫 단계는 늘 열려 있으므로 아무것도 이기지 않은 상태를 -1로 둔다.
     cakeOperation: { clearedIndex: -1 },
     // 빈 날짜 키는 첫 현상수배 조회에서 서버와 같은 UTC 날짜로 정규화된다.
-    bounty: { date: "", entries: 0, clearedTierIds: [] },
+    bounty: { clearedTierIds: [] },
     // 기간별 연구도와 단계 수령 기록은 임무 수령 기록과 독립적으로 초기화한다.
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [], researchPoints: { daily: 0, weekly: 0 }, claimedResearchStageIds: [] },
     productPurchases: {},

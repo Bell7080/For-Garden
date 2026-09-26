@@ -1,10 +1,112 @@
 {
-"dungeon.enemyPower": ["敌方战斗力", "พลังต่อสู้ของศัตรู", "Lực chiến địch", "Kekuatan Tempur Musuh", "Poder de combate enemigo", "Poder de Combate inimigo", "Kampfkraft der Gegner", "Боевая мощь врага"],
-"dungeon.reward": ["奖励", "รางวัล", "Phần thưởng", "Hadiah", "Recompensa", "Recompensa", "Belohnung", "Награда"],
-"dungeon.tier.level": ["LV.{level}", "LV.{level}", "LV.{level}", "LV.{level}", "LV.{level}", "LV.{level}", "LV.{level}", "LV.{level}"],
-"dungeon.multiplier": ["x{value}", "x{value}", "x{value}", "x{value}", "x{value}", "x{value}", "x{value}", "x{value}"],
-"dungeon.sortie": ["出击", "ออกรบ", "Xuất kích", "Berangkat", "Salir", "Partir", "Aufbruch", "В бой"],
-"dungeon.sweep": ["扫荡", "กวาดล้าง", "Càn quét", "Sapu", "Barrido", "Varredura", "Säubern", "Зачистка"],
-"dungeon.sweep.title": ["扫荡完成", "กวาดล้างเสร็จสิ้น", "Càn quét hoàn tất", "Sapu Selesai", "Barrido completado", "Varredura concluída", "Säuberung abgeschlossen", "Зачистка завершена"],
-"party.hordeCount": ["{count}名敌人", "ศัตรู {count} ตัว", "{count} kẻ địch", "{count} musuh", "{count} enemigos", "{count} inimigos", "{count} Gegner", "Врагов: {count}"]
+"dungeon.enemyPower": [
+"敌方战斗力",
+"พลังต่อสู้ของศัตรู",
+"Lực chiến địch",
+"Kekuatan Tempur Musuh",
+"Poder de combate enemigo",
+"Poder de Combate inimigo",
+"Kampfkraft der Gegner",
+"Боевая мощь врага"
+],
+"dungeon.reward": [
+"奖励",
+"รางวัล",
+"Phần thưởng",
+"Hadiah",
+"Recompensa",
+"Recompensa",
+"Belohnung",
+"Награда"
+],
+"dungeon.tier.level": [
+"LV.{level}",
+"LV.{level}",
+"LV.{level}",
+"LV.{level}",
+"LV.{level}",
+"LV.{level}",
+"LV.{level}",
+"LV.{level}"
+],
+"dungeon.sortie": [
+"出击",
+"ออกรบ",
+"Xuất kích",
+"Berangkat",
+"Salir",
+"Partir",
+"Aufbruch",
+"В бой"
+],
+"dungeon.sweep": [
+"扫荡",
+"กวาดล้าง",
+"Càn quét",
+"Sapu",
+"Barrido",
+"Varredura",
+"Säubern",
+"Зачистка"
+],
+"dungeon.sweep.title": [
+"扫荡完成",
+"กวาดล้างเสร็จสิ้น",
+"Càn quét hoàn tất",
+"Sapu Selesai",
+"Barrido completado",
+"Varredura concluída",
+"Säuberung abgeschlossen",
+"Зачистка завершена"
+],
+"party.hordeCount": [
+"{count}名敌人",
+"ศัตรู {count} ตัว",
+"{count} kẻ địch",
+"{count} musuh",
+"{count} enemigos",
+"{count} inimigos",
+"{count} Gegner",
+"Врагов: {count}"
+],
+"dungeon.sweep.count": [
+"x{count}",
+"x{count}",
+"x{count}",
+"x{count}",
+"x{count}",
+"x{count}",
+"x{count}",
+"x{count}"
+],
+"dungeon.sweep.max": [
+"MAX",
+"MAX",
+"MAX",
+"MAX",
+"MAX",
+"MAX",
+"MAX",
+"MAX"
+],
+"dungeon.sweep.ad": [
+"广告 +{count}",
+"โฆษณา +{count}",
+"Quảng cáo +{count}",
+"Iklan +{count}",
+"Anuncio +{count}",
+"Anúncio +{count}",
+"Werbung +{count}",
+"Реклама +{count}"
+],
+"dungeon.sweep.adUsage": [
+"{used}/{limit}",
+"{used}/{limit}",
+"{used}/{limit}",
+"{used}/{limit}",
+"{used}/{limit}",
+"{used}/{limit}",
+"{used}/{limit}",
+"{used}/{limit}"
+]
 }

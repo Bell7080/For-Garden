@@ -60,8 +60,12 @@ export interface UltimatePresentationTiming {
   skipLeadIn: boolean;
 }
 
-const ULTIMATE_BASE_RATE = 2.25;
-const ULTIMATE_RATE_CAP = 3.25;
+/**
+ * 궁극기 확대·공격 동작의 재생 배율 — **배속을 곱하지 않는다.** 배속만큼 당기던 때(1배 2.25 ·
+ * 2·3배 3.25)는 배속을 올린 손에게 궁극기가 늘 번쩍하고 지나갔다. 한 판에 몇 번 없는 큰 기술이라
+ * 어느 배속에서나 같은 무게로 읽혀야 하고, 예전 1배속보다도 한 박자 느리게 둔다.
+ */
+const ULTIMATE_PRESENTATION_RATE = 1.6;
 /**
  * **모든 전투는 전원이 서고 나서 잠깐 숨을 고른 뒤 시작한다**(실제 시간, 배속과 무관).
  * SD와 체력 바가 서는 그 프레임에 곧바로 시간을 흘리던 때는 전장을 한 번 훑어볼 틈도 없이
@@ -84,8 +88,13 @@ export function battleFightStartsAt(spawnedAt: number): number {
 }
 
 export const ULTIMATE_MIN_DURATION_MS = 24;
-/** 진입·이름 노출·퇴장을 합쳐 두세 프레임짜리 섬광으로 축소되지 않게 하는 컷인 전체 하한이다. */
-export const ULTIMATE_CUT_IN_MIN_VISIBLE_MS = 96;
+/**
+ * **컷인은 배속을 받지 않는다**(실제 시간). 누가 무엇을 쓰는지를 알리는 한 장이라, 배속만큼
+ * 당기던 때는 3배속에서 0.1초 남짓 번쩍하고 지나가 이름도 원화도 읽히지 않았다. 여는 숨
+ * 고르기(`BATTLE_OPENING_HOLD_MS`)와 같은 이유로 이 시간은 전투가 아니라 **보는 사람의 몫**이다.
+ * 머무는 시간은 개체마다 다른 무게(`cutInHoldMs`)를 `holdScale`배로 늘리고 바닥을 깐다.
+ */
+export const ULTIMATE_CUT_IN_TIMING = { enterMs: 300, holdBaseMs: 300, holdScale: 2, exitMs: 240 } as const;
 export const ULTIMATE_RECOVERY_RATIO = 0.55;
 
 /**
@@ -98,12 +107,9 @@ export function shouldWaitForUltimatePresentation(hasDeathEvent: boolean, hasFin
   return !(hasDeathEvent && hasFinishEvent);
 }
 
-/**
- * 1배속부터 기존 공격 배율 2보다 빠른 2.25를 써 반복 궁극기의 정체감을 줄인다.
- * 2·3배속은 3.25에서 막는다. 그 이상은 관절 보간이 건너뛰어져 공격이 순간이동처럼 보인다.
- */
-export function ultimatePresentationTiming(battleSpeed: BattleSpeed, skipLeadIn: boolean): UltimatePresentationTiming {
-  return { rate: Math.min(ULTIMATE_BASE_RATE * battleSpeed, ULTIMATE_RATE_CAP), skipLeadIn };
+/** 궁극기 연출의 시간축. 배속과 무관하고, 스킵만 공격 전 기다림을 없앤다. */
+export function ultimatePresentationTiming(skipLeadIn: boolean): UltimatePresentationTiming {
+  return { rate: ULTIMATE_PRESENTATION_RATE, skipLeadIn };
 }
 
 /** 프리셋의 상대적인 무게감은 보존하면서 공용 시간축과 최소 한 프레임가량의 가시성을 적용한다. */
@@ -112,12 +118,9 @@ export function scaleUltimateDuration(durationMs: number, timing: UltimatePresen
   return Math.max(ULTIMATE_MIN_DURATION_MS, Math.round((durationMs * ratio) / timing.rate));
 }
 
-/** 세 구간의 상대 속도는 유지하되 부족한 전체 가시 시간은 이름을 읽는 가운데 hold에 더한다. */
-export function scaleUltimateCutInDurations(
-  enterMs: number, holdMs: number, exitMs: number, timing: UltimatePresentationTiming,
-): readonly [enter: number, hold: number, exit: number] {
-  if (timing.skipLeadIn) return [0, 0, 0];
-  const durations = [enterMs, holdMs, exitMs].map((duration) => scaleUltimateDuration(duration, timing));
-  const deficit = Math.max(0, ULTIMATE_CUT_IN_MIN_VISIBLE_MS - durations.reduce((sum, duration) => sum + duration, 0));
-  return [durations[0], durations[1] + deficit, durations[2]];
+/** 컷인의 세 구간(진입·머묾·퇴장, ms). 배속과 무관하고 스킵만 셋 다 0으로 만든다. */
+export function ultimateCutInDurations(cutInHoldMs: number, skipLeadIn: boolean): readonly [enter: number, hold: number, exit: number] {
+  if (skipLeadIn) return [0, 0, 0];
+  const { enterMs, holdBaseMs, holdScale, exitMs } = ULTIMATE_CUT_IN_TIMING;
+  return [enterMs, Math.round(holdBaseMs + cutInHoldMs * holdScale), exitMs];
 }

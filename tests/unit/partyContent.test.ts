@@ -14,8 +14,8 @@ describe("편성 화면의 콘텐츠", () => {
     // 레이드 보스가 LV.48에 돌파 2(상한 40)로 서 있었다 — 만들 수 없는 성장을 화면이 말했다.
     const contents = [
       ...(["easy", "normal", "hard", "rampage"] as const).map((difficulty) => ({ content: "raid", raidId: `r-${difficulty}`, bossRelicId: RAID_SEASON_BOSS.relicId, difficulty }) as const),
-      ...BOUNTY_TIERS.map((tier) => ({ content: "bounty", tierId: tier.id, multiplier: 1 }) as const),
-      ...CAKE_OPERATION_TIERS.map((tier) => ({ content: "cake", tierId: tier.id, multiplier: 1 }) as const),
+      ...BOUNTY_TIERS.map((tier) => ({ content: "bounty", tierId: tier.id }) as const),
+      ...CAKE_OPERATION_TIERS.map((tier) => ({ content: "cake", tierId: tier.id }) as const),
     ];
     for (const content of contents) {
       for (const { def, level, breakthrough } of partyPreview(content, STAGE).shown) {
@@ -24,10 +24,10 @@ describe("편성 화면의 콘텐츠", () => {
     }
   });
 
-  it("모르는 값·없는 단계는 스토리로 수렴하고 배율은 표에 있는 값으로 좁힌다", () => {
+  it("모르는 값·없는 단계는 스토리로 수렴하고 옛 배율 값은 버린다", () => {
     expect(normalizePartyContent(undefined)).toEqual({ content: "stage" });
-    expect(normalizePartyContent({ content: "cake", tierId: "없는-단계", multiplier: 2 })).toEqual({ content: "stage" });
-    expect(normalizePartyContent({ content: "bounty", tierId: BOUNTY_TIERS[0].id, multiplier: 9 })).toEqual({ content: "bounty", tierId: BOUNTY_TIERS[0].id, multiplier: 1 });
+    expect(normalizePartyContent({ content: "cake", tierId: "없는-단계" })).toEqual({ content: "stage" });
+    expect(normalizePartyContent({ content: "bounty", tierId: BOUNTY_TIERS[0].id, multiplier: 9 })).toEqual({ content: "bounty", tierId: BOUNTY_TIERS[0].id });
     // 레이드는 어느 판인지까지 있어야 한다 — 판 ID나 난이도가 빠지면 어느 체력을 깎을지 모른다.
     expect(normalizePartyContent({ content: "raid" })).toEqual({ content: "stage" });
     expect(normalizePartyContent({ content: "raid", raidId: "r1", bossRelicId: "sukusuino", difficulty: "nope" })).toEqual({ content: "stage" });
@@ -36,7 +36,7 @@ describe("편성 화면의 콘텐츠", () => {
   });
 
   it("현상수배는 세 라운드의 정예가 라운드 번호를 달고 선다", () => {
-    const preview = partyPreview({ content: "bounty", tierId: BOUNTY_TIERS[0].id, multiplier: 1 }, STAGE);
+    const preview = partyPreview({ content: "bounty", tierId: BOUNTY_TIERS[0].id}, STAGE);
     expect(preview.shown.map(({ round }) => round)).toEqual([1, 2, 3]);
     expect(preview.shown.map(({ def }) => def.id)).toEqual(BOUNTY_TIERS[0].rounds.map(({ relicId }) => relicId));
     expect(preview.role).toBe("normal");
@@ -44,7 +44,7 @@ describe("편성 화면의 콘텐츠", () => {
 
   it("대작전은 대표 얼굴 다섯만 세우고 몰려오는 수 전부를 따로 든다", () => {
     const tier = CAKE_OPERATION_TIERS[4];
-    const preview = partyPreview({ content: "cake", tierId: tier.id, multiplier: 1 }, STAGE);
+    const preview = partyPreview({ content: "cake", tierId: tier.id}, STAGE);
     expect(preview.shown).toHaveLength(5);
     expect(new Set(preview.shown.map(({ def }) => def.element)).size).toBe(5);
     expect(preview.all).toHaveLength(tier.enemyCount);

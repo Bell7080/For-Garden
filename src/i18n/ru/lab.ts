@@ -39,7 +39,7 @@ export const LAB_RU = {
   "lab.cinematic.specimenNote": "FOSSIL / AMBER",
   "lab.showcase.quote": "«{line}»",
   "lab.banner.welcome.eyebrow": "WELCOME RESEARCH",
-  "lab.banner.welcome.title": "Первое исследование восстановления",
+  "lab.banner.welcome.title": "Исследование восстановления",
   "lab.banner.fossil.eyebrow": "STANDARD RESEARCH",
   "lab.banner.fossil.title": "Исследование окаменелостей",
   "lab.banner.amber.eyebrow": "LIMITED PICK UP",

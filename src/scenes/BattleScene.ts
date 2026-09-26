@@ -51,6 +51,7 @@ import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { bindLongPress } from "../ui/longPressInfo";
 import { type InfoManager, sceneInfoManager } from "../ui/info";
 import { EnemyInfoPopup } from "../ui/EnemyInfoPopup";
+import { SummonInfoPopup } from "../ui/SummonInfoPopup";
 import { placedEnemyIndex, type PlacedEnemy } from "../data/placedEnemies";
 import { UltimateCutIn } from "../ui/UltimateCutIn";
 import {
@@ -108,6 +109,7 @@ import { beginBossSettlementAttempt, bossSettlementRecoveryRoute, completeBossSe
 import { hasMergedBattleHit, isPlayerUltimateReadyTransition } from "../core/hapticPolicy";
 import { applyBattleTestPreset, battleRandom } from "../testSupport/battleHarness";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
+import { addSdFootShadow } from "../ui/SdFootShadow";
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -150,6 +152,8 @@ const KNOCKBACK_SPIN = 1_080;
 
 /** SD 한 명의 화면 높이. 여섯이 겹치지 않도록 기존 300에서 0.7배로 줄였다. */
 const UNIT_HEIGHT = 210;
+/** 보통 몸의 발밑 그림자 폭. 몸집(`bodyScale`)만큼 줄어든다. */
+const BATTLE_FOOT_SHADOW_WIDTH = 140;
 const PROFILE_TOP = 1430;
 /**
  * 조작 칩은 프로필 줄 바로 위 우하단에 모인다. 전장을 가리지 않고 엄지가 닿는 자리다.
@@ -230,7 +234,7 @@ interface FighterView {
   fighter: Fighter;
   /** 움직이는 Puppet의 메시 입력 경계 대신 몸통을 따라가는 안정적인 전투 클릭 영역이다. */
   infoHit?: Phaser.GameObjects.Rectangle;
-  shadow: Phaser.GameObjects.Ellipse;
+  shadow: Phaser.GameObjects.Container;
   /** 머리 위 체력 바. 깎일 때 스르륵 따라오는 것은 프리팹이 맡는다. */
   hpBar: UnitHealthBar;
   /** 걸린 상태를 알리는 칩 한 줄. 체력 바 **위**에 서고, 누르면 쪽지가 열린다. */
@@ -364,6 +368,7 @@ export class BattleScene extends Phaser.Scene {
   private contributionChip!: ControlChip;
   /** 적 상세는 씬이 아니라 팝업 한 장이다 — 적에게는 유대·급여·룬이 없어 화면을 다 쓰면 초라하다. */
   private info!: EnemyInfoPopup;
+  private summonInfo!: SummonInfoPopup;
   /**
    * 전장에 실제로 선 적의 성장 스냅샷. 키는 난전이 매기는 `enemy-<index>`다.
    *
@@ -576,6 +581,7 @@ export class BattleScene extends Phaser.Scene {
     this.contributionResult = undefined;
     this.buffPopups = new PopupLayer(this, 2200);
     this.info = new EnemyInfoPopup(this, this.buffPopups);
+    this.summonInfo = new SummonInfoPopup(this, this.buffPopups);
     this.enemySnapshots = placedEnemyIndex(this.battleInput, stage, stageEnemies);
     this.openBuff = undefined;
     // 파편·파문은 SD보다 앞이되 궁극기 컷인(900)보다는 뒤라 연출을 가리지 않는다.
@@ -637,6 +643,19 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /** 두 원격 경계를 manager 흐름에 맡기고, 성공하면 전리품을 포함한 최종판을 곧바로 연다. */
+
+  /** 늑대를 누르면 소환수 창을 연다. 지휘자를 찾지 못하면 false — 부른 쪽이 적 창으로 되돌아간다. */
+  private openSummonInfo(fighter: Fighter): boolean {
+    if (fighter.summonOwnerId === null) return false;
+    // 이미 창이 떠 있으면 삼킨다 — 적 창으로 되돌아가면 한 번에 두 창이 겹친다.
+    if (this.info.isOpen || this.summonInfo.isOpen) return true;
+    const owner = this.state.fighters.find(({ id }) => id === fighter.summonOwnerId);
+    const summon = owner?.def.summons?.find(({ def }) => fighter.id.endsWith(`:${def.id}`));
+    if (!owner || !summon) return false;
+    // 전투 정의의 능력치가 곧 지휘자의 성장한 최종 능력치다.
+    this.summonInfo.show({ owner: owner.def, ownerStats: owner.def.stats, summon });
+    return true;
+  }
   private async submitAndSettleBoss(input: ExpeditionBossBattleInputDto, actions: ExpeditionBossAction[]): Promise<void> {
     // 전송 중 연타는 같은 멱등 요청조차 병렬 실행하지 않으며, 재시도는 낡은 실패판부터 걷는다.
     if (!beginBossSettlementAttempt(this.bossSettlementFailureState)) return;
@@ -951,13 +970,16 @@ export class BattleScene extends Phaser.Scene {
         ? this.add.rectangle(fighter.x, fighter.y - unitHeight / 2, 190 * fighter.bodyScale, unitHeight + 70, 0xffffff, 0)
           .setInteractive({ useHandCursor: true })
           .on("pointerup", () => {
-            // 배치된 그 개체를 그대로 연다. 스냅샷에 없는 소환수는 제 정의만 들고 1레벨로 선다.
+            // 소환수는 적 창이 아니라 소환수 창이다 — 레벨·돌파가 없고 지휘자의 한 능력치를 따라 자란다.
+            if (this.openSummonInfo(fighter)) return;
+            // 배치된 그 개체를 그대로 연다.
             this.info.show(this.enemySnapshots.get(fighter.id) ?? { def: fighter.def, level: 1, breakthrough: 0 });
           })
         : undefined;
       // 폭주 필터. 스킬 아이콘과 같은 속성·직군 색을 그대로 쓰며, 발광이 아니라 몸에 입힌다.
       const feverTint = skillArtTint(fighter.def.element, fighter.def.role);
-      const shadow = this.add.ellipse(fighter.x, fighter.y + 4, 132, 24, 0x000000, 0.38);
+      // 발밑 그림자는 몸집만큼만 — 작게 선 늑대가 사람만 한 그림자를 끌고 다니지 않는다.
+      const shadow = addSdFootShadow(this, fighter.x, fighter.y + 4, BATTLE_FOOT_SHADOW_WIDTH * fighter.bodyScale);
       const barColor = fighter.side === "player" ? COLOR.hpFill : COLOR.hpEnemy;
       const hpBar = new UnitHealthBar(this, barColor, this.motion.effectiveBattleUiMotion).snap(1);
       const statusChips = new UnitStatusChips(this);
@@ -1591,7 +1613,6 @@ export class BattleScene extends Phaser.Scene {
       }
       return undefined;
     }
-    if (event.kind === "bloodscent") return undefined;
 
     const attacker = this.views.get(event.attackerId);
     const target = this.views.get(event.targetId);
@@ -1973,7 +1994,7 @@ export class BattleScene extends Phaser.Scene {
         .setDepth(Math.round(fighter.y / 10) + DEPTH.unitBase + 1);
       // 떠 있는 동안 그림자는 땅에 남되 작고 옅어진다.
       const lift = 1 - Math.min(pose.hop / 60, 0.45);
-      view.shadow.setPosition(pose.shadowX, pose.shadowY + 4).setDisplaySize(132 * lift, 24 * lift).setAlpha(0.38 * lift);
+      view.shadow.setPosition(pose.shadowX, pose.shadowY + 4).setScale(lift).setAlpha(lift);
       const barY = pose.y - unitHeight - 26;
       view.hpBar.setPosition(pose.x, barY).setDepth(DEPTH.hpBar).setValue(fighter.hp / fighter.maxHp);
       const stunned = fighter.stunnedFor > 0;

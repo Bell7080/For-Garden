@@ -63,9 +63,10 @@ import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, typ
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
-import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, dualStrikeDamageKeywords, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, elationKeyword, passiveShieldKeyword, periodicStackKeyword, skillDescription } from "./skillPresentation";
+import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, elationKeyword, passiveShieldKeyword, periodicStackKeyword, skillDescription } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
 import { deriveSummonStats } from "../core/summonStats";
+import { SummonInfoPopup } from "./SummonInfoPopup";
 import { galleryPortraitPlacement, INFO_PORTRAIT_FOCUS, infoPortraitPlacement } from "./portraitPlacement";
 import { skinsForRelic } from "../data/relicSkins";
 import { relicSkinManager } from "../managers/RelicSkinManager";
@@ -73,6 +74,7 @@ import { pressIn, pressOut } from "./pressFeedback";
 import { FeedTapEffect } from "./feedTapEffect";
 import { settingsManager } from "../managers/SettingsManager";
 import { FEED_TAP, feedHoldDelay } from "./feedTapStyle";
+import { addSdFootShadow } from "./SdFootShadow";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -431,6 +433,8 @@ export class InfoManager {
   private readonly column: Phaser.GameObjects.Container;
   private readonly popups: PopupLayer;
   private readonly keywords: KeywordManager;
+  /** 쿠로·시로 태그가 여는 그 몸의 정보창. 처음 누를 때 한 번 세운다. */
+  private summonInfo?: SummonInfoPopup;
 
   private readonly rarityText: Phaser.GameObjects.Text;
   /** 등급 글자 뒤에 깔리는 같은 모양의 발광. 보석처럼 스스로 빛나 보이게 한다. */
@@ -1886,7 +1890,7 @@ export class InfoManager {
     openFerocityTraitPopup(this.scene, this.popups, this.keywords, finalDef, from, {
       breakthroughEffect: !breakthroughEnhances(def, breakthrough, "ferocity")
         ? undefined : breakthroughEffectText(def, "ferocity", finalDef.stats),
-      summonTags: this.summonKeywordTags(),
+      summonTags: this.summonKeywordTags(), summonActions: this.summonActions(),
     });
   }
 
@@ -1902,7 +1906,7 @@ export class InfoManager {
       ? breakthroughEffectText(def, slot, finalDef.stats) : undefined;
     return buildSkillViewModel({
       def: finalDef, breakthrough, kindLabel, skill, gaugeCost, slot,
-      summonTags: this.summonKeywordTags(), breakthroughEffect,
+      summonTags: this.summonKeywordTags(), summonActions: this.summonActions(), breakthroughEffect,
     });
   }
 
@@ -1917,7 +1921,6 @@ export class InfoManager {
     // 미보유 도감은 성장·스킬과 같은 정책으로 귀속 소환수도 감춘다.
     if (!this.capabilities.showSummons || !this.ownedNow) return [];
     const owner = this.currentDef;
-    const scent = owner?.passive.bloodscent;
     // 늑대의 수치는 지휘자가 **지금** 가진 능력치에서 파생한다 — 정적 정의의 태생값을 적으면
     // 디안을 키운 뒤에도 쪽지 속 늑대만 1레벨로 남는다.
     const ownerStats = owner === undefined ? undefined : this.shownStats(owner);
@@ -1956,28 +1959,25 @@ export class InfoManager {
         ],
       };
     });
-    // 겹당 수치와 상한은 지휘자마다 다를 수 있으므로 전역 사전이 아니라 그 창이 데이터에서 만든다.
-    // 겹당 수치와 상한, 문턱 증가폭은 지휘자마다 다르므로 전역 사전이 아니라 그 정의에서 만든다.
-    const finisher = owner?.basic.finisher;
-    if (scent) {
-      const threshold = finisher === undefined || finisher.thresholdPerStack <= 0
-        ? ""
-        : t("skill.keyword.bloodscent.threshold", { percent: finisher.thresholdPerStack });
-      tags.push({
-        id: "bloodscent", term: t("skill.keyword.bloodscent.term"), kind: "buff",
-        description: t("skill.keyword.bloodscent.description", {
-          stacks: scent.maxStacks, percent: scent.damagePercentPerStack, threshold,
-        }),
-      });
-    }
-    // 목덜미도 비례 수치를 아는 자리에서는 실제 값으로 말한다.
-    if (finisher) {
-      tags.push({
-        id: "nape", term: t("skill.keyword.nape.term"), kind: "rule",
-        description: t("skill.keyword.nape.description", { percent: finisher.remainingHpPercent }),
-      });
-    }
     return tags;
+  }
+
+  /**
+   * 쿠로·시로 태그를 누르면 뜻풀이 쪽지가 아니라 **그 몸의 정보창**(SD·스킬 액자·오각형)을 연다.
+   *
+   * 소환수 정보창(`SummonInfoPopup`)은 적 정보창과 같은 판·칸·액자를 쓰고, 등급·돌파·레벨 자리에
+   * 지휘자와의 관계(성장 기준·재소환)를 세운다. 능력치는 지휘자가 **지금** 가진 능력치에서
+   * 파생한다. 감추는 문맥에서는 태그 자체가 없어 여기도 비어 있다.
+   */
+  private summonActions(): Readonly<Record<string, () => void>> | undefined {
+    const owner = this.currentDef;
+    const summons = owner?.summons ?? [];
+    if (!owner || summons.length === 0 || !this.capabilities.showSummons || !this.ownedNow) return undefined;
+    const ownerStats = this.shownStats(owner);
+    return Object.fromEntries(summons.map((summon) => [`summon-${summon.def.id}`, () => {
+      this.summonInfo ??= new SummonInfoPopup(this.scene, this.popups);
+      this.summonInfo.show({ owner, ownerStats, summon });
+    }]));
   }
 
   /** 도감은 보유 여부를 전달해 정적 기록과 성장 정보의 잠금을 한곳에서 적용한다. */
@@ -2322,9 +2322,8 @@ export function addInfoPanel(
 
 
 export function addInfoFigureStand(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, x: number, y: number): void {
-  parent.add(scene.add.ellipse(x, y + 6, 206, 52, COLOR.void, 0.55));
-  parent.add(scene.add.ellipse(x, y, 192, 44, 0x141920, 0.92));
-  parent.add(drawHairline(scene, x, y - 20, 172, { color: COLOR.accent, alpha: 0.4 }));
+  // 받침은 판이 아니라 발밑 그림자다 — 전장·편성과 같은 한 장(`addSdFootShadow`).
+  addSdFootShadow(scene, x, y, 206, parent);
   parent.add(
     scene.add.text(x, y + 32, "IN-GAME SD", textStyle({ role: "body", size: 17, color: COLOR.inkDim })).setOrigin(0.5, 0),
   );
@@ -2629,7 +2628,7 @@ export function openFerocityTraitPopup(
   /** 레벨·돌파·룬까지 반영한 정의. 창이 다시 성장시키지 않는다. */
   def: RelicDef,
   from: PopupSource,
-  options: { breakthroughEffect?: string; summonTags?: readonly KeywordDef[] } = {},
+  options: { breakthroughEffect?: string; summonTags?: readonly KeywordDef[]; summonActions?: Readonly<Record<string, () => void>> } = {},
 ): void {
   // 피해 수치가 있는 폭주만 현재 능력치로 환산한다. 토리카의 새 탱커 계약은 자체 실제값을 그대로 보여 준다.
   const { atk: attack, def: defense, ap: abilityPower } = def.stats;
@@ -2667,6 +2666,7 @@ export function openFerocityTraitPopup(
     effectType: "buff",
     valueLabel: t("skill.ferocity.valueLabel"),
     contextualKeywords: contextualKeywords.length > 0 ? contextualKeywords : undefined,
+    keywordActions: options.summonActions,
     // 폭주도 돌파가 효과를 붙이는 슬롯이라 같은 노란 줄을 얻는다.
     breakthroughEffect: options.breakthroughEffect,
     // 설명 수치는 전투가 읽는 특성 필드에서 생성해 정적 문구와 실제 효과가 갈라지지 않는다.
@@ -2685,6 +2685,8 @@ export function buildSkillViewModel(options: {
   slot?: SkillArtSlot;
   /** 지휘자의 귀속 소환수 설명. 감추는 문맥(미보유 도감)은 빈 배열을 넘긴다. */
   summonTags?: readonly KeywordDef[];
+  /** 소환수 태그를 눌렀을 때 뜻풀이 대신 여는 그 몸의 정보창. 태그 ID가 키다. */
+  summonActions?: Readonly<Record<string, () => void>>;
   /** 한계 돌파로 이 슬롯에 붙은 효과를 노란 줄로 함께 세울지. 열린 돌파 등급의 몫만 넘긴다. */
   breakthroughEffect?: string;
 }): SkillInfoViewModel {
@@ -2756,8 +2758,6 @@ export function buildSkillViewModel(options: {
     contextualKeywords: [
       ...summonTags,
       ...breakthroughTags,
-      // 합공은 수치마다 제 산식을 연다. `damageDetail`은 첫 수의 산식 하나뿐이다.
-      ...dualStrikeDamageKeywords(skill as Skill, { atk: attacker?.def.stats.atk, ap: attacker?.def.stats.ap }),
       damageDetail, shieldDetail, healDetail,
       "kind" in skill ? undefined : periodicStackKeyword(skill as Skill),
       // 「고통의 희열」은 패시브 본문이 직접 가리키는 태그라 그 쪽지에도 함께 실린다.
@@ -2768,6 +2768,7 @@ export function buildSkillViewModel(options: {
         description: t("skill.keyword.shield.fromMaxHp", { percent: skill.selfGuard.shieldMaxHpPercent }),
       },
     ].filter((item): item is KeywordDef => item !== undefined),
+    keywordActions: options.summonActions,
     // 정적 문장에서 수치를 재해석하지 않고 전투 정의를 그대로 팝업에 넘긴다.
     targeting: "targeting" in skill ? skill.targeting as Ultimate["targeting"] : undefined,
     statusEffects: "statusEffects" in skill ? skill.statusEffects : undefined,

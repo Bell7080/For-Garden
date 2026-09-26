@@ -23,6 +23,7 @@ import { powerSavingPolicy } from "../core/settings";
 import { session } from "../state/session";
 import { pressIn, pressOut } from "./pressFeedback";
 import { PlayerLevelTreePopup } from "./PlayerLevelTreePopup";
+import { addSdFootShadow } from "./SdFootShadow";
 
 /** 희귀도는 theme 의미 토큰 표만 거치므로 DTO가 임의 색 문자열을 주입할 수 없다. */
 function modifierColor(modifier: PublicProfileModifier): number {
@@ -284,8 +285,7 @@ export class PlayerProfilePopup {
     }
 
     // 발밑 투영 그림자 — 서 있는 자리를 바닥에 붙인다.
-    body.add(this.scene.add.ellipse(showcase.sd.x, showcase.sd.groundY, 220, 46, frame.color, 0.18));
-    body.add(this.scene.add.ellipse(showcase.sd.x, showcase.sd.groundY, 150, 28, 0x000000, 0.45));
+    addSdFootShadow(this.scene, showcase.sd.x, showcase.sd.groundY, 210, body);
     const stage = this.scene.add.container(0, 0);
     body.add(stage);
     // 친구 카드는 서버가 공개한 외형을, 자기 카드는 제 장착을 읽는다.

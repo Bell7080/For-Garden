@@ -80,37 +80,6 @@ export function damageKeyword(preview?: DamagePreview): KeywordDef | undefined {
   return { id: "damage-value", term: String(preview.amount), kind: "rule", description };
 }
 
-/**
- * 합공의 수치 태그 ID. 축과 위력마다 따로 둔다.
- *
- * 한 문장에 수치가 넷(합공 물리·마법, 혼자 남았을 때 물리·마법) 서는데 모두 `damage-value`
- * 하나를 가리키면, 어느 수를 눌러도 첫 수의 산식("공격력의 45%")이 열려 나머지 셋은 제 설명과
- * 다른 말을 듣는다. ID를 가르면 같은 값을 가진 수만 같은 쪽지를 연다.
- */
-function dualStrikeValueId(stat: "atk" | "ap", percent: number): string {
-  return `damage-value-${stat}-${percent}`;
-}
-
-/** 합공 본문의 수치 태그가 여는 쪽지. 본문과 같은 ID·같은 값에서 짓는다. */
-export function dualStrikeDamageKeywords(skill: DescribedSkill, stats: { atk?: number; ap?: number }): KeywordDef[] {
-  if (!("dualStrike" in skill) || skill.dualStrike === undefined) return [];
-  const dual = skill.dualStrike;
-  const entries: Array<["atk" | "ap", number]> = [
-    ["atk", dual.attackPercent], ["ap", dual.abilityPercent],
-    ["atk", dual.aloneAlternatePercent], ["ap", dual.aloneAlternatePercent],
-  ];
-  const keywords = new Map<string, KeywordDef>();
-  for (const [stat, percent] of entries) {
-    const base = stats[stat];
-    if (base === undefined) continue;
-    const id = dualStrikeValueId(stat, percent);
-    keywords.set(id, {
-      id, term: String(Math.round(base * percent / 100)), kind: "rule",
-      description: t("skill.keyword.damage.single", { stat: statName(stat), percent }),
-    });
-  }
-  return [...keywords.values()];
-}
 
 /**
  * 이름을 가진 주기 스택(토리카의 「세 개의 뿔」)의 태그 정의.
@@ -149,20 +118,6 @@ function withoutKeywordTags(text: string): string {
   return text.replace(/\[\[[^\]|]+\|([^\]]+)\]\]/g, "$1");
 }
 
-/**
- * 마무리 한 절.
- *
- * **무엇이 얼마나 들어가는지는 말하지 않는다.** 남은 체력 비례 몫은 「목덜미」 태그가, 문턱이
- * 겹마다 오르는 몫은 「피 냄새」 태그가 갖는다 — 쓰는 개체가 하나뿐인 규칙어라 태그가 수치를
- * 갖고, 본문은 **언제 무는가**만 적는다. 여기서 다시 적으면 한 쪽지에 같은 수가 두 번 선다.
- */
-function finisherClause(finisher: BasicAttack["finisher"]): string {
-  if (finisher === undefined) return "";
-  const bite = t("skill.finisher.bite");
-  // 문턱이 100이면 조건 자체가 없다. "100% 이하"라고 적으면 없는 조건을 찾게 만든다.
-  if (finisher.thresholdPercent >= 100) return ` ${t("skill.finisher.always", { bite })}`;
-  return ` ${t("skill.finisher.threshold", { percent: finisher.thresholdPercent, bite })}`;
-}
 
 /** 요약과 본문이 같은 동적 키워드 사전을 쓰도록 순수 레이아웃 옵션을 한 경계에서 결합한다. */
 export function skillKeywordLayoutOptions(
@@ -172,17 +127,6 @@ export function skillKeywordLayoutOptions(
   return { ...options, contextualKeywords: skill.contextualKeywords, keywordActions: skill.keywordActions };
 }
 
-/**
- * 폭주가 함께 올리는 치명타 확률과 흡혈 한 절.
- *
- * **같은 값이면 한 번만 말한다** — "각각 25%, 25%"는 두 수를 읽게 해 놓고 결국 같은 수다.
- * 값이 서로 달라지는 순간 다시 나열한다.
- */
-function critAndLifeStealClause(criticalPoints: number, lifeStealPoints: number): string {
-  return criticalPoints === lifeStealPoints
-    ? t("skill.ferocity.critLifeSteal.same", { percent: criticalPoints })
-    : t("skill.ferocity.critLifeSteal.split", { chance: criticalPoints, lifeSteal: lifeStealPoints });
-}
 
 /** 폭주 설명의 모든 수치를 실제 전투 계약에서 만들어 밸런스 조정 후 문구가 남지 않게 한다. */
 export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack: number; defense: number; maxHp?: number; abilityPower?: number }): string {
@@ -298,10 +242,7 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
     const guard = defense === undefined
       ? t("skill.ferocity.packBody.guardPercent", { percent: trait.defenseResistancePercent })
       : t("skill.ferocity.packBody.guardAmount", { amount: defense });
-    return t("skill.ferocity.packBody", {
-      guard, percent: trait.attackSpeedPercent,
-      crit: critAndLifeStealClause(trait.criticalChancePoints, trait.lifeStealPoints),
-    });
+    return t("skill.ferocity.packBody", { guard, percent: trait.attackSpeedPercent });
   }
 
   if (trait.effectId === "duoBreakthrough") {
@@ -452,10 +393,6 @@ function passiveHead(passive: Passive, atk?: number): string {
     });
   }
   if (passive.kind === "summonCommander") {
-    const crit = passive.criticalChancePercent;
-    const guard = crit === undefined
-      ? t("skill.passive.summonCommander.guard")
-      : t("skill.passive.summonCommander.guardCrit", { percent: crit });
     /*
      * **혼자 남는 순간을 본문이 직접 말한다.**
      *
@@ -463,10 +400,7 @@ function passiveHead(passive: Passive, atk?: number): string {
      * 실제로는 그 프레임에 은신이 풀려 지휘자가 그대로 맞는 몸이 되고, 그것이 이 편성이 파는
      * 값이다. 주어가 달라지는 절이라 제 문장으로 세운다.
      */
-    const exposed = t("skill.passive.summonCommander.exposed");
-    // 피 냄새의 겹당 수치와 상한은 태그가 말한다. 여기서는 **언제 얻는가**만 적는다.
-    const scent = passive.bloodscent === undefined ? "" : t("skill.passive.summonCommander.scent");
-    return t("skill.passive.summonCommander", { guard, exposed, scent });
+    return t("skill.passive.summonCommander", { exposed: t("skill.passive.summonCommander.exposed") });
   }
   if (passive.kind === "followHighestAttackAllyTarget") return t("skill.passive.followHighestAttackAllyTarget");
   // 주기만 적는다. 어디로 가는지(가장 약해진 적)와 한 방이 확정 치명타라는 것은 문장이 갖고,
@@ -696,31 +630,6 @@ export function skillDescription(
   skill: DescribedSkill,
   stats: SkillDescriptionStats = {},
 ): string {
-  // 합공은 한 행동에 두 축이 함께 들어간다. 하나로 합친 위력이 없으므로 정형 문장을 따로 짓는다.
-  if ("dualStrike" in skill && skill.dualStrike !== undefined) {
-    const dual = skill.dualStrike;
-    const value = (stat: "atk" | "ap", percent: number): string => {
-      const base = stat === "atk" ? stats.atk?.atk : stats.ap;
-      return base === undefined
-        ? t("skill.value.scaling", { stat: statName(stat), percent })
-        : `[[${dualStrikeValueId(stat, percent)}|${Math.round(base * percent / 100)}]]`;
-    };
-    /*
-     * 순서는 **합공 → 혼자 남았을 때 → 마무리**다. 혼자 남은 한 방도 합공을 바꿔 치는 형태라
-     * 합공 바로 뒤에 서야 하고, 마무리는 둘 중 무엇이든 대신하므로 맨 뒤다. 혼자 남은 몫도
-     * 실제 수치로 보여 준다 — 위력(%)으로만 두면 위 문장과 단위가 갈린다.
-     */
-    return t("skill.sentence.dualStrike", { physical: value("atk", dual.attackPercent), magical: value("ap", dual.abilityPercent) })
-      + ` ${t("skill.sentence.dualStrike.alone", { physical: value("atk", dual.aloneAlternatePercent), magical: value("ap", dual.aloneAlternatePercent) })}`
-      + finisherClause(skill.finisher);
-  }
-  // 무리를 통째로 던지는 궁극기. 지휘자 자신은 때리지 않고 늑대의 돌진과 마무리가 전부다.
-  if ("packAssault" in skill && skill.packAssault !== undefined) {
-    const assault = skill.packAssault;
-    return t("skill.sentence.packAssault", { percent: assault.summonPowerPercent })
-      + ` ${t("skill.sentence.packAssault.resummon", { seconds: assault.resummonHasteSeconds })}`
-      + finisherClause(skill.finisher);
-  }
   // 순수 회복기는 때리는 대상이 없어 "대상 → 피해"로 시작할 수 없다. 회복 계약에서 바로 짓는다.
   if (skill.damageType === undefined || skill.power === undefined) {
     if ("healing" in skill && skill.healing?.kind === "teamMissingHpPercent") {
@@ -957,6 +866,20 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
   }
   if ("periodicCritical" in skill && skill.periodicCritical) {
     clauses.push({ text: t("skill.clause.periodicCritical", { every: skill.periodicCritical.every }), standalone: true });
+  }
+  /*
+   * 목덜미는 **언제·얼마나**를 본문이 말한다. 문턱과 배율은 스킬마다 다를 수 있는 수라 태그가 못
+   * 박으면 거짓말이 되고, 태그는 그것이 무엇인지(체력 낮은 적을 끝내는 한 방)만 말한다.
+   */
+  if ("finisher" in skill && skill.finisher !== undefined) {
+    clauses.push({
+      text: t("skill.clause.nape", { percent: skill.finisher.thresholdPercent, bonus: skill.finisher.bonusDamagePercent, seconds: skill.finisher.cooldownSeconds }),
+      standalone: true,
+    });
+  }
+  // 늑대가 무엇을 하는지는 늑대의 궁극기가 말한다. 여기서는 부른다는 것만 적는다.
+  if ("commandsPack" in skill && skill.commandsPack === true) {
+    clauses.push({ text: t("skill.clause.commandsPack"), standalone: true });
   }
   // 여울은 **쓰는 개체가 하나뿐인 규칙어**라 반경·시간·둔화·확정 연격을 태그가 갖는다.
   // 본문이 그걸 다시 늘어놓으면 한 문장이 그 규칙 하나로 가득 찬다.

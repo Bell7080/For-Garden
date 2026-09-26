@@ -53,7 +53,7 @@ export const GLOSSARY = {
 
   // ── 콘텐츠 ────────────────────────────────────────────────────────────
   research: { note: "화석·호박석을 써서 개체를 얻는 확률형 뽑기. **이것이 가챠다.**", forms: { ko: "연구", ja: "研究", en: "Research", "zh-Hans": "研究", "zh-Hant": "研究", th: "วิจัย", vi: "Nghiên cứu", id: "Riset", es: "Investig", "pt-BR": "Pesquis", de: "Forsch", ru: "Исследов" } },
-  lab: { note: "연구를 여는 화면 이름.", forms: { ko: "연구소", ja: "研究所", en: "Research Lab", "zh-Hans": "研究所", "zh-Hant": "研究所", th: "ห้องวิจัย", vi: "Viện nghiên cứu", id: "Lab Riset", es: "Laboratorio", "pt-BR": "Laboratório", de: "Forschungslabor", ru: "Лаборатори" } },
+  lab: { note: "연구를 여는 화면 이름.", forms: { ko: "연구소", ja: "研究所", en: "Research Lab", "zh-Hans": "研究所", "zh-Hant": "研究所", th: "ห้องวิจัย", vi: "Viện nghiên cứu", id: "Lab Riset", es: "Lab", "pt-BR": "Laboratório", de: "Forschungslabor", ru: "Лаб" } },
   excavation: { note: "로비에서 개체를 배치해 두고 시간이 지나 자원을 걷는 방치형. **뽑기가 아니다.**", forms: { ko: "발굴", ja: "採掘", en: "Excavation", "zh-Hans": "采掘", "zh-Hant": "採掘", th: "ขุด", vi: "Khai thác", id: "Gali", es: "Excava", "pt-BR": "Escava", de: "Grabung", ru: "Раскоп" } },
   expedition: { note: "수장된 제2·제3지부를 무대로 하는 주간 기록형 콘텐츠.", forms: { ko: "원정", ja: "遠征", en: "Expedition", "zh-Hans": "远征", "zh-Hant": "遠征", th: "ออกสำรวจ", vi: "Viễn chinh", id: "Ekspedisi", es: "Expedici", "pt-BR": "Expediç", de: "Expedition", ru: "Экспедици" } },
   interaction: { note: "이터널 바깥 Garden 도시들을 도는 방치형 서브 콘텐츠.", forms: { ko: "교류", ja: "交流", en: "Exchange", "zh-Hans": "交流", "zh-Hant": "交流", th: "แลกเปลี่ยน", vi: "Giao lưu", id: "Tukar", es: "Intercambio", "pt-BR": "Intercâmbio", de: "Austausch", ru: "Обмен" } },

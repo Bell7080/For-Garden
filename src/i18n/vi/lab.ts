@@ -39,7 +39,7 @@ export const LAB_VI = {
   "lab.cinematic.specimenNote": "FOSSIL / AMBER",
   "lab.showcase.quote": "“{line}”",
   "lab.banner.welcome.eyebrow": "WELCOME RESEARCH",
-  "lab.banner.welcome.title": "Nghiên cứu Phục hồi đầu tiên",
+  "lab.banner.welcome.title": "Nghiên cứu Phục hồi Sơ khởi",
   "lab.banner.fossil.eyebrow": "STANDARD RESEARCH",
   "lab.banner.fossil.title": "Nghiên cứu Hóa thạch",
   "lab.banner.amber.eyebrow": "LIMITED PICK UP",

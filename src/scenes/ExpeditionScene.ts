@@ -957,7 +957,7 @@ export class ExpeditionScene extends Phaser.Scene {
       // 칸의 밑판·발밑 그림자·빈 자리 번호는 네 편성 화면이 공유하는 한 장이다. 예전에는 이
       // 화면만 깎은 칩을 **빈 칸에만** 깔아, 같은 세 자리가 발굴·파견과 다른 판 위에 섰다.
       addFormationSlotPlate(this, layer, box, {
-        accent: COLOR.sortie, occupied: Boolean(relicId), index, groundOffset: FORMATION.groundOffset,
+        occupied: Boolean(relicId), index, groundOffset: FORMATION.groundOffset,
         // 원정도 전투 편성이라 같은 추천 직군 표를 세운다. 끄기는 공용 편성 화면의 버튼이 정한다.
         recommendedRoles: settingsManager.get().game.formationRoleHint ? RECOMMENDED_SLOT_ROLES[index] : undefined,
       });

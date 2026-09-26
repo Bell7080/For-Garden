@@ -17,20 +17,40 @@ function dianSummon(id: "kuro" | "shiro") {
 }
 
 describe("디안 귀속 소환수 능력치", () => {
-  it("은 쿠로가 최종 공격력 성장만 따른다", () => {
+  it("은 쿠로의 공격과 속도가 공격력만, 몸은 공격력과 주문력을 함께 따른다", () => {
     const kuro = dianSummon("kuro");
-    const grown = deriveSummonStats({ ...FINAL_STATS, atk: 260 }, kuro);
-    expect(grown.atk).toBeGreaterThan(deriveSummonStats(FINAL_STATS, kuro).atk);
-    // 주문력 변화는 쿠로의 모든 파생 능력치에 영향을 주지 않는다.
-    expect(deriveSummonStats({ ...FINAL_STATS, ap: 9999 }, kuro)).toEqual(deriveSummonStats(FINAL_STATS, kuro));
+    const base = deriveSummonStats(FINAL_STATS, kuro);
+    const moreAp = deriveSummonStats({ ...FINAL_STATS, ap: 300 }, kuro);
+    // 주문력을 키워도 때리는 손과 속도는 그대로다.
+    expect(moreAp.atk).toBe(base.atk);
+    expect(moreAp.attackSpeed).toBe(base.attackSpeed);
+    expect(moreAp.ap).toBe(0);
+    // 몸은 두꺼워진다 — 주인이 어느 축을 키워도 앞에 선 방패가 같이 자란다.
+    expect(moreAp.hp).toBeGreaterThan(base.hp);
+    expect(moreAp.def).toBeGreaterThan(base.def);
+    expect(moreAp.res).toBeGreaterThan(base.res);
   });
 
-  it("은 시로가 최종 주문력 성장만 따른다", () => {
+  it("은 시로의 공격과 속도가 주문력만, 몸은 공격력과 주문력을 함께 따른다", () => {
     const shiro = dianSummon("shiro");
-    const grown = deriveSummonStats({ ...FINAL_STATS, ap: 210 }, shiro);
-    expect(grown.ap).toBeGreaterThan(deriveSummonStats(FINAL_STATS, shiro).ap);
-    // 공격력 변화는 시로의 모든 파생 능력치에 영향을 주지 않는다.
-    expect(deriveSummonStats({ ...FINAL_STATS, atk: 9999 }, shiro)).toEqual(deriveSummonStats(FINAL_STATS, shiro));
+    const base = deriveSummonStats(FINAL_STATS, shiro);
+    const moreAtk = deriveSummonStats({ ...FINAL_STATS, atk: 400 }, shiro);
+    expect(moreAtk.ap).toBe(base.ap);
+    expect(moreAtk.attackSpeed).toBe(base.attackSpeed);
+    expect(moreAtk.atk).toBe(0);
+    expect(moreAtk.hp).toBeGreaterThan(base.hp);
+    expect(moreAtk.def).toBeGreaterThan(base.def);
+  });
+
+  it("은 디안의 태생값에서 정의의 태생 능력치를 그대로 낸다", () => {
+    const dian = getRelic("dian");
+    for (const id of ["kuro", "shiro"] as const) {
+      const summon = dianSummon(id);
+      const derived = deriveSummonStats(dian.stats, summon);
+      for (const key of ["hp", "def", "res", "atk", "ap"] as const) {
+        expect(Math.abs(derived[key] - summon.def.stats[key]), `${id}.${key}`).toBeLessThanOrEqual(1);
+      }
+    }
   });
 
   it("은 반올림 뒤 공속·이속 상한을 적용하고 입력을 변경하지 않는다", () => {

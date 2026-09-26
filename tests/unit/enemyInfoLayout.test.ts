@@ -96,4 +96,5 @@ describe("적 정보 팝업 배치", () => {
     expect(placed.get("enemy-0")?.level).toBe(14);
     expect(placed.get("enemy-0")?.breakthrough).toBe(0);
   });
+
 });

@@ -17,6 +17,7 @@ import { spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { loadOwnedPuppet } from "./statusPuppetLoad";
 import { takePlayerExp } from "../managers/PlayerExpReceipts";
 import { addPlayerExpGainRow } from "./PlayerExpGainRow";
+import { addSdFootShadow } from "./SdFootShadow";
 
 /** 결과 화면이 넘기는 편성원 한 명. MVP 여부만 알면 카드 크기·발광은 이 프리팹이 정한다. */
 export interface StageCompleteFighter {
@@ -274,7 +275,7 @@ export class StageCompletePopup {
       const absX = BASE_WIDTH / 2 + cx;
       const relic = getRelic(fighter.relicId);
       // 발밑 그림자는 카드 없이 서는 SD가 바닥에 붙어 보이게 하는 최소한의 장치다.
-      puppetLayer.add(this.scene.add.ellipse(absX, absGroundY + 6, size.width * 0.6, size.width * 0.2, 0x000000, 0.32));
+      addSdFootShadow(this.scene, absX, absGroundY + 6, size.width * 0.66, puppetLayer);
       void loadOwnedPuppet({
         spawn: () => spawnPuppet(this.scene, relicAppearanceManager.sdAssetFor(fighter.relicId), { x: absX, groundY: absGroundY, height: size.height }),
         isCurrent: () => !isDisposed(),

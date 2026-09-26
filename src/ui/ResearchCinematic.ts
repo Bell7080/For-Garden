@@ -250,6 +250,8 @@ export class ResearchCinematic {
   private readonly introduced = new Set<number>();
   /** 소개 장면이 도는 동안에는 판이 손을 받지 않는다. */
   private introducing = false;
+  /** 건너뛰기가 소개를 차례로 돌리는 동안 — 소개 사이에 판을 되살리지 않는다. */
+  private holdHidden = false;
   private readonly introduce?: (index: number) => Promise<void>;
   private readonly introduceSlots: ReadonlySet<number>;
 
@@ -374,11 +376,22 @@ export class ResearchCinematic {
    * 얼굴이 카드 한 장으로만 지나가면 "새로 왔다"가 읽히지 않는다.
    */
   private async skipAfterIntroductions(): Promise<void> {
-    for (const index of this.pendingIntroductions()) {
-      await this.runIntroduction(index);
-      if (this.closed) return;
+    // 소개와 소개 사이에 판을 다시 보이지 않는다 — 건너뛰는 중이라 그 사이의 무대는 볼 것이 아니고,
+    // 한 박자씩 비치면 화면이 번쩍이며 바뀌는 것으로 읽힌다. 결산 격자가 선 뒤에야 판을 되살린다.
+    this.holdHidden = true;
+    try {
+      for (const index of this.pendingIntroductions()) {
+        await this.runIntroduction(index);
+        if (this.closed) return;
+      }
+      this.instance.skipToResult();
+    } finally {
+      this.holdHidden = false;
+      if (!this.closed) {
+        this.root.style.opacity = "";
+        this.root.style.pointerEvents = "";
+      }
     }
-    this.instance.skipToResult();
   }
 
   /** 아직 소개하지 않은 새 렐릭 칸. 카드 순서대로다. */
@@ -417,8 +430,10 @@ export class ResearchCinematic {
       this.introducing = false;
       if (!this.closed) {
         this.game.input.enabled = false;
-        this.root.style.opacity = "";
-        this.root.style.pointerEvents = "";
+        if (!this.holdHidden) {
+          this.root.style.opacity = "";
+          this.root.style.pointerEvents = "";
+        }
       }
     }
   }

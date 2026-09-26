@@ -51,6 +51,7 @@ import { normalizePartyContent, partyPreview, type PartyContent, type PartyPrevi
 import { consumeSceneEntry } from "./sceneEntry";
 import { getBountyTier } from "../data/bounty";
 import { getCakeOperationTier } from "../data/cakeOperation";
+import { addSdFootShadow } from "../ui/SdFootShadow";
 
 /**
  * 미리보기 전장.
@@ -437,7 +438,7 @@ export class PartyScene extends Phaser.Scene {
   private addPreviewEnemy(enemy: PartyPreviewEnemy, x: number, bodyScale: number, elite: boolean, crowded: boolean): void {
     const { def } = enemy;
     // 받침은 SD(-10)보다 뒤에 둬야 발을 덮지 않는다.
-    this.add.ellipse(x, ENEMY_ROW + 4, (crowded ? 150 : 190) * bodyScale, 34, COLOR.void, 0.45).setDepth(-12);
+    addSdFootShadow(this, x, ENEMY_ROW + 4, (crowded ? 150 : 190) * bodyScale).setDepth(-12);
     void this.standSD(def.id, x, ENEMY_ROW, true, bodyScale);
     const headY = ENEMY_ROW - PREVIEW_HEIGHT * bodyScale - 6;
     // 현상수배는 정예마다 **몇 라운드에 서는지**를 머리 위에 적는다 — 아래 같은 열의 아군이 그
@@ -780,7 +781,7 @@ export class PartyScene extends Phaser.Scene {
       // 고른 칸 밑판 **위에** 칸 판을 깐다(발굴과 같은 순서). 밑판이 칸 판을 덮으면 고른 자리만
       // 다른 색 유리가 되어, 판이 아니라 칠이 바뀐 것처럼 보인다.
       addFormationSlotPlate(this, plate, partyAllyPlateBox(i), {
-        accent: COLOR.ally, occupied: Boolean(id), index: i, groundOffset: partyAllyGroundOffset(),
+        occupied: Boolean(id), index: i, groundOffset: partyAllyGroundOffset(),
         recommendedRoles: settingsManager.get().game.formationRoleHint ? RECOMMENDED_SLOT_ROLES[i] : undefined,
       });
       // 빼는 표식은 **고른 자리에 누군가 서 있을 때만** 선다. 늘 세워 두면 세 자리 위에 붉은

@@ -15,10 +15,8 @@
 export const FORMATION_SLOT_PLATE = {
   /** 판 윗변 강조선의 진하기. */
   edgeAlpha: 0.55,
-  /** 발밑 투영 그림자 — 칸 폭 대비 너비, 높이, 진하기. */
+  /** 발밑 그림자의 칸 폭 대비 너비. 결(겹·진하기)은 `SD_FOOT_SHADOW` 한 표가 갖는다. */
   groundWidthRatio: 0.82,
-  groundHeight: 25,
-  groundAlpha: 0.16,
   /** 빈 칸에 서는 자리 번호의 크기. */
   emptyFontSize: 22,
 } as const;

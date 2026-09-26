@@ -224,23 +224,16 @@ export interface PlayerStateDto {
    *
    * 화면이 권리 ID나 만료 시각을 들고 판단하지 않는다 — 화면은 "쓸 수 있나"만 알면 되고,
    * 기간 계산은 서버 시각을 가진 쪽에서 한 번만 한다. 클라이언트가 만료를 스스로 셈하면
-   * 기기 시계를 돌려 잠긴 배율을 여는 길이 생긴다.
+   * 기기 시계를 돌려 소탕권 없이 소탕하는 길이 생긴다.
    */
   adFreeMembership: boolean;
   /** 치즈케이크 대작전에서 이긴 가장 높은 단계의 순번(0부터, 없으면 -1)이다. */
   cakeOperation: { clearedIndex: number };
 }
 
-/**
- * 물량형 던전 한 번의 요청. 출격과 소탕이 **같은 계약**을 쓴다.
- *
- * 둘이 다른 요청을 쓰면 같은 단계의 값이 두 곳에서 계산되고, 소탕만 규칙이 뒤처진다.
- * 무엇이 다른지는 `sweep` 한 값뿐이며 그 차이는 "전투를 거치는가"에서 끝난다.
- */
+/** 물량형 던전의 입장. 스테미나는 여기서 한 번만 빠진다. */
 export interface CakeOperationRunRequest {
   tierId: string;
-  /** 1·2는 누구나, 3부터는 광고 제거 멤버십만 쓸 수 있다. */
-  multiplier: number;
   requestId: string;
 }
 
@@ -248,28 +241,39 @@ export interface CakeOperationRunRequest {
 export interface CakeOperationEnterResponse extends PlayerStateDto {
   tierId: string;
   requestId: string;
-  multiplier: number;
   staminaSpent: number;
   refundPolicy: "no-refund-after-admission";
 }
 
 /** 전투 결과 확정. 패배도 명시해 승리 전용 보상이 새지 않게 한다. */
-export interface CakeOperationCompleteRequest { tierId: string; requestId: string; multiplier: number; victory: boolean; }
+export interface CakeOperationCompleteRequest { tierId: string; requestId: string; victory: boolean; }
 export interface CakeOperationCompleteResponse extends PlayerStateDto {
   tierId: string;
   victory: boolean;
-  multiplier: number;
   /** 이번 처리에서 실제로 늘어난 재화다. 화면이 다시 곱하지 않는다. */
   granted: Partial<Record<keyof Wallet, number>>;
   /** 이 판으로 새 단계가 열렸는가. */
   unlockedNextTier: boolean;
 }
 
-/** 소탕. 스테미나 차감과 보상 지급이 전투 없이 한 처리로 끝난다. */
-export interface CakeOperationSweepResponse extends PlayerStateDto {
+/**
+ * 던전 소탕 — 현상수배와 치즈케이크 대작전이 **같은 계약**을 쓴다.
+ *
+ * `count`번을 한 처리로 끝낸다. 멤버십이 없으면 소탕권도 `count`장 든다(`dungeonShortcut`).
+ * 둘이 다른 요청을 쓰면 같은 단계의 값이 두 곳에서 계산되고, 한쪽 규칙만 뒤처진다.
+ */
+export interface DungeonSweepRequest {
   tierId: string;
-  multiplier: number;
+  requestId: string;
+  count: number;
+}
+
+/** 소탕 결과. 스테미나·소탕권 차감과 보상 지급이 전투 없이 한 처리로 끝난다. */
+export interface DungeonSweepResponse extends PlayerStateDto {
+  tierId: string;
+  count: number;
   staminaSpent: number;
+  ticketsSpent: number;
   granted: Partial<Record<keyof Wallet, number>>;
 }
 
@@ -505,10 +509,10 @@ export interface UpgradeRuneTraitRequest { runeInstanceId: string; itemId: strin
 export interface UpgradeRuneTraitResponse { rune: RuneInstance; items: InventoryItemDto[]; }
 
 /** UI가 서버 실패 원인을 문구로 바꿀 수 있게 고정한 오류 코드다. */
-export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPEDITION_RUN_NOT_FOUND" | "EXPEDITION_ALREADY_SETTLED" | "EXPEDITION_ALREADY_ACTIVE" | "EXPEDITION_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REQUIRED" | "AD_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REJECTED" | "RAID_DAILY_LIMIT" | "RAID_SCORE_REJECTED" | "RAID_REWARD_NOT_EARNED" | "RAID_NOT_FOUND" | "RAID_ENDED" | "RAID_NOT_ENDED" | "RAID_SUMMON_INVALID" | "RAID_TICKET_SHORTAGE" | "EXPEDITION_REWARD_NOT_FOUND" | "EXPEDITION_REWARD_NOT_EARNED" | "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INVALID_PURCHASE_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "BANNER_NOT_FOUND" | "BANNER_LIMIT_REACHED" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "INVALID_RUNE_SALE" | "RUNE_EQUIPPED" | "RUNE_LOCKED" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "BOUNTY_TIER_NOT_FOUND" | "BOUNTY_TIER_LOCKED" | "BOUNTY_DAILY_LIMIT" | "BOUNTY_ADMISSION_NOT_FOUND" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_STOREFRONT_MISMATCH" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "ACQUISITION_FLOW_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE"
+export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPEDITION_RUN_NOT_FOUND" | "EXPEDITION_ALREADY_SETTLED" | "EXPEDITION_ALREADY_ACTIVE" | "EXPEDITION_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REQUIRED" | "AD_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REJECTED" | "RAID_DAILY_LIMIT" | "RAID_SCORE_REJECTED" | "RAID_REWARD_NOT_EARNED" | "RAID_NOT_FOUND" | "RAID_ENDED" | "RAID_NOT_ENDED" | "RAID_SUMMON_INVALID" | "RAID_TICKET_SHORTAGE" | "EXPEDITION_REWARD_NOT_FOUND" | "EXPEDITION_REWARD_NOT_EARNED" | "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INVALID_PURCHASE_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "BANNER_NOT_FOUND" | "BANNER_LIMIT_REACHED" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "INVALID_RUNE_SALE" | "RUNE_EQUIPPED" | "RUNE_LOCKED" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "BOUNTY_TIER_NOT_FOUND" | "BOUNTY_TIER_LOCKED" | "BOUNTY_ADMISSION_NOT_FOUND" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_STOREFRONT_MISMATCH" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "ACQUISITION_FLOW_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE"
   | "STRATA_NO_CHARGE" | "STRATA_RUN_ACTIVE" | "STRATA_RUN_NOT_FOUND" | "STRATA_SITE_LOCKED" | "STRATA_SITE_COOLING" | "STRATA_TILE_UNAVAILABLE"
   | "RUNE_TRAIT_NOT_FOUND" | "RUNE_TRAIT_ITEM_INVALID" | "RUNE_TRAIT_MAX_GRADE" | "RUNE_TRAIT_GRADE_REACHED" | "RUNE_TRAIT_REROLL_PENDING"
-  | "CAKE_TIER_NOT_FOUND" | "CAKE_TIER_LOCKED" | "CAKE_MULTIPLIER_LOCKED" | "BOUNTY_MULTIPLIER_LOCKED";
+  | "CAKE_TIER_NOT_FOUND" | "CAKE_TIER_LOCKED" | "DUNGEON_NOT_CLEARED" | "SWEEP_TICKET_SHORTAGE";
 
 /**
  * 급여 응답.
@@ -527,23 +531,17 @@ export interface EnterStageResponse extends PlayerStateDto { stageId: string; re
 /**
  * 현상수배 입장 영수증.
  *
- * 세 라운드가 **한 번의 입장**이라 스테미나와 일일 횟수는 여기서 한 번만 나간다. 라운드 사이에
+ * 세 라운드가 **한 번의 입장**이라 스테미나는 여기서 한 번만 나간다. 라운드 사이에
  * 나가더라도 환불하지 않는 것은 스테이지 입장과 같은 계약이다.
  */
-/**
- * 배율은 대작전과 **같은 단축 규칙**(`dungeonShortcut`)이다 — x1·x2는 누구나, x3은 광고 제거
- * 멤버십. 배율만큼 스테미나·입장 횟수·보상에 같은 수를 곱한다.
- */
-export interface EnterBountyRequest { tierId: string; requestId: string; multiplier: number; }
-export interface EnterBountyResponse extends PlayerStateDto { tierId: string; requestId: string; multiplier: number; staminaSpent: number; entriesRemaining: number; refundPolicy: "no-refund-after-admission"; }
-/** 소탕. 이미 이긴 등급만 전투 없이 차감과 지급을 한 처리로 끝낸다. */
-export interface SweepBountyResponse extends PlayerStateDto { tierId: string; multiplier: number; staminaSpent: number; entriesRemaining: number; granted: Partial<Record<keyof Wallet, number>>; }
+export interface EnterBountyRequest { tierId: string; requestId: string; }
+export interface EnterBountyResponse extends PlayerStateDto { tierId: string; requestId: string; staminaSpent: number; refundPolicy: "no-refund-after-admission"; }
 /** 세 라운드의 결과를 한 번에 확정한다. 진 판도 보내 기록이 이긴 판만의 것이 되지 않게 한다. */
 export interface CompleteBountyRequest { tierId: string; requestId: string; victory: boolean; clearedRounds: number; }
 /** 골드 지급과 등급 해금을 한 처리로 확정하고 화면이 다시 계산하지 않게 결과만 돌려준다. */
-export interface CompleteBountyResponse extends PlayerStateDto { tierId: string; victory: boolean; clearedRounds: number; multiplier: number; goldEarned: number; firstClear: boolean; clearedTierIds: string[]; }
-/** 등급 줄과 남은 입장 횟수를 서버 날짜 기준으로 조회한다. */
-export interface BountyStatusResponse { clearedTierIds: string[]; entriesRemaining: number; serverTime: string; }
+export interface CompleteBountyResponse extends PlayerStateDto { tierId: string; victory: boolean; clearedRounds: number; goldEarned: number; firstClear: boolean; clearedTierIds: string[]; }
+/** 깬 등급을 조회한다. 하루 입장 제한은 없다. */
+export interface BountyStatusResponse { clearedTierIds: string[]; serverTime: string; }
 
 /** 로비 터치 결과는 중복 여부와 대사 UI가 표시할 유대 변화량을 돌려준다. */
 export interface LobbyInteractionResponse extends PlayerStateDto { relicId: string; bondXpEarned: number; bondLevelsGained: number; }
@@ -747,14 +745,14 @@ export interface GameApi extends AsyncArenaProfileApi {
   /** 전투 결과 확정. 승리면 배율만큼의 치즈케이크를 얹고 해금 단계를 갱신한다. */
   completeCakeOperation(request: CakeOperationCompleteRequest): Promise<CakeOperationCompleteResponse>;
   /** 이미 이긴 단계를 전투 없이 턴다. 차감과 지급이 한 처리다. */
-  sweepCakeOperation(request: CakeOperationRunRequest): Promise<CakeOperationSweepResponse>;
+  sweepCakeOperation(request: DungeonSweepRequest): Promise<DungeonSweepResponse>;
   enterDailyRestoration(): Promise<EnterDailyRestorationResponse>;
   /** 현상수배 등급 줄과 오늘 남은 입장 횟수를 조회한다. */
   getBountyStatus(): Promise<BountyStatusResponse>;
   /** 스테미나와 일일 입장 횟수를 한 처리로 차감하고 세 라운드의 입장을 연다. */
   enterBounty(request: EnterBountyRequest): Promise<EnterBountyResponse>;
   /** 이미 이긴 등급을 전투 없이 배율만큼 턴다. 스테미나·입장 횟수·골드가 한 처리로 확정된다. */
-  sweepBounty(request: EnterBountyRequest): Promise<SweepBountyResponse>;
+  sweepBounty(request: DungeonSweepRequest): Promise<DungeonSweepResponse>;
   /** 세 라운드의 결과를 확정한다. 이긴 판만 골드를 주고 다음 등급을 연다. */
   completeBounty(request: CompleteBountyRequest): Promise<CompleteBountyResponse>;
   /** 이벤트 목록과 활성 상태는 서버 시각으로만 계산한다. */

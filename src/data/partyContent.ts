@@ -1,4 +1,3 @@
-import { normalizeMultiplier, type DungeonMultiplier } from "../core/dungeonShortcut";
 import { RAID_BOSS_ROLE, raidBossDef, raidBossGrowth } from "../core/raid";
 import type { BattleStageDef, RelicDef } from "../core/types";
 import { bountyRoundEnemy, bountyRoundLevel, BOUNTY_ROLE, BOUNTY_TIERS, getBountyTier } from "./bounty";
@@ -19,29 +18,29 @@ import { getStageEnemies, stageEnemyGrowth, stageEnemyRole } from "./stages";
 export type PartySceneData =
   | { content?: "stage" }
   | { content: "raid"; raidId: string; bossRelicId: string; difficulty: RaidDifficulty }
-  | { content: "bounty" | "cake"; tierId: string; multiplier: number };
+  | { content: "bounty" | "cake"; tierId: string };
 
-/** 정규화된 진입. 배율은 표에 있는 값으로 좁혀 둔다. */
+/** 정규화된 진입. 단계는 표에 있는 값만 남는다. */
 export type PartyContent =
   | { content: "stage" }
   | { content: "raid"; raidId: string; bossRelicId: string; difficulty: RaidDifficulty }
-  | { content: "bounty" | "cake"; tierId: string; multiplier: DungeonMultiplier };
+  | { content: "bounty" | "cake"; tierId: string };
 
 /**
  * Phaser가 건넨 진입 데이터를 콘텐츠 하나로 좁힌다. 모르는 값·없는 단계는 **스토리**로 수렴한다 —
  * 지난 진입의 값으로 엉뚱한 던전의 편성이 뜨면 안 된다.
  */
 export function normalizePartyContent(input: unknown): PartyContent {
-  const data = (input ?? {}) as Partial<{ content: string; tierId: string; multiplier: number; raidId: string; bossRelicId: string; difficulty: string }>;
+  const data = (input ?? {}) as Partial<{ content: string; tierId: string; raidId: string; bossRelicId: string; difficulty: string }>;
   // 레이드는 **어느 판인가**까지 있어야 한다 — 판 ID가 빠진 진입은 어느 체력을 깎을지 모른다.
   if (data.content === "raid" && typeof data.raidId === "string" && typeof data.bossRelicId === "string" && isRaidDifficulty(data.difficulty)) {
     return { content: "raid", raidId: data.raidId, bossRelicId: data.bossRelicId, difficulty: data.difficulty };
   }
   if (data.content === "bounty" && BOUNTY_TIERS.some(({ id }) => id === data.tierId)) {
-    return { content: "bounty", tierId: data.tierId as string, multiplier: normalizeMultiplier(data.multiplier) };
+    return { content: "bounty", tierId: data.tierId as string };
   }
   if (data.content === "cake" && CAKE_OPERATION_TIERS.some(({ id }) => id === data.tierId)) {
-    return { content: "cake", tierId: data.tierId as string, multiplier: normalizeMultiplier(data.multiplier) };
+    return { content: "cake", tierId: data.tierId as string };
   }
   return { content: "stage" };
 }

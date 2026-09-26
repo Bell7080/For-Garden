@@ -1,5 +1,6 @@
 import { RAID_TICKET_TEST_KIT } from "../data/raid";
 import { previewCompletedRaids, RAID_HISTORY_PREVIEW_PREFIX } from "../core/raid";
+import { SWEEP_TICKET_TEST_KIT } from "../core/dungeonShortcut";
 import { calculateFinalStats, breakthroughGrade, remainingBreakthroughCost } from "../core/relicProgression";
 import type { RelicProgress, Stats } from "../core/types";
 import { getRelic } from "../data/relics";
@@ -94,6 +95,20 @@ export class RelicProgressionManager {
     }
     if (!changed) return;
     this.state.itemInventory = items;
+    this.persistSharedSession();
+  }
+
+  /**
+   * 임시 지급: 소탕권을 하한까지 채운다. 웹 빌드에는 광고 SDK가 없어 광고로는 채울 수 없으므로,
+   * 소탕을 만져 보려면 가방에 몇 장이 있어야 한다. 광고 SDK가 붙으면 이 메서드와 부트의 호출을 지운다.
+   */
+  grantSweepTicketTestKit(): void {
+    const { itemId, quantity } = SWEEP_TICKET_TEST_KIT;
+    const owned = this.state.itemInventory.find((entry) => entry.itemId === itemId);
+    if (owned && owned.quantity >= quantity) return;
+    this.state.itemInventory = owned
+      ? this.state.itemInventory.map((entry) => entry.itemId === itemId ? { ...entry, quantity } : entry)
+      : [...this.state.itemInventory, { itemId, quantity }];
     this.persistSharedSession();
   }
 

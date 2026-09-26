@@ -17,7 +17,7 @@ import { createArchaeologyState } from "../core/strataDig";
 import { findItem } from "../data/items";
 import { EXPEDITION_AUGMENT_IDS, EXPEDITION_REWARD_IDS } from "../data/expedition";
 import { CAKE_OPERATION_TIERS } from "../data/cakeOperation";
-import { BOUNTY, BOUNTY_TIERS } from "../data/bounty";
+import { BOUNTY_TIERS } from "../data/bounty";
 import { validateExpeditionMap } from "../core/expeditionMap";
 import type { ExpeditionRunState } from "./session";
 import { staminaMaxForResearchLevel } from "../core/stamina";
@@ -400,9 +400,10 @@ export class SaveManager {
     const savedCake = legacy.cakeOperation as Partial<SaveData["cakeOperation"]> | undefined;
     const cakeClearedIndex = Number.isInteger(savedCake?.clearedIndex) ? Number(savedCake?.clearedIndex) : -1;
     const cakeOperation = { clearedIndex: Math.min(Math.max(-1, cakeClearedIndex), CAKE_OPERATION_TIERS.length - 1) };
-    // 현상수배 도입(v38) 전 저장은 깬 등급이 없으므로 1급만 열린 채로 시작한다.
+    // 현상수배 도입(v38) 전 저장은 깬 등급이 없으므로 1급만 열린 채로 시작한다. 하루 입장 제한을
+    // 걷어 낸 뒤로는 예전 저장의 날짜·횟수(`date`·`entries`)를 버리고 깬 등급만 옮긴다.
     const savedBounty = legacy.bounty as Partial<SaveData["bounty"]> | undefined;
-    const bounty = { date: savedBounty?.date ?? "", entries: savedBounty?.entries ?? 0, clearedTierIds: savedBounty?.clearedTierIds ?? [] };
+    const bounty = { clearedTierIds: savedBounty?.clearedTierIds ?? [] };
     // 임무 도입 전 저장은 기간 키가 비어 있어 다음 서버 접근에서 현재 UTC 기간으로 정규화된다.
     const savedMissions = legacy.missions as Partial<SaveData["missions"]> | undefined;
     // 구버전 저장은 이미 완료된 임무를 다시 연구도로 환산하지 않고 0에서 안전하게 시작한다.
@@ -566,7 +567,7 @@ export class SaveManager {
     const equipped = Object.values(data.relicProgress).flatMap(({ heartGemSlots }) => heartGemSlots.filter((id): id is string => id !== null));
     if (equipped.some((id) => !runeIds.includes(id)) || new Set(equipped).size !== equipped.length) fail("룬 장착 소유권 또는 중복이 올바르지 않습니다.");
     if (!data.dailyContent || typeof data.dailyContent.date !== "string" || !Number.isInteger(data.dailyContent.restorationEntries) || data.dailyContent.restorationEntries < 0 || data.dailyContent.restorationEntries > 3 || !Array.isArray(data.dailyContent.completedIds) || !Array.isArray(data.dailyContent.claimedRewardIds)) fail("일일 콘텐츠 정보가 올바르지 않습니다.");
-    if (!data.bounty || typeof data.bounty.date !== "string" || !Number.isInteger(data.bounty.entries) || data.bounty.entries < 0 || data.bounty.entries > BOUNTY.maxEntriesPerUtcDay
+    if (!data.bounty
       || !Array.isArray(data.bounty.clearedTierIds) || data.bounty.clearedTierIds.some((id) => typeof id !== "string" || !BOUNTY_TIERS.some((tier) => tier.id === id))
       || new Set(data.bounty.clearedTierIds).size !== data.bounty.clearedTierIds.length) fail("현상수배 진행 정보가 올바르지 않습니다.");
     if (!data.missions || typeof data.missions.dailyKey !== "string" || typeof data.missions.weeklyKey !== "string" || !data.missions.progress || typeof data.missions.progress !== "object" || Object.values(data.missions.progress).some((value) => !Number.isInteger(value) || value < 0) || !Array.isArray(data.missions.claimedIds) || new Set(data.missions.claimedIds).size !== data.missions.claimedIds.length || !data.missions.researchPoints || (["daily", "weekly"] as const).some((period) => { const value = data.missions.researchPoints[period]; return !Number.isInteger(value) || value < 0 || value > maxResearchPoints(period); }) || !Array.isArray(data.missions.claimedResearchStageIds) || data.missions.claimedResearchStageIds.some((id) => typeof id !== "string") || new Set(data.missions.claimedResearchStageIds).size !== data.missions.claimedResearchStageIds.length) fail("임무 진행 정보가 올바르지 않습니다.");

@@ -180,6 +180,7 @@ export const MISC_JA = {
   "stageComplete.repeatClear": "反復クリア報酬",
   "stageComplete.toResearch": "研究所",
   "stageComplete.toRelics": "レリック強化",
+  "stageComplete.replay": "もう一度",
   "stageComplete.toMap": "マップへ",
 
 

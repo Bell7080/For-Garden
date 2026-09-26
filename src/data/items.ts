@@ -66,6 +66,8 @@ export const ITEMS = [
   // 서는 재화가 아니고, 레이드 목록 머리에서만 몇 장 남았는지 말한다.
   { id: "raid-ticket", name: "토벌권", description: "친구와 함께 치는 레이드를 엽니다. 보스와 난이도는 무작위로 정해집니다.", category: "material", icon: { kind: "asset", key: "item-raid-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
   { id: "raid-select-ticket", name: "선택 토벌권", description: "친구와 함께 치는 레이드를 엽니다. 보스와 난이도를 골라서 엽니다.", category: "material", icon: { kind: "asset", key: "item-raid-select-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  // 소탕 한 번에 한 장. 멤버십이 없을 때만 들고, 던전 입구에서 광고를 보면 다섯 장씩 채워진다.
+  { id: "sweep-ticket", name: "소탕권", description: "이미 이긴 던전 단계를 전투 없이 한 번 소탕합니다.", category: "material", icon: { kind: "glyph", key: "scroll" }, maxStack: 999, useEffect: { kind: "none" } },
   // 전리품 상점의 두 증표. 상한을 두지 않는 이유가 곧 지갑에 둔 이유다 — 가끔 들어가 터는
   // 자리라 몇 주치가 쌓여도 버려지면 안 된다.
   { id: "raidSigil", name: "토벌 증표", description: "레이드 보스를 밀어낸 몫으로 받는 증표입니다. 전리품 상점에서 교환합니다.", category: "currency", icon: { kind: "currency", key: "raidSigil" }, maxStack: 9_999_999, useEffect: { kind: "none" } },

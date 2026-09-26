@@ -45,13 +45,12 @@ import { createFormationDragVisualController, type FormationDragVisualController
 import { PopupLayer } from "../ui/PopupLayer";
 import { StaminaPopup } from "../ui/StaminaPopup";
 import { partyEntryErrorView } from "./partyEntryError";
+import { enterContentBattle } from "./contentBattleEntry";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { normalizePartyContent, partyPreview, type PartyContent, type PartyPreview, type PartyPreviewEnemy } from "../data/partyContent";
 import { consumeSceneEntry } from "./sceneEntry";
 import { getBountyTier } from "../data/bounty";
 import { getCakeOperationTier } from "../data/cakeOperation";
-import type { BountyBattleInputDto } from "../core/bountyRun";
-import type { CakeBattleInputDto, RaidBattleInputDto } from "../core/expeditionBattle";
 
 /**
  * 미리보기 전장.
@@ -479,40 +478,18 @@ export class PartyScene extends Phaser.Scene {
     return `${stage.id}  ${stage.name}`;
   }
 
-  /**
-   * 전투 시작이 부르는 입장. **콘텐츠마다 다른 것은 이 한 곳뿐이다.**
-   *
-   * 입장 비용(스테미나·일일 횟수)은 전부 서버가 확정한 뒤에만 전장으로 넘어간다 — 화면이 먼저
-   * 넘어가면 입장이 거절된 판을 싸우게 된다. 레이드는 판이 끝난 뒤 제출에서 도전 횟수를 센다.
-   */
+  /** 전투 시작이 부르는 입장 — 결과판의 「다시 하기」와 같은 길이다(`enterContentBattle`). */
   private async enterBattle(): Promise<void> {
-    const content = this.content;
-    const requestId = globalThis.crypto?.randomUUID?.() ?? `${content.content}-entry-${Date.now()}`;
-    if (content.content === "raid") {
-      startScene(this, "battle", { mode: "raid", raidId: content.raidId, bossRelicId: content.bossRelicId, difficulty: content.difficulty } satisfies RaidBattleInputDto);
-      return;
-    }
-    if (content.content === "bounty") {
-      const admission = await gameApi.enterBounty({ tierId: content.tierId, multiplier: content.multiplier, requestId });
-      startScene(this, "battle", { mode: "bounty", tierId: admission.tierId, round: 0, requestId, multiplier: admission.multiplier } satisfies BountyBattleInputDto);
-      return;
-    }
-    if (content.content === "cake") {
-      const admission = await gameApi.enterCakeOperation({ tierId: content.tierId, multiplier: content.multiplier, requestId });
-      startScene(this, "battle", { mode: "cake", tierId: admission.tierId, multiplier: admission.multiplier, requestId } satisfies CakeBattleInputDto);
-      return;
-    }
-    await gameApi.enterStage({ stageId: session.selectedStageId!, requestId });
-    startScene(this, "battle", { mode: "stage" });
+    await enterContentBattle(this, this.content);
   }
 
-  /** 뒤로가기는 들어온 입구로 돌아간다. 던전은 고르던 단계·배율을 그대로 되살린다. */
+  /** 뒤로가기는 들어온 입구로 돌아간다. 던전은 고르던 단계를 그대로 되살린다. */
   private leave(): void {
     const content = this.content;
     // 레이드 편성에서 나가는 길은 목록이 아니라 고른 그 판이다 — 한 단계 앞이다.
     if (content.content === "raid") startScene(this, "raid", { raidId: content.raidId });
-    else if (content.content === "bounty") startScene(this, "bounty", { tierId: content.tierId, multiplier: content.multiplier });
-    else if (content.content === "cake") startScene(this, "cakeOperation", { tierId: content.tierId, multiplier: content.multiplier });
+    else if (content.content === "bounty") startScene(this, "bounty", { tierId: content.tierId });
+    else if (content.content === "cake") startScene(this, "cakeOperation", { tierId: content.tierId });
     else startScene(this, "stageMap");
   }
 

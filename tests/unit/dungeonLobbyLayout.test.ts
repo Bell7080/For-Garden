@@ -1,10 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { BASE_WIDTH } from "../../src/config/gameConfig";
-import { DUNGEON_MULTIPLIERS } from "../../src/core/dungeonShortcut";
 import { BOUNTY_TIERS } from "../../src/data/bounty";
 import { CAKE_OPERATION_TIERS } from "../../src/data/cakeOperation";
 import {
-  DUNGEON_LOBBY, dungeonActionButtonX, dungeonActionFitsAboveBackButton, dungeonListBottom, dungeonMultiplierChipX,
+  DUNGEON_LOBBY, dungeonActionButtonX, dungeonActionFitsAboveBackButton, dungeonListBottom, dungeonSweepControlX,
   dungeonRowCenterY, dungeonRowFaceX, dungeonSummaryTitleTop, dungeonSummaryTop,
 } from "../../src/ui/dungeonLobbyLayout";
 
@@ -24,20 +23,39 @@ describe("던전 입구 배치표", () => {
     // 판 윗변에 걸터앉는 제목표(적 전투력·보상)도 목록 줄에 닿지 않는다.
     expect(dungeonListBottom(longest)).toBeLessThan(dungeonSummaryTitleTop());
     const summaryBottom = DUNGEON_LOBBY.summary.y + DUNGEON_LOBBY.summary.height / 2;
-    const chipTop = DUNGEON_LOBBY.multiplier.y - DUNGEON_LOBBY.multiplier.chipHeight / 2;
-    const chipBottom = DUNGEON_LOBBY.multiplier.y + DUNGEON_LOBBY.multiplier.chipHeight / 2;
+    const sweepTop = DUNGEON_LOBBY.sweep.y - DUNGEON_LOBBY.sweep.height / 2;
+    const sweepBottom = DUNGEON_LOBBY.sweep.y + DUNGEON_LOBBY.sweep.height / 2;
     const actionTop = DUNGEON_LOBBY.action.y - DUNGEON_LOBBY.action.height / 2;
-    expect(chipTop).toBeGreaterThan(summaryBottom);
-    // 고른 배율 칩은 1.12배로 커지므로 그만큼 여유를 둔다.
-    expect(actionTop).toBeGreaterThan(chipBottom + DUNGEON_LOBBY.multiplier.chipHeight * 0.06);
+    expect(sweepTop).toBeGreaterThan(summaryBottom);
+    // 버튼은 누르면 커지므로 그만큼 여유를 둔다.
+    expect(actionTop).toBeGreaterThan(sweepBottom + DUNGEON_LOBBY.sweep.height * 0.06);
     expect(dungeonActionFitsAboveBackButton()).toBe(true);
   });
 
-  it("배율 칩과 조작 버튼은 화면 가운데를 기준으로 균등하게 선다", () => {
-    const xs = DUNGEON_MULTIPLIERS.map((_, index) => dungeonMultiplierChipX(index, DUNGEON_MULTIPLIERS.length));
-    expect((xs[0] + xs[xs.length - 1]) / 2).toBeCloseTo(BASE_WIDTH / 2, 5);
-    expect(xs[1] - xs[0]).toBe(DUNGEON_LOBBY.multiplier.chipWidth + DUNGEON_LOBBY.multiplier.gap);
+  it("조작 버튼은 화면 가운데를 기준으로 균등하게 선다", () => {
     expect((dungeonActionButtonX(0) + dungeonActionButtonX(1)) / 2).toBeCloseTo(BASE_WIDTH / 2, 5);
+  });
+
+  /** 왼쪽(− 횟수 + MAX)과 오른쪽(소탕권 · 광고) 두 묶음이 줄 안에 들고 서로 겹치지 않는다. */
+  it("소탕 횟수 줄의 조작은 줄 안에서 겹치지 않고 왼쪽에서 오른쪽으로 선다", () => {
+    const { left, right, step, count, max, ticket, ad } = DUNGEON_LOBBY.sweep;
+    const x = dungeonSweepControlX();
+    const spans: [number, number][] = [
+      [x.minus - step / 2, x.minus + step / 2], [x.count - count / 2, x.count + count / 2], [x.plus - step / 2, x.plus + step / 2],
+      [x.max - max / 2, x.max + max / 2], [x.ticket - ticket / 2, x.ticket + ticket / 2], [x.ad - ad / 2, x.ad + ad / 2],
+    ];
+    expect(spans[0][0]).toBeGreaterThanOrEqual(left);
+    expect(spans[spans.length - 1][1]).toBeLessThanOrEqual(right);
+    for (let index = 1; index < spans.length; index += 1) expect(spans[index][0]).toBeGreaterThan(spans[index - 1][1]);
+  });
+
+  /** 속성 뱃지는 대작전의 다섯 속성까지 요약 판 왼쪽 절반 안(가르는 선 앞)에 든다. */
+  it("다섯 속성 뱃지가 적 전투력 숫자 자리를 파고들지 않는다", () => {
+    const { width, element } = DUNGEON_LOBBY.summary;
+    const last = 40 - element.rightInset - element.size / 2;
+    const firstLeft = last - 4 * element.step - element.size / 2;
+    // 전투력 숫자(46px · 여덟 자 남짓)가 서는 폭을 남긴다.
+    expect(firstLeft).toBeGreaterThan(-width / 2 + 48 + 8 * 26);
   });
 
   it("줄 안의 적 얼굴은 이름 자리와 보상 액자 사이에 선다", () => {

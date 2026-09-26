@@ -144,12 +144,11 @@ export interface RaidBattleInputDto {
  * 치즈케이크 대작전 입장.
  *
  * 스테미나는 **입장에서 이미 빠졌다** — 그 영수증의 `requestId`를 그대로 들고 다녀야 결과
- * 확정이 같은 판의 것으로 붙는다. 배율은 화면이 다시 정하지 않고 입장이 확정한 값이다.
+ * 확정이 같은 판의 것으로 붙는다.
  */
 export interface CakeBattleInputDto {
   mode: "cake";
   tierId: string;
-  multiplier: number;
   requestId: string;
 }
 

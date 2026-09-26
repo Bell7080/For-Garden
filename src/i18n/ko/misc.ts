@@ -199,6 +199,7 @@ export const MISC_KO = {
   "stageComplete.repeatClear": "반복 클리어 보상",
   "stageComplete.toResearch": "연구소",
   "stageComplete.toRelics": "렐릭 강화",
+  "stageComplete.replay": "다시 하기",
   "stageComplete.toMap": "지도로",
 
   // 전투 프로필·보상

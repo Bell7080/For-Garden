@@ -60,6 +60,13 @@ export interface StageCompletePopupOptions {
   /** 그래프 팝업을 연 뒤 그 팝업이 닫히면 반드시 `onClosed`를 불러야 버튼이 다시 보인다. */
   onOpenContribution: (onClosed: () => void) => void;
   onConfirm?: () => void;
+  /**
+   * **다시 하기** — 같은 편성·같은 단계로 한 판 더. 또 도전할 수 있을 때만 넘긴다(던전·레이드).
+   *
+   * 이긴 판은 보상 줄 아래에, 진 판은 다음에 할 일 줄의 맨 위에 선다. 결과판 → 입구 → 편성 →
+   * 전투 시작을 도는 대신 한 번에 다음 판으로 간다.
+   */
+  replay?: StageCompleteAction;
 }
 
 const WIDTH = 940;
@@ -80,6 +87,9 @@ const REWARD_ROW = { y: 300, frame: 132, gap: 168 } as const;
  * 한 번씩 읽혀야 한다.
  */
 const DEFEAT_ACTIONS = { top: 252, width: 420, height: 86, gap: 18, belowLoot: 396 } as const;
+
+/** 이긴 판의 「다시 하기」. 보상 줄과 그 아래 한 줄(점수 증가분) 밑에 선다. */
+const REPLAY = { y: 510, width: 420, height: 86 } as const;
 
 /**
  * MVP는 크게, 좌우 둘은 작게 — 가로 간격은 예전 카드 규격을 그대로 빌려 쓰고, 세로는 발끝이
@@ -145,13 +155,20 @@ export class StageCompletePopup {
       });
       body.add(attackButton);
       body.add(drawHairline(this.scene, 0, 168, WIDTH - 140, { color: defeated ? COLOR.danger : COLOR.accent, alpha: 0.3 }));
-      if (options.reward.kind === "storyClear") this.buildClearReward(body, Math.floor(options.reward.cheesecakeEarned), options.reward.firstClear);
+      if (options.reward.kind === "storyClear") {
+        this.buildClearReward(body, Math.floor(options.reward.cheesecakeEarned), options.reward.firstClear);
+        if (options.replay) this.buildReplay(body, close, options.replay);
+      }
       else if (options.reward.kind === "defeat") {
         const carried = (options.reward.items ?? []).filter(({ amount }) => amount > 0);
         if (carried.length > 0) this.buildLoot(body, carried);
-        this.buildDefeatActions(body, close, options.reward.actions, carried.length > 0);
+        const actions = options.replay ? [options.replay, ...options.reward.actions] : options.reward.actions;
+        this.buildDefeatActions(body, close, actions, carried.length > 0);
       }
-      else this.buildLoot(body, loot, options.reward.footnote);
+      else {
+        this.buildLoot(body, loot, options.reward.footnote);
+        if (options.replay) this.buildReplay(body, close, options.replay);
+      }
 
       // 팝업 밖(화면 고정 좌표)에 두되, 이 층 바로 위에만 머물게 한다 — 그래야 기여도 그래프가
       // 같은 popups 위에 한 겹 더 쌓여도 그 뒤로 가려지고, 새치기하듯 계속 앞에 남지 않는다.
@@ -208,6 +225,14 @@ export class StageCompletePopup {
         onClick: () => { action.onPress(); close(); },
       }));
     });
+  }
+
+  /** 이긴 판의 「다시 하기」. 고른 길을 먼저 알리고 닫는다 — 순서는 `buildDefeatActions`와 같은 이유다. */
+  private buildReplay(body: Phaser.GameObjects.Container, close: () => void, replay: StageCompleteAction): void {
+    body.add(new Button(this.scene, 0, REPLAY.y, {
+      width: REPLAY.width, height: REPLAY.height, label: replay.label, fontSize: 30, variant: "primary",
+      onClick: () => { replay.onPress(); close(); },
+    }));
   }
 
   /**

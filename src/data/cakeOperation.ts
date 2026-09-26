@@ -1,5 +1,5 @@
 import { registerDataText } from "../i18n";
-import type { DungeonRunCost } from "../core/dungeonShortcut";
+import { dungeonRunStamina, type DungeonRunCost } from "../core/dungeonShortcut";
 import type { RelicDef } from "../core/types";
 import { getRelic } from "./relics";
 import { applyEncounterScaling, encounterRoleFor, type EncounterRole } from "../core/levelDesign";
@@ -31,9 +31,7 @@ export interface CakeOperationTier {
    * 무리를 치우면 잠깐 전장이 비어 물량전의 압박이 끊겼다. 상한은 난전의 `MAX_ENEMY_COUNT`다.
    */
   enemyCount: number;
-  /** 한 판(배율 x1)에 드는 스테미나다. */
-  staminaCost: number;
-  /** 한 판(배율 x1)을 이겼을 때 받는 치즈케이크다. */
+  /** 한 판을 이겼을 때 받는 치즈케이크다. 스테미나는 레벨이 정한다(`dungeonRunStamina`). */
   rewardCheesecake: number;
 }
 
@@ -52,14 +50,14 @@ export interface CakeOperationTier {
  * 기준으로 잡아, 중간 단계 서너 판이 하루치를 채운다.
  */
 export const CAKE_OPERATION_TIERS: readonly CakeOperationTier[] = [
-  { id: "cake-1", name: "1단계", enemyLevel: 5, enemyCount: 10, staminaCost: 6, rewardCheesecake: 20 },
-  { id: "cake-2", name: "2단계", enemyLevel: 10, enemyCount: 10, staminaCost: 8, rewardCheesecake: 32 },
-  { id: "cake-3", name: "3단계", enemyLevel: 15, enemyCount: 11, staminaCost: 10, rewardCheesecake: 46 },
-  { id: "cake-4", name: "4단계", enemyLevel: 20, enemyCount: 12, staminaCost: 12, rewardCheesecake: 62 },
-  { id: "cake-5", name: "5단계", enemyLevel: 26, enemyCount: 13, staminaCost: 14, rewardCheesecake: 82 },
-  { id: "cake-6", name: "6단계", enemyLevel: 32, enemyCount: 14, staminaCost: 16, rewardCheesecake: 104 },
-  { id: "cake-7", name: "7단계", enemyLevel: 38, enemyCount: 15, staminaCost: 18, rewardCheesecake: 128 },
-  { id: "cake-8", name: "8단계", enemyLevel: 45, enemyCount: 15, staminaCost: 20, rewardCheesecake: 150 },
+  { id: "cake-1", name: "1단계", enemyLevel: 5, enemyCount: 10, rewardCheesecake: 20 },
+  { id: "cake-2", name: "2단계", enemyLevel: 10, enemyCount: 10, rewardCheesecake: 32 },
+  { id: "cake-3", name: "3단계", enemyLevel: 15, enemyCount: 11, rewardCheesecake: 46 },
+  { id: "cake-4", name: "4단계", enemyLevel: 20, enemyCount: 12, rewardCheesecake: 62 },
+  { id: "cake-5", name: "5단계", enemyLevel: 26, enemyCount: 13, rewardCheesecake: 82 },
+  { id: "cake-6", name: "6단계", enemyLevel: 32, enemyCount: 14, rewardCheesecake: 104 },
+  { id: "cake-7", name: "7단계", enemyLevel: 38, enemyCount: 15, rewardCheesecake: 128 },
+  { id: "cake-8", name: "8단계", enemyLevel: 45, enemyCount: 15, rewardCheesecake: 150 },
 ];
 
 /**
@@ -101,9 +99,9 @@ export function isCakeTierUnlocked(id: string, clearedIndex: number): boolean {
   return index >= 0 && index <= clearedIndex + 1;
 }
 
-/** 단축 규칙이 읽는 한 판의 값. 배율을 곱하는 일은 `dungeonShortcut`이 한다. */
+/** 단축 규칙이 읽는 한 판의 값. 소탕 횟수를 곱하는 일은 `dungeonShortcut`이 한다. */
 export function cakeOperationRunCost(tier: CakeOperationTier): DungeonRunCost {
-  return { staminaCost: tier.staminaCost, rewards: { cheesecake: tier.rewardCheesecake } };
+  return { staminaCost: dungeonRunStamina(tier.enemyLevel), rewards: { cheesecake: tier.rewardCheesecake } };
 }
 
 /** 단계 이름을 언어별로 덮어쓸 수 있게 등록한다. */

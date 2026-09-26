@@ -1,12 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { bountyEntriesRemaining, bountyTierProgress, consumeBountyEntry, isBountyTierUnlocked, markBountyTierCleared, nextBountyStep, normalizeBounty } from "../../src/core/bountyRun";
+import { bountyTierProgress, isBountyTierUnlocked, markBountyTierCleared, nextBountyStep } from "../../src/core/bountyRun";
 import { BOUNTY, BOUNTY_ROLE, BOUNTY_TIERS, bountyRoundEnemy, bountyRoundLevel, getBountyTier } from "../../src/data/bounty";
 import { applyEncounterScaling } from "../../src/core/levelDesign";
-import type { BountyState } from "../../src/state/session";
 import { getRelic } from "../../src/data/relics";
-
-const DAY = new Date("2026-09-19T04:00:00Z");
-const NEXT_DAY = new Date("2026-09-20T00:05:00Z");
 
 describe("현상수배 진행 규칙", () => {
   it("은 이긴 라운드만 다음 라운드를 열고 마지막을 이기면 판이 끝난다", () => {
@@ -37,28 +33,13 @@ describe("현상수배 진행 규칙", () => {
     expect(rows[2]).toMatchObject({ unlocked: false, cleared: false });
   });
 
-  it("은 하루 입장 횟수를 다 쓰면 더 열지 않는다", () => {
-    let state: BountyState = { date: "", entries: 0, clearedTierIds: [] };
-    for (let index = 0; index < BOUNTY.maxEntriesPerUtcDay; index += 1) state = consumeBountyEntry(state, DAY);
-    expect(bountyEntriesRemaining(state, DAY)).toBe(0);
-    expect(() => consumeBountyEntry(state, DAY)).toThrow(RangeError);
-  });
-
-  it("은 날짜가 바뀌면 입장 횟수만 되돌리고 깬 등급은 남긴다", () => {
-    const spent = markBountyTierCleared(consumeBountyEntry({ date: "", entries: 0, clearedTierIds: [] }, DAY), "bounty-1", DAY);
-    const tomorrow = normalizeBounty(spent, NEXT_DAY);
-    expect(tomorrow.entries).toBe(0);
-    // 다음 등급을 여는 값이라 하루가 지났다고 잠기면 어제 깬 관문을 다시 깨야 한다.
-    expect(tomorrow.clearedTierIds).toEqual(["bounty-1"]);
-  });
-
   it("은 같은 등급을 두 번 깨도 목록을 늘리지 않는다", () => {
-    const once = markBountyTierCleared({ date: "", entries: 0, clearedTierIds: [] }, "bounty-1", DAY);
-    expect(markBountyTierCleared(once, "bounty-1", DAY).clearedTierIds).toEqual(["bounty-1"]);
+    const once = markBountyTierCleared({ clearedTierIds: [] }, "bounty-1");
+    expect(markBountyTierCleared(once, "bounty-1").clearedTierIds).toEqual(["bounty-1"]);
   });
 
   it("은 없는 등급을 저장에 남기지 않는다", () => {
-    expect(() => markBountyTierCleared({ date: "", entries: 0, clearedTierIds: [] }, "bounty-99", DAY)).toThrow();
+    expect(() => markBountyTierCleared({ clearedTierIds: [] }, "bounty-99")).toThrow();
   });
 });
 

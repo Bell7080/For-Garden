@@ -34,7 +34,7 @@ function makeSession(): Session {
     itemInventory: [],
     runeInventory: [],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
-    bounty: { date: "", entries: 0, clearedTierIds: [] },
+    bounty: { clearedTierIds: [] },
     missions: { dailyKey: "", weeklyKey: "", progress: {}, claimedIds: [], researchPoints: { daily: 0, weekly: 0 }, claimedResearchStageIds: [] },
     // 상품 테스트가 아닌 세션도 최신 저장 계약의 빈 구매 이력을 명시한다.
     productPurchases: {},

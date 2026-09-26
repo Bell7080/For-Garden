@@ -172,6 +172,7 @@ export const MISC_EN = {
   "stageComplete.repeatClear": "Repeat Clear Rewards",
   "stageComplete.toResearch": "Research Lab",
   "stageComplete.toRelics": "Strengthen Relics",
+  "stageComplete.replay": "Play Again",
   "stageComplete.toMap": "To the Map",
   "battle.profile.down": "Down",
   "battle.profile.ferocity": "Ferocity {value} / 100",

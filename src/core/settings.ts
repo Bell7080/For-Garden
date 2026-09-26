@@ -149,7 +149,7 @@ export function createDefaultSettings(): GameSettings {
     // 현재 대사는 보이스의 보조 자막이 아니라 필수 진행 정보이므로 숨김 설정을 제공하지 않는다.
     accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
-    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE },
+    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" } },
     // 이름을 적어 두지 않는다 — 저장에 굳으면 언어를 바꿔도 그 줄만 옛 언어로 남는다.
     // 빈 값은 화면이 부를 때 `profile.guest`로 메운다.
     account: { provider: "guest", displayId: "" },
@@ -159,6 +159,7 @@ export function createDefaultSettings(): GameSettings {
 const record = (value: unknown): Record<string, unknown> => value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 const bool = (value: unknown, fallback: boolean) => typeof value === "boolean" ? value : fallback;
 const volume = (value: unknown, fallback: number) => typeof value === "number" && Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : fallback;
+const tierId = (value: unknown): string => typeof value === "string" && value.length <= 40 ? value : "";
 const allowed = <T extends string | number>(value: unknown, values: readonly T[], fallback: T): T => values.includes(value as T) ? value as T : fallback;
 
 /** 오래된 부분 객체와 알 수 없는 열거형을 현재의 완전한 직렬화 모델로 안전하게 정규화한다. */
@@ -185,7 +186,9 @@ export function normalizeSettings(value: unknown): GameSettings {
       skipUltimatePresentation: typeof g.skipUltimatePresentation === "boolean" ? g.skipUltimatePresentation : p.ultimateCutIn === false,
       textSpeed: allowed(g.textSpeed, TEXT_SPEEDS, d.game.textSpeed),
       // 지원 언어 목록은 language.ts 하나가 가지므로 여기에 코드를 다시 적지 않는다.
-      language: normalizeLanguage(g.language) },
+      language: normalizeLanguage(g.language),
+      // 단계가 실제로 있는지는 입구가 가린다 — 여기서는 짧은 문자열인지만 본다.
+      dungeonTiers: { bounty: tierId(record(g.dungeonTiers).bounty), cake: tierId(record(g.dungeonTiers).cake) } },
     // 인증 토큰은 이 모델에 애초에 자리를 만들지 않아 로컬 저장으로 새는 경로를 차단한다.
     account: { provider: allowed(a.provider, ["guest", "google", "apple"] as const, d.account.provider), displayId: typeof a.displayId === "string" && a.displayId.length <= 80 ? a.displayId : d.account.displayId },
   };

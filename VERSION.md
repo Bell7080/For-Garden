@@ -1,6 +1,6 @@
 # 버전 관리
 
-현재 버전: **v0.184.0**
+현재 버전: **v0.185.0**
 
 `VERSION.md`와 `package.json`의 `version`은 항상 같은 값을 쓰고, 타이틀(로딩) 화면 좌측
 하단 표기는 그 값을 그대로 읽는다. 화면에 손으로 적어 두지 않는다.
@@ -31,6 +31,42 @@
   그 이전의 초기 프로토타입 단계는 `v0.1.0` 항목 하나로 묶었다.
 
 ## 변경 이력
+
+## v0.185.0 — 2026-09-26
+
+**에너지 드링크에 기한이 생기고, 원정이 하루 한 번 · 최고 점수 하나로 바뀐다. 레이드는 한 판에 10으로 통일.**
+
+- **에너지 드링크 기한**(`src/core/itemLots.ts`): 받은 묶음마다 1~7일 기한을 세고 지나면 사라진다. 가방
+  한도 99 → **999**. 쓸 때는 먼저 사라질 묶음부터 쓴다. 지급처별 날수: 레벨업 7일, 상점 매일 묶음·
+  전리품 상점 3일, 개척 지원 우편 5일, 그 밖은 기본 7일. 가방 칸 왼쪽 위·안내창·스테미나 창에 가장
+  먼저 사라질 묶음의 남은 시간이 선다. 기한이 생기기 전에 받아 둔 병은 처음 걷힐 때 지금부터 7일을
+  새긴다(한꺼번에 사라지지 않게).
+- **레벨업 보상은 기본 에너지 드링크(60) 한 병 · 7일**로 바꿨다(v0.184.0의 에너지 드링크+에서).
+- **레이드 스테미나 통일**: 난이도·레벨로 12~22를 가르던 것을 **모든 판 10**(`RAID_RUN_STAMINA`)으로.
+- **원정은 하루 한 번**(`EXPEDITION_DAILY_POLICY`): 주 2회 → 하루 1회(UTC). 소탕도 그 한 번을 쓴다.
+- **누적 점수 삭제 — 한 판 최고 점수만**: 메인 화면·지도 HUD·보상 창·로비 줄 모두 주간 최고 점수만
+  말한다. 두세 판의 합은 몇 번 들어왔는지를 말할 뿐이었다. 보상 길도 최고 점수로 연다.
+- **최고 점수 보상 길을 스물네 마디로**(`EXPEDITION_BEST_SCORE_REWARD_STAGES`): 2천 ~ 20만 점, 인양 기록을
+  뼈대로 골드·치즈케이크·DNA 조각·화석·호박석·보석이 섞인다. 옛 `damage-*` 단계는 사라졌다(주가 바뀌면
+  어차피 비워지는 수령 기록이다).
+- **주간 순위 보상**(`EXPEDITION_WEEKLY_RANK_REWARDS`): 주가 끝나면 그 주 최고 점수의 순위로 보석 +
+  인양 기록 우편이 온다(1위 500·400 ~ 참가 80·80). 기록 화면에 지금 순위로 받을 몫이 선다.
+- **인양 기록 수급**: 노드 클리어마다 2~5개(한 판 상한 90), 보물 6~10개, **폰토스 피해 점수 1천당 1개**
+  (상한 200 · `expeditionBossSalvage`, 정산에서 함께 지급). 결과판·영수증에 인양 기록이 빠져 있던
+  아이콘 표도 채웠다(`currencyRecordToRewardItems`).
+- **소탕은 노드 클리어 보상의 75%만**(`EXPEDITION_SWEEP_POLICY.nodeRewardRatio`): 보물 전리품·폰토스
+  인양 기록·점수는 없다(예전: 역대 최고의 80%를 점수로 + 전리품 50%).
+- **보물 노드 전리품은 영수증 팝업**으로 알린다 — 지도 합계만 조용히 늘던 것을 바꿨다.
+- **주간 기록을 저장으로 올렸다**: 개발 서버가 메모리에만 두던 주간 최고 점수·보상 수령이 새로 고침마다
+  사라졌다. 이제 `session.expedition`이 갖는다.
+
+**저장 v41 → v42**: `ExpeditionState.playsThisWeek`를 걷고 `dayKey`·`playsToday`·`bestAchievedAt`·
+`claimedRewardStageIds`·`pendingRankReward`를 더했다. 옛 판 수는 버린다(오늘 판 수로 옮기면 지난 주의
+판이 오늘을 막는다). `ItemStack.lots`는 선택 필드라 옛 가방 저장은 그대로 읽힌다. **서버 계약 변경**:
+`ExpeditionWeeklyBestResponse`·`SubmitExpeditionBossScoreResponse`에서 `cumulativeScore`를 걷고
+`rank`·`rankRewards`·`bossSalvage`를 더했다. `SweepExpeditionResponse`는 `granted`·`playsToday`만 싣는다.
+오류 코드 `EXPEDITION_WEEKLY_LIMIT` → `EXPEDITION_DAILY_LIMIT`. `InventoryItemDto.lots`, 우편·상품 지급의
+`expiresInDays`가 새로 생겼다.
 
 ## v0.184.0 — 2026-09-26
 

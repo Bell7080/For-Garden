@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_DIFFICULTY, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM, isRaidDifficulty, raidRunStamina } from "../../src/data/raid";
+import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_DIFFICULTY, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM, isRaidDifficulty, RAID_RUN_STAMINA, raidRunStamina } from "../../src/data/raid";
 import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidKillProgress, raidKillTicks, raidDayProgress, raidResetsAt, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../../src/core/raid";
 import { getRelic, PLAYABLE_RELICS, RELICS } from "../../src/data/relics";
 import { ENCOUNTER_ROLE, applyEncounterScaling } from "../../src/core/levelDesign";
@@ -10,7 +10,6 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import { findItem } from "../../src/data/items";
 import { PRODUCTS } from "../../src/data/shopCatalog";
 import { FakeServer } from "../../src/api/FakeServer";
-import { dungeonRunStamina } from "../../src/core/dungeonShortcut";
 import { createDefaultSession, type RaidInstanceState, type Session } from "../../src/state/session";
 
 /**
@@ -569,9 +568,9 @@ describe("레이드 서버 경계", () => {
       .rejects.toMatchObject({ code: "RAID_NOT_ENTERED" });
   });
 
-  it("의 스테미나는 판의 레벨이 던전과 같은 사다리에서 정한다", () => {
-    expect(raidRunStamina("easy")).toBe(dungeonRunStamina(RAID_DIFFICULTY.easy.level));
-    expect(raidRunStamina("rampage")).toBeGreaterThan(raidRunStamina("hard"));
+  it("의 스테미나는 난이도와 무관하게 모든 판이 같다", () => {
+    for (const difficulty of Object.keys(RAID_DIFFICULTY) as (keyof typeof RAID_DIFFICULTY)[]) expect(raidRunStamina(difficulty)).toBe(RAID_RUN_STAMINA);
+    expect([5, 10]).toContain(RAID_RUN_STAMINA);
   });
 
   it("은 없는 판과 끝난 판의 제출을 거절한다", async () => {

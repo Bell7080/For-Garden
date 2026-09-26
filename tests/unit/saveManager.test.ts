@@ -232,7 +232,7 @@ describe("SaveManager", () => {
     legacy.saveVersion = 22;
     legacy.expedition = { weekKey: "2026-08-24", playsThisWeek: 2, bestScore: 400, active: { relicIds: ["anky", "rex", "spino"], startedAt: "2026-08-25T00:00:00Z", score: 30 } };
     // 소탕 도입 전 저장은 그때까지의 주간 최고점을 역대 최고점 초기값으로 이어받는다.
-    expect(new SaveManager(new MemoryStorage()).migrate(legacy).expedition).toEqual({ weekKey: "2026-08-24", playsThisWeek: 2, bestScore: 400, allTimeBestScore: 400, lastParty: [], run: null });
+    expect(new SaveManager(new MemoryStorage()).migrate(legacy).expedition).toEqual({ weekKey: "2026-08-24", dayKey: "", playsToday: 0, bestAchievedAt: "", claimedRewardStageIds: [], pendingRankReward: null, bestScore: 400, allTimeBestScore: 400, lastParty: [], run: null });
   });
 
   it("마지막 원정 편성을 왕복하고 구버전·미보유 항목을 안전하게 정규화한다", () => {

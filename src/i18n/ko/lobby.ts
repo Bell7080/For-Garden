@@ -19,7 +19,7 @@ export const LOBBY_KO = {
   "lobby.sortie.raid.status": "협동 작전 · 주간 시즌",
 
   "lobby.expedition.resume": "이어하기 · {plays}회 · 최고 {best}",
-  "lobby.expedition.weekly": "주간 {plays}회 · 최고 {best} · {quick}",
+  "lobby.expedition.weekly": "오늘 {plays}회 · 최고 {best} · {quick}",
   "lobby.expedition.quickReady": "빠른 가능",
   "lobby.expedition.quickLocked": "빠른 잠김",
 

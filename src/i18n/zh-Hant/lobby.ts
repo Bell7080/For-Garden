@@ -16,7 +16,7 @@ export const LOBBY_ZH_HANT = {
   "lobby.sortie.shopTitle": "商店",
   "lobby.sortie.raid.status": "協力作戰 · 準備中",
   "lobby.expedition.resume": "繼續 · {plays}次 · 最佳 {best}",
-  "lobby.expedition.weekly": "本週 {plays}次 · 最佳 {best} · {quick}",
+  "lobby.expedition.weekly": "今日 {plays}次 · 最高 {best} · {quick}",
   "lobby.expedition.quickReady": "快速可用",
   "lobby.expedition.quickLocked": "快速未解鎖",
   "lobby.rail.mission": "任務",

@@ -16,7 +16,7 @@ export const LOBBY_ID = {
   "lobby.sortie.shopTitle": "Toko",
   "lobby.sortie.raid.status": "Operasi Kooperatif · Dalam Persiapan",
   "lobby.expedition.resume": "Lanjutkan · {plays} kali · Terbaik {best}",
-  "lobby.expedition.weekly": "Minggu ini {plays} kali · Terbaik {best} · {quick}",
+  "lobby.expedition.weekly": "Hari ini {plays} · Terbaik {best} · {quick}",
   "lobby.expedition.quickReady": "Cepat Siap",
   "lobby.expedition.quickLocked": "Cepat Terkunci",
   "lobby.rail.mission": "Misi",

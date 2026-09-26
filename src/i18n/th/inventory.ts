@@ -12,6 +12,7 @@ export const INVENTORY_TH = {
   "inventory.sort.craft": "เจียระไน",
   "inventory.sort.equipped": "สวมใส่",
   "inventory.guide.held": "ที่มี",
+  "inventory.guide.expiry": "{count} ชิ้น · หมดอายุใน {time}",
   "inventory.guide.effect": "ผล",
   "inventory.useButton": "ใช้",
   "inventory.useDone": "ใช้แล้ว",

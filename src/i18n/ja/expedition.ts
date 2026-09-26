@@ -1,15 +1,15 @@
 /** 원정 화면의 일본어 표. */
 export const EXPEDITION_JA = {
   "expedition.weekly.title": "週間遠征",
-  "expedition.weekly.summary": "今週 {plays}回  ·  週間最高スコア {best}",
-  "expedition.weekly.cumulative": "週間累計スコア {score}",
+  "expedition.weekly.summary": "本日 {plays}/{max}回  ·  週間最高スコア {best}",
+  "expedition.weekly.best": "週間最高スコア {score}",
   "expedition.weekly.myBest": "自分の週間最高スコア",
   "expedition.weekly.rank": "週間 {rank}位",
+  "expedition.weekly.rankReward": "週間報酬 · 宝石 {gems} · 引き揚げ記録 {salvage}",
   "expedition.weekly.unranked": "未登録",
-  "expedition.weekly.cumulativeLine": "週間累計遠征スコア {score}",
   "expedition.weekly.rolled": "週が変わりました。入り直してください。",
   "expedition.weekly.loadFailed": "記録を読み込めませんでした",
-  "expedition.weekly.plays": "今週 {plays} / {max}回",
+  "expedition.weekly.plays": "本日 {plays} / {max}回",
 
   "expedition.sortie": "出  撃",
   "expedition.sweep": "掃  討",
@@ -40,7 +40,7 @@ export const EXPEDITION_JA = {
   "expedition.augment.applyAll": "すべて適用",
 
   "expedition.sweep.title": "掃討",
-  "expedition.sweep.body": "過去最高スコアの80%を週間記録に、ノードクリア戦利品の50%を即時付与します。\n今週の遠征機会を1回使用し、取り消せません。",
+  "expedition.sweep.body": "ノードクリア報酬の75%を即時受け取ります。宝物の戦利品・ポントスの引き揚げ記録・スコアは残りません。\n本日の遠征機会を1回使い、取り消せません。",
   "expedition.sweep.confirm": "掃討する",
   "expedition.sweep.done": "掃討完了",
   "expedition.sweep.noBaseline": "掃討の基準スコアがありません",
@@ -53,8 +53,8 @@ export const EXPEDITION_JA = {
   "expedition.party.start": "遠征開始",
   "expedition.party.ownedOnly": "所持レリックのみ選択できます",
   "expedition.party.distinct": "異なるレリック3体を選択してください",
-
-  "expedition.noPlaysLeft": "今週の遠征機会をすべて使いました",
+  "expedition.noPlaysLeft": "本日の遠征機会をすべて使いました",
+  "expedition.treasure.title": "戦利品獲得",
   "expedition.runInProgress": "進行中の遠征があります",
   "expedition.devOnly": "開発ビルドでのみ使用できます",
 

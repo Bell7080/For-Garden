@@ -32,7 +32,7 @@ import { ExpeditionAugmentPopup, type AugmentTargetPicker } from "../ui/Expediti
 import { expeditionAugmentBadges, expeditionAugmentRows } from "../ui/expeditionAugmentBadges";
 import { ExpeditionAugmentChip } from "../ui/ExpeditionAugmentChip";
 import { FaceFrame } from "../ui/FaceFrame";
-import { EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_WEEKLY_POLICY } from "../data/expedition";
+import { EXPEDITION_DAILY_POLICY, EXPEDITION_NODE_REWARD_BALANCE } from "../data/expedition";
 import { completedAdToken } from "../data/adRewards";
 import { presentRewardedAd } from "../platform/rewardedAds";
 import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
@@ -243,7 +243,7 @@ export class ExpeditionScene extends Phaser.Scene {
     }
 
     this.add.text(54, 34, t("expedition.weekly.title"), textStyle({ role: "display", size: 48 })).setOrigin(0, 0);
-    this.add.text(54, 94, t("expedition.weekly.summary", { plays: status.playsThisWeek, best: status.bestScore.toLocaleString() }), textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setOrigin(0, 0);
+    this.add.text(54, 94, t("expedition.weekly.summary", { plays: status.playsToday, max: EXPEDITION_DAILY_POLICY.maxPlaysPerDay, best: status.bestScore.toLocaleString() }), textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setOrigin(0, 0);
     drawHairline(this, BASE_WIDTH / 2, 224, BASE_WIDTH - 108, { color: COLOR.accent, alpha: 0.34 });
 
     if (status.active) this.buildActive(status.active.score, status.run?.selectedAugments ?? []);
@@ -264,11 +264,11 @@ export class ExpeditionScene extends Phaser.Scene {
   private buildActive(score: number, augments: readonly ExpeditionAugmentSelection[]): void {
     const run = expeditionManager.status().run;
     if (!run) return;
-    // 이번 판의 점수는 전리품 판 아래에 크게 서므로, 위 구석의 작은 줄은 **이번 주에 얼마나
-    // 쌓았는가**를 맡는다. 같은 수를 두 자리에 적으면 어느 쪽이 무엇인지 흐려진다.
+    // 이번 판의 점수는 전리품 판 아래에 크게 서므로, 위 구석의 작은 줄은 **이번 주 최고 기록**을
+    // 맡는다 — 이번 판이 그 기록을 넘어야 순위와 보상 길이 움직인다. 판의 점수는 합치지 않는다.
     const weekly = this.add.text(BASE_WIDTH - 54, 94, "", textStyle({ role: "emphasis", size: 25, color: COLOR.sortieText })).setOrigin(1, 0);
     void gameApi.getExpeditionWeeklyBest()
-      .then((best) => { if (weekly.active) weekly.setText(t("expedition.weekly.cumulative", { score: best.cumulativeScore.toLocaleString() })); })
+      .then((best) => { if (weekly.active) weekly.setText(t("expedition.weekly.best", { score: best.bestScore.toLocaleString() })); })
       // 조회에 실패하면 그 자리를 비운다 — 못 읽었다는 말은 플레이어가 지금 할 일을 바꾸지 않는다.
       .catch(() => { if (weekly.active) weekly.setText(""); });
     // 지도 HUD는 마지막 노드 증가분이 아니라 서버 저장 런 합계를 명시적으로 넘긴다.
@@ -423,8 +423,12 @@ export class ExpeditionScene extends Phaser.Scene {
     if (!run) { this.nodeTransitionPending = false; return; }
     try {
       // 보상 필드가 없는 완료 계약이므로 재화 종류나 수량을 위조할 수 없다.
-      await gameApi.completeExpeditionNode({ requestId: `${run.runId}:${node.id}`, runId: run.runId, nodeId: node.id, relicHp: run.relics.map(({ currentHp }) => currentHp) });
-      restartScene(this);
+      const result = await gameApi.completeExpeditionNode({ requestId: `${run.runId}:${node.id}`, runId: run.runId, nodeId: node.id, relicHp: run.relics.map(({ currentHp }) => currentHp) });
+      // 전리품을 주웠으면 영수증 한 장으로 알린다 — 지도의 합계만 슬쩍 늘면 무엇을 주웠는지 읽히지 않는다.
+      // 영수증은 화면 아무 곳이나 눌러 닫히고, 닫히면 지도가 새 합계로 다시 선다.
+      const items = currencyRecordToRewardItems(result.rewards);
+      if (items.length > 0 && this.scene.isActive()) openRewardPopup(this, this.popups, { title: t("expedition.treasure.title"), items, onConfirm: () => restartScene(this) });
+      else restartScene(this);
     } catch { this.nodeTransitionPending = false; }
   }
 
@@ -636,7 +640,7 @@ export class ExpeditionScene extends Phaser.Scene {
     const sweepX = BASE_WIDTH / 2 + actionsTotal / 2 - actions.sweepWidth / 2;
     new Button(this, sortieX, actions.y, {
       width: actions.sortieWidth, height: actions.height, label: t("expedition.sortie"),
-      sub: t("expedition.weekly.plays", { plays: status.playsThisWeek, max: EXPEDITION_WEEKLY_POLICY.maxPlaysPerWeek }), fontSize: 40,
+      sub: t("expedition.weekly.plays", { plays: status.playsToday, max: EXPEDITION_DAILY_POLICY.maxPlaysPerDay }), fontSize: 40,
       variant: "primary", accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText,
       onClick: () => restartScene(this, { stage: "preparation" }),
     }).setEnabled(status.canStartRun).setDepth(12);
@@ -656,7 +660,7 @@ export class ExpeditionScene extends Phaser.Scene {
   }
 
   /** 서버 스냅샷이 오기 전에도 자리를 잡아 두어 판이 비어 보이지 않게 한다. */
-  private renderMyScore(message: string, best?: { rank?: number; bestScore: number; cumulativeScore: number }): void {
+  private renderMyScore(message: string, best?: { rank?: number; bestScore: number; rankRewards: Partial<Record<string, number>> }): void {
     this.scorePanel?.destroy();
     const { score } = RANKING;
     const panel = this.add.container(BASE_WIDTH / 2, score.y).setDepth(12);
@@ -675,7 +679,10 @@ export class ExpeditionScene extends Phaser.Scene {
     panel.add(this.add.text(left, top, t("expedition.weekly.myBest"), textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0, 0));
     panel.add(this.add.text(left, top + 32, (best?.bestScore ?? 0).toLocaleString(), textStyle({ role: "display", size: 52, color: COLOR.accentText })).setOrigin(0, 0));
     panel.add(this.add.text(right, top, best?.rank ? t("expedition.weekly.rank", { rank: best.rank }) : t("expedition.weekly.unranked"), textStyle({ role: "emphasis", size: 26, color: COLOR.sortieText })).setOrigin(1, 0));
-    panel.add(this.add.text(right, top + 90, t("expedition.weekly.cumulativeLine", { score: (best?.cumulativeScore ?? 0).toLocaleString() }), textStyle({ role: "body", size: 20, color: COLOR.ink })).setOrigin(1, 0));
+    // 누적 점수 대신 **주가 끝나면 받을 순위 보상**이 선다 — 최고 기록 하나가 순위와 보상을 함께 정한다.
+    if (best?.rankRewards && (best.rankRewards.gems || best.rankRewards.salvageRecord)) {
+      panel.add(this.add.text(right, top + 90, t("expedition.weekly.rankReward", { gems: (best.rankRewards.gems ?? 0).toLocaleString(), salvage: (best.rankRewards.salvageRecord ?? 0).toLocaleString() }), textStyle({ role: "body", size: 20, color: COLOR.ink })).setOrigin(1, 0));
+    }
   }
 
   /** 내 최고 순위는 순위표에만 있으므로 두 조회를 함께 묶는다. */
@@ -685,7 +692,7 @@ export class ExpeditionScene extends Phaser.Scene {
       if (!this.scene.isActive() || this.stage !== "ranking") return;
       if (best.weekKey !== leaderboard.weekKey) { this.renderMyScore(t("expedition.weekly.rolled")); return; }
       const mine = leaderboard.entries.find((entry) => entry.isMe);
-      this.renderMyScore("", { rank: mine?.rank, bestScore: best.bestScore, cumulativeScore: best.cumulativeScore });
+      this.renderMyScore("", { rank: mine?.rank ?? best.rank ?? undefined, bestScore: best.bestScore, rankRewards: best.rankRewards });
     } catch {
       if (!this.scene.isActive() || this.stage !== "ranking") return;
       this.renderMyScore(t("expedition.weekly.loadFailed"));
@@ -714,7 +721,7 @@ export class ExpeditionScene extends Phaser.Scene {
       const code = error instanceof GameApiError ? error.code : undefined;
       const message: Partial<Record<string, string>> = {
         EXPEDITION_SCORE_REQUIRED: t("expedition.sweep.noBaseline"),
-        EXPEDITION_WEEKLY_LIMIT: t("expedition.noPlaysLeft"),
+        EXPEDITION_DAILY_LIMIT: t("expedition.noPlaysLeft"),
         EXPEDITION_ALREADY_ACTIVE: t("expedition.runInProgress"),
       };
       this.renderMyScore(message[code ?? ""] ?? t("expedition.sweep.failed"));
@@ -1102,7 +1109,7 @@ export class ExpeditionScene extends Phaser.Scene {
   private failureMessage(reason: StartExpeditionFailure): string {
     if (reason === "alreadyActive") return t("expedition.runInProgress");
     if (reason === "notOwned") return t("expedition.party.ownedOnly");
-    if (reason === "weeklyLimitReached") return t("expedition.noPlaysLeft");
+    if (reason === "dailyLimitReached") return t("expedition.noPlaysLeft");
     return t("expedition.party.distinct");
   }
 }

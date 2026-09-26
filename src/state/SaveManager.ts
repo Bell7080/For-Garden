@@ -6,6 +6,8 @@ import { BREAKTHROUGH_CAP } from "../core/relicProgression";
 import type { RelicProgress } from "../core/types";
 import { normalizePlayerCard } from "../core/playerCard";
 import { normalizePlayerLevel } from "../core/playerLevel";
+import { isValidLotStack } from "../core/itemLots";
+import { normalizeExpeditionState } from "../core/expeditionPeriods";
 import { maxResearchPoints } from "../core/missions";
 import { createDefaultSession, createEmptyInteractionProgress, createInitialPlayerResearchProgress, type RaidInstanceState, type RaidState, type SaveData, type Session } from "./session";
 import { PROFILE_MODIFIERS } from "../data/profileModifiers";
@@ -42,7 +44,7 @@ function migrateV12Rune(definitionId: string): RuneInstance {
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 41;
+export const CURRENT_SAVE_VERSION = 42;
 
 /**
  * 연구도는 기간마다 상한이 다르다(일일 100 · 주간 500). 상한이 120 하나이던 때의 저장은 일일
@@ -245,7 +247,7 @@ export class SaveManager {
       // 서버 확정 연구 진행을 값 복사해 저장 뒤 런타임 변경과 저장 DTO를 분리한다.
       playerResearch: { ...state.playerResearch },
       playerCard: { ...state.playerCard },
-      itemInventory: state.itemInventory.map((stack) => ({ ...stack })),
+      itemInventory: state.itemInventory.map((stack) => ({ ...stack, ...(stack.lots ? { lots: stack.lots.map((lot) => ({ ...lot })) } : {}) })),
       idleExcavation: { ...state.idleExcavation, assignedRelicIds: [...state.idleExcavation.assignedRelicIds], unclaimed: { ...state.idleExcavation.unclaimed } },
       // 진행 중인 판까지 통째로 복사한다 — 얕게 담으면 저장 뒤의 한 번 더 판 칸이 이미 쓴
       // 저장에 새어 들어가 앱을 껐다 켠 화면과 갈린다.
@@ -276,7 +278,7 @@ export class SaveManager {
       productPurchases: Object.fromEntries(Object.entries(state.productPurchases).map(([id, value]) => [id, { ...value }])),
       // 광고 검증 토큰은 제외하고 UTC 일자·횟수·멱등 ID만 독립 복사한다.
       dailyAdRewards: { ...state.dailyAdRewards, claimsBySlot: { ...state.dailyAdRewards.claimsBySlot }, requestIds: [...state.dailyAdRewards.requestIds] },
-      expedition: { ...state.expedition, lastParty: [...state.expedition.lastParty], run: state.expedition.run ? cloneExpeditionRun(state.expedition.run) : null },
+      expedition: { ...state.expedition, claimedRewardStageIds: [...state.expedition.claimedRewardStageIds], pendingRankReward: state.expedition.pendingRankReward ? { ...state.expedition.pendingRankReward } : null, lastParty: [...state.expedition.lastParty], run: state.expedition.run ? cloneExpeditionRun(state.expedition.run) : null },
       // 레이드는 판마다 평평한 객체라 판 하나씩 얕게 복사하면 된다.
       raid: { instances: state.raid.instances.map((instance) => ({ ...instance })) },
       cakeOperation: { ...state.cakeOperation },
@@ -420,7 +422,10 @@ export class SaveManager {
     // 콘텐츠별 마지막 편성은 독립적이다. 발굴 배치나 스토리 파티를 원정 기본값으로 복사하지 않는다.
     const rawLastParty = Array.isArray(savedExpedition?.lastParty) ? savedExpedition.lastParty : [];
     const lastParty = rawLastParty.filter((id, index) => ownedIds.includes(id) && rawLastParty.indexOf(id) === index).slice(0, 3);
-    const expedition = { weekKey: savedExpedition?.weekKey ?? "", playsThisWeek: savedExpedition?.playsThisWeek ?? 0, bestScore: savedExpedition?.bestScore ?? 0, allTimeBestScore: savedExpedition?.allTimeBestScore ?? savedExpedition?.bestScore ?? 0, lastParty, run: normalizeExpeditionRun(savedExpedition?.run, ownedIds) };
+    // v42: 주간 판 수(`playsThisWeek`)가 하루 한 판(`dayKey`·`playsToday`)으로 바뀌고, 주간 최고 점수
+    // 보상 수령과 순위 보상 대기가 저장으로 올라왔다. 옛 판 수는 버린다 — 오늘 판 수로 옮기면 지난 주의
+    // 판이 오늘을 막는다.
+    const expedition = { ...normalizeExpeditionState({ ...(savedExpedition ?? {}), lastParty }), run: normalizeExpeditionRun(savedExpedition?.run, ownedIds) };
     // **레이드는 판 목록으로 이관한다.** 주간 시즌·하루 한 마리 시절의 저장(`seasonKey`·`myDamage`)은
     // 판 ID가 없어 어느 판의 몫인지 되살릴 수 없고, 그 몫의 보상은 당시 이미 단계별로 받았다 —
     // 그래서 빈 목록에서 시작한다. 판 목록이 있는 저장은 모양이 맞는 판만 남긴다.
@@ -501,7 +506,7 @@ export class SaveManager {
       .filter((stack: { itemId?: unknown }) => stack?.itemId !== "raid-sigil");
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
     if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid } as unknown as SaveData;
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, CURRENT_SAVE_VERSION];
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
     return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid } as unknown as SaveData;
   }
@@ -559,7 +564,7 @@ export class SaveManager {
       || Object.entries(data.relicFragments).some(([id, count]) => !data.ownedRelicIds.includes(id) || !Number.isInteger(count) || count < 0)) fail("렐릭 파편 정보가 올바르지 않습니다.");
     if (!Array.isArray(data.runeInventory)) fail("룬 인벤토리가 올바르지 않습니다.");
     if (!Array.isArray(data.itemInventory) || new Set(data.itemInventory.map(({ itemId }) => itemId)).size !== data.itemInventory.length
-      || data.itemInventory.some(({ itemId, quantity }) => { const item = findItem(itemId); return !item || item.category === "rune" || item.category === "currency" || !Number.isInteger(quantity) || quantity <= 0 || quantity > item.maxStack; })) fail("중첩 아이템 인벤토리가 올바르지 않습니다.");
+      || data.itemInventory.some((stack) => { const { itemId, quantity } = stack; const item = findItem(itemId); return !item || item.category === "rune" || item.category === "currency" || !Number.isInteger(quantity) || quantity <= 0 || quantity > item.maxStack || !isValidLotStack(stack); })) fail("중첩 아이템 인벤토리가 올바르지 않습니다.");
     try { data.runeInventory.forEach(assertValidRuneInstance); } catch { fail("룬 인벤토리에 손상된 인스턴스가 있습니다."); }
     const runeIds = data.runeInventory.map(({ instanceId }) => instanceId);
     if (new Set(runeIds).size !== runeIds.length) fail("룬 인스턴스 ID가 중복되었습니다.");
@@ -575,7 +580,7 @@ export class SaveManager {
     const adLimits = Object.fromEntries(AD_REWARD_SLOTS.map(({ id, dailyLimitUtc }) => [id, dailyLimitUtc]));
     // 삭제/변조된 슬롯과 정적 UTC 제한을 넘긴 저장은 서버 지급 이력으로 신뢰하지 않는다.
     if (!data.dailyAdRewards || typeof data.dailyAdRewards.date !== "string" || !data.dailyAdRewards.claimsBySlot || Object.entries(data.dailyAdRewards.claimsBySlot).some(([id, count]) => !(id in adLimits) || !Number.isInteger(count) || count < 0 || count > adLimits[id]) || !Array.isArray(data.dailyAdRewards.requestIds) || data.dailyAdRewards.requestIds.some((id) => typeof id !== "string" || id.length === 0) || new Set(data.dailyAdRewards.requestIds).size !== data.dailyAdRewards.requestIds.length) fail("일일 광고 수령 정보가 올바르지 않습니다.");
-    if (!data.expedition || typeof data.expedition.weekKey !== "string" || !Number.isInteger(data.expedition.playsThisWeek) || data.expedition.playsThisWeek < 0 || !Number.isInteger(data.expedition.bestScore) || data.expedition.bestScore < 0 || !Number.isInteger(data.expedition.allTimeBestScore) || data.expedition.allTimeBestScore < 0 || !Array.isArray(data.expedition.lastParty) || data.expedition.lastParty.length > 3 || new Set(data.expedition.lastParty).size !== data.expedition.lastParty.length || data.expedition.lastParty.some((id) => !data.ownedRelicIds.includes(id)) || (data.expedition.run !== null && normalizeExpeditionRun(data.expedition.run, data.ownedRelicIds) === null)) fail("원정 진행 정보가 올바르지 않습니다.");
+    if (!data.expedition || typeof data.expedition.weekKey !== "string" || typeof data.expedition.dayKey !== "string" || !Number.isInteger(data.expedition.playsToday) || data.expedition.playsToday < 0 || !Array.isArray(data.expedition.claimedRewardStageIds) || typeof data.expedition.bestAchievedAt !== "string" || !Number.isInteger(data.expedition.bestScore) || data.expedition.bestScore < 0 || !Number.isInteger(data.expedition.allTimeBestScore) || data.expedition.allTimeBestScore < 0 || !Array.isArray(data.expedition.lastParty) || data.expedition.lastParty.length > 3 || new Set(data.expedition.lastParty).size !== data.expedition.lastParty.length || data.expedition.lastParty.some((id) => !data.ownedRelicIds.includes(id)) || (data.expedition.run !== null && normalizeExpeditionRun(data.expedition.run, data.ownedRelicIds) === null)) fail("원정 진행 정보가 올바르지 않습니다.");
     // 레이드는 내 몫과 수령 기록만 저장하므로 검사도 그 둘의 모양과 부호뿐이다.
     if (!data.raid || !Array.isArray(data.raid.instances) || !data.raid.instances.every(isRaidInstance) || new Set(data.raid.instances.map(({ id }) => id)).size !== data.raid.instances.length) fail("레이드 진행 정보가 올바르지 않습니다.");
     // 표에 없는 단계까지 이긴 것으로 적힌 저장은 소탕으로 그만큼을 바로 털 수 있어 거절한다.
@@ -597,7 +602,7 @@ export class SaveManager {
       // 검증된 저장 DTO와 런타임 세션이 연구 진행 객체를 공유하지 않도록 복사한다.
       playerResearch: { ...data.playerResearch },
       playerCard: { ...data.playerCard },
-      itemInventory: data.itemInventory.map((stack) => ({ ...stack })),
+      itemInventory: data.itemInventory.map((stack) => ({ ...stack, ...(stack.lots ? { lots: stack.lots.map((lot) => ({ ...lot })) } : {}) })),
       idleExcavation: { ...data.idleExcavation, assignedRelicIds: [...data.idleExcavation.assignedRelicIds], unclaimed: { ...data.idleExcavation.unclaimed } },
       archaeology: structuredClone(data.archaeology ?? createArchaeologyState()),
       settings: normalizeSettings(data.settings),
@@ -613,7 +618,7 @@ export class SaveManager {
       missions: { ...data.missions, progress: { ...data.missions.progress }, claimedIds: [...data.missions.claimedIds], researchPoints: { ...data.missions.researchPoints }, claimedResearchStageIds: [...data.missions.claimedResearchStageIds] },
       productPurchases: Object.fromEntries(Object.entries(data.productPurchases).map(([id, value]) => [id, { ...value }])),
       dailyAdRewards: { ...data.dailyAdRewards, claimsBySlot: { ...data.dailyAdRewards.claimsBySlot }, requestIds: [...data.dailyAdRewards.requestIds] },
-      expedition: { ...data.expedition, lastParty: [...data.expedition.lastParty], run: data.expedition.run ? cloneExpeditionRun(data.expedition.run) : null },
+      expedition: { ...data.expedition, claimedRewardStageIds: [...data.expedition.claimedRewardStageIds], pendingRankReward: data.expedition.pendingRankReward ? { ...data.expedition.pendingRankReward } : null, lastParty: [...data.expedition.lastParty], run: data.expedition.run ? cloneExpeditionRun(data.expedition.run) : null },
       raid: { instances: data.raid.instances.map((instance) => ({ ...instance })) },
       cakeOperation: { ...data.cakeOperation },
     };

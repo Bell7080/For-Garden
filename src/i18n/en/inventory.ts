@@ -12,6 +12,7 @@ export const INVENTORY_EN = {
   "inventory.sort.craft": "Polish",
   "inventory.sort.equipped": "Equipped",
   "inventory.guide.held": "Held",
+  "inventory.guide.expiry": "{count} expire in {time}",
   "inventory.guide.effect": "Effect",
   "inventory.useButton": "Use",
   "inventory.useDone": "Used",

@@ -1,6 +1,5 @@
 import { registerDataText } from "../i18n";
 import { requiredBreakthroughForLevel } from "../core/levelDesign";
-import { dungeonRunStamina } from "../core/dungeonShortcut";
 
 /**
  * 레이드 — **경쟁이 아니라 함께 미는 보스전**이다.
@@ -162,11 +161,13 @@ export const RAID_ATTEMPTS_PER_RAID = 2;
 /**
  * 레이드 한 판의 스테미나 — 입장에서 도전 한 번과 함께 빠진다.
  *
- * 값은 난이도가 아니라 **그 판의 레벨**이 정한다(`dungeonRunStamina`) — 같은 `LV.n`은 던전이든
- * 레이드든 같은 값을 치른다(쉬움 LV20 12 · 보통 LV30 14 · 어려움 LV40 18 · 폭주 LV60 22).
+ * **모든 레이드가 같은 값이다**(`RAID_RUN_STAMINA`). 난이도·레벨로 값을 가르던 때는 같은 "한 판 더"가
+ * 판마다 다른 값이라 치기 전에 셈을 해야 했다 — 레이드의 무게는 도전 횟수(판마다 두 번)가 이미 정한다.
  */
-export function raidRunStamina(difficulty: RaidDifficulty): number {
-  return dungeonRunStamina(RAID_DIFFICULTY[difficulty].level);
+export const RAID_RUN_STAMINA = 10;
+
+export function raidRunStamina(_difficulty?: RaidDifficulty): number {
+  return RAID_RUN_STAMINA;
 }
 
 /**

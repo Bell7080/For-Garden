@@ -12,6 +12,7 @@ export const INVENTORY_KO = {
   "inventory.sort.craft": "세공",
   "inventory.sort.equipped": "장착",
   "inventory.guide.held": "보유",
+  "inventory.guide.expiry": "{count}개 · {time} 뒤 소멸",
   "inventory.guide.effect": "효과",
   "inventory.useButton": "사용하기",
   "inventory.useDone": "사용 완료",

@@ -12,6 +12,8 @@ import { pressIn, pressOut } from "./pressFeedback";
 export interface ItemGuideOptions {
   readonly definition: ItemDefinition;
   readonly quantity: number;
+  /** 기한이 있는 칸 — 가장 먼저 사라질 묶음의 수와 남은 시간. 보유 수 아래 한 줄로 선다. */
+  readonly expiry?: { count: number; time: string };
   /** 소비품만 온다 — 오면 창 밑동에 「사용하기」가 선다. 한 개를 쓰고 창을 닫는다. */
   readonly onUse?: () => void;
 }
@@ -28,7 +30,7 @@ export class ItemGuidePopup {
   constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer) {}
 
   open(options: ItemGuideOptions): void {
-    const { definition, quantity, onUse } = options;
+    const { definition, quantity, onUse, expiry } = options;
     const height = itemGuideHeight(onUse !== undefined);
     const top = -height / 2;
     this.popups.open({ width: ITEM_GUIDE.width, height, title: definition.name, dim: true, dimAlpha: 0.34 }, (body, close) => {
@@ -43,6 +45,7 @@ export class ItemGuidePopup {
       body.add(this.scene.add.text(hero.width / 2 - 40, heroY - 28, t("inventory.guide.held"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(1, 0.5));
       body.add(this.scene.add.text(hero.width / 2 - 40, heroY + 18, quantity.toLocaleString(), textStyle({ role: "display", size: 52, color: "#ffe9a3" }))
         .setOrigin(1, 0.5).setShadow(2, 6, "#05070a", 7, false, true));
+      if (expiry) body.add(this.scene.add.text(hero.width / 2 - 40, heroY + 62, t("inventory.guide.expiry", { count: expiry.count, time: expiry.time }), textStyle({ role: "emphasis", size: 20, color: COLOR.dangerText })).setOrigin(1, 0.5));
 
       const { section } = ITEM_GUIDE;
       const sectionY = top + section.top;

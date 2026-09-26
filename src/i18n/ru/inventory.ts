@@ -12,6 +12,7 @@ export const INVENTORY_RU = {
   "inventory.sort.craft": "Огранка",
   "inventory.sort.equipped": "Надето",
   "inventory.guide.held": "Есть",
+  "inventory.guide.expiry": "{count} шт. · исчезнут через {time}",
   "inventory.guide.effect": "Эффект",
   "inventory.useButton": "Использовать",
   "inventory.useDone": "Использовано",

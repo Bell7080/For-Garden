@@ -3,7 +3,7 @@ export const EXPEDITION_REWARD_ID = {
   "expeditionReward.title": "Hadiah Rekor",
   "expeditionReward.none": "Belum ada tahap hadiah yang terbuka",
   "expeditionReward.refresh": "Muat Ulang",
-  "expeditionReward.summary": "Total skor Ekspedisi mingguan {cumulative}  ·  Terbaik mingguan {best}",
+  "expeditionReward.summary": "Terbaik mingguan {best}",
   "expeditionReward.claimed": "Sudah diklaim",
   "expeditionReward.claimedAmount": "{amount} diklaim",
   "expeditionReward.loadFailed": "Tidak dapat memuat hadiah rekor.",

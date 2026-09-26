@@ -12,6 +12,7 @@ export const INVENTORY_PT_BR = {
   "inventory.sort.craft": "Lapidação",
   "inventory.sort.equipped": "Equipada",
   "inventory.guide.held": "Em posse",
+  "inventory.guide.expiry": "{count} · expiram em {time}",
   "inventory.guide.effect": "Efeito",
   "inventory.useButton": "Usar",
   "inventory.useDone": "Usado",

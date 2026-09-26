@@ -1,3 +1,4 @@
+import { expeditionBossSalvage } from "../../src/data/expedition";
 import { describe, expect, it, vi } from "vitest";
 import { createSkirmish, stepSkirmish, type SkirmishEvent } from "../../src/core/skirmish";
 import { createExpeditionBossSkirmishConfig, type ExpeditionBossBattleInputDto } from "../../src/core/expeditionBattle";
@@ -145,7 +146,9 @@ describe("원정 보스 비동기 정산 복구", () => {
     const harness = settlementHarness();
     const result = await harness.flow.finish(harness.request, harness.actions);
     expect(result.score.bossDamageScore).toBeGreaterThan(0);
-    expect(result.settlement.granted).toEqual({ gold: 73 });
+    expect(result.settlement.granted.gold).toBe(73);
+    // 폰토스 피해의 인양 기록이 같은 정산에서 함께 들어온다.
+    expect(result.settlement.granted.salvageRecord ?? 0).toBe(expeditionBossSalvage(result.score.bossDamageScore));
     expect(harness.submit).toHaveBeenCalledTimes(1);
     expect(harness.settle).toHaveBeenCalledTimes(1);
     expect(harness.managerSaves.filter(({ expedition }) => expedition.run?.visitedNodeIds.includes(harness.request.nodeId))).toHaveLength(1);
@@ -158,7 +161,7 @@ describe("원정 보스 비동기 정산 복구", () => {
     expect(settlementCommit).toBeGreaterThan(scoreCommit);
     expect(harness.commitOrder).toEqual(["score", "local-node", "settlement"]);
     expect(harness.state.wallet.gold).toBe(harness.walletBefore + 73);
-    expect(harness.state.expedition.playsThisWeek).toBe(1);
+    expect(harness.state.expedition.playsToday).toBe(1);
     expect(harness.state.expedition.run).toBeNull();
   });
 
@@ -168,20 +171,22 @@ describe("원정 보스 비동기 정산 복구", () => {
     const result = await harness.flow.finish(harness.request, harness.actions);
     expect(harness.submit).toHaveBeenCalledTimes(2);
     expect(harness.settle).toHaveBeenCalledTimes(1);
-    expect(result.score.cumulativeScore).toBe(result.score.bossDamageScore);
+    expect(result.score.bestScore).toBe(result.score.runScore);
     expect(harness.state.wallet.gold).toBe(harness.walletBefore + 73);
-    expect(harness.state.expedition.playsThisWeek).toBe(1);
+    expect(harness.state.expedition.playsToday).toBe(1);
   });
 
   it("최종 정산 저장 실패는 settlement 소유자만 재시도해 보상과 플레이 횟수를 중복하지 않는다", async () => {
     const harness = settlementHarness("settlement");
     await expect(harness.flow.finish(harness.request, harness.actions)).rejects.toMatchObject({ phase: "settlement", causeCode: "PERSISTENCE_FAILED" } satisfies Partial<ExpeditionBossSettlementError>);
     const result = await harness.flow.finish(harness.request, harness.actions);
-    expect(result.settlement.granted).toEqual({ gold: 73 });
+    expect(result.settlement.granted.gold).toBe(73);
+    // 폰토스 피해의 인양 기록이 같은 정산에서 함께 들어온다.
+    expect(result.settlement.granted.salvageRecord ?? 0).toBe(expeditionBossSalvage(result.score.bossDamageScore));
     expect(harness.submit).toHaveBeenCalledTimes(1);
     expect(harness.settle).toHaveBeenCalledTimes(2);
     expect(harness.state.wallet.gold).toBe(harness.walletBefore + 73);
-    expect(harness.state.expedition.playsThisWeek).toBe(1);
+    expect(harness.state.expedition.playsToday).toBe(1);
     expect(harness.state.expedition.run).toBeNull();
   });
 
@@ -197,9 +202,9 @@ describe("원정 보스 비동기 정산 복구", () => {
     expect(recovered.settlement.settlementId).toBe(storedRequest.settlementId);
     expect(harness.submit).toHaveBeenCalledTimes(2);
     expect(harness.settle).toHaveBeenCalledTimes(2);
-    expect(recovered.score.cumulativeScore).toBe(recovered.score.bossDamageScore);
+    expect(recovered.score.bestScore).toBe(recovered.score.runScore);
     expect(harness.state.wallet.gold).toBe(harness.walletBefore + 73);
-    expect(harness.state.expedition.playsThisWeek).toBe(1);
+    expect(harness.state.expedition.playsToday).toBe(1);
   });
 
   it("최종 커밋 직후 페이지가 재시작되어 활성 런이 없어도 두 서버 영수증을 다시 읽는다", async () => {
@@ -211,7 +216,7 @@ describe("원정 보스 비동기 정산 복구", () => {
     const recovered = await restarted.finish(harness.request, harness.actions);
     expect(recovered).toEqual(first);
     expect(harness.state.wallet.gold).toBe(harness.walletBefore + 73);
-    expect(harness.state.expedition.playsThisWeek).toBe(1);
+    expect(harness.state.expedition.playsToday).toBe(1);
     expect(harness.state.expedition.run).toBeNull();
   });
 

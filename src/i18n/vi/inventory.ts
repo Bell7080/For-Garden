@@ -12,6 +12,7 @@ export const INVENTORY_VI = {
   "inventory.sort.craft": "Mài",
   "inventory.sort.equipped": "Đang trang bị",
   "inventory.guide.held": "Đang có",
+  "inventory.guide.expiry": "{count} · hết hạn sau {time}",
   "inventory.guide.effect": "Hiệu ứng",
   "inventory.useButton": "Dùng",
   "inventory.useDone": "Đã dùng",

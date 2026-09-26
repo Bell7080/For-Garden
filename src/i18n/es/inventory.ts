@@ -12,6 +12,7 @@ export const INVENTORY_ES = {
   "inventory.sort.craft": "Tallado",
   "inventory.sort.equipped": "Equipada",
   "inventory.guide.held": "En posesión",
+  "inventory.guide.expiry": "{count} · caducan en {time}",
   "inventory.guide.effect": "Efecto",
   "inventory.useButton": "Usar",
   "inventory.useDone": "Usado",

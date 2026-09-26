@@ -12,6 +12,7 @@ export const INVENTORY_JA = {
   "inventory.sort.craft": "研磨",
   "inventory.sort.equipped": "装着",
   "inventory.guide.held": "所持",
+  "inventory.guide.expiry": "{count}個 · {time}後に消滅",
   "inventory.guide.effect": "効果",
   "inventory.useButton": "使用する",
   "inventory.useDone": "使用完了",

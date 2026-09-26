@@ -58,6 +58,9 @@ export const SYSTEM_KO = {
 
   // ── 임시 서버가 보내는 우편·알림 ─────────────────────────────────────────
   "mail.launch.title": "개척 지원 보급 상자",
+  "mail.expeditionRank.title": "주간 원정 순위 보상",
+  "mail.expeditionRank.sender": "수장 지부 조사단",
+  "mail.expeditionRank.body": "지난주 원정 최고 점수 {score}점으로 {rank}위에 올랐습니다. 인양해 온 몫을 보냅니다.",
   "mail.launch.sender": "연구지원국",
   "mail.launch.body": "이터널 시티 도착을 환영합니다. 조사에 필요한 물자를 함께 보냅니다.",
   "mail.update.title": "임무·우편함 정비 안내",

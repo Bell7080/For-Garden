@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { EXPEDITION_NODE_REWARD_BALANCE, expeditionBossSalvage, expeditionRankRewards } from "../../src/data/expedition";
 import { FakeServer } from "../../src/api/FakeServer";
 import { breakthroughFragmentCost, BREAKTHROUGH_STEPS, RELIC_LEVEL_CAP } from "../../src/core/relicProgression";
 import { GameApiError } from "../../src/api/contracts";
@@ -53,7 +54,7 @@ function makeSession(fossil = 1000): Session {
     // 테스트 계정은 광고 수령 이력이 없는 UTC 일일 상태로 시작한다.
     dailyAdRewards: { date: "", claimsBySlot: {}, requestIds: [] },
     // API 테스트의 원정 저장 계약은 빈 상태로 명시한다.
-    expedition: { weekKey: "", playsThisWeek: 0, bestScore: 0, allTimeBestScore: 0, lastParty: [], run: null },
+    expedition: { weekKey: "", dayKey: "", playsToday: 0, bestScore: 0, bestAchievedAt: "", claimedRewardStageIds: [], pendingRankReward: null, allTimeBestScore: 0, lastParty: [], run: null },
     raid: createEmptyRaidState(),
     cakeOperation: { clearedIndex: -1 },
   };
@@ -140,20 +141,20 @@ describe("FakeServer", () => {
     expect(high.improved).toBe(true); expect(low.improved).toBe(false); expect(low.bestScore).toBe(high.score); expect(low.score).toBe(0);
   });
 
-  it("누적 단계 보상은 다른 요청 ID로 재요청해도 한 번만 지급한다", async () => {
+  it("최고 점수 보상은 다른 요청 ID로 재요청해도 한 번만 지급한다", async () => {
     const state = makeSession(); const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
-    // 실제 스킬 계수 점수를 여러 정상 런으로 누적해 첫 주간 단계에 도달시킨다.
+    await server.submitExpeditionBossScore({ requestId: "boss-reward-score", actions: bossActions(10) });
     let weekly = await server.getExpeditionWeeklyBest();
-    for (let run = 0; weekly.cumulativeScore < 10_000; run += 1) {
-      await server.submitExpeditionBossScore({ requestId: `boss-reward-score-${run}`, actions: bossActions(10) });
-      weekly = await server.getExpeditionWeeklyBest();
-    }
-    const first = await server.claimExpeditionReward({ requestId: "reward-a", stageId: "damage-10k" }); const gold = state.wallet.gold;
-    const repeated = await server.claimExpeditionReward({ requestId: "reward-b", stageId: "damage-10k" });
+    const stage = weekly.rewardStages.find(({ threshold }) => threshold <= weekly.bestScore)!;
+    expect(stage).toBeDefined();
+    const first = await server.claimExpeditionReward({ requestId: "reward-a", stageId: stage.id }); const held = state.wallet[stage.reward.currency];
+    const repeated = await server.claimExpeditionReward({ requestId: "reward-b", stageId: stage.id });
     weekly = await server.getExpeditionWeeklyBest();
-    // 공개 DTO가 운영 단계와 수령 스냅샷을 함께 반환해 클라이언트 정적 표를 UI 권한으로 쓰지 않게 한다.
-    expect(first.alreadyClaimed).toBe(false); expect(first.wallet.gold).toBe(gold); expect(repeated.alreadyClaimed).toBe(true);
-    expect(weekly.rewardStages.find(({ id }) => id === "damage-10k")?.claimed).toBe(true); expect(state.wallet.gold).toBe(gold);
+    expect(first.alreadyClaimed).toBe(false); expect(first.wallet[stage.reward.currency]).toBe(held); expect(repeated.alreadyClaimed).toBe(true);
+    expect(weekly.rewardStages.find(({ id }) => id === stage.id)?.claimed).toBe(true); expect(state.wallet[stage.reward.currency]).toBe(held);
+    // 아직 넘지 않은 마디는 받을 수 없다 — 최고 점수 하나만 본다(판을 합치지 않는다).
+    const locked = weekly.rewardStages.find(({ threshold }) => threshold > weekly.bestScore);
+    if (locked) await expect(server.claimExpeditionReward({ requestId: "reward-c", stageId: locked.id })).rejects.toMatchObject({ code: "EXPEDITION_REWARD_NOT_EARNED" });
   });
 
   it("피해 숫자를 제출할 필드가 없고 비정상 입력은 API 경계에서 거부한다", async () => {
@@ -183,11 +184,11 @@ describe("FakeServer", () => {
     expect(state.expedition.run).toBe(originalRun);
     expect(state.expedition.run).toEqual(originalRunSnapshot);
     expect(state.expedition.allTimeBestScore).toBe(originalAllTimeBestScore);
-    expect((await server.getExpeditionWeeklyBest()).cumulativeScore).toBe(weeklyBefore.cumulativeScore);
+    expect((await server.getExpeditionWeeklyBest()).bestScore).toBe(weeklyBefore.bestScore);
 
     fail = false;
     const success = await server.submitExpeditionBossScore(request);
-    expect(success.cumulativeScore).toBe(success.bossDamageScore);
+    expect(success.bestScore).toBe(success.runScore);
     expect(state.expedition.run).not.toBe(originalRun);
     expect(state.expedition.run).toMatchObject({ bossDamageScore: success.bossDamageScore, runScore: success.runScore });
     expect(state.expedition.allTimeBestScore).toBe(success.runScore);
@@ -846,55 +847,48 @@ describe("FakeServer 원정 정산", () => {
     expect(rewardTotal).not.toBe(expectedScore);
     await server.completeExpeditionNode({ requestId: "node-score", runId: state.expedition.run!.runId, nodeId: node.id, relicHp: [100, 90, 80] });
     const weekly = await server.getExpeditionWeeklyBest();
-    expect(weekly.cumulativeScore).toBe(expectedScore);
     expect(state.expedition.run!.normalNodeScoreTotal).toBe(expectedScore);
+    // 노드를 넘을 때마다 인양 기록이 소소하게 쌓인다.
+    expect(response.rewards.salvageRecord ?? 0).toBeGreaterThan(0);
     // 순위 산정 기준(bestScore)은 여전히 보스 피해량만 반영한다.
     expect(weekly.bestScore).toBe(0);
   });
 
-  it("일반 노드·폰토스 피해·소탕은 주간 누적에 한 번씩 더하고 새 주에는 단계 수령을 초기화한다", async () => {
+  it("주간 기록은 한 판 최고 점수 하나이고, 새 주에는 지난주 기록이 순위 보상 우편으로 선다", async () => {
     const state = makeSession();
     let now = new Date("2026-08-25T12:00:00Z");
     const manager = new (await import("../../src/managers/ExpeditionManager")).ExpeditionManager(state, { save: () => undefined }, () => now);
     manager.start(["anky", "rex", "dodo"]);
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0.5, now: () => now });
     const runId = state.expedition.run!.runId;
-
-    // 일반 노드 응답의 확정 점수는 같은 요청을 재전송해도 누적에 한 번만 들어간다.
-    const normalNode = state.expedition.run!.nodes.find(({ floor }) => floor === 1)!;
-    const nodeRequest = { requestId: "weekly-node-once", runId, nodeId: normalNode.id, relicHp: [100, 90, 80] };
-    const nodeResult = await server.completeExpeditionNode(nodeRequest);
-    await server.completeExpeditionNode(nodeRequest);
-    expect((await server.getExpeditionWeeklyBest()).cumulativeScore).toBe(nodeResult.nodeScore);
-
-    // 폰토스 제출도 캐시된 재요청을 제외한 피해 몫만 더해 한 판 합계와 주간 누적을 일치시킨다.
     const bossNode = state.expedition.run!.nodes.find(({ type }) => type === "boss")!;
     state.expedition.run!.bossSubmissionId = `${runId}:${bossNode.id}:weekly-boss-once`;
-    // 공용 공속 쿨다운과 실제 전투 종료 시각 안에 머무는 기본 공격열만 서버에 제출한다.
     const actions = Array.from({ length: 5 }, (_, index) => ["anky", "rex", "dodo"].map((actorId) => (
       { elapsedMs: index * 2_000, actorId, kind: "basic" as const }
     ))).flat();
     const bossRequest = { requestId: state.expedition.run!.bossSubmissionId!, runId, nodeId: bossNode.id, actions };
     const bossResult = await server.submitExpeditionBossScore(bossRequest);
     await server.submitExpeditionBossScore(bossRequest);
-    expect((await server.getExpeditionWeeklyBest()).cumulativeScore).toBe(nodeResult.nodeScore + bossResult.bossDamageScore);
-
-    // 정산으로 활성 런을 닫은 뒤 소탕 역시 동일 요청을 두 번 받아도 scoreGain을 딱 한 번만 더한다.
+    // 재요청해도 최고 점수는 한 판 점수 그대로다 — 판의 점수를 합치지 않는다.
+    expect((await server.getExpeditionWeeklyBest()).bestScore).toBe(bossResult.runScore);
+    // 폰토스 피해는 인양 기록으로도 돌아온다(정산에서 지급).
+    expect(state.expedition.run!.pendingRewards.salvageRecord ?? 0).toBe(expeditionBossSalvage(bossResult.bossDamageScore));
     await server.settleExpeditionRun({ runId, settlementId: "weekly-score-settlement", outcome: "abandoned" });
-    // 소탕 기준을 10,000점 이상으로 고정해 수령 초기화까지 전투 밸런스 변동과 독립적으로 검사한다.
-    state.expedition.allTimeBestScore = Math.max(10_000, state.expedition.allTimeBestScore);
-    const beforeSweep = (await server.getExpeditionWeeklyBest()).cumulativeScore;
-    const sweepResult = await server.sweepExpedition({ requestId: "weekly-sweep-once" });
-    await server.sweepExpedition({ requestId: "weekly-sweep-once" });
-    expect((await server.getExpeditionWeeklyBest()).cumulativeScore).toBe(beforeSweep + sweepResult.scoreGain);
+    expect(state.expedition.playsToday).toBe(1);
 
-    // 레거시 damage-* ID는 저장 호환 키일 뿐이며, 새 주 스냅샷은 점수와 수령 상태를 함께 비운다.
-    expect((await server.claimExpeditionReward({ requestId: "weekly-stage-claim", stageId: "damage-10k" })).alreadyClaimed).toBe(false);
     now = new Date("2026-08-31T00:00:00Z");
     const reset = await server.getExpeditionWeeklyBest();
-    expect(reset.cumulativeScore).toBe(0);
     expect(reset.bestScore).toBe(0);
     expect(reset.rewardStages.every(({ claimed }) => !claimed)).toBe(true);
+    const mails = await server.getMails();
+    const rankMail = mails.mails.find(({ id }) => id === "expedition-rank:2026-08-24");
+    expect(rankMail?.rewards).toEqual(expect.arrayContaining([expect.objectContaining({ currency: "gems" }), expect.objectContaining({ currency: "salvageRecord" })]));
+    const gems = state.wallet.gems;
+    await server.claimMailRewards({ requestId: "rank-claim", mailIds: [rankMail!.id] });
+    expect(state.wallet.gems).toBe(gems + (expeditionRankRewards(1).gems ?? 0));
+    expect(state.expedition.pendingRankReward).toBeNull();
+    // 받은 뒤에는 다시 세워지지 않는다.
+    expect((await new FakeServer(state, { latencyMs: 0, now: () => now }).getMails()).mails.some(({ id }) => id === rankMail!.id)).toBe(false);
   });
 
   it("정산 뒤 새 편성을 열고 같은 정산 ID는 지갑을 다시 늘리지 않는다", async () => {
@@ -911,9 +905,9 @@ describe("FakeServer 원정 정산", () => {
     const walletAfterFirst = { ...state.wallet };
     expect(await server.settleExpeditionRun(request)).toEqual(first);
     expect(state.wallet).toEqual(walletAfterFirst);
-    // 활성 run이 null이므로 화면이 사용하는 동일 매니저 계약에서 곧바로 새 편성을 시작할 수 있다.
+    // 활성 run은 비었지만 정산한 판이 오늘의 한 번이므로, 같은 날에는 새로 떠나지 못한다.
     expect(manager.status().active).toBeNull();
-    expect(manager.start(["anky", "rex", "dodo"]).ok).toBe(true);
+    expect(manager.start(["anky", "rex", "dodo"])).toEqual({ ok: false, reason: "dailyLimitReached" });
     await expect(server.settleExpeditionRun({ runId: first.runId, settlementId: "settlement-2", outcome: "completed" })).rejects.toMatchObject({ code: "EXPEDITION_RUN_NOT_FOUND" });
     expect(state.wallet).toMatchObject({ gold: 999_999_999, fossil: 1007 });
   });
@@ -930,7 +924,7 @@ describe("FakeServer 원정 정산", () => {
     // 불사 보스는 처치가 불가능해 "완료"가 없다 — 주간 랭킹·역대 최고점은 노드 진행이 아니라
     // submitExpeditionBossScore가 제출하는 실제 피해량만으로 갱신된다.
     const weekly = await server.getExpeditionWeeklyBest();
-    expect(weekly.bestScore).toBe(0); expect(weekly.cumulativeScore).toBe(0);
+    expect(weekly.bestScore).toBe(12_000);
     expect(state.expedition.allTimeBestScore).toBe(0);
   });
 
@@ -957,7 +951,6 @@ describe("FakeServer 원정 정산", () => {
     // 팀이 전멸해 "패배"로 끝나도(불사 보스는 애초에 이길 수 없다) 이미 입힌 피해는 그대로 남는다.
     await server.settleExpeditionRun({ runId, settlementId: "boss-then-wipe", outcome: "abandoned" });
     const weekly = await server.getExpeditionWeeklyBest();
-    expect(weekly.cumulativeScore).toBe(score.score);
     expect(weekly.bestScore).toBe(score.score);
     expect(state.expedition.allTimeBestScore).toBe(score.score);
   });
@@ -974,21 +967,18 @@ describe("FakeServer 원정 정산", () => {
   });
 
   describe("소탕", () => {
-    it("역대 최고점의 80%를 주간 랭킹에, 노드 보상 상한의 50%를 지갑에 즉시 지급한다", async () => {
+    it("노드 클리어 보상의 75%만 즉시 지급하고 점수는 남기지 않는다", async () => {
       const state = makeSession();
       state.expedition.allTimeBestScore = 10_000;
       const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
       const goldBefore = state.wallet.gold;
 
       const result = await server.sweepExpedition({ requestId: "sweep-1" });
-      expect(result.scoreGain).toBe(8_000);
-      expect(result.bestScore).toBe(8_000);
-      expect(result.cumulativeScore).toBe(8_000);
-      expect(result.granted.gold).toBe(3_750); // runCap 7,500의 50%
-      expect(state.wallet.gold).toBe(goldBefore + 3_750);
-      expect(state.expedition.playsThisWeek).toBe(1);
-      const weekly = await server.getExpeditionWeeklyBest();
-      expect(weekly.bestScore).toBe(8_000);
+      expect(result.granted.gold).toBe(Math.floor(EXPEDITION_NODE_REWARD_BALANCE.gold.runCap * 0.75));
+      expect(result.granted.salvageRecord).toBe(Math.floor(EXPEDITION_NODE_REWARD_BALANCE.salvageRecord.runCap * 0.75));
+      expect(state.wallet.gold).toBe(goldBefore + result.granted.gold!);
+      expect(state.expedition.playsToday).toBe(1);
+      expect((await server.getExpeditionWeeklyBest()).bestScore).toBe(0);
     });
 
     it("같은 요청 ID는 두 번째 호출에서도 같은 응답을 반환하고 다시 지급하지 않는다", async () => {
@@ -998,7 +988,7 @@ describe("FakeServer 원정 정산", () => {
       const first = await server.sweepExpedition({ requestId: "sweep-idem" });
       const second = await server.sweepExpedition({ requestId: "sweep-idem" });
       expect(second).toEqual(first);
-      expect(state.expedition.playsThisWeek).toBe(1);
+      expect(state.expedition.playsToday).toBe(1);
     });
 
     it("참조할 역대 최고점이 없으면 거부한다", async () => {
@@ -1014,14 +1004,15 @@ describe("FakeServer 원정 정산", () => {
       await expect(server.sweepExpedition({ requestId: "sweep-active" })).rejects.toMatchObject({ code: "EXPEDITION_ALREADY_ACTIVE" });
     });
 
-    it("이번 주 원정 기회를 모두 쓰면 소탕도 거부한다", async () => {
+    it("오늘의 원정 기회를 쓰면 소탕도 거부한다", async () => {
       const state = makeSession();
       state.expedition.allTimeBestScore = 5_000;
-      // 서버 시각과 같은 주차 키를 맞춰 둬야 소탕이 이 카운트를 새 주차로 착각해 초기화하지 않는다.
+      // 서버 시각과 같은 날짜 키를 맞춰 둬야 소탕이 이 카운트를 새 날로 착각해 초기화하지 않는다.
       state.expedition.weekKey = "2026-08-24";
-      state.expedition.playsThisWeek = 2;
+      state.expedition.dayKey = "2026-08-25";
+      state.expedition.playsToday = 1;
       const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
-      await expect(server.sweepExpedition({ requestId: "sweep-limit" })).rejects.toMatchObject({ code: "EXPEDITION_WEEKLY_LIMIT" });
+      await expect(server.sweepExpedition({ requestId: "sweep-limit" })).rejects.toMatchObject({ code: "EXPEDITION_DAILY_LIMIT" });
     });
   });
 

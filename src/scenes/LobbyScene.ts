@@ -627,9 +627,9 @@ export class LobbyScene extends Phaser.Scene {
     this.sortieBackButton?.destroy(); this.sortieBackButton = undefined;
   }
 
-  /** 주간 횟수·진행·최고점·빠른 가능 여부를 한 줄의 짧은 원정 상태로 합친다. */
+  /** 오늘의 횟수·진행·주간 최고점·빠른 가능 여부를 한 줄의 짧은 원정 상태로 합친다. */
   private expeditionStatus(status = expeditionManager.status()): string {
-    const plays = status.playsThisWeek;
+    const plays = status.playsToday;
     const best = status.bestScore.toLocaleString();
     if (status.active) return t("lobby.expedition.resume", { plays, best });
     const quick = t(status.quickAvailable ? "lobby.expedition.quickReady" : "lobby.expedition.quickLocked");

@@ -16,7 +16,7 @@ export const LOBBY_TH = {
   "lobby.sortie.shopTitle": "ร้านค้า",
   "lobby.sortie.raid.status": "ปฏิบัติการร่วม · กำลังเตรียม",
   "lobby.expedition.resume": "เล่นต่อ · {plays} รอบ · สูงสุด {best}",
-  "lobby.expedition.weekly": "สัปดาห์นี้ {plays} รอบ · สูงสุด {best} · {quick}",
+  "lobby.expedition.weekly": "วันนี้ {plays} · สูงสุด {best} · {quick}",
   "lobby.expedition.quickReady": "เริ่มด่วนได้",
   "lobby.expedition.quickLocked": "เริ่มด่วนล็อก",
   "lobby.rail.mission": "ภารกิจ",

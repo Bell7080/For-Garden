@@ -16,7 +16,7 @@ export const LOBBY_RU = {
   "lobby.sortie.shopTitle": "Магазины",
   "lobby.sortie.raid.status": "Совместная операция · В подготовке",
   "lobby.expedition.resume": "Продолжить · {plays} забегов · Лучший {best}",
-  "lobby.expedition.weekly": "Неделя {plays} забегов · Лучший {best} · {quick}",
+  "lobby.expedition.weekly": "Сегодня {plays} · Лучшее {best} · {quick}",
   "lobby.expedition.quickReady": "Быстрый готов",
   "lobby.expedition.quickLocked": "Быстрый закрыт",
   "lobby.rail.mission": "Задания",

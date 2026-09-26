@@ -10,13 +10,16 @@
  * 같은 값으로 셈해지고, 싼 판을 여러 번 도는 요령이 생기지 않는다. 스테미나를 쓰는 모든
  * 경계는 서버(`FakeServer`)에 있으므로 거기서만 더한다.
  *
- * **레벨이 오르면 스테미나를 채우지 않고 에너지 드링크+ 한 병을 준다**(`PLAYER_LEVEL_UP_REWARD`).
+ * **레벨이 오르면 스테미나를 채우지 않고 에너지 드링크 한 병(7일 기한)을 준다**(`PLAYER_LEVEL_UP_REWARD`).
  * 곧바로 채우면 오른 순간 가득 찬 상한이 이미 모아 둔 회복분을 덮어 버리고, 판 중간에 오르면
  * 그 몫이 언제 들어왔는지도 읽히지 않는다. 병 하나는 가방에 남아 쓰고 싶을 때 쓴다.
  */
 export const PLAYER_LEVEL_CAP = 60;
-/** 레벨 하나가 오를 때마다 가방에 넣는 것. 두 레벨이 한 번에 오르면 두 병이다. */
-export const PLAYER_LEVEL_UP_REWARD = { itemId: "stamina-tonic-large", quantity: 1 } as const;
+/**
+ * 레벨 하나가 오를 때마다 가방에 넣는 것 — 기본 에너지 드링크(60) 한 병, 받은 날로부터 7일.
+ * 두 레벨이 한 번에 오르면 두 병이다.
+ */
+export const PLAYER_LEVEL_UP_REWARD = { itemId: "stamina-tonic", quantity: 1, expiresInDays: 7 } as const;
 
 /** 1 스테미나가 주는 경험치. 운영 조정은 이 수 하나만 움직인다. */
 export const PLAYER_EXP_PER_STAMINA = 1;
@@ -77,7 +80,7 @@ export interface PlayerExpReceipt {
   granted: number;
   levelsGained: number;
   /** 레벨업으로 실제로 가방에 들어간 것. 쌓을 한도에 걸려 깎였으면 깎인 뒤의 수다. */
-  levelUpItems: { itemId: string; quantity: number }[];
+  levelUpItems: { itemId: string; quantity: number; expiresInDays?: number }[];
 }
 
 /** 경험치 줄이 한 레벨 안에서 몇 할 찼는가(0~1). 만렙은 가득 찬 줄이다. */

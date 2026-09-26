@@ -12,6 +12,7 @@ export const INVENTORY_ID = {
   "inventory.sort.craft": "Asah",
   "inventory.sort.equipped": "Dipakai",
   "inventory.guide.held": "Dimiliki",
+  "inventory.guide.expiry": "{count} · kedaluwarsa dalam {time}",
   "inventory.guide.effect": "Efek",
   "inventory.useButton": "Gunakan",
   "inventory.useDone": "Digunakan",

@@ -175,7 +175,7 @@ export default {
   "shop.tab.special": "Ofertas",
   "shop.tab.daily": "Diario",
   "shop.tab.weekly": "Semanal",
-  "banner.welcome.name": "Primera Investigación de Restauración",
+  "banner.welcome.name": "Primera Investigación Restauradora",
   "banner.fossil.name": "Investigación de Fósiles",
   "banner.amber.name": "Investigación de Ámbar",
   "skin.torika-skin-001.name": "Torika de vacaciones de verano",

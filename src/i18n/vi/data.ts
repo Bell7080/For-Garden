@@ -175,7 +175,7 @@ export default {
   "shop.tab.special": "Ưu đãi",
   "shop.tab.daily": "Hằng ngày",
   "shop.tab.weekly": "Hằng tuần",
-  "banner.welcome.name": "Nghiên cứu Phục hồi đầu tiên",
+  "banner.welcome.name": "Nghiên cứu Phục hồi Sơ khởi",
   "banner.fossil.name": "Nghiên cứu Hóa thạch",
   "banner.amber.name": "Nghiên cứu Hổ phách",
   "skin.torika-skin-001.name": "Torika nghỉ hè",

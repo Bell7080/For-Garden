@@ -99,6 +99,9 @@ export const MISC_JA = {
   "archaeology.reward.rawStone": "原石",
   "archaeology.reward.rune": "ルーン",
   "archaeology.reward.gold": "ゴールド",
+  "archaeology.reward.grade": "{count}/5",
+  "archaeology.reward.veryRare": "非常に希少",
+  "archaeology.reward.unavailable": "入手不可",
 
   "mileage.title": "マイレージショップ",
   "mileage.owned": "所持DNA  {amount}",

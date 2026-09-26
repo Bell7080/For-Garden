@@ -27,6 +27,15 @@ export type Catalog = Partial<Record<TextKey, string>>;
 const LOADERS: Partial<Record<LanguageId, () => Promise<{ default: Catalog }>>> = {
   ja: () => import("./ja"),
   en: () => import("./en"),
+  "zh-Hant": () => import("./zh-Hant"),
+  "zh-Hans": () => import("./zh-Hans"),
+  th: () => import("./th"),
+  vi: () => import("./vi"),
+  id: () => import("./id"),
+  es: () => import("./es"),
+  "pt-BR": () => import("./pt-BR"),
+  de: () => import("./de"),
+  ru: () => import("./ru"),
 };
 
 /** 지금까지 받아 둔 표. 한국어는 대체본이라 처음부터 들어 있다. */

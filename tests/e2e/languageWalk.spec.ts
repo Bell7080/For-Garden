@@ -40,7 +40,7 @@ async function expectNothingClamped(page: import("@playwright/test").Page, where
  * 언어마다 스펙을 복사하면 화면이 늘 때 한쪽만 고쳐지고, 그 언어의 회귀가 캡처에서 조용히
  * 사라진다. 새 언어를 `SELECTABLE_LANGUAGE_IDS`에 올리면 여기 한 줄만 더한다.
  */
-const WALKED = ["en", "ja"] as const;
+const WALKED = ["en", "ja", "zh-Hant", "zh-Hans", "th", "vi", "id", "es", "pt-BR", "de", "ru"] as const;
 
 for (const language of WALKED) {
 test.describe(`${language} 화면 훑기`, () => {

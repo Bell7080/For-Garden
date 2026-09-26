@@ -2055,6 +2055,14 @@
   `dataText.ts`의 덮어쓰기 목록, `SELECTABLE_LANGUAGE_IDS`, `tests/unit/dataText.test.ts`의
   `COMPLETE`, `tests/e2e/languageWalk.spec.ts`의 `WALKED`. 글꼴이 필요하면
   `scripts/prepare_fonts.py`를 다시 돌린다 — 라틴·키릴은 NEXON Kart가 이미 덮으므로 필요 없다.
+- **영어·일본어 밖의 아홉 언어는 원고가 따로 있다**(`i18n-src/<파일>.json` → `scripts/build_translations.py`).
+  키마다 `[zh-Hans, th, vi, id, es, pt-BR, de, ru]` 여덟 값을 한 줄에 두고, 굽는 스크립트가
+  `src/i18n/<언어>/<파일>.ts`를 새로 쓴다 — 그 파일들을 손으로 고치면 다음 굽기에 사라진다.
+  **번체는 원고에 없다**: 간체를 OpenCC(`s2twp`)로 옮기고 `ZH_HANT_FIX`로 지역 낱말만 바로잡는다
+  (芝士 → 起司). `{자리}`와 `[[id|` 태그는 옮기는 동안 보호한다. 문구를 더하면 원고에 한 줄을
+  더하고 굽고, 새 글자가 들어왔으면 `patch_font_glyphs.py`로 글꼴을 채운다.
+  **플레이어(연구원)의 성별을 정하지 않는다** — 러시아어·독일어·스페인어처럼 문법이 성을 요구하는
+  언어에서도 연구원을 가리키는 동사·형용사가 한쪽 성으로 굳지 않게 문장을 짠다.
 - **굴절하는 언어는 용어 사전 대조가 어간으로 돈다.** 끝의 `e`를 떼고 대소문자 없이 포함을
   보므로 `Restore`가 `Restoration`을, `Feed`가 `Feeding`을 받아들인다. **한국어의 포함 관계도
   함께 지킨다** — `연구소`가 `연구`를 품으므로 영어도 `Research Lab`이 `Research`를 품어야 한다.
@@ -2118,6 +2126,8 @@
   실제로 있는 글자만 남겨 굽고, 번역이 없는 언어는 건너뛴다. **번역을 고치면 함께 돌린다** —
   빠진 글자는 그 글자만 대체 글꼴로 보인다.
   **원본이 손에 없으면 번역을 고쳐 쓰지 말고 글자를 보충한다**(`scripts/patch_font_glyphs.py`).
+  구운 파일이 아직 없는 언어는 그 스크립트가 npm 배포판의 라틴 조각으로 뼈대부터 세운다 — 간체·번체·
+  베트남어가 그렇게 구워졌다(`@fontsource/noto-sans-sc`·`noto-sans-tc`·`be-vietnam-pro`).
   같은 글꼴의 npm 배포판(`npm pack @fontsource/line-seed-jp`)에서 **지금 서브셋에 없는 글자만** 옮겨
   붙이고 이미 있는 글자는 건드리지 않는다 — 실측으로 원본과 윤곽이 0.1% 안에서 같다. 없는 글자를
   피하려고 표현을 바꾸면 뜻이 흐려진다(大丈夫를 無事로 바꾼 적이 있다).

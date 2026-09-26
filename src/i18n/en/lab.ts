@@ -32,6 +32,11 @@ export const LAB_EN = {
   "lab.result.openAll": "Open All",
   "lab.result.tapTile": "Tap a tile to reveal",
   "lab.result.tapToReturn": "Tap the screen to go back",
+  "lab.cinematic.skip": "SKIP",
+  "lab.cinematic.resource": "Currency",
+  "lab.cinematic.specimenCode": "SPECIMEN No. 001",
+  "lab.cinematic.specimenName": "UNKNOWN ORGANISM",
+  "lab.cinematic.specimenNote": "FOSSIL / AMBER",
 
   // 새로 만난 렐릭의 소개 장면 — 그 개체의 한마디를 묶는 따옴표만 표가 갖는다.
   "lab.showcase.quote": "“{line}”",

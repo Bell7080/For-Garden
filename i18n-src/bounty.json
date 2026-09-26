@@ -1,0 +1,32 @@
+{
+"bounty.title": [
+"悬赏",
+"ค่าหัว",
+"Truy nã",
+"Buronan",
+"Se busca",
+"Procurados",
+"Kopfgeld",
+"Розыск"
+],
+"bounty.formation.round": [
+"第{round}回合",
+"รอบที่ {round}",
+"Hiệp {round}",
+"Ronde {round}",
+"Ronda {round}",
+"Rodada {round}",
+"Runde {round}",
+"Раунд {round}"
+],
+"bounty.result.toBounty": [
+"返回悬赏",
+"กลับไปค่าหัว",
+"Về Truy nã",
+"Ke Buronan",
+"Volver a Se busca",
+"Voltar a Procurados",
+"Zum Kopfgeld",
+"К розыску"
+]
+}

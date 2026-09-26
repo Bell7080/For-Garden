@@ -1,0 +1,13 @@
+{
+"missions.title": ["任务记录", "บันทึกภารกิจ", "Hồ sơ nhiệm vụ", "Catatan Misi", "Registro de misiones", "Registro de missões", "Missionsprotokoll", "Журнал заданий"],
+"missions.tab.daily": ["每日", "รายวัน", "Hằng ngày", "Harian", "Diarias", "Diárias", "Täglich", "Ежедневные"],
+"missions.tab.weekly": ["每周", "รายสัปดาห์", "Hằng tuần", "Mingguan", "Semanales", "Semanais", "Wöchentlich", "Еженедельные"],
+"missions.claimAll": ["全部领取", "รับทั้งหมด", "Nhận tất cả", "Klaim Semua", "Reclamar todo", "Resgatar tudo", "Alle abholen", "Забрать всё"],
+"missions.researchPoints": ["研究度 +{points}", "ค่าวิจัย +{points}", "Nghiên cứu +{points}", "Riset +{points}", "Investigación +{points}", "Pesquisa +{points}", "Forschung +{points}", "Исследование +{points}"],
+"missions.state.claimed": ["已领取", "รับแล้ว", "Đã nhận", "Sudah Diklaim", "Reclamado", "Resgatado", "Abgeholt", "Получено"],
+"missions.state.inProgress": ["进行中", "กำลังดำเนินการ", "Đang tiến hành", "Berlangsung", "En curso", "Em andamento", "Läuft", "В процессе"],
+"missions.rewardTitle": ["任务奖励", "รางวัลภารกิจ", "Thưởng nhiệm vụ", "Hadiah Misi", "Recompensas de misión", "Recompensas de missão", "Missionsbelohnungen", "Награды за задания"],
+"missions.researchCaption": ["研究度", "ค่าวิจัย", "Nghiên cứu", "Riset", "Investigación", "Pesquisa", "Forschung", "Исследование"],
+"missions.resetIn": ["{time}后重置", "รีเซ็ตใน {time}", "Làm mới sau {time}", "Reset dalam {time}", "Se reinicia en {time}", "Reinicia em {time}", "Zurücksetzung in {time}", "Сброс через {time}"],
+"missions.state.complete": ["已完成", "สำเร็จ", "Hoàn thành", "Selesai", "Completada", "Concluída", "Erledigt", "Выполнено"]
+}

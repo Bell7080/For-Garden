@@ -1,0 +1,1792 @@
+{
+"currency.raidSigil.name": [
+"讨伐徽印",
+"ตราปราบปราม",
+"Ấn chinh phạt",
+"Segel Penaklukan",
+"Sello de subyugación",
+"Selo de subjugação",
+"Bezwingungssiegel",
+"Печать усмирения"
+],
+"currency.raidSigil.lore": [
+"根据你击退首领的程度所颁发的证明。",
+"ใบรับรองที่ออกให้ตามระยะที่ผลักบอสถอยไปได้",
+"Chứng nhận cấp theo mức bạn đẩy lùi được trùm.",
+"Sertifikat yang diberikan sesuai seberapa jauh kamu memukul mundur bos.",
+"Un certificado emitido según cuánto hiciste retroceder al jefe.",
+"Um certificado emitido conforme o quanto você fez o chefe recuar.",
+"Eine Bescheinigung dafür, wie weit du den Boss zurückgedrängt hast.",
+"Свидетельство о том, насколько вы оттеснили босса."
+],
+"currency.raidSigil.source.0": [
+"结束的讨伐结算",
+"สรุปผลเรดที่จบแล้ว",
+"Quyết toán đột kích đã kết thúc",
+"Penyelesaian raid yang berakhir",
+"Liquidación de una incursión terminada",
+"Acerto de uma raide encerrada",
+"Abrechnung eines beendeten Raids",
+"Расчёт завершённого рейда"
+],
+"currency.raidSigil.source.1": [
+"讨伐的击败分成",
+"ส่วนแบ่งจากการปราบเรด",
+"Phần chia chinh phạt đột kích",
+"Bagian penaklukan raid",
+"Parte por subyugar la incursión",
+"Parte pela subjugação da raide",
+"Anteil an der Raid-Bezwingung",
+"Доля за усмирение в рейде"
+],
+"currency.raidSigil.use.0": [
+"战利品商店的讨伐兑换",
+"แลกของปราบปรามที่ร้านค้าของรางวัล",
+"Đổi chinh phạt ở Cửa hàng chiến lợi phẩm",
+"Tukar penaklukan di Toko Jarahan",
+"Canje de subyugación en la Tienda de botín",
+"Troca de subjugação na Loja de espólios",
+"Bezwingungstausch im Beute-Shop",
+"Обмен за усмирение в магазине трофеев"
+],
+"currency.salvageRecord.name": [
+"打捞记录",
+"บันทึกกู้ซาก",
+"Hồ sơ trục vớt",
+"Catatan Penyelamatan",
+"Registro de rescate",
+"Registro de resgate",
+"Bergungsprotokoll",
+"Запись спасения"
+],
+"currency.salvageRecord.lore": [
+"从沉没分部打捞上来的物品记录。",
+"บันทึกของที่กู้ขึ้นมาจากสาขาที่จมน้ำ",
+"Hồ sơ những gì được trục vớt từ các chi nhánh chìm.",
+"Catatan barang yang diangkat dari cabang-cabang tenggelam.",
+"Un registro de lo rescatado de las sedes hundidas.",
+"Um registro do que foi resgatado das filiais submersas.",
+"Ein Protokoll dessen, was aus den versunkenen Zweigstellen geborgen wurde.",
+"Запись о поднятом из затонувших филиалов."
+],
+"currency.salvageRecord.source.0": [
+"远征节点奖励",
+"รางวัลจุดออกสำรวจ",
+"Thưởng nút Viễn chinh",
+"Hadiah titik Ekspedisi",
+"Recompensas de nodos de Expedición",
+"Recompensas de nós da Expedição",
+"Expedition-Knotenbelohnungen",
+"Награды узлов экспедиции"
+],
+"currency.salvageRecord.source.1": [
+"远征每周记录奖励",
+"รางวัลสถิติออกสำรวจรายสัปดาห์",
+"Thưởng kỷ lục Viễn chinh tuần",
+"Hadiah rekor mingguan Ekspedisi",
+"Recompensas del récord semanal de Expedición",
+"Recompensas do recorde semanal da Expedição",
+"Expedition-Wochenrekordbelohnungen",
+"Награды рекорда экспедиции за неделю"
+],
+"currency.salvageRecord.use.0": [
+"战利品商店的打捞兑换",
+"แลกของกู้ซากที่ร้านค้าของรางวัล",
+"Đổi trục vớt ở Cửa hàng chiến lợi phẩm",
+"Tukar penyelamatan di Toko Jarahan",
+"Canje de rescate en la Tienda de botín",
+"Troca de resgate na Loja de espólios",
+"Bergungstausch im Beute-Shop",
+"Обмен спасённого в магазине трофеев"
+],
+"item.rawStone.name": [
+"原石",
+"หินดิบ",
+"Đá thô",
+"Batu Mentah",
+"Piedra en bruto",
+"Pedra bruta",
+"Rohstein",
+"Необработанный камень"
+],
+"item.rawStone.description": [
+"地层探查中挖到的原始矿物。用于重新解读符文特性。",
+"แร่ดิบที่ขุดได้จากการสำรวจชั้นดิน ใช้ตีความคุณลักษณะรูนใหม่",
+"Khoáng vật thô đào được khi Thám sát địa tầng. Dùng để diễn giải lại đặc tính Rune.",
+"Mineral mentah dari Survei Strata. Dipakai untuk menafsir ulang sifat rune.",
+"Un mineral en bruto hallado en un Estudio de estratos. Sirve para reinterpretar rasgos de runa.",
+"Um mineral bruto obtido na Pesquisa de estratos. Usado para reinterpretar traços de runa.",
+"Ein roher Mineralfund aus der Schichtenerkundung. Dient zur Neudeutung von Runenmerkmalen.",
+"Сырой минерал из разведки пластов. Нужен для переосмысления черт рун."
+],
+"item.ancient-core.name": [
+"未知的古代核心",
+"แกนโบราณไร้ชื่อ",
+"Lõi cổ đại chưa rõ",
+"Inti Purba Tak Dikenal",
+"Núcleo antiguo desconocido",
+"Núcleo antigo desconhecido",
+"Unbekannter uralter Kern",
+"Неизвестное древнее ядро"
+],
+"item.ancient-core.description": [
+"为符文赋予新的特性行。若已有特性，则抹除后重新抽取。",
+"มอบบรรทัดคุณลักษณะใหม่ให้รูน ถ้ามีอยู่แล้วจะลบแล้วสุ่มใหม่",
+"Ban một dòng đặc tính mới cho rune. Nếu đã có, nó bị xóa và rút lại.",
+"Memberi baris sifat baru ke rune. Jika sudah ada, dihapus lalu diundi ulang.",
+"Otorga una nueva línea de rasgo a una runa. Si ya tenía una, se borra y se vuelve a sortear.",
+"Concede uma nova linha de traço a uma runa. Se já houver, é apagada e sorteada de novo.",
+"Verleiht einer Rune eine neue Merkmalszeile. Existiert schon eine, wird sie gelöscht und neu gezogen.",
+"Даёт руне новую строку черты. Если она уже есть, стирает и выбирает заново."
+],
+"item.refined-core.name": [
+"精炼的古代核心",
+"แกนโบราณที่ขัดเกลา",
+"Lõi cổ đại tinh luyện",
+"Inti Purba Murni",
+"Núcleo antiguo refinado",
+"Núcleo antigo refinado",
+"Veredelter uralter Kern",
+"Очищенное древнее ядро"
+],
+"item.refined-core.description": [
+"必定赋予英雄以上等级的特性。无法用于已是英雄以上的特性。",
+"มอบคุณลักษณะระดับมหากาพย์ขึ้นไปแน่นอน ใช้กับคุณลักษณะที่เป็นมหากาพย์ขึ้นไปแล้วไม่ได้",
+"Chắc chắn ban đặc tính bậc Sử thi trở lên. Không dùng được cho đặc tính đã từ Sử thi trở lên.",
+"Pasti memberi sifat tingkat Epik ke atas. Tidak bisa dipakai pada sifat yang sudah Epik ke atas.",
+"Otorga con seguridad un rasgo de grado Épico o superior. No se puede usar en un rasgo que ya sea Épico o superior.",
+"Concede com garantia um traço de grau Épico ou superior. Não pode ser usado em traço que já seja Épico ou superior.",
+"Verleiht garantiert ein Merkmal der Stufe Episch oder höher. Nicht nutzbar bei Merkmalen, die schon Episch oder höher sind.",
+"Гарантированно даёт черту ранга «эпическая» или выше. Нельзя применить к черте, уже эпической или выше."
+],
+"item.restoration-crystal.name": [
+"完全复原结晶",
+"ผลึกฟื้นคืนสมบูรณ์",
+"Tinh thể Phục hồi hoàn toàn",
+"Kristal Restorasi Penuh",
+"Cristal de restauración total",
+"Cristal de restauração total",
+"Kristall der vollständigen Restaurierung",
+"Кристалл полного восстановления"
+],
+"item.restoration-crystal.description": [
+"保持特性种类，直接提升至传说。无法用于已是传说的特性。",
+"ยกระดับคุณลักษณะเป็นตำนานทันทีโดยคงชนิดไว้ ใช้กับคุณลักษณะที่เป็นตำนานแล้วไม่ได้",
+"Nâng thẳng đặc tính lên Huyền thoại, giữ nguyên loại. Không dùng được cho đặc tính đã là Huyền thoại.",
+"Menaikkan sifat langsung ke Legendaris dengan jenis tetap. Tidak bisa dipakai pada sifat yang sudah Legendaris.",
+"Eleva un rasgo directamente a Legendario conservando su tipo. No se puede usar en un rasgo que ya sea Legendario.",
+"Eleva um traço direto para Lendário, mantendo o tipo. Não pode ser usado em traço que já seja Lendário.",
+"Hebt ein Merkmal direkt auf Legendär und behält seinen Typ. Nicht nutzbar bei bereits legendären Merkmalen.",
+"Сразу поднимает черту до легендарной, сохраняя тип. Нельзя применить к уже легендарной черте."
+],
+"item.cheesecake.name": [
+"芝士蛋糕",
+"ชีสเค้ก",
+"Bánh phô mai",
+"Cheesecake",
+"Tarta de queso",
+"Cheesecake",
+"Käsekuchen",
+"Чизкейк"
+],
+"item.cheesecake.description": [
+"喂给遗物使其成长。",
+"ป้อนให้เรลิกเพื่อให้เติบโต",
+"Cho Di vật ăn để nó lớn lên.",
+"Berikan ke Relik agar tumbuh.",
+"Dáselo a una Reliquia para que crezca.",
+"Dê a uma Relíquia para que ela cresça.",
+"Füttere ein Relikt damit, damit es wächst.",
+"Скормите реликту, чтобы он рос."
+],
+"item.stamina-tonic.name": [
+"能量饮料",
+"เครื่องดื่มชูกำลัง",
+"Nước tăng lực",
+"Minuman Energi",
+"Bebida energética",
+"Bebida energética",
+"Energydrink",
+"Энергетик"
+],
+"item.stamina-tonic.description": [
+"恢复60体力。",
+"ฟื้นฟูสตามินา 60",
+"Hồi 60 Thể lực.",
+"Memulihkan 60 Stamina.",
+"Recupera 60 de Estamina.",
+"Recupera 60 de Estamina.",
+"Stellt 60 Ausdauer wieder her.",
+"Восстанавливает 60 выносливости."
+],
+"item.stamina-tonic-large.name": [
+"能量饮料+",
+"เครื่องดื่มชูกำลัง+",
+"Nước tăng lực+",
+"Minuman Energi+",
+"Bebida energética+",
+"Bebida energética+",
+"Energydrink+",
+"Энергетик+"
+],
+"item.stamina-tonic-large.description": [
+"恢复120体力。",
+"ฟื้นฟูสตามินา 120",
+"Hồi 120 Thể lực.",
+"Memulihkan 120 Stamina.",
+"Recupera 120 de Estamina.",
+"Recupera 120 de Estamina.",
+"Stellt 120 Ausdauer wieder her.",
+"Восстанавливает 120 выносливости."
+],
+"item.rune-dust.name": [
+"符文粉尘",
+"ฝุ่นรูน",
+"Bụi Rune",
+"Debu Rune",
+"Polvo de runa",
+"Pó de runa",
+"Runenstaub",
+"Рунная пыль"
+],
+"item.rune-dust.description": [
+"用于符文研究的精炼材料。",
+"วัสดุขัดเกลาที่ใช้ในการวิจัยรูน",
+"Vật liệu tinh chế dùng trong nghiên cứu Rune.",
+"Bahan olahan untuk riset Rune.",
+"Un material refinado para la investigación de Runas.",
+"Um material refinado usado na pesquisa de Runas.",
+"Ein veredeltes Material für die Runenforschung.",
+"Очищенный материал для исследования рун."
+],
+"dna.dna-fragment.name": [
+"持有遗物的碎片",
+"เศษของเรลิกที่มี",
+"Mảnh Di vật đang có",
+"Serpihan Relik Dimiliki",
+"Fragmentos de Reliquias obtenidas",
+"Fragmentos de Relíquias obtidas",
+"Splitter eigener Relikte",
+"Фрагменты своих реликтов"
+],
+"dna.dna-rune.name": [
+"高级符文材料",
+"วัสดุรูนระดับสูง",
+"Nguyên liệu Rune cao cấp",
+"Bahan Rune Tingkat Tinggi",
+"Materiales de Runa de alto grado",
+"Materiais de Runa de alto grau",
+"Hochwertiges Runenmaterial",
+"Материалы для рун высокого ранга"
+],
+"dna.dna-past-event.name": [
+"往期调查记录兑换券",
+"คูปองบันทึกสำรวจในอดีต",
+"Phiếu hồ sơ khảo sát cũ",
+"Voucher Catatan Survei Lampau",
+"Vale de registros de campo pasados",
+"Vale de registros de campo passados",
+"Gutschein für frühere Erkundungsakten",
+"Талон на прошлые записи"
+],
+"premium.tab.package": [
+"礼包",
+"แพ็กเกจ",
+"Gói",
+"Paket",
+"Paquetes",
+"Pacotes",
+"Pakete",
+"Наборы"
+],
+"premium.tab.deal": [
+"特惠",
+"ดีล",
+"Ưu đãi",
+"Penawaran",
+"Ofertas",
+"Ofertas",
+"Angebote",
+"Выгода"
+],
+"premium.tab.limited": [
+"限定",
+"จำกัด",
+"Giới hạn",
+"Terbatas",
+"Limitado",
+"Limitado",
+"Limitiert",
+"Лимит"
+],
+"premium.tab.gem": [
+"钻石",
+"เพชร",
+"Kim cương",
+"Berlian",
+"Diamantes",
+"Diamantes",
+"Diamanten",
+"Алмазы"
+],
+"shop.tab.gold": [
+"金币",
+"ทอง",
+"Vàng",
+"Emas",
+"Oro",
+"Ouro",
+"Gold",
+"Золото"
+],
+"shop.tab.gems": [
+"钻石",
+"เพชร",
+"Kim cương",
+"Berlian",
+"Diamantes",
+"Diamantes",
+"Diamanten",
+"Алмазы"
+],
+"shop.tab.special": [
+"特惠",
+"ดีล",
+"Ưu đãi",
+"Penawaran",
+"Ofertas",
+"Ofertas",
+"Angebote",
+"Выгода"
+],
+"shop.tab.daily": [
+"每日",
+"รายวัน",
+"Hằng ngày",
+"Harian",
+"Diario",
+"Diário",
+"Täglich",
+"Ежедневно"
+],
+"shop.tab.weekly": [
+"每周",
+"รายสัปดาห์",
+"Hằng tuần",
+"Mingguan",
+"Semanal",
+"Semanal",
+"Wöchentlich",
+"Еженедельно"
+],
+"banner.welcome.name": [
+"首次复原研究",
+"วิจัยฟื้นคืนครั้งแรก",
+"Nghiên cứu Phục hồi Sơ khởi",
+"Riset Restorasi Pertama",
+"Primera Investigación Restauradora",
+"Primeira Pesquisa de Restauração",
+"Erste Restaurierungsforschung",
+"Исследование восстановления"
+],
+"banner.fossil.name": [
+"化石研究",
+"วิจัยฟอสซิล",
+"Nghiên cứu Hóa thạch",
+"Riset Fosil",
+"Investigación de Fósiles",
+"Pesquisa de Fósseis",
+"Fossilforschung",
+"Исследование окаменелостей"
+],
+"banner.amber.name": [
+"琥珀研究",
+"วิจัยอำพัน",
+"Nghiên cứu Hổ phách",
+"Riset Amber",
+"Investigación de Ámbar",
+"Pesquisa de Âmbar",
+"Bernsteinforschung",
+"Исследование янтаря"
+],
+"skin.torika-skin-001.name": [
+"暑假托莉卡",
+"โทริกะปิดเทอมฤดูร้อน",
+"Torika nghỉ hè",
+"Torika Liburan Musim Panas",
+"Torika de vacaciones de verano",
+"Torika de férias de verão",
+"Sommerferien-Torika",
+"Торика на летних каникулах"
+],
+"skin.torika-skin-002.name": [
+"寒假托莉卡",
+"โทริกะปิดเทอมฤดูหนาว",
+"Torika nghỉ đông",
+"Torika Liburan Musim Dingin",
+"Torika de vacaciones de invierno",
+"Torika de férias de inverno",
+"Winterferien-Torika",
+"Торика на зимних каникулах"
+],
+"skin.torika-skin-003.name": [
+"运动会托莉卡",
+"โทริกะวันกีฬาสี",
+"Torika hội thao",
+"Torika Hari Olahraga",
+"Torika del día deportivo",
+"Torika do dia esportivo",
+"Sportfest-Torika",
+"Торика на спортивном празднике"
+],
+"skin.torika-skin-004.name": [
+"夜自习托莉卡",
+"โทริกะอ่านหนังสือกลางคืน",
+"Torika tự học buổi tối",
+"Torika Belajar Malam",
+"Torika de estudio nocturno",
+"Torika de estudo noturno",
+"Nachtlern-Torika",
+"Торика на вечерней учёбе"
+],
+"skin.torika-skin-005.name": [
+"校服托莉卡",
+"โทริกะชุดนักเรียน",
+"Torika đồng phục",
+"Torika Seragam Sekolah",
+"Torika con uniforme escolar",
+"Torika de uniforme escolar",
+"Schuluniform-Torika",
+"Торика в школьной форме"
+],
+"stamina.source.stamina-gems.name": [
+"紧急补给",
+"เสบียงฉุกเฉิน",
+"Tiếp tế khẩn cấp",
+"Pasokan Darurat",
+"Suministro de emergencia",
+"Suprimento de emergência",
+"Notversorgung",
+"Экстренные припасы"
+],
+"stamina.source.stamina-ad.name": [
+"补给请求",
+"ขอเสบียง",
+"Yêu cầu tiếp tế",
+"Permintaan Pasokan",
+"Solicitud de suministros",
+"Pedido de suprimentos",
+"Versorgungsanfrage",
+"Запрос припасов"
+],
+"expedition.phase.0": [
+"观察",
+"สังเกต",
+"Quan sát",
+"Observasi",
+"Observación",
+"Observação",
+"Beobachtung",
+"Наблюдение"
+],
+"expedition.phase.1": [
+"过载",
+"โอเวอร์โหลด",
+"Quá tải",
+"Kelebihan Beban",
+"Sobrecarga",
+"Sobrecarga",
+"Überlast",
+"Перегрузка"
+],
+"expedition.phase.2": [
+"崩溃",
+"ล่มสลาย",
+"Sụp đổ",
+"Keruntuhan",
+"Colapso",
+"Colapso",
+"Zusammenbruch",
+"Обрушение"
+],
+"expedition.phase.3": [
+"灭绝",
+"สูญพันธุ์",
+"Tuyệt chủng",
+"Kepunahan",
+"Extinción",
+"Extinção",
+"Aussterben",
+"Вымирание"
+],
+"raid.phase.0": [
+"交战",
+"ปะทะ",
+"Giao chiến",
+"Pertempuran",
+"Combate",
+"Combate",
+"Gefecht",
+"Столкновение"
+],
+"raid.phase.1": [
+"激化",
+"ทวีความรุนแรง",
+"Leo thang",
+"Eskalasi",
+"Escalada",
+"Escalada",
+"Eskalation",
+"Обострение"
+],
+"raid.phase.2": [
+"背水一战",
+"หลังพิงกำแพง",
+"Tử chiến",
+"Pertahanan Terakhir",
+"Última resistencia",
+"Última resistência",
+"Letztes Aufgebot",
+"Последний рубеж"
+],
+"raid.phase.3": [
+"撤退",
+"ถอนกำลัง",
+"Rút lui",
+"Penarikan",
+"Retirada",
+"Retirada",
+"Rückzug",
+"Отступление"
+],
+"item.raidSigil.name": [
+"讨伐徽印",
+"ตราปราบปราม",
+"Ấn chinh phạt",
+"Segel Penaklukan",
+"Sello de subyugación",
+"Selo de subjugação",
+"Bezwingungssiegel",
+"Печать усмирения"
+],
+"item.raidSigil.description": [
+"击退讨伐首领所获得的徽印。可在战利品商店兑换。",
+"ตราที่ได้จากการผลักบอสเรดถอย แลกได้ที่ร้านค้าของรางวัล",
+"Ấn nhận được khi đẩy lùi trùm đột kích. Đổi ở Cửa hàng chiến lợi phẩm.",
+"Segel yang diberikan karena memukul mundur bos raid. Tukarkan di Toko Jarahan.",
+"Un sello otorgado por hacer retroceder al jefe de incursión. Canjéalo en la Tienda de botín.",
+"Um selo concedido por fazer o chefe da raide recuar. Troque na Loja de espólios.",
+"Ein Siegel dafür, den Raid-Boss zurückgedrängt zu haben. Im Beute-Shop eintauschbar.",
+"Печать за то, что оттеснили босса рейда. Обменяйте в магазине трофеев."
+],
+"item.salvageRecord.name": [
+"打捞记录",
+"บันทึกกู้ซาก",
+"Hồ sơ trục vớt",
+"Catatan Penyelamatan",
+"Registro de rescate",
+"Registro de resgate",
+"Bergungsprotokoll",
+"Запись спасения"
+],
+"item.salvageRecord.description": [
+"从沉没分部打捞上来的物品记录。可在战利品商店兑换。",
+"บันทึกของที่กู้ขึ้นมาจากสาขาที่จมน้ำ แลกได้ที่ร้านค้าของรางวัล",
+"Hồ sơ những gì được trục vớt từ các chi nhánh chìm. Đổi ở Cửa hàng chiến lợi phẩm.",
+"Catatan barang yang diangkat dari cabang tenggelam. Tukarkan di Toko Jarahan.",
+"Un registro de lo rescatado de las sedes hundidas. Canjéalo en la Tienda de botín.",
+"Um registro do que foi resgatado das filiais submersas. Troque na Loja de espólios.",
+"Ein Protokoll dessen, was aus den versunkenen Zweigstellen geborgen wurde. Im Beute-Shop eintauschbar.",
+"Запись о поднятом из затонувших филиалов. Обменяйте в магазине трофеев."
+],
+"shop.loot.tab.raid": [
+"讨伐",
+"ปราบปราม",
+"Chinh phạt",
+"Penaklukan",
+"Subyugación",
+"Subjugação",
+"Bezwingung",
+"Усмирение"
+],
+"shop.loot.tab.expedition": [
+"打捞",
+"กู้ซาก",
+"Trục vớt",
+"Penyelamatan",
+"Rescate",
+"Resgate",
+"Bergung",
+"Спасение"
+],
+"product.raid-cheesecake-ration.name": [
+"讨伐口粮",
+"เสบียงปราบปราม",
+"Khẩu phần chinh phạt",
+"Ransum Penaklukan",
+"Ración de subyugación",
+"Ração de subjugação",
+"Bezwingungsration",
+"Паёк усмирения"
+],
+"product.raid-cheesecake-ration.description": [
+"芝士蛋糕400个",
+"ชีสเค้ก 400",
+"400 Bánh phô mai",
+"400 Cheesecake",
+"400 de Tarta de queso",
+"400 Cheesecakes",
+"400 Käsekuchen",
+"400 чизкейков"
+],
+"product.raid-gold-bounty.name": [
+"讨伐赏金",
+"ค่าหัวปราบปราม",
+"Tiền thưởng chinh phạt",
+"Hadiah Penaklukan",
+"Recompensa de subyugación",
+"Recompensa de subjugação",
+"Bezwingungsprämie",
+"Награда за усмирение"
+],
+"product.raid-gold-bounty.description": [
+"金币30,000",
+"ทอง 30,000",
+"30.000 Vàng",
+"30.000 Emas",
+"30.000 de oro",
+"30.000 de ouro",
+"30.000 Gold",
+"30 000 золота"
+],
+"product.raid-fossil-crate.name": [
+"讨伐标本箱",
+"กล่องตัวอย่างปราบปราม",
+"Hòm mẫu vật chinh phạt",
+"Peti Spesimen Penaklukan",
+"Caja de especímenes de subyugación",
+"Caixa de espécimes de subjugação",
+"Bezwingungs-Exemplarkiste",
+"Ящик экземпляров усмирения"
+],
+"product.raid-fossil-crate.description": [
+"化石1,500个",
+"ฟอสซิล 1,500",
+"1.500 Hóa thạch",
+"1.500 Fosil",
+"1.500 fósiles",
+"1.500 fósseis",
+"1.500 Fossilien",
+"1500 окаменелостей"
+],
+"product.raid-dna-supply.name": [
+"讨伐复原补给",
+"เสบียงฟื้นคืนปราบปราม",
+"Tiếp tế phục hồi chinh phạt",
+"Pasokan Restorasi Penaklukan",
+"Suministro de restauración de subyugación",
+"Suprimento de restauração de subjugação",
+"Bezwingungs-Restaurierungsvorrat",
+"Припасы восстановления усмирения"
+],
+"product.raid-dna-supply.description": [
+"DNA片段12个",
+"เศษ DNA 12",
+"12 Mảnh DNA",
+"12 Serpihan DNA",
+"12 fragmentos de ADN",
+"12 fragmentos de DNA",
+"12 DNA-Splitter",
+"12 фрагментов ДНК"
+],
+"product.raid-amber-token.name": [
+"讨伐功勋琥珀",
+"อำพันเกียรติคุณปราบปราม",
+"Hổ phách công trạng chinh phạt",
+"Amber Jasa Penaklukan",
+"Ámbar al mérito de subyugación",
+"Âmbar de mérito da subjugação",
+"Bezwingungs-Verdienstbernstein",
+"Янтарь за заслуги в усмирении"
+],
+"product.raid-amber-token.description": [
+"琥珀15个",
+"อำพัน 15",
+"15 Hổ phách",
+"15 Amber",
+"15 de ámbar",
+"15 âmbares",
+"15 Bernstein",
+"15 янтаря"
+],
+"product.raid-ancient-core.name": [
+"讨伐古代核心",
+"แกนโบราณปราบปราม",
+"Lõi cổ đại chinh phạt",
+"Inti Purba Penaklukan",
+"Núcleo antiguo de subyugación",
+"Núcleo antigo de subjugação",
+"Uralter Bezwingungskern",
+"Древнее ядро усмирения"
+],
+"product.raid-ancient-core.description": [
+"未知的古代核心1个",
+"แกนโบราณไร้ชื่อ 1",
+"1 Lõi cổ đại chưa rõ",
+"1 Inti Purba Tak Dikenal",
+"1 Núcleo antiguo desconocido",
+"1 Núcleo antigo desconhecido",
+"1 unbekannter uralter Kern",
+"1 неизвестное древнее ядро"
+],
+"product.raid-refined-core.name": [
+"讨伐精炼核心",
+"แกนขัดเกลาปราบปราม",
+"Lõi tinh luyện chinh phạt",
+"Inti Murni Penaklukan",
+"Núcleo refinado de subyugación",
+"Núcleo refinado de subjugação",
+"Veredelter Bezwingungskern",
+"Очищенное ядро усмирения"
+],
+"product.raid-refined-core.description": [
+"精炼的古代核心1个",
+"แกนโบราณที่ขัดเกลา 1",
+"1 Lõi cổ đại tinh luyện",
+"1 Inti Purba Murni",
+"1 Núcleo antiguo refinado",
+"1 Núcleo antigo refinado",
+"1 veredelter uralter Kern",
+"1 очищенное древнее ядро"
+],
+"product.loot-salvage-orestone.name": [
+"打捞矿物",
+"แร่ที่กู้มา",
+"Khoáng vật trục vớt",
+"Mineral Selamatan",
+"Minerales rescatados",
+"Minerais resgatados",
+"Geborgene Mineralien",
+"Поднятые минералы"
+],
+"product.loot-salvage-orestone.description": [
+"原石800个",
+"หินดิบ 800",
+"800 Đá thô",
+"800 Batu Mentah",
+"800 de piedra en bruto",
+"800 pedras brutas",
+"800 Rohstein",
+"800 камня"
+],
+"product.loot-salvage-tonic.name": [
+"打捞口粮",
+"เสบียงที่กู้มา",
+"Khẩu phần trục vớt",
+"Ransum Selamatan",
+"Raciones rescatadas",
+"Rações resgatadas",
+"Geborgene Rationen",
+"Поднятые пайки"
+],
+"product.loot-salvage-tonic.description": [
+"能量饮料3个",
+"เครื่องดื่มชูกำลัง 3",
+"3 Nước tăng lực",
+"3 Minuman Energi",
+"3 bebidas energéticas",
+"3 bebidas energéticas",
+"3 Energydrinks",
+"3 энергетика"
+],
+"product.loot-salvage-gems.name": [
+"打捞结算结晶",
+"ผลึกสรุปผลกู้ซาก",
+"Tinh thể quyết toán trục vớt",
+"Kristal Penyelesaian Selamatan",
+"Cristal de liquidación de rescate",
+"Cristal de acerto de resgate",
+"Bergungs-Abrechnungskristall",
+"Кристалл расчёта спасения"
+],
+"product.loot-salvage-gems.description": [
+"宝石40个",
+"เจม 40",
+"40 Ngọc",
+"40 Permata",
+"40 gemas",
+"40 gemas",
+"40 Juwelen",
+"40 самоцветов"
+],
+"product.loot-salvage-dna.name": [
+"打捞复原样本",
+"ตัวอย่างฟื้นคืนที่กู้มา",
+"Mẫu phục hồi trục vớt",
+"Sampel Restorasi Selamatan",
+"Muestra de restauración rescatada",
+"Amostra de restauração resgatada",
+"Geborgene Restaurierungsprobe",
+"Поднятый образец восстановления"
+],
+"product.loot-salvage-dna.description": [
+"DNA片段15个",
+"เศษ DNA 15",
+"15 Mảnh DNA",
+"15 Serpihan DNA",
+"15 fragmentos de ADN",
+"15 fragmentos de DNA",
+"15 DNA-Splitter",
+"15 фрагментов ДНК"
+],
+"product.loot-salvage-dust.name": [
+"打捞精炼粉尘",
+"ฝุ่นขัดเกลาที่กู้มา",
+"Bụi tinh chế trục vớt",
+"Debu Olahan Selamatan",
+"Polvo de refinado rescatado",
+"Pó de refino resgatado",
+"Geborgener Veredelungsstaub",
+"Поднятая очищающая пыль"
+],
+"product.loot-salvage-dust.description": [
+"符文粉尘40个",
+"ฝุ่นรูน 40",
+"40 Bụi Rune",
+"40 Debu Rune",
+"40 de polvo de runa",
+"40 pós de runa",
+"40 Runenstaub",
+"40 рунной пыли"
+],
+"product.loot-salvage-crystal.name": [
+"打捞复原结晶",
+"ผลึกฟื้นคืนที่กู้มา",
+"Tinh thể phục hồi trục vớt",
+"Kristal Restorasi Selamatan",
+"Cristal de restauración rescatado",
+"Cristal de restauração resgatado",
+"Geborgener Restaurierungskristall",
+"Поднятый кристалл восстановления"
+],
+"product.loot-salvage-crystal.description": [
+"完全复原结晶1个",
+"ผลึกฟื้นคืนสมบูรณ์ 1",
+"1 Tinh thể Phục hồi hoàn toàn",
+"1 Kristal Restorasi Penuh",
+"1 Cristal de restauración total",
+"1 Cristal de restauração total",
+"1 Kristall der vollständigen Restaurierung",
+"1 кристалл полного восстановления"
+],
+"modifier.field-pioneer.name": [
+"现场开拓者",
+"ผู้บุกเบิกภาคสนาม",
+"Người tiên phong hiện trường",
+"Perintis Lapangan",
+"Pionero de campo",
+"Pioneiro de campo",
+"Feldpionier",
+"Первопроходец поля"
+],
+"modifier.steady-researcher.name": [
+"踏实的研究员",
+"นักวิจัยผู้มั่นคง",
+"Nhà nghiên cứu bền bỉ",
+"Periset Tekun",
+"Investigador constante",
+"Pesquisador constante",
+"Beständiger Forscher",
+"Упорный исследователь"
+],
+"modifier.deep-record.name": [
+"深层记录者",
+"ผู้บันทึกชั้นลึก",
+"Người ghi chép tầng sâu",
+"Pencatat Kedalaman",
+"Cronista de las profundidades",
+"Cronista das profundezas",
+"Tiefenchronist",
+"Летописец глубин"
+],
+"modifier.garden-legend.name": [
+"庭园的传说",
+"ตำนานแห่งสวน",
+"Huyền thoại Khu vườn",
+"Legenda Taman",
+"Leyenda del Jardín",
+"Lenda do Jardim",
+"Legende des Gartens",
+"Легенда сада"
+],
+"profileFrame.field.name": [
+"现场研究员",
+"นักวิจัยภาคสนาม",
+"Nhà nghiên cứu hiện trường",
+"Periset Lapangan",
+"Investigador de campo",
+"Pesquisador de campo",
+"Feldforscher",
+"Полевой исследователь"
+],
+"profileFrame.holo.name": [
+"全息观测者",
+"ผู้สังเกตโฮโล",
+"Người quan sát Holo",
+"Pengamat Holo",
+"Observador holográfico",
+"Observador holográfico",
+"Holo-Beobachter",
+"Голонаблюдатель"
+],
+"profileFrame.amber.name": [
+"琥珀标本",
+"ตัวอย่างอำพัน",
+"Mẫu vật Hổ phách",
+"Spesimen Amber",
+"Espécimen de ámbar",
+"Espécime de âmbar",
+"Bernstein-Exemplar",
+"Янтарный экземпляр"
+],
+"profileFrame.abyss.name": [
+"深渊记录",
+"บันทึกห้วงลึก",
+"Hồ sơ vực thẳm",
+"Catatan Jurang",
+"Registro abisal",
+"Registro abissal",
+"Abgründiger Eintrag",
+"Запись бездны"
+],
+"profileFrame.garden.name": [
+"庭园守护者",
+"ผู้พิทักษ์สวน",
+"Người canh giữ Khu vườn",
+"Penjaga Taman",
+"Guardián del Jardín",
+"Guardião do Jardim",
+"Hüter des Gartens",
+"Страж сада"
+],
+"profileFrame.eternal.name": [
+"永恒",
+"นิรันดร์",
+"Vĩnh hằng",
+"Abadi",
+"Eterno",
+"Eterno",
+"Ewig",
+"Вечность"
+],
+"friend.friend-haneul.status": [
+"正在追踪新标本",
+"กำลังตามรอยตัวอย่างใหม่",
+"Đang lần theo mẫu vật mới",
+"Melacak spesimen baru",
+"Rastreando un nuevo espécimen",
+"Rastreando um novo espécime",
+"Auf der Spur eines neuen Exemplars",
+"Выслеживаю новый экземпляр"
+],
+"friend.friend-haneul.lastActive": [
+"刚刚",
+"เมื่อสักครู่",
+"Vừa xong",
+"Baru saja",
+"Justo ahora",
+"Agora mesmo",
+"Gerade eben",
+"Только что"
+],
+"friend.friend-moss.status": [
+"今天也在慢慢复原中",
+"วันนี้ก็ค่อย ๆ ฟื้นคืนอีกเช่นเคย",
+"Hôm nay lại phục hồi từ từ",
+"Hari ini pun merestorasi pelan-pelan",
+"Hoy también restaurando con calma",
+"Hoje também restaurando devagar",
+"Auch heute wieder in Ruhe restaurieren",
+"И сегодня восстанавливаю не спеша"
+],
+"friend.friend-moss.lastActive": [
+"12分钟前",
+"12 นาทีที่แล้ว",
+"12 phút trước",
+"12 menit lalu",
+"Hace 12 minutos",
+"Há 12 minutos",
+"Vor 12 Minuten",
+"12 минут назад"
+],
+"friend.friend-haneul.highestStage": [
+"2-5 赤红峡谷",
+"2-5 หุบเขาสีเลือด",
+"2-5 Hẻm núi Đỏ thẫm",
+"2-5 Ngarai Merah Tua",
+"2-5 Cañón Carmesí",
+"2-5 Cânion Carmesim",
+"2-5 Karmesinschlucht",
+"2-5 Багровое ущелье"
+],
+"friend.friend-haneul.arenaTier": [
+"黄金 II",
+"ทอง II",
+"Vàng II",
+"Emas II",
+"Oro II",
+"Ouro II",
+"Gold II",
+"Золото II"
+],
+"adReward.daily-stamina.text": [
+"体力10",
+"สตามินา 10",
+"Thể lực 10",
+"Stamina 10",
+"Estamina 10",
+"Estamina 10",
+"Ausdauer 10",
+"Выносливость 10"
+],
+"adReward.daily-cheesecake.text": [
+"芝士蛋糕20",
+"ชีสเค้ก 20",
+"Bánh phô mai 20",
+"Cheesecake 20",
+"Tarta de queso 20",
+"Cheesecake 20",
+"Käsekuchen 20",
+"Чизкейк 20"
+],
+"adReward.excavation-harvest.text": [
+"当前收获 ×1.5",
+"ผลเก็บเกี่ยวปัจจุบัน ×1.5",
+"Thu hoạch hiện tại ×1.5",
+"Panen saat ini ×1.5",
+"Cosecha actual ×1.5",
+"Colheita atual ×1.5",
+"Aktuelle Ernte ×1,5",
+"Текущий сбор ×1,5"
+],
+"adReward.excavation-storage.text": [
+"至下次结算前最多储存8小时",
+"เก็บได้สูงสุด 8 ชั่วโมงจนถึงการสรุปผลครั้งถัดไป",
+"Chứa tối đa 8 giờ đến lần quyết toán sau",
+"Simpan hingga 8 jam sampai penyelesaian berikutnya",
+"Almacena hasta 8 horas hasta la siguiente liquidación",
+"Armazena até 8 horas até o próximo acerto",
+"Bis zur nächsten Abrechnung bis zu 8 Stunden lagern",
+"Хранить до 8 часов до следующего расчёта"
+],
+"adReward.excavation-speed.text": [
+"产量 ×1.5 · 60分钟",
+"ผลผลิต ×1.5 · 60 นาที",
+"Sản lượng ×1.5 · 60 phút",
+"Produksi ×1.5 · 60 menit",
+"Producción ×1.5 · 60 min",
+"Produção ×1.5 · 60 min",
+"Produktion ×1,5 · 60 Min.",
+"Добыча ×1,5 · 60 мин"
+],
+"adReward.quick-expedition.text": [
+"快速远征",
+"ออกสำรวจด่วน",
+"Viễn chinh nhanh",
+"Ekspedisi Cepat",
+"Expedición rápida",
+"Expedição rápida",
+"Schnelle Expedition",
+"Быстрая экспедиция"
+],
+"trade.trade-cheesecake-supply.name": [
+"芝士蛋糕补给",
+"เสบียงชีสเค้ก",
+"Tiếp tế Bánh phô mai",
+"Pasokan Cheesecake",
+"Suministro de Tarta de queso",
+"Suprimento de Cheesecake",
+"Käsekuchen-Lieferung",
+"Поставка чизкейков"
+],
+"trade.trade-cheesecake-supply.description": [
+"芝士蛋糕600个",
+"ชีสเค้ก 600",
+"600 Bánh phô mai",
+"600 Cheesecake",
+"600 de Tarta de queso",
+"600 Cheesecakes",
+"600 Käsekuchen",
+"600 чизкейков"
+],
+"trade.trade-research-grant.name": [
+"研究补助金",
+"ทุนวิจัย",
+"Tài trợ nghiên cứu",
+"Hibah Riset",
+"Beca de investigación",
+"Bolsa de pesquisa",
+"Forschungszuschuss",
+"Грант на исследования"
+],
+"trade.trade-research-grant.description": [
+"金币140,000与DNA片段14个",
+"ทอง 140,000 และเศษ DNA 14",
+"140.000 Vàng và 14 Mảnh DNA",
+"140.000 Emas dan 14 Serpihan DNA",
+"140.000 de oro y 14 fragmentos de ADN",
+"140.000 de ouro e 14 fragmentos de DNA",
+"140.000 Gold und 14 DNA-Splitter",
+"140 000 золота и 14 фрагментов ДНК"
+],
+"trade.trade-excavation-crate.name": [
+"采掘装备箱",
+"กล่องอุปกรณ์ขุดหา",
+"Hòm dụng cụ Khai thác",
+"Peti Peralatan Penggalian",
+"Caja de equipo de excavación",
+"Caixa de equipamento de escavação",
+"Grabungsausrüstungskiste",
+"Ящик снаряжения для раскопок"
+],
+"trade.trade-excavation-crate.description": [
+"化石4个与琥珀2个",
+"ฟอสซิล 4 และอำพัน 2",
+"4 Hóa thạch và 2 Hổ phách",
+"4 Fosil dan 2 Amber",
+"4 fósiles y 2 de ámbar",
+"4 fósseis e 2 âmbares",
+"4 Fossilien und 2 Bernstein",
+"4 окаменелости и 2 янтаря"
+],
+"trade.trade-daily-bundle.name": [
+"今日特惠组合",
+"ชุดพิเศษวันนี้",
+"Gói đặc biệt hôm nay",
+"Bundel Spesial Hari Ini",
+"Lote especial de hoy",
+"Pacote especial de hoje",
+"Heutiges Spezialbündel",
+"Особый набор дня"
+],
+"trade.trade-daily-bundle.description": [
+"金币40,000与芝士蛋糕60个",
+"ทอง 40,000 และชีสเค้ก 60",
+"40.000 Vàng và 60 Bánh phô mai",
+"40.000 Emas dan 60 Cheesecake",
+"40.000 de oro y 60 de Tarta de queso",
+"40.000 de ouro e 60 Cheesecakes",
+"40.000 Gold und 60 Käsekuchen",
+"40 000 золота и 60 чизкейков"
+],
+"trade.refresh.monthly": [
+"每月",
+"รายเดือน",
+"Hằng tháng",
+"Bulanan",
+"Mensual",
+"Mensal",
+"Monatlich",
+"Ежемесячно"
+],
+"product.arch-dust-permit.name": [
+"精炼粉尘许可证",
+"ใบอนุญาตฝุ่นขัดเกลา",
+"Giấy phép bụi tinh chế",
+"Izin Debu Olahan",
+"Permiso de polvo refinado",
+"Licença de pó refinado",
+"Genehmigung für Veredelungsstaub",
+"Разрешение на очищенную пыль"
+],
+"product.arch-dust-permit.description": [
+"符文粉尘 x40",
+"ฝุ่นรูน x40",
+"Bụi Rune x40",
+"Debu Rune x40",
+"Polvo de runa x40",
+"Pó de runa x40",
+"Runenstaub x40",
+"Рунная пыль x40"
+],
+"product.arch-dust-permit.grant.0": [
+"符文粉尘",
+"ฝุ่นรูน",
+"Bụi Rune",
+"Debu Rune",
+"Polvo de runa",
+"Pó de runa",
+"Runenstaub",
+"Рунная пыль"
+],
+"product.arch-ancient-core.name": [
+"古代核心许可证",
+"ใบอนุญาตแกนโบราณ",
+"Giấy phép lõi cổ đại",
+"Izin Inti Purba",
+"Permiso de núcleo antiguo",
+"Licença de núcleo antigo",
+"Genehmigung für uralte Kerne",
+"Разрешение на древнее ядро"
+],
+"product.arch-ancient-core.description": [
+"未知的古代核心1个",
+"แกนโบราณไร้ชื่อ 1",
+"1 Lõi cổ đại chưa rõ",
+"1 Inti Purba Tak Dikenal",
+"1 Núcleo antiguo desconocido",
+"1 Núcleo antigo desconhecido",
+"1 unbekannter uralter Kern",
+"1 неизвестное древнее ядро"
+],
+"product.arch-refined-core.name": [
+"精炼核心许可证",
+"ใบอนุญาตแกนขัดเกลา",
+"Giấy phép lõi tinh luyện",
+"Izin Inti Murni",
+"Permiso de núcleo refinado",
+"Licença de núcleo refinado",
+"Genehmigung für veredelte Kerne",
+"Разрешение на очищенное ядро"
+],
+"product.arch-refined-core.description": [
+"精炼的古代核心1个",
+"แกนโบราณที่ขัดเกลา 1",
+"1 Lõi cổ đại tinh luyện",
+"1 Inti Purba Murni",
+"1 Núcleo antiguo refinado",
+"1 Núcleo antigo refinado",
+"1 veredelter uralter Kern",
+"1 очищенное древнее ядро"
+],
+"product.arch-restoration-crystal.name": [
+"复原结晶执照",
+"ใบอนุญาตผลึกฟื้นคืน",
+"Giấy phép tinh thể phục hồi",
+"Lisensi Kristal Restorasi",
+"Licencia de cristal de restauración",
+"Licença de cristal de restauração",
+"Lizenz für Restaurierungskristalle",
+"Лицензия на кристалл восстановления"
+],
+"product.arch-restoration-crystal.description": [
+"完全复原结晶1个",
+"ผลึกฟื้นคืนสมบูรณ์ 1",
+"1 Tinh thể Phục hồi hoàn toàn",
+"1 Kristal Restorasi Penuh",
+"1 Cristal de restauración total",
+"1 Cristal de restauração total",
+"1 Kristall der vollständigen Restaurierung",
+"1 кристалл полного восстановления"
+],
+"product.arch-ancient-core.grant.0": [
+"未知的古代核心",
+"แกนโบราณไร้ชื่อ",
+"Lõi cổ đại chưa rõ",
+"Inti Purba Tak Dikenal",
+"Núcleo antiguo desconocido",
+"Núcleo antigo desconhecido",
+"Unbekannter uralter Kern",
+"Неизвестное древнее ядро"
+],
+"product.arch-refined-core.grant.0": [
+"精炼的古代核心",
+"แกนโบราณที่ขัดเกลา",
+"Lõi cổ đại tinh luyện",
+"Inti Purba Murni",
+"Núcleo antiguo refinado",
+"Núcleo antigo refinado",
+"Veredelter uralter Kern",
+"Очищенное древнее ядро"
+],
+"product.raid-ancient-core.grant.0": [
+"未知的古代核心",
+"แกนโบราณไร้ชื่อ",
+"Lõi cổ đại chưa rõ",
+"Inti Purba Tak Dikenal",
+"Núcleo antiguo desconocido",
+"Núcleo antigo desconhecido",
+"Unbekannter uralter Kern",
+"Неизвестное древнее ядро"
+],
+"product.raid-refined-core.grant.0": [
+"精炼的古代核心",
+"แกนโบราณที่ขัดเกลา",
+"Lõi cổ đại tinh luyện",
+"Inti Purba Murni",
+"Núcleo antiguo refinado",
+"Núcleo antigo refinado",
+"Veredelter uralter Kern",
+"Очищенное древнее ядро"
+],
+"product.loot-salvage-tonic.grant.0": [
+"能量饮料",
+"เครื่องดื่มชูกำลัง",
+"Nước tăng lực",
+"Minuman Energi",
+"Bebida energética",
+"Bebida energética",
+"Energydrink",
+"Энергетик"
+],
+"product.loot-salvage-dust.grant.0": [
+"符文粉尘",
+"ฝุ่นรูน",
+"Bụi Rune",
+"Debu Rune",
+"Polvo de runa",
+"Pó de runa",
+"Runenstaub",
+"Рунная пыль"
+],
+"product.loot-salvage-crystal.grant.0": [
+"完全复原结晶",
+"ผลึกฟื้นคืนสมบูรณ์",
+"Tinh thể Phục hồi hoàn toàn",
+"Kristal Restorasi Penuh",
+"Cristal de restauración total",
+"Cristal de restauração total",
+"Kristall der vollständigen Restaurierung",
+"Кристалл полного восстановления"
+],
+"product.arch-restoration-crystal.grant.0": [
+"完全复原结晶",
+"ผลึกฟื้นคืนสมบูรณ์",
+"Tinh thể Phục hồi hoàn toàn",
+"Kristal Restorasi Penuh",
+"Cristal de restauración total",
+"Cristal de restauração total",
+"Kristall der vollständigen Restaurierung",
+"Кристалл полного восстановления"
+],
+"trade.refresh.once": [
+"每个账号",
+"ต่อบัญชี",
+"Mỗi tài khoản",
+"Per akun",
+"Por cuenta",
+"Por conta",
+"Pro Konto",
+"На аккаунт"
+],
+"trade.refresh.daily": [
+"每日",
+"รายวัน",
+"Hằng ngày",
+"Harian",
+"Diario",
+"Diário",
+"Täglich",
+"Ежедневно"
+],
+"trade.refresh.weekly": [
+"每周",
+"รายสัปดาห์",
+"Hằng tuần",
+"Mingguan",
+"Semanal",
+"Semanal",
+"Wöchentlich",
+"Еженедельно"
+],
+"trade.refresh.none": [
+"常驻",
+"ตลอด",
+"Luôn có",
+"Selalu",
+"Siempre",
+"Sempre",
+"Immer",
+"Всегда"
+],
+"pvp.arena.label": [
+"竞技场",
+"อารีนา",
+"Đấu trường",
+"Arena",
+"Arena",
+"Arena",
+"Arena",
+"Арена"
+],
+"pvp.arena.title": [
+"竞技场",
+"อารีนา",
+"Đấu trường",
+"Arena",
+"Arena",
+"Arena",
+"Arena",
+"Арена"
+],
+"pvp.arena.scope": [
+"以预先组好的进攻队挑战对手的防守队",
+"ใช้ทีมบุกที่จัดไว้ล่วงหน้าสู้กับทีมป้องกันของคู่แข่ง",
+"Dùng đội tấn công dựng sẵn đấu với đội phòng thủ của đối thủ",
+"Lawan tim pertahanan lawan dengan tim serang yang sudah disusun",
+"Lucha contra el equipo defensivo rival con un equipo de ataque preparado",
+"Enfrente a equipe de defesa rival com uma equipe de ataque montada",
+"Kämpfe mit einem vorbereiteten Angriffsteam gegen das Verteidigungsteam des Gegners",
+"Сражайтесь заранее собранной атакующей командой против защиты соперника"
+],
+"pvp.boss-duel.label": [
+"王者\n对决",
+"ดวล\nแชมเปียน",
+"Tay đôi\nNhà vô địch",
+"Duel\nJuara",
+"Duelo de\ncampeones",
+"Duelo de\ncampeões",
+"Champion-\nDuell",
+"Дуэль\nчемпионов"
+],
+"pvp.boss-duel.title": [
+"王者对决",
+"ดวลแชมเปียน",
+"Tay đôi Nhà vô địch",
+"Duel Juara",
+"Duelo de campeones",
+"Duelo de campeões",
+"Champion-Duell",
+"Дуэль чемпионов"
+],
+"pvp.boss-duel.scope": [
+"双方最强遗物的1对1战斗\n初期使用对手池",
+"การต่อสู้ 1:1 ระหว่างเรลิกที่แข็งแกร่งที่สุดของแต่ละฝ่าย\nช่วงแรกใช้กลุ่มคู่แข่งสำรอง",
+"Trận 1:1 giữa Di vật mạnh nhất mỗi bên\nBan đầu dùng nhóm đối thủ có sẵn",
+"Pertarungan 1:1 antara Relik terkuat tiap pihak\nAwalnya memakai kumpulan lawan",
+"Un combate 1:1 entre la Reliquia más fuerte de cada bando\nAl principio se usa un grupo de rivales",
+"Uma luta 1:1 entre a Relíquia mais forte de cada lado\nNo início usa um grupo de oponentes",
+"Ein 1:1-Kampf zwischen dem stärksten Relikt jeder Seite\nAnfangs wird ein Gegnerpool genutzt",
+"Бой 1:1 сильнейших реликтов сторон\nПоначалу используется пул соперников"
+],
+"pvp.brawl.label": [
+"乱斗",
+"ตะลุมบอน",
+"Hỗn chiến",
+"Tawuran",
+"Refriega",
+"Briga",
+"Keilerei",
+"Потасовка"
+],
+"pvp.brawl.title": [
+"乱斗",
+"ตะลุมบอน",
+"Hỗn chiến",
+"Tawuran",
+"Refriega",
+"Briga",
+"Keilerei",
+"Потасовка"
+],
+"pvp.brawl.scope": [
+"6对6对决",
+"ดวล 6:6",
+"Đấu 6:6",
+"Duel 6:6",
+"Un duelo 6:6",
+"Um duelo 6:6",
+"Ein 6:6-Duell",
+"Дуэль 6:6"
+],
+"pvp.training.label": [
+"练习",
+"ฝึกซ้อม",
+"Luyện tập",
+"Latihan",
+"Práctica",
+"Treino",
+"Training",
+"Тренировка"
+],
+"pvp.training.title": [
+"练习",
+"ฝึกซ้อม",
+"Luyện tập",
+"Latihan",
+"Práctica",
+"Treino",
+"Training",
+"Тренировка"
+],
+"pvp.training.scope": [
+"与木桩\n或自己的遗物进行1:1至3:3练习",
+"ฝึก 1:1 ถึง 3:3 กับหุ่นซ้อม\nหรือเรลิกของตัวเอง",
+"Luyện 1:1 đến 3:3 với hình nộm\nhoặc Di vật của chính bạn",
+"Latihan 1:1 hingga 3:3 melawan boneka\natau Relik milikmu",
+"Práctica de 1:1 a 3:3 contra un muñeco\no tus propias Reliquias",
+"Treino de 1:1 a 3:3 contra um boneco\nou suas próprias Relíquias",
+"1:1- bis 3:3-Training gegen eine Puppe\noder deine eigenen Relikte",
+"Тренировка 1:1–3:3 против манекена\nили своих реликтов"
+],
+"firstMeeting.fallback": [
+"你就是唤醒我的调查员吧。今后请多关照。",
+"คุณคือนักสำรวจที่ปลุกฉันขึ้นมาสินะ ฝากตัวด้วยนะ",
+"Vậy ra bạn là điều tra viên đã đánh thức tôi. Mong được hợp tác.",
+"Jadi kamu penyelidik yang membangunkanku. Mohon kerja samanya.",
+"Así que tú eres quien me despertó. Espero que trabajemos bien juntos.",
+"Então é você quem me despertou. Conto com você daqui em diante.",
+"Du bist also die Person, die mich geweckt hat. Auf gute Zusammenarbeit.",
+"Так это вы меня разбудили. Рада сотрудничеству."
+],
+"firstMeeting.rex": [
+"我是战斗的女王。",
+"ข้าคือราชินีแห่งการต่อสู้",
+"Ta là nữ hoàng chiến trận.",
+"Akulah ratu pertempuran.",
+"Soy la reina de la batalla.",
+"Eu sou a rainha da batalha.",
+"Ich bin die Königin der Schlacht.",
+"Я — королева битвы."
+],
+"firstMeeting.anky": [
+"我会站在你前面的，队长！",
+"หนูจะยืนอยู่ข้างหน้าเองค่ะ กัปตัน!",
+"Em sẽ đứng chắn phía trước, Đội trưởng!",
+"Aku akan berdiri di depanmu, Kapten!",
+"¡Yo me pondré delante, Capitán!",
+"Eu fico na sua frente, Capitão!",
+"Ich stelle mich vor dich, Captain!",
+"Я встану впереди, капитан!"
+],
+"firstMeeting.spino": [
+"……只要能听见水声，哪里都行。",
+"…ที่ไหนก็ได้ ขอแค่ได้ยินเสียงน้ำ",
+"…Ở đâu cũng được, miễn nghe thấy tiếng nước.",
+"…Di mana saja, asal bisa mendengar air.",
+"…Donde sea, mientras pueda oír el agua.",
+"…Qualquer lugar, desde que eu ouça a água.",
+"…Egal wo, solange ich das Wasser höre.",
+"…Где угодно, лишь бы слышать воду."
+],
+"firstMeeting.luka": [
+"跑步是我的强项。仅次于沙发。",
+"วิ่งคือของถนัด รองจากโซฟาน่ะนะ",
+"Chạy là nghề của tôi. Chỉ sau cái sofa.",
+"Lari itu keahlianku. Setelah sofa, sih.",
+"Correr es lo mío. Justo después del sofá.",
+"Correr é comigo. Logo depois do sofá.",
+"Rennen ist mein Ding. Gleich nach dem Sofa.",
+"Бег — моё. Сразу после дивана."
+],
+"firstMeeting.dodo": [
+"队长，快看这个！世纪大发现！",
+"กัปตัน ดูนี่สิ! การค้นพบแห่งศตวรรษ!",
+"Đội trưởng, nhìn này! Phát hiện thế kỷ!",
+"Kapten, lihat ini! Penemuan abad ini!",
+"¡Capitán, mira esto! ¡El descubrimiento del siglo!",
+"Capitão, olha isto! A descoberta do século!",
+"Captain, sieh dir das an! Die Entdeckung des Jahrhunderts!",
+"Капитан, гляди! Открытие века!"
+],
+"firstMeeting.tia": [
+"闪闪发亮的东西全都是我的！",
+"ของวิบวับทั้งหมดเป็นของฉัน!",
+"Mọi thứ lấp lánh đều là của tôi!",
+"Semua yang berkilau itu milikku!",
+"¡Todo lo que brilla es mío!",
+"Tudo o que brilha é meu!",
+"Alles, was glitzert, gehört mir!",
+"Всё, что блестит, — моё!"
+],
+"firstMeeting.stella": [
+"风向我已经读好了，前辈。",
+"ฉันอ่านทิศลมไว้แล้วค่ะ รุ่นพี่",
+"Em đã đọc được hướng gió rồi, tiền bối.",
+"Aku sudah membaca anginnya, senpai.",
+"Ya he leído el viento, senpai.",
+"Já li o vento, senpai.",
+"Ich habe den Wind schon gelesen, Senpai.",
+"Я уже прочла ветер, сэмпай."
+],
+"firstMeeting.meron": [
+"咦？你……不喜欢吗……？",
+"เอ๋? คุณ… ไม่ชอบเหรอ…?",
+"Hả? Anh… không thích sao…?",
+"Eh? Kamu… tidak suka…?",
+"¿Eh? ¿No… te gusta…?",
+"Hã? Você… não gosta…?",
+"Hm? Du… magst es nicht…?",
+"А? Тебе… не нравится…?"
+],
+"firstMeeting.pachi": [
+"喂，让开！我在给老大开路。",
+"เฮ้ หลบไป! ฉันกำลังเปิดทางให้บอส",
+"Này, tránh ra! Tôi đang mở đường cho đại ca.",
+"Hei, minggir! Aku sedang membuka jalan buat bos.",
+"¡Eh, apártate! Le estoy abriendo paso al jefe.",
+"Ei, sai da frente! Estou abrindo caminho pro chefe.",
+"Hey, aus dem Weg! Ich mach dem Boss Platz.",
+"Эй, посторонись! Расчищаю путь боссу."
+],
+"firstMeeting.maki": [
+"等等，我可是医生哦？",
+"เดี๋ยวก่อน ฉันเป็นหมอนะ รู้ไหม?",
+"Khoan đã, tôi là bác sĩ đấy nhé?",
+"Tunggu, aku ini dokter, lho?",
+"Un momento, que soy médico, ¿eh?",
+"Espera aí, eu sou médico, sabia?",
+"Moment mal, ich bin Arzt, weißt du?",
+"Постой, я вообще-то врач, знаешь?"
+],
+"firstMeeting.keris": [
+"只看着我吧，前辈。",
+"มองแค่ฉันคนเดียวนะคะ รุ่นพี่",
+"Chỉ nhìn mình em thôi, tiền bối.",
+"Lihat aku saja, senpai.",
+"Mírame solo a mí, senpai.",
+"Olhe só para mim, senpai.",
+"Sieh nur mich an, Senpai.",
+"Смотри только на меня, сэмпай."
+],
+"firstMeeting.delopi": [
+"锵锵！这是你的钥匙，研究员。",
+"แท่นแท๊น! นี่กุญแจของคุณค่ะ นักวิจัย",
+"Tèn ten! Chìa khóa của anh đây, Nhà nghiên cứu.",
+"Taraa! Ini kuncimu, Periset.",
+"¡Tachán! Aquí tienes tu llave, Investigador.",
+"Tchã-rã! Aqui está sua chave, Pesquisador.",
+"Tadaa! Hier ist dein Schlüssel, Forscher.",
+"Та-дам! Вот ваш ключ, исследователь."
+],
+"firstMeeting.nodonia": [
+"疼的时候要告诉我哦，小家伙。我会替你挡下来的。",
+"เจ็บเมื่อไหร่ก็บอกนะ เจ้าตัวน้อย ฉันจะรับไว้แทนเอง",
+"Đau thì nói nhé, nhóc. Ta sẽ đỡ đòn thay.",
+"Bilang kalau sakit, si kecil. Akan kutahan pukulannya untukmu.",
+"Dime cuando duela, pequeño. Yo recibiré el golpe por ti.",
+"Me diga quando doer, pequeno. Eu levo o golpe por você.",
+"Sag Bescheid, wenn es wehtut, Kleines. Ich fange den Schlag für dich ab.",
+"Скажи, когда будет больно, малыш. Я приму удар за тебя."
+],
+"firstMeeting.ella": [
+"我会守住阵地。后方交给我。",
+"ฉันจะยืนหยัดไว้ ด้านหลังปล่อยให้ฉันเอง",
+"Tôi sẽ giữ vững vị trí. Hậu phương cứ để tôi.",
+"Aku akan bertahan. Serahkan barisan belakang padaku.",
+"Mantendré la posición. Deja la retaguardia en mis manos.",
+"Vou manter a posição. Deixe a retaguarda comigo.",
+"Ich halte die Stellung. Überlass mir die Nachhut.",
+"Я удержу позицию. Тыл за мной."
+],
+"firstMeeting.mette": [
+"只属于你的舞台，现在开幕。",
+"เวทีที่มีไว้เพื่อคุณคนเดียว เริ่มขึ้นแล้ว",
+"Sân khấu chỉ dành cho anh bắt đầu ngay bây giờ.",
+"Panggung khusus untukmu dimulai sekarang.",
+"El escenario solo para ti empieza ahora.",
+"O palco só para você começa agora.",
+"Die Bühne nur für dich beginnt jetzt.",
+"Сцена только для тебя начинается сейчас."
+],
+"firstMeeting.deina": [
+"你懂什么艺术？",
+"คุณรู้อะไรเรื่องศิลปะ?",
+"Anh thì biết gì về nghệ thuật?",
+"Memangnya kamu tahu apa soal seni?",
+"¿Y tú qué sabes de arte?",
+"E o que você sabe de arte?",
+"Was verstehst du schon von Kunst?",
+"Да что ты знаешь об искусстве?"
+],
+"firstMeeting.maddy": [
+"空调开到最强，拜托了。",
+"เปิดแอร์แรงสุดเลย ขอร้อง",
+"Bật điều hòa mức tối đa giùm.",
+"Tolong AC-nya paling dingin.",
+"Aire acondicionado al máximo, por favor.",
+"Ar-condicionado no máximo, por favor.",
+"Klimaanlage auf volle Leistung, bitte.",
+"Кондиционер на максимум, пожалуйста."
+],
+"firstMeeting.terisa": [
+"要是哪里破了……我帮你缝好，小家伙。",
+"ถ้ามีตรงไหนขาด… ฉันจะเย็บให้นะ เจ้าตัวน้อย",
+"Có chỗ nào rách… ta sẽ vá cho, nhóc.",
+"Kalau ada yang robek… akan kujahit, si kecil.",
+"Si algo se rompe… yo lo remiendo, pequeño.",
+"Se algo rasgar… eu remendo, pequeno.",
+"Wenn etwas reißt… flicke ich es, Kleines.",
+"Если что порвётся… я зашью, малыш."
+],
+"firstMeeting.parua": [
+"好远……好远啊！全都看得见。",
+"ไกล… ไกลมาก! มองเห็นทุกอย่างเลย",
+"Xa… xa quá! Tôi thấy hết mọi thứ.",
+"Jauh… jauh sekali! Aku bisa lihat semuanya.",
+"Lejos… ¡tan lejos! Lo veo todo.",
+"Longe… tão longe! Consigo ver tudo.",
+"Weit… so weit! Ich kann alles sehen.",
+"Далеко… так далеко! Мне всё видно."
+],
+"firstMeeting.shute": [
+"我说了不是那个！照我的指示来。",
+"บอกแล้วว่าไม่ใช่อันนั้น! ทำตามคำสั่งฉัน",
+"Đã bảo không phải cái đó! Làm theo lệnh tôi.",
+"Sudah kubilang bukan itu! Ikuti perintahku.",
+"¡Te dije que eso no! Sigue mi orden.",
+"Eu disse que não é isso! Siga minha ordem.",
+"Ich sagte, nicht das! Folge meinem Befehl.",
+"Я же сказала — не то! Следуй моему приказу."
+],
+"firstMeeting.morphe": [
+"全部放出去吧。我就在这里看着。",
+"ปล่อยออกไปให้หมด ฉันจะดูอยู่ตรงนี้",
+"Thả hết ra đi. Ta sẽ xem từ đây.",
+"Lepaskan semuanya. Aku akan menonton dari sini.",
+"Suéltalos a todos. Yo miraré desde aquí.",
+"Solte todos. Eu assisto daqui.",
+"Lass sie alle los. Ich sehe von hier aus zu.",
+"Выпускай всех. Я посмотрю отсюда."
+],
+"firstMeeting.dian": [
+"我会保护你的，队长！……啊，克罗！希罗！",
+"ฉันจะปกป้องคุณเองค่ะ กัปตัน! …อ๊ะ คุโระ! ชิโระ!",
+"Em sẽ bảo vệ anh, Đội trưởng! …A, Kuro! Shiro!",
+"Aku akan melindungimu, Kapten! …Ah, Kuro! Shiro!",
+"¡Yo te protegeré, Capitán! …¡Ah, Kuro! ¡Shiro!",
+"Eu vou te proteger, Capitão! …Ah, Kuro! Shiro!",
+"Ich beschütze dich, Captain! …Ah, Kuro! Shiro!",
+"Я защищу тебя, капитан! …Ой, Куро! Широ!"
+],
+"event.greatAuk.stage.name": [
+"大海雀海岸发掘地",
+"แหล่งขุดค้นชายฝั่งนกอัลก์ใหญ่",
+"Bãi khai quật bờ biển Chim Auk lớn",
+"Situs Galian Pantai Auk Besar",
+"Yacimiento costero del Gran Alca",
+"Sítio costeiro do Arau-gigante",
+"Küsten-Fundstätte des Riesenalks",
+"Береговые раскопки бескрылой гагарки"
+],
+"event.greatAuk.title": [
+"失落之翼的发掘报告",
+"รายงานการขุดค้นปีกที่หายไป",
+"Báo cáo khai quật đôi cánh đã mất",
+"Laporan Penggalian Sayap yang Hilang",
+"Informe de excavación del ala perdida",
+"Relatório de escavação da asa perdida",
+"Grabungsbericht des verlorenen Flügels",
+"Отчёт о раскопках утраченного крыла"
+],
+"event.greatAuk.mission.great-auk-clear-shore": [
+"确保海岸发掘地",
+"ยึดแหล่งขุดค้นชายฝั่ง",
+"Bảo đảm bãi khai quật bờ biển",
+"Amankan situs galian pantai",
+"Asegura el yacimiento costero",
+"Garanta o sítio costeiro",
+"Sichere die Küsten-Fundstätte",
+"Обезопасить береговые раскопки"
+],
+"event.greatAuk.mission.great-auk-file-report": [
+"完成大海雀发掘报告",
+"ทำรายงานการขุดค้นนกอัลก์ใหญ่ให้เสร็จ",
+"Hoàn thành báo cáo khai quật Chim Auk lớn",
+"Selesaikan laporan penggalian Auk Besar",
+"Completa el informe de excavación del Gran Alca",
+"Conclua o relatório de escavação do Arau-gigante",
+"Schließe den Grabungsbericht zum Riesenalk ab",
+"Завершить отчёт о раскопках гагарки"
+]
+}

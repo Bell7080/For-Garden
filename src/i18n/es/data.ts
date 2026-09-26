@@ -591,7 +591,7 @@ export default {
   "keyword.missing-hp.term": "PV perdidos",
   "keyword.missing-hp.description": "PV máx. menos PV actuales. La curación basada en PV perdidos se recalcula justo después de cada golpe.",
   "keyword.nape.term": "Nuca",
-  "keyword.nape.description": "Un golpe de gracia dirigido a un enemigo debilitado. Es un crítico garantizado y su daño aumenta mucho.",
+  "keyword.nape.description": "Un mordisco de gracia a un enemigo debilitado. Tras el golpe, inflige otro golpe de daño mágico con crítico garantizado que escala con Ataque y Poder mágico.",
   "keyword.physical-damage.term": "Daño físico",
   "keyword.physical-damage.description": "Daño calculado a partir del Ataque o del atributo indicado y reducido por la Defensa del objetivo.",
   "keyword.magical-damage.term": "Daño mágico",

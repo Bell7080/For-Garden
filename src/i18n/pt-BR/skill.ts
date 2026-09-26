@@ -191,7 +191,7 @@ export const SKILL_PT_BR = {
   "skill.clause.curseTransfer": "se a [[curse|Maldição]] desse inimigo já estiver no máximo, [[transfer|transfere]] ao inimigo mais próximo {percent}% do dano final de PV que ele realmente perdeu e o Amaldiçoa. Se a Maldição desse inimigo também estiver no máximo, continua do mesmo jeito",
   "skill.clause.energyRefundOnKill": "devolve {value} de medidor de Suprema se este ataque derrotar",
   "skill.clause.periodicCritical": "a cada {every}º [[basic-attack|ataque básico]] real, o crítico é garantido",
-  "skill.clause.nape": "se o PV do alvo estiver em {percent}% ou menos, mira a [[nape|Nuca]] com um crítico garantido que causa {bonus}% a mais de dano, no máximo uma vez a cada {seconds} s por alvo",
+  "skill.clause.nape": "se o PV do alvo estiver em {percent}% ou menos, morde a [[nape|Nuca]] e causa {damage} adicional com crítico garantido, no máximo uma vez a cada {seconds} s por alvo",
   "skill.clause.commandsPack": "[[summon-kuro|Kuro]] e [[summon-shiro|Shiro]], se vivos, usam na hora a Suprema nesse alvo",
   "skill.clause.shallows": "forma um [[shallows|Raso]] perto de um inimigo e a cada {count} ataques básicos faz um [[dive|Mergulho]] de {damage}",
   "skill.clause.detonateShallows": "explode todos os [[shallows|Rasos]] formados, {damage} cada",

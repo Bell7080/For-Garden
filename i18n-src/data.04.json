@@ -870,14 +870,14 @@
 "Загривок"
 ],
 "keyword.nape.description": [
-"瞄准虚弱之敌的致命一击。必定暴击，伤害大幅提升。",
-"การโจมตีปิดฉากที่เล็งศัตรูที่อ่อนแรง เป็นคริติคอลแน่นอนและความเสียหายเพิ่มขึ้นอย่างมาก",
-"Đòn kết liễu nhắm vào kẻ địch đã suy yếu. Chắc chắn chí mạng và sát thương tăng mạnh.",
-"Serangan pamungkas yang mengincar musuh yang melemah. Pasti kritis dan kerusakannya naik tajam.",
-"Un golpe de gracia dirigido a un enemigo debilitado. Es un crítico garantizado y su daño aumenta mucho.",
-"Um golpe de misericórdia contra um inimigo enfraquecido. É um crítico garantido e seu dano aumenta muito.",
-"Ein Gnadenstoß gegen einen geschwächten Feind. Er ist ein garantierter kritischer Treffer und sein Schaden steigt stark.",
-"Добивающий удар по ослабленному врагу. Гарантированный крит с сильно возросшим уроном."
+"瞄准虚弱之敌的致命一咬。本次攻击之后，再以必定暴击追加一次同时依靠攻击力与法术强度的魔法伤害。",
+"การกัดปิดฉากที่เล็งศัตรูที่อ่อนแรง หลังการโจมตีหลักจะสร้างความเสียหายเวทที่ใช้ทั้งพลังโจมตีและพลังเวทเพิ่มอีกหนึ่งครั้งแบบคริติคอลแน่นอน",
+"Đòn kết liễu nhắm vào kẻ địch đã suy yếu. Sau đòn chính, gây thêm một đòn sát thương phép chắc chắn chí mạng, tính theo cả Công và Phép.",
+"Gigitan pamungkas yang mengincar musuh yang melemah. Setelah serangan utama, ia memberi satu serangan kerusakan magis tambahan yang pasti kritis, berdasarkan Serangan dan Kekuatan Magis.",
+"Un mordisco de gracia a un enemigo debilitado. Tras el golpe, inflige otro golpe de daño mágico con crítico garantizado que escala con Ataque y Poder mágico.",
+"Uma mordida de misericórdia num inimigo enfraquecido. Após o golpe, causa outro golpe de dano mágico com crítico garantido que escala com Ataque e Poder mágico.",
+"Ein Gnadenbiss gegen einen geschwächten Feind. Nach dem Treffer folgt ein zusätzlicher garantiert kritischer Treffer mit magischem Schaden, der mit Angriff und Zauberkraft skaliert.",
+"Добивающий укус по ослабленному врагу. После удара наносит ещё один гарантированно критический удар магическим уроном, зависящий от атаки и силы магии."
 ],
 "keyword.physical-damage.term": [
 "物理伤害",

@@ -191,7 +191,7 @@ export const SKILL_ID = {
   "skill.clause.curseTransfer": "jika [[curse|Kutukan]] musuh itu sudah penuh, [[transfer|mengalihkan]] {percent}% dari kerusakan HP akhir yang benar-benar hilang ke musuh lain terdekat dan mengutuknya. Jika Kutukan musuh itu juga penuh, berlanjut dengan cara yang sama",
   "skill.clause.energyRefundOnKill": "mengembalikan {value} gauge Ultimate jika serangan ini mengalahkan",
   "skill.clause.periodicCritical": "setiap [[basic-attack|serangan dasar]] nyata ke-{every} pasti kritis",
-  "skill.clause.nape": "jika HP target {percent}% atau kurang, ia mengincar [[nape|Tengkuk]] untuk kritis pasti dengan kerusakan +{bonus}%, paling banyak sekali tiap {seconds} detik per target",
+  "skill.clause.nape": "jika HP target {percent}% atau kurang, ia menggigit [[nape|Tengkuk]] untuk satu serangan tambahan berupa {damage} yang pasti kritis, paling banyak sekali tiap {seconds} detik per target",
   "skill.clause.commandsPack": "[[summon-kuro|Kuro]] dan [[summon-shiro|Shiro]] yang hidup langsung memakai Ultimate pada target itu",
   "skill.clause.shallows": "membentuk [[shallows|Perairan Dangkal]] di dekat musuh, dan setiap {count} serangan dasar [[dive|Menyelam]] untuk {damage}",
   "skill.clause.detonateShallows": "meledakkan semua [[shallows|Perairan Dangkal]] yang terbentuk, masing-masing {damage}",

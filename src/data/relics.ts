@@ -2960,17 +2960,18 @@ export const RELICS: RelicDef[] = [
      * 물리·마법 두 축을 따로 내던 합공(늑대가 없으면 번갈아 25%)은 같은 한 방을 두 수로 말해야 했다.
      * 두 능력치를 다 쓰는 것은 그대로 두되 피해 종류는 하나다.
      *
-     * **목덜미는 암살자의 마무리다** — 체력 30% 이하인 적에게 피해가 두 배가 된다. 순간이동과 확정
+     * **목덜미는 암살자의 마무리다** — 체력 30% 이하인 적에게 본 타격 뒤 공격력 125% + 주문력 125%의
+     * 마법 치명타 한 대를 더 문다(표적마다 8초). 순간이동과 확정
      * 치명타로 열던 때는 자리만 옮겨 다녀 "끝낸다"가 숫자로 읽히지 않았다. 두목은 이제 가장 뒤에 선 채
      * 약해진 적을 끝낸다.
      */
     basic: {
       id: "dian-basic", name: "얘들아, 물어!", power: 40, secondaryScaling: { stat: "ap", power: 60 },
       iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", scalingStat: "atk", targeting: "single",
-      finisher: { thresholdPercent: 30, bonusDamagePercent: 100, cooldownSeconds: 8 },
+      finisher: { thresholdPercent: 30, atkPercent: 125, apPercent: 125, cooldownSeconds: 8 },
     },
     /**
-     * 표적을 크게 물고(체력 30% 이하면 목덜미로 두 배), 살아 있는 늑대가 그 표적에게 곧바로 제
+     * 표적을 크게 물고(체력 30% 이하면 목덜미 한 대가 더), 살아 있는 늑대가 그 표적에게 곧바로 제
      * 궁극기를 쓴다.
      *
      * 늑대의 돌진은 제 정의의 궁극기 그대로다(쿠로 출혈 · 시로 둔화) — 따로 적은 돌진 위력과 부활
@@ -2979,7 +2980,7 @@ export const RELICS: RelicDef[] = [
     ultimate: {
       id: "dian-ult", name: "약점을 공격해!", power: 60, secondaryScaling: { stat: "ap", power: 90 },
       iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", scalingStat: "atk", cost: 130, targeting: "single",
-      finisher: { thresholdPercent: 30, bonusDamagePercent: 100, cooldownSeconds: 8 },
+      finisher: { thresholdPercent: 30, atkPercent: 125, apPercent: 125, cooldownSeconds: 8 },
       commandsPack: true,
     },
   },

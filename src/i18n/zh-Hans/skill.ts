@@ -191,7 +191,7 @@ export const SKILL_ZH_HANS = {
   "skill.clause.curseTransfer": "若该敌人的[[curse|诅咒]]已满，则将其实际损失的最终生命伤害的{percent}%[[transfer|转移]]给最近的其他敌人并施加诅咒。若该敌人的诅咒也已满，则以同样方式继续",
   "skill.clause.energyRefundOnKill": "若此次攻击击倒目标，返还{value}必杀技能量",
   "skill.clause.periodicCritical": "每第{every}次实际[[basic-attack|普通攻击]]必定暴击",
-  "skill.clause.nape": "若目标生命在{percent}%以下，则瞄准[[nape|后颈]]打出必定暴击，伤害提升{bonus}%，对同一目标每{seconds}秒最多触发一次",
+  "skill.clause.nape": "若目标生命在{percent}%以下，则咬住[[nape|后颈]]，再以必定暴击造成一次{damage}，对同一目标每{seconds}秒最多触发一次",
   "skill.clause.commandsPack": "存活的[[summon-kuro|克罗]]与[[summon-shiro|希罗]]会立即对该目标使用必杀技",
   "skill.clause.shallows": "在敌人附近形成[[shallows|浅滩]]，每{count}次普通攻击进行[[dive|潜袭]]，造成{damage}",
   "skill.clause.detonateShallows": "引爆所有已形成的[[shallows|浅滩]]，每处造成{damage}",

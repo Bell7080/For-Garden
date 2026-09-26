@@ -191,7 +191,7 @@ export const SKILL_VI = {
   "skill.clause.curseTransfer": "nếu [[curse|Nguyền rủa]] của kẻ địch đó đã đầy, [[transfer|chuyển]] {percent}% sát thương máu cuối cùng nó thực mất sang kẻ địch khác gần nhất và Nguyền rủa nó. Nếu Nguyền rủa của kẻ đó cũng đầy, tiếp tục như vậy",
   "skill.clause.energyRefundOnKill": "hoàn {value} thanh Tuyệt kỹ nếu đòn này hạ gục",
   "skill.clause.periodicCritical": "mỗi [[basic-attack|đòn đánh thường]] thực thứ {every} chắc chắn chí mạng",
-  "skill.clause.nape": "nếu HP mục tiêu từ {percent}% trở xuống, nhắm vào [[nape|Gáy]] để chí mạng chắc chắn, tăng {bonus}% sát thương, tối đa một lần mỗi {seconds} giây cho mỗi mục tiêu",
+  "skill.clause.nape": "nếu HP mục tiêu từ {percent}% trở xuống, cắn vào [[nape|Gáy]] gây thêm một đòn {damage} chắc chắn chí mạng, tối đa một lần mỗi {seconds} giây cho mỗi mục tiêu",
   "skill.clause.commandsPack": "[[summon-kuro|Kuro]] và [[summon-shiro|Shiro]] còn sống lập tức dùng Tuyệt kỹ lên mục tiêu đó",
   "skill.clause.shallows": "tạo [[shallows|Vùng nước nông]] gần kẻ địch, và mỗi {count} đòn đánh thường sẽ [[dive|Lặn tập kích]] gây {damage}",
   "skill.clause.detonateShallows": "làm nổ mọi [[shallows|Vùng nước nông]] đã tạo, mỗi chỗ gây {damage}",

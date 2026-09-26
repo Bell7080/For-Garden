@@ -569,7 +569,7 @@ export type SkirmishEvent =
       kind: "attack";
       attackerId: string;
       targetId: string;
-      skill: "basic" | "ultimate" | "staccato" | "transfer" | "shimmer" | "weakpoint";
+      skill: "basic" | "ultimate" | "staccato" | "transfer" | "shimmer" | "weakpoint" | "nape";
       amount: number;
       /** 방어·저항·속성·대상 경감·무효화 전, 공격자가 실제로 만든 점수 기여값이다. */
       contributionAmount: number;
@@ -4600,15 +4600,14 @@ function strike(
   }
   const forcedCritical = periodicCritical !== undefined && attacker.basicAttackCount >= periodicCritical.every;
   if (forcedCritical) attacker.basicAttackCount = 0;
-  // 목덜미 — 표적이 문턱 아래면 이번 한 방이 확정 치명타에 큰 추가 피해가 된다. 판정은 **맞기 전의** 체력이다.
-  const nape = napeBonus(attacker, target, skill, state, events);
+  // 목덜미 — 표적이 문턱 아래면 이번 한 방 뒤에 마법 치명타 한 대가 따로 들어간다. 판정은 **맞기 전의** 체력이다.
+  const nape = opensNape(attacker, target, skill, state, events);
   // 궁극기가 걸어 둔 강화는 실제로 나가는 일반 공격 한 번을 쓰고 사라진다. 이 타격이 곧 그
   // 한 번이므로 여기서 소비한다 — 궁극기 쪽에서 미리 지우면 강화가 붙을 타격이 없어진다.
   const empowered = !useUltimate && attacker.empoweredBasic;
   if (empowered) attacker.empoweredBasic = false;
   // 확정 치명타는 RNG를 호출조차 하지 않아 이후 리플레이 난수열이 밀리지 않는다.
-  // 확정 치명타는 RNG를 부르지 않는다 — 목덜미도 같다. 이후 리플레이 난수열이 밀리지 않는다.
-  const critical = forcedCritical || empowered || bleedingBite || nape > 1 || isCriticalHit(Math.min(100, criticalChance), rng());
+  const critical = forcedCritical || empowered || bleedingBite || isCriticalHit(Math.min(100, criticalChance), rng());
   // 공속 복합 계수는 현재 기본 공속과 전투의 환희 누적을 읽되 폭주 임시 배율은 포함하지 않는다.
   const attackSpeedPower = useUltimate ? attacker.def.ultimate.attackSpeedPower ?? 0 : 0;
   const basePower = attackSpeedPower > 0
@@ -4651,10 +4650,10 @@ function strike(
   const periodicBonus = periodicBonusInput ? computeDamage(damageAttacker, damageTarget, periodicBonusInput) : 0;
   // 원정 공격력은 전투 스냅샷에 이미 반영됐으므로 공용 피해 공식에서 다시 곱하지 않는다.
   const rawAmount = Math.max(1, Math.round((computeDamage(damageAttacker, damageTarget, damageInput) + defenseBonus + periodicBonus)
-    * traitDamageMultiplier(state, attacker, target) * nape));
+    * traitDamageMultiplier(state, attacker, target)));
   const contributionAmount = Math.max(0, (computeDamageContribution(damageAttacker, damageInput)
     + (defenseBonus > 0 ? computeDamageContribution(attacker, { ...damageInput, power: splashTrait.effectId === "splashDamage" ? splashTrait.defenseDamagePercent ?? 0 : 0, scalingStat: "def", damageType: "physical" }) : 0)
-    + (periodicBonusInput ? computeDamageContribution(damageAttacker, periodicBonusInput) : 0)) * nape);
+    + (periodicBonusInput ? computeDamageContribution(damageAttacker, periodicBonusInput) : 0)));
   // 방어·패시브·상성 뒤의 모든 개별 경감은 공용 HP 피해 경계에서 한 번만 적용한다.
   const resolution = resolveReceivedDamage(target, rawAmount);
   const amount = resolution.applied;
@@ -4786,6 +4785,8 @@ function strike(
     ...(useUltimate || !attacker.def.basic.cycle ? {} : { basicStep: attacker.basicCycleStep % attacker.def.basic.cycle.length }),
   });
   if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
+  // 목덜미 한 대는 본 타격 **다음** 사건이다 — 숫자도 본 타격 뒤에 떠야 "한 대 더"로 읽힌다.
+  if (nape !== undefined) strikeNape(damageAttacker, target, nape, state, events);
 
   // 덧칠된 적이 맞을 때마다 그 피해의 일부가 최저 체력 아군의 회복으로 돌아온다. 궁극기로
   // 덧칠이 지워지기 전에 정산해야 이번 타격의 몫이 빠지지 않는다.
@@ -5543,21 +5544,46 @@ function reviveWolf(state: SkirmishState, owner: Fighter, wolf: Fighter, events:
 
 /**
  * 목덜미. 표적의 체력이 문턱(`finisher.thresholdPercent`) 아래로 내려온 뒤 **처음 닿는 한 방**이
- * 확정 치명타에 큰 추가 피해(`bonusDamagePercent`)가 된다 — 약해진 적을 끝내는 암살자의 한 방이다.
- * 한 번 터지면 그 표적에게는 `cooldownSeconds` 동안 다시 터지지 않는다(**표적마다 따로**). 돌려주는
- * 값은 피해 배율이고, 1보다 크면 열린 것이다.
- *
- * **추가 타격을 따로 세우지 않고 한 방에 얹는다.** 따로 세우면 보스 점수와 서버의 재사용 대기
- * 검증이 같은 행동을 두 번으로 센다. 숫자 하나가 커지는 대신 표적 자리에서 연출이 터져 "노렸다"를
- * 말한다. 자리는 옮기지 않는다 — 두목은 가장 뒤에 남는다.
+ * 목덜미를 연다 — 약해진 적을 끝내는 암살자의 한 대다. 한 번 열리면 그 표적에게는
+ * `cooldownSeconds` 동안 다시 열리지 않는다(**표적마다 따로**). 연 계약을 돌려주고, 닫혀 있으면
+ * `undefined`다. 자리는 옮기지 않는다 — 두목은 가장 뒤에 남는다.
  */
-function napeBonus(attacker: Fighter, target: Fighter, skill: Skill, state: SkirmishState, events: SkirmishEvent[]): number {
+function opensNape(attacker: Fighter, target: Fighter, skill: Skill, state: SkirmishState, events: SkirmishEvent[]): NonNullable<Skill["finisher"]> | undefined {
   const finisher = "finisher" in skill ? skill.finisher : undefined;
-  if (finisher === undefined || !isFighterAlive(target) || target.hp / target.maxHp * 100 > finisher.thresholdPercent) return 1;
-  if (state.elapsed < (attacker.napeReadyAt[target.id] ?? 0)) return 1;
+  if (finisher === undefined || !isFighterAlive(target) || target.hp / target.maxHp * 100 > finisher.thresholdPercent) return undefined;
+  if (state.elapsed < (attacker.napeReadyAt[target.id] ?? 0)) return undefined;
   attacker.napeReadyAt[target.id] = state.elapsed + finisher.cooldownSeconds;
   events.push({ kind: "packFinisher", fighterId: attacker.id, targetId: target.id, x: target.x, y: target.y });
-  return 1 + finisher.bonusDamagePercent / 100;
+  return finisher;
+}
+
+/**
+ * 목덜미 한 대 — 공격력과 주문력을 함께 쓰는 **마법 치명타**. 본 타격 뒤에 따로 들어간다.
+ *
+ * 반짝의 추가타(`strikeShimmer`)와 같은 길이다: 제 피해 사건(`nape`, `animate: false`)을 내므로
+ * 보스 행동 기록에는 잡히지 않고(원본 행동 하나), 게이지도 채우지 않는다. 본 타격에 쓰러졌으면
+ * 물 것이 없다.
+ */
+function strikeNape(attacker: Fighter, target: Fighter, finisher: NonNullable<Skill["finisher"]>, state: SkirmishState, events: SkirmishEvent[]): void {
+  if (!isFighterAlive(target)) return;
+  const input = {
+    power: finisher.atkPercent, scalingStat: "atk" as const, secondaryScaling: { stat: "ap" as const, power: finisher.apPercent },
+    damageType: "magical" as const, isCritical: true, kind: "basic" as const,
+  };
+  const raw = computeDamage(attacker, defensiveDefinition(target, state), input);
+  const contributionAmount = computeDamageContribution(attacker, input);
+  const resolution = resolveReceivedDamage(target, raw);
+  const hpBefore = target.hp; const shieldBefore = target.shield.amount; const shieldProviderId = target.shield.providerId;
+  applyDamage(target, resolution.applied, events, state);
+  const credited = recordDamageContribution(state, attacker.id, target, "magical", "atk", contributionAmount, resolution, hpBefore, shieldBefore, shieldProviderId);
+  events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: "nape", amount: resolution.applied, contributionAmount: credited,
+    critical: true, animate: false, damageType: "magical", mitigated: resolution.reduced < resolution.raw });
+  if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
+  if (!isFighterAlive(target)) {
+    clearDefeatedStatuses(target);
+    events.push({ kind: "death", fighterId: target.id, sourceId: attacker.id });
+    state.log.push(`${target.def.name} 전투 불능`);
+  }
 }
 
 /**

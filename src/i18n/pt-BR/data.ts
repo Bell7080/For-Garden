@@ -591,7 +591,7 @@ export default {
   "keyword.missing-hp.term": "PV perdido",
   "keyword.missing-hp.description": "PV máx. menos PV atual. A cura baseada em PV perdido é recalculada logo após cada golpe.",
   "keyword.nape.term": "Nuca",
-  "keyword.nape.description": "Um golpe de misericórdia contra um inimigo enfraquecido. É um crítico garantido e seu dano aumenta muito.",
+  "keyword.nape.description": "Uma mordida de misericórdia num inimigo enfraquecido. Após o golpe, causa outro golpe de dano mágico com crítico garantido que escala com Ataque e Poder mágico.",
   "keyword.physical-damage.term": "Dano físico",
   "keyword.physical-damage.description": "Dano calculado a partir do Ataque ou do atributo indicado e reduzido pela Defesa do alvo.",
   "keyword.magical-damage.term": "Dano mágico",

@@ -191,7 +191,7 @@ export const SKILL_ES = {
   "skill.clause.curseTransfer": "si la [[curse|Maldición]] de ese enemigo ya está al máximo, [[transfer|transfiere]] al enemigo más cercano el {percent}% del daño final a los PV que perdió realmente y lo Maldice. Si la Maldición de ese enemigo también estaba al máximo, continúa del mismo modo",
   "skill.clause.energyRefundOnKill": "devuelve {value} de medidor de Definitiva si este ataque derrota",
   "skill.clause.periodicCritical": "cada {every}.º [[basic-attack|ataque básico]] real es crítico garantizado",
-  "skill.clause.nape": "si los PV del objetivo son del {percent}% o menos, va a por la [[nape|Nuca]] con un crítico garantizado que inflige un {bonus}% más de daño, como máximo una vez cada {seconds} s por objetivo",
+  "skill.clause.nape": "si los PV del objetivo son del {percent}% o menos, muerde la [[nape|Nuca]] e inflige {damage} adicional con crítico garantizado, como máximo una vez cada {seconds} s por objetivo",
   "skill.clause.commandsPack": "[[summon-kuro|Kuro]] y [[summon-shiro|Shiro]], si siguen vivos, usan al instante su Definitiva contra ese objetivo",
   "skill.clause.shallows": "forma [[shallows|Bajíos]] cerca de un enemigo y cada {count} ataques básicos hace una [[dive|Zambullida]] de {damage}",
   "skill.clause.detonateShallows": "hace estallar todos los [[shallows|Bajíos]] formados, {damage} cada uno",

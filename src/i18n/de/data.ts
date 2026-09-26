@@ -591,7 +591,7 @@ export default {
   "keyword.missing-hp.term": "Fehlendes Leben",
   "keyword.missing-hp.description": "Max. Leben minus aktuelles Leben. Heilung, die vom fehlenden Leben abhängt, wird nach jedem Treffer neu berechnet.",
   "keyword.nape.term": "Nacken",
-  "keyword.nape.description": "Ein Gnadenstoß gegen einen geschwächten Feind. Er ist ein garantierter kritischer Treffer und sein Schaden steigt stark.",
+  "keyword.nape.description": "Ein Gnadenbiss gegen einen geschwächten Feind. Nach dem Treffer folgt ein zusätzlicher garantiert kritischer Treffer mit magischem Schaden, der mit Angriff und Zauberkraft skaliert.",
   "keyword.physical-damage.term": "Physischer Schaden",
   "keyword.physical-damage.description": "Schaden auf Basis von Angriff oder dem genannten Wert, gemindert durch die Verteidigung des Ziels.",
   "keyword.magical-damage.term": "Magischer Schaden",

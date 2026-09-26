@@ -191,7 +191,7 @@ export const SKILL_RU = {
   "skill.clause.curseTransfer": "если [[curse|проклятие]] этого врага уже на максимуме, [[transfer|передаёт]] {percent}% реально потерянного им здоровья ближайшему другому врагу и проклинает его. Если и у того проклятие было на максимуме, продолжает так же",
   "skill.clause.energyRefundOnKill": "возвращает {value} заряда ульты, если атака убивает",
   "skill.clause.periodicCritical": "каждая {every}-я реальная [[basic-attack|обычная атака]] гарантированно критическая",
-  "skill.clause.nape": "если ОЗ цели {percent}% или меньше, бьёт в [[nape|загривок]] гарантированным критом с уроном +{bonus}%, не чаще раза в {seconds} с на цель",
+  "skill.clause.nape": "если ОЗ цели {percent}% или меньше, вцепляется в [[nape|загривок]] и дополнительно наносит {damage} гарантированным критом, не чаще раза в {seconds} с на цель",
   "skill.clause.commandsPack": "живые [[summon-kuro|Куро]] и [[summon-shiro|Широ]] сразу применяют ульту по этой цели",
   "skill.clause.shallows": "создаёт [[shallows|мелководье]] у врага и каждые {count} обычных атак совершает [[dive|нырок]], нанося {damage}",
   "skill.clause.detonateShallows": "взрывает всё созданное [[shallows|мелководье]], по {damage} каждое",

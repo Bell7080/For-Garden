@@ -191,7 +191,7 @@ export const SKILL_DE = {
   "skill.clause.curseTransfer": "ist der [[curse|Fluch]] dieses Gegners bereits voll, [[transfer|überträgt]] es {percent}% des tatsächlich verlorenen Lebens auf den nächsten anderen Gegner und verflucht ihn. War auch dessen Fluch voll, geht es auf dieselbe Weise weiter",
   "skill.clause.energyRefundOnKill": "erstattet {value} Ultimativ-Ladung, wenn dieser Angriff besiegt",
   "skill.clause.periodicCritical": "jeder {every}. tatsächliche [[basic-attack|Normalangriff]] ist garantiert kritisch",
-  "skill.clause.nape": "liegen die LP des Ziels bei {percent} % oder darunter, zielt sie auf den [[nape|Nacken]] – ein garantierter kritischer Treffer mit {bonus} % mehr Schaden, höchstens einmal alle {seconds} s pro Ziel",
+  "skill.clause.nape": "liegen die LP des Ziels bei {percent} % oder darunter, beißt sie in den [[nape|Nacken]] und verursacht zusätzlich {damage} als garantierten kritischen Treffer, höchstens einmal alle {seconds} s pro Ziel",
   "skill.clause.commandsPack": "die lebenden [[summon-kuro|Kuro]] und [[summon-shiro|Shiro]] setzen sofort ihre Ultimativ gegen dieses Ziel ein",
   "skill.clause.shallows": "lässt nahe einem Gegner [[shallows|Untiefen]] entstehen und macht alle {count} Normalangriffe einen [[dive|Tauchangriff]] für {damage}",
   "skill.clause.detonateShallows": "lässt alle entstandenen [[shallows|Untiefen]] platzen, je {damage}",

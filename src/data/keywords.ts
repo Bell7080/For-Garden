@@ -266,21 +266,10 @@ export const KEYWORDS: readonly KeywordDef[] = [
     description: "최대 체력에서 현재 체력을 뺀 값이다. 잃은 체력 비례 회복은 각 적중 직후의 값을 다시 계산한다.",
   },
   {
-    id: "bloodscent",
-    term: "피 냄새",
-    kind: "buff",
-    /*
-     * 겹당 수치와 상한은 지휘자마다 다를 수 있어 그 창이 문맥 사전으로 주입한다. 여기에는
-     * **언제 얻고 무엇이 오르는가**만 둔다 — 수치를 못 박으면 둘째 지휘자가 생기는 순간
-     * 한쪽 설명이 거짓말이 된다.
-     */
-    description: "표적이 쓰러지거나 [[nape|목덜미]]를 물 때마다 한 겹 얻는다. 겹마다 지휘자의 일반 공격 피해가 커지고 목덜미가 열리는 체력 문턱이 함께 오른다. 상한에 닿으면 더 쌓이지 않고 전투가 끝나면 사라진다.",
-  },
-  {
     id: "nape",
     term: "목덜미",
     kind: "rule",
-    description: "지휘자가 표적 뒤로 [[teleport|순간이동]]해 표적의 남은 체력에 비례하는 [[fixed-damage|고정 피해]]를 준다. 방어력과 저항력을 무시하며 [[stealth|은신]]은 풀리지 않는다.",
+    description: "표적의 등 뒤로 [[teleport|순간이동]]해 무는 한 방이다. 확정 치명타가 되며 [[stealth|은신]]은 풀리지 않는다.",
   },
   {
     id: "physical-damage", term: "물리 피해", kind: "rule",

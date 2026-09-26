@@ -1584,7 +1584,6 @@ export class BattleScene extends Phaser.Scene {
       }
       return undefined;
     }
-    if (event.kind === "bloodscent") return undefined;
 
     const attacker = this.views.get(event.attackerId);
     const target = this.views.get(event.targetId);

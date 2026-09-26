@@ -63,7 +63,7 @@ import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, typ
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
-import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, dualStrikeDamageKeywords, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, elationKeyword, passiveShieldKeyword, periodicStackKeyword, skillDescription } from "./skillPresentation";
+import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, elationKeyword, passiveShieldKeyword, periodicStackKeyword, skillDescription } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
 import { deriveSummonStats } from "../core/summonStats";
 import { EnemyInfoPopup } from "./EnemyInfoPopup";
@@ -1920,7 +1920,6 @@ export class InfoManager {
     // 미보유 도감은 성장·스킬과 같은 정책으로 귀속 소환수도 감춘다.
     if (!this.capabilities.showSummons || !this.ownedNow) return [];
     const owner = this.currentDef;
-    const scent = owner?.passive.bloodscent;
     // 늑대의 수치는 지휘자가 **지금** 가진 능력치에서 파생한다 — 정적 정의의 태생값을 적으면
     // 디안을 키운 뒤에도 쪽지 속 늑대만 1레벨로 남는다.
     const ownerStats = owner === undefined ? undefined : this.shownStats(owner);
@@ -1959,27 +1958,6 @@ export class InfoManager {
         ],
       };
     });
-    // 겹당 수치와 상한은 지휘자마다 다를 수 있으므로 전역 사전이 아니라 그 창이 데이터에서 만든다.
-    // 겹당 수치와 상한, 문턱 증가폭은 지휘자마다 다르므로 전역 사전이 아니라 그 정의에서 만든다.
-    const finisher = owner?.basic.finisher;
-    if (scent) {
-      const threshold = finisher === undefined || finisher.thresholdPerStack <= 0
-        ? ""
-        : t("skill.keyword.bloodscent.threshold", { percent: finisher.thresholdPerStack });
-      tags.push({
-        id: "bloodscent", term: t("skill.keyword.bloodscent.term"), kind: "buff",
-        description: t("skill.keyword.bloodscent.description", {
-          stacks: scent.maxStacks, percent: scent.damagePercentPerStack, threshold,
-        }),
-      });
-    }
-    // 목덜미도 비례 수치를 아는 자리에서는 실제 값으로 말한다.
-    if (finisher) {
-      tags.push({
-        id: "nape", term: t("skill.keyword.nape.term"), kind: "rule",
-        description: t("skill.keyword.nape.description", { percent: finisher.remainingHpPercent }),
-      });
-    }
     return tags;
   }
 
@@ -2783,8 +2761,6 @@ export function buildSkillViewModel(options: {
     contextualKeywords: [
       ...summonTags,
       ...breakthroughTags,
-      // 합공은 수치마다 제 산식을 연다. `damageDetail`은 첫 수의 산식 하나뿐이다.
-      ...dualStrikeDamageKeywords(skill as Skill, { atk: attacker?.def.stats.atk, ap: attacker?.def.stats.ap }),
       damageDetail, shieldDetail, healDetail,
       "kind" in skill ? undefined : periodicStackKeyword(skill as Skill),
       // 「고통의 희열」은 패시브 본문이 직접 가리키는 태그라 그 쪽지에도 함께 실린다.

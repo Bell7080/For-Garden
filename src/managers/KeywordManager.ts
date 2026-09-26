@@ -121,7 +121,7 @@ export class KeywordManager {
     const open = actions?.[keyword.id];
     hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
       if (open) open();
-      // 쪽지 안의 태그도 같은 문맥 사전을 읽는다 — 그래야 「피 냄새」 안의 「목덜미」가 전역의
+      // 쪽지 안의 태그도 같은 문맥 사전을 읽는다 — 그래야 소환수 쪽지 안의 태그가 전역의
       // 뭉뚱그린 문장이 아니라 이 개체의 실제 수치로 열린다.
       else this.explain(keyword, { x: pointer.worldX, y: pointer.worldY - 20 }, contextualKeywords);
     });

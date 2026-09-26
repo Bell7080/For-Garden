@@ -7,7 +7,7 @@ import { FOCUS } from "../../src/core/skirmish";
 import { KEYWORDS } from "../../src/data/keywords";
 import type { BasicAttack, Skill } from "../../src/core/types";
 import { ELEMENT_TINT, ROLE_TINT, SKILL_ART_ASSETS, SKILL_ART_SLOTS, skillArtFor, skillArtKey, skillArtTint } from "../../src/ui/skillArt";
-import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, dualStrikeDamageKeywords, elationKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, passiveShieldKeyword, periodicStackKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
+import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, elationKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, passiveShieldKeyword, periodicStackKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
 import type { SkillInfoViewModel } from "../../src/ui/SkillPopup";
 import { ENCOUNTER_ROLE_ICON_ASSETS, encounterRoleDescription, encounterRoleIcon, encounterRoleMultipliers, encounterRoleName } from "../../src/ui/encounterRolePresentation";
 
@@ -664,67 +664,35 @@ describe("스킬 설명문 양식 계약", () => {
     },
   );
 
-  it("디안 무리는 소환을 이름으로 말하고 같은 수치를 두 번 적지 않는다", () => {
+  it("디안의 패시브는 부르는 늑대와 은신 한 가지만 말한다", () => {
     const dian = RELICS.find((def) => def.id === "dian")!;
     const body = passiveDescription(dian.passive, dian.stats.atk);
     // 무엇을 부르는지가 먼저다. 이름 없이 "귀속 소환수"라고만 하면 누구인지 눌러 볼 수도 없다.
-    expect(body).toContain("[[summon-kuro|쿠로]]");
-    expect(body).toContain("[[summon-shiro|시로]]");
-    // 치명타는 제 문장에서 이미 말하므로 공용 절이 뒤에 또 붙지 않는다.
-    expect(body.match(/치명타 확률/g)).toHaveLength(1);
-    // 겹당 수치는 태그가 말한다. 패시브는 **언제 얻는가**만 적는다.
-    expect(body).toContain("[[bloodscent|피 냄새]]를 한 겹 얻는다");
-    expect(body).not.toContain("겹마다");
-    /*
-     * **혼자 남으면 다시 맞는다는 것을 본문이 말한다.**
-     *
-     * 조건절만 적고 그 반대를 읽는 쪽이 뒤집게 두면 "늑대가 없어도 계속 숨는다"로 읽히는데,
-     * 그렇게 이해하고 늑대를 잃으면 지휘자가 일방적으로 맞는다. 표적에 관한 말은 어디서나
-     * 같은 이름을 써야 하므로 "대상"으로 되돌아가지 않는지도 함께 본다.
-     */
-    expect(body).toContain("한 마리라도 쓰러지면 은신이 풀려 다시 표적이 된다.");
-    expect(body).not.toContain("대상");
-    // 은신이 무엇인지(단일 표적 공격에서 빠진다)는 태그가 말한다. 본문이 다시 풀지 않는다.
-    expect(body).not.toContain("단일 표적");
+    expect(body).toBe("전투 시작 시 [[summon-kuro|쿠로]]와 [[summon-shiro|시로]]를 소환한다. "
+      + "둘이 모두 살아 있는 동안 [[stealth|은신]]한다. 한 마리라도 쓰러지면 은신이 풀려 다시 표적이 된다.");
+    // 첫 픽업이라 보이지 않는 숫자(척후·무리 치명타·겹)를 다시 들이지 않는다.
+    for (const word of ["전투력", "치명타", "겹", "[[bloodscent|"]) expect(body).not.toContain(word);
   });
 
-  it("디안의 두 축과 마무리는 한 문장 안에서 섞이지 않는다", () => {
+  it("디안의 일반 공격은 한 줄의 물리 피해이고 목덜미는 언제 무는가만 말한다", () => {
     const dian = RELICS.find((def) => def.id === "dian")!;
-    const stats = { ap: 158, atk: { atk: 160, attackSpeed: 132 } };
-    const basic = skillDescription(dian.basic, stats);
-    // 합공은 두 축을 각각 실제 수치로 보여 준다 — 하나로 합치면 방어와 저항이 다르게 깎는 것이 숨는다.
-    // 혼자 남은 한 방도 두 축이라 모두 넷이다.
-    expect(basic.match(/\[\[damage-value-(atk|ap)-\d+\|/g)).toHaveLength(4);
-    /*
-     * **수치마다 제 산식이 열린다.** 넷이 한 ID를 가리키면 어느 수를 눌러도 첫 수의 산식
-     * (공격력의 45%)이 열려, 71·40이 제 설명과 다른 말을 들었다.
-     */
-    const tags = dualStrikeDamageKeywords(dian.basic, { atk: 160, ap: 158 });
-    for (const match of basic.matchAll(/\[\[(damage-value-[a-z]+-\d+)\|(\d+)\]\]/g)) {
-      const tag = tags.find(({ id }) => id === match[1]);
-      expect(tag, match[1]).toBeDefined();
-      expect(tag!.term).toBe(match[2]);
-    }
-    expect(tags.find(({ id }) => id === "damage-value-ap-45")!.description).toBe("현재 주문력에서 45%를 받아 계산한 피해 수치다.");
-    expect(tags.find(({ id }) => id === "damage-value-atk-25")!.description).toBe("현재 공격력에서 25%를 받아 계산한 피해 수치다.");
-    expect(basic).toContain("동시에 준다");
-    /*
-     * **마무리는 언제 무는가만 말한다.** 남은 체력 비례 몫은 「목덜미」, 문턱이 오르는 몫은
-     * 「피 냄새」 태그가 갖는다 — 본문에 다시 적으면 한 쪽지에 같은 수가 두 번 선다.
-     */
-    expect(basic).toContain("표적의 체력이 25% 이하면 대신 [[nape|목덜미]]를 문다.");
-    expect(basic).not.toContain("남은 체력의");
-    expect(basic).not.toContain("[[bloodscent|");
-    // 혼자 남은 한 방도 합공과 같은 단위(실제 수치)로 선다. 위력 %만 두면 위아래 문장의 단위가 갈린다.
-    expect(basic).toContain("대신 [[damage-value-atk-25|40]]의 물리 피해와 [[damage-value-ap-25|40]]의 마법 피해를 번갈아 준다.");
-    // 순서는 합공 → 혼자 남았을 때 → 마무리다. 마무리는 둘 중 무엇이든 대신한다.
-    expect(basic.indexOf("번갈아")).toBeLessThan(basic.indexOf("[[nape|"));
+    // 본문은 아이콘 위 라벨과 같은 합산 수치를 받아 쓴다: 160×40% + 158×60% = 159.
+    const basic = skillDescription(dian.basic, { ap: 158, atk: { atk: 160, attackSpeed: 132 }, damage: 159 });
+    expect(basic).toBe("적 한 명에게 [[damage-value|159]]의 [[physical-damage|물리 피해]]를 준다. "
+      + "표적의 체력이 25% 이하면 [[nape|목덜미]]를 문다.");
 
-    const ultimate = skillDescription(dian.ultimate, stats);
-    // 궁극기의 마무리에는 문턱이 없다. "100% 이하"라고 적으면 없는 조건을 찾게 만든다.
-    expect(ultimate).toContain("이어 표적의 체력과 무관하게 [[nape|목덜미]]를 문다.");
+    const ultimate = skillDescription(dian.ultimate, { ap: 158, atk: { atk: 160, attackSpeed: 132 }, damage: 238 });
+    // 궁극기의 목덜미에는 문턱이 없다. "100% 이하"라고 적으면 없는 조건을 찾게 만든다.
+    expect(ultimate).toContain("표적의 체력과 무관하게 [[nape|목덜미]]를 문다.");
     expect(ultimate).not.toContain("100% 이하");
-    expect(ultimate).toContain("부활 대기 시간이 10초 줄어");
+    // 늑대가 무엇을 하는지는 늑대의 궁극기가 말한다. 여기서는 부른다는 것만 적는다.
+    expect(ultimate).toContain("살아 있는 [[summon-kuro|쿠로]]와 [[summon-shiro|시로]]가 그 표적에게 곧바로 궁극기를 쓴다.");
+    expect(ultimate).not.toContain("부활 대기");
+
+    // 목덜미가 무엇인지(등 뒤 순간이동 · 확정 치명타)는 태그가 말한다. 남은 체력 비례 몫은 없다.
+    const nape = KEYWORDS.find((keyword) => keyword.id === "nape")!;
+    expect(nape.description).toContain("확정 치명타");
+    expect(nape.description).not.toContain("남은 체력");
   });
 
   it("디안의 폭주는 누가 폭주하는지만 말하고, 무엇이 오르는지는 늑대 쪽지에 맡긴다", () => {
@@ -741,8 +709,7 @@ describe("스킬 설명문 양식 계약", () => {
       expect(body, id).toContain(`디안의 ${axis}이`);
       // 폭주는 같은 값이 함께 오르므로 한 번만 말하고, 방어·저항은 실제로 오르는 값으로 보여 준다.
       const fever = ferocityTraitDescription(wolf.ferocityTrait, { attack: wolf.stats.atk, defense: wolf.stats.def });
-      expect(fever, id).toMatch(/방어력과 저항력이 \d+씩 오르고/);
-      expect(fever, id).toContain("치명타 확률과 모든 피해 흡혈이 모두 25% 증가한다.");
+      expect(fever, id).toMatch(/^방어력과 저항력이 \d+씩 오르고 \[\[attack-speed\|공격 속도\]\]가 50% 오른다\.$/);
     }
   });
 

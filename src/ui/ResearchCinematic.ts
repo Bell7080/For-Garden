@@ -127,6 +127,15 @@ function loadAsset(): Promise<CinematicBundle> {
  * 것(뽑기가 결과를 낸다)은 확인하지 못하고 기다림만 늘어난다. 그래서 그 빌드는 Phaser 연출
  * 경로를 그대로 타고, 이 경계 자체는 `tests/unit/researchCinematic.test.ts`가 지킨다.
  */
+/**
+ * 묶음만 미리 읽는다. 타이틀 로딩이 부른다 — 첫 뽑기에서 570KB를 받고 파싱하느라 화면이 멎지 않게.
+ * 세울 수 없는 환경이면 아무것도 하지 않고, 실패해도 뽑기에서 다시 시도한다.
+ */
+export function preloadResearchCinematic(): Promise<void> {
+  if (!researchCinematicEnabled() || !supportsWebgl2()) return Promise.resolve();
+  return loadAsset().then(() => undefined, () => undefined);
+}
+
 export function researchCinematicEnabled(): boolean {
   return import.meta.env.MODE !== "test";
 }
@@ -392,12 +401,18 @@ export class ResearchCinematic {
     // `visibility`로 숨기지 않는다 — 카드 층(`.cards.opening`·`.overview`)이 제 `visibility: visible`을
     // 들고 있어 부모가 숨어도 카드만 그대로 떠, 소개 장면이 카드 **아래**에 깔렸다. 판 전체를
     // 투명하게 하고 손도 통과시켜 그 아래 캔버스(소개 장면)가 받게 한다.
-    this.root.style.opacity = "0";
+    //
+    // **판은 소개 장면이 한 번 그려진 뒤에 숨긴다.** 먼저 숨기면 소개 장면이 캔버스에 서기 전의
+    // 한 프레임 동안 그 아래의 연구소 화면이 그대로 드러나, 뽑기 화면으로 한 번 튕겨 나갔다가
+    // 소개가 뜨는 것처럼 보였다. 손은 곧바로 캔버스로 넘기고, 보이는 것만 한 박자 늦춘다.
     this.root.style.pointerEvents = "none";
     await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
     if (!this.closed) this.game.input.enabled = true;
     try {
-      await this.introduce(index);
+      const introduced = this.introduce(index);
+      await this.afterNextGameFrame();
+      if (!this.closed && this.introducing) this.root.style.opacity = "0";
+      await introduced;
     } finally {
       this.introducing = false;
       if (!this.closed) {
@@ -406,6 +421,25 @@ export class ResearchCinematic {
         this.root.style.pointerEvents = "";
       }
     }
+  }
+
+  /**
+   * 게임 캔버스가 한 번 더 그려질 때까지 기다린다. 그린 직후에 판을 숨겨야 그 사이에 뒤 화면이
+   * 드러나지 않는다. 게임 루프가 멈춰 있어도(탭이 숨는 등) 갇히지 않도록 상한을 둔다.
+   */
+  private afterNextGameFrame(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        this.game.events.off("postrender", finish);
+        // postrender는 그린 직후지만 화면에 붙는 것은 다음 합성이다 — 한 프레임 더 넘긴다.
+        requestAnimationFrame(() => resolve());
+      };
+      this.game.events.once("postrender", finish);
+      window.setTimeout(finish, 250);
+    });
   }
 
   close(): void {

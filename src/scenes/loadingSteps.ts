@@ -15,6 +15,10 @@ import { EXCAVATION_TRAIT_ICON_ASSETS } from "../ui/excavationIcons";
 import { ITEM_ICON_ASSETS, ITEM_RASTER_ICON_ASSETS } from "../ui/itemIcons";
 import { SQUAD_EMBLEM_ASSETS } from "../data/factions";
 import { SHOP_PRODUCT_ICON_ASSETS } from "../data/shopCatalog";
+import { PLAYABLE_RELICS } from "../data/relics";
+import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
+import { preloadResearchCinematic } from "../ui/ResearchCinematic";
+import { preloadSsrOmen } from "../ui/SsrOmenCinematic";
 
 /**
  * 타이틀 화면이 지불하는 로딩 비용의 전부.
@@ -167,7 +171,36 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
     label: "SD·적 묶음",
     run: () => preloadPuppetAssets(PUPPET_PRELOAD_GROUPS[1]),
   },
+  {
+    // 뽑기의 3D 시네마틱과 SSR 전조 무대는 합쳐 1MB 남짓한 스크립트라, 첫 뽑기에서 받으면 그
+    // 자리에서 화면이 멎는다. 여기서 받아 파싱까지 끝내 둔다.
+    //
+    // 새로 만난 렐릭의 소개 장면이 세울 원화(뽑을 수 있는 개체의 전신·SD)는 **기다리지 않고**
+    // 내려받기만 걸어 둔다 — 합쳐 수십 MB라 타이틀을 붙잡으면 게임에 들어가는 길이 그만큼 멀어지고,
+    // 받아 둔 것은 브라우저 캐시에 남아 소개 장면이 일꾼에게 넘길 때 네트워크를 건너뛴다. 파싱·
+    // 디코드는 하지 않는다(GPU·메모리를 쓰는 것은 세울 때뿐이어야 한다 — 거주 규칙).
+    label: "뽑기 연출",
+    run: async () => {
+      prefetchGachaPuppetFiles();
+      await Promise.all([preloadResearchCinematic(), preloadSsrOmen()?.then(() => undefined, () => undefined)]);
+    },
+  },
 ];
+
+/** 뽑을 수 있는 개체의 전신·SD ZIP을 내려받아 캐시에만 둔다. 한 번에 두 개씩, 뒤에서. */
+function prefetchGachaPuppetFiles(): void {
+  const urls = [...new Set(PLAYABLE_RELICS.flatMap((relic) => [
+    relicAppearanceManager.portraitAssetFor(relic.id).url,
+    relicAppearanceManager.battleAssetFor(relic.id).url,
+  ]))];
+  const next = (): void => {
+    const url = urls.shift();
+    if (!url) return;
+    void fetch(url, { priority: "low" } as RequestInit).then((response) => response.arrayBuffer()).catch(() => undefined).finally(next);
+  };
+  next();
+  next();
+}
 
 /**
  * 단계를 순서대로 밟으며 끝난 개수를 알린다.

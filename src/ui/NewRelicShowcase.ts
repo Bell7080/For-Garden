@@ -31,6 +31,8 @@ import { addSceneBackground, BACKGROUND } from "./backgrounds";
 import { squadEmblemKey, SQUADS } from "../data/factions";
 import { CRACK_BRANCHES, crackBranchPoints, fossilShards, shardPoints } from "./fossilCrack";
 import { squeezeTextToWidth } from "./textFit";
+import { openSsrOmen, type SsrOmenHandle } from "./SsrOmenCinematic";
+import { audioManager } from "../managers/AudioManager";
 import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawVignette, HOLO, toPoints } from "./holo";
 import { addInfoFigureStand, paintRarityGem } from "./info";
 import { infoPortraitPlacement } from "./portraitPlacement";
@@ -105,6 +107,10 @@ class NewRelicShowcase {
   private omen?: Phaser.GameObjects.Container;
   private readonly omenTimers: Phaser.Time.TimerEvent[] = [];
   private readonly omenTweens: Phaser.Tweens.Tween[] = [];
+  /** 3D 전조(`SsrOmenCinematic`). 세울 수 없으면 Phaser 전조가 대신 돈다. */
+  private omen3d?: SsrOmenHandle;
+  /** 3D 전조를 기다리는 동안 뒤 화면을 가리는 어둠. */
+  private omenCover?: Phaser.GameObjects.Rectangle;
   /** 뒷배경에 깔리는 소속 스쿼드 엠블럼·이름. 무대가 선 뒤 조금 늦게 떠오른다. */
   private squadBackdrop?: Phaser.GameObjects.Container;
   private hint?: Phaser.GameObjects.Text;
@@ -146,7 +152,7 @@ class NewRelicShowcase {
       this.tapLockedUntil = performance.now() + SHOWCASE_TAP_LOCK_MS.omen;
       this.voice.setAlpha(0);
       setDebugRelicShowcase({ relicId, phase: "omen" });
-      this.playOmen();
+      void this.startOmen();
     } else {
       setDebugRelicShowcase({ relicId, phase: "voice" });
       this.startVoice();
@@ -154,6 +160,48 @@ class NewRelicShowcase {
   }
 
   /* ── 전조(SSR) ──────────────────────────────────────────────────────────── */
+
+  /**
+   * 전조를 연다. 3D 무대(`SsrOmenCinematic` — 지반이 콰지지직 갈라지다 팡 터진다)가 먼저이고,
+   * 세울 수 없으면 Phaser로 그린 전조로 되돌아간다. 무대를 읽는 동안에는 어둠이 뒤 화면을 가린다.
+   */
+  private async startOmen(): Promise<void> {
+    this.omenCover = this.scene.add
+      .rectangle(W / 2, H / 2, OW, OH, COLOR.void, 1)
+      .setDepth(this.options.depth + 2);
+    const handle = await openSsrOmen(this.scene, {
+      reducedMotion: this.options.reduceMotion,
+      volume: audioManager?.volume("sfx") ?? 0,
+      onBurst: () => this.burstToVoice(),
+    });
+    if (this.phase !== "omen") { handle?.stop(); return; }
+    if (handle) {
+      this.omen3d = handle;
+      // 섬광 알림을 놓쳐도(그래픽 연결이 끊기는 등) 무대가 끝나면 대사 막으로 넘어간다.
+      void handle.done.then(() => this.enterVoice());
+      return;
+    }
+    this.omenCover?.destroy();
+    this.omenCover = undefined;
+    this.playOmen();
+  }
+
+  /**
+   * 팡 — 3D 전조의 섬광 정점. 대사 막이 곧바로 열리고, 그 위에서 무대가 감속하며 천천히 걷힌다 —
+   * 흩어지는 조각이 거의 멈춘 채로 옅어지는 동안 대사가 번져, 두 막이 끊기지 않고 이어진다.
+   */
+  private burstToVoice(): void {
+    if (this.phase !== "omen") return;
+    this.omen3d?.stop();
+    const flashes = flashPolicy(this.options.reduceFlashes);
+    const bright = Phaser.Display.Color.IntegerToColor(this.tone.halo).lighten(35).color;
+    const flash = this.scene.add.rectangle(W / 2, H / 2, OW, OH, bright, 1)
+      .setDepth(this.options.depth + 6)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setAlpha(0.55 * flashes.alphaRatio);
+    this.scene.tweens.add({ targets: flash, alpha: 0, duration: this.options.reduceMotion ? 160 : 900, ease: "Sine.easeOut", onComplete: () => flash.destroy() });
+    this.enterVoice();
+  }
 
   /**
    * 샤락 — 핑, 핑핑핑 — 쩍.
@@ -272,6 +320,11 @@ class NewRelicShowcase {
   private stopOmen(immediate: boolean): void {
     for (const timer of this.omenTimers.splice(0)) timer.remove();
     for (const running of this.omenTweens.splice(0)) running.stop();
+    // 누르거나 닫을 때는 곧바로 걷는다. 섬광 뒤의 느린 걷힘은 `burstToVoice`가 이미 시작했다.
+    this.omen3d?.stop(true);
+    this.omen3d = undefined;
+    this.omenCover?.destroy();
+    this.omenCover = undefined;
     const omen = this.omen;
     this.omen = undefined;
     if (!omen) return;

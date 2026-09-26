@@ -111,7 +111,7 @@ export const SHOWCASE_OMEN = {
   shardSize: 54,
   /** 줄마다 작게 흔든다. 터질 때만 크게. */
   strikeShake: { ms: 70, intensity: 0.003 },
-  burstShake: { ms: 260, intensity: 0.009 },
+  burstShake: { ms: 220, intensity: 0.005 },
   /** 움직임 줄이기에서 전조가 서 있는 시간. */
   reducedHoldMs: 700,
 } as const;
@@ -202,7 +202,8 @@ export const SHOWCASE_COMPOSITION: Record<RelicRarity, ShowcaseComposition> = {
     watermark: true,
     sparkles: 9,
     flashes: 2,
-    shake: { ms: 420, intensity: 0.008 },
+    // 전조가 이미 지반을 흔들었으므로 등장은 짧게 한 번만 울린다.
+    shake: { ms: 240, intensity: 0.0035 },
     voiceSize: 66,
     omen: true,
   },

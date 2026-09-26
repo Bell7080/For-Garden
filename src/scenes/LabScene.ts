@@ -19,6 +19,7 @@ import { CRACK_BRANCHES, FOSSIL_CRACK, crackBranchPoints, fossilShards, shardPoi
 import { researchBoardLayout } from "../ui/researchBoardLayout";
 import { ResearchSlotTile } from "../ui/ResearchSlotTile";
 import { playNewRelicShowcase } from "../ui/NewRelicShowcase";
+import { preloadSsrOmen, warmSsrOmen } from "../ui/SsrOmenCinematic";
 import { exposeShowcasePreview } from "../testSupport/showcaseHarness";
 import { audioManager, type AudioScope } from "../managers/AudioManager";
 import { PopupLayer } from "../ui/PopupLayer";
@@ -188,6 +189,9 @@ export class LabScene extends Phaser.Scene {
     });
     this.showcaseRelic();
     this.refresh();
+    // SSR 전조 무대를 손이 노는 동안 미리 세운다 — 첫 SSR이 뜨는 순간 셰이더 컴파일이 몰려
+    // 화면이 멎지 않게. 들어오는 연출이 끝난 뒤에 세워 그 연출을 끊지 않는다.
+    this.time.delayedCall(900, () => void warmSsrOmen(this.game, settingsManager.get().accessibility.reduceMotion));
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
@@ -463,6 +467,8 @@ export class LabScene extends Phaser.Scene {
    * 돌려주는 값은 "시네마틱이 실제로 연출을 맡았는가"다. 거짓이면 씬은 예전 연출을 재생한다.
    */
   private async playCinematic(results: PullResultDto[], request: number): Promise<boolean> {
+    // SSR이 든 판이면 전조 무대를 미리 읽어 둔다 — 카드가 뒤집힐 때쯤이면 도착해 있다.
+    if (results.some((result) => result.type === "relic" && getRelic(result.relicId).rarity === "SSR")) void preloadSsrOmen()?.catch(() => undefined);
     if (!researchCinematicEnabled() || !isCinematicCount(results.length)) return false;
     const preferences = settingsManager.get();
     const views = researchSlotViews(results, (relicId) => getRelic(relicId).rarity);

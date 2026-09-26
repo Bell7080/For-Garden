@@ -1,0 +1,762 @@
+{
+"relic.rex.name": [
+"蕾克希娅",
+"เร็กเซีย",
+"Rexia",
+"Rexia",
+"Rexia",
+"Rexia",
+"Rexia",
+"Рексия"
+],
+"relic.anky.name": [
+"托莉卡",
+"โทริกะ",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Торика"
+],
+"relic.spino.name": [
+"斯皮娜",
+"สปีนา",
+"Spina",
+"Spina",
+"Spina",
+"Spina",
+"Spina",
+"Спина"
+],
+"relic.luka.name": [
+"卢卡",
+"ลูกา",
+"Luka",
+"Luka",
+"Luka",
+"Luka",
+"Luka",
+"Лука"
+],
+"relic.dodo.name": [
+"多蒂",
+"โดดี",
+"Dodi",
+"Dodi",
+"Dodi",
+"Dodi",
+"Dodi",
+"Доди"
+],
+"relic.tia.name": [
+"蒂娅",
+"เทีย",
+"Tia",
+"Tia",
+"Tia",
+"Tia",
+"Tia",
+"Тиа"
+],
+"relic.stella.name": [
+"丝黛拉",
+"สเตลลา",
+"Stella",
+"Stella",
+"Stella",
+"Stella",
+"Stella",
+"Стелла"
+],
+"relic.meron.name": [
+"梅隆",
+"เมรอน",
+"Meron",
+"Meron",
+"Meron",
+"Meron",
+"Meron",
+"Мерон"
+],
+"relic.pachi.name": [
+"帕琪",
+"ปาจิ",
+"Pachi",
+"Pachi",
+"Pachi",
+"Pachi",
+"Pachi",
+"Пачи"
+],
+"relic.maki.name": [
+"玛琪",
+"มากิ",
+"Maki",
+"Maki",
+"Maki",
+"Maki",
+"Maki",
+"Маки"
+],
+"relic.keris.name": [
+"凯莉丝",
+"เคริส",
+"Keris",
+"Keris",
+"Keris",
+"Keris",
+"Keris",
+"Керис"
+],
+"relic.delopi.name": [
+"德洛皮",
+"เดโลปี",
+"Delopi",
+"Delopi",
+"Delopi",
+"Delopi",
+"Delopi",
+"Делопи"
+],
+"relic.nodonia.name": [
+"诺多尼亚",
+"โนโดเนีย",
+"Nodonia",
+"Nodonia",
+"Nodonia",
+"Nodonia",
+"Nodonia",
+"Нодония"
+],
+"relic.ella.name": [
+"艾拉",
+"เอลลา",
+"Ella",
+"Ella",
+"Ella",
+"Ella",
+"Ella",
+"Элла"
+],
+"relic.toby.name": [
+"托比",
+"โทบี",
+"Toby",
+"Toby",
+"Toby",
+"Toby",
+"Toby",
+"Тоби"
+],
+"relic.amo.name": [
+"阿莫",
+"อาโม",
+"Amo",
+"Amo",
+"Amo",
+"Amo",
+"Amo",
+"Амо"
+],
+"relic.ripa.name": [
+"莉帕",
+"ริปา",
+"Ripa",
+"Ripa",
+"Ripa",
+"Ripa",
+"Ripa",
+"Рипа"
+],
+"relic.mette.name": [
+"梅特",
+"เมเทะ",
+"Mette",
+"Mette",
+"Mette",
+"Mette",
+"Mette",
+"Метте"
+],
+"relic.deina.name": [
+"黛依",
+"เดย์",
+"Dei",
+"Dei",
+"Dei",
+"Dei",
+"Dei",
+"Дей"
+],
+"relic.maddy.name": [
+"玛蒂",
+"แมดดี้",
+"Maddy",
+"Maddy",
+"Maddy",
+"Maddy",
+"Maddy",
+"Мэдди"
+],
+"relic.terisa.name": [
+"特丽莎",
+"เทริสา",
+"Terisa",
+"Terisa",
+"Terisa",
+"Terisa",
+"Terisa",
+"Териса"
+],
+"relic.morphe.name": [
+"莫尔菲",
+"มอร์เฟ",
+"Morphe",
+"Morphe",
+"Morphe",
+"Morphe",
+"Morphe",
+"Морфе"
+],
+"relic.parua.name": [
+"帕鲁娅",
+"ปารัว",
+"Parua",
+"Parua",
+"Parua",
+"Parua",
+"Parua",
+"Паруа"
+],
+"relic.shute.name": [
+"修特",
+"ชูเตะ",
+"Shute",
+"Shute",
+"Shute",
+"Shute",
+"Shute",
+"Шуте"
+],
+"relic.dian.name": [
+"蒂安",
+"เดียน",
+"Dian",
+"Dian",
+"Dian",
+"Dian",
+"Dian",
+"Диан"
+],
+"relic.kuro.name": [
+"克罗",
+"คุโระ",
+"Kuro",
+"Kuro",
+"Kuro",
+"Kuro",
+"Kuro",
+"Куро"
+],
+"relic.shiro.name": [
+"希罗",
+"ชิโระ",
+"Shiro",
+"Shiro",
+"Shiro",
+"Shiro",
+"Shiro",
+"Широ"
+],
+"relic.pontos.name": [
+"蓬托斯",
+"พอนทอส",
+"Pontos",
+"Pontos",
+"Pontos",
+"Pontos",
+"Pontos",
+"Понтос"
+],
+"relic.rex.origin": [
+"霸王龙",
+"ไทรันโนซอรัส",
+"Tyrannosaurus",
+"Tyrannosaurus",
+"Tiranosaurio",
+"Tiranossauro",
+"Tyrannosaurus",
+"Тираннозавр"
+],
+"relic.anky.origin": [
+"三角龙",
+"ไทรเซอราทอปส์",
+"Triceratops",
+"Triceratops",
+"Tricerátops",
+"Tricerátops",
+"Triceratops",
+"Трицератопс"
+],
+"relic.spino.origin": [
+"棘龙",
+"สไปโนซอรัส",
+"Spinosaurus",
+"Spinosaurus",
+"Espinosaurio",
+"Espinossauro",
+"Spinosaurus",
+"Спинозавр"
+],
+"relic.luka.origin": [
+"伶盗龙",
+"เวโลซิแรปเตอร์",
+"Velociraptor",
+"Velociraptor",
+"Velociraptor",
+"Velociraptor",
+"Velociraptor",
+"Велоцираптор"
+],
+"relic.dodo.origin": [
+"渡渡鸟",
+"นกโดโด",
+"Chim dodo",
+"Dodo",
+"Dodo",
+"Dodô",
+"Dodo",
+"Дронт"
+],
+"relic.tia.origin": [
+"鱼龙",
+"อิคธิโอซอรัส",
+"Ichthyosaurus",
+"Ichthyosaurus",
+"Ictiosaurio",
+"Ictiossauro",
+"Ichthyosaurus",
+"Ихтиозавр"
+],
+"relic.stella.origin": [
+"盖氏无齿翼龙",
+"จีโอสเติร์นแบร์เกีย",
+"Geosternbergia",
+"Geosternbergia",
+"Geosternbergia",
+"Geosternbergia",
+"Geosternbergia",
+"Геостернбергия"
+],
+"relic.meron.origin": [
+"巨齿鲨",
+"เมกาโลดอน",
+"Megalodon",
+"Megalodon",
+"Megalodón",
+"Megalodonte",
+"Megalodon",
+"Мегалодон"
+],
+"relic.pachi.origin": [
+"肿头龙",
+"แพคิเซฟาโลซอรัส",
+"Pachycephalosaurus",
+"Pachycephalosaurus",
+"Paquicefalosaurio",
+"Paquicefalossauro",
+"Pachycephalosaurus",
+"Пахицефалозавр"
+],
+"relic.maki.origin": [
+"短剑剑齿虎",
+"มาไคโรดัส",
+"Machairodus",
+"Machairodus",
+"Machairodus",
+"Machairodus",
+"Machairodus",
+"Махайрод"
+],
+"relic.keris.origin": [
+"大角鹿",
+"เมกาโลเซรอส",
+"Megaloceros",
+"Megaloceros",
+"Megaloceros",
+"Megaloceros",
+"Riesenhirsch",
+"Большерогий олень"
+],
+"relic.delopi.origin": [
+"双脊龙",
+"ไดโลโฟซอรัส",
+"Dilophosaurus",
+"Dilophosaurus",
+"Dilofosaurio",
+"Dilofossauro",
+"Dilophosaurus",
+"Дилофозавр"
+],
+"relic.nodonia.origin": [
+"无齿翼龙",
+"เทอราโนดอน",
+"Pteranodon",
+"Pteranodon",
+"Pteranodon",
+"Pteranodonte",
+"Pteranodon",
+"Птеранодон"
+],
+"relic.ella.origin": [
+"披毛犀",
+"แรดขนยาว",
+"Tê giác lông mịn",
+"Badak berbulu",
+"Rinoceronte lanudo",
+"Rinoceronte-lanudo",
+"Wollnashorn",
+"Шерстистый носорог"
+],
+"relic.toby.origin": [
+"海蝎",
+"แมงป่องทะเล",
+"Bọ cạp biển",
+"Kalajengking laut",
+"Escorpión marino",
+"Escorpião-marinho",
+"Seeskorpion",
+"Морской скорпион"
+],
+"relic.amo.origin": [
+"菊石",
+"แอมโมไนต์",
+"Cúc đá",
+"Amonit",
+"Amonites",
+"Amonite",
+"Ammonit",
+"Аммонит"
+],
+"relic.ripa.origin": [
+"三叶虫",
+"ไทรโลไบต์",
+"Bọ ba thùy",
+"Trilobit",
+"Trilobites",
+"Trilobita",
+"Trilobit",
+"Трилобит"
+],
+"relic.mette.origin": [
+"大地懒",
+"เมกะทีเรียม",
+"Megatherium",
+"Megatherium",
+"Megaterio",
+"Megatério",
+"Megatherium",
+"Мегатерий"
+],
+"relic.deina.origin": [
+"恐爪龙",
+"ไดโนนิคัส",
+"Deinonychus",
+"Deinonychus",
+"Deinonychus",
+"Deinonico",
+"Deinonychus",
+"Дейнонихус"
+],
+"relic.maddy.origin": [
+"猛犸象",
+"แมมมอธ",
+"Voi ma mút",
+"Mamut",
+"Mamut",
+"Mamute",
+"Mammut",
+"Мамонт"
+],
+"relic.terisa.origin": [
+"镰刀龙",
+"เทอริซิโนซอรัส",
+"Therizinosaurus",
+"Therizinosaurus",
+"Terizinosaurio",
+"Terizinossauro",
+"Therizinosaurus",
+"Теризинозавр"
+],
+"relic.morphe.origin": [
+"双型齿翼龙",
+"ไดมอร์โฟดอน",
+"Dimorphodon",
+"Dimorphodon",
+"Dimorphodon",
+"Dimorfodonte",
+"Dimorphodon",
+"Диморфодон"
+],
+"relic.parua.origin": [
+"副栉龙",
+"พาราซอโรโลฟัส",
+"Parasaurolophus",
+"Parasaurolophus",
+"Parasaurolophus",
+"Parassaurolofo",
+"Parasaurolophus",
+"Паразауролоф"
+],
+"relic.shute.origin": [
+"剑龙",
+"สเตโกซอรัส",
+"Stegosaurus",
+"Stegosaurus",
+"Estegosaurio",
+"Estegossauro",
+"Stegosaurus",
+"Стегозавр"
+],
+"relic.dian.origin": [
+"恐狼",
+"หมาป่าไดร์",
+"Sói dire",
+"Serigala Dire",
+"Lobo terrible",
+"Lobo-terrível",
+"Schattenwolf",
+"Ужасный волк"
+],
+"relic.pontos.origin": [
+"梅尔维尔鲸",
+"ลิไวอาแทน เมลวิลเลอี",
+"Livyatan melvillei",
+"Livyatan melvillei",
+"Livyatan melvillei",
+"Livyatan melvillei",
+"Livyatan melvillei",
+"Livyatan melvillei"
+],
+"cakeOperation.cake-1.name": [
+"1阶",
+"ขั้น 1",
+"Bậc 1",
+"Tingkat 1",
+"Nivel 1",
+"Nível 1",
+"Stufe 1",
+"Ярус 1"
+],
+"cakeOperation.cake-2.name": [
+"2阶",
+"ขั้น 2",
+"Bậc 2",
+"Tingkat 2",
+"Nivel 2",
+"Nível 2",
+"Stufe 2",
+"Ярус 2"
+],
+"cakeOperation.cake-3.name": [
+"3阶",
+"ขั้น 3",
+"Bậc 3",
+"Tingkat 3",
+"Nivel 3",
+"Nível 3",
+"Stufe 3",
+"Ярус 3"
+],
+"cakeOperation.cake-4.name": [
+"4阶",
+"ขั้น 4",
+"Bậc 4",
+"Tingkat 4",
+"Nivel 4",
+"Nível 4",
+"Stufe 4",
+"Ярус 4"
+],
+"cakeOperation.cake-5.name": [
+"5阶",
+"ขั้น 5",
+"Bậc 5",
+"Tingkat 5",
+"Nivel 5",
+"Nível 5",
+"Stufe 5",
+"Ярус 5"
+],
+"cakeOperation.cake-6.name": [
+"6阶",
+"ขั้น 6",
+"Bậc 6",
+"Tingkat 6",
+"Nivel 6",
+"Nível 6",
+"Stufe 6",
+"Ярус 6"
+],
+"cakeOperation.cake-7.name": [
+"7阶",
+"ขั้น 7",
+"Bậc 7",
+"Tingkat 7",
+"Nivel 7",
+"Nível 7",
+"Stufe 7",
+"Ярус 7"
+],
+"cakeOperation.cake-8.name": [
+"8阶",
+"ขั้น 8",
+"Bậc 8",
+"Tingkat 8",
+"Nivel 8",
+"Nível 8",
+"Stufe 8",
+"Ярус 8"
+],
+"mission.daily-battle.title": [
+"战斗胜利1次",
+"ชนะการต่อสู้ 1 ครั้ง",
+"Thắng 1 trận",
+"Menang 1 pertarungan",
+"Gana 1 combate",
+"Vença 1 batalha",
+"Gewinne 1 Kampf",
+"Победить в 1 бою"
+],
+"mission.daily-excavate.title": [
+"在研究所研究角色1次",
+"วิจัยตัวละครที่ห้องวิจัย 1 ครั้ง",
+"Nghiên cứu nhân vật ở Viện nghiên cứu 1 lần",
+"Riset karakter di Lab Riset 1 kali",
+"Investiga un personaje en el Laboratorio de Investigación 1 vez",
+"Pesquise um personagem no Laboratório de Pesquisa 1 vez",
+"Erforsche 1-mal einen Charakter im Forschungslabor",
+"Проведите исследование персонажа в исследовательской лаборатории 1 раз"
+],
+"mission.daily-salary.title": [
+"喂食遗物1次",
+"ป้อนอาหารเรลิก 1 ครั้ง",
+"Cho Di vật ăn 1 lần",
+"Beri makan Relik 1 kali",
+"Alimenta a una Reliquia 1 vez",
+"Alimente uma Relíquia 1 vez",
+"Füttere 1-mal ein Relikt",
+"Покормите Реликта 1 раз"
+],
+"mission.daily-lobby.title": [
+"在大厅交流1次",
+"แลกเปลี่ยนที่ล็อบบี้ 1 ครั้ง",
+"Giao lưu ở sảnh 1 lần",
+"Tukar sapa di lobi 1 kali",
+"Intercambio en el vestíbulo 1 vez",
+"Intercâmbio no saguão 1 vez",
+"Austausch in der Lobby 1-mal",
+"Обмен в лобби 1 раз"
+],
+"mission.weekly-battle.title": [
+"战斗胜利20次",
+"ชนะการต่อสู้ 20 ครั้ง",
+"Thắng 20 trận",
+"Menang 20 pertarungan",
+"Gana 20 combates",
+"Vença 20 batalhas",
+"Gewinne 20 Kämpfe",
+"Победить в 20 боях"
+],
+"mission.daily-stamina.title": [
+"消耗60体力",
+"ใช้สตามินา 60",
+"Dùng 60 Thể lực",
+"Gunakan 60 Stamina",
+"Usa 60 de Estamina",
+"Use 60 de Estamina",
+"Verbrauche 60 Ausdauer",
+"Потратьте 60 выносливости"
+],
+"mission.daily-harvest.title": [
+"采掘收获1次",
+"เก็บเกี่ยวการขุดค้น 1 ครั้ง",
+"Thu hoạch Khai thác 1 lần",
+"Panen galian 1 kali",
+"Cosecha la excavación 1 vez",
+"Colha a escavação 1 vez",
+"Ernte 1-mal die Ausgrabung",
+"Соберите урожай раскопок 1 раз"
+],
+"mission.weekly-daily.title": [
+"完成20个每日任务",
+"ทำภารกิจรายวันสำเร็จ 20 ครั้ง",
+"Hoàn thành 20 nhiệm vụ ngày",
+"Selesaikan 20 misi harian",
+"Completa 20 misiones diarias",
+"Conclua 20 missões diárias",
+"Schließe 20 tägliche Missionen ab",
+"Выполните 20 ежедневных заданий"
+],
+"mission.weekly-stamina.title": [
+"消耗600体力",
+"ใช้สตามินา 600",
+"Dùng 600 Thể lực",
+"Gunakan 600 Stamina",
+"Usa 600 de Estamina",
+"Use 600 de Estamina",
+"Verbrauche 600 Ausdauer",
+"Потратьте 600 выносливости"
+],
+"mission.weekly-dispatch.title": [
+"派遣交流5次",
+"ส่งการแลกเปลี่ยน 5 ครั้ง",
+"Cử Giao lưu 5 lần",
+"Kirim 5 pengiriman Pertukaran",
+"Envía 5 despachos de Intercambio",
+"Envie 5 despachos de Intercâmbio",
+"Schicke 5 Austausch-Entsendungen",
+"Отправьте 5 обменов"
+],
+"mission.weekly-salary.title": [
+"喂食遗物10次",
+"ป้อนอาหารเรลิก 10 ครั้ง",
+"Cho Di vật ăn 10 lần",
+"Beri makan Relik 10 kali",
+"Alimenta Reliquias 10 veces",
+"Alimente Relíquias 10 vezes",
+"Füttere 10-mal Relikte",
+"Покормите Реликтов 10 раз"
+],
+"mission.daily-dispatch.title": [
+"派遣交流1次",
+"ส่งการแลกเปลี่ยน 1 ครั้ง",
+"Cử Giao lưu 1 lần",
+"Kirim 1 pengiriman Pertukaran",
+"Envía 1 despacho de Intercambio",
+"Envie 1 despacho de Intercâmbio",
+"Schicke 1 Austausch-Entsendung",
+"Отправьте 1 обмен"
+],
+"mission.weekly-harvest.title": [
+"采掘收获5次",
+"เก็บเกี่ยวการขุดค้น 5 ครั้ง",
+"Thu hoạch Khai thác 5 lần",
+"Panen galian 5 kali",
+"Cosecha la excavación 5 veces",
+"Colha a escavação 5 vezes",
+"Ernte 5-mal die Ausgrabung",
+"Соберите урожай раскопок 5 раз"
+],
+"mission.weekly-excavate.title": [
+"在研究所研究角色10次",
+"วิจัยตัวละครที่ห้องวิจัย 10 ครั้ง",
+"Nghiên cứu nhân vật ở Viện nghiên cứu 10 lần",
+"Riset karakter di Lab Riset 10 kali",
+"Investiga un personaje en el Laboratorio de Investigación 10 veces",
+"Pesquise um personagem no Laboratório de Pesquisa 10 vezes",
+"Erforsche 10-mal einen Charakter im Forschungslabor",
+"Проведите исследование персонажа в исследовательской лаборатории 10 раз"
+]
+}

@@ -1,0 +1,952 @@
+{
+"relic.raitia-grass.name": [
+"维莉娅",
+"วิเรีย",
+"Viria",
+"Viria",
+"Viria",
+"Viria",
+"Viria",
+"Вирия"
+],
+"relic.raitia-grass.origin": [
+"睡鼠",
+"หนูดอร์เมาส์",
+"Chuột sóc",
+"Dormouse",
+"Lirón",
+"Arganaz",
+"Bilch",
+"Соня"
+],
+"relic.raitia-grass.excavationSite": [
+"斯洛文尼亚 喀斯特洞穴沉积层",
+"ตะกอนถ้ำคาสต์ สโลวีเนีย",
+"Trầm tích hang karst, Slovenia",
+"Sedimen gua karst Slovenia",
+"Sedimento de cueva kárstica, Eslovenia",
+"Sedimento de caverna cárstica, Eslovênia",
+"Karsthöhlensediment, Slowenien",
+"Отложения карстовой пещеры, Словения"
+],
+"relic.raitia-grass.fossilRecord": [
+"从洞穴沉积物的同一层中回收了数十个同种头骨。其中五个在大小与齿列上高度一致，被归为同一窝。",
+"จากตะกอนถ้ำชั้นเดียวกันได้กะโหลกชนิดเดียวกันหลายสิบชิ้น ห้าชิ้นในนั้นมีขนาดและแนวฟันตรงกันมากจนจัดเป็นครอกเดียวกัน",
+"Hàng chục hộp sọ cùng loài được thu từ một lớp trầm tích hang duy nhất. Năm chiếc trong số đó khớp nhau về kích thước và hàm răng đến mức được xếp vào cùng một lứa.",
+"Puluhan tengkorak spesies yang sama ditemukan dari satu lapisan sedimen gua. Lima di antaranya begitu cocok dalam ukuran dan susunan gigi sehingga digolongkan satu perindukan.",
+"De una sola capa de sedimento de la cueva se recuperaron decenas de cráneos de la misma especie. Cinco coinciden tanto en tamaño y dentición que se clasificaron como una misma camada.",
+"De uma única camada de sedimento da caverna foram recuperados dezenas de crânios da mesma espécie. Cinco deles coincidem tanto em tamanho e dentição que foram classificados como uma só ninhada.",
+"Aus einer einzigen Schicht Höhlensediment wurden Dutzende Schädel derselben Art geborgen. Fünf davon stimmen in Größe und Gebiss so genau überein, dass sie als ein Wurf eingestuft wurden.",
+"Из одного слоя пещерных отложений извлекли десятки черепов одного вида. Пять из них так совпадают по размеру и зубам, что их отнесли к одному помёту."
+],
+"relic.raitia-grass.catalogSummary": [
+"以睡鼠为基础，复原出过大门齿与颊囊的个体。",
+"ตัวอย่างที่ฟื้นคืนจากหนูดอร์เมาส์ มีฟันหน้าและกระพุ้งแก้มขนาดใหญ่เกินปกติ",
+"Mẫu vật dựa trên chuột sóc, được phục hồi với răng cửa và túi má quá khổ.",
+"Spesimen berbasis dormouse yang direstorasi dengan gigi seri dan kantong pipi berukuran besar.",
+"Espécimen basado en un lirón, restaurado con incisivos y abazones descomunales.",
+"Espécime baseado em arganaz, restaurado com incisivos e bolsas nas bochechas enormes.",
+"Ein Exemplar auf Bilchbasis, restauriert mit übergroßen Schneidezähnen und Backentaschen.",
+"Образец на основе сони с увеличенными резцами и защёчными мешками."
+],
+"relic.raitia-grass.squadNote": [
+"歼灭的消耗性兵力。她们朝指向的方向一齐涌去填满走廊，后面的直接踏过前面倒下的地方。",
+"กำลังพลใช้แล้วทิ้งของหน่วยทำลายล้าง พวกเธอหลั่งไหลพร้อมกันไปทางที่ถูกชี้จนเต็มทางเดิน ตัวข้างหลังก้าวข้ามจุดที่ตัวข้างหน้าล้มไปทันที",
+"Lực lượng tiêu hao của Hủy Diệt. Chúng đồng loạt tràn về hướng được chỉ và lấp kín hành lang, những kẻ phía sau bước thẳng qua chỗ kẻ phía trước ngã xuống.",
+"Massa sekali pakai Pemusnahan. Mereka mengalir serentak ke arah yang ditunjuk dan memenuhi lorong, yang di belakang langsung melangkahi tempat yang di depan jatuh.",
+"La masa desechable de Aniquilación. Fluyen todas a la vez hacia donde se las apunte y llenan el pasillo; las de detrás pisan directamente donde cayeron las de delante.",
+"A massa descartável da Aniquilação. Fluem todas de uma vez para onde forem apontadas e enchem o corredor; as de trás pisam direto onde as da frente caíram.",
+"Die entbehrliche Masse der Vernichtung. Sie strömen alle zugleich in die gewiesene Richtung und füllen den Gang; die hinteren treten geradewegs über die Stelle, an der die vorderen fielen.",
+"Расходная масса Истребления. Они разом текут туда, куда укажут, заполняя коридор, и задние шагают прямо через место, где пали передние."
+],
+"relic.raitia-grass.researcherTitle": [
+"研究员",
+"นักวิจัย",
+"Nhà nghiên cứu",
+"Periset",
+"Investigador",
+"Pesquisador",
+"Forscher",
+"Исследователь"
+],
+"relic.raitia-grass.observation.originYear": [
+"约200万年前",
+"ประมาณ 2 ล้านปีก่อน",
+"Khoảng 2 triệu năm trước",
+"Sekitar 2 juta tahun lalu",
+"Hace unos 2 millones de años",
+"Há cerca de 2 milhões de anos",
+"Vor etwa 2 Millionen Jahren",
+"Около 2 млн лет назад"
+],
+"relic.raitia-grass.observation.restorationYear": [
+"E.C. 2",
+"E.C. 2",
+"E.C. 2",
+"E.C. 2",
+"E.C. 2",
+"E.C. 2",
+"E.C. 2",
+"E.C. 2"
+],
+"relic.raitia-grass.observation.lifeStage": [
+"幼年",
+"วัยเยาว์",
+"Nhỏ tuổi",
+"Remaja",
+"Juvenil",
+"Juvenil",
+"Jungtier",
+"Юная"
+],
+"relic.raitia-grass.observation.height": [
+"0.94 m",
+"0.94 m",
+"0,94 m",
+"0,94 m",
+"0,94 m",
+"0,94 m",
+"0,94 m",
+"0,94 м"
+],
+"relic.raitia-grass.observation.weight": [
+"21 kg",
+"21 kg",
+"21 kg",
+"21 kg",
+"21 kg",
+"21 kg",
+"21 kg",
+"21 кг"
+],
+"relic.raitia-grass.passive.name": [
+"冬眠",
+"จำศีล",
+"Ngủ đông",
+"Hibernasi",
+"Hibernación",
+"Hibernação",
+"Winterschlaf",
+"Спячка"
+],
+"relic.raitia-grass.passive.desc": [
+"每场战斗一次，生命降至一半以下时，5秒内每秒恢复最大生命的3%。",
+"หนึ่งครั้งต่อการต่อสู้ เมื่อ HP ลดเหลือครึ่งหนึ่งหรือต่ำกว่า จะฟื้นฟู 3% ของ HP สูงสุดทุกวินาทีเป็นเวลา 5 วินาที",
+"Mỗi trận một lần, khi HP còn một nửa trở xuống, hồi 3% HP tối đa mỗi giây trong 5 giây.",
+"Sekali per pertarungan, saat HP turun ke separuh atau kurang, memulihkan 3% HP maksimum tiap detik selama 5 detik.",
+"Una vez por combate, cuando sus PV bajan a la mitad o menos, recupera un 3% de los PV máximos cada segundo durante 5 segundos.",
+"Uma vez por batalha, quando o PV cai à metade ou menos, recupera 3% do PV máximo a cada segundo por 5 segundos.",
+"Einmal pro Kampf stellt sie, wenn ihre LP auf die Hälfte oder darunter fallen, 5 Sekunden lang jede Sekunde 3 % der max. LP wieder her.",
+"Раз за бой, когда ОЗ падают до половины или ниже, 5 секунд восстанавливает по 3% макс. ОЗ в секунду."
+],
+"relic.raitia-grass.ferocity.name": [
+"暴食",
+"ตะกละ",
+"Ăn ngấu nghiến",
+"Melahap",
+"Atracón",
+"Comilança",
+"Völlerei",
+"Обжорство"
+],
+"relic.raitia-grass.basic.name": [
+"门齿啃咬",
+"แทะด้วยฟันหน้า",
+"Gặm răng cửa",
+"Gigitan Gigi Seri",
+"Roer con incisivos",
+"Roída de incisivos",
+"Schneidezahnnagen",
+"Грызь резцами"
+],
+"relic.raitia-grass.ultimate.name": [
+"颊囊倾倒",
+"เทกระพุ้งแก้ม",
+"Dốc túi má",
+"Tumpahan Kantong Pipi",
+"Vaciado de abazones",
+"Despejo das bochechas",
+"Backentaschen-Ausschüttung",
+"Опустошение защёчных мешков"
+],
+"relic.raitia-grass.projectName": [
+"ANNIHILATION SWARM — 过食个体群",
+"ANNIHILATION SWARM — ประชากรกินเกิน",
+"ANNIHILATION SWARM — Quần thể ăn quá mức",
+"ANNIHILATION SWARM — Populasi Kekenyangan",
+"ANNIHILATION SWARM — Población sobrealimentada",
+"ANNIHILATION SWARM — População superalimentada",
+"ANNIHILATION SWARM — Überfütterte Population",
+"ANNIHILATION SWARM — Перекормленная популяция"
+],
+"relic.raitia-grass.unlockRecord": [
+"复原后，莱提娅不睡觉。即使到了该冬眠的季节也不停止进食，颊囊早已塞满也仍用门齿啃个不停。找到食物时，她们不是用叫声而是用牙齿的声音传讯，听到的姐妹们会一齐涌向同一处。长女啃过的地方都会长出新芽。从颊囊里撒落的种子在每个脚印里发芽，因此群体经过的道路始终青绿。",
+"หลังฟื้นคืน เรเทียไม่นอน แม้ถึงฤดูจำศีลก็ไม่หยุดกิน และยังแทะด้วยฟันหน้าต่อไปนานหลังกระพุ้งแก้มเต็มแล้ว เมื่อตัวหนึ่งเจออาหาร มันส่งสัญญาณด้วยเสียงฟันแทนเสียงร้อง และพี่น้องทุกตัวที่ได้ยินจะกรูไปที่จุดเดียวกันพร้อมกัน พี่คนโตทิ้งยอดอ่อนไว้ทุกที่ที่แทะ เมล็ดที่ร่วงจากกระพุ้งแก้มงอกในทุกรอยเท้า ทางที่ฝูงผ่านไปจึงเขียวขจีอยู่เสมอ",
+"Sau khi phục hồi, Raetia không ngủ. Dù đến mùa ngủ đông, chúng vẫn không ngừng ăn và cứ gặm bằng răng cửa rất lâu sau khi túi má đã đầy. Khi một con tìm thấy thức ăn, nó báo hiệu không bằng tiếng kêu mà bằng tiếng răng, và mọi chị em nghe thấy sẽ cùng lúc ùa tới một chỗ. Cô chị cả để lại chồi non ở mọi nơi mình gặm. Hạt rơi từ túi má nảy mầm trong từng dấu chân, nên con đường bầy đi qua luôn xanh tươi.",
+"Setelah restorasi, Raetia tidak tidur. Bahkan saat musim hibernasi tiba mereka tak berhenti makan, dan terus menggerogoti dengan gigi seri lama setelah kantong pipinya penuh. Saat satu menemukan makanan, ia memberi sinyal bukan dengan cicitan melainkan bunyi giginya, dan setiap saudari yang mendengarnya berkerumun ke tempat yang sama sekaligus. Si sulung meninggalkan tunas segar di mana pun ia menggerogoti. Biji yang tumpah dari kantong pipinya tumbuh di setiap jejak kaki, sehingga jalan yang dilalui kawanan tetap hijau.",
+"Tras la restauración, Raetia no duerme. Aunque llegue la temporada de hibernar no deja de comer, y sigue royendo con los incisivos mucho después de llenar los abazones. Cuando una encuentra comida no avisa con un chillido sino con el sonido de sus dientes, y todas las hermanas que lo oyen acuden en masa al mismo sitio a la vez. La mayor deja brotes tiernos dondequiera que roe. Las semillas que caen de sus abazones germinan en cada huella, así que el camino por donde pasa el enjambre sigue verde.",
+"Após a restauração, Raetia não dorme. Mesmo quando chega a estação de hibernar, não para de comer e continua roendo com os incisivos muito depois de encher as bochechas. Quando uma encontra comida, avisa não com um guincho, mas com o som dos dentes, e todas as irmãs que ouvem correm em bando para o mesmo lugar ao mesmo tempo. A mais velha deixa brotos novos onde quer que roa. As sementes que caem das bochechas brotam em cada pegada, então o caminho por onde o enxame passa continua verde.",
+"Nach der Restaurierung schläft Raetia nicht. Selbst wenn die Zeit des Winterschlafs kommt, hört sie nicht auf zu fressen und nagt noch lange mit den Schneidezähnen, nachdem die Backentaschen voll sind. Findet eine Futter, meldet sie es nicht mit einem Laut, sondern mit dem Geräusch ihrer Zähne, und jede Schwester, die es hört, schwärmt sofort an dieselbe Stelle. Die Älteste hinterlässt frische Triebe, wo immer sie nagt. Samen, die aus ihren Backentaschen fallen, keimen in jedem Fußabdruck, sodass der Weg des Schwarms grün bleibt.",
+"После восстановления Рэтия не спит. Даже когда приходит пора спячки, она не перестаёт есть и продолжает грызть резцами ещё долго после того, как защёчные мешки полны. Найдя еду, одна подаёт знак не писком, а звуком зубов, и все услышавшие сёстры разом сбегаются в одно место. Старшая оставляет свежие ростки везде, где грызёт. Семена, сыплющиеся из её защёчных мешков, прорастают в каждом следе, поэтому путь, по которому прошла стая, остаётся зелёным."
+],
+"relic.raitia-water.name": [
+"古缇娅",
+"กุตเทีย",
+"Guttia",
+"Guttia",
+"Guttia",
+"Guttia",
+"Guttia",
+"Гуттия"
+],
+"relic.raitia-water.origin": [
+"睡鼠",
+"หนูดอร์เมาส์",
+"Chuột sóc",
+"Dormouse",
+"Lirón",
+"Arganaz",
+"Bilch",
+"Соня"
+],
+"relic.raitia-water.excavationSite": [
+"斯洛文尼亚 喀斯特洞穴沉积层",
+"ตะกอนถ้ำคาสต์ สโลวีเนีย",
+"Trầm tích hang karst, Slovenia",
+"Sedimen gua karst Slovenia",
+"Sedimento de cueva kárstica, Eslovenia",
+"Sedimento de caverna cárstica, Eslovênia",
+"Karsthöhlensediment, Slowenien",
+"Отложения карстовой пещеры, Словения"
+],
+"relic.raitia-water.fossilRecord": [
+"从洞穴沉积物的同一层中回收了数十个同种头骨。其中五个在大小与齿列上高度一致，被归为同一窝。",
+"จากตะกอนถ้ำชั้นเดียวกันได้กะโหลกชนิดเดียวกันหลายสิบชิ้น ห้าชิ้นในนั้นมีขนาดและแนวฟันตรงกันมากจนจัดเป็นครอกเดียวกัน",
+"Hàng chục hộp sọ cùng loài được thu từ một lớp trầm tích hang duy nhất. Năm chiếc trong số đó khớp nhau về kích thước và hàm răng đến mức được xếp vào cùng một lứa.",
+"Puluhan tengkorak spesies yang sama ditemukan dari satu lapisan sedimen gua. Lima di antaranya begitu cocok dalam ukuran dan susunan gigi sehingga digolongkan satu perindukan.",
+"De una sola capa de sedimento de la cueva se recuperaron decenas de cráneos de la misma especie. Cinco coinciden tanto en tamaño y dentición que se clasificaron como una misma camada.",
+"De uma única camada de sedimento da caverna foram recuperados dezenas de crânios da mesma espécie. Cinco deles coincidem tanto em tamanho e dentição que foram classificados como uma só ninhada.",
+"Aus einer einzigen Schicht Höhlensediment wurden Dutzende Schädel derselben Art geborgen. Fünf davon stimmen in Größe und Gebiss so genau überein, dass sie als ein Wurf eingestuft wurden.",
+"Из одного слоя пещерных отложений извлекли десятки черепов одного вида. Пять из них так совпадают по размеру и зубам, что их отнесли к одному помёту."
+],
+"relic.raitia-water.catalogSummary": [
+"以睡鼠为基础，复原出过大门齿与颊囊的个体。",
+"ตัวอย่างที่ฟื้นคืนจากหนูดอร์เมาส์ มีฟันหน้าและกระพุ้งแก้มขนาดใหญ่เกินปกติ",
+"Mẫu vật dựa trên chuột sóc, được phục hồi với răng cửa và túi má quá khổ.",
+"Spesimen berbasis dormouse yang direstorasi dengan gigi seri dan kantong pipi berukuran besar.",
+"Espécimen basado en un lirón, restaurado con incisivos y abazones descomunales.",
+"Espécime baseado em arganaz, restaurado com incisivos e bolsas nas bochechas enormes.",
+"Ein Exemplar auf Bilchbasis, restauriert mit übergroßen Schneidezähnen und Backentaschen.",
+"Образец на основе сони с увеличенными резцами и защёчными мешками."
+],
+"relic.raitia-water.squadNote": [
+"歼灭的消耗性兵力。她们朝指向的方向一齐涌去填满走廊，后面的直接踏过前面倒下的地方。",
+"กำลังพลใช้แล้วทิ้งของหน่วยทำลายล้าง พวกเธอหลั่งไหลพร้อมกันไปทางที่ถูกชี้จนเต็มทางเดิน ตัวข้างหลังก้าวข้ามจุดที่ตัวข้างหน้าล้มไปทันที",
+"Lực lượng tiêu hao của Hủy Diệt. Chúng đồng loạt tràn về hướng được chỉ và lấp kín hành lang, những kẻ phía sau bước thẳng qua chỗ kẻ phía trước ngã xuống.",
+"Massa sekali pakai Pemusnahan. Mereka mengalir serentak ke arah yang ditunjuk dan memenuhi lorong, yang di belakang langsung melangkahi tempat yang di depan jatuh.",
+"La masa desechable de Aniquilación. Fluyen todas a la vez hacia donde se las apunte y llenan el pasillo; las de detrás pisan directamente donde cayeron las de delante.",
+"A massa descartável da Aniquilação. Fluem todas de uma vez para onde forem apontadas e enchem o corredor; as de trás pisam direto onde as da frente caíram.",
+"Die entbehrliche Masse der Vernichtung. Sie strömen alle zugleich in die gewiesene Richtung und füllen den Gang; die hinteren treten geradewegs über die Stelle, an der die vorderen fielen.",
+"Расходная масса Истребления. Они разом текут туда, куда укажут, заполняя коридор, и задние шагают прямо через место, где пали передние."
+],
+"relic.raitia-water.researcherTitle": [
+"研究员",
+"นักวิจัย",
+"Nhà nghiên cứu",
+"Periset",
+"Investigador",
+"Pesquisador",
+"Forscher",
+"Исследователь"
+],
+"relic.raitia-water.observation.originYear": [
+"约200万年前",
+"ประมาณ 2 ล้านปีก่อน",
+"Khoảng 2 triệu năm trước",
+"Sekitar 2 juta tahun lalu",
+"Hace unos 2 millones de años",
+"Há cerca de 2 milhões de anos",
+"Vor etwa 2 Millionen Jahren",
+"Около 2 млн лет назад"
+],
+"relic.raitia-water.observation.restorationYear": [
+"E.C. 2",
+"E.C. 2",
+"E.C. 2",
+"E.C. 2",
+"E.C. 2",
+"E.C. 2",
+"E.C. 2",
+"E.C. 2"
+],
+"relic.raitia-water.observation.lifeStage": [
+"幼年",
+"วัยเยาว์",
+"Nhỏ tuổi",
+"Remaja",
+"Juvenil",
+"Juvenil",
+"Jungtier",
+"Юная"
+],
+"relic.raitia-water.observation.height": [
+"0.94 m",
+"0.94 m",
+"0,94 m",
+"0,94 m",
+"0,94 m",
+"0,94 m",
+"0,94 m",
+"0,94 м"
+],
+"relic.raitia-water.observation.weight": [
+"21 kg",
+"21 kg",
+"21 kg",
+"21 kg",
+"21 kg",
+"21 kg",
+"21 kg",
+"21 кг"
+],
+"relic.raitia-water.passive.name": [
+"冬眠",
+"จำศีล",
+"Ngủ đông",
+"Hibernasi",
+"Hibernación",
+"Hibernação",
+"Winterschlaf",
+"Спячка"
+],
+"relic.raitia-water.passive.desc": [
+"每场战斗一次，生命降至一半以下时，5秒内每秒恢复最大生命的3%。",
+"หนึ่งครั้งต่อการต่อสู้ เมื่อ HP ลดเหลือครึ่งหนึ่งหรือต่ำกว่า จะฟื้นฟู 3% ของ HP สูงสุดทุกวินาทีเป็นเวลา 5 วินาที",
+"Mỗi trận một lần, khi HP còn một nửa trở xuống, hồi 3% HP tối đa mỗi giây trong 5 giây.",
+"Sekali per pertarungan, saat HP turun ke separuh atau kurang, memulihkan 3% HP maksimum tiap detik selama 5 detik.",
+"Una vez por combate, cuando sus PV bajan a la mitad o menos, recupera un 3% de los PV máximos cada segundo durante 5 segundos.",
+"Uma vez por batalha, quando o PV cai à metade ou menos, recupera 3% do PV máximo a cada segundo por 5 segundos.",
+"Einmal pro Kampf stellt sie, wenn ihre LP auf die Hälfte oder darunter fallen, 5 Sekunden lang jede Sekunde 3 % der max. LP wieder her.",
+"Раз за бой, когда ОЗ падают до половины или ниже, 5 секунд восстанавливает по 3% макс. ОЗ в секунду."
+],
+"relic.raitia-water.ferocity.name": [
+"暴食",
+"ตะกละ",
+"Ăn ngấu nghiến",
+"Melahap",
+"Atracón",
+"Comilança",
+"Völlerei",
+"Обжорство"
+],
+"relic.raitia-water.basic.name": [
+"门齿啃咬",
+"แทะด้วยฟันหน้า",
+"Gặm răng cửa",
+"Gigitan Gigi Seri",
+"Roer con incisivos",
+"Roída de incisivos",
+"Schneidezahnnagen",
+"Грызь резцами"
+],
+"relic.raitia-water.ultimate.name": [
+"颊囊倾倒",
+"เทกระพุ้งแก้ม",
+"Dốc túi má",
+"Tumpahan Kantong Pipi",
+"Vaciado de abazones",
+"Despejo das bochechas",
+"Backentaschen-Ausschüttung",
+"Опустошение защёчных мешков"
+],
+"relic.raitia-water.projectName": [
+"ANNIHILATION SWARM — 过食个体群",
+"ANNIHILATION SWARM — ประชากรกินเกิน",
+"ANNIHILATION SWARM — Quần thể ăn quá mức",
+"ANNIHILATION SWARM — Populasi Kekenyangan",
+"ANNIHILATION SWARM — Población sobrealimentada",
+"ANNIHILATION SWARM — População superalimentada",
+"ANNIHILATION SWARM — Überfütterte Population",
+"ANNIHILATION SWARM — Перекормленная популяция"
+],
+"relic.raitia-water.unlockRecord": [
+"复原后，莱提娅不睡觉。即使到了该冬眠的季节也不停止进食，颊囊早已塞满也仍用门齿啃个不停。找到食物时，她们不是用叫声而是用牙齿的声音传讯，听到的姐妹们会一齐涌向同一处。老二的颊囊从不干涸。她含着水啃咬，所以门齿发出闷响；倒下时会一次把水全部洒出。",
+"หลังฟื้นคืน เรเทียไม่นอน แม้ถึงฤดูจำศีลก็ไม่หยุดกิน และยังแทะด้วยฟันหน้าต่อไปนานหลังกระพุ้งแก้มเต็มแล้ว เมื่อตัวหนึ่งเจออาหาร มันส่งสัญญาณด้วยเสียงฟันแทนเสียงร้อง และพี่น้องทุกตัวที่ได้ยินจะกรูไปที่จุดเดียวกันพร้อมกัน กระพุ้งแก้มของคนที่สองไม่เคยแห้ง เธอแทะทั้งที่อมน้ำไว้ ฟันหน้าจึงดังทึบ ๆ และเมื่อล้มลงเธอจะทำน้ำหกออกมาทั้งหมดในคราวเดียว",
+"Sau khi phục hồi, Raetia không ngủ. Dù đến mùa ngủ đông, chúng vẫn không ngừng ăn và cứ gặm bằng răng cửa rất lâu sau khi túi má đã đầy. Khi một con tìm thấy thức ăn, nó báo hiệu không bằng tiếng kêu mà bằng tiếng răng, và mọi chị em nghe thấy sẽ cùng lúc ùa tới một chỗ. Túi má của cô thứ hai không bao giờ khô. Cô gặm trong khi ngậm nước nên răng cửa kêu đục, và khi ngã xuống cô làm đổ hết nước một lượt.",
+"Setelah restorasi, Raetia tidak tidur. Bahkan saat musim hibernasi tiba mereka tak berhenti makan, dan terus menggerogoti dengan gigi seri lama setelah kantong pipinya penuh. Saat satu menemukan makanan, ia memberi sinyal bukan dengan cicitan melainkan bunyi giginya, dan setiap saudari yang mendengarnya berkerumun ke tempat yang sama sekaligus. Kantong pipi si kedua tak pernah kering. Ia menggerogoti sambil menahan air, jadi gigi serinya berbunyi tumpul, dan saat jatuh ia menumpahkan semuanya sekaligus.",
+"Tras la restauración, Raetia no duerme. Aunque llegue la temporada de hibernar no deja de comer, y sigue royendo con los incisivos mucho después de llenar los abazones. Cuando una encuentra comida no avisa con un chillido sino con el sonido de sus dientes, y todas las hermanas que lo oyen acuden en masa al mismo sitio a la vez. Los abazones de la segunda nunca se secan. Roe con agua dentro, así que sus incisivos suenan sordos, y cuando cae la derrama toda de golpe.",
+"Após a restauração, Raetia não dorme. Mesmo quando chega a estação de hibernar, não para de comer e continua roendo com os incisivos muito depois de encher as bochechas. Quando uma encontra comida, avisa não com um guincho, mas com o som dos dentes, e todas as irmãs que ouvem correm em bando para o mesmo lugar ao mesmo tempo. As bochechas da segunda nunca secam. Ela rói com água dentro, por isso os incisivos soam abafados, e quando cai derrama tudo de uma vez.",
+"Nach der Restaurierung schläft Raetia nicht. Selbst wenn die Zeit des Winterschlafs kommt, hört sie nicht auf zu fressen und nagt noch lange mit den Schneidezähnen, nachdem die Backentaschen voll sind. Findet eine Futter, meldet sie es nicht mit einem Laut, sondern mit dem Geräusch ihrer Zähne, und jede Schwester, die es hört, schwärmt sofort an dieselbe Stelle. Die Backentaschen der Zweiten trocknen nie. Sie nagt mit Wasser darin, deshalb klingen ihre Schneidezähne dumpf, und wenn sie fällt, verschüttet sie alles auf einmal.",
+"После восстановления Рэтия не спит. Даже когда приходит пора спячки, она не перестаёт есть и продолжает грызть резцами ещё долго после того, как защёчные мешки полны. Найдя еду, одна подаёт знак не писком, а звуком зубов, и все услышавшие сёстры разом сбегаются в одно место. Защёчные мешки второй никогда не пересыхают. Она грызёт, держа в них воду, поэтому резцы звучат глухо, а падая, она разом выплёскивает всё."
+],
+"relic.raitia-fire.name": [
+"法薇娅",
+"ฟาเวีย",
+"Favia",
+"Favia",
+"Favia",
+"Favia",
+"Favia",
+"Фавия"
+],
+"relic.raitia-fire.origin": [
+"睡鼠",
+"หนูดอร์เมาส์",
+"Chuột sóc",
+"Dormouse",
+"Lirón",
+"Arganaz",
+"Bilch",
+"Соня"
+],
+"relic.raitia-fire.excavationSite": [
+"斯洛文尼亚 喀斯特洞穴沉积层",
+"ตะกอนถ้ำคาสต์ สโลวีเนีย",
+"Trầm tích hang karst, Slovenia",
+"Sedimen gua karst Slovenia",
+"Sedimento de cueva kárstica, Eslovenia",
+"Sedimento de caverna cárstica, Eslovênia",
+"Karsthöhlensediment, Slowenien",
+"Отложения карстовой пещеры, Словения"
+],
+"relic.raitia-fire.fossilRecord": [
+"从洞穴沉积物的同一层中回收了数十个同种头骨。其中五个在大小与齿列上高度一致，被归为同一窝。",
+"จากตะกอนถ้ำชั้นเดียวกันได้กะโหลกชนิดเดียวกันหลายสิบชิ้น ห้าชิ้นในนั้นมีขนาดและแนวฟันตรงกันมากจนจัดเป็นครอกเดียวกัน",
+"Hàng chục hộp sọ cùng loài được thu từ một lớp trầm tích hang duy nhất. Năm chiếc trong số đó khớp nhau về kích thước và hàm răng đến mức được xếp vào cùng một lứa.",
+"Puluhan tengkorak spesies yang sama ditemukan dari satu lapisan sedimen gua. Lima di antaranya begitu cocok dalam ukuran dan susunan gigi sehingga digolongkan satu perindukan.",
+"De una sola capa de sedimento de la cueva se recuperaron decenas de cráneos de la misma especie. Cinco coinciden tanto en tamaño y dentición que se clasificaron como una misma camada.",
+"De uma única camada de sedimento da caverna foram recuperados dezenas de crânios da mesma espécie. Cinco deles coincidem tanto em tamanho e dentição que foram classificados como uma só ninhada.",
+"Aus einer einzigen Schicht Höhlensediment wurden Dutzende Schädel derselben Art geborgen. Fünf davon stimmen in Größe und Gebiss so genau überein, dass sie als ein Wurf eingestuft wurden.",
+"Из одного слоя пещерных отложений извлекли десятки черепов одного вида. Пять из них так совпадают по размеру и зубам, что их отнесли к одному помёту."
+],
+"relic.raitia-fire.catalogSummary": [
+"以睡鼠为基础，复原出过大门齿与颊囊的个体。",
+"ตัวอย่างที่ฟื้นคืนจากหนูดอร์เมาส์ มีฟันหน้าและกระพุ้งแก้มขนาดใหญ่เกินปกติ",
+"Mẫu vật dựa trên chuột sóc, được phục hồi với răng cửa và túi má quá khổ.",
+"Spesimen berbasis dormouse yang direstorasi dengan gigi seri dan kantong pipi berukuran besar.",
+"Espécimen basado en un lirón, restaurado con incisivos y abazones descomunales.",
+"Espécime baseado em arganaz, restaurado com incisivos e bolsas nas bochechas enormes.",
+"Ein Exemplar auf Bilchbasis, restauriert mit übergroßen Schneidezähnen und Backentaschen.",
+"Образец на основе сони с увеличенными резцами и защёчными мешками."
+],
+"relic.raitia-fire.squadNote": [
+"歼灭的消耗性兵力。她们朝指向的方向一齐涌去填满走廊，后面的直接踏过前面倒下的地方。",
+"กำลังพลใช้แล้วทิ้งของหน่วยทำลายล้าง พวกเธอหลั่งไหลพร้อมกันไปทางที่ถูกชี้จนเต็มทางเดิน ตัวข้างหลังก้าวข้ามจุดที่ตัวข้างหน้าล้มไปทันที",
+"Lực lượng tiêu hao của Hủy Diệt. Chúng đồng loạt tràn về hướng được chỉ và lấp kín hành lang, những kẻ phía sau bước thẳng qua chỗ kẻ phía trước ngã xuống.",
+"Massa sekali pakai Pemusnahan. Mereka mengalir serentak ke arah yang ditunjuk dan memenuhi lorong, yang di belakang langsung melangkahi tempat yang di depan jatuh.",
+"La masa desechable de Aniquilación. Fluyen todas a la vez hacia donde se las apunte y llenan el pasillo; las de detrás pisan directamente donde cayeron las de delante.",
+"A massa descartável da Aniquilação. Fluem todas de uma vez para onde forem apontadas e enchem o corredor; as de trás pisam direto onde as da frente caíram.",
+"Die entbehrliche Masse der Vernichtung. Sie strömen alle zugleich in die gewiesene Richtung und füllen den Gang; die hinteren treten geradewegs über die Stelle, an der die vorderen fielen.",
+"Расходная масса Истребления. Они разом текут туда, куда укажут, заполняя коридор, и задние шагают прямо через место, где пали передние."
+],
+"relic.raitia-fire.researcherTitle": [
+"研究员",
+"นักวิจัย",
+"Nhà nghiên cứu",
+"Periset",
+"Investigador",
+"Pesquisador",
+"Forscher",
+"Исследователь"
+],
+"relic.raitia-fire.observation.originYear": [
+"约200万年前",
+"ประมาณ 2 ล้านปีก่อน",
+"Khoảng 2 triệu năm trước",
+"Sekitar 2 juta tahun lalu",
+"Hace unos 2 millones de años",
+"Há cerca de 2 milhões de anos",
+"Vor etwa 2 Millionen Jahren",
+"Около 2 млн лет назад"
+],
+"relic.raitia-fire.observation.restorationYear": [
+"E.C. 2",
+"E.C. 2",
+"E.C. 2",
+"E.C. 2",
+"E.C. 2",
+"E.C. 2",
+"E.C. 2",
+"E.C. 2"
+],
+"relic.raitia-fire.observation.lifeStage": [
+"幼年",
+"วัยเยาว์",
+"Nhỏ tuổi",
+"Remaja",
+"Juvenil",
+"Juvenil",
+"Jungtier",
+"Юная"
+],
+"relic.raitia-fire.observation.height": [
+"0.94 m",
+"0.94 m",
+"0,94 m",
+"0,94 m",
+"0,94 m",
+"0,94 m",
+"0,94 m",
+"0,94 м"
+],
+"relic.raitia-fire.observation.weight": [
+"21 kg",
+"21 kg",
+"21 kg",
+"21 kg",
+"21 kg",
+"21 kg",
+"21 kg",
+"21 кг"
+],
+"relic.raitia-fire.passive.name": [
+"冬眠",
+"จำศีล",
+"Ngủ đông",
+"Hibernasi",
+"Hibernación",
+"Hibernação",
+"Winterschlaf",
+"Спячка"
+],
+"relic.raitia-fire.passive.desc": [
+"每场战斗一次，生命降至一半以下时，5秒内每秒恢复最大生命的3%。",
+"หนึ่งครั้งต่อการต่อสู้ เมื่อ HP ลดเหลือครึ่งหนึ่งหรือต่ำกว่า จะฟื้นฟู 3% ของ HP สูงสุดทุกวินาทีเป็นเวลา 5 วินาที",
+"Mỗi trận một lần, khi HP còn một nửa trở xuống, hồi 3% HP tối đa mỗi giây trong 5 giây.",
+"Sekali per pertarungan, saat HP turun ke separuh atau kurang, memulihkan 3% HP maksimum tiap detik selama 5 detik.",
+"Una vez por combate, cuando sus PV bajan a la mitad o menos, recupera un 3% de los PV máximos cada segundo durante 5 segundos.",
+"Uma vez por batalha, quando o PV cai à metade ou menos, recupera 3% do PV máximo a cada segundo por 5 segundos.",
+"Einmal pro Kampf stellt sie, wenn ihre LP auf die Hälfte oder darunter fallen, 5 Sekunden lang jede Sekunde 3 % der max. LP wieder her.",
+"Раз за бой, когда ОЗ падают до половины или ниже, 5 секунд восстанавливает по 3% макс. ОЗ в секунду."
+],
+"relic.raitia-fire.ferocity.name": [
+"暴食",
+"ตะกละ",
+"Ăn ngấu nghiến",
+"Melahap",
+"Atracón",
+"Comilança",
+"Völlerei",
+"Обжорство"
+],
+"relic.raitia-fire.basic.name": [
+"门齿啃咬",
+"แทะด้วยฟันหน้า",
+"Gặm răng cửa",
+"Gigitan Gigi Seri",
+"Roer con incisivos",
+"Roída de incisivos",
+"Schneidezahnnagen",
+"Грызь резцами"
+],
+"relic.raitia-fire.ultimate.name": [
+"颊囊倾倒",
+"เทกระพุ้งแก้ม",
+"Dốc túi má",
+"Tumpahan Kantong Pipi",
+"Vaciado de abazones",
+"Despejo das bochechas",
+"Backentaschen-Ausschüttung",
+"Опустошение защёчных мешков"
+],
+"relic.raitia-fire.projectName": [
+"ANNIHILATION SWARM — 过食个体群",
+"ANNIHILATION SWARM — ประชากรกินเกิน",
+"ANNIHILATION SWARM — Quần thể ăn quá mức",
+"ANNIHILATION SWARM — Populasi Kekenyangan",
+"ANNIHILATION SWARM — Población sobrealimentada",
+"ANNIHILATION SWARM — População superalimentada",
+"ANNIHILATION SWARM — Überfütterte Population",
+"ANNIHILATION SWARM — Перекормленная популяция"
+],
+"relic.raitia-fire.unlockRecord": [
+"复原后，莱提娅不睡觉。即使到了该冬眠的季节也不停止进食，颊囊早已塞满也仍用门齿啃个不停。找到食物时，她们不是用叫声而是用牙齿的声音传讯，听到的姐妹们会一齐涌向同一处。老三的门齿从不冷却。她啃得太快，光是摩擦就迸出火星，总比任何姐妹都先到达食物。",
+"หลังฟื้นคืน เรเทียไม่นอน แม้ถึงฤดูจำศีลก็ไม่หยุดกิน และยังแทะด้วยฟันหน้าต่อไปนานหลังกระพุ้งแก้มเต็มแล้ว เมื่อตัวหนึ่งเจออาหาร มันส่งสัญญาณด้วยเสียงฟันแทนเสียงร้อง และพี่น้องทุกตัวที่ได้ยินจะกรูไปที่จุดเดียวกันพร้อมกัน ฟันหน้าของคนที่สามไม่เคยเย็นลง เธอแทะเร็วจนแค่แรงเสียดทานก็มีประกายไฟกระเด็น และไปถึงอาหารก่อนพี่น้องทุกคน",
+"Sau khi phục hồi, Raetia không ngủ. Dù đến mùa ngủ đông, chúng vẫn không ngừng ăn và cứ gặm bằng răng cửa rất lâu sau khi túi má đã đầy. Khi một con tìm thấy thức ăn, nó báo hiệu không bằng tiếng kêu mà bằng tiếng răng, và mọi chị em nghe thấy sẽ cùng lúc ùa tới một chỗ. Răng cửa của cô thứ ba không bao giờ nguội. Cô gặm nhanh đến mức chỉ ma sát thôi cũng bắn tia lửa, và luôn tới chỗ thức ăn trước mọi chị em.",
+"Setelah restorasi, Raetia tidak tidur. Bahkan saat musim hibernasi tiba mereka tak berhenti makan, dan terus menggerogoti dengan gigi seri lama setelah kantong pipinya penuh. Saat satu menemukan makanan, ia memberi sinyal bukan dengan cicitan melainkan bunyi giginya, dan setiap saudari yang mendengarnya berkerumun ke tempat yang sama sekaligus. Gigi seri si ketiga tak pernah dingin. Ia menggerogoti begitu cepat hingga gesekannya saja memercikkan bara, dan ia mencapai makanan sebelum saudari mana pun.",
+"Tras la restauración, Raetia no duerme. Aunque llegue la temporada de hibernar no deja de comer, y sigue royendo con los incisivos mucho después de llenar los abazones. Cuando una encuentra comida no avisa con un chillido sino con el sonido de sus dientes, y todas las hermanas que lo oyen acuden en masa al mismo sitio a la vez. Los incisivos de la tercera nunca se enfrían. Roe tan rápido que la fricción sola lanza chispas, y llega a la comida antes que cualquiera de sus hermanas.",
+"Após a restauração, Raetia não dorme. Mesmo quando chega a estação de hibernar, não para de comer e continua roendo com os incisivos muito depois de encher as bochechas. Quando uma encontra comida, avisa não com um guincho, mas com o som dos dentes, e todas as irmãs que ouvem correm em bando para o mesmo lugar ao mesmo tempo. Os incisivos da terceira nunca esfriam. Ela rói tão rápido que só o atrito solta faíscas, e chega à comida antes de qualquer irmã.",
+"Nach der Restaurierung schläft Raetia nicht. Selbst wenn die Zeit des Winterschlafs kommt, hört sie nicht auf zu fressen und nagt noch lange mit den Schneidezähnen, nachdem die Backentaschen voll sind. Findet eine Futter, meldet sie es nicht mit einem Laut, sondern mit dem Geräusch ihrer Zähne, und jede Schwester, die es hört, schwärmt sofort an dieselbe Stelle. Die Schneidezähne der Dritten kühlen nie ab. Sie nagt so schnell, dass allein die Reibung Funken schlägt, und erreicht das Futter vor allen Schwestern.",
+"После восстановления Рэтия не спит. Даже когда приходит пора спячки, она не перестаёт есть и продолжает грызть резцами ещё долго после того, как защёчные мешки полны. Найдя еду, одна подаёт знак не писком, а звуком зубов, и все услышавшие сёстры разом сбегаются в одно место. Резцы третьей никогда не остывают. Она грызёт так быстро, что от одного трения летят искры, и добирается до еды раньше всех сестёр."
+],
+"relic.raitia-earth.name": [
+"希莉娅",
+"ซิเลีย",
+"Silia",
+"Silia",
+"Silia",
+"Silia",
+"Silia",
+"Силия"
+],
+"relic.raitia-earth.origin": [
+"睡鼠",
+"หนูดอร์เมาส์",
+"Chuột sóc",
+"Dormouse",
+"Lirón",
+"Arganaz",
+"Bilch",
+"Соня"
+],
+"relic.raitia-earth.excavationSite": [
+"斯洛文尼亚 喀斯特洞穴沉积层",
+"ตะกอนถ้ำคาสต์ สโลวีเนีย",
+"Trầm tích hang karst, Slovenia",
+"Sedimen gua karst Slovenia",
+"Sedimento de cueva kárstica, Eslovenia",
+"Sedimento de caverna cárstica, Eslovênia",
+"Karsthöhlensediment, Slowenien",
+"Отложения карстовой пещеры, Словения"
+],
+"relic.raitia-earth.fossilRecord": [
+"从洞穴沉积物的同一层中回收了数十个同种头骨。其中五个在大小与齿列上高度一致，被归为同一窝。",
+"จากตะกอนถ้ำชั้นเดียวกันได้กะโหลกชนิดเดียวกันหลายสิบชิ้น ห้าชิ้นในนั้นมีขนาดและแนวฟันตรงกันมากจนจัดเป็นครอกเดียวกัน",
+"Hàng chục hộp sọ cùng loài được thu từ một lớp trầm tích hang duy nhất. Năm chiếc trong số đó khớp nhau về kích thước và hàm răng đến mức được xếp vào cùng một lứa.",
+"Puluhan tengkorak spesies yang sama ditemukan dari satu lapisan sedimen gua. Lima di antaranya begitu cocok dalam ukuran dan susunan gigi sehingga digolongkan satu perindukan.",
+"De una sola capa de sedimento de la cueva se recuperaron decenas de cráneos de la misma especie. Cinco coinciden tanto en tamaño y dentición que se clasificaron como una misma camada.",
+"De uma única camada de sedimento da caverna foram recuperados dezenas de crânios da mesma espécie. Cinco deles coincidem tanto em tamanho e dentição que foram classificados como uma só ninhada.",
+"Aus einer einzigen Schicht Höhlensediment wurden Dutzende Schädel derselben Art geborgen. Fünf davon stimmen in Größe und Gebiss so genau überein, dass sie als ein Wurf eingestuft wurden.",
+"Из одного слоя пещерных отложений извлекли десятки черепов одного вида. Пять из них так совпадают по размеру и зубам, что их отнесли к одному помёту."
+],
+"relic.raitia-earth.catalogSummary": [
+"以睡鼠为基础，复原出过大门齿与颊囊的个体。",
+"ตัวอย่างที่ฟื้นคืนจากหนูดอร์เมาส์ มีฟันหน้าและกระพุ้งแก้มขนาดใหญ่เกินปกติ",
+"Mẫu vật dựa trên chuột sóc, được phục hồi với răng cửa và túi má quá khổ.",
+"Spesimen berbasis dormouse yang direstorasi dengan gigi seri dan kantong pipi berukuran besar.",
+"Espécimen basado en un lirón, restaurado con incisivos y abazones descomunales.",
+"Espécime baseado em arganaz, restaurado com incisivos e bolsas nas bochechas enormes.",
+"Ein Exemplar auf Bilchbasis, restauriert mit übergroßen Schneidezähnen und Backentaschen.",
+"Образец на основе сони с увеличенными резцами и защёчными мешками."
+],
+"relic.raitia-earth.squadNote": [
+"歼灭的消耗性兵力。她们朝指向的方向一齐涌去填满走廊，后面的直接踏过前面倒下的地方。",
+"กำลังพลใช้แล้วทิ้งของหน่วยทำลายล้าง พวกเธอหลั่งไหลพร้อมกันไปทางที่ถูกชี้จนเต็มทางเดิน ตัวข้างหลังก้าวข้ามจุดที่ตัวข้างหน้าล้มไปทันที",
+"Lực lượng tiêu hao của Hủy Diệt. Chúng đồng loạt tràn về hướng được chỉ và lấp kín hành lang, những kẻ phía sau bước thẳng qua chỗ kẻ phía trước ngã xuống.",
+"Massa sekali pakai Pemusnahan. Mereka mengalir serentak ke arah yang ditunjuk dan memenuhi lorong, yang di belakang langsung melangkahi tempat yang di depan jatuh.",
+"La masa desechable de Aniquilación. Fluyen todas a la vez hacia donde se las apunte y llenan el pasillo; las de detrás pisan directamente donde cayeron las de delante.",
+"A massa descartável da Aniquilação. Fluem todas de uma vez para onde forem apontadas e enchem o corredor; as de trás pisam direto onde as da frente caíram.",
+"Die entbehrliche Masse der Vernichtung. Sie strömen alle zugleich in die gewiesene Richtung und füllen den Gang; die hinteren treten geradewegs über die Stelle, an der die vorderen fielen.",
+"Расходная масса Истребления. Они разом текут туда, куда укажут, заполняя коридор, и задние шагают прямо через место, где пали передние."
+],
+"relic.raitia-earth.researcherTitle": [
+"研究员",
+"นักวิจัย",
+"Nhà nghiên cứu",
+"Periset",
+"Investigador",
+"Pesquisador",
+"Forscher",
+"Исследователь"
+],
+"relic.raitia-earth.observation.originYear": [
+"约200万年前",
+"ประมาณ 2 ล้านปีก่อน",
+"Khoảng 2 triệu năm trước",
+"Sekitar 2 juta tahun lalu",
+"Hace unos 2 millones de años",
+"Há cerca de 2 milhões de anos",
+"Vor etwa 2 Millionen Jahren",
+"Около 2 млн лет назад"
+],
+"relic.raitia-earth.observation.restorationYear": [
+"E.C. 2",
+"E.C. 2",
+"E.C. 2",
+"E.C. 2",
+"E.C. 2",
+"E.C. 2",
+"E.C. 2",
+"E.C. 2"
+],
+"relic.raitia-earth.observation.lifeStage": [
+"幼年",
+"วัยเยาว์",
+"Nhỏ tuổi",
+"Remaja",
+"Juvenil",
+"Juvenil",
+"Jungtier",
+"Юная"
+],
+"relic.raitia-earth.observation.height": [
+"0.94 m",
+"0.94 m",
+"0,94 m",
+"0,94 m",
+"0,94 m",
+"0,94 m",
+"0,94 m",
+"0,94 м"
+],
+"relic.raitia-earth.observation.weight": [
+"21 kg",
+"21 kg",
+"21 kg",
+"21 kg",
+"21 kg",
+"21 kg",
+"21 kg",
+"21 кг"
+],
+"relic.raitia-earth.passive.name": [
+"冬眠",
+"จำศีล",
+"Ngủ đông",
+"Hibernasi",
+"Hibernación",
+"Hibernação",
+"Winterschlaf",
+"Спячка"
+],
+"relic.raitia-earth.passive.desc": [
+"每场战斗一次，生命降至一半以下时，5秒内每秒恢复最大生命的3%。",
+"หนึ่งครั้งต่อการต่อสู้ เมื่อ HP ลดเหลือครึ่งหนึ่งหรือต่ำกว่า จะฟื้นฟู 3% ของ HP สูงสุดทุกวินาทีเป็นเวลา 5 วินาที",
+"Mỗi trận một lần, khi HP còn một nửa trở xuống, hồi 3% HP tối đa mỗi giây trong 5 giây.",
+"Sekali per pertarungan, saat HP turun ke separuh atau kurang, memulihkan 3% HP maksimum tiap detik selama 5 detik.",
+"Una vez por combate, cuando sus PV bajan a la mitad o menos, recupera un 3% de los PV máximos cada segundo durante 5 segundos.",
+"Uma vez por batalha, quando o PV cai à metade ou menos, recupera 3% do PV máximo a cada segundo por 5 segundos.",
+"Einmal pro Kampf stellt sie, wenn ihre LP auf die Hälfte oder darunter fallen, 5 Sekunden lang jede Sekunde 3 % der max. LP wieder her.",
+"Раз за бой, когда ОЗ падают до половины или ниже, 5 секунд восстанавливает по 3% макс. ОЗ в секунду."
+],
+"relic.raitia-earth.ferocity.name": [
+"暴食",
+"ตะกละ",
+"Ăn ngấu nghiến",
+"Melahap",
+"Atracón",
+"Comilança",
+"Völlerei",
+"Обжорство"
+],
+"relic.raitia-earth.basic.name": [
+"门齿啃咬",
+"แทะด้วยฟันหน้า",
+"Gặm răng cửa",
+"Gigitan Gigi Seri",
+"Roer con incisivos",
+"Roída de incisivos",
+"Schneidezahnnagen",
+"Грызь резцами"
+],
+"relic.raitia-earth.ultimate.name": [
+"颊囊倾倒",
+"เทกระพุ้งแก้ม",
+"Dốc túi má",
+"Tumpahan Kantong Pipi",
+"Vaciado de abazones",
+"Despejo das bochechas",
+"Backentaschen-Ausschüttung",
+"Опустошение защёчных мешков"
+],
+"relic.raitia-earth.projectName": [
+"ANNIHILATION SWARM — 过食个体群",
+"ANNIHILATION SWARM — ประชากรกินเกิน",
+"ANNIHILATION SWARM — Quần thể ăn quá mức",
+"ANNIHILATION SWARM — Populasi Kekenyangan",
+"ANNIHILATION SWARM — Población sobrealimentada",
+"ANNIHILATION SWARM — População superalimentada",
+"ANNIHILATION SWARM — Überfütterte Population",
+"ANNIHILATION SWARM — Перекормленная популяция"
+],
+"relic.raitia-earth.unlockRecord": [
+"复原后，莱提娅不睡觉。即使到了该冬眠的季节也不停止进食，颊囊早已塞满也仍用门齿啃个不停。找到食物时，她们不是用叫声而是用牙齿的声音传讯，听到的姐妹们会一齐涌向同一处。老四往颊囊里塞满碎石。因为重量她总是最后到达，却守住前线最久，还用自己的身体填补姐妹倒下的空缺。",
+"หลังฟื้นคืน เรเทียไม่นอน แม้ถึงฤดูจำศีลก็ไม่หยุดกิน และยังแทะด้วยฟันหน้าต่อไปนานหลังกระพุ้งแก้มเต็มแล้ว เมื่อตัวหนึ่งเจออาหาร มันส่งสัญญาณด้วยเสียงฟันแทนเสียงร้อง และพี่น้องทุกตัวที่ได้ยินจะกรูไปที่จุดเดียวกันพร้อมกัน คนที่สี่ยัดกรวดเต็มกระพุ้งแก้ม น้ำหนักทำให้เธอมาถึงเป็นคนสุดท้าย แต่เธอยึดแนวหน้าได้นานที่สุด และใช้ร่างตัวเองอุดช่องที่พี่น้องล้มไป",
+"Sau khi phục hồi, Raetia không ngủ. Dù đến mùa ngủ đông, chúng vẫn không ngừng ăn và cứ gặm bằng răng cửa rất lâu sau khi túi má đã đầy. Khi một con tìm thấy thức ăn, nó báo hiệu không bằng tiếng kêu mà bằng tiếng răng, và mọi chị em nghe thấy sẽ cùng lúc ùa tới một chỗ. Cô thứ tư nhét đầy sỏi vào túi má. Sức nặng khiến cô luôn tới sau cùng, nhưng cô giữ tiền tuyến lâu nhất và lấy thân mình lấp chỗ trống nơi chị em ngã xuống.",
+"Setelah restorasi, Raetia tidak tidur. Bahkan saat musim hibernasi tiba mereka tak berhenti makan, dan terus menggerogoti dengan gigi seri lama setelah kantong pipinya penuh. Saat satu menemukan makanan, ia memberi sinyal bukan dengan cicitan melainkan bunyi giginya, dan setiap saudari yang mendengarnya berkerumun ke tempat yang sama sekaligus. Si keempat mengisi kantong pipinya dengan kerikil. Beratnya membuatnya tiba paling akhir, tapi ia menahan garis depan paling lama dan menutup celah saudari yang jatuh dengan tubuhnya.",
+"Tras la restauración, Raetia no duerme. Aunque llegue la temporada de hibernar no deja de comer, y sigue royendo con los incisivos mucho después de llenar los abazones. Cuando una encuentra comida no avisa con un chillido sino con el sonido de sus dientes, y todas las hermanas que lo oyen acuden en masa al mismo sitio a la vez. La cuarta llena los abazones de grava. El peso hace que llegue la última, pero sostiene la primera línea más que nadie y tapa con su cuerpo el hueco de una hermana caída.",
+"Após a restauração, Raetia não dorme. Mesmo quando chega a estação de hibernar, não para de comer e continua roendo com os incisivos muito depois de encher as bochechas. Quando uma encontra comida, avisa não com um guincho, mas com o som dos dentes, e todas as irmãs que ouvem correm em bando para o mesmo lugar ao mesmo tempo. A quarta enche as bochechas de cascalho. O peso a faz chegar por último, mas ela segura a linha de frente por mais tempo e preenche com o corpo o vão de uma irmã caída.",
+"Nach der Restaurierung schläft Raetia nicht. Selbst wenn die Zeit des Winterschlafs kommt, hört sie nicht auf zu fressen und nagt noch lange mit den Schneidezähnen, nachdem die Backentaschen voll sind. Findet eine Futter, meldet sie es nicht mit einem Laut, sondern mit dem Geräusch ihrer Zähne, und jede Schwester, die es hört, schwärmt sofort an dieselbe Stelle. Die Vierte füllt ihre Backentaschen mit Kies. Das Gewicht lässt sie als Letzte ankommen, doch sie hält die Front am längsten und füllt die Lücke einer gefallenen Schwester mit ihrem eigenen Körper.",
+"После восстановления Рэтия не спит. Даже когда приходит пора спячки, она не перестаёт есть и продолжает грызть резцами ещё долго после того, как защёчные мешки полны. Найдя еду, одна подаёт знак не писком, а звуком зубов, и все услышавшие сёстры разом сбегаются в одно место. Четвёртая набивает защёчные мешки гравием. Из-за веса приходит последней, но дольше всех держит передовую и закрывает собой брешь, где пала сестра."
+],
+"relic.raitia-wind.name": [
+"梵缇娅",
+"เวนเทีย",
+"Ventia",
+"Ventia",
+"Ventia",
+"Ventia",
+"Ventia",
+"Вентия"
+],
+"relic.raitia-wind.origin": [
+"睡鼠",
+"หนูดอร์เมาส์",
+"Chuột sóc",
+"Dormouse",
+"Lirón",
+"Arganaz",
+"Bilch",
+"Соня"
+],
+"relic.raitia-wind.excavationSite": [
+"斯洛文尼亚 喀斯特洞穴沉积层",
+"ตะกอนถ้ำคาสต์ สโลวีเนีย",
+"Trầm tích hang karst, Slovenia",
+"Sedimen gua karst Slovenia",
+"Sedimento de cueva kárstica, Eslovenia",
+"Sedimento de caverna cárstica, Eslovênia",
+"Karsthöhlensediment, Slowenien",
+"Отложения карстовой пещеры, Словения"
+],
+"relic.raitia-wind.fossilRecord": [
+"从洞穴沉积物的同一层中回收了数十个同种头骨。其中五个在大小与齿列上高度一致，被归为同一窝。",
+"จากตะกอนถ้ำชั้นเดียวกันได้กะโหลกชนิดเดียวกันหลายสิบชิ้น ห้าชิ้นในนั้นมีขนาดและแนวฟันตรงกันมากจนจัดเป็นครอกเดียวกัน",
+"Hàng chục hộp sọ cùng loài được thu từ một lớp trầm tích hang duy nhất. Năm chiếc trong số đó khớp nhau về kích thước và hàm răng đến mức được xếp vào cùng một lứa.",
+"Puluhan tengkorak spesies yang sama ditemukan dari satu lapisan sedimen gua. Lima di antaranya begitu cocok dalam ukuran dan susunan gigi sehingga digolongkan satu perindukan.",
+"De una sola capa de sedimento de la cueva se recuperaron decenas de cráneos de la misma especie. Cinco coinciden tanto en tamaño y dentición que se clasificaron como una misma camada.",
+"De uma única camada de sedimento da caverna foram recuperados dezenas de crânios da mesma espécie. Cinco deles coincidem tanto em tamanho e dentição que foram classificados como uma só ninhada.",
+"Aus einer einzigen Schicht Höhlensediment wurden Dutzende Schädel derselben Art geborgen. Fünf davon stimmen in Größe und Gebiss so genau überein, dass sie als ein Wurf eingestuft wurden.",
+"Из одного слоя пещерных отложений извлекли десятки черепов одного вида. Пять из них так совпадают по размеру и зубам, что их отнесли к одному помёту."
+],
+"relic.raitia-wind.catalogSummary": [
+"以睡鼠为基础，复原出过大门齿与颊囊的个体。",
+"ตัวอย่างที่ฟื้นคืนจากหนูดอร์เมาส์ มีฟันหน้าและกระพุ้งแก้มขนาดใหญ่เกินปกติ",
+"Mẫu vật dựa trên chuột sóc, được phục hồi với răng cửa và túi má quá khổ.",
+"Spesimen berbasis dormouse yang direstorasi dengan gigi seri dan kantong pipi berukuran besar.",
+"Espécimen basado en un lirón, restaurado con incisivos y abazones descomunales.",
+"Espécime baseado em arganaz, restaurado com incisivos e bolsas nas bochechas enormes.",
+"Ein Exemplar auf Bilchbasis, restauriert mit übergroßen Schneidezähnen und Backentaschen.",
+"Образец на основе сони с увеличенными резцами и защёчными мешками."
+],
+"relic.raitia-wind.squadNote": [
+"歼灭的消耗性兵力。她们朝指向的方向一齐涌去填满走廊，后面的直接踏过前面倒下的地方。",
+"กำลังพลใช้แล้วทิ้งของหน่วยทำลายล้าง พวกเธอหลั่งไหลพร้อมกันไปทางที่ถูกชี้จนเต็มทางเดิน ตัวข้างหลังก้าวข้ามจุดที่ตัวข้างหน้าล้มไปทันที",
+"Lực lượng tiêu hao của Hủy Diệt. Chúng đồng loạt tràn về hướng được chỉ và lấp kín hành lang, những kẻ phía sau bước thẳng qua chỗ kẻ phía trước ngã xuống.",
+"Massa sekali pakai Pemusnahan. Mereka mengalir serentak ke arah yang ditunjuk dan memenuhi lorong, yang di belakang langsung melangkahi tempat yang di depan jatuh.",
+"La masa desechable de Aniquilación. Fluyen todas a la vez hacia donde se las apunte y llenan el pasillo; las de detrás pisan directamente donde cayeron las de delante.",
+"A massa descartável da Aniquilação. Fluem todas de uma vez para onde forem apontadas e enchem o corredor; as de trás pisam direto onde as da frente caíram.",
+"Die entbehrliche Masse der Vernichtung. Sie strömen alle zugleich in die gewiesene Richtung und füllen den Gang; die hinteren treten geradewegs über die Stelle, an der die vorderen fielen.",
+"Расходная масса Истребления. Они разом текут туда, куда укажут, заполняя коридор, и задние шагают прямо через место, где пали передние."
+],
+"relic.raitia-wind.researcherTitle": [
+"研究员",
+"นักวิจัย",
+"Nhà nghiên cứu",
+"Periset",
+"Investigador",
+"Pesquisador",
+"Forscher",
+"Исследователь"
+],
+"relic.raitia-wind.observation.originYear": [
+"约200万年前",
+"ประมาณ 2 ล้านปีก่อน",
+"Khoảng 2 triệu năm trước",
+"Sekitar 2 juta tahun lalu",
+"Hace unos 2 millones de años",
+"Há cerca de 2 milhões de anos",
+"Vor etwa 2 Millionen Jahren",
+"Около 2 млн лет назад"
+],
+"relic.raitia-wind.observation.restorationYear": [
+"E.C. 2",
+"E.C. 2",
+"E.C. 2",
+"E.C. 2",
+"E.C. 2",
+"E.C. 2",
+"E.C. 2",
+"E.C. 2"
+],
+"relic.raitia-wind.observation.lifeStage": [
+"幼年",
+"วัยเยาว์",
+"Nhỏ tuổi",
+"Remaja",
+"Juvenil",
+"Juvenil",
+"Jungtier",
+"Юная"
+],
+"relic.raitia-wind.observation.height": [
+"0.94 m",
+"0.94 m",
+"0,94 m",
+"0,94 m",
+"0,94 m",
+"0,94 m",
+"0,94 m",
+"0,94 м"
+],
+"relic.raitia-wind.observation.weight": [
+"21 kg",
+"21 kg",
+"21 kg",
+"21 kg",
+"21 kg",
+"21 kg",
+"21 kg",
+"21 кг"
+],
+"relic.raitia-wind.passive.name": [
+"冬眠",
+"จำศีล",
+"Ngủ đông",
+"Hibernasi",
+"Hibernación",
+"Hibernação",
+"Winterschlaf",
+"Спячка"
+],
+"relic.raitia-wind.passive.desc": [
+"每场战斗一次，生命降至一半以下时，5秒内每秒恢复最大生命的3%。",
+"หนึ่งครั้งต่อการต่อสู้ เมื่อ HP ลดเหลือครึ่งหนึ่งหรือต่ำกว่า จะฟื้นฟู 3% ของ HP สูงสุดทุกวินาทีเป็นเวลา 5 วินาที",
+"Mỗi trận một lần, khi HP còn một nửa trở xuống, hồi 3% HP tối đa mỗi giây trong 5 giây.",
+"Sekali per pertarungan, saat HP turun ke separuh atau kurang, memulihkan 3% HP maksimum tiap detik selama 5 detik.",
+"Una vez por combate, cuando sus PV bajan a la mitad o menos, recupera un 3% de los PV máximos cada segundo durante 5 segundos.",
+"Uma vez por batalha, quando o PV cai à metade ou menos, recupera 3% do PV máximo a cada segundo por 5 segundos.",
+"Einmal pro Kampf stellt sie, wenn ihre LP auf die Hälfte oder darunter fallen, 5 Sekunden lang jede Sekunde 3 % der max. LP wieder her.",
+"Раз за бой, когда ОЗ падают до половины или ниже, 5 секунд восстанавливает по 3% макс. ОЗ в секунду."
+],
+"relic.raitia-wind.ferocity.name": [
+"暴食",
+"ตะกละ",
+"Ăn ngấu nghiến",
+"Melahap",
+"Atracón",
+"Comilança",
+"Völlerei",
+"Обжорство"
+],
+"relic.raitia-wind.basic.name": [
+"门齿啃咬",
+"แทะด้วยฟันหน้า",
+"Gặm răng cửa",
+"Gigitan Gigi Seri",
+"Roer con incisivos",
+"Roída de incisivos",
+"Schneidezahnnagen",
+"Грызь резцами"
+],
+"relic.raitia-wind.ultimate.name": [
+"颊囊倾倒",
+"เทกระพุ้งแก้ม",
+"Dốc túi má",
+"Tumpahan Kantong Pipi",
+"Vaciado de abazones",
+"Despejo das bochechas",
+"Backentaschen-Ausschüttung",
+"Опустошение защёчных мешков"
+],
+"relic.raitia-wind.projectName": [
+"ANNIHILATION SWARM — 过食个体群",
+"ANNIHILATION SWARM — ประชากรกินเกิน",
+"ANNIHILATION SWARM — Quần thể ăn quá mức",
+"ANNIHILATION SWARM — Populasi Kekenyangan",
+"ANNIHILATION SWARM — Población sobrealimentada",
+"ANNIHILATION SWARM — População superalimentada",
+"ANNIHILATION SWARM — Überfütterte Population",
+"ANNIHILATION SWARM — Перекормленная популяция"
+],
+"relic.raitia-wind.unlockRecord": [
+"复原后，莱提娅不睡觉。即使到了该冬眠的季节也不停止进食，颊囊早已塞满也仍用门齿啃个不停。找到食物时，她们不是用叫声而是用牙齿的声音传讯，听到的姐妹们会一齐涌向同一处。老五让颊囊保持空着。身子轻盈的她跑在前面标出食物所在，门齿的声音传得比谁都远。",
+"หลังฟื้นคืน เรเทียไม่นอน แม้ถึงฤดูจำศีลก็ไม่หยุดกิน และยังแทะด้วยฟันหน้าต่อไปนานหลังกระพุ้งแก้มเต็มแล้ว เมื่อตัวหนึ่งเจออาหาร มันส่งสัญญาณด้วยเสียงฟันแทนเสียงร้อง และพี่น้องทุกตัวที่ได้ยินจะกรูไปที่จุดเดียวกันพร้อมกัน คนที่ห้าปล่อยกระพุ้งแก้มว่างไว้ ด้วยตัวที่เบา เธอวิ่งนำไปบอกตำแหน่งอาหาร และเสียงฟันหน้าของเธอดังไปไกลกว่าใคร",
+"Sau khi phục hồi, Raetia không ngủ. Dù đến mùa ngủ đông, chúng vẫn không ngừng ăn và cứ gặm bằng răng cửa rất lâu sau khi túi má đã đầy. Khi một con tìm thấy thức ăn, nó báo hiệu không bằng tiếng kêu mà bằng tiếng răng, và mọi chị em nghe thấy sẽ cùng lúc ùa tới một chỗ. Cô thứ năm để túi má trống. Thân nhẹ, cô chạy trước đánh dấu nơi có thức ăn, và tiếng răng cửa của cô vang xa hơn tất cả.",
+"Setelah restorasi, Raetia tidak tidur. Bahkan saat musim hibernasi tiba mereka tak berhenti makan, dan terus menggerogoti dengan gigi seri lama setelah kantong pipinya penuh. Saat satu menemukan makanan, ia memberi sinyal bukan dengan cicitan melainkan bunyi giginya, dan setiap saudari yang mendengarnya berkerumun ke tempat yang sama sekaligus. Si kelima membiarkan kantong pipinya kosong. Bertubuh ringan, ia berlari lebih dulu menandai letak makanan, dan bunyi gigi serinya terdengar lebih jauh dari siapa pun.",
+"Tras la restauración, Raetia no duerme. Aunque llegue la temporada de hibernar no deja de comer, y sigue royendo con los incisivos mucho después de llenar los abazones. Cuando una encuentra comida no avisa con un chillido sino con el sonido de sus dientes, y todas las hermanas que lo oyen acuden en masa al mismo sitio a la vez. La quinta mantiene los abazones vacíos. Ligera, corre por delante para marcar dónde está la comida, y sus incisivos se oyen más lejos que los de ninguna.",
+"Após a restauração, Raetia não dorme. Mesmo quando chega a estação de hibernar, não para de comer e continua roendo com os incisivos muito depois de encher as bochechas. Quando uma encontra comida, avisa não com um guincho, mas com o som dos dentes, e todas as irmãs que ouvem correm em bando para o mesmo lugar ao mesmo tempo. A quinta mantém as bochechas vazias. Leve, corre à frente para marcar onde está a comida, e seus incisivos se ouvem mais longe que os de qualquer uma.",
+"Nach der Restaurierung schläft Raetia nicht. Selbst wenn die Zeit des Winterschlafs kommt, hört sie nicht auf zu fressen und nagt noch lange mit den Schneidezähnen, nachdem die Backentaschen voll sind. Findet eine Futter, meldet sie es nicht mit einem Laut, sondern mit dem Geräusch ihrer Zähne, und jede Schwester, die es hört, schwärmt sofort an dieselbe Stelle. Die Fünfte hält ihre Backentaschen leer. Leichtfüßig rennt sie voraus, um zu markieren, wo das Futter ist, und ihre Schneidezähne tragen weiter als die aller anderen.",
+"После восстановления Рэтия не спит. Даже когда приходит пора спячки, она не перестаёт есть и продолжает грызть резцами ещё долго после того, как защёчные мешки полны. Найдя еду, одна подаёт знак не писком, а звуком зубов, и все услышавшие сёстры разом сбегаются в одно место. Пятая держит защёчные мешки пустыми. Лёгкая, она бежит вперёд отметить, где еда, и звук её резцов разносится дальше, чем у остальных."
+]
+}

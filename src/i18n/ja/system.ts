@@ -31,6 +31,7 @@ export const SYSTEM_JA = {
   "product.action.platform_payment": "購入",
   "product.action.free": "無料受取",
   "product.action.rewarded_ad": "広告を見て受取",
+  "product.action.item": "交換",
   "product.pending": "処理中…",
   "product.pending.reason": "すでに処理中です。",
   "product.limit.ad": "UTCの1日の制限に達しました。",
@@ -41,6 +42,7 @@ export const SYSTEM_JA = {
   "product.price.free": "無料",
   "product.price.ad": "広告 · 1日{count}回",
   "product.price.currency": "{amount} {currency}",
+  "product.price.item": "{amount} {item}",
 
   "mail.launch.title": "開拓支援の補給箱",
   "mail.launch.sender": "研究支援局",

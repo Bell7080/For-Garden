@@ -1,0 +1,23 @@
+{
+"interaction.title": ["交流", "แลกเปลี่ยน", "Giao lưu", "Pertukaran", "Intercambio", "Intercâmbio", "Austausch", "Обмен"],
+"interaction.subtitle": ["每座城市可派遣一支队伍", "ส่งได้เมืองละหนึ่งทีม", "Mỗi thành phố được cử một đội", "Satu tim dapat dikirim ke tiap kota", "Se puede enviar un equipo a cada ciudad", "Uma equipe pode ser enviada a cada cidade", "In jede Stadt kann ein Team geschickt werden", "В каждый город можно отправить один отряд"],
+"interaction.dispatched": ["派遣中 · {remaining}", "กำลังส่งตัว · {remaining}", "Đang cử đi · {remaining}", "Dikirim · {remaining}", "Enviado · {remaining}", "Enviado · {remaining}", "Entsandt · {remaining}", "В пути · {remaining}"],
+"interaction.awaitingClaim": ["待领取", "รอรับรางวัล", "Chờ nhận", "Menunggu diklaim", "Por reclamar", "Aguardando resgate", "Abholbereit", "Ожидает получения"],
+"interaction.lockedByStage": ["通关{stage}后开放", "เปิดหลังผ่าน {stage}", "Mở sau khi vượt {stage}", "Terbuka setelah menyelesaikan {stage}", "Se abre tras superar {stage}", "Abre após concluir {stage}", "Wird nach {stage} freigeschaltet", "Откроется после прохождения {stage}"],
+"interaction.journal": ["城市日志", "บันทึกเมือง", "Nhật ký thành phố", "Jurnal Kota", "Diario de la ciudad", "Diário da cidade", "Stadtjournal", "Дневник города"],
+"interaction.expected": ["预计奖励", "รางวัลที่คาดว่าจะได้", "Thưởng dự kiến", "Perkiraan Hadiah", "Recompensas esperadas", "Recompensas esperadas", "Erwartete Belohnungen", "Ожидаемые награды"],
+"interaction.specialty": ["专长", "ความถนัด", "Chuyên môn", "Keahlian", "Especialidad", "Especialidade", "Spezialität", "Специализация"],
+"interaction.specialtyMatch": ["专长 {count}", "ความถนัด {count}", "Chuyên môn {count}", "Keahlian {count}", "Especialidad {count}", "Especialidade {count}", "Spezialität {count}", "Специализация {count}"],
+"interaction.awayOverlay": ["派遣中", "ส่งตัวอยู่", "Đang cử đi", "Dikirim", "Enviado", "Enviado", "Entsandt", "В пути"],
+"interaction.sendSub": ["{count} / 3  ·  奖励 ×{factor}", "{count} / 3  ·  รางวัล ×{factor}", "{count} / 3  ·  Thưởng ×{factor}", "{count} / 3  ·  Hadiah ×{factor}", "{count} / 3  ·  Recompensas ×{factor}", "{count} / 3  ·  Recompensas ×{factor}", "{count} / 3  ·  Belohnung ×{factor}", "{count} / 3  ·  Награды ×{factor}"],
+"interaction.autoPlace": ["自动配置", "จัดวางอัตโนมัติ", "Tự xếp", "Atur Otomatis", "Colocación automática", "Posicionar automático", "Auto-Platzierung", "Авторасстановка"],
+"interaction.noRelics": ["没有可派遣的遗物", "ไม่มีเรลิกที่ส่งได้", "Không có Di vật nào để cử đi", "Tidak ada Relik yang bisa dikirim", "No hay Reliquias que enviar", "Nenhuma Relíquia pode ser enviada", "Kein Relikt kann entsandt werden", "Нет реликтов для отправки"],
+"interaction.ownedRelics": ["拥有的遗物", "เรลิกที่มี", "Di vật sở hữu", "Relik Dimiliki", "Reliquias obtenidas", "Relíquias obtidas", "Eigene Relikte", "Ваши реликты"],
+"interaction.ownedRelicsForSlot": ["拥有的遗物 · 配置到{slot}号位", "เรลิกที่มี · วางในช่อง {slot}", "Di vật sở hữu · Đặt vào ô {slot}", "Relik Dimiliki · Tempatkan di slot {slot}", "Reliquias obtenidas · Colocar en la posición {slot}", "Relíquias obtidas · Colocar na posição {slot}", "Eigene Relikte · Auf Platz {slot} setzen", "Ваши реликты · Поставить на место {slot}"],
+"interaction.claiming": ["领取中…", "กำลังรับ…", "Đang nhận…", "Mengklaim…", "Reclamando…", "Resgatando…", "Wird abgeholt…", "Получение…"],
+"interaction.claim": ["领取奖励", "รับรางวัล", "Nhận thưởng", "Klaim Hadiah", "Reclamar recompensas", "Resgatar recompensas", "Belohnung abholen", "Забрать награду"],
+"interaction.cancel": ["取消", "ยกเลิก", "Hủy", "Batal", "Cancelar", "Cancelar", "Abbrechen", "Отмена"],
+"interaction.sending": ["派遣中…", "กำลังส่ง…", "Đang cử đi…", "Mengirim…", "Enviando…", "Enviando…", "Wird entsandt…", "Отправка…"],
+"interaction.send": ["派遣", "ส่งตัว", "Cử đi", "Kirim", "Enviar", "Enviar", "Entsenden", "Отправить"],
+"interaction.rewardTitle": ["交流奖励", "รางวัลการแลกเปลี่ยน", "Thưởng Giao lưu", "Hadiah Pertukaran", "Recompensas de Intercambio", "Recompensas de Intercâmbio", "Austausch-Belohnungen", "Награды обмена"]
+}

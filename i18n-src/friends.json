@@ -1,0 +1,5 @@
+{
+"friends.title": ["好友", "เพื่อน", "Bạn bè", "Teman", "Amigos", "Amigos", "Freunde", "Друзья"],
+"friends.researchLevel": ["研究员 LV.{level}", "นักวิจัย LV.{level}", "Nhà nghiên cứu LV.{level}", "Periset LV.{level}", "Investigador LV.{level}", "Pesquisador LV.{level}", "Forscher LV.{level}", "Исследователь LV.{level}"],
+"friends.profile": ["好友资料", "โปรไฟล์เพื่อน", "Hồ sơ bạn bè", "Profil Teman", "Perfil de amigo", "Perfil do amigo", "Freundesprofil", "Профиль друга"]
+}

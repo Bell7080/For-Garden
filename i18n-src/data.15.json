@@ -1,0 +1,1102 @@
+{
+"dialogue.event-great-auk-report.specimen.speaker": [
+"托莉卡",
+"โทริกะ",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Торика"
+],
+"dialogue.event-great-auk-report.specimen.body": [
+"北大西洋标本箱里出现了大海雀的骨骼标记。",
+"เจอเครื่องหมายโครงกระดูกของนกอ๊อกใหญ่ในกล่องตัวอย่างแอตแลนติกเหนือ",
+"Trong hộp mẫu Bắc Đại Tây Dương xuất hiện dấu xương của chim anca lớn.",
+"Penanda kerangka great auk muncul di kotak spesimen Atlantik Utara.",
+"Ha aparecido un marcador óseo de alca gigante en la caja de especímenes del Atlántico Norte.",
+"Um marcador ósseo de arau-gigante apareceu na caixa de espécimes do Atlântico Norte.",
+"Im Nordatlantik-Probenkasten ist eine Skelettmarkierung des Riesenalks aufgetaucht.",
+"В ящике с образцами Северной Атлантики нашлась скелетная метка бескрылой гагарки."
+],
+"dialogue.event-great-auk-report.site.speaker": [
+"研究员",
+"นักวิจัย",
+"Nhà nghiên cứu",
+"Periset",
+"Investigador",
+"Pesquisador",
+"Forscher",
+"Исследователь"
+],
+"dialogue.event-great-auk-report.site.body": [
+"先保住海岸采掘现场，回收受损的记录碎片吧。",
+"ไปยึดพื้นที่ขุดค้นชายฝั่งแล้วเก็บเศษบันทึกที่เสียหายกันเถอะ",
+"Hãy bảo vệ hiện trường khai quật ven biển và thu hồi các mảnh ghi chép bị hỏng.",
+"Ayo amankan situs penggalian pantai dan pulihkan pecahan catatan yang rusak.",
+"Aseguremos la excavación costera y recuperemos los fragmentos de registro dañados.",
+"Vamos proteger o sítio de escavação costeiro e recuperar os fragmentos de registro danificados.",
+"Sichern wir die Küstengrabung und bergen die beschädigten Aufzeichnungsfragmente.",
+"Давай обезопасим прибрежный раскоп и соберём повреждённые фрагменты записей."
+],
+"dialogue.event-great-auk-report.result.speaker": [
+"托莉卡",
+"โทริกะ",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Торика"
+],
+"dialogue.event-great-auk-report.result.body": [
+"我把栖息地和灭绝原因对照过了。现在就把采掘报告交给保存档案馆。",
+"ฉันเทียบถิ่นอาศัยกับสาเหตุการสูญพันธุ์แล้ว จะส่งรายงานการขุดค้นให้หอเก็บรักษาเดี๋ยวนี้",
+"Mình đã đối chiếu môi trường sống với nguyên nhân tuyệt chủng. Giờ mình sẽ giao báo cáo khai quật cho kho lưu trữ bảo tồn.",
+"Aku sudah mencocokkan habitatnya dengan penyebab kepunahan. Laporan penggaliannya akan kuserahkan ke arsip pelestarian sekarang.",
+"He contrastado el hábitat con la causa de la extinción. Ahora entrego el informe de excavación al archivo de conservación.",
+"Cruzei o habitat com a causa da extinção. Vou entregar o relatório de escavação ao arquivo de preservação agora.",
+"Ich habe den Lebensraum mit der Aussterbeursache abgeglichen. Den Grabungsbericht gebe ich jetzt ans Konservierungsarchiv.",
+"Я сверила ареал с причиной вымирания. Сейчас передам отчёт о раскопках в архив сохранения."
+],
+"dialogue.stage-1-5-greenhouse-echo.signal.speaker": [
+"托莉卡",
+"โทริกะ",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Торика"
+],
+"dialogue.stage-1-5-greenhouse-echo.signal.body": [
+"等等，我听到主走廊旁的温室里传来古老的生物信号。",
+"เดี๋ยวก่อน ฉันได้ยินสัญญาณชีวภาพเก่าจากเรือนกระจกข้างทางเดินหลัก",
+"Khoan đã, mình nghe thấy tín hiệu sinh học cũ từ nhà kính cạnh hành lang chính.",
+"Tunggu, aku mendengar sinyal hayati lama dari rumah kaca di samping koridor utama.",
+"Espera, oigo una vieja bioseñal en el invernadero junto al pasillo principal.",
+"Espere, ouço um biossinal antigo vindo da estufa ao lado do corredor principal.",
+"Warte, ich höre ein altes Biosignal aus dem Gewächshaus neben dem Hauptgang.",
+"Постой, я слышу старый биосигнал из оранжереи у главного коридора."
+],
+"dialogue.stage-1-5-greenhouse-echo.seed.speaker": [
+"蕾克希娅",
+"เร็กเซีย",
+"Rexia",
+"Rexia",
+"Rexia",
+"Rexia",
+"Rexia",
+"Рексия"
+],
+"dialogue.stage-1-5-greenhouse-echo.seed.body": [
+"没有战斗的痕迹。感觉像是某人留下的种子的记忆。",
+"ไม่มีร่องรอยการต่อสู้ รู้สึกเหมือนความทรงจำของเมล็ดที่ใครสักคนทิ้งไว้",
+"Không có dấu vết giao tranh. Cảm giác như ký ức về hạt giống ai đó để lại.",
+"Tak ada tanda pertarungan. Rasanya seperti kenangan benih yang ditinggalkan seseorang.",
+"No hay rastro de lucha. Parece el recuerdo de una semilla que alguien dejó atrás.",
+"Nenhum sinal de luta. Parece a memória de uma semente que alguém deixou para trás.",
+"Keine Kampfspuren. Es fühlt sich an wie die Erinnerung an einen Samen, den jemand zurückgelassen hat.",
+"Следов боя нет. Похоже на память о семени, которое кто-то оставил."
+],
+"dialogue.stage-1-5-greenhouse-echo.promise.speaker": [
+"托莉卡",
+"โทริกะ",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Торика"
+],
+"dialogue.stage-1-5-greenhouse-echo.promise.body": [
+"记录下来吧。就算我们继续前进，也不该忘记这座小花园。",
+"บันทึกไว้กันเถอะ ต่อให้เราเดินต่อไป ก็ไม่ควรลืมสวนเล็ก ๆ แห่งนี้",
+"Ghi lại đi. Dù ta có đi tiếp, khu vườn nhỏ này cũng không nên bị lãng quên.",
+"Ayo kita catat. Meski kita terus berjalan, taman kecil ini tak boleh dilupakan.",
+"Registrémoslo. Aunque sigamos adelante, este pequeño jardín no debería olvidarse.",
+"Vamos registrar. Mesmo seguindo em frente, este pequeno jardim não deve ser esquecido.",
+"Halten wir es fest. Auch wenn wir weitergehen, soll dieser kleine Garten nicht vergessen werden.",
+"Запишем это. Даже если мы пойдём дальше, этот маленький сад нельзя забывать."
+],
+"dialogue.interaction-central-dialogue-02.signal.speaker": [
+"托莉卡",
+"โทริกะ",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Торика"
+],
+"dialogue.interaction-central-dialogue-02.signal.body": [
+"玻璃走廊下面，一个古老的呼叫信号一直在重复。",
+"ใต้ทางเดินกระจก มีสัญญาณเรียกเก่า ๆ ดังซ้ำไม่หยุด",
+"Dưới hành lang kính, một tín hiệu gọi cũ cứ lặp đi lặp lại.",
+"Sinyal panggilan lama terus berulang di bawah koridor kaca.",
+"Bajo el pasillo de cristal se repite una y otra vez una vieja señal de llamada.",
+"Um antigo sinal de chamada se repete sem parar sob o corredor de vidro.",
+"Unter dem Glasgang wiederholt sich unablässig ein altes Rufsignal.",
+"Под стеклянным коридором раз за разом повторяется старый сигнал вызова."
+],
+"dialogue.interaction-central-dialogue-02.choice.speaker": [
+"研究员",
+"นักวิจัย",
+"Nhà nghiên cứu",
+"Periset",
+"Investigador",
+"Pesquisador",
+"Forscher",
+"Исследователь"
+],
+"dialogue.interaction-central-dialogue-02.choice.body": [
+"记录仪的哪一层要先复原？",
+"ควรฟื้นคืนชั้นไหนของเครื่องบันทึกก่อน?",
+"Nên phục hồi lớp nào của máy ghi trước?",
+"Lapisan perekam mana yang harus kita pulihkan dulu?",
+"¿Qué capa del registrador restauramos primero?",
+"Qual camada do gravador devemos restaurar primeiro?",
+"Welche Schicht des Rekorders sollen wir zuerst restaurieren?",
+"Какой слой записывающего устройства восстановить первым?"
+],
+"dialogue.interaction-central-dialogue-02.choice.choice.0": [
+"先复原声音层",
+"ฟื้นคืนชั้นเสียงก่อน",
+"Phục hồi lớp giọng nói trước",
+"Pulihkan lapisan suara dulu",
+"Restaurar primero la capa de voz",
+"Restaurar primeiro a camada de voz",
+"Zuerst die Sprachschicht restaurieren",
+"Сначала восстановить голосовой слой"
+],
+"dialogue.interaction-central-dialogue-02.choice.choice.1": [
+"先复原移动路线",
+"ฟื้นคืนเส้นทางเคลื่อนที่ก่อน",
+"Phục hồi lộ trình di chuyển trước",
+"Pulihkan rute pergerakan dulu",
+"Restaurar primero las rutas de movimiento",
+"Restaurar primeiro as rotas de movimento",
+"Zuerst die Bewegungsrouten restaurieren",
+"Сначала восстановить маршруты движения"
+],
+"dialogue.interaction-central-dialogue-02.voice-result.speaker": [
+"托莉卡",
+"โทริกะ",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Торика"
+],
+"dialogue.interaction-central-dialogue-02.voice-result.body": [
+"每天都有不同的声音留下同样的问候。这是市民们对复原者说话的记录。",
+"ทุกวันมีคำทักทายเดียวกันถูกทิ้งไว้ด้วยเสียงที่ต่างกัน นี่คือบันทึกที่ชาวเมืองพูดกับผู้ถูกฟื้นคืน",
+"Mỗi ngày, cùng một lời chào được để lại bằng một giọng khác. Đây là ghi chép người dân trò chuyện với những người được phục hồi.",
+"Salam yang sama ditinggalkan dengan suara berbeda setiap hari. Ini catatan warga yang berbicara kepada mereka yang direstorasi.",
+"Cada día queda el mismo saludo con una voz distinta. Son registros de ciudadanos hablando a los restaurados.",
+"A cada dia fica o mesmo cumprimento numa voz diferente. São registros de cidadãos falando com os restaurados.",
+"Jeden Tag bleibt derselbe Gruß in einer anderen Stimme zurück. Es sind Aufzeichnungen von Bürgern, die zu den Restaurierten sprechen.",
+"Каждый день одно и то же приветствие оставлено другим голосом. Это записи горожан, обращающихся к восстановленным."
+],
+"dialogue.interaction-central-dialogue-02.route-result.speaker": [
+"托莉卡",
+"โทริกะ",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Торика"
+],
+"dialogue.interaction-central-dialogue-02.route-result.body": [
+"所有脚印都通向温室中央。看起来像是在等待第一次见面的人们走过的路。",
+"รอยเท้าทุกรอยมุ่งไปกลางเรือนกระจก ดูเหมือนเส้นทางของผู้คนที่รอการพบกันครั้งแรก",
+"Mọi dấu chân đều dẫn tới giữa nhà kính. Trông như lối đi của những người chờ lần gặp đầu tiên.",
+"Setiap jejak kaki mengarah ke tengah rumah kaca. Seperti jalan orang-orang yang menanti pertemuan pertama.",
+"Todas las huellas llevan al centro del invernadero. Parece el camino de gente que esperaba un primer encuentro.",
+"Todas as pegadas levam ao centro da estufa. Parece o caminho de pessoas esperando um primeiro encontro.",
+"Alle Fußspuren führen zur Mitte des Gewächshauses. Es sieht aus wie der Weg von Menschen, die auf ein erstes Treffen warten.",
+"Все следы ведут к центру оранжереи. Похоже на путь людей, ждавших первой встречи."
+],
+"dialogue.opening-train.title": [
+"坠落的方舟",
+"นาวาที่ร่วงหล่น",
+"Con thuyền rơi xuống",
+"Bahtera yang Jatuh",
+"El arca que cae",
+"A arca que cai",
+"Die fallende Arche",
+"Падающий ковчег"
+],
+"dialogue.opening-train.subtitle": [
+"永恒之城与研究员",
+"นครนิรันดร์และนักวิจัย",
+"Thành phố Vĩnh Hằng và nhà nghiên cứu",
+"Kota Abadi dan Sang Periset",
+"La Ciudad Eterna y quien investiga",
+"A Cidade Eterna e quem pesquisa",
+"Die Ewige Stadt und die Forschungsleitung",
+"Вечный город и исследователь"
+],
+"dialogue.opening-train.wake.speaker": [
+"???",
+"???",
+"???",
+"???",
+"???",
+"???",
+"???",
+"???"
+],
+"dialogue.opening-train.wake.body": [
+"研究员，研究员！快睁开眼睛。窗外能看到城市了！",
+"นักวิจัย นักวิจัย! ลืมตาสิ มองเห็นเมืองนอกหน้าต่างแล้ว!",
+"Nhà nghiên cứu ơi, nhà nghiên cứu! Mở mắt ra đi. Nhìn thấy thành phố ngoài cửa sổ rồi!",
+"Periset, periset! Buka matamu. Kotanya terlihat dari jendela!",
+"¡Oye, despierta! ¡Abre los ojos! ¡Ya se ve la ciudad por la ventana!",
+"Ei, acorde! Abra os olhos! Dá para ver a cidade pela janela!",
+"Hey, aufwachen! Mach die Augen auf. Man sieht die Stadt draußen vor dem Fenster!",
+"Исследователь, исследователь! Открой глаза. В окне уже виден город!"
+],
+"dialogue.opening-train.greet.speaker": [
+"托莉卡",
+"โทริกะ",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Торика"
+],
+"dialogue.opening-train.greet.body": [
+"我是托莉卡！从今天起我就是你的护卫遗物。到达之前我会一直待在你身边。",
+"ฉันคือโทริกะ! ตั้งแต่วันนี้ฉันเป็นเรลิกคุ้มกันของเธอ จะอยู่ข้าง ๆ จนกว่าจะถึงเลยนะ",
+"Mình là Torika! Từ hôm nay mình là Di vật hộ tống của bạn. Mình sẽ ở ngay cạnh bạn cho tới khi đến nơi.",
+"Aku Torika! Mulai hari ini aku Relik pengawalmu. Aku akan tetap di sisimu sampai kita tiba.",
+"¡Soy Torika! Desde hoy soy tu Reliquia escolta. Me quedaré a tu lado hasta que lleguemos.",
+"Eu sou a Torika! A partir de hoje sou sua Relíquia de escolta. Vou ficar do seu lado até chegarmos.",
+"Ich bin Torika! Ab heute bin ich dein Begleit-Relikt. Ich bleibe an deiner Seite, bis wir ankommen.",
+"Я Торика! С сегодняшнего дня я твой Реликт сопровождения. Буду рядом, пока не приедем."
+],
+"dialogue.opening-train.window.speaker": [
+"托莉卡",
+"โทริกะ",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Торика"
+],
+"dialogue.opening-train.window.body": [
+"看到那些像白骨一样耸立的塔了吗？那就是建立在灭绝记忆之上的永恒之城。",
+"เห็นหอคอยที่ตั้งตระหง่านเหมือนกระดูกสีขาวไหม? นั่นคือนครนิรันดร์ที่สร้างบนความทรงจำของการสูญพันธุ์",
+"Thấy những ngọn tháp vươn lên như xương trắng kia không? Đó là Thành phố Vĩnh Hằng, xây trên ký ức của sự tuyệt chủng.",
+"Lihat menara-menara yang menjulang seperti tulang putih itu? Itulah Kota Abadi, dibangun di atas kenangan kepunahan.",
+"¿Ves esas torres que se alzan como huesos blancos? Es la Ciudad Eterna, construida sobre la memoria de la extinción.",
+"Vê aquelas torres que se erguem como ossos brancos? É a Cidade Eterna, construída sobre a memória da extinção.",
+"Siehst du die Türme, die wie weiße Knochen aufragen? Das ist die Ewige Stadt, erbaut auf der Erinnerung an das Aussterben.",
+"Видишь башни, что встают, словно белые кости? Это Вечный город, построенный на памяти о вымирании."
+],
+"dialogue.opening-train.answer.speaker": [
+"托莉卡",
+"โทริกะ",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Торика"
+],
+"dialogue.opening-train.answer.body": [
+"到了之后，你最先想做什么？",
+"พอไปถึงแล้ว อยากทำอะไรก่อน?",
+"Tới nơi rồi, bạn muốn làm gì đầu tiên?",
+"Setelah tiba, apa yang ingin kau lakukan pertama kali?",
+"¿Qué quieres hacer primero cuando lleguemos?",
+"O que você quer fazer primeiro quando chegarmos?",
+"Was möchtest du als Erstes tun, wenn wir ankommen?",
+"Что ты хочешь сделать первым делом, когда приедем?"
+],
+"dialogue.opening-train.answer.choice.0": [
+"我想更了解你们",
+"อยากรู้จักพวกเธอให้มากขึ้น",
+"Tôi muốn hiểu các bạn hơn",
+"Aku ingin lebih mengenal kalian",
+"Quiero conoceros mejor",
+"Quero conhecer vocês melhor",
+"Ich will euch besser kennenlernen",
+"Хочу узнать вас получше"
+],
+"dialogue.opening-train.answer.choice.1": [
+"我先去城市里转转",
+"จะเดินดูรอบเมืองก่อน",
+"Tôi sẽ đi dạo quanh thành phố trước",
+"Aku akan berkeliling kota dulu",
+"Primero echaré un vistazo a la ciudad",
+"Vou dar uma volta pela cidade primeiro",
+"Ich sehe mich zuerst in der Stadt um",
+"Сначала осмотрю город"
+],
+"dialogue.opening-train.warm.speaker": [
+"托莉卡",
+"โทริกะ",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Торика"
+],
+"dialogue.opening-train.warm.body": [
+"嘿嘿，那我先说！我喜欢的东西是零食，还有……研究员你旁边的位子！",
+"ฮิฮิ งั้นฉันก่อนนะ! สิ่งที่ชอบคือขนม แล้วก็… ที่นั่งข้าง ๆ นักวิจัย!",
+"Hihi, vậy để mình trước! Thứ mình thích là đồ ăn vặt và… chỗ ngồi cạnh bạn đó!",
+"Hehe, kalau begitu aku duluan! Yang kusuka itu camilan dan... kursi di sebelahmu, periset!",
+"¡Jeje, entonces empiezo yo! Lo que me gusta son los aperitivos y… ¡el asiento a tu lado!",
+"Hehe, então eu começo! Eu gosto de lanchinhos e… do lugar do seu lado!",
+"Hehe, dann fange ich an! Was ich mag, sind Snacks und … der Platz neben dir!",
+"Хе-хе, тогда я первая! Я люблю вкусняшки и… место рядом с тобой!"
+],
+"dialogue.opening-train.ready.speaker": [
+"托莉卡",
+"โทริกะ",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Торика"
+],
+"dialogue.opening-train.ready.body": [
+"那我来带路！先去好吃的店……啊，不、不对，先去重要的研究所！",
+"งั้นฉันจะพาเที่ยวเอง! ร้านอร่อย ๆ ก่อน… อ๊ะ ม-ไม่ใช่ ห้องวิจัยที่สำคัญก่อน!",
+"Vậy để mình dẫn đường! Mấy quán ngon trước… A, k-không, Viện nghiên cứu quan trọng trước!",
+"Kalau begitu biar aku yang mengantarmu! Toko enak dulu... Ah, b-bukan, Lab Riset yang penting dulu!",
+"¡Entonces te lo enseño yo! Primero las tiendas ricas… ¡Ah, n-no, primero los importantes Laboratorios de Investigación!",
+"Então eu te mostro tudo! Primeiro as lojas gostosas… Ah, n-não, primeiro os importantes Laboratórios de Pesquisa!",
+"Dann führe ich dich herum! Zuerst die leckeren Läden … Ah, n-nein, zuerst die wichtigen Forschungslabore!",
+"Тогда я всё покажу! Сначала вкусные лавки… Ой, н-нет, сначала важные исследовательские лаборатории!"
+],
+"dialogue.opening-train.peek.speaker": [
+"???",
+"???",
+"???",
+"???",
+"???",
+"???",
+"???",
+"???"
+],
+"dialogue.opening-train.peek.body": [
+"那、那个……托莉卡。那位……那位就是研究员吗？",
+"อ-เอ่อ… โทริกะ คนนั้น… คนนั้นคือนักวิจัยเหรอ?",
+"Ư-ừm… Torika. Người đó… người đó là nhà nghiên cứu à?",
+"A-anu... Torika. Itu... itu periset, ya?",
+"E-esto… Torika. ¿Esa persona… es quien investiga?",
+"É-é… Torika. Aquela pessoa… é quem pesquisa?",
+"Ä-ähm … Torika. Ist das … ist das die Forschungsleitung?",
+"Э-э… Торика. Это… это исследователь?"
+],
+"dialogue.opening-train.callDodi.speaker": [
+"托莉卡",
+"โทริกะ",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Торика"
+],
+"dialogue.opening-train.callDodi.body": [
+"多蒂！别躲在那后面了，快过来打招呼！",
+"โดดี! เลิกแอบอยู่ข้างหลังแล้วมาทักทายสิ!",
+"Dodi! Đừng trốn sau đó nữa, ra chào hỏi đi!",
+"Dodi! Berhenti bersembunyi di belakang sana dan kemari beri salam!",
+"¡Dodi! ¡Deja de esconderte ahí detrás y ven a saludar!",
+"Dodi! Pare de se esconder aí atrás e venha dizer oi!",
+"Dodi! Hör auf, dich da hinten zu verstecken, und komm Hallo sagen!",
+"Доди! Хватит прятаться, иди поздоровайся!"
+],
+"dialogue.opening-train.fan.speaker": [
+"多蒂",
+"โดดี",
+"Dodi",
+"Dodi",
+"Dodi",
+"Dodi",
+"Dodi",
+"Доди"
+],
+"dialogue.opening-train.fan.body": [
+"哇……真的是本人。是真正的研究员！我、我是记录员多蒂！你的复原报告我每一行都读过了！",
+"ว้าว… ตัวจริงเลย นักวิจัยตัวจริง! ฉ-ฉันคือโดดี ผู้บันทึก! รายงานการฟื้นคืนของคุณ ฉันอ่านครบทุกบรรทัดเลย!",
+"Oa… đúng là người thật. Nhà nghiên cứu thật kìa! T-tớ là Dodi, người ghi chép! Tớ đã đọc từng dòng báo cáo Phục hồi của bạn!",
+"Wah... benar-benar orangnya. Periset asli! A-aku Dodi, sang pencatat! Aku sudah membaca setiap baris laporan Restorasimu!",
+"Uau… es de verdad. ¡Es quien investiga en persona! ¡S-soy Dodi, la cronista! ¡He leído cada línea de tus informes de Restauración!",
+"Uau… é de verdade. É quem pesquisa em pessoa! E-eu sou a Dodi, a registradora! Li cada linha dos seus relatórios de Restauração!",
+"Wow … wirklich echt. Die echte Forschungsleitung! I-ich bin Dodi, die Chronistin! Ich habe jede einzelne Zeile deiner Restaurierungsberichte gelesen!",
+"Ух ты… и правда. Настоящий исследователь! Я-я Доди, летописец! Я прочитала каждую строчку твоих отчётов о Восстановлении!"
+],
+"dialogue.opening-train.shy.speaker": [
+"多蒂",
+"โดดี",
+"Dodi",
+"Dodi",
+"Dodi",
+"Dodi",
+"Dodi",
+"Доди"
+],
+"dialogue.opening-train.shy.body": [
+"所、所以，那个……能不能……在我日志的第一页……签一次名字……？",
+"ง-งั้น เอ่อ… พอจะ… เซ็นชื่อสักครั้ง… ในหน้าแรกของบันทึกฉันได้ไหม…?",
+"V-vậy, ừm… bạn có thể… ký tên một lần… vào trang đầu nhật ký của tớ không…?",
+"J-jadi, anu... maukah... menulis namamu sekali saja... di halaman pertama catatanku...?",
+"E-entonces, esto… ¿podrías… escribir tu nombre una vez… en la primera página de mi diario…?",
+"E-então, é… você poderia… escrever seu nome só uma vez… na primeira página do meu diário…?",
+"A-also, ähm … würdest du vielleicht … einmal deinen Namen … auf die erste Seite meines Logbuchs schreiben …?",
+"Т-так вот… можно… всего разок… написать своё имя… на первой странице моего журнала…?"
+],
+"dialogue.opening-train.title.speaker": [
+"多蒂",
+"โดดี",
+"Dodi",
+"Dodi",
+"Dodi",
+"Dodi",
+"Dodi",
+"Доди"
+],
+"dialogue.opening-train.title.body": [
+"从今天起你就是我们的队长！队长、队长……嘿嘿，已经叫顺口了！",
+"ตั้งแต่วันนี้ คุณคือกัปตันของพวกเรา! กัปตัน กัปตัน… ฮิฮิ ติดปากแล้วล่ะ!",
+"Từ hôm nay bạn là Đội trưởng của bọn tớ! Đội trưởng, Đội trưởng… hihi, nghe quen miệng rồi!",
+"Mulai hari ini kau Kapten kami! Kapten, Kapten... hehe, rasanya sudah biasa!",
+"¡Desde hoy eres nuestro Capitán! Capitán, Capitán… ¡jeje, ya suena natural!",
+"A partir de hoje você é nosso Capitão! Capitão, Capitão… hehe, já soa natural!",
+"Ab heute bist du unser Captain! Captain, Captain … hehe, fühlt sich schon ganz normal an!",
+"С сегодняшнего дня ты наш Капитан! Капитан, Капитан… хе-хе, уже привычно звучит!"
+],
+"dialogue.opening-train.halt.speaker": [
+"???",
+"???",
+"???",
+"???",
+"???",
+"???",
+"???",
+"???"
+],
+"dialogue.opening-train.halt.body": [
+"多蒂。你太近了。研究员都往后仰了。",
+"โดดี ใกล้เกินไปแล้ว นักวิจัยเอนตัวหนีแล้วนะ",
+"Dodi. Cậu đứng gần quá. Nhà nghiên cứu đang ngả người ra sau kìa.",
+"Dodi. Kau terlalu dekat. Perisetnya sampai condong ke belakang.",
+"Dodi. Estás demasiado cerca. Se está echando hacia atrás.",
+"Dodi. Você está perto demais. Está se inclinando para trás.",
+"Dodi. Du bist zu nah. Die Forschungsleitung lehnt sich schon nach hinten.",
+"Доди. Ты слишком близко. Исследователь уже отклоняется назад."
+],
+"dialogue.opening-train.sorry.speaker": [
+"多蒂",
+"โดดี",
+"Dodi",
+"Dodi",
+"Dodi",
+"Dodi",
+"Dodi",
+"Доди"
+],
+"dialogue.opening-train.sorry.body": [
+"啊，对、对不起！我只是见到本人太开心了……！",
+"อ๊ะ ข-ขอโทษ! ฉันแค่ดีใจมากที่ได้เจอ…!",
+"A, x-xin lỗi! Tớ chỉ quá vui khi được gặp…!",
+"Ah, m-maaf! Aku cuma terlalu senang bertemu...!",
+"¡Ah, p-perdón! ¡Es que me alegraba tanto conocerte…!",
+"Ah, d-desculpa! Eu só fiquei muito feliz em conhecer…!",
+"Ah, e-entschuldige! Ich hab mich nur so über das Treffen gefreut …!",
+"Ой, п-прости! Я просто так обрадовалась встрече…!"
+],
+"dialogue.opening-train.parua.speaker": [
+"帕鲁娅",
+"ปารัว",
+"Parua",
+"Parua",
+"Parua",
+"Parua",
+"Parua",
+"Паруа"
+],
+"dialogue.opening-train.parua.body": [
+"我是帕鲁娅。负责看守后方。",
+"ฉันคือปารัว หน้าที่ของฉันคือระวังหลัง",
+"Tớ là Parua. Canh chừng phía sau là việc của tớ.",
+"Aku Parua. Mengawasi bagian belakang adalah tugasku.",
+"Soy Parua. Vigilar la retaguardia es mi trabajo.",
+"Sou a Parua. Vigiar a retaguarda é o meu trabalho.",
+"Ich bin Parua. Den Rücken zu decken ist meine Aufgabe.",
+"Я Паруа. Прикрывать тыл — моя работа."
+],
+"dialogue.opening-train.sniff.speaker": [
+"帕鲁娅",
+"ปารัว",
+"Parua",
+"Parua",
+"Parua",
+"Parua",
+"Parua",
+"Паруа"
+],
+"dialogue.opening-train.sniff.body": [
+"不过好奇怪。你的气味和其他研究员不一样。……我可以靠近点看看吗？",
+"แต่แปลกจัง กลิ่นของคุณต่างจากนักวิจัยคนอื่น …ขอดูใกล้ ๆ หน่อยได้ไหม?",
+"Nhưng lạ thật. Mùi của bạn khác với những nhà nghiên cứu khác. …Tớ nhìn gần hơn chút được không?",
+"Tapi aneh. Baumu berbeda dari periset lain. ...Boleh aku lihat lebih dekat?",
+"Pero es raro. Hueles distinto a los demás investigadores. …¿Puedo mirarte más de cerca?",
+"Mas é estranho. Seu cheiro é diferente dos outros pesquisadores. …Posso olhar mais de perto?",
+"Aber seltsam. Du riechst anders als die anderen Forscher. … Darf ich genauer hinsehen?",
+"Но странно. Ты пахнешь не так, как другие исследователи. …Можно взглянуть поближе?"
+],
+"dialogue.opening-train.scold.speaker": [
+"托莉卡",
+"โทริกะ",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Торика"
+],
+"dialogue.opening-train.scold.body": [
+"连帕鲁娅你也这样！研究员都不自在了啦！",
+"ปารัวก็ด้วยเหรอ! ทำให้นักวิจัยอึดอัดแล้วนะ!",
+"Cả Parua cũng vậy nữa! Làm nhà nghiên cứu khó xử rồi kìa!",
+"Kau juga, Parua! Kau membuat perisetnya tidak nyaman!",
+"¡Tú también, Parua! ¡Lo estás incomodando!",
+"Você também, Parua! Está deixando quem pesquisa desconfortável!",
+"Du auch noch, Parua! Du machst das ganz unangenehm!",
+"И ты туда же, Паруа! Исследователю же неловко!"
+],
+"dialogue.opening-train.quake.body": [
+"轰隆隆……！！整节车厢剧烈晃动。",
+"ครืนนน…!! ทั้งตู้รถไฟโยกอย่างรุนแรง",
+"Ầm ầm…!! Cả toa tàu chao đảo dữ dội.",
+"GEMURUH...!! Seluruh gerbong terguncang hebat.",
+"¡¡RETUMBO…!! Todo el vagón da una violenta sacudida.",
+"ESTRONDO…!! O vagão inteiro dá um tranco violento.",
+"RUMPEL …!! Der ganze Waggon ruckt heftig.",
+"ГРОХОТ…!! Весь вагон резко швыряет."
+],
+"dialogue.opening-train.alarm.speaker": [
+"广播",
+"ประกาศ",
+"Thông báo",
+"Pengumuman",
+"Aviso",
+"Aviso",
+"Durchsage",
+"Объявление"
+],
+"dialogue.opening-train.alarm.body": [
+"警报。警报。前方轨道有不明个体接近。全体乘客请立即留在座位上。",
+"แจ้งเตือน แจ้งเตือน มีสิ่งมีชีวิตไม่ทราบชนิดเข้าใกล้บนรางข้างหน้า ผู้โดยสารทุกท่านโปรดอยู่ที่นั่งทันที",
+"Cảnh báo. Cảnh báo. Có thực thể không xác định đang tiến tới trên đường ray phía trước. Toàn bộ hành khách lập tức ngồi yên tại chỗ.",
+"Peringatan. Peringatan. Entitas tak dikenal mendekat di rel depan. Seluruh penumpang, segera tetap di kursi Anda.",
+"Alerta. Alerta. Entidades no identificadas se aproximan por la vía. Todos los pasajeros permanezcan en sus asientos de inmediato.",
+"Alerta. Alerta. Entidades não identificadas se aproximam na via à frente. Todos os passageiros permaneçam em seus assentos imediatamente.",
+"Achtung. Achtung. Unbekannte Wesen nähern sich auf dem Gleis voraus. Alle Fahrgäste bleiben sofort auf ihren Plätzen.",
+"Внимание. Внимание. Впереди на путях приближаются неопознанные объекты. Всем пассажирам немедленно оставаться на местах."
+],
+"dialogue.opening-train.sense.speaker": [
+"帕鲁娅",
+"ปารัว",
+"Parua",
+"Parua",
+"Parua",
+"Parua",
+"Parua",
+"Паруа"
+],
+"dialogue.opening-train.sense.body": [
+"……前面有东西来了。不止一个。",
+"…มีอะไรมาจากข้างหน้า ไม่ใช่แค่ตัวเดียว",
+"…Có gì đó đang tới từ phía trước. Không chỉ một.",
+"...Ada sesuatu datang dari depan. Lebih dari satu.",
+"…Algo viene por delante. Más de uno.",
+"…Tem algo vindo da frente. Mais de um.",
+"… Da kommt etwas von vorn. Mehr als eins.",
+"…Спереди что-то приближается. И не одно."
+],
+"dialogue.opening-train.guard.speaker": [
+"托莉卡",
+"โทริกะ",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Торика"
+],
+"dialogue.opening-train.guard.body": [
+"研究员，到我身后！不管发生什么，我都会挡住它们！",
+"นักวิจัย มาอยู่ข้างหลังฉัน! ไม่ว่าอะไรจะเกิดขึ้น ฉันจะหยุดพวกมันเอง!",
+"Nhà nghiên cứu, ra sau mình! Dù có chuyện gì, mình cũng sẽ chặn chúng lại!",
+"Periset, ke belakangku! Apa pun yang terjadi, aku akan menahan mereka!",
+"¡Ponte detrás de mí! ¡Pase lo que pase, los detendré!",
+"Fique atrás de mim! Aconteça o que acontecer, vou segurá-los!",
+"Hinter mich! Egal, was passiert, ich halte sie auf!",
+"Исследователь, за меня! Что бы ни случилось, я их сдержу!"
+],
+"dialogue.opening-train.veil.speaker": [
+"???",
+"???",
+"???",
+"???",
+"???",
+"???",
+"???",
+"???"
+],
+"dialogue.opening-train.veil.body": [
+"找到了。Garden派下来的研究员。",
+"เจอแล้ว นักวิจัยที่ Garden ส่งลงมา",
+"Tìm thấy rồi. Nhà nghiên cứu mà Garden phái xuống.",
+"Ketemu. Periset yang dikirim Garden.",
+"Te encontré. A quien Garden ha enviado a investigar.",
+"Achei. Quem a Garden mandou para pesquisar.",
+"Gefunden. Die von Garden entsandte Forschungsleitung.",
+"Нашла. Исследователя, которого прислал Garden."
+],
+"dialogue.opening-train.order.speaker": [
+"???",
+"???",
+"???",
+"???",
+"???",
+"???",
+"???",
+"???"
+],
+"dialogue.opening-train.order.body": [
+"开始目标回收作战。不惜一切代价抓住研究员。……把整艘方舟打下来。",
+"เริ่มปฏิบัติการเก็บกู้เป้าหมาย จับตัวนักวิจัยให้ได้ไม่ว่าจะด้วยวิธีใด …ทำให้นาวาทั้งลำร่วงลงมา",
+"Bắt đầu chiến dịch thu hồi mục tiêu. Bắt giữ nhà nghiên cứu bằng mọi giá. …Hạ cả con thuyền xuống.",
+"Memulai operasi pengambilan target. Tangkap perisetnya, apa pun caranya. ...Jatuhkan seluruh bahtera.",
+"Comienza la operación de recuperación del objetivo. Capturad a quien investiga, cueste lo que cueste. …Derribad el arca entera.",
+"Iniciando a operação de captura do alvo. Peguem quem pesquisa, custe o que custar. …Derrubem a arca inteira.",
+"Beginne die Zielbergungsoperation. Fangt die Forschungsleitung, koste es, was es wolle. … Holt die ganze Arche herunter.",
+"Начинаем операцию по захвату цели. Взять исследователя любой ценой. …Обрушить весь ковчег."
+],
+"dialogue.opening-train.blast.body": [
+"轰——隆——！！",
+"ตูมมมม!!",
+"ẦMMMM!!",
+"BUUUMMM!!",
+"¡¡BUUUUM!!",
+"BUUUUM!!",
+"KA-WUMMM!!",
+"БА-БАААХ!!"
+],
+"dialogue.opening-train.aftermath.speaker": [
+"托莉卡",
+"โทริกะ",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Торика"
+],
+"dialogue.opening-train.aftermath.body": [
+"咳、咳……研究员，你没事吧？！列车……脱轨了……！",
+"แค่ก แค่ก… นักวิจัย เป็นอะไรไหม?! รถไฟ… ตกรางแล้ว…!",
+"Khụ, khụ… Nhà nghiên cứu, bạn không sao chứ?! Đoàn tàu… trật bánh rồi…!",
+"Uhuk, uhuk... Periset, kau baik-baik saja?! Keretanya... anjlok dari rel...!",
+"Cof, cof… ¿¡Estás bien!? El tren… ¡se ha salido de las vías…!",
+"Cof, cof… Você está bem?! O trem… saiu dos trilhos…!",
+"Hust, hust … Alles in Ordnung?! Der Zug … ist entgleist …!",
+"Кха, кха… Исследователь, с тобой всё в порядке?! Поезд… сошёл с рельсов…!"
+],
+"dialogue.opening-train.record.speaker": [
+"多蒂",
+"โดดี",
+"Dodi",
+"Dodi",
+"Dodi",
+"Dodi",
+"Dodi",
+"Доди"
+],
+"dialogue.opening-train.record.body": [
+"队、队长平安！得记录……记录下来……不对，现在不是做这个的时候！",
+"ก-กัปตันปลอดภัย! ต้องบันทึก… บันทึกไว้… ไม่สิ ตอนนี้ไม่ใช่เวลาทำแบบนั้น!",
+"Đ-Đội trưởng an toàn! Phải ghi lại… ghi lại… Không, giờ đâu phải lúc làm thế!",
+"K-Kapten selamat! Aku harus mencatat... mencatat ini... Bukan, sekarang bukan waktunya!",
+"¡E-el Capitán está a salvo! Tengo que registrar… registrar esto… ¡No, no es momento para eso!",
+"O-o Capitão está a salvo! Preciso registrar… registrar isto… Não, não é hora para isso!",
+"D-der Captain ist in Sicherheit! Ich muss das festhalten … festhalten … Nein, dafür ist jetzt keine Zeit!",
+"К-Капитан цел! Надо записать… записать это… Нет, сейчас не до этого!"
+],
+"dialogue.opening-train.three.speaker": [
+"帕鲁娅",
+"ปารัว",
+"Parua",
+"Parua",
+"Parua",
+"Parua",
+"Parua",
+"Паруа"
+],
+"dialogue.opening-train.three.body": [
+"嘘。三个。正穿过烟雾往这边来。",
+"ชู่ว สามตัว กำลังฝ่าควันมาทางนี้",
+"Suỵt. Ba đứa. Đang băng qua khói tới đây.",
+"Ssst. Tiga. Datang ke sini menembus asap.",
+"Chsss. Tres. Vienen hacia aquí entre el humo.",
+"Shh. Três. Vindo para cá pela fumaça.",
+"Pst. Drei. Sie kommen durch den Rauch hierher.",
+"Тсс. Трое. Идут сюда сквозь дым."
+],
+"dialogue.opening-train.toby.speaker": [
+"托比",
+"โทบี",
+"Toby",
+"Toby",
+"Toby",
+"Toby",
+"Toby",
+"Тоби"
+],
+"dialogue.opening-train.toby.body": [
+"找到了！那边，那就是研究员！这次我要第一个抓住！",
+"เจอแล้ว! ตรงนั้น นั่นแหละนักวิจัย! คราวนี้ฉันจะจับเป็นคนแรก!",
+"Tìm thấy rồi! Đằng kia, đó là nhà nghiên cứu! Lần này tao sẽ tóm trước!",
+"Ketemu! Di sana, itu perisetnya! Kali ini aku yang menangkap duluan!",
+"¡Los encontré! ¡Ahí, esa es la persona que investiga! ¡Esta vez la atrapo yo primero!",
+"Achei! Ali, aquela é quem pesquisa! Desta vez eu pego primeiro!",
+"Gefunden! Da, das ist die Forschungsleitung! Diesmal schnapp ich sie zuerst!",
+"Нашёл! Вон там, это исследователь! На этот раз я схвачу первым!"
+],
+"dialogue.opening-train.amo.speaker": [
+"阿莫",
+"อาโม",
+"Amo",
+"Amo",
+"Amo",
+"Amo",
+"Amo",
+"Амо"
+],
+"dialogue.opening-train.amo.body": [
+"托、托比……小声点。柯玛说要悄悄行动的……",
+"โ-โทบี… เบาเสียงหน่อย โคมะบอกให้เคลื่อนไหวเงียบ ๆ …",
+"T-Toby… nhỏ giọng thôi. Koma bảo phải di chuyển lặng lẽ mà…",
+"T-Toby... pelankan suaramu. Koma bilang kita harus bergerak diam-diam...",
+"T-Toby… baja la voz. Koma dijo que nos moviéramos en silencio…",
+"T-Toby… fala baixo. O Koma mandou a gente se mexer em silêncio…",
+"T-Toby … sei leiser. Koma hat gesagt, wir sollen uns leise bewegen …",
+"Т-Тоби… тише. Кома велел двигаться тихо…"
+],
+"dialogue.opening-train.ripa.speaker": [
+"莉帕",
+"ริปา",
+"Ripa",
+"Ripa",
+"Ripa",
+"Ripa",
+"Ripa",
+"Рипа"
+],
+"dialogue.opening-train.ripa.body": [
+"哎呀，反正都被发现了吧？看那三个人的表情。太好玩啦！",
+"อ้าว ยังไงก็โดนเห็นแล้วนี่? ดูหน้าสามคนนั้นสิ สนุกจัง!",
+"Ơ, đằng nào cũng bị phát hiện rồi còn gì? Nhìn mặt ba đứa kia xem. Vui quá đi!",
+"Aw, kita sudah ketahuan juga, kan? Lihat wajah mereka bertiga. Seru sekali!",
+"Anda ya, si nos han visto igualmente, ¿no? Mira las caras de esos tres. ¡Qué divertido!",
+"Ah, já nos viram mesmo, né? Olha a cara daqueles três. Que divertido!",
+"Ach, die haben uns doch sowieso entdeckt, oder? Schau dir die Gesichter der drei an. Das macht so Spaß!",
+"Ой, нас всё равно заметили, да? Посмотри на лица этих троих. Как весело!"
+],
+"dialogue.opening-train.demand.speaker": [
+"托比",
+"โทบี",
+"Toby",
+"Toby",
+"Toby",
+"Toby",
+"Toby",
+"Тоби"
+],
+"dialogue.opening-train.demand.body": [
+"我们是歼灭！把那个研究员交出来，就放你们好好离开！",
+"พวกเราคือหน่วยทำลายล้าง! ส่งนักวิจัยคนนั้นมา แล้วจะปล่อยพวกแกไปดี ๆ!",
+"Bọn tao là Hủy Diệt! Giao nhà nghiên cứu đó ra thì bọn tao cho đi yên ổn!",
+"Kami Pemusnahan! Serahkan periset itu dan kalian boleh pergi baik-baik!",
+"¡Somos Aniquilación! ¡Entregadnos a quien investiga y os dejaremos ir por las buenas!",
+"Somos a Aniquilação! Entreguem quem pesquisa e deixamos vocês irem numa boa!",
+"Wir sind die Vernichtung! Gebt die Forschungsleitung heraus, dann lassen wir euch friedlich gehen!",
+"Мы — Истребление! Отдайте исследователя, и мы вас по-хорошему отпустим!"
+],
+"dialogue.opening-train.refuse.speaker": [
+"托莉卡",
+"โทริกะ",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Торика"
+],
+"dialogue.opening-train.refuse.body": [
+"休想！研究员是……我们的队长。你们一步也别想过去！",
+"ไม่มีทาง! นักวิจัยคือ… กัปตันของพวกเรา พวกแกผ่านไปไม่ได้แม้แต่ก้าวเดียว!",
+"Đừng hòng! Nhà nghiên cứu là… Đội trưởng của bọn mình. Các người đừng hòng bước qua một bước!",
+"Tidak akan! Periset itu... Kapten kami. Kalian tak akan lewat satu langkah pun!",
+"¡Ni hablar! Quien investiga es… nuestro Capitán. ¡No daréis ni un paso más!",
+"De jeito nenhum! Quem pesquisa é… nosso Capitão. Vocês não passam nem um passo!",
+"Niemals! Die Forschungsleitung ist … unser Captain. Ihr kommt keinen Schritt an uns vorbei!",
+"Ни за что! Исследователь — наш… Капитан. Ни шагу дальше вы не сделаете!"
+],
+"dialogue.opening-train.brave.speaker": [
+"多蒂",
+"โดดี",
+"Dodi",
+"Dodi",
+"Dodi",
+"Dodi",
+"Dodi",
+"Доди"
+],
+"dialogue.opening-train.brave.body": [
+"我、我很害怕，可是……我要写下守护队长的第一份记录！",
+"ฉ-ฉันกลัว แต่… ฉันจะเขียนบันทึกแรกของการปกป้องกัปตัน!",
+"T-tớ sợ lắm, nhưng… tớ sẽ viết bản ghi chép đầu tiên về việc bảo vệ Đội trưởng!",
+"A-aku takut, tapi... aku akan menulis catatan pertama tentang melindungi Kapten!",
+"T-tengo miedo, pero… ¡voy a escribir el primer registro de proteger al Capitán!",
+"E-eu estou com medo, mas… vou escrever o primeiro registro de proteger o Capitão!",
+"I-ich habe Angst, aber … ich schreibe den ersten Bericht darüber, wie wir den Captain beschützen!",
+"М-мне страшно, но… я напишу первую запись о том, как мы защищаем Капитана!"
+],
+"dialogue.opening-train.aim.speaker": [
+"帕鲁娅",
+"ปารัว",
+"Parua",
+"Parua",
+"Parua",
+"Parua",
+"Parua",
+"Паруа"
+],
+"dialogue.opening-train.aim.body": [
+"……箭已经准备好了。随时可以。",
+"…ลูกธนูพร้อมแล้ว เมื่อไหร่ก็ได้",
+"…Mũi tên sẵn sàng rồi. Lúc nào cũng được.",
+"...Panahku siap. Kapan pun kau siap.",
+"…Mi flecha está lista. Cuando quieras.",
+"…Minha flecha está pronta. Quando quiser.",
+"… Mein Pfeil ist bereit. Wann immer ihr wollt.",
+"…Стрела готова. Когда скажешь."
+],
+"dialogue.opening-train.end.speaker": [
+"托莉卡",
+"โทริกะ",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Торика"
+],
+"dialogue.opening-train.end.body": [
+"队长，待在我身后。……战斗开始！",
+"กัปตัน อยู่ข้างหลังฉันนะ …เริ่มการต่อสู้!",
+"Đội trưởng, ở sau mình nhé. …Bắt đầu chiến đấu!",
+"Kapten, tetap di belakangku. ...Pertarungan dimulai!",
+"Capitán, quédate detrás de mí. …¡Que empiece el combate!",
+"Capitão, fique atrás de mim. …Começa a batalha!",
+"Captain, bleib hinter mir. … Kampf beginnt!",
+"Капитан, держись за мной. …Бой начинается!"
+],
+"dialogue.opening-retreat.groan.speaker": [
+"托比",
+"โทบี",
+"Toby",
+"Toby",
+"Toby",
+"Toby",
+"Toby",
+"Тоби"
+],
+"dialogue.opening-retreat.groan.body": [
+"呀啊啊！这、这不可能！",
+"เฮือกกก! ม-ไม่จริงน่า!",
+"Áaaa! Kh-không thể nào!",
+"Gyaaah! T-tidak mungkin!",
+"¡Gyaaah! ¡E-esto no puede estar pasando!",
+"Gyaaah! I-isso não pode estar acontecendo!",
+"Gyaaah! D-das kann nicht sein!",
+"Гья-а-а! Н-не может быть!"
+],
+"dialogue.opening-retreat.sigh.speaker": [
+"阿莫",
+"อาโม",
+"Amo",
+"Amo",
+"Amo",
+"Amo",
+"Amo",
+"Амо"
+],
+"dialogue.opening-retreat.sigh.body": [
+"我就说嘛……应该悄悄走的……",
+"บอกแล้วไง… ควรไปเงียบ ๆ …",
+"Đã bảo rồi mà… lẽ ra phải đi lặng lẽ…",
+"Sudah kubilang... seharusnya kita pergi diam-diam...",
+"Te lo dije… teníamos que ir en silencio…",
+"Eu falei… a gente devia ter ido quieto…",
+"Ich hab's doch gesagt … wir hätten leise gehen sollen …",
+"Я же говорила… надо было идти тихо…"
+],
+"dialogue.opening-retreat.grin.speaker": [
+"莉帕",
+"ริปา",
+"Ripa",
+"Ripa",
+"Ripa",
+"Ripa",
+"Ripa",
+"Рипа"
+],
+"dialogue.opening-retreat.grin.body": [
+"哎呀，不过很好玩吧？那三个人比看起来更难缠呢～",
+"อ้าว แต่ก็สนุกดีใช่ไหม? สามคนนั้นแกร่งกว่าที่คิดนะ~",
+"Ơ, nhưng vui mà đúng không? Ba người đó cứng cựa hơn vẻ ngoài đấy~",
+"Aw, tapi seru, kan? Mereka bertiga lebih tangguh dari kelihatannya~",
+"Anda, pero ha sido divertido, ¿no? Esos tres eran más duros de lo que parecían~",
+"Ah, mas foi divertido, né? Aqueles três eram mais durões do que pareciam~",
+"Ach, aber es hat Spaß gemacht, oder? Die drei waren zäher, als sie aussahen~",
+"Ой, но было же весело? Эти трое оказались крепче, чем выглядели~"
+],
+"dialogue.opening-retreat.vow.speaker": [
+"托比",
+"โทบี",
+"Toby",
+"Toby",
+"Toby",
+"Toby",
+"Toby",
+"Тоби"
+],
+"dialogue.opening-retreat.vow.body": [
+"给我记住，研究员！下次一定把你带走！",
+"จำไว้เลยนะ นักวิจัย! คราวหน้าจะพาตัวไปให้ได้!",
+"Nhớ đấy, nhà nghiên cứu! Lần sau bọn tao sẽ bắt ngươi đi!",
+"Ingat ini, periset! Lain kali kami akan membawamu!",
+"¡Recuerda esto! ¡La próxima vez te llevamos con nosotros!",
+"Lembre-se disto! Da próxima vez vamos te levar!",
+"Merk dir das! Nächstes Mal nehmen wir dich mit!",
+"Запомни это, исследователь! В следующий раз мы тебя заберём!"
+],
+"dialogue.opening-retreat.away.speaker": [
+"托比、阿莫、莉帕",
+"โทบี อาโม และริปา",
+"Toby, Amo & Ripa",
+"Toby, Amo & Ripa",
+"Toby, Amo y Ripa",
+"Toby, Amo e Ripa",
+"Toby, Amo & Ripa",
+"Тоби, Амо и Рипа"
+],
+"dialogue.opening-retreat.away.body": [
+"你们给我记住——！！",
+"เรื่องยังไม่จบง่าย ๆ หรอกนะะะ~!!",
+"Chưa xong đâu nhaaaa~!!",
+"Kalian belum lihat yang terakhir dari kamiii~!!",
+"¡¡Esto no acaba aquííí~!!",
+"Vocês ainda vão nos veeer~!!",
+"Das war noch nicht das letzte Maaal~!!",
+"Мы ещё вернё-ё-ёмся~!!"
+],
+"dialogue.opening-retreat.gone.speaker": [
+"托莉卡",
+"โทริกะ",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Торика"
+],
+"dialogue.opening-retreat.gone.body": [
+"……飞走了。队长，你哪里都没受伤吧？",
+"…ปลิวไปแล้ว กัปตัน ไม่ได้เจ็บตรงไหนใช่ไหม?",
+"…Bay mất rồi. Đội trưởng, bạn không bị thương chỗ nào chứ?",
+"...Mereka terbang pergi. Kapten, kau tidak terluka di mana pun, kan?",
+"…Salieron volando. Capitán, no estás herido en ningún lado, ¿verdad?",
+"…Saíram voando. Capitão, não se machucou em lugar nenhum, né?",
+"… Sie sind weggeflogen. Captain, du bist doch nirgends verletzt, oder?",
+"…Улетели. Капитан, нигде не больно?"
+],
+"dialogue.opening-retreat.log.speaker": [
+"多蒂",
+"โดดี",
+"Dodi",
+"Dodi",
+"Dodi",
+"Dodi",
+"Dodi",
+"Доди"
+],
+"dialogue.opening-retreat.log.body": [
+"第一份战斗记录，完成！敌人变成了天上的星星……我就这么写！",
+"บันทึกการต่อสู้ครั้งแรก เสร็จสมบูรณ์! ศัตรูกลายเป็นดาวบนฟ้า… จะเขียนแบบนี้แหละ!",
+"Bản ghi trận đầu tiên, hoàn tất! Kẻ địch đã thành ngôi sao trên trời… tớ sẽ viết thế!",
+"Catatan pertempuran pertama, selesai! Musuh menjadi bintang di langit... itu yang akan kutulis!",
+"¡Primer registro de combate, completo! El enemigo se convirtió en una estrella en el cielo… ¡eso escribiré!",
+"Primeiro registro de batalha, completo! O inimigo virou uma estrela no céu… é isso que vou escrever!",
+"Erster Kampfbericht, fertig! Der Feind wurde zu einem Stern am Himmel … das schreibe ich!",
+"Первая боевая запись готова! Враг стал звездой на небе… так и напишу!"
+],
+"dialogue.opening-retreat.watch.speaker": [
+"帕鲁娅",
+"ปารัว",
+"Parua",
+"Parua",
+"Parua",
+"Parua",
+"Parua",
+"Паруа"
+],
+"dialogue.opening-retreat.watch.body": [
+"……他们还会回来的。那不是会放弃的表情。",
+"…พวกนั้นจะกลับมาอีก สีหน้าแบบนั้นไม่ใช่คนที่ยอมแพ้",
+"…Chúng sẽ quay lại. Đó không phải vẻ mặt của kẻ bỏ cuộc.",
+"...Mereka akan kembali. Itu bukan wajah yang menyerah.",
+"…Volverán. Esas no eran caras de rendirse.",
+"…Eles vão voltar. Aquelas não eram caras de quem desiste.",
+"… Die kommen wieder. Das waren keine Gesichter, die aufgeben.",
+"…Они вернутся. Это были не те лица, что сдаются."
+],
+"dialogue.opening-retreat.onward.speaker": [
+"托莉卡",
+"โทริกะ",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Torika",
+"Торика"
+],
+"dialogue.opening-retreat.onward.body": [
+"那我们也快走吧。我会一路带你到永恒之城！",
+"งั้นพวกเราก็รีบไปกันเถอะ ฉันจะนำทางไปจนถึงนครนิรันดร์เลย!",
+"Vậy mình cũng nhanh lên thôi. Mình sẽ dẫn bạn tới tận Thành phố Vĩnh Hằng!",
+"Kalau begitu kita juga bergegas. Aku akan memandumu sampai ke Kota Abadi!",
+"Entonces démonos prisa también. ¡Te guiaré hasta la Ciudad Eterna!",
+"Então vamos nos apressar também. Vou te guiar até a Cidade Eterna!",
+"Dann beeilen wir uns auch. Ich führe dich bis zur Ewigen Stadt!",
+"Тогда и нам пора спешить. Я провожу тебя до самого Вечного города!"
+]
+}

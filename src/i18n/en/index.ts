@@ -22,7 +22,8 @@ import { INVENTORY_EN } from "./inventory";
 import { MISC_EN } from "./misc";
 import { SKILL_EN } from "./skill";
 import { SYSTEM_EN } from "./system";
+import { RAID_EN } from "./raid";
 import { BOUNTY_EN } from "./bounty";
 import { DUNGEON_EN } from "./dungeon";
 
-export default { ...SETTINGS_EN, ...LOBBY_EN, ...COMMON_EN, ...INFO_EN, ...STATUS_EN, ...LAB_EN, ...EXPEDITION_EN, ...BATTLE_EN, ...CAKE_OPERATION_EN, ...EXCAVATION_EN, ...AUGMENT_EN, ...FRIENDS_EN, ...RUNE_EN, ...PARTY_EN, ...EXPEDITION_REWARD_EN, ...SAVE_CONFLICT_EN, ...INTERACTION_EN, ...SHOP_EN, ...MISSIONS_EN, ...INVENTORY_EN, ...MISC_EN, ...SKILL_EN, ...SYSTEM_EN, ...BOUNTY_EN, ...DUNGEON_EN };
+export default { ...SETTINGS_EN, ...LOBBY_EN, ...COMMON_EN, ...INFO_EN, ...STATUS_EN, ...LAB_EN, ...EXPEDITION_EN, ...BATTLE_EN, ...CAKE_OPERATION_EN, ...EXCAVATION_EN, ...AUGMENT_EN, ...FRIENDS_EN, ...RUNE_EN, ...PARTY_EN, ...EXPEDITION_REWARD_EN, ...SAVE_CONFLICT_EN, ...INTERACTION_EN, ...SHOP_EN, ...MISSIONS_EN, ...INVENTORY_EN, ...MISC_EN, ...SKILL_EN, ...SYSTEM_EN, ...RAID_EN, ...BOUNTY_EN, ...DUNGEON_EN };

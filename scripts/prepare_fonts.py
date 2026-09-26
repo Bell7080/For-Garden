@@ -66,21 +66,23 @@ SOURCES = {
         700: "LINESeedJP_TTF_Bd.ttf",   # 획/H 0.184
         800: "LINESeedJP_TTF_Eb.ttf",   # 획/H 0.254
     }, "LINE Seed JP — LY Corporation, SIL OFL 1.1 (새 번역에 들어온 글자는 같은 글꼴의 npm 배포판 @fontsource/line-seed-jp에서 보충)"),
+    # LINE Seed TW는 npm 배포판이 없어 원본 없이는 다시 구울 수 없다. 번체도 간체와 같은 계열
+    # (Noto Sans TC = Source Han Sans TC)로 맞춰 두 중국어가 같은 획을 쓰게 한다.
     "zh-Hant": ("FG Sans TC", "fg-tc", {
-        500: "LINESeedTW_TTF_Rg.ttf",
-        700: "LINESeedTW_TTF_Bd.ttf",
-        800: "LINESeedTW_TTF_Eb.ttf",
-    }, "LINE Seed TW — LY Corporation, SIL OFL 1.1 (예약 이름 'LINE Seed TW')"),
+        500: "NotoSansTC-Regular.ttf",
+        700: "NotoSansTC-Bold.ttf",
+        800: "NotoSansTC-Black.ttf",
+    }, "Noto Sans TC — Google, SIL OFL 1.1 (npm 배포판 @fontsource/noto-sans-tc에서 구움)"),
     "zh-Hans": ("FG Sans SC", "fg-sc", {
         500: "SourceHanSansSC-Normal.otf",  # 획/H 0.113
         700: "SourceHanSansSC-Bold.otf",    # 획/H 0.200
         800: "SourceHanSansSC-Heavy.otf",   # 획/H 0.240
-    }, "Source Han Sans SC — Adobe, SIL OFL 1.1 (예약 이름 'Source')"),
+    }, "Source Han Sans SC / Noto Sans SC — Adobe·Google, SIL OFL 1.1 (npm 배포판 @fontsource/noto-sans-sc에서 구움, 예약 이름 'Source')"),
     "vi": ("FG Sans VI", "fg-vi", {
         500: "BeVietnamPro-Medium.ttf",
         700: "BeVietnamPro-Bold.ttf",
         800: "BeVietnamPro-ExtraBold.ttf",
-    }, "Be Vietnam Pro — Be Vietnam Pro Project Authors, SIL OFL 1.1"),
+    }, "Be Vietnam Pro — Be Vietnam Pro Project Authors, SIL OFL 1.1 (npm 배포판 @fontsource/be-vietnam-pro에서 구움)"),
 }
 
 # 번역에 없더라도 화면에 늘 나오는 글자. 숫자·기호는 공용 글꼴이 그리지만, 보조 글꼴이 단독으로
@@ -102,27 +104,11 @@ def used_characters(language: str) -> set[str]:
     return set(text)
 
 
-def bake(language: str, family: str, slug: str, weight: int, source_name: str, charset: set[str]) -> None:
-    source = SOURCE / source_name
-    if not source.is_file():
-        print(f"  건너뜀 {weight}: 원본 없음 ({source_name})")
-        return
+def stamp(font: TTFont, family: str, weight: int) -> None:
+    """세로 지표를 공용 글꼴에 맞추고 예약 폰트 이름을 피해 이름을 새로 새긴다.
 
-    font = TTFont(source, fontNumber=0)
-
-    options = subset.Options()
-    # 글자 모양만 남기고 세로쓰기·레이아웃 표는 버린다. 가로쓰기 모바일 화면만 쓴다.
-    options.layout_features = ["kern", "liga", "ccmp", "mark", "mkmk"]
-    options.drop_tables += ["vhea", "vmtx", "VORG"]
-    options.name_IDs = ["*"]
-    options.name_legacy = True
-    options.notdef_outline = True
-    options.recalc_bounds = True
-
-    subsetter = subset.Subsetter(options=options)
-    subsetter.populate(text="".join(sorted(charset)))
-    subsetter.subset(font)
-
+    원본에서 굽는 `bake`와 npm 배포판 조각에서 처음 세우는 `patch_font_glyphs.py`가 같은 규칙을 쓴다.
+    """
     # 세로 지표를 공용 글꼴에 맞춘다. UPM이 다르면 같은 비율로 환산한다.
     upm = font["head"].unitsPerEm
     scale = upm / 1000.0
@@ -150,6 +136,30 @@ def bake(language: str, family: str, slug: str, weight: int, source_name: str, c
     for name_id, value in records.items():
         font["name"].setName(value, name_id, 3, 1, 0x409)
 
+
+def bake(language: str, family: str, slug: str, weight: int, source_name: str, charset: set[str]) -> None:
+    source = SOURCE / source_name
+    if not source.is_file():
+        print(f"  건너뜀 {weight}: 원본 없음 ({source_name})")
+        return
+
+    font = TTFont(source, fontNumber=0)
+
+    options = subset.Options()
+    # 글자 모양만 남기고 세로쓰기·레이아웃 표는 버린다. 가로쓰기 모바일 화면만 쓴다.
+    options.layout_features = ["kern", "liga", "ccmp", "mark", "mkmk"]
+    options.drop_tables += ["vhea", "vmtx", "VORG"]
+    options.name_IDs = ["*"]
+    options.name_legacy = True
+    options.notdef_outline = True
+    options.recalc_bounds = True
+
+    subsetter = subset.Subsetter(options=options)
+    subsetter.populate(text="".join(sorted(charset)))
+    subsetter.subset(font)
+
+    stamp(font, family, weight)
+
     font.flavor = "woff2"
     out = PUBLIC_FONTS / f"{slug}-{weight}.woff2"
     font.save(out)
@@ -174,7 +184,7 @@ def main() -> None:
             "# 글꼴 고지\n\n"
             "게임에 실린 글꼴과 그 출처다. 서브셋본은 예약 폰트 이름을 피하려고 이름을 바꿔 구웠으며,\n"
             "원본 라이선스 전문은 각 배포처에 있다.\n\n"
-            "- **NEXON Kart** (ko·en·th) — NEXON, 무료 상업 이용\n"
+            "- **NEXON Kart** (ko·en·th·id·es·pt-BR·de·ru) — NEXON, 무료 상업 이용\n"
             + "\n".join(notices) + "\n",
             encoding="utf-8",
         )

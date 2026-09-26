@@ -1052,7 +1052,7 @@ export default {
   "relic.dian.observation.weight": "29 kg",
   "relic.dian.passive.name": "Canh gác của thủ lĩnh",
   "relic.dian.passive.desc": "Khi bắt đầu trận, triệu hồi Kuro và Shiro. Khi cả hai còn sống, vào Tàng hình. Chỉ cần một con gục, Tàng hình tan.",
-  "relic.dian.ferocity.name": "Đội trưởng để bọn mình bảo vệ!",
+  "relic.dian.ferocity.name": "Bầy sói",
   "relic.dian.basic.name": "Xông lên!",
   "relic.dian.ultimate.name": "Cả bầy, vồ lấy!",
   "relic.dian.projectName": "PACK ECHO",

@@ -1052,7 +1052,7 @@ export default {
   "relic.dian.observation.weight": "29 kg",
   "relic.dian.passive.name": "La guardia de la líder",
   "relic.dian.passive.desc": "Al inicio del combate invoca a Kuro y Shiro. Mientras ambos vivan, entra en Sigilo. Si cae aunque sea uno, el Sigilo se rompe.",
-  "relic.dian.ferocity.name": "¡Nosotros te protegemos, Capitán!",
+  "relic.dian.ferocity.name": "Manada",
   "relic.dian.basic.name": "¡A por ellos!",
   "relic.dian.ultimate.name": "¡Todos juntos, a por él!",
   "relic.dian.projectName": "PACK ECHO",

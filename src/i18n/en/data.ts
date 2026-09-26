@@ -1068,7 +1068,7 @@ export default {
   "relic.dian.observation.weight": "29 kg",
   "relic.dian.passive.name": "The Leader's Watch",
   "relic.dian.passive.desc": "At the start of battle, summons Kuro and Shiro. While both are alive, it enters Stealth. If even one falls, Stealth breaks.",
-  "relic.dian.ferocity.name": "We'll Guard You, Captain!",
+  "relic.dian.ferocity.name": "Pack",
   "relic.dian.basic.name": "Get Them!",
   "relic.dian.ultimate.name": "Pounce Together!",
   "relic.dian.projectName": "PACK ECHO",

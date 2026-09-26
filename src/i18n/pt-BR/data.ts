@@ -1052,7 +1052,7 @@ export default {
   "relic.dian.observation.weight": "29 kg",
   "relic.dian.passive.name": "A vigília da líder",
   "relic.dian.passive.desc": "No início da batalha, invoca Kuro e Shiro. Enquanto ambos vivem, entra em Furtividade. Se um só cair, a Furtividade se desfaz.",
-  "relic.dian.ferocity.name": "Nós protegemos você, Capitão!",
+  "relic.dian.ferocity.name": "Matilha",
   "relic.dian.basic.name": "Pega eles!",
   "relic.dian.ultimate.name": "Todos juntos, ataquem!",
   "relic.dian.projectName": "PACK ECHO",

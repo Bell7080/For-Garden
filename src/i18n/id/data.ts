@@ -1052,7 +1052,7 @@ export default {
   "relic.dian.observation.weight": "29 kg",
   "relic.dian.passive.name": "Pengawasan Sang Pemimpin",
   "relic.dian.passive.desc": "Di awal pertarungan, memanggil Kuro dan Shiro. Selama keduanya hidup, masuk Siluman. Bila satu saja jatuh, Siluman pecah.",
-  "relic.dian.ferocity.name": "Kapten, Biar Kami yang Jaga!",
+  "relic.dian.ferocity.name": "Kawanan",
   "relic.dian.basic.name": "Serang Mereka!",
   "relic.dian.ultimate.name": "Semua, Terkam!",
   "relic.dian.projectName": "PACK ECHO",

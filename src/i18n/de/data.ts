@@ -1052,7 +1052,7 @@ export default {
   "relic.dian.observation.weight": "29 kg",
   "relic.dian.passive.name": "Wacht der Anführerin",
   "relic.dian.passive.desc": "Beschwört zu Kampfbeginn Kuro und Shiro. Solange beide leben, geht sie in Tarnung. Fällt auch nur einer, bricht die Tarnung.",
-  "relic.dian.ferocity.name": "Captain, wir beschützen dich!",
+  "relic.dian.ferocity.name": "Rudel",
   "relic.dian.basic.name": "Schnappt sie!",
   "relic.dian.ultimate.name": "Alle zusammen, drauf!",
   "relic.dian.projectName": "PACK ECHO",

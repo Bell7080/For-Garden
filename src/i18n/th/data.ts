@@ -1052,7 +1052,7 @@ export default {
   "relic.dian.observation.weight": "29 kg",
   "relic.dian.passive.name": "การเฝ้ามองของจ่าฝูง",
   "relic.dian.passive.desc": "เมื่อเริ่มการต่อสู้ จะเรียกคุโระและชิโระ ระหว่างที่ทั้งคู่ยังมีชีวิตจะล่องหน ถ้าล้มไปแม้เพียงตัวเดียว การล่องหนจะหายไป",
-  "relic.dian.ferocity.name": "กัปตัน พวกเราจะปกป้องเอง!",
+  "relic.dian.ferocity.name": "ฝูง",
   "relic.dian.basic.name": "จัดการเลย!",
   "relic.dian.ultimate.name": "ทุกคน กระโจนใส่!",
   "relic.dian.projectName": "PACK ECHO",

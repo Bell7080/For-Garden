@@ -1052,7 +1052,7 @@ export default {
   "relic.dian.observation.weight": "29 кг",
   "relic.dian.passive.name": "Дозор вожака",
   "relic.dian.passive.desc": "В начале боя призывает Куро и Широ. Пока оба живы, уходит в невидимость. Стоит пасть хотя бы одному — невидимость спадает.",
-  "relic.dian.ferocity.name": "Капитан, мы тебя защитим!",
+  "relic.dian.ferocity.name": "Стая",
   "relic.dian.basic.name": "Взять их!",
   "relic.dian.ultimate.name": "Все вместе, в атаку!",
   "relic.dian.projectName": "PACK ECHO",

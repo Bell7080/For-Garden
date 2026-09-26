@@ -1252,7 +1252,7 @@ export default {
   "relic.dian.observation.weight": "29 kg",
   "relic.dian.passive.name": "頭目の警戒",
   "relic.dian.passive.desc": "戦闘開始時にクロとシロを召喚する。2匹とも生きている間は隠密する。1匹でも倒れると隠密が解ける。",
-  "relic.dian.ferocity.name": "隊長はわたしたちが守る！",
+  "relic.dian.ferocity.name": "群れ",
   "relic.dian.basic.name": "みんな、噛みつけ！",
   "relic.dian.ultimate.name": "みんなで飛びかかれ！",
   "relic.dian.projectName": "PACK ECHO",

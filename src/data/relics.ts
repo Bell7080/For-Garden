@@ -39,7 +39,7 @@ const KURO_DEF: RelicDef = {
   reachTier: "melee",
   excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
   // 디안의 태생 공격력 160에서 파생한 값이며, 전투에서는 성장한 공격력으로 다시 계산된다.
-  stats: { hp: 422, def: 56, res: 56, atk: 158, ap: 0, attackSpeed: 104, moveSpeed: 109, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 0 },
+  stats: { hp: 422, def: 67, res: 67, atk: 158, ap: 0, attackSpeed: 104, moveSpeed: 109, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 0 },
   ferocityTrait: {
     name: "무리의 몸", effectId: "packBody",
     defenseResistancePercent: 50, attackSpeedPercent: 50,
@@ -75,7 +75,7 @@ const SHIRO_DEF: RelicDef = {
   reachTier: "melee",
   excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
   // 디안의 태생 주문력 158에서 파생한 값이며, 전투에서는 성장한 주문력으로 다시 계산된다.
-  stats: { hp: 422, def: 58, res: 62, atk: 0, ap: 155, attackSpeed: 96, moveSpeed: 100, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 0 },
+  stats: { hp: 422, def: 70, res: 74, atk: 0, ap: 155, attackSpeed: 96, moveSpeed: 100, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 0 },
   ferocityTrait: {
     name: "무리의 몸", effectId: "packBody",
     defenseResistancePercent: 50, attackSpeedPercent: 50,
@@ -2918,8 +2918,9 @@ export const RELICS: RelicDef[] = [
         // 하나로 공격력·체력·방어·저항이 오르고, 공격 속도·이동 속도는 제 정의의 값 그대로다.
         // 체력은 일부러 얇다(약 420) — 늑대는 두목을 가리는 방패라, 쓰러뜨리면 은신이 풀리는 순간이
         // 실제로 와야 한다. 두꺼웠던 때(약 700)는 1대1에서 늑대 둘을 뚫는 사이 판이 끝나 디안이
-        // 승률과 잔여 체력을 함께 1위로 가져갔다.
-        scaling: { hp: 2.64, atk: 0.99, def: 0.35, res: 0.35 },
+        // 승률과 잔여 체력을 함께 1위로 가져갔다. 내구를 더 줄 때는 체력이 아니라 방어·저항으로
+        // 준다 — 체력은 +5%만 얹어도 그 1위 독점이 돌아오고, 방어·저항은 +20%(0.35 → 0.42)까지 버틴다.
+        scaling: { hp: 2.64, atk: 0.99, def: 0.42, res: 0.42 },
         // 편성원과 같은 키로 세우면 사람만 한 늑대가 되어 폭만 남는다. 칸 하나가 몸 셋을 세우므로
         // 전장이 난잡해지지 않게 작게 세우고, 밀어내는 간격도 몸집만큼 줄어든다(`pairSpacing`).
         bodyScale: 0.6,
@@ -2928,7 +2929,7 @@ export const RELICS: RelicDef[] = [
       },
       {
         def: SHIRO_DEF, growthStat: "ap",
-        scaling: { hp: 2.67, atk: 0.98, def: 0.37, res: 0.39 },
+        scaling: { hp: 2.67, atk: 0.98, def: 0.44, res: 0.47 },
         // 같은 몸집으로 읽혀야 하는 한 쌍이라 털색만 다른 쿠로와 같은 배율을 쓴다.
         bodyScale: 0.6,
         resummon: { enabled: true, cooldownSeconds: 20, hpPercent: 40 },
@@ -2940,7 +2941,7 @@ export const RELICS: RelicDef[] = [
      * 무엇이 얼마나 오르는지는 여기 적지 않는다 — 그 값은 폭주하는 몸이 갖는다(`packBody`).
      * 디안 자신은 폭주해도 때리는 손이 달라지지 않는다. 앞에 선 것은 늑대이기 때문이다.
      */
-    ferocityTrait: { name: "대장님은 우리가 지켜!", effectId: "summonPackFrenzy" },
+    ferocityTrait: { name: "무리", effectId: "summonPackFrenzy" },
     /**
      * 첫 픽업이라 **한 문장으로 읽혀야 한다** — 늑대를 부르고, 둘이 서 있는 동안 숨는다.
      *

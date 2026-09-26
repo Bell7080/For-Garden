@@ -1052,7 +1052,7 @@ export default {
   "relic.dian.observation.weight": "29 kg",
   "relic.dian.passive.name": "首领的守望",
   "relic.dian.passive.desc": "战斗开始时召唤克罗与希罗。两者都存活期间进入隐身。只要有一只倒下，隐身就会解除。",
-  "relic.dian.ferocity.name": "队长由我们来守护！",
+  "relic.dian.ferocity.name": "狼群",
   "relic.dian.basic.name": "上吧！",
   "relic.dian.ultimate.name": "一起扑上去！",
   "relic.dian.projectName": "PACK ECHO",

@@ -36,6 +36,17 @@ function pickupPools(pickups: Partial<Record<RelicRarity, string[]>>): Record<Re
 
 const AMBER_PICKUP = { SSR: ["dian"] } as const satisfies Partial<Record<RelicRarity, string[]>>;
 
+/**
+ * **모든 연구가 같은 확률·같은 회색 보상을 쓴다.** 화석과 호박석의 한 번이 같은 값(젬 300)이려면
+ * 뽑기 자체가 같아야 한다 — 확률을 조금만 달리해도 두 재화의 값을 따로 셈해야 하고, 그 차이를
+ * 상점·무역·보상 표마다 다시 매겨야 한다. 배너가 다른 것은 풀·픽업·천장·값·한도뿐이다.
+ */
+const STANDARD_SLOT_RATES = { R: 0.12, SR: 0.04, SSR: 0.01, GRAY: 0.83 } as const;
+const STANDARD_GRAY_REWARDS = [
+  { kind: "gold", min: 1_000, max: 3_000, weight: 3 },
+  { kind: "cheesecake", min: 5, max: 15, weight: 1 },
+] as const;
+
 /** 교체 배너가 같은 값을 쓰면 천장과 픽업 확정이 이월되는 명시적 운영 그룹이다. */
 export const PITY_GROUP = { WELCOME: "welcome", STANDARD: "standard-fossil", LIMITED_PICKUP: "limited-pickup" } as const;
 
@@ -63,11 +74,8 @@ export const BANNERS: Banner[] = [
     id: "welcome", pityGroupId: PITY_GROUP.WELCOME, name: "첫 복원 연구", featuredRelicId: "rex",
     currency: "fossil", costOne: 1, costTen: 8, tenOnly: true, pullLimit: 50,
     // 확률과 회색 보상은 화석 연구와 같다. 다른 것은 풀·값·한도·확정뿐이다.
-    slotRates: { R: 0.12, SR: 0.04, SSR: 0.01, GRAY: 0.83 },
-    grayRewards: [
-      { kind: "gold", min: 1_000, max: 3_000, weight: 3 },
-      { kind: "cheesecake", min: 5, max: 15, weight: 1 },
-    ],
+    slotRates: STANDARD_SLOT_RATES,
+    grayRewards: STANDARD_GRAY_REWARDS,
     relicPools: { ...STANDARD_POOLS, SSR: [...WELCOME_SSR_POOL] },
     pickupRelicIds: {}, pickupRate: 0,
     highestRarityGuarantee: 50,
@@ -86,11 +94,8 @@ export const BANNERS: Banner[] = [
     currency: "fossil", costOne: 1, costTen: 10,
     // 초기의 작은 R 풀을 너무 빨리 소진하지 않도록 대부분을 부산물로 돌린다. 10연 SR 보장은
     // 그대로 남아 있어 한 묶음은 보통 SR 1장 안팎, R 1~2장, 나머지는 재화로 구성된다.
-    slotRates: { R: 0.12, SR: 0.04, SSR: 0.01, GRAY: 0.83 },
-    grayRewards: [
-      { kind: "gold", min: 1_000, max: 3_000, weight: 3 },
-      { kind: "cheesecake", min: 5, max: 15, weight: 1 },
-    ],
+    slotRates: STANDARD_SLOT_RATES,
+    grayRewards: STANDARD_GRAY_REWARDS,
     // **화석 연구는 픽업이 없는 기본 연구다.** 픽업을 세우면 상시 연구가 한정 연구처럼 읽히고,
     // 호박석 연구의 픽업이 무엇이 다른지 말하지 못한다.
     relicPools: STANDARD_POOLS, pickupRelicIds: {}, pickupRate: 0,
@@ -104,13 +109,11 @@ export const BANNERS: Banner[] = [
     // 재화의 희소도 같은 설계 메모도 배너 카피로 옮기지 않고 운영 데이터와 주석에만 남긴다.
     // 호박석도 한 개가 한 번이다. 값의 차이는 개수가 아니라 재화가 말한다.
     currency: "amber", costOne: 1, costTen: 10,
-    // SSR은 화석 연구와 같은 1%다 — 호박석이 사는 것은 SSR 확률이 아니라 **한정 픽업**(디안은 여기서만
-    // 나온다)과 두 배 가까운 SR·R 확률이다. 재화 결과는 여전히 과반이다.
-    slotRates: { R: 0.22, SR: 0.08, SSR: 0.01, GRAY: 0.69 },
-    grayRewards: [
-      { kind: "gold", min: 3_000, max: 8_000, weight: 2 },
-      { kind: "cheesecake", min: 15, max: 30, weight: 1 },
-    ],
+    // **확률·회색 보상은 화석 연구와 똑같다**(`STANDARD_SLOT_RATES`·`STANDARD_GRAY_REWARDS`). 다른 것은
+    // 한정 픽업(디안은 여기서만 나온다)뿐이다. 확률을 조금만 달리해도 두 재화의 값을 따로 매겨야 해,
+    // 한 번의 값을 둘 다 젬 300으로 두려면 뽑기 자체가 같아야 한다(`TRADE_GEM_RATE`).
+    slotRates: STANDARD_SLOT_RATES,
+    grayRewards: STANDARD_GRAY_REWARDS,
     relicPools: pickupPools(AMBER_PICKUP), pickupRelicIds: { SSR: [...AMBER_PICKUP.SSR] }, pickupRate: 0.5,
     highestRarityGuarantee: 100,
   },

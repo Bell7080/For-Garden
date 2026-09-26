@@ -214,7 +214,7 @@ describe("운영 배너 데이터", () => {
       fossil: { relicRPlus: [0.169, 0.171], gold: [1_244, 1_246], cheesecake: [2.07, 2.08] },
       // 첫 복원 연구는 확률·회색 보상이 화석 연구와 같다. 다른 것은 풀·값·한도·확정뿐이다.
       welcome: { relicRPlus: [0.169, 0.171], gold: [1_244, 1_246], cheesecake: [2.07, 2.08] },
-      amber: { relicRPlus: [0.309, 0.311], gold: [2_529, 2_531], cheesecake: [5.17, 5.18] },
+      amber: { relicRPlus: [0.169, 0.171], gold: [1_244, 1_246], cheesecake: [2.07, 2.08] },
     } as const;
 
     for (const candidate of BANNERS) {
@@ -231,13 +231,14 @@ describe("운영 배너 데이터", () => {
     }
   });
 
-  it("화석은 대부분 재화이고 호박석은 더 높은 렐릭 확률을 제공한다", () => {
+  it("모든 연구는 확률과 회색 보상이 같다 — 화석과 호박석 한 번의 값을 하나로 매기기 위해서다", () => {
     const fossil = BANNERS.find((candidate) => candidate.id === "fossil")!;
-    const amber = BANNERS.find((candidate) => candidate.id === "amber")!;
-    // 출시 초기의 작은 R 풀을 보호하면서 비싼 호박석의 가치 차이도 고정한다.
+    // 출시 초기의 작은 R 풀을 보호하도록 대부분이 재화다.
     expect(fossil.slotRates.GRAY).toBeGreaterThanOrEqual(0.8);
-    expect(amber.slotRates.GRAY).toBeGreaterThan(0.5);
-    expect(calculateBannerExpectations(amber).relicRPlus).toBeGreaterThan(calculateBannerExpectations(fossil).relicRPlus);
+    for (const candidate of BANNERS) {
+      expect(candidate.slotRates).toEqual(fossil.slotRates);
+      expect(candidate.grayRewards).toEqual(fossil.grayRewards);
+    }
   });
 
   it("1회 기대값을 10회 분석 값으로 선형 합산한다", () => {

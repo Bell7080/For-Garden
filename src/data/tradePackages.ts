@@ -29,18 +29,14 @@ export const TRADE_GEM_RATE: Readonly<Record<ProductCurrency, number>> = {
   /*
    * **뽑기 한 번이 이 표의 기준점이다.**
    *
-   * 호박석 한 개가 한 번이고 그 값이 젬 300이다. 화석도 한 번(열 개)이지만 **같은 한 번이
-   * 아니다** — 화석은 일반 연구, 호박석은 픽업 연구라 뽑는 것 자체가 다른 물건이다. 두 번을
-   * 같은 값으로 두면 픽업이 공짜가 되어 일반 배너가 열 이유를 잃는다.
+   * 화석 한 개도 호박석 한 개도 연구 한 번이고, **둘 다 젬 300이다.** 두 연구는 확률·회색 보상이
+   * 똑같고(`banners.ts`의 `STANDARD_SLOT_RATES`) 다른 것은 픽업뿐이라 한 번의 값을 가를 근거가 없다.
+   * 확률을 조금이라도 달리하면 이 표를 둘로 나눠 다시 매겨야 한다.
    *
-   * 두 배너의 SSR 확률은 같은 1%다. 호박석 한 번이 세 배인 것은 **한정 픽업**(그 개체는 호박석
-   * 연구에서만 나온다)과 두 배인 SR·R 확률의 값이다. 그래서 일반 한 번은 젬 100이고, 한 개가 한 번이므로 화석 한 개가 곧 **젬 100**이다.
-   *
-   *   한 번 = 화석 1 = 젬 100 · 열 번 = 화석 10 = 젬 1,000
-   *   한 번 = 호박석 1 = 젬 300 · 열 번 = 호박석 10 = 젬 3,000
+   *   한 번 = 화석 1 = 호박석 1 = 젬 300 · 열 번 = 젬 3,000
    */
   amber: 1 / 300,
-  fossil: 1 / 100,
+  fossil: 1 / 300,
   /*
    * 원석은 고고학 안에서만 돌고 한 판에서 수십 개가 나온다(`strataLayers`의 원석 칸 6~26,
    * 한 판 8~10회). 뽑기 재화와 같은 자리에 두지 않는 이유가 그것이다 — 파서 모으는 재화라
@@ -105,7 +101,7 @@ export function isTradePackage(product: { storefront: ProductStorefront }): bool
  * 검수 장부(시세표 기준 환산):
  * - `trade-cheesecake-supply`: 젬 150 → 치즈케이크 600 = 젬 300 → **200%**
  * - `trade-research-grant`: 젬 200 → 골드 140,000(젬 280) + DNA 14(젬 70) = 젬 350 → **175%**
- * - `trade-excavation-crate`: 젬 400 → 화석 4(젬 400) + 호박석 2(젬 600) = 젬 1,000 → **250%**
+ * - `trade-excavation-crate`: 젬 700 → 화석 4(젬 1,200) + 호박석 2(젬 600) = 젬 1,800 → **257%**
  * - `trade-daily-bundle`: 젬 50 → 골드 40,000(젬 80) + 치즈케이크 60(젬 30) = 젬 110 → **220%**
  *
  * **전시 순서는 한 번뿐인 것 → 주간 → 매일이다.** 가장 후한 것이 맨 위에 서야 화면을 연 순간
@@ -115,7 +111,7 @@ export const TRADE_PACKAGES: readonly ProductDefinition[] = [
   {
     id: "trade-excavation-crate", storefront: "trade", category: "special", iconKey: "shop-product-supplies",
     name: "발굴 장비 보급함", description: "화석 4개와 호박석 2개",
-    acquisition: { kind: "currency", currency: "gems", amount: 400 },
+    acquisition: { kind: "currency", currency: "gems", amount: 700 },
     grants: [{ kind: "currency", currency: "fossil", amount: 4 }, { kind: "currency", currency: "amber", amount: 2 }],
     defaultQuantity: 1, purchaseLimit: 1, refresh: "once",
     visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z",

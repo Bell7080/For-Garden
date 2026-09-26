@@ -337,7 +337,7 @@ describe("디안 일반 공격·목덜미·궁극기", () => {
     expect(isFighterAlive(kuro)).toBe(false);
     expect(kuro.resummonIn).toBe(20);
     expect(hitsBy(events, kuro.id)).toHaveLength(0);
-    // 곁에 선 몸은 제 궁극기(서리 추적)로 같은 표적을 덮친다. 모아 두던 게이지는 그대로다.
+    // 곁에 선 몸은 제 궁극기(흰 추격)로 같은 표적을 덮친다. 모아 두던 게이지는 그대로다.
     expect(hitsBy(events, shiro.id).map(({ skill, targetId }) => ({ skill, targetId }))).toEqual([{ skill: "ultimate", targetId: state.fighters[1].id }]);
     expect(shiro.energy).toBe(30);
     expect(dian.energy).toBe(0);

@@ -4708,7 +4708,7 @@ function strike(
     applyHealing(state, attacker, dealt * damageHealingRate(attacker, skill, attackingInFever, target) / 100);
   };
   healFromDamage(dealt);
-  // 「약점을 공격해!」 — 두목이 문 자리로 살아 있는 늑대가 곧바로 제 궁극기를 쓴다.
+  // 「다 같이 덮쳐!」 — 두목이 문 자리로 살아 있는 늑대가 곧바로 제 궁극기를 쓴다.
   if (useUltimate && attacker.def.ultimate.commandsPack === true) commandPack(attacker, target, rng, state, events);
   if (!useUltimate) grantShieldFromDamage(attacker, dealt, events, state);
   if (!useUltimate) stitchSuture(attacker, targetHpBefore - target.hp, state, events);

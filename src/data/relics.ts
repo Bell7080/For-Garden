@@ -45,7 +45,7 @@ const KURO_DEF: RelicDef = {
     defenseResistancePercent: 50, attackSpeedPercent: 50,
   },
   passive: { id: "kuro-passive", name: "검은 이빨", kind: "summonDerived", iconAssetId: "skill-icon-buff", effectType: "buff", value: 0, desc: "디안이 전투 시작 시 불러내는 귀속 소환수다. 디안의 공격력이 쿠로의 공격력·체력·방어력·저항력을 정한다." },
-  basic: { id: "kuro-basic", name: "물어뜯기", power: 45, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", targeting: "single" },
+  basic: { id: "kuro-basic", name: "검은 발톱", power: 45, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", targeting: "single" },
   ultimate: {
     id: "kuro-ult", name: "검은 돌진", power: 150, iconAssetId: "skill-icon-physical", effectType: "physical",
     damageType: "physical", cost: 100, targeting: "chargeLine", radius: 42,
@@ -81,9 +81,9 @@ const SHIRO_DEF: RelicDef = {
     defenseResistancePercent: 50, attackSpeedPercent: 50,
   },
   passive: { id: "shiro-passive", name: "흰 이빨", kind: "summonDerived", iconAssetId: "skill-icon-buff", effectType: "buff", value: 0, desc: "디안이 전투 시작 시 불러내는 귀속 소환수다. 디안의 주문력이 시로의 주문력·체력·방어력·저항력을 정한다." },
-  basic: { id: "shiro-basic", name: "백색 포효", power: 45, iconAssetId: "skill-icon-magical", effectType: "magical", damageType: "magical", scalingStat: "ap", targeting: "single" },
+  basic: { id: "shiro-basic", name: "흰 포효", power: 45, iconAssetId: "skill-icon-magical", effectType: "magical", damageType: "magical", scalingStat: "ap", targeting: "single" },
   ultimate: {
-    id: "shiro-ult", name: "서리 추적", power: 150, iconAssetId: "skill-icon-magical", effectType: "magical",
+    id: "shiro-ult", name: "흰 추격", power: 150, iconAssetId: "skill-icon-magical", effectType: "magical",
     damageType: "magical", scalingStat: "ap", cost: 100, targeting: "chargeLine", radius: 42,
     statusEffects: [{ kind: "chill", speedPercentPerStack: 15, maxStacks: 2 }],
   },
@@ -2940,7 +2940,7 @@ export const RELICS: RelicDef[] = [
      * 무엇이 얼마나 오르는지는 여기 적지 않는다 — 그 값은 폭주하는 몸이 갖는다(`packBody`).
      * 디안 자신은 폭주해도 때리는 손이 달라지지 않는다. 앞에 선 것은 늑대이기 때문이다.
      */
-    ferocityTrait: { name: "무리", effectId: "summonPackFrenzy" },
+    ferocityTrait: { name: "대장님은 우리가 지켜!", effectId: "summonPackFrenzy" },
     /**
      * 첫 픽업이라 **한 문장으로 읽혀야 한다** — 늑대를 부르고, 둘이 서 있는 동안 숨는다.
      *
@@ -2978,7 +2978,7 @@ export const RELICS: RelicDef[] = [
      * 대기 단축을 걷어 내, 이 궁극기가 하는 일은 "두목이 물고 무리가 덮친다" 한 문장이다.
      */
     ultimate: {
-      id: "dian-ult", name: "약점을 공격해!", power: 60, secondaryScaling: { stat: "ap", power: 90 },
+      id: "dian-ult", name: "다 같이 덮쳐!", power: 60, secondaryScaling: { stat: "ap", power: 90 },
       iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", scalingStat: "atk", cost: 130, targeting: "single",
       finisher: { thresholdPercent: 30, atkPercent: 125, apPercent: 125, cooldownSeconds: 8 },
       commandsPack: true,

@@ -266,10 +266,10 @@ describe("디안 일반 공격·목덜미·궁극기", () => {
     expect(alone.map(({ damageType, amount }) => ({ damageType, amount }))).toEqual([{ damageType: "physical", amount: expected }]);
   });
 
-  it("은 표적이 문턱 아래면 자리를 옮기지 않고 같은 한 방에 큰 추가 피해를 얹는다", () => {
+  it("은 표적이 문턱 아래면 자리를 옮기지 않고 확정 치명타에 큰 추가 피해를 얹는다", () => {
     const { state, dian } = readyDian(1);
     const foe = state.fighters[1];
-    const normal = computeDamage(dian, defensiveDefinition(foe, state), { ...dian.def.basic, isCritical: false, kind: "basic" });
+    const critical = computeDamage(dian, defensiveDefinition(foe, state), { ...dian.def.basic, isCritical: true, kind: "basic" });
     foe.hp = foe.maxHp * 0.2;
     const before = { x: dian.x, y: dian.y };
     const events = stepSkirmish(state, 0.01);
@@ -280,9 +280,29 @@ describe("디안 일반 공격·목덜미·궁극기", () => {
     // 한 행동에 한 타격이다 — 추가 타격을 따로 세우면 보스 점수와 재사용 대기 검증이 두 번으로 센다.
     const hits = hitsBy(events, dian.id);
     expect(hits).toHaveLength(1);
-    expect(hits[0].amount).toBe(Math.round(normal * (1 + dian.def.basic.finisher!.bonusDamagePercent / 100)));
-    expect(hits[0].critical).toBe(false);
+    expect(hits[0].critical).toBe(true);
+    expect(hits[0].amount).toBe(Math.round(critical * (1 + dian.def.basic.finisher!.bonusDamagePercent / 100)));
   });
+
+  it("은 한 번 연 표적에게 대기 시간 동안 다시 열지 않고, 다른 표적에게는 곧바로 연다", () => {
+    const { state, dian } = readyDian(2);
+    const [first, second] = [state.fighters[1], state.fighters[2]];
+    first.hp = first.maxHp * 0.25;
+    second.hp = second.maxHp * 0.25;
+    const cooldown = dian.def.basic.finisher!.cooldownSeconds;
+    expect(stepSkirmish(state, 0.01).some((event) => event.kind === "packFinisher")).toBe(true);
+    // 같은 표적은 문턱 아래여도 대기 중이다.
+    dian.attackCooldown = 0; first.hp = first.maxHp * 0.25;
+    expect(stepSkirmish(state, 0.01).some((event) => event.kind === "packFinisher")).toBe(false);
+    // 다른 표적은 제 시계가 따로라 곧바로 터진다.
+    dian.targetId = second.id; dian.attackCooldown = 0;
+    dian.x = second.x + 40; dian.y = second.y;
+    const other = stepSkirmish(state, 0.01).find((event) => event.kind === "packFinisher");
+    expect(other?.kind === "packFinisher" ? other.targetId : undefined).toBe(second.id);
+    // 대기가 끝나면 첫 표적에게 다시 열린다.
+    expect(dian.napeReadyAt[first.id]).toBeCloseTo(0.01 + cooldown, 5);
+  });
+
 
 
   it("은 문턱 위에서는 추가 피해가 붙지 않는다", () => {

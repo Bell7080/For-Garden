@@ -721,7 +721,7 @@ export class IdleExcavationPopup {
       const slot = this.scene.add.container(x, STATUS_HERO.slotY);
       // 칸의 밑판·발밑 그림자·빈 자리 번호는 네 편성 화면이 공유하는 한 장이다.
       addFormationSlotPlate(this.scene, slot, { x: 0, y: 0, width: 210, height: 245 }, {
-        accent: COLOR.accent, occupied: Boolean(relic), index, groundOffset: SLOT_GROUND_OFFSET,
+        occupied: Boolean(relic), index, groundOffset: SLOT_GROUND_OFFSET,
       });
       parent.add(slot);
       // 테두리 색으로 선택을 알리지 않는다 — 뒤에 깔리는 밑판이 이미 그 말을 하고, 색을 바꾸려면

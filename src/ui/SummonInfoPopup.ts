@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { deriveSummonStats } from "../core/summonStats";
+import { deriveSummonStats, summonBodyBasis } from "../core/summonStats";
 import type { RelicDef, Stats, SummonDef } from "../core/types";
 import { setDebugInfoAssetReady } from "../debug";
 import { t } from "../i18n";
@@ -15,6 +15,7 @@ import { addObservationJournalButton, openObservationJournal } from "./Observati
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
 import { addSectionTitle } from "./SectionTitle";
 import { statToneHex } from "./statTones";
+import { shrinkTextToWidth } from "./textFit";
 import { SUMMON_INFO as L } from "./summonInfoLayout";
 import { COLOR, textStyle } from "./theme";
 
@@ -29,6 +30,10 @@ export interface SummonInfoSubject {
 
 /** 팝업 몸판 가운데가 앉는 화면 자리. Puppet은 컨테이너 변환을 물려받지 않아 화면 좌표로 선다. */
 const SCREEN_CENTER = { x: BASE_WIDTH / 2, y: BASE_HEIGHT / 2 } as const;
+
+/** 성장 기준 칸 두 줄의 세로 자리(칸 가운데 0)와 수가 차지하는 폭. 네 자리 수까지 캡션과 겹치지 않는다. */
+const SUMMON_GROWTH_ROW_Y = [-30, 30] as const;
+const SUMMON_GROWTH_VALUE_WIDTH = 124;
 
 /**
  * 소환수 정보창 — 쿠로·시로처럼 **지휘자에게 딸린 몸**을 여는 한 장.
@@ -97,27 +102,37 @@ export class SummonInfoPopup {
   }
 
   /**
-   * 성장 기준 칸 — 적 창의 레벨 칸과 같은 자리·같은 글자 크기다.
+   * 성장 기준 칸 — 적 창의 레벨 칸 자리. **두 줄**이다.
    *
-   * 큰 수는 **지휘자의 그 능력치**이고 색도 그 능력치의 색이다. 늑대의 수치가 무엇을 따라 오르는지는
-   * 이 수 하나가 말하고, 실제로 얼마가 되었는지는 바로 아래 오각형이 말한다.
+   * 윗줄은 때리는 손과 속도가 따르는 **성장 축 한 수**(쿠로 공격력 · 시로 주문력), 아랫줄은 몸(체력·
+   * 방어·저항)이 따르는 **공격력 + 주문력**이다. 수는 그 능력치의 색이고, 옆에 무엇이 그 수를 따르는지와
+   * 그 수가 어디서 왔는지를 두 줄로 붙인다. 실제로 얼마가 되었는지는 바로 아래 오각형이 말한다.
    */
   private paintGrowth(chrome: Phaser.GameObjects.Container, owner: RelicDef, ownerStats: Readonly<Stats>, summon: SummonDef): void {
     const { column, growthPanel } = L;
     const panel = addInfoPanel(this.scene, chrome, column.x, enemyInfoPanelCenterY(growthPanel), column.width, growthPanel.height);
     addSectionTitle(this.scene, column.x - column.width / 2, growthPanel.top - 4, t("info.summon.growth"), { parent: chrome });
     const stat = summon.growthStat;
-    const value = this.scene.add
-      .text(-column.width / 2 + 54, -66, String(Math.round(ownerStats[stat])), textStyle({ role: "display", size: 96, color: statToneHex(stat) }))
-      .setOrigin(0, 0)
-      .setScale(1, 1.16)
-      .setShadow(3, 8, "#05070a", 10, false, true);
-    panel.add(value);
-    panel.add(this.scene.add
-      .text(value.x + value.displayWidth + 14, value.y + value.displayHeight - 4,
-        t("info.summon.growthSource", { owner: owner.name, stat: t(stat === "atk" ? "skill.stat.atk" : "skill.stat.ap") }),
-        textStyle({ role: "emphasis", size: 28, color: COLOR.inkDim }))
-      .setOrigin(0, 1));
+    const statName = (key: "atk" | "ap"): string => t(key === "atk" ? "skill.stat.atk" : "skill.stat.ap");
+    const rows = [
+      { value: Math.round(ownerStats[stat]), color: statToneHex(stat), what: t("info.summon.growth.offense"), from: t("info.summon.growthSource", { owner: owner.name, stat: statName(stat) }) },
+      { value: Math.round(summonBodyBasis(ownerStats)), color: statToneHex("hp"), what: t("info.summon.growth.body"),
+        from: t("info.summon.growthBodySource", { owner: owner.name, atk: statName("atk"), ap: statName("ap") }) },
+    ];
+    const left = -column.width / 2 + 44;
+    const captionRight = column.width / 2 - 24;
+    rows.forEach((row, index) => {
+      const y = SUMMON_GROWTH_ROW_Y[index];
+      const value = this.scene.add.text(left, y, String(row.value), textStyle({ role: "display", size: 52, color: row.color }))
+        .setOrigin(0, 0.5).setShadow(2, 6, "#05070a", 8, false, true);
+      panel.add(value);
+      const captionX = left + SUMMON_GROWTH_VALUE_WIDTH;
+      const what = this.scene.add.text(captionX, y - 13, row.what, textStyle({ role: "emphasis", size: 22, color: COLOR.ink })).setOrigin(0, 0.5);
+      const from = this.scene.add.text(captionX, y + 14, row.from, textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0, 0.5);
+      shrinkTextToWidth(what, captionRight - captionX);
+      shrinkTextToWidth(from, captionRight - captionX);
+      panel.add([what, from]);
+    });
   }
 
   /**

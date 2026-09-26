@@ -39,12 +39,12 @@ const KURO_DEF: RelicDef = {
   reachTier: "melee",
   excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
   // 디안의 태생 공격력 160에서 파생한 값이며, 전투에서는 성장한 공격력으로 다시 계산된다.
-  stats: { hp: 422, def: 56, res: 56, atk: 158, ap: 0, attackSpeed: 104, moveSpeed: 109, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 0 },
+  stats: { hp: 423, def: 56, res: 56, atk: 158, ap: 0, attackSpeed: 104, moveSpeed: 109, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 0 },
   ferocityTrait: {
     name: "무리의 몸", effectId: "packBody",
     defenseResistancePercent: 50, attackSpeedPercent: 50,
   },
-  passive: { id: "kuro-passive", name: "검은 이빨", kind: "summonDerived", iconAssetId: "skill-icon-buff", effectType: "buff", value: 0, desc: "디안이 전투 시작 시 불러내는 귀속 소환수다. 디안의 공격력이 쿠로의 체력·공격력·방어력·저항력·공격 속도·이동 속도를 모두 정한다." },
+  passive: { id: "kuro-passive", name: "검은 이빨", kind: "summonDerived", iconAssetId: "skill-icon-buff", effectType: "buff", value: 0, desc: "디안이 전투 시작 시 불러내는 귀속 소환수다. 디안의 공격력이 쿠로의 공격력·공격 속도·이동 속도를, 디안의 공격력과 주문력이 함께 체력·방어력·저항력을 정한다." },
   basic: { id: "kuro-basic", name: "물어뜯기", power: 45, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", targeting: "single" },
   ultimate: {
     id: "kuro-ult", name: "검은 돌진", power: 150, iconAssetId: "skill-icon-physical", effectType: "physical",
@@ -75,12 +75,12 @@ const SHIRO_DEF: RelicDef = {
   reachTier: "melee",
   excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
   // 디안의 태생 주문력 158에서 파생한 값이며, 전투에서는 성장한 주문력으로 다시 계산된다.
-  stats: { hp: 422, def: 58, res: 62, atk: 0, ap: 155, attackSpeed: 96, moveSpeed: 100, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 0 },
+  stats: { hp: 423, def: 58, res: 62, atk: 0, ap: 155, attackSpeed: 96, moveSpeed: 100, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 0 },
   ferocityTrait: {
     name: "무리의 몸", effectId: "packBody",
     defenseResistancePercent: 50, attackSpeedPercent: 50,
   },
-  passive: { id: "shiro-passive", name: "흰 이빨", kind: "summonDerived", iconAssetId: "skill-icon-buff", effectType: "buff", value: 0, desc: "디안이 전투 시작 시 불러내는 귀속 소환수다. 디안의 주문력이 시로의 체력·주문력·방어력·저항력·공격 속도·이동 속도를 모두 정한다." },
+  passive: { id: "shiro-passive", name: "흰 이빨", kind: "summonDerived", iconAssetId: "skill-icon-buff", effectType: "buff", value: 0, desc: "디안이 전투 시작 시 불러내는 귀속 소환수다. 디안의 주문력이 시로의 주문력·공격 속도·이동 속도를, 디안의 공격력과 주문력이 함께 체력·방어력·저항력을 정한다." },
   basic: { id: "shiro-basic", name: "백색 포효", power: 45, iconAssetId: "skill-icon-magical", effectType: "magical", damageType: "magical", scalingStat: "ap", targeting: "single" },
   ultimate: {
     id: "shiro-ult", name: "서리 추적", power: 150, iconAssetId: "skill-icon-magical", effectType: "magical",
@@ -2914,11 +2914,12 @@ export const RELICS: RelicDef[] = [
     summons: [
       {
         def: KURO_DEF, growthStat: "atk",
-        // 정의의 태생 능력치가 그대로 나오도록 디안의 태생 공격력 160을 기준으로 잰 계수다.
+        // 정의의 태생 능력치가 그대로 나오도록 디안의 태생값으로 잰 계수다. 공격력·속도는 공격력 160,
+        // 몸(체력·방어·저항)은 공격력 + 주문력 318에 곱한다.
         // 체력은 일부러 얇다(약 420) — 늑대는 두목을 가리는 방패라, 쓰러뜨리면 은신이 풀리는 순간이
         // 실제로 와야 한다. 두꺼웠던 때(약 700)는 1대1에서 늑대 둘을 뚫는 사이 판이 끝나 디안이
         // 승률과 잔여 체력을 함께 1위로 가져갔다.
-        scaling: { hp: 2.64, atk: 0.99, def: 0.35, res: 0.35, attackSpeed: 0.65, moveSpeed: 0.68, attackSpeedCap: 150, moveSpeedCap: 150 },
+        scaling: { hp: 1.33, atk: 0.99, def: 0.176, res: 0.176, attackSpeed: 0.65, moveSpeed: 0.68, attackSpeedCap: 150, moveSpeedCap: 150 },
         // 편성원과 같은 키로 세우면 사람만 한 늑대가 되어 폭만 남는다. 칸 하나가 몸 셋을 세우므로
         // 전장이 난잡해지지 않게 작게 세우고, 밀어내는 간격도 몸집만큼 줄어든다(`pairSpacing`).
         bodyScale: 0.6,
@@ -2927,7 +2928,7 @@ export const RELICS: RelicDef[] = [
       },
       {
         def: SHIRO_DEF, growthStat: "ap",
-        scaling: { hp: 2.67, atk: 0.98, def: 0.37, res: 0.39, attackSpeed: 0.61, moveSpeed: 0.63, attackSpeedCap: 140, moveSpeedCap: 145 },
+        scaling: { hp: 1.33, atk: 0.98, def: 0.182, res: 0.195, attackSpeed: 0.61, moveSpeed: 0.63, attackSpeedCap: 140, moveSpeedCap: 145 },
         // 같은 몸집으로 읽혀야 하는 한 쌍이라 털색만 다른 쿠로와 같은 배율을 쓴다.
         bodyScale: 0.6,
         resummon: { enabled: true, cooldownSeconds: 20, hpPercent: 40 },
@@ -2966,7 +2967,7 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "dian-basic", name: "얘들아, 물어!", power: 40, secondaryScaling: { stat: "ap", power: 60 },
       iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", scalingStat: "atk", targeting: "single",
-      finisher: { thresholdPercent: 30, bonusDamagePercent: 100 },
+      finisher: { thresholdPercent: 30, bonusDamagePercent: 100, cooldownSeconds: 8 },
     },
     /**
      * 표적을 크게 물고(체력 30% 이하면 목덜미로 두 배), 살아 있는 늑대가 그 표적에게 곧바로 제
@@ -2978,7 +2979,7 @@ export const RELICS: RelicDef[] = [
     ultimate: {
       id: "dian-ult", name: "약점을 공격해!", power: 60, secondaryScaling: { stat: "ap", power: 90 },
       iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", scalingStat: "atk", cost: 130, targeting: "single",
-      finisher: { thresholdPercent: 30, bonusDamagePercent: 100 },
+      finisher: { thresholdPercent: 30, bonusDamagePercent: 100, cooldownSeconds: 8 },
       commandsPack: true,
     },
   },

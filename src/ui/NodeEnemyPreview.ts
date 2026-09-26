@@ -14,6 +14,7 @@ import { combatPower } from "../core/combatPower";
 import { ENCOUNTER_ROLE, encounterRoleFor } from "../core/levelDesign";
 import { addStageEliteMark } from "./stageEliteMark";
 import { anchorEnemyPreview, enemyPreviewColumns, enemyPreviewSlotHalfWidth, NODE_ENEMY_PREVIEW, NODE_ENEMY_SITUATION, NODE_ENEMY_SLOT } from "./nodeEnemyPreviewLayout";
+import { addSdFootShadow } from "./SdFootShadow";
 
 export interface NodeEnemyPreviewOptions {
   title: string;
@@ -87,7 +88,7 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     this.options.enemies.forEach((enemy, index) => {
       const growth = this.options.growth[index] ?? { level: 1, breakthrough: 0 };
       const x = columns[index];
-      this.add(this.scene.add.ellipse(x, ground + 4, compact ? 112 : 150, 26, COLOR.void, 0.5));
+      addSdFootShadow(this.scene, x, ground + 4, compact ? 112 : 150, this);
       // **카드 그리드와 같은 양식을 쓰되 칸이 아니라 SD로 세운다.** 속성·직군은 왼쪽 위에
       // 아이콘으로, 돌파는 오른쪽 위에 로마자로 — 화면마다 다른 글로 적으면 같은 값이 어디서는
       // 표식, 어디서는 문장이 된다.

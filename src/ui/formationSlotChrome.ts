@@ -9,6 +9,7 @@ import { squeezeTextToWidth } from "./textFit";
 import type { Role } from "../core/types";
 import { COLOR, textStyle } from "./theme";
 import { pressIn, pressOut } from "./pressFeedback";
+import { addSdFootShadow } from "./SdFootShadow";
 
 /**
  * 편성 자리의 겉치레 — 고른 칸과 빼는 표식.
@@ -84,8 +85,6 @@ export function addFormationRemoveChip(
 }
 
 export interface FormationSlotPlateOptions {
-  /** 이 콘텐츠의 강조색. 발밑 그림자가 그 색을 옅게 쓴다. */
-  accent?: number;
   /** 이 칸에 누군가 서 있는가. */
   occupied: boolean;
   /** 자리 번호(0부터). 빈 칸이 이 수를 적는다. */
@@ -110,15 +109,8 @@ export function addFormationSlotPlate(
     edgeAlpha: FORMATION_SLOT_PLATE.edgeAlpha,
   }));
   if (options.occupied) {
-    // 사방 테두리나 입체 받침 대신 얇은 홀로그램 투영 그림자만 발 아래에 둔다.
-    parent.add(scene.add.ellipse(
-      box.x,
-      box.y + options.groundOffset + 2,
-      box.width * FORMATION_SLOT_PLATE.groundWidthRatio,
-      FORMATION_SLOT_PLATE.groundHeight,
-      options.accent ?? COLOR.accent,
-      FORMATION_SLOT_PLATE.groundAlpha,
-    ));
+    // 사방 테두리나 입체 받침 대신 발밑 그림자만 둔다 — SD가 서는 모든 자리와 같은 한 장이다.
+    addSdFootShadow(scene, box.x, box.y + options.groundOffset + 2, box.width * FORMATION_SLOT_PLATE.groundWidthRatio, parent);
     return;
   }
   // 추천 직군이 있으면 빈 칸의 자리 번호 대신 그것이 선다(`FORMATION_ROLE_HINT`).

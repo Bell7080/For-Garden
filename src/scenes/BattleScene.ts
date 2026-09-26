@@ -107,6 +107,7 @@ import { beginBossSettlementAttempt, bossSettlementRecoveryRoute, completeBossSe
 import { hasMergedBattleHit, isPlayerUltimateReadyTransition } from "../core/hapticPolicy";
 import { applyBattleTestPreset, battleRandom } from "../testSupport/battleHarness";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
+import { addSdFootShadow } from "../ui/SdFootShadow";
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -149,6 +150,8 @@ const KNOCKBACK_SPIN = 1_080;
 
 /** SD 한 명의 화면 높이. 여섯이 겹치지 않도록 기존 300에서 0.7배로 줄였다. */
 const UNIT_HEIGHT = 210;
+/** 보통 몸의 발밑 그림자 폭. 몸집(`bodyScale`)만큼 줄어든다. */
+const BATTLE_FOOT_SHADOW_WIDTH = 140;
 const PROFILE_TOP = 1430;
 /**
  * 조작 칩은 프로필 줄 바로 위 우하단에 모인다. 전장을 가리지 않고 엄지가 닿는 자리다.
@@ -229,7 +232,7 @@ interface FighterView {
   fighter: Fighter;
   /** 움직이는 Puppet의 메시 입력 경계 대신 몸통을 따라가는 안정적인 전투 클릭 영역이다. */
   infoHit?: Phaser.GameObjects.Rectangle;
-  shadow: Phaser.GameObjects.Ellipse;
+  shadow: Phaser.GameObjects.Container;
   /** 머리 위 체력 바. 깎일 때 스르륵 따라오는 것은 프리팹이 맡는다. */
   hpBar: UnitHealthBar;
   /** 걸린 상태를 알리는 칩 한 줄. 체력 바 **위**에 서고, 누르면 쪽지가 열린다. */
@@ -968,7 +971,8 @@ export class BattleScene extends Phaser.Scene {
         : undefined;
       // 폭주 필터. 스킬 아이콘과 같은 속성·직군 색을 그대로 쓰며, 발광이 아니라 몸에 입힌다.
       const feverTint = skillArtTint(fighter.def.element, fighter.def.role);
-      const shadow = this.add.ellipse(fighter.x, fighter.y + 4, 132, 24, 0x000000, 0.38);
+      // 발밑 그림자는 몸집만큼만 — 작게 선 늑대가 사람만 한 그림자를 끌고 다니지 않는다.
+      const shadow = addSdFootShadow(this, fighter.x, fighter.y + 4, BATTLE_FOOT_SHADOW_WIDTH * fighter.bodyScale);
       const barColor = fighter.side === "player" ? COLOR.hpFill : COLOR.hpEnemy;
       const hpBar = new UnitHealthBar(this, barColor, this.motion.effectiveBattleUiMotion).snap(1);
       const statusChips = new UnitStatusChips(this);
@@ -1983,7 +1987,7 @@ export class BattleScene extends Phaser.Scene {
         .setDepth(Math.round(fighter.y / 10) + DEPTH.unitBase + 1);
       // 떠 있는 동안 그림자는 땅에 남되 작고 옅어진다.
       const lift = 1 - Math.min(pose.hop / 60, 0.45);
-      view.shadow.setPosition(pose.shadowX, pose.shadowY + 4).setDisplaySize(132 * lift, 24 * lift).setAlpha(0.38 * lift);
+      view.shadow.setPosition(pose.shadowX, pose.shadowY + 4).setScale(lift).setAlpha(lift);
       const barY = pose.y - unitHeight - 26;
       view.hpBar.setPosition(pose.x, barY).setDepth(DEPTH.hpBar).setValue(fighter.hp / fighter.maxHp);
       const stunned = fighter.stunnedFor > 0;

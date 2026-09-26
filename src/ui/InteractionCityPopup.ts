@@ -229,7 +229,7 @@ export class InteractionCityPopup {
       // 칸의 밑판·발밑 그림자·빈 자리 번호는 네 편성 화면이 공유하는 한 장이다. 판은 서 있든
       // 비었든 늘 깔린다 — 세 칸이 같은 판 위에 서야 무엇을 더 고를 수 있는지가 보인다.
       addFormationSlotPlate(this.scene, parent, box, {
-        accent: BLUE, occupied: Boolean(relicId), index, groundOffset: SLOT_GROUND_OFFSET,
+        occupied: Boolean(relicId), index, groundOffset: SLOT_GROUND_OFFSET,
       });
       if (relicId) this.standPuppet(relicId, x, view.state === "away");
       if (!editable) return;

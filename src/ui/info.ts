@@ -74,6 +74,7 @@ import { pressIn, pressOut } from "./pressFeedback";
 import { FeedTapEffect } from "./feedTapEffect";
 import { settingsManager } from "../managers/SettingsManager";
 import { FEED_TAP, feedHoldDelay } from "./feedTapStyle";
+import { addSdFootShadow } from "./SdFootShadow";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -2321,9 +2322,8 @@ export function addInfoPanel(
 
 
 export function addInfoFigureStand(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, x: number, y: number): void {
-  parent.add(scene.add.ellipse(x, y + 6, 206, 52, COLOR.void, 0.55));
-  parent.add(scene.add.ellipse(x, y, 192, 44, 0x141920, 0.92));
-  parent.add(drawHairline(scene, x, y - 20, 172, { color: COLOR.accent, alpha: 0.4 }));
+  // 받침은 판이 아니라 발밑 그림자다 — 전장·편성과 같은 한 장(`addSdFootShadow`).
+  addSdFootShadow(scene, x, y, 206, parent);
   parent.add(
     scene.add.text(x, y + 32, "IN-GAME SD", textStyle({ role: "body", size: 17, color: COLOR.inkDim })).setOrigin(0.5, 0),
   );

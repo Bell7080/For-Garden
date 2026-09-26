@@ -873,7 +873,7 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
    */
   if ("finisher" in skill && skill.finisher !== undefined) {
     clauses.push({
-      text: t("skill.clause.nape", { percent: skill.finisher.thresholdPercent, bonus: skill.finisher.bonusDamagePercent }),
+      text: t("skill.clause.nape", { percent: skill.finisher.thresholdPercent, bonus: skill.finisher.bonusDamagePercent, seconds: skill.finisher.cooldownSeconds }),
       standalone: true,
     });
   }

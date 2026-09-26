@@ -180,6 +180,12 @@ export interface Fighter extends Combatant {
   resummonIn: number;
   /** 표적을 다시 고르기까지 남은 시간(초). 0이 되는 프레임에 주위를 다시 잰다. */
   retargetIn: number;
+  /**
+   * 목덜미를 표적마다 다시 열 수 있는 전투 시각(`state.elapsed`). 키는 표적 ID다.
+   *
+   * 남은 시간을 매 프레임 깎지 않고 **열리는 시각**을 적는다 — 표적 수만큼 시계를 돌릴 까닭이 없다.
+   */
+  napeReadyAt: Record<string, number>;
   /** 고품격 식재료가 다시 표적을 고르기까지 남은 시간(초). 0이 되는 프레임에 도약한다. */
   huntCooldown: number;
   /**
@@ -987,6 +993,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     shellGuard: null,
     shellGuardCooldownRemaining: 0,
     retargetIn: 0,
+    napeReadyAt: {},
     curse: null,
     frenzy: null,
     bleed: null,
@@ -4593,14 +4600,15 @@ function strike(
   }
   const forcedCritical = periodicCritical !== undefined && attacker.basicAttackCount >= periodicCritical.every;
   if (forcedCritical) attacker.basicAttackCount = 0;
-  // 목덜미 — 표적이 문턱 아래면 이번 한 방에 큰 추가 피해가 붙는다. 판정은 **맞기 전의** 체력이다.
-  const nape = napeBonus(attacker, target, skill, events);
+  // 목덜미 — 표적이 문턱 아래면 이번 한 방이 확정 치명타에 큰 추가 피해가 된다. 판정은 **맞기 전의** 체력이다.
+  const nape = napeBonus(attacker, target, skill, state, events);
   // 궁극기가 걸어 둔 강화는 실제로 나가는 일반 공격 한 번을 쓰고 사라진다. 이 타격이 곧 그
   // 한 번이므로 여기서 소비한다 — 궁극기 쪽에서 미리 지우면 강화가 붙을 타격이 없어진다.
   const empowered = !useUltimate && attacker.empoweredBasic;
   if (empowered) attacker.empoweredBasic = false;
   // 확정 치명타는 RNG를 호출조차 하지 않아 이후 리플레이 난수열이 밀리지 않는다.
-  const critical = forcedCritical || empowered || bleedingBite || isCriticalHit(Math.min(100, criticalChance), rng());
+  // 확정 치명타는 RNG를 부르지 않는다 — 목덜미도 같다. 이후 리플레이 난수열이 밀리지 않는다.
+  const critical = forcedCritical || empowered || bleedingBite || nape > 1 || isCriticalHit(Math.min(100, criticalChance), rng());
   // 공속 복합 계수는 현재 기본 공속과 전투의 환희 누적을 읽되 폭주 임시 배율은 포함하지 않는다.
   const attackSpeedPower = useUltimate ? attacker.def.ultimate.attackSpeedPower ?? 0 : 0;
   const basePower = attackSpeedPower > 0
@@ -5534,16 +5542,20 @@ function reviveWolf(state: SkirmishState, owner: Fighter, wolf: Fighter, events:
 }
 
 /**
- * 목덜미. 표적의 체력이 문턱(`finisher.thresholdPercent`) 이하면 이번 한 방에 **큰 추가 피해**가
- * 붙는다(`bonusDamagePercent`) — 약해진 적을 끝내는 암살자의 한 방이다. 돌려주는 값은 피해 배율이다.
+ * 목덜미. 표적의 체력이 문턱(`finisher.thresholdPercent`) 아래로 내려온 뒤 **처음 닿는 한 방**이
+ * 확정 치명타에 큰 추가 피해(`bonusDamagePercent`)가 된다 — 약해진 적을 끝내는 암살자의 한 방이다.
+ * 한 번 터지면 그 표적에게는 `cooldownSeconds` 동안 다시 터지지 않는다(**표적마다 따로**). 돌려주는
+ * 값은 피해 배율이고, 1보다 크면 열린 것이다.
  *
  * **추가 타격을 따로 세우지 않고 한 방에 얹는다.** 따로 세우면 보스 점수와 서버의 재사용 대기
  * 검증이 같은 행동을 두 번으로 센다. 숫자 하나가 커지는 대신 표적 자리에서 연출이 터져 "노렸다"를
  * 말한다. 자리는 옮기지 않는다 — 두목은 가장 뒤에 남는다.
  */
-function napeBonus(attacker: Fighter, target: Fighter, skill: Skill, events: SkirmishEvent[]): number {
+function napeBonus(attacker: Fighter, target: Fighter, skill: Skill, state: SkirmishState, events: SkirmishEvent[]): number {
   const finisher = "finisher" in skill ? skill.finisher : undefined;
   if (finisher === undefined || !isFighterAlive(target) || target.hp / target.maxHp * 100 > finisher.thresholdPercent) return 1;
+  if (state.elapsed < (attacker.napeReadyAt[target.id] ?? 0)) return 1;
+  attacker.napeReadyAt[target.id] = state.elapsed + finisher.cooldownSeconds;
   events.push({ kind: "packFinisher", fighterId: attacker.id, targetId: target.id, x: target.x, y: target.y });
   return 1 + finisher.bonusDamagePercent / 100;
 }

@@ -30,7 +30,6 @@ describe("편성 칸의 공용 양식", () => {
     // 값이 흩어지면 같은 칸이 화면마다 다른 진하기로 보인다. 여기서 한 번 고정한다.
     expect(FORMATION_SLOT_PLATE.groundWidthRatio).toBeGreaterThan(0.5);
     expect(FORMATION_SLOT_PLATE.groundWidthRatio).toBeLessThan(1);
-    expect(FORMATION_SLOT_PLATE.groundAlpha).toBeLessThan(0.3);
     expect(FORMATION_SLOT_PLATE.edgeAlpha).toBeLessThan(1);
   });
 });

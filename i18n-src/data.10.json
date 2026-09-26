@@ -130,14 +130,14 @@
 "В начале боя призывает Куро и Широ. Пока оба живы, уходит в невидимость. Стоит пасть хотя бы одному — невидимость спадает."
 ],
 "relic.dian.ferocity.name": [
-"狼群",
-"ฝูง",
-"Bầy sói",
-"Kawanan",
-"Manada",
-"Matilha",
-"Rudel",
-"Стая"
+"队长由我们来守护！",
+"กัปตัน พวกเราจะปกป้องเอง!",
+"Đội trưởng để bọn mình bảo vệ!",
+"Kapten, Biar Kami yang Jaga!",
+"¡Nosotros te protegemos, Capitán!",
+"Nós protegemos você, Capitão!",
+"Captain, wir beschützen dich!",
+"Капитан, мы тебя защитим!"
 ],
 "relic.dian.basic.name": [
 "上吧！",
@@ -150,14 +150,14 @@
 "Взять их!"
 ],
 "relic.dian.ultimate.name": [
-"打它的弱点！",
-"โจมตีจุดอ่อน!",
-"Đánh vào điểm yếu!",
-"Serang Titik Lemahnya!",
-"¡Al punto débil!",
-"No ponto fraco!",
-"Auf die Schwachstelle!",
-"Бей в слабое место!"
+"一起扑上去！",
+"ทุกคน กระโจนใส่!",
+"Cả bầy, vồ lấy!",
+"Semua, Terkam!",
+"¡Todos juntos, a por él!",
+"Todos juntos, ataquem!",
+"Alle zusammen, drauf!",
+"Все вместе, в атаку!"
 ],
 "relic.dian.projectName": [
 "PACK ECHO",
@@ -270,14 +270,14 @@
 "Тело стаи"
 ],
 "relic.kuro.basic.name": [
-"撕咬",
-"กัด",
-"Cắn",
-"Gigitan",
-"Mordisco",
-"Mordida",
-"Biss",
-"Укус"
+"黑色利爪",
+"กรงเล็บดำ",
+"Vuốt đen",
+"Cakar Hitam",
+"Garra negra",
+"Garra negra",
+"Schwarze Klaue",
+"Чёрный коготь"
 ],
 "relic.kuro.ultimate.name": [
 "黑色冲锋",
@@ -410,14 +410,14 @@
 "Белый вой"
 ],
 "relic.shiro.ultimate.name": [
-"霜之追猎",
-"ไล่ล่าน้ำค้างแข็ง",
-"Truy đuổi băng giá",
-"Pengejaran Beku",
-"Persecución helada",
-"Perseguição gélida",
-"Frostjagd",
-"Морозная погоня"
+"白色追猎",
+"ไล่ล่าสีขาว",
+"Truy đuổi trắng",
+"Pengejaran Putih",
+"Persecución blanca",
+"Perseguição branca",
+"Weiße Jagd",
+"Белая погоня"
 ],
 "relic.shiro.projectName": [
 "PACK ECHO",

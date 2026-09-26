@@ -15,6 +15,8 @@ import { COLOR, textStyle } from "./theme";
 import { setDebugRewardPopup } from "../debug";
 import { spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { loadOwnedPuppet } from "./statusPuppetLoad";
+import { takePlayerExp } from "../managers/PlayerExpReceipts";
+import { addPlayerExpGainRow } from "./PlayerExpGainRow";
 
 /** 결과 화면이 넘기는 편성원 한 명. MVP 여부만 알면 카드 크기·발광은 이 프리팹이 정한다. */
 export interface StageCompleteFighter {
@@ -70,7 +72,13 @@ export interface StageCompletePopupOptions {
 }
 
 const WIDTH = 940;
-const HEIGHT = 1200;
+/**
+ * 판 높이. 표제와 편성 SD 사이에 **연구원 경험치 줄**(`PlayerExpGainRow`)이 서므로 그만큼 위로
+ * 넓다 — 표제는 판 윗변에서, 그 아래 조각들은 판 가운데에서 재므로 늘어난 몫은 표제 쪽에만 생긴다.
+ */
+const HEIGHT = 1360;
+/** 경험치 줄의 자리 — 표제 바로 아래. 레벨업 표제가 그 위로 한 뼘 떠오르므로 표제와 간격을 둔다. */
+const EXP_ROW_Y = -HEIGHT / 2 + 212;
 /**
  * 보상 줄의 자리. 스토리의 치즈케이크 한 장과 원정의 전리품 여럿이 **같은 줄**을 쓴다.
  *
@@ -109,6 +117,8 @@ export class StageCompletePopup {
 
   open(options: StageCompletePopupOptions): void {
     const defeated = options.reward.kind === "defeat";
+    // 이 판의 입장이 올린 경험치. 진 판도 스테미나를 썼으므로 함께 선다. 한 번 꺼내면 비워진다.
+    const expReceipt = takePlayerExp();
     const loot = options.reward.kind === "loot" ? options.reward.items.filter(({ amount }) => amount > 0) : [];
     const shownRewards = options.reward.kind === "storyClear"
       ? (Math.floor(options.reward.cheesecakeEarned) > 0 ? 1 : 0)
@@ -144,6 +154,7 @@ export class StageCompletePopup {
       body.add(closeCatcher);
 
       this.buildTitle(body, defeated);
+      if (expReceipt) addPlayerExpGainRow(this.scene, body, EXP_ROW_Y, expReceipt);
       // SD는 body 바깥, 팝업 층 바로 위에 화면 좌표로 세운다.
       puppetLayer = this.scene.add.container(0, 0).setDepth((body.parentContainer?.depth ?? 0) + 1);
       this.buildFighterPuppets(body, puppetLayer, puppets, () => disposed, options.fighters);

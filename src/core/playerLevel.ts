@@ -9,8 +9,15 @@
  * 같은 규칙을 쓴다: 전투를 몇 판 돌았는지가 아니라 **얼마나 썼는지**로 재야 배율 입장·소탕도
  * 같은 값으로 셈해지고, 싼 판을 여러 번 도는 요령이 생기지 않는다. 스테미나를 쓰는 모든
  * 경계는 서버(`FakeServer`)에 있으므로 거기서만 더한다.
+ *
+ * **레벨이 오르면 스테미나를 채우지 않고 에너지 드링크+ 한 병을 준다**(`PLAYER_LEVEL_UP_REWARD`).
+ * 곧바로 채우면 오른 순간 가득 찬 상한이 이미 모아 둔 회복분을 덮어 버리고, 판 중간에 오르면
+ * 그 몫이 언제 들어왔는지도 읽히지 않는다. 병 하나는 가방에 남아 쓰고 싶을 때 쓴다.
  */
 export const PLAYER_LEVEL_CAP = 60;
+/** 레벨 하나가 오를 때마다 가방에 넣는 것. 두 레벨이 한 번에 오르면 두 병이다. */
+export const PLAYER_LEVEL_UP_REWARD = { itemId: "stamina-tonic-large", quantity: 1 } as const;
+
 /** 1 스테미나가 주는 경험치. 운영 조정은 이 수 하나만 움직인다. */
 export const PLAYER_EXP_PER_STAMINA = 1;
 
@@ -56,4 +63,39 @@ export function grantPlayerExperience(progress: PlayerLevelProgress, amount: num
 /** 스테미나를 쓴 만큼의 경험치. */
 export function playerExpForStamina(stamina: number): number {
   return Math.max(0, Math.floor(stamina)) * PLAYER_EXP_PER_STAMINA;
+}
+
+/**
+ * 스테미나를 쓴 한 처리가 남긴 경험치 영수증 — 결과판이 경험치 줄을 이 한 장으로 채운다.
+ *
+ * 전후 값을 서버가 함께 내려 준다. 화면이 입장 전 값을 기억해 두었다가 빼면 그 사이 다른
+ * 경계(우편·임무)가 바꾼 값까지 한 판의 몫으로 읽힌다.
+ */
+export interface PlayerExpReceipt {
+  before: PlayerLevelProgress;
+  after: PlayerLevelProgress;
+  granted: number;
+  levelsGained: number;
+  /** 레벨업으로 실제로 가방에 들어간 것. 쌓을 한도에 걸려 깎였으면 깎인 뒤의 수다. */
+  levelUpItems: { itemId: string; quantity: number }[];
+}
+
+/** 경험치 줄이 한 레벨 안에서 몇 할 찼는가(0~1). 만렙은 가득 찬 줄이다. */
+export function playerExpRatio(progress: PlayerLevelProgress): number {
+  if (progress.level >= PLAYER_LEVEL_CAP) return 1;
+  return progress.experienceToNext > 0 ? Math.max(0, Math.min(1, progress.experience / progress.experienceToNext)) : 0;
+}
+
+/**
+ * 결과판의 경험치 줄이 지나갈 구간들 — 레벨이 오를 때마다 끝까지 찼다가 비워지고 다시 찬다.
+ *
+ * 한 구간은 `{ level, from, to }`(0~1)이다. 두 레벨이 오르면 구간이 셋이다(끝까지 · 한 바퀴 · 남은 몫).
+ */
+export function playerExpBarSegments(receipt: Pick<PlayerExpReceipt, "before" | "after">): { level: number; from: number; to: number }[] {
+  const { before, after } = receipt;
+  if (after.level <= before.level) return [{ level: before.level, from: playerExpRatio(before), to: playerExpRatio(after) }];
+  const segments = [{ level: before.level, from: playerExpRatio(before), to: 1 }];
+  for (let level = before.level + 1; level < after.level; level += 1) segments.push({ level, from: 0, to: 1 });
+  segments.push({ level: after.level, from: 0, to: playerExpRatio(after) });
+  return segments;
 }

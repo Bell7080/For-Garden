@@ -1590,14 +1590,14 @@
 "Уровень исследователя повышен"
 ],
 "profile.levelUp.stamina": [
-"体力已完全恢复 · 上限 +{amount}",
-"สตามินาฟื้นฟูเต็ม · สูงสุด +{amount}",
-"Hồi đầy Thể lực · Tối đa +{amount}",
-"Stamina pulih penuh · Maks +{amount}",
-"Estamina restaurada · Máx. +{amount}",
-"Estamina restaurada · Máx. +{amount}",
-"Ausdauer voll aufgefüllt · Max. +{amount}",
-"Выносливость восстановлена · Макс. +{amount}"
+"体力上限 +{amount}",
+"สตามินาสูงสุด +{amount}",
+"Thể lực tối đa +{amount}",
+"Stamina maks +{amount}",
+"Estamina máx. +{amount}",
+"Estamina máx. +{amount}",
+"Ausdauer max. +{amount}",
+"Макс. выносливость +{amount}"
 ],
 "profile.levelUp.frame": [
 "新头像框「{name}」",
@@ -1618,6 +1618,96 @@
 "Novo conteúdo \"{content}\"",
 "Neuer Inhalt „{content}“",
 "Новый контент «{content}»"
+],
+"profile.levelUp.drink": [
+"获得「{item}」×{count}",
+"ได้รับ \"{item}\" ×{count}",
+"Nhận \"{item}\" ×{count}",
+"Menerima \"{item}\" ×{count}",
+"Recibes «{item}» ×{count}",
+"Recebeu \"{item}\" ×{count}",
+"Erhalten: „{item}“ ×{count}",
+"Получено: «{item}» ×{count}"
+],
+"profile.exp.value": [
+"{current} / {total}",
+"{current} / {total}",
+"{current} / {total}",
+"{current} / {total}",
+"{current} / {total}",
+"{current} / {total}",
+"{current} / {total}",
+"{current} / {total}"
+],
+"profile.exp.tooltip": [
+"{current} / {total} EXP · {percent}%",
+"{current} / {total} EXP · {percent}%",
+"{current} / {total} EXP · {percent}%",
+"{current} / {total} EXP · {percent}%",
+"{current} / {total} EXP · {percent}%",
+"{current} / {total} EXP · {percent}%",
+"{current} / {total} EXP · {percent}%",
+"{current} / {total} EXP · {percent}%"
+],
+"profile.exp.toNext": [
+"距下一级还需 {remaining} EXP",
+"อีก {remaining} EXP ถึงเลเวลถัดไป",
+"Còn {remaining} EXP đến cấp tiếp theo",
+"{remaining} EXP lagi ke level berikutnya",
+"Faltan {remaining} EXP para el siguiente nivel",
+"Faltam {remaining} EXP para o próximo nível",
+"Noch {remaining} EXP bis zum nächsten Level",
+"До следующего уровня: {remaining} EXP"
+],
+"profile.levelTree.title": [
+"等级开放",
+"ปลดล็อกตามเลเวล",
+"Mở khóa theo cấp",
+"Buka per Level",
+"Desbloqueos por nivel",
+"Desbloqueios por nível",
+"Freischaltungen nach Level",
+"Открытия по уровням"
+],
+"profile.levelTree.perLevel": [
+"每次升级获得「{item}」×{count}",
+"ทุกครั้งที่เลเวลอัป: \"{item}\" ×{count}",
+"Mỗi lần lên cấp: \"{item}\" ×{count}",
+"Setiap naik level: \"{item}\" ×{count}",
+"Cada subida de nivel: «{item}» ×{count}",
+"A cada nível: \"{item}\" ×{count}",
+"Bei jedem Levelaufstieg: „{item}“ ×{count}",
+"За каждый уровень: «{item}» ×{count}"
+],
+"profile.levelTree.frame": [
+"头像框「{name}」",
+"กรอบ \"{name}\"",
+"Khung \"{name}\"",
+"Bingkai \"{name}\"",
+"Marco «{name}»",
+"Moldura \"{name}\"",
+"Rahmen „{name}“",
+"Рамка «{name}»"
+],
+"profile.levelTree.content": [
+"开放 · {content}",
+"ปลดล็อก · {content}",
+"Mở · {content}",
+"Terbuka · {content}",
+"Se abre · {content}",
+"Abre · {content}",
+"Frei · {content}",
+"Открывается · {content}"
+],
+"profile.levelTree.stamina": [
+"体力上限 {max}",
+"สตามินาสูงสุด {max}",
+"Thể lực tối đa {max}",
+"Stamina maks {max}",
+"Estamina máx. {max}",
+"Estamina máx. {max}",
+"Ausdauer max. {max}",
+"Макс. выносливость {max}"
 ],
 "profile.unset": [
 "未设置",

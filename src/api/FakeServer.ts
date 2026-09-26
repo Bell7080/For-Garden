@@ -38,17 +38,17 @@ import { ARCHAEOLOGY_SITES, findArchaeologySite } from "../data/archaeologySites
 import { archaeologySiteAvailability } from "../core/archaeologyMap";
 import type { AbandonStrataRunRequest, ArchaeologyStateResponse, DigStrataTileRequest, DigStrataTileResponse, GrantRuneTraitRequest, GrantRuneTraitResponse, RerollRuneTraitRequest, RerollRuneTraitResponse, ResolveRuneTraitRerollRequest, ResolveRuneTraitRerollResponse, StartStrataRunRequest, UpgradeRuneTraitRequest, UpgradeRuneTraitResponse } from "./contracts";
 import { findItem, type WalletItemKey } from "../data/items";
-import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_COMPLETED_KEEP_HOURS, RAID_DIFFICULTY, RAID_RUN_GOLD_PER_DAMAGE, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM } from "../data/raid";
+import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_COMPLETED_KEEP_HOURS, RAID_DIFFICULTY, RAID_RUN_GOLD_PER_DAMAGE, raidRunStamina, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM } from "../data/raid";
 import { mockFriendRaids, mockRaidContributions, raidKillProgress, mockRaidWorldDamage, mockSummonContributions, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../core/raid";
 import { battleArena } from "../core/battleArena";
 import { staminaCurrencyRecharge } from "../data/staminaRecharge";
-import { settleStamina, staminaMaxForPlayer, staminaMaxForResearchLevel, staminaTiming } from "../core/stamina";
+import { settleStamina, staminaMaxForPlayer, staminaTiming } from "../core/stamina";
 import { InventoryManager } from "../managers/InventoryManager";
 import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, MarkRuneRequest, MarkRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse } from "./contracts";
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
 import { excavationHarvestStatus, excavationProductionDisplayModel, excavationStorageLimitSeconds, harvestIdleExcavation, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
 import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest, InventoryResponse, UseConsumableRequest, UseConsumableResponse } from "./contracts";
-import type { RaidDto, RaidListResponse, RaidRewardDto, SettleRaidRequest, SettleRaidResponse, SubmitRaidDamageRequest, SubmitRaidDamageResponse, SummonRaidRequest, SummonRaidResponse } from "./contracts";
+import type { EnterRaidRequest, EnterRaidResponse, RaidDto, RaidListResponse, RaidRewardDto, SettleRaidRequest, SettleRaidResponse, SubmitRaidDamageRequest, SubmitRaidDamageResponse, SummonRaidRequest, SummonRaidResponse } from "./contracts";
 import type { ClaimExpeditionRewardRequest, ClaimExpeditionRewardResponse, CompleteExpeditionNodeRequest, CompleteExpeditionNodeResponse, ExpeditionLeaderboardResponse, ExpeditionWeeklyBestResponse, SettleExpeditionRunRequest, SettleExpeditionRunResponse, SubmitExpeditionBossScoreRequest, SubmitExpeditionBossScoreResponse, SweepExpeditionRequest, SweepExpeditionResponse } from "./contracts";
 import type { EnterStageRequest, EnterStageResponse } from "./contracts";
 import type { CakeOperationCompleteRequest, CakeOperationCompleteResponse, CakeOperationEnterResponse, CakeOperationRunRequest, DungeonSweepRequest, DungeonSweepResponse } from "./contracts";
@@ -61,7 +61,7 @@ import { expeditionNodeRole } from "../data/expeditionEnemies";
 import { calculateExpeditionNodeRewards, calculateExpeditionRunScore } from "../core/expeditionRewards";
 import { calculateExpeditionNodeScore, expeditionBossDamageScore } from "../core/expeditionScore";
 import { RelicProgressionManager } from "../managers/RelicProgressionManager";
-import { grantPlayerExperience, playerExpForStamina } from "../core/playerLevel";
+import { grantPlayerExperience, normalizePlayerLevel, PLAYER_LEVEL_UP_REWARD, playerExpForStamina, type PlayerExpReceipt } from "../core/playerLevel";
 import { isExpeditionRelicSnapshot } from "../core/expeditionSnapshot";
 import { partyRuneTraitEffects } from "../core/runeTraitEffects";
 import type { ExpeditionAugmentEffect } from "../core/expeditionAugments";
@@ -90,6 +90,12 @@ export interface FakeServerOptions {
 }
 
 /** 백엔드가 생기기 전까지 메모리 상태를 서버처럼 독점 변경하는 임시 어댑터다. */
+/** 스테미나 소비 한 번이 바꾸는 상태와 그 경험치 영수증. 저장은 부르는 쪽이 한 처리로 확정한다. */
+interface StaminaSpend {
+  wallet: Session["wallet"]; playerResearch: Session["playerResearch"]; missions: Session["missions"];
+  itemInventory: Session["itemInventory"]; playerExp: PlayerExpReceipt;
+}
+
 export class FakeServer implements GameApi {
   /** 완료 수령 requestId의 최초 응답을 보존해 네트워크 재시도와 연타를 같은 영수증으로 묶는다. */
   private readonly interactionClaimResults = new Map<string, ClaimInteractionDispatchResponse>();
@@ -127,6 +133,9 @@ export class FakeServer implements GameApi {
   private readonly bossRewardResults = new Map<string, ClaimExpeditionRewardResponse>();
   // 레이드도 원정과 같은 멱등 영수증을 쓴다 — 같은 요청 ID가 다시 오면 저장을 건드리지 않는다.
   private readonly raidSubmissionResults = new Map<string, SubmitRaidDamageResponse>();
+  private readonly raidAdmissionResults = new Map<string, EnterRaidResponse>();
+  /** 입장했지만 아직 피해를 내지 않은 판. 입장 영수증 → 판 ID. */
+  private readonly pendingRaidRuns = new Map<string, string>();
   private readonly raidSettleResults = new Map<string, SettleRaidResponse>();
   private readonly raidSummonResults = new Map<string, SummonRaidResponse>();
   /** 운영 DB의 런 ID/정산 ID 고유 제약과 빠른 원정 주간 카운터를 흉내 낸다. */
@@ -558,6 +567,42 @@ export class FakeServer implements GameApi {
   }
 
   /**
+   * 레이드 한 판의 입장 — 스테미나와 도전 한 번을 여기서 함께 쓴다.
+   *
+   * 다른 콘텐츠와 같이 **입장이 비용을 확정한다**. 도전을 제출에서 세던 때는 판을 열어 보고
+   * 나가는 길이 공짜였고, 스테미나를 쓰지 않으니 레이드만 연구원 경험치에서 빠져 있었다.
+   * 나간 판은 돌려주지 않는다(`no-refund-after-admission`).
+   */
+  async enterRaid(request: EnterRaidRequest): Promise<EnterRaidResponse> {
+    await this.delay();
+    const cached = this.raidAdmissionResults.get(request.requestId);
+    if (cached) return structuredClone(cached);
+    if (!request.requestId) throw new GameApiError("INVALID_STATE", "입장 요청 ID가 필요합니다.");
+    const now = this.now();
+    this.normalizeRaid(now);
+    const instance = this.raidInstances(now).find(({ id }) => id === request.raidId);
+    if (!instance) throw new GameApiError("RAID_NOT_FOUND", "존재하지 않는 레이드입니다.");
+    if (this.raidDto(instance, now).status !== "active") throw new GameApiError("RAID_ENDED", "이미 끝난 레이드입니다.");
+    if (instance.attemptsUsed >= RAID_ATTEMPTS_PER_RAID) throw new GameApiError("RAID_DAILY_LIMIT", "이 레이드의 도전 횟수를 모두 사용했습니다.");
+    const cost = raidRunStamina(instance.difficulty);
+    this.settleStaminaNow(now);
+    if (this.state.wallet.stamina < cost) throw new GameApiError("INSUFFICIENT_STAMINA", "스테미나가 부족합니다.");
+    const spent = this.spendStamina(cost);
+    const updated: RaidInstanceState = { ...instance, attemptsUsed: instance.attemptsUsed + 1 };
+    const nextState = structuredClone(this.state);
+    Object.assign(nextState, { wallet: spent.wallet, playerResearch: spent.playerResearch, missions: spent.missions, itemInventory: spent.itemInventory });
+    nextState.raid = { instances: [...nextState.raid.instances.filter(({ id }) => id !== updated.id), updated] };
+    this.commitRaidState(nextState);
+    this.pendingRaidRuns.set(request.requestId, updated.id);
+    const response: EnterRaidResponse = {
+      ...this.snapshot(), raid: this.raidDto(updated, now), requestId: request.requestId,
+      staminaSpent: cost, playerExp: spent.playerExp, refundPolicy: "no-refund-after-admission",
+    };
+    this.raidAdmissionResults.set(request.requestId, structuredClone(response));
+    return response;
+  }
+
+  /**
    * 원정 보스와 **같은 재현기**로 한 판을 다시 돌리고 그 피해만 그 레이드의 체력에서 깎는다.
    *
    * 클라이언트가 보낸 피해 숫자는 받지 않는다 — 계약에 아예 없다. 한 판을 확정하면 그 피해에
@@ -573,7 +618,8 @@ export class FakeServer implements GameApi {
     const instance = this.raidInstances(now).find(({ id }) => id === request.raidId);
     if (!instance) throw new GameApiError("RAID_NOT_FOUND", "존재하지 않는 레이드입니다.");
     if (this.raidDto(instance, now).status !== "active") throw new GameApiError("RAID_ENDED", "이미 끝난 레이드입니다.");
-    if (instance.attemptsUsed >= RAID_ATTEMPTS_PER_RAID) throw new GameApiError("RAID_DAILY_LIMIT", "이 레이드의 도전 횟수를 모두 사용했습니다.");
+    // 도전은 입장에서 이미 셌다 — 제출은 그 입장 영수증으로만 받는다.
+    if (this.pendingRaidRuns.get(request.requestId) !== instance.id) throw new GameApiError("RAID_NOT_ENTERED", "입장하지 않은 레이드 판입니다.");
 
     let result: ReturnType<typeof resolveExpeditionBossBattle>;
     try {
@@ -608,7 +654,7 @@ export class FakeServer implements GameApi {
     // 한 번이 한 칸이라는 단위가 깨진다(점수는 경감 전 기여라 몸보다 클 수 있다).
     const runDamage = Math.min(RAID_DIFFICULTY[instance.difficulty].bodyHp, Math.max(0, Math.floor(result.totalDamage)));
     const gold = raidRunGold(runDamage, RAID_RUN_GOLD_PER_DAMAGE);
-    const updated: RaidInstanceState = { ...instance, myDamage: instance.myDamage + runDamage, attemptsUsed: instance.attemptsUsed + 1 };
+    const updated: RaidInstanceState = { ...instance, myDamage: instance.myDamage + runDamage };
     const nextState = structuredClone(this.state);
     nextState.raid = { instances: [...nextState.raid.instances.filter(({ id }) => id !== updated.id), updated] };
     nextState.wallet = { ...nextState.wallet, gold: Math.min(WALLET_CAPS.gold, nextState.wallet.gold + gold) };
@@ -618,6 +664,7 @@ export class FakeServer implements GameApi {
       granted: gold > 0 ? [{ currency: "gold", name: findItem("gold")?.name ?? "gold", amount: gold }] : [],
     };
     this.raidSubmissionResults.set(request.requestId, response);
+    this.pendingRaidRuns.delete(request.requestId);
     return structuredClone(response);
   }
 
@@ -1135,15 +1182,14 @@ export class FakeServer implements GameApi {
     this.settleStaminaNow();
     const cost = CONTENT_STAMINA_COSTS.normalStage;
     if (this.state.wallet.stamina < cost) throw new GameApiError("INSUFFICIENT_STAMINA", "스테미나가 부족합니다.");
-    const { wallet: nextWallet, playerResearch: nextResearch, missions: spentMissions } = this.spendStamina(cost);
+    const spent = this.spendStamina(cost);
     // 가챠·성장 API처럼 다음 상태를 먼저 저장해야 저장 실패 시 공유 메모리 지갑이 호출 전 값으로 보존된다.
-    this.persist({ ...this.state, wallet: nextWallet, playerResearch: nextResearch, missions: spentMissions });
     // 영속화가 성공한 뒤에만 공유 참조를 교체해 응답 스냅샷도 실제로 확정된 잔액을 기준으로 만든다.
-    this.state.wallet = nextWallet; this.state.playerResearch = nextResearch; this.state.missions = spentMissions;
+    this.commitStaminaSpend(spent);
     const pending = this.pendingStageAdmissions.get(request.stageId) ?? new Set<string>();
     pending.add(request.requestId);
     this.pendingStageAdmissions.set(request.stageId, pending);
-    const response = { ...this.snapshot(), stageId: request.stageId, requestId: request.requestId, staminaSpent: cost, refundPolicy: "no-refund-after-admission" as const };
+    const response = { ...this.snapshot(), stageId: request.stageId, requestId: request.requestId, staminaSpent: cost, playerExp: spent.playerExp, refundPolicy: "no-refund-after-admission" as const };
     this.stageAdmissionResults.set(request.requestId, structuredClone(response));
     return response;
   }
@@ -1223,15 +1269,15 @@ export class FakeServer implements GameApi {
     if (refusal === "not_enough_tickets") throw new GameApiError("SWEEP_TICKET_SHORTAGE", "소탕권이 부족합니다.");
     if (refusal === "not_enough_stamina") throw new GameApiError("INSUFFICIENT_STAMINA", "스테미나가 부족합니다.");
     const settlement = settleSweep(cost, request.count, member);
-    const { wallet: nextWallet, playerResearch: nextResearch, missions: spentMissions } = this.spendStamina(settlement.staminaCost);
+    const { wallet: nextWallet, playerResearch: nextResearch, missions: spentMissions, itemInventory: spentItems, playerExp } = this.spendStamina(settlement.staminaCost);
     const granted = this.grantDungeonRewards(nextWallet, settlement.rewards);
     let nextMissions = spentMissions;
     for (let index = 0; index < settlement.count; index += 1) nextMissions = applyMissionEvent(nextMissions, { type: "battle_completed", victory: true }, now);
-    const nextItems = this.state.itemInventory.flatMap((entry) => entry.itemId !== SWEEP_TICKET_ITEM || settlement.ticketCost === 0 ? [entry]
+    const nextItems = spentItems.flatMap((entry) => entry.itemId !== SWEEP_TICKET_ITEM || settlement.ticketCost === 0 ? [entry]
       : entry.quantity > settlement.ticketCost ? [{ ...entry, quantity: entry.quantity - settlement.ticketCost }] : []);
     this.persist({ ...this.state, wallet: nextWallet, playerResearch: nextResearch, missions: nextMissions, itemInventory: nextItems });
     this.state.wallet = nextWallet; this.state.playerResearch = nextResearch; this.state.missions = nextMissions; this.state.itemInventory = nextItems;
-    return { ...this.snapshot(), tierId, count: settlement.count, staminaSpent: settlement.staminaCost, ticketsSpent: settlement.ticketCost, granted };
+    return { ...this.snapshot(), tierId, count: settlement.count, staminaSpent: settlement.staminaCost, ticketsSpent: settlement.ticketCost, granted, playerExp };
   }
 
   /** 지갑 상한을 넘기지 않고 지급하며, 실제로 늘어난 몫만 돌려준다. */
@@ -1255,16 +1301,15 @@ export class FakeServer implements GameApi {
     if (cached) return structuredClone(cached);
     const now = this.now();
     const run = this.assertCakeRun(request.tierId, request.requestId, now);
-    const { wallet: nextWallet, playerResearch: nextResearch, missions: spentMissions } = this.spendStamina(run.cost.staminaCost);
+    const spent = this.spendStamina(run.cost.staminaCost);
     // 다른 API와 같이 저장이 성공한 뒤에만 공유 지갑을 교체해, 저장 실패가 잔액을 지우지 않게 한다.
-    this.persist({ ...this.state, wallet: nextWallet, playerResearch: nextResearch, missions: spentMissions });
-    this.state.wallet = nextWallet; this.state.playerResearch = nextResearch; this.state.missions = spentMissions;
+    this.commitStaminaSpend(spent);
     const pending = this.pendingCakeAdmissions.get(run.tier.id) ?? new Set<string>();
     pending.add(request.requestId);
     this.pendingCakeAdmissions.set(run.tier.id, pending);
     const response: CakeOperationEnterResponse = {
       ...this.snapshot(), tierId: run.tier.id, requestId: request.requestId,
-      staminaSpent: run.cost.staminaCost, refundPolicy: "no-refund-after-admission",
+      staminaSpent: run.cost.staminaCost, playerExp: spent.playerExp, refundPolicy: "no-refund-after-admission",
     };
     this.cakeAdmissionResults.set(request.requestId, structuredClone(response));
     return response;
@@ -1372,13 +1417,12 @@ export class FakeServer implements GameApi {
     const cost = bountyRunCost(tier);
     this.settleStaminaNow(this.now());
     if (this.state.wallet.stamina < cost.staminaCost) throw new GameApiError("INSUFFICIENT_STAMINA", "스테미나가 부족합니다.");
-    const { wallet: nextWallet, playerResearch: nextResearch, missions: spentMissions } = this.spendStamina(cost.staminaCost);
+    const spent = this.spendStamina(cost.staminaCost);
     // 저장이 성공한 뒤에만 공유 참조를 바꿔, 실패해도 지갑이 호출 전 값으로 남게 한다.
-    this.persist({ ...this.state, wallet: nextWallet, playerResearch: nextResearch, missions: spentMissions });
-    this.state.wallet = nextWallet; this.state.playerResearch = nextResearch; this.state.missions = spentMissions;
+    this.commitStaminaSpend(spent);
     this.pendingBountyRuns.set(request.requestId, tier.id);
     const response: EnterBountyResponse = {
-      ...this.snapshot(), tierId: tier.id, requestId: request.requestId, staminaSpent: cost.staminaCost, refundPolicy: "no-refund-after-admission",
+      ...this.snapshot(), tierId: tier.id, requestId: request.requestId, staminaSpent: cost.staminaCost, playerExp: spent.playerExp, refundPolicy: "no-refund-after-admission",
     };
     this.bountyAdmissionResults.set(request.requestId, structuredClone(response));
     return response;
@@ -2197,17 +2241,40 @@ export class FakeServer implements GameApi {
   /**
    * 스테미나를 쓰는 **모든** 경계가 지나는 한 곳 — 쓴 만큼 연구원 경험치가 오른다(`playerLevel.ts`).
    *
-   * **레벨이 오르면 스테미나를 새 상한까지 채운다**(명일방주·블루 아카이브와 같다). 레벨업이 "더
-   * 싸울 수 있다"로 읽혀야 한다 — 상한만 넓히고 비워 두면 오른 순간이 "이제 못 한다"로 읽힌다.
-   * 이미 상한을 넘겨 가진 몫(토닉 등)은 깎지 않는다.
+   * **레벨이 오르면 스테미나를 채우지 않고 에너지 드링크+를 한 병씩 가방에 넣는다**
+   * (`PLAYER_LEVEL_UP_REWARD`). 오른 순간 상한까지 채우던 때는 이미 모아 둔 회복분이 그 몫에
+   * 묻혔다 — 병은 가방에 남아 쓰고 싶을 때 쓴다. 쌓을 한도(`maxStack`)를 넘는 몫은 깎아서 준다.
+   * 결과판이 경험치 줄을 채우도록 전후 값을 영수증(`playerExp`)으로 함께 돌려준다.
    */
-  private spendStamina(cost: number): { wallet: Session["wallet"]; playerResearch: Session["playerResearch"]; missions: Session["missions"] } {
-    const grant = grantPlayerExperience(this.state.playerResearch, playerExpForStamina(cost));
-    const remaining = this.state.wallet.stamina - cost;
-    const stamina = grant.levelsGained > 0 ? Math.max(remaining, staminaMaxForResearchLevel(grant.progress.level)) : remaining;
+  private spendStamina(cost: number): StaminaSpend {
+    const before = { ...this.state.playerResearch };
+    const grant = grantPlayerExperience(before, playerExpForStamina(cost));
+    const itemInventory = this.state.itemInventory.map((entry) => ({ ...entry }));
+    const levelUpItems: PlayerExpReceipt["levelUpItems"] = [];
+    if (grant.levelsGained > 0) {
+      const { itemId, quantity } = PLAYER_LEVEL_UP_REWARD;
+      const cap = findItem(itemId)?.maxStack ?? 0;
+      const stack = itemInventory.find((entry) => entry.itemId === itemId);
+      const held = stack?.quantity ?? 0;
+      const added = Math.max(0, Math.min(cap, held + quantity * grant.levelsGained) - held);
+      if (added > 0) {
+        if (stack) stack.quantity += added;
+        else itemInventory.push({ itemId, quantity: added });
+        levelUpItems.push({ itemId, quantity: added });
+      }
+    }
     // 스테미나 임무도 이 한 곳에서만 센다 — 입장 API마다 적으면 새 입장이 빠뜨린다.
     const missions = applyMissionEvent(this.state.missions, { type: "stamina_spent", amount: cost }, this.now());
-    return { wallet: { ...this.state.wallet, stamina }, playerResearch: grant.progress, missions };
+    return {
+      wallet: { ...this.state.wallet, stamina: this.state.wallet.stamina - cost }, playerResearch: grant.progress, missions, itemInventory,
+      playerExp: { before: normalizePlayerLevel(before), after: { ...grant.progress }, granted: grant.granted, levelsGained: grant.levelsGained, levelUpItems },
+    };
+  }
+
+  /** 입장 한 번의 스테미나 소비를 저장하고, 저장이 성공한 뒤에만 공유 참조를 바꾼다. */
+  private commitStaminaSpend(spent: StaminaSpend): void {
+    this.persist({ ...this.state, wallet: spent.wallet, playerResearch: spent.playerResearch, missions: spent.missions, itemInventory: spent.itemInventory });
+    this.state.wallet = spent.wallet; this.state.playerResearch = spent.playerResearch; this.state.missions = spent.missions; this.state.itemInventory = spent.itemInventory;
   }
 
   private persist(next: Session): void {

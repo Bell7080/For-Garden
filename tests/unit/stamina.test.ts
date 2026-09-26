@@ -6,6 +6,7 @@ import { TIME_ACCRUAL_FIXTURES } from "../fixtures/timeAccrual";
 import { CONTENT_STAMINA_COSTS } from "../../src/data/contentCosts";
 import { GameApiError } from "../../src/api/contracts";
 import { partyEntryErrorView } from "../../src/scenes/partyEntryError";
+import { PLAYER_LEVEL_UP_REWARD } from "../../src/core/playerLevel";
 
 describe("stamina rules", () => {
   it("shares timezone, regression, long-offline, and boundary clock fixtures with excavation", () => {
@@ -119,14 +120,18 @@ describe("stamina admission", () => {
 });
 
 describe("연구원 경험치", () => {
-  it("쓴 스테미나만큼 경험치가 오르고, 레벨이 오르면 스테미나를 새 상한까지 채운다", async () => {
+  it("쓴 스테미나만큼 경험치가 오르고, 레벨이 오르면 스테미나 대신 에너지 드링크+를 한 병 준다", async () => {
     const state = createDefaultSession(); state.wallet.stamina = 60; state.staminaUpdatedAt = "2026-09-01T00:00:00.000Z";
     state.playerResearch = { level: 1, experience: 46, experienceToNext: 50 };
+    state.itemInventory = state.itemInventory.filter(({ itemId }) => itemId !== PLAYER_LEVEL_UP_REWARD.itemId);
     const api = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-01T00:00:00.000Z") });
-    await api.enterStage({ stageId: "1-1", requestId: "exp-1" });
+    const admission = await api.enterStage({ stageId: "1-1", requestId: "exp-1" });
     expect(state.playerResearch.level).toBe(2);
     expect(state.playerResearch.experience).toBe(46 + CONTENT_STAMINA_COSTS.normalStage - 50);
-    expect(state.wallet.stamina).toBe(staminaMaxForResearchLevel(2));
+    // 채우지 않는다 — 쓴 만큼만 줄고, 병이 가방에 들어간다.
+    expect(state.wallet.stamina).toBe(60 - CONTENT_STAMINA_COSTS.normalStage);
+    expect(state.itemInventory.find(({ itemId }) => itemId === PLAYER_LEVEL_UP_REWARD.itemId)?.quantity).toBe(1);
+    expect(admission.playerExp).toMatchObject({ before: { level: 1, experience: 46 }, after: { level: 2 }, granted: CONTENT_STAMINA_COSTS.normalStage, levelsGained: 1, levelUpItems: [{ itemId: PLAYER_LEVEL_UP_REWARD.itemId, quantity: 1 }] });
     // 같은 요청의 재전송은 경험치를 두 번 주지 않는다.
     await api.enterStage({ stageId: "1-1", requestId: "exp-1" });
     expect(state.playerResearch.experience).toBe(2);

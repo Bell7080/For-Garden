@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { DialogueFlow, dialogueStandingOrder, type DialogueChoice } from "../core/dialogue";
 import { gameApi } from "../api/FakeServer";
+import { rememberPlayerExp } from "../managers/PlayerExpReceipts";
 import { OPENING_RETREAT } from "../data/dialogues/openingRetreat";
 import { OPENING_TRAIN } from "../data/dialogues/openingTrain";
 import { FIXED_STAGE_ENEMIES } from "../data/stages";
@@ -133,7 +134,8 @@ export class OpeningScene extends Phaser.Scene {
     const stageId = "1-1";
     try {
       const requestId = globalThis.crypto?.randomUUID?.() ?? `opening-${stageId}-${Date.now()}`;
-      await gameApi.enterStage({ stageId, requestId });
+      const admission = await gameApi.enterStage({ stageId, requestId });
+      rememberPlayerExp(admission.playerExp);
       if (!this.scene.isActive()) return;
       session.selectedStageId = stageId;
       // 이기면 공멸 삼인조가 날아가는 막을 거쳐 로비로 나간다.

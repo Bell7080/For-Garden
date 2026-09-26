@@ -22,6 +22,7 @@ import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { powerSavingPolicy } from "../core/settings";
 import { session } from "../state/session";
 import { pressIn, pressOut } from "./pressFeedback";
+import { PlayerLevelTreePopup } from "./PlayerLevelTreePopup";
 
 /** 희귀도는 theme 의미 토큰 표만 거치므로 DTO가 임의 색 문자열을 주입할 수 없다. */
 function modifierColor(modifier: PublicProfileModifier): number {
@@ -108,6 +109,16 @@ export class PlayerProfilePopup {
     const levelTag = this.scene.add.text(avatar.x - 34, header.levelChip.y + 2, "LV", textStyle({ role: "display", size: 20, color: COLOR.inkDim })).setOrigin(1, 0.5);
     const levelValue = this.scene.add.text(avatar.x - 28, header.levelChip.y, String(this.profile.level), textStyle({ role: "display", size: 36, color: COLOR.accentText })).setOrigin(0, 0.5);
     body.add([levelTag, levelValue]);
+    // 자기 카드의 레벨 칩을 누르면 레벨마다 무엇이 열리는지 가지나무가 열린다. 얼굴의 입력면보다
+    // 뒤에 얹어 칩 자리만은 얼굴 편집보다 먼저 손을 받는다.
+    if (this.editors) {
+      this.bindEdit(body, levelValue, avatar.x, header.levelChip.y, header.levelChip.width + 20, header.levelChip.height + 16, () => {
+        new PlayerLevelTreePopup(this.scene, this.layer, {
+          level: this.profile.level, portraitAssetId: this.profile.avatar?.portraitAssetId,
+          fallback: profileAvatarContent(this.profile, () => false).fallback,
+        }).open();
+      });
+    }
 
     const left = header.textLeft;
     const name = this.scene.add.text(left, header.nameY, compactProfileText(this.profile.displayName, 12), textStyle({ role: "display", size: 50, color: COLOR.ink }))
@@ -153,11 +164,58 @@ export class PlayerProfilePopup {
     }
     const width = header.textRight - left;
     const bar = new HoloBar(this.scene, left + width / 2, header.expY, width, header.expHeight, { color: frame.color, trackAlpha: 0.85, outline: true, ticks: 9 }).addTo(body);
-    bar.setValue(this.profile.levelCapped ? 1 : profileProgressRatio(this.profile.experience, this.profile.experienceToNext));
+    const ratio = this.profile.levelCapped ? 1 : profileProgressRatio(this.profile.experience, this.profile.experienceToNext);
+    bar.setValue(ratio);
     body.add(this.scene.add.text(left, header.expValueY, "EXP", textStyle({ role: "display", size: 22, color: hex(frame.color) })).setOrigin(0, 0.5));
     body.add(this.scene.add.text(header.textRight, header.expValueY,
       this.profile.levelCapped ? "MAX" : `${this.profile.experience.toLocaleString()} / ${this.profile.experienceToNext.toLocaleString()}`,
       textStyle({ role: "emphasis", size: 22, color: COLOR.ink })).setOrigin(1, 0.5));
+    this.bindExpTooltip(body, left + width / 2, width, ratio, frame);
+  }
+
+  /**
+   * 경험치 줄을 누르면 그 위에 **말풍선 하나**가 떠 얼마 중 얼마, 몇 퍼센트, 다음 레벨까지 얼마인지를
+   * 말한다. 줄 옆의 `현재 / 요구`만으로는 비율과 남은 양을 머릿속에서 셈해야 한다. 다시 누르거나
+   * 잠시 지나면 사라진다 — 고를 것이 없는 정보라 판을 세우지 않는다.
+   */
+  private bindExpTooltip(body: Phaser.GameObjects.Container, centerX: number, width: number, ratio: number, frame: ProfileFrameDefinition): void {
+    const { header } = PLAYER_PROFILE_LAYOUT;
+    const { experience, experienceToNext, levelCapped } = this.profile;
+    let tip: Phaser.GameObjects.Container | undefined;
+    let timer: Phaser.Time.TimerEvent | undefined;
+    const hide = (): void => { timer?.remove(false); timer = undefined; tip?.destroy(); tip = undefined; };
+    const show = (): void => {
+      hide();
+      const lines = levelCapped ? ["MAX"] : [
+        t("profile.exp.tooltip", { current: experience.toLocaleString(), total: experienceToNext.toLocaleString(), percent: (Math.floor(ratio * 1000) / 10).toFixed(1) }),
+        t("profile.exp.toNext", { remaining: Math.max(0, experienceToNext - experience).toLocaleString() }),
+      ];
+      // 첫 줄(얼마 중 얼마 · %)이 이 풍선의 답이라 굵게, 남은 양은 곁들이는 본문이다.
+      const texts = lines.map((line, index) => this.scene.add.text(0, 0, line, index === 0
+        ? textStyle({ role: "display", size: 26, color: COLOR.ink })
+        : textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5));
+      const boxWidth = Math.max(...texts.map((text) => text.width)) + 48;
+      const boxHeight = texts.length * 34 + 24;
+      // 말풍선의 꼬리는 줄에서 지금 찬 자리를 가리킨다. 풍선은 카드 안쪽으로만 비켜 선다.
+      const pointX = centerX - width / 2 + width * ratio;
+      const x = Phaser.Math.Clamp(pointX, centerX - width / 2 + boxWidth / 2, centerX + width / 2 - boxWidth / 2);
+      const y = header.expY - header.expHeight / 2 - 18 - boxHeight / 2;
+      tip = this.scene.add.container(x, y);
+      tip.add(drawLayer(this.scene, 0, 0, chipPoints(boxWidth, boxHeight, { bevel: { topLeft: 12, bottomRight: 12 } }), { fill: 0x0b0f15, alpha: 0.96, edge: frame.color, edgeAlpha: 0.9 }));
+      const tail = this.scene.add.graphics();
+      tail.fillStyle(0x0b0f15, 0.96);
+      tail.fillTriangle(pointX - x - 10, boxHeight / 2 - 1, pointX - x + 10, boxHeight / 2 - 1, pointX - x, boxHeight / 2 + 14);
+      tip.add(tail);
+      texts.forEach((text, index) => { text.setY((index - (texts.length - 1) / 2) * 34); tip?.add(text); });
+      body.add(tip);
+      tip.setAlpha(0);
+      this.scene.tweens.add({ targets: tip, alpha: 1, duration: 140 });
+      timer = this.scene.time.delayedCall(2600, hide);
+    };
+    const hit = this.scene.add.rectangle(centerX, header.expY, width, header.expHeight + 40, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerup", () => { if (tip) hide(); else show(); });
+    hit.once(Phaser.GameObjects.Events.DESTROY, () => timer?.remove(false));
+    body.add(hit);
   }
 
   /**

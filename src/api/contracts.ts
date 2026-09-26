@@ -18,6 +18,7 @@ import type { AdReward } from "../data/adRewards";
 import type { ItemCategory, ItemUseEffect, WalletItemKey } from "../data/items";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import type { PlayerResearchProgress } from "../state/session";
+import type { PlayerExpReceipt } from "../core/playerLevel";
 import type { AsyncArenaProfileApi } from "./asyncArenaContracts";
 import type { InteractionCity } from "../data/interactionCities";
 import type { InteractionDispatchSnapshot } from "../state/session";
@@ -242,6 +243,7 @@ export interface CakeOperationEnterResponse extends PlayerStateDto {
   tierId: string;
   requestId: string;
   staminaSpent: number;
+  playerExp: PlayerExpReceipt;
   refundPolicy: "no-refund-after-admission";
 }
 
@@ -275,6 +277,8 @@ export interface DungeonSweepResponse extends PlayerStateDto {
   staminaSpent: number;
   ticketsSpent: number;
   granted: Partial<Record<keyof Wallet, number>>;
+  /** 쓴 스테미나가 올린 연구원 경험치. 레벨이 올랐으면 받은 병까지 함께 싣는다. */
+  playerExp: PlayerExpReceipt;
 }
 
 /** 공개 프로필 API가 확정한 업적 획득 목록과 사용자의 장착 선택이며 모두 ID로만 직렬화한다. */
@@ -509,7 +513,7 @@ export interface UpgradeRuneTraitRequest { runeInstanceId: string; itemId: strin
 export interface UpgradeRuneTraitResponse { rune: RuneInstance; items: InventoryItemDto[]; }
 
 /** UI가 서버 실패 원인을 문구로 바꿀 수 있게 고정한 오류 코드다. */
-export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPEDITION_RUN_NOT_FOUND" | "EXPEDITION_ALREADY_SETTLED" | "EXPEDITION_ALREADY_ACTIVE" | "EXPEDITION_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REQUIRED" | "AD_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REJECTED" | "RAID_DAILY_LIMIT" | "RAID_SCORE_REJECTED" | "RAID_REWARD_NOT_EARNED" | "RAID_NOT_FOUND" | "RAID_ENDED" | "RAID_NOT_ENDED" | "RAID_SUMMON_INVALID" | "RAID_TICKET_SHORTAGE" | "EXPEDITION_REWARD_NOT_FOUND" | "EXPEDITION_REWARD_NOT_EARNED" | "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INVALID_PURCHASE_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "BANNER_NOT_FOUND" | "BANNER_LIMIT_REACHED" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "INVALID_RUNE_SALE" | "RUNE_EQUIPPED" | "RUNE_LOCKED" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "BOUNTY_TIER_NOT_FOUND" | "BOUNTY_TIER_LOCKED" | "BOUNTY_ADMISSION_NOT_FOUND" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_STOREFRONT_MISMATCH" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "ACQUISITION_FLOW_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE"
+export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPEDITION_RUN_NOT_FOUND" | "EXPEDITION_ALREADY_SETTLED" | "EXPEDITION_ALREADY_ACTIVE" | "EXPEDITION_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REQUIRED" | "AD_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REJECTED" | "RAID_DAILY_LIMIT" | "RAID_NOT_ENTERED" | "RAID_SCORE_REJECTED" | "RAID_REWARD_NOT_EARNED" | "RAID_NOT_FOUND" | "RAID_ENDED" | "RAID_NOT_ENDED" | "RAID_SUMMON_INVALID" | "RAID_TICKET_SHORTAGE" | "EXPEDITION_REWARD_NOT_FOUND" | "EXPEDITION_REWARD_NOT_EARNED" | "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INVALID_PURCHASE_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "BANNER_NOT_FOUND" | "BANNER_LIMIT_REACHED" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "INVALID_RUNE_SALE" | "RUNE_EQUIPPED" | "RUNE_LOCKED" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "BOUNTY_TIER_NOT_FOUND" | "BOUNTY_TIER_LOCKED" | "BOUNTY_ADMISSION_NOT_FOUND" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_STOREFRONT_MISMATCH" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "ACQUISITION_FLOW_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE"
   | "STRATA_NO_CHARGE" | "STRATA_RUN_ACTIVE" | "STRATA_RUN_NOT_FOUND" | "STRATA_SITE_LOCKED" | "STRATA_SITE_COOLING" | "STRATA_TILE_UNAVAILABLE"
   | "RUNE_TRAIT_NOT_FOUND" | "RUNE_TRAIT_ITEM_INVALID" | "RUNE_TRAIT_MAX_GRADE" | "RUNE_TRAIT_GRADE_REACHED" | "RUNE_TRAIT_REROLL_PENDING"
   | "CAKE_TIER_NOT_FOUND" | "CAKE_TIER_LOCKED" | "DUNGEON_NOT_CLEARED" | "SWEEP_TICKET_SHORTAGE";
@@ -527,7 +531,7 @@ export interface BreakThroughResponse extends PlayerStateDto { relicId: string; 
 export interface CompleteStageResponse extends PlayerStateDto { stageId: string; firstClear: boolean; cheesecakeEarned: number; }
 /** 입장 영수증은 재시도에 그대로 반환되며 확정 뒤 클라이언트 로딩 실패는 자동 환불하지 않는다. */
 export interface EnterStageRequest { stageId: string; requestId: string; }
-export interface EnterStageResponse extends PlayerStateDto { stageId: string; requestId: string; staminaSpent: number; refundPolicy: "no-refund-after-admission"; }
+export interface EnterStageResponse extends PlayerStateDto { stageId: string; requestId: string; staminaSpent: number; playerExp: PlayerExpReceipt; refundPolicy: "no-refund-after-admission"; }
 /**
  * 현상수배 입장 영수증.
  *
@@ -535,7 +539,7 @@ export interface EnterStageResponse extends PlayerStateDto { stageId: string; re
  * 나가더라도 환불하지 않는 것은 스테이지 입장과 같은 계약이다.
  */
 export interface EnterBountyRequest { tierId: string; requestId: string; }
-export interface EnterBountyResponse extends PlayerStateDto { tierId: string; requestId: string; staminaSpent: number; refundPolicy: "no-refund-after-admission"; }
+export interface EnterBountyResponse extends PlayerStateDto { tierId: string; requestId: string; staminaSpent: number; playerExp: PlayerExpReceipt; refundPolicy: "no-refund-after-admission"; }
 /** 세 라운드의 결과를 한 번에 확정한다. 진 판도 보내 기록이 이긴 판만의 것이 되지 않게 한다. */
 export interface CompleteBountyRequest { tierId: string; requestId: string; victory: boolean; clearedRounds: number; }
 /** 골드 지급과 등급 해금을 한 처리로 확정하고 화면이 다시 계산하지 않게 결과만 돌려준다. */
@@ -642,7 +646,18 @@ export interface RaidListResponse { raids: RaidDto[]; tickets: { normal: number;
  */
 export interface SummonRaidRequest { requestId: string; bossRelicId?: string; difficulty?: RaidDifficulty; }
 export interface SummonRaidResponse extends PlayerStateDto { raid: RaidDto; tickets: RaidListResponse["tickets"]; }
-/** 원정 보스와 **같은 재현 규칙**을 쓴다 — 클라이언트 피해 숫자는 받지 않는다. */
+/**
+ * 레이드 한 판의 **입장**. 스테미나와 도전 한 번을 여기서 함께 쓴다(`raidRunStamina`).
+ *
+ * 도전을 제출에서 세던 때는 입장에 값이 없어, 판을 열어 보고 마음에 들지 않으면 나가는 길이
+ * 공짜였다. 다른 콘텐츠처럼 입장이 비용을 확정하고, 제출은 그 입장 영수증(`requestId`)으로만 받는다.
+ */
+export interface EnterRaidRequest { requestId: string; raidId: string; }
+export interface EnterRaidResponse extends PlayerStateDto { raid: RaidDto; requestId: string; staminaSpent: number; playerExp: PlayerExpReceipt; refundPolicy: "no-refund-after-admission"; }
+/**
+ * 원정 보스와 **같은 재현 규칙**을 쓴다 — 클라이언트 피해 숫자는 받지 않는다.
+ * `requestId`는 그 판의 **입장 영수증**이다 — 입장하지 않은 판의 피해는 받지 않는다.
+ */
 export interface SubmitRaidDamageRequest { requestId: string; raidId: string; actions: ExpeditionBossAction[]; }
 /** 한 판이 확정된 뒤의 그 레이드 상태와, 그 판의 피해에 비례해 곧바로 지급된 것이다. */
 export interface SubmitRaidDamageResponse extends PlayerStateDto { raid: RaidDto; runDamage: number; endedAtMs: number; granted: RaidRewardDto[]; }
@@ -677,6 +692,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   getRaids(limit?: number): Promise<RaidListResponse>;
   /** 토벌권 한 장을 써서 친구와 함께 칠 판을 연다. 선택 토벌권이면 보스를 고른다. */
   summonRaid(request: SummonRaidRequest): Promise<SummonRaidResponse>;
+  /** 스테미나와 도전 한 번을 함께 쓰고 그 판에 들어간다. */
+  enterRaid(request: EnterRaidRequest): Promise<EnterRaidResponse>;
   /** 동작열을 서버 편성으로 재현하고 그 판의 피해만 그 레이드의 체력에서 깎는다. */
   submitRaidDamage(request: SubmitRaidDamageRequest): Promise<SubmitRaidDamageResponse>;
   /** 끝난 판의 정산을 서버 멱등 기록으로 수령한다. 참여한 판만, 한 번만. */

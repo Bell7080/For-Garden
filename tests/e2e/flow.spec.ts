@@ -49,8 +49,8 @@ function infoOpen(page: Page) {
 }
 
 /** 타이틀에서 편성 화면까지 들어간다. */
-async function enterParty(page: Page): Promise<void> {
-  await startAfterOpening(page);
+async function enterParty(page: Page, prepare?: Parameters<typeof startAfterOpening>[1]): Promise<void> {
+  await startAfterOpening(page, prepare);
 
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2); // 타이틀 → 로비
   await expect.poll(() => scene(page)).toBe("lobby");
@@ -97,10 +97,10 @@ async function pickParty(page: Page): Promise<void> {
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.party?.selectedCount)).toBe(3);
 }
 
-async function enterBattle(page: Page): Promise<void> {
+async function enterBattle(page: Page, prepare?: Parameters<typeof startAfterOpening>[1]): Promise<void> {
   // 테스트 빌드의 명시적 창구에 고정 seed를 넣어 전투 사건 순서가 실행마다 흔들리지 않게 한다.
   await page.evaluate(() => { window.__PF_BATTLE_TEST__ ??= { seed: 0x5eed }; });
-  await enterParty(page);
+  await enterParty(page, prepare);
   await pickParty(page);
   await tap(page, BASE_WIDTH / 2, 1700); // 전투 시작
   await expect.poll(() => scene(page)).toBe("battle");
@@ -192,6 +192,19 @@ test("일반 전투 결과의 기여도 세 분류를 확인하고 닫은 뒤 �
   // 눌러도 지도로 넘어간다.
   await tap(page, BASE_WIDTH - 106, BASE_HEIGHT - 120); await tap(page, BASE_WIDTH / 2, 790);
   await expect.poll(() => scene(page)).toBe("stageMap");
+});
+
+test("전투 결과판에 연구원 경험치가 차오르고 레벨이 오르면 에너지 드링크+가 선다", async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
+  await page.addInitScript(() => { window.__PF_BATTLE_TEST__ = { seed: 0x5eed, preset: "result" }; });
+  // 한 판(스테미나 6)이면 레벨이 오르도록 요구치 바로 아래에서 시작한다.
+  await enterBattle(page, (session) => { session.playerResearch = { level: 4, experience: 100, experienceToNext: 103 }; });
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.rewardPopup), { timeout: 15_000 }).toBe(true);
+  // 줄이 끝까지 찼다가 다시 차오르는 연출이 끝난 뒤에 찍는다.
+  await page.waitForTimeout(2500);
+  await captureGame(page, `test-results/${testInfo.project.name}-battle-result-player-exp-1080x1920.png`);
+  const bottles = await page.evaluate(() => JSON.parse(localStorage.getItem("eternal-city.local-save") ?? "null")?.itemInventory?.find((entry: { itemId: string }) => entry.itemId === "stamina-tonic-large")?.quantity ?? 0);
+  expect(bottles).toBeGreaterThanOrEqual(1);
 });
 
 test("전투 시작의 빠른 연속 탭은 한 번만 진입하고 유효 편성을 보존한다", async ({ page }) => {

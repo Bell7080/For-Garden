@@ -137,6 +137,8 @@ export interface RaidBattleInputDto {
   raidId: string;
   bossRelicId: string;
   difficulty: RaidDifficulty;
+  /** 그 판의 입장 영수증. 피해 제출은 이 ID로만 받는다(`enterRaid`). */
+  requestId: string;
 }
 
 /** 일반 스테이지 진입과 원정·레이드 진입을 명시적으로 구분하는 전투 씬 입력 계약이다. */
@@ -162,7 +164,7 @@ export function normalizeBattleSceneInput(input?: unknown): BattleSceneInputDto 
     const candidate = input as BattleSceneInputDto;
     if (candidate.mode === "expedition" || candidate.mode === "expeditionBoss" || candidate.mode === "cake") return candidate;
     // 레이드는 판 ID까지 있어야 한다 — 판별값만 남은 입력은 어느 체력을 깎을지 모른다.
-    if (candidate.mode === "raid" && typeof candidate.raidId === "string" && typeof candidate.bossRelicId === "string" && isRaidDifficulty(candidate.difficulty)) return candidate;
+    if (candidate.mode === "raid" && typeof candidate.raidId === "string" && typeof candidate.bossRelicId === "string" && isRaidDifficulty(candidate.difficulty) && typeof candidate.requestId === "string") return candidate;
     // 현상수배는 라운드 번호까지 있어야 한 판이 이어진다 — 판별값만 남은 입력은 스토리로 돌린다.
     if (candidate.mode === "bounty" && typeof candidate.tierId === "string" && typeof candidate.requestId === "string") return candidate;
     // 스토리는 돌아갈 곳 하나만 이어받는다. 모르는 값은 기본 길(지도)로 수렴시킨다.

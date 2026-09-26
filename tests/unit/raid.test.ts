@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_DIFFICULTY, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM, isRaidDifficulty } from "../../src/data/raid";
+import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_DIFFICULTY, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM, isRaidDifficulty, raidRunStamina } from "../../src/data/raid";
 import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidKillProgress, raidKillTicks, raidDayProgress, raidResetsAt, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../../src/core/raid";
 import { getRelic, PLAYABLE_RELICS, RELICS } from "../../src/data/relics";
 import { ENCOUNTER_ROLE, applyEncounterScaling } from "../../src/core/levelDesign";
@@ -10,6 +10,7 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import { findItem } from "../../src/data/items";
 import { PRODUCTS } from "../../src/data/shopCatalog";
 import { FakeServer } from "../../src/api/FakeServer";
+import { dungeonRunStamina } from "../../src/core/dungeonShortcut";
 import { createDefaultSession, type RaidInstanceState, type Session } from "../../src/state/session";
 
 /**
@@ -533,11 +534,44 @@ describe("레이드 서버 경계", () => {
     expect(raids.some(({ id }) => id === "world-2026-09-10")).toBe(true);
   });
 
-  it("은 도전 횟수를 다 쓴 판의 제출을 거절한다", async () => {
+  it("은 도전 횟수를 다 쓴 판의 입장을 거절한다", async () => {
     const state = makeRaidSession();
     state.raid = { instances: [instance({ id: "world-2026-09-16", openedAt: "2026-09-16T00:00:00.000Z", endsAt: "2026-09-17T00:00:00.000Z", attemptsUsed: RAID_ATTEMPTS_PER_RAID })] };
-    await expect(serverAt(state, "2026-09-16T12:00:00Z").submitRaidDamage({ requestId: "s1", raidId: "world-2026-09-16", actions: [] }))
+    await expect(serverAt(state, "2026-09-16T12:00:00Z").enterRaid({ requestId: "e1", raidId: "world-2026-09-16" }))
       .rejects.toMatchObject({ code: "RAID_DAILY_LIMIT" });
+  });
+
+  it("은 입장에서 스테미나와 도전 한 번을 함께 쓰고, 같은 요청은 두 번 빼지 않는다", async () => {
+    const state = makeRaidSession();
+    state.wallet.stamina = 100; state.staminaUpdatedAt = "2026-09-16T12:00:00.000Z";
+    const api = serverAt(state, "2026-09-16T12:00:00Z");
+    const cost = raidRunStamina("rampage");
+    const entry = await api.enterRaid({ requestId: "e2", raidId: "world-2026-09-16" });
+    expect(entry.staminaSpent).toBe(cost);
+    expect(entry.raid.attemptsUsed).toBe(1);
+    expect(entry.playerExp.granted).toBe(cost);
+    expect(state.wallet.stamina).toBe(100 - cost);
+    await api.enterRaid({ requestId: "e2", raidId: "world-2026-09-16" });
+    expect(state.wallet.stamina).toBe(100 - cost);
+  });
+
+  it("은 스테미나가 모자라면 입장하지 않고 도전도 쓰지 않는다", async () => {
+    const state = makeRaidSession();
+    state.wallet.stamina = raidRunStamina("rampage") - 1; state.staminaUpdatedAt = "2026-09-16T12:00:00.000Z";
+    const api = serverAt(state, "2026-09-16T12:00:00Z");
+    await expect(api.enterRaid({ requestId: "e3", raidId: "world-2026-09-16" })).rejects.toMatchObject({ code: "INSUFFICIENT_STAMINA" });
+    const { raids } = await api.getRaids();
+    expect(raids[0]!.attemptsUsed).toBe(0);
+  });
+
+  it("은 입장 영수증 없는 제출을 거절한다", async () => {
+    await expect(serverAt(makeRaidSession(), "2026-09-16T12:00:00Z").submitRaidDamage({ requestId: "s1", raidId: "world-2026-09-16", actions: [] }))
+      .rejects.toMatchObject({ code: "RAID_NOT_ENTERED" });
+  });
+
+  it("의 스테미나는 판의 레벨이 던전과 같은 사다리에서 정한다", () => {
+    expect(raidRunStamina("easy")).toBe(dungeonRunStamina(RAID_DIFFICULTY.easy.level));
+    expect(raidRunStamina("rampage")).toBeGreaterThan(raidRunStamina("hard"));
   });
 
   it("은 없는 판과 끝난 판의 제출을 거절한다", async () => {
@@ -558,7 +592,9 @@ describe("레이드 서버 경계", () => {
     // 클라이언트가 보낸 피해 숫자를 받지 않으므로, 재현이 서지 않으면 제출 전체가 거절된다.
     const state = makeRaidSession();
     state.party = [];
-    await expect(serverAt(state, "2026-09-16T12:00:00Z").submitRaidDamage({ requestId: "s2", raidId: "world-2026-09-16", actions: [] }))
+    const api = serverAt(state, "2026-09-16T12:00:00Z");
+    await api.enterRaid({ requestId: "s2", raidId: "world-2026-09-16" });
+    await expect(api.submitRaidDamage({ requestId: "s2", raidId: "world-2026-09-16", actions: [] }))
       .rejects.toMatchObject({ code: "RAID_SCORE_REJECTED" });
   });
 });

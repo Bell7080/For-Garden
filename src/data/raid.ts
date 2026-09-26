@@ -1,5 +1,6 @@
 import { registerDataText } from "../i18n";
 import { requiredBreakthroughForLevel } from "../core/levelDesign";
+import { dungeonRunStamina } from "../core/dungeonShortcut";
 
 /**
  * 레이드 — **경쟁이 아니라 함께 미는 보스전**이다.
@@ -157,6 +158,16 @@ export const RAID_SEASON_TOTAL_HP = RAID_DIFFICULTY.rampage.totalHp;
 
 /** 판 하나에 도전할 수 있는 횟수. 내 기여는 그 두 판의 피해 합이다. */
 export const RAID_ATTEMPTS_PER_RAID = 2;
+
+/**
+ * 레이드 한 판의 스테미나 — 입장에서 도전 한 번과 함께 빠진다.
+ *
+ * 값은 난이도가 아니라 **그 판의 레벨**이 정한다(`dungeonRunStamina`) — 같은 `LV.n`은 던전이든
+ * 레이드든 같은 값을 치른다(쉬움 LV20 12 · 보통 LV30 14 · 어려움 LV40 18 · 폭주 LV60 22).
+ */
+export function raidRunStamina(difficulty: RaidDifficulty): number {
+  return dungeonRunStamina(RAID_DIFFICULTY[difficulty].level);
+}
 
 /**
  * 때린 판마다 곧바로 받는 골드 — **그 판의 피해에 비례한다.**

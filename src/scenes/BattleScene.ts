@@ -1,6 +1,8 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
+import { rememberPlayerExp } from "../managers/PlayerExpReceipts";
+import { raidRunStamina } from "../data/raid";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { FEROCITY_RULES } from "../core/ferocity";
 import {
@@ -312,7 +314,6 @@ export class BattleScene extends Phaser.Scene {
   /** 보스 제출에는 코어가 실제로 낸 공격 종류와 시각만 기록하며 피해 숫자는 넣지 않는다. */
   private bossActions: ExpeditionBossAction[] = [];
   /** 레이드 제출의 멱등 키. 재시도가 같은 ID를 써야 성공한 제출이 두 번 쌓이지 않는다. */
-  private raidRequestId?: string;
   /** 성공 응답은 결과 UI보다 오래 살아 UI 생성 중단 뒤에도 같은 영수증으로 복구된다. */
   private readonly bossSettlement = new ExpeditionBossSettlementFlow(gameApi, expeditionManager);
   /** 요청 잠금과 실패판 세대를 함께 보관해 연타와 재시도 UI 중첩을 막는다. */
@@ -556,7 +557,6 @@ export class BattleScene extends Phaser.Scene {
     // 이전 씬의 tween 종료보다 재진입이 빠르더라도 표시 관찰값은 새 전투에서 0부터 시작한다.
     this.healPopups = 0;
     this.bossActions = [];
-    this.raidRequestId = undefined;
     this.raidSeasonHud = undefined;
     // 이전 전투/환경설정에서 저장한 조작 상태를 새 판의 시작값으로 그대로 복원한다.
     const currentSettings = settingsManager.get();
@@ -683,10 +683,10 @@ export class BattleScene extends Phaser.Scene {
     if (!beginBossSettlementAttempt(this.bossSettlementFailureState)) return;
     this.bossSettlementFailureUi?.destroy(true);
     this.bossSettlementFailureUi = undefined;
-    // 요청 ID는 한 판에 하나다 — 재시도가 새 ID를 만들면 성공한 제출이 두 번 쌓인다.
-    this.raidRequestId ??= `raid-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
+    // 요청 ID는 그 판의 **입장 영수증**이다 — 재시도도 같은 ID라 성공한 제출이 두 번 쌓이지 않는다.
+    const requestId = this.battleInput.requestId;
     try {
-      const result = await gameApi.submitRaidDamage({ requestId: this.raidRequestId, raidId, actions });
+      const result = await gameApi.submitRaidDamage({ requestId, raidId, actions });
       completeBossSettlementAttempt(this.bossSettlementFailureState);
       this.showRaidResult(result);
     } catch (error) {
@@ -724,13 +724,20 @@ export class BattleScene extends Phaser.Scene {
     // 도전이 남은 판이면 「다시 하기」로 곧바로 한 판 더 간다. 같은 부트 재동기화를 지나 서버 최신본을
     // 읽은 뒤 전장으로 들어간다 — 방금 제출한 몫이 반영된 체력으로 다시 선다.
     const input = this.battleInput;
-    const again = input.mode === "raid" && result.raid.status === "active" && result.raid.attemptsUsed < result.raid.attemptsLimit;
+    // 입장이 스테미나를 쓰므로 모자라면 세우지 않는다 — 눌러서 거절당할 버튼은 준비 상태를 과장한다.
+    const again = input.mode === "raid" && result.raid.status === "active" && result.raid.attemptsUsed < result.raid.attemptsLimit
+      && session.wallet.stamina >= raidRunStamina(input.difficulty);
     const replay = again ? {
       label: t("stageComplete.replay"),
       onPress: () => {
         if (this.bossLeaving) return;
         this.bossLeaving = true;
-        this.scene.start("boot", { destination: "raidBattle", raidBattle: { mode: "raid", raidId: input.raidId, bossRelicId: input.bossRelicId, difficulty: input.difficulty } satisfies RaidBattleInputDto });
+        // 다른 콘텐츠의 「다시 하기」처럼 **입장부터** 지난다. 거절되면 전장이 아니라 그 판으로 돌아간다.
+        const requestId = globalThis.crypto?.randomUUID?.() ?? `raid-entry-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        void gameApi.enterRaid({ raidId: input.raidId, requestId }).then((admission) => {
+          rememberPlayerExp(admission.playerExp);
+          this.scene.start("boot", { destination: "raidBattle", raidBattle: { mode: "raid", raidId: input.raidId, bossRelicId: input.bossRelicId, difficulty: input.difficulty, requestId } satisfies RaidBattleInputDto });
+        }).catch(() => { this.scene.start("boot", { destination: "raid", raidId: result.raid.id }); });
       },
     } : undefined;
     new StageCompletePopup(this, popups).open({

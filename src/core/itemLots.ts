@@ -83,12 +83,23 @@ export function nextExpiringLot(stack: LotStack | undefined): ItemLot | undefine
   return stack?.lots ? normalizeLots(stack.lots)[0] : undefined;
 }
 
-/** 남은 시간을 `nD`/`nH`/`nM` 한 마디로. 화면은 이 한 마디만 붙인다. */
+/**
+ * 남은 시간을 `7D` · `24H` · `60M` 한 마디로 — 가방 칸 왼쪽 위의 작은 표식이 이것만 적는다.
+ *
+ * **올려서 센다.** 받은 병은 막 받았을 때 `7D`로 서야 하고(내려서 세면 받자마자 `6D`), 하루가 안 남으면
+ * `24H`부터, 한 시간이 안 남으면 `60M`부터 줄어든다. 자세한 남은 시간은 눌러서 여는 안내창이 말한다.
+ */
 export function remainingLabel(expiresAt: string, now: Date): string {
   const ms = Math.max(0, Date.parse(expiresAt) - now.getTime());
-  if (ms >= DAY_MS) return `${Math.floor(ms / DAY_MS)}D`;
-  if (ms >= 3_600_000) return `${Math.floor(ms / 3_600_000)}H`;
-  return `${Math.max(1, Math.floor(ms / 60_000))}M`;
+  if (ms > DAY_MS) return `${Math.ceil(ms / DAY_MS)}D`;
+  if (ms > 3_600_000) return `${Math.ceil(ms / 3_600_000)}H`;
+  return `${Math.max(1, Math.ceil(ms / 60_000))}M`;
+}
+
+/** 남은 시간을 일·시·분·초로 가른다. 안내창의 자세한 한 줄이 쓴다. */
+export function remainingParts(expiresAt: string, now: Date): { days: number; hours: number; minutes: number; seconds: number } {
+  const total = Math.max(0, Math.floor((Date.parse(expiresAt) - now.getTime()) / 1000));
+  return { days: Math.floor(total / 86_400), hours: Math.floor(total / 3_600) % 24, minutes: Math.floor(total / 60) % 60, seconds: total % 60 };
 }
 
 /** 저장 검증 — 묶음이 있는 칸은 합이 `quantity`와 같고 각 묶음이 양수·올바른 시각이어야 한다. */

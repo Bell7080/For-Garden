@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addItemLot, isValidLotStack, purgeExpiredLots, removeItemLot, remainingLabel, type LotStack } from "../../src/core/itemLots";
+import { addItemLot, isValidLotStack, purgeExpiredLots, removeItemLot, remainingLabel, remainingParts, type LotStack } from "../../src/core/itemLots";
 import { normalizeExpeditionState, rollExpeditionPeriods } from "../../src/core/expeditionPeriods";
 import { PLAYER_LEVEL_UP_REWARD } from "../../src/core/playerLevel";
 import { findItem } from "../../src/data/items";
@@ -42,6 +42,12 @@ describe("기한 있는 아이템 묶음", () => {
     expect(purgeExpiredLots(inv, day("2026-09-05T00:00:00Z")).inventory).toEqual([]);
     expect(remainingLabel("2026-09-04T00:00:00Z", day("2026-09-01T00:00:00Z"))).toBe("3D");
     expect(remainingLabel("2026-09-01T05:00:00Z", day("2026-09-01T00:00:00Z"))).toBe("5H");
+    // 올려서 센다 — 막 받은 7일짜리는 7D, 하루 미만은 24H부터, 한 시간 미만은 60M부터.
+    expect(remainingLabel("2026-09-08T00:00:00Z", day("2026-09-01T00:00:01Z"))).toBe("7D");
+    expect(remainingLabel("2026-09-02T00:00:00Z", day("2026-09-01T00:00:01Z"))).toBe("24H");
+    expect(remainingLabel("2026-09-01T01:00:00Z", day("2026-09-01T00:00:01Z"))).toBe("60M");
+    expect(remainingLabel("2026-09-01T00:00:30Z", day("2026-09-01T00:00:00Z"))).toBe("1M");
+    expect(remainingParts("2026-09-03T05:07:09Z", day("2026-09-01T00:00:00Z"))).toEqual({ days: 2, hours: 5, minutes: 7, seconds: 9 });
   });
 
   it("기한은 1~7일 밖으로 나가지 않고, 쌓을 한도를 넘는 몫은 깎아서 준다", () => {

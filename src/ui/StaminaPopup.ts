@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
-import { soonestItemExpiry } from "./itemExpiry";
+import { remainingDetail, soonestItemExpiry } from "./itemExpiry";
 import type { AdPresentationResult, GameApi } from "../api/contracts";
 import { completedAdToken } from "../data/adRewards";
 import { currencyGuide } from "../data/currencyGuide";
@@ -183,7 +183,7 @@ export class StaminaPopup {
         name: item?.definition.name ?? "",
         gain: item?.amount ?? 0,
         // 기한이 있는 병은 가장 먼저 사라질 묶음을 한 마디로 말한다 — 먼저 쓸 이유가 된다.
-        detail: ((expiry) => expiry ? t("inventory.guide.expiry", expiry) : "")(soonestItemExpiry(itemId)),
+        detail: ((expiry) => expiry ? t("inventory.guide.expiry", { count: expiry.count, time: remainingDetail(expiry.expiresAt) }) : "")(soonestItemExpiry(itemId)),
         owned,
         label: t("stamina.spend"),
         enabled: item !== undefined && owned > 0,

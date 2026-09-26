@@ -129,6 +129,36 @@
 "{count} · verfallen in {time}",
 "{count} шт. · исчезнут через {time}"
 ],
+"inventory.expiry.days": [
+"{days}天{hours}小时",
+"{days} วัน {hours} ชม.",
+"{days} ngày {hours} giờ",
+"{days} hari {hours} jam",
+"{days} d {hours} h",
+"{days} d {hours} h",
+"{days} T. {hours} Std.",
+"{days} д. {hours} ч."
+],
+"inventory.expiry.hours": [
+"{hours}小时{minutes}分",
+"{hours} ชม. {minutes} นาที",
+"{hours} giờ {minutes} phút",
+"{hours} jam {minutes} menit",
+"{hours} h {minutes} min",
+"{hours} h {minutes} min",
+"{hours} Std. {minutes} Min.",
+"{hours} ч. {minutes} мин."
+],
+"inventory.expiry.minutes": [
+"{minutes}分{seconds}秒",
+"{minutes} นาที {seconds} วินาที",
+"{minutes} phút {seconds} giây",
+"{minutes} menit {seconds} detik",
+"{minutes} min {seconds} s",
+"{minutes} min {seconds} s",
+"{minutes} Min. {seconds} Sek.",
+"{minutes} мин. {seconds} с"
+],
 "inventory.guide.effect": [
 "效果",
 "ผล",

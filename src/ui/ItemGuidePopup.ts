@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { remainingDetail } from "./itemExpiry";
 import { t } from "../i18n";
 import type { ItemDefinition } from "../data/items";
 import { drawLayer, HoloBar, slantedRect } from "./holo";
@@ -13,7 +14,7 @@ export interface ItemGuideOptions {
   readonly definition: ItemDefinition;
   readonly quantity: number;
   /** 기한이 있는 칸 — 가장 먼저 사라질 묶음의 수와 남은 시간. 보유 수 아래 한 줄로 선다. */
-  readonly expiry?: { count: number; time: string };
+  readonly expiry?: { count: number; expiresAt: string };
   /** 소비품만 온다 — 오면 창 밑동에 「사용하기」가 선다. 한 개를 쓰고 창을 닫는다. */
   readonly onUse?: () => void;
 }
@@ -45,7 +46,16 @@ export class ItemGuidePopup {
       body.add(this.scene.add.text(hero.width / 2 - 40, heroY - 28, t("inventory.guide.held"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(1, 0.5));
       body.add(this.scene.add.text(hero.width / 2 - 40, heroY + 18, quantity.toLocaleString(), textStyle({ role: "display", size: 52, color: "#ffe9a3" }))
         .setOrigin(1, 0.5).setShadow(2, 6, "#05070a", 7, false, true));
-      if (expiry) body.add(this.scene.add.text(hero.width / 2 - 40, heroY + 62, t("inventory.guide.expiry", { count: expiry.count, time: expiry.time }), textStyle({ role: "emphasis", size: 20, color: COLOR.dangerText })).setOrigin(1, 0.5));
+      if (expiry) {
+        // 가방 칸의 표식(`7D`)이 줄여 적은 것을 여기서는 자세히 — 가장 먼저 사라질 묶음의 수와 남은
+        // 일·시간(하루 안이면 시·분, 한 시간 안이면 분·초)을 초마다 다시 적는다.
+        const line = this.scene.add.text(hero.width / 2 - 40, heroY + 62, "", textStyle({ role: "emphasis", size: 20, color: COLOR.dangerText })).setOrigin(1, 0.5);
+        const paint = (): void => { line.setText(t("inventory.guide.expiry", { count: expiry.count, time: remainingDetail(expiry.expiresAt) })); };
+        paint();
+        const timer = this.scene.time.addEvent({ delay: 1000, loop: true, callback: paint });
+        line.once(Phaser.GameObjects.Events.DESTROY, () => timer.remove(false));
+        body.add(line);
+      }
 
       const { section } = ITEM_GUIDE;
       const sectionY = top + section.top;

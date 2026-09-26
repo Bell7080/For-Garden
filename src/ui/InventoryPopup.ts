@@ -20,7 +20,7 @@ import { managerEvents } from "../managers/ManagerEvents";
 import { CurrencyGuidePopup } from "./CurrencyGuidePopup";
 import { ItemGuidePopup } from "./ItemGuidePopup";
 import { addItemDefinitionIcon } from "./itemDefinitionIcon";
-import { soonestItemExpiry } from "./itemExpiry";
+import { addExpiryTag, soonestItemExpiry } from "./itemExpiry";
 import type { CurrencyGuideAction } from "../data/currencyGuide";
 
 const CATEGORIES: readonly { id: ItemCategory; labelKey: TextKey }[] = [
@@ -233,9 +233,10 @@ export class InventoryPopup {
     // 골드처럼 자릿수가 큰 재화는 K·M으로 줄여 칸을 넘지 않게 한다 — 온전한 수는 눌러서 여는
     // 안내가 말한다.
     card.add(this.scene.add.text(frameSize / 2 - 6, frameSize / 2 - 2, formatCurrency(item.quantity), textStyle({ role: "emphasis", size: 32 })).setOrigin(1, 1).setStroke("#05070a", 4).setShadow(0, 2, "#05070a", 3, true, true));
-    // 기한이 있는 칸은 가장 먼저 사라질 묶음의 남은 시간을 왼쪽 위에 붙인다 — 수량과 마주 보는 자리다.
+    // 기한이 있는 칸은 가장 먼저 사라질 묶음의 남은 시간을 왼쪽 위의 붉은 표식으로 붙인다 — 수량과
+    // 마주 보는 자리다. 표식은 초마다 제 한 마디를 다시 적는다(`7D` → … → `24H` → … → `60M`).
     const expiry = soonestItemExpiry(item.definition.id);
-    if (expiry) card.add(this.scene.add.text(-frameSize / 2 + 8, -frameSize / 2 + 4, expiry.time, textStyle({ role: "emphasis", size: 22, color: COLOR.dangerText })).setOrigin(0, 0).setStroke("#05070a", 4));
+    if (expiry) card.add(addExpiryTag(this.scene, -frameSize / 2 + 4, -frameSize / 2 + 4, expiry.expiresAt));
     this.addCardInput(content, card, item, cardWidth, cardHeight);
   }
 

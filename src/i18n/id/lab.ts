@@ -2,7 +2,6 @@
 export const LAB_ID = {
   "lab.rates": "Detail Peluang",
   "lab.rates.basis": "{banner} · Peluang per 1 Riset",
-  "lab.rates.tier.gray": "Lain-lain",
   "lab.rates.percent": "{percent}%",
   "lab.rates.range": "{min}~{max}",
   "lab.rates.pickup": "Pick Up!",

@@ -2,7 +2,6 @@
 export const LAB_PT_BR = {
   "lab.rates": "Detalhes das chances",
   "lab.rates.basis": "{banner} · Chance por Pesquisa",
-  "lab.rates.tier.gray": "Diversos",
   "lab.rates.percent": "{percent}%",
   "lab.rates.range": "{min}~{max}",
   "lab.rates.pickup": "Pick Up!",

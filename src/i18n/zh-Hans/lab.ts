@@ -2,7 +2,6 @@
 export const LAB_ZH_HANS = {
   "lab.rates": "概率详情",
   "lab.rates.basis": "{banner} · 每次研究概率",
-  "lab.rates.tier.gray": "杂货",
   "lab.rates.percent": "{percent}%",
   "lab.rates.range": "{min}~{max}",
   "lab.rates.pickup": "Pick Up!",

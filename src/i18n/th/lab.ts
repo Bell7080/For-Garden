@@ -2,7 +2,6 @@
 export const LAB_TH = {
   "lab.rates": "รายละเอียดอัตรา",
   "lab.rates.basis": "{banner} · อัตราต่อการวิจัย 1 ครั้ง",
-  "lab.rates.tier.gray": "ของทั่วไป",
   "lab.rates.percent": "{percent}%",
   "lab.rates.range": "{min}~{max}",
   "lab.rates.pickup": "Pick Up!",

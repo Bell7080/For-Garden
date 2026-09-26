@@ -2,7 +2,6 @@
 export const LAB_ZH_HANT = {
   "lab.rates": "機率詳情",
   "lab.rates.basis": "{banner} · 每次研究機率",
-  "lab.rates.tier.gray": "雜貨",
   "lab.rates.percent": "{percent}%",
   "lab.rates.range": "{min}~{max}",
   "lab.rates.pickup": "Pick Up!",

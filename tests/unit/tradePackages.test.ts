@@ -42,7 +42,7 @@ describe("무역 패키지 운영 데이터", () => {
     // 한 개가 곧 연구 한 번이라 시세표의 기준점도 그 한 번이다 — 일반 젬 100, 픽업 젬 300.
     expect(1 / TRADE_GEM_RATE.fossil).toBe(100);
     expect(1 / TRADE_GEM_RATE.amber).toBe(300);
-    // 배수는 지어낸 값이 아니라 두 배너의 SSR 확률 차이(0.01 → 0.03)에서 그대로 온다.
+    // 픽업 한 번은 일반 한 번의 세 배다 — 한정 픽업과 두 배인 SR·R 확률의 값이다.
     expect(TRADE_GEM_RATE.fossil / TRADE_GEM_RATE.amber).toBe(3);
     // 시세가 없는 지급품(장식)은 환산하지 않는다 — 세면 가치 %가 부풀려진다.
     expect(tradeGemValue([{ kind: "profile_decoration", decorationId: "patron-monthly", name: "명찰" }])).toBe(0);

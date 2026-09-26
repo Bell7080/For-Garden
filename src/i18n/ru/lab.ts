@@ -2,7 +2,6 @@
 export const LAB_RU = {
   "lab.rates": "Шансы",
   "lab.rates.basis": "{banner} · Шанс за одно Исследование",
-  "lab.rates.tier.gray": "Прочее",
   "lab.rates.percent": "{percent}%",
   "lab.rates.range": "{min}~{max}",
   "lab.rates.pickup": "Pick Up!",

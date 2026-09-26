@@ -2,7 +2,6 @@
 export const LAB_JA = {
   "lab.rates": "確率情報",
   "lab.rates.basis": "{banner} · 研究1回あたり",
-  "lab.rates.tier.gray": "雑貨",
   "lab.rates.percent": "{percent}%",
   "lab.rates.range": "{min}~{max}",
   "lab.rates.pickup": "Pick Up!",

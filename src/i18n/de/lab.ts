@@ -2,7 +2,6 @@
 export const LAB_DE = {
   "lab.rates": "Wahrscheinlichkeiten",
   "lab.rates.basis": "{banner} · Chance pro Forschung",
-  "lab.rates.tier.gray": "Sonstiges",
   "lab.rates.percent": "{percent}%",
   "lab.rates.range": "{min}~{max}",
   "lab.rates.pickup": "Pick Up!",

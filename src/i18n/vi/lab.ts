@@ -2,7 +2,6 @@
 export const LAB_VI = {
   "lab.rates": "Chi tiết tỉ lệ",
   "lab.rates.basis": "{banner} · Tỉ lệ mỗi lần Nghiên cứu",
-  "lab.rates.tier.gray": "Tạp hóa",
   "lab.rates.percent": "{percent}%",
   "lab.rates.range": "{min}~{max}",
   "lab.rates.pickup": "Pick Up!",

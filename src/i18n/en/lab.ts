@@ -2,7 +2,6 @@
 export const LAB_EN = {
   "lab.rates": "Rate Details",
   "lab.rates.basis": "{banner} · Rates per 1 Research",
-  "lab.rates.tier.gray": "Misc.",
   "lab.rates.percent": "{percent}%",
   "lab.rates.range": "{min}~{max}",
   "lab.rates.pickup": "Pick Up!",

@@ -104,8 +104,9 @@ export const BANNERS: Banner[] = [
     // 재화의 희소도 같은 설계 메모도 배너 카피로 옮기지 않고 운영 데이터와 주석에만 남긴다.
     // 호박석도 한 개가 한 번이다. 값의 차이는 개수가 아니라 재화가 말한다.
     currency: "amber", costOne: 1, costTen: 10,
-    // 비싼 호박석은 화석보다 렐릭 확률을 거의 두 배로 두되, 재화 결과가 여전히 과반이 되게 한다.
-    slotRates: { R: 0.22, SR: 0.08, SSR: 0.03, GRAY: 0.67 },
+    // SSR은 화석 연구와 같은 1%다 — 호박석이 사는 것은 SSR 확률이 아니라 **한정 픽업**(디안은 여기서만
+    // 나온다)과 두 배 가까운 SR·R 확률이다. 재화 결과는 여전히 과반이다.
+    slotRates: { R: 0.22, SR: 0.08, SSR: 0.01, GRAY: 0.69 },
     grayRewards: [
       { kind: "gold", min: 3_000, max: 8_000, weight: 2 },
       { kind: "cheesecake", min: 15, max: 30, weight: 1 },

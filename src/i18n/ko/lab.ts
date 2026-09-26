@@ -2,7 +2,6 @@
 export const LAB_KO = {
   "lab.rates": "확률 정보",
   "lab.rates.basis": "{banner} · 1회 연구 기준",
-  "lab.rates.tier.gray": "잡화",
   "lab.rates.percent": "{percent}%",
   "lab.rates.range": "{min}~{max}",
   "lab.rates.pickup": "Pick Up!",

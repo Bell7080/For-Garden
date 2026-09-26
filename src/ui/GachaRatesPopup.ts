@@ -36,9 +36,17 @@ export interface GachaRatesContext {
   pity: GachaPityState;
 }
 
-/** 등급 줄의 이름과 색. 렐릭 등급은 카드 바탕과 같은 색이고, 잡화만 잿빛이다. */
+/**
+ * 등급 줄의 이름과 색. 렐릭 등급은 카드 바탕과 같은 색이고, 회색 등급만 잿빛이다.
+ *
+ * 회색 등급의 이름은 **뽑기 연출이 그 카드에 새기는 `RESOURCE`** 그대로다(`researchCinematic`의
+ * 카드 등급 줄). SSR·SR·R처럼 언어를 가리지 않는 등급 표기라 번역하지 않는다 — 표와 연출이 다른
+ * 이름을 쓰면 같은 칸이 두 이름을 갖는다.
+ */
+const GRAY_TIER_LABEL = "RESOURCE";
+
 function tierLabel(tier: RateTier): string {
-  return tier === "GRAY" ? t("lab.rates.tier.gray") : tier;
+  return tier === "GRAY" ? GRAY_TIER_LABEL : tier;
 }
 
 function tierColor(tier: RateTier): { ink: string; tone: number } {

@@ -34,8 +34,8 @@ describe("연구 확률표", () => {
     expect(first).toMatchObject({ kind: "relic", relicId: "dian", pickup: true });
     expect(first.rate).toBeCloseTo(banner.slotRates.SSR * banner.pickupRate, 12);
     expect(rest.every((entry) => entry.kind === "relic" && !entry.pickup)).toBe(true);
-    expect(formatRatePercent(first.rate)).toBe("1.5");
-    expect(formatRatePercent(rest[0].rate)).toBe("0.15");
+    expect(formatRatePercent(first.rate)).toBe("0.5");
+    expect(formatRatePercent(rest[0].rate)).toBe("0.05");
   });
 
   it("픽업이 없는 배너는 풀 안이 균등하다", () => {

@@ -250,14 +250,14 @@
 "Чёрный клык"
 ],
 "relic.kuro.passive.desc": [
-"蒂安在战斗开始时召唤的绑定召唤物。蒂安的攻击力决定克罗的攻击力、攻击速度与移动速度；蒂安的攻击力与法术强度共同决定其生命、防御力与抗性。",
-"สัตว์อัญเชิญผูกพันที่เดียนเรียกเมื่อเริ่มการต่อสู้ พลังโจมตีของเดียนกำหนดพลังโจมตี ความเร็วโจมตี และความเร็วเคลื่อนที่ของคุโระ ส่วนพลังโจมตีกับพลังเวทของเดียนร่วมกันกำหนด HP พลังป้องกัน และต้านทาน",
-"Triệu hồi gắn kết mà Dian gọi khi bắt đầu trận. Công của Dian quyết định Công, Tốc đánh và Tốc chạy của Kuro; Công và Phép của Dian cùng quyết định HP, Thủ và Kháng.",
-"Panggilan terikat yang dipanggil Dian di awal pertarungan. Serangan Dian menentukan Serangan, Kecepatan Serang, dan Kecepatan Gerak Kuro; Serangan dan Kekuatan Magis Dian bersama menentukan HP, Pertahanan, dan Resistensinya.",
-"Invocación vinculada que Dian llama al inicio del combate. El Ataque de Dian fija el Ataque, la Velocidad de ataque y la Velocidad de movimiento de Kuro; el Ataque y el Poder mágico de Dian juntos fijan sus PV, Defensa y Resistencia.",
-"Invocação vinculada que Dian chama no início da batalha. O Ataque de Dian define Ataque, Velocidade de ataque e Velocidade de movimento de Kuro; Ataque e Poder mágico de Dian juntos definem PV, Defesa e Resistência.",
-"Eine gebundene Beschwörung, die Dian zu Kampfbeginn ruft. Dians Angriff bestimmt Kuros Angriff, Angriffstempo und Lauftempo; Dians Angriff und Zauberkraft zusammen bestimmen LP, Verteidigung und Widerstand.",
-"Связанный призыв, которого Диан вызывает в начале боя. Атака Диан задаёт атаку, скорость атаки и скорость движения Куро; атака и сила магии Диан вместе задают ОЗ, защиту и сопротивление."
+"蒂安在战斗开始时召唤的绑定召唤物。蒂安的攻击力决定克罗的攻击力、生命、防御力与抗性。",
+"สัตว์อัญเชิญผูกพันที่เดียนเรียกเมื่อเริ่มการต่อสู้ พลังโจมตีของเดียนกำหนดพลังโจมตี HP พลังป้องกัน และต้านทานของคุโระ",
+"Triệu hồi gắn kết mà Dian gọi khi bắt đầu trận. Công của Dian quyết định Công, HP, Thủ và Kháng của Kuro.",
+"Panggilan terikat yang dipanggil Dian di awal pertarungan. Serangan Dian menentukan Serangan, HP, Pertahanan, dan Resistensi Kuro.",
+"Invocación vinculada que Dian llama al inicio del combate. El Ataque de Dian fija el Ataque, los PV, la Defensa y la Resistencia de Kuro.",
+"Invocação vinculada que Dian chama no início da batalha. O Ataque de Dian define Ataque, PV, Defesa e Resistência de Kuro.",
+"Eine gebundene Beschwörung, die Dian zu Kampfbeginn ruft. Dians Angriff bestimmt Kuros Angriff, LP, Verteidigung und Widerstand.",
+"Связанный призыв, которого Диан вызывает в начале боя. Атака Диан задаёт атаку, ОЗ, защиту и сопротивление Куро."
 ],
 "relic.kuro.ferocity.name": [
 "狼群之躯",
@@ -380,14 +380,14 @@
 "Белый клык"
 ],
 "relic.shiro.passive.desc": [
-"蒂安在战斗开始时召唤的绑定召唤物。蒂安的法术强度决定希罗的法术强度、攻击速度与移动速度；蒂安的攻击力与法术强度共同决定其生命、防御力与抗性。",
-"สัตว์อัญเชิญผูกพันที่เดียนเรียกเมื่อเริ่มการต่อสู้ พลังเวทของเดียนกำหนดพลังเวท ความเร็วโจมตี และความเร็วเคลื่อนที่ของชิโระ ส่วนพลังโจมตีกับพลังเวทของเดียนร่วมกันกำหนด HP พลังป้องกัน และต้านทาน",
-"Triệu hồi gắn kết mà Dian gọi khi bắt đầu trận. Phép của Dian quyết định Phép, Tốc đánh và Tốc chạy của Shiro; Công và Phép của Dian cùng quyết định HP, Thủ và Kháng.",
-"Panggilan terikat yang dipanggil Dian di awal pertarungan. Kekuatan Magis Dian menentukan Kekuatan Magis, Kecepatan Serang, dan Kecepatan Gerak Shiro; Serangan dan Kekuatan Magis Dian bersama menentukan HP, Pertahanan, dan Resistensinya.",
-"Invocación vinculada que Dian llama al inicio del combate. El Poder mágico de Dian fija el Poder mágico, la Velocidad de ataque y la Velocidad de movimiento de Shiro; el Ataque y el Poder mágico de Dian juntos fijan sus PV, Defensa y Resistencia.",
-"Invocação vinculada que Dian chama no início da batalha. O Poder mágico de Dian define Poder mágico, Velocidade de ataque e Velocidade de movimento de Shiro; Ataque e Poder mágico de Dian juntos definem PV, Defesa e Resistência.",
-"Eine gebundene Beschwörung, die Dian zu Kampfbeginn ruft. Dians Zauberkraft bestimmt Shiros Zauberkraft, Angriffstempo und Lauftempo; Dians Angriff und Zauberkraft zusammen bestimmen LP, Verteidigung und Widerstand.",
-"Связанный призыв, которого Диан вызывает в начале боя. Сила магии Диан задаёт силу магии, скорость атаки и скорость движения Широ; атака и сила магии Диан вместе задают ОЗ, защиту и сопротивление."
+"蒂安在战斗开始时召唤的绑定召唤物。蒂安的法术强度决定希罗的法术强度、生命、防御力与抗性。",
+"สัตว์อัญเชิญผูกพันที่เดียนเรียกเมื่อเริ่มการต่อสู้ พลังเวทของเดียนกำหนดพลังเวท HP พลังป้องกัน และต้านทานของชิโระ",
+"Triệu hồi gắn kết mà Dian gọi khi bắt đầu trận. Phép của Dian quyết định Phép, HP, Thủ và Kháng của Shiro.",
+"Panggilan terikat yang dipanggil Dian di awal pertarungan. Kekuatan Magis Dian menentukan Kekuatan Magis, HP, Pertahanan, dan Resistensi Shiro.",
+"Invocación vinculada que Dian llama al inicio del combate. El Poder mágico de Dian fija el Poder mágico, los PV, la Defensa y la Resistencia de Shiro.",
+"Invocação vinculada que Dian chama no início da batalha. O Poder mágico de Dian define Poder mágico, PV, Defesa e Resistência de Shiro.",
+"Eine gebundene Beschwörung, die Dian zu Kampfbeginn ruft. Dians Zauberkraft bestimmt Shiros Zauberkraft, LP, Verteidigung und Widerstand.",
+"Связанный призыв, которого Диан вызывает в начале боя. Сила магии Диан задаёт силу магии, ОЗ, защиту и сопротивление Широ."
 ],
 "relic.shiro.ferocity.name": [
 "狼群之躯",

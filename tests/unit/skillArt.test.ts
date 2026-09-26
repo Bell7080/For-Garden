@@ -674,15 +674,16 @@ describe("스킬 설명문 양식 계약", () => {
     for (const word of ["전투력", "치명타", "겹", "[[bloodscent|"]) expect(body).not.toContain(word);
   });
 
-  it("디안의 일반 공격은 한 줄의 물리 피해이고 목덜미는 문턱과 추가 피해를 말한다", () => {
+  it("디안의 일반 공격은 한 줄의 물리 피해이고 목덜미는 문턱과 따로 드는 마법 치명타 한 대를 말한다", () => {
     const dian = RELICS.find((def) => def.id === "dian")!;
     // 본문은 아이콘 위 라벨과 같은 합산 수치를 받아 쓴다: 160×40% + 158×60% = 159.
     const basic = skillDescription(dian.basic, { ap: 158, atk: { atk: 160, attackSpeed: 132 }, damage: 159 });
+    // 목덜미 한 대는 본 타격과 다른 피해라 제 수를 갖는다: 160×125% + 158×125% = 398.
     expect(basic).toBe("적 한 명에게 [[damage-value|159]]의 [[physical-damage|물리 피해]]를 준다. "
-      + "표적의 체력이 30% 이하면 [[nape|목덜미]]를 노려 확정 치명타로 피해가 100% 늘어나고, 같은 표적에게는 8초에 한 번만 터진다.");
+      + "표적의 체력이 30% 이하면 [[nape|목덜미]]를 노려 [[damage-value|398]]의 [[magical-damage|마법 피해]]를 확정 치명타로 한 번 더 주고, 같은 표적에게는 8초에 한 번만 터진다.");
 
     const ultimate = skillDescription(dian.ultimate, { ap: 158, atk: { atk: 160, attackSpeed: 132 }, damage: 238 });
-    expect(ultimate).toContain("표적의 체력이 30% 이하면 [[nape|목덜미]]를 노려 확정 치명타로 피해가 100% 늘어나고, 같은 표적에게는 8초에 한 번만 터진다.");
+    expect(ultimate).toContain("표적의 체력이 30% 이하면 [[nape|목덜미]]를 노려 [[damage-value|398]]의 [[magical-damage|마법 피해]]를 확정 치명타로 한 번 더 주고, 같은 표적에게는 8초에 한 번만 터진다.");
     // 늑대가 무엇을 하는지는 늑대의 궁극기가 말한다. 여기서는 부른다는 것만 적는다.
     expect(ultimate).toContain("살아 있는 [[summon-kuro|쿠로]]와 [[summon-shiro|시로]]가 그 표적에게 곧바로 궁극기를 쓴다.");
     expect(ultimate).not.toContain("부활 대기");
@@ -706,8 +707,9 @@ describe("스킬 설명문 양식 계약", () => {
       const body = passiveDescription(wolf.passive, wolf.stats.atk);
       expect(body, id).toContain("디안이 전투 시작 시 불러내는 귀속 소환수다");
       expect(body, id).toContain(`디안의 ${axis}이`);
-      // 몸(체력·방어·저항)은 두 축을 함께 따른다.
-      expect(body, id).toContain("디안의 공격력과 주문력이 함께 체력·방어력·저항력을 정한다");
+      // 한 축이 그 축과 몸(체력·방어·저항)을 정한다. 속도는 따라 오르지 않아 적지 않는다.
+      expect(body, id).toContain(`디안의 ${axis}이 ${id === "kuro" ? "쿠로" : "시로"}의 ${axis}·체력·방어력·저항력을 정한다`);
+      expect(body, id).not.toContain("속도");
       // 폭주는 같은 값이 함께 오르므로 한 번만 말하고, 방어·저항은 실제로 오르는 값으로 보여 준다.
       const fever = ferocityTraitDescription(wolf.ferocityTrait, { attack: wolf.stats.atk, defense: wolf.stats.def });
       expect(fever, id).toMatch(/^방어력과 저항력이 \d+씩 오르고 \[\[attack-speed\|공격 속도\]\]가 50% 오른다\.$/);

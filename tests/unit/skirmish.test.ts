@@ -266,10 +266,14 @@ describe("디안 일반 공격·목덜미·궁극기", () => {
     expect(alone.map(({ damageType, amount }) => ({ damageType, amount }))).toEqual([{ damageType: "physical", amount: expected }]);
   });
 
-  it("은 표적이 문턱 아래면 자리를 옮기지 않고 확정 치명타에 큰 추가 피해를 얹는다", () => {
+  it("은 표적이 문턱 아래면 자리를 옮기지 않고 본 타격 뒤에 공격력+주문력 마법 치명타 한 대를 더 문다", () => {
     const { state, dian } = readyDian(1);
     const foe = state.fighters[1];
-    const critical = computeDamage(dian, defensiveDefinition(foe, state), { ...dian.def.basic, isCritical: true, kind: "basic" });
+    const finisher = dian.def.basic.finisher!;
+    const napeHit = computeDamage(dian, defensiveDefinition(foe, state), {
+      power: finisher.atkPercent, scalingStat: "atk", secondaryScaling: { stat: "ap", power: finisher.apPercent },
+      damageType: "magical", isCritical: true, kind: "basic",
+    });
     foe.hp = foe.maxHp * 0.2;
     const before = { x: dian.x, y: dian.y };
     const events = stepSkirmish(state, 0.01);
@@ -277,11 +281,13 @@ describe("디안 일반 공격·목덜미·궁극기", () => {
     const cue = events.find((event) => event.kind === "packFinisher");
     expect(cue?.kind === "packFinisher" ? cue.targetId : undefined).toBe(foe.id);
     expect({ x: dian.x, y: dian.y }).toEqual(before);
-    // 한 행동에 한 타격이다 — 추가 타격을 따로 세우면 보스 점수와 재사용 대기 검증이 두 번으로 센다.
+    // 본 타격은 여느 때의 물리 한 방이고, 목덜미는 제 사건으로 따로 선다 — 행동 기록에 잡히지 않게 animate: false.
     const hits = hitsBy(events, dian.id);
-    expect(hits).toHaveLength(1);
-    expect(hits[0].critical).toBe(true);
-    expect(hits[0].amount).toBe(Math.round(critical * (1 + dian.def.basic.finisher!.bonusDamagePercent / 100)));
+    expect(hits.map(({ skill, damageType }) => ({ skill, damageType }))).toEqual([
+      { skill: "basic", damageType: "physical" },
+      { skill: "nape", damageType: "magical" },
+    ]);
+    expect(hits[1]).toMatchObject({ critical: true, animate: false, amount: napeHit });
   });
 
   it("은 한 번 연 표적에게 대기 시간 동안 다시 열지 않고, 다른 표적에게는 곧바로 연다", () => {

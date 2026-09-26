@@ -1009,35 +1009,15 @@
 "{stat} von {owner}",
 "{owner}: {stat}"
 ],
-"info.summon.growth.offense": [
-"攻击·速度",
-"โจมตี·ความเร็ว",
-"Tấn công · Tốc độ",
-"Serangan · Kecepatan",
-"Ofensiva · Velocidad",
-"Ofensiva · Velocidade",
-"Offensive · Tempo",
-"Атака · Скорость"
-],
-"info.summon.growth.body": [
-"生命·防御·抗性",
-"HP·ป้องกัน·ต้านทาน",
-"HP · Thủ · Kháng",
-"HP · PER · RES",
-"PV · DEF · RES",
-"PV · DEF · RES",
-"LP · VER · WID",
-"ОЗ · ЗАЩ · СОПР"
-],
-"info.summon.growthBodySource": [
-"{owner} {atk} + {ap}",
-"{atk} + {ap} ของ{owner}",
-"{atk} + {ap} của {owner}",
-"{atk} + {ap} {owner}",
-"{atk} + {ap} de {owner}",
-"{atk} + {ap} de {owner}",
-"{atk} + {ap} von {owner}",
-"{owner}: {atk} + {ap}"
+"info.summon.growth.follows": [
+"{stat}·生命·防御·抗性",
+"{stat} · HP · ป้องกัน · ต้านทาน",
+"{stat} · HP · Thủ · Kháng",
+"{stat} · HP · Pert. · Res.",
+"{stat} · PV · Def. · Res.",
+"{stat} · PV · Def. · Res.",
+"{stat} · LP · Vert. · Wid.",
+"{stat} · ОЗ · защ. · сопр."
 ],
 "info.summon.resummon": [
 "重新召唤",

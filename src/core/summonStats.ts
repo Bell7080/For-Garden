@@ -12,30 +12,22 @@ const SUMMON_SECONDARY_STATS: Pick<Stats, "critChance" | "critDamage" | "energyG
 /**
  * 주인의 모든 성장·장비가 반영된 Stats에서 귀속 소환수의 능력치를 파생한다.
  *
- * 각 항목은 먼저 성장 기준에 계수를 곱해 정수로 반올림하고, 그 다음 공속·이속 상한을 적용한다.
- * 이 순서를 고정하면 상한 근처의 소수점이 먼저 잘려 플랫폼에 따라 제한을 넘는 일을 막을 수 있다.
- * 입력 객체는 전투 양 진영이 같은 정적 정의를 공유할 수 있도록 절대 변경하지 않는다.
+ * **한 소환수는 주인의 한 축만 따른다**(`growthStat`) — 쿠로는 공격력으로 공격력·체력·방어·저항이,
+ * 시로는 주문력으로 주문력·체력·방어·저항이 오른다. 주인이 어느 축을 키웠는지가 곧 어느 늑대가
+ * 두꺼워지는지다. **공격 속도·이동 속도는 오르지 않는다** — 그 둘은 정체성이라(규칙 6) 늑대 정의의
+ * 태생값을 그대로 쓴다. 입력 객체는 전투 양 진영이 같은 정적 정의를 공유할 수 있도록 절대 변경하지 않는다.
  */
-/** 소환수의 몸(체력·방어·저항)이 따르는 주인의 값 — 공격력과 주문력의 합이다. */
-export function summonBodyBasis(ownerStats: Readonly<Stats>): number {
-  return ownerStats.atk + ownerStats.ap;
-}
-
 export function deriveSummonStats(ownerStats: Readonly<Stats>, summon: Readonly<SummonDef>): Stats {
   const basis = ownerStats[summon.growthStat];
   const scaled = (coefficient: number): number => Math.round(basis * coefficient);
-  // 몸은 주인의 두 공격 축을 함께 따른다. 어느 쪽을 키워도 앞에 선 방패가 같이 두꺼워진다.
-  const bodyBasis = summonBodyBasis(ownerStats);
-  const body = (coefficient: number): number => Math.round(bodyBasis * coefficient);
   return {
-    hp: body(summon.scaling.hp),
+    hp: scaled(summon.scaling.hp),
     atk: summon.growthStat === "atk" ? scaled(summon.scaling.atk) : 0,
     ap: summon.growthStat === "ap" ? scaled(summon.scaling.atk) : 0,
-    def: body(summon.scaling.def),
-    res: body(summon.scaling.res),
-    // 반올림을 먼저 하고 상한을 적용한다. 상한값 자체는 정수라 결과도 늘 결정적이다.
-    attackSpeed: Math.min(scaled(summon.scaling.attackSpeed), summon.scaling.attackSpeedCap),
-    moveSpeed: Math.min(scaled(summon.scaling.moveSpeed), summon.scaling.moveSpeedCap),
+    def: scaled(summon.scaling.def),
+    res: scaled(summon.scaling.res),
+    attackSpeed: summon.def.stats.attackSpeed,
+    moveSpeed: summon.def.stats.moveSpeed,
     ...SUMMON_SECONDARY_STATS,
   };
 }

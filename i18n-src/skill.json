@@ -2300,14 +2300,14 @@
 "Дополнительный магический удар, как [[basic-attack|обычная атака]] Метте. [[stagger|Ошеломляет]] задетую цель."
 ],
 "skill.keyword.summon.description": [
-"攻击与速度随{owner}的{stat}，生命·防御力·抗性则由攻击力与法术强度共同决定的近战召唤物。自行选择目标，并以自身量表使用必杀技。{resummon}",
-"ยูนิตอัญเชิญระยะประชิดที่การโจมตีและความเร็วตาม{stat}ของ{owner} ส่วน HP พลังป้องกัน และต้านทานมาจากพลังโจมตีและพลังเวทรวมกัน เลือกเป้าหมายเองและใช้ท่าไม้ตายตามเกจของตัวเอง{resummon}",
-"Triệu hồi cận chiến có tấn công và tốc độ theo {stat} của {owner}, còn HP, Thủ và Kháng theo Công và Phép cộng lại. Tự chọn mục tiêu và dùng Tuyệt kỹ theo thanh của chính nó.{resummon}",
-"Panggilan jarak dekat yang serangan dan kecepatannya mengikuti {stat} {owner}, sedangkan HP, Pertahanan, dan Resistensinya dari Serangan dan Kekuatan Magis bersama. Memilih target sendiri dan memakai Ultimate dengan pengukurnya sendiri.{resummon}",
-"Invocación cuerpo a cuerpo cuyo ataque y velocidad siguen el {stat} de {owner}, mientras que sus PV, Defensa y Resistencia siguen al Ataque y el Poder mágico juntos. Elige sus propios objetivos y usa la Definitiva con su propio medidor.{resummon}",
-"Invocação corpo a corpo cujo ataque e velocidade seguem o {stat} de {owner}, enquanto PV, Defesa e Resistência seguem Ataque e Poder mágico juntos. Escolhe os próprios alvos e usa a Suprema com o próprio medidor.{resummon}",
-"Eine Nahkampf-Beschwörung, deren Angriff und Tempo {owner}s {stat} folgen, während LP, Verteidigung und Widerstand Angriff und Zauberkraft zusammen folgen. Sie wählt eigene Ziele und setzt ihre Ultimativ mit der eigenen Leiste ein.{resummon}",
-"Призыв ближнего боя: атака и скорость зависят от {stat} ({owner}), а ОЗ, защита и сопротивление — от атаки и силы магии вместе. Сам выбирает цели и применяет ульту по своей шкале.{resummon}"
+"{stat}、生命、防御力与抗性均由{owner}的{stat}决定的近战召唤物。自行选择目标，并以自身能量使用必杀技。{resummon}",
+"สัตว์อัญเชิญระยะประชิดที่{stat} HP พลังป้องกัน และต้านทานกำหนดจาก{stat}ของ{owner} เลือกเป้าหมายเองและใช้ท่าไม้ตายด้วยเกจของตัวเอง{resummon}",
+"Triệu hồi cận chiến có {stat}, HP, Thủ và Kháng dựa trên {stat} của {owner}. Tự chọn mục tiêu và dùng Tuyệt kỹ bằng thanh của riêng nó.{resummon}",
+"Panggilan jarak dekat yang {stat}, HP, Pertahanan, dan Resistensinya ditentukan oleh {stat} milik {owner}. Ia memilih target sendiri dan memakai Ultimate dengan gauge-nya sendiri.{resummon}",
+"Invocación cuerpo a cuerpo cuyos {stat}, PV, Defensa y Resistencia dependen de {stat} de {owner}. Elige sus propios objetivos y usa su Definitiva con su propio medidor.{resummon}",
+"Invocação corpo a corpo cujos {stat}, PV, Defesa e Resistência dependem de {stat} de {owner}. Escolhe os próprios alvos e usa a Suprema com o próprio medidor.{resummon}",
+"Eine Nahkampf-Beschwörung, deren {stat}, LP, Verteidigung und Widerstand von {stat} von {owner} abhängen. Sie wählt eigene Ziele und setzt ihre Ultimativ mit eigener Ladung ein.{resummon}",
+"Призыв ближнего боя: {stat}, ОЗ, защита и сопротивление зависят от {stat} ({owner}). Сам выбирает цели и применяет ульту по своей шкале.{resummon}"
 ],
 "skill.keyword.summon.resummon": [
 "倒下后{seconds}秒以最大生命{percent}%重新站起。",
@@ -2430,14 +2430,14 @@
 "При срабатывании «{trigger}» восстанавливает {heal} [[hp|здоровья]] и [[taunt|провоцирует]] врагов на широкой области на {seconds} с."
 ],
 "skill.clause.nape": [
-"若目标生命在{percent}%以下，则瞄准[[nape|后颈]]打出必定暴击，伤害提升{bonus}%，对同一目标每{seconds}秒最多触发一次",
-"หาก HP ของเป้าหมายไม่เกิน {percent}% จะเล็ง[[nape|ท้ายทอย]]เป็นคริติคอลแน่นอน ความเสียหายเพิ่มขึ้น {bonus}% และเกิดกับเป้าหมายเดิมได้ไม่เกินหนึ่งครั้งทุก {seconds} วินาที",
-"nếu HP mục tiêu từ {percent}% trở xuống, nhắm vào [[nape|Gáy]] để chí mạng chắc chắn, tăng {bonus}% sát thương, tối đa một lần mỗi {seconds} giây cho mỗi mục tiêu",
-"jika HP target {percent}% atau kurang, ia mengincar [[nape|Tengkuk]] untuk kritis pasti dengan kerusakan +{bonus}%, paling banyak sekali tiap {seconds} detik per target",
-"si los PV del objetivo son del {percent}% o menos, va a por la [[nape|Nuca]] con un crítico garantizado que inflige un {bonus}% más de daño, como máximo una vez cada {seconds} s por objetivo",
-"se o PV do alvo estiver em {percent}% ou menos, mira a [[nape|Nuca]] com um crítico garantido que causa {bonus}% a mais de dano, no máximo uma vez a cada {seconds} s por alvo",
-"liegen die LP des Ziels bei {percent} % oder darunter, zielt sie auf den [[nape|Nacken]] – ein garantierter kritischer Treffer mit {bonus} % mehr Schaden, höchstens einmal alle {seconds} s pro Ziel",
-"если ОЗ цели {percent}% или меньше, бьёт в [[nape|загривок]] гарантированным критом с уроном +{bonus}%, не чаще раза в {seconds} с на цель"
+"若目标生命在{percent}%以下，则咬住[[nape|后颈]]，再以必定暴击造成一次{damage}，对同一目标每{seconds}秒最多触发一次",
+"หาก HP ของเป้าหมายไม่เกิน {percent}% จะกัด[[nape|ท้ายทอย]] สร้าง{damage}เพิ่มอีกหนึ่งครั้งแบบคริติคอลแน่นอน และเกิดกับเป้าหมายเดิมได้ไม่เกินหนึ่งครั้งทุก {seconds} วินาที",
+"nếu HP mục tiêu từ {percent}% trở xuống, cắn vào [[nape|Gáy]] gây thêm một đòn {damage} chắc chắn chí mạng, tối đa một lần mỗi {seconds} giây cho mỗi mục tiêu",
+"jika HP target {percent}% atau kurang, ia menggigit [[nape|Tengkuk]] untuk satu serangan tambahan berupa {damage} yang pasti kritis, paling banyak sekali tiap {seconds} detik per target",
+"si los PV del objetivo son del {percent}% o menos, muerde la [[nape|Nuca]] e inflige {damage} adicional con crítico garantizado, como máximo una vez cada {seconds} s por objetivo",
+"se o PV do alvo estiver em {percent}% ou menos, morde a [[nape|Nuca]] e causa {damage} adicional com crítico garantido, no máximo uma vez a cada {seconds} s por alvo",
+"liegen die LP des Ziels bei {percent} % oder darunter, beißt sie in den [[nape|Nacken]] und verursacht zusätzlich {damage} als garantierten kritischen Treffer, höchstens einmal alle {seconds} s pro Ziel",
+"если ОЗ цели {percent}% или меньше, вцепляется в [[nape|загривок]] и дополнительно наносит {damage} гарантированным критом, не чаще раза в {seconds} с на цель"
 ],
 "skill.clause.commandsPack": [
 "存活的[[summon-kuro|克罗]]与[[summon-shiro|希罗]]会立即对该目标使用必杀技",

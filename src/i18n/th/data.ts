@@ -591,7 +591,7 @@ export default {
   "keyword.missing-hp.term": "HP ที่เสียไป",
   "keyword.missing-hp.description": "HP สูงสุดลบ HP ปัจจุบัน การฟื้นฟูที่อิง HP ที่เสียไปจะคำนวณค่าใหม่ทันทีหลังโดนแต่ละครั้ง",
   "keyword.nape.term": "ท้ายทอย",
-  "keyword.nape.description": "การกัดหลัง[[teleport|วาร์ป]]ไปด้านหลังเป้าหมาย คริติคอลแน่นอน และ[[stealth|การล่องหน]]ไม่หาย",
+  "keyword.nape.description": "การโจมตีปิดฉากศัตรูที่อ่อนแรง ความเสียหายจะเพิ่มขึ้นอย่างมาก",
   "keyword.physical-damage.term": "ความเสียหายกายภาพ",
   "keyword.physical-damage.description": "ความเสียหายที่คำนวณจากพลังโจมตีหรือค่าที่ระบุ และถูกลดด้วยพลังป้องกันของเป้าหมาย",
   "keyword.magical-damage.term": "ความเสียหายเวท",

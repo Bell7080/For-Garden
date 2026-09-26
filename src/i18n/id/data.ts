@@ -591,7 +591,7 @@ export default {
   "keyword.missing-hp.term": "HP yang Hilang",
   "keyword.missing-hp.description": "HP maks dikurangi HP saat ini. Penyembuhan berbasis HP yang hilang dihitung ulang tepat setelah setiap kenaan.",
   "keyword.nape.term": "Tengkuk",
-  "keyword.nape.description": "Gigitan setelah [[teleport|berteleportasi]] ke belakang target. Pasti kritis, dan [[stealth|Siluman]] tidak pecah.",
+  "keyword.nape.description": "Serangan penghabisan untuk musuh yang melemah. Kerusakannya naik drastis.",
   "keyword.physical-damage.term": "Kerusakan Fisik",
   "keyword.physical-damage.description": "Kerusakan yang dihitung dari Serangan atau stat yang disebut dan dikurangi Pertahanan target.",
   "keyword.magical-damage.term": "Kerusakan Magis",

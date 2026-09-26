@@ -591,7 +591,7 @@ export default {
   "keyword.missing-hp.term": "已損失生命",
   "keyword.missing-hp.description": "最大生命減去當前生命。按已損失生命計算的治療會在每次命中後立即重新計算數值。",
   "keyword.nape.term": "後頸",
-  "keyword.nape.description": "[[teleport|瞬移]]至目標身後咬下的一擊。必定暴擊，且不會解除[[stealth|隱身]]。",
+  "keyword.nape.description": "針對虛弱敵人的致命一擊，傷害大幅提高。",
   "keyword.physical-damage.term": "物理傷害",
   "keyword.physical-damage.description": "以攻擊力或指定屬性計算，並被目標防禦力減免的傷害。",
   "keyword.magical-damage.term": "魔法傷害",

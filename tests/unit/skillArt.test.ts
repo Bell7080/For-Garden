@@ -674,26 +674,25 @@ describe("스킬 설명문 양식 계약", () => {
     for (const word of ["전투력", "치명타", "겹", "[[bloodscent|"]) expect(body).not.toContain(word);
   });
 
-  it("디안의 일반 공격은 한 줄의 물리 피해이고 목덜미는 언제 무는가만 말한다", () => {
+  it("디안의 일반 공격은 한 줄의 물리 피해이고 목덜미는 문턱과 추가 피해를 말한다", () => {
     const dian = RELICS.find((def) => def.id === "dian")!;
     // 본문은 아이콘 위 라벨과 같은 합산 수치를 받아 쓴다: 160×40% + 158×60% = 159.
     const basic = skillDescription(dian.basic, { ap: 158, atk: { atk: 160, attackSpeed: 132 }, damage: 159 });
     expect(basic).toBe("적 한 명에게 [[damage-value|159]]의 [[physical-damage|물리 피해]]를 준다. "
-      + "표적의 체력이 25% 이하면 [[nape|목덜미]]를 문다.");
+      + "표적의 체력이 30% 이하면 [[nape|목덜미]]를 노려 피해가 100% 늘어난다.");
 
     const ultimate = skillDescription(dian.ultimate, { ap: 158, atk: { atk: 160, attackSpeed: 132 }, damage: 238 });
-    // 궁극기의 목덜미에는 문턱이 없다. "100% 이하"라고 적으면 없는 조건을 찾게 만든다.
-    expect(ultimate).toContain("표적의 체력과 무관하게 [[nape|목덜미]]를 문다.");
-    expect(ultimate).not.toContain("100% 이하");
+    expect(ultimate).toContain("표적의 체력이 30% 이하면 [[nape|목덜미]]를 노려 피해가 100% 늘어난다.");
     // 늑대가 무엇을 하는지는 늑대의 궁극기가 말한다. 여기서는 부른다는 것만 적는다.
     expect(ultimate).toContain("살아 있는 [[summon-kuro|쿠로]]와 [[summon-shiro|시로]]가 그 표적에게 곧바로 궁극기를 쓴다.");
     expect(ultimate).not.toContain("부활 대기");
 
-    // 목덜미가 무엇인지(등 뒤 순간이동 · 확정 치명타)는 태그가 말한다. 남은 체력 비례 몫은 없다.
+    // 태그는 무엇인지만 말하고 수치를 갖지 않는다 — 문턱과 배율은 스킬마다 다를 수 있다.
     const nape = KEYWORDS.find((keyword) => keyword.id === "nape")!;
-    expect(nape.description).toContain("확정 치명타");
-    expect(nape.description).not.toContain("남은 체력");
+    expect(nape.description).not.toMatch(/\d/);
+    expect(nape.description).not.toContain("순간이동");
   });
+
 
   it("디안의 폭주는 누가 폭주하는지만 말하고, 무엇이 오르는지는 늑대 쪽지에 맡긴다", () => {
     const dian = RELICS.find((def) => def.id === "dian")!;

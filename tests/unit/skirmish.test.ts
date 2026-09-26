@@ -266,27 +266,36 @@ describe("디안 일반 공격·목덜미·궁극기", () => {
     expect(alone.map(({ damageType, amount }) => ({ damageType, amount }))).toEqual([{ damageType: "physical", amount: expected }]);
   });
 
-  it("은 표적이 문턱 아래면 등 뒤로 순간이동해 확정 치명타로 물고 그 자리에 선다", () => {
+  it("은 표적이 문턱 아래면 자리를 옮기지 않고 같은 한 방에 큰 추가 피해를 얹는다", () => {
     const { state, dian } = readyDian(1);
     const foe = state.fighters[1];
+    const normal = computeDamage(dian, defensiveDefinition(foe, state), { ...dian.def.basic, isCritical: false, kind: "basic" });
     foe.hp = foe.maxHp * 0.2;
     const before = { x: dian.x, y: dian.y };
     const events = stepSkirmish(state, 0.01);
-    expect(events.some((event) => event.kind === "packFinisher")).toBe(true);
-    // 피해 공식은 평소 그대로이고 치명타만 확정이다.
-    expect(hitsBy(events, dian.id).map(({ damageType, critical }) => ({ damageType, critical }))).toEqual([{ damageType: "physical", critical: true }]);
-    expect({ x: dian.x, y: dian.y }).not.toEqual(before);
-    expect(dian.stealthFor).toBe(Number.POSITIVE_INFINITY);
+    // 표적 자리에서 연출이 터진다. 두목은 가장 뒤에 선 그대로다.
+    const cue = events.find((event) => event.kind === "packFinisher");
+    expect(cue?.kind === "packFinisher" ? cue.targetId : undefined).toBe(foe.id);
+    expect({ x: dian.x, y: dian.y }).toEqual(before);
+    // 한 행동에 한 타격이다 — 추가 타격을 따로 세우면 보스 점수와 재사용 대기 검증이 두 번으로 센다.
+    const hits = hitsBy(events, dian.id);
+    expect(hits).toHaveLength(1);
+    expect(hits[0].amount).toBe(Math.round(normal * (1 + dian.def.basic.finisher!.bonusDamagePercent / 100)));
+    expect(hits[0].critical).toBe(false);
   });
 
-  it("은 문턱 위에서는 자리를 옮기지 않고 치명타도 확정하지 않는다", () => {
+
+  it("은 문턱 위에서는 추가 피해가 붙지 않는다", () => {
     const { state, dian } = readyDian(1);
+    const foe = state.fighters[1];
+    const normal = computeDamage(dian, defensiveDefinition(foe, state), { ...dian.def.basic, isCritical: false, kind: "basic" });
     const events = stepSkirmish(state, 0.01);
     expect(events.some((event) => event.kind === "packFinisher")).toBe(false);
-    expect(hitsBy(events, dian.id)[0].critical).toBe(false);
+    expect(hitsBy(events, dian.id)[0].amount).toBe(normal);
   });
 
-  it("은 궁극기에서 체력과 무관하게 목덜미를 물고, 살아 있는 늑대가 곧바로 제 궁극기를 쓴다", () => {
+
+  it("은 궁극기에서 살아 있는 늑대가 곧바로 제 궁극기를 쓴다", () => {
     const { state, dian } = readyDian(1);
     const [kuro, shiro] = state.fighters.filter((f) => f.summonOwnerId === dian.id);
     kuro.hp = 0;
@@ -295,8 +304,9 @@ describe("디안 일반 공격·목덜미·궁극기", () => {
     shiro.energy = 30;
     dian.energy = dian.def.ultimate.cost;
     const events = fireUltimate(state, dian.id);
-    expect(events.some((event) => event.kind === "packFinisher")).toBe(true);
-    expect(hitsBy(events, dian.id)[0].critical).toBe(true);
+    // 표적 체력이 가득해 목덜미는 열리지 않는다.
+    expect(events.some((event) => event.kind === "packFinisher")).toBe(false);
+    expect(hitsBy(events, dian.id)).toHaveLength(1);
     // 쓰러진 몸은 되살리지도 앞당기지도 않는다.
     expect(isFighterAlive(kuro)).toBe(false);
     expect(kuro.resummonIn).toBe(20);

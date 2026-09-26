@@ -591,7 +591,7 @@ export default {
   "keyword.missing-hp.term": "Máu đã mất",
   "keyword.missing-hp.description": "HP tối đa trừ HP hiện tại. Hồi máu theo máu đã mất sẽ tính lại ngay sau mỗi đòn trúng.",
   "keyword.nape.term": "Gáy",
-  "keyword.nape.description": "Cú cắn sau khi [[teleport|dịch chuyển]] ra sau mục tiêu. Chắc chắn chí mạng, và [[stealth|Tàng hình]] không vỡ.",
+  "keyword.nape.description": "Đòn kết liễu nhắm vào kẻ địch đã suy yếu. Sát thương tăng mạnh.",
   "keyword.physical-damage.term": "Sát thương vật lý",
   "keyword.physical-damage.description": "Sát thương tính từ Công hoặc chỉ số nêu rõ, bị Thủ của mục tiêu giảm bớt.",
   "keyword.magical-damage.term": "Sát thương phép",

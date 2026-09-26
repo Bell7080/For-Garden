@@ -597,7 +597,7 @@ export default {
   "keyword.missing-hp.term": "Missing HP",
   "keyword.missing-hp.description": "Max HP minus current HP. Healing that scales with missing HP recalculates the value right after each hit.",
   "keyword.nape.term": "Nape",
-  "keyword.nape.description": "A bite delivered after [[teleport|teleporting]] behind the target. It is a guaranteed critical, and [[stealth|Stealth]] does not break.",
+  "keyword.nape.description": "A finishing strike aimed at a weakened enemy. Its damage rises sharply.",
   "keyword.physical-damage.term": "Physical Damage",
   "keyword.physical-damage.description": "Damage calculated from Attack or the stated stat and reduced by the target's Defense.",
   "keyword.magical-damage.term": "Magical Damage",

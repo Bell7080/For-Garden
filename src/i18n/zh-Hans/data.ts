@@ -591,7 +591,7 @@ export default {
   "keyword.missing-hp.term": "已损失生命",
   "keyword.missing-hp.description": "最大生命减去当前生命。按已损失生命计算的治疗会在每次命中后立即重新计算数值。",
   "keyword.nape.term": "后颈",
-  "keyword.nape.description": "[[teleport|瞬移]]至目标身后咬下的一击。必定暴击，且不会解除[[stealth|隐身]]。",
+  "keyword.nape.description": "针对虚弱敌人的致命一击，伤害大幅提高。",
   "keyword.physical-damage.term": "物理伤害",
   "keyword.physical-damage.description": "以攻击力或指定属性计算，并被目标防御力减免的伤害。",
   "keyword.magical-damage.term": "魔法伤害",

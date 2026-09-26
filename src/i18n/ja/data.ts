@@ -775,7 +775,7 @@ export default {
   "keyword.missing-hp.term": "失った体力",
   "keyword.missing-hp.description": "最大体力から現在の体力を引いた値だ。失った体力に比例する回復は、各命中直後の値を計算し直す。",
   "keyword.nape.term": "首筋",
-  "keyword.nape.description": "標的の背後へ[[teleport|瞬間移動]]して噛みつく一撃。確定クリティカルになり、[[stealth|隠密]]は解けない。",
+  "keyword.nape.description": "弱った敵を仕留める一撃。ダメージが大きく増える。",
   "keyword.physical-damage.term": "物理ダメージ",
   "keyword.physical-damage.description": "攻撃力または明示された能力値で計算し、対象の防御力で減少するダメージだ。",
   "keyword.magical-damage.term": "魔法ダメージ",

@@ -4593,14 +4593,14 @@ function strike(
   }
   const forcedCritical = periodicCritical !== undefined && attacker.basicAttackCount >= periodicCritical.every;
   if (forcedCritical) attacker.basicAttackCount = 0;
-  // 목덜미 — 표적이 문턱 아래면 등 뒤로 파고들어 확정 치명타로 문다. 피해 공식은 평소와 같다.
-  const nape = biteNape(attacker, target, skill, state, events);
+  // 목덜미 — 표적이 문턱 아래면 이번 한 방에 큰 추가 피해가 붙는다. 판정은 **맞기 전의** 체력이다.
+  const nape = napeBonus(attacker, target, skill, events);
   // 궁극기가 걸어 둔 강화는 실제로 나가는 일반 공격 한 번을 쓰고 사라진다. 이 타격이 곧 그
   // 한 번이므로 여기서 소비한다 — 궁극기 쪽에서 미리 지우면 강화가 붙을 타격이 없어진다.
   const empowered = !useUltimate && attacker.empoweredBasic;
   if (empowered) attacker.empoweredBasic = false;
   // 확정 치명타는 RNG를 호출조차 하지 않아 이후 리플레이 난수열이 밀리지 않는다.
-  const critical = forcedCritical || empowered || bleedingBite || nape || isCriticalHit(Math.min(100, criticalChance), rng());
+  const critical = forcedCritical || empowered || bleedingBite || isCriticalHit(Math.min(100, criticalChance), rng());
   // 공속 복합 계수는 현재 기본 공속과 전투의 환희 누적을 읽되 폭주 임시 배율은 포함하지 않는다.
   const attackSpeedPower = useUltimate ? attacker.def.ultimate.attackSpeedPower ?? 0 : 0;
   const basePower = attackSpeedPower > 0
@@ -4643,10 +4643,10 @@ function strike(
   const periodicBonus = periodicBonusInput ? computeDamage(damageAttacker, damageTarget, periodicBonusInput) : 0;
   // 원정 공격력은 전투 스냅샷에 이미 반영됐으므로 공용 피해 공식에서 다시 곱하지 않는다.
   const rawAmount = Math.max(1, Math.round((computeDamage(damageAttacker, damageTarget, damageInput) + defenseBonus + periodicBonus)
-    * traitDamageMultiplier(state, attacker, target)));
-  const contributionAmount = Math.max(0, computeDamageContribution(damageAttacker, damageInput)
+    * traitDamageMultiplier(state, attacker, target) * nape));
+  const contributionAmount = Math.max(0, (computeDamageContribution(damageAttacker, damageInput)
     + (defenseBonus > 0 ? computeDamageContribution(attacker, { ...damageInput, power: splashTrait.effectId === "splashDamage" ? splashTrait.defenseDamagePercent ?? 0 : 0, scalingStat: "def", damageType: "physical" }) : 0)
-    + (periodicBonusInput ? computeDamageContribution(damageAttacker, periodicBonusInput) : 0));
+    + (periodicBonusInput ? computeDamageContribution(damageAttacker, periodicBonusInput) : 0)) * nape);
   // 방어·패시브·상성 뒤의 모든 개별 경감은 공용 HP 피해 경계에서 한 번만 적용한다.
   const resolution = resolveReceivedDamage(target, rawAmount);
   const amount = resolution.applied;
@@ -5534,28 +5534,18 @@ function reviveWolf(state: SkirmishState, owner: Fighter, wolf: Fighter, events:
 }
 
 /**
- * 목덜미. 표적의 체력이 문턱(`finisher.thresholdPercent`) 이하면 **등 뒤로 순간이동**하고, 이번
- * 한 방을 확정 치명타로 만든다. 문턱이 100이면(궁극기) 체력과 무관하게 늘 연다.
+ * 목덜미. 표적의 체력이 문턱(`finisher.thresholdPercent`) 이하면 이번 한 방에 **큰 추가 피해**가
+ * 붙는다(`bonusDamagePercent`) — 약해진 적을 끝내는 암살자의 한 방이다. 돌려주는 값은 피해 배율이다.
  *
- * 피해 공식은 건드리지 않는다 — 남은 체력 비례 고정 피해를 따로 두던 때는 같은 기술이 보스에서만
- * 몇 배로 부풀었고, 설명도 수치 셋을 따로 말해야 했다. 여는 것은 자리와 치명타뿐이다.
- *
- * **문 자리에 그대로 선다** — 물고 제자리로 돌아오면 앞뒤를 오가는 순간이동만 반복해 보인다.
- * 은신은 풀리지 않는다.
+ * **추가 타격을 따로 세우지 않고 한 방에 얹는다.** 따로 세우면 보스 점수와 서버의 재사용 대기
+ * 검증이 같은 행동을 두 번으로 센다. 숫자 하나가 커지는 대신 표적 자리에서 연출이 터져 "노렸다"를
+ * 말한다. 자리는 옮기지 않는다 — 두목은 가장 뒤에 남는다.
  */
-function biteNape(attacker: Fighter, target: Fighter, skill: Skill, state: SkirmishState, events: SkirmishEvent[]): boolean {
+function napeBonus(attacker: Fighter, target: Fighter, skill: Skill, events: SkirmishEvent[]): number {
   const finisher = "finisher" in skill ? skill.finisher : undefined;
-  if (finisher === undefined || !isFighterAlive(target) || target.hp / target.maxHp * 100 > finisher.thresholdPercent) return false;
-  // 표적의 등 뒤. 아군 진영 반대쪽이라 무리가 앞을 막는 동안 두목이 뒤를 문다.
-  const behind = target.side === "player" ? 1 : -1;
-  attacker.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x));
-  attacker.y = Math.min(state.arena.bottom, Math.max(state.arena.top, target.y + behind * 64));
-  attacker.facing = target.y >= attacker.y ? 1 : -1;
-  attacker.engaged = true;
-  attacker.bestGap = 0;
-  attacker.blockedFor = 0;
-  events.push({ kind: "packFinisher", fighterId: attacker.id, targetId: target.id, x: attacker.x, y: attacker.y });
-  return true;
+  if (finisher === undefined || !isFighterAlive(target) || target.hp / target.maxHp * 100 > finisher.thresholdPercent) return 1;
+  events.push({ kind: "packFinisher", fighterId: attacker.id, targetId: target.id, x: target.x, y: target.y });
+  return 1 + finisher.bonusDamagePercent / 100;
 }
 
 /**

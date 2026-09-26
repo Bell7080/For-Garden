@@ -591,7 +591,7 @@ export default {
   "keyword.missing-hp.term": "Потерянное здоровье",
   "keyword.missing-hp.description": "Макс. ОЗ минус текущие. Лечение от потерянного здоровья пересчитывается сразу после каждого удара.",
   "keyword.nape.term": "Загривок",
-  "keyword.nape.description": "Укус после [[teleport|телепортации]] за спину цели. Гарантированно критический, [[stealth|невидимость]] не спадает.",
+  "keyword.nape.description": "Добивающий удар по ослабленному врагу. Его урон сильно растёт.",
   "keyword.physical-damage.term": "Физический урон",
   "keyword.physical-damage.description": "Урон от атаки или указанного параметра, снижаемый защитой цели.",
   "keyword.magical-damage.term": "Магический урон",

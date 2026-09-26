@@ -868,14 +868,12 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
     clauses.push({ text: t("skill.clause.periodicCritical", { every: skill.periodicCritical.every }), standalone: true });
   }
   /*
-   * 목덜미는 **언제 무는가**만 말한다. 무엇인지(등 뒤로 순간이동 · 확정 치명타)는 쓰는 개체가
-   * 하나뿐인 규칙어라 태그가 갖는다. 문턱이 100이면 조건이 없으므로 "100% 이하"라고 적지 않는다.
+   * 목덜미는 **언제·얼마나**를 본문이 말한다. 문턱과 배율은 스킬마다 다를 수 있는 수라 태그가 못
+   * 박으면 거짓말이 되고, 태그는 그것이 무엇인지(체력 낮은 적을 끝내는 한 방)만 말한다.
    */
   if ("finisher" in skill && skill.finisher !== undefined) {
     clauses.push({
-      text: skill.finisher.thresholdPercent >= 100
-        ? t("skill.clause.napeAlways")
-        : t("skill.clause.nape", { percent: skill.finisher.thresholdPercent }),
+      text: t("skill.clause.nape", { percent: skill.finisher.thresholdPercent, bonus: skill.finisher.bonusDamagePercent }),
       standalone: true,
     });
   }

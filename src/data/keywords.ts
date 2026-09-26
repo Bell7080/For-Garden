@@ -269,7 +269,7 @@ export const KEYWORDS: readonly KeywordDef[] = [
     id: "nape",
     term: "목덜미",
     kind: "rule",
-    description: "표적의 등 뒤로 [[teleport|순간이동]]해 무는 한 방이다. 확정 치명타가 되며 [[stealth|은신]]은 풀리지 않는다.",
+    description: "약해진 적을 끝내는 마무리 한 방이다. 피해가 크게 늘어난다.",
   },
   {
     id: "physical-damage", term: "물리 피해", kind: "rule",

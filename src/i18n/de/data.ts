@@ -591,7 +591,7 @@ export default {
   "keyword.missing-hp.term": "Fehlendes Leben",
   "keyword.missing-hp.description": "Max. Leben minus aktuelles Leben. Heilung, die vom fehlenden Leben abhängt, wird nach jedem Treffer neu berechnet.",
   "keyword.nape.term": "Nacken",
-  "keyword.nape.description": "Ein Biss nach einer [[teleport|Teleportation]] hinter das Ziel. Er ist garantiert kritisch, und die [[stealth|Tarnung]] bricht nicht.",
+  "keyword.nape.description": "Ein Todesstoß gegen einen geschwächten Gegner. Sein Schaden steigt stark.",
   "keyword.physical-damage.term": "Physischer Schaden",
   "keyword.physical-damage.description": "Schaden auf Basis von Angriff oder dem genannten Wert, gemindert durch die Verteidigung des Ziels.",
   "keyword.magical-damage.term": "Magischer Schaden",

@@ -591,7 +591,7 @@ export default {
   "keyword.missing-hp.term": "PV perdido",
   "keyword.missing-hp.description": "PV máx. menos PV atual. A cura baseada em PV perdido é recalculada logo após cada golpe.",
   "keyword.nape.term": "Nuca",
-  "keyword.nape.description": "Uma mordida após se [[teleport|teleportar]] para trás do alvo. É crítico garantido, e a [[stealth|Furtividade]] não se desfaz.",
+  "keyword.nape.description": "Um golpe de misericórdia contra um inimigo enfraquecido. Seu dano aumenta muito.",
   "keyword.physical-damage.term": "Dano físico",
   "keyword.physical-damage.description": "Dano calculado a partir do Ataque ou do atributo indicado e reduzido pela Defesa do alvo.",
   "keyword.magical-damage.term": "Dano mágico",

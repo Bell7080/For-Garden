@@ -591,7 +591,7 @@ export default {
   "keyword.missing-hp.term": "PV perdidos",
   "keyword.missing-hp.description": "PV máx. menos PV actuales. La curación basada en PV perdidos se recalcula justo después de cada golpe.",
   "keyword.nape.term": "Nuca",
-  "keyword.nape.description": "Un mordisco tras [[teleport|teletransportarse]] detrás del objetivo. Es crítico garantizado y el [[stealth|Sigilo]] no se rompe.",
+  "keyword.nape.description": "Un golpe de gracia contra un enemigo debilitado. Su daño aumenta mucho.",
   "keyword.physical-damage.term": "Daño físico",
   "keyword.physical-damage.description": "Daño calculado a partir del Ataque o del atributo indicado y reducido por la Defensa del objetivo.",
   "keyword.magical-damage.term": "Daño mágico",

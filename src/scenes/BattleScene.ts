@@ -1072,7 +1072,7 @@ export class BattleScene extends Phaser.Scene {
       const skipPresentation = settingsManager.get().game.skipUltimatePresentation;
       // 컷인·확대·공격·복귀가 이 한 계산값을 공유한다. 전투 배속과 스킵을 단계마다 다시
       // 해석하면 서로 다른 시간축이 생기므로 pump 진입 시 한 번만 고정한다.
-      const timing = ultimatePresentationTiming(this.battleSpeed, skipPresentation);
+      const timing = ultimatePresentationTiming(skipPresentation);
       if (!skipPresentation) {
         // 전투 카드 잠금과 별개로 기여도 판은 컷인이 실제로 덮는 동안에만 입력을 멈춘다.
         this.contributionPanel?.setInputLocked(true);

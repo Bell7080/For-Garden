@@ -3,13 +3,10 @@ import { gameApi } from "../api/FakeServer";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { bountyRoundEnemy, bountyRoundLevel, BOUNTY_TIERS, getBountyTier } from "../data/bounty";
 import { bountyRunCost, bountyTierProgress } from "../core/bountyRun";
-import { maxSweepCount, sweepRefusal, SWEEP_TICKET_ITEM } from "../core/dungeonShortcut";
 import type { PlayerStateDto } from "../api/contracts";
-import { findItem } from "../data/items";
 import { settingsManager } from "../managers/SettingsManager";
-import { openItemGuide } from "../ui/currencyGuideEntry";
 import { distinctElements } from "../core/element";
-import { heldSweepTickets, sweepTicketState, watchSweepTicketAd } from "./dungeonSweepTickets";
+import { openDungeonSweep } from "./dungeonSweepFlow";
 import { combatPower } from "../core/combatPower";
 import { getRelic } from "../data/relics";
 import { setDebugScene } from "../debug";
@@ -22,7 +19,6 @@ import { DungeonLobby } from "../ui/DungeonLobby";
 import { addBackButton } from "../ui/IconButton";
 import { drawVignette } from "../ui/holo";
 import { PopupLayer } from "../ui/PopupLayer";
-import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { TopBar } from "../ui/TopBar";
 import { startScene } from "../ui/screenTransition";
@@ -48,7 +44,6 @@ export interface BountySceneData {
  */
 export class BountyScene extends Phaser.Scene {
   private selectedTierId = "";
-  private sweepCount = 1;
   private clearedTierIds: readonly string[] = [];
   private adFreeMembership = false;
   private dailyAdRewards?: PlayerStateDto["dailyAdRewards"];
@@ -73,7 +68,6 @@ export class BountyScene extends Phaser.Scene {
     prefetchBattlePuppets(relicCollection.validParty, BOUNTY_TIERS.flatMap((tier) => tier.rounds.map((round) => round.relicId)));
     setDebugScene("bounty");
     this.busy = false;
-    this.sweepCount = 1;
     this.clearedTierIds = session.bounty.clearedTierIds;
     // 돌아온 등급 → 마지막으로 고른 등급 → 열린 가장 높은 등급 순이다(`refresh`가 잠긴 값을 고친다).
     const remembered = this.entry.tierId ?? settingsManager.get().game.dungeonTiers.bounty;
@@ -85,11 +79,8 @@ export class BountyScene extends Phaser.Scene {
     this.popups = new PopupLayer(this, 2200);
     this.lobby = new DungeonLobby(this, {
       onSelectTier: (id) => { if (!this.busy) { this.selectedTierId = id; settingsManager.rememberDungeonTier("bounty", id); this.refresh(); } },
-      onSweepCount: (count) => { if (!this.busy) { this.sweepCount = count; this.refresh(); } },
       onSortie: () => this.openParty(),
-      onSweep: () => void this.sweep(),
-      onWatchAd: () => void this.watchAd(),
-      onTicketInfo: () => { const item = findItem(SWEEP_TICKET_ITEM); if (item) openItemGuide({ scene: this, popups: this.popups }, item); },
+      onSweep: () => this.sweep(),
     });
     addBackButton(this, () => this.scene.start("lobby", LOBBY_RETURN.sortie));
     this.refresh();
@@ -121,14 +112,6 @@ export class BountyScene extends Phaser.Scene {
     const tier = getBountyTier(this.selectedTierId);
     const selected = rows.find((row) => row.tier.id === tier.id);
     const cost = bountyRunCost(tier);
-    const tickets = sweepTicketState(this.adFreeMembership, this.dailyAdRewards);
-    const maxSweep = maxSweepCount({ stamina: session.wallet.stamina, tickets: heldSweepTickets(), adFreeMembership: this.adFreeMembership, cost });
-    this.sweepCount = Math.min(Math.max(1, this.sweepCount), Math.max(1, maxSweep));
-    const refusal = sweepRefusal({
-      cleared: selected?.cleared === true, count: this.sweepCount, adFreeMembership: this.adFreeMembership,
-      tickets: heldSweepTickets(), stamina: session.wallet.stamina, cost,
-    });
-    const sweepStamina = cost.staminaCost * this.sweepCount;
     this.lobby?.render({
       tiers: rows.map((row) => ({
         id: row.tier.id, name: row.tier.name,
@@ -144,12 +127,7 @@ export class BountyScene extends Phaser.Scene {
       sortieCost: cost.staminaCost,
       sortieAffordable: session.wallet.stamina >= cost.staminaCost,
       sortieEnabled: !this.busy && selected?.unlocked === true && session.wallet.stamina >= cost.staminaCost,
-      sweepCount: this.sweepCount,
-      maxSweep,
-      sweepCost: sweepStamina,
-      sweepAffordable: session.wallet.stamina >= sweepStamina,
-      sweepEnabled: !this.busy && refusal === null,
-      tickets,
+      sweepEnabled: !this.busy && selected?.cleared === true,
     });
   }
 
@@ -159,39 +137,22 @@ export class BountyScene extends Phaser.Scene {
     startScene(this, "party", { content: "bounty", tierId: this.selectedTierId } satisfies PartySceneData);
   }
 
-  /** 소탕. 차감과 지급이 서버에서 한 처리로 끝나고 화면은 영수증만 연다. */
-  private async sweep(): Promise<void> {
+  /** 소탕 — 배율을 고르는 창을 열고, 누르면 연출과 서버 요청이 나란히 돈 뒤 영수증이 열린다. */
+  private sweep(): void {
     if (this.busy) return;
-    this.busy = true;
-    this.refresh();
-    const tierId = this.selectedTierId;
-    const requestId = `bounty-sweep:${tierId}:${this.sweepCount}:${Date.now()}`;
-    try {
-      const result = await gameApi.sweepBounty({ tierId, count: this.sweepCount, requestId });
-      if (!this.scene.isActive()) return;
-      openRewardPopup(this, this.popups, { title: t("dungeon.sweep.title"), items: currencyRecordToRewardItems(result.granted) });
-    } catch {
-      // 지급이 서지 않았으므로 알릴 것이 없다 — 서버가 확정한 해금만 다시 읽는다.
-      this.reloadStatus();
-    } finally {
-      this.busy = false;
-      if (this.scene.isActive()) this.refresh();
-    }
+    const tier = getBountyTier(this.selectedTierId);
+    openDungeonSweep({
+      scene: this, popups: this.popups,
+      tierName: tier.name, level: bountyRoundLevel(tier.rounds[0]), cost: bountyRunCost(tier),
+      cleared: this.clearedTierIds.includes(tier.id),
+      enemyId: tier.rounds[tier.rounds.length - 1].relicId,
+      membership: () => this.adFreeMembership,
+      dailyAdRewards: () => this.dailyAdRewards,
+      setDailyAdRewards: (daily) => { this.dailyAdRewards = daily; },
+      request: (count) => gameApi.sweepBounty({ tierId: tier.id, count, requestId: `bounty-sweep:${tier.id}:${count}:${Date.now()}` }),
+      setBusy: (busy) => { this.busy = busy; if (this.scene.isActive()) this.refresh(); },
+      onFailed: () => this.reloadStatus(),
+    });
   }
 
-  /** 광고를 보고 소탕권을 채운다. 취소되면 아무 일도 없다. */
-  private async watchAd(): Promise<void> {
-    if (this.busy) return;
-    this.busy = true;
-    this.refresh();
-    try {
-      const daily = await watchSweepTicketAd();
-      if (daily) this.dailyAdRewards = daily;
-    } catch {
-      // 지급이 서지 않았다 — 가방과 횟수는 그대로다.
-    } finally {
-      this.busy = false;
-      if (this.scene.isActive()) this.refresh();
-    }
-  }
 }

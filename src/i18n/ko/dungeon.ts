@@ -10,6 +10,14 @@ export const DUNGEON_KO = {
   "dungeon.sortie": "출격",
   "dungeon.sweep": "소탕",
   "dungeon.sweep.title": "소탕 완료",
+  "dungeon.sweep.tier": "{name} · LV.{level}",
+  "dungeon.sweep.needHave": "{need} / {have}",
+  "dungeon.sweep.stamina": "스테미나",
+  "dungeon.sweep.membership": "소탕권 없이 소탕 가능.",
+  "dungeon.sweep.ticketShort": "소탕권이 부족합니다. 광고를 보고 소탕권을 받아 보세요.",
+  "dungeon.sweep.staminaShort": "스테미나가 부족합니다.",
+  "dungeon.sweep.notCleared": "이긴 단계만 소탕할 수 있습니다.",
+  "dungeon.sweep.expected": "예상 보상",
   // 물량형 던전의 편성 미리보기는 대표 얼굴만 세우므로 한꺼번에 몰려오는 수를 따로 적는다.
   "party.hordeCount": "적 {count}기",
 } as const;

@@ -5,7 +5,7 @@ import { completedAdToken, findAdRewardSlot } from "../data/adRewards";
 import { InventoryManager } from "../managers/InventoryManager";
 import { presentRewardedAd } from "../platform/rewardedAds";
 import { session } from "../state/session";
-import type { DungeonLobbyTickets } from "../ui/DungeonLobby";
+import type { SweepTickets } from "../ui/SweepPopup";
 
 /** 소탕권을 채우는 광고 슬롯. 한 번에 몇 장·하루 몇 번인지는 슬롯 표(`AD_REWARD_SLOTS`)가 갖는다. */
 export const SWEEP_TICKET_AD_SLOT = "sweep-tickets";
@@ -23,7 +23,7 @@ export function heldSweepTickets(): number {
  * 광고 사용 횟수는 서버가 날짜를 정규화해 돌려준 값(`dailyAdRewards`)만 읽는다 — 기기 시계로
  * 날짜를 가르면 시계를 돌려 횟수를 되살리는 길이 생긴다. 아직 모르면 한 번도 안 본 것으로 둔다.
  */
-export function sweepTicketState(adFreeMembership: boolean, dailyAdRewards?: PlayerStateDto["dailyAdRewards"]): DungeonLobbyTickets | undefined {
+export function sweepTicketState(adFreeMembership: boolean, dailyAdRewards?: PlayerStateDto["dailyAdRewards"]): SweepTickets | undefined {
   if (adFreeMembership) return undefined;
   const slot = findAdRewardSlot(SWEEP_TICKET_AD_SLOT);
   const limit = slot?.dailyLimitUtc ?? 0;

@@ -59,6 +59,86 @@
 "Säuberung abgeschlossen",
 "Зачистка завершена"
 ],
+"dungeon.sweep.tier": [
+"{name} · LV.{level}",
+"{name} · LV.{level}",
+"{name} · LV.{level}",
+"{name} · LV.{level}",
+"{name} · LV.{level}",
+"{name} · LV.{level}",
+"{name} · LV.{level}",
+"{name} · LV.{level}"
+],
+"dungeon.sweep.needHave": [
+"{need} / {have}",
+"{need} / {have}",
+"{need} / {have}",
+"{need} / {have}",
+"{need} / {have}",
+"{need} / {have}",
+"{need} / {have}",
+"{need} / {have}"
+],
+"dungeon.sweep.stamina": [
+"体力",
+"สตามินา",
+"Thể lực",
+"Stamina",
+"Estamina",
+"Estamina",
+"Ausdauer",
+"Выносливость"
+],
+"dungeon.sweep.membership": [
+"无需扫荡券即可扫荡。",
+"กวาดล้างได้โดยไม่ต้องใช้ตั๋วกวาดล้าง",
+"Có thể Càn quét không cần vé Càn quét.",
+"Sapu tanpa Tiket Sapu.",
+"Barrido sin boletos de barrido.",
+"Varredura sem bilhetes de varredura.",
+"Säuberung ohne Säuberungsticket möglich.",
+"Зачистка без билетов зачистки."
+],
+"dungeon.sweep.ticketShort": [
+"扫荡券不足。观看广告即可获得扫荡券。",
+"ตั๋วกวาดล้างไม่พอ ดูโฆษณาเพื่อรับตั๋วกวาดล้าง",
+"Không đủ vé Càn quét. Hãy xem quảng cáo để nhận thêm.",
+"Tiket Sapu kurang. Tonton iklan untuk mendapatkannya.",
+"No hay suficientes boletos de barrido. Mira un anuncio para conseguir más.",
+"Bilhetes de varredura insuficientes. Assista a um anúncio para obter mais.",
+"Nicht genug Säuberungstickets. Sieh dir Werbung an, um mehr zu erhalten.",
+"Не хватает билетов зачистки. Посмотрите рекламу, чтобы получить ещё."
+],
+"dungeon.sweep.staminaShort": [
+"体力不足。",
+"สตามินาไม่พอ",
+"Không đủ Thể lực.",
+"Stamina tidak cukup.",
+"No hay suficiente estamina.",
+"Estamina insuficiente.",
+"Nicht genug Ausdauer.",
+"Недостаточно выносливости."
+],
+"dungeon.sweep.notCleared": [
+"只能扫荡已通关的阶段。",
+"กวาดล้างได้เฉพาะด่านที่ผ่านแล้ว",
+"Chỉ có thể Càn quét màn đã vượt qua.",
+"Hanya tahap yang sudah dimenangkan yang bisa disapu.",
+"Solo puedes hacer barrido de etapas superadas.",
+"Só é possível fazer varredura de etapas vencidas.",
+"Nur gewonnene Stufen können gesäubert werden.",
+"Зачистка доступна только для пройденных этапов."
+],
+"dungeon.sweep.expected": [
+"预计奖励",
+"รางวัลที่คาดว่าจะได้",
+"Phần thưởng dự kiến",
+"Perkiraan Hadiah",
+"Recompensas estimadas",
+"Recompensas previstas",
+"Erwartete Belohnungen",
+"Ожидаемые награды"
+],
 "party.hordeCount": [
 "{count}名敌人",
 "ศัตรู {count} ตัว",

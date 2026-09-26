@@ -10,5 +10,13 @@ export const DUNGEON_VI = {
   "dungeon.sortie": "Xuất kích",
   "dungeon.sweep": "Càn quét",
   "dungeon.sweep.title": "Càn quét hoàn tất",
+  "dungeon.sweep.tier": "{name} · LV.{level}",
+  "dungeon.sweep.needHave": "{need} / {have}",
+  "dungeon.sweep.stamina": "Thể lực",
+  "dungeon.sweep.membership": "Có thể Càn quét không cần vé Càn quét.",
+  "dungeon.sweep.ticketShort": "Không đủ vé Càn quét. Hãy xem quảng cáo để nhận thêm.",
+  "dungeon.sweep.staminaShort": "Không đủ Thể lực.",
+  "dungeon.sweep.notCleared": "Chỉ có thể Càn quét màn đã vượt qua.",
+  "dungeon.sweep.expected": "Phần thưởng dự kiến",
   "party.hordeCount": "{count} kẻ địch",
 } as const;

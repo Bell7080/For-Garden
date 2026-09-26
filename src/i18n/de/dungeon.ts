@@ -10,5 +10,13 @@ export const DUNGEON_DE = {
   "dungeon.sortie": "Aufbruch",
   "dungeon.sweep": "Säubern",
   "dungeon.sweep.title": "Säuberung abgeschlossen",
+  "dungeon.sweep.tier": "{name} · LV.{level}",
+  "dungeon.sweep.needHave": "{need} / {have}",
+  "dungeon.sweep.stamina": "Ausdauer",
+  "dungeon.sweep.membership": "Säuberung ohne Säuberungsticket möglich.",
+  "dungeon.sweep.ticketShort": "Nicht genug Säuberungstickets. Sieh dir Werbung an, um mehr zu erhalten.",
+  "dungeon.sweep.staminaShort": "Nicht genug Ausdauer.",
+  "dungeon.sweep.notCleared": "Nur gewonnene Stufen können gesäubert werden.",
+  "dungeon.sweep.expected": "Erwartete Belohnungen",
   "party.hordeCount": "{count} Gegner",
 } as const;

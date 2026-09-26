@@ -10,5 +10,13 @@ export const DUNGEON_ES = {
   "dungeon.sortie": "Salir",
   "dungeon.sweep": "Barrido",
   "dungeon.sweep.title": "Barrido completado",
+  "dungeon.sweep.tier": "{name} · LV.{level}",
+  "dungeon.sweep.needHave": "{need} / {have}",
+  "dungeon.sweep.stamina": "Estamina",
+  "dungeon.sweep.membership": "Barrido sin boletos de barrido.",
+  "dungeon.sweep.ticketShort": "No hay suficientes boletos de barrido. Mira un anuncio para conseguir más.",
+  "dungeon.sweep.staminaShort": "No hay suficiente estamina.",
+  "dungeon.sweep.notCleared": "Solo puedes hacer barrido de etapas superadas.",
+  "dungeon.sweep.expected": "Recompensas estimadas",
   "party.hordeCount": "{count} enemigos",
 } as const;

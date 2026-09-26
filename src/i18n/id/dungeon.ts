@@ -10,5 +10,13 @@ export const DUNGEON_ID = {
   "dungeon.sortie": "Berangkat",
   "dungeon.sweep": "Sapu",
   "dungeon.sweep.title": "Sapu Selesai",
+  "dungeon.sweep.tier": "{name} · LV.{level}",
+  "dungeon.sweep.needHave": "{need} / {have}",
+  "dungeon.sweep.stamina": "Stamina",
+  "dungeon.sweep.membership": "Sapu tanpa Tiket Sapu.",
+  "dungeon.sweep.ticketShort": "Tiket Sapu kurang. Tonton iklan untuk mendapatkannya.",
+  "dungeon.sweep.staminaShort": "Stamina tidak cukup.",
+  "dungeon.sweep.notCleared": "Hanya tahap yang sudah dimenangkan yang bisa disapu.",
+  "dungeon.sweep.expected": "Perkiraan Hadiah",
   "party.hordeCount": "{count} musuh",
 } as const;

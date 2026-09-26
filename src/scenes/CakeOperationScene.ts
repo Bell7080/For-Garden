@@ -6,12 +6,9 @@ import { gameApi } from "../api/FakeServer";
 import { session } from "../state/session";
 import { CAKE_OPERATION_TIERS, cakeOperationEnemies, cakeOperationEnemyDisplayLevel, cakeOperationRunCost, cakeOperationTierIndex, isCakeTierUnlocked, type CakeOperationTier } from "../data/cakeOperation";
 import type { PlayerStateDto } from "../api/contracts";
-import { findItem } from "../data/items";
 import { settingsManager } from "../managers/SettingsManager";
-import { openItemGuide } from "../ui/currencyGuideEntry";
 import { distinctElements } from "../core/element";
-import { heldSweepTickets, sweepTicketState, watchSweepTicketAd } from "./dungeonSweepTickets";
-import { maxSweepCount, sweepRefusal, SWEEP_TICKET_ITEM } from "../core/dungeonShortcut";
+import { openDungeonSweep } from "./dungeonSweepFlow";
 import { combatPower } from "../core/combatPower";
 import { DUNGEON_LOBBY } from "../ui/dungeonLobbyLayout";
 import { DungeonLobby } from "../ui/DungeonLobby";
@@ -19,7 +16,6 @@ import { addBackButton } from "../ui/IconButton";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { PopupLayer } from "../ui/PopupLayer";
-import { openRewardPopup, currencyRecordToRewardItems } from "../ui/RewardPopup";
 import { TopBar } from "../ui/TopBar";
 import { drawVignette } from "../ui/holo";
 import { LOBBY_RETURN } from "./lobbyEntry";
@@ -47,7 +43,6 @@ export interface CakeOperationSceneData {
  */
 export class CakeOperationScene extends Phaser.Scene {
   private selectedTierId = CAKE_OPERATION_TIERS[0].id;
-  private sweepCount = 1;
   private adFreeMembership = false;
   private dailyAdRewards?: PlayerStateDto["dailyAdRewards"];
   private busy = false;
@@ -72,7 +67,6 @@ export class CakeOperationScene extends Phaser.Scene {
     prefetchBattlePuppets(relicCollection.validParty, CAKE_OPERATION_ENEMY_IDS);
     setDebugScene("cakeOperation", t("cake.title"));
     this.busy = false;
-    this.sweepCount = 1;
     // 돌아온 단계 → 마지막으로 고른 단계 → 마지막으로 이긴 단계의 다음 칸 순이다. 잠긴 값은 `refresh`가 고친다.
     const next = Math.min(session.cakeOperation.clearedIndex + 1, CAKE_OPERATION_TIERS.length - 1);
     const remembered = this.entry.tierId ?? settingsManager.get().game.dungeonTiers.cake;
@@ -85,11 +79,8 @@ export class CakeOperationScene extends Phaser.Scene {
     this.popups = new PopupLayer(this, 2200);
     this.lobby = new DungeonLobby(this, {
       onSelectTier: (id) => { if (!this.busy) { this.selectedTierId = id; settingsManager.rememberDungeonTier("cake", id); this.refresh(); } },
-      onSweepCount: (count) => { if (!this.busy) { this.sweepCount = count; this.refresh(); } },
       onSortie: () => this.openParty(),
-      onSweep: () => void this.sweep(),
-      onWatchAd: () => void this.watchAd(),
-      onTicketInfo: () => { const item = findItem(SWEEP_TICKET_ITEM); if (item) openItemGuide({ scene: this, popups: this.popups }, item); },
+      onSweep: () => this.sweep(),
     });
     this.refresh();
     addBackButton(this, () => this.scene.start("lobby", LOBBY_RETURN.sortie));
@@ -114,14 +105,6 @@ export class CakeOperationScene extends Phaser.Scene {
     if (!isCakeTierUnlocked(this.selectedTierId, clearedIndex)) this.selectedTierId = CAKE_OPERATION_TIERS[Math.min(clearedIndex + 1, CAKE_OPERATION_TIERS.length - 1)].id;
     const tier = this.selectedTier();
     const cost = cakeOperationRunCost(tier);
-    const tickets = sweepTicketState(this.adFreeMembership, this.dailyAdRewards);
-    const maxSweep = maxSweepCount({ stamina: session.wallet.stamina, tickets: heldSweepTickets(), adFreeMembership: this.adFreeMembership, cost });
-    this.sweepCount = Math.min(Math.max(1, this.sweepCount), Math.max(1, maxSweep));
-    const refusal = sweepRefusal({
-      cleared: cakeOperationTierIndex(tier.id) <= clearedIndex, count: this.sweepCount, adFreeMembership: this.adFreeMembership,
-      tickets: heldSweepTickets(), stamina: session.wallet.stamina, cost,
-    });
-    const sweepStamina = cost.staminaCost * this.sweepCount;
     this.lobby?.render({
       tiers: CAKE_OPERATION_TIERS.map((entry) => {
         const enemies = cakeOperationEnemies(entry);
@@ -137,12 +120,7 @@ export class CakeOperationScene extends Phaser.Scene {
       sortieCost: cost.staminaCost,
       sortieAffordable: session.wallet.stamina >= cost.staminaCost,
       sortieEnabled: !this.busy && session.wallet.stamina >= cost.staminaCost,
-      sweepCount: this.sweepCount,
-      maxSweep,
-      sweepCost: sweepStamina,
-      sweepAffordable: session.wallet.stamina >= sweepStamina,
-      sweepEnabled: !this.busy && refusal === null,
-      tickets,
+      sweepEnabled: !this.busy && cakeOperationTierIndex(tier.id) <= clearedIndex,
     });
   }
 
@@ -152,38 +130,22 @@ export class CakeOperationScene extends Phaser.Scene {
     startScene(this, "party", { content: "cake", tierId: this.selectedTierId } satisfies PartySceneData);
   }
 
-  /** 소탕. 차감과 지급이 서버에서 한 처리로 끝나고 화면은 영수증만 연다. */
-  private async sweep(): Promise<void> {
+  /** 소탕 — 배율을 고르는 창을 열고, 누르면 연출과 서버 요청이 나란히 돈 뒤 영수증이 열린다. */
+  private sweep(): void {
     if (this.busy) return;
-    this.busy = true;
-    this.refresh();
     const tier = this.selectedTier();
-    const requestId = `cake-sweep:${tier.id}:${this.sweepCount}:${Date.now()}`;
-    try {
-      const result = await gameApi.sweepCakeOperation({ tierId: tier.id, count: this.sweepCount, requestId });
-      if (!this.scene.isActive()) return;
-      openRewardPopup(this, this.popups, { title: t("dungeon.sweep.title"), items: currencyRecordToRewardItems(result.granted) });
-    } catch {
-      // 지급이 서지 않았으므로 알릴 것이 없다 — 조작만 되돌린다.
-    } finally {
-      this.busy = false;
-      if (this.scene.isActive()) this.refresh();
-    }
+    const enemies = cakeOperationEnemies(tier);
+    openDungeonSweep({
+      scene: this, popups: this.popups,
+      tierName: tier.name, level: cakeOperationEnemyDisplayLevel(tier).level, cost: cakeOperationRunCost(tier),
+      cleared: cakeOperationTierIndex(tier.id) <= session.cakeOperation.clearedIndex,
+      enemyId: enemies[0]?.id ?? CAKE_OPERATION_ENEMY_IDS[0],
+      membership: () => this.adFreeMembership,
+      dailyAdRewards: () => this.dailyAdRewards,
+      setDailyAdRewards: (daily) => { this.dailyAdRewards = daily; },
+      request: (count) => gameApi.sweepCakeOperation({ tierId: tier.id, count, requestId: `cake-sweep:${tier.id}:${count}:${Date.now()}` }),
+      setBusy: (busy) => { this.busy = busy; if (this.scene.isActive()) this.refresh(); },
+    });
   }
 
-  /** 광고를 보고 소탕권을 채운다. 취소되면 아무 일도 없다. */
-  private async watchAd(): Promise<void> {
-    if (this.busy) return;
-    this.busy = true;
-    this.refresh();
-    try {
-      const daily = await watchSweepTicketAd();
-      if (daily) this.dailyAdRewards = daily;
-    } catch {
-      // 지급이 서지 않았다 — 가방과 횟수는 그대로다.
-    } finally {
-      this.busy = false;
-      if (this.scene.isActive()) this.refresh();
-    }
-  }
 }

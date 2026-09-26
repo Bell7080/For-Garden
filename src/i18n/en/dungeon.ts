@@ -10,5 +10,13 @@ export const DUNGEON_EN = {
   "dungeon.sortie": "Sortie",
   "dungeon.sweep": "Sweep",
   "dungeon.sweep.title": "Sweep Complete",
+  "dungeon.sweep.tier": "{name} · LV.{level}",
+  "dungeon.sweep.needHave": "{need} / {have}",
+  "dungeon.sweep.stamina": "Stamina",
+  "dungeon.sweep.membership": "Sweep without Sweep Tickets.",
+  "dungeon.sweep.ticketShort": "Not enough Sweep Tickets. Watch an ad to get more.",
+  "dungeon.sweep.staminaShort": "Not enough Stamina.",
+  "dungeon.sweep.notCleared": "Sweep is available only for cleared stages.",
+  "dungeon.sweep.expected": "Expected Rewards",
   "party.hordeCount": "{count} enemies",
 } as const;

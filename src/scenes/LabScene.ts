@@ -323,10 +323,12 @@ export class LabScene extends Phaser.Scene {
     if (this.pullPending || !canPull(session.wallet, banner, count, this.pityOf(banner))) return;
     const payment = pullPayment(session.wallet, banner, count);
     if (payment.gems <= 0 || !this.popupLayer) { void this.doPull(count); return; }
-    const values = { tickets: payment.tickets.toLocaleString(), gems: payment.gems.toLocaleString(), currency: t(`currency.${banner.currency}`) };
+    // 치를 것은 문장이 아니라 액자가 말한다 — 문장에 수를 또 적으면 같은 값을 한 창에 두 번 읽는다.
     this.popupLayer.confirm({
       title: t("lab.pull.gemTitle"),
-      message: payment.tickets > 0 ? t("lab.pull.gemMixed", values) : t("lab.pull.gemOnly", values),
+      message: t("lab.pull.gemMessage", { currency: t(`currency.${banner.currency}`), count }),
+      costs: pullCostParts(banner, count),
+      note: t("lab.pull.gemBalance", { before: session.wallet.gems.toLocaleString(), after: (session.wallet.gems - payment.gems).toLocaleString() }),
       confirmLabel: t("lab.pull.gemConfirm"),
     }, () => { void this.doPull(count); });
   }

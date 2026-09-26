@@ -479,25 +479,25 @@
 "Mit Juwelen zahlen",
 "Оплатить самоцветами"
 ],
-"lab.pull.gemMixed": [
-"使用{currency}{tickets}个和宝石{gems}个进行研究。",
-"ใช้{currency} {tickets} ชิ้นและเจม {gems} เม็ดเพื่อวิจัย",
-"Nghiên cứu bằng {tickets} {currency} và {gems} Ngọc.",
-"Riset menggunakan {tickets} {currency} dan {gems} Permata.",
-"Investigación con {tickets} {currency} y {gems} gemas.",
-"Pesquisa usando {tickets} {currency} e {gems} gemas.",
-"Forschung mit {tickets} {currency} und {gems} Juwelen.",
-"Исследование за {currency}: {tickets} и самоцветы: {gems}."
+"lab.pull.gemMessage": [
+"用宝石补足不够的{currency}，进行{count}次研究。",
+"ใช้เจมเติม{currency}ที่ขาดแล้ววิจัย {count} ครั้ง",
+"Bù phần {currency} còn thiếu bằng Ngọc và Nghiên cứu {count} lần.",
+"Tutupi {currency} yang kurang dengan Permata dan Riset {count} kali.",
+"Completa el {currency} que falta con gemas e investiga {count} veces.",
+"Complete o {currency} que falta com gemas e faça {count} pesquisas.",
+"Fehlendes {currency} mit Juwelen ausgleichen und {count}-mal forschen.",
+"Недостающий ресурс «{currency}» покрыть самоцветами и провести исследование: {count} раз."
 ],
-"lab.pull.gemOnly": [
-"使用宝石{gems}个进行研究。",
-"ใช้เจม {gems} เม็ดเพื่อวิจัย",
-"Nghiên cứu bằng {gems} Ngọc.",
-"Riset menggunakan {gems} Permata.",
-"Investigación con {gems} gemas.",
-"Pesquisa usando {gems} gemas.",
-"Forschung mit {gems} Juwelen.",
-"Исследование за самоцветы: {gems}."
+"lab.pull.gemBalance": [
+"持有宝石 {before} → {after}",
+"เจมที่มี {before} → {after}",
+"Ngọc đang có {before} → {after}",
+"Permata {before} → {after}",
+"Gemas {before} → {after}",
+"Gemas {before} → {after}",
+"Juwelen {before} → {after}",
+"Самоцветы {before} → {after}"
 ],
 "lab.pull.gemConfirm": [
 "研究",

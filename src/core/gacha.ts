@@ -155,6 +155,31 @@ export function pullCost(banner: Banner, count: number): number {
   return count === 10 ? banner.costTen : banner.costOne * count;
 }
 
+/**
+ * 연구 재화(화석·호박석) 한 개의 젬 값. **모자란 몫은 한 개에 이 값만큼 젬으로 채운다.**
+ *
+ * 두 연구는 확률·회색 보상이 같아(`banners.ts`의 `STANDARD_SLOT_RATES`) 한 번의 값도 하나다. 무역
+ * 시세(`TRADE_GEM_RATE`)도 이 수를 읽는다 — 두 곳에 따로 적으면 상점과 연구 버튼이 다른 값을 말한다.
+ */
+export const RESEARCH_TICKET_GEM_PRICE = 300;
+
+/** 한 번의 연구를 무엇으로 치르나 — 가진 연구 재화를 먼저 쓰고 모자란 몫만 젬이다. */
+export interface PullPayment {
+  /** 쓰는 연구 재화 수. */
+  tickets: number;
+  /** 모자란 연구 재화를 대신하는 젬. */
+  gems: number;
+  /** 젬까지 합쳐 치를 수 있는가. */
+  affordable: boolean;
+}
+
+export function pullPayment(wallet: Pick<Wallet, "fossil" | "amber" | "gems">, banner: Banner, count: number): PullPayment {
+  const cost = pullCost(banner, count);
+  const tickets = Math.max(0, Math.min(cost, wallet[banner.currency]));
+  const gems = (cost - tickets) * RESEARCH_TICKET_GEM_PRICE;
+  return { tickets, gems, affordable: wallet.gems >= gems };
+}
+
 /** 횟수 제한이 있는 배너에서 남은 횟수. 제한이 없으면 무한이다. */
 export function bannerPullsRemaining(banner: Banner, pity: GachaPityState | undefined): number {
   if (banner.pullLimit === undefined) return Number.POSITIVE_INFINITY;
@@ -179,8 +204,9 @@ export function bannerGuaranteePending(banner: Banner, pity: GachaPityState | un
   return (pity?.pullsSinceSsr ?? 0) === total && total < banner.pullLimit;
 }
 
+/** 연구 재화에 젬을 더해 치를 수 있고 배너가 그 횟수를 받는가. */
 export function canPull(wallet: Wallet, banner: Banner, count: number, pity?: GachaPityState): boolean {
-  return wallet[banner.currency] >= pullCost(banner, count) && bannerAcceptsCount(banner, count, pity);
+  return pullPayment(wallet, banner, count).affordable && bannerAcceptsCount(banner, count, pity);
 }
 
 /** 0 이상 1 미만이라는 RNG 계약을 방어적으로 배열 인덱스에 맞춘다. */
@@ -262,10 +288,11 @@ export function pull(
   return { slots, relicIds, rarities, pity };
 }
 
-/** 비용을 치른 새 지갑. 모자라면 원래 참조를 돌려준다. */
+/** 비용을 치른 새 지갑 — 연구 재화를 먼저 쓰고 모자란 몫은 젬이다. 모자라면 원래 참조를 돌려준다. */
 export function spend(wallet: Wallet, banner: Banner, count: number): Wallet {
   if (!canPull(wallet, banner, count)) return wallet;
-  return { ...wallet, [banner.currency]: wallet[banner.currency] - pullCost(banner, count) };
+  const payment = pullPayment(wallet, banner, count);
+  return { ...wallet, [banner.currency]: wallet[banner.currency] - payment.tickets, gems: wallet.gems - payment.gems };
 }
 
 export type AcquisitionKind = "new" | "fragment" | "overflow";

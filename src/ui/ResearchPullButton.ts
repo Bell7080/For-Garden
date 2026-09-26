@@ -12,6 +12,9 @@ export interface ResearchPullButtonOptions {
   onClick: () => void;
 }
 
+/** 드는 값 한 조각 — 그림과 수. `short`면 치를 수 없는 몫이라 수가 붉다. */
+export interface ResearchPullCostPart { iconKey: string; amount: number; short?: boolean; }
+
 /** 버튼 글자의 짙은 갈색 — 밝은 크림 면 위에서 검정보다 부드럽게 선다. */
 const INK = 0x3b2a1c;
 /** 크림 면. 모집 원화가 밝은 파스텔이라 어두운 유리 판은 그 위에서 구멍처럼 뚫려 보였다. */
@@ -27,11 +30,8 @@ const CREAM = 0xfff6e4;
  */
 export class ResearchPullButton extends Phaser.GameObjects.Container {
   private readonly face: Phaser.GameObjects.Container;
-  private readonly icon: Phaser.GameObjects.Image;
-  /** 그림 뒤에 까는 검은 복제 둘 — 크림빛 면 위에서 화석·호박석의 윤곽을 떼어 낸다. */
-  private readonly iconRim: Phaser.GameObjects.Image;
-  private readonly iconShadow: Phaser.GameObjects.Image;
-  private readonly amount: Phaser.GameObjects.Text;
+  /** 드는 값 줄 — 연구 재화 한 조각과, 모자라면 그 옆의 젬 한 조각. 값이 바뀔 때마다 다시 세운다. */
+  private readonly cost: Phaser.GameObjects.Container;
   private enabled = true;
 
   constructor(scene: Phaser.Scene, x: number, y: number, private readonly options: ResearchPullButtonOptions) {
@@ -69,12 +69,8 @@ export class ResearchPullButton extends Phaser.GameObjects.Container {
     // **드는 재화 그림은 크게, 검은 복제를 깔아 세운다.** 밝은 크림빛 면 위에서 호박석의 노란 결과
     // 화석의 옅은 돌빛이 면과 같은 밝기라 작게 두면 윤곽이 녹았다 — 판을 받치지 않고(버튼 안에 판이
     // 두 겹이 된다) 아래로 민 그림자와 한 뼘 큰 옅은 테두리로만 떼어 낸다.
-    const iconY = height * 0.23;
-    this.iconShadow = scene.add.image(0, iconY + 4, "__DEFAULT").setTintFill(0x2a1c10).setAlpha(0.42);
-    this.iconRim = scene.add.image(0, iconY, "__DEFAULT").setTintFill(0x2a1c10).setAlpha(0.5);
-    this.icon = scene.add.image(0, iconY, "__DEFAULT");
-    this.amount = scene.add.text(0, iconY, "", textStyle({ role: "display", size: Math.round(height * 0.2), color: hex(INK) })).setOrigin(0, 0.5);
-    this.face.add([this.iconShadow, this.iconRim, this.icon, this.amount]);
+    this.cost = scene.add.container(0, height * 0.23);
+    this.face.add(this.cost);
     this.add(this.face);
 
     const hit = scene.add.rectangle(0, depth / 2, width, height + depth, 0xffffff, 0).setInteractive({ useHandCursor: true });
@@ -88,20 +84,34 @@ export class ResearchPullButton extends Phaser.GameObjects.Container {
     scene.add.existing(this);
   }
 
-  /** 드는 재화 그림과 수. 모자라면 수가 붉어져 왜 못 누르는지 값 자체가 말한다. */
-  setCost(iconKey: string, amount: number, affordable: boolean): this {
-    const size = this.options.height * 0.42;
-    this.icon.setTexture(iconKey).setDisplaySize(size, size);
-    this.iconRim.setTexture(iconKey).setDisplaySize(size * 1.1, size * 1.1);
-    this.iconShadow.setTexture(iconKey).setDisplaySize(size, size);
-    this.amount.setText(`× ${amount.toLocaleString()}`).setColor(affordable ? hex(INK) : "#d2463c");
-    // 그림과 수를 한 덩어리로 가운데에 세운다.
-    const gap = 6;
-    const total = size + gap + this.amount.width;
-    this.icon.setX(-total / 2 + size / 2);
-    this.iconRim.setX(this.icon.x);
-    this.iconShadow.setX(this.icon.x + 3);
-    this.amount.setX(-total / 2 + size + gap);
+  /**
+   * 드는 값 — **연구 재화를 먼저 쓰고 모자란 몫은 젬**으로 옆에 선다(`화석 ×1  젬 ×2,700`).
+   *
+   * 연구 재화가 하나도 없으면 젬 조각 하나만 서고, 넉넉하면 연구 재화 조각 하나만 선다. 두 조각은 한
+   * 덩어리로 가운데에 놓인다. 젬까지 모자라면 젬 수가 붉어져 왜 못 누르는지 값 자체가 말한다.
+   */
+  setCost(parts: readonly ResearchPullCostPart[]): this {
+    this.cost.removeAll(true);
+    const size = this.options.height * (parts.length > 1 ? 0.34 : 0.42);
+    const textSize = Math.round(this.options.height * (parts.length > 1 ? 0.17 : 0.2));
+    const pieces: { width: number; build: (x: number) => void }[] = parts.map((part) => {
+      const amount = this.scene.add.text(0, 0, `× ${part.amount.toLocaleString()}`, textStyle({ role: "display", size: textSize, color: part.short ? "#d2463c" : hex(INK) })).setOrigin(0, 0.5);
+      const gap = 6;
+      return {
+        width: size + gap + amount.width,
+        build: (x: number) => {
+          // 그림 뒤에 검은 복제 둘을 깐다 — 크림빛 면 위에서 화석·호박석·젬의 윤곽을 떼어 낸다.
+          const shadow = this.scene.add.image(x + size / 2 + 3, 4, part.iconKey).setDisplaySize(size, size).setTintFill(0x2a1c10).setAlpha(0.42);
+          const rim = this.scene.add.image(x + size / 2, 0, part.iconKey).setDisplaySize(size * 1.1, size * 1.1).setTintFill(0x2a1c10).setAlpha(0.5);
+          const icon = this.scene.add.image(x + size / 2, 0, part.iconKey).setDisplaySize(size, size);
+          this.cost.add([shadow, rim, icon, amount.setX(x + size + gap)]);
+        },
+      };
+    });
+    const between = 18;
+    const total = pieces.reduce((sum, piece) => sum + piece.width, 0) + between * Math.max(0, pieces.length - 1);
+    let x = -total / 2;
+    for (const piece of pieces) { piece.build(x); x += piece.width + between; }
     return this;
   }
 

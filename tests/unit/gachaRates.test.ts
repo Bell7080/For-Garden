@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { formatRatePercent, gachaRateTable, RATE_TIERS } from "../../src/core/gachaRateTable";
+import { canPull, pullPayment, RESEARCH_TICKET_GEM_PRICE, spend } from "../../src/core/gacha";
+import { TRADE_GEM_RATE } from "../../src/data/tradePackages";
 import { BANNERS, getBanner } from "../../src/data/banners";
 import { GACHA_RATES, gachaRatesPopupHeight, gachaRatesRowCount, gachaRatesSlots, gachaRatesTierScreenY } from "../../src/ui/gachaRatesLayout";
 import { BACK_BUTTON_SIZE, BACK_SLOT } from "../../src/ui/popupGeometry";
@@ -79,5 +81,31 @@ describe("확률표 창 자리", () => {
   it("펼쳐도 그 위의 등급 줄은 제자리에 남는다", () => {
     expect(gachaRatesTierScreenY(0, 0, 6)).toBe(gachaRatesTierScreenY(0, null, 0));
     expect(gachaRatesTierScreenY(1, 0, 6) - gachaRatesTierScreenY(1, null, 0)).toBe(6 * GACHA_RATES.entryStep + GACHA_RATES.entryPad * 2);
+  });
+});
+
+describe("모자란 연구 재화는 젬으로 채운다", () => {
+  const wallet = (fossil: number, gems: number) => ({ fossil, amber: 0, gems, gold: 0, stamina: 0, dnaFragments: 0, cheesecake: 0, rawStone: 0, raidSigil: 0, salvageRecord: 0 });
+  const fossil = getBanner("fossil");
+
+  it("가진 연구 재화를 먼저 쓰고 모자란 한 개마다 젬 300이다", () => {
+    expect(pullPayment(wallet(1, 5_000), fossil, 10)).toEqual({ tickets: 1, gems: 2_700, affordable: true });
+    expect(pullPayment(wallet(0, 5_000), fossil, 10)).toEqual({ tickets: 0, gems: 3_000, affordable: true });
+    expect(pullPayment(wallet(12, 0), fossil, 10)).toEqual({ tickets: 10, gems: 0, affordable: true });
+    expect(pullPayment(wallet(0, 299), fossil, 1)).toEqual({ tickets: 0, gems: 300, affordable: false });
+  });
+
+  it("차감도 같은 규칙이고 젬까지 모자라면 치르지 않는다", () => {
+    expect(canPull(wallet(1, 2_700), fossil, 10)).toBe(true);
+    expect(spend(wallet(1, 2_700), fossil, 10)).toMatchObject({ fossil: 0, gems: 0 });
+    const poor = wallet(1, 2_699);
+    expect(canPull(poor, fossil, 10)).toBe(false);
+    expect(spend(poor, fossil, 10)).toBe(poor);
+  });
+
+  it("무역 시세와 같은 한 수를 쓴다", () => {
+    expect(RESEARCH_TICKET_GEM_PRICE).toBe(300);
+    expect(1 / TRADE_GEM_RATE.fossil).toBe(RESEARCH_TICKET_GEM_PRICE);
+    expect(1 / TRADE_GEM_RATE.amber).toBe(RESEARCH_TICKET_GEM_PRICE);
   });
 });

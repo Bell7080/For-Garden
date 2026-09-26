@@ -395,6 +395,22 @@ test("연구소에서 화석을 사용하면 렐릭 연구 결과가 뜬다", as
   await captureGame(page, `test-results/${test.info().project.name}-lab-pull-result.png`);
 });
 
+test("연구 재화가 모자라면 버튼 옆에 젬으로 채우는 값이 서고, 누르면 확인 창이 먼저 묻는다", async ({ page }) => {
+  await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
+  await startAfterOpening(page, (session) => { session.wallet.fossil = 1; session.wallet.gems = 5_000; });
+  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
+  await tap(page, (BASE_WIDTH * 7) / 10, BASE_HEIGHT - 180 + 90);
+  await expect.poll(() => scene(page)).toBe("lab");
+  // 첫 복원 연구(10연 전용)를 넘겨 화석 연구로 간다 — 1회는 화석 1, 10회는 화석 1 + 젬 2,700이다.
+  await tap(page, BASE_WIDTH - LAB_TITLE.arrow.x, LAB_TITLE.arrow.y);
+  await captureGame(page, `test-results/${test.info().project.name}-lab-pull-gem-cost.png`);
+  await tap(page, 780, LAB_CHROME.pull.y);
+  await expect.poll(async () => (await page.evaluate(() => window.__PF_DEBUG?.popupTitles))?.length ?? 0).toBe(1);
+  await captureGame(page, `test-results/${test.info().project.name}-lab-pull-gem-confirm.png`);
+  // 확인 전에는 아무것도 빠지지 않았다.
+  expect(await page.evaluate(() => window.__PF_DEBUG?.wallet?.fossil)).toBe(1);
+});
+
 test("연구소 확률표는 등급 줄을 눌러 세부 확률을 펼치고, 세 배너 모두 같은 표를 쓴다", async ({ page }) => {
   await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
   await startAfterOpening(page);

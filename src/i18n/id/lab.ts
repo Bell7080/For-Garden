@@ -52,6 +52,10 @@ export const LAB_ID = {
   "lab.tag.ssrGuarantee": "SSR Terjamin dalam {count}",
   "lab.tag.remaining": "Sisa Riset {left} / {total}",
   "lab.pull.discount": "-{percent}%",
+  "lab.pull.gemTitle": "Bayar dengan Permata",
+  "lab.pull.gemMixed": "Riset menggunakan {tickets} {currency} dan {gems} Permata.",
+  "lab.pull.gemOnly": "Riset menggunakan {gems} Permata.",
+  "lab.pull.gemConfirm": "Riset",
   "lab.pity.remaining": "Sisa Riset",
   "lab.policy.limit": "{limit} per akun · Hanya Riset x10 · 1 SSR terjamin dalam {limit}",
 } as const;

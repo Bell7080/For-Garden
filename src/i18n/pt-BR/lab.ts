@@ -52,6 +52,10 @@ export const LAB_PT_BR = {
   "lab.tag.ssrGuarantee": "SSR garantido em {count}",
   "lab.tag.remaining": "Pesquisas restantes {left} / {total}",
   "lab.pull.discount": "-{percent}%",
+  "lab.pull.gemTitle": "Pagar com gemas",
+  "lab.pull.gemMixed": "Pesquisa usando {tickets} {currency} e {gems} gemas.",
+  "lab.pull.gemOnly": "Pesquisa usando {gems} gemas.",
+  "lab.pull.gemConfirm": "Pesquisar",
   "lab.pity.remaining": "Pesquisas restantes",
   "lab.policy.limit": "{limit} por conta · Apenas Pesquisar x10 · 1 SSR garantido em {limit}",
 } as const;

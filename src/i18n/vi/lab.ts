@@ -52,6 +52,10 @@ export const LAB_VI = {
   "lab.tag.ssrGuarantee": "Chắc chắn SSR trong {count} lượt",
   "lab.tag.remaining": "Nghiên cứu còn {left} / {total}",
   "lab.pull.discount": "-{percent}%",
+  "lab.pull.gemTitle": "Bù bằng Ngọc",
+  "lab.pull.gemMixed": "Nghiên cứu bằng {tickets} {currency} và {gems} Ngọc.",
+  "lab.pull.gemOnly": "Nghiên cứu bằng {gems} Ngọc.",
+  "lab.pull.gemConfirm": "Nghiên cứu",
   "lab.pity.remaining": "Nghiên cứu còn lại",
   "lab.policy.limit": "{limit} lượt mỗi tài khoản · Chỉ Nghiên cứu x10 · Chắc chắn 1 SSR trong {limit} lượt",
 } as const;

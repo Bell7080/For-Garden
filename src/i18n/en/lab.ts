@@ -56,6 +56,10 @@ export const LAB_EN = {
   "lab.tag.ssrGuarantee": "SSR Guaranteed within {count}",
   "lab.tag.remaining": "Research Left {left} / {total}",
   "lab.pull.discount": "-{percent}%",
+  "lab.pull.gemTitle": "Pay with Gems",
+  "lab.pull.gemMixed": "Research using {tickets} {currency} and {gems} Gems.",
+  "lab.pull.gemOnly": "Research using {gems} Gems.",
+  "lab.pull.gemConfirm": "Research",
   "lab.pity.remaining": "Research Left",
   "lab.policy.limit": "{limit} per account · Research x10 only · 1 SSR guaranteed within {limit}",
 } as const;

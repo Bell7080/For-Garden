@@ -52,6 +52,10 @@ export const LAB_ZH_HANT = {
   "lab.tag.ssrGuarantee": "{count}次內必出SSR",
   "lab.tag.remaining": "剩餘研究 {left} / {total}",
   "lab.pull.discount": "-{percent}%",
+  "lab.pull.gemTitle": "用寶石補足",
+  "lab.pull.gemMixed": "使用{currency}{tickets}個和寶石{gems}個進行研究。",
+  "lab.pull.gemOnly": "使用寶石{gems}個進行研究。",
+  "lab.pull.gemConfirm": "研究",
   "lab.pity.remaining": "剩餘研究",
   "lab.policy.limit": "每個賬號{limit}次 · 僅限研究x10 · {limit}次內必出1個SSR",
 } as const;

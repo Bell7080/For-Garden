@@ -1,3 +1,4 @@
+import { RESEARCH_TICKET_GEM_PRICE } from "../core/gacha";
 import type { ProductAcquisition, ProductCurrency, ProductDefinition, ProductGrant, ProductRefresh, ProductStorefront } from "./products";
 import { registerDataText } from "../i18n";
 
@@ -31,12 +32,13 @@ export const TRADE_GEM_RATE: Readonly<Record<ProductCurrency, number>> = {
    *
    * 화석 한 개도 호박석 한 개도 연구 한 번이고, **둘 다 젬 300이다.** 두 연구는 확률·회색 보상이
    * 똑같고(`banners.ts`의 `STANDARD_SLOT_RATES`) 다른 것은 픽업뿐이라 한 번의 값을 가를 근거가 없다.
-   * 확률을 조금이라도 달리하면 이 표를 둘로 나눠 다시 매겨야 한다.
+   * 확률을 조금이라도 달리하면 이 표를 둘로 나눠 다시 매겨야 한다. 값은 연구 버튼이 모자란 몫을
+   * 젬으로 채우는 값(`RESEARCH_TICKET_GEM_PRICE`)과 같은 한 수다.
    *
    *   한 번 = 화석 1 = 호박석 1 = 젬 300 · 열 번 = 젬 3,000
    */
-  amber: 1 / 300,
-  fossil: 1 / 300,
+  amber: 1 / RESEARCH_TICKET_GEM_PRICE,
+  fossil: 1 / RESEARCH_TICKET_GEM_PRICE,
   /*
    * 원석은 고고학 안에서만 돌고 한 판에서 수십 개가 나온다(`strataLayers`의 원석 칸 6~26,
    * 한 판 8~10회). 뽑기 재화와 같은 자리에 두지 않는 이유가 그것이다 — 파서 모으는 재화라

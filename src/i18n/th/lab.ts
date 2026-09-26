@@ -52,6 +52,10 @@ export const LAB_TH = {
   "lab.tag.ssrGuarantee": "การันตี SSR ภายใน {count} ครั้ง",
   "lab.tag.remaining": "วิจัยเหลือ {left} / {total}",
   "lab.pull.discount": "-{percent}%",
+  "lab.pull.gemTitle": "เติมด้วยเจม",
+  "lab.pull.gemMixed": "ใช้{currency} {tickets} ชิ้นและเจม {gems} เม็ดเพื่อวิจัย",
+  "lab.pull.gemOnly": "ใช้เจม {gems} เม็ดเพื่อวิจัย",
+  "lab.pull.gemConfirm": "วิจัย",
   "lab.pity.remaining": "วิจัยที่เหลือ",
   "lab.policy.limit": "บัญชีละ {limit} ครั้ง · วิจัย x10 เท่านั้น · การันตี SSR 1 ตัวภายใน {limit} ครั้ง",
 } as const;

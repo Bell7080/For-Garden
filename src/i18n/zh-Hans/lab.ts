@@ -52,6 +52,10 @@ export const LAB_ZH_HANS = {
   "lab.tag.ssrGuarantee": "{count}次内必出SSR",
   "lab.tag.remaining": "剩余研究 {left} / {total}",
   "lab.pull.discount": "-{percent}%",
+  "lab.pull.gemTitle": "用宝石补足",
+  "lab.pull.gemMixed": "使用{currency}{tickets}个和宝石{gems}个进行研究。",
+  "lab.pull.gemOnly": "使用宝石{gems}个进行研究。",
+  "lab.pull.gemConfirm": "研究",
   "lab.pity.remaining": "剩余研究",
   "lab.policy.limit": "每个账号{limit}次 · 仅限研究x10 · {limit}次内必出1个SSR",
 } as const;

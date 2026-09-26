@@ -52,6 +52,10 @@ export const LAB_RU = {
   "lab.tag.ssrGuarantee": "SSR гарантирован за {count}",
   "lab.tag.remaining": "Осталось исследований {left} / {total}",
   "lab.pull.discount": "-{percent}%",
+  "lab.pull.gemTitle": "Оплатить самоцветами",
+  "lab.pull.gemMixed": "Исследование за {currency}: {tickets} и самоцветы: {gems}.",
+  "lab.pull.gemOnly": "Исследование за самоцветы: {gems}.",
+  "lab.pull.gemConfirm": "Исследовать",
   "lab.pity.remaining": "Осталось исследований",
   "lab.policy.limit": "{limit} на аккаунт · Только исследование x10 · 1 SSR гарантирован за {limit}",
 } as const;

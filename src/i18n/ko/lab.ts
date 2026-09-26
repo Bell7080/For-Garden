@@ -53,6 +53,10 @@ export const LAB_KO = {
   "lab.tag.ssrGuarantee": "{count}회 안에 SSR 확정",
   "lab.tag.remaining": "남은 연구 {left} / {total}",
   "lab.pull.discount": "-{percent}%",
+  "lab.pull.gemTitle": "젬으로 채우기",
+  "lab.pull.gemMixed": "{currency} {tickets}개와 젬 {gems}개를 써서 연구합니다.",
+  "lab.pull.gemOnly": "젬 {gems}개를 써서 연구합니다.",
+  "lab.pull.gemConfirm": "연구",
   "lab.pity.remaining": "남은 연구",
   "lab.policy.limit": "계정당 {limit}회 · 10회 연구만 · {limit}회 안에 SSR 1회 확정",
 

@@ -4,7 +4,7 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugResearchBoard, setDebugScene } from "../debug";
 import { gameApi } from "../api/FakeServer";
 import { GameApiError, type PullResultDto } from "../api/contracts";
-import { bannerAcceptsCount, bannerGuaranteePending, bannerPullsRemaining, canPull, pullCost, type Banner, type GachaPityState, type ResearchGrade } from "../core/gacha";
+import { bannerAcceptsCount, bannerGuaranteePending, bannerPullsRemaining, canPull, pullCost, pullPayment, type Banner, type GachaPityState, type ResearchGrade } from "../core/gacha";
 import { ResearchPresentationController, highestRarity, researchSlotViews, showcaseRelicIds } from "../core/researchPresentation";
 import { BANNERS, LIMITED_RELIC_IDS } from "../data/banners";
 import { getRelic } from "../data/relics";
@@ -24,7 +24,7 @@ import { exposeShowcasePreview } from "../testSupport/showcaseHarness";
 import { audioManager, type AudioScope } from "../managers/AudioManager";
 import { PopupLayer } from "../ui/PopupLayer";
 import { openGachaRates } from "../ui/GachaRatesPopup";
-import { ResearchPullButton } from "../ui/ResearchPullButton";
+import { ResearchPullButton, type ResearchPullCostPart } from "../ui/ResearchPullButton";
 import { addRatesLink, addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
 import { LAB_CHROME, LAB_TITLE } from "../ui/labLayout";
 import { addBannerArrow, addBannerTitle, drawBannerPages } from "../ui/LabBannerTitle";
@@ -156,10 +156,10 @@ export class LabScene extends Phaser.Scene {
     this.bannerPages = this.add.graphics({ x: cx, y: LAB_TITLE.pages.y });
 
     this.oneButton = new ResearchPullButton(this, 300, LAB_CHROME.pull.y, {
-      ...LAB_CHROME.pull.size, label: t("lab.pull.one"), tone: LAB_CHROME.pull.oneTone, onClick: () => void this.doPull(1),
+      ...LAB_CHROME.pull.size, label: t("lab.pull.one"), tone: LAB_CHROME.pull.oneTone, onClick: () => this.requestPull(1),
     });
     this.tenButton = new ResearchPullButton(this, 780, LAB_CHROME.pull.y, {
-      ...LAB_CHROME.pull.size, label: t("lab.pull.ten"), tone: LAB_CHROME.pull.tenTone, onClick: () => void this.doPull(10),
+      ...LAB_CHROME.pull.size, label: t("lab.pull.ten"), tone: LAB_CHROME.pull.tenTone, onClick: () => this.requestPull(10),
     });
 
     this.addPityPlate(cx);
@@ -311,6 +311,24 @@ export class LabScene extends Phaser.Scene {
         onComplete: () => { if (previous?.active) previous.destroy(); loaded.setDepth(LAB_CHROME.depth.art); },
       });
     });
+  }
+
+  /**
+   * 연구 버튼을 누른 손. **젬이 드는 연구는 한 번 더 묻는다** — 연구 재화가 모자라 젬으로 채우는
+   * 몫이 있으면 무엇을 얼마나 쓰는지 확인 창이 먼저 말한다. 젬은 되돌릴 수 없는 재화라 버튼 옆의
+   * 값만 보고 곧바로 빠져나가면 안 된다.
+   */
+  private requestPull(count: 1 | 10): void {
+    const banner = this.banner;
+    if (this.pullPending || !canPull(session.wallet, banner, count, this.pityOf(banner))) return;
+    const payment = pullPayment(session.wallet, banner, count);
+    if (payment.gems <= 0 || !this.popupLayer) { void this.doPull(count); return; }
+    const values = { tickets: payment.tickets.toLocaleString(), gems: payment.gems.toLocaleString(), currency: t(`currency.${banner.currency}`) };
+    this.popupLayer.confirm({
+      title: t("lab.pull.gemTitle"),
+      message: payment.tickets > 0 ? t("lab.pull.gemMixed", values) : t("lab.pull.gemOnly", values),
+      confirmLabel: t("lab.pull.gemConfirm"),
+    }, () => { void this.doPull(count); });
   }
 
   private async doPull(count: 1 | 10): Promise<void> {
@@ -752,15 +770,14 @@ export class LabScene extends Phaser.Scene {
      * 10연 전용 배너는 1회 버튼을 세우지 않고 10회 버튼을 가운데로 옮긴다 — 누를 수 없는 버튼을
      * 꺼진 채 세워 두면 왜 안 되는지 묻게 된다.
      */
-    const icon = CURRENCY_ICON_BY_WALLET[banner.currency];
     const oneOpen = bannerAcceptsCount(banner, 1, pity) || !banner.tenOnly;
     this.oneButton.setVisible(!banner.tenOnly);
     this.tenButton.setX(banner.tenOnly ? BASE_WIDTH / 2 : 780);
     this.oneButton
-      .setCost(icon, pullCost(banner, 1), canPull(session.wallet, banner, 1, pity))
+      .setCost(pullCostParts(banner, 1))
       .setEnabled(oneOpen && !this.pullPending && canPull(session.wallet, banner, 1, pity));
     this.tenButton
-      .setCost(icon, pullCost(banner, 10), canPull(session.wallet, banner, 10, pity))
+      .setCost(pullCostParts(banner, 10))
       .setEnabled(!this.pullPending && canPull(session.wallet, banner, 10, pity));
 
     const discount = bannerTenDiscountPercent(banner);
@@ -768,4 +785,14 @@ export class LabScene extends Phaser.Scene {
     this.discountText.setText(t("lab.pull.discount", { percent: discount }));
     this.discountBadge.setPosition(this.tenButton.x + LAB_TITLE.discount.dx, LAB_CHROME.pull.y + LAB_TITLE.discount.dy);
   }
+}
+
+/** 연구 버튼에 세울 값 조각 — 가진 연구 재화 몫과 모자라 젬으로 채우는 몫. */
+function pullCostParts(banner: Banner, count: number): ResearchPullCostPart[] {
+  const payment = pullPayment(session.wallet, banner, count);
+  const parts: ResearchPullCostPart[] = [];
+  // 연구 재화가 하나도 없으면 그 조각은 세우지 않는다(「화석 ×0」은 읽을 필요 없는 수다).
+  if (payment.tickets > 0 || payment.gems === 0) parts.push({ iconKey: CURRENCY_ICON_BY_WALLET[banner.currency], amount: payment.gems === 0 ? pullCost(banner, count) : payment.tickets });
+  if (payment.gems > 0) parts.push({ iconKey: CURRENCY_ICON_BY_WALLET.gems, amount: payment.gems, short: !payment.affordable });
+  return parts;
 }

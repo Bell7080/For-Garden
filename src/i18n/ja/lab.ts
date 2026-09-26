@@ -58,6 +58,10 @@ export const LAB_JA = {
   "lab.tag.ssrGuarantee": "{count}回以内にSSR確定",
   "lab.tag.remaining": "残り研究 {left} / {total}",
   "lab.pull.discount": "-{percent}%",
+  "lab.pull.gemTitle": "ジェムで補う",
+  "lab.pull.gemMixed": "{currency}{tickets}個とジェム{gems}個を使って研究します。",
+  "lab.pull.gemOnly": "ジェム{gems}個を使って研究します。",
+  "lab.pull.gemConfirm": "研究",
   "lab.pity.remaining": "残り研究",
   "lab.policy.limit": "アカウントごとに{limit}回・10回研究のみ・{limit}回以内にSSR1回確定",
 

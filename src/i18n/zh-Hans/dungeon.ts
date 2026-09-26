@@ -10,5 +10,13 @@ export const DUNGEON_ZH_HANS = {
   "dungeon.sortie": "出击",
   "dungeon.sweep": "扫荡",
   "dungeon.sweep.title": "扫荡完成",
+  "dungeon.sweep.tier": "{name} · LV.{level}",
+  "dungeon.sweep.needHave": "{need} / {have}",
+  "dungeon.sweep.stamina": "体力",
+  "dungeon.sweep.membership": "无需扫荡券即可扫荡。",
+  "dungeon.sweep.ticketShort": "扫荡券不足。观看广告即可获得扫荡券。",
+  "dungeon.sweep.staminaShort": "体力不足。",
+  "dungeon.sweep.notCleared": "只能扫荡已通关的阶段。",
+  "dungeon.sweep.expected": "预计奖励",
   "party.hordeCount": "{count}名敌人",
 } as const;

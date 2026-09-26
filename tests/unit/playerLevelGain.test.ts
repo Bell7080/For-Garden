@@ -37,10 +37,14 @@ describe("결과판의 경험치 줄", () => {
   });
 
   it("은 판 안에 들고, 레벨업 병 액자가 판 밖으로 나가지 않는다", () => {
-    const halfPopup = 940 / 2;
-    expect(PLAYER_EXP_ROW.level.x).toBeGreaterThanOrEqual(-halfPopup + 60);
-    expect(PLAYER_EXP_ROW.reward.x + PLAYER_EXP_ROW.reward.size / 2).toBeLessThanOrEqual(halfPopup - 60);
-    expect(PLAYER_EXP_ROW.bar.left + PLAYER_EXP_ROW.bar.width).toBeLessThan(PLAYER_EXP_ROW.reward.x - PLAYER_EXP_ROW.reward.size / 2);
+    // 결과판(940)과 소탕 영수증(920) 중 좁은 쪽에도 든다.
+    const halfPopup = 920 / 2;
+    const L = PLAYER_EXP_ROW;
+    expect(L.reward.x + L.reward.size / 2).toBeLessThanOrEqual(halfPopup - 60);
+    expect(L.bar.width / 2).toBeLessThan(L.reward.x - L.reward.size / 2);
+    expect(L.width / 2).toBeLessThanOrEqual(halfPopup - 60);
+    // 레벨 판 위끝부터 올린 몫 아래끝까지가 블록 높이 안에 든다.
+    expect(L.gain.y + L.gain.size / 2 - (L.badge.y - L.badge.height / 2)).toBeLessThanOrEqual(L.height);
   });
 });
 

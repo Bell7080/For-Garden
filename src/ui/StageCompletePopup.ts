@@ -73,20 +73,24 @@ export interface StageCompletePopupOptions {
 }
 
 const WIDTH = 940;
-/**
- * 판 높이. 표제와 편성 SD 사이에 **연구원 경험치 줄**(`PlayerExpGainRow`)이 서므로 그만큼 위로
- * 넓다 — 표제는 판 윗변에서, 그 아래 조각들은 판 가운데에서 재므로 늘어난 몫은 표제 쪽에만 생긴다.
- */
+/** 판 높이. 표제는 판 윗변에서, 그 아래 조각들은 판 가운데에서 잰다. */
 const HEIGHT = 1360;
-/** 경험치 줄의 자리 — 표제 바로 아래. 레벨업 표제가 그 위로 한 뼘 떠오르므로 표제와 간격을 둔다. */
-const EXP_ROW_Y = -HEIGHT / 2 + 212;
+/**
+ * 연구원 경험치 블록(`PlayerExpGainRow`)의 자리 — **기여도 버튼 아래, 보상 줄 바로 위**, 가운데 정렬.
+ *
+ * 표제 바로 아래에 두던 때는 한 판의 결말(누가 잘했나 → 무엇을 받았나) 사이가 아니라 그 앞에 서서,
+ * 연구원이 얼마나 컸는지가 승리 표제에 묻혔다. 받은 것과 한 덩어리로 읽히도록 보상 바로 위에 둔다.
+ */
+const EXP_ROW_Y = 172;
+/** 기여도 그래프 입구. 편성 SD 이름줄과 경험치 블록 사이다. */
+const CONTRIBUTION_Y = 50;
 /**
  * 보상 줄의 자리. 스토리의 치즈케이크 한 장과 원정의 전리품 여럿이 **같은 줄**을 쓴다.
  *
  * 액자 크기는 `RewardPopup`의 158보다 한 뼘 작다 — 그쪽은 영수증 한 장이 전부인 판이지만
  * 여기는 위에 승리 표제와 편성 SD가 이미 서 있어, 같은 크기로 두면 보상이 MVP보다 먼저 읽힌다.
  */
-const REWARD_ROW = { y: 300, frame: 132, gap: 168 } as const;
+const REWARD_ROW = { y: 320, frame: 132, gap: 168 } as const;
 
 /**
  * 실패 결산창이 보상 자리에 세우는 버튼 줄.
@@ -95,16 +99,16 @@ const REWARD_ROW = { y: 300, frame: 132, gap: 168 } as const;
  * 자리는 고를 것이 하나뿐인 영수증이 아니라 **다음에 어디로 갈지**를 고르는 자리라 줄마다
  * 한 번씩 읽혀야 한다.
  */
-const DEFEAT_ACTIONS = { top: 252, width: 420, height: 86, gap: 18, belowLoot: 396 } as const;
+const DEFEAT_ACTIONS = { top: 272, width: 420, height: 86, gap: 18, belowLoot: 416 } as const;
 
 /** 이긴 판의 「다시 하기」. 보상 줄과 그 아래 한 줄(점수 증가분) 밑에 선다. */
-const REPLAY = { y: 510, width: 420, height: 86 } as const;
+const REPLAY = { y: 530, width: 420, height: 86 } as const;
 
 /**
  * MVP는 크게, 좌우 둘은 작게 — 가로 간격은 예전 카드 규격을 그대로 빌려 쓰고, 세로는 발끝이
  * 한 줄에 맞도록 SD 그림 높이만 다르게 잡는다. `groundY`가 모두 같은 값을 쓰는 이유다.
  */
-const SD = { mvp: { width: 200, height: 300 }, side: { width: 150, height: 220 }, gap: 26, groundY: -30 };
+const SD = { mvp: { width: 200, height: 300 }, side: { width: 150, height: 220 }, gap: 26, groundY: -70 };
 
 /**
  * 스토리 스테이지 승리 결과.
@@ -155,18 +159,19 @@ export class StageCompletePopup {
       body.add(closeCatcher);
 
       this.buildTitle(body, defeated);
-      if (expReceipt) addPlayerExpGainRow(this.scene, body, EXP_ROW_Y, expReceipt);
       // SD는 body 바깥, 팝업 층 바로 위에 화면 좌표로 세운다.
       puppetLayer = this.scene.add.container(0, 0).setDepth((body.parentContainer?.depth ?? 0) + 1);
       this.buildFighterPuppets(body, puppetLayer, puppets, () => disposed, options.fighters);
-      attackButton = new Button(this.scene, 0, 90, {
+      attackButton = new Button(this.scene, 0, CONTRIBUTION_Y, {
         width: 360, height: 84, label: t("stageComplete.contribution"), fontSize: 26,
         // 그래프를 보는 동안은 이 버튼이 뒤에서 겹쳐 눌리지 않도록 숨겼다가, 그래프를 닫으면
         // 다시 보여준다.
         onClick: () => { attackButton?.setVisible(false); options.onOpenContribution(() => { if (!disposed) attackButton?.setVisible(true); }); },
       });
       body.add(attackButton);
-      body.add(drawHairline(this.scene, 0, 168, WIDTH - 140, { color: defeated ? COLOR.danger : COLOR.accent, alpha: 0.3 }));
+      // 경험치를 올린 판이면 그 블록이, 아니면(원정처럼 스테미나를 쓰지 않는 판) 얇은 구분선이 같은 자리에 선다.
+      if (expReceipt) addPlayerExpGainRow(this.scene, body, EXP_ROW_Y, expReceipt);
+      else body.add(drawHairline(this.scene, 0, EXP_ROW_Y, WIDTH - 140, { color: defeated ? COLOR.danger : COLOR.accent, alpha: 0.3 }));
       if (options.reward.kind === "storyClear") {
         this.buildClearReward(body, Math.floor(options.reward.cheesecakeEarned), options.reward.firstClear);
         if (options.replay) this.buildReplay(body, close, options.replay);

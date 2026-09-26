@@ -10,5 +10,13 @@ export const DUNGEON_ZH_HANT = {
   "dungeon.sortie": "出擊",
   "dungeon.sweep": "掃蕩",
   "dungeon.sweep.title": "掃蕩完成",
+  "dungeon.sweep.tier": "{name} · LV.{level}",
+  "dungeon.sweep.needHave": "{need} / {have}",
+  "dungeon.sweep.stamina": "體力",
+  "dungeon.sweep.membership": "無需掃蕩券即可掃蕩。",
+  "dungeon.sweep.ticketShort": "掃蕩券不足。觀看廣告即可獲得掃蕩券。",
+  "dungeon.sweep.staminaShort": "體力不足。",
+  "dungeon.sweep.notCleared": "只能掃蕩已通關的階段。",
+  "dungeon.sweep.expected": "預計獎勵",
   "party.hordeCount": "{count}名敵人",
 } as const;

@@ -10,5 +10,13 @@ export const DUNGEON_PT_BR = {
   "dungeon.sortie": "Partir",
   "dungeon.sweep": "Varredura",
   "dungeon.sweep.title": "Varredura concluída",
+  "dungeon.sweep.tier": "{name} · LV.{level}",
+  "dungeon.sweep.needHave": "{need} / {have}",
+  "dungeon.sweep.stamina": "Estamina",
+  "dungeon.sweep.membership": "Varredura sem bilhetes de varredura.",
+  "dungeon.sweep.ticketShort": "Bilhetes de varredura insuficientes. Assista a um anúncio para obter mais.",
+  "dungeon.sweep.staminaShort": "Estamina insuficiente.",
+  "dungeon.sweep.notCleared": "Só é possível fazer varredura de etapas vencidas.",
+  "dungeon.sweep.expected": "Recompensas previstas",
   "party.hordeCount": "{count} inimigos",
 } as const;

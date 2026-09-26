@@ -10,5 +10,13 @@ export const DUNGEON_JA = {
   "dungeon.sortie": "出撃",
   "dungeon.sweep": "掃討",
   "dungeon.sweep.title": "掃討完了",
+  "dungeon.sweep.tier": "{name} · LV.{level}",
+  "dungeon.sweep.needHave": "{need} / {have}",
+  "dungeon.sweep.stamina": "スタミナ",
+  "dungeon.sweep.membership": "掃討券なしで掃討できます。",
+  "dungeon.sweep.ticketShort": "掃討券が足りません。広告を見て掃討券を受け取りましょう。",
+  "dungeon.sweep.staminaShort": "スタミナが足りません。",
+  "dungeon.sweep.notCleared": "クリアした段階のみ掃討できます。",
+  "dungeon.sweep.expected": "予想報酬",
   "party.hordeCount": "敵 {count}体",
 } as const;

@@ -10,5 +10,13 @@ export const DUNGEON_RU = {
   "dungeon.sortie": "В бой",
   "dungeon.sweep": "Зачистка",
   "dungeon.sweep.title": "Зачистка завершена",
+  "dungeon.sweep.tier": "{name} · LV.{level}",
+  "dungeon.sweep.needHave": "{need} / {have}",
+  "dungeon.sweep.stamina": "Выносливость",
+  "dungeon.sweep.membership": "Зачистка без билетов зачистки.",
+  "dungeon.sweep.ticketShort": "Не хватает билетов зачистки. Посмотрите рекламу, чтобы получить ещё.",
+  "dungeon.sweep.staminaShort": "Недостаточно выносливости.",
+  "dungeon.sweep.notCleared": "Зачистка доступна только для пройденных этапов.",
+  "dungeon.sweep.expected": "Ожидаемые награды",
   "party.hordeCount": "Врагов: {count}",
 } as const;

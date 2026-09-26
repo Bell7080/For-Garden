@@ -10,5 +10,13 @@ export const DUNGEON_TH = {
   "dungeon.sortie": "ออกรบ",
   "dungeon.sweep": "กวาดล้าง",
   "dungeon.sweep.title": "กวาดล้างเสร็จสิ้น",
+  "dungeon.sweep.tier": "{name} · LV.{level}",
+  "dungeon.sweep.needHave": "{need} / {have}",
+  "dungeon.sweep.stamina": "สตามินา",
+  "dungeon.sweep.membership": "กวาดล้างได้โดยไม่ต้องใช้ตั๋วกวาดล้าง",
+  "dungeon.sweep.ticketShort": "ตั๋วกวาดล้างไม่พอ ดูโฆษณาเพื่อรับตั๋วกวาดล้าง",
+  "dungeon.sweep.staminaShort": "สตามินาไม่พอ",
+  "dungeon.sweep.notCleared": "กวาดล้างได้เฉพาะด่านที่ผ่านแล้ว",
+  "dungeon.sweep.expected": "รางวัลที่คาดว่าจะได้",
   "party.hordeCount": "ศัตรู {count} ตัว",
 } as const;

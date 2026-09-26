@@ -9,6 +9,9 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { drawGlyph } from "./glyphs";
 import type { RewardPopupItem } from "./rewardPopupModel";
 import { addFramedIcon } from "./itemFrame";
+import type { PlayerExpReceipt } from "../core/playerLevel";
+import { addPlayerExpGainRow } from "./PlayerExpGainRow";
+import { PLAYER_EXP_ROW } from "./playerExpLayout";
 
 // 기존 호출부는 UI 진입점 하나만 알면 되도록 순수 표시 변환도 함께 다시 내보낸다.
 export { currencyRecordToRewardItems, productGrantsToRewardItems, type RewardPopupItem } from "./rewardPopupModel";
@@ -29,11 +32,16 @@ export interface RewardPopupOptions {
    * 판이 낮아 아래에 빈 자리가 남으므로 거기에 글자만 세운다.
    */
   footnote?: string;
+  /**
+   * 이 결과를 만든 스테미나가 올린 연구원 경험치(소탕). 주면 판 **머리**에 결과판과 같은 경험치
+   * 블록(`PlayerExpGainRow`)이 서고, 판은 그만큼 위로 자란다.
+   */
+  playerExp?: PlayerExpReceipt;
   onConfirm?: () => void;
 }
 
 /** 모바일 안전 여백 안에서 네 칸까지 한 줄에 담고, 그 이상은 같은 줄을 가로로 훑는 낮은 규격이다. */
-const REWARD_POPUP = { width: 920, height: 360, viewport: 820, frame: 158, gap: 198, frameY: -8 } as const;
+const REWARD_POPUP = { width: 920, height: 360, viewport: 820, frame: 158, gap: 198, frameY: -8, expGap: 40 } as const;
 
 /**
  * 서버에서 이미 지급이 확정된 결과를 짧게 확인시키는 공용 팝업이다.
@@ -50,12 +58,16 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
 
   // 팝업 중심은 기준 게임 화면 중심이며 E2E에는 내용 대신 표시 칸 수와 확인 입력점만 알린다.
   // 확인 입력점은 액자 줄 **아래**다 — 가운데를 누르면 한 칸짜리 영수증에서는 그 액자의 안내창이 열린다.
-  setDebugRewardPopup(true, items.length, { x: BASE_WIDTH / 2, y: BASE_HEIGHT / 2 + 140 });
+  // 경험치 블록이 서면 판이 그만큼 위로 자라고, 영수증 줄은 판 아래쪽 절반에 그대로 남는다.
+  const expRoom = options.playerExp ? PLAYER_EXP_ROW.height + REWARD_POPUP.expGap : 0;
+  const height = REWARD_POPUP.height + expRoom;
+  const shift = expRoom / 2;
+  setDebugRewardPopup(true, items.length, { x: BASE_WIDTH / 2, y: BASE_HEIGHT / 2 + 140 + shift });
   // 확인 안내는 팝업 안이 아니라 화면 하단에 둔다. "어디를 눌러도 넘어간다"는 말은 팝업 밖의 말이다.
   let hint: Phaser.GameObjects.Text | undefined;
   popups.open({
     width: REWARD_POPUP.width,
-    height: REWARD_POPUP.height,
+    height,
     title: options.title ?? t("reward.title"),
     titleSize: options.titleSize,
     // 영수증은 원래 화면의 맥락을 남기되, 아래 작업판보다 높은 층에서 불필요한 돌아가기를 가린다.
@@ -73,7 +85,12 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
   }, (body, close) => {
     // 로비가 별도로 만든 우하단 뒤로가기(depth 2100)도 보상 확인 중에는 보이거나 눌리지 않는다.
     body.parentContainer?.setDepth(4000);
-    const strip = scene.add.container(0, 0);
+    if (options.playerExp) {
+      // 블록의 레벨 판 위끝이 판 윗변(제목표) 아래로 한 뼘 내려서게 둔다.
+      const blockY = -height / 2 + 64 + (PLAYER_EXP_ROW.badge.height / 2 - PLAYER_EXP_ROW.badge.y);
+      addPlayerExpGainRow(scene, body, blockY, options.playerExp);
+    }
+    const strip = scene.add.container(0, shift);
     const contentWidth = (items.length - 1) * REWARD_POPUP.gap + REWARD_POPUP.frame;
     const overflow = Math.max(0, contentWidth - REWARD_POPUP.viewport);
     // 한 개부터 네 개까지는 전체 묶음의 중심을 원점에 맞추고, 넘칠 때만 좌우 끝까지 이동시킨다.
@@ -94,12 +111,12 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
 
     // 내용만 잘라 액자들이 닫기 버튼이나 안전 여백을 침범하지 않게 한다.
     const maskShape = scene.make.graphics({ x: body.x, y: body.y });
-    maskShape.fillStyle(0xffffff).fillRect(-REWARD_POPUP.viewport / 2, -100, REWARD_POPUP.viewport, 205);
+    maskShape.fillStyle(0xffffff).fillRect(-REWARD_POPUP.viewport / 2, -100 + shift, REWARD_POPUP.viewport, 205);
     strip.setMask(maskShape.createGeometryMask());
 
-    body.add(drawHairline(scene, 0, 108, 700, { color: COLOR.accent, alpha: 0.3 }));
+    body.add(drawHairline(scene, 0, 108 + shift, 700, { color: COLOR.accent, alpha: 0.3 }));
     if (options.footnote) {
-      body.add(scene.add.text(0, REWARD_POPUP.height / 2 + 54, options.footnote, textStyle({ role: "display", size: 38, color: COLOR.sortieText }))
+      body.add(scene.add.text(0, height / 2 + 54, options.footnote, textStyle({ role: "display", size: 38, color: COLOR.sortieText }))
         .setOrigin(0.5)
         .setShadow(0, 4, "#000000", 6, false, true));
     }
@@ -112,7 +129,7 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
     hint.setShadow(0, 3, "#000000", 4, false, true);
 
     // 짧은 누름은 확인, 가로 끌기는 보상 줄 이동으로 갈라 눌러 닫기와 스크롤을 함께 보존한다.
-    const hit = scene.add.rectangle(0, 20, REWARD_POPUP.width, REWARD_POPUP.height - 80, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    const hit = scene.add.rectangle(0, 20, REWARD_POPUP.width, height - 80, 0xffffff, 0).setInteractive({ useHandCursor: true });
     let downX = 0; let stripX = 0; let dragged = false;
     hit.on("pointerdown", (pointer: Phaser.Input.Pointer) => { downX = pointer.x; stripX = strip.x; dragged = false; });
     hit.on("pointermove", (pointer: Phaser.Input.Pointer) => {

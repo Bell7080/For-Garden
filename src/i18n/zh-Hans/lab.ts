@@ -54,7 +54,6 @@ export const LAB_ZH_HANS = {
   "lab.pull.discount": "-{percent}%",
   "lab.pull.gemTitle": "用宝石补足",
   "lab.pull.gemMessage": "用宝石补足不够的{currency}，进行{count}次研究。",
-  "lab.pull.gemBalance": "持有宝石 {before} → {after}",
   "lab.pull.gemConfirm": "研究",
   "lab.pity.remaining": "剩余研究",
   "lab.policy.limit": "每个账号{limit}次 · 仅限研究x10 · {limit}次内必出1个SSR",

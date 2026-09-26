@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import { CONFIRM_DIALOG, confirmButtonXs, confirmDialogHeight, confirmPlateHeight } from "../../src/ui/confirmDialogLayout";
 
 describe("확인 창 한 벌", () => {
-  const plain = { messageHeight: 84, costs: false, note: false };
-  const rich = { messageHeight: 84, costs: true, note: true };
+  const plain = { messageHeight: 84, costs: false, balance: false };
+  const rich = { messageHeight: 84, costs: true, balance: true };
 
   it("창 높이는 쌓인 내용에서 거꾸로 구한다 — 값 줄·곁말이 서면 그만큼 자란다", () => {
     const L = CONFIRM_DIALOG;
-    expect(confirmPlateHeight(rich) - confirmPlateHeight(plain)).toBe(L.costGap + L.costIcon + L.noteGap + L.noteHeight);
+    expect(confirmPlateHeight(rich) - confirmPlateHeight(plain)).toBe(L.costGap + L.costIcon + L.balanceGap + L.balanceHeight);
     expect(confirmDialogHeight(rich) - confirmDialogHeight(plain)).toBe(confirmPlateHeight(rich) - confirmPlateHeight(plain));
   });
 

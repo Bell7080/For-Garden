@@ -472,7 +472,7 @@ export class ArchaeologyScene extends Phaser.Scene {
     const finish = new Button(this, BASE_WIDTH / 2, ARCHAEOLOGY.finishButton.y, {
       width: ARCHAEOLOGY.finishButton.width, height: ARCHAEOLOGY.finishButton.height,
       label: t("archaeology.finish"),
-      onClick: () => { if (!this.digging) void this.finishRun(board); },
+      onClick: () => { if (!this.digging) this.requestFinish(board); },
     });
     this.view.add(this.add.existing(finish));
 
@@ -533,6 +533,20 @@ export class ArchaeologyScene extends Phaser.Scene {
   }
 
   /** 남은 횟수를 버리고 판을 닫는다. 이미 캔 것은 그대로 남으므로 영수증만 한 장 띄운다. */
+  /**
+   * 굴착이 남아 있으면 한 번 묻는다 — 판을 여는 데 이미 횟수를 치렀고 남은 굴착은 돌아오지 않는다.
+   * 다 판 판은 묻지 않고 곧바로 닫는다(버릴 것이 없다).
+   */
+  private requestFinish(board: StrataBoardView): void {
+    if (board.digsLeft <= 0) { void this.finishRun(board); return; }
+    this.popups.confirm({
+      title: t("archaeology.finish"),
+      message: t("archaeology.finishMessage", { count: board.digsLeft }),
+      confirmLabel: t("archaeology.finish"),
+      destructive: true,
+    }, () => { if (!this.digging) void this.finishRun(board); });
+  }
+
   private async finishRun(board: StrataBoardView): Promise<void> {
     this.digging = true;
     try {

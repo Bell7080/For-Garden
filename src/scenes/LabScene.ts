@@ -328,7 +328,7 @@ export class LabScene extends Phaser.Scene {
       title: t("lab.pull.gemTitle"),
       message: t("lab.pull.gemMessage", { currency: t(`currency.${banner.currency}`), count }),
       costs: pullCostParts(banner, count),
-      note: t("lab.pull.gemBalance", { before: session.wallet.gems.toLocaleString(), after: (session.wallet.gems - payment.gems).toLocaleString() }),
+      balance: { iconKey: CURRENCY_ICON_BY_WALLET.gems, before: session.wallet.gems, after: session.wallet.gems - payment.gems },
       confirmLabel: t("lab.pull.gemConfirm"),
     }, () => { void this.doPull(count); });
   }

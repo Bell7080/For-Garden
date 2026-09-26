@@ -8,6 +8,8 @@ export const RUNE_TH = {
   "rune.nameTitle": "ชื่อรูน",
   "rune.nameSaved": "บันทึกชื่อแล้ว",
   "rune.sell": "ขาย",
+  "rune.sell.title": "ขายรูน",
+  "rune.sell.message": "ขายรูนนี้ รูนที่ขายแล้วไม่สามารถกู้คืนได้",
   "rune.craft": "เจียระไน",
   "rune.craftTitle": "เจียระไนรูน",
   "rune.unequip": "ถอด",

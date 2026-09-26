@@ -8,6 +8,8 @@ export const RUNE_ZH_HANS = {
   "rune.nameTitle": "符文名称",
   "rune.nameSaved": "名称已保存。",
   "rune.sell": "出售",
+  "rune.sell.title": "出售符文",
+  "rune.sell.message": "出售这个符文。已出售的符文无法恢复。",
   "rune.craft": "打磨",
   "rune.craftTitle": "符文打磨",
   "rune.unequip": "卸下",

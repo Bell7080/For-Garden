@@ -489,16 +489,6 @@
 "Fehlendes {currency} mit Juwelen ausgleichen und {count}-mal forschen.",
 "Недостающий ресурс «{currency}» покрыть самоцветами и провести исследование: {count} раз."
 ],
-"lab.pull.gemBalance": [
-"持有宝石 {before} → {after}",
-"เจมที่มี {before} → {after}",
-"Ngọc đang có {before} → {after}",
-"Permata {before} → {after}",
-"Gemas {before} → {after}",
-"Gemas {before} → {after}",
-"Juwelen {before} → {after}",
-"Самоцветы {before} → {after}"
-],
 "lab.pull.gemConfirm": [
 "研究",
 "วิจัย",

@@ -20,6 +20,8 @@ export const INVENTORY_ID = {
   "stamina.sources": "Sumber",
   "stamina.uses": "Digunakan untuk",
   "stamina.recharge": "Isi Ulang",
+  "stamina.gemTitle": "Isi dengan Permata",
+  "stamina.gemMessage": "Gunakan Permata untuk memulihkan {amount} Stamina.",
   "stamina.spend": "Pakai",
   "stamina.adRemaining": "Hari ini {left}/{limit}",
   "stamina.watchAd": "Tonton",

@@ -899,6 +899,16 @@
 "Erkundung beenden",
 "Завершить разведку"
 ],
+"archaeology.finishMessage": [
+"放弃剩余的{count}次挖掘并结束探查。剩余次数不会返还。",
+"จบการสำรวจโดยไม่ใช้การขุดที่เหลือ {count} ครั้ง การขุดที่เหลือจะไม่ได้คืน",
+"Kết thúc khảo sát khi còn {count} lượt đào chưa dùng. Lượt đào còn lại sẽ không được hoàn.",
+"Akhiri survei dengan {count} galian tersisa. Galian tersisa tidak dikembalikan.",
+"Terminar la exploración sin usar {count} excavaciones. No se devuelven.",
+"Encerrar a exploração sem usar {count} escavações. Elas não são devolvidas.",
+"Erkundung beenden, {count} Grabungen bleiben ungenutzt. Sie werden nicht erstattet.",
+"Завершить исследование, не используя оставшиеся раскопки: {count}. Они не возвращаются."
+],
 "archaeology.reward.expected": [
 "预计收获",
 "ผลที่คาดว่าจะได้",
@@ -2458,6 +2468,16 @@
 "Cancelar",
 "Abbrechen",
 "Отмена"
+],
+"popup.balance": [
+"持有",
+"มีอยู่",
+"Đang có",
+"Dimiliki",
+"Tienes",
+"Possui",
+"Besitz",
+"Есть"
 ],
 "expedition.entry": [
 "远征",

@@ -103,6 +103,7 @@ export const MISC_KO = {
   "archaeology.map.cooling": "재탐사까지 {time}",
   "archaeology.map.noCharge": "탐사 횟수가 없습니다",
   "archaeology.finish": "탐사 종료",
+  "archaeology.finishMessage": "남은 굴착 {count}회를 쓰지 않고 탐사를 마칩니다. 남은 굴착은 돌아오지 않습니다.",
   "archaeology.reward.expected": "기대 획득",
   "archaeology.reward.rawStone": "원석",
   "archaeology.reward.rune": "룬",
@@ -292,6 +293,7 @@ export const MISC_KO = {
   "interaction.done": "완료",
   "damage.immune": "무효",
   "popup.cancel": "취소",
+  "popup.balance": "보유",
   "expedition.entry": "원정",
 
   // 스테이지 지도

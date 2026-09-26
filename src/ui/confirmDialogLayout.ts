@@ -2,7 +2,7 @@
  * 확인 창의 자리 — Phaser를 모르는 순수 배치표.
  *
  * 되돌릴 수 없는 조작 앞에서 한 번 묻는 창(젬 쓰기·원정 포기·저장 초기화…)은 모두 이 한 벌을 쓴다.
- * 창 높이는 손으로 적지 않고 **문장 높이 · 값 줄 · 곁말 줄에서 거꾸로 구한다** — 문장이 두 줄이 되거나
+ * 창 높이는 손으로 적지 않고 **문장 높이 · 값 줄 · 보유 줄에서 거꾸로 구한다** — 문장이 두 줄이 되거나
  * 언어가 바뀌어도 버튼이 판 밖으로 나가지 않는다(`tests/unit/confirmDialog.test.ts`).
  */
 export const CONFIRM_DIALOG = {
@@ -19,10 +19,15 @@ export const CONFIRM_DIALOG = {
   costGap: 30,
   costIcon: 104,
   costSpacing: 40,
-  /** 곁말 줄(보유 → 남는 양 같은 한 줄). */
-  noteGap: 22,
-  noteSize: 24,
-  noteHeight: 32,
+  /**
+   * 보유 줄 — `보유 [그림] 5,000 → 2,300`. 곁말처럼 흐린 한 줄로 두면 정작 얼마가 남는지가 읽히지
+   * 않아, **재화 그림과 두 수를 값 글자 크기로** 세운다. 이름표(「보유」)만 작고 흐리다.
+   */
+  balanceGap: 26,
+  balanceHeight: 56,
+  balanceLabelSize: 24,
+  balanceIcon: 46,
+  balanceValueSize: 32,
   /** 안쪽 판 아랫변에서 버튼 가운데까지. */
   buttonRoom: 96,
   button: { width: 320, height: 104, gap: 40, fontSize: 34 },
@@ -40,8 +45,8 @@ export interface ConfirmDialogContent {
   messageHeight: number;
   /** 값 줄이 서는가. */
   costs: boolean;
-  /** 곁말 줄이 서는가. */
-  note: boolean;
+  /** 보유 줄이 서는가. */
+  balance: boolean;
 }
 
 /** 안쪽 판의 높이. */
@@ -49,7 +54,7 @@ export function confirmPlateHeight(content: ConfirmDialogContent): number {
   const L = CONFIRM_DIALOG;
   return L.platePadY * 2 + content.messageHeight
     + (content.costs ? L.costGap + L.costIcon : 0)
-    + (content.note ? L.noteGap + L.noteHeight : 0);
+    + (content.balance ? L.balanceGap + L.balanceHeight : 0);
 }
 
 /** 창 높이. */

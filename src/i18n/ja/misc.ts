@@ -95,6 +95,7 @@ export const MISC_JA = {
   "archaeology.map.cooling": "再探査まで {time}",
   "archaeology.map.noCharge": "探査回数が足りません",
   "archaeology.finish": "探査終了",
+  "archaeology.finishMessage": "残りの掘削{count}回を使わずに探査を終えます。残った掘削は戻りません。",
   "archaeology.reward.expected": "期待獲得",
   "archaeology.reward.rawStone": "原石",
   "archaeology.reward.rune": "ルーン",
@@ -269,6 +270,7 @@ export const MISC_JA = {
   "interaction.done": "完了",
   "damage.immune": "無効",
   "popup.cancel": "キャンセル",
+  "popup.balance": "所持",
   "expedition.entry": "遠征",
 
   "stage.eliteMark": "精鋭",

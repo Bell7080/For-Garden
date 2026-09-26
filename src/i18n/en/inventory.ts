@@ -20,6 +20,8 @@ export const INVENTORY_EN = {
   "stamina.sources": "Sources",
   "stamina.uses": "Used for",
   "stamina.recharge": "Recharge",
+  "stamina.gemTitle": "Recharge with Gems",
+  "stamina.gemMessage": "Use Gems to restore {amount} Stamina.",
   "stamina.spend": "Spend",
   "stamina.adRemaining": "Today {left}/{limit}",
   "stamina.watchAd": "Watch",

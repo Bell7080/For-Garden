@@ -20,6 +20,8 @@ export const INVENTORY_DE = {
   "stamina.sources": "Quellen",
   "stamina.uses": "Verwendung",
   "stamina.recharge": "Aufladen",
+  "stamina.gemTitle": "Mit Juwelen aufladen",
+  "stamina.gemMessage": "Mit Juwelen {amount} Ausdauer wiederherstellen.",
   "stamina.spend": "Einsetzen",
   "stamina.adRemaining": "Heute {left}/{limit}",
   "stamina.watchAd": "Ansehen",

@@ -54,7 +54,6 @@ export const LAB_VI = {
   "lab.pull.discount": "-{percent}%",
   "lab.pull.gemTitle": "Bù bằng Ngọc",
   "lab.pull.gemMessage": "Bù phần {currency} còn thiếu bằng Ngọc và Nghiên cứu {count} lần.",
-  "lab.pull.gemBalance": "Ngọc đang có {before} → {after}",
   "lab.pull.gemConfirm": "Nghiên cứu",
   "lab.pity.remaining": "Nghiên cứu còn lại",
   "lab.policy.limit": "{limit} lượt mỗi tài khoản · Chỉ Nghiên cứu x10 · Chắc chắn 1 SSR trong {limit} lượt",

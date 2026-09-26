@@ -20,6 +20,8 @@ export const INVENTORY_RU = {
   "stamina.sources": "Источники",
   "stamina.uses": "Расход",
   "stamina.recharge": "Пополнить",
+  "stamina.gemTitle": "Восполнить самоцветами",
+  "stamina.gemMessage": "Потратить самоцветы и восстановить выносливость: {amount}.",
   "stamina.spend": "Потратить",
   "stamina.adRemaining": "Сегодня {left}/{limit}",
   "stamina.watchAd": "Смотреть",

@@ -58,7 +58,6 @@ export const LAB_EN = {
   "lab.pull.discount": "-{percent}%",
   "lab.pull.gemTitle": "Pay with Gems",
   "lab.pull.gemMessage": "Cover the missing {currency} with Gems and Research {count} times.",
-  "lab.pull.gemBalance": "Gems {before} → {after}",
   "lab.pull.gemConfirm": "Research",
   "lab.pity.remaining": "Research Left",
   "lab.policy.limit": "{limit} per account · Research x10 only · 1 SSR guaranteed within {limit}",

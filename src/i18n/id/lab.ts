@@ -54,7 +54,6 @@ export const LAB_ID = {
   "lab.pull.discount": "-{percent}%",
   "lab.pull.gemTitle": "Bayar dengan Permata",
   "lab.pull.gemMessage": "Tutupi {currency} yang kurang dengan Permata dan Riset {count} kali.",
-  "lab.pull.gemBalance": "Permata {before} → {after}",
   "lab.pull.gemConfirm": "Riset",
   "lab.pity.remaining": "Sisa Riset",
   "lab.policy.limit": "{limit} per akun · Hanya Riset x10 · 1 SSR terjamin dalam {limit}",

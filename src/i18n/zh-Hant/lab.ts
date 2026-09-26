@@ -54,7 +54,6 @@ export const LAB_ZH_HANT = {
   "lab.pull.discount": "-{percent}%",
   "lab.pull.gemTitle": "用寶石補足",
   "lab.pull.gemMessage": "用寶石補足不夠的{currency}，進行{count}次研究。",
-  "lab.pull.gemBalance": "持有寶石 {before} → {after}",
   "lab.pull.gemConfirm": "研究",
   "lab.pity.remaining": "剩餘研究",
   "lab.policy.limit": "每個賬號{limit}次 · 僅限研究x10 · {limit}次內必出1個SSR",

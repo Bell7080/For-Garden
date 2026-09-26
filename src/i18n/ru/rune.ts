@@ -8,6 +8,8 @@ export const RUNE_RU = {
   "rune.nameTitle": "Имя руны",
   "rune.nameSaved": "Имя сохранено.",
   "rune.sell": "Продать",
+  "rune.sell.title": "Продать руну",
+  "rune.sell.message": "Продать эту руну. Проданную руну нельзя вернуть.",
   "rune.craft": "Огранка",
   "rune.craftTitle": "Огранка руны",
   "rune.unequip": "Снять",

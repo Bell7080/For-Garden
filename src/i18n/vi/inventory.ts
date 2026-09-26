@@ -20,6 +20,8 @@ export const INVENTORY_VI = {
   "stamina.sources": "Nguồn",
   "stamina.uses": "Dùng cho",
   "stamina.recharge": "Nạp lại",
+  "stamina.gemTitle": "Nạp bằng Ngọc",
+  "stamina.gemMessage": "Dùng Ngọc để hồi {amount} Thể lực.",
   "stamina.spend": "Dùng",
   "stamina.adRemaining": "Hôm nay {left}/{limit}",
   "stamina.watchAd": "Xem",

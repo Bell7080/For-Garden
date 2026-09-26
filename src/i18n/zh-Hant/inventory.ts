@@ -20,6 +20,8 @@ export const INVENTORY_ZH_HANT = {
   "stamina.sources": "獲取途徑",
   "stamina.uses": "用途",
   "stamina.recharge": "充能",
+  "stamina.gemTitle": "用寶石補充",
+  "stamina.gemMessage": "使用寶石恢復{amount}點體力。",
   "stamina.spend": "使用",
   "stamina.adRemaining": "今日 {left}/{limit}",
   "stamina.watchAd": "觀看",

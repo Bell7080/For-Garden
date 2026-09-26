@@ -55,7 +55,6 @@ export const LAB_KO = {
   "lab.pull.discount": "-{percent}%",
   "lab.pull.gemTitle": "젬으로 채우기",
   "lab.pull.gemMessage": "모자란 {currency}{currency!을} 젬으로 채워 {count}회 연구합니다.",
-  "lab.pull.gemBalance": "보유 젬 {before} → {after}",
   "lab.pull.gemConfirm": "연구",
   "lab.pity.remaining": "남은 연구",
   "lab.policy.limit": "계정당 {limit}회 · 10회 연구만 · {limit}회 안에 SSR 1회 확정",

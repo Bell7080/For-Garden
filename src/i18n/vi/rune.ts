@@ -8,6 +8,8 @@ export const RUNE_VI = {
   "rune.nameTitle": "Tên Rune",
   "rune.nameSaved": "Đã lưu tên.",
   "rune.sell": "Bán",
+  "rune.sell.title": "Bán Rune",
+  "rune.sell.message": "Bán Rune này. Rune đã bán không thể lấy lại.",
   "rune.craft": "Mài",
   "rune.craftTitle": "Mài Rune",
   "rune.unequip": "Tháo",

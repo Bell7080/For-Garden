@@ -20,6 +20,8 @@ export const INVENTORY_ZH_HANS = {
   "stamina.sources": "获取途径",
   "stamina.uses": "用途",
   "stamina.recharge": "充能",
+  "stamina.gemTitle": "用宝石补充",
+  "stamina.gemMessage": "使用宝石恢复{amount}点体力。",
   "stamina.spend": "使用",
   "stamina.adRemaining": "今日 {left}/{limit}",
   "stamina.watchAd": "观看",

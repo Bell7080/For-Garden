@@ -20,6 +20,8 @@ export const INVENTORY_TH = {
   "stamina.sources": "แหล่งที่มา",
   "stamina.uses": "ใช้กับ",
   "stamina.recharge": "เติม",
+  "stamina.gemTitle": "เติมด้วยเจม",
+  "stamina.gemMessage": "ใช้เจมเพื่อฟื้นสตามินา {amount}",
   "stamina.spend": "ใช้",
   "stamina.adRemaining": "วันนี้ {left}/{limit}",
   "stamina.watchAd": "ดู",

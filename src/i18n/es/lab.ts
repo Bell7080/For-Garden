@@ -54,7 +54,6 @@ export const LAB_ES = {
   "lab.pull.discount": "-{percent}%",
   "lab.pull.gemTitle": "Pagar con gemas",
   "lab.pull.gemMessage": "Completa el {currency} que falta con gemas e investiga {count} veces.",
-  "lab.pull.gemBalance": "Gemas {before} → {after}",
   "lab.pull.gemConfirm": "Investigar",
   "lab.pity.remaining": "Investigaciones restantes",
   "lab.policy.limit": "{limit} por cuenta · Solo Investigar x10 · 1 SSR garantizado en {limit}",

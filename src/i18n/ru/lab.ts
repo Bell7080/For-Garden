@@ -54,7 +54,6 @@ export const LAB_RU = {
   "lab.pull.discount": "-{percent}%",
   "lab.pull.gemTitle": "Оплатить самоцветами",
   "lab.pull.gemMessage": "Недостающий ресурс «{currency}» покрыть самоцветами и провести исследование: {count} раз.",
-  "lab.pull.gemBalance": "Самоцветы {before} → {after}",
   "lab.pull.gemConfirm": "Исследовать",
   "lab.pity.remaining": "Осталось исследований",
   "lab.policy.limit": "{limit} на аккаунт · Только исследование x10 · 1 SSR гарантирован за {limit}",

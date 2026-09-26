@@ -8,6 +8,8 @@ export const RUNE_KO = {
   "rune.nameTitle": "룬 이름",
   "rune.nameSaved": "이름을 저장했습니다.",
   "rune.sell": "판매",
+  "rune.sell.title": "룬 판매",
+  "rune.sell.message": "이 룬을 판매합니다. 판매한 룬은 되돌릴 수 없습니다.",
   "rune.craft": "세공",
   "rune.craftTitle": "룬 세공",
   "rune.unequip": "해제",

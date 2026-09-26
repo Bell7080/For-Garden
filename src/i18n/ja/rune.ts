@@ -8,6 +8,8 @@ export const RUNE_JA = {
   "rune.nameTitle": "ルーン名",
   "rune.nameSaved": "名前を保存しました。",
   "rune.sell": "売却",
+  "rune.sell.title": "ルーン売却",
+  "rune.sell.message": "このルーンを売却します。売却したルーンは元に戻せません。",
   "rune.craft": "研磨",
   "rune.craftTitle": "ルーン研磨",
   "rune.unequip": "外す",

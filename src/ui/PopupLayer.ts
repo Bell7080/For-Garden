@@ -16,7 +16,7 @@ import { pressIn, pressOut } from "./pressFeedback";
 /** 제목 위계는 순수 배치표가 갖고 여기서는 다시 내보내기만 한다. */
 export { POPUP_TITLE_SIZE };
 
-/** 확인 창에 서는 것. `costs`는 치를 것을 액자로, `note`는 그 아래 한 줄 곁말이다. */
+/** 확인 창에 서는 것. `costs`는 치를 것을 액자로, `balance`는 그 재화가 지금 얼마에서 얼마가 되는지다. */
 export interface ConfirmOptions {
   title: string;
   message: string;
@@ -25,7 +25,7 @@ export interface ConfirmOptions {
   /** 취소 버튼 글자. `false`면 알리기만 하는 창이라 버튼 하나만 선다. */
   cancelLabel?: string | false;
   costs?: readonly { iconKey: string; amount: number; short?: boolean }[];
-  note?: string;
+  balance?: { iconKey: string; before: number; after: number };
 }
 
 /** 팝업 한 장을 여는 데 필요한 것. 내용은 콜백이 컨테이너에 직접 채운다. */
@@ -205,7 +205,7 @@ export class PopupLayer {
     const plateWidth = L.width - L.plateInset * 2;
     const message = this.scene.add.text(0, 0, options.message, textStyle({ role: "body", size: L.messageSize, color: COLOR.ink, align: "center", lineSpacing: L.messageLineSpacing, wrap: plateWidth - 72 })).setOrigin(0.5, 0);
     const costs = options.costs ?? [];
-    const content = { messageHeight: message.height, costs: costs.length > 0, note: options.note !== undefined };
+    const content = { messageHeight: message.height, costs: costs.length > 0, balance: options.balance !== undefined };
     const height = confirmDialogHeight(content);
     const single = options.cancelLabel === false;
     const tone = options.destructive ? COLOR.danger : COLOR.accent;
@@ -232,9 +232,9 @@ export class PopupLayer {
         });
         y += L.costIcon;
       }
-      if (options.note !== undefined) {
-        y += L.noteGap;
-        body.add(this.scene.add.text(0, y + L.noteHeight / 2, options.note, textStyle({ role: "emphasis", size: L.noteSize, color: COLOR.inkDim })).setOrigin(0.5));
+      if (options.balance) {
+        y += L.balanceGap;
+        body.add(this.addBalanceRow(y + L.balanceHeight / 2, options.balance));
       }
 
       const buttonY = plateTop + plateHeight + L.buttonRoom;
@@ -255,6 +255,35 @@ export class PopupLayer {
         onClick: () => { close(); onConfirm(); },
       }));
     });
+  }
+
+  /**
+   * 보유 줄 — `보유 [그림] 5,000 → 2,300`을 한 덩어리로 가운데에 세운다.
+   *
+   * 수는 값 글자(`display`)라 흐린 곁말보다 먼저 읽히고, 그림은 버튼 안의 비용 표기처럼 검은 복제를
+   * 깔아 앉힌다(액자를 두면 위의 값 액자와 같은 무게가 되어 무엇을 치르는지가 흐려진다). 줄어드는 쪽은
+   * 붉게, 늘어나는 쪽은 강조색으로 남는 수를 칠한다.
+   */
+  private addBalanceRow(y: number, balance: NonNullable<ConfirmOptions["balance"]>): Phaser.GameObjects.Container {
+    const L = CONFIRM_DIALOG;
+    const row = this.scene.add.container(0, y);
+    const label = this.scene.add.text(0, 0, t("popup.balance"), textStyle({ role: "emphasis", size: L.balanceLabelSize, color: COLOR.inkDim })).setOrigin(0, 0.5);
+    const shadow = this.scene.add.image(0, 4, balance.iconKey).setDisplaySize(L.balanceIcon, L.balanceIcon).setTint(0x05070a).setAlpha(0.55);
+    const icon = this.scene.add.image(0, 0, balance.iconKey).setDisplaySize(L.balanceIcon, L.balanceIcon);
+    const before = this.scene.add.text(0, 0, balance.before.toLocaleString(), textStyle({ role: "display", size: L.balanceValueSize, color: COLOR.ink })).setOrigin(0, 0.5);
+    const arrow = this.scene.add.text(0, 0, "→", textStyle({ role: "display", size: L.balanceValueSize, color: COLOR.inkDim })).setOrigin(0, 0.5);
+    const afterColor = balance.after < balance.before ? COLOR.dangerText : COLOR.accentText;
+    const after = this.scene.add.text(0, 0, balance.after.toLocaleString(), textStyle({ role: "display", size: L.balanceValueSize, color: afterColor })).setOrigin(0, 0.5);
+    const gap = 14;
+    const total = label.width + gap * 1.6 + L.balanceIcon + gap * 0.6 + before.width + gap + arrow.width + gap + after.width;
+    let x = -total / 2;
+    label.setX(x); x += label.width + gap * 1.6;
+    shadow.setX(x + L.balanceIcon / 2 + 3); icon.setX(x + L.balanceIcon / 2); x += L.balanceIcon + gap * 0.6;
+    before.setX(x); x += before.width + gap;
+    arrow.setX(x); x += arrow.width + gap;
+    after.setX(x);
+    row.add([label, shadow, icon, before, arrow, after]);
+    return row;
   }
 
   /** 팝업 한 장을 연다. `build`는 판 가운데를 원점으로 하는 컨테이너를 받는다. */

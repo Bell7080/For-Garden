@@ -199,6 +199,26 @@
 "Aufladen",
 "Пополнить"
 ],
+"stamina.gemTitle": [
+"用宝石补充",
+"เติมด้วยเจม",
+"Nạp bằng Ngọc",
+"Isi dengan Permata",
+"Recargar con gemas",
+"Recarregar com gemas",
+"Mit Juwelen aufladen",
+"Восполнить самоцветами"
+],
+"stamina.gemMessage": [
+"使用宝石恢复{amount}点体力。",
+"ใช้เจมเพื่อฟื้นสตามินา {amount}",
+"Dùng Ngọc để hồi {amount} Thể lực.",
+"Gunakan Permata untuk memulihkan {amount} Stamina.",
+"Usa gemas para recuperar {amount} de estamina.",
+"Use gemas para recuperar {amount} de estamina.",
+"Mit Juwelen {amount} Ausdauer wiederherstellen.",
+"Потратить самоцветы и восстановить выносливость: {amount}."
+],
 "stamina.spend": [
 "使用",
 "ใช้",

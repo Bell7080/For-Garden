@@ -60,7 +60,6 @@ export const LAB_JA = {
   "lab.pull.discount": "-{percent}%",
   "lab.pull.gemTitle": "ジェムで補う",
   "lab.pull.gemMessage": "足りない{currency}をジェムで補って{count}回研究します。",
-  "lab.pull.gemBalance": "所持ジェム {before} → {after}",
   "lab.pull.gemConfirm": "研究",
   "lab.pity.remaining": "残り研究",
   "lab.policy.limit": "アカウントごとに{limit}回・10回研究のみ・{limit}回以内にSSR1回確定",

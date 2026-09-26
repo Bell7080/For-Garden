@@ -54,7 +54,6 @@ export const LAB_DE = {
   "lab.pull.discount": "-{percent}%",
   "lab.pull.gemTitle": "Mit Juwelen zahlen",
   "lab.pull.gemMessage": "Fehlendes {currency} mit Juwelen ausgleichen und {count}-mal forschen.",
-  "lab.pull.gemBalance": "Juwelen {before} → {after}",
   "lab.pull.gemConfirm": "Forschen",
   "lab.pity.remaining": "Verbleibende Forschung",
   "lab.policy.limit": "{limit} pro Konto · Nur Forschung x10 · 1 SSR garantiert in {limit}",

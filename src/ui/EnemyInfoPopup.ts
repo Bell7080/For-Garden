@@ -9,16 +9,14 @@ import { KeywordManager } from "../managers/KeywordManager";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { openElementPopup, openRolePopup } from "./affinityPopups";
-import { addPopupBackgroundImage, BACKGROUND } from "./backgrounds";
-import { ENEMY_INFO, enemyInfoPanelCenterY, enemyInfoSkillColumns } from "./enemyInfoLayout";
+import { ENEMY_INFO, enemyInfoPanelCenterY } from "./enemyInfoLayout";
 import {
   addInfoFerocityBadge, addInfoFigureStand, addInfoMagnifier, addInfoPanel, addInfoRoleBadge, buildSkillViewModel,
   openBreakthroughStepsPopup, openEncounterRolePopup, openExtraStatsPopup, openFerocityTraitPopup, paintRarityGem, slotFallbackIcon,
 } from "./info";
+import { mountInfoPopupFrame } from "./infoPopupFrame";
 import { addObservationJournalButton, openObservationJournal } from "./ObservationJournal";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
-import { drawFrameVignette, drawGlassFade, drawShapeOutline } from "./holo";
-import { popupArtShape, popupBodyShapeMask } from "./popupArt";
 import { addBreakthroughGradeMark } from "./rarityMark";
 import { addSectionTitle } from "./SectionTitle";
 import { shrinkTextToWidth } from "./textFit";
@@ -86,63 +84,19 @@ export class EnemyInfoPopup {
       dim: true, dimAlpha: 0.64, closeOnBackdrop: false, backButton: true,
       onClose: () => this.dispose(),
     }, (body) => {
-      // 정보창을 줄여 놓은 판이라 **배경 원화도 같은 것을 깐다.** 판과 같은 실루엣으로 잘라
-      // 깎인 모서리 밖으로 나가지 않게 한다.
-      const shape = popupArtShape(ENEMY_INFO.width, ENEMY_INFO.height);
-      addPopupBackgroundImage(this.scene, body, BACKGROUND.info, { x: 0, y: 0, width: ENEMY_INFO.width, height: ENEMY_INFO.height, maskShape: shape, overlayStrength: 0.62 });
-      // 정보창은 원화 위에 **은은한 검은 면 한 겹**을 깔아 인물과 글자를 앞으로 끌어낸다.
-      // 같은 값(`COLOR.void` 0.52)을 그대로 쓰고 판과 같은 실루엣으로 자른다.
-      body.add(this.scene.add.rectangle(0, 0, ENEMY_INFO.width, ENEMY_INFO.height, COLOR.void, 0.52).setMask(popupBodyShapeMask(this.scene, body, shape)));
-      // 가장자리 누르기도 정보창과 **같은 세기**(0.6)다. 화면이 아니라 판 안에서 가운데로 눈이 간다.
-      body.add(drawFrameVignette(this.scene, 0, 0, ENEMY_INFO.width, ENEMY_INFO.height, { strength: 0.6, spread: 0.18 }).setMask(popupBodyShapeMask(this.scene, body, shape)));
-      /*
-       * **이 창만 사방 외곽선을 두른다.**
-       *
-       * 홀로그램 규칙은 판때기에 테두리를 두르지 않지만(위·구분선만), 이 판은 배경 원화 위에
-       * 원화 한 장을 통째로 세우고 그 원화가 판 밑변에서 잘린다 — 선이 없으면 어디까지가 창이고
-       * 어디부터가 뒤 화면인지 흐려져 잘린 단면이 "덜 그려진 것"처럼 보인다. 선은 **몸판과 같은
-       * 도형**을 따라가므로 깎인 두 모서리도 그대로 돈다.
-       *
-       * 색은 강조색이 아니라 **검정**이다 — 강조색 선을 사방에 두르면 그 선이 판 안의 강조색
-       * 수치·제목과 같은 무게로 읽혀 창 전체가 한 겹 더 시끄러워진다. 어두운 획은 배경에서
-       * 판을 떼어 놓는 일만 하고 물러난다.
-       *
-       * 판(`body`)에 넣는 이유는 원화 때문이다 — 원화 위층에 두르면 그 층의 이름줄 어둠과
-       * 함께 움직여야 하고, 제목표는 `moveTitle`로 그보다 더 위에 올려 두었다.
-       */
-      body.add(drawShapeOutline(this.scene, 0, 0, shape, { color: COLOR.void, alpha: 0.92, width: 7 }));
-      // 원화와 SD는 판 위에 서지만 그 위의 칸·액자에는 가려야 한다. Puppet은 컨테이너 변환을
-      // 물려받지 않아 판 안에 넣을 수 없으므로, 팝업 층과 다음 팝업(쪽지) 사이에 두 층을 낸다.
-      const depth = body.parentContainer?.depth ?? this.popups.baseDepth;
-      const mask = popupBodyShapeMask(this.scene, body, shape);
-      const chrome = this.scene.add.container(body.x, body.y).setDepth(depth + 0.6).setAlpha(0).setScale(0.96);
-      // 이름줄 뒤의 어둠은 원화보다 위, 글자보다 아래다 — 정보창과 같이 판이 아니라 내려오는
-      // 그라데이션 한 겹이라, 밝은 원화 앞에서도 이름과 개체번호가 읽힌다. **판 윗변에서**
-      // 시작해야 시작선이 가로줄로 보이지 않는다.
-      chrome.add(drawGlassFade(this.scene, 0, ENEMY_INFO.nameFade.top + ENEMY_INFO.nameFade.height / 2, ENEMY_INFO.width, ENEMY_INFO.nameFade.height, { topAlpha: 0.9, bottomAlpha: 0 }).setMask(popupBodyShapeMask(this.scene, chrome, shape)));
+      // 판(배경 원화·검은 면·가장자리 누르기·외곽선)과 그 위의 칸 층은 소환수 창과 같은 한 장이다.
+      const { chrome, mask, depth } = mountInfoPopupFrame(this.scene, this.popups, body, ENEMY_INFO);
       this.chrome = chrome;
-      // 판과 함께 떠오르게 같은 등장 tween을 건다 — 층이 다르다고 따로 나타나면 두 장으로 보인다.
-      this.scene.tweens.add({ targets: chrome, alpha: 1, duration: 160 });
-      this.scene.tweens.add({ targets: chrome, scale: 1, duration: 200, ease: "Cubic.Out" });
-      // 제목표를 이 층으로 끌어올린다 — 판 안에 두면 바로 위의 이름줄 어둠이 `/정보창`과 그
-      // 그림자를 함께 눌러 흐려진다. 판과 같은 자리·같은 배율이라 좌표는 그대로 맞는다.
-      this.popups.moveTitle(body, chrome);
-      // 아군 정보창과 **같은 검사 계약**을 게시한다 — 두 원화는 ZIP을 내려받아 세우므로 첫
-      // 프레임보다 늦게 도착하고, 그 전에 찍은 그림은 판만 있고 인물이 없다. 같은 창을 보는
-      // 두 화면이 서로 다른 신호를 쓰면 자동화가 한쪽만 기다리게 된다.
-      setDebugInfoAssetReady({ portrait: false, sd: false });
-      this.paintHeader(chrome, snapshot);
+      const ctx = { scene: this.scene, popups: this.popups, keywords: this.keywords };
+      paintInfoHeader(ctx, chrome, snapshot.def, ENEMY_INFO);
       this.paintLevel(chrome, snapshot);
-      this.paintStats(chrome, snapshot.def);
-      this.paintSkills(chrome, snapshot);
-      const solo = sdOnly(snapshot.def);
-      const stand = solo ? ENEMY_INFO.soloFigure : ENEMY_INFO.figure;
-      addInfoFigureStand(this.scene, chrome, stand.x, stand.groundY);
+      paintInfoStats(ctx, chrome, snapshot.def, ENEMY_INFO);
+      paintInfoSkills(ctx, chrome, snapshot, ENEMY_INFO, ["passive", "basic", "ultimate"]);
+      addInfoFigureStand(this.scene, chrome, ENEMY_INFO.figure.x, ENEMY_INFO.figure.groundY);
+      // 아군 창과 같은 돋보기 — 원화를 통째로 보는 입구다. 판이 열려 있는 동안에만 살아 있다.
       this.galleryBody = body;
       this.shownDef = snapshot.def;
-      // 아군 창과 같은 돋보기 — 원화를 통째로 보는 입구다. 판이 열려 있는 동안에만 살아 있다.
-      // 전신이 없는 몸은 볼 원화가 없으므로 입구도 세우지 않는다.
-      if (!solo) addInfoMagnifier(this.scene, this.popups, chrome, ENEMY_INFO.portraitMagnifier.x, ENEMY_INFO.portraitMagnifier.y, (from) => this.enterGallery(from.onClose, mask));
+      addInfoMagnifier(this.scene, this.popups, chrome, ENEMY_INFO.portraitMagnifier.x, ENEMY_INFO.portraitMagnifier.y, (from) => this.enterGallery(from.onClose, mask));
       /*
        * **관찰 일지도 아군 창과 같은 한 장이다.**
        *
@@ -227,38 +181,7 @@ export class EnemyInfoPopup {
     this.figure?.setVisible(true);
   }
 
-  /** 왼쪽 위 이름 블록 — 정보창과 같은 순서·같은 글자 크기·같은 그림자다. */
-  private paintHeader(chrome: Phaser.GameObjects.Container, snapshot: EnemyInfoSnapshot): void {
-    const { def } = snapshot;
-    const scene = this.scene;
-    // 등급 글자는 **정보창과 같은 함수**가 칠한다 — 글자 높이를 따라 색이 흐르는 보석 연출이라
-    // 화면이 단색으로 다시 칠하면 같은 등급이 여기서만 맨 글자로 보인다.
-    const rarityGlow = scene.add.text(ENEMY_INFO.left, ENEMY_INFO.rarityY, "", textStyle({ role: "display", size: 44 }))
-      .setOrigin(0, 0.5).setAlpha(0.55).setScale(1.06).setBlendMode(Phaser.BlendModes.ADD);
-    const rarityText = scene.add.text(ENEMY_INFO.left, ENEMY_INFO.rarityY, "", textStyle({ role: "display", size: 44 })).setOrigin(0, 0.5);
-    chrome.add([rarityGlow, rarityText]);
-    paintRarityGem(rarityText, rarityGlow, def.rarity);
-    // 이름은 같은 글자를 검게 한 겹 어긋나게 깔아 그림자를 만든다. 흐린 그림자보다 또렷하다.
-    const shadow = scene.add.text(ENEMY_INFO.left + 6, ENEMY_INFO.nameY + 8, def.name, textStyle({ role: "display", size: 84, color: "#05070a" })).setOrigin(0, 0.5).setAlpha(0.85);
-    const name = scene.add.text(ENEMY_INFO.left, ENEMY_INFO.nameY, def.name, textStyle({ role: "display", size: 84 })).setOrigin(0, 0.5);
-    // 이름과 뱃지 둘이 돌파 등급 표식 앞에서 끝나도록 이름만 줄인다. 뱃지를 줄이면 속성·직군이
-    // 개체마다 다른 크기로 서고, 그대로 두면 긴 이름이 뱃지를 오른쪽 기둥 위로 밀어낸다.
-    const { badge } = ENEMY_INFO;
-    shrinkTextToWidth(name, ENEMY_INFO.nameRight - ENEMY_INFO.left - (badge.gap + badge.element + 12 + badge.role));
-    shadow.setFontSize(name.style.fontSize);
-    chrome.add([shadow, name]);
-    chrome.add(scene.add.text(ENEMY_INFO.left + 4, ENEMY_INFO.numberY, `NO.${def.specimenNumber}   ${def.origin}`, textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
-    // 이름 폭이 개체마다 다르므로 뱃지 자리도 그릴 때마다 이름 끝에서 다시 잡는다.
-    const badgeLeft = ENEMY_INFO.left + name.width + ENEMY_INFO.badge.gap;
-    const elementX = badgeLeft + ENEMY_INFO.badge.element / 2;
-    const roleX = badgeLeft + ENEMY_INFO.badge.element + ENEMY_INFO.badge.role / 2 + 12;
-    chrome.add(new AffinityBadge(scene, elementX, ENEMY_INFO.nameY, ELEMENT_ICON[def.element], ENEMY_INFO.badge.element));
-    chrome.add(new AffinityBadge(scene, roleX, ENEMY_INFO.nameY + 6, ROLE_ICON[def.role], ENEMY_INFO.badge.role));
-    // 적 표식도 아군 창과 **같은 쪽지**를 연다. 같은 그림이 어느 창에서 눌리느냐에 따라 다른
-    // 말을 하면 상성을 두 번 배우게 된다.
-    chrome.add(addAffinityTap(scene, elementX, ENEMY_INFO.nameY, ENEMY_INFO.badge.element, () => openElementPopup(scene, this.popups, def.element, { x: elementX, y: ENEMY_INFO.nameY })));
-    chrome.add(addAffinityTap(scene, roleX, ENEMY_INFO.nameY + 6, ENEMY_INFO.badge.role, () => openRolePopup(scene, this.popups, def.role, { x: roleX, y: ENEMY_INFO.nameY })));
-  }
+
 
   /**
    * 돌파 등급 표식과 레벨 칸.
@@ -290,97 +213,11 @@ export class EnemyInfoPopup {
       .setOrigin(0, 1));
   }
 
-  /** 능력치 칸 — 정보창과 **같은 오각형·같은 반지름·같은 사거리 줄**이다. */
-  private paintStats(chrome: Phaser.GameObjects.Container, def: RelicDef): void {
-    const scene = this.scene;
-    const { column, statPanel, radar, reach, statMagnifier } = ENEMY_INFO;
-    const panel = addInfoPanel(scene, chrome, column.x, enemyInfoPanelCenterY(statPanel), column.width, statPanel.height);
-    addSectionTitle(scene, column.x - column.width / 2, statPanel.top - 4, t("info.section.stats"), { parent: chrome });
-    addInfoMagnifier(scene, this.popups, panel, column.x + column.width / 2 - 30, enemyInfoPanelCenterY(statPanel) + statMagnifier.offsetY, (from) => openExtraStatsPopup(scene, this.popups, def, def.stats, from), true);
-    // 사거리는 오각형에 없는 축이라 제목 바로 아래에 이름표처럼 한 줄로만 선다.
-    panel.add(scene.add
-      .text(reach.offsetX, reach.offsetY, t("info.enemy.reach", { tier: reachLabel(def.reachTier) }), textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
-      .setOrigin(0, 0.5));
-    const chart = new StatRadar(scene, 0, radar.offsetY, radar.radius, {
-      size: 24,
-      colors: Object.fromEntries((["hp", "atk", "ap", "def", "res"] as const).map((key) => [key, `#${STAT_TONE[key].toString(16).padStart(6, "0")}`])),
-      values: true,
-      power: true,
-    });
-    panel.add(chart);
-    // 스테이지가 성장시킨 정의를 그대로 읽는다 — 창이 레벨 보정을 다시 하면 지도·편성·전투가
-    // 같은 적을 다른 수치로 말한다.
-    chart.draw(def.stats, radar.radius);
-  }
 
-  /**
-   * 왼쪽 아래 스킬 액자 셋과 패시브 위의 폭주 뱃지 — 정보창과 같은 자리·같은 크기다.
-   *
-   * 쪽지는 아군 창과 **같은 조립기**(`buildSkillViewModel`)를 지나므로 그 안의 태그도 그대로
-   * 열린다 — 화면마다 따로 만들면 같은 궁극기가 어디서는 실제 피해로, 어디서는 위력 %로 적힌다.
-   */
-  private paintSkills(chrome: Phaser.GameObjects.Container, snapshot: EnemyInfoSnapshot): void {
-    const { def } = snapshot;
-    const entries: { label: string; slot: SkillArtSlot; skill: Skill | Passive; gaugeCost?: number }[] = [
-      { label: skillSlotLabel("passive"), slot: "passive", skill: { ...def.passive, power: def.passive.value, damageType: "physical" } as unknown as Skill },
-      { label: skillSlotLabel("basic"), slot: "basic", skill: def.basic },
-      { label: skillSlotLabel("ultimate"), slot: "ultimate", skill: def.ultimate, gaugeCost: (def.ultimate as Ultimate).cost },
-    ];
-    const columns = enemyInfoSkillColumns(entries.length);
-    entries.forEach((entry, index) => {
-      const size = ENEMY_INFO.skills.size;
-      const container = this.scene.add.container(columns[index], ENEMY_INFO.skills.y);
-      container.add(addSkillIconFrame(this.scene, {
-        size, slot: entry.slot, relicId: def.id,
-        fallbackIcon: slotFallbackIcon(def, entry.slot),
-        element: def.element, role: def.role, label: entry.label,
-        // 강조는 돌파로 자란 칸만 갖는다 — 아군 창과 같은 규칙이다.
-        enhanced: breakthroughEnhances(def, snapshot.breakthrough, entry.slot),
-      }));
-      const hit = this.scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerdown", () => pressIn(container));
-      hit.on("pointerout", () => { if (!this.popups.isOpen) pressOut(container, "normal", { pop: false }); });
-      hit.on("pointerup", () => {
-        pressIn(container);
-        this.openSkill(snapshot, entry, { x: SCREEN_CENTER.x + container.x, y: SCREEN_CENTER.y + container.y - size / 2, onClose: () => pressOut(container) });
-      });
-      container.add(hit);
-      chrome.add(container);
-      // 패시브 위에만 이 개체의 피버 발현을 작게 얹는다. 야성은 벌이 아니라 상이라는 표시다.
-      if (index === 0) {
-        addInfoFerocityBadge(this.scene, this.popups, chrome, container.x, container.y + ENEMY_INFO.ferocityBadgeOffsetY, def, (from) => {
-          const breakthroughEffect = breakthroughEnhances(def, snapshot.breakthrough, "ferocity") ? breakthroughEffectText(def, "ferocity", def.stats) : undefined;
-          openFerocityTraitPopup(this.scene, this.popups, this.keywords, def, { ...from, x: SCREEN_CENTER.x + from.x, y: SCREEN_CENTER.y + from.y }, { breakthroughEffect });
-        });
-        /*
-         * **그 위에 역할(잡졸·무리·정예·보스·불사)이 같은 크기로 선다.** 자리가 곱하는 배율과
-         * 보스·불사가 갖는 강인함·경감은 개체의 패시브가 아니라 이 칸이 말한다. 자리를 새기지
-         * 않은 정의(도감처럼 전장에 서지 않은 개체)에는 세우지 않는다.
-         */
-        const role = def.encounterRole;
-        if (role !== undefined) {
-          addInfoRoleBadge(this.scene, this.popups, chrome, container.x, container.y + ENEMY_INFO.roleBadgeOffsetY, def, role, (from) => {
-            openEncounterRolePopup(this.scene, this.popups, this.keywords, role, { ...from, x: SCREEN_CENTER.x + from.x, y: SCREEN_CENTER.y + from.y });
-          });
-        }
-      }
-    });
-  }
 
-  /** 스킬 쪽지는 아군 창과 **같은 조립기**를 지난다. 태그도 그대로 열린다. */
-  private openSkill(
-    snapshot: EnemyInfoSnapshot,
-    entry: { label: string; slot: SkillArtSlot; skill: Skill | Passive; gaugeCost?: number },
-    from: { x: number; y: number; onClose: () => void },
-  ): void {
-    const { def, breakthrough } = snapshot;
-    // 적도 돌파로 스킬에 효과가 붙는다. 열린 등급의 몫만 노란 줄로 선다.
-    const breakthroughEffect = breakthroughEnhances(def, breakthrough, entry.slot) ? breakthroughEffectText(def, entry.slot, def.stats) : undefined;
-    openSkillPopup(this.scene, this.popups, this.keywords, buildSkillViewModel({
-      def, breakthrough, kindLabel: entry.label, skill: entry.skill, gaugeCost: entry.gaugeCost, slot: entry.slot,
-      breakthroughEffect,
-    }), from);
-  }
+
+
+
 
   /**
    * 전신 원화와 SD.
@@ -390,7 +227,6 @@ export class EnemyInfoPopup {
    * 않으므로 자리도 마스크도 화면 좌표로 잡는다.
    */
   private async loadPuppets(def: RelicDef, generation: number, portraitDepth: number, figureDepth: number, mask: Phaser.Display.Masks.GeometryMask): Promise<void> {
-    if (sdOnly(def)) { await this.loadSoloFigure(def, generation, portraitDepth, mask); return; }
     const asset = portraitAssetFor(def.portraitAssetId);
     const [portrait, figure] = await Promise.all([
       spawnPuppet(this.scene, asset, {
@@ -425,35 +261,6 @@ export class EnemyInfoPopup {
     setDebugInfoAssetReady({ portrait: true, sd: true });
   }
 
-  /**
-   * 전신이 없는 몸은 SD 하나를 왼쪽 기둥에 크게 세운다(`ENEMY_INFO.soloFigure`).
-   *
-   * 칸·액자보다 **아래 층**(전신 자리의 층)에 둔다 — 크게 선 몸이 폭주 뱃지나 능력치 칸을
-   * 덮지 않게 하려는 것이다. 받침에 선 SD와 같이 누르면 한 번 튄다.
-   */
-  private async loadSoloFigure(def: RelicDef, generation: number, depth: number, mask: Phaser.Display.Masks.GeometryMask): Promise<void> {
-    const { soloFigure } = ENEMY_INFO;
-    const figure = await spawnPuppet(this.scene, battleAssetFor(def.id), {
-      x: SCREEN_CENTER.x + soloFigure.x,
-      groundY: SCREEN_CENTER.y + soloFigure.groundY,
-      height: soloFigure.height,
-      depth,
-    });
-    if (generation !== this.generation || !this.open) { figure.destroy(); return; }
-    this.figure?.destroy();
-    this.figure = figure;
-    figure.disableInteractive();
-    figure.setMask(mask);
-    figure.setAlpha(0);
-    this.scene.tweens.add({ targets: figure, alpha: 1, duration: 220 });
-    enableHitOnClick(this.scene, figure);
-    setDebugInfoAssetReady({ portrait: true, sd: true });
-  }
-}
-
-/** 전신 원화가 따로 없고 SD 묶음이 곧 그 몸인 개체인가. 이름이 아니라 묶음으로 가른다. */
-function sdOnly(def: RelicDef): boolean {
-  return portraitAssetFor(def.portraitAssetId) === battleAssetFor(def.id);
 }
 
 /** 표식 위에 얹는 투명한 입력면. 뱃지 자체는 발광을 겹친 그림이라 입력을 받지 않는다. */
@@ -487,4 +294,155 @@ export function addEnemyPortraitTap(
     onTap();
   });
   return hit;
+}
+
+/** 창과 그 안의 쪽지가 함께 쓰는 셋. 적 창과 소환수 창이 같은 경계로 쪽지를 연다. */
+export interface InfoPopupContext {
+  scene: Phaser.Scene;
+  popups: PopupLayer;
+  keywords: KeywordManager;
+}
+
+/** 두 창이 같은 칸을 세우는 데 필요한 자리. `ENEMY_INFO`와 `SUMMON_INFO`가 모두 이 모양이다. */
+type Widen<T> = T extends number ? number : { readonly [K in keyof T]: Widen<T[K]> };
+export type InfoPopupLayout = Widen<Pick<typeof ENEMY_INFO, "width" | "left" | "rarityY" | "nameY" | "numberY" | "badge" | "nameRight" | "column" | "statPanel" | "radar" | "reach" | "statMagnifier" | "skills" | "ferocityBadgeOffsetY" | "roleBadgeOffsetY">>;
+
+/** 스킬 액자가 서는 x. 왼쪽 끝에서 같은 간격으로 이어진다. */
+function infoSkillColumns(L: InfoPopupLayout, count: number): number[] {
+  return Array.from({ length: count }, (_, index) => L.skills.x + index * L.skills.step);
+}
+
+/** 왼쪽 위 이름 블록 — 정보창과 같은 순서·같은 글자 크기·같은 그림자다. */
+export function paintInfoHeader(ctx: InfoPopupContext, chrome: Phaser.GameObjects.Container, def: RelicDef, L: InfoPopupLayout,
+  /** 등급 글자 자리에 대신 세울 한 줄(소환수의 「디안의 소환수」). 비우면 등급을 칠한다. */
+  eyebrow?: string): void {
+  const scene = ctx.scene;
+  if (eyebrow === undefined) {
+    // 등급 글자는 **정보창과 같은 함수**가 칠한다 — 글자 높이를 따라 색이 흐르는 보석 연출이라
+    // 화면이 단색으로 다시 칠하면 같은 등급이 여기서만 맨 글자로 보인다.
+    const rarityGlow = scene.add.text(L.left, L.rarityY, "", textStyle({ role: "display", size: 44 }))
+      .setOrigin(0, 0.5).setAlpha(0.55).setScale(1.06).setBlendMode(Phaser.BlendModes.ADD);
+    const rarityText = scene.add.text(L.left, L.rarityY, "", textStyle({ role: "display", size: 44 })).setOrigin(0, 0.5);
+    chrome.add([rarityGlow, rarityText]);
+    paintRarityGem(rarityText, rarityGlow, def.rarity);
+  } else {
+    // 소환수는 등급이 아니라 **누구의 몸인가**가 먼저다. 같은 자리·같은 크기로 이름 위에 선다.
+    chrome.add(scene.add.text(L.left, L.rarityY, eyebrow, textStyle({ role: "emphasis", size: 34, color: COLOR.accentText })).setOrigin(0, 0.5).setShadow(2, 4, "#05070a", 6, false, true));
+  }
+  // 이름은 같은 글자를 검게 한 겹 어긋나게 깔아 그림자를 만든다. 흐린 그림자보다 또렷하다.
+  const shadow = scene.add.text(L.left + 6, L.nameY + 8, def.name, textStyle({ role: "display", size: 84, color: "#05070a" })).setOrigin(0, 0.5).setAlpha(0.85);
+  const name = scene.add.text(L.left, L.nameY, def.name, textStyle({ role: "display", size: 84 })).setOrigin(0, 0.5);
+  // 이름과 뱃지 둘이 돌파 등급 표식 앞에서 끝나도록 이름만 줄인다. 뱃지를 줄이면 속성·직군이
+  // 개체마다 다른 크기로 서고, 그대로 두면 긴 이름이 뱃지를 오른쪽 기둥 위로 밀어낸다.
+  const { badge } = ENEMY_INFO;
+  shrinkTextToWidth(name, L.nameRight - L.left - (badge.gap + badge.element + 12 + badge.role));
+  shadow.setFontSize(name.style.fontSize);
+  chrome.add([shadow, name]);
+  chrome.add(scene.add.text(L.left + 4, L.numberY, `NO.${def.specimenNumber}   ${def.origin}`, textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
+  // 이름 폭이 개체마다 다르므로 뱃지 자리도 그릴 때마다 이름 끝에서 다시 잡는다.
+  const badgeLeft = L.left + name.width + L.badge.gap;
+  const elementX = badgeLeft + L.badge.element / 2;
+  const roleX = badgeLeft + L.badge.element + L.badge.role / 2 + 12;
+  chrome.add(new AffinityBadge(scene, elementX, L.nameY, ELEMENT_ICON[def.element], L.badge.element));
+  chrome.add(new AffinityBadge(scene, roleX, L.nameY + 6, ROLE_ICON[def.role], L.badge.role));
+  // 적 표식도 아군 창과 **같은 쪽지**를 연다. 같은 그림이 어느 창에서 눌리느냐에 따라 다른
+  // 말을 하면 상성을 두 번 배우게 된다.
+  chrome.add(addAffinityTap(scene, elementX, L.nameY, L.badge.element, () => openElementPopup(scene, ctx.popups, def.element, { x: elementX, y: L.nameY })));
+  chrome.add(addAffinityTap(scene, roleX, L.nameY + 6, L.badge.role, () => openRolePopup(scene, ctx.popups, def.role, { x: roleX, y: L.nameY })));
+}
+
+/** 능력치 칸 — 정보창과 **같은 오각형·같은 반지름·같은 사거리 줄**이다. */
+export function paintInfoStats(ctx: InfoPopupContext, chrome: Phaser.GameObjects.Container, def: RelicDef, L: InfoPopupLayout): void {
+  const scene = ctx.scene;
+  const { column, statPanel, radar, reach, statMagnifier } = L;
+  const panel = addInfoPanel(scene, chrome, column.x, enemyInfoPanelCenterY(statPanel), column.width, statPanel.height);
+  addSectionTitle(scene, column.x - column.width / 2, statPanel.top - 4, t("info.section.stats"), { parent: chrome });
+  addInfoMagnifier(scene, ctx.popups, panel, column.x + column.width / 2 - 30, enemyInfoPanelCenterY(statPanel) + statMagnifier.offsetY, (from) => openExtraStatsPopup(scene, ctx.popups, def, def.stats, from), true);
+  // 사거리는 오각형에 없는 축이라 제목 바로 아래에 이름표처럼 한 줄로만 선다.
+  panel.add(scene.add
+    .text(reach.offsetX, reach.offsetY, t("info.enemy.reach", { tier: reachLabel(def.reachTier) }), textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
+    .setOrigin(0, 0.5));
+  const chart = new StatRadar(scene, 0, radar.offsetY, radar.radius, {
+    size: 24,
+    colors: Object.fromEntries((["hp", "atk", "ap", "def", "res"] as const).map((key) => [key, `#${STAT_TONE[key].toString(16).padStart(6, "0")}`])),
+    values: true,
+    power: true,
+  });
+  panel.add(chart);
+  // 스테이지가 성장시킨 정의를 그대로 읽는다 — 창이 레벨 보정을 다시 하면 지도·편성·전투가
+  // 같은 적을 다른 수치로 말한다.
+  chart.draw(def.stats, radar.radius);
+}
+
+/**
+ * 왼쪽 아래 스킬 액자 셋과 패시브 위의 폭주 뱃지 — 정보창과 같은 자리·같은 크기다.
+ *
+ * 쪽지는 아군 창과 **같은 조립기**(`buildSkillViewModel`)를 지나므로 그 안의 태그도 그대로
+ * 열린다 — 화면마다 따로 만들면 같은 궁극기가 어디서는 실제 피해로, 어디서는 위력 %로 적힌다.
+ */
+export function paintInfoSkills(ctx: InfoPopupContext, chrome: Phaser.GameObjects.Container, snapshot: EnemyInfoSnapshot, L: InfoPopupLayout,
+  /** 세울 액자. 소환수는 패시브가 성장 칸과 같은 말을 해 빼고 일반 공격부터 세운다. */
+  slots: readonly ("passive" | "basic" | "ultimate")[]): void {
+  const { def } = snapshot;
+  const all: { label: string; slot: SkillArtSlot; skill: Skill | Passive; gaugeCost?: number }[] = [
+    { label: skillSlotLabel("passive"), slot: "passive", skill: { ...def.passive, power: def.passive.value, damageType: "physical" } as unknown as Skill },
+    { label: skillSlotLabel("basic"), slot: "basic", skill: def.basic },
+    { label: skillSlotLabel("ultimate"), slot: "ultimate", skill: def.ultimate, gaugeCost: (def.ultimate as Ultimate).cost },
+  ];
+  const entries = all.filter((entry) => slots.includes(entry.slot as "passive" | "basic" | "ultimate"));
+  const columns = infoSkillColumns(L, entries.length);
+  entries.forEach((entry, index) => {
+    const size = L.skills.size;
+    const container = ctx.scene.add.container(columns[index], L.skills.y);
+    container.add(addSkillIconFrame(ctx.scene, {
+      size, slot: entry.slot, relicId: def.id,
+      fallbackIcon: slotFallbackIcon(def, entry.slot),
+      element: def.element, role: def.role, label: entry.label,
+      // 강조는 돌파로 자란 칸만 갖는다 — 아군 창과 같은 규칙이다.
+      enhanced: breakthroughEnhances(def, snapshot.breakthrough, entry.slot),
+    }));
+    const hit = ctx.scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", () => pressIn(container));
+    hit.on("pointerout", () => { if (!ctx.popups.isOpen) pressOut(container, "normal", { pop: false }); });
+    hit.on("pointerup", () => {
+      pressIn(container);
+      openInfoSkill(ctx, snapshot, entry, { x: SCREEN_CENTER.x + container.x, y: SCREEN_CENTER.y + container.y - size / 2, onClose: () => pressOut(container) });
+    });
+    container.add(hit);
+    chrome.add(container);
+    // 패시브 위에만 이 개체의 피버 발현을 작게 얹는다. 야성은 벌이 아니라 상이라는 표시다.
+    if (index === 0) {
+      addInfoFerocityBadge(ctx.scene, ctx.popups, chrome, container.x, container.y + L.ferocityBadgeOffsetY, def, (from) => {
+        const breakthroughEffect = breakthroughEnhances(def, snapshot.breakthrough, "ferocity") ? breakthroughEffectText(def, "ferocity", def.stats) : undefined;
+        openFerocityTraitPopup(ctx.scene, ctx.popups, ctx.keywords, def, { ...from, x: SCREEN_CENTER.x + from.x, y: SCREEN_CENTER.y + from.y }, { breakthroughEffect });
+      });
+      /*
+       * **그 위에 역할(잡졸·무리·정예·보스·불사)이 같은 크기로 선다.** 자리가 곱하는 배율과
+       * 보스·불사가 갖는 강인함·경감은 개체의 패시브가 아니라 이 칸이 말한다. 자리를 새기지
+       * 않은 정의(도감처럼 전장에 서지 않은 개체)에는 세우지 않는다.
+       */
+      const role = def.encounterRole;
+      if (role !== undefined) {
+        addInfoRoleBadge(ctx.scene, ctx.popups, chrome, container.x, container.y + L.roleBadgeOffsetY, def, role, (from) => {
+          openEncounterRolePopup(ctx.scene, ctx.popups, ctx.keywords, role, { ...from, x: SCREEN_CENTER.x + from.x, y: SCREEN_CENTER.y + from.y });
+        });
+      }
+    }
+  });
+}
+
+/** 스킬 쪽지는 아군 창과 **같은 조립기**를 지난다. 태그도 그대로 열린다. */
+function openInfoSkill(
+  ctx: InfoPopupContext,
+  snapshot: EnemyInfoSnapshot,
+  entry: { label: string; slot: SkillArtSlot; skill: Skill | Passive; gaugeCost?: number },
+  from: { x: number; y: number; onClose: () => void },
+): void {
+  const { def, breakthrough } = snapshot;
+  // 적도 돌파로 스킬에 효과가 붙는다. 열린 등급의 몫만 노란 줄로 선다.
+  const breakthroughEffect = breakthroughEnhances(def, breakthrough, entry.slot) ? breakthroughEffectText(def, entry.slot, def.stats) : undefined;
+  openSkillPopup(ctx.scene, ctx.popups, ctx.keywords, buildSkillViewModel({
+    def, breakthrough, kindLabel: entry.label, skill: entry.skill, gaugeCost: entry.gaugeCost, slot: entry.slot,
+    breakthroughEffect,
+  }), from);
 }

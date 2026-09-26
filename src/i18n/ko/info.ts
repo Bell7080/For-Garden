@@ -4,6 +4,15 @@ export const INFO_KO = {
   "info.section.stats": "능력치",
   // 적 전용 팝업 — 정보창을 줄여 놓은 창이라 머리글은 개체 이름이 아니라 창 이름이다.
   "info.enemy.title": "정보창",
+  // 소환수 정보창 — 적 창의 등급·돌파·레벨 자리에 지휘자와의 관계(성장 기준·재소환)가 선다.
+  "info.summon.title": "소환수",
+  "info.summon.owner": "{owner}의 소환수",
+  "info.summon.growth": "성장 기준",
+  "info.summon.growthSource": "{owner} {stat}",
+  "info.summon.resummon": "재소환",
+  "info.summon.resummonValue": "{seconds}초",
+  "info.summon.resummonHp": "체력 {percent}%",
+  "info.summon.resummonNone": "없음",
   "info.enemy.reach": "사거리 · {tier}",
   // 적 정보창의 역할 칸. 쪽지는 그 자리가 바꾸는 것만 말하고, 바꾸는 것이 없으면 그 적의 한마디다.
   "info.enemy.role": "역할",

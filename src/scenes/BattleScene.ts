@@ -49,6 +49,7 @@ import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { bindLongPress } from "../ui/longPressInfo";
 import { type InfoManager, sceneInfoManager } from "../ui/info";
 import { EnemyInfoPopup } from "../ui/EnemyInfoPopup";
+import { SummonInfoPopup } from "../ui/SummonInfoPopup";
 import { placedEnemyIndex, type PlacedEnemy } from "../data/placedEnemies";
 import { UltimateCutIn } from "../ui/UltimateCutIn";
 import {
@@ -363,6 +364,7 @@ export class BattleScene extends Phaser.Scene {
   private contributionChip!: ControlChip;
   /** 적 상세는 씬이 아니라 팝업 한 장이다 — 적에게는 유대·급여·룬이 없어 화면을 다 쓰면 초라하다. */
   private info!: EnemyInfoPopup;
+  private summonInfo!: SummonInfoPopup;
   /**
    * 전장에 실제로 선 적의 성장 스냅샷. 키는 난전이 매기는 `enemy-<index>`다.
    *
@@ -576,6 +578,7 @@ export class BattleScene extends Phaser.Scene {
     this.contributionResult = undefined;
     this.buffPopups = new PopupLayer(this, 2200);
     this.info = new EnemyInfoPopup(this, this.buffPopups);
+    this.summonInfo = new SummonInfoPopup(this, this.buffPopups);
     this.enemySnapshots = placedEnemyIndex(this.battleInput, stage, stageEnemies);
     this.openBuff = undefined;
     // 파편·파문은 SD보다 앞이되 궁극기 컷인(900)보다는 뒤라 연출을 가리지 않는다.
@@ -637,6 +640,19 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /** 두 원격 경계를 manager 흐름에 맡기고, 성공하면 전리품을 포함한 최종판을 곧바로 연다. */
+
+  /** 늑대를 누르면 소환수 창을 연다. 지휘자를 찾지 못하면 false — 부른 쪽이 적 창으로 되돌아간다. */
+  private openSummonInfo(fighter: Fighter): boolean {
+    if (fighter.summonOwnerId === null) return false;
+    // 이미 창이 떠 있으면 삼킨다 — 적 창으로 되돌아가면 한 번에 두 창이 겹친다.
+    if (this.info.isOpen || this.summonInfo.isOpen) return true;
+    const owner = this.state.fighters.find(({ id }) => id === fighter.summonOwnerId);
+    const summon = owner?.def.summons?.find(({ def }) => fighter.id.endsWith(`:${def.id}`));
+    if (!owner || !summon) return false;
+    // 전투 정의의 능력치가 곧 지휘자의 성장한 최종 능력치다.
+    this.summonInfo.show({ owner: owner.def, ownerStats: owner.def.stats, summon });
+    return true;
+  }
   private async submitAndSettleBoss(input: ExpeditionBossBattleInputDto, actions: ExpeditionBossAction[]): Promise<void> {
     // 전송 중 연타는 같은 멱등 요청조차 병렬 실행하지 않으며, 재시도는 낡은 실패판부터 걷는다.
     if (!beginBossSettlementAttempt(this.bossSettlementFailureState)) return;
@@ -944,7 +960,9 @@ export class BattleScene extends Phaser.Scene {
         ? this.add.rectangle(fighter.x, fighter.y - unitHeight / 2, 190 * fighter.bodyScale, unitHeight + 70, 0xffffff, 0)
           .setInteractive({ useHandCursor: true })
           .on("pointerup", () => {
-            // 배치된 그 개체를 그대로 연다. 스냅샷에 없는 소환수는 제 정의만 들고 1레벨로 선다.
+            // 소환수는 적 창이 아니라 소환수 창이다 — 레벨·돌파가 없고 지휘자의 한 능력치를 따라 자란다.
+            if (this.openSummonInfo(fighter)) return;
+            // 배치된 그 개체를 그대로 연다.
             this.info.show(this.enemySnapshots.get(fighter.id) ?? { def: fighter.def, level: 1, breakthrough: 0 });
           })
         : undefined;

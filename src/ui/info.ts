@@ -66,7 +66,7 @@ import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../cor
 import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, elationKeyword, passiveShieldKeyword, periodicStackKeyword, skillDescription } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
 import { deriveSummonStats } from "../core/summonStats";
-import { EnemyInfoPopup } from "./EnemyInfoPopup";
+import { SummonInfoPopup } from "./SummonInfoPopup";
 import { galleryPortraitPlacement, INFO_PORTRAIT_FOCUS, infoPortraitPlacement } from "./portraitPlacement";
 import { skinsForRelic } from "../data/relicSkins";
 import { relicSkinManager } from "../managers/RelicSkinManager";
@@ -433,7 +433,7 @@ export class InfoManager {
   private readonly popups: PopupLayer;
   private readonly keywords: KeywordManager;
   /** 쿠로·시로 태그가 여는 그 몸의 정보창. 처음 누를 때 한 번 세운다. */
-  private summonInfo?: EnemyInfoPopup;
+  private summonInfo?: SummonInfoPopup;
 
   private readonly rarityText: Phaser.GameObjects.Text;
   /** 등급 글자 뒤에 깔리는 같은 모양의 발광. 보석처럼 스스로 빛나 보이게 한다. */
@@ -1964,21 +1964,18 @@ export class InfoManager {
   /**
    * 쿠로·시로 태그를 누르면 뜻풀이 쪽지가 아니라 **그 몸의 정보창**(SD·스킬 액자·오각형)을 연다.
    *
-   * 늑대는 완전한 `RelicDef`를 가진 몸이라 적 정보창과 같은 한 장(`EnemyInfoPopup`)에 선다 —
-   * 소환수 전용 화면을 다시 만들면 스킬 액자·폭주 뱃지·능력치 상세가 그 창에서만 옛 모습으로
-   * 남는다. 능력치는 지휘자가 **지금** 가진 능력치에서 파생하고, 레벨·돌파는 늑대가 따로 갖지
-   * 않으므로 지휘자의 값을 그대로 적는다. 감추는 문맥에서는 태그 자체가 없어 여기도 비어 있다.
+   * 소환수 정보창(`SummonInfoPopup`)은 적 정보창과 같은 판·칸·액자를 쓰고, 등급·돌파·레벨 자리에
+   * 지휘자와의 관계(성장 기준·재소환)를 세운다. 능력치는 지휘자가 **지금** 가진 능력치에서
+   * 파생한다. 감추는 문맥에서는 태그 자체가 없어 여기도 비어 있다.
    */
   private summonActions(): Readonly<Record<string, () => void>> | undefined {
     const owner = this.currentDef;
     const summons = owner?.summons ?? [];
     if (!owner || summons.length === 0 || !this.capabilities.showSummons || !this.ownedNow) return undefined;
     const ownerStats = this.shownStats(owner);
-    const level = this.publicProfile ? this.publicProfile.level : relicProgression.getProgress(owner.id).level;
-    const breakthrough = this.shownBreakthrough(owner);
     return Object.fromEntries(summons.map((summon) => [`summon-${summon.def.id}`, () => {
-      this.summonInfo ??= new EnemyInfoPopup(this.scene, this.popups);
-      this.summonInfo.show({ def: { ...summon.def, stats: deriveSummonStats(ownerStats, summon) }, level, breakthrough });
+      this.summonInfo ??= new SummonInfoPopup(this.scene, this.popups);
+      this.summonInfo.show({ owner, ownerStats, summon });
     }]));
   }
 

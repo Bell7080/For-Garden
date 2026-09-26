@@ -2916,7 +2916,7 @@ export const RELICS: RelicDef[] = [
         def: KURO_DEF, growthStat: "atk",
         // 정의의 태생 능력치가 그대로 나오도록 디안의 태생 공격력 160에 곱하는 계수다. 쿠로는 공격력
         // 하나로 공격력·체력·방어·저항이 오르고, 공격 속도·이동 속도는 제 정의의 값 그대로다.
-        // 체력은 일부러 얇다(약 420) — 늑대는 두목을 가리는 방패라, 쓰러뜨리면 은신이 풀리는 순간이
+        // 체력은 일부러 얇다(약 420) — 늑대는 두목을 가리는 방패라, 둘 다 쓰러뜨리면 은신이 풀리는 순간이
         // 실제로 와야 한다. 두꺼웠던 때(약 700)는 1대1에서 늑대 둘을 뚫는 사이 판이 끝나 디안이
         // 승률과 잔여 체력을 함께 1위로 가져갔다. 내구를 더 줄 때는 체력이 아니라 방어·저항으로
         // 준다 — 체력은 +5%만 얹어도 그 1위 독점이 돌아오고, 방어·저항은 +20%(0.35 → 0.42)까지 버틴다.
@@ -2924,15 +2924,16 @@ export const RELICS: RelicDef[] = [
         // 편성원과 같은 키로 세우면 사람만 한 늑대가 되어 폭만 남는다. 칸 하나가 몸 셋을 세우므로
         // 전장이 난잡해지지 않게 작게 세우고, 밀어내는 간격도 몸집만큼 줄어든다(`pairSpacing`).
         bodyScale: 0.6,
-        // 쓰러진 뒤 긴 공백을 남기고 불완전한 체력으로 돌아와 늑대를 소모품처럼 던질 수 없게 한다.
-        resummon: { enabled: true, cooldownSeconds: 20, hpPercent: 40 },
+        // 쓰러진 뒤 공백을 남기고 불완전한 체력으로 돌아와 늑대를 소모품처럼 던질 수 없게 한다. 20초였을 때는
+        // 대개 판이 먼저 끝나 다시 서는 일이 없었다 — 12초면 한 판 안에 돌아와 은신을 다시 세운다.
+        resummon: { enabled: true, cooldownSeconds: 12, hpPercent: 40 },
       },
       {
         def: SHIRO_DEF, growthStat: "ap",
         scaling: { hp: 2.67, atk: 0.98, def: 0.44, res: 0.47 },
         // 같은 몸집으로 읽혀야 하는 한 쌍이라 털색만 다른 쿠로와 같은 배율을 쓴다.
         bodyScale: 0.6,
-        resummon: { enabled: true, cooldownSeconds: 20, hpPercent: 40 },
+        resummon: { enabled: true, cooldownSeconds: 12, hpPercent: 40 },
       },
     ],
     /**
@@ -2941,19 +2942,19 @@ export const RELICS: RelicDef[] = [
      * 무엇이 얼마나 오르는지는 여기 적지 않는다 — 그 값은 폭주하는 몸이 갖는다(`packBody`).
      * 디안 자신은 폭주해도 때리는 손이 달라지지 않는다. 앞에 선 것은 늑대이기 때문이다.
      */
-    ferocityTrait: { name: "무리", effectId: "summonPackFrenzy" },
+    ferocityTrait: { name: "대장님은 우리가 지켜!", effectId: "summonPackFrenzy" },
     /**
-     * 첫 픽업이라 **한 문장으로 읽혀야 한다** — 늑대를 부르고, 둘이 서 있는 동안 숨는다.
+     * 첫 픽업이라 **한 문장으로 읽혀야 한다** — 늑대를 부르고, 한 마리라도 서 있는 동안 숨는다.
      *
      * 척후(전투력 1위를 첫 표적으로)·무리 치명타·피 냄새 겹을 걷어 냈다. 셋 다 화면에서 보이지
      * 않는 숫자라 "왜 이렇게 됐는가"를 설명하는 데만 문장을 썼다. 남긴 은신은 SD가 반투명해지고
-     * 늑대가 쓰러지는 순간 풀려 눈으로 읽힌다.
+     * 마지막 늑대가 쓰러지는 순간 풀려 눈으로 읽힌다.
      */
     passive: {
       id: "dian-passive", name: "우두머리의 경계", kind: "summonCommander",
       iconAssetId: "skill-icon-buff", effectType: "buff", value: 0,
       // 전용 분기가 문장을 짓는다. 이 사본은 화면에 뜨지 않는 데이터 문서용이다.
-      desc: "전투 시작 시 쿠로와 시로를 소환한다. 둘이 모두 살아 있는 동안 은신한다. 한 마리라도 쓰러지면 은신이 풀린다.",
+      desc: "전투 시작 시 쿠로와 시로를 소환한다. 한 마리라도 살아 있는 동안 은신한다. 둘 다 쓰러지면 은신이 풀린다.",
     },
     /**
      * 공격력 40% + 주문력 60%를 **한 번의 물리 피해**로 낸다.
@@ -2961,18 +2962,17 @@ export const RELICS: RelicDef[] = [
      * 물리·마법 두 축을 따로 내던 합공(늑대가 없으면 번갈아 25%)은 같은 한 방을 두 수로 말해야 했다.
      * 두 능력치를 다 쓰는 것은 그대로 두되 피해 종류는 하나다.
      *
-     * **목덜미는 암살자의 마무리다** — 체력 30% 이하인 적에게 본 타격 뒤 공격력 125% + 주문력 125%의
-     * 마법 치명타 한 대를 더 문다(표적마다 8초). 순간이동과 확정
+     * **목덜미는 암살자의 마무리다** — 체력 30% 이하인 적에게 피해가 두 배가 된다. 순간이동과 확정
      * 치명타로 열던 때는 자리만 옮겨 다녀 "끝낸다"가 숫자로 읽히지 않았다. 두목은 이제 가장 뒤에 선 채
      * 약해진 적을 끝낸다.
      */
     basic: {
       id: "dian-basic", name: "얘들아, 물어!", power: 40, secondaryScaling: { stat: "ap", power: 60 },
       iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", scalingStat: "atk", targeting: "single",
-      finisher: { thresholdPercent: 30, atkPercent: 125, apPercent: 125, cooldownSeconds: 8 },
+      finisher: { thresholdPercent: 30, bonusDamagePercent: 100, cooldownSeconds: 8 },
     },
     /**
-     * 표적을 크게 물고(체력 30% 이하면 목덜미 한 대가 더), 살아 있는 늑대가 그 표적에게 곧바로 제
+     * 표적을 크게 물고(체력 30% 이하면 목덜미로 두 배), 살아 있는 늑대가 그 표적에게 곧바로 제
      * 궁극기를 쓴다.
      *
      * 늑대의 돌진은 제 정의의 궁극기 그대로다(쿠로 출혈 · 시로 둔화) — 따로 적은 돌진 위력과 부활
@@ -2981,7 +2981,7 @@ export const RELICS: RelicDef[] = [
     ultimate: {
       id: "dian-ult", name: "다 같이 덮쳐!", power: 60, secondaryScaling: { stat: "ap", power: 90 },
       iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", scalingStat: "atk", cost: 130, targeting: "single",
-      finisher: { thresholdPercent: 30, atkPercent: 125, apPercent: 125, cooldownSeconds: 8 },
+      finisher: { thresholdPercent: 30, bonusDamagePercent: 100, cooldownSeconds: 8 },
       commandsPack: true,
     },
   },

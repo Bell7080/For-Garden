@@ -104,7 +104,7 @@ export function attackDamagePopupRequest(
   event: {
     amount: number;
     damageType: "physical" | "magical" | "true";
-    skill: "basic" | "ultimate" | "staccato" | "transfer" | "shimmer" | "weakpoint" | "nape";
+    skill: "basic" | "ultimate" | "staccato" | "transfer" | "shimmer" | "weakpoint";
     critical: boolean;
     mitigated?: boolean;
   },

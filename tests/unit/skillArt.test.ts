@@ -669,21 +669,20 @@ describe("스킬 설명문 양식 계약", () => {
     const body = passiveDescription(dian.passive, dian.stats.atk);
     // 무엇을 부르는지가 먼저다. 이름 없이 "귀속 소환수"라고만 하면 누구인지 눌러 볼 수도 없다.
     expect(body).toBe("전투 시작 시 [[summon-kuro|쿠로]]와 [[summon-shiro|시로]]를 소환한다. "
-      + "둘이 모두 살아 있는 동안 [[stealth|은신]]한다. 한 마리라도 쓰러지면 은신이 풀려 다시 표적이 된다.");
+      + "한 마리라도 살아 있는 동안 [[stealth|은신]]한다. 둘 다 쓰러지면 은신이 풀려 다시 표적이 된다.");
     // 첫 픽업이라 보이지 않는 숫자(척후·무리 치명타·겹)를 다시 들이지 않는다.
     for (const word of ["전투력", "치명타", "겹", "[[bloodscent|"]) expect(body).not.toContain(word);
   });
 
-  it("디안의 일반 공격은 한 줄의 물리 피해이고 목덜미는 문턱과 따로 드는 마법 치명타 한 대를 말한다", () => {
+  it("디안의 일반 공격은 한 줄의 물리 피해이고 목덜미는 문턱과 추가 피해를 말한다", () => {
     const dian = RELICS.find((def) => def.id === "dian")!;
     // 본문은 아이콘 위 라벨과 같은 합산 수치를 받아 쓴다: 160×40% + 158×60% = 159.
     const basic = skillDescription(dian.basic, { ap: 158, atk: { atk: 160, attackSpeed: 132 }, damage: 159 });
-    // 목덜미 한 대는 본 타격과 다른 피해라 제 수를 갖는다: 160×125% + 158×125% = 398.
     expect(basic).toBe("적 한 명에게 [[damage-value|159]]의 [[physical-damage|물리 피해]]를 준다. "
-      + "표적의 체력이 30% 이하면 [[nape|목덜미]]를 노려 [[damage-value|398]]의 [[magical-damage|마법 피해]]를 확정 치명타로 한 번 더 주고, 같은 표적에게는 8초에 한 번만 터진다.");
+      + "표적의 체력이 30% 이하면 [[nape|목덜미]]를 노려 확정 치명타로 피해가 100% 늘어나고, 같은 표적에게는 8초에 한 번만 터진다.");
 
     const ultimate = skillDescription(dian.ultimate, { ap: 158, atk: { atk: 160, attackSpeed: 132 }, damage: 238 });
-    expect(ultimate).toContain("표적의 체력이 30% 이하면 [[nape|목덜미]]를 노려 [[damage-value|398]]의 [[magical-damage|마법 피해]]를 확정 치명타로 한 번 더 주고, 같은 표적에게는 8초에 한 번만 터진다.");
+    expect(ultimate).toContain("표적의 체력이 30% 이하면 [[nape|목덜미]]를 노려 확정 치명타로 피해가 100% 늘어나고, 같은 표적에게는 8초에 한 번만 터진다.");
     // 늑대가 무엇을 하는지는 늑대의 궁극기가 말한다. 여기서는 부른다는 것만 적는다.
     expect(ultimate).toContain("살아 있는 [[summon-kuro|쿠로]]와 [[summon-shiro|시로]]가 그 표적에게 곧바로 궁극기를 쓴다.");
     expect(ultimate).not.toContain("부활 대기");

@@ -872,15 +872,8 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
    * 박으면 거짓말이 되고, 태그는 그것이 무엇인지(체력 낮은 적을 끝내는 한 방)만 말한다.
    */
   if ("finisher" in skill && skill.finisher !== undefined) {
-    const finisher = skill.finisher;
-    // 목덜미 한 대는 본 타격과 **다른 피해**다(공격력 + 주문력의 마법). 능력치를 알면 두 축을 더한
-    // 실제 값, 모르면 두 축의 %를 적는다 — 본 타격의 수를 빌려 쓰면 갈린다.
-    const type = t("skill.damageType.magical");
-    const damage = stats.atk === undefined || stats.ap === undefined
-      ? t("skill.damage.dualScaling", { stat: statName("atk"), percent: finisher.atkPercent, secondStat: statName("ap"), secondPercent: finisher.apPercent, type })
-      : t("skill.damage.value", { amount: Math.round(stats.atk.atk * finisher.atkPercent / 100 + stats.ap * finisher.apPercent / 100), type });
     clauses.push({
-      text: t("skill.clause.nape", { percent: finisher.thresholdPercent, damage, seconds: finisher.cooldownSeconds }),
+      text: t("skill.clause.nape", { percent: skill.finisher.thresholdPercent, bonus: skill.finisher.bonusDamagePercent, seconds: skill.finisher.cooldownSeconds }),
       standalone: true,
     });
   }

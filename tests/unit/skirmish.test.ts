@@ -181,17 +181,20 @@ describe("디안 무리 생명주기", () => {
     expect(wolves.every(isFighterAlive)).toBe(true);
   });
 
-  it("은 늑대 하나가 쓰러지면 즉시 은신을 끄고, 다시 서면 되살린다", () => {
+  it("은 한 마리가 남아 있으면 은신을 지키고, 둘 다 쓰러지면 끄며, 다시 서면 되살린다", () => {
     const state = createSkirmish([getRelic("dian")], [getRelic("amo")], ARENA);
     const dian = state.fighters[0];
-    const [kuro] = wolvesOf(state, dian.id);
+    const [kuro, shiro] = wolvesOf(state, dian.id);
     kuro.hp = 0;
+    stepSkirmish(state, 1 / 60);
+    expect(dian.stealthFor).toBe(Number.POSITIVE_INFINITY);
+    shiro.hp = 0;
     stepSkirmish(state, 1 / 60);
     expect(dian.stealthFor).toBe(0);
 
-    // 적 행동을 멈춰 재소환 조건만 관찰한다. 긴 대기 직전에는 아직 서지 않는다.
+    // 적 행동을 멈춰 재소환 조건만 관찰한다. 대기 직전에는 아직 서지 않는다.
     state.fighters[1].attackCooldown = 999;
-    advanceFor(state, 19.9);
+    advanceFor(state, 11.9);
     expect(isFighterAlive(kuro)).toBe(false);
     const returned = advanceFor(state, 0.2);
     expect(isFighterAlive(kuro)).toBe(true);
@@ -266,14 +269,10 @@ describe("디안 일반 공격·목덜미·궁극기", () => {
     expect(alone.map(({ damageType, amount }) => ({ damageType, amount }))).toEqual([{ damageType: "physical", amount: expected }]);
   });
 
-  it("은 표적이 문턱 아래면 자리를 옮기지 않고 본 타격 뒤에 공격력+주문력 마법 치명타 한 대를 더 문다", () => {
+  it("은 표적이 문턱 아래면 자리를 옮기지 않고 확정 치명타에 큰 추가 피해를 얹는다", () => {
     const { state, dian } = readyDian(1);
     const foe = state.fighters[1];
-    const finisher = dian.def.basic.finisher!;
-    const napeHit = computeDamage(dian, defensiveDefinition(foe, state), {
-      power: finisher.atkPercent, scalingStat: "atk", secondaryScaling: { stat: "ap", power: finisher.apPercent },
-      damageType: "magical", isCritical: true, kind: "basic",
-    });
+    const critical = computeDamage(dian, defensiveDefinition(foe, state), { ...dian.def.basic, isCritical: true, kind: "basic" });
     foe.hp = foe.maxHp * 0.2;
     const before = { x: dian.x, y: dian.y };
     const events = stepSkirmish(state, 0.01);
@@ -281,13 +280,11 @@ describe("디안 일반 공격·목덜미·궁극기", () => {
     const cue = events.find((event) => event.kind === "packFinisher");
     expect(cue?.kind === "packFinisher" ? cue.targetId : undefined).toBe(foe.id);
     expect({ x: dian.x, y: dian.y }).toEqual(before);
-    // 본 타격은 여느 때의 물리 한 방이고, 목덜미는 제 사건으로 따로 선다 — 행동 기록에 잡히지 않게 animate: false.
+    // 한 행동에 한 타격이다 — 추가 타격을 따로 세우면 보스 점수와 재사용 대기 검증이 두 번으로 센다.
     const hits = hitsBy(events, dian.id);
-    expect(hits.map(({ skill, damageType }) => ({ skill, damageType }))).toEqual([
-      { skill: "basic", damageType: "physical" },
-      { skill: "nape", damageType: "magical" },
-    ]);
-    expect(hits[1]).toMatchObject({ critical: true, animate: false, amount: napeHit });
+    expect(hits).toHaveLength(1);
+    expect(hits[0].critical).toBe(true);
+    expect(hits[0].amount).toBe(Math.round(critical * (1 + dian.def.basic.finisher!.bonusDamagePercent / 100)));
   });
 
   it("은 한 번 연 표적에게 대기 시간 동안 다시 열지 않고, 다른 표적에게는 곧바로 연다", () => {
@@ -326,7 +323,7 @@ describe("디안 일반 공격·목덜미·궁극기", () => {
     const [kuro, shiro] = state.fighters.filter((f) => f.summonOwnerId === dian.id);
     kuro.hp = 0;
     stepSkirmish(state, 1 / 60);
-    expect(kuro.resummonIn).toBe(20);
+    expect(kuro.resummonIn).toBe(12);
     shiro.energy = 30;
     dian.energy = dian.def.ultimate.cost;
     const events = fireUltimate(state, dian.id);
@@ -335,7 +332,7 @@ describe("디안 일반 공격·목덜미·궁극기", () => {
     expect(hitsBy(events, dian.id)).toHaveLength(1);
     // 쓰러진 몸은 되살리지도 앞당기지도 않는다.
     expect(isFighterAlive(kuro)).toBe(false);
-    expect(kuro.resummonIn).toBe(20);
+    expect(kuro.resummonIn).toBe(12);
     expect(hitsBy(events, kuro.id)).toHaveLength(0);
     // 곁에 선 몸은 제 궁극기(흰 추격)로 같은 표적을 덮친다. 모아 두던 게이지는 그대로다.
     expect(hitsBy(events, shiro.id).map(({ skill, targetId }) => ({ skill, targetId }))).toEqual([{ skill: "ultimate", targetId: state.fighters[1].id }]);
@@ -380,8 +377,8 @@ describe("디안 일반 공격·목덜미·궁극기", () => {
     pack[0].hp = 0;
     stepSkirmish(state, 1 / 60);
     const [fallen] = unitStatusViews(dian, pack);
-    expect(fallen.remaining).toBe(20);
-    expect(fallen.total).toBe(20);
+    expect(fallen.remaining).toBe(12);
+    expect(fallen.total).toBe(12);
     expect(fallen.detail).toContain("다시 선다");
   });
 

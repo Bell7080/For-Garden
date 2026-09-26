@@ -120,24 +120,24 @@
 "Дозор вожака"
 ],
 "relic.dian.passive.desc": [
-"战斗开始时召唤克罗与希罗。两者都存活期间进入隐身。只要有一只倒下，隐身就会解除。",
-"เมื่อเริ่มการต่อสู้ จะเรียกคุโระและชิโระ ระหว่างที่ทั้งคู่ยังมีชีวิตจะล่องหน ถ้าล้มไปแม้เพียงตัวเดียว การล่องหนจะหายไป",
-"Khi bắt đầu trận, triệu hồi Kuro và Shiro. Khi cả hai còn sống, vào Tàng hình. Chỉ cần một con gục, Tàng hình tan.",
-"Di awal pertarungan, memanggil Kuro dan Shiro. Selama keduanya hidup, masuk Siluman. Bila satu saja jatuh, Siluman pecah.",
-"Al inicio del combate invoca a Kuro y Shiro. Mientras ambos vivan, entra en Sigilo. Si cae aunque sea uno, el Sigilo se rompe.",
-"No início da batalha, invoca Kuro e Shiro. Enquanto ambos vivem, entra em Furtividade. Se um só cair, a Furtividade se desfaz.",
-"Beschwört zu Kampfbeginn Kuro und Shiro. Solange beide leben, geht sie in Tarnung. Fällt auch nur einer, bricht die Tarnung.",
-"В начале боя призывает Куро и Широ. Пока оба живы, уходит в невидимость. Стоит пасть хотя бы одному — невидимость спадает."
+"战斗开始时召唤克罗与希罗。只要有一只存活就进入隐身。两只都倒下时，隐身就会解除。",
+"เมื่อเริ่มการต่อสู้ จะเรียกคุโระและชิโระ ระหว่างที่ยังมีตัวใดตัวหนึ่งมีชีวิตจะล่องหน ถ้าล้มทั้งคู่ การล่องหนจะหายไป",
+"Khi bắt đầu trận, triệu hồi Kuro và Shiro. Khi còn ít nhất một con sống, vào Tàng hình. Nếu cả hai gục, Tàng hình tan.",
+"Di awal pertarungan, memanggil Kuro dan Shiro. Selama salah satunya masih hidup, masuk Siluman. Bila keduanya jatuh, Siluman pecah.",
+"Al inicio del combate invoca a Kuro y Shiro. Mientras al menos uno viva, entra en Sigilo. Si caen los dos, el Sigilo se rompe.",
+"No início da batalha, invoca Kuro e Shiro. Enquanto ao menos um vive, entra em Furtividade. Se os dois caírem, a Furtividade se desfaz.",
+"Beschwört zu Kampfbeginn Kuro und Shiro. Solange mindestens einer lebt, geht sie in Tarnung. Fallen beide, bricht die Tarnung.",
+"В начале боя призывает Куро и Широ. Пока жив хотя бы один, уходит в невидимость. Если падут оба, невидимость спадает."
 ],
 "relic.dian.ferocity.name": [
-"狼群",
-"ฝูง",
-"Bầy sói",
-"Kawanan",
-"Manada",
-"Matilha",
-"Rudel",
-"Стая"
+"队长由我们来守护！",
+"กัปตัน พวกเราจะปกป้องเอง!",
+"Đội trưởng để bọn mình bảo vệ!",
+"Kapten, Biar Kami yang Jaga!",
+"¡Nosotros te protegemos, Capitán!",
+"Nós protegemos você, Capitão!",
+"Captain, wir beschützen dich!",
+"Капитан, мы тебя защитим!"
 ],
 "relic.dian.basic.name": [
 "上吧！",

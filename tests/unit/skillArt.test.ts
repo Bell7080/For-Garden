@@ -679,10 +679,10 @@ describe("스킬 설명문 양식 계약", () => {
     // 본문은 아이콘 위 라벨과 같은 합산 수치를 받아 쓴다: 160×40% + 158×60% = 159.
     const basic = skillDescription(dian.basic, { ap: 158, atk: { atk: 160, attackSpeed: 132 }, damage: 159 });
     expect(basic).toBe("적 한 명에게 [[damage-value|159]]의 [[physical-damage|물리 피해]]를 준다. "
-      + "표적의 체력이 30% 이하면 [[nape|목덜미]]를 노려 확정 치명타로 피해가 100% 늘어나고, 같은 표적에게는 8초에 한 번만 터진다.");
+      + "표적의 체력이 30% 이하면 [[nape|목덜미]]를 노려 확정 치명타로 피해가 100% 늘어나고, 같은 표적에게는 3초에 한 번만 터진다.");
 
     const ultimate = skillDescription(dian.ultimate, { ap: 158, atk: { atk: 160, attackSpeed: 132 }, damage: 238 });
-    expect(ultimate).toContain("표적의 체력이 30% 이하면 [[nape|목덜미]]를 노려 확정 치명타로 피해가 100% 늘어나고, 같은 표적에게는 8초에 한 번만 터진다.");
+    expect(ultimate).toContain("표적의 체력이 30% 이하면 [[nape|목덜미]]를 노려 확정 치명타로 피해가 100% 늘어나고, 같은 표적에게는 3초에 한 번만 터진다.");
     // 늑대가 무엇을 하는지는 늑대의 궁극기가 말한다. 여기서는 부른다는 것만 적는다.
     expect(ultimate).toContain("살아 있는 [[summon-kuro|쿠로]]와 [[summon-shiro|시로]]가 그 표적에게 곧바로 궁극기를 쓴다.");
     expect(ultimate).not.toContain("부활 대기");

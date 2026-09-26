@@ -199,7 +199,7 @@ describe("디안 무리 생명주기", () => {
     const returned = advanceFor(state, 0.2);
     expect(isFighterAlive(kuro)).toBe(true);
     // 불완전한 체력으로 돌아와 늑대를 소모품처럼 던질 수 없게 한다.
-    expect(kuro.hp).toBe(Math.round(kuro.maxHp * 0.4));
+    expect(kuro.hp).toBe(Math.round(kuro.maxHp * 0.7));
     expect(returned).toContainEqual(expect.objectContaining({ kind: "packSummon", fighterId: kuro.id }));
     expect(dian.stealthFor).toBe(Number.POSITIVE_INFINITY);
   });

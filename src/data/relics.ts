@@ -2926,14 +2926,14 @@ export const RELICS: RelicDef[] = [
         bodyScale: 0.6,
         // 쓰러진 뒤 공백을 남기고 불완전한 체력으로 돌아와 늑대를 소모품처럼 던질 수 없게 한다. 20초였을 때는
         // 대개 판이 먼저 끝나 다시 서는 일이 없었다 — 12초면 한 판 안에 돌아와 은신을 다시 세운다.
-        resummon: { enabled: true, cooldownSeconds: 12, hpPercent: 40 },
+        resummon: { enabled: true, cooldownSeconds: 12, hpPercent: 70 },
       },
       {
         def: SHIRO_DEF, growthStat: "ap",
         scaling: { hp: 2.67, atk: 0.98, def: 0.44, res: 0.47 },
         // 같은 몸집으로 읽혀야 하는 한 쌍이라 털색만 다른 쿠로와 같은 배율을 쓴다.
         bodyScale: 0.6,
-        resummon: { enabled: true, cooldownSeconds: 12, hpPercent: 40 },
+        resummon: { enabled: true, cooldownSeconds: 12, hpPercent: 70 },
       },
     ],
     /**
@@ -2969,7 +2969,7 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "dian-basic", name: "얘들아, 물어!", power: 40, secondaryScaling: { stat: "ap", power: 60 },
       iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", scalingStat: "atk", targeting: "single",
-      finisher: { thresholdPercent: 30, bonusDamagePercent: 100, cooldownSeconds: 8 },
+      finisher: { thresholdPercent: 30, bonusDamagePercent: 100, cooldownSeconds: 3 },
     },
     /**
      * 표적을 크게 물고(체력 30% 이하면 목덜미로 두 배), 살아 있는 늑대가 그 표적에게 곧바로 제
@@ -2981,7 +2981,7 @@ export const RELICS: RelicDef[] = [
     ultimate: {
       id: "dian-ult", name: "다 같이 덮쳐!", power: 60, secondaryScaling: { stat: "ap", power: 90 },
       iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", scalingStat: "atk", cost: 130, targeting: "single",
-      finisher: { thresholdPercent: 30, bonusDamagePercent: 100, cooldownSeconds: 8 },
+      finisher: { thresholdPercent: 30, bonusDamagePercent: 100, cooldownSeconds: 3 },
       commandsPack: true,
     },
   },

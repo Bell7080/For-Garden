@@ -70,14 +70,14 @@
 "Реагент"
 ],
 "keyword.reagent.description": [
-"攻击在敌人身上留下的、按施加者区分的层数。同一施加者会刷新持续时间，叠满时全部消耗并引发试剂反应。",
-"ชั้นที่การโจมตีทิ้งไว้บนศัตรู แยกตามผู้ติด ผู้ติดคนเดิมจะรีเฟรชเวลา และเมื่อเต็มจะใช้ทั้งหมดเพื่อเกิดปฏิกิริยาสารทดลอง",
-"Tầng do đòn đánh để lại trên kẻ địch, tính riêng theo người gây. Cùng người gây sẽ làm mới thời gian, và khi đầy thì tiêu hết để gây Phản ứng thuốc thử.",
-"Tumpukan per pemberi yang ditinggalkan serangan pada musuh. Pemberi yang sama menyegarkan durasi, dan saat penuh semuanya dipakai untuk memicu Reaksi Reagen.",
-"Una carga por aplicador que los ataques dejan en un enemigo. El mismo aplicador renueva la duración y, al máximo, se consumen todas para causar una Reacción de reactivo.",
-"Um acúmulo por aplicador deixado no inimigo pelos ataques. O mesmo aplicador renova a duração e, no máximo, todos são consumidos para causar uma Reação de reagente.",
-"Ein Stapel pro Verursacher, den Angriffe auf einem Gegner hinterlassen. Derselbe Verursacher frischt die Dauer auf; bei vollen Stapeln werden alle für eine Reagenzreaktion verbraucht.",
-"Заряд, оставляемый атаками на враге, отдельный для каждого накладывающего. Тот же накладывающий обновляет время, а при максимуме все расходуются на реакцию реагента."
+"攻击命中时留在敌人身上的莉帕药剂。再次施加会重置持续时间，叠满时全部爆开并引发试剂反应。每个莉帕的试剂分别叠加。",
+"ยาของริปาที่ติดอยู่บนศัตรูที่โดนโจมตี ติดซ้ำจะเริ่มนับเวลาใหม่ และเมื่อเต็มจะแตกออกทั้งหมดเกิดปฏิกิริยาสารทดลอง ริปาแต่ละตัวสะสมแยกกัน",
+"Dược chất của Ripa bám lên kẻ địch trúng đòn. Gắn lại sẽ làm mới thời gian, khi đầy sẽ vỡ ra toàn bộ và gây Phản ứng thuốc thử. Mỗi Ripa tích riêng.",
+"Ramuan Ripa yang menempel pada musuh yang terkena serangan. Diberi lagi akan mengulang durasinya, dan saat penuh semuanya pecah memicu Reaksi Reagen. Tiap Ripa menumpuk terpisah.",
+"Brebaje de Ripa que queda en los enemigos alcanzados. Aplicarlo de nuevo reinicia la duración y, al llenarse, estalla por completo en una Reacción de reactivo. Cada Ripa acumula por separado.",
+"Mistura de Ripa que fica nos inimigos atingidos. Aplicar de novo reinicia a duração e, ao encher, tudo estoura numa Reação de reagente. Cada Ripa acumula separadamente.",
+"Ripas Gebräu, das an getroffenen Gegnern haftet. Erneutes Auftragen startet die Dauer neu; ist es voll, platzt alles zu einer Reagenzreaktion. Jede Ripa stapelt getrennt.",
+"Снадобье Рипы, остающееся на поражённых врагах. Повторное нанесение обновляет время, а когда оно полно, всё лопается и вызывает реакцию реагента. У каждой Рипы свой счёт."
 ],
 "keyword.reagent-reaction.term": [
 "试剂反应",
@@ -90,14 +90,14 @@
 "Реакция реагента"
 ],
 "keyword.reagent-reaction.description": [
-"消耗满层试剂，使目标中毒并降低抗性，同时治疗生命比例最低的存活队友。",
-"ใช้สารทดลองเต็มชั้นเพื่อทิ้งพิษและลดต้านทานของเป้าหมาย และฟื้นฟูพันธมิตรที่มีชีวิตซึ่งมีสัดส่วน HP ต่ำสุด",
-"Tiêu tầng tối đa Thuốc thử để gây Độc và giảm Kháng cho mục tiêu, đồng thời hồi máu cho đồng minh còn sống có tỉ lệ máu thấp nhất.",
-"Memakai tumpukan penuh Reagen untuk meninggalkan Racun dan menurunkan Resistensi target, serta menyembuhkan sekutu hidup dengan rasio HP terendah.",
-"Consume el máximo de Reactivo para dejar Veneno y reducir la Resistencia del objetivo, y cura al aliado vivo con menor proporción de PV.",
-"Consome o máximo de Reagente para deixar Veneno e reduzir a Resistência do alvo, e cura o aliado vivo com menor proporção de PV.",
-"Verbraucht volle Reagenzstapel, hinterlässt Gift und senkt den Widerstand des Ziels und heilt den lebenden Verbündeten mit dem geringsten Lebensanteil.",
-"Расходует максимум реагента: отравляет цель и снижает её сопротивление, а также лечит живого союзника с наименьшей долей ОЗ."
+"叠满的试剂爆开的瞬间。使该敌人中毒并降低抗性，同时治疗生命比例最低的一名队友。",
+"ช่วงเวลาที่สารทดลองที่เต็มแตกออก ทำให้ศัตรูนั้นติดพิษและต้านทานลดลง พร้อมฟื้นฟูพันธมิตรที่มีสัดส่วน HP ต่ำสุดหนึ่งคน",
+"Khoảnh khắc Thuốc thử đầy vỡ ra. Khiến kẻ địch đó bị Độc và giảm Kháng, đồng thời hồi máu cho một đồng đội có tỉ lệ máu thấp nhất.",
+"Saat Reagen penuh pecah. Membuat musuh itu terkena Racun dan menurunkan Resistensinya, serta memulihkan satu sekutu dengan rasio HP terendah.",
+"El momento en que el Reactivo lleno estalla. Envenena a ese enemigo, reduce su Resistencia y cura al aliado con menor proporción de PV.",
+"O momento em que o Reagente cheio estoura. Envenena esse inimigo, reduz sua Resistência e cura o aliado com menor proporção de PV.",
+"Der Moment, in dem volles Reagenz platzt. Vergiftet den Gegner, senkt seinen Widerstand und heilt den Verbündeten mit dem geringsten Lebensanteil.",
+"Момент, когда полный реагент лопается. Отравляет врага, снижает его сопротивление и лечит союзника с наименьшей долей ОЗ."
 ],
 "keyword.shell.term": [
 "甲壳",

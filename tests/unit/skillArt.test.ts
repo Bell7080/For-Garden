@@ -208,7 +208,7 @@ describe("노도니아 스킬 표시 계약", () => {
   it("의 전장의 열기는 들어설 때의 도발, 지속 피해, 희열 회복 증가를 차례로 말한다", () => {
     expect(nodonia.ferocityTrait).toMatchObject({ name: "전장의 열기", effectId: "battleHeat", auraDamageMaxHpPercent: 1.5, radius: 240, taunt: { kind: "taunt", seconds: 3 }, tauntRadius: 420, elationHealBonusPercent: 50 });
     expect(ferocityTraitDescription(nodonia.ferocityTrait, { attack: nodonia.stats.atk, defense: nodonia.stats.def })).toBe(
-      "폭주에 들어서는 순간 넓은 범위의 적을 3초 동안 [[taunt|도발]]한다."
+      "폭주에 들어가는 순간 넓은 범위의 적을 3초 동안 [[taunt|도발]]한다."
       + " 매초 자신의 주위 모든 적에게 최대 체력의 1.5%만큼 [[fixed-damage|고정 피해]]를 준다."
       + " 폭주 동안 [[nodonia-elation|희열]]의 회복량이 50% 증가한다.",
     );
@@ -931,27 +931,29 @@ describe("리파 시약 표시 계약", () => {
     expect(def.basic.name).toBe("찰싹! 시약 묻히기");
     expect(def.ultimate.name).toBe("뭐가 들었게? 약물 폭탄");
     expect(skillDescription(def.basic, { damage: 160 })).toBe(
-      "적 한 명에게 [[damage-value|160]]의 [[magical-damage|마법 피해]]를 주고 [[reagent|시약]]을 1겹 부여한다.",
+      "적 한 명에게 [[damage-value|160]]의 [[magical-damage|마법 피해]]를 주고 [[reagent|시약]]을 1겹 묻힌다.",
     );
     expect(skillDescription(def.ultimate, { damage: 200 })).toBe(
-      "전장의 모든 적에게 [[damage-value|200]]의 [[magical-damage|마법 피해]]를 주고 [[reagent|시약]]을 2겹 부여한다.",
+      "전장의 모든 적에게 [[damage-value|200]]의 [[magical-damage|마법 피해]]를 주고 [[reagent|시약]]을 2겹 묻힌다.",
     );
   });
 
   it("은 패시브와 폭주의 모든 수치를 캐릭터 ID가 아닌 계약에서 설명한다", () => {
     const def = ripa();
     expect(passiveDescription(def.passive)).toBe(
-      "공격이 적중하면 [[reagent|시약]]을 부여한다. [[basic-attack|기본 공격]]은 1겹, 궁극기는 2겹 부여한다. 시약은 최대 3겹까지 8초 동안 유지되며, 최대 중첩이 되면 모두 소비해 [[reagent-reaction|시약 반응]]을 일으킨다. 반응한 적을 4초 동안 [[poison|중독]]시키고 저항력을 5초 동안 12% 낮춘다. 이어 현재 HP 비율이 가장 낮은 생존 아군 한 명을 그 아군 최대 체력의 5%만큼 회복한다.",
+      "공격이 적중한 적에게 [[reagent|시약]]을 묻힌다. 시약은 최대 3겹까지 쌓이고 8초 동안 남는다."
+      + " 가득 차면 [[reagent-reaction|시약 반응]]이 일어나 그 적을 4초 동안 [[poison|중독]]시키고 5초 동안 저항력을 12% 낮추며,"
+      + " 체력 비율이 가장 낮은 아군 한 명이 최대 체력의 5%를 회복한다.",
     );
     expect(ferocityTraitDescription(def.ferocityTrait)).toBe(
-      "폭주에 진입하면 모든 생존 적에게 [[reagent|시약]]을 1겹 부여한다. 폭주 중 [[attack-speed|공격 속도]]가 40% 증가한다.",
+      "폭주에 들어가는 순간 모든 적에게 [[reagent|시약]]을 1겹 묻힌다. 폭주 중 [[attack-speed|공격 속도]]가 40% 증가한다.",
     );
   });
 
   it("은 시약과 시약 반응의 전역 문맥 설명을 제공한다", () => {
     // 관련 UI는 전역 사전을 사용하므로 두 태그가 모두 있어야 팝업에서 눌러 설명을 열 수 있다.
-    expect(KEYWORDS.find((keyword) => keyword.id === "reagent")?.description).toContain("제공자별 중첩");
-    expect(KEYWORDS.find((keyword) => keyword.id === "reagent-reaction")?.description).toContain("중독과 저항력 감소");
+    expect(KEYWORDS.find((keyword) => keyword.id === "reagent")?.description).toContain("리파마다 따로 쌓인다");
+    expect(KEYWORDS.find((keyword) => keyword.id === "reagent-reaction")?.description).toContain("중독시키고 저항력을 낮추며");
   });
 });
 

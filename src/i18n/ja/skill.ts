@@ -57,7 +57,7 @@ export const SKILL_JA = {
 
   "skill.stack.bonus": "{stat}の{percent}%に当たる物理ダメージを追加で与え",
   "skill.stack.description": "通常攻撃1回ごとに1重ずつ積まれ、{every}重目で弾ける。弾ける一撃は {effects}。弾けた後、重ねは0に戻る。",
-  "skill.ferocity.reagentDoping": "暴走に入るとすべての生存中の敵に[[reagent|試薬]]を{stacks}重付与する。暴走中は[[attack-speed|攻撃速度]]が{percent}%増加する。",
+  "skill.ferocity.reagentDoping": "暴走に入った瞬間、すべての敵に[[reagent|試薬]]を{stacks}重付ける。暴走中は[[attack-speed|攻撃速度]]が{percent}%増加する。",
   "skill.ferocity.damageReduction": "受けるダメージが{percent}%減る。",
   "skill.ferocity.torikaBulwark": "防御力が{defense}、抵抗力が{resistance}増加する。暴走に入った瞬間、周囲のすべての敵を{seconds}秒間[[taunt|挑発]]する。",
   "skill.ferocity.teamMoveSpeedBonus": "生存中の味方全体の移動速度が{percent}%速くなる。",
@@ -107,7 +107,7 @@ export const SKILL_JA = {
   "skill.passive.crit.split": "クリティカル率が{chance}%、クリティカルダメージが{damage}%上がる。",
   "skill.passive.crit.chance": "クリティカル率が{percent}%上がる。",
   "skill.passive.crit.damage": "クリティカルダメージが{percent}%上がる。",
-  "skill.passive.reagentReaction": "攻撃が命中すると[[reagent|試薬]]を付与する。[[basic-attack|通常攻撃]]は{basic}重、必殺技は{ultimate}重付与する。試薬は最大{stacks}重まで{seconds}秒間持続し、最大重複になるとすべて消費して[[reagent-reaction|試薬反応]]を起こす。反応した敵を{poisonSeconds}秒間[[poison|毒]]状態にし、抵抗力を{resistanceSeconds}秒間{resistancePercent}%下げる。続けて現在HP割合が最も低い生存中の味方1人を、その味方の最大体力の{healPercent}%分回復する。",
+  "skill.passive.reagentReaction": "攻撃が命中した敵に[[reagent|試薬]]を付ける。試薬は最大{stacks}重まで積まれ、{seconds}秒間残る。満タンになると[[reagent-reaction|試薬反応]]が起き、その敵を{poisonSeconds}秒間[[poison|毒]]状態にして{resistanceSeconds}秒間抵抗力を{resistancePercent}%下げ、HP割合が最も低い味方1人が最大体力の{healPercent}%を回復する。",
   "skill.passive.summonCommander": "戦闘開始時に[[summon-kuro|クロ]]と[[summon-shiro|シロ]]を召喚する。1匹でも生きている間は[[stealth|隠密]]する。{exposed}",
   "skill.passive.summonCommander.exposed": " 2匹とも倒れると隠密が解け、再び標的になる。",
   "skill.passive.followHighestAttackAllyTarget": "戦闘開始時、味方のうち攻撃力が最も高いレリックが標的にした敵を一緒に標的にする。",
@@ -189,7 +189,7 @@ export const SKILL_JA = {
   "skill.damage.dualScaling": "{stat}の{percent}%と{secondStat}の{secondPercent}%を合わせた{type}",
   "skill.damage.composite": "攻撃力の{percent}%と現在の[[attack-speed|攻撃速度]]の{speedPercent}%を合わせた{type}",
 
-  "skill.clause.reagent": "[[reagent|試薬]]を{stacks}重付与する",
+  "skill.clause.reagent": "[[reagent|試薬]]を{stacks}重付ける",
   "skill.clause.elationDamage": "[[nodonia-elation|悦び]]1重ごとにこのダメージが{percent}%上がる",
   "skill.clause.combo": "{percent}%の確率で[[combo|連撃]]して計{hits}回命中する",
   "skill.clause.damageHealing": "与えたダメージの{percent}%分の体力を回復する",

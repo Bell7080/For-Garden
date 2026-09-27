@@ -75,7 +75,7 @@ export const SKILL_KO = {
   // ── 마무리 한 방 ─────────────────────────────────────────────────────────
 
   // ── 폭주 ────────────────────────────────────────────────────────────────
-  "skill.ferocity.reagentDoping": "폭주에 진입하면 모든 생존 적에게 [[reagent|시약]]을 {stacks}겹 부여한다. 폭주 중 [[attack-speed|공격 속도]]가 {percent}% 증가한다.",
+  "skill.ferocity.reagentDoping": "폭주에 들어가는 순간 모든 적에게 [[reagent|시약]]을 {stacks}겹 묻힌다. 폭주 중 [[attack-speed|공격 속도]]가 {percent}% 증가한다.",
   "skill.ferocity.damageReduction": "받는 피해가 {percent}% 줄어든다.",
   "skill.ferocity.torikaBulwark": "방어력이 {defense}, 저항력이 {resistance} 증가한다. 폭주에 들어가는 순간 주위 모든 적을 {seconds}초 동안 [[taunt|도발]]한다.",
   "skill.ferocity.teamMoveSpeedBonus": "생존 아군 전체의 이동 속도가 {percent}% 빨라진다.",
@@ -100,7 +100,7 @@ export const SKILL_KO = {
   "skill.ferocity.knockbackSlam": "{loaded}[[concussion|뇌진탕]]이 확정 치명타가 되고, 그 적을 [[knockback|날려버린다]]. 날려버린 뒤에는 가장 가까운 적을 표적으로 다시 지정한다.",
   "skill.ferocity.knockbackSlam.loaded": "폭주에 들어가면 [[concussion|뇌진탕]]이 곧바로 장전된다. ",
   "skill.ferocity.frenzyGaze": "폭주 중 [[basic-attack|기본 공격]]에 적중한 적을 {seconds}초 동안 [[frenzy|광란]]시킨다. 전이된 타격으로는 발동하지 않는다.",
-  "skill.ferocity.battleHeat": "폭주에 들어서는 순간 넓은 범위의 적을 {seconds}초 동안 [[taunt|도발]]한다. 매초 자신의 주위 모든 적에게 최대 체력의 {percent}%만큼 [[fixed-damage|고정 피해]]를 준다. 폭주 동안 [[nodonia-elation|희열]]의 회복량이 {healPercent}% 증가한다.",
+  "skill.ferocity.battleHeat": "폭주에 들어가는 순간 넓은 범위의 적을 {seconds}초 동안 [[taunt|도발]]한다. 매초 자신의 주위 모든 적에게 최대 체력의 {percent}%만큼 [[fixed-damage|고정 피해]]를 준다. 폭주 동안 [[nodonia-elation|희열]]의 회복량이 {healPercent}% 증가한다.",
   "skill.ferocity.graffitiRun": "이동 속도가 {percent}% 증가하고 [[basic-attack|기본 공격]]을 하지 않는다. 매초 자신의 주위 모든 적에게 {damage}의 [[magical-damage|마법 피해]]를 주고 [[vandalism|밴덜리즘]]을 한 겹 쌓으며 {seconds}초 동안 [[taunt|도발]]한다.",
   "skill.ferocity.furCoat": "폭주에 들어가는 순간 자신의 모든 상태이상·디버프를 지우고 최대 체력의 {percent}% 보호막을 얻는다. 폭주 중에는 방어력과 저항력이 {guardPercent}% 오른다.",
   "skill.ferocity.shellResolve": "폭주에 들어가는 순간 자신의 모든 상태이상·디버프를 지우고 [[shell|조가비]]를 {stacks}겹 얻는다. 폭주 중 조가비 내부 재사용 대기시간이 {seconds}초로 줄어든다.",
@@ -126,7 +126,7 @@ export const SKILL_KO = {
   "skill.passive.crit.split": "치명타 확률이 {chance}%, 치명타 피해가 {damage}% 오른다.",
   "skill.passive.crit.chance": "치명타 확률이 {percent}% 오른다.",
   "skill.passive.crit.damage": "치명타 피해가 {percent}% 오른다.",
-  "skill.passive.reagentReaction": "공격이 적중하면 [[reagent|시약]]을 부여한다. [[basic-attack|기본 공격]]은 {basic}겹, 궁극기는 {ultimate}겹 부여한다. 시약은 최대 {stacks}겹까지 {seconds}초 동안 유지되며, 최대 중첩이 되면 모두 소비해 [[reagent-reaction|시약 반응]]을 일으킨다. 반응한 적을 {poisonSeconds}초 동안 [[poison|중독]]시키고 저항력을 {resistanceSeconds}초 동안 {resistancePercent}% 낮춘다. 이어 현재 HP 비율이 가장 낮은 생존 아군 한 명을 그 아군 최대 체력의 {healPercent}%만큼 회복한다.",
+  "skill.passive.reagentReaction": "공격이 적중한 적에게 [[reagent|시약]]을 묻힌다. 시약은 최대 {stacks}겹까지 쌓이고 {seconds}초 동안 남는다. 가득 차면 [[reagent-reaction|시약 반응]]이 일어나 그 적을 {poisonSeconds}초 동안 [[poison|중독]]시키고 {resistanceSeconds}초 동안 저항력을 {resistancePercent}% 낮추며, 체력 비율이 가장 낮은 아군 한 명이 최대 체력의 {healPercent}%를 회복한다.",
   "skill.passive.summonCommander": "전투 시작 시 [[summon-kuro|쿠로]]와 [[summon-shiro|시로]]를 소환한다. 한 마리라도 살아 있는 동안 [[stealth|은신]]한다.{exposed}",
   "skill.passive.summonCommander.exposed": " 둘 다 쓰러지면 은신이 풀려 다시 표적이 된다.",
   "skill.passive.followHighestAttackAllyTarget": "전투 시작 시 아군 중 공격력이 가장 높은 렐릭이 표적으로 삼은 적을 함께 표적으로 삼는다.",
@@ -212,7 +212,7 @@ export const SKILL_KO = {
   "skill.damage.composite": "공격력의 {percent}%와 현재 [[attack-speed|공격 속도]]의 {speedPercent}%를 합친 {type}",
 
   // ── 부가 효과 절 ─────────────────────────────────────────────────────────
-  "skill.clause.reagent": "[[reagent|시약]]을 {stacks}겹 부여한다",
+  "skill.clause.reagent": "[[reagent|시약]]을 {stacks}겹 묻힌다",
   "skill.clause.elationDamage": "[[nodonia-elation|희열]] 한 겹마다 이 피해가 {percent}% 오른다",
   "skill.clause.combo": "{percent}% 확률로 [[combo|연격]]하여 총 {hits}회 적중한다",
   "skill.clause.damageHealing": "입힌 피해의 {percent}%만큼 체력을 회복한다",

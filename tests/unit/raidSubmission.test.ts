@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { battleArena } from "../../src/core/battleArena";
+import { BATTLE_DEATH_CLOCK } from "../../src/core/battleClock";
 import { createRaidSkirmishConfig } from "../../src/core/expeditionBattle";
 import { resolveExpeditionBossBattle, type ExpeditionBossAction } from "../../src/core/expeditionBoss";
 import { raidBossDef, raidBossPercentHpBasis } from "../../src/core/raid";
@@ -137,8 +138,8 @@ describe("레이드 피해 제출 왕복", () => {
       }
     }
     expect(state.phase).toBe("victory");
-    // 제한 시간(90초)까지 서 있지 않고 쓰러뜨린 그 자리에서 끝났다.
-    expect(state.elapsed * 1_000).toBeLessThan(RAID_BOSS_BALANCE.phases[RAID_BOSS_BALANCE.phases.length - 1].startsAtMs);
+    // 데스 카운트가 돌기 전에, 쓰러뜨린 그 자리에서 끝났다.
+    expect(state.elapsed).toBeLessThan(BATTLE_DEATH_CLOCK.startsAtSeconds);
     const result = resolveExpeditionBossBattle({ allies: party, boss, balance: RAID_BOSS_BALANCE, percentHpBasis: basis, arena: battleArena("raid"), bossKillable: true }, actions);
     expect(result.bossDefeated).toBe(true);
   });

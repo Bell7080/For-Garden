@@ -29,11 +29,11 @@ describe("전투 진행 시계", () => {
 });
 
 describe("데스 카운트", () => {
-  it("는 3분을 넘기기 전에는 돌지 않는다", () => {
+  it("는 시작 시각을 넘기기 전에는 돌지 않는다", () => {
     expect(deathClockTicksAt(0)).toBe(0);
     expect(deathClockTicksAt(BATTLE_DEATH_CLOCK.startsAtSeconds - 0.01)).toBe(0);
-    expect(isDeathClockRunning(179)).toBe(false);
-    // 3분에 닿는 그 순간 첫 번째가 돈다 — "넘어가면 작동한다"가 화면과 어긋나지 않게.
+    expect(isDeathClockRunning(BATTLE_DEATH_CLOCK.startsAtSeconds - 1)).toBe(false);
+    // 시작 시각에 닿는 그 순간 첫 번째가 돈다 — "넘어가면 작동한다"가 화면과 어긋나지 않게.
     expect(deathClockTicksAt(BATTLE_DEATH_CLOCK.startsAtSeconds)).toBe(1);
     expect(isDeathClockRunning(BATTLE_DEATH_CLOCK.startsAtSeconds)).toBe(true);
   });

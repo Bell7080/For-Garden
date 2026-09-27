@@ -1280,12 +1280,6 @@ export class BattleScene extends Phaser.Scene {
     // 코어가 센 시간을 그대로 적는다. 배속은 이미 위에서 한 번 곱해졌으므로 시계도 그만큼 빨리 돈다.
     this.clockLabel?.setText(formatBattleClock(this.state.elapsed));
     this.paintDeathClock();
-    // **시간을 다 쓴 라운드는 진 것으로 센다.** 1대1은 서로 못 죽이는 조합이 실제로 있어,
-    // 제한이 없으면 그 판이 영영 끝나지 않는다(`BOUNTY.limitSeconds`).
-    if (this.battleInput.mode === "bounty" && this.state.phase === "fight" && this.state.elapsed >= BOUNTY.limitSeconds) {
-      this.finishBattle("defeat");
-      return;
-    }
     if (this.state.boss) {
       const boss = this.state.boss; const phase = boss.phases[boss.phaseIndex];
       const normalScore = expeditionManager.status().run?.normalNodeScoreTotal ?? 0;

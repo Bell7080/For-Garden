@@ -1,4 +1,5 @@
 import { registerDataText } from "../i18n";
+import { BOSS_REPLAY_SLACK_SECONDS, deathClockClosesBySeconds } from "../core/battleClock";
 import { requiredBreakthroughForLevel } from "../core/levelDesign";
 
 /**
@@ -55,19 +56,19 @@ export const RAID_SEASON_BOSS = {
 /**
  * 서버 검증이 허용하는 전투 길이와 입력량 상한이다.
  *
- * 마지막 단계의 처형 피해는 **제한 시간을 전멸로 바꾸는 장치**이지 난이도가 아니다 — 보스는
- * 판 안에서 죽지 않고(공유 체력은 서버가 갖는다) 90초가 지나면 판이 끝나야 하는데, 재현이
- * 인정하는 종료는 전멸 하나뿐이기 때문이다. 원정 보스와 같은 방식이다.
+ * **제한 시간을 따로 두지 않는다.** 예전에는 90초에 처형 단계(초당 10억)를 두어 판을 전멸로 끝냈는데,
+ * 모든 전투에 이미 데스 카운트(`BATTLE_DEATH_CLOCK`)가 돌아 판을 스스로 닫는다 — 두 장치가 같은 일을
+ * 했고, 처형은 버티던 판을 한순간에 지워 「얼마나 버텼나」를 말하지 못했다. 길이 상한은 데스 카운트가
+ * 어떤 편성이든 닫는 시각(`deathClockClosesBySeconds`)에 여유를 얹은 값이다. 단계는 이름표뿐이다.
  */
 export const RAID_BOSS_BALANCE = {
-  maximumDurationMs: 100_000,
+  maximumDurationMs: (deathClockClosesBySeconds() + BOSS_REPLAY_SLACK_SECONDS) * 1_000,
   maximumActions: 2_000,
   maximumAcceptedScore: 100_000_000,
   phases: [
     { startsAtMs: 0, attackPerSecond: 0, label: "교전" },
     { startsAtMs: 30_000, attackPerSecond: 0, label: "격화" },
     { startsAtMs: 60_000, attackPerSecond: 0, label: "최후" },
-    { startsAtMs: 90_000, attackPerSecond: 1_000_000_000, label: "철수" },
   ],
 } as const;
 

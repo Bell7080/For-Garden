@@ -80,6 +80,7 @@ export const EXPEDITION_NON_COMBAT_TYPES = ["rest", "treasure"] as const;
 /** 저장 데이터가 임의 문자열로 전투 규칙을 주입하지 못하게 하는 원정 증강 ID 목록이다. */
 /** @deprecated 증강 상세 정의는 expeditionAugments.ts가 소유하며 이 목록은 저장 호환 조회만 제공한다. */
 export { EXPEDITION_AUGMENTS } from "./expeditionAugments";
+import { BOSS_REPLAY_SLACK_SECONDS, deathClockClosesBySeconds } from "../core/battleClock";
 import { EXPEDITION_AUGMENTS } from "./expeditionAugments";
 import { registerDataText } from "../i18n";
 export const EXPEDITION_AUGMENT_IDS = EXPEDITION_AUGMENTS.map(({ id }) => id);
@@ -134,18 +135,23 @@ export const EXPEDITION_TREASURE_REWARD_BALANCE = {
 /** 빠른 원정은 서버가 보유한 유효 최고 점수의 이 비율만 보상 점수로 환산한다. */
 export const QUICK_EXPEDITION_POLICY = { scoreRatio: 0.25, dailyLimitUtc: 2, weeklyLimitUtc: 5 } as const;
 
-/** 불사 보스의 시간 경과 강화 표다. 마지막 처형 단계는 어떤 정상 편성도 버티지 못하게 한다. */
+/**
+ * 폰토스 판의 길이·입력 상한과 단계 이름표다.
+ *
+ * **제한 시간을 따로 두지 않는다** — 90초의 처형 단계(「종말」)를 걷어 내고 데스 카운트
+ * (`BATTLE_DEATH_CLOCK`)가 판을 닫는다(레이드와 같다). 길이 상한은 데스 카운트가 어떤 편성이든
+ * 닫는 시각에 여유를 얹은 값이다.
+ */
 export const EXPEDITION_BOSS_BALANCE = {
   /** 서버 검증이 허용하는 전투 길이와 입력량 상한이다. */
-  maximumDurationMs: 180_000,
+  maximumDurationMs: (deathClockClosesBySeconds() + BOSS_REPLAY_SLACK_SECONDS) * 1_000,
   maximumActions: 2_000,
   maximumAcceptedScore: 100_000_000,
-  /** 일반 단계의 공격은 폰토스 정적 스킬만 담당하고, 이 표는 제한 시간 처형만 담당한다. */
+  /** 단계는 이름표다. 공격은 폰토스 정적 스킬이, 끝은 데스 카운트가 맡는다. */
   phases: [
     { startsAtMs: 0, attackPerSecond: 0, label: "관측" },
     { startsAtMs: 30_000, attackPerSecond: 0, label: "과부하" },
     { startsAtMs: 60_000, attackPerSecond: 0, label: "붕괴" },
-    { startsAtMs: 90_000, attackPerSecond: 1_000_000_000, label: "종말" },
   ],
 } as const;
 

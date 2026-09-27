@@ -79,10 +79,10 @@ export function createExpeditionBossSkirmishConfig(input: ExpeditionBossBattleIn
 }
 
 /**
- * 레이드도 **같은 불사 보스 계약**을 쓴다 — 다른 것은 제한 시간과 단계 이름뿐이다.
+ * 레이드도 **같은 보스 계약**을 쓴다 — 다른 것은 단계 이름과 몸을 다 깎으면 이기는 것뿐이다.
  *
- * 판 안에서 보스를 눕히지 않는 이유는 남은 체력의 주인이 시즌이기 때문이다. 한 판은 90초 동안
- * 민 몫을 재고, 그 뒤 마지막 단계의 처형이 판을 끝낸다.
+ * 한 판은 몸을 다 깎거나 전멸할 때까지 민 몫을 잰다. 따로 두던 90초 처형은 걷어 냈고, 끝나지
+ * 않는 판은 모든 전투와 같은 데스 카운트가 닫는다.
  */
 export function createRaidSkirmishConfig(playerDefs: readonly RelicDef[], boss: RelicDef, percentHpBasis: number): ExpeditionSkirmishConfig & { boss: { phases: SkirmishBossPhase[]; limitSeconds: number; percentHpBasis: number; endsOnKill: boolean } } {
   return {

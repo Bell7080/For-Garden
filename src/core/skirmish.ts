@@ -529,7 +529,7 @@ export interface SkirmishBossState {
   /**
    * **보스를 쓰러뜨리면 그 자리에서 판이 끝나는가**(레이드). 원정 폰토스는 불사 자리라 눕지 않고
    * 전멸만이 끝이지만, 레이드의 몸은 공유 게이지의 한 칸이라 다 깎으면 그 판은 이긴 것이다 —
-   * 쓰러진 보스 앞에서 90초 제한이 다할 때까지 서 있게 두면 처치가 처치로 읽히지 않는다.
+   * 쓰러진 보스 앞에서 전멸할 때까지 서 있게 두면 처치가 처치로 읽히지 않는다.
    */
   endsOnKill: boolean;
 }
@@ -4026,7 +4026,7 @@ export function tickRegeneration(fighter: Fighter, dt: number, state?: SkirmishS
 }
 
 /**
- * **데스 카운트** — 3분을 넘긴 판을 스스로 닫게 만든다.
+ * **데스 카운트** — 시작 시각(`BATTLE_DEATH_CLOCK.startsAtSeconds`)을 넘긴 판을 스스로 닫게 만든다.
  *
  * 규칙과 수치는 `core/battleClock.ts`가 갖고 여기서는 그 시계를 돌리기만 한다. 한 번 돌 때마다
  * 아군이 최대 체력의 일부를 잃고, 회복·보호막은 `deathClockSurvivalMultiplier`를 통해 함께

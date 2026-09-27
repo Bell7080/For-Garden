@@ -17,6 +17,7 @@ import { NodeEnemyPreview } from "../ui/NodeEnemyPreview";
 import { isEnemyPreviewNodeVisible } from "../ui/nodeEnemyPreviewLayout";
 import { stageChapterNavigationLayout } from "../ui/stageChapterLayout";
 import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
+import { stageFirstClearRewards } from "../core/stageRewards";
 import { PopupLayer } from "../ui/PopupLayer";
 import { StaminaPopup } from "../ui/StaminaPopup";
 import { gameApi } from "../api/FakeServer";
@@ -58,6 +59,8 @@ export class StageMapScene extends Phaser.Scene {
 
   /** 노드 편성의 렌더와 비동기 SD 수명은 공용 프리팹이 소유한다. */
   private enemyPreview!: NodeEnemyPreview;
+  /** 서사 노드용 출전 버튼. 전투 버튼과 같은 자리에 서고 비용이 없다. */
+  private storyButton!: Button;
 
   private scrollMin = 0;
   private scrollMax = 0;
@@ -89,20 +92,29 @@ export class StageMapScene extends Phaser.Scene {
 
     this.enemyPreview = new NodeEnemyPreview(this, { title: "", growth: [], enemies: [], top: WINDOW.top - 40, bottom: WINDOW.bottom + 40, onEnemyClick: () => undefined });
 
+    // **전투 관문의 출전은 드는 스테미나를 버튼 위에 박는다** — 던전 입구·레이드 판과 같은 비용 표기다.
+    // 이긴 판에서만 빠지지만(`charged-on-victory`) 얼마가 걸려 있는지는 누르기 전에 읽혀야 한다.
+    // 서사 노드는 스테미나를 쓰지 않으므로 비용 없는 버튼이 같은 자리에서 갈아 선다.
+    const stageCost = CONTENT_STAMINA_COSTS.normalStage;
     this.sortieButton = new Button(this, cx, BASE_HEIGHT - 180, {
-      width: 340,
+      width: 380,
       height: 108,
       variant: "primary",
       accentColor: COLOR.sortie,
       accentTextColor: COLOR.sortieText,
       label: t("stageMap.sortie"),
       fontSize: 36,
-      onClick: () => {
-        // 선택 kind에 맞는 한 진입점만 호출해 스토리에서 편성 화면이 열리지 않게 한다.
-        this.enterSelected();
-      },
+      cost: { icon: "currency-stamina", amount: stageCost, affordable: session.wallet.stamina >= stageCost },
+      // 선택 kind에 맞는 한 진입점만 호출해 스토리에서 편성 화면이 열리지 않게 한다.
+      onClick: () => this.enterSelected(),
     });
     this.sortieButton.setDepth(CHROME_DEPTH);
+    this.storyButton = new Button(this, cx, BASE_HEIGHT - 180, {
+      width: 380, height: 108, variant: "primary", accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText,
+      label: t("stageMap.readRecord"), fontSize: 36,
+      onClick: () => this.enterSelected(),
+    });
+    this.storyButton.setDepth(CHROME_DEPTH).setVisible(false).setEnabled(false);
     const navigation = stageChapterNavigationLayout(BASE_WIDTH, BASE_HEIGHT);
     this.previousChapterButton = new Button(this, navigation.previous.x, navigation.previous.y, {
       width: navigation.previous.width, height: navigation.previous.height, label: t("stageMap.prevZone"), fontSize: 28,
@@ -288,15 +300,20 @@ export class StageMapScene extends Phaser.Scene {
       node.label.setColor(chosen ? COLOR.accentText : completed ? COLOR.ink : COLOR.inkDim);
     }
     const visualIndex = stage.kind === "story" ? 4 : index;
-    const scroll = Phaser.Math.Clamp((WINDOW.top + WINDOW.bottom) / 2 + visualIndex * NODE_GAP, this.scrollMin, this.scrollMax);
+    // **전투 관문은 창 아래쪽에 세운다.** 스토리 판은 적 칸·줄거리·초회 보상까지 서서 원정 판보다
+    // 한참 높아, 노드를 창 가운데에 두면 위에도 아래에도 자리가 모자라 판이 노드를 덮는다. 아래에
+    // 두면 판이 노드 위로 온전히 선다(맨 위 관문은 스크롤 끝에 걸려 판이 아래로 뒤집힌다).
+    const anchorY = stage.kind === "battle" ? WINDOW.bottom - 90 : (WINDOW.top + WINDOW.bottom) / 2;
+    const scroll = Phaser.Math.Clamp(anchorY + visualIndex * NODE_GAP, this.scrollMin, this.scrollMax);
     this.scrollTo(scroll, !instant);
-    this.sortieButton.setSub("");
+    const story = stage.kind === "story";
+    this.sortieButton.setVisible(!story).setEnabled(!story);
+    this.storyButton.setVisible(story).setEnabled(story);
     if (stage.kind === "story") {
       this.enemyPreview.dismiss();
-      this.sortieButton.setLabel(storyManager.isCompleted(stage.storyId) ? t("stageMap.replay") : t("stageMap.readRecord"));
+      this.storyButton.setLabel(storyManager.isCompleted(stage.storyId) ? t("stageMap.replay") : t("stageMap.readRecord"));
       return;
     }
-    this.sortieButton.setLabel(t("stageMap.sortie"));
     const enemies = getStageEnemies(stage);
     this.enemyPreview.showAt(scroll - index * NODE_GAP, {
       // 성장 스냅샷은 능력치 사본과 **같은 자리 순서**로 넘긴다 — 배열 순서로 넘기면 아모의
@@ -304,6 +321,8 @@ export class StageMapScene extends Phaser.Scene {
       title: `${stage.id}  ${stage.name}`, growth: stageEnemyGrowth(stage), enemies, elite: stage.elite === true,
       // 서사가 없는 관문은 `undefined`가 그대로 넘어가 직전 노드의 줄이 남지 않는다.
       situation: stage.situation,
+      // 초회 보상은 판 맨 아래 한 줄로 늘 선다. 이미 깬 관문이면 받은 표시(검은 막 + 노란 체크)다.
+      sections: { rewards: stageFirstClearRewards(stage), rewardsClaimed: session.cleared.has(stage.id) },
       // 전투 전에도 전투와 동일한 공용 적 정보창으로 연결한다.
       // 미리보기가 그 칸의 성장 상태를 함께 넘긴다 — 화면이 배열에서 다시 찾지 않는다.
       onEnemyClick: (enemy, growth) => this.info.show({ def: enemy, level: growth.level, breakthrough: growth.breakthrough }),

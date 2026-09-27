@@ -41,7 +41,8 @@ export type GlyphName =
   | "search"
   | "caret-down"
   | "affinity"
-  | "sort-arrow";
+  | "sort-arrow"
+  | "check";
 
 function points(...pairs: number[]): Phaser.Geom.Point[] {
   const list: Phaser.Geom.Point[] = [];
@@ -115,6 +116,12 @@ export function drawGlyph(
     case "page-next":
       // "page-prev"를 좌우로 뒤집은 모양이다.
       g.strokePoints(points(-r * 0.28, -r * 0.7, r * 0.32, 0, -r * 0.28, r * 0.7), false);
+      break;
+    case "check":
+      // 받은 보상 위에 서는 체크. 꺾이는 두 획을 **채운 다각형**으로 그린다 — 선 두 줄로 그으면
+      // 꺾인 자리에서 획 끝이 둥글게 겹쳐 각진 아이콘 결에서 벗어난다.
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(-r * 0.9, -r * 0.02, -r * 0.56, -r * 0.36, -r * 0.2, r * 0.02, r * 0.58, -r * 0.8, r * 0.92, -r * 0.46, -r * 0.2, r * 0.7), true);
       break;
     case "remove":
       // 굵은 가로줄 하나. 편성 자리에서 캐릭터를 빼는 조작은 어디서나 이 표식만 쓴다 —

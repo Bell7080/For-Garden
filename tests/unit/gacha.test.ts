@@ -211,10 +211,10 @@ describe("운영 배너 데이터", () => {
   it("R 이상 렐릭과 회색 보상의 기대값이 운영 목표 범위 안이다", () => {
     // 범위는 economy-design.md의 독립 슬롯 목표를 허용 오차와 함께 기계적으로 고정한다.
     const targets = {
-      fossil: { relicRPlus: [0.169, 0.171], gold: [1_244, 1_246], cheesecake: [2.07, 2.08] },
+      fossil: { relicRPlus: [0.169, 0.171], gold: [3_873, 3_874], cheesecake: [29.04, 29.06] },
       // 첫 복원 연구는 확률·회색 보상이 화석 연구와 같다. 다른 것은 풀·값·한도·확정뿐이다.
-      welcome: { relicRPlus: [0.169, 0.171], gold: [1_244, 1_246], cheesecake: [2.07, 2.08] },
-      amber: { relicRPlus: [0.169, 0.171], gold: [1_244, 1_246], cheesecake: [2.07, 2.08] },
+      welcome: { relicRPlus: [0.169, 0.171], gold: [3_873, 3_874], cheesecake: [29.04, 29.06] },
+      amber: { relicRPlus: [0.169, 0.171], gold: [3_873, 3_874], cheesecake: [29.04, 29.06] },
     } as const;
 
     for (const candidate of BANNERS) {

@@ -45,17 +45,22 @@ export interface CakeOperationTier {
  *
  * 레벨이 한 번도 내려가지 않게 짠다 — 다음 단계가 앞 단계보다
  * 가벼우면 사다리가 아니라 옆길이 된다. 보상은 실효 레벨과 같은 결로 올라가되 **스테미나당
- * 효율이 위로 갈수록 좋아진다**: 그래야 아군을 키울 이유가 생긴다(1단계 3.3 → 8단계 7.5
+ * 효율이 위로 갈수록 좋아진다**: 그래야 아군을 키울 이유가 생긴다(1단계 5.0 → 8단계 7.5
  * 케이크/스테미나). 일일 무과금 치즈케이크 목표(`FREE_MONTHLY_TARGETS.daily` 200)를
  * 기준으로 잡아, 중간 단계 서너 판이 하루치를 채운다.
+ *
+ * **아래 네 단계는 한 번 끌어올렸다.** 1단계가 3.3이던 때는 렐릭 셋을 20레벨(치즈케이크 6,840)까지
+ * 올리는 데 스테미나 2,000이 들어 — 자연 회복으로 이레 — 1장 끝(1-10, LV.20)에 닿은 사람이 대작전
+ * 1단계를 일주일 돌아야 했다. 초반은 편성이 막 생긴 때라 성장이 가장 빨라야 하는 자리다.
+ * 위 네 단계는 그대로 두었다 — 상한 60까지의 긴 성장은 원래 속도가 맞다.
  */
 export const CAKE_OPERATION_TIERS: readonly CakeOperationTier[] = [
-  { id: "cake-1", name: "1단계", enemyLevel: 5, enemyCount: 10, rewardCheesecake: 20 },
-  { id: "cake-2", name: "2단계", enemyLevel: 10, enemyCount: 10, rewardCheesecake: 32 },
-  { id: "cake-3", name: "3단계", enemyLevel: 15, enemyCount: 11, rewardCheesecake: 46 },
-  { id: "cake-4", name: "4단계", enemyLevel: 20, enemyCount: 12, rewardCheesecake: 62 },
-  { id: "cake-5", name: "5단계", enemyLevel: 26, enemyCount: 13, rewardCheesecake: 82 },
-  { id: "cake-6", name: "6단계", enemyLevel: 32, enemyCount: 14, rewardCheesecake: 104 },
+  { id: "cake-1", name: "1단계", enemyLevel: 5, enemyCount: 10, rewardCheesecake: 30 },
+  { id: "cake-2", name: "2단계", enemyLevel: 10, enemyCount: 10, rewardCheesecake: 44 },
+  { id: "cake-3", name: "3단계", enemyLevel: 15, enemyCount: 11, rewardCheesecake: 58 },
+  { id: "cake-4", name: "4단계", enemyLevel: 20, enemyCount: 12, rewardCheesecake: 72 },
+  { id: "cake-5", name: "5단계", enemyLevel: 26, enemyCount: 13, rewardCheesecake: 88 },
+  { id: "cake-6", name: "6단계", enemyLevel: 32, enemyCount: 14, rewardCheesecake: 108 },
   { id: "cake-7", name: "7단계", enemyLevel: 38, enemyCount: 15, rewardCheesecake: 128 },
   { id: "cake-8", name: "8단계", enemyLevel: 45, enemyCount: 15, rewardCheesecake: 150 },
 ];

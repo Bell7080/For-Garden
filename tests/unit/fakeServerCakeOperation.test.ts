@@ -56,14 +56,16 @@ const TIER = CAKE_OPERATION_TIERS[0];
 const COST = cakeOperationRunCost(TIER).staminaCost;
 
 describe("FakeServer 치즈케이크 대작전", () => {
-  it("입장은 한 판의 스테미나만 빼고 보상은 얹지 않는다", async () => {
+  it("입장은 스테미나를 확인만 하고 빼지 않는다 — 이긴 판의 확정이 뺀다", async () => {
     const state = makeSession(); const server = make(state);
     const enter = await server.enterCakeOperation({ tierId: TIER.id, requestId: "enter-1" });
-    expect(enter.staminaSpent).toBe(COST);
-    expect(state.wallet.stamina).toBe(100 - COST);
+    expect(enter.staminaCost).toBe(COST);
+    expect(enter.refundPolicy).toBe("charged-on-victory");
+    expect(state.wallet.stamina).toBe(100);
     expect(state.wallet.cheesecake).toBe(0);
-    // 같은 요청 ID는 두 번 빼지 않는다.
     await expect(server.enterCakeOperation({ tierId: TIER.id, requestId: "enter-1" })).resolves.toEqual(enter);
+    const done = await server.completeCakeOperation({ tierId: TIER.id, requestId: "enter-1", victory: true });
+    expect(done.staminaSpent).toBe(COST);
     expect(state.wallet.stamina).toBe(100 - COST);
   });
 
@@ -83,6 +85,9 @@ describe("FakeServer 치즈케이크 대작전", () => {
     await server.enterCakeOperation({ tierId: TIER.id, requestId: "enter-4" });
     const done = await server.completeCakeOperation({ tierId: TIER.id, requestId: "enter-4", victory: false });
     expect(done.granted).toEqual({});
+    // 진 판은 스테미나를 쓰지 않는다.
+    expect(done).toMatchObject({ staminaSpent: 0, staminaRefunded: COST });
+    expect(state.wallet.stamina).toBe(100);
     expect(done.unlockedNextTier).toBe(false);
     expect(state.cakeOperation.clearedIndex).toBe(-1);
   });

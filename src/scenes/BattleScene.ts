@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import { rememberPlayerExp } from "../managers/PlayerExpReceipts";
+import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
 import { raidRunStamina } from "../data/raid";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { FEROCITY_RULES } from "../core/ferocity";
@@ -2340,6 +2341,9 @@ export class BattleScene extends Phaser.Scene {
    */
   private finishStageDefeat(stage: ReturnType<typeof getBattleStage>): void {
     void gameApi.completeStage(stage.id, false).catch(() => undefined);
+    // **진 판은 스테미나를 쓰지 않는다** — 입장이 확인만 해 둔 값이 그대로 남는다. 결과 확정을
+    // 기다리지 않고 판을 먼저 세우므로 그 몫은 입장이 확인한 값 그대로다.
+    const staminaRefunded = CONTENT_STAMINA_COSTS.normalStage;
     const popups = new PopupLayer(this, 2200);
     // 버튼이 닫기를 먼저 부르므로 `onConfirm`이 그 직후에 돈다 — 고른 길과 기본 길이 같은
     // 틱에 두 번 시작되지 않도록, 고른 것이 있으면 기본 길은 서지 않는다.
@@ -2354,6 +2358,7 @@ export class BattleScene extends Phaser.Scene {
           { label: t("stageComplete.toMap"), onPress: go("stageMap") },
         ],
       },
+      staminaRefunded,
       fighters: this.stageCompleteFighters(),
       onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
       // 버튼을 고르지 않고 판을 닫으면 원래 가던 곳(지도, 오프닝에서 왔으면 로비)으로 돌아간다.
@@ -2372,10 +2377,17 @@ export class BattleScene extends Phaser.Scene {
     try {
       const result = await gameApi.completeStage(stage.id, true);
       if (!this.scene.isActive()) return;
+      // 스테미나는 이긴 이 확정에서 빠졌다 — 그 경험치 영수증을 결과판이 꺼내도록 맡긴다.
+      rememberPlayerExp(result.playerExp);
       const popups = new PopupLayer(this, 2200);
       const fighters = this.stageCompleteFighters();
       new StageCompletePopup(this, popups).open({
-        reward: { kind: "storyClear", cheesecakeEarned: result.cheesecakeEarned, firstClear: result.firstClear },
+        reward: {
+          kind: "storyClear", cheesecakeEarned: result.cheesecakeEarned, firstClear: result.firstClear,
+          firstClearRewards: result.firstClearRewards.map((grant) => grant.kind === "rune"
+            ? { kind: "rune" as const, rarity: grant.rarity, part: grant.part }
+            : grant),
+        },
         fighters,
         onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
         onConfirm: () => {
@@ -2406,6 +2418,7 @@ export class BattleScene extends Phaser.Scene {
     try {
       const result = await gameApi.completeCakeOperation({ tierId: input.tierId, requestId: input.requestId, victory: won });
       if (!this.scene.isActive()) return;
+      rememberPlayerExp(result.playerExp);
       const popups = new PopupLayer(this, 2200);
       const items = currencyRecordToRewardItems(result.granted);
       // 버튼이 닫기를 먼저 부르지 않지만 닫힘이 기본 길(`onConfirm`)을 부르므로, 고른 길이 있으면 기본 길은 서지 않는다.
@@ -2423,6 +2436,7 @@ export class BattleScene extends Phaser.Scene {
           ],
         },
         replay: replayable ? { label: t("stageComplete.replay"), onPress: go(() => this.replayContent({ content: "cake", tierId: input.tierId }, back)) } : undefined,
+        staminaRefunded: result.staminaRefunded,
         fighters: this.stageCompleteFighters(),
         onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
         onConfirm: () => { if (!chosen && this.scene.isActive()) back(); },
@@ -2476,6 +2490,7 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
     if (!this.scene.isActive()) return;
+    rememberPlayerExp(settled.playerExp);
     // 입구로 돌아갈 때는 고르던 등급을 넘긴다.
     const toBounty = (): void => { this.scene.start("bounty", { tierId: input.tierId }); };
     let chosen = false;
@@ -2499,7 +2514,7 @@ export class BattleScene extends Phaser.Scene {
         { label: t("stageComplete.toRelics"), onPress: go(() => this.scene.start("relics")) },
         ...(replay ? [] : [{ label: t("bounty.result.toBounty"), onPress: go(toBounty) }]),
       ] },
-      replay, fighters, onOpenContribution: openContribution,
+      replay, fighters, onOpenContribution: openContribution, staminaRefunded: settled.staminaRefunded,
       onConfirm: () => { if (!chosen && this.scene.isActive()) toBounty(); },
     });
   }

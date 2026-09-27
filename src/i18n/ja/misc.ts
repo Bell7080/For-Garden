@@ -190,6 +190,7 @@ export const MISC_JA = {
   "stageComplete.contribution": "攻撃 · 防御 · 回復",
   "stageComplete.tapToConfirm": "画面を押して確認",
   "stageComplete.firstClear": "初回クリア報酬",
+  "stageComplete.staminaRefunded": "スタミナが返還されました (+{amount})",
   "stageComplete.repeatClear": "反復クリア報酬",
   "stageComplete.toResearch": "研究所",
   "stageComplete.toRelics": "レリック強化",
@@ -205,6 +206,8 @@ export const MISC_JA = {
 
   "enemyPreview.title": "敵編成",
   "enemyPreview.totalPower": "総戦闘力 {power}",
+  "enemyPreview.enemyInfo": "敵情報",
+  "enemyPreview.story": "あらすじ",
   "rune.chanceSuccess": "成功 {percent}%",
   "rune.chanceFail": "失敗 {percent}%",
   "formation.emptySlot": "空きスロット\n{index}",

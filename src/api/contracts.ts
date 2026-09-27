@@ -242,13 +242,16 @@ export interface CakeOperationRunRequest {
   requestId: string;
 }
 
-/** 입장 영수증. 스테미나는 여기서 한 번만 빠지고 결과 확정에서는 보상만 얹는다. */
+/**
+ * 입장 영수증. **스테미나는 아직 빠지지 않는다** — 값만 확인해 두고 이긴 판의 결과 확정이 뺀다
+ * (`charged-on-victory`). 지거나 판이 끊기면 아무것도 빠지지 않은 채로 끝난다.
+ */
 export interface CakeOperationEnterResponse extends PlayerStateDto {
   tierId: string;
   requestId: string;
-  staminaSpent: number;
-  playerExp: PlayerExpReceipt;
-  refundPolicy: "no-refund-after-admission";
+  /** 이기면 빠질 스테미나. */
+  staminaCost: number;
+  refundPolicy: StaminaRefundPolicy;
 }
 
 /** 전투 결과 확정. 패배도 명시해 승리 전용 보상이 새지 않게 한다. */
@@ -260,6 +263,11 @@ export interface CakeOperationCompleteResponse extends PlayerStateDto {
   granted: Partial<Record<keyof Wallet, number>>;
   /** 이 판으로 새 단계가 열렸는가. */
   unlockedNextTier: boolean;
+  /** 이 판에서 실제로 쓴 스테미나(진 판은 0)와 돌려준 몫. */
+  staminaSpent: number;
+  staminaRefunded: number;
+  /** 이긴 판만 연구원 경험치가 오른다. */
+  playerExp?: PlayerExpReceipt;
 }
 
 /**
@@ -531,23 +539,51 @@ export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPE
 export interface FeedRelicResponse extends PlayerStateDto { relicId: string; feeds: number; cheesecakeSpent: number; levelsGained: number; }
 /** 돌파 결과. 열린 상한을 함께 돌려줘 화면이 표를 다시 뒤지지 않게 한다. */
 export interface BreakThroughResponse extends PlayerStateDto { relicId: string; breakthrough: number; levelCap: number; /** 돌파 뒤의 별(1~5). */ breakthroughGrade: number; /** 남은 그 개체의 파편. */ fragments: number; }
-/** 전투 확인 시 저장되는 보상으로 최초 여부와 획득 치즈케이크를 결과 UI에 그대로 전달한다. */
-export interface CompleteStageResponse extends PlayerStateDto { stageId: string; firstClear: boolean; cheesecakeEarned: number; }
-/** 입장 영수증은 재시도에 그대로 반환되며 확정 뒤 클라이언트 로딩 실패는 자동 환불하지 않는다. */
+/**
+ * 스테미나를 쓰는 전투 입장의 환불 규칙.
+ *
+ * **이긴 판만 스테미나를 쓴다**(`charged-on-victory`). 입장은 값을 확인해 두기만 하고, 결과 확정이
+ * 이긴 판에서만 빼며 그때 연구원 경험치도 오른다 — 진 판·중간에 끊긴 판·오류로 끝난 판은 아무것도
+ * 빠지지 않은 채로 끝나므로 따로 돌려줄 것이 없다. 레이드만 예외다(`no-refund-after-admission`):
+ * 진 판이 없고 친 만큼이 곧 점수라, 입장이 도전 한 번과 스테미나를 함께 쓴다.
+ */
+export type StaminaRefundPolicy = "charged-on-victory" | "no-refund-after-admission";
+/**
+ * 전투 결과 확정. 이긴 첫 판이면 초회 보상 전부가 한 번에 들어온다.
+ *
+ * `firstClearRewards`는 **실제로 받은 것**이다(상한에서 깎인 재화는 깎인 만큼) — 화면이 관문 정의를
+ * 다시 읽어 그리면 미리 본 보상과 받은 보상이 갈릴 때 받지 않은 것까지 받은 것처럼 선다.
+ */
+export interface CompleteStageResponse extends PlayerStateDto {
+  stageId: string;
+  firstClear: boolean;
+  cheesecakeEarned: number;
+  firstClearRewards: StageClearGrantDto[];
+  /** 이 판에서 실제로 쓴 스테미나(진 판은 0)와 돌려준 몫. */
+  staminaSpent: number;
+  staminaRefunded: number;
+  /** 이긴 판만 연구원 경험치가 오른다. */
+  playerExp?: PlayerExpReceipt;
+}
+/** 초회 보상으로 실제 들어온 한 줄. 룬은 발급된 인스턴스의 등급·자리를 그대로 싣는다. */
+export type StageClearGrantDto =
+  | { kind: "currency"; currency: keyof Wallet; amount: number }
+  | { kind: "rune"; rarity: RuneInstance["rarity"]; part: RuneInstance["part"]; instanceId: string; name: string };
+/** 입장 영수증은 재시도에 그대로 반환된다. 스테미나는 여기서 빠지지 않고 이긴 판의 결과 확정이 뺀다. */
 export interface EnterStageRequest { stageId: string; requestId: string; }
-export interface EnterStageResponse extends PlayerStateDto { stageId: string; requestId: string; staminaSpent: number; playerExp: PlayerExpReceipt; refundPolicy: "no-refund-after-admission"; }
+export interface EnterStageResponse extends PlayerStateDto { stageId: string; requestId: string; staminaCost: number; refundPolicy: StaminaRefundPolicy; }
 /**
  * 현상수배 입장 영수증.
  *
- * 세 라운드가 **한 번의 입장**이라 스테미나는 여기서 한 번만 나간다. 라운드 사이에
- * 나가더라도 환불하지 않는 것은 스테이지 입장과 같은 계약이다.
+ * 세 라운드가 **한 번의 입장**이다. 스테미나는 세 라운드를 모두 이긴 결과 확정에서만 빠진다 —
+ * 스테이지 입장과 같은 계약(`charged-on-victory`)이다.
  */
 export interface EnterBountyRequest { tierId: string; requestId: string; }
-export interface EnterBountyResponse extends PlayerStateDto { tierId: string; requestId: string; staminaSpent: number; playerExp: PlayerExpReceipt; refundPolicy: "no-refund-after-admission"; }
+export interface EnterBountyResponse extends PlayerStateDto { tierId: string; requestId: string; staminaCost: number; refundPolicy: StaminaRefundPolicy; }
 /** 세 라운드의 결과를 한 번에 확정한다. 진 판도 보내 기록이 이긴 판만의 것이 되지 않게 한다. */
 export interface CompleteBountyRequest { tierId: string; requestId: string; victory: boolean; clearedRounds: number; }
 /** 골드 지급과 등급 해금을 한 처리로 확정하고 화면이 다시 계산하지 않게 결과만 돌려준다. */
-export interface CompleteBountyResponse extends PlayerStateDto { tierId: string; victory: boolean; clearedRounds: number; goldEarned: number; firstClear: boolean; clearedTierIds: string[]; }
+export interface CompleteBountyResponse extends PlayerStateDto { tierId: string; victory: boolean; clearedRounds: number; goldEarned: number; firstClear: boolean; clearedTierIds: string[]; staminaSpent: number; staminaRefunded: number; playerExp?: PlayerExpReceipt; }
 /** 깬 등급을 조회한다. 하루 입장 제한은 없다. */
 export interface BountyStatusResponse { clearedTierIds: string[]; serverTime: string; }
 

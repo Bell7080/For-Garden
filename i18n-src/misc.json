@@ -1779,6 +1779,16 @@
 "Erstabschluss-Belohnungen",
 "Награды за первое прохождение"
 ],
+"stageComplete.staminaRefunded": [
+"体力已返还 (+{amount})",
+"คืนสตามินาแล้ว (+{amount})",
+"Đã hoàn lại thể lực (+{amount})",
+"Stamina telah dikembalikan (+{amount})",
+"Se ha devuelto la estamina (+{amount})",
+"A estamina foi devolvida (+{amount})",
+"Ausdauer wurde zurückerstattet (+{amount})",
+"Выносливость возвращена (+{amount})"
+],
 "stageComplete.repeatClear": [
 "重复通关奖励",
 "รางวัลผ่านซ้ำ",
@@ -1878,6 +1888,26 @@
 "Formação inimiga",
 "Gegnerische Formation",
 "Построение врага"
+],
+"enemyPreview.enemyInfo": [
+"敌方情报",
+"ข้อมูลศัตรู",
+"Thông tin địch",
+"Info Musuh",
+"Info. enemiga",
+"Info. inimiga",
+"Gegnerinfo",
+"Инфо о враге"
+],
+"enemyPreview.story": [
+"剧情",
+"เนื้อเรื่อง",
+"Cốt truyện",
+"Alur Cerita",
+"Historia",
+"História",
+"Handlung",
+"Сюжет"
 ],
 "enemyPreview.totalPower": [
 "总战斗力 {power}",

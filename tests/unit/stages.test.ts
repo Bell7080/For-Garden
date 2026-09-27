@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { requiredBreakthroughForLevel } from "../../src/core/levelDesign";
 
 import { getRelic } from "../../src/data/relics";
-import { CHAPTERS, DAILY_RESTORATION, FIXED_STAGE_ENEMIES, SIDE_STORY_STAGE, STAGES, getStage, getStageEnemies } from "../../src/data/stages";
+import { CHAPTERS, DAILY_RESTORATION, FIXED_STAGE_ENEMIES, SIDE_STORY_STAGE, STAGES, getBattleStage, getStage, getStageEnemies } from "../../src/data/stages";
+import { stageFirstClearRewards } from "../../src/core/stageRewards";
 import { isStageUnlockedByProgress } from "../../src/core/stageProgress";
 import { stageChapterNavigationLayout } from "../../src/ui/stageChapterLayout";
 import { BREAKTHROUGH_CAP, relicLevelCap } from "../../src/core/relicProgression";
@@ -12,9 +13,32 @@ describe("stage enemy design", () => {
   /** 판별 유니온 테스트에서 전투 데이터만 안전하게 추려낸다. */
   const battles = STAGES.filter((stage) => stage.kind === "battle");
   it("최초/반복 보상과 단일 일일 복원 3회 제한을 정적 데이터로 제공한다", () => {
-    expect(battles[0].rewards).toEqual({ firstClearCheesecake: 30, repeatClearCheesecake: 10 });
+    expect(battles[0].rewards).toMatchObject({ firstClearCheesecake: 30, repeatClearCheesecake: 10 });
     expect(DAILY_RESTORATION).toMatchObject({ id: "daily-restoration", maxEntriesPerUtcDay: 3, rewardCheesecake: 40 });
   });
+  /*
+   * 초회 보상은 **깊을수록 두껍고**, 룬은 1-5부터, 화석은 정예 관문에만 든다.
+   */
+  it("초회 보상은 룬을 1-5부터, 화석을 정예 관문에만 두고 깊을수록 골드가 는다", () => {
+    const rewardsOf = (id: string) => stageFirstClearRewards(getBattleStage(id));
+    const firstRune = battles.findIndex((stage) => stage.kind === "battle" && rewardsOf(stage.id).some(({ kind }) => kind === "rune"));
+    expect(battles[firstRune].id).toBe("1-5");
+    for (const stage of battles) {
+      if (stage.kind !== "battle") continue;
+      const fossil = rewardsOf(stage.id).find((reward) => reward.kind === "currency" && reward.currency === "fossil");
+      expect(Boolean(fossil), stage.id).toBe(stage.elite === true);
+      if (fossil?.kind === "currency") expect(fossil.amount, stage.id).toBe(1);
+    }
+    const gold = (id: string) => rewardsOf(id).reduce((sum, reward) => reward.kind === "currency" && reward.currency === "gold" ? sum + reward.amount : sum, 0);
+    expect(gold("3-9")).toBeGreaterThan(gold("2-9"));
+    expect(gold("2-9")).toBeGreaterThan(gold("1-9"));
+    // 한 장을 닫으면 1·2·3번 조각이 모두 찬다.
+    for (const chapter of [1, 2, 3]) {
+      const parts = battles.filter((stage) => stage.chapter === chapter).flatMap((stage) => rewardsOf(stage.id)).flatMap((reward) => reward.kind === "rune" ? [reward.part] : []);
+      expect(new Set(parts), `${chapter}장`).toEqual(new Set([0, 1, 2]));
+    }
+  });
+
   it("챕터 1의 기본 악당은 토비·아모·리파이고 1-5·1-10만 단일 정예가 대신 선다", () => {
     // 정예 관문(1-5·1-10)을 뺀 나머지 여덟 관문은 언제나 같은 셋이 선다.
     const squads = battles.slice(0, 10).filter((stage) => stage.kind === "battle" && stage.elite !== true);

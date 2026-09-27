@@ -77,9 +77,10 @@ describe("레벨업 보상", () => {
     state.playerResearch = { level: 1, experience: 49, experienceToNext: 50 };
     state.itemInventory = [...state.itemInventory.filter(({ itemId }) => itemId !== PLAYER_LEVEL_UP_REWARD.itemId), { itemId: PLAYER_LEVEL_UP_REWARD.itemId, quantity: cap }];
     const api = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-01T00:00:00.000Z") });
-    const admission = await api.enterStage({ stageId: "1-1", requestId: "cap-1" });
-    expect(admission.playerExp.levelsGained).toBe(1);
-    expect(admission.playerExp.levelUpItems).toEqual([]);
+    await api.enterStage({ stageId: "1-1", requestId: "cap-1" });
+    const admission = await api.completeStage("1-1", true);
+    expect(admission.playerExp?.levelsGained).toBe(1);
+    expect(admission.playerExp?.levelUpItems).toEqual([]);
     expect(state.itemInventory.find(({ itemId }) => itemId === PLAYER_LEVEL_UP_REWARD.itemId)?.quantity).toBe(cap);
     expect(state.wallet.stamina).toBe(60 - CONTENT_STAMINA_COSTS.normalStage);
   });

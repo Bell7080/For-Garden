@@ -42,9 +42,18 @@ const AMBER_PICKUP = { SSR: ["dian"] } as const satisfies Partial<Record<RelicRa
  * 상점·무역·보상 표마다 다시 매겨야 한다. 배너가 다른 것은 풀·픽업·천장·값·한도뿐이다.
  */
 const STANDARD_SLOT_RATES = { R: 0.12, SR: 0.04, SSR: 0.01, GRAY: 0.83 } as const;
+/*
+ * **회색 한 칸도 받은 것처럼 읽혀야 한다.**
+ *
+ * 연구 한 번은 젬 300이고 무역 시세로 치즈케이크 600·골드 150,000이다(`TRADE_GEM_RATE`). 예전 값
+ * (골드 1,000~3,000 · 치즈케이크 5~15)은 회색 한 칸의 기대값이 연구 값의 1.3%에 그쳐, 열 번 중
+ * 여덟 번이 사실상 빈 칸이었다 — 치즈케이크 10개는 1레벨 한 번 올리는 값(30개)의 삼분의 일이다.
+ * 지금은 기대값이 연구 값의 7% 남짓이고, 치즈케이크 한 칸이 초반 렐릭 두세 레벨이다. 뽑기가
+ * 성장 재화의 주 공급처가 되지 않도록 그 이상은 올리지 않는다 — 그 몫은 대작전이 맡는다.
+ */
 const STANDARD_GRAY_REWARDS = [
-  { kind: "gold", min: 1_000, max: 3_000, weight: 3 },
-  { kind: "cheesecake", min: 5, max: 15, weight: 1 },
+  { kind: "gold", min: 4_000, max: 10_000, weight: 2 },
+  { kind: "cheesecake", min: 60, max: 150, weight: 1 },
 ] as const;
 
 /** 교체 배너가 같은 값을 쓰면 천장과 픽업 확정이 이월되는 명시적 운영 그룹이다. */

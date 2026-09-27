@@ -55,21 +55,22 @@ describe("stamina rules", () => {
 });
 
 describe("stamina admission", () => {
-  it("charges a normal stage only once for the same request id", async () => {
+  it("admission only checks stamina; the same request id returns the first receipt", async () => {
     const state = createDefaultSession(); state.wallet.stamina = 20; state.staminaUpdatedAt = "2026-09-01T00:00:00.000Z";
     const api = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-01T00:00:00.000Z") });
     const request = { stageId: "1-1", requestId: "admission-1" };
     const first = await api.enterStage(request); const retried = await api.enterStage(request);
-    expect(first.staminaSpent).toBe(6); expect(retried.wallet.stamina).toBe(14); expect(state.wallet.stamina).toBe(14);
-    expect(retried.refundPolicy).toBe("no-refund-after-admission");
+    // 이긴 판만 스테미나를 쓴다 — 입장은 값을 확인하고 영수증을 걸어 둘 뿐이다.
+    expect(first.staminaCost).toBe(6); expect(retried).toEqual(first); expect(state.wallet.stamina).toBe(20);
+    expect(retried.refundPolicy).toBe("charged-on-victory");
   });
 
-  it("preserves stamina when admission persistence fails and charges one successful retry", async () => {
+  it("preserves stamina when victory persistence fails and charges once on a successful retry", async () => {
     const state = createDefaultSession(); state.wallet.stamina = 20; state.staminaUpdatedAt = "2026-09-01T00:00:00.000Z";
-    let shouldFail = true;
-    // 저장 어댑터의 첫 커밋만 실패시켜 실제 저장소 예외 뒤 같은 requestId 재시도를 재현한다.
+    let shouldFail = false;
+    // 저장 어댑터의 승리 커밋만 실패시켜 실제 저장소 예외 뒤 같은 확정 재시도를 재현한다.
     const api = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-01T00:00:00.000Z"), persistSession: () => { if (shouldFail) throw new Error("storage unavailable"); } });
-    const request = { stageId: "1-1", requestId: "persistence-retry" };
+    await api.enterStage({ stageId: "1-1", requestId: "persistence-retry" });
 
     /*
      * **저장 실패는 공용 API 오류로 감싸여 나온다.**
@@ -77,7 +78,8 @@ describe("stamina admission", () => {
      * 화면이 여러 곳에서 `error.message`를 그대로 그리므로 저장소의 원문이 그대로 나가면
      * 플레이어가 영어 내부 메시지를 읽는다. 원인은 `cause`에 남으므로 여기서 함께 확인한다.
      */
-    const failure = await api.enterStage(request).then(() => undefined, (error: unknown) => error);
+    shouldFail = true;
+    const failure = await api.completeStage("1-1", true).then(() => undefined, (error: unknown) => error);
     expect(failure).toBeInstanceOf(GameApiError);
     expect((failure as GameApiError).code).toBe("PERSISTENCE_FAILED");
     expect(((failure as GameApiError).cause as Error).message).toBe("storage unavailable");
@@ -85,8 +87,8 @@ describe("stamina admission", () => {
     expect(state.wallet.stamina).toBe(20);
 
     shouldFail = false;
-    const succeeded = await api.enterStage(request); const retried = await api.enterStage(request);
-    expect(succeeded.wallet.stamina).toBe(14); expect(retried.wallet.stamina).toBe(14); expect(state.wallet.stamina).toBe(14);
+    const succeeded = await api.completeStage("1-1", true);
+    expect(succeeded.staminaSpent).toBe(6); expect(state.wallet.stamina).toBe(14);
   });
 
   it("returns INSUFFICIENT_STAMINA without changing a balance below the admission cost", async () => {
@@ -99,15 +101,25 @@ describe("stamina admission", () => {
     expect(state.wallet.stamina).toBe(CONTENT_STAMINA_COSTS.normalStage - 1);
   });
 
-  it("keeps an admitted charge after defeat and charges the next admission", async () => {
+  it("spends nothing on defeat or an abandoned run and charges only the won run", async () => {
     const state = createDefaultSession(); state.wallet.stamina = 20; state.staminaUpdatedAt = "2026-09-01T00:00:00.000Z";
+    state.playerResearch = { level: 1, experience: 0, experienceToNext: 50 };
     const api = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-01T00:00:00.000Z") });
     await api.enterStage({ stageId: "1-1", requestId: "defeat" });
-    await api.completeStage("1-1", false);
-    expect(state.wallet.stamina).toBe(14);
+    const lost = await api.completeStage("1-1", false);
+    // 진 판은 아무것도 빠지지 않고 경험치도 오르지 않는다 — 그 몫이 돌려준 몫이다.
+    expect(state.wallet.stamina).toBe(20);
+    expect(lost).toMatchObject({ staminaSpent: 0, staminaRefunded: 6 });
+    expect(lost.playerExp).toBeUndefined();
+    expect(state.playerResearch.experience).toBe(0);
+    // 결과 확정 없이 끊긴 판도 빠진 것이 없다.
+    await api.enterStage({ stageId: "1-2", requestId: "abandoned" });
+    expect(state.wallet.stamina).toBe(20);
     await api.enterStage({ stageId: "1-1", requestId: "victory" });
-    await api.completeStage("1-1", true);
-    expect(state.wallet.stamina).toBe(8);
+    const won = await api.completeStage("1-1", true);
+    expect(state.wallet.stamina).toBe(14);
+    expect(won).toMatchObject({ staminaSpent: 6, staminaRefunded: 0 });
+    expect(won.playerExp?.granted).toBe(6);
   });
 
   it("maps insufficient stamina to recharge guidance instead of a party-save failure", () => {
@@ -125,15 +137,18 @@ describe("연구원 경험치", () => {
     state.playerResearch = { level: 1, experience: 46, experienceToNext: 50 };
     state.itemInventory = state.itemInventory.filter(({ itemId }) => itemId !== PLAYER_LEVEL_UP_REWARD.itemId);
     const api = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-01T00:00:00.000Z") });
-    const admission = await api.enterStage({ stageId: "1-1", requestId: "exp-1" });
+    await api.enterStage({ stageId: "1-1", requestId: "exp-1" });
+    // 경험치는 입장이 아니라 **이긴 판의 결과 확정**에서 오른다(`charged-on-victory`).
+    expect(state.playerResearch.level).toBe(1);
+    const admission = await api.completeStage("1-1", true);
     expect(state.playerResearch.level).toBe(2);
     expect(state.playerResearch.experience).toBe(46 + CONTENT_STAMINA_COSTS.normalStage - 50);
     // 채우지 않는다 — 쓴 만큼만 줄고, 병이 가방에 들어간다.
     expect(state.wallet.stamina).toBe(60 - CONTENT_STAMINA_COSTS.normalStage);
     expect(state.itemInventory.find(({ itemId }) => itemId === PLAYER_LEVEL_UP_REWARD.itemId)?.quantity).toBe(1);
     expect(admission.playerExp).toMatchObject({ before: { level: 1, experience: 46 }, after: { level: 2 }, granted: CONTENT_STAMINA_COSTS.normalStage, levelsGained: 1, levelUpItems: [{ itemId: PLAYER_LEVEL_UP_REWARD.itemId, quantity: 1 }] });
-    // 같은 요청의 재전송은 경험치를 두 번 주지 않는다.
-    await api.enterStage({ stageId: "1-1", requestId: "exp-1" });
+    // 입장 영수증 하나는 한 번만 쓰인다 — 같은 판을 두 번 확정해도 경험치는 한 번이다.
+    await api.completeStage("1-1", true);
     expect(state.playerResearch.experience).toBe(2);
   });
 });

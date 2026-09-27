@@ -2035,6 +2035,16 @@ export interface StageEnemyDef {
 
 
 /** 전투 노드만 적별 성장 스냅샷과 전투 보상을 소유한다. */
+/**
+ * 초회 클리어 보상 한 줄. 재화는 지갑 칸 이름과 수, 룬은 **등급과 자리**를 적는다.
+ *
+ * 룬의 자리를 데이터가 정하는 이유는 미리보기가 받을 조각을 그대로 보여 주기 때문이다 — 자리를
+ * 서버가 굴리면 화면은 어느 조각인지 모르는 채 아무 그림이나 세우게 된다. 옵션은 여전히 서버가 굴린다.
+ */
+export type StageBonusReward =
+  | { kind: "currency"; currency: "gold" | "gems" | "rawStone" | "fossil"; amount: number }
+  | { kind: "rune"; rarity: "uncommon" | "rare" | "epic" | "legendary"; part: 0 | 1 | 2 };
+
 export interface BattleStageDef extends StageBase {
   kind: "battle";
   /**
@@ -2053,7 +2063,18 @@ export interface BattleStageDef extends StageBase {
    * 정규화라 관문마다 움직이지 않고, 관문을 조이는 것은 언제나 그 관문의 레벨 하나다.
    */
   elite?: true;
-  rewards: { firstClearCheesecake: number; repeatClearCheesecake: number };
+  rewards: {
+    firstClearCheesecake: number;
+    repeatClearCheesecake: number;
+    /**
+     * 치즈케이크 밖의 **초회 클리어 보상**(골드·젬·원석·화석·룬). 한 번 이기면 다시 받지 않는다.
+     *
+     * 치즈케이크를 이 목록에 섞지 않는 이유는 반복 보상과 짝을 이루는 값이라서다 — 첫 판과
+     * 반복 판이 같은 재화를 얼마씩 주는지가 한 줄에 함께 서야 비교된다. 화면·서버는 둘을 합친
+     * 목록을 `stageFirstClearRewards` 하나로 읽는다. 비워 두면 치즈케이크만 준다.
+     */
+    firstClearBonus?: readonly StageBonusReward[];
+  };
   /**
    * 관문 한 줄 — **예고가 아니라 지금 어디까지 왔는가**다.
    *

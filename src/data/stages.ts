@@ -1,7 +1,7 @@
 import { applyBreakthrough } from "../core/relicProgression";
 import { registerDataText } from "../i18n";
 import { applyEncounterScaling, encounterRoleFor, type EncounterRole } from "../core/levelDesign";
-import { type ChapterDef, type RelicDef, type StageDef, type StageEnemyDef } from "../core/types";
+import { type ChapterDef, type RelicDef, type StageBonusReward, type StageDef, type StageEnemyDef } from "../core/types";
 import { getRelic } from "./relics";
 
 /** 챕터 1의 기본 악당 셋은 영구 캐릭터 ID만 공유하고 성장 상태는 각 스테이지가 소유한다. */
@@ -85,6 +85,49 @@ const CHAPTER_ONE_ENEMIES: readonly (readonly StageEnemyDef[])[] =
  */
 
 /**
+ * 룬이 처음 나오는 자리. **1-5부터다** — 첫 관문부터 룬을 쥐여 주면 급여·편성을 겨우 익히는 동안
+ * 세공·장착까지 한꺼번에 밀려온다. 스테이지를 조금 민 뒤, 첫 정예를 넘은 상으로 처음 손에 쥔다.
+ *
+ * 한 장에 세 번(1·2·3번 조각)이라 장을 닫으면 세 칸이 모두 찬다. 등급은 장마다 한 단계씩 오르고,
+ * 스토리의 끝(3-10)만 전설 한 장을 둔다.
+ */
+const STORY_RUNE_REWARDS: Readonly<Record<string, Extract<StageBonusReward, { kind: "rune" }>>> = {
+  "1-5": { kind: "rune", rarity: "uncommon", part: 0 },
+  "1-7": { kind: "rune", rarity: "uncommon", part: 1 },
+  "1-9": { kind: "rune", rarity: "uncommon", part: 2 },
+  "2-3": { kind: "rune", rarity: "rare", part: 0 },
+  "2-6": { kind: "rune", rarity: "rare", part: 1 },
+  "2-9": { kind: "rune", rarity: "rare", part: 2 },
+  "3-3": { kind: "rune", rarity: "epic", part: 0 },
+  "3-6": { kind: "rune", rarity: "epic", part: 1 },
+  "3-9": { kind: "rune", rarity: "epic", part: 2 },
+  "3-10": { kind: "rune", rarity: "legendary", part: 0 },
+};
+
+/**
+ * 치즈케이크 밖의 초회 보상 — 골드·젬·원석·화석·룬.
+ *
+ * - **골드**는 관문이 깊을수록 늘고, 무거운 자리(정예·장의 끝)는 두 배다.
+ * - **젬**은 매 관문 조금, 무거운 자리에서 크게 — 장 하나가 연구 두어 번 몫이다.
+ * - **원석**은 1-3부터다. 룬 특성 연구의 재료라 룬이 나오기 조금 전부터 모아 두게 한다.
+ * - **화석은 정예 관문에만 한 개**다(`elite`). 스토리 화석은 짜게 두고, 모자란 몫은 스토리 클리어
+ *   패스(무료·유료 두 줄)가 채운다 — 관문마다 화석을 주면 패스가 채울 자리가 없다.
+ * - **룬**은 `STORY_RUNE_REWARDS`가 자리를 정한다.
+ */
+function storyFirstClearBonus(id: string, globalOrder: number, chapter: number, chapterOrder: number, elite: boolean): StageBonusReward[] {
+  const heavy = elite || chapterOrder === 10;
+  const bonus: StageBonusReward[] = [
+    { kind: "currency", currency: "gold", amount: (3_000 + globalOrder * 1_000) * (heavy ? 2 : 1) },
+    { kind: "currency", currency: "gems", amount: heavy ? [150, 200, 300][chapter - 1] ?? 300 : [30, 40, 50][chapter - 1] ?? 50 },
+  ];
+  if (globalOrder >= 2) bonus.push({ kind: "currency", currency: "rawStone", amount: 40 + globalOrder * 10 });
+  if (elite) bonus.push({ kind: "currency", currency: "fossil", amount: 1 });
+  const rune = STORY_RUNE_REWARDS[id];
+  if (rune) bonus.push(rune);
+  return bonus;
+}
+
+/**
  * 관문 한 줄(`BattleStageDef.situation`).
  *
  * **예고편이 아니라 진행 상황이다.** 1장은 수송 열차 피습 하나가 이어지는 장면이라
@@ -143,16 +186,28 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
     const laterChapterEnemies = laterChapterIds.map((relicId, slot) =>
       enemyGrowth(relicId, STORY_RECOMMENDED_LEVELS[globalOrder] ?? 1, 0, slot as 0 | 1 | 2));
     const enemies = chapter === 1 ? CHAPTER_ONE_ENEMIES[orderIndex] : laterChapterEnemies;
+    const id = `${chapter}-${chapterOrder}`;
+    const elite = enemies.length === 1;
     return {
       kind: "battle",
-      id: `${chapter}-${chapterOrder}`, name, chapter, chapterOrder,
+      id, name, chapter, chapterOrder,
       // 첫 노드는 이전 챕터 끝을, 나머지는 같은 챕터의 직전 노드를 선행 조건으로 삼는다.
       prerequisiteStageIds: chapterOrder === 1 ? (prerequisiteStageId ? [prerequisiteStageId] : []) : [`${chapter}-${chapterOrder - 1}`],
       // 마지막 심층 관문은 원정 최종층과 같은 폰토스를 세워 등록된 보스가 스테이지에서도 고립되지 않게 한다.
       enemies,
       // 혼자 서면 정예다. 화면은 이 표식으로 몸집과 표식만 바꾸고 수치는 건드리지 않는다.
-      ...(enemies.length === 1 ? { elite: true as const } : {}),
-      rewards: { firstClearCheesecake: 30 + globalOrder * 5, repeatClearCheesecake: 10 + globalOrder * 2 },
+      ...(elite ? { elite: true as const } : {}),
+      rewards: {
+        /*
+         * 초회 치즈케이크는 **난이도 검수가 딛고 선 값**이라 그대로 둔다. `stageDifficulty.test`가 관문마다
+         * "그 자리에 닿은 사람이 스토리로 받은 치즈케이크"로 파티를 키워 1-10·2장의 벽을 재므로, 여기를
+         * 올리면 벽이 조용히 낮아진다(1-10의 땅 딜러 조합이 여덟 판 중 한 판 → 여섯 판으로 열렸다).
+         * 초회의 몫은 나머지 보상(`firstClearBonus`)이 늘리고, 성장 재화의 숨통은 대작전이 튼다.
+         */
+        firstClearCheesecake: 30 + globalOrder * 5,
+        repeatClearCheesecake: 10 + globalOrder * 2,
+        firstClearBonus: storyFirstClearBonus(id, globalOrder, chapter, chapterOrder, elite),
+      },
       // 아직 서사가 없는 장은 이 값이 비어 있고, 화면은 그 줄을 그리지 않는다.
       situation: CHAPTER_SITUATIONS[chapterIndex]?.[orderIndex],
     };

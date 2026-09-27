@@ -18,6 +18,8 @@ import { loadOwnedPuppet } from "./statusPuppetLoad";
 import { takePlayerExp } from "../managers/PlayerExpReceipts";
 import { addPlayerExpGainRow } from "./PlayerExpGainRow";
 import { addSdFootShadow } from "./SdFootShadow";
+import type { StageFirstClearReward } from "../core/stageRewards";
+import { addStageRewardFrame } from "./stageRewardFrame";
 
 /** 결과 화면이 넘기는 편성원 한 명. MVP 여부만 알면 카드 크기·발광은 이 프리팹이 정한다. */
 export interface StageCompleteFighter {
@@ -33,7 +35,11 @@ export interface StageCompleteFighter {
  * 이유는 승리 화면과 영수증이 따로 뜨면 MVP를 보다가 창을 한 번 더 넘겨야 하기 때문이다.
  */
 export type StageCompleteReward =
-  | { kind: "storyClear"; cheesecakeEarned: number; firstClear: boolean }
+  /**
+   * 스토리 승리. 첫 판이면 **초회 보상 전부**(`firstClearRewards` — 실제로 받은 것)가 한 줄로 서고,
+   * 반복 판이면 치즈케이크 한 장이다.
+   */
+  | { kind: "storyClear"; cheesecakeEarned: number; firstClear: boolean; firstClearRewards?: readonly StageFirstClearReward[] }
   | { kind: "loot"; items: readonly RewardPopupItem[]; footnote?: string }
   /**
    * 작전 실패.
@@ -70,6 +76,11 @@ export interface StageCompletePopupOptions {
    * 전투 시작을 도는 대신 한 번에 다음 판으로 간다.
    */
   replay?: StageCompleteAction;
+  /**
+   * 진 판에서 돌려준 스테미나. 있으면 판 밑동에 **작고 흐린 한 줄**로만 선다 — 진 판의 주인공은
+   * 다음에 할 일이라, 이 줄이 버튼보다 먼저 읽히면 안 된다. 경험치 블록은 서지 않는다(오르지 않았다).
+   */
+  staminaRefunded?: number;
 }
 
 const WIDTH = 940;
@@ -101,6 +112,9 @@ const REWARD_ROW = { y: 320, frame: 132, gap: 168 } as const;
  */
 const DEFEAT_ACTIONS = { top: 272, width: 420, height: 86, gap: 18, belowLoot: 416 } as const;
 
+/** 진 판에서 돌려준 스테미나 한 줄. 판 밑변 가까이, 버튼 줄보다 한참 아래에 선다. */
+const STAMINA_REFUND_Y = HEIGHT / 2 - 64;
+
 /** 이긴 판의 「다시 하기」. 보상 줄과 그 아래 한 줄(점수 증가분) 밑에 선다. */
 const REPLAY = { y: 530, width: 420, height: 86 } as const;
 
@@ -125,8 +139,9 @@ export class StageCompletePopup {
     // 이 판의 입장이 올린 경험치. 진 판도 스테미나를 썼으므로 함께 선다. 한 번 꺼내면 비워진다.
     const expReceipt = takePlayerExp();
     const loot = options.reward.kind === "loot" ? options.reward.items.filter(({ amount }) => amount > 0) : [];
+    const clearRewards = options.reward.kind === "storyClear" && options.reward.firstClear ? options.reward.firstClearRewards ?? [] : [];
     const shownRewards = options.reward.kind === "storyClear"
-      ? (Math.floor(options.reward.cheesecakeEarned) > 0 ? 1 : 0)
+      ? (clearRewards.length > 0 ? clearRewards.length : Math.floor(options.reward.cheesecakeEarned) > 0 ? 1 : 0)
       : loot.length;
     let hint: Phaser.GameObjects.Text | undefined;
     /** Puppet은 컨테이너 변환을 물려받지 않으므로 원점(0,0)에 선 전용 레이어에 화면 좌표로 세운다. */
@@ -173,7 +188,8 @@ export class StageCompletePopup {
       if (expReceipt) addPlayerExpGainRow(this.scene, body, EXP_ROW_Y, expReceipt);
       else body.add(drawHairline(this.scene, 0, EXP_ROW_Y, WIDTH - 140, { color: defeated ? COLOR.danger : COLOR.accent, alpha: 0.3 }));
       if (options.reward.kind === "storyClear") {
-        this.buildClearReward(body, Math.floor(options.reward.cheesecakeEarned), options.reward.firstClear);
+        if (clearRewards.length > 0) this.buildFirstClearRewards(body, clearRewards);
+        else this.buildClearReward(body, Math.floor(options.reward.cheesecakeEarned), options.reward.firstClear);
         if (options.replay) this.buildReplay(body, close, options.replay);
       }
       else if (options.reward.kind === "defeat") {
@@ -181,6 +197,11 @@ export class StageCompletePopup {
         if (carried.length > 0) this.buildLoot(body, carried);
         const actions = options.replay ? [options.replay, ...options.reward.actions] : options.reward.actions;
         this.buildDefeatActions(body, close, actions, carried.length > 0);
+        if ((options.staminaRefunded ?? 0) > 0) {
+          body.add(this.scene.add
+            .text(0, STAMINA_REFUND_Y, t("stageComplete.staminaRefunded", { amount: options.staminaRefunded ?? 0 }), textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
+            .setOrigin(0.5).setAlpha(0.72));
+        }
       }
       else {
         this.buildLoot(body, loot, options.reward.footnote);
@@ -317,6 +338,18 @@ export class StageCompletePopup {
     amount.setStroke("#000000", 6); amount.setShadow(2, 3, "#000000", 2, false, true);
     body.add(amount);
     body.add(this.scene.add.text(0, REWARD_ROW.y + size / 2 + 33, firstClear ? t("stageComplete.firstClear") : t("stageComplete.repeatClear"), textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
+  }
+
+  /**
+   * 첫 승리의 초회 보상 전부 — 노드 미리보기에서 본 **같은 액자**(`addStageRewardFrame`)가 같은 순서로
+   * 선다. 미리보기에서 본 줄이 그대로 손에 들어왔다는 것이 읽혀야 한다.
+   */
+  private buildFirstClearRewards(body: Phaser.GameObjects.Container, rewards: readonly StageFirstClearReward[]): void {
+    const gap = Math.min(REWARD_ROW.gap, (WIDTH - 140 - REWARD_ROW.frame) / Math.max(1, rewards.length - 1));
+    const frame = Math.min(REWARD_ROW.frame, gap - 14);
+    const startX = -((rewards.length - 1) * gap) / 2;
+    rewards.forEach((reward, index) => addStageRewardFrame(this.scene, body, startX + index * gap, REWARD_ROW.y, frame, reward));
+    body.add(this.scene.add.text(0, REWARD_ROW.y + frame / 2 + 33, t("stageComplete.firstClear"), textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
   }
 
   /**

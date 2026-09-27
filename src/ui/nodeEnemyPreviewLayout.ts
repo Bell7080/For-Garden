@@ -51,7 +51,7 @@ export function enemyPreviewSlotHalfWidth(count: number, width = NODE_ENEMY_PREV
 }
 
 /** 노드 위 공간이 부족할 때만 아래로 뒤집고, 양쪽 안전 영역 안에 판 전체를 보존한다. */
-export function anchorEnemyPreview(nodeY: number, top: number, bottom: number, height = NODE_ENEMY_PREVIEW.height): { y: number; above: boolean } {
+export function anchorEnemyPreview(nodeY: number, top: number, bottom: number, height: number = NODE_ENEMY_PREVIEW.height): { y: number; above: boolean } {
   const aboveY = nodeY - height / 2 - NODE_ENEMY_PREVIEW.tailGap;
   const belowY = nodeY + height / 2 + NODE_ENEMY_PREVIEW.tailGap;
   const above = aboveY - height / 2 >= top;
@@ -62,4 +62,97 @@ export function anchorEnemyPreview(nodeY: number, top: number, bottom: number, h
 /** 선택 노드 중심이 지도 마스크 안에 남아 있는 동안에만 부착 판을 표시한다. */
 export function isEnemyPreviewNodeVisible(nodeY: number, top: number, bottom: number): boolean {
   return nodeY >= top && nodeY <= bottom;
+}
+
+/**
+ * **스토리 관문의 미리보기 — 펼치는 두 칸과 초회 보상 한 줄.**
+ *
+ * 원정 노드는 적만 보여 주면 되지만 스토리 관문은 적·줄거리·초회 보상 셋을 말해야 한다. 셋을 모두
+ * 펼쳐 두면 판이 화면의 절반을 넘어 지도가 가려지므로 **적 정보와 줄거리는 접을 수 있는 칸**이다.
+ *
+ * - 적 칸의 머리줄이 곧 **총 전투력**이다. 접어도 "얼마나 센가"는 남아야 붙어 볼지 정할 수 있다.
+ * - 줄거리 칸은 한 등급 가볍다 — 머리줄이 낮고 글자가 작고 흐리다. 고르는 데 필요한 정보가 아니다.
+ * - 초회 보상은 접지 않는다. 판 맨 아래에 늘 서고, 받은 것은 액자 위에 체크가 선다.
+ *
+ * 좌표는 **판 윗변에서 잰 값**이다. 높이가 칸을 여닫을 때마다 바뀌므로 가운데 기준으로 적어 두면
+ * 모든 줄이 함께 흔들린다 — 그리는 쪽이 마지막에 `height / 2`만 빼서 가운데 좌표로 옮긴다.
+ */
+export const STORY_PREVIEW = {
+  padTop: 30,
+  titleSize: 32,
+  titleDivider: 92,
+  /** 적 칸 머리줄(총 전투력 · 적 정보 ▾)의 높이. */
+  enemyHeader: 78,
+  /** 펼친 적 칸. 표식은 칸 윗변에서, 발끝·이름줄은 같은 윗변에서 잰다. */
+  enemyBody: { badgeTop: 38, ground: 292, nameY: 312, height: 364 },
+  /** 줄거리 칸 머리줄 — 적 칸보다 낮다. */
+  storyHeader: 60,
+  storyText: { size: 24, inset: 56, padTop: 2, padBottom: 22 },
+  reward: { labelGap: 20, labelSize: 22, frame: 96, gap: 118, rowGap: 16, padBottom: 30 },
+} as const;
+
+export interface StoryPreviewLayoutInput {
+  enemiesOpen: boolean;
+  storyOpen: boolean;
+  /** 줄거리가 없는 관문은 줄거리 칸 자체를 세우지 않는다. */
+  hasStory: boolean;
+  /** 펼친 줄거리 글의 실제 높이(재서 넘긴다). */
+  storyTextHeight: number;
+  rewardCount: number;
+}
+
+export interface StoryPreviewLayout {
+  height: number;
+  titleY: number;
+  dividers: number[];
+  enemyHeaderY: number;
+  /** 펼친 적 칸의 윗변. 접혀 있으면 없다. */
+  enemyBodyTop?: number;
+  storyHeaderY?: number;
+  storyTextY?: number;
+  rewardLabelY?: number;
+  rewardRowY?: number;
+}
+
+/** 여닫힌 상태에서 각 줄의 자리와 판 높이를 판 윗변 기준으로 구한다. */
+export function storyPreviewLayout(input: StoryPreviewLayoutInput): StoryPreviewLayout {
+  const spec = STORY_PREVIEW;
+  const dividers: number[] = [spec.titleDivider];
+  let cursor = spec.titleDivider;
+  const enemyHeaderY = cursor + spec.enemyHeader / 2;
+  cursor += spec.enemyHeader;
+  let enemyBodyTop: number | undefined;
+  if (input.enemiesOpen) {
+    enemyBodyTop = cursor;
+    cursor += spec.enemyBody.height;
+  }
+  let storyHeaderY: number | undefined;
+  let storyTextY: number | undefined;
+  if (input.hasStory) {
+    dividers.push(cursor);
+    storyHeaderY = cursor + spec.storyHeader / 2;
+    cursor += spec.storyHeader;
+    if (input.storyOpen) {
+      storyTextY = cursor + spec.storyText.padTop;
+      cursor += spec.storyText.padTop + input.storyTextHeight + spec.storyText.padBottom;
+    }
+  }
+  let rewardLabelY: number | undefined;
+  let rewardRowY: number | undefined;
+  if (input.rewardCount > 0) {
+    dividers.push(cursor);
+    rewardLabelY = cursor + spec.reward.labelGap;
+    rewardRowY = rewardLabelY + spec.reward.labelSize + spec.reward.rowGap + spec.reward.frame / 2;
+    cursor = rewardRowY + spec.reward.frame / 2 + spec.reward.padBottom;
+  } else {
+    cursor += spec.reward.padBottom;
+  }
+  return { height: cursor, titleY: spec.padTop, dividers, enemyHeaderY, enemyBodyTop, storyHeaderY, storyTextY, rewardLabelY, rewardRowY };
+}
+
+/** 보상 액자 줄의 x. 판 폭 안에 들도록 간격만 좁힌다. */
+export function storyPreviewRewardColumns(count: number, width = NODE_ENEMY_PREVIEW.width): number[] {
+  const { frame, gap } = STORY_PREVIEW.reward;
+  const step = Math.min(gap, (width - 120 - frame) / Math.max(1, count - 1));
+  return Array.from({ length: count }, (_, index) => (index - (count - 1) / 2) * step);
 }

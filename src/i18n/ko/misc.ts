@@ -205,7 +205,8 @@ export const MISC_KO = {
   // 스테이지 결과
   "stageComplete.contribution": "공격 · 방어 · 회복",
   "stageComplete.tapToConfirm": "화면을 눌러 확인",
-  "stageComplete.firstClear": "최초 클리어 보상",
+  "stageComplete.firstClear": "초회 클리어 보상",
+  "stageComplete.staminaRefunded": "스테미나가 반환되었습니다 (+{amount})",
   "stageComplete.repeatClear": "반복 클리어 보상",
   "stageComplete.toResearch": "연구소",
   "stageComplete.toRelics": "렐릭 강화",
@@ -222,6 +223,8 @@ export const MISC_KO = {
   // 적 미리보기·룬 확률
   "enemyPreview.title": "적 편성",
   "enemyPreview.totalPower": "총 전투력 {power}",
+  "enemyPreview.enemyInfo": "적 정보",
+  "enemyPreview.story": "줄거리",
   "rune.chanceSuccess": "성공 {percent}%",
   "rune.chanceFail": "실패 {percent}%",
   "formation.emptySlot": "빈 슬롯\n{index}",

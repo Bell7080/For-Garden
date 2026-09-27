@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
+import { stageFirstClearRewards } from "../../src/core/stageRewards";
+import { getBattleStage } from "../../src/data/stages";
 import { EXPEDITION_NODE_REWARD_BALANCE, expeditionBossSalvage, expeditionRankRewards } from "../../src/data/expedition";
 import { FakeServer } from "../../src/api/FakeServer";
 import { breakthroughFragmentCost, BREAKTHROUGH_STEPS, RELIC_LEVEL_CAP } from "../../src/core/relicProgression";
@@ -361,6 +363,25 @@ describe("FakeServer", () => {
     expect(state.wallet.cheesecake).toBe(40);
   });
 
+  it("첫 승리는 미리보기와 같은 초회 보상 전부를 주고, 룬은 보여 준 자리로 발급한다", async () => {
+    const state = makeSession(); const server = new FakeServer(state, { latencyMs: 0 });
+    const expected = stageFirstClearRewards(getBattleStage("1-5"));
+    const walletBefore = { ...state.wallet };
+    const runesBefore = state.runeInventory.length;
+    const result = await server.completeStage("1-5", true);
+    expect(result.firstClearRewards.map((grant) => grant.kind === "rune" ? { kind: "rune", rarity: grant.rarity, part: grant.part } : grant)).toEqual(expected);
+    // 1-5는 첫 정예라 화석 한 개와 첫 룬(1번 조각)이 함께 든다.
+    expect(expected).toContainEqual({ kind: "currency", currency: "fossil", amount: 1 });
+    expect(expected).toContainEqual({ kind: "rune", rarity: "uncommon", part: 0 });
+    for (const reward of expected) if (reward.kind === "currency") expect(state.wallet[reward.currency] - walletBefore[reward.currency]).toBe(reward.amount);
+    expect(state.runeInventory).toHaveLength(runesBefore + 1);
+    expect(state.runeInventory.at(-1)).toMatchObject({ rarity: "uncommon", part: 0 });
+    // 두 번째 승리는 반복 치즈케이크뿐이다.
+    const again = await server.completeStage("1-5", true);
+    expect(again).toMatchObject({ firstClear: false, firstClearRewards: [] });
+    expect(state.runeInventory).toHaveLength(runesBefore + 1);
+  });
+
   it("재화가 가득 차도 스테이지를 깰 수 있고 넘치는 보상만 깎인다", async () => {
     // 그냥 더하기만 했을 때는 저장 직전 검사가 상한 초과로 던져, 치즈케이크가 가득 찬 계정은
     // 클리어 기록도 유대도 임무 진행도 함께 막혔다. 다른 지급 경로처럼 깎아서 준다.
@@ -396,16 +417,23 @@ describe("FakeServer", () => {
     await expect(server.interactInLobby("anky")).resolves.toMatchObject({ bondXpEarned: 0 });
   });
 
-  it("현상수배는 입장 한 번에만 레벨 사다리의 스테미나를 쓰고 같은 영수증을 두 번 깎지 않는다", async () => {
+  it("현상수배는 세 라운드를 다 이긴 판에만 레벨 사다리의 스테미나를 쓰고 같은 영수증을 두 번 깎지 않는다", async () => {
     const state = makeSession();
     state.wallet.stamina = 100;
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-19T04:00:00Z") });
 
     const admission = await server.enterBounty({ tierId: "bounty-1", requestId: "run-1" });
-    expect(admission).toMatchObject({ tierId: "bounty-1", staminaSpent: 6 });
+    expect(admission).toMatchObject({ tierId: "bounty-1", staminaCost: 6, refundPolicy: "charged-on-victory" });
+    // 입장은 확인만 한다.
+    expect(state.wallet.stamina).toBe(100);
+    await expect(server.enterBounty({ tierId: "bounty-1", requestId: "run-1" })).resolves.toMatchObject({ staminaCost: 6 });
+    const won = await server.completeBounty({ tierId: "bounty-1", requestId: "run-1", victory: true, clearedRounds: 3 });
+    expect(won).toMatchObject({ staminaSpent: 6, staminaRefunded: 0 });
     expect(state.wallet.stamina).toBe(94);
-    // 재전송은 최초 영수증을 그대로 돌려줘 스테미나가 두 번 나가지 않는다.
-    await expect(server.enterBounty({ tierId: "bounty-1", requestId: "run-1" })).resolves.toMatchObject({ staminaSpent: 6 });
+    // 2라운드에서 진 판은 스테미나를 쓰지 않는다.
+    await server.enterBounty({ tierId: "bounty-1", requestId: "run-2" });
+    const lost = await server.completeBounty({ tierId: "bounty-1", requestId: "run-2", victory: false, clearedRounds: 1 });
+    expect(lost).toMatchObject({ staminaSpent: 0, staminaRefunded: 6 });
     expect(state.wallet.stamina).toBe(94);
   });
 
@@ -417,7 +445,10 @@ describe("FakeServer", () => {
     // 해금은 화면 표시가 아니라 서버가 지키는 값이다 — 직접 진입도 같은 경계에서 막힌다.
     await expect(server.enterBounty({ tierId: "bounty-2", requestId: "skip" })).rejects.toMatchObject({ code: "BOUNTY_TIER_LOCKED" });
     // 스테미나가 곧 한도다 — 예전의 하루 세 번을 넘겨도 막히지 않는다.
-    for (let index = 0; index < 5; index += 1) await server.enterBounty({ tierId: "bounty-1", requestId: `run-${index}` });
+    for (let index = 0; index < 5; index += 1) {
+      await server.enterBounty({ tierId: "bounty-1", requestId: `run-${index}` });
+      await server.completeBounty({ tierId: "bounty-1", requestId: `run-${index}`, victory: true, clearedRounds: 3 });
+    }
     expect(state.wallet.stamina).toBe(100 - 6 * 5);
   });
 
@@ -539,7 +570,7 @@ describe("FakeServer", () => {
     const rolls = [0.9, 0, 0, ...Array(40).fill(0)];
     let index = 0;
     const response = await new FakeServer(state, { latencyMs: 0, random: () => rolls[index++] ?? 0 }).pullRelics({ bannerId: "fossil", count: 10 });
-    expect(response.results[0]).toEqual({ type: "currency", currency: "gold", amount: 1_000, grade: "GRAY" });
+    expect(response.results[0]).toEqual({ type: "currency", currency: "gold", amount: 4_000, grade: "GRAY" });
     expect(response.results.slice(1).every((result) => result.type === "relic")).toBe(true);
     expect(state.wallet.gold).toBe(999_999_999);
     expect(state.gachaPityByGroup["standard-fossil"].pullsSinceSsr).toBe(0);

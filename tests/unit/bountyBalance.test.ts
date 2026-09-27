@@ -21,7 +21,7 @@ const SEEDS = [1, 2, 3] as const;
 
 /** 등급마다 상정한 플레이어 레벨. 1·2급은 돌파 없는 상한(20) 안이고 그 위는 돌파가 연 자리다. */
 const ASSUMED_LEVEL: Readonly<Record<string, number>> = {
-  "bounty-1": 15, "bounty-2": 20, "bounty-3": 30, "bounty-4": 40, "bounty-5": 50,
+  "bounty-1": 15, "bounty-2": 22, "bounty-3": 34, "bounty-4": 48, "bounty-5": 60,
 };
 
 const grow = (def: RelicDef, level: number): RelicDef => ({ ...def, stats: applyLevelGrowth(def.stats, level, def.rarity) });

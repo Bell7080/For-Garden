@@ -429,24 +429,24 @@ describe("FakeServer", () => {
     await expect(server.interactInLobby("anky")).resolves.toMatchObject({ bondXpEarned: 0 });
   });
 
-  it("현상수배는 세 라운드를 다 이긴 판에만 레벨 사다리의 스테미나를 쓰고 같은 영수증을 두 번 깎지 않는다", async () => {
+  it("현상수배는 세 라운드를 다 이긴 판에만 한 판의 스테미나(10)를 쓰고 같은 영수증을 두 번 깎지 않는다", async () => {
     const state = makeSession();
     state.wallet.stamina = 100;
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-19T04:00:00Z") });
 
     const admission = await server.enterBounty({ tierId: "bounty-1", requestId: "run-1" });
-    expect(admission).toMatchObject({ tierId: "bounty-1", staminaCost: 6, refundPolicy: "charged-on-victory" });
+    expect(admission).toMatchObject({ tierId: "bounty-1", staminaCost: 10, refundPolicy: "charged-on-victory" });
     // 입장은 확인만 한다.
     expect(state.wallet.stamina).toBe(100);
-    await expect(server.enterBounty({ tierId: "bounty-1", requestId: "run-1" })).resolves.toMatchObject({ staminaCost: 6 });
+    await expect(server.enterBounty({ tierId: "bounty-1", requestId: "run-1" })).resolves.toMatchObject({ staminaCost: 10 });
     const won = await server.completeBounty({ tierId: "bounty-1", requestId: "run-1", victory: true, clearedRounds: 3 });
-    expect(won).toMatchObject({ staminaSpent: 6, staminaRefunded: 0 });
-    expect(state.wallet.stamina).toBe(94);
+    expect(won).toMatchObject({ staminaSpent: 10, staminaRefunded: 0 });
+    expect(state.wallet.stamina).toBe(90);
     // 2라운드에서 진 판은 스테미나를 쓰지 않는다.
     await server.enterBounty({ tierId: "bounty-1", requestId: "run-2" });
     const lost = await server.completeBounty({ tierId: "bounty-1", requestId: "run-2", victory: false, clearedRounds: 1 });
-    expect(lost).toMatchObject({ staminaSpent: 0, staminaRefunded: 6 });
-    expect(state.wallet.stamina).toBe(94);
+    expect(lost).toMatchObject({ staminaSpent: 0, staminaRefunded: 10 });
+    expect(state.wallet.stamina).toBe(90);
   });
 
   it("현상수배는 잠긴 등급을 서버가 막고 하루 입장 제한은 없다", async () => {
@@ -461,7 +461,7 @@ describe("FakeServer", () => {
       await server.enterBounty({ tierId: "bounty-1", requestId: `run-${index}` });
       await server.completeBounty({ tierId: "bounty-1", requestId: `run-${index}`, victory: true, clearedRounds: 3 });
     }
-    expect(state.wallet.stamina).toBe(100 - 6 * 5);
+    expect(state.wallet.stamina).toBe(100 - 10 * 5);
   });
 
   it("현상수배는 세 라운드를 다 이긴 판에만 골드를 주고 다음 등급을 연다", async () => {
@@ -503,7 +503,7 @@ describe("FakeServer", () => {
     await server.enterBounty({ tierId: "bounty-1", requestId: "clear" });
     await server.completeBounty({ tierId: "bounty-1", requestId: "clear", victory: true, clearedRounds: 3 });
     const swept = await server.sweepBounty({ tierId: "bounty-1", requestId: "sweep", count: 3 });
-    expect(swept).toMatchObject({ count: 3, staminaSpent: 18, ticketsSpent: 3, granted: { gold: 3_600 } });
+    expect(swept).toMatchObject({ count: 3, staminaSpent: 30, ticketsSpent: 3, granted: { gold: 3_600 } });
     expect(state.wallet.gold).toBe(4_800);
     await expect(server.sweepBounty({ tierId: "bounty-1", requestId: "sweep", count: 3 })).resolves.toMatchObject({ granted: { gold: 3_600 } });
     expect(state.wallet.gold).toBe(4_800);
@@ -543,7 +543,7 @@ describe("FakeServer", () => {
     const ssr: string[] = [];
     for (let i = 0; i < 5; i += 1) {
       const response = await server.pullRelics({ bannerId: "welcome", count: 10 });
-      for (const result of response.results) if (result.type === "relic" && ["rex", "spino", "ella", "mette"].includes(result.relicId)) ssr.push(result.relicId);
+      for (const result of response.results) if (result.type === "relic" && ["rex", "spino", "nodonia", "mette"].includes(result.relicId)) ssr.push(result.relicId);
     }
     expect(ssr).toHaveLength(1);
   });

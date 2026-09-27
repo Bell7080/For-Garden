@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  DUNGEON_STAMINA_LADDER, SWEEP_COUNT_LIMIT, dungeonRunStamina, maxSweepCount, normalizeSweepCount, settleSweep, sweepRefusal,
+  DUNGEON_RUN_STAMINA, SWEEP_COUNT_LIMIT, maxSweepCount, normalizeSweepCount, settleSweep, sweepRefusal,
 } from "../../src/core/dungeonShortcut";
 import { bountyRunCost } from "../../src/core/bountyRun";
 import { BOUNTY_TIERS } from "../../src/data/bounty";
@@ -50,29 +50,11 @@ describe("던전 단축 규칙", () => {
   });
 });
 
-/** 같은 레벨은 어느 던전에서나 같은 값을 치른다 — 현상수배가 15로 고정이던 때 같은 `LV.15`가 10과 15로 갈렸다. */
-describe("던전 스테미나 사다리", () => {
-  it("사다리는 레벨이 오를수록 내려가지 않는다", () => {
-    for (let index = 1; index < DUNGEON_STAMINA_LADDER.length; index += 1) {
-      expect(DUNGEON_STAMINA_LADDER[index][0]).toBeGreaterThan(DUNGEON_STAMINA_LADDER[index - 1][0]);
-      expect(DUNGEON_STAMINA_LADDER[index][1]).toBeGreaterThanOrEqual(DUNGEON_STAMINA_LADDER[index - 1][1]);
-    }
-  });
-
-  it("대작전 여덟 단계와 현상수배 다섯 등급이 모두 제 레벨로 사다리를 읽는다", () => {
-    expect(CAKE_OPERATION_TIERS.map((tier) => cakeOperationRunCost(tier).staminaCost)).toEqual([6, 8, 10, 12, 14, 16, 18, 20]);
-    expect(BOUNTY_TIERS.map((tier) => bountyRunCost(tier).staminaCost)).toEqual(BOUNTY_TIERS.map((tier) => dungeonRunStamina(tier.rounds[0].level)));
-    // 같은 레벨(5·15)의 두 던전 단계는 같은 값이다.
-    expect(bountyRunCost(BOUNTY_TIERS[0]).staminaCost).toBe(cakeOperationRunCost(CAKE_OPERATION_TIERS[0]).staminaCost);
-    expect(bountyRunCost(BOUNTY_TIERS[1]).staminaCost).toBe(cakeOperationRunCost(CAKE_OPERATION_TIERS[2]).staminaCost);
-  });
-
-  /** 하루 세 번 제한을 걷어 내며 스테미나가 바뀌었어도 1당 골드는 예전(15 고정) 그대로다. */
-  it("현상수배의 스테미나 1당 골드는 예전 효율에서 벗어나지 않는다", () => {
-    const before = [3_000, 5_000, 8_000, 12_000, 18_000].map((gold) => gold / 15);
-    BOUNTY_TIERS.forEach((tier, index) => {
-      const cost = bountyRunCost(tier);
-      expect(Math.abs(tier.rewardGold / cost.staminaCost - before[index]!) / before[index]!).toBeLessThan(0.02);
-    });
+/** 두 던전의 모든 단계가 같은 값을 치른다 — 단계가 가르는 것은 보상뿐이다. */
+describe("던전 한 판의 스테미나", () => {
+  it("대작전 여덟 단계와 현상수배 다섯 등급이 모두 10이다", () => {
+    expect(DUNGEON_RUN_STAMINA).toBe(10);
+    expect(CAKE_OPERATION_TIERS.map((tier) => cakeOperationRunCost(tier).staminaCost)).toEqual(CAKE_OPERATION_TIERS.map(() => 10));
+    expect(BOUNTY_TIERS.map((tier) => bountyRunCost(tier).staminaCost)).toEqual(BOUNTY_TIERS.map(() => 10));
   });
 });

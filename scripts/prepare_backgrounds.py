@@ -36,6 +36,7 @@ STORY_BACKGROUNDS = {
 # 연구소 모집 원화의 원본 이름 → 구운 이름. 배너가 `artKey`로 이 그림을 가리킨다.
 RECRUIT_BACKGROUNDS = {
     "디안픽업배경": "recruit_dian",
+    "스타팅가챠배경": "recruit_welcome",
 }
 
 

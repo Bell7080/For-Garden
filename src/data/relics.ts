@@ -1403,34 +1403,40 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    // 폭주 중에는 서 있는 것만으로 주위가 지져진다. 회복만 있던 자리에 적에게 남기는 값을 하나
-    // 두는 것이라, 탱커가 자기 숫자만 바꾸다 화면에서 사라지는 일이 없다.
+    // 폭주에 들어서는 순간 넓은 범위의 적이 한꺼번에 이쪽을 본다(3초, 들어설 때 한 번). 폭주 동안은
+    // 서 있는 것만으로 주위가 지져지고 희열이 터질 때의 회복이 늘어난다 — 회복만 있던 자리에 적에게
+    // 남기는 값을 하나 두는 것이라, 탱커가 자기 숫자만 바꾸다 화면에서 사라지는 일이 없다.
     ferocityTrait: {
-      name: "절정", effectId: "climax", auraDamageMaxHpPercent: 1.5, radius: 240,
-      // 화상 틱을 버틴 적만 잠깐 노도니아를 바라보므로 피해 반경과 도발 반경이 갈리지 않는다.
-      taunt: { kind: "taunt", seconds: 0.5 }, missingHpPercentPerBasic: 3,
+      name: "전장의 열기", effectId: "battleHeat", auraDamageMaxHpPercent: 1.5, radius: 240,
+      taunt: { kind: "taunt", seconds: 3 }, tauntRadius: 420, elationHealBonusPercent: 50,
     },
     passive: {
       // kind가 painfulElation인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
       id: "nodonia-passive",
-      name: "고통의 희열",
+      // 상처가 곧 기쁨인 개체라 이름이 그 결을 말한다. 효과는 태그(희열)가 말한다.
+      name: "달콤한 상처",
       kind: "painfulElation",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 겹 하나가 매초 돌리는 비율을 담아 둔다.
       value: 0.4,
       durationSeconds: 5,
+      // 궁극기(+200%)와 폭주(+50%)는 겹이 아니라 이 재생량을 더해서 키운다.
       elation: { maxStacks: 10, maxHpRegenPercentPerStack: 0.4, seconds: 5 },
-      desc: "적에게 피격당할 때마다 희열이 한 겹 쌓여 겹당 매초 최대 체력의 0.4%를 회복한다. 최대 열 겹까지 쌓이고 5초 동안 남으며, 다시 맞으면 유지 시간이 처음부터 다시 흐른다.",
+      desc: "적에게 피격당하거나 아군 대신 맞을 때마다 희열이 한 겹 쌓여 겹당 매초 최대 체력의 0.4%를 회복한다. 최대 열 겹까지 쌓이고 5초 동안 남으며, 다시 맞으면 유지 시간이 처음부터 다시 흐른다.",
     },
     basic: {
       id: "nodonia-basic",
-      name: "착한 아이에게는 포상을",
+      // 아군에게는 쓰다듬어 주는 손이 적에게는 벌이다 — 착한 아이는 머리를 쓰다듬고 나쁜 아이는 혼낸다.
+      name: "나쁜 아이에게는 벌을",
       // 최대 체력에서 피해를 뽑는다. 방어가 종이라 방어 계수는 쓸 수 없고, 이 개체가 키우는
       // 유일한 축이 체력이라 몸집이 곧 손이 된다.
       power: 5,
       scalingStat: "hp",
+      // 맞아서 쌓인 희열이 손으로 돌아온다 — 열 겹이면 한 방이 두 배를 넘는다(+120%). 앞에 서서 오래
+      // 버틸수록 세게 치므로, 맞는 자리에 서 있는 이유가 재생 하나로 끝나지 않는다.
+      elationDamagePercentPerStack: 12,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -1438,15 +1444,17 @@ export const RELICS: RelicDef[] = [
     },
     ultimate: {
       id: "nodonia-ult",
-      name: "고통의 미학",
+      // 아픔이 곧 기쁨인 개체가 가장 많이 맞는 순간이다 — 아군의 몫까지 전부 제가 받는다.
+      name: "절정",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
       cost: 150,
       // 아무도 때리지 않고 아무 데도 가지 않는다. 앞에 서서 아군의 몫을 대신 받는 것이 전부다.
       targeting: "self",
-      // 방어를 올리지 않고 회복만 돌린다. 종이 방어로 다 맞으면서 그보다 빨리 차오르는 것이
-      // 이 궁극기이고, 끝난 뒤가 아니라 **버티는 동안** 돌아야 그 사이에 쓰러지지 않는다.
-      selfBulwark: { seconds: 5, redirectPercent: 100, maxHpRegenPercentPerSecond: 5 },
+      // 방어를 올리지 않는다. 매초 5% 회복이 있던 자리를 **희열 재생량 +200%**가 갖는다 — 대신 받은
+      // 피해도 희열이 되므로 가장 많이 맞는 이 5초에 겹이 가장 빨리 차고, 그 재생이 세 배로 돈다.
+      // 보호막은 두르지 않는다(엘라의 결이다).
+      selfBulwark: { seconds: 5, redirectPercent: 100, passiveHealBonusPercent: 200 },
     },
   },
 

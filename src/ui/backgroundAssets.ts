@@ -49,6 +49,8 @@ export const BACKGROUND = {
   recruitFossil: "background-recruit-fossil",
   /** 호박석 연구 — 디안 한정 픽업의 모집 원화. */
   recruitDian: "background-recruit-dian",
+  /** 첫 복원 연구 — 비워 둔 방에 확정 SSR 넷의 SD가 선다(`WelcomeBannerCast`). */
+  recruitWelcome: "background-recruit-welcome",
   /**
    * 지층 탐사판의 **아래층** — 겉장을 부순 칸에 드러나는 맨 흙이다.
    *
@@ -141,6 +143,7 @@ export const BACKGROUND_ASSETS = [
   [BACKGROUND.lootShop, "sprites/background/background_016.webp"],
   [BACKGROUND.recruitFossil, "sprites/background/background_017.webp"],
   [BACKGROUND.recruitDian, "sprites/background/recruit_dian.webp"],
+  [BACKGROUND.recruitWelcome, "sprites/background/recruit_welcome.webp"],
   [BACKGROUND.strataBase, "sprites/background/strata_base.webp"],
   // 겉장은 한 번 탐사할 때마다 그중 한 장이 뽑힌다. 키 이름은 `strataLayerTextureKey`가 짓는다.
   ["background-strata-layer-001", "sprites/background/strata_layer_001.webp"],

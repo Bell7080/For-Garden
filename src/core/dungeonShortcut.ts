@@ -1,9 +1,9 @@
 /**
  * 던전이 공유하는 **단축 규칙** — 스테미나 사다리와 소탕.
  *
- * - **스테미나 사다리**(`dungeonRunStamina`): 한 판의 스테미나는 던전이 아니라 **적 레벨**이 정한다.
- *   현상수배와 치즈케이크 대작전이 저마다 값을 적던 때는 같은 `LV.15`가 한쪽에서는 10, 다른
- *   쪽에서는 15였다 — 같은 레벨은 어디서나 같은 세기이듯 같은 값을 치른다.
+ * - **한 판의 스테미나**(`DUNGEON_RUN_STAMINA`): 현상수배와 치즈케이크 대작전은 **모든 단계가 같은
+ *   값**을 치른다. 적 레벨로 값이 오르던 사다리(6 → 22)는 위 단계로 올라갈수록 입장이 무거워져, 키운
+ *   만큼 더 높은 단계를 도는 보람을 값이 깎아 먹었다. 단계가 가르는 것은 보상뿐이다.
  * - **소탕**(`sweep`): 이미 이긴 단계를 전투 없이 **원하는 횟수만큼** 턴다. 한때 x1·x2·x3 배율이
  *   함께 있었는데, 소탕이 횟수를 고를 수 있으면 배율은 "한 번에 여러 판"을 두 번 말하는 손잡이였다.
  *   스테미나를 한 번에 녹이는 일은 소탕 하나가 맡는다.
@@ -22,21 +22,8 @@ export const SWEEP_TICKET_TEST_KIT = { itemId: SWEEP_TICKET_ITEM, quantity: 10 }
 /** 한 번의 소탕 요청이 돌 수 있는 최대 횟수. 스테미나 상한을 넘는 값을 굳이 받지 않는다. */
 export const SWEEP_COUNT_LIMIT = 50;
 
-/**
- * 적 레벨 → 한 판의 스테미나. `level` 이상인 첫 칸부터 그 값을 쓴다.
- *
- * 대작전의 여덟 단계가 이 사다리 위에 그대로 서고, 현상수배 등급도 제 레벨로 같은 칸을 읽는다.
- */
-export const DUNGEON_STAMINA_LADDER: readonly (readonly [level: number, stamina: number])[] = [
-  [1, 6], [10, 8], [15, 10], [20, 12], [26, 14], [32, 16], [38, 18], [45, 20], [50, 22],
-];
-
-/** 그 레벨의 적과 한 판 싸우는 데 드는 스테미나. */
-export function dungeonRunStamina(level: number): number {
-  let stamina = DUNGEON_STAMINA_LADDER[0][1];
-  for (const [from, value] of DUNGEON_STAMINA_LADDER) if (level >= from) stamina = value;
-  return stamina;
-}
+/** 던전 한 판의 스테미나 — 현상수배·치즈케이크 대작전의 모든 단계가 같은 값이다. */
+export const DUNGEON_RUN_STAMINA = 10;
 
 /** 한 판의 값. 던전은 이것만 만들어 넘기고 곱하기는 하지 않는다. */
 export interface DungeonRunCost {

@@ -100,7 +100,7 @@ export const SKILL_KO = {
   "skill.ferocity.knockbackSlam": "{loaded}[[concussion|뇌진탕]]이 확정 치명타가 되고, 그 적을 [[knockback|날려버린다]]. 날려버린 뒤에는 가장 가까운 적을 표적으로 다시 지정한다.",
   "skill.ferocity.knockbackSlam.loaded": "폭주에 들어가면 [[concussion|뇌진탕]]이 곧바로 장전된다. ",
   "skill.ferocity.frenzyGaze": "폭주 중 [[basic-attack|기본 공격]]에 적중한 적을 {seconds}초 동안 [[frenzy|광란]]시킨다. 전이된 타격으로는 발동하지 않는다.",
-  "skill.ferocity.climax": "매초 자신의 주위 모든 적에게 최대 체력의 {percent}%만큼 [[fixed-damage|고정 피해]]를 준다. 매초 피해를 받은 적을 {seconds}초 동안 [[taunt|도발]]한다. [[basic-attack|기본 공격]]마다 [[missing-hp|잃은 체력]]의 {healPercent}%를 회복한다.",
+  "skill.ferocity.battleHeat": "폭주에 들어서는 순간 넓은 범위의 적을 {seconds}초 동안 [[taunt|도발]]한다. 매초 자신의 주위 모든 적에게 최대 체력의 {percent}%만큼 [[fixed-damage|고정 피해]]를 준다. 폭주 동안 [[nodonia-elation|희열]]의 회복량이 {healPercent}% 증가한다.",
   "skill.ferocity.graffitiRun": "이동 속도가 {percent}% 증가하고 [[basic-attack|기본 공격]]을 하지 않는다. 매초 자신의 주위 모든 적에게 {damage}의 [[magical-damage|마법 피해]]를 주고 [[vandalism|밴덜리즘]]을 한 겹 쌓으며 {seconds}초 동안 [[taunt|도발]]한다.",
   "skill.ferocity.furCoat": "폭주에 들어가는 순간 자신의 모든 상태이상·디버프를 지우고 최대 체력의 {percent}% 보호막을 얻는다. 폭주 중에는 방어력과 저항력이 {guardPercent}% 오른다.",
   "skill.ferocity.shellResolve": "폭주에 들어가는 순간 자신의 모든 상태이상·디버프를 지우고 [[shell|조가비]]를 {stacks}겹 얻는다. 폭주 중 조가비 내부 재사용 대기시간이 {seconds}초로 줄어든다.",
@@ -151,7 +151,7 @@ export const SKILL_KO = {
   "skill.passive.openingStealth": "전투를 시작할 때 {seconds}초 동안 [[stealth|은신]]한다.",
   "skill.passive.undyingTalisman": "전투당 한 번, 쓰러질 피해를 받으면 죽지 않고 {seconds}초 동안 [[invulnerable|무적]]이 되는 대신 아무 행동도 하지 못한다. 그동안 최대 체력의 {percent}%를 매초 나누어 회복한다.{blast}",
   "skill.passive.undyingTalisman.blast": " 이때 주위 적을 [[knockback|날려버린다]].",
-  "skill.passive.painfulElation": "적에게 피격당할 때마다 [[nodonia-elation|희열]]이 한 겹 쌓인다.",
+  "skill.passive.painfulElation": "적에게 피격당하거나 아군 대신 피해를 받을 때마다 [[nodonia-elation|희열]]이 한 겹 쌓인다.",
   "skill.passive.shellGuard": "실제 피해를 받고 살아남으면 {seconds}초 동안 유지되는 [[{stack}|{stackName}]]{stackName!을} 한 겹 얻는다. {stacks}겹이 되면 모두 소비해 자신에게 최대 체력의 {selfPercent}%, 자신을 제외한 현재 HP 비율이 가장 낮은 생존 아군에게 그 아군 최대 체력의 {allyPercent}% 보호막을 부여한다. 한 번 발동하면 {cooldown}초 동안 다시 발동하지 않는다.",
   "skill.passive.shellGuard.selfOnly": "실제 피해를 받고 살아남으면 {seconds}초 동안 유지되는 [[{stack}|{stackName}]]{stackName!을} 한 겹 얻는다. {stacks}겹이 되면 모두 소비해 자신에게 최대 체력의 {selfPercent}% 보호막을 부여한다. 한 번 발동하면 {cooldown}초 동안 다시 발동하지 않는다.",
   "skill.passive.tagAndRun": "[[basic-attack|기본 공격]]을 낼 때마다 아직 때리지 않은 적으로 표적을 바꾼다.{phasing} 움직이는 동안 매초 {charge}씩 더 찬다.",
@@ -176,6 +176,7 @@ export const SKILL_KO = {
   "skill.sentence.clause": "{text}.",
   "skill.sentence.teamMissingHpHeal": "모든 생존 아군이 각자 [[missing-hp|잃은 체력]]의 {percent}%를 회복한다.",
   "skill.sentence.selfBulwark": "{seconds}초 동안 모든 아군이 받는 피해를 대신 받고, 그동안 매초 최대 체력의 {percent}%를 회복한다.",
+  "skill.sentence.selfBulwarkElation": "{seconds}초 동안 모든 아군이 받는 피해를 대신 받고, 그동안 [[nodonia-elation|희열]]의 회복량이 {percent}% 증가한다.",
   "skill.sentence.overpaintDetonation": "{target} 쌓인 [[overpaint|덧칠]]을 터뜨려 한 겹마다 {damage}를 주고, 그 덧칠을 지운다.",
   "skill.sentence.channel": "{target} {seconds}초 동안 매초 {damage}를 주고 {effects}.",
   "skill.sentence.channel.rider": "{tick} 그동안 [[basic-attack|기본 공격]]에 맞은 적을 {effects}.",
@@ -212,6 +213,7 @@ export const SKILL_KO = {
 
   // ── 부가 효과 절 ─────────────────────────────────────────────────────────
   "skill.clause.reagent": "[[reagent|시약]]을 {stacks}겹 부여한다",
+  "skill.clause.elationDamage": "[[nodonia-elation|희열]] 한 겹마다 이 피해가 {percent}% 오른다",
   "skill.clause.combo": "{percent}% 확률로 [[combo|연격]]하여 총 {hits}회 적중한다",
   "skill.clause.damageHealing": "입힌 피해의 {percent}%만큼 체력을 회복한다",
   "skill.clause.selfShield": "자신은 {shield}만큼 보호막을 얻는다",

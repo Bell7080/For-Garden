@@ -143,6 +143,7 @@ export const SKILL_ZH_HANT = {
   "skill.sentence.clause": "此外，{text}。",
   "skill.sentence.teamMissingHpHeal": "所有存活隊友恢復自身[[missing-hp|已損失生命]]的{percent}%。",
   "skill.sentence.selfBulwark": "{seconds}秒內代替所有隊友承受傷害，期間每秒恢復最大生命的{percent}%。",
+  "skill.sentence.selfBulwarkElation": "將[[nodonia-elation|愉悅]]疊滿，並在{seconds}秒內代替所有隊友承受傷害，期間每秒恢復最大生命的{percent}%。",
   "skill.sentence.overpaintDetonation": "引爆疊加在{target}身上的[[overpaint|疊塗]]，每層造成{damage}，之後清除該疊塗。",
   "skill.sentence.channel": "{seconds}秒內每秒對{target}造成{damage}，並{effects}。",
   "skill.sentence.channel.rider": "{tick} 期間，被其[[basic-attack|普通攻擊]]命中的敵人{effects}。",

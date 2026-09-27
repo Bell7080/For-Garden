@@ -1946,6 +1946,14 @@ function gainElation(target: Fighter): void {
   };
 }
 
+/** 희열을 한 번에 최대 겹까지 채운다. 유지 시간도 처음부터 다시 흐른다. */
+function fillElation(target: Fighter): void {
+  const plan = target.def.passive.elation;
+  if (target.def.passive.kind !== "painfulElation" || plan === undefined) return;
+  for (let stack = target.elation?.stacks ?? 0; stack < plan.maxStacks; stack += 1) gainElation(target);
+  if ((target.elation?.stacks ?? 0) >= plan.maxStacks) gainElation(target);
+}
+
 /** 제공자의 몫을 **받는 쪽 최대 체력의 비율**로 두르는 자리. 값만 구하고 두르는 일은 `grantShield`가 한다. */
 function grantProvidedShield(state: SkirmishState, provider: Fighter, target: Fighter, percent: number, events: SkirmishEvent[]): void {
   grantShield(state, target, provider.id, Math.max(1, Math.round(target.maxHp * percent / 100)), events);
@@ -6071,6 +6079,8 @@ export function fireUltimate(
       skillId: teamUltimate.id,
       name: teamUltimate.name,
     });
+    // 겹이 비어 있을 때 켜도 첫 초부터 버티도록 희열을 끝까지 채운다(맞으며 차오르는 방식을 앞당긴다).
+    if (plan.fillPassiveStacks === true) fillElation(attacker);
     events.push({ kind: "combatEffect", fighterId: attacker.id, effect: { tag: "shieldGain", intensity: 1.6 } });
     attacker.attackCooldown = attackInterval(attacker, state);
     return events;

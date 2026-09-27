@@ -143,6 +143,7 @@ export const SKILL_VI = {
   "skill.sentence.clause": "Ngoài ra, {text}.",
   "skill.sentence.teamMissingHpHeal": "Mọi đồng minh còn sống hồi {percent}% [[missing-hp|máu đã mất]] của mình.",
   "skill.sentence.selfBulwark": "Trong {seconds} giây, gánh sát thương thay mọi đồng minh và hồi {percent}% HP tối đa mỗi giây trong lúc đó.",
+  "skill.sentence.selfBulwarkElation": "Nạp đầy [[nodonia-elation|Hân hoan]], rồi trong {seconds} giây gánh sát thương thay mọi đồng minh và hồi {percent}% HP tối đa mỗi giây trong lúc đó.",
   "skill.sentence.overpaintDetonation": "Làm nổ [[overpaint|Tô chồng]] tích trên {target}, gây {damage} mỗi tầng, rồi xóa Tô chồng đó.",
   "skill.sentence.channel": "Trong {seconds} giây, mỗi giây gây {damage} lên {target} và {effects}.",
   "skill.sentence.channel.rider": "{tick} Trong lúc đó, kẻ địch trúng [[basic-attack|đòn đánh thường]] của nó {effects}.",

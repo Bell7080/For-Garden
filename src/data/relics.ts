@@ -1446,7 +1446,11 @@ export const RELICS: RelicDef[] = [
       targeting: "self",
       // 방어를 올리지 않고 회복만 돌린다. 종이 방어로 다 맞으면서 그보다 빨리 차오르는 것이
       // 이 궁극기이고, 끝난 뒤가 아니라 **버티는 동안** 돌아야 그 사이에 쓰러지지 않는다.
-      selfBulwark: { seconds: 5, redirectPercent: 100, maxHpRegenPercentPerSecond: 5 },
+      // **켜는 순간 희열을 열 겹까지 채운다.** 대신 받기는 아군 셋의 피해가 한꺼번에 몰려와, 겹이 빈
+      // 채로 켜면 재생이 차오르기 전에 쓰러졌다 — 첫 초부터 매초 9%(궁극기 5 + 희열 4)가 돌아 자동
+      // 궁극기에 맡겨도 버틴다. 보호막은 두르지 않는다(엘라의 결이다). 종이 방어·산더미 체력·맞으며
+      // 차오르는 결은 그대로다.
+      selfBulwark: { seconds: 5, redirectPercent: 100, maxHpRegenPercentPerSecond: 5, fillPassiveStacks: true },
     },
   },
 

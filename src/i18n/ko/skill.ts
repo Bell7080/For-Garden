@@ -176,6 +176,7 @@ export const SKILL_KO = {
   "skill.sentence.clause": "{text}.",
   "skill.sentence.teamMissingHpHeal": "모든 생존 아군이 각자 [[missing-hp|잃은 체력]]의 {percent}%를 회복한다.",
   "skill.sentence.selfBulwark": "{seconds}초 동안 모든 아군이 받는 피해를 대신 받고, 그동안 매초 최대 체력의 {percent}%를 회복한다.",
+  "skill.sentence.selfBulwarkElation": "[[nodonia-elation|희열]]을 끝까지 채우고 {seconds}초 동안 모든 아군이 받는 피해를 대신 받으며, 그동안 매초 최대 체력의 {percent}%를 회복한다.",
   "skill.sentence.overpaintDetonation": "{target} 쌓인 [[overpaint|덧칠]]을 터뜨려 한 겹마다 {damage}를 주고, 그 덧칠을 지운다.",
   "skill.sentence.channel": "{target} {seconds}초 동안 매초 {damage}를 주고 {effects}.",
   "skill.sentence.channel.rider": "{tick} 그동안 [[basic-attack|기본 공격]]에 맞은 적을 {effects}.",

@@ -143,6 +143,7 @@ export const SKILL_ZH_HANS = {
   "skill.sentence.clause": "此外，{text}。",
   "skill.sentence.teamMissingHpHeal": "所有存活队友恢复自身[[missing-hp|已损失生命]]的{percent}%。",
   "skill.sentence.selfBulwark": "{seconds}秒内代替所有队友承受伤害，期间每秒恢复最大生命的{percent}%。",
+  "skill.sentence.selfBulwarkElation": "将[[nodonia-elation|愉悦]]叠满，并在{seconds}秒内代替所有队友承受伤害，期间每秒恢复最大生命的{percent}%。",
   "skill.sentence.overpaintDetonation": "引爆叠加在{target}身上的[[overpaint|叠涂]]，每层造成{damage}，之后清除该叠涂。",
   "skill.sentence.channel": "{seconds}秒内每秒对{target}造成{damage}，并{effects}。",
   "skill.sentence.channel.rider": "{tick} 期间，被其[[basic-attack|普通攻击]]命中的敌人{effects}。",

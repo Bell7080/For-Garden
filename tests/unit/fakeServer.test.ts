@@ -543,7 +543,7 @@ describe("FakeServer", () => {
     const ssr: string[] = [];
     for (let i = 0; i < 5; i += 1) {
       const response = await server.pullRelics({ bannerId: "welcome", count: 10 });
-      for (const result of response.results) if (result.type === "relic" && ["rex", "spino", "ella", "mette"].includes(result.relicId)) ssr.push(result.relicId);
+      for (const result of response.results) if (result.type === "relic" && ["rex", "spino", "nodonia", "mette"].includes(result.relicId)) ssr.push(result.relicId);
     }
     expect(ssr).toHaveLength(1);
   });

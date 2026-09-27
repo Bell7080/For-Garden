@@ -143,6 +143,7 @@ export const SKILL_DE = {
   "skill.sentence.clause": "Außerdem: {text}.",
   "skill.sentence.teamMissingHpHeal": "Alle lebenden Verbündeten stellen {percent}% ihres [[missing-hp|fehlenden Lebens]] wieder her.",
   "skill.sentence.selfBulwark": "{seconds} s lang nimmt es den Schaden aller Verbündeten auf sich und stellt dabei jede Sekunde {percent}% des max. Lebens wieder her.",
+  "skill.sentence.selfBulwarkElation": "Füllt [[nodonia-elation|Hochgefühl]] vollständig auf und nimmt {seconds} s lang den Schaden aller Verbündeten auf sich; dabei stellt es jede Sekunde {percent}% des max. Lebens wieder her.",
   "skill.sentence.overpaintDetonation": "Lässt die auf {target} gestapelte [[overpaint|Übermalung]] platzen, verursacht pro Stapel {damage} und entfernt sie danach.",
   "skill.sentence.channel": "Fügt {seconds} s lang jede Sekunde {target} {damage} zu und {effects}.",
   "skill.sentence.channel.rider": "{tick} Währenddessen gilt für Gegner, die sein [[basic-attack|Normalangriff]] trifft: {effects}.",

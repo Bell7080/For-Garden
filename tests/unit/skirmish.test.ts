@@ -3778,7 +3778,13 @@ describe("노도니아의 프로젝트 REVERIE", () => {
     const { state, nodonia, ally, foe } = arena();
     const plan = getRelic("nodonia").ultimate.selfBulwark!;
     nodonia.energy = ULTIMATE_ENERGY_MAX;
+    expect(nodonia.elation).toBeNull();
     fireUltimate(state, nodonia.id);
+    // 켜는 순간 희열이 끝까지 찬다 — 겹이 빈 채로 켜도 첫 초부터 버틴다. 보호막은 두르지 않는다.
+    const elation = getRelic("nodonia").passive.elation!;
+    expect(plan.fillPassiveStacks).toBe(true);
+    expect(nodonia.elation?.stacks).toBe(elation.maxStacks);
+    expect(nodonia.shield.amount).toBe(0);
     expect(nodonia.bulwark).toMatchObject({
       percent: plan.redirectPercent,
       regenPercentPerSecond: plan.maxHpRegenPercentPerSecond,
@@ -3804,7 +3810,9 @@ describe("노도니아의 프로젝트 REVERIE", () => {
     const wounded = nodonia.hp;
     for (let frame = 0; frame < 61; frame += 1) stepSkirmish(state, 1 / 60);
     expect(nodonia.bulwark).not.toBeNull();
-    expect(nodonia.hp - wounded).toBeCloseTo(Math.round(nodonia.maxHp * plan.maxHpRegenPercentPerSecond / 100), 0);
+    // 궁극기의 몫과 꽉 찬 희열의 몫이 함께 돈다.
+    const perSecond = plan.maxHpRegenPercentPerSecond + elation.maxStacks * elation.maxHpRegenPercentPerStack;
+    expect(nodonia.hp - wounded).toBeCloseTo(nodonia.maxHp * perSecond / 100, -1);
   });
 
   it("의 절정은 폭주 중 주위를 매초 지지고 잃은 체력을 되찾는다", () => {

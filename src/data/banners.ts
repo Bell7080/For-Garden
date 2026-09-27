@@ -65,8 +65,11 @@ export const PITY_GROUP = { WELCOME: "welcome", STANDARD: "standard-fossil", LIM
  * 간판 둘(렉시아·스피나)과 기본 편성(토리카·도디·파루아)에 없는 탱커·지원가를 메우는 둘을
  * 골랐다. 누가 나와도 지금 편성의 한 자리를 곧바로 채운다. 풀 안의 확률은 균등하다 — 간판에
  * 가중치를 주면 "렉시아가 안 나왔다"가 곧 실패로 읽힌다. 한정 개체는 여기 서지 않는다.
+ *
+ * **넷의 속성이 모두 다르다**(불·물·바람·풀). 탱커를 엘라(풀)로 두던 때는 메테와 속성이 겹쳐,
+ * 누가 나오든 상성 선택지가 하나 비었다. 같은 탱커인 노도니아(바람)가 그 자리에 선다.
  */
-export const WELCOME_SSR_POOL = ["rex", "spino", "ella", "mette"] as const;
+export const WELCOME_SSR_POOL = ["rex", "spino", "nodonia", "mette"] as const;
 
 /** 연구소의 화석 연구 운영값. 천장(100회)은 개별 배너가 아니라 pityGroupId별로 누적된다. */
 export const BANNERS: Banner[] = [

@@ -2775,7 +2775,10 @@ export function buildSkillViewModel(options: {
       damageDetail, shieldDetail, healDetail,
       "kind" in skill ? undefined : periodicStackKeyword(skill as Skill),
       // 「고통의 희열」은 패시브 본문이 직접 가리키는 태그라 그 쪽지에도 함께 실린다.
-      "kind" in skill ? elationKeyword(skill as Passive) : undefined,
+      // 궁극기가 희열을 끝까지 채우므로 그 쪽지에도 같은 태그가 실린다.
+      "kind" in skill
+        ? elationKeyword(skill as Passive)
+        : "selfBulwark" in skill && skill.selfBulwark?.fillPassiveStacks === true ? elationKeyword(finalDef.passive) : undefined,
       // 「인」이 덮는 막도 실제 값으로 보여 주고, 어디서 나온 수인지 눌러 읽게 한다.
       guardShield === undefined || !("selfGuard" in skill) || skill.selfGuard === undefined ? undefined : {
         id: "shield-value", term: String(guardShield), kind: "rule" as const,

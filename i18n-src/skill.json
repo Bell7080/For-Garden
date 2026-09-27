@@ -1419,6 +1419,16 @@
 "{seconds} s lang nimmt es den Schaden aller Verbündeten auf sich und stellt dabei jede Sekunde {percent}% des max. Lebens wieder her.",
 "На {seconds} с принимает урон, предназначенный всем союзникам, и тем временем восстанавливает {percent}% макс. ОЗ в секунду."
 ],
+"skill.sentence.selfBulwarkElation": [
+"将[[nodonia-elation|愉悦]]叠满，并在{seconds}秒内代替所有队友承受伤害，期间每秒恢复最大生命的{percent}%。",
+"เติม[[nodonia-elation|ปีติ]]จนเต็ม แล้วรับความเสียหายแทนพันธมิตรทุกตัวเป็นเวลา {seconds} วินาที และฟื้นฟู {percent}% ของ HP สูงสุดทุกวินาทีระหว่างนั้น",
+"Nạp đầy [[nodonia-elation|Hân hoan]], rồi trong {seconds} giây gánh sát thương thay mọi đồng minh và hồi {percent}% HP tối đa mỗi giây trong lúc đó.",
+"Mengisi [[nodonia-elation|Kegembiraan]] hingga penuh, lalu selama {seconds} dtk menerima kerusakan yang seharusnya diterima semua sekutu, sambil memulihkan {percent}% HP maks tiap detik.",
+"Llena la [[nodonia-elation|Euforia]] al máximo y durante {seconds} s recibe el daño que recibirían todos los aliados; mientras tanto, recupera el {percent}% de los PV máx. cada segundo.",
+"Enche a [[nodonia-elation|Euforia]] ao máximo e, por {seconds} s, recebe o dano que todos os aliados receberiam; enquanto isso, recupera {percent}% do PV máx. a cada segundo.",
+"Füllt [[nodonia-elation|Hochgefühl]] vollständig auf und nimmt {seconds} s lang den Schaden aller Verbündeten auf sich; dabei stellt es jede Sekunde {percent}% des max. Lebens wieder her.",
+"Заполняет [[nodonia-elation|Упоение]] до предела и на {seconds} с принимает урон, предназначенный всем союзникам, тем временем восстанавливая {percent}% макс. ОЗ в секунду."
+],
 "skill.sentence.overpaintDetonation": [
 "引爆叠加在{target}身上的[[overpaint|叠涂]]，每层造成{damage}，之后清除该叠涂。",
 "ระเบิด[[overpaint|ทาทับ]]ที่สะสมบน{target} สร้าง{damage}ต่อชั้น แล้วล้างทาทับนั้น",

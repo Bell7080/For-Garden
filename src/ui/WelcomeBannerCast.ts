@@ -4,31 +4,35 @@ import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { enableHitOnClick, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { motionPolicy, powerSavingPolicy } from "../core/settings";
 import { session } from "../state/session";
-import { AffinityBadge } from "./AffinityBadge";
-import { ELEMENT_ICON } from "./affinityIcons";
 import { drawGlyph } from "./glyphs";
-import { drawLayer, slantedRect } from "./holo";
 import { pressIn, pressOut } from "./pressFeedback";
-import { RARITY_TONE } from "./rarityMark";
 import { addSdFootShadow } from "./SdFootShadow";
 import { ELEMENT_TINT } from "./skillArt";
-import { COLOR, textStyle } from "./theme";
-import { squeezeTextToWidth } from "./textFit";
-import { WELCOME_CAST, welcomeCastTagY } from "./welcomeCastLayout";
+import { textStyle } from "./theme";
+import { WELCOME_CAST, WELCOME_SPARKLE, welcomeCastNameY, welcomeSparkle } from "./welcomeCastLayout";
+
+/** 네 갈래 별 한 장 — 한 번만 굽고 색은 tint로 갈아 끼운다(매 프레임 도형을 다시 그리지 않는다). */
+const SPARKLE_TEXTURE = "welcome-sparkle";
+const SPARKLE_TEXTURE_SIZE = 64;
 
 /**
- * 첫 복원 연구 원화(빈 방) 위에 서는 SSR 넷 — 크게 엇갈려 선 SD와 머리 위에 떠 있는 이름표.
+ * 첫 복원 연구 원화(빈 방) 위에 서는 SSR 넷 — 크게 엇갈려 선 SD, 뒤로 비껴 따라 움직이는 복제
+ * 그림자, 발밑의 속성 색 이름, 방을 채우는 반짝임.
  *
- * 원화에 인물이 그려져 있지 않아 **누가 나오는 판인지를 이 넷이 말한다.** 이름표는 발밑의 판이
- * 아니라 SD 머리 위에 둥실 떠서 꼬리로 제 주인을 가리키는 표다 — 면은 그 개체의 속성 색을 눌러
- * 칠하고, 왼쪽 끝에 속성 뱃지, 왼쪽 위 모서리에 희귀도 색 보석 칩(SSR), 오른쪽 끝에 돋보기가
- * 걸린다. SD·이름표·돋보기 어디를 눌러도 그 개체가 톡 뛰고 정보창(얻기 전이면 실루엣 미리보기)이
- * 열린다 — 픽업 배너의 「캐릭터 정보」 버튼과 같은 길이다.
+ * 원화에 인물이 그려져 있지 않아 **누가 나오는 판인지를 이 넷이 말한다.** 이름은 판 없이 속성 색
+ * 글자로만 서고, 옆의 돋보기·이름·SD 어디를 눌러도 그 개체가 톡 뛰며 정보창(얻기 전이면 실루엣
+ * 미리보기)이 열린다 — 픽업 배너의 「캐릭터 정보」 버튼과 같은 길이다.
+ *
+ * 복제 그림자는 개체를 하나 더 세우지 않고 같은 정점을 검게 다시 그린다(`setAfterimages`) — 그래서
+ * 몸이 숨 쉬는 대로 그림자도 같은 자세로 따라 움직인다.
  *
  * Puppet은 비동기로 서므로, 도착했을 때 이 판이 이미 걷혔으면 그 자리에서 놓는다.
  */
 export class WelcomeBannerCast {
   private readonly root: Phaser.GameObjects.Container;
+  private readonly sparklesBack: Phaser.GameObjects.Container;
+  private readonly sparklesFront: Phaser.GameObjects.Container;
+  private readonly names: Phaser.GameObjects.Container;
   private readonly puppets = new Map<number, PuppetCreature>();
   private readonly animate: boolean;
   private alive = true;
@@ -38,9 +42,15 @@ export class WelcomeBannerCast {
     relicIds: readonly string[],
     private readonly onInspect: (relicId: string) => void,
   ) {
-    this.root = scene.add.container(0, 0).setDepth(WELCOME_CAST.depth);
+    const { depth } = WELCOME_CAST;
     this.animate = motionPolicy(session.settings).nonEssentialDistanceFactor > 0;
-    // 뒷줄부터 세워 앞줄 SD와 이름표가 그 위에 겹친다.
+    this.sparklesBack = scene.add.container(0, 0).setDepth(depth - 0.5);
+    this.root = scene.add.container(0, 0).setDepth(depth);
+    // 이름은 모든 SD보다 위에 선다 — 뒷줄 이름이 앞줄 몸에 묻히지 않게.
+    this.names = scene.add.container(0, 0).setDepth(depth + 0.3);
+    this.sparklesFront = scene.add.container(0, 0).setDepth(depth + 0.4);
+    this.addSparkles();
+    // 뒷줄부터 세워 앞줄 SD가 그 위에 겹친다.
     const members = relicIds.slice(0, WELCOME_CAST.spots.length).map((relicId, index) => ({ relicId, index }));
     members.sort((a, b) => WELCOME_CAST.spots[a.index].groundY - WELCOME_CAST.spots[b.index].groundY);
     for (const { relicId, index } of members) this.addMember(relicId, index);
@@ -50,7 +60,7 @@ export class WelcomeBannerCast {
     this.alive = false;
     for (const puppet of this.puppets.values()) puppet.destroy();
     this.puppets.clear();
-    this.root.destroy(true);
+    for (const layer of [this.sparklesBack, this.root, this.names, this.sparklesFront]) layer.destroy(true);
   }
 
   private addMember(relicId: string, index: number): void {
@@ -66,12 +76,16 @@ export class WelcomeBannerCast {
     hit.on("pointerup", () => this.inspect(relicId, index));
     member.add(hit);
 
+    // 복제 그림자는 화면 가운데에서 멀어지는 쪽으로 비낀다 — 무리가 가운데로 모여 선 것처럼 깊이가 생긴다.
+    const outward = spot.x < scene.scale.width / 2 ? -1 : 1;
+    const echo = WELCOME_CAST.echo.map((step) => ({ dx: step.dx * outward, dy: step.dy, alpha: step.alpha }));
     const delay = index * WELCOME_CAST.enterStagger;
     void spawnPuppet(scene, relicAppearanceManager.sdAssetFor(relicId), {
       x: spot.x, groundY: spot.groundY, height: spot.height, flipX: spot.flipX, depth: WELCOME_CAST.depth,
     }).then((puppet) => {
       if (!this.alive || !member.active) { puppet.destroy(); return; }
       puppet.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
+      puppet.setAfterimages(echo);
       this.puppets.set(index, puppet);
       member.addAt(puppet, 1);
       enableHitOnClick(scene, puppet);
@@ -82,17 +96,10 @@ export class WelcomeBannerCast {
       scene.tweens.add({ targets: puppet, y, alpha: 1, duration: 360, delay, ease: "Back.Out" });
     }).catch(() => undefined);
 
-    const tag = this.addTag(relicId, index);
-    member.add(tag);
+    const name = this.addName(relicId, index);
     if (!this.animate) return;
-    tag.setScale(0.4).setAlpha(0);
-    scene.tweens.add({ targets: tag, scale: 1, alpha: 1, duration: 320, delay: delay + 200, ease: "Back.Out" });
-    // 이름표는 머리 위에 둥실 떠 있다. 넷이 같은 박자로 오르내리면 한 판처럼 굳어 보여 박자를 어긋낸다.
-    const { bob } = WELCOME_CAST.tag;
-    scene.tweens.add({
-      targets: tag, y: tag.y - bob.distance, duration: bob.duration, yoyo: true, repeat: -1, ease: "Sine.InOut",
-      delay: delay + 520 + index * 230,
-    });
+    name.setAlpha(0).setY(name.y + 14);
+    scene.tweens.add({ targets: name, y: name.y - 14, alpha: 1, duration: 300, delay: delay + 220, ease: "Cubic.Out" });
   }
 
   /** 누르면 그 개체가 톡 뛰고 정보창이 열린다. 뛰는 것을 기다리지 않는다. */
@@ -105,71 +112,81 @@ export class WelcomeBannerCast {
     this.onInspect(relicId);
   }
 
-  /** 머리 위 이름표 — 속성 색 면 + 꼬리 + 속성 뱃지 + SSR 보석 칩 + 이름 + 돋보기. */
-  private addTag(relicId: string, index: number): Phaser.GameObjects.Container {
+  /** 발밑 이름 — 판 없이 속성 색 글자 + 검은 획, 그 오른쪽에 작은 돋보기. */
+  private addName(relicId: string, index: number): Phaser.GameObjects.Container {
     const { scene } = this;
     const relic = getRelic(relicId);
-    const { tag: spec } = WELCOME_CAST;
-    const tint = ELEMENT_TINT[relic.element];
-    const face = shade(tint, spec.shade);
-    const tag = scene.add.container(WELCOME_CAST.spots[index].x, welcomeCastTagY(index));
-    const shape = slantedRect(spec.width, spec.height, spec.slant);
+    const spot = WELCOME_CAST.spots[index];
+    const { name: spec } = WELCOME_CAST;
+    const color = lighten(ELEMENT_TINT[relic.element], spec.lift);
+    const line = scene.add.container(spot.x, welcomeCastNameY(index));
+    const label = scene.add.text(0, 0, relic.name, textStyle({ role: "display", size: spec.size, color: `#${color.toString(16).padStart(6, "0")}` }))
+      .setOrigin(0.5).setStroke("#05070a", spec.stroke).setShadow(0, 4, "#000000", 6, false, true);
+    const glass = scene.add.container(0, 0);
+    glass.add(drawGlyph(scene, "magnifier", 0, 0, spec.magnifierSize, 0x05070a, 0.85, 8));
+    glass.add(drawGlyph(scene, "magnifier", 0, 0, spec.magnifierSize, color, 1, 4));
+    // 이름과 돋보기를 한 덩어리로 재서 발 가운데에 놓는다.
+    const total = label.width + spec.magnifierGap + spec.magnifierSize;
+    label.x = -total / 2 + label.width / 2;
+    glass.x = total / 2 - spec.magnifierSize / 2;
+    line.add([label, glass]);
+    const hit = scene.add.rectangle(0, 0, total + spec.hit / 2, spec.hit, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", () => pressIn(line));
+    hit.on("pointerout", () => pressOut(line, "normal", { pop: false }));
+    hit.on("pointerup", () => { pressOut(line); this.inspect(relicId, index); });
+    line.add(hit);
+    this.names.add(line);
+    return line;
+  }
 
-    // 꼬리는 면과 같은 색으로 아래를 가리키고, 그림자는 면과 함께 아래로 한 겹 떨어진다.
-    const tail = scene.add.graphics();
-    const { width: tw, height: th } = spec.tail;
-    const tailTop = spec.height / 2 - 2;
-    tail.fillStyle(0x000000, 0.4).fillTriangle(-tw / 2 + 4, tailTop + 6, tw / 2 + 4, tailTop + 6, 4, tailTop + th + 6);
-    tail.fillStyle(face, 0.96).fillTriangle(-tw / 2, tailTop, tw / 2, tailTop, 0, tailTop + th);
-    tag.add(drawLayer(scene, 4, 6, shape, { fill: 0x000000, alpha: 0.42, shadow: false }));
-    tag.add(tail);
-    tag.add(drawLayer(scene, 0, 0, shape, { fill: face, alpha: 0.96, edge: tint, edgeAlpha: 1, edgeWidth: 4, shadow: false }));
-    // 면 아래쪽에 옅은 한 줄 — 평평한 판이 아니라 떠 있는 표로 읽히게 하는 얇은 반사.
-    const shine = scene.add.graphics();
-    shine.lineStyle(2, 0xffffff, 0.18).lineBetween(-spec.width / 2 + spec.slant + 10, spec.height / 2 - 7, spec.width / 2 - 14, spec.height / 2 - 7);
-    tag.add(shine);
-
-    const { badge, rarity, magnifier } = spec;
-    const left = badge.dx + badge.size / 2;
-    const right = magnifier.dx - magnifier.radius;
-    const name = scene.add.text((left + right) / 2, -1, relic.name, textStyle({ role: "display", size: spec.nameSize, color: COLOR.ink }))
-      .setOrigin(0.5).setStroke("#05070a", 6).setShadow(0, 3, "#000000", 4, false, true);
-    squeezeTextToWidth(name, right - left - 8);
-    tag.add(name);
-    tag.add(new AffinityBadge(scene, badge.dx, 0, ELEMENT_ICON[relic.element], badge.size, 0.7));
-
-    // 희귀도는 모서리에 비스듬히 박힌 보석 칩이다 — 이름줄에 같은 크기로 끼우면 이름과 무게가 같아진다.
-    const tone = RARITY_TONE[relic.rarity];
-    const gem = scene.add.container(rarity.dx, rarity.dy).setAngle(rarity.angle);
-    const gemShape = slantedRect(rarity.width, rarity.height, 8);
-    gem.add(drawLayer(scene, 2, 3, gemShape, { fill: 0x000000, alpha: 0.45, shadow: false }));
-    gem.add(drawLayer(scene, 0, 0, gemShape, { fill: tone.chip, alpha: 1, edge: 0xffffff, edgeAlpha: 0.7, edgeWidth: 2, shadow: false }));
-    gem.add(scene.add.text(0, 0, relic.rarity, textStyle({ role: "display", size: rarity.size, color: tone.ink }))
-      .setOrigin(0.5).setStroke("#2a1600", 4).setShadow(0, 0, tone.halo, 8, false, true));
-    tag.add(gem);
-
-    const glass = scene.add.container(magnifier.dx, 0);
-    const glassShape = slantedRect(magnifier.radius * 2, magnifier.radius * 2, 7);
-    glass.add(drawLayer(scene, 2, 3, glassShape, { fill: 0x000000, alpha: 0.45, shadow: false }));
-    glass.add(drawLayer(scene, 0, 0, glassShape, { fill: 0x10151d, alpha: 0.95, edge: tint, edgeAlpha: 1, edgeWidth: 2, shadow: false }));
-    glass.add(drawGlyph(scene, "magnifier", 0, 0, magnifier.glyph, 0xf1f5f9, 1, 4));
-    tag.add(glass);
-
-    // 이름표 전체가 눌린다. 돋보기는 눌린 손맛만 따로 받는다.
-    const hit = scene.add.rectangle(0, 0, spec.width + magnifier.radius * 2, spec.height + 20, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerdown", () => pressIn(glass));
-    hit.on("pointerout", () => pressOut(glass, "normal", { pop: false }));
-    hit.on("pointerup", () => { pressOut(glass); this.inspect(relicId, index); });
-    tag.add(hit);
-    return tag;
+  /** 방을 채우는 반짝임. 움직임 줄이기에서는 옅게 선 채로 남는다. */
+  private addSparkles(): void {
+    const { scene } = this;
+    ensureSparkleTexture(scene);
+    for (let index = 0; index < WELCOME_SPARKLE.count; index += 1) {
+      const spot = welcomeSparkle(index);
+      const star = scene.add.image(spot.x, spot.y, SPARKLE_TEXTURE)
+        .setTint(spot.color)
+        .setDisplaySize(spot.size, spot.size);
+      (spot.front ? this.sparklesFront : this.sparklesBack).add(star);
+      const scale = star.scaleX;
+      if (!this.animate) { star.setAlpha(WELCOME_SPARKLE.alpha * 0.4); continue; }
+      star.setAlpha(0).setScale(scale * 0.3);
+      scene.tweens.add({
+        targets: star, alpha: WELCOME_SPARKLE.alpha, scale, angle: 45,
+        duration: spot.duration / 2, yoyo: true, ease: "Sine.InOut",
+        // 꺼져 있는 틈을 켜진 시간보다 짧게 두어 방이 늘 어딘가 반짝이게 한다.
+        delay: spot.delay, repeat: -1, repeatDelay: Math.round(spot.delay / 2),
+      });
+    }
   }
 }
 
-/** 색을 `amount`만큼 검정 쪽으로 누른다. */
-function shade(color: number, amount: number): number {
-  const keep = 1 - amount;
-  const r = Math.round(((color >> 16) & 0xff) * keep);
-  const g = Math.round(((color >> 8) & 0xff) * keep);
-  const b = Math.round((color & 0xff) * keep);
-  return (r << 16) | (g << 8) | b;
+/** 네 갈래 별을 한 번 굽는다 — 가운데가 밝고 갈래 끝이 가늘다. 동그라미를 쓰지 않는다. */
+function ensureSparkleTexture(scene: Phaser.Scene): void {
+  if (scene.textures.exists(SPARKLE_TEXTURE)) return;
+  const size = SPARKLE_TEXTURE_SIZE;
+  const c = size / 2;
+  const g = scene.make.graphics({ x: 0, y: 0 }, false);
+  const star = (reach: number, waist: number, alpha: number): void => {
+    g.fillStyle(0xffffff, alpha);
+    g.fillPoints([
+      { x: c, y: c - reach }, { x: c + waist, y: c - waist }, { x: c + reach, y: c }, { x: c + waist, y: c + waist },
+      { x: c, y: c + reach }, { x: c - waist, y: c + waist }, { x: c - reach, y: c }, { x: c - waist, y: c - waist },
+    ], true);
+  };
+  star(c, c * 0.2, 0.35);
+  star(c * 0.78, c * 0.14, 0.7);
+  star(c * 0.5, c * 0.1, 1);
+  g.generateTexture(SPARKLE_TEXTURE, size, size);
+  g.destroy();
+}
+
+/** 색을 `amount`만큼 흰빛 쪽으로 밝힌다 — 속성 색 글자가 검은 획 위에서 또렷하도록. */
+function lighten(color: number, amount: number): number {
+  const channel = (shift: number): number => {
+    const value = (color >> shift) & 0xff;
+    return Math.round(value + (255 - value) * amount);
+  };
+  return (channel(16) << 16) | (channel(8) << 8) | channel(0);
 }

@@ -638,6 +638,10 @@ export function skillDescription(
     // 앞에 서는 궁극기. 아무도 때리지 않고 아군의 몫을 대신 받는다.
     if ("selfBulwark" in skill && skill.selfBulwark !== undefined) {
       const plan = skill.selfBulwark;
+      // 채우는 겹이 무엇이고 몇 겹까지인지는 「희열」 태그가 말한다(쓰는 개체가 하나뿐인 규칙어).
+      if (plan.fillPassiveStacks === true) {
+        return t("skill.sentence.selfBulwarkElation", { seconds: plan.seconds, percent: plan.maxHpRegenPercentPerSecond });
+      }
       return t("skill.sentence.selfBulwark", { seconds: plan.seconds, percent: plan.maxHpRegenPercentPerSecond });
     }
     // 버티는 궁극기. 끌어당겨 붙잡아 두고 덜 맞은 만큼을 끝나고 돌려받는다.

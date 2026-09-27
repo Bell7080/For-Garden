@@ -156,6 +156,7 @@ export const SKILL_JA = {
   "skill.sentence.clause": "{text}。",
   "skill.sentence.teamMissingHpHeal": "すべての生存中の味方がそれぞれ[[missing-hp|失った体力]]の{percent}%を回復する。",
   "skill.sentence.selfBulwark": "{seconds}秒間、すべての味方が受けるダメージを代わりに受け、その間毎秒 最大体力の{percent}%を回復する。",
+  "skill.sentence.selfBulwarkElation": "[[nodonia-elation|悦び]]を最大まで満たし、{seconds}秒間すべての味方が受けるダメージを代わりに受け、その間毎秒 最大体力の{percent}%を回復する。",
   "skill.sentence.selfGuard": "周囲のすべての敵を[[pull|引き寄せ]]て{seconds}秒間[[taunt|挑発]]し、{shield}のシールドを得る。{reset}",
   "skill.sentence.selfGuard.shieldPercent": "最大体力の{percent}%",
   "skill.sentence.selfGuard.reset": " [[shell|貝殻]]の内部クールタイムを初期化する。",

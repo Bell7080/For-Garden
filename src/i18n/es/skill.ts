@@ -143,6 +143,7 @@ export const SKILL_ES = {
   "skill.sentence.clause": "Además, {text}.",
   "skill.sentence.teamMissingHpHeal": "Todos los aliados vivos recuperan el {percent}% de sus [[missing-hp|PV perdidos]].",
   "skill.sentence.selfBulwark": "Durante {seconds} s recibe el daño que recibirían todos los aliados y, mientras tanto, recupera el {percent}% de los PV máx. cada segundo.",
+  "skill.sentence.selfBulwarkElation": "Llena la [[nodonia-elation|Euforia]] al máximo y durante {seconds} s recibe el daño que recibirían todos los aliados; mientras tanto, recupera el {percent}% de los PV máx. cada segundo.",
   "skill.sentence.overpaintDetonation": "Hace estallar el [[overpaint|Repintado]] acumulado en {target}, infligiendo {damage} por carga, y luego lo elimina.",
   "skill.sentence.channel": "Durante {seconds} s, inflige {damage} a {target} cada segundo y {effects}.",
   "skill.sentence.channel.rider": "{tick} Mientras tanto, los enemigos alcanzados por su [[basic-attack|ataque básico]] {effects}.",

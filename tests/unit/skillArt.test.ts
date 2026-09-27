@@ -165,9 +165,9 @@ describe("노도니아 스킬 표시 계약", () => {
 
   it("의 고통의 미학은 대신 받으며 버티는 시간을 말한다", () => {
     expect(nodonia.ultimate.desc).toBeUndefined();
-    expect(nodonia.ultimate.selfBulwark).toMatchObject({ seconds: 5, redirectPercent: 100, maxHpRegenPercentPerSecond: 5 });
+    expect(nodonia.ultimate.selfBulwark).toMatchObject({ seconds: 5, redirectPercent: 100, maxHpRegenPercentPerSecond: 5, fillPassiveStacks: true });
     const text = skillDescription(nodonia.ultimate);
-    expect(text).toBe("5초 동안 모든 아군이 받는 피해를 대신 받고, 그동안 매초 최대 체력의 5%를 회복한다.");
+    expect(text).toBe("[[nodonia-elation|희열]]을 끝까지 채우고 5초 동안 모든 아군이 받는 피해를 대신 받으며, 그동안 매초 최대 체력의 5%를 회복한다.");
     // 엘라와 갈라 두는 지점이다 — 무적도 아니고 방어를 올리지도 않는다. 종이 방어로 다 맞으면서
     // 그보다 빨리 차오르는 것이 이 개체의 값이다.
     expect(text).not.toContain("무적");

@@ -163,6 +163,9 @@ describe("운영 배너 데이터", () => {
     expect(welcome.relicPools.SSR).toEqual([...WELCOME_SSR_POOL]);
     const roles = WELCOME_SSR_POOL.map((id) => PLAYABLE_RELICS.find((relic) => relic.id === id)!.role);
     expect(new Set(roles)).toEqual(new Set(["warrior", "assassin", "tank", "support"]));
+    // 속성도 넷이 모두 달라 누가 나오든 상성 선택지가 비지 않는다.
+    const elements = WELCOME_SSR_POOL.map((id) => PLAYABLE_RELICS.find((relic) => relic.id === id)!.element);
+    expect(new Set(elements).size).toBe(WELCOME_SSR_POOL.length);
     for (const id of Object.values(welcome.relicPools).flat()) expect(LIMITED_RELIC_IDS.has(id), id).toBe(false);
     expect(welcome).toMatchObject({ pullLimit: 50, tenOnly: true, costTen: 8, pityGroupId: PITY_GROUP.WELCOME });
     // 자기 천장 그룹을 혼자 쓴다 — 상시·픽업 카운터와 섞이지 않는다.

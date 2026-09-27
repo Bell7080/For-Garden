@@ -104,8 +104,19 @@ const STORY_RUNE_REWARDS: Readonly<Record<string, Extract<StageBonusReward, { ki
   "3-10": { kind: "rune", rarity: "rare", part: 2, trait: true },
 };
 
-/** 원석이 처음 나오는 관문(전역 순서). 1-10에서 특성을 처음 본 다음 관문, 2-1이다. */
-const RAW_STONE_FIRST_ORDER = 10;
+/**
+ * 원석이 나오는 자리 — **맛보기로 가끔, 조금씩.**
+ *
+ * 원석의 주 수급처는 고고학(지층 탐사 한 판에 수십~백여 개)이다. 스토리는 1-10에서 특성 붙은 룬을
+ * 받은 사람에게 "이런 재료가 있다"만 알려 주는 자리라, 장마다 두 번만 한 줌씩 준다 — 첫 줌은 특성을
+ * 처음 본 바로 다음 관문(2-1)이다. 관문마다 주면 고고학을 파러 갈 이유가 흐려진다.
+ */
+const STORY_RAW_STONE: Readonly<Record<string, number>> = {
+  "2-1": 30,
+  "2-6": 40,
+  "3-1": 50,
+  "3-6": 60,
+};
 
 /**
  * 치즈케이크 밖의 초회 보상.
@@ -113,8 +124,8 @@ const RAW_STONE_FIRST_ORDER = 10;
  * **바탕은 골드·치즈케이크·젬 셋이다.** 나머지는 제 이야기가 시작되는 자리에서만 붙는다.
  * - **골드**는 관문이 깊을수록 늘고, 무거운 자리(정예·장의 끝)는 두 배다.
  * - **젬**은 매 관문 조금, 무거운 자리에서 크게 — 장 하나가 연구 두어 번 몫이다.
- * - **원석**은 2장부터 조금씩 늘어난다. 룬 특성 연구의 재료라, 1-10에서 특성 붙은 룬을 받아
- *   특성이 무엇인지 안 다음에야 뜻이 선다 — 그 전에 쌓아 두면 쓸 곳 모르는 재화가 된다.
+ * - **원석**은 2장부터 장마다 두 번만 맛보기로(`STORY_RAW_STONE`). 룬 특성 연구의 재료라 1-10에서
+ *   특성을 본 다음에야 뜻이 서고, 주 수급처는 고고학이다.
  * - **화석은 정예 관문에만 한 개**다(`elite`). 스토리 화석은 짜게 두고, 모자란 몫은 스토리 클리어
  *   패스(무료·유료 두 줄)가 채운다 — 관문마다 화석을 주면 패스가 채울 자리가 없다.
  * - **룬**은 `STORY_RUNE_REWARDS`가 자리를 정한다.
@@ -125,7 +136,8 @@ function storyFirstClearBonus(id: string, globalOrder: number, chapter: number, 
     { kind: "currency", currency: "gold", amount: (3_000 + globalOrder * 1_000) * (heavy ? 2 : 1) },
     { kind: "currency", currency: "gems", amount: heavy ? [150, 200, 300][chapter - 1] ?? 300 : [30, 40, 50][chapter - 1] ?? 50 },
   ];
-  if (globalOrder >= RAW_STONE_FIRST_ORDER) bonus.push({ kind: "currency", currency: "rawStone", amount: 20 + (globalOrder - RAW_STONE_FIRST_ORDER) * 5 });
+  const rawStone = STORY_RAW_STONE[id];
+  if (rawStone) bonus.push({ kind: "currency", currency: "rawStone", amount: rawStone });
   if (elite) bonus.push({ kind: "currency", currency: "fossil", amount: 1 });
   const rune = STORY_RUNE_REWARDS[id];
   if (rune) bonus.push(rune);

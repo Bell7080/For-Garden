@@ -26,9 +26,14 @@ describe("stage enemy design", () => {
     const has = (id: string, currency: string) => rewardsOf(id).some((reward) => reward.kind === "currency" && reward.currency === currency);
     for (const stage of stages) {
       for (const base of ["cheesecake", "gold", "gems"]) expect(has(stage.id, base), `${stage.id} ${base}`).toBe(true);
-      // 원석은 1-10에서 특성을 처음 본 다음, 2장부터다.
-      expect(has(stage.id, "rawStone"), `${stage.id} rawStone`).toBe((stage.chapter ?? 1) >= 2);
       expect(has(stage.id, "fossil"), `${stage.id} fossil`).toBe(stage.elite === true);
+    }
+    // 원석은 고고학이 주 수급처라 스토리는 2장부터 장마다 두 번만, 한 줌씩 맛보기로 준다.
+    const rawStone = stages.filter((stage) => has(stage.id, "rawStone")).map(({ id }) => id);
+    expect(rawStone).toEqual(["2-1", "2-6", "3-1", "3-6"]);
+    for (const id of rawStone) {
+      const amount = rewardsOf(id).reduce((sum, reward) => reward.kind === "currency" && reward.currency === "rawStone" ? sum + reward.amount : sum, 0);
+      expect(amount, id).toBeLessThanOrEqual(60);
     }
     const runes = stages.flatMap((stage) => rewardsOf(stage.id).flatMap((reward) => reward.kind === "rune" ? [{ id: stage.id, ...reward }] : []));
     expect(runes.map(({ id }) => id)).toEqual(["1-5", "1-10", "2-5", "2-10", "3-5", "3-10"]);

@@ -1403,10 +1403,11 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    // 폭주 중에는 서 있는 것만으로 주위가 지져진다. 회복만 있던 자리에 적에게 남기는 값을 하나
-    // 두는 것이라, 탱커가 자기 숫자만 바꾸다 화면에서 사라지는 일이 없다.
+    // 폭주하면 늘 내려 두던 베일을 걷는다. 서 있는 것만으로 주위가 지져지고 그 열기를 버틴 적은
+    // 잠깐 이쪽을 본다 — 회복만 있던 자리에 적에게 남기는 값을 하나 두는 것이라, 탱커가 자기
+    // 숫자만 바꾸다 화면에서 사라지는 일이 없다.
     ferocityTrait: {
-      name: "절정", effectId: "climax", auraDamageMaxHpPercent: 1.5, radius: 240,
+      name: "베일을 걷고", effectId: "climax", auraDamageMaxHpPercent: 1.5, radius: 240,
       // 화상 틱을 버틴 적만 잠깐 노도니아를 바라보므로 피해 반경과 도발 반경이 갈리지 않는다.
       taunt: { kind: "taunt", seconds: 0.5 }, missingHpPercentPerBasic: 3,
     },
@@ -1414,7 +1415,8 @@ export const RELICS: RelicDef[] = [
       // kind가 painfulElation인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
       id: "nodonia-passive",
-      name: "고통의 희열",
+      // 상처가 곧 기쁨인 개체라 이름이 그 결을 말한다. 효과는 태그(희열)가 말한다.
+      name: "달콤한 상처",
       kind: "painfulElation",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
@@ -1422,15 +1424,19 @@ export const RELICS: RelicDef[] = [
       value: 0.4,
       durationSeconds: 5,
       elation: { maxStacks: 10, maxHpRegenPercentPerStack: 0.4, seconds: 5 },
-      desc: "적에게 피격당할 때마다 희열이 한 겹 쌓여 겹당 매초 최대 체력의 0.4%를 회복한다. 최대 열 겹까지 쌓이고 5초 동안 남으며, 다시 맞으면 유지 시간이 처음부터 다시 흐른다.",
+      desc: "적에게 피격당하거나 아군 대신 맞을 때마다 희열이 한 겹 쌓여 겹당 매초 최대 체력의 0.4%를 회복한다. 최대 열 겹까지 쌓이고 5초 동안 남으며, 다시 맞으면 유지 시간이 처음부터 다시 흐른다.",
     },
     basic: {
       id: "nodonia-basic",
-      name: "착한 아이에게는 포상을",
+      // 아군에게는 쓰다듬어 주는 손이 적에게는 벌이다 — 착한 아이는 머리를 쓰다듬고 나쁜 아이는 혼낸다.
+      name: "나쁜 아이에게는 벌을",
       // 최대 체력에서 피해를 뽑는다. 방어가 종이라 방어 계수는 쓸 수 없고, 이 개체가 키우는
       // 유일한 축이 체력이라 몸집이 곧 손이 된다.
       power: 5,
       scalingStat: "hp",
+      // 맞아서 쌓인 희열이 손으로 돌아온다 — 열 겹이면 한 방이 거의 두 배(+80%)다. 앞에 서서 오래
+      // 버틸수록 세게 치므로, 맞는 자리에 서 있는 이유가 재생 하나로 끝나지 않는다.
+      elationDamagePercentPerStack: 8,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -1438,7 +1444,8 @@ export const RELICS: RelicDef[] = [
     },
     ultimate: {
       id: "nodonia-ult",
-      name: "고통의 미학",
+      // "아가"라 부르는 아이들 앞을 막아서는 한마디다. 아군 몫의 아픔을 전부 제가 가져간다.
+      name: "대신 아파 줄게요",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
       cost: 150,

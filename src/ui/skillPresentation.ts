@@ -799,6 +799,11 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
   if ("reagentStacks" in skill && skill.reagentStacks !== undefined) {
     clauses.push({ text: t("skill.clause.reagent", { stacks: skill.reagentStacks }) });
   }
+  // 희열 겹마다 오르는 몫은 주어가 "이 피해"라 제 문장으로 선다. 곱하는 비율이라 실제 값이 아니라 %로 남긴다
+  // — 겹 수가 맞는 순간마다 달라 능력치만으로는 계산할 수 없는 값이다.
+  if ("elationDamagePercentPerStack" in skill && skill.elationDamagePercentPerStack !== undefined) {
+    clauses.push({ text: t("skill.clause.elationDamage", { percent: skill.elationDamagePercentPerStack }), standalone: true });
+  }
   const combo = "combo" in skill ? skill.combo : undefined;
   if (combo) {
     clauses.push({ text: t("skill.clause.combo", { percent: combo.chancePercent, hits: combo.hitCount }) });

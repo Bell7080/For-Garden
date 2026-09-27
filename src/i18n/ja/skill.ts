@@ -132,7 +132,7 @@ export const SKILL_JA = {
   "skill.passive.openingStealth": "戦闘を始めるとき、{seconds}秒間[[stealth|隠密]]する。",
   "skill.passive.undyingTalisman": "戦闘ごとに1回、倒れるダメージを受けても死なず、{seconds}秒間[[invulnerable|無敵]]になる代わりに何の行動もできない。その間、最大体力の{percent}%を毎秒分けて回復する。{blast}",
   "skill.passive.undyingTalisman.blast": " このとき周囲の敵を[[knockback|吹き飛ばす]]。",
-  "skill.passive.painfulElation": "敵に被弾するたびに[[nodonia-elation|悦び]]が1重積まれる。",
+  "skill.passive.painfulElation": "敵に被弾するか味方の代わりにダメージを受けるたびに[[nodonia-elation|悦び]]が1重積まれる。",
   "skill.passive.shellGuard": "実ダメージを受けて生き残ると、{seconds}秒間持続する[[{stack}|{stackName}]]を1重得る。{stacks}重になるとすべて消費し、自分に最大体力の{selfPercent}%、自分を除いて現在HP割合が最も低い生存中の味方にその味方の最大体力の{allyPercent}%のシールドを付与する。一度発動すると{cooldown}秒間は再び発動しない。",
   "skill.passive.shellGuard.selfOnly": "実ダメージを受けて生き残ると、{seconds}秒間持続する[[{stack}|{stackName}]]を1重得る。{stacks}重になるとすべて消費し、自分に最大体力の{selfPercent}%のシールドを付与する。一度発動すると{cooldown}秒間は再び発動しない。",
   "skill.passive.tagAndRun": "[[basic-attack|通常攻撃]]を出すたびに、まだ殴っていない敵へ標的を変える。{phasing} 動いている間、毎秒{charge}ずつ多く溜まる。",
@@ -190,6 +190,7 @@ export const SKILL_JA = {
   "skill.damage.composite": "攻撃力の{percent}%と現在の[[attack-speed|攻撃速度]]の{speedPercent}%を合わせた{type}",
 
   "skill.clause.reagent": "[[reagent|試薬]]を{stacks}重付与する",
+  "skill.clause.elationDamage": "[[nodonia-elation|悦び]]1重ごとにこのダメージが{percent}%上がる",
   "skill.clause.combo": "{percent}%の確率で[[combo|連撃]]して計{hits}回命中する",
   "skill.clause.damageHealing": "与えたダメージの{percent}%分の体力を回復する",
   "skill.clause.selfShield": "自身は{shield}のシールドを得る",

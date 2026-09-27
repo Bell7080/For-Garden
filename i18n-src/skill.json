@@ -1190,14 +1190,14 @@
 " Также [[knockback|отбрасывает]] ближних врагов."
 ],
 "skill.passive.painfulElation": [
-"每次被敌人攻击时，叠加1层[[nodonia-elation|愉悦]]。",
-"ทุกครั้งที่โดนศัตรูโจมตี จะสะสม[[nodonia-elation|ปีติ]] 1 ชั้น",
-"Mỗi khi bị kẻ địch đánh trúng, tích 1 tầng [[nodonia-elation|Hân hoan]].",
-"Setiap kali terkena serangan musuh, satu tumpuk [[nodonia-elation|Kegembiraan]] terbentuk.",
-"Cada vez que un enemigo lo golpea, acumula una carga de [[nodonia-elation|Euforia]].",
-"Cada vez que um inimigo o atinge, acumula um [[nodonia-elation|Euforia]].",
-"Jedes Mal, wenn ein Gegner es trifft, baut sich ein Stapel [[nodonia-elation|Hochgefühl]] auf.",
-"Каждый удар врага даёт заряд [[nodonia-elation|упоения]]."
+"每次被敌人攻击或代替队友承受伤害时，叠加1层[[nodonia-elation|愉悦]]。",
+"ทุกครั้งที่โดนศัตรูโจมตีหรือรับความเสียหายแทนพันธมิตร จะสะสม[[nodonia-elation|ปีติ]] 1 ชั้น",
+"Mỗi khi bị kẻ địch đánh trúng hoặc chịu sát thương thay đồng đội, tích 1 tầng [[nodonia-elation|Hân hoan]].",
+"Setiap kali terkena serangan musuh atau menerima kerusakan menggantikan sekutu, satu tumpuk [[nodonia-elation|Kegembiraan]] terbentuk.",
+"Cada vez que un enemigo lo golpea o recibe daño en lugar de un aliado, acumula una carga de [[nodonia-elation|Euforia]].",
+"Cada vez que um inimigo o atinge ou recebe dano no lugar de um aliado, acumula um [[nodonia-elation|Euforia]].",
+"Jedes Mal, wenn ein Gegner es trifft oder es Schaden anstelle eines Verbündeten erleidet, baut sich ein Stapel [[nodonia-elation|Hochgefühl]] auf.",
+"Каждый удар врага и каждый удар, принятый вместо союзника, даёт заряд [[nodonia-elation|упоения]]."
 ],
 "skill.passive.shellGuard": [
 "承受实际伤害后获得1层[[{stack}|{stackName}]]，持续{seconds}秒。叠至{stacks}层时全部消耗，为自身提供最大生命{selfPercent}%的护盾，并为除自身外生命比例最低的存活队友提供其最大生命{allyPercent}%的护盾。触发后{cooldown}秒内不会再次触发。",
@@ -1718,6 +1718,16 @@
 "aplica {stacks} acúmulos de [[reagent|Reagente]]",
 "gibt {stacks} Stapel [[reagent|Reagenz]]",
 "накладывает {stacks} зар. [[reagent|реагента]]"
+],
+"skill.clause.elationDamage": [
+"每层[[nodonia-elation|愉悦]]使此伤害提高{percent}%",
+"[[nodonia-elation|ปีติ]]แต่ละชั้นเพิ่มความเสียหายนี้ {percent}%",
+"mỗi tầng [[nodonia-elation|Hân hoan]] tăng sát thương này thêm {percent}%",
+"setiap tumpuk [[nodonia-elation|Kegembiraan]] menambah kerusakan ini sebesar {percent}%",
+"cada carga de [[nodonia-elation|Euforia]] aumenta este daño un {percent}%",
+"cada acúmulo de [[nodonia-elation|Euforia]] aumenta este dano em {percent}%",
+"jeder Stapel [[nodonia-elation|Hochgefühl]] erhöht diesen Schaden um {percent}%",
+"каждый заряд [[nodonia-elation|упоения]] увеличивает этот урон на {percent}%"
 ],
 "skill.clause.combo": [
 "有{percent}%概率[[combo|连击]]，共命中{hits}次",

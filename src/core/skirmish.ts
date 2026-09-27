@@ -382,7 +382,7 @@ export interface Fighter extends Combatant {
    */
   elation: { stacks: number; remaining: number; total: number; regenPercentPerStack: number; maxStacks: number; tickIn: number } | null;
   /**
-   * 아군이 받을 피해를 대신 받는 중. 「고통의 미학」이 켠다.
+   * 아군이 받을 피해를 대신 받는 중. 「대신 아파 줄게요」가 켠다.
    *
    * **슬롯은 하나뿐이다** — 두 겹으로 쌓으면 같은 피해가 두 번 나뉘어 아군이 실제로 받는 몫이
    * 화면과 갈린다. 그래서 새로 켜질 때는 **대신 받는 비율이 큰 쪽**이 남고, 비율이 같으면 남은
@@ -406,7 +406,7 @@ export interface Fighter extends Combatant {
   empoweredBasic: boolean;
   /** 폰토스 폭주의 다음 1초 고정 피해까지 남은 시간이며 비활성 중에는 1초로 초기화한다. */
   pontusRageTickIn: number;
-  /** 「절정」의 다음 1초 주위 피해까지 남은 시간이며 비활성 중에는 1초로 초기화한다. */
+  /** 「베일을 걷고」의 다음 1초 주위 피해까지 남은 시간이며 비활성 중에는 1초로 초기화한다. */
   climaxAuraTickIn: number;
   /** 토리카 탱커 폭주의 다음 1초 최대 체력 회복까지 남은 시간이다. */
   ferocityRegenTickIn: number;
@@ -1924,9 +1924,9 @@ function grantShieldFromDamage(attacker: Fighter, dealt: number, events: Skirmis
 }
 
 /**
- * 「고통의 희열」 — 맞은 그 순간 겹이 하나 오른다.
+ * 「달콤한 상처」 — 맞은 그 순간 겹이 하나 오른다.
  *
- * **공격에 맞았을 때만 오른다.** 출혈·중독처럼 시간이 깎는 피해까지 세면 겹이 저절로 차올라
+ * **공격에 맞았을 때(아군 대신 맞은 한 대 포함)만 오른다.** 출혈·중독처럼 시간이 깎는 피해까지 세면 겹이 저절로 차올라
  * "앞에 서서 맞고 있다"가 아니라 "가만히 있어도 단단해진다"가 된다.
  *
  * 정해진 최대 겹에 닿으면 더 쌓이지 않으며, 다시 맞을 때마다 유지 시간을 처음부터 갱신한다.
@@ -2071,7 +2071,7 @@ function tickElation(fighter: Fighter, dt: number): void {
  * 앞에 서기를 켠다. **슬롯은 하나뿐이다.**
  *
  * 두 겹으로 쌓으면 같은 한 방이 두 번 나뉘어 아군이 실제로 받는 몫이 화면과 갈린다. 지금은
- * 켜는 곳이 「고통의 미학」 하나뿐이라 다시 켜면 그대로 덮어쓴다 — 둘째 원천이 생기면 여기서
+ * 켜는 곳이 「대신 아파 줄게요」 하나뿐이라 다시 켜면 그대로 덮어쓴다 — 둘째 원천이 생기면 여기서
  * 어느 쪽이 남는지부터 정한다.
  */
 function raiseBulwark(
@@ -2112,7 +2112,7 @@ function tickBulwark(fighter: Fighter, dt: number, state: SkirmishState, events:
 }
 
 /**
- * 「절정」의 자기 기본 공격 회복. 잃은 체력 비례라 아플수록 많이 돌아온다.
+ * 「베일을 걷고」의 자기 기본 공격 회복. 잃은 체력 비례라 아플수록 많이 돌아온다.
  *
  * 최대 체력 비례로 두면 멀쩡할 때 가장 많이 회복해 성질이 거꾸로 선다 — 앞에 서서 다 맞는
  * 개체라 아플 때 크게 돌아와야 한다.
@@ -2145,7 +2145,7 @@ function tickFerocityRegen(fighter: Fighter, dt: number, state: SkirmishState, e
 }
 
 /**
- * 「절정」의 주위 지속 피해. 폭주 중에는 서 있는 것만으로 주위가 지져진다.
+ * 「베일을 걷고」의 주위 지속 피해. 폭주 중에는 서 있는 것만으로 주위가 지져진다.
  *
  * 최대 체력 비례 **고정 피해**라 방어를 지나간다 — 공격력을 아예 쓰지 않는 개체라 자기 몸이
  * 곧 화력이고, 그래서 체력을 올리는 것이 공격을 올리는 것이 된다. 폭주가 아닐 때 시계를 1로
@@ -2180,7 +2180,7 @@ function tickClimaxAura(fighter: Fighter, dt: number, state: SkirmishState, even
 /**
  * 「네가 예술을 알아?」의 시계. 폭주 중 매초 주위에 낙서를 흩뿌린다.
  *
- * 「절정」과 같은 1초 시계를 쓰지만 피해의 출처가 다르다 — 그쪽은 자기 최대 체력 비례
+ * 「베일을 걷고」와 같은 1초 시계를 쓰지만 피해의 출처가 다르다 — 그쪽은 자기 최대 체력 비례
  * 고정 피해라 방어를 지나치지만, 이쪽은 **주문력에서 나오는 보통 마법 피해**라 저항과 속성
  * 상성을 그대로 거친다. 지나가며 뿌리는 것이지 태우는 것이 아니다.
  */
@@ -4080,9 +4080,8 @@ export function resolveReceivedDamage(target: Fighter, rawAmount: number): Recei
   // 덧칠은 경감과 같은 최종 경계에서 곱한다 — 여기 두지 않으면 피해 경로마다 따로 곱하게 되고
   // 어느 한 곳을 빠뜨리면 "덧칠했는데 그 스킬만 안 아픈" 상태가 된다.
   const amplified = rawAmount * overpaintMultiplier(target);
-  // 「인」과 「고통의 미학」의 버티기는 **여기서 곱하지 않는다.** 그 둘은 최종 피해 감쇠가
-  // 아니라 방어력·저항력 증가라 `defensiveDefinition`이 피해 공식 안에서 이미 반영한다 —
-  // 그래야 방어 관통·고정 피해가 그대로 지나가고, 수치가 커질수록 수익이 줄어든다.
+  // 「인」과 「대신 아파 줄게요」의 버티기는 **여기서 곱하지 않는다.** 그 둘은 최종 피해 감쇠가
+  // 아니라 눈에 보이는 자원(보호막 · 대신 받기와 매초 회복)이라 이 경계를 지나지 않는다.
   const softened = Math.max(1, Math.round(amplified * (1 - Math.min(100, Math.max(0, reduction)) / 100)));
   const reduced = applyImpactCap(target, softened);
   // 일반 전투원의 최소 1 피해는 그대로 두고, 경감을 가진 자리만 최종 반올림 뒤 무효화한다.
@@ -4168,8 +4167,8 @@ function tryTriggerDamageStealth(fighter: Fighter, state: SkirmishState): void {
  * 앞에 선 아군이 대신 받는 몫을 떼어 낸다. 실제로 넘어간 양(원래 피해 기준)을 돌려준다.
  *
  * **대신 받는 개체 자신의 피해는 다시 나누지 않는다** — 나누면 앞에 선 둘이 서로에게 몫을
- * 넘기며 같은 한 방이 몇 번이고 쪼개진다. 넘어간 몫도 그 개체의 경감을 그대로 지나므로,
- * 「고통의 미학」의 70% 감쇠가 대신 받은 피해에도 든다.
+ * 넘기며 같은 한 방이 몇 번이고 쪼개진다. 넘어간 몫은 방어·저항을 다시 지나지 않고
+ * 받는 쪽의 처리(`resolveReceivedDamage`)만 거친다.
  */
 function shareWithBulwark(target: Fighter, amount: number, events: SkirmishEvent[], state: SkirmishState): number {
   if (target.bulwark !== null) return 0;
@@ -4182,6 +4181,9 @@ function shareWithBulwark(target: Fighter, amount: number, events: SkirmishEvent
   const resolution = resolveReceivedDamage(guardian, share);
   const dealt = applyDamage(guardian, resolution.applied, events, state);
   events.push({ kind: "damageShared", fighterId: guardian.id, fromFighterId: target.id, amount: dealt });
+  // 대신 아파 준 한 대도 희열이다 — 세지 않으면 대신 받는 5초 동안 제 몸으로 날아온 공격만 겹을
+  // 이어 가, 가장 많이 맞는 순간에 겹이 도리어 끊긴다.
+  gainElation(guardian);
   return share;
 }
 
@@ -4622,7 +4624,9 @@ function strike(
   const basePower = attackSpeedPower > 0
     ? skill.power + currentAttackSpeed(attacker) * attackSpeedPower / Math.max(1, attacker.def.stats.atk)
     : skill.power;
-  const compositePower = basePower;
+  // 희열이 오른 만큼 벌이 무거워진다 — 맞아서 쌓인 겹이 손으로도 돌아온다. 이번 타격 시작 시점의 겹이다.
+  const elationPerStack = !useUltimate ? attacker.def.basic.elationDamagePercentPerStack ?? 0 : 0;
+  const compositePower = basePower * (1 + (attacker.elation?.stacks ?? 0) * elationPerStack / 100);
   const damageInput = {
     ...skill,
     power: compositePower,
@@ -4680,7 +4684,7 @@ function strike(
   const credited = recordDamageContribution(state, creditedTo, target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, targetHpBefore, shieldBefore, shieldProviderId);
   tryTriggerEmergencyRecovery(target, state); tryTriggerLowHpVanish(target, state);
   triggerCombatAugments(state, target, "onLowHp", events);
-  // 맞은 그 순간 희열이 오른다. 대신 받은 몫이 아니라 **실제로 날아온 공격**만 세는 자리다.
+  // 맞은 그 순간 희열이 오른다. 대신 받은 몫은 `shareWithBulwark`가 따로 센다.
   gainElation(target);
   if (!useUltimate) pullStruck(attacker, target, state, events);
 

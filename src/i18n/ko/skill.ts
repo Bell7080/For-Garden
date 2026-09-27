@@ -151,7 +151,7 @@ export const SKILL_KO = {
   "skill.passive.openingStealth": "전투를 시작할 때 {seconds}초 동안 [[stealth|은신]]한다.",
   "skill.passive.undyingTalisman": "전투당 한 번, 쓰러질 피해를 받으면 죽지 않고 {seconds}초 동안 [[invulnerable|무적]]이 되는 대신 아무 행동도 하지 못한다. 그동안 최대 체력의 {percent}%를 매초 나누어 회복한다.{blast}",
   "skill.passive.undyingTalisman.blast": " 이때 주위 적을 [[knockback|날려버린다]].",
-  "skill.passive.painfulElation": "적에게 피격당할 때마다 [[nodonia-elation|희열]]이 한 겹 쌓인다.",
+  "skill.passive.painfulElation": "적에게 피격당하거나 아군 대신 피해를 받을 때마다 [[nodonia-elation|희열]]이 한 겹 쌓인다.",
   "skill.passive.shellGuard": "실제 피해를 받고 살아남으면 {seconds}초 동안 유지되는 [[{stack}|{stackName}]]{stackName!을} 한 겹 얻는다. {stacks}겹이 되면 모두 소비해 자신에게 최대 체력의 {selfPercent}%, 자신을 제외한 현재 HP 비율이 가장 낮은 생존 아군에게 그 아군 최대 체력의 {allyPercent}% 보호막을 부여한다. 한 번 발동하면 {cooldown}초 동안 다시 발동하지 않는다.",
   "skill.passive.shellGuard.selfOnly": "실제 피해를 받고 살아남으면 {seconds}초 동안 유지되는 [[{stack}|{stackName}]]{stackName!을} 한 겹 얻는다. {stacks}겹이 되면 모두 소비해 자신에게 최대 체력의 {selfPercent}% 보호막을 부여한다. 한 번 발동하면 {cooldown}초 동안 다시 발동하지 않는다.",
   "skill.passive.tagAndRun": "[[basic-attack|기본 공격]]을 낼 때마다 아직 때리지 않은 적으로 표적을 바꾼다.{phasing} 움직이는 동안 매초 {charge}씩 더 찬다.",
@@ -213,6 +213,7 @@ export const SKILL_KO = {
 
   // ── 부가 효과 절 ─────────────────────────────────────────────────────────
   "skill.clause.reagent": "[[reagent|시약]]을 {stacks}겹 부여한다",
+  "skill.clause.elationDamage": "[[nodonia-elation|희열]] 한 겹마다 이 피해가 {percent}% 오른다",
   "skill.clause.combo": "{percent}% 확률로 [[combo|연격]]하여 총 {hits}회 적중한다",
   "skill.clause.damageHealing": "입힌 피해의 {percent}%만큼 체력을 회복한다",
   "skill.clause.selfShield": "자신은 {shield}만큼 보호막을 얻는다",

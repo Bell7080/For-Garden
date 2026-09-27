@@ -3774,7 +3774,25 @@ describe("노도니아의 프로젝트 REVERIE", () => {
     expect(nodonia.elation).toBeNull();
   });
 
-  it("의 고통의 미학은 아군의 몫을 전부 대신 받으며 매초 차오른다", () => {
+  it("의 나쁜 아이에게는 벌을은 희열 한 겹마다 피해가 오른다", () => {
+    const hit = (stacks: number): number => {
+      const { state, nodonia, foe } = arena();
+      if (stacks > 0) {
+        const plan = getRelic("nodonia").passive.elation!;
+        nodonia.elation = { stacks, remaining: 99, total: plan.seconds, regenPercentPerStack: 0, maxStacks: plan.maxStacks, tickIn: 99 };
+      }
+      nodonia.targetId = foe.id; nodonia.attackCooldown = 0;
+      stepSkirmish(state, 1 / 60);
+      return foe.maxHp - foe.hp;
+    };
+    const perStack = getRelic("nodonia").basic.elationDamagePercentPerStack!;
+    const calm = hit(0);
+    expect(calm).toBeGreaterThan(0);
+    // 열 겹이면 한 방이 (1 + 10 × 8%)배다 — 반올림 한 칸 안에서.
+    expect(Math.abs(hit(10) - calm * (1 + 10 * perStack / 100))).toBeLessThanOrEqual(2);
+  });
+
+  it("의 대신 아파 줄게요는 아군의 몫을 전부 대신 받으며 매초 차오른다", () => {
     const { state, nodonia, ally, foe } = arena();
     const plan = getRelic("nodonia").ultimate.selfBulwark!;
     nodonia.energy = ULTIMATE_ENERGY_MAX;
@@ -3800,8 +3818,11 @@ describe("노도니아의 프로젝트 REVERIE", () => {
     ally.hp = ally.maxHp; ally.shield.amount = 0;
     nodonia.hp = nodonia.maxHp / 2; nodonia.shield.amount = 0;
     foe.targetId = ally.id; foe.attackCooldown = 0;
+    // 대신 맞은 한 대도 희열이다 — 유지 시간이 처음부터 다시 흐른다.
+    nodonia.elation!.remaining = 1;
     const shared = stepSkirmish(state, 1 / 60).filter((event) => event.kind === "damageShared");
     expect(shared).toHaveLength(1);
+    expect(nodonia.elation!.remaining).toBeGreaterThan(elation.seconds - 0.1);
     expect(ally.hp).toBe(ally.maxHp);
     expect(nodonia.hp).toBeLessThan(nodonia.maxHp / 2);
 
@@ -3815,7 +3836,7 @@ describe("노도니아의 프로젝트 REVERIE", () => {
     expect(nodonia.hp - wounded).toBeCloseTo(nodonia.maxHp * perSecond / 100, -1);
   });
 
-  it("의 절정은 폭주 중 주위를 매초 지지고 잃은 체력을 되찾는다", () => {
+  it("의 베일을 걷고는 폭주 중 주위를 매초 지지고 잃은 체력을 되찾는다", () => {
     // 반경 안팎을 같은 틱에서 비교해야 피해와 도발의 대상 집합이 정확히 같은지 알 수 있다.
     const state = createSkirmish([getRelic("nodonia"), getRelic("anky")], [getRelic("toby"), getRelic("amo")], ARENA);
     const [nodonia, ally, foe, outsideFoe] = state.fighters;
@@ -3847,7 +3868,7 @@ describe("노도니아의 프로젝트 REVERIE", () => {
     expect(outsideFoe.hp).toBe(outsideFoe.maxHp);
     expect(outsideFoe.taunted).toBeNull();
 
-    // 공용 경로는 이미 남은 시간이 더 긴 도발을 짧은 절정 도발로 덮어쓰지 않는다.
+    // 공용 경로는 이미 남은 시간이 더 긴 도발을 짧은 폭주 도발로 덮어쓰지 않는다.
     foe.taunted = { remaining: 3, total: 3, sourceId: ally.id };
     for (let frame = 0; frame < 60; frame += 1) stepSkirmish(state, 1 / 60);
     expect(foe.taunted?.sourceId).toBe(ally.id);

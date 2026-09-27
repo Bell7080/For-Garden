@@ -1,6 +1,6 @@
 import { BOUNTY, BOUNTY_TIERS, getBountyTier, type BountyTierDef } from "../data/bounty";
 import type { BountyState } from "../state/session";
-import { dungeonRunStamina, type DungeonRunCost } from "./dungeonShortcut";
+import { DUNGEON_RUN_STAMINA, type DungeonRunCost } from "./dungeonShortcut";
 
 /**
  * 현상수배 한 판의 **진행 규칙**.
@@ -59,7 +59,7 @@ export function bountyTierProgress(clearedTierIds: readonly string[]): { tier: B
  * 치즈케이크 대작전과 같은 레벨이면 같은 값이다. 한 등급의 셋은 같은 레벨로 선다.
  */
 export function bountyRunCost(tier: BountyTierDef): DungeonRunCost {
-  return { staminaCost: dungeonRunStamina(tier.rounds[0].level), rewards: { gold: tier.rewardGold } };
+  return { staminaCost: DUNGEON_RUN_STAMINA, rewards: { gold: tier.rewardGold } };
 }
 
 /** 세 라운드를 모두 이긴 등급만 다음 등급을 연다. 두 번째 클리어는 목록을 늘리지 않는다. */

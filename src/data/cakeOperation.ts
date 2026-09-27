@@ -1,5 +1,5 @@
 import { registerDataText } from "../i18n";
-import { dungeonRunStamina, type DungeonRunCost } from "../core/dungeonShortcut";
+import { DUNGEON_RUN_STAMINA, type DungeonRunCost } from "../core/dungeonShortcut";
 import type { RelicDef } from "../core/types";
 import { getRelic } from "./relics";
 import { applyEncounterScaling, encounterRoleFor, type EncounterRole } from "../core/levelDesign";
@@ -31,7 +31,7 @@ export interface CakeOperationTier {
    * 무리를 치우면 잠깐 전장이 비어 물량전의 압박이 끊겼다. 상한은 난전의 `MAX_ENEMY_COUNT`다.
    */
   enemyCount: number;
-  /** 한 판을 이겼을 때 받는 치즈케이크다. 스테미나는 레벨이 정한다(`dungeonRunStamina`). */
+  /** 한 판을 이겼을 때 받는 치즈케이크다. 스테미나는 모든 단계가 같다(`DUNGEON_RUN_STAMINA`). */
   rewardCheesecake: number;
 }
 
@@ -106,7 +106,7 @@ export function isCakeTierUnlocked(id: string, clearedIndex: number): boolean {
 
 /** 단축 규칙이 읽는 한 판의 값. 소탕 횟수를 곱하는 일은 `dungeonShortcut`이 한다. */
 export function cakeOperationRunCost(tier: CakeOperationTier): DungeonRunCost {
-  return { staminaCost: dungeonRunStamina(tier.enemyLevel), rewards: { cheesecake: tier.rewardCheesecake } };
+  return { staminaCost: DUNGEON_RUN_STAMINA, rewards: { cheesecake: tier.rewardCheesecake } };
 }
 
 /** 단계 이름을 언어별로 덮어쓸 수 있게 등록한다. */

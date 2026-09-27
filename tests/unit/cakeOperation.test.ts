@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dungeonRunStamina } from "../../src/core/dungeonShortcut";
+import { DUNGEON_RUN_STAMINA } from "../../src/core/dungeonShortcut";
 import { CAKE_OPERATION_ENEMY_IDS, CAKE_OPERATION_TIERS, cakeOperationRunCost, cakeOperationTierIndex, cakeOperationEnemies, getCakeOperationTier, isCakeTierUnlocked, cakeOperationEnemyDisplayLevel, cakeOperationRole } from "../../src/data/cakeOperation";
 import { getRelic } from "../../src/data/relics";
 import { applyEncounterScaling } from "../../src/core/levelDesign";
@@ -70,6 +70,6 @@ describe("치즈케이크 대작전 단계 표", () => {
 
   it("한 판의 값은 레벨 사다리의 스테미나와 그 단계의 보상이다", () => {
     const tier = getCakeOperationTier("cake-3");
-    expect(cakeOperationRunCost(tier)).toEqual({ staminaCost: dungeonRunStamina(tier.enemyLevel), rewards: { cheesecake: tier.rewardCheesecake } });
+    expect(cakeOperationRunCost(tier)).toEqual({ staminaCost: DUNGEON_RUN_STAMINA, rewards: { cheesecake: tier.rewardCheesecake } });
   });
 });

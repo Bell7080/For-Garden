@@ -518,6 +518,15 @@ describe("레이드 서버 경계", () => {
     expect(state.wallet.raidSigil).toBe(before + amount);
   });
 
+  it("은 정산을 마친 판을 목록에서 걷는다 — 완료 탭에는 받을 것이 남은 판만 선다", async () => {
+    const state = makeRaidSession();
+    state.raid = { instances: [yesterdayWorld(30_000)] };
+    const server = serverAt(state, "2026-09-16T12:00:00Z");
+    expect((await server.getRaids()).raids.some(({ id }) => id === "world-2026-09-15")).toBe(true);
+    await server.settleRaid({ requestId: "st-gone", raidId: "world-2026-09-15" });
+    expect((await server.getRaids()).raids.some(({ id }) => id === "world-2026-09-15")).toBe(false);
+  });
+
   it("은 참여하지 않은 판의 정산을 거절한다", async () => {
     const state = makeRaidSession();
     state.raid = { instances: [yesterdayWorld(0)] };

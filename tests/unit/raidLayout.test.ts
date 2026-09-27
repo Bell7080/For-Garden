@@ -119,9 +119,12 @@ describe("레이드 배치표", () => {
     expect(RAID_DIFFICULTY_TONE.rampage).toBe(0xd2463c);
   });
 
-  it("소환자 이름은 층 윗변 위, 다음 층 사이의 틈 안에 선다", () => {
-    // 층 사이 틈(gap)보다 높이 올라가면 윗층의 체력 줄을 덮는다.
-    expect(RAID_LAYER_OWNER.up + RAID_LAYER_OWNER.size / 2).toBeLessThan(RAID_LIST.gap);
+  it("소환자 이름은 층 안쪽 오른쪽 위에 선다 — 윗변을 넘지 않고 이름줄보다 위다", () => {
+    expect(RAID_LAYER_OWNER.down - RAID_LAYER_OWNER.size / 2).toBeGreaterThan(0);
+    for (const spec of Object.values(RAID_LIST.kinds)) {
+      expect(-spec.height / 2 + RAID_LAYER_OWNER.down + RAID_LAYER_OWNER.size / 2).toBeLessThan(spec.text.nameY);
+    }
+    expect(RAID_LAYER_OWNER.inset).toBeGreaterThan(0);
   });
 
   it("소환 연출은 어려운 판일수록 오래 모이고 세게 터진다", () => {

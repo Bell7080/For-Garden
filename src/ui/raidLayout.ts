@@ -191,6 +191,8 @@ export const RAID_LIST = {
      */
     haze: { width: 520, height: 210, alpha: 0.62 },
     stroke: { color: "#0a0d12", width: 10 },
+    /** 글자를 검게 복제해 오른쪽 아래로 비스듬히 민 그림자 — 글자가 층에서 한 뼘 튀어나와 보인다. */
+    echo: { dx: 9, dy: 9, alpha: 0.72 },
     /** 글자가 숨 쉬는 진하기의 폭과 한 번의 시간. */
     breath: { from: 0.72, ms: 900 },
     /** 걷히는 연출 — 글자가 커지며 사라지고 덮개가 옅어진다. */
@@ -264,8 +266,12 @@ export const RAID_DIFFICULTY_TONE = {
 /** 층 뒷배경의 물들임 — 글이 서는 왼쪽에서 가장 짙고 얼굴 쪽으로 풀린다. 윗변에 같은 색 선 한 줄. */
 export const RAID_LAYER_TONE = { washAlpha: 0.34, washReach: 0.78, edgeAlpha: 0.85, edgeWidth: 4 } as const;
 
-/** 소환자는 층 윗변 오른쪽 위에 회색 글자로 선다 — 왼쪽의 제목표와 같은 줄, 맞은편이다. */
-export const RAID_LAYER_OWNER = { up: 20, size: 22 } as const;
+/**
+ * 소환자는 층 **안쪽** 오른쪽 위에 회색 글자로 선다. 윗변 위 틈에 띄우던 때는 층 사이에 떠 있어
+ * 어느 층의 말인지 흐렸다 — 판 안에 두어 그 층의 곁말로 묶는다. `down`은 윗변에서 글줄 가운데까지,
+ * `inset`은 기운 오른쪽 변에서 안으로 들어온 거리다.
+ */
+export const RAID_LAYER_OWNER = { down: 30, inset: 34, size: 22 } as const;
 
 /**
  * 소환 연출의 세기 — **어려운 판일수록 오래 모이고 세게 터진다**(뽑기 연출과 같은 규칙).

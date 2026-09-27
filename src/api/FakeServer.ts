@@ -505,7 +505,9 @@ export class FakeServer implements GameApi {
     const now = this.now();
     this.normalizeRaid(now);
     const raids = this.raidInstances(now).map((instance) => this.raidDto(instance, now, limit))
-      .filter((raid) => raid.status === "active" || raid.myDamage > 0)
+      // 끝난 판은 **받을 것이 남은 판만** 선다 — 정산을 마친 판이 「정산 완료」로 남아 있으면 완료 탭이
+      // 받을 판과 받은 판이 섞인 기록장이 되고, 끝난 판은 칠 수도 없어 눌러도 할 일이 없다.
+      .filter((raid) => raid.status === "active" || (raid.myDamage > 0 && !raid.settled))
       .sort((a, b) => (a.status === b.status ? 0 : a.status === "active" ? -1 : 1)
         || (a.kind === b.kind ? 0 : a.kind === "world" ? -1 : 1)
         || (a.status === "active" ? Date.parse(a.endsAt) - Date.parse(b.endsAt) : Date.parse(b.endsAt) - Date.parse(a.endsAt)));

@@ -152,7 +152,7 @@ export function addRaidLayer(
     : raid.summonedByMe ? t("raid.summoner.me") : raid.summonerName ? t("raid.summoner.friend", { name: raid.summonerName }) : undefined;
   if (owner) {
     layer.add(shadowed(scene.add
-      .text(width / 2 - slant / 2, top - RAID_LAYER_OWNER.up, owner, textStyle({ role: "body", size: RAID_LAYER_OWNER.size, color: COLOR.inkDim }))
+      .text(slantedRightX(width, height, slant, top + RAID_LAYER_OWNER.down) - RAID_LAYER_OWNER.inset, top + RAID_LAYER_OWNER.down, owner, textStyle({ role: "body", size: RAID_LAYER_OWNER.size, color: COLOR.inkDim }))
       .setOrigin(1, 0.5)));
   }
   const remaining = Math.max(0, raid.attemptsLimit - raid.attemptsUsed);
@@ -207,6 +207,13 @@ function addSettleCover(
   const haze = scene.add.image(0, 0, EFFECT_TEXTURE.glow).setTint(COLOR.void).setAlpha(spec.haze.alpha);
   haze.setScale(spec.haze.width / haze.width, spec.haze.height / haze.height);
   cover.add(haze);
+  // 같은 글자를 검게 복제해 비스듬히 민 그림자 한 겹 — 흐리지 않고 각지게 떨어져 글자가 튀어나온다.
+  const echo = scene.add
+    .text(spec.echo.dx, spec.echo.dy, t("raid.settle.button"), textStyle({ role: "display", size: spec.labelSize, color: "#000000" }))
+    .setOrigin(0.5)
+    .setStroke("#000000", spec.stroke.width)
+    .setAlpha(spec.echo.alpha);
+  cover.add(echo);
   const label = shadowed(scene.add
     .text(0, 0, t("raid.settle.button"), textStyle({ role: "display", size: spec.labelSize, color: COLOR.accentText }))
     .setOrigin(0.5)
@@ -226,7 +233,7 @@ function addSettleCover(
       hit.disableInteractive();
       breath.stop();
       const duration = still ? 0 : spec.dismissMs;
-      scene.tweens.add({ targets: label, scale: spec.dismissScale, alpha: 0, duration, ease: "Cubic.Out" });
+      scene.tweens.add({ targets: [label, echo], scale: spec.dismissScale, alpha: 0, duration, ease: "Cubic.Out" });
       scene.tweens.add({ targets: cover, alpha: 0, duration, ease: "Quad.In", onComplete: () => resolve() });
     }));
   });
@@ -297,6 +304,11 @@ function addPickLayerBase(
   layer.add(drawShapeEdge(scene, 0, 0, shape, "top", { color: tone, alpha: RAID_LAYER_TONE.edgeAlpha, width: RAID_LAYER_TONE.edgeWidth }));
   addSectionTitle(scene, -width / 2 + slant / 2, top - 4, options.tag, { parent: layer });
   return layer;
+}
+
+/** 기운 판(`slantedRect`)의 오른쪽 변이 높이 `y`에서 지나는 x. 윗변 끝이 가장 오른쪽이다. */
+function slantedRightX(width: number, height: number, slant: number, y: number): number {
+  return width / 2 + slant / 2 - slant * ((y + height / 2) / height);
 }
 
 const shadowed = (object: Phaser.GameObjects.Text, blur = 5): Phaser.GameObjects.Text => object.setShadow(0, 2, "#05070a", blur, false, true);

@@ -13,7 +13,7 @@ import { setDebugScene } from "../debug";
 import { t } from "../i18n";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { session } from "../state/session";
-import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
+import { addSceneBackground, BACKGROUND, battleFieldBackground } from "../ui/backgrounds";
 import { DUNGEON_LOBBY } from "../ui/dungeonLobbyLayout";
 import { DungeonLobby } from "../ui/DungeonLobby";
 import { addBackButton } from "../ui/IconButton";
@@ -146,6 +146,7 @@ export class BountyScene extends Phaser.Scene {
       tierName: tier.name, level: bountyRoundLevel(tier.rounds[0]), cost: bountyRunCost(tier),
       cleared: this.clearedTierIds.includes(tier.id),
       enemyId: tier.rounds[tier.rounds.length - 1].relicId,
+      fieldKey: battleFieldBackground("bounty"),
       membership: () => this.adFreeMembership,
       dailyAdRewards: () => this.dailyAdRewards,
       setDailyAdRewards: (daily) => { this.dailyAdRewards = daily; },

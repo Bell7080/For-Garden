@@ -33,7 +33,7 @@ import { playRaidSummonCinematic } from "../ui/RaidSummonCinematic";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { addFramedIcon } from "../ui/itemFrame";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
-import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
+import { openRaidSettlementPopup } from "../ui/RaidSettlementPopup";
 import { consumeSceneEntry } from "./sceneEntry";
 import { findItem } from "../data/items";
 import { openItemGuide } from "../ui/currencyGuideEntry";
@@ -282,8 +282,9 @@ export class RaidScene extends Phaser.Scene {
     layers.removeAll(true);
     const stack = raidLayerStack(raids.map(({ kind }) => kind));
     raids.forEach((raid, index) => addRaidLayer(this, layers, raid, stack.centers[index]!, {
-      onTap: () => { if (!this.dragged) this.openRaid(raid.id); },
-      onSettle: () => { if (!this.dragged) void this.settle(raid.id); },
+      // 끝난 판은 칠 수 없으니 판으로 넘어가지 않는다 — 정산은 층을 덮는 덮개가 그 자리에서 맡는다.
+      onTap: () => { if (!this.dragged && raid.status !== "completed") this.openRaid(raid.id); },
+      onSettle: (dismiss) => { if (!this.dragged) void this.settle(raid.id, dismiss); },
     }));
     const viewportHeight = RAID_LIST.viewport.bottom - RAID_LIST.viewport.top;
     this.minScroll = Math.min(0, viewportHeight - stack.height);
@@ -404,23 +405,20 @@ export class RaidScene extends Phaser.Scene {
   }
 
   /**
-   * 끝난 판의 정산 — 서버가 몫을 다시 계산해 한 처리로 지급한다. 받은 것은 영수증 한 장이 말하고,
-   * 목록(또는 판)은 새 응답으로 다시 그린다.
+   * 끝난 판의 정산 — 서버가 몫을 다시 계산해 한 처리로 지급한다. 목록의 정산 덮개가 걷히는 연출과
+   * 서버 요청이 **나란히** 돌고, 둘 다 끝나면 레이드 정산 창(기여도 · 보상 · 내 점수)이 열린다.
+   * 목록(또는 판)은 새 응답으로 그 뒤에서 다시 그린다 — 받은 판은 덮개 없이 「정산 완료」로 선다.
    */
-  private async settle(raidId: string): Promise<void> {
+  private async settle(raidId: string, dismiss?: () => Promise<void>): Promise<void> {
     if (this.busy) return;
     this.busy = true;
     const requestId = globalThis.crypto?.randomUUID?.() ?? `raid-settle-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     try {
-      const result = await gameApi.settleRaid({ requestId, raidId });
+      const [result] = await Promise.all([gameApi.settleRaid({ requestId, raidId }), dismiss?.() ?? Promise.resolve()]);
       if (!this.scene.isActive()) return;
       this.busy = false;
-      const redraw = (): void => { if (this.raidId) this.render(result.raid); else void this.refreshList(); };
-      redraw();
-      openRewardPopup(this, this.popups, {
-        title: t("raid.settle.title"),
-        items: currencyRecordToRewardItems(Object.fromEntries(result.granted.map(({ currency, amount }) => [currency, amount]))),
-      });
+      if (this.raidId) this.render(result.raid); else void this.refreshList();
+      openRaidSettlementPopup(this, this.popups, { raid: result.raid, granted: result.granted });
     } catch {
       if (!this.scene.isActive()) return;
       this.busy = false;

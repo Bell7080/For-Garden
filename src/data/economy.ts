@@ -1,4 +1,5 @@
 import type { Wallet } from "../core/gacha";
+import { STAMINA_HOLD_LIMIT } from "../core/stamina";
 import { registerDataText } from "../i18n";
 
 /** 라이브 운영에서 지급량과 소비량을 함께 검토하는 네 핵심 경제 재화다. */
@@ -11,7 +12,8 @@ export const WALLET_CAPS: Readonly<Record<keyof Wallet, number>> = {
   amber: 9_999,
   gems: 9_999_999,
   gold: 999_999_999,
-  stamina: 9_999,
+  // 시간 회복은 레벨 상한에서 멈추지만 대가를 치른 충전은 그 위로 이 끝까지 쌓인다.
+  stamina: STAMINA_HOLD_LIMIT,
   dnaFragments: 99_999,
   cheesecake: 9_999_999,
   rawStone: 9_999_999,

@@ -56,11 +56,24 @@ describe("레이드 배치표", () => {
       expect(reward.y - reward.size / 2, kind).toBeGreaterThan(text.attemptsY + 14);
       expect(reward.y + reward.size / 2, kind).toBeLessThan(half - hp.labelUp - 12);
       expect(half - hp.labelUp + 12, kind).toBeLessThan(half - hp.up - hp.height / 2);
-      // 정산 버튼은 액자와 겹치지 않고 얼굴이 서기 시작하는 곳 앞에서 끝난다.
-      const left = -RAID_LIST.width / 2 + RAID_LIST.slant / 2 + RAID_LIST.padding;
-      expect(RAID_LIST.settle.fromFrame, kind).toBeGreaterThan(reward.size + RAID_LIST.rewardText.gap + 150);
-      expect(left + RAID_LIST.settle.fromFrame + RAID_LIST.settle.width, kind).toBeLessThan(-RAID_LIST.width / 2 + RAID_LIST.width * (RAID_LIST.art.from + RAID_LIST.art.fade));
+      // 정산 덮개의 「정산」 한 마디는 층 높이 안에 든다(제목표·체력 줄을 넘지 않게 가운데에 선다).
+      expect(RAID_LIST.settle.labelSize, kind).toBeLessThan(height / 2);
     }
+  });
+
+  it("정산 덮개는 살짝만 어둡고, 걷히는 연출은 짧다", () => {
+    const { dimAlpha, dots, dismissMs, breath } = RAID_LIST.settle;
+    // 얼굴 띠가 비쳐야 어느 판의 정산인지 읽힌다.
+    expect(dimAlpha).toBeLessThan(0.7);
+    expect(dots.alpha).toBeLessThan(0.6);
+    expect(dots.reach).toBeLessThanOrEqual(0.5);
+    expect(dismissMs).toBeLessThan(600);
+    expect(breath.from).toBeGreaterThan(0.5);
+    // 글자 뒤 어둠은 글자보다 넓되 층을 통째로 덮지 않고, 완전히 검지 않다.
+    const { haze, labelSize } = RAID_LIST.settle;
+    expect(haze.height).toBeGreaterThan(labelSize);
+    expect(haze.width).toBeLessThan(RAID_LIST.width * 0.6);
+    expect(haze.alpha).toBeLessThan(0.8);
   });
 
   it("월드 폭주가 소환 레이드보다 두껍게 선다", () => {

@@ -5,7 +5,7 @@ import type { AdPresentationResult, GameApi } from "../api/contracts";
 import { completedAdToken } from "../data/adRewards";
 import { currencyGuide } from "../data/currencyGuide";
 import { STAMINA_RECHARGE_SOURCES, staminaAdSlot, staminaConsumable, type StaminaRechargeSource } from "../data/staminaRecharge";
-import { staminaMaxForPlayer } from "../core/stamina";
+import { STAMINA_HOLD_LIMIT, staminaMaxForPlayer } from "../core/stamina";
 import { InventoryManager } from "../managers/InventoryManager";
 import { managerEvents } from "../managers/ManagerEvents";
 import { presentRewardedAd } from "../platform/rewardedAds";
@@ -90,7 +90,8 @@ export class StaminaPopup {
   private paint(view: Phaser.GameObjects.Container): void {
     const amount = session.wallet.stamina;
     const maximum = staminaMaxForPlayer(session);
-    const full = amount >= maximum;
+    // 충전 버튼을 끄는 것은 레벨 상한이 아니라 보유 끝이다 — 병·젬·광고는 상한을 넘어 채운다.
+    const full = amount >= STAMINA_HOLD_LIMIT;
     const timer = staminaTimerLine(amount, maximum, session.staminaUpdatedAt, Date.now());
 
     // 전용 판: 이 창에서 가장 먼저 읽어야 하는 "지금 얼마 남았나"를 그림과 수 한 덩어리로 모은다.

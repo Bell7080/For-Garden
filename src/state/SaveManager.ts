@@ -22,7 +22,7 @@ import { CAKE_OPERATION_TIERS } from "../data/cakeOperation";
 import { BOUNTY_TIERS } from "../data/bounty";
 import { validateExpeditionMap } from "../core/expeditionMap";
 import type { ExpeditionRunState } from "./session";
-import { staminaMaxForResearchLevel } from "../core/stamina";
+import { STAMINA_HOLD_LIMIT } from "../core/stamina";
 import { findInteractionCity } from "../data/interactionCities";
 import { WALLET_CAPS } from "../data/economy";
 import { INTERACTION_JOURNALS } from "../data/interactionJournals";
@@ -392,7 +392,7 @@ export class SaveManager {
       value === undefined ? undefined : Math.min(cap, Math.ceil(value / divisor));
     const rescaledFossil = needsPullUnitRescale ? rescalePullCurrency(savedWallet?.fossil, 100, WALLET_CAPS.fossil) : savedWallet?.fossil;
     const rescaledAmber = needsPullUnitRescale ? rescalePullCurrency(savedWallet?.amber, 2, WALLET_CAPS.amber) : savedWallet?.amber;
-    const wallet = { ...walletWithoutLegacyCurrency, fossil: rescaledFossil ?? 0, amber: rescaledAmber ?? 0, dnaFragments: savedWallet?.dnaFragments ?? 0, cheesecake: savedWallet?.cheesecake ?? legacyCheesecake, rawStone: savedWallet?.rawStone ?? 0, gems: savedWallet?.gems ?? 0, gold: savedWallet?.gold ?? 0, raidSigil: savedWallet?.raidSigil ?? legacySigils, salvageRecord: savedWallet?.salvageRecord ?? 0, stamina: Math.min(savedWallet?.stamina ?? 0, staminaMaxForResearchLevel(playerResearch.level)) };
+    const wallet = { ...walletWithoutLegacyCurrency, fossil: rescaledFossil ?? 0, amber: rescaledAmber ?? 0, dnaFragments: savedWallet?.dnaFragments ?? 0, cheesecake: savedWallet?.cheesecake ?? legacyCheesecake, rawStone: savedWallet?.rawStone ?? 0, gems: savedWallet?.gems ?? 0, gold: savedWallet?.gold ?? 0, raidSigil: savedWallet?.raidSigil ?? legacySigils, salvageRecord: savedWallet?.salvageRecord ?? 0, stamina: Math.min(savedWallet?.stamina ?? 0, STAMINA_HOLD_LIMIT) };
     // 구 저장은 로컬 시각을 신뢰하지 않고 첫 서버 요청에서 기준점을 세운다.
     const staminaUpdatedAt = typeof legacy.staminaUpdatedAt === "string" && Number.isFinite(Date.parse(legacy.staminaUpdatedAt)) ? legacy.staminaUpdatedAt : "";
     // 일일 입장 횟수 도입 전 저장은 같은 UTC 키에서 0회로 시작하되 이후 재실행에는 저장값을 유지한다.

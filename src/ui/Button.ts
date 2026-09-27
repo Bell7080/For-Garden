@@ -16,8 +16,14 @@ export const BUTTON_DRAG_CANCEL_DISTANCE = 24;
  * 점의 크기와 진하기가 안쪽으로 갈수록 줄어 그라데이션처럼 읽힌다. 판이 기울어지거나 모서리가
  * 깎여도 삐져나오지 않도록, 실제 판 모양 안에 들어오는 점만 찍는다.
  */
-function dotPattern(scene: Phaser.Scene, shape: number[], color: number): Phaser.GameObjects.Graphics {
-  const points = toShapePoints(shape);
+export function dotPattern(
+  scene: Phaser.Scene,
+  shape: readonly number[],
+  color: number,
+  /** 점이 흩어지는 깊이(판 폭 대비)와 가장자리 점의 진하기. 기본은 출격 버튼의 값이다. */
+  options: { reach?: number; alpha?: number } = {},
+): Phaser.GameObjects.Graphics {
+  const points = toShapePoints([...shape]);
   const polygon = new Phaser.Geom.Polygon(points.map((point) => new Phaser.Geom.Point(point.x, point.y)));
   const left = Math.min(...points.map((point) => point.x));
   const right = Math.max(...points.map((point) => point.x));
@@ -25,7 +31,7 @@ function dotPattern(scene: Phaser.Scene, shape: number[], color: number): Phaser
   const bottom = Math.max(...points.map((point) => point.y));
   const step = 15;
   // 점이 흩어지는 깊이. 판 폭의 절반을 넘기면 가운데에서 두 무늬가 만나 지저분해진다.
-  const reach = (right - left) * 0.34;
+  const reach = (right - left) * (options.reach ?? 0.34);
   const graphics = scene.add.graphics();
   for (let y = top + step / 2; y < bottom; y += step) {
     // 줄마다 반 칸씩 어긋나게 찍어 격자가 아니라 흩뿌린 것처럼 보이게 한다.
@@ -35,7 +41,7 @@ function dotPattern(scene: Phaser.Scene, shape: number[], color: number): Phaser
       if (depth > reach) continue;
       const fade = 1 - depth / reach;
       if (!polygon.contains(x, y)) continue;
-      graphics.fillStyle(color, 0.5 * fade * fade);
+      graphics.fillStyle(color, (options.alpha ?? 0.5) * fade * fade);
       graphics.fillCircle(x, y, 1.2 + 1.8 * fade);
     }
   }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ABSOLUTE_STAMINA_MAX, settleStamina, staminaMaxForResearchLevel, staminaTiming } from "../../src/core/stamina";
+import { ABSOLUTE_STAMINA_MAX, settleStamina, STAMINA_HOLD_LIMIT, staminaMaxForResearchLevel, staminaTiming } from "../../src/core/stamina";
 import { FakeServer } from "../../src/api/FakeServer";
 import { createDefaultSession } from "../../src/state/session";
 import { TIME_ACCRUAL_FIXTURES } from "../fixtures/timeAccrual";
@@ -38,14 +38,27 @@ describe("stamina rules", () => {
     expect(staminaTiming(result.amount, 122, result.updatedAt)).toEqual({ nextRecoveryAt: null, fullAt: null });
   });
 
-  it("tonic returns applied and overflow amounts against the research maximum", async () => {
+  it("tonic fills past the research maximum and never drops the paid amount", async () => {
     const state = createDefaultSession();
     state.wallet.stamina = 120; state.staminaUpdatedAt = "2026-09-01T00:00:00.000Z";
     state.itemInventory = [{ itemId: "stamina-tonic", quantity: 1 }];
     const api = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-01T00:01:00.000Z") });
     const response = await api.useConsumable({ itemId: "stamina-tonic", quantity: 1 });
-    // 기본 레벨 1의 동적 최대치 122까지 2만 적용하고 나머지 58은 명시적으로 돌려준다.
-    expect(response).toMatchObject({ appliedAmount: 2, overflowAmount: 58, stamina: { current: 122, maximum: 122 } });
+    // 병은 대가를 치른 충전이라 레벨 상한(122)에서 깎지 않고 60을 모두 더한다.
+    expect(response).toMatchObject({ appliedAmount: 60, overflowAmount: 0, stamina: { current: 180, maximum: 122, nextRecoveryAt: null } });
+  });
+
+  it("keeps an over-cap amount and only pauses time recovery", () => {
+    // 상한을 넘겨 든 몫은 시간이 흘러도 깎이지 않고, 자연 회복만 멈춘다.
+    expect(settleStamina(300, 122, "2026-09-01T00:00:00.000Z", new Date("2026-09-02T00:00:00.000Z"))).toMatchObject({ amount: 300, recovered: 0 });
+  });
+
+  it("clips paid stamina only at the hold limit", async () => {
+    const state = createDefaultSession();
+    state.wallet.stamina = STAMINA_HOLD_LIMIT - 10; state.itemInventory = [{ itemId: "stamina-tonic", quantity: 2 }];
+    const api = new FakeServer(state, { latencyMs: 0 });
+    expect(await api.useConsumable({ itemId: "stamina-tonic", quantity: 1 })).toMatchObject({ appliedAmount: 10, overflowAmount: 50 });
+    await expect(api.useConsumable({ itemId: "stamina-tonic", quantity: 1 })).rejects.toMatchObject({ code: "STAMINA_FULL" });
   });
 
   it("keeps current stamina on level-up and fills the newly opened space naturally", () => {

@@ -10,7 +10,7 @@ import { createRuneInstance, enhanceRune as applyRuneEnhancement, runeEnhancemen
 import { createDefaultSettings } from "../../src/core/settings";
 import { WALLET_CAPS } from "../../src/data/economy";
 import { staminaCurrencyRecharge } from "../../src/data/staminaRecharge";
-import { staminaMaxForPlayer } from "../../src/core/stamina";
+import { STAMINA_HOLD_LIMIT, staminaMaxForPlayer } from "../../src/core/stamina";
 import { createArchaeologyState } from "../../src/core/strataDig";
 import { STRATA_SITE_COOLDOWN_MS } from "../../src/data/strataLayers";
 
@@ -1147,21 +1147,21 @@ describe("스테미나 충전 경계", () => {
     expect(response).toMatchObject({ sourceId: source.id, appliedAmount: source.amount, overflowAmount: 0, spent: { currency: "gems", amount: source.cost } });
   });
 
-  it("는 상한을 넘는 몫만 버리고 값은 그대로 받는다", async () => {
+  it("는 레벨 상한을 넘어서도 치른 몫을 모두 채운다", async () => {
     const state = makeSession();
     const maximum = staminaMaxForPlayer(state);
     state.wallet = { ...state.wallet, gems: source.cost, stamina: maximum - 1 };
     const server = new FakeServer(state, { latencyMs: 0 });
     const response = await server.rechargeStamina({ sourceId: source.id, requestId: "recharge-2" });
-    expect(state.wallet.stamina).toBe(maximum);
-    expect(response.appliedAmount).toBe(1);
-    expect(response.overflowAmount).toBe(source.amount - 1);
+    expect(state.wallet.stamina).toBe(maximum - 1 + source.amount);
+    expect(response.appliedAmount).toBe(source.amount);
+    expect(response.overflowAmount).toBe(0);
   });
 
-  it("는 이미 가득 찼거나 재화가 모자라면 아무것도 바꾸지 않는다", async () => {
+  it("는 보유 끝에 닿았거나 재화가 모자라면 아무것도 바꾸지 않는다", async () => {
     const full = makeSession();
-    full.wallet = { ...full.wallet, gems: source.cost, stamina: staminaMaxForPlayer(full) };
-    // 헛돈을 쓰지 않도록 가득 찬 상태는 차감 전에 거절한다.
+    full.wallet = { ...full.wallet, gems: source.cost, stamina: STAMINA_HOLD_LIMIT };
+    // 헛돈을 쓰지 않도록 보유 끝에 닿은 상태는 차감 전에 거절한다.
     await expect(new FakeServer(full, { latencyMs: 0 }).rechargeStamina({ sourceId: source.id, requestId: "recharge-3" }))
       .rejects.toMatchObject({ code: "STAMINA_FULL" });
     expect(full.wallet.gems).toBe(source.cost);

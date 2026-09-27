@@ -835,7 +835,7 @@ export default {
   "relic.nodonia.observation.height": "1.66 m",
   "relic.nodonia.observation.weight": "79 kg",
   "relic.nodonia.passive.name": "Sweet Wounds",
-  "relic.nodonia.passive.desc": "Each time she is hit by an enemy or takes damage in an ally's place, one stack of Elation builds; at 5 stacks, all are consumed to restore 8% of max HP. Lasts 5 seconds, and being hit again restarts the duration.",
+  "relic.nodonia.passive.desc": "Each time she is hit by an enemy or takes damage in an ally's place, one stack of Elation builds, restoring 0.4% of max HP per second per stack. It builds up to ten stacks and lasts 5 seconds, and being hit again restarts the duration.",
   "relic.nodonia.ferocity.name": "Heat of Battle",
   "relic.nodonia.basic.name": "A Punishment for a Naughty Child",
   "relic.nodonia.ultimate.name": "Climax",

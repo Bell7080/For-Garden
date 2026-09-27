@@ -102,7 +102,7 @@ export const SKILL_JA = {
   "skill.ferocity.splash.ending": "{bonus}を与える。",
 
   "skill.keyword.elation.term": "悦び",
-  "skill.keyword.elation.description": "{stacks}重になるとすべて消費して最大体力の{percent}%を回復する。{seconds}秒間残り、再び被弾すると持続時間が最初から流れ直す。",
+  "skill.keyword.elation.description": "1重ごとに毎秒 最大体力の{percent}%を回復し、最大{stacks}重まで積まれる。{seconds}秒間残り、再び被弾すると持続時間が最初から流れ直す。",
   "skill.passive.crit.same": "クリティカル率とクリティカルダメージが共に{percent}%上がる。",
   "skill.passive.crit.split": "クリティカル率が{chance}%、クリティカルダメージが{damage}%上がる。",
   "skill.passive.crit.chance": "クリティカル率が{percent}%上がる。",
@@ -156,7 +156,7 @@ export const SKILL_JA = {
   "skill.sentence.clause": "{text}。",
   "skill.sentence.teamMissingHpHeal": "すべての生存中の味方がそれぞれ[[missing-hp|失った体力]]の{percent}%を回復する。",
   "skill.sentence.selfBulwark": "{seconds}秒間、すべての味方が受けるダメージを代わりに受け、その間毎秒 最大体力の{percent}%を回復する。",
-  "skill.sentence.selfBulwarkElation": "[[nodonia-elation|悦び]]を最大まで満たし、{seconds}秒間すべての味方が受けるダメージを代わりに受け、その間[[nodonia-elation|悦び]]の回復量が{percent}%増加する。",
+  "skill.sentence.selfBulwarkElation": "{seconds}秒間すべての味方が受けるダメージを代わりに受け、その間[[nodonia-elation|悦び]]の回復量が{percent}%増加する。",
   "skill.sentence.selfGuard": "周囲のすべての敵を[[pull|引き寄せ]]て{seconds}秒間[[taunt|挑発]]し、{shield}のシールドを得る。{reset}",
   "skill.sentence.selfGuard.shieldPercent": "最大体力の{percent}%",
   "skill.sentence.selfGuard.reset": " [[shell|貝殻]]の内部クールタイムを初期化する。",

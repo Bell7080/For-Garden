@@ -823,7 +823,7 @@ export default {
   "relic.nodonia.observation.height": "1,66 m",
   "relic.nodonia.observation.weight": "79 kg",
   "relic.nodonia.passive.name": "Feridas doces",
-  "relic.nodonia.passive.desc": "Cada vez que um inimigo a atinge ou ela recebe dano no lugar de um aliado, acumula uma Euforia; ao chegar a 5 consome todas para recuperar 8% do PV máx. Dura 5 segundos e ser atingida de novo reinicia a duração.",
+  "relic.nodonia.passive.desc": "Cada vez que um inimigo a atinge ou ela recebe dano no lugar de um aliado, acumula uma Euforia que recupera 0,4% do PV máx. por segundo por acúmulo. Acumula até dez, dura 5 segundos e ser atingida de novo reinicia a duração.",
   "relic.nodonia.ferocity.name": "O calor da batalha",
   "relic.nodonia.basic.name": "Um castigo para quem se comporta mal",
   "relic.nodonia.ultimate.name": "Clímax",

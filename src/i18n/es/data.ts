@@ -823,7 +823,7 @@ export default {
   "relic.nodonia.observation.height": "1,66 m",
   "relic.nodonia.observation.weight": "79 kg",
   "relic.nodonia.passive.name": "Heridas dulces",
-  "relic.nodonia.passive.desc": "Cada vez que un enemigo la golpea o recibe daño en lugar de un aliado, acumula una carga de Euforia; al llegar a 5 las consume todas para recuperar el 8% de los PV máx. Dura 5 segundos y recibir otro golpe reinicia la duración.",
+  "relic.nodonia.passive.desc": "Cada vez que un enemigo la golpea o recibe daño en lugar de un aliado, acumula una carga de Euforia que recupera el 0,4% de los PV máx. por segundo por carga. Acumula hasta diez, dura 5 segundos y recibir otro golpe reinicia la duración.",
   "relic.nodonia.ferocity.name": "El calor de la batalla",
   "relic.nodonia.basic.name": "Un castigo para quien se porta mal",
   "relic.nodonia.ultimate.name": "Clímax",

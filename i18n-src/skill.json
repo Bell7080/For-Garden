@@ -890,14 +890,14 @@
 "Упоение"
 ],
 "skill.keyword.elation.description": [
-"叠满{stacks}层时全部消耗，恢复最大生命的{percent}%。持续{seconds}秒，再次受击时重置持续时间。",
-"เมื่อครบ {stacks} ชั้นจะใช้ทั้งหมดเพื่อฟื้นฟู {percent}% ของ HP สูงสุด คงอยู่ {seconds} วินาที และโดนอีกจะเริ่มนับใหม่",
-"Khi đủ {stacks} tầng, tiêu hao toàn bộ để hồi {percent}% HP tối đa. Kéo dài {seconds} giây, bị đánh lại sẽ làm mới thời gian.",
-"Pada {stacks} tumpuk, semuanya dipakai untuk memulihkan {percent}% HP maks. Bertahan {seconds} detik, dan terkena lagi mengulang durasinya.",
-"Al llegar a {stacks} cargas, las consume todas para recuperar el {percent}% de los PV máx. Dura {seconds} s y recibir otro golpe reinicia la duración.",
-"Ao chegar a {stacks} acúmulos, consome todos para recuperar {percent}% do PV máx. Dura {seconds} s e ser atingido de novo reinicia a duração.",
-"Bei {stacks} Stapeln werden alle verbraucht und {percent}% des max. Lebens wiederhergestellt. Hält {seconds} s; ein erneuter Treffer startet die Dauer neu.",
-"При {stacks} зарядах расходует все и восстанавливает {percent}% макс. ОЗ. Длится {seconds} с; новый удар обновляет время."
+"每层每秒恢复最大生命的{percent}%，最多{stacks}层。持续{seconds}秒，再次受击时重置持续时间。",
+"แต่ละชั้นฟื้นฟู {percent}% ของ HP สูงสุดต่อวินาที สูงสุด {stacks} ชั้น คงอยู่ {seconds} วินาที และโดนโจมตีอีกจะเริ่มนับเวลาใหม่",
+"Mỗi tầng hồi {percent}% HP tối đa mỗi giây, tối đa {stacks} tầng. Kéo dài {seconds} giây và bị đánh lại sẽ làm mới thời gian.",
+"Setiap tumpuk memulihkan {percent}% HP maks per detik, hingga {stacks} tumpuk. Bertahan {seconds} dtk dan terkena lagi mengulang durasinya.",
+"Cada carga recupera el {percent}% de los PV máx. por segundo, hasta {stacks} cargas. Dura {seconds} s y recibir otro golpe reinicia la duración.",
+"Cada acúmulo recupera {percent}% do PV máx. por segundo, até {stacks} acúmulos. Dura {seconds} s e ser atingido de novo reinicia a duração.",
+"Jeder Stapel stellt pro Sekunde {percent}% des max. Lebens wieder her, bis zu {stacks} Stapel. Hält {seconds} s; ein erneuter Treffer startet die Dauer neu.",
+"Каждый заряд восстанавливает {percent}% макс. ОЗ в секунду, до {stacks} зарядов. Длится {seconds} с, новый удар обновляет время."
 ],
 "skill.passive.crit.same": [
 "暴击率与暴击伤害均提升{percent}%。",
@@ -1420,14 +1420,14 @@
 "На {seconds} с принимает урон, предназначенный всем союзникам, и тем временем восстанавливает {percent}% макс. ОЗ в секунду."
 ],
 "skill.sentence.selfBulwarkElation": [
-"将[[nodonia-elation|愉悦]]叠满，并在{seconds}秒内代替所有队友承受伤害，期间[[nodonia-elation|愉悦]]的恢复量提高{percent}%。",
-"เติม[[nodonia-elation|ปีติ]]จนเต็ม แล้วรับความเสียหายแทนพันธมิตรทุกคนเป็นเวลา {seconds} วินาที ระหว่างนั้นปริมาณการฟื้นฟูของ[[nodonia-elation|ปีติ]]เพิ่มขึ้น {percent}%",
-"Lấp đầy [[nodonia-elation|Hân hoan]], rồi trong {seconds} giây chịu thay mọi sát thương mà đồng đội phải nhận, trong lúc đó lượng hồi của [[nodonia-elation|Hân hoan]] tăng {percent}%.",
-"Mengisi penuh [[nodonia-elation|Kegembiraan]], lalu selama {seconds} detik menerima kerusakan yang seharusnya diterima semua sekutu, dan selama itu pemulihan [[nodonia-elation|Kegembiraan]] meningkat {percent}%.",
-"Llena la [[nodonia-elation|Euforia]] al máximo y durante {seconds} s recibe el daño que recibiría cada aliado; mientras tanto, la curación de [[nodonia-elation|Euforia]] aumenta un {percent}%.",
-"Enche a [[nodonia-elation|Euforia]] ao máximo e por {seconds} s recebe o dano que cada aliado receberia; enquanto isso, a cura de [[nodonia-elation|Euforia]] aumenta {percent}%.",
-"Füllt [[nodonia-elation|Hochgefühl]] vollständig auf und übernimmt {seconds} s lang den Schaden aller Verbündeten; währenddessen steigt die Heilung durch [[nodonia-elation|Hochgefühl]] um {percent}%.",
-"Полностью заполняет [[nodonia-elation|упоение]] и на {seconds} с принимает урон, который получили бы все союзники; в это время лечение от [[nodonia-elation|упоения]] увеличено на {percent}%."
+"在{seconds}秒内代替所有队友承受伤害，期间[[nodonia-elation|愉悦]]的恢复量提高{percent}%。",
+"รับความเสียหายแทนพันธมิตรทุกคนเป็นเวลา {seconds} วินาที ระหว่างนั้นปริมาณการฟื้นฟูของ[[nodonia-elation|ปีติ]]เพิ่มขึ้น {percent}%",
+"Trong {seconds} giây, chịu thay mọi sát thương mà đồng đội phải nhận, trong lúc đó lượng hồi của [[nodonia-elation|Hân hoan]] tăng {percent}%.",
+"Selama {seconds} detik, menerima kerusakan yang seharusnya diterima semua sekutu, dan selama itu pemulihan [[nodonia-elation|Kegembiraan]] meningkat {percent}%.",
+"Durante {seconds} s recibe el daño que recibiría cada aliado y, mientras tanto, la curación de [[nodonia-elation|Euforia]] aumenta un {percent}%.",
+"Por {seconds} s recebe o dano que cada aliado receberia e, enquanto isso, a cura de [[nodonia-elation|Euforia]] aumenta {percent}%.",
+"{seconds} s lang übernimmt es den Schaden aller Verbündeten; währenddessen steigt die Heilung durch [[nodonia-elation|Hochgefühl]] um {percent}%.",
+"На {seconds} с принимает урон, который получили бы все союзники; в это время лечение от [[nodonia-elation|упоения]] увеличено на {percent}%."
 ],
 "skill.sentence.overpaintDetonation": [
 "引爆叠加在{target}身上的[[overpaint|叠涂]]，每层造成{damage}，之后清除该叠涂。",

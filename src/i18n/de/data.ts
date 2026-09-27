@@ -823,7 +823,7 @@ export default {
   "relic.nodonia.observation.height": "1,66 m",
   "relic.nodonia.observation.weight": "79 kg",
   "relic.nodonia.passive.name": "Süße Wunden",
-  "relic.nodonia.passive.desc": "Jedes Mal, wenn ein Gegner sie trifft oder sie Schaden anstelle eines Verbündeten erleidet, baut sich ein Stapel Hochgefühl auf; bei 5 Stapeln werden alle verbraucht und 8% des max. Lebens wiederhergestellt. 5 Sekunden Dauer; ein erneuter Treffer startet die Dauer neu.",
+  "relic.nodonia.passive.desc": "Jedes Mal, wenn ein Gegner sie trifft oder sie Schaden anstelle eines Verbündeten erleidet, baut sich ein Stapel Hochgefühl auf, der pro Stapel und Sekunde 0,4% des max. Lebens wiederherstellt. Bis zu zehn Stapel, 5 Sekunden Dauer; ein erneuter Treffer startet die Dauer neu.",
   "relic.nodonia.ferocity.name": "Hitze des Gefechts",
   "relic.nodonia.basic.name": "Eine Strafe fürs unartige Kind",
   "relic.nodonia.ultimate.name": "Höhepunkt",

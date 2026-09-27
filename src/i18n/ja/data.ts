@@ -1017,7 +1017,7 @@ export default {
   "relic.nodonia.observation.height": "1.66 m",
   "relic.nodonia.observation.weight": "79 kg",
   "relic.nodonia.passive.name": "甘い傷",
-  "relic.nodonia.passive.desc": "敵に被弾するか味方の代わりにダメージを受けるたびに悦びが1重積まれ、5重になるとすべて消費して最大体力の8%を回復する。5秒間残り、再び被弾すると持続時間が最初から流れ直す。",
+  "relic.nodonia.passive.desc": "敵に被弾するか味方の代わりにダメージを受けるたびに悦びが1重積まれ、1重ごとに毎秒 最大体力の0.4%を回復する。最大10重まで積まれて5秒間残り、再び被弾すると持続時間が最初から流れ直す。",
   "relic.nodonia.ferocity.name": "戦場の熱気",
   "relic.nodonia.basic.name": "悪い子にはお仕置きを",
   "relic.nodonia.ultimate.name": "絶頂",

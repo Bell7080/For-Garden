@@ -380,7 +380,7 @@ export interface Fighter extends Combatant {
    * 정해진 최대 겹을 넘지 않으며 다시 피격되면 유지 시간이 처음부터 갱신된다. 갱신 없이 유지
    * 시간이 만료되면 쌓인 희열을 모두 제거한다.
    */
-  elation: { stacks: number; remaining: number; total: number; maxStacks: number } | null;
+  elation: { stacks: number; remaining: number; total: number; regenPercentPerStack: number; maxStacks: number; tickIn: number } | null;
   /**
    * 아군이 받을 피해를 대신 받는 중. 「절정」이 켠다.
    *
@@ -1924,36 +1924,32 @@ function grantShieldFromDamage(attacker: Fighter, dealt: number, events: Skirmis
 }
 
 /**
- * 희열 — 맞은 그 순간 겹이 하나 오르고, **상한에 닿는 그 프레임에 겹을 모두 쓰고 회복한다.**
+ * 희열 — 맞은 그 순간 겹이 하나 오른다.
  *
  * **공격에 맞았을 때(아군 대신 맞은 한 대 포함)만 오른다.** 출혈·중독처럼 시간이 깎는 피해까지
- * 세면 겹이 저절로 차올라 "앞에 서서 맞고 있다"가 아니라 "가만히 있어도 차오른다"가 된다.
+ * 세면 겹이 저절로 차올라 "앞에 서서 맞고 있다"가 아니라 "가만히 있어도 단단해진다"가 된다.
  *
- * 회복량은 궁극기(대신 받는 동안)와 폭주(전장의 열기)가 **더해서** 키운다 — 둘이 곱해지면 같은
- * 궁극기가 폭주에 들어 있느냐에 따라 한 번에 서너 배씩 갈린다.
+ * 정해진 최대 겹에 닿으면 더 쌓이지 않으며, 다시 맞을 때마다 유지 시간을 처음부터 갱신한다.
+ * 겹은 별도 효과를 발동해 소비되지 않고 유지 시간이 만료될 때 모두 제거된다.
  */
-function gainElation(target: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+function gainElation(target: Fighter): void {
   const plan = target.def.passive.elation;
   if (target.def.passive.kind !== "painfulElation" || plan === undefined || !isFighterAlive(target)) return;
-  const stacks = Math.min(plan.maxStacks, (target.elation?.stacks ?? 0) + 1);
-  if (stacks < plan.maxStacks) {
-    target.elation = { stacks, remaining: plan.seconds, total: plan.seconds, maxStacks: plan.maxStacks };
-    return;
-  }
-  target.elation = null;
-  const amount = applyHealing(state, target, target.maxHp * plan.healMaxHpPercent * elationHealMultiplier(target) / 100, target.id);
-  pushHeal(events, target, amount, "passive", 1.3);
+  target.elation = {
+    stacks: Math.min(plan.maxStacks, (target.elation?.stacks ?? 0) + 1),
+    remaining: plan.seconds,
+    total: plan.seconds,
+    regenPercentPerStack: plan.maxHpRegenPercentPerStack,
+    maxStacks: plan.maxStacks,
+    // 겹이 새로 쌓여도 남은 틱은 이어 간다 — 맞을 때마다 초기화하면 재생이 영영 돌지 않는다.
+    tickIn: target.elation?.tickIn ?? 1,
+  };
 }
 
-/** 희열을 상한까지 채운다. 상한에서 터지므로 곧바로 한 번 회복한다. */
-function fillElation(target: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
-  const plan = target.def.passive.elation;
-  if (target.def.passive.kind !== "painfulElation" || plan === undefined || !isFighterAlive(target)) return;
-  target.elation = { stacks: plan.maxStacks - 1, remaining: plan.seconds, total: plan.seconds, maxStacks: plan.maxStacks };
-  gainElation(target, state, events);
-}
-
-/** 희열 회복량의 배율. 궁극기와 폭주가 더하는 몫을 합친다. */
+/**
+ * 희열 재생량의 배율. 궁극기(대신 받는 동안)와 폭주(전장의 열기)가 **더해서** 키운다 — 둘이 곱해지면
+ * 같은 궁극기가 폭주에 들어 있느냐에 따라 한 번에 몇 배씩 갈린다.
+ */
 export function elationHealMultiplier(target: Fighter): number {
   const trait = target.def.ferocityTrait;
   const fever = target.ferocityFever && trait.effectId === "battleHeat" ? trait.elationHealBonusPercent : 0;
@@ -2052,6 +2048,18 @@ function gainShellGuard(target: Fighter, stacks: number, state: SkirmishState, e
     total: plan.durationSeconds,
   };
   consumeShellGuard(target, state, events);
+}
+
+/** 희열이 유지되는 동안 한 겹마다 매초 최대 체력에 비례한 회복을 적용한다. 궁극기·폭주가 그 양을 키운다. */
+function tickElationRegen(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  const elation = fighter.elation;
+  if (!elation || elation.regenPercentPerStack <= 0) return;
+  const tickIn = elation.tickIn - dt;
+  if (tickIn > 0) { fighter.elation = { ...elation, tickIn }; return; }
+  fighter.elation = { ...elation, tickIn: tickIn + 1 };
+  const percent = elation.stacks * elation.regenPercentPerStack * elationHealMultiplier(fighter);
+  const amount = applyHealing(state, fighter, fighter.maxHp * percent / 100, fighter.id);
+  pushHeal(events, fighter, amount, "passive");
 }
 
 /** 재피격으로 갱신되지 않은 희열의 유지 시간을 줄이고, 만료되면 모든 겹을 제거한다. */
@@ -2928,7 +2936,7 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
       name: fighter.bulwark.name,
       description: fighter.bulwark.regenPercentPerSecond > 0
         ? `아군이 받는 피해의 ${fighter.bulwark.percent}%를 대신 받고 매초 최대 체력의 ${fighter.bulwark.regenPercentPerSecond}% 회복`
-        : `아군이 받는 피해의 ${fighter.bulwark.percent}%를 대신 받고 희열 회복량 ${fighter.bulwark.passiveHealBonusPercent}% 증가`,
+        : `아군이 받는 피해의 ${fighter.bulwark.percent}%를 대신 받고 희열 재생량 ${fighter.bulwark.passiveHealBonusPercent}% 증가`,
       timing: { kind: "timed", remainingSeconds: fighter.bulwark.remaining, totalSeconds: fighter.bulwark.total },
     });
   }
@@ -2939,7 +2947,7 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
       targetFighterId: fighter.id,
       skillId: fighter.def.passive.id,
       name: fighter.def.passive.name,
-      description: `${fighter.elation.maxStacks}겹이 되면 모두 써서 최대 체력의 ${fighter.def.passive.elation?.healMaxHpPercent ?? 0}% 회복`,
+      description: `한 겹마다 매초 최대 체력의 ${fighter.elation.regenPercentPerStack}% 회복 · 최대 ${fighter.elation.maxStacks}겹`,
       stacks: fighter.elation.stacks,
       timing: { kind: "timed", remainingSeconds: fighter.elation.remaining, totalSeconds: fighter.elation.total },
     });
@@ -4187,7 +4195,7 @@ function shareWithBulwark(target: Fighter, amount: number, events: SkirmishEvent
   events.push({ kind: "damageShared", fighterId: guardian.id, fromFighterId: target.id, amount: dealt });
   // 대신 아파 준 한 대도 희열이다 — 세지 않으면 대신 받는 5초 동안 제 몸으로 날아온 공격만 겹을
   // 이어 가, 가장 많이 맞는 순간에 겹이 도리어 끊긴다.
-  gainElation(guardian, state, events);
+  gainElation(guardian);
   return share;
 }
 
@@ -4689,7 +4697,7 @@ function strike(
   tryTriggerEmergencyRecovery(target, state); tryTriggerLowHpVanish(target, state);
   triggerCombatAugments(state, target, "onLowHp", events);
   // 맞은 그 순간 희열이 오른다. 대신 받은 몫은 `shareWithBulwark`가 따로 센다.
-  gainElation(target, state, events);
+  gainElation(target);
   if (!useUltimate) pullStruck(attacker, target, state, events);
 
   const transfer = useUltimate ? attacker.def.ultimate.damageTransfer : undefined;
@@ -5092,7 +5100,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     if (!resolution.ignored) gainFerocity(target, FEROCITY_RULES.hitGain, state, events);
     // 광역으로 맞은 쪽도 희열이 오른다. 단일과 광역에서 규칙이 갈리면 같은 한 대가 어느
     // 스킬에 맞았느냐에 따라 겹을 주기도 하고 안 주기도 한다.
-    gainElation(target, state, events);
+    gainElation(target);
     // 광역 걸음도 같은 규칙으로 끌어당긴다 — 단일과 광역에서 갈리면 같은 걸음이 대상 수에 따라 다른 일을 한다.
     if (!useUltimate) pullStruck(attacker, target, state, events);
     // 집중도 **적중마다** 쌓는다. 단일 타격 쪽에만 두면 갈래화살이 셋을 맞혀도 겹이 하나도
@@ -5813,6 +5821,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     tickOpeningCharge(fighter, state, events);
     tickBulwark(fighter, dt, state, events);
     tickElation(fighter, dt);
+    tickElationRegen(fighter, dt, state, events);
     tickAftershock(fighter, dt, rng, state, events);
     // 폭주 회복은 행동 불능과 무관한 전투 시간으로 돌아 탱커가 제어당해도 계약한 생존력을 유지한다.
     tickFerocityRegen(fighter, dt, state, events);
@@ -6084,8 +6093,6 @@ export function fireUltimate(
       skillId: teamUltimate.id,
       name: teamUltimate.name,
     });
-    // 앞에 선 **뒤에** 채운다 — 곧바로 터지는 그 회복에도 궁극기의 증가가 들어야 한다.
-    if (plan.fillPassiveStacks === true) fillElation(attacker, state, events);
     events.push({ kind: "combatEffect", fighterId: attacker.id, effect: { tag: "shieldGain", intensity: 1.6 } });
     attacker.attackCooldown = attackInterval(attacker, state);
     return events;

@@ -154,9 +154,12 @@ describe("노도니아 스킬 표시 계약", () => {
     const tag = elationKeyword(nodonia.passive)!;
     expect(tag).toMatchObject({ id: "nodonia-elation", term: "희열", kind: "buff" });
     expect(tag.description).toBe(
-      "5겹이 되면 모두 써서 최대 체력의 8%를 회복한다."
+      "한 겹마다 매초 최대 체력의 0.4%를 회복하며 최대 10겹까지 쌓인다."
       + " 5초 동안 남으며 다시 맞으면 유지 시간이 처음부터 다시 흐른다.",
     );
+    // **터지지 않는다.** 겹 하나하나가 곧 재생이라 채워 두는 것이 목적이지, 채워서 다른 일을
+    // 터뜨리는 것이 아니다 — 문장에도 그 말이 남으면 안 된다.
+    expect(tag.description).not.toMatch(/터진|터져|터뜨/);
     // 태그 팝업은 화면의 임시 사전을 물려받지 못하므로 그 안에는 태그를 두지 않는다.
     expect(tag.description).not.toMatch(/\[\[/);
   });
@@ -164,9 +167,9 @@ describe("노도니아 스킬 표시 계약", () => {
   it("의 절정은 대신 받는 동안 희열의 회복이 는다고 말한다", () => {
     expect(nodonia.ultimate.name).toBe("절정");
     expect(nodonia.ultimate.desc).toBeUndefined();
-    expect(nodonia.ultimate.selfBulwark).toEqual({ seconds: 5, redirectPercent: 100, passiveHealBonusPercent: 200, fillPassiveStacks: true });
+    expect(nodonia.ultimate.selfBulwark).toEqual({ seconds: 5, redirectPercent: 100, passiveHealBonusPercent: 200 });
     const text = skillDescription(nodonia.ultimate);
-    expect(text).toBe("[[nodonia-elation|희열]]을 끝까지 채우고 5초 동안 모든 아군이 받는 피해를 대신 받으며, 그동안 [[nodonia-elation|희열]]의 회복량이 200% 증가한다.");
+    expect(text).toBe("5초 동안 모든 아군이 받는 피해를 대신 받고, 그동안 [[nodonia-elation|희열]]의 회복량이 200% 증가한다.");
     // 엘라와 갈라 두는 지점이다 — 무적도 아니고 방어를 올리지도 않는다.
     expect(text).not.toContain("무적");
     expect(text).not.toContain("방어력");

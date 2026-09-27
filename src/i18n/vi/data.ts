@@ -823,7 +823,7 @@ export default {
   "relic.nodonia.observation.height": "1,66 m",
   "relic.nodonia.observation.weight": "79 kg",
   "relic.nodonia.passive.name": "Vết thương ngọt ngào",
-  "relic.nodonia.passive.desc": "Mỗi khi bị kẻ địch đánh trúng hoặc chịu sát thương thay đồng đội, tích 1 tầng Hân hoan; đủ 5 tầng sẽ tiêu hao toàn bộ để hồi 8% HP tối đa. Kéo dài 5 giây, bị đánh lại sẽ làm mới thời gian.",
+  "relic.nodonia.passive.desc": "Mỗi khi bị kẻ địch đánh trúng hoặc chịu sát thương thay đồng đội, tích 1 tầng Hân hoan, mỗi tầng hồi 0,4% HP tối đa mỗi giây. Tích tối đa mười tầng, kéo dài 5 giây, và bị đánh lại sẽ làm mới thời gian.",
   "relic.nodonia.ferocity.name": "Sức nóng chiến trường",
   "relic.nodonia.basic.name": "Hình phạt cho bé hư",
   "relic.nodonia.ultimate.name": "Cao trào",

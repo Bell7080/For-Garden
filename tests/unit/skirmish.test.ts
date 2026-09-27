@@ -3730,40 +3730,44 @@ describe("노도니아의 프로젝트 REVERIE", () => {
     return { state, nodonia, ally, foe };
   }
 
-  it("의 희열은 다섯 번째 겹에서 모두 쓰고 한 번에 회복하며 방어를 올리지 않는다", () => {
+  it("의 희열은 맞을수록 재생이 빨라지고 방어를 올리지는 않는다", () => {
     const { state, nodonia, foe } = arena();
     const plan = getRelic("nodonia").passive.elation!;
-    expect(plan).toMatchObject({ maxStacks: 5, healMaxHpPercent: 8 });
     const calm = defensiveDefinition(nodonia, state).def.stats;
     foe.targetId = nodonia.id;
-    const hitOnce = (): void => { foe.attackCooldown = 0; stepSkirmish(state, 1 / 60); foe.attackCooldown = 99; };
-    for (let hit = 1; hit < plan.maxStacks; hit += 1) hitOnce();
-    expect(nodonia.elation?.stacks).toBe(plan.maxStacks - 1);
-    // **방어는 그대로다.** 아프지 않으면 회복이 할 일이 없어 성질이 거꾸로 선다.
+    for (let hit = 0; hit < 3; hit += 1) {
+      foe.attackCooldown = 0;
+      stepSkirmish(state, 1 / 60);
+    }
+    expect(nodonia.elation?.stacks).toBe(3);
+    // **방어는 그대로다.** 아프지 않으면 재생이 할 일이 없어 성질이 거꾸로 선다.
     const elated = defensiveDefinition(nodonia, state).def.stats;
     expect(elated.def).toBe(calm.def);
     expect(elated.res).toBe(calm.res);
 
-    // 겹만으로는 아무것도 돌지 않는다 — 매초 재생이 아니라 터지는 한 방이다.
+    // 겹이 곧 재생이다 — 1초가 지나면 겹 수에 비례해 돌아온다.
+    // 맞는 동안 이미 줄어든 몫을 되돌려 딱 한 번의 회복만 재도록 눈금을 다시 세운다.
+    nodonia.elation!.tickIn = 1;
     nodonia.hp = nodonia.maxHp / 2;
-    for (let frame = 0; frame < 61; frame += 1) stepSkirmish(state, 1 / 60);
-    expect(nodonia.hp).toBe(nodonia.maxHp / 2);
-
-    // 다섯 번째 겹에서 모두 쓰고 최대 체력의 8%를 되찾는다.
-    const events = (() => { foe.attackCooldown = 0; return stepSkirmish(state, 1 / 60); })();
-    foe.attackCooldown = 99;
-    expect(nodonia.elation).toBeNull();
-    const heal = events.find((event) => event.kind === "heal" && event.fighterId === nodonia.id);
-    expect(heal && "amount" in heal ? heal.amount : 0).toBeCloseTo(nodonia.maxHp * plan.healMaxHpPercent / 100, 0);
+    const wounded = nodonia.hp;
+    for (let frame = 0; frame < 61; frame += 1) {
+      foe.attackCooldown = 99;
+      stepSkirmish(state, 1 / 60);
+    }
+    const healed = nodonia.hp - wounded;
+    expect(healed).toBeCloseTo((nodonia.maxHp * 3 * plan.maxHpRegenPercentPerStack) / 100, 5);
   });
 
-  it("의 희열은 다시 맞지 않으면 유지 시간이 지나 사라진다", () => {
+  it("의 희열은 상한에서 터지지 않고 그 자리에 머문다", () => {
     const { state, nodonia, foe } = arena();
     const plan = getRelic("nodonia").passive.elation!;
     foe.targetId = nodonia.id;
-    foe.attackCooldown = 0;
-    stepSkirmish(state, 1 / 60);
-    expect(nodonia.elation?.stacks).toBe(1);
+    for (let hit = 0; hit < plan.maxStacks + 4; hit += 1) {
+      foe.attackCooldown = 0;
+      stepSkirmish(state, 1 / 60);
+    }
+    expect(nodonia.elation?.stacks).toBe(plan.maxStacks);
+    expect(nodonia.bulwark).toBeNull();
     for (let frame = 0; frame < 60 * plan.seconds + 2; frame += 1) {
       foe.attackCooldown = 99;
       stepSkirmish(state, 1 / 60);
@@ -3776,7 +3780,7 @@ describe("노도니아의 프로젝트 REVERIE", () => {
       const { state, nodonia, foe } = arena();
       if (stacks > 0) {
         const plan = getRelic("nodonia").passive.elation!;
-        nodonia.elation = { stacks, remaining: 99, total: plan.seconds, maxStacks: plan.maxStacks };
+        nodonia.elation = { stacks, remaining: 99, total: plan.seconds, regenPercentPerStack: 0, maxStacks: plan.maxStacks, tickIn: 99 };
       }
       nodonia.targetId = foe.id; nodonia.attackCooldown = 0;
       stepSkirmish(state, 1 / 60);
@@ -3785,24 +3789,20 @@ describe("노도니아의 프로젝트 REVERIE", () => {
     const perStack = getRelic("nodonia").basic.elationDamagePercentPerStack!;
     const calm = hit(0);
     expect(calm).toBeGreaterThan(0);
-    // 쥘 수 있는 네 겹이면 한 방이 (1 + 4 × 12%)배다 — 반올림 한 칸 안에서.
-    expect(Math.abs(hit(4) - calm * (1 + 4 * perStack / 100))).toBeLessThanOrEqual(2);
+    expect(perStack).toBe(12);
+    // 열 겹이면 한 방이 (1 + 10 × 12%)배다 — 반올림 한 칸 안에서.
+    expect(Math.abs(hit(10) - calm * (1 + 10 * perStack / 100))).toBeLessThanOrEqual(2);
   });
 
-  it("의 절정은 아군의 몫을 전부 대신 받고, 그동안 희열이 세 배로 회복한다", () => {
+  it("의 절정은 아군의 몫을 전부 대신 받고, 그동안 희열이 세 배로 재생한다", () => {
     const { state, nodonia, ally, foe } = arena();
     const plan = getRelic("nodonia").ultimate.selfBulwark!;
     const elation = getRelic("nodonia").passive.elation!;
-    expect(plan).toMatchObject({ seconds: 5, redirectPercent: 100, passiveHealBonusPercent: 200, fillPassiveStacks: true });
-    expect(plan.maxHpRegenPercentPerSecond).toBeUndefined();
+    expect(plan).toEqual({ seconds: 5, redirectPercent: 100, passiveHealBonusPercent: 200 });
     nodonia.energy = ULTIMATE_ENERGY_MAX;
-    nodonia.hp = nodonia.maxHp / 2;
-    const opened = fireUltimate(state, nodonia.id);
-    // 켜는 순간 희열을 끝까지 채워 곧바로 터진다 — 앞에 선 뒤라 그 회복에도 +200%가 든다.
+    fireUltimate(state, nodonia.id);
+    // 겹을 미리 채우지 않고 보호막도 두르지 않는다.
     expect(nodonia.elation).toBeNull();
-    const firstHeal = opened.find((event) => event.kind === "heal" && event.fighterId === nodonia.id);
-    expect(firstHeal && "amount" in firstHeal ? firstHeal.amount : 0).toBeCloseTo(nodonia.maxHp * elation.healMaxHpPercent * 3 / 100, 0);
-    // 보호막은 두르지 않는다.
     expect(nodonia.shield.amount).toBe(0);
     expect(nodonia.bulwark).toMatchObject({ percent: plan.redirectPercent, passiveHealBonusPercent: 200, total: plan.seconds });
     // **방어를 올리지 않는다.**
@@ -3821,21 +3821,14 @@ describe("노도니아의 프로젝트 REVERIE", () => {
     expect(nodonia.hp).toBeLessThan(nodonia.maxHp / 2);
     expect(nodonia.elation?.stacks).toBe(1);
 
-    // 따로 매초 회복은 돌지 않는다.
+    // 매초 5% 대신 희열 재생이 세 배로 돈다 — 한 겹이면 0.4% × 3.
     foe.attackCooldown = 99;
+    nodonia.elation!.tickIn = 1;
     const wounded = nodonia.hp;
     for (let frame = 0; frame < 61; frame += 1) stepSkirmish(state, 1 / 60);
     expect(nodonia.bulwark).not.toBeNull();
-    expect(nodonia.hp).toBe(wounded);
-
-    // 다섯 번째 겹이 터지면 기본의 세 배(8% × 3)를 되찾는다.
-    nodonia.elation = { stacks: elation.maxStacks - 1, remaining: 5, total: 5, maxStacks: elation.maxStacks };
-    ally.hp = ally.maxHp;
-    foe.attackCooldown = 0;
-    const events = stepSkirmish(state, 1 / 60);
-    const heal = events.find((event) => event.kind === "heal" && event.fighterId === nodonia.id);
-    expect(heal && "amount" in heal ? heal.amount : 0).toBeCloseTo(nodonia.maxHp * elation.healMaxHpPercent * 3 / 100, 0);
     expect(elationHealMultiplier(nodonia)).toBe(3);
+    expect(nodonia.hp - wounded).toBeCloseTo(nodonia.maxHp * elation.maxHpRegenPercentPerStack * 3 / 100, 5);
   });
 
   it("의 전장의 열기는 들어설 때 넓게 한 번 도발하고, 폭주 동안 주위를 지지며 희열 회복을 늘린다", () => {
@@ -3873,7 +3866,7 @@ describe("노도니아의 프로젝트 REVERIE", () => {
     expect(farFoe.hp).toBe(farFoe.maxHp);
     expect(farFoe.taunted).toBeNull();
 
-    // 폭주 동안 희열의 회복이 50% 늘고, 궁극기와 겹치면 더해진다(곱하지 않는다).
+    // 폭주 동안 희열의 재생이 50% 늘고, 궁극기와 겹치면 더해진다(곱하지 않는다).
     expect(elationHealMultiplier(nodonia)).toBe(1.5);
     nodonia.bulwark = { remaining: 5, total: 5, percent: 100, regenPercentPerSecond: 0, passiveHealBonusPercent: 200, tickIn: 1, skillId: "nodonia-ult", name: "절정" };
     expect(elationHealMultiplier(nodonia)).toBe(3.5);

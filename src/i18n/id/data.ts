@@ -823,7 +823,7 @@ export default {
   "relic.nodonia.observation.height": "1,66 m",
   "relic.nodonia.observation.weight": "79 kg",
   "relic.nodonia.passive.name": "Luka yang Manis",
-  "relic.nodonia.passive.desc": "Setiap kali terkena musuh atau menerima kerusakan menggantikan sekutu, satu tumpuk Kegembiraan terbentuk; pada 5 tumpuk semuanya dipakai untuk memulihkan 8% HP maks. Bertahan 5 detik, dan terkena lagi mengulang durasinya.",
+  "relic.nodonia.passive.desc": "Setiap kali terkena musuh atau menerima kerusakan menggantikan sekutu, satu tumpuk Kegembiraan terbentuk, memulihkan 0,4% HP maks per detik per tumpuk. Menumpuk hingga sepuluh, bertahan 5 detik, dan terkena lagi mengulang durasinya.",
   "relic.nodonia.ferocity.name": "Panasnya Medan Perang",
   "relic.nodonia.basic.name": "Hukuman untuk Anak Nakal",
   "relic.nodonia.ultimate.name": "Klimaks",

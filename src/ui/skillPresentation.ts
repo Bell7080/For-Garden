@@ -281,7 +281,7 @@ export function elationKeyword(passive: Passive): KeywordDef | undefined {
     term: t("skill.keyword.elation.term"),
     kind: "buff",
     description: t("skill.keyword.elation.description", {
-      percent: plan.healMaxHpPercent, stacks: plan.maxStacks, seconds: plan.seconds,
+      percent: plan.maxHpRegenPercentPerStack, stacks: plan.maxStacks, seconds: plan.seconds,
     }),
   };
 }
@@ -639,7 +639,7 @@ export function skillDescription(
     if ("selfBulwark" in skill && skill.selfBulwark !== undefined) {
       const plan = skill.selfBulwark;
       // 희열이 무엇이고 얼마나 회복하는지는 「희열」 태그가 말한다(쓰는 개체가 하나뿐인 규칙어).
-      if (plan.passiveHealBonusPercent !== undefined && plan.fillPassiveStacks === true) {
+      if (plan.passiveHealBonusPercent !== undefined) {
         return t("skill.sentence.selfBulwarkElation", { seconds: plan.seconds, percent: plan.passiveHealBonusPercent });
       }
       return t("skill.sentence.selfBulwark", { seconds: plan.seconds, percent: plan.maxHpRegenPercentPerSecond ?? 0 });

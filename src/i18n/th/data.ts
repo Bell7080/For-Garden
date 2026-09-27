@@ -823,7 +823,7 @@ export default {
   "relic.nodonia.observation.height": "1.66 m",
   "relic.nodonia.observation.weight": "79 kg",
   "relic.nodonia.passive.name": "บาดแผลแสนหวาน",
-  "relic.nodonia.passive.desc": "ทุกครั้งที่โดนศัตรูโจมตีหรือรับความเสียหายแทนพันธมิตรจะสะสมปีติ 1 ชั้น เมื่อครบ 5 ชั้นจะใช้ทั้งหมดเพื่อฟื้นฟู 8% ของ HP สูงสุด คงอยู่ 5 วินาที และโดนอีกจะเริ่มนับใหม่",
+  "relic.nodonia.passive.desc": "ทุกครั้งที่โดนศัตรูโจมตีหรือรับความเสียหายแทนพันธมิตรจะสะสมปีติ 1 ชั้น แต่ละชั้นฟื้นฟู 0.4% ของ HP สูงสุดต่อวินาที สะสมได้สูงสุดสิบชั้น นาน 5 วินาที และโดนอีกจะเริ่มนับใหม่",
   "relic.nodonia.ferocity.name": "ความร้อนแห่งสนามรบ",
   "relic.nodonia.basic.name": "บทลงโทษสำหรับเด็กดื้อ",
   "relic.nodonia.ultimate.name": "จุดสูงสุด",

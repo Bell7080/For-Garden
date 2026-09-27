@@ -823,7 +823,7 @@ export default {
   "relic.nodonia.observation.height": "1.66 m",
   "relic.nodonia.observation.weight": "79 kg",
   "relic.nodonia.passive.name": "甜蜜的伤痕",
-  "relic.nodonia.passive.desc": "每次被敌人攻击或代替队友承受伤害时叠加1层愉悦，叠满5层时全部消耗，恢复最大生命的8%。持续5秒，再次受击时重置持续时间。",
+  "relic.nodonia.passive.desc": "每次被敌人攻击或代替队友承受伤害时叠加1层愉悦，每层每秒恢复最大生命的0.4%。最多叠加十层，持续5秒，再次受击时重置持续时间。",
   "relic.nodonia.ferocity.name": "战场热浪",
   "relic.nodonia.basic.name": "给坏孩子的惩罚",
   "relic.nodonia.ultimate.name": "高潮",

@@ -455,7 +455,8 @@ describe("폰토스 스킬 표시 계약", () => {
     expect(encounterRoleDescription("endless")).toBe(
       "공격력·주문력 ×2.6   ·   몸집 ×1.45\n"
       + "[[tenacity|강인함]] 50%로 시작해 [[crowd-control|군중제어]]를 받을 때마다 8%씩, 최대 100%까지 오른다."
-      + "\n[[damage-reduction|경감]] 70%로 시작해 [[hp|체력]]이 깎일수록 최대 99%까지 오르고, 10 이하의 피해는 무효가 된다.",
+      + "\n[[damage-reduction|경감]] 70%로 시작해 [[hp|체력]]이 깎일수록 최대 99%까지 오르고, 10 이하의 피해는 무효가 된다."
+      + "\n최대 체력 비례 피해를 30% 덜 받는다.",
     );
     // 폭주도 같은 규칙으로 태그를 건다 — 고정 피해가 무엇인지는 규칙어가 말한다.
     expect(ferocityTraitDescription(pontos.ferocityTrait)).toBe(

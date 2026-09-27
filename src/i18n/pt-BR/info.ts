@@ -24,6 +24,7 @@ export const INFO_PT_BR = {
   "info.enemy.role.stat.body": "Tamanho ×{value}",
   "info.enemy.role.tenacity": "Começa com {base}% de [[tenacity|Tenacidade]] e ganha {per}% a cada vez que se livra de [[crowd-control|controle de grupo]], até {max}%.",
   "info.enemy.role.damageReduction": "Começa com {base}% de [[damage-reduction|Redução de dano]] e sobe até {max}% conforme a [[hp|Vida]] cai; dano de {ignore} ou menos é anulado.",
+  "info.enemy.role.percentHpResistance": "Recebe {percent}% menos dano baseado na Vida máxima.",
   "info.enemy.role.line.normal": "“Nós? Somos só capangas de passagem… mas vamos dar o nosso melhor!”",
   "info.section.rune": "Runa",
   "info.level": "Nível",

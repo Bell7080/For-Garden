@@ -46,6 +46,8 @@ export interface ExpeditionBossReplayInput {
    * 판도 정상 종료로 받는다. 끄면(원정 폰토스) 예전처럼 한계 체력으로 세워 전멸만 받는다.
    */
   bossKillable?: boolean;
+  /** 시즌 보스의 남은 공유 체력(레이드 — `SkirmishBossState.seasonHp`). 입장에서 붙잡은 값을 넘긴다. */
+  seasonHp?: number;
 }
 /**
  * 전멸한 정상 종료만 확정하며 totalDamage는 서버가 행동 로그로 재계산한 **대상 경감 전** 기여도다.
@@ -167,7 +169,8 @@ export function resolveExpeditionBossBattle(input: ExpeditionBossReplayInput, ac
   const bossHp = killable ? input.boss.stats.hp : Number.MAX_SAFE_INTEGER;
   const state = createSkirmish([...input.allies], [{ ...input.boss, stats: { ...input.boss.stats, hp: bossHp } }], input.arena, input.bondLevels ?? {}, input.breakthroughs ?? {}, {
     playerInitialStates: initialStates, augmentEffects: input.augmentEffects,
-    boss: { phases, limitSeconds: balance.maximumDurationMs / 1_000, percentHpBasis: input.percentHpBasis ?? input.boss.stats.hp, endsOnKill: killable },
+    boss: { phases, limitSeconds: balance.maximumDurationMs / 1_000, percentHpBasis: input.percentHpBasis ?? input.boss.stats.hp, endsOnKill: killable,
+      ...(input.seasonHp !== undefined ? { seasonHp: input.seasonHp } : {}) },
   });
   // 자동 평타는 제출 로그가 명시적으로 재생하므로 끄고, 폰토스의 AI·폭주·상태 시계만 stepSkirmish로 진행한다.
   for (const fighter of state.fighters) if (fighter.side === "player") fighter.attackCooldown = Number.POSITIVE_INFINITY;

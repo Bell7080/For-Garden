@@ -78,26 +78,6 @@ export function raidSeasonProgress(dealtDamage: number, totalHp: number = RAID_S
   return { totalHp: total, dealtDamage: dealt, remainingHp, remainingRatio: total > 0 ? remainingHp / total : 0, defeated: total > 0 && dealt >= total };
 }
 
-/**
- * 공유 게이지를 **보스 처치 횟수**로 읽는다 — 한 번 처치가 머리 위 체력 바 한 줄(`bodyHp`)이다.
- *
- * 남은 체력 숫자만으로는 "몇 번 더 잡으면 끝나나"가 읽히지 않는다. 처치는 버림으로 센다 —
- * 반쯤 민 몸을 한 번으로 세면 토벌되지 않은 판이 다 잡은 것처럼 읽힌다.
- */
-export function raidKillProgress(dealtDamage: number, difficulty: RaidDifficulty): { done: number; kills: number; bodyHp: number } {
-  const { bodyHp, kills } = RAID_DIFFICULTY[difficulty];
-  return { done: Math.min(kills, Math.floor(Math.max(0, dealtDamage) / bodyHp)), kills, bodyHp };
-}
-
-/**
- * 공유 게이지의 칸 수 — 한 칸이 보스 한 번 처치다. 칸이 너무 촘촘해지면(월드 폭주 40번) 칸이 아니라
- * 무늬로 읽히므로 그때는 게이지의 기본 칸을 쓰고, 처치 수는 글자가 말한다.
- */
-export const RAID_KILL_TICK_LIMIT = 12;
-export function raidKillTicks(kills: number, fallback: number): number {
-  return kills >= 2 && kills <= RAID_KILL_TICK_LIMIT ? kills - 1 : fallback;
-}
-
 /** 기여 목록 한 줄. 순위는 경쟁이 아니라 **얼마나 밀었나**의 정렬 결과다. */
 export interface RaidContributionEntry {
   rank: number;

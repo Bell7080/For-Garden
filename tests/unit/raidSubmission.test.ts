@@ -5,7 +5,7 @@ import { createRaidSkirmishConfig } from "../../src/core/expeditionBattle";
 import { resolveExpeditionBossBattle, type ExpeditionBossAction } from "../../src/core/expeditionBoss";
 import { raidBossDef, raidBossPercentHpBasis } from "../../src/core/raid";
 import { canFireUltimate, createSkirmish, fireUltimate, stepSkirmish, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
-import { RAID_BOSS_BALANCE, RAID_BOSS_POOL, type RaidDifficulty } from "../../src/data/raid";
+import { RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_DIFFICULTY, type RaidDifficulty } from "../../src/data/raid";
 import { RELICS } from "../../src/data/relics";
 
 /**
@@ -52,7 +52,8 @@ function fightAndVerify(party: readonly string[], bossId: string, difficulty: Ra
   const base = RELICS.find(({ id }) => id === bossId)!;
   const boss = raidBossDef(base, difficulty);
   const basis = raidBossPercentHpBasis(base, difficulty);
-  const config = createRaidSkirmishConfig(players, boss, basis);
+  const seasonHp = RAID_DIFFICULTY[difficulty].totalHp;
+  const config = createRaidSkirmishConfig(players, boss, basis, seasonHp);
   let value = seed;
   const rng = (): number => { value = (value * 1664525 + 1013904223) % 4294967296; return value / 4294967296; };
   const state = createSkirmish(config.playerDefs, config.enemyDefs, battleArena("raid"), {}, {}, {
@@ -67,7 +68,7 @@ function fightAndVerify(party: readonly string[], bossId: string, difficulty: Ra
   }
   expect(["defeat", "victory"]).toContain(state.phase);
   expect(actions.length).toBeGreaterThan(0);
-  const result = resolveExpeditionBossBattle({ allies: players, boss, balance: RAID_BOSS_BALANCE, percentHpBasis: basis, arena: battleArena("raid"), bossKillable: config.boss.endsOnKill === true }, actions);
+  const result = resolveExpeditionBossBattle({ allies: players, boss, balance: RAID_BOSS_BALANCE, percentHpBasis: basis, arena: battleArena("raid"), bossKillable: config.boss.endsOnKill === true, seasonHp }, actions);
   expect(result.totalDamage).toBeLessThanOrEqual(RAID_BOSS_BALANCE.maximumAcceptedScore);
 }
 
@@ -105,7 +106,7 @@ describe("레이드 피해 제출 왕복", () => {
   it("디안의 합공은 한 행동에 평타 하나만 남긴다", () => {
     const dian = RELICS.find(({ id }) => id === "dian")!;
     const base = RELICS.find(({ id }) => id === "sukusuino")!;
-    const config = createRaidSkirmishConfig([dian], raidBossDef(base, "easy"), raidBossPercentHpBasis(base, "easy"));
+    const config = createRaidSkirmishConfig([dian], raidBossDef(base, "easy"), raidBossPercentHpBasis(base, "easy"), RAID_DIFFICULTY.easy.totalHp);
     const state = createSkirmish(config.playerDefs, config.enemyDefs, battleArena("raid"), {}, {}, { playerInitialStates: config.playerInitialStates, boss: config.boss });
     const primary: number[] = [];
     for (let frame = 0; frame < 240; frame++) {
@@ -117,13 +118,14 @@ describe("레이드 피해 제출 왕복", () => {
     expect(new Set(primary).size).toBe(primary.length);
   });
 
-  it("레이드 보스를 쓰러뜨리면 그 자리에서 이기고, 서버 재현도 그 끝을 받는다", () => {
-    // 몸을 작게 세워 한 판 안에 쓰러뜨린다 — 규칙은 몸의 크기와 무관하다.
+  it("남은 공유 게이지를 다 깎으면 그 자리에서 이기고, 서버 재현도 그 끝을 받는다", () => {
+    // 남은 게이지를 작게 두어 한 판 안에 다 깎는다 — 규칙은 게이지의 크기와 무관하다.
     const party = ["anky", "dodo", "parua"].map((id) => RELICS.find((relic) => relic.id === id)!);
     const base = RELICS.find(({ id }) => id === "sukusuino")!;
-    const boss = { ...raidBossDef(base, "easy"), stats: { ...raidBossDef(base, "easy").stats, hp: 800 } };
+    const boss = raidBossDef(base, "easy");
     const basis = raidBossPercentHpBasis(base, "easy");
-    const config = createRaidSkirmishConfig(party, boss, basis);
+    const seasonHp = 800;
+    const config = createRaidSkirmishConfig(party, boss, basis, seasonHp);
     expect(config.boss.endsOnKill).toBe(true);
     const state = createSkirmish(config.playerDefs, config.enemyDefs, battleArena("raid"), {}, {}, { playerInitialStates: config.playerInitialStates, boss: config.boss });
     const actions: ExpeditionBossAction[] = [];
@@ -140,8 +142,10 @@ describe("레이드 피해 제출 왕복", () => {
     expect(state.phase).toBe("victory");
     // 데스 카운트가 돌기 전에, 쓰러뜨린 그 자리에서 끝났다.
     expect(state.elapsed).toBeLessThan(BATTLE_DEATH_CLOCK.startsAtSeconds);
-    const result = resolveExpeditionBossBattle({ allies: party, boss, balance: RAID_BOSS_BALANCE, percentHpBasis: basis, arena: battleArena("raid"), bossKillable: true }, actions);
+    const result = resolveExpeditionBossBattle({ allies: party, boss, balance: RAID_BOSS_BALANCE, percentHpBasis: basis, arena: battleArena("raid"), bossKillable: true, seasonHp }, actions);
     expect(result.bossDefeated).toBe(true);
+    // 이긴 것은 점수가 남은 게이지에 닿았기 때문이다.
+    expect(state.boss!.score).toBeGreaterThanOrEqual(seasonHp);
   });
 
   it("원정 폰토스처럼 쓰러지지 않는 보스는 여전히 전멸만이 끝이다", () => {

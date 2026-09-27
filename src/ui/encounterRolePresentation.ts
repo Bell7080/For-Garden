@@ -83,5 +83,6 @@ export function encounterRoleDescription(role: EncounterRole): string {
       ignore: spec.damageReduction.ignoreAtOrBelow,
     }));
   }
+  if (spec.percentHpResistance) lines.push(t("info.enemy.role.percentHpResistance", { percent: spec.percentHpResistance }));
   return lines.length > 0 ? lines.join("\n") : t("info.enemy.role.line.normal");
 }

@@ -129,6 +129,16 @@
 "Größe ×{value}",
 "Размер ×{value}"
 ],
+"info.enemy.role.percentHpResistance": [
+"受到的最大生命比例伤害减少{percent}%。",
+"ได้รับความเสียหายตาม HP สูงสุดน้อยลง {percent}%",
+"Nhận ít hơn {percent}% sát thương theo Máu tối đa.",
+"Menerima {percent}% lebih sedikit kerusakan berbasis HP maksimum.",
+"Recibe un {percent}% menos de daño basado en la Salud máxima.",
+"Recebe {percent}% menos dano baseado na Vida máxima.",
+"Erleidet {percent}% weniger Schaden, der auf maximalem Leben basiert.",
+"Получает на {percent}% меньше урона от максимального здоровья."
+],
 "info.enemy.role.tenacity": [
 "初始拥有{base}%[[tenacity|韧性]]，每次摆脱[[crowd-control|控制]]时提升{per}%，最多{max}%。",
 "เริ่มต้นด้วย[[tenacity|ความทนทาน]] {base}% และเพิ่ม {per}% ทุกครั้งที่สลัด[[crowd-control|การควบคุม]]หลุด สูงสุด {max}%",

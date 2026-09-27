@@ -17,7 +17,7 @@ export const RAID_ID = {
   "raid.summon.select": "Panggil Pilihan",
   "raid.summon.difficulty": "{difficulty} · LV.{level}",
   "raid.pick.levels": "LV.{min}~{max}",
-  "raid.pick.hp": "HP Bos {hp} · {kills} kali kalah",
+  "raid.pick.hp": "HP Bos {hp}",
   "raid.settle.button": "Selesaikan",
   "raid.settle.title": "Penyelesaian Raid",
   "raid.settle.done": "Selesai Diselesaikan",
@@ -29,7 +29,6 @@ export const RAID_ID = {
   "raid.settle.participants": "{count} peserta",
   "raid.settle.score": "Skor Saya",
   "raid.boss.remaining": "Sisa HP",
-  "raid.boss.kills": "Kalah {done} / {kills}",
   "raid.boss.defeated": "Tertaklukkan",
   "raid.endsAt": "Berakhir {time}",
   "raid.attempts": "Sisa tantangan {remaining}/{limit}",
@@ -46,5 +45,5 @@ export const RAID_ID = {
   "raid.reward.killNo": "Berlangsung",
   "raid.reward.killFailed": "Gagal",
   "raid.reward.note": "Setelah raid berakhir, selesaikan di tab Selesai untuk menerima",
-  "raid.result.footnote": "Kerusakan diberikan {damage} · Kontribusiku di raid ini {total}",
+  "raid.result.score": "Skor {score}",
 } as const;

@@ -16,7 +16,7 @@
 "raid.summon.select": ["选择召唤", "เลือกอัญเชิญ", "Triệu hồi chọn lọc", "Panggil Pilihan", "Invocación elegida", "Invocação escolhida", "Wahlbeschwörung", "Выборочный призыв"],
 "raid.summon.difficulty": ["{difficulty} · LV.{level}", "{difficulty} · LV.{level}", "{difficulty} · LV.{level}", "{difficulty} · LV.{level}", "{difficulty} · LV.{level}", "{difficulty} · LV.{level}", "{difficulty} · LV.{level}", "{difficulty} · LV.{level}"],
 "raid.pick.levels": ["LV.{min}~{max}", "LV.{min}~{max}", "LV.{min}~{max}", "LV.{min}~{max}", "LV.{min}~{max}", "LV.{min}~{max}", "LV.{min}~{max}", "LV.{min}~{max}"],
-"raid.pick.hp": ["首领生命 {hp} · 击败{kills}次", "HP บอส {hp} · กำจัด {kills} ครั้ง", "Máu trùm {hp} · Hạ {kills} lần", "HP Bos {hp} · {kills} kali kalah", "PV del jefe {hp} · {kills} derrotas", "PV do chefe {hp} · {kills} derrotas", "Boss-Leben {hp} · {kills} Siege", "ОЗ босса {hp} · Убийств: {kills}"],
+"raid.pick.hp": ["首领生命 {hp}", "HP บอส {hp}", "Máu trùm {hp}", "HP Bos {hp}", "PV del jefe {hp}", "PV do chefe {hp}", "Boss-Leben {hp}", "ОЗ босса {hp}"],
 "raid.settle.button": ["结算", "สรุปผล", "Quyết toán", "Selesaikan", "Liquidar", "Acertar", "Abrechnen", "Рассчитать"],
 "raid.settle.title": ["讨伐结算", "สรุปผลเรด", "Quyết toán đột kích", "Penyelesaian Raid", "Liquidación de incursión", "Acerto da raide", "Raid-Abrechnung", "Расчёт рейда"],
 "raid.settle.done": ["结算完成", "สรุปผลแล้ว", "Đã quyết toán", "Selesai Diselesaikan", "Liquidada", "Acertado", "Abgerechnet", "Рассчитано"],
@@ -28,7 +28,6 @@
 "raid.settle.participants": ["参与 {count}人", "ผู้เข้าร่วม {count} คน", "{count} người tham gia", "{count} peserta", "{count} participantes", "{count} participantes", "{count} Teilnehmende", "Участников: {count}"],
 "raid.settle.score": ["我的分数", "คะแนนของฉัน", "Điểm của tôi", "Skor Saya", "Mi puntuación", "Minha pontuação", "Meine Punkte", "Мои очки"],
 "raid.boss.remaining": ["剩余生命", "HP ที่เหลือ", "Máu còn lại", "Sisa HP", "PV restantes", "PV restante", "Restleben", "Осталось ОЗ"],
-"raid.boss.kills": ["击败 {done} / {kills}", "กำจัด {done} / {kills}", "Hạ {done} / {kills}", "Kalah {done} / {kills}", "Derrotas {done} / {kills}", "Derrotas {done} / {kills}", "Siege {done} / {kills}", "Убийства {done} / {kills}"],
 "raid.boss.defeated": ["讨伐完成", "ปราบสำเร็จ", "Đã chinh phạt", "Tertaklukkan", "Subyugado", "Subjugado", "Bezwungen", "Усмирён"],
 "raid.endsAt": ["{time}结束", "จบ {time}", "Kết thúc {time}", "Berakhir {time}", "Termina {time}", "Termina {time}", "Endet {time}", "Окончание {time}"],
 "raid.attempts": ["剩余挑战 {remaining}/{limit}", "ท้าทายได้อีก {remaining}/{limit}", "Lượt thách đấu còn {remaining}/{limit}", "Sisa tantangan {remaining}/{limit}", "Intentos restantes {remaining}/{limit}", "Tentativas restantes {remaining}/{limit}", "Verbleibende Versuche {remaining}/{limit}", "Осталось попыток {remaining}/{limit}"],
@@ -45,5 +44,5 @@
 "raid.reward.killNo": ["进行中", "กำลังดำเนินการ", "Đang diễn ra", "Berlangsung", "En curso", "Em andamento", "Laufend", "Идёт"],
 "raid.reward.killFailed": ["失败", "ล้มเหลว", "Thất bại", "Gagal", "Fallida", "Falhou", "Gescheitert", "Неудача"],
 "raid.reward.note": ["讨伐结束后，在「已完成」分页结算领取", "เมื่อเรดจบ ให้สรุปผลรับรางวัลในแท็บเสร็จสิ้น", "Khi đột kích kết thúc, quyết toán ở thẻ Hoàn thành để nhận", "Setelah raid berakhir, selesaikan di tab Selesai untuk menerima", "Cuando termine la incursión, liquídala en la pestaña Completadas", "Quando a raide terminar, faça o acerto na aba Concluídas", "Nach dem Raid in der Registerkarte „Abgeschlossen“ abrechnen", "После окончания рейда получите расчёт во вкладке «Завершены»"],
-"raid.result.footnote": ["造成伤害 {damage} · 本次讨伐我的贡献 {total}", "ความเสียหายที่ทำ {damage} · การมีส่วนร่วมของฉันในเรดนี้ {total}", "Sát thương gây ra {damage} · Đóng góp của tôi trong đột kích này {total}", "Kerusakan diberikan {damage} · Kontribusiku di raid ini {total}", "Daño infligido {damage} · Mi contribución a esta incursión {total}", "Dano causado {damage} · Minha contribuição nesta raide {total}", "Verursachter Schaden {damage} · Mein Beitrag zu diesem Raid {total}", "Нанесено урона {damage} · Мой вклад в этот рейд {total}"]
+"raid.result.score": ["得分 {score}", "คะแนน {score}", "Điểm {score}", "Skor {score}", "Puntuación {score}", "Pontuação {score}", "Punkte {score}", "Очки {score}"]
 }

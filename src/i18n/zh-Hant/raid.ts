@@ -17,7 +17,7 @@ export const RAID_ZH_HANT = {
   "raid.summon.select": "選擇召喚",
   "raid.summon.difficulty": "{difficulty} · LV.{level}",
   "raid.pick.levels": "LV.{min}~{max}",
-  "raid.pick.hp": "首領生命 {hp} · 擊敗{kills}次",
+  "raid.pick.hp": "首領生命 {hp}",
   "raid.settle.button": "結算",
   "raid.settle.title": "討伐結算",
   "raid.settle.done": "結算完成",
@@ -29,7 +29,6 @@ export const RAID_ZH_HANT = {
   "raid.settle.participants": "參與 {count}人",
   "raid.settle.score": "我的分數",
   "raid.boss.remaining": "剩餘生命",
-  "raid.boss.kills": "擊敗 {done} / {kills}",
   "raid.boss.defeated": "討伐完成",
   "raid.endsAt": "{time}結束",
   "raid.attempts": "剩餘挑戰 {remaining}/{limit}",
@@ -46,5 +45,5 @@ export const RAID_ZH_HANT = {
   "raid.reward.killNo": "進行中",
   "raid.reward.killFailed": "失敗",
   "raid.reward.note": "討伐結束後，在「已完成」分頁結算領取",
-  "raid.result.footnote": "造成傷害 {damage} · 本次討伐我的貢獻 {total}",
+  "raid.result.score": "得分 {score}",
 } as const;

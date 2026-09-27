@@ -17,7 +17,7 @@ export const RAID_TH = {
   "raid.summon.select": "เลือกอัญเชิญ",
   "raid.summon.difficulty": "{difficulty} · LV.{level}",
   "raid.pick.levels": "LV.{min}~{max}",
-  "raid.pick.hp": "HP บอส {hp} · กำจัด {kills} ครั้ง",
+  "raid.pick.hp": "HP บอส {hp}",
   "raid.settle.button": "สรุปผล",
   "raid.settle.title": "สรุปผลเรด",
   "raid.settle.done": "สรุปผลแล้ว",
@@ -29,7 +29,6 @@ export const RAID_TH = {
   "raid.settle.participants": "ผู้เข้าร่วม {count} คน",
   "raid.settle.score": "คะแนนของฉัน",
   "raid.boss.remaining": "HP ที่เหลือ",
-  "raid.boss.kills": "กำจัด {done} / {kills}",
   "raid.boss.defeated": "ปราบสำเร็จ",
   "raid.endsAt": "จบ {time}",
   "raid.attempts": "ท้าทายได้อีก {remaining}/{limit}",
@@ -46,5 +45,5 @@ export const RAID_TH = {
   "raid.reward.killNo": "กำลังดำเนินการ",
   "raid.reward.killFailed": "ล้มเหลว",
   "raid.reward.note": "เมื่อเรดจบ ให้สรุปผลรับรางวัลในแท็บเสร็จสิ้น",
-  "raid.result.footnote": "ความเสียหายที่ทำ {damage} · การมีส่วนร่วมของฉันในเรดนี้ {total}",
+  "raid.result.score": "คะแนน {score}",
 } as const;

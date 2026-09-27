@@ -17,7 +17,7 @@ export const RAID_JA = {
   "raid.summon.select": "選択召喚",
   "raid.summon.difficulty": "{difficulty} · LV.{level}",
   "raid.pick.levels": "LV.{min}~{max}",
-  "raid.pick.hp": "ボス体力 {hp} · 討伐{kills}回",
+  "raid.pick.hp": "ボス体力 {hp}",
   "raid.settle.button": "精算",
   "raid.settle.title": "レイド精算",
   "raid.settle.done": "精算完了",
@@ -29,7 +29,6 @@ export const RAID_JA = {
   "raid.settle.participants": "参加 {count}人",
   "raid.settle.score": "自分のスコア",
   "raid.boss.remaining": "残り体力",
-  "raid.boss.kills": "討伐 {done} / {kills}",
   "raid.boss.defeated": "討伐完了",
   "raid.endsAt": "{time}終了",
   "raid.attempts": "残り挑戦 {remaining}/{limit}",
@@ -46,5 +45,5 @@ export const RAID_JA = {
   "raid.reward.killNo": "進行中",
   "raid.reward.killFailed": "失敗",
   "raid.reward.note": "レイドが終わると完了タブで精算して受け取ります",
-  "raid.result.footnote": "与えたダメージ {damage} · このレイドでの自分の貢献 {total}",
+  "raid.result.score": "スコア {score}",
 } as const;

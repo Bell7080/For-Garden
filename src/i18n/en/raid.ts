@@ -17,7 +17,7 @@ export const RAID_EN = {
   "raid.summon.select": "Select Summon",
   "raid.summon.difficulty": "{difficulty} · LV.{level}",
   "raid.pick.levels": "LV.{min}~{max}",
-  "raid.pick.hp": "Boss HP {hp} · {kills} kills",
+  "raid.pick.hp": "Boss HP {hp}",
   "raid.settle.button": "Settle",
   "raid.settle.title": "Raid Settlement",
   "raid.settle.done": "Settled",
@@ -29,7 +29,6 @@ export const RAID_EN = {
   "raid.settle.participants": "{count} participants",
   "raid.settle.score": "My Score",
   "raid.boss.remaining": "HP Left",
-  "raid.boss.kills": "Kills {done} / {kills}",
   "raid.boss.defeated": "Subjugated",
   "raid.endsAt": "Ends {time}",
   "raid.attempts": "Attempts left {remaining}/{limit}",
@@ -46,5 +45,5 @@ export const RAID_EN = {
   "raid.reward.killNo": "In Progress",
   "raid.reward.killFailed": "Failed",
   "raid.reward.note": "Once the raid ends, settle it from the Completed tab",
-  "raid.result.footnote": "Damage dealt {damage} · My contribution to this raid {total}",
+  "raid.result.score": "Score {score}",
 } as const;

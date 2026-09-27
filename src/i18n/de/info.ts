@@ -24,6 +24,7 @@ export const INFO_DE = {
   "info.enemy.role.stat.body": "Größe ×{value}",
   "info.enemy.role.tenacity": "Beginnt mit {base}% [[tenacity|Zähigkeit]] und gewinnt {per}% hinzu, sobald es [[crowd-control|Massenkontrolle]] abschüttelt, bis zu {max}%.",
   "info.enemy.role.damageReduction": "Beginnt mit {base}% [[damage-reduction|Schadensminderung]], die bis {max}% steigt, je weiter das [[hp|Leben]] sinkt; Schaden von {ignore} oder weniger wird aufgehoben.",
+  "info.enemy.role.percentHpResistance": "Erleidet {percent}% weniger Schaden, der auf maximalem Leben basiert.",
   "info.enemy.role.line.normal": "„Wir? Nur Handlanger auf der Durchreise… aber wir geben unser Bestes!“",
   "info.section.rune": "Rune",
   "info.level": "Level",

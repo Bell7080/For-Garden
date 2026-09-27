@@ -274,6 +274,13 @@ export interface Fighter extends Combatant {
    * 성장으로 얻은 체력보다 수십 배 크고, 그대로 재면 출혈 2%가 판 전체의 타격보다 컸다.
    */
   percentHpBasis?: number;
+  /**
+   * 제 몸에 두르는 막(궁극기의 `selfShieldMaxHpPercent`·조가비 겹)이 재는 체력. 없으면 최대 체력이다.
+   *
+   * 시즌 보스(레이드)만 갖는다 — 판 안의 최대 체력이 남은 시즌 게이지 전체라, 그 값으로 막을 재면
+   * 2%가 한 판의 딜을 통째로 삼킨다. 막은 예전처럼 난이도의 몸(`RaidDifficultySpec.bodyHp`)에서 잰다.
+   */
+  shieldHpBasis?: number;
   /** 기본 공격 실제 적중으로 쌓인 전투 한정 공격 속도다. 저장 모델에는 존재하지 않는다. */
   bonusAttackSpeed: number;
   /**
@@ -532,6 +539,14 @@ export interface SkirmishBossState {
    * 쓰러진 보스 앞에서 전멸할 때까지 서 있게 두면 처치가 처치로 읽히지 않는다.
    */
   endsOnKill: boolean;
+  /**
+   * **시즌 보스의 남은 공유 체력**(점수 단위). 있으면 그 보스의 머리 위 체력 바가 곧 시즌 게이지다 —
+   * 매 프레임 `남은 체력 − 점수`로 맞추고, 점수가 그 값에 닿는 순간 쓰러져 판이 이긴다.
+   *
+   * 몸 한 줄(`bodyHp`)에서 쓰러지던 때는 한 판이 깎는 몫이 그 한 줄에 묶여, 52,000점을 내도 공유 게이지는
+   * 25,000만 줄었다. 이제는 남은 게이지가 곧 한 판의 상한이다.
+   */
+  seasonHp?: number;
 }
 
 /** 원정 저장 상태를 전투 시작 값으로 옮길 때 쓰는 렐릭별 스냅샷이다. currentHp는 0~100 비율이다. */
@@ -554,7 +569,7 @@ export interface CreateSkirmishOptions {
    * 체력을 가진 보스는 판 안의 최대 체력이 세기가 아니라 단위라, 그 값으로 비율을 재면 출혈
    * 하나가 모든 타격을 합친 것보다 커진다. 비우면 그 보스의 최대 체력을 그대로 쓴다.
    */
-  boss?: { phases: readonly SkirmishBossPhase[]; limitSeconds: number; fighterId?: string; percentHpBasis?: number; endsOnKill?: boolean };
+  boss?: { phases: readonly SkirmishBossPhase[]; limitSeconds: number; fighterId?: string; percentHpBasis?: number; endsOnKill?: boolean; seasonHp?: number };
 }
 
 /** 씬이 모션·피격 숫자·사망 연출을 붙일 수 있도록 이번 프레임에 일어난 일만 모아 돌려준다. */
@@ -1106,6 +1121,17 @@ export function percentHpBasis(fighter: Pick<Fighter, "maxHp" | "percentHpBasis"
   return fighter.percentHpBasis ?? fighter.maxHp;
 }
 
+/**
+ * 최대 체력 비례 피해 한 번의 양. 기준 체력(`percentHpBasis`)에 비율을 곱하고, 그 자리가 가진
+ * 비율 피해 저항(`EncounterRoleSpec.percentHpResistance` — 보스·불사)만큼 덜어 낸다. 비율 피해를 만드는
+ * 자리는 모두 여기를 지난다 — 한 곳만 저항을 빠뜨리면 그 효과 하나가 보스를 녹인다.
+ */
+export function percentHpDamage(target: Pick<Fighter, "maxHp" | "percentHpBasis" | "def">, percent: number): number {
+  const role = target.def.encounterRole;
+  const resistance = role === undefined ? 0 : ENCOUNTER_ROLE[role].percentHpResistance ?? 0;
+  return Math.max(1, Math.round(percentHpBasis(target) * percent / 100 * (1 - resistance / 100)));
+}
+
 /** 보스를 때린 고정 피해도 점수에 든다 — 체력 줄은 줄었는데 점수가 그대로면 두 수가 갈린다. */
 function scoreBossFixedDamage(state: SkirmishState, target: Fighter, amount: number): void {
   if (state.boss && target.id === state.boss.fighterId && amount > 0) state.boss.score += amount;
@@ -1184,6 +1210,15 @@ export function createSkirmish(
     // 쓰러지면 판이 끝나는 보스(레이드)는 불사가 아니다 — 체력이 0에 닿는 순간이 곧 처치다.
     fighter.immortal = options.boss !== undefined && options.boss.endsOnKill !== true && fighter.id === bossFighterId;
     if (options.boss !== undefined && fighter.id === bossFighterId && options.boss.percentHpBasis !== undefined) fighter.percentHpBasis = Math.max(1, options.boss.percentHpBasis);
+    // 시즌 보스: 머리 위 바가 남은 공유 게이지 전체다. 점수로만 깎이므로(`syncSeasonBoss`) 피해로는
+    // 쓰러지지 않게 두고, 막은 예전 몸에서 잰다(`shieldHpBasis`).
+    const seasonHp = options.boss?.seasonHp;
+    if (seasonHp !== undefined && fighter.id === bossFighterId) {
+      fighter.shieldHpBasis = fighter.maxHp;
+      fighter.maxHp = Math.max(1, Math.round(seasonHp));
+      fighter.hp = fighter.maxHp;
+      fighter.immortal = true;
+    }
     return fighter;
   });
   if (options.boss && !enemies.some(({ id }) => id === bossFighterId)) throw new RangeError("보스 전투원 ID는 적 편성에 존재해야 합니다.");
@@ -1201,7 +1236,7 @@ export function createSkirmish(
     log: [],
     augmentEffects: options.augmentEffects ?? [],
     initialEvents: [],
-    boss: options.boss ? { fighterId: bossFighterId, score: 0, survivedFor: 0, phaseIndex: 0, limitReached: false, phases: options.boss.phases, limitSeconds: options.boss.limitSeconds, damageRemainder: 0, tideWarning: false, endsOnKill: options.boss.endsOnKill === true } : undefined,
+    boss: options.boss ? { fighterId: bossFighterId, score: 0, survivedFor: 0, phaseIndex: 0, limitReached: false, phases: options.boss.phases, limitSeconds: options.boss.limitSeconds, damageRemainder: 0, tideWarning: false, endsOnKill: options.boss.endsOnKill === true, ...(options.boss.seasonHp !== undefined ? { seasonHp: Math.max(1, Math.round(options.boss.seasonHp)) } : {}) } : undefined,
   };
   // 지휘형 은신과 무리 치명타는 시간이 아니라 두 늑대의 생존 조건이 소유한다.
   refreshPackGuard(state);
@@ -1518,7 +1553,7 @@ function applyConcussion(
   // 폭주가 확정 치명타를 얹는다. 판정을 다시 굴리지 않아 날아가는 그림과 수치가 갈리지 않는다.
   const struck = critical || slam !== undefined;
   const percent = struck ? effect.criticalMaxHpPercent : effect.maxHpPercent;
-  const amount = Math.max(1, Math.round(percentHpBasis(target) * percent / 100));
+  const amount = percentHpDamage(target, percent);
   const dealt = applyDamage(target, amount, events, state);
   scoreBossFixedDamage(state, target, dealt);
   events.push({ kind: "concussion", fighterId: target.id, amount: dealt, critical: struck, sourceId });
@@ -1902,7 +1937,7 @@ function grantShield(
 function grantCastShield(attacker: Fighter, skill: Skill, state: SkirmishState, events: SkirmishEvent[]): void {
   const percent = skill.selfShieldMaxHpPercent ?? 0;
   if (percent <= 0 || !isFighterAlive(attacker)) return;
-  grantShield(state, attacker, attacker.id, Math.max(1, Math.round(attacker.maxHp * percent / 100)), events);
+  grantShield(state, attacker, attacker.id, Math.max(1, Math.round((attacker.shieldHpBasis ?? attacker.maxHp) * percent / 100)), events);
 }
 
 /**
@@ -1958,7 +1993,7 @@ export function elationHealMultiplier(target: Fighter): number {
 
 /** 제공자의 몫을 **받는 쪽 최대 체력의 비율**로 두르는 자리. 값만 구하고 두르는 일은 `grantShield`가 한다. */
 function grantProvidedShield(state: SkirmishState, provider: Fighter, target: Fighter, percent: number, events: SkirmishEvent[]): void {
-  grantShield(state, target, provider.id, Math.max(1, Math.round(target.maxHp * percent / 100)), events);
+  grantShield(state, target, provider.id, Math.max(1, Math.round((target.shieldHpBasis ?? target.maxHp) * percent / 100)), events);
 }
 
 /**
@@ -4329,7 +4364,7 @@ function tickBleed(fighter: Fighter, dt: number, state: SkirmishState, events: S
   bleed.remaining -= dt;
   bleed.tickIn -= dt;
   while (bleed.tickIn <= 0 && isFighterAlive(fighter)) {
-    const amount = receivedDamage(fighter, Math.max(1, Math.round((percentHpBasis(fighter) * bleed.percent) / 100)));
+    const amount = receivedDamage(fighter, percentHpDamage(fighter, bleed.percent));
     const hpBefore = fighter.hp;
     applyDamage(fighter, amount, events, state);
     scoreBossFixedDamage(state, fighter, amount);
@@ -5677,8 +5712,27 @@ function commandPack(owner: Fighter, target: Fighter, rng: () => number, state: 
   }
 }
 
+/**
+ * 시즌 보스의 머리 위 바를 공유 게이지에 맞춘다. 점수가 남은 게이지에 닿으면 그 자리에서 쓰러진다.
+ *
+ * 체력을 피해가 아니라 점수로 맞추는 이유는 시즌 게이지가 점수로 깎이기 때문이다 — 둘을 따로 두면
+ * 머리 위 바와 맨 위 시즌 줄이 서로 다른 속도로 줄어든다.
+ */
+function syncSeasonBoss(state: SkirmishState, events: SkirmishEvent[]): void {
+  const boss = state.boss;
+  if (boss?.seasonHp === undefined) return;
+  const fighter = state.fighters.find(({ id }) => id === boss.fighterId);
+  if (!fighter || !fighter.immortal) return;
+  fighter.hp = Math.max(0, fighter.maxHp - Math.round(boss.score));
+  if (fighter.hp > 0) return;
+  fighter.immortal = false;
+  clearDefeatedStatuses(fighter);
+  events.push({ kind: "death", fighterId: fighter.id });
+}
+
 function settle(state: SkirmishState, events: SkirmishEvent[]): void {
   if (state.phase !== "fight") return;
+  syncSeasonBoss(state, events);
   const playersLeft = aliveFighters(state, "player").filter(isPartyFighter).length;
   const enemiesLeft = aliveFighters(state, "enemy").filter(isPartyFighter).length;
   // 불사 보스는 적 HP와 무관하게 아군 전멸만 정상 종료로 인정한다.
@@ -5800,7 +5854,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     if (isFighterAlive(fighter) && fighter.frozen) {
       const remaining = fighter.frozen.remaining - dt;
       if (remaining <= EMERGENCY_RECOVERY.epsilon) {
-        const amount = Math.max(1, Math.round(fighter.maxHp * fighter.frozen.maxHpPercentOnExpire / 100));
+        const amount = percentHpDamage(fighter, fighter.frozen.maxHpPercentOnExpire);
         fighter.frozen = null;
         const dealt = applyDamage(fighter, amount, events, state);
         events.push({ kind: "concussion", fighterId: fighter.id, amount: dealt, critical: false });

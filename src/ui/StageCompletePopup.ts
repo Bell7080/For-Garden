@@ -385,7 +385,8 @@ export class StageCompletePopup {
 
   /** 이번 판이 점수를 얼마나 보탰는가. 재화가 아니므로 액자가 아니라 글자 한 줄이다. */
   private buildFootnote(body: Phaser.GameObjects.Container, y: number, footnote: string): void {
-    body.add(this.scene.add.text(0, y, footnote, textStyle({ role: "display", size: 34, color: COLOR.sortieText }))
+    // 점수는 경고가 아니다 — 주황·붉은 글씨로 세우면 무언가 잘못된 것처럼 읽혀 흰 글씨로 깔끔하게 둔다.
+    body.add(this.scene.add.text(0, y, footnote, textStyle({ role: "display", size: 34, color: COLOR.ink }))
       .setOrigin(0.5)
       .setShadow(0, 4, "#000000", 6, false, true));
   }

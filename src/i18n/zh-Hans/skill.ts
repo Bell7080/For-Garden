@@ -56,6 +56,7 @@ export const SKILL_ZH_HANS = {
   "skill.ferocity.vanguardCharge": "获得相当于[[missing-hp|已损失生命]]{shield}%的护盾，[[attack-speed|攻击速度]]提升{percent}%。",
   "skill.ferocity.selfAttackSpeedMultiplier": "攻击速度提升{percent}%。",
   "skill.ferocity.selfAttackSpeedMultiplier.shield": "攻击速度提升{percent}%，治疗时还会为该队友提供治疗量{shield}%的护盾。",
+  "skill.ferocity.selfAttackSpeedMultiplier.pull": "进入暴走的瞬间，[[pull|拉近]]附近所有敌人。暴走期间攻击速度提升{percent}%。",
   "skill.ferocity.packHunt": "进入[[stealth|隐身]]{seconds}秒并再次发动[[pack-hunt|群猎]]。暴走期间，与其目标相同的存活队友（包括自身）[[attack-speed|攻击速度]]提升{percent}%。",
   "skill.ferocity.crescendoStaccato": "暴走期间，每次队友普通攻击命中时，都会追加触发一次携带{damage}伤害的[[mette-staccato|断奏]]。",
   "skill.ferocity.crescendoStaccato.power": "攻击力{percent}%的",

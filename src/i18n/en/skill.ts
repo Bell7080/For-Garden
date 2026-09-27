@@ -56,6 +56,7 @@ export const SKILL_EN = {
   "skill.ferocity.vanguardCharge": "Gains a shield worth {shield}% of [[missing-hp|missing HP]] and [[attack-speed|Attack Speed]] increases by {percent}%.",
   "skill.ferocity.selfAttackSpeedMultiplier": "Attack Speed increases by {percent}%.",
   "skill.ferocity.selfAttackSpeedMultiplier.shield": "Attack Speed increases by {percent}%, and healing also grants that ally a shield worth {shield}% of the amount healed.",
+  "skill.ferocity.selfAttackSpeedMultiplier.pull": "On entering Frenzy, [[pull|pulls in]] every enemy nearby. Attack Speed increases by {percent}% during Frenzy.",
   "skill.ferocity.packHunt": "Enters [[stealth|Stealth]] for {seconds}s and triggers [[pack-hunt|Pack Hunt]] again. During Frenzy, [[attack-speed|Attack Speed]] of living allies sharing its target, itself included, increases by {percent}%.",
   "skill.ferocity.crescendoStaccato": "During Frenzy, every ally basic attack that lands also triggers a [[mette-staccato|Staccato]] carrying {damage} damage.",
   "skill.ferocity.crescendoStaccato.power": "{percent}% of Attack in",

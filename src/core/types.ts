@@ -1171,6 +1171,13 @@ export type FerocityTrait = {
        * 읽힌다.
        */
       healingShieldPercent?: number;
+      /**
+       * 폭주에 들어서는 순간 반경 안의 적을 이 거리까지 끌어당긴다(아모의 궁극기와 같은 끌어당김).
+       *
+       * 빨라지는 손만으로는 폭주가 "조금 더 세졌다"까지만 말한다. 멀리 선 후열까지 한꺼번에 몸 앞으로
+       * 끌려오는 한 순간이 있어야 게이지가 찬 것이 화면에서 읽힌다.
+       */
+      pullOnEntry?: { radius: number; distance: number };
     }
   | {
       /**

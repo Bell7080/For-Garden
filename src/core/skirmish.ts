@@ -3561,6 +3561,25 @@ function tickTailwind(fighter: Fighter, dt: number, state: SkirmishState): Skirm
   return events;
 }
 
+/**
+ * 반경 안의 적을 시전자 앞 정해진 거리로 끌어온다(아모의 궁극기 · 타보아의 폭주).
+ *
+ * 끌어당김은 보간 없이 같은 프레임에 자리를 옮긴다 — 순간이동과 같은 규칙이라 이동 속도의
+ * 영향을 받지 않고, 끌려온 자리는 시전자에게서 정해진 거리다. 끌려온 적을 돌려주므로 도발처럼
+ * 그 뒤에 얹는 일은 부르는 쪽이 정한다.
+ */
+function pullEnemiesToward(caster: Fighter, pull: { radius: number; distance: number }, state: SkirmishState): Fighter[] {
+  const pulled: Fighter[] = [];
+  for (const other of state.fighters) {
+    if (other.side === caster.side || !isFighterAlive(other) || distance(caster, other) > pull.radius) continue;
+    const dx = other.x - caster.x; const dy = other.y - caster.y; const gap = Math.hypot(dx, dy) || 1;
+    other.x = Math.min(state.arena.right, Math.max(state.arena.left, caster.x + dx / gap * pull.distance));
+    other.y = Math.min(state.arena.bottom, Math.max(state.arena.top, caster.y + dy / gap * pull.distance));
+    pulled.push(other);
+  }
+  return pulled;
+}
+
 /** 폭주 진입 정화들이 공유하는 상태이상·디버프 정리 경로다. 이로운 조가비·희열·순풍은 건드리지 않는다. */
 function cleanseAllDebuffs(fighter: Fighter): void {
   fighter.stunnedFor = 0; fighter.staggeredFor = 0; fighter.frozen = null; fighter.chill = null;
@@ -3600,6 +3619,15 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, even
     }
     if (trait.effectId === "adamantBody") fighter.hastenedAttacksLeft = trait.hastenedAttacks;
     if (trait.effectId === "battleHeat") tauntOnBattleHeat(fighter, trait, state, events);
+    // 똬리 속으로: 들어서는 순간 반경 안의 적을 몸 앞으로 끌어온다. 끌려온 자리가 곧 궁극기의 범위다.
+    if (trait.effectId === "selfAttackSpeedMultiplier" && trait.pullOnEntry) {
+      const pulled = pullEnemiesToward(fighter, trait.pullOnEntry, state);
+      for (const other of pulled) events.push({ kind: "combatEffect", fighterId: other.id, effect: { tag: "shieldHit", intensity: 1 } });
+      if (pulled.length > 0) {
+        events.push({ kind: "areaImpact", attackerId: fighter.id, ultimate: false, damageType: "physical",
+          area: { shape: "radial", x: fighter.x, y: fighter.y, radius: trait.pullOnEntry.radius } });
+      }
+    }
     // 공멸 선봉: 지금까지 잃은 만큼을 막으로 두른다. 몰린 뒤에 열릴수록 두꺼워지는 것이
     // 이 폭주의 값이라 최대 체력이 아니라 **잃은 체력**에서 잰다.
     if (trait.effectId === "vanguardCharge") {
@@ -6141,13 +6169,7 @@ export function fireUltimate(
     attacker.energy -= ultimateCost(state, attacker, true);
     // 불러 놓고 그 자리에서 덮는다 — 도발과 보호막이 한 조작에 든다.
     grantShield(state, attacker, attacker.id, Math.max(1, Math.round(attacker.maxHp * plan.shieldMaxHpPercent / 100)), events, 1.5);
-    for (const other of state.fighters) {
-      if (other.side === attacker.side || !isFighterAlive(other) || distance(attacker, other) > plan.pull.radius) continue;
-      // 끌어당김은 보간 없이 같은 프레임에 자리를 옮긴다 — 순간이동과 같은 규칙이라 이동 속도의
-      // 영향을 받지 않고, 끌려온 자리는 시전자에게서 정해진 거리다.
-      const dx = other.x - attacker.x; const dy = other.y - attacker.y; const gap = Math.hypot(dx, dy) || 1;
-      other.x = Math.min(state.arena.right, Math.max(state.arena.left, attacker.x + dx / gap * plan.pull.distance));
-      other.y = Math.min(state.arena.bottom, Math.max(state.arena.top, attacker.y + dy / gap * plan.pull.distance));
+    for (const other of pullEnemiesToward(attacker, plan.pull, state)) {
       // 데이의 짧은 도발과 **같은 경로**를 지난다. 여기서 슬롯에 직접 넣으면 원정 증강의
       // 지속시간 배율이 이 도발에만 들지 않고, 더 긴 도발을 지키는 규칙도 비껴간다.
       applyCombatStatusEffect(other, { kind: "taunt", seconds: plan.tauntSeconds }, events, state, attacker.id);

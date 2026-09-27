@@ -155,6 +155,8 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
     return t(key, { seconds: trait.durationSeconds });
   }
   if (trait.effectId === "selfAttackSpeedMultiplier") {
+    // 들어서는 순간의 끌어당김이 먼저다 — 화면에서 확인할 첫 변화가 적이 한꺼번에 끌려오는 것이다.
+    if (trait.pullOnEntry) return t("skill.ferocity.selfAttackSpeedMultiplier.pull", { percent: trait.bonusPercent });
     // 고친 자리에 한 겹 덮는 몫은 손이 빨라지는 것과 다른 축이라 제 절로 선다.
     return trait.healingShieldPercent === undefined
       ? t("skill.ferocity.selfAttackSpeedMultiplier", { percent: trait.bonusPercent })

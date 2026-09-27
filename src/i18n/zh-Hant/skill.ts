@@ -56,6 +56,7 @@ export const SKILL_ZH_HANT = {
   "skill.ferocity.vanguardCharge": "獲得相當於[[missing-hp|已損失生命]]{shield}%的護盾，[[attack-speed|攻擊速度]]提升{percent}%。",
   "skill.ferocity.selfAttackSpeedMultiplier": "攻擊速度提升{percent}%。",
   "skill.ferocity.selfAttackSpeedMultiplier.shield": "攻擊速度提升{percent}%，治療時還會為該隊友提供治療量{shield}%的護盾。",
+  "skill.ferocity.selfAttackSpeedMultiplier.pull": "進入暴走的瞬間，[[pull|拉近]]附近所有敵人。暴走期間攻擊速度提升{percent}%。",
   "skill.ferocity.packHunt": "進入[[stealth|隱身]]{seconds}秒並再次發動[[pack-hunt|群獵]]。暴走期間，與其目標相同的存活隊友（包括自身）[[attack-speed|攻擊速度]]提升{percent}%。",
   "skill.ferocity.crescendoStaccato": "暴走期間，每次隊友普通攻擊命中時，都會追加觸發一次攜帶{damage}傷害的[[mette-staccato|斷奏]]。",
   "skill.ferocity.crescendoStaccato.power": "攻擊力{percent}%的",

@@ -1630,10 +1630,15 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    // 공속 축의 폭주는 전부 같은 계약(`selfAttackSpeedMultiplier`)을 쓴다. 예전에는 이 둘만
-    // 간격을 직접 줄이는 별도 효과라, 같은 일을 하는 폭주가 화면에서 "공격 간격이 짧아진다"는
-    // 다른 말로 섰다 — 게임 어디에도 없는 단위다. 간격 -12%는 속도 x1/0.88이므로 +14%로 옮긴다.
-    ferocityTrait: { name: "맹추", effectId: "selfAttackSpeedMultiplier", bonusPercent: 14 },
+    /*
+     * **완전 난장판!** 힘 조절에 실패하는 순간이 폭주다 — 한 대씩 비틀던 집게가 옆 사람까지 휩쓴다.
+     *
+     * 공속만 올리던 때(「맹추」 +14%)는 폭주가 "조금 빨라졌다"까지만 말해 이 개체의 성격(부순 다음에야
+     * 안다)이 전투에 서지 않았다. 공용 범위 전이(`splashDamage`)라 바닥 범위가 곧 그 말을 한다.
+     * 수쿠스이노의 「범람」(45% · 반경 320 · 공속 +30%)보다 좁고 약하며 공속을 얹지 않는다 — 1-5의
+     * 단일 정예라 둘 다 주면 셋이 둘러싼 자리가 한꺼번에 무너진다.
+     */
+    ferocityTrait: { name: "완전 난장판!", effectId: "splashDamage", damagePercent: 40, radius: 200 },
     /*
      * **손을 대기 시작하면 멈추지 못한다.** 관찰 기록의 성격(먼저 집게발을 대고, 부순 다음에야
      * 힘 조절에 실패했다는 것을 안다)을 그대로 전투 값으로 옮긴 셋이다 — 때릴수록 손이 빨라지고
@@ -1641,7 +1646,7 @@ export const RELICS: RelicDef[] = [
      */
     passive: {
       id: "toby-passive",
-      name: "손대고 나서 생각하기",
+      name: "악당 중의 악당",
       kind: "basicHitAttackSpeedStack",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
@@ -1653,7 +1658,7 @@ export const RELICS: RelicDef[] = [
     },
     basic: {
       id: "toby-basic",
-      name: "집게발 비틀기",
+      name: "날카로운 집게",
       power: 100,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
@@ -1663,7 +1668,7 @@ export const RELICS: RelicDef[] = [
     ultimate: {
       id: "toby-ult",
       // 잠긴 방벽을 먼저 뜯어 일을 키우는 그 손이다. 이름이 이미 그림을 말하므로 본문은 효과만 적는다.
-      name: "일단 뜯고 본다",
+      name: "완전 부수기",
       /*
        * **혼자 서는 자리를 전제로 짠 광역이다.** 1-5의 단일 정예가 이 개체라, 궁극기가 한 명만
        * 때리면 셋이 둘러싼 자리에서 아무 일도 일어나지 않는다(실제로 야성을 34까지 올려도 바닥
@@ -3335,12 +3340,15 @@ export const RELICS: RelicDef[] = [
       ferocityGain: 0,
     },
     /*
-     * **열대의 체온.** 그 몸을 데우던 뜨거운 기온이 돌아오면 조이는 손이 한층 빨라진다.
+     * **똬리 속으로.** 폭주에 드는 순간 주위의 먹잇감을 한꺼번에 몸 앞으로 끌어오고, 그 뒤로 조이는
+     * 손이 빨라진다.
      *
-     * 공속 축 폭주의 공용 계약(`selfAttackSpeedMultiplier`) 하나로 짠다 — 패시브의 겹과 곱해져
-     * 폭주가 곧 "가장 빨리 감기는 순간"으로 읽힌다.
+     * 공속만 올리던 때(「열대의 체온」 +40%)는 게이지가 찬 순간이 화면에 서지 않았다. 끌려온 자리가
+     * 곧 궁극기(반경 340)의 범위라, 멀리 서 있던 후열도 폭주 한 번에 똬리 안으로 들어온다 — 원을 멀리
+     * 지정하는 수쿠스이노와 위협하는 자리가 갈리는 이 보스의 결을 폭주가 한 번 더 민다. 공속은
+     * 끌어당김 몫만큼 덜었다(40 → 25). 회복·보호막은 여전히 없다(시즌 게이지를 되돌리지 않는다).
      */
-    ferocityTrait: { name: "열대의 체온", effectId: "selfAttackSpeedMultiplier", bonusPercent: 40 },
+    ferocityTrait: { name: "똬리 속으로", effectId: "selfAttackSpeedMultiplier", bonusPercent: 25, pullOnEntry: { radius: 480, distance: 150 } },
     /*
      * **조여 드는 똬리.** 감은 채로 때릴수록 공격 속도가 쌓인다(토비·스피나와 같은 공용 계약).
      *

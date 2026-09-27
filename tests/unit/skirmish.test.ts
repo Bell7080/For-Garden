@@ -3831,6 +3831,30 @@ describe("노도니아의 프로젝트 REVERIE", () => {
     expect(nodonia.hp - wounded).toBeCloseTo(nodonia.maxHp * elation.maxHpRegenPercentPerStack * 3 / 100, 5);
   });
 
+  it("타보아의 「똬리 속으로」는 폭주에 드는 순간 반경 안의 적을 몸 앞으로 끌어온다", () => {
+    const state = createSkirmish([getRelic("anky"), getRelic("rex"), getRelic("nodonia")], [getRelic("taboa")], ARENA);
+    const [hitter, near, far, taboa] = state.fighters;
+    const trait = getRelic("taboa").ferocityTrait;
+    expect(trait).toMatchObject({ effectId: "selfAttackSpeedMultiplier", bonusPercent: 25, pullOnEntry: { radius: 480, distance: 150 } });
+    if (trait.effectId !== "selfAttackSpeedMultiplier" || !trait.pullOnEntry) return;
+    for (const fighter of state.fighters) fighter.attackCooldown = 99;
+    taboa.x = 200; taboa.y = 700;
+    near.x = 200; near.y = 700 + 400; // 반경 안
+    far.x = 900; far.y = 1300; // 반경 밖(대각선 약 922)
+    hitter.x = 200 + 60; hitter.y = 700; // 붙어 서서 한 대를 쳐 폭주를 연다
+    taboa.ferocity = FEROCITY_RULES.max - FEROCITY_RULES.hitGain;
+    hitter.targetId = taboa.id; hitter.attackCooldown = 0;
+    const events = stepSkirmish(state, 1 / 60);
+    expect(taboa.ferocityFever).toBe(true);
+    // 같은 프레임의 밀어내기가 몇 px 흔들 뿐, 400 밖에서 몸 앞(150)까지 끌려온다.
+    const pulledGap = Math.hypot(near.x - taboa.x, near.y - taboa.y);
+    expect(pulledGap).toBeGreaterThan(120);
+    expect(pulledGap).toBeLessThan(180);
+    // 반경 밖은 끌려오지 않는다(한 프레임 걸음만큼만 움직인다).
+    expect(Math.hypot(far.x - taboa.x, far.y - taboa.y)).toBeGreaterThan(500);
+    expect(events.some((event) => event.kind === "areaImpact" && event.area.shape === "radial" && event.area.radius === 480)).toBe(true);
+  });
+
   it("의 전장의 열기는 들어설 때 넓게 한 번 도발하고, 폭주 동안 주위를 지지며 희열 회복을 늘린다", () => {
     const state = createSkirmish([getRelic("nodonia"), getRelic("anky")], [getRelic("toby"), getRelic("amo")], ARENA);
     const [nodonia, ally, foe, farFoe] = state.fighters;

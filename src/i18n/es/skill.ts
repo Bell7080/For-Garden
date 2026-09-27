@@ -56,6 +56,7 @@ export const SKILL_ES = {
   "skill.ferocity.vanguardCharge": "Obtiene un escudo del {shield}% de los [[missing-hp|PV perdidos]] y la [[attack-speed|Velocidad de ataque]] sube un {percent}%.",
   "skill.ferocity.selfAttackSpeedMultiplier": "La Velocidad de ataque sube un {percent}%.",
   "skill.ferocity.selfAttackSpeedMultiplier.shield": "La Velocidad de ataque sube un {percent}% y al curar también otorga a ese aliado un escudo del {shield}% de lo curado.",
+  "skill.ferocity.selfAttackSpeedMultiplier.pull": "Al entrar en Frenesí, [[pull|atrae]] a todos los enemigos cercanos. Durante el Frenesí, la Velocidad de ataque sube un {percent}%.",
   "skill.ferocity.packHunt": "Entra en [[stealth|Sigilo]] durante {seconds} s y vuelve a activar [[pack-hunt|Caza en manada]]. Durante el Frenesí, la [[attack-speed|Velocidad de ataque]] de los aliados vivos que comparten su objetivo, incluido él, sube un {percent}%.",
   "skill.ferocity.crescendoStaccato": "Durante el Frenesí, cada ataque básico aliado que impacta activa también un [[mette-staccato|Staccato]] con {damage} de daño.",
   "skill.ferocity.crescendoStaccato.power": "{percent}% del Ataque en",

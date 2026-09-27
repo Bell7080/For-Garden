@@ -56,6 +56,7 @@ export const SKILL_DE = {
   "skill.ferocity.vanguardCharge": "Erhält einen Schild in Höhe von {shield}% des [[missing-hp|fehlenden Lebens]], und das [[attack-speed|Angriffstempo]] steigt um {percent}%.",
   "skill.ferocity.selfAttackSpeedMultiplier": "Das Angriffstempo steigt um {percent}%.",
   "skill.ferocity.selfAttackSpeedMultiplier.shield": "Das Angriffstempo steigt um {percent}%, und Heilung gibt dem Verbündeten zusätzlich einen Schild von {shield}% der geheilten Menge.",
+  "skill.ferocity.selfAttackSpeedMultiplier.pull": "Beim Eintritt in die Raserei [[pull|zieht]] alle Gegner in der Nähe heran. Während der Raserei steigt das Angriffstempo um {percent}%.",
   "skill.ferocity.packHunt": "Geht {seconds} s in [[stealth|Tarnung]] und löst [[pack-hunt|Rudeljagd]] erneut aus. Während der Raserei steigt das [[attack-speed|Angriffstempo]] lebender Verbündeter mit demselben Ziel, es selbst eingeschlossen, um {percent}%.",
   "skill.ferocity.crescendoStaccato": "Während der Raserei löst jeder treffende Normalangriff eines Verbündeten zusätzlich ein [[mette-staccato|Staccato]] mit {damage} Schaden aus.",
   "skill.ferocity.crescendoStaccato.power": "{percent}% des Angriffs als",

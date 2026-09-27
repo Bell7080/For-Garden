@@ -78,9 +78,11 @@ export const BANNERS: Banner[] = [
      * 화면에 섞으면 무엇의 확률이고 무엇의 천장인지 읽히지 않는다. 천장을 한도와 같은 50으로
      * 두면 "50회 안에 확정"이 되고, 그 전에 SSR이 나오면 천장이 0으로 돌아가 남은 횟수로는 다시
      * 닿지 못하므로 확정은 저절로 한 번뿐이다. 다 쓰면 목록에서 사라진다. 기획은
-     * `docs/live-ops-bm.md` §2. 전용 모집 원화는 아직 없어 연구소 설비 원화가 선다.
+     * `docs/live-ops-bm.md` §2. 모집 원화는 비워 둔 방이고, 그 바닥에 SSR 풀 넷의 SD가 선다.
      */
     id: "welcome", pityGroupId: PITY_GROUP.WELCOME, name: "첫 복원 연구", featuredRelicId: "rex",
+    artKey: BACKGROUND.recruitWelcome,
+    castRelicIds: WELCOME_SSR_POOL,
     currency: "fossil", costOne: 1, costTen: 8, tenOnly: true, pullLimit: 50,
     // 확률과 회색 보상은 화석 연구와 같다. 다른 것은 풀·값·한도·확정뿐이다.
     slotRates: STANDARD_SLOT_RATES,

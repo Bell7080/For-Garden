@@ -28,6 +28,7 @@ import { ResearchPullButton, type ResearchPullCostPart } from "../ui/ResearchPul
 import { addRatesLink, addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
 import { LAB_CHROME, LAB_TITLE } from "../ui/labLayout";
 import { addBannerArrow, addBannerTitle, drawBannerPages } from "../ui/LabBannerTitle";
+import { WelcomeBannerCast } from "../ui/WelcomeBannerCast";
 import { BANNER_TONE, bannerPresentation, bannerTags, bannerTenDiscountPercent } from "../ui/labBannerPresentation";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { MileagePopup } from "../ui/MileagePopup";
@@ -60,6 +61,8 @@ export class LabScene extends Phaser.Scene {
   private shownBannerId = "";
   /** 픽업 렐릭의 정보창을 여는 버튼. 배너가 바뀌면 걷고 다시 세운다. */
   private pickupPanels?: Phaser.GameObjects.Container;
+  /** 인물 없는 모집 원화 위에 서는 SD들(`Banner.castRelicIds`). */
+  private cast?: WelcomeBannerCast;
   /** 그 버튼이 여는 정보창. 처음 누를 때 세운다. */
   private info?: CharacterInfoManager;
   private bannerPages!: Phaser.GameObjects.Graphics;
@@ -179,6 +182,8 @@ export class LabScene extends Phaser.Scene {
       this.showcase?.destroy();
       this.showcase = undefined;
       this.pickupPanels = undefined;
+      this.cast?.destroy();
+      this.cast = undefined;
       this.info = undefined;
       this.presentation.invalidate();
       this.finishStage?.();
@@ -295,15 +300,18 @@ export class LabScene extends Phaser.Scene {
   private syncPickupPanels(): void {
     this.pickupPanels?.destroy();
     this.pickupPanels = undefined;
+    this.cast?.destroy();
+    this.cast = undefined;
+    // 인물 없이 비워 둔 원화(첫 복원 연구)는 누가 나오는 판인지를 SD 넷이 말한다.
+    if (this.banner.castRelicIds?.length) {
+      this.cast = new WelcomeBannerCast(this, this.banner.castRelicIds, (id) => this.inspectRelic(id));
+    }
     const relicId = Object.values(this.banner.pickupRelicIds).flat()[0];
     if (!relicId) return;
     const spot = LAB_CHROME.pickupInfo;
     const button = new Button(this, spot.x, spot.y, {
       width: spot.width, height: spot.height, label: t("lab.pickupInfo"), fontSize: spot.fontSize, icon: "magnifier",
-      onClick: () => {
-        this.info ??= new CharacterInfoManager(this);
-        this.info.showRelic(getRelic(relicId), relicCollection.owns(relicId));
-      },
+      onClick: () => this.inspectRelic(relicId),
     });
     button.setDepth(LAB_CHROME.depth.panels);
     this.pickupPanels = button;
@@ -311,6 +319,12 @@ export class LabScene extends Phaser.Scene {
     button.x = spot.x + spot.enterDistance;
     button.setAlpha(0);
     this.tweens.add({ targets: button, x: spot.x, alpha: 1, duration: 360, ease: "Cubic.Out" });
+  }
+
+  /** 그 렐릭의 정보창 — 얻기 전이면 실루엣 미리보기로 열린다. */
+  private inspectRelic(relicId: string): void {
+    this.info ??= new CharacterInfoManager(this);
+    this.info.showRelic(getRelic(relicId), relicCollection.owns(relicId));
   }
 
   /**

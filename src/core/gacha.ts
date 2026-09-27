@@ -66,6 +66,13 @@ export interface Banner {
    * 두 장을 겹쳐 두면 들어가는 순간 설비 원화가 먼저 보이고 그 위로 픽업 원화가 덮인다.
    */
   artKey?: string;
+  /**
+   * 모집 원화 위에 SD로 세울 개체들 — 원화가 인물 없이 비워 둔 방일 때만 적는다.
+   *
+   * 픽업 원화는 인물이 그림에 이미 그려져 있지만, 첫 복원 연구의 원화는 **빈 방**이라 누가 나오는
+   * 판인지를 SD가 말한다. 화면이 배너 ID로 가르지 않도록 배너가 이 목록을 갖는다.
+   */
+  castRelicIds?: readonly string[];
   currency: Currency;
   costOne: number;
   costTen: number;

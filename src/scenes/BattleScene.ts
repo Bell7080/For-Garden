@@ -60,6 +60,9 @@ import {
   type BattleSpeed,
 } from "../core/battleControls";
 import { ControlChip } from "../ui/ControlChip";
+import { BattlePauseButton } from "../ui/BattlePauseButton";
+import { battlePauseActions } from "../core/battlePauseMenu";
+import { EffectOverlayScene } from "./EffectOverlayScene";
 import {
   beginNextUltimate, cancelUltimateSequence, createUltimateSequenceState, enqueueUltimate, releaseUltimate,
   type UltimateSequenceState,
@@ -315,6 +318,11 @@ export class BattleScene extends Phaser.Scene {
   private finished = false;
   /** 끝난 판이 결과판을 여는 실제 시각과, 그때 부를 일. 숨 고르기가 끝나기 전 씬을 떠나면 버린다. */
   private closingAt = 0;
+  /** 설정을 겹쳐 연 동안 이 씬이 잠든 시각. 깨어나면 멈춰 있던 만큼 숨 고르기 시계를 뒤로 민다. */
+  private sleptAt = 0;
+  /** 설정에서 돌아오면 일시 정지 판을 다시 연다 — 설정을 닫자마자 전투가 흐르면 손이 따라가지 못한다. */
+  private reopenPauseOnWake = false;
+  private pausePopups?: PopupLayer;
   private pendingResult?: () => void;
   /** 보스 제출에는 코어가 실제로 낸 공격 종류와 시각만 기록하며 피해 숫자는 넣지 않는다. */
   private bossActions: ExpeditionBossAction[] = [];
@@ -587,7 +595,7 @@ export class BattleScene extends Phaser.Scene {
     this.openBuff = undefined;
     // 파편·파문은 SD보다 앞이되 궁극기 컷인(900)보다는 뒤라 연출을 가리지 않는다.
     // 광역 범위만 배경 원화 위·SD 아래에 깔려 누가 어디 섰는지 가리지 않는다.
-    this.effects = new EffectManager(this, { depth: DEPTH.burst, groundDepth: DEPTH.ground, motion: this.motion, damageNumbers: currentSettings.presentation.damageNumbers, graphicsQuality: currentSettings.presentation.graphicsQuality, reduceFlashes: currentSettings.accessibility.reduceFlashes });
+    this.effects = new EffectManager(this, { depth: DEPTH.burst, groundDepth: DEPTH.ground, bodyDepth: DEPTH.hpBar - 1, motion: this.motion, damageNumbers: currentSettings.presentation.damageNumbers, graphicsQuality: currentSettings.presentation.graphicsQuality, reduceFlashes: currentSettings.accessibility.reduceFlashes });
     this.combatEffects = new CombatEffectPresenter(this.effects);
     // 전장 전체를 때리는 궁극기는 그릴 경계가 없어 가장자리 워시로 알린다. 그 자리를 알려 준다.
     this.effects.setArena(this.state.arena);
@@ -612,6 +620,16 @@ export class BattleScene extends Phaser.Scene {
     if (this.battleInput.mode === "expeditionBoss" || this.battleInput.mode === "raid") this.buildBossScoreHud();
 
     this.buildBattleControls();
+    new BattlePauseButton(this, () => this.openPauseMenu());
+    const onSleep = (): void => { this.sleptAt = performance.now(); };
+    const onWake = (): void => this.onWake();
+    this.events.on(Phaser.Scenes.Events.SLEEP, onSleep);
+    this.events.on(Phaser.Scenes.Events.WAKE, onWake);
+    // 씬의 사건 통은 다시 시작해도 비워지지 않는다 — 판마다 걸면 깨어날 때 처리기가 판 수만큼 돈다.
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.events.off(Phaser.Scenes.Events.SLEEP, onSleep);
+      this.events.off(Phaser.Scenes.Events.WAKE, onWake);
+    });
 
     // 씬은 코어 스냅샷을 넘길 뿐 공격·방어·회복 합산을 복제하지 않는다.
     this.contributionPanel = new BattleContributionPanel(this, (category) => {
@@ -887,6 +905,91 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /** 배속 칩의 글자와 켜짐 세기. 단계가 오를수록 테두리를 도는 빛이 강해진다. */
+  /**
+   * 일시 정지 판 — 계속하기 · 설정 · 다시 하기 · 나가기.
+   *
+   * 판이 떠 있으면 코어 시간이 멈춘다(`simulationPaused`가 `anyPopupOpen`을 읽는다). 무엇을 세울지는
+   * 모드가 정한다(`battlePauseActions`) — 도중에 그만두면 잃는 것이 있는 판(레이드·원정)에는 다시 하기를
+   * 두지 않는다. 되돌릴 수 없는 두 조작은 공용 확인 창을 지난다.
+   */
+  private openPauseMenu(): void {
+    if (this.finished || !this.spawned || this.ultimateSequenceActive) return;
+    const popups = this.pausePopups ??= new PopupLayer(this, 2400);
+    if (popups.isOpen) return;
+    const actions = battlePauseActions(this.battleInput.mode);
+    const rows: { label: string; primary?: boolean; onPress: (close: () => void) => void }[] = [
+      { label: t("battle.pause.resume"), primary: true, onPress: (close) => close() },
+      { label: t("battle.pause.settings"), onPress: (close) => { close(); this.openSettingsOverlay(); } },
+    ];
+    if (actions.retry) rows.push({ label: t("battle.pause.retry"), onPress: () => popups.confirm({ title: t("battle.pause.retry"), message: t("battle.pause.retryConfirm"), confirmLabel: t("battle.pause.retry") }, () => this.retryBattle()) });
+    if (actions.exit === "leave") rows.push({ label: t("battle.pause.exit"), onPress: () => popups.confirm({ title: t("battle.pause.exit"), message: t("battle.pause.exitConfirm"), confirmLabel: t("battle.pause.exit"), destructive: true }, () => this.leaveBattle()) });
+    if (actions.exit === "forfeit") rows.push({ label: t("battle.pause.exit"), onPress: (close) => popups.confirm({ title: t("battle.pause.exit"), message: t("battle.pause.forfeitConfirm"), confirmLabel: t("battle.pause.exit"), destructive: true }, () => { close(); this.finishBattle("defeat"); }) });
+    const button = { width: 420, height: 86, gap: 20, top: 120, bottom: 70 };
+    const height = button.top + rows.length * button.height + (rows.length - 1) * button.gap + button.bottom;
+    popups.open({ width: 560, height, title: t("battle.pause.title"), dim: true, closeOnBackdrop: true }, (body, close) => {
+      rows.forEach((row, index) => {
+        const y = -height / 2 + button.top + button.height / 2 + index * (button.height + button.gap);
+        body.add(new Button(this, 0, y, { width: button.width, height: button.height, label: row.label, fontSize: 30, variant: row.primary ? "primary" : undefined, onClick: () => row.onPress(close) }));
+      });
+    });
+  }
+
+  /**
+   * 설정을 전투 **위에 겹쳐** 연다. 설정 씬으로 넘어가 버리면 이 판이 통째로 사라진다 — 그래서 이 씬은
+   * 잠들고(코어 시간·화면이 함께 멎는다) 설정이 닫히며 다시 깨운다(`SettingsEntryData.overlayOf`).
+   */
+  private openSettingsOverlay(): void {
+    this.reopenPauseOnWake = true;
+    this.scene.launch("settings", { overlayOf: "battle" });
+    this.scene.bringToTop("settings");
+    // 누른 자리 파문은 어느 화면에서나 맨 위다 — 설정을 올린 뒤 그 층을 다시 맨 위로 올린다.
+    this.scene.bringToTop(EffectOverlayScene.KEY);
+    this.scene.sleep();
+  }
+
+  /** 잠들어 있던 만큼 실제 시각으로 재던 시계를 밀고, 설정에서 바뀐 전투 값을 다시 읽는다. */
+  private onWake(): void {
+    setDebugScene("battle");
+    const now = performance.now();
+    const slept = Math.max(0, now - this.sleptAt);
+    if (Number.isFinite(this.fightStartsAt) && this.sleptAt < this.fightStartsAt) this.fightStartsAt += slept;
+    if (this.closingAt > this.sleptAt) this.closingAt += slept;
+    // 멈춰 있던 시간이 한 프레임에 한꺼번에 흘러들지 않게 한다.
+    this.lastStepAt = now;
+    const game = settingsManager.get().game;
+    this.battleSpeed = usableBattleSpeed(game.battleSpeed, this.battleMember);
+    this.autoUltimate = game.autoUltimate;
+    this.refreshSpeedChip();
+    this.autoChip.setLabel(this.autoUltimate ? t("battle.chip.autoOn") : t("battle.chip.autoOff")).setActive(this.autoUltimate);
+    if (this.reopenPauseOnWake) { this.reopenPauseOnWake = false; this.openPauseMenu(); }
+  }
+
+  /**
+   * 처음부터 다시 — 편성 화면의 전투 시작과 **같은 입장**을 다시 지난다. 스토리는 오프닝에서 곧장 들어온
+   * 판이면 그 길(`exitTo`)을 그대로 들고 간다. 입장이 거절되면 전장에 남지 않고 입구로 나간다.
+   */
+  private retryBattle(): void {
+    const input = this.battleInput;
+    if (input.mode === "stage") {
+      const requestId = globalThis.crypto?.randomUUID?.() ?? `stage-entry-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      void gameApi.enterStage({ stageId: session.selectedStageId!, requestId })
+        .then(() => { if (this.scene.isActive()) startScene(this, "battle", { ...input }); })
+        .catch(() => { if (this.scene.isActive()) this.leaveBattle(); });
+      return;
+    }
+    if (input.mode === "cake" || input.mode === "bounty") {
+      void enterContentBattle(this, { content: input.mode, tierId: input.tierId }).catch(() => { if (this.scene.isActive()) this.leaveBattle(); });
+    }
+  }
+
+  /** 결과 없이 입구로 나간다. 스테미나는 이긴 판에서만 빠지므로 되돌려 줄 것이 없다. */
+  private leaveBattle(): void {
+    const input = this.battleInput;
+    if (input.mode === "cake") { startScene(this, "cakeOperation", { tierId: input.tierId }); return; }
+    if (input.mode === "bounty") { startScene(this, "bounty", { tierId: input.tierId }); return; }
+    startScene(this, this.stageExit());
+  }
+
   private refreshSpeedChip(): void {
     const tier = battleSpeedTier(this.battleSpeed);
     this.speedChip.setLabel(t("battle.chip.speed", { speed: this.battleSpeed })).setActive(tier > 0, tier);

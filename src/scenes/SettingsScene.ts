@@ -23,7 +23,7 @@ import { PopupLayer } from "../ui/PopupLayer";
 import { SETTINGS_HEAD, SETTINGS_ROW, SETTINGS_SECTION, SETTINGS_SUPPORT, SETTINGS_TEXT, settingsSectionHeight, settingsTabSlot } from "../ui/settingsLayout";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { addSectionTitle } from "../ui/SectionTitle";
-import { validateSettingsReturn, type SettingsEntryData, type SettingsReturnScene } from "./settingsNavigation";
+import { validateSettingsOverlay, validateSettingsReturn, type SettingsEntryData, type SettingsOverlayHost, type SettingsReturnScene } from "./settingsNavigation";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { getRelic } from "../data/relics";
@@ -65,6 +65,8 @@ export class SettingsScene extends Phaser.Scene {
   private returnScene: SettingsReturnScene = "lobby";
   private returnData?: SettingsEntryData["returnData"];
   private slideFrom?: number;
+  /** 겹쳐 연 씬. 있으면 닫을 때 그 씬으로 넘어가지 않고 깨운다. */
+  private overlayOf?: SettingsOverlayHost;
 
   constructor() { super("settings"); }
 
@@ -88,7 +90,7 @@ export class SettingsScene extends Phaser.Scene {
     zone.on("dragstart", (pointer: Phaser.Input.Pointer) => { this.dragStartY = pointer.y - this.scrollY; });
     zone.on("drag", (pointer: Phaser.Input.Pointer) => this.scrollTo(pointer.y - this.dragStartY));
     this.input.on("wheel", (_p: unknown, _o: unknown, _dx: number, dy: number) => this.scrollTo(this.scrollY - dy));
-    addBackButton(this, () => startScene(this, this.returnScene, this.returnData)).setDepth(30);
+    addBackButton(this, () => this.close()).setDepth(30);
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
@@ -114,7 +116,7 @@ export class SettingsScene extends Phaser.Scene {
           if (tab.id === this.activeTab) return;
           const slideFrom = TABS.findIndex(({ id }) => id === this.activeTab);
           this.activeTab = tab.id; this.scrollY = 0;
-          restartScene(this, { tab: tab.id, returnScene: this.returnScene, returnData: this.returnData, slideFrom });
+          restartScene(this, { ...this.route(), tab: tab.id, slideFrom });
         },
       }).setDepth(20);
     });
@@ -126,7 +128,29 @@ export class SettingsScene extends Phaser.Scene {
     this.slideFrom = typeof data?.slideFrom === "number" ? data.slideFrom : undefined;
     const route = validateSettingsReturn(data);
     this.returnScene = route.returnScene; this.returnData = route.returnData;
+    this.overlayOf = validateSettingsOverlay(data);
     consumeSceneEntry(this);
+  }
+
+  /** 탭을 바꿔 다시 세울 때 들고 가는 경로 — 돌아갈 화면과 겹쳐 연 씬을 잃지 않는다. */
+  private route(): SettingsEntryData {
+    return { returnScene: this.returnScene, returnData: this.returnData, overlayOf: this.overlayOf };
+  }
+
+  /** 닫기. 겹쳐 연 설정이면 그 씬을 깨우고 스스로 멈춘다 — 넘어가면 잠든 전투가 통째로 버려진다. */
+  private close(): void {
+    if (this.overlayOf) {
+      this.scene.wake(this.overlayOf);
+      this.scene.stop();
+      return;
+    }
+    startScene(this, this.returnScene, this.returnData);
+  }
+
+  /** 저장·계정이 바뀌어 부트로 되돌아갈 때는 겹쳐 연 씬도 함께 걷는다 — 잠든 채 남으면 옛 저장으로 깨어난다. */
+  private leaveToBoot(): void {
+    if (this.overlayOf) this.scene.stop(this.overlayOf);
+    startScene(this, "boot");
   }
 
   /** 현재 탭에 종속된 행만 생성해 다른 탭의 입력면이 마스크 뒤에 남지 않게 한다. */
@@ -229,12 +253,12 @@ export class SettingsScene extends Phaser.Scene {
         settingsManager.update({game:{language:v}});
         // 글꼴 스택과 문구 표가 함께 바뀌므로, 둘 다 도착한 뒤에 다시 그린다. Phaser Text는 그린
         // 순간의 글꼴로 텍스처를 굳으니 받기 전에 그리면 대체 글꼴 상태로 남는다.
-        void Promise.all([loadGameFonts(v), loadTextCatalog(v), loadDataOverlay(v)]).then(()=>{ if (this.scene.isActive()) restartScene(this, { tab: "play", returnScene: this.returnScene, returnData: this.returnData }); });
+        void Promise.all([loadGameFonts(v), loadTextCatalog(v), loadDataOverlay(v)]).then(()=>{ if (this.scene.isActive()) restartScene(this, { ...this.route(), tab: "play" }); });
       },v=>LANGUAGE_NATIVE_NAME[v])); y+=SETTINGS_ROW.step; divider();
       }
     } else if (this.activeTab === "access") {
       section(t("settings.section.access"));
-      this.content.add(new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,t("settings.access.textScale"),s.accessibility.textScale,[1,1.15,1.3] as const,value=>{ settingsManager.update({accessibility:{textScale:value}}); restartScene(this, { tab: "access" }); })); y+=SETTINGS_ROW.step; divider();
+      this.content.add(new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,t("settings.access.textScale"),s.accessibility.textScale,[1,1.15,1.3] as const,value=>{ settingsManager.update({accessibility:{textScale:value}}); restartScene(this, { ...this.route(), tab: "access" }); })); y+=SETTINGS_ROW.step; divider();
       // 접근성 선택은 공용 효과·의미 표식 경계에서 소비하며 씬마다 별도 색이나 밝기를 만들지 않는다.
       toggle(t("settings.access.reduceMotion"),'accessibility','reduceMotion'); toggle(t("settings.access.reduceFlashes"),'accessibility','reduceFlashes'); toggle(t("settings.access.colorAssist"),'accessibility','colorAssist');
     } else {
@@ -315,14 +339,14 @@ export class SettingsScene extends Phaser.Scene {
     this.popups.confirm({ title: t("settings.support.resetSettings"), message: t("settings.support.resetSettingsBody"), confirmLabel: t("settings.action.reset") }, () => {
       settingsManager.reset();
       // 현재 반환 경로도 함께 넘겨 초기화 뒤 뒤로가기가 사용자가 들어온 화면을 그대로 가리키게 한다.
-      restartScene(this, { tab: "support", returnScene: this.returnScene, returnData: this.returnData });
+      restartScene(this, { ...this.route(), tab: "support" });
     });
   }
 
   /** 1차 위험 안내 후 2차 최종 확인을 거쳐 로컬 저장만 삭제한다. */
   private confirmLocalReset(): void {
     this.popups.confirm({ title: t("settings.support.resetSave"), message: t("settings.support.resetSaveStep1"), confirmLabel: t("settings.action.next"), destructive: true }, () => {
-      this.popups.confirm({ title: t("settings.support.finalConfirm"), message: t("settings.support.resetSaveStep2"), confirmLabel: t("settings.action.reset"), destructive: true }, () => { saveManager.reset(); startScene(this, "boot"); });
+      this.popups.confirm({ title: t("settings.support.finalConfirm"), message: t("settings.support.resetSaveStep2"), confirmLabel: t("settings.action.reset"), destructive: true }, () => { saveManager.reset(); this.leaveToBoot(); });
     });
   }
 
@@ -361,7 +385,7 @@ export class SettingsScene extends Phaser.Scene {
     const sync = new AccountSaveSync(accountApi, saveManager);
     const requestId = crypto.randomUUID();
     const result = await sync.synchronize(session, (local, remote) => new Promise<SaveConflictChoice>(resolve => openSaveConflictPopup(this, this.popups, local, remote, resolve)), requestId);
-    if (result.ok) { startScene(this, "boot"); return; }
+    if (result.ok) { this.leaveToBoot(); return; }
     this.showAccountFailure(result.code);
   }
 
@@ -373,7 +397,7 @@ export class SettingsScene extends Phaser.Scene {
   /** 전환 중 입력을 잠그고 성공하면 부트의 저장 검증·마이그레이션 경계를 다시 탄다. */
   private async runAccountAction(operation: () => Promise<{ ok: boolean; code?: AccountFailureCode; message?: string }>): Promise<void> {
     this.accountBusy = true; this.input.enabled = false; const result = await operation(); this.accountBusy = false; this.input.enabled = true;
-    if (result.ok) { startScene(this, "boot"); return; }
+    if (result.ok) { this.leaveToBoot(); return; }
     this.showAccountFailure(result.code ?? "network-error");
   }
 

@@ -22,6 +22,7 @@ export type GlyphName =
   | "exchange"
   | "settings"
   | "auto"
+  | "pause"
   | "speed"
   | "heart"
   | "bookmark"
@@ -206,6 +207,11 @@ export function drawGlyph(
         const angle = (Math.PI / 3) * i;
         g.lineBetween(Math.cos(angle) * r * 0.6, Math.sin(angle) * r * 0.6, Math.cos(angle) * r * 0.95, Math.sin(angle) * r * 0.95);
       }
+      break;
+    case "pause":
+      // 세로 막대 둘 — 멈춤. 어느 화면에서나 같은 뜻으로 읽히는 모양이라 달리 꾸미지 않는다.
+      g.lineBetween(-r * 0.34, -r * 0.72, -r * 0.34, r * 0.72);
+      g.lineBetween(r * 0.34, -r * 0.72, r * 0.34, r * 0.72);
       break;
     case "auto":
       // 순환 화살표와 가운데 각성점으로 자동 발동을 표현한다.

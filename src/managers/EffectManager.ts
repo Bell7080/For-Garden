@@ -50,6 +50,13 @@ export interface EffectManagerOptions {
    * SD보다 **뒤**여야 한다. 앞에 두면 범위가 캐릭터를 덮어 누가 어디 섰는지 가린다.
    */
   groundDepth?: number;
+  /**
+   * 몸에 붙어 따라다니는 지속 표시(보호막 원·지속 강화 표식)의 깊이.
+   *
+   * 한 번 터지고 마는 파편(`depth`)과 달리 **캐릭터의 일부**라 체력 바보다 아래, SD보다 위에 선다.
+   * 파편과 같은 깊이에 두었을 때는 화면 옆에 붙는 기여도 판 위로 푸른 원이 떠올랐다.
+   */
+  bodyDepth?: number;
 }
 
 export interface BurstOptions {
@@ -144,6 +151,7 @@ export class EffectManager {
   private readonly shakeEnabled: boolean;
   private readonly shakeFactor: number;
   private readonly groundDepth: number;
+  private readonly bodyDepth: number;
   /** 바닥에 머무는 면들. 키는 그 판을 깔아 둔 개체와 판 번호다. */
   private readonly surfaces = new Map<string, SurfaceSlot>();
   private readonly quality: ReturnType<typeof presentationPolicy>;
@@ -178,6 +186,7 @@ export class EffectManager {
     this.shakeEnabled = motion.cameraShakeFactor > 0;
     this.shakeFactor = motion.cameraShakeFactor;
     this.groundDepth = options.groundDepth ?? this.depth - 400;
+    this.bodyDepth = options.bodyDepth ?? this.depth - 1;
     this.quality = presentationPolicy(options.graphicsQuality ?? "high");
     this.flashes = flashPolicy(options.reduceFlashes ?? false);
     this.damageNumbers = options.damageNumbers;
@@ -704,7 +713,7 @@ export class EffectManager {
       seen.add(target.id);
       let aura = this.shieldAuras.get(target.id);
       if (!aura) {
-        aura = { graphics: this.scene.add.graphics().setDepth(this.depth - 1), key: "" };
+        aura = { graphics: this.scene.add.graphics().setDepth(this.bodyDepth), key: "" };
         this.shieldAuras.set(target.id, aura);
       }
       const width = target.height * SHIELD_AURA_SHAPE.widthRatio;
@@ -758,7 +767,7 @@ export class EffectManager {
       seen.add(key);
       let slot = this.sustained.get(key);
       if (!slot) {
-        const graphics = this.scene.add.graphics().setDepth(this.depth - 1);
+        const graphics = this.scene.add.graphics().setDepth(this.bodyDepth);
         // 모션 감소가 0이면 무한 tween을 만들지 않고 정적인 홀로그램 표식만 유지한다.
         const duration = target.tag === "lukaSharedTargetHasteActive" ? SUSTAINED_COMBAT_EFFECT.luka.travelMs : SUSTAINED_COMBAT_EFFECT.mette.pulseMs;
         const tween = this.shakeFactor > 0 ? this.scene.tweens.add({ targets: graphics, alpha: { from: 0.45, to: 1 }, scaleX: target.tag === "lukaSharedTargetHasteActive" ? { from: 0.7, to: 1 } : 1,

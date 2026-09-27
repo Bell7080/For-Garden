@@ -8,6 +8,15 @@
  * import하게 되고, 그 순간 Node가 Phaser를 통째로 불러 `window is not defined`로 스펙
  * 수집 전체가 멈춘다(전 스펙이 "No tests found"가 됐다).
  */
+/**
+ * 전투 일시 정지 버튼. **화면 오른쪽 위 구석**이다.
+ *
+ * 맨 위 가운데는 시계(레이드는 시즌 체력 줄)가 쓰고 밑동은 프로필·조작 줄이 쓴다. 구석은 전장을
+ * 가리지 않고, 누르면 판이 떠 코어 시간이 멈추므로 잘못 눌러도 잃는 것이 없다. 레이드 체력 줄의
+ * 오른쪽 끝(`RAID_BATTLE_HUD`)보다 바깥에 서야 한다 — 테스트가 그 간격을 잰다.
+ */
+export const BATTLE_PAUSE_BUTTON = { x: 1080 - 60, y: 62, size: 72, depth: 320 } as const;
+
 export const BATTLE_CONTROLS = { rowY: 1288, rightX: 1080 - 130, speedX: 1080 - 335, stackGap: 92, depth: 320 } as const;
 
 /** 전투 프로필 한 칸의 1080×1920 기준 실제 외곽과 내부 기준선이다. */

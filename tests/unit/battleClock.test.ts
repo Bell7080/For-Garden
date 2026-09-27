@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BATTLE_CLOCK_HOUR_SECONDS, BATTLE_DEATH_CLOCK, deathClockSurvivalMultiplier, deathClockTicksAt, formatBattleClock, isDeathClockRunning } from "../../src/core/battleClock";
+import { BATTLE_CLOCK_HOUR_SECONDS, BATTLE_DEATH_CLOCK, deathClockClosesBySeconds, deathClockCumulativePercent, deathClockSurvivalMultiplier, deathClockTickPercent, deathClockTicksAt, formatBattleClock, isDeathClockRunning } from "../../src/core/battleClock";
 
 describe("전투 진행 시계", () => {
   it("는 분·초·100분의 1초를 두 자리씩 적는다", () => {
@@ -46,8 +46,20 @@ describe("데스 카운트", () => {
   it("는 회복과 보호막을 같은 배율로 시들게 한다", () => {
     // 한쪽만 깎으면 남은 쪽으로 버티는 편성이 그대로 살아남는다.
     expect(deathClockSurvivalMultiplier(0)).toBe(1);
-    expect(deathClockSurvivalMultiplier(BATTLE_DEATH_CLOCK.startsAtSeconds)).toBeCloseTo(0.98, 6);
-    expect(deathClockSurvivalMultiplier(BATTLE_DEATH_CLOCK.startsAtSeconds + 9)).toBeCloseTo(0.8, 6);
+    // 첫 번째 1% → 열 번째까지 1 + 1.5 + … + 5.5 = 32.5%.
+    expect(deathClockSurvivalMultiplier(BATTLE_DEATH_CLOCK.startsAtSeconds)).toBeCloseTo(0.99, 6);
+    expect(deathClockSurvivalMultiplier(BATTLE_DEATH_CLOCK.startsAtSeconds + 9)).toBeCloseTo(0.675, 6);
+  });
+
+  it("는 돌수록 세진다 — 끌리는 판일수록 빠르게 닫힌다", () => {
+    expect(deathClockTickPercent(0)).toBe(0);
+    expect(deathClockTickPercent(1)).toBe(BATTLE_DEATH_CLOCK.firstTickPercent);
+    for (let tick = 2; tick < 30; tick += 1) expect(deathClockTickPercent(tick)).toBeGreaterThan(deathClockTickPercent(tick - 1));
+    // 누적은 틱 하나하나의 합과 같다(화면·전투가 같은 값을 읽는다).
+    let sum = 0;
+    for (let tick = 1; tick <= 25; tick += 1) { sum += deathClockTickPercent(tick); expect(deathClockCumulativePercent(tick)).toBeCloseTo(sum, 9); }
+    // 고정 2%이던 때(50번 · 2분 20초)보다 훨씬 빨리 닫힌다.
+    expect(deathClockClosesBySeconds() - BATTLE_DEATH_CLOCK.startsAtSeconds).toBeLessThanOrEqual(20);
   });
 
   it("는 반드시 0에 닿고 그 아래로는 내려가지 않는다", () => {
@@ -55,7 +67,7 @@ describe("데스 카운트", () => {
      * 피해만 얹으면 회복량이 그 피해보다 큰 편성은 여전히 영원히 산다. 버티는 수단이 0이
      * 되는 시각이 있어야 어떤 편성이든 판이 닫힌다.
      */
-    const zeroAt = BATTLE_DEATH_CLOCK.startsAtSeconds + 100 / BATTLE_DEATH_CLOCK.recoveryLossPercentPerTick;
+    const zeroAt = deathClockClosesBySeconds();
     expect(deathClockSurvivalMultiplier(zeroAt)).toBe(0);
     expect(deathClockSurvivalMultiplier(zeroAt + 600)).toBe(0);
   });

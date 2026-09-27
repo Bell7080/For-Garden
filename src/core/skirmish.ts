@@ -1,5 +1,5 @@
 import { amplifyFerocityGain } from "./bond";
-import { BATTLE_DEATH_CLOCK, deathClockSurvivalMultiplier, deathClockTicksAt } from "./battleClock";
+import { deathClockSurvivalMultiplier, deathClockTickPercent, deathClockTicksAt } from "./battleClock";
 import type { Combatant } from "./combatTypes";
 import { computeDamage, computeDamageContribution, currentAbilityPower, isCriticalHit } from "./damage";
 // 전투 HUD와 피해 공식이 동일한 현재 주문력 계산을 소비하도록 공용 헬퍼를 다시 노출한다.
@@ -4045,7 +4045,8 @@ function tickDeathClock(state: SkirmishState, events: SkirmishEvent[]): void {
   while (state.deathClockTicks < due) {
     state.deathClockTicks += 1;
     for (const fighter of aliveFighters(state, "player")) {
-      const amount = Math.max(1, Math.round(fighter.maxHp * BATTLE_DEATH_CLOCK.maxHpDamagePercentPerTick / 100));
+      // 틱마다 세진다(`deathClockTickPercent`) — 끌리는 판일수록 빠르게 닫힌다.
+      const amount = Math.max(1, Math.round(fighter.maxHp * deathClockTickPercent(state.deathClockTicks) / 100));
       applyDamage(fighter, amount, events, state);
       if (!isFighterAlive(fighter)) { clearDefeatedStatuses(fighter); events.push({ kind: "death", fighterId: fighter.id }); }
     }

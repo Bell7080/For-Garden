@@ -1,5 +1,6 @@
 import { EXPEDITION_BOSS_BALANCE } from "../data/expedition";
 import type { ExpeditionAugmentEffect } from "./expeditionAugments";
+import { ULTIMATE_ENERGY_MAX } from "./ultimate";
 import { attackInterval, createSkirmish, isFighterAlive, replayLoggedBossAction, stepSkirmish, type Arena, type Fighter } from "./skirmish";
 import type { RelicDef } from "./types";
 
@@ -98,7 +99,26 @@ function fastestAttackInterval(fighter: Fighter, state: Parameters<typeof attack
   // 수 있다. 그러면 편성이 실제로 낼 수 있었던 속도보다 느린 값이 기준이 되어, 규칙대로 싸운
   // 판이 거절된다 — 이동 규칙을 손댈 때마다 이 검증이 흔들리던 이유다. 켜진 것을 한 번 더
   // 세더라도 한계는 느슨해질 뿐이라 재현으로 설명되지 않는 판은 여전히 걸린다.
-  return interval / (1 + strongestAllyAttackSpeedPercent(fighter, state) / 100);
+  return interval / (1 + strongestAllyAttackSpeedPercent(fighter, state) / 100) / (1 + missingTeamBuffAttackSpeedPercent(fighter, state) / 100);
+}
+
+/**
+ * 아군 궁극기가 걸어 줄 수 있었던 공속 강화(%) — **재현에서 그 강화가 꺼져 있을 때만** 센다.
+ *
+ * 강화를 건 쪽이 재현에서만 먼저 쓰러지면(보스의 공격 순서가 어긋난다) 그 궁극기가 재생되지 않아,
+ * 실제 판에서 「오더」·순풍을 받고 빨라진 평타가 "너무 빠르다"로 거절되었다. 이미 걸려 있으면
+ * `attackInterval`이 센 몫이라 한 번 더 곱하지 않는다. 한계는 느슨해질 뿐이다.
+ */
+function missingTeamBuffAttackSpeedPercent(fighter: Fighter, state: Parameters<typeof attackInterval>[1]): number {
+  if (!state || fighter.tailwindFor > 0) return 0;
+  return Math.max(0, ...state.fighters
+    .filter((ally) => ally.side === fighter.side && ally !== fighter)
+    .map((ally) => {
+      const ultimate = ally.def.ultimate;
+      if (ultimate.teamBuff === undefined) return 0;
+      if (ultimate.targeting === "duo" && ally.duoId !== fighter.id) return 0;
+      return ultimate.teamBuff.attackSpeedPercent ?? 0;
+    }));
 }
 
 /** 그 편성이 걸어 줄 수 있었던 가장 강한 아군 공속 오라(%). 제공자의 생사와 표적은 묻지 않는다. */
@@ -111,6 +131,27 @@ function strongestAllyAttackSpeedPercent(fighter: Fighter, state: Parameters<typ
       ally.def.ferocityTrait.effectId === "packHunt" ? ally.def.ferocityTrait.sharedTargetAttackSpeedPercent : 0,
     )));
 }
+
+/**
+ * 재현에서만 쓰러진 개체의 행동이 **아군에게 나눠 주던 게이지**만 흘려보낸다.
+ *
+ * 행동 자체는 버려도 점수를 깎을 뿐이지만, 그 개체가 평타마다 듀오·아군에게 채워 주던 게이지까지
+ * 사라지면 받는 쪽의 궁극기가 "게이지가 모자란다"로 거절된다 — 실제 판에서는 살아서 채워 주고
+ * 있었다. 피해·점수는 만들지 않고 나눠 주는 몫만 옮긴다.
+ */
+function passOnReplayEnergy(giver: Fighter, kind: ExpeditionBossAction["kind"], state: ReturnType<typeof createSkirmish>): void {
+  const skill = kind === "ultimate" ? giver.def.ultimate : giver.def.basic;
+  const living = state.fighters.filter((ally) => ally.side === giver.side && isFighterAlive(ally));
+  const allyGain = skill.allyEnergyGain ?? 0;
+  if (allyGain > 0) for (const ally of living) ally.energy = Math.min(ULTIMATE_ENERGY_MAX, ally.energy + allyGain);
+  const duo = giver.duoId ? living.find(({ id }) => id === giver.duoId) : undefined;
+  if (duo && (skill.duoCharge?.energy ?? 0) > 0) duo.energy = Math.min(ULTIMATE_ENERGY_MAX, duo.energy + skill.duoCharge!.energy);
+}
+
+/** 재현 속 게이지가 비용의 이만큼만 차 있어도 궁극기를 받아 준다(자리·처치 환급의 어긋남). */
+const ULTIMATE_REPLAY_ENERGY_TOLERANCE = 0.4;
+/** 행동 시각은 밀리초로 반올림되어 온다 — 그 반올림만큼은 이르게 와도 받는다. */
+const REPLAY_ROUNDING_MS = 1;
 
 /**
  * 행동열을 공용 난전에 재생한다. 서버는 클라이언트 피해를 받지 않으며 렐릭/폰토스 정의, 실제 스킬
@@ -132,7 +173,11 @@ export function resolveExpeditionBossBattle(input: ExpeditionBossReplayInput, ac
   for (const fighter of state.fighters) if (fighter.side === "player") fighter.attackCooldown = Number.POSITIVE_INFINITY;
   // 같은 행동이 다시 준비되는 시각을 그 행동을 재생한 **그 순간의 상태**로 못 박는다.
   const readyAt = new Map<string, number>(); const basicCount = new Map<string, number>(); let cursorMs = 0;
-  for (const action of actions) {
+  // **시각 순으로 줄 세운 뒤 읽는다.** 궁극기는 시전 순간, 평타는 코어가 못 박은 타격 시각으로
+  // 적히는데, 한 프레임 안의 평타 사건이 그 프레임 끝에 쓴 궁극기보다 늦게 도착할 수 있다. 순서는
+  // 조작의 여지가 없으므로(시각 자체는 아래에서 그대로 검사한다) 도착 순서로 거절하지 않는다.
+  const ordered = [...actions].sort((a, b) => a.elapsedMs - b.elapsedMs);
+  for (const action of ordered) {
     // 보스를 쓰러뜨려 판이 끝났으면 그 뒤의 행동은 없다 — 재현이 실제 판보다 먼저 끝났을 뿐이다.
     if (state.phase !== "fight") break;
     if (!Number.isInteger(action.elapsedMs) || action.elapsedMs < cursorMs || action.elapsedMs > balance.maximumDurationMs) throw new Error("INVALID_BOSS_BATTLE_INPUT");
@@ -145,15 +190,33 @@ export function resolveExpeditionBossBattle(input: ExpeditionBossReplayInput, ac
     // 거절하면 규칙대로 싸운 판이 "정산 실패 · 다시 시도"로 끝난다(성장 규칙을 손댈 때마다 이
     // 검증이 무더기로 터진 이유다). 버리는 쪽은 점수를 **깎기만** 하므로 조작에 쓸 수 없고,
     // 재현으로 설명되지 않을 만큼 빠른 행동은 아래 재사용 대기 검사가 그대로 거절한다.
-    if (!isFighterAlive(fighter)) continue;
-    const key = `${action.actorId}:${action.kind}`;
-    if (action.elapsedMs + 1e-6 < (readyAt.get(key) ?? -Infinity)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
+    if (!isFighterAlive(fighter)) { passOnReplayEnergy(fighter, action.kind, state); continue; }
+    const basicKey = `${action.actorId}:basic`;
+    if (action.kind === "basic") {
+      if (action.elapsedMs + REPLAY_ROUNDING_MS < (readyAt.get(basicKey) ?? -Infinity)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
+    } else if (fighter.summonOwnerId !== null) {
+      // 소환수의 게이지는 두목이 빌려주고(`commandPack`) 제 평타도 재현에서 따로 돌아 실제 판과 크게
+      // 갈린다. 게이지 대신 **비용을 평타 충전으로 채우는 시간의 절반**을 최소 간격으로 둔다.
+      const ultimateKey = `${action.actorId}:ultimate`;
+      if (action.elapsedMs + REPLAY_ROUNDING_MS < (readyAt.get(ultimateKey) ?? -Infinity)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
+      const intervalMs = fastestAttackInterval(fighter, state, basicCount.get(action.actorId) ?? 0) * 1_000;
+      readyAt.set(ultimateKey, action.elapsedMs + fighter.def.ultimate.cost / Math.max(1, fighter.def.stats.energyGain) * intervalMs * 0.5);
+    } else if (fighter.energy < fighter.def.ultimate.cost * ULTIMATE_REPLAY_ENERGY_TOLERANCE) {
+      // **궁극기는 시간이 아니라 재현 속 게이지로 잰다.** 게이지는 평타만이 아니라 아군 충전·듀오·
+      // 순풍·처치 환급으로도 차고 상한(300)까지 모아 둘 수 있어, 「비용 ÷ 평타 충전 × 간격」으로
+      // 잰 대기는 규칙대로 모아 쏜 궁극기를 거절했다(v0.198.5까지 레이드 정산의 절반이 그랬다).
+      // 재현도 같은 평타열을 다시 치므로 게이지가 함께 찬다 — 자리·처치가 어긋난 몫만큼만 봐준다.
+      throw new Error("INVALID_BOSS_BATTLE_INPUT");
+    }
     replayLoggedBossAction(state, action.actorId, action.kind, rng);
     if (action.kind === "basic") basicCount.set(action.actorId, (basicCount.get(action.actorId) ?? 0) + 1);
     // 대기 시간은 **때린 그 순간**의 상태로 잰다. 다음 행동 때 다시 재면 그 사이에 풀린 강화만큼
     // 간격이 길어져, 규칙대로 싸운 판이 거절된다.
     const intervalMs = fastestAttackInterval(fighter, state, basicCount.get(action.actorId) ?? 0) * 1_000;
-    readyAt.set(key, action.elapsedMs + (action.kind === "basic" ? intervalMs : fighter.def.ultimate.cost / Math.max(1, fighter.def.stats.energyGain) * intervalMs));
+    const nextBasic = action.elapsedMs + intervalMs;
+    // 궁극기는 평타 대기를 **그 순간의 간격으로 다시 건다**(`fireUltimate`). 남은 대기보다 짧을 수
+    // 있으므로 더 이른 쪽을 따른다 — 긴 쪽을 두면 궁극기 직후의 평타가 거절된다.
+    readyAt.set(basicKey, action.kind === "basic" ? nextBasic : Math.min(readyAt.get(basicKey) ?? nextBasic, nextBasic));
   }
   while (state.phase === "fight" && cursorMs < balance.maximumDurationMs) { stepSkirmish(state, 0.05, rng); cursorMs += 50; }
   const bossDefeated = killable && state.phase === "victory";

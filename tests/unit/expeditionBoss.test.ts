@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { expeditionBossPhaseAt, expeditionWeekKey, resolveExpeditionBossBattle, type ExpeditionBossAction } from "../../src/core/expeditionBoss";
+import { deathClockClosesBySeconds } from "../../src/core/battleClock";
+import { expeditionWeekKey, resolveExpeditionBossBattle, type ExpeditionBossAction } from "../../src/core/expeditionBoss";
+import { EXPEDITION_BOSS_BALANCE } from "../../src/data/expedition";
 import { getRelic } from "../../src/data/relics";
 
 const ARENA = { left: 130, right: 950, top: 600, bottom: 1360 };
@@ -34,10 +36,11 @@ describe("expedition boss rules", () => {
     expect(result.bossDefeated).toBe(false); expect(result.totalDamage).toBeGreaterThan(0);
   });
 
-  it("폰토스 스킬로 먼저 전멸할 수 있고 제한 시각에는 별도 종말 처형 단계만 남는다", () => {
+  it("처형 단계 없이 폰토스 스킬과 데스 카운트만으로 판이 전멸로 닫힌다", () => {
     const result = resolveExpeditionBossBattle(replayInput(), basicActions(["rex"]));
-    expect(expeditionBossPhaseAt(90_000).label).toBe("종말"); expect(result.allAlliesDead).toBe(true); expect(result.endedAtMs).toBeLessThanOrEqual(90_000);
-    // 폰토스의 실제 범위 스킬과 종말 처형 모두 단일 대상을 임의 선택하지 않는다.
+    expect(EXPEDITION_BOSS_BALANCE.phases.every(({ attackPerSecond }) => attackPerSecond === 0)).toBe(true);
+    expect(result.allAlliesDead).toBe(true); expect(result.endedAtMs).toBeLessThanOrEqual(deathClockClosesBySeconds() * 1_000);
+    // 폰토스의 실제 범위 스킬과 데스 카운트 모두 단일 대상을 임의 선택하지 않는다.
     expect(Object.values(result.remainingHpByAlly)).toEqual([0]);
   });
 

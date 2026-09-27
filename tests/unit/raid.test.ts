@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { deathClockClosesBySeconds } from "../../src/core/battleClock";
 import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_DIFFICULTY, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM, isRaidDifficulty, RAID_RUN_STAMINA, raidRunStamina } from "../../src/data/raid";
 import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidKillProgress, raidKillTicks, raidDayProgress, raidResetsAt, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../../src/core/raid";
 import { getRelic, PLAYABLE_RELICS, RELICS } from "../../src/data/relics";
@@ -332,12 +333,10 @@ describe("레이드 보스", () => {
 });
 
 describe("재현 표", () => {
-  it("는 마지막 단계가 제한 시간을 전멸로 바꾼다", () => {
-    // 보스는 판 안에서 죽지 않으므로(공유 체력은 서버가 갖는다) 판을 끝내는 것은 이 처형뿐이다.
-    const last = RAID_BOSS_BALANCE.phases.at(-1)!;
-    expect(last.attackPerSecond).toBeGreaterThan(0);
-    expect(last.startsAtMs).toBeLessThan(RAID_BOSS_BALANCE.maximumDurationMs);
-    expect(RAID_BOSS_BALANCE.phases.slice(0, -1).every(({ attackPerSecond }) => attackPerSecond === 0)).toBe(true);
+  it("는 처형 단계를 두지 않고, 판의 길이 상한은 데스 카운트가 닫는 시각에서 나온다", () => {
+    // 제한 시간은 데스 카운트 하나가 맡는다 — 처형 단계를 되살리면 두 장치가 같은 일을 한다.
+    expect(RAID_BOSS_BALANCE.phases.every(({ attackPerSecond }) => attackPerSecond === 0)).toBe(true);
+    expect(RAID_BOSS_BALANCE.maximumDurationMs).toBeGreaterThan(deathClockClosesBySeconds() * 1_000);
   });
 
   it("의 단계는 시간 오름차순으로 선다", () => {

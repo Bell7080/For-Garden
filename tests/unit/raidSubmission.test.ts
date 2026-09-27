@@ -1,11 +1,38 @@
 import { describe, expect, it } from "vitest";
 import { battleArena } from "../../src/core/battleArena";
+import { BATTLE_DEATH_CLOCK } from "../../src/core/battleClock";
 import { createRaidSkirmishConfig } from "../../src/core/expeditionBattle";
 import { resolveExpeditionBossBattle, type ExpeditionBossAction } from "../../src/core/expeditionBoss";
 import { raidBossDef, raidBossPercentHpBasis } from "../../src/core/raid";
-import { createSkirmish, stepSkirmish } from "../../src/core/skirmish";
+import { canFireUltimate, createSkirmish, fireUltimate, stepSkirmish, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
 import { RAID_BOSS_BALANCE, RAID_BOSS_POOL, type RaidDifficulty } from "../../src/data/raid";
 import { RELICS } from "../../src/data/relics";
+
+/**
+ * 한 프레임의 사건을 **전투 씬과 같은 규칙으로** 적는다. 평타는 코어가 못 박은 타격 시각에, 궁극기는
+ * 쓴 순간에 적고 궁극기의 피해 사건은 거두지 않는다(`BattleScene.pumpUltimateQueue`).
+ */
+function recordFrame(state: SkirmishState, events: readonly SkirmishEvent[], actions: ExpeditionBossAction[]): void {
+  for (const event of events) {
+    if (event.kind !== "attack") continue;
+    const attacker = state.fighters.find(({ id }) => id === event.attackerId);
+    const target = state.fighters.find(({ id }) => id === event.targetId);
+    if (!state.boss || attacker?.side !== "player" || target?.side !== "enemy" || event.animate === false || event.followUp === true) continue;
+    const kind = event.skill === "staccato" || event.skill === "shimmer" || event.skill === "weakpoint" ? "basic" : event.skill;
+    if (kind === "basic") actions.push({ elapsedMs: Math.round((event.at ?? state.elapsed) * 1_000), actorId: attacker.def.id, kind });
+  }
+}
+
+/** 씬처럼 궁극기를 쓴다 — 차는 대로(`auto`) 또는 상한 가까이 모아 두었다가(`hoard`). */
+function castUltimates(state: SkirmishState, rng: () => number, mode: "auto" | "hoard", actions: ExpeditionBossAction[]): void {
+  for (const fighter of state.fighters) {
+    if (fighter.side !== "player" || !canFireUltimate(state, fighter)) continue;
+    if (mode === "hoard" && fighter.energy < 290) continue;
+    const castAt = state.elapsed; const energyBefore = fighter.energy;
+    const events = fireUltimate(state, fighter.id, rng);
+    if (events.length > 0 || fighter.energy < energyBefore) actions.push({ elapsedMs: Math.round(castAt * 1_000), actorId: fighter.def.id, kind: "ultimate" });
+  }
+}
 
 /**
  * 레이드 한 판의 왕복 — 진짜 난전을 끝까지 돌려 **전투 씬과 같은 규칙으로** 행동을 적고, 그
@@ -15,8 +42,12 @@ import { RELICS } from "../../src/data/relics";
  * 여기 모인 편성은 실제로 거절되던 자리다 — 디안의 합공이 한 행동에 두 사건을 남기고, 늑대의
  * 폭주가 오히려 느려지게 계산되고, 타보아의 둔화가 재현에서만 걸리고, 엘라의 금강불괴 가속이
  * 한계에 빠져 있었다. 넷 모두 "전투 기록이 서버 검증에서 거절되었습니다"로 끝났다.
+ *
+ * **궁극기도 쓴다.** 예전 왕복은 궁극기를 한 번도 쓰지 않아, 피해 없는 궁극기(오더·순풍)가 기록에서
+ * 빠지고 모아 쏜 궁극기가 시간 한계에 걸려 실제 판의 절반이 거절되는 동안에도 통과했다(v0.198.5).
+ * 3배속의 긴 프레임도 섞는다.
  */
-function fightAndVerify(party: readonly string[], bossId: string, difficulty: RaidDifficulty, seed: number): void {
+function fightAndVerify(party: readonly string[], bossId: string, difficulty: RaidDifficulty, seed: number, mode: "auto" | "hoard" | "none" = "auto"): void {
   const players = party.map((id) => RELICS.find((relic) => relic.id === id)!);
   const base = RELICS.find(({ id }) => id === bossId)!;
   const boss = raidBossDef(base, difficulty);
@@ -30,20 +61,13 @@ function fightAndVerify(party: readonly string[], bossId: string, difficulty: Ra
   const actions: ExpeditionBossAction[] = [];
   let frames = 0;
   while (state.phase === "fight" && frames++ < 60_000) {
-    for (const event of stepSkirmish(state, 1 / 60, rng)) {
-      if (event.kind !== "attack") continue;
-      const attacker = state.fighters.find(({ id }) => id === event.attackerId);
-      const target = state.fighters.find(({ id }) => id === event.targetId);
-      // BattleScene의 기록 조건과 같은 줄을 쓴다 — 하나라도 달라지면 이 회귀가 실제를 검사하지 못한다.
-      if (!state.boss || attacker?.side !== "player" || target?.side !== "enemy" || event.animate === false || event.followUp === true) continue;
-      const kind = event.skill === "staccato" || event.skill === "shimmer" || event.skill === "weakpoint"
-        ? "basic" : event.skill === "transfer" ? "ultimate" : event.skill;
-      actions.push({ elapsedMs: Math.round((event.at ?? state.elapsed) * 1_000), actorId: attacker.def.id, kind });
-    }
+    const dt = mode === "none" ? 1 / 60 : (frames % 97 === 0 ? 0.25 : frames % 13 === 0 ? 0.05 : 1 / 60) * 3;
+    recordFrame(state, stepSkirmish(state, dt, rng), actions);
+    if (mode !== "none") castUltimates(state, rng, mode, actions);
   }
-  expect(state.phase).toBe("defeat");
+  expect(["defeat", "victory"]).toContain(state.phase);
   expect(actions.length).toBeGreaterThan(0);
-  const result = resolveExpeditionBossBattle({ allies: players, boss, balance: RAID_BOSS_BALANCE, percentHpBasis: basis, arena: battleArena("raid") }, actions);
+  const result = resolveExpeditionBossBattle({ allies: players, boss, balance: RAID_BOSS_BALANCE, percentHpBasis: basis, arena: battleArena("raid"), bossKillable: config.boss.endsOnKill === true }, actions);
   expect(result.totalDamage).toBeLessThanOrEqual(RAID_BOSS_BALANCE.maximumAcceptedScore);
 }
 
@@ -52,16 +76,31 @@ describe("레이드 피해 제출 왕복", () => {
     ["dian", "spino", "stella"], ["parua", "dian", "luka"], ["mette", "terisa", "dian"],
     ["ella", "maddy", "morphe"], ["anky", "dodo", "pachi"], ["pachi", "delopi", "deina"],
     ["anky", "dodo", "parua"],
+    // 피해 없는 궁극기 — 슈테의 오더(듀오 공속), 스테라의 순풍 — 와 듀오 충전.
+    ["maddy", "shute", "anky"], ["stella", "maki", "ella"], ["ella", "shute", "rex"], ["nodonia", "deina", "shute"],
   ];
   for (const bossId of RAID_BOSS_POOL) {
     for (const difficulty of ["easy", "rampage"] as const) {
       parties.forEach((party, index) => {
         it(`${bossId} ${difficulty} · ${party.join("·")} 편성의 실제 전투를 서버가 받아들인다`, () => {
-          fightAndVerify(party, bossId, difficulty, index + 1);
+          fightAndVerify(party, bossId, difficulty, index + 1, "none");
+          fightAndVerify(party, bossId, difficulty, index + 11, "auto");
+          fightAndVerify(party, bossId, difficulty, index + 21, "hoard");
         });
       });
     }
   }
+
+  it("게이지가 차지 않은 궁극기와 대기를 건너뛴 평타는 여전히 거절한다", () => {
+    const party = ["anky", "dodo", "parua"].map((id) => RELICS.find((relic) => relic.id === id)!);
+    const base = RELICS.find(({ id }) => id === "sukusuino")!;
+    const boss = raidBossDef(base, "easy");
+    const input = { allies: party, boss, balance: RAID_BOSS_BALANCE, percentHpBasis: raidBossPercentHpBasis(base, "easy"), arena: battleArena("raid") };
+    const ultimates = Array.from({ length: 5 }, (_, index) => ({ elapsedMs: 1_000 + index * 100, actorId: "anky", kind: "ultimate" as const }));
+    expect(() => resolveExpeditionBossBattle(input, ultimates)).toThrow("INVALID_BOSS_BATTLE_INPUT");
+    const basics = Array.from({ length: 5 }, (_, index) => ({ elapsedMs: 1_000 + index * 50, actorId: "anky", kind: "basic" as const }));
+    expect(() => resolveExpeditionBossBattle(input, basics)).toThrow("INVALID_BOSS_BATTLE_INPUT");
+  });
 
   it("디안의 합공은 한 행동에 평타 하나만 남긴다", () => {
     const dian = RELICS.find(({ id }) => id === "dian")!;
@@ -99,8 +138,8 @@ describe("레이드 피해 제출 왕복", () => {
       }
     }
     expect(state.phase).toBe("victory");
-    // 제한 시간(90초)까지 서 있지 않고 쓰러뜨린 그 자리에서 끝났다.
-    expect(state.elapsed * 1_000).toBeLessThan(RAID_BOSS_BALANCE.phases[RAID_BOSS_BALANCE.phases.length - 1].startsAtMs);
+    // 데스 카운트가 돌기 전에, 쓰러뜨린 그 자리에서 끝났다.
+    expect(state.elapsed).toBeLessThan(BATTLE_DEATH_CLOCK.startsAtSeconds);
     const result = resolveExpeditionBossBattle({ allies: party, boss, balance: RAID_BOSS_BALANCE, percentHpBasis: basis, arena: battleArena("raid"), bossKillable: true }, actions);
     expect(result.bossDefeated).toBe(true);
   });

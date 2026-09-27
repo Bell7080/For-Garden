@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { aliveFighters, createSkirmish, stepSkirmish } from "../../src/core/skirmish";
 import { getRelic } from "../../src/data/relics";
-import { BATTLE_DEATH_CLOCK } from "../../src/core/battleClock";
+import { BATTLE_DEATH_CLOCK, deathClockClosesBySeconds } from "../../src/core/battleClock";
 import type { RelicDef } from "../../src/core/types";
 
 /**
@@ -65,7 +65,7 @@ describe("데스 카운트가 판을 닫는다", () => {
     expect(result.alive).toBe(0);
   });
 
-  it("는 3분 전에는 아무것도 하지 않는다", () => {
+  it("는 시작 시각 전에는 아무것도 하지 않는다", () => {
     // 시작 전부터 깎으면 평범한 판의 균형까지 함께 바뀐다.
     const state = undyingStalemate();
     for (let seconds = 0; seconds < BATTLE_DEATH_CLOCK.startsAtSeconds - 1; seconds += 0.05) stepSkirmish(state, 0.05, () => 0.5);
@@ -75,11 +75,11 @@ describe("데스 카운트가 판을 닫는다", () => {
 
   it("는 버티는 수단이 0이 되는 시각 안에 끝난다", () => {
     /*
-     * 회복·보호막이 0이 되는 시각(3분 + 50초)을 넉넉히 넘겨서도 살아 있으면, 감쇠를 빠뜨린
+     * 회복·보호막이 0이 되는 시각(`deathClockClosesBySeconds`)을 넉넉히 넘겨서도 살아 있으면, 감쇠를 빠뜨린
      * 보호막 경로가 남아 있다는 뜻이다 — `shield.amount +=`가 아홉 군데로 흩어져 있던 것이
      * 그 위험이었고, 그래서 공용 경계 하나로 모았다.
      */
-    const zeroAt = BATTLE_DEATH_CLOCK.startsAtSeconds + 100 / BATTLE_DEATH_CLOCK.recoveryLossPercentPerTick;
-    expect(runUntilDone(900).seconds).toBeLessThan(zeroAt + 60);
+    // 점점 세지는 시계라 누적이 100%에 닿는 그 틱 언저리에서 닫혀야 한다.
+    expect(runUntilDone(900).seconds).toBeLessThan(deathClockClosesBySeconds() + 5);
   });
 });

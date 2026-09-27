@@ -134,7 +134,8 @@ const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole,
   ["대작전 1단계", 5, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[0]), "swarm", "cake", 27.2, 0.82],
   ["대작전 8단계", 60, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", "cake", 65.1, 0.61],
   ["원정 일반 5층", 10, () => getExpeditionEncounterEnemies("normal", 5), "normal", "expedition", 14.3, 0.96],
-  ["원정 정예 10층", 20, () => getExpeditionEncounterEnemies("elite", 10), "elite", "expedition", 39.7, 0.45],
+  // 여덟 판 중 늘어지던 한 판을 데스 카운트(90초부터)가 닫아 평균이 39.7 → 37.3으로 줄었다.
+  ["원정 정예 10층", 20, () => getExpeditionEncounterEnemies("elite", 10), "elite", "expedition", 37.3, 0.45],
   ["원정 무리 15층", 30, () => getExpeditionEncounterEnemies("horde", 15), "swarm", "expedition", 14.1, 0.76],
 ];
 

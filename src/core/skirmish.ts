@@ -1,5 +1,5 @@
 import { amplifyFerocityGain } from "./bond";
-import { BATTLE_DEATH_CLOCK, deathClockSurvivalMultiplier, deathClockTicksAt } from "./battleClock";
+import { deathClockSurvivalMultiplier, deathClockTickPercent, deathClockTicksAt } from "./battleClock";
 import type { Combatant } from "./combatTypes";
 import { computeDamage, computeDamageContribution, currentAbilityPower, isCriticalHit } from "./damage";
 // 전투 HUD와 피해 공식이 동일한 현재 주문력 계산을 소비하도록 공용 헬퍼를 다시 노출한다.
@@ -529,7 +529,7 @@ export interface SkirmishBossState {
   /**
    * **보스를 쓰러뜨리면 그 자리에서 판이 끝나는가**(레이드). 원정 폰토스는 불사 자리라 눕지 않고
    * 전멸만이 끝이지만, 레이드의 몸은 공유 게이지의 한 칸이라 다 깎으면 그 판은 이긴 것이다 —
-   * 쓰러진 보스 앞에서 90초 제한이 다할 때까지 서 있게 두면 처치가 처치로 읽히지 않는다.
+   * 쓰러진 보스 앞에서 전멸할 때까지 서 있게 두면 처치가 처치로 읽히지 않는다.
    */
   endsOnKill: boolean;
 }
@@ -4026,7 +4026,7 @@ export function tickRegeneration(fighter: Fighter, dt: number, state?: SkirmishS
 }
 
 /**
- * **데스 카운트** — 3분을 넘긴 판을 스스로 닫게 만든다.
+ * **데스 카운트** — 시작 시각(`BATTLE_DEATH_CLOCK.startsAtSeconds`)을 넘긴 판을 스스로 닫게 만든다.
  *
  * 규칙과 수치는 `core/battleClock.ts`가 갖고 여기서는 그 시계를 돌리기만 한다. 한 번 돌 때마다
  * 아군이 최대 체력의 일부를 잃고, 회복·보호막은 `deathClockSurvivalMultiplier`를 통해 함께
@@ -4045,7 +4045,8 @@ function tickDeathClock(state: SkirmishState, events: SkirmishEvent[]): void {
   while (state.deathClockTicks < due) {
     state.deathClockTicks += 1;
     for (const fighter of aliveFighters(state, "player")) {
-      const amount = Math.max(1, Math.round(fighter.maxHp * BATTLE_DEATH_CLOCK.maxHpDamagePercentPerTick / 100));
+      // 틱마다 세진다(`deathClockTickPercent`) — 끌리는 판일수록 빠르게 닫힌다.
+      const amount = Math.max(1, Math.round(fighter.maxHp * deathClockTickPercent(state.deathClockTicks) / 100));
       applyDamage(fighter, amount, events, state);
       if (!isFighterAlive(fighter)) { clearDefeatedStatuses(fighter); events.push({ kind: "death", fighterId: fighter.id }); }
     }
@@ -4936,10 +4937,34 @@ export function replayLoggedBossAction(state: SkirmishState, relicId: string, ki
   const attacker = state.fighters.find((fighter) => fighter.side === "player" && fighter.def.id === relicId);
   const target = state.boss && state.fighters.find((fighter) => fighter.id === state.boss!.fighterId);
   if (!attacker || !target || !isFighterAlive(attacker) || !isFighterAlive(target)) return [];
+  if (kind === "ultimate") {
+    /*
+     * **궁극기는 화면과 같은 `fireUltimate`로 재생한다.** 예전에는 정적 스킬을 `strike`로만 쳐서
+     * 피해 없는 궁극기(순풍·듀오 강화·연사·은신·대신 받기)가 재현에서 통째로 빠졌고, 그 강화로
+     * 빨라진 평타가 "너무 빠르다"로 거절되었다. 점수·되찍기·채널링·늑대 명령도 그 함수가 맡는다.
+     * 게이지 검증은 부르는 쪽이 끝냈으므로 모자란 몫만 채워 문을 연다. 시전이 평타 대기를 새로
+     * 걸지만, 재현의 평타는 로그가 부르므로 다시 멈춰 둔다.
+     */
+    const cost = ultimateCost(state, attacker, false);
+    attacker.energy = Math.max(attacker.energy, cost);
+    /*
+     * 재현 속 기절·경직·빙결은 **실제 판의 것이 아니다** — 보스의 공격 순서가 조금씩 어긋나 그 순간
+     * 재현에서만 묶여 있을 수 있다. 실제 판에서 쓴 궁극기가 거기 걸려 빠지면 그 강화(듀오 강화·
+     * 순풍)도 함께 빠져 뒤이은 평타가 "너무 빠르다"가 되므로, 시전 한 번 동안만 풀었다 되돌린다.
+     */
+    const held = { stunnedFor: attacker.stunnedFor, staggeredFor: attacker.staggeredFor, frozen: attacker.frozen };
+    attacker.stunnedFor = 0; attacker.staggeredFor = 0; attacker.frozen = null;
+    const fired = fireUltimate(state, attacker.id, rng);
+    attacker.stunnedFor = held.stunnedFor; attacker.staggeredFor = held.staggeredFor; attacker.frozen = held.frozen;
+    attacker.attackCooldown = Number.POSITIVE_INFINITY;
+    return fired;
+  }
   const events: SkirmishEvent[] = [];
-  // 검증기는 로그에 기록된 행동 자체를 재생하므로 자동 게이지 소비 대신 정적 스킬을 직접 실행한다.
-  if (kind === "ultimate") attacker.energy = Math.max(attacker.energy, attacker.def.ultimate.cost);
-  strike(attacker, target, rng, state, events, kind === "ultimate");
+  strike(attacker, target, rng, state, events, false);
+  // 제 둘레를 치는 평타는 재현 속 자리가 실제 판과 어긋나면 **아무도 맞히지 못한다.** 피해는
+  // 없는 채로 두되(점수를 깎을 뿐이다) 쳤다는 사실이 채우는 게이지는 남긴다 — 그러지 않으면
+  // 그 게이지로 쓴 다음 궁극기가 "게이지가 모자란다"로 거절된다.
+  if (!events.some((event) => event.kind === "attack" && event.attackerId === attacker.id)) gainEnergy(attacker, state);
   // 명시적 보스 ID만 대조해 향후 광역 부속물 피해가 폰토스 점수에 섞이지 않게 한다.
   if (state.boss) state.boss.score += events.reduce((sum, event) => sum + (event.kind === "attack" && event.attackerId === attacker.id && event.targetId === target.id ? event.contributionAmount : 0), 0);
   return events;

@@ -509,16 +509,6 @@
 "Zusammenbruch",
 "Обрушение"
 ],
-"expedition.phase.3": [
-"灭绝",
-"สูญพันธุ์",
-"Tuyệt chủng",
-"Kepunahan",
-"Extinción",
-"Extinção",
-"Aussterben",
-"Вымирание"
-],
 "raid.phase.0": [
 "交战",
 "ปะทะ",
@@ -548,16 +538,6 @@
 "Última resistência",
 "Letztes Aufgebot",
 "Последний рубеж"
-],
-"raid.phase.3": [
-"撤退",
-"ถอนกำลัง",
-"Rút lui",
-"Penarikan",
-"Retirada",
-"Retirada",
-"Rückzug",
-"Отступление"
 ],
 "item.raidSigil.name": [
 "讨伐徽印",

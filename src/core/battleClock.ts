@@ -49,37 +49,66 @@ export function formatBattleClock(elapsedSeconds: number): string {
 /**
  * **데스 카운트** — 끝나지 않는 판을 끝내는 시계.
  *
- * 자동 전투는 양쪽이 서로 못 죽이는 조합이 실제로 나온다. 현상수배는 제한 시간을 두어
- * 그 판을 패배로 세었지만(`BOUNTY.limitSeconds`), 나머지 모드는 손잡이가 없어 영영 돌았다.
+ * 자동 전투는 양쪽이 서로 못 죽이는 조합이 실제로 나온다. **모든 모드의 유일한 끝내는 장치다** —
+ * 현상수배의 60초 제한, 레이드·폰토스의 90초 처형 단계는 걷어 냈다(v0.199.0). 같은 일을 두 장치가
+ * 하면 어느 쪽이 판을 닫았는지 읽히지 않는다.
  *
  * **제한 시간으로 끊지 않고 판을 기울인다.** 시간이 다 됐다고 그 자리에서 패배를 선언하면
- * 거의 이긴 판과 아무것도 못 한 판이 같은 결과가 된다. 대신 3분을 넘긴 순간부터 매초
- * 아군이 최대 체력의 일부를 잃고 **버티는 수단이 함께 시든다** — 이기고 있던 판은 그 안에
+ * 거의 이긴 판과 아무것도 못 한 판이 같은 결과가 된다. 대신 90초를 넘긴 순간부터 매초
+ * 아군이 최대 체력의 일부를 잃고 **버티는 수단이 함께 시든다**(점점 세게) — 이기고 있던 판은 그 안에
  * 끝나고, 못 끝내는 판은 스스로 무너진다. 어느 쪽이든 판은 반드시 닫힌다.
  *
  * ## 왜 회복·보호막까지 깎나
  *
  * 피해만 얹으면 **회복량이 그 피해보다 큰 편성**은 여전히 영원히 산다. 실제로 끝나지 않는
  * 판의 대부분이 그 모양이라, 버티는 쪽의 성능이 같이 시들어야 시계가 제 일을 한다.
- * 50초면 회복이 0이 되므로 3분 50초 안에는 어떤 편성이든 반드시 닫힌다.
+ * **점점 세진다** — 첫 번째는 1%이고 매번 0.5%씩 더 깎아, 19번(1분 49초)이면 회복이 0이 되고
+ * 최대 체력만큼 깎여 어떤 편성이든 반드시 닫힌다.
+ *
+ * ## 왜 90초인가
+ *
+ * 실측(v0.199.0, 자동 궁극기): 스토리는 권장 레벨 ±8에서 이긴 판이 **최대 28초**, 진 판도 83초 안에
+ * 끝났다. 대작전은 레벨이 한참 모자라거나 넘치는 판까지 넣어도 이긴 판의 90%가 69초 안이고, 레이드는
+ * 90%가 84초 안에 스스로 전멸한다. 90초는 설계 목표(`ENCOUNTER_ROLE`의 10~32초)의 세 배라 정상적인
+ * 판에는 닿지 않고, 레이드 점수는 옛 90초 처형과 거의 같다(점점 세지는 시계로 평균 +1%). 3분이던 때는 끝나지 않는 판이
+ * 4분 가까이 돌았다. 콘텐츠의 목표 시간을 바꾸면 이 값도 다시 잰다.
  */
 export const BATTLE_DEATH_CLOCK = {
   /** 이 시각(초)을 넘기는 순간부터 돈다. */
-  startsAtSeconds: 180,
+  startsAtSeconds: 90,
   /** 몇 초마다 한 번 도는가. */
   tickSeconds: 1,
-  /** 한 번 돌 때 아군이 잃는 최대 체력 비율(%). 방어·경감을 지나지 않는 고정 피해다. */
-  maxHpDamagePercentPerTick: 2,
-  /** 한 번 돌 때 회복·보호막이 잃는 성능(%). 누적이라 50번이면 0이 된다. */
-  recoveryLossPercentPerTick: 2,
+  /**
+   * 첫 번째가 깎는 비율(%). 아군의 최대 체력과 회복·보호막 성능을 **같은 비율로** 깎는다 —
+   * 체력 피해는 방어·경감을 지나지 않는 고정 피해다.
+   */
+  firstTickPercent: 1,
+  /**
+   * 한 번 돌 때마다 다음 번이 더 깎는 몫(%). **시계는 점점 세진다** — 처음 몇 번은 거의 이긴 판이
+   * 끝낼 틈을 주고, 그래도 끌리는 판은 가속이 붙어 빠르게 닫힌다. 고정 2%이던 때는 50번을 기다려야
+   * 했는데(2분 20초), 지금은 19번(1분 49초)이면 어떤 편성이든 닫힌다.
+   */
+  rampPercentPerTick: 0.5,
 } as const;
+
+/** n번째(1부터) 데스 카운트가 깎는 비율(%). */
+export function deathClockTickPercent(tick: number): number {
+  if (tick < 1) return 0;
+  return BATTLE_DEATH_CLOCK.firstTickPercent + BATTLE_DEATH_CLOCK.rampPercentPerTick * (tick - 1);
+}
+
+/** 첫 번째부터 n번째까지 깎은 비율의 합(%). */
+export function deathClockCumulativePercent(ticks: number): number {
+  if (ticks < 1) return 0;
+  return ticks * BATTLE_DEATH_CLOCK.firstTickPercent + BATTLE_DEATH_CLOCK.rampPercentPerTick * ticks * (ticks - 1) / 2;
+}
 
 /** 그 시각까지 데스 카운트가 **몇 번 돌았어야 하는가**. 시작 전에는 0이다. */
 export function deathClockTicksAt(elapsedSeconds: number): number {
   if (!Number.isFinite(elapsedSeconds)) return 0;
   const past = elapsedSeconds - BATTLE_DEATH_CLOCK.startsAtSeconds;
   if (past < 0) return 0;
-  // 3분에 닿는 그 순간 첫 번째가 돈다 — 그래야 "넘어가면 작동한다"가 화면과 어긋나지 않는다.
+  // 시작 시각에 닿는 그 순간 첫 번째가 돈다 — 그래야 "넘어가면 작동한다"가 화면과 어긋나지 않는다.
   return Math.floor(past / BATTLE_DEATH_CLOCK.tickSeconds) + 1;
 }
 
@@ -90,9 +119,23 @@ export function deathClockTicksAt(elapsedSeconds: number): number {
  * 한쪽만 깎으면 남은 쪽으로 버티는 편성이 그대로 남는다.
  */
 export function deathClockSurvivalMultiplier(elapsedSeconds: number): number {
-  const lost = deathClockTicksAt(elapsedSeconds) * BATTLE_DEATH_CLOCK.recoveryLossPercentPerTick;
+  const lost = deathClockCumulativePercent(deathClockTicksAt(elapsedSeconds));
   return Math.min(1, Math.max(0, 1 - lost / 100));
 }
+
+/**
+ * 데스 카운트가 **어떤 편성이든** 닫는 시각(초). 회복·보호막이 0이 되는 틱과 최대 체력을 다 깎는
+ * 틱 중 늦은 쪽이다. 제한 시간을 따로 두지 않는 보스 판의 길이 상한이 이 값에서 나온다.
+ */
+export function deathClockClosesBySeconds(): number {
+  // 누적이 100%에 닿는 틱 — 그때 회복·보호막은 0이고 최대 체력만큼 깎였다.
+  let ticks = 1;
+  while (deathClockCumulativePercent(ticks) < 100) ticks += 1;
+  return BATTLE_DEATH_CLOCK.startsAtSeconds + ticks * BATTLE_DEATH_CLOCK.tickSeconds;
+}
+
+/** 보스 판 재현이 데스 카운트가 닫는 시각 뒤로 더 허용하는 여유(초) — 부활·불멸 같은 버팀의 몫. */
+export const BOSS_REPLAY_SLACK_SECONDS = 30;
 
 /** 데스 카운트가 도는 중인가. 화면이 시계를 붉게 맥동시키는 조건과 같은 값을 읽는다. */
 export function isDeathClockRunning(elapsedSeconds: number): boolean {

@@ -34,8 +34,8 @@ export type BountyStep =
 /**
  * 그 라운드의 결과가 판을 어디로 보내는가.
  *
- * **진 라운드는 남은 라운드를 열지 않는다.** 시간을 다 써 무승부로 끝난 라운드도 `won: false`로
- * 들어온다 — 죽이지 못한 것은 이긴 것이 아니다(`BOUNTY.limitSeconds`).
+ * **진 라운드는 남은 라운드를 열지 않는다.** 서로 못 죽이던 라운드는 데스 카운트에 무너져
+ * `won: false`로 들어온다 — 죽이지 못한 것은 이긴 것이 아니다.
  */
 export function nextBountyStep(round: BountyRoundIndex, won: boolean): BountyStep {
   if (!won) return { kind: "defeat", round };

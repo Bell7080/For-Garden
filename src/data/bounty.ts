@@ -64,27 +64,29 @@ export const BOUNTY = {
  * 줄어드는지**다.
  *
  * 뒤엣것이 처음 표를 되돌렸다. 레벨을 다섯씩 올리던 첫 표는 레벨 20 파티 기준으로 2급과 3급이
- * **똑같은 무게**(32종)였다 — 등급이 보상만 다른 같은 관문이 되는 자리다. 지금은 실효 레벨이
- * 등급마다 크게 벌어져(토비 10 → 20 → 35 → 50 → 70) 그 수가 37 → 32 → 26 → 19 → 12로 내려간다.
+ * **똑같은 무게**(32종)였다 — 등급이 보상만 다른 같은 관문이 되는 자리다. 지금은 레벨이
+ * 등급마다 크게 벌어져(5 → 18 → 32 → 46 → 60) 레벨 20 파티가 낼 수 있는 수가
+ * 44 → 34 → 25 → 16 → 11로 내려간다. 스테미나는 모든 등급이 10이라 위 등급일수록 1당 골드가
+ * 크게 좋아지고(120 → 2,640), 그 몫만큼 5급은 돌파를 끝까지 연 만렙(LV.60)의 자리다.
  */
 export const BOUNTY_TIERS: readonly BountyTierDef[] = [
   // 1급은 스토리 1장을 막 민 파티(레벨 15 언저리)가 들어서는 자리다.
   { id: "bounty-1", order: 1, name: "현상수배 1급", rewardGold: 1_200, rounds: [
     { relicId: "toby", level: 5 }, { relicId: "amo", level: 5 }, { relicId: "koma", level: 5 },
   ] },
-  // 2급부터 레벨 상한(20)을 채운 셋을 요구한다.
+  // 2급부터 돌파 없는 상한(20)을 넘는다.
   { id: "bounty-2", order: 2, name: "현상수배 2급", rewardGold: 3_300, rounds: [
-    { relicId: "toby", level: 15 }, { relicId: "amo", level: 15 }, { relicId: "koma", level: 15 },
+    { relicId: "toby", level: 18 }, { relicId: "amo", level: 18 }, { relicId: "koma", level: 18 },
   ] },
   { id: "bounty-3", order: 3, name: "현상수배 3급", rewardGold: 6_400, rounds: [
-    { relicId: "toby", level: 25 }, { relicId: "amo", level: 25 }, { relicId: "koma", level: 25 },
+    { relicId: "toby", level: 32 }, { relicId: "amo", level: 32 }, { relicId: "koma", level: 32 },
   ] },
   { id: "bounty-4", order: 4, name: "현상수배 4급", rewardGold: 14_400, rounds: [
-    { relicId: "toby", level: 40 }, { relicId: "amo", level: 40 }, { relicId: "koma", level: 40 },
+    { relicId: "toby", level: 46 }, { relicId: "amo", level: 46 }, { relicId: "koma", level: 46 },
   ] },
   // 5급은 돌파로 상한을 연 만렙 셋의 자리다.
   { id: "bounty-5", order: 5, name: "현상수배 5급", rewardGold: 26_400, rounds: [
-    { relicId: "toby", level: 50 }, { relicId: "amo", level: 50 }, { relicId: "koma", level: 50 },
+    { relicId: "toby", level: 60 }, { relicId: "amo", level: 60 }, { relicId: "koma", level: 60 },
   ] },
 ];
 

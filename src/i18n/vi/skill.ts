@@ -56,6 +56,7 @@ export const SKILL_VI = {
   "skill.ferocity.vanguardCharge": "Nhận khiên bằng {shield}% [[missing-hp|máu đã mất]] và [[attack-speed|Tốc đánh]] tăng {percent}%.",
   "skill.ferocity.selfAttackSpeedMultiplier": "Tốc đánh tăng {percent}%.",
   "skill.ferocity.selfAttackSpeedMultiplier.shield": "Tốc đánh tăng {percent}%, và khi hồi máu cũng trao cho đồng minh đó khiên bằng {shield}% lượng hồi.",
+  "skill.ferocity.selfAttackSpeedMultiplier.pull": "Ngay khi vào Cuồng bạo, [[pull|kéo]] mọi kẻ địch gần đó lại. Trong Cuồng bạo, Tốc đánh tăng {percent}%.",
   "skill.ferocity.packHunt": "Vào [[stealth|Tàng hình]] {seconds} giây và kích hoạt lại [[pack-hunt|Săn theo bầy]]. Trong Cuồng bạo, [[attack-speed|Tốc đánh]] của các đồng minh còn sống chung mục tiêu, kể cả bản thân, tăng {percent}%.",
   "skill.ferocity.crescendoStaccato": "Trong Cuồng bạo, mỗi đòn đánh thường của đồng minh trúng đích cũng kích hoạt một [[mette-staccato|Staccato]] mang {damage} sát thương.",
   "skill.ferocity.crescendoStaccato.power": "{percent}% Công",

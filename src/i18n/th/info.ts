@@ -24,6 +24,7 @@ export const INFO_TH = {
   "info.enemy.role.stat.body": "ขนาดตัว ×{value}",
   "info.enemy.role.tenacity": "เริ่มต้นด้วย[[tenacity|ความทนทาน]] {base}% และเพิ่ม {per}% ทุกครั้งที่สลัด[[crowd-control|การควบคุม]]หลุด สูงสุด {max}%",
   "info.enemy.role.damageReduction": "เริ่มต้นด้วย[[damage-reduction|ลดความเสียหาย]] {base}% และเพิ่มถึง {max}% เมื่อ[[hp|พลังชีวิต]]ลดลง ความเสียหายไม่เกิน {ignore} จะถูกลบล้าง",
+  "info.enemy.role.percentHpResistance": "ได้รับความเสียหายตาม HP สูงสุดน้อยลง {percent}%",
   "info.enemy.role.line.normal": "“พวกเรา? ก็แค่ลูกกระจ๊อกที่ผ่านมา… แต่จะพยายามเต็มที่นะ!”",
   "info.section.rune": "รูน",
   "info.level": "เลเวล",

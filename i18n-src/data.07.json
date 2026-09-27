@@ -81,10 +81,10 @@
 "relic.toby.observation.lifeStage": ["成年", "โตเต็มวัย", "Trưởng thành", "Dewasa", "Adulto", "Adulto", "Adult", "Взрослый"],
 "relic.toby.observation.height": ["1.42 m", "1.42 m", "1,42 m", "1,42 m", "1,42 m", "1,42 m", "1,42 m", "1,42 м"],
 "relic.toby.observation.weight": ["48 kg", "48 kg", "48 kg", "48 kg", "48 kg", "48 kg", "48 kg", "48 кг"],
-"relic.toby.passive.name": ["先摸再想", "จับก่อนคิดทีหลัง", "Sờ trước nghĩ sau", "Sentuh Dulu, Pikir Belakangan", "Primero toco, luego pienso", "Primeiro mexo, depois penso", "Erst anfassen, dann denken", "Сначала трогаю, потом думаю"],
+"relic.toby.passive.name": ["恶棍中的恶棍", "ตัวร้ายในหมู่ตัวร้าย", "Kẻ xấu trong những kẻ xấu", "Penjahat di Antara Penjahat", "El villano de los villanos", "O vilão dos vilões", "Der Schurke unter den Schurken", "Злодей среди злодеев"],
 "relic.toby.passive.desc": ["每次普通攻击命中时，本场战斗攻击速度提升。", "ทุกครั้งที่การโจมตีปกติโดน ความเร็วโจมตีเพิ่มขึ้นตลอดการต่อสู้นี้", "Mỗi khi đòn đánh thường trúng, Tốc đánh tăng trong trận này.", "Setiap serangan dasar mengenai, Kecepatan Serang naik untuk pertarungan ini.", "Cada vez que un ataque básico impacta, la Velocidad de ataque sube durante este combate.", "Cada vez que um ataque básico acerta, a Velocidade de ataque sobe nesta batalha.", "Jeder treffende Normalangriff erhöht das Angriffstempo für diesen Kampf.", "Каждая попавшая обычная атака повышает скорость атаки до конца боя."],
-"relic.toby.ferocity.name": ["蛮牛冲撞", "พุ่งชนดั่งกระทิง", "Húc như bò tót", "Serudukan Banteng", "Embestida de toro", "Investida de touro", "Stierangriff", "Бычий напор"],
-"relic.toby.basic.name": ["螯钳扭转", "บิดด้วยก้าม", "Xoắn càng", "Pelintir Capit", "Giro de pinza", "Torção de pinça", "Scherendrehung", "Поворот клешни"],
-"relic.toby.ultimate.name": ["先撕开再说", "ฉีกก่อนค่อยว่ากัน", "Xé toạc trước đã", "Robek Dulu Saja", "Primero lo abro", "Primeiro eu arrombo", "Erst mal aufreißen", "Сначала вскрыть"],
+"relic.toby.ferocity.name": ["一团乱麻！", "วุ่นวายสุด ๆ!", "Loạn hết cả lên!", "Kacau Total!", "¡Un caos total!", "Uma bagunça total!", "Totales Chaos!", "Полный хаос!"],
+"relic.toby.basic.name": ["锋利蟹钳", "ก้ามคม", "Càng sắc", "Capit Tajam", "Pinza afilada", "Pinça afiada", "Scharfe Schere", "Острая клешня"],
+"relic.toby.ultimate.name": ["彻底粉碎", "พังให้ยับ", "Đập tan tành", "Hancurkan Total", "Destrozo total", "Destruição total", "Alles zertrümmern", "Разнести всё"],
 "relic.toby.projectName": ["ANNIHILATION OVERREACH", "ANNIHILATION OVERREACH", "ANNIHILATION OVERREACH", "ANNIHILATION OVERREACH", "ANNIHILATION OVERREACH", "ANNIHILATION OVERREACH", "ANNIHILATION OVERREACH", "ANNIHILATION OVERREACH"]
 }

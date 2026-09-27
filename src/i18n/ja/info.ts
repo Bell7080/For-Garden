@@ -24,6 +24,7 @@ export const INFO_JA = {
   "info.enemy.role.stat.body": "体格 ×{value}",
   "info.enemy.role.tenacity": "[[tenacity|強靭さ]]{base}%から始まり、[[crowd-control|行動妨害]]を受けるたびに{per}%ずつ、最大{max}%まで上がる。",
   "info.enemy.role.damageReduction": "[[damage-reduction|軽減]]{base}%から始まり、[[hp|体力]]が削れるほど最大{max}%まで上がり、{ignore}以下のダメージは無効になる。",
+  "info.enemy.role.percentHpResistance": "最大体力に比例するダメージを{percent}%軽減して受ける。",
   "info.enemy.role.line.normal": "「わたしたち？ 通りすがりの雑兵ですけど…それでもがんばります！」",
   "info.section.rune": "ルーン",
   "info.level": "レベル",

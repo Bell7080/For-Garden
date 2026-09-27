@@ -455,7 +455,8 @@ describe("폰토스 스킬 표시 계약", () => {
     expect(encounterRoleDescription("endless")).toBe(
       "공격력·주문력 ×2.6   ·   몸집 ×1.45\n"
       + "[[tenacity|강인함]] 50%로 시작해 [[crowd-control|군중제어]]를 받을 때마다 8%씩, 최대 100%까지 오른다."
-      + "\n[[damage-reduction|경감]] 70%로 시작해 [[hp|체력]]이 깎일수록 최대 99%까지 오르고, 10 이하의 피해는 무효가 된다.",
+      + "\n[[damage-reduction|경감]] 70%로 시작해 [[hp|체력]]이 깎일수록 최대 99%까지 오르고, 10 이하의 피해는 무효가 된다."
+      + "\n최대 체력 비례 피해를 30% 덜 받는다.",
     );
     // 폭주도 같은 규칙으로 태그를 건다 — 고정 피해가 무엇인지는 규칙어가 말한다.
     expect(ferocityTraitDescription(pontos.ferocityTrait)).toBe(
@@ -1015,6 +1016,21 @@ describe("파치 스킬 표시 계약", () => {
   });
 });
 
+describe("공멸 적 폭주 표시 계약", () => {
+  it("토비의 「완전 난장판!」은 공속이 아니라 주위로 번지는 기본 공격이다", () => {
+    const toby = RELICS.find((def) => def.id === "toby")!;
+    expect(toby.ferocityTrait.effectId).toBe("splashDamage");
+    const text = ferocityTraitDescription(toby.ferocityTrait, { attack: toby.stats.atk, defense: toby.stats.def });
+    expect(text).toBe("기본 공격이 대상 주위의 모든 적에게 적중해 원래 피해의 40%를 입힌다.");
+  });
+
+  it("타보아의 「똬리 속으로」는 들어서는 순간의 끌어당김을 먼저 말한다", () => {
+    const taboa = RELICS.find((def) => def.id === "taboa")!;
+    const text = ferocityTraitDescription(taboa.ferocityTrait, { attack: taboa.stats.atk, defense: taboa.stats.def });
+    expect(text).toBe("폭주에 들어가는 순간 주위의 모든 적을 [[pull|끌어당긴다]]. 폭주 중 공격 속도가 25% 증가한다.");
+  });
+});
+
 describe("수쿠스이노 스킬 표시 계약", () => {
   const boss = () => RELICS.find((def) => def.id === "sukusuino")!;
 
@@ -1030,7 +1046,7 @@ describe("수쿠스이노 스킬 표시 계약", () => {
     expect(def.passive.shellGuard?.lowestHpAllyShieldMaxHpPercent).toBe(0);
     const text = passiveDescription(def.passive, def.stats.atk);
     // 계약은 아모와 같아도 겹의 이름은 이 개체의 것이다 — 조가비가 아니라 흉터다.
-    expect(text).toContain("[[scar|흉터]]를 한 겹");
+    expect(text).toContain("[[scar|흉터]]가 한 겹");
     expect(text).not.toContain("조가비");
     expect(text).not.toContain("아군");
     expect(text).not.toContain("회복");
@@ -1178,7 +1194,7 @@ describe("아모 조가비 표시 계약", () => {
     expect(passiveDescription(amo.passive)).toContain("[[shell|조가비]]");
     expect(passiveDescription(amo.passive)).toContain("최대 체력의 10%");
     expect(ferocityTraitDescription(amo.ferocityTrait)).toContain("조가비]]를 3겹");
-    expect(skillDescription(amo.ultimate)).toContain("조가비]] 내부 재사용 대기시간을 초기화");
+    expect(skillDescription(amo.ultimate)).toContain("조가비]]가 곧바로 다시 터질 수 있게 된다");
   });
 });
 

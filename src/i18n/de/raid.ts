@@ -17,7 +17,7 @@ export const RAID_DE = {
   "raid.summon.select": "Wahlbeschwörung",
   "raid.summon.difficulty": "{difficulty} · LV.{level}",
   "raid.pick.levels": "LV.{min}~{max}",
-  "raid.pick.hp": "Boss-Leben {hp} · {kills} Siege",
+  "raid.pick.hp": "Boss-Leben {hp}",
   "raid.settle.button": "Abrechnen",
   "raid.settle.title": "Raid-Abrechnung",
   "raid.settle.done": "Abgerechnet",
@@ -29,7 +29,6 @@ export const RAID_DE = {
   "raid.settle.participants": "{count} Teilnehmende",
   "raid.settle.score": "Meine Punkte",
   "raid.boss.remaining": "Restleben",
-  "raid.boss.kills": "Siege {done} / {kills}",
   "raid.boss.defeated": "Bezwungen",
   "raid.endsAt": "Endet {time}",
   "raid.attempts": "Verbleibende Versuche {remaining}/{limit}",
@@ -46,5 +45,5 @@ export const RAID_DE = {
   "raid.reward.killNo": "Laufend",
   "raid.reward.killFailed": "Gescheitert",
   "raid.reward.note": "Nach dem Raid in der Registerkarte „Abgeschlossen“ abrechnen",
-  "raid.result.footnote": "Verursachter Schaden {damage} · Mein Beitrag zu diesem Raid {total}",
+  "raid.result.score": "Punkte {score}",
 } as const;

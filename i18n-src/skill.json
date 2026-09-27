@@ -549,6 +549,16 @@
 "Das Angriffstempo steigt um {percent}%, und Heilung gibt dem Verbündeten zusätzlich einen Schild von {shield}% der geheilten Menge.",
 "Скорость атаки растёт на {percent}%, а лечение также даёт союзнику щит в {shield}% от вылеченного."
 ],
+"skill.ferocity.selfAttackSpeedMultiplier.pull": [
+"进入暴走的瞬间，[[pull|拉近]]附近所有敌人。暴走期间攻击速度提升{percent}%。",
+"ทันทีที่เข้าสู่คลั่ง [[pull|ดึง]]ศัตรูทั้งหมดใกล้ ๆ เข้ามา ระหว่างคลั่งความเร็วโจมตีเพิ่มขึ้น {percent}%",
+"Ngay khi vào Cuồng bạo, [[pull|kéo]] mọi kẻ địch gần đó lại. Trong Cuồng bạo, Tốc đánh tăng {percent}%.",
+"Saat memasuki Amuk, [[pull|menarik]] semua musuh terdekat. Selama Amuk, Kecepatan Serang naik {percent}%.",
+"Al entrar en Frenesí, [[pull|atrae]] a todos los enemigos cercanos. Durante el Frenesí, la Velocidad de ataque sube un {percent}%.",
+"Ao entrar em Frenesi, [[pull|puxa]] todos os inimigos próximos. Durante o Frenesi, a Velocidade de ataque sobe {percent}%.",
+"Beim Eintritt in die Raserei [[pull|zieht]] alle Gegner in der Nähe heran. Während der Raserei steigt das Angriffstempo um {percent}%.",
+"При входе в Неистовство [[pull|притягивает]] всех ближних врагов. Во время Неистовства скорость атаки растёт на {percent}%."
+],
 "skill.ferocity.packHunt": [
 "进入[[stealth|隐身]]{seconds}秒并再次发动[[pack-hunt|群猎]]。暴走期间，与其目标相同的存活队友（包括自身）[[attack-speed|攻击速度]]提升{percent}%。",
 "[[stealth|ล่องหน]] {seconds} วินาที และเปิดใช้[[pack-hunt|ล่าเป็นฝูง]]อีกครั้ง ระหว่างคลั่ง พันธมิตรที่มีชีวิตซึ่งมีเป้าหมายเดียวกัน รวมถึงตัวเอง [[attack-speed|ความเร็วโจมตี]]เพิ่มขึ้น {percent}%",

@@ -17,7 +17,7 @@ export const RAID_RU = {
   "raid.summon.select": "Выборочный призыв",
   "raid.summon.difficulty": "{difficulty} · LV.{level}",
   "raid.pick.levels": "LV.{min}~{max}",
-  "raid.pick.hp": "ОЗ босса {hp} · Убийств: {kills}",
+  "raid.pick.hp": "ОЗ босса {hp}",
   "raid.settle.button": "Рассчитать",
   "raid.settle.title": "Расчёт рейда",
   "raid.settle.done": "Рассчитано",
@@ -29,7 +29,6 @@ export const RAID_RU = {
   "raid.settle.participants": "Участников: {count}",
   "raid.settle.score": "Мои очки",
   "raid.boss.remaining": "Осталось ОЗ",
-  "raid.boss.kills": "Убийства {done} / {kills}",
   "raid.boss.defeated": "Усмирён",
   "raid.endsAt": "Окончание {time}",
   "raid.attempts": "Осталось попыток {remaining}/{limit}",
@@ -46,5 +45,5 @@ export const RAID_RU = {
   "raid.reward.killNo": "Идёт",
   "raid.reward.killFailed": "Неудача",
   "raid.reward.note": "После окончания рейда получите расчёт во вкладке «Завершены»",
-  "raid.result.footnote": "Нанесено урона {damage} · Мой вклад в этот рейд {total}",
+  "raid.result.score": "Очки {score}",
 } as const;

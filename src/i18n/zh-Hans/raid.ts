@@ -17,7 +17,7 @@ export const RAID_ZH_HANS = {
   "raid.summon.select": "选择召唤",
   "raid.summon.difficulty": "{difficulty} · LV.{level}",
   "raid.pick.levels": "LV.{min}~{max}",
-  "raid.pick.hp": "首领生命 {hp} · 击败{kills}次",
+  "raid.pick.hp": "首领生命 {hp}",
   "raid.settle.button": "结算",
   "raid.settle.title": "讨伐结算",
   "raid.settle.done": "结算完成",
@@ -29,7 +29,6 @@ export const RAID_ZH_HANS = {
   "raid.settle.participants": "参与 {count}人",
   "raid.settle.score": "我的分数",
   "raid.boss.remaining": "剩余生命",
-  "raid.boss.kills": "击败 {done} / {kills}",
   "raid.boss.defeated": "讨伐完成",
   "raid.endsAt": "{time}结束",
   "raid.attempts": "剩余挑战 {remaining}/{limit}",
@@ -46,5 +45,5 @@ export const RAID_ZH_HANS = {
   "raid.reward.killNo": "进行中",
   "raid.reward.killFailed": "失败",
   "raid.reward.note": "讨伐结束后，在「已完成」分页结算领取",
-  "raid.result.footnote": "造成伤害 {damage} · 本次讨伐我的贡献 {total}",
+  "raid.result.score": "得分 {score}",
 } as const;

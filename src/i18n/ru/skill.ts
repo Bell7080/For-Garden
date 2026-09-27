@@ -56,6 +56,7 @@ export const SKILL_RU = {
   "skill.ferocity.vanguardCharge": "Получает щит в {shield}% [[missing-hp|потерянного здоровья]], [[attack-speed|скорость атаки]] растёт на {percent}%.",
   "skill.ferocity.selfAttackSpeedMultiplier": "Скорость атаки растёт на {percent}%.",
   "skill.ferocity.selfAttackSpeedMultiplier.shield": "Скорость атаки растёт на {percent}%, а лечение также даёт союзнику щит в {shield}% от вылеченного.",
+  "skill.ferocity.selfAttackSpeedMultiplier.pull": "При входе в Неистовство [[pull|притягивает]] всех ближних врагов. Во время Неистовства скорость атаки растёт на {percent}%.",
   "skill.ferocity.packHunt": "Уходит в [[stealth|невидимость]] на {seconds} с и снова запускает [[pack-hunt|охоту стаей]]. Во время неистовства [[attack-speed|скорость атаки]] живых союзников с той же целью, включая себя, растёт на {percent}%.",
   "skill.ferocity.crescendoStaccato": "Во время неистовства каждая попавшая обычная атака союзника также вызывает [[mette-staccato|стаккато]] с уроном {damage}.",
   "skill.ferocity.crescendoStaccato.power": "{percent}% атаки —",

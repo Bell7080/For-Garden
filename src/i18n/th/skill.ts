@@ -56,6 +56,7 @@ export const SKILL_TH = {
   "skill.ferocity.vanguardCharge": "ได้รับโล่เท่ากับ {shield}% ของ[[missing-hp|HP ที่เสียไป]] และ[[attack-speed|ความเร็วโจมตี]]เพิ่มขึ้น {percent}%",
   "skill.ferocity.selfAttackSpeedMultiplier": "ความเร็วโจมตีเพิ่มขึ้น {percent}%",
   "skill.ferocity.selfAttackSpeedMultiplier.shield": "ความเร็วโจมตีเพิ่มขึ้น {percent}% และเมื่อฟื้นฟูจะมอบโล่เท่ากับ {shield}% ของปริมาณที่ฟื้นฟูให้พันธมิตรนั้นด้วย",
+  "skill.ferocity.selfAttackSpeedMultiplier.pull": "ทันทีที่เข้าสู่คลั่ง [[pull|ดึง]]ศัตรูทั้งหมดใกล้ ๆ เข้ามา ระหว่างคลั่งความเร็วโจมตีเพิ่มขึ้น {percent}%",
   "skill.ferocity.packHunt": "[[stealth|ล่องหน]] {seconds} วินาที และเปิดใช้[[pack-hunt|ล่าเป็นฝูง]]อีกครั้ง ระหว่างคลั่ง พันธมิตรที่มีชีวิตซึ่งมีเป้าหมายเดียวกัน รวมถึงตัวเอง [[attack-speed|ความเร็วโจมตี]]เพิ่มขึ้น {percent}%",
   "skill.ferocity.crescendoStaccato": "ระหว่างคลั่ง ทุกครั้งที่การโจมตีปกติของพันธมิตรโดน จะเกิด[[mette-staccato|สตัคคาโต]]ที่มีความเสียหาย {damage} เพิ่มอีกครั้ง",
   "skill.ferocity.crescendoStaccato.power": "{percent}% ของพลังโจมตี",

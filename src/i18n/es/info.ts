@@ -24,6 +24,7 @@ export const INFO_ES = {
   "info.enemy.role.stat.body": "Tamaño ×{value}",
   "info.enemy.role.tenacity": "Empieza con un {base}% de [[tenacity|Tenacidad]] y gana un {per}% cada vez que se libra del [[crowd-control|control de masas]], hasta un {max}%.",
   "info.enemy.role.damageReduction": "Empieza con un {base}% de [[damage-reduction|Reducción de daño]] que sube hasta un {max}% al bajar la [[hp|Salud]]; el daño de {ignore} o menos se anula.",
+  "info.enemy.role.percentHpResistance": "Recibe un {percent}% menos de daño basado en la Salud máxima.",
   "info.enemy.role.line.normal": "«¿Nosotros? Solo somos esbirros de paso… ¡pero lo daremos todo!»",
   "info.section.rune": "Runa",
   "info.level": "Nivel",

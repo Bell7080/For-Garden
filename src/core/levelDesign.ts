@@ -92,6 +92,15 @@ export interface EncounterRoleSpec {
   tenacity?: EncounterTenacity;
   /** 그 자리가 갖는 경감. 죽지 않는 자리만 갖는다. */
   damageReduction?: EncounterDamageReduction;
+  /**
+   * **최대 체력 비례 피해(출혈·뇌진탕·빙결 해제)를 덜 받는 비율(%).**
+   *
+   * 비율 피해는 맞는 쪽이 두꺼울수록 커지므로, 압도적인 체력으로 서는 자리(보스·불사)에서는 같은 출혈이
+   * 다른 모든 타격을 합친 것보다 커진다. 기준 체력(`percentHpBasis`)을 성장 체력으로 낮춘 뒤에도 여전히
+   * 한 개체의 퍼뎀이 판을 끌고 가서, 그 자리에만 한 겹을 더 둔다. 받는 피해 전체를 깎는 경감이 아니라
+   * **비율 피해만** 줄이므로 무엇으로 때리면 되는지는 그대로 읽힌다.
+   */
+  percentHpResistance?: number;
 }
 
 /**
@@ -162,6 +171,7 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
      * 번의 잠금은 확실히 가져가게 하는 선이다.
      */
     tenacity: { basePercent: 50, perControlPercent: 6, maxPercent: 100 },
+    percentHpResistance: 30,
   },
   endless: {
     // 판 안에서 눕지 않는다(`SkirmishState.boss`의 불사 계약). 체력은 세기가 아니라 점수를 재는
@@ -180,6 +190,7 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
      * 체력 75%에서 80%, 50%에서 87%, 25%에서 93%로 붙고 끝에서 상한에 **부딪히지 않고 닿는다.**
      */
     damageReduction: { basePercent: 70, maxPercent: 99, maxAtHpPercent: 0, curve: 0.75, ignoreAtOrBelow: 10 },
+    percentHpResistance: 30,
   },
 };
 

@@ -2,7 +2,6 @@ import Phaser from "phaser";
 import type { RaidDto } from "../api/contracts";
 import { RAID_DIFFICULTY, RAID_SUMMON_DIFFICULTIES, type RaidDifficulty } from "../data/raid";
 import { formatCurrency } from "../core/formatCurrency";
-import { raidKillTicks } from "../core/raid";
 import { getRelic } from "../data/relics";
 import { t } from "../i18n";
 import { computeFaceBandFrame } from "../puppets/anchors";
@@ -165,7 +164,7 @@ export function addRaidLayer(
   // 맨 밑은 참가자 전원이 함께 깎는 남은 체력이다. 잡지 못해도 되는 판이라 게이지가 비지 않은 채
   // 끝나는 날이 있다 — 그래서 수치는 남은 몫이 아니라 **남은 비율**로 짧게 선다.
   const barWidth = width - slant - padding * 2;
-  const bar = new HoloBar(scene, 0, height / 2 - hp.up, barWidth, hp.height, { color: RAID_HP_BAR_COLOR, trackAlpha: 0.82, outline: true, ticks: raidKillTicks(raid.kills, 7) });
+  const bar = new HoloBar(scene, 0, height / 2 - hp.up, barWidth, hp.height, { color: RAID_HP_BAR_COLOR, trackAlpha: 0.82, outline: true, ticks: 7 });
   bar.setValue(raid.totalHp > 0 ? raid.remainingHp / raid.totalHp : 0);
   bar.objects.forEach((object) => layer.add(object));
   const percent = raid.totalHp > 0 ? Math.ceil(raid.remainingHp / raid.totalHp * 100) : 0;
@@ -173,10 +172,6 @@ export function addRaidLayer(
     .text(-barWidth / 2, height / 2 - hp.labelUp, raid.defeated ? t("raid.boss.defeated") : t("raid.boss.remaining"), textStyle({ role: "emphasis", size: 24, color: raid.defeated ? COLOR.accentText : COLOR.inkDim }))
     .setOrigin(0, 0.5));
   layer.add(hpLabel);
-  // 한 칸이 보스 한 번 처치다. 남은 비율만으로는 몇 번 더 잡으면 끝나는지 읽히지 않는다.
-  layer.add(shadowed(scene.add
-    .text(hpLabel.x + hpLabel.width + 16, height / 2 - hp.labelUp, t("raid.boss.kills", { done: raid.killsDone, kills: raid.kills }), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText }))
-    .setOrigin(0, 0.5)));
   layer.add(shadowed(scene.add
     .text(barWidth / 2, height / 2 - hp.labelUp, t("raid.world.percent", { percent }), textStyle({ role: "display", size: 30, color: COLOR.ink }))
     .setOrigin(1, 0.5), 6));
@@ -389,7 +384,7 @@ export function addRaidDifficultyPickLayer(
     .text(textX, spec.reward.y - spec.rewardText.labelUp, t("raid.settle.max"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim }))
     .setOrigin(0, 0.5)));
   layer.add(shadowed(scene.add
-    .text(textX, spec.reward.y + spec.rewardText.valueDown, t("raid.pick.hp", { hp: formatCurrency(table.bodyHp), kills: table.kills }), textStyle({ role: "body", size: 23, color: COLOR.ink }))
+    .text(textX, spec.reward.y + spec.rewardText.valueDown, t("raid.pick.hp", { hp: formatCurrency(table.totalHp) }), textStyle({ role: "body", size: 23, color: COLOR.ink }))
     .setOrigin(0, 0.5)));
   return layer;
 }

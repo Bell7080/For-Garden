@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { deathClockClosesBySeconds } from "../../src/core/battleClock";
 import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_DIFFICULTY, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM, isRaidDifficulty, RAID_RUN_STAMINA, raidRunStamina } from "../../src/data/raid";
-import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidKillProgress, raidKillTicks, raidDayProgress, raidResetsAt, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../../src/core/raid";
+import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidDayProgress, raidResetsAt, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../../src/core/raid";
 import { getRelic, PLAYABLE_RELICS, RELICS } from "../../src/data/relics";
 import { ENCOUNTER_ROLE, applyEncounterScaling } from "../../src/core/levelDesign";
 
@@ -284,17 +284,6 @@ describe("레이드 보스", () => {
       expect(upper.kills).toBeGreaterThanOrEqual(lower.kills);
     }
     expect(RAID_SEASON_TOTAL_HP).toBe(RAID_DIFFICULTY.rampage.totalHp);
-  });
-
-  it("의 처치 수는 몸 한 줄 단위로 버림해 센다", () => {
-    const { bodyHp, kills } = RAID_DIFFICULTY.easy;
-    expect(raidKillProgress(0, "easy")).toEqual({ done: 0, kills, bodyHp });
-    expect(raidKillProgress(bodyHp - 1, "easy").done).toBe(0);
-    expect(raidKillProgress(bodyHp * 2 + 5, "easy").done).toBe(2);
-    expect(raidKillProgress(bodyHp * (kills + 3), "easy").done).toBe(kills);
-    // 한 칸이 한 번 처치다. 칸이 너무 촘촘하면(월드 폭주) 기본 칸으로 되돌아간다.
-    expect(raidKillTicks(6, 7)).toBe(5);
-    expect(raidKillTicks(40, 7)).toBe(7);
   });
 
   it("의 비율 피해는 시즌 단위가 아니라 성장 체력에서 잰다", () => {

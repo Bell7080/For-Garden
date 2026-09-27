@@ -84,7 +84,7 @@ export function createExpeditionBossSkirmishConfig(input: ExpeditionBossBattleIn
  * 한 판은 몸을 다 깎거나 전멸할 때까지 민 몫을 잰다. 따로 두던 90초 처형은 걷어 냈고, 끝나지
  * 않는 판은 모든 전투와 같은 데스 카운트가 닫는다.
  */
-export function createRaidSkirmishConfig(playerDefs: readonly RelicDef[], boss: RelicDef, percentHpBasis: number): ExpeditionSkirmishConfig & { boss: { phases: SkirmishBossPhase[]; limitSeconds: number; percentHpBasis: number; endsOnKill: boolean } } {
+export function createRaidSkirmishConfig(playerDefs: readonly RelicDef[], boss: RelicDef, percentHpBasis: number, seasonHp: number): ExpeditionSkirmishConfig & { boss: { phases: SkirmishBossPhase[]; limitSeconds: number; percentHpBasis: number; endsOnKill: boolean; seasonHp: number } } {
   return {
     playerDefs: [...playerDefs],
     enemyDefs: [{ ...boss, stats: { ...boss.stats } }],
@@ -96,8 +96,10 @@ export function createRaidSkirmishConfig(playerDefs: readonly RelicDef[], boss: 
       limitSeconds: RAID_BOSS_BALANCE.maximumDurationMs / 1_000,
       // 출혈 같은 비율 피해는 시즌 단위가 아니라 성장 체력에서 잰다(`raidBossPercentHpBasis`).
       percentHpBasis,
-      // 레이드의 몸은 공유 게이지의 한 칸이다 — 다 깎으면 그 판은 그 자리에서 끝난다.
+      // 머리 위 바가 곧 남은 공유 게이지다 — 한 판의 상한은 몸 한 줄이 아니라 남은 게이지 전체이고,
+      // 그것을 다 깎으면 그 판은 그 자리에서 끝난다.
       endsOnKill: true,
+      seasonHp,
     },
   };
 }
@@ -139,6 +141,11 @@ export interface RaidBattleInputDto {
   difficulty: RaidDifficulty;
   /** 그 판의 입장 영수증. 피해 제출은 이 ID로만 받는다(`enterRaid`). */
   requestId: string;
+  /**
+   * 입장한 순간의 남은 공유 체력(`EnterRaidResponse.raid.remainingHp`). 판 안의 보스 체력이 곧 이 값이다 —
+   * 서버도 입장에서 같은 값을 붙잡아 재현하므로, 그 사이 다른 참가자가 깎아도 두 판이 갈리지 않는다.
+   */
+  seasonHp: number;
 }
 
 /** 일반 스테이지 진입과 원정·레이드 진입을 명시적으로 구분하는 전투 씬 입력 계약이다. */
@@ -164,7 +171,7 @@ export function normalizeBattleSceneInput(input?: unknown): BattleSceneInputDto 
     const candidate = input as BattleSceneInputDto;
     if (candidate.mode === "expedition" || candidate.mode === "expeditionBoss" || candidate.mode === "cake") return candidate;
     // 레이드는 판 ID까지 있어야 한다 — 판별값만 남은 입력은 어느 체력을 깎을지 모른다.
-    if (candidate.mode === "raid" && typeof candidate.raidId === "string" && typeof candidate.bossRelicId === "string" && isRaidDifficulty(candidate.difficulty) && typeof candidate.requestId === "string") return candidate;
+    if (candidate.mode === "raid" && typeof candidate.raidId === "string" && typeof candidate.bossRelicId === "string" && isRaidDifficulty(candidate.difficulty) && typeof candidate.requestId === "string" && typeof candidate.seasonHp === "number" && Number.isFinite(candidate.seasonHp)) return candidate;
     // 현상수배는 라운드 번호까지 있어야 한 판이 이어진다 — 판별값만 남은 입력은 스토리로 돌린다.
     if (candidate.mode === "bounty" && typeof candidate.tierId === "string" && typeof candidate.requestId === "string") return candidate;
     // 스토리는 돌아갈 곳 하나만 이어받는다. 모르는 값은 기본 길(지도)로 수렴시킨다.

@@ -17,7 +17,7 @@ export const RAID_PT_BR = {
   "raid.summon.select": "Invocação escolhida",
   "raid.summon.difficulty": "{difficulty} · LV.{level}",
   "raid.pick.levels": "LV.{min}~{max}",
-  "raid.pick.hp": "PV do chefe {hp} · {kills} derrotas",
+  "raid.pick.hp": "PV do chefe {hp}",
   "raid.settle.button": "Acertar",
   "raid.settle.title": "Acerto da raide",
   "raid.settle.done": "Acertado",
@@ -29,7 +29,6 @@ export const RAID_PT_BR = {
   "raid.settle.participants": "{count} participantes",
   "raid.settle.score": "Minha pontuação",
   "raid.boss.remaining": "PV restante",
-  "raid.boss.kills": "Derrotas {done} / {kills}",
   "raid.boss.defeated": "Subjugado",
   "raid.endsAt": "Termina {time}",
   "raid.attempts": "Tentativas restantes {remaining}/{limit}",
@@ -46,5 +45,5 @@ export const RAID_PT_BR = {
   "raid.reward.killNo": "Em andamento",
   "raid.reward.killFailed": "Falhou",
   "raid.reward.note": "Quando a raide terminar, faça o acerto na aba Concluídas",
-  "raid.result.footnote": "Dano causado {damage} · Minha contribuição nesta raide {total}",
+  "raid.result.score": "Pontuação {score}",
 } as const;

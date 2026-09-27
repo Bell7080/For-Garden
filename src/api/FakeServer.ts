@@ -40,7 +40,7 @@ import { archaeologySiteAvailability } from "../core/archaeologyMap";
 import type { AbandonStrataRunRequest, ArchaeologyStateResponse, DigStrataTileRequest, DigStrataTileResponse, GrantRuneTraitRequest, GrantRuneTraitResponse, RerollRuneTraitRequest, RerollRuneTraitResponse, ResolveRuneTraitRerollRequest, ResolveRuneTraitRerollResponse, StartStrataRunRequest, UpgradeRuneTraitRequest, UpgradeRuneTraitResponse } from "./contracts";
 import { findItem, type WalletItemKey } from "../data/items";
 import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_COMPLETED_KEEP_HOURS, RAID_DIFFICULTY, RAID_RUN_GOLD_PER_DAMAGE, raidRunStamina, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM } from "../data/raid";
-import { mockFriendRaids, mockRaidContributions, raidKillProgress, mockRaidWorldDamage, mockSummonContributions, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../core/raid";
+import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonContributions, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../core/raid";
 import { battleArena } from "../core/battleArena";
 import { staminaCurrencyRecharge } from "../data/staminaRecharge";
 import { paidStaminaApplied, settleStamina, STAMINA_HOLD_LIMIT, staminaMaxForPlayer, staminaTiming } from "../core/stamina";
@@ -138,7 +138,8 @@ export class FakeServer implements GameApi {
   private readonly raidSubmissionResults = new Map<string, SubmitRaidDamageResponse>();
   private readonly raidAdmissionResults = new Map<string, EnterRaidResponse>();
   /** 입장했지만 아직 피해를 내지 않은 판. 입장 영수증 → 판 ID. */
-  private readonly pendingRaidRuns = new Map<string, string>();
+  /** 입장 영수증 → 그 판과 입장한 순간의 남은 공유 체력. 재현은 이 값으로 보스를 세운다(`seasonHp`). */
+  private readonly pendingRaidRuns = new Map<string, { raidId: string; seasonHp: number }>();
   private readonly raidSettleResults = new Map<string, SettleRaidResponse>();
   private readonly raidSummonResults = new Map<string, SummonRaidResponse>();
   /** 운영 DB의 런 ID/정산 ID 고유 제약과 빠른 원정 주간 카운터를 흉내 낸다. */
@@ -466,7 +467,6 @@ export class FakeServer implements GameApi {
     const progress = raidSeasonProgress(others + instance.myDamage, spec.totalHp);
     const completed = progress.defeated || now.getTime() >= Date.parse(instance.endsAt);
     const growth = raidBossGrowth(instance.difficulty);
-    const killProgress = raidKillProgress(progress.dealtDamage, instance.difficulty);
     const rewardOf = (currency: WalletItemKey, amount: number): RaidRewardDto => ({ currency, name: findItem(currency)?.name ?? currency, amount });
     // 진행 중인 판도 **지금까지의 몫**을 싣는다 — 층이 "끝나면 이만큼"을 미리 말한다. 받는 것은
     // 끝난 뒤의 정산 한 번뿐이다(`settleRaid`가 상태를 다시 본다).
@@ -479,7 +479,6 @@ export class FakeServer implements GameApi {
       id: instance.id, kind: instance.kind, bossRelicId: instance.bossRelicId, difficulty: instance.difficulty,
       bossLevel: growth.level, bossBreakthrough: growth.breakthrough,
       summonerName: instance.summonerName, summonedByMe: instance.summonedByMe,
-      bossBodyHp: killProgress.bodyHp, kills: killProgress.kills, killsDone: killProgress.done,
       totalHp: progress.totalHp, dealtDamage: progress.dealtDamage, remainingHp: progress.remainingHp, defeated: progress.defeated,
       status: completed ? "completed" : "active", openedAt: instance.openedAt, endsAt: instance.endsAt,
       myDamage: instance.myDamage, attemptsUsed: instance.attemptsUsed, attemptsLimit: RAID_ATTEMPTS_PER_RAID,
@@ -607,9 +606,10 @@ export class FakeServer implements GameApi {
     Object.assign(nextState, { wallet: spent.wallet, playerResearch: spent.playerResearch, missions: spent.missions, itemInventory: spent.itemInventory });
     nextState.raid = { instances: [...nextState.raid.instances.filter(({ id }) => id !== updated.id), updated] };
     this.commitRaidState(nextState);
-    this.pendingRaidRuns.set(request.requestId, updated.id);
+    const raidDto = this.raidDto(updated, now);
+    this.pendingRaidRuns.set(request.requestId, { raidId: updated.id, seasonHp: raidDto.remainingHp });
     const response: EnterRaidResponse = {
-      ...this.snapshot(), raid: this.raidDto(updated, now), requestId: request.requestId,
+      ...this.snapshot(), raid: raidDto, requestId: request.requestId,
       staminaSpent: cost, playerExp: spent.playerExp, refundPolicy: "no-refund-after-admission",
     };
     this.raidAdmissionResults.set(request.requestId, structuredClone(response));
@@ -633,7 +633,8 @@ export class FakeServer implements GameApi {
     if (!instance) throw new GameApiError("RAID_NOT_FOUND", "존재하지 않는 레이드입니다.");
     if (this.raidDto(instance, now).status !== "active") throw new GameApiError("RAID_ENDED", "이미 끝난 레이드입니다.");
     // 도전은 입장에서 이미 셌다 — 제출은 그 입장 영수증으로만 받는다.
-    if (this.pendingRaidRuns.get(request.requestId) !== instance.id) throw new GameApiError("RAID_NOT_ENTERED", "입장하지 않은 레이드 판입니다.");
+    const admission = this.pendingRaidRuns.get(request.requestId);
+    if (admission?.raidId !== instance.id) throw new GameApiError("RAID_NOT_ENTERED", "입장하지 않은 레이드 판입니다.");
 
     let result: ReturnType<typeof resolveExpeditionBossBattle>;
     try {
@@ -655,8 +656,9 @@ export class FakeServer implements GameApi {
         augmentEffects: growth.traitEffects, bondLevels: growth.bondLevels, breakthroughs: growth.breakthroughs,
         // 전장은 화면과 **같은 표**를 읽는다 — 자리가 다르면 사거리·표적이 갈려 재현이 어긋난다.
         arena: battleArena("raid"),
-        // 레이드의 몸은 쓰러진다 — 다 깎은 판은 그 자리에서 끝나고, 재현도 그 끝을 받는다.
+        // 레이드의 보스는 남은 공유 게이지를 다 깎으면 쓰러진다 — 재현도 입장한 순간의 게이지로 그 끝을 받는다.
         bossKillable: true,
+        seasonHp: admission.seasonHp,
       }, request.actions);
       if (result.totalDamage > RAID_BOSS_BALANCE.maximumAcceptedScore) throw new Error("ABNORMAL_SCORE");
     } catch (error) {
@@ -664,9 +666,10 @@ export class FakeServer implements GameApi {
       throw new GameApiError("RAID_SCORE_REJECTED", "검증할 수 없거나 비정상적으로 큰 레이드 피해입니다.", { cause: error });
     }
 
-    // **한 판이 깎는 것은 몸 한 줄까지다.** 쓰러진 몸 너머로 넘친 몫까지 공유 게이지에 들이면 처치
-    // 한 번이 한 칸이라는 단위가 깨진다(점수는 경감 전 기여라 몸보다 클 수 있다).
-    const runDamage = Math.min(RAID_DIFFICULTY[instance.difficulty].bodyHp, Math.max(0, Math.floor(result.totalDamage)));
+    // **한 판의 상한은 남은 공유 게이지뿐이다.** 몸 한 줄(`bodyHp`)에 묶던 때는 52,000점을 내도 25,000만
+    // 깎였다. 입장한 사이 다른 참가자가 더 깎았을 수 있으므로 지금 남은 몫에서 자른다.
+    const remainingNow = this.raidDto(instance, now).remainingHp;
+    const runDamage = Math.min(remainingNow, Math.max(0, Math.floor(result.totalDamage)));
     const gold = raidRunGold(runDamage, RAID_RUN_GOLD_PER_DAMAGE);
     const updated: RaidInstanceState = { ...instance, myDamage: instance.myDamage + runDamage };
     const nextState = structuredClone(this.state);

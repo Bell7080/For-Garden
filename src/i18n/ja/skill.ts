@@ -67,6 +67,7 @@ export const SKILL_JA = {
   "skill.ferocity.vanguardCharge": "[[missing-hp|失った体力]]の{shield}%のシールドを得て、[[attack-speed|攻撃速度]]が{percent}%増加する。",
   "skill.ferocity.selfAttackSpeedMultiplier": "攻撃速度が{percent}%増加する。",
   "skill.ferocity.selfAttackSpeedMultiplier.shield": "攻撃速度が{percent}%増加し、回復した量の{shield}%の防御膜をその味方に重ねる。",
+  "skill.ferocity.selfAttackSpeedMultiplier.pull": "暴走に入った瞬間、周囲のすべての敵を[[pull|引き寄せる]]。暴走中、攻撃速度が{percent}%増加する。",
   "skill.ferocity.packHunt": "{seconds}秒間[[stealth|隠密]]し、[[pack-hunt|群れ狩り]]を再び発動する。暴走中、自分を含めて同じ敵を標的にしている生存中の味方の[[attack-speed|攻撃速度]]が{percent}%増加する。",
   "skill.ferocity.crescendoStaccato": "暴走中、味方の通常攻撃が命中するたびに{damage}ダメージ量を持つ[[mette-staccato|スタッカート]]が追加で発動する。",
   "skill.ferocity.crescendoStaccato.power": "攻撃力{percent}%の",

@@ -24,6 +24,7 @@ export const INFO_ZH_HANS = {
   "info.enemy.role.stat.body": "体型 ×{value}",
   "info.enemy.role.tenacity": "初始拥有{base}%[[tenacity|韧性]]，每次摆脱[[crowd-control|控制]]时提升{per}%，最多{max}%。",
   "info.enemy.role.damageReduction": "初始拥有{base}%[[damage-reduction|伤害减免]]，随[[hp|生命]]降低提升至{max}%；{ignore}以下的伤害无效。",
+  "info.enemy.role.percentHpResistance": "受到的最大生命比例伤害减少{percent}%。",
   "info.enemy.role.line.normal": "“我们？只是路过的杂兵啦……不过会尽力的！”",
   "info.section.rune": "符文",
   "info.level": "等级",

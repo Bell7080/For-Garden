@@ -56,6 +56,7 @@ export const SKILL_ID = {
   "skill.ferocity.vanguardCharge": "Mendapat perisai senilai {shield}% [[missing-hp|HP yang hilang]] dan [[attack-speed|Kecepatan Serang]] naik {percent}%.",
   "skill.ferocity.selfAttackSpeedMultiplier": "Kecepatan Serang naik {percent}%.",
   "skill.ferocity.selfAttackSpeedMultiplier.shield": "Kecepatan Serang naik {percent}%, dan penyembuhan juga memberi sekutu itu perisai senilai {shield}% dari jumlah yang disembuhkan.",
+  "skill.ferocity.selfAttackSpeedMultiplier.pull": "Saat memasuki Amuk, [[pull|menarik]] semua musuh terdekat. Selama Amuk, Kecepatan Serang naik {percent}%.",
   "skill.ferocity.packHunt": "Masuk [[stealth|Siluman]] selama {seconds} dtk dan memicu [[pack-hunt|Perburuan Kawanan]] lagi. Selama Amukan, [[attack-speed|Kecepatan Serang]] sekutu hidup yang berbagi target, termasuk dirinya, naik {percent}%.",
   "skill.ferocity.crescendoStaccato": "Selama Amukan, setiap serangan dasar sekutu yang mengenai juga memicu [[mette-staccato|Staccato]] dengan kerusakan {damage}.",
   "skill.ferocity.crescendoStaccato.power": "{percent}% Serangan",

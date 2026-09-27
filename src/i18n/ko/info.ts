@@ -27,6 +27,7 @@ export const INFO_KO = {
   "info.enemy.role.stat.body": "몸집 ×{value}",
   "info.enemy.role.tenacity": "[[tenacity|강인함]] {base}%로 시작해 [[crowd-control|군중제어]]를 받을 때마다 {per}%씩, 최대 {max}%까지 오른다.",
   "info.enemy.role.damageReduction": "[[damage-reduction|경감]] {base}%로 시작해 [[hp|체력]]이 깎일수록 최대 {max}%까지 오르고, {ignore} 이하의 피해는 무효가 된다.",
+  "info.enemy.role.percentHpResistance": "최대 체력 비례 피해를 {percent}% 덜 받는다.",
   "info.enemy.role.line.normal": "“저희요? 그냥 지나가던 잡졸인데요… 그래도 열심히 해 볼게요!”",
   "info.section.rune": "룬",
   "info.level": "레벨",

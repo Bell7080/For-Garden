@@ -17,7 +17,7 @@ export const RAID_ES = {
   "raid.summon.select": "Invocación elegida",
   "raid.summon.difficulty": "{difficulty} · LV.{level}",
   "raid.pick.levels": "LV.{min}~{max}",
-  "raid.pick.hp": "PV del jefe {hp} · {kills} derrotas",
+  "raid.pick.hp": "PV del jefe {hp}",
   "raid.settle.button": "Liquidar",
   "raid.settle.title": "Liquidación de incursión",
   "raid.settle.done": "Liquidada",
@@ -29,7 +29,6 @@ export const RAID_ES = {
   "raid.settle.participants": "{count} participantes",
   "raid.settle.score": "Mi puntuación",
   "raid.boss.remaining": "PV restantes",
-  "raid.boss.kills": "Derrotas {done} / {kills}",
   "raid.boss.defeated": "Subyugado",
   "raid.endsAt": "Termina {time}",
   "raid.attempts": "Intentos restantes {remaining}/{limit}",
@@ -46,5 +45,5 @@ export const RAID_ES = {
   "raid.reward.killNo": "En curso",
   "raid.reward.killFailed": "Fallida",
   "raid.reward.note": "Cuando termine la incursión, liquídala en la pestaña Completadas",
-  "raid.result.footnote": "Daño infligido {damage} · Mi contribución a esta incursión {total}",
+  "raid.result.score": "Puntuación {score}",
 } as const;

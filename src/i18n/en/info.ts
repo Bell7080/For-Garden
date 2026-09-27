@@ -24,6 +24,7 @@ export const INFO_EN = {
   "info.enemy.role.stat.body": "Size ×{value}",
   "info.enemy.role.tenacity": "Starts at {base}% [[tenacity|Tenacity]] and gains {per}% each time it shrugs off [[crowd-control|crowd control]], up to {max}%.",
   "info.enemy.role.damageReduction": "Starts at {base}% [[damage-reduction|Damage Reduction]] and rises to {max}% as [[hp|Health]] falls; damage of {ignore} or less is nullified.",
+  "info.enemy.role.percentHpResistance": "Takes {percent}% less damage based on max Health.",
   "info.enemy.role.line.normal": "\"Us? We're just grunts passing by… but we'll do our best!\"",
   "info.section.rune": "Rune",
   "info.level": "Level",

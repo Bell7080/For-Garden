@@ -17,7 +17,7 @@ export const RAID_VI = {
   "raid.summon.select": "Triệu hồi chọn lọc",
   "raid.summon.difficulty": "{difficulty} · LV.{level}",
   "raid.pick.levels": "LV.{min}~{max}",
-  "raid.pick.hp": "Máu trùm {hp} · Hạ {kills} lần",
+  "raid.pick.hp": "Máu trùm {hp}",
   "raid.settle.button": "Quyết toán",
   "raid.settle.title": "Quyết toán đột kích",
   "raid.settle.done": "Đã quyết toán",
@@ -29,7 +29,6 @@ export const RAID_VI = {
   "raid.settle.participants": "{count} người tham gia",
   "raid.settle.score": "Điểm của tôi",
   "raid.boss.remaining": "Máu còn lại",
-  "raid.boss.kills": "Hạ {done} / {kills}",
   "raid.boss.defeated": "Đã chinh phạt",
   "raid.endsAt": "Kết thúc {time}",
   "raid.attempts": "Lượt thách đấu còn {remaining}/{limit}",
@@ -46,5 +45,5 @@ export const RAID_VI = {
   "raid.reward.killNo": "Đang diễn ra",
   "raid.reward.killFailed": "Thất bại",
   "raid.reward.note": "Khi đột kích kết thúc, quyết toán ở thẻ Hoàn thành để nhận",
-  "raid.result.footnote": "Sát thương gây ra {damage} · Đóng góp của tôi trong đột kích này {total}",
+  "raid.result.score": "Điểm {score}",
 } as const;

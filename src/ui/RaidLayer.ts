@@ -10,6 +10,7 @@ import { portraitAssetFor, withPuppetTexture } from "../puppets/assets";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { dotPattern } from "./Button";
+import { EFFECT_TEXTURE, ensureEffectTextures } from "./effectTextures";
 import { motionPolicy } from "../core/settings";
 import { session } from "../state/session";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
@@ -201,9 +202,15 @@ function addSettleCover(
   layer.add(cover);
   cover.add(drawLayer(scene, 0, 0, shape, { fill: COLOR.void, alpha: spec.dimAlpha }));
   cover.add(dotPattern(scene, shape, COLOR.accent, spec.dots));
+  // 글자 뒤의 옅은 어둠 — 판을 받치지 않고 부드러운 덩어리 하나로 글자 둘레만 눌러 둔다.
+  ensureEffectTextures(scene);
+  const haze = scene.add.image(0, 0, EFFECT_TEXTURE.glow).setTint(COLOR.void).setAlpha(spec.haze.alpha);
+  haze.setScale(spec.haze.width / haze.width, spec.haze.height / haze.height);
+  cover.add(haze);
   const label = shadowed(scene.add
     .text(0, 0, t("raid.settle.button"), textStyle({ role: "display", size: spec.labelSize, color: COLOR.accentText }))
-    .setOrigin(0.5), 10);
+    .setOrigin(0.5)
+    .setStroke(spec.stroke.color, spec.stroke.width), 14);
   cover.add(label);
   const breath = scene.tweens.add({ targets: label, alpha: spec.breath.from, duration: spec.breath.ms, yoyo: true, repeat: -1, ease: "Sine.InOut" });
   const still = motionPolicy(session.settings).nonEssentialDistanceFactor === 0;

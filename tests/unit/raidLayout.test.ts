@@ -69,6 +69,11 @@ describe("레이드 배치표", () => {
     expect(dots.reach).toBeLessThanOrEqual(0.5);
     expect(dismissMs).toBeLessThan(600);
     expect(breath.from).toBeGreaterThan(0.5);
+    // 글자 뒤 어둠은 글자보다 넓되 층을 통째로 덮지 않고, 완전히 검지 않다.
+    const { haze, labelSize } = RAID_LIST.settle;
+    expect(haze.height).toBeGreaterThan(labelSize);
+    expect(haze.width).toBeLessThan(RAID_LIST.width * 0.6);
+    expect(haze.alpha).toBeLessThan(0.8);
   });
 
   it("월드 폭주가 소환 레이드보다 두껍게 선다", () => {

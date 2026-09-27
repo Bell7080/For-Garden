@@ -2664,6 +2664,11 @@ export function openFerocityTraitPopup(
     id: "damage-value", term: String(convertedDamage), kind: "rule",
     description: t("skill.keyword.damage.bonus", { stat: damageSourceLabel, percent: defensePercent ?? attackPercent }),
   });
+  // 전장의 열기는 희열의 회복량을 키우므로 그 태그를 이 쪽지에서도 눌러 읽게 한다.
+  if (def.ferocityTrait.effectId === "battleHeat") {
+    const elation = elationKeyword(def.passive);
+    if (elation) contextualKeywords.push(elation);
+  }
   // 메테의 스타카토 추가타는 기본 공격과 같은 효과를 다시 부르는 것이므로 그 뜻을 여기서 짧게 설명한다.
   if (def.ferocityTrait.effectId === "crescendoStaccato") contextualKeywords.push({
     id: "mette-staccato", term: t("skill.keyword.staccato.term"), kind: "rule",
@@ -2778,7 +2783,7 @@ export function buildSkillViewModel(options: {
       // 기본 공격(겹마다 피해가 오른다)도 같은 태그를 가리키므로 그 쪽지에도 실린다.
       "kind" in skill
         ? elationKeyword(skill as Passive)
-        : ("selfBulwark" in skill && skill.selfBulwark?.fillPassiveStacks === true)
+        : ("selfBulwark" in skill && skill.selfBulwark?.passiveHealBonusPercent !== undefined)
           || ("elationDamagePercentPerStack" in skill && skill.elationDamagePercentPerStack !== undefined)
           ? elationKeyword(finalDef.passive) : undefined,
       // 「인」이 덮는 막도 실제 값으로 보여 주고, 어디서 나온 수인지 눌러 읽게 한다.

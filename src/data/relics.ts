@@ -1403,13 +1403,12 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    // 폭주하면 늘 내려 두던 베일을 걷는다. 서 있는 것만으로 주위가 지져지고 그 열기를 버틴 적은
-    // 잠깐 이쪽을 본다 — 회복만 있던 자리에 적에게 남기는 값을 하나 두는 것이라, 탱커가 자기
-    // 숫자만 바꾸다 화면에서 사라지는 일이 없다.
+    // 폭주에 들어서는 순간 넓은 범위의 적이 한꺼번에 이쪽을 본다(3초, 들어설 때 한 번). 폭주 동안은
+    // 서 있는 것만으로 주위가 지져지고 희열이 터질 때의 회복이 늘어난다 — 회복만 있던 자리에 적에게
+    // 남기는 값을 하나 두는 것이라, 탱커가 자기 숫자만 바꾸다 화면에서 사라지는 일이 없다.
     ferocityTrait: {
-      name: "베일을 걷고", effectId: "climax", auraDamageMaxHpPercent: 1.5, radius: 240,
-      // 화상 틱을 버틴 적만 잠깐 노도니아를 바라보므로 피해 반경과 도발 반경이 갈리지 않는다.
-      taunt: { kind: "taunt", seconds: 0.5 }, missingHpPercentPerBasic: 3,
+      name: "전장의 열기", effectId: "battleHeat", auraDamageMaxHpPercent: 1.5, radius: 240,
+      taunt: { kind: "taunt", seconds: 3 }, tauntRadius: 420, elationHealBonusPercent: 50,
     },
     passive: {
       // kind가 painfulElation인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
@@ -1420,11 +1419,13 @@ export const RELICS: RelicDef[] = [
       kind: "painfulElation",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
-      // Passive.value는 공용 필수 필드라, 이 패시브에서는 겹 하나가 매초 돌리는 비율을 담아 둔다.
-      value: 0.4,
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 한 번 터질 때의 회복 비율을 담아 둔다.
+      value: 8,
       durationSeconds: 5,
-      elation: { maxStacks: 10, maxHpRegenPercentPerStack: 0.4, seconds: 5 },
-      desc: "적에게 피격당하거나 아군 대신 맞을 때마다 희열이 한 겹 쌓여 겹당 매초 최대 체력의 0.4%를 회복한다. 최대 열 겹까지 쌓이고 5초 동안 남으며, 다시 맞으면 유지 시간이 처음부터 다시 흐른다.",
+      // 다섯 번 맞으면 겹을 모두 쓰고 최대 체력 8%를 한 번에 되찾는다. 궁극기(+200%)와 폭주(+50%)가
+      // 이 회복량을 더해서 키운다.
+      elation: { maxStacks: 5, healMaxHpPercent: 8, seconds: 5 },
+      desc: "적에게 피격당하거나 아군 대신 맞을 때마다 희열이 한 겹 쌓이고, 다섯 겹이 되면 모두 써서 최대 체력의 8%를 회복한다. 겹은 5초 동안 남으며 다시 맞으면 유지 시간이 처음부터 다시 흐른다.",
     },
     basic: {
       id: "nodonia-basic",
@@ -1434,9 +1435,9 @@ export const RELICS: RelicDef[] = [
       // 유일한 축이 체력이라 몸집이 곧 손이 된다.
       power: 5,
       scalingStat: "hp",
-      // 맞아서 쌓인 희열이 손으로 돌아온다 — 열 겹이면 한 방이 거의 두 배(+80%)다. 앞에 서서 오래
-      // 버틸수록 세게 치므로, 맞는 자리에 서 있는 이유가 재생 하나로 끝나지 않는다.
-      elationDamagePercentPerStack: 8,
+      // 맞아서 쌓인 희열이 손으로 돌아온다 — 다섯 겹째에 터지므로 쥘 수 있는 것은 네 겹, 최대 +48%다.
+      // 쌓였다 터지는 박자가 손에도 그대로 실려, 회복이 터지기 직전의 한 방이 가장 무겁다.
+      elationDamagePercentPerStack: 12,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -1444,20 +1445,18 @@ export const RELICS: RelicDef[] = [
     },
     ultimate: {
       id: "nodonia-ult",
-      // "아가"라 부르는 아이들 앞을 막아서는 한마디다. 아군 몫의 아픔을 전부 제가 가져간다.
-      name: "대신 아파 줄게요",
+      // 아픔이 곧 기쁨인 개체가 가장 많이 맞는 순간이다 — 아군의 몫까지 전부 제가 받는다.
+      name: "절정",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
       cost: 150,
       // 아무도 때리지 않고 아무 데도 가지 않는다. 앞에 서서 아군의 몫을 대신 받는 것이 전부다.
       targeting: "self",
-      // 방어를 올리지 않고 회복만 돌린다. 종이 방어로 다 맞으면서 그보다 빨리 차오르는 것이
-      // 이 궁극기이고, 끝난 뒤가 아니라 **버티는 동안** 돌아야 그 사이에 쓰러지지 않는다.
-      // **켜는 순간 희열을 열 겹까지 채운다.** 대신 받기는 아군 셋의 피해가 한꺼번에 몰려와, 겹이 빈
-      // 채로 켜면 재생이 차오르기 전에 쓰러졌다 — 첫 초부터 매초 9%(궁극기 5 + 희열 4)가 돌아 자동
-      // 궁극기에 맡겨도 버틴다. 보호막은 두르지 않는다(엘라의 결이다). 종이 방어·산더미 체력·맞으며
-      // 차오르는 결은 그대로다.
-      selfBulwark: { seconds: 5, redirectPercent: 100, maxHpRegenPercentPerSecond: 5, fillPassiveStacks: true },
+      // 방어를 올리지 않는다. 매초 5% 회복이 있던 자리를 **희열 회복량 +200%**가 갖는다 — 대신 받은
+      // 피해도 희열이 되므로 가장 많이 맞는 이 5초에 겹이 가장 빨리 차고, 그때 터지는 회복이 세 배가
+      // 된다. 켜는 순간 희열을 끝까지 채워 곧바로 한 번 차오르고 시작한다(초보자용 손질).
+      // 보호막은 두르지 않는다(엘라의 결이다).
+      selfBulwark: { seconds: 5, redirectPercent: 100, passiveHealBonusPercent: 200, fillPassiveStacks: true },
     },
   },
 

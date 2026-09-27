@@ -20,8 +20,6 @@ export interface UnitStatusView {
   color: number;
   /** 겹치는 상태만 갖는 겹 수. 칩 우하단의 작은 수가 이 값이다. */
   stacks?: number;
-  /** 숫자 대신 채워진 시험관 수로 읽는 자원만 갖는 고정 슬롯 수다. */
-  stackSlots?: number;
   /** 남은 시간(초)과 한 바퀴의 전체 시간. 시계 고리가 이 둘의 비로 돈다. */
   remaining?: number;
   total?: number;
@@ -166,7 +164,7 @@ export function unitStatusViews(fighter: Fighter, pack: readonly Fighter[] = [])
   for (const [providerId, reagent] of Object.entries(fighter.reagents)) {
     views.push({
       key: `reagent:${providerId}`, id: "reagent", name: t("status.reagent"), color: UNIT_STATUS_COLOR.reagent,
-      stacks: reagent.stacks, stackSlots: 3,
+      stacks: reagent.stacks,
       remaining: reagent.remaining, total: Math.max(reagent.total, reagent.remaining),
       detail: t("status.reagent.detail", { stacks: reagent.stacks, time: seconds(reagent.remaining) }),
     });

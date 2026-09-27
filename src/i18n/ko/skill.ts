@@ -100,7 +100,7 @@ export const SKILL_KO = {
   "skill.ferocity.knockbackSlam": "{loaded}[[concussion|뇌진탕]]이 확정 치명타가 되고, 그 적을 [[knockback|날려버린다]]. 날려버린 뒤에는 가장 가까운 적을 표적으로 다시 지정한다.",
   "skill.ferocity.knockbackSlam.loaded": "폭주에 들어가면 [[concussion|뇌진탕]]이 곧바로 장전된다. ",
   "skill.ferocity.frenzyGaze": "폭주 중 [[basic-attack|기본 공격]]에 적중한 적을 {seconds}초 동안 [[frenzy|광란]]시킨다. 전이된 타격으로는 발동하지 않는다.",
-  "skill.ferocity.climax": "매초 자신의 주위 모든 적에게 최대 체력의 {percent}%만큼 [[fixed-damage|고정 피해]]를 준다. 매초 피해를 받은 적을 {seconds}초 동안 [[taunt|도발]]한다. [[basic-attack|기본 공격]]마다 [[missing-hp|잃은 체력]]의 {healPercent}%를 회복한다.",
+  "skill.ferocity.battleHeat": "폭주에 들어서는 순간 넓은 범위의 적을 {seconds}초 동안 [[taunt|도발]]한다. 매초 자신의 주위 모든 적에게 최대 체력의 {percent}%만큼 [[fixed-damage|고정 피해]]를 준다. 폭주 동안 [[nodonia-elation|희열]]의 회복량이 {healPercent}% 증가한다.",
   "skill.ferocity.graffitiRun": "이동 속도가 {percent}% 증가하고 [[basic-attack|기본 공격]]을 하지 않는다. 매초 자신의 주위 모든 적에게 {damage}의 [[magical-damage|마법 피해]]를 주고 [[vandalism|밴덜리즘]]을 한 겹 쌓으며 {seconds}초 동안 [[taunt|도발]]한다.",
   "skill.ferocity.furCoat": "폭주에 들어가는 순간 자신의 모든 상태이상·디버프를 지우고 최대 체력의 {percent}% 보호막을 얻는다. 폭주 중에는 방어력과 저항력이 {guardPercent}% 오른다.",
   "skill.ferocity.shellResolve": "폭주에 들어가는 순간 자신의 모든 상태이상·디버프를 지우고 [[shell|조가비]]를 {stacks}겹 얻는다. 폭주 중 조가비 내부 재사용 대기시간이 {seconds}초로 줄어든다.",
@@ -121,7 +121,7 @@ export const SKILL_KO = {
 
   // ── 패시브 ──────────────────────────────────────────────────────────────
   "skill.keyword.elation.term": "희열",
-  "skill.keyword.elation.description": "한 겹마다 매초 최대 체력의 {percent}%를 회복하며 최대 {stacks}겹까지 쌓인다. {seconds}초 동안 남으며 다시 맞으면 유지 시간이 처음부터 다시 흐른다.",
+  "skill.keyword.elation.description": "{stacks}겹이 되면 모두 써서 최대 체력의 {percent}%를 회복한다. {seconds}초 동안 남으며 다시 맞으면 유지 시간이 처음부터 다시 흐른다.",
   "skill.passive.crit.same": "치명타 확률과 치명타 피해가 모두 {percent}% 오른다.",
   "skill.passive.crit.split": "치명타 확률이 {chance}%, 치명타 피해가 {damage}% 오른다.",
   "skill.passive.crit.chance": "치명타 확률이 {percent}% 오른다.",
@@ -176,7 +176,7 @@ export const SKILL_KO = {
   "skill.sentence.clause": "{text}.",
   "skill.sentence.teamMissingHpHeal": "모든 생존 아군이 각자 [[missing-hp|잃은 체력]]의 {percent}%를 회복한다.",
   "skill.sentence.selfBulwark": "{seconds}초 동안 모든 아군이 받는 피해를 대신 받고, 그동안 매초 최대 체력의 {percent}%를 회복한다.",
-  "skill.sentence.selfBulwarkElation": "[[nodonia-elation|희열]]을 끝까지 채우고 {seconds}초 동안 모든 아군이 받는 피해를 대신 받으며, 그동안 매초 최대 체력의 {percent}%를 회복한다.",
+  "skill.sentence.selfBulwarkElation": "[[nodonia-elation|희열]]을 끝까지 채우고 {seconds}초 동안 모든 아군이 받는 피해를 대신 받으며, 그동안 [[nodonia-elation|희열]]의 회복량이 {percent}% 증가한다.",
   "skill.sentence.overpaintDetonation": "{target} 쌓인 [[overpaint|덧칠]]을 터뜨려 한 겹마다 {damage}를 주고, 그 덧칠을 지운다.",
   "skill.sentence.channel": "{target} {seconds}초 동안 매초 {damage}를 주고 {effects}.",
   "skill.sentence.channel.rider": "{tick} 그동안 [[basic-attack|기본 공격]]에 맞은 적을 {effects}.",

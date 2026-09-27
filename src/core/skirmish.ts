@@ -380,15 +380,15 @@ export interface Fighter extends Combatant {
    * 정해진 최대 겹을 넘지 않으며 다시 피격되면 유지 시간이 처음부터 갱신된다. 갱신 없이 유지
    * 시간이 만료되면 쌓인 희열을 모두 제거한다.
    */
-  elation: { stacks: number; remaining: number; total: number; regenPercentPerStack: number; maxStacks: number; tickIn: number } | null;
+  elation: { stacks: number; remaining: number; total: number; maxStacks: number } | null;
   /**
-   * 아군이 받을 피해를 대신 받는 중. 「대신 아파 줄게요」가 켠다.
+   * 아군이 받을 피해를 대신 받는 중. 「절정」이 켠다.
    *
    * **슬롯은 하나뿐이다** — 두 겹으로 쌓으면 같은 피해가 두 번 나뉘어 아군이 실제로 받는 몫이
    * 화면과 갈린다. 그래서 새로 켜질 때는 **대신 받는 비율이 큰 쪽**이 남고, 비율이 같으면 남은
    * 시간이 긴 쪽이 남는다.
    */
-  bulwark: { remaining: number; total: number; percent: number; regenPercentPerSecond: number; tickIn: number; skillId: string; name: string } | null;
+  bulwark: { remaining: number; total: number; percent: number; regenPercentPerSecond: number; passiveHealBonusPercent: number; tickIn: number; skillId: string; name: string } | null;
   /**
    * 이번 프레임에 쓰러질 피해를 가로챘다는 표시다.
    *
@@ -406,8 +406,8 @@ export interface Fighter extends Combatant {
   empoweredBasic: boolean;
   /** 폰토스 폭주의 다음 1초 고정 피해까지 남은 시간이며 비활성 중에는 1초로 초기화한다. */
   pontusRageTickIn: number;
-  /** 「베일을 걷고」의 다음 1초 주위 피해까지 남은 시간이며 비활성 중에는 1초로 초기화한다. */
-  climaxAuraTickIn: number;
+  /** 「전장의 열기」의 다음 1초 주위 피해까지 남은 시간이며 비활성 중에는 1초로 초기화한다. */
+  heatAuraTickIn: number;
   /** 토리카 탱커 폭주의 다음 1초 최대 체력 회복까지 남은 시간이다. */
   ferocityRegenTickIn: number;
   /**
@@ -629,7 +629,7 @@ export type SkirmishEvent =
        * 아군 피격 여부보다 먼저 색을 정한다 — 같은 상태가 바닥과 머리 위에서 다른 색이면
        * 무엇이 걸렸는지 두 번 읽어야 한다.
        */
-      status?: "submerged";
+      status?: "submerged" | "taunt";
       area:
         | { shape: "radial"; x: number; y: number; radius: number }
         | { shape: "lane"; from: { x: number; y: number }; to: { x: number; y: number }; halfWidth: number }
@@ -1036,7 +1036,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     empoweredBasic: false,
     // 폭주가 켜진 뒤 온전한 1초가 지나야 첫 파동이 발생한다.
     pontusRageTickIn: 1,
-    climaxAuraTickIn: 1,
+    heatAuraTickIn: 1,
     ferocityRegenTickIn: 1,
     vandalism: null,
     artChannel: null,
@@ -1924,34 +1924,40 @@ function grantShieldFromDamage(attacker: Fighter, dealt: number, events: Skirmis
 }
 
 /**
- * 「달콤한 상처」 — 맞은 그 순간 겹이 하나 오른다.
+ * 희열 — 맞은 그 순간 겹이 하나 오르고, **상한에 닿는 그 프레임에 겹을 모두 쓰고 회복한다.**
  *
- * **공격에 맞았을 때(아군 대신 맞은 한 대 포함)만 오른다.** 출혈·중독처럼 시간이 깎는 피해까지 세면 겹이 저절로 차올라
- * "앞에 서서 맞고 있다"가 아니라 "가만히 있어도 단단해진다"가 된다.
+ * **공격에 맞았을 때(아군 대신 맞은 한 대 포함)만 오른다.** 출혈·중독처럼 시간이 깎는 피해까지
+ * 세면 겹이 저절로 차올라 "앞에 서서 맞고 있다"가 아니라 "가만히 있어도 차오른다"가 된다.
  *
- * 정해진 최대 겹에 닿으면 더 쌓이지 않으며, 다시 맞을 때마다 유지 시간을 처음부터 갱신한다.
- * 겹은 별도 효과를 발동해 소비되지 않고 유지 시간이 만료될 때 모두 제거된다.
+ * 회복량은 궁극기(대신 받는 동안)와 폭주(전장의 열기)가 **더해서** 키운다 — 둘이 곱해지면 같은
+ * 궁극기가 폭주에 들어 있느냐에 따라 한 번에 서너 배씩 갈린다.
  */
-function gainElation(target: Fighter): void {
+function gainElation(target: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
   const plan = target.def.passive.elation;
   if (target.def.passive.kind !== "painfulElation" || plan === undefined || !isFighterAlive(target)) return;
-  target.elation = {
-    stacks: Math.min(plan.maxStacks, (target.elation?.stacks ?? 0) + 1),
-    remaining: plan.seconds,
-    total: plan.seconds,
-    regenPercentPerStack: plan.maxHpRegenPercentPerStack,
-    maxStacks: plan.maxStacks,
-    // 겹이 새로 쌓여도 남은 틱은 이어 간다 — 맞을 때마다 초기화하면 재생이 영영 돌지 않는다.
-    tickIn: target.elation?.tickIn ?? 1,
-  };
+  const stacks = Math.min(plan.maxStacks, (target.elation?.stacks ?? 0) + 1);
+  if (stacks < plan.maxStacks) {
+    target.elation = { stacks, remaining: plan.seconds, total: plan.seconds, maxStacks: plan.maxStacks };
+    return;
+  }
+  target.elation = null;
+  const amount = applyHealing(state, target, target.maxHp * plan.healMaxHpPercent * elationHealMultiplier(target) / 100, target.id);
+  pushHeal(events, target, amount, "passive", 1.3);
 }
 
-/** 희열을 한 번에 최대 겹까지 채운다. 유지 시간도 처음부터 다시 흐른다. */
-function fillElation(target: Fighter): void {
+/** 희열을 상한까지 채운다. 상한에서 터지므로 곧바로 한 번 회복한다. */
+function fillElation(target: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
   const plan = target.def.passive.elation;
-  if (target.def.passive.kind !== "painfulElation" || plan === undefined) return;
-  for (let stack = target.elation?.stacks ?? 0; stack < plan.maxStacks; stack += 1) gainElation(target);
-  if ((target.elation?.stacks ?? 0) >= plan.maxStacks) gainElation(target);
+  if (target.def.passive.kind !== "painfulElation" || plan === undefined || !isFighterAlive(target)) return;
+  target.elation = { stacks: plan.maxStacks - 1, remaining: plan.seconds, total: plan.seconds, maxStacks: plan.maxStacks };
+  gainElation(target, state, events);
+}
+
+/** 희열 회복량의 배율. 궁극기와 폭주가 더하는 몫을 합친다. */
+export function elationHealMultiplier(target: Fighter): number {
+  const trait = target.def.ferocityTrait;
+  const fever = target.ferocityFever && trait.effectId === "battleHeat" ? trait.elationHealBonusPercent : 0;
+  return 1 + ((target.bulwark?.passiveHealBonusPercent ?? 0) + fever) / 100;
 }
 
 /** 제공자의 몫을 **받는 쪽 최대 체력의 비율**로 두르는 자리. 값만 구하고 두르는 일은 `grantShield`가 한다. */
@@ -2048,17 +2054,6 @@ function gainShellGuard(target: Fighter, stacks: number, state: SkirmishState, e
   consumeShellGuard(target, state, events);
 }
 
-/** 희열이 유지되는 동안 한 겹마다 매초 최대 체력에 비례한 회복을 적용한다. */
-function tickElationRegen(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
-  const elation = fighter.elation;
-  if (!elation || elation.regenPercentPerStack <= 0) return;
-  const tickIn = elation.tickIn - dt;
-  if (tickIn > 0) { fighter.elation = { ...elation, tickIn }; return; }
-  fighter.elation = { ...elation, tickIn: tickIn + 1 };
-  const amount = applyHealing(state, fighter, fighter.maxHp * elation.stacks * elation.regenPercentPerStack / 100, fighter.id);
-  pushHeal(events, fighter, amount, "passive");
-}
-
 /** 재피격으로 갱신되지 않은 희열의 유지 시간을 줄이고, 만료되면 모든 겹을 제거한다. */
 function tickElation(fighter: Fighter, dt: number): void {
   const elation = fighter.elation;
@@ -2071,18 +2066,19 @@ function tickElation(fighter: Fighter, dt: number): void {
  * 앞에 서기를 켠다. **슬롯은 하나뿐이다.**
  *
  * 두 겹으로 쌓으면 같은 한 방이 두 번 나뉘어 아군이 실제로 받는 몫이 화면과 갈린다. 지금은
- * 켜는 곳이 「대신 아파 줄게요」 하나뿐이라 다시 켜면 그대로 덮어쓴다 — 둘째 원천이 생기면 여기서
+ * 켜는 곳이 「절정」 하나뿐이라 다시 켜면 그대로 덮어쓴다 — 둘째 원천이 생기면 여기서
  * 어느 쪽이 남는지부터 정한다.
  */
 function raiseBulwark(
   fighter: Fighter,
-  plan: { seconds: number; percent: number; regenPercentPerSecond: number; skillId: string; name: string },
+  plan: { seconds: number; percent: number; regenPercentPerSecond: number; passiveHealBonusPercent: number; skillId: string; name: string },
 ): void {
   fighter.bulwark = {
     remaining: plan.seconds,
     total: plan.seconds,
     percent: plan.percent,
     regenPercentPerSecond: plan.regenPercentPerSecond,
+    passiveHealBonusPercent: plan.passiveHealBonusPercent,
     // 켜는 순간부터 한 박자 뒤에 첫 회복이 돈다 — 걸자마자 한 번 주면 시간이 짧을수록 이득이다.
     tickIn: 1,
     skillId: plan.skillId,
@@ -2104,24 +2100,12 @@ function tickBulwark(fighter: Fighter, dt: number, state: SkirmishState, events:
     const tickIn = bulwark.tickIn - dt;
     if (tickIn > 0) { fighter.bulwark = { ...bulwark, remaining, tickIn }; return; }
     fighter.bulwark = { ...bulwark, remaining, tickIn: tickIn + 1 };
+    if (bulwark.regenPercentPerSecond <= 0) return;
     const healed = applyHealing(state, fighter, fighter.maxHp * bulwark.regenPercentPerSecond / 100, fighter.id);
     pushHeal(events, fighter, healed, "ultimate", 1.65);
     return;
   }
   fighter.bulwark = null;
-}
-
-/**
- * 「베일을 걷고」의 자기 기본 공격 회복. 잃은 체력 비례라 아플수록 많이 돌아온다.
- *
- * 최대 체력 비례로 두면 멀쩡할 때 가장 많이 회복해 성질이 거꾸로 선다 — 앞에 서서 다 맞는
- * 개체라 아플 때 크게 돌아와야 한다.
- */
-function healClimaxBasic(attacker: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
-  const trait = attacker.def.ferocityTrait;
-  if (!attacker.ferocityFever || trait.effectId !== "climax") return;
-  const amount = applyHealing(state, attacker, (attacker.maxHp - attacker.hp) * trait.missingHpPercentPerBasic / 100, attacker.id);
-  pushHeal(events, attacker, amount, "ferocity", 1.2);
 }
 
 /**
@@ -2145,19 +2129,39 @@ function tickFerocityRegen(fighter: Fighter, dt: number, state: SkirmishState, e
 }
 
 /**
- * 「베일을 걷고」의 주위 지속 피해. 폭주 중에는 서 있는 것만으로 주위가 지져진다.
+ * 「전장의 열기」에 들어서는 순간의 도발. 넓은 반경의 적이 한꺼번에 노도니아를 바라본다.
+ *
+ * **들어서는 한 번**뿐이다 — 지속 피해 틱마다 걸던 때는 짧은 도발이 끊임없이 덮여 적이 언제
+ * 풀려나는지가 읽히지 않았다. 공용 상태 경로로 보내 원정 지속시간 배율과 더 긴 기존 도발을
+ * 보존하는 규칙을 그대로 받는다.
+ */
+function tauntOnBattleHeat(fighter: Fighter, trait: { taunt: CombatStatusEffect; tauntRadius: number }, state: SkirmishState, events: SkirmishEvent[]): void {
+  let struck = 0;
+  for (const other of state.fighters) {
+    if (other.side === fighter.side || !isFighterAlive(other) || distance(fighter, other) > trait.tauntRadius) continue;
+    applyCombatStatusEffect(other, trait.taunt, events, state, fighter.id, false);
+    struck += 1;
+  }
+  if (struck > 0) {
+    events.push({ kind: "areaImpact", attackerId: fighter.id, ultimate: false, status: "taunt",
+      area: { shape: "radial", x: fighter.x, y: fighter.y, radius: trait.tauntRadius } });
+  }
+}
+
+/**
+ * 「전장의 열기」의 주위 지속 피해. 폭주 중에는 서 있는 것만으로 주위가 지져진다.
  *
  * 최대 체력 비례 **고정 피해**라 방어를 지나간다 — 공격력을 아예 쓰지 않는 개체라 자기 몸이
  * 곧 화력이고, 그래서 체력을 올리는 것이 공격을 올리는 것이 된다. 폭주가 아닐 때 시계를 1로
  * 되돌리는 이유는, 그러지 않으면 폭주에 들어가는 첫 프레임에 한 번이 공짜로 터지기 때문이다.
  */
-function tickClimaxAura(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+function tickBattleHeatAura(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
   const trait = fighter.def.ferocityTrait;
-  if (trait.effectId !== "climax") return;
-  if (!fighter.ferocityFever) { fighter.climaxAuraTickIn = 1; return; }
-  const tickIn = fighter.climaxAuraTickIn - dt;
-  if (tickIn > 0) { fighter.climaxAuraTickIn = tickIn; return; }
-  fighter.climaxAuraTickIn = tickIn + 1;
+  if (trait.effectId !== "battleHeat") return;
+  if (!fighter.ferocityFever) { fighter.heatAuraTickIn = 1; return; }
+  const tickIn = fighter.heatAuraTickIn - dt;
+  if (tickIn > 0) { fighter.heatAuraTickIn = tickIn; return; }
+  fighter.heatAuraTickIn = tickIn + 1;
   const amount = Math.max(1, Math.round(fighter.maxHp * trait.auraDamageMaxHpPercent / 100));
   for (const other of state.fighters) {
     if (other.side === fighter.side || !isFighterAlive(other) || distance(fighter, other) > trait.radius) continue;
@@ -2167,9 +2171,6 @@ function tickClimaxAura(fighter: Fighter, dt: number, state: SkirmishState, even
     // 휘두르지 않고 서 있기만 하므로 시전 모션을 틀지 않는다(`animate: false`).
     events.push({ kind: "attack", attackerId: fighter.id, targetId: other.id, skill: "basic", amount,
       contributionAmount: amount, critical: false, animate: false, damageType: "true" });
-    // 피해 틱을 버틴 같은 대상만 공용 상태 경로로 보낸다. 그래야 원정 지속시간 배율과
-    // 더 긴 기존 도발을 보존하는 규칙을 그대로 받고, 반경 밖·사망 대상에는 도발이 남지 않는다.
-    if (isFighterAlive(other)) applyCombatStatusEffect(other, trait.taunt, events, state, fighter.id, false);
     if (!isFighterAlive(other)) {
       clearDefeatedStatuses(other);
       events.push({ kind: "death", fighterId: other.id, sourceId: fighter.id });
@@ -2180,7 +2181,7 @@ function tickClimaxAura(fighter: Fighter, dt: number, state: SkirmishState, even
 /**
  * 「네가 예술을 알아?」의 시계. 폭주 중 매초 주위에 낙서를 흩뿌린다.
  *
- * 「베일을 걷고」와 같은 1초 시계를 쓰지만 피해의 출처가 다르다 — 그쪽은 자기 최대 체력 비례
+ * 「전장의 열기」와 같은 1초 시계를 쓰지만 피해의 출처가 다르다 — 그쪽은 자기 최대 체력 비례
  * 고정 피해라 방어를 지나치지만, 이쪽은 **주문력에서 나오는 보통 마법 피해**라 저항과 속성
  * 상성을 그대로 거친다. 지나가며 뿌리는 것이지 태우는 것이 아니다.
  */
@@ -2925,7 +2926,9 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
       targetFighterId: fighter.id,
       skillId: fighter.bulwark.skillId,
       name: fighter.bulwark.name,
-      description: `아군이 받는 피해의 ${fighter.bulwark.percent}%를 대신 받고 매초 최대 체력의 ${fighter.bulwark.regenPercentPerSecond}% 회복`,
+      description: fighter.bulwark.regenPercentPerSecond > 0
+        ? `아군이 받는 피해의 ${fighter.bulwark.percent}%를 대신 받고 매초 최대 체력의 ${fighter.bulwark.regenPercentPerSecond}% 회복`
+        : `아군이 받는 피해의 ${fighter.bulwark.percent}%를 대신 받고 희열 회복량 ${fighter.bulwark.passiveHealBonusPercent}% 증가`,
       timing: { kind: "timed", remainingSeconds: fighter.bulwark.remaining, totalSeconds: fighter.bulwark.total },
     });
   }
@@ -2936,7 +2939,7 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
       targetFighterId: fighter.id,
       skillId: fighter.def.passive.id,
       name: fighter.def.passive.name,
-      description: `한 겹마다 매초 최대 체력의 ${fighter.elation.regenPercentPerStack}% 회복 · 최대 ${fighter.elation.maxStacks}겹`,
+      description: `${fighter.elation.maxStacks}겹이 되면 모두 써서 최대 체력의 ${fighter.def.passive.elation?.healMaxHpPercent ?? 0}% 회복`,
       stacks: fighter.elation.stacks,
       timing: { kind: "timed", remainingSeconds: fighter.elation.remaining, totalSeconds: fighter.elation.total },
     });
@@ -3588,6 +3591,7 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, even
       fighter.statusHitCount = Math.max(0, (fighter.def.basic.statusEffectEvery ?? 1) - 1);
     }
     if (trait.effectId === "adamantBody") fighter.hastenedAttacksLeft = trait.hastenedAttacks;
+    if (trait.effectId === "battleHeat") tauntOnBattleHeat(fighter, trait, state, events);
     // 공멸 선봉: 지금까지 잃은 만큼을 막으로 두른다. 몰린 뒤에 열릴수록 두꺼워지는 것이
     // 이 폭주의 값이라 최대 체력이 아니라 **잃은 체력**에서 잰다.
     if (trait.effectId === "vanguardCharge") {
@@ -4080,7 +4084,7 @@ export function resolveReceivedDamage(target: Fighter, rawAmount: number): Recei
   // 덧칠은 경감과 같은 최종 경계에서 곱한다 — 여기 두지 않으면 피해 경로마다 따로 곱하게 되고
   // 어느 한 곳을 빠뜨리면 "덧칠했는데 그 스킬만 안 아픈" 상태가 된다.
   const amplified = rawAmount * overpaintMultiplier(target);
-  // 「인」과 「대신 아파 줄게요」의 버티기는 **여기서 곱하지 않는다.** 그 둘은 최종 피해 감쇠가
+  // 「인」과 「절정」의 버티기는 **여기서 곱하지 않는다.** 그 둘은 최종 피해 감쇠가
   // 아니라 눈에 보이는 자원(보호막 · 대신 받기와 매초 회복)이라 이 경계를 지나지 않는다.
   const softened = Math.max(1, Math.round(amplified * (1 - Math.min(100, Math.max(0, reduction)) / 100)));
   const reduced = applyImpactCap(target, softened);
@@ -4183,7 +4187,7 @@ function shareWithBulwark(target: Fighter, amount: number, events: SkirmishEvent
   events.push({ kind: "damageShared", fighterId: guardian.id, fromFighterId: target.id, amount: dealt });
   // 대신 아파 준 한 대도 희열이다 — 세지 않으면 대신 받는 5초 동안 제 몸으로 날아온 공격만 겹을
   // 이어 가, 가장 많이 맞는 순간에 겹이 도리어 끊긴다.
-  gainElation(guardian);
+  gainElation(guardian, state, events);
   return share;
 }
 
@@ -4685,7 +4689,7 @@ function strike(
   tryTriggerEmergencyRecovery(target, state); tryTriggerLowHpVanish(target, state);
   triggerCombatAugments(state, target, "onLowHp", events);
   // 맞은 그 순간 희열이 오른다. 대신 받은 몫은 `shareWithBulwark`가 따로 센다.
-  gainElation(target);
+  gainElation(target, state, events);
   if (!useUltimate) pullStruck(attacker, target, state, events);
 
   const transfer = useUltimate ? attacker.def.ultimate.damageTransfer : undefined;
@@ -5088,7 +5092,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     if (!resolution.ignored) gainFerocity(target, FEROCITY_RULES.hitGain, state, events);
     // 광역으로 맞은 쪽도 희열이 오른다. 단일과 광역에서 규칙이 갈리면 같은 한 대가 어느
     // 스킬에 맞았느냐에 따라 겹을 주기도 하고 안 주기도 한다.
-    gainElation(target);
+    gainElation(target, state, events);
     // 광역 걸음도 같은 규칙으로 끌어당긴다 — 단일과 광역에서 갈리면 같은 걸음이 대상 수에 따라 다른 일을 한다.
     if (!useUltimate) pullStruck(attacker, target, state, events);
     // 집중도 **적중마다** 쌓는다. 단일 타격 쪽에만 두면 갈래화살이 셋을 맞혀도 겹이 하나도
@@ -5809,11 +5813,10 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     tickOpeningCharge(fighter, state, events);
     tickBulwark(fighter, dt, state, events);
     tickElation(fighter, dt);
-    tickElationRegen(fighter, dt, state, events);
     tickAftershock(fighter, dt, rng, state, events);
     // 폭주 회복은 행동 불능과 무관한 전투 시간으로 돌아 탱커가 제어당해도 계약한 생존력을 유지한다.
     tickFerocityRegen(fighter, dt, state, events);
-    tickClimaxAura(fighter, dt, state, events);
+    tickBattleHeatAura(fighter, dt, state, events);
     tickGraffitiAura(fighter, dt, state, events);
     // 궁극기 채널링은 기절·행동불가와 무관하게 흐른다 — 이미 뿌려 둔 낙서라 손이 멈춰도 마른다.
     tickArtChannel(fighter, dt, state, events);
@@ -5980,9 +5983,6 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
           }
         }
         if (fighter.hastenedAttacksLeft > 0) fighter.hastenedAttacksLeft -= 1;
-        // 「한 판 더」의 자기 회복도 행동 하나마다다 — 적중 수로 세면 광역 한 번이 셋을 맞힐 때
-        // 세 배로 돌아 같은 폭주가 편성에 따라 다른 무게가 된다.
-        healClimaxBasic(fighter, state, events);
         // 숨어 들어가 꽂는 한 방은 그 한 방이 곧 노출이다. 피해가 끝난 **뒤**에 푸는 이유는
         // 그 타격까지는 숨은 채로 들어가야 하기 때문이다.
         breakStealthOnBasic(fighter);
@@ -6079,12 +6079,13 @@ export function fireUltimate(
     raiseBulwark(attacker, {
       seconds: plan.seconds,
       percent: plan.redirectPercent,
-      regenPercentPerSecond: plan.maxHpRegenPercentPerSecond,
+      regenPercentPerSecond: plan.maxHpRegenPercentPerSecond ?? 0,
+      passiveHealBonusPercent: plan.passiveHealBonusPercent ?? 0,
       skillId: teamUltimate.id,
       name: teamUltimate.name,
     });
-    // 겹이 비어 있을 때 켜도 첫 초부터 버티도록 희열을 끝까지 채운다(맞으며 차오르는 방식을 앞당긴다).
-    if (plan.fillPassiveStacks === true) fillElation(attacker);
+    // 앞에 선 **뒤에** 채운다 — 곧바로 터지는 그 회복에도 궁극기의 증가가 들어야 한다.
+    if (plan.fillPassiveStacks === true) fillElation(attacker, state, events);
     events.push({ kind: "combatEffect", fighterId: attacker.id, effect: { tag: "shieldGain", intensity: 1.6 } });
     attacker.attackCooldown = attackInterval(attacker, state);
     return events;

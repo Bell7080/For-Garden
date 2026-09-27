@@ -699,15 +699,15 @@
 "Während der Raserei verfallen Gegner, die ein [[basic-attack|Normalangriff]] trifft, {seconds} s in [[frenzy|Raserei]]. Übertragene Treffer lösen das nicht aus.",
 "Во время неистовства враги, задетые [[basic-attack|обычной атакой]], впадают в [[frenzy|неистовство]] на {seconds} с. Переданные удары этого не вызывают."
 ],
-"skill.ferocity.climax": [
-"每秒对自身周围所有敌人造成相当于最大生命{percent}%的[[fixed-damage|固定伤害]]。每秒[[taunt|嘲讽]]受到伤害的敌人{seconds}秒。每次[[basic-attack|普通攻击]]恢复[[missing-hp|已损失生命]]的{healPercent}%。",
-"ทุกวินาทีสร้าง[[fixed-damage|ความเสียหายคงที่]]เท่ากับ {percent}% ของ HP สูงสุดให้ศัตรูทั้งหมดรอบตัว ทุกวินาที[[taunt|ยั่วยุ]]ศัตรูที่โดนความเสียหาย {seconds} วินาที [[basic-attack|การโจมตีปกติ]]แต่ละครั้งฟื้นฟู {healPercent}% ของ[[missing-hp|HP ที่เสียไป]]",
-"Mỗi giây gây [[fixed-damage|sát thương cố định]] bằng {percent}% HP tối đa lên mọi kẻ địch quanh bản thân. Mỗi giây [[taunt|Khiêu khích]] kẻ địch đã trúng đòn trong {seconds} giây. Mỗi [[basic-attack|đòn đánh thường]] hồi {healPercent}% [[missing-hp|máu đã mất]].",
-"Setiap detik memberi [[fixed-damage|kerusakan tetap]] sebesar {percent}% HP maks ke semua musuh di sekitarnya. Setiap detik [[taunt|Memprovokasi]] musuh yang terkena selama {seconds} dtk. Setiap [[basic-attack|serangan dasar]] memulihkan {healPercent}% [[missing-hp|HP yang hilang]].",
-"Cada segundo inflige a todos los enemigos a su alrededor [[fixed-damage|daño fijo]] igual al {percent}% de los PV máx. Cada segundo [[taunt|Provoca]] durante {seconds} s a los enemigos que dañó. Cada [[basic-attack|ataque básico]] recupera el {healPercent}% de los [[missing-hp|PV perdidos]].",
-"A cada segundo, causa a todos os inimigos ao redor [[fixed-damage|dano fixo]] igual a {percent}% do PV máx. A cada segundo, [[taunt|Provoca]] por {seconds} s os inimigos que atingiu. Cada [[basic-attack|ataque básico]] recupera {healPercent}% do [[missing-hp|PV perdido]].",
-"Fügt jede Sekunde allen Gegnern in der Nähe [[fixed-damage|fixen Schaden]] in Höhe von {percent}% des max. Lebens zu. Jede Sekunde [[taunt|verspottet]] es die getroffenen Gegner {seconds} s lang. Jeder [[basic-attack|Normalangriff]] stellt {healPercent}% des [[missing-hp|fehlenden Lebens]] wieder her.",
-"Каждую секунду наносит всем врагам вокруг [[fixed-damage|фиксированный урон]] в {percent}% макс. ОЗ. Каждую секунду [[taunt|провоцирует]] задетых врагов на {seconds} с. Каждая [[basic-attack|обычная атака]] восстанавливает {healPercent}% [[missing-hp|потерянного здоровья]]."
+"skill.ferocity.battleHeat": [
+"进入暴走的瞬间，[[taunt|嘲讽]]大范围内的敌人{seconds}秒。每秒对自身周围所有敌人造成相当于最大生命{percent}%的[[fixed-damage|固定伤害]]。暴走期间，[[nodonia-elation|愉悦]]的恢复量提高{healPercent}%。",
+"เมื่อเข้าสู่โหมดคลั่ง จะ[[taunt|ยั่วยุ]]ศัตรูในพื้นที่กว้างเป็นเวลา {seconds} วินาที ทุกวินาทีสร้าง[[fixed-damage|ความเสียหายคงที่]]เท่ากับ {percent}% ของ HP สูงสุดให้ศัตรูทั้งหมดรอบตัว ระหว่างโหมดคลั่ง ปริมาณการฟื้นฟูของ[[nodonia-elation|ปีติ]]เพิ่มขึ้น {healPercent}%",
+"Khi vào Cuồng bạo, [[taunt|Khiêu khích]] kẻ địch trong phạm vi rộng trong {seconds} giây. Mỗi giây gây [[fixed-damage|sát thương cố định]] bằng {percent}% HP tối đa cho mọi kẻ địch xung quanh. Trong Cuồng bạo, lượng hồi của [[nodonia-elation|Hân hoan]] tăng {healPercent}%.",
+"Saat memasuki Amukan, [[taunt|memprovokasi]] musuh di area luas selama {seconds} detik. Setiap detik memberikan [[fixed-damage|kerusakan tetap]] sebesar {percent}% HP maks kepada semua musuh di sekitarnya. Selama Amukan, pemulihan [[nodonia-elation|Kegembiraan]] meningkat {healPercent}%.",
+"Al entrar en Frenesí, [[taunt|provoca]] a los enemigos en un área amplia durante {seconds} s. Cada segundo inflige [[fixed-damage|daño fijo]] equivalente al {percent}% de los PV máx. a todos los enemigos a su alrededor. Durante el Frenesí, la curación de [[nodonia-elation|Euforia]] aumenta un {healPercent}%.",
+"Ao entrar em Frenesi, [[taunt|provoca]] inimigos em uma área ampla por {seconds} s. A cada segundo causa [[fixed-damage|dano fixo]] igual a {percent}% do PV máx. a todos os inimigos ao redor. Durante o Frenesi, a cura de [[nodonia-elation|Euforia]] aumenta {healPercent}%.",
+"Beim Eintritt in die Raserei werden Gegner in einem weiten Bereich {seconds} s lang [[taunt|verspottet]]. Jede Sekunde erleiden alle Gegner in der Nähe [[fixed-damage|festen Schaden]] in Höhe von {percent}% des max. Lebens. Während der Raserei steigt die Heilung durch [[nodonia-elation|Hochgefühl]] um {healPercent}%.",
+"При входе в неистовство [[taunt|провоцирует]] врагов в широкой области на {seconds} с. Каждую секунду наносит всем врагам рядом [[fixed-damage|фиксированный урон]] в размере {percent}% макс. ОЗ. Во время неистовства лечение от [[nodonia-elation|упоения]] увеличено на {healPercent}%."
 ],
 "skill.ferocity.graffitiRun": [
 "移动速度提升{percent}%，并停止[[basic-attack|普通攻击]]。每秒对自身周围所有敌人造成{damage}[[magical-damage|魔法伤害]]，叠加1层[[vandalism|破坏]]并[[taunt|嘲讽]]它们{seconds}秒。",
@@ -890,14 +890,14 @@
 "Упоение"
 ],
 "skill.keyword.elation.description": [
-"每层每秒恢复最大生命的{percent}%，最多{stacks}层。持续{seconds}秒，再次受击时重置持续时间。",
-"แต่ละชั้นฟื้นฟู {percent}% ของ HP สูงสุดต่อวินาที สูงสุด {stacks} ชั้น คงอยู่ {seconds} วินาที และโดนโจมตีอีกจะเริ่มนับเวลาใหม่",
-"Mỗi tầng hồi {percent}% HP tối đa mỗi giây, tối đa {stacks} tầng. Kéo dài {seconds} giây và bị đánh lại sẽ làm mới thời gian.",
-"Setiap tumpuk memulihkan {percent}% HP maks per detik, hingga {stacks} tumpuk. Bertahan {seconds} dtk dan terkena lagi mengulang durasinya.",
-"Cada carga recupera el {percent}% de los PV máx. por segundo, hasta {stacks} cargas. Dura {seconds} s y recibir otro golpe reinicia la duración.",
-"Cada acúmulo recupera {percent}% do PV máx. por segundo, até {stacks} acúmulos. Dura {seconds} s e ser atingido de novo reinicia a duração.",
-"Jeder Stapel stellt pro Sekunde {percent}% des max. Lebens wieder her, bis zu {stacks} Stapel. Hält {seconds} s; ein erneuter Treffer startet die Dauer neu.",
-"Каждый заряд восстанавливает {percent}% макс. ОЗ в секунду, до {stacks} зарядов. Длится {seconds} с, новый удар обновляет время."
+"叠满{stacks}层时全部消耗，恢复最大生命的{percent}%。持续{seconds}秒，再次受击时重置持续时间。",
+"เมื่อครบ {stacks} ชั้นจะใช้ทั้งหมดเพื่อฟื้นฟู {percent}% ของ HP สูงสุด คงอยู่ {seconds} วินาที และโดนอีกจะเริ่มนับใหม่",
+"Khi đủ {stacks} tầng, tiêu hao toàn bộ để hồi {percent}% HP tối đa. Kéo dài {seconds} giây, bị đánh lại sẽ làm mới thời gian.",
+"Pada {stacks} tumpuk, semuanya dipakai untuk memulihkan {percent}% HP maks. Bertahan {seconds} detik, dan terkena lagi mengulang durasinya.",
+"Al llegar a {stacks} cargas, las consume todas para recuperar el {percent}% de los PV máx. Dura {seconds} s y recibir otro golpe reinicia la duración.",
+"Ao chegar a {stacks} acúmulos, consome todos para recuperar {percent}% do PV máx. Dura {seconds} s e ser atingido de novo reinicia a duração.",
+"Bei {stacks} Stapeln werden alle verbraucht und {percent}% des max. Lebens wiederhergestellt. Hält {seconds} s; ein erneuter Treffer startet die Dauer neu.",
+"При {stacks} зарядах расходует все и восстанавливает {percent}% макс. ОЗ. Длится {seconds} с; новый удар обновляет время."
 ],
 "skill.passive.crit.same": [
 "暴击率与暴击伤害均提升{percent}%。",
@@ -1420,14 +1420,14 @@
 "На {seconds} с принимает урон, предназначенный всем союзникам, и тем временем восстанавливает {percent}% макс. ОЗ в секунду."
 ],
 "skill.sentence.selfBulwarkElation": [
-"将[[nodonia-elation|愉悦]]叠满，并在{seconds}秒内代替所有队友承受伤害，期间每秒恢复最大生命的{percent}%。",
-"เติม[[nodonia-elation|ปีติ]]จนเต็ม แล้วรับความเสียหายแทนพันธมิตรทุกตัวเป็นเวลา {seconds} วินาที และฟื้นฟู {percent}% ของ HP สูงสุดทุกวินาทีระหว่างนั้น",
-"Nạp đầy [[nodonia-elation|Hân hoan]], rồi trong {seconds} giây gánh sát thương thay mọi đồng minh và hồi {percent}% HP tối đa mỗi giây trong lúc đó.",
-"Mengisi [[nodonia-elation|Kegembiraan]] hingga penuh, lalu selama {seconds} dtk menerima kerusakan yang seharusnya diterima semua sekutu, sambil memulihkan {percent}% HP maks tiap detik.",
-"Llena la [[nodonia-elation|Euforia]] al máximo y durante {seconds} s recibe el daño que recibirían todos los aliados; mientras tanto, recupera el {percent}% de los PV máx. cada segundo.",
-"Enche a [[nodonia-elation|Euforia]] ao máximo e, por {seconds} s, recebe o dano que todos os aliados receberiam; enquanto isso, recupera {percent}% do PV máx. a cada segundo.",
-"Füllt [[nodonia-elation|Hochgefühl]] vollständig auf und nimmt {seconds} s lang den Schaden aller Verbündeten auf sich; dabei stellt es jede Sekunde {percent}% des max. Lebens wieder her.",
-"Заполняет [[nodonia-elation|Упоение]] до предела и на {seconds} с принимает урон, предназначенный всем союзникам, тем временем восстанавливая {percent}% макс. ОЗ в секунду."
+"将[[nodonia-elation|愉悦]]叠满，并在{seconds}秒内代替所有队友承受伤害，期间[[nodonia-elation|愉悦]]的恢复量提高{percent}%。",
+"เติม[[nodonia-elation|ปีติ]]จนเต็ม แล้วรับความเสียหายแทนพันธมิตรทุกคนเป็นเวลา {seconds} วินาที ระหว่างนั้นปริมาณการฟื้นฟูของ[[nodonia-elation|ปีติ]]เพิ่มขึ้น {percent}%",
+"Lấp đầy [[nodonia-elation|Hân hoan]], rồi trong {seconds} giây chịu thay mọi sát thương mà đồng đội phải nhận, trong lúc đó lượng hồi của [[nodonia-elation|Hân hoan]] tăng {percent}%.",
+"Mengisi penuh [[nodonia-elation|Kegembiraan]], lalu selama {seconds} detik menerima kerusakan yang seharusnya diterima semua sekutu, dan selama itu pemulihan [[nodonia-elation|Kegembiraan]] meningkat {percent}%.",
+"Llena la [[nodonia-elation|Euforia]] al máximo y durante {seconds} s recibe el daño que recibiría cada aliado; mientras tanto, la curación de [[nodonia-elation|Euforia]] aumenta un {percent}%.",
+"Enche a [[nodonia-elation|Euforia]] ao máximo e por {seconds} s recebe o dano que cada aliado receberia; enquanto isso, a cura de [[nodonia-elation|Euforia]] aumenta {percent}%.",
+"Füllt [[nodonia-elation|Hochgefühl]] vollständig auf und übernimmt {seconds} s lang den Schaden aller Verbündeten; währenddessen steigt die Heilung durch [[nodonia-elation|Hochgefühl]] um {percent}%.",
+"Полностью заполняет [[nodonia-elation|упоение]] и на {seconds} с принимает урон, который получили бы все союзники; в это время лечение от [[nodonia-elation|упоения]] увеличено на {percent}%."
 ],
 "skill.sentence.overpaintDetonation": [
 "引爆叠加在{target}身上的[[overpaint|叠涂]]，每层造成{damage}，之后清除该叠涂。",

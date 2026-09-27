@@ -154,35 +154,31 @@ describe("노도니아 스킬 표시 계약", () => {
     const tag = elationKeyword(nodonia.passive)!;
     expect(tag).toMatchObject({ id: "nodonia-elation", term: "희열", kind: "buff" });
     expect(tag.description).toBe(
-      "한 겹마다 매초 최대 체력의 0.4%를 회복하며 최대 10겹까지 쌓인다."
+      "5겹이 되면 모두 써서 최대 체력의 8%를 회복한다."
       + " 5초 동안 남으며 다시 맞으면 유지 시간이 처음부터 다시 흐른다.",
     );
-    // **터지지 않는다.** 겹 하나하나가 곧 재생이라 채워 두는 것이 목적이지, 채워서 다른 일을
-    // 터뜨리는 것이 아니다 — 문장에도 그 말이 남으면 안 된다.
-    expect(tag.description).not.toMatch(/터진|터져|터뜨/);
     // 태그 팝업은 화면의 임시 사전을 물려받지 못하므로 그 안에는 태그를 두지 않는다.
     expect(tag.description).not.toMatch(/\[\[/);
   });
 
-  it("의 대신 아파 줄게요는 대신 받으며 버티는 시간을 말한다", () => {
-    expect(nodonia.ultimate.name).toBe("대신 아파 줄게요");
+  it("의 절정은 대신 받는 동안 희열의 회복이 는다고 말한다", () => {
+    expect(nodonia.ultimate.name).toBe("절정");
     expect(nodonia.ultimate.desc).toBeUndefined();
-    expect(nodonia.ultimate.selfBulwark).toMatchObject({ seconds: 5, redirectPercent: 100, maxHpRegenPercentPerSecond: 5, fillPassiveStacks: true });
+    expect(nodonia.ultimate.selfBulwark).toEqual({ seconds: 5, redirectPercent: 100, passiveHealBonusPercent: 200, fillPassiveStacks: true });
     const text = skillDescription(nodonia.ultimate);
-    expect(text).toBe("[[nodonia-elation|희열]]을 끝까지 채우고 5초 동안 모든 아군이 받는 피해를 대신 받으며, 그동안 매초 최대 체력의 5%를 회복한다.");
-    // 엘라와 갈라 두는 지점이다 — 무적도 아니고 방어를 올리지도 않는다. 종이 방어로 다 맞으면서
-    // 그보다 빨리 차오르는 것이 이 개체의 값이다.
+    expect(text).toBe("[[nodonia-elation|희열]]을 끝까지 채우고 5초 동안 모든 아군이 받는 피해를 대신 받으며, 그동안 [[nodonia-elation|희열]]의 회복량이 200% 증가한다.");
+    // 엘라와 갈라 두는 지점이다 — 무적도 아니고 방어를 올리지도 않는다.
     expect(text).not.toContain("무적");
     expect(text).not.toContain("방어력");
     expect(text).not.toContain("보호막");
   });
 
   it("의 기본 공격은 최대 체력에서 피해를 뽑는다", () => {
-    expect(nodonia.basic).toMatchObject({ name: "나쁜 아이에게는 벌을", scalingStat: "hp", power: 5, elationDamagePercentPerStack: 8 });
+    expect(nodonia.basic).toMatchObject({ name: "나쁜 아이에게는 벌을", scalingStat: "hp", power: 5, elationDamagePercentPerStack: 12 });
     expect(nodonia.basic.desc).toBeUndefined();
     // 겹마다 오르는 몫은 곱하는 비율이라 %로 남고, 주어가 "이 피해"라 제 문장으로 선다.
     expect(skillDescription(nodonia.basic)).toBe("적 한 명에게 최대 체력의 5% [[physical-damage|물리 피해]]를 준다."
-      + " [[nodonia-elation|희열]] 한 겹마다 이 피해가 8% 오른다.");
+      + " [[nodonia-elation|희열]] 한 겹마다 이 피해가 12% 오른다.");
     // 공격력은 어디에도 쓰이지 않으므로 플레이어블 로스터 최저다 — 쓰지 않는 능력치를 높게
     // 적지 않는다. 적 전용 리파처럼 주문력만 쓰는 개체는 같은 원칙으로 더 낮을 수 있다.
     // 소환 전용 개체는 쓰지 않는 축이 0이라 같은 이유로 비교에서 뺀다.
@@ -206,13 +202,12 @@ describe("노도니아 스킬 표시 계약", () => {
     expect(deina.stats.hp).toBeGreaterThan(Math.min(...allyTanks.map((def) => def.stats.hp)));
   });
 
-  it("의 베일을 걷고는 주위를 지지고 잃은 체력을 되찾는다", () => {
-    // 표시문과 전투가 같은 구조화 도발 계약을 읽어 0.5초 수치가 둘 사이에서 갈리지 않게 한다.
-    expect(nodonia.ferocityTrait).toMatchObject({ name: "베일을 걷고", effectId: "climax", auraDamageMaxHpPercent: 1.5, radius: 240, taunt: { kind: "taunt", seconds: 0.5 }, missingHpPercentPerBasic: 3 });
+  it("의 전장의 열기는 들어설 때의 도발, 지속 피해, 희열 회복 증가를 차례로 말한다", () => {
+    expect(nodonia.ferocityTrait).toMatchObject({ name: "전장의 열기", effectId: "battleHeat", auraDamageMaxHpPercent: 1.5, radius: 240, taunt: { kind: "taunt", seconds: 3 }, tauntRadius: 420, elationHealBonusPercent: 50 });
     expect(ferocityTraitDescription(nodonia.ferocityTrait, { attack: nodonia.stats.atk, defense: nodonia.stats.def })).toBe(
-      "매초 자신의 주위 모든 적에게 최대 체력의 1.5%만큼 [[fixed-damage|고정 피해]]를 준다."
-      + " 매초 피해를 받은 적을 0.5초 동안 [[taunt|도발]]한다."
-      + " [[basic-attack|기본 공격]]마다 [[missing-hp|잃은 체력]]의 3%를 회복한다.",
+      "폭주에 들어서는 순간 넓은 범위의 적을 3초 동안 [[taunt|도발]]한다."
+      + " 매초 자신의 주위 모든 적에게 최대 체력의 1.5%만큼 [[fixed-damage|고정 피해]]를 준다."
+      + " 폭주 동안 [[nodonia-elation|희열]]의 회복량이 50% 증가한다.",
     );
   });
 });

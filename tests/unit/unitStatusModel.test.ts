@@ -62,8 +62,8 @@ describe("머리 위 상태 목록", () => {
     const reagents = unitStatusViews(target).filter(({ id }) => id === "reagent");
     // 색에 의존하지 않고 stackSlots와 stacks 조합만으로 빈칸·1겹·2겹을 그릴 수 있어야 한다.
     expect(reagents).toEqual([
-      expect.objectContaining({ key: "reagent:player-0", stacks: 1, stackSlots: 3, color: 0x7a4bab }),
-      expect.objectContaining({ key: "reagent:player-1", stacks: 2, stackSlots: 3, color: 0x7a4bab }),
+      expect.objectContaining({ key: "reagent:player-0", stacks: 1, color: 0x7a4bab }),
+      expect.objectContaining({ key: "reagent:player-1", stacks: 2, color: 0x7a4bab }),
     ]);
     delete target.reagents["player-0"];
     delete target.reagents["player-1"];

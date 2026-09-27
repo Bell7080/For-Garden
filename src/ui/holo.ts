@@ -136,8 +136,13 @@ export function toPoints(flat: number[]): Phaser.Geom.Point[] {
 export interface LayerOptions {
   fill: number;
   alpha?: number;
-  /** 그림자를 깔지 여부. 겹쳐 놓는 얇은 보조 레이어는 끈다. */
-  shadow?: boolean;
+  /**
+   * 그림자를 깔지 여부. 겹쳐 놓는 얇은 보조 레이어는 끈다.
+   *
+   * 판 크기에 맞춘 오프셋을 줄 수도 있다 — 기본값(`HOLO.shadow`)은 판때기 기준이라, 머리 위 상태
+   * 칩처럼 한 변이 20px 남짓인 칩에 그대로 깔면 그림자가 칩 절반만큼 튀어나가 옆 칩과 체력 바를 덮는다.
+   */
+  shadow?: boolean | { x: number; y: number };
   /** 윗변에만 긋는 얇은 강조선 색. 사방을 두르는 테두리는 만들지 않는다. */
   edge?: number;
   edgeAlpha?: number;
@@ -199,10 +204,11 @@ export function drawLayer(
   const points = toPoints(shape);
   const graphics = scene.add.graphics({ x, y });
   if (options.shadow !== false) {
+    const offset = typeof options.shadow === "object" ? options.shadow : HOLO.shadow;
     graphics.fillStyle(0x000000, HOLO.shadow.alpha);
-    graphics.translateCanvas(HOLO.shadow.x, HOLO.shadow.y);
+    graphics.translateCanvas(offset.x, offset.y);
     graphics.fillPoints(points, true);
-    graphics.translateCanvas(-HOLO.shadow.x, -HOLO.shadow.y);
+    graphics.translateCanvas(-offset.x, -offset.y);
   }
   graphics.fillStyle(options.fill, options.alpha ?? HOLO.glass);
   graphics.fillPoints(points, true);

@@ -39,14 +39,13 @@ describe("머리 위 상태 칩 줄", () => {
     expect(BATTLE_STATUS_LAYOUT.chipRowLift).toBeGreaterThanOrEqual(BATTLE_STATUS_LAYOUT.chipSize / 2);
   });
 
-  it("은 세 시험관을 1080×1920 체력 바 아래에서 바·윗쪽 상태 칩과 겹치지 않게 둔다", () => {
-    const { reagent, reagentRowDrop, hpBarWidth, chipRowLift, chipSize } = BATTLE_STATUS_LAYOUT;
-    const width = reagent.slotWidth * 3 + reagent.gap * 2;
-    // 시험관 묶음은 체력 바 폭 안에 있고, 바 아랫변보다 아래에서 시작한다.
-    expect(width).toBeLessThan(hpBarWidth);
-    expect(reagentRowDrop - reagent.slotHeight / 2).toBeGreaterThan(11 / 2);
-    // 기존 상태 행은 위쪽, 시험관은 아래쪽이라 어떤 중첩 수에서도 세로 영역이 갈린다.
-    expect(-chipRowLift + chipSize / 2).toBeLessThan(reagentRowDrop - reagent.slotHeight / 2);
+  it("의 그림자는 칩 크기에 맞춰 옆 칩 사이와 체력 바 끝 빗금에 닿지 않는다", () => {
+    const { chipShadow, chipSize, chipGap, chipRowLift, hpBarCapHalfHeight } = BATTLE_STATUS_LAYOUT;
+    // 그림자는 한 변의 1할 남짓 — 옆 칩과의 틈보다 작아 이웃을 덮지 않는다.
+    expect(chipShadow.x).toBeLessThanOrEqual(chipGap);
+    expect(Math.max(chipShadow.x, chipShadow.y)).toBeLessThanOrEqual(chipSize * 0.15);
+    // 칩 아래 변 + 그림자가 바의 끝 빗금 꼭대기보다 위에서 끝난다.
+    expect(-chipRowLift + chipSize / 2 + chipShadow.y).toBeLessThan(-hpBarCapHalfHeight);
   });
 });
 

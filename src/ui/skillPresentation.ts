@@ -196,12 +196,12 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   }
   // 광란은 시간이 스킬마다 다르므로(궁극 4초 · 폭주 2초) 태그가 아니라 본문이 초를 적는다.
   if (trait.effectId === "frenzyGaze") return t("skill.ferocity.frenzyGaze", { seconds: trait.seconds });
-  // 최대 체력이 아니라 **잃은 체력** 비례라는 것이 이 폭주의 전부다 — 앞에 서서 맞는 것이
-  // 값인 개체라, 성한 몸일 때 가장 많이 도는 회복이면 성질이 거꾸로 선다.
-  if (trait.effectId === "climax") {
-    return t("skill.ferocity.climax", {
+  // 들어서는 순간의 도발이 먼저다 — 폭주에서 화면으로 확인할 첫 변화가 적이 한꺼번에 돌아서는
+  // 것이고, 그 뒤에 서 있는 동안의 지속 피해와 희열의 회복 증가가 온다.
+  if (trait.effectId === "battleHeat") {
+    return t("skill.ferocity.battleHeat", {
       percent: trait.auraDamageMaxHpPercent, seconds: trait.taunt.seconds,
-      healPercent: trait.missingHpPercentPerBasic,
+      healPercent: trait.elationHealBonusPercent,
     });
   }
   // 때리지 않는다는 것을 먼저 말한다 — 이 폭주에서 플레이어가 화면으로 확인할 첫 변화가
@@ -281,7 +281,7 @@ export function elationKeyword(passive: Passive): KeywordDef | undefined {
     term: t("skill.keyword.elation.term"),
     kind: "buff",
     description: t("skill.keyword.elation.description", {
-      percent: plan.maxHpRegenPercentPerStack, stacks: plan.maxStacks, seconds: plan.seconds,
+      percent: plan.healMaxHpPercent, stacks: plan.maxStacks, seconds: plan.seconds,
     }),
   };
 }
@@ -638,11 +638,11 @@ export function skillDescription(
     // 앞에 서는 궁극기. 아무도 때리지 않고 아군의 몫을 대신 받는다.
     if ("selfBulwark" in skill && skill.selfBulwark !== undefined) {
       const plan = skill.selfBulwark;
-      // 채우는 겹이 무엇이고 몇 겹까지인지는 「희열」 태그가 말한다(쓰는 개체가 하나뿐인 규칙어).
-      if (plan.fillPassiveStacks === true) {
-        return t("skill.sentence.selfBulwarkElation", { seconds: plan.seconds, percent: plan.maxHpRegenPercentPerSecond });
+      // 희열이 무엇이고 얼마나 회복하는지는 「희열」 태그가 말한다(쓰는 개체가 하나뿐인 규칙어).
+      if (plan.passiveHealBonusPercent !== undefined && plan.fillPassiveStacks === true) {
+        return t("skill.sentence.selfBulwarkElation", { seconds: plan.seconds, percent: plan.passiveHealBonusPercent });
       }
-      return t("skill.sentence.selfBulwark", { seconds: plan.seconds, percent: plan.maxHpRegenPercentPerSecond });
+      return t("skill.sentence.selfBulwark", { seconds: plan.seconds, percent: plan.maxHpRegenPercentPerSecond ?? 0 });
     }
     // 버티는 궁극기. 끌어당겨 붙잡아 두고 덜 맞은 만큼을 끝나고 돌려받는다.
     if ("selfGuard" in skill && skill.selfGuard !== undefined) {

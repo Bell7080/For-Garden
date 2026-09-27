@@ -2283,6 +2283,31 @@ export class FakeServer implements GameApi {
     return { missions: this.missionDtos(), claimableCount: claimableMissionIds(normalized).length + stageClaimable, research };
   }
 
+  /** 지금 받을 수 있는 임무 보상 수 — 임무와 연구도 마디를 함께 센다(`missionListDto`의 `claimableCount`와 같은 셈). */
+  private missionNoticeCount(missions: Session["missions"]): number {
+    const normalized = normalizeMissions(missions, this.now());
+    const stages = (["daily", "weekly"] as const).reduce((sum, period) => sum + RESEARCH_REWARD_STAGES[period]
+      .filter((stage) => normalized.researchPoints[period] >= stage.threshold && !normalized.claimedResearchStageIds.includes(researchStageClaimId(period, stage.id))).length, 0);
+    return claimableMissionIds(normalized).length + stages;
+  }
+
+  private readonly missionNoticeListeners = new Set<() => void>();
+  private lastMissionNotice?: number;
+
+  subscribeMissionNotice(listener: () => void): () => void {
+    this.missionNoticeListeners.add(listener);
+    return () => { this.missionNoticeListeners.delete(listener); };
+  }
+
+  /** 저장을 마친 뒤 받을 보상 수가 바뀌었을 때만 알린다 — 조회가 다시 저장해도 수가 같으면 되풀이되지 않는다. */
+  private signalMissionNotice(next: Session): void {
+    if (this.missionNoticeListeners.size === 0) return;
+    const count = this.missionNoticeCount(next.missions);
+    if (count === this.lastMissionNotice) return;
+    this.lastMissionNotice = count;
+    this.missionNoticeListeners.forEach((listener) => listener());
+  }
+
   /** 주차가 달라지면 점수·누적·수령 단계를 함께 버려 지난주 보상이 새 주에 새지 않게 한다. */
   /**
    * 원정의 하루·주 주기를 서버 시각까지 넘긴다(`rollExpeditionPeriods`). 주가 넘어가면 지난주 기록이
@@ -2408,6 +2433,7 @@ export class FakeServer implements GameApi {
     } catch (error) {
       throw persistenceFailed(error);
     }
+    this.signalMissionNotice(next);
   }
 
   /** 실제 HTTP 서버로 옮겨도 그대로 적용할 API 응답 직전 불변식 검사다. */

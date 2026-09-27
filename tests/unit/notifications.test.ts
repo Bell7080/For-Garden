@@ -44,6 +44,31 @@ describe("notifications", () => {
     expect(api.getMissions).toHaveBeenCalledTimes(2);
   });
 
+  it("다른 조회 하나가 실패해도 임무 점은 확정하고, 실패한 쪽은 지난 값을 둔다", async () => {
+    // 셋을 한꺼번에 기다리던 때는 발굴 조회 하나가 실패하면 받을 임무가 있어도 임무 점이 꺼진 채 남았다.
+    const getIdleExcavation = vi.fn().mockResolvedValueOnce({ excavation: {}, serverTime: "", storageFillRatio: 1, harvestNotice: true }).mockRejectedValue(new Error("down"));
+    const api = { getMissions: vi.fn().mockResolvedValue({ missions: [], claimableCount: 2 }), getIdleExcavation, getNotificationSignals: vi.fn().mockRejectedValue(new Error("down")) } as unknown as GameApi;
+    const manager = new NotificationManager(api); const missions: boolean[] = []; const harvest: boolean[] = [];
+    manager.subscribe("missionReward", (value) => missions.push(value));
+    manager.subscribe("excavationHarvestReady", (value) => harvest.push(value));
+    await manager.refresh(); await manager.refresh();
+    expect(missions).toEqual([false, true]);
+    expect(harvest).toEqual([false, true]);
+  });
+
+  it("서버가 받을 보상 수가 바뀌었다고 알리면 곧바로 다시 읽는다", async () => {
+    let notify: () => void = () => undefined;
+    const getMissions = vi.fn().mockResolvedValueOnce({ missions: [], claimableCount: 0 }).mockResolvedValue({ missions: [], claimableCount: 1 });
+    const api = { getMissions, getIdleExcavation: vi.fn().mockResolvedValue({ excavation: {}, serverTime: "", storageFillRatio: 0, harvestNotice: false }), getNotificationSignals: vi.fn().mockResolvedValue({ pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0 }),
+      subscribeMissionNotice: (listener: () => void) => { notify = listener; return () => undefined; } } as unknown as GameApi;
+    const manager = new NotificationManager(api); const values: boolean[] = [];
+    manager.subscribe("missionReward", (value) => values.push(value));
+    await manager.refresh();
+    notify(); notify(); // 한 처리 안의 여러 저장은 한 번만 다시 읽는다.
+    await vi.waitFor(() => expect(values).toEqual([false, true]));
+    expect(getMissions).toHaveBeenCalledTimes(2);
+  });
+
   it("팝업 출입이나 앱 재진입을 읽음 처리하지 않고 서버 확정 수확 상태를 복원한다", async () => {
     const getIdleExcavation = vi.fn().mockResolvedValue({ excavation: {}, serverTime: "", storageFillRatio: 0.5, harvestNotice: true });
     const api = { getMissions: vi.fn().mockResolvedValue({ missions: [], claimableCount: 0 }), getIdleExcavation, getNotificationSignals: vi.fn().mockResolvedValue({ pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0 }) } as unknown as GameApi;

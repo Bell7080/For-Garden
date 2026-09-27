@@ -819,6 +819,12 @@ export interface GameApi extends AsyncArenaProfileApi {
   getMissions(): Promise<MissionListResponse>;
   /** 친구 요청·새 이벤트·우편의 실제 읽음 상태를 한 번에 조회한다. */
   getNotificationSignals(): Promise<NotificationSignalsResponse>;
+  /**
+   * **받을 임무 보상의 수가 바뀌었다**는 신호를 구독한다. 임무 진행은 급여·수확·연구·전투처럼 로비의 판
+   * 위에서도 오르므로, 로비에 들어올 때만 다시 읽으면 판을 닫아도 빨간 점이 서지 않았다. 실제 서버는 같은
+   * 신호를 푸시로 준다. 선택 구현이다 — 없으면 화면이 들어올 때 읽는 것으로 되돌아간다.
+   */
+  subscribeMissionNotice?(listener: () => void): () => void;
   /** ID를 생략하면 현재 완료된 모든 미수령 임무를 한 저장 처리로 받는다. */
   claimMissionRewards(missionIds?: string[], researchPeriod?: MissionPeriod, researchStageIds?: string[]): Promise<ClaimMissionRewardsResponse>;
   /** 서버 시각과 구매 이력을 반영한 공용 카탈로그를 조회한다. */

@@ -626,6 +626,21 @@ describe("FakeServer", () => {
     expect(state.runeInventory).toHaveLength(1);
   });
 
+  it("받을 임무 보상 수가 바뀌면 알림 신호를 보내고, 수가 같으면 다시 보내지 않는다", async () => {
+    // 로비의 판 위에서 임무가 차도 빨간 점이 서도록 — 들어올 때만 다시 읽던 구멍을 막는 신호다.
+    const state = makeSession();
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-20T12:00:00Z") });
+    const signal = vi.fn();
+    server.subscribeMissionNotice(signal);
+    await server.completeStage("1-1", true);
+    expect(signal).toHaveBeenCalledTimes(1);
+    // 조회가 정규화하며 다시 저장해도 받을 수가 그대로면 되풀이하지 않는다.
+    await server.getMissions();
+    expect(signal).toHaveBeenCalledTimes(1);
+    await server.claimMissionRewards(["daily-battle"]);
+    expect(signal).toHaveBeenCalledTimes(2);
+  });
+
   it("완료 전 수령을 거부하고 완료 보상은 중복 지급하지 않는다", async () => {
     const state = makeSession();
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-20T12:00:00Z") });

@@ -1148,7 +1148,14 @@ export class BattleScene extends Phaser.Scene {
       const zoom = skipPresentation
         ? Promise.resolve()
         : this.tween({ targets: view.creature, scale: base * presentation.zoomScale, duration: scaleUltimateDuration(presentation.zoomMs, timing), ease: "Back.Out" });
+      const castAt = this.state.elapsed; const energyBefore = fighter.energy;
       const events = fireUltimate(this.state, fighter.id, this.rng);
+      // 궁극기는 **쓴 순간**을 행동으로 남긴다. 피해 사건에서 거두던 때는 피해 없는 궁극기(순풍·
+      // 연사·은신·대신 받기)가 기록에서 빠져, 서버 재현이 그 강화를 모른 채 뒤이은 평타를 "너무
+      // 빠르다"로 거절했다. 되찍기·채널링·늑대 돌진은 서버가 같은 함수로 다시 만든다.
+      // 표적이 없어 헛돈 시전은 게이지도 사건도 남기지 않으므로 적지 않는다.
+      const cast = events.length > 0 || fighter.energy < energyBefore;
+      if (cast && this.state.boss && fighter.side === "player") this.bossActions.push({ elapsedMs: Math.round(castAt * 1_000), actorId: fighter.def.id, kind: "ultimate" });
       // 공격 판정(core), 시각적 사망(scene tween), 전투 결과(finish)는 서로 다른 책임이다.
       // 사건 순서는 건드리지 않고, finish가 있는 결정타인지만 종료 대기 정책에 따로 전달한다.
       const hasDeathEvent = events.some((event) => event.kind === "death");
@@ -1624,10 +1631,11 @@ export class BattleScene extends Phaser.Scene {
       // 전체를 거절했고(v0.66.1까지 폰토스 정산이 t("battle.result.retry")만 남긴 원인), 그래서 코어가
       // 표시하는 `followUp`을 읽는다. transfer는 animate=false라 여기 닿지 않는다.
       // 약점 포착도 표식을 찍은 개체가 낸 추가타라 원본 행동인 평타에 접는다 — 스타카토와 같다.
-      const replayKind = event.skill === "staccato" || event.skill === "shimmer" || event.skill === "weakpoint"
-        ? "basic" : event.skill === "transfer" ? "ultimate" : event.skill;
+      // 궁극기의 피해 사건은 거두지 않는다 — 시전 순간에 이미 적었고(`pumpUltimateQueue`), 되찍기·채널링·
+      // 늑대 돌진의 뒤따르는 피해는 서버가 그 한 번에서 다시 만든다.
+      const replayKind = event.skill === "staccato" || event.skill === "shimmer" || event.skill === "weakpoint" ? "basic" : event.skill;
       // 프레임이 끝난 지금이 아니라 코어가 못 박은 타격 시각을 적는다(`at`).
-      this.bossActions.push({ elapsedMs: Math.round((event.at ?? this.state.elapsed) * 1_000), actorId: attacker.fighter.def.id, kind: replayKind });
+      if (replayKind === "basic") this.bossActions.push({ elapsedMs: Math.round((event.at ?? this.state.elapsed) * 1_000), actorId: attacker.fighter.def.id, kind: replayKind });
     }
     // 한 광역 기술의 후속 피해 사건은 피격 표현만 만들고 시전자 모션은 첫 사건에서 한 번만 튼다.
     const playback = attacker && event.animate !== false ? playMotion(this, attacker.creature, "attack", motionSpeedMultiplier) : undefined;

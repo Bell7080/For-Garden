@@ -13,7 +13,7 @@ import { combatPower } from "../core/combatPower";
 import { DUNGEON_LOBBY } from "../ui/dungeonLobbyLayout";
 import { DungeonLobby } from "../ui/DungeonLobby";
 import { addBackButton } from "../ui/IconButton";
-import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
+import { addSceneBackground, BACKGROUND, battleFieldBackground } from "../ui/backgrounds";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { PopupLayer } from "../ui/PopupLayer";
 import { TopBar } from "../ui/TopBar";
@@ -140,6 +140,7 @@ export class CakeOperationScene extends Phaser.Scene {
       tierName: tier.name, level: cakeOperationEnemyDisplayLevel(tier).level, cost: cakeOperationRunCost(tier),
       cleared: cakeOperationTierIndex(tier.id) <= session.cakeOperation.clearedIndex,
       enemyId: enemies[0]?.id ?? CAKE_OPERATION_ENEMY_IDS[0],
+      fieldKey: battleFieldBackground("cake"),
       membership: () => this.adFreeMembership,
       dailyAdRewards: () => this.dailyAdRewards,
       setDailyAdRewards: (daily) => { this.dailyAdRewards = daily; },

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SWEEP_POPUP, sweepCountControlX, sweepPopupHeight } from "../../src/ui/sweepPopupLayout";
-import { SWEEP_SKIRMISH, sweepBandSlab, sweepSkirmishBeats, sweepSkirmishDurationMs } from "../../src/ui/sweepSkirmishLayout";
+import { SWEEP_SKIRMISH, sweepBandSlab, sweepLootArc, sweepLootPoint, sweepSkirmishBeats, sweepSkirmishDurationMs, sweepSkirmishTimeline } from "../../src/ui/sweepSkirmishLayout";
 
 describe("소탕 창 배치표", () => {
   it("배율 줄의 조각은 겹치지 않고 판 안에 든다", () => {
@@ -38,8 +38,51 @@ describe("소탕 연출", () => {
     expect(beats.some((beat) => beat.attacker === "enemy")).toBe(true);
   });
 
-  it("한 판을 대신하는 몸짓이라 3초를 넘지 않는다", () => {
-    expect(sweepSkirmishDurationMs()).toBeLessThan(3000);
+  it("한 판을 짧은 만화로 대신한다 — 볼거리는 늘었지만 영수증까지 7초를 넘지 않는다", () => {
+    expect(sweepSkirmishDurationMs()).toBeGreaterThan(4000);
+    expect(sweepSkirmishDurationMs()).toBeLessThan(7000);
+  });
+
+  it("주고받기 → 먼지구름 → 몰아치기 → 날려 보내기 → 뿅뿅 → 정산 순으로 겹치지 않고 흐른다", () => {
+    const line = sweepSkirmishTimeline();
+    const before = line.beats.filter((beat) => beat.atMs < line.scuffle.startMs);
+    const after = line.beats.filter((beat) => beat.atMs > line.scuffle.endMs);
+    expect(before.length).toBeGreaterThan(0);
+    expect(after.length).toBeGreaterThan(0);
+    expect(before.length + after.length).toBe(line.beats.length);
+    // 구름 속 불꽃은 구름이 떠 있는 동안에만 튄다.
+    expect(line.scuffle.pops.length).toBeGreaterThan(3);
+    for (const pop of line.scuffle.pops) expect(pop).toBeGreaterThan(line.scuffle.startMs), expect(pop).toBeLessThan(line.scuffle.endMs);
+    // 몰아치는 박자는 주고받는 박자보다 짧다 — 「투다다닥」.
+    expect(after[1].atMs - after[0].atMs).toBeLessThan(before[1].atMs - before[0].atMs);
+    const finisher = line.beats[line.beats.length - 1];
+    expect(line.blastOff.startMs).toBeGreaterThan(finisher.atMs);
+    expect(line.blastOff.twinkleAtMs).toBeGreaterThan(line.blastOff.startMs);
+    expect(line.victory.startMs).toBeGreaterThanOrEqual(line.blastOff.twinkleAtMs);
+    expect(line.settle.startMs).toBeGreaterThanOrEqual(line.victory.endMs);
+    expect(line.endMs).toBe(line.settle.endMs);
+  });
+
+  it("전리품은 난수 없이 늘 같은 궤적으로 튀고, 띠 밖이 아니라 발밑 언저리에 떨어진다", () => {
+    const L = SWEEP_SKIRMISH;
+    const half = L.band.width / 2 - L.band.bevel;
+    for (let index = 0; index < L.loot.maxPieces; index += 1) {
+      const arc = sweepLootArc(index, L.enemy.x);
+      expect(arc).toEqual(sweepLootArc(index, L.enemy.x));
+      expect(Math.abs(arc.landX)).toBeLessThanOrEqual(half);
+      expect(arc.landY).toBeGreaterThanOrEqual(L.groundY);
+      expect(arc.landY).toBeLessThan(L.band.height / 2);
+      // 곡사 — 가운데에서 출발점과 떨어지는 자리보다 높이 솟는다.
+      const from = { x: L.enemy.x, y: L.groundY - L.sdHeight * 0.45 };
+      const middle = sweepLootPoint(from.x, from.y, arc, 0.5);
+      expect(middle.y).toBeLessThan(Math.min(from.y, arc.landY));
+      expect(sweepLootPoint(from.x, from.y, arc, 1)).toEqual({ x: arc.landX, y: arc.landY });
+    }
+    // 크고 작은 조각이 섞이고, 대부분은 이긴 쪽(왼쪽)으로 떨어진다.
+    const arcs = Array.from({ length: 12 }, (_, index) => sweepLootArc(index, L.enemy.x));
+    expect(arcs.some((arc) => arc.big)).toBe(true);
+    expect(arcs.some((arc) => !arc.big)).toBe(true);
+    expect(arcs.filter((arc) => arc.landX < L.enemy.x).length).toBeGreaterThan(arcs.length / 2);
   });
 
   it("지층은 띠를 빈틈없이 채우고 층의 도형은 깎인 모서리 밖으로 나가지 않는다", () => {

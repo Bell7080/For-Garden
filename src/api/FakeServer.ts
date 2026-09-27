@@ -42,7 +42,7 @@ import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_COMPLET
 import { mockFriendRaids, mockRaidContributions, raidKillProgress, mockRaidWorldDamage, mockSummonContributions, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../core/raid";
 import { battleArena } from "../core/battleArena";
 import { staminaCurrencyRecharge } from "../data/staminaRecharge";
-import { settleStamina, staminaMaxForPlayer, staminaTiming } from "../core/stamina";
+import { paidStaminaApplied, settleStamina, STAMINA_HOLD_LIMIT, staminaMaxForPlayer, staminaTiming } from "../core/stamina";
 import { InventoryManager } from "../managers/InventoryManager";
 import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, MarkRuneRequest, MarkRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse } from "./contracts";
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
@@ -839,9 +839,10 @@ export class FakeServer implements GameApi {
     this.settleItemExpiry(this.now());
     const stack = this.state.itemInventory.find(({ itemId }) => itemId === request.itemId);
     if (!stack || stack.quantity < request.quantity) throw new GameApiError("INSUFFICIENT_ITEMS", "아이템 수량이 부족합니다.");
-    if (definition.useEffect.kind === "restore_stamina" && this.state.wallet.stamina >= staminaMaxForPlayer(this.state)) throw new GameApiError("STAMINA_FULL", "스테미나가 이미 가득 찼습니다.");
+    // 병은 레벨 상한을 넘어 채운다 — 치른 대가를 상한에서 버리지 않는다. 막는 것은 보유 끝뿐이다.
+    if (definition.useEffect.kind === "restore_stamina" && this.state.wallet.stamina >= STAMINA_HOLD_LIMIT) throw new GameApiError("STAMINA_FULL", "스테미나가 이미 가득 찼습니다.");
     const requested = definition.useEffect.amount * request.quantity;
-    const appliedAmount = Math.min(requested, staminaMaxForPlayer(this.state) - this.state.wallet.stamina);
+    const appliedAmount = paidStaminaApplied(this.state.wallet.stamina, requested);
     const nextWallet = { ...this.state.wallet, stamina: this.state.wallet.stamina + appliedAmount };
     // 기한이 있는 병은 가장 먼저 사라질 묶음부터 쓴다(`removeItemLot`).
     const nextItems = removeItemLot(this.state.itemInventory, request.itemId, request.quantity);
@@ -886,8 +887,8 @@ export class FakeServer implements GameApi {
    * 재화로 스테미나를 채운다.
    *
    * 화면은 값도 회복량도 계산하지 않는다 — 수단 ID만 보내고 서버가 표(`STAMINA_RECHARGE_SOURCES`)에서
-   * 값을 읽어 차감과 회복을 한 처리 단위로 확정한다. 상한을 넘는 몫은 버리되 값은 그대로 받으므로,
-   * 이미 가득 찬 상태에서는 아예 거절해 헛돈을 쓰지 않게 한다.
+   * 값을 읽어 차감과 회복을 한 처리 단위로 확정한다. **레벨 상한을 넘어서도 채운다** — 값을 치른
+   * 몫을 상한에서 버리면 그 값이 그대로 손실이다. 보유 끝(`STAMINA_HOLD_LIMIT`)에 닿았을 때만 거절한다.
    */
   async rechargeStamina(request: RechargeStaminaRequest): Promise<RechargeStaminaResponse> {
     await this.delay();
@@ -895,10 +896,9 @@ export class FakeServer implements GameApi {
     this.settleStaminaNow();
     const source = staminaCurrencyRecharge(request.sourceId);
     if (!source) throw new GameApiError("INVALID_EXCHANGE_TARGET", "존재하지 않는 충전 수단입니다.");
-    const maximum = staminaMaxForPlayer(this.state);
-    if (this.state.wallet.stamina >= maximum) throw new GameApiError("STAMINA_FULL", "스테미나가 이미 가득 찼습니다.");
+    if (this.state.wallet.stamina >= STAMINA_HOLD_LIMIT) throw new GameApiError("STAMINA_FULL", "스테미나가 이미 가득 찼습니다.");
     if (this.state.wallet[source.currency] < source.cost) throw new GameApiError("INSUFFICIENT_CURRENCY", "재화가 부족합니다.");
-    const appliedAmount = Math.min(source.amount, maximum - this.state.wallet.stamina);
+    const appliedAmount = paidStaminaApplied(this.state.wallet.stamina, source.amount);
     const nextWallet = {
       ...this.state.wallet,
       [source.currency]: this.state.wallet[source.currency] - source.cost,
@@ -2163,7 +2163,8 @@ export class FakeServer implements GameApi {
     let excavation = this.cloneExcavation(this.state.idleExcavation);
     const itemInventory = this.state.itemInventory.map((entry) => ({ ...entry }));
     if (reward.kind === "currency") {
-      wallet[reward.currency] += reward.amount;
+      // 스테미나 광고도 레벨 상한을 넘어 채운다. 깎는 것은 계정 보유 끝뿐이다.
+      wallet[reward.currency] = Math.min(WALLET_CAPS[reward.currency], wallet[reward.currency] + reward.amount);
       return { wallet, excavation, itemInventory };
     }
     if (reward.kind === "quick_expedition") {

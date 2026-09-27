@@ -100,13 +100,14 @@ describe("inventory", () => {
     expect(positions[0].x).toBe(-positions[positions.length - 1].x);
   });
 
-  it("0·소수·초과 사용량을 거부하고 스테미나 상한까지만 회복한다", async () => {
+  it("0·소수·초과 사용량을 거부하고 병은 스테미나 상한을 넘어서도 회복한다", async () => {
     const state = createDefaultSession(); state.wallet.stamina = 110; state.itemInventory = [{ itemId: "stamina-tonic", quantity: 2 }];
     const api = new FakeServer(state, { latencyMs: 0 });
     for (const quantity of [0, 1.5, 3]) await expect(api.useConsumable({ itemId: "stamina-tonic", quantity })).rejects.toBeInstanceOf(GameApiError);
     const result = await api.useConsumable({ itemId: "stamina-tonic", quantity: 1 });
-    expect(result.appliedAmount).toBe(12); expect(result.wallet.stamina).toBe(122); expect(state.itemInventory[0].quantity).toBe(1);
-    await expect(api.useConsumable({ itemId: "stamina-tonic", quantity: 1 })).rejects.toMatchObject({ code: "STAMINA_FULL" });
+    expect(result.appliedAmount).toBe(60); expect(result.wallet.stamina).toBe(170); expect(state.itemInventory[0].quantity).toBe(1);
+    // 상한(122)을 넘긴 상태에서도 남은 병을 쓸 수 있다.
+    expect((await api.useConsumable({ itemId: "stamina-tonic", quantity: 1 })).wallet.stamina).toBe(230);
   });
 
   it("룬·지갑·스택을 카테고리별로 합성하고 많은 행의 하단 범위를 계산한다", () => {

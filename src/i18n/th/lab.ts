@@ -1,6 +1,7 @@
 /** The Research Lab: fossil research and its results. */
 export const LAB_TH = {
   "lab.rates": "รายละเอียดอัตรา",
+  "lab.pickupInfo": "ข้อมูลตัวละคร",
   "lab.rates.basis": "{banner} · อัตราต่อการวิจัย 1 ครั้ง",
   "lab.rates.percent": "{percent}%",
   "lab.rates.range": "{min}~{max}",

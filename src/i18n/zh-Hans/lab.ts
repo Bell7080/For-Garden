@@ -1,6 +1,7 @@
 /** The Research Lab: fossil research and its results. */
 export const LAB_ZH_HANS = {
   "lab.rates": "概率详情",
+  "lab.pickupInfo": "角色信息",
   "lab.rates.basis": "{banner} · 每次研究概率",
   "lab.rates.percent": "{percent}%",
   "lab.rates.range": "{min}~{max}",

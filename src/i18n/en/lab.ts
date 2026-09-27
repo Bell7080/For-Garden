@@ -1,6 +1,7 @@
 /** The Research Lab: fossil research and its results. */
 export const LAB_EN = {
   "lab.rates": "Rate Details",
+  "lab.pickupInfo": "Character Info",
   "lab.rates.basis": "{banner} · Rates per 1 Research",
   "lab.rates.percent": "{percent}%",
   "lab.rates.range": "{min}~{max}",

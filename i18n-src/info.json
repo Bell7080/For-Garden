@@ -479,16 +479,6 @@
 "{stage} · Größe {height} · Gewicht {weight}",
 "{stage} · Рост {height} · Вес {weight}"
 ],
-"info.journal.noRecord": [
-"无记录",
-"ไม่มีบันทึก",
-"Không có hồ sơ",
-"Tidak ada catatan",
-"Sin registro",
-"Sem registro",
-"Kein Eintrag",
-"Нет записи"
-],
 "info.journal.unknown": [
 "未知",
 "ไม่ทราบ",
@@ -908,26 +898,6 @@
 "Frenesi",
 "Raserei",
 "Неистовство"
-],
-"info.enemy.undug": [
-"未发掘标本",
-"ตัวอย่างที่ยังไม่ขุดพบ",
-"Mẫu vật chưa khai quật",
-"Spesimen Belum Digali",
-"Espécimen sin excavar",
-"Espécime não escavado",
-"Nicht ausgegrabenes Exemplar",
-"Неоткопанный экземпляр"
-],
-"info.enemy.silhouette": [
-"   剪影记录",
-"   บันทึกเงาร่าง",
-"   Hồ sơ bóng hình",
-"   Catatan siluet",
-"   Registro de silueta",
-"   Registro de silhueta",
-"   Silhouetten-Eintrag",
-"   Запись силуэта"
 ],
 "info.story.1": [
 "第1话 · 初次问候",

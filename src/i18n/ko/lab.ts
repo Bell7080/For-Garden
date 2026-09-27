@@ -1,6 +1,7 @@
 /** 연구소(화석 연구) 화면의 문구. */
 export const LAB_KO = {
   "lab.rates": "확률 정보",
+  "lab.pickupInfo": "캐릭터 정보",
   "lab.rates.basis": "{banner} · 1회 연구 기준",
   "lab.rates.percent": "{percent}%",
   "lab.rates.range": "{min}~{max}",

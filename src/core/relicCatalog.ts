@@ -36,7 +36,7 @@ export function compareBookmarkedOwnedRelics<T extends { id: string }>(a: T, b: 
 
 /** 보유 여부에 따라 상세 창에 전달할 수 있는 기록의 공개 범위를 명시한다. */
 export type RelicCatalogDisclosure =
-  | { access: "silhouette"; specimenNumber: string; catalogSummary: string }
+  | { access: "silhouette"; specimenNumber: string; projectName: string; origin: string; catalogSummary: string }
   | { access: "full"; specimenNumber: string; projectName: string; origin: string; excavationSite: string; record: string };
 
 /**
@@ -48,7 +48,9 @@ export type RelicCatalogDisclosure =
  * 기록도 끝내 읽을 수 없다. 그 개체를 여는 손은 이미 전장에서 마주친 뒤라 처음부터 공개한다.
  */
 export function getRelicCatalogDisclosure(def: RelicDef, owned: boolean): RelicCatalogDisclosure {
-  if (!owned && def.enemyOnly !== true) return { access: "silhouette", specimenNumber: def.specimenNumber, catalogSummary: def.catalogSummary };
+  // 미보유는 **미리보기**다 — 누구인지(프로젝트 · 종)와 발굴 요약까지는 말하고, 발굴지·연대·복원 뒤
+  // 관찰 기록·소속은 얻은 뒤에 열린다. 이름·스킬은 정보창이 이미 세우므로 뽑기 전에 무슨 개체인지는 읽힌다.
+  if (!owned && def.enemyOnly !== true) return { access: "silhouette", specimenNumber: def.specimenNumber, projectName: def.projectName, origin: def.origin, catalogSummary: def.catalogSummary };
   return {
     access: "full",
     specimenNumber: def.specimenNumber,

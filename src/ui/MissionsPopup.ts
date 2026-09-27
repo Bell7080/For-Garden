@@ -17,8 +17,14 @@ import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
 import { RewardFrame } from "./RewardFrame";
 import { openRewardPopup } from "./RewardPopup";
 import { COLOR, textStyle } from "./theme";
-import { MissionClaimController, missionDisplayModel, orderMissions, missionResetRemainingMs, formatResetRemaining } from "./missionsPopupModel";
+import { MissionClaimController, missionDisplayModel, stableOrderMissions, missionResetRemainingMs, formatResetRemaining, type MissionOrderMemory } from "./missionsPopupModel";
 import { MISSIONS_POPUP_LAYOUT, missionListContentHeight, missionRowY, missionsTabX, researchTrackLayout } from "./missionsPopupLayout";
+
+/**
+ * 기간마다 지난 줄 순서. 판을 닫았다 다시 열어도(같은 실행 안에서는) 이어진다 — 저장할 값이 아니라
+ * 「방금 본 순서」라 메모리에만 둔다.
+ */
+const MISSION_ORDER_MEMORY = new Map<string, MissionOrderMemory>();
 import { shapeClipMask } from "./popupArt";
 
 const PERIODS: readonly MissionPeriod[] = ["daily", "weekly"];
@@ -97,13 +103,20 @@ export class MissionsPopup {
     this.list = this.scene.add.container(0, 0); this.body.add(this.list);
     this.renderResearch();
     const inData = this.missions.filter((mission) => mission.period === this.period);
-    const missions = orderMissions(inData);
+    // 지난 순서를 지킨다 — 바뀐 줄만 제자리를 다시 찾는다(탭을 오갈 때마다 전체가 다시 줄 서지 않게).
+    const previous = MISSION_ORDER_MEMORY.get(this.period);
+    const ordered = stableOrderMissions(inData, previous);
+    const missions = ordered.missions;
+    MISSION_ORDER_MEMORY.set(this.period, ordered.memory);
     this.rows = [];
     const content = this.buildScrollList(missions.length);
     missions.forEach((raw, index) => this.renderMission(content, raw, index));
     // **줄이 제자리를 찾아 스르륵 옮겨 간다.** 처음 열 때는 데이터 순서의 자리에서, 받은 뒤에는
     // 방금 서 있던 자리에서 출발한다 — 순서가 뚝 바뀌면 방금 받은 임무가 어디로 갔는지 놓친다.
-    const from = this.scrollPeriod === this.period ? this.rowPositions : new Map(inData.map((mission, index) => [mission.id, missionRowY(index)]));
+    // 다른 탭에서 넘어오면 **지난번에 서 있던 자리**에서 출발한다 — 바뀐 것이 없으면 아무 줄도 움직이지 않는다.
+    const from = this.scrollPeriod === this.period ? this.rowPositions
+      : previous ? new Map(previous.order.map((id, index) => [id, missionRowY(index)]))
+        : new Map(inData.map((mission, index) => [mission.id, missionRowY(index)]));
     this.rowPositions = new Map(missions.map((mission, index) => [mission.id, missionRowY(index)]));
     this.scrollPeriod = this.period;
     this.applyScroll(keepScroll);

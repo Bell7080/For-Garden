@@ -212,13 +212,14 @@ describe("relic catalog", () => {
     expect(luka.unlockRecord.text).toContain("하체 근육량이 탄탄한");
   });
 
-  it("미보유 개체에는 번호와 실루엣 요약만 공개한다", () => {
+  it("미보유 개체에는 번호·프로젝트·종과 요약까지만 공개하고 발굴지·관찰 기록은 감춘다", () => {
     const relic: RelicDef = PLAYABLE_RELICS[0];
     const locked = getRelicCatalogDisclosure(relic, false);
     const owned = getRelicCatalogDisclosure(relic, true);
 
-    expect(locked).toEqual({ access: "silhouette", specimenNumber: relic.specimenNumber, catalogSummary: relic.catalogSummary });
+    expect(locked).toEqual({ access: "silhouette", specimenNumber: relic.specimenNumber, projectName: relic.projectName, origin: relic.origin, catalogSummary: relic.catalogSummary });
     expect(locked).not.toHaveProperty("record");
+    expect(locked).not.toHaveProperty("excavationSite");
     expect(owned).toMatchObject({ access: "full", projectName: relic.projectName, record: relic.unlockRecord.status === "recorded" ? relic.unlockRecord.text : expect.any(String) });
   });
 

@@ -17,10 +17,15 @@ export const LAB_CHROME = {
    * 내려가, 비네트가 한 박자 늦게 **툭** 켜졌다. 다른 탭은 원화와 비네트가 처음부터 같은 순서로
    * 서서 함께 밝아진다.
    */
-  depth: { art: -30, incomingArt: -29, vignette: -28 },
+  depth: { art: -30, incomingArt: -29, vignette: -28, panels: 5 },
   rates: { x: 36, y: 180 },
   pull: { y: NAV_TOP - 240, size: { width: 420, height: 150 }, oneTone: 0x7cc7ef, tenTone: 0xf58fb4 },
   pity: { y: NAV_TOP - 440, width: 560, height: 84 },
+  /**
+   * 픽업 렐릭의 정보창을 여는 버튼 — 오른쪽 아래, 확정 판보다 한 뼘 위. 원화의 인물을 가리지 않는
+   * 구석이고, 연구 버튼과는 확정 판을 사이에 두고 떨어져 있어 손이 잘못 닿지 않는다.
+   */
+  pickupInfo: { x: 1080 - 36 - 140, y: NAV_TOP - 440 - 42 - 20 - 38, width: 280, height: 76, fontSize: 28, enterDistance: 180 },
 } as const;
 
 /** 확정 판이 버튼(눌린 두께 12 포함)과 겹치지 않고, 그 아래 픽업 한 줄이 들어갈 틈이 남는지. */

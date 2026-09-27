@@ -1,6 +1,7 @@
 /** 연구소 화면의 일본어 표. */
 export const LAB_JA = {
   "lab.rates": "確率情報",
+  "lab.pickupInfo": "キャラクター情報",
   "lab.rates.basis": "{banner} · 研究1回あたり",
   "lab.rates.percent": "{percent}%",
   "lab.rates.range": "{min}~{max}",

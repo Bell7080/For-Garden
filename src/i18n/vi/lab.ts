@@ -1,6 +1,7 @@
 /** The Research Lab: fossil research and its results. */
 export const LAB_VI = {
   "lab.rates": "Chi tiết tỉ lệ",
+  "lab.pickupInfo": "Thông tin nhân vật",
   "lab.rates.basis": "{banner} · Tỉ lệ mỗi lần Nghiên cứu",
   "lab.rates.percent": "{percent}%",
   "lab.rates.range": "{min}~{max}",

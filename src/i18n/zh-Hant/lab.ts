@@ -1,6 +1,7 @@
 /** The Research Lab: fossil research and its results. */
 export const LAB_ZH_HANT = {
   "lab.rates": "機率詳情",
+  "lab.pickupInfo": "角色資訊",
   "lab.rates.basis": "{banner} · 每次研究機率",
   "lab.rates.percent": "{percent}%",
   "lab.rates.range": "{min}~{max}",

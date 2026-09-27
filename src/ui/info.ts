@@ -20,6 +20,7 @@ import {
   portraitAssetForSkin,
   sdAssetForSkin,
   spawnPuppet,
+  tintPuppet,
 } from "../puppets/assets";
 import { addSceneBackground, BACKGROUND } from "./backgrounds";
 import { addBackButton, IconButton } from "./IconButton";
@@ -88,6 +89,11 @@ const PORTRAIT_FOCUS = INFO_PORTRAIT_FOCUS;
 
 /** 정보창 구석에 세우는 SD 피규어. 받침 위에서 idle만 재생한다. */
 const FIGURE = { x: 762, y: 1786, height: 240 } as const;
+/**
+ * 미보유 개체의 원화·SD — 대사 화면이 정체를 감춘 인물에 쓰는 것과 같은 검은 칠을 반투명하게.
+ * 윤곽은 읽히되 얼굴과 색은 얻은 뒤에 보인다.
+ */
+const INFO_SILHOUETTE = { tint: 0x06060a, alpha: 0.62 } as const;
 
 /*
  * **정보창에는 대사창을 세우지 않는다.**
@@ -483,6 +489,8 @@ export class InfoManager {
   /** 지금 선 전신·SD가 어느 원화인가. 같은 원화면 다시 열 때 새로 세우지 않는다. */
   private portraitUrl?: string;
   private figureUrl?: string;
+  /** 지금 선 원화·SD가 미보유 실루엣으로 선 것인가. 같은 URL이어도 실루엣과 제 모습은 이어 쓰지 않는다. */
+  private portraitSilhouette = false;
   /**
    * 원화가 정보창에서 서 있어야 할 제자리.
    *
@@ -1496,7 +1504,8 @@ export class InfoManager {
    */
   private enterGallery(onClose?: () => void): void {
     const def = this.currentDef;
-    if (!def || this.gallery || !this.portrait) return;
+    // 실루엣은 감상할 그림이 아니다 — 크게 세워도 검은 덩어리만 커진다.
+    if (!def || this.gallery || !this.portrait || !this.ownedNow) return;
     // 외형 선택은 manager/resolver가 소유한다. 공개 프로필은 로컬 장착 상태 대신 DTO 값만 사용한다.
     const asset = this.publicProfile
       ? portraitAssetForSkin(def.portraitAssetId, this.publicProfile.equippedSkinId)
@@ -1769,6 +1778,8 @@ export class InfoManager {
     this.portrait?.destroy();
     this.portrait = portrait;
     this.portraitUrl = asset.url;
+    this.portraitSilhouette = !this.ownedNow;
+    if (!this.ownedNow) tintPuppet(portrait, INFO_SILHOUETTE.tint);
     setDebugInfoAssetReady({ portrait: true });
     // 세운 그 자리가 곧 제자리다. 전신 감상은 여기로만 되돌아온다.
     this.portraitHome = { x: portrait.x, y: portrait.y, scale: portrait.scaleX };
@@ -1777,7 +1788,12 @@ export class InfoManager {
     portrait.setVisible(this.portraitWanted && this.root.visible);
     // 새 인물은 살짝 떠오르며 나타난다. 좌우로 넘길 때 갈아 끼우는 티가 덜 난다.
     portrait.setAlpha(0);
-    this.scene.tweens.add({ targets: portrait, alpha: 1, duration: 220 });
+    this.scene.tweens.add({ targets: portrait, alpha: this.portraitAlpha(), duration: 220 });
+  }
+
+  /** 제 모습은 온전히, 미보유 실루엣은 반투명하게 선다. */
+  private portraitAlpha(): number {
+    return this.ownedNow ? 1 : INFO_SILHOUETTE.alpha;
   }
 
   private async loadFigure(def: RelicDef): Promise<void> {
@@ -1797,7 +1813,8 @@ export class InfoManager {
     this.figure = figure;
     this.figureUrl = asset.url;
     setDebugInfoAssetReady({ sd: true });
-    enableHitOnClick(this.scene, figure);
+    if (!this.ownedNow) { tintPuppet(figure, INFO_SILHOUETTE.tint); figure.setAlpha(INFO_SILHOUETTE.alpha); }
+    else enableHitOnClick(this.scene, figure);
     figure.setVisible(this.portraitWanted && this.root.visible);
   }
 
@@ -1996,44 +2013,47 @@ export class InfoManager {
     this.appearanceButton?.setVisible(owned && !this.publicProfile && skinsForRelic(def.id).length > 0);
     this.popups.closeAll();
 
-    this.paintRarity(owned ? def.rarity : undefined);
-    this.nameText.setText(owned ? def.name : t("info.enemy.undug"));
+    // **미보유도 누구인지는 말한다** — 이름·등급·속성·직군·종·스킬까지는 서고, 원화와 SD만 검은
+    // 반투명 실루엣으로 선다(`INFO_SILHOUETTE`). 번호와 실루엣만 남기던 때는 뽑기 전에 그 개체가 무엇을
+    // 하는지 알 길이 없었다. 성장(급여·돌파·유대·룬)은 여전히 보유한 개체만 만진다.
+    this.paintRarity(def.rarity);
+    this.nameText.setText(def.name);
     this.nameShadow.setText(this.nameText.text);
     // 이름 폭이 캐릭터마다 다르므로 뱃지 자리도 그릴 때마다 이름 끝에서 다시 잡는다.
     const badgeLeft = this.nameText.x + this.nameText.width + AFFINITY.gap;
-    this.elementBadge.setIcon(ELEMENT_ICON[def.element], AFFINITY.main).setPosition(badgeLeft + AFFINITY.main / 2, 152).setVisible(owned);
-    this.roleBadge.setIcon(ROLE_ICON[def.role], AFFINITY.sub).setPosition(badgeLeft + AFFINITY.main + AFFINITY.sub / 2 + 12, 158).setVisible(owned);
-    this.elementHit.setPosition(this.elementBadge.x, this.elementBadge.y).setVisible(owned);
-    this.roleHit.setPosition(this.roleBadge.x, this.roleBadge.y).setVisible(owned);
+    this.elementBadge.setIcon(ELEMENT_ICON[def.element], AFFINITY.main).setPosition(badgeLeft + AFFINITY.main / 2, 152).setVisible(true);
+    this.roleBadge.setIcon(ROLE_ICON[def.role], AFFINITY.sub).setPosition(badgeLeft + AFFINITY.main + AFFINITY.sub / 2 + 12, 158).setVisible(true);
+    this.elementHit.setPosition(this.elementBadge.x, this.elementBadge.y).setVisible(true);
+    this.roleHit.setPosition(this.roleBadge.x, this.roleBadge.y).setVisible(true);
     this.colorAssistMarks.removeAll(true);
-    if (owned) {
+    {
       // 이름 너비와 무관한 화면 좌우 앵커라 1.3배 텍스트에서도 뱃지·탭을 침범하지 않는다.
       addColorAssistMark(this.scene, this.colorAssistMarks, BASE_WIDTH - 72, 70, COLOR_ASSIST_LAYOUT.card.size, session.settings.accessibility.colorAssist, "rarity", def.rarity);
       addColorAssistMark(this.scene, this.colorAssistMarks, BASE_WIDTH - 72, 112, COLOR_ASSIST_LAYOUT.card.size, session.settings.accessibility.colorAssist, "element", def.element);
     }
     // 속성과 직군은 옆의 아이콘이 말한다. 같은 것을 글자로 또 적으면 줄만 길어진다.
-    this.roleText.setText("NO." + def.specimenNumber + (owned ? "   " + def.origin : t("info.enemy.silhouette")));
+    this.roleText.setText("NO." + def.specimenNumber + "   " + def.origin);
     this.refreshBadges();
     this.paintStars(def);
     this.buildSkillIcons(def);
     this.refreshGrowth();
 
-    // 미보유 개체는 원화·스킬을 감추고 번호와 실루엣만 남긴다.
-    for (const icon of this.skillIcons) icon.setVisible(owned);
-    this.portraitWanted = owned;
+    for (const icon of this.skillIcons) icon.setVisible(true);
+    this.portraitWanted = true;
     // 이전 인물의 완료값을 지워 새 원화·SD가 모두 교체된 순간만 관찰하게 한다.
-    setDebugInfoAssetReady(owned ? { portrait: false, sd: false } : undefined);
+    setDebugInfoAssetReady({ portrait: false, sd: false });
     // **이미 선 그 원화면 다시 세우지 않는다.** 같은 개체를 닫았다 다시 열거나 창 안의 조작(급여·
     // 돌파·즐겨찾기)으로 다시 그릴 때마다 전신과 SD를 새로 읽어 녹여 들이면, 인물이 사라졌다
     // 다시 떠올라 **창이 새로고침된 것처럼** 읽혔다. 외형을 바꾼 때만 URL이 달라져 새로 세운다.
-    const keepPortrait = owned && this.portrait?.active === true && this.portraitUrl === this.portraitAssetOf(def).url;
-    const keepFigure = owned && this.figure?.active === true && this.figureUrl === this.figureAssetOf(def).url;
+    // 실루엣과 제 모습은 같은 원화라도 다르게 선 것이라 서로 이어 쓰지 않는다.
+    const keepPortrait = this.portraitSilhouette === !owned && this.portrait?.active === true && this.portraitUrl === this.portraitAssetOf(def).url;
+    const keepFigure = this.portraitSilhouette === !owned && this.figure?.active === true && this.figureUrl === this.figureAssetOf(def).url;
     if (!keepPortrait) this.portrait?.setVisible(false);
     if (!keepFigure) this.figure?.setVisible(false);
-    if (owned) {
-      if (keepPortrait) { this.portraitRequest += 1; this.portrait?.setVisible(this.portraitWanted).setAlpha(1); setDebugInfoAssetReady({ portrait: true }); }
+    {
+      if (keepPortrait) { this.portraitRequest += 1; this.portrait?.setVisible(this.portraitWanted).setAlpha(this.portraitAlpha()); setDebugInfoAssetReady({ portrait: true }); }
       else void this.loadPortrait(def);
-      if (keepFigure) { this.figureRequest += 1; this.figure?.setVisible(this.portraitWanted); setDebugInfoAssetReady({ sd: true }); }
+      if (keepFigure) { this.figureRequest += 1; this.figure?.setVisible(this.portraitWanted).setAlpha(this.portraitAlpha()); setDebugInfoAssetReady({ sd: true }); }
       else void this.loadFigure(def);
     }
     this.root.setVisible(true);
@@ -2084,7 +2104,7 @@ export class InfoManager {
     // 새로 그려지지 않게 한다.
     if (this.skillIconsKey !== this.skillIconsKeyOf(def)) {
       this.buildSkillIcons(def);
-      for (const icon of this.skillIcons) icon.setVisible(this.ownedNow);
+      for (const icon of this.skillIcons) icon.setVisible(true);
     }
     // 공개 프로필은 필요한 표시용 기본값도 DTO로부터 만들며 플레이어 저장을 건드리지 않는다.
     const progress: RelicProgress = this.publicProfile

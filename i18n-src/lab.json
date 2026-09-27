@@ -9,6 +9,16 @@
 "Wahrscheinlichkeiten",
 "Шансы"
 ],
+"lab.pickupInfo": [
+"角色信息",
+"ข้อมูลตัวละคร",
+"Thông tin nhân vật",
+"Info Karakter",
+"Info del personaje",
+"Info do personagem",
+"Charakterinfo",
+"О персонаже"
+],
 "lab.rates.basis": [
 "{banner} · 每次研究概率",
 "{banner} · อัตราต่อการวิจัย 1 ครั้ง",

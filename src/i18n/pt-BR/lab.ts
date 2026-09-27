@@ -1,6 +1,7 @@
 /** The Research Lab: fossil research and its results. */
 export const LAB_PT_BR = {
   "lab.rates": "Detalhes das chances",
+  "lab.pickupInfo": "Info do personagem",
   "lab.rates.basis": "{banner} · Chance por Pesquisa",
   "lab.rates.percent": "{percent}%",
   "lab.rates.range": "{min}~{max}",

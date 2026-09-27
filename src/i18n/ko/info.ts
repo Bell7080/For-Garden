@@ -63,7 +63,6 @@ export const INFO_KO = {
   "info.journal.restoredYear": "복원 연도",
   "info.journal.lifeStage": "성장 단계",
   "info.journal.lifeStageValue": "{stage} · 키 {height} · 몸무게 {weight}",
-  "info.journal.noRecord": "기록 없음",
   "info.journal.unknown": "미상",
   "info.journal.lockedNotice": "\n\n상세 기록은 개체 획득 후 해제됩니다.",
   "info.journal.afterRestoration": "복원 후 관찰 기록",
@@ -111,9 +110,6 @@ export const INFO_KO = {
   "info.skill.basic": "일반 공격",
   "info.skill.ultimate": "궁극기",
   "info.skill.ferocity": "폭주",
-
-  "info.enemy.undug": "미발굴 개체",
-  "info.enemy.silhouette": "   실루엣 기록",
 
   "info.story.1": "1화 · 첫 인사",
   "info.story.2": "2화 · 사육장의 밤",

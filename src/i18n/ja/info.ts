@@ -60,7 +60,6 @@ export const INFO_JA = {
   "info.journal.restoredYear": "復元年",
   "info.journal.lifeStage": "成長段階",
   "info.journal.lifeStageValue": "{stage} · 体長 {height} · 体重 {weight}",
-  "info.journal.noRecord": "記録なし",
   "info.journal.unknown": "不明",
   "info.journal.lockedNotice": "\n\n詳細な記録は個体の獲得後に解放されます。",
   "info.journal.afterRestoration": "復元後の観察記録",
@@ -108,9 +107,6 @@ export const INFO_JA = {
   "info.skill.basic": "通常攻撃",
   "info.skill.ultimate": "必殺技",
   "info.skill.ferocity": "暴走",
-
-  "info.enemy.undug": "未発掘個体",
-  "info.enemy.silhouette": "   シルエット記録",
 
   "info.story.1": "第1話 · はじめの挨拶",
   "info.story.2": "第2話 · 飼育場の夜",

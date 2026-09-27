@@ -226,8 +226,8 @@ export function openObservationJournal(deps: ObservationJournalDeps, options: Ob
       ]
     : [
         { label: t("info.journal.id"), value: "NO." + disclosure.specimenNumber },
-        { label: t("info.journal.project"), value: t("info.journal.noRecord") },
-        { label: t("info.journal.origin"), value: t("info.journal.unknown") },
+        { label: t("info.journal.project"), value: disclosure.projectName },
+        { label: t("info.journal.origin"), value: disclosure.origin },
         { label: t("info.journal.site"), value: t("info.journal.unknown") },
       ];
 

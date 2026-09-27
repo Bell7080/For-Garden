@@ -126,4 +126,22 @@ describe("MissionsPopup 줄 순서", () => {
     ];
     expect(orderMissions(list).map(({ id }) => id)).toEqual(["ready-a", "ready-b", "high", "low", "zero", "claimed"]);
   });
+
+  it("한 번 정한 순서는 지키고, 바뀐 줄만 제자리를 다시 찾는다", async () => {
+    const { stableOrderMissions } = await import("../../src/ui/missionsPopupModel");
+    const first = [
+      mission({ id: "low", progress: 1, target: 10 }),
+      mission({ id: "high", progress: 8, target: 10 }),
+      mission({ id: "ready", progress: 1, target: 1 }),
+      mission({ id: "zero", progress: 0, target: 5 }),
+    ];
+    const opened = stableOrderMissions(first);
+    expect(opened.missions.map(({ id }) => id)).toEqual(["ready", "high", "low", "zero"]);
+    // 아무것도 바뀌지 않았으면 같은 순서 그대로다(탭을 오가도 줄이 움직이지 않는다).
+    expect(stableOrderMissions(first, opened.memory).missions.map(({ id }) => id)).toEqual(["ready", "high", "low", "zero"]);
+    // zero가 완료되면 zero만 받을 것 무리로 올라가고, 나머지는 서로의 순서를 지킨다.
+    const updated = first.map((entry) => entry.id === "zero" ? { ...entry, progress: 5 } : entry.id === "ready" ? { ...entry, claimed: true } : entry);
+    const next = stableOrderMissions(updated, opened.memory);
+    expect(next.missions.map(({ id }) => id)).toEqual(["zero", "high", "low", "ready"]);
+  });
 });

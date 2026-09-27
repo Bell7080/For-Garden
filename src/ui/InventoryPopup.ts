@@ -22,6 +22,8 @@ import { ItemGuidePopup } from "./ItemGuidePopup";
 import { addItemDefinitionIcon } from "./itemDefinitionIcon";
 import { addExpiryTag, soonestItemExpiry } from "./itemExpiry";
 import type { CurrencyGuideAction } from "../data/currencyGuide";
+import { RELIC_GRID_INTRO, relicGridIntroDelay } from "./relicGridLayout";
+import { motionPolicy } from "../core/settings";
 
 const CATEGORIES: readonly { id: ItemCategory; labelKey: TextKey }[] = [
   { id: "rune", labelKey: "inventory.tab.rune" }, { id: "currency", labelKey: "inventory.tab.currency" }, { id: "consumable", labelKey: "inventory.tab.consumable" }, { id: "material", labelKey: "inventory.tab.material" },
@@ -62,6 +64,8 @@ export class InventoryPopup {
   private maskShape?: Phaser.GameObjects.Rectangle;
   /** 마스크를 실제로 걸어 둔 컨테이너. 풀 때 이 자리에서 지워야 죽은 마스크가 남지 않는다. */
   private maskedContent?: Phaser.GameObjects.Container;
+  /** 이번 그리기가 칸을 차례로 깔아 들이는가(`render`의 `deal`). */
+  private dealing = false;
   private geometryMask?: Phaser.Display.Masks.GeometryMask;
   /** 중첩 상세 팝업 유무와 무관하게 가방 자체를 닫는 전용 콜백이다. */
   private closePopup?: () => void;
@@ -92,7 +96,7 @@ export class InventoryPopup {
       // 닫기는 LobbyScene의 화면 우하단 공용 버튼 하나가 맡아 팝업에 붙은 중복 버튼을 만들지 않는다.
       // Manager가 조회·검증·Session 반영을 끝낸 뒤에만 단일 list 경로를 렌더링한다.
       void this.inventory.refresh(this.api).then(() => {
-        this.render(view);
+        this.render(view, true);
         // 초기 응답 이후에는 DTO 대신 manager의 인벤토리 확정 신호만 받아 현재 표시 모델을 다시 읽는다.
         this.unsubscribeInventory = managerEvents.subscribe("inventory", () => { if (this.view) this.render(this.view); });
       });
@@ -102,7 +106,12 @@ export class InventoryPopup {
   close(): void { this.closePopup?.(); }
 
   /** 탭과 목록만 다시 만들어 서버/세션 상태를 UI 객체가 직접 수정하지 않게 한다. */
-  private render(body: Phaser.GameObjects.Container): void {
+  /**
+   * `deal`이면 칸이 **도감과 같은 몫으로 촤르륵 깔린다**(`RELIC_GRID_INTRO`) — 판을 열 때와 탭을 바꿀
+   * 때만이다. 정렬을 바꾸거나 쓰고 난 뒤 다시 그릴 때까지 깔리면 같은 목록이 매번 새로 열린 것처럼 읽힌다.
+   */
+  private render(body: Phaser.GameObjects.Container, deal = false): void {
+    this.dealing = deal && motionPolicy(session.settings).nonEssentialDistanceFactor > 0;
     // 탭 전환 전에 display-list 밖의 GeometryMask까지 명시적으로 해제한다.
     this.destroyMask();
     body.removeAll(true);
@@ -154,7 +163,7 @@ export class InventoryPopup {
         if (tab.id === this.category) return;
         const from = CATEGORIES.findIndex(({ id }) => id === this.category);
         this.category = tab.id;
-        this.render(body);
+        this.render(body, true);
         if (this.maskedContent) slideTabPage(this.scene, [this.maskedContent], from, index);
       },
     });
@@ -247,6 +256,13 @@ export class InventoryPopup {
     hit.on("pointerup", () => this.select(item));
     card.add(hit);
     content.add(card);
+    if (!this.dealing) return;
+    // 도감의 카드처럼 한 뼘 아래에서 떠오르며 차례로 깔린다. 지연에는 상한이 있어 첫 줄 뒤는 함께 선다.
+    const index = content.list.length - 1;
+    const finalY = card.y;
+    card.setAlpha(0);
+    card.y = finalY + RELIC_GRID_INTRO.rise;
+    this.scene.tweens.add({ targets: card, alpha: 1, y: finalY, duration: RELIC_GRID_INTRO.duration, delay: relicGridIntroDelay(index), ease: "Quad.easeOut" });
   }
 
   /** 룬은 룬 쪽지, 재화는 재화 안내창, 재료·소비품은 같은 양식의 아이템 안내창으로 연결한다. */

@@ -113,6 +113,4 @@ export function glossaryForm(id: GlossaryId, language: LanguageId): string | und
 export const GLOSSARY_EXCEPTIONS: Readonly<Record<string, readonly GlossaryId[]>> = {
   // 화석을 캐낸 실제 장소이지 방치형 자원 수집 기능이 아니다.
   "info.journal.site": ["excavation"],
-  // 아직 화석에서 복원하지 않은 개체라는 뜻이다.
-  "info.enemy.undug": ["excavation"],
 };

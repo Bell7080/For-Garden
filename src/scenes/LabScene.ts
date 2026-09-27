@@ -32,6 +32,7 @@ import { BANNER_TONE, bannerPresentation, bannerTags, bannerTenDiscountPercent }
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { MileagePopup } from "../ui/MileagePopup";
 import { settingsManager } from "../managers/SettingsManager";
+import { motionPolicy } from "../core/settings";
 import { colorAssistPolicy, excavationStageDuration } from "../core/settings";
 import { flashPolicy } from "../ui/signatureEffects";
 import { hasRareExcavationResult } from "../core/hapticPolicy";
@@ -39,6 +40,8 @@ import { ResearchCinematic, researchCinematicEnabled } from "../ui/ResearchCinem
 import { cinematicCardArt, cinematicRewards, isCinematicCount } from "../ui/researchCinematicModel";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
 import { formatCurrency } from "../core/formatCurrency";
+import { CharacterInfoManager } from "../managers/CharacterInfoManager";
+import { relicCollection } from "../managers/RelicCollectionManager";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 
 /**
@@ -55,6 +58,10 @@ export class LabScene extends Phaser.Scene {
   private bannerTitleKey = "";
   /** 지금 원화를 세운 배너. 목록이 줄어 배너가 바뀌면 원화도 갈아 끼운다. */
   private shownBannerId = "";
+  /** 픽업 렐릭의 정보창을 여는 버튼. 배너가 바뀌면 걷고 다시 세운다. */
+  private pickupPanels?: Phaser.GameObjects.Container;
+  /** 그 버튼이 여는 정보창. 처음 누를 때 세운다. */
+  private info?: CharacterInfoManager;
   private bannerPages!: Phaser.GameObjects.Graphics;
   /** 10연 할인 표식. 할인이 있는 배너에서만 선다. */
   private discountBadge!: Phaser.GameObjects.Container;
@@ -171,6 +178,8 @@ export class LabScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.showcase?.destroy();
       this.showcase = undefined;
+      this.pickupPanels = undefined;
+      this.info = undefined;
       this.presentation.invalidate();
       this.finishStage?.();
       this.boardTap = undefined;
@@ -278,6 +287,33 @@ export class LabScene extends Phaser.Scene {
   }
 
   /**
+   * 픽업 배너면 **그 렐릭의 정보창을 여는 버튼**을 오른쪽 아래, 확정 판 바로 위에 세운다
+   * (`LAB_CHROME.pickupInfo`). 모집 원화가 곧 이 화면이라 원화 위에 칸을 더 얹지 않고 버튼 하나만 둔다 —
+   * 얻기 전이면 정보창이 실루엣 미리보기로 열려 이름·종·스킬을 읽을 수 있다. 배너를 넘길 때마다 오른쪽에서
+   * 한 뼘 밀려 들어오고, 픽업이 없는 배너에서는 걷는다.
+   */
+  private syncPickupPanels(): void {
+    this.pickupPanels?.destroy();
+    this.pickupPanels = undefined;
+    const relicId = Object.values(this.banner.pickupRelicIds).flat()[0];
+    if (!relicId) return;
+    const spot = LAB_CHROME.pickupInfo;
+    const button = new Button(this, spot.x, spot.y, {
+      width: spot.width, height: spot.height, label: t("lab.pickupInfo"), fontSize: spot.fontSize, icon: "magnifier",
+      onClick: () => {
+        this.info ??= new CharacterInfoManager(this);
+        this.info.showRelic(getRelic(relicId), relicCollection.owns(relicId));
+      },
+    });
+    button.setDepth(LAB_CHROME.depth.panels);
+    this.pickupPanels = button;
+    if (motionPolicy(session.settings).nonEssentialDistanceFactor === 0) return;
+    button.x = spot.x + spot.enterDistance;
+    button.setAlpha(0);
+    this.tweens.add({ targets: button, x: spot.x, alpha: 1, duration: 360, ease: "Cubic.Out" });
+  }
+
+  /**
    * 배너가 가리키는 모집 원화를 세운다. **이 한 장이 이 화면의 배경이다.**
    *
    * 화면이 사는 동안 한 장을 붙잡는 `addSceneBackground`를 쓰지 않는 이유는, 이 그림이
@@ -291,6 +327,7 @@ export class LabScene extends Phaser.Scene {
    */
   private showcaseRelic(): void {
     this.shownBannerId = this.banner.id;
+    this.syncPickupPanels();
     // **앞 배너의 원화는 새 원화가 다 선 뒤에 걷는다.** 먼저 지우면 새 원화가 녹아 드는 0.16초
     // 동안 화면 뒤가 통째로 비어, 배너를 넘길 때마다 검게 한 번 깜빡였다.
     const previous = this.showcase;

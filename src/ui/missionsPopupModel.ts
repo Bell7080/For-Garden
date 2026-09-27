@@ -67,3 +67,50 @@ export function orderMissions<T extends MissionDto>(missions: readonly T[]): T[]
     .sort((a, b) => a.rank - b.rank || (a.rank === 1 ? b.ratio - a.ratio : 0) || a.index - b.index)
     .map(({ mission }) => mission);
 }
+
+/** 한 기간 목록의 지난 순서와, 그때 줄마다의 상태 서명. */
+export interface MissionOrderMemory {
+  order: readonly string[];
+  signatures: ReadonlyMap<string, string>;
+}
+
+/** 줄이 「바뀌었다」를 가르는 서명 — 받을 수 있음 · 받음 · 진행도. 셋 중 하나라도 달라야 자리를 옮긴다. */
+export function missionSignature(mission: MissionDto): string {
+  const model = missionDisplayModel(mission);
+  return `${model.claimable ? 1 : 0}|${mission.claimed ? 1 : 0}|${mission.progress}`;
+}
+
+/**
+ * **한 번 정한 순서는 지킨다** — 바뀐 줄만 제자리를 다시 찾는다.
+ *
+ * 탭을 오갈 때마다 `orderMissions`로 처음부터 다시 줄 세우면, 아무것도 바뀌지 않았는데 줄이 데이터
+ * 순서에서 정렬 순서로 매번 스르륵 옮겨 가 정신이 사나웠다. 지난 순서(`memory`)가 있으면 서명이 같은
+ * 줄은 그 자리 그대로 두고, 새로 생기거나 서명이 바뀐 줄(갱신·완료·수령)만 정렬 기준대로 끼워 넣는다.
+ * 지난 순서가 없을 때(처음 연 기간)만 전체를 한 번 줄 세운다.
+ */
+export function stableOrderMissions<T extends MissionDto>(missions: readonly T[], memory?: MissionOrderMemory): { missions: T[]; memory: MissionOrderMemory } {
+  const signatures = new Map(missions.map((mission) => [mission.id, missionSignature(mission)]));
+  const remember = (list: T[]): { missions: T[]; memory: MissionOrderMemory } => ({ missions: list, memory: { order: list.map(({ id }) => id), signatures } });
+  if (!memory) return remember(orderMissions(missions));
+  const byId = new Map(missions.map((mission) => [mission.id, mission]));
+  const kept = memory.order
+    .filter((id) => byId.has(id) && memory.signatures.get(id) === signatures.get(id))
+    .map((id) => byId.get(id)!);
+  const keptIds = new Set(kept.map(({ id }) => id));
+  const moved = orderMissions(missions.filter(({ id }) => !keptIds.has(id)));
+  const key = (mission: T): [number, number] => {
+    const model = missionDisplayModel(mission);
+    const rank = model.claimable ? 0 : model.claimed ? 2 : 1;
+    return [rank, rank === 1 ? -model.ratio : 0];
+  };
+  const after = (a: T, b: T): boolean => {
+    const [ra, sa] = key(a); const [rb, sb] = key(b);
+    return ra > rb || (ra === rb && sa > sb);
+  };
+  const list = [...kept];
+  for (const mission of moved) {
+    const at = list.findIndex((existing) => after(existing, mission));
+    if (at < 0) list.push(mission); else list.splice(at, 0, mission);
+  }
+  return remember(list);
+}

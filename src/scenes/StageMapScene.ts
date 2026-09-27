@@ -19,6 +19,8 @@ import { stageChapterNavigationLayout } from "../ui/stageChapterLayout";
 import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
 import { PopupLayer } from "../ui/PopupLayer";
 import { StaminaPopup } from "../ui/StaminaPopup";
+import { TopBar } from "../ui/TopBar";
+import { openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { gameApi } from "../api/FakeServer";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { LOBBY_RETURN } from "./lobbyEntry";
@@ -29,6 +31,9 @@ const WINDOW = { top: 500, bottom: 1560 } as const;
 const NODE_GAP = 230;
 /** 드래그를 스크롤로 볼지 탭으로 볼지 가르는 거리. */
 const DRAG_SLOP = 14;
+
+/** 챕터 제목 두 줄. 상단 재화 줄(y 40~136) 아래에 선다. */
+const STAGE_MAP_TITLE = { titleY: 200, subtitleY: 260 } as const;
 
 /** 제목·출전·뒤로가기가 앉는 깊이. 비네트(40)보다 위, 적 편성 팝업(60)보다 아래다. */
 const CHROME_DEPTH = 50;
@@ -81,9 +86,12 @@ export class StageMapScene extends Phaser.Scene {
     // 이 위에 얹혀 눌리지 않는다(CHROME_DEPTH).
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: 40, strength: 0.5 });
 
-    this.chapterTitle = this.add.text(cx, 140, "", textStyle({ role: "display", size: 60 })).setOrigin(0.5).setDepth(CHROME_DEPTH);
+    // 스토리 입장은 스테미나를 쓰므로 위에 재화 줄을 세운다 — 다른 던전 입구와 같은 한 장이다.
+    // 스테미나 칸을 누르면 그 자리에서 충전 창이 열린다. 제목은 그 줄 아래로 내려선다.
+    new TopBar(this, 40, { profile: false, depth: CHROME_DEPTH, onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.enemyPopups }, currency) });
+    this.chapterTitle = this.add.text(cx, STAGE_MAP_TITLE.titleY, "", textStyle({ role: "display", size: 60 })).setOrigin(0.5).setDepth(CHROME_DEPTH);
     this.chapterSubtitle = this.add
-      .text(cx, 202, "", textStyle({ role: "body", size: 28, color: COLOR.inkDim }))
+      .text(cx, STAGE_MAP_TITLE.subtitleY, "", textStyle({ role: "body", size: 28, color: COLOR.inkDim }))
       .setOrigin(0.5)
       .setDepth(CHROME_DEPTH);
 

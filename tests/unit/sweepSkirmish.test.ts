@@ -106,3 +106,14 @@ describe("소탕 연출", () => {
     expect(SWEEP_SKIRMISH.groundY).toBeCloseTo(-height / 2 + height * SWEEP_SKIRMISH.strata[0].ratio, 6);
   });
 });
+
+describe("소탕 연출의 어둠", () => {
+  it("전장이 비치도록 암전·누름·지층이 모두 옅다", () => {
+    expect(SWEEP_SKIRMISH.dimAlpha).toBeLessThanOrEqual(0.55);
+    expect(SWEEP_SKIRMISH.fieldOverlay).toBeLessThanOrEqual(0.15);
+    expect(SWEEP_SKIRMISH.vignette).toBeLessThanOrEqual(0.3);
+    // 하늘 층은 거의 투명하고, 가장 짙은 흙도 절반을 넘지 않는다.
+    expect(SWEEP_SKIRMISH.strata[0].alpha).toBeLessThan(0.1);
+    for (const layer of SWEEP_SKIRMISH.strata) expect(layer.alpha).toBeLessThan(0.5);
+  });
+});

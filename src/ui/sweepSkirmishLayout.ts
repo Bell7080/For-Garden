@@ -22,13 +22,19 @@ export const SWEEP_SKIRMISH = {
    * 하늘 층은 거의 투명하고, 발밑 흙만 조금 짙게 눌러 SD가 선 자리를 받친다.
    */
   strata: [
-    { ratio: 0.64, color: 0x1a2330, alpha: 0.14 },
-    { ratio: 0.14, color: 0x3a2c20, alpha: 0.42 },
-    { ratio: 0.12, color: 0x2e241b, alpha: 0.56 },
-    { ratio: 0.1, color: 0x221b15, alpha: 0.68 },
+    { ratio: 0.64, color: 0x1a2330, alpha: 0.04 },
+    { ratio: 0.14, color: 0x3a2c20, alpha: 0.2 },
+    { ratio: 0.12, color: 0x2e241b, alpha: 0.28 },
+    { ratio: 0.1, color: 0x221b15, alpha: 0.36 },
   ],
-  /** 전장 원화 위에 까는 청흑색 누름 세기(`addPopupBackgroundImage`의 `overlayStrength`). */
-  fieldOverlay: 0.25,
+  /**
+   * 어둠의 세기 — **전장이 밝게 비쳐야 한다.** 뒤 화면 암전·원화 위 청흑색 누름·띠 가장자리 누르기를
+   * 한 표에 모은다. 셋을 모두 진하게 두었을 때는 띠 안의 전장까지 거의 검게 가라앉아, 배경을 깐
+   * 뜻이 사라졌다.
+   */
+  dimAlpha: 0.5,
+  fieldOverlay: 0.1,
+  vignette: 0.22,
   /** 발이 서는 선(띠 가운데 기준) — 첫 지층의 밑변과 같다. */
   groundY: 0.64 * 480 - 240,
   hero: { x: -230 },

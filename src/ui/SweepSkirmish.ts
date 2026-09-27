@@ -68,7 +68,7 @@ export function playSweepSkirmish(scene: Phaser.Scene, options: SweepSkirmishOpt
   let finished = false;
 
   // 뒤를 누르고 손을 받는다 — 누르면 건너뛴다.
-  const dim = scene.add.rectangle(0, 0, BASE_WIDTH + 400, BASE_HEIGHT + 400, COLOR.void, 0.72).setInteractive();
+  const dim = scene.add.rectangle(0, 0, BASE_WIDTH + 400, BASE_HEIGHT + 400, COLOR.void, L.dimAlpha).setInteractive();
   root.add(dim);
 
   const band = scene.add.container(0, still ? 0 : 70).setAlpha(0);
@@ -88,7 +88,7 @@ export function playSweepSkirmish(scene: Phaser.Scene, options: SweepSkirmishOpt
   }
   // 땅 선 — 발이 서는 자리를 한 줄로 알린다.
   band.add(scene.add.rectangle(0, L.groundY, width - bevel * 2, 3, COLOR.accent, 0.35));
-  band.add(drawFrameVignette(scene, 0, 0, width, height, { strength: 0.42 }));
+  band.add(drawFrameVignette(scene, 0, 0, width, height, { strength: L.vignette }));
   band.add(drawLayer(scene, 0, 0, shape, { fill: 0x000000, alpha: 0, edge: COLOR.accent, edgeAlpha: 0.9, edgeWidth: 4 }));
   addSectionTitle(scene, -width / 2 + 24, -height / 2 - 4, t("dungeon.sweep"), { parent: band });
   band.add(scene.add.text(L.count.x, L.count.y, t("dungeon.sweep.count", { count: options.count }), textStyle({ role: "display", size: L.count.size, color: COLOR.accentText }))

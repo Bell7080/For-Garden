@@ -9,7 +9,9 @@ import { computeFaceBandFrame } from "../puppets/anchors";
 import { portraitAssetFor, withPuppetTexture } from "../puppets/assets";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
-import { Button } from "./Button";
+import { dotPattern } from "./Button";
+import { motionPolicy } from "../core/settings";
+import { session } from "../state/session";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { bakeBandTexture } from "./faceTexture";
 import { drawFrameVignette, drawLayer, drawShapeEdge, drawShapeOutline, HoloBar, slantedRect } from "./holo";
@@ -24,8 +26,11 @@ import { pressIn, pressOut } from "./pressFeedback";
 export interface RaidLayerHandlers {
   /** 층을 눌렀을 때. 목록을 끌던 손이면 부른 쪽이 거른다. */
   onTap: () => void;
-  /** 끝난 판의 정산. 참여했고 아직 받지 않은 판에만 버튼이 선다. */
-  onSettle?: () => void;
+  /**
+   * 끝난 판의 정산. 참여했고 아직 받지 않은 판에만 층 전체를 덮는 정산 덮개가 선다.
+   * `dismiss`는 그 덮개가 걷히는 연출이고, 다 걷히면 풀린다 — 부른 쪽이 서버 응답과 나란히 기다린다.
+   */
+  onSettle?: (dismiss: () => Promise<void>) => void;
 }
 
 /** 층 윗변에 걸터앉는 제목표. 월드 폭주는 그 이름, 소환 레이드는 난이도다. */
@@ -87,7 +92,7 @@ function paintSlantedBacking(
  * 통째로 담는 액자라 사방 외곽선을 두르는 예외(교류 층·적 정보창과 같다)다.
  *
  * **보상 칸은 정산의 몫이다.** 참여했으면 지금까지의 몫(끝난 판이면 받을 몫), 아직 치지 않았으면
- * 이 판이 줄 수 있는 최대치가 선다 — 판이 끝나야 받고, 받는 것은 완료 탭의 정산 버튼이다.
+ * 이 판이 줄 수 있는 최대치가 선다 — 판이 끝나야 받고, 받는 것은 완료 탭에서 층을 덮는 정산 덮개다.
  */
 export function addRaidLayer(
   scene: Phaser.Scene,
@@ -154,7 +159,7 @@ export function addRaidLayer(
     .text(left, text.attemptsY, completed ? t(raid.defeated ? "raid.boss.defeated" : "raid.layer.ended") : t("raid.attempts", { remaining, limit: raid.attemptsLimit }), textStyle({ role: "emphasis", size: 28, color: !completed && remaining > 0 ? COLOR.sortieText : COLOR.inkDim }))
     .setOrigin(0, 0.5)));
 
-  addRewardRow(scene, layer, raid, left, reward, rewardText, settle, handlers);
+  addRewardRow(scene, layer, raid, left, reward, rewardText);
 
   // 맨 밑은 참가자 전원이 함께 깎는 남은 체력이다. 잡지 못해도 되는 판이라 게이지가 비지 않은 채
   // 끝나는 날이 있다 — 그래서 수치는 남은 몫이 아니라 **남은 비율**로 짧게 선다.
@@ -174,11 +179,54 @@ export function addRaidLayer(
   layer.add(shadowed(scene.add
     .text(barWidth / 2, height / 2 - hp.labelUp, t("raid.world.percent", { percent }), textStyle({ role: "display", size: 30, color: COLOR.ink }))
     .setOrigin(1, 0.5), 6));
+  if (completed && raid.settlement.length > 0 && !raid.settled && handlers.onSettle) addSettleCover(scene, layer, shape, width - slant, height, settle, handlers.onSettle);
   return layer;
 }
 
 /**
- * 보상 줄 — 증표 액자 하나와 그 오른쪽 두 줄, 끝난 판이면 정산 버튼.
+ * 정산 덮개 — 층 전체를 살짝 어둡게 덮고 점 무늬를 깐 뒤 가운데에 「정산」 한 마디만 크게 세운다.
+ * 층의 입력면보다 위라 이 판에서는 누르는 곳이 어디든 정산이다(끝난 판은 칠 수 없으니 판으로 넘어가지
+ * 않는다). 점은 마스크가 아니라 도형 안의 점만 찍는다 — 목록은 흐르고 기하 마스크는 그 이동을 따라오지 않는다.
+ */
+function addSettleCover(
+  scene: Phaser.Scene,
+  layer: Phaser.GameObjects.Container,
+  shape: number[],
+  hitWidth: number,
+  height: number,
+  spec: typeof RAID_LIST.settle,
+  onSettle: (dismiss: () => Promise<void>) => void,
+): void {
+  const cover = scene.add.container(0, 0);
+  layer.add(cover);
+  cover.add(drawLayer(scene, 0, 0, shape, { fill: COLOR.void, alpha: spec.dimAlpha }));
+  cover.add(dotPattern(scene, shape, COLOR.accent, spec.dots));
+  const label = shadowed(scene.add
+    .text(0, 0, t("raid.settle.button"), textStyle({ role: "display", size: spec.labelSize, color: COLOR.accentText }))
+    .setOrigin(0.5), 10);
+  cover.add(label);
+  const breath = scene.tweens.add({ targets: label, alpha: spec.breath.from, duration: spec.breath.ms, yoyo: true, repeat: -1, ease: "Sine.InOut" });
+  const still = motionPolicy(session.settings).nonEssentialDistanceFactor === 0;
+  if (still) breath.pause();
+  const hit = scene.add.rectangle(0, 0, hitWidth, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+  cover.add(hit);
+  hit.on("pointerdown", () => pressIn(label));
+  hit.on("pointerout", () => pressOut(label, "normal", { pop: false }));
+  hit.on("pointerup", () => {
+    pressOut(label);
+    onSettle(() => new Promise<void>((resolve) => {
+      if (!cover.active) { resolve(); return; }
+      hit.disableInteractive();
+      breath.stop();
+      const duration = still ? 0 : spec.dismissMs;
+      scene.tweens.add({ targets: label, scale: spec.dismissScale, alpha: 0, duration, ease: "Cubic.Out" });
+      scene.tweens.add({ targets: cover, alpha: 0, duration, ease: "Quad.In", onComplete: () => resolve() });
+    }));
+  });
+}
+
+/**
+ * 보상 줄 — 증표 액자 하나와 그 오른쪽 두 줄. 정산은 층 전체를 덮는 덮개가 맡는다(`addSettleCover`).
  *
  * 증표를 두 칸으로 가르지 않는다(내 기여 몫·전체 진행 몫·토벌 몫이 모두 같은 증표다). 세 몫의
  * 내역은 판 안의 보상 창이 말하고, 층에서 읽어야 하는 것은 "얼마를 받나" 하나다.
@@ -190,8 +238,6 @@ function addRewardRow(
   left: number,
   reward: { y: number; size: number },
   rewardText: typeof RAID_LIST.rewardText,
-  settle: typeof RAID_LIST.settle,
-  handlers: RaidLayerHandlers,
 ): void {
   const participated = raid.settlement.length > 0;
   const max = RAID_DIFFICULTY[raid.difficulty].settlement;
@@ -212,11 +258,6 @@ function addRewardRow(
     .text(textX, reward.y + rewardText.valueDown, t("raid.contribution.value", { damage: raid.myDamage.toLocaleString() }), textStyle({ role: "body", size: 23, color: COLOR.ink }))
     .setOrigin(0, 0.5)
     .setShadow(0, 2, "#05070a", 5, false, true));
-  if (raid.status !== "completed" || !participated || raid.settled || !handlers.onSettle) return;
-  layer.add(new Button(scene, left + settle.fromFrame + settle.width / 2, reward.y, {
-    width: settle.width, height: settle.height, label: t("raid.settle.button"), fontSize: 28, variant: "primary",
-    onClick: handlers.onSettle,
-  }));
 }
 
 /**

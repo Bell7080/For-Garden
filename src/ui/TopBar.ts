@@ -19,7 +19,14 @@ import { pressIn, pressOut } from "./pressFeedback";
 export type { TopBarCurrencyContext };
 
 /** 상단 줄에는 공개 표시 모델과 공개 동작만 들어오며 인증 비밀을 받을 자리가 없다. */
-export interface TopBarOptions { onSettings?: () => void; onProfile?: (profile: PlayerProfileDisplay) => void; onCurrency?: (currency: WalletItemKey) => void; currencies?: TopBarCurrencyContext; profile?: boolean }
+export interface TopBarOptions {
+  onSettings?: () => void; onProfile?: (profile: PlayerProfileDisplay) => void; onCurrency?: (currency: WalletItemKey) => void; currencies?: TopBarCurrencyContext; profile?: boolean;
+  /**
+   * 줄 전체를 올려 앉힐 깊이. 흐르는 지도처럼 그 위로 다른 층이 지나가는 화면에서만 준다 —
+   * 비우면 예전처럼 만든 순서대로 쌓인다.
+   */
+  depth?: number;
+}
 
 /**
  * 화면 위쪽 줄. 렐릭 · 로비 · 연구소 어디서든 같은 자리에 같은 모양으로 뜬다.
@@ -62,6 +69,8 @@ export class TopBar {
   private avatarKey?: string;
 
   constructor(scene: Phaser.Scene, y = 40, options: TopBarOptions = {}) {
+    // 줄이 세우는 조각은 여럿이라 하나씩 깊이를 적지 않고, 이 생성자가 더한 것만 골라 한 번에 올린다.
+    const before = options.depth === undefined ? undefined : new Set(scene.children.list);
     drawGlassFade(scene, BASE_WIDTH / 2, y + 30, BASE_WIDTH, 150, { topAlpha: 0.92, bottomAlpha: 0 });
     drawHairline(scene, BASE_WIDTH / 2, y + 96, BASE_WIDTH, { color: COLOR.accent, alpha: 0.18 });
 
@@ -88,6 +97,9 @@ export class TopBar {
       hit.on("pointerup", () => { pressOut(settings); options.onSettings?.(); });
     } else settings.setAlpha(0.38);
 
+    if (before && options.depth !== undefined) {
+      for (const child of scene.children.list) if (!before.has(child)) (child as unknown as Phaser.GameObjects.Components.Depth).setDepth?.(options.depth);
+    }
     this.refresh();
     // 회복 카운트다운은 표시만 갱신하며 확정 스테미나는 다음 서버 응답만 반영한다.
     scene.time.addEvent({ delay: 1_000, loop: true, callback: () => this.refresh() });

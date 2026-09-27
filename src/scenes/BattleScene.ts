@@ -84,6 +84,7 @@ import { GameApiError } from "../api/contracts";
 import { currencyRecordToRewardItems } from "../ui/RewardPopup";
 import { BATTLE_CLOCK_LAYOUT, BATTLE_CONTROLS, BATTLE_STATUS_LAYOUT, RAID_BATTLE_HUD } from "../ui/battleStatusLayout";
 import { RAID_HP_BAR_COLOR } from "../ui/raidLayout";
+import { CONFIRM_DIALOG } from "../ui/confirmDialogLayout";
 import { formatBattleClock, isDeathClockRunning } from "../core/battleClock";
 import { UnitStatusChips } from "../ui/UnitStatusChips";
 import { openUnitStatusPopup } from "../ui/UnitStatusPopup";
@@ -917,19 +918,23 @@ export class BattleScene extends Phaser.Scene {
     const popups = this.pausePopups ??= new PopupLayer(this, 2400);
     if (popups.isOpen) return;
     const actions = battlePauseActions(this.battleInput.mode);
-    const rows: { label: string; primary?: boolean; onPress: (close: () => void) => void }[] = [
+    const rows: { label: string; primary?: boolean; destructive?: boolean; onPress: (close: () => void) => void }[] = [
       { label: t("battle.pause.resume"), primary: true, onPress: (close) => close() },
       { label: t("battle.pause.settings"), onPress: (close) => { close(); this.openSettingsOverlay(); } },
     ];
     if (actions.retry) rows.push({ label: t("battle.pause.retry"), onPress: () => popups.confirm({ title: t("battle.pause.retry"), message: t("battle.pause.retryConfirm"), confirmLabel: t("battle.pause.retry") }, () => this.retryBattle()) });
-    if (actions.exit === "leave") rows.push({ label: t("battle.pause.exit"), onPress: () => popups.confirm({ title: t("battle.pause.exit"), message: t("battle.pause.exitConfirm"), confirmLabel: t("battle.pause.exit"), destructive: true }, () => this.leaveBattle()) });
-    if (actions.exit === "forfeit") rows.push({ label: t("battle.pause.exit"), onPress: (close) => popups.confirm({ title: t("battle.pause.exit"), message: t("battle.pause.forfeitConfirm"), confirmLabel: t("battle.pause.exit"), destructive: true }, () => { close(); this.finishBattle("defeat"); }) });
+    if (actions.exit === "leave") rows.push({ label: t("battle.pause.exit"), destructive: true, onPress: () => popups.confirm({ title: t("battle.pause.exit"), message: t("battle.pause.exitConfirm"), confirmLabel: t("battle.pause.exit"), destructive: true }, () => this.leaveBattle()) });
+    if (actions.exit === "forfeit") rows.push({ label: t("battle.pause.exit"), destructive: true, onPress: (close) => popups.confirm({ title: t("battle.pause.exit"), message: t("battle.pause.forfeitConfirm"), confirmLabel: t("battle.pause.exit"), destructive: true }, () => { close(); this.finishBattle("defeat"); }) });
     const button = { width: 420, height: 86, gap: 20, top: 120, bottom: 70 };
     const height = button.top + rows.length * button.height + (rows.length - 1) * button.gap + button.bottom;
     popups.open({ width: 560, height, title: t("battle.pause.title"), dim: true, closeOnBackdrop: true }, (body, close) => {
       rows.forEach((row, index) => {
         const y = -height / 2 + button.top + button.height / 2 + index * (button.height + button.gap);
-        body.add(new Button(this, 0, y, { width: button.width, height: button.height, label: row.label, fontSize: 30, variant: row.primary ? "primary" : undefined, onClick: () => row.onPress(close) }));
+        // 나가기는 확인 창의 파괴적 확정과 같은 붉은 판이다 — 계속하기와 같은 어두운 판이면 무엇이 판을 끝내는지 글자를 읽어야 안다.
+        const danger = row.destructive
+          ? { variant: "primary" as const, fill: CONFIRM_DIALOG.destructiveFill, decorDots: true, accentColor: COLOR.danger, accentTextColor: COLOR.ink }
+          : { variant: row.primary ? "primary" as const : undefined };
+        body.add(new Button(this, 0, y, { width: button.width, height: button.height, label: row.label, fontSize: 30, ...danger, onClick: () => row.onPress(close) }));
       });
     });
   }

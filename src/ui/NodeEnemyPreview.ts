@@ -34,7 +34,12 @@ export interface NodeEnemyPreviewOptions {
    * **스토리 관문의 칸 구성** — 있으면 적 정보·줄거리를 여닫는 칸으로 세우고 맨 아래에 초회 보상을
    * 한 줄 둔다(`STORY_PREVIEW`). 원정 노드는 넘기지 않아 예전의 한 장 그대로다.
    */
-  sections?: { rewards: readonly StageFirstClearReward[]; rewardsClaimed: boolean };
+  sections?: {
+    rewards: readonly StageFirstClearReward[];
+    rewardsClaimed: boolean;
+    /** 룬 액자를 누르면 부른다 — 받기 전의 룬은 등급·자리만 알려 주는 미리보기 쪽지를 연다. */
+    onRuneClick?: (reward: Extract<StageFirstClearReward, { kind: "rune" }>, point: { x: number; y: number }) => void;
+  };
   /** 렌더된 적과 같은 슬롯 순서의 공개 성장 상태다. */
   growth: readonly Pick<StageEnemyDef, "level" | "breakthrough">[];
   enemies: readonly RelicDef[];
@@ -247,7 +252,16 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     if (layout.rewardLabelY !== undefined && layout.rewardRowY !== undefined) {
       this.add(this.scene.add.text(left, top + layout.rewardLabelY, t("stageComplete.firstClear"), textStyle({ role: "emphasis", size: spec.reward.labelSize, color: COLOR.inkDim })).setOrigin(0, 0));
       const columns = storyPreviewRewardColumns(sections.rewards.length, width);
-      sections.rewards.forEach((reward, index) => addStageRewardFrame(this.scene, this, columns[index], top + layout.rewardRowY!, spec.reward.frame, reward, { claimed: sections.rewardsClaimed }));
+      sections.rewards.forEach((reward, index) => {
+        const x = columns[index];
+        const y = top + layout.rewardRowY!;
+        addStageRewardFrame(this.scene, this, x, y, spec.reward.frame, reward, { claimed: sections.rewardsClaimed });
+        if (reward.kind !== "rune" || !sections.onRuneClick) return;
+        const onRuneClick = sections.onRuneClick;
+        const hit = this.scene.add.rectangle(x, y, spec.reward.frame, spec.reward.frame, 0xffffff, 0).setInteractive({ useHandCursor: true });
+        hit.on("pointerup", () => onRuneClick(reward, { x: this.x + x, y: this.y + y - spec.reward.frame / 2 }));
+        this.add(hit);
+      });
     }
 
     if (keepPuppets && previousGroundScreen !== undefined) {

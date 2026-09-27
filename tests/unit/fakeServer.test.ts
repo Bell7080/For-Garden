@@ -369,17 +369,29 @@ describe("FakeServer", () => {
     const walletBefore = { ...state.wallet };
     const runesBefore = state.runeInventory.length;
     const result = await server.completeStage("1-5", true);
-    expect(result.firstClearRewards.map((grant) => grant.kind === "rune" ? { kind: "rune", rarity: grant.rarity, part: grant.part } : grant)).toEqual(expected);
-    // 1-5는 첫 정예라 화석 한 개와 첫 룬(1번 조각)이 함께 든다.
+    const shown = (grant: (typeof result.firstClearRewards)[number]) => grant.kind === "rune"
+      ? { kind: "rune", rarity: grant.rarity, part: grant.part, ...(grant.trait ? { trait: true } : {}) } : grant;
+    expect(result.firstClearRewards.map(shown)).toEqual(expected);
+    // 1-5는 첫 정예라 화석 한 개와 첫 룬(1번 조각, 특성 없음)이 함께 든다.
     expect(expected).toContainEqual({ kind: "currency", currency: "fossil", amount: 1 });
     expect(expected).toContainEqual({ kind: "rune", rarity: "uncommon", part: 0 });
     for (const reward of expected) if (reward.kind === "currency") expect(state.wallet[reward.currency] - walletBefore[reward.currency]).toBe(reward.amount);
     expect(state.runeInventory).toHaveLength(runesBefore + 1);
     expect(state.runeInventory.at(-1)).toMatchObject({ rarity: "uncommon", part: 0 });
+    expect(state.runeInventory.at(-1)?.trait).toBeUndefined();
     // 두 번째 승리는 반복 치즈케이크뿐이다.
     const again = await server.completeStage("1-5", true);
     expect(again).toMatchObject({ firstClear: false, firstClearRewards: [] });
     expect(state.runeInventory).toHaveLength(runesBefore + 1);
+  });
+
+  it("장을 닫는 관문의 룬은 특성이 확정으로 붙어 나온다", async () => {
+    const state = makeSession(); const server = new FakeServer(state, { latencyMs: 0 });
+    const result = await server.completeStage("1-10", true);
+    expect(result.firstClearRewards).toContainEqual(expect.objectContaining({ kind: "rune", rarity: "uncommon", part: 1, trait: true }));
+    const rune = state.runeInventory.at(-1);
+    expect(rune?.part).toBe(1);
+    expect(rune?.trait).toBeDefined();
   });
 
   it("재화가 가득 차도 스테이지를 깰 수 있고 넘치는 보상만 깎인다", async () => {

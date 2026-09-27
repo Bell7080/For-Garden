@@ -1909,6 +1909,46 @@
 "Handlung",
 "Сюжет"
 ],
+"stageRune.title": [
+"符文预览",
+"ตัวอย่างรูน",
+"Xem trước rune",
+"Pratinjau Rune",
+"Vista previa de runa",
+"Prévia da runa",
+"Runen-Vorschau",
+"Предпросмотр руны"
+],
+"stageRune.unknown": [
+"未知",
+"ไม่ทราบ",
+"Không rõ",
+"Tidak diketahui",
+"Desconocido",
+"Desconhecido",
+"Unbekannt",
+"Неизвестно"
+],
+"stageRune.traitGuaranteed": [
+"确定 · 种类未知",
+"การันตี · ไม่ทราบประเภท",
+"Chắc chắn · chưa rõ loại",
+"Pasti · jenis tidak diketahui",
+"Garantizado · tipo desconocido",
+"Garantido · tipo desconhecido",
+"Garantiert · Art unbekannt",
+"Гарантировано · тип неизвестен"
+],
+"stageRune.traitNone": [
+"无",
+"ไม่มี",
+"Không có",
+"Tidak ada",
+"Ninguno",
+"Nenhum",
+"Keine",
+"Нет"
+],
 "enemyPreview.totalPower": [
 "总战斗力 {power}",
 "พลังต่อสู้รวม {power}",

@@ -1,10 +1,12 @@
 import type { Wallet } from "./gacha";
-import type { BattleStageDef, StageBonusReward } from "./types";
+import type { RunePart, RuneRarity } from "./runes";
+import type { BattleStageDef } from "./types";
 
 /** 초회 클리어 보상 한 줄 — 치즈케이크까지 같은 모양으로 편 것. */
 export type StageFirstClearReward =
   | { kind: "currency"; currency: keyof Wallet; amount: number }
-  | Extract<StageBonusReward, { kind: "rune" }>;
+  /** 결과판은 발급된 룬을 그대로 그리므로 등급을 넓게 받는다. 초회 표가 주는 것은 고급·희귀뿐이다. */
+  | { kind: "rune"; rarity: RuneRarity; part: RunePart; trait?: boolean };
 
 /**
  * 그 관문의 **초회 클리어 보상 전부**를 화면에 서는 순서대로 편다.

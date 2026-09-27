@@ -1239,9 +1239,12 @@ export class FakeServer implements GameApi {
       // 초회 보상은 **미리보기와 같은 목록**(`stageFirstClearRewards`)을 그대로 준다.
       for (const reward of stageFirstClearRewards(stage)) {
         if (reward.kind === "rune") {
-          const rune = this.createGrantedRune(reward.rarity, nextRunes, reward.part);
+          const base = this.createGrantedRune(reward.rarity, nextRunes, reward.part);
+          // 특성 확정 룬은 발급하는 자리에서 특성 하나를 붙인다(하한 고급) — 종류·등급은 서버가 굴린다.
+          const rune: RuneInstance = reward.trait ? { ...base, trait: rollRuneTrait({ traitIds: RUNE_TRAIT_IDS, minimumGrade: "uncommon", random: this.random }) } : base;
+          assertValidRuneInstance(rune);
           nextRunes = [...nextRunes, rune];
-          firstClearRewards.push({ kind: "rune", rarity: rune.rarity, part: rune.part, instanceId: rune.instanceId, name: rune.customName ?? rune.baseName });
+          firstClearRewards.push({ kind: "rune", rarity: rune.rarity, part: rune.part, instanceId: rune.instanceId, name: rune.customName ?? rune.baseName, trait: rune.trait !== undefined });
           continue;
         }
         const applied = Math.max(0, Math.min(reward.amount, WALLET_CAPS[reward.currency] - nextWallet[reward.currency]));

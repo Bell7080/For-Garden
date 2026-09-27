@@ -36,6 +36,16 @@ test("스토리 미리보기는 줄거리 칸을 펼치고 초회 보상을 판 
   expect(closed.panelBottom).toBeLessThanOrEqual(closed.bottom);
   await captureGame(page, `test-results/${test.info().project.name}-stage-preview-closed.png`);
 
+  // 1-5의 초회 보상은 치즈케이크·골드·젬·화석·룬 다섯 칸이고 룬이 맨 끝이다. 누르면 미리보기 쪽지가
+  // 등급·자리만 말하고 옵션·특성은 가린다. 보상 줄 = 판 윗변 + 제목(92) + 적(78+364) + 줄거리(60) + 20 + 22 + 16 + 액자 절반(48).
+  await tap(page, BASE_WIDTH / 2 + 2 * 118, closed.panelTop + 92 + 78 + 364 + 60 + 20 + 22 + 16 + 48);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("룬 미리보기");
+  await page.waitForTimeout(400);
+  await captureGame(page, `test-results/${test.info().project.name}-stage-preview-rune.png`);
+  await tap(page, 80, 300);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles ?? [])).not.toContain("룬 미리보기");
+  await expect.poll(async () => (await panel(page)) !== undefined, { timeout: 10_000 }).toBe(true);
+
   // 줄거리 머리줄 = 판 윗변 + 제목(92) + 적 머리줄(78) + 펼친 적 칸(364) + 줄거리 머리줄의 절반(30).
   await tap(page, BASE_WIDTH / 2, closed.panelTop + 92 + 78 + 364 + 30);
   await expect.poll(async () => (await panel(page))!.panelBottom - (await panel(page))!.panelTop).toBeGreaterThan(closed.panelBottom - closed.panelTop);

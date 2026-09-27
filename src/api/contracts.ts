@@ -568,7 +568,7 @@ export interface CompleteStageResponse extends PlayerStateDto {
 /** 초회 보상으로 실제 들어온 한 줄. 룬은 발급된 인스턴스의 등급·자리를 그대로 싣는다. */
 export type StageClearGrantDto =
   | { kind: "currency"; currency: keyof Wallet; amount: number }
-  | { kind: "rune"; rarity: RuneInstance["rarity"]; part: RuneInstance["part"]; instanceId: string; name: string };
+  | { kind: "rune"; rarity: RuneInstance["rarity"]; part: RuneInstance["part"]; instanceId: string; name: string; trait: boolean };
 /** 입장 영수증은 재시도에 그대로 반환된다. 스테미나는 여기서 빠지지 않고 이긴 판의 결과 확정이 뺀다. */
 export interface EnterStageRequest { stageId: string; requestId: string; }
 export interface EnterStageResponse extends PlayerStateDto { stageId: string; requestId: string; staminaCost: number; refundPolicy: StaminaRefundPolicy; }

@@ -17,26 +17,31 @@ describe("stage enemy design", () => {
     expect(DAILY_RESTORATION).toMatchObject({ id: "daily-restoration", maxEntriesPerUtcDay: 3, rewardCheesecake: 40 });
   });
   /*
-   * 초회 보상은 **깊을수록 두껍고**, 룬은 1-5부터, 화석은 정예 관문에만 든다.
+   * 초회 보상의 바탕은 골드·치즈케이크·젬이다. 원석은 2장부터, 화석은 정예 관문에만, 룬은 고급·희귀만
+   * 장마다 둘(1-5 특성 없음 → 1-10 특성 확정).
    */
-  it("초회 보상은 룬을 1-5부터, 화석을 정예 관문에만 두고 깊을수록 골드가 는다", () => {
+  it("초회 보상은 골드·치즈케이크·젬이 바탕이고 원석·화석·룬은 제 자리에서만 붙는다", () => {
+    const stages = battles.filter((stage): stage is Extract<typeof stage, { kind: "battle" }> => stage.kind === "battle");
     const rewardsOf = (id: string) => stageFirstClearRewards(getBattleStage(id));
-    const firstRune = battles.findIndex((stage) => stage.kind === "battle" && rewardsOf(stage.id).some(({ kind }) => kind === "rune"));
-    expect(battles[firstRune].id).toBe("1-5");
-    for (const stage of battles) {
-      if (stage.kind !== "battle") continue;
-      const fossil = rewardsOf(stage.id).find((reward) => reward.kind === "currency" && reward.currency === "fossil");
-      expect(Boolean(fossil), stage.id).toBe(stage.elite === true);
-      if (fossil?.kind === "currency") expect(fossil.amount, stage.id).toBe(1);
+    const has = (id: string, currency: string) => rewardsOf(id).some((reward) => reward.kind === "currency" && reward.currency === currency);
+    for (const stage of stages) {
+      for (const base of ["cheesecake", "gold", "gems"]) expect(has(stage.id, base), `${stage.id} ${base}`).toBe(true);
+      // 원석은 1-10에서 특성을 처음 본 다음, 2장부터다.
+      expect(has(stage.id, "rawStone"), `${stage.id} rawStone`).toBe((stage.chapter ?? 1) >= 2);
+      expect(has(stage.id, "fossil"), `${stage.id} fossil`).toBe(stage.elite === true);
     }
+    const runes = stages.flatMap((stage) => rewardsOf(stage.id).flatMap((reward) => reward.kind === "rune" ? [{ id: stage.id, ...reward }] : []));
+    expect(runes.map(({ id }) => id)).toEqual(["1-5", "1-10", "2-5", "2-10", "3-5", "3-10"]);
+    // 영웅·전설은 두지 않는다 — 스토리는 주 수급처가 아니다.
+    expect(runes.every(({ rarity }) => rarity === "uncommon" || rarity === "rare")).toBe(true);
+    // 첫 룬은 특성이 없고, 장을 닫는 관문의 룬만 특성이 확정으로 붙는다.
+    expect(runes.find(({ id }) => id === "1-5")?.trait).toBeUndefined();
+    for (const { id, trait } of runes) expect(trait === true, id).toBe(id.endsWith("-10"));
+    // 조각은 1→2→3번을 돈다.
+    expect(new Set(runes.map(({ part }) => part))).toEqual(new Set([0, 1, 2]));
     const gold = (id: string) => rewardsOf(id).reduce((sum, reward) => reward.kind === "currency" && reward.currency === "gold" ? sum + reward.amount : sum, 0);
     expect(gold("3-9")).toBeGreaterThan(gold("2-9"));
     expect(gold("2-9")).toBeGreaterThan(gold("1-9"));
-    // 한 장을 닫으면 1·2·3번 조각이 모두 찬다.
-    for (const chapter of [1, 2, 3]) {
-      const parts = battles.filter((stage) => stage.chapter === chapter).flatMap((stage) => rewardsOf(stage.id)).flatMap((reward) => reward.kind === "rune" ? [reward.part] : []);
-      expect(new Set(parts), `${chapter}장`).toEqual(new Set([0, 1, 2]));
-    }
   });
 
   it("챕터 1의 기본 악당은 토비·아모·리파이고 1-5·1-10만 단일 정예가 대신 선다", () => {

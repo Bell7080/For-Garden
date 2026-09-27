@@ -18,6 +18,7 @@ import { isEnemyPreviewNodeVisible } from "../ui/nodeEnemyPreviewLayout";
 import { stageChapterNavigationLayout } from "../ui/stageChapterLayout";
 import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
 import { stageFirstClearRewards } from "../core/stageRewards";
+import { openStageRunePreview } from "../ui/StageRunePreviewPopup";
 import { PopupLayer } from "../ui/PopupLayer";
 import { StaminaPopup } from "../ui/StaminaPopup";
 import { gameApi } from "../api/FakeServer";
@@ -322,7 +323,10 @@ export class StageMapScene extends Phaser.Scene {
       // 서사가 없는 관문은 `undefined`가 그대로 넘어가 직전 노드의 줄이 남지 않는다.
       situation: stage.situation,
       // 초회 보상은 판 맨 아래 한 줄로 늘 선다. 이미 깬 관문이면 받은 표시(검은 막 + 노란 체크)다.
-      sections: { rewards: stageFirstClearRewards(stage), rewardsClaimed: session.cleared.has(stage.id) },
+      sections: {
+        rewards: stageFirstClearRewards(stage), rewardsClaimed: session.cleared.has(stage.id),
+        onRuneClick: (reward, point) => openStageRunePreview(this, this.enemyPopups, reward, point),
+      },
       // 전투 전에도 전투와 동일한 공용 적 정보창으로 연결한다.
       // 미리보기가 그 칸의 성장 상태를 함께 넘긴다 — 화면이 배열에서 다시 찾지 않는다.
       onEnemyClick: (enemy, growth) => this.info.show({ def: enemy, level: growth.level, breakthrough: growth.breakthrough }),

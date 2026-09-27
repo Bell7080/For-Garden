@@ -85,31 +85,36 @@ const CHAPTER_ONE_ENEMIES: readonly (readonly StageEnemyDef[])[] =
  */
 
 /**
- * 룬이 처음 나오는 자리. **1-5부터다** — 첫 관문부터 룬을 쥐여 주면 급여·편성을 겨우 익히는 동안
- * 세공·장착까지 한꺼번에 밀려온다. 스테이지를 조금 민 뒤, 첫 정예를 넘은 상으로 처음 손에 쥔다.
+ * 룬이 나오는 자리 — **장마다 두 번, 고급·희귀만.**
  *
- * 한 장에 세 번(1·2·3번 조각)이라 장을 닫으면 세 칸이 모두 찬다. 등급은 장마다 한 단계씩 오르고,
- * 스토리의 끝(3-10)만 전설 한 장을 둔다.
+ * **1-5가 처음이다** — 첫 관문부터 룬을 쥐여 주면 급여·편성을 겨우 익히는 동안 세공·장착까지
+ * 한꺼번에 밀려온다. 첫 정예를 넘은 상으로 **특성 없는** 고급 룬 하나를 쥐고, 장을 닫는 1-10에서
+ * **특성이 확정으로 붙은** 룬을 받아 그때 특성이라는 것을 처음 본다(원석이 2장부터 나오는 이유다).
+ * 뒤의 장도 같은 박자(중간 하나 · 장의 끝 하나 + 특성)이고, 조각은 1→2→3번을 돌아 한 벌이 두 장에 걸쳐 찬다.
+ *
+ * **영웅·전설은 두지 않는다.** 여기는 룬을 알려 주는 자리이지 주 수급처가 아니다 — 고고학·교환이
+ * 그 몫이고, 더 높은 등급은 뒤쪽 장(8·9장)에서 연다.
  */
 const STORY_RUNE_REWARDS: Readonly<Record<string, Extract<StageBonusReward, { kind: "rune" }>>> = {
   "1-5": { kind: "rune", rarity: "uncommon", part: 0 },
-  "1-7": { kind: "rune", rarity: "uncommon", part: 1 },
-  "1-9": { kind: "rune", rarity: "uncommon", part: 2 },
-  "2-3": { kind: "rune", rarity: "rare", part: 0 },
-  "2-6": { kind: "rune", rarity: "rare", part: 1 },
-  "2-9": { kind: "rune", rarity: "rare", part: 2 },
-  "3-3": { kind: "rune", rarity: "epic", part: 0 },
-  "3-6": { kind: "rune", rarity: "epic", part: 1 },
-  "3-9": { kind: "rune", rarity: "epic", part: 2 },
-  "3-10": { kind: "rune", rarity: "legendary", part: 0 },
+  "1-10": { kind: "rune", rarity: "uncommon", part: 1, trait: true },
+  "2-5": { kind: "rune", rarity: "uncommon", part: 2 },
+  "2-10": { kind: "rune", rarity: "rare", part: 0, trait: true },
+  "3-5": { kind: "rune", rarity: "rare", part: 1 },
+  "3-10": { kind: "rune", rarity: "rare", part: 2, trait: true },
 };
 
+/** 원석이 처음 나오는 관문(전역 순서). 1-10에서 특성을 처음 본 다음 관문, 2-1이다. */
+const RAW_STONE_FIRST_ORDER = 10;
+
 /**
- * 치즈케이크 밖의 초회 보상 — 골드·젬·원석·화석·룬.
+ * 치즈케이크 밖의 초회 보상.
  *
+ * **바탕은 골드·치즈케이크·젬 셋이다.** 나머지는 제 이야기가 시작되는 자리에서만 붙는다.
  * - **골드**는 관문이 깊을수록 늘고, 무거운 자리(정예·장의 끝)는 두 배다.
  * - **젬**은 매 관문 조금, 무거운 자리에서 크게 — 장 하나가 연구 두어 번 몫이다.
- * - **원석**은 1-3부터다. 룬 특성 연구의 재료라 룬이 나오기 조금 전부터 모아 두게 한다.
+ * - **원석**은 2장부터 조금씩 늘어난다. 룬 특성 연구의 재료라, 1-10에서 특성 붙은 룬을 받아
+ *   특성이 무엇인지 안 다음에야 뜻이 선다 — 그 전에 쌓아 두면 쓸 곳 모르는 재화가 된다.
  * - **화석은 정예 관문에만 한 개**다(`elite`). 스토리 화석은 짜게 두고, 모자란 몫은 스토리 클리어
  *   패스(무료·유료 두 줄)가 채운다 — 관문마다 화석을 주면 패스가 채울 자리가 없다.
  * - **룬**은 `STORY_RUNE_REWARDS`가 자리를 정한다.
@@ -120,7 +125,7 @@ function storyFirstClearBonus(id: string, globalOrder: number, chapter: number, 
     { kind: "currency", currency: "gold", amount: (3_000 + globalOrder * 1_000) * (heavy ? 2 : 1) },
     { kind: "currency", currency: "gems", amount: heavy ? [150, 200, 300][chapter - 1] ?? 300 : [30, 40, 50][chapter - 1] ?? 50 },
   ];
-  if (globalOrder >= 2) bonus.push({ kind: "currency", currency: "rawStone", amount: 40 + globalOrder * 10 });
+  if (globalOrder >= RAW_STONE_FIRST_ORDER) bonus.push({ kind: "currency", currency: "rawStone", amount: 20 + (globalOrder - RAW_STONE_FIRST_ORDER) * 5 });
   if (elite) bonus.push({ kind: "currency", currency: "fossil", amount: 1 });
   const rune = STORY_RUNE_REWARDS[id];
   if (rune) bonus.push(rune);

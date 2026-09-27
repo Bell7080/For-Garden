@@ -2043,7 +2043,11 @@ export interface StageEnemyDef {
  */
 export type StageBonusReward =
   | { kind: "currency"; currency: "gold" | "gems" | "rawStone" | "fossil"; amount: number }
-  | { kind: "rune"; rarity: "uncommon" | "rare" | "epic" | "legendary"; part: 0 | 1 | 2 };
+  /**
+   * 룬은 **고급·희귀만** 둔다 — 스토리는 룬을 처음 쥐여 주는 자리이지 주 수급처가 아니다. 영웅·전설은
+   * 뒤쪽 장(8·9장)에서 연다. `trait`이면 발급할 때 특성 하나를 확정으로 붙인다(하한 고급).
+   */
+  | { kind: "rune"; rarity: "uncommon" | "rare"; part: 0 | 1 | 2; trait?: true };
 
 export interface BattleStageDef extends StageBase {
   kind: "battle";

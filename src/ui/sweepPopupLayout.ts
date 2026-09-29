@@ -9,7 +9,7 @@ export const SWEEP_POPUP = {
   width: 880,
   tierY: 104,
   count: { y: 200, height: 88, step: 88, plate: 168, max: 132, gap: 16 },
-  cost: { top: 262, height: 150, lineGap: 64, padX: 40, icon: 46, valueSize: 32, labelSize: 24 },
+  cost: { top: 262, height: 150, lineGap: 64, padX: 40, icon: 52, valueSize: 32, labelSize: 24 },
   /** 소탕권 줄 오른쪽의 광고 버튼. 모자라면 강조 판으로 바뀌어 다음에 할 일을 말한다. */
   ad: { width: 236, height: 62 },
   notice: { y: 446, size: 22 },

@@ -32,7 +32,8 @@ import { ExpeditionAugmentPopup, type AugmentTargetPicker } from "../ui/Expediti
 import { expeditionAugmentBadges, expeditionAugmentRows } from "../ui/expeditionAugmentBadges";
 import { ExpeditionAugmentChip } from "../ui/ExpeditionAugmentChip";
 import { FaceFrame } from "../ui/FaceFrame";
-import { EXPEDITION_DAILY_POLICY, EXPEDITION_NODE_REWARD_BALANCE } from "../data/expedition";
+import { EXPEDITION_DAILY_POLICY, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_REWARD_IDS } from "../data/expedition";
+import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
 import { completedAdToken } from "../data/adRewards";
 import { presentRewardedAd } from "../platform/rewardedAds";
 import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
@@ -67,7 +68,7 @@ const ROSTER = formationRosterGrid(BASE_WIDTH - 96);
  *
  * 판 안에는 액자 넷과 방금 얻은 몫까지만 들어가고, 점수는 판 밖 아래에 맨 글자로 선다.
  */
-const LOOT = { panelY: 199, panelHeight: 152, frameY: 200, step: 200, gainY: 258, scoreY: 316 } as const;
+const LOOT = { panelY: 199, panelHeight: 152, frameY: 200, step: 200, frame: 96, span: 860, gainY: 258, scoreY: 316 } as const;
 /** 보유 렐릭이 늘면 편성판 아래·힌트/출격 버튼 위 사이만 스크롤로 보여준다. */
 const ROSTER_VIEWPORT = { top: 705, bottom: 1500 } as const;
 /** 손가락이 이 거리 이상 움직여야 카드 선택이 아니라 스크롤로 판정한다. */
@@ -303,18 +304,23 @@ export class ExpeditionScene extends Phaser.Scene {
     confirmedScore: { scope: "node" | "run"; value: number },
     last: { nodeScore: number; rewards: Record<string, number>; cappedCurrencies: string[] } | null,
   ): void {
-    const items = [
-      ["currency-cheesecake", "cheesecake"], ["currency-gold", "gold"],
-      ["currency-fossil", "fossil"], ["currency-gems", "gems"],
-    ] as const;
+    // 액자는 고정 넷이 아니라 **보류 보상 목록**(`EXPEDITION_REWARD_IDS`)에서 읽는다. 넷만 적어 두던
+    // 때는 노드마다 쌓이는 인양 기록과 보물 노드의 몫이 판에 서지 않아, 받은 것이 결산에서야 보였다.
+    // 노드가 늘 주는 몫(`EXPEDITION_NODE_REWARD_BALANCE`)은 0이어도 자리를 지키고, 그 밖의 것은 쌓였을 때만 선다.
+    const items = EXPEDITION_REWARD_IDS
+      .filter((key) => key in EXPEDITION_NODE_REWARD_BALANCE || Math.floor(rewards[key] ?? 0) > 0)
+      .map((key) => [CURRENCY_ICON_BY_WALLET[key], key] as const);
+    // 액자 수가 늘어도 판 안에 들도록 간격만 좁힌다(액자 크기는 그대로다).
+    const step = items.length > 1 ? Math.min(LOOT.step, (LOOT.span - LOOT.frame) / (items.length - 1)) : 0;
     // 지도 위에 떠 있는 하나의 전리품 레이어로 읽히도록 제목과 얇은 상단선을 먼저 놓는다.
     drawLayer(this, BASE_WIDTH / 2, LOOT.panelY, chipPoints(972, LOOT.panelHeight, { bevel: { topLeft: 30, bottomRight: 22 } }), { fill: 0x0d131b, alpha: 0.82, edge: COLOR.accent, edgeAlpha: 0.55 });
     this.add.text(86, 137, t("expedition.loot"), textStyle({ role: "display", size: 25, color: COLOR.accentText })).setOrigin(0, 0.5);
     items.forEach(([icon, key], index) => {
       // 네 액자는 판 가운데에 모여 선다. 넓게 벌리면 네 재화가 각자 다른 정보처럼 읽힌다.
-      const x = BASE_WIDTH / 2 + (index - 1.5) * LOOT.step; const y = LOOT.frameY; const size = 96;
+      const x = BASE_WIDTH / 2 + (index - (items.length - 1) / 2) * step; const y = LOOT.frameY; const size = LOOT.frame;
       const total = Math.floor(rewards[key] ?? 0);
-      const capped = last?.cappedCurrencies.includes(key) ?? total >= EXPEDITION_NODE_REWARD_BALANCE[key].runCap;
+      const rule = key in EXPEDITION_NODE_REWARD_BALANCE ? EXPEDITION_NODE_REWARD_BALANCE[key as keyof typeof EXPEDITION_NODE_REWARD_BALANCE] : undefined;
+      const capped = rule !== undefined && (last?.cappedCurrencies.includes(key) ?? total >= rule.runCap);
       // 액자·그림·그늘·수량은 가방·보상 팝업과 같은 공용 프리팹 한 장이 그린다.
       addFramedIcon(this, undefined, x, y, size, icon, {
         amount: `${formatCurrency(total)}${capped ? " MAX" : ""}`,

@@ -196,7 +196,7 @@ export class Button extends Phaser.GameObjects.Container {
     }
     if (opts.cost) {
       // 라벨과 비용을 한 덩어리로 보고 판 가운데에 세운다. 값이 길어져도 덩어리째 가운데다.
-      const coin = fontSize * 1.06;
+      const coin = fontSize * 1.3;
       const gap = fontSize * 0.42;
       // 재화 수는 라벨보다 굵고 크게, 그러나 **세로로만** 늘인다. 가로로 키우면 자릿수가
       // 늘었을 때 덩어리가 판을 넘는다. 아이콘과는 손가락 하나가 아니라 한 뼘만 띄운다.

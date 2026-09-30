@@ -34,6 +34,7 @@ import {
   GUTTIA_SD_METADATA,
   KERIS_PORTRAIT_METADATA,
   KERIS_SD_METADATA,
+  DIMO_SD_METADATA,
   KURO_SD_METADATA,
   LEXIA_PORTRAIT_METADATA,
   LOOT_CLERK_PORTRAIT_METADATA,
@@ -155,6 +156,17 @@ export interface PuppetAsset {
    * 적지 않도록 그 차이를 원화 쪽에 적어 둔다.
    */
   portraitOffsetY?: number;
+  /**
+   * 정보창에서 **이 원화만 따로 잡는 구도**. 두 눈 관절이 정하는 공용 얼굴 규격(`FACE_STANDARD.info`)
+   * 위에 얹히는 값이며, 관절과 alpha 경계를 실측으로 확인한 **뒤에도** 화면에서 어긋나 보일 때만 적는다.
+   *
+   * - `raise`: 눈높이 한 줄을 이만큼(정보창 기준 높이 1820 대비 px) 더 올린다. 머리 위로 후드·베일이 높이
+   *   솟은 원화는 눈이 같은 줄에 서도 정수리가 다른 전신보다 한참 낮게 서서 내려앉아 보인다(테리사).
+   * - `showLeft`: **끝까지 보여야 하는 그림의 왼쪽 끝**(원화 x). 얼굴이 오른쪽에 치우친 원화는 공용 규격의
+   *   배율에서 왼쪽 몸 밖의 조각(모르페의 드론)이 화면 밖으로 나간다. 그 끝이 정보창 왼쪽 안쪽에 들도록
+   *   먼저 오른쪽으로 옮기고, 그래도 넘치면 줄인다 — 얼굴 크기 띠는 이때 포기한다.
+   */
+  infoFraming?: { raise?: number; showLeft?: number };
   /**
    * 카드 머리 홈이 한쪽으로 더 열려야 하는 정도(칩 폭 대비 비율, 0~1). 비워두면 대칭이다.
    *
@@ -330,6 +342,8 @@ export const MORPHE_ASSET: PuppetAsset = {
 
 /** 20번 기본 SD는 디안, `_black`은 쿠로, `_white`는 시로라는 이름 대응을 보존한다. */
 export const DIAN_SD_ASSET: PuppetAsset = { url: `${base}puppets/charSD_020.zip`, ...DIAN_SD_METADATA };
+/** 모르페가 띄우는 관제 드론 디모(A-Dimo)의 SD. 전신 원화가 따로 없어 정보창도 같은 묶음을 세운다. */
+export const DIMO_SD_ASSET: PuppetAsset = { url: `${base}puppets/charSD_022_dimo.zip`, ...DIMO_SD_METADATA };
 export const KURO_SD_ASSET: PuppetAsset = { url: `${base}puppets/charSD_020_black.zip`, ...KURO_SD_METADATA };
 export const SHIRO_SD_ASSET: PuppetAsset = { url: `${base}puppets/charSD_020_white.zip`, ...SHIRO_SD_METADATA };
 
@@ -458,6 +472,7 @@ const PORTRAIT_ASSETS = {
   morphe: MORPHE_ASSET,
   // 늑대는 전신 원화가 따로 없다. SD 자체가 온전한 한 마리라 정보창도 같은 묶음을 세운다.
   kuro: KURO_SD_ASSET,
+  dimo: DIMO_SD_ASSET,
   shiro: SHIRO_SD_ASSET,
 } as const satisfies Record<PortraitAssetId, PuppetAsset>;
 
@@ -674,6 +689,7 @@ export const TIA_SD_ASSET: PuppetAsset = {
 export const SUMMON_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
   charSD_020_black: KURO_SD_ASSET,
   charSD_020_white: SHIRO_SD_ASSET,
+  charSD_022_dimo: DIMO_SD_ASSET,
 };
 
 /**
@@ -707,6 +723,7 @@ const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
   terisa: TERISA_SD_ASSET,
   morphe: MORPHE_SD_ASSET,
   kuro: KURO_SD_ASSET,
+  dimo: DIMO_SD_ASSET,
   shiro: SHIRO_SD_ASSET,
 };
 

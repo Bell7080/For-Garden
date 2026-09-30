@@ -2804,7 +2804,7 @@ export function buildSkillViewModel(options: {
     gaugeCost,
     // 구조화된 연격·복합 계수는 정적 설명을 복제하지 않고 키워드가 연결된 공용 문장으로 표시한다.
     description: "kind" in skill
-      ? passiveDescription(skill as Passive, attacker?.def.stats.atk)
+      ? passiveDescription(skill as Passive, attacker?.def.stats.atk, attacker === undefined ? undefined : { defense: attacker.def.stats.def, resistance: attacker.def.stats.res })
       : skillDescription(skill as Skill, {
         ap: attacker?.def.stats.ap,
         atk: attacker && { atk: attacker.def.stats.atk, attackSpeed: attacker.def.stats.attackSpeed },

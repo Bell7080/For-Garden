@@ -36,6 +36,8 @@ export const STATUS_VI = {
   "status.submerged.detail": "Tốc chạy -{percent}% · Hết khi rời Vùng nước nông",
   "status.vandalism": "Phá hoại",
   "status.vandalism.detail": "{stacks} / {max} tầng · Công & Phép -{percent}% · Nổ ngay khi đầy",
+  "status.observation": "Quan trắc",
+  "status.observation.detail": "{stacks} / {max} tầng · Tự nó không gây sát thương · Kích hoạt theo số tầng khi đòn đánh thường của Morphe trúng · còn {time}",
   "status.butcher": "Xẻ thịt",
   "status.butcher.detail": "{stacks} / {max} tầng · Nổ ngay khi đầy",
 } as const;

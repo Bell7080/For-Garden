@@ -36,6 +36,8 @@ export const STATUS_TH = {
   "status.submerged.detail": "ความเร็วเคลื่อนที่ -{percent}% · หายเมื่อออกจากน้ำตื้น",
   "status.vandalism": "ทำลายข้าวของ",
   "status.vandalism.detail": "{stacks} / {max} ชั้น · พลังโจมตีและพลังเวท -{percent}% · ระเบิดทันทีเมื่อเต็ม",
+  "status.observation": "การจับตา",
+  "status.observation.detail": "{stacks} / {max} ชั้น · ไม่สร้างความเสียหายเอง · ทำงานตามจำนวนชั้นเมื่อการโจมตีปกติของมอร์เฟโดน · เหลือ {time}",
   "status.butcher": "ชำแหละ",
   "status.butcher.detail": "{stacks} / {max} ชั้น · ระเบิดทันทีเมื่อเต็ม",
 } as const;

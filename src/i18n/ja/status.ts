@@ -38,6 +38,8 @@ export const STATUS_JA = {
   "status.submerged.detail": "移動速度 -{percent}% · 浅瀬から出れば解ける",
   "status.vandalism": "ヴァンダリズム",
   "status.vandalism.detail": "{stacks} / {max}層 · 攻撃力·魔力 -{percent}% · 満ちるとその場で弾ける",
+  "status.observation": "観測",
+  "status.observation.detail": "{stacks} / {max}重 · ダメージなし · モルフェの通常攻撃が命中すると重ねの数だけ発動 · 残り{time}",
   "status.butcher": "解体",
   "status.butcher.detail": "{stacks} / {max}層 · 満ちるとその場で弾ける",
 } as const;

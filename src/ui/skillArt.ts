@@ -19,7 +19,20 @@ export const SKILL_ART_SLOTS: readonly SkillArtSlot[] = ["passive", "basic", "ul
  * 여기 없는 개체는 공용 효과 아이콘(`skillIcons.ts`)으로 남는다. 아트가 도착하면 이 목록에
  * id를 더하고 같은 이름의 폴더만 채우면 된다 — 화면 코드는 손대지 않는다.
  */
-const RELICS_WITH_ART: readonly string[] = ["anky", "rex", "spino", "luka", "dodo", "mette", "stella", "tia", "meron", "pachi", "maki", "keris", "delopi", "nodonia", "ella", "deina", "toby", "amo", "ripa", "pontos", "koma", "parua"];
+const ART_FOLDERS: readonly string[] = ["anky", "rex", "spino", "luka", "dodo", "mette", "stella", "tia", "meron", "pachi", "maki", "keris", "delopi", "nodonia", "ella", "deina", "toby", "amo", "ripa", "pontos", "koma", "parua", "sukusuino", "taboa", "raitia"];
+
+/**
+ * 한 세트를 나눠 쓰는 개체. 레이티아 다섯 자매는 같은 종이라 스킬 일러스트가 한 벌이고, 자매마다
+ * 폴더를 복제하면 같은 그림이 텍스처로 다섯 번 올라간다. 속성색은 화면이 개체의 속성으로 칠하므로
+ * 그림이 같아도 자매끼리 색은 갈린다.
+ */
+const SHARED_ART_FOLDER: Readonly<Record<string, string>> = {
+  "raitia-grass": "raitia",
+  "raitia-water": "raitia",
+  "raitia-fire": "raitia",
+  "raitia-earth": "raitia",
+  "raitia-wind": "raitia",
+};
 
 /** Phaser 텍스처 키. 파일 경로가 아니라 이 함수가 만든 키로만 그림을 찾는다. */
 export function skillArtKey(relicId: string, slot: SkillArtSlot): string {
@@ -28,11 +41,12 @@ export function skillArtKey(relicId: string, slot: SkillArtSlot): string {
 
 /** 전용 일러스트가 있으면 그 키를, 없으면 undefined를 준다. 화면은 없을 때 공용 아이콘으로 되돌린다. */
 export function skillArtFor(relicId: string, slot: SkillArtSlot): string | undefined {
-  return RELICS_WITH_ART.includes(relicId) ? skillArtKey(relicId, slot) : undefined;
+  const folder = SHARED_ART_FOLDER[relicId] ?? relicId;
+  return ART_FOLDERS.includes(folder) ? skillArtKey(folder, slot) : undefined;
 }
 
 /** 로딩 단계가 읽는 목록. 렐릭 하나에 네 장이다. */
-export const SKILL_ART_ASSETS: ReadonlyArray<readonly [string, string]> = RELICS_WITH_ART.flatMap((relicId) =>
+export const SKILL_ART_ASSETS: ReadonlyArray<readonly [string, string]> = ART_FOLDERS.flatMap((relicId) =>
   SKILL_ART_SLOTS.map((slot) => [skillArtKey(relicId, slot), `/sprites/skills/${relicId}/${slot}.webp`] as const),
 );
 

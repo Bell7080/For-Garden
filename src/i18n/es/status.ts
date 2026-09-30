@@ -36,6 +36,8 @@ export const STATUS_ES = {
   "status.submerged.detail": "Velocidad de movimiento -{percent}% · Termina al salir de los Bajíos",
   "status.vandalism": "Vandalismo",
   "status.vandalism.detail": "{stacks} / {max} cargas · Ataque y Poder mágico -{percent}% · Estalla al llenarse",
+  "status.observation": "Avistamiento",
+  "status.observation.detail": "{stacks} / {max} cargas · Sin daño propio · Se activa por cada carga cuando impacta el ataque básico de Morphe · quedan {time}",
   "status.butcher": "Despiece",
   "status.butcher.detail": "{stacks} / {max} cargas · Estalla al llenarse",
 } as const;

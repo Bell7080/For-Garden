@@ -36,6 +36,8 @@ export const STATUS_ZH_HANS = {
   "status.submerged.detail": "移动速度 -{percent}% · 离开浅滩时解除",
   "status.vandalism": "破坏",
   "status.vandalism.detail": "{stacks} / {max}层 · 攻击力与法术强度 -{percent}% · 叠满时当场引爆",
+  "status.observation": "观测",
+  "status.observation.detail": "{stacks} / {max}层 · 自身无伤害 · 莫尔菲的普通攻击命中时按层数发动 · 剩余{time}",
   "status.butcher": "处理",
   "status.butcher.detail": "{stacks} / {max}层 · 叠满时当场引爆",
 } as const;

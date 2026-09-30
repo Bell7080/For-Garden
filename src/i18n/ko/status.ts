@@ -41,6 +41,8 @@ export const STATUS_KO = {
   "status.chill.detail": "{stacks} / {max}겹 · 공격 속도·이동 속도 -{percent}%",
   "status.submerged": "잠김",
   "status.submerged.detail": "이동 속도 -{percent}% · 여울에서 벗어나면 풀린다",
+  "status.observation": "관측",
+  "status.observation.detail": "{stacks} / {max}겹 · 피해 없음 · 모르페의 일반 공격이 적중하면 겹만큼 발동 · {time} 남음",
   "status.vandalism": "밴덜리즘",
   "status.vandalism.detail": "{stacks} / {max}겹 · 공격력·주문력 -{percent}% · 다 차면 그 자리에서 터진다",
   "status.butcher": "손질",

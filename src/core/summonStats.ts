@@ -29,6 +29,8 @@ export function deriveSummonStats(ownerStats: Readonly<Stats>, summon: Readonly<
     attackSpeed: summon.def.stats.attackSpeed,
     moveSpeed: summon.def.stats.moveSpeed,
     ...SUMMON_SECONDARY_STATS,
+    // 늑대는 주인이 게이지를 빌려줘야 궁극기를 쓰지만(0), 스스로 채우는 소환수(디모)는 제 정의의 충전량을 쓴다.
+    energyGain: summon.selfCharge === true ? summon.def.stats.energyGain : SUMMON_SECONDARY_STATS.energyGain,
   };
 }
 

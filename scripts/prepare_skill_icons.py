@@ -9,7 +9,8 @@
 그래야 캐릭터가 늘어도 색 규칙이 코드 한 곳에만 남는다.
 
 원본은 저장소에 남기지 않는다. 다시 구울 일이 생기면 원본을 폴더에 두고 이 스크립트를
-그 폴더로 다시 돌린다. 파일 이름 규칙(`char{번호}skill_{자리}`)만 지키면 표를 고칠 일이 없다.
+그 폴더로 다시 돌린다. 파일 이름 규칙(`char{번호}skill_{자리}` 또는 `{이름}{자리}` — 예:
+`스쿠스1.png`)만 지키면 표를 고칠 일이 없다.
 """
 import sys
 from pathlib import Path
@@ -48,6 +49,12 @@ RELICS = {
     # 번호 없이 올라온 원본(c1~c4 · p1~p4)도 같은 방식으로 렐릭 id를 머리말로 바꿔 굽는다.
     "koma": "koma",
     "parua": "parua",
+    # 한국어 이름으로 올라온 원본은 `{이름}{자리}.png`다(스쿠스1~4). 레이티아는 다섯 자매가 한 세트를
+    # 나눠 쓰므로 자매 id가 아니라 `raitia` 폴더 하나로 굽고, 화면이 자매 다섯을 그 폴더로 잇는다
+    # (`src/ui/skillArt.ts`의 `SHARED_ART_FOLDER`).
+    "스쿠스": "sukusuino",
+    "타보아": "taboa",
+    "레이티아": "raitia",
 }
 
 # 적 정보창의 **역할** 아이콘. 원본 이름은 `:{번호}.png`이고 번호는 잡졸부터 불사까지의 순서다.
@@ -152,18 +159,23 @@ def audit() -> int:
     return 1 if bad else 0
 
 
+def candidates(stem: str, slot: int) -> list[Path]:
+    """한 자리의 원본 후보. `char001skill_001` 꼴과 `스쿠스1` 꼴을 모두 받는다."""
+    names = [f"{stem}skill_{slot:03d}", f"{stem}{slot}"]
+    return [SOURCE / f"{name}{suffix}" for name in names for suffix in (".png", ".jpeg", ".jpg", ".webp")]
+
+
 def exists(stem: str, slot: int) -> bool:
     """굽지 않은 원본이 남아 있는지만 본다."""
-    return any((SOURCE / f"{stem}skill_{slot:03d}{suffix}").exists() for suffix in (".png", ".jpeg", ".jpg", ".webp"))
+    return any(path.exists() for path in candidates(stem, slot))
 
 
 def find(stem: str, slot: int) -> Path:
     """원본 확장자는 올린 사람마다 다르다(png·jpeg). 이름으로만 찾고 확장자는 묻지 않는다."""
-    for suffix in (".png", ".jpeg", ".jpg", ".webp"):
-        path = SOURCE / f"{stem}skill_{slot:03d}{suffix}"
+    for path in candidates(stem, slot):
         if path.exists():
             return path
-    raise FileNotFoundError(f"원본을 찾지 못했다: {stem}skill_{slot:03d}")
+    raise FileNotFoundError(f"원본을 찾지 못했다: {stem} 자리 {slot}")
 
 
 def bake_encounter_roles() -> None:

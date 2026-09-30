@@ -89,6 +89,56 @@ const SHIRO_DEF: RelicDef = {
   },
 };
 
+/**
+ * 모르페가 띄우는 관제 드론 **A-Dimo**(모델명) — 표시 이름은 「디모」다.
+ *
+ * 쿠로·시로와 같은 방식의 귀속 소환수다(`summonOnly` + 주인의 `summons`). 다른 점은 앞을 막는 몸이 아니라
+ * **떠다니는 눈**이라는 것 — 정해진 표적 없이 전장을 비행하며 적마다 관측을 쌓고, 궁극기 게이지를 스스로
+ * 채운다(`SummonDef.selfCharge`). 가챠·도감·편성에 서지 않는다.
+ */
+const DIMO_DEF: RelicDef = {
+  id: "dimo",
+  summonOnly: true,
+  squad: "eye",
+  name: "디모",
+  specimenNumber: "224",
+  projectName: "CRADLE SIGNAL",
+  excavationSite: "모르페의 요람 관제실",
+  fossilRecord: "화석에서 복원된 개체가 아니라 모르페의 요람에 딸린 관제 드론이다. 표본 206의 앞다리 비막을 본떠 만든 날개막이 기체 양옆에 달려 있다.",
+  catalogSummary: "모르페가 요람에서 띄우는 관제 드론. 모델명은 A-Dimo이며, 모르페의 공격력이 이 기체의 모든 수치를 정한다.",
+  unlockRecord: { status: "recorded", text: "A-Dimo는 모르페의 손짓 한 번에 천장으로 떠올라 그때부터 한자리에 서지 않는다. 적을 향해 곧장 날아드는 법이 없고, 전장을 한 바퀴 돌며 아직 표식이 없는 쪽부터 찾아간다. 기체가 다치면 잠깐 숨어 숨을 고르고, 모르페는 그동안에도 의자에서 내려오지 않는다." },
+  squadNote: "시그널 아이의 눈. 요람에 앉은 모르페 대신 전장을 훑으며 적마다 관측을 남긴다.",
+  researcherTitle: "담당관",
+  rarity: "R",
+  portraitAssetId: "dimo",
+  origin: "관제 드론",
+  element: "wind",
+  role: "support",
+  reachTier: "ranged",
+  excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
+  // 모르페의 태생 공격력 172에서 파생한 값이며, 전투에서는 성장한 공격력으로 다시 계산된다.
+  stats: { hp: 301, def: 43, res: 43, atk: 86, ap: 0, attackSpeed: 110, moveSpeed: 105, critChance: 0, critDamage: 150, energyGain: 12, lifeSteal: 0, ferocityGain: 0 },
+  ferocityTrait: { name: "오버클럭", effectId: "overclockBody", attackSpeedPercent: 50, moveSpeedPercent: 50 },
+  passive: {
+    id: "dimo-passive", name: "고공 탐색", kind: "highAltitudeRecon", iconAssetId: "skill-icon-buff", effectType: "buff", value: 0,
+    lowHpStealth: { hpPercent: 50, seconds: 3 },
+    // 은신 절은 `lowHpStealth` 계약에서 본문이 따로 붙는다 — 여기 적으면 같은 말이 두 번 나온다.
+    desc: "정해진 표적을 노리지 않고 전장을 유유히 비행한다.",
+  },
+  // 위력은 낮게 둔다 — 이 기체의 값은 피해가 아니라 겹을 쌓는 것이다. 관측이 없거나 가장 적은 적을 고른다.
+  basic: {
+    id: "dimo-basic", name: "다중 관측", power: 40, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical",
+    targeting: "single", targetSelection: "fewestObservation",
+    statusEffects: [{ kind: "observation", seconds: 8, maxStacks: 25 }],
+  },
+  // 게이지는 스스로 채운다. 현재 체력이 가장 높은 적에게 한꺼번에 다섯 겹을 쌓는다.
+  ultimate: {
+    id: "dimo-ult", name: "위험 신호 관측", power: 60, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical",
+    cost: 80, targeting: "single", targetSelection: "highestCurrentHp",
+    statusEffects: [{ kind: "observation", seconds: 8, maxStacks: 25, stacks: 5 }],
+  },
+};
+
 export const RELICS: RelicDef[] = [
   {
     id: "rex",
@@ -2778,7 +2828,7 @@ export const RELICS: RelicDef[] = [
       weight: "41 kg",
     },
     catalogSummary: "신장 1.57m, 체중 41kg의 인간형 체격에 앞다리에서 이어지는 얇은 비막과 짧은 뿔부리가 확인된 성체 디몰포돈 표본.",
-    unlockRecord: { status: "recorded", text: "모르페는 제 요람에서 내려오지 않는다. 관제실이 내준 의자를 통째로 제 자리로 바꿔 놓고, 등받이를 끝까지 젖힌 채 천장에 띄운 드론들을 본다. 부르면 대답은 하는데 늘 한 박자 늦고 대체로 짧다. 그런데 드론이 움직이는 속도는 그 말투와 정반대라, 세 기가 각자 다른 통로를 동시에 맡는 것을 보고 관제탑 선임들이 손을 놓은 적이 여러 번이다. 직접 걷는 일은 거의 없다 — 어디를 봐야 하느냐고 물으면 천장을 가리키고, 그러면 이미 그곳에 드론이 가 있다." },
+    unlockRecord: { status: "recorded", text: "모르페는 제 요람에서 내려오지 않는다. 관제실이 내준 의자를 통째로 제 자리로 바꿔 놓고, 등받이를 끝까지 젖힌 채 천장에 띄운 A-Dimo를 본다. 부르면 대답은 하는데 늘 한 박자 늦고 대체로 짧다. 그런데 A-Dimo가 움직이는 속도는 그 말투와 정반대라, 한 기가 전장 전체를 훑으며 적마다 표식을 남기는 것을 보고 관제탑 선임들이 손을 놓은 적이 여러 번이다. 직접 걷는 일은 거의 없다 — 어디를 봐야 하느냐고 물으면 천장을 가리키고, 그러면 이미 그곳에 A-Dimo가 가 있다." },
     squadNote: "시그널 아이의 드론 관제. 고공 정찰을 사람이 나가지 않고 끝내는 유일한 담당이라, 다른 척후들이 오르던 환기구 순찰이 이 개체가 온 뒤로 절반으로 줄었다.",
     // 직접 오르내리지 않고 화면으로만 상대하는 개체라 스쿼드에서 가장 사무적인 호칭을 쓴다.
     researcherTitle: "담당관",
@@ -2828,57 +2878,64 @@ export const RELICS: RelicDef[] = [
       ferocityGain: 0,
     },
     /*
-     * **네 슬롯은 아직 임시다.** 드론 관제라는 정체성을 전투로 옮기려면 전용 메커니즘이 필요한데,
-     * 그 메커니즘은 뒤에 올 드론 개체들과 함께 한 번에 짜는 편이 낫다 — 이 개체 하나를 위해
-     * 계약을 세우면 둘째 개체에서 다시 갈아엎게 된다. 그래서 지금은 **공용 계약만으로** 세운다.
+     * **두 갈래가 한 자리에서 돈다** — 요람에 앉아 화력을 내는 모르페와, 그 눈이 되어 전장을 도는 디모.
      *
-     * 프로필·능력치·소속·원화는 확정이고, 여기 넷만 나중에 갈아 끼운다. 다만 임시라도
-     * **직군 계약은 지킨다** — 전사의 자가 수급이 패시브에 있고, 은신은 없다.
+     * 관측은 **피해가 없는 표식**이다. 디모가 적마다 쌓고, 모르페의 일반 공격이 적중할 때 그 겹만큼의
+     * 틱으로 켜진다(겹은 소모하지 않는다). 궁극기는 적 전원의 관측 합산에 비례한다. 그래서 디모가 살아서
+     * 많이 걸수록 모르페가 세지고, 디모를 잃으면 방어·저항과 회복도 함께 꺼진다.
      */
-    ferocityTrait: { name: "다 띄워.", effectId: "selfAttackSpeedMultiplier", bonusPercent: 40 },
+    ferocityTrait: { name: "오버클럭 ON", effectId: "overclock", shieldAttackPercent: 500, attackSpeedPercent: 50, auraDamagePercent: 50, auraRadius: 300 },
+    summons: [
+      {
+        def: DIMO_DEF, growthStat: "atk",
+        // 정의의 태생 능력치가 그대로 나오도록 모르페의 태생 공격력 172에 곱하는 계수다. 체력은 얇게 잡는다 —
+        // 이 기체가 쓰러지는 순간이 모르페의 약점 구간이어야 지켜야 하는 이유가 서 있다.
+        scaling: { hp: 1.75, atk: 0.5, def: 0.25, res: 0.25 },
+        selfCharge: true,
+        bodyScale: 0.6,
+        // 쿠로·시로(12초)보다 길다 — 눈을 잃은 동안이 값이다.
+        resummon: { enabled: true, cooldownSeconds: 15, hpPercent: 70 },
+      },
+    ],
     passive: {
       id: "morphe-passive",
       name: "요람에서 내려올 생각 없음",
-      /*
-       * 전사 계약이 요구하는 자가 수급이다. 토리카와 같은 공용 계약을 쓰되, 원거리에서 드론만
-       * 내보내는 개체라 값은 그쪽(초당 3.5%·5초)보다 얕게 둔다.
-       */
-      kind: "emergencyRecovery",
-      iconAssetId: "skill-icon-healing",
-      effectType: "healing",
-      value: 2.5,
-      durationSeconds: 5,
-      // 전용 분기가 없는 종류라 이 문장이 그대로 화면에 선다.
-      desc: "전투당 한 번, 체력이 절반 이하가 되면 요람이 5초 동안 매초 최대 체력의 2.5%를 되돌린다.",
-      /*
-       * 태생 치명타는 전 개체 공통이므로 "왜 이 개체가 치명타형인가"의 답은 늘 패시브에 있다.
-       * 12는 스피나(10)·파루아(12)와 같은 구간이고 렉시아(25)·디안(20)보다 낮다.
-       */
-      criticalChancePercent: 12,
+      kind: "droneLink",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      value: 0,
+      // 방어·저항은 고정값이 아니라 비율이다 — 레벨이 올라도 같은 몫이 든다. 화면은 실제로 오르는 값으로 보여 준다.
+      droneLink: { defenseResistancePercent: 50, regenMaxHpPercentPerSecond: 0.8 },
+      // 전용 분기가 문장을 짓는다. 이 사본은 화면에 뜨지 않는 데이터 문서용이다.
+      desc: "전투 시작 시 디모를 소환한다. 디모가 살아 있는 동안 방어력과 저항력이 50% 오르고 매초 최대 체력의 0.8%를 회복한다.",
     },
+    // 약한 원거리 단일 물리 피해. 적중한 적의 관측을 발동한다(겹당 공격력 10%, 방어 무시, 소모 없음).
     basic: {
       id: "morphe-basic",
       name: "산개 사격",
-      // 임시 수치다. 원거리 단일 물리 평타이며, 드론이 대신 나간다는 것은 아직 이름과 원화가 맡는다.
-      power: 95,
+      power: 45,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
       targeting: "single",
+      observationVolley: { percentPerStack: 10, windowSeconds: 0.6 },
     },
+    // 현재 체력이 가장 높은 적을 저격한다. 관측은 소모하지 않는다.
     ultimate: {
       id: "morphe-ult",
-      name: "전부, 한 점으로",
-      // 임시 수치다. 흩어져 있던 드론이 한 명에게 모이는 그림이라 단일 대상 한 방으로 둔다.
-      power: 300,
+      name: "정조준 관측",
+      power: 100,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
-      cost: 120,
+      cost: 160,
       targeting: "single",
-      statusEffects: [{ kind: "stagger", seconds: 0.1 }],
+      targetSelection: "highestCurrentHp",
+      observationStrike: { powerPerStack: 8, maxCountedStacks: 50 },
     },
   },
+
+  DIMO_DEF,
 
   {
     /**

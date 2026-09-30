@@ -56,7 +56,7 @@ function skillSustains(skill: Skill): boolean {
 }
 
 function passiveSustains(passive: Passive): boolean {
-  const kinds = new Set(["emergencyRecovery", "impactCap", "undyingTalisman", "painfulElation", "shellGuard", "sutureStitch", "adagioWeight"]);
+  const kinds = new Set(["emergencyRecovery", "impactCap", "undyingTalisman", "painfulElation", "shellGuard", "sutureStitch", "adagioWeight", "droneLink"]);
   return kinds.has(passive.kind)
     || passive.frenzyLifeStealPercent !== undefined
     || passive.tauntHeal !== undefined

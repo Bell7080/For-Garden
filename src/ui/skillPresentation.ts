@@ -42,6 +42,8 @@ export function statusEffectLabel(effect?: CombatStatusEffect): string | undefin
   // 시간으로 사라지지 않으므로 요약줄에도 초를 적지 않는다. 겹 상한은 태그가 말한다.
   if (effect?.kind === "vandalism") return t("skill.statusLabel.vandalism");
   if (effect?.kind === "taunt") return t("skill.statusLabel.taunt", { seconds: effect.seconds });
+  // 시간과 상한은 본문이 적는다. 요약줄은 이 스킬이 몇 겹을 쌓는지만 말한다.
+  if (effect?.kind === "observation") return t("skill.statusLabel.observation", { stacks: effect.stacks ?? 1 });
   return undefined;
 }
 
@@ -250,6 +252,19 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   if (trait.effectId === "duoBreakthrough") {
     return t("skill.ferocity.duoBreakthrough", { percent: trait.allyRegenFromDuoDamagePercent });
   }
+  if (trait.effectId === "overclock") {
+    // 보호막·광역 피해 모두 **모르페 자신의 공격력**에서 나온다 — 능력치를 알면 실제 값으로, 모르면 비율로 적는다.
+    const shield = stats === undefined
+      ? t("skill.ferocity.overclock.shieldPercent", { percent: trait.shieldAttackPercent })
+      : `[[shield-value|${Math.round(stats.attack * trait.shieldAttackPercent / 100)}]]`;
+    const damage = stats === undefined
+      ? t("skill.damage.scaling", { stat: statName("atk"), percent: trait.auraDamagePercent, type: t("skill.damageType.physical") })
+      : t("skill.damage.value", { amount: Math.round(stats.attack * trait.auraDamagePercent / 100), type: t("skill.damageType.physical") });
+    return t("skill.ferocity.overclock", { percent: trait.attackSpeedPercent, shield, damage });
+  }
+  if (trait.effectId === "overclockBody") {
+    return t("skill.ferocity.overclockBody", { percent: trait.attackSpeedPercent, move: trait.moveSpeedPercent });
+  }
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? ""
@@ -302,9 +317,9 @@ export function passiveShieldKeyword(passive: Passive, atk?: number): KeywordDef
  * 치명타가 전 개체 공통이라 "이 개체가 왜 치명타형인가"의 답은 늘 패시브에 있고, 그 답을
  * 개체마다 손으로 적으면 수치를 조정한 뒤 옛 문장이 남는다.
  */
-export function passiveDescription(passive: Passive, atk?: number): string {
+export function passiveDescription(passive: Passive, atk?: number, guard?: { defense: number; resistance: number }): string {
   return [
-    passiveOpeningStealthClause(passive), passiveHead(passive, atk),
+    passiveOpeningStealthClause(passive), passiveHead(passive, atk, guard),
     passiveFrenzyDrainClause(passive), passiveTauntHealClause(passive),
     passiveLowHpStealthClause(passive), passiveCriticalClause(passive),
   ].filter(Boolean).join(" ");
@@ -381,7 +396,17 @@ function passiveCriticalClause(passive: Passive): string {
   return "";
 }
 
-function passiveHead(passive: Passive, atk?: number): string {
+function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; resistance: number }): string {
+  if (passive.kind === "droneLink" && passive.droneLink !== undefined) {
+    // 방어력·저항력은 퍼센트가 아니라 실제로 오르는 값으로 보여 준다 — 같은 비율도 두 능력치의 오르는 양이 다르다.
+    const percent = passive.droneLink.defenseResistancePercent;
+    const amount = guard === undefined
+      ? t("skill.passive.droneLink.guardPercent", { percent })
+      : t("skill.passive.droneLink.guardAmount", {
+        defense: Math.round(guard.defense * percent / 100), resistance: Math.round(guard.resistance * percent / 100),
+      });
+    return t("skill.passive.droneLink", { guard: amount, regen: passive.droneLink.regenMaxHpPercentPerSecond });
+  }
   if (passive.kind === "reagentReaction" && passive.reagentReaction !== undefined) {
     // 이름이 아니라 공용 계약을 문장화하므로 다른 캐릭터가 같은 메커니즘을 선언해도 그대로 읽힌다.
     const reagent = passive.reagentReaction;
@@ -806,6 +831,15 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
   if ("elationDamagePercentPerStack" in skill && skill.elationDamagePercentPerStack !== undefined) {
     clauses.push({ text: t("skill.clause.elationDamage", { percent: skill.elationDamagePercentPerStack }), standalone: true });
   }
+  // 관측 발동 — 겹마다 들어가는 한 틱의 실제 값을 함께 적는다(능력치를 모르는 자리에서는 공격력의 몇 %로).
+  const volley = "observationVolley" in skill ? skill.observationVolley : undefined;
+  if (volley) {
+    clauses.push({ text: t("skill.clause.observationVolley", { damage: attackDamageTerm(volley.percentPerStack, stats) }), standalone: true });
+  }
+  const strike = "observationStrike" in skill ? skill.observationStrike : undefined;
+  if (strike) {
+    clauses.push({ text: t("skill.clause.observationStrike", { max: strike.maxCountedStacks, damage: attackDamageTerm(strike.powerPerStack, stats) }), standalone: true });
+  }
   const combo = "combo" in skill ? skill.combo : undefined;
   if (combo) {
     clauses.push({ text: t("skill.clause.combo", { percent: combo.chancePercent, hits: combo.hitCount }) });
@@ -1016,6 +1050,8 @@ function statusEffectClause(effect: CombatStatusEffect): string | undefined {
   if (effect.kind === "vandalism") return t("skill.status.vandalism");
   // 도발은 붙잡아 두는 시간이 곧 스킬마다 다른 값이라 본문이 초를 적는다.
   if (effect.kind === "taunt") return t("skill.status.taunt", { seconds: effect.seconds });
+  // 유지 시간과 상한은 이 규칙어를 쓰는 스킬마다 같아도 태그가 수치를 갖지 않으므로(모르페·디모 공용) 본문이 적는다.
+  if (effect.kind === "observation") return t("skill.status.observation", { stacks: effect.stacks ?? 1, seconds: effect.seconds, max: effect.maxStacks });
   return undefined;
 }
 
@@ -1036,6 +1072,8 @@ function skillTargetPhrase(skill: DescribedSkill): string {
   if (targeting === "targetedCircle") return t("skill.phrase.targetedCircle");
   // 돌진은 시전 시점의 자리가 아니라 지나간 길이 대상이라, 원·전장과 다른 말로 적는다.
   if (targeting === "chargeLine") return t("skill.phrase.chargeLine");
+  // 표적 선택 계약이 있는 단일 대상 스킬은 **누구를 고르는지**가 곧 대상이다.
+  if ("targetSelection" in skill && skill.targetSelection !== undefined) return t(`skill.phrase.${skill.targetSelection}`);
   return t("skill.phrase.single");
 }
 

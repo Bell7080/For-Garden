@@ -8,7 +8,7 @@ import { t } from "../i18n";
  * 겹 수와 남은 시간을 여기서 한 번만 만들고 둘 다 이 목록만 그린다. Phaser를 들여오지 않아
  * 순서·색·문구를 테스트가 그대로 고정할 수 있다.
  */
-export type UnitStatusId = "packKuro" | "packShiro" | "shell" | "scar" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism" | "weakpoint" | "shimmer";
+export type UnitStatusId = "packKuro" | "packShiro" | "packDimo" | "shell" | "scar" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism" | "weakpoint" | "shimmer" | "observation";
 
 export interface UnitStatusView {
   /** 같은 상태를 제공자가 여럿 걸 수 있을 때도 HUD 객체를 덮어쓰지 않는 전투 내 키다. */
@@ -37,6 +37,8 @@ export const UNIT_STATUS_COLOR: Readonly<Record<UnitStatusId, number>> = {
    */
   packKuro: 0xd9603a,
   packShiro: 0x4fa8e4,
+  // 관제 드론은 바람 속성의 청록이다 — 늑대 둘의 불·서리와 갈려 무리 칩이 어느 몸인지 색으로 읽힌다.
+  packDimo: 0x4fb3a8,
   // 보호막 시각 효과와 같은 청록 계열을 사용해 조가비 소비 결과가 한 자원으로 읽히게 한다.
   shell: 0x62c6d8,
   // 수쿠스이노의 흉터. 소비 결과는 같은 보호막이지만 겹 자체는 아문 살갗이라 뼈빛 호박색으로 가른다 —
@@ -64,6 +66,8 @@ export const UNIT_STATUS_COLOR: Readonly<Record<UnitStatusId, number>> = {
   shimmer: 0x8fe3f0,
   butcher: 0xc07fa4,
   vandalism: 0xd45aa8,
+  // 관측은 지속 피해가 아니라 **모르페의 일반 공격이 켜는 표식**이라 바람 청록을 그대로 쓴다(피해 숫자의 색과 같은 계열).
+  observation: 0x4fa3a8,
 };
 
 function seconds(value: number): string {
@@ -77,6 +81,12 @@ function seconds(value: number): string {
  * 때리는지 자체를 바꾸기** 때문이다. 순서를 화면이 정하면 같은 상태가 개체마다 다른 자리에
  * 서서, 어디를 봐야 하는지 매번 다시 찾게 된다.
  */
+/** 무리 칩의 종류. 비행 정찰기는 바람빛, 그 밖의 몸은 그 몸이 내는 피해의 결(물리·마법)로 가른다. */
+function packChipId(wolf: Fighter): "packKuro" | "packShiro" | "packDimo" {
+  if (wolf.def.passive.kind === "highAltitudeRecon") return "packDimo";
+  return wolf.def.stats.ap > wolf.def.stats.atk ? "packShiro" : "packKuro";
+}
+
 export function unitStatusViews(fighter: Fighter, pack: readonly Fighter[] = []): UnitStatusView[] {
   const views: UnitStatusView[] = [];
   /*
@@ -92,9 +102,9 @@ export function unitStatusViews(fighter: Fighter, pack: readonly Fighter[] = [])
     const remaining = Number.isFinite(wolf.resummonIn) ? wolf.resummonIn : 0;
     views.push({
       key: `pack:${wolf.def.id}`,
-      id: wolf.def.stats.ap > wolf.def.stats.atk ? "packShiro" : "packKuro",
+      id: packChipId(wolf),
       name: wolf.def.name,
-      color: UNIT_STATUS_COLOR[wolf.def.stats.ap > wolf.def.stats.atk ? "packShiro" : "packKuro"],
+      color: UNIT_STATUS_COLOR[packChipId(wolf)],
       // 서 있는 동안에는 시계를 돌리지 않는다. 덮인 만큼이 곧 남은 대기라는 규칙이 흐려진다.
       remaining: alive ? undefined : remaining,
       total: alive ? undefined : Math.max(total, remaining),
@@ -215,6 +225,15 @@ export function unitStatusViews(fighter: Fighter, pack: readonly Fighter[] = [])
     views.push({
       id: "submerged", name: t("status.submerged"), color: UNIT_STATUS_COLOR.submerged,
       detail: t("status.submerged.detail", { percent: fighter.submergedIn.moveSlowPercent }),
+    });
+  }
+  if (fighter.observation) {
+    const observation = fighter.observation;
+    views.push({
+      id: "observation", name: t("status.observation"), color: UNIT_STATUS_COLOR.observation,
+      stacks: observation.stacks,
+      remaining: observation.remaining, total: Math.max(observation.total, observation.remaining),
+      detail: t("status.observation.detail", { stacks: observation.stacks, max: observation.maxStacks, time: seconds(observation.remaining) }),
     });
   }
   if (fighter.vandalism) {

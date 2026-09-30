@@ -43,7 +43,7 @@ export type RelicRarity = "R" | "SR" | "SSR";
  */
 export type RaitiaAssetId = "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind";
 
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
@@ -135,6 +135,15 @@ interface SkillBase {
   iconAssetId: SkillIconAssetId;
   /** UI가 피해·회복·강화 의미를 damageType 존재 여부와 무관하게 표현하는 분류다. */
   effectType: EffectType;
+  /**
+   * 이 스킬이 **누구를 표적으로 삼는가**를 공용 거리 점수 대신 고른다. 없으면 평소대로다.
+   *
+   * 개체 이름이 아니라 이 필드 하나를 전투가 읽는다 — 「현재 체력이 가장 높은 적」과 「관측이 가장
+   * 적은 적」은 모르페와 디모가 함께 쓰는 규칙이라 두 정의가 같은 말을 같은 값으로 적는다.
+   * `highestCurrentHp`는 숨은 적을 거르되 남은 적이 없으면 마지막 하나를 고르고,
+   * `fewestObservation`은 겹이 같으면 가까운 쪽이다.
+   */
+  targetSelection?: "highestCurrentHp" | "fewestObservation";
   /**
    * 목덜미 — 표적의 체력이 문턱 이하면 이번 한 방이 **확정 치명타에 큰 추가 피해**가 된다.
    *
@@ -542,6 +551,15 @@ export type BasicAttack = AttackSkill & {
   cycle?: readonly BasicAttackStep[];
   /** 실제 감소시킨 적 HP의 이 비율만큼 최저 현재 HP 생존 아군을 회복한다. 자신도 후보이며 동률은 편성 순서다. */
   lowestHpAllyHealingFromDamagePercent?: number;
+  /**
+   * **관측을 발동한다**(모르페). 이 공격이 적중한 적에게 쌓여 있는 관측이 **겹 수만큼의 짧은 틱**으로
+   * 나뉘어 박힌다 — 겹은 소모하지 않고 스탯도 쓰지 않는다. 쌓인 값을 켜는 것이 전부다.
+   *
+   * 한 틱은 자기 공격력의 `percentPerStack`%이고 **방어를 지난다**(낮게 두어 고방어 적에게 1로
+   * 수렴하지 않게 한다). 10겹이면 100%가 열 번에 나뉘어 들어간다. 틱을 다 넣는 시간은 겹 수와
+   * 무관하게 `windowSeconds` 안에 끝난다 — 25겹을 같은 간격으로 두면 발동이 다음 공격보다 길어진다.
+   */
+  observationVolley?: { percentPerStack: number; windowSeconds: number };
   /** 실제 기본 공격 행동 수를 세어 주기 끝 타격을 난수 소비 없이 확정 치명타로 만든다. */
   periodicCritical?: { every: number };
   /**
@@ -818,6 +836,22 @@ export type CombatStatusEffect =
     }
   | {
       /**
+       * 관측(디모). **피해가 없는 표식**이다 — 겹 자체는 아무것도 깎지 않고, 모르페의 일반 공격이
+       * 적중할 때 그 겹만큼의 틱으로 켜진다(`BasicAttack.observationVolley`).
+       *
+       * 겹이 쌓이고 **다시 걸면 시간이 갱신**된다는 점은 저주·덧칠과 같은 축이다. 시간이 다하면
+       * 겹이 통째로 사라진다. 상한은 판이 아니라 **레이드 때문에 걸어 둔 안전장치**다.
+       */
+      kind: "observation";
+      /** 유지 시간(초). 다시 걸면 처음부터 다시 센다. */
+      seconds: number;
+      /** 한 적에게 쌓을 수 있는 최대 겹. */
+      maxStacks: number;
+      /** 한 번에 쌓는 겹 수. 없으면 1이다. */
+      stacks?: number;
+    }
+  | {
+      /**
        * 광란. 표적을 **자기 편으로 뒤집는다.**
        *
        * 군중제어와 다른 축이다 — 행동을 막는 것이 아니라 방향을 돌린다. 때릴 자기 편이 남지
@@ -841,6 +875,12 @@ export type Ultimate = Skill & {
   attackSpeedPower?: number;
   /** 혼합 궁극기가 범위 안 생존 아군에게 적용할 주문력 회복 배율(%). */
   allyHealingPower?: number;
+  /**
+   * **적 전원의 관측 겹 합산에 비례하는 한 방**(모르페). `power`가 바닥이고, 합산한 겹마다
+   * `powerPerStack`%가 더해진다. 합산은 `maxCountedStacks`까지만 인정한다 — 한 적의 상한과는
+   * 다른 값이다. 겹을 소모하지 않으므로 쏜 뒤에도 평타의 발동은 그대로 이어진다.
+   */
+  observationStrike?: { powerPerStack: number; maxCountedStacks: number };
   /** 이 궁극기로 대상을 처치하면 되돌려받는 궁극기 게이지다. 빗나가거나 살아남으면 없다. */
   energyRefundOnKill?: number;
   /**
@@ -1057,7 +1097,18 @@ export type PassiveKind =
    * 보호막인 이유는 아직 맞지 않은 몸에도 미리 덧댈 수 있어야 하기 때문이다 — 그 실을 그
    * 자리에서 지져 회복으로 바꾸는 것은 폭주(`cautery`)의 몫이다.
    */
-  | "sutureStitch";
+  | "sutureStitch"
+  /**
+   * 모르페 전용: 귀속 소환수(디모)를 불러 세우고, **그 소환수가 살아 있는 동안** 방어력·저항력이
+   * 오르며 매초 최대 체력을 되찾는다(`Passive.droneLink`). 소환수가 쓰러지면 둘 다 꺼진다 —
+   * 지켜야 하는 이유가 수치 하나로 읽힌다.
+   */
+  | "droneLink"
+  /**
+   * 귀속 소환수 전용(디모): **정해진 표적 없이 전장을 유유히 비행한다.** 공격 때마다 그때 필요한
+   * 적을 고르고(`Skill.targetSelection`), 사거리 안이면 서서 쏘지 않고 계속 떠돈다.
+   */
+  | "highAltitudeRecon";
 
 /** 전투 엔진이 판별하는 야성 특성 효과 ID다. 새 효과는 수치 계약과 함께 명시적으로 추가한다. */
 export type FerocityEffectId =
@@ -1106,7 +1157,11 @@ export type FerocityEffectId =
   /** 슈테 전용: 폭주 진입 시 듀오를 체력이 가장 낮은 적으로 돌진시키고, 그 뒤로 팀 재생을 돌린다. */
   | "duoBreakthrough"
   /** 테리사 전용: 폭주 중 「가봉」이 보호막 대신 즉시 회복으로 들어가고 자기 공격 속도가 오른다. */
-  | "cautery";
+  | "cautery"
+  /** 모르페 전용: 폭주 진입 시 자신과 소환수가 보호막을 두르고, 폭주 중 소환수 주위가 매초 지져진다. */
+  | "overclock"
+  /** 귀속 소환수 전용: 주인의 「오버클럭」을 함께 받는 몸이 실제로 얻는 강화다. */
+  | "overclockBody";
 
 /**
  * 개체별 피버 발현 정적 데이터다.
@@ -1457,6 +1512,32 @@ export type FerocityTrait = {
       attackSpeedPercent: number;
     }
   | {
+      /**
+       * 「오버클럭 "ON"」(모르페). 기준은 **모르페 자신의 공격력**이다 — 보호막도 광역 피해도 소환수의
+       * 능력치가 아니라 이 값에서 나온다.
+       *
+       * 보호막은 모르페와 살아 있는 소환수 **양쪽**에 두르고 폭주 시간(8초)의 절반이 지나면 다 사라지게
+       * 서서히 깎인다 — 오래 남는 방벽이 아니라 순간 열리는 한 겹이다. 회복은 없다.
+       */
+      effectId: "overclock";
+      /** 폭주에 들어서는 순간 자신과 소환수가 각각 두르는 보호막(자기 공격력의 %). */
+      shieldAttackPercent: number;
+      /** 폭주 동안 자기 공격 속도에 곱하는 증가율(%). */
+      attackSpeedPercent: number;
+      /** 매초 소환수 주위의 모든 적에게 주는 피해(자기 공격력의 %). 방어를 지나는 보통 물리 피해다. */
+      auraDamagePercent: number;
+      /** 그 피해가 닿는 소환수 중심의 반경(px)이다. */
+      auraRadius: number;
+    }
+  | {
+      /** 귀속 소환수 전용: 주인의 폭주를 함께 받는 몸이 실제로 얻는 강화다. */
+      effectId: "overclockBody";
+      /** 공격 속도가 오르는 비율(%). */
+      attackSpeedPercent: number;
+      /** 이동 속도가 오르는 비율(%). 주인은 걷지 않으므로 이 몸만 빨라진다. */
+      moveSpeedPercent: number;
+    }
+  | {
       /** 리파 ID가 아니라 이 계약을 선언한 모든 캐릭터가 사용할 수 있는 시약 도핑 효과다. */
       effectId: "reagentDoping";
       /** 모든 생존 적에게 폭주 진입 시 부여할 시약 수로, 캐릭터 ID 대신 정의가 결정한다. */
@@ -1568,6 +1649,18 @@ export interface Passive {
    * 「짜잔!」과 파루아의 「나무가 아닌 숲을!」이 서로 다른 패시브이면서 같은 값을 읽는다.
    */
   openingStealthSeconds?: number;
+  /**
+   * 「요람에서 내려올 생각 없음」 계약. **소환수가 살아 있는 동안만** 켜지는 두 값이다.
+   *
+   * 값이 둘인 이유는 이 패시브가 전사의 자가 수급을 겸하기 때문이다 — 방어·저항만 오르면 수급이
+   * 폭주에만 남는다. 둘 다 소환수를 잃는 순간 함께 꺼져 "디모를 지켜라"가 한 줄로 말해진다.
+   */
+  droneLink?: {
+    /** 방어력·저항력이 함께 오르는 비율(%). 화면은 실제로 오르는 값으로 환산해 보여 준다. */
+    defenseResistancePercent: number;
+    /** 매초 되찾는 최대 체력 비율(%). */
+    regenMaxHpPercentPerSecond: number;
+  };
   /**
    * 체력이 이 비율 이하로 떨어지는 순간, 전투당 한 번 [[stealth|은신]]해 표적에서 벗어난다.
    *
@@ -1803,6 +1896,13 @@ export interface SummonDef {
    * 분기해 정하지 않고 이 계약 하나에 적는다.
    */
   bodyScale?: number;
+  /**
+   * 이 소환수가 **제 궁극기 게이지를 스스로 채우는가**. 없으면 주인이 빌려줄 때만 궁극기를 쓴다(늑대).
+   *
+   * 채우는 양은 소환수 정의의 `energyGain`이다 — 주인의 성장 축에서 파생하지 않는다. 궁극기가 주인 명령이
+   * 아니라 그 몸의 일인 소환수(디모의 「위험 신호 관측」)만 켠다.
+   */
+  selfCharge?: true;
   /** 쓰러진 뒤 같은 전투에서 다시 불러오는 규칙이다. */
   resummon: {
     /** 재소환을 허용하는지 여부다. */

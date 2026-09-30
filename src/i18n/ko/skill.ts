@@ -37,6 +37,8 @@ export const SKILL_KO = {
 
   // ── 본문이 문장을 여는 대상 ──────────────────────────────────────────────
   "skill.phrase.single": "적 한 명에게",
+  "skill.phrase.highestCurrentHp": "현재 체력이 가장 높은 적에게",
+  "skill.phrase.fewestObservation": "[[observation|관측]]이 없거나 가장 적은 적에게",
   "skill.phrase.nearbyEnemies": "자신의 주위 모든 적에게",
   "skill.phrase.splitShot": "표적과 그 주위의 적에게",
   "skill.phrase.battlefieldEnemies": "전장의 모든 적에게",
@@ -50,6 +52,7 @@ export const SKILL_KO = {
   "skill.statusLabel.poison": "[[poison|중독]] {seconds}초",
   "skill.statusLabel.weakpoint": "[[weakpoint|약점 포착]]",
   "skill.statusLabel.vandalism": "[[vandalism|밴덜리즘]]",
+  "skill.statusLabel.observation": "[[observation|관측]] {stacks}겹",
   "skill.statusLabel.taunt": "[[taunt|도발]] {seconds}초",
 
   // ── 요약줄의 수치 ────────────────────────────────────────────────────────
@@ -108,6 +111,9 @@ export const SKILL_KO = {
   "skill.ferocity.cautery": "공격 속도가 {percent}% 증가하고, 부여하던 보호막이 같은 양의 즉시 회복으로 바뀐다.",
   "skill.ferocity.splitVolley": "폭주 중 모든 일반 공격이 [[split-arrow|갈래화살]]이 되고 사거리가 {reach} 증가한다.",
   "skill.ferocity.summonPackFrenzy": "[[summon-kuro|쿠로]]와 [[summon-shiro|시로]]가 함께 폭주한다.",
+  "skill.ferocity.overclock": "[[attack-speed|공격 속도]]가 {percent}% 오르고, 자신과 디모가 {shield}만큼 보호막을 얻는다. 보호막은 폭주가 절반쯤 지나면 모두 사라진다. 디모 주위 넓은 범위의 적에게 매초 {damage}가 들어간다.",
+  "skill.ferocity.overclock.shieldPercent": "공격력의 {percent}%",
+  "skill.ferocity.overclockBody": "[[attack-speed|공격 속도]]가 {percent}%, 이동 속도가 {move}% 오른다.",
   "skill.ferocity.packBody": "{guard} [[attack-speed|공격 속도]]가 {percent}% 오른다.",
   "skill.ferocity.packBody.guardPercent": "방어력과 저항력이 {percent}% 오르고",
   "skill.ferocity.packBody.guardAmount": "방어력과 저항력이 {amount}씩 오르고",
@@ -128,6 +134,9 @@ export const SKILL_KO = {
   "skill.passive.crit.chance": "치명타 확률이 {percent}% 오른다.",
   "skill.passive.crit.damage": "치명타 피해가 {percent}% 오른다.",
   "skill.passive.reagentReaction": "공격이 적중한 적에게 [[reagent|시약]]을 묻힌다. 시약은 최대 {stacks}겹까지 쌓이고 {seconds}초 동안 남는다. 가득 차면 [[reagent-reaction|시약 반응]]이 일어나 그 적을 {poisonSeconds}초 동안 [[poison|중독]]시키고 {resistanceSeconds}초 동안 저항력을 {resistancePercent}% 낮추며, 체력 비율이 가장 낮은 아군 한 명이 최대 체력의 {healPercent}%를 회복한다.",
+  "skill.passive.droneLink": "전투 시작 시 디모를 소환한다. 디모가 살아 있는 동안 {guard} 매초 최대 체력의 {regen}%를 회복한다.",
+  "skill.passive.droneLink.guardAmount": "방어력이 {defense}, 저항력이 {resistance} 오르고",
+  "skill.passive.droneLink.guardPercent": "방어력과 저항력이 {percent}% 오르고",
   "skill.passive.summonCommander": "전투 시작 시 [[summon-kuro|쿠로]]와 [[summon-shiro|시로]]를 소환한다. 한 마리라도 살아 있는 동안 [[stealth|은신]]한다.{exposed}",
   "skill.passive.summonCommander.exposed": " 둘 다 쓰러지면 은신이 풀려 다시 표적이 된다.",
   "skill.passive.followHighestAttackAllyTarget": "전투 시작 시 아군 중 공격력이 가장 높은 렐릭이 표적으로 삼은 적을 함께 표적으로 삼는다.",
@@ -260,6 +269,9 @@ export const SKILL_KO = {
   "skill.status.chill": "[[chill|둔화]]를 한 겹 쌓아 최대 {stacks}겹까지 겹마다 공격 속도와 이동 속도를 {percent}% 낮춘다",
   "skill.status.frenzy": "{seconds}초 동안 [[frenzy|광란]]시킨다",
   "skill.status.vandalism": "[[vandalism|밴덜리즘]]을 한 겹 쌓는다",
+  "skill.status.observation": "[[observation|관측]]을 {stacks}겹 쌓는다. 다시 걸면 {seconds}초로 갱신되며 한 적에게 최대 {max}겹이다",
+  "skill.clause.observationVolley": "적중한 적에게 쌓인 [[observation|관측]]을 발동한다. 겹마다 {damage}가 방어력을 지나 잇따라 들어간다",
+  "skill.clause.observationStrike": "적 전원의 [[observation|관측]]이 한 겹(합산 최대 {max}겹)마다 {damage}가 더해진다",
   "skill.status.taunt": "{seconds}초 동안 [[taunt|도발]]한다",
 
   // ── 한계 돌파가 여는 자리 ────────────────────────────────────────────────

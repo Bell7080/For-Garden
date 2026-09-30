@@ -24,6 +24,17 @@ export const KURO_SD_METADATA: Omit<PuppetAsset, "url"> = {
   joints: { center: [533, 729], head: [446, 577], eyes: null, feet: [[882, 1080], [694, 1056]] },
 };
 
+/**
+ * 관제 드론 디모(A-Dimo) SD의 독립 실측값이다. alpha > 16 경계와 관절(중심1·머리1·발1·발2)을
+ * `charSD_022_dimo.zip`에서 읽었으며 눈 관절은 없다. 날개막이 캔버스 좌우를 거의 채워(1072/1254)
+ * 모르페 SD처럼 정사각 원본을 그대로 쓴다.
+ */
+export const DIMO_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254, imageHeight: 1254,
+  content: { left: 92, top: 112, right: 1164, bottom: 1141 },
+  joints: { center: [566, 703], head: [356, 634], eyes: null, feet: [[597, 835], [724, 879]] },
+};
+
 /** 흰 털 소환수 시로 SD의 독립 실측값이다. */
 export const SHIRO_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1254, imageHeight: 1254,
@@ -457,6 +468,11 @@ export const MORPHE_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   joints: { center: [732, 473], head: [712, 390], eyes: [[678, 388], [753, 369]], feet: [[404, 1415], [511, 1427]] },
   /** 로비 세로 비율: 메론 기준. 1.57 m — 눈(378.5)에서 의자 밑동까지를 그 키로 맞춘다. */
   lobbyZoom: 1.092,
+  /**
+   * **왼쪽 위의 드론(A-Dimo)도 이 원화의 주인공이다.** 얼굴이 오른쪽에 있어 공용 규격 배율로 세우면 드론이
+   * 통째로 화면 밖으로 나간다 — 드론의 왼쪽 끝(alpha 경계 left)까지 정보창 안에 들도록 구도를 잡는다.
+   */
+  infoFraming: { showLeft: 23 },
 };
 
 /** 모르페 SD: 중심1·머리1·발1·발2를 프로젝트에서 읽었으며 눈 관절은 없다. */
@@ -486,6 +502,11 @@ export const TERISA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   joints: { center: [509, 274], head: [484, 159], eyes: [[468, 172], [536, 145]], feet: [[792, 1619], [424, 1518]] },
   /** 로비 세로 비율: 메론 기준. 1.72 m — 보정 없이 세우면 1.709 m로 서므로 살짝 키운다. */
   lobbyZoom: 1.007,
+  /**
+   * 관절은 실측과 맞다(눈1·눈2가 두 눈 위에 정확히 앉는다). 다만 눈이 정수리(12)에서 146px 아래라
+   * 후드·베일이 높이 솟은 만큼 같은 눈높이에서 정수리가 메론보다 약 110px 낮게 서 내려앉아 보인다.
+   */
+  infoFraming: { raise: 110 },
 };
 
 /** 테리사 SD ZIP의 정사각 원본과 alpha > 16 경계다. 중심1(587,564)·머리1(522,405)을 함께 읽었다. */

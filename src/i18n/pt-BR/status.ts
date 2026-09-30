@@ -36,6 +36,8 @@ export const STATUS_PT_BR = {
   "status.submerged.detail": "Velocidade de movimento -{percent}% · Termina ao sair do Raso",
   "status.vandalism": "Vandalismo",
   "status.vandalism.detail": "{stacks} / {max} acúmulos · Ataque e Poder mágico -{percent}% · Explode ao encher",
+  "status.observation": "Avistamento",
+  "status.observation.detail": "{stacks} / {max} acúmulos · Sem dano próprio · Dispara por acúmulo quando o ataque básico de Morphe acerta · restam {time}",
   "status.butcher": "Destrinche",
   "status.butcher.detail": "{stacks} / {max} acúmulos · Explode ao encher",
 } as const;

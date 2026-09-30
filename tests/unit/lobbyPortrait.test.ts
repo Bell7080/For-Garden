@@ -12,6 +12,7 @@ import {
   MADDY_PORTRAIT_METADATA,
   PARUA_PORTRAIT_METADATA,
   SHUTE_PORTRAIT_METADATA,
+  MORPHE_PORTRAIT_METADATA,
   TERISA_PORTRAIT_METADATA,
   MAKI_PORTRAIT_METADATA,
   MERON_PORTRAIT_METADATA,
@@ -60,6 +61,7 @@ const JOINTS: Readonly<Record<string, { eyes: readonly [readonly [number, number
   parua: { eyes: [[536, 331], [615, 361]], core: [561, 468] },
   shute: { eyes: [[637, 315], [714, 269]], core: [728, 410] },
   terisa: { eyes: [[468, 172], [536, 145]], core: [509, 274] },
+  morphe: { eyes: [[678, 388], [753, 369]], core: [732, 473] },
 };
 
 /** 눈 관절 두 개의 중간 높이. 배율은 이 점에서 발끝까지의 거리로 잰다. */
@@ -90,6 +92,7 @@ const PORTRAITS: Readonly<Record<string, Omit<PuppetAsset, "url">>> = {
   parua: PARUA_PORTRAIT_METADATA,
   shute: SHUTE_PORTRAIT_METADATA,
   terisa: TERISA_PORTRAIT_METADATA,
+  morphe: MORPHE_PORTRAIT_METADATA,
 };
 
 /** 로비에 설 수 있는 개체 = 플레이어가 애착으로 고를 수 있는 렐릭이다. */
@@ -177,13 +180,17 @@ describe("정보창 전신의 얼굴 규격", () => {
     (_name, assetId) => {
       const placement = placementOf(assetId);
       expect(placement.focus.anchor).toBe("eyeLine");
-      expect(placement.focus.y).toBeCloseTo(INFO_PORTRAIT_FOCUS.y - FACE_STANDARD.info.eyeRise * INFO_PORTRAIT_FOCUS.height, 6);
+      // `infoFraming.raise`를 적은 원화만 그만큼 더 올라간다 — 눈높이 한 줄이 기본이고 예외는 그 필드 하나다.
+      const raise = PORTRAITS[assetId].infoFraming?.raise ?? 0;
+      expect(placement.focus.y).toBeCloseTo(INFO_PORTRAIT_FOCUS.y - FACE_STANDARD.info.eyeRise * INFO_PORTRAIT_FOCUS.height - raise, 6);
     },
   );
 
   it.each(LOBBY_RELICS.map((relic) => [relic.name, relic.portraitAssetId] as const))(
     "%s의 얼굴은 다른 전신과 같은 크기대에 있다",
     (_name, assetId) => {
+      // 왼쪽 끝까지 보여야 하는 원화(모르페의 드론)는 얼굴 띠를 포기하고 줄어든다 — 아래 별도 검사가 맡는다.
+      if (PORTRAITS[assetId].infoFraming?.showLeft !== undefined) return;
       const ratio = faceSizeOf(assetId) / target;
       // 위는 띠 끝 그대로다. 아래는 실루엣 폭 상한에 먼저 걸리는 노도니아(0.74)를 위해 조금 더
       // 열어 둔다 — 예전 0.58은 확실히 잡는다.
@@ -191,6 +198,26 @@ describe("정보창 전신의 얼굴 규격", () => {
       expect(ratio).toBeLessThanOrEqual(1 + FACE_STANDARD.info.band + 0.005);
     },
   );
+
+  it("는 테리사의 눈높이를 후드가 솟은 만큼만 올려 정수리가 메론보다 낮게 서지 않게 한다", () => {
+    const top = (assetId: string): number => {
+      const asset = PORTRAITS[assetId];
+      const placement = placementOf(assetId);
+      const eyeY = (asset.joints!.eyes![0][1] + asset.joints!.eyes![1][1]) / 2;
+      return placement.focus.y - (eyeY - asset.content.top) * scaleOf(assetId);
+    };
+    // 조정 전에는 약 108px 낮았다. 같은 자리에서 40px 안이면 나란히 선 것으로 읽힌다.
+    expect(Math.abs(top("terisa") - top("meron"))).toBeLessThan(40);
+  });
+
+  it("는 모르페의 드론(왼쪽 끝)을 정보창 안에 끝까지 보여 준다", () => {
+    const asset = PORTRAITS.morphe;
+    const placement = placementOf("morphe");
+    const left = placement.focus.x - (asset.joints!.center![0] - asset.content.left) * scaleOf("morphe");
+    expect(left).toBeGreaterThanOrEqual(0);
+    // 얼굴도 판 밖으로 밀려나지 않는다 — 오른쪽 능력치 판(x≈555)보다 안쪽에 선다.
+    expect(placement.focus.x).toBeLessThan(555);
+  });
 
   it("는 노도니아를 얼굴 띠가 아니라 폭 상한에서 멈춘다", () => {
     const asset = PORTRAITS.nodonia;

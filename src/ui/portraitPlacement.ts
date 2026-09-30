@@ -44,6 +44,14 @@ export const FACE_STANDARD = {
   card: { fill: 0.56, span: 47 / 300, band: 0.1, aspect: 464 / 300, maxHeadDrop: 0.45 },
 } as const;
 
+/**
+ * `infoFraming.showLeft`가 있는 원화의 구도.
+ *
+ * 그 왼쪽 끝을 정보창 왼쪽 안쪽 여백(`margin`)에 들이려고 먼저 얼굴을 오른쪽으로 `shift`만큼 옮긴다 —
+ * 오른쪽은 어차피 능력치 판이 덮는 자리라 얼굴만 판 밖에 남으면 된다. 그래도 넘치면 배율을 줄인다.
+ */
+export const INFO_SHOW_LEFT = { shift: 104, margin: 24 } as const;
+
 /** 얼굴이 목표 띠 밖이면 띠 끝까지 당기는 배율. 띠 안이면 1이다. */
 function faceBandFactor(natural: number, target: number, band: number): number {
   if (natural <= 0) return 1;
@@ -64,8 +72,19 @@ export function infoPortraitPlacement(asset: PuppetAsset, focus: { x: number; y:
   const spec = FACE_STANDARD.info;
   const base = focus.height / contentHeight;
   const widthCap = (spec.maxWidth * focus.height) / contentWidth;
-  const scale = Math.min(base * faceBandFactor(face.span * base, spec.span * focus.height, spec.band), Math.max(base, widthCap));
-  return { focus: { anchor: "eyeLine" as const, x: focus.x, y: focus.y - spec.eyeRise * focus.height }, height: scale * contentHeight };
+  const faceScale = Math.min(base * faceBandFactor(face.span * base, spec.span * focus.height, spec.band), Math.max(base, widthCap));
+  const framing = asset.infoFraming;
+  // 눈높이 한 줄에서 `raise`만큼 더 올린다. 기준 높이가 다른 자리(적 창·획득창)에서도 같은 비율이 되도록 높이에 비례한다.
+  const y = focus.y - spec.eyeRise * focus.height - (framing?.raise ?? 0) * focus.height / INFO_PORTRAIT_FOCUS.height;
+  if (framing?.showLeft === undefined) {
+    return { focus: { anchor: "eyeLine" as const, x: focus.x, y }, height: faceScale * contentHeight };
+  }
+  // 눈높이 배치의 가로 기준은 몸(코어)이다. 코어에서 끝까지 보여야 하는 왼쪽 끝까지의 거리(원화 px)가
+  // 화면에서 `x - margin` 안에 들어야 한다.
+  const reach = Math.max(1, anchor.x - framing.showLeft);
+  const x = focus.x + INFO_SHOW_LEFT.shift * focus.height / INFO_PORTRAIT_FOCUS.height;
+  const scale = Math.min(faceScale, (x - INFO_SHOW_LEFT.margin) / reach);
+  return { focus: { anchor: "eyeLine" as const, x, y }, height: scale * contentHeight };
 }
 
 /**

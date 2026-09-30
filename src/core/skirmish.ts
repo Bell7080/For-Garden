@@ -464,6 +464,24 @@ export interface Fighter extends Combatant {
    * 폭발 피해가 나가게 된다.
    */
   frozen: { remaining: number; total: number; maxHpPercentOnExpire: number } | null;
+  /**
+   * 지금 걸린 관측. **피해가 없는 표식**이라 겹이 스스로 아무것도 깎지 않는다 — 모르페의 일반
+   * 공격이 적중할 때 이 겹 수만큼의 틱으로 켜진다(`fireObservationVolley`).
+   *
+   * 저주·덧칠과 같은 이유로 슬롯은 하나다. 다시 걸면 겹이 하나 오르고 **시간이 처음부터 갱신**되며,
+   * 시간이 다하면 겹이 통째로 사라진다. 남은 시간과 전체 시간을 함께 드는 이유는 머리 위 칩이
+   * 지나간 만큼을 덮어 보여 주기 때문이다.
+   */
+  observation: { stacks: number; remaining: number; total: number; maxStacks: number } | null;
+  /**
+   * 서서히 줄어드는 보호막(오버클럭). 정해진 시간 동안 **매초 같은 양**이 깎이므로 막이 얼마나
+   * 남았는지가 곧 폭주가 얼마나 흘렀는지다. 다른 막을 두르는 규칙은 이 값을 건드리지 않는다.
+   */
+  shieldFade: { perSecond: number; remaining: number } | null;
+  /** 오버클럭이 소환수 주위를 매초 지지는 다음 시계까지 남은 시간이며 비활성 중에는 1초다. */
+  overclockAuraTickIn: number;
+  /** 소환수와 이어진 동안 매초 되찾는 회복(`Passive.droneLink`)의 다음 시계다. */
+  droneLinkTickIn: number;
 }
 
 /** 편성 캐릭터와 분리되어 승패·보상·유대 정산에 절대 들어가지 않는 귀속 전투 유닛이다. */
@@ -691,6 +709,12 @@ export type SkirmishEvent =
   | { kind: "butcherBurst"; attackerId: string; fighterId: string; amount: number }
   /** 밴덜리즘이 상한에 닿아 낙서가 통째로 터진 순간. 칠한 쪽의 주문력에서 나온 마법 피해다. */
   | { kind: "vandalismBurst"; attackerId: string; fighterId: string; amount: number }
+  /**
+   * 관측이 발동해 박힌 틱 하나. 한 번의 발동이 겹 수만큼 이 사건을 **같은 프레임에** 싣는다 —
+   * 시간에 흩는 일은 코어가 아니라 화면이 한다(`index / count × windowSeconds`). 코어가 시간에
+   * 흩으면 서버 재현이 프레임마다 다른 결과를 낼 수 있다.
+   */
+  | { kind: "observationTick"; attackerId: string; fighterId: string; amount: number; index: number; count: number; windowSeconds: number }
   /** 돌진이 실제로 지나간 선분. 씬은 이 두 점 사이에 자국을 그린다. */
   | { kind: "charge"; fighterId: string; from: { x: number; y: number }; to: { x: number; y: number } }
   | { kind: "finish"; phase: "victory" | "defeat" };
@@ -1059,6 +1083,10 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     graffitiAuraTickIn: 1,
     chill: null,
     frozen: null,
+    observation: null,
+    shieldFade: null,
+    overclockAuraTickIn: 1,
+    droneLinkTickIn: 1,
   };
 }
 
@@ -1521,6 +1549,7 @@ export function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEf
   // 원정의 지속시간 배율(`potency`)은 시계가 있는 상태에만 든다. 밴덜리즘은 시간으로 사라지지
   // 않으므로 늘릴 시간 자체가 없다.
   if (effect.kind === "vandalism") applyVandalism(fighter, effect, events, state, sourceId);
+  if (effect.kind === "observation") applyObservation(fighter, effect, potency);
   // 날려버림은 때린 쪽의 자리에서 방향이 나오므로 시전자를 모르면 밀 방향이 없다. 원정의
   // 지속시간 배율은 시계가 있는 상태에만 들므로 여기서는 곱하지 않는다 — 날아가는 시간은
   // 벽에 부딪히는 횟수가 끊는다(`bounces`).
@@ -1742,6 +1771,207 @@ export function vandalismOffenseShred(fighter: Fighter): number {
   const paint = fighter.vandalism;
   if (!paint) return 0;
   return Math.min(1, paint.stacks * paint.percentPerStack / 100);
+}
+
+/**
+ * 관측을 쌓는다. 겹은 하나(또는 `stacks`)만큼 오르고 상한에서 멈추며 **시간은 언제나 갱신된다**.
+ *
+ * 상한에 닿은 뒤에도 갱신하는 이유는 겹이 가득 찬 적을 계속 관측하는 손이 시간을 이어 주어야
+ * 하기 때문이다 — 갱신이 없으면 가득 찬 적이 8초 뒤 통째로 비어 상한이 곧 벽이 된다.
+ */
+function applyObservation(target: Fighter, effect: Extract<CombatStatusEffect, { kind: "observation" }>, potency: number): void {
+  const stacks = Math.min(effect.maxStacks, (target.observation?.stacks ?? 0) + (effect.stacks ?? 1));
+  const seconds = effect.seconds * potency;
+  target.observation = { stacks, remaining: seconds, total: seconds, maxStacks: effect.maxStacks };
+}
+
+/** 이 개체에게 귀속된 소환수 중 지금 살아 있는 것들이다. 오버클럭·요람 연결이 같은 목록을 읽는다. */
+function livingDrones(state: SkirmishState, owner: Fighter): Fighter[] {
+  return state.fighters.filter((unit) => unit.summonOwnerId === owner.id && isFighterAlive(unit));
+}
+
+/**
+ * 요람 연결이 지금 올리고 있는 방어력·저항력 비율(%). 소환수가 살아 있는 동안만이다.
+ *
+ * `defensiveDefinition`과 화면(`droneLinkBonus`)이 같은 값을 읽는다 — 두 곳이 따로 재면 능력치 판의
+ * 숫자와 피해 계산이 갈린다.
+ */
+export function droneLinkDefensePercent(state: SkirmishState, fighter: Fighter): number {
+  const link = fighter.def.passive.kind === "droneLink" ? fighter.def.passive.droneLink : undefined;
+  if (!link || !isFighterAlive(fighter)) return 0;
+  return livingDrones(state, fighter).length > 0 ? link.defenseResistancePercent : 0;
+}
+
+/** 요람 연결의 매초 회복. 소환수가 없으면 시계를 되감아 두고 아무것도 하지 않는다. */
+function tickDroneLink(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  const link = fighter.def.passive.kind === "droneLink" ? fighter.def.passive.droneLink : undefined;
+  if (!link) return;
+  if (livingDrones(state, fighter).length === 0) { fighter.droneLinkTickIn = 1; return; }
+  const tickIn = fighter.droneLinkTickIn - dt;
+  if (tickIn > 0) { fighter.droneLinkTickIn = tickIn; return; }
+  fighter.droneLinkTickIn = tickIn + 1;
+  const healed = applyHealing(state, fighter, fighter.maxHp * link.regenMaxHpPercentPerSecond / 100);
+  pushHeal(events, fighter, healed, "passive");
+}
+
+/**
+ * 표적 선택 계약(`Skill.targetSelection`)이 고르는 적. 계약이 없으면 `undefined`라 호출부가 공용 규칙으로 되돌아간다.
+ *
+ * 숨은 적은 거른다 — 단일 대상 기술의 중심이 될 수 없다는 공용 규칙이다. 다만 남은 적이 숨은 한 명뿐이면
+ * 그 하나를 고른다(마지막 한 명은 숨어도 보인다).
+ */
+function pickBySelection(state: SkirmishState, fighter: Fighter, selection: Skill["targetSelection"]): Fighter | undefined {
+  if (selection === undefined || fighter.frenzy) return undefined;
+  const foes = state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other));
+  const visible = foes.filter((other) => other.stealthFor <= 0);
+  const pool = visible.length > 0 ? visible : foes;
+  if (pool.length === 0) return undefined;
+  if (selection === "highestCurrentHp") {
+    // 동률은 편성 순서(배열 앞)가 이긴다 — 난수 없이 같은 판이 같은 표적을 고른다.
+    return pool.reduce((best, other) => other.hp > best.hp ? other : best);
+  }
+  return pool.reduce((best, other) => {
+    const mine = other.observation?.stacks ?? 0;
+    const theirs = best.observation?.stacks ?? 0;
+    // 겹이 같으면 가까운 쪽이다 — 멀리 있는 적을 향해 전장을 가로지르지 않는다.
+    return mine < theirs || (mine === theirs && distance(fighter, other) < distance(fighter, best)) ? other : best;
+  });
+}
+
+/**
+ * 관측 발동. 이 공격이 맞힌 적에게 쌓인 겹 수만큼 짧은 틱이 **같은 프레임에** 박힌다.
+ *
+ * 겹은 소모하지 않고 스탯도 쓰지 않는다 — 쌓여 있는 값을 켜는 것이 전부다. 한 틱은 자기 공격력의
+ * `percentPerStack`%이고 **방어·저항을 지난다**(낮게 두어도 고방어 적에게 1로 수렴하지 않는다). 속성 상성과
+ * 대상 경감은 그대로 거친다. 피해는 지속 피해가 아니라 이 공격의 뒤이은 몫이라 게이지·야성은 올리지 않는다.
+ *
+ * 틱을 시간에 흩는 것은 화면의 일이다(`observationTick`) — 서버 재현이 프레임 크기와 무관하게 같은 값을 내야 해서
+ * 코어는 한 번에 확정한다. 보스에게 들어간 몫은 점수에도 든다(`scoreBossFixedDamage`와 같은 이유).
+ */
+function fireObservationVolley(attacker: Fighter, target: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const plan = attacker.def.basic.observationVolley;
+  const count = target.observation?.stacks ?? 0;
+  if (!plan || count <= 0 || !isFighterAlive(target)) return;
+  const offense = { ...attacker, def: offensiveDefinition(attacker) };
+  const defense = defensiveDefinition(target, state);
+  const input = { power: plan.percentPerStack, damageType: "physical" as const, scalingStat: "atk" as const, isCritical: false, kind: "basic" as const, ignoresDefense: true };
+  for (let index = 0; index < count && isFighterAlive(target); index += 1) {
+    const raw = computeDamage(offense, defense, input);
+    const resolution = resolveReceivedDamage(target, raw);
+    const hpBefore = target.hp;
+    const shieldBefore = target.shield.amount; const shieldProviderId = target.shield.providerId;
+    applyDamage(target, resolution.applied, events, state);
+    const credited = recordDamageContribution(state, packCreditId(attacker), target, "physical", "atk", computeDamageContribution(offense, input), resolution, hpBefore, shieldBefore, shieldProviderId);
+    if (state.boss && target.id === state.boss.fighterId) state.boss.score += credited;
+    events.push({ kind: "observationTick", attackerId: attacker.id, fighterId: target.id, amount: resolution.applied, index, count, windowSeconds: plan.windowSeconds });
+    if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
+    tryTriggerEmergencyRecovery(target, state); tryTriggerLowHpVanish(target, state);
+  }
+  if (!isFighterAlive(target)) {
+    clearDefeatedStatuses(target);
+    events.push({ kind: "death", fighterId: target.id, sourceId: attacker.id });
+  }
+}
+
+/** 적 전원의 관측 겹 합산을 상한까지만 센다. 모르페 궁극기의 위력이 이 수에 비례한다. */
+function countedObservationStacks(state: SkirmishState, attacker: Fighter, limit: number): number {
+  const total = state.fighters
+    .filter((other) => other.side !== attacker.side && isFighterAlive(other))
+    .reduce((sum, other) => sum + (other.observation?.stacks ?? 0), 0);
+  return Math.min(limit, total);
+}
+
+/**
+ * 오버클럭에 들어서는 순간. 자신과 살아 있는 소환수가 각각 **모르페 공격력**의 몇 %를 막으로 두르고,
+ * 그 막은 폭주 시간(`FEROCITY_RULES`)의 **절반이 지나면 다 사라지도록** 서서히 깎인다. 소환수도 같은
+ * 폭주로 끓는다(`summonPackFrenzy`와 같은 규칙이다 — 주인의 시계를 그대로 받는다).
+ */
+function enterOverclock(fighter: Fighter, trait: Extract<RelicDef["ferocityTrait"], { effectId: "overclock" }>, state: SkirmishState, events: SkirmishEvent[]): void {
+  const requested = Math.max(1, Math.round(offensiveDefinition(fighter).stats.atk * trait.shieldAttackPercent / 100));
+  const drones = livingDrones(state, fighter);
+  const halfFever = FEROCITY_RULES.max / FEROCITY_RULES.feverDrainPerSecond / 2;
+  for (const body of [fighter, ...drones]) {
+    const granted = grantShield(state, body, fighter.id, requested, events, 1.5);
+    if (granted > 0) body.shieldFade = { perSecond: granted / halfFever, remaining: halfFever };
+  }
+  for (const drone of drones) {
+    drone.ferocity = fighter.ferocity;
+    drone.ferocityFever = true;
+  }
+}
+
+/** 서서히 줄어드는 막을 시간만큼 깎는다. 다 사라지는 순간만 사건으로 알린다. */
+function tickShieldFade(fighter: Fighter, dt: number, events: SkirmishEvent[]): void {
+  const fade = fighter.shieldFade;
+  if (!fade) return;
+  const elapsed = Math.min(dt, fade.remaining);
+  const before = fighter.shield.amount;
+  fighter.shield.amount = Math.max(0, before - fade.perSecond * elapsed);
+  fade.remaining -= elapsed;
+  // 부동소수점 잔여(1e-13)가 막 한 조각으로 남아 머리 위 바에 칸을 세우지 않게 한다.
+  if (fighter.shield.amount < 1e-6) fighter.shield.amount = 0;
+  if (before > 0 && fighter.shield.amount <= 0) events.push({ kind: "shieldDepleted", fighterId: fighter.id, effect: { tag: "shieldBreak", intensity: 0.6 } });
+  if (fade.remaining <= EMERGENCY_RECOVERY.epsilon) fighter.shieldFade = null;
+}
+
+/**
+ * 「오버클럭」의 광역 시계. 폭주 중 매초 **소환수 주위**의 적에게 모르페 공격력의 몇 %를 준다.
+ *
+ * 노도니아의 열기가 자기 몸을 중심으로 지지는 것과 달리 중심이 자리를 옮기는 소환수라, 반경은 소환수의
+ * 현재 좌표에서 잰다. 관측은 쌓지 않는다 — 쌓으면 폭주 한 번에 상한이 순식간에 차서 폭주가 관측의 값을
+ * 통째로 삼킨다. 보통 물리 피해라 방어를 거친다.
+ */
+function tickOverclockAura(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  const trait = fighter.def.ferocityTrait;
+  if (trait.effectId !== "overclock") return;
+  if (!fighter.ferocityFever) { fighter.overclockAuraTickIn = 1; return; }
+  const tickIn = fighter.overclockAuraTickIn - dt;
+  if (tickIn > 0) { fighter.overclockAuraTickIn = tickIn; return; }
+  fighter.overclockAuraTickIn = tickIn + 1;
+  const attacker = { ...fighter, def: offensiveDefinition(fighter) };
+  const input = { power: trait.auraDamagePercent, damageType: "physical" as const, scalingStat: "atk" as const, isCritical: false, kind: "basic" as const };
+  const struck = new Set<string>();
+  for (const drone of livingDrones(state, fighter)) {
+    let hit = 0;
+    for (const other of state.fighters) {
+      if (other.side === fighter.side || !isFighterAlive(other) || struck.has(other.id) || distance(drone, other) > trait.auraRadius) continue;
+      struck.add(other.id);
+      const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(other, state), input)));
+      const resolution = resolveReceivedDamage(other, raw);
+      const hpBefore = other.hp;
+      const shieldBefore = other.shield.amount; const shieldProviderId = other.shield.providerId;
+      applyDamage(other, resolution.applied, events, state);
+      const credited = recordDamageContribution(state, fighter.id, other, "physical", "atk", computeDamageContribution(attacker, input), resolution, hpBefore, shieldBefore, shieldProviderId);
+      if (state.boss && other.id === state.boss.fighterId) state.boss.score += credited;
+      // 휘두르지 않고 떠 있는 것이 때리므로 시전 모션을 틀지 않는다(`animate: false`).
+      events.push({ kind: "attack", attackerId: fighter.id, targetId: other.id, skill: "basic", amount: resolution.applied,
+        contributionAmount: credited, critical: false, animate: false, damageType: "physical", mitigated: resolution.reduced < resolution.raw });
+      if (!isFighterAlive(other)) {
+        clearDefeatedStatuses(other);
+        events.push({ kind: "death", fighterId: other.id, sourceId: fighter.id });
+      }
+      hit += 1;
+    }
+    // 아무도 없는 자리에는 바닥 자국을 남기지 않는다 — 매초 빈 원이 뜨면 "여기 맞았다"의 뜻이 흐려진다.
+    if (hit > 0) events.push({ kind: "areaImpact", attackerId: fighter.id, ultimate: false, damageType: "physical",
+      area: { shape: "radial", x: drone.x, y: drone.y, radius: trait.auraRadius } });
+  }
+}
+
+/** 소환수 정찰기의 유유한 비행 경로. 시간과 개체의 위상만으로 정해져 난수 없이 같은 판이 같은 길을 난다. */
+function dronePatrolPoint(state: SkirmishState, drone: Fighter): { x: number; y: number } {
+  const { left, right, top, bottom } = state.arena;
+  const phase = state.elapsed * 0.22 + drone.wander;
+  return {
+    x: (left + right) / 2 + Math.sin(phase) * (right - left) * 0.32,
+    y: (top + bottom) / 2 + Math.sin(phase * 1.7 + 1) * (bottom - top) * 0.28,
+  };
+}
+
+/** 정찰기가 이번 행동에 노릴 적. 궁극기가 찼으면 궁극기의 계약을, 아니면 평타의 계약을 따른다. */
+function pickDroneTarget(state: SkirmishState, drone: Fighter): Fighter | undefined {
+  const skill = canFireUltimate(state, drone) ? drone.def.ultimate : drone.def.basic;
+  return pickBySelection(state, drone, skill.targetSelection);
 }
 
 /**
@@ -2892,6 +3122,8 @@ function clearDefeatedStatuses(fighter: Fighter): void {
   fighter.staggeredFor = 0;
   fighter.chill = null;
   fighter.frozen = null;
+  fighter.observation = null;
+  fighter.shieldFade = null;
 }
 
 /** 한쪽 편에서 살아 있는 캐릭터만 고른다. */
@@ -3120,6 +3352,9 @@ export function attackInterval(fighter: Fighter, state?: SkirmishState): number 
       : fighter.ferocityFever && trait.effectId === "cautery"
         // 자를수록 꿰매는 개체라 속도가 곧 지원량이다. 다른 자기 가속과 같은 역수 규칙을 쓴다.
         ? 1 / (1 + trait.attackSpeedPercent / 100)
+      : fighter.ferocityFever && (trait.effectId === "overclock" || trait.effectId === "overclockBody")
+        // 모르페와 함께 끓는 소환수가 같은 폭주로 빨라진다. 다른 자기 가속과 같은 역수 규칙을 쓴다.
+        ? 1 / (1 + trait.attackSpeedPercent / 100)
       : 1;
   return Math.max(SKIRMISH.minimumAttackInterval, ((SKIRMISH.attackInterval * 100) / Math.max(1, currentAttackSpeed(fighter, state))) * feverMultiplier);
 }
@@ -3145,11 +3380,13 @@ export function defensiveDefinition(target: Fighter, state: SkirmishState): Figh
   // 토리카는 퍼센트가 아닌 실제값을 피해 계산용 사본에만 더해 정적 RelicDef를 보존한다.
   const torika = target.ferocityFever && target.def.ferocityTrait.effectId === "torikaBulwark" ? target.def.ferocityTrait : undefined;
   const reagentReduction = reagentResistanceReduction(target);
-  if (bonus <= 0 && furCoat <= 0 && torika === undefined && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0 && reagentReduction === 0) return target;
+  // 요람 연결(모르페)은 소환수가 살아 있는 동안만 방어·저항을 함께 올린다. 오라·모피 코트와 같은 자리에서 곱한다.
+  const linked = droneLinkDefensePercent(state, target);
+  if (bonus <= 0 && furCoat <= 0 && linked <= 0 && torika === undefined && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0 && reagentReduction === 0) return target;
   return { ...target, def: { ...target.def, stats: { ...target.def.stats,
-    def: target.def.stats.def * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + target.augmentDefensePercent / 100) + (torika?.defenseBonus ?? 0),
+    def: target.def.stats.def * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + target.augmentDefensePercent / 100) + (torika?.defenseBonus ?? 0),
     // 시약 반응은 정적 정의가 아닌 런타임 실제 감소량이며, 여러 제공자가 있어도 유효 저항은 0 아래로 내리지 않는다.
-    res: Math.max(0, target.def.stats.res * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + target.augmentResistancePercent / 100) * shred - reagentReduction + (torika?.resistanceBonus ?? 0)),
+    res: Math.max(0, target.def.stats.res * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + target.augmentResistancePercent / 100) * shred - reagentReduction + (torika?.resistanceBonus ?? 0)),
   } } };
 }
 
@@ -3265,7 +3502,8 @@ export function moveSpeed(fighter: Fighter, state?: SkirmishState): number {
     : 0;
   // 팀 오라와 달리 그래피티 런은 폭주한 본인만 빨라진다.
   const trait = fighter.def.ferocityTrait;
-  const selfBonus = fighter.ferocityFever && trait.effectId === "graffitiRun" ? trait.moveSpeedPercent : 0;
+  // 오버클럭은 걷지 않는 주인이 아니라 소환수(`overclockBody`)만 빨라진다.
+  const selfBonus = fighter.ferocityFever && (trait.effectId === "graffitiRun" || trait.effectId === "overclockBody") ? trait.moveSpeedPercent : 0;
   // 이동 속도를 데려오는 것은 순풍뿐이다 — 오더는 한 명의 화력만 올리고 걸음은 건드리지 않는다.
   const tailwindPercent = fighter.tailwindFor > 0 && fighter.tailwind?.kind === "tailwind" ? fighter.tailwind.moveSpeedPercent : 0;
   // 둔화는 공격 속도와 같은 비율로 이동 속도도 함께 깎는다.
@@ -3620,6 +3858,7 @@ function cleanseAllDebuffs(fighter: Fighter): void {
   fighter.stunnedFor = 0; fighter.staggeredFor = 0; fighter.frozen = null; fighter.chill = null;
   fighter.bleed = null; fighter.poison = null; fighter.curse = null; fighter.overpaint = null;
   fighter.vandalism = null; fighter.butcher = null; fighter.frenzy = null; fighter.taunted = null;
+  fighter.observation = null;
 }
 
 /** 실시간 전투도 턴제와 같은 사건별 증가 및 임계 로그 계약을 사용한다. */
@@ -3694,6 +3933,7 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, even
       for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
       if (trait.retriggerPackHunt) triggerPackHunt(state, fighter.side);
     }
+    if (trait.effectId === "overclock") enterOverclock(fighter, trait, state, events);
     if (trait.effectId === "summonPackFrenzy") {
       // 지휘자는 자기 손이 달라지지 않는다. 대신 앞에 선 몸들이 주인의 시계를 그대로 받는다.
       for (const wolf of state.fighters.filter((unit) => unit.summonOwnerId === fighter.id && isFighterAlive(unit))) {
@@ -4697,9 +4937,14 @@ function strike(
   const critical = forcedCritical || empowered || bleedingBite || nape > 1 || isCriticalHit(Math.min(100, criticalChance), rng());
   // 공속 복합 계수는 현재 기본 공속과 전투의 환희 누적을 읽되 폭주 임시 배율은 포함하지 않는다.
   const attackSpeedPower = useUltimate ? attacker.def.ultimate.attackSpeedPower ?? 0 : 0;
-  const basePower = attackSpeedPower > 0
+  // 정조준 관측 — 적 전원의 관측 겹 합산(상한까지)이 바닥 위력 위에 겹마다 얹힌다. 겹은 소모하지 않는다.
+  const observationPlan = useUltimate ? attacker.def.ultimate.observationStrike : undefined;
+  const observationPower = observationPlan
+    ? countedObservationStacks(state, attacker, observationPlan.maxCountedStacks) * observationPlan.powerPerStack
+    : 0;
+  const basePower = (attackSpeedPower > 0
     ? skill.power + currentAttackSpeed(attacker) * attackSpeedPower / Math.max(1, attacker.def.stats.atk)
-    : skill.power;
+    : skill.power) + observationPower;
   // 희열이 오른 만큼 벌이 무거워진다 — 맞아서 쌓인 겹이 손으로도 돌아온다. 이번 타격 시작 시점의 겹이다.
   const elationPerStack = !useUltimate ? attacker.def.basic.elationDamagePercentPerStack ?? 0 : 0;
   const compositePower = basePower * (1 + (attacker.elation?.stacks ?? 0) * elationPerStack / 100);
@@ -4898,6 +5143,8 @@ function strike(
     // 주기이므로 같은 문 안에서 함께 돈다 — 따로 세면 두 셈이 한 박자씩 어긋난다.
     if (!useUltimate) applyBasicBreakthrough(attacker, state, events);
   }
+  // 관측 발동은 상태를 건 **뒤**에 켠다 — 이번 공격이 방금 쌓은 겹도 같은 손이 함께 켠다.
+  if (!useUltimate && isFighterAlive(target) && !resolution.ignored) fireObservationVolley(attacker, target, state, events);
   // 채널링이 도는 동안에는 손이 닿은 적에게만 한 겹이 더 붙는다. 틱이 거는 상태(전장 전체)와
   // 다른 축이라 스킬 정의도 따로 든다 — 씬도 전투도 개체 이름으로 분기하지 않는다.
   const channelRider = !useUltimate && attacker.artChannel ? attacker.def.ultimate.channel?.basicStatusEffects : undefined;
@@ -5644,6 +5891,8 @@ function reviveWolf(state: SkirmishState, owner: Fighter, wolf: Fighter, events:
   if (!rule?.enabled || isFighterAlive(wolf)) return;
   wolf.hp = Math.max(1, Math.round(wolf.maxHp * rule.hpPercent / 100));
   wolf.resummonIn = 0;
+  // 다시 선 몸은 전투당 한 번인 위기 은신도 새로 쥔다 — 정찰기는 돌아올 때마다 한 번 숨을 수 있다.
+  wolf.passiveTriggered = false;
   const index = (owner.def.summons ?? []).findIndex((spec) => wolf.id.endsWith(`:${spec.def.id}`));
   wolf.x = Math.min(state.arena.right, Math.max(state.arena.left, owner.x + (index % 2 === 0 ? -70 : 70)));
   // 처음 설 때와 같은 자리다 — 지휘자의 앞을 다시 막아선다.
@@ -5880,6 +6129,12 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       if (remaining <= EMERGENCY_RECOVERY.epsilon) fighter.curse = null;
       else fighter.curse = { ...fighter.curse, remaining };
     }
+    // 관측도 같은 공용 시계로 마른다. 다시 걸릴 때마다 갱신되므로 손이 끊긴 적만 통째로 비워진다.
+    if (isFighterAlive(fighter) && fighter.observation) {
+      const remaining = fighter.observation.remaining - dt;
+      if (remaining <= EMERGENCY_RECOVERY.epsilon) fighter.observation = null;
+      else fighter.observation = { ...fighter.observation, remaining };
+    }
     // 광란이 풀리는 순간 표적을 비운다. 남겨 두면 원래 편으로 돌아가고도 아군을 계속 때린다.
     if (isFighterAlive(fighter) && fighter.frenzy) {
       const remaining = fighter.frenzy.remaining - dt;
@@ -5934,6 +6189,10 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     tickFerocityRegen(fighter, dt, state, events);
     tickBattleHeatAura(fighter, dt, state, events);
     tickGraffitiAura(fighter, dt, state, events);
+    // 요람 연결의 회복과 오버클럭의 광역·감쇠 막도 행동 불능과 무관한 전투 시간으로 돈다.
+    tickDroneLink(fighter, dt, state, events);
+    tickOverclockAura(fighter, dt, state, events);
+    tickShieldFade(fighter, dt, events);
     // 궁극기 채널링은 기절·행동불가와 무관하게 흐른다 — 이미 뿌려 둔 낙서라 손이 멈춰도 마른다.
     tickArtChannel(fighter, dt, state, events);
     tickTaunt(fighter, dt, state);
@@ -5971,8 +6230,12 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     fighter.retargetIn -= dt;
     const reconsider = ownTarget && fighter.retargetIn <= 0;
     if (reconsider) fighter.retargetIn = SKIRMISH.retargetSeconds;
-    const target = resolveTarget(state, fighter, reconsider);
+    // 정찰기는 정해진 표적이 없다 — 이번 행동에 필요한 적을 그때그때 고른다(`Skill.targetSelection`).
+    const drone = fighter.def.passive.kind === "highAltitudeRecon";
+    const droneAim = drone ? pickDroneTarget(state, fighter) : undefined;
+    const target = droneAim ?? resolveTarget(state, fighter, reconsider);
     if (!target) continue;
+    if (droneAim) fighter.targetId = droneAim.id;
 
     const dx = target.x - fighter.x;
     const dy = target.y - fighter.y;
@@ -6027,7 +6290,26 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       fighter.blockedFor += dt;
     }
 
-    if (!fighter.engaged || runsUntilStrike) {
+    if (drone) {
+      /*
+       * **서서 쏘지 않고 떠돈다.** 사거리 안이면 경유지를 따라 전장을 유유히 비행하고, 밖이면 표적 쪽으로
+       * 다가간다. 표적을 향해 곧장 붙는 공용 규칙을 쓰지 않는 것이 이 개체의 정체성이다 — 걷지 않는 주인의
+       * 눈이라 전장을 훑는 그림이 곧 관측이다.
+       */
+      fighter.engaged = gap <= reach;
+      const goal = fighter.engaged ? dronePatrolPoint(state, fighter) : target;
+      const toX = goal.x - fighter.x;
+      const toY = goal.y - fighter.y;
+      const toGap = Math.hypot(toX, toY);
+      if (toGap > 1e-6) {
+        const advanceBy = Math.min(1, moveSpeed(fighter, state) * dt / toGap);
+        fighter.x += toX * advanceBy;
+        fighter.y += toY * advanceBy;
+      }
+      fighter.hopPhase += dt * SKIRMISH.hopRate * Math.PI * (fighter.def.stats.moveSpeed / 100);
+      fighter.hop = Math.abs(Math.sin(fighter.hopPhase)) * SKIRMISH.hopHeight;
+      if (!fighter.engaged) continue;
+    } else if (!fighter.engaged || runsUntilStrike) {
       const step = moveSpeed(fighter, state) * dt;
       // 달리는 동안만 차오르는 몫. 서서 때리는 프레임에는 오르지 않아, 얼마나 돌아다녔는지가
       // 그대로 게이지가 된다. 피버 중에는 공용 규칙대로 야성이 더 오르지 않는다.
@@ -6270,7 +6552,10 @@ export function fireUltimate(
     for (const pool of [...attacker.shallowPools]) burstShallowPool(attacker, pool, detonate.power, state, events);
     attacker.shallowPools = [];
   }
-  const target = resolveTarget(state, attacker);
+  // 표적 선택 계약이 있는 궁극기는 공용 거리 점수 대신 그 규칙이 고른 적을 노린다.
+  const aimed = pickBySelection(state, attacker, teamUltimate.targetSelection);
+  if (aimed) attacker.targetId = aimed.id;
+  const target = aimed ?? resolveTarget(state, attacker);
   if (!target) return events;
 
   strike(attacker, target, rng, state, events, true, undefined, targetPoint);
@@ -6338,7 +6623,8 @@ export function stepSkirmish(state: SkirmishState, dt: number, rng: () => number
   for (const fighter of state.fighters) {
     const tag = stealthTransition(stealthBefore.get(fighter.id) ?? 0, fighter.stealthFor);
     if (tag) events.push({ kind: "combatEffect", fighterId: fighter.id, effect: { tag, intensity: 1 } });
-    if (frenzyBefore.get(fighter.id) && !fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "summonPackFrenzy") {
+    if (frenzyBefore.get(fighter.id) && !fighter.ferocityFever
+      && (fighter.def.ferocityTrait.effectId === "summonPackFrenzy" || fighter.def.ferocityTrait.effectId === "overclock")) {
       // 주인의 폭주가 가라앉으면 앞에 선 몸도 함께 식는다. 남은 게이지도 같이 비운다.
       for (const wolf of state.fighters.filter((unit) => unit.summonOwnerId === fighter.id)) {
         wolf.ferocityFever = false;

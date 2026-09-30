@@ -70,8 +70,16 @@ describe("스킬 일러스트 파일", () => {
     for (const def of RELICS) {
       const art = skillArtFor(def.id, "passive");
       if (!art) continue;
-      for (const slot of SKILL_ART_SLOTS) expect(relics.has(skillArtKey(def.id, slot))).toBe(true);
+      for (const slot of SKILL_ART_SLOTS) expect(relics.has(skillArtFor(def.id, slot) ?? ""), `${def.id} ${slot}`).toBe(true);
     }
+  });
+
+  it("은 스쿠스이노·타보아와 레이티아 다섯 자매도 전용 일러스트를 갖고, 자매는 한 벌을 나눠 쓴다", () => {
+    for (const relicId of ["sukusuino", "taboa", "raitia-grass", "raitia-water", "raitia-fire", "raitia-earth", "raitia-wind"]) {
+      for (const slot of SKILL_ART_SLOTS) expect(skillArtFor(relicId, slot), `${relicId} ${slot}`).toBeDefined();
+    }
+    expect(skillArtFor("raitia-grass", "basic")).toBe(skillArtFor("raitia-wind", "basic"));
+    expect(SKILL_ART_ASSETS.filter(([key]) => key.startsWith("skill-art-raitia")).length).toBe(SKILL_ART_SLOTS.length);
   });
 });
 
@@ -652,7 +660,7 @@ describe("스킬 설명문 양식 계약", () => {
       const borrowsSummonStats = "packAssault" in skill && skill.packAssault !== undefined;
       for (const body of bodies) {
         // 대상이 먼저다. 무엇을 때리는지 모른 채 수치부터 읽게 하지 않는다.
-        expect(body).toMatch(/^(적 한 명|자신의 주위 모든 적|표적과 그 주위의 적|전장의 모든 적|지정한 원 안의 모든 적|\[\[charge\|돌진\]\]해 뚫고 지나간 길의 모든 적)에게 /);
+        expect(body).toMatch(/^(적 한 명|자신의 주위 모든 적|표적과 그 주위의 적|전장의 모든 적|지정한 원 안의 모든 적|\[\[charge\|돌진\]\]해 뚫고 지나간 길의 모든 적|현재 체력이 가장 높은 적|\[\[observation\|관측\]\]이 없거나 가장 적은 적)에게 /);
         if (borrowsSummonStats) {
           expect(body).toMatch(/\d+% 위력/);
           continue;

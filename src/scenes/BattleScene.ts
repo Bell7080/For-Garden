@@ -1674,6 +1674,21 @@ export class BattleScene extends Phaser.Scene {
       flashHit(this, view.creature, this.bodyTint(view));
       return undefined;
     }
+    if (event.kind === "observationTick") {
+      const view = this.views.get(event.fighterId);
+      if (!view) return undefined;
+      view.hpBar.setValue({ currentHp: view.fighter.hp, maxHp: view.fighter.maxHp, damage: event.amount, cause: "damage" });
+      this.profiles.find((profile) => profile.fighter.id === event.fighterId)?.prefab.setHealthTarget(view.fighter.hp, view.fighter.maxHp, "damage", event.amount);
+      // 코어는 틱 전부를 한 프레임에 확정했다. 「티디디딕」은 화면이 창(window) 안에 흩어 뿌린다 —
+      // 배속만큼 창도 줄여 3배속에서도 한 번의 발동이 다음 공격보다 길어지지 않는다.
+      const delayMs = event.count > 1 ? Math.round(event.windowSeconds * 1000 * event.index / event.count / this.battleSpeed) : 0;
+      const pop = (): void => {
+        this.popNumber(view.fighter, event.amount, "debuff", { debuff: "observation" });
+        if (event.index === 0) flashHit(this, view.creature, this.bodyTint(view));
+      };
+      if (delayMs <= 0) pop(); else this.time.delayedCall(delayMs, pop);
+      return undefined;
+    }
     if (event.kind === "charge") {
       // 바닥 자국은 `areaImpact`가 통로 모양 그대로 그린다 — 여기서 경로 길이만 한 마름모를 더
       // 깔면 실제 판정폭(반폭 110px)보다 훨씬 넓은 범위를 보여 주게 된다.

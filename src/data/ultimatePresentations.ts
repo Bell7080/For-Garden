@@ -80,6 +80,8 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   // 늑대는 컷인 원화가 SD 한 장뿐이라 크게 세우지 않는다. 무게는 돌진이 바닥에 그리는 통로가 낸다.
   kuro: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.9, cutInHoldMs: 110, zoomScale: 1.14, zoomMs: 92, cameraShakeIntensity: 0.006 },
   shiro: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.9, cutInHoldMs: 110, zoomScale: 1.12, zoomMs: 92, cameraShakeIntensity: 0.005 },
+  // 관제 드론은 컷인 원화가 SD 한 장뿐이라 크게 세우지 않는다. 신호를 뿌리는 궁극기라 흔들림은 가장 얕다.
+  dimo: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.9, cutInHoldMs: 110, zoomScale: 1.1, zoomMs: 92, cameraShakeIntensity: 0.003 },
   // 때리지 않고 지시만 하는 궁극기라 확대도 흔들림도 가장 얕다 — 화면이 크게 흔들리면
   // 정작 세지는 것은 듀오인데 슈테가 큰 한 방을 낸 것처럼 읽힌다.
   shute: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.98, cutInHoldMs: 130, zoomScale: 1.04, zoomMs: 92, cameraShakeIntensity: 0.003 },

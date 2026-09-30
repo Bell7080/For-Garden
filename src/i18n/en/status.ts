@@ -36,6 +36,8 @@ export const STATUS_EN = {
   "status.submerged.detail": "Move Speed -{percent}% · Ends on leaving the Shallows",
   "status.vandalism": "Vandalism",
   "status.vandalism.detail": "{stacks} / {max} stacks · Attack & Ability Power -{percent}% · Bursts on the spot when full",
+  "status.observation": "Spotting",
+  "status.observation.detail": "{stacks} / {max} stacks · No damage itself · Fires per stack when Morphe's Basic Attack hits · {time} left",
   "status.butcher": "Butcher",
   "status.butcher.detail": "{stacks} / {max} stacks · Bursts on the spot when full",
 } as const;

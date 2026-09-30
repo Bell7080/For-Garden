@@ -37,7 +37,7 @@ export type DamageFlavor =
  * **새 디버프는 여기와 아래 색표에만 더한다.** 화면이 상태마다 색을 새로 고르면 같은 계열의
  * 상태가 화면마다 다른 색으로 보인다.
  */
-export type DebuffId = "bleed" | "poison" | "concussion" | "butcher" | "curse" | "frenzy" | "vandalism" | "weakpoint";
+export type DebuffId = "bleed" | "poison" | "concussion" | "butcher" | "curse" | "frenzy" | "vandalism" | "weakpoint" | "observation";
 
 /**
  * 디버프별 색.
@@ -59,6 +59,8 @@ export const DEBUFF_TONE: Record<DebuffId, string> = {
   // 표식이 터진 한 방은 지속 피해가 아니라 듀오가 밟은 결과라, 다른 디버프처럼 누르지 않고
   // 관측 신호의 노란빛을 그대로 쓴다 — 머리 위 칩과 같은 색이어야 한 사건으로 읽힌다.
   weakpoint: "#e8c33a",
+  // 관측이 발동해 박힌 틱은 잔타로 여럿이 잇따라 뜬다 — 바람 속성의 청록을 어둡게 눌러 큰 한 방과 섞이지 않게 한다.
+  observation: "#4fa3a8",
 };
 
 export interface DamagePopupRequest {

@@ -239,6 +239,39 @@ describe("디모 — 다중 관측 · 위험 신호 관측", () => {
   });
 });
 
+describe("디모 — 도주 비행", () => {
+  it("는 유체화라 밀어내기에 참여하지 않는다", () => {
+    expect(getRelic("dimo").passive.phasesThroughFighters).toBe(true);
+  });
+
+  it("는 가까이 온 적에게서 멀어진다", () => {
+    const { state, dimo, enemies } = setup();
+    enemies[0].x = 500; enemies[0].y = 560;
+    dimo.x = 500; dimo.y = 700;
+    const before = Math.hypot(dimo.x - enemies[0].x, dimo.y - enemies[0].y);
+    step(state, 1.5);
+    expect(Math.hypot(dimo.x - enemies[0].x, dimo.y - enemies[0].y)).toBeGreaterThan(before + 40);
+  });
+
+  it("는 구석에 몰려도 전장 밖으로 나가지 않고 그 자리에 붙어 서지도 않는다", () => {
+    const { state, dimo, enemies } = setup();
+    dimo.x = 10; dimo.y = 10;
+    enemies[0].x = 120; enemies[0].y = 120;
+    step(state, 3);
+    expect(dimo.x).toBeGreaterThanOrEqual(0);
+    expect(dimo.y).toBeGreaterThanOrEqual(0);
+    expect(Math.hypot(dimo.x - 10, dimo.y - 10)).toBeGreaterThan(60);
+  });
+
+  it("는 적이 멀리 있으면 도망치지 않고 전장을 떠돈다", () => {
+    const { state, dimo, enemies } = setup();
+    enemies[0].x = 900; enemies[0].y = 100;
+    const start = { x: dimo.x, y: dimo.y };
+    step(state, 4);
+    expect(Math.hypot(dimo.x - start.x, dimo.y - start.y)).toBeGreaterThan(20);
+  });
+});
+
 describe("모르페 — 오버클럭", () => {
   function enterFever() {
     const context = setup();
@@ -304,5 +337,18 @@ describe("모르페 스킬의 디모 태그", () => {
     const stats = { attack: 100, defense: 50, maxHp: 1000, abilityPower: 0 };
     expect(passiveDescription(morphe.passive)).toContain("[[summon-dimo|디모]]");
     expect(ferocityTraitDescription(morphe.ferocityTrait, stats)).toContain("[[summon-dimo|디모]]");
+  });
+
+  it("보호막·방어력·저항력·이동 속도도 규칙어 태그로 열린다", async () => {
+    const { passiveDescription, ferocityTraitDescription } = await import("../../src/ui/skillPresentation");
+    const { KEYWORDS } = await import("../../src/data/keywords");
+    const morphe = getRelic("morphe");
+    const stats = { attack: 100, defense: 50, maxHp: 1000, abilityPower: 0 };
+    const passive = passiveDescription(morphe.passive, 100, { defense: 50, resistance: 50 });
+    expect(passive).toContain("[[def|");
+    expect(passive).toContain("[[res|");
+    expect(ferocityTraitDescription(morphe.ferocityTrait, stats)).toContain("[[shield|");
+    expect(ferocityTraitDescription(getRelic("dimo").ferocityTrait, stats)).toContain("[[move-speed|");
+    for (const id of ["res", "move-speed", "shield"]) expect(KEYWORDS.some((keyword) => keyword.id === id), id).toBe(true);
   });
 });

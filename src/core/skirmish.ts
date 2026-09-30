@@ -1968,6 +1968,79 @@ function dronePatrolPoint(state: SkirmishState, drone: Fighter): { x: number; y:
   };
 }
 
+/** 정찰기의 도주 기준. 이 거리 안으로 들어온 적이 있으면 그 반대쪽으로 달아난다. */
+export const DRONE_FLEE = {
+  /** 적이 이 안에 들면 밀려난다. 가까울수록 세게 민다. */
+  radius: 480,
+  /** 전장 가장자리에서 이만큼 안쪽부터 벽이 안쪽으로 민다. */
+  wallMargin: 110,
+  /** 한 번에 바라보는 앞의 거리 — 이 만큼 앞의 점을 경유지로 삼는다. */
+  lookAhead: 220,
+  /** 도주 방향에 섞는 옆걸음 몫. 구석에 몰려도 벽에 붙어 서지 않고 돌아 나간다. */
+  swerve: 0.55,
+  /** 표적이 사거리 밖일 때 표적 쪽으로 당기는 몫 — 도주가 사거리를 통째로 잃게 하지 않는다. */
+  hold: 0.45,
+} as const;
+
+/**
+ * 정찰기의 이번 프레임 경유지. **적에게서 달아나는 것이 이 개체의 움직임이다.**
+ *
+ * 가까운 적마다 반대쪽으로 미는 힘을 더하고, 전장 벽이 안쪽으로 밀며, 벽 쪽으로 몰리면 옆으로 돌아 나간다
+ * (유체화라 적·아군을 뚫고 지나갈 수 있어 어디에도 끼지 않는다). 위협이 없으면 예전처럼 사거리 안에서
+ * 경유지를 따라 떠돌고, 표적이 사거리 밖이면 조금 당겨 사거리를 놓치지 않는다. 난수를 쓰지 않는다.
+ */
+function droneGoal(state: SkirmishState, drone: Fighter, target: Fighter, reach: number): { x: number; y: number } {
+  const { left, right, top, bottom } = state.arena;
+  let pushX = 0;
+  let pushY = 0;
+  for (const other of state.fighters) {
+    if (other.side === drone.side || !isFighterAlive(other)) continue;
+    const away = distance(drone, other);
+    if (away >= DRONE_FLEE.radius) continue;
+    const weight = (DRONE_FLEE.radius - away) / DRONE_FLEE.radius;
+    const norm = away > 0.001 ? away : 1;
+    pushX += (away > 0.001 ? (drone.x - other.x) / norm : Math.cos(drone.wander)) * weight;
+    pushY += (away > 0.001 ? (drone.y - other.y) / norm : Math.sin(drone.wander)) * weight;
+  }
+  const threatened = Math.hypot(pushX, pushY) > 1e-6;
+  if (!threatened) {
+    const gap = distance(drone, target);
+    return gap <= reach ? dronePatrolPoint(state, drone) : target;
+  }
+  // 벽이 안쪽으로 민다 — 가장자리에 다가갈수록 세다.
+  const wall = (position: number, low: number, high: number): number => {
+    if (position < low + DRONE_FLEE.wallMargin) return (low + DRONE_FLEE.wallMargin - position) / DRONE_FLEE.wallMargin;
+    if (position > high - DRONE_FLEE.wallMargin) return -(position - (high - DRONE_FLEE.wallMargin)) / DRONE_FLEE.wallMargin;
+    return 0;
+  };
+  const wallX = wall(drone.x, left, right);
+  const wallY = wall(drone.y, top, bottom);
+  let dirX = pushX + wallX * 1.4;
+  let dirY = pushY + wallY * 1.4;
+  // 벽에 몰리면 도주 방향의 옆으로 돌아 나간다. 어느 쪽으로 도는지는 개체의 위상이 정한다.
+  const cornered = Math.abs(wallX) + Math.abs(wallY) > 0;
+  if (cornered) {
+    const side = Math.sin(drone.wander + state.elapsed * 0.35) >= 0 ? 1 : -1;
+    const length = Math.hypot(dirX, dirY) || 1;
+    const swerveX = (-dirY / length) * DRONE_FLEE.swerve * side * length;
+    const swerveY = (dirX / length) * DRONE_FLEE.swerve * side * length;
+    dirX += swerveX;
+    dirY += swerveY;
+  }
+  // 사거리를 통째로 잃지 않게 표적 쪽으로 조금 당긴다.
+  const toTarget = distance(drone, target);
+  if (toTarget > reach * 0.85 && toTarget > 0.001) {
+    const length = Math.hypot(dirX, dirY) || 1;
+    dirX += ((target.x - drone.x) / toTarget) * DRONE_FLEE.hold * length;
+    dirY += ((target.y - drone.y) / toTarget) * DRONE_FLEE.hold * length;
+  }
+  const length = Math.hypot(dirX, dirY) || 1;
+  return {
+    x: Math.min(Math.max(drone.x + (dirX / length) * DRONE_FLEE.lookAhead, left), right),
+    y: Math.min(Math.max(drone.y + (dirY / length) * DRONE_FLEE.lookAhead, top), bottom),
+  };
+}
+
 /** 정찰기가 이번 행동에 노릴 적. 궁극기가 찼으면 궁극기의 계약을, 아니면 평타의 계약을 따른다. */
 function pickDroneTarget(state: SkirmishState, drone: Fighter): Fighter | undefined {
   const skill = canFireUltimate(state, drone) ? drone.def.ultimate : drone.def.basic;
@@ -6292,12 +6365,12 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
 
     if (drone) {
       /*
-       * **서서 쏘지 않고 떠돈다.** 사거리 안이면 경유지를 따라 전장을 유유히 비행하고, 밖이면 표적 쪽으로
-       * 다가간다. 표적을 향해 곧장 붙는 공용 규칙을 쓰지 않는 것이 이 개체의 정체성이다 — 걷지 않는 주인의
-       * 눈이라 전장을 훑는 그림이 곧 관측이다.
+       * **서서 쏘지 않고 적에게서 달아난다**(`droneGoal`). 가까운 적의 반대쪽으로 날며 그 와중에 사거리 안의
+       * 표적에게 쏘고, 위협이 없으면 전장을 유유히 떠돈다. 표적을 향해 곧장 붙는 공용 규칙을 쓰지 않는 것이
+       * 이 개체의 정체성이다. 유체화(`phasesThroughFighters`)라 몰려도 아무 몸에도 끼지 않는다.
        */
       fighter.engaged = gap <= reach;
-      const goal = fighter.engaged ? dronePatrolPoint(state, fighter) : target;
+      const goal = droneGoal(state, fighter, target, reach);
       const toX = goal.x - fighter.x;
       const toY = goal.y - fighter.y;
       const toGap = Math.hypot(toX, toY);

@@ -122,8 +122,10 @@ const DIMO_DEF: RelicDef = {
   passive: {
     id: "dimo-passive", name: "고공 탐색", kind: "highAltitudeRecon", iconAssetId: "skill-icon-buff", effectType: "buff", value: 0,
     lowHpStealth: { hpPercent: 50, seconds: 3 },
+    // 적에게서 달아나는 비행체라 적·아군을 그대로 지나간다 — 좁은 전장에서 어느 몸에도 끼지 않는다.
+    phasesThroughFighters: true,
     // 은신 절은 `lowHpStealth` 계약에서 본문이 따로 붙는다 — 여기 적으면 같은 말이 두 번 나온다.
-    desc: "정해진 표적을 노리지 않고 전장을 유유히 비행한다.",
+    desc: "적과 거리를 벌리며 전장을 날아다니고, 다른 전투원을 그대로 지나간다.",
   },
   // 위력은 낮게 둔다 — 이 기체의 값은 피해가 아니라 겹을 쌓는 것이다. 관측이 없거나 가장 적은 적을 고른다.
   basic: {

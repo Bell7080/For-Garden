@@ -1105,8 +1105,9 @@ export type PassiveKind =
    */
   | "droneLink"
   /**
-   * 귀속 소환수 전용(디모): **정해진 표적 없이 전장을 유유히 비행한다.** 공격 때마다 그때 필요한
-   * 적을 고르고(`Skill.targetSelection`), 사거리 안이면 서서 쏘지 않고 계속 떠돈다.
+   * 귀속 소환수 전용(디모): **정해진 표적 없이 적에게서 달아나며 비행한다.** 공격 때마다 그때 필요한
+   * 적을 고르고(`Skill.targetSelection`), 서서 쏘지 않고 가까운 적의 반대쪽으로 날며 쏜다(`droneGoal`).
+   * 위협이 없으면 전장을 유유히 떠돈다. 유체화(`phasesThroughFighters`)와 함께 쓴다.
    */
   | "highAltitudeRecon";
 

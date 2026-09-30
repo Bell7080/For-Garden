@@ -200,6 +200,18 @@ export const KEYWORDS: readonly KeywordDef[] = [
     description: "받는 물리 피해를 줄이고 일부 방어형 스킬의 실제 피해량을 정한다.",
   },
   {
+    id: "res", term: "저항력", kind: "rule",
+    description: "받는 마법 피해를 줄이고 일부 방어형 스킬의 실제 피해량을 정한다.",
+  },
+  {
+    id: "move-speed", term: "이동 속도", kind: "rule",
+    description: "전장을 움직이는 빠르기를 정하는 수치다. 높을수록 표적에게 더 빨리 붙고 위협에서 더 빨리 벗어난다.",
+  },
+  {
+    id: "shield", term: "보호막", kind: "rule",
+    description: "체력보다 먼저 깎이는 한 겹이다. 스스로 차오르지 않으며 체력 바 오른쪽에 푸른 칸으로 이어 붙는다.",
+  },
+  {
     id: "ap", term: "주문력", kind: "rule",
     description: "마법 스킬과 일부 회복 스킬의 실제 수치를 정하는 능력치다.",
   },

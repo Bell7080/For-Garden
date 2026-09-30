@@ -110,6 +110,19 @@ describe("inventory", () => {
     expect((await api.useConsumable({ itemId: "stamina-tonic", quantity: 1 })).wallet.stamina).toBe(230);
   });
 
+  it("탐사권은 탐사 횟수를 상한까지만 채우고 가득 차 있으면 쓰지 않는다", async () => {
+    const state = createDefaultSession(); state.itemInventory = [{ itemId: "strata-ticket", quantity: 3 }];
+    const api = new FakeServer(state, { latencyMs: 0 });
+    const max = state.archaeology.charges;
+    await expect(api.useConsumable({ itemId: "strata-ticket", quantity: 1 })).rejects.toMatchObject({ code: "STRATA_CHARGE_FULL" });
+    expect(state.itemInventory[0].quantity).toBe(3);
+    state.archaeology.charges = max - 1; state.archaeology.chargesUpdatedAt = new Date().toISOString();
+    const result = await api.useConsumable({ itemId: "strata-ticket", quantity: 2 });
+    // 한 칸만 비어 있었으므로 한 장만 쓰고 남은 장은 가방에 남는다.
+    expect(result.appliedAmount).toBe(1); expect(result.quantityUsed).toBe(1);
+    expect(state.archaeology.charges).toBe(max); expect(state.itemInventory[0].quantity).toBe(2);
+  });
+
   it("룬·지갑·스택을 카테고리별로 합성하고 많은 행의 하단 범위를 계산한다", () => {
     const state = createDefaultSession(); const inventory = new InventoryManager(state);
     expect(inventory.list("currency").find(({ id }) => id === "gold")?.quantity).toBe(state.wallet.gold);

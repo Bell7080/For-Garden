@@ -4,6 +4,7 @@ import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { chipPoints, drawInnerVignette, drawShapeOutline, drawLayer } from "./holo";
 import { COLOR, textStyle } from "./theme";
 import { pressIn, pressOut } from "./pressFeedback";
+import { RUNE_FRAME_FILL, RUNE_PIECE_ORIGIN_Y, runePartOfTexture, runePieceFit } from "./runePieceContent";
 
 /**
  * 그 화면에서 재화 액자를 누르면 무엇이 열리는가.
@@ -162,7 +163,16 @@ export function addFramedIcon(
   const holder = scene.add.container(x, y);
   const shape = chipPoints(size, size, { bevel: { topLeft: size * ITEM_FRAME.bevel, topRight: 0, bottomRight: size * ITEM_FRAME.bevel, bottomLeft: 0 } });
   holder.add(drawLayer(scene, 0, 0, shape, { fill: options.fill ?? ITEM_FRAME.fill, alpha: options.fillAlpha ?? ITEM_FRAME.fillAlpha }));
-  if (textureKey && scene.textures.exists(textureKey)) {
+  const runePart = textureKey ? runePartOfTexture(textureKey) : undefined;
+  if (runePart !== undefined && scene.textures.exists(textureKey)) {
+    // 룬 조각은 캔버스가 아니라 **보이는 그림**을 가운데에 크게 앉힌다 — 가방의 룬 카드와 같은 맞춤이다.
+    const fit = runePieceFit(runePart, size, RUNE_FRAME_FILL);
+    const offset = fit.content * 0.045;
+    const place = (image: Phaser.GameObjects.Image, dx: number, dy: number): Phaser.GameObjects.Image =>
+      image.setOrigin(0.5, RUNE_PIECE_ORIGIN_Y).setDisplaySize(fit.size, fit.size).setPosition(fit.x + dx, fit.y + dy);
+    holder.add(place(scene.add.image(0, 0, textureKey), offset, offset * 1.2).setTint(0x05070a).setAlpha(0.5 * (options.iconAlpha ?? 1)));
+    holder.add(place(scene.add.image(0, 0, textureKey), 0, 0).setAlpha(options.iconAlpha ?? 1));
+  } else if (textureKey && scene.textures.exists(textureKey)) {
     const icon = size * (options.iconRatio ?? ITEM_FRAME.icon);
     const { offsetX, offsetY, alpha } = ITEM_FRAME.shadow;
     holder.add(scene.add.image(offsetX, offsetY, textureKey).setDisplaySize(icon, icon).setTint(0x000000).setAlpha(alpha * (options.iconAlpha ?? 1)));

@@ -7,7 +7,8 @@ import { session } from "../state/session";
 import { Button } from "./Button";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { chipPoints, drawLayer } from "./holo";
-import { addFramedIcon } from "./itemFrame";
+import { addFramedIcon, guideForIcon } from "./itemFrame";
+import { pressIn, pressOut } from "./pressFeedback";
 import { addItemDefinitionIcon } from "./itemDefinitionIcon";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
@@ -104,8 +105,26 @@ export function openSweepPopup(scene: Phaser.Scene, popups: PopupLayer, options:
         next.add(value);
         next.add(icon(right - value.width - 14 - L.cost.icon / 2, y));
       };
+      /**
+       * 드는 것의 그림도 눌린다 — 액자(`addFramedIcon`)와 같은 규칙으로 그 그림의 안내창이 열린다.
+       * 이 줄만 맨 그림이라 스테미나·소탕권을 눌러도 아무 일이 없었다.
+       */
+      const tappable = (holder: Phaser.GameObjects.Container, textureKey: string): Phaser.GameObjects.Container => {
+        const open = guideForIcon(scene, textureKey);
+        if (!open) return holder;
+        const size = L.cost.icon + 24;
+        const hit = scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
+        hit.on("pointerdown", () => pressIn(holder));
+        hit.on("pointerout", () => pressOut(holder, "normal", { pop: false }));
+        hit.on("pointerup", () => { pressOut(holder); open(); });
+        holder.add(hit);
+        return holder;
+      };
       const panelRight = panelWidth / 2 - L.cost.padX;
-      addLine(0, t("dungeon.sweep.stamina"), (ix, iy) => scene.add.image(ix, iy, CURRENCY_ICON_BY_WALLET.stamina).setDisplaySize(L.cost.icon, L.cost.icon), settlement.staminaCost, held.stamina, panelRight);
+      addLine(0, t("dungeon.sweep.stamina"), (ix, iy) => tappable(
+        scene.add.container(ix, iy, [scene.add.image(0, 0, CURRENCY_ICON_BY_WALLET.stamina).setDisplaySize(L.cost.icon, L.cost.icon)]),
+        CURRENCY_ICON_BY_WALLET.stamina,
+      ), settlement.staminaCost, held.stamina, panelRight);
       if (tickets) {
         const ticket = findItem(SWEEP_TICKET_ITEM);
         const short = held.tickets < settlement.ticketCost;
@@ -114,7 +133,7 @@ export function openSweepPopup(scene: Phaser.Scene, popups: PopupLayer, options:
         addLine(1, ticket?.name ?? "", (ix, iy) => {
           const holder = scene.add.container(ix, iy);
           if (ticket) holder.add(addItemDefinitionIcon(scene, ticket.icon, 0, 0, L.cost.icon));
-          return holder;
+          return ticket?.icon.kind === "asset" ? tappable(holder, ticket.icon.key) : holder;
         }, settlement.ticketCost, held.tickets, valueRight);
         // 광고 — 모자라면 강조 판으로 서서 「여기서 채운다」를 말한다. 오늘 남은 횟수가 아래 줄이다.
         const ad = new Button(scene, adRight - L.ad.width / 2, lineY(1), {

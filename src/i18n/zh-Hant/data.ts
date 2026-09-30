@@ -137,6 +137,8 @@ export default {
   "item.raid-select-ticket.description": "開啟與好友一同挑戰的討伐。可自行選擇首領與難度。",
   "item.sweep-ticket.name": "掃蕩券",
   "item.sweep-ticket.description": "不經戰鬥，對已通關的地下城階段掃蕩一次。",
+  "item.strata-ticket.name": "探查券",
+  "item.strata-ticket.description": "恢復1次考古地層探查次數。",
   "currency.raidSigil.name": "討伐徽印",
   "currency.raidSigil.lore": "根據你擊退首領的程度所頒發的證明。",
   "currency.raidSigil.source.0": "結束的討伐結算",

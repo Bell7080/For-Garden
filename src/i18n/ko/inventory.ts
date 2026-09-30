@@ -20,6 +20,10 @@ export const INVENTORY_KO = {
   "inventory.useButton": "사용하기",
   "inventory.useDone": "사용 완료",
   "inventory.staminaGained": "스테미나 +{amount}",
+  "inventory.strataChargeGained": "탐사 횟수 +{amount}",
+  "inventory.useFailed": "사용할 수 없음",
+  "inventory.strataChargeFull": "탐사 횟수가 가득 찼습니다",
+  "inventory.staminaFull": "스테미나가 가득 찼습니다",
 
   "stamina.sources": "획득처",
   "stamina.uses": "사용처",

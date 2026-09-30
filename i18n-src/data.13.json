@@ -788,5 +788,25 @@
 "Tíquete de varredura 5",
 "Säuberungsticket 5",
 "Билет зачистки 5"
+],
+"item.strata-ticket.name": [
+"探查券",
+"ตั๋วสำรวจ",
+"Vé thám sát",
+"Tiket Survei",
+"Ticket de estudio",
+"Tíquete de pesquisa",
+"Erkundungsticket",
+"Билет разведки"
+],
+"item.strata-ticket.description": [
+"恢复1次考古地层探查次数。",
+"ฟื้นฟูจำนวนครั้งสำรวจชั้นหินโบราณคดี 1 ครั้ง",
+"Hồi 1 lượt thám sát địa tầng Khảo cổ.",
+"Memulihkan 1 kesempatan survei lapisan Arkeologi.",
+"Recupera 1 intento de estudio de estratos de Arqueología.",
+"Recupera 1 tentativa de pesquisa de estratos da Arqueologia.",
+"Stellt 1 Erkundung der Archäologie-Schichten wieder her.",
+"Восстанавливает 1 попытку разведки слоёв Археологии."
 ]
 }

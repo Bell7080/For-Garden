@@ -458,5 +458,45 @@
 "Formação e batalha desta operação abrem mais tarde",
 "Formation und Kampf dieser Operation öffnen später",
 "Построение и бой этой операции откроются позже"
+],
+"inventory.strataChargeGained": [
+"探查次数 +{amount}",
+"จำนวนครั้งสำรวจ +{amount}",
+"Lượt thám sát +{amount}",
+"Kesempatan survei +{amount}",
+"Intentos de estudio +{amount}",
+"Tentativas de pesquisa +{amount}",
+"Erkundungen +{amount}",
+"Попытки разведки +{amount}"
+],
+"inventory.useFailed": [
+"无法使用",
+"ใช้ไม่ได้",
+"Không thể dùng",
+"Tidak bisa dipakai",
+"No se puede usar",
+"Não pode usar",
+"Nicht nutzbar",
+"Нельзя использовать"
+],
+"inventory.strataChargeFull": [
+"探查次数已满",
+"จำนวนครั้งสำรวจเต็มแล้ว",
+"Lượt thám sát đã đầy",
+"Kesempatan survei sudah penuh",
+"Los intentos de estudio están llenos",
+"As tentativas de pesquisa estão cheias",
+"Erkundungen sind voll",
+"Попытки разведки заполнены"
+],
+"inventory.staminaFull": [
+"体力已满",
+"สตามินาเต็มแล้ว",
+"Thể lực đã đầy",
+"Stamina sudah penuh",
+"La estamina está llena",
+"A estamina está cheia",
+"Ausdauer ist voll",
+"Выносливость заполнена"
 ]
 }

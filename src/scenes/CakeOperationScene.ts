@@ -16,6 +16,7 @@ import { addBackButton } from "../ui/IconButton";
 import { addSceneBackground, BACKGROUND, battleFieldBackground } from "../ui/backgrounds";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { PopupLayer } from "../ui/PopupLayer";
+import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { TopBar } from "../ui/TopBar";
 import { drawVignette } from "../ui/holo";
 import { LOBBY_RETURN } from "./lobbyEntry";
@@ -74,9 +75,11 @@ export class CakeOperationScene extends Phaser.Scene {
 
     addSceneBackground(this, BACKGROUND.sortieCake);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { strength: 0.72 });
-    new TopBar(this, 40, { profile: false });
+    new TopBar(this, 40, { profile: false, onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency) });
     addSectionTitle(this, DUNGEON_LOBBY.title.x, DUNGEON_LOBBY.title.y, t("cake.title"));
     this.popups = new PopupLayer(this, 2200);
+    // 소탕 창의 스테미나·소탕권 그림도 같은 안내창으로 이어진다(`addFramedIcon`·`guideForIcon`).
+    bindCurrencyGuide({ scene: this, popups: this.popups });
     this.lobby = new DungeonLobby(this, {
       onSelectTier: (id) => { if (!this.busy) { this.selectedTierId = id; settingsManager.rememberDungeonTier("cake", id); this.refresh(); } },
       onSortie: () => this.openParty(),

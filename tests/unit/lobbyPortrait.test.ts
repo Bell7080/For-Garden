@@ -112,7 +112,7 @@ describe("로비 전신의 세로 비율", () => {
   it("는 모든 개체가 관찰 프로필의 키에 비례해 선다", () => {
     for (const relic of LOBBY_RELICS) {
       // 왼쪽 끝을 끝까지 보여야 하는 원화(모르페의 드론)는 키 비례를 포기한다 — 아래 별도 검사.
-      if (PORTRAITS[relic.portraitAssetId].infoFraming?.showLeft !== undefined) continue;
+      if (PORTRAITS[relic.portraitAssetId].lobbyFraming !== undefined) continue;
       const metres = Number.parseFloat(relic.observationProfile!.height);
       const expected = metres * PIXELS_PER_METRE;
       const actual = eyeToFootOnScreen(relic.portraitAssetId);
@@ -150,15 +150,14 @@ describe("로비 전신의 세로 비율", () => {
     }
   });
 
-  it("는 끝까지 보여야 하는 왼쪽 끝(모르페의 드론)을 화면 안에 둔다", () => {
-    const framed = LOBBY_RELICS.filter((relic) => PORTRAITS[relic.portraitAssetId].infoFraming?.showLeft !== undefined);
+  it("는 키 비례를 포기한 원화(모르페)도 몸이 화면 오른쪽 밖으로 나가지 않는다", () => {
+    const framed = LOBBY_RELICS.filter((relic) => PORTRAITS[relic.portraitAssetId].lobbyFraming !== undefined);
     expect(framed.length).toBeGreaterThan(0);
     for (const relic of framed) {
       const asset = { url: "", ...PORTRAITS[relic.portraitAssetId] } as PuppetAsset;
       const { focusX, height } = lobbyPortraitPlacement(asset);
       const scale = height / (asset.content.bottom - asset.content.top);
       const core = JOINTS[relic.portraitAssetId].core;
-      expect(focusX.x + (asset.content.left - core[0]) * scale, `${relic.name} 왼쪽`).toBeGreaterThanOrEqual(0);
       expect(focusX.x + (asset.content.right - core[0]) * scale, `${relic.name} 오른쪽`).toBeLessThanOrEqual(1080);
     }
   });
@@ -204,8 +203,6 @@ describe("정보창 전신의 얼굴 규격", () => {
   it.each(LOBBY_RELICS.map((relic) => [relic.name, relic.portraitAssetId] as const))(
     "%s의 얼굴은 다른 전신과 같은 크기대에 있다",
     (_name, assetId) => {
-      // 왼쪽 끝까지 보여야 하는 원화(모르페의 드론)는 얼굴 띠를 포기하고 줄어든다 — 아래 별도 검사가 맡는다.
-      if (PORTRAITS[assetId].infoFraming?.showLeft !== undefined) return;
       const ratio = faceSizeOf(assetId) / target;
       // 위는 띠 끝 그대로다. 아래는 실루엣 폭 상한에 먼저 걸리는 노도니아(0.74)를 위해 조금 더
       // 열어 둔다 — 예전 0.58은 확실히 잡는다.
@@ -223,15 +220,6 @@ describe("정보창 전신의 얼굴 규격", () => {
     };
     // 조정 전에는 약 108px 낮았다. 같은 자리에서 40px 안이면 나란히 선 것으로 읽힌다.
     expect(Math.abs(top("terisa") - top("meron"))).toBeLessThan(40);
-  });
-
-  it("는 모르페의 드론(왼쪽 끝)을 정보창 안에 끝까지 보여 준다", () => {
-    const asset = PORTRAITS.morphe;
-    const placement = placementOf("morphe");
-    const left = placement.focus.x - (asset.joints!.center![0] - asset.content.left) * scaleOf("morphe");
-    expect(left).toBeGreaterThanOrEqual(0);
-    // 얼굴도 판 밖으로 밀려나지 않는다 — 오른쪽 능력치 판(x≈555)보다 안쪽에 선다.
-    expect(placement.focus.x).toBeLessThan(555);
   });
 
   it("는 노도니아를 얼굴 띠가 아니라 폭 상한에서 멈춘다", () => {

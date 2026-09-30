@@ -472,7 +472,8 @@ export const MORPHE_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
    * **왼쪽 위의 드론(A-Dimo)도 이 원화의 주인공이다.** 얼굴이 오른쪽에 있어 공용 규격 배율로 세우면 드론이
    * 통째로 화면 밖으로 나간다 — 드론의 왼쪽 끝(alpha 경계 left)까지 정보창 안에 들도록 구도를 잡는다.
    */
-  infoFraming: { showLeft: 23 },
+  // 요람에 앉은 개체라 키 비례를 포기한다. 지금보다 25% 크게 세우고, 드론 쪽은 화면 왼쪽에 조금 걸친다.
+  lobbyFraming: { shift: 120, zoom: 0.806 },
 };
 
 /** 모르페 SD: 중심1·머리1·발1·발2를 프로젝트에서 읽었으며 눈 관절은 없다. */

@@ -151,14 +151,30 @@ export function galleryPortraitPlacement(asset: PuppetAsset): { x: number; groun
  */
 export const LOBBY_PORTRAIT_SPOT = { x: BASE_WIDTH / 2, floor: 1930, height: 1740 } as const;
 
+/**
+ * `infoFraming.showLeft`가 있는 원화의 로비 구도. 그 왼쪽 끝이 화면 왼쪽 안쪽 여백(`margin`)에 들도록
+ * 몸을 오른쪽으로 `shift`만큼 옮기고, 그래도 넘치면 배율을 줄인다 — 키 비례는 이때 포기한다.
+ */
+export const LOBBY_SHOW_LEFT = { shift: 120, margin: 24 } as const;
+
 /** 로비 전신이 쓰는 spawn 옵션. 화면이 좌표와 배율을 손으로 적지 않는다. */
 export function lobbyPortraitPlacement(asset: PuppetAsset) {
-  return {
-    // 꼬리가 긴 렉시아도 그림 외곽이 아니라 `중심1` 관절이 광장 중앙에 오도록 맞춘다.
-    focusX: { anchor: "core" as const, x: LOBBY_PORTRAIT_SPOT.x },
-    groundY: LOBBY_PORTRAIT_SPOT.floor,
-    height: LOBBY_PORTRAIT_SPOT.height * (asset.lobbyZoom ?? 1),
-  };
+  const height = LOBBY_PORTRAIT_SPOT.height * (asset.lobbyZoom ?? 1);
+  const showLeft = asset.infoFraming?.showLeft;
+  if (showLeft === undefined) {
+    return {
+      // 꼬리가 긴 렉시아도 그림 외곽이 아니라 `중심1` 관절이 광장 중앙에 오도록 맞춘다.
+      focusX: { anchor: "core" as const, x: LOBBY_PORTRAIT_SPOT.x },
+      groundY: LOBBY_PORTRAIT_SPOT.floor,
+      height,
+    };
+  }
+  // 몸 가운데(코어)에서 끝까지 보여야 하는 왼쪽 끝까지의 거리(원화 px)가 화면 `x - margin` 안에 들어야 한다.
+  const contentHeight = asset.content.bottom - asset.content.top;
+  const reach = Math.max(1, (eyeLineAnchor(asset)?.x ?? asset.content.left) - showLeft);
+  const x = LOBBY_PORTRAIT_SPOT.x + LOBBY_SHOW_LEFT.shift;
+  const scale = Math.min(height / contentHeight, (x - LOBBY_SHOW_LEFT.margin) / reach);
+  return { focusX: { anchor: "core" as const, x }, groundY: LOBBY_PORTRAIT_SPOT.floor, height: scale * contentHeight };
 }
 
 /** 정적으로 측정한 alpha union과 코어 관절로 실제 화면의 머리·꼬리 끝을 계산한다. */

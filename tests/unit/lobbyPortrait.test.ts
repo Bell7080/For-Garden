@@ -111,6 +111,8 @@ function eyeToFootOnScreen(assetId: string): number {
 describe("로비 전신의 세로 비율", () => {
   it("는 모든 개체가 관찰 프로필의 키에 비례해 선다", () => {
     for (const relic of LOBBY_RELICS) {
+      // 왼쪽 끝을 끝까지 보여야 하는 원화(모르페의 드론)는 키 비례를 포기한다 — 아래 별도 검사.
+      if (PORTRAITS[relic.portraitAssetId].infoFraming?.showLeft !== undefined) continue;
       const metres = Number.parseFloat(relic.observationProfile!.height);
       const expected = metres * PIXELS_PER_METRE;
       const actual = eyeToFootOnScreen(relic.portraitAssetId);
@@ -145,6 +147,19 @@ describe("로비 전신의 세로 비율", () => {
         expect(y, `${relic.name} 관절 y`).toBeGreaterThanOrEqual(content.top);
         expect(y, `${relic.name} 관절 y`).toBeLessThanOrEqual(content.bottom);
       }
+    }
+  });
+
+  it("는 끝까지 보여야 하는 왼쪽 끝(모르페의 드론)을 화면 안에 둔다", () => {
+    const framed = LOBBY_RELICS.filter((relic) => PORTRAITS[relic.portraitAssetId].infoFraming?.showLeft !== undefined);
+    expect(framed.length).toBeGreaterThan(0);
+    for (const relic of framed) {
+      const asset = { url: "", ...PORTRAITS[relic.portraitAssetId] } as PuppetAsset;
+      const { focusX, height } = lobbyPortraitPlacement(asset);
+      const scale = height / (asset.content.bottom - asset.content.top);
+      const core = JOINTS[relic.portraitAssetId].core;
+      expect(focusX.x + (asset.content.left - core[0]) * scale, `${relic.name} 왼쪽`).toBeGreaterThanOrEqual(0);
+      expect(focusX.x + (asset.content.right - core[0]) * scale, `${relic.name} 오른쪽`).toBeLessThanOrEqual(1080);
     }
   });
 

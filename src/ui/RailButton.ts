@@ -12,6 +12,11 @@ export interface RailButtonOptions {
   size?: number;
   /** 강조 버튼은 강조색 면과 밝은 선을 쓴다. 교류처럼 새 화면으로 나가는 입구에 쓴다. */
   accent?: boolean;
+  /**
+   * 노란 이벤트 입구. 강조(금빛)와 따로 두는 이유는 금빛이 이미 임무·보상을 뜻해서다 —
+   * 같은 색이면 "받을 것이 있다"와 "행사가 열려 있다"가 한 신호로 읽힌다.
+   */
+  event?: boolean;
   onClick: () => void;
 }
 
@@ -25,15 +30,16 @@ export class RailButton extends Phaser.GameObjects.Container {
   constructor(scene: Phaser.Scene, x: number, y: number, options: RailButtonOptions) {
     super(scene, x, y);
     const size = options.size ?? 96;
-    const color = options.accent ? COLOR.accent : 0xd2d6dc;
+    const color = options.event ? COLOR.event : options.accent ? COLOR.accent : 0xd2d6dc;
+    const lit = Boolean(options.accent || options.event);
 
     this.add(drawLayer(scene, 0, 0, chipPoints(size, size, {
       bevel: { topLeft: size * 0.32, topRight: 0, bottomRight: size * 0.32, bottomLeft: 0 },
     }), {
-      fill: options.accent ? 0x2a2418 : 0x1a1f27,
+      fill: options.event ? 0x2e2710 : options.accent ? 0x2a2418 : 0x1a1f27,
       alpha: HOLO.glass,
-      edge: COLOR.accent,
-      edgeAlpha: options.accent ? 0.85 : 0.35,
+      edge: options.event ? COLOR.event : COLOR.accent,
+      edgeAlpha: lit ? 0.85 : 0.35,
     }));
     // 글자는 칩 안 아래쪽에 둔다. 칩 밖으로 내리면 배경 원화 위에 놓여 읽히지 않는다.
     // UI SVG 키는 등록 목록으로 판별해 GlyphName 문자열과 우연히 겹쳐도 렌더 경계가 흔들리지 않는다.
@@ -42,7 +48,7 @@ export class RailButton extends Phaser.GameObjects.Container {
     else this.add(drawGlyph(scene, options.icon as GlyphName, 0, -size * 0.12, size * 0.42, color));
     this.add(
       scene.add
-        .text(0, size * 0.2, options.label, textStyle({ role: "emphasis", size: 19, color: options.accent ? COLOR.accentText : COLOR.ink }))
+        .text(0, size * 0.2, options.label, textStyle({ role: "emphasis", size: 19, color: options.event ? COLOR.eventText : options.accent ? COLOR.accentText : COLOR.ink }))
         .setOrigin(0.5, 0),
     );
 

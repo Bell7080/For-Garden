@@ -11,7 +11,7 @@
  */
 
 /** 로비가 다시 열 수 있는 판. 씬이 아니라 판이므로 이름도 판의 것이다. */
-export type LobbyMenu = "sortie" | "duel";
+export type LobbyMenu = "sortie" | "duel" | "event";
 
 /** 로비 진입 데이터. 자리를 넘기지 않고 들어온 사람은 판 없는 로비에 선다. */
 export interface LobbySceneData {
@@ -27,6 +27,7 @@ export interface LobbySceneData {
 export const LOBBY_RETURN: Readonly<Record<LobbyMenu, LobbySceneData>> = {
   sortie: { menu: "sortie" },
   duel: { menu: "duel" },
+  event: { menu: "event" },
 };
 
 /**
@@ -38,5 +39,5 @@ export const LOBBY_RETURN: Readonly<Record<LobbyMenu, LobbySceneData>> = {
 export function normalizeLobbyEntry(data?: unknown): LobbyMenu | undefined {
   if (typeof data !== "object" || data === null || !("menu" in data)) return undefined;
   const menu = (data as LobbySceneData).menu;
-  return menu === "sortie" || menu === "duel" ? menu : undefined;
+  return menu === "sortie" || menu === "duel" || menu === "event" ? menu : undefined;
 }

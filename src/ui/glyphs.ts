@@ -20,6 +20,7 @@ export type GlyphName =
   | "mail"
   | "friends"
   | "exchange"
+  | "event"
   | "settings"
   | "auto"
   | "pause"
@@ -199,6 +200,12 @@ export function drawGlyph(
       g.strokePoints(points(r * 0.4, -r * 0.75, r * 0.85, -r * 0.35, r * 0.4, r * 0.05), false);
       g.lineBetween(r * 0.85, r * 0.45, -r * 0.85, r * 0.45);
       g.strokePoints(points(-r * 0.4, r * 0.05, -r * 0.85, r * 0.45, -r * 0.4, r * 0.85), false);
+      break;
+    case "event":
+      // 깃대에 걸린 삼각 깃발 — 지금 열려 있는 행사.
+      g.lineBetween(-r * 0.55, -r * 0.85, -r * 0.55, r * 0.9);
+      g.strokePoints(points(-r * 0.55, -r * 0.8, r * 0.85, -r * 0.4, -r * 0.55, r * 0.05), true);
+      g.lineBetween(-r * 0.85, r * 0.9, -r * 0.25, r * 0.9);
       break;
     case "settings":
       // 톱니 — 굵은 선 여섯 줄과 가운데 원.

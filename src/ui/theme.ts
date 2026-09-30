@@ -20,6 +20,9 @@ export const COLOR = {
   accentText: "#d8b978",
   /** 완료했지만 아직 받지 않은 보상만 쓰는 밝은 호박색 신호다. */
   missionClaim: 0xe0a83e,
+  /** 로비 이벤트 입구와 이벤트 목록만 쓰는 노란빛. 금빛 강조(보상)보다 한 톤 밝고 차갑다. */
+  event: 0xf2cc4a,
+  eventText: "#ffe07a",
   danger: 0xb03a3a,
   dangerText: "#e07a7a",
   ally: 0x5b86a3,

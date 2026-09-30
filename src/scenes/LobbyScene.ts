@@ -23,6 +23,7 @@ import { bondDialogue } from "../data/bonds";
 import { PopupLayer, POPUP_TITLE_SIZE } from "../ui/PopupLayer";
 import { IdleExcavationPopup } from "../ui/IdleExcavationPopup";
 import { TradePopup } from "../ui/TradePopup";
+import { LobbyEventPopup } from "../ui/LobbyEventPopup";
 import { BACK_SLOT, IconButton } from "../ui/IconButton";
 import { UI_ICON } from "../ui/icons";
 import { InventoryPopup } from "../ui/InventoryPopup";
@@ -163,6 +164,8 @@ export class LobbyScene extends Phaser.Scene {
   /** 무역은 로비 수명을 보존하는 패키지 레이어다. */
   private tradePopup?: TradePopup;
   private tradeBackButton?: IconButton;
+  private eventPopup?: LobbyEventPopup;
+  private eventBackButton?: IconButton;
   /** 발굴은 화면 크기의 작업판이므로 팝업 X 대신 로비 좌하단의 공용 아이콘 양식을 쓴다. */
   private excavationBackButton?: IconButton;
   /** 인벤토리는 로비 세션을 유지하는 공용 팝업이며 상태 변경은 API에만 위임한다. */
@@ -296,6 +299,7 @@ export class LobbyScene extends Phaser.Scene {
     // 로비가 먼저 보이고 판이 뒤늦게 열려, 로비로 튕겼다가 판이 다시 열리는 것처럼 읽혔다.
     if (this.returnMenu === "sortie") this.openSortieMenu(true);
     else if (this.returnMenu === "duel") this.openPvpMenu(true);
+    else if (this.returnMenu === "event") this.openEvents(true);
     // 되돌아간 판이 없을 때만 레벨업을 알린다 — 판 위에 겹치면 둘 다 반쯤 가린다.
     if (!this.returnMenu) this.announcePlayerLevel();
 
@@ -396,6 +400,21 @@ export class LobbyScene extends Phaser.Scene {
     this.tradePopup.open();
     // 판이 화면을 거의 채우므로 팝업 X 대신 다른 작업판과 같은 우하단 공용 아이콘을 쓴다.
     if (!this.tradeBackButton) this.tradeBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.tradePopup?.close() }).setDepth(2100);
+  }
+
+  /**
+   * 이벤트 목록도 무역처럼 로비를 유지하는 레이어다. 카드를 누르면 그 이벤트의 화면으로 넘어가고,
+   * 거기서 돌아오면 이 판이 다시 선다(`LOBBY_RETURN.event`).
+   */
+  private openEvents(instant = false): void {
+    if (!this.popupLayer) return;
+    this.eventPopup ??= new LobbyEventPopup(this, this.popupLayer, {
+      instant,
+      onSelect: (event) => startScene(this, "event", { eventId: event.id }),
+      onClosed: () => { this.eventPopup = undefined; this.eventBackButton?.destroy(); this.eventBackButton = undefined; },
+    });
+    this.eventPopup.open();
+    if (!this.eventBackButton) this.eventBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.eventPopup?.close() }).setDepth(2100);
   }
 
   /**
@@ -661,6 +680,7 @@ export class LobbyScene extends Phaser.Scene {
   private buildUtilityRail(): void {
     // 우편·친구·가방은 각각 입력 중심 하나만 가져야 한 번의 탭이 한 동작으로 이어진다.
     const rail = createLobbyUtilityRail({
+      openEvents: () => this.openEvents(),
       openMail: () => this.openMail(),
       // 친구는 더 이상 준비 중 토스트가 아니라 목록과 공개 프로필 화면으로 연결된다.
       openFriends: () => startScene(this, "friends"),
@@ -668,7 +688,7 @@ export class LobbyScene extends Phaser.Scene {
       openInventory: () => this.openInventory(),
     });
     rail.forEach((item) => {
-      const button = new RailButton(this, item.bounds.x, item.bounds.y, { icon: item.icon, label: item.label, size: item.bounds.width, onClick: item.onClick });
+      const button = new RailButton(this, item.bounds.x, item.bounds.y, { icon: item.icon, label: item.label, size: item.bounds.width, event: item.event, onClick: item.onClick });
       // 실제 서버 계약이 준비된 우편·친구 요청만 연결하고 Fake 데이터에서는 임의로 켜지 않는다.
       const key = item.icon === "mail" ? "mail" : item.icon === "friends" ? "friendRequest" : undefined;
       if (key) bindNotificationDot(this, button, { x: 42, y: -42 }, (listener) => notificationManager.subscribe(key, listener));

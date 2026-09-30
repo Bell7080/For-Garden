@@ -18,6 +18,9 @@ export const LOBBY_RAIL_BOUNDS = {
     trade: { x: RAIL.leftX, y: RAIL.top + RAIL.step * 2, width: RAIL.size, height: RAIL.size },
   },
   utility: {
+    // 이벤트는 오른쪽 줄 맨 위, 우편보다 한 칸 위에 선다. 편의 기능 셋은 자리를 옮기지 않는다 —
+    // 손에 익은 우편·친구·가방이 한 칸씩 밀리면 늘 누르던 자리가 다른 것을 연다.
+    event: { x: RAIL.rightX, y: RAIL.top - RAIL.step, width: RAIL.size, height: RAIL.size },
     mail: { x: RAIL.rightX, y: RAIL.top, width: RAIL.size, height: RAIL.size },
     friends: { x: RAIL.rightX, y: RAIL.top + RAIL.step, width: RAIL.size, height: RAIL.size },
     inventory: { x: RAIL.rightX, y: RAIL.top + RAIL.step * 2, width: RAIL.size, height: RAIL.size },

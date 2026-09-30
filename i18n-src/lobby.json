@@ -268,5 +268,95 @@
 "{label} — Em preparação",
 "{label} — In Vorbereitung",
 "{label} — В подготовке"
+],
+"lobby.rail.event": [
+"活动",
+"อีเวนต์",
+"Sự kiện",
+"Event",
+"Eventos",
+"Eventos",
+"Events",
+"События"
+],
+"event.title": [
+"活动",
+"อีเวนต์",
+"Sự kiện",
+"Event",
+"Eventos",
+"Eventos",
+"Events",
+"События"
+],
+"event.remaining.days": [
+"剩余{value}天",
+"เหลือ {value} วัน",
+"Còn {value} ngày",
+"Sisa {value} hari",
+"Quedan {value} d",
+"Restam {value} d",
+"Noch {value} T.",
+"Осталось {value} дн."
+],
+"event.remaining.hours": [
+"剩余{value}小时",
+"เหลือ {value} ชม.",
+"Còn {value} giờ",
+"Sisa {value} jam",
+"Quedan {value} h",
+"Restam {value} h",
+"Noch {value} Std.",
+"Осталось {value} ч"
+],
+"event.remaining.minutes": [
+"剩余{value}分钟",
+"เหลือ {value} นาที",
+"Còn {value} phút",
+"Sisa {value} menit",
+"Quedan {value} min",
+"Restam {value} min",
+"Noch {value} Min.",
+"Осталось {value} мин"
+],
+"event.wolfCafe.title": [
+"手忙脚乱的狼咖啡店",
+"คาเฟ่หมาป่าจอมวุ่นวาย",
+"Quán cà phê Sói vụng về",
+"Kafe Serigala yang Heboh",
+"El caótico Café del Lobo",
+"O atrapalhado Café do Lobo",
+"Das chaotische Wolfscafé",
+"Суматошное «Волчье кафе»"
+],
+"event.wolfCafe.subtitle": [
+"迎接狼咖啡店客人的限时活动",
+"อีเวนต์จำกัดเวลาต้อนรับแขกของคาเฟ่หมาป่า",
+"Sự kiện giới hạn đón khách ở Quán cà phê Sói",
+"Event terbatas menyambut tamu Kafe Serigala",
+"Evento por tiempo limitado para recibir a los clientes del Café del Lobo",
+"Evento por tempo limitado para receber os clientes do Café do Lobo",
+"Zeitlich begrenztes Event: Gäste im Wolfscafé empfangen",
+"Ограниченное событие: встречаем гостей «Волчьего кафе»"
+],
+"event.autumnHarvest.title": [
+"秋季丰收祭",
+"เทศกาลเก็บเกี่ยวฤดูใบไม้ร่วง",
+"Lễ hội thu hoạch mùa thu",
+"Festival Panen Musim Gugur",
+"Festival de la cosecha de otoño",
+"Festival da colheita de outono",
+"Herbsterntefest",
+"Осенний праздник урожая"
+],
+"event.autumnHarvest.subtitle": [
+"每天来领取丰收礼物的活动",
+"แวะมาทุกวันเพื่อรับของขวัญจากการเก็บเกี่ยว",
+"Ghé mỗi ngày để nhận quà thu hoạch",
+"Mampir setiap hari untuk menerima hadiah panen",
+"Pásate cada día para recoger regalos de la cosecha",
+"Passe todos os dias para receber presentes da colheita",
+"Schau täglich vorbei und hol dir Erntegeschenke ab",
+"Заходите каждый день за подарками урожая"
 ]
 }

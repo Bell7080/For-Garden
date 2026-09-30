@@ -15,6 +15,7 @@ describe("로비로 돌아갈 자리", () => {
   it("는 보낸 판을 그대로 되돌려 준다", () => {
     expect(normalizeLobbyEntry(LOBBY_RETURN.sortie)).toBe("sortie");
     expect(normalizeLobbyEntry(LOBBY_RETURN.duel)).toBe("duel");
+    expect(normalizeLobbyEntry(LOBBY_RETURN.event)).toBe("event");
   });
 
   it("는 모르는 값과 빈손을 판 없음으로 수렴시킨다", () => {

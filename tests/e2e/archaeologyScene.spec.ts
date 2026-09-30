@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
-import { captureGame, tap } from "./canvasInput";
+import { captureGame, tap, tapBurst } from "./canvasInput";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import { archaeologySitePopupLayout } from "../../src/ui/archaeologySitePopupLayout";
 
@@ -191,9 +191,8 @@ test("지층 한 칸은 타격까지 입력을 잠그고 선택한 결과만 공
   const before = await page.evaluate(() => window.__PF_DEBUG!.archaeologyDig!.revealedIndices);
 
   // 첫 입력 직후 같은 칸과 다른 칸을 연달아 눌러도 전역 잠금이 요청을 하나로 제한해야 한다.
-  await tap(page, targets[0].x, targets[0].y);
-  await tap(page, targets[0].x, targets[0].y);
-  await tap(page, targets[1].x, targets[1].y);
+  // **쉬지 않고 누른다** — 칸마다 화면이 가라앉기를 기다리면 곡괭이 한 번(0.2초 남짓)이 그 사이에 끝나 연타가 아니게 된다.
+  await tapBurst(page, [targets[0], targets[0], targets[1]]);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.archaeologyDig?.requests)).toBe(1);
   /*
    * **연출이 끝나기를 기다리는 자리는 기본 제한(5초)으로 부족하다.** 시간표 자체는 0.45초

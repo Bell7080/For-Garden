@@ -3,17 +3,20 @@ import { t, type TextKey } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugArchaeologyDig, setDebugArchaeologyMap, setDebugScene, setDebugStorefrontControls } from "../debug";
-import { strataBoardHaul, type StrataBoardView } from "../core/strataDig";
-import { findStrataLayer, type StrataRewardKind } from "../data/strataLayers";
+import { strataBoardHaul, strataHaulKey, type StrataBoardView, type StrataHaulEntry } from "../core/strataDig";
+import { composeStrataFog, strataFogFields } from "../core/strataFog";
+import { strataLegend } from "../core/strataLegend";
+import { motionPolicy } from "../core/settings";
+import { findStrataLayer } from "../data/strataLayers";
 import { ARCHAEOLOGY_SITES, type ArchaeologySiteDefinition } from "../data/archaeologySites";
 import { resolveArchaeologyFocusSite, rewardExpectationRating } from "../core/archaeologyMap";
 import { archaeologySitePopupLayout } from "../ui/archaeologySitePopupLayout";
-import { archaeologyRatingColor, STRATA_ZONE_TONE } from "../ui/strataTones";
+import { archaeologyRatingColor, STRATA_FOG_TONE } from "../ui/strataTones";
 import { ArchaeologyMapView } from "../ui/ArchaeologyMapView";
 import { session } from "../state/session";
 import { canGrantRuneTraitAtLeast, canUpgradeRuneTraitGrade, RUNE_TRAIT_RULES } from "../core/runeTraits";
 import { RUNE_TRAIT_ITEMS } from "../data/runeTraits";
-import type { RuneInstance } from "../core/runes";
+import type { RuneInstance, RunePart, RuneRarity } from "../core/runes";
 import { addResearchBench, type ResearchBenchAction } from "../ui/ResearchBench";
 import { addSceneBackground, BACKGROUND, useBackgroundTexture } from "../ui/backgrounds";
 import { BottomNav } from "../ui/BottomNav";
@@ -21,6 +24,7 @@ import { addRatesLink, addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
 import { Button } from "../ui/Button";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
+import { runeTexture } from "../ui/runeIcons";
 import { chipPoints, drawFrameVignette, drawLayer, drawVignette, HOLO, HoloBar } from "../ui/holo";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { addFramedIcon } from "../ui/itemFrame";
@@ -28,7 +32,13 @@ import { KeywordManager } from "../managers/KeywordManager";
 import { PopupLayer } from "../ui/PopupLayer";
 import { openRuneTraitReroll } from "../ui/RuneTraitPopup";
 import { openRuneTraitOdds } from "../ui/RuneTraitOddsPopup";
-import { coverSourceCrop, STRATA_ART, STRATA_BOARD, strataBoardFrame, strataCropPlacement, strataLayerTextureKey, strataTileCenter, strataTileCrop, type ScreenRect, type SourceCropRect } from "../ui/strataBoardLayout";
+import { coverSourceCrop, STRATA_ART, STRATA_BOARD, STRATA_LEGEND, strataBoardFrame, strataCropPlacement, strataHaulLayout, strataLayerTextureKey, strataLegendFrame, strataTileCenter, strataTileCrop, type ScreenRect, type SourceCropRect, type StrataBoardFrame } from "../ui/strataBoardLayout";
+import { StrataRewardPop } from "../ui/StrataRewardPop";
+import { STRATA_REWARD_POP, strataRewardTier } from "../ui/strataRewardPopStyle";
+import { addRuneFrame } from "../ui/runeIcons";
+import { openRuneInfoPopup } from "../ui/RunePopup";
+import { findItem } from "../data/items";
+import { pressIn, pressOut } from "../ui/pressFeedback";
 import { UI_ICON } from "../ui/icons";
 import { TopBar } from "../ui/TopBar";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
@@ -77,9 +87,9 @@ const ARCHAEOLOGY = {
    */
   chargePanel: { y: 352, width: 620, height: 126, icon: 58 },
   /** 진행 중인 판 위에 서는 남은 발굴 횟수 판. 같은 양식을 조금 줄여 쓴다. */
-  digsPanel: { y: 292, width: 470, height: 104, icon: 46 },
+  digsPanel: { y: 292, width: 620, height: 96, icon: 50 },
   /** 판 아래 전리품 줄과 그 아래 중간 종료. 둘 다 판 크기와 무관하게 같은 자리에 선다. */
-  haul: { y: 1372, frame: 116, gap: 152 },
+  haul: { y: 1382, frame: 116, gap: 152 },
   /**
    * 중간 종료.
    *
@@ -114,12 +124,42 @@ function fillWithCrop(image: Phaser.GameObjects.Image, crop: SourceCropRect, tar
   image.setScale(placement.scaleX, placement.scaleY).setPosition(placement.x, placement.y);
 }
 
-/** 보상 종류를 액자에 세울 그림 키로 바꾼다. 화면이 종류마다 그림을 따로 고르지 않는다. */
-function rewardTexture(kind: StrataRewardKind): string | null {
+/**
+ * 안개 밭을 굽는 해상도(칸 하나가 차지하는 픽셀)와 훑는 빛띠의 굵기.
+ *
+ * 밭이 작아도 화면에서는 늘려 그리므로 선형 보간이 가장자리를 한 번 더 풀어 준다.
+ */
+const FOG = { resolution: 20, sweepBand: 150, sweepKey: "strata-sweep" } as const;
+
+/** 두 겹의 안개가 경계를 서로 다르게 비튼다. 겹쳐 엇갈리는 동안 경계가 일렁인다. */
+const FOG_WARP = [
+  { amplitude: 0.16, frequency: 1.7, phase: 0 },
+  { amplitude: 0.24, frequency: 2.4, phase: 2.1 },
+] as const;
+
+/**
+ * 보상 종류를 액자에 세울 그림 키로 바꾼다. 화면이 종류마다 그림을 따로 고르지 않는다.
+ *
+ * **룬은 원석 그림이 아니라 룬 조각이고, 연구 재료는 실제로 받은 아이템의 그림이다.** 예전에는 룬 칸이
+ * 원석 아이콘으로, 연구 재료 칸이 게임에 없는 「룬 가루」 그림으로 서서 무엇이 나왔는지 읽히지 않았다.
+ */
+function rewardTexture(entry: Pick<StrataHaulEntry, "kind" | "runeRarity" | "itemId">): string | null {
+  const { kind } = entry;
   if (kind === "empty") return null;
-  if (kind === "rune") return "currency-orestone";
-  if (kind === "researchItem") return "item-rune-dust";
+  if (kind === "rune") return runeTexture(entry.runeRarity ?? "uncommon", 0);
+  if (kind === "researchItem") {
+    const definition = entry.itemId ? findItem(entry.itemId) : undefined;
+    return definition?.icon.kind === "asset" ? definition.icon.key : null;
+  }
   return CURRENCY_ICON_BY_WALLET[kind];
+}
+
+/** 캔 것의 영수증 한 줄(보상 팝업)로 바꾼다. */
+function haulToRewardItems(haul: readonly StrataHaulEntry[]): RewardPopupItem[] {
+  return haul.flatMap((entry) => {
+    const icon = rewardTexture(entry);
+    return icon === null ? [] : [{ icon, amount: entry.amount }];
+  });
 }
 
 export class ArchaeologyScene extends Phaser.Scene {
@@ -171,8 +211,24 @@ export class ArchaeologyScene extends Phaser.Scene {
   private strataHaul: Phaser.GameObjects.Container | null = null;
   /** 한 칸 결과마다 판 전체를 다시 만들지 않고 남은/총 굴착 횟수만 고치는 글자다. */
   private strataDigsText: Phaser.GameObjects.Text | null = null;
+  /** 남은 굴착 횟수 게이지. 글자와 함께 칸 하나를 팔 때마다 갱신한다. */
+  private strataDigsBar: HoloBar | null = null;
   /** 씬 종료 때 네트워크와 독립적으로 남아 있을 수 있는 연출을 모두 정리한다. */
   private readonly digEffects = new Set<StrataDigEffect>();
+  /** 캔 보상이 떠올랐다 전리품으로 들어가는 연출. 판이 바뀌거나 씬이 죽으면 걷는다. */
+  private readonly pops = new Set<StrataRewardPop>();
+  /** 아직 전리품에 닿지 않은 칸. 줄은 닿은 몫만 세운다. */
+  private readonly flying = new Set<number>();
+  /** 마지막 굴착까지 반영한 판. 날아갈 전리품 칸의 자리를 여기서 구한다. */
+  private haulBoard: StrataBoardView | null = null;
+  /** 이번 판에서 받은 룬. 전리품의 룬 칸을 누르면 이 중 가장 최근 것의 정보가 열린다. */
+  private readonly grantedRunes: Array<{ rarity: RuneRarity; instanceId: string }> = [];
+  /** 판 뒤를 눌러 주는 어둠. 판이 없을 때는 투명하다. */
+  private boardDim!: Phaser.GameObjects.Rectangle;
+  /** 안개 두 겹과 훑는 빛띠. 판을 다시 그릴 때마다 새로 세운다. */
+  private fogImages: Phaser.GameObjects.Image[] = [];
+  private fogTextures: Phaser.Textures.CanvasTexture[] = [];
+  private ambientTweens: Phaser.Tweens.Tween[] = [];
   /** 자동화에는 실제 API 호출 경계를 그대로 세어 한 입력당 한 요청인지 알린다. */
   private digRequests = 0;
   /**
@@ -202,6 +258,10 @@ export class ArchaeologyScene extends Phaser.Scene {
     addSceneBackground(this, BACKGROUND.archaeology);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -20, strength: 0.72 });
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.5).setDepth(-19);
+    // 판을 파는 동안에는 뒤를 한 겹 더 눌러 발굴판이 떠오르게 한다. 배경 바로 위, 화면 요소 아래다.
+    this.boardDim = this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 1).setDepth(-18).setAlpha(0);
+    this.flying.clear(); this.pops.clear(); this.grantedRunes.length = 0; this.haulBoard = null;
+    this.fogImages = []; this.fogTextures = []; this.ambientTweens = [];
     this.popups = new PopupLayer(this, 2600);
     this.keywords = new KeywordManager(this, this.popups);
     bindCurrencyGuide({ scene: this, popups: this.popups });
@@ -236,8 +296,10 @@ export class ArchaeologyScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.digEffects.forEach((effect) => effect.destroy());
       this.digEffects.clear();
+      this.pops.forEach((pop) => pop.destroy()); this.pops.clear(); this.flying.clear();
+      this.destroyFog();
       this.chargeTimer?.destroy(); this.chargeTimer = null; this.chargeValueText = null; this.chargeNoteText = null;
-      this.strataTiles.clear(); this.strataHits.clear(); this.strataGrid = null; this.strataHaul = null; this.strataDigsText = null; this.digging = false;
+      this.strataTiles.clear(); this.strataHits.clear(); this.strataGrid = null; this.strataHaul = null; this.strataDigsText = null; this.strataDigsBar = null; this.digging = false;
       setDebugArchaeologyDig(undefined);
     });
     void this.refresh();
@@ -326,12 +388,24 @@ export class ArchaeologyScene extends Phaser.Scene {
 
   private paintView(): void {
     // 명시적인 화면 전환에서만 기존 판 경계를 버린다. 한 칸 결과에는 이 메서드를 호출하지 않는다.
-    this.strataTiles.clear(); this.strataHits.clear(); this.strataGrid = null; this.strataHaul = null; this.strataDigsText = null;
+    this.strataTiles.clear(); this.strataHits.clear(); this.strataGrid = null; this.strataHaul = null; this.strataDigsText = null; this.strataDigsBar = null;
+    // 떠 있던 보상은 이 판의 것이다 — 판이 바뀌면 함께 걷는다(닿을 전리품 칸도 사라진다).
+    this.pops.forEach((pop) => pop.destroy()); this.pops.clear(); this.flying.clear();
+    this.destroyFog();
     this.view.removeAll(true);
     this.chargeValueText = null; this.chargeNoteText = null;
     setDebugArchaeologyMap(undefined);
     if (this.tab === "strata") this.paintStrata();
     else this.paintResearch();
+    this.setBoardDim(this.tab === "strata" && this.board !== null);
+  }
+
+  /** 판이 있을 때만 뒤를 눌러 둔다. 움직임 줄이기에서는 곧바로 바뀐다. */
+  private setBoardDim(on: boolean): void {
+    const target = on ? 0.46 : 0;
+    this.tweens.killTweensOf(this.boardDim);
+    if (session.settings.accessibility.reduceMotion || this.boardDim.alpha === target) { this.boardDim.setAlpha(target); return; }
+    this.tweens.add({ targets: this.boardDim, alpha: target, duration: 260, ease: "Quad.Out" });
   }
 
   /* ── 지층 탐사 ────────────────────────────────────────────────────────────── */
@@ -339,17 +413,17 @@ export class ArchaeologyScene extends Phaser.Scene {
   /**
    * 수 하나가 서던 자리를 이름표가 붙은 판으로 감싼다.
    *
-   * **지도의 탐사 횟수와 판 위의 남은 굴착이 같은 한 장을 쓴다** — 둘 다 「곡괭이를 몇 번 더
-   * 휘두를 수 있나」라 생김새가 갈리면 화면을 옮길 때마다 다른 것으로 읽힌다. 크기만 다르다.
+   * 유적에 들어가는 횟수는 **입장권**으로 선다. 한 판 안에서 곡괭이를 휘두르는 횟수(게이지)와 같은
+   * 곡괭이 그림을 두 번 쓰면 둘이 같은 수처럼 읽힌다.
    */
-  private addCountPanel(spot: { y: number; width: number; height: number; icon: number }, label: string):
+  private addCountPanel(spot: { y: number; width: number; height: number; icon: number }, label: string, icon: string = UI_ICON.ticket):
   { value: Phaser.GameObjects.Text; note: Phaser.GameObjects.Text } {
     const panel = this.add.container(BASE_WIDTH / 2, spot.y);
     this.view.add(panel);
     const shape = chipPoints(spot.width, spot.height, { bevel: { topLeft: spot.height * 0.34, bottomRight: spot.height * 0.34 } });
     panel.add(drawLayer(this, 0, 0, shape, { fill: 0x0b1116, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.8 }));
     const left = -spot.width / 2;
-    panel.add(this.add.image(left + 30 + spot.icon / 2, 0, UI_ICON.pickaxe).setDisplaySize(spot.icon, spot.icon));
+    panel.add(this.add.image(left + 30 + spot.icon / 2, 0, icon).setDisplaySize(spot.icon, spot.icon));
     const textX = left + 44 + spot.icon;
     panel.add(this.add.text(textX, -spot.height * 0.2, label,
       textStyle({ role: "emphasis", size: Math.round(spot.height * 0.21), color: COLOR.inkDim })).setOrigin(0, 0.5));
@@ -399,13 +473,15 @@ export class ArchaeologyScene extends Phaser.Scene {
     }
 
     const frame = strataBoardFrame(board.columns, board.rows, BASE_WIDTH);
+    this.haulBoard = board;
+    this.paintBoardStage(frame);
     const grid = this.add.container(frame.centerX, frame.centerY);
     this.strataGrid = grid;
     this.view.add(grid);
 
     // 그림자 → 금속 외곽 → 홀로그램 안쪽 선 순으로 판의 깊이를 만든다. 모두 입력 타일보다 아래다.
-    const shadow = this.add.graphics().fillStyle(COLOR.void, 0.42)
-      .fillRoundedRect(-frame.width / 2 + 10, -frame.height / 2 + 16, frame.width, frame.height, 18);
+    const shadow = this.add.graphics().fillStyle(COLOR.void, 0.5)
+      .fillRoundedRect(-frame.width / 2 + 10, -frame.height / 2 + 18, frame.width, frame.height, 18);
     grid.add(shadow);
     const frameArt = this.add.graphics();
     frameArt.lineStyle(8, COLOR.strataFrame, 0.78).strokeRoundedRect(-frame.width / 2 - 7, -frame.height / 2 - 7, frame.width + 14, frame.height + 14, 20);
@@ -432,6 +508,9 @@ export class ArchaeologyScene extends Phaser.Scene {
       this.paintStrataTile(tile.index, board, boardCrop);
     }
 
+    // 구역의 성질은 칸마다 칠하지 않고 판 위에 깔리는 안개로 말한다. 겉장(칸)과 격자선 사이에 낀다.
+    this.paintFog(grid, board, frame);
+
     // 경계는 입력 사각형과 분리된 단 하나의 Graphics가 일괄 그린다. 열린 칸도 같은 선을 공유한다.
     // 원화 뒤에 먼저 만들어 둔 외곽선을 원화 앞으로 올리되, 입력 객체와는 계속 분리해 둔다.
     grid.bringToTop(frameArt);
@@ -455,12 +534,10 @@ export class ArchaeologyScene extends Phaser.Scene {
      */
     grid.add(drawFrameVignette(this, 0, 0, frame.width, frame.height, { strength: 0.52, spread: 0.26 }));
 
-    // 곡괭이는 충전 횟수가 아니라 현재 판에서 실제로 파는 횟수 옆에서만 의미를 갖는다.
-    // 지도의 횟수 판과 **같은 한 장**을 조금 줄여 쓴다.
-    const digs = this.addCountPanel(ARCHAEOLOGY.digsPanel, t("archaeology.digs.label"));
-    this.strataDigsText = digs.value;
-    digs.note.setVisible(false);
-    this.paintStrataProgress(board);
+    this.paintLegend(board, frame);
+
+    // 남은 굴착은 곡괭이 옆의 게이지다. 유적에 들어오는 입장권과 다른 그림이라 두 수가 갈려 읽힌다.
+    this.paintDigsGauge(board);
 
     /*
      * **중간에 그만둘 수 있다.**
@@ -478,6 +555,185 @@ export class ArchaeologyScene extends Phaser.Scene {
 
     this.paintStrataHaul(board);
     this.publishDigDebug();
+  }
+
+  /**
+   * 발굴판이 서는 무대.
+   *
+   * **판이 배경 위에 놓인 한 장이 아니라 화면의 주인공이 되도록** 뒤를 한 겹 더 깐다 — 판과 범례를
+   * 함께 품는 어두운 유리 판, 네 모서리의 꺽쇠, 판 뒤에서 은은히 번지는 빛이다. 판때기를 두껍게 받치지
+   * 않고 유리 한 장과 얇은 윗변선, 모서리 표식만 쓴다(화면 전체의 규칙).
+   */
+  private paintBoardStage(frame: StrataBoardFrame): void {
+    const left = STRATA_BOARD.left - 14; const right = BASE_WIDTH - STRATA_BOARD.left + 14;
+    const top = frame.centerY - frame.height / 2 - 22; const bottom = frame.centerY + frame.height / 2 + 22;
+    const width = right - left; const height = bottom - top;
+    const stage = this.add.container((left + right) / 2, (top + bottom) / 2);
+    this.view.add(stage);
+    const shape = chipPoints(width, height, { bevel: { topLeft: 46, bottomRight: 46 } });
+    stage.add(drawLayer(this, 0, 0, shape, { fill: 0x04070a, alpha: 0.78, edge: COLOR.accent, edgeAlpha: 0.5 }));
+    // 판 뒤에서 번지는 빛: 겹쳐 밝아지는 합성이라 아주 옅게만 깐다.
+    stage.add(this.add.ellipse(frame.centerX - stage.x, frame.centerY - stage.y, frame.width * 1.2, frame.height * 1.1, COLOR.accent, 0.05)
+      .setBlendMode(Phaser.BlendModes.ADD));
+    const bracket = this.add.graphics().lineStyle(4, COLOR.accent, 0.72);
+    const reach = 40; const inset = 12;
+    const corners: ReadonlyArray<readonly [number, number, number, number]> = [
+      [-width / 2 + inset, -height / 2 + inset, 1, 1], [width / 2 - inset, -height / 2 + inset, -1, 1],
+      [-width / 2 + inset, height / 2 - inset, 1, -1], [width / 2 - inset, height / 2 - inset, -1, -1],
+    ];
+    for (const [cx, cy, dx, dy] of corners) {
+      bracket.moveTo(cx + dx * reach, cy).lineTo(cx, cy).lineTo(cx, cy + dy * reach);
+    }
+    bracket.strokePath();
+    stage.add(bracket);
+  }
+
+  /**
+   * 아직 캐지 않은 땅 위의 안개.
+   *
+   * 구역의 색을 칸마다 칠하면 색 타일이 된다. 안개는 **구역 하나를 한 덩어리로** 덮고 가장자리가
+   * 이웃과 스며든다 — 레이더에 잡힌 불특정한 영역처럼 어디까지가 그 구역인지는 대략만 읽힌다.
+   * 서로 다른 경계를 그린 두 겹이 천천히 엇갈려 일렁이고, 그 위로 얇은 빛띠가 판을 훑는다.
+   * 판 밖으로 번지지 않도록 크기를 키우거나 옮기지 않고 **진하기만** 움직인다(마스크가 컨테이너
+   * 이동을 물려받지 않아 판 밖을 자를 수 없다).
+   */
+  private paintFog(grid: Phaser.GameObjects.Container, board: StrataBoardView, frame: StrataBoardFrame): void {
+    this.destroyFog();
+    const width = board.columns * FOG.resolution; const height = board.rows * FOG.resolution;
+    const calm = motionPolicy(session.settings).nonEssentialRepeatFactor === 0;
+    FOG_WARP.forEach((_, variant) => {
+      const key = `strata-fog-${variant}`;
+      if (this.textures.exists(key)) this.textures.remove(key);
+      const texture = this.textures.createCanvas(key, width, height);
+      if (texture === null) return;
+      this.fogTextures.push(texture);
+      const image = this.add.image(0, 0, key).setDisplaySize(frame.width, frame.height).setBlendMode(Phaser.BlendModes.ADD)
+        .setAlpha(variant === 0 ? 1 : calm ? 0.45 : 0.2);
+      grid.add(image);
+      this.fogImages.push(image);
+    });
+    this.bakeFog(board);
+    if (calm) return;
+    const [first, second] = this.fogImages;
+    if (first) this.ambientTweens.push(this.tweens.add({ targets: first, alpha: 0.38, duration: 2600, yoyo: true, repeat: -1, ease: "Sine.InOut" }));
+    if (second) this.ambientTweens.push(this.tweens.add({ targets: second, alpha: 0.95, duration: 3300, yoyo: true, repeat: -1, ease: "Sine.InOut", delay: 400 }));
+
+    // 훑는 빛띠: 위에서 아래로 천천히 지나간다. 양 끝에서는 투명해 판 밖으로 번져 보이지 않는다.
+    if (!this.textures.exists(FOG.sweepKey)) {
+      const sweep = this.textures.createCanvas(FOG.sweepKey, 4, 128);
+      const context = sweep?.getContext();
+      if (sweep && context) {
+        const gradient = context.createLinearGradient(0, 0, 0, 128);
+        gradient.addColorStop(0, "rgba(255,255,255,0)"); gradient.addColorStop(0.5, "rgba(255,255,255,0.9)"); gradient.addColorStop(1, "rgba(255,255,255,0)");
+        context.fillStyle = gradient; context.fillRect(0, 0, 4, 128);
+        sweep.refresh();
+      }
+    }
+    if (!this.textures.exists(FOG.sweepKey)) return;
+    const band = this.add.image(0, 0, FOG.sweepKey).setDisplaySize(frame.width, FOG.sweepBand)
+      .setBlendMode(Phaser.BlendModes.ADD).setTint(0xbdf3ff).setAlpha(0);
+    grid.add(band);
+    this.fogImages.push(band);
+    this.ambientTweens.push(this.tweens.addCounter({
+      from: 0, to: 1, duration: 4600, repeat: -1, repeatDelay: 1400,
+      onUpdate: (counter) => {
+        const progress = counter.getValue() ?? 0;
+        band.setY(-frame.height / 2 - FOG.sweepBand / 2 + progress * (frame.height + FOG.sweepBand));
+        band.setAlpha(0.2 * Math.sin(Math.PI * progress));
+      },
+    }));
+  }
+
+  /** 안개 밭을 지금 판 상태로 다시 굽는다. 칸을 팔 때마다 판 자리의 안개가 걷힌다. */
+  private bakeFog(board: StrataBoardView): void {
+    const tones = board.tiles.map((tile) => board.zones[tile.zone]?.tone ?? "soil");
+    const revealed = board.tiles.map((tile) => tile.revealed);
+    this.fogTextures.forEach((texture, variant) => {
+      const context = texture.getContext();
+      if (!context) return;
+      const fog = strataFogFields({ columns: board.columns, rows: board.rows, toneOfTile: tones, revealed, resolution: FOG.resolution, warp: FOG_WARP[variant] });
+      const pixels = composeStrataFog(fog, STRATA_FOG_TONE);
+      context.putImageData(new ImageData(new Uint8ClampedArray(pixels), fog.width, fog.height), 0, 0);
+      texture.refresh();
+    });
+  }
+
+  /** 안개 텍스처와 그 움직임을 걷는다. 판을 다시 그리거나 씬이 죽을 때 부른다. */
+  private destroyFog(): void {
+    this.ambientTweens.forEach((tween) => tween.stop()); this.ambientTweens = [];
+    this.fogImages = [];
+    for (const texture of this.fogTextures) { if (this.textures.exists(texture.key)) this.textures.remove(texture.key); }
+    this.fogTextures = [];
+  }
+
+  /**
+   * 판 오른쪽의 범례. **어떤 색이 무엇이 나오기 쉬운 자리인지** 그림으로 말한다.
+   *
+   * 확률은 숫자로 적지 않는다 — 색마다 유난히 잘 나오는 것만 뽑아 아이콘으로 세운다
+   * (`strataLegend`). 흙빛(안개 없음)은 가장 흔한 것을 보여 준다.
+   */
+  private paintLegend(board: StrataBoardView, frame: StrataBoardFrame): void {
+    const layer = findStrataLayer(board.layerId);
+    if (layer === undefined) return;
+    const rows = strataLegend(layer, board.zones.map((zone) => zone.tone));
+    const spot = strataLegendFrame(frame, rows.length, BASE_WIDTH);
+    const panel = this.add.container(0, 0);
+    this.view.add(panel);
+    const shape = chipPoints(spot.width, spot.height, { bevel: { topLeft: 30, bottomRight: 30 } });
+    panel.add(drawLayer(this, spot.centerX, spot.top + spot.height / 2, shape, { fill: 0x0b1116, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.55 }));
+    panel.add(this.add.text(spot.centerX, spot.top + STRATA_LEGEND.titleHeight / 2 + 2, t("archaeology.legend.title"),
+      textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
+    rows.forEach((row, index) => {
+      const top = spot.rowTops[index];
+      if (index > 0) panel.add(this.add.rectangle(spot.centerX, top, spot.width - 36, 2, COLOR.accent, 0.18));
+      // 견본: 안개 한 덩어리를 작게 — 겹겹이 옅게 깔아 가장자리가 번지게 한다. 흙빛은 안개가 없어 맨 흙색이다.
+      const tone = STRATA_FOG_TONE[row.tone];
+      const swatch = this.add.graphics({ x: spot.centerX, y: top + 34 });
+      const size = STRATA_LEGEND.swatch;
+      const blob = (scale: number, alpha: number, color: number): void => {
+        swatch.fillStyle(color, alpha);
+        swatch.fillPoints([
+          new Phaser.Geom.Point(-size * scale * 0.62, 0), new Phaser.Geom.Point(-size * scale * 0.1, -size * scale * 0.5),
+          new Phaser.Geom.Point(size * scale * 0.62, -size * scale * 0.05), new Phaser.Geom.Point(size * scale * 0.12, size * scale * 0.5),
+        ], true);
+      };
+      if (row.tone === "soil") blob(0.9, 0.7, COLOR.archaeologySoil);
+      else { blob(1.5, 0.12, tone.color); blob(1.2, 0.2, tone.color); blob(0.9, 0.5, tone.color); }
+      panel.add(swatch);
+      const iconY = top + 34 + size / 2 + 12 + STRATA_LEGEND.icon / 2;
+      const gap = 4;
+      const total = row.kinds.length * STRATA_LEGEND.icon + Math.max(0, row.kinds.length - 1) * gap;
+      row.kinds.forEach((kind, i) => {
+        const x = spot.centerX - total / 2 + STRATA_LEGEND.icon / 2 + i * (STRATA_LEGEND.icon + gap);
+        if (kind === "rune") { panel.add(addRuneFrame(this, x, iconY, STRATA_LEGEND.icon, "rare", 1)); return; }
+        const texture = kind === "researchItem" ? "item-ancient-core" : rewardTexture({ kind });
+        if (texture !== null) addFramedIcon(this, panel, x, iconY, STRATA_LEGEND.icon, texture, {});
+      });
+    });
+  }
+
+  /** 남은 굴착 횟수: 곡괭이 + 게이지 + `남은/전체`. 칸 하나를 팔 때마다 `paintStrataProgress`가 채운다. */
+  private paintDigsGauge(board: StrataBoardView): void {
+    const spot = ARCHAEOLOGY.digsPanel;
+    const panel = this.add.container(BASE_WIDTH / 2, spot.y);
+    this.view.add(panel);
+    const shape = chipPoints(spot.width, spot.height, { bevel: { topLeft: spot.height * 0.34, bottomRight: spot.height * 0.34 } });
+    panel.add(drawLayer(this, 0, 0, shape, { fill: 0x0b1116, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.8 }));
+    const left = -spot.width / 2;
+    panel.add(this.add.image(left + 34 + spot.icon / 2, 0, UI_ICON.pickaxe).setDisplaySize(spot.icon, spot.icon));
+    const barX = left + 34 + spot.icon + 24;
+    const barWidth = spot.width - (barX - left) - 150;
+    panel.add(this.add.text(barX, -spot.height * 0.3, t("archaeology.digs.label"),
+      textStyle({ role: "emphasis", size: 20, color: COLOR.inkDim })).setOrigin(0, 0.5));
+    const bar = new HoloBar(this, barX + barWidth / 2, spot.height * 0.12, barWidth, 24, {
+      color: COLOR.accent, trackAlpha: 0.85, outline: true, ticks: Math.max(0, board.digsMax - 1),
+    });
+    panel.add([...bar.objects]);
+    this.strataDigsBar = bar;
+    this.strataDigsText = this.add.text(spot.width / 2 - 30, spot.height * 0.08, "",
+      textStyle({ role: "display", size: 38, color: COLOR.accentText })).setOrigin(1, 0.5);
+    panel.add(this.strataDigsText);
+    this.paintStrataProgress(board);
   }
 
   /**
@@ -504,25 +760,10 @@ export class ArchaeologyScene extends Phaser.Scene {
         fillWithCrop(image, crop, { centerX: center.x, centerY: center.y, width: frame.cellWidth, height: frame.cellHeight });
       }));
     }
-    /*
-     * **구역의 색.** 판을 만들 때 이미 구역마다 색이 정해져 있는데(`StrataZone`) 화면이 한
-     * 번도 그리지 않아, 스물다섯 칸이 전부 같은 흙으로 보이고 어디를 파든 같은 선택이었다.
-     * 흙빛은 칠하지 않으므로(`alpha` 0) 특화 구역 셋만 바탕 위로 떠오른다. 부순 칸에도
-     * 그대로 남는다 — 색은 그 칸의 내용이 아니라 **땅의 성질**이다.
-     */
-    const tone = STRATA_ZONE_TONE[board.zones[tile.zone]?.tone ?? "soil"];
-    if (tone.alpha > 0) {
-      tileView.add(this.add.rectangle(center.x, center.y, frame.cellWidth, frame.cellHeight, tone.color, tone.alpha)
-        .setBlendMode(Phaser.BlendModes.ADD));
-    }
     if (tile.revealed) {
-      // 보상은 부순 칸 위에 선다. 액자 없이 그림만 두면 흙 위에 얹힌 그림으로 읽히지 않는다.
-      const texture = tile.kind === undefined ? null : rewardTexture(tile.kind);
-      if (texture === null) return;
-      // 룬처럼 수가 뜻이 없는 것에는 수를 적지 않는다 — 「1」이 서면 하나를 세는 자리로 읽힌다.
-      const amount = tile.kind === "rune" ? undefined : String(tile.amount ?? 0);
-      addFramedIcon(this, tileView, center.x, center.y, Math.min(frame.cellWidth, frame.cellHeight) * 0.82, texture,
-        { ...(amount ? { amount } : {}), plain: true });
+      // 판 자리는 맨땅만 남는다. 캔 보상은 잠깐 떠올랐다가 전리품으로 들어가므로(`StrataRewardPop`)
+      // 칸에 그대로 남기지 않는다 — 판에도 남고 전리품에도 있으면 어디에 있는 것인지 애매했다.
+      tileView.add(this.add.rectangle(center.x, center.y, frame.cellWidth, frame.cellHeight, COLOR.void, 0.24));
       return;
     }
     const hit = this.add.rectangle(center.x, center.y, frame.cellWidth, frame.cellHeight, 0xffffff, 0.001)
@@ -553,10 +794,7 @@ export class ArchaeologyScene extends Phaser.Scene {
       const response = await gameApi.abandonStrataRun({ requestId: `strata-finish-${Date.now()}` });
       this.applyArchaeologyState(response);
       this.paintView();
-      const items: RewardPopupItem[] = strataBoardHaul(board).flatMap(({ kind, amount }) => {
-        const icon = rewardTexture(kind);
-        return icon === null ? [] : [{ icon, amount }];
-      });
+      const items = haulToRewardItems(strataBoardHaul(board));
       if (items.length > 0) openRewardPopup(this, this.popups, { items });
     } catch {
       // 서버가 확정하지 않았으면 판을 그대로 둔다. 화면만 닫으면 치른 횟수가 조용히 사라진다.
@@ -688,32 +926,36 @@ export class ArchaeologyScene extends Phaser.Scene {
         // 응답이 판을 닫아도 총 횟수는 직전 공개 모델이 소유하므로 마지막 0/max를 그릴 수 있다.
         digsMax: result.board?.digsMax ?? board.digsMax,
         digsLeft: result.board?.digsLeft ?? 0,
-        tiles: board.tiles.map((tile) => tile.index === result.tile.index
-          ? { ...tile, revealed: true, kind: result.tile.kind, amount: result.tile.amount }
+        // 내용은 이 응답이 확정한 칸을 덧붙여 받는다. 서버가 판을 닫아도 지금까지 캔 것은 그대로 쌓인다.
+        tiles: (result.board?.tiles ?? board.tiles).map((tile) => tile.index === result.tile.index
+          ? {
+            ...tile, revealed: true, kind: result.tile.kind, amount: result.tile.amount,
+            ...(result.tile.runeRarity ? { runeRarity: result.tile.runeRarity } : {}),
+            ...(result.tile.runePart !== undefined && result.tile.kind === "rune" ? { runePart: result.tile.runePart } : {}),
+            ...(result.tile.itemId ? { itemId: result.tile.itemId } : {}),
+          }
           : tile),
       } satisfies StrataBoardView;
       this.applyArchaeologyState(result);
+      if (result.grantedRune) this.grantedRunes.push({ rarity: result.grantedRune.rarity, instanceId: result.grantedRune.instanceId });
+      this.haulBoard = completedBoard;
+      const shown = result.board ?? completedBoard;
+      this.replaceStrataTile(index, completedBoard);
+      this.bakeFog(completedBoard);
+      this.paintStrataProgress(shown);
+      // 캔 보상은 판에 남기지 않고 잠깐 떠올렸다가 전리품 칸으로 들여보낸다. 줄은 닿은 몫만 센다.
+      this.startRewardPop(index, completedBoard, frame);
+      this.paintStrataHaul(completedBoard);
       if (result.board === null) {
         /*
-         * 마지막 충돌에도 판을 곧바로 치우지 않는다. 선택 칸, 0/총 횟수, 최종 영수증을 먼저
-         * 반영하고 곡괭이가 퇴장한 뒤 짧게 머물러 최종 보상을 눈으로 확인하게 한다.
+         * 마지막 충돌에도 판을 곧바로 치우지 않는다. 곡괭이가 물러나고 마지막 보상이 전리품에
+         * 들어간 뒤에 판을 치워 최종 보상을 눈으로 확인하게 한다.
          */
-        this.replaceStrataTile(index, completedBoard);
-        this.paintStrataProgress(completedBoard);
-        this.paintStrataHaul(completedBoard);
         await playback.finished;
-        await this.waitForFinalBoardConfirmation();
+        await Promise.all([...this.pops].map((pop) => pop.done));
+        if (!this.scene.isActive()) return;
         this.paintView();
-        const items: RewardPopupItem[] = strataBoardHaul(completedBoard).flatMap(({ kind, amount }) => {
-          const icon = rewardTexture(kind);
-          return icon === null ? [] : [{ icon, amount }];
-        });
-        openRewardPopup(this, this.popups, { items });
-      } else {
-        this.replaceStrataTile(index, result.board);
-        this.paintStrataProgress(result.board);
-        // **판 아래 영수증도 함께 자란다.** 칸 하나만 갈아 끼우면 그 줄이 직전 판에서 멈춘다.
-        this.paintStrataHaul(result.board);
+        openRewardPopup(this, this.popups, { items: haulToRewardItems(strataBoardHaul(completedBoard)) });
       }
       this.publishDigDebug(index);
     } catch {
@@ -733,32 +975,105 @@ export class ArchaeologyScene extends Phaser.Scene {
     }
   }
 
+  /** 이 칸의 결과를 담은 전리품 칸의 열쇠. 캘 수 없는 예전 빈 칸은 없다. */
+  private startRewardPop(index: number, board: StrataBoardView, frame: StrataBoardFrame): void {
+    const tile = board.tiles[index];
+    if (tile === undefined || tile.kind === undefined || tile.kind === "empty") return;
+    const entry: StrataHaulEntry = {
+      kind: tile.kind, amount: tile.amount ?? 0,
+      ...(tile.runePart !== undefined ? { runePart: tile.runePart } : {}),
+      ...(tile.runeRarity ? { runeRarity: tile.runeRarity } : {}), ...(tile.itemId ? { itemId: tile.itemId } : {}),
+    };
+    const key = strataHaulKey(entry);
+    const center = strataTileCenter(index, board.columns, frame);
+    const cell = Math.min(frame.cellWidth, frame.cellHeight);
+    this.flying.add(index);
+    const pop = new StrataRewardPop(this, {
+      x: frame.centerX + center.x, y: frame.centerY + center.y,
+      size: Math.round(cell * STRATA_REWARD_POP.sizeRatio),
+      tier: strataRewardTier({ kind: tile.kind, runeRarity: tile.runeRarity, itemId: tile.itemId }),
+      buildFrame: (size) => this.buildRewardFrame(entry, size, tile.runePart),
+      target: () => this.haulTarget(key),
+      onLand: () => {
+        this.flying.delete(index);
+        if (this.strataHaul?.active && this.haulBoard) this.paintStrataHaul(this.haulBoard);
+      },
+    });
+    this.pops.add(pop);
+    void pop.play().finally(() => { this.pops.delete(pop); this.flying.delete(index); });
+  }
+
+  /** 떠오르는 보상의 액자 한 장. 룬은 실제 조각과 등급색, 그 밖의 것은 공용 액자다. */
+  private buildRewardFrame(entry: StrataHaulEntry, size: number, part?: RunePart, showAmount = true): Phaser.GameObjects.Container {
+    if (entry.kind === "rune") return addRuneFrame(this, 0, 0, size, entry.runeRarity ?? "uncommon", part ?? 0);
+    const texture = rewardTexture(entry) ?? "";
+    return addFramedIcon(this, undefined, 0, 0, size, texture, { plain: true, ...(showAmount ? { amount: String(entry.amount) } : {}) });
+  }
+
+  /** 날아가 닿을 전리품 칸의 화면 중심과 크기. 이미 줄이 바뀌었으면 마지막 칸으로 떨어진다. */
+  private haulTarget(key: string): { x: number; y: number; size: number } {
+    const haul = this.haulBoard === null ? [] : strataBoardHaul(this.haulBoard);
+    const layout = strataHaulLayout(haul.length, BASE_WIDTH, { frame: ARCHAEOLOGY.haul.frame, gap: ARCHAEOLOGY.haul.gap });
+    const found = haul.findIndex((entry) => strataHaulKey(entry) === key);
+    const at = found >= 0 ? found : Math.max(0, haul.length - 1);
+    return { x: layout.xs[at] ?? BASE_WIDTH / 2, y: ARCHAEOLOGY.haul.y, size: layout.frame };
+  }
+
   /**
    * 판 아래 빈 띠에 지금까지 캔 결과를 액자 영수증으로 세운다.
    *
    * **제 컨테이너를 갖는다** — 한 칸만 갈아 끼우는 굴착에서도 이 줄은 다시 그려야 하는데,
    * 씬이나 몸통에 직접 얹으면 지울 방법이 없어 판을 팔 때마다 액자가 겹쳐 쌓인다.
+   *
+   * **자리는 떠오른 보상까지 센 전체로 정하고, 그려 넣는 것은 닿은 몫뿐이다** — 날아오는 중인 칸이
+   * 늘 때마다 줄이 옆으로 밀리면 날아가는 액자가 닿을 자리를 잃는다. 판 밑변이 아니라 고정된 자리라
+   * 어느 유적에 들어가도 같은 자리에서 같은 크기로 자란다. **칸을 누르면 그 재화·아이템의 안내창이
+   * 열린다**(룬은 이번 판에서 받은 가장 최근 것의 정보).
    */
   private paintStrataHaul(board: StrataBoardView): void {
     this.strataHaul?.destroy(true);
-    const frame = strataBoardFrame(board.columns, board.rows, BASE_WIDTH);
     const row = this.add.container(0, 0);
     this.strataHaul = row;
     this.view.add(row);
-    const haul = strataBoardHaul(board);
-    /*
-     * **액자를 키우고 판 밑변이 아니라 고정된 자리에 세운다.**
-     *
-     * 84px짜리가 판 바로 아래에 붙어 있던 때는, 이 판에서 무엇을 캤는지가 격자의 덤처럼
-     * 읽혔고 판 크기(5×5·6×5·6×6)가 바뀔 때마다 그 줄의 높이도 함께 움직였다. 지금 자리는
-     * 판과 무관한 아래 띠라, 어느 유적에 들어가도 같은 자리에서 같은 크기로 자란다.
-     */
-    haul.forEach(({ kind, amount }, index) => {
-      const texture = rewardTexture(kind);
-      if (texture === null) return;
-      const x = frame.centerX - ((haul.length - 1) * ARCHAEOLOGY.haul.gap) / 2 + index * ARCHAEOLOGY.haul.gap;
-      addFramedIcon(this, row, x, ARCHAEOLOGY.haul.y, ARCHAEOLOGY.haul.frame, texture, { amount: String(amount), plain: true });
+    const full = strataBoardHaul(board);
+    const landed = new Map(strataBoardHaul({ ...board, tiles: board.tiles.filter((tile) => !this.flying.has(tile.index)) })
+      .map((entry) => [strataHaulKey(entry), entry] as const));
+    const layout = strataHaulLayout(full.length, BASE_WIDTH, { frame: ARCHAEOLOGY.haul.frame, gap: ARCHAEOLOGY.haul.gap });
+    full.forEach((entry, index) => {
+      const shown = landed.get(strataHaulKey(entry));
+      if (shown === undefined) return;
+      const x = layout.xs[index];
+      if (entry.kind !== "rune") {
+        const texture = rewardTexture(entry);
+        // 안내창을 여는 것은 액자 공용 규칙이다(재화·아이템 어느 쪽이든 같은 그림은 같은 일을 한다).
+        if (texture !== null) addFramedIcon(this, row, x, ARCHAEOLOGY.haul.y, layout.frame, texture, { amount: String(shown.amount) });
+        return;
+      }
+      const holder = this.add.container(x, ARCHAEOLOGY.haul.y);
+      row.add(holder);
+      holder.add(this.buildRewardFrame(shown, layout.frame, shown.runePart));
+      if (shown.amount > 1) {
+        holder.add(this.add.text(layout.frame / 2 - 8, layout.frame / 2 - 6, String(shown.amount),
+          textStyle({ role: "display", size: Math.max(18, Math.round(layout.frame * 0.23)), color: COLOR.accentText }))
+          .setOrigin(1, 1).setStroke("#000000", 6));
+      }
+      const hit = this.add.rectangle(0, 0, layout.frame, layout.frame, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      hit.on("pointerdown", () => pressIn(holder));
+      hit.on("pointerout", () => pressOut(holder, "normal", { pop: false }));
+      hit.on("pointerup", () => { pressOut(holder); this.openHaulRune(shown.runeRarity); });
+      holder.add(hit);
     });
+  }
+
+  /** 전리품의 룬 칸을 누르면 이번 판에서 받은 그 등급의 가장 최근 룬 정보가 열린다. */
+  private openHaulRune(rarity: RuneRarity | undefined): void {
+    for (let at = this.grantedRunes.length - 1; at >= 0; at -= 1) {
+      const granted = this.grantedRunes[at];
+      if (granted.rarity !== rarity) continue;
+      if (!session.runeInventory.some(({ instanceId }) => instanceId === granted.instanceId)) continue;
+      openRuneInfoPopup(this, this.popups, { runeInstanceId: granted.instanceId });
+      return;
+    }
   }
 
   /** 서버가 돌려준 결과 중 선택한 칸만 기존 컨테이너 안에서 교체한다. */
@@ -767,17 +1082,10 @@ export class ArchaeologyScene extends Phaser.Scene {
     this.paintStrataTile(index, board, coverSourceCrop(STRATA_ART.width, STRATA_ART.height, frame.width, frame.height));
   }
 
-  /** 곡괭이 옆의 짧은 진행 표기만 서버 공개 모델의 남은/총 횟수로 갱신한다. */
+  /** 곡괭이 옆 게이지와 `남은/전체` 글자를 서버 공개 모델의 값으로 맞춘다. */
   private paintStrataProgress(board: StrataBoardView): void {
     this.strataDigsText?.setText(t("archaeology.digsCount", { current: board.digsLeft, max: board.digsMax }));
-  }
-
-  /** 마지막 곡괭이가 사라진 뒤 최종 판을 읽을 수 있게 보장하는 짧은 정지다. */
-  private waitForFinalBoardConfirmation(): Promise<void> {
-    // 연출 자체가 절반 아래로 짧아졌으므로 그 뒤의 정지도 함께 줄인다 — 판은 이미 다 서 있고,
-    // 이 정지는 「마지막 한 칸을 눈으로 확인하는」 한 박자일 뿐이다.
-    const delay = session.settings.accessibility.reduceMotion ? 120 : 280;
-    return new Promise((resolve) => { this.time.delayedCall(delay, resolve); });
+    this.strataDigsBar?.setValue(board.digsMax > 0 ? board.digsLeft / board.digsMax : 0);
   }
 
   /** 성공·실패 뒤 현재도 팔 수 있는 모든 칸에만 입력을 되돌린다. */

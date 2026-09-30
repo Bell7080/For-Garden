@@ -9,7 +9,7 @@ export type { PremiumCategory, ProductStorefront, ShopCategory } from "../data/p
 import type { DnaExchangeKind } from "../data/economy";
 import type { StageDef } from "../core/types";
 import type { EventDefinition } from "../data/events/types";
-import type { RuneInstance, RuneStatKey } from "../core/runes";
+import type { RuneInstance, RuneRarity, RunePart, RuneStatKey } from "../core/runes";
 import type { RuneTrait } from "../core/runeTraits";
 import type { StrataBoardView } from "../core/strataDig";
 import type { StrataRewardKind } from "../data/strataLayers";
@@ -487,7 +487,7 @@ export interface DigStrataTileRequest { tileIndex: number; requestId: string; }
 export interface AbandonStrataRunRequest { requestId: string; }
 /** 이번 한 칸의 결과와 그 지급까지 한 영수증으로 확정한다. */
 export interface DigStrataTileResponse extends ArchaeologyStateResponse {
-  tile: { index: number; kind: StrataRewardKind; amount: number };
+  tile: { index: number; kind: StrataRewardKind; amount: number; runeRarity?: RuneRarity; runePart?: RunePart; itemId?: string };
   wallet: Wallet;
   items: InventoryItemDto[];
   /** 룬이 나온 칸에서만 서버가 만든 완성 인스턴스를 싣는다. */

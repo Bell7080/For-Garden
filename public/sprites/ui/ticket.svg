@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" fill="none">
+  <!-- 입장권. 배경판 없이 양옆을 각지게 파낸 표 한 장과 점선 절취선만 그린다(miter 이음). -->
+  <path d="M10 24H86V40L79 48L86 56V72H10V56L17 48L10 40V24Z" stroke="#D7F5FF" stroke-width="5" stroke-linejoin="miter"/>
+  <path d="M34 28V36M34 44V52M34 60V68" stroke="#7EDFFF" stroke-width="4" stroke-linejoin="miter"/>
+  <path d="M50 40H74M50 56H66" stroke="#7EDFFF" stroke-width="4" stroke-linejoin="miter"/>
+</svg>

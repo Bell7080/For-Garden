@@ -33,7 +33,7 @@ import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, 
 import { runeEnhancementGoldCost, runeSellValue } from "../data/runes";
 import { canGrantRuneTraitAtLeast, canUpgradeRuneTraitGrade, grantRuneTrait as rollRuneTrait, rerollRuneTrait as rollRuneTraitReroll, RUNE_TRAIT_RULES, upgradeRuneTraitGrade, type RuneTrait } from "../core/runeTraits";
 import { RUNE_TRAIT_IDS, RUNE_TRAIT_ITEMS } from "../data/runeTraits";
-import { beginStrataSiteCooldown, canDigStrataTile, createStrataBoard, digStrataTile as digTile, nextStrataChargeAt, settleStrataCharges, strataBoardView, strataSiteCooldownUntil } from "../core/strataDig";
+import { beginStrataSiteCooldown, canDigStrataTile, createStrataBoard, digStrataTile as digTile, nextStrataChargeAt, rollStrataResearchItem, rollStrataRuneRarity, settleStrataCharges, strataBoardView, strataSiteCooldownUntil } from "../core/strataDig";
 import { findStrataLayer, STRATA_CHARGE } from "../data/strataLayers";
 import { ARCHAEOLOGY_SITES, findArchaeologySite } from "../data/archaeologySites";
 import { archaeologySiteAvailability } from "../core/archaeologyMap";
@@ -2063,15 +2063,18 @@ export class FakeServer implements GameApi {
     let grantedRune: RuneInstance | undefined;
     let grantedItemId: string | undefined;
     if (tile.kind === "rune") {
-      // 희귀도도 서버가 정한다. 어느 룬이 나올지는 발굴의 일부라 요청이 주장하지 못한다.
-      const roll = this.random();
-      const rarity: RuneRarity = roll < 0.55 ? "uncommon" : roll < 0.85 ? "rare" : roll < 0.97 ? "epic" : "legendary";
-      grantedRune = this.createGrantedRune(rarity, this.state.runeInventory);
+      // 등급·자리는 판을 만들 때 정해 둔 칸의 값이다. 이 필드가 없는 예전 저장의 칸만 여기서 굴려
+      // 채우고, 굴린 값을 판에 남겨 칸을 다시 그려도 같은 룬으로 읽히게 한다.
+      const layer = findStrataLayer(result.board.layerId);
+      const tone = result.board.zones[tile.zone]?.tone ?? "soil";
+      const rarity: RuneRarity = tile.runeRarity ?? (layer ? rollStrataRuneRarity(layer, tone, this.random) : "uncommon");
+      const part: RunePart = tile.runePart ?? Math.min(2, Math.floor(this.random() * 3)) as RunePart;
+      tile.runeRarity = rarity; tile.runePart = part;
+      grantedRune = this.createGrantedRune(rarity, this.state.runeInventory, part);
       this.state.runeInventory = [...this.state.runeInventory, grantedRune];
     } else if (tile.kind === "researchItem") {
-      // 상위 아이템은 아주 드물다. 무한 과금 없이도 모이되, 흔하면 특성 연구가 리롤을 거친다.
-      const roll = this.random();
-      grantedItemId = roll < 0.78 ? RUNE_TRAIT_ITEMS.grant.itemId : roll < 0.96 ? RUNE_TRAIT_ITEMS.grantHigh.itemId : RUNE_TRAIT_ITEMS.upgrade.itemId;
+      grantedItemId = tile.itemId ?? rollStrataResearchItem(this.random);
+      tile.itemId = grantedItemId;
       const stack = this.state.itemInventory.find(({ itemId }) => itemId === grantedItemId);
       if (stack) stack.quantity += tile.amount;
       else this.state.itemInventory = [...this.state.itemInventory, { itemId: grantedItemId, quantity: tile.amount }];
@@ -2086,7 +2089,12 @@ export class FakeServer implements GameApi {
     const inventory = await this.getInventory();
     return {
       ...this.archaeologyDto(),
-      tile: { index: tile.index, kind: tile.kind, amount: tile.amount },
+      tile: {
+        index: tile.index, kind: tile.kind, amount: tile.amount,
+        ...(tile.runeRarity ? { runeRarity: tile.runeRarity } : {}),
+        ...(tile.runePart !== undefined && tile.kind === "rune" ? { runePart: tile.runePart } : {}),
+        ...(tile.itemId ? { itemId: tile.itemId } : {}),
+      },
       wallet: { ...this.state.wallet },
       items: inventory.items,
       ...(grantedRune ? { grantedRune: this.cloneRune(grantedRune) } : {}),

@@ -70,6 +70,7 @@ export const MISC_JA = {
   "archaeology.charge.next": "次の充填 {time}",
   "archaeology.charge.full": "満タン",
   "archaeology.digs.label": "残り掘削回数",
+  "archaeology.legend.title": "地層の色",
   "archaeology.chargeFull": "{charges}/{max}",
   "archaeology.digsCount": "{current}/{max}",
   "archaeology.title": "考 古 学",

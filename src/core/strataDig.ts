@@ -8,8 +8,10 @@
  * 다른 것이 나오고, 「저 구역이 특별해 보인다」는 판단이 아무것도 가리키지 않게 된다.
  */
 
-import { findStrataLayer, STRATA_ART_COUNT, STRATA_CHARGE, STRATA_SITE_COOLDOWN_MS, type StrataLayerDefinition, type StrataRewardKind, type StrataZoneTone } from "../data/strataLayers";
+import { findStrataLayer, STRATA_ART_COUNT, STRATA_CHARGE, STRATA_RUNE_TILES, STRATA_RUNE_UNCOMMON_SHARE, STRATA_SITE_COOLDOWN_MS, type StrataLayerDefinition, type StrataRewardKind, type StrataZoneTone } from "../data/strataLayers";
+import { RUNE_TRAIT_ITEMS } from "../data/runeTraits";
 import { timeAccrualWindow } from "./timeAccrual";
+import type { RunePart, RuneRarity } from "./runes";
 import type { RuneTrait } from "./runeTraits";
 
 /** 판에 깔린 칸 하나다. 서버가 갖고 있다가 공개된 것만 클라이언트에 내려보낸다. */
@@ -19,9 +21,19 @@ export interface StrataTile {
   /** 이 칸이 속한 구역 번호다. 화면은 그 구역의 색만 읽는다. */
   zone: number;
   kind: StrataRewardKind;
-  /** 수량이다. 빈 흙과 룬처럼 수가 없는 것은 각각 0과 1이다. */
+  /** 수량이다. 룬처럼 수가 없는 것은 1이다(예전 저장의 빈 흙만 0이다). */
   amount: number;
   revealed: boolean;
+  /**
+   * 룬 칸이 내놓을 룬의 등급·자리와 연구 재료 칸이 내놓을 아이템.
+   *
+   * **판을 만들 때 함께 정한다** — 캘 때 굴리면 앱을 껐다 켠 뒤에도 같은 칸이 같은 것을
+   * 내놓는다는 보장이 없고, 이미 판 칸을 다시 그릴 때 무엇이 나왔는지 말할 수도 없다. 이 필드가
+   * 없는 예전 저장의 칸은 캘 때 서버가 굴려 채운다.
+   */
+  runeRarity?: RuneRarity;
+  runePart?: RunePart;
+  itemId?: string;
 }
 
 /** 판을 나눈 구역 하나다. */
@@ -58,6 +70,9 @@ export interface StrataTileView {
   /** 연 칸만 무엇이 나왔는지 갖는다. */
   kind?: StrataRewardKind;
   amount?: number;
+  runeRarity?: RuneRarity;
+  runePart?: RunePart;
+  itemId?: string;
 }
 
 /** 화면이 받는 판이다. 여기에 없는 것은 화면이 알 수 없다. */
@@ -128,18 +143,86 @@ function assignZones(layer: StrataLayerDefinition, random: () => number): { zone
   return { zones, zoneOf };
 }
 
+/** 그 구역 색에서 한 칸이 그 종류일 확률(0~1)이다. */
+function tileChance(layer: StrataLayerDefinition, tone: StrataZoneTone, kind: StrataRewardKind): number {
+  const total = layer.rewards.reduce((sum, row) => sum + Math.max(0, row.weight[tone]), 0);
+  if (total <= 0) return 0;
+  const weight = layer.rewards.reduce((sum, row) => row.kind === kind ? sum + Math.max(0, row.weight[tone]) : sum, 0);
+  return weight / total;
+}
+
+/**
+ * 룬 한 개의 등급 확률.
+ *
+ * **영웅은 화석 칸이 나올 확률, 전설은 호박석 칸이 나올 확률과 같다** — 룬이 대부분 고급과
+ * 희귀인 것은 그대로 두고, 귀한 등급이 나오는 빈도만 이미 화면이 귀하게 여기는 두 재화에
+ * 묶는다. 값을 따로 적으면 재화 확률을 손볼 때 룬만 옛 값으로 남는다.
+ */
+export function strataRuneRarityOdds(layer: StrataLayerDefinition, tone: StrataZoneTone): Record<RuneRarity, number> {
+  const epic = tileChance(layer, tone, "fossil");
+  const legendary = tileChance(layer, tone, "amber");
+  const common = Math.max(0, 1 - epic - legendary);
+  return { uncommon: common * STRATA_RUNE_UNCOMMON_SHARE, rare: common * (1 - STRATA_RUNE_UNCOMMON_SHARE), epic, legendary };
+}
+
+/** 위 확률로 룬 등급 하나를 굴린다. */
+export function rollStrataRuneRarity(layer: StrataLayerDefinition, tone: StrataZoneTone, random: () => number): RuneRarity {
+  const odds = strataRuneRarityOdds(layer, tone);
+  const order: RuneRarity[] = ["uncommon", "rare", "epic", "legendary"];
+  return weightedPick(order, (rarity) => odds[rarity], random);
+}
+
+/** 연구 재료 칸이 내놓을 아이템. 상위 아이템일수록 드물다. */
+export function rollStrataResearchItem(random: () => number): string {
+  const value = roll(random);
+  return value < 0.78 ? RUNE_TRAIT_ITEMS.grant.itemId : value < 0.96 ? RUNE_TRAIT_ITEMS.grantHigh.itemId : RUNE_TRAIT_ITEMS.upgrade.itemId;
+}
+
+/** 룬 칸의 등급·자리를 채운다. */
+function withRuneDetail(layer: StrataLayerDefinition, tone: StrataZoneTone, random: () => number): Pick<StrataTile, "runeRarity" | "runePart"> {
+  return { runeRarity: rollStrataRuneRarity(layer, tone, random), runePart: Math.min(2, Math.floor(roll(random) * 3)) as RunePart };
+}
+
+/**
+ * 룬 칸의 수를 `STRATA_RUNE_TILES` 범위로 맞춘다.
+ *
+ * 넘치는 룬은 그 판의 원석 칸으로, 모자라면 골드·원석 칸 중 하나가 룬으로 바뀐다 — 귀한 재화
+ * 칸(화석·호박석·다이아·연구 재료)은 건드리지 않아 그 확률이 룬 때문에 움직이지 않는다.
+ */
+function fitRuneTileCount(layer: StrataLayerDefinition, tiles: StrataTile[], random: () => number): void {
+  const runes = tiles.filter((tile) => tile.kind === "rune");
+  const stone = layer.rewards.find((row) => row.kind === "rawStone");
+  const stoneAmount = stone ? Math.round((stone.min + stone.max) / 2) : 0;
+  const excess = runes.length - STRATA_RUNE_TILES.max;
+  for (let n = 0; n < excess; n += 1) {
+    const pick = runes.splice(Math.min(runes.length - 1, Math.floor(roll(random) * runes.length)), 1)[0];
+    pick.kind = "rawStone"; pick.amount = stoneAmount;
+  }
+  const candidates = tiles.filter((tile) => tile.kind === "gold" || tile.kind === "rawStone");
+  for (let n = runes.length; n < STRATA_RUNE_TILES.min && candidates.length > 0; n += 1) {
+    const pick = candidates.splice(Math.min(candidates.length - 1, Math.floor(roll(random) * candidates.length)), 1)[0];
+    pick.kind = "rune"; pick.amount = 1;
+  }
+}
+
 /** 새 판을 만든다. 모든 칸의 내용이 이 순간 정해지고 그 뒤로는 바뀌지 않는다. */
 export function createStrataBoard(input: { layerId: string; siteId?: string; random: () => number }): StrataBoard {
   const layer = findStrataLayer(input.layerId);
   if (layer === undefined) throw new Error("알 수 없는 지층입니다.");
   const { zones, zoneOf } = assignZones(layer, input.random);
-  const tiles = zoneOf.map((zone, index) => {
+  const tiles: StrataTile[] = zoneOf.map((zone, index) => {
     const tone = zones[zone].tone;
     const row = weightedPick(layer.rewards, (reward) => reward.weight[tone], input.random);
     const span = Math.max(0, row.max - row.min);
     const amount = row.kind === "empty" ? 0 : row.min + Math.round(roll(input.random) * span);
     return { index, zone, kind: row.kind, amount, revealed: false };
   });
+  fitRuneTileCount(layer, tiles, input.random);
+  for (const tile of tiles) {
+    const tone = zones[tile.zone].tone;
+    if (tile.kind === "rune") Object.assign(tile, withRuneDetail(layer, tone, input.random));
+    else if (tile.kind === "researchItem") tile.itemId = rollStrataResearchItem(input.random);
+  }
   const art = 1 + Math.floor(roll(input.random) * STRATA_ART_COUNT);
   return { layerId: layer.id, ...(input.siteId ? { siteId: input.siteId } : {}), art, columns: layer.columns, rows: layer.rows, tiles, zones, digsLeft: layer.digs };
 }
@@ -181,19 +264,55 @@ export function strataBoardView(board: StrataBoard): StrataBoardView {
     digsMax: layer.digs,
     digsLeft: board.digsLeft,
     tiles: board.tiles.map((tile) => tile.revealed
-      ? { index: tile.index, zone: tile.zone, revealed: true, kind: tile.kind, amount: tile.amount }
+      ? {
+        index: tile.index, zone: tile.zone, revealed: true, kind: tile.kind, amount: tile.amount,
+        ...(tile.runeRarity ? { runeRarity: tile.runeRarity } : {}),
+        ...(tile.runePart !== undefined ? { runePart: tile.runePart } : {}),
+        ...(tile.itemId ? { itemId: tile.itemId } : {}),
+      }
       : { index: tile.index, zone: tile.zone, revealed: false }),
   };
 }
 
+/** 전리품 줄의 칸 하나다. 룬은 등급별로, 연구 재료는 아이템별로 따로 선다. */
+export interface StrataHaulEntry {
+  kind: StrataRewardKind;
+  amount: number;
+  runeRarity?: RuneRarity;
+  /** 룬 칸에 그릴 조각. 같은 등급의 룬이 여럿이면 처음 나온 조각을 쓴다(칸을 가르는 열쇠는 아니다). */
+  runePart?: RunePart;
+  itemId?: string;
+}
+
+/** 전리품 칸을 가르는 열쇠다. 화면이 줄을 다시 그려도 같은 칸이 같은 자리에 서게 한다. */
+export function strataHaulKey(entry: Pick<StrataHaulEntry, "kind" | "runeRarity" | "itemId">): string {
+  return `${entry.kind}:${entry.runeRarity ?? ""}:${entry.itemId ?? ""}`;
+}
+
+/** 칸 하나가 전리품에서 갖는 열쇠 재료다. */
+function haulEntryOf(tile: StrataTileView): Pick<StrataHaulEntry, "kind" | "runeRarity" | "runePart" | "itemId"> | null {
+  if (!tile.revealed || tile.kind === undefined || tile.kind === "empty") return null;
+  return { kind: tile.kind, ...(tile.kind === "rune" && tile.runeRarity ? { runeRarity: tile.runeRarity } : {}), ...(tile.kind === "rune" && tile.runePart !== undefined ? { runePart: tile.runePart } : {}), ...(tile.kind === "researchItem" && tile.itemId ? { itemId: tile.itemId } : {}) };
+}
+
 /** 이번 판에서 지금까지 캔 것의 합이다. 화면이 따로 세지 않는다. */
-export function strataBoardHaul(board: StrataBoardView): Array<{ kind: StrataRewardKind; amount: number }> {
-  const totals = new Map<StrataRewardKind, number>();
+export function strataBoardHaul(board: StrataBoardView): StrataHaulEntry[] {
+  const totals = new Map<string, StrataHaulEntry>();
   for (const tile of board.tiles) {
-    if (!tile.revealed || tile.kind === undefined || tile.kind === "empty") continue;
-    totals.set(tile.kind, (totals.get(tile.kind) ?? 0) + (tile.amount ?? 0));
+    const entry = haulEntryOf(tile);
+    if (entry === null) continue;
+    const key = strataHaulKey(entry);
+    const found = totals.get(key);
+    if (found) found.amount += tile.amount ?? 0;
+    else totals.set(key, { ...entry, amount: tile.amount ?? 0 });
   }
-  return [...totals].map(([kind, amount]) => ({ kind, amount }));
+  return [...totals.values()];
+}
+
+/** 한 칸이 전리품에서 어느 칸으로 들어가는가. 캘 때 날아갈 자리를 정한다. */
+export function strataTileHaulKey(tile: StrataTileView): string | null {
+  const entry = haulEntryOf(tile);
+  return entry === null ? null : strataHaulKey(entry);
 }
 
 /**

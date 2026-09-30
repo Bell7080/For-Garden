@@ -65,6 +65,7 @@ export const MISC_EN = {
   "archaeology.charge.next": "Next in {time}",
   "archaeology.charge.full": "Full",
   "archaeology.digs.label": "Digs left",
+  "archaeology.legend.title": "Strata Tint",
   "archaeology.chargeFull": "{charges}/{max}",
   "archaeology.digsCount": "{current}/{max}",
   "archaeology.title": "A R C H A E O L O G Y",

@@ -71,6 +71,22 @@ export async function tap(page: Page, x: number, y: number): Promise<void> {
 }
 
 /**
+ * 여러 자리를 **쉬지 않고** 연달아 누른다.
+ *
+ * `tap`은 누를 때마다 화면이 가라앉을 틈을 두므로 세 번 누르는 데 그 몫이 세 번 든다. 연출이 짧은
+ * 콘텐츠(곡괭이 한 번은 0.2초 남짓)에서는 그 사이에 첫 입력의 잠금이 이미 풀려, 「연달아 눌러도
+ * 하나만 받는다」를 검사하려던 것이 그저 세 번의 정상 입력이 되어 버린다. 진짜 연타는 이 함수로 만든다.
+ */
+export async function tapBurst(page: Page, points: ReadonlyArray<{ x: number; y: number }>): Promise<void> {
+  const box = await canvasBox(page);
+  for (const { x, y } of points) {
+    const point = gamePoint(box, x, y);
+    await page.mouse.click(point.x, point.y);
+  }
+  await page.waitForTimeout(SETTLE_MS);
+}
+
+/**
  * 원하는 상태가 될 때까지 같은 자리를 다시 누른다.
  *
  * 씬이 이름을 바꾼 순간에도 그 화면의 입력면은 아직 없을 수 있다 — 로비의 하단 탭, 로비 위에

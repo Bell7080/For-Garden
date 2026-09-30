@@ -14,7 +14,15 @@ export const STRATA_ART = { width: 941, height: 1672 } as const;
  * **밑변을 1580에서 1280으로 올렸다.** 판 아래에 전리품 액자 줄과 그 아래 「탐사 종료」가
  * 서야 하는데, 판이 1580까지 내려오던 때는 그 둘이 설 자리가 하단 라벨 줄(1652)과 겹쳤다.
  */
-export const STRATA_BOARD = { top: 360, bottom: 1280, maxWidth: 1000, baseShade: 0.32 } as const;
+export const STRATA_BOARD = { top: 360, bottom: 1280, maxWidth: 840, left: 24, baseShade: 0.32 } as const;
+
+/**
+ * 판 오른쪽에 서는 범례 띠. 안개 색이 무엇을 기울이는지 그림으로 말한다.
+ *
+ * 판이 화면 폭을 다 쓰던 때는 옆에 설 자리가 없었다 — 판 폭을 줄여 이 띠를 낸다. 세로는 판과
+ * 같은 높이 띠 안에서 가운데에 서며, 색이 넷이어도 판의 가장 낮은 높이(840)를 넘지 않는다(제목 56 + 4 × 146 = 640).
+ */
+export const STRATA_LEGEND = { width: 176, gap: 16, titleHeight: 56, rowHeight: 146, icon: 50, swatch: 44 } as const;
 
 /** 화면에 그리는 판과 셀의 좌표/크기다. 값의 단위는 모두 화면 px이다. */
 export interface StrataBoardFrame {
@@ -42,12 +50,14 @@ export function coverSourceCrop(sourceWidth: number, sourceHeight: number, targe
 export function strataBoardFrame(columns: number, rows: number, screenWidth: number): StrataBoardFrame {
   const safeColumns = Math.max(1, columns);
   const safeRows = Math.max(1, rows);
-  const roomWidth = Math.min(STRATA_BOARD.maxWidth, screenWidth);
+  const regionLeft = STRATA_BOARD.left;
+  const regionRight = screenWidth - STRATA_BOARD.left - STRATA_LEGEND.width - STRATA_LEGEND.gap;
+  const roomWidth = Math.min(STRATA_BOARD.maxWidth, regionRight - regionLeft);
   const roomHeight = STRATA_BOARD.bottom - STRATA_BOARD.top;
   const cellSize = Math.min(roomWidth / safeColumns, roomHeight / safeRows);
   const width = cellSize * safeColumns;
   const height = cellSize * safeRows;
-  return { width, height, centerX: screenWidth / 2, centerY: STRATA_BOARD.top + roomHeight / 2, cellWidth: cellSize, cellHeight: cellSize };
+  return { width, height, centerX: (regionLeft + regionRight) / 2, centerY: STRATA_BOARD.top + roomHeight / 2, cellWidth: cellSize, cellHeight: cellSize };
 }
 
 /** 판 컨테이너의 중심을 원점으로 한 화면 셀 중심이다. */
@@ -94,4 +104,37 @@ export function strataCropPlacement(
     scaleX,
     scaleY,
   };
+}
+
+
+/** 범례 띠의 화면 사각형이다. 세로는 판 옆에서 가운데에 선다. */
+export interface StrataLegendFrame { left: number; centerX: number; width: number; top: number; height: number; rowTops: number[] }
+
+/** 색이 `rowCount`개인 범례 띠의 자리를 구한다. 판이 다시 그려져도 같은 판이면 같은 자리다. */
+export function strataLegendFrame(frame: StrataBoardFrame, rowCount: number, screenWidth: number): StrataLegendFrame {
+  const width = STRATA_LEGEND.width;
+  const left = screenWidth - STRATA_BOARD.left - width;
+  const height = STRATA_LEGEND.titleHeight + Math.max(0, rowCount) * STRATA_LEGEND.rowHeight;
+  const top = frame.centerY - height / 2;
+  const rowTops = Array.from({ length: Math.max(0, rowCount) }, (_, row) => top + STRATA_LEGEND.titleHeight + row * STRATA_LEGEND.rowHeight);
+  return { left, centerX: left + width / 2, width, top, height, rowTops };
+}
+
+/** 전리품 줄의 칸 자리와 크기다. 칸 수가 늘어도 화면 폭 안에서 서로 겹치지 않는다. */
+export interface StrataHaulLayout { xs: number[]; frame: number }
+
+/**
+ * 전리품 칸이 `count`개일 때의 가로 자리.
+ *
+ * 룬은 등급마다, 연구 재료는 아이템마다 칸이 갈라져 칸 수가 재화 종류보다 많아질 수 있다. 칸 간격을
+ * 화면 폭에서 거꾸로 구하고, 좁아지면 액자도 함께 줄여(하한 있음) 옆 칸을 덮지 않게 한다.
+ */
+export function strataHaulLayout(count: number, screenWidth: number, preferred = { frame: 116, gap: 152 }, margin = 40): StrataHaulLayout {
+  const n = Math.max(0, Math.floor(count));
+  if (n === 0) return { xs: [], frame: preferred.frame };
+  const room = Math.max(0, screenWidth - margin * 2 - preferred.frame);
+  const gap = n <= 1 ? preferred.gap : Math.min(preferred.gap, room / (n - 1));
+  const frame = Math.max(72, Math.min(preferred.frame, gap - 6));
+  const start = screenWidth / 2 - ((n - 1) * gap) / 2;
+  return { xs: Array.from({ length: n }, (_, index) => start + index * gap), frame };
 }

@@ -78,6 +78,7 @@ export const MISC_KO = {
   "archaeology.charge.next": "다음 충전 {time}",
   "archaeology.charge.full": "가득 참",
   "archaeology.digs.label": "남은 굴착 횟수",
+  "archaeology.legend.title": "지층 색",
   "archaeology.title": "고 고 학",
   // 유적 지도 정적 데이터는 이 키만 참조해 표시 문장을 품지 않는다.
   "archaeology.site.garden-gate.name": "정원의 관문",

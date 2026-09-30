@@ -41,3 +41,17 @@ export const ARCHAEOLOGY_RATING_TONE: readonly number[] = [
 export function archaeologyRatingColor(filled: number): number {
   return ARCHAEOLOGY_RATING_TONE[Math.min(ARCHAEOLOGY_RATING_TONE.length - 1, Math.max(0, filled - 1))];
 }
+
+/**
+ * 안개의 색과 가장 짙을 때의 진하기.
+ *
+ * 구역 색을 칸마다 칠하던 것을 대신한다(`src/core/strataFog.ts`). 겹쳐 밝아지는 합성으로 깔리므로
+ * 진하기는 옛 칸 색보다 높아도 흙 결이 비친다 — 두 겹이 엇갈려 일렁이는 동안 합이 이 값을
+ * 넘지 않게 한 겹의 상한을 잡았다. 흙빛은 안개를 두르지 않는다.
+ */
+export const STRATA_FOG_TONE: Readonly<Record<StrataZoneTone, { readonly color: number; readonly alpha: number }>> = {
+  soil: { color: COLOR.archaeologySoil, alpha: 0 },
+  teal: { color: COLOR.raritySR, alpha: 0.44 },
+  gold: { color: COLOR.accent, alpha: 0.46 },
+  deep: { color: COLOR.raritySRAlt, alpha: 0.5 },
+} as const;

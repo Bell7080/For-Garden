@@ -62,6 +62,12 @@ function makeSession(fossil = 1000): Session {
   };
 }
 
+/** 시드를 주는 작은 난수. 같은 씨앗이면 같은 판이 나온다. */
+function seededRandom(seed: number): () => number {
+  let value = seed >>> 0;
+  return () => { value = (value * 1664525 + 1013904223) >>> 0; return value / 0x100000000; };
+}
+
 describe("FakeServer 고고학", () => {
   /** 한 판을 남김없이 파서 닫는다. 어느 지층이든 횟수를 다 쓰면 판이 닫힌다. */
   async function digUntilClosed(server: FakeServer): Promise<void> {
@@ -106,6 +112,56 @@ describe("FakeServer 고고학", () => {
     const open = await server.startStrataRun({ siteId: "rust-canal", requestId: "run-2" });
     expect(open.board).not.toBeNull();
     expect(open.sites.find(({ siteId }) => siteId === "rust-canal")!.cooldownUntil).toBeNull();
+  });
+
+  it("는 판을 다 파는 동안 모든 칸에서 실제로 무언가를 지급하고 룬은 정해 둔 등급으로 준다", async () => {
+    const state = makeSession();
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-03-01T00:00:00Z"), random: seededRandom(2024) });
+    await server.startStrataRun({ siteId: "garden-gate", requestId: "run" });
+    let dug = 0;
+    for (let guard = 0; guard < 40; guard += 1) {
+      const view = await server.archaeologyState();
+      const open = view.board?.tiles.find((tile) => !tile.revealed);
+      if (!view.board || !open) break;
+      const before = { ...state.wallet };
+      const runesBefore = state.runeInventory.length;
+      const itemsBefore = state.itemInventory.reduce((sum, stack) => sum + stack.quantity, 0);
+      const result = await server.digStrataTile({ tileIndex: open.index, requestId: `dig-${guard}` });
+      dug += 1;
+      // 꽝은 없다.
+      expect(result.tile.kind).not.toBe("empty");
+      const itemsAfter = state.itemInventory.reduce((sum, stack) => sum + stack.quantity, 0);
+      const walletGain = (Object.keys(state.wallet) as Array<keyof typeof state.wallet>).some((key) => state.wallet[key] > before[key]);
+      expect(walletGain || state.runeInventory.length > runesBefore || itemsAfter > itemsBefore).toBe(true);
+      if (result.tile.kind === "rune") {
+        expect(result.grantedRune?.rarity).toBe(result.tile.runeRarity);
+        expect(result.grantedRune?.part).toBe(result.tile.runePart);
+      }
+      if (result.tile.kind === "researchItem") expect(result.grantedItemId).toBe(result.tile.itemId);
+    }
+    expect(dug).toBeGreaterThan(0);
+  });
+
+  it("는 치즈케이크 칸의 수량을 그대로 지갑에 넣는다", async () => {
+    const state = makeSession();
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-03-01T00:00:00Z"), random: seededRandom(31) });
+    let found = false;
+    for (let attempt = 0; attempt < 8 && !found; attempt += 1) {
+      state.archaeology = { ...state.archaeology, board: null, siteCooldowns: {}, charges: 5 };
+      await server.startStrataRun({ siteId: "garden-gate", requestId: `run-${attempt}` });
+      const view = await server.archaeologyState();
+      for (const tile of view.board!.tiles) {
+        const before = state.wallet.cheesecake;
+        const result = await server.digStrataTile({ tileIndex: tile.index, requestId: `d-${attempt}-${tile.index}` }).catch(() => undefined);
+        if (result?.tile.kind === "cheesecake") {
+          expect(state.wallet.cheesecake).toBe(before + result.tile.amount);
+          found = true;
+          break;
+        }
+        if (!result || result.board === null) break;
+      }
+    }
+    expect(found).toBe(true);
   });
 
   it("의 탐사 종료는 아무것도 더 주지 않고 판만 닫는다", async () => {

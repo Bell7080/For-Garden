@@ -780,24 +780,24 @@
 "Каждое попадание обычной атаки повышает скорость атаки до конца боя."
 ],
 "relic.taboa.passive.name": [
-"收紧的盘绕",
-"ขดที่รัดแน่น",
-"Vòng siết chặt",
-"Lilitan yang Mengetat",
-"Espiral que aprieta",
-"Espiral que aperta",
-"Enger werdende Windung",
-"Сжимающиеся кольца"
+"升温之躯",
+"ร่างที่ร้อนขึ้น",
+"Thân nóng dần",
+"Tubuh yang Memanas",
+"Cuerpo que se caldea",
+"Corpo que esquenta",
+"Sich aufheizender Körper",
+"Раскаляющееся тело"
 ],
 "relic.taboa.ferocity.name": [
-"缠入蛇圈",
-"เข้าสู่ขดงู",
-"Vào vòng cuộn",
-"Masuk Lilitan",
-"Dentro del anillo",
-"Para dentro do enrosco",
-"In die Windungen",
-"В кольца"
+"大胃王的餐桌",
+"โต๊ะอาหารของนักกินจุ",
+"Bàn ăn của kẻ háu ăn",
+"Meja Sang Pelahap",
+"La mesa del glotón",
+"A mesa do glutão",
+"Tisch des Vielfraßes",
+"Стол обжоры"
 ],
 "relic.taboa.basic.name": [
 "绞缠",
@@ -810,14 +810,14 @@
 "Удушение"
 ],
 "relic.taboa.ultimate.name": [
-"热带盘绕",
-"ขดเขตร้อน",
-"Vòng xoắn nhiệt đới",
-"Lilitan Tropis",
-"Espiral tropical",
-"Espiral tropical",
-"Tropische Windung",
-"Тропические кольца"
+"窒息的拥抱",
+"อ้อมกอดแห่งการหายใจไม่ออก",
+"Cái ôm nghẹt thở",
+"Pelukan yang Mencekik",
+"Abrazo asfixiante",
+"Abraço sufocante",
+"Würgende Umarmung",
+"Удушающие объятия"
 ],
 "relic.taboa.projectName": [
 "ANNIHILATION SIEGE 005",
@@ -828,5 +828,165 @@
 "ANNIHILATION SIEGE 005",
 "ANNIHILATION SIEGE 005",
 "ANNIHILATION SIEGE 005"
+],
+"relic.quetzalcoatlus.name": [
+"风神翼龙",
+"เควตซัลโคอาทลัส",
+"Quetzalcoatlus",
+"Quetzalcoatlus",
+"Quetzalcoatlus",
+"Quetzalcoatlus",
+"Quetzalcoatlus",
+"Кетцалькоатль"
+],
+"relic.quetzalcoatlus.origin": [
+"风神翼龙",
+"เควตซัลโคอาทลัส",
+"Quetzalcoatlus",
+"Quetzalcoatlus",
+"Quetzalcoatlus",
+"Quetzalcoatlus",
+"Quetzalcoatlus",
+"Кетцалькоатль"
+],
+"relic.quetzalcoatlus.excavationSite": [
+"美国得克萨斯 大弯地区 白垩纪末河流沉积层",
+"ชั้นตะกอนแม่น้ำยุคครีเทเชียสตอนปลาย บิ๊กเบนด์ เท็กซัส สหรัฐอเมริกา",
+"Trầm tích sông cuối Kỷ Phấn Trắng, Big Bend, Texas, Hoa Kỳ",
+"Endapan sungai Kapur Akhir, Big Bend, Texas, AS",
+"Depósitos fluviales del Cretácico tardío, Big Bend, Texas, EE. UU.",
+"Depósitos fluviais do Cretáceo Superior, Big Bend, Texas, EUA",
+"Flussablagerungen der Oberkreide, Big Bend, Texas, USA",
+"Речные отложения позднего мела, Биг-Бенд, Техас, США"
+],
+"relic.quetzalcoatlus.fossilRecord": [
+"在河岸泥岩层中，空心的颈椎节呈一条连续的线被回收。骨壁薄如纸张，推测是为了让身体浮在空中，同时还记录到只留有翼尖痕迹的沉积面。",
+"พบกระดูกคอกลวงเรียงต่อกันเป็นแนวเดียวในชั้นหินโคลนริมแม่น้ำ ผนังกระดูกบางราวกับกระดาษ จึงสันนิษฐานว่าใช้พยุงลำตัวให้ลอยอยู่กลางอากาศ และบันทึกพื้นผิวตะกอนที่เหลือเพียงรอยปลายปีกไว้ด้วย",
+"Một chuỗi đốt sống cổ rỗng được tìm thấy nối liền thành một hàng trong lớp đá bùn ven sông. Thành xương mỏng như giấy, được cho là để nâng cơ thể lơ lửng trên không, và một mặt trầm tích chỉ còn vết đầu cánh cũng được ghi nhận.",
+"Sebaris ruas tulang leher berongga ditemukan tersambung dalam satu garis di lapisan batu lumpur tepi sungai. Dinding tulangnya setipis kertas sehingga diduga berfungsi menjaga tubuh tetap melayang, dan permukaan sedimen yang hanya menyisakan bekas ujung sayap turut dicatat.",
+"De un estrato de lutita ribereña se recuperó una hilera de vértebras cervicales huecas, todavía unidas. Las paredes óseas, finas como papel, se interpretan como una adaptación para mantener el cuerpo en el aire, y se registró además una superficie sedimentaria con marcas solo de puntas de ala.",
+"De uma camada de argilito à beira de um rio foi recuperada uma fileira de vértebras cervicais ocas ainda unidas. As paredes ósseas, finas como papel, são interpretadas como uma adaptação para manter o corpo no ar, e registrou-se também uma superfície sedimentar com marcas apenas de pontas de asa.",
+"In einem Schluffstein am Flussufer wurde eine Reihe hohler Halswirbel gefunden, noch im Verbund. Die papierdünnen Knochenwände gelten als Anpassung, den Körper in der Luft zu halten; zudem wurde eine Sedimentfläche dokumentiert, auf der nur Flügelspitzenspuren zu sehen waren.",
+"В глинистом сланце речного берега нашли цепочку полых шейных позвонков, всё ещё соединённых в одну линию. Стенки костей тонки как бумага — их считают приспособлением для удержания тела в воздухе; рядом зафиксирована поверхность осадка, где остались лишь следы кончиков крыльев."
+],
+"relic.quetzalcoatlus.catalogSummary": [
+"以风神翼龙为基础、颈部与翼膜被过度复原的大型个体。",
+"ตัวอย่างขนาดใหญ่จากเควตซัลโคอาทลัสที่ฟื้นฟูคอและเยื่อปีกมากเกินไป",
+"Mẫu vật cỡ lớn dựa trên Quetzalcoatlus với cổ và màng cánh được phục dựng quá mức.",
+"Spesimen besar berbasis Quetzalcoatlus dengan leher dan selaput sayap yang direstorasi berlebihan.",
+"Gran espécimen basado en Quetzalcoatlus con el cuello y la membrana alar sobrerrestaurados.",
+"Grande espécime baseado em Quetzalcoatlus, com pescoço e membrana alar restaurados em excesso.",
+"Großes Exemplar auf Quetzalcoatlus-Basis mit übermäßig rekonstruiertem Hals und Flügelhaut.",
+"Крупный образец на основе кетцалькоатля с чрезмерно восстановленными шеей и крыльевой перепонкой."
+],
+"relic.quetzalcoatlus.observation.originYear": [
+"约6800万年前",
+"ประมาณ 68 ล้านปีก่อน",
+"Khoảng 68 triệu năm trước",
+"Sekitar 68 juta tahun lalu",
+"Hace unos 68 millones de años",
+"Há cerca de 68 milhões de anos",
+"Vor etwa 68 Millionen Jahren",
+"Около 68 млн лет назад"
+],
+"relic.quetzalcoatlus.observation.restorationYear": [
+"E.C. 18",
+"E.C. 18",
+"E.C. 18",
+"E.C. 18",
+"E.C. 18",
+"E.C. 18",
+"E.C. 18",
+"E.C. 18"
+],
+"relic.quetzalcoatlus.observation.lifeStage": [
+"成年",
+"โตเต็มวัย",
+"Trưởng thành",
+"Dewasa",
+"Adulta",
+"Adulta",
+"Adult",
+"Взрослая"
+],
+"relic.quetzalcoatlus.observation.height": [
+"2.15 m",
+"2.15 m",
+"2,15 m",
+"2,15 m",
+"2,15 m",
+"2,15 m",
+"2,15 m",
+"2,15 м"
+],
+"relic.quetzalcoatlus.observation.weight": [
+"92 kg",
+"92 kg",
+"92 kg",
+"92 kg",
+"92 kg",
+"92 kg",
+"92 kg",
+"92 кг"
+],
+"relic.quetzalcoatlus.passive.desc": [
+"战斗开始时向目标俯冲并使其眩晕，暴击率提升。",
+"เมื่อการต่อสู้เริ่มขึ้นจะพุ่งดิ่งใส่เป้าหมายจนสลบ และอัตราคริติคอลเพิ่มขึ้น",
+"Khi trận đấu mở màn, lao xuống mục tiêu và làm choáng, đồng thời tăng Tỉ lệ chí mạng.",
+"Saat pertempuran dibuka, menukik ke target dan membuatnya pingsan, serta menaikkan Peluang Kritis.",
+"Al abrirse el combate se lanza en picado sobre su objetivo y lo aturde, y aumenta la probabilidad de crítico.",
+"Ao abrir a batalha, mergulha sobre o alvo e o atordoa, e aumenta a chance de crítico.",
+"Stürzt sich beim Kampfbeginn auf sein Ziel und betäubt es; die Kritische Trefferchance steigt.",
+"В начале боя пикирует на цель и оглушает её; шанс критического удара повышается."
+],
+"relic.quetzalcoatlus.passive.name": [
+"俯冲猎杀",
+"ล่าด้วยการพุ่งดิ่ง",
+"Săn mồi lao xuống",
+"Perburuan Menukik",
+"Caza en picado",
+"Caça em mergulho",
+"Sturzjagd",
+"Охота с пике"
+],
+"relic.quetzalcoatlus.ferocity.name": [
+"风暴振翅",
+"กระพือปีกพายุ",
+"Cánh vỗ bão tố",
+"Kepakan Badai",
+"Aleteo de tormenta",
+"Bater de asas da tempestade",
+"Sturmflügelschlag",
+"Взмах бури"
+],
+"relic.quetzalcoatlus.basic.name": [
+"矛喙",
+"จะงอยปากหอก",
+"Mỏ giáo",
+"Paruh Tombak",
+"Pico lanza",
+"Bico-lança",
+"Lanzenschnabel",
+"Клюв-копьё"
+],
+"relic.quetzalcoatlus.ultimate.name": [
+"风暴俯冲",
+"พุ่งดิ่งพายุ",
+"Lao xuống bão tố",
+"Terjun Badai",
+"Picado de tormenta",
+"Mergulho da tempestade",
+"Sturzflug",
+"Штормовое пике"
+],
+"relic.quetzalcoatlus.projectName": [
+"ANNIHILATION SIEGE 006",
+"ANNIHILATION SIEGE 006",
+"ANNIHILATION SIEGE 006",
+"ANNIHILATION SIEGE 006",
+"ANNIHILATION SIEGE 006",
+"ANNIHILATION SIEGE 006",
+"ANNIHILATION SIEGE 006",
+"ANNIHILATION SIEGE 006"
 ]
 }

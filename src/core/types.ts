@@ -43,7 +43,7 @@ export type RelicRarity = "R" | "SR" | "SSR";
  */
 export type RaitiaAssetId = "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind";
 
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
@@ -1076,6 +1076,13 @@ export type PassiveKind =
    * 평소처럼 가장 가까운 적으로 되돌린다.
    */
   | "farthestFocus"
+  /**
+   * 케찰코아틀루스 전용: 전투가 열리면 표적에게 급강하(`openingCharge`)하고 치명타가 오른다.
+   *
+   * 엔진이 읽는 것은 종류가 아니라 필드 둘(`openingCharge`·`criticalChancePercent`)이라 이 종류는 문장을
+   * 고르는 이름표일 뿐이다 — 렉시아의 종류에 얹으면 그 문장이 공속·공격력까지 함께 말하게 된다.
+   */
+  | "openingDive"
   /** 캐릭터 ID와 무관하게 구조화된 시약 중첩과 반응 보상을 해석한다. */
   | "reagentReaction"
   /**

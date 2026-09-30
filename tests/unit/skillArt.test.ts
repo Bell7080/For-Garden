@@ -1032,7 +1032,7 @@ describe("공멸 적 폭주 표시 계약", () => {
     expect(text).toBe("[[basic-attack|기본 공격]]이 대상 주위의 모든 적에게 적중해 원래 피해의 40%를 입힌다.");
   });
 
-  it("타보아의 「똬리 속으로」는 들어서는 순간의 끌어당김을 먼저 말한다", () => {
+  it("타보아의 「대식가의 식탁」는 들어서는 순간의 끌어당김을 먼저 말한다", () => {
     const taboa = RELICS.find((def) => def.id === "taboa")!;
     const text = ferocityTraitDescription(taboa.ferocityTrait, { attack: taboa.stats.atk, defense: taboa.stats.def });
     expect(text).toBe("폭주에 들어가는 순간 주위의 모든 적을 [[pull|끌어당긴다]]. 폭주 중 [[attack-speed|공격 속도]]가 25% 증가한다.");

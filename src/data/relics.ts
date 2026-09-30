@@ -3341,6 +3341,9 @@ export const RELICS: RelicDef[] = [
      * 그래서 같은 보스 자리에 서도 "다음 턱을 읽고 비킨다"가 아니라 "감기기 전에 끊는다"가 답이
      * 되어, 하루 두 판을 같은 편성으로 돌리지 못하게 한다.
      *
+     * 스킬 이름은 뱀이라는 사실을 되풀이하지 않고 **열대의 체온과 먹성**으로 간다 — 「똬리」가 넷 중 셋에
+     * 들어가 있던 때는 무엇이 이 개체의 기술인지가 이름만으로는 갈리지 않았다.
+     *
      * 이름은 종명(티타노보아)의 뒤 두 음절에 첫 음절을 붙여 줄였다 — 수쿠스이노처럼 연구동에서
      * 부르던 호칭이 그대로 굳은 것이다.
      */
@@ -3399,24 +3402,24 @@ export const RELICS: RelicDef[] = [
       ferocityGain: 0,
     },
     /*
-     * **똬리 속으로.** 폭주에 드는 순간 주위의 먹잇감을 한꺼번에 몸 앞으로 끌어오고, 그 뒤로 조이는
+     * **대식가의 식탁.** 폭주에 드는 순간 주위의 먹잇감을 한꺼번에 몸 앞으로 끌어오고, 그 뒤로 조이는
      * 손이 빨라진다.
      *
      * 공속만 올리던 때(「열대의 체온」 +40%)는 게이지가 찬 순간이 화면에 서지 않았다. 끌려온 자리가
-     * 곧 궁극기(반경 340)의 범위라, 멀리 서 있던 후열도 폭주 한 번에 똬리 안으로 들어온다 — 원을 멀리
+     * 곧 궁극기(반경 340)의 범위라, 멀리 서 있던 후열도 폭주 한 번에 몸 앞 식탁에 오른다 — 원을 멀리
      * 지정하는 수쿠스이노와 위협하는 자리가 갈리는 이 보스의 결을 폭주가 한 번 더 민다. 공속은
      * 끌어당김 몫만큼 덜었다(40 → 25). 회복·보호막은 여전히 없다(시즌 게이지를 되돌리지 않는다).
      */
-    ferocityTrait: { name: "똬리 속으로", effectId: "selfAttackSpeedMultiplier", bonusPercent: 25, pullOnEntry: { radius: 480, distance: 150 } },
+    ferocityTrait: { name: "대식가의 식탁", effectId: "selfAttackSpeedMultiplier", bonusPercent: 25, pullOnEntry: { radius: 480, distance: 150 } },
     /*
-     * **조여 드는 똬리.** 감은 채로 때릴수록 공격 속도가 쌓인다(토비·스피나와 같은 공용 계약).
+     * **달아오르는 몸.** 감은 채로 때릴수록 공격 속도가 쌓인다(토비·스피나와 같은 공용 계약).
      *
      * **회복을 주지 않는다** — 시즌 게이지는 참가자 전원이 함께 깎은 줄이라 되돌리면 어제 민 몫이
      * 사라진다(수쿠스이노와 같은 이유). 버티는 대신 **점점 아파진다**.
      */
     passive: {
       id: "taboa-passive",
-      name: "조여 드는 똬리",
+      name: "달아오르는 몸",
       kind: "basicHitAttackSpeedStack",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
@@ -3442,7 +3445,7 @@ export const RELICS: RelicDef[] = [
     },
     ultimate: {
       id: "taboa-ult",
-      name: "열대의 똬리",
+      name: "질식의 포옹",
       // 수쿠스이노의 지정 원(300)보다 약간 낮다. 제 주위를 통째로 감는 기술이라 붙어 선 근거리
       // 편성이 가장 크게 맞는다.
       power: 260,
@@ -3465,6 +3468,133 @@ export const RELICS: RelicDef[] = [
       selfShieldMaxHpPercent: 3,
     },
     // 수쿠스이노와 같은 이유로 네 칸 모두 "없음"이다.
+    breakthroughEffects: { basic: { kind: "none" }, ultimate: { kind: "none" }, ferocity: { kind: "none" }, passive: { kind: "none" } },
+  },
+  {
+    /**
+     * **케찰코아틀루스.** 공멸이 풀어 놓은 셋째 폭주 병기이자 레이드 보스다.
+     *
+     * 수쿠스이노가 **턱**, 타보아가 **몸통으로 조이는 것**이라면 이쪽은 **하늘에서 내리꽂는 부리**다.
+     * 전투가 열리는 순간 표적에게 급강하해 한 번 멈춰 세우고(패시브), 세 번째 부리질마다 자세를
+     * 무너뜨리며(기본기), 궁극기는 전장을 한 줄로 뚫고 지나간다. 앞의 두 보스가 "다음 턱을 읽고
+     * 비킨다", "감기기 전에 끊는다"였다면 이쪽의 답은 **한 줄에 나란히 서지 않는 것**이다.
+     *
+     * 바람 속성의 전사이고, 세 보스가 속성을 겹치지 않아(풀·불·바람) 속성 상성이 고른 편성을 갈라 준다.
+     */
+    id: "quetzalcoatlus",
+    enemyOnly: true,
+    squad: "annihilation",
+    name: "케찰코아틀루스",
+    specimenNumber: "233",
+    projectName: "ANNIHILATION SIEGE 006",
+    excavationSite: "미국 텍사스 빅벤드 백악기 말 하천 퇴적층",
+    fossilRecord: "강변 이암층에서 속이 빈 목뼈 마디가 한 줄로 이어진 채 나왔다. 뼈벽이 종잇장만큼 얇아 몸을 공중에 띄우는 데 쓰였다고 추정했고, 날개 끝 자국만 남은 퇴적면이 함께 기록되었다.",
+    observationProfile: {
+      originYear: "약 6,800만 년 전",
+      // E.C.는 높은 곳에서 내려다보며 기회를 재는 성체형 인상을 분류하며, 실제 나이가 아니다.
+      restorationYear: "E.C. 18년",
+      lifeStage: "성체",
+      height: "2.15 m",
+      weight: "92 kg",
+    },
+    catalogSummary: "목과 날개막이 과하게 복원된 케찰코아틀루스 기반 대형 표본.",
+    unlockRecord: { status: "sealed", reason: "restricted" },
+    // 봉인된 적은 소속만 공개한다. squadNote·researcherTitle은 관계 기록 해제 전까지 넣지 않는다.
+    rarity: "SSR",
+    portraitAssetId: "quetzalcoatlus",
+    origin: "케찰코아틀루스",
+    element: "wind",
+    role: "warrior",
+    // 긴 부리로 멀리서 꽂는 몸이라 중거리다. 근거리 보스 둘과 서 있는 자리가 갈린다.
+    reachTier: "mid",
+    // 강인함은 다른 보스와 같이 보스 자리(`ENCOUNTER_ROLE.boss`)가 갖는다.
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
+    stats: {
+      /*
+       * **다른 두 보스와 같은 예산 안에서 모양만 다르다.** 날개로 나는 몸이라 방어가 가장 얇고,
+       * 그만큼 저항과 공격에 얹었다 — 물리로 미는 편성이 가장 쉽게 뚫고, 마법 딜러는 수쿠스이노보다는
+       * 오래 친다. 주문력은 쓰는 스킬이 없어 0이다.
+       *
+       * 체력은 판에 서지 않는다 — 시즌 보스로 설 때의 몸은 난이도의 몸에서 나온다
+       * (`raidBossDef` → `RaidDifficultySpec.bodyHp`).
+       */
+      hp: 2800,
+      def: 126,
+      res: 152,
+      atk: 200,
+      ap: 0,
+      /*
+       * **세 보스 중 가장 빠르다.** 그래도 로스터 아래쪽이라 한 대는 무겁고 사이는 길다. 날아다니는
+       * 몸이 느리면 이름값을 못 하므로 이동은 타보아보다 한 뼘 위에 둔다.
+       */
+      attackSpeed: 48,
+      moveSpeed: 50,
+      critChance: 8,
+      critDamage: 150,
+      energyGain: 30,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    /*
+     * **폭풍의 날갯짓.** 폭주에 드는 순간 다음 한 방이 곧바로 자세를 무너뜨리고, 맞은 쪽은 벽까지 날아간다.
+     * 파치의 폭주와 같은 공용 계약(`knockbackSlam`)이다 — 보스 전용 배율을 만들지 않는다.
+     */
+    ferocityTrait: { name: "폭풍의 날갯짓", effectId: "knockbackSlam", loadsStatusCycleOnEntry: true, seconds: 1.1, speed: 1800, bounces: 2 },
+    /*
+     * **급강하 사냥.** 전투가 열리고 표적이 중거리 안에 들어오면 그 자리로 내리꽂아 한 번 멈춰 세운다.
+     * 렉시아의 달려들기와 같은 공용 계약(`openingCharge`)이고, 치명타 가산은 필드 하나로 적는다.
+     *
+     * 회복은 주지 않는다 — 시즌 게이지를 되돌리지 않는다(다른 보스와 같은 이유).
+     */
+    passive: {
+      id: "quetzalcoatlus-passive",
+      name: "급강하 사냥",
+      kind: "openingDive",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      value: 0,
+      criticalChancePercent: 25,
+      openingCharge: { withinReachTier: "mid", stunSeconds: 1 },
+      // 전용 분기(`passiveDescription`)가 문장을 짓는다. 이 원문은 표시되지 않는 데이터 문서용 사본이다.
+      desc: "전투가 열리면 표적에게 급강하해 기절시키고, 치명타 확률이 오른다.",
+    },
+    basic: {
+      id: "quetzalcoatlus-basic",
+      name: "창날 부리",
+      power: 125,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+      /*
+       * **세 번째 부리질이 자세를 무너뜨린다.** 매 타격이 행동을 끊으면 전투가 아니라 구속이 되고, 주기로
+       * 끊으면 "세 번째에 온다"를 읽고 비킬 수 있다(수쿠스이노의 네 번째 턱과 같은 이유다).
+       */
+      statusEffectEvery: 3,
+      statusEffects: [{ kind: "stagger", seconds: 1 }],
+    },
+    ultimate: {
+      id: "quetzalcoatlus-ult",
+      name: "폭풍 강하",
+      power: 270,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      cost: 100,
+      /*
+       * **한 줄로 뚫고 지나간다.** 원을 지정하는 수쿠스이노, 제 주위를 감는 타보아와 달리 통로 하나가
+       * 범위라 나란히 선 편성이 통째로 맞고 흩어져 선 편성은 한둘만 맞는다. 거리는 이동 속도에서 나온다.
+       */
+      targeting: "chargeLine",
+      radius: 130,
+      // 거리는 이동 속도에서 나온다(`chargeReachMultiplier` 기준 1). 이 몸은 로스터 아래쪽 발이라 그대로는 한 뼘도
+      // 못 나아가므로 **길게 내리꽂는 기술**이 되도록 배율로 벌린다 — 전장 폭의 절반쯤이다.
+      chargeReachMultiplier: 6,
+      statusEffects: [{ kind: "stun", seconds: 1.5 }],
+      // 회복 대신 그 판 안에서만 남는 보호막을 궁극기 때만 조금 두른다(타보아와 같은 이유).
+      selfShieldMaxHpPercent: 3,
+    },
+    // 다른 보스와 같은 이유로 네 칸 모두 "없음"이다.
     breakthroughEffects: { basic: { kind: "none" }, ultimate: { kind: "none" }, ferocity: { kind: "none" }, passive: { kind: "none" } },
   },
   {

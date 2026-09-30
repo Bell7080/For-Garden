@@ -674,3 +674,22 @@ export const TABOA_SD_METADATA: Omit<PuppetAsset, "url"> = {
   content: { left: 119, top: 13, right: 1135, bottom: 1241 },
   joints: { center: [648, 560], head: [572, 472], eyes: null, feet: [[509, 1262], [734, 1251]] },
 };
+
+/**
+ * **케찰코아틀루스 전신.** 공멸이 풀어 놓은 셋째 폭주 병기이자 셋째 레이드 보스다.
+ *
+ * 값은 ZIP 안 WebP의 실제 크기와 alpha > 16 경계를 직접 재서 적었다. 앞선 두 보스와 캔버스가
+ * 달라(1122×1402) 그 값을 옮겨 오지 않는다.
+ */
+export const QUETZALCOATLUS_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1122, imageHeight: 1402,
+  content: { left: 11, top: 78, right: 1108, bottom: 1349 },
+  joints: { center: [574, 318], head: [568, 248], eyes: [[551, 249], [593, 225]], feet: [[424, 1387], [782, 1494]] },
+};
+
+/** 케찰코아틀루스 전투 SD. */
+export const QUETZALCOATLUS_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254, imageHeight: 1254,
+  content: { left: 28, top: 34, right: 1226, bottom: 1220 },
+  joints: { center: [662, 621], head: [637, 513], eyes: null, feet: [[638, 1226], [812, 1205]] },
+};

@@ -3831,7 +3831,7 @@ describe("노도니아의 프로젝트 REVERIE", () => {
     expect(nodonia.hp - wounded).toBeCloseTo(nodonia.maxHp * elation.maxHpRegenPercentPerStack * 3 / 100, 5);
   });
 
-  it("타보아의 「똬리 속으로」는 폭주에 드는 순간 반경 안의 적을 몸 앞으로 끌어온다", () => {
+  it("타보아의 「대식가의 식탁」는 폭주에 드는 순간 반경 안의 적을 몸 앞으로 끌어온다", () => {
     const state = createSkirmish([getRelic("anky"), getRelic("rex"), getRelic("nodonia")], [getRelic("taboa")], ARENA);
     const [hitter, near, far, taboa] = state.fighters;
     const trait = getRelic("taboa").ferocityTrait;

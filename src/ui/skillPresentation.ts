@@ -433,6 +433,7 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
   // 주기만 적는다. 어디로 가는지(가장 약해진 적)와 한 방이 확정 치명타라는 것은 문장이 갖고,
   // 그 한 방의 세기는 치명타 피해가 이미 말한다.
   if (passive.kind === "stalkerBlink") return t("skill.passive.stalkerBlink", { seconds: passive.value });
+  if (passive.kind === "openingDive" && passive.openingCharge !== undefined) return t("skill.passive.openingCharge", { seconds: passive.openingCharge.stunSeconds });
   if (passive.kind === "basicHitAttackSpeedStack") return t("skill.passive.basicHitAttackSpeedStack", { value: passive.value });
   if (passive.kind === "farthestFocus") {
     // 겹당 무엇이 얼마나 오르는지는 전부 태그가 말한다 — 쓰는 개체가 하나뿐인 규칙어라

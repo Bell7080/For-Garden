@@ -49,10 +49,10 @@ export const WELCOME_SPARKLE = {
   area: { left: 60, right: 1020, top: 430, bottom: 1230 },
   size: { min: 16, max: 42 },
   /**
-   * 분홍 · 금빛 · 하늘빛 · 연보라 — 방의 원화 색에서 골랐다. 벽이 밝은 크림빛이라 겹쳐 밝아지는
+   * 장미 · 금빛 · 연보라 · 와인 — 방의 원화(버건디 리본·금 장식·보라 술)에서 골랐다. 벽이 밝은 크림빛이라 겹쳐 밝아지는
    * 합성은 벽에 묻혀 사라지므로 보통 합성에 채도를 조금 올린 색을 쓴다.
    */
-  colors: [0xff8fc4, 0xffc93c, 0x6fc8ff, 0xc39bff],
+  colors: [0xf2708f, 0xf5b942, 0xb586e8, 0xd9506f],
   alpha: 0.95,
   duration: { min: 900, max: 1700 },
   gap: { min: 200, max: 1400 },

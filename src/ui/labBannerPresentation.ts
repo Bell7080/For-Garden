@@ -31,10 +31,10 @@ export interface BannerToneStyle {
  *
  * - 상시(화석): 화석과 모래의 따뜻한 상아빛 — 늘 있는 판이라 들뜨지 않게.
  * - 한정(호박석): 호박의 금빛에서 다홍으로 — 가장 화려하다.
- * - 첫 복원: 새로 시작하는 판이라 맑은 민트·하늘빛.
+ * - 첫 복원: 모집 원화(크림 벽·버건디 리본·금 장식)에서 고른 크림 → 장미 → 와인빛. 한정의 금빛·상시의 상아빛과 갈린다.
  */
 export const BANNER_TONE: Record<BannerTone, BannerToneStyle> = {
-  welcome: { gradient: ["#effffb", "#8ef0d8", "#3aa7c9"], accent: 0x7fe3d0, tagFill: 0x1f8f9c },
+  welcome: { gradient: ["#fff3e6", "#f7b6c6", "#c2456a"], accent: 0xf29ab2, tagFill: 0x9c3552 },
   standard: { gradient: ["#fffaf0", "#f1dcae", "#b98a4a"], accent: 0xe8c68a, tagFill: 0x8a6331 },
   limited: { gradient: ["#fff6cc", "#ffc247", "#e2582c"], accent: 0xffc247, tagFill: 0xc8452f },
 };

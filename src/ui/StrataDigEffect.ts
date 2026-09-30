@@ -3,6 +3,7 @@ import { motionPolicy } from "../core/settings";
 import { session } from "../state/session";
 import { UI_ICON } from "./icons";
 import { COLOR } from "./theme";
+import { PICKAXE_ORIGIN, pickaxePoses } from "./pickaxeSwing";
 
 /** 서버 응답과 정확히 맞물릴 수 있도록 충돌과 전체 종료를 따로 공개한다. */
 export interface StrataDigPlayback {
@@ -53,32 +54,40 @@ export class StrataDigEffect {
   private impactResolve: () => void = () => undefined;
   private finishResolve: () => void = () => undefined;
 
-  constructor(private readonly scene: Phaser.Scene, private readonly x: number, private readonly y: number, private readonly cellSize: number) {
+  /** 세 자세. 칸 가운데에 날 끝이 닿도록 손 자리를 거꾸로 구한다. */
+  private readonly poses: ReturnType<typeof pickaxePoses>;
+
+  constructor(private readonly scene: Phaser.Scene, x: number, y: number, private readonly cellSize: number) {
     this.layer = scene.add.container(x, y).setDepth(1500);
     this.fx = scene.add.container(x, y).setDepth(1499);
-    this.pickaxe = scene.add.image(0, 0, UI_ICON.pickaxe)
-      .setDisplaySize(cellSize * 0.78, cellSize * 0.78).setTint(COLOR.archaeologyMetal);
+    const display = cellSize * 1.05;
+    // 원점이 쥔 곳이라 몸통이 아니라 **손을 축으로** 돌아간다 — 날이 호를 그리며 칸을 후려친다.
+    this.pickaxe = scene.add.image(0, 0, UI_ICON.pickaxe).setOrigin(PICKAXE_ORIGIN.x, PICKAXE_ORIGIN.y).setDisplaySize(display, display);
     this.layer.add(this.pickaxe);
+    this.poses = pickaxePoses({ x, y }, cellSize, display);
     // 처음부터 또렷하다. 옅게 들어오는 단계가 없으므로 잔상도 없다.
-    this.layer.setPosition(x + cellSize * 0.42, y - cellSize * 0.5).setAngle(-38);
+    this.layer.setPosition(this.poses.rest.x, this.poses.rest.y).setAngle(this.poses.rest.angle);
   }
 
-  /** 젖힘 → 내려꽂기 → 충돌(섬광·금·조각·떨림) → 즉시 퇴장. 두 Promise 이정표를 돌려준다. */
+  /** 젖힘 → 후려치기 → 충돌(섬광·금·조각·떨림) → 즉시 퇴장. 두 Promise 이정표를 돌려준다. */
   play(): StrataDigPlayback {
     const reduced = session.settings.accessibility.reduceMotion;
     const timing = reduced ? TIMING.reduced : TIMING.default;
     const impact = new Promise<void>((resolve) => { this.impactResolve = resolve; });
     const finished = new Promise<void>((resolve) => { this.finishResolve = resolve; });
-    const size = this.cellSize;
+    const { raised, strike } = this.poses;
 
-    // 젖힘: 위로 살짝 더 들어 올려 내려꽂는 힘을 모은다.
-    this.tween({ targets: this.layer, x: this.x + size * 0.5, y: this.y - size * 0.66, angle: -62,
-      duration: timing.windup, ease: "Quad.Out" });
+    // 젖힘: 손이 위·뒤로 물러나며 머리가 뒤로 넘어간다. 힘을 모으는 박자라 감속한다.
+    this.tween({ targets: this.layer, x: raised.x, y: raised.y, angle: raised.angle, duration: timing.windup, ease: "Quad.Out" });
     this.timer(timing.windup, () => {
-      // 몸통과 날을 함께 돌린다. 가속만 있고 감속이 없어 부딪히는 순간 가장 빠르다.
-      this.tween({ targets: this.layer, x: this.x + size * 0.06, y: this.y - size * 0.06, angle: 46,
-        duration: timing.swing, ease: "Cubic.In",
-        onComplete: () => { this.impactResolve(); this.burst(reduced, timing.burst); } });
+      // 손을 축으로 92도를 한 번에 돌린다. 가속만 있고 감속이 없어 날이 닿는 순간이 가장 빠르다.
+      this.tween({ targets: this.layer, x: strike.x, y: strike.y, angle: strike.angle, duration: timing.swing, ease: "Cubic.In",
+        onComplete: () => {
+          this.impactResolve(); this.burst(reduced, timing.burst);
+          // 박히며 튕기는 반동: 손이 살짝 튕겨 오른다.
+          this.tween({ targets: this.layer, angle: strike.angle + 7, x: strike.x + this.cellSize * 0.03, y: strike.y - this.cellSize * 0.04,
+            duration: Math.min(50, timing.hold), ease: "Quad.Out" });
+        } });
     });
     // 박힌 채 한 박자 멈췄다가 곧바로 사라진다 — 흐려지지도 날아가지도 않는다. 조각은 제 수명을 마저 산다.
     this.timer(timing.windup + timing.swing + timing.hold, () => this.layer.setVisible(false));

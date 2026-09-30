@@ -4,7 +4,7 @@ import { strataLegend } from "../../src/core/strataLegend";
 import { createStrataBoard, digStrataTile, strataBoardHaul, strataBoardView, strataHaulKey, strataRuneRarityOdds } from "../../src/core/strataDig";
 import { RUNE_TRAIT_ITEMS } from "../../src/data/runeTraits";
 import { STRATA_LAYERS, STRATA_RUNE_TILES, type StrataZoneTone } from "../../src/data/strataLayers";
-import { STRATA_LEGEND, STRATA_BOARD, strataBoardFrame, strataHaulLayout, strataLegendFrame } from "../../src/ui/strataBoardLayout";
+import { STRATA_LEGEND, STRATA_BOARD, STRATA_STAGE, strataBoardFrame, strataBracketBoxes, strataHaulLayout, strataLegendFrame, strataStageFrame } from "../../src/ui/strataBoardLayout";
 import { STRATA_FOG_TONE } from "../../src/ui/strataTones";
 import { strataRewardTier } from "../../src/ui/strataRewardPopStyle";
 
@@ -137,10 +137,10 @@ describe("안개 밭", () => {
     // 청록 구역 한가운데는 짙고 흙빛 쪽으로 갈수록 서서히 옅어진다.
     expect(values[Math.floor(resolution * 0.9)]).toBeGreaterThan(0.85);
     const middle = values.filter((value) => value > 0.1 && value < 0.9).length;
-    expect(middle).toBeGreaterThan(resolution * 0.5);
+    expect(middle).toBeGreaterThanOrEqual(resolution * 0.25);
     // 조각 사이 최대 변화가 한 칸 계단(1)보다 훨씬 부드럽다.
     const steps = values.slice(1).map((value, x) => Math.abs(value - values[x]));
-    expect(Math.max(...steps)).toBeLessThan(0.35);
+    expect(Math.max(...steps)).toBeLessThan(0.5);
   });
 
   it("은 판 칸의 안개를 걷어 낸다", () => {
@@ -215,5 +215,46 @@ describe("판 옆 범례와 전리품 배치", () => {
       expect(x + layout.frame / 2).toBeLessThanOrEqual(1080);
       if (index > 0) expect(x - layout.xs[index - 1]).toBeGreaterThanOrEqual(layout.frame);
     });
+  });
+});
+
+describe("안개 경계선", () => {
+  it("은 구역 경계에서 가장 밝고 짙어 어디까지가 한 구역인지 읽힌다", () => {
+    const columns = 6; const rows = 3; const resolution = 16;
+    const tone: StrataZoneTone[] = Array.from({ length: columns * rows }, (_, index) => (index % columns < 3 ? "teal" : "soil"));
+    const none = tone.map(() => false);
+    const pixels = composeStrataFog(strataFogFields({ columns, rows, toneOfTile: tone, revealed: none, resolution }), STRATA_FOG_TONE);
+    const width = columns * resolution; const y = Math.floor(rows * resolution / 2);
+    const at = (x: number): { alpha: number; red: number } => ({ alpha: pixels[(y * width + x) * 4 + 3], red: pixels[(y * width + x) * 4] });
+    const boundary = 3 * resolution; // 청록 3칸이 끝나는 자리
+    const edge = at(boundary); const inside = at(boundary - 2 * resolution);
+    expect(edge.alpha).toBeGreaterThan(inside.alpha);
+    expect(edge.red).toBeGreaterThan(inside.red);
+    // 바깥(흙빛 쪽 깊은 곳)에는 안개가 없다.
+    expect(at(boundary + 2 * resolution).alpha).toBeLessThan(10);
+  });
+});
+
+describe("발굴판 무대 장식", () => {
+  const overlap = (a: { left: number; right: number; top: number; bottom: number }, b: { left: number; right: number; top: number; bottom: number }): boolean =>
+    a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+
+  it.each([[5, 5], [6, 5], [5, 6], [6, 6]])("%d×%d 판의 모서리 표식은 판 테두리·범례·굴착 게이지와 겹치지 않는다", (columns, rows) => {
+    const frame = strataBoardFrame(columns, rows, 1080);
+    const stage = strataStageFrame(frame, 1080);
+    const outer = STRATA_STAGE.frameOuter;
+    const boardBox = { left: frame.centerX - frame.width / 2 - outer, right: frame.centerX + frame.width / 2 + outer, top: frame.centerY - frame.height / 2 - outer, bottom: frame.centerY + frame.height / 2 + outer };
+    const legend = strataLegendFrame(frame, 4, 1080);
+    const legendBox = { left: legend.left, right: legend.left + legend.width, top: legend.top, bottom: legend.top + legend.height };
+    // 굴착 게이지 판(장면 상수와 같은 값): 가운데 y 284, 높이 92.
+    const gaugeBox = { left: 0, right: 1080, top: 284 - 46, bottom: 284 + 46 };
+    for (const bracket of stage.brackets) {
+      for (const box of strataBracketBoxes(bracket)) {
+        expect(overlap(box, boardBox), "판 테두리").toBe(false);
+        expect(overlap(box, legendBox), "범례").toBe(false);
+        expect(box.left).toBeGreaterThanOrEqual(0); expect(box.right).toBeLessThanOrEqual(1080);
+      }
+    }
+    expect(stage.top).toBeGreaterThanOrEqual(gaugeBox.bottom - STRATA_STAGE.gap - 1);
   });
 });

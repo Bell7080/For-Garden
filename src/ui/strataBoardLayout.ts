@@ -138,3 +138,52 @@ export function strataHaulLayout(count: number, screenWidth: number, preferred =
   const start = screenWidth / 2 - ((n - 1) * gap) / 2;
   return { xs: Array.from({ length: n }, (_, index) => start + index * gap), frame };
 }
+
+/**
+ * 발굴판 무대의 장식 자리.
+ *
+ * 판에는 이미 두 겹의 테두리(굵은 바깥선 + 안쪽 가는 선)와 그림자가 있고, 옆에는 범례 판과 위에는 굴착
+ * 게이지 판이 선다. 무대의 모서리 표식을 그 위에 그대로 얹으면(판 왼쪽 위를 표식 하나가 가로지르던 때가
+ * 있었다) 장식끼리 겹쳐 지저분하다. 그래서 **표식은 판 테두리 바깥, 범례·게이지 판 사이의 빈 띠에만** 앉힌다.
+ */
+export const STRATA_STAGE = {
+  /** 판 바깥 테두리(굵은 선 + 선 굵기의 반)가 판 가장자리에서 밖으로 나가는 거리. */
+  frameOuter: 12,
+  /** 표식 줄기의 길이와 굵기, 무대 가장자리에서 안쪽으로 들어간 거리. */
+  bracketReach: 40, bracketStroke: 4, bracketInset: 4,
+  /** 판 윗변·밑변에서 무대 가장자리까지. 표식의 가로줄이 판 테두리와 떨어질 만큼이다. */
+  marginY: 32,
+  /** 굴착 게이지 판이 무대 위로 튀어나오지 않도록 비워 두는 띠. */
+  gap: 2,
+} as const;
+
+export interface StrataStageFrame {
+  left: number; right: number; top: number; bottom: number;
+  /** 표식 네 곳: 꺾이는 점과 두 줄기가 뻗는 방향(±1). */
+  brackets: Array<{ x: number; y: number; dx: 1 | -1; dy: 1 | -1 }>;
+}
+
+/** 무대의 사각형과 표식 자리. 화면 가장자리에 붙어 판·범례와 어떤 장식도 겹치지 않는다. */
+export function strataStageFrame(frame: StrataBoardFrame, screenWidth: number): StrataStageFrame {
+  const left = 0; const right = screenWidth;
+  const top = frame.centerY - frame.height / 2 - STRATA_STAGE.marginY;
+  const bottom = frame.centerY + frame.height / 2 + STRATA_STAGE.marginY;
+  const x0 = left + STRATA_STAGE.bracketInset; const x1 = right - STRATA_STAGE.bracketInset;
+  const y0 = top + STRATA_STAGE.bracketInset; const y1 = bottom - STRATA_STAGE.bracketInset;
+  return { left, right, top, bottom, brackets: [
+    { x: x0, y: y0, dx: 1, dy: 1 }, { x: x1, y: y0, dx: -1, dy: 1 },
+    { x: x0, y: y1, dx: 1, dy: -1 }, { x: x1, y: y1, dx: -1, dy: -1 },
+  ] };
+}
+
+/** 표식 한 곳이 차지하는 상자 둘 — 가로 줄기와 세로 줄기. 「ㄱ」 자라 묶음 상자로 재면 빈 모서리까지 겹쳐 센다. */
+export function strataBracketBoxes(bracket: StrataStageFrame["brackets"][number]): Array<{ left: number; right: number; top: number; bottom: number }> {
+  const half = STRATA_STAGE.bracketStroke / 2; const reach = STRATA_STAGE.bracketReach;
+  const span = (a: number, b: number): [number, number] => [Math.min(a, b), Math.max(a, b)];
+  const [hl, hr] = span(bracket.x - half, bracket.x + bracket.dx * reach);
+  const [vt, vb] = span(bracket.y - half, bracket.y + bracket.dy * reach);
+  return [
+    { left: hl, right: hr, top: bracket.y - half, bottom: bracket.y + half },
+    { left: bracket.x - half, right: bracket.x + half, top: vt, bottom: vb },
+  ];
+}

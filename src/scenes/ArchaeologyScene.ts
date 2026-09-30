@@ -32,7 +32,7 @@ import { KeywordManager } from "../managers/KeywordManager";
 import { PopupLayer } from "../ui/PopupLayer";
 import { openRuneTraitReroll } from "../ui/RuneTraitPopup";
 import { openRuneTraitOdds } from "../ui/RuneTraitOddsPopup";
-import { coverSourceCrop, STRATA_ART, STRATA_BOARD, STRATA_LEGEND, strataBoardFrame, strataCropPlacement, strataHaulLayout, strataLayerTextureKey, strataLegendFrame, strataTileCenter, strataTileCrop, type ScreenRect, type SourceCropRect, type StrataBoardFrame } from "../ui/strataBoardLayout";
+import { coverSourceCrop, STRATA_ART, STRATA_BOARD, STRATA_LEGEND, STRATA_STAGE, strataBoardFrame, strataCropPlacement, strataHaulLayout, strataLayerTextureKey, strataLegendFrame, strataStageFrame, strataTileCenter, strataTileCrop, type ScreenRect, type SourceCropRect, type StrataBoardFrame } from "../ui/strataBoardLayout";
 import { StrataRewardPop } from "../ui/StrataRewardPop";
 import { STRATA_REWARD_POP, strataRewardTier } from "../ui/strataRewardPopStyle";
 import { addRuneFrame } from "../ui/runeIcons";
@@ -87,7 +87,7 @@ const ARCHAEOLOGY = {
    */
   chargePanel: { y: 352, width: 620, height: 126, icon: 58 },
   /** 진행 중인 판 위에 서는 남은 발굴 횟수 판. 같은 양식을 조금 줄여 쓴다. */
-  digsPanel: { y: 292, width: 620, height: 96, icon: 50 },
+  digsPanel: { y: 284, width: 620, height: 92, icon: 48 },
   /** 판 아래 전리품 줄과 그 아래 중간 종료. 둘 다 판 크기와 무관하게 같은 자리에 선다. */
   haul: { y: 1382, frame: 116, gap: 152 },
   /**
@@ -565,24 +565,21 @@ export class ArchaeologyScene extends Phaser.Scene {
    * 않고 유리 한 장과 얇은 윗변선, 모서리 표식만 쓴다(화면 전체의 규칙).
    */
   private paintBoardStage(frame: StrataBoardFrame): void {
-    const left = STRATA_BOARD.left - 14; const right = BASE_WIDTH - STRATA_BOARD.left + 14;
-    const top = frame.centerY - frame.height / 2 - 22; const bottom = frame.centerY + frame.height / 2 + 22;
-    const width = right - left; const height = bottom - top;
-    const stage = this.add.container((left + right) / 2, (top + bottom) / 2);
+    const spot = strataStageFrame(frame, BASE_WIDTH);
+    const width = spot.right - spot.left; const height = spot.bottom - spot.top;
+    const stage = this.add.container((spot.left + spot.right) / 2, (spot.top + spot.bottom) / 2);
     this.view.add(stage);
+    // 윗변 강조선을 긋지 않는다 — 굴착 게이지 판·판 테두리의 선과 나란히 달려 장식이 겹쳐 보였다. 표식이 무대의 유일한 장식이다.
     const shape = chipPoints(width, height, { bevel: { topLeft: 46, bottomRight: 46 } });
-    stage.add(drawLayer(this, 0, 0, shape, { fill: 0x04070a, alpha: 0.78, edge: COLOR.accent, edgeAlpha: 0.5 }));
+    stage.add(drawLayer(this, 0, 0, shape, { fill: 0x04070a, alpha: 0.78 }));
     // 판 뒤에서 번지는 빛: 겹쳐 밝아지는 합성이라 아주 옅게만 깐다.
     stage.add(this.add.ellipse(frame.centerX - stage.x, frame.centerY - stage.y, frame.width * 1.2, frame.height * 1.1, COLOR.accent, 0.05)
       .setBlendMode(Phaser.BlendModes.ADD));
-    const bracket = this.add.graphics().lineStyle(4, COLOR.accent, 0.72);
-    const reach = 40; const inset = 12;
-    const corners: ReadonlyArray<readonly [number, number, number, number]> = [
-      [-width / 2 + inset, -height / 2 + inset, 1, 1], [width / 2 - inset, -height / 2 + inset, -1, 1],
-      [-width / 2 + inset, height / 2 - inset, 1, -1], [width / 2 - inset, height / 2 - inset, -1, -1],
-    ];
-    for (const [cx, cy, dx, dy] of corners) {
-      bracket.moveTo(cx + dx * reach, cy).lineTo(cx, cy).lineTo(cx, cy + dy * reach);
+    // 모서리 표식은 판 테두리 바깥의 빈 띠에만 앉는다(`strataStageFrame` + 테스트가 겹침을 지킨다).
+    const bracket = this.add.graphics().lineStyle(STRATA_STAGE.bracketStroke, COLOR.accent, 0.72);
+    for (const corner of spot.brackets) {
+      const x = corner.x - stage.x; const y = corner.y - stage.y;
+      bracket.moveTo(x + corner.dx * STRATA_STAGE.bracketReach, y).lineTo(x, y).lineTo(x, y + corner.dy * STRATA_STAGE.bracketReach);
     }
     bracket.strokePath();
     stage.add(bracket);

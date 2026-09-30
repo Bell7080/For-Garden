@@ -161,8 +161,10 @@ export class LabScene extends Phaser.Scene {
     addRatesLink(this, LAB_CHROME.rates.x, LAB_CHROME.rates.y, t("lab.rates"), () => this.showRates());
 
     // 배너 전환 — 판때기가 아니라 옅은 유리 위의 꺾쇠(`addBannerArrow`).
-    addBannerArrow(this, LAB_TITLE.arrow.x, LAB_TITLE.arrow.y, -1, () => this.switchBanner(-1));
-    addBannerArrow(this, BASE_WIDTH - LAB_TITLE.arrow.x, LAB_TITLE.arrow.y, 1, () => this.switchBanner(1));
+    // **넘김 화살표는 모집판의 SD(첫 복원 연구의 SSR 넷)보다 위에서 손을 받는다.** 바깥 두 마리가 화살표
+    // 자리까지 걸쳐 서서, 같은 깊이면 SD가 먼저 눌려 배너가 넘어가지 않았다. 화면에서 배너를 넘기는 손이 먼저다.
+    addBannerArrow(this, LAB_TITLE.arrow.x, LAB_TITLE.arrow.y, -1, () => this.switchBanner(-1)).setDepth(LAB_CHROME.depth.arrows);
+    addBannerArrow(this, BASE_WIDTH - LAB_TITLE.arrow.x, LAB_TITLE.arrow.y, 1, () => this.switchBanner(1)).setDepth(LAB_CHROME.depth.arrows);
     this.bannerPages = this.add.graphics({ x: cx, y: LAB_TITLE.pages.y });
 
     this.oneButton = new ResearchPullButton(this, 300, LAB_CHROME.pull.y, {

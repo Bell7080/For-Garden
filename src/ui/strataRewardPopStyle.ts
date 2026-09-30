@@ -28,16 +28,16 @@ export function strataRewardTier(reward: { kind: StrataRewardKind; runeRarity?: 
 }
 
 export const STRATA_REWARD_POP = {
-  /** 떠오른 보상이 그 자리에 머무는 시간(ms). 전리품으로 들어가기 전에 눈으로 확인하는 시간이다. */
-  holdMs: 2000,
+  /** 칸에 박힌 보상이 그 자리에 머무는 시간(ms). 전리품으로 들어가기 전에 눈으로 확인하는 시간이다(길면 판이 가려진다). */
+  holdMs: 1000,
   /** 움직임 줄이기에서의 머무는 시간. */
-  holdReducedMs: 1000,
+  holdReducedMs: 600,
   /** 나타나는 데 걸리는 시간. */
   appearMs: 260,
   /** 전리품 칸으로 날아가는 시간. */
   flyMs: 400,
-  /** 액자 한 변 대비 떠오른 보상의 크기(칸 한 변 기준). */
-  sizeRatio: 1.05,
+  /** 칸 한 변 대비 보상 액자의 크기. 1보다 작아야 칸 안쪽에 박혀 이웃 칸을 덮지 않는다. */
+  sizeRatio: 0.88,
   /** 화려함별 반짝이는 조각 수와 섬광 세기. 섬광은 옅게 둔다(상한 0.6). */
   tier: {
     common: { sparks: 0, flash: 0, rays: 0, twinkles: 0 },

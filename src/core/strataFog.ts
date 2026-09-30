@@ -35,9 +35,14 @@ export interface StrataFog {
   fields: Partial<Record<StrataZoneTone, Float32Array>>;
 }
 
-/** 안개가 번지는 폭(칸 대비). 클수록 이웃 구역과 더 넓게 스며든다. */
-const FOG_SPREAD_CELLS = 0.55;
-const FOG_BLUR_PASSES = 3;
+/**
+ * 안개가 번지는 폭(칸 대비). 클수록 이웃 구역과 더 넓게 스며든다.
+ *
+ * 0.55칸으로 세 번 흐리던 때는 경계가 한 칸 넘게 풀려 어디까지가 한 구역인지 읽히지 않았다. 지금은
+ * 경계가 좁게만 풀리고, 그 자리를 밝은 경계선(`composeStrataFog`의 edge)이 또렷하게 긋는다.
+ */
+const FOG_SPREAD_CELLS = 0.2;
+const FOG_BLUR_PASSES = 2;
 
 /** 양 끝을 늘려 붙이는 상자 흐림 한 방향이다. 끝에서 옅어지지 않아 판 가장자리까지 안개가 찬다. */
 function boxBlur(source: Float32Array, width: number, height: number, radius: number, horizontal: boolean): Float32Array {
@@ -100,16 +105,22 @@ export interface FogTone { color: number; alpha: number }
  * 겹치는 곳은 알파를 더하되 1을 넘기지 않고, 색은 알파로 가중해 평균한다 — 이웃 구역이
  * 스며드는 자리에서 두 색이 섞여 보인다.
  */
-export function composeStrataFog(fog: StrataFog, tones: Readonly<Record<StrataZoneTone, FogTone>>, gain = 1): Uint8ClampedArray {
+export function composeStrataFog(fog: StrataFog, tones: Readonly<Record<StrataZoneTone, FogTone>>, gain = 1, edgeStrength = 0.9): Uint8ClampedArray {
   const out = new Uint8ClampedArray(fog.width * fog.height * 4);
   const entries = (Object.keys(fog.fields) as StrataZoneTone[]).map((tone) => ({ field: fog.fields[tone]!, tone: tones[tone] }));
   for (let pixel = 0; pixel < fog.width * fog.height; pixel += 1) {
     let alpha = 0; let red = 0; let green = 0; let blue = 0;
     for (const { field, tone } of entries) {
-      const a = field[pixel] * tone.alpha * gain;
+      const f = field[pixel];
+      // 경계선: 구역 안쪽(1)과 바깥(0)의 한가운데(0.5)에서 가장 강한 봉우리. 그 자리는 더 밝고 짙게 그어
+      // 어디까지가 이 구역인지 읽히게 한다. 안쪽 깊은 곳과 바깥에서는 0이라 채움의 결을 해치지 않는다.
+      const edge = Math.max(0, 1 - Math.abs(f - 0.5) * 3.2) * edgeStrength;
+      const a = (f + edge * 0.85) * tone.alpha * gain;
       if (a <= 0) continue;
       alpha += a;
-      red += ((tone.color >> 16) & 255) * a; green += ((tone.color >> 8) & 255) * a; blue += (tone.color & 255) * a;
+      const lift = edge * 0.55;
+      const r = ((tone.color >> 16) & 255); const g = ((tone.color >> 8) & 255); const b = (tone.color & 255);
+      red += (r + (255 - r) * lift) * a; green += (g + (255 - g) * lift) * a; blue += (b + (255 - b) * lift) * a;
     }
     if (alpha <= 0) continue;
     const at = pixel * 4;

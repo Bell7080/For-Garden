@@ -17,7 +17,7 @@ export const LAB_CHROME = {
    * 내려가, 비네트가 한 박자 늦게 **툭** 켜졌다. 다른 탭은 원화와 비네트가 처음부터 같은 순서로
    * 서서 함께 밝아진다.
    */
-  depth: { art: -30, incomingArt: -29, vignette: -28, panels: 5 },
+  depth: { art: -30, incomingArt: -29, vignette: -28, panels: 5, arrows: 6 },
   rates: { x: 36, y: 180 },
   pull: { y: NAV_TOP - 240, size: { width: 420, height: 150 }, oneTone: 0x7cc7ef, tenTone: 0xf58fb4 },
   pity: { y: NAV_TOP - 440, width: 560, height: 84 },

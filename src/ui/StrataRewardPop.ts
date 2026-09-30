@@ -21,10 +21,10 @@ export interface StrataRewardPopSpec {
 }
 
 /**
- * 캔 보상이 판 위로 떠올라 잠깐 머물다가 반짝이며 전리품으로 들어가는 한 벌의 연출이다.
+ * 캔 보상이 칸 안쪽에 박혀 잠깐 머물다가 반짝이며 전리품으로 들어가는 한 벌의 연출이다.
  *
  * **보상이 판에 그대로 남아 있으면서 전리품에도 쌓이면 어디에 있는 것인지 애매했다.** 그래서
- * 캔 칸에는 보상을 남기지 않고, 여기서 잠깐(2초) 보여 준 뒤 **한 곳으로만** 옮긴다. 판과 갈라
+ * 캔 칸에는 보상을 남기지 않고, 여기서 잠깐(1초) 보여 준 뒤 **한 곳으로만** 옮긴다. 판과 갈라
  * 보이도록 액자 뒤에 짙은 후광과 아래로 떨어지는 그림자를 깐다.
  *
  * 화려함(`tier`)은 화석·호박석·귀한 룬에서 커진다 — 조각은 마름모(네 갈래 별)이고 위로 뜨며,
@@ -54,12 +54,12 @@ export class StrataRewardPop {
 
     // 판과 갈라 주는 층: 넓고 짙은 후광 한 겹 + 아래로 깔리는 그림자. 액자보다 먼저 깐다.
     const halo = scene.add.graphics();
-    halo.fillStyle(COLOR.void, 0.34).fillPoints(this.diamond(size * 1.85, size * 1.3), true);
-    halo.fillStyle(COLOR.void, 0.4).fillPoints(this.diamond(size * 1.4, size * 1.0), true);
+    halo.fillStyle(COLOR.void, 0.34).fillPoints(this.diamond(size * 1.25, size * 0.95), true);
+    halo.fillStyle(COLOR.void, 0.4).fillPoints(this.diamond(size * 1.05, size * 0.8), true);
     // 액자와 같은 모양의 그림자를 바닥 쪽으로 어긋나게 깔아, 액자가 판에서 떠 있는 것으로 읽히게 한다.
     // 마름모를 따로 그리면 액자와 무관한 검은 조각이 판 위에 남는다.
     const cardShape = chipPoints(size, size, { bevel: { topLeft: size * 0.22, topRight: 0, bottomRight: size * 0.22, bottomLeft: 0 } });
-    const shadow = scene.add.container(size * 0.08, size * 0.1);
+    const shadow = scene.add.container(size * 0.035, size * 0.05);
     shadow.add(drawLayer(scene, size * 0.03, size * 0.05, cardShape, { fill: 0x000000, alpha: 0.32 }).setScale(1.1));
     shadow.add(drawLayer(scene, 0, 0, cardShape, { fill: 0x000000, alpha: 0.65 }));
     const frame = spec.buildFrame(size);
@@ -70,14 +70,14 @@ export class StrataRewardPop {
     body.setScale(reduced ? 1 : 0.3).setAlpha(reduced ? 1 : 0);
 
     // 등장: 튀어 오르며 커진다. 그림자는 떠오른 만큼 작고 옅어진다.
-    this.tween({ targets: body, scale: 1, alpha: 1, y: -size * 0.16, duration: reduced ? 1 : cfg.appearMs, ease: "Back.Out" });
+    this.tween({ targets: body, scale: 1, alpha: 1, y: 0, duration: reduced ? 1 : cfg.appearMs, ease: "Back.Out" });
     this.tween({ targets: halo, alpha: 1, duration: cfg.appearMs, ease: "Quad.Out" });
     this.tween({ targets: shadow, alpha: 1, scale: 1, duration: cfg.appearMs, ease: "Quad.Out" });
     if (spec.tier !== "common") this.celebrate(tier, glow, reduced);
 
     // 머무는 동안 살짝 떠 있다. 반복이 꺼진 설정에서는 가만히 선다.
     if (!reduced && motionPolicy(session.settings).nonEssentialRepeatFactor > 0) {
-      this.timer(cfg.appearMs, () => this.tween({ targets: body, y: -size * 0.2, duration: 620, yoyo: true, repeat: -1, ease: "Sine.InOut" }));
+      this.timer(cfg.appearMs, () => this.tween({ targets: body, y: -size * 0.025, duration: 700, yoyo: true, repeat: -1, ease: "Sine.InOut" }));
     }
     this.timer(reduced ? cfg.holdReducedMs : cfg.holdMs, () => this.leave(body, halo, shadow, glow, reduced));
     return this.done;
@@ -92,7 +92,7 @@ export class StrataRewardPop {
    */
   private celebrate(tier: (typeof STRATA_REWARD_POP.tier)[StrataRewardTier], glow: number, reduced: boolean): void {
     const size = this.spec.size;
-    const lift = -size * 0.16;
+    const lift = 0;
     const flash = this.scene.add.rectangle(0, lift, size * 1.6, size * 0.8, glow, tier.flash * (reduced ? 0.5 : 1))
       .setRotation(Math.PI / 4).setBlendMode(Phaser.BlendModes.ADD);
     this.root.addAt(flash, 0);

@@ -27,7 +27,7 @@ import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
 import { runeTexture } from "../ui/runeIcons";
 import { chipPoints, drawFrameVignette, drawLayer, drawVignette, HOLO, HoloBar } from "../ui/holo";
 import { addSectionTitle } from "../ui/SectionTitle";
-import { addFramedIcon } from "../ui/itemFrame";
+import { addFramedIcon, guideForIcon } from "../ui/itemFrame";
 import { KeywordManager } from "../managers/KeywordManager";
 import { PopupLayer } from "../ui/PopupLayer";
 import { openRuneTraitReroll } from "../ui/RuneTraitPopup";
@@ -161,6 +161,9 @@ function haulToRewardItems(haul: readonly StrataHaulEntry[]): RewardPopupItem[] 
     return icon === null ? [] : [{ icon, amount: entry.amount }];
   });
 }
+
+/** 탐사 횟수 칸의 그림 — 가방의 탐사권과 같은 키라 누르면 그 안내창이 열린다. */
+const STRATA_TICKET_ICON = "item-strata-ticket";
 
 export class ArchaeologyScene extends Phaser.Scene {
   private popups!: PopupLayer;
@@ -423,7 +426,17 @@ export class ArchaeologyScene extends Phaser.Scene {
     const shape = chipPoints(spot.width, spot.height, { bevel: { topLeft: spot.height * 0.34, bottomRight: spot.height * 0.34 } });
     panel.add(drawLayer(this, 0, 0, shape, { fill: 0x0b1116, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.8 }));
     const left = -spot.width / 2;
-    panel.add(this.add.image(left + 30 + spot.icon / 2, 0, icon).setDisplaySize(spot.icon, spot.icon));
+    const iconHolder = this.add.container(left + 30 + spot.icon / 2, 0, [this.add.image(0, 0, icon).setDisplaySize(spot.icon, spot.icon)]);
+    panel.add(iconHolder);
+    // 입장권 그림을 누르면 탐사권 안내가 열린다 — 가방의 소비품과 같은 그림·같은 창이다(`guideForIcon`).
+    const openGuide = guideForIcon(this, icon);
+    if (openGuide) {
+      const hit = this.add.rectangle(0, 0, spot.icon + 24, spot.icon + 24, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      hit.on("pointerdown", () => pressIn(iconHolder));
+      hit.on("pointerout", () => pressOut(iconHolder, "normal", { pop: false }));
+      hit.on("pointerup", () => { pressOut(iconHolder); openGuide(); });
+      iconHolder.add(hit);
+    }
     const textX = left + 44 + spot.icon;
     panel.add(this.add.text(textX, -spot.height * 0.2, label,
       textStyle({ role: "emphasis", size: Math.round(spot.height * 0.21), color: COLOR.inkDim })).setOrigin(0, 0.5));
@@ -440,7 +453,7 @@ export class ArchaeologyScene extends Phaser.Scene {
     const board = this.board;
     if (board === null) {
       // 단일 시작 버튼 대신 양축 유적 지도를 세우고, 서버가 확정한 상태를 노드에만 투영한다.
-      const charge = this.addCountPanel(ARCHAEOLOGY.chargePanel, t("archaeology.charge.label"));
+      const charge = this.addCountPanel(ARCHAEOLOGY.chargePanel, t("archaeology.charge.label"), STRATA_TICKET_ICON);
       this.chargeValueText = charge.value; this.chargeNoteText = charge.note;
       this.updateChargeCountdown();
       const focus = resolveArchaeologyFocusSite(

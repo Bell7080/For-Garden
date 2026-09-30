@@ -83,13 +83,15 @@ export function playSweepSkirmish(scene: Phaser.Scene, options: SweepSkirmishOpt
   let top = -height / 2;
   for (const layer of L.strata) {
     const bottom = top + height * layer.ratio;
-    band.add(drawLayer(scene, 0, 0, sweepBandSlab(top, bottom), { fill: layer.color, alpha: layer.alpha }));
+    // 층마다 그림자를 끈다 — `drawLayer`의 기본 그림자가 원화 **위에** 한 겹씩 더 깔려 전장이 탁해졌다.
+    band.add(drawLayer(scene, 0, 0, sweepBandSlab(top, bottom), { fill: layer.color, alpha: layer.alpha, shadow: false }));
     top = bottom;
   }
   // 땅 선 — 발이 서는 자리를 한 줄로 알린다.
   band.add(scene.add.rectangle(0, L.groundY, width - bevel * 2, 3, COLOR.accent, 0.35));
   band.add(drawFrameVignette(scene, 0, 0, width, height, { strength: L.vignette }));
-  band.add(drawLayer(scene, 0, 0, shape, { fill: 0x000000, alpha: 0, edge: COLOR.accent, edgeAlpha: 0.9, edgeWidth: 4 }));
+  // 윗변 선만 긋는 층이다. 그림자는 맨 아래 판이 이미 원화 **뒤에** 깔고 있으므로 여기서는 끈다.
+  band.add(drawLayer(scene, 0, 0, shape, { fill: 0x000000, alpha: 0, edge: COLOR.accent, edgeAlpha: 0.9, edgeWidth: 4, shadow: false }));
   addSectionTitle(scene, -width / 2 + 24, -height / 2 - 4, t("dungeon.sweep"), { parent: band });
   band.add(scene.add.text(L.count.x, L.count.y, t("dungeon.sweep.count", { count: options.count }), textStyle({ role: "display", size: L.count.size, color: COLOR.accentText }))
     .setOrigin(1, 0.5).setShadow(0, 3, "#000000", 4, false, true));

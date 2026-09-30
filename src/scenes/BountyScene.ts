@@ -19,6 +19,7 @@ import { DungeonLobby } from "../ui/DungeonLobby";
 import { addBackButton } from "../ui/IconButton";
 import { drawVignette } from "../ui/holo";
 import { PopupLayer } from "../ui/PopupLayer";
+import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { TopBar } from "../ui/TopBar";
 import { startScene } from "../ui/screenTransition";
@@ -74,9 +75,11 @@ export class BountyScene extends Phaser.Scene {
     this.selectedTierId = BOUNTY_TIERS.some(({ id }) => id === remembered) ? remembered : "";
     addSceneBackground(this, BACKGROUND.sortieBounty);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { strength: 0.7 });
-    new TopBar(this, 40, { profile: false });
+    new TopBar(this, 40, { profile: false, onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency) });
     addSectionTitle(this, DUNGEON_LOBBY.title.x, DUNGEON_LOBBY.title.y, t("bounty.title"));
     this.popups = new PopupLayer(this, 2200);
+    // 소탕 창의 스테미나·소탕권 그림도 같은 안내창으로 이어진다(`addFramedIcon`·`guideForIcon`).
+    bindCurrencyGuide({ scene: this, popups: this.popups });
     this.lobby = new DungeonLobby(this, {
       onSelectTier: (id) => { if (!this.busy) { this.selectedTierId = id; settingsManager.rememberDungeonTier("bounty", id); this.refresh(); } },
       onSortie: () => this.openParty(),

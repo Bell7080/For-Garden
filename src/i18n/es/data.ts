@@ -137,6 +137,8 @@ export default {
   "item.raid-select-ticket.description": "Abre una incursión para afrontarla con amigos. Tú eliges el jefe y la dificultad.",
   "item.sweep-ticket.name": "Ticket de barrido",
   "item.sweep-ticket.description": "Hace un barrido de una etapa de mazmorra ya superada, una vez, sin combatir.",
+  "item.strata-ticket.name": "Ticket de estudio",
+  "item.strata-ticket.description": "Recupera 1 intento de estudio de estratos de Arqueología.",
   "currency.raidSigil.name": "Sello de subyugación",
   "currency.raidSigil.lore": "Un certificado emitido según cuánto hiciste retroceder al jefe.",
   "currency.raidSigil.source.0": "Liquidación de una incursión terminada",

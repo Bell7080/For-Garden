@@ -137,6 +137,8 @@ export default {
   "item.raid-select-ticket.description": "Открывает рейд для игры с друзьями. Босса и сложность выбираете вы.",
   "item.sweep-ticket.name": "Билет зачистки",
   "item.sweep-ticket.description": "Один раз проводит зачистку уже пройденного этапа подземелья без боя.",
+  "item.strata-ticket.name": "Билет разведки",
+  "item.strata-ticket.description": "Восстанавливает 1 попытку разведки слоёв Археологии.",
   "currency.raidSigil.name": "Печать усмирения",
   "currency.raidSigil.lore": "Свидетельство о том, насколько вы оттеснили босса.",
   "currency.raidSigil.source.0": "Расчёт завершённого рейда",

@@ -23,6 +23,8 @@ export const ITEM_RASTER_ICON_ASSETS = [
   ["item-raid-ticket", "sprites/items/raid-ticket.webp"],
   ["item-raid-select-ticket", "sprites/items/raid-select-ticket.webp"],
   ["item-sweep-ticket", "sprites/items/sweep-ticket.webp"],
+  // 탐사권은 고고학의 탐사 횟수 칸과 같은 입장권 그림이다 — 두 자리가 같은 물건을 말한다.
+  ["item-strata-ticket", "sprites/ui/ticket.webp"],
   ["item-ancient-core", "sprites/items/ancient-core.webp"],
   ["item-refined-core", "sprites/items/refined-core.webp"],
   ["item-restoration-crystal", "sprites/items/restoration-crystal.webp"],

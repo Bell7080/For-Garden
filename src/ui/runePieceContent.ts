@@ -18,8 +18,16 @@ export const RUNE_PIECE_CONTENT: Readonly<Record<RunePart, { left: number; top: 
   2: { left: 0.2695, top: 0.4375, right: 0.7344, bottom: 0.8203 },
 };
 
+/**
+ * 액자 한 변 대비 조각이 차지하는 비율.
+ *
+ * 잘린 모서리와 안쪽 비네트에 그림이 닿지 않는 선에서 최대한 크게 잡는다. 1에 가까우면
+ * 조각의 뾰족한 끝이 액자 선을 넘고, 작으면 그림이 큰 칸 한가운데에 떠 액자만 커 보인다.
+ */
+export const RUNE_FRAME_FILL = 0.6;
+
 /** 조각 이미지를 세울 때 쓰는 세로 기준점. `prepare_icons.py`의 `RUNE_CENTER_Y`와 같다. */
-const ORIGIN_Y = 0.44;
+export const RUNE_PIECE_ORIGIN_Y = 0.44;
 
 /** 액자 한 칸에 조각을 앉히는 자리와 크기. */
 export interface RunePieceFit {
@@ -47,7 +55,19 @@ export function runePieceFit(part: RunePart, frameSize: number, fill: number): R
   return {
     size,
     x: -((box.left + box.right) / 2 - 0.5) * size,
-    y: -((box.top + box.bottom) / 2 - ORIGIN_Y) * size,
+    y: -((box.top + box.bottom) / 2 - RUNE_PIECE_ORIGIN_Y) * size,
     content: frameSize * fill,
   };
+}
+
+/**
+ * 그림 키가 룬 조각이면 그 자리(part)를 돌려준다(`rune-{등급}-{자리}`·`rune-empty-{자리}`).
+ *
+ * 재화 액자(`addFramedIcon`)는 그림 키만 받는다. 영수증·우편·임무처럼 룬을 그 액자로 세우는 자리가
+ * 캔버스를 통째로 넣으면 조각이 칸 한쪽으로 쏠려 작게 앉았다 — 가방의 룬 카드와 같은 그림이 경로마다
+ * 다른 크기로 섰다. 키에서 자리를 되짚어 같은 맞춤(`runePieceFit`)을 쓰게 한다.
+ */
+export function runePartOfTexture(textureKey: string): RunePart | undefined {
+  const match = /^rune-(?:uncommon|rare|epic|legendary|empty)-([012])$/.exec(textureKey);
+  return match ? (Number(match[1]) as RunePart) : undefined;
 }

@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { slideTabPage } from "./screenTransition";
 import { t, type TextKey } from "../i18n";
-import type { GameApi } from "../api/contracts";
+import { GameApiError, type GameApi } from "../api/contracts";
 import type { ItemCategory } from "../data/items";
 import { setDebugInventoryCategory, setDebugInventoryTextureKeys } from "../debug";
 import { DEFAULT_INVENTORY_SORT, INVENTORY_LAYOUT, InventoryManager, inventoryGridPosition, inventoryScrollMetrics, type InventoryDisplayItem, type InventorySort } from "../managers/InventoryManager";
@@ -284,9 +284,18 @@ export class InventoryPopup {
    * 양식이 아니라 짧은 결과 쪽지로 알린다.
    */
   private useConsumable(itemId: string): void {
+    const notice = (title: TextKey, text: string): void => {
+      this.popups.open({ width: 440, height: 250, title: t(title), dim: true }, (body) => body.add(this.scene.add.text(0, 0, text, textStyle({ role: "emphasis", size: 26, color: COLOR.accentText })).setOrigin(0.5)));
+    };
     void this.inventory.useConsumable(this.api, itemId).then((result) => {
-      this.popups.open({ width: 440, height: 250, title: t("inventory.useDone"), dim: true }, (body) => body.add(this.scene.add.text(0, 0, t("inventory.staminaGained", { amount: result.appliedAmount }), textStyle({ role: "emphasis", size: 26, color: COLOR.accentText })).setOrigin(0.5)));
+      const gained: TextKey = result.effect.kind === "restore_strata_charge" ? "inventory.strataChargeGained" : "inventory.staminaGained";
+      notice("inventory.useDone", t(gained, { amount: result.appliedAmount }));
       if (this.view) this.render(this.view);
+    }).catch((error: unknown) => {
+      // 가득 찬 채로 쓰면 아무것도 빠지지 않는다. 왜 쓰이지 않았는지만 짧게 말한다.
+      if (error instanceof GameApiError && error.code === "STRATA_CHARGE_FULL") notice("inventory.useFailed", t("inventory.strataChargeFull"));
+      else if (error instanceof GameApiError && error.code === "STAMINA_FULL") notice("inventory.useFailed", t("inventory.staminaFull"));
+      else console.error("소비품 사용 실패", error);
     });
   }
 }

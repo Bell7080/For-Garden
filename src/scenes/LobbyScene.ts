@@ -197,11 +197,31 @@ export class LobbyScene extends Phaser.Scene {
     consumeSceneEntry(this);
   }
 
+  /** 지난 로비가 남긴 판·뒤로가기 참조를 비운다. 그 객체들은 이미 씬 종료와 함께 사라졌다. */
+  private forgetPopups(): void {
+    this.sortieBackButton = undefined;
+    this.idleExcavationPopup = undefined;
+    this.excavationBackButton = undefined;
+    this.tradePopup = undefined;
+    this.tradeBackButton = undefined;
+    this.eventPopup = undefined;
+    this.eventBackButton = undefined;
+    this.inventoryPopup = undefined;
+    this.inventoryBackButton = undefined;
+    this.missionsPopup = undefined;
+    this.mailPopup = undefined;
+    this.playerProfilePopup = undefined;
+  }
+
   create(): void {
     // 이전 씬의 true를 지우고, 로비가 끝날 때도 다음 씬에 준비 상태가 새지 않게 한다.
     bindDebugReadyLifecycle(this.events);
     setDebugScene("lobby");
     this.popupLayer = new PopupLayer(this);
+    // Phaser는 씬 인스턴스를 다시 쓰므로 **지난 로비의 판 참조가 필드에 남는다.** 판 위에서 다른 씬으로
+    // 넘어가면(이벤트 카드 → 이벤트 화면) 닫힘 콜백이 돌지 않아, 돌아왔을 때 `??=`가 죽은 판을 다시
+    // 열려다 아무것도 세우지 못했다 — 이벤트 판이 두 번 다시 열리지 않았다. 새 로비는 빈손으로 시작한다.
+    this.forgetPopups();
     // 이 한 줄로 상단 재화 칸뿐 아니라 가방·무역·영수증의 재화 액자까지 같은 창으로 이어진다.
     bindCurrencyGuide({ scene: this, popups: this.popupLayer, onAction: (action) => this.handleCurrencyAction(action) });
     this.sortieSdPuppets.clear();

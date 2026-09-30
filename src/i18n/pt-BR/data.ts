@@ -137,6 +137,8 @@ export default {
   "item.raid-select-ticket.description": "Abre uma raide para enfrentar com amigos. Você escolhe o chefe e a dificuldade.",
   "item.sweep-ticket.name": "Tíquete de varredura",
   "item.sweep-ticket.description": "Faz uma varredura de uma etapa de masmorra já vencida, uma vez, sem batalha.",
+  "item.strata-ticket.name": "Tíquete de pesquisa",
+  "item.strata-ticket.description": "Recupera 1 tentativa de pesquisa de estratos da Arqueologia.",
   "currency.raidSigil.name": "Selo de subjugação",
   "currency.raidSigil.lore": "Um certificado emitido conforme o quanto você fez o chefe recuar.",
   "currency.raidSigil.source.0": "Acerto de uma raide encerrada",

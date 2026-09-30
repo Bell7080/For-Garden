@@ -64,6 +64,8 @@ export interface StageCompleteAction {
   readonly primary?: boolean;
   /** 지금은 갈 수 없는 길(스테미나가 모자란 다시 하기 등). 버튼은 서되 꺼져 있다. */
   readonly disabled?: boolean;
+  /** 나가기처럼 판을 떠나는 길. 글자만 붉게 선다. */
+  readonly danger?: boolean;
 }
 
 export interface StageCompletePopupOptions {
@@ -270,6 +272,7 @@ export class StageCompletePopup {
       const y = top + index * (DEFEAT_ACTIONS.height + DEFEAT_ACTIONS.gap);
       body.add(new Button(this.scene, 0, y, {
         width: DEFEAT_ACTIONS.width, height: DEFEAT_ACTIONS.height, label: action.label, fontSize: 30,
+        labelColor: action.danger ? COLOR.dangerText : undefined,
         // **고른 길을 먼저 알리고 그다음 닫는다.** 판은 화면 아무 곳이나 눌러도 닫히고 그
         // 닫힘이 "아무것도 고르지 않았다"는 기본 행선지를 부르므로, 닫기를 먼저 부르면 고른
         // 길과 기본 길이 같은 틱에 둘 다 선다.
@@ -288,6 +291,7 @@ export class StageCompletePopup {
       body.add(new Button(this.scene, x, CLEAR_ACTIONS.y, {
         width, height: CLEAR_ACTIONS.height, label: action.label, fontSize: CLEAR_ACTIONS.font,
         variant: action.primary ? "primary" : undefined,
+        labelColor: action.danger ? COLOR.dangerText : undefined,
         onClick: () => { action.onPress(); close(); },
       }).setEnabled(action.disabled !== true));
     });

@@ -91,6 +91,8 @@ export interface ButtonOptions {
   tilt?: number;
   /** 강조색을 바꾼다. 출격(금)과 성격이 다른 입구를 색으로 가를 때만 쓴다. */
   accentColor?: number;
+  /** 주 라벨의 글자색. 나가기처럼 되돌아가는 길을 붉게 알릴 때만 쓴다. */
+  labelColor?: string;
   /** 강조색과 함께 쓸 글자색. 넘기지 않으면 기본 잉크색이다. */
   accentTextColor?: string;
   /**
@@ -173,7 +175,7 @@ export class Button extends Phaser.GameObjects.Container {
     const fontSize = opts.fontSize ?? 36;
     const iconSize = fontSize * 1.35;
     const label = scene.add
-      .text(0, hasSub ? -14 : 0, opts.label, textStyle({ role: "display", size: fontSize }))
+      .text(0, hasSub ? -14 : 0, opts.label, textStyle({ role: "display", size: fontSize, ...(opts.labelColor ? { color: opts.labelColor } : {}) }))
       .setOrigin(0.5);
     plate.add(label);
     this.labelText = label;

@@ -2477,7 +2477,7 @@ export class BattleScene extends Phaser.Scene {
       reward: {
         kind: "defeat",
         actions: [
-          { label: t("stageComplete.exit"), onPress: () => { chosen = true; startScene(this, exitTo); } },
+          { label: t("stageComplete.exit"), danger: true, onPress: () => { chosen = true; startScene(this, exitTo); } },
         ],
       },
       replay: {
@@ -2523,7 +2523,7 @@ export class BattleScene extends Phaser.Scene {
           label: t("stageComplete.replay"), disabled: !canEnter,
           onPress: () => { chosen = true; this.replayContent({ content: "stage" }, toMap); },
         },
-        { label: t("stageComplete.exit"), onPress: () => undefined },
+        { label: t("stageComplete.exit"), danger: true, onPress: () => undefined },
       ];
       new StageCompletePopup(this, popups).open({
         clearActions,

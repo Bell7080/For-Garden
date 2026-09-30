@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { portraitCardZoom } from "./portraitPlacement";
 import { t, type TextKey } from "../i18n";
 import { profileAvatarContent, type PlayerProfileDisplay, type PublicProfileModifier } from "../state/playerProfile";
 import type { ContentId } from "../core/contentUnlock";
@@ -346,7 +347,7 @@ export class PlayerProfilePopup {
       if (!backdrop.active) return undefined;
       const crop = computeFaceBandFrame(asset, anchors.head, {
         width: showcase.width, height,
-        crop: spec.crop / ((asset.cardZoom ?? 1) * (asset.portraitZoom ?? 1)),
+        crop: spec.crop / portraitCardZoom(asset),
         headX: spec.headX, anchorY: spec.anchorY,
       });
       return bakeBandTexture(this.scene, source, { width: showcase.width, height }, crop, { shape: panel, from: 0, fade: spec.fade });

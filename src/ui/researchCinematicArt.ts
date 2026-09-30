@@ -1,4 +1,5 @@
 import type Phaser from "phaser";
+import { portraitCardZoom } from "./portraitPlacement";
 import type { PortraitAssetId } from "../core/types";
 import { computeFaceFrame, computeHeadCardFrame } from "../puppets/anchors";
 import { portraitAssetFor, withPuppetTexture } from "../puppets/assets";
@@ -46,7 +47,7 @@ function encode(canvas: HTMLCanvasElement): string {
  * 카드에 세울 전신 잘라내기.
  *
  * 그리드 카드와 같은 `fillRatio`·`headroom`·`cardTop`을 쓴다 — 정수리를 한 줄도 자르지 않고,
- * 등신이 낮은 원화는 제 `cardZoom`으로 되돌려 한 판에서 크기가 튀지 않게 한다.
+ * 얼굴 크기는 카드와 같은 공용 얼굴 규격(`portraitCardZoom`)으로 맞춰 한 판에서 크기가 튀지 않게 한다.
  */
 export async function bakeCinematicPortrait(
   scene: Phaser.Scene,
@@ -65,7 +66,7 @@ export async function bakeCinematicPortrait(
       const frame = computeHeadCardFrame(asset, anchors.head, {
         width,
         height,
-        fillRatio: 0.56 / ((asset.cardZoom ?? 1) * (asset.portraitZoom ?? 1)),
+        fillRatio: 0.56 / portraitCardZoom(asset),
         headroom: 0,
         cardTop: asset.cardTop,
       });
@@ -107,7 +108,7 @@ export async function bakeCinematicFace(
       const source = scene.textures.get(key).getSourceImage() as CanvasImageSource;
       const face = computeFaceFrame(asset, anchors.head, {
         size,
-        crop: FACE_CROP / ((asset.cardZoom ?? 1) * (asset.portraitZoom ?? 1)),
+        crop: FACE_CROP / portraitCardZoom(asset),
         anchorY: FACE_ANCHOR_Y,
       });
       const target = canvasOf(size, size);

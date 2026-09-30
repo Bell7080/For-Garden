@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { portraitCardZoom } from "./portraitPlacement";
 import type { RaidDto } from "../api/contracts";
 import { RAID_DIFFICULTY, RAID_SUMMON_DIFFICULTIES, type RaidDifficulty } from "../data/raid";
 import { formatCurrency } from "../core/formatCurrency";
@@ -420,7 +421,7 @@ async function loadFaceBand(
     if (!layer.active) return undefined;
     const crop = computeFaceBandFrame(asset, anchors.head, {
       width: artWidth, height,
-      crop: art.crop / ((asset.cardZoom ?? 1) * (asset.portraitZoom ?? 1)),
+      crop: art.crop / portraitCardZoom(asset),
       headX: art.headX, anchorY: art.anchorY,
     });
     return bakeBandTexture(scene, source, { width, height }, crop, { shape, from: art.from, fade: art.fade });

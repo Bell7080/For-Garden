@@ -38,7 +38,7 @@ export const TORIKA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1054,
   imageHeight: 1492,
   content: { left: 95, top: 69, right: 894, bottom: 1419 },
-  cardZoom: 0.82,
+  joints: { center: [603, 711], head: [609, 395], eyes: [[554, 416], [638, 446]], feet: [[353, 1376], [686, 1403]] },
   /** 로비 세로 비율: 메론 기준. 1.26 m — 등신이 낮아 상자에 맞추면 혼자 가장 크게 섰다. */
   lobbyZoom: 0.903,
 };
@@ -48,17 +48,16 @@ export const TORIKA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
  *
  * alpha > 16 경계는 178,23–972,1491이고, 관절은 중심1(467,454)·머리1(527,335)·
  * 눈1(472,312)·눈2(558,344)다. 기본 토리카 값을 복사하지 않고 같은 화면에서 나란히 비교했다.
- * `cardZoom` 0.792는 눈 간격의 카드 표시 크기를 기본 외형과 맞추고, `lobbyZoom` 0.834는 같은
- * 1.26 m 토리카의 눈–발끝 표시 길이를 맞춘다. 높은 중심 관절은 정보창 얼굴을 278px 내리므로
- * `portraitOffsetY`로 되돌린다. 머리 장식은 대칭 카드 홈 안에 들어 `cardHeadEscape`는 불필요하다.
+ * `lobbyZoom` 0.834는 같은 1.26 m 토리카의 눈–발끝 표시 길이를 맞춘다. 카드·정보창의 얼굴
+ * 크기와 눈높이는 공용 얼굴 규격(`FACE_STANDARD`)이 두 눈 관절에서 정한다. 머리 장식은 대칭 카드
+ * 홈 안에 들어 `cardHeadEscape`는 불필요하다.
  */
 export const TORIKA_SKIN_001_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1024,
   imageHeight: 1536,
   content: { left: 178, top: 23, right: 972, bottom: 1491 },
-  cardZoom: 0.792,
+  joints: { center: [467, 454], head: [527, 335], eyes: [[472, 312], [558, 344]], feet: [[723, 1381], [403, 1474]] },
   lobbyZoom: 0.834,
-  portraitOffsetY: -278,
 };
 
 /**
@@ -82,17 +81,7 @@ export const LEXIA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1054,
   imageHeight: 1492,
   content: { left: 15, top: 43, right: 1038, bottom: 1455 },
-  /*
-   * 카드 배율은 `content` **폭**으로 정해지는데, 렉시아는 낫 무기가 좌우로 크게 뻗어 그 폭이
-   * 캔버스를 거의 다 차지한다(1023 / 1054). 몸은 그만큼 넓지 않으므로 혼자 축소되어 얼굴이
-   * 다른 카드보다 한참 작아 보였다 — 눈 사이 거리로 재면 여섯 종 중앙값의 72%였다.
-   *
-   * 게다가 배율을 정한 그 무기는 **정작 잘라내기에서 버려진다.** 카드 크롭은 머리 관절 기준
-   * 327~899이고 무기는 15~327에 있어 화면에 나오지도 않는다. 그래서 개체별 보정이 맞다 —
-   * 무기가 화면 밖으로 나가는 만큼만 되돌린다. 값은 눈대중이 아니라 중앙값에 맞춰 계산했고
-   * (49.0 ÷ 35.4 ≒ 1.38), `tests/unit/puppetAnchors.test.ts`의 "카드 얼굴 크기"가 지킨다.
-   */
-  cardZoom: 1.38,
+  joints: { center: [629, 396], head: [613, 265], eyes: [[582, 265], [643, 236]], feet: [[498, 1426], [788, 1448]] },
   /** 로비 세로 비율: 메론 기준. 1.63 m. */
   lobbyZoom: 1.002,
 };
@@ -107,6 +96,7 @@ export const SEIRA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1085,
   imageHeight: 1450,
   content: { left: 273, top: 82, right: 950, bottom: 1450 },
+  joints: { center: [495, 557], head: [572, 250], eyes: [[544, 239], [597, 208]], feet: [[497, 1402], [649, 1438]] },
   // 뒷머리 뾰족 장식이 오른쪽으로 쏠려 카드 홈의 오른쪽 대각선 모서리에 걸렸다.
   cardHeadEscape: { right: 0.12 },
   /** 로비 세로 비율: 메론 기준. 1.74 m. */
@@ -119,8 +109,7 @@ export const LUKA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageHeight: 2446,
   // 원화의 후드·손·발·꼬리를 모두 포함한 가시 영역으로 발 높이와 화면 확대를 맞춘다.
   content: { left: 52, top: 44, right: 1683, bottom: 2404 },
-  // 코어 관절이 다른 원화보다 아래에 박혀 있어 정보창에서 혼자 내려앉아 보인다.
-  portraitOffsetY: -34,
+  joints: { center: [843, 639], head: [882, 419], eyes: [[832, 425], [960, 368]], feet: [[593, 1435], [446, 2336]] },
   /** 로비 세로 비율: 메론 기준. 1.62 m. */
   lobbyZoom: 0.999,
 };
@@ -130,6 +119,7 @@ export const STELLA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1024,
   imageHeight: 1536,
   content: { left: 23, top: 37, right: 1007, bottom: 1503 },
+  joints: { center: [581, 475], head: [549, 375], eyes: [[510, 386], [591, 357]], feet: [[542, 1433], [305, 1488]] },
   /** 로비 세로 비율: 메론 기준. 1.42 m. */
   lobbyZoom: 0.965,
 };
@@ -146,7 +136,7 @@ export const TIA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1086,
   imageHeight: 1448,
   content: { left: 25, top: 21, right: 1076, bottom: 1425 },
-  cardZoom: 1.12,
+  joints: { center: [548, 415], head: [518, 308], eyes: [[480, 317], [548, 265]], feet: [[248, 1231], [252, 1411]] },
   /** 로비 세로 비율: 메론 기준. 1.31 m. */
   lobbyZoom: 0.851,
 };
@@ -161,8 +151,7 @@ export const MERON_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1086,
   imageHeight: 1448,
   content: { left: 186, top: 10, right: 1031, bottom: 1440 },
-  // 코어 관절이 가시 영역의 25% 지점에 박혀 있어(다른 원화는 28~35%) 정보창에서 혼자 내려앉는다.
-  portraitOffsetY: -50,
+  joints: { center: [470, 369], head: [482, 270], eyes: [[439, 268], [507, 242]], feet: [[436, 1499], [493, 1397]] },
   // 로비 세로 비율의 기준(1.58 m)이라 보정이 없다. 다른 원화의 `lobbyZoom`이 이 크기를 향한다.
 };
 
@@ -178,8 +167,7 @@ export const PACHI_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1024,
   imageHeight: 1536,
   content: { left: 88, top: 8, right: 1009, bottom: 1515 },
-  // 배트를 어깨에 걸친 자세라 코어가 가시 영역의 19% 지점까지 올라와 있어 더 크게 올린다.
-  portraitOffsetY: -110,
+  joints: { center: [459, 292], head: [445, 199], eyes: [[420, 206], [480, 172]], feet: [[359, 1515], [365, 1655]] },
   /** 로비 세로 비율: 메론 기준. 1.55 m. */
   lobbyZoom: 0.924,
 };
@@ -196,6 +184,7 @@ export const MAKI_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1085,
   imageHeight: 1449,
   content: { left: 31, top: 65, right: 1073, bottom: 1392 },
+  joints: { center: [599, 457], head: [578, 315], eyes: [[528, 327], [620, 306]], feet: [[208, 1530], [853, 1542]] },
   /** 로비 세로 비율: 메론 기준. 1.62 m. */
   lobbyZoom: 1.048,
 };
@@ -219,6 +208,7 @@ export const DODI_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1086,
   imageHeight: 1448,
   content: { left: 100, top: 76, right: 986, bottom: 1352 },
+  joints: { center: [618, 489], head: [585, 370], eyes: [[528, 367], [632, 355]], feet: [[485, 1320], [600, 1339]] },
   // 오른쪽으로 뻗은 머리 깃털이 카드에서 대칭 홈의 오른쪽 대각선 모서리에 애매하게 걸렸다.
   cardHeadEscape: { right: 0.08 },
   /** 로비 세로 비율: 메론 기준. 토리카 원화와 같은 등신이다. */
@@ -236,6 +226,7 @@ export const METTE_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1054,
   imageHeight: 1492,
   content: { left: 67, top: 43, right: 1003, bottom: 1463 },
+  joints: { center: [514, 432], head: [520, 255], eyes: [[481, 277], [557, 243]], feet: [[574, 1377], [449, 1612]] },
   // 왼쪽으로 처진 후드 장식이 카드에서 대칭 홈의 왼쪽 대각선 모서리에 잘렸다.
   cardHeadEscape: { left: 0.12 },
   /** 로비 세로 비율: 메론 기준. 1.76 m — 가장 크다. */
@@ -281,6 +272,7 @@ export const KERIS_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1024,
   imageHeight: 1536,
   content: { left: 77, top: 35, right: 926, bottom: 1491 },
+  joints: { center: [537, 454], head: [546, 334], eyes: [[490, 330], [569, 361]], feet: [[417, 1492], [614, 1623]] },
   /** 로비 세로 비율: 메론 기준. 1.62 m. */
   lobbyZoom: 1.079,
 };
@@ -297,17 +289,7 @@ export const DELOPI_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1086,
   imageHeight: 1448,
   content: { left: 42, top: 27, right: 1062, bottom: 1426 },
-  /*
-   * 렉시아의 낫과 같은 이유의 보정이다. 카드 배율은 `content` **폭**으로 정해지는데, 델로피는
-   * 양옆으로 뿌린 카드가 캔버스를 거의 다 채운다(1020 / 1086). 몸은 그만큼 넓지 않으므로 혼자
-   * 축소되어 얼굴이 다른 카드의 70%로 앉았다.
-   *
-   * 값을 더 키우지 않는 이유는 등신이 낮아 머리가 크기 때문이다. 1.25를 넘으면 머리 위 여백이
-   * 자르기 높이의 0.42를 넘어 `MAX_HEAD_DROP_RATIO`(0.46)에 바짝 붙고, 1.35에서는 남은 여백이
-   * 3px까지 줄어 정수리가 홈 윗변에 닿는다. 1.2는 얼굴이 중앙값의 84%이면서 머리 드롭이
-   * 0.403이라 한계와 여유가 남는 자리이고, `tests/unit/puppetAnchors.test.ts`가 그 둘을 함께 지킨다.
-   */
-  cardZoom: 1.2,
+  joints: { center: [537, 394], head: [519, 324], eyes: [[496, 319], [556, 294]], feet: [[535, 1531], [1048, 1743]] },
   /** 로비 세로 비율: 메론 기준. 1.45 m. */
   lobbyZoom: 0.95,
 };
@@ -331,31 +313,12 @@ export const NODONIA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1024,
   imageHeight: 1536,
   content: { left: 13, top: 14, right: 1011, bottom: 1521 },
+  joints: { center: [520, 420], head: [484, 353], eyes: [[467, 344], [515, 327]], feet: [[491, 1971], [214, 1576]] },
   /**
    * 베일과 펼친 날개가 캔버스를 거의 다 채워(998 / 1024) 카드 배율이 그 폭으로 정해지는 바람에
    * 얼굴만 중앙값의 0.56배까지 줄었다 — 렉시아의 낫과 같은 함정이다. 게다가 이 원화는 얼굴
    * 자체도 작게 그려져 있어(눈 간격 51px, 엘라 74px) 되돌릴 폭이 더 크다.
    */
-  /**
-   * 카드 배율은 `cardZoom × portraitZoom`의 곱으로 정해진다. 정보창에서 되돌린 몫이 카드에도
-   * 함께 들어오므로, 카드에서 실제로 쓰는 배율(1.5)이 되도록 여기서 나눠 둔다 — 정보창 배율을
-   * 고치면 이 값도 함께 고쳐야 카드가 따라 움직이지 않는다.
-   */
-  cardZoom: 1.24,
-  /**
-   * 정보창 전신 배율.
-   *
-   * **크기의 기준은 얼굴이 아니라 몸이다.** 이 원화는 얼굴이 혼자 작아(눈 간격 51px, 중앙값
-   * 85px) 얼굴을 중앙값에 맞추려 1.55 → 1.45까지 올려 봤지만, 그러면 실루엣 폭이 1748px가
-   * 되어 다른 개체(901~1429px)를 통째로 넘고 발끝이 화면 아래로 958px 나갔다 — 화면에서
-   * 읽히는 크기는 얼굴이 아니라 **판을 채우는 몸**이라 "너무 확대됐다"로 보인다.
-   * 1.21은 두 규칙이 정확히 만나는 자리다 — 얼굴이 중앙값의 0.70배(하한)이고 실루엣 폭이
-   * 1458px으로 가장 넓은 개체(마키 1429px)의 1.02배다. 더 올리면 몸이 띠를 벗어나고 더
-   * 내리면 얼굴이 하한 아래로 떨어진다.
-   * 얼굴이 작은 것은 원화가 그렇게 그려졌기 때문이라 배율로 덮지 않는다 — 되돌리려면
-   * 아트를 다시 굽는다.
-   */
-  portraitZoom: 1.21,
   /**
    * 카드는 베일 끝을 자른다. 실루엣 폭의 15%(150px)를 처음 넘는 행이 236이라, 그 위는 몇
    * 픽셀짜리 뾰족한 끝이라 잘려도 단면이 보이지 않는다. 로비 전신은 이 값을 쓰지 않는다.
@@ -377,15 +340,7 @@ export const ELLA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1122,
   imageHeight: 1402,
   content: { left: 85, top: 2, right: 1054, bottom: 1363 },
-  /**
-   * 정보창에서 혼자 내려앉아 보이는 몫.
-   *
-   * 이 원화는 뿔과 머리채가 정수리 위로 길게 솟아 있어, 코어 관절을 다른 개체와 같은 자리에
-   * 두면 머리 끝은 나란한데 **얼굴만 50px 아래**에 선다(눈 809px, 중앙값 757px). 얼굴이
-   * 판의 절반 아래로 내려가면 인물이 뒤로 가라앉은 것처럼 보인다. 배율은 이미 중앙값
-   * (얼굴 102px, 중앙값 107px)이라 `portraitZoom`으로 덮지 않고 자리만 올린다.
-   */
-  portraitOffsetY: -50,
+  joints: { center: [589, 377], head: [572, 283], eyes: [[529, 280], [603, 262]], feet: [[395, 1451], [638, 1437]] },
   /** 로비 세로 비율: 메론 기준. 1.56 m. */
   lobbyZoom: 1.019,
 };
@@ -402,16 +357,7 @@ export const DEINA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1085,
   imageHeight: 1450,
   content: { left: 57, top: 45, right: 1053, bottom: 1395 },
-  /*
-   * **렉시아와 같은 함정이다.** 카드 배율은 `content` **폭**으로 정해지는데, 이 원화는 왼쪽으로
-   * 내민 스프레이 캔과 오른쪽으로 크게 휘는 깃털 꼬리가 캔버스를 거의 다 차지한다(996 / 1085).
-   * 몸은 그만큼 넓지 않으므로 혼자 축소되어 얼굴이 다른 카드의 68%까지 작아졌다.
-   *
-   * 그리고 그 폭을 만든 캔과 꼬리는 **정작 잘라내기에서 버려진다** — 카드 크롭은 머리 관절
-   * 기준이라 화면에 나오지도 않는다. 그래서 개체별 보정이 맞다. 값은 눈대중이 아니라
-   * `tests/unit/puppetAnchors.test.ts`의 "카드 얼굴 크기" 중앙값에 맞춰 구했다(0.99배).
-   */
-  cardZoom: 1.45,
+  joints: { center: [441, 344], head: [403, 245], eyes: [[383, 254], [430, 216]], feet: [[199, 1369], [574, 1337]] },
   /** 로비 세로 비율: 메론 기준. 1.66 m. */
   lobbyZoom: 1.013,
 };
@@ -426,18 +372,14 @@ export const DEINA_SD_METADATA: Omit<PuppetAsset, "url"> = {
 /**
  * 17번 매디(매머드) 전신. ZIP 안 WebP의 alpha > 16 경계를 실측한 값이다.
  *
- * 거대한 모피 코트가 실루엣 폭을 넓게 채워(982 / 1086) 렉시아의 낫과 같은 함정에 걸린다 —
- * 카드·정보창 배율이 `content` **폭**으로 정해지는데, 모피는 몸 넓이만큼 있지 않아 얼굴이
- * 중앙값보다 작게 앉는다. `cardZoom`은 카드 얼굴 크기 회귀 테스트의 중앙값에 맞춰 구했다.
- * `portraitZoom`은 얼굴 하한(도디가 밀려 1.45를 넘지 않는 범위)과 실루엣 폭 상한(다른
- * 개체의 105%를 넘지 않는 범위)이 겹치는 좁은 구간(1.188~1.192) 안에서 골랐다.
+ * 거대한 모피 코트가 실루엣 폭을 넓게 채운다(982 / 1086). 얼굴 크기는 폭이 아니라 두 눈
+ * 관절로 재는 공용 얼굴 규격(`FACE_STANDARD`)이 맞추므로 개체 보정을 두지 않는다.
  */
 export const MADDY_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1086,
   imageHeight: 1448,
   content: { left: 37, top: 29, right: 1019, bottom: 1421 },
-  cardZoom: 1.2,
-  portraitZoom: 1.19,
+  joints: { center: [507, 324], head: [472, 255], eyes: [[448, 244], [509, 218]], feet: [[588, 1344], [226, 1418]] },
   /** 로비 세로 비율: 메론 기준. 1.52 m. */
   lobbyZoom: 0.932,
 };
@@ -459,6 +401,7 @@ export const PARUA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1086,
   imageHeight: 1448,
   content: { left: 58, top: 12, right: 1052, bottom: 1431 },
+  joints: { center: [561, 468], head: [588, 360], eyes: [[536, 331], [615, 361]], feet: [[374, 1434], [714, 1419]] },
   /** 로비 세로 비율: 메론 기준. 1.45 m — 보정 없이 세우면 1.459 m로 서므로 살짝 줄인다. */
   lobbyZoom: 0.994,
 };
@@ -484,6 +427,7 @@ export const SHUTE_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1087,
   imageHeight: 1447,
   content: { left: 5, top: 8, right: 1078, bottom: 1446 },
+  joints: { center: [728, 410], head: [671, 313], eyes: [[637, 315], [714, 269]], feet: [[141, 1213], [473, 1412]] },
   /** 로비 세로 비율: 메론 기준. 1.46 m. */
   lobbyZoom: 0.953,
 };
@@ -510,6 +454,7 @@ export const MORPHE_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1086,
   imageHeight: 1448,
   content: { left: 23, top: 42, right: 1067, bottom: 1408 },
+  joints: { center: [732, 473], head: [712, 390], eyes: [[678, 388], [753, 369]], feet: [[404, 1415], [511, 1427]] },
   /** 로비 세로 비율: 메론 기준. 1.57 m — 눈(378.5)에서 의자 밑동까지를 그 키로 맞춘다. */
   lobbyZoom: 1.092,
 };
@@ -538,13 +483,7 @@ export const TERISA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1088,
   imageHeight: 1446,
   content: { left: 36, top: 12, right: 1077, bottom: 1415 },
-  /**
-   * 카드 배율은 `content` **폭**으로 정해지는데, 좌우로 벌린 갈퀴가 실루엣을 캔버스 폭의
-   * 96%까지 넓혀 얼굴만 작아졌다(렉시아의 낫과 같은 함정이다 — 그 갈퀴는 카드 잘라내기에서
-   * 버려지는데도 배율만 끌어내렸다). 카드 규격이 아니라 이 값으로 되돌린다 — 값은 카드
-   * 얼굴 크기 회귀 테스트의 중앙값에 맞춰 구했다.
-   */
-  cardZoom: 1.08,
+  joints: { center: [509, 274], head: [484, 159], eyes: [[468, 172], [536, 145]], feet: [[792, 1619], [424, 1518]] },
   /** 로비 세로 비율: 메론 기준. 1.72 m — 보정 없이 세우면 1.709 m로 서므로 살짝 키운다. */
   lobbyZoom: 1.007,
 };
@@ -611,23 +550,6 @@ export const VIRIA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1086, imageHeight: 1448,
   content: { left: 130, top: 41, right: 953, bottom: 1413 },
   joints: { center: [537, 499], head: [511, 405], eyes: [[472, 410], [555, 366]], feet: [[577, 1843], [54, 1496]] },
-  /*
-   * **등신이 낮고 머리가 큰 원화라 카드에서만 한 뼘 줄인다.**
-   *
-   * `머리1` 관절이 눈높이에 있고 그 위로 머리통과 귀가 실루엣의 4분의 1을 차지해, 기본
-   * 배율에서는 자르기 시작점이 `MAX_HEAD_DROP_RATIO` 한계에 걸려 정수리가 통째로 잘렸다.
-   * 개체별 보정을 새로 만들거나 그 한계를 로스터 전체에 대고 늘리지 않고, 토리카(0.82)와
-   * 같은 자리인 `cardZoom` 하나로 맞춘다. 다섯 자매는 같은 몸이라 **같은 값**을 쓴다.
-   */
-  /*
-   * **카드에서만 쓰는 배율 보정.**
-   *
-   * `머리1` 관절이 눈높이에 있고 그 위로 머리통이 실루엣의 4분의 1을 차지하는 원화라, 기본
-   * 배율에서는 얼굴이 카드 세로 절반 아래로 내려앉는다. 값은 눈대중이 아니라 **두 눈 사이
-   * 거리가 로스터 중앙값(47.1px)에 맞는 배율**로 구했다 — 다섯이 같은 몸이라도 실루엣 폭이
-   * 자매마다 달라(823~992) 같은 값을 쓰면 넓은 쪽만 얼굴이 작아진다.
-   */
-  cardZoom: 0.77,
 };
 
 /** 비리아(raitia-grass) 전투 SD. */
@@ -642,23 +564,6 @@ export const GUTTIA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1086, imageHeight: 1448,
   content: { left: 67, top: 35, right: 1050, bottom: 1429 },
   joints: { center: [568, 508], head: [538, 385], eyes: [[511, 415], [595, 372]], feet: [[580, 1596], [32, 1495]] },
-  /*
-   * **등신이 낮고 머리가 큰 원화라 카드에서만 한 뼘 줄인다.**
-   *
-   * `머리1` 관절이 눈높이에 있고 그 위로 머리통과 귀가 실루엣의 4분의 1을 차지해, 기본
-   * 배율에서는 자르기 시작점이 `MAX_HEAD_DROP_RATIO` 한계에 걸려 정수리가 통째로 잘렸다.
-   * 개체별 보정을 새로 만들거나 그 한계를 로스터 전체에 대고 늘리지 않고, 토리카(0.82)와
-   * 같은 자리인 `cardZoom` 하나로 맞춘다. 다섯 자매는 같은 몸이라 **같은 값**을 쓴다.
-   */
-  /*
-   * **카드에서만 쓰는 배율 보정.**
-   *
-   * `머리1` 관절이 눈높이에 있고 그 위로 머리통이 실루엣의 4분의 1을 차지하는 원화라, 기본
-   * 배율에서는 얼굴이 카드 세로 절반 아래로 내려앉는다. 값은 눈대중이 아니라 **두 눈 사이
-   * 거리가 로스터 중앙값(47.1px)에 맞는 배율**로 구했다 — 다섯이 같은 몸이라도 실루엣 폭이
-   * 자매마다 달라(823~992) 같은 값을 쓰면 넓은 쪽만 얼굴이 작아진다.
-   */
-  cardZoom: 0.92,
 };
 
 /** 구티아(raitia-water) 전투 SD. */
@@ -673,23 +578,6 @@ export const FAVIA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1023, imageHeight: 1537,
   content: { left: 161, top: 32, right: 937, bottom: 1513 },
   joints: { center: [541, 514], head: [511, 416], eyes: [[479, 409], [558, 375]], feet: [[533, 1697], [184, 1627]] },
-  /*
-   * **등신이 낮고 머리가 큰 원화라 카드에서만 한 뼘 줄인다.**
-   *
-   * `머리1` 관절이 눈높이에 있고 그 위로 머리통과 귀가 실루엣의 4분의 1을 차지해, 기본
-   * 배율에서는 자르기 시작점이 `MAX_HEAD_DROP_RATIO` 한계에 걸려 정수리가 통째로 잘렸다.
-   * 개체별 보정을 새로 만들거나 그 한계를 로스터 전체에 대고 늘리지 않고, 토리카(0.82)와
-   * 같은 자리인 `cardZoom` 하나로 맞춘다. 다섯 자매는 같은 몸이라 **같은 값**을 쓴다.
-   */
-  /*
-   * **카드에서만 쓰는 배율 보정.**
-   *
-   * `머리1` 관절이 눈높이에 있고 그 위로 머리통이 실루엣의 4분의 1을 차지하는 원화라, 기본
-   * 배율에서는 얼굴이 카드 세로 절반 아래로 내려앉는다. 값은 눈대중이 아니라 **두 눈 사이
-   * 거리가 로스터 중앙값(47.1px)에 맞는 배율**로 구했다 — 다섯이 같은 몸이라도 실루엣 폭이
-   * 자매마다 달라(823~992) 같은 값을 쓰면 넓은 쪽만 얼굴이 작아진다.
-   */
-  cardZoom: 0.79,
 };
 
 /** 파비아(raitia-fire) 전투 SD. */
@@ -704,23 +592,6 @@ export const SILIA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1086, imageHeight: 1448,
   content: { left: 26, top: 32, right: 1018, bottom: 1417 },
   joints: { center: [568, 508], head: [605, 417], eyes: [[559, 371], [635, 416]], feet: [[970, 1605], [201, 2026]] },
-  /*
-   * **등신이 낮고 머리가 큰 원화라 카드에서만 한 뼘 줄인다.**
-   *
-   * `머리1` 관절이 눈높이에 있고 그 위로 머리통과 귀가 실루엣의 4분의 1을 차지해, 기본
-   * 배율에서는 자르기 시작점이 `MAX_HEAD_DROP_RATIO` 한계에 걸려 정수리가 통째로 잘렸다.
-   * 개체별 보정을 새로 만들거나 그 한계를 로스터 전체에 대고 늘리지 않고, 토리카(0.82)와
-   * 같은 자리인 `cardZoom` 하나로 맞춘다. 다섯 자매는 같은 몸이라 **같은 값**을 쓴다.
-   */
-  /*
-   * **카드에서만 쓰는 배율 보정.**
-   *
-   * `머리1` 관절이 눈높이에 있고 그 위로 머리통이 실루엣의 4분의 1을 차지하는 원화라, 기본
-   * 배율에서는 얼굴이 카드 세로 절반 아래로 내려앉는다. 값은 눈대중이 아니라 **두 눈 사이
-   * 거리가 로스터 중앙값(47.1px)에 맞는 배율**로 구했다 — 다섯이 같은 몸이라도 실루엣 폭이
-   * 자매마다 달라(823~992) 같은 값을 쓰면 넓은 쪽만 얼굴이 작아진다.
-   */
-  cardZoom: 0.99,
 };
 
 /** 실리아(raitia-earth) 전투 SD. */
@@ -735,23 +606,6 @@ export const VENTIA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1086, imageHeight: 1448,
   content: { left: 178, top: 37, right: 1016, bottom: 1424 },
   joints: { center: [568, 508], head: [523, 446], eyes: [[491, 449], [579, 414]], feet: [[566, 1599], [195, 1533]] },
-  /*
-   * **등신이 낮고 머리가 큰 원화라 카드에서만 한 뼘 줄인다.**
-   *
-   * `머리1` 관절이 눈높이에 있고 그 위로 머리통과 귀가 실루엣의 4분의 1을 차지해, 기본
-   * 배율에서는 자르기 시작점이 `MAX_HEAD_DROP_RATIO` 한계에 걸려 정수리가 통째로 잘렸다.
-   * 개체별 보정을 새로 만들거나 그 한계를 로스터 전체에 대고 늘리지 않고, 토리카(0.82)와
-   * 같은 자리인 `cardZoom` 하나로 맞춘다. 다섯 자매는 같은 몸이라 **같은 값**을 쓴다.
-   */
-  /*
-   * **카드에서만 쓰는 배율 보정.**
-   *
-   * `머리1` 관절이 눈높이에 있고 그 위로 머리통이 실루엣의 4분의 1을 차지하는 원화라, 기본
-   * 배율에서는 얼굴이 카드 세로 절반 아래로 내려앉는다. 값은 눈대중이 아니라 **두 눈 사이
-   * 거리가 로스터 중앙값(47.1px)에 맞는 배율**로 구했다 — 다섯이 같은 몸이라도 실루엣 폭이
-   * 자매마다 달라(823~992) 같은 값을 쓰면 넓은 쪽만 얼굴이 작아진다.
-   */
-  cardZoom: 0.78,
 };
 
 /** 벤티아(raitia-wind) 전투 SD. */
@@ -771,15 +625,6 @@ export const SUKUSUINO_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1086, imageHeight: 1448,
   content: { left: 15, top: 19, right: 1069, bottom: 1410 },
   joints: { center: [637, 386], head: [608, 267], eyes: [[585, 265], [637, 239]], feet: [[402, 1719], [858, 1423]] },
-  /*
-   * **몸이 커서 얼굴이 작은 원화라 카드에서만 한 뼘 당긴다.**
-   *
-   * 꼬리까지 실루엣이 1,054px을 차지하는데 두 눈 사이는 57px뿐이라, 기본 배율에서는 카드에
-   * 선 얼굴이 로스터 중앙값의 0.63배로 혼자 작았다 — 한 그리드에 나란히 서는 카드라 그만큼
-   * 덜 중요한 칸으로 읽힌다. 값은 눈대중이 아니라 **두 눈 사이 거리가 그 중앙값 띠 안에
-   * 들어오는 배율**로 구했다(레이티아 다섯의 `cardZoom`과 같은 방법·반대 방향이다).
-   */
-  cardZoom: 1.35,
 };
 
 /** 수쿠스이노 전투 SD. */
@@ -799,11 +644,6 @@ export const TABOA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1086, imageHeight: 1448,
   content: { left: 26, top: 21, right: 1055, bottom: 1421 },
   joints: { center: [566, 269], head: [520, 184], eyes: [[498, 188], [551, 147]], feet: [[909, 1904], [421, 1544]] },
-  /*
-   * **꼬리가 캔버스를 가로질러 얼굴이 작아지는 원화라 카드에서만 한 뼘 당긴다.** 수쿠스이노와
-   * 같은 방법(두 눈 사이 거리가 로스터 중앙값 띠에 드는 배율)으로 구했다.
-   */
-  cardZoom: 1.15,
 };
 
 /** 타보아 전투 SD. */

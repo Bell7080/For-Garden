@@ -11,6 +11,7 @@ import {
   type CardFrame,
 } from "../../src/puppets/anchors";
 import type { PuppetAsset } from "../../src/puppets/assets";
+import { FACE_STANDARD, portraitCardZoom } from "../../src/ui/portraitPlacement";
 // assets.ts는 Phaser를 들여오므로 node 환경에서는 소스 문자열로만 읽는다.
 import ASSETS_SOURCE from "../../src/puppets/assets.ts?raw";
 import { RELICS } from "../../src/data/relics";
@@ -292,7 +293,7 @@ describe("토리카 skin001 에셋 앵커 메타데이터", () => {
     expect(TORIKA_SKIN_001_PORTRAIT_METADATA).toMatchObject({
       imageWidth: 1024, imageHeight: 1536,
       content: { left: 178, top: 23, right: 972, bottom: 1491 },
-      cardZoom: 0.792, lobbyZoom: 0.834, portraitOffsetY: -278,
+      lobbyZoom: 0.834,
     });
     expect(TORIKA_SKIN_001_SD_METADATA).toMatchObject({
       imageWidth: 1254, imageHeight: 1254,
@@ -340,7 +341,7 @@ const REAL_PORTRAITS = [
   { name: "스피나", metadata: SEIRA_PORTRAIT_METADATA, head: { x: 572, y: 250 }, eyes: [{ x: 544, y: 239 }, { x: 597, y: 208 }] },
   { name: "루카", metadata: LUKA_PORTRAIT_METADATA, head: { x: 882, y: 419 }, eyes: [{ x: 832, y: 425 }, { x: 960, y: 368 }] },
   { name: "도디", metadata: DODI_PORTRAIT_METADATA, head: { x: 585, y: 370 }, eyes: [{ x: 528, y: 367 }, { x: 632, y: 355 }] },
-  { name: "메테", metadata: METTE_PORTRAIT_METADATA, head: { x: 520, y: 255 }, eyes: [{ x: 472, y: 277 }, { x: 568, y: 242 }] },
+  { name: "메테", metadata: METTE_PORTRAIT_METADATA, head: { x: 520, y: 255 }, eyes: [{ x: 481, y: 277 }, { x: 557, y: 243 }] },
   { name: "스테라", metadata: STELLA_PORTRAIT_METADATA, head: { x: 549, y: 375 }, eyes: [{ x: 510, y: 386 }, { x: 591, y: 357 }] },
   { name: "티아", metadata: TIA_PORTRAIT_METADATA, head: { x: 518, y: 308 }, eyes: [{ x: 480, y: 317 }, { x: 548, y: 265 }] },
   { name: "메론", metadata: MERON_PORTRAIT_METADATA, head: { x: 482, y: 270 }, eyes: [{ x: 439, y: 268 }, { x: 507, y: 242 }] },
@@ -370,7 +371,7 @@ const REAL_PORTRAITS = [
 function realCardFrame(portrait: { metadata: Omit<PuppetAsset, "url">; head: { x: number; y: number } }): CardFrame {
   return computeHeadCardFrame(portrait.metadata, portrait.head, {
     ...REAL_CARD,
-    fillRatio: 0.56 / ((portrait.metadata.cardZoom ?? 1) * (portrait.metadata.portraitZoom ?? 1)),
+    fillRatio: FACE_STANDARD.card.fill / portraitCardZoom(portrait.metadata),
     // 카드만의 윗선도 화면과 같은 값을 쓴다 — 여기서 빠뜨리면 실제로는 자르지 않는 원화를
     // 자른다고 판정하고, 반대로 정말 잘리는 원화를 못 잡는다.
     cardTop: portrait.metadata.cardTop,
@@ -426,56 +427,50 @@ describe("실제 원화의 카드 잘라내기", () => {
 });
 
 /**
- * **회귀 테스트다.** "렉시아만 얼굴이 작아 보인다"를 눈대중이 아니라 수치로 고정한다.
+ * **회귀 테스트다.** "렉시아만 · 테리사만 얼굴이 작아 보인다"를 눈대중이 아니라 수치로 고정한다.
  *
- * 카드 배율은 `content` **폭**으로 정해지므로, 무기·망토가 좌우로 크게 뻗은 원화는 몸이 그만큼
- * 넓지 않은데도 함께 축소되어 혼자 얼굴이 작아진다. 렉시아가 그랬다 — 낫이 캔버스를 거의 다
- * 차지해(1023 / 1054) 중앙값의 72%까지 줄었고, 정작 그 낫은 카드 잘라내기에서 버려졌다.
- * `cardZoom`으로 되돌린 뒤에도 다음 원화가 같은 함정에 빠지지 않도록 여기서 막는다.
- *
- * 크기 대리 지표로 **두 눈 사이 거리**를 쓴다. 실루엣 폭은 무기·소매·들어 올린 손에 휘둘리지만
- * 눈 간격은 장식이 무엇이든 얼굴 크기만 따라간다.
+ * 카드 배율을 `content` **폭**으로만 정하면 무기·갈퀴·모피가 좌우로 크게 뻗은 원화는 몸이 그만큼
+ * 넓지 않은데도 함께 축소되어 혼자 얼굴이 작아진다(렉시아 72%, 테리사는 무릎까지 보였다).
+ * 개체마다 `cardZoom`을 적어 덮던 방식을 걷어 내고, 지금은 공용 얼굴 규격(`portraitCardZoom`)이
+ * **두 눈 사이 거리**로 모든 카드를 같은 띠에 모은다. 눈 간격은 장식이 무엇이든 얼굴 크기만 따라간다.
  */
 describe("실제 원화의 카드 얼굴 크기", () => {
   const faceSizeOf = (portrait: (typeof REAL_PORTRAITS)[number]): number => {
     const [left, right] = portrait.eyes;
     return Math.hypot(right.x - left.x, right.y - left.y) * realCardFrame(portrait).scale;
   };
-
-  const median = (values: number[]): number => {
-    const sorted = [...values].sort((a, b) => a - b);
-    const middle = sorted.length / 2;
-    return sorted.length % 2 === 0 ? (sorted[middle - 1] + sorted[middle]) / 2 : sorted[Math.floor(middle)];
-  };
-
-  /**
-   * 한 그리드에 나란히 서는 카드들이라 얼굴 크기가 서로 크게 어긋나면 안 된다.
-   *
-   * 폭이 좁은 이유: 렉시아가 걸렸던 0.72는 확실히 잡아야 하고, 위쪽은 지금 도디(1.29)·메테(1.19)가
-   * 붙어 있다. 둘은 원화 자체가 머리가 큰 디자인이라 이번에는 손대지 않았고, 아트 방향이 더 촘촘한
-   * 정렬을 원하면 그 둘의 `cardZoom`을 낮추면서 이 한계도 함께 좁힌다.
-   */
-  const MIN_RATIO = 0.8;
-  const MAX_RATIO = 1.35;
+  const target = FACE_STANDARD.card.span * REAL_CARD.width;
 
   it.each(REAL_PORTRAITS.map((portrait) => [portrait.name, portrait] as const))(
-    "%s의 얼굴은 다른 카드와 같은 크기대에 있다",
+    "%s의 얼굴은 공용 얼굴 규격의 띠 안에 있다",
     (_name, portrait) => {
-      const center = median(REAL_PORTRAITS.map(faceSizeOf));
-      const ratio = faceSizeOf(portrait) / center;
-      expect(ratio).toBeGreaterThanOrEqual(MIN_RATIO);
-      expect(ratio).toBeLessThanOrEqual(MAX_RATIO);
+      const ratio = faceSizeOf(portrait) / target;
+      // 아래는 띠 끝 그대로다. 위는 띠보다 한 뼘 여유가 있다 — 머리통이 크게 솟은 원화(토리카·
+      // 레이티아 자매)는 정수리를 지키느라 띠까지 줄이지 못하는 대신 그 이상 커지지도 않는다.
+      expect(ratio).toBeGreaterThanOrEqual(1 - FACE_STANDARD.card.band - 0.005);
+      expect(ratio).toBeLessThanOrEqual(1 + FACE_STANDARD.card.band + 0.005);
     },
   );
 
-  it("는 렉시아가 낫 무기 때문에 다시 축소되면 실패한다", () => {
-    // cardZoom을 떼면 예전 값(중앙값의 0.72배)으로 돌아가는지 직접 확인한다.
-    const lexia = REAL_PORTRAITS.find((portrait) => portrait.name === "렉시아")!;
-    const withoutZoom = { ...lexia, metadata: { ...lexia.metadata, cardZoom: undefined } };
-    const center = median(REAL_PORTRAITS.map(faceSizeOf));
-    expect(faceSizeOf(withoutZoom) / center).toBeLessThan(MIN_RATIO);
-    expect(faceSizeOf(lexia) / center).toBeGreaterThanOrEqual(MIN_RATIO);
+  it("는 얼굴 규격을 떼면 렉시아·테리사가 다시 작아진다", () => {
+    // 규격이 실제로 일을 하고 있는지 — 떼면 예전 크기(띠 밖)로 돌아가는지 직접 확인한다.
+    for (const name of ["렉시아", "테리사"]) {
+      const portrait = REAL_PORTRAITS.find((entry) => entry.name === name)!;
+      const bare = computeHeadCardFrame(portrait.metadata, portrait.head, { ...REAL_CARD, fillRatio: FACE_STANDARD.card.fill, cardTop: portrait.metadata.cardTop });
+      const [left, right] = portrait.eyes;
+      expect(Math.hypot(right.x - left.x, right.y - left.y) * bare.scale / target, name).toBeLessThan(1 - FACE_STANDARD.card.band);
+    }
   });
+
+  it.each(REAL_PORTRAITS.map((portrait) => [portrait.name, portrait] as const))(
+    "%s의 메타데이터 관절은 ZIP에서 읽은 머리·눈과 같다",
+    (_name, portrait) => {
+      // 얼굴 규격은 메타데이터(`joints`)를 읽는다. 원화를 다시 구우면 이 표와 함께 다시 잰다.
+      const joints = portrait.metadata.joints!;
+      expect(joints.head).toEqual([portrait.head.x, portrait.head.y]);
+      expect(joints.eyes).toEqual(portrait.eyes.map((eye) => [eye.x, eye.y]));
+    },
+  );
 });
 
 /**

@@ -1,5 +1,6 @@
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { PuppetAsset } from "../puppets/assets";
+import { eyeLineAnchor, faceJoints } from "../puppets/anchors";
 
 /** Alpha 실루엣을 화면 좌표로 옮긴 결과다. UI 안전 영역 테스트도 이 값만 사용한다. */
 export interface PortraitScreenBounds { top: number; bottom: number; height: number }
@@ -11,16 +12,81 @@ export const INFO_PORTRAIT_SAFE_AREA = {
 } as const;
 
 /**
- * 정보창 전신 원화의 코어(`중심1`) 관절이 놓이는 자리와 확대 높이.
+ * 정보창 전신 원화가 서는 기준.
  *
- * 화면 한가운데(960)보다 아주 조금만 아래에 둔다 — 더 내리면 얼굴이 화면 절반 아래로 내려가
- * 인물이 판 뒤로 가라앉은 것처럼 보인다. 이 값은 테스트와 화면이 함께 읽는다.
+ * `x`·`y`는 코어(`중심1`) 관절 자리이고 `height`는 alpha 경계 전체의 기준 높이다. 두 눈 관절을
+ * 가진 원화는 이 값에서 **눈높이 한 줄**과 **얼굴 크기**를 거꾸로 구한다(`FACE_STANDARD`).
+ * 코어는 가슴께에 박혀 있어 거기서 얼굴까지의 거리가 원화의 등신비를 그대로 따라가므로,
+ * 코어로 세우면 같은 화면에서 눈높이가 330px 넘게 벌어졌다(스피나 506 · 델로피 836).
  */
 export const INFO_PORTRAIT_FOCUS = { x: 336, y: 950, height: 1820 } as const;
 
-/** 모든 정보창이 같은 메타데이터 보정 경로를 지나도록 focus 옵션을 한 곳에서 만든다. */
+/**
+ * 얼굴 규격 — 전신과 카드가 **두 눈 관절**(`눈1`·`눈2`)로 맞추는 공통 기준.
+ *
+ * 개체마다 세로 보정(`portraitOffsetY`)·확대 보정(`cardZoom`·`portraitZoom`)을 적어 맞추던 때는
+ * 새 원화가 들어올 때마다 같은 어긋남이 다시 생겼다(테리사가 그랬다 — 갈퀴가 실루엣 폭을 넓혀
+ * 카드에서 무릎까지 보일 만큼 작아졌고, 정보창에서는 눈이 메론보다 45px 아래에 섰다).
+ * 지금은 이 표 한 곳이 모든 개체의 얼굴선을 정한다.
+ *
+ * - `eyeRise`: 정보창 기준 높이 대비, 코어 자리에서 눈높이 한 줄까지 올라가는 거리.
+ * - `span`: 두 눈 사이 거리의 목표. 정보창은 기준 높이 대비, 카드는 카드 폭 대비다.
+ * - `band`: 목표에서 이만큼 벗어난 얼굴만 띠 끝까지 당긴다. 눈 간격은 고개 각도·그림체에 따라
+ *   원래 조금씩 다르므로 전부 한 크기로 누르면 몸 비율이 튄다 — 띠 안은 원화 그대로 둔다.
+ * - `aspect`·`maxHeadDrop`: 도감 카드(머리 홈 포함)의 세로/가로 비와, 카드가 정수리를 자르지
+ *   않고 얼굴을 당길 수 있는 한계. 머리통·귀가 크게 솟은 원화(토리카·레이티아 자매)는 얼굴을
+ *   띠까지 키우면 자르기 시작점이 `MAX_HEAD_DROP_RATIO`에 걸려 정수리가 잘린다 — 그 전에서 멈춘다.
+ * - `maxWidth`: 정보창 실루엣 폭의 상한(기준 높이 대비). 얼굴만 맞추면 얼굴이 작게 그려진 원화의
+ *   배율이 계속 올라가 판을 통째로 덮는다(노도니아가 폭 1748px이 된 적이 있다).
+ */
+export const FACE_STANDARD = {
+  info: { eyeRise: 190 / 1820, span: 104 / 1820, band: 0.1, maxWidth: 1500 / 1820 },
+  card: { fill: 0.56, span: 47 / 300, band: 0.1, aspect: 464 / 300, maxHeadDrop: 0.45 },
+} as const;
+
+/** 얼굴이 목표 띠 밖이면 띠 끝까지 당기는 배율. 띠 안이면 1이다. */
+function faceBandFactor(natural: number, target: number, band: number): number {
+  if (natural <= 0) return 1;
+  const clamped = Math.min(Math.max(natural, target * (1 - band)), target * (1 + band));
+  return clamped / natural;
+}
+
+/** 모든 정보창이 같은 얼굴 규격을 지나도록 spawn 옵션을 한 곳에서 만든다. */
 export function infoPortraitPlacement(asset: PuppetAsset, focus: { x: number; y: number; height: number }) {
-  return { focus: { anchor: "core" as const, x: focus.x, y: focus.y + (asset.portraitOffsetY ?? 0) }, height: focus.height * (asset.portraitZoom ?? 1) };
+  const anchor = eyeLineAnchor(asset);
+  const face = faceJoints(asset);
+  if (!anchor || !face) {
+    // 눈 관절이 없는 원화(폰토스 등)는 코어 기준과 원화 쪽 보정을 그대로 쓴다.
+    return { focus: { anchor: "core" as const, x: focus.x, y: focus.y + (asset.portraitOffsetY ?? 0) }, height: focus.height * (asset.portraitZoom ?? 1) };
+  }
+  const contentHeight = asset.content.bottom - asset.content.top;
+  const contentWidth = asset.content.right - asset.content.left;
+  const spec = FACE_STANDARD.info;
+  const base = focus.height / contentHeight;
+  const widthCap = (spec.maxWidth * focus.height) / contentWidth;
+  const scale = Math.min(base * faceBandFactor(face.span * base, spec.span * focus.height, spec.band), Math.max(base, widthCap));
+  return { focus: { anchor: "eyeLine" as const, x: focus.x, y: focus.y - spec.eyeRise * focus.height }, height: scale * contentHeight };
+}
+
+/**
+ * 카드·얼굴 액자의 확대 보정. 모든 잘라내기(카드·얼굴 액자·얼굴 띠·뽑기 카드)가 기준 비율을
+ * 이 값으로 나눈다 — 화면마다 보정을 따로 곱하면 같은 개체가 화면마다 다른 크기로 선다.
+ *
+ * 눈 관절을 가진 원화는 카드 속 두 눈 사이 거리를 `FACE_STANDARD.card` 띠 안으로 모은다.
+ * 실루엣 **가로폭**으로 크기를 정하는 카드는 갈퀴·낫·날개가 넓은 원화만 얼굴이 작아지기 때문이다.
+ */
+export function portraitCardZoom(asset: Pick<PuppetAsset, "joints" | "content" | "cardTop" | "cardZoom" | "portraitZoom">): number {
+  const face = faceJoints(asset);
+  const head = asset.joints?.head;
+  if (!face || !head) return (asset.cardZoom ?? 1) * (asset.portraitZoom ?? 1);
+  const spec = FACE_STANDARD.card;
+  const fillWidth = (asset.content.right - asset.content.left) * spec.fill;
+  const zoom = faceBandFactor(face.span / fillWidth, spec.span, spec.band);
+  // 카드 잘라내기 높이는 `fillWidth × aspect ÷ zoom`이다. 머리 관절이 그 높이의 `maxHeadDrop`
+  // 안에 들어야 자르기가 정수리 위에서 시작한다.
+  const headDrop = head[1] - (asset.cardTop ?? asset.content.top);
+  const clipCap = headDrop > 0 ? (spec.maxHeadDrop * fillWidth * spec.aspect) / headDrop : Infinity;
+  return Math.min(zoom, clipCap);
 }
 
 /**

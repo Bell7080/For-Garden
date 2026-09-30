@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { portraitCardZoom } from "./portraitPlacement";
 import type { PortraitAssetId } from "../core/types";
 import { computeFaceFrame } from "../puppets/anchors";
 import { portraitAssetFor, withPuppetTexture } from "../puppets/assets";
@@ -95,11 +96,11 @@ export class FaceFrame extends Phaser.GameObjects.Container {
     const built = await withPuppetTexture(scene, asset, ({ key, anchors }) => {
       if (this.disposed) return undefined;
       // 카드 잘라내기가 아니라 **얼굴 전용 정사각 잘라내기**를 쓴다(`computeFaceFrame` 주석 참고).
-      // 등신이 낮아 얼굴이 큰 원화는 카드와 같은 기준(`cardZoom`)으로 되돌려, 같은 액자에 나란히
+      // 얼굴 크기는 카드와 같은 공용 얼굴 규격(`portraitCardZoom`)으로 맞춰, 같은 액자에 나란히
       // 서도 얼굴 크기가 개체마다 튀지 않게 한다.
       const face = computeFaceFrame(asset, anchors.head, {
         size,
-        crop: FACE_FRAME.crop / ((asset.cardZoom ?? 1) * (asset.portraitZoom ?? 1)),
+        crop: FACE_FRAME.crop / portraitCardZoom(asset),
         anchorY: FACE_FRAME.anchorY,
       });
       // **액자 한 변을 꽉 채우고, 깎인 두 모서리는 구울 때 지운다.** 덮으면 액자 바깥에 검은 뿔이

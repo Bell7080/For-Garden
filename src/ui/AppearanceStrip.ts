@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { portraitCardZoom } from "./portraitPlacement";
 import { t } from "../i18n";
 import type { RelicDef, RelicSkinId } from "../core/types";
 import { relicSkinManager } from "../managers/RelicSkinManager";
@@ -497,7 +498,7 @@ export class AppearanceStrip {
       // 카드보다 훨씬 더 당겨 **얼굴 하나가 칸을 채운다** — 여기서 보려는 것은 등신이 아니라
       // 머리다. 0.42로 두었을 때는 어깨와 가슴까지 함께 들어와, 정작 달라지는 머리 장식이
       // 칸의 위쪽 절반으로 밀렸다.
-      fillRatio: 0.32 / ((asset.cardZoom ?? 1) * (asset.portraitZoom ?? 1)),
+      fillRatio: 0.32 / portraitCardZoom(asset),
       headroom: 0,
       cardTop: asset.cardTop,
     });

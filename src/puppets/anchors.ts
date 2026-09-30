@@ -103,6 +103,27 @@ export function resolveAnchors(
   return { core: pick("core"), head: pick("head"), body: pick("body") };
 }
 
+/** 원화 메타데이터가 실측해 둔 관절(`PuppetAsset.joints`)의 모양 중 얼굴 규격이 읽는 몫. */
+export interface FaceJointSource {
+  center: readonly [number, number];
+  eyes: readonly (readonly [number, number])[] | null;
+}
+
+/** 두 눈 관절의 가운데와 사이 거리(텍스처 좌표). 눈 관절이 없는 원화는 `null`이다. */
+export function faceJoints(asset: { joints?: FaceJointSource }): { x: number; y: number; span: number } | null {
+  const eyes = asset.joints?.eyes;
+  if (!eyes || eyes.length < 2) return null;
+  const [left, right] = eyes;
+  return { x: (left[0] + right[0]) / 2, y: (left[1] + right[1]) / 2, span: Math.hypot(right[0] - left[0], right[1] - left[1]) };
+}
+
+/** 눈높이 한 줄 배치의 기준점: 가로는 몸(코어), 세로는 두 눈의 가운데다. */
+export function eyeLineAnchor(asset: { joints?: FaceJointSource }): { x: number; y: number } | null {
+  const face = faceJoints(asset);
+  const center = asset.joints?.center;
+  return face && center ? { x: center[0], y: face.y } : null;
+}
+
 /** 기준 관절을 화면의 한 점에 맞출 때 쓰는 설정. */
 export interface FocusOptions {
   /** 기준 관절이 놓일 화면 좌표. */

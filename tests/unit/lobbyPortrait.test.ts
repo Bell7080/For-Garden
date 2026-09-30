@@ -24,7 +24,7 @@ import {
   TORIKA_PORTRAIT_METADATA,
   TORIKA_SKIN_001_PORTRAIT_METADATA,
 } from "../../src/puppets/assetMetadata";
-import { INFO_PORTRAIT_FOCUS, LOBBY_PORTRAIT_SPOT, lobbyPortraitPlacement } from "../../src/ui/portraitPlacement";
+import { FACE_STANDARD, INFO_PORTRAIT_FOCUS, infoPortraitPlacement, LOBBY_PORTRAIT_SPOT, lobbyPortraitPlacement } from "../../src/ui/portraitPlacement";
 
 /**
  * 로비에 선 애착 렐릭의 세로 비율 계약.
@@ -153,71 +153,63 @@ describe("로비 전신의 세로 비율", () => {
 });
 
 /**
- * **회귀 테스트다.** "정보창에서 노도니아만 작아 보인다"를 눈대중이 아니라 수치로 고정한다.
+ * **회귀 테스트다.** 정보창·새 캐릭터 획득창의 얼굴선을 눈대중이 아니라 수치로 고정한다.
  *
- * 정보창 전신은 그림(alpha 상자) **전체**를 공용 높이에 맞추므로, 날개·베일처럼 실루엣을
- * 키우는 장식이 있으면 그만큼 얼굴이 줄어든다. 노도니아가 그랬다 — 눈 간격이 화면에서
- * 61.5px로 중앙값(106px)의 58%였고, `portraitZoom`으로 되돌렸다. 카드에서 같은 함정을 막는
- * `puppetAnchors.test.ts`의 "카드 얼굴 크기"와 짝이며, 크기 대리 지표(두 눈 사이 거리)도 같다.
- *
- * 관절 표(`JOINTS`)를 이 파일이 갖고 있어 여기 둔다.
+ * 예전에는 가슴께의 코어(`중심1`) 관절을 한 점에 맞추고 그림 전체 키로 크기를 정해, 눈높이가
+ * 원화의 등신비를 그대로 따라갔다(스피나 506 · 테리사 800 · 델로피 836). 노도니아처럼 날개·베일이
+ * 실루엣을 키우는 원화는 얼굴이 중앙값의 58%까지 줄었다. 지금은 공용 얼굴 규격이 두 눈 관절로
+ * **눈높이 한 줄**과 **얼굴 크기 띠**를 함께 정한다(`FACE_STANDARD.info`).
  */
-describe("정보창 전신의 얼굴 크기", () => {
-  const faceSizeOf = (assetId: string): number => {
+describe("정보창 전신의 얼굴 규격", () => {
+  const placementOf = (assetId: string) => infoPortraitPlacement({ url: "", ...PORTRAITS[assetId] } as PuppetAsset, INFO_PORTRAIT_FOCUS);
+  const scaleOf = (assetId: string): number => {
     const asset = PORTRAITS[assetId];
-    const height = INFO_PORTRAIT_FOCUS.height * (asset.portraitZoom ?? 1);
-    const scale = height / (asset.content.bottom - asset.content.top);
-    const [left, right] = JOINTS[assetId].eyes;
-    return Math.hypot(right[0] - left[0], right[1] - left[1]) * scale;
+    return placementOf(assetId).height / (asset.content.bottom - asset.content.top);
   };
+  const faceSizeOf = (assetId: string): number => {
+    const [left, right] = PORTRAITS[assetId].joints!.eyes!;
+    return Math.hypot(right[0] - left[0], right[1] - left[1]) * scaleOf(assetId);
+  };
+  const target = FACE_STANDARD.info.span * INFO_PORTRAIT_FOCUS.height;
 
-  const median = (values: number[]): number => {
-    const sorted = [...values].sort((a, b) => a - b);
-    const middle = sorted.length / 2;
-    return sorted.length % 2 === 0 ? (sorted[middle - 1] + sorted[middle]) / 2 : sorted[Math.floor(middle)];
-  };
+  it.each(LOBBY_RELICS.map((relic) => [relic.name, relic.portraitAssetId] as const))(
+    "%s는 눈높이 한 줄에 선다",
+    (_name, assetId) => {
+      const placement = placementOf(assetId);
+      expect(placement.focus.anchor).toBe("eyeLine");
+      expect(placement.focus.y).toBeCloseTo(INFO_PORTRAIT_FOCUS.y - FACE_STANDARD.info.eyeRise * INFO_PORTRAIT_FOCUS.height, 6);
+    },
+  );
 
   it.each(LOBBY_RELICS.map((relic) => [relic.name, relic.portraitAssetId] as const))(
     "%s의 얼굴은 다른 전신과 같은 크기대에 있다",
     (_name, assetId) => {
-      const center = median(LOBBY_RELICS.map((relic) => faceSizeOf(relic.portraitAssetId)));
-      const ratio = faceSizeOf(assetId) / center;
-      // 아래는 노도니아가 걸렸던 0.58을 확실히 잡고, 위는 등신이 낮아 머리가 큰 도디(1.41)와
-      // 메테(1.24)를 그대로 통과시킨다. 아트 방향이 더 촘촘한 정렬을 원하면 그 둘의
-      // portraitZoom을 낮추면서 이 한계도 함께 좁힌다.
-      expect(ratio).toBeGreaterThanOrEqual(0.7);
-      expect(ratio).toBeLessThanOrEqual(1.45);
+      const ratio = faceSizeOf(assetId) / target;
+      // 위는 띠 끝 그대로다. 아래는 실루엣 폭 상한에 먼저 걸리는 노도니아(0.74)를 위해 조금 더
+      // 열어 둔다 — 예전 0.58은 확실히 잡는다.
+      expect(ratio).toBeGreaterThanOrEqual(0.72);
+      expect(ratio).toBeLessThanOrEqual(1 + FACE_STANDARD.info.band + 0.005);
     },
   );
 
-  it("는 노도니아의 portraitZoom을 떼면 다시 실패한다", () => {
-    // 보정을 되돌리면 예전 값(중앙값의 0.58배)으로 돌아가는지 직접 확인한다. 배율 자체를
-    // 여기 적지 않는 이유는, 값을 조정할 때마다 테스트가 그 숫자만 따라 고쳐지면 정작
-    // "보정이 필요하다"는 사실은 아무도 검사하지 않게 되기 때문이다.
+  it("는 노도니아를 얼굴 띠가 아니라 폭 상한에서 멈춘다", () => {
     const asset = PORTRAITS.nodonia;
-    expect(asset.portraitZoom ?? 1).toBeGreaterThan(1);
-    const bare = faceSizeOf("nodonia") / (asset.portraitZoom ?? 1);
-    const center = median(LOBBY_RELICS.map((relic) => faceSizeOf(relic.portraitAssetId)));
-    expect(bare / center).toBeLessThan(0.7);
+    const width = (asset.content.right - asset.content.left) * scaleOf("nodonia");
+    expect(width).toBeCloseTo(FACE_STANDARD.info.maxWidth * INFO_PORTRAIT_FOCUS.height, 3);
+    expect(faceSizeOf("nodonia") / target).toBeLessThan(1 - FACE_STANDARD.info.band);
   });
 
   /**
    * **화면에서 읽히는 크기는 얼굴이 아니라 판을 채우는 몸이다.**
    *
    * 얼굴만 맞추면 얼굴이 작게 그려진 원화는 배율이 계속 올라가고, 그때 함께 커지는 것은
-   * 실루엣 전체다 — 노도니아가 1.45에서 폭 1748px(다른 개체 최대 1429px)이 되어 "너무
-   * 확대됐다"로 보였다. 위 얼굴 하한과 이 폭 상한이 함께 서야 배율이 한쪽으로 달아나지 않는다.
+   * 실루엣 전체다 — 노도니아가 폭 1748px이 되어 "너무 확대됐다"로 보인 적이 있다.
    */
-  it("는 어느 전신도 다른 개체보다 크게 판을 채우지 않는다", () => {
-    const widthOf = (assetId: string): number => {
-      const asset = PORTRAITS[assetId];
-      const height = INFO_PORTRAIT_FOCUS.height * (asset.portraitZoom ?? 1);
-      return (asset.content.right - asset.content.left) * height / (asset.content.bottom - asset.content.top);
-    };
+  it("는 어느 전신도 폭 상한을 넘겨 판을 채우지 않는다", () => {
     for (const relic of LOBBY_RELICS) {
-      const others = LOBBY_RELICS.filter((other) => other !== relic).map((other) => widthOf(other.portraitAssetId));
-      // 가장 넓은 개체보다 5% 넘게 넓으면 그 원화만 판을 통째로 덮는다.
-      expect(widthOf(relic.portraitAssetId) / Math.max(...others), relic.name).toBeLessThanOrEqual(1.05);
+      const asset = PORTRAITS[relic.portraitAssetId];
+      const width = (asset.content.right - asset.content.left) * scaleOf(relic.portraitAssetId);
+      expect(width, relic.name).toBeLessThanOrEqual(FACE_STANDARD.info.maxWidth * INFO_PORTRAIT_FOCUS.height + 0.5);
     }
   });
 });
@@ -237,10 +229,10 @@ describe("토리카 skin001 화면 비율", () => {
     expect(eyeToFoot(TORIKA_SKIN_001_PORTRAIT_METADATA, skinEyes) / eyeToFoot(TORIKA_PORTRAIT_METADATA, baseEyes)).toBeCloseTo(1, 3);
   });
 
-  it("는 카드와 정보창 보정이 기본 토리카 복사가 아니다", () => {
+  it("는 로비 보정이 기본 토리카 복사가 아니고, 관절은 제 원화에서 잰 값이다", () => {
     // 새 눈 간격·실루엣·중심1로 다시 잰 값이어야 하므로 기본 메타데이터와 달라야 한다.
-    expect(TORIKA_SKIN_001_PORTRAIT_METADATA.cardZoom).not.toBe(TORIKA_PORTRAIT_METADATA.cardZoom);
     expect(TORIKA_SKIN_001_PORTRAIT_METADATA.lobbyZoom).not.toBe(TORIKA_PORTRAIT_METADATA.lobbyZoom);
-    expect(TORIKA_SKIN_001_PORTRAIT_METADATA.portraitOffsetY).toBe(-278);
+    expect(TORIKA_SKIN_001_PORTRAIT_METADATA.joints?.eyes).toEqual(skinEyes);
+    expect(TORIKA_SKIN_001_PORTRAIT_METADATA.joints?.center).toEqual([467, 454]);
   });
 });

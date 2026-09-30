@@ -7,6 +7,7 @@ import { ENEMY_SD_ASSET_IDS } from "./enemyAssetIds";
 import {
   computeAnchoredPlacement,
   computeHeadCardFrame,
+  eyeLineAnchor,
   resolveAnchors,
   type AnchorKind,
   type AnchorPoint,
@@ -924,7 +925,7 @@ export interface SpawnOptions {
    * 코어(`중심1`)나 머리(`머리1`) 관절을 화면의 한 점에 맞추는 배치.
    * 화면 밖으로 잘려도 되는 큰 연출은 발끝 대신 이쪽을 쓴다.
    */
-  focus?: { anchor: AnchorKind; x: number; y: number };
+  focus?: { anchor: AnchorKind | "eyeLine"; x: number; y: number };
   /** 바닥 높이는 유지하면서 지정 관절의 가로 위치만 맞춘다. 로비 전신처럼 발을 세운 화면에 쓴다. */
   focusX?: { anchor: AnchorKind; x: number };
   /** 그림(투명 여백 제외)의 화면상 높이. 이 값에 맞춰 배율이 정해진다. */
@@ -1060,7 +1061,10 @@ function resolvePlacement(
       height: options.height,
       flipX: options.flipX,
     };
-    return computeAnchoredPlacement(asset, anchorsOf()[options.focus.anchor], focus);
+    // 눈높이 한 줄은 ZIP 관절이 아니라 메타데이터의 실측 눈 관절로 잡는다 — 배율도 같은 값에서
+    // 나오므로(`infoPortraitPlacement`) 둘이 다른 출처를 읽으면 얼굴선이 어긋난다.
+    const point = options.focus.anchor === "eyeLine" ? eyeLineAnchor(asset) ?? anchorsOf().core : anchorsOf()[options.focus.anchor];
+    return computeAnchoredPlacement(asset, point, focus);
   }
   const grounded = computePlacement(asset, {
     ...options,

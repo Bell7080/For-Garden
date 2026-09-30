@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { portraitCardZoom } from "./portraitPlacement";
 import type { Element, PortraitAssetId, RelicRarity, Role } from "../core/types";
 import { headCardFrame, loadPortraitTexture, portraitAssetFor, type PuppetAsset } from "../puppets/assets";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
@@ -552,12 +553,12 @@ export class PortraitCard extends Phaser.GameObjects.Container {
     const { width, height } = this.options;
     const frameHeight = this.bodyHeight + this.overhang;
     // fillRatio가 작을수록 캐릭터가 카드를 꽉 채운다. 뒷배경이 거의 보이지 않는 값이며,
-    // 등신이 낮은 원화는 asset.cardZoom으로 되돌려 한 그리드에서 크기가 맞게 한다.
+    // 얼굴 크기는 공용 얼굴 규격(`portraitCardZoom`)이 두 눈 관절로 맞춰 한 그리드에서 크기가 맞게 한다.
     const card = headCardFrame(asset, anchors, {
       width,
       height: frameHeight,
       // 전신 정보창과 같은 원화 배율 보정을 적용해 폰토스가 카드에서만 다시 커지지 않게 한다.
-      fillRatio: 0.56 / ((asset.cardZoom ?? 1) * (asset.portraitZoom ?? 1)),
+      fillRatio: 0.56 / portraitCardZoom(asset),
       // 정수리를 한 줄도 자르지 않는다. 카드에서는 머리 끝이 곧 그리드의 윗선이라, 몇 px만
       // 잘라도 뿔·리본이 평평하게 깎인 것처럼 읽힌다.
       headroom: 0,

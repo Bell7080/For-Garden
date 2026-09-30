@@ -296,3 +296,13 @@ describe("모르페 — 오버클럭", () => {
     expect(JSON.stringify(getRelic("morphe").ferocityTrait)).not.toMatch(/heal|regen/i);
   });
 });
+
+describe("모르페 스킬의 디모 태그", () => {
+  it("패시브와 폭주 본문이 디모를 누르면 열리는 소환수 태그로 건다", async () => {
+    const { passiveDescription, ferocityTraitDescription } = await import("../../src/ui/skillPresentation");
+    const morphe = getRelic("morphe");
+    const stats = { attack: 100, defense: 50, maxHp: 1000, abilityPower: 0 };
+    expect(passiveDescription(morphe.passive)).toContain("[[summon-dimo|디모]]");
+    expect(ferocityTraitDescription(morphe.ferocityTrait, stats)).toContain("[[summon-dimo|디모]]");
+  });
+});

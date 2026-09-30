@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { drawGlyph, type GlyphName } from "./glyphs";
 import type { CurrencyIconKey } from "./currencyIcons";
 import { chipPoints, drawLayer, HOLO, perspectiveRect, slantedRect } from "./holo";
+import { CONFIRM_DIALOG } from "./confirmDialogLayout";
 import { COLOR, textStyle } from "./theme";
 import { settingsManager } from "../managers/SettingsManager";
 import { pressIn, pressOut } from "./pressFeedback";
@@ -91,8 +92,6 @@ export interface ButtonOptions {
   tilt?: number;
   /** 강조색을 바꾼다. 출격(금)과 성격이 다른 입구를 색으로 가를 때만 쓴다. */
   accentColor?: number;
-  /** 주 라벨의 글자색. 나가기처럼 되돌아가는 길을 붉게 알릴 때만 쓴다. */
-  labelColor?: string;
   /** 강조색과 함께 쓸 글자색. 넘기지 않으면 기본 잉크색이다. */
   accentTextColor?: string;
   /**
@@ -175,7 +174,7 @@ export class Button extends Phaser.GameObjects.Container {
     const fontSize = opts.fontSize ?? 36;
     const iconSize = fontSize * 1.35;
     const label = scene.add
-      .text(0, hasSub ? -14 : 0, opts.label, textStyle({ role: "display", size: fontSize, ...(opts.labelColor ? { color: opts.labelColor } : {}) }))
+      .text(0, hasSub ? -14 : 0, opts.label, textStyle({ role: "display", size: fontSize }))
       .setOrigin(0.5);
     plate.add(label);
     this.labelText = label;
@@ -299,3 +298,15 @@ export class Button extends Phaser.GameObjects.Container {
     return this;
   }
 }
+
+/**
+ * 파괴적·떠나는 조작의 붉은 버튼 — 확인 창의 파괴적 확정과 결과판의 나가기가 같은 한 벌을 쓴다.
+ * 글자색만 붉게 바꾸지 않는다: 붉은 판·점무늬·강조색이 함께 있어야 같은 종류의 버튼으로 읽힌다.
+ */
+export const DESTRUCTIVE_BUTTON_STYLE = {
+  variant: "primary",
+  fill: CONFIRM_DIALOG.destructiveFill,
+  decorDots: true,
+  accentColor: COLOR.danger,
+  accentTextColor: COLOR.ink,
+} as const;

@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { chipPoints, drawLayer, drawShapeEdge, HOLO } from "./holo";
-import { Button } from "./Button";
+import { Button, DESTRUCTIVE_BUTTON_STYLE } from "./Button";
 import { addFramedIcon } from "./itemFrame";
 import { CONFIRM_DIALOG, confirmButtonXs, confirmDialogHeight, confirmPlateHeight } from "./confirmDialogLayout";
 import { IconButton } from "./IconButton";
@@ -251,7 +251,7 @@ export class PopupLayer {
         // 진행인지 글자를 읽어야 안다. 파괴적 조작은 같은 자리가 붉다.
         fill: options.destructive ? CONFIRM_DIALOG.destructiveFill : CONFIRM_DIALOG.confirmFill,
         decorDots: true,
-        ...(options.destructive ? { accentColor: COLOR.danger, accentTextColor: COLOR.ink } : {}),
+        ...(options.destructive ? DESTRUCTIVE_BUTTON_STYLE : {}),
         onClick: () => { close(); onConfirm(); },
       }));
     });

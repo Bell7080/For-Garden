@@ -41,7 +41,7 @@ import { battleAssetFor, cancelMotion, flashHit, isHitFlashing, placePuppet, pla
 import { isStageUnlocked, session } from "../state/session";
 import { addSceneBackground, battleFieldBackground } from "../ui/backgrounds";
 import { battlefieldWashBands, statusAreaColor } from "../ui/groundAreas";
-import { Button } from "../ui/Button";
+import { Button, DESTRUCTIVE_BUTTON_STYLE } from "../ui/Button";
 import { chipPoints, drawGlassFade, drawHairline, drawLayer, HoloBar, HOLO } from "../ui/holo";
 import { PortraitCard } from "../ui/PortraitCard";
 import { UnitHealthBar } from "../ui/UnitHealthBar";
@@ -2671,7 +2671,7 @@ export class BattleScene extends Phaser.Scene {
     ui.add(this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.9));
     ui.add(this.add.text(BASE_WIDTH / 2, 900, t("battle.result.saveFailed"), textStyle({ role: "body", size: 30, color: COLOR.ink })).setOrigin(0.5));
     ui.add(new Button(this, BASE_WIDTH / 2, 1010, { width: 460, height: 100, label: t("battle.result.retry"), variant: "primary", onClick: () => { ui.destroy(true); this.resultFailureUi = undefined; retry(); } }));
-    ui.add(new Button(this, BASE_WIDTH / 2, 1140, { width: 460, height: 90, label: t("stageComplete.exit"), labelColor: COLOR.dangerText, onClick: () => { ui.destroy(true); this.resultFailureUi = undefined; leave(); } }));
+    ui.add(new Button(this, BASE_WIDTH / 2, 1140, { width: 460, height: 90, label: t("stageComplete.exit"), ...DESTRUCTIVE_BUTTON_STYLE, onClick: () => { ui.destroy(true); this.resultFailureUi = undefined; leave(); } }));
     this.resultFailureUi = ui;
   }
 

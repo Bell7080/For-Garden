@@ -9,7 +9,7 @@ import { chipPoints, drawHairline, drawInnerVignette, drawLayer, drawShapeOutlin
 import { drawGlyph } from "./glyphs";
 import { addFramedIcon } from "./itemFrame";
 import type { RewardPopupItem } from "./rewardPopupModel";
-import { Button } from "./Button";
+import { Button, DESTRUCTIVE_BUTTON_STYLE } from "./Button";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { setDebugRewardPopup } from "../debug";
@@ -272,7 +272,7 @@ export class StageCompletePopup {
       const y = top + index * (DEFEAT_ACTIONS.height + DEFEAT_ACTIONS.gap);
       body.add(new Button(this.scene, 0, y, {
         width: DEFEAT_ACTIONS.width, height: DEFEAT_ACTIONS.height, label: action.label, fontSize: 30,
-        labelColor: action.danger ? COLOR.dangerText : undefined,
+        ...(action.danger ? DESTRUCTIVE_BUTTON_STYLE : {}),
         // **고른 길을 먼저 알리고 그다음 닫는다.** 판은 화면 아무 곳이나 눌러도 닫히고 그
         // 닫힘이 "아무것도 고르지 않았다"는 기본 행선지를 부르므로, 닫기를 먼저 부르면 고른
         // 길과 기본 길이 같은 틱에 둘 다 선다.
@@ -291,7 +291,7 @@ export class StageCompletePopup {
       body.add(new Button(this.scene, x, CLEAR_ACTIONS.y, {
         width, height: CLEAR_ACTIONS.height, label: action.label, fontSize: CLEAR_ACTIONS.font,
         variant: action.primary ? "primary" : undefined,
-        labelColor: action.danger ? COLOR.dangerText : undefined,
+        ...(action.danger ? DESTRUCTIVE_BUTTON_STYLE : {}),
         onClick: () => { action.onPress(); close(); },
       }).setEnabled(action.disabled !== true));
     });

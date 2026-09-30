@@ -196,6 +196,8 @@ export const MISC_JA = {
   "stageComplete.toResearch": "研究所",
   "stageComplete.toRelics": "レリック強化",
   "stageComplete.replay": "もう一度",
+  "stageComplete.next": "次のステージ",
+  "stageComplete.exit": "退出",
   "stageComplete.toMap": "マップへ",
 
 
@@ -227,6 +229,8 @@ export const MISC_JA = {
   "relics.filter.element": "属性",
   "relics.filter.role": "クラス",
   "relics.filter.reach": "射程",
+  "relics.filter.rarity": "等級",
+  "relics.filter.squad": "所属",
   "relics.filter.reset": "条件解除",
   "relics.search": "名前で検索",
 

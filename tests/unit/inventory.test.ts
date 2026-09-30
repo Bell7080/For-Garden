@@ -196,3 +196,14 @@ describe("inventory", () => {
   });
 
 });
+
+describe("탐사권 칸", () => {
+  it("가진 수가 0이어도 소비품 탭에는 칸이 서고, 저장 목록에는 넣지 않는다", async () => {
+    const { InventoryManager } = await import("../../src/managers/InventoryManager");
+    const { session } = await import("../../src/state/session");
+    const manager = new InventoryManager(session as never);
+    expect(manager.list("consumable").some(({ id }) => id === "strata-ticket")).toBe(false);
+    const shown = manager.list("consumable", undefined, { showEmpty: true }).find(({ id }) => id === "strata-ticket");
+    expect(shown?.quantity).toBe(0);
+  });
+});

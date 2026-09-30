@@ -234,10 +234,10 @@ export const DEFAULT_STRATA_LAYER_ID = STRATA_LAYERS[0].id;
  * 탐사 횟수.
  *
  * 스테미나를 나눠 쓰지 않는다 — 전투와 자원을 다투면 「전투를 포기하고 팔지」가 되어 두
- * 콘텐츠가 서로를 갉는다. 시간이 지나면 차오르고, 상한이 있어 며칠 치가 쌓이지는 않는다.
+ * 콘텐츠가 서로를 갉는다. 시간이 지나면 차오르고, 상한(셋)이 있어 며칠 치가 쌓이지는 않는다.
  */
 export const STRATA_CHARGE = {
-  max: 5,
+  max: 3,
   /** 한 번이 차는 데 걸리는 시간(ms). 세 시간마다 하나다. */
   intervalMs: 3 * 60 * 60 * 1000,
 } as const;

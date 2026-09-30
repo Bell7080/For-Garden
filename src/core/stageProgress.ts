@@ -26,3 +26,13 @@ export function highestClearedStage(stages: readonly StageDef[], cleared: Readon
 export function latestUnlockedStage(stages: readonly StageDef[], cleared: ReadonlySet<string>): StageDef | undefined {
   return stages.filter((stage) => isStageUnlockedByProgress(stages, stage.id, cleared)).reduce<StageDef | undefined>((latest, stage) => !latest || progressRank(stage) > progressRank(latest) ? stage : latest, undefined);
 }
+
+/**
+ * 결과판의 「다음 단계」가 갈 곳 — 정적 배열에서 지금 관문 **뒤**에 오는 첫 **전투** 관문 중 입장 가능한 것.
+ * 사이에 낀 서사 노드는 건너뛰고, 아직 잠긴 관문은 다음으로 세지 않는다(없으면 `undefined`).
+ */
+export function nextBattleStage(stages: readonly StageDef[], currentId: string, isUnlocked: (stageId: string) => boolean): StageDef | undefined {
+  const index = stages.findIndex((stage) => stage.id === currentId);
+  if (index < 0) return undefined;
+  return stages.slice(index + 1).find((stage) => stage.kind === "battle" && isUnlocked(stage.id));
+}

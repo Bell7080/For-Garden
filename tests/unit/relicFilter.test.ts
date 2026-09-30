@@ -53,3 +53,16 @@ describe("도감 필터", () => {
     expect(toggleFilterValue(["fire", "water"], "fire")).toEqual(["water"]);
   });
 });
+
+describe("도감 필터 — 등급·소속", () => {
+  it("등급과 소속도 조건 수에 들고 한 축 안은 OR, 축끼리는 AND다", () => {
+    const filter = { ...EMPTY_RELIC_FILTER, rarities: [anky.rarity], squads: [anky.squad] };
+    expect(relicFilterCount(filter)).toBe(2);
+    expect(matchesRelicFilter(anky, filter)).toBe(true);
+    const otherRarity = anky.rarity === "SSR" ? "R" : "SSR";
+    expect(matchesRelicFilter(anky, { ...EMPTY_RELIC_FILTER, rarities: [otherRarity] })).toBe(false);
+    expect(matchesRelicFilter(anky, { ...EMPTY_RELIC_FILTER, rarities: [otherRarity, anky.rarity] })).toBe(true);
+    const otherSquad = RELICS.find((relic) => relic.squad !== anky.squad)!.squad;
+    expect(matchesRelicFilter(anky, { ...EMPTY_RELIC_FILTER, squads: [otherSquad] })).toBe(false);
+  });
+});

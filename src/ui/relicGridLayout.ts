@@ -176,6 +176,8 @@ export function relicFilterChipX(index: number, count: number): number {
 export interface FilterSectionSpec {
   /** 그 줄의 칩 높이. 아이콘이 서는 줄과 글자만 서는 줄이 다르다. */
   readonly chipHeight: number;
+  /** 앞 줄의 이어짐 — 제목 없이 바로 아래에 붙는다(칩이 한 줄에 다 들어가지 않는 소속). */
+  readonly continued?: boolean;
 }
 
 export interface FilterPopupLayout {
@@ -191,8 +193,10 @@ export function relicFilterPopupLayout(sections: readonly FilterSectionSpec[], r
   const { top, bottom, labelHeight, labelGap, sectionGap } = RELIC_FILTER_POPUP;
   let cursor = top;
   const stacked = sections.map((section) => {
+    // 이어지는 줄은 제목도 큰 칸 사이 틈도 없이 앞 줄 바로 아래에 붙는다.
+    if (section.continued) cursor -= sectionGap - RELIC_FILTER_POPUP.gap;
     const labelTop = cursor;
-    const chipTop = labelTop + labelGap;
+    const chipTop = section.continued ? labelTop : labelTop + labelGap;
     cursor = chipTop + section.chipHeight + sectionGap;
     return { labelTop, chipTop, chipHeight: section.chipHeight };
   });

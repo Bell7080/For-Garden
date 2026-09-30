@@ -185,6 +185,8 @@ export const MISC_EN = {
   "stageComplete.toResearch": "Research Lab",
   "stageComplete.toRelics": "Strengthen Relics",
   "stageComplete.replay": "Play Again",
+  "stageComplete.next": "Next Stage",
+  "stageComplete.exit": "Leave",
   "stageComplete.toMap": "To the Map",
   "battle.profile.down": "Down",
   "battle.profile.ferocity": "Ferocity {value} / 100",
@@ -212,6 +214,8 @@ export const MISC_EN = {
   "relics.filter.element": "Element",
   "relics.filter.role": "Class",
   "relics.filter.reach": "Range",
+  "relics.filter.rarity": "Rarity",
+  "relics.filter.squad": "Squad",
   "relics.filter.reset": "Clear",
   "relics.search": "Search by name",
 

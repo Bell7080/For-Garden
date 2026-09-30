@@ -38,9 +38,9 @@ export const ARCHAEOLOGY_SITES: readonly ArchaeologySiteDefinition[] = [
   // ── 관문. 모든 줄기가 여기서 갈라진다. ──────────────────────────────────────
   { id: "garden-gate", nameKey: "archaeology.site.garden-gate.name", x: 250, y: 1430, connectionIds: ["collapsed-greenhouse", "rust-canal", "ash-terrace"], layerId: "surface", recommendedLevel: 1, minimumLevel: 1, board: { columns: 5, rows: 5 }, rewardKinds: ["rawStone", "rune", "gold"], backgroundAssetKey: "archaeology_map", nodeAssetKey: "archaeology-node-gate" },
 
-  // ── 첫 갈래 셋. 레벨이 조금씩 높아질 뿐 서로를 막지 않는다. ────────────────
-  { id: "collapsed-greenhouse", nameKey: "archaeology.site.collapsed-greenhouse.name", x: 560, y: 1160, connectionIds: ["sunken-archive", "rust-canal"], layerId: "surface", recommendedLevel: 3, minimumLevel: 2, board: { columns: 5, rows: 5 }, rewardKinds: ["rawStone", "rune", "gold"], backgroundAssetKey: "archaeology_map", nodeAssetKey: "archaeology-node-gate" },
-  { id: "rust-canal", nameKey: "archaeology.site.rust-canal.name", x: 300, y: 870, connectionIds: ["lantern-shaft"], layerId: "canal", recommendedLevel: 4, minimumLevel: 3, board: { columns: 5, rows: 6 }, rewardKinds: ["rawStone", "rune", "gold"], backgroundAssetKey: "archaeology_map", nodeAssetKey: "archaeology-node-gate" },
+  // ── 첫 갈래 셋. 관문과 함께 1레벨부터 열려(서로를 막지 않는다) 재사용 대기 중에도 갈 곳이 남는다. ────
+  { id: "collapsed-greenhouse", nameKey: "archaeology.site.collapsed-greenhouse.name", x: 560, y: 1160, connectionIds: ["sunken-archive", "rust-canal"], layerId: "surface", recommendedLevel: 3, minimumLevel: 1, board: { columns: 5, rows: 5 }, rewardKinds: ["rawStone", "rune", "gold"], backgroundAssetKey: "archaeology_map", nodeAssetKey: "archaeology-node-gate" },
+  { id: "rust-canal", nameKey: "archaeology.site.rust-canal.name", x: 300, y: 870, connectionIds: ["lantern-shaft"], layerId: "canal", recommendedLevel: 4, minimumLevel: 1, board: { columns: 5, rows: 6 }, rewardKinds: ["rawStone", "rune", "gold"], backgroundAssetKey: "archaeology_map", nodeAssetKey: "archaeology-node-gate" },
   { id: "ash-terrace", nameKey: "archaeology.site.ash-terrace.name", x: 650, y: 1620, connectionIds: ["bone-quarry", "collapsed-greenhouse"], layerId: "surface", recommendedLevel: 5, minimumLevel: 4, board: { columns: 5, rows: 5 }, rewardKinds: ["rawStone", "rune", "gold"], backgroundAssetKey: "archaeology_map", nodeAssetKey: "archaeology-node-gate" },
 
   // ── 둘째 줄. 기록고 계열이 여기서 시작한다. ────────────────────────────────

@@ -212,6 +212,8 @@ export const MISC_KO = {
   "stageComplete.toResearch": "연구소",
   "stageComplete.toRelics": "렐릭 강화",
   "stageComplete.replay": "다시 하기",
+  "stageComplete.next": "다음 단계",
+  "stageComplete.exit": "나가기",
   "stageComplete.toMap": "지도로",
 
   // 전투 프로필·보상
@@ -245,6 +247,8 @@ export const MISC_KO = {
   "relics.filter.element": "속성",
   "relics.filter.role": "직군",
   "relics.filter.reach": "사거리",
+  "relics.filter.rarity": "등급",
+  "relics.filter.squad": "소속",
   "relics.filter.reset": "조건 해제",
   "relics.search": "이름 검색",
 

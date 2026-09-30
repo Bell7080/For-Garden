@@ -26,7 +26,8 @@ import {
 } from "../core/skirmish";
 import { partyRuneTraitEffects } from "../core/runeTraitEffects";
 import { getRelic } from "../data/relics";
-import { getBattleStage, getStageEnemies, stageEnemyGrowth } from "../data/stages";
+import { getBattleStage, getStageEnemies, stageEnemyGrowth, STAGES } from "../data/stages";
+import { nextBattleStage } from "../core/stageProgress";
 import { BOUNTY, bountyRoundEnemy, getBountyTier } from "../data/bounty";
 import { bountyRunCost, isBountyTierUnlocked, nextBountyStep, type BountyBattleInputDto } from "../core/bountyRun";
 import type { PartyContent } from "../data/partyContent";
@@ -37,7 +38,7 @@ import type { PuppetCreature, PuppetAsset } from "../puppets/assets";
 import type { ExpeditionRelicSnapshot } from "../core/expeditionSnapshot";
 import { showExpeditionRelic } from "../ui/expeditionRelicInfo";
 import { battleAssetFor, cancelMotion, flashHit, isHitFlashing, placePuppet, playMotion, sdAssetForSkin, spawnPuppet, tintPuppet } from "../puppets/assets";
-import { session } from "../state/session";
+import { isStageUnlocked, session } from "../state/session";
 import { addSceneBackground, battleFieldBackground } from "../ui/backgrounds";
 import { battlefieldWashBands, statusAreaColor } from "../ui/groundAreas";
 import { Button } from "../ui/Button";
@@ -94,7 +95,7 @@ import { BattleContributionPanel } from "../ui/BattleContributionPanel";
 import { CONTRIBUTION_TOGGLE } from "../ui/battleContributionLayout";
 import { battleContributionMvp, createBattleContributionResult, withConfirmedAttackTotal, type BattleContributionResult, type ContributionCategory } from "../core/battleContribution";
 import { BattleContributionPopup } from "../ui/BattleContributionPopup";
-import { StageCompletePopup, type StageCompleteFighter } from "../ui/StageCompletePopup";
+import { StageCompletePopup, type StageCompleteAction, type StageCompleteFighter } from "../ui/StageCompletePopup";
 import { EffectManager } from "../managers/EffectManager";
 import { CombatEffectPresenter, type CombatEffectTarget } from "../managers/CombatEffectPresenter";
 import { knockbackFlightPath } from "../ui/knockbackFlight";
@@ -2470,15 +2471,19 @@ export class BattleScene extends Phaser.Scene {
     // 버튼이 닫기를 먼저 부르므로 `onConfirm`이 그 직후에 돈다 — 고른 길과 기본 길이 같은
     // 틱에 두 번 시작되지 않도록, 고른 것이 있으면 기본 길은 서지 않는다.
     let chosen = false;
-    const go = (scene: string) => () => { chosen = true; startScene(this, scene); };
+    // 진 판의 길은 둘뿐이다 — 같은 관문을 다시 하거나(스테미나는 아직 그대로다), 나간다.
+    const exitTo = this.stageExit();
     new StageCompletePopup(this, popups).open({
       reward: {
         kind: "defeat",
         actions: [
-          { label: t("stageComplete.toResearch"), onPress: go("lab") },
-          { label: t("stageComplete.toRelics"), onPress: go("relics") },
-          { label: t("stageComplete.toMap"), onPress: go("stageMap") },
+          { label: t("stageComplete.exit"), onPress: () => { chosen = true; startScene(this, exitTo); } },
         ],
+      },
+      replay: {
+        label: t("stageComplete.replay"),
+        disabled: session.wallet.stamina < CONTENT_STAMINA_COSTS.normalStage,
+        onPress: () => { chosen = true; this.replayContent({ content: "stage" }, () => startScene(this, exitTo)); },
       },
       staminaRefunded,
       fighters: this.stageCompleteFighters(),
@@ -2503,7 +2508,25 @@ export class BattleScene extends Phaser.Scene {
       rememberPlayerExp(result.playerExp);
       const popups = new PopupLayer(this, 2200);
       const fighters = this.stageCompleteFighters();
+      // 오프닝에서 곧장 들어온 판은 이어지는 이야기를 거쳐 나가야 하므로 길을 고르게 하지 않는다.
+      const opening = this.battleInput.mode === "stage" && this.battleInput.exitTo === "lobby";
+      let chosen = false;
+      const canEnter = session.wallet.stamina >= CONTENT_STAMINA_COSTS.normalStage;
+      const upcoming = nextBattleStage(STAGES, stage.id, isStageUnlocked);
+      const toMap = () => startScene(this, this.stageExit());
+      const clearActions: StageCompleteAction[] | undefined = opening ? undefined : [
+        ...(upcoming ? [{
+          label: t("stageComplete.next"), primary: true, disabled: !canEnter,
+          onPress: () => { chosen = true; session.selectedStageId = upcoming.id; this.replayContent({ content: "stage" }, toMap); },
+        }] : []),
+        {
+          label: t("stageComplete.replay"), disabled: !canEnter,
+          onPress: () => { chosen = true; this.replayContent({ content: "stage" }, toMap); },
+        },
+        { label: t("stageComplete.exit"), onPress: () => undefined },
+      ];
       new StageCompletePopup(this, popups).open({
+        clearActions,
         reward: {
           kind: "storyClear", cheesecakeEarned: result.cheesecakeEarned, firstClear: result.firstClear,
           firstClearRewards: result.firstClearRewards.map((grant) => grant.kind === "rune"
@@ -2513,6 +2536,8 @@ export class BattleScene extends Phaser.Scene {
         fighters,
         onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
         onConfirm: () => {
+          // 다음 단계·다시 하기를 골랐으면 그 길이 이미 시작됐다 — 기본 길을 또 세우지 않는다.
+          if (chosen) return;
           // 이긴 판에 이어지는 이야기가 있으면 그것을 거쳐 나간다(오프닝 1-1 → 공멸 삼인조의 퇴각).
           const epilogue = this.battleInput.mode === "stage" ? this.battleInput.epilogueStoryId : undefined;
           if (epilogue) startScene(this, "stageStory", { storyId: epilogue, exitTo: this.stageExit() });

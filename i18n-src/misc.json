@@ -2089,6 +2089,26 @@
 "Reichweite",
 "Дальность"
 ],
+"relics.filter.rarity": [
+"稀有度",
+"ระดับ",
+"Hạng",
+"Kelangkaan",
+"Rareza",
+"Raridade",
+"Seltenheit",
+"Редкость"
+],
+"relics.filter.squad": [
+"所属",
+"สังกัด",
+"Đội",
+"Skuad",
+"Escuadrón",
+"Esquadrão",
+"Trupp",
+"Отряд"
+],
 "relics.filter.reset": [
 "清除",
 "ล้าง",
@@ -2628,6 +2648,26 @@
 "Jogar de novo",
 "Nochmal spielen",
 "Сыграть снова"
+],
+"stageComplete.next": [
+"下一关",
+"ด่านถัดไป",
+"Màn tiếp theo",
+"Tahap Berikutnya",
+"Siguiente etapa",
+"Próxima fase",
+"Nächste Stufe",
+"Следующий этап"
+],
+"stageComplete.exit": [
+"退出",
+"ออก",
+"Thoát",
+"Keluar",
+"Salir",
+"Sair",
+"Verlassen",
+"Выйти"
 ],
 "opening.devSkip": [
 "跳过（开发用）",

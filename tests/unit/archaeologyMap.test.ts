@@ -90,3 +90,11 @@ describe("archaeology map rules", () => {
     expect(resolveArchaeologyFocusSite(ARCHAEOLOGY_SITES, states, undefined, "deep-sanctum")?.id).toBe("sunken-archive");
   });
 });
+
+describe("1레벨 탐사 지도와 횟수", () => {
+  it("1레벨에 열리는 유적이 셋이고 탐사 횟수 상한은 셋이다", async () => {
+    expect(ARCHAEOLOGY_SITES.filter((site) => site.minimumLevel <= 1)).toHaveLength(3);
+    const { STRATA_CHARGE } = await import("../../src/data/strataLayers");
+    expect(STRATA_CHARGE.max).toBe(3);
+  });
+});

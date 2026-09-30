@@ -60,6 +60,10 @@ export type StageCompleteReward =
 export interface StageCompleteAction {
   readonly label: string;
   readonly onPress: () => void;
+  /** 이긴 판의 줄에서 가장 앞에 둘 길(다음 단계). 강조 판으로 선다. */
+  readonly primary?: boolean;
+  /** 지금은 갈 수 없는 길(스테미나가 모자란 다시 하기 등). 버튼은 서되 꺼져 있다. */
+  readonly disabled?: boolean;
 }
 
 export interface StageCompletePopupOptions {
@@ -76,6 +80,11 @@ export interface StageCompletePopupOptions {
    * 전투 시작을 도는 대신 한 번에 다음 판으로 간다.
    */
   replay?: StageCompleteAction;
+  /**
+   * 이긴 스토리 관문의 **가로 한 줄**(다음 단계 · 다시 하기 · 나가기). 있으면 `replay` 자리를 대신한다.
+   * 판은 화면 아무 곳이나 눌러도 닫히므로, 나가기는 그 닫힘이 부르는 기본 길과 같다.
+   */
+  clearActions?: readonly StageCompleteAction[];
   /**
    * 진 판에서 돌려준 스테미나. 있으면 판 밑동에 **작고 흐린 한 줄**로만 선다 — 진 판의 주인공은
    * 다음에 할 일이라, 이 줄이 버튼보다 먼저 읽히면 안 된다. 경험치 블록은 서지 않는다(오르지 않았다).
@@ -114,6 +123,9 @@ const DEFEAT_ACTIONS = { top: 272, width: 420, height: 86, gap: 18, belowLoot: 4
 
 /** 진 판에서 돌려준 스테미나 한 줄. 판 밑변 가까이, 버튼 줄보다 한참 아래에 선다. */
 const STAMINA_REFUND_Y = HEIGHT / 2 - 64;
+
+/** 이긴 스토리 관문의 가로 버튼 줄(다음 단계 · 다시 하기 · 나가기). */
+const CLEAR_ACTIONS = { y: 530, height: 92, gap: 16, side: 70, maxWidth: 300, font: 28 } as const;
 
 /** 이긴 판의 「다시 하기」. 보상 줄과 그 아래 한 줄(점수 증가분) 밑에 선다. */
 const REPLAY = { y: 530, width: 420, height: 86 } as const;
@@ -190,7 +202,8 @@ export class StageCompletePopup {
       if (options.reward.kind === "storyClear") {
         if (clearRewards.length > 0) this.buildFirstClearRewards(body, clearRewards);
         else this.buildClearReward(body, Math.floor(options.reward.cheesecakeEarned), options.reward.firstClear);
-        if (options.replay) this.buildReplay(body, close, options.replay);
+        if (options.clearActions) this.buildClearActions(body, close, options.clearActions);
+        else if (options.replay) this.buildReplay(body, close, options.replay);
       }
       else if (options.reward.kind === "defeat") {
         const carried = (options.reward.items ?? []).filter(({ amount }) => amount > 0);
@@ -261,7 +274,22 @@ export class StageCompletePopup {
         // 닫힘이 "아무것도 고르지 않았다"는 기본 행선지를 부르므로, 닫기를 먼저 부르면 고른
         // 길과 기본 길이 같은 틱에 둘 다 선다.
         onClick: () => { action.onPress(); close(); },
-      }));
+      }).setEnabled(action.disabled !== true));
+    });
+  }
+
+  /** 이긴 판의 가로 한 줄. 셋이 한 폭을 똑같이 나눠 어느 길도 먼저 눈에 띄지 않되, 앞서 갈 길만 강조 판이다. */
+  private buildClearActions(body: Phaser.GameObjects.Container, close: () => void, actions: readonly StageCompleteAction[]): void {
+    const gap = CLEAR_ACTIONS.gap;
+    const width = Math.min(CLEAR_ACTIONS.maxWidth, (WIDTH - CLEAR_ACTIONS.side * 2 - gap * (actions.length - 1)) / actions.length);
+    const total = width * actions.length + gap * (actions.length - 1);
+    actions.forEach((action, index) => {
+      const x = -total / 2 + width / 2 + index * (width + gap);
+      body.add(new Button(this.scene, x, CLEAR_ACTIONS.y, {
+        width, height: CLEAR_ACTIONS.height, label: action.label, fontSize: CLEAR_ACTIONS.font,
+        variant: action.primary ? "primary" : undefined,
+        onClick: () => { action.onPress(); close(); },
+      }).setEnabled(action.disabled !== true));
     });
   }
 

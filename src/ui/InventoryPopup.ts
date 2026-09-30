@@ -120,7 +120,7 @@ export class InventoryPopup {
     // 매 렌더마다 비워 실제로 현재 탭에 놓인 이미지 키만 E2E에 남긴다.
     const textureKeys: string[] = [];
     setDebugInventoryTextureKeys(textureKeys);
-    const visible = this.inventory.list(this.category, this.sort);
+    const visible = this.inventory.list(this.category, this.sort, { showEmpty: true });
     // 첫 카드가 큰 작업판 제목의 세로 영역을 침범하지 않도록 기존 목록을 50px 내린다.
     // 첫 카드의 윗변을 마스크 윗변에 맞춰 아이콘/액자가 절반 잘리지 않게 한다.
     const contentStartY = VIEWPORT.y - VIEWPORT.height / 2 + INVENTORY_LAYOUT.cellHeight / 2;

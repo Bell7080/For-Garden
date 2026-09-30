@@ -1,6 +1,10 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
-import type { Element, ReachTier, Role } from "../core/types";
+import type { Element, ReachTier, RelicRarity, Role, SquadId } from "../core/types";
+import { PLAYABLE_RELICS } from "../data/relics";
+import { SQUADS } from "../data/factions";
+import { RARITY_TONE } from "./rarityMark";
+import { squeezeTextToWidth } from "./textFit";
 import { EMPTY_RELIC_FILTER, relicFilterCount, toggleFilterValue, type RelicFilter } from "../core/relicFilter";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON, type AffinityIconKey } from "./affinityIcons";
@@ -19,6 +23,14 @@ import { pressIn, pressOut } from "./pressFeedback";
 const ELEMENTS: readonly Element[] = ["fire", "water", "grass", "earth", "wind"];
 const ROLES: readonly Role[] = ["warrior", "tank", "assassin", "support"];
 const REACHES: readonly ReachTier[] = ["melee", "mid", "ranged"];
+const RARITIES: readonly RelicRarity[] = ["SSR", "SR", "R"];
+/** 소속 칩은 한 줄에 셋씩 — 스쿼드 이름이 길어 다섯을 한 줄에 두면 글자가 칸을 넘는다. */
+const SQUAD_PER_ROW = 3;
+/** 도감에 실제로 서는 개체가 속한 스쿼드만 고를 수 있다 — 아무도 없는 칸은 눌러도 목록이 비기만 한다. */
+function playableSquads(): SquadId[] {
+  const used = new Set(PLAYABLE_RELICS.map((relic) => relic.squad));
+  return (Object.keys(SQUADS) as SquadId[]).filter((id) => used.has(id));
+}
 
 /** 켜진 칩과 꺼진 칩. 색이 아니라 **밝기와 크기**로 가른다 — 화면 전체의 선택 규칙과 같다. */
 const CHIP = { on: { fill: 0x1d2a38, alpha: 0.98, scale: 1.06 }, off: { fill: 0x080d13, alpha: 0.72, scale: 1 } } as const;
@@ -37,10 +49,15 @@ export function openRelicFilterPopup(
   current: () => RelicFilter,
   onChange: (filter: RelicFilter) => void,
 ): void {
+  const squads = playableSquads();
+  const squadRows = Math.max(1, Math.ceil(squads.length / SQUAD_PER_ROW));
+  // 순서: 등급 · 속성 · 직군 · 사거리 · 소속(여러 줄이면 첫 줄만 제목을 갖는다).
   const sections = [
+    { chipHeight: RELIC_FILTER_POPUP.textChipHeight },
     { chipHeight: RELIC_FILTER_POPUP.iconChipHeight },
     { chipHeight: RELIC_FILTER_POPUP.iconChipHeight },
     { chipHeight: RELIC_FILTER_POPUP.textChipHeight },
+    ...Array.from({ length: squadRows }, (_, row) => ({ chipHeight: RELIC_FILTER_POPUP.textChipHeight, continued: row > 0 })),
   ];
   const hasCondition = relicFilterCount(current()) > 0;
   const layout = relicFilterPopupLayout(sections, hasCondition);
@@ -59,25 +76,41 @@ export function openRelicFilterPopup(
         body.add(scene.add.text(left, y, text, textStyle({ role: "display", size: 28, color: COLOR.accentText })).setOrigin(0, 0.5));
       };
 
-      label(layout.sections[0].labelY, t("relics.filter.element"));
+      label(layout.sections[0].labelY, t("relics.filter.rarity"));
+      RARITIES.forEach((rarity, index) => {
+        addTextChip(scene, body, relicFilterChipX(index, RARITIES.length), layout.sections[0].chipY, relicFilterChipWidth(RARITIES.length), rarity, RARITY_TONE[rarity].chip,
+          () => current().rarities.includes(rarity),
+          () => onChange({ ...current(), rarities: toggleFilterValue(current().rarities, rarity) }));
+      });
+
+      label(layout.sections[1].labelY, t("relics.filter.element"));
       ELEMENTS.forEach((element, index) => {
-        addIconChip(scene, body, relicFilterChipX(index, ELEMENTS.length), layout.sections[0].chipY, relicFilterChipWidth(ELEMENTS.length), ELEMENT_ICON[element], t(`element.${element}`),
+        addIconChip(scene, body, relicFilterChipX(index, ELEMENTS.length), layout.sections[1].chipY, relicFilterChipWidth(ELEMENTS.length), ELEMENT_ICON[element], t(`element.${element}`),
           () => current().elements.includes(element),
           () => onChange({ ...current(), elements: toggleFilterValue(current().elements, element) }));
       });
 
-      label(layout.sections[1].labelY, t("relics.filter.role"));
+      label(layout.sections[2].labelY, t("relics.filter.role"));
       ROLES.forEach((role, index) => {
-        addIconChip(scene, body, relicFilterChipX(index, ROLES.length), layout.sections[1].chipY, relicFilterChipWidth(ROLES.length), ROLE_ICON[role], t(`role.${role}`),
+        addIconChip(scene, body, relicFilterChipX(index, ROLES.length), layout.sections[2].chipY, relicFilterChipWidth(ROLES.length), ROLE_ICON[role], t(`role.${role}`),
           () => current().roles.includes(role),
           () => onChange({ ...current(), roles: toggleFilterValue(current().roles, role) }));
       });
 
-      label(layout.sections[2].labelY, t("relics.filter.reach"));
+      label(layout.sections[3].labelY, t("relics.filter.reach"));
       REACHES.forEach((reach, index) => {
-        addTextChip(scene, body, relicFilterChipX(index, REACHES.length), layout.sections[2].chipY, relicFilterChipWidth(REACHES.length), reachLabel(reach), REACH_TONE[reach],
+        addTextChip(scene, body, relicFilterChipX(index, REACHES.length), layout.sections[3].chipY, relicFilterChipWidth(REACHES.length), reachLabel(reach), REACH_TONE[reach],
           () => current().reaches.includes(reach),
           () => onChange({ ...current(), reaches: toggleFilterValue(current().reaches, reach) }));
+      });
+
+      label(layout.sections[4].labelY, t("relics.filter.squad"));
+      squads.forEach((squad, index) => {
+        const row = Math.floor(index / SQUAD_PER_ROW);
+        const column = index % SQUAD_PER_ROW;
+        addTextChip(scene, body, relicFilterChipX(column, SQUAD_PER_ROW), layout.sections[4 + row].chipY, relicFilterChipWidth(SQUAD_PER_ROW), SQUADS[squad].name, COLOR.accent,
+          () => current().squads.includes(squad),
+          () => onChange({ ...current(), squads: toggleFilterValue(current().squads, squad) }));
       });
 
       // **걸린 조건이 없으면 그 줄 자체를 세우지 않는다.** 눌러도 아무 일이 없는 칸은 준비
@@ -163,6 +196,8 @@ function addTextChip(
   const plate = drawLayer(scene, 0, 0, shape, { fill: CHIP.off.fill, alpha: CHIP.off.alpha, shadow: false });
   const edge = drawShapeEdge(scene, 0, 0, shape, "top", { color: tone, alpha: 1, width: 5 });
   const text = scene.add.text(0, 0, name, textStyle({ role: "display", size: 27, color: COLOR.inkDim })).setOrigin(0.5);
+  // 스쿼드 이름처럼 긴 낱말은 칸을 넘지 않게 가로로만 누른다(크기를 줄이면 한 줄에서 칩마다 무게가 갈린다).
+  squeezeTextToWidth(text, width - 36);
   chip.add([plate, edge, text]);
 
   const points = toPoints(shape);

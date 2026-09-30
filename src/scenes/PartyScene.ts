@@ -34,6 +34,8 @@ import { ELEMENT_ICON, ROLE_ICON } from "../ui/affinityIcons";
 import { addBreakthroughGradeMark } from "../ui/rarityMark";
 import { addUnitNameplate } from "../ui/unitNameplate";
 import { combatPower } from "../core/combatPower";
+import { applyRosterView, DEFAULT_ROSTER_VIEW, type RosterView } from "../core/rosterView";
+import { RosterControls, ROSTER_CONTROLS } from "../ui/RosterControls";
 import { formationMembers, tapFormationSlot, tapRosterRelic, toFormationSlots } from "../core/formationSlots";
 import { prefetchBattlePuppets as prefetchBattleSds } from "../puppets/battlePrefetch";
 import { moveFormationSlot } from "../core/formation";
@@ -84,7 +86,9 @@ const ROSTER_GRID = formationRosterGrid(BASE_WIDTH - 96);
  * 버튼 위로 그대로 자란다(실제로 그랬다). 원정 편성·도감과 같은 방식으로 이 창 안에서만
  * 흐르게 하고, 첫 줄은 머리가 잘리지 않는 공용 안전 영역만큼 내려 세운다.
  */
-const ROSTER_VIEWPORT = { top: 962, bottom: 1500 } as const;
+const ROSTER_VIEWPORT = { top: 1026, bottom: 1500 } as const;
+/** 그리드 위 두 줄의 간격 — 아래 줄은 필터·정렬, 그 위 줄은 자동 배치 같은 편성 보조 버튼이다. */
+const ROSTER_BAR_STEP = 64;
 /** 손가락이 이 거리 이상 움직이면 편성이 아니라 스크롤로 본다. */
 const ROSTER_DRAG_SLOP = 12;
 
@@ -141,6 +145,8 @@ export class PartyScene extends Phaser.Scene {
    */
   private selectedSlot: number | undefined;
   private cards = new Map<string, RosterCard>();
+  /** 목록 위 조작 줄이 고른 필터·정렬. 씬이 다시 열릴 때까지만 기억한다. */
+  private rosterView: RosterView = DEFAULT_ROSTER_VIEW;
   private allySlots: AllySlot[] = [];
   /** 대치선 위에 마주 보는 두 편의 종합 전투력. 편성이 바뀌면 아군 쪽만 다시 적는다. */
   private enemyPowerText?: Phaser.GameObjects.Text;
@@ -207,6 +213,7 @@ export class PartyScene extends Phaser.Scene {
     this.picked = toFormationSlots(relicCollection.validParty, 3);
     this.selectedSlot = undefined;
     this.cards.clear();
+    this.rosterView = DEFAULT_ROSTER_VIEW;
     this.allySlots = [];
     this.isEnteringBattle = false;
 
@@ -242,8 +249,16 @@ export class PartyScene extends Phaser.Scene {
     const headTop = firstRowY - ROSTER_GRID.cardHeight / 2 - portraitGridHeadroom(ROSTER_GRID.cardHeight);
     this.autoButtonPosition = {
       x: rosterRightEdge() - autoButtonWidth / 2,
-      y: headTop - 18 - autoButtonHeight / 2,
+      // 자동 배치 줄은 필터·정렬 줄 **바로 위**로 한 칸 밀려 서고, 그리드에 붙는 줄은 조작 줄이 갖는다.
+      y: headTop - 18 - autoButtonHeight / 2 - ROSTER_BAR_STEP,
     };
+    new RosterControls(this, {
+      left: BASE_WIDTH / 2 + formationRosterColumnX(ROSTER_GRID, 0) - ROSTER_GRID.cardWidth / 2,
+      right: rosterRightEdge(),
+      y: headTop - 18 - ROSTER_CONTROLS.height / 2,
+      view: this.rosterView,
+      onChange: (view) => { this.rosterView = view; this.fillRoster(); this.refresh(); },
+    });
     new Button(this, this.autoButtonPosition.x, this.autoButtonPosition.y, {
       width: autoButtonWidth,
       height: autoButtonHeight,
@@ -589,19 +604,32 @@ export class PartyScene extends Phaser.Scene {
    * 고른 카드는 띠 문구가 전장에서 설 자리 번호로 바뀐다.
    */
   private buildRoster(): void {
-    const { columns: cols, cardWidth: cardW, cardHeight: cardH, rowStep } = ROSTER_GRID;
-    // 첫 줄은 창 윗변에 붙이지 않는다 — 칩 밖으로 빠져나온 정수리가 마스크에 잘린다.
-    const startY = portraitGridFirstRowY(ROSTER_VIEWPORT.top, cardH, PORTRAIT_GRID_MASK_GAP);
-
     const content = this.add.container(0, 0);
     this.rosterContent = content;
     this.rosterMask = this.make.graphics({});
     this.rosterMask.fillStyle(0xffffff, 1).fillRect(0, ROSTER_VIEWPORT.top, BASE_WIDTH, ROSTER_VIEWPORT.bottom - ROSTER_VIEWPORT.top);
     content.setMask(this.rosterMask.createGeometryMask());
+    this.fillRoster();
+    this.bindRosterScroll();
 
-    // 보유한 렐릭만 편성할 수 있다.
-    const roster = relicCollection.owned;
-    // 카드 자리를 Canvas 밖에 알린다 — 스펙이 보유 순서와 격자 칸 수를 손으로 셈하지 않게 한다.
+    this.add
+      .text(BASE_WIDTH / 2, 1520, t("party.longPressHint"), textStyle({ role: "body", size: 24, color: COLOR.inkDim }))
+      .setOrigin(0.5, 0);
+  }
+
+  /**
+   * 보유 렐릭을 지금 필터·정렬대로 카드로 세운다. 조작 줄이 바뀔 때마다 다시 부르므로 이전 카드는 먼저 걷는다.
+   * 편성 자리(`picked`)는 목록과 무관하게 남는다 — 필터에 걸러진 렐릭도 이미 선 자리에서는 빠지지 않는다.
+   */
+  private fillRoster(): void {
+    const content = this.rosterContent;
+    if (!content) return;
+    const { columns: cols, cardWidth: cardW, cardHeight: cardH, rowStep } = ROSTER_GRID;
+    const startY = portraitGridFirstRowY(ROSTER_VIEWPORT.top, cardH, PORTRAIT_GRID_MASK_GAP);
+    content.removeAll(true);
+    this.cards.clear();
+    const powerOf = (relic: RelicDef): number => combatPower(relicProgression.getFinalStats(relic.id));
+    const roster = applyRosterView(relicCollection.owned, this.rosterView, powerOf);
     setDebugGridCards("party", Object.fromEntries(roster.map((relic, i) => [relic.id, {
       x: rosterColumnX(i % cols), y: startY + Math.floor(i / cols) * rowStep,
     }])), this.rosterScrollY, ROSTER_VIEWPORT);
@@ -622,23 +650,16 @@ export class PartyScene extends Phaser.Scene {
         // 읽혀 이미 세운 렐릭과 아직 고를 수 있는 렐릭이 같은 무게가 된다.
         selectedStyle: "pressed",
       });
-
       this.bindCardInput(card.hit, relic);
       this.cards.set(relic.id, { card, role });
       content.add(card);
     });
-
     const rows = Math.ceil(roster.length / cols);
     const contentHeight = rows > 0 ? PORTRAIT_GRID_MASK_GAP + portraitGridContentHeight(rows, rowStep, cardH) : 0;
     const viewportHeight = ROSTER_VIEWPORT.bottom - ROSTER_VIEWPORT.top;
     // 도감과 같은 28px 여유를 아래에도 둬 마지막 줄 밑변이 마스크 경계에 겹쳐 깎이지 않게 한다.
     this.rosterMinScroll = Math.min(0, viewportHeight - contentHeight - 28);
     this.scrollRosterTo(0);
-    this.bindRosterScroll();
-
-    this.add
-      .text(BASE_WIDTH / 2, 1520, t("party.longPressHint"), textStyle({ role: "body", size: 24, color: COLOR.inkDim }))
-      .setOrigin(0.5, 0);
   }
 
   /** 창 안에서만 흐르게 하는 휠·드래그 배선. 씬이 내려갈 때 리스너와 마스크를 함께 뗀다. */

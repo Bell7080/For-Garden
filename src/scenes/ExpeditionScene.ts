@@ -14,6 +14,10 @@ import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { showExpeditionRelic } from "../ui/expeditionRelicInfo";
 import { expeditionManager, type StartExpeditionFailure } from "../managers/ExpeditionManager";
 import { relicProgression } from "../managers/RelicProgressionManager";
+import type { RelicDef } from "../core/types";
+import { combatPower } from "../core/combatPower";
+import { applyRosterView, DEFAULT_ROSTER_VIEW, type RosterView } from "../core/rosterView";
+import { RosterControls, ROSTER_CONTROLS } from "../ui/RosterControls";
 import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
@@ -70,7 +74,7 @@ const ROSTER = formationRosterGrid(BASE_WIDTH - 96);
  */
 const LOOT = { panelY: 199, panelHeight: 152, frameY: 200, step: 200, frame: 96, span: 860, gainY: 258, scoreY: 316 } as const;
 /** 보유 렐릭이 늘면 편성판 아래·힌트/출격 버튼 위 사이만 스크롤로 보여준다. */
-const ROSTER_VIEWPORT = { top: 705, bottom: 1500 } as const;
+const ROSTER_VIEWPORT = { top: 769, bottom: 1500 } as const;
 /** 손가락이 이 거리 이상 움직여야 카드 선택이 아니라 스크롤로 판정한다. */
 const ROSTER_DRAG_SLOP = 12;
 /** 발굴 편성처럼 화면 상단에서 순서를 먼저 읽는 1/2/3 슬롯 규격이다. */
@@ -116,6 +120,7 @@ export class ExpeditionScene extends Phaser.Scene {
   private cards = new Map<string, PortraitCard>();
   /** 보유 카드가 뷰포트를 넘을 때만 쓰는 스크롤 콘텐츠·마스크·틱커다. */
   private rosterContent?: Phaser.GameObjects.Container;
+  private rosterView: RosterView = DEFAULT_ROSTER_VIEW;
   private rosterMask?: Phaser.GameObjects.Graphics;
   private rosterTicker?: Phaser.Time.TimerEvent;
   private rosterScrollY = 0;
@@ -787,17 +792,51 @@ export class ExpeditionScene extends Phaser.Scene {
    * 쌓아서 보유 렐릭이 두 줄을 넘으면 아래 카드가 출격 버튼과 겹쳐 보였다.
    */
   private buildRosterGrid(): void {
-    const owned = [...session.owned].map(getRelic);
-    const rowStep = ROSTER.rowStep;
-    // 머리가 칩 밖으로 나오므로 첫 줄은 도감·발굴과 같은 공용 안전 영역만큼 내려 세운다.
-    const firstRowY = portraitGridFirstRowY(ROSTER_VIEWPORT.top, ROSTER.cardHeight, PORTRAIT_GRID_MASK_GAP);
-
     const content = this.add.container(0, 0);
     this.rosterContent = content;
     this.rosterMask = this.make.graphics({});
     this.rosterMask.fillStyle(0xffffff, 1).fillRect(0, ROSTER_VIEWPORT.top, BASE_WIDTH, ROSTER_VIEWPORT.bottom - ROSTER_VIEWPORT.top);
     content.setMask(this.rosterMask.createGeometryMask());
+    this.rosterView = DEFAULT_ROSTER_VIEW;
+    this.fillRosterGrid();
+    // 편성판 바로 아래 한 줄 — 도감과 같은 필터·정렬. 그리드가 시작하는 머리 끝선 위에 앉는다.
+    new RosterControls(this, {
+      left: BASE_WIDTH / 2 + formationRosterColumnX(ROSTER, 0) - ROSTER.cardWidth / 2,
+      right: BASE_WIDTH / 2 + formationRosterColumnX(ROSTER, ROSTER.columns - 1) + ROSTER.cardWidth / 2,
+      y: ROSTER_VIEWPORT.top + PORTRAIT_GRID_MASK_GAP - 18 - ROSTER_CONTROLS.height / 2,
+      view: this.rosterView,
+      onChange: (view) => { this.rosterView = view; this.fillRosterGrid(); this.refreshPreparationSelection(); },
+    });
 
+    this.input.on("pointerdown", this.onRosterPointerDown);
+    this.input.on("pointermove", this.onRosterPointerMove);
+    this.input.on("pointerup", this.onRosterPointerUp);
+    this.input.on("pointerupoutside", this.onRosterPointerUp);
+    this.input.on("wheel", this.onRosterWheel);
+    this.rosterTicker = this.time.addEvent({ delay: 16, loop: true, callback: () => this.syncRosterCardMasks() });
+    this.syncRosterCardMasks();
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.input.off("pointerdown", this.onRosterPointerDown);
+      this.input.off("pointermove", this.onRosterPointerMove);
+      this.input.off("pointerup", this.onRosterPointerUp);
+      this.input.off("pointerupoutside", this.onRosterPointerUp);
+      this.input.off("wheel", this.onRosterWheel);
+      this.rosterTicker?.remove(false); this.rosterTicker = undefined;
+      this.rosterMask?.destroy(); this.rosterMask = undefined;
+    });
+  }
+
+  /** 보유 렐릭을 지금 필터·정렬대로 카드로 세운다. 편성 자리는 목록과 무관하게 남는다. */
+  private fillRosterGrid(): void {
+    const content = this.rosterContent;
+    if (!content) return;
+    const powerOf = (relic: RelicDef): number => combatPower(relicProgression.getFinalStats(relic.id));
+    const owned = applyRosterView([...session.owned].map(getRelic), this.rosterView, powerOf);
+    const rowStep = ROSTER.rowStep;
+    // 머리가 칩 밖으로 나오므로 첫 줄은 도감·발굴과 같은 공용 안전 영역만큼 내려 세운다.
+    const firstRowY = portraitGridFirstRowY(ROSTER_VIEWPORT.top, ROSTER.cardHeight, PORTRAIT_GRID_MASK_GAP);
+    content.removeAll(true);
+    this.cards.clear();
     owned.forEach((relic, index) => {
       const card = new PortraitCard(this, BASE_WIDTH / 2 + formationRosterColumnX(ROSTER, index % ROSTER.columns), firstRowY + Math.floor(index / ROSTER.columns) * rowStep, {
         width: ROSTER.cardWidth,
@@ -830,23 +869,6 @@ export class ExpeditionScene extends Phaser.Scene {
     // 겹쳐 앤티에일리어싱으로 깎이지 않게 한다.
     this.rosterMinScroll = Math.min(0, viewportHeight - contentHeight - 28);
     this.scrollRosterTo(0);
-
-    this.input.on("pointerdown", this.onRosterPointerDown);
-    this.input.on("pointermove", this.onRosterPointerMove);
-    this.input.on("pointerup", this.onRosterPointerUp);
-    this.input.on("pointerupoutside", this.onRosterPointerUp);
-    this.input.on("wheel", this.onRosterWheel);
-    this.rosterTicker = this.time.addEvent({ delay: 16, loop: true, callback: () => this.syncRosterCardMasks() });
-    this.syncRosterCardMasks();
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      this.input.off("pointerdown", this.onRosterPointerDown);
-      this.input.off("pointermove", this.onRosterPointerMove);
-      this.input.off("pointerup", this.onRosterPointerUp);
-      this.input.off("pointerupoutside", this.onRosterPointerUp);
-      this.input.off("wheel", this.onRosterWheel);
-      this.rosterTicker?.remove(false); this.rosterTicker = undefined;
-      this.rosterMask?.destroy(); this.rosterMask = undefined;
-    });
   }
 
   private scrollRosterTo(value: number): void {

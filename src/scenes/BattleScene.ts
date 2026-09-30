@@ -2546,9 +2546,7 @@ export class BattleScene extends Phaser.Scene {
       });
     } catch {
       // 승리는 이미 확정됐으므로 전장으로 되돌리지 않고, 같은 저장 요청만 다시 시도하게 한다.
-      this.add.rectangle(BASE_WIDTH / 2, 930, BASE_WIDTH, 420, COLOR.void, 0.84).setDepth(100);
-      this.add.text(BASE_WIDTH / 2, 900, t("battle.result.saveFailed"), textStyle({ role: "body", size: 30, color: COLOR.ink })).setOrigin(0.5).setDepth(101);
-      new Button(this, BASE_WIDTH / 2, 1010, { width: 400, height: 100, label: t("battle.result.retry"), onClick: () => void this.finishStageVictory(stage) }).setDepth(101);
+      this.showResultFailure(() => void this.finishStageVictory(stage), () => startScene(this, this.stageExit()));
     }
   }
 
@@ -2590,9 +2588,7 @@ export class BattleScene extends Phaser.Scene {
       });
     } catch {
       // 결과 확정만 실패한 자리라 전장으로 되돌리지 않고 같은 요청만 다시 시도하게 한다.
-      this.add.rectangle(BASE_WIDTH / 2, 930, BASE_WIDTH, 420, COLOR.void, 0.84).setDepth(100);
-      this.add.text(BASE_WIDTH / 2, 900, t("battle.result.saveFailed"), textStyle({ role: "body", size: 30, color: COLOR.ink })).setOrigin(0.5).setDepth(101);
-      new Button(this, BASE_WIDTH / 2, 1010, { width: 400, height: 100, label: t("battle.result.retry"), onClick: () => void this.finishCakeOperation(input, won) }).setDepth(101);
+      this.showResultFailure(() => void this.finishCakeOperation(input, won), () => this.scene.start("cakeOperation", { tierId: input.tierId }));
     }
   }
 
@@ -2631,9 +2627,7 @@ export class BattleScene extends Phaser.Scene {
     } catch {
       // 정산이 늦어도 전장으로 되돌리지 않는다. 같은 영수증으로 다시 시도하게만 한다.
       if (!this.scene.isActive()) return;
-      this.add.rectangle(BASE_WIDTH / 2, 930, BASE_WIDTH, 420, COLOR.void, 0.84).setDepth(100);
-      this.add.text(BASE_WIDTH / 2, 900, t("battle.result.saveFailed"), textStyle({ role: "body", size: 30, color: COLOR.ink })).setOrigin(0.5).setDepth(101);
-      new Button(this, BASE_WIDTH / 2, 1010, { width: 400, height: 100, label: t("battle.result.retry"), onClick: () => void this.finishBountyRound(input, won) }).setDepth(101);
+      this.showResultFailure(() => void this.finishBountyRound(input, won), () => this.scene.start("bounty", { tierId: input.tierId }));
       return;
     }
     if (!this.scene.isActive()) return;
@@ -2667,6 +2661,21 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /**
+   * 결과 확정이 막혔을 때의 판. 다시 시도와 나가기를 함께 세워 어느 경우에도 화면이 멈춰 서지 않는다.
+   * 이긴·진 결과를 그리는 모든 모드가 같은 판을 쓴다.
+   */
+  private resultFailureUi?: Phaser.GameObjects.Container;
+  private showResultFailure(retry: () => void, leave: () => void): void {
+    this.resultFailureUi?.destroy(true);
+    const ui = this.add.container(0, 0).setDepth(5000);
+    ui.add(this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.9));
+    ui.add(this.add.text(BASE_WIDTH / 2, 900, t("battle.result.saveFailed"), textStyle({ role: "body", size: 30, color: COLOR.ink })).setOrigin(0.5));
+    ui.add(new Button(this, BASE_WIDTH / 2, 1010, { width: 460, height: 100, label: t("battle.result.retry"), variant: "primary", onClick: () => { ui.destroy(true); this.resultFailureUi = undefined; retry(); } }));
+    ui.add(new Button(this, BASE_WIDTH / 2, 1140, { width: 460, height: 90, label: t("stageComplete.exit"), labelColor: COLOR.dangerText, onClick: () => { ui.destroy(true); this.resultFailureUi = undefined; leave(); } }));
+    this.resultFailureUi = ui;
+  }
+
+  /**
    * 결과판이 세울 편성 스냅샷. **누가 이번 판을 끌었는가**(MVP)까지 함께 정한다.
    *
    * 스토리와 원정이 같은 결과판을 쓰므로 이 계산도 한 곳에만 둔다 — 두 곳에서 따로 고르면
@@ -2696,7 +2705,7 @@ export class BattleScene extends Phaser.Scene {
         if (!won) {
           // 전멸은 추가 지도 입력을 거치지 않고 같은 멱등 정산 경계로 끝낸다. 결과는 스토리
           // 실패와 **같은 결산창**이 말하고, 그때까지 걷은 전리품이 보상 줄에 함께 선다.
-          void gameApi.settleExpeditionRun({ runId: input.runId, settlementId: `${input.runId}:defeat`, outcome: "abandoned" }).then((settlement) => {
+          return gameApi.settleExpeditionRun({ runId: input.runId, settlementId: `${input.runId}:defeat`, outcome: "abandoned" }).then((settlement) => {
             const popups = new PopupLayer(this, 2200);
             let chosen = false;
             new StageCompletePopup(this, popups).open({
@@ -2715,8 +2724,7 @@ export class BattleScene extends Phaser.Scene {
               onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
               onConfirm: () => { if (!chosen && this.scene.isActive()) startScene(this, "lobby"); },
             });
-          }).catch(() => undefined);
-          return;
+          });
         }
         /*
          * 승리 노드도 **스토리와 같은 결과판**을 쓴다.
@@ -2738,7 +2746,11 @@ export class BattleScene extends Phaser.Scene {
           onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
           onConfirm: () => startScene(this, "expedition"),
         });
-      }).catch(() => undefined);
+      }).catch((error: unknown) => {
+        // 두 정산 모두 같은 영수증으로 멱등이라 다시 시도해도 두 번 쌓이지 않는다. 삼키면 판이 아무것도 없이 멈춘다.
+        console.error("[expedition] 노드 결과 정산 실패", error);
+        if (this.scene.isActive()) this.showResultFailure(() => this.finishExpeditionBattle(input, won), () => startScene(this, "lobby"));
+      });
     }
   }
 

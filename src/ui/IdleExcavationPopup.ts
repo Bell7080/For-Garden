@@ -16,6 +16,10 @@ import { notificationManager } from "../managers/NotificationManager";
 import { Button } from "./Button";
 import { chipPoints, drawHairline, drawLayer, HOLO, HoloBar, slantedRect } from "./holo";
 import { PortraitCard } from "./PortraitCard";
+import { combatPower } from "../core/combatPower";
+import { relicProgression } from "../managers/RelicProgressionManager";
+import { applyRosterView, DEFAULT_ROSTER_VIEW, type RosterView } from "../core/rosterView";
+import { RosterControls } from "./RosterControls";
 import { autoAssignExcavation, excavationAutoModeLabel, EXCAVATION_AUTO_MODES, type ExcavationAutoMode, type ExcavationCandidate } from "../core/excavationAutoAssign";
 import { bindLongPress } from "./longPressInfo";
 import { type InfoManager, sceneInfoManager } from "./info";
@@ -56,7 +60,9 @@ const STORAGE_GAUGE = { labelY: -158, y: -128, width: 700, height: 20 } as const
 // 카드 비율(세로/가로)을 도감 그리드(300×400)와 맞춰, 머리 관절 기준 잘라내기가 카드 크기와
 // 무관하게 같은 구도로 보이게 한다 — 비율이 다르면 같은 캐릭터도 화면마다 잘리는 범위가
 // 달라진다(`computeHeadCardFrame`은 카드 가로세로비를 그대로 잘라내기 비율로 쓴다).
-const GRID_VIEW = { left: -415, right: 415, top: STATUS_SUMMARY.y - STATUS_SUMMARY.height / 2, bottom: 425 } as const;
+/** 그리드 위 두 줄의 간격 — 그리드에 붙는 줄은 필터·정렬, 그 위 줄은 자동 배치 같은 편성 보조 버튼이다. */
+const ROSTER_BAR_STEP = 64;
+const GRID_VIEW = { left: -415, right: 415, top: STATUS_SUMMARY.y - STATUS_SUMMARY.height / 2 + ROSTER_BAR_STEP, bottom: 425 } as const;
 /** 한 줄에 몇 칸이고 카드가 얼마나 큰지는 화면이 정하지 않는다 — 폭만 주면 공용 규칙이 정한다. */
 const ROSTER = formationRosterGrid(GRID_VIEW.right - GRID_VIEW.left);
 /** 손가락이 이 거리 이상 움직여야 카드 선택이 아니라 스크롤로 판정한다. */
@@ -169,6 +175,7 @@ export class IdleExcavationPopup {
   private saving = false;
   /** 자동 배치의 기준. 창을 여는 동안만 남는다 — 다음에 열 때는 다시 골고루부터 본다. */
   private autoMode: ExcavationAutoMode = "balanced";
+  private rosterView: RosterView = DEFAULT_ROSTER_VIEW;
   /** 전송 실패 재시도에서도 같은 멱등 키를 유지하고 성공한 뒤에만 비운다. */
   private harvestRequestId?: string;
   /** 성공 결과는 다음 현황 렌더 한 번에만 안내·연출하고 즉시 소비한다. */
@@ -462,7 +469,7 @@ export class IdleExcavationPopup {
     if (!this.confirmed || this.saving) return;
     this.draft = copyFormation(this.confirmed.excavation.assignedRelicIds);
     this.selectedSlot = slot;
-    this.gridScrollY = 0;
+    this.gridScrollY = 0; this.rosterView = DEFAULT_ROSTER_VIEW;
     this.renderEditor();
   }
 
@@ -509,11 +516,11 @@ export class IdleExcavationPopup {
     this.renderUpper(this.draft, true);
     const content = this.resetLower();
     if (!content) return;
-    this.rosterLabel = this.scene.add.text(GRID_VIEW.left + 10, GRID_VIEW.top - 42, (this.selectedSlot === undefined ? t("excavation.ownedRelics") : t("excavation.ownedRelicsForSlot", { slot: this.selectedSlot + 1 })), textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0.5);
+    this.rosterLabel = this.scene.add.text(GRID_VIEW.left + 10, GRID_VIEW.top - 42 - ROSTER_BAR_STEP, (this.selectedSlot === undefined ? t("excavation.ownedRelics") : t("excavation.ownedRelicsForSlot", { slot: this.selectedSlot + 1 })), textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0.5);
     content.add(this.rosterLabel);
     // 조작 설명 대신 **그 조작을 대신해 주는 단추**를 둔다. 기준은 화살표로 돌려 고르고,
     // 무엇을 많이 캘지는 지금 모자란 재화에 따라 그때그때 달라지므로 하나로 고정하지 않는다.
-    const autoY = GRID_VIEW.top - 42;
+    const autoY = GRID_VIEW.top - 42 - ROSTER_BAR_STEP;
     content.add(new Button(this.scene, GRID_VIEW.right - 205, autoY, {
       width: 190, height: 56, fontSize: 22,
       label: t("excavation.autoPlace"), sub: excavationAutoModeLabel(this.autoMode),
@@ -533,7 +540,13 @@ export class IdleExcavationPopup {
         this.renderEditor();
       },
     }));
-    const owned = RELICS.filter((relic) => session.owned.has(relic.id));
+    const powerOf = (relic: RelicDef): number => combatPower(relicProgression.getFinalStats(relic.id));
+    const owned = applyRosterView(RELICS.filter((relic) => session.owned.has(relic.id)), this.rosterView, powerOf);
+    // 그리드에 붙는 줄 — 도감과 같은 필터·정렬. 바뀌면 목록만 다시 세운다(편성 초안은 그대로다).
+    new RosterControls(this.scene, {
+      left: GRID_VIEW.left, right: GRID_VIEW.right, y: GRID_VIEW.top - 42, parent: content, view: this.rosterView,
+      onChange: (view) => { this.rosterView = view; this.gridScrollY = 0; this.renderEditor(); },
+    });
     this.rosterCards.clear();
     const grid = this.scene.add.container(0, GRID_VIEW.top + this.gridScrollY);
     owned.forEach((relic, index) => {

@@ -47,6 +47,9 @@ import { COLOR, textStyle } from "./theme";
 import { currencyRecordToRewardItems, openRewardPopup } from "./RewardPopup";
 import { interactionRemainingLabel, relicsAwayOnInteraction, autoAssignInteractionParty, interactionLayerViews, type InteractionLayerView } from "./interactionLayerModel";
 import { combatPower } from "../core/combatPower";
+import type { RelicDef } from "../core/types";
+import { applyRosterView, DEFAULT_ROSTER_VIEW, type RosterView } from "../core/rosterView";
+import { RosterControls } from "./RosterControls";
 import { tapFormationSlot, tapRosterRelic, toFormationSlots, formationMembers } from "../core/formationSlots";
 import { bindLongPress } from "./longPressInfo";
 import { CurrencyGuidePopup } from "./CurrencyGuidePopup";
@@ -66,6 +69,10 @@ const PANEL = INTERACTION_CITY_PANEL;
 const SLOT = INTERACTION_CITY_SLOT;
 const SLOT_GROUND_OFFSET = INTERACTION_CITY_SLOT_GROUND_OFFSET;
 const LOWER = INTERACTION_CITY_LOWER;
+/** 그리드 위 두 줄의 간격 — 그리드에 붙는 줄은 필터·정렬, 그 위 줄은 자동 배치 같은 편성 보조 버튼이다. */
+const ROSTER_BAR_STEP = 64;
+/** 파견 목록의 보이는 창. 조작 줄 한 칸만큼 아래에서 시작한다. */
+const ROSTER_VIEW = { ...LOWER, top: LOWER.top + ROSTER_BAR_STEP } as const;
 const ACTION = INTERACTION_CITY_ACTION;
 /** 한 줄에 몇 칸이고 카드가 얼마나 큰지는 화면이 정하지 않는다 — 폭만 주면 공용 규칙이 정한다. */
 const ROSTER = formationRosterGrid(LOWER.right - LOWER.left);
@@ -108,6 +115,7 @@ export class InteractionCityPopup {
   private editing = false;
   private busy = false;
   private gridScrollY = 0;
+  private rosterView: RosterView = DEFAULT_ROSTER_VIEW;
   private gridDragMoved = 0;
   private body?: Phaser.GameObjects.Container;
   /** 자리·SD가 사는 위 칸과 안내/그리드가 교대하는 아래 칸. */
@@ -152,6 +160,7 @@ export class InteractionCityPopup {
     this.selectedSlot = undefined;
     this.editing = false;
     this.gridScrollY = 0;
+    this.rosterView = DEFAULT_ROSTER_VIEW;
     this.busy = false;
     this.popups.closeAll();
 
@@ -453,17 +462,19 @@ export class InteractionCityPopup {
     // 못한다. 고를 수 있는 이가 먼저 서고, 나가 있는 이는 뒤에서 덮인 채 남은 시간을 든다.
     const owned = RELICS.filter((relic) => session.owned.has(relic.id));
     const available = owned.filter((relic) => !away.has(relic.id));
-    const roster = [...available, ...owned.filter((relic) => away.has(relic.id))];
+    const powerOf = (relic: RelicDef): number => combatPower(relicProgression.getFinalStats(relic.id));
+    const shown = applyRosterView(owned, this.rosterView, powerOf);
+    const roster = [...shown.filter((relic) => !away.has(relic.id)), ...shown.filter((relic) => away.has(relic.id))];
     const awayUntil = new Map<string, number>();
     for (const dispatch of dispatches) if (!dispatch.claimed) for (const id of dispatch.party) awayUntil.set(id, Date.parse(dispatch.completesAt));
     this.rosterCards.clear();
     this.awayClocks = [];
 
-    this.rosterHint = this.scene.add.text(LOWER.left + 10, LOWER.top - 42, this.rosterHintText(), textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0.5);
+    this.rosterHint = this.scene.add.text(ROSTER_VIEW.left + 10, LOWER.top - 42, this.rosterHintText(), textStyle({ role: "emphasis", size: 23, color: COLOR.accentText })).setOrigin(0, 0.5);
     parent.add(this.rosterHint);
     // 조작 설명 대신 그 조작을 대신해 주는 단추를 둔다. 교류에는 발굴의 생산 특화 같은 개체별
     // 기준이 없어 고를 축이 전투력뿐이라, 발굴처럼 기준을 돌려 고르는 화살표는 두지 않는다.
-    parent.add(new Button(this.scene, LOWER.right - 90, LOWER.top - 42, {
+    parent.add(new Button(this.scene, ROSTER_VIEW.right - 90, LOWER.top - 42, {
       width: 170, height: 52, fontSize: 22, label: t("interaction.autoPlace"), accentColor: BLUE,
       onClick: () => {
         // 그 도시에 맞는 칸이 많은 이부터 세운다 — 같은 수끼리만 전투력으로 가른다.
@@ -476,12 +487,17 @@ export class InteractionCityPopup {
       },
     }));
 
+    new RosterControls(this.scene, {
+      left: ROSTER_VIEW.left, right: ROSTER_VIEW.right, y: ROSTER_VIEW.top - 42, parent, view: this.rosterView,
+      onChange: (next) => { this.rosterView = next; this.gridScrollY = 0; this.renderRoster(view); },
+    });
+
     if (roster.length === 0) {
-      parent.add(this.scene.add.text(0, (LOWER.top + LOWER.bottom) / 2, t("interaction.noRelics"), textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5));
+      parent.add(this.scene.add.text(0, (ROSTER_VIEW.top + ROSTER_VIEW.bottom) / 2, t("interaction.noRelics"), textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5));
       return;
     }
 
-    const grid = this.scene.add.container(0, LOWER.top + this.gridScrollY);
+    const grid = this.scene.add.container(0, ROSTER_VIEW.top + this.gridScrollY);
     parent.add(grid);
     roster.forEach((relic, index) => {
       const progress = relicProgression.getProgress(relic.id);
@@ -645,21 +661,21 @@ export class InteractionCityPopup {
 
   /** 보유 카드가 한 줄을 넘으면 드래그와 휠이 같은 연속 스크롤 값을 갱신한다. */
   private attachGridScroll(parent: Phaser.GameObjects.Container, grid: Phaser.GameObjects.Container, relicCount: number): void {
-    const viewportHeight = LOWER.bottom - LOWER.top;
+    const viewportHeight = ROSTER_VIEW.bottom - ROSTER_VIEW.top;
     const rows = Math.ceil(relicCount / ROSTER.columns);
     const contentHeight = PORTRAIT_GRID_MASK_GAP + portraitGridContentHeight(rows, ROSTER.rowStep, ROSTER.cardHeight);
     const minScroll = Math.min(0, viewportHeight - contentHeight - 28);
     this.gridScrollY = Phaser.Math.Clamp(this.gridScrollY, minScroll, 0);
-    grid.setY(LOWER.top + this.gridScrollY);
+    grid.setY(ROSTER_VIEW.top + this.gridScrollY);
 
     // 기하 마스크는 컨테이너 이동을 물려받지 않으므로 팝업 판이 자리를 잡은 뒤 월드 좌표로 맞춘다.
     const mask = this.scene.make.graphics({});
     this.gridMask = mask;
     const syncMask = (): void => {
       const matrix = parent.getWorldTransformMatrix();
-      const topLeft = matrix.transformPoint(LOWER.left, LOWER.top);
+      const topLeft = matrix.transformPoint(ROSTER_VIEW.left, ROSTER_VIEW.top);
       mask.clear().fillStyle(0xffffff, 1)
-        .fillRect(topLeft.x, topLeft.y, (LOWER.right - LOWER.left) * matrix.scaleX, viewportHeight * matrix.scaleY);
+        .fillRect(topLeft.x, topLeft.y, (ROSTER_VIEW.right - ROSTER_VIEW.left) * matrix.scaleX, viewportHeight * matrix.scaleY);
       for (const child of grid.list) if (child instanceof PortraitCard) child.syncMask();
     };
     syncMask();
@@ -668,13 +684,13 @@ export class InteractionCityPopup {
 
     const scrollTo = (value: number): void => {
       this.gridScrollY = Phaser.Math.Clamp(value, minScroll, 0);
-      grid.setY(LOWER.top + this.gridScrollY);
+      grid.setY(ROSTER_VIEW.top + this.gridScrollY);
       syncMask();
     };
     const inside = (pointer: Phaser.Input.Pointer): boolean => {
       const matrix = parent.getWorldTransformMatrix();
-      const topLeft = matrix.transformPoint(LOWER.left, LOWER.top);
-      const bottomRight = matrix.transformPoint(LOWER.right, LOWER.bottom);
+      const topLeft = matrix.transformPoint(ROSTER_VIEW.left, ROSTER_VIEW.top);
+      const bottomRight = matrix.transformPoint(ROSTER_VIEW.right, ROSTER_VIEW.bottom);
       return pointer.x >= topLeft.x && pointer.x <= bottomRight.x && pointer.y >= topLeft.y && pointer.y <= bottomRight.y;
     };
     let dragging = false;

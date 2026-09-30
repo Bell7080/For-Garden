@@ -49,7 +49,7 @@ export const KEYWORDS: readonly KeywordDef[] = [
     id: "burn",
     term: "화상",
     kind: "debuff",
-    description: "매 초 공격력의 4%만큼 고정 피해를 입는다. 겹쳐 걸면 지속 시간만 늘어난다.",
+    description: "매초 공격력의 4%만큼 고정 피해를 입는다. 겹쳐 걸면 지속 시간만 늘어난다.",
   },
   {
     id: "guard",
@@ -101,7 +101,7 @@ export const KEYWORDS: readonly KeywordDef[] = [
   // 같은 이유로 스킬마다 본문이 적는다 — 시간이 다른 개체가 생기는 순간 태그가 거짓말이 된다.
   {
     id: "poison", term: "중독", kind: "debuff",
-    description: `시전자의 공격력 ${POISON.attackPercentPerSecond}%와 주문력 ${POISON.abilityPercentPerSecond}%를 합친 [[magical-damage|마법 피해]]를 매초 입는다. 매초 얼마인지는 바르는 순간 한 번 정해지며, 세기가 맞은 쪽이 아니라 바른 쪽에서 나오므로 더 아픈 독이 덮으면 그 값이 남는다.`,
+    description: `시전자의 공격력 ${POISON.attackPercentPerSecond}%와 주문력 ${POISON.abilityPercentPerSecond}%를 합친 [[magical-damage|마법 피해]]를 매초 입는다. 값은 바르는 순간 정해지며, 더 아픈 독이 덮으면 그 값이 남는다.`,
   },
   {
     id: "liquidate", term: "청산", kind: "rule",
@@ -123,7 +123,7 @@ export const KEYWORDS: readonly KeywordDef[] = [
   },
   {
     id: "weakpoint", term: "약점 포착", kind: "debuff",
-    description: "[[duo|듀오]]가 그 적을 때리면 터진다. 표식을 남긴 개체의 [[ap|주문력]] 120%에 해당하는 [[magical-damage|마법 피해]]를 주고, 그 피해의 50%만큼 듀오가 체력을 회복한다. 터지면 사라지고 시간이 흘러 사라지지는 않는다.",
+    description: "[[duo|듀오]]가 그 적을 때리면 터져, 표식을 남긴 개체 [[ap|주문력]]의 120% [[magical-damage|마법 피해]]를 주고 그 피해의 50%를 듀오가 회복한다. 시간이 지나도 사라지지 않는다.",
   },
   {
     id: "butcher", term: "손질", kind: "debuff",
@@ -139,7 +139,7 @@ export const KEYWORDS: readonly KeywordDef[] = [
   // 적는다(출혈과 같은 이유다). 태그는 이것이 무엇인지만 말한다.
   {
     id: "observation", term: "관측", kind: "debuff",
-    description: "피해가 없는 표식이다. 겹이 쌓이고, 다시 걸면 유지 시간이 처음부터 갱신되며, 시간이 다하면 모두 사라진다. 모르페의 일반 공격이 적중하면 그 적에게 쌓인 겹만큼 짧은 물리 피해가 방어력을 지나 잇따라 들어간다. 겹은 소모되지 않는다.",
+    description: "피해가 없는 표식이다. 겹이 쌓이고, 다시 걸면 유지 시간이 갱신된다. 모르페의 일반 공격이 적중하면 이 겹을 발동한다.",
   },
   // 저주·광란은 쓰는 개체가 케리스 하나뿐이라 태그가 수치를 가져도 된다. 다만 광란의 **시간**은
   // 스킬마다 다르므로(궁극 4초 · 폭주 2초) 태그가 아니라 본문이 적는다 — 출혈과 같은 이유다.
@@ -153,7 +153,7 @@ export const KEYWORDS: readonly KeywordDef[] = [
   },
   {
     id: "concussion", term: "뇌진탕", kind: "debuff",
-    description: "최대 체력의 5%에 해당하는 피해. 치명타 발동 시 15%에 해당하는 피해. 방어력과 속성을 지나쳐 맞은 순간 한 번에 들어간다.",
+    description: "최대 체력의 5%(치명타면 15%)에 해당하는 피해로, 방어력과 속성을 지나쳐 맞은 순간 한 번에 들어간다.",
   },
   {
     id: "knockback", term: "날려버림", kind: "debuff",
@@ -230,7 +230,7 @@ export const KEYWORDS: readonly KeywordDef[] = [
   },
   {
     id: "transfer", term: "전이", kind: "rule",
-    description: "처음 계산한 순수 피해가 아니라 치명타·방어·보호막·받는 피해 경감·무효화와 과잉 피해 제한을 모두 거친 뒤 주 대상이 실제로 잃은 최종 HP 피해를 기준으로 일부를 다른 대상에게 옮긴다.",
+    description: "주 대상이 방어·보호막·경감을 모두 거친 뒤 실제로 잃은 체력을 기준으로 일부를 다른 대상에게 옮긴다.",
   },
   {
     id: "pack-hunt", term: "무리 사냥", kind: "buff",

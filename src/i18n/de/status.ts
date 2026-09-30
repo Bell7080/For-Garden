@@ -37,7 +37,7 @@ export const STATUS_DE = {
   "status.vandalism": "Vandalismus",
   "status.vandalism.detail": "{stacks} / {max} Stapel · Angriff & Zauberkraft -{percent}% · Platzt sofort, wenn voll",
   "status.observation": "Sichtung",
-  "status.observation.detail": "{stacks} / {max} Stapel · Kein eigener Schaden · Löst je Stapel aus, wenn Morphes Normalangriff trifft · noch {time}",
+  "status.observation.detail": "{stacks} / {max} Stapel · noch {time}",
   "status.butcher": "Zerlegen",
   "status.butcher.detail": "{stacks} / {max} Stapel · Platzt sofort, wenn voll",
 } as const;

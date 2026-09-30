@@ -170,14 +170,14 @@
 "Яд"
 ],
 "keyword.poison.description": [
-"每秒受到[[magical-damage|魔法伤害]]，数值为施加者攻击力15%与法术强度15%之和。每秒伤害在施加瞬间确定一次，由于强度来自施加者而非目标，更痛的中毒覆盖时会保留自身的数值。",
-"ได้รับ[[magical-damage|ความเสียหายเวท]]ทุกวินาที เท่ากับ 15% ของพลังโจมตีบวก 15% ของพลังเวทของผู้ติด ค่าต่อวินาทีถูกกำหนดครั้งเดียวตอนติด และเพราะความแรงมาจากผู้ติดไม่ใช่เป้าหมาย พิษที่แรงกว่าซึ่งทับลงมาจะคงค่าของตัวเองไว้",
-"Mỗi giây chịu [[magical-damage|sát thương phép]] bằng 15% Công cộng 15% Phép của người gây. Lượng mỗi giây được cố định một lần lúc gây, và vì sức mạnh đến từ người gây chứ không phải mục tiêu, Độc đau hơn ghi đè lên sẽ giữ giá trị của nó.",
-"Menerima [[magical-damage|kerusakan magis]] tiap detik, gabungan 15% Serangan dan 15% Kekuatan Magis pemberi. Jumlah per detik ditetapkan sekali saat diberikan, dan karena kekuatannya berasal dari pemberi bukan target, Racun yang lebih menyakitkan yang menimpanya mempertahankan nilainya sendiri.",
-"Recibe cada segundo [[magical-damage|daño mágico]] que combina el 15% del Ataque y el 15% del Poder mágico de quien lo aplica. La cantidad por segundo se fija una vez al aplicarse y, como su fuerza viene del aplicador y no del objetivo, un Veneno más doloroso que lo sustituya conserva su propio valor.",
-"Recebe a cada segundo [[magical-damage|dano mágico]] que combina 15% do Ataque e 15% do Poder mágico de quem aplicou. O valor por segundo é fixado uma vez, ao aplicar, e como a força vem do aplicador e não do alvo, um Veneno mais doloroso que o substitua mantém seu próprio valor.",
-"Erleidet jede Sekunde [[magical-damage|magischen Schaden]] aus 15% Angriff plus 15% Zauberkraft des Verursachers. Der Wert pro Sekunde wird beim Auftragen einmal festgelegt; da die Stärke vom Verursacher und nicht vom Ziel stammt, behält ein schmerzhafteres Gift beim Überschreiben seinen eigenen Wert.",
-"Каждую секунду получает [[magical-damage|магический урон]] из 15% атаки и 15% силы магии накладывающего. Урон в секунду фиксируется при наложении; поскольку сила идёт от накладывающего, а не от цели, более болезненный яд, заменивший этот, сохраняет своё значение."
+"每秒受到相当于施加者攻击力15%与法术强度15%之和的[[magical-damage|魔法伤害]]。数值在施加瞬间确定，更强的毒覆盖时保留其数值。",
+"ได้รับ[[magical-damage|ความเสียหายเวท]]ทุกวินาที เท่ากับ 15% ของพลังโจมตีรวมกับ 15% ของพลังเวทของผู้ใส่ ค่านี้ถูกกำหนดตอนใส่ และพิษที่แรงกว่าที่มาทับจะคงค่าของตัวเองไว้",
+"Nhận [[magical-damage|sát thương phép]] mỗi giây bằng 15% Công cộng 15% Phép của người gán. Giá trị chốt lúc gán, và độc mạnh hơn đè lên sẽ giữ giá trị của nó.",
+"Menerima [[magical-damage|kerusakan magis]] tiap detik sebesar 15% Serangan ditambah 15% Kekuatan Magis pemberi. Nilainya ditetapkan saat diterapkan, dan racun yang lebih kuat yang menimpanya mempertahankan nilainya sendiri.",
+"Recibe [[magical-damage|daño mágico]] cada segundo igual al 15% del Ataque más el 15% del Poder mágico de quien lo aplica. La cantidad se fija al aplicarse, y un veneno más fuerte que lo sobrescriba conserva su propio valor.",
+"Recebe [[magical-damage|dano mágico]] a cada segundo igual a 15% do Ataque mais 15% do Poder mágico de quem aplica. O valor é fixado na aplicação, e um veneno mais forte que o sobrescreva mantém o próprio valor.",
+"Erleidet jede Sekunde [[magical-damage|magischen Schaden]] in Höhe von 15 % des Angriffs plus 15 % der Zauberkraft des Verursachers. Der Wert wird beim Auftragen festgelegt; ein stärkeres Gift, das ihn überschreibt, behält seinen eigenen Wert.",
+"Каждую секунду получает [[magical-damage|магический урон]] в размере 15% атаки плюс 15% силы магии наложившего. Значение фиксируется при наложении; более сильный яд, перезаписывающий его, сохраняет своё значение."
 ],
 "keyword.liquidate.term": [
 "清算",
@@ -270,14 +270,14 @@
 "Слабое место"
 ],
 "keyword.weakpoint.description": [
-"当[[duo|二人组]]攻击该敌人时爆发，造成相当于标记者[[ap|法术强度]]120%的[[magical-damage|魔法伤害]]，并为二人组恢复该伤害的50%。爆发后消失，不会随时间消失。",
-"ระเบิดเมื่อ[[duo|คู่หู]]โจมตีศัตรูนั้น สร้าง[[magical-damage|ความเสียหายเวท]]เท่ากับ 120% ของ[[ap|พลังเวท]]ของผู้ทำเครื่องหมาย และฟื้นฟูคู่หู 50% ของความเสียหายนั้น หายไปเมื่อระเบิดและไม่หมดไปตามเวลา",
-"Nổ khi [[duo|bộ đôi]] đánh kẻ địch đó, gây [[magical-damage|sát thương phép]] bằng 120% [[ap|Phép]] của người đánh dấu và hồi cho bộ đôi 50% sát thương đó. Biến mất khi nổ và không hết hạn theo thời gian.",
-"Meledak saat [[duo|Duo]] menyerang musuh itu, memberi [[magical-damage|kerusakan magis]] sebesar 120% [[ap|Kekuatan Magis]] penanda dan menyembuhkan Duo 50% dari kerusakan itu. Hilang saat meledak dan tak kedaluwarsa oleh waktu.",
-"Estalla cuando el [[duo|Dúo]] golpea a ese enemigo, infligiendo [[magical-damage|daño mágico]] igual al 120% del [[ap|Poder mágico]] de quien marcó y curando al Dúo el 50% de ese daño. Desaparece al estallar y no caduca con el tiempo.",
-"Explode quando a [[duo|Dupla]] ataca esse inimigo, causando [[magical-damage|dano mágico]] igual a 120% do [[ap|Poder mágico]] de quem marcou e curando a Dupla em 50% desse dano. Some ao explodir e não expira com o tempo.",
-"Platzt, wenn das [[duo|Duo]] diesen Gegner trifft, verursacht [[magical-damage|magischen Schaden]] in Höhe von 120% der [[ap|Zauberkraft]] des Markierenden und heilt das Duo um 50% dieses Schadens. Verschwindet beim Platzen und läuft nie zeitlich ab.",
-"Взрывается, когда [[duo|дуэт]] бьёт этого врага: наносит [[magical-damage|магический урон]] в 120% [[ap|силы магии]] пометившего и лечит дуэт на 50% этого урона. Исчезает при взрыве и не истекает со временем."
+"当[[duo|二人组]]攻击该敌人时爆发，造成相当于标记者[[ap|法术强度]]120%的[[magical-damage|魔法伤害]]，并为二人组恢复该伤害的50%。不会随时间消失。",
+"ระเบิดเมื่อ[[duo|คู่หู]]โจมตีศัตรูนั้น สร้าง[[magical-damage|ความเสียหายเวท]]เท่ากับ 120% ของ[[ap|พลังเวท]]ของผู้ทำเครื่องหมาย และฟื้นฟูคู่หู 50% ของความเสียหายนั้น ไม่หายไปตามเวลา",
+"Nổ khi [[duo|bộ đôi]] đánh kẻ địch đó, gây [[magical-damage|sát thương phép]] bằng 120% [[ap|Phép]] của người đánh dấu và hồi cho bộ đôi 50% sát thương đó. Không hết hạn theo thời gian.",
+"Meledak saat [[duo|Duo]] menyerang musuh itu, memberi [[magical-damage|kerusakan magis]] sebesar 120% [[ap|Kekuatan Magis]] penanda dan menyembuhkan Duo 50% dari kerusakan itu. Tidak kedaluwarsa oleh waktu.",
+"Estalla cuando el [[duo|Dúo]] golpea a ese enemigo, infligiendo [[magical-damage|daño mágico]] igual al 120% del [[ap|Poder mágico]] de quien marcó y curando al Dúo el 50% de ese daño. No caduca con el tiempo.",
+"Explode quando a [[duo|Dupla]] ataca esse inimigo, causando [[magical-damage|dano mágico]] igual a 120% do [[ap|Poder mágico]] de quem marcou e curando a Dupla em 50% desse dano. Não expira com o tempo.",
+"Platzt, wenn das [[duo|Duo]] diesen Gegner trifft, verursacht [[magical-damage|magischen Schaden]] in Höhe von 120% der [[ap|Zauberkraft]] des Markierenden und heilt das Duo um 50% dieses Schadens. Läuft nie zeitlich ab.",
+"Взрывается, когда [[duo|дуэт]] бьёт этого врага: наносит [[magical-damage|магический урон]] в 120% [[ap|силы магии]] пометившего и лечит дуэт на 50% этого урона. Со временем не истекает."
 ],
 "keyword.butcher.term": [
 "处理",
@@ -670,14 +670,14 @@
 "Передача"
 ],
 "keyword.transfer.description": [
-"以主目标在经过暴击、防御、护盾、伤害减免、无效化与溢出上限全部计算后实际损失的最终生命伤害为基准，而非最初计算的原始伤害，转移其中一部分。",
-"ย้ายความเสียหายบางส่วนโดยอิงจากความเสียหาย HP สุดท้ายที่เป้าหมายหลักเสียจริง หลังผ่านคริติคอล พลังป้องกัน โล่ การลดความเสียหาย การลบล้าง และเพดานความเสียหายเกิน แทนที่จะใช้ความเสียหายดิบที่คำนวณครั้งแรก",
-"Chuyển một phần sát thương dựa trên lượng máu cuối cùng mục tiêu chính thực mất sau khi áp dụng chí mạng, Thủ, khiên, giảm sát thương, vô hiệu và giới hạn dư thừa, chứ không phải sát thương thô tính ban đầu.",
-"Memindahkan sebagian kerusakan berdasarkan kerusakan HP akhir yang benar-benar hilang dari target utama setelah kritis, Pertahanan, perisai, reduksi, pembatalan, dan batas kelebihan diterapkan, bukan kerusakan mentah yang dihitung pertama.",
-"Traslada parte del daño tomando como base el daño final a los PV que el objetivo principal perdió realmente, tras aplicar críticos, Defensa, escudos, reducción, anulación y el tope de exceso, y no el daño bruto calculado al principio.",
-"Move parte do dano com base no dano final de PV que o alvo principal realmente perdeu, depois de aplicar críticos, Defesa, escudos, redução, anulação e o limite de excesso, e não no dano bruto calculado primeiro.",
-"Überträgt einen Teil des Schadens auf Basis des tatsächlich verlorenen Lebens des Hauptziels – nach Krit, Verteidigung, Schilden, Schadensminderung, Aufhebung und Overkill-Grenze –, nicht auf Basis des zuerst berechneten Rohschadens.",
-"Переносит часть урона исходя из реально потерянного основной целью здоровья после крита, защиты, щитов, снижения, обнуления и предела избыточного урона, а не из исходно рассчитанного сырого урона."
+"以主目标在经过防御、护盾与伤害减免后实际损失的生命为基准，将其中一部分转移给其他目标。",
+"ย้ายความเสียหายบางส่วนไปยังเป้าหมายอื่น โดยอิงจาก HP ที่เป้าหมายหลักเสียจริงหลังผ่านพลังป้องกัน โล่ และการลดความเสียหายทั้งหมด",
+"Chuyển một phần sang mục tiêu khác, dựa trên lượng HP mục tiêu chính thực mất sau khi áp dụng Thủ, khiên và giảm sát thương.",
+"Memindahkan sebagian ke target lain berdasarkan HP yang benar-benar hilang dari target utama setelah Pertahanan, perisai, dan reduksi kerusakan diterapkan.",
+"Traslada una parte a otro objetivo, tomando como base los PV que el objetivo principal perdió realmente tras aplicar Defensa, escudos y reducción de daño.",
+"Move uma parte para outro alvo, com base no PV que o alvo principal realmente perdeu depois de aplicar Defesa, escudos e redução de dano.",
+"Überträgt einen Teil auf ein anderes Ziel, basierend auf dem Leben, das das Hauptziel nach Verteidigung, Schilden und Schadensminderung tatsächlich verloren hat.",
+"Переносит часть на другую цель исходя из здоровья, которое основная цель реально потеряла после защиты, щитов и снижения урона."
 ],
 "keyword.pack-hunt.term": [
 "群猎",

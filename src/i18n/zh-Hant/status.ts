@@ -37,7 +37,7 @@ export const STATUS_ZH_HANT = {
   "status.vandalism": "破壞",
   "status.vandalism.detail": "{stacks} / {max}層 · 攻擊力與法術強度 -{percent}% · 疊滿時當場引爆",
   "status.observation": "觀測",
-  "status.observation.detail": "{stacks} / {max}層 · 自身無傷害 · 莫爾菲的普通攻擊命中時按層數發動 · 剩餘{time}",
+  "status.observation.detail": "{stacks} / {max}層 · 剩餘{time}",
   "status.butcher": "處理",
   "status.butcher.detail": "{stacks} / {max}層 · 疊滿時當場引爆",
 } as const;

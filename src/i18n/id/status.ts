@@ -37,7 +37,7 @@ export const STATUS_ID = {
   "status.vandalism": "Vandalisme",
   "status.vandalism.detail": "{stacks} / {max} tumpuk · Serangan & Kekuatan Magis -{percent}% · Meledak saat penuh",
   "status.observation": "Pengintaian",
-  "status.observation.detail": "{stacks} / {max} tumpuk · Tidak memberi kerusakan sendiri · Aktif sesuai jumlah tumpuk saat serangan dasar Morphe mengenai · sisa {time}",
+  "status.observation.detail": "{stacks} / {max} tumpuk · sisa {time}",
   "status.butcher": "Jagal",
   "status.butcher.detail": "{stacks} / {max} tumpuk · Meledak saat penuh",
 } as const;

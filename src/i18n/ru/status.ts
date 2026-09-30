@@ -37,7 +37,7 @@ export const STATUS_RU = {
   "status.vandalism": "Вандализм",
   "status.vandalism.detail": "{stacks} / {max} зар. · Атака и сила магии -{percent}% · Взрывается при заполнении",
   "status.observation": "Засечка",
-  "status.observation.detail": "{stacks} / {max} зар. · Сам урона не наносит · Срабатывает за каждый заряд при попадании обычной атаки Морфе · осталось {time}",
+  "status.observation.detail": "{stacks} / {max} зар. · осталось {time}",
   "status.butcher": "Разделка",
   "status.butcher.detail": "{stacks} / {max} зар. · Взрывается при заполнении",
 } as const;

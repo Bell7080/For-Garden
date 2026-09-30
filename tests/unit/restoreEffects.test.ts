@@ -56,6 +56,6 @@ describe("회복·보호막 지급 경로", () => {
     expect(taboa.ultimate.selfShieldMaxHpPercent).toBeGreaterThan(0);
     expect(taboa.ultimate.selfShieldMaxHpPercent).toBeLessThanOrEqual(5);
     expect(JSON.stringify(taboa)).not.toMatch(/Healing|heal/);
-    expect(skillDescription(taboa.ultimate, { damage: 500, maxHp: 1000 })).toContain("[[shield-value|30]]만큼 보호막을 얻는다");
+    expect(skillDescription(taboa.ultimate, { damage: 500, maxHp: 1000 })).toContain("[[shield-value|30]]만큼 [[shield|보호막]]을 얻는다");
   });
 });

@@ -186,8 +186,8 @@ describe("돌파 효과 문구", () => {
     expect(breakthroughEffectText(lexia, "ultimate")).toContain("고정 피해");
     expect(breakthroughEffectText(lexia, "ultimate")).toContain("150 회복");
     expect(breakthroughEffectText(lexia, "ferocity")).toContain("조금 넓은 범위");
-    expect(breakthroughEffectText(lexia, "passive")).toContain("최대 체력·방어력·저항력이 25% 증가");
-    expect(breakthroughEffectText(lexia, "passive")).toContain("다시 돌진");
+    expect(breakthroughEffectText(lexia, "passive")).toContain("최대 체력·[[def|방어력]]·[[res|저항력]]이 25% 증가");
+    expect(breakthroughEffectText(lexia, "passive")).toContain("다시 [[charge|돌진]]");
   });
 
   it("는 슬롯을 비운 개체에는 문장을 만들지 않는다", () => {

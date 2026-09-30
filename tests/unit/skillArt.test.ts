@@ -108,7 +108,7 @@ describe("토리카 스킬 표시 계약", () => {
     // **폭주에는 회복이 없다.** 버티는 값만 들고, 되찾는 것은 패시브가 전투당 한 번만 맡는다.
     expect(torika.ferocityTrait).toMatchObject({ effectId: "torikaBulwark", defenseBonus: 40, resistanceBonus: 30, tauntRadius: 320, tauntDurationSeconds: 3 });
     expect(torika.ferocityTrait).not.toHaveProperty("maxHpRegenPercentPerSecond");
-    expect(ferocityTraitDescription(torika.ferocityTrait, { attack: torika.stats.atk, defense: torika.stats.def })).toBe("방어력이 40, 저항력이 30 증가한다. 폭주에 들어가는 순간 주위 모든 적을 3초 동안 [[taunt|도발]]한다.");
+    expect(ferocityTraitDescription(torika.ferocityTrait, { attack: torika.stats.atk, defense: torika.stats.def })).toBe("[[def|방어력]]이 40, [[res|저항력]]이 30 증가한다. 폭주에 들어가는 순간 주위 모든 적을 3초 동안 [[taunt|도발]]한다.");
     // 공격 스킬에는 설명 원문 자체를 두지 않는다 — 문장은 구조화 필드에서만 나온다.
     expect(torika.ultimate.desc).toBeUndefined();
     // 전투 엔진의 반경(px) 같은 개발 좌표는 문장에 새지 않고 대상 범위 문구로만 나온다.
@@ -269,12 +269,12 @@ describe("데이 스킬 표시 계약", () => {
       + " 움직이는 동안 매초 궁극기 게이지가 6, [[ferocity|야성]]이 2.5씩 더 찬다."
       // 탱커 계약이 요구하는 생존기다. 초당 상한을 함께 말하지 않으면 폭주가 주위 전부를
       // 도발하는 개체라 "적이 많을수록 그만큼 찬다"로 읽힌다.
-      + " 적을 [[taunt|도발]]할 때마다 잃은 체력의 5%를 회복한다. 회복은 1초에 2번까지 발동한다.",
+      + " 적을 [[taunt|도발]]할 때마다 [[missing-hp|잃은 체력]]의 5%를 회복한다. 회복은 1초에 2번까지 발동한다.",
     );
     // 폭주의 첫 절이 "때리지 않는다"인 이유는 화면에서 확인할 첫 변화가 그것이기 때문이다.
     // 도발이 그 뒤에 붙는 것이 이 폭주의 핵심이다 — 손을 놓아도 어그로는 꺼지지 않는다.
     expect(ferocityTraitDescription(deina.ferocityTrait, { attack: deina.stats.atk, defense: deina.stats.def, abilityPower: deina.stats.ap })).toBe(
-      "이동 속도가 100% 증가하고 [[basic-attack|기본 공격]]을 하지 않는다."
+      "[[move-speed|이동 속도]]가 100% 증가하고 [[basic-attack|기본 공격]]을 하지 않는다."
       + " 매초 자신의 주위 모든 적에게 [[damage-value|18]]의 [[magical-damage|마법 피해]]를 주고 [[vandalism|밴덜리즘]]을 한 겹 쌓으며 0.75초 동안 [[taunt|도발]]한다.",
     );
   });
@@ -309,7 +309,7 @@ describe("엘라 스킬 표시 계약", () => {
     expect(ella.basic.desc).toBeUndefined();
     expect(skillDescription(ella.basic, { cycleDamage: [64, 84, 108] })).toBe([
       "다음 3가지를 차례로 반복한다.",
-      "「점(粘)」 자신의 주위 모든 적에게 [[damage-value|64]]의 [[physical-damage|물리 피해]]를 주고, 입힌 피해의 80%만큼 보호막을 얻는다.",
+      "「점(粘)」 자신의 주위 모든 적에게 [[damage-value|64]]의 [[physical-damage|물리 피해]]를 주고, 입힌 피해의 80%만큼 [[shield|보호막]]을 얻는다.",
       "「화(化)」 자신의 주위 모든 적에게 [[damage-value|84]]의 [[physical-damage|물리 피해]]를 주고 [[stagger|경직]]시킨다.",
       "「발(發)」 자신의 주위 모든 적에게 [[damage-value|108]]의 [[physical-damage|물리 피해]]를 주고 [[pull|끌어당긴다]].",
     ].join("\n"));
@@ -328,9 +328,9 @@ describe("엘라 스킬 표시 계약", () => {
     // 불러 놓고 그 자리에서 덮는다 — 도발과 보호막이 한 조작에 든다.
     expect(ella.ultimate.selfGuard).toMatchObject({ tauntSeconds: 5, shieldMaxHpPercent: 35 });
     expect(skillDescription(ella.ultimate, { maxHp: ella.stats.hp }))
-      .toBe("주위 모든 적을 [[pull|끌어당겨]] 5초 동안 [[taunt|도발]]하고, [[shield-value|525]]만큼 보호막을 얻는다.");
+      .toBe("주위 모든 적을 [[pull|끌어당겨]] 5초 동안 [[taunt|도발]]하고, [[shield-value|525]]만큼 [[shield|보호막]]을 얻는다.");
     // 능력치를 모르는 자리(도감)에서만 비율로 되돌아간다.
-    expect(skillDescription(ella.ultimate)).toContain("최대 체력의 35%만큼 보호막");
+    expect(skillDescription(ella.ultimate)).toContain("최대 체력의 35%만큼 [[shield|보호막]]");
     // 버티는 궁극기가 최종 피해 감쇠를 쓰지 않는 것은 그대로다 — 뚫을 창이 있으면 뚫려야 한다.
     expect(skillDescription(ella.ultimate)).not.toContain("받는 피해가");
 
@@ -340,9 +340,9 @@ describe("엘라 스킬 표시 계약", () => {
     );
     expect(ella.ferocityTrait).toMatchObject({ effectId: "adamantBody", shieldMaxHpPercent: 25, hastenedAttacks: 3, attackSpeedPercent: 150 });
     expect(ferocityTraitDescription(ella.ferocityTrait, { attack: ella.stats.atk, defense: ella.stats.def, maxHp: ella.stats.hp }))
-      .toBe("[[shield-value|375]]만큼 보호막을 얻는다. 이후 [[basic-attack|기본 공격]] 3회 동안 [[attack-speed|공격 속도]]가 150% 오른다.");
+      .toBe("[[shield-value|375]]만큼 [[shield|보호막]]을 얻는다. 이후 [[basic-attack|기본 공격]] 3회 동안 [[attack-speed|공격 속도]]가 150% 오른다.");
     expect(ferocityTraitDescription(ella.ferocityTrait, { attack: ella.stats.atk, defense: ella.stats.def }))
-      .toContain("최대 체력의 25%만큼 보호막");
+      .toContain("최대 체력의 25%만큼 [[shield|보호막]]");
   });
 });
 
@@ -364,7 +364,7 @@ describe("렉시아 스킬 표시 계약", () => {
     // 다섯이 모두 같은 값으로 오르므로 한 줄에 함께 선다 — 흡혈만 따로 세우면 같은 값이 두
     // 번 나뉘어 읽혀 서로 다른 몫처럼 보인다. 여는 돌진은 **거리**가 조건이라 그 절이 따로 선다.
     expect(passiveDescription(rex.passive)).toBe(
-      "전투 시작 시, 공격 속도·공격력·치명타 확률·치명타 피해·흡혈이 모두 25% 오른다."
+      "전투 시작 시, [[attack-speed|공격 속도]]·[[atk|공격력]]·치명타 확률·치명타 피해·흡혈이 모두 25% 오른다."
       + " 전투당 한 번, 표적에게 중거리까지 다가서면 그 자리로 [[charge|돌진]]해 1초 동안 [[stun|기절]]시킨다.",
     );
     expect(statusEffectLabel(rex.basic.statusEffects?.[0])).toBe("[[bleed|출혈]] 3초 · 매초 최대 체력 2%");
@@ -388,11 +388,11 @@ describe("메테 스킬 표시 계약", () => {
   it("은 폭주·패시브의 % 수치를 실제 능력치로 환산한 태그로 만든다", () => {
     const mette = RELICS.find((def) => def.id === "mette")!;
     expect(ferocityTraitDescription(mette.ferocityTrait, { attack: 200, defense: 0 })).toBe(
-      "폭주 중 아군 기본 공격 적중마다 [[damage-value|100]]의 피해량을 가진 [[mette-staccato|스타카토]]가 추가로 발동한다.",
+      "폭주 중 아군 [[basic-attack|기본 공격]] 적중마다 [[damage-value|100]]의 피해량을 가진 [[mette-staccato|스타카토]]가 추가로 발동한다.",
     );
     expect(passiveShieldKeyword(mette.passive, 200)).toMatchObject({ id: "shield-value", term: "640" });
     expect(passiveDescription(mette.passive, 200)).toBe(
-      "생존 중 아군 [[attack-speed|공격 속도]]를 20% 높인다. 아군이 [[crowd-control|군중제어]]에 걸리면 즉시 정화하고 [[shield-value|640]] 보호막을 부여한다.",
+      "생존 중 아군 [[attack-speed|공격 속도]]를 20% 높인다. 아군이 [[crowd-control|군중제어]]에 걸리면 즉시 정화하고 [[shield-value|640]] [[shield|보호막]]을 부여한다.",
     );
   });
 
@@ -423,7 +423,7 @@ describe("도디 스킬 표시 계약", () => {
 
   it("의 야성 발현은 배속 환산 괄호 없이 상승률만 말한다", () => {
     const dodo = RELICS.find((def) => def.id === "dodo")!;
-    expect(ferocityTraitDescription(dodo.ferocityTrait)).toBe("공격 속도가 50% 증가하고, 회복시킨 양의 40%만큼 그 아군에게 보호막을 덧씌운다.");
+    expect(ferocityTraitDescription(dodo.ferocityTrait)).toBe("[[attack-speed|공격 속도]]가 50% 증가하고, 회복시킨 양의 40%만큼 그 아군에게 [[shield|보호막]]을 덧씌운다.");
   });
 
   it("의 일반 공격은 묘사 대신 대상·피해·회복 비율을 말한다", () => {
@@ -487,7 +487,7 @@ describe("티아 스킬 표시 계약", () => {
     // 능력치를 모르는 자리에서도 어느 능력치에서 나오는 배율인지 말한다.
     expect(skillDescription(def.basic)).toBe(
       `적 한 명에게 주문력의 ${def.basic.power}% [[magical-damage|마법 피해]]를 준다.`
-      + " [[shimmer|반짝!]]이 사라질 때 그 자리에서 터져 주위 적에게 [[ap|주문력]]의 50%만큼 [[magical-damage|마법 피해]]를 입히고, 그 피해의 40%만큼 보호막을 얻는다.",
+      + " [[shimmer|반짝!]]이 사라질 때 그 자리에서 터져 주위 적에게 [[ap|주문력]]의 50%만큼 [[magical-damage|마법 피해]]를 입히고, 그 피해의 40%만큼 [[shield|보호막]]을 얻는다.",
     );
   });
 
@@ -599,7 +599,7 @@ describe("델로피 스킬 표시 계약", () => {
     expect(targetingLabel(delopi.ultimate.targeting)).toBe("자신");
     expect(canPreviewSkillDamage(delopi.ultimate)).toBe(false);
     const text = skillDescription(delopi.ultimate);
-    expect(text).toBe("3초 동안 [[stealth|은신]]하고 체력이 가장 낮은 적에게 [[teleport|순간이동]]한다. 이후 처음 적중하는 [[basic-attack|기본 공격]]이 확정 치명타가 되고 방어력을 무시하는 [[fixed-damage|고정 피해]]로 들어간다. 그 공격과 함께 [[stealth|은신]]이 풀린다.");
+    expect(text).toBe("3초 동안 [[stealth|은신]]하고 체력이 가장 낮은 적에게 [[teleport|순간이동]]한다. 이후 처음 적중하는 [[basic-attack|기본 공격]]이 확정 치명타가 되고 [[def|방어력]]을 무시하는 [[fixed-damage|고정 피해]]로 들어간다. 그 공격과 함께 [[stealth|은신]]이 풀린다.");
     // **언제 풀리는지는 그 한 방을 언제 쓸지 정하는 정보다.** 시간만으로 끊으면 혼자 남은 판에서
     // 아무도 자신을 고르지 못한 채 계속 때리게 되어 짧은 무적과 다르지 않다.
     expect(delopi.ultimate.selfSetup?.stealthBreaksOnBasic).toBe(true);
@@ -612,7 +612,7 @@ describe("델로피 스킬 표시 계약", () => {
 
   it("은 폭주가 바르는 쪽과 터뜨리는 쪽을 모두 말한다", () => {
     const text = ferocityTraitDescription(delopi.ferocityTrait);
-    expect(text).toContain("공격 속도가 30% 증가한다.");
+    expect(text).toContain("[[attack-speed|공격 속도]]가 30% 증가한다.");
     expect(text).toContain("[[liquidate|청산]]");
     // 번갈아 한다고 적지 않는다 — 실제 규칙은 "지금 걸려 있나"만 보고 고른다.
     expect(text).not.toContain("번갈아");
@@ -722,7 +722,7 @@ describe("스킬 설명문 양식 계약", () => {
       expect(body, id).not.toContain("속도");
       // 폭주는 같은 값이 함께 오르므로 한 번만 말하고, 방어·저항은 실제로 오르는 값으로 보여 준다.
       const fever = ferocityTraitDescription(wolf.ferocityTrait, { attack: wolf.stats.atk, defense: wolf.stats.def });
-      expect(fever, id).toMatch(/^방어력과 저항력이 \d+씩 오르고 \[\[attack-speed\|공격 속도\]\]가 50% 오른다\.$/);
+      expect(fever, id).toMatch(/^\[\[def\|방어력\]\]과 \[\[res\|저항력\]\]이 \d+씩 오르고 \[\[attack-speed\|공격 속도\]\]가 50% 오른다\.$/);
     }
   });
 
@@ -733,8 +733,8 @@ describe("스킬 설명문 양식 계약", () => {
     expect(chill.description).not.toContain("겹까지");
     const shiro = skillDescription(RELICS.find((def) => def.id === "shiro")!.ultimate, { ap: 158 });
     const maddy = skillDescription(RELICS.find((def) => def.id === "maddy")!.basic, { atk: { atk: 120, attackSpeed: 100 }, damage: 123 });
-    expect(shiro).toContain("최대 2겹까지 겹마다 공격 속도와 이동 속도를 15% 낮춘다");
-    expect(maddy).toContain("최대 3겹까지 겹마다 공격 속도와 이동 속도를 5% 낮춘다");
+    expect(shiro).toContain("최대 2겹까지 겹마다 [[attack-speed|공격 속도]]와 [[move-speed|이동 속도]]를 15% 낮춘다");
+    expect(maddy).toContain("최대 3겹까지 겹마다 [[attack-speed|공격 속도]]와 [[move-speed|이동 속도]]를 5% 낮춘다");
   });
 
   it("은 공격·정형 회복 스킬의 설명 원문을 데이터에 남기지 않는다", () => {
@@ -799,7 +799,7 @@ describe("스피나 스킬 표시 계약", () => {
        * 흐려졌다. 본문이 적는 것은 **주기(4회)** 하나뿐이다. 스킬마다 다를 수 있는 수라
        * 태그가 못 박으면 거짓말이 된다(출혈과 같은 규칙).
        */
-      + " 적 주위에 [[shallows|여울]]이 고이고, 기본 공격 4회마다 [[dive|강하]]해 공격력의 110% [[physical-damage|물리 피해]]를 준다.",
+      + " 적 주위에 [[shallows|여울]]이 고이고, [[basic-attack|기본 공격]] 4회마다 [[dive|강하]]해 공격력의 110% [[physical-damage|물리 피해]]를 준다.",
     );
     expect(spino.basic.shallows).toMatchObject({
       radius: 200, seconds: 6, moveSlowPercent: 35,
@@ -842,11 +842,11 @@ describe("루카 스킬 표시 계약", () => {
     expect(ferocityTraitDescription(luka.ferocityTrait)).toContain("자신을 포함해 같은 적");
     expect(ferocityTraitDescription(luka.ferocityTrait)).toContain("[[stealth|은신]]");
     expect(ferocityTraitDescription(luka.ferocityTrait)).toContain("[[attack-speed|공격 속도]]가 40%");
-    expect(passiveDescription(luka.passive)).toContain("공격력이 가장 높은 렐릭");
+    expect(passiveDescription(luka.passive)).toContain("[[atk|공격력]]이 가장 높은 렐릭");
     expect(passiveDescription(luka.passive)).toContain(`치명타 확률이 ${luka.passive.criticalChancePercent}% 오른다`);
     expect(skillDescription(luka.basic)).toContain("매 4번째 실제 [[basic-attack|기본 공격]]");
     expect(skillDescription(luka.basic)).toContain("[[physical-damage|물리 피해]]");
-    expect(skillDescription(luka.ultimate)).toContain("최종 HP 피해의 75%");
+    expect(skillDescription(luka.ultimate)).toContain("실제로 잃은 체력의 75%");
     expect(skillDescription(luka.ultimate)).toContain("[[transfer|전이]]");
   });
 });
@@ -951,7 +951,7 @@ describe("리파 시약 표시 계약", () => {
     const def = ripa();
     expect(passiveDescription(def.passive)).toBe(
       "공격이 적중한 적에게 [[reagent|시약]]을 묻힌다. 시약은 최대 3겹까지 쌓이고 8초 동안 남는다."
-      + " 가득 차면 [[reagent-reaction|시약 반응]]이 일어나 그 적을 4초 동안 [[poison|중독]]시키고 5초 동안 저항력을 12% 낮추며,"
+      + " 가득 차면 [[reagent-reaction|시약 반응]]이 일어나 그 적을 4초 동안 [[poison|중독]]시키고 5초 동안 [[res|저항력]]을 12% 낮추며,"
       + " 체력 비율이 가장 낮은 아군 한 명이 최대 체력의 5%를 회복한다.",
     );
     expect(ferocityTraitDescription(def.ferocityTrait)).toBe(
@@ -975,8 +975,8 @@ describe("파치 스킬 표시 계약", () => {
     // 전부다. 막의 크기는 맞은 쪽 최대 체력에서 나오는 값이라 미리 환산하지 못해 %로 남는다.
     expect(passiveDescription(def.passive, def.stats.atk)).toBe(
       "한 번에 받는 피해가 최대 체력의 40%를 넘지 않는다."
-      + " [[concussion|뇌진탕]]이 입힌 피해의 60%만큼 보호막을 얻는다."
-      + " 한 번에 두르는 보호막은 최대 체력의 35%를 넘지 않는다.",
+      + " [[concussion|뇌진탕]]이 입힌 피해의 60%만큼 [[shield|보호막]]을 얻는다."
+      + " 한 번에 두르는 [[shield|보호막]]은 최대 체력의 35%를 넘지 않는다.",
     );
   });
 
@@ -1020,22 +1020,22 @@ describe("파치 스킬 표시 계약", () => {
     const keyword = KEYWORDS.find((entry) => entry.id === "concussion")!;
     // 수치를 태그가 말하기로 했으므로 데이터와 갈리면 유일한 설명이 틀린다.
     expect(keyword.description).toContain(`최대 체력의 ${effect.maxHpPercent}%`);
-    expect(keyword.description).toContain(`치명타 발동 시 ${effect.criticalMaxHpPercent}%`);
+    expect(keyword.description).toContain(`치명타면 ${effect.criticalMaxHpPercent}%`);
   });
 });
 
 describe("공멸 적 폭주 표시 계약", () => {
-  it("토비의 「완전 난장판!」은 공속이 아니라 주위로 번지는 기본 공격이다", () => {
+  it("토비의 「완전 난장판!」은 공속이 아니라 주위로 번지는 [[basic-attack|기본 공격]]이다", () => {
     const toby = RELICS.find((def) => def.id === "toby")!;
     expect(toby.ferocityTrait.effectId).toBe("splashDamage");
     const text = ferocityTraitDescription(toby.ferocityTrait, { attack: toby.stats.atk, defense: toby.stats.def });
-    expect(text).toBe("기본 공격이 대상 주위의 모든 적에게 적중해 원래 피해의 40%를 입힌다.");
+    expect(text).toBe("[[basic-attack|기본 공격]]이 대상 주위의 모든 적에게 적중해 원래 피해의 40%를 입힌다.");
   });
 
   it("타보아의 「똬리 속으로」는 들어서는 순간의 끌어당김을 먼저 말한다", () => {
     const taboa = RELICS.find((def) => def.id === "taboa")!;
     const text = ferocityTraitDescription(taboa.ferocityTrait, { attack: taboa.stats.atk, defense: taboa.stats.def });
-    expect(text).toBe("폭주에 들어가는 순간 주위의 모든 적을 [[pull|끌어당긴다]]. 폭주 중 공격 속도가 25% 증가한다.");
+    expect(text).toBe("폭주에 들어가는 순간 주위의 모든 적을 [[pull|끌어당긴다]]. 폭주 중 [[attack-speed|공격 속도]]가 25% 증가한다.");
   });
 });
 
@@ -1107,11 +1107,11 @@ describe("코마 스킬 표시 계약", () => {
     // 도착한 한 방이 얼마나 센지는 치명타 피해가 이미 말하므로 본문이 되풀이하지 않는다.
     expect(def.passive.kind).toBe("stalkerBlink");
     expect(passiveDescription(def.passive, def.stats.atk)).toBe(
-      "8초마다 체력이 가장 적은 적의 곁으로 순간이동하고, 그 자리에서 내는 첫 [[basic-attack|기본 공격]]이 확정 치명타가 된다.",
+      "8초마다 체력이 가장 적은 적의 곁으로 [[teleport|순간이동]]하고, 그 자리에서 내는 첫 [[basic-attack|기본 공격]]이 확정 치명타가 된다.",
     );
   });
 
-  it("의 기본 공격은 세 효과를 한 절로 이어 붙인다", () => {
+  it("의 [[basic-attack|기본 공격]]은 세 효과를 한 절로 이어 붙인다", () => {
     const def = koma();
     expect(def.basic.statusEffectEvery).toBe(3);
     // 셋을 따로 세우면 "기절시킨다 날려버린다"처럼 끝맺은 문장이 나란히 선다. 어미를 잘라
@@ -1137,7 +1137,7 @@ describe("코마 스킬 표시 계약", () => {
     if (trait.effectId !== "vanguardCharge") throw new Error("코마의 폭주 특성이 아니다");
     // 잃은 체력은 대상이 없으면 계산할 수 없는 값이라 명중 시점의 상대값과 같이 %로 남는다.
     expect(ferocityTraitDescription(trait)).toBe(
-      "[[missing-hp|잃은 체력]]의 40%만큼 보호막을 얻고 [[attack-speed|공격 속도]]가 50% 증가한다.",
+      "[[missing-hp|잃은 체력]]의 40%만큼 [[shield|보호막]]을 얻고 [[attack-speed|공격 속도]]가 50% 증가한다.",
     );
   });
 
@@ -1257,7 +1257,7 @@ describe("테리사 표시 계약", () => {
     // 본문이 함께 적는다.
     if (terisa.passive.kind !== "sutureStitch") throw new Error("테리사 패시브 계약이 바뀌었다");
     const body = passiveDescription(terisa.passive);
-    expect(body).toContain("자신을 포함해 현재 HP 비율이 가장 낮은 생존 아군");
+    expect(body).toContain("자신을 포함해 체력 비율이 가장 낮은 생존 아군");
     expect(body).toContain(`그 피해의 ${terisa.passive.suture!.damagePercent}%`);
     expect(body).toContain(`최대 체력의 ${terisa.passive.suture!.maxHpCapPercent}%`);
     // 버티기를 보호막으로만 짠다 — 숨은 배율로 덜 맞게 만드는 문장이 섞이면 안 된다.
@@ -1269,7 +1269,7 @@ describe("테리사 표시 계약", () => {
     // 옛 값으로 남아 같은 실이 위아래에서 두 수로 보인다.
     if (terisa.ferocityTrait.effectId !== "cautery") throw new Error("테리사 야성 계약이 바뀌었다");
     const body = ferocityTraitDescription(terisa.ferocityTrait);
-    expect(body).toContain(`공격 속도가 ${terisa.ferocityTrait.attackSpeedPercent}%`);
+    expect(body).toContain(`[[attack-speed|공격 속도]]가 ${terisa.ferocityTrait.attackSpeedPercent}%`);
     expect(body).toContain("즉시 회복으로 바뀐다");
     // 공속 값과 가봉 비율이 우연히 같은 수일 수 있으므로, 수가 아니라 **그 수를 말하는 문구**가
     // 없는지로 확인한다 — 비율과 상한을 다시 말하는 순간 두 곳이 갈릴 자리가 생긴다.
@@ -1285,7 +1285,7 @@ describe("테리사 표시 계약", () => {
     const body = skillDescription(ultimate, { damage: 162 });
     expect(body).toContain("자신의 주위 모든 적에게");
     expect(body).toContain(`입힌 피해의 총합 중 ${ultimate.allyShieldFromDamagePercent}%`);
-    expect(body).toContain("똑같이 나눠 보호막으로 얻는다");
+    expect(body).toContain("똑같이 나눠 [[shield|보호막]]으로 얻는다");
   });
 
   it("의 평타는 세 걸음이 저마다 다른 일을 해 제 줄을 갖는다", () => {
@@ -1295,7 +1295,7 @@ describe("테리사 표시 계약", () => {
     expect(skillDescription(terisa.basic, { cycleDamage: [64, 64, 46] })).toBe([
       "다음 3가지를 차례로 반복한다.",
       "「겉감」 적 한 명에게 [[damage-value|64]]의 [[physical-damage|물리 피해]]를 주고, 0.5초 동안 [[stealth|은신]]한다.",
-      "「안감」 적 한 명에게 [[damage-value|64]]의 [[physical-damage|물리 피해]]를 주고, 입힌 피해의 50%만큼 보호막을 얻는다.",
+      "「안감」 적 한 명에게 [[damage-value|64]]의 [[physical-damage|물리 피해]]를 주고, 입힌 피해의 50%만큼 [[shield|보호막]]을 얻는다.",
       "「엇갈려 자르기」 자신의 주위 모든 적에게 [[damage-value|46]]의 [[physical-damage|물리 피해]]를 준다.",
     ].join("\n"));
     // 전투 엔진의 반경(px)은 문장에 새지 않고 대상 범위 문구로만 나온다.

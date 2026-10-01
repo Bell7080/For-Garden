@@ -318,5 +318,12 @@ export const SKILL_KO = {
   "skill.passive.salvageCatch": "[[pressure|수압]]으로 적을 [[stun|기절]]시킬 때마다 최대 체력의 {percent}%만큼 [[shield|보호막]]을 얻는다. 지금 두른 보호막이 최대 체력의 {cap}%에 닿아 있으면 그 선까지만 채운다.",
   "skill.sentence.selfGuard.farthest": "가장 멀리 있는 적 하나를 [[pull|끌어당겨]] {seconds}초 동안 [[taunt|도발]]하고, {shield}만큼 [[shield|보호막]]을 얻는다.{reset}",
   "skill.status.pressure": "[[pressure|수압]]을 한 겹 쌓는다",
+  "skill.status.drowsy": "[[drowsy|졸음]]을 한 겹 쌓는다",
+  "skill.passive.whiteNoise": "{seconds}초마다 장치가 한 번 울린다. 주위 아군은 {heal}만큼 회복하고, 주위 적 가운데 자신이 아닌 아군을 노리는 적은 [[drowsy|졸음]]이 한 겹 쌓인다.",
+  "skill.passive.whiteNoise.healPercent": "[[res|저항력]]의 {percent}%",
+  "skill.sentence.lullaby": "주위 적 가운데 아군을 노리던 적은 곧바로 [[sleep|수면]]에 빠지고, 자신을 노리던 적은 {seconds}초 동안 [[taunt|도발]]된다. {shield}만큼 [[shield|보호막]]을 얻고, 주위 아군은 {regen}초 동안 매초 [[missing-hp|잃은 체력]]의 {percent}%를 회복한다.",
+  "skill.sentence.lullaby.shieldPercent": "[[res|저항력]]의 {percent}%",
+  "skill.ferocity.sleepTantrum": "[[attack-speed|공격 속도]]가 {percent}% 증가하고, [[basic-attack|기본 공격]]이 자신의 주위 모든 적에게 적중해 맞은 적을 짧게 밀어낸다.",
+  "skill.keyword.shield.fromStat": "현재 {stat}에서 {percent}%를 받아 계산한 보호막 수치다.",
   "skill.ferocity.caffeineBubble": "폭주에 들어가는 순간 넓은 범위의 적을 {seconds}초 동안 [[taunt|도발]]한다. 폭주 중에는 [[kento-prickle|까칠]]이 한 번에 {multiplier}배로 쌓인다.",
 } as const;

@@ -15,6 +15,7 @@ import {
   MORPHE_PORTRAIT_METADATA,
   KENTO_PORTRAIT_METADATA,
   MOSANA_PORTRAIT_METADATA,
+  ANKA_PORTRAIT_METADATA,
   TERISA_PORTRAIT_METADATA,
   MAKI_PORTRAIT_METADATA,
   MERON_PORTRAIT_METADATA,
@@ -66,6 +67,7 @@ const JOINTS: Readonly<Record<string, { eyes: readonly [readonly [number, number
   morphe: { eyes: [[678, 388], [753, 369]], core: [732, 473] },
   kento: { eyes: [[543, 350], [630, 378]], core: [550, 466] },
   mosana: { eyes: [[381, 218], [423, 177]], core: [440, 298] },
+  anka: { eyes: [[374, 220], [456, 201]], core: [426, 324] },
 };
 
 /** 눈 관절 두 개의 중간 높이. 배율은 이 점에서 발끝까지의 거리로 잰다. */
@@ -99,6 +101,7 @@ const PORTRAITS: Readonly<Record<string, Omit<PuppetAsset, "url">>> = {
   morphe: MORPHE_PORTRAIT_METADATA,
   kento: KENTO_PORTRAIT_METADATA,
   mosana: MOSANA_PORTRAIT_METADATA,
+  anka: ANKA_PORTRAIT_METADATA,
 };
 
 /** 로비에 설 수 있는 개체 = 플레이어가 애착으로 고를 수 있는 렐릭이다. */

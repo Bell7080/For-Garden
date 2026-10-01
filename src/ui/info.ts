@@ -2725,6 +2725,13 @@ export function buildSkillViewModel(options: {
   const maxHp = attacker?.def.stats.hp;
   const guardShield = "selfGuard" in skill && skill.selfGuard !== undefined && maxHp !== undefined
     ? Math.round(maxHp * skill.selfGuard.shieldMaxHpPercent / 100) : undefined;
+  // 저항력에서 나오는 막(자장가)과 회복(백색소음)도 실제 값으로 보여 준다.
+  const resistance = attacker?.def.stats.res;
+  const lullabyShield = "selfLullaby" in skill && skill.selfLullaby !== undefined && resistance !== undefined
+    ? Math.round(resistance * skill.selfLullaby.shieldResistancePercent / 100) : undefined;
+  const whiteNoise = "kind" in skill ? (skill as Passive).whiteNoise : undefined;
+  const whiteNoiseHeal = whiteNoise !== undefined && resistance !== undefined
+    ? Math.round(resistance * whiteNoise.healResistancePercent / 100) : undefined;
   // 공격 속도 복합 궁극기(스피나 등)는 위력만 보는 previewSkillDamage로는 실제 한 방의
   // 절반만 계산되므로, 상단 라벨과 본문이 같은 하나의 합산 수치를 쓰도록 먼저 따로 구한다.
   const attackSpeedPower = "attackSpeedPower" in skill ? (skill as Ultimate).attackSpeedPower : undefined;
@@ -2802,6 +2809,14 @@ export function buildSkillViewModel(options: {
         id: "shield-value", term: String(guardShield), kind: "rule" as const,
         description: t("skill.keyword.shield.fromMaxHp", { percent: skill.selfGuard.shieldMaxHpPercent }),
       },
+      lullabyShield === undefined || !("selfLullaby" in skill) || skill.selfLullaby === undefined ? undefined : {
+        id: "shield-value", term: String(lullabyShield), kind: "rule" as const,
+        description: t("skill.keyword.shield.fromStat", { stat: t("skill.stat.res"), percent: skill.selfLullaby.shieldResistancePercent }),
+      },
+      whiteNoiseHeal === undefined || whiteNoise === undefined ? undefined : {
+        id: "heal-value", term: String(whiteNoiseHeal), kind: "rule" as const,
+        description: t("skill.keyword.heal.fromStat", { stat: t("skill.stat.res"), percent: whiteNoise.healResistancePercent }),
+      },
     ].filter((item): item is KeywordDef => item !== undefined),
     keywordActions: options.summonActions,
     // 정적 문장에서 수치를 재해석하지 않고 전투 정의를 그대로 팝업에 넘긴다.
@@ -2823,6 +2838,7 @@ export function buildSkillViewModel(options: {
         damage: preview?.kind === "scaling" ? preview.amount : undefined,
         cycleDamage,
         maxHp,
+        resistance,
       }),
   };
 }

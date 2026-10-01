@@ -37,7 +37,7 @@ export type DamageFlavor =
  * **새 디버프는 여기와 아래 색표에만 더한다.** 화면이 상태마다 색을 새로 고르면 같은 계열의
  * 상태가 화면마다 다른 색으로 보인다.
  */
-export type DebuffId = "bleed" | "poison" | "concussion" | "butcher" | "curse" | "frenzy" | "vandalism" | "weakpoint" | "observation" | "pressure";
+export type DebuffId = "bleed" | "poison" | "concussion" | "butcher" | "curse" | "frenzy" | "vandalism" | "weakpoint" | "observation" | "pressure" | "sleep";
 
 /**
  * 디버프별 색.
@@ -63,6 +63,8 @@ export const DEBUFF_TONE: Record<DebuffId, string> = {
   observation: "#4fa3a8",
   // 수압이 터진 한 방은 깊은 물빛이다 — 둔화·여울의 하늘빛보다 짙게 눌러 지속 피해 잔타와 같은 무게로 둔다.
   pressure: "#2d6fa8",
+  // 잠에서 깨는 피해 — 수면 칩과 같은 라벤더를 어둡게 눌러 둔다.
+  sleep: "#5a52b8",
 };
 
 export interface DamagePopupRequest {

@@ -1100,6 +1100,105 @@ export const RELICS: RelicDef[] = [
   },
 
   {
+    id: "anka",
+    squad: "rune",
+    name: "안카",
+    specimenNumber: "228",
+    projectName: "WHITE NOISE",
+    excavationSite: "캐나다 앨버타주 백악기 후기 하천 범람원 사암층",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "강가 범람원 사암층에서 등판의 골편이 거의 흐트러지지 않은 채 몸을 웅크린 자세로 나왔다. 꼬리 끝 곤봉 뼈는 크고 둥글게 닳아 있었고, 머리를 앞다리 사이에 묻은 모양이 잠든 채 묻힌 것으로 기록되었다.",
+    observationProfile: {
+      originYear: "약 6,700만 년 전",
+      // E.C.는 안카의 인간형 신체 나잇대이며, 원종 화석의 연대와 독립된 값이다.
+      restorationYear: "E.C. 9년",
+      lifeStage: "유년기",
+      height: "1.24 m",
+      weight: "38 kg",
+    },
+    catalogSummary: "신장 1.24m, 체중 38kg의 인간형 체격에 골판이 박힌 잠옷과 곤봉 꼬리, 백색소음 장치를 단 철퇴를 갖춘 채 복원된 유년기 안킬로사우루스 표본.",
+    unlockRecord: { status: "recorded", text: "복원 후 안카는 하루의 절반 가까이를 졸린 눈으로 보낸다. 말끝이 늘어지고 대답보다 하품이 먼저 나오며, 다른 대원을 재우러 들어간 방에서 본인이 먼저 잠든 채 발견되는 일이 잦다. 잠을 깨우면 철퇴를 끌어안고 크게 화를 내지만, 다친 대원이 누운 침상 곁에서는 밤새 장치를 끄지 않고 눈을 비비며 깨어 있었다는 기록이 여러 번 남아 있다." },
+    squadNote: "사일런트 룬의 수면 담당. 잠 못 드는 대원 곁에서 백색소음 장치를 틀어 재우고, 아픈 대원의 침상을 끝까지 지킨다.",
+    // 졸린 말투에 어울리는 늘어지는 호칭이라 사일런트 룬의 「연구원 씨」를 쓴다.
+    researcherTitle: "연구원 씨",
+    rarity: "R",
+    portraitAssetId: "anka",
+    origin: "안킬로사우루스",
+    element: "earth",
+    role: "tank",
+    // 철퇴가 닿는 거리에서 싸운다.
+    reachTier: "melee",
+    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 1.12, efficiencyMultiplier: 1.04 },
+    /**
+     * **저항력이 곧 손이다** — 백색소음의 회복, 자장가의 보호막, 잠에서 깨는 피해가 모두 저항력에서 나오므로
+     * 체력과 저항력을 높게 두고, 평타(공격력)는 보통이다. 주문력을 쓰는 스킬이 없어 주문력은 낮게 둔다.
+     * 늘 졸린 개체라 공격 속도·이동 속도는 느리다.
+     */
+    stats: {
+      hp: 1300,
+      def: 130,
+      res: 130,
+      atk: 66,
+      ap: 20,
+      attackSpeed: 70,
+      moveSpeed: 62,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    // 폭주 중 공속이 오르고 철퇴가 자기 주위를 휩쓸어 맞은 적을 짧게 밀어낸다.
+    ferocityTrait: { name: "잠투정", effectId: "sleepTantrum", attackSpeedPercent: 40, radius: 200, knockback: { seconds: 0.3, speed: 700, bounces: 0 } },
+    passive: {
+      // kind가 whiteNoise인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
+      // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
+      id: "anka-passive",
+      name: "백색소음",
+      kind: "whiteNoise",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 울리는 간격(초)을 담아 둔다.
+      value: 4,
+      // 졸음 세 겹이면 3초 잠든다. 맞고 깨면 안카 저항력의 150% 마법 피해, 깬 뒤 2초 동안 공속 -30%.
+      whiteNoise: {
+        intervalSeconds: 4,
+        radius: 260,
+        healResistancePercent: 60,
+        drowsy: {
+          kind: "drowsy", maxStacks: 3, seconds: 6, sleepSeconds: 3,
+          wakeResistancePower: 150, groggySeconds: 2, groggyAttackSpeedPercent: 30,
+        },
+      },
+      desc: "4초마다 장치가 한 번 울린다. 주위 아군은 저항력의 60%만큼 회복하고, 주위 적 가운데 안카가 아닌 아군을 노리는 적은 졸음이 한 겹 쌓인다.",
+    },
+    basic: {
+      id: "anka-basic",
+      name: "오늘의 사연은...",
+      power: 100,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+    },
+    ultimate: {
+      id: "anka-ult",
+      name: "자장가",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      cost: 150,
+      // 때리지 않는다. 아군을 노리던 주위 적은 곧바로 재우고, 자신을 노리던 적은 도발한다.
+      targeting: "self",
+      selfLullaby: {
+        radius: 300,
+        tauntSeconds: 3,
+        shieldResistancePercent: 300,
+        regen: { seconds: 4, missingHpPercentPerSecond: 8 },
+      },
+    },
+  },
+
+  {
     id: "meron",
     squad: "rune",
     name: "메론",

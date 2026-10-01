@@ -18,8 +18,8 @@ export interface Combatant {
 export interface DamageInput {
   power: number;
   damageType: DamageType;
-  /** 생략하면 피해 종류에 따라 공격력 또는 주문력을 사용한다. */
-  scalingStat?: "atk" | "ap" | "def" | "hp";
+  /** 생략하면 피해 종류에 따라 공격력 또는 주문력을 사용한다. 저항력(`res`)은 코어가 직접 짓는 입력(잠에서 깨는 피해)만 쓴다. */
+  scalingStat?: "atk" | "ap" | "def" | "hp" | "res";
   /** 한 타격의 위력을 두 능력치가 나눠 가질 때만 쓰는 여벌 계수다. */
   /** 저항력(`res`)은 스킬 정의가 아니라 수압처럼 코어가 직접 짓는 입력만 쓴다. */
   secondaryScaling?: { stat: "atk" | "ap" | "def" | "hp" | "res"; power: number };

@@ -272,4 +272,11 @@ export const SKILL_EN = {
   "skill.passive.salvageCatch": "Each time [[pressure|Pressure]] [[stun|Stuns]] an enemy, gains a [[shield|Shield]] equal to {percent}% of max HP. If the current shield already reaches {cap}% of max HP, it only fills up to that line.",
   "skill.sentence.selfGuard.farthest": "[[pull|Pulls]] in the single farthest enemy and [[taunt|Taunts]] it for {seconds}s, then gains a [[shield|Shield]] worth {shield}.{reset}",
   "skill.status.pressure": "builds a stack of [[pressure|Pressure]]",
+  "skill.status.drowsy": "builds a stack of [[drowsy|Drowsy]]",
+  "skill.passive.whiteNoise": "Every {seconds}s the device sounds once. Nearby allies recover {heal} HP, and nearby enemies targeting an ally other than her gain a stack of [[drowsy|Drowsy]].",
+  "skill.passive.whiteNoise.healPercent": "{percent}% of her [[res|Resistance]]",
+  "skill.sentence.lullaby": "Nearby enemies targeting an ally fall into [[sleep|Sleep]] at once, and those targeting her are [[taunt|Taunted]] for {seconds}s. She gains a [[shield|Shield]] of {shield}, and nearby allies restore {percent}% of their [[missing-hp|missing HP]] every second for {regen}s.",
+  "skill.sentence.lullaby.shieldPercent": "{percent}% of her [[res|Resistance]]",
+  "skill.ferocity.sleepTantrum": "[[attack-speed|Attack Speed]] rises by {percent}%, and [[basic-attack|Basic Attacks]] hit every enemy around her, briefly pushing back each one hit.",
+  "skill.keyword.shield.fromStat": "A shield calculated from {percent}% of the current {stat}.",
 } as const;

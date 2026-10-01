@@ -270,6 +270,7 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   }
   // 반경은 바닥에 그려지는 범위라 수로 적지 않는다. 수압이 무엇을 하는지는 태그가 말한다.
   if (trait.effectId === "abyssalVortex") return t("skill.ferocity.abyssalVortex", { percent: trait.attackSpeedPercent });
+  if (trait.effectId === "sleepTantrum") return t("skill.ferocity.sleepTantrum", { percent: trait.attackSpeedPercent });
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? ""
@@ -511,6 +512,14 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
   if (passive.kind === "painfulElation" && passive.elation !== undefined) {
     return t("skill.passive.painfulElation");
   }
+  // 졸음이 몇 겹에 잠드는지·잠이 무엇인지는 태그가 말한다. 본문은 언제·누구에게·얼마를 적는다.
+  if (passive.kind === "whiteNoise" && passive.whiteNoise !== undefined) {
+    const plan = passive.whiteNoise;
+    const heal = guard === undefined
+      ? t("skill.passive.whiteNoise.healPercent", { percent: plan.healResistancePercent })
+      : `[[heal-value|${Math.round(guard.resistance * plan.healResistancePercent / 100)}]]`;
+    return t("skill.passive.whiteNoise", { seconds: plan.intervalSeconds, heal });
+  }
   if (passive.kind === "shellGuard" && passive.shellGuard !== undefined) {
     const shell = passive.shellGuard;
     // 계약은 같아도 겹의 이름은 개체의 것이다 — 아모의 조가비, 수쿠스이노의 흉터.
@@ -654,6 +663,8 @@ export interface SkillDescriptionStats {
   cycleDamage?: readonly number[];
   /** 최대 체력 비례 보호막을 실제 값으로 환산할 때 쓴다. 없으면 위력(%)으로 되돌아간다. */
   maxHp?: number;
+  /** 저항력 비례 보호막(자장가)을 실제 값으로 환산할 때 쓴다. 없으면 위력(%)으로 되돌아간다. */
+  resistance?: number;
 }
 
 /** 순환 걸음 둘이 같은 일을 하는가. 이름까지 같아야 화면에서도 같은 한 방으로 읽힌다. */
@@ -716,6 +727,16 @@ export function skillDescription(
       // 가장 먼 적 하나만 낚는 궁극기는 대상이 달라 문장 머리가 다르다(나머지 절은 같다).
       const sentence = guard.pull.target === "farthest" ? "skill.sentence.selfGuard.farthest" : "skill.sentence.selfGuard";
       return t(sentence, { seconds: guard.tauntSeconds, shield, reset: reset + prickle + shockwave });
+    }
+    // 재우는 궁극기. 반경 안의 적을 누구를 노리는가로 갈라 재우거나 도발하고, 아군을 다독인다.
+    if ("selfLullaby" in skill && skill.selfLullaby !== undefined) {
+      const plan = skill.selfLullaby;
+      const shield = stats.resistance === undefined
+        ? t("skill.sentence.lullaby.shieldPercent", { percent: plan.shieldResistancePercent })
+        : `[[shield-value|${Math.round(stats.resistance * plan.shieldResistancePercent / 100)}]]`;
+      return t("skill.sentence.lullaby", {
+        seconds: plan.tauntSeconds, shield, regen: plan.regen.seconds, percent: plan.regen.missingHpPercentPerSecond,
+      });
     }
     // 때리지 않고 자리만 잡는 궁극기. 위력을 적지 않는 이유는 그 피해가 이어질 일반 공격의
     // 몫이기 때문이다 — 여기에 수치를 적으면 같은 한 방이 위아래에서 두 수로 보인다.
@@ -1091,6 +1112,7 @@ function statusEffectClause(effect: CombatStatusEffect): string | undefined {
   if (effect.kind === "vandalism") return t("skill.status.vandalism");
   // 수압의 감속·상한·기절·터지는 피해는 태그가 말한다(쓰는 개체가 하나뿐이라 태그가 수치를 가진다).
   if (effect.kind === "pressure") return t("skill.status.pressure");
+  if (effect.kind === "drowsy") return t("skill.status.drowsy");
   // 도발은 붙잡아 두는 시간이 곧 스킬마다 다른 값이라 본문이 초를 적는다.
   if (effect.kind === "taunt") return t("skill.status.taunt", { seconds: effect.seconds });
   // 유지 시간과 상한은 이 규칙어를 쓰는 스킬마다 같아도 태그가 수치를 갖지 않으므로(모르페·디모 공용) 본문이 적는다.

@@ -271,4 +271,11 @@ export const SKILL_ZH_HANS = {
   "skill.passive.salvageCatch": "每当[[pressure|水压]]使敌人[[stun|眩晕]]时，获得相当于最大生命{percent}%的[[shield|护盾]]。若当前护盾已达到最大生命的{cap}%，则只补充到该线为止。",
   "skill.sentence.selfGuard.farthest": "[[pull|拉近]]距离最远的一名敌人并[[taunt|嘲讽]]{seconds}秒，获得{shield}的[[shield|护盾]]。{reset}",
   "skill.status.pressure": "叠加一层[[pressure|水压]]",
+  "skill.status.drowsy": "叠加一层[[drowsy|困意]]",
+  "skill.passive.whiteNoise": "装置每{seconds}秒响一次。附近的队友恢复{heal}生命，附近敌人中瞄准自身以外队友的敌人叠加一层[[drowsy|困意]]。",
+  "skill.passive.whiteNoise.healPercent": "[[res|抗性]]的{percent}%",
+  "skill.sentence.lullaby": "附近敌人中瞄准队友的敌人立刻陷入[[sleep|睡眠]]，瞄准自身的敌人被[[taunt|嘲讽]]{seconds}秒。获得相当于{shield}的[[shield|护盾]]，附近的队友在{regen}秒内每秒恢复[[missing-hp|已损失生命]]的{percent}%。",
+  "skill.sentence.lullaby.shieldPercent": "[[res|抗性]]的{percent}%",
+  "skill.ferocity.sleepTantrum": "[[attack-speed|攻击速度]]提升{percent}%，[[basic-attack|普通攻击]]命中自身周围的所有敌人，并将被命中的敌人短暂击退。",
+  "skill.keyword.shield.fromStat": "以当前{stat}的{percent}%计算的护盾。",
 } as const;

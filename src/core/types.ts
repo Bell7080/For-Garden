@@ -43,7 +43,7 @@ export type RelicRarity = "R" | "SR" | "SSR";
  */
 export type RaitiaAssetId = "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind";
 
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
@@ -287,6 +287,7 @@ export type AttackSkill = SkillBase & {
   selfGuard?: never;
   selfBulwark?: never;
   selfVolley?: never;
+  selfLullaby?: never;
 };
 
 /** 순수 회복 스킬은 damageType/power를 가질 수 없어 피해 계산에 잘못 전달되지 않는다. */
@@ -299,6 +300,7 @@ export type HealingSkill = SkillBase & {
   selfGuard?: never;
   selfBulwark?: never;
   selfVolley?: never;
+  selfLullaby?: never;
   healing: { kind: "teamMissingHpPercent"; percent: number };
 };
 
@@ -315,10 +317,11 @@ export type SetupSkill = SkillBase & {
   healing?: never;
   teamBuff?: never;
 } & (
-  | { selfSetup: SelfSetup; selfGuard?: never; selfBulwark?: never; selfVolley?: never }
-  | { selfSetup?: never; selfGuard: SelfGuard; selfBulwark?: never; selfVolley?: never }
-  | { selfSetup?: never; selfGuard?: never; selfBulwark: SelfBulwark; selfVolley?: never }
-  | { selfSetup?: never; selfGuard?: never; selfBulwark?: never; selfVolley: SelfVolley }
+  | { selfSetup: SelfSetup; selfGuard?: never; selfBulwark?: never; selfVolley?: never; selfLullaby?: never }
+  | { selfSetup?: never; selfGuard: SelfGuard; selfBulwark?: never; selfVolley?: never; selfLullaby?: never }
+  | { selfSetup?: never; selfGuard?: never; selfBulwark: SelfBulwark; selfVolley?: never; selfLullaby?: never }
+  | { selfSetup?: never; selfGuard?: never; selfBulwark?: never; selfVolley: SelfVolley; selfLullaby?: never }
+  | { selfSetup?: never; selfGuard?: never; selfBulwark?: never; selfVolley?: never; selfLullaby: SelfLullaby }
 );
 
 /**
@@ -404,6 +407,23 @@ export type SelfGuard = {
   shockwave?: { radius: number; stunSeconds: number };
 };
 
+/**
+ * 재우는 계약(안카의 「자장가」). 때리지 않는다.
+ *
+ * 반경 안의 적을 **누구를 노리고 있는가**로 가른다 — 안카가 아닌 아군을 노리던 적은 곧바로 잠들고(패시브
+ * 「백색소음」의 `drowsy` 잠을 그대로 쓴다), 안카를 노리던 적은 도발된다. 안카는 저항력에 비례한 보호막을
+ * 두르고, 반경 안의 아군(자신 포함)은 정해진 시간 동안 **잃은 체력에 비례해** 매초 회복한다.
+ */
+export type SelfLullaby = {
+  radius: number;
+  /** 안카를 노리던 적에게 거는 도발(초). */
+  tauntSeconds: number;
+  /** 시전 순간 얻는 보호막(자기 저항력 비율 %). */
+  shieldResistancePercent: number;
+  /** 반경 안 아군의 재생 — 매초 그 순간 잃은 체력의 `missingHpPercentPerSecond`%를 돌린다. */
+  regen: { seconds: number; missingHpPercentPerSecond: number };
+};
+
 /** 자리를 잡는 계약. 은신·순간이동·다음 타격 강화를 코어가 판별할 수 있는 값으로만 적는다. */
 export type SelfSetup = {
   /** 단일 대상 선택에서 제외되는 시간(초). */
@@ -449,6 +469,7 @@ export type SupportSkill = SkillBase & {
   selfGuard?: never;
   selfBulwark?: never;
   selfVolley?: never;
+  selfLullaby?: never;
   teamBuff: TeamBuff;
 };
 
@@ -879,6 +900,28 @@ export type CombatStatusEffect =
     }
   | {
       /**
+       * 졸음(안카). 겹이 상한에 닿으면 **잠든다** — 기절처럼 행동하지 못하고 강인함을 그대로 지나지만,
+       * 피해를 받으면 곧바로 깬다. 깨는 순간 건 쪽(`sourceId`)의 저항력에서 뽑은 마법 피해를 한 번 더 받고,
+       * 잠이 덜 깬 채로 잠깐 공격 속도가 깎인다. 시간이 다해 스스로 깨면 추가 피해는 없다.
+       *
+       * 겹 자체는 아무것도 깎지 않는다 — 깎는 것은 잠과 깬 뒤의 몽롱함이다.
+       */
+      kind: "drowsy";
+      /** 이 겹에 닿으면 잠든다. */
+      maxStacks: number;
+      /** 겹이 남는 시간(초). 새 겹이 쌓일 때마다 처음부터 다시 흐른다. */
+      seconds: number;
+      /** 잠드는 시간(초). 강인함이 기절과 똑같이 줄인다. */
+      sleepSeconds: number;
+      /** 피해를 받아 깰 때 건 쪽 저항력에서 뽑는 마법 피해 비율(%). */
+      wakeResistancePower: number;
+      /** 깬 뒤 잠이 덜 깬 시간(초). */
+      groggySeconds: number;
+      /** 그동안 깎이는 공격 속도 비율(%). */
+      groggyAttackSpeedPercent: number;
+    }
+  | {
+      /**
        * 관측(디모). **피해가 없는 표식**이다 — 겹 자체는 아무것도 깎지 않고, 모르페의 일반 공격이
        * 적중할 때 그 겹만큼의 틱으로 켜진다(`BasicAttack.observationVolley`).
        *
@@ -1082,6 +1125,8 @@ export type PassiveKind =
   | "prickly"
   /** 모사나 전용: 「수압」으로 적을 기절시킬 때마다 보호막을 얻는다(상한까지 채운다). */
   | "salvageCatch"
+  /** 안카 전용: 몇 초마다 장치가 울려 주위 아군을 회복하고, 다른 아군을 때리던 주위 적에게 「졸음」을 건다. */
+  | "whiteNoise"
   /** 실제 HP 피해를 받고 살아남을 때 겹(아모의 조가비 · 수쿠스이노의 흉터)을 쌓아 자신과 최저 HP 비율 아군을 보호한다. */
   | "shellGuard"
   /** 렉시아 전용: 공격 속도·공격력·치명타 확률·치명타 피해를 함께 강화한다. */
@@ -1205,6 +1250,8 @@ export type FerocityEffectId =
   | "caffeineBubble"
   /** 모사나 전용: 폭주 중 공격 속도가 오르고 기본 공격이 자기 주위의 모든 적을 친다. */
   | "abyssalVortex"
+  /** 안카 전용: 폭주 중 공격 속도가 오르고 기본 공격이 주위를 휩쓸어 맞은 적을 짧게 밀어낸다. */
+  | "sleepTantrum"
   /** 데이 전용: 폭주 중 때리기를 멈추고 훨씬 빠르게 달리며 주위에 매초 낙서를 흩뿌린다. */
   | "graffitiRun"
   /** 매디 전용: 폭주 진입 시 모든 상태이상·디버프를 지우고 보호막을 얻으며, 폭주 중 방어력·저항력이 함께 오른다. */
@@ -1370,6 +1417,19 @@ export type FerocityTrait = {
       attackSpeedPercent: number;
       /** 폭주 중 기본 공격이 닿는 자기 주위 반경. */
       radius: number;
+    }
+  | {
+      /**
+       * 잠투정(안카). 폭주 중 공격 속도가 오르고, 기본 공격의 철퇴가 **자기 주위를 휩쓸어** 맞은 적을 짧게
+       * 밀어낸다. 날려 보내 튕기게 하는 파치의 폭주와 달리 벽까지 닿지 않는 짧은 밀침이다.
+       */
+      effectId: "sleepTantrum";
+      /** 폭주 중 공격 속도에 더하는 비율(%). */
+      attackSpeedPercent: number;
+      /** 폭주 중 기본 공격이 닿는 자기 주위 반경. */
+      radius: number;
+      /** 맞은 적을 밀어내는 값. 공용 날려버림(`knockback`)과 같은 규칙을 지난다. */
+      knockback: { seconds: number; speed: number; bounces: number };
     }
   | {
       /**
@@ -1825,6 +1885,18 @@ export interface Passive {
     shieldMaxHpPercent: number;
     /** 이 패시브가 채우는 상한(최대 체력 비율 %). 다른 막까지 합친 잔량으로 잰다. */
     capMaxHpPercent: number;
+  };
+  /**
+   * 「백색소음」 계약(안카). `intervalSeconds`마다 한 번 장치가 울린다 — 반경 안의 아군(자신 포함)은 안카
+   * 저항력의 `healResistancePercent`%만큼 회복하고, 반경 안의 적 가운데 **안카가 아닌 아군을 노리고 있는 적**은
+   * 「졸음」 한 겹을 받는다. 안카를 노리는 적은 그대로 둔다 — 그 적은 이미 탱커가 붙잡고 있다.
+   * 궁극기 「자장가」가 재우는 잠도 이 계약의 `drowsy`를 그대로 쓴다.
+   */
+  whiteNoise?: {
+    intervalSeconds: number;
+    radius: number;
+    healResistancePercent: number;
+    drowsy: Extract<CombatStatusEffect, { kind: "drowsy" }>;
   };
   prickle?: {
     /** 겹 상한. */

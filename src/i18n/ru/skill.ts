@@ -271,4 +271,11 @@ export const SKILL_RU = {
   "skill.passive.salvageCatch": "Каждый раз, когда [[pressure|Давление]] [[stun|оглушает]] врага, получает [[shield|щит]], равный {percent}% макс. ОЗ. Если текущий щит уже достиг {cap}% макс. ОЗ, он пополняется только до этой отметки.",
   "skill.sentence.selfGuard.farthest": "[[pull|Притягивает]] самого дальнего врага и [[taunt|провоцирует]] его на {seconds} с, затем получает [[shield|щит]] в {shield}.{reset}",
   "skill.status.pressure": "накапливает заряд [[pressure|Давления]]",
+  "skill.status.drowsy": "накапливает заряд [[drowsy|Сонливости]]",
+  "skill.passive.whiteNoise": "Каждые {seconds} с устройство звучит один раз. Ближние союзники восстанавливают {heal} ОЗ, а ближние враги, целящиеся в союзника, кроме неё, получают заряд [[drowsy|Сонливости]].",
+  "skill.passive.whiteNoise.healPercent": "{percent}% [[res|сопротивления]]",
+  "skill.sentence.lullaby": "Ближние враги, целящиеся в союзника, сразу погружаются в [[sleep|Сон]], а целящиеся в неё [[taunt|провоцируются]] на {seconds} с. Получает [[shield|щит]], равный {shield}, а ближние союзники {regen} с каждую секунду восстанавливают {percent}% [[missing-hp|потерянного здоровья]].",
+  "skill.sentence.lullaby.shieldPercent": "{percent}% [[res|сопротивления]]",
+  "skill.ferocity.sleepTantrum": "[[attack-speed|Скорость атаки]] растёт на {percent}%, а [[basic-attack|обычные атаки]] поражают всех врагов вокруг и ненадолго отталкивают каждого.",
+  "skill.keyword.shield.fromStat": "Щит, рассчитанный из {percent}% текущей {stat}.",
 } as const;

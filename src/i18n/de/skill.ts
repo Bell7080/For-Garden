@@ -271,4 +271,11 @@ export const SKILL_DE = {
   "skill.passive.salvageCatch": "Jedes Mal, wenn [[pressure|Wasserdruck]] einen Gegner [[stun|betäubt]], erhält sie einen [[shield|Schild]] in Höhe von {percent} % des max. Lebens. Erreicht der aktuelle Schild bereits {cap} % des max. Lebens, wird er nur bis zu dieser Linie aufgefüllt.",
   "skill.sentence.selfGuard.farthest": "[[pull|Zieht]] den am weitesten entfernten Gegner heran und [[taunt|provoziert]] ihn {seconds} s lang; danach erhält sie einen [[shield|Schild]] von {shield}.{reset}",
   "skill.status.pressure": "baut eine Aufladung [[pressure|Wasserdruck]] auf",
+  "skill.status.drowsy": "baut einen Stapel [[drowsy|Müdigkeit]] auf",
+  "skill.passive.whiteNoise": "Alle {seconds} s ertönt das Gerät einmal. Verbündete in der Nähe stellen {heal} Leben wieder her, und Gegner in der Nähe, die einen anderen Verbündeten als sie anvisieren, erhalten einen Stapel [[drowsy|Müdigkeit]].",
+  "skill.passive.whiteNoise.healPercent": "{percent} % ihres [[res|Widerstands]]",
+  "skill.sentence.lullaby": "Gegner in der Nähe, die einen Verbündeten anvisieren, fallen sofort in [[sleep|Schlaf]], und wer sie selbst anvisiert, wird {seconds} s lang [[taunt|verspottet]]. Sie erhält einen [[shield|Schild]] in Höhe von {shield}, und Verbündete in der Nähe stellen {regen} s lang jede Sekunde {percent} % ihres [[missing-hp|fehlenden Lebens]] wieder her.",
+  "skill.sentence.lullaby.shieldPercent": "{percent} % ihres [[res|Widerstands]]",
+  "skill.ferocity.sleepTantrum": "[[attack-speed|Angriffstempo]] steigt um {percent} %, und [[basic-attack|Standardangriffe]] treffen alle Gegner um sie herum und stoßen jeden Getroffenen kurz zurück.",
+  "skill.keyword.shield.fromStat": "Schild, berechnet aus {percent}% {stat}.",
 } as const;

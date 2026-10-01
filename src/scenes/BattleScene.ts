@@ -1675,6 +1675,20 @@ export class BattleScene extends Phaser.Scene {
       flashHit(this, view.creature, this.bodyTint(view));
       return undefined;
     }
+    if (event.kind === "sleepWake") {
+      const view = this.views.get(event.fighterId);
+      if (!view) return undefined;
+      view.hpBar.setValue({ currentHp: view.fighter.hp, maxHp: view.fighter.maxHp, damage: event.amount, cause: "damage" });
+      this.profiles.find((profile) => profile.fighter.id === event.fighterId)?.prefab.setHealthTarget(view.fighter.hp, view.fighter.maxHp, "damage", event.amount);
+      // 맞고 화들짝 깬 순간이라 평타와 다른 무게로 읽혀야 한다 — 수면의 색을 쓴다.
+      this.popNumber(view.fighter, event.amount, "debuff", { debuff: "sleep" });
+      flashHit(this, view.creature, this.bodyTint(view));
+      return undefined;
+    }
+    if (event.kind === "fellAsleep") {
+      // 머리 위 칩이 잠을 말한다. 여기서는 따로 터뜨리지 않는다.
+      return undefined;
+    }
     if (event.kind === "pressureBurst") {
       const view = this.views.get(event.fighterId);
       if (!view) return undefined;

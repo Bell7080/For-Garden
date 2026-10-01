@@ -294,4 +294,11 @@ export const SKILL_JA = {
   "skill.passive.salvageCatch": "[[pressure|水圧]]で敵を[[stun|気絶]]させるたびに最大HPの{percent}%分の[[shield|シールド]]を得る。今まとっているシールドが最大HPの{cap}%に達していれば、その線までしか満たさない。",
   "skill.sentence.selfGuard.farthest": "いちばん遠くにいる敵ひとりを[[pull|引き寄せて]]{seconds}秒間[[taunt|挑発]]し、{shield}分の[[shield|シールド]]を得る。{reset}",
   "skill.status.pressure": "[[pressure|水圧]]を1重積む",
+  "skill.status.drowsy": "[[drowsy|眠気]]を1重積む",
+  "skill.passive.whiteNoise": "{seconds}秒ごとに装置が一度鳴る。周囲の味方は{heal}回復し、周囲の敵のうち自身以外の味方を狙う敵は[[drowsy|眠気]]が1重積まれる。",
+  "skill.passive.whiteNoise.healPercent": "[[res|抵抗力]]の{percent}%",
+  "skill.sentence.lullaby": "周囲の敵のうち味方を狙っていた敵はすぐに[[sleep|睡眠]]に落ち、自身を狙っていた敵は{seconds}秒間[[taunt|挑発]]される。{shield}の[[shield|シールド]]を得て、周囲の味方は{regen}秒間、毎秒[[missing-hp|失った体力]]の{percent}%を回復する。",
+  "skill.sentence.lullaby.shieldPercent": "[[res|抵抗力]]の{percent}%",
+  "skill.ferocity.sleepTantrum": "[[attack-speed|攻撃速度]]が{percent}%増加し、[[basic-attack|基本攻撃]]が自身の周囲のすべての敵に命中して、当たった敵を短く押し返す。",
+  "skill.keyword.shield.fromStat": "現在の{stat}から{percent}%を受けて計算したシールド数値だ。",
 } as const;

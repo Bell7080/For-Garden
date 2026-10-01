@@ -53,6 +53,8 @@ import {
   KENTO_SD_METADATA,
   MOSANA_PORTRAIT_METADATA,
   MOSANA_SD_METADATA,
+  ANKA_PORTRAIT_METADATA,
+  ANKA_SD_METADATA,
   NODONIA_PORTRAIT_METADATA,
   NODONIA_SD_METADATA,
   PACHI_PORTRAIT_METADATA,
@@ -360,6 +362,12 @@ export const MOSANA_ASSET: PuppetAsset = {
   ...MOSANA_PORTRAIT_METADATA,
 };
 
+/** 25번 전신 일러스트: 안카(안킬로사우루스). */
+export const ANKA_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_025.zip`,
+  ...ANKA_PORTRAIT_METADATA,
+};
+
 /** 20번 기본 SD는 디안, `_black`은 쿠로, `_white`는 시로라는 이름 대응을 보존한다. */
 export const DIAN_SD_ASSET: PuppetAsset = { url: `${base}puppets/charSD_020.zip`, ...DIAN_SD_METADATA };
 /** 모르페가 띄우는 관제 드론 디모(A-Dimo)의 SD. 전신 원화가 따로 없어 정보창도 같은 묶음을 세운다. */
@@ -496,6 +504,7 @@ const PORTRAIT_ASSETS = {
   morphe: MORPHE_ASSET,
   kento: KENTO_ASSET,
   mosana: MOSANA_ASSET,
+  anka: ANKA_ASSET,
   // 늑대는 전신 원화가 따로 없다. SD 자체가 온전한 한 마리라 정보창도 같은 묶음을 세운다.
   kuro: KURO_SD_ASSET,
   dimo: DIMO_SD_ASSET,
@@ -698,6 +707,12 @@ export const MOSANA_SD_ASSET: PuppetAsset = {
   ...MOSANA_SD_METADATA,
 };
 
+/** 25번 SD: 안카. */
+export const ANKA_SD_ASSET: PuppetAsset = {
+  url: `${base}puppets/charSD_025.zip`,
+  ...ANKA_SD_METADATA,
+};
+
 /** 19번 SD: 테리사. */
 export const TERISA_SD_ASSET: PuppetAsset = {
   url: `${base}puppets/charSD_019.zip`,
@@ -768,6 +783,7 @@ const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
   morphe: MORPHE_SD_ASSET,
   kento: KENTO_SD_ASSET,
   mosana: MOSANA_SD_ASSET,
+  anka: ANKA_SD_ASSET,
   kuro: KURO_SD_ASSET,
   dimo: DIMO_SD_ASSET,
   shiro: SHIRO_SD_ASSET,

@@ -50,13 +50,14 @@ function skillSustains(skill: Skill): boolean {
     || any.shieldPercent !== undefined
     || any.selfBulwark !== undefined
     || any.selfGuard !== undefined
+    || any.selfLullaby !== undefined
     || any.selfShieldMaxHpPercent !== undefined
     || (Array.isArray(any.steps) && any.steps.some((step: Record<string, unknown>) =>
       step.shieldFromDamagePercent !== undefined || step.shieldMaxHpPercent !== undefined));
 }
 
 function passiveSustains(passive: Passive): boolean {
-  const kinds = new Set(["emergencyRecovery", "impactCap", "undyingTalisman", "painfulElation", "shellGuard", "sutureStitch", "adagioWeight", "droneLink"]);
+  const kinds = new Set(["emergencyRecovery", "impactCap", "undyingTalisman", "painfulElation", "shellGuard", "sutureStitch", "adagioWeight", "droneLink", "whiteNoise"]);
   return kinds.has(passive.kind)
     || passive.frenzyLifeStealPercent !== undefined
     || passive.tauntHeal !== undefined

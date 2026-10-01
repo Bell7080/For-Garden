@@ -271,4 +271,11 @@ export const SKILL_TH = {
   "skill.passive.salvageCatch": "ทุกครั้งที่[[pressure|แรงดันน้ำ]]ทำให้ศัตรู[[stun|มึนงง]] จะได้รับ[[shield|โล่]]เท่ากับ {percent}% ของ HP สูงสุด หากโล่ที่มีอยู่ถึง {cap}% ของ HP สูงสุดแล้ว จะเติมได้เพียงถึงเส้นนั้น",
   "skill.sentence.selfGuard.farthest": "[[pull|ดึง]]ศัตรูที่อยู่ไกลที่สุดหนึ่งตัวเข้ามาและ[[taunt|ยั่วยุ]]เป็นเวลา {seconds} วินาที แล้วได้รับ[[shield|โล่]] {shield}{reset}",
   "skill.status.pressure": "สะสม[[pressure|แรงดันน้ำ]]หนึ่งชั้น",
+  "skill.status.drowsy": "สะสม[[drowsy|ความง่วง]]หนึ่งชั้น",
+  "skill.passive.whiteNoise": "ทุก {seconds} วินาที อุปกรณ์จะดังหนึ่งครั้ง พันธมิตรใกล้ ๆ ฟื้นฟู HP {heal} และศัตรูใกล้ ๆ ที่เล็งพันธมิตรที่ไม่ใช่ตัวเองจะได้รับ[[drowsy|ความง่วง]]หนึ่งชั้น",
+  "skill.passive.whiteNoise.healPercent": "{percent}% ของ[[res|ต้านทาน]]",
+  "skill.sentence.lullaby": "ศัตรูใกล้ ๆ ที่เล็งพันธมิตรจะเข้าสู่[[sleep|หลับ]]ทันที ส่วนศัตรูที่เล็งตัวเองจะถูก[[taunt|ยั่วยุ]] {seconds} วินาที ได้รับ[[shield|โล่]]เท่ากับ {shield} และพันธมิตรใกล้ ๆ ฟื้นฟู {percent}% ของ[[missing-hp|HP ที่เสียไป]]ทุกวินาทีเป็นเวลา {regen} วินาที",
+  "skill.sentence.lullaby.shieldPercent": "{percent}% ของ[[res|ต้านทาน]]",
+  "skill.ferocity.sleepTantrum": "[[attack-speed|ความเร็วโจมตี]]เพิ่มขึ้น {percent}% และ[[basic-attack|การโจมตีปกติ]]จะโดนศัตรูทุกตัวรอบตัว พร้อมผลักศัตรูที่โดนถอยไปเล็กน้อย",
+  "skill.keyword.shield.fromStat": "โล่ที่คำนวณจาก {percent}% ของ{stat}ปัจจุบัน",
 } as const;

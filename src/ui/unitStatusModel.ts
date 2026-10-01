@@ -8,7 +8,7 @@ import { t } from "../i18n";
  * 겹 수와 남은 시간을 여기서 한 번만 만들고 둘 다 이 목록만 그린다. Phaser를 들여오지 않아
  * 순서·색·문구를 테스트가 그대로 고정할 수 있다.
  */
-export type UnitStatusId = "packKuro" | "packShiro" | "packDimo" | "shell" | "scar" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism" | "weakpoint" | "shimmer" | "observation" | "pressure";
+export type UnitStatusId = "packKuro" | "packShiro" | "packDimo" | "shell" | "scar" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism" | "weakpoint" | "shimmer" | "observation" | "pressure" | "drowsy" | "sleep" | "groggy";
 
 export interface UnitStatusView {
   /** 같은 상태를 제공자가 여럿 걸 수 있을 때도 HUD 객체를 덮어쓰지 않는 전투 내 키다. */
@@ -68,6 +68,10 @@ export const UNIT_STATUS_COLOR: Readonly<Record<UnitStatusId, number>> = {
   vandalism: 0xd45aa8,
   // 수압은 깊은 물빛이다 — 둔화·여울과 같은 물 계열이되 가장 짙어, 눌려 터지는 상태라는 것이 갈린다.
   pressure: 0x3a7fc4,
+  // 안카의 졸음·잠·몽롱함은 밤하늘 같은 라벤더 한 계열이다 — 졸음이 옅고, 잠이 가장 짙고, 깬 뒤가 다시 옅다.
+  drowsy: 0xa59bdf,
+  sleep: 0x6f67d4,
+  groggy: 0xbcb2e0,
   // 관측은 지속 피해가 아니라 **모르페의 일반 공격이 켜는 표식**이라 바람 청록을 그대로 쓴다(피해 숫자의 색과 같은 계열).
   observation: 0x4fa3a8,
 };
@@ -124,7 +128,17 @@ export function unitStatusViews(fighter: Fighter, pack: readonly Fighter[] = [])
       detail: t(id === "scar" ? "status.scar.detail" : "status.shell.detail", { stacks: shell.stacks, max: maxStacks, time: seconds(shell.remaining) }),
     });
   }
-  if (fighter.stunnedFor > 0) {
+  // 잠은 기절 슬롯으로 행동을 막지만 화면에는 **잠**으로 선다 — 맞으면 깨는 상태라 기절과 같은 칩이면
+  // 때려도 되는지 읽히지 않는다. 잠보다 긴 다른 기절이 겹쳐 있으면 기절도 함께 선다.
+  if (fighter.sleep) {
+    const sleep = fighter.sleep;
+    views.push({
+      id: "sleep", name: t("status.sleep"), color: UNIT_STATUS_COLOR.sleep,
+      remaining: sleep.remaining, total: Math.max(sleep.total, sleep.remaining),
+      detail: t("status.sleep.detail", { time: seconds(sleep.remaining) }),
+    });
+  }
+  if (fighter.stunnedFor > 0 && !(fighter.sleep && fighter.stunnedFor <= fighter.sleep.remaining + 1e-6)) {
     views.push({
       id: "stun", name: t("status.stun"), color: UNIT_STATUS_COLOR.stun,
       remaining: fighter.stunnedFor, total: Math.max(fighter.stunnedTotal, fighter.stunnedFor),
@@ -247,6 +261,23 @@ export function unitStatusViews(fighter: Fighter, pack: readonly Fighter[] = [])
       detail: t("status.pressure.detail", {
         stacks: pressure.stacks, max: pressure.effect.maxStacks, percent: pressure.stacks * pressure.effect.speedPercentPerStack,
       }),
+    });
+  }
+  if (fighter.drowsy) {
+    const drowsy = fighter.drowsy;
+    views.push({
+      id: "drowsy", name: t("status.drowsy"), color: UNIT_STATUS_COLOR.drowsy,
+      stacks: drowsy.stacks,
+      remaining: drowsy.remaining, total: Math.max(drowsy.total, drowsy.remaining),
+      detail: t("status.drowsy.detail", { stacks: drowsy.stacks, max: drowsy.effect.maxStacks }),
+    });
+  }
+  if (fighter.groggy) {
+    const groggy = fighter.groggy;
+    views.push({
+      id: "groggy", name: t("status.groggy"), color: UNIT_STATUS_COLOR.groggy,
+      remaining: groggy.remaining, total: Math.max(groggy.total, groggy.remaining),
+      detail: t("status.groggy.detail", { percent: groggy.attackSpeedPercent, time: seconds(groggy.remaining) }),
     });
   }
   if (fighter.vandalism) {

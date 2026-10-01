@@ -271,4 +271,11 @@ export const SKILL_PT_BR = {
   "skill.passive.salvageCatch": "Cada vez que a [[pressure|Pressão]] [[stun|Atordoa]] um inimigo, ganha um [[shield|Escudo]] igual a {percent}% do PV máx. Se o escudo atual já chegar a {cap}% do PV máx., só é preenchido até essa linha.",
   "skill.sentence.selfGuard.farthest": "[[pull|Puxa]] o inimigo mais distante e o [[taunt|Provoca]] por {seconds}s; depois ganha um [[shield|Escudo]] de {shield}.{reset}",
   "skill.status.pressure": "acumula uma carga de [[pressure|Pressão]]",
+  "skill.status.drowsy": "acumula uma carga de [[drowsy|Sonolência]]",
+  "skill.passive.whiteNoise": "A cada {seconds} s o dispositivo toca uma vez. Aliados próximos recuperam {heal} PV, e inimigos próximos que miram um aliado que não seja ela ganham uma carga de [[drowsy|Sonolência]].",
+  "skill.passive.whiteNoise.healPercent": "{percent}% da [[res|Resistência]]",
+  "skill.sentence.lullaby": "Inimigos próximos que miram um aliado caem em [[sleep|Sono]] na hora, e os que miram ela são [[taunt|Provocados]] por {seconds} s. Ganha um [[shield|escudo]] igual a {shield}, e aliados próximos recuperam {percent}% do [[missing-hp|PV perdido]] a cada segundo por {regen} s.",
+  "skill.sentence.lullaby.shieldPercent": "{percent}% da [[res|Resistência]]",
+  "skill.ferocity.sleepTantrum": "A [[attack-speed|Velocidade de ataque]] sobe {percent}% e os [[basic-attack|ataques básicos]] atingem todos os inimigos ao redor, empurrando brevemente cada um.",
+  "skill.keyword.shield.fromStat": "Escudo calculado a partir de {percent}% de {stat} atual.",
 } as const;

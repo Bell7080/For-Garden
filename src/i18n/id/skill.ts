@@ -271,4 +271,11 @@ export const SKILL_ID = {
   "skill.passive.salvageCatch": "Setiap kali [[pressure|Tekanan Air]] membuat musuh [[stun|pingsan]], mendapat [[shield|Perisai]] sebesar {percent}% HP maks. Jika perisai saat ini sudah mencapai {cap}% HP maks, hanya diisi sampai batas itu.",
   "skill.sentence.selfGuard.farthest": "[[pull|Menarik]] satu musuh terjauh dan [[taunt|memprovokasinya]] selama {seconds} detik, lalu mendapat [[shield|Perisai]] sebesar {shield}.{reset}",
   "skill.status.pressure": "menumpuk satu [[pressure|Tekanan Air]]",
+  "skill.status.drowsy": "menumpuk satu [[drowsy|Kantuk]]",
+  "skill.passive.whiteNoise": "Setiap {seconds} dtk perangkat berbunyi sekali. Sekutu di sekitar memulihkan {heal} HP, dan musuh di sekitar yang mengincar sekutu selain dirinya mendapat satu tumpuk [[drowsy|Kantuk]].",
+  "skill.passive.whiteNoise.healPercent": "{percent}% [[res|Resistensi]]",
+  "skill.sentence.lullaby": "Musuh di sekitar yang mengincar sekutu langsung jatuh ke dalam [[sleep|Tidur]], dan yang mengincar dirinya [[taunt|Diprovokasi]] selama {seconds} dtk. Mendapat [[shield|perisai]] sebesar {shield}, dan sekutu di sekitar memulihkan {percent}% [[missing-hp|HP yang hilang]] setiap detik selama {regen} dtk.",
+  "skill.sentence.lullaby.shieldPercent": "{percent}% [[res|Resistensi]]",
+  "skill.ferocity.sleepTantrum": "[[attack-speed|Kecepatan Serang]] naik {percent}%, dan [[basic-attack|serangan dasar]] mengenai semua musuh di sekitarnya serta mendorong mundur sebentar setiap yang terkena.",
+  "skill.keyword.shield.fromStat": "Perisai yang dihitung dari {percent}% {stat} saat ini.",
 } as const;

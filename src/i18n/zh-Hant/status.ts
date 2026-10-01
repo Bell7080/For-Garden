@@ -42,4 +42,10 @@ export const STATUS_ZH_HANT = {
   "status.observation.detail": "{stacks} / {max}層 · 剩餘{time}",
   "status.butcher": "處理",
   "status.butcher.detail": "{stacks} / {max}層 · 疊滿時當場引爆",
+  "status.drowsy": "睏意",
+  "status.drowsy.detail": "{stacks} / {max}層 · 疊滿時入睡",
+  "status.sleep": "睡眠",
+  "status.sleep.detail": "無法行動 · 受到傷害時醒來 · {time}",
+  "status.groggy": "睡眼惺忪",
+  "status.groggy.detail": "攻擊速度 -{percent}% · {time}",
 } as const;

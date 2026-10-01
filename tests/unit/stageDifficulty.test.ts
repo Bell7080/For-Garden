@@ -352,15 +352,20 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     const enemies = getStageEnemies(getBattleStage("1-1"));
     const pairs = selectableRPartyPairs(PLAYABLE_RELICS);
     const parties = selectReferenceParties(getRelic("torika"), PLAYABLE_RELICS, enemies, SEEDS);
-    // 새 R이 추가되면 조합 수와 최선/최악 선택이 자동으로 넓어진다 — 파루아가 들어와 셋이, 켄토(불 탱커)가 들어와 여섯이 됐다.
+    // 새 R이 추가되면 조합 수와 최선/최악 선택이 자동으로 넓어진다 — 파루아가 들어와 셋이, 켄토(불 탱커)가 들어와 여섯이,
+    // 안카(땅 탱커)가 들어와 열이 됐다.
     // 티아의 반짝이 표식을 옮겨 다니는 대신 그 자리에서 터뜨리는 쪽으로 바뀌면서 최악 조합이
     // 파루아 쪽으로 옮겨 갔다: 붙어서 같은 적을 계속 때리는 손이 이제 두 대마다 주위까지
     // 함께 적신다.
-    expect(pairs.map((pair) => pair.map(({ id }) => id))).toEqual([["dodo", "tia"], ["dodo", "kento"], ["dodo", "parua"], ["tia", "kento"], ["tia", "parua"], ["kento", "parua"]]);
+    expect(pairs.map((pair) => pair.map(({ id }) => id))).toEqual([
+      ["dodo", "tia"], ["dodo", "kento"], ["dodo", "anka"], ["dodo", "parua"], ["tia", "kento"],
+      ["tia", "anka"], ["tia", "parua"], ["kento", "anka"], ["kento", "parua"], ["anka", "parua"],
+    ]);
     // 실제 전장 크기로 옮기자(v0.172.6) 붙어서 싸우는 거리가 짧아져 도디·티아가 최악으로 내려앉았다.
     expect(parties.favorable.map(({ id }) => id)).toEqual(["torika", "tia", "parua"]);
     // 켄토는 평타가 약하고 반격으로 싸우는 탱커라 1-1에서는 가장 늦게 적을 쓰러뜨린다 — 최악 조합이 도디·켄토로 옮겨 갔다.
-    expect(parties.unfavorable.map(({ id }) => id)).toEqual(["torika", "dodo", "kento"]);
+    // 안카는 때리지 않고 재우는 탱커라 같은 이유로 더 늦다 — 토리카와 탱커 둘이 서는 티아·안카가 최악이다.
+    expect(parties.unfavorable.map(({ id }) => id)).toEqual(["torika", "tia", "anka"]);
   });
 
   it("장 목표와 허용 조정 순서를 전용 배율 없이 공개한다", () => {

@@ -271,4 +271,11 @@ export const SKILL_ES = {
   "skill.passive.salvageCatch": "Cada vez que la [[pressure|Presión]] [[stun|Aturde]] a un enemigo, obtiene un [[shield|Escudo]] igual al {percent}% de los PV máx. Si el escudo actual ya llega al {cap}% de los PV máx., solo se rellena hasta esa línea.",
   "skill.sentence.selfGuard.farthest": "[[pull|Atrae]] al enemigo más lejano y lo [[taunt|Provoca]] durante {seconds} s; después obtiene un [[shield|Escudo]] de {shield}.{reset}",
   "skill.status.pressure": "acumula una carga de [[pressure|Presión]]",
+  "skill.status.drowsy": "acumula una carga de [[drowsy|Somnolencia]]",
+  "skill.passive.whiteNoise": "Cada {seconds} s el dispositivo suena una vez. Los aliados cercanos recuperan {heal} PV, y los enemigos cercanos que apuntan a un aliado que no sea ella ganan una carga de [[drowsy|Somnolencia]].",
+  "skill.passive.whiteNoise.healPercent": "el {percent}% de su [[res|Resistencia]]",
+  "skill.sentence.lullaby": "Los enemigos cercanos que apuntan a un aliado caen en [[sleep|Sueño]] al instante, y los que la apuntan a ella quedan [[taunt|Provocados]] durante {seconds} s. Obtiene un [[shield|escudo]] igual a {shield}, y los aliados cercanos recuperan el {percent}% de sus [[missing-hp|PV perdidos]] cada segundo durante {regen} s.",
+  "skill.sentence.lullaby.shieldPercent": "el {percent}% de su [[res|Resistencia]]",
+  "skill.ferocity.sleepTantrum": "La [[attack-speed|Velocidad de ataque]] sube un {percent}% y los [[basic-attack|ataques básicos]] golpean a todos los enemigos a su alrededor, empujando brevemente a cada uno.",
+  "skill.keyword.shield.fromStat": "Escudo calculado con el {percent}% de {stat} actual.",
 } as const;

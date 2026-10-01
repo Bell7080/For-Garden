@@ -271,4 +271,11 @@ export const SKILL_VI = {
   "skill.passive.salvageCatch": "Mỗi lần [[pressure|Áp suất nước]] làm kẻ địch [[stun|Choáng]], nhận [[shield|Khiên]] bằng {percent}% HP tối đa. Nếu khiên hiện có đã đạt {cap}% HP tối đa thì chỉ nạp đến mức đó.",
   "skill.sentence.selfGuard.farthest": "[[pull|Kéo]] kẻ địch xa nhất về và [[taunt|Khiêu khích]] nó {seconds} giây, rồi nhận [[shield|Khiên]] bằng {shield}.{reset}",
   "skill.status.pressure": "cộng một tầng [[pressure|Áp suất nước]]",
+  "skill.status.drowsy": "cộng một tầng [[drowsy|Buồn ngủ]]",
+  "skill.passive.whiteNoise": "Cứ mỗi {seconds} giây thiết bị kêu một lần. Đồng minh gần đó hồi {heal} máu, và kẻ địch gần đó đang nhắm vào đồng minh không phải bản thân nhận một tầng [[drowsy|Buồn ngủ]].",
+  "skill.passive.whiteNoise.healPercent": "{percent}% [[res|Kháng]]",
+  "skill.sentence.lullaby": "Kẻ địch gần đó đang nhắm vào đồng minh lập tức rơi vào [[sleep|Ngủ]], còn kẻ nhắm vào bản thân bị [[taunt|Khiêu khích]] {seconds} giây. Nhận [[shield|khiên]] bằng {shield}, và đồng minh gần đó hồi {percent}% [[missing-hp|máu đã mất]] mỗi giây trong {regen} giây.",
+  "skill.sentence.lullaby.shieldPercent": "{percent}% [[res|Kháng]]",
+  "skill.ferocity.sleepTantrum": "[[attack-speed|Tốc đánh]] tăng {percent}%, [[basic-attack|đòn đánh thường]] trúng mọi kẻ địch xung quanh và đẩy lùi ngắn từng kẻ bị trúng.",
+  "skill.keyword.shield.fromStat": "Khiên tính từ {percent}% {stat} hiện tại.",
 } as const;

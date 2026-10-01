@@ -746,3 +746,23 @@ export const MOSANA_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageHeight: 1254,
   content: { left: 50, top: 21, right: 1203, bottom: 1232 },
 };
+
+/**
+ * 안카 전신(char_025): 중심1·머리1·눈1·눈2·발1·발2를 프로젝트에서 읽었다. alpha 경계는 (145,15)–(942,1438)이다.
+ * 발 관절은 그림 밖에 박혀 있어 바닥선은 alpha 아래 경계가 맡는다.
+ */
+export const ANKA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086,
+  imageHeight: 1448,
+  content: { left: 145, top: 15, right: 942, bottom: 1438 },
+  joints: { center: [426, 324], head: [401, 213], eyes: [[374, 220], [456, 201]], feet: [[265, 1613], [538, 1649]] },
+  /** 로비 세로 비율: 메론 기준. 1.24 m — 눈(210.5)에서 alpha 아래 경계까지를 그 키로 맞춘다. */
+  lobbyZoom: 0.753,
+};
+
+/** 안카 SD: 중심1·머리1·발1·발2를 프로젝트에서 읽었으며 눈 관절은 없다. alpha 경계는 (179,15)–(1075,1239)다. */
+export const ANKA_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 179, top: 15, right: 1075, bottom: 1239 },
+};

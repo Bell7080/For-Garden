@@ -473,6 +473,24 @@ export interface Fighter extends Combatant {
   pressure: { stacks: number; remaining: number; total: number; sourceId: string; effect: Extract<CombatStatusEffect, { kind: "pressure" }> } | null;
   /** 수압이 터진 뒤 새 겹이 쌓이지 않는 남은 시간(초). 기절 시간 + 계약의 `lockoutSeconds`로 켜진다. */
   pressureLockFor: number;
+  /** 「졸음」 겹(안카). 상한에 닿으면 잠든다. 시간이 다하면 한꺼번에 사라진다. */
+  drowsy: { stacks: number; remaining: number; total: number; sourceId: string; effect: Extract<CombatStatusEffect, { kind: "drowsy" }> } | null;
+  /**
+   * 잠. 행동은 기절 슬롯(`stunnedFor`)이 막고 — 그래야 강인함과 정화가 기절과 같은 규칙으로 지난다 — 이
+   * 슬롯은 **피해를 받으면 깬다**는 것과 깰 때의 피해만 들고 있다.
+   */
+  sleep: { remaining: number; total: number; sourceId: string; effect: Extract<CombatStatusEffect, { kind: "drowsy" }> } | null;
+  /**
+   * 피해로 깬 직후, 다음 행동 루프에서 한 번 치를 깨는 피해. 모든 피해의 마지막 관문(`applyDamage`) 안에서
+   * 곧바로 피해를 더 넣으면 그 관문이 제 자신을 다시 부르므로, 깨우는 일만 그 자리에서 하고 피해는 미룬다.
+   */
+  pendingWake: { sourceId: string; effect: Extract<CombatStatusEffect, { kind: "drowsy" }> } | null;
+  /** 잠이 덜 깬 몽롱함. 남은 동안 공격 속도가 깎인다. */
+  groggy: { remaining: number; total: number; attackSpeedPercent: number } | null;
+  /** 「백색소음」이 다음에 울리기까지 남은 시간(초). */
+  whiteNoiseIn: number;
+  /** 「자장가」의 재생. 매초 그 순간 잃은 체력에 비례해 돌린다. */
+  lullabyRegen: { remaining: number; total: number; missingHpPercentPerSecond: number; tickIn: number; sourceId: string } | null;
   /**
    * 지금 걸린 빙결. 기절과 같은 완전 행동불가이며, `stunnedFor`와 별도 슬롯을 쓴다.
    *
@@ -679,7 +697,7 @@ export type SkirmishEvent =
        * 아군 피격 여부보다 먼저 색을 정한다 — 같은 상태가 바닥과 머리 위에서 다른 색이면
        * 무엇이 걸렸는지 두 번 읽어야 한다.
        */
-      status?: "submerged" | "taunt" | "stun";
+      status?: "submerged" | "taunt" | "stun" | "sleep";
       area:
         | { shape: "radial"; x: number; y: number; radius: number }
         | { shape: "lane"; from: { x: number; y: number }; to: { x: number; y: number }; halfWidth: number }
@@ -728,6 +746,10 @@ export type SkirmishEvent =
   | { kind: "vandalismBurst"; attackerId: string; fighterId: string; amount: number }
   /** 수압이 상한에 닿아 터진 순간. 건 쪽의 방어력·저항력에서 나온 물리 피해이고 기절이 함께 들어간다. */
   | { kind: "pressureBurst"; attackerId: string; fighterId: string; amount: number }
+  /** 잠든 적이 피해를 받고 깬 순간의 추가 피해. 재운 쪽의 저항력에서 나온 마법 피해다. */
+  | { kind: "sleepWake"; attackerId: string; fighterId: string; amount: number }
+  /** 졸음이 차 잠든 순간(자장가가 곧바로 재운 순간도 같다). */
+  | { kind: "fellAsleep"; fighterId: string; sourceId: string }
   /**
    * 관측이 발동해 박힌 틱 하나. 한 번의 발동이 겹 수만큼 이 사건을 **같은 프레임에** 싣는다 —
    * 시간에 흩는 일은 코어가 아니라 화면이 한다(`index / count × windowSeconds`). 코어가 시간에
@@ -1105,6 +1127,12 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     chill: null,
     pressure: null,
     pressureLockFor: 0,
+    drowsy: null,
+    sleep: null,
+    pendingWake: null,
+    groggy: null,
+    whiteNoiseIn: def.passive.whiteNoise?.intervalSeconds ?? 0,
+    lullabyRegen: null,
     frozen: null,
     observation: null,
     shieldFade: null,
@@ -1552,6 +1580,7 @@ export function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEf
   }
   if (effect.kind === "curse") refreshCurse(fighter, { ...effect, seconds: effect.seconds * potency });
   if (effect.kind === "chill") refreshChill(fighter, effect);
+  if (effect.kind === "drowsy" && sourceId) applyDrowsy(fighter, { ...effect, sleepSeconds: effect.sleepSeconds * potency }, events, state, sourceId);
   if (effect.kind === "pressure" && sourceId) applyPressure(fighter, { ...effect, seconds: effect.seconds * potency }, events, state, sourceId);
   if (effect.kind === "frenzy") applyFrenzy(fighter, { ...effect, seconds: effect.seconds * potency }, sourceId);
   // 도발은 방향만 돌리는 상태라 기절 저항도 정화도 거치지 않는다. 건 사람이 없으면 바라볼
@@ -1874,6 +1903,149 @@ function tickPressure(fighter: Fighter, dt: number): void {
   if (!pressure) return;
   const remaining = pressure.remaining - dt;
   fighter.pressure = remaining <= EMERGENCY_RECOVERY.epsilon ? null : { ...pressure, remaining };
+}
+
+/**
+ * 「졸음」 한 겹. 상한에 닿으면 잠든다. 이미 잠든 적에게는 쌓지 않는다 — 깨기 전에 다음 잠을 쌓아 두면
+ * 깨자마자 다시 잠들어 그 적이 판 내내 누워 있게 된다.
+ */
+function applyDrowsy(
+  target: Fighter,
+  effect: Extract<CombatStatusEffect, { kind: "drowsy" }>,
+  events: SkirmishEvent[],
+  state: SkirmishState,
+  sourceId: string,
+): void {
+  if (!isFighterAlive(target) || target.sleep !== null) return;
+  const stacks = Math.min(effect.maxStacks, (target.drowsy?.stacks ?? 0) + 1);
+  target.drowsy = { stacks, remaining: effect.seconds, total: effect.seconds, sourceId, effect };
+  if (stacks < effect.maxStacks) return;
+  putToSleep(target, effect, events, state, sourceId);
+}
+
+/**
+ * 재운다. 행동은 기절과 같은 경로(`applyStun`)로 막아 강인함이 똑같이 줄이고, 막아 낸 만큼 잠도 짧다 —
+ * 강인함이 통째로 막으면 잠들지 않는다. 졸음 겹은 잠드는 순간 비운다.
+ */
+function putToSleep(
+  target: Fighter,
+  effect: Extract<CombatStatusEffect, { kind: "drowsy" }>,
+  events: SkirmishEvent[],
+  state: SkirmishState,
+  sourceId: string,
+): void {
+  if (!isFighterAlive(target)) return;
+  target.drowsy = null;
+  const seconds = effect.sleepSeconds * (1 - controlResistPercent(target) / 100);
+  events.push(...applyStun(target, effect.sleepSeconds, state));
+  if (seconds <= EMERGENCY_RECOVERY.epsilon || target.stunnedFor <= 0) return;
+  target.sleep = { remaining: seconds, total: seconds, sourceId, effect };
+  // 잠든 적은 쫓던 상대를 놓는다 — 깨면 그때 다시 고른다.
+  target.engaged = false;
+  events.push({ kind: "fellAsleep", fighterId: target.id, sourceId });
+}
+
+/**
+ * 깨운다. 잠이 막고 있던 행동을 풀고(그보다 긴 다른 기절이 겹쳐 있으면 그 기절은 남긴다), 잠이 덜 깬
+ * 몽롱함을 건다. 피해로 깼다면 깨는 피해를 다음 행동 루프에 맡긴다.
+ */
+function wakeUp(target: Fighter, byDamage: boolean): void {
+  const sleep = target.sleep;
+  if (!sleep) return;
+  target.sleep = null;
+  if (target.stunnedFor <= sleep.remaining + EMERGENCY_RECOVERY.epsilon) target.stunnedFor = 0;
+  if (sleep.effect.groggySeconds > 0) {
+    target.groggy = { remaining: sleep.effect.groggySeconds, total: sleep.effect.groggySeconds, attackSpeedPercent: sleep.effect.groggyAttackSpeedPercent };
+  }
+  if (byDamage) target.pendingWake = { sourceId: sleep.sourceId, effect: sleep.effect };
+}
+
+/** 피해로 깬 적이 재운 쪽의 저항력에서 나온 마법 피해를 한 번 받는다. 재운 쪽이 쓰러졌어도 그 몸의 값을 쓴다. */
+function resolvePendingWake(target: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const wake = target.pendingWake;
+  if (!wake) return;
+  target.pendingWake = null;
+  const sleeper = findFighter(state, wake.sourceId);
+  if (!sleeper || !isFighterAlive(target) || wake.effect.wakeResistancePower <= 0) return;
+  const raw = Math.max(1, Math.round(computeDamage(
+    { ...sleeper, def: offensiveDefinition(sleeper) },
+    defensiveDefinition(target, state),
+    { power: wake.effect.wakeResistancePower, scalingStat: "res", damageType: "magical", isCritical: false, kind: "basic" },
+  )));
+  const resolution = resolveReceivedDamage(target, raw);
+  const hpBefore = target.hp;
+  applyDamage(target, resolution.applied, events, state);
+  addContribution(state.contributions, sleeper.id, "attack", hpBefore - target.hp, "abilityPower");
+  events.push({ kind: "sleepWake", attackerId: sleeper.id, fighterId: target.id, amount: resolution.applied });
+  if (!isFighterAlive(target)) {
+    clearDefeatedStatuses(target);
+    events.push({ kind: "death", fighterId: target.id, sourceId: sleeper.id });
+  }
+}
+
+/** 졸음 겹·잠·몽롱함의 시계. 시간이 다해 스스로 깨면 깨는 피해는 없고 몽롱함만 남는다. */
+function tickSleep(fighter: Fighter, dt: number): void {
+  if (fighter.drowsy) {
+    const remaining = fighter.drowsy.remaining - dt;
+    fighter.drowsy = remaining <= EMERGENCY_RECOVERY.epsilon ? null : { ...fighter.drowsy, remaining };
+  }
+  if (fighter.sleep) {
+    const remaining = fighter.sleep.remaining - dt;
+    // 정화(`clearStun`)처럼 잠을 거치지 않고 행동이 풀렸다면 잠도 함께 끝난다.
+    if (remaining <= EMERGENCY_RECOVERY.epsilon || fighter.stunnedFor <= 0) wakeUp(fighter, false);
+    else fighter.sleep = { ...fighter.sleep, remaining };
+  }
+  if (fighter.groggy) {
+    const remaining = fighter.groggy.remaining - dt;
+    fighter.groggy = remaining <= EMERGENCY_RECOVERY.epsilon ? null : { ...fighter.groggy, remaining };
+  }
+}
+
+/** 이 적이 지금 노리고 있는 상대가 `owner`가 아닌 `owner`의 아군인가. */
+function targetsOtherAlly(state: SkirmishState, enemy: Fighter, owner: Fighter): boolean {
+  if (enemy.targetId === null || enemy.targetId === owner.id) return false;
+  const target = findFighter(state, enemy.targetId);
+  return target !== undefined && target.side === owner.side && isFighterAlive(target);
+}
+
+/**
+ * 「백색소음」(안카). 장치가 정해진 간격으로 한 번 울린다 — 반경 안의 아군은 안카 저항력에 비례해 회복하고,
+ * 반경 안에서 **안카가 아닌 아군을 노리는** 적은 졸음 한 겹을 받는다. 장치가 우는 것이라 안카가 기절해 있어도
+ * 시계는 흐른다.
+ */
+function tickWhiteNoise(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  const plan = fighter.def.passive.whiteNoise;
+  if (fighter.def.passive.kind !== "whiteNoise" || plan === undefined || !isFighterAlive(fighter)) return;
+  fighter.whiteNoiseIn -= dt;
+  if (fighter.whiteNoiseIn > EMERGENCY_RECOVERY.epsilon) return;
+  fighter.whiteNoiseIn += plan.intervalSeconds;
+  const heal = fighter.def.stats.res * plan.healResistancePercent / 100;
+  for (const ally of state.fighters) {
+    if (ally.side !== fighter.side || !isFighterAlive(ally) || distance(fighter, ally) > plan.radius) continue;
+    pushHeal(events, ally, applyHealing(state, ally, heal, fighter.id), "passive");
+  }
+  for (const enemy of state.fighters) {
+    if (enemy.side === fighter.side || !isFighterAlive(enemy) || distance(fighter, enemy) > plan.radius) continue;
+    if (!targetsOtherAlly(state, enemy, fighter)) continue;
+    applyCombatStatusEffect(enemy, plan.drowsy, events, state, fighter.id);
+  }
+  events.push({ kind: "areaImpact", attackerId: fighter.id, ultimate: false, supportive: true,
+    area: { shape: "radial", x: fighter.x, y: fighter.y, radius: plan.radius } });
+}
+
+/** 「자장가」의 재생 — 매초 그 순간 잃은 체력에 비례해 돌린다. 많이 다친 아군일수록 많이 돌아온다. */
+function tickLullabyRegen(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  const regen = fighter.lullabyRegen;
+  if (!regen) return;
+  const elapsed = Math.min(dt, Math.max(0, regen.remaining));
+  regen.remaining -= elapsed;
+  regen.tickIn -= elapsed;
+  while (regen.tickIn <= EMERGENCY_RECOVERY.epsilon) {
+    const amount = applyHealing(state, fighter, (fighter.maxHp - fighter.hp) * regen.missingHpPercentPerSecond / 100, regen.sourceId);
+    pushHeal(events, fighter, amount, "ultimate");
+    regen.tickIn += 1;
+  }
+  if (regen.remaining <= EMERGENCY_RECOVERY.epsilon) fighter.lullabyRegen = null;
 }
 
 /** 수압이 지금 깎고 있는 공격 속도·이동 속도 비율(%). */
@@ -3087,6 +3259,11 @@ function breakthroughSkill(attacker: Fighter, useUltimate: boolean): Skill {
   if (attacker.ferocityFever && trait.effectId === "abyssalVortex") {
     skill = { ...skill, targeting: "nearbyEnemies", radius: trait.radius };
   }
+  // 잠투정 — 폭주 중 철퇴가 자기 주위를 휩쓸고 맞은 적을 짧게 밀어낸다.
+  if (attacker.ferocityFever && trait.effectId === "sleepTantrum") {
+    skill = { ...skill, targeting: "nearbyEnemies", radius: trait.radius,
+      statusEffects: [...(skill.statusEffects ?? []), { kind: "knockback", ...trait.knockback }] };
+  }
   return skill;
 }
 
@@ -3390,6 +3567,11 @@ function clearDefeatedStatuses(fighter: Fighter): void {
   fighter.taunted = null;
   fighter.vandalism = null;
   fighter.pressure = null;
+  fighter.drowsy = null;
+  fighter.sleep = null;
+  fighter.pendingWake = null;
+  fighter.groggy = null;
+  fighter.lullabyRegen = null;
   fighter.artChannel = null;
   fighter.elation = null;
   fighter.prickle = null;
@@ -3637,14 +3819,19 @@ export function currentAttackSpeed(fighter: Fighter, state?: SkirmishState): num
   // 심해 와류는 폭주한 본인의 손만 빨라진다. 물살을 타는 손과 같은 자리다.
   const vortexPercent = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "abyssalVortex"
     ? fighter.def.ferocityTrait.attackSpeedPercent : 0;
+  // 잠투정도 폭주한 본인의 손만 빨라진다.
+  const tantrumPercent = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "sleepTantrum"
+    ? fighter.def.ferocityTrait.attackSpeedPercent : 0;
+  // 잠이 덜 깬 몽롱함은 남이 건 감속이다.
+  const groggyPercent = fighter.groggy?.attackSpeedPercent ?? 0;
   // 룬 특성의 가속도 시간이 정해진 배율이라 순풍·광란과 같은 자리에서 곱한다.
   const traitHastePercent = fighter.traitHaste?.attackSpeedPercent ?? 0;
   return (fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed)
     * (1 + traitHastePercent / 100)
     * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + frenzyPercent / 100)
     * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100)
-    * (1 + vortexPercent / 100)
-    * (1 - chillPercent / 100) * (1 - pressurePercent / 100);
+    * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100)
+    * (1 - chillPercent / 100) * (1 - pressurePercent / 100) * (1 - groggyPercent / 100);
 }
 
 export function attackInterval(fighter: Fighter, state?: SkirmishState): number {
@@ -4199,7 +4386,7 @@ function hookFarthestEnemy(caster: Fighter, pull: { radius: number; distance: nu
 function cleanseAllDebuffs(fighter: Fighter): void {
   fighter.stunnedFor = 0; fighter.staggeredFor = 0; fighter.frozen = null; fighter.chill = null;
   fighter.bleed = null; fighter.poison = null; fighter.curse = null; fighter.overpaint = null;
-  fighter.vandalism = null; fighter.pressure = null; fighter.butcher = null; fighter.frenzy = null; fighter.taunted = null;
+  fighter.vandalism = null; fighter.pressure = null; fighter.drowsy = null; fighter.sleep = null; fighter.groggy = null; fighter.butcher = null; fighter.frenzy = null; fighter.taunted = null;
   fighter.observation = null;
 }
 
@@ -4775,6 +4962,8 @@ function applyDamage(target: Fighter, amount: number, events: SkirmishEvent[], s
   // 마지막 관문이라, 출혈·중독·뇌진탕까지 한 규칙으로 나뉜다.
   amount -= shareWithBulwark(target, amount, events, state);
   if (amount <= 0) return 0;
+  // 잠든 몸은 무엇에 맞든 깬다 — 막에 막힌 한 대도 맞은 것이다. 깨는 피해는 다음 행동 루프가 치른다.
+  if (target.sleep) wakeUp(target, true);
   // 폭주 돌파가 끝날 때 쓸 누적이다. 모든 피해 원천의 마지막 관문이라 출혈·중독처럼 공격이
   // 아닌 경로로 받은 몫도 빠지지 않고, 앞에 선 아군이 대신 받은 몫은 이미 떼어져 있다.
   if (target.ferocityFever) target.feverDamageTaken += amount;
@@ -6533,6 +6722,11 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     tickElationRegen(fighter, dt, state, events);
     tickPrickle(fighter, dt);
     tickPressure(fighter, dt);
+    tickSleep(fighter, dt);
+    resolvePendingWake(fighter, state, events);
+    if (!isFighterAlive(fighter)) continue;
+    tickWhiteNoise(fighter, dt, state, events);
+    tickLullabyRegen(fighter, dt, state, events);
     tickFortress(fighter, dt, state, events);
     tickAftershock(fighter, dt, rng, state, events);
     // 폭주 회복은 행동 불능과 무관한 전투 시간으로 돌아 탱커가 제어당해도 계약한 생존력을 유지한다.
@@ -6846,6 +7040,33 @@ export function fireUltimate(
     // 표시용 사건을 따로 쏘지 않는다 — 궁극기 컷인이 이미 켜지고, 도는 동안은 자기 프로필의
     // 버프 칩이 남은 시간을 든다. 여기서 한 번 더 터뜨리면 같은 순간이 두 번 읽힌다.
     attacker.attackCooldown = attackInterval(attacker, state);
+    return events;
+  }
+
+  if (teamUltimate.selfLullaby !== undefined) {
+    // 때리지 않는 궁극기다. 반경 안의 적을 누구를 노리는가로 갈라 재우거나 도발하고, 아군을 다독인다.
+    const plan = teamUltimate.selfLullaby;
+    const drowsy = attacker.def.passive.whiteNoise?.drowsy;
+    attacker.energy -= ultimateCost(state, attacker, true);
+    grantShield(state, attacker, attacker.id, Math.max(1, Math.round(attacker.def.stats.res * plan.shieldResistancePercent / 100)), events, 1.5);
+    for (const other of state.fighters) {
+      if (other.side === attacker.side || !isFighterAlive(other) || distance(attacker, other) > plan.radius) continue;
+      if (other.targetId === attacker.id) {
+        applyCombatStatusEffect(other, { kind: "taunt", seconds: plan.tauntSeconds }, events, state, attacker.id);
+        if (other.taunted?.sourceId === attacker.id) other.targetId = attacker.id;
+      } else if (drowsy && targetsOtherAlly(state, other, attacker)) {
+        putToSleep(other, drowsy, events, state, attacker.id);
+      }
+    }
+    for (const ally of state.fighters) {
+      if (ally.side !== attacker.side || !isFighterAlive(ally) || distance(attacker, ally) > plan.radius) continue;
+      ally.lullabyRegen = { remaining: plan.regen.seconds, total: plan.regen.seconds,
+        missingHpPercentPerSecond: plan.regen.missingHpPercentPerSecond, tickIn: 1, sourceId: attacker.id };
+    }
+    events.push({ kind: "areaImpact", attackerId: attacker.id, ultimate: true, status: "sleep",
+      area: { shape: "radial", x: attacker.x, y: attacker.y, radius: plan.radius } });
+    attacker.attackCooldown = attackInterval(attacker, state);
+    settle(state, events);
     return events;
   }
 

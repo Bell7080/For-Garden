@@ -268,6 +268,8 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   if (trait.effectId === "overclockBody") {
     return t("skill.ferocity.overclockBody", { percent: trait.attackSpeedPercent, move: trait.moveSpeedPercent });
   }
+  // 반경은 바닥에 그려지는 범위라 수로 적지 않는다. 수압이 무엇을 하는지는 태그가 말한다.
+  if (trait.effectId === "abyssalVortex") return t("skill.ferocity.abyssalVortex", { percent: trait.attackSpeedPercent });
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? ""
@@ -500,6 +502,10 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
     return t("skill.passive.undyingTalisman", { seconds: passive.durationSeconds, percent: passive.value, blast });
   }
   if (passive.kind === "prickly" && passive.prickle !== undefined) return t("skill.passive.prickly");
+  // 수압이 무엇이고 언제 기절시키는지는 태그가 말한다. 본문은 막이 얼마이고 어디까지 차는지만 적는다.
+  if (passive.kind === "salvageCatch" && passive.salvageCatch !== undefined) {
+    return t("skill.passive.salvageCatch", { percent: passive.salvageCatch.shieldMaxHpPercent, cap: passive.salvageCatch.capMaxHpPercent });
+  }
   if (passive.kind === "painfulElation" && passive.elation !== undefined) {
     return t("skill.passive.painfulElation");
   }
@@ -705,7 +711,9 @@ export function skillDescription(
       // 까칠을 더 쌓고 끝에 충격파가 터지는 궁극기는 그 두 절이 같은 문장 끝에 붙는다.
       const prickle = guard.prickleGain === undefined ? "" : t("skill.sentence.selfGuard.prickle", { count: guard.prickleGain });
       const shockwave = guard.shockwave === undefined ? "" : t("skill.sentence.selfGuard.shockwave", { seconds: guard.shockwave.stunSeconds });
-      return t("skill.sentence.selfGuard", { seconds: guard.tauntSeconds, shield, reset: reset + prickle + shockwave });
+      // 가장 먼 적 하나만 낚는 궁극기는 대상이 달라 문장 머리가 다르다(나머지 절은 같다).
+      const sentence = guard.pull.target === "farthest" ? "skill.sentence.selfGuard.farthest" : "skill.sentence.selfGuard";
+      return t(sentence, { seconds: guard.tauntSeconds, shield, reset: reset + prickle + shockwave });
     }
     // 때리지 않고 자리만 잡는 궁극기. 위력을 적지 않는 이유는 그 피해가 이어질 일반 공격의
     // 몫이기 때문이다 — 여기에 수치를 적으면 같은 한 방이 위아래에서 두 수로 보인다.
@@ -1079,6 +1087,8 @@ function statusEffectClause(effect: CombatStatusEffect): string | undefined {
   // 겹 상한·감소율·유지 시간·터지는 위력은 밴덜리즘 태그가 말한다(쓰는 개체가 하나뿐이라
   // 태그가 수치를 가진다). 둘째 개체가 이 규칙어를 갖게 되면 출혈처럼 본문으로 옮긴다.
   if (effect.kind === "vandalism") return t("skill.status.vandalism");
+  // 수압의 감속·상한·기절·터지는 피해는 태그가 말한다(쓰는 개체가 하나뿐이라 태그가 수치를 가진다).
+  if (effect.kind === "pressure") return t("skill.status.pressure");
   // 도발은 붙잡아 두는 시간이 곧 스킬마다 다른 값이라 본문이 초를 적는다.
   if (effect.kind === "taunt") return t("skill.status.taunt", { seconds: effect.seconds });
   // 유지 시간과 상한은 이 규칙어를 쓰는 스킬마다 같아도 태그가 수치를 갖지 않으므로(모르페·디모 공용) 본문이 적는다.

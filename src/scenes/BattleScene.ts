@@ -1675,6 +1675,16 @@ export class BattleScene extends Phaser.Scene {
       flashHit(this, view.creature, this.bodyTint(view));
       return undefined;
     }
+    if (event.kind === "pressureBurst") {
+      const view = this.views.get(event.fighterId);
+      if (!view) return undefined;
+      view.hpBar.setValue({ currentHp: view.fighter.hp, maxHp: view.fighter.maxHp, damage: event.amount, cause: "damage" });
+      this.profiles.find((profile) => profile.fighter.id === event.fighterId)?.prefab.setHealthTarget(view.fighter.hp, view.fighter.maxHp, "damage", event.amount);
+      // 세 겹이 다 차 눌려 터진 자리라 평타와 다른 무게로 읽혀야 한다 — 상태의 색을 쓴다.
+      this.popNumber(view.fighter, event.amount, "debuff", { debuff: "pressure" });
+      flashHit(this, view.creature, this.bodyTint(view));
+      return undefined;
+    }
     if (event.kind === "observationTick") {
       const view = this.views.get(event.fighterId);
       if (!view) return undefined;

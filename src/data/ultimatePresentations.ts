@@ -92,6 +92,8 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   // 약하게 두고, 모이는 순간만 확대로 알린다.
   morphe: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.96, zoomScale: 1.20, zoomMs: 110, cameraShakeIntensity: 0.010 },
   kento: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.96, zoomScale: 1.16, zoomMs: 112, cameraShakeIntensity: 0.008 },
+  // 먼 적을 낚아 끌어오는 한 순간이라 당기는 끝에서만 세게 흔든다.
+  mosana: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, zoomScale: 1.2, zoomMs: 112, cameraShakeIntensity: 0.011 },
   "toby": { ...DEFAULT_ULTIMATE_PRESENTATION, cutInHoldMs: 135, zoomScale: 1.2, zoomMs: 110, cameraShakeIntensity: 0.008 },
   "amo": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, zoomScale: 1.24, zoomMs: 115, cameraShakeIntensity: 0.009 },
   "ripa": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.92, artworkOrigin: { x: 650, y: 770 }, zoomScale: 1.16, cameraShakeIntensity: 0.007 },

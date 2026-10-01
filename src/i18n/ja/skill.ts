@@ -290,4 +290,8 @@ export const SKILL_JA = {
   "skill.sentence.selfGuard.prickle": " 自分の[[kento-prickle|とげとげ]]がさらに{count}重積まれる。",
   "skill.sentence.selfGuard.shockwave": " 挑発が終わる瞬間に衝撃波が炸裂し、周囲の敵を{seconds}秒間[[stun|気絶]]させる。",
   "skill.ferocity.caffeineBubble": "暴走に入った瞬間、広範囲の敵を{seconds}秒間[[taunt|挑発]]する。暴走中は[[kento-prickle|とげとげ]]が一度に{multiplier}倍積まれる。",
+  "skill.ferocity.abyssalVortex": "[[attack-speed|攻撃速度]]が{percent}%上がり、[[basic-attack|通常攻撃]]が自分の周囲のすべての敵に命中して、当たった敵すべてに[[pressure|水圧]]を積む。",
+  "skill.passive.salvageCatch": "[[pressure|水圧]]で敵を[[stun|気絶]]させるたびに最大HPの{percent}%分の[[shield|シールド]]を得る。今まとっているシールドが最大HPの{cap}%に達していれば、その線までしか満たさない。",
+  "skill.sentence.selfGuard.farthest": "いちばん遠くにいる敵ひとりを[[pull|引き寄せて]]{seconds}秒間[[taunt|挑発]]し、{shield}分の[[shield|シールド]]を得る。{reset}",
+  "skill.status.pressure": "[[pressure|水圧]]を1重積む",
 } as const;

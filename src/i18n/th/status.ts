@@ -36,6 +36,8 @@ export const STATUS_TH = {
   "status.submerged.detail": "ความเร็วเคลื่อนที่ -{percent}% · หายเมื่อออกจากน้ำตื้น",
   "status.vandalism": "ทำลายข้าวของ",
   "status.vandalism.detail": "{stacks} / {max} ชั้น · พลังโจมตีและพลังเวท -{percent}% · ระเบิดทันทีเมื่อเต็ม",
+  "status.pressure": "แรงดันน้ำ",
+  "status.pressure.detail": "{stacks} / {max} ชั้น · ความเร็วโจมตีและเคลื่อนที่ -{percent}% · เต็มแล้วระเบิดและมึนงง",
   "status.observation": "การจับตา",
   "status.observation.detail": "{stacks} / {max} ชั้น · เหลือ {time}",
   "status.butcher": "ชำแหละ",

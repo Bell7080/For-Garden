@@ -36,6 +36,8 @@ export const STATUS_ID = {
   "status.submerged.detail": "Kecepatan Gerak -{percent}% · Berakhir saat keluar dari Perairan Dangkal",
   "status.vandalism": "Vandalisme",
   "status.vandalism.detail": "{stacks} / {max} tumpuk · Serangan & Kekuatan Magis -{percent}% · Meledak saat penuh",
+  "status.pressure": "Tekanan Air",
+  "status.pressure.detail": "{stacks} / {max} tumpuk · Kecepatan serang & gerak -{percent}% · Penuh: meledak dan pingsan",
   "status.observation": "Pengintaian",
   "status.observation.detail": "{stacks} / {max} tumpuk · sisa {time}",
   "status.butcher": "Jagal",

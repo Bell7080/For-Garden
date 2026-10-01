@@ -42,6 +42,7 @@ import {
   STELLA_PORTRAIT_METADATA,
   TERISA_PORTRAIT_METADATA,
   KENTO_PORTRAIT_METADATA,
+  MOSANA_PORTRAIT_METADATA,
   TIA_PORTRAIT_METADATA,
   TORIKA_PORTRAIT_METADATA,
   TORIKA_SKIN_001_PORTRAIT_METADATA,
@@ -358,6 +359,7 @@ const REAL_PORTRAITS = [
   { name: "슈테", metadata: SHUTE_PORTRAIT_METADATA, head: { x: 671, y: 313 }, eyes: [{ x: 637, y: 315 }, { x: 714, y: 269 }] },
   { name: "테리사", metadata: TERISA_PORTRAIT_METADATA, head: { x: 484, y: 159 }, eyes: [{ x: 468, y: 172 }, { x: 536, y: 145 }] },
   { name: "켄토", metadata: KENTO_PORTRAIT_METADATA, head: { x: 604, y: 374 }, eyes: [{ x: 543, y: 350 }, { x: 630, y: 378 }] },
+  { name: "모사나", metadata: MOSANA_PORTRAIT_METADATA, head: { x: 401, y: 213 }, eyes: [{ x: 381, y: 218 }, { x: 423, y: 177 }] },
   // 레이티아 다섯 자매. 같은 몸이지만 묶음마다 캔버스와 여백이 달라 다섯을 모두 건다.
   { name: "비리아", metadata: VIRIA_PORTRAIT_METADATA, head: { x: 511, y: 405 }, eyes: [{ x: 472, y: 410 }, { x: 555, y: 366 }] },
   { name: "구티아", metadata: GUTTIA_PORTRAIT_METADATA, head: { x: 538, y: 385 }, eyes: [{ x: 511, y: 415 }, { x: 595, y: 372 }] },

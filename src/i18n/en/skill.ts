@@ -268,4 +268,8 @@ export const SKILL_EN = {
   "skill.sentence.selfGuard.prickle": " It also builds {count} more stacks of [[kento-prickle|Prickly]] on itself.",
   "skill.sentence.selfGuard.shockwave": " When the taunt ends, a shockwave bursts and [[stun|Stuns]] nearby enemies for {seconds}s.",
   "skill.ferocity.caffeineBubble": "On entering Frenzy, [[taunt|Taunts]] enemies across a wide area for {seconds}s. While in Frenzy, [[kento-prickle|Prickly]] builds {multiplier} times as fast.",
+  "skill.ferocity.abyssalVortex": "[[attack-speed|Attack Speed]] increases by {percent}%, and [[basic-attack|Basic Attacks]] hit every enemy around her, building [[pressure|Pressure]] on all of them.",
+  "skill.passive.salvageCatch": "Each time [[pressure|Pressure]] [[stun|Stuns]] an enemy, gains a [[shield|Shield]] equal to {percent}% of max HP. If the current shield already reaches {cap}% of max HP, it only fills up to that line.",
+  "skill.sentence.selfGuard.farthest": "[[pull|Pulls]] in the single farthest enemy and [[taunt|Taunts]] it for {seconds}s, then gains a [[shield|Shield]] worth {shield}.{reset}",
+  "skill.status.pressure": "builds a stack of [[pressure|Pressure]]",
 } as const;

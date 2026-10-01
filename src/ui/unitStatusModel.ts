@@ -8,7 +8,7 @@ import { t } from "../i18n";
  * 겹 수와 남은 시간을 여기서 한 번만 만들고 둘 다 이 목록만 그린다. Phaser를 들여오지 않아
  * 순서·색·문구를 테스트가 그대로 고정할 수 있다.
  */
-export type UnitStatusId = "packKuro" | "packShiro" | "packDimo" | "shell" | "scar" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism" | "weakpoint" | "shimmer" | "observation";
+export type UnitStatusId = "packKuro" | "packShiro" | "packDimo" | "shell" | "scar" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism" | "weakpoint" | "shimmer" | "observation" | "pressure";
 
 export interface UnitStatusView {
   /** 같은 상태를 제공자가 여럿 걸 수 있을 때도 HUD 객체를 덮어쓰지 않는 전투 내 키다. */
@@ -66,6 +66,8 @@ export const UNIT_STATUS_COLOR: Readonly<Record<UnitStatusId, number>> = {
   shimmer: 0x8fe3f0,
   butcher: 0xc07fa4,
   vandalism: 0xd45aa8,
+  // 수압은 깊은 물빛이다 — 둔화·여울과 같은 물 계열이되 가장 짙어, 눌려 터지는 상태라는 것이 갈린다.
+  pressure: 0x3a7fc4,
   // 관측은 지속 피해가 아니라 **모르페의 일반 공격이 켜는 표식**이라 바람 청록을 그대로 쓴다(피해 숫자의 색과 같은 계열).
   observation: 0x4fa3a8,
 };
@@ -234,6 +236,17 @@ export function unitStatusViews(fighter: Fighter, pack: readonly Fighter[] = [])
       stacks: observation.stacks,
       remaining: observation.remaining, total: Math.max(observation.total, observation.remaining),
       detail: t("status.observation.detail", { stacks: observation.stacks, max: observation.maxStacks, time: seconds(observation.remaining) }),
+    });
+  }
+  if (fighter.pressure) {
+    const pressure = fighter.pressure;
+    views.push({
+      id: "pressure", name: t("status.pressure"), color: UNIT_STATUS_COLOR.pressure,
+      stacks: pressure.stacks,
+      remaining: pressure.remaining, total: Math.max(pressure.total, pressure.remaining),
+      detail: t("status.pressure.detail", {
+        stacks: pressure.stacks, max: pressure.effect.maxStacks, percent: pressure.stacks * pressure.effect.speedPercentPerStack,
+      }),
     });
   }
   if (fighter.vandalism) {

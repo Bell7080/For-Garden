@@ -36,8 +36,9 @@ export function currentAbilityPower(combatant: Combatant): number {
 }
 
 /** 스킬이 고른 능력치 하나를 읽는다. 고르지 않았으면 피해 종류가 정한다. */
-function scalingStatValue(attacker: Combatant, stat: DamageInput["scalingStat"], damageType: DamageInput["damageType"]): number {
+function scalingStatValue(attacker: Combatant, stat: DamageInput["scalingStat"] | "res", damageType: DamageInput["damageType"]): number {
   if (stat === "def") return attacker.def.stats.def;
+  if (stat === "res") return attacker.def.stats.res;
   // 최대 체력에서 뽑는 개체는 공격력을 아예 쓰지 않는다. 현재 체력이 아니라 **최대** 체력이라
   // 아플 때 갑자기 약해지지 않는다 — 앞에 서서 맞는 개체의 피해가 맞을수록 줄면 성질이 거꾸로다.
   if (stat === "hp") return attacker.def.stats.hp;

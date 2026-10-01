@@ -992,6 +992,110 @@ export const RELICS: RelicDef[] = [
   },
 
   {
+    /**
+     * 모사나(모사사우루스) — **물 SR 탱커**이고 나이트 기어의 잔해 인양 잠수부다. 등에 산소통을 메고
+     * 관제 드론 하나를 테더로 달고 다니며, 꼬리 끝의 닻 모양 지느러미가 곧 인양 장비다.
+     *
+     * 다른 탱커가 넓게 도발하거나 버티는 동안 이 개체는 **먼 적 하나를 낚아 끌고 온다**(노틸러스·블리츠크랭크).
+     * 일반 공격이 「수압」을 쌓고, 세 겹이 차면 터져 기절시키며 **자기 방어력·저항력**에서 나온 피해를 준다 —
+     * 단단해질수록 세게 누르는 탱커다. 버티는 값은 「받는 피해 감소」가 아니라 **보호막**뿐이다: 궁극기 막과,
+     * 수압으로 적을 기절시킬 때마다 채워지는 「인양 성공」의 막. 폭주는 막을 따로 주지 않는다 — 광역 평타로
+     * 여럿을 묶는 것이 곧 막이 되므로, 묶은 만큼 버틴다.
+     */
+    id: "mosana",
+    squad: "gear",
+    name: "모사나",
+    specimenNumber: "227",
+    projectName: "DEEP SALVAGE",
+    excavationSite: "네덜란드 마스트리흐트 백악기 말 해성 석회암층",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "석회암 채석장 갱도 깊숙한 곳에서 거대한 턱과 함께 꼬리뼈가 끝부분에서 아래로 꺾인 채 이어진 골격이 나왔다. 꼬리 끝 척추에 무언가를 감아 끌어당긴 듯한 마모가 한쪽으로만 남아 있어, 먹이를 물속으로 끌고 내려갔다고 추정했다.",
+    observationProfile: {
+      originYear: "약 6,800만 년 전",
+      // E.C.는 모사나의 인간형 신체 나잇대이며, 원종 화석의 연대와 독립된 값이다.
+      restorationYear: "E.C. 17년",
+      lifeStage: "성체",
+      height: "1.62 m",
+      weight: "49 kg",
+    },
+    catalogSummary: "신장 1.62m, 체중 49kg의 인간형 체격에 닻 모양 지느러미가 달린 톱니 꼬리와 잠수 장비 일체, 탐사 드론 한 기를 갖춘 채 복원된 성체 모사사우루스 표본.",
+    unlockRecord: { status: "recorded", text: "복원 후 모사나는 대부분의 시간을 수조 바닥이나 인양 갱도에서 보낸다. 마스크를 벗는 일이 드물어 말은 짧게 끊어지고, 대답 대신 드론의 불빛을 두 번 깜빡여 보내기도 한다. 다른 대원이 \"다녀왔어?\"라고 물으면 고개만 끄덕이지만, 끌어 올린 잔해 목록은 한 줄도 빠짐없이 적어 관제실 문 앞에 붙여 둔다. 줄이 끊어진 채 돌아온 날에는 아무에게도 말하지 않고 다시 내려가며, 드론에게만 \"조금 더\"라고 말하는 것이 녹음에 남아 있다." },
+    squadNote: "나이트 기어의 심해 인양 담당. 물에 잠긴 구획으로 먼저 내려가 길을 열고, 대원이 들고 오지 못한 잔해와 장비를 줄 하나로 끌어 올린다.",
+    // 말을 아끼는 작업자라 스쿼드 호칭 중 가장 짧고 건조한 쪽을 쓴다.
+    researcherTitle: "당신",
+    rarity: "SR",
+    portraitAssetId: "mosana",
+    origin: "모사사우루스",
+    element: "water",
+    role: "tank",
+    // 꼬리가 닿는 거리에서 싸운다. 멀리 있는 적은 궁극기가 끌어온다.
+    reachTier: "melee",
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.16, efficiencyMultiplier: 1.08 },
+    /**
+     * **방어·저항이 곧 손이다** — 수압이 터지는 피해가 두 수치에서 나오므로 둘을 고르게 높이고, 평타
+     * (공격력)는 보통이다. 주문력을 쓰는 스킬이 없어 주문력은 낮게 둔다(쓰지 않는 능력치를 높이지 않는다).
+     * 무거운 장비를 멘 잠수부라 이동 속도는 느리다.
+     */
+    stats: {
+      hp: 1400,
+      def: 120,
+      res: 120,
+      atk: 80,
+      ap: 20,
+      attackSpeed: 76,
+      moveSpeed: 66,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    // 폭주 중 공속이 오르고 평타가 자기 주위를 쓸어, 맞은 적 모두에게 수압이 쌓인다. 보호막은 따로 주지 않는다.
+    ferocityTrait: { name: "심해 와류", effectId: "abyssalVortex", attackSpeedPercent: 40, radius: 200 },
+    passive: {
+      // kind가 salvageCatch인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
+      // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
+      id: "mosana-passive",
+      name: "인양 성공",
+      kind: "salvageCatch",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 한 번에 얻는 막(최대 체력 %)을 담아 둔다.
+      value: 6,
+      salvageCatch: { shieldMaxHpPercent: 6, capMaxHpPercent: 24 },
+      desc: "수압으로 적을 기절시킬 때마다 최대 체력의 6%만큼 보호막을 얻는다. 지금 두른 보호막이 최대 체력의 24%에 닿아 있으면 그 선까지만 채운다.",
+    },
+    basic: {
+      id: "mosana-basic",
+      name: "톱니 꼬리",
+      power: 100,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+      // 세 겹이 차면 터져 2초 기절 + 자기 방어력·저항력 140%씩의 물리 피해. 터진 적은 기절이 풀린 뒤 6초 동안 다시 쌓이지 않는다.
+      statusEffects: [{
+        kind: "pressure", speedPercentPerStack: 8, maxStacks: 3, seconds: 4,
+        stunSeconds: 2, defensePower: 140, resistancePower: 140, lockoutSeconds: 6,
+      }],
+    },
+    ultimate: {
+      id: "mosana-ult",
+      name: "심해 인양",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      cost: 150,
+      // 때리지 않는다. 드론이 짚은 가장 먼 적 하나를 꼬리 닻으로 낚아 앞까지 끌어오고, 그 적만 도발한 채 막을 두른다.
+      targeting: "self",
+      selfGuard: {
+        tauntSeconds: 4,
+        pull: { radius: 2000, distance: 150, target: "farthest" },
+        shieldMaxHpPercent: 30,
+      },
+    },
+  },
+
+  {
     id: "meron",
     squad: "rune",
     name: "메론",

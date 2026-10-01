@@ -267,4 +267,8 @@ export const SKILL_DE = {
   "skill.sentence.selfGuard.prickle": " Außerdem erhält sie {count} weitere Aufladungen [[kento-prickle|Stachelig]].",
   "skill.sentence.selfGuard.shockwave": " Wenn die Provokation endet, löst sich eine Schockwelle und [[stun|betäubt]] Gegner in der Nähe für {seconds} s.",
   "skill.ferocity.caffeineBubble": "Beim Eintritt in die Raserei werden Gegner in einem großen Bereich {seconds} s lang [[taunt|provoziert]]. In der Raserei baut sich [[kento-prickle|Stachelig]] {multiplier}-mal so schnell auf.",
+  "skill.ferocity.abyssalVortex": "[[attack-speed|Angriffstempo]] steigt um {percent} %, und [[basic-attack|Standardangriffe]] treffen alle Gegner um sie herum und bauen bei allen [[pressure|Wasserdruck]] auf.",
+  "skill.passive.salvageCatch": "Jedes Mal, wenn [[pressure|Wasserdruck]] einen Gegner [[stun|betäubt]], erhält sie einen [[shield|Schild]] in Höhe von {percent} % des max. Lebens. Erreicht der aktuelle Schild bereits {cap} % des max. Lebens, wird er nur bis zu dieser Linie aufgefüllt.",
+  "skill.sentence.selfGuard.farthest": "[[pull|Zieht]] den am weitesten entfernten Gegner heran und [[taunt|provoziert]] ihn {seconds} s lang; danach erhält sie einen [[shield|Schild]] von {shield}.{reset}",
+  "skill.status.pressure": "baut eine Aufladung [[pressure|Wasserdruck]] auf",
 } as const;

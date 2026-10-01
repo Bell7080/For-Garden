@@ -36,6 +36,8 @@ export const STATUS_PT_BR = {
   "status.submerged.detail": "Velocidade de movimento -{percent}% · Termina ao sair do Raso",
   "status.vandalism": "Vandalismo",
   "status.vandalism.detail": "{stacks} / {max} acúmulos · Ataque e Poder mágico -{percent}% · Explode ao encher",
+  "status.pressure": "Pressão",
+  "status.pressure.detail": "{stacks} / {max} acúmulos · Vel. de ataque e mov. -{percent}% · Ao encher explode e atordoa",
   "status.observation": "Avistamento",
   "status.observation.detail": "{stacks} / {max} acúmulos · restam {time}",
   "status.butcher": "Destrinche",

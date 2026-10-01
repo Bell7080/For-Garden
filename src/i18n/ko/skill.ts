@@ -314,5 +314,9 @@ export const SKILL_KO = {
   "skill.clause.prickleGain": "자신의 [[kento-prickle|까칠]]이 {count}겹 쌓인다",
   "skill.sentence.selfGuard.prickle": " 자신의 [[kento-prickle|까칠]]이 {count}겹 더 쌓인다.",
   "skill.sentence.selfGuard.shockwave": " 도발이 끝나는 순간 충격파가 터져 주위의 적을 {seconds}초 동안 [[stun|기절]]시킨다.",
+  "skill.ferocity.abyssalVortex": "[[attack-speed|공격 속도]]가 {percent}% 증가하고, [[basic-attack|기본 공격]]이 자신의 주위 모든 적에게 적중해 맞은 적 모두에게 [[pressure|수압]]을 쌓는다.",
+  "skill.passive.salvageCatch": "[[pressure|수압]]으로 적을 [[stun|기절]]시킬 때마다 최대 체력의 {percent}%만큼 [[shield|보호막]]을 얻는다. 지금 두른 보호막이 최대 체력의 {cap}%에 닿아 있으면 그 선까지만 채운다.",
+  "skill.sentence.selfGuard.farthest": "가장 멀리 있는 적 하나를 [[pull|끌어당겨]] {seconds}초 동안 [[taunt|도발]]하고, {shield}만큼 [[shield|보호막]]을 얻는다.{reset}",
+  "skill.status.pressure": "[[pressure|수압]]을 한 겹 쌓는다",
   "skill.ferocity.caffeineBubble": "폭주에 들어가는 순간 넓은 범위의 적을 {seconds}초 동안 [[taunt|도발]]한다. 폭주 중에는 [[kento-prickle|까칠]]이 한 번에 {multiplier}배로 쌓인다.",
 } as const;

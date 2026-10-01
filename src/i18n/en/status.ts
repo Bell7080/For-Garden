@@ -36,6 +36,8 @@ export const STATUS_EN = {
   "status.submerged.detail": "Move Speed -{percent}% · Ends on leaving the Shallows",
   "status.vandalism": "Vandalism",
   "status.vandalism.detail": "{stacks} / {max} stacks · Attack & Ability Power -{percent}% · Bursts on the spot when full",
+  "status.pressure": "Pressure",
+  "status.pressure.detail": "{stacks} / {max} stacks · Attack & Move Speed -{percent}% · Bursts into a stun when full",
   "status.observation": "Spotting",
   "status.observation.detail": "{stacks} / {max} stacks · {time} left",
   "status.butcher": "Butcher",

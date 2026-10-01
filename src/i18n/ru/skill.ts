@@ -267,4 +267,8 @@ export const SKILL_RU = {
   "skill.sentence.selfGuard.prickle": " Также накапливает себе ещё {count} зарядов [[kento-prickle|Колючести]].",
   "skill.sentence.selfGuard.shockwave": " Когда провокация заканчивается, происходит ударная волна, которая [[stun|оглушает]] врагов рядом на {seconds} с.",
   "skill.ferocity.caffeineBubble": "В момент входа в Неистовство [[taunt|провоцирует]] врагов на большой площади на {seconds} с. Во время Неистовства [[kento-prickle|Колючесть]] накапливается в {multiplier} раза быстрее.",
+  "skill.ferocity.abyssalVortex": "[[attack-speed|Скорость атаки]] растёт на {percent}%, а [[basic-attack|обычные атаки]] поражают всех врагов вокруг и накапливают [[pressure|Давление]] на каждом из них.",
+  "skill.passive.salvageCatch": "Каждый раз, когда [[pressure|Давление]] [[stun|оглушает]] врага, получает [[shield|щит]], равный {percent}% макс. ОЗ. Если текущий щит уже достиг {cap}% макс. ОЗ, он пополняется только до этой отметки.",
+  "skill.sentence.selfGuard.farthest": "[[pull|Притягивает]] самого дальнего врага и [[taunt|провоцирует]] его на {seconds} с, затем получает [[shield|щит]] в {shield}.{reset}",
+  "skill.status.pressure": "накапливает заряд [[pressure|Давления]]",
 } as const;

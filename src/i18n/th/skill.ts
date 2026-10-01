@@ -267,4 +267,8 @@ export const SKILL_TH = {
   "skill.sentence.selfGuard.prickle": " และสะสม [[kento-prickle|หนาม]] เพิ่มให้ตัวเองอีก {count} ชั้น",
   "skill.sentence.selfGuard.shockwave": " เมื่อการยั่วยุสิ้นสุด คลื่นกระแทกจะระเบิดและทำให้ศัตรูรอบตัว[[stun|มึนงง]] {seconds} วินาที",
   "skill.ferocity.caffeineBubble": "ในวินาทีที่เข้าสู่โหมดคลั่ง จะ[[taunt|ยั่วยุ]]ศัตรูในวงกว้างเป็นเวลา {seconds} วินาที ระหว่างคลั่ง [[kento-prickle|หนาม]] จะสะสมเร็วขึ้น {multiplier} เท่า",
+  "skill.ferocity.abyssalVortex": "[[attack-speed|ความเร็วโจมตี]]เพิ่มขึ้น {percent}% และ[[basic-attack|การโจมตีปกติ]]จะโดนศัตรูทุกตัวรอบตัว พร้อมสะสม[[pressure|แรงดันน้ำ]]ให้ศัตรูที่โดนทั้งหมด",
+  "skill.passive.salvageCatch": "ทุกครั้งที่[[pressure|แรงดันน้ำ]]ทำให้ศัตรู[[stun|มึนงง]] จะได้รับ[[shield|โล่]]เท่ากับ {percent}% ของ HP สูงสุด หากโล่ที่มีอยู่ถึง {cap}% ของ HP สูงสุดแล้ว จะเติมได้เพียงถึงเส้นนั้น",
+  "skill.sentence.selfGuard.farthest": "[[pull|ดึง]]ศัตรูที่อยู่ไกลที่สุดหนึ่งตัวเข้ามาและ[[taunt|ยั่วยุ]]เป็นเวลา {seconds} วินาที แล้วได้รับ[[shield|โล่]] {shield}{reset}",
+  "skill.status.pressure": "สะสม[[pressure|แรงดันน้ำ]]หนึ่งชั้น",
 } as const;

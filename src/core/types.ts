@@ -43,7 +43,7 @@ export type RelicRarity = "R" | "SR" | "SSR";
  */
 export type RaitiaAssetId = "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind";
 
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
@@ -379,8 +379,13 @@ export type SelfBulwark = {
 export type SelfGuard = {
   /** 끌어당긴 적이 자신만 표적으로 삼는 시간(초). */
   tauntSeconds: number;
-  /** 시전 순간 주위 적을 끌어당긴다. `distance`는 끌어당긴 뒤 시전자와의 거리다. */
-  pull: { radius: number; distance: number };
+  /**
+   * 시전 순간 주위 적을 끌어당긴다. `distance`는 끌어당긴 뒤 시전자와의 거리다.
+   *
+   * `target: "farthest"`면 반경 안의 **가장 먼 적 하나**만 끌어온다(모사나의 인양 — 숨은 적은 고르지 않되
+   * 숨지 않은 적이 없으면 숨은 적도 고른다). 도발도 그 하나에게만 걸린다.
+   */
+  pull: { radius: number; distance: number; target?: "farthest" };
   /**
    * 시전 **순간** 얻는 보호막(최대 체력 비율 %).
    *
@@ -845,6 +850,35 @@ export type CombatStatusEffect =
     }
   | {
       /**
+       * 수압(모사나). 겹마다 그 적의 공격 속도·이동 속도를 깎고, **상한에 닿는 순간 터져** 기절시키며
+       * 건 쪽의 **방어력·저항력**에 비례한 물리 피해를 준다. 터진 뒤 겹은 사라진다.
+       *
+       * 둔화(가만히 쌓이고 남이 터뜨린다)와 손질(시간 없이 쌓여 터진다) 사이의 축이다 — 시간이 흐르면
+       * 겹이 통째로 사라지고, 터지는 것은 스스로다. 피해가 건 쪽의 몸(방어·저항)에서 나오는 이유는 이것이
+       * 탱커의 손이기 때문이다: 단단해질수록 세게 누른다.
+       *
+       * **터진 적은 기절이 풀린 뒤 `lockoutSeconds` 동안 새 겹이 쌓이지 않는다.** 폭주의 광역 평타가
+       * 주위 적 전원을 쉬지 않고 묶지 못하게 하는 장치이고, 같은 적이 「인양 성공」의 막을 내는 빈도도
+       * 함께 묶는다.
+       */
+      kind: "pressure";
+      /** 겹 하나가 깎는 공격 속도·이동 속도 비율(%). */
+      speedPercentPerStack: number;
+      /** 이 겹에 닿으면 터진다. */
+      maxStacks: number;
+      /** 겹이 남는 시간(초). 새 겹이 쌓일 때마다 처음부터 다시 흐른다. */
+      seconds: number;
+      /** 터질 때 거는 기절(초). 강인함을 그대로 지난다. */
+      stunSeconds: number;
+      /** 터질 때 건 쪽 방어력에서 뽑는 물리 피해 비율(%). */
+      defensePower: number;
+      /** 터질 때 건 쪽 저항력에서 함께 뽑는 비율(%). 둘을 더한 값이 한 번의 피해다. */
+      resistancePower: number;
+      /** 기절이 풀린 뒤 새 겹이 쌓이지 않는 시간(초). */
+      lockoutSeconds: number;
+    }
+  | {
+      /**
        * 관측(디모). **피해가 없는 표식**이다 — 겹 자체는 아무것도 깎지 않고, 모르페의 일반 공격이
        * 적중할 때 그 겹만큼의 틱으로 켜진다(`BasicAttack.observationVolley`).
        *
@@ -1046,6 +1080,8 @@ export type PassiveKind =
   | "painfulElation"
   /** 켄토 전용: 맞을수록 「까칠」이 쌓이고, 때린 적이 겹 수만큼 마법 피해를 되받는다. */
   | "prickly"
+  /** 모사나 전용: 「수압」으로 적을 기절시킬 때마다 보호막을 얻는다(상한까지 채운다). */
+  | "salvageCatch"
   /** 실제 HP 피해를 받고 살아남을 때 겹(아모의 조가비 · 수쿠스이노의 흉터)을 쌓아 자신과 최저 HP 비율 아군을 보호한다. */
   | "shellGuard"
   /** 렉시아 전용: 공격 속도·공격력·치명타 확률·치명타 피해를 함께 강화한다. */
@@ -1167,6 +1203,8 @@ export type FerocityEffectId =
   | "battleHeat"
   /** 켄토 전용: 폭주 진입 시 넓게 도발하고, 폭주 중 「까칠」이 두 배로 쌓인다. */
   | "caffeineBubble"
+  /** 모사나 전용: 폭주 중 공격 속도가 오르고 기본 공격이 자기 주위의 모든 적을 친다. */
+  | "abyssalVortex"
   /** 데이 전용: 폭주 중 때리기를 멈추고 훨씬 빠르게 달리며 주위에 매초 낙서를 흩뿌린다. */
   | "graffitiRun"
   /** 매디 전용: 폭주 진입 시 모든 상태이상·디버프를 지우고 보호막을 얻으며, 폭주 중 방어력·저항력이 함께 오른다. */
@@ -1320,6 +1358,18 @@ export type FerocityTrait = {
       tauntRadius: number;
       /** 폭주 중 까칠이 한 번에 쌓이는 겹 수의 배율이다. */
       prickleGainMultiplier: number;
+    }
+  | {
+      /**
+       * 심해 와류(모사나). 폭주 중 공격 속도가 오르고, **기본 공격이 자기 주위의 모든 적을 친다** — 그래서
+       * 기본 공격이 거는 「수압」도 맞은 적 모두에게 쌓인다. 버티는 값(보호막)을 따로 두지 않는다: 여럿을
+       * 묶는 것이 곧 「인양 성공」의 막이 되므로, 폭주는 묶은 만큼 버티는 시간이다.
+       */
+      effectId: "abyssalVortex";
+      /** 폭주 중 공격 속도에 더하는 비율(%). */
+      attackSpeedPercent: number;
+      /** 폭주 중 기본 공격이 닿는 자기 주위 반경. */
+      radius: number;
     }
   | {
       /**
@@ -1764,6 +1814,18 @@ export interface Passive {
    * 출혈·중독 같은 지속 피해는 때린 손이 없어 겹도 반격도 일으키지 않는다. 반격은 자기 주문력에서
    * 나오므로 이 개체는 평타(공격력)가 약하고 맞는 자리에 서 있는 것이 곧 화력이다.
    */
+  /**
+   * 「인양 성공」 계약(모사나). 이 개체가 건 「수압」이 터져 **기절이 실제로 들어간 순간** 보호막을 얻는다.
+   *
+   * 막은 한 번에 `shieldMaxHpPercent`씩 오르되, 지금 두른 막이 `capMaxHpPercent`에 닿아 있으면 그 선까지만
+   * 채운다 — 궁극기 막이 두꺼운 동안에는 아무것도 더하지 않는다. 강인함이 기절을 통째로 막으면 막도 없다.
+   */
+  salvageCatch?: {
+    /** 한 번에 얻는 막(최대 체력 비율 %). */
+    shieldMaxHpPercent: number;
+    /** 이 패시브가 채우는 상한(최대 체력 비율 %). 다른 막까지 합친 잔량으로 잰다. */
+    capMaxHpPercent: number;
+  };
   prickle?: {
     /** 겹 상한. */
     maxStacks: number;

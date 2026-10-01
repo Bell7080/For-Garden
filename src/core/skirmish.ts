@@ -467,6 +467,13 @@ export interface Fighter extends Combatant {
    */
   chill: { stacks: number; speedPercentPerStack: number; maxStacks: number } | null;
   /**
+   * 「수압」 겹(모사나). 공격 속도·이동 속도를 겹마다 깎고, 상한에 닿는 순간 터진다. 터지는 피해·기절은
+   * 건 쪽(`sourceId`)의 몸에서 나오므로 계약을 통째로 들고 있다. 시간이 다하면 한꺼번에 사라진다.
+   */
+  pressure: { stacks: number; remaining: number; total: number; sourceId: string; effect: Extract<CombatStatusEffect, { kind: "pressure" }> } | null;
+  /** 수압이 터진 뒤 새 겹이 쌓이지 않는 남은 시간(초). 기절 시간 + 계약의 `lockoutSeconds`로 켜진다. */
+  pressureLockFor: number;
+  /**
    * 지금 걸린 빙결. 기절과 같은 완전 행동불가이며, `stunnedFor`와 별도 슬롯을 쓴다.
    *
    * 슬롯을 나누는 이유는 **풀리는 순간의 고정 피해**(`maxHpPercentOnExpire`) 때문이다 —
@@ -719,6 +726,8 @@ export type SkirmishEvent =
   | { kind: "butcherBurst"; attackerId: string; fighterId: string; amount: number }
   /** 밴덜리즘이 상한에 닿아 낙서가 통째로 터진 순간. 칠한 쪽의 주문력에서 나온 마법 피해다. */
   | { kind: "vandalismBurst"; attackerId: string; fighterId: string; amount: number }
+  /** 수압이 상한에 닿아 터진 순간. 건 쪽의 방어력·저항력에서 나온 물리 피해이고 기절이 함께 들어간다. */
+  | { kind: "pressureBurst"; attackerId: string; fighterId: string; amount: number }
   /**
    * 관측이 발동해 박힌 틱 하나. 한 번의 발동이 겹 수만큼 이 사건을 **같은 프레임에** 싣는다 —
    * 시간에 흩는 일은 코어가 아니라 화면이 한다(`index / count × windowSeconds`). 코어가 시간에
@@ -1094,6 +1103,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     taggedIds: [],
     graffitiAuraTickIn: 1,
     chill: null,
+    pressure: null,
+    pressureLockFor: 0,
     frozen: null,
     observation: null,
     shieldFade: null,
@@ -1541,6 +1552,7 @@ export function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEf
   }
   if (effect.kind === "curse") refreshCurse(fighter, { ...effect, seconds: effect.seconds * potency });
   if (effect.kind === "chill") refreshChill(fighter, effect);
+  if (effect.kind === "pressure" && sourceId) applyPressure(fighter, { ...effect, seconds: effect.seconds * potency }, events, state, sourceId);
   if (effect.kind === "frenzy") applyFrenzy(fighter, { ...effect, seconds: effect.seconds * potency }, sourceId);
   // 도발은 방향만 돌리는 상태라 기절 저항도 정화도 거치지 않는다. 건 사람이 없으면 바라볼
   // 상대도 없으므로 아무 일도 일어나지 않는다.
@@ -1776,6 +1788,97 @@ function applyVandalism(
     clearDefeatedStatuses(target);
     events.push({ kind: "death", fighterId: target.id, sourceId: attacker.id });
   }
+}
+
+/**
+ * 수압을 한 겹 쌓고, 상한에 닿으면 **그 자리에서 터뜨린다.**
+ *
+ * 터진 적은 기절이 풀린 뒤 `lockoutSeconds` 동안 새 겹이 쌓이지 않는다 — 그 동안 들어오는 겹은 조용히
+ * 버린다. 시간이 흐르면 겹이 통째로 사라지는 것은 덧칠·저주와 같고, 상한에서 스스로 터지는 것은 손질과 같다.
+ */
+function applyPressure(
+  target: Fighter,
+  effect: Extract<CombatStatusEffect, { kind: "pressure" }>,
+  events: SkirmishEvent[],
+  state: SkirmishState,
+  sourceId: string,
+): void {
+  if (!isFighterAlive(target) || target.pressureLockFor > 0) return;
+  const stacks = Math.min(effect.maxStacks, (target.pressure?.stacks ?? 0) + 1);
+  target.pressure = { stacks, remaining: effect.seconds, total: effect.seconds, sourceId, effect };
+  if (stacks < effect.maxStacks) return;
+  target.pressure = null;
+  burstPressure(target, effect, events, state, sourceId);
+}
+
+/**
+ * 수압이 터진다 — 건 쪽의 방어력·저항력에서 뽑은 물리 피해 한 번과 기절.
+ *
+ * 피해가 먼저 들어가고, 살아남은 적에게만 기절을 건다. 기절이 실제로 들어갔다면(강인함이 통째로 막지
+ * 않았다면) 건 쪽의 「인양 성공」이 막을 채운다. 잠금은 기절이 끝나는 시각부터 센다 — 강인함이 기절을
+ * 줄이면 잠금도 그만큼 앞당겨진다.
+ */
+function burstPressure(
+  target: Fighter,
+  effect: Extract<CombatStatusEffect, { kind: "pressure" }>,
+  events: SkirmishEvent[],
+  state: SkirmishState,
+  sourceId: string,
+): void {
+  const attacker = findFighter(state, sourceId);
+  if (attacker) {
+    const raw = Math.max(1, Math.round(computeDamage(
+      { ...attacker, def: offensiveDefinition(attacker) },
+      defensiveDefinition(target, state),
+      { power: effect.defensePower, scalingStat: "def", secondaryScaling: { stat: "res", power: effect.resistancePower },
+        damageType: "physical", isCritical: false, kind: "basic" },
+    )));
+    const resolution = resolveReceivedDamage(target, raw);
+    const hpBefore = target.hp;
+    applyDamage(target, resolution.applied, events, state);
+    addContribution(state.contributions, attacker.id, "attack", hpBefore - target.hp, "attackPower");
+    events.push({ kind: "pressureBurst", attackerId: attacker.id, fighterId: target.id, amount: resolution.applied });
+    if (!isFighterAlive(target)) {
+      clearDefeatedStatuses(target);
+      events.push({ kind: "death", fighterId: target.id, sourceId: attacker.id });
+      return;
+    }
+  }
+  // 막아 내는 비율은 기절을 거는 순간의 값이다 — 걸고 나면 강인함이 한 칸 오른다.
+  const landed = controlResistPercent(target) < 100;
+  applyCombatStatusEffect(target, { kind: "stun", seconds: effect.stunSeconds }, events, state, sourceId);
+  target.pressureLockFor = target.stunnedFor + effect.lockoutSeconds;
+  if (landed && attacker) catchSalvage(attacker, state, events);
+}
+
+/**
+ * 「인양 성공」 — 수압의 기절이 들어간 순간 건 쪽이 막을 얻는다.
+ *
+ * 지금 두른 막(다른 데서 얻은 몫까지)이 상한에 닿아 있으면 그 선까지만 채운다. 그래서 궁극기 막이 두꺼운
+ * 동안에는 아무것도 더하지 않고, 막이 깎일수록 다시 차오른다.
+ */
+function catchSalvage(fighter: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const plan = fighter.def.passive.salvageCatch;
+  if (fighter.def.passive.kind !== "salvageCatch" || plan === undefined || !isFighterAlive(fighter)) return;
+  const basis = fighter.shieldHpBasis ?? fighter.maxHp;
+  const room = basis * plan.capMaxHpPercent / 100 - fighter.shield.amount;
+  const amount = Math.min(basis * plan.shieldMaxHpPercent / 100, room);
+  if (amount < 1) return;
+  grantShield(state, fighter, fighter.id, Math.round(amount), events);
+}
+
+/** 수압 겹의 수명과 터진 뒤의 잠금. 시간이 다하면 겹은 한꺼번에 사라진다. */
+function tickPressure(fighter: Fighter, dt: number): void {
+  if (fighter.pressureLockFor > 0) fighter.pressureLockFor = Math.max(0, fighter.pressureLockFor - dt);
+  const pressure = fighter.pressure;
+  if (!pressure) return;
+  const remaining = pressure.remaining - dt;
+  fighter.pressure = remaining <= EMERGENCY_RECOVERY.epsilon ? null : { ...pressure, remaining };
+}
+
+/** 수압이 지금 깎고 있는 공격 속도·이동 속도 비율(%). */
+function pressureSlowPercent(fighter: Fighter): number {
+  return fighter.pressure ? fighter.pressure.stacks * fighter.pressure.effect.speedPercentPerStack : 0;
 }
 
 /** 밴덜리즘이 지금 깎고 있는 공격력·주문력 비율(0~1). 화면과 전투가 같은 값을 읽는다. */
@@ -2962,6 +3065,11 @@ function breakthroughSkill(attacker: Fighter, useUltimate: boolean): Skill {
   if (attacker.ferocityFever && ferocity?.kind === "cleavingBasics") {
     skill = { ...skill, targeting: "nearbyEnemies", radius: ferocity.radius };
   }
+  // 심해 와류 — 폭주 중 기본 공격이 자기 주위의 모든 적을 친다. 걸음이 거는 수압도 맞은 적 모두에게 쌓인다.
+  const trait = attacker.def.ferocityTrait;
+  if (attacker.ferocityFever && trait.effectId === "abyssalVortex") {
+    skill = { ...skill, targeting: "nearbyEnemies", radius: trait.radius };
+  }
   return skill;
 }
 
@@ -3264,6 +3372,7 @@ function clearDefeatedStatuses(fighter: Fighter): void {
   fighter.undyingPending = false;
   fighter.taunted = null;
   fighter.vandalism = null;
+  fighter.pressure = null;
   fighter.artChannel = null;
   fighter.elation = null;
   fighter.prickle = null;
@@ -3506,13 +3615,19 @@ export function currentAttackSpeed(fighter: Fighter, state?: SkirmishState): num
     ? fighter.def.ferocityTrait.attackSpeedPercent : 0;
   // 둔화는 남이 걸어 준 감속이라 다른 배율과 같은 자리에서 나눈다.
   const chillPercent = fighter.chill ? fighter.chill.stacks * fighter.chill.speedPercentPerStack : 0;
+  // 수압도 남이 건 감속이다. 둔화와 다른 슬롯이라 둘이 함께 걸리면 곱해진다.
+  const pressurePercent = pressureSlowPercent(fighter);
+  // 심해 와류는 폭주한 본인의 손만 빨라진다. 물살을 타는 손과 같은 자리다.
+  const vortexPercent = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "abyssalVortex"
+    ? fighter.def.ferocityTrait.attackSpeedPercent : 0;
   // 룬 특성의 가속도 시간이 정해진 배율이라 순풍·광란과 같은 자리에서 곱한다.
   const traitHastePercent = fighter.traitHaste?.attackSpeedPercent ?? 0;
   return (fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed)
     * (1 + traitHastePercent / 100)
     * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + frenzyPercent / 100)
     * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100)
-    * (1 - chillPercent / 100);
+    * (1 + vortexPercent / 100)
+    * (1 - chillPercent / 100) * (1 - pressurePercent / 100);
 }
 
 export function attackInterval(fighter: Fighter, state?: SkirmishState): number {
@@ -3702,7 +3817,7 @@ export function moveSpeed(fighter: Fighter, state?: SkirmishState): number {
   return fighter.def.stats.moveSpeed * SKIRMISH.moveRate
     * (1 + teamBonus / 100) * (1 + selfBonus / 100) * (1 + tailwindPercent / 100)
     * (1 + (fighter.traitHaste?.moveSpeedPercent ?? 0) / 100)
-    * (1 - chillPercent / 100) * (1 - submergedPercent / 100);
+    * (1 - chillPercent / 100) * (1 - pressureSlowPercent(fighter) / 100) * (1 - submergedPercent / 100);
 }
 
 /** 화면에 그릴 위치. 발 좌표에 돌진·피격 변위와 뛰어오른 높이를 얹은 값이다. */
@@ -4042,11 +4157,32 @@ function pullEnemiesToward(caster: Fighter, pull: { radius: number; distance: nu
   return pulled;
 }
 
+/**
+ * 반경 안의 **가장 먼 적 하나**를 시전자 앞으로 끌어온다(모사나의 「심해 인양」).
+ *
+ * 숨은 적은 고르지 않는다 — 다만 숨지 않은 적이 하나도 없으면 숨은 적이라도 고른다. 게이지를 다 쓴
+ * 궁극기가 아무도 낚지 못하고 막만 두르면, 그 개체를 고른 이유인 한 순간이 사라진다.
+ */
+function hookFarthestEnemy(caster: Fighter, pull: { radius: number; distance: number }, state: SkirmishState): Fighter[] {
+  const inReach = state.fighters.filter((other) => other.side !== caster.side && isFighterAlive(other) && distance(caster, other) <= pull.radius);
+  const visible = inReach.filter((other) => other.stealthFor <= 0);
+  const pool = visible.length > 0 ? visible : inReach;
+  if (pool.length === 0) return [];
+  const farthest = pool.reduce((best, other) => distance(caster, other) > distance(caster, best) ? other : best);
+  const dx = farthest.x - caster.x; const dy = farthest.y - caster.y; const gap = Math.hypot(dx, dy) || 1;
+  farthest.x = Math.min(state.arena.right, Math.max(state.arena.left, caster.x + dx / gap * pull.distance));
+  farthest.y = Math.min(state.arena.bottom, Math.max(state.arena.top, caster.y + dy / gap * pull.distance));
+  // 끌려온 순간 이전 추적을 끊는다 — 쫓던 자리로 되돌아 걸어가지 않게.
+  farthest.engaged = false;
+  farthest.knockback = null;
+  return [farthest];
+}
+
 /** 폭주 진입 정화들이 공유하는 상태이상·디버프 정리 경로다. 이로운 조가비·희열·순풍은 건드리지 않는다. */
 function cleanseAllDebuffs(fighter: Fighter): void {
   fighter.stunnedFor = 0; fighter.staggeredFor = 0; fighter.frozen = null; fighter.chill = null;
   fighter.bleed = null; fighter.poison = null; fighter.curse = null; fighter.overpaint = null;
-  fighter.vandalism = null; fighter.butcher = null; fighter.frenzy = null; fighter.taunted = null;
+  fighter.vandalism = null; fighter.pressure = null; fighter.butcher = null; fighter.frenzy = null; fighter.taunted = null;
   fighter.observation = null;
 }
 
@@ -6379,6 +6515,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     tickElation(fighter, dt);
     tickElationRegen(fighter, dt, state, events);
     tickPrickle(fighter, dt);
+    tickPressure(fighter, dt);
     tickFortress(fighter, dt, state, events);
     tickAftershock(fighter, dt, rng, state, events);
     // 폭주 회복은 행동 불능과 무관한 전투 시간으로 돌아 탱커가 제어당해도 계약한 생존력을 유지한다.
@@ -6701,7 +6838,8 @@ export function fireUltimate(
     attacker.energy -= ultimateCost(state, attacker, true);
     // 불러 놓고 그 자리에서 덮는다 — 도발과 보호막이 한 조작에 든다.
     grantShield(state, attacker, attacker.id, Math.max(1, Math.round(attacker.maxHp * plan.shieldMaxHpPercent / 100)), events, 1.5);
-    for (const other of pullEnemiesToward(attacker, plan.pull, state)) {
+    const pulled = plan.pull.target === "farthest" ? hookFarthestEnemy(attacker, plan.pull, state) : pullEnemiesToward(attacker, plan.pull, state);
+    for (const other of pulled) {
       // 데이의 짧은 도발과 **같은 경로**를 지난다. 여기서 슬롯에 직접 넣으면 원정 증강의
       // 지속시간 배율이 이 도발에만 들지 않고, 더 긴 도발을 지키는 규칙도 비껴간다.
       applyCombatStatusEffect(other, { kind: "taunt", seconds: plan.tauntSeconds }, events, state, attacker.id);

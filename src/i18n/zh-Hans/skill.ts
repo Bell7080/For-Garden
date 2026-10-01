@@ -267,4 +267,8 @@ export const SKILL_ZH_HANS = {
   "skill.sentence.selfGuard.prickle": " 自身再叠加{count}层[[kento-prickle|带刺]]。",
   "skill.sentence.selfGuard.shockwave": " 嘲讽结束的瞬间爆发冲击波，使周围敌人[[stun|眩晕]]{seconds}秒。",
   "skill.ferocity.caffeineBubble": "进入暴走的瞬间，对大范围内的敌人[[taunt|嘲讽]]{seconds}秒。暴走期间，[[kento-prickle|带刺]]一次叠加{multiplier}倍的层数。",
+  "skill.ferocity.abyssalVortex": "[[attack-speed|攻击速度]]提升{percent}%，[[basic-attack|普通攻击]]命中自身周围的所有敌人，并对所有被命中的敌人叠加[[pressure|水压]]。",
+  "skill.passive.salvageCatch": "每当[[pressure|水压]]使敌人[[stun|眩晕]]时，获得相当于最大生命{percent}%的[[shield|护盾]]。若当前护盾已达到最大生命的{cap}%，则只补充到该线为止。",
+  "skill.sentence.selfGuard.farthest": "[[pull|拉近]]距离最远的一名敌人并[[taunt|嘲讽]]{seconds}秒，获得{shield}的[[shield|护盾]]。{reset}",
+  "skill.status.pressure": "叠加一层[[pressure|水压]]",
 } as const;

@@ -36,6 +36,8 @@ export const STATUS_VI = {
   "status.submerged.detail": "Tốc chạy -{percent}% · Hết khi rời Vùng nước nông",
   "status.vandalism": "Phá hoại",
   "status.vandalism.detail": "{stacks} / {max} tầng · Công & Phép -{percent}% · Nổ ngay khi đầy",
+  "status.pressure": "Áp suất nước",
+  "status.pressure.detail": "{stacks} / {max} tầng · Tốc đánh & chạy -{percent}% · Đầy thì nổ và gây choáng",
   "status.observation": "Quan trắc",
   "status.observation.detail": "{stacks} / {max} tầng · còn {time}",
   "status.butcher": "Xẻ thịt",

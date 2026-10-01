@@ -26,6 +26,7 @@ export const RELIC_FIRST_MEETINGS: Readonly<Record<string, string>> = {
   shute: "그거 아니라니까? 내 오더 들어.",
   morphe: "다 띄워. 난 여기서 볼게.",
   kento: "5분만 더… 아, 연구원이야? 그럼 일어나야지.",
+  mosana: "…수심 확인. 당신, 줄 잡아. 놓치면 안 건져 줘.",
   dian: "대장님은 내가 지킬게! …아, 쿠로! 시로!",
 };
 

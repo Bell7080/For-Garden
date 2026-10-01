@@ -44,6 +44,8 @@ export const STATUS_KO = {
   "status.observation": "관측",
   "status.observation.detail": "{stacks} / {max}겹 · {time} 남음",
   "status.vandalism": "밴덜리즘",
+  "status.pressure": "수압",
+  "status.pressure.detail": "{stacks} / {max}겹 · 공격·이동 속도 -{percent}% · 다 차면 터져 기절",
   "status.vandalism.detail": "{stacks} / {max}겹 · 공격력·주문력 -{percent}% · 다 차면 그 자리에서 터진다",
   "status.butcher": "손질",
   "status.butcher.detail": "{stacks} / {max}겹 · 다 차면 그 자리에서 터진다",

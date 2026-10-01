@@ -720,3 +720,29 @@ export const KENTO_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageHeight: 1254,
   content: { left: 51, top: 76, right: 1209, bottom: 1214 },
 };
+
+/**
+ * 24번 모사나(모사사우루스) 전신.
+ *
+ * ZIP 안 WebP의 alpha > 16 경계를 실측했다(93,52–1018,1410). 눈1(381,218)·눈2(423,177)·머리1(401,213)·
+ * 중심1(440,298)이 모두 그 상자 안에 있다. **발 관절(235,1530 · 596,1535)은 alpha 아래 경계(1410)
+ * 밖에 박혀 있다** — 그래서 바닥선은 관절이 아니라 alpha 경계로 세운다(로비 규칙과 같다).
+ *
+ * 몸 뒤로 크게 휘어 나온 톱니 꼬리가 캔버스 오른쪽을 거의 채우지만 허리 아래에서 벌어져 머리 위
+ * 여백을 키우지 않는다. 로비 배율은 눈에서 alpha 아래 경계까지를 관찰 프로필의 키로 맞춘 값이다.
+ */
+export const MOSANA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086,
+  imageHeight: 1448,
+  content: { left: 93, top: 52, right: 1018, bottom: 1410 },
+  joints: { center: [440, 298], head: [401, 213], eyes: [[381, 218], [423, 177]], feet: [[235, 1530], [596, 1535]] },
+  /** 로비 세로 비율: 메론 기준. 1.62 m — 눈(197.5)에서 alpha 아래 경계까지를 그 키로 맞춘다. */
+  lobbyZoom: 0.951,
+};
+
+/** 모사나 SD: 중심1·머리1·발1·발2를 프로젝트에서 읽었으며 눈 관절은 없다. alpha 경계는 (50,21)–(1203,1232)다. */
+export const MOSANA_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 50, top: 21, right: 1203, bottom: 1232 },
+};

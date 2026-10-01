@@ -267,4 +267,8 @@ export const SKILL_ZH_HANT = {
   "skill.sentence.selfGuard.prickle": " 自身再疊加{count}層[[kento-prickle|帶刺]]。",
   "skill.sentence.selfGuard.shockwave": " 嘲諷結束的瞬間爆發衝擊波，使周圍敵人[[stun|眩暈]]{seconds}秒。",
   "skill.ferocity.caffeineBubble": "進入暴走的瞬間，對大範圍內的敵人[[taunt|嘲諷]]{seconds}秒。暴走期間，[[kento-prickle|帶刺]]一次疊加{multiplier}倍的層數。",
+  "skill.ferocity.abyssalVortex": "[[attack-speed|攻擊速度]]提升{percent}%，[[basic-attack|普通攻擊]]命中自身周圍的所有敵人，並對所有被命中的敵人疊加[[pressure|水壓]]。",
+  "skill.passive.salvageCatch": "每當[[pressure|水壓]]使敵人[[stun|眩暈]]時，獲得相當於最大生命{percent}%的[[shield|護盾]]。若當前護盾已達到最大生命的{cap}%，則只補充到該線為止。",
+  "skill.sentence.selfGuard.farthest": "[[pull|拉近]]距離最遠的一名敵人並[[taunt|嘲諷]]{seconds}秒，獲得{shield}的[[shield|護盾]]。{reset}",
+  "skill.status.pressure": "疊加一層[[pressure|水壓]]",
 } as const;

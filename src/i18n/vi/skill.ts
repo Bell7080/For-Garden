@@ -267,4 +267,8 @@ export const SKILL_VI = {
   "skill.sentence.selfGuard.prickle": " Đồng thời cộng thêm {count} tầng [[kento-prickle|Gai góc]] cho bản thân.",
   "skill.sentence.selfGuard.shockwave": " Khi hiệu ứng khiêu khích kết thúc, một sóng xung kích nổ ra và [[stun|Choáng]] kẻ địch xung quanh {seconds} giây.",
   "skill.ferocity.caffeineBubble": "Ngay khi bước vào Cuồng bạo, [[taunt|Khiêu khích]] kẻ địch trong phạm vi rộng {seconds} giây. Trong lúc Cuồng bạo, [[kento-prickle|Gai góc]] cộng nhanh gấp {multiplier} lần.",
+  "skill.ferocity.abyssalVortex": "[[attack-speed|Tốc đánh]] tăng {percent}%, [[basic-attack|đòn đánh thường]] trúng mọi kẻ địch xung quanh và cộng [[pressure|Áp suất nước]] cho tất cả kẻ bị trúng.",
+  "skill.passive.salvageCatch": "Mỗi lần [[pressure|Áp suất nước]] làm kẻ địch [[stun|Choáng]], nhận [[shield|Khiên]] bằng {percent}% HP tối đa. Nếu khiên hiện có đã đạt {cap}% HP tối đa thì chỉ nạp đến mức đó.",
+  "skill.sentence.selfGuard.farthest": "[[pull|Kéo]] kẻ địch xa nhất về và [[taunt|Khiêu khích]] nó {seconds} giây, rồi nhận [[shield|Khiên]] bằng {shield}.{reset}",
+  "skill.status.pressure": "cộng một tầng [[pressure|Áp suất nước]]",
 } as const;

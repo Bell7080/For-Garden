@@ -36,6 +36,8 @@ export const STATUS_ZH_HANT = {
   "status.submerged.detail": "移動速度 -{percent}% · 離開淺灘時解除",
   "status.vandalism": "破壞",
   "status.vandalism.detail": "{stacks} / {max}層 · 攻擊力與法術強度 -{percent}% · 疊滿時當場引爆",
+  "status.pressure": "水壓",
+  "status.pressure.detail": "{stacks} / {max}層 · 攻擊與移動速度 -{percent}% · 疊滿時爆發並眩暈",
   "status.observation": "觀測",
   "status.observation.detail": "{stacks} / {max}層 · 剩餘{time}",
   "status.butcher": "處理",

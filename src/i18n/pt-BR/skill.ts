@@ -267,4 +267,8 @@ export const SKILL_PT_BR = {
   "skill.sentence.selfGuard.prickle": " Também acumula mais {count} cargas de [[kento-prickle|Espinhoso]] em si mesma.",
   "skill.sentence.selfGuard.shockwave": " Quando a provocação termina, uma onda de choque explode e [[stun|Atordoa]] os inimigos próximos por {seconds}s.",
   "skill.ferocity.caffeineBubble": "Ao entrar em frenesi, [[taunt|Provoca]] inimigos em uma área ampla por {seconds}s. Durante o frenesi, [[kento-prickle|Espinhoso]] acumula {multiplier} vezes mais rápido.",
+  "skill.ferocity.abyssalVortex": "A [[attack-speed|Velocidade de ataque]] sobe {percent}% e os [[basic-attack|ataques básicos]] atingem todos os inimigos ao redor, acumulando [[pressure|Pressão]] em todos eles.",
+  "skill.passive.salvageCatch": "Cada vez que a [[pressure|Pressão]] [[stun|Atordoa]] um inimigo, ganha um [[shield|Escudo]] igual a {percent}% do PV máx. Se o escudo atual já chegar a {cap}% do PV máx., só é preenchido até essa linha.",
+  "skill.sentence.selfGuard.farthest": "[[pull|Puxa]] o inimigo mais distante e o [[taunt|Provoca]] por {seconds}s; depois ganha um [[shield|Escudo]] de {shield}.{reset}",
+  "skill.status.pressure": "acumula uma carga de [[pressure|Pressão]]",
 } as const;

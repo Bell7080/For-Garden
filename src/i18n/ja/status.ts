@@ -38,6 +38,8 @@ export const STATUS_JA = {
   "status.submerged.detail": "移動速度 -{percent}% · 浅瀬から出れば解ける",
   "status.vandalism": "ヴァンダリズム",
   "status.vandalism.detail": "{stacks} / {max}層 · 攻撃力·魔力 -{percent}% · 満ちるとその場で弾ける",
+  "status.pressure": "水圧",
+  "status.pressure.detail": "{stacks} / {max}層 · 攻撃·移動速度 -{percent}% · 満ちると弾けて気絶",
   "status.observation": "観測",
   "status.observation.detail": "{stacks} / {max}重 · 残り{time}",
   "status.butcher": "解体",

@@ -36,6 +36,8 @@ export const STATUS_ES = {
   "status.submerged.detail": "Velocidad de movimiento -{percent}% · Termina al salir de los Bajíos",
   "status.vandalism": "Vandalismo",
   "status.vandalism.detail": "{stacks} / {max} cargas · Ataque y Poder mágico -{percent}% · Estalla al llenarse",
+  "status.pressure": "Presión",
+  "status.pressure.detail": "{stacks} / {max} cargas · Vel. de ataque y mov. -{percent}% · Al llenarse estalla y aturde",
   "status.observation": "Avistamiento",
   "status.observation.detail": "{stacks} / {max} cargas · quedan {time}",
   "status.butcher": "Despiece",

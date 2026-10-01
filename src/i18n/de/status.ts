@@ -36,6 +36,8 @@ export const STATUS_DE = {
   "status.submerged.detail": "Lauftempo -{percent}% · Endet beim Verlassen der Untiefen",
   "status.vandalism": "Vandalismus",
   "status.vandalism.detail": "{stacks} / {max} Stapel · Angriff & Zauberkraft -{percent}% · Platzt sofort, wenn voll",
+  "status.pressure": "Wasserdruck",
+  "status.pressure.detail": "{stacks} / {max} Stapel · Angriffs- & Lauftempo -{percent}% · Voll: platzt und betäubt",
   "status.observation": "Sichtung",
   "status.observation.detail": "{stacks} / {max} Stapel · noch {time}",
   "status.butcher": "Zerlegen",

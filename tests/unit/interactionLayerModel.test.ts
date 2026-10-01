@@ -7,7 +7,7 @@ const NOW = Date.parse("2026-09-04T00:00:00.000Z");
 function dispatch(cityId: string, over: Partial<InteractionDispatchSnapshot> = {}): InteractionDispatchSnapshot {
   return {
     dispatchId: `d-${cityId}`, cityId, startedAt: new Date(NOW - 60_000).toISOString(),
-    completesAt: new Date(NOW + 60_000).toISOString(), party: ["anky"], rewardSeed: "s",
+    completesAt: new Date(NOW + 60_000).toISOString(), party: ["torika"], rewardSeed: "s",
     rewards: [{ currency: "gold", amount: 10 }], claimed: false, ...over,
   };
 }
@@ -40,7 +40,7 @@ describe("교류 층 모델", () => {
 
   it("나가 있는 렐릭은 다시 보낼 수 없다 — 수령한 파견은 풀려난다", () => {
     const away = relicsAwayOnInteraction([dispatch("doppel-parlor"), dispatch("night-ward", { party: ["rex", "spino"], claimed: true })]);
-    expect([...away]).toEqual(["anky"]);
+    expect([...away]).toEqual(["torika"]);
   });
 
   it("남은 시간은 초까지 도는 시계 한 모양으로 선다", () => {

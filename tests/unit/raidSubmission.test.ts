@@ -75,10 +75,10 @@ function fightAndVerify(party: readonly string[], bossId: string, difficulty: Ra
 describe("레이드 피해 제출 왕복", () => {
   const parties = [
     ["dian", "spino", "stella"], ["parua", "dian", "luka"], ["mette", "terisa", "dian"],
-    ["ella", "maddy", "morphe"], ["anky", "dodo", "pachi"], ["pachi", "delopi", "deina"],
-    ["anky", "dodo", "parua"],
+    ["ella", "maddy", "morphe"], ["torika", "dodo", "pachi"], ["pachi", "delopi", "deina"],
+    ["torika", "dodo", "parua"],
     // 피해 없는 궁극기 — 슈테의 오더(듀오 공속), 스테라의 순풍 — 와 듀오 충전.
-    ["maddy", "shute", "anky"], ["stella", "maki", "ella"], ["ella", "shute", "rex"], ["nodonia", "deina", "shute"],
+    ["maddy", "shute", "torika"], ["stella", "maki", "ella"], ["ella", "shute", "rex"], ["nodonia", "deina", "shute"],
   ];
   for (const bossId of RAID_BOSS_POOL) {
     for (const difficulty of ["easy", "rampage"] as const) {
@@ -93,13 +93,13 @@ describe("레이드 피해 제출 왕복", () => {
   }
 
   it("게이지가 차지 않은 궁극기와 대기를 건너뛴 평타는 여전히 거절한다", () => {
-    const party = ["anky", "dodo", "parua"].map((id) => RELICS.find((relic) => relic.id === id)!);
+    const party = ["torika", "dodo", "parua"].map((id) => RELICS.find((relic) => relic.id === id)!);
     const base = RELICS.find(({ id }) => id === "sukusuino")!;
     const boss = raidBossDef(base, "easy");
     const input = { allies: party, boss, balance: RAID_BOSS_BALANCE, percentHpBasis: raidBossPercentHpBasis(base, "easy"), arena: battleArena("raid") };
-    const ultimates = Array.from({ length: 5 }, (_, index) => ({ elapsedMs: 1_000 + index * 100, actorId: "anky", kind: "ultimate" as const }));
+    const ultimates = Array.from({ length: 5 }, (_, index) => ({ elapsedMs: 1_000 + index * 100, actorId: "torika", kind: "ultimate" as const }));
     expect(() => resolveExpeditionBossBattle(input, ultimates)).toThrow("INVALID_BOSS_BATTLE_INPUT");
-    const basics = Array.from({ length: 5 }, (_, index) => ({ elapsedMs: 1_000 + index * 50, actorId: "anky", kind: "basic" as const }));
+    const basics = Array.from({ length: 5 }, (_, index) => ({ elapsedMs: 1_000 + index * 50, actorId: "torika", kind: "basic" as const }));
     expect(() => resolveExpeditionBossBattle(input, basics)).toThrow("INVALID_BOSS_BATTLE_INPUT");
   });
 
@@ -120,7 +120,7 @@ describe("레이드 피해 제출 왕복", () => {
 
   it("남은 공유 게이지를 다 깎으면 그 자리에서 이기고, 서버 재현도 그 끝을 받는다", () => {
     // 남은 게이지를 작게 두어 한 판 안에 다 깎는다 — 규칙은 게이지의 크기와 무관하다.
-    const party = ["anky", "dodo", "parua"].map((id) => RELICS.find((relic) => relic.id === id)!);
+    const party = ["torika", "dodo", "parua"].map((id) => RELICS.find((relic) => relic.id === id)!);
     const base = RELICS.find(({ id }) => id === "sukusuino")!;
     const boss = raidBossDef(base, "easy");
     const basis = raidBossPercentHpBasis(base, "easy");
@@ -149,7 +149,7 @@ describe("레이드 피해 제출 왕복", () => {
   });
 
   it("원정 폰토스처럼 쓰러지지 않는 보스는 여전히 전멸만이 끝이다", () => {
-    const party = [RELICS.find((relic) => relic.id === "anky")!];
+    const party = [RELICS.find((relic) => relic.id === "torika")!];
     const base = RELICS.find(({ id }) => id === "sukusuino")!;
     const boss = { ...raidBossDef(base, "easy"), stats: { ...raidBossDef(base, "easy").stats, hp: 50 } };
     const state = createSkirmish(party, [boss], battleArena("raid"), {}, {}, {

@@ -7,7 +7,7 @@ import { appearanceEntries, appearanceState, canEquipAppearance, isAppearanceDim
 import type { RelicSkinDef } from "../../src/data/relicSkins";
 
 const skin = (id: string, extra: Partial<RelicSkinDef> = {}): RelicSkinDef => ({
-  id: id as RelicSkinDef["id"], defaultUnlocked: false, relicId: "anky", name: id,
+  id: id as RelicSkinDef["id"], defaultUnlocked: false, relicId: "torika", name: id,
   portraitAssetId: `${id}-portrait`, sdAssetId: `${id}-sd`, ...extra,
 });
 

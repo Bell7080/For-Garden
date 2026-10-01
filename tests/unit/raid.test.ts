@@ -476,7 +476,7 @@ describe("레이드 서버 경계", () => {
     // 토벌권은 아무것도 고르지 않고 선택 토벌권은 둘 다 고른다 — 한쪽만 온 요청은 거절한다.
     await expect(server.summonRaid({ requestId: "x3", difficulty: "easy" })).rejects.toMatchObject({ code: "RAID_SUMMON_INVALID" });
     await expect(server.summonRaid({ requestId: "x4", bossRelicId: RAID_BOSS_POOL[0] })).rejects.toMatchObject({ code: "RAID_SUMMON_INVALID" });
-    await expect(server.summonRaid({ requestId: "x2", difficulty: "easy", bossRelicId: "anky" })).rejects.toMatchObject({ code: "RAID_SUMMON_INVALID" });
+    await expect(server.summonRaid({ requestId: "x2", difficulty: "easy", bossRelicId: "torika" })).rejects.toMatchObject({ code: "RAID_SUMMON_INVALID" });
   });
 
   it("은 끝나지 않은 판의 정산을 거절한다", async () => {

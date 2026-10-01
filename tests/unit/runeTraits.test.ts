@@ -86,10 +86,10 @@ describe("룬 특성", () => {
 
   it("은 열두 종이 모두 실제로 도는 전투 효과를 만든다", () => {
     for (const def of RUNE_TRAIT_DEFS) {
-      const effects = runeTraitCombatEffects({ id: def.id, grade: "rare", upgradeMisses: 0 }, "anky");
+      const effects = runeTraitCombatEffects({ id: def.id, grade: "rare", upgradeMisses: 0 }, "torika");
       expect(effects.length, def.id).toBeGreaterThan(0);
       // 특성은 그 룬을 낀 렐릭 하나에만 걸린다 — 전체 범위가 새면 편성 전체가 함께 세진다.
-      for (const effect of effects) expect(effect.scope).toEqual({ kind: "relic", relicId: "anky" });
+      for (const effect of effects) expect(effect.scope).toEqual({ kind: "relic", relicId: "torika" });
     }
   });
 
@@ -110,6 +110,6 @@ describe("룬 특성", () => {
   });
 
   it("은 알 수 없는 ID에 효과를 만들지 않는다", () => {
-    expect(runeTraitCombatEffects({ id: "no-such-trait", grade: "rare", upgradeMisses: 0 }, "anky")).toEqual([]);
+    expect(runeTraitCombatEffects({ id: "no-such-trait", grade: "rare", upgradeMisses: 0 }, "torika")).toEqual([]);
   });
 });

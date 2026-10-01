@@ -85,7 +85,7 @@ describe("연구 결과판이 칸마다 보여 주는 것", () => {
     const views = researchSlotViews([
       slot("rex", "new"),
       slot("rex", "fragment"),
-      slot("anky", "overflow"),
+      slot("torika", "overflow"),
       { type: "currency", currency: "gold", amount: 120, grade: "GRAY" },
     ], rarityOf);
     expect(views.map((view) => view.kind)).toEqual(["relic", "fragment", "dna", "currency"]);
@@ -99,7 +99,7 @@ describe("연구 결과판이 칸마다 보여 주는 것", () => {
   it("액자에 적히는 수는 그 칸이 실제로 늘린 양이다", () => {
     const [fragment, dna, currency] = researchSlotViews([
       slot("rex", "fragment"),
-      slot("anky", "overflow"),
+      slot("torika", "overflow"),
       { type: "currency", currency: "cheesecake", amount: 40, grade: "GRAY" },
     ], rarityOf);
     expect(fragment).toMatchObject({ kind: "fragment", amount: 1, relicId: "rex" });

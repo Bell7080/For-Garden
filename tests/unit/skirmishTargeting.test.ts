@@ -48,7 +48,7 @@ describe("사거리 단계", () => {
  */
 describe("표적 재평가", () => {
   it("은 사거리 안에 들어온 적을 지나쳐 걸어가지 않는다", () => {
-    const state = createSkirmish([getRelic("anky")], [getRelic("amo"), getRelic("toby")], ARENA);
+    const state = createSkirmish([getRelic("torika")], [getRelic("amo"), getRelic("toby")], ARENA);
     const [ally, far, near] = state.fighters;
     // 처음에는 멀리 있는 적을 노리게 해 두고, 그 사이 다른 적을 코앞에 세운다.
     ally.x = 200; ally.y = 1000;
@@ -67,7 +67,7 @@ describe("표적 재평가", () => {
   });
 
   it("은 노리던 상대에게 보너스를 줘 매 프레임 표적이 뒤집히지 않게 한다", () => {
-    const state = createSkirmish([getRelic("anky")], [getRelic("amo"), getRelic("toby")], ARENA);
+    const state = createSkirmish([getRelic("torika")], [getRelic("amo"), getRelic("toby")], ARENA);
     const [ally, first, second] = state.fighters;
     ally.x = 500; ally.y = 1000;
     first.x = 500; first.y = 700;

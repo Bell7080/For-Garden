@@ -42,7 +42,7 @@ function unkillable(def: RelicDef): RelicDef {
 
 function undyingStalemate() {
   return createSkirmish(
-    [unkillable(getRelic("anky")), unkillable(getRelic("tia"))],
+    [unkillable(getRelic("torika")), unkillable(getRelic("tia"))],
     [harmless(getRelic("pontos"))],
     { left: 0, right: 600, top: 0, bottom: 1000 },
     {}, {},

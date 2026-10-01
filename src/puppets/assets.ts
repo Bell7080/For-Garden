@@ -744,7 +744,7 @@ export const SUMMON_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
  * — 메론이 v0.52.3까지 원정과 승리 MVP에서 그랬다. 표가 하나면 빠뜨릴 자리가 없다.
  */
 const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
-  anky: TORIKA_SD_ASSET,
+  torika: TORIKA_SD_ASSET,
   rex: LEXIA_SD_ASSET,
   spino: SEIRA_SD_ASSET,
   luka: LUKA_SD_ASSET,
@@ -792,7 +792,7 @@ export const ENEMY_SD_ASSETS_BY_ID: Readonly<Record<string, PuppetAsset>> = {
 
 /** SD 스킨도 렐릭 ID 아래에만 등록해 다른 렐릭으로 폴백할 수 없게 한다. */
 const ALLY_SD_SKINS: Readonly<Record<string, Readonly<Record<string, PuppetAsset>>>> = {
-  anky: { "torika-skin-001": TORIKA_SKIN_001_SD_ASSET },
+  torika: { "torika-skin-001": TORIKA_SKIN_001_SD_ASSET },
 };
 
 /** 비전투 화면의 아군 SD 선택. 적 ID는 받지 않는다. */

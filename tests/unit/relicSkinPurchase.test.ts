@@ -17,7 +17,7 @@ describe("렐릭 외형 구매 경계", () => {
     server.purchaseRelicSkin({ relicId, skinId: skinId as RelicSkinId, requestId: `t:${relicId}:${skinId}` });
 
   it("없는 외형과 대상이 어긋난 외형을 거절한다", async () => {
-    await expect(buy("anky", "없는-외형")).rejects.toBeInstanceOf(GameApiError);
+    await expect(buy("torika", "없는-외형")).rejects.toBeInstanceOf(GameApiError);
     // 표에 있는 외형이라도 그 렐릭의 것이 아니면 살 수 없다 — 값만 맞으면 아무나 입는 일이 없다.
     await expect(buy("dodo", RELIC_SKINS[0].id)).rejects.toMatchObject({ code: "ITEM_NOT_FOUND" });
   });

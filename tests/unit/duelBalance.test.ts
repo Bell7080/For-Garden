@@ -11,8 +11,8 @@ describe("개체 대 개체 검수", () => {
   it("은 만렙·돌파 V 토리카가 렉시아를 이기지는 못해도 즉사하지 않고 탱커다운 시간을 번다", () => {
     const seeds = Array.from({ length: 25 }, (_, index) => index + 1);
     const runs = seeds.flatMap((seed) => {
-      const forward = simulateMaxedDuel(getRelic("anky"), getRelic("rex"), seed);
-      const reverse = simulateMaxedDuel(getRelic("rex"), getRelic("anky"), seed);
+      const forward = simulateMaxedDuel(getRelic("torika"), getRelic("rex"), seed);
+      const reverse = simulateMaxedDuel(getRelic("rex"), getRelic("torika"), seed);
       return [forward, { ...reverse, winner: reverse.winner === "left" ? "right" as const : reverse.winner === "right" ? "left" as const : null,
         leftHpRatio: reverse.rightHpRatio, rightHpRatio: reverse.leftHpRatio }];
     });
@@ -21,8 +21,8 @@ describe("개체 대 개체 검수", () => {
     const durations = runs.map(({ durationSeconds }) => durationSeconds);
     const oldLexia = { ...getRelic("rex"), breakthroughEffects: undefined };
     const baseline = seeds.flatMap((seed) => {
-      const forward = simulateMaxedDuel(getRelic("anky"), oldLexia, seed);
-      const reverse = simulateMaxedDuel(oldLexia, getRelic("anky"), seed);
+      const forward = simulateMaxedDuel(getRelic("torika"), oldLexia, seed);
+      const reverse = simulateMaxedDuel(oldLexia, getRelic("torika"), seed);
       return [forward, { ...reverse, winner: reverse.winner === "left" ? "right" as const : reverse.winner === "right" ? "left" as const : null,
         leftHpRatio: reverse.rightHpRatio, rightHpRatio: reverse.leftHpRatio }];
     });

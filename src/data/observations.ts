@@ -19,22 +19,22 @@ export const COMMON_OBSERVATION_QUESTIONS: readonly ObservationQuestion[] = [
 
 /** 렐릭별 질문은 설정을 답으로 단정하지 않고, 구체적인 상황에서 드러나는 반응으로 검증한다. */
 export const RELIC_OBSERVATION_QUESTIONS: Readonly<Record<string, readonly ObservationQuestion[]>> = {
-  anky: [
+  torika: [
     // 먹이 화제에서 토리카의 왕성한 식욕과 동료 배려, 부끄러움 중 어느 면이 앞서는지 검증한다.
-    { id: "anky-meal-appetite", prompt: "평소 먹는 양과 좋아하는 먹이를 물으면 어떤 반응을 보여?", choices: [
-      { id: "anky-meal-eager", label: "좋아하는 먹이부터 신나게 이야기한다", personalityTag: "왕성한 식욕", habitKey: "ankyMealEager" },
-      { id: "anky-meal-share", label: "동료들이 먹을 몫부터 헤아린다", personalityTag: "동료 배려", habitKey: "ankyMealShare" },
-      { id: "anky-meal-shy", label: "먹은 양은 작게 말하고 좋아하는 잎만 알려 준다", personalityTag: "쑥스러움", habitKey: "ankyMealShy" },
+    { id: "torika-meal-appetite", prompt: "평소 먹는 양과 좋아하는 먹이를 물으면 어떤 반응을 보여?", choices: [
+      { id: "torika-meal-eager", label: "좋아하는 먹이부터 신나게 이야기한다", personalityTag: "왕성한 식욕", habitKey: "torikaMealEager" },
+      { id: "torika-meal-share", label: "동료들이 먹을 몫부터 헤아린다", personalityTag: "동료 배려", habitKey: "torikaMealShare" },
+      { id: "torika-meal-shy", label: "먹은 양은 작게 말하고 좋아하는 잎만 알려 준다", personalityTag: "쑥스러움", habitKey: "torikaMealShy" },
     ] },
     // 몸무게 화제에서 볏이 붉어진다는 기존 관찰 기록을 서로 다른 대처 방식으로 이어 간다.
-    { id: "anky-weight-reaction", prompt: "몸무게 이야기가 나오면 토리카는 어떻게 반응해?", choices: [
-      { id: "anky-weight-honest", label: "붉어진 채로 지금 수치를 또박또박 말한다", personalityTag: "솔직함", habitKey: "ankyWeightHonest" },
-      { id: "anky-weight-deflect", label: "볏을 가리며 얼른 다른 이야기를 꺼낸다", personalityTag: "쑥스러움", habitKey: "ankyWeightDeflect" },
+    { id: "torika-weight-reaction", prompt: "몸무게 이야기가 나오면 토리카는 어떻게 반응해?", choices: [
+      { id: "torika-weight-honest", label: "붉어진 채로 지금 수치를 또박또박 말한다", personalityTag: "솔직함", habitKey: "torikaWeightHonest" },
+      { id: "torika-weight-deflect", label: "볏을 가리며 얼른 다른 이야기를 꺼낸다", personalityTag: "쑥스러움", habitKey: "torikaWeightDeflect" },
     ] },
     // 한 걸음 물러나도 앞을 막는 설정에서 두려움의 인정과 보호 행동을 각각 관찰한다.
-    { id: "anky-frightened-shield", prompt: "겁이 나는데도 누군가의 앞을 막아서야 할 때 어떤 반응을 보여?", choices: [
-      { id: "anky-shield-admit", label: "무섭다고 말한 뒤 한 걸음 물러서 자리를 지킨다", personalityTag: "두려움 인정", habitKey: "ankyShieldAdmit" },
-      { id: "anky-shield-protect", label: "떨리는 다리를 버티며 상대의 앞을 가로막는다", personalityTag: "보호본능", habitKey: "ankyShieldProtect" },
+    { id: "torika-frightened-shield", prompt: "겁이 나는데도 누군가의 앞을 막아서야 할 때 어떤 반응을 보여?", choices: [
+      { id: "torika-shield-admit", label: "무섭다고 말한 뒤 한 걸음 물러서 자리를 지킨다", personalityTag: "두려움 인정", habitKey: "torikaShieldAdmit" },
+      { id: "torika-shield-protect", label: "떨리는 다리를 버티며 상대의 앞을 가로막는다", personalityTag: "보호본능", habitKey: "torikaShieldProtect" },
     ] },
   ],
   rex: [
@@ -97,16 +97,16 @@ export const OBSERVATION_FALLBACK = { intro: "무엇이 궁금한지 말해 줘.
 
 /** 대답과 일지 문장을 한 반응표에 묶어 캐릭터 설정과 저장 결과가 어긋나지 않게 한다. */
 export const REACTIONS: Readonly<Record<string, ObservationReaction>> = {
-  anky: { intro: "천천히 물어봐. 생각해 볼게.", replies: {
+  torika: { intro: "천천히 물어봐. 생각해 볼게.", replies: {
     approach: "뿔을 낮추고 가까이 가 볼래.", wait: "발밑의 떨림부터 확인할래.", share: "어린 개체가 먼저 먹어야 해.", guard: "내가 바깥쪽을 지킬게.",
-    "anky-meal-eager": "많이 먹어! 아삭한 어린 잎이 제일 좋아.", "anky-meal-share": "내 몫은 커도 돼. 하지만 다들 먹을 건 남겨 둘래.", "anky-meal-shy": "조금... 아니, 보통만큼 먹어. 어린 잎은 좋아해.",
-    "anky-weight-honest": "볏이 뜨거워도 말할 수 있어. 지금 몸무게는 기록대로야.", "anky-weight-deflect": "그, 그보다 오늘 잎 상태가 정말 좋지 않아?",
-    "anky-shield-admit": "무서워. 그래도 한 걸음만 물러서서 여기 있을래.", "anky-shield-protect": "내 뒤에 있어. 다리가 떨려도 길은 안 비킬 거야.",
+    "torika-meal-eager": "많이 먹어! 아삭한 어린 잎이 제일 좋아.", "torika-meal-share": "내 몫은 커도 돼. 하지만 다들 먹을 건 남겨 둘래.", "torika-meal-shy": "조금... 아니, 보통만큼 먹어. 어린 잎은 좋아해.",
+    "torika-weight-honest": "볏이 뜨거워도 말할 수 있어. 지금 몸무게는 기록대로야.", "torika-weight-deflect": "그, 그보다 오늘 잎 상태가 정말 좋지 않아?",
+    "torika-shield-admit": "무서워. 그래도 한 걸음만 물러서서 여기 있을래.", "torika-shield-protect": "내 뒤에 있어. 다리가 떨려도 길은 안 비킬 거야.",
   }, habits: {
     approach: "낯선 진동을 앞발로 두 번 확인한다.", wait: "위험을 느끼면 무리의 바깥을 향해 선다.", share: "먹이 가운데 부드러운 잎을 어린 개체에게 남긴다.", guard: "식사 중에도 일정한 간격으로 고개를 들어 경계한다.",
-    ankyMealEager: "식사량을 숨기지 않고 아삭한 어린 잎을 가장 먼저 찾는다.", ankyMealShare: "먹고 싶은 양이 많아도 동료의 몫을 먼저 따로 둔다.", ankyMealShy: "식사량을 작게 말할 때도 좋아하는 어린 잎은 빠뜨리지 않는다.",
-    ankyWeightHonest: "몸무게를 말할 때 볏 끝까지 붉어지지만 수치는 또박또박 확인한다.", ankyWeightDeflect: "몸무게가 언급되면 볏 끝까지 붉어진 채 먹이 이야기로 화제를 돌린다.",
-    ankyShieldAdmit: "겁이 난다고 인정하고 한 걸음 물러서지만 보호할 대상의 앞은 비우지 않는다.", ankyShieldProtect: "다리가 떨려도 몸을 낮춰 보호할 대상의 앞을 막아선다.",
+    torikaMealEager: "식사량을 숨기지 않고 아삭한 어린 잎을 가장 먼저 찾는다.", torikaMealShare: "먹고 싶은 양이 많아도 동료의 몫을 먼저 따로 둔다.", torikaMealShy: "식사량을 작게 말할 때도 좋아하는 어린 잎은 빠뜨리지 않는다.",
+    torikaWeightHonest: "몸무게를 말할 때 볏 끝까지 붉어지지만 수치는 또박또박 확인한다.", torikaWeightDeflect: "몸무게가 언급되면 볏 끝까지 붉어진 채 먹이 이야기로 화제를 돌린다.",
+    torikaShieldAdmit: "겁이 난다고 인정하고 한 걸음 물러서지만 보호할 대상의 앞은 비우지 않는다.", torikaShieldProtect: "다리가 떨려도 몸을 낮춰 보호할 대상의 앞을 막아선다.",
   } },
   // 경쟁심·강자 선호에는 정중한 승부 절차를, 에티켓·약자 배려에는 위압하지 않는 태도를 대응시킨다.
   rex: { intro: "관찰이라니, 재미있는 걸 묻네.", replies: {

@@ -52,7 +52,7 @@ export const RELIC_SKINS: readonly RelicSkinDef[] = [
     id: "torika-skin-001",
     // 공개 시점부터 모든 계정에 제공하므로 세션과 마이그레이션이 이 ID를 따로 알지 않게 한다.
     defaultUnlocked: true,
-    relicId: "anky",
+    relicId: "torika",
     name: "여름방학 토리카",
     portraitAssetId: "torika-skin-001-portrait",
     sdAssetId: "torika-skin-001-sd",
@@ -60,10 +60,10 @@ export const RELIC_SKINS: readonly RelicSkinDef[] = [
   // 아래 넷은 **이름만 걸어 둔 자리**다. 원화가 아직 없어 에셋 키도 값도 조건도 적지 않으며,
   // 전시관은 이 넷을 실루엣으로 세우고 얻는 길을 말하지 않는다. 방학·행사처럼 같은 계절 한 벌로
   // 묶어 두어야 나중에 한 장씩 열릴 때 목록이 흩어지지 않는다.
-  { id: "torika-skin-002", defaultUnlocked: false, relicId: "anky", name: "겨울방학 토리카", comingSoon: true },
-  { id: "torika-skin-003", defaultUnlocked: false, relicId: "anky", name: "체육대회 토리카", comingSoon: true },
-  { id: "torika-skin-004", defaultUnlocked: false, relicId: "anky", name: "야간자습 토리카", comingSoon: true },
-  { id: "torika-skin-005", defaultUnlocked: false, relicId: "anky", name: "교복 토리카", comingSoon: true },
+  { id: "torika-skin-002", defaultUnlocked: false, relicId: "torika", name: "겨울방학 토리카", comingSoon: true },
+  { id: "torika-skin-003", defaultUnlocked: false, relicId: "torika", name: "체육대회 토리카", comingSoon: true },
+  { id: "torika-skin-004", defaultUnlocked: false, relicId: "torika", name: "야간자습 토리카", comingSoon: true },
+  { id: "torika-skin-005", defaultUnlocked: false, relicId: "torika", name: "교복 토리카", comingSoon: true },
 ];
 
 /** 중복 ID, 없는 대상 렐릭, 한쪽만 적힌 에셋 조합을 콘텐츠 로드 전에 함께 검사한다. */

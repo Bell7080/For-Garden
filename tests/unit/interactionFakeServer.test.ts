@@ -6,7 +6,7 @@ import { createDefaultSession } from "../../src/state/session";
 describe("FakeServer interaction API", () => {
   it("종료 전 수령을 막고 같은 requestId를 두 번 지급하지 않는다", async () => {
     let now = new Date("2026-09-03T00:00:00.000Z"); const state = createDefaultSession(); const server = new FakeServer(state, { latencyMs: 0, random: () => 0, now: () => now });
-    const started = await server.startInteractionDispatch({ cityId: "doppel-parlor", party: ["anky"] });
+    const started = await server.startInteractionDispatch({ cityId: "doppel-parlor", party: ["torika"] });
     const dispatch = started.dispatches[0]!; expect(dispatch.startedAt).toBe(now.toISOString());
     await expect(server.claimInteractionDispatch({ dispatchId: dispatch.dispatchId, requestId: "claim-1" })).rejects.toThrow();
     now = new Date(dispatch.completesAt); const before = state.wallet.gold;
@@ -20,18 +20,18 @@ describe("FakeServer interaction API", () => {
     // 두 도시가 모두 열리도록 레벨을 올려 둔다. 개방은 플레이어 레벨이 정한다.
     state.playerResearch = { ...state.playerResearch, level: 9 };
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0, now: () => now });
-    await server.startInteractionDispatch({ cityId: "doppel-parlor", party: ["anky"] });
+    await server.startInteractionDispatch({ cityId: "doppel-parlor", party: ["torika"] });
     const both = await server.startInteractionDispatch({ cityId: "night-ward", party: ["rex"] });
     expect(both.dispatches).toHaveLength(2);
     await expect(server.startInteractionDispatch({ cityId: "doppel-parlor", party: ["spino"] })).rejects.toThrow();
-    await expect(server.startInteractionDispatch({ cityId: "abyss-port", party: ["anky"] })).rejects.toThrow();
+    await expect(server.startInteractionDispatch({ cityId: "abyss-port", party: ["torika"] })).rejects.toThrow();
   });
 
   it("돌아올 것은 출발할 때 표의 모든 줄에서 굴리고, 수령하면 그 목록 그대로 들어온다", async () => {
     let now = new Date("2026-09-03T00:00:00.000Z"); const state = createDefaultSession();
     // 가장 높은 쪽으로 굴린다 — 「0~n」인 귀한 줄도 비지 않는다.
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0.999, now: () => now });
-    const [dispatch] = (await server.startInteractionDispatch({ cityId: "doppel-parlor", party: ["anky", "rex", "spino"] })).dispatches;
+    const [dispatch] = (await server.startInteractionDispatch({ cityId: "doppel-parlor", party: ["torika", "rex", "spino"] })).dispatches;
     expect(dispatch.rewards.map(({ currency }) => currency)).toEqual(["gold", "cheesecake", "rawStone"]);
     // 그 도시의 교류 파견 임무도 함께 센다.
     expect(state.missions.progress["weekly-dispatch"]).toBe(1);

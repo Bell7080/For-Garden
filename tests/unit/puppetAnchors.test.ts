@@ -501,7 +501,7 @@ describe("아군 SD 등록", () => {
     (relicId) => {
       expect(table).toContain(`${relicId}:`);
       // 토리카만 1번 SD를 자기 것으로 쓰고, 나머지가 그 자리에 오면 전용 원화가 빠진 것이다.
-      if (relicId !== "anky") expect(table).not.toMatch(new RegExp(`${relicId}: TORIKA_SD_ASSET`));
+      if (relicId !== "torika") expect(table).not.toMatch(new RegExp(`${relicId}: TORIKA_SD_ASSET`));
     },
   );
 });

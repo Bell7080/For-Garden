@@ -15,18 +15,18 @@ describe("정적 콘텐츠 번역", () => {
   });
 
   it("은 언어를 바꾸면 정적 정의의 문구가 함께 바뀐다", async () => {
-    expect(getRelic("anky").name).toBe("토리카");
+    expect(getRelic("torika").name).toBe("토리카");
     await loadDataOverlay("ja");
-    expect(getRelic("anky").name).toBe("トリカ");
-    expect(getRelic("anky").origin).toBe("トリケラトプス");
+    expect(getRelic("torika").name).toBe("トリカ");
+    expect(getRelic("torika").origin).toBe("トリケラトプス");
   });
 
   it("은 한국어로 되돌리면 원본이 그대로 돌아온다", async () => {
     // 원본을 붙잡아 두지 않으면 두 번째 언어에 첫 번째 언어의 글이 남는다.
     await loadDataOverlay("ja");
     await loadDataOverlay("ko");
-    expect(getRelic("anky").name).toBe("토리카");
-    expect(getRelic("anky").origin).toBe("트리케라톱스");
+    expect(getRelic("torika").name).toBe("토리카");
+    expect(getRelic("torika").origin).toBe("트리케라톱스");
   });
 
   it("은 덮을 값이 없는 자리를 한국어로 남긴다", async () => {

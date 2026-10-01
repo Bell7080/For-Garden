@@ -22,15 +22,15 @@ function makeSession(): Session {
     settings: createDefaultSettings(),
     completedStoryIds: new Set(), observationRecords: [],
     selectedStageId: null,
-    party: ["anky", "rex", "dodo"],
+    party: ["torika", "rex", "dodo"],
     cleared: new Set(),
-    owned: new Set(["anky", "rex", "dodo"]),
-    favorite: "anky",
+    owned: new Set(["torika", "rex", "dodo"]),
+    favorite: "torika",
     bookmarked: new Set<string>(),
     gachaPityByGroup: { "standard-fossil": { pullsSinceSsr: 0, pickupGuaranteed: false }, "limited-pickup": { pullsSinceSsr: 0, pickupGuaranteed: false } },
     staminaUpdatedAt: "",
     wallet: { fossil: 0, amber: 0, gems: 0, gold: 0, stamina: 0, dnaFragments: 0, cheesecake: 0 , rawStone: 0, raidSigil: 0, salvageRecord: 0},
-    relicFragments: {}, relicProgress: Object.fromEntries(["anky", "rex", "dodo"].map((id) => [id, { level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] }])),
+    relicFragments: {}, relicProgress: Object.fromEntries(["torika", "rex", "dodo"].map((id) => [id, { level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] }])),
     itemInventory: [],
     runeInventory: [],
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
@@ -53,9 +53,9 @@ describe("RelicCollectionManager", () => {
     const manager = new RelicCollectionManager(state);
 
     expect(manager.setFavorite("spino")).toBe(false);
-    expect(manager.setParty(["anky", "rex", "spino"])).toEqual({ ok: false, reason: "not-owned", relicId: "spino" });
-    expect(state.favorite).toBe("anky");
-    expect(state.party).toEqual(["anky", "rex", "dodo"]);
+    expect(manager.setParty(["torika", "rex", "spino"])).toEqual({ ok: false, reason: "not-owned", relicId: "spino" });
+    expect(state.favorite).toBe("torika");
+    expect(state.party).toEqual(["torika", "rex", "dodo"]);
   });
 
   it("즐겨찾기는 여러 명을 담고 애착 렐릭과 섞이지 않는다", () => {
@@ -66,7 +66,7 @@ describe("RelicCollectionManager", () => {
     expect(manager.toggleBookmark("dodo")).toBe(true);
     expect(manager.isBookmarked("rex")).toBe(true);
     // 즐겨찾기를 바꿔도 로비에 서는 애착 렐릭은 그대로다.
-    expect(state.favorite).toBe("anky");
+    expect(state.favorite).toBe("torika");
 
     expect(manager.toggleBookmark("rex")).toBe(true);
     expect(manager.isBookmarked("rex")).toBe(false);
@@ -85,22 +85,22 @@ describe("RelicCollectionManager", () => {
     const state = makeSession();
     const manager = new RelicCollectionManager(state);
 
-    expect(manager.setParty(["rex", "dodo", "anky"])).toEqual({ ok: true });
-    expect(manager.setParty(["rex", "rex", "anky"])).toEqual({ ok: false, reason: "duplicate" });
-    expect(state.party).toEqual(["rex", "dodo", "anky"]);
+    expect(manager.setParty(["rex", "dodo", "torika"])).toEqual({ ok: true });
+    expect(manager.setParty(["rex", "rex", "torika"])).toEqual({ ok: false, reason: "duplicate" });
+    expect(state.party).toEqual(["rex", "dodo", "torika"]);
   });
 
   it("파티 인원 부족과 미보유를 서로 다른 실패 사유로 돌려준다", () => {
     const manager = new RelicCollectionManager(makeSession());
 
     // UI가 같은 false를 추측하지 않고 각 원인에 맞는 안내를 표시할 수 있어야 한다.
-    expect(manager.setParty(["anky", "rex"])).toEqual({ ok: false, reason: "wrong-size" });
-    expect(manager.setParty(["anky", "rex", "quetzal"])).toEqual({ ok: false, reason: "not-owned", relicId: "quetzal" });
+    expect(manager.setParty(["torika", "rex"])).toEqual({ ok: false, reason: "wrong-size" });
+    expect(manager.setParty(["torika", "rex", "quetzal"])).toEqual({ ok: false, reason: "not-owned", relicId: "quetzal" });
   });
 
   it("저장 파티에서 미보유 렐릭이 발견되면 초기 편성 후보를 비운다", () => {
     const state = makeSession();
-    state.party = ["anky", "rex", "quetzal"];
+    state.party = ["torika", "rex", "quetzal"];
     const manager = new RelicCollectionManager(state);
     // 씬은 손상 배열 일부를 이어 쓰지 않고 이 빈 결과만 자동 편성으로 대체한다.
     expect(manager.validParty).toEqual([]);

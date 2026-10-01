@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 import { battleBuffStackSpot, expeditionAugmentChipOffsets, BATTLE_PROFILE_LAYOUT } from "../../src/ui/battleStatusLayout";
 import { expeditionAugmentBadges, expeditionAugmentRows } from "../../src/ui/expeditionAugmentBadges";
 
-const ORDER = ["anky", "rex", "spino"];
+const ORDER = ["torika", "rex", "spino"];
 const SELECTIONS = [
   { augmentId: "predator-instinct", targetRelicId: "rex" },
   { augmentId: "reinforced-core" },
-  { augmentId: "blood-edge", targetRelicId: "anky" },
+  { augmentId: "blood-edge", targetRelicId: "torika" },
   { augmentId: "apex-signal" },
   { augmentId: "relentless-hunt", targetRelicId: "rex" },
 ];
@@ -16,7 +16,7 @@ describe("원정 증강 표식", () => {
     const groups = expeditionAugmentBadges(SELECTIONS);
     expect(groups.global.map(({ augmentId }) => augmentId)).toEqual(["reinforced-core", "apex-signal"]);
     expect(groups.byRelic.rex.map(({ augmentId }) => augmentId)).toEqual(["predator-instinct", "relentless-hunt"]);
-    expect(groups.byRelic.anky).toHaveLength(1);
+    expect(groups.byRelic.torika).toHaveLength(1);
     expect(groups.byRelic.spino).toBeUndefined();
     // 내부 소문자 키는 플레이어에게 기존 렐릭 등급 표기와 같은 대문자로 보인다.
     expect(groups.global.map(({ meta }) => meta)).toEqual(["SR · 전체", "SSR · 전체"]);
@@ -30,7 +30,7 @@ describe("원정 증강 표식", () => {
   it("의 팝업 차례는 전체가 먼저이고 그다음이 편성 순서다", () => {
     // 고른 순서로 늘어놓으면 같은 캐릭터의 증강이 목록 여기저기에 흩어진다.
     const rows = expeditionAugmentRows(SELECTIONS, ORDER);
-    expect(rows.map(({ relicId }) => relicId)).toEqual([undefined, "anky", "rex"]);
+    expect(rows.map(({ relicId }) => relicId)).toEqual([undefined, "torika", "rex"]);
     expect(rows[0].badges).toHaveLength(2);
     expect(rows[2].badges).toHaveLength(2);
   });
@@ -38,12 +38,12 @@ describe("원정 증강 표식", () => {
   it("의 효과 종류가 곧 문양이다", () => {
     const groups = expeditionAugmentBadges(SELECTIONS);
     // 출혈은 개별 이름이 아니라 확장된 상태 효과 카테고리 문양을 공유한다.
-    expect(groups.byRelic.anky[0].glyph).toBe("status");
+    expect(groups.byRelic.torika[0].glyph).toBe("status");
     expect(groups.global[0].glyph).toBe("attack");
   });
 
   it("은 표준 출혈의 실제 공용 수치와 발동 주기를 표시한다", () => {
-    const badge = expeditionAugmentBadges(SELECTIONS).byRelic.anky[0];
+    const badge = expeditionAugmentBadges(SELECTIONS).byRelic.torika[0];
     expect(badge.effect).toBe("3회 공격마다 출혈\n초당 최대 체력 2% · 3초");
   });
 });

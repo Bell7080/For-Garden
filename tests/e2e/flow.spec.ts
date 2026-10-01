@@ -118,7 +118,7 @@ test("스토리 전투 확정 편성은 다음 스테이지 준비 저장에 유
   // 그리드 순서(렉시아 → 토리카 → 스피나)와 일부러 어긋나게 골라야 "저장이 그리드를 다시 읽지
   // 않고 고른 순서를 그대로 들고 있다"가 증명된다 — 그리드 순서를 기대값으로 적으면 정렬이
   // 무너져도 테스트가 통과한다.
-  expect(savedParty).toEqual(["anky", "rex", "spino"]);
+  expect(savedParty).toEqual(["torika", "rex", "spino"]);
 });
 
 test("원정 종료 뒤에도 다음 원정 전용 편성 저장은 스토리·발굴과 독립적으로 유지된다", async ({ page }) => {
@@ -126,12 +126,12 @@ test("원정 종료 뒤에도 다음 원정 전용 편성 저장은 스토리·�
   const snapshot = await page.evaluate(() => {
     const value = JSON.parse(localStorage.getItem("eternal-city.local-save") ?? "null");
     // 실제 종료 저장과 같은 모양으로 run만 닫혀도 마지막 확정 편성이 남는 회귀 계약을 확인한다.
-    value.expedition.lastParty = ["spino", "rex", "anky"];
+    value.expedition.lastParty = ["spino", "rex", "torika"];
     value.expedition.run = null;
     localStorage.setItem("eternal-city.local-save", JSON.stringify(value));
     return { lastParty: value.expedition.lastParty, party: value.party, excavation: value.idleExcavation.assignedRelicIds };
   });
-  expect(snapshot.lastParty).toEqual(["spino", "rex", "anky"]);
+  expect(snapshot.lastParty).toEqual(["spino", "rex", "torika"]);
   expect(snapshot.lastParty).not.toEqual(snapshot.party);
   expect(snapshot.lastParty).not.toEqual(snapshot.excavation);
 });

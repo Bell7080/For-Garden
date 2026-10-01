@@ -64,7 +64,7 @@ function verify(party: readonly string[], actions: readonly ExpeditionBossAction
 describe("원정 보스 제출 왕복", () => {
   // 연격을 가진 스피나가 한 행동에 두 사건을 남기고, 그 두 사건이 같은 밀리초에 평타로 기록돼
   // 서버 재사용 대기 검증이 제출 전체를 거절했다. 그러면 정산 화면에는 "다시 시도"만 남는다.
-  const parties = [["anky", "rex", "spino"], ["spino", "luka", "dodo"], ["mette", "maki", "pachi"], ["keris", "stella", "tia"], ["meron", "delopi", "spino"]];
+  const parties = [["torika", "rex", "spino"], ["spino", "luka", "dodo"], ["mette", "maki", "pachi"], ["keris", "stella", "tia"], ["meron", "delopi", "spino"]];
   for (const party of parties) {
     for (const seed of [1, 7, 4_242]) {
       it(`${party.join("·")} 편성의 실제 전투(seed ${seed}) 행동열을 서버가 받아들인다`, () => {
@@ -76,7 +76,7 @@ describe("원정 보스 제출 왕복", () => {
   }
 
   it("여러 일반 노드 뒤 폰토스 피해를 한 판 점수로 한 번만 합친다", () => {
-    const bossDamageScore = verify(["anky", "rex", "spino"], fightAndLog(["anky", "rex", "spino"], 1));
+    const bossDamageScore = verify(["torika", "rex", "spino"], fightAndLog(["torika", "rex", "spino"], 1));
     const nodeScoreTotal = 4_000 + 5_700 + 7_200;
     const first = calculateExpeditionRunScore({ normalNodeScoreTotal: nodeScoreTotal, bossDamageScore });
     const retry = calculateExpeditionRunScore({ normalNodeScoreTotal: nodeScoreTotal, bossDamageScore });
@@ -85,17 +85,17 @@ describe("원정 보스 제출 왕복", () => {
   });
 
   it("한 행동이 남긴 뒤이은 타격은 행동으로 세지 않는다", () => {
-    const actions = fightAndLog(["anky", "rex", "spino"], 1);
+    const actions = fightAndLog(["torika", "rex", "spino"], 1);
     // 같은 개체·같은 종류가 같은 밀리초에 두 번 서면 그것이 곧 연격을 두 행동으로 센 것이다.
     const keys = actions.map(({ elapsedMs, actorId, kind }) => `${actorId}:${kind}:${elapsedMs}`);
     expect(new Set(keys).size).toBe(keys.length);
   });
 
   it("재현으로 설명되지 않을 만큼 빠른 평타는 여전히 거절한다", () => {
-    const actions = fightAndLog(["anky", "rex", "spino"], 1);
+    const actions = fightAndLog(["torika", "rex", "spino"], 1);
     const first = actions.find(({ kind }) => kind === "basic")!;
     const spam = Array.from({ length: 8 }, (_, index) => ({ ...first, elapsedMs: first.elapsedMs + index * 10 }));
-    expect(() => verify(["anky", "rex", "spino"], spam)).toThrow();
+    expect(() => verify(["torika", "rex", "spino"], spam)).toThrow();
   });
 });
 
@@ -116,7 +116,7 @@ function settlementHarness(failOnce?: PersistPhase) {
     managerSaves.push(structuredClone(next));
     commitOrder.push(next.expedition.run?.visitedNodeIds.includes(bossNodeId) ? "local-node" : "manager-setup");
   } }, () => new Date("2026-09-02T12:00:00Z"), true);
-  const shortcut = manager.prepareDevelopmentBossShortcut(["anky", "rex", "spino"]);
+  const shortcut = manager.prepareDevelopmentBossShortcut(["torika", "rex", "spino"]);
   if (!shortcut.ok) throw new Error(`보스 테스트 런 준비 실패: ${shortcut.reason}`);
   const boss = state.expedition.run!.nodes.find(({ type }) => type === "boss")!;
   bossNodeId = boss.id;
@@ -135,7 +135,7 @@ function settlementHarness(failOnce?: PersistPhase) {
   const settle = vi.spyOn(server, "settleExpeditionRun");
   const requests = manager.prepareBossRequests(boss.id)!;
   const request = { ...requests, runId: state.expedition.run!.runId, nodeId: boss.id };
-  const actions = fightAndLog(["anky", "rex", "spino"], 1);
+  const actions = fightAndLog(["torika", "rex", "spino"], 1);
   // 준비 단계의 manager 저장은 finish 순서 검증 대상이 아니므로 실제 왕복 직전에 기록만 비운다.
   commitOrder.length = 0;
   return { state, manager, server, flow: new ExpeditionBossSettlementFlow(server, manager), request, actions, walletBefore, managerSaves, serverPersists, commitOrder, persistSession, submit, settle };

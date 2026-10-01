@@ -12,13 +12,13 @@ function progress(level = 1, breakthrough = 0): RelicProgress {
 
 /** 테스트마다 같은 3인 편성과 UTC 기준점을 갖는 독립 상태를 만든다. */
 function activeState() {
-  return { ...createIdleExcavationState("2026-08-20T00:00:00.000Z"), assignedRelicIds: ["anky", "rex", "spino"] as [string, string, string] };
+  return { ...createIdleExcavationState("2026-08-20T00:00:00.000Z"), assignedRelicIds: ["torika", "rex", "spino"] as [string, string, string] };
 }
 
-const starterProgress = { anky: progress(), rex: progress(), spino: progress() };
+const starterProgress = { torika: progress(), rex: progress(), spino: progress() };
 
 /** 기본 편성(토리카·렉시아·스피나)의 시간당 합산. 게이지의 분모를 손으로 적지 않는다. */
-const TOTALS = excavationProductionDisplayModel(["anky", "rex", "spino"], RELICS, starterProgress).totalsPerHour;
+const TOTALS = excavationProductionDisplayModel(["torika", "rex", "spino"], RELICS, starterProgress).totalsPerHour;
 
 const emptyWallet = { fossil: 0, gold: 0, cheesecake: 0, amber: 0, gems: 0, stamina: 0, dnaFragments: 0, rawStone: 0, raidSigil: 0, salvageRecord: 0 };
 
@@ -46,7 +46,7 @@ describe("방치 발굴 순수 규칙", () => {
   it("3칸이 다 차지 않은 편성도 유효하다", () => {
     // 자리를 고르는 규칙 자체는 formationSlots.test.ts가 지킨다. 여기서는 그 결과가 발굴 편성
     // 검증을 그대로 통과하는지만 본다.
-    expect(validateExcavationFormation([null, "anky", null], new Set(["rex", "anky"]))).toEqual({ valid: true });
+    expect(validateExcavationFormation([null, "torika", null], new Set(["rex", "torika"]))).toEqual({ valid: true });
   });
 
   it("서로 다른 자원 특화를 자원별로 합산한다", () => {
@@ -56,8 +56,8 @@ describe("방치 발굴 순수 규칙", () => {
   });
 
   it("네 발굴 재화가 실제 렐릭 데이터에서 모두 생산된다", () => {
-    const ids = ["anky", "spino", "rex", "dodo"];
-    const model = excavationProductionDisplayModel(["anky", "spino", "rex"], RELICS, { anky: progress(), spino: progress(), rex: progress() });
+    const ids = ["torika", "spino", "rex", "dodo"];
+    const model = excavationProductionDisplayModel(["torika", "spino", "rex"], RELICS, { torika: progress(), spino: progress(), rex: progress() });
     const diamond = excavationProductionDisplayModel(["dodo", null, null], RELICS, { dodo: progress(50, 4) });
     expect(new Set([...model.relics.map(({ currency }) => currency), diamond.relics[0].currency])).toEqual(new Set(["gold", "cheesecake", "rawStone", "gems"]));
     // 다이아는 높은 성장에서도 시간당 1개 미만이며 정수 수확 전까지 소수로 남는다.

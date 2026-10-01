@@ -90,7 +90,7 @@ describe("토리카 스킬 표시 계약", () => {
     // 아무도 때리지 않고 자리만 잡는 궁극기(델로피)는 자신만 가리키는 계약을 쓴다.
     // 듀오 한 명에게만 거는 궁극기(슈테)는 전장 전체 아군과 다른 계약이다.
     for (const def of RELICS) expect(["single", "nearbyEnemies", "battlefieldEnemies", "battlefieldAllies", "duo", "self", "targetedCircle", "chargeLine"]).toContain(def.ultimate.targeting);
-    const torika = RELICS.find((def) => def.id === "anky")!;
+    const torika = RELICS.find((def) => def.id === "torika")!;
     expect(torika.ultimate).toMatchObject({
       targeting: "nearbyEnemies",
       radius: 220,
@@ -121,11 +121,11 @@ describe("토리카 스킬 표시 계약", () => {
     expect(torika.basic.periodicBonusScaling).toEqual({ stat: "def", power: 50 });
     expect(torika.basic.desc).toBeUndefined();
     expect(skillDescription(torika.basic, { damage: 74 }))
-      .toBe("적 한 명에게 [[damage-value|74]]의 [[physical-damage|물리 피해]]를 주고 [[anky-basic-stack|세 개의 뿔]]을 한 겹 쌓는다.");
+      .toBe("적 한 명에게 [[damage-value|74]]의 [[physical-damage|물리 피해]]를 주고 [[torika-basic-stack|세 개의 뿔]]을 한 겹 쌓는다.");
 
     // 태그 본문은 실제 전투가 읽는 필드에서 짓는다 — 주기·수치를 조정하면 문장도 함께 바뀐다.
     const stack = periodicStackKeyword(torika.basic)!;
-    expect(stack).toMatchObject({ id: "anky-basic-stack", term: "세 개의 뿔", kind: "rule" });
+    expect(stack).toMatchObject({ id: "torika-basic-stack", term: "세 개의 뿔", kind: "rule" });
     expect(stack.description).toBe("기본 공격 한 번마다 한 겹씩 쌓이고 3겹째에 터진다. 터지는 타격은 방어력의 50%에 해당하는 물리 피해를 추가로 주고 0.5초 동안 기절시킨다. 터진 뒤 겹은 0으로 돌아간다.");
     // **태그 팝업 안에는 또 다른 태그를 두지 않는다** — 그 안에서 여는 설명은 화면의 임시
     // 사전을 물려받지 못해 눌러도 아무것도 열리지 않는다.

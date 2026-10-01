@@ -19,7 +19,7 @@ export const SKILL_ART_SLOTS: readonly SkillArtSlot[] = ["passive", "basic", "ul
  * 여기 없는 개체는 공용 효과 아이콘(`skillIcons.ts`)으로 남는다. 아트가 도착하면 이 목록에
  * id를 더하고 같은 이름의 폴더만 채우면 된다 — 화면 코드는 손대지 않는다.
  */
-const ART_FOLDERS: readonly string[] = ["anky", "rex", "spino", "luka", "dodo", "mette", "stella", "tia", "meron", "pachi", "maki", "keris", "delopi", "nodonia", "ella", "deina", "toby", "amo", "ripa", "pontos", "koma", "parua", "sukusuino", "taboa", "raitia"];
+const ART_FOLDERS: readonly string[] = ["torika", "rex", "spino", "luka", "dodo", "mette", "stella", "tia", "meron", "pachi", "maki", "keris", "delopi", "nodonia", "ella", "deina", "toby", "amo", "ripa", "pontos", "koma", "parua", "sukusuino", "taboa", "raitia"];
 
 /**
  * 한 세트를 나눠 쓰는 개체. 레이티아 다섯 자매는 같은 종이라 스킬 일러스트가 한 벌이고, 자매마다

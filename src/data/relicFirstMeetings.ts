@@ -5,7 +5,7 @@ import { registerDataText } from "../i18n";
  */
 export const RELIC_FIRST_MEETINGS: Readonly<Record<string, string>> = {
   rex: "전투의 여왕은 나야.",
-  anky: "대장님 앞은 제가 막을게요!",
+  torika: "대장님 앞은 제가 막을게요!",
   spino: "…물소리가 들리는 곳이라면, 어디든.",
   luka: "달리는 건 자신 있어. 소파 다음으로.",
   dodo: "대장님, 이것 좀 보세요! 세기의 대발견이에요!",

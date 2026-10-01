@@ -20,7 +20,7 @@ const SEEDS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
  * 바닥으로 삼으면 못 뽑은 사람이 그대로 막힌다. 초반에 확실히 손에 드는 셋으로 세우고, 몰아줄
  * 자리는 이 중 유일한 딜러인 파루아다 — 탱커에게 몰아주는 사람은 없다.
  */
-const FLOOR_ROSTER = ["anky", "dodo", "parua"] as const;
+const FLOOR_ROSTER = ["torika", "dodo", "parua"] as const;
 
 /**
  * **두 번째 축 — 실제로 밀 만한 파티.**
@@ -34,7 +34,7 @@ const FLOOR_ROSTER = ["anky", "dodo", "parua"] as const;
  * 않고 자리별 후보에서 조합을 만든다 — 한 조합만 박아 두면 그 조합에만 맞는 관문이 된다.
  */
 const BLENDED_DPS = ["rex", "spino", "maki"] as const;
-const BLENDED_TANK = ["anky", "nodonia", "ella"] as const;
+const BLENDED_TANK = ["torika", "nodonia", "ella"] as const;
 const BLENDED_SUPPORT = ["stella", "luka", "mette"] as const;
 
 /**
@@ -46,7 +46,7 @@ const BLENDED_SUPPORT = ["stella", "luka", "mette"] as const;
  * 들어오거나 정예의 속성이 바뀌면 이 셋을 다시 고른다.
  */
 const BLENDED_COMBOS = [
-  ["anky", "rex", "luka"],
+  ["torika", "rex", "luka"],
   ["ella", "maki", "stella"],
   ["nodonia", "spino", "mette"],
 ] as const;
@@ -351,16 +351,16 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
   it("토리카와 선택 가능한 R 두 명의 최선·최악 기준 파티를 실제 조합 탐색으로 만든다", () => {
     const enemies = getStageEnemies(getBattleStage("1-1"));
     const pairs = selectableRPartyPairs(PLAYABLE_RELICS);
-    const parties = selectReferenceParties(getRelic("anky"), PLAYABLE_RELICS, enemies, SEEDS);
+    const parties = selectReferenceParties(getRelic("torika"), PLAYABLE_RELICS, enemies, SEEDS);
     // 새 R이 추가되면 조합 수와 최선/최악 선택이 자동으로 넓어진다 — 파루아가 들어와 셋이, 켄토(불 탱커)가 들어와 여섯이 됐다.
     // 티아의 반짝이 표식을 옮겨 다니는 대신 그 자리에서 터뜨리는 쪽으로 바뀌면서 최악 조합이
     // 파루아 쪽으로 옮겨 갔다: 붙어서 같은 적을 계속 때리는 손이 이제 두 대마다 주위까지
     // 함께 적신다.
     expect(pairs.map((pair) => pair.map(({ id }) => id))).toEqual([["dodo", "tia"], ["dodo", "kento"], ["dodo", "parua"], ["tia", "kento"], ["tia", "parua"], ["kento", "parua"]]);
     // 실제 전장 크기로 옮기자(v0.172.6) 붙어서 싸우는 거리가 짧아져 도디·티아가 최악으로 내려앉았다.
-    expect(parties.favorable.map(({ id }) => id)).toEqual(["anky", "tia", "parua"]);
+    expect(parties.favorable.map(({ id }) => id)).toEqual(["torika", "tia", "parua"]);
     // 켄토는 평타가 약하고 반격으로 싸우는 탱커라 1-1에서는 가장 늦게 적을 쓰러뜨린다 — 최악 조합이 도디·켄토로 옮겨 갔다.
-    expect(parties.unfavorable.map(({ id }) => id)).toEqual(["anky", "dodo", "kento"]);
+    expect(parties.unfavorable.map(({ id }) => id)).toEqual(["torika", "dodo", "kento"]);
   });
 
   it("장 목표와 허용 조정 순서를 전용 배율 없이 공개한다", () => {

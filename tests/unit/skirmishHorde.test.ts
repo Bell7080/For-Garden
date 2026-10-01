@@ -43,7 +43,7 @@ describe("난전 물량", () => {
 
   it("몰려온 적을 모두 쓰러뜨려야 승리하고 승리는 한 번만 선다", () => {
     const tier = CAKE_OPERATION_TIERS[0];
-    const players = ["rex", "spino", "anky"].map((id) => getRelic(id));
+    const players = ["rex", "spino", "torika"].map((id) => getRelic(id));
     const state = createSkirmish(players, cakeOperationEnemies(tier), battleArena("cake"));
     runToEnd(state);
     if (state.phase === "victory") expect(state.fighters.filter(({ side, hp }) => side === "enemy" && hp > 0)).toHaveLength(0);

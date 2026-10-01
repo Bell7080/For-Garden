@@ -242,7 +242,7 @@ export const RELICS: RelicDef[] = [
     },
   },
   {
-    id: "anky",
+    id: "torika",
     squad: "rogue",
     name: "토리카",
     specimenNumber: "014",
@@ -316,7 +316,7 @@ export const RELICS: RelicDef[] = [
       passive: { kind: "sharedRecovery", percent: 25 },
     },
     passive: {
-      id: "anky-passive",
+      id: "torika-passive",
       name: "온화한 방패",
       kind: "emergencyRecovery",
       iconAssetId: "skill-icon-buff",
@@ -331,7 +331,7 @@ export const RELICS: RelicDef[] = [
       desc: "전투당 한 번, 체력이 절반 이하가 되면 5초 동안 매초 최대 체력의 3.5%를 회복한다.",
     },
     basic: {
-      id: "anky-basic",
+      id: "torika-basic",
       name: "들이받기",
       // 위력을 로스터 최저로 내리고 그 몫을 기절로 옮겼다. 한 방이 아프지 않은 대신 상대의
       // 시간을 빼앗는 개체라, 방어형 탱커가 "혼자 튼튼하기만 한" 자리에서 벗어난다.
@@ -352,7 +352,7 @@ export const RELICS: RelicDef[] = [
       statusEffects: [{ kind: "stun", seconds: 0.5 }],
     },
     ultimate: {
-      id: "anky-ult",
+      id: "torika-ult",
       name: "지각 붕괴",
       // 방어형 성장의 보상을 분명히 하기 위해 방어력 계수를 300%로 사용한다.
       power: 300,

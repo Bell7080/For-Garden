@@ -192,7 +192,7 @@ export const RAID_COMPLETED_KEEP_HOURS = 48;
  */
 export const RAID_MOCK_PARTICIPANTS = [
   { id: "raider-haneul", displayName: "하늘정원", favoriteRelicId: "rex", pace: 1.32 },
-  { id: "raider-moss", displayName: "이끼연구소", favoriteRelicId: "anky", pace: 0.71 },
+  { id: "raider-moss", displayName: "이끼연구소", favoriteRelicId: "torika", pace: 0.71 },
   { id: "raider-viola", displayName: "비올라", favoriteRelicId: "spino", pace: 1.18 },
   { id: "raider-kettle", displayName: "주전자", favoriteRelicId: "luka", pace: 0.94 },
   { id: "raider-noon", displayName: "정오의표본", favoriteRelicId: "dodo", pace: 1.07 },
@@ -213,7 +213,7 @@ export const RAID_MOCK_PARTICIPANTS = [
   { id: "raider-amberly", displayName: "호박빛", favoriteRelicId: "shute", pace: 1.06 },
   { id: "raider-slate", displayName: "점판암", favoriteRelicId: "dian", pace: 0.81 },
   { id: "raider-vellum", displayName: "양피지", favoriteRelicId: "rex", pace: 1.13 },
-  { id: "raider-drift", displayName: "표류", favoriteRelicId: "anky", pace: 0.73 },
+  { id: "raider-drift", displayName: "표류", favoriteRelicId: "torika", pace: 0.73 },
   { id: "raider-kiln", displayName: "가마", favoriteRelicId: "spino", pace: 1.27 },
 ] as const;
 

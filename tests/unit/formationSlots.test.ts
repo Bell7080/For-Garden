@@ -11,7 +11,7 @@ import {
 describe("자리를 비우기", () => {
   it("뒤 자리를 당기지 않는다", () => {
     // 2번을 비워도 3번은 3번에 그대로 선다 — 손대지 않은 자리가 저 혼자 움직이지 않는다.
-    expect(clearFormationSlot(["rex", "anky", "spino"], 1)).toEqual(["rex", null, "spino"]);
+    expect(clearFormationSlot(["rex", "torika", "spino"], 1)).toEqual(["rex", null, "spino"]);
   });
 
   it("범위 밖 인덱스는 아무것도 바꾸지 않는다", () => {
@@ -22,9 +22,9 @@ describe("자리를 비우기", () => {
   });
 
   it("호출자의 배열을 건드리지 않는다", () => {
-    const formation = ["rex", "anky", null];
+    const formation = ["rex", "torika", null];
     clearFormationSlot(formation, 0);
-    expect(formation).toEqual(["rex", "anky", null]);
+    expect(formation).toEqual(["rex", "torika", null]);
   });
 });
 
@@ -44,13 +44,13 @@ describe("목록의 카드를 누름", () => {
 
   it("빈 칸이 남지 않으면 방금 채운 자리에 머문다", () => {
     // 다 찬 뒤에 오는 손은 대개 방금 세운 렐릭을 바꿔 보려는 손이다.
-    const result = tapRosterRelic(["rex", "anky", null], 2, "spino");
-    expect(result.formation).toEqual(["rex", "anky", "spino"]);
+    const result = tapRosterRelic(["rex", "torika", null], 2, "spino");
+    expect(result.formation).toEqual(["rex", "torika", "spino"]);
     expect(result.selectedSlot).toBe(2);
   });
 
   it("고른 자리에 누가 서 있으면 그대로 갈아 끼운다", () => {
-    const result = tapRosterRelic(["rex", "anky", null], 1, "spino");
+    const result = tapRosterRelic(["rex", "torika", null], 1, "spino");
     expect(result.formation).toEqual(["rex", "spino", null]);
     // 갈아 끼운 뒤에도 남은 빈 칸이 있으면 그리로 넘어간다.
     expect(result.selectedSlot).toBe(2);
@@ -70,22 +70,22 @@ describe("목록의 카드를 누름", () => {
 
 describe("자리를 누름", () => {
   it("고르지 않은 자리를 누르면 고르기만 하고 캐릭터는 그대로 선다", () => {
-    const result = tapFormationSlot(["rex", "anky", "spino"], 1, 0);
-    expect(result.formation).toEqual(["rex", "anky", "spino"]);
+    const result = tapFormationSlot(["rex", "torika", "spino"], 1, 0);
+    expect(result.formation).toEqual(["rex", "torika", "spino"]);
     expect(result.selectedSlot).toBe(1);
     expect(result.cleared).toBe(false);
   });
 
   it("이미 고른 자리를 한 번 더 누르면 그 자리만 비운다", () => {
-    const result = tapFormationSlot(["rex", "anky", "spino"], 1, 1);
+    const result = tapFormationSlot(["rex", "torika", "spino"], 1, 1);
     expect(result.formation).toEqual(["rex", null, "spino"]);
     expect(result.selectedSlot).toBe(1);
     expect(result.cleared).toBe(true);
   });
 
   it("`−`는 고르지 않은 자리에서도 곧바로 비운다", () => {
-    const result = tapFormationSlot(["rex", "anky", "spino"], 2, 0, "clear");
-    expect(result.formation).toEqual(["rex", "anky", null]);
+    const result = tapFormationSlot(["rex", "torika", "spino"], 2, 0, "clear");
+    expect(result.formation).toEqual(["rex", "torika", null]);
     expect(result.selectedSlot).toBe(2);
   });
 
@@ -103,7 +103,7 @@ describe("편성원과 고정 길이", () => {
 
   it("모자라면 빈 자리로 채우고 넘치면 자른다", () => {
     expect(toFormationSlots(["rex"], 3)).toEqual(["rex", null, null]);
-    expect(toFormationSlots(["rex", "anky", "spino", "dodi"], 3)).toEqual(["rex", "anky", "spino"]);
+    expect(toFormationSlots(["rex", "torika", "spino", "dodi"], 3)).toEqual(["rex", "torika", "spino"]);
   });
 });
 
@@ -117,8 +117,8 @@ describe("아무 칸도 고르지 않았을 때", () => {
 
   it("이미 다 찼으면 아무것도 바꾸지 않는다", () => {
     // 누구를 물릴지는 사람이 정한다. 마지막 칸을 임의로 갈아 끼우면 누르지 않은 자리가 사라진다.
-    const result = tapRosterRelic(["rex", "anky", "spino"], undefined, "dodi");
-    expect(result.formation).toEqual(["rex", "anky", "spino"]);
+    const result = tapRosterRelic(["rex", "torika", "spino"], undefined, "dodi");
+    expect(result.formation).toEqual(["rex", "torika", "spino"]);
     expect(result.selectedSlot).toBeUndefined();
   });
 
@@ -134,10 +134,10 @@ describe("다음 빈 칸", () => {
 
   it("는 뒤가 차 있으면 한 바퀴 돌아 앞의 빈 칸을 찾는다", () => {
     // 3번을 먼저 채운 손이 1번을 채우러 칸을 다시 누를 이유가 없다.
-    expect(nextEmptySlot([null, "anky", "spino"], 2)).toBe(0);
+    expect(nextEmptySlot([null, "torika", "spino"], 2)).toBe(0);
   });
 
   it("는 빈 칸이 없으면 아무 칸도 고르지 않는다", () => {
-    expect(nextEmptySlot(["rex", "anky", "spino"], 1)).toBeUndefined();
+    expect(nextEmptySlot(["rex", "torika", "spino"], 1)).toBeUndefined();
   });
 });

@@ -38,7 +38,7 @@ export const DEFAULT_ULTIMATE_PRESENTATION: Readonly<UltimatePresentation> = Obj
 /** 현재 출시 렐릭의 개성을 조정하는 유일한 프레젠테이션 표다. */
 export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentation>> = Object.freeze({
   rex: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 1.08, zoomScale: 1.3, cameraShakeIntensity: 0.013 },
-  anky: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.96, zoomScale: 1.26, zoomMs: 115, cameraShakeIntensity: 0.012 },
+  torika: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.96, zoomScale: 1.26, zoomMs: 115, cameraShakeIntensity: 0.012 },
   spino: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 1.04, artworkOrigin: { x: 680, y: 820 }, zoomScale: 1.28, cameraShakeIntensity: 0.012 },
   luka: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkOrigin: { x: 620, y: 800 }, cutInHoldMs: 140, zoomScale: 1.18, zoomMs: 110 },
   dodo: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.9, artworkOrigin: { x: 640, y: 790 }, zoomScale: 1.14, cameraShakeIntensity: 0.006 },

@@ -60,12 +60,12 @@ describe("얼음 가로채기", () => {
   });
 
   it("effectiveElement는 elementOverride가 없으면 원래 속성을 그대로 돌려준다", () => {
-    const anky = getRelic("anky");
-    expect(effectiveElement(anky)).toBe(anky.element);
+    const torika = getRelic("torika");
+    expect(effectiveElement(torika)).toBe(torika.element);
   });
 
   it("effectiveElement는 elementOverride가 있으면 그 값으로 가로챈다", () => {
-    const disguised = { ...getRelic("anky"), passive: { ...getRelic("anky").passive, elementOverride: "ice" as const } };
+    const disguised = { ...getRelic("torika"), passive: { ...getRelic("torika").passive, elementOverride: "ice" as const } };
     expect(disguised.element).toBe("earth");
     expect(effectiveElement(disguised)).toBe("ice");
   });

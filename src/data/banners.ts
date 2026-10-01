@@ -95,7 +95,7 @@ export const BANNERS: Banner[] = [
     highestRarityGuarantee: 50,
   },
   {
-    id: "fossil", pityGroupId: PITY_GROUP.STANDARD, name: "화석 연구", featuredRelicId: "anky",
+    id: "fossil", pityGroupId: PITY_GROUP.STANDARD, name: "화석 연구", featuredRelicId: "torika",
     artKey: BACKGROUND.recruitFossil,
     // 연구 방식과 픽업 대상은 각각 기능명·픽업 표식으로 이미 전달하므로 설명형 문구를 노출하지 않는다.
     /*

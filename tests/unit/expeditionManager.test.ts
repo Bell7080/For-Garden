@@ -18,22 +18,22 @@ describe("ExpeditionManager", () => {
     // 첫 상태 조회의 주차 정규화 저장은 시작 검증 저장과 구분해 제거한다.
     manager.status();
     save.mockClear();
-    expect(manager.start(["anky", "rex"])).toEqual({ ok: false, reason: "exactlyThree" });
-    expect(manager.start(["anky", "rex", "rex"])).toEqual({ ok: false, reason: "duplicate" });
-    expect(manager.start(["anky", "rex", "unknown"])).toEqual({ ok: false, reason: "notOwned" });
+    expect(manager.start(["torika", "rex"])).toEqual({ ok: false, reason: "exactlyThree" });
+    expect(manager.start(["torika", "rex", "rex"])).toEqual({ ok: false, reason: "duplicate" });
+    expect(manager.start(["torika", "rex", "unknown"])).toEqual({ ok: false, reason: "notOwned" });
     expect(save).not.toHaveBeenCalled();
 
-    const result = manager.start(["anky", "rex", "spino"]);
+    const result = manager.start(["torika", "rex", "spino"]);
     expect(result.ok).toBe(true);
-    expect(state.expedition.run?.relics.map(({ relicId }) => relicId)).toEqual(["anky", "rex", "spino"]);
-    expect(state.expedition.lastParty).toEqual(["anky", "rex", "spino"]);
+    expect(state.expedition.run?.relics.map(({ relicId }) => relicId)).toEqual(["torika", "rex", "spino"]);
+    expect(state.expedition.lastParty).toEqual(["torika", "rex", "spino"]);
     expect(save).toHaveBeenCalledTimes(1);
   });
 
   it("preserves an active expedition across weekly rollover and blocks replacement", () => {
     const state = createDefaultSession();
     const setup = new ExpeditionManager(state, { save: vi.fn() }, () => new Date("2026-08-23T12:00:00Z"));
-    setup.start(["anky", "rex", "spino"]);
+    setup.start(["torika", "rex", "spino"]);
     state.expedition = { ...state.expedition, weekKey: "2026-08-17", dayKey: "2026-08-23", playsToday: 1, bestScore: 9200, bestAchievedAt: "2026-08-20T00:00:00Z" };
     if (state.expedition.run) state.expedition.run.bestScore = 300;
     const manager = new ExpeditionManager(state, { save: vi.fn() }, () => new Date("2026-08-25T12:00:00Z"));
@@ -44,7 +44,7 @@ describe("ExpeditionManager", () => {
     // 지난주 최고 기록은 지워지지 않고 순위 보상 대기로 옮겨 간다.
     expect(state.expedition.pendingRankReward).toEqual({ weekKey: "2026-08-17", score: 9200, achievedAt: "2026-08-20T00:00:00Z" });
     expect(status.run?.bestScore).toBe(300);
-    expect(manager.start(["anky", "rex", "spino"])).toEqual({ ok: false, reason: "alreadyActive" });
+    expect(manager.start(["torika", "rex", "spino"])).toEqual({ ok: false, reason: "alreadyActive" });
   });
 
   it("exposes quick expedition only after a weekly score and without active progress", () => {
@@ -57,7 +57,7 @@ describe("ExpeditionManager", () => {
   it("기존 settled 런을 비활성으로 정리해 재진입에서 새 편성을 허용한다", () => {
     const state = createDefaultSession(); const save = vi.fn();
     const manager = new ExpeditionManager(state, { save }, () => new Date("2026-08-25T12:00:00Z"));
-    manager.start(["anky", "rex", "spino"]);
+    manager.start(["torika", "rex", "spino"]);
     state.expedition.run!.settled = true;
     state.expedition.run!.settlementId = "legacy-settlement";
     save.mockClear();
@@ -67,7 +67,7 @@ describe("ExpeditionManager", () => {
     expect(status.run).toBeNull();
     expect(state.expedition.run).toBeNull();
     expect(save).toHaveBeenCalledTimes(1);
-    expect(manager.start(["anky", "rex", "spino"]).ok).toBe(true);
+    expect(manager.start(["torika", "rex", "spino"]).ok).toBe(true);
   });
 
   it("원정은 하루 한 번이고 날이 바뀌면 다시 열린다", () => {
@@ -75,13 +75,13 @@ describe("ExpeditionManager", () => {
     let now = new Date("2026-08-25T12:00:00Z");
     const manager = new ExpeditionManager(state, { save: vi.fn() }, () => now);
     expect(manager.status().canStartRun).toBe(true);
-    expect(manager.start(["anky", "rex", "spino"]).ok).toBe(true);
+    expect(manager.start(["torika", "rex", "spino"]).ok).toBe(true);
 
     // 활성 런을 비워 다음 시도가 alreadyActive가 아니라 하루 한도로 막히는지 본다.
     state.expedition.run = null;
     state.expedition.playsToday = 1;
     expect(manager.status().canStartRun).toBe(false);
-    expect(manager.start(["anky", "rex", "spino"])).toEqual({ ok: false, reason: "dailyLimitReached" });
+    expect(manager.start(["torika", "rex", "spino"])).toEqual({ ok: false, reason: "dailyLimitReached" });
 
     now = new Date("2026-08-26T00:10:00Z");
     expect(manager.status().canStartRun).toBe(true);
@@ -92,7 +92,7 @@ describe("ExpeditionManager", () => {
     const state = createDefaultSession();
     const save = vi.fn();
     const manager = new ExpeditionManager(state, { save }, () => new Date("2026-08-25T12:00:00Z"));
-    manager.start(["anky", "rex", "spino"]);
+    manager.start(["torika", "rex", "spino"]);
     const node = state.expedition.run!.nodes.find(({ type }) => type === "rest")!;
     state.expedition.run!.relics[0].currentHp = 20;
     save.mockClear();
@@ -109,22 +109,22 @@ describe("ExpeditionManager", () => {
   it("전투 결과의 생존자만 전체 회복 증강 합계만큼 회복하고 100에서 제한한다", () => {
     const state = createDefaultSession(); const save = vi.fn();
     const manager = new ExpeditionManager(state, { save }, () => new Date("2026-08-25T12:00:00Z"));
-    manager.start(["anky", "rex", "spino"]);
+    manager.start(["torika", "rex", "spino"]);
     const node = state.expedition.run!.nodes.find(({ type }) => type === "normal")!;
     // SR 전체 회복과 SSR 전체 회복을 중복 선택한 저장 스냅샷을 구성한다.
     state.expedition.run!.selectedAugments = [
       { augmentId: "field-repair" }, { augmentId: "field-repair" }, { augmentId: "regrowth-protocol" },
-      { augmentId: "predator-instinct", targetRelicId: "anky" },
+      { augmentId: "predator-instinct", targetRelicId: "torika" },
     ];
     save.mockClear();
 
     expect(manager.completeBattle(node.id, [
-      { relicId: "anky", currentHp: 90, alive: true },
+      { relicId: "torika", currentHp: 90, alive: true },
       { relicId: "rex", currentHp: 40, alive: true },
       { relicId: "spino", currentHp: 0, alive: false },
     ])).toBe(true);
     expect(state.expedition.run!.relics.map(({ relicId, currentHp, alive }) => ({ relicId, currentHp, alive }))).toEqual([
-      { relicId: "anky", currentHp: 100, alive: true },
+      { relicId: "torika", currentHp: 100, alive: true },
       { relicId: "rex", currentHp: 72, alive: true },
       { relicId: "spino", currentHp: 0, alive: false },
     ]);
@@ -136,12 +136,12 @@ describe("ExpeditionManager", () => {
   it("중복 회복은 50% 상한이며 같은 전투 결과 재전송은 회복과 저장을 반복하지 않는다", () => {
     const state = createDefaultSession(); const save = vi.fn();
     const manager = new ExpeditionManager(state, { save }, () => new Date("2026-08-25T12:00:00Z"));
-    manager.start(["anky", "rex", "spino"]);
+    manager.start(["torika", "rex", "spino"]);
     const node = state.expedition.run!.nodes.find(({ type }) => type === "boss")!;
     // 16% 네 장은 64%지만 순수 누적 규칙의 전투당 상한 50%가 적용된다.
     state.expedition.run!.selectedAugments = Array.from({ length: 4 }, () => ({ augmentId: "regrowth-protocol" }));
     const results = [
-      { relicId: "anky", currentHp: 10, alive: true },
+      { relicId: "torika", currentHp: 10, alive: true },
       { relicId: "rex", currentHp: 0, alive: false },
       { relicId: "spino", currentHp: 25, alive: true },
     ] as const;
@@ -158,20 +158,20 @@ describe("ExpeditionManager", () => {
   it("전멸 결과에는 회복 증강이 발동해도 사망자를 자동 부활시키지 않는다", () => {
     const state = createDefaultSession(); const save = vi.fn();
     const manager = new ExpeditionManager(state, { save }, () => new Date("2026-08-25T12:00:00Z"));
-    manager.start(["anky", "rex", "spino"]);
+    manager.start(["torika", "rex", "spino"]);
     const node = state.expedition.run!.nodes.find(({ type }) => type === "elite")!;
     state.expedition.run!.selectedAugments = [{ augmentId: "regrowth-protocol" }];
 
-    expect(manager.completeBattle(node.id, ["anky", "rex", "spino"].map((relicId) => ({ relicId, currentHp: 0, alive: false })))).toBe(true);
+    expect(manager.completeBattle(node.id, ["torika", "rex", "spino"].map((relicId) => ({ relicId, currentHp: 0, alive: false })))).toBe(true);
     expect(state.expedition.run!.relics.every(({ currentHp, alive }) => currentHp === 0 && !alive)).toBe(true);
   });
 
   it("클라이언트 HP 헬퍼는 일반 노드 점수를 만들지 않고 같은 노드 재시도도 거절한다", () => {
     const state = createDefaultSession();
     const manager = new ExpeditionManager(state, { save: vi.fn() }, () => new Date("2026-08-25T12:00:00Z"));
-    manager.start(["anky", "rex", "spino"]);
+    manager.start(["torika", "rex", "spino"]);
     const first = state.expedition.run!.nodes.find(({ floor }) => floor === 1)!;
-    const results = ["anky", "rex", "spino"].map((relicId) => ({ relicId, currentHp: 100, alive: true }));
+    const results = ["torika", "rex", "spino"].map((relicId) => ({ relicId, currentHp: 100, alive: true }));
     expect(manager.completeBattle(first.id, results)).toBe(true);
     const second = state.expedition.run!.nodes.find(({ id }) => first.successorIds.includes(id))!;
     expect(manager.completeBattle(second.id, results)).toBe(true);
@@ -185,7 +185,7 @@ describe("ExpeditionManager", () => {
   it("보스 제출과 정산 ID를 전투 진입 전에 한 번만 저장한다", () => {
     const state = createDefaultSession(); const save = vi.fn();
     const manager = new ExpeditionManager(state, { save }, () => new Date("2026-08-25T12:00:00Z"));
-    manager.start(["anky", "rex", "spino"]);
+    manager.start(["torika", "rex", "spino"]);
     const boss = state.expedition.run!.nodes.find(({ type }) => type === "boss")!;
     const first = manager.prepareBossRequests(boss.id); const repeated = manager.prepareBossRequests(boss.id);
     expect(repeated).toEqual(first);
@@ -195,11 +195,11 @@ describe("ExpeditionManager", () => {
   it("개발 바로가기가 유효한 지도와 선택한 3기 편성을 보스 직전까지 한 번에 보존한다", () => {
     const state = createDefaultSession(); const save = vi.fn();
     const manager = new ExpeditionManager(state, { save }, () => new Date("2026-08-25T12:00:00Z"), true);
-    const result = manager.prepareDevelopmentBossShortcut(["spino", "anky", "rex"]);
+    const result = manager.prepareDevelopmentBossShortcut(["spino", "torika", "rex"]);
     expect(result.ok).toBe(true);
     const run = state.expedition.run!;
     expect(validateExpeditionMap({ seed: run.mapSeed, nodes: run.nodes })).toEqual([]);
-    expect(run.relics.map(({ relicId }) => relicId)).toEqual(["spino", "anky", "rex"]);
+    expect(run.relics.map(({ relicId }) => relicId)).toEqual(["spino", "torika", "rex"]);
     expect(run.nodes.find(({ id }) => id === run.currentNodeId)).toMatchObject({ floor: 19 });
     expect(run.nodes.find(({ type }) => type === "boss")?.predecessorIds).toContain(run.currentNodeId);
     expect(save).toHaveBeenCalledTimes(2); // 주차 정규화와 완성된 바로가기 스냅샷만 각각 저장한다.
@@ -208,7 +208,7 @@ describe("ExpeditionManager", () => {
   it("production 경계에서는 개발 바로가기를 상태 변경 없이 거부한다", () => {
     const state = createDefaultSession(); const save = vi.fn();
     const manager = new ExpeditionManager(state, { save }, () => new Date("2026-08-25T12:00:00Z"), false);
-    expect(manager.prepareDevelopmentBossShortcut(["anky", "rex", "spino"])).toEqual({ ok: false, reason: "developmentOnly" });
+    expect(manager.prepareDevelopmentBossShortcut(["torika", "rex", "spino"])).toEqual({ ok: false, reason: "developmentOnly" });
     expect(state.expedition.run).toBeNull();
     expect(save).not.toHaveBeenCalled();
   });
@@ -216,7 +216,7 @@ describe("ExpeditionManager", () => {
   it("개발 바로가기에서 선점한 보스 요청 ID를 재진입해도 중복 생성하지 않는다", () => {
     const state = createDefaultSession(); const save = vi.fn();
     const manager = new ExpeditionManager(state, { save }, () => new Date("2026-08-25T12:00:00Z"), true);
-    const shortcut = manager.prepareDevelopmentBossShortcut(["anky", "rex", "spino"]);
+    const shortcut = manager.prepareDevelopmentBossShortcut(["torika", "rex", "spino"]);
     expect(shortcut.ok).toBe(true);
     const boss = state.expedition.run!.nodes.find(({ type }) => type === "boss")!;
     const before = { requestId: state.expedition.run!.bossSubmissionId, settlementId: state.expedition.run!.bossSettlementId };
@@ -228,31 +228,31 @@ describe("ExpeditionManager", () => {
   it("원정은 떠날 때의 성장을 굳혀 두고 도중의 급여·돌파·룬·외형을 반영하지 않는다", () => {
     const state = createDefaultSession(); const save = vi.fn();
     const manager = new ExpeditionManager(state, { save }, () => new Date("2026-08-25T12:00:00Z"));
-    expect(manager.start(["anky", "rex", "spino"]).ok).toBe(true);
-    const before = manager.snapshotFor("anky");
+    expect(manager.start(["torika", "rex", "spino"]).ok).toBe(true);
+    const before = manager.snapshotFor("torika");
     // 떠난 뒤 성장을 바꾼다.
-    state.relicProgress.anky = { ...state.relicProgress.anky, level: before.level + 10, breakthrough: 2, heartGemSlots: [null, null, null] };
-    state.equippedRelicSkinIds.anky = "changed-skin" as never;
-    const after = manager.snapshotFor("anky");
+    state.relicProgress.torika = { ...state.relicProgress.torika, level: before.level + 10, breakthrough: 2, heartGemSlots: [null, null, null] };
+    state.equippedRelicSkinIds.torika = "changed-skin" as never;
+    const after = manager.snapshotFor("torika");
     expect(after.level).toBe(before.level);
     expect(after.breakthrough).toBe(before.breakthrough);
     expect(after.stats).toEqual(before.stats);
     expect(after.skinId).toBe(before.skinId);
     // 런이 없으면 지금 성장을 읽는다 — 편성 화면은 바로 바뀐다.
     state.expedition.run = null;
-    expect(manager.snapshotFor("anky").level).toBe(before.level + 10);
+    expect(manager.snapshotFor("torika").level).toBe(before.level + 10);
   });
 
   it("스냅샷이 없던 런은 불러올 때 한 번 굳힌다", () => {
     const state = createDefaultSession(); const save = vi.fn();
     const manager = new ExpeditionManager(state, { save }, () => new Date("2026-08-25T12:00:00Z"));
-    manager.start(["anky", "rex", "spino"]);
+    manager.start(["torika", "rex", "spino"]);
     state.expedition.run!.relics.forEach((relic) => { delete relic.snapshot; });
     manager.status();
     expect(state.expedition.run!.relics.every(({ snapshot }) => snapshot !== undefined)).toBe(true);
     const level = state.expedition.run!.relics[0].snapshot!.level;
-    state.relicProgress.anky = { ...state.relicProgress.anky, level: level + 5 };
+    state.relicProgress.torika = { ...state.relicProgress.torika, level: level + 5 };
     manager.status();
-    expect(manager.snapshotFor("anky").level).toBe(level);
+    expect(manager.snapshotFor("torika").level).toBe(level);
   });
 });

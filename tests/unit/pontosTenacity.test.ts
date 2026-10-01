@@ -21,14 +21,14 @@ const ARENA = { left: 0, right: 600, top: 0, bottom: 1_000 };
  * 자리를 새긴 정의로 세운다.
  */
 function pontos(): Fighter {
-  const state = createSkirmish([getRelic("anky")], [{ ...getRelic("pontos"), encounterRole: "endless" }], ARENA);
+  const state = createSkirmish([getRelic("torika")], [{ ...getRelic("pontos"), encounterRole: "endless" }], ARENA);
   return state.fighters[1];
 }
 
 describe("자리가 갖는 강인함·경감", () => {
   it("은 개체가 아니라 그 적이 선 자리에서 온다", () => {
     // 같은 폰토스라도 자리를 새기지 않으면(도감 정의) 아무것도 갖지 않는다.
-    const bare = createSkirmish([getRelic("anky")], [getRelic("pontos")], ARENA).fighters[1];
+    const bare = createSkirmish([getRelic("torika")], [getRelic("pontos")], ARENA).fighters[1];
     applyStun(bare, 1);
     expect(controlResistPercent(bare)).toBe(0);
     expect(receivedDamage(bare, 1_000)).toBeGreaterThan(300);
@@ -54,7 +54,7 @@ describe("자리가 갖는 강인함·경감", () => {
   });
 
   it("은 레이드 보스에게 경감 없이 강인함만 준다", () => {
-    const state = createSkirmish([getRelic("anky")], [raidBossDef(getRelic("sukusuino"))], ARENA);
+    const state = createSkirmish([getRelic("torika")], [raidBossDef(getRelic("sukusuino"))], ARENA);
     const boss = state.fighters[1];
     expect(controlResistPercent(boss)).toBe(ENCOUNTER_ROLE.boss.tenacity!.basePercent);
     applyStun(boss, 1);
@@ -118,7 +118,7 @@ describe("불사 자리의 강인함", () => {
   });
 
   it("은 값을 적지 않은 개체에게는 아무 일도 하지 않는다", () => {
-    const state = createSkirmish([getRelic("anky")], [getRelic("toby")], ARENA);
+    const state = createSkirmish([getRelic("torika")], [getRelic("toby")], ARENA);
     const [ally, foe] = state.fighters;
     applyStun(foe, 1);
     applyStun(foe, 1);
@@ -158,7 +158,7 @@ describe("불사 자리의 경감", () => {
 describe("폰토스전의 원정 점수", () => {
   /** 불사 보스를 세우고 아군이 한 번 때리게 한 뒤, 점수와 실제로 깎인 체력을 함께 돌려준다. */
   function oneHit(bossHpRatio: number) {
-    const state = createSkirmish([getRelic("anky")], [{ ...getRelic("pontos"), encounterRole: "endless" }], ARENA, {}, {}, {
+    const state = createSkirmish([getRelic("torika")], [{ ...getRelic("pontos"), encounterRole: "endless" }], ARENA, {}, {}, {
       boss: { phases: [{ startsAt: 0, damagePerSecond: 0, label: "관측" }], limitSeconds: 1_000 },
     });
     const [ally, boss] = state.fighters;

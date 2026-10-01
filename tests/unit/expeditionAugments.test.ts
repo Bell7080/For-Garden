@@ -32,10 +32,10 @@ describe("원정 증강 능력치", () => {
       { kind: "maxHpPercent", percent: 10, scope: { kind: "all" } },
       { kind: "maxHpPercent", percent: 20, scope: { kind: "relic", relicId: "rex" } },
       { kind: "defensePercent", percent: 15, scope: { kind: "all" } },
-      { kind: "spellPowerPercent", percent: 25, scope: { kind: "relic", relicId: "anky" } },
+      { kind: "spellPowerPercent", percent: 25, scope: { kind: "relic", relicId: "torika" } },
     ];
     expect(expeditionAugmentStatMultipliers(effects, "rex")).toMatchObject({ maxHpPercent: 1.3, defensePercent: 1.15, spellPowerPercent: 1 });
-    expect(expeditionAugmentStatMultipliers(effects, "anky")).toMatchObject({ maxHpPercent: 1.1, defensePercent: 1.15, spellPowerPercent: 1.25 });
+    expect(expeditionAugmentStatMultipliers(effects, "torika")).toMatchObject({ maxHpPercent: 1.1, defensePercent: 1.15, spellPowerPercent: 1.25 });
   });
 
   it("합산 상한형은 상한에서 멈추고 최강 단일형은 가장 큰 효과 하나만 쓴다", () => {

@@ -88,7 +88,7 @@ const PLACEHOLDER_NAMES = [
 ] as const;
 
 /** 표본이 세우는 얼굴. 실제 이용자 풀이 생기면 이 목록도 함께 지운다. */
-const PLACEHOLDER_FACES = ["rex", "anky", "dodo", "spino", "mette", "tia", "parua", "luka", "maki", "stella"] as const;
+const PLACEHOLDER_FACES = ["rex", "torika", "dodo", "spino", "mette", "tia", "parua", "luka", "maki", "stella"] as const;
 
 /** 표본 한 사람. 점수는 내 기록을 기준으로 위아래로 고르게 흩어진다. */
 export function placeholderRankingEntries(bestScore: number, count: number): ExpeditionLeaderboardEntry[] {

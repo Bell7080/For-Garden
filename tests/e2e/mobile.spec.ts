@@ -408,7 +408,7 @@ test("방치 발굴 팝업은 좁은 로비 위 한 장으로 열리고 뒤 입�
 test("SD 완료 뒤 세 슬롯의 공용 입력면이 각각 올바른 편집 슬롯으로 진입한다", async ({ page }) => {
   await startAfterOpening(page, (session) => {
     // 기본 저장의 편성은 비어 있으므로 SD가 실제로 서는 세 자리를 명시적으로 채운다.
-    session.idleExcavation.assignedRelicIds = ["anky", "rex", "spino"];
+    session.idleExcavation.assignedRelicIds = ["torika", "rex", "spino"];
     // 작은 모바일과 1.15 텍스트 확대 조합에서도 슬롯 입력면의 고정 안전 영역을 검증한다.
     session.settings.accessibility.textScale = 1.15;
   });

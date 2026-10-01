@@ -43,7 +43,7 @@ describe("코아틀 — 셋째 레이드 보스", () => {
   });
 
   it("전투가 열리면 표적에게 급강하해 기절시킨다", () => {
-    const state = createSkirmish([getRelic("anky"), getRelic("amo")], [boss], ARENA);
+    const state = createSkirmish([getRelic("torika"), getRelic("amo")], [boss], ARENA);
     const events: SkirmishEvent[] = [];
     for (let frame = 0; frame < 60 * 12 && !events.some((event) => event.kind === "charge"); frame += 1) events.push(...stepSkirmish(state, 1 / 60));
     const charge = events.find((event): event is Extract<SkirmishEvent, { kind: "charge" }> => event.kind === "charge");
@@ -52,7 +52,7 @@ describe("코아틀 — 셋째 레이드 보스", () => {
   });
 
   it("궁극기는 한 줄로 뚫고 지나가며 길 위의 아군을 모두 친다", () => {
-    const state = createSkirmish([getRelic("anky"), getRelic("amo")], [boss], ARENA);
+    const state = createSkirmish([getRelic("torika"), getRelic("amo")], [boss], ARENA);
     const [first, second, bossFighter] = state.fighters;
     bossFighter.openingChargeReady = false;
     bossFighter.x = 200; bossFighter.y = 1000;
@@ -77,7 +77,7 @@ describe("코아틀 — 셋째 레이드 보스", () => {
   it("레이드 보스 자리에 세우면 강인함을 가진 보스로 서고, 30초 전투가 끝까지 돈다", () => {
     const def = raidBossDef(boss);
     expect(def.encounterRole).toBe("boss");
-    const state = createSkirmish([getRelic("anky"), getRelic("amo"), getRelic("rex")], [def], ARENA);
+    const state = createSkirmish([getRelic("torika"), getRelic("amo"), getRelic("rex")], [def], ARENA);
     for (let frame = 0; frame < 60 * 30 && state.phase === "fight"; frame += 1) stepSkirmish(state, 1 / 60);
     expect(state.fighters.every((fighter) => Number.isFinite(fighter.hp))).toBe(true);
   });

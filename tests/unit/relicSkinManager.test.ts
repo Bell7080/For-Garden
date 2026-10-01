@@ -17,7 +17,7 @@ describe("RelicSkinManager", () => {
 
     expect(manager.equip("tia", "torika-skin-001")).toBe(false);
     state.ownedRelicSkinIds.clear();
-    expect(manager.equip("anky", "torika-skin-001")).toBe(false);
+    expect(manager.equip("torika", "torika-skin-001")).toBe(false);
     // 기본 해금 복구 뒤에도 다른 렐릭용 외형이라는 장착 규칙은 그대로 적용된다.
     state.ownedRelicSkinIds.add("torika-skin-001");
     expect(manager.equip("rex", "torika-skin-001")).toBe(false);
@@ -33,18 +33,18 @@ describe("RelicSkinManager", () => {
     const unsubscribe = manager.subscribe(listener);
 
     expect(manager.owns("torika-skin-001")).toBe(true);
-    expect(manager.equippedFor("anky")).toBeUndefined();
-    expect(manager.equip("anky", "torika-skin-001")).toBe(true);
-    expect(manager.equippedFor("anky")).toBe("torika-skin-001");
-    expect(manager.unequip("anky")).toBe(true);
-    expect(manager.equippedFor("anky")).toBeUndefined();
+    expect(manager.equippedFor("torika")).toBeUndefined();
+    expect(manager.equip("torika", "torika-skin-001")).toBe(true);
+    expect(manager.equippedFor("torika")).toBe("torika-skin-001");
+    expect(manager.unequip("torika")).toBe(true);
+    expect(manager.equippedFor("torika")).toBeUndefined();
     expect(saves.save).toHaveBeenCalledTimes(2);
     expect(saves.save).toHaveBeenNthCalledWith(1, state);
     // 저장 뒤 사건만 발행해 정보창·도감·로비가 확정 상태를 함께 다시 읽는다.
-    expect(listener).toHaveBeenNthCalledWith(1, { relicId: "anky", equippedSkinId: "torika-skin-001" });
-    expect(listener).toHaveBeenNthCalledWith(2, { relicId: "anky", equippedSkinId: undefined });
+    expect(listener).toHaveBeenNthCalledWith(1, { relicId: "torika", equippedSkinId: "torika-skin-001" });
+    expect(listener).toHaveBeenNthCalledWith(2, { relicId: "torika", equippedSkinId: undefined });
     unsubscribe();
-    manager.equip("anky", "torika-skin-001");
+    manager.equip("torika", "torika-skin-001");
     expect(listener).toHaveBeenCalledTimes(2);
   });
 });

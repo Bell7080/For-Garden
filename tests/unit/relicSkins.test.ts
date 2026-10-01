@@ -8,11 +8,11 @@ describe("relic skins", () => {
     // 상태 코드가 특정 ID를 복제하지 않도록 공개 헬퍼의 계산 결과를 계약으로 고정한다.
     expect(defaultUnlockedRelicSkinIds()).toEqual(["torika-skin-001"]);
   });
-  it("토리카 추가 외형은 anky에만 연결된다", () => {
+  it("토리카 추가 외형은 torika에만 연결된다", () => {
     // 표시명이나 파일 번호가 아니라 저장 호환 렐릭 ID로 소유 대상을 고정한다.
-    expect(skinsForRelic("anky").map(({ id }) => id))
+    expect(skinsForRelic("torika").map(({ id }) => id))
       .toEqual(["torika-skin-001", "torika-skin-002", "torika-skin-003", "torika-skin-004", "torika-skin-005"]);
-    expect(RELIC_SKINS.filter(({ id }) => id === "torika-skin-001").map(({ relicId }) => relicId)).toEqual(["anky"]);
+    expect(RELIC_SKINS.filter(({ id }) => id === "torika-skin-001").map(({ relicId }) => relicId)).toEqual(["torika"]);
     expect(skinsForRelic("rex")).toEqual([]);
   });
 

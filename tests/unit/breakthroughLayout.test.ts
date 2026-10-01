@@ -75,7 +75,7 @@ describe("한계 돌파 표", () => {
     // 실제 문구가 그 안에 드는지 글자 수로 가늠한다 — 한 줄에 대략 `wrap / 글자폭`자가 들어간다.
     const perLine = Math.floor(LAYOUT.textWrap / (BREAK_STEPS.textSize * 0.92));
     for (const step of BREAKTHROUGH_STEPS) {
-      const text = breakthroughEffectText(getRelic("anky"), step.slot);
+      const text = breakthroughEffectText(getRelic("torika"), step.slot);
       expect(text).toBeDefined();
       // 화면에 실제로 서는 것은 `[[taunt|도발]]`이 아니라 「도발」이다 — 태그 표기를 그대로
       // 세면 같은 문장이 소스에서만 길어져, 줄이 남는데도 넘친다고 읽힌다.

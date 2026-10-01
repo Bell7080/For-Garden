@@ -65,8 +65,8 @@ test("토리카 기본 외형에서 스킨을 장착해 도감·로비·편성·
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await tapUntil(page, BASE_WIDTH * 0.3, BASE_HEIGHT - 90, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "relics");
 
-  // 토리카(anky) 카드 자리는 도감이 내놓는 값을 읽는다.
-  const torika = await gridCardPoint(page, "relics", "anky");
+  // 토리카(torika) 카드 자리는 도감이 내놓는 값을 읽는다.
+  const torika = await gridCardPoint(page, "relics", "torika");
   await tapUntil(page, torika.x, torika.y, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === true);
   // 외형 칩은 오른쪽 기둥 가운데에 선다(`appearanceButtonX()` = 991, `APPEARANCE_BUTTON.y`).
   // 칩은 정보창이 그 개체를 다 읽은 뒤에야 보이므로 열릴 때까지 눌러 본다.
@@ -115,7 +115,7 @@ test("스킨 ZIP 하나가 실패해도 타이틀과 기본 토리카 외형으�
   // 전신 스킨 하나만 네트워크 실패시켜 단계 실패가 나머지 로딩과 기본 외형까지 막지 않는지 재현한다.
   await page.route("**/puppets/char_001_skin001.zip", (route) => route.abort("failed"));
   await startAfterOpening(page, (session) => {
-    delete session.equippedRelicSkinIds.anky;
+    delete session.equippedRelicSkinIds.torika;
   });
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("title");
   await captureGame(page, `test-results/${testInfo.project.name}-skin-zip-failure-title-continues.png`);

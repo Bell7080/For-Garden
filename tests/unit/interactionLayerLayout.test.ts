@@ -89,7 +89,7 @@ describe("교류 층 자리", () => {
 
 describe("교류 자동 배치", () => {
   const CANDIDATES = [
-    { id: "anky", power: 2200 },
+    { id: "torika", power: 2200 },
     { id: "rex", power: 2400 },
     { id: "dodo", power: 2100 },
     { id: "keris", power: 2400 },
@@ -97,7 +97,7 @@ describe("교류 자동 배치", () => {
 
   it("는 전투력이 높은 순서로 채운다", () => {
     // 교류에는 발굴의 생산 특화 같은 개체별 기준이 없어 비교 가능한 값이 전투력뿐이다.
-    expect(autoAssignInteractionParty(CANDIDATES, 3)).toEqual(["keris", "rex", "anky"]);
+    expect(autoAssignInteractionParty(CANDIDATES, 3)).toEqual(["keris", "rex", "torika"]);
   });
 
   it("는 동률을 ID 순으로 끊어 늘 같은 편성을 만든다", () => {
@@ -107,6 +107,6 @@ describe("교류 자동 배치", () => {
   });
 
   it("는 모자라면 빈 자리를 남긴다", () => {
-    expect(autoAssignInteractionParty([{ id: "anky", power: 1 }], 3)).toEqual(["anky", null, null]);
+    expect(autoAssignInteractionParty([{ id: "torika", power: 1 }], 3)).toEqual(["torika", null, null]);
   });
 });

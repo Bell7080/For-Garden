@@ -312,7 +312,7 @@ export class SettingsScene extends Phaser.Scene {
     this.addTextAction(90, y, t("settings.debug.grantAll"), () => this.grantAllRelics()); y += SETTINGS_SUPPORT.actionStep;
     // 한계 돌파는 레벨 상한·파편·치즈케이크 셋이 동시에 맞아야 열리는 조작이라, 재료 없이는
     // 그 화면과 별마다 열리는 개체 효과를 확인할 방법이 없다. 재료만 주고 돌파는 사람이 누른다.
-    this.addTextAction(90, y, t("settings.debug.breakthroughSet"), () => this.grantBreakthroughSet("anky")); y += SETTINGS_SUPPORT.actionStep;
+    this.addTextAction(90, y, t("settings.debug.breakthroughSet"), () => this.grantBreakthroughSet("torika")); y += SETTINGS_SUPPORT.actionStep;
     this.addTextAction(90, y, t("settings.support.withdraw"), () => this.confirmAccountAction(t("settings.support.withdraw"), t("settings.support.withdrawNotice"), () => accountApi.requestWithdrawal()), true); y += 110;
     return y;
   }

@@ -73,18 +73,18 @@ describe("expedition augment rewards", () => {
     const offers = generateExpeditionAugmentOffers({ rarity: "sr", relics, selections: [], random: () => 0 });
     const personal = offers.find(({ eligibleTargetRelicIds }) => eligibleTargetRelicIds.length > 0);
     // 한 생존자가 있으므로 쓰러진 rex도 휴식에서 부활 가능한 유효 대상이다.
-    expect(personal?.eligibleTargetRelicIds).toEqual(["anky", "rex", "spino"]);
+    expect(personal?.eligibleTargetRelicIds).toEqual(["torika", "rex", "spino"]);
     expect(personal && validateExpeditionAugmentChoice(personal, { augmentId: personal.augmentId, targetRelicId: "unknown" }, [])).toBe(false);
     expect(generateExpeditionAugmentOffers({ rarity: "sr", relics: relics.map((relic) => ({ ...relic, currentHp: 0, alive: false })), selections: [], random: () => 0 }).every(({ eligibleTargetRelicIds }) => eligibleTargetRelicIds.length === 0)).toBe(true);
   });
 
   it("최대 중첩에 도달한 후보를 제거하고 저장 뒤 변조된 재선택도 거절한다", () => {
     const def = EXPEDITION_AUGMENTS.find(({ id }) => id === "predator-instinct")!;
-    const prior = Array.from({ length: def.maxStacks }, () => ({ augmentId: def.id, targetRelicId: "anky" }));
+    const prior = Array.from({ length: def.maxStacks }, () => ({ augmentId: def.id, targetRelicId: "torika" }));
     const offers = generateExpeditionAugmentOffers({ rarity: "sr", relics: party(), selections: prior, random: () => 0, candidateCount: 99 });
     expect(offers.some(({ augmentId }) => augmentId === def.id)).toBe(false);
     // 오래 저장된 제안 DTO를 다시 보내도 현재 런의 중첩 수를 기준으로 서버 경계가 거절한다.
-    expect(validateExpeditionAugmentChoice({ augmentId: def.id, eligibleTargetRelicIds: ["anky"] }, { augmentId: def.id, targetRelicId: "anky" }, prior)).toBe(false);
+    expect(validateExpeditionAugmentChoice({ augmentId: def.id, eligibleTargetRelicIds: ["torika"] }, { augmentId: def.id, targetRelicId: "torika" }, prior)).toBe(false);
   });
 
   it("이미 선택한 배타 그룹의 다른 후보와 조작된 선택 DTO를 거절한다", () => {
@@ -98,7 +98,7 @@ describe("expedition augment rewards", () => {
   it("후보 풀이 요청 수보다 작으면 더미 없이 가능한 후보만 결정적으로 표시한다", () => {
     const remaining = new Set(["field-repair", "formation-barrier"]);
     const prior = EXPEDITION_AUGMENTS.filter(({ rarity, id }) => rarity === "sr" && !remaining.has(id))
-      .flatMap((def) => Array.from({ length: def.maxStacks }, () => ({ augmentId: def.id, ...(def.target === "relic" ? { targetRelicId: "anky" } : {}) })));
+      .flatMap((def) => Array.from({ length: def.maxStacks }, () => ({ augmentId: def.id, ...(def.target === "relic" ? { targetRelicId: "torika" } : {}) })));
     const input = { rarity: "sr" as const, relics: party(), selections: prior, candidateCount: 3 };
     const first = generateExpeditionAugmentOffers({ ...input, random: expeditionRewardRandom("saved-prior") });
     const restored = generateExpeditionAugmentOffers({ ...input, selections: structuredClone(prior), random: expeditionRewardRandom("saved-prior") });
@@ -110,7 +110,7 @@ describe("expedition augment rewards", () => {
   it("stores generated seed and offers so reconnecting cannot reroll candidates", () => {
     const state = createDefaultSession();
     const manager = new ExpeditionManager(state, { save: vi.fn() }, () => new Date("2026-08-25T12:00:00Z"));
-    manager.start(["anky", "rex", "spino"]);
+    manager.start(["torika", "rex", "spino"]);
     const node = state.expedition.run?.nodes.find(({ type }) => type === "normal");
     expect(node).toBeDefined();
     const first = manager.beginAugmentReward(node!.id, "normal");
@@ -124,7 +124,7 @@ describe("expedition augment rewards", () => {
   it("persists the first horde result before opening and completing its second consecutive choice", () => {
     const state = createDefaultSession();
     const manager = new ExpeditionManager(state, { save: vi.fn() }, () => new Date("2026-08-25T12:00:00Z"));
-    manager.start(["anky", "rex", "spino"]);
+    manager.start(["torika", "rex", "spino"]);
     const node = state.expedition.run?.nodes.find(({ type }) => type === "horde");
     expect(node).toBeDefined();
     const first = manager.beginAugmentReward(node!.id, "horde")!;
@@ -140,7 +140,7 @@ describe("expedition augment rewards", () => {
 /** 각 테스트가 변경해도 서로 참조를 공유하지 않는 기본 원정대다. */
 function party() {
   return [
-    { relicId: "anky", currentHp: 100, alive: true },
+    { relicId: "torika", currentHp: 100, alive: true },
     { relicId: "rex", currentHp: 100, alive: true },
     { relicId: "spino", currentHp: 100, alive: true },
   ];

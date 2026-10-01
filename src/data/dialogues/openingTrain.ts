@@ -44,7 +44,7 @@ export const OPENING_TRAIN: DialogueStory = {
     {
       id: "answer", speaker: "토리카", body: "도착하면 제일 먼저 뭘 하고 싶으세요?", standing: "torika",
       choices: [
-        { id: "promise", label: "너희를 더 알고 싶어", nextId: "warm", effect: { type: "bondXp", relicId: "anky", amount: 5 } },
+        { id: "promise", label: "너희를 더 알고 싶어", nextId: "warm", effect: { type: "bondXp", relicId: "torika", amount: 5 } },
         { id: "work", label: "도시부터 둘러볼게", nextId: "ready" },
       ],
     },

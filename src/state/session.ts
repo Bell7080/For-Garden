@@ -59,7 +59,7 @@ export interface GameSettings {
  *
  * 파루아가 들어 있는 이유는 기본 편성(아래) 때문이다 — 편성은 보유한 개체만 세울 수 있다.
  */
-const STARTER_RELICS = ["anky", "rex", "spino", "luka", "dodo", "mette", "parua"];
+const STARTER_RELICS = ["torika", "rex", "spino", "luka", "dodo", "mette", "parua"];
 /**
  * 기본 편성은 **오프닝의 쁘띠 로그 셋**(토리카·도디·파루아)이다.
  *
@@ -69,7 +69,7 @@ const STARTER_RELICS = ["anky", "rex", "spino", "luka", "dodo", "mette", "parua"
  * 자리는 자동 편성과 같은 규칙(`arrangeByRole`)을 따른다 — 가운데에 탱커 토리카, 왼쪽에 암살자
  * 파루아, 오른쪽에 지원가 도디다.
  */
-const STARTER_PARTY = ["parua", "anky", "dodo"];
+const STARTER_PARTY = ["parua", "torika", "dodo"];
 
 /** 서버가 확정해 저장하고 프로필 UI가 그대로 표시하는 JSON 안전 플레이어 연구 진행이다. */
 export interface PlayerResearchProgress {

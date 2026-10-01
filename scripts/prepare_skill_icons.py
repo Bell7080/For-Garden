@@ -24,7 +24,7 @@ SOURCE = Path(ARGS[0]) if ARGS else PUBLIC
 
 # 원본 이름 머리말과 렐릭 id. Puppet 묶음(char_00N.zip · enemy_00N.zip)과 같은 번호를 쓴다.
 RELICS = {
-    "char001": "anky",
+    "char001": "torika",
     "char002": "rex",
     "char003": "spino",
     "char004": "luka",

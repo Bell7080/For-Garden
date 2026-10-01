@@ -9,10 +9,10 @@ const ARENA: Arena = { left: 0, right: 1_000, top: 0, bottom: 1_600 };
 
 /** 토리카 한 명과 적 한 명. 돌파 단계만 갈아 끼워 같은 판을 두 번 돌린다. */
 function battle(breakthrough: number): SkirmishState {
-  return createSkirmish([getRelic("anky")], [getRelic("amo")], ARENA, {}, { anky: breakthrough });
+  return createSkirmish([getRelic("torika")], [getRelic("amo")], ARENA, {}, { torika: breakthrough });
 }
 
-function lexiaBattle(enemies = ["anky"]): SkirmishState {
+function lexiaBattle(enemies = ["torika"]): SkirmishState {
   return createSkirmish([getRelic("rex")], enemies.map(getRelic), ARENA, {}, { rex: BREAKTHROUGH_STEPS.length });
 }
 
@@ -143,7 +143,7 @@ describe("한계 돌파 — 폭주(별 IV)", () => {
 
 describe("한계 돌파 — 패시브(별 V)", () => {
   it("은 패시브가 돌 때 아군에게 회복을 나눈다", () => {
-    const state = createSkirmish([getRelic("anky"), getRelic("dian")], [getRelic("amo")], ARENA, {}, { anky: BREAKTHROUGH_STEPS.length });
+    const state = createSkirmish([getRelic("torika"), getRelic("dian")], [getRelic("amo")], ARENA, {}, { torika: BREAKTHROUGH_STEPS.length });
     const torika = findFighter(state, "player-0")!;
     const ally = findFighter(state, "player-1")!;
     torika.hp = torika.maxHp * 0.4;
@@ -154,7 +154,7 @@ describe("한계 돌파 — 패시브(별 V)", () => {
   });
 
   it("은 별 넷에서는 나누지 않는다", () => {
-    const state = createSkirmish([getRelic("anky"), getRelic("dian")], [getRelic("amo")], ARENA, {}, { anky: 3 });
+    const state = createSkirmish([getRelic("torika"), getRelic("dian")], [getRelic("amo")], ARENA, {}, { torika: 3 });
     const torika = findFighter(state, "player-0")!;
     const ally = findFighter(state, "player-1")!;
     torika.hp = torika.maxHp * 0.4;
@@ -165,7 +165,7 @@ describe("한계 돌파 — 패시브(별 V)", () => {
 
 describe("돌파 효과 문구", () => {
   it("는 정의한 슬롯만 문장을 만들고 기술 이름을 정의에서 읽는다", () => {
-    const torika = getRelic("anky");
+    const torika = getRelic("torika");
     const basic = breakthroughEffectText(torika, "basic");
     expect(basic).toContain(torika.basic.statusEffectStackName!);
     expect(basic).toContain("방어력의 60%");
@@ -255,7 +255,7 @@ describe("렉시아 한계 돌파", () => {
   });
 
   it("는 폭주 중 일반 공격으로 조금 넓은 범위를 함께 때리고 처치 뒤 돌진을 다시 준비한다", () => {
-    const state = lexiaBattle(["anky", "amo"]);
+    const state = lexiaBattle(["torika", "amo"]);
     const lexia = findFighter(state, "player-0")!;
     const enemies = state.fighters.filter((fighter) => fighter.side === "enemy");
     for (const [index, enemy] of enemies.entries()) {

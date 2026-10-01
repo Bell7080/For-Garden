@@ -6,7 +6,7 @@ import { GREENHOUSE_ECHO } from "../../src/data/dialogues/greenhouseEcho";
 
 const STORY: DialogueStory = {
   id: "test-story", startNodeId: "start", nodes: [
-    { id: "start", speaker: "A", body: "선택", choices: [{ id: "left", label: "왼쪽", nextId: "last", effect: { type: "bondXp", relicId: "anky", amount: 5 } }, { id: "right", label: "오른쪽", nextId: "other" }] },
+    { id: "start", speaker: "A", body: "선택", choices: [{ id: "left", label: "왼쪽", nextId: "last", effect: { type: "bondXp", relicId: "torika", amount: 5 } }, { id: "right", label: "오른쪽", nextId: "other" }] },
     { id: "last", speaker: "A", body: "끝" },
     { id: "other", speaker: "B", body: "다른 끝" },
   ],
@@ -26,7 +26,7 @@ describe("DialogueFlow", () => {
     flow.markCurrentNodeReady();
     const branch = flow.advance("left");
     expect(branch.node?.id).toBe("last");
-    expect(branch.effect).toEqual({ type: "bondXp", relicId: "anky", amount: 5 });
+    expect(branch.effect).toEqual({ type: "bondXp", relicId: "torika", amount: 5 });
     flow.markCurrentNodeReady();
     expect(flow.advance().completed).toBe(true);
   });
@@ -53,18 +53,18 @@ describe("StoryManager", () => {
     const state = createDefaultSession();
     const saved: string[][] = [];
     const manager = new StoryManager(state, { save: (next) => saved.push([...next.completedStoryIds]) });
-    const before = state.relicProgress.anky.bondXp;
-    expect(manager.applyEffect(STORY.id, { type: "bondXp", relicId: "anky", amount: 5 })).toBe(5);
+    const before = state.relicProgress.torika.bondXp;
+    expect(manager.applyEffect(STORY.id, { type: "bondXp", relicId: "torika", amount: 5 })).toBe(5);
     expect(manager.complete(STORY.id)).toBe(true);
     expect(manager.complete(STORY.id)).toBe(false);
-    expect(manager.applyEffect(STORY.id, { type: "bondXp", relicId: "anky", amount: 5 })).toBe(0);
-    expect(state.relicProgress.anky.bondXp).toBe(before + 5);
+    expect(manager.applyEffect(STORY.id, { type: "bondXp", relicId: "torika", amount: 5 })).toBe(0);
+    expect(state.relicProgress.torika.bondXp).toBe(before + 5);
     expect(saved.at(-1)).toEqual([STORY.id]);
   });
 
   it("검증되지 않은 대상과 과도한 유대 명령을 거부한다", () => {
     const manager = new StoryManager(createDefaultSession(), { save: () => undefined });
     expect(() => manager.applyEffect(STORY.id, { type: "bondXp", relicId: "missing", amount: 5 })).toThrow("대상 렐릭");
-    expect(() => manager.applyEffect(STORY.id, { type: "bondXp", relicId: "anky", amount: 999 })).toThrow("0~20");
+    expect(() => manager.applyEffect(STORY.id, { type: "bondXp", relicId: "torika", amount: 999 })).toThrow("0~20");
   });
 });

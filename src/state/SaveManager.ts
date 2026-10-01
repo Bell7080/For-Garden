@@ -44,7 +44,7 @@ function migrateV12Rune(definitionId: string): RuneInstance {
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 42;
+export const CURRENT_SAVE_VERSION = 43;
 
 /**
  * 연구도는 기간마다 상한이 다르다(일일 100 · 주간 500). 상한이 120 하나이던 때의 저장은 일일
@@ -67,7 +67,13 @@ const LEGACY_SAVED_RELIC_ID_MAP: Readonly<Record<string, string>> = {
   "husk-shell": "amo",
   "husk-raptor": "toby",
   "husk-wing": "ripa",
+  // v43: 토리카(트리케라톱스)가 안킬로사우루스를 뜻하던 `anky`를 내부 ID로 쓰고 있었다.
+  // 새 안킬로사우루스 개체(안카)와 갈리도록 이름과 같은 ID로 옮긴다.
+  anky: "torika",
 };
+
+/** 렐릭 ID가 박혀 있는 관찰 문답 ID(`anky-meal-eager`)의 머리말 치환표다. */
+const LEGACY_OBSERVATION_PREFIX_MAP: Readonly<Record<string, string>> = { "anky-": "torika-" };
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -100,6 +106,9 @@ function migrateSavedRelicIds(input: Record<string, unknown>): Record<string, un
   const mapUniqueIds = (value: unknown): unknown => Array.isArray(value)
     ? [...new Set(value.map(mapId))]
     : value;
+  const mapUniqueIdsWith = (value: unknown, map: (id: unknown) => unknown): unknown => Array.isArray(value)
+    ? [...new Set(value.map(map))]
+    : value;
   const mapNullableIds = (value: unknown): unknown => Array.isArray(value)
     ? value.map((id) => id === null ? null : mapId(id))
     : value;
@@ -121,6 +130,19 @@ function migrateSavedRelicIds(input: Record<string, unknown>): Record<string, un
   data.bookmarkedRelicIds = mapUniqueIds(data.bookmarkedRelicIds);
   data.relicProgress = remapRecordKeys(data.relicProgress, "렐릭 성장 정보");
   data.relicFragments = remapRecordKeys(data.relicFragments, "렐릭 파편 정보");
+  data.equippedRelicSkinIds = remapRecordKeys(data.equippedRelicSkinIds, "렐릭 스킨 장착 정보");
+  // 관찰 이야기 ID는 `observation.<날짜>.<렐릭 ID>`라 끝자리의 렐릭 ID만 바꾼다.
+  const mapStoryId = (value: unknown): unknown => {
+    if (typeof value !== "string") return value;
+    const match = /^(observation\.\d{4}-\d{2}-\d{2}\.)(.+)$/.exec(value);
+    return match ? `${match[1]}${mapId(match[2]) as string}` : value;
+  };
+  const mapObservationId = (value: unknown): unknown => {
+    if (typeof value !== "string") return value;
+    const prefix = Object.keys(LEGACY_OBSERVATION_PREFIX_MAP).find((key) => value.startsWith(key));
+    return prefix ? `${LEGACY_OBSERVATION_PREFIX_MAP[prefix]}${value.slice(prefix.length)}` : value;
+  };
+  data.completedStoryIds = mapUniqueIdsWith(data.completedStoryIds, mapStoryId);
 
   // 발굴은 빈 슬롯(null)의 위치를 보존하되 저장된 배치 ID만 치환한다.
   const excavation = data.idleExcavation as Record<string, unknown> | undefined;
@@ -131,7 +153,12 @@ function migrateSavedRelicIds(input: Record<string, unknown>): Record<string, un
     if (slot && typeof slot === "object") (slot as Record<string, unknown>).party = mapUniqueIds((slot as Record<string, unknown>).party);
   });
   if (Array.isArray(data.observationRecords)) data.observationRecords.forEach((record) => {
-    if (record && typeof record === "object") (record as Record<string, unknown>).relicId = mapId((record as Record<string, unknown>).relicId);
+    if (!record || typeof record !== "object") return;
+    const entry = record as Record<string, unknown>;
+    entry.relicId = mapId(entry.relicId);
+    entry.storyId = mapStoryId(entry.storyId);
+    entry.questionId = mapObservationId(entry.questionId);
+    entry.choiceId = mapObservationId(entry.choiceId);
   });
 
   const expedition = data.expedition as Record<string, unknown> | undefined;
@@ -506,7 +533,7 @@ export class SaveManager {
       .filter((stack: { itemId?: unknown }) => stack?.itemId !== "raid-sigil");
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
     if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid } as unknown as SaveData;
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, CURRENT_SAVE_VERSION];
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
     return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid } as unknown as SaveData;
   }

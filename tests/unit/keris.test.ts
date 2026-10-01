@@ -14,7 +14,7 @@ const ARENA: Arena = { left: 130, right: 950, top: 600, bottom: 1360 };
  */
 describe("저주", () => {
   it("는 겹이 쌓일수록 저항만 깎아 마법 피해를 키운다", () => {
-    const state = createSkirmish([getRelic("keris")], [getRelic("anky")], ARENA);
+    const state = createSkirmish([getRelic("keris")], [getRelic("torika")], ARENA);
     const [keris, foe] = state.fighters;
     const magic = { power: 100, damageType: "magical" as const, scalingStat: "ap" as const, isCritical: false, kind: "basic" as const };
     const physical = { power: 100, damageType: "physical" as const, scalingStat: "atk" as const, isCritical: false, kind: "basic" as const };
@@ -29,7 +29,7 @@ describe("저주", () => {
   });
 
   it("는 기본 공격 세 번이면 상한에 닿고 더 쌓이지 않는다", () => {
-    const state = createSkirmish([getRelic("keris")], [getRelic("anky")], ARENA);
+    const state = createSkirmish([getRelic("keris")], [getRelic("torika")], ARENA);
     const [, foe] = state.fighters;
     for (let frame = 0; frame < 60 * 20 && state.phase === "fight"; frame += 1) stepSkirmish(state, 1 / 60, () => 0.99);
     expect(foe.curse === null || foe.curse.stacks <= 3).toBe(true);
@@ -38,7 +38,7 @@ describe("저주", () => {
 
 describe("저주 전이", () => {
   it("는 저주가 최대인 적을 때렸을 때만 옆으로 이어진다", () => {
-    const state = createSkirmish([getRelic("keris")], [getRelic("anky"), getRelic("rex")], ARENA);
+    const state = createSkirmish([getRelic("keris")], [getRelic("torika"), getRelic("rex")], ARENA);
     const [keris, primary, neighbour] = state.fighters;
     // 전이는 **이번 타격이 얹기 전**의 겹으로 판정한다. 최대가 아니면 옆 적은 멀쩡하다.
     primary.curse = { remaining: 8, total: 8, stacks: 1, percentPerStack: 15, maxStacks: 3 };
@@ -82,7 +82,7 @@ describe("저주 전이", () => {
 
 describe("광란", () => {
   it("은 걸린 개체가 가장 가까운 자기 편을 때리게 만든다", () => {
-    const state = createSkirmish([getRelic("keris")], [getRelic("anky"), getRelic("rex")], ARENA);
+    const state = createSkirmish([getRelic("keris")], [getRelic("torika"), getRelic("rex")], ARENA);
     const [, first, second] = state.fighters;
     first.frenzy = { remaining: 6, total: 6, attackSpeedPercent: 50, sourceId: state.fighters[0].id };
     const before = second.hp;
@@ -91,7 +91,7 @@ describe("광란", () => {
   });
 
   it("은 때릴 자기 편이 없으면 제자리에서 자신을 공격한다", () => {
-    const state = createSkirmish([getRelic("keris")], [getRelic("anky")], ARENA);
+    const state = createSkirmish([getRelic("keris")], [getRelic("torika")], ARENA);
     const [, lone] = state.fighters;
     lone.frenzy = { remaining: 30, total: 30, attackSpeedPercent: 50, sourceId: state.fighters[0].id };
     const before = lone.hp;
@@ -104,7 +104,7 @@ describe("광란", () => {
   });
 
   it("중에는 궁극기를 쓰지 못한다", () => {
-    const state = createSkirmish([getRelic("keris")], [getRelic("anky")], ARENA);
+    const state = createSkirmish([getRelic("keris")], [getRelic("torika")], ARENA);
     const [keris] = state.fighters;
     keris.energy = 999;
     expect(canFireUltimate(state, keris)).toBe(true);

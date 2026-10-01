@@ -284,8 +284,8 @@ export const SKILL_JA = {
   "skill.count.4": "4",
 
   "skill.keyword.prickle.term": "とげとげ",
-  "skill.keyword.prickle.description": "被弾するたびに1重積まれ、最大{stacks}重まで上がる。攻撃した敵は1重につき自分の魔力の{percent}%分の魔法ダメージを跳ね返される。{seconds}秒間残り、新しい重が積まれるたびに持続時間が最初から流れ直す。",
-  "skill.passive.prickly": "敵に被弾するたびに[[kento-prickle|とげとげ]]が1重積まれ、攻撃した敵は重の数だけダメージを跳ね返される。",
+  "skill.keyword.prickle.description": "被弾するたびに1重積まれ、最大{stacks}重まで上がる。攻撃した敵は1重につき自分の魔力の{percent}%分の魔法ダメージを跳ね返される。{seconds}秒間残り、満タンになると{tauntSeconds}秒の挑発・最大体力{shield}%のシールド・{regenSeconds}秒間毎秒{regen}%の回復を得て0重に戻る。",
+  "skill.passive.prickly": "敵に被弾するたびに[[kento-prickle|とげとげ]]が1重積まれ、攻撃した敵は重の数だけダメージを跳ね返される。満タンになると周囲の敵を[[taunt|挑発]]し、[[shield|シールド]]と持続回復を得て0重に戻る。",
   "skill.clause.prickleGain": "自分の[[kento-prickle|とげとげ]]が{count}重積まれる",
   "skill.sentence.selfGuard.prickle": " 自分の[[kento-prickle|とげとげ]]がさらに{count}重積まれる。",
   "skill.sentence.selfGuard.shockwave": " 挑発が終わる瞬間に衝撃波が炸裂し、周囲の敵を{seconds}秒間[[stun|気絶]]させる。",

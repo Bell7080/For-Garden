@@ -2325,7 +2325,7 @@ function reactPrickle(target: Fighter, attacker: Fighter, state: SkirmishState, 
   if (target.def.passive.kind !== "prickly" || plan === undefined || !isFighterAlive(target)) return;
   gainPrickle(target, 1);
   const stacks = target.prickle?.stacks ?? 0;
-  if (stacks <= 0 || attacker.side === target.side || !isFighterAlive(attacker)) return;
+  if (stacks <= 0 || attacker.side === target.side || !isFighterAlive(attacker)) { overflowPrickle(target, state, events); return; }
   const input = {
     power: stacks * plan.reflectApPercentPerStack,
     damageType: "magical" as const, scalingStat: "ap" as const, isCritical: false, kind: "basic" as const,
@@ -2344,6 +2344,23 @@ function reactPrickle(target: Fighter, attacker: Fighter, state: SkirmishState, 
     clearDefeatedStatuses(attacker);
     events.push({ kind: "death", fighterId: attacker.id, sourceId: target.id });
   }
+  overflowPrickle(target, state, events);
+}
+
+/**
+ * 까칠이 상한에 닿았으면 터뜨린다 — 넓은 도발·보호막·지속 회복을 얻고 겹이 0으로 돌아간다.
+ *
+ * 반격이 먼저 겹 수만큼 들어간 **뒤에** 부른다(`reactPrickle`) — 가득 찬 한 대가 가장 센 반격이다. 겹을 비우는 것은
+ * 시간이 아니라 이 한 번뿐이라, 계속 맞는 동안에는 "쌓는다 → 터진다 → 다시 쌓는다"가 한 박자로 돈다.
+ */
+function overflowPrickle(fighter: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const plan = fighter.def.passive.prickle;
+  const overflow = plan?.overflow;
+  if (!plan || !overflow || !isFighterAlive(fighter) || (fighter.prickle?.stacks ?? 0) < plan.maxStacks) return;
+  fighter.prickle = null;
+  tauntOnBattleHeat(fighter, { taunt: { kind: "taunt", seconds: overflow.tauntSeconds }, tauntRadius: overflow.tauntRadius }, state, events);
+  grantShield(state, fighter, fighter.id, Math.max(1, Math.round(fighter.maxHp * overflow.shieldMaxHpPercent / 100)), events, 1.2);
+  fighter.regeneration = { remaining: overflow.regenSeconds, tickIn: EMERGENCY_RECOVERY.tickSeconds, percentPerTick: overflow.regenMaxHpPercentPerSecond };
 }
 
 /** 까칠 겹의 수명. 시간이 다하면 한꺼번에 사라진다. */
@@ -5199,7 +5216,7 @@ function strike(
   gainElation(target);
   // 까칠도 같은 순간에 오르고, 때린 쪽이 그 겹만큼 되받는다. 제 평타가 적중한 몫은 반격이 아니라 겹으로 돌아온다.
   reactPrickle(target, attacker, state, events);
-  if (!useUltimate) gainPrickle(attacker, attacker.def.basic.prickleGain ?? 0);
+  if (!useUltimate) { gainPrickle(attacker, attacker.def.basic.prickleGain ?? 0); overflowPrickle(attacker, state, events); }
   if (!useUltimate) pullStruck(attacker, target, state, events);
 
   const transfer = useUltimate ? attacker.def.ultimate.damageTransfer : undefined;
@@ -6717,7 +6734,7 @@ export function fireUltimate(
     // 필드가 없는 기존 selfGuard에는 손대지 않아 궁극기 사용이 조가비를 연쇄 발동시키지 않는다.
     if (plan.resetShellGuardCooldown === true) attacker.shellGuardCooldownRemaining = 0;
     // 까칠을 더 쌓고, 도발이 끝나는 순간 터질 충격파의 시계를 켠다.
-    if (plan.prickleGain !== undefined) gainPrickle(attacker, plan.prickleGain);
+    if (plan.prickleGain !== undefined) { gainPrickle(attacker, plan.prickleGain); overflowPrickle(attacker, state, events); }
     if (plan.shockwave !== undefined) {
       attacker.fortress = {
         remaining: plan.tauntSeconds, total: plan.tauntSeconds, skillId: teamUltimate.id, name: teamUltimate.name,

@@ -1213,6 +1213,7 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
         reduction: trim(effect.healingReceivedReductionPercent),
       });
     }
+    if (effect.kind === "splitHealing") return t("skill.breakthrough.effect.basic.splitHealing", { percent: trim(effect.sharePercent) });
     // 주기 이름이 있으면 그것이 이 효과가 얹히는 그 한 방의 이름이다(칩에 뜨는 이름과 같다).
     const trigger = def.basic.statusEffectStackName ?? def.basic.name;
     // **회복량은 계산할 수 있으면 실제 값으로 말한다.** 능력치를 아는 자리(정보창·적 팝업)에서는
@@ -1229,6 +1230,7 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     const effect = effects.ultimate;
     if (effect.kind === "none") return undefined;
     if (effect.kind === "execution") return t("skill.breakthrough.effect.ultimate.execution", { energy: trim(effect.energyRefundOnKill) });
+    if (effect.kind === "healingShield") return t("skill.breakthrough.effect.ultimate.healingShield", { percent: trim(effect.shieldPercentOfHealing) });
     // 피해량의 몇 %는 **명중 시점의 상대값**이라 실제 수로 바꾸지 않는다(대상마다 달라진다).
     return t("skill.breakthrough.effect.ultimate", {
       percent: trim(effect.powerPercent), name: def.ultimate.name,
@@ -1239,6 +1241,7 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     const effect = effects.ferocity;
     if (effect.kind === "none") return undefined;
     if (effect.kind === "cleavingBasics") return t("skill.breakthrough.effect.ferocity.cleavingBasics");
+    if (effect.kind === "feverShare") return t("skill.breakthrough.effect.ferocity.feverShare", { percent: trim(effect.shieldPercentOfHealingDone) });
     return t("skill.breakthrough.effect.ferocity", {
       percent: trim(effect.shieldPercentOfDamageTaken), seconds: trim(effect.tauntSeconds),
     });
@@ -1247,6 +1250,9 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effects.passive.kind === "none") return undefined;
     if (effects.passive.kind === "battleMaidAscension") {
       return t("skill.breakthrough.effect.passive.battleMaidAscension", { percent: trim(effects.passive.durabilityPercent) });
+    }
+    if (effects.passive.kind === "rescueShield") {
+      return t("skill.breakthrough.effect.passive.rescueShield", { hp: trim(effects.passive.belowHpPercent), percent: trim(effects.passive.apPercent) });
     }
     return t("skill.breakthrough.effect.passive", { name: def.passive.name, percent: trim(effects.passive.percent) });
   }

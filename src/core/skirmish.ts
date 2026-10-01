@@ -336,6 +336,10 @@ export interface Fighter extends Combatant {
    * 받은 몫도 빠지지 않는다. 폭주에 들어갈 때 0으로 되돌린다.
    */
   feverDamageTaken: number;
+  /** 이번 폭주 동안 **실제로 준** 회복의 누적. 폭주 돌파(`feverShare`)가 끝날 때 보호막으로 바꾼다. */
+  feverHealingDone: number;
+  /** 패시브 돌파(`rescueShield`)의 전투당 한 번뿐인 발동권을 썼는지. */
+  rescueUsed: boolean;
   /**
    * 궁극기 돌파(`UltimateBreakthrough`)가 더 떨어뜨릴 남은 타격.
    *
@@ -1098,6 +1102,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     basicAttackCount: 0,
     basicCycleStep: 0,
     feverDamageTaken: 0,
+    feverHealingDone: 0,
+    rescueUsed: false,
     breakthroughEcho: null,
     hastenedAttacksLeft: 0,
     instantButcherAttacksLeft: 0,
@@ -3144,8 +3150,20 @@ function tickUltimateBreakthrough(fighter: Fighter, dt: number, state: SkirmishS
  */
 function applyFerocityBreakthrough(fighter: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
   const taken = fighter.feverDamageTaken;
+  const healingDone = fighter.feverHealingDone;
   fighter.feverDamageTaken = 0;
+  fighter.feverHealingDone = 0;
   const effect = openedBreakthrough(fighter, "ferocity", (effects) => effects.ferocity);
+  if (effect?.kind === "feverShare") {
+    // 총량을 살아 있는 아군(자신 포함)에게 똑같이 나눈다 — 머릿수가 늘어도 보호막 총량은 그대로다.
+    // 귀속 소환수는 편성원이 아니라 몫을 받지 않는다 — 머릿수에 넣으면 같은 총량이 더 얇게 나뉜다.
+    const allies = aliveFighters(state, fighter.side).filter(isPartyFighter);
+    const total = healingDone * effect.shieldPercentOfHealingDone / 100;
+    if (!isFighterAlive(fighter) || total <= 0 || allies.length === 0) return;
+    const each = Math.max(1, Math.round(total / allies.length));
+    for (const ally of allies) grantShield(state, ally, fighter.id, each, events);
+    return;
+  }
   if (!effect || effect.kind !== "feverBulwark" || !isFighterAlive(fighter) || taken <= 0) return;
   const shield = Math.round(taken * effect.shieldPercentOfDamageTaken / 100);
   if (shield > 0) grantShield(state, fighter, fighter.id, shield, events);
@@ -3985,16 +4003,19 @@ function applyHealing(state: SkirmishState, target: Fighter, requested: number, 
  */
 function grantFeverHealingShield(caster: Fighter, target: Fighter, healed: number, events: SkirmishEvent[], state: SkirmishState): void {
   const trait = caster.def.ferocityTrait;
-  if (!caster.ferocityFever || trait.effectId !== "selfAttackSpeedMultiplier") return;
+  if (!caster.ferocityFever) return;
+  // 폭주 돌파(`feverShare`)가 끝날 때 쓸 누적 — 실제로 오른 양만 센다(가득 찬 아군에게 간 몫은 0이다).
+  if (healed > 0) caster.feverHealingDone += healed;
+  if (trait.effectId !== "selfAttackSpeedMultiplier") return;
   const percent = trait.healingShieldPercent ?? 0;
   if (percent <= 0 || healed <= 0 || !isFighterAlive(target)) return;
   grantShield(state, target, caster.id, Math.max(1, Math.round(healed * percent / 100)), events);
 }
 
 /** 현재 HP 절대값이 가장 낮은 생존 아군을 고르며 동률은 fighters의 편성 순서로 확정한다. */
-function lowestCurrentHpAlly(state: SkirmishState, side: Side, exceptId?: string): Fighter | undefined {
+function lowestCurrentHpAlly(state: SkirmishState, side: Side, exceptId?: string, alsoExceptId?: string): Fighter | undefined {
   return aliveFighters(state, side)
-    .filter((fighter) => fighter.id !== exceptId)
+    .filter((fighter) => fighter.id !== exceptId && fighter.id !== alsoExceptId)
     .reduce<Fighter | undefined>((chosen, fighter) =>
       chosen === undefined || fighter.hp < chosen.hp ? fighter : chosen, undefined);
 }
@@ -4406,6 +4427,7 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, even
     // 이번 폭주에서 받는 피해만 센다. 지난 폭주의 몫이 남아 있으면 두 번째 폭주가 첫 번째의
     // 피해로 보호막을 짓는다.
     fighter.feverDamageTaken = 0;
+    fighter.feverHealingDone = 0;
     const trait = fighter.def.ferocityTrait;
     if (trait.effectId === "stealthLeap") {
       fighter.stealthFor = trait.durationSeconds;
@@ -4992,7 +5014,27 @@ function applyDamage(target: Fighter, amount: number, events: SkirmishEvent[], s
   // 모든 피해 원천이 지나온 마지막 관문에서만 지급한다. 실제 HP 손실 0·전투 불능은 제외해
   // 보호막에 막힌 피해나 죽은 개체가 조가비를 만들고 다시 살아나는 무한 재발동을 방지한다.
   if (dealt > 0 && isFighterAlive(target)) gainShellGuard(target, 1, state, events);
+  if (dealt > 0 && isFighterAlive(target)) tryTriggerRescueShield(target, state, events);
   return dealt;
+}
+
+/**
+ * 패시브 돌파(`rescueShield`) — 아군의 체력이 문턱 아래로 내려가면 **전투당 한 번** 보호막을 둘러 준다.
+ *
+ * 발동권은 구하는 쪽(도디)이 갖고, 문턱은 맞은 쪽의 최대 체력 대비다. 모든 피해 원천이 지나는
+ * 마지막 관문(`applyDamage`)에서만 판정하므로 출혈·중독으로 내려간 것도 놓치지 않는다.
+ */
+function tryTriggerRescueShield(target: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  if (!isPartyFighter(target)) return;
+  for (const rescuer of aliveFighters(state, target.side)) {
+    if (rescuer.rescueUsed) continue;
+    const effect = openedBreakthrough(rescuer, "passive", (effects) => effects.passive);
+    if (effect?.kind !== "rescueShield" || target.hp > target.maxHp * effect.belowHpPercent / 100) continue;
+    rescuer.rescueUsed = true;
+    const shield = Math.max(1, Math.round(currentAbilityPower(rescuer) * effect.apPercent / 100));
+    grantShield(state, target, rescuer.id, shield, events);
+    return;
+  }
 }
 
 /** 마키의 피격 은신을 전투당 상한 안에서 발동하고, 이미 자신을 보던 적의 어그로를 즉시 끊는다. */
@@ -5593,6 +5635,14 @@ function strike(
       const healed = applyHealing(state, ally, (targetHpBefore - target.hp) * attacker.def.basic.lowestHpAllyHealingFromDamagePercent / 100, attacker.id);
       pushHeal(events, ally, healed, "passive");
       grantFeverHealingShield(attacker, ally, healed, events, state);
+      // 돌파 — 첫 대상이 받은 만큼의 일부를 둘째로 다친 아군에게도 보낸다. 가득 찬 아군에게 간 몫(0)은 보내지 않는다.
+      const split = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
+      const second = split?.kind === "splitHealing" ? lowestCurrentHpAlly(state, attacker.side, attacker.id, ally.id) : undefined;
+      if (split?.kind === "splitHealing" && second && healed > 0) {
+        const sharedHeal = applyHealing(state, second, healed * split.sharePercent / 100, attacker.id);
+        pushHeal(events, second, sharedHeal, "passive");
+        grantFeverHealingShield(attacker, second, sharedHeal, events, state);
+      }
     }
   }
   if (comboHit?.grantActionResources !== false) {
@@ -6018,10 +6068,17 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   // 이 계약은 공격 스킬만 갖는다. 좁히지 않고 읽으면 지원 궁극기까지 같은 자리를 지나간다.
   shareShieldFromDamage(attacker, "allyShieldFromDamagePercent" in skill ? skill.allyShieldFromDamagePercent : undefined, sharedShieldSource, state, events);
   // 혼합 궁극기의 회복은 같은 원 경계(거리 <= 반경)를 공유하며 주문력 200% 같은 정적 계수를 읽는다.
+  const ultimateShield = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
   for (const ally of healingTargets) {
-    const healed = applyHealing(state, ally, currentAbilityPower(attacker) * (ultimate?.allyHealingPower ?? 0) / 100, attacker.id);
+    const requestedHeal = currentAbilityPower(attacker) * (ultimate?.allyHealingPower ?? 0) / 100;
+    const healed = applyHealing(state, ally, requestedHeal, attacker.id);
     pushHeal(events, ally, healed, "passive");
     grantFeverHealingShield(attacker, ally, healed, events, state);
+    // 돌파 — 계산된 회복량의 일부를 보호막으로 덮는다. 가득 찬 아군도 덮이도록 실제로 오른 양이 아니라 요청량을 쓴다.
+    if (ultimateShield?.kind === "healingShield" && isFighterAlive(ally)) {
+      const shield = Math.round(requestedHeal * ultimateShield.shieldPercentOfHealing / 100);
+      if (shield > 0) grantShield(state, ally, attacker.id, shield, events);
+    }
   }
   gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state, events);
 }

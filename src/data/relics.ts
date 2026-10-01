@@ -652,6 +652,20 @@ export const RELICS: RelicDef[] = [
     // 속도만 두 배가 되면 폭주가 "더 많이 고쳤다"까지만 말하고, 이미 가득 찬 아군에게는
     // 아무 일도 하지 않는다.
     ferocityTrait: { name: "인비저블 썸띵?", effectId: "selfAttackSpeedMultiplier", bonusPercent: 50, healingShieldPercent: 40 },
+    // 별 넷이 이 개체를 **회복을 나눠 주는 기록병**으로 완성한다. 회복 총량은 키우지 않는다(공속·평타 회복·궁극기를
+    // 한 번씩 깎아 낸 이력이 있다) — 대신 한 명만 보던 회복을 둘로 나누고(II), 회복 위에 막을 덮고(III), 폭주가 끝날 때
+    // 준 회복을 팀의 막으로 남기고(IV), 마지막에 쓰러지기 직전의 한 명을 막으로 구한다(V).
+    breakthroughEffects: {
+      // 평타 회복(깎은 피해의 30%)의 75%를 둘째에게 더 보낸다. 몫 자체가 작은 평타라 총 회복이 크게 불지 않고,
+      // 가장 다친 한 명만 살리던 평타가 둘을 본다.
+      basic: { kind: "splitHealing", sharePercent: 75 },
+      // 궁극기의 계산된 회복(주문력 100%)의 절반이 막으로 더해진다. 세 명에게 한 번씩 덮여 총량은 회복의 150%다.
+      ultimate: { kind: "healingShield", shieldPercentOfHealing: 50 },
+      // 폭주 동안 준 회복의 50%를 살아 있는 아군이 똑같이 나눠 갖는다. 폭주 중 덮기(40%)와 달리 끝난 뒤의 한 겹이다.
+      ferocity: { kind: "feverShare", shieldPercentOfHealingDone: 50 },
+      // 자기 패시브(오라)의 연장이다 — 새 조건이 아니라 아군의 체력 25%라는 한 문턱만 읽고, 전투당 한 번이다.
+      passive: { kind: "rescueShield", belowHpPercent: 25, apPercent: 150 },
+    },
     passive: {
       id: "dodo-passive",
       name: "연구원님, 이것 좀 보세요!",

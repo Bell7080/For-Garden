@@ -264,6 +264,10 @@ export const SKILL_JA = {
   "skill.breakthrough.effect.ultimate.execution": "必殺技のダメージが固定ダメージになり、敵を倒すと必殺技ゲージを{energy}回復する。",
   "skill.breakthrough.effect.ferocity.cleavingBasics": "暴走中、通常攻撃がやや広い範囲のすべての敵を攻撃する。",
   "skill.breakthrough.effect.passive.battleMaidAscension": "最大体力・[[def|防御力]]・[[res|抵抗力]]が{percent}%上がり、敵を倒すと次の標的へもう一度[[charge|突進]]する。",
+  "skill.breakthrough.effect.basic.splitHealing": "最も傷ついた味方に与える回復量の{percent}%を、2番目に傷ついた味方にも分け与える。",
+  "skill.breakthrough.effect.ultimate.healingShield": "回復を受けた味方は、その回復量の{percent}%の[[shield|シールド]]も得る。体力が満タンの味方も得られる。",
+  "skill.breakthrough.effect.ferocity.feverShare": "[[ferocity|暴走]]が終わるとき、暴走中に与えた回復量の{percent}%を、生存中の味方全員で等分して[[shield|シールド]]として得る。",
+  "skill.breakthrough.effect.passive.rescueShield": "戦闘中1回、味方の体力が{hp}%以下になると、その味方は魔力の{percent}%の[[shield|シールド]]を得る。",
 
   "skill.keyword.shield.fromMaxHp": "現在の最大体力から{percent}%を受けて計算したシールド数値だ。",
   "skill.keyword.damage.bonus": "現在の{stat}から{percent}%を受けて計算した追加ダメージ数値だ。",

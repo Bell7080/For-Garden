@@ -289,6 +289,10 @@ export const SKILL_KO = {
   "skill.breakthrough.effect.ultimate.execution": "궁극기의 피해가 고정 피해로 바뀌며, 적 처치 시 궁극기 게이지를 {energy} 회복한다.",
   "skill.breakthrough.effect.ferocity.cleavingBasics": "[[ferocity|폭주]] 중 일반 공격이 조금 넓은 범위의 적을 모두 공격한다.",
   "skill.breakthrough.effect.passive.battleMaidAscension": "최대 체력·[[def|방어력]]·[[res|저항력]]이 {percent}% 증가하고, 적 처치 시 다음 표적에게 다시 [[charge|돌진]]한다.",
+  "skill.breakthrough.effect.basic.splitHealing": "가장 다친 아군에게 주는 회복량의 {percent}%를 두 번째로 다친 아군에게도 전달한다.",
+  "skill.breakthrough.effect.ultimate.healingShield": "회복을 받은 아군마다 그 회복량의 {percent}%에 해당하는 [[shield|보호막]]을 얻는다. 이미 체력이 가득 찬 아군도 보호막은 얻는다.",
+  "skill.breakthrough.effect.ferocity.feverShare": "[[ferocity|폭주]]가 끝날 때, 폭주 동안 준 회복량의 {percent}%를 살아 있는 아군 모두가 똑같이 나눠 [[shield|보호막]]으로 얻는다.",
+  "skill.breakthrough.effect.passive.rescueShield": "전투당 한 번, 아군의 체력이 {hp}% 이하로 내려가면 그 아군이 주문력의 {percent}%에 해당하는 [[shield|보호막]]을 얻는다.",
 
   // ── 정보창이 스킬 쪽지에 주입하는 문맥 사전 ─────────────────────────────
   "skill.keyword.shield.fromMaxHp": "현재 최대 체력에서 {percent}%를 받아 계산한 보호막 수치다.",

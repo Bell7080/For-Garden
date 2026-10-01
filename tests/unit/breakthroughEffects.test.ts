@@ -270,3 +270,82 @@ describe("렉시아 한계 돌파", () => {
     expect(lexia.openingChargeReady).toBe(true);
   });
 });
+
+describe("도디 한계 돌파", () => {
+  /** 도디와 아군 둘(티아·디안)이 적 하나를 상대한다. 돌파 단계만 갈아 끼운다. */
+  function dodoBattle(breakthrough: number): SkirmishState {
+    return createSkirmish([getRelic("dodo"), getRelic("tia"), getRelic("dian")], [getRelic("amo")], ARENA, {}, { dodo: breakthrough });
+  }
+
+  it("는 평타 회복의 일부를 둘째로 다친 아군에게도 보낸다(별 II)", () => {
+    const state = dodoBattle(1);
+    const [dodo, tia, dian] = ["player-0", "player-1", "player-2"].map((id) => findFighter(state, id)!);
+    const enemy = findFighter(state, "enemy-0")!;
+    enemy.x = dodo.x + 40; enemy.y = dodo.y; enemy.attackCooldown = 999; enemy.maxHp = 1_000_000; enemy.hp = enemy.maxHp;
+    tia.hp = tia.maxHp * 0.3; dian.hp = dian.maxHp * 0.5; dodo.attackCooldown = 0;
+    const tiaBefore = tia.hp; const dianBefore = dian.hp;
+    for (let tick = 0; tick < 3; tick += 1) stepSkirmish(state, 0.05, () => 0.99);
+    // 가장 다친 티아가 먼저, 둘째로 다친 디안이 그 75%를 받는다.
+    expect(tia.hp).toBeGreaterThan(tiaBefore);
+    expect(dian.hp).toBeGreaterThan(dianBefore);
+    expect((dian.hp - dianBefore) / (tia.hp - tiaBefore)).toBeCloseTo(0.75, 1);
+  });
+
+  it("은 별 하나에서는 둘째에게 보내지 않는다", () => {
+    const state = dodoBattle(0);
+    const [dodo, tia, dian] = ["player-0", "player-1", "player-2"].map((id) => findFighter(state, id)!);
+    const enemy = findFighter(state, "enemy-0")!;
+    enemy.x = dodo.x + 40; enemy.y = dodo.y; enemy.attackCooldown = 999; enemy.maxHp = 1_000_000; enemy.hp = enemy.maxHp;
+    tia.hp = tia.maxHp * 0.3; dian.hp = dian.maxHp * 0.5; dodo.attackCooldown = 0;
+    const dianBefore = dian.hp;
+    for (let tick = 0; tick < 3; tick += 1) stepSkirmish(state, 0.05, () => 0.99);
+    expect(dian.hp).toBe(dianBefore);
+  });
+
+  it("는 궁극기 회복 위에 이미 가득 찬 아군에게도 보호막을 덮는다(별 III)", () => {
+    const state = dodoBattle(2);
+    const dodo = findFighter(state, "player-0")!;
+    const enemy = findFighter(state, "enemy-0")!;
+    for (const fighter of state.fighters) { fighter.x = 500; fighter.y = 800; }
+    enemy.attackCooldown = 999; enemy.maxHp = 1_000_000; enemy.hp = enemy.maxHp;
+    dodo.energy = dodo.def.ultimate.cost;
+    fireUltimate(state, dodo.id, () => 0.99);
+    const expected = Math.round(dodo.def.stats.ap * 100 / 100 * 0.5);
+    for (const id of ["player-1", "player-2"]) expect(findFighter(state, id)!.shield.amount).toBeGreaterThanOrEqual(expected * 0.9);
+  });
+
+  it("는 폭주가 끝날 때 준 회복의 일부를 살아 있는 아군이 똑같이 나눠 보호막으로 얻는다(별 IV)", () => {
+    const state = dodoBattle(3);
+    const dodo = findFighter(state, "player-0")!;
+    const enemy = findFighter(state, "enemy-0")!;
+    enemy.attackCooldown = 999;
+    for (const fighter of state.fighters) fighter.shield.amount = 0;
+    dodo.ferocity = FEROCITY_RULES.max; dodo.ferocityFever = true; dodo.feverHealingDone = 300;
+    let ended = false;
+    for (let tick = 0; tick < 400 && !ended; tick += 1) { stepSkirmish(state, 0.05); ended = !dodo.ferocityFever; }
+    expect(ended).toBe(true);
+    // 300의 50%를 셋이 나눈다.
+    for (const id of ["player-0", "player-1", "player-2"]) expect(findFighter(state, id)!.shield.amount).toBe(50);
+    expect(dodo.feverHealingDone).toBe(0);
+  });
+
+  it("는 아군 체력이 25% 이하로 내려가면 전투당 한 번만 주문력 보호막을 둘러 준다(별 V)", () => {
+    const state = dodoBattle(BREAKTHROUGH_STEPS.length);
+    const dodo = findFighter(state, "player-0")!;
+    const tia = findFighter(state, "player-1")!;
+    const enemy = findFighter(state, "enemy-0")!;
+    enemy.x = tia.x + 40; enemy.y = tia.y; enemy.attackCooldown = 0;
+    tia.hp = tia.maxHp * 0.26; tia.shield.amount = 0;
+    for (let tick = 0; tick < 40 && !dodo.rescueUsed; tick += 1) stepSkirmish(state, 0.05, () => 0.99);
+    expect(dodo.rescueUsed).toBe(true);
+    expect(tia.shield.amount).toBeGreaterThan(0);
+  });
+
+  it("는 네 슬롯 모두 문장을 만든다", () => {
+    const dodo = getRelic("dodo");
+    expect(breakthroughEffectText(dodo, "basic")).toContain("75%");
+    expect(breakthroughEffectText(dodo, "ultimate")).toContain("[[shield|보호막]]");
+    expect(breakthroughEffectText(dodo, "ferocity")).toContain("[[ferocity|폭주]]가 끝날 때");
+    expect(breakthroughEffectText(dodo, "passive")).toContain("25% 이하");
+  });
+});

@@ -2275,6 +2275,14 @@ export type BasicBreakthrough = {
   kind: "deepBleed";
   bleedMultiplier: number;
   healingReceivedReductionPercent: number;
+} | {
+  /**
+   * 평타가 가장 다친 아군에게 주는 회복의 일부를 **두 번째로 다친 아군**에게도 보낸다(도디의 「깃펜 톡톡」).
+   * 총 회복을 키우는 값이 아니라 한 명만 보던 회복을 두 명으로 나누는 값이라 몫은 작게 둔다.
+   */
+  kind: "splitHealing";
+  /** 첫 번째 대상이 받은 회복량의 몇 %를 둘째에게 보내는지. */
+  sharePercent: number;
 } | BreakthroughNone;
 
 /**
@@ -2295,6 +2303,13 @@ export type UltimateBreakthrough = {
 } | {
   kind: "execution";
   energyRefundOnKill: number;
+} | {
+  /**
+   * 궁극기가 회복을 준 아군마다 **그 회복량의 일부를 보호막으로** 한 겹 더 덮는다(도디).
+   * 가득 찬 아군도 덮이도록 실제로 오른 양이 아니라 계산된 회복량(주문력 × 회복 계수)을 기준으로 한다.
+   */
+  kind: "healingShield";
+  shieldPercentOfHealing: number;
 } | BreakthroughNone;
 
 /**
@@ -2312,6 +2327,13 @@ export type FerocityBreakthrough = {
 } | {
   kind: "cleavingBasics";
   radius: number;
+} | {
+  /**
+   * 폭주가 **끝나는 순간**, 폭주 동안 준 회복량의 일부를 살아 있는 아군 모두에게 **나눠** 보호막으로 남긴다
+   * (도디). 총량이 정해져 있고 머릿수로 나뉘므로 편성이 넓어도 보호막이 불어나지 않는다.
+   */
+  kind: "feverShare";
+  shieldPercentOfHealingDone: number;
 } | BreakthroughNone;
 
 /**
@@ -2328,6 +2350,15 @@ export type PassiveBreakthrough = {
   kind: "battleMaidAscension";
   durabilityPercent: number;
   rechargeOnKill: true;
+} | {
+  /**
+   * 전투당 한 번, 살아 있는 아군(자신 포함)의 체력이 `belowHpPercent` 이하로 내려가면 그 아군에게
+   * 이 개체의 주문력에서 나온 보호막을 둘러 준다(도디). 발동권은 이 개체가 갖는다.
+   */
+  kind: "rescueShield";
+  belowHpPercent: number;
+  /** 보호막의 크기 = 이 개체의 지금 주문력 × 이 값(%). */
+  apPercent: number;
 } | BreakthroughNone;
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */

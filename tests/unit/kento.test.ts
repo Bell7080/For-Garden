@@ -61,9 +61,9 @@ describe("켄토 — 까칠", () => {
 
   it("은 겹이 상한에서 멈추고 시간이 다하면 한꺼번에 사라진다", () => {
     const { state, kento, enemies } = setup();
-    kento.prickle = { stacks: 10, remaining: 6, total: 6 };
+    kento.prickle = { stacks: 8, remaining: 6, total: 6 };
     hitOnce(state, enemies[0], kento);
-    expect(kento.prickle?.stacks).toBe(10);
+    expect(kento.prickle?.stacks).toBe(9);
     kento.hp = kento.maxHp;
     step(state, 6.2);
     expect(kento.prickle).toBeNull();
@@ -82,6 +82,19 @@ describe("켄토 — 까칠", () => {
     kento.targetId = enemies[0].id;
     step(state, 0.1);
     expect(kento.prickle?.stacks).toBe(1);
+  });
+
+  it("은 열 겹이 차는 순간 도발·보호막·지속 회복을 얻고 0겹으로 돌아간다", () => {
+    const { state, kento, enemies } = setup();
+    kento.prickle = { stacks: 9, remaining: 6, total: 6 };
+    const before = enemies[0].hp;
+    hitOnce(state, enemies[0], kento);
+    // 가득 찬 한 대가 가장 센 반격이다 — 그 뒤에 겹이 비워진다.
+    expect(enemies[0].hp).toBeLessThan(before);
+    expect(kento.prickle).toBeNull();
+    expect(kento.shield.amount).toBeGreaterThan(0);
+    expect(kento.regeneration).not.toBeNull();
+    expect(enemies[0].taunted?.sourceId).toBe(kento.id);
   });
 
   it("은 폭주 중 겹이 두 배로 쌓인다", () => {
@@ -133,7 +146,7 @@ describe("켄토 — 표시 계약", () => {
   const kento = getRelic("kento");
   it("의 본문은 데이터에서 조립되고 까칠 태그를 가리킨다", () => {
     expect(kento.basic.desc).toBeUndefined();
-    expect(passiveDescription(kento.passive)).toBe("적에게 피격당할 때마다 [[kento-prickle|까칠]]이 한 겹 쌓이고, 때린 적이 겹 수만큼 되받는다.");
+    expect(passiveDescription(kento.passive)).toBe("적에게 피격당할 때마다 [[kento-prickle|까칠]]이 한 겹 쌓이고, 때린 적이 겹 수만큼 되받는다. 겹이 가득 차면 주위의 적을 [[taunt|도발]]하고 [[shield|보호막]]과 지속 회복을 얻은 뒤 0겹으로 돌아간다.");
     expect(skillDescription(kento.basic)).toContain("[[kento-prickle|까칠]]이 1겹 쌓인다");
     expect(skillDescription(kento.ultimate)).toContain("[[kento-prickle|까칠]]이 5겹 더 쌓인다");
     expect(skillDescription(kento.ultimate)).toContain("충격파");
@@ -146,6 +159,7 @@ describe("켄토 — 표시 계약", () => {
     expect(keyword.description).toContain("최대 10겹");
     expect(keyword.description).toContain("30%");
     expect(keyword.description).toContain("6초");
+    expect(keyword.description).toContain("12%");
     expect(keyword.description).not.toContain("[[");
   });
 

@@ -1833,6 +1833,22 @@ export interface Passive {
     reflectApPercentPerStack: number;
     /** 겹이 남는 시간(초). 새 겹이 쌓일 때마다 처음부터 다시 흐른다. */
     seconds: number;
+    /**
+     * 겹이 상한까지 차는 순간 **한 번 터진다.** 넓게 도발하고 보호막과 지속 회복을 얻은 뒤 겹이 0으로 돌아간다.
+     * 되받는 반격은 터지기 직전의 겹 수로 먼저 들어가므로, 가득 찬 한 대는 가장 센 반격이다.
+     */
+    overflow?: {
+      /** 반경 안의 적을 도발하는 시간(초). */
+      tauntSeconds: number;
+      /** 도발이 닿는 반경이다. */
+      tauntRadius: number;
+      /** 자신에게 두르는 보호막(최대 체력 비율 %). */
+      shieldMaxHpPercent: number;
+      /** 지속 회복이 매초 되찾는 최대 체력 비율(%). */
+      regenMaxHpPercentPerSecond: number;
+      /** 지속 회복이 도는 시간(초). */
+      regenSeconds: number;
+    };
   };
   /**
    * 「조가비」 계약. 실제 HP 피해 처리가 끝나고 개체가 살아 있을 때만 한 겹을 얻으며,

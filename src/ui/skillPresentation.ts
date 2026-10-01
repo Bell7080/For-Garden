@@ -323,6 +323,8 @@ export function prickleKeyword(passive: Passive): KeywordDef | undefined {
     kind: "buff",
     description: t("skill.keyword.prickle.description", {
       percent: plan.reflectApPercentPerStack, stacks: plan.maxStacks, seconds: plan.seconds,
+      tauntSeconds: plan.overflow?.tauntSeconds ?? 0, shield: plan.overflow?.shieldMaxHpPercent ?? 0,
+      regen: plan.overflow?.regenMaxHpPercentPerSecond ?? 0, regenSeconds: plan.overflow?.regenSeconds ?? 0,
     }),
   };
 }

@@ -352,14 +352,15 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     const enemies = getStageEnemies(getBattleStage("1-1"));
     const pairs = selectableRPartyPairs(PLAYABLE_RELICS);
     const parties = selectReferenceParties(getRelic("anky"), PLAYABLE_RELICS, enemies, SEEDS);
-    // 새 R이 추가되면 조합 수와 최선/최악 선택이 자동으로 넓어진다 — 파루아가 들어와 셋이 됐다.
+    // 새 R이 추가되면 조합 수와 최선/최악 선택이 자동으로 넓어진다 — 파루아가 들어와 셋이, 켄토(불 탱커)가 들어와 여섯이 됐다.
     // 티아의 반짝이 표식을 옮겨 다니는 대신 그 자리에서 터뜨리는 쪽으로 바뀌면서 최악 조합이
     // 파루아 쪽으로 옮겨 갔다: 붙어서 같은 적을 계속 때리는 손이 이제 두 대마다 주위까지
     // 함께 적신다.
-    expect(pairs.map((pair) => pair.map(({ id }) => id))).toEqual([["dodo", "tia"], ["dodo", "parua"], ["tia", "parua"]]);
+    expect(pairs.map((pair) => pair.map(({ id }) => id))).toEqual([["dodo", "tia"], ["dodo", "kento"], ["dodo", "parua"], ["tia", "kento"], ["tia", "parua"], ["kento", "parua"]]);
     // 실제 전장 크기로 옮기자(v0.172.6) 붙어서 싸우는 거리가 짧아져 도디·티아가 최악으로 내려앉았다.
     expect(parties.favorable.map(({ id }) => id)).toEqual(["anky", "tia", "parua"]);
-    expect(parties.unfavorable.map(({ id }) => id)).toEqual(["anky", "dodo", "tia"]);
+    // 켄토는 평타가 약하고 반격으로 싸우는 탱커라 1-1에서는 가장 늦게 적을 쓰러뜨린다 — 최악 조합이 도디·켄토로 옮겨 갔다.
+    expect(parties.unfavorable.map(({ id }) => id)).toEqual(["anky", "dodo", "kento"]);
   });
 
   it("장 목표와 허용 조정 순서를 전용 배율 없이 공개한다", () => {

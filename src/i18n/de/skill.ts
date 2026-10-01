@@ -260,4 +260,11 @@ export const SKILL_DE = {
   "skill.count.2": "2",
   "skill.count.3": "3",
   "skill.count.4": "4",
+  "skill.keyword.prickle.term": "Stachelig",
+  "skill.keyword.prickle.description": "Jeder Treffer fügt eine Aufladung hinzu, bis zu {stacks}. Der Angreifer erleidet pro Aufladung magischen Schaden in Höhe von {percent}% der Zauberkraft dieser Einheit. Hält {seconds} s und beginnt mit jeder neuen Aufladung von vorn.",
+  "skill.passive.prickly": "Jedes Mal, wenn ein Gegner sie trifft, entsteht eine Aufladung [[kento-prickle|Stachelig]] und der Angreifer erleidet Schaden entsprechend der Aufladungen.",
+  "skill.clause.prickleGain": "erhält {count} Aufladung [[kento-prickle|Stachelig]]",
+  "skill.sentence.selfGuard.prickle": " Außerdem erhält sie {count} weitere Aufladungen [[kento-prickle|Stachelig]].",
+  "skill.sentence.selfGuard.shockwave": " Wenn die Provokation endet, löst sich eine Schockwelle und [[stun|betäubt]] Gegner in der Nähe für {seconds} s.",
+  "skill.ferocity.caffeineBubble": "Beim Eintritt in die Raserei werden Gegner in einem großen Bereich {seconds} s lang [[taunt|provoziert]]. In der Raserei baut sich [[kento-prickle|Stachelig]] {multiplier}-mal so schnell auf.",
 } as const;

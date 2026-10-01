@@ -260,4 +260,11 @@ export const SKILL_TH = {
   "skill.count.2": "2",
   "skill.count.3": "3",
   "skill.count.4": "4",
+  "skill.keyword.prickle.term": "หนาม",
+  "skill.keyword.prickle.description": "ถูกโจมตีทีละครั้งจะสะสมหนึ่งชั้น สูงสุด {stacks} ชั้น ศัตรูที่โจมตีจะได้รับความเสียหายเวทเท่ากับ {percent}% ของพลังเวทของตัวเองต่อหนึ่งชั้น คงอยู่ {seconds} วินาที และนับใหม่ทุกครั้งที่มีชั้นใหม่",
+  "skill.passive.prickly": "ทุกครั้งที่ถูกศัตรูโจมตี [[kento-prickle|หนาม]] จะสะสมหนึ่งชั้น และศัตรูที่โจมตีจะได้รับความเสียหายสะท้อนตามจำนวนชั้น",
+  "skill.clause.prickleGain": "สะสม [[kento-prickle|หนาม]] ให้ตัวเอง {count} ชั้น",
+  "skill.sentence.selfGuard.prickle": " และสะสม [[kento-prickle|หนาม]] เพิ่มให้ตัวเองอีก {count} ชั้น",
+  "skill.sentence.selfGuard.shockwave": " เมื่อการยั่วยุสิ้นสุด คลื่นกระแทกจะระเบิดและทำให้ศัตรูรอบตัว[[stun|มึนงง]] {seconds} วินาที",
+  "skill.ferocity.caffeineBubble": "ในวินาทีที่เข้าสู่โหมดคลั่ง จะ[[taunt|ยั่วยุ]]ศัตรูในวงกว้างเป็นเวลา {seconds} วินาที ระหว่างคลั่ง [[kento-prickle|หนาม]] จะสะสมเร็วขึ้น {multiplier} เท่า",
 } as const;

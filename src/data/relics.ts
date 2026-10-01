@@ -883,6 +883,115 @@ export const RELICS: RelicDef[] = [
   },
 
   {
+    /**
+     * 켄토(켄트로사우르스) — **불 R 탱커**다. R에 불 속성도 탱커도 없던 자리를 메우는 개체이고,
+     * 람머스류의 「가시 갑옷」을 근미래 장비로 옮겼다: 몸이 아니라 **떠 있는 가시 날 둘**이 대신 받아치고,
+     * 켄토 자신은 맞는 자리에 서서 껌을 씹을 뿐이다.
+     *
+     * 공격력이 아니라 **주문력**이 이 개체의 손이다. 평타는 약하고(공격력 최저권) 맞을수록 「까칠」이
+     * 쌓여 때린 쪽이 되받는다 — 그래서 앞에 서 있는 것이 곧 화력이고, 방어·저항·체력을 올리는 것이
+     * 반격을 올리는 것이 된다. 「받는 피해 감소」로 버티지 않고 **보호막 + 도발**(궁극기)로 버틴다.
+     */
+    id: "kento",
+    squad: "eye",
+    name: "켄토",
+    specimenNumber: "212",
+    projectName: "SPIKE ANCHOR",
+    excavationSite: "탄자니아 텐다구루 상부 쥐라기 해성 사암층",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "해성 사암층에서 등뼈 위로 두 줄의 골판이 어깨 쪽에서 가시로 바뀌는 채 이어진 골격이 나왔다. 꼬리 끝 가시 네 쌍이 한쪽으로 닳아 있어, 같은 방향으로 수없이 휘둘렀다고 추정했다.",
+    observationProfile: {
+      originYear: "약 1억 5천만 년 전",
+      // E.C.는 켄토의 인간형 신체 나잇대이며, 원종 화석의 연대와 독립된 값이다.
+      restorationYear: "E.C. 18년",
+      lifeStage: "성체",
+      height: "1.38 m",
+      weight: "41 kg",
+    },
+    catalogSummary: "신장 1.38m, 체중 41kg의 작은 인간형 체격에 가시가 줄지어 난 꼬리와 자동 반사 장치를 둘 단 채 복원된 성체 켄트로사우르스 표본.",
+    // 다른 스쿼드를 동경하는 설정이 아니라, 스테라를 챙기는 선임이라는 관계를 직접 관찰된 행동으로 남긴다.
+    unlockRecord: { status: "recorded", text: "복원 후 켄토는 관제탑 아래층 의자에서 거의 내려오지 않는다. 풍선껌을 불며 단말기를 뒤적이다가도 스테라의 비행 경로 보고만은 한 줄도 빼지 않고 열어 보며, 그 사실을 들키면 \"심심해서 본 거야\"라고 말한다. 연구원이 일을 시키면 \"5분만 더\"라며 눈을 감지만 스테라가 첫 비행에 나서는 날에는 가시 날 둘을 먼저 바람 앞에 띄워 두고 아무 말 없이 돌아온다. 작다는 말이 나오면 껌이 터지고, 어린 렐릭들 앞에서는 한숨을 쉬면서도 끝까지 줄을 세워 주는 쪽이 늘 켄토다." },
+    squadNote: "시그널 아이의 지상 거점 담당. 하늘에서 신호를 읽는 선배·후배들이 내려앉을 자리를 가시 날 둘로 먼저 막아 두고, 신입 스테라를 가장 가까이서 챙긴다.",
+    // 관제 호칭 중 가장 실무적인 것을 골라, 귀찮다면서도 일은 끝까지 하는 선임의 결을 말한다.
+    researcherTitle: "담당관",
+    rarity: "R",
+    portraitAssetId: "kento",
+    origin: "켄트로사우르스",
+    element: "fire",
+    role: "tank",
+    // 몸을 말아 앞에서 받는 자리지만 가시 날이 닿는 거리까지만 싸운다.
+    reachTier: "melee",
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 128, efficiencyMultiplier: 1.05 },
+    /**
+     * **평타(공격력)가 아니라 되받는 마법 피해(주문력)가 손이다.** 그래서 공격력은 로스터 하위권이고
+     * 공격 속도도 느리다. 방어·저항은 노도니아보다 높고 실효 체력도 데이보다 두꺼운 R 탱커이며,
+     * 그 몫을 주문력과 공격 속도에서 덜어 냈다 — 반격의 크기는 주문력에 **비율**(%)로 걸리므로 낮은
+     * 주문력은 비율을 키워 메운다(`prickle.reflectApPercentPerStack`).
+     */
+    stats: {
+      hp: 1570,
+      def: 90,
+      res: 90,
+      atk: 48,
+      ap: 70,
+      attackSpeed: 52,
+      moveSpeed: 66,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    // 들어서는 순간 넓게 한 번 도발하고, 폭주 중에는 까칠이 두 배로 쌓인다. 반격이 세지는 것은 겹이 그만큼
+    // 빨리 차서이며 피해량을 따로 올리는 숨은 보정이 아니다(공용 야성 규칙이 이미 피해를 올린다).
+    ferocityTrait: {
+      name: "카페인 풍선껌", effectId: "caffeineBubble",
+      taunt: { kind: "taunt", seconds: 3 }, tauntRadius: 420, prickleGainMultiplier: 2,
+    },
+    passive: {
+      // kind가 prickly인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
+      // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
+      id: "kento-passive",
+      name: "까칠한 성격",
+      kind: "prickly",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 겹 하나가 되받는 주문력 비율(%)을 담아 둔다.
+      value: 30,
+      durationSeconds: 6,
+      prickle: { maxStacks: 10, reflectApPercentPerStack: 30, seconds: 6 },
+      desc: "적에게 피격당할 때마다 까칠이 한 겹 쌓이고, 때린 적이 겹당 자신의 주문력 30%만큼 마법 피해를 되받는다. 최대 열 겹까지 쌓이고 6초 동안 남으며, 새 겹이 쌓일 때마다 유지 시간이 처음부터 다시 흐른다.",
+    },
+    basic: {
+      id: "kento-basic",
+      name: "자동 반사 프로토콜",
+      power: 80,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+      // 가까운 적을 쳐서 겹을 쌓는다 — 맞지 않고도 반격이 차는 길이라, 앞에서 막고 서는 동안 손이 놀지 않는다.
+      prickleGain: 1,
+    },
+    ultimate: {
+      id: "kento-ult",
+      name: "최전방 전개 부대",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      cost: 150,
+      // 때리지 않는다. 끌어당겨 도발하고 막을 두르고 까칠을 채운 뒤, 도발이 끝나는 순간 충격파를 터뜨려 기절시킨다.
+      targeting: "self",
+      selfGuard: {
+        tauntSeconds: 4,
+        pull: { radius: 420, distance: 150 },
+        shieldMaxHpPercent: 30,
+        prickleGain: 5,
+        shockwave: { radius: 300, stunSeconds: 1.5 },
+      },
+    },
+  },
+
+  {
     id: "meron",
     squad: "rune",
     name: "메론",

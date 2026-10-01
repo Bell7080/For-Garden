@@ -260,4 +260,11 @@ export const SKILL_ZH_HANS = {
   "skill.count.2": "2",
   "skill.count.3": "3",
   "skill.count.4": "4",
+  "skill.keyword.prickle.term": "带刺",
+  "skill.keyword.prickle.description": "每次被击中叠加一层，最多{stacks}层。攻击者每层会反受相当于自身法术强度{percent}%的魔法伤害。持续{seconds}秒，每叠加新的一层都会重新计时。",
+  "skill.passive.prickly": "每次被敌人击中，[[kento-prickle|带刺]]就叠加一层，攻击者会按层数反受伤害。",
+  "skill.clause.prickleGain": "自身叠加{count}层[[kento-prickle|带刺]]",
+  "skill.sentence.selfGuard.prickle": " 自身再叠加{count}层[[kento-prickle|带刺]]。",
+  "skill.sentence.selfGuard.shockwave": " 嘲讽结束的瞬间爆发冲击波，使周围敌人[[stun|眩晕]]{seconds}秒。",
+  "skill.ferocity.caffeineBubble": "进入暴走的瞬间，对大范围内的敌人[[taunt|嘲讽]]{seconds}秒。暴走期间，[[kento-prickle|带刺]]一次叠加{multiplier}倍的层数。",
 } as const;

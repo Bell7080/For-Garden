@@ -307,4 +307,12 @@ export const SKILL_KO = {
   "skill.count.2": "두",
   "skill.count.3": "세",
   "skill.count.4": "네",
+
+  "skill.keyword.prickle.term": "까칠",
+  "skill.keyword.prickle.description": "맞을 때마다 한 겹 쌓이며 최대 {stacks}겹까지 오른다. 때린 적은 겹 하나당 자신의 주문력의 {percent}%만큼 마법 피해를 되받는다. {seconds}초 동안 남으며 새 겹이 쌓일 때마다 처음부터 다시 흐른다.",
+  "skill.passive.prickly": "적에게 피격당할 때마다 [[kento-prickle|까칠]]이 한 겹 쌓이고, 때린 적이 겹 수만큼 되받는다.",
+  "skill.clause.prickleGain": "자신의 [[kento-prickle|까칠]]이 {count}겹 쌓인다",
+  "skill.sentence.selfGuard.prickle": " 자신의 [[kento-prickle|까칠]]이 {count}겹 더 쌓인다.",
+  "skill.sentence.selfGuard.shockwave": " 도발이 끝나는 순간 충격파가 터져 주위의 적을 {seconds}초 동안 [[stun|기절]]시킨다.",
+  "skill.ferocity.caffeineBubble": "폭주에 들어가는 순간 넓은 범위의 적을 {seconds}초 동안 [[taunt|도발]]한다. 폭주 중에는 [[kento-prickle|까칠]]이 한 번에 {multiplier}배로 쌓인다.",
 } as const;

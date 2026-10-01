@@ -260,4 +260,11 @@ export const SKILL_ES = {
   "skill.count.2": "2",
   "skill.count.3": "3",
   "skill.count.4": "4",
+  "skill.keyword.prickle.term": "Espinoso",
+  "skill.keyword.prickle.description": "Cada vez que lo golpean se acumula una carga, hasta {stacks}. El atacante recibe daño mágico igual al {percent}% del poder mágico de esta unidad por carga. Dura {seconds} s y se reinicia con cada carga nueva.",
+  "skill.passive.prickly": "Cada vez que un enemigo la golpea, se acumula una carga de [[kento-prickle|Espinoso]] y el atacante recibe daño de vuelta según las cargas.",
+  "skill.clause.prickleGain": "acumula {count} carga de [[kento-prickle|Espinoso]] en sí misma",
+  "skill.sentence.selfGuard.prickle": " También acumula {count} cargas más de [[kento-prickle|Espinoso]] en sí misma.",
+  "skill.sentence.selfGuard.shockwave": " Cuando termina la provocación, una onda expansiva estalla y [[stun|Aturde]] a los enemigos cercanos durante {seconds} s.",
+  "skill.ferocity.caffeineBubble": "Al entrar en frenesí, [[taunt|Provoca]] a los enemigos de una zona amplia durante {seconds} s. Durante el frenesí, [[kento-prickle|Espinoso]] se acumula {multiplier} veces más rápido.",
 } as const;

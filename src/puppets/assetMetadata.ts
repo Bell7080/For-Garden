@@ -693,3 +693,30 @@ export const QUETZALCOATLUS_SD_METADATA: Omit<PuppetAsset, "url"> = {
   content: { left: 28, top: 34, right: 1226, bottom: 1220 },
   joints: { center: [662, 621], head: [637, 513], eyes: null, feet: [[638, 1226], [812, 1205]] },
 };
+
+/**
+ * 23번 켄토(켄트로사우르스) 전신.
+ *
+ * ZIP 안 WebP의 alpha > 16 경계를 실측했다(16,4–1071,1442). 눈1(543,350)·눈2(630,378)·머리1(604,374)·
+ * 중심1(550,466)이 모두 그 상자 안에 있다. **발 관절(482,1388 · 714,1431)** 중 발2는 alpha 아래 경계(1442)
+ * 안이라 바닥선이 어긋나지 않는다.
+ *
+ * 몸 뒤로 뻗은 가시 꼬리와 위쪽의 부유 가시 날 둘 때문에 실루엣이 캔버스를 거의 채우지만, 둘 다 어깨
+ * 높이보다 위에서 머리 옆으로 벌어져 머리 위 여백을 키우지 않는다. **키가 1.38 m로 작아** 로비 배율은
+ * 눈에서 alpha 아래 경계까지를 그 키로 맞춘 값이다(`lobbyZoom`).
+ */
+export const KENTO_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1087,
+  imageHeight: 1447,
+  content: { left: 16, top: 4, right: 1071, bottom: 1442 },
+  joints: { center: [550, 466], head: [604, 374], eyes: [[543, 350], [630, 378]], feet: [[482, 1388], [714, 1431]] },
+  /** 로비 세로 비율: 메론 기준. 1.38 m — 눈(364)에서 alpha 아래 경계까지를 그 키로 맞춘다. */
+  lobbyZoom: 0.965,
+};
+
+/** 켄토 SD: 중심1·머리1·발1·발2를 프로젝트에서 읽었으며 눈 관절은 없다. alpha 경계는 (51,76)–(1209,1214)다. */
+export const KENTO_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 51, top: 76, right: 1209, bottom: 1214 },
+};

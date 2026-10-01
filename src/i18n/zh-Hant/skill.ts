@@ -260,4 +260,11 @@ export const SKILL_ZH_HANT = {
   "skill.count.2": "2",
   "skill.count.3": "3",
   "skill.count.4": "4",
+  "skill.keyword.prickle.term": "帶刺",
+  "skill.keyword.prickle.description": "每次被擊中疊加一層，最多{stacks}層。攻擊者每層會反受相當於自身法術強度{percent}%的魔法傷害。持續{seconds}秒，每疊加新的一層都會重新計時。",
+  "skill.passive.prickly": "每次被敵人擊中，[[kento-prickle|帶刺]]就疊加一層，攻擊者會按層數反受傷害。",
+  "skill.clause.prickleGain": "自身疊加{count}層[[kento-prickle|帶刺]]",
+  "skill.sentence.selfGuard.prickle": " 自身再疊加{count}層[[kento-prickle|帶刺]]。",
+  "skill.sentence.selfGuard.shockwave": " 嘲諷結束的瞬間爆發衝擊波，使周圍敵人[[stun|眩暈]]{seconds}秒。",
+  "skill.ferocity.caffeineBubble": "進入暴走的瞬間，對大範圍內的敵人[[taunt|嘲諷]]{seconds}秒。暴走期間，[[kento-prickle|帶刺]]一次疊加{multiplier}倍的層數。",
 } as const;

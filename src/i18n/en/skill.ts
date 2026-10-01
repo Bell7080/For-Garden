@@ -260,4 +260,12 @@ export const SKILL_EN = {
   "skill.count.2": "2",
   "skill.count.3": "3",
   "skill.count.4": "4",
+
+  "skill.keyword.prickle.term": "Prickly",
+  "skill.keyword.prickle.description": "One stack builds each time it is hit, up to {stacks} stacks. The attacker takes magic damage equal to {percent}% of this unit's Ability Power per stack. It lasts {seconds}s and every new stack restarts the duration.",
+  "skill.passive.prickly": "Each time it is hit by an enemy, one stack of [[kento-prickle|Prickly]] builds and the attacker takes damage back for every stack.",
+  "skill.clause.prickleGain": "builds {count} stack of [[kento-prickle|Prickly]] on itself",
+  "skill.sentence.selfGuard.prickle": " It also builds {count} more stacks of [[kento-prickle|Prickly]] on itself.",
+  "skill.sentence.selfGuard.shockwave": " When the taunt ends, a shockwave bursts and [[stun|Stuns]] nearby enemies for {seconds}s.",
+  "skill.ferocity.caffeineBubble": "On entering Frenzy, [[taunt|Taunts]] enemies across a wide area for {seconds}s. While in Frenzy, [[kento-prickle|Prickly]] builds {multiplier} times as fast.",
 } as const;

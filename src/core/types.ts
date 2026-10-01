@@ -43,7 +43,7 @@ export type RelicRarity = "R" | "SR" | "SSR";
  */
 export type RaitiaAssetId = "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind";
 
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
@@ -390,6 +390,13 @@ export type SelfGuard = {
   shieldMaxHpPercent: number;
   /** 시전 순간, 보호막·끌어당김·도발 처리가 끝난 뒤 시전자 조가비의 내부 쿨다운만 0으로 되돌린다. */
   resetShellGuardCooldown?: true;
+  /** 시전 순간 자신의 「까칠」을 이만큼 더 쌓는다(상한까지). */
+  prickleGain?: number;
+  /**
+   * 도발이 끝나는 순간 한 번 터지는 충격파. 막이 깨졌든 시간이 다했든 **지속이 끝나는 때**가 기준이라,
+   * 깨지기 전에 터질지를 신경 쓸 필요가 없다. 피해는 없고 반경 안의 적을 기절시킨다.
+   */
+  shockwave?: { radius: number; stunSeconds: number };
 };
 
 /** 자리를 잡는 계약. 은신·순간이동·다음 타격 강화를 코어가 판별할 수 있는 값으로만 적는다. */
@@ -570,6 +577,8 @@ export type BasicAttack = AttackSkill & {
    * 말할 수 있어서다 — 최대 체력의 몇 %를 더한다고 적으면 같은 한 방의 수치가 두 곳에서 갈린다.
    */
   elationDamagePercentPerStack?: number;
+  /** 이 기본 공격이 적중할 때마다 자기 「까칠」을 이만큼 쌓는다(켄토). 맞지 않고도 반격이 차는 길이다. */
+  prickleGain?: number;
   /**
    * `statusEffectEvery`가 터지는 **그 한 방에만** 더해지는 추가 계수다.
    *
@@ -1035,6 +1044,8 @@ export type PassiveKind =
   | "undyingTalisman"
   /** 노도니아 전용: 맞을수록 회복 중첩을 쌓는 패시브다. */
   | "painfulElation"
+  /** 켄토 전용: 맞을수록 「까칠」이 쌓이고, 때린 적이 겹 수만큼 마법 피해를 되받는다. */
+  | "prickly"
   /** 실제 HP 피해를 받고 살아남을 때 겹(아모의 조가비 · 수쿠스이노의 흉터)을 쌓아 자신과 최저 HP 비율 아군을 보호한다. */
   | "shellGuard"
   /** 렉시아 전용: 공격 속도·공격력·치명타 확률·치명타 피해를 함께 강화한다. */
@@ -1154,6 +1165,8 @@ export type FerocityEffectId =
   | "adamantBody"
   /** 노도니아 전용: 폭주 중 주위를 매초 지지고, 기본 공격마다 잃은 체력을 되찾는다. */
   | "battleHeat"
+  /** 켄토 전용: 폭주 진입 시 넓게 도발하고, 폭주 중 「까칠」이 두 배로 쌓인다. */
+  | "caffeineBubble"
   /** 데이 전용: 폭주 중 때리기를 멈추고 훨씬 빠르게 달리며 주위에 매초 낙서를 흩뿌린다. */
   | "graffitiRun"
   /** 매디 전용: 폭주 진입 시 모든 상태이상·디버프를 지우고 보호막을 얻으며, 폭주 중 방어력·저항력이 함께 오른다. */
@@ -1294,6 +1307,19 @@ export type FerocityTrait = {
       hastenedAttacks: number;
       /** 그 횟수 동안 공격 속도에 더하는 비율(%)이다. */
       attackSpeedPercent: number;
+    }
+  | {
+      /**
+       * 카페인 풍선껌(켄토). 폭주에 들어서는 순간 넓은 범위의 적을 도발하고, 폭주 중에는 「까칠」이
+       * 몇 배로 쌓인다. 반격이 세지는 것은 겹이 그만큼 빨리 차기 때문이며 피해량을 따로 올리지 않는다.
+       */
+      effectId: "caffeineBubble";
+      /** 폭주에 들어서는 순간 반경 안의 적에게 거는 도발이다. */
+      taunt: { kind: "taunt"; seconds: number };
+      /** 그 도발이 닿는 반경이다. */
+      tauntRadius: number;
+      /** 폭주 중 까칠이 한 번에 쌓이는 겹 수의 배율이다. */
+      prickleGainMultiplier: number;
     }
   | {
       /**
@@ -1729,6 +1755,21 @@ export interface Passive {
     /** 겹 하나가 매초 회복시키는 최대 체력 비율(%) — 궁극기·폭주의 증가 전 값이다. */
     maxHpRegenPercentPerStack: number;
     /** 겹이 남아 있는 시간(초). 다시 맞으면 처음부터 다시 흐른다. */
+    seconds: number;
+  };
+  /**
+   * 「까칠」 계약(켄토). 직접 맞을 때마다 겹이 쌓이고, **때린 쪽이 그 순간의 겹 수만큼 마법 피해를 되받는다.**
+   *
+   * 희열·덧칠과 같은 축이다 — 상한에 닿아도 터지지 않고, 반격으로도 줄지 않으며 비우는 것은 시간뿐이다.
+   * 출혈·중독 같은 지속 피해는 때린 손이 없어 겹도 반격도 일으키지 않는다. 반격은 자기 주문력에서
+   * 나오므로 이 개체는 평타(공격력)가 약하고 맞는 자리에 서 있는 것이 곧 화력이다.
+   */
+  prickle?: {
+    /** 겹 상한. */
+    maxStacks: number;
+    /** 겹 하나가 되받는 자기 주문력의 비율(%). */
+    reflectApPercentPerStack: number;
+    /** 겹이 남는 시간(초). 새 겹이 쌓일 때마다 처음부터 다시 흐른다. */
     seconds: number;
   };
   /**

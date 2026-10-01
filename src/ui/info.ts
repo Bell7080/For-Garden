@@ -65,7 +65,7 @@ import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, typ
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
-import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, elationKeyword, passiveShieldKeyword, periodicStackKeyword, skillDescription } from "./skillPresentation";
+import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, elationKeyword, prickleKeyword, passiveShieldKeyword, periodicStackKeyword, skillDescription } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
 import { deriveSummonStats } from "../core/summonStats";
 import { SummonInfoPopup } from "./SummonInfoPopup";
@@ -2669,6 +2669,11 @@ export function openFerocityTraitPopup(
     const elation = elationKeyword(def.passive);
     if (elation) contextualKeywords.push(elation);
   }
+  // 카페인 풍선껌은 까칠이 쌓이는 속도를 바꾸므로 그 태그를 이 쪽지에서도 눌러 읽게 한다.
+  if (def.ferocityTrait.effectId === "caffeineBubble") {
+    const prickle = prickleKeyword(def.passive);
+    if (prickle) contextualKeywords.push(prickle);
+  }
   // 메테의 스타카토 추가타는 기본 공격과 같은 효과를 다시 부르는 것이므로 그 뜻을 여기서 짧게 설명한다.
   if (def.ferocityTrait.effectId === "crescendoStaccato") contextualKeywords.push({
     id: "mette-staccato", term: t("skill.keyword.staccato.term"), kind: "rule",
@@ -2786,6 +2791,12 @@ export function buildSkillViewModel(options: {
         : ("selfBulwark" in skill && skill.selfBulwark?.passiveHealBonusPercent !== undefined)
           || ("elationDamagePercentPerStack" in skill && skill.elationDamagePercentPerStack !== undefined)
           ? elationKeyword(finalDef.passive) : undefined,
+      // 까칠은 패시브 본문이 가리키는 태그라 그 쪽지에도 실리고, 평타·궁극기가 겹을 쌓을 때도 같은 태그를 가리킨다.
+      "kind" in skill
+        ? prickleKeyword(skill as Passive)
+        : ("prickleGain" in skill && skill.prickleGain !== undefined)
+          || ("selfGuard" in skill && skill.selfGuard?.prickleGain !== undefined)
+          ? prickleKeyword(finalDef.passive) : undefined,
       // 「인」이 덮는 막도 실제 값으로 보여 주고, 어디서 나온 수인지 눌러 읽게 한다.
       guardShield === undefined || !("selfGuard" in skill) || skill.selfGuard === undefined ? undefined : {
         id: "shield-value", term: String(guardShield), kind: "rule" as const,

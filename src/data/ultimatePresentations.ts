@@ -91,6 +91,7 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   // 흩어져 있던 드론이 한 점으로 모이는 궁극기다. 본인은 요람에서 움직이지 않으므로 흔들림은
   // 약하게 두고, 모이는 순간만 확대로 알린다.
   morphe: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.96, zoomScale: 1.20, zoomMs: 110, cameraShakeIntensity: 0.010 },
+  kento: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.96, zoomScale: 1.16, zoomMs: 112, cameraShakeIntensity: 0.008 },
   "toby": { ...DEFAULT_ULTIMATE_PRESENTATION, cutInHoldMs: 135, zoomScale: 1.2, zoomMs: 110, cameraShakeIntensity: 0.008 },
   "amo": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, zoomScale: 1.24, zoomMs: 115, cameraShakeIntensity: 0.009 },
   "ripa": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.92, artworkOrigin: { x: 650, y: 770 }, zoomScale: 1.16, cameraShakeIntensity: 0.007 },

@@ -282,4 +282,12 @@ export const SKILL_JA = {
   "skill.count.2": "2",
   "skill.count.3": "3",
   "skill.count.4": "4",
+
+  "skill.keyword.prickle.term": "とげとげ",
+  "skill.keyword.prickle.description": "被弾するたびに1重積まれ、最大{stacks}重まで上がる。攻撃した敵は1重につき自分の魔力の{percent}%分の魔法ダメージを跳ね返される。{seconds}秒間残り、新しい重が積まれるたびに持続時間が最初から流れ直す。",
+  "skill.passive.prickly": "敵に被弾するたびに[[kento-prickle|とげとげ]]が1重積まれ、攻撃した敵は重の数だけダメージを跳ね返される。",
+  "skill.clause.prickleGain": "自分の[[kento-prickle|とげとげ]]が{count}重積まれる",
+  "skill.sentence.selfGuard.prickle": " 自分の[[kento-prickle|とげとげ]]がさらに{count}重積まれる。",
+  "skill.sentence.selfGuard.shockwave": " 挑発が終わる瞬間に衝撃波が炸裂し、周囲の敵を{seconds}秒間[[stun|気絶]]させる。",
+  "skill.ferocity.caffeineBubble": "暴走に入った瞬間、広範囲の敵を{seconds}秒間[[taunt|挑発]]する。暴走中は[[kento-prickle|とげとげ]]が一度に{multiplier}倍積まれる。",
 } as const;

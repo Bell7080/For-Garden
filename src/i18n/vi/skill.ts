@@ -260,4 +260,11 @@ export const SKILL_VI = {
   "skill.count.2": "2",
   "skill.count.3": "3",
   "skill.count.4": "4",
+  "skill.keyword.prickle.term": "Gai góc",
+  "skill.keyword.prickle.description": "Mỗi lần bị đánh sẽ cộng một tầng, tối đa {stacks} tầng. Kẻ địch đánh trúng sẽ nhận lại sát thương phép bằng {percent}% Phép của bản thân cho mỗi tầng. Tồn tại {seconds} giây và tính lại mỗi khi có tầng mới.",
+  "skill.passive.prickly": "Mỗi lần bị kẻ địch đánh trúng, [[kento-prickle|Gai góc]] cộng một tầng và kẻ đánh trúng sẽ nhận lại sát thương theo số tầng.",
+  "skill.clause.prickleGain": "tự cộng {count} tầng [[kento-prickle|Gai góc]]",
+  "skill.sentence.selfGuard.prickle": " Đồng thời cộng thêm {count} tầng [[kento-prickle|Gai góc]] cho bản thân.",
+  "skill.sentence.selfGuard.shockwave": " Khi hiệu ứng khiêu khích kết thúc, một sóng xung kích nổ ra và [[stun|Choáng]] kẻ địch xung quanh {seconds} giây.",
+  "skill.ferocity.caffeineBubble": "Ngay khi bước vào Cuồng bạo, [[taunt|Khiêu khích]] kẻ địch trong phạm vi rộng {seconds} giây. Trong lúc Cuồng bạo, [[kento-prickle|Gai góc]] cộng nhanh gấp {multiplier} lần.",
 } as const;

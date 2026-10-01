@@ -260,4 +260,11 @@ export const SKILL_ID = {
   "skill.count.2": "2",
   "skill.count.3": "3",
   "skill.count.4": "4",
+  "skill.keyword.prickle.term": "Berduri",
+  "skill.keyword.prickle.description": "Setiap terkena serangan, satu tumpukan bertambah hingga maksimal {stacks}. Musuh yang menyerang menerima balik damage sihir sebesar {percent}% Kekuatan Magis per tumpukan. Bertahan {seconds} detik dan dihitung ulang setiap ada tumpukan baru.",
+  "skill.passive.prickly": "Setiap kali terkena serangan musuh, satu tumpukan [[kento-prickle|Berduri]] bertambah dan penyerang menerima balik damage sesuai jumlah tumpukan.",
+  "skill.clause.prickleGain": "menambah {count} tumpukan [[kento-prickle|Berduri]] pada diri sendiri",
+  "skill.sentence.selfGuard.prickle": " Juga menambah {count} tumpukan [[kento-prickle|Berduri]] pada diri sendiri.",
+  "skill.sentence.selfGuard.shockwave": " Saat provokasi berakhir, gelombang kejut meledak dan membuat musuh di sekitar [[stun|pingsan]] selama {seconds} detik.",
+  "skill.ferocity.caffeineBubble": "Saat mengamuk, [[taunt|memprovokasi]] musuh di area luas selama {seconds} detik. Selama mengamuk, [[kento-prickle|Berduri]] menumpuk {multiplier} kali lipat.",
 } as const;

@@ -260,4 +260,11 @@ export const SKILL_RU = {
   "skill.count.2": "2",
   "skill.count.3": "3",
   "skill.count.4": "4",
+  "skill.keyword.prickle.term": "Колючесть",
+  "skill.keyword.prickle.description": "С каждым попаданием по юниту накапливается один заряд, максимум {stacks}. Атаковавший получает магический урон, равный {percent}% силы магии этого юнита за заряд. Длится {seconds} с и отсчитывается заново с каждым новым зарядом.",
+  "skill.passive.prickly": "Каждый раз, когда по ней попадает враг, накапливается один заряд [[kento-prickle|Колючести]], и атаковавший получает ответный урон по числу зарядов.",
+  "skill.clause.prickleGain": "накапливает себе {count} зарядов [[kento-prickle|Колючести]]",
+  "skill.sentence.selfGuard.prickle": " Также накапливает себе ещё {count} зарядов [[kento-prickle|Колючести]].",
+  "skill.sentence.selfGuard.shockwave": " Когда провокация заканчивается, происходит ударная волна, которая [[stun|оглушает]] врагов рядом на {seconds} с.",
+  "skill.ferocity.caffeineBubble": "В момент входа в Неистовство [[taunt|провоцирует]] врагов на большой площади на {seconds} с. Во время Неистовства [[kento-prickle|Колючесть]] накапливается в {multiplier} раза быстрее.",
 } as const;

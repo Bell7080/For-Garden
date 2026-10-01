@@ -262,6 +262,9 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
       : t("skill.damage.value", { amount: Math.round(stats.attack * trait.auraDamagePercent / 100), type: t("skill.damageType.physical") });
     return t("skill.ferocity.overclock", { percent: trait.attackSpeedPercent, shield, damage });
   }
+  if (trait.effectId === "caffeineBubble") {
+    return t("skill.ferocity.caffeineBubble", { seconds: trait.taunt.seconds, multiplier: trait.prickleGainMultiplier });
+  }
   if (trait.effectId === "overclockBody") {
     return t("skill.ferocity.overclockBody", { percent: trait.attackSpeedPercent, move: trait.moveSpeedPercent });
   }
@@ -299,6 +302,25 @@ export function elationKeyword(passive: Passive): KeywordDef | undefined {
     kind: "buff",
     description: t("skill.keyword.elation.description", {
       percent: plan.maxHpRegenPercentPerStack, stacks: plan.maxStacks, seconds: plan.seconds,
+    }),
+  };
+}
+
+/**
+ * 「까칠」 태그(켄토). 겹이 어떻게 쌓이고 누가 얼마를 되받는지를 한 자리에서 말한다.
+ *
+ * 쓰는 개체가 하나뿐이라 태그가 수치를 가져도 되며, 본문은 그 수치를 되풀이하지 않는다. 문장은 실제
+ * 전투가 읽는 필드에서 지으므로 상한·비율을 조정하면 팝업도 함께 바뀐다.
+ */
+export function prickleKeyword(passive: Passive): KeywordDef | undefined {
+  const plan = passive.prickle;
+  if (passive.kind !== "prickly" || plan === undefined) return undefined;
+  return {
+    id: "kento-prickle",
+    term: t("skill.keyword.prickle.term"),
+    kind: "buff",
+    description: t("skill.keyword.prickle.description", {
+      percent: plan.reflectApPercentPerStack, stacks: plan.maxStacks, seconds: plan.seconds,
     }),
   };
 }
@@ -477,6 +499,7 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
     const blast = passive.undyingKnockback === undefined ? "" : t("skill.passive.undyingTalisman.blast");
     return t("skill.passive.undyingTalisman", { seconds: passive.durationSeconds, percent: passive.value, blast });
   }
+  if (passive.kind === "prickly" && passive.prickle !== undefined) return t("skill.passive.prickly");
   if (passive.kind === "painfulElation" && passive.elation !== undefined) {
     return t("skill.passive.painfulElation");
   }
@@ -679,7 +702,10 @@ export function skillDescription(
         ? t("skill.sentence.selfGuard.shieldPercent", { percent: guard.shieldMaxHpPercent })
         : `[[shield-value|${Math.round(stats.maxHp * guard.shieldMaxHpPercent / 100)}]]`;
       const reset = guard.resetShellGuardCooldown === true ? t("skill.sentence.selfGuard.reset") : "";
-      return t("skill.sentence.selfGuard", { seconds: guard.tauntSeconds, shield, reset });
+      // 까칠을 더 쌓고 끝에 충격파가 터지는 궁극기는 그 두 절이 같은 문장 끝에 붙는다.
+      const prickle = guard.prickleGain === undefined ? "" : t("skill.sentence.selfGuard.prickle", { count: guard.prickleGain });
+      const shockwave = guard.shockwave === undefined ? "" : t("skill.sentence.selfGuard.shockwave", { seconds: guard.shockwave.stunSeconds });
+      return t("skill.sentence.selfGuard", { seconds: guard.tauntSeconds, shield, reset: reset + prickle + shockwave });
     }
     // 때리지 않고 자리만 잡는 궁극기. 위력을 적지 않는 이유는 그 피해가 이어질 일반 공격의
     // 몫이기 때문이다 — 여기에 수치를 적으면 같은 한 방이 위아래에서 두 수로 보인다.
@@ -831,6 +857,10 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
   // — 겹 수가 맞는 순간마다 달라 능력치만으로는 계산할 수 없는 값이다.
   if ("elationDamagePercentPerStack" in skill && skill.elationDamagePercentPerStack !== undefined) {
     clauses.push({ text: t("skill.clause.elationDamage", { percent: skill.elationDamagePercentPerStack }), standalone: true });
+  }
+  // 제 평타가 적중할 때마다 까칠이 쌓이는 몫은 주어가 자신이라 제 문장으로 선다.
+  if ("prickleGain" in skill && skill.prickleGain !== undefined) {
+    clauses.push({ text: t("skill.clause.prickleGain", { count: skill.prickleGain }), standalone: true });
   }
   // 관측 발동 — 겹마다 들어가는 한 틱의 실제 값을 함께 적는다(능력치를 모르는 자리에서는 공격력의 몇 %로).
   const volley = "observationVolley" in skill ? skill.observationVolley : undefined;

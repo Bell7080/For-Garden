@@ -389,6 +389,16 @@ export interface Fighter extends Combatant {
    */
   elation: { stacks: number; remaining: number; total: number; regenPercentPerStack: number; maxStacks: number; tickIn: number } | null;
   /**
+   * 「까칠」 겹(켄토). 맞을 때마다 오르고 때린 쪽이 겹 수만큼 되받는다. 시간이 다하면 한꺼번에 사라진다.
+   * 반격 비율은 정의가 갖고 있어 상태는 값만 든다.
+   */
+  prickle: { stacks: number; remaining: number; total: number } | null;
+  /**
+   * 「최전방 전개 부대」가 도는 동안의 시계. **끝나는 순간** 충격파가 터지므로 시전 때 계약을 함께 들고 간다.
+   * 슬롯 하나뿐이다 — 도는 중에 다시 쓰면 시계만 처음부터 다시 흐른다.
+   */
+  fortress: { remaining: number; total: number; skillId: string; name: string; radius: number; stunSeconds: number } | null;
+  /**
    * 아군이 받을 피해를 대신 받는 중. 「절정」이 켠다.
    *
    * **슬롯은 하나뿐이다** — 두 겹으로 쌓으면 같은 피해가 두 번 나뉘어 아군이 실제로 받는 몫이
@@ -662,7 +672,7 @@ export type SkirmishEvent =
        * 아군 피격 여부보다 먼저 색을 정한다 — 같은 상태가 바닥과 머리 위에서 다른 색이면
        * 무엇이 걸렸는지 두 번 읽어야 한다.
        */
-      status?: "submerged" | "taunt";
+      status?: "submerged" | "taunt" | "stun";
       area:
         | { shape: "radial"; x: number; y: number; radius: number }
         | { shape: "lane"; from: { x: number; y: number }; to: { x: number; y: number }; halfWidth: number }
@@ -1071,6 +1081,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     undyingPending: false,
     taunted: null,
     elation: null,
+    prickle: null,
+    fortress: null,
     bulwark: null,
     empoweredBasic: false,
     // 폭주가 켜진 뒤 온전한 1초가 지나야 첫 파동이 발생한다.
@@ -2285,6 +2297,84 @@ function gainElation(target: Fighter): void {
 }
 
 /**
+ * 까칠 — 겹을 쌓는다. 맞았을 때와 제 평타가 적중했을 때 두 길로만 오른다.
+ *
+ * 폭주 중에는 한 번에 쌓이는 겹이 배율만큼 늘어난다(`caffeineBubble`). 새 겹이 쌓일 때마다 유지
+ * 시간을 처음부터 다시 흘려, 계속 맞는 동안에는 사라지지 않는다.
+ */
+function gainPrickle(fighter: Fighter, count: number): void {
+  const plan = fighter.def.passive.prickle;
+  if (fighter.def.passive.kind !== "prickly" || plan === undefined || !isFighterAlive(fighter) || count <= 0) return;
+  const trait = fighter.def.ferocityTrait;
+  const multiplier = fighter.ferocityFever && trait.effectId === "caffeineBubble" ? trait.prickleGainMultiplier : 1;
+  fighter.prickle = {
+    stacks: Math.min(plan.maxStacks, (fighter.prickle?.stacks ?? 0) + count * multiplier),
+    remaining: plan.seconds,
+    total: plan.seconds,
+  };
+}
+
+/**
+ * 맞은 순간의 까칠. 겹을 하나 쌓은 뒤 **그 한 대를 친 쪽**이 겹 수만큼 마법 피해를 되받는다.
+ *
+ * 지속 피해·아군 대신 받기에서는 부르지 않는다 — 때린 손이 없거나(출혈) 손이 이미 따로 있다.
+ * 반격은 `applyDamage`만 지나고 `strike`를 다시 부르지 않으므로 서로 되받아치는 고리가 생기지 않는다.
+ */
+function reactPrickle(target: Fighter, attacker: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const plan = target.def.passive.prickle;
+  if (target.def.passive.kind !== "prickly" || plan === undefined || !isFighterAlive(target)) return;
+  gainPrickle(target, 1);
+  const stacks = target.prickle?.stacks ?? 0;
+  if (stacks <= 0 || attacker.side === target.side || !isFighterAlive(attacker)) return;
+  const input = {
+    power: stacks * plan.reflectApPercentPerStack,
+    damageType: "magical" as const, scalingStat: "ap" as const, isCritical: false, kind: "basic" as const,
+  };
+  const raw = Math.max(1, Math.round(computeDamage(target, defensiveDefinition(attacker, state), input)));
+  const resolution = resolveReceivedDamage(attacker, raw);
+  const hpBefore = attacker.hp;
+  const shieldBefore = attacker.shield.amount; const shieldProviderId = attacker.shield.providerId;
+  applyDamage(attacker, resolution.applied, events, state);
+  const credited = recordDamageContribution(state, target.id, attacker, "magical", "ap",
+    computeDamageContribution(target, input), resolution, hpBefore, shieldBefore, shieldProviderId);
+  // 맞은 쪽이 휘두르는 것이 아니므로 시전 모션을 틀지 않는다(`animate: false`).
+  events.push({ kind: "attack", attackerId: target.id, targetId: attacker.id, skill: "basic", amount: resolution.applied,
+    contributionAmount: credited, critical: false, animate: false, damageType: "magical", mitigated: resolution.reduced < resolution.raw });
+  if (!isFighterAlive(attacker)) {
+    clearDefeatedStatuses(attacker);
+    events.push({ kind: "death", fighterId: attacker.id, sourceId: target.id });
+  }
+}
+
+/** 까칠 겹의 수명. 시간이 다하면 한꺼번에 사라진다. */
+function tickPrickle(fighter: Fighter, dt: number): void {
+  const prickle = fighter.prickle;
+  if (!prickle) return;
+  const remaining = prickle.remaining - dt;
+  fighter.prickle = remaining <= EMERGENCY_RECOVERY.epsilon ? null : { ...prickle, remaining };
+}
+
+/** 「최전방 전개 부대」의 시계. 도발이 끝나는 순간 충격파가 한 번 터져 반경 안의 적을 기절시킨다. */
+function tickFortress(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  const fortress = fighter.fortress;
+  if (!fortress) return;
+  const remaining = fortress.remaining - dt;
+  if (remaining > EMERGENCY_RECOVERY.epsilon && isFighterAlive(fighter)) { fighter.fortress = { ...fortress, remaining }; return; }
+  fighter.fortress = null;
+  if (!isFighterAlive(fighter)) return;
+  let struck = 0;
+  for (const other of state.fighters) {
+    if (other.side === fighter.side || !isFighterAlive(other) || distance(fighter, other) > fortress.radius) continue;
+    applyCombatStatusEffect(other, { kind: "stun", seconds: fortress.stunSeconds }, events, state, fighter.id, false);
+    events.push({ kind: "combatEffect", fighterId: other.id, effect: { tag: "shieldHit", intensity: 1.4 } });
+    struck += 1;
+  }
+  events.push({ kind: "areaImpact", attackerId: fighter.id, ultimate: true, status: "stun",
+    area: { shape: "radial", x: fighter.x, y: fighter.y, radius: fortress.radius } });
+  void struck;
+}
+
+/**
  * 희열 재생량의 배율. 궁극기(대신 받는 동안)와 폭주(전장의 열기)가 **더해서** 키운다 — 둘이 곱해지면
  * 같은 궁극기가 폭주에 들어 있느냐에 따라 한 번에 몇 배씩 갈린다.
  */
@@ -3176,6 +3266,8 @@ function clearDefeatedStatuses(fighter: Fighter): void {
   fighter.vandalism = null;
   fighter.artChannel = null;
   fighter.elation = null;
+  fighter.prickle = null;
+  fighter.fortress = null;
   fighter.shellGuard = null;
   fighter.bulwark = null;
   fighter.overpaint = null;
@@ -3290,6 +3382,30 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
       description: `한 겹마다 매초 최대 체력의 ${fighter.elation.regenPercentPerStack}% 회복 · 최대 ${fighter.elation.maxStacks}겹`,
       stacks: fighter.elation.stacks,
       timing: { kind: "timed", remainingSeconds: fighter.elation.remaining, totalSeconds: fighter.elation.total },
+    });
+  }
+  if (fighter.prickle) {
+    const plan = fighter.def.passive.prickle;
+    buffs.push({
+      id: `prickle:${fighter.id}`,
+      sourceFighterId: fighter.id,
+      targetFighterId: fighter.id,
+      skillId: fighter.def.passive.id,
+      name: fighter.def.passive.name,
+      description: `맞을 때마다 쌓이고 때린 적이 겹당 주문력의 ${plan?.reflectApPercentPerStack ?? 0}%만큼 마법 피해를 되받음 · 최대 ${plan?.maxStacks ?? 0}겹`,
+      stacks: fighter.prickle.stacks,
+      timing: { kind: "timed", remainingSeconds: fighter.prickle.remaining, totalSeconds: fighter.prickle.total },
+    });
+  }
+  if (fighter.fortress) {
+    buffs.push({
+      id: `fortress:${fighter.id}`,
+      sourceFighterId: fighter.id,
+      targetFighterId: fighter.id,
+      skillId: fighter.fortress.skillId,
+      name: fighter.fortress.name,
+      description: `적을 도발하는 중 · 끝나면 충격파가 터져 주위 적을 ${fighter.fortress.stunSeconds}초 기절`,
+      timing: { kind: "timed", remainingSeconds: fighter.fortress.remaining, totalSeconds: fighter.fortress.total },
     });
   }
   if (fighter.undying) {
@@ -3966,6 +4082,7 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, even
     }
     if (trait.effectId === "adamantBody") fighter.hastenedAttacksLeft = trait.hastenedAttacks;
     if (trait.effectId === "battleHeat") tauntOnBattleHeat(fighter, trait, state, events);
+    if (trait.effectId === "caffeineBubble") tauntOnBattleHeat(fighter, trait, state, events);
     // 똬리 속으로: 들어서는 순간 반경 안의 적을 몸 앞으로 끌어온다. 끌려온 자리가 곧 궁극기의 범위다.
     if (trait.effectId === "selfAttackSpeedMultiplier" && trait.pullOnEntry) {
       const pulled = pullEnemiesToward(fighter, trait.pullOnEntry, state);
@@ -5080,6 +5197,9 @@ function strike(
   triggerCombatAugments(state, target, "onLowHp", events);
   // 맞은 그 순간 희열이 오른다. 대신 받은 몫은 `shareWithBulwark`가 따로 센다.
   gainElation(target);
+  // 까칠도 같은 순간에 오르고, 때린 쪽이 그 겹만큼 되받는다. 제 평타가 적중한 몫은 반격이 아니라 겹으로 돌아온다.
+  reactPrickle(target, attacker, state, events);
+  if (!useUltimate) gainPrickle(attacker, attacker.def.basic.prickleGain ?? 0);
   if (!useUltimate) pullStruck(attacker, target, state, events);
 
   const transfer = useUltimate ? attacker.def.ultimate.damageTransfer : undefined;
@@ -5509,6 +5629,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     // 광역으로 맞은 쪽도 희열이 오른다. 단일과 광역에서 규칙이 갈리면 같은 한 대가 어느
     // 스킬에 맞았느냐에 따라 겹을 주기도 하고 안 주기도 한다.
     gainElation(target);
+    reactPrickle(target, attacker, state, events);
     // 광역 걸음도 같은 규칙으로 끌어당긴다 — 단일과 광역에서 갈리면 같은 걸음이 대상 수에 따라 다른 일을 한다.
     if (!useUltimate) pullStruck(attacker, target, state, events);
     // 집중도 **적중마다** 쌓는다. 단일 타격 쪽에만 두면 갈래화살이 셋을 맞혀도 겹이 하나도
@@ -6257,6 +6378,8 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     tickBulwark(fighter, dt, state, events);
     tickElation(fighter, dt);
     tickElationRegen(fighter, dt, state, events);
+    tickPrickle(fighter, dt);
+    tickFortress(fighter, dt, state, events);
     tickAftershock(fighter, dt, rng, state, events);
     // 폭주 회복은 행동 불능과 무관한 전투 시간으로 돌아 탱커가 제어당해도 계약한 생존력을 유지한다.
     tickFerocityRegen(fighter, dt, state, events);
@@ -6593,6 +6716,14 @@ export function fireUltimate(
     // 끌어당김·도발·selfGuard 보호막을 모두 확정한 뒤에만 조가비 내부 쿨다운을 초기화한다.
     // 필드가 없는 기존 selfGuard에는 손대지 않아 궁극기 사용이 조가비를 연쇄 발동시키지 않는다.
     if (plan.resetShellGuardCooldown === true) attacker.shellGuardCooldownRemaining = 0;
+    // 까칠을 더 쌓고, 도발이 끝나는 순간 터질 충격파의 시계를 켠다.
+    if (plan.prickleGain !== undefined) gainPrickle(attacker, plan.prickleGain);
+    if (plan.shockwave !== undefined) {
+      attacker.fortress = {
+        remaining: plan.tauntSeconds, total: plan.tauntSeconds, skillId: teamUltimate.id, name: teamUltimate.name,
+        radius: plan.shockwave.radius, stunSeconds: plan.shockwave.stunSeconds,
+      };
+    }
     attacker.attackCooldown = attackInterval(attacker, state);
     settle(state, events);
     return events;

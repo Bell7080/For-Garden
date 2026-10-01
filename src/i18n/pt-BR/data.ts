@@ -1143,7 +1143,7 @@ export default {
   "relic.taboa.basic.name": "Constrição",
   "relic.taboa.ultimate.name": "Abraço sufocante",
   "relic.taboa.projectName": "ANNIHILATION SIEGE 005",
-  "relic.quetzalcoatlus.name": "Quetzalcoatlus",
+  "relic.quetzalcoatlus.name": "Coatl",
   "relic.quetzalcoatlus.origin": "Quetzalcoatlus",
   "relic.quetzalcoatlus.excavationSite": "Depósitos fluviais do Cretáceo Superior, Big Bend, Texas, EUA",
   "relic.quetzalcoatlus.fossilRecord": "De uma camada de argilito à beira de um rio foi recuperada uma fileira de vértebras cervicais ocas ainda unidas. As paredes ósseas, finas como papel, são interpretadas como uma adaptação para manter o corpo no ar, e registrou-se também uma superfície sedimentar com marcas apenas de pontas de asa.",

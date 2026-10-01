@@ -1143,7 +1143,7 @@ export default {
   "relic.taboa.basic.name": "Удушение",
   "relic.taboa.ultimate.name": "Удушающие объятия",
   "relic.taboa.projectName": "ANNIHILATION SIEGE 005",
-  "relic.quetzalcoatlus.name": "Кетцалькоатль",
+  "relic.quetzalcoatlus.name": "Коатль",
   "relic.quetzalcoatlus.origin": "Кетцалькоатль",
   "relic.quetzalcoatlus.excavationSite": "Речные отложения позднего мела, Биг-Бенд, Техас, США",
   "relic.quetzalcoatlus.fossilRecord": "В глинистом сланце речного берега нашли цепочку полых шейных позвонков, всё ещё соединённых в одну линию. Стенки костей тонки как бумага — их считают приспособлением для удержания тела в воздухе; рядом зафиксирована поверхность осадка, где остались лишь следы кончиков крыльев.",

@@ -676,7 +676,7 @@ export const TABOA_SD_METADATA: Omit<PuppetAsset, "url"> = {
 };
 
 /**
- * **케찰코아틀루스 전신.** 공멸이 풀어 놓은 셋째 폭주 병기이자 셋째 레이드 보스다.
+ * **코아틀 전신.** 공멸이 풀어 놓은 셋째 폭주 병기이자 셋째 레이드 보스다.
  *
  * 값은 ZIP 안 WebP의 실제 크기와 alpha > 16 경계를 직접 재서 적었다. 앞선 두 보스와 캔버스가
  * 달라(1122×1402) 그 값을 옮겨 오지 않는다.
@@ -687,7 +687,7 @@ export const QUETZALCOATLUS_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   joints: { center: [574, 318], head: [568, 248], eyes: [[551, 249], [593, 225]], feet: [[424, 1387], [782, 1494]] },
 };
 
-/** 케찰코아틀루스 전투 SD. */
+/** 코아틀 전투 SD. */
 export const QUETZALCOATLUS_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1254, imageHeight: 1254,
   content: { left: 28, top: 34, right: 1226, bottom: 1220 },

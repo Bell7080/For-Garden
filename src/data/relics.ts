@@ -3472,7 +3472,10 @@ export const RELICS: RelicDef[] = [
   },
   {
     /**
-     * **케찰코아틀루스.** 공멸이 풀어 놓은 셋째 폭주 병기이자 레이드 보스다.
+     * **코아틀.** 공멸이 풀어 놓은 셋째 폭주 병기이자 레이드 보스다.
+     *
+     * 이름은 종명(케찰코아틀루스)의 뒤 음절을 따 줄였다 — 수쿠스이노(데이노수쿠스)·타보아(티타노보아)처럼
+     * 연구동에서 부르던 호칭이 그대로 굳은 것이다.
      *
      * 수쿠스이노가 **턱**, 타보아가 **몸통으로 조이는 것**이라면 이쪽은 **하늘에서 내리꽂는 부리**다.
      * 전투가 열리는 순간 표적에게 급강하해 한 번 멈춰 세우고(패시브), 세 번째 부리질마다 자세를
@@ -3484,7 +3487,7 @@ export const RELICS: RelicDef[] = [
     id: "quetzalcoatlus",
     enemyOnly: true,
     squad: "annihilation",
-    name: "케찰코아틀루스",
+    name: "코아틀",
     specimenNumber: "233",
     projectName: "ANNIHILATION SIEGE 006",
     excavationSite: "미국 텍사스 빅벤드 백악기 말 하천 퇴적층",

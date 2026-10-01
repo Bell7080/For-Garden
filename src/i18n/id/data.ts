@@ -1143,7 +1143,7 @@ export default {
   "relic.taboa.basic.name": "Lilit",
   "relic.taboa.ultimate.name": "Pelukan yang Mencekik",
   "relic.taboa.projectName": "ANNIHILATION SIEGE 005",
-  "relic.quetzalcoatlus.name": "Quetzalcoatlus",
+  "relic.quetzalcoatlus.name": "Koatl",
   "relic.quetzalcoatlus.origin": "Quetzalcoatlus",
   "relic.quetzalcoatlus.excavationSite": "Endapan sungai Kapur Akhir, Big Bend, Texas, AS",
   "relic.quetzalcoatlus.fossilRecord": "Sebaris ruas tulang leher berongga ditemukan tersambung dalam satu garis di lapisan batu lumpur tepi sungai. Dinding tulangnya setipis kertas sehingga diduga berfungsi menjaga tubuh tetap melayang, dan permukaan sedimen yang hanya menyisakan bekas ujung sayap turut dicatat.",

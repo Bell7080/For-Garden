@@ -1143,7 +1143,7 @@ export default {
   "relic.taboa.basic.name": "Siết",
   "relic.taboa.ultimate.name": "Cái ôm nghẹt thở",
   "relic.taboa.projectName": "ANNIHILATION SIEGE 005",
-  "relic.quetzalcoatlus.name": "Quetzalcoatlus",
+  "relic.quetzalcoatlus.name": "Coatl",
   "relic.quetzalcoatlus.origin": "Quetzalcoatlus",
   "relic.quetzalcoatlus.excavationSite": "Trầm tích sông cuối Kỷ Phấn Trắng, Big Bend, Texas, Hoa Kỳ",
   "relic.quetzalcoatlus.fossilRecord": "Một chuỗi đốt sống cổ rỗng được tìm thấy nối liền thành một hàng trong lớp đá bùn ven sông. Thành xương mỏng như giấy, được cho là để nâng cơ thể lơ lửng trên không, và một mặt trầm tích chỉ còn vết đầu cánh cũng được ghi nhận.",

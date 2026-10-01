@@ -8,7 +8,7 @@ import { passiveDescription } from "../../src/ui/skillPresentation";
 
 const ARENA: Arena = { left: 130, right: 950, top: 600, bottom: 1360 };
 
-describe("케찰코아틀루스 — 셋째 레이드 보스", () => {
+describe("코아틀 — 셋째 레이드 보스", () => {
   const boss = getRelic("quetzalcoatlus");
 
   it("바람 속성의 전사이고 공멸의 봉인된 적이다", () => {

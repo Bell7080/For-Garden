@@ -429,7 +429,7 @@ export const SUKUSUINO_ASSET: PuppetAsset = { url: `${base}puppets/raid_001.zip`
 /** **타보아 전신.** 둘째 레이드 보스다(`raid_002`). */
 export const TABOA_ASSET: PuppetAsset = { url: `${base}puppets/raid_002.zip`, ...TABOA_PORTRAIT_METADATA };
 
-/** **케찰코아틀루스 전신.** 셋째 레이드 보스다(`raid_003`). */
+/** **코아틀 전신.** 셋째 레이드 보스다(`raid_003`). */
 export const QUETZALCOATLUS_ASSET: PuppetAsset = { url: `${base}puppets/raid_003.zip`, ...QUETZALCOATLUS_PORTRAIT_METADATA };
 
 export const RAITIA_ASSETS: Readonly<Record<RaitiaAssetId, PuppetAsset>> = {
@@ -542,7 +542,7 @@ export const TABOA_SD_ASSET: PuppetAsset = {
   ...TABOA_SD_METADATA,
 };
 
-/** 케찰코아틀루스 전투 SD. 전신과 같은 레이드 번호 묶음(`raidSD_003`)이다. */
+/** 코아틀 전투 SD. 전신과 같은 레이드 번호 묶음(`raidSD_003`)이다. */
 export const QUETZALCOATLUS_SD_ASSET: PuppetAsset = {
   url: `${base}puppets/raidSD_003.zip`,
   ...QUETZALCOATLUS_SD_METADATA,

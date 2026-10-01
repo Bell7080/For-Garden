@@ -1143,7 +1143,7 @@ export default {
   "relic.taboa.basic.name": "绞缠",
   "relic.taboa.ultimate.name": "窒息的拥抱",
   "relic.taboa.projectName": "ANNIHILATION SIEGE 005",
-  "relic.quetzalcoatlus.name": "风神翼龙",
+  "relic.quetzalcoatlus.name": "科阿特",
   "relic.quetzalcoatlus.origin": "风神翼龙",
   "relic.quetzalcoatlus.excavationSite": "美国得克萨斯 大弯地区 白垩纪末河流沉积层",
   "relic.quetzalcoatlus.fossilRecord": "在河岸泥岩层中，空心的颈椎节呈一条连续的线被回收。骨壁薄如纸张，推测是为了让身体浮在空中，同时还记录到只留有翼尖痕迹的沉积面。",

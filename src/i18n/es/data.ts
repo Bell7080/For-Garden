@@ -1143,7 +1143,7 @@ export default {
   "relic.taboa.basic.name": "Constricción",
   "relic.taboa.ultimate.name": "Abrazo asfixiante",
   "relic.taboa.projectName": "ANNIHILATION SIEGE 005",
-  "relic.quetzalcoatlus.name": "Quetzalcoatlus",
+  "relic.quetzalcoatlus.name": "Coatl",
   "relic.quetzalcoatlus.origin": "Quetzalcoatlus",
   "relic.quetzalcoatlus.excavationSite": "Depósitos fluviales del Cretácico tardío, Big Bend, Texas, EE. UU.",
   "relic.quetzalcoatlus.fossilRecord": "De un estrato de lutita ribereña se recuperó una hilera de vértebras cervicales huecas, todavía unidas. Las paredes óseas, finas como papel, se interpretan como una adaptación para mantener el cuerpo en el aire, y se registró además una superficie sedimentaria con marcas solo de puntas de ala.",

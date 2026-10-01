@@ -1143,7 +1143,7 @@ export default {
   "relic.taboa.basic.name": "Würgen",
   "relic.taboa.ultimate.name": "Würgende Umarmung",
   "relic.taboa.projectName": "ANNIHILATION SIEGE 005",
-  "relic.quetzalcoatlus.name": "Quetzalcoatlus",
+  "relic.quetzalcoatlus.name": "Koatl",
   "relic.quetzalcoatlus.origin": "Quetzalcoatlus",
   "relic.quetzalcoatlus.excavationSite": "Flussablagerungen der Oberkreide, Big Bend, Texas, USA",
   "relic.quetzalcoatlus.fossilRecord": "In einem Schluffstein am Flussufer wurde eine Reihe hohler Halswirbel gefunden, noch im Verbund. Die papierdünnen Knochenwände gelten als Anpassung, den Körper in der Luft zu halten; zudem wurde eine Sedimentfläche dokumentiert, auf der nur Flügelspitzenspuren zu sehen waren.",

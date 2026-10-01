@@ -1159,7 +1159,7 @@ export default {
   "relic.taboa.basic.name": "Constrict",
   "relic.taboa.ultimate.name": "Suffocating Embrace",
   "relic.taboa.projectName": "ANNIHILATION SIEGE 005",
-  "relic.quetzalcoatlus.name": "Quetzalcoatlus",
+  "relic.quetzalcoatlus.name": "Koatl",
   "relic.quetzalcoatlus.origin": "Quetzalcoatlus",
   "relic.quetzalcoatlus.excavationSite": "Late Cretaceous river deposits, Big Bend, Texas, USA",
   "relic.quetzalcoatlus.fossilRecord": "A hollow chain of neck vertebrae was recovered in a single line from a riverbank mudstone. The bone walls were as thin as paper, which is taken to mean the body was built to stay aloft, and a sediment surface bearing only wingtip marks was recorded alongside it.",

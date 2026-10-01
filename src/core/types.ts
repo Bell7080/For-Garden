@@ -1077,7 +1077,7 @@ export type PassiveKind =
    */
   | "farthestFocus"
   /**
-   * 케찰코아틀루스 전용: 전투가 열리면 표적에게 급강하(`openingCharge`)하고 치명타가 오른다.
+   * 코아틀 전용: 전투가 열리면 표적에게 급강하(`openingCharge`)하고 치명타가 오른다.
    *
    * 엔진이 읽는 것은 종류가 아니라 필드 둘(`openingCharge`·`criticalChancePercent`)이라 이 종류는 문장을
    * 고르는 이름표일 뿐이다 — 렉시아의 종류에 얹으면 그 문장이 공속·공격력까지 함께 말하게 된다.

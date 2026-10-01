@@ -1143,7 +1143,7 @@ export default {
   "relic.taboa.basic.name": "รัด",
   "relic.taboa.ultimate.name": "อ้อมกอดแห่งการหายใจไม่ออก",
   "relic.taboa.projectName": "ANNIHILATION SIEGE 005",
-  "relic.quetzalcoatlus.name": "เควตซัลโคอาทลัส",
+  "relic.quetzalcoatlus.name": "โคอาทล์",
   "relic.quetzalcoatlus.origin": "เควตซัลโคอาทลัส",
   "relic.quetzalcoatlus.excavationSite": "ชั้นตะกอนแม่น้ำยุคครีเทเชียสตอนปลาย บิ๊กเบนด์ เท็กซัส สหรัฐอเมริกา",
   "relic.quetzalcoatlus.fossilRecord": "พบกระดูกคอกลวงเรียงต่อกันเป็นแนวเดียวในชั้นหินโคลนริมแม่น้ำ ผนังกระดูกบางราวกับกระดาษ จึงสันนิษฐานว่าใช้พยุงลำตัวให้ลอยอยู่กลางอากาศ และบันทึกพื้นผิวตะกอนที่เหลือเพียงรอยปลายปีกไว้ด้วย",

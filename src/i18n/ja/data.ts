@@ -1344,7 +1344,7 @@ export default {
   "relic.taboa.basic.name": "締め付け",
   "relic.taboa.ultimate.name": "窒息の抱擁",
   "relic.taboa.projectName": "ANNIHILATION SIEGE 005",
-  "relic.quetzalcoatlus.name": "ケツァルコアトルス",
+  "relic.quetzalcoatlus.name": "コアトル",
   "relic.quetzalcoatlus.origin": "ケツァルコアトルス",
   "relic.quetzalcoatlus.excavationSite": "アメリカ テキサス ビッグベンド 白亜紀末の河川堆積層",
   "relic.quetzalcoatlus.fossilRecord": "河岸の泥岩層から、中空の頸椎が一列に連なったまま出土した。骨壁が紙のように薄く、体を宙に浮かせるための構造だったと推定され、翼の先の跡だけが残る堆積面も併せて記録された。",

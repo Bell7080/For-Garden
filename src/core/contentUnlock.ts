@@ -26,7 +26,10 @@ export interface ContentUnlock { id: ContentId; level: number; }
  * - 3: 상점+무역 — 재화를 쓰는 창구는 일찍 열고, 얼마나 사 모을지는 재화 공급 쪽이 조인다.
  * - 4: 대작전+현상수배 — 급여·돌파 재료 파밍. 한꺼번에 밀고 싶어도 **적 레벨 사다리(난이도)** 가 막으므로 재화 인플레이션은 거기서 조인다.
  * - 5~6: 교류 → 결투 — 서브 콘텐츠를 차례로, 결투는 편성이 갖춰진 뒤.
- * - 7~12: 친구 → 레이드(공동 토벌이라 친구가 먼저) → 원정 — 가장 무겁고 마지막에 닿는 콘텐츠.
+ * - 7~10: 친구 → 레이드(공동 토벌이라 친구가 먼저) → 원정 — 가장 무겁고 마지막에 닿는 콘텐츠.
+ *
+ * **개방 속도의 목표**: 진득하게 하는 계정이 하루~이틀(시간 회복만 쓸 때 2일 안)에 거의 다 연다. 레벨별로 몇 스테미나를 녹여야
+ * 하는지는 `naturalStaminaToReach`가 재고 `docs/content-unlock-pacing.md`에 표로 남겼다. 레벨을 옮길 때는 그 표와 테스트를 함께 본다.
  * - 고고학은 레벨이 아니라 **스테이지 클리어**로 연다(`CONTENT_STAGE_UNLOCKS`) — 원석과 특성이 처음 열리는 1-10을 깬 사람이 그것을 쓸 곳이다.
  */
 export const CONTENT_UNLOCKS: readonly ContentUnlock[] = [
@@ -38,8 +41,8 @@ export const CONTENT_UNLOCKS: readonly ContentUnlock[] = [
   { id: "interaction", level: 5 },
   { id: "duel", level: 6 },
   { id: "friends", level: 7 },
-  { id: "raid", level: 10 },
-  { id: "expedition", level: 12 },
+  { id: "raid", level: 9 },
+  { id: "expedition", level: 10 },
 ] as const;
 
 /** 레벨이 아니라 **스테이지 클리어**로 열리는 콘텐츠. 그 스테이지를 깨는 순간 열린다. */

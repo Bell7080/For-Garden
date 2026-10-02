@@ -639,7 +639,7 @@ export class SaveManager {
     const seen = new Set<string>();
     for (const answer of story.answers) {
       const question = relicStoryFor(answer.relicId)?.questions.find(({ id }) => id === answer.questionId);
-      if (!data.ownedRelicIds.includes(answer.relicId) || !question || !question.choices.some(({ id }) => id === answer.choiceId) || seen.has(answer.questionId) || !Number.isFinite(Date.parse(answer.answeredAt))) throw new SaveDataError("렐릭 관찰 질문 답변이 올바르지 않습니다.");
+      if (!data.ownedRelicIds.includes(answer.relicId) || !question || typeof answer.claimed !== "boolean" || seen.has(answer.questionId) || !Number.isFinite(Date.parse(answer.answeredAt))) throw new SaveDataError("렐릭 관찰 질문 답변이 올바르지 않습니다.");
       seen.add(answer.questionId);
     }
     const chapters = new Set<string>();
@@ -697,7 +697,10 @@ function normalizeRelicStory(value: unknown): SaveData["relicStory"] {
   const source = (value && typeof value === "object" ? value : {}) as Partial<SaveData["relicStory"]>;
   return {
     metAt: source.metAt && typeof source.metAt === "object" ? { ...source.metAt } : {},
-    answers: Array.isArray(source.answers) ? source.answers.map((answer) => ({ ...answer })) : [],
+    // 예전 저장은 고른 답(choiceId)을 들고 있었다 — 버리고, 그때는 답과 함께 젬을 받았으므로 수령한 것으로 옮긴다.
+    answers: Array.isArray(source.answers)
+      ? source.answers.map((answer) => ({ relicId: answer.relicId, questionId: answer.questionId, answeredAt: answer.answeredAt, claimed: typeof answer.claimed === "boolean" ? answer.claimed : true }))
+      : [],
     claimedChapterIds: Array.isArray(source.claimedChapterIds) ? [...source.claimedChapterIds] : [],
   };
 }

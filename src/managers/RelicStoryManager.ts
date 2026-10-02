@@ -12,8 +12,8 @@ export interface DiaryQuestionView {
   status: DiaryQuestionStatus;
   /** 열리는 시각(epoch ms). 이미 열렸으면 지금보다 이전이다. */
   unlocksAt: number;
-  /** 답한 선택지. 답하지 않았으면 없다. */
-  answeredChoiceId?: string;
+  /** 답한 질문의 보상(젬)을 이미 받았는가. */
+  rewardClaimed: boolean;
 }
 
 export interface BondChapterView {
@@ -48,7 +48,7 @@ export class RelicStoryManager {
       const answer = this.state.relicStory.answers.find(({ questionId }) => questionId === question.id);
       const unlocksAt = diaryQuestionUnlockAt(metAt, index);
       const status: DiaryQuestionStatus = answer ? "answered" : now >= unlocksAt ? "open" : "locked";
-      return { index, questionId: question.id, status, unlocksAt, answeredChoiceId: answer?.choiceId };
+      return { index, questionId: question.id, status, unlocksAt, rewardClaimed: answer?.claimed === true };
     });
   }
 
@@ -57,8 +57,13 @@ export class RelicStoryManager {
     return Math.max(1, Math.ceil((unlocksAt - now) / DAY_MS));
   }
 
-  async answer(relicId: string, questionId: string, choiceId: string): Promise<number> {
-    const response = await this.api.answerRelicQuestion({ relicId, questionId, choiceId });
+  /** 질문에 답한다. 젬은 주지 않는다 — 답한 뒤 보상 아이콘을 눌러 `claimQuestionReward`로 받는다. */
+  async answer(relicId: string, questionId: string, choiceId: string): Promise<void> {
+    await this.api.answerRelicQuestion({ relicId, questionId, choiceId });
+  }
+
+  async claimQuestionReward(relicId: string, questionId: string): Promise<number> {
+    const response = await this.api.claimRelicQuestionReward({ relicId, questionId });
     return response.gemsGranted;
   }
 

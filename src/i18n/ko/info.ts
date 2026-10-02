@@ -57,6 +57,7 @@ export const INFO_KO = {
 
   "info.journal.title": "관찰 일지",
   "info.journal.fossilRecord": "발굴 기록",
+  "info.journal.diaryTitle": "관찰 일기",
   "info.journal.id": "개체번호",
   "info.journal.project": "프로젝트",
   "info.journal.origin": "기원",
@@ -69,7 +70,6 @@ export const INFO_KO = {
   "info.journal.lockedNotice": "\n\n상세 기록은 개체 획득 후 해제됩니다.",
   "info.journal.afterRestoration": "복원 후 관찰 기록",
   "info.journal.entry": "{date}  ·  #{tag}\nQ. {question}\nA. {answer}\n발견  {habit}",
-  "info.journal.noObservation": "아직 기록된 관찰이 없습니다.",
   "info.journal.viewAll": "전체 기록 보기 ({count}건)",
   "info.journal.history": "관찰 기록",
   "info.journal.noInterview": "아직 기록된 인터뷰가 없습니다.",
@@ -78,12 +78,7 @@ export const INFO_KO = {
   "info.diary.title": "관찰 질문 {index} / {total}",
   "info.diary.locked": "{days}일 뒤에 열리는 질문이에요.",
   "info.diary.reward": "답하면 젬 {gems}개를 받아요",
-  "info.diary.received": "젬 {gems}개를 받았어요",
   "info.diary.answerChip": "답변 {n}",
-  "info.diary.answerChipMine": "답변 {n} · 내 선택",
-  "info.interview.open": "관찰 인터뷰 열기",
-  "info.interview.doneToday": "오늘의 관찰 인터뷰 완료",
-  "info.interview.title": "관찰 인터뷰",
 
   "info.bond.level": "유대 {level}",
   "info.bond.ferocityGain": "야성 상승",

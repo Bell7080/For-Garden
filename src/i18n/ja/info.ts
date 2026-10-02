@@ -65,15 +65,11 @@ export const INFO_JA = {
   "info.journal.lockedNotice": "\n\n詳細な記録は個体の獲得後に解放されます。",
   "info.journal.afterRestoration": "復元後の観察記録",
   "info.journal.entry": "{date}  ·  #{tag}\nQ. {question}\nA. {answer}\n発見  {habit}",
-  "info.journal.noObservation": "まだ記録された観察はありません。",
   "info.journal.viewAll": "すべての記録を見る ({count}件)",
   "info.journal.history": "観察記録",
   "info.journal.noInterview": "まだ記録されたインタビューはありません。",
   "info.journal.historyEntry": "Q. {question}\n\nA. {answer}\n\n発見  {habit}",
 
-  "info.interview.open": "観察インタビューを開く",
-  "info.interview.doneToday": "本日の観察インタビュー完了",
-  "info.interview.title": "観察インタビュー",
 
   "info.bond.level": "絆 {level}",
   "info.bond.ferocityGain": "野性上昇",

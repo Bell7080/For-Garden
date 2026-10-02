@@ -310,6 +310,8 @@ export class SettingsScene extends Phaser.Scene {
     this.addTextAction(90, y, t("settings.support.resetSave"), () => this.confirmLocalReset(), true); y += SETTINGS_SUPPORT.actionStep;
     // 스타터 렐릭 추가처럼 저장 마이그레이션이 소급하지 않는 변경을 QA가 재설치 없이 확인하는 임시 진입점이다.
     this.addTextAction(90, y, t("settings.debug.grantAll"), () => this.grantAllRelics()); y += SETTINGS_SUPPORT.actionStep;
+    // 렐릭 이야기(관찰 질문 셋·애착 스토리 넷)는 처음 만난 날과 유대 4~10이 열어 주므로, 확인용으로 한 번에 모두 연다.
+    this.addTextAction(90, y, t("settings.debug.unlockStories"), () => this.unlockAllStories()); y += SETTINGS_SUPPORT.actionStep;
     // 한계 돌파는 레벨 상한·파편·치즈케이크 셋이 동시에 맞아야 열리는 조작이라, 재료 없이는
     // 그 화면과 별마다 열리는 개체 효과를 확인할 방법이 없다. 재료만 주고 돌파는 사람이 누른다.
     this.addTextAction(90, y, t("settings.debug.breakthroughSet"), () => this.grantBreakthroughSet("torika")); y += SETTINGS_SUPPORT.actionStep;
@@ -366,6 +368,12 @@ export class SettingsScene extends Phaser.Scene {
       confirmLabel: t("settings.action.confirm"),
       cancelLabel: false,
     });
+  }
+
+  /** 보유한 모든 렐릭의 유대를 10으로 올리고 관찰 질문·애착 스토리를 전부 연다(개발용). */
+  private unlockAllStories(): void {
+    const changed = relicCollection.unlockAllStoriesForDebug();
+    this.popups.confirm({ title: t("settings.debug.unlockStories"), message: t("settings.debug.unlockedStories", { count: changed }), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
   }
 
   /** 미보유 렐릭만 채워 넣고 몇 명이 새로 늘었는지만 짧게 알린다. */

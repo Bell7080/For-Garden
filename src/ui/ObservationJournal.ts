@@ -2,7 +2,6 @@ import Phaser from "phaser";
 import { getRelicCatalogDisclosure } from "../core/relicCatalog";
 import type { RelicDef } from "../core/types";
 import { SQUADS } from "../data/factions";
-import { observationQuestionForRelicAndDate } from "../data/observations";
 import { t } from "../i18n";
 import type { KeywordManager } from "../managers/KeywordManager";
 import { observations } from "../managers/ObservationManager";
@@ -14,9 +13,9 @@ import { session } from "../state/session";
 import { addPopupBackgroundImage } from "./backgrounds";
 import { addFactionMark, factionMarkBounds } from "./FactionMark";
 import { drawGlyph } from "./glyphs";
-import { chipPoints, drawHairline, drawLayer, HOLO, slantedRect } from "./holo";
+import { addSectionTitle } from "./SectionTitle";
+import { chipPoints, drawHairline, drawLayer, HOLO } from "./holo";
 import { clampObservationPage, sortedObservationHistory } from "./observationHistory";
-import { OBSERVATION_INTERVIEW_LAYOUT, observationInterviewPanelState, type ObservationInterviewPanelState } from "./observationInterviewPanel";
 import { calculateObservationJournalFlow, OBSERVATION_JOURNAL_SIZE, withoutRepeatedProfileDetails } from "./observationJournalLayout";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
@@ -263,16 +262,16 @@ export function openObservationJournal(deps: ObservationJournalDeps, options: Ob
    */
   const allEntries = interviews && !story ? observations.recordFor(def.id) : [];
   const entries = allEntries.slice(-1).reverse();
-  const observationHeading = interviews
-    ? scene.add.text(0, 0, t("info.journal.afterRestoration"), textStyle({ role: "emphasis", size: journal.font.regular, color: COLOR.ink })).setOrigin(0, 0)
-    : undefined;
+  // 이 칸의 제목은 맨 글자가 아니라 공용 제목표(`/관찰 일기`)다. 옛 인터뷰 기록이 있는 개체만 「복원 후 관찰 기록」으로 남는다.
+  const hasObservationRegion = interviews && (story !== undefined || allEntries.length > 0);
+  const headingSize = journal.font.regular;
+  const observationHeadingHeight = hasObservationRegion ? Math.round(headingSize * 1.52) : 0;
   // 이 판에는 가장 최근 관찰 기록 한 건만 둔다. 쌓인 전체 이력은 별도 레이어(관찰 기록)가
   // 한 건씩 넘겨 보여 준다.
-  const observationCopy = story ? (disclosure.access === "full" ? disclosure.record : "") : entries.length
-    ? entries.map((entry) => t("info.journal.entry", { date: entry.date, tag: entry.personalityTag, question: entry.question, answer: entry.answer, habit: entry.discoveredHabit })).join("\n\n")
-    : t("info.journal.noObservation");
-  const observation = interviews
-    ? scene.add.text(0, 0, observationCopy, textStyle({ role: "body", size: entries.length || story ? journal.font.regular : journal.font.small, color: COLOR.ink, lineSpacing: journal.spacing.compactLine, wrap: journal.body.width })).setOrigin(0, 0)
+  const observationCopy = story ? (disclosure.access === "full" ? disclosure.record : "")
+    : entries.map((entry) => t("info.journal.entry", { date: entry.date, tag: entry.personalityTag, question: entry.question, answer: entry.answer, habit: entry.discoveredHabit })).join("\n\n");
+  const observation = hasObservationRegion
+    ? scene.add.text(0, 0, observationCopy, textStyle({ role: "body", size: journal.font.regular, color: COLOR.ink, lineSpacing: journal.spacing.compactLine, wrap: journal.body.width })).setOrigin(0, 0)
     : undefined;
   // 링크 한 줄만큼 흐름 계산에 미리 더해 둔다 — 그러지 않으면 바로 아래 인터뷰 조작과 겹친다.
   const closing = story
@@ -283,11 +282,23 @@ export function openObservationJournal(deps: ObservationJournalDeps, options: Ob
   const fossilHeader = story
     ? scene.add.text(0, 0, t("info.journal.fossilRecord"), textStyle({ role: "emphasis", size: journal.font.regular, color: COLOR.inkDim })).setOrigin(0, 0)
     : undefined;
-  const fossilBodyHeight = fossilHeader ? fossilHeader.height + (fossilOpen ? journal.spacing.compactLine + excavation.height : 0) : excavation.height;
-  const actionHeight = story ? 0 : interviews && owned ? OBSERVATION_INTERVIEW_LAYOUT.trigger.height : 0;
+  const fossilExtra = fossilOpen ? journal.spacing.compactLine + excavation.height : 0;
+  const fossilBodyHeight = fossilHeader ? fossilHeader.height + fossilExtra : excavation.height;
+  // 발굴 기록을 펴도 **창은 커지지 않는다** — 그만큼 관찰 일기가 `…`로 줄어 요약된다(최소 두 줄은 남긴다).
+  if (story && observation && fossilExtra > 0) {
+    const lines = observation.getWrappedText();
+    const lineHeight = observation.height / Math.max(1, lines.length);
+    const keep = Math.max(2, Math.floor((observation.height - fossilExtra) / lineHeight));
+    if (keep < lines.length) {
+      const kept = lines.slice(0, keep);
+      kept[keep - 1] = `${kept[keep - 1].slice(0, -2).trimEnd()}…`;
+      observation.setText(kept.join("\n"));
+    }
+  }
+  const actionHeight = 0;
   const flow = calculateObservationJournalFlow({
     metadata: identity.height, excavation: fossilBodyHeight, squad: 0,
-    observationHeading: observationHeading?.height ?? 0, observation: (observation?.height ?? 0) + closingHeight + historyLinkHeight, action: actionHeight,
+    observationHeading: observationHeadingHeight, observation: (observation?.height ?? 0) + closingHeight + historyLinkHeight, action: actionHeight,
   });
 
   popups.open({ width: journal.popup.width, height: flow.popupHeight, title: t("info.journal.title"), titleSize: journal.font.title, tilt: journal.popup.tilt, ...sourceOf(from) }, (body, close) => {
@@ -313,9 +324,9 @@ export function openObservationJournal(deps: ObservationJournalDeps, options: Ob
       content.add(toggle);
       if (fossilOpen) { excavation.setPosition(bodyLeft, flow.excavationY + fossilHeader.height + journal.spacing.compactLine); content.add(excavation); } else excavation.destroy();
     } else { excavation.setPosition(bodyLeft, flow.excavationY); content.add(excavation); }
-    if (observationHeading && observation && flow.observationDividerY !== undefined && flow.observationHeadingY !== undefined && flow.observationY !== undefined) {
+    if (observation && flow.observationDividerY !== undefined && flow.observationHeadingY !== undefined && flow.observationY !== undefined) {
       content.add(drawHairline(scene, 0, flow.observationDividerY, journal.body.width, { color: COLOR.accent, alpha: 0.35 }));
-      observationHeading.setPosition(bodyLeft, flow.observationHeadingY); content.add(observationHeading);
+      addSectionTitle(scene, bodyLeft, flow.observationHeadingY + observationHeadingHeight / 2, story ? t("info.journal.diaryTitle") : t("info.journal.afterRestoration"), { size: headingSize, parent: content });
       observation.setPosition(bodyLeft, flow.observationY); content.add(observation);
       if (closing) { closing.setPosition(bodyLeft, flow.observationY + observation.height + journal.spacing.paragraph); content.add(closing); }
       if (allEntries.length > 1) {
@@ -340,9 +351,6 @@ export function openObservationJournal(deps: ObservationJournalDeps, options: Ob
     if (squadMark) content.add(squadMark);
     if (disclosure.access === "full") content.add(scene.add.text(JOURNAL_SQUAD_MARK.x, markY + markBounds.bottom + JOURNAL_SQUAD_MARK.nameGap, SQUADS[def.squad].name, textStyle({ role: "display", size: journal.font.regular, color: COLOR.accentText, align: "center" })).setOrigin(0.5, 0));
 
-    if (interviews && owned && flow.actionY !== undefined) {
-      addInterviewTrigger(deps, def, from, content, close, flow.actionY, actionHeight);
-    }
     body.add(content);
 
     let viewportRect: Phaser.GameObjects.Rectangle | undefined;
@@ -394,7 +402,7 @@ function addJournalPages(
   const pages: Phaser.GameObjects.Container[] = [content];
   story.questions.forEach((_, index) => {
     const page = scene.add.container(0, -popupHeight / 2).setVisible(false);
-    const draw = (): void => { renderDiaryQuestionPage(scene, page, bodyLeft, journal.body.top, relicId, index, state, () => { draw(); paintChrome(); }); };
+    const draw = (): void => { renderDiaryQuestionPage(scene, page, bodyLeft, journal.body.top, relicId, index, state, deps.popups, popupHeight - journal.body.bottom - 130, () => { draw(); paintChrome(); }); };
     draw();
     body.add(page);
     pages.push(page);
@@ -452,49 +460,4 @@ function addJournalPages(
   };
   scene.input.on("pointerdown", onDown); scene.input.on("pointerup", onUp);
   body.once(Phaser.GameObjects.Events.DESTROY, () => { scene.input.off("pointerdown", onDown); scene.input.off("pointerup", onUp); });
-}
-
-/** 오늘의 인터뷰를 여는 판 아래 버튼과 그 문답 팝업. 보유한 개체에만 선다. */
-function addInterviewTrigger(
-  deps: ObservationJournalDeps,
-  def: RelicDef,
-  from: JournalSource,
-  content: Phaser.GameObjects.Container,
-  close: () => void,
-  actionY: number,
-  actionHeight: number,
-): void {
-  const { scene, popups } = deps;
-  const journal = OBSERVATION_JOURNAL_SIZE;
-  const utcDate = new Date().toISOString().slice(0, 10);
-  const interview = OBSERVATION_INTERVIEW_LAYOUT;
-  const canStart = observations.canStart(def.id, utcDate);
-  const trigger = scene.add.container(0, actionY + actionHeight / 2);
-  trigger.add(drawLayer(scene, 0, 0, slantedRect(interview.trigger.width, interview.trigger.height, interview.trigger.bevel), { fill: canStart ? 0x141a22 : 0x10141a, alpha: canStart ? 0.92 : 0.58, edge: COLOR.accent, edgeAlpha: canStart ? 0.4 : 0.16 }));
-  trigger.add(scene.add.text(0, 0, canStart ? t("info.interview.open") : t("info.interview.doneToday"), textStyle({ role: "emphasis", size: journal.font.large, color: canStart ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
-  let interviewState: ObservationInterviewPanelState = { open: false, completedToday: !canStart };
-  if (canStart) {
-    const hit = scene.add.rectangle(0, 0, interview.trigger.width, interview.trigger.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerdown", () => pressIn(trigger)); hit.on("pointerout", () => { if (!interviewState.open) pressOut(trigger, "normal", { pop: false }); });
-    hit.on("pointerup", () => {
-      pressOut(trigger); if (interviewState.open) { popups.closeTop(); return; }
-      interviewState = observationInterviewPanelState(interviewState, "toggle");
-      const question = observationQuestionForRelicAndDate(def.id, utcDate);
-      popups.open({ ...interview.popup, title: t("info.interview.title"), closeOnBackdrop: false, dim: true, dimAlpha: 0.25, onClose: () => { interviewState = observationInterviewPanelState(interviewState, "close"); pressOut(trigger); } }, (panel, closeInterview) => {
-        panel.add(scene.add.text(interview.question.x, interview.question.y, question.prompt, textStyle({ role: "emphasis", size: journal.font.question, color: COLOR.accentText, wrap: interview.question.width })).setOrigin(0, 0));
-        question.choices.forEach((choice, index) => {
-          const choiceButton = scene.add.container(0, interview.choice.firstY + index * interview.choice.step);
-          choiceButton.add(drawLayer(scene, 0, 0, slantedRect(interview.choice.width, interview.choice.height, interview.choice.bevel), { fill: 0x141a22, alpha: 0.94, edge: COLOR.accent, edgeAlpha: 0.42 }));
-          choiceButton.add(scene.add.text(0, 0, choice.label, textStyle({ role: "emphasis", size: journal.font.large })).setOrigin(0.5));
-          const choiceHit = scene.add.rectangle(0, 0, interview.choice.width, interview.choice.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-          choiceHit.on("pointerdown", () => pressIn(choiceButton)); choiceHit.on("pointerout", () => pressOut(choiceButton, "normal", { pop: false }));
-          // 답을 고르면 그 기록이 실린 일지를 곧바로 다시 연다 — 닫고 찾아 들어오게 하지 않는다.
-          choiceHit.on("pointerup", () => { observations.complete(def.id, utcDate, choice.id); interviewState = observationInterviewPanelState(interviewState, "complete"); closeInterview(); close(); openObservationJournal(deps, { def, owned: true, interviews: true, from }); });
-          choiceButton.add(choiceHit); panel.add(choiceButton);
-        });
-      });
-    });
-    trigger.add(hit);
-  }
-  content.add(trigger);
 }

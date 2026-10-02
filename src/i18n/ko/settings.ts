@@ -112,6 +112,8 @@ export const SETTINGS_KO = {
   "settings.action.next": "다음",
 
   "settings.debug.grantAll": "모든 캐릭터 획득",
+  "settings.debug.unlockStories": "유대 10 · 질문/스토리 전체 개방",
+  "settings.debug.unlockedStories": "유대를 올린 캐릭터 {count}명. 모든 관찰 질문과 애착 스토리가 열렸습니다.",
   "settings.debug.breakthroughSet": "토리카 돌파 세트",
   "settings.debug.breakthroughTitle": "돌파 세트",
   "settings.debug.breakthroughSuffix": " 돌파 세트",

@@ -137,10 +137,13 @@ export interface RenameRuneResponse { rune: RuneInstance; inventory: RuneInvento
 export interface MarkRuneRequest { runeInstanceId: string; locked?: boolean; bookmarked?: boolean; }
 /** 표시가 반영된 룬과 갱신된 인벤토리다. */
 export interface MarkRuneResponse { rune: RuneInstance; inventory: RuneInventoryDto; }
-/** 관찰 질문 한 답. 개체·질문·선택지를 모두 서버가 정적 이야기 묶음과 대조한다. */
+/** 관찰 질문 한 답. 개체·질문·선택지를 서버가 정적 이야기 묶음과 대조하지만 **고른 답은 남기지 않는다**. 젬은 따로 받는다. */
 export interface AnswerRelicQuestionRequest { relicId: string; questionId: string; choiceId: string; }
+export interface AnswerRelicQuestionResponse { serverTime: string; }
+/** 답한 질문의 보상(젬 50)을 한 번만 받는다. */
+export interface ClaimRelicQuestionRewardRequest { relicId: string; questionId: string; }
 /** 실제로 지급한 젬(상한에서 깎일 수 있다)과 확정된 지갑이다. */
-export interface AnswerRelicQuestionResponse { gemsGranted: number; wallet: Wallet; serverTime: string; }
+export interface ClaimRelicQuestionRewardResponse { gemsGranted: number; wallet: Wallet; serverTime: string; }
 /** 애착 스토리 한 장을 처음 읽은 것을 확정한다. 유대 레벨은 서버가 자기 상태로 확인한다. */
 export interface ClaimRelicChapterRequest { relicId: string; level: number; }
 export interface ClaimRelicChapterResponse { gemsGranted: number; wallet: Wallet; serverTime: string; }
@@ -849,8 +852,10 @@ export interface GameApi extends AsyncArenaProfileApi {
   renameRune(request: RenameRuneRequest): Promise<RenameRuneResponse>;
   /** 룬의 잠금·즐겨찾기 표시를 바꾼다. 잠긴 룬은 판매 경계가 직접 거부한다. */
   markRune(request: MarkRuneRequest): Promise<MarkRuneResponse>;
-  /** 관찰 질문에 답하고 젬 50개를 질문마다 한 번만 받는다. 열리는 날은 서버 시각이 정한다. */
+  /** 관찰 질문에 답한다(질문마다 한 번). 열리는 날은 서버 시각이 정하고, 고른 답은 남기지 않는다. */
   answerRelicQuestion(request: AnswerRelicQuestionRequest): Promise<AnswerRelicQuestionResponse>;
+  /** 답한 질문의 젬 50개를 한 번만 받는다. */
+  claimRelicQuestionReward(request: ClaimRelicQuestionRewardRequest): Promise<ClaimRelicQuestionRewardResponse>;
   /** 유대 레벨이 닿은 애착 스토리 한 장의 해금 젬을 한 번만 받는다. */
   claimRelicChapter(request: ClaimRelicChapterRequest): Promise<ClaimRelicChapterResponse>;
   /** 한 룬이 전체 장착표에서 정확히 한 슬롯에만 있도록 장착한다. */

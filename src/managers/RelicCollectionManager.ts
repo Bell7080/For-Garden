@@ -1,4 +1,4 @@
-import { BOND_XP_REWARD, grantBondXp } from "../core/bond";
+import { BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD, grantBondXp } from "../core/bond";
 import type { RelicDef } from "../core/types";
 import { PLAYABLE_RELICS } from "../data/relics";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
@@ -105,6 +105,24 @@ export class RelicCollectionManager {
     }
     if (newlyOwned.length > 0) this.persistSharedSession();
     return newlyOwned.length;
+  }
+
+  /**
+   * 소유한 모든 렐릭의 유대를 10으로 올리고 관찰 질문을 전부 여는 **개발용** 진입점(설정 화면 전용).
+   * 처음 만난 날을 지워 질문이 모두 열린 상태(기록 도입 전 개체와 같다)로 돌리고, 애착 스토리는 유대 레벨이 열어 준다.
+   * 이미 받은 젬·답변 기록은 건드리지 않는다. 몇 명을 올렸는지 돌려준다.
+   */
+  unlockAllStoriesForDebug(): number {
+    let changed = 0;
+    for (const id of this.state.owned) {
+      const progress = this.state.relicProgress[id];
+      if (!progress || progress.bondLevel >= BOND_LEVEL_CAP) continue;
+      this.state.relicProgress[id] = { ...progress, bondLevel: BOND_LEVEL_CAP, bondXp: BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP] };
+      changed += 1;
+    }
+    this.state.relicStory = { ...this.state.relicStory, metAt: {} };
+    this.persistSharedSession();
+    return changed;
   }
 
   /** 테스트 주입 상태는 디스크에 쓰지 않고 앱 공유 상태의 확정 변경만 저장한다. */

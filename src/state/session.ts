@@ -324,13 +324,19 @@ export interface BountyState {
   clearedTierIds: string[];
 }
 
-/** 관찰 질문 하나에 한 답변. 질문 ID는 전 개체에서 유일하다. */
+/**
+ * 관찰 질문 하나를 **답했다는 사실**. 질문 ID는 전 개체에서 유일하다.
+ *
+ * **어느 답을 골랐는지는 저장하지 않는다** — 영구히 남는 선택은 수집형에서 좋은 판단이 아니라서, 답한 뒤에는 모든 답변을
+ * 똑같이 열어 볼 수 있고 보상 수령 여부만 남는다.
+ */
 export interface RelicStoryAnswer {
   relicId: string;
   questionId: string;
-  choiceId: string;
   /** 답한 시각(ISO). */
   answeredAt: string;
+  /** 질문 보상(젬)을 받았는가. 답한 뒤 보상 아이콘을 눌러 받는다. */
+  claimed: boolean;
 }
 
 export interface RelicStoryState {

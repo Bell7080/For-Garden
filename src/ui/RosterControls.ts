@@ -11,7 +11,10 @@ import { CONTROL_BAR as BAR, SortControl } from "./SortControl";
 import { COLOR, textStyle } from "./theme";
 
 /** 조작 줄의 자리. 도감의 큰 줄(84)보다 한 뼘 낮게 잡아 편성 화면의 그리드 위 한 줄에 든다. */
-export const ROSTER_CONTROLS = { height: 56, gap: 12, filterWidth: 80, sortWidth: 190, dirWidth: 64, fontSize: 24 } as const;
+export const ROSTER_CONTROLS = { height: 56, gap: 12, filterWidth: 96, sortWidth: 190, dirWidth: 64, fontSize: 24 } as const;
+
+/** 씬 위에 바로 서는 줄의 깊이. 정보창(1000)과 그 위 팝업보다 아래여야 창이 떠 있는 동안 눌리지 않는다. */
+export const ROSTER_CONTROLS_DEPTH = 500;
 
 export interface RosterControlsOptions {
   /** 조작 줄의 왼쪽·오른쪽 끝(화면 좌표). 필터는 왼쪽, 정렬·방향은 오른쪽 끝에 붙는다. */
@@ -51,7 +54,8 @@ export class RosterControls {
     const { y } = options;
     this.view = options.view;
     this.popups = options.popups ?? new PopupLayer(scene, 2200);
-    this.layer = scene.add.container(0, 0).setDepth(options.depth ?? 3000);
+    // 정보창(1000)보다 아래에 둔다 — 3000에 서 있던 때는 정보창을 연 채로도 필터가 눌려 판이 겹쳐 열렸다.
+    this.layer = scene.add.container(0, 0).setDepth(options.depth ?? ROSTER_CONTROLS_DEPTH);
     options.parent?.add(this.layer);
 
     const filter = scene.add.container(options.left + filterWidth / 2, y);
@@ -65,7 +69,8 @@ export class RosterControls {
     this.badgeText = scene.add.text(0, 0, "", textStyle({ role: "display", size: 17, color: COLOR.ink })).setOrigin(0.5);
     this.badge.add([plate, this.badgeText]);
     filter.add(this.badge);
-    const hit = scene.add.rectangle(0, 0, filterWidth, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    // 누르는 면은 보이는 칩보다 한 뼘 넓다 — 엄지가 칩 가장자리를 빗나가지 않게.
+    const hit = scene.add.rectangle(0, 0, filterWidth + 16, height + 16, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => pressIn(filter));
     hit.on("pointerout", () => pressOut(filter, "normal", { pop: false }));
     hit.on("pointerup", () => {
@@ -73,7 +78,7 @@ export class RosterControls {
       this.sort.closeMenu();
       const anchor = { x: options.left + filterWidth / 2, y: y + height / 2 + 26 };
       const world = options.parent ? options.parent.getWorldTransformMatrix().transformPoint(anchor.x, anchor.y) : anchor;
-      openRelicFilterPopup(scene, this.popups, { x: world.x, y: world.y }, () => this.view.filter, (next) => this.change({ ...this.view, filter: next }));
+      openRelicFilterPopup(scene, this.popups, { x: world.x, y: world.y }, () => this.view.filter, (next) => this.change({ ...this.view, filter: next }), "battle");
     });
     filter.add(hit);
     this.layer.add(filter);

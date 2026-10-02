@@ -22,12 +22,18 @@ import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
+import { AffinityBadge } from "../ui/AffinityBadge";
+import { ELEMENT_ICON, ROLE_ICON } from "../ui/affinityIcons";
+import { PARTY_POWER_PLATE } from "../ui/partyPreviewLayout";
+import { addBreakthroughGradeMark } from "../ui/rarityMark";
+import { addUnitNameplate, addUnitPower } from "../ui/unitNameplate";
+import { BACK_SLOT } from "../ui/popupGeometry";
 import { PortraitCard } from "../ui/PortraitCard";
 import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY } from "../ui/portraitGrid";
 import { addFramedIcon } from "../ui/itemFrame";
 import { PopupLayer } from "../ui/PopupLayer";
 import { COLOR, textStyle } from "../ui/theme";
-import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawVignette, HOLO } from "../ui/holo";
+import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawVignette, HOLO, slantedRect } from "../ui/holo";
 import { EXPEDITION_LAYOUT, expeditionBackgroundFor, type ExpeditionBackgroundState } from "../ui/expeditionLayout";
 import { ExpeditionMapView } from "../ui/ExpeditionMapView";
 import { type ExpeditionAugmentSelection } from "../core/expeditionRewards";
@@ -74,7 +80,9 @@ const ROSTER = formationRosterGrid(BASE_WIDTH - 96);
  */
 const LOOT = { panelY: 199, panelHeight: 152, frameY: 200, step: 200, frame: 96, span: 860, gainY: 258, scoreY: 316 } as const;
 /** 보유 렐릭이 늘면 편성판 아래·힌트/출격 버튼 위 사이만 스크롤로 보여준다. */
-const ROSTER_VIEWPORT = { top: 769, bottom: 1500 } as const;
+const ROSTER_VIEWPORT = { top: 850, bottom: 1640 } as const;
+/** 아군 총 전투력 판의 세로 중심 — 이름줄 아래, 목록 조작 줄 위. */
+const FORMATION_POWER_Y = 756;
 /** 손가락이 이 거리 이상 움직여야 카드 선택이 아니라 스크롤로 판정한다. */
 const ROSTER_DRAG_SLOP = 12;
 /** 발굴 편성처럼 화면 상단에서 순서를 먼저 읽는 1/2/3 슬롯 규격이다. */
@@ -759,10 +767,10 @@ export class ExpeditionScene extends Phaser.Scene {
 
     this.buildRosterGrid();
 
-    this.hint = this.add.text(BASE_WIDTH / 2, 1550, t("expedition.party.needThree"), textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0.5);
-    this.startButton = new Button(this, BASE_WIDTH / 2, 1680, {
+    this.hint = this.add.text(BASE_WIDTH / 2, 1664, t("expedition.party.needThree"), textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0.5);
+    this.startButton = new Button(this, BASE_WIDTH / 2, BACK_SLOT.y, {
       width: 560,
-      height: 132,
+      height: 130,
       label: t("expedition.party.start"),
       sub: "0 / 3",
       fontSize: 42,
@@ -989,7 +997,18 @@ export class ExpeditionScene extends Phaser.Scene {
         // 원정도 전투 편성이라 같은 추천 직군 표를 세운다. 끄기는 공용 편성 화면의 버튼이 정한다.
         recommendedRoles: settingsManager.get().game.formationRoleHint ? RECOMMENDED_SLOT_ROLES[index] : undefined,
       });
-      if (relicId) this.standFormationPuppet(relicId, x, generation);
+      if (relicId) {
+        this.standFormationPuppet(relicId, x, generation);
+        // 스토리 편성과 같은 어휘 — 속성·직군(왼쪽 위), 돌파 등급(오른쪽 위), 발밑 전투력, 레벨·이름 한 줄.
+        const def = getRelic(relicId);
+        const groundY = FORMATION.y + FORMATION.groundOffset;
+        const badgeTop = FORMATION.y - FORMATION.height / 2 + 34;
+        chrome.add(new AffinityBadge(this, x - 104, badgeTop, ELEMENT_ICON[def.element], 52, 0.62));
+        chrome.add(new AffinityBadge(this, x - 104, badgeTop + 49, ROLE_ICON[def.role], 38, 0.62));
+        addBreakthroughGradeMark(this, chrome, x + 104, badgeTop - 4, 42, relicProgression.getBreakthroughGrade(relicId));
+        addUnitPower(this, chrome, x, groundY + 22, combatPower(relicProgression.getFinalStats(relicId)), 24, COLOR.accentText);
+        addUnitNameplate(this, chrome, x, groundY + 26, relicProgression.getProgress(relicId).level, def.name, 30);
+      }
       // 공용 슬롯 면은 SD보다 위에서 입력을 맡고, SD 자체는 계속 비대화형으로 둔다.
       const hit = this.add.rectangle(x, FORMATION.y, FORMATION.width, FORMATION.height, 0xffffff, 0)
         .setName(`expedition-formation-slot-${index + 1}`).setDepth(4).setInteractive({ useHandCursor: true });
@@ -998,6 +1017,11 @@ export class ExpeditionScene extends Phaser.Scene {
       if (index === this.selectedSlot && relicId) addFormationRemoveChip(this, chrome, box, () => this.tapFormationSlot(index, "clear"));
       dragSlots.push({ hit, x, y: FORMATION.y, width: FORMATION.width, height: FORMATION.height });
     }
+    // 세 자리 아래, 목록 조작 줄 위에 선 아군 총 전투력 — 스토리 편성의 대치선 판과 같은 판이다(원정은
+    // 적이 정해져 있지 않아 아군 쪽만 선다).
+    const totalPower = formationMembers(this.selected).reduce((sum, id) => sum + combatPower(relicProgression.getFinalStats(id)), 0);
+    layer.add(drawLayer(this, BASE_WIDTH / 2, FORMATION_POWER_Y, slantedRect(PARTY_POWER_PLATE.width, PARTY_POWER_PLATE.height), { fill: COLOR.panel, alpha: HOLO.glass, edge: COLOR.panelEdge, edgeAlpha: 0.85 }));
+    layer.add(this.add.text(BASE_WIDTH / 2, FORMATION_POWER_Y, t("party.allyPower", { power: totalPower.toLocaleString() }), textStyle({ role: "display", size: 30, color: COLOR.accentText })).setOrigin(0.5).setShadow(0, 3, "#05070a", 4, false, true));
     // Puppet이 컨테이너 좌표를 물려받지 않으므로 공용 표현기에 기존 화면 좌표 배치기를 주입한다.
     this.formationDragVisual = createFormationDragVisualController({
       scene: this, slots: dragSlots, formation: () => this.selected, color: COLOR.sortie,

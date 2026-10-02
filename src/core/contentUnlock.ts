@@ -71,6 +71,13 @@ export function nextContentUnlock(playerLevel: number, gates = CONTENT_LEVEL_GAT
   return CONTENT_UNLOCKS.find((entry) => entry.level > playerLevel);
 }
 
+/** 아직 못 연 스테이지 조건 콘텐츠 중 하나(레벨 표와 별개의 조건이라 따로 읽는다). */
+export function nextStageUnlock(clearedStages: ReadonlySet<string>, gates = CONTENT_LEVEL_GATES_ENABLED): { id: ContentId; stageId: string } | undefined {
+  if (!gates) return undefined;
+  for (const [id, stageId] of Object.entries(CONTENT_STAGE_UNLOCKS) as [ContentId, string][]) if (!clearedStages.has(stageId)) return { id, stageId };
+  return undefined;
+}
+
 /** 한 레벨업으로 새로 열린 것들(`from` 초과 ~ `to` 이하). 레벨업 알림이 읽는다. */
 export function contentUnlockedBetween(from: number, to: number, gates = CONTENT_LEVEL_GATES_ENABLED): ContentUnlock[] {
   if (!gates) return [];

@@ -425,10 +425,16 @@ export class PlayerProfilePopup {
 
   /** 레벨 잠금을 켰을 때만 — 다음에 무엇이 열리는지 한 줄. */
   private buildNextUnlock(body: Phaser.GameObjects.Container): void {
+    const lines: string[] = [];
     const next = this.profile.nextUnlock;
-    if (!next) return;
-    const y = PLAYER_PROFILE_LAYOUT.nextUnlock.y;
-    body.add(drawGlyph(this.scene, "lock", -300, y, 30, COLOR.accent));
-    body.add(this.scene.add.text(-270, y, t("profile.nextUnlock", { level: next.level, content: t(contentNameKey(next.contentId)) }), textStyle({ role: "emphasis", size: 26, color: COLOR.ink })).setOrigin(0, 0.5));
+    if (next) lines.push(t("profile.nextUnlock", { level: next.level, content: t(contentNameKey(next.contentId)) }));
+    const stage = this.profile.nextStageUnlock;
+    if (stage) lines.push(t("profile.nextUnlockStage", { stage: stage.stageId, content: t(contentNameKey(stage.contentId)) }));
+    const gap = 38;
+    lines.forEach((line, index) => {
+      const y = PLAYER_PROFILE_LAYOUT.nextUnlock.y + (index - (lines.length - 1) / 2) * gap;
+      body.add(drawGlyph(this.scene, "lock", -300, y, 30, COLOR.accent));
+      body.add(this.scene.add.text(-270, y, line, textStyle({ role: "emphasis", size: 26, color: COLOR.ink })).setOrigin(0, 0.5));
+    });
   }
 }

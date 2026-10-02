@@ -2512,6 +2512,19 @@ export const RELICS: RelicDef[] = [
       attackSpeed: 88, moveSpeed: 74, critChance: 10, critDamage: 150,
       energyGain: 26, lifeSteal: 0, ferocityGain: 0,
     },
+    // 별 넷이 이 개체를 **지휘하는 연주자**로 완성한다 — 박자가 쌓이고(II), 찬가가 더 자주 울리며 넘치는 선율이 방패가 되고(III),
+    // 크레센도가 점점 커지고(IV), 무게가 내려앉는다(V). 회복 총량(잃은 체력 15%)은 건드리지 않는다.
+    breakthroughEffects: {
+      // 같은 적을 연속으로 맞히면 경직이 0.1초씩 쌓인다(최대 0.3초). 공격 간격(약 1.7초)보다 짧아 영구 경직이 되지 않고,
+      // 경직이 쌓일 때마다 저항(`gainTenacity`)도 함께 오른다.
+      basic: { kind: "staccatoChain", secondsPerStack: 0.1, maxStacks: 3 },
+      // 궁극기 게이지가 90에서 75로 줄고, 체력이 가득 차 회복할 몫이 없던 아군은 최대 체력 8%의 보호막을 얻는다.
+      ultimate: { kind: "lightChorus", costReduction: 15, fullHpShieldPercent: 8 },
+      // 크레센도 추가타는 아군 누구의 평타든 따라붙어 팀 속도로 쌓이므로, 한 번마다 +5%씩 오르되 +50%에서 멈춘다.
+      ferocity: { kind: "crescendoRamp", percentPerHit: 5, maxPercent: 50 },
+      // 메테가 둘러 준 보호막이 다 깨지는 순간 주위 적에게 공격력 150%의 마법 피해와 0.1초 경직. 7초에 한 번이다.
+      passive: { kind: "adagioSlam", radius: 260, powerPercent: 150, staggerSeconds: 0.1, cooldownSeconds: 7 },
+    },
     ferocityTrait: {
       name: "크레센도", effectId: "crescendoStaccato",
       // 추가타는 메테 atk 50%의 마법 피해이며 기존 토리카와 같은 0.1초 경직을 사용한다.

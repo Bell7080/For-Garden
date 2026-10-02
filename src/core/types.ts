@@ -2310,6 +2310,16 @@ export type BasicBreakthrough = {
   reach: number;
   /** 듀오 곁에 붙어 서는 거리(px). */
   followDistance: number;
+} | {
+  /**
+   * 같은 적을 **연속으로** 맞힐수록 스타카토의 경직이 겹쳐 길어진다(메테의 박자 쌓기). 다른 적으로 옮기면 처음부터다.
+   * 한 겹이 더하는 시간과 상한은 공격 간격보다 짧게 둔다 — 경직이 다음 타격까지 이어지면 영구 경직이 된다.
+   */
+  kind: "staccatoChain";
+  /** 겹 하나가 더하는 경직(초). */
+  secondsPerStack: number;
+  /** 최대 겹 수(첫 타 포함). */
+  maxStacks: number;
 } | BreakthroughNone;
 
 /**
@@ -2359,6 +2369,17 @@ export type UltimateBreakthrough = {
    * 오더의 지속·게이지는 건드리지 않는다.
    */
   kind: "orderStrike";
+} | {
+  /**
+   * 궁극기 게이지가 **더 적게** 들고(그만큼 더 자주 나가고), 체력이 가득 차 회복할 몫이 없던 아군은 보호막을 얻는다
+   * (메테의 넘치는 선율). 회복량은 잃은 체력 비례라 과회복이 없으므로, 비어 있던 몫만 보호막으로 채운다.
+   * 게이지를 줄이는 값은 전투 스냅샷의 정의에 반영해 화면·재현이 같은 값을 읽는다.
+   */
+  kind: "lightChorus";
+  /** 줄어드는 궁극기 게이지. */
+  costReduction: number;
+  /** 체력이 가득 찬 아군이 얻는 보호막(최대 체력의 %). */
+  fullHpShieldPercent: number;
 } | BreakthroughNone;
 
 /**
@@ -2393,6 +2414,16 @@ export type FerocityBreakthrough = {
 } | {
   /** 폭주 동안 평타가 세 걸음마다가 아니라 **매번** 표식을 찍는다(슈테). 폭주가 끝나면 주기로 돌아간다. */
   kind: "pingStorm";
+} | {
+  /**
+   * 폭주(크레센도) 추가타의 위력이 칠 때마다 점점 커진다(메테의 크레센도). 추가타는 **아군 누구의 평타든** 한 번씩
+   * 따라붙으므로 팀 속도로 쌓인다 — 그래서 상한을 둔다. 폭주가 끝나면 초기화된다.
+   */
+  kind: "crescendoRamp";
+  /** 추가타 한 번마다 오르는 위력(%). */
+  percentPerHit: number;
+  /** 오를 수 있는 최대 위력 증가(%). */
+  maxPercent: number;
 } | BreakthroughNone;
 
 /**
@@ -2433,6 +2464,17 @@ export type PassiveBreakthrough = {
    * 은신·표식·궁극기가 다시 돈다.
    */
   kind: "relink";
+} | {
+  /**
+   * 메테의 보호막이 **다 깨지는 순간** 그 자리 주위의 적에게 아다지오의 무게가 내려앉는다(피해와 짧은 경직).
+   * 정화·궁극기 보호막이 모두 같은 보호막 슬롯이라 이 개체 전용 쿨다운이 따로 있다.
+   */
+  kind: "adagioSlam";
+  radius: number;
+  /** 메테 공격력의 몇 %인 마법 피해인지. */
+  powerPercent: number;
+  staggerSeconds: number;
+  cooldownSeconds: number;
 } | BreakthroughNone;
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */

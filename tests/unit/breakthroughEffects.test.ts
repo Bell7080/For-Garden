@@ -865,3 +865,117 @@ describe("이르나 한계 돌파", () => {
     expect(breakthroughEffectText(irna, "passive")).toContain("해무 방벽");
   });
 });
+
+describe("노도니아 한계 돌파", () => {
+  const FULL = BREAKTHROUGH_STEPS.length;
+  /** 노도니아 한 명과 적 하나. 적이 때릴지(`hostile`)와 노도니아가 먼저 때릴지는 시험이 정한다. */
+  function nodoniaBattle(breakthrough: number, enemy = "toby"): SkirmishState {
+    const state = createSkirmish([getRelic("nodonia")], [getRelic(enemy)], ARENA, {}, { nodonia: breakthrough });
+    const foe = state.fighters.find((fighter) => fighter.side === "enemy")!;
+    foe.maxHp = 1_000_000; foe.hp = foe.maxHp; foe.stealthFor = 0;
+    const nodonia = findFighter(state, "player-0")!;
+    nodonia.x = 500; nodonia.y = 1_000; foe.x = 540; foe.y = 1_000;
+    return state;
+  }
+
+  it("은 평타에 맞은 적이 잠깐 노도니아만 노린다(별 II)", () => {
+    const run = (breakthrough: number) => {
+      const state = nodoniaBattle(breakthrough);
+      const foe = state.fighters.find((fighter) => fighter.side === "enemy")!;
+      foe.attackCooldown = 999;
+      for (let tick = 0; tick < 200; tick += 1) {
+        stepSkirmish(state, 0.05);
+        if (foe.taunted) break;
+      }
+      return foe.taunted;
+    };
+    expect(run(1)?.sourceId).toBe("player-0");
+    expect(run(0)).toBeNull();
+  });
+
+  /** 대신 받기가 켜진 뒤 합계를 `taken`으로 맞추고 끝날 때까지 돌려 적이 입은 피해를 잰다. 돌파가 없는 판과 같은 조건이라 차이만 본다. */
+  function paybackDamage(breakthrough: number, taken: number, foeX = 140): number {
+    const state = nodoniaBattle(breakthrough);
+    const foe = state.fighters.find((fighter) => fighter.side === "enemy")!;
+    foe.x = foeX; foe.attackCooldown = 999; foe.retargetIn = 999;
+    const nodonia = findFighter(state, "player-0")!;
+    nodonia.x = 100; nodonia.retargetIn = 999; nodonia.attackCooldown = 999; nodonia.energy = 1_000;
+    fireUltimate(state, "player-0");
+    // 켜는 순간 합계는 0으로 시작한다 — 이후 대신 받은 피해만 센다.
+    expect(nodonia.bt.bulwarkTaken).toBe(0);
+    nodonia.bt.bulwarkTaken = taken;
+    // 서로 다가서지 않도록 자리를 붙박아 둔다 — 반경 판정을 시험하는 판이다.
+    for (let tick = 0; tick < 130; tick += 1) {
+      nodonia.x = 100; nodonia.y = 1_000; foe.x = foeX; foe.y = 1_000;
+      stepSkirmish(state, 0.05);
+    }
+    return foe.maxHp - foe.hp;
+  }
+
+  it("은 대신 받기가 끝날 때 대신 받은 피해의 일부를 주위 적에게만 고정 피해로 돌려준다(별 III)", () => {
+    // 400의 25% = 100. 자기 최대 체력의 10%보다 작으니 상한에 걸리지 않는다.
+    expect(paybackDamage(2, 400) - paybackDamage(0, 400)).toBe(100);
+    // 반경(300) 밖의 적은 맞지 않는다.
+    expect(paybackDamage(2, 400, 900) - paybackDamage(0, 400, 900)).toBe(0);
+  });
+
+  it("은 대신 받은 피해가 많아도 적 한 명이 받는 몫을 노도니아 최대 체력의 10%로 막는다(별 III)", () => {
+    const maxHp = findFighter(nodoniaBattle(2), "player-0")!.maxHp;
+    expect(paybackDamage(2, 100_000) - paybackDamage(0, 100_000)).toBe(Math.round(maxHp * 0.1));
+  });
+
+  it("은 폭주 중에는 희열이 열다섯 겹까지 쌓이고 폭주가 끝나면 열 겹으로 깎인다(별 IV)", () => {
+    const state = nodoniaBattle(3, "toby");
+    const nodonia = findFighter(state, "player-0")!;
+    const foe = state.fighters.find((fighter) => fighter.side === "enemy")!;
+    nodonia.retargetIn = 999; nodonia.attackCooldown = 999;
+    nodonia.ferocityFever = true;
+    let peak = 0;
+    for (let tick = 0; tick < 1_200 && peak < 15; tick += 1) {
+      nodonia.ferocity = FEROCITY_RULES.max; nodonia.hp = nodonia.maxHp;
+      stepSkirmish(state, 0.05);
+      peak = Math.max(peak, nodonia.elation?.stacks ?? 0);
+    }
+    expect(foe.hp).toBeLessThanOrEqual(foe.maxHp);
+    expect(peak).toBe(15);
+    // 폭주가 끝나는 프레임에 상한이 열 겹으로 돌아오고 넘친 겹이 깎인다.
+    nodonia.ferocity = 0.001; nodonia.ferocityFever = true;
+    stepSkirmish(state, 0.05);
+    expect(nodonia.ferocityFever).toBe(false);
+    expect(nodonia.elation?.maxStacks).toBe(10);
+    expect(nodonia.elation?.stacks ?? 0).toBeLessThanOrEqual(10);
+  });
+
+  it("은 폭주가 아니면 열 겹에서 멈춘다(별 IV)", () => {
+    const state = nodoniaBattle(3, "toby");
+    const nodonia = findFighter(state, "player-0")!;
+    nodonia.retargetIn = 999; nodonia.attackCooldown = 999;
+    let peak = 0;
+    for (let tick = 0; tick < 600; tick += 1) {
+      nodonia.hp = nodonia.maxHp; nodonia.ferocity = 0;
+      stepSkirmish(state, 0.05);
+      peak = Math.max(peak, nodonia.elation?.stacks ?? 0);
+    }
+    expect(peak).toBeLessThanOrEqual(10);
+  });
+
+  it("은 희열 한 겹의 재생을 0.3%에서 0.4%로 돌려놓는다(별 V)", () => {
+    const regen = (breakthrough: number): number | undefined => {
+      const state = nodoniaBattle(breakthrough, "toby");
+      const nodonia = findFighter(state, "player-0")!;
+      nodonia.retargetIn = 999; nodonia.attackCooldown = 999;
+      for (let tick = 0; tick < 200 && !nodonia.elation; tick += 1) { nodonia.hp = nodonia.maxHp; stepSkirmish(state, 0.05); }
+      return nodonia.elation?.regenPercentPerStack;
+    };
+    expect(regen(0)).toBe(0.3);
+    expect(regen(FULL)).toBe(0.4);
+  });
+
+  it("는 네 슬롯 모두 문장을 만든다", () => {
+    const nodonia = getRelic("nodonia");
+    expect(breakthroughEffectText(nodonia, "basic")).toContain("도발");
+    expect(breakthroughEffectText(nodonia, "ultimate")).toContain("고정 피해");
+    expect(breakthroughEffectText(nodonia, "ferocity")).toContain("15겹");
+    expect(breakthroughEffectText(nodonia, "passive")).toContain("0.4%");
+  });
+});

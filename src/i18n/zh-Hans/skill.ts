@@ -316,4 +316,8 @@ export const SKILL_ZH_HANS = {
   "skill.sentence.roar.percent": "最大生命的{percent}%",
   "skill.keyword.shield.fromRoar": "以当前最大生命的{base}%，加上每名陷入恐惧的敌人{per}%(最多{max}名)计算的护盾。",
   "skill.ferocity.huntInstinct": "暴走期间，[[basic-attack|普通攻击]]每次叠加{stacks}层[[intimidation|威压]]，[[fear|恐惧]]结束后的免疫缩短为{seconds}秒。",
+  "skill.breakthrough.effect.basic.scoldTaunt": "被「{name}」击中的敌人会被[[taunt|嘲讽]]{seconds}秒。",
+  "skill.breakthrough.effect.ultimate.bulwarkPayback": "「{name}」结束的瞬间，将期间代替承受的伤害的{percent}%以[[fixed-damage|固定伤害]]返还给周围所有敌人。每名敌人受到的伤害不超过自身最大生命的{cap}%。",
+  "skill.breakthrough.effect.ferocity.heatOverflow": "[[ferocity|暴走]]期间，[[nodonia-elation|愉悦]]最多可叠加{max}层。暴走结束后减少为{base}层。",
+  "skill.breakthrough.effect.passive.sweeterWound": "每层[[nodonia-elation|愉悦]]每秒恢复的生命从最大生命的{from}%提高到{to}%。",
 } as const;

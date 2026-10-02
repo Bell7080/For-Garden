@@ -316,4 +316,8 @@ export const SKILL_ID = {
   "skill.sentence.roar.percent": "{percent}% HP maks",
   "skill.keyword.shield.fromRoar": "Perisai yang dihitung dari {base}% HP maks saat ini, ditambah {per}% untuk setiap musuh yang ketakutan (maks. {max}).",
   "skill.ferocity.huntInstinct": "Saat mengamuk, [[basic-attack|serangan dasar]] menumpuk {stacks} [[intimidation|Intimidasi]] sekaligus, dan kekebalan setelah [[fear|Ketakutan]] berakhir dipersingkat menjadi {seconds}d.",
+  "skill.breakthrough.effect.basic.scoldTaunt": "Musuh yang terkena \"{name}\" di-[[taunt|provokasi]] selama {seconds} dtk.",
+  "skill.breakthrough.effect.ultimate.bulwarkPayback": "Saat \"{name}\" berakhir, {percent}% kerusakan yang diterima menggantikan sekutu dikembalikan ke semua musuh di sekitar sebagai [[fixed-damage|kerusakan tetap]]. Satu musuh menerima tidak lebih dari {cap}% HP maks dirinya sendiri.",
+  "skill.breakthrough.effect.ferocity.heatOverflow": "Selama [[ferocity|Amukan]], [[nodonia-elation|Kegembiraan]] menumpuk hingga {max}. Saat Amukan berakhir, turun kembali ke {base} tumpuk.",
+  "skill.breakthrough.effect.passive.sweeterWound": "Setiap tumpuk [[nodonia-elation|Kegembiraan]] memulihkan per detik naik dari {from}% menjadi {to}% HP maks.",
 } as const;

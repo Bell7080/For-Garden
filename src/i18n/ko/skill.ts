@@ -364,4 +364,8 @@ export const SKILL_KO = {
   "skill.sentence.roar.percent": "최대 체력의 {percent}%",
   "skill.keyword.shield.fromRoar": "현재 최대 체력의 {base}%에, 공포에 빠진 적 한 명마다 {per}%(최대 {max}명)를 더해 계산한 보호막 수치다.",
   "skill.ferocity.huntInstinct": "폭주 중 [[basic-attack|기본 공격]]이 [[intimidation|위압]]을 {stacks}겹씩 쌓고, [[fear|공포]]가 풀린 뒤의 면역이 {seconds}초로 짧아진다.",
+  "skill.breakthrough.effect.basic.scoldTaunt": "「{name}」에 맞은 적을 {seconds}초 동안 [[taunt|도발]]한다.",
+  "skill.breakthrough.effect.ultimate.bulwarkPayback": "「{name}」이 끝나는 순간 그동안 대신 받은 피해의 {percent}%를 주위 모든 적에게 [[fixed-damage|고정 피해]]로 돌려준다. 적 한 명이 받는 피해는 자신의 최대 체력의 {cap}%를 넘지 않는다.",
+  "skill.breakthrough.effect.ferocity.heatOverflow": "[[ferocity|폭주]] 중 [[nodonia-elation|희열]]이 최대 {max}겹까지 쌓인다. 폭주가 끝나면 {base}겹으로 줄어든다.",
+  "skill.breakthrough.effect.passive.sweeterWound": "[[nodonia-elation|희열]] 한 겹이 돌리는 매초 회복이 최대 체력의 {from}%에서 {to}%로 늘어난다.",
 } as const;

@@ -2438,6 +2438,15 @@ export type BasicBreakthrough = {
   damagePercentPerStack: number;
   /** 피해가 오르는 최대 겹 수(첫 타 포함). */
   maxStacks: number;
+} | {
+  /**
+   * 기본 공격에 맞은 적이 **잠깐 시전자만 노린다**(노도니아의 「벌 세우기」). 둔화는 지속 시간이 없는 마디 전용 상태라 쓰지 않고,
+   * 시간이 있는 공용 도발을 건다. 맞는 자리에 서는 개체라 도발당한 적이 칠수록 희열이 쌓인다. 평타마다 걸리지만 한 번에 한 적뿐이고
+   * 짧아서, 다른 적까지 붙잡는 폭주 도발과는 다른 몫이다.
+   */
+  kind: "scoldTaunt";
+  /** 도발 시간(초). */
+  tauntSeconds: number;
 } | BreakthroughNone;
 
 /**
@@ -2508,6 +2517,18 @@ export type UltimateBreakthrough = {
   radius: number;
   /** 본 궁극기 위력의 몇 %로 튀는지. */
   powerPercent: number;
+} | {
+  /**
+   * 대신 받기(`selfBulwark`)가 **끝나는 순간** 그동안 대신 받은 피해의 일부를 주위 모든 적에게 고정 피해로 돌려준다(노도니아의 「절정」).
+   * 공격력·주문력을 쓰지 않는 개체라 고정 피해이고, 적 한 명당 노도니아 최대 체력의 일정 비율을 넘지 않는다.
+   */
+  kind: "bulwarkPayback";
+  /** 대신 받은 피해 합계의 몇 %를 돌려주는지. */
+  returnPercent: number;
+  /** 피해가 닿는 전장 반경(px). */
+  radius: number;
+  /** 적 한 명이 한 번에 받는 상한(노도니아 최대 체력의 %). */
+  capMaxHpPercent: number;
 } | BreakthroughNone;
 
 /**
@@ -2561,6 +2582,14 @@ export type FerocityBreakthrough = {
   kind: "ankleShot";
   /** 경직 시간(초). */
   staggerSeconds: number;
+} | {
+  /**
+   * 폭주 중에는 희열이 **더 많이** 쌓이고(노도니아의 「열기 속의 열기」), 폭주가 끝나면 원래 상한으로 도로 깎인다.
+   * 궁극기와 엮지 않는 평타·재생 축의 효과다.
+   */
+  kind: "heatOverflow";
+  /** 폭주 동안 늘어나는 희열 최대 겹 수. */
+  extraMaxStacks: number;
 } | BreakthroughNone;
 
 /**
@@ -2620,6 +2649,11 @@ export type PassiveBreakthrough = {
   kind: "highTide";
   /** 늘어나는 피해(%). */
   damagePercent: number;
+} | {
+  /** 희열 한 겹이 돌리는 매초 회복(최대 체력의 %)이 이만큼 늘어난다(노도니아의 「달콤한 상처」). */
+  kind: "sweeterWound";
+  /** 겹당 늘어나는 회복(최대 체력의 %p, 화면에는 %로 적는다). */
+  regenPercentPerStack: number;
 } | BreakthroughNone;
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */

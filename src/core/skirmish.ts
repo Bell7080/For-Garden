@@ -367,6 +367,8 @@ export interface Fighter extends Combatant {
     staccatoStreak: { targetId: string; count: number } | null;
     /** 평타 돌파(`focusFire`) — 직전에 맞힌 적과 연속 적중 수. */
     focusStreak: { targetId: string; count: number } | null;
+    /** 궁극기 돌파(`bulwarkPayback`) — 이번 대신 받기 동안 대신 받은 피해(원래 피해 기준)의 합. 대신 받기를 새로 켜면 0으로 되돌린다. */
+    bulwarkTaken: number;
     /** 폭주 돌파(`crescendoRamp`) — 이번 폭주에서 따라붙은 추가타 수. 폭주에 들어설 때 0으로 되돌린다. */
     crescendoHits: number;
     /** 패시브 돌파(`adagioSlam`)가 다시 내려앉을 수 있기까지 남은 시간(초). */
@@ -1165,6 +1167,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
       staccatoStreak: null,
       focusStreak: null,
       crescendoHits: 0,
+      bulwarkTaken: 0,
       adagioSlamCooldown: 0,
     },
     breakthroughEcho: null,
@@ -2803,12 +2806,17 @@ function grantShieldFromDamage(attacker: Fighter, dealt: number, events: Skirmis
 function gainElation(target: Fighter): void {
   const plan = target.def.passive.elation;
   if (target.def.passive.kind !== "painfulElation" || plan === undefined || !isFighterAlive(target)) return;
+  // 폭주 돌파(`heatOverflow`)는 폭주 동안만 상한을 늘리고, 패시브 돌파(`sweeterWound`)는 겹당 재생을 키운다.
+  const heat = target.ferocityFever ? openedBreakthrough(target, "ferocity", (effects) => effects.ferocity) : undefined;
+  const wound = openedBreakthrough(target, "passive", (effects) => effects.passive);
+  const maxStacks = plan.maxStacks + (heat?.kind === "heatOverflow" ? heat.extraMaxStacks : 0);
+  const regen = Math.round((plan.maxHpRegenPercentPerStack + (wound?.kind === "sweeterWound" ? wound.regenPercentPerStack : 0)) * 1000) / 1000;
   target.elation = {
-    stacks: Math.min(plan.maxStacks, (target.elation?.stacks ?? 0) + 1),
+    stacks: Math.min(maxStacks, (target.elation?.stacks ?? 0) + 1),
     remaining: plan.seconds,
     total: plan.seconds,
-    regenPercentPerStack: plan.maxHpRegenPercentPerStack,
-    maxStacks: plan.maxStacks,
+    regenPercentPerStack: regen,
+    maxStacks,
     // 겹이 새로 쌓여도 남은 틱은 이어 간다 — 맞을 때마다 초기화하면 재생이 영영 돌지 않는다.
     tickIn: target.elation?.tickIn ?? 1,
   };
@@ -3044,6 +3052,7 @@ function raiseBulwark(
   fighter: Fighter,
   plan: { seconds: number; percent: number; regenPercentPerSecond: number; passiveHealBonusPercent: number; skillId: string; name: string },
 ): void {
+  fighter.bt.bulwarkTaken = 0;
   fighter.bulwark = {
     remaining: plan.seconds,
     total: plan.seconds,
@@ -3077,6 +3086,33 @@ function tickBulwark(fighter: Fighter, dt: number, state: SkirmishState, events:
     return;
   }
   fighter.bulwark = null;
+  payBulwarkBack(fighter, state, events);
+}
+
+/**
+ * 궁극기 돌파 — 대신 받기가 **끝나는 순간** 그동안 대신 받은 피해의 일부를 주위 적에게 고정 피해로 돌려준다.
+ *
+ * 쓰러지면 끝나는 것이 아니라 시간이 다해 끝날 때만 값을 치른다(쓰러진 개체는 `fighter.bulwark`가 이미 비워진다).
+ * 적 한 명당 상한은 자기 최대 체력의 비율이라, 한 판에 몰린 피해가 한 번에 판을 끝내지 못한다.
+ */
+function payBulwarkBack(fighter: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const taken = fighter.bt.bulwarkTaken;
+  fighter.bt.bulwarkTaken = 0;
+  const effect = openedBreakthrough(fighter, "ultimate", (effects) => effects.ultimate);
+  if (effect?.kind !== "bulwarkPayback" || !isFighterAlive(fighter) || taken <= 0) return;
+  const amount = Math.max(1, Math.round(Math.min(taken * effect.returnPercent / 100, fighter.maxHp * effect.capMaxHpPercent / 100)));
+  for (const other of state.fighters) {
+    if (other.side === fighter.side || !isFighterAlive(other) || distance(fighter, other) > effect.radius) continue;
+    const hpBefore = other.hp;
+    applyDamage(other, amount, events, state);
+    addContribution(state.contributions, fighter.id, "attack", hpBefore - other.hp, "attackPower");
+    events.push({ kind: "attack", attackerId: fighter.id, targetId: other.id, skill: "ultimate", amount,
+      contributionAmount: amount, critical: false, animate: false, damageType: "true" });
+    if (!isFighterAlive(other)) {
+      clearDefeatedStatuses(other);
+      events.push({ kind: "death", fighterId: other.id, sourceId: fighter.id });
+    }
+  }
 }
 
 /**
@@ -3392,6 +3428,11 @@ function tickUltimateBreakthrough(fighter: Fighter, dt: number, state: SkirmishS
  * 폭주 중에 주면 이미 세진 시간만 더 세지고, 끝나고 가장 약해지는 자리를 메우지 못한다.
  */
 function applyFerocityBreakthrough(fighter: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  // 폭주가 끝나면 늘어났던 희열 상한이 원래대로 돌아가고, 넘친 겹은 그 상한까지 깎인다(`heatOverflow`).
+  const plan = fighter.def.passive.elation;
+  if (plan !== undefined && fighter.elation !== null && fighter.elation.maxStacks > plan.maxStacks) {
+    fighter.elation = { ...fighter.elation, maxStacks: plan.maxStacks, stacks: Math.min(fighter.elation.stacks, plan.maxStacks) };
+  }
   const taken = fighter.feverDamageTaken;
   const healingDone = fighter.bt.feverHealingDone;
   fighter.bt.ambushCritReady = false;
@@ -3511,6 +3552,9 @@ function breakthroughSkill(attacker: Fighter, useUltimate: boolean): Skill {
       maxHpPercentPerSecond: effect.maxHpPercentPerSecond * basic.bleedMultiplier,
       healingReceivedReductionPercent: basic.healingReceivedReductionPercent,
     } : effect) };
+  }
+  if (basic?.kind === "scoldTaunt") {
+    skill = { ...skill, statusEffects: [...(skill.statusEffects ?? []), { kind: "taunt", seconds: basic.tauntSeconds }] };
   }
   const ferocity = openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity);
   if (attacker.ferocityFever && ferocity?.kind === "cleavingBasics") {
@@ -5406,6 +5450,7 @@ function shareWithBulwark(target: Fighter, amount: number, events: SkirmishEvent
   const resolution = resolveReceivedDamage(guardian, share);
   const dealt = applyDamage(guardian, resolution.applied, events, state);
   events.push({ kind: "damageShared", fighterId: guardian.id, fromFighterId: target.id, amount: dealt });
+  guardian.bt.bulwarkTaken += share;
   // 대신 아파 준 한 대도 희열이다 — 세지 않으면 대신 받는 5초 동안 제 몸으로 날아온 공격만 겹을
   // 이어 가, 가장 많이 맞는 순간에 겹이 도리어 끊긴다.
   gainElation(guardian);

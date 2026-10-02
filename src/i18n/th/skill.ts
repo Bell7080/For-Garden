@@ -316,4 +316,8 @@ export const SKILL_TH = {
   "skill.sentence.roar.percent": "{percent}% ของ HP สูงสุด",
   "skill.keyword.shield.fromRoar": "โล่ที่คำนวณจาก {base}% ของ HP สูงสุดปัจจุบัน บวกเพิ่ม {per}% ต่อศัตรูหนึ่งตัวที่หวาดกลัว (สูงสุด {max} ตัว)",
   "skill.ferocity.huntInstinct": "ระหว่างคลั่ง [[basic-attack|การโจมตีปกติ]]จะสะสม[[intimidation|ความข่มขวัญ]]ครั้งละ {stacks} ชั้น และภูมิคุ้มกันหลัง[[fear|ความหวาดกลัว]]หมดจะสั้นลงเหลือ {seconds} วินาที",
+  "skill.breakthrough.effect.basic.scoldTaunt": "ศัตรูที่โดน \"{name}\" จะถูก[[taunt|ยั่วยุ]] {seconds} วินาที",
+  "skill.breakthrough.effect.ultimate.bulwarkPayback": "เมื่อ \"{name}\" สิ้นสุด จะคืน {percent}% ของความเสียหายที่รับแทนมาให้ศัตรูทั้งหมดรอบตัวเป็น[[fixed-damage|ความเสียหายคงที่]] ศัตรูแต่ละตัวรับความเสียหายไม่เกิน {cap}% ของ HP สูงสุดของตัวเอง",
+  "skill.breakthrough.effect.ferocity.heatOverflow": "ระหว่าง[[ferocity|คลั่ง]] [[nodonia-elation|ปีติ]]สะสมได้สูงสุด {max} ชั้น เมื่อคลั่งสิ้นสุดจะลดลงเหลือ {base} ชั้น",
+  "skill.breakthrough.effect.passive.sweeterWound": "[[nodonia-elation|ปีติ]]แต่ละชั้นฟื้นฟู HP ต่อวินาทีเพิ่มจาก {from}% เป็น {to}% ของ HP สูงสุด",
 } as const;

@@ -316,4 +316,8 @@ export const SKILL_VI = {
   "skill.sentence.roar.percent": "{percent}% HP tối đa",
   "skill.keyword.shield.fromRoar": "Khiên tính từ {base}% HP tối đa hiện tại, cộng thêm {per}% cho mỗi kẻ địch bị Hoảng sợ (tối đa {max}).",
   "skill.ferocity.huntInstinct": "Khi Cuồng bạo, [[basic-attack|đòn đánh thường]] cộng {stacks} tầng [[intimidation|Uy hiếp]] mỗi lần, và thời gian miễn nhiễm sau khi [[fear|Hoảng sợ]] kết thúc rút còn {seconds}s.",
+  "skill.breakthrough.effect.basic.scoldTaunt": "Kẻ địch trúng \"{name}\" bị [[taunt|Khiêu khích]] trong {seconds} giây.",
+  "skill.breakthrough.effect.ultimate.bulwarkPayback": "Khi \"{name}\" kết thúc, trả lại {percent}% sát thương đã chịu thay cho mọi kẻ địch xung quanh dưới dạng [[fixed-damage|sát thương cố định]]. Mỗi kẻ địch nhận không quá {cap}% HP tối đa của bản thân.",
+  "skill.breakthrough.effect.ferocity.heatOverflow": "Trong [[ferocity|Cuồng bạo]], [[nodonia-elation|Hân hoan]] tích tối đa {max} tầng. Khi Cuồng bạo kết thúc, giảm xuống còn {base} tầng.",
+  "skill.breakthrough.effect.passive.sweeterWound": "Mỗi tầng [[nodonia-elation|Hân hoan]] hồi mỗi giây tăng từ {from}% lên {to}% HP tối đa.",
 } as const;

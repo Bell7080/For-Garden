@@ -316,4 +316,8 @@ export const SKILL_PT_BR = {
   "skill.sentence.roar.percent": "{percent}% do PV máx.",
   "skill.keyword.shield.fromRoar": "Escudo calculado a partir de {base}% do PV máx. atual, mais {per}% por inimigo em Medo (até {max}).",
   "skill.ferocity.huntInstinct": "Durante o frenesi, os [[basic-attack|ataques básicos]] acumulam {stacks} cargas de [[intimidation|Intimidação]] por vez, e a imunidade após o [[fear|Medo]] cai para {seconds} s.",
+  "skill.breakthrough.effect.basic.scoldTaunt": "Inimigos atingidos por \"{name}\" ficam [[taunt|provocados]] por {seconds} s.",
+  "skill.breakthrough.effect.ultimate.bulwarkPayback": "Quando \"{name}\" termina, devolve {percent}% do dano recebido no lugar dos aliados a todos os inimigos próximos como [[fixed-damage|dano fixo]]. Nenhum inimigo sofre mais de {cap}% do PV máx. desta unidade.",
+  "skill.breakthrough.effect.ferocity.heatOverflow": "Durante o [[ferocity|Frenesi]], [[nodonia-elation|Euforia]] acumula até {max}. Quando o Frenesi termina, volta para {base} acúmulos.",
+  "skill.breakthrough.effect.passive.sweeterWound": "Cada acúmulo de [[nodonia-elation|Euforia]] recupera por segundo {to}% do PV máx. em vez de {from}%.",
 } as const;

@@ -317,4 +317,8 @@ export const SKILL_EN = {
   "skill.sentence.roar.percent": "{percent}% of max HP",
   "skill.keyword.shield.fromRoar": "A shield calculated from {base}% of the current max HP, plus {per}% for each enemy put in Fear (up to {max}).",
   "skill.ferocity.huntInstinct": "During frenzy, [[basic-attack|Basic Attacks]] stack {stacks} [[intimidation|Intimidation]] at a time, and immunity after [[fear|Fear]] ends is shortened to {seconds}s.",
+  "skill.breakthrough.effect.basic.scoldTaunt": "Enemies hit by \"{name}\" are [[taunt|Taunted]] for {seconds}s.",
+  "skill.breakthrough.effect.ultimate.bulwarkPayback": "When \"{name}\" ends, {percent}% of the damage taken on allies' behalf is returned to all nearby enemies as [[fixed-damage|Fixed Damage]]. No enemy takes more than {cap}% of this unit's Max HP.",
+  "skill.breakthrough.effect.ferocity.heatOverflow": "During [[ferocity|Frenzy]], [[nodonia-elation|Elation]] stacks up to {max}. When Frenzy ends, it drops back to {base} stacks.",
+  "skill.breakthrough.effect.passive.sweeterWound": "Each stack of [[nodonia-elation|Elation]] restores {to}% of Max HP per second instead of {from}%.",
 } as const;

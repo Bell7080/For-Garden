@@ -316,4 +316,8 @@ export const SKILL_RU = {
   "skill.sentence.roar.percent": "{percent}% макс. ОЗ",
   "skill.keyword.shield.fromRoar": "Щит, рассчитанный из {base}% текущих макс. ОЗ плюс {per}% за каждого напуганного врага (до {max}).",
   "skill.ferocity.huntInstinct": "В неистовстве [[basic-attack|обычные атаки]] накладывают по {stacks} зар. [[intimidation|Устрашения]], а иммунитет после [[fear|Страха]] сокращается до {seconds} с.",
+  "skill.breakthrough.effect.basic.scoldTaunt": "Враги, пораженные «{name}», [[taunt|провоцируются]] на {seconds} с.",
+  "skill.breakthrough.effect.ultimate.bulwarkPayback": "Когда «{name}» заканчивается, {percent}% урона, принятого вместо союзников, возвращается всем врагам рядом как [[fixed-damage|фиксированный урон]]. Один враг получает не более {cap}% макс. ОЗ этого юнита.",
+  "skill.breakthrough.effect.ferocity.heatOverflow": "Во время [[ferocity|неистовства]] [[nodonia-elation|упоение]] накапливается до {max} зарядов. Когда неистовство заканчивается, остаётся {base} зарядов.",
+  "skill.breakthrough.effect.passive.sweeterWound": "Каждый заряд [[nodonia-elation|упоения]] восстанавливает в секунду {to}% макс. ОЗ вместо {from}%.",
 } as const;

@@ -339,4 +339,8 @@ export const SKILL_JA = {
   "skill.sentence.roar.percent": "最大体力の{percent}%",
   "skill.keyword.shield.fromRoar": "現在の最大体力の{base}%に、恐怖に陥った敵1体につき{per}%(最大{max}体)を加えて計算したシールド数値だ。",
   "skill.ferocity.huntInstinct": "暴走中、[[basic-attack|通常攻撃]]が[[intimidation|威圧]]を{stacks}重ずつ積み、[[fear|恐怖]]が解けた後の免疫が{seconds}秒に短くなる。",
+  "skill.breakthrough.effect.basic.scoldTaunt": "「{name}」が当たった敵を{seconds}秒間[[taunt|挑発]]する。",
+  "skill.breakthrough.effect.ultimate.bulwarkPayback": "「{name}」が終わる瞬間、それまでに肩代わりしたダメージの{percent}%を周囲のすべての敵に[[fixed-damage|固定ダメージ]]として返す。敵1体が受けるダメージは自身の最大HPの{cap}%を超えない。",
+  "skill.breakthrough.effect.ferocity.heatOverflow": "[[ferocity|暴走]]中、[[nodonia-elation|悦び]]が最大{max}重まで溜まる。暴走が終わると{base}重まで減る。",
+  "skill.breakthrough.effect.passive.sweeterWound": "[[nodonia-elation|悦び]]1層が毎秒回復する量が、最大HPの{from}%から{to}%に増える。",
 } as const;

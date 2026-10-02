@@ -2011,6 +2011,14 @@ export const RELICS: RelicDef[] = [
       name: "전장의 열기", effectId: "battleHeat", auraDamageMaxHpPercent: 1.5, radius: 240,
       taunt: { kind: "taunt", seconds: 3 }, tauntRadius: 420, elationHealBonusPercent: 50,
     },
+    // 한계 돌파 — 평타에 맞은 적이 잠깐 노도니아만 노리고(벌 세우기), 절정이 끝나면 대신 받은 피해의 일부를 주위에 돌려주며,
+    // 폭주 중에는 희열이 열다섯 겹까지 쌓이고(폭주가 끝나면 열 겹으로 깎인다), 희열 한 겹의 재생이 0.3%에서 0.4%로 돌아온다.
+    breakthroughEffects: {
+      basic: { kind: "scoldTaunt", tauntSeconds: 0.5 },
+      ultimate: { kind: "bulwarkPayback", returnPercent: 25, radius: 300, capMaxHpPercent: 10 },
+      ferocity: { kind: "heatOverflow", extraMaxStacks: 5 },
+      passive: { kind: "sweeterWound", regenPercentPerStack: 0.1 },
+    },
     passive: {
       // kind가 painfulElation인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.

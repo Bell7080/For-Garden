@@ -187,7 +187,6 @@ export const MISC_DE = {
   "battle.profile.down": "Besiegt",
   "battle.profile.ferocity": "Wildheit {value} / 100",
   "reward.title": "Erhaltene Belohnungen",
-  "reward.swipeHint": "Wischen zum Durchsehen · Tippen zum Bestätigen",
   "reward.tapHint": "Zum Bestätigen auf den Bildschirm tippen",
   "enemyPreview.title": "Gegnerische Formation",
   "enemyPreview.totalPower": "Gesamte Kampfkraft {power}",

@@ -2554,7 +2554,7 @@ export class BattleScene extends Phaser.Scene {
         reward: {
           kind: "storyClear", cheesecakeEarned: result.cheesecakeEarned, firstClear: result.firstClear,
           firstClearRewards: result.firstClearRewards.map((grant) => grant.kind === "rune"
-            ? { kind: "rune" as const, rarity: grant.rarity, part: grant.part, trait: grant.trait }
+            ? { kind: "rune" as const, rarity: grant.rarity, part: grant.part, trait: grant.trait, instanceId: grant.instanceId }
             : grant),
         },
         fighters,

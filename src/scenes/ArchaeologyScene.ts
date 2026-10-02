@@ -143,10 +143,10 @@ const FOG_WARP = [
  * **룬은 원석 그림이 아니라 룬 조각이고, 연구 재료는 실제로 받은 아이템의 그림이다.** 예전에는 룬 칸이
  * 원석 아이콘으로, 연구 재료 칸이 게임에 없는 「룬 가루」 그림으로 서서 무엇이 나왔는지 읽히지 않았다.
  */
-function rewardTexture(entry: Pick<StrataHaulEntry, "kind" | "runeRarity" | "itemId">): string | null {
+function rewardTexture(entry: Pick<StrataHaulEntry, "kind" | "runeRarity" | "runePart" | "itemId">): string | null {
   const { kind } = entry;
   if (kind === "empty") return null;
-  if (kind === "rune") return runeTexture(entry.runeRarity ?? "uncommon", 0);
+  if (kind === "rune") return runeTexture(entry.runeRarity ?? "uncommon", entry.runePart ?? 0);
   if (kind === "researchItem") {
     const definition = entry.itemId ? findItem(entry.itemId) : undefined;
     return definition?.icon.kind === "asset" ? definition.icon.key : null;
@@ -155,10 +155,16 @@ function rewardTexture(entry: Pick<StrataHaulEntry, "kind" | "runeRarity" | "ite
 }
 
 /** 캔 것의 영수증 한 줄(보상 팝업)로 바꾼다. */
-function haulToRewardItems(haul: readonly StrataHaulEntry[]): RewardPopupItem[] {
-  return haul.flatMap((entry) => {
+function haulToRewardItems(haul: readonly StrataHaulEntry[], granted: ReadonlyArray<{ rarity: RuneRarity; part: RunePart; instanceId: string }>): RewardPopupItem[] {
+  return haul.flatMap((entry): RewardPopupItem[] => {
     const icon = rewardTexture(entry);
-    return icon === null ? [] : [{ icon, amount: entry.amount }];
+    if (icon === null) return [];
+    if (entry.kind !== "rune") return [{ icon, amount: entry.amount }];
+    // 룬은 서버가 발급한 실제 조각 한 장씩 선다 — 눌러서 그 룬의 쪽지를 열 수 있어야 한다.
+    const owned = granted.filter((rune) => rune.rarity === entry.runeRarity && rune.part === entry.runePart).slice(-entry.amount);
+    return owned.length === entry.amount
+      ? owned.map((rune) => ({ icon, amount: 1, runeInstanceId: rune.instanceId }))
+      : [{ icon, amount: entry.amount }];
   });
 }
 
@@ -225,7 +231,7 @@ export class ArchaeologyScene extends Phaser.Scene {
   /** 마지막 굴착까지 반영한 판. 날아갈 전리품 칸의 자리를 여기서 구한다. */
   private haulBoard: StrataBoardView | null = null;
   /** 이번 판에서 받은 룬. 전리품의 룬 칸을 누르면 이 중 가장 최근 것의 정보가 열린다. */
-  private readonly grantedRunes: Array<{ rarity: RuneRarity; instanceId: string }> = [];
+  private readonly grantedRunes: Array<{ rarity: RuneRarity; part: RunePart; instanceId: string }> = [];
   /** 판 뒤를 눌러 주는 어둠. 판이 없을 때는 투명하다. */
   private boardDim!: Phaser.GameObjects.Rectangle;
   /** 안개 두 겹과 훑는 빛띠. 판을 다시 그릴 때마다 새로 세운다. */
@@ -804,7 +810,7 @@ export class ArchaeologyScene extends Phaser.Scene {
       const response = await gameApi.abandonStrataRun({ requestId: `strata-finish-${Date.now()}` });
       this.applyArchaeologyState(response);
       this.paintView();
-      const items = haulToRewardItems(strataBoardHaul(board));
+      const items = haulToRewardItems(strataBoardHaul(board), this.grantedRunes);
       if (items.length > 0) openRewardPopup(this, this.popups, { items });
     } catch {
       // 서버가 확정하지 않았으면 판을 그대로 둔다. 화면만 닫으면 치른 횟수가 조용히 사라진다.
@@ -947,7 +953,7 @@ export class ArchaeologyScene extends Phaser.Scene {
           : tile),
       } satisfies StrataBoardView;
       this.applyArchaeologyState(result);
-      if (result.grantedRune) this.grantedRunes.push({ rarity: result.grantedRune.rarity, instanceId: result.grantedRune.instanceId });
+      if (result.grantedRune) this.grantedRunes.push({ rarity: result.grantedRune.rarity, part: result.grantedRune.part, instanceId: result.grantedRune.instanceId });
       this.haulBoard = completedBoard;
       const shown = result.board ?? completedBoard;
       this.replaceStrataTile(index, completedBoard);
@@ -965,7 +971,7 @@ export class ArchaeologyScene extends Phaser.Scene {
         await Promise.all([...this.pops].map((pop) => pop.done));
         if (!this.scene.isActive()) return;
         this.paintView();
-        openRewardPopup(this, this.popups, { items: haulToRewardItems(strataBoardHaul(completedBoard)) });
+        openRewardPopup(this, this.popups, { items: haulToRewardItems(strataBoardHaul(completedBoard), this.grantedRunes) });
       }
       this.publishDigDebug(index);
     } catch {
@@ -1070,16 +1076,16 @@ export class ArchaeologyScene extends Phaser.Scene {
       const hit = this.add.rectangle(0, 0, layout.frame, layout.frame, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerdown", () => pressIn(holder));
       hit.on("pointerout", () => pressOut(holder, "normal", { pop: false }));
-      hit.on("pointerup", () => { pressOut(holder); this.openHaulRune(shown.runeRarity); });
+      hit.on("pointerup", () => { pressOut(holder); this.openHaulRune(shown.runeRarity, shown.runePart); });
       holder.add(hit);
     });
   }
 
-  /** 전리품의 룬 칸을 누르면 이번 판에서 받은 그 등급의 가장 최근 룬 정보가 열린다. */
-  private openHaulRune(rarity: RuneRarity | undefined): void {
+  /** 전리품의 룬 칸을 누르면 이번 판에서 받은 그 등급·조각의 가장 최근 룬 정보가 열린다. */
+  private openHaulRune(rarity: RuneRarity | undefined, part: RunePart | undefined): void {
     for (let at = this.grantedRunes.length - 1; at >= 0; at -= 1) {
       const granted = this.grantedRunes[at];
-      if (granted.rarity !== rarity) continue;
+      if (granted.rarity !== rarity || granted.part !== part) continue;
       if (!session.runeInventory.some(({ instanceId }) => instanceId === granted.instanceId)) continue;
       openRuneInfoPopup(this, this.popups, { runeInstanceId: granted.instanceId });
       return;

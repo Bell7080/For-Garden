@@ -340,4 +340,8 @@ export const SKILL_ES = {
   "skill.breakthrough.effect.passive.salvageShare": "Cuando «{name}» obtiene un [[shield|escudo]], el aliado con el escudo más fino recibe también el {percent}% de ese escudo.",
   "skill.breakthrough.effect.passive.thornStorm": "Con [[kento-prickle|Espinoso]] en {min} o más acumulaciones, la réplica también rebota a otro enemigo cercano al atacante con el {percent}% de su valor.",
   "skill.breakthrough.effect.passive.softBreath": "La curación de «{name}» aumenta un {percent}% por cada enemigo en [[sleep|Sueño]] dentro del área (máximo {max}).",
+  "skill.breakthrough.effect.basic.dreadAegis": "Cuando「{name}」golpea a un enemigo que ya tiene[[intimidation|Intimidación]], esta unidad obtiene un[[shield|escudo]]del {percent}% de su salud máxima. Se activa como máximo una vez cada {seconds} s.",
+  "skill.breakthrough.effect.ultimate.quarryMark": "Los enemigos que「{name}」sumerge realmente en[[fear|Miedo]]reciben un {percent}% más de todo el daño durante {seconds} s. La marca permanece aunque el Miedo termine.",
+  "skill.breakthrough.effect.ferocity.spreadingDread": "Durante el[[ferocity|Frenesí]], en cuanto un enemigo cae en[[fear|Miedo]], {stacks} carga de[[intimidation|Intimidación]]se extiende a los demás enemigos cercanos.",
+  "skill.breakthrough.effect.passive.terrorCarapace": "Por cada enemigo al que esta unidad aplica[[intimidation|Intimidación]], la[[def|Defensa]]y la[[res|Resistencia]]aumentan un {percent}% (hasta {max}%).",
 } as const;

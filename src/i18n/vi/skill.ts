@@ -340,4 +340,8 @@ export const SKILL_VI = {
   "skill.breakthrough.effect.passive.salvageShare": "Khi「{name}」nhận [[shield|khiên]], đồng minh có khiên mỏng nhất cũng nhận {percent}% lượng khiên đó.",
   "skill.breakthrough.effect.passive.thornStorm": "Khi [[kento-prickle|Gai góc]] từ {min} tầng trở lên, đòn phản còn văng sang một kẻ địch khác gần kẻ tấn công với {percent}% giá trị.",
   "skill.breakthrough.effect.passive.softBreath": "Hồi phục của「{name}」tăng {percent}% cho mỗi kẻ địch đang [[sleep|Ngủ]] trong tầm (tối đa {max}).",
+  "skill.breakthrough.effect.basic.dreadAegis": "Khi「{name}」đánh trúng kẻ địch đã bị[[intimidation|Uy hiếp]], bản thân nhận[[shield|khiên]]bằng {percent}% HP tối đa. Kích hoạt tối đa một lần mỗi {seconds} giây.",
+  "skill.breakthrough.effect.ultimate.quarryMark": "Kẻ địch thực sự bị「{name}」đẩy vào[[fear|Sợ hãi]] chịu thêm {percent}% mọi sát thương trong {seconds} giây. Dấu hiệu vẫn còn sau khi hết Sợ hãi.",
+  "skill.breakthrough.effect.ferocity.spreadingDread": "Trong[[ferocity|Cuồng bạo]], ngay khi một kẻ địch rơi vào[[fear|Sợ hãi]], {stacks} lớp[[intimidation|Uy hiếp]]lan sang các kẻ địch khác gần đó.",
+  "skill.breakthrough.effect.passive.terrorCarapace": "Với mỗi kẻ địch bị bản thân gây[[intimidation|Uy hiếp]], [[def|Phòng thủ]]và[[res|Kháng]]tăng {percent}% (tối đa {max}%).",
 } as const;

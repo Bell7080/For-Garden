@@ -341,4 +341,8 @@ export const SKILL_EN = {
   "skill.breakthrough.effect.passive.salvageShare": "When \"{name}\" gains a [[shield|shield]], the ally with the thinnest shield also receives {percent}% of it.",
   "skill.breakthrough.effect.passive.thornStorm": "While [[kento-prickle|Prickly]] is at {min} or more stacks, the counter also hits one other enemy near the attacker for {percent}% of its value.",
   "skill.breakthrough.effect.passive.softBreath": "\"{name}\" heals {percent}% more for each enemy in [[sleep|Sleep]] within range (up to {max}).",
+  "skill.breakthrough.effect.basic.dreadAegis": "When \"{name}\" hits an enemy that already has [[intimidation|Dread]], this unit gains a [[shield|shield]] worth {percent}% of its max HP. Triggers at most once every {seconds}s.",
+  "skill.breakthrough.effect.ultimate.quarryMark": "Enemies that \"{name}\" actually puts into [[fear|Fear]] take {percent}% more damage from all sources for {seconds}s. The mark stays even after Fear ends.",
+  "skill.breakthrough.effect.ferocity.spreadingDread": "During [[ferocity|Frenzy]], the moment an enemy falls into [[fear|Fear]], {stacks} stack of [[intimidation|Dread]] spreads to other enemies near it.",
+  "skill.breakthrough.effect.passive.terrorCarapace": "For each enemy this unit has put under [[intimidation|Dread]], [[def|Defense]] and [[res|Resistance]] increase by {percent}% (up to {max}%).",
 } as const;

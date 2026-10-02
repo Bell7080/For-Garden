@@ -30,7 +30,7 @@ const MAP_ENEMY_SLOT: [number, number] = [278, 1238];
 /** 편성 미리보기에서 첫 적 옆에 붙는 `?` 뱃지. SD 자체는 입력을 받지 않는다. */
 const PARTY_ENEMY_HELP: [number, number] = [366, 230];
 
-const ROSTER = { startX: 116, startY: 1080, stepX: 212, stepY: 244, cols: 5 };
+const ROSTER = { startX: 170, startY: 1230, stepX: 247, stepY: 225, cols: 4 };
 function card(index: number): [number, number] {
   return [
     ROSTER.startX + (index % ROSTER.cols) * ROSTER.stepX,
@@ -66,7 +66,8 @@ async function enterParty(page: Page, prepare?: Parameters<typeof startAfterOpen
   await expect.poll(() => scene(page)).toBe("stageMap");
 
   // 지도는 열려 있는 가장 뒤쪽 스테이지를 이미 골라 둔다. 출전만 누르면 편성으로 넘어간다.
-  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT - 180); // 출전
+  // 지도가 그려지는 중에는 첫 누름이 허공을 칠 수 있어 편성이 열릴 때까지 다시 누른다.
+  await tapUntil(page, BASE_WIDTH / 2, BASE_HEIGHT - 180, async () => (await scene(page)) === "party"); // 출전
   await expect.poll(() => scene(page)).toBe("party");
 }
 
@@ -288,8 +289,8 @@ test("관찰 일지는 발굴 기록을 접어 두고 질문을 옆쪽으로 넘
   await expect.poll(() => infoOpen(page)).toBe(true);
   await tap(page, 268, 300);
   await captureGame(page, `test-results/${test.info().project.name}-observation-journal.png`);
-  await tap(page, BASE_WIDTH / 2 + 440, BASE_HEIGHT / 2);
-  await page.waitForTimeout(500);
+  await tap(page, BASE_WIDTH / 2 + 440, 945);
+  await page.waitForTimeout(1200);
   await captureGame(page, `test-results/${test.info().project.name}-observation-question-page.png`);
 });
 

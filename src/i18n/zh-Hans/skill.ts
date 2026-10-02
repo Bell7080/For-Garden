@@ -340,4 +340,8 @@ export const SKILL_ZH_HANS = {
   "skill.breakthrough.effect.passive.salvageShare": "「{name}」获得[[shield|护盾]]时，护盾最薄的一名队友也会获得同样护盾的{percent}%。",
   "skill.breakthrough.effect.passive.thornStorm": "[[kento-prickle|带刺]]达到{min}层以上时，反击还会以{percent}%的数值弹向攻击者附近的另一名敌人。",
   "skill.breakthrough.effect.passive.softBreath": "范围内每有一名[[sleep|睡眠]]中的敌人，「{name}」的治疗就提高{percent}%（最多{max}名）。",
+  "skill.breakthrough.effect.basic.dreadAegis": "「{name}」命中已带有[[intimidation|威压]]的敌人时，获得相当于自身最大生命值{percent}%的[[shield|护盾]]。每{seconds}秒最多触发一次。",
+  "skill.breakthrough.effect.ultimate.quarryMark": "「{name}」使其真正陷入[[fear|恐惧]]的敌人，在{seconds}秒内受到的所有伤害增加{percent}%。恐惧结束后标记仍会保留。",
+  "skill.breakthrough.effect.ferocity.spreadingDread": "[[ferocity|暴走]]期间，敌人陷入[[fear|恐惧]]的瞬间，其周围的其他敌人会被叠加{stacks}层[[intimidation|威压]]。",
+  "skill.breakthrough.effect.passive.terrorCarapace": "自身每对一名敌人施加[[intimidation|威压]]，[[def|防御力]]和[[res|抗性]]提高{percent}%（最高{max}%）。",
 } as const;

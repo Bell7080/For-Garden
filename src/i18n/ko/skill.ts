@@ -388,4 +388,8 @@ export const SKILL_KO = {
   "skill.breakthrough.effect.passive.salvageShare": "「{name}」의 [[shield|보호막]]이 오를 때 보호막이 가장 얇은 아군 한 명에게도 같은 막의 {percent}%가 간다.",
   "skill.breakthrough.effect.passive.thornStorm": "[[kento-prickle|까칠]]이 {min}겹 이상일 때 반격이 때린 적 곁의 다른 적 한 명에게도 {percent}%의 몫으로 튄다.",
   "skill.breakthrough.effect.passive.softBreath": "「{name}」의 회복이 범위 안에서 [[sleep|수면]] 중인 적 한 명마다 {percent}% 늘어난다(최대 {max}명).",
+  "skill.breakthrough.effect.basic.dreadAegis": "「{name}」{name!이} 이미 [[intimidation|위압]]이 걸려 있던 적을 맞히면 자기 최대 체력의 {percent}%만큼 [[shield|보호막]]을 두른다. {seconds}초에 한 번만 발동한다.",
+  "skill.breakthrough.effect.ultimate.quarryMark": "「{name}」{name!이} 실제로 [[fear|공포]]에 빠뜨린 적은 {seconds}초 동안 받는 모든 피해가 {percent}% 늘어난다. 공포가 풀려도 표식은 남는다.",
+  "skill.breakthrough.effect.ferocity.spreadingDread": "[[ferocity|폭주]] 중 적이 [[fear|공포]]에 빠지는 순간, 그 주변의 다른 적에게 [[intimidation|위압]]이 {stacks}겹 번진다.",
+  "skill.breakthrough.effect.passive.terrorCarapace": "자신이 [[intimidation|위압]]을 건 적 한 명당 [[def|방어력]]과 [[res|저항력]]이 {percent}% 오른다(최대 {max}%).",
 } as const;

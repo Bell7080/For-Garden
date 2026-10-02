@@ -81,6 +81,10 @@ const CATEGORY: Record<EffectKind, Category> = {
   windPull: "cadence",
   huntMark: "crit",
   windEcho: "cadence",
+  dreadAegis: "survival",
+  quarryMark: "support",
+  spreadingDread: "control",
+  terrorCarapace: "survival",
   // 탱커 계약(수압·까칠·졸음)을 새 동작으로 보여 주는 효과들
   pressureConduct: "control",
   thornJab: "damage",

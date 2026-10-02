@@ -340,4 +340,8 @@ export const SKILL_RU = {
   "skill.breakthrough.effect.passive.salvageShare": "Когда «{name}» получает [[shield|щит]], союзник с самым тонким щитом тоже получает {percent}% этого щита.",
   "skill.breakthrough.effect.passive.thornStorm": "При {min} и более слоях [[kento-prickle|Колючести]] ответный удар дополнительно отскакивает на ещё одного врага рядом с атакующим с {percent}% своего значения.",
   "skill.breakthrough.effect.passive.softBreath": "Лечение «{name}» увеличивается на {percent}% за каждого врага в состоянии [[sleep|Сон]] в зоне (не более {max}).",
+  "skill.breakthrough.effect.basic.dreadAegis": "Когда「{name}」попадает по врагу, уже находящемуся под[[intimidation|Запугиванием]], этот боец получает[[shield|щит]]в размере {percent}% макс. здоровья. Срабатывает не чаще раза в {seconds} с.",
+  "skill.breakthrough.effect.ultimate.quarryMark": "Враги, которых「{name}」действительно ввергает в[[fear|Страх]], получают на {percent}% больше любого урона в течение {seconds} с. Метка остаётся, даже когда Страх закончится.",
+  "skill.breakthrough.effect.ferocity.spreadingDread": "Во время[[ferocity|Неистовства]], когда враг впадает в[[fear|Страх]], {stacks} стак. [[intimidation|Запугивания]]переходит на других врагов поблизости.",
+  "skill.breakthrough.effect.passive.terrorCarapace": "За каждого врага под[[intimidation|Запугиванием]]от этого бойца[[def|Защита]]и[[res|Сопротивление]]растут на {percent}% (до {max}%).",
 } as const;

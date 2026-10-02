@@ -340,4 +340,8 @@ export const SKILL_ID = {
   "skill.breakthrough.effect.passive.salvageShare": "Saat「{name}」mendapat [[shield|perisai]], satu sekutu dengan perisai tertipis juga menerima {percent}% dari perisai itu.",
   "skill.breakthrough.effect.passive.thornStorm": "Saat [[kento-prickle|Berduri]] berada di {min} tumpukan atau lebih, serangan balik juga memantul ke satu musuh lain di dekat penyerang sebesar {percent}% nilainya.",
   "skill.breakthrough.effect.passive.softBreath": "Pemulihan「{name}」meningkat {percent}% untuk setiap musuh yang sedang [[sleep|Tidur]] dalam jangkauan (maksimal {max}).",
+  "skill.breakthrough.effect.basic.dreadAegis": "Saat「{name}」mengenai musuh yang sudah terkena[[intimidation|Intimidasi]], unit ini mendapat[[shield|perisai]]sebesar {percent}% HP maksimumnya. Aktif paling banyak sekali setiap {seconds} detik.",
+  "skill.breakthrough.effect.ultimate.quarryMark": "Musuh yang benar-benar dibuat[[fear|Takut]]oleh「{name}」menerima {percent}% lebih banyak semua damage selama {seconds} detik. Tanda tetap ada meski Takut berakhir.",
+  "skill.breakthrough.effect.ferocity.spreadingDread": "Selama[[ferocity|Mengamuk]], saat musuh jatuh ke dalam[[fear|Takut]], {stacks} lapis[[intimidation|Intimidasi]]menyebar ke musuh lain di dekatnya.",
+  "skill.breakthrough.effect.passive.terrorCarapace": "Untuk setiap musuh yang dikenai[[intimidation|Intimidasi]]oleh unit ini, [[def|Pertahanan]]dan[[res|Resistensi]]meningkat {percent}% (maksimal {max}%).",
 } as const;

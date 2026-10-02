@@ -340,4 +340,8 @@ export const SKILL_TH = {
   "skill.breakthrough.effect.passive.salvageShare": "เมื่อ「{name}」ได้รับ[[shield|โล่]] พันธมิตรที่มีโล่บางที่สุดหนึ่งคนจะได้รับโล่เท่ากับ {percent}% ของโล่นั้นด้วย",
   "skill.breakthrough.effect.passive.thornStorm": "เมื่อ[[kento-prickle|หนาม]]ตั้งแต่ {min} ชั้นขึ้นไป การสะท้อนจะกระเด็นไปโดนศัตรูอีกหนึ่งตัวใกล้ผู้โจมตีด้วยค่า {percent}%",
   "skill.breakthrough.effect.passive.softBreath": "การฟื้นฟูของ「{name}」เพิ่มขึ้น {percent}% ต่อศัตรูที่[[sleep|หลับ]]อยู่ในระยะหนึ่งตัว (สูงสุด {max} ตัว)",
+  "skill.breakthrough.effect.basic.dreadAegis": "เมื่อ「{name}」โจมตีศัตรูที่มี[[intimidation|แรงกดดัน]]อยู่แล้ว จะได้รับ[[shield|โล่]]เท่ากับ {percent}% ของ HP สูงสุดของตนเอง ทำงานได้สูงสุดหนึ่งครั้งทุก {seconds} วินาที",
+  "skill.breakthrough.effect.ultimate.quarryMark": "ศัตรูที่「{name}」ทำให้เข้าสู่[[fear|ความกลัว]]จริง จะรับความเสียหายทั้งหมดเพิ่มขึ้น {percent}% เป็นเวลา {seconds} วินาที เครื่องหมายคงอยู่แม้ความกลัวจะหมดแล้ว",
+  "skill.breakthrough.effect.ferocity.spreadingDread": "ระหว่าง[[ferocity|คลั่ง]] ทันทีที่ศัตรูเข้าสู่[[fear|ความกลัว]] [[intimidation|แรงกดดัน]] {stacks} ชั้นจะแผ่ไปยังศัตรูตัวอื่นที่อยู่ใกล้",
+  "skill.breakthrough.effect.passive.terrorCarapace": "ศัตรูแต่ละตัวที่ตนใส่[[intimidation|แรงกดดัน]]ไว้ จะเพิ่ม[[def|พลังป้องกัน]]และ[[res|ความต้านทาน]] {percent}% (สูงสุด {max}%)",
 } as const;

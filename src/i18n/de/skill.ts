@@ -340,4 +340,8 @@ export const SKILL_DE = {
   "skill.breakthrough.effect.passive.salvageShare": "Erhält „{name}“ ein [[shield|Schild]], bekommt der Verbündete mit dem dünnsten Schild {percent}% davon ebenfalls.",
   "skill.breakthrough.effect.passive.thornStorm": "Bei mindestens {min} Stapeln [[kento-prickle|Stachelig]] springt der Rückschaden zusätzlich mit {percent}% seines Werts auf einen weiteren Gegner in der Nähe des Angreifers über.",
   "skill.breakthrough.effect.passive.softBreath": "Die Heilung von „{name}“ steigt um {percent}% für jeden Gegner im [[sleep|Schlaf]] in Reichweite (höchstens {max}).",
+  "skill.breakthrough.effect.basic.dreadAegis": "Trifft「{name}」einen Gegner, der bereits[[intimidation|Einschüchterung]]trägt, erhält diese Einheit einen[[shield|Schild]]in Höhe von {percent}% ihrer maximalen Lebenspunkte. Löst höchstens alle {seconds} s aus.",
+  "skill.breakthrough.effect.ultimate.quarryMark": "Gegner, die「{name}」tatsächlich in[[fear|Furcht]]versetzt, erhalten {seconds} s lang {percent}% mehr Schaden aus allen Quellen. Die Markierung bleibt auch nach dem Ende der Furcht.",
+  "skill.breakthrough.effect.ferocity.spreadingDread": "Während der[[ferocity|Raserei]] breitet sich, sobald ein Gegner in[[fear|Furcht]]gerät, {stacks} Stapel[[intimidation|Einschüchterung]]auf andere Gegner in der Nähe aus.",
+  "skill.breakthrough.effect.passive.terrorCarapace": "Für jeden Gegner, dem diese Einheit[[intimidation|Einschüchterung]]auferlegt hat, steigen[[def|Verteidigung]]und[[res|Widerstand]]um {percent}% (bis zu {max}%).",
 } as const;

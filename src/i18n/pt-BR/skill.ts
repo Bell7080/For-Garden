@@ -340,4 +340,8 @@ export const SKILL_PT_BR = {
   "skill.breakthrough.effect.passive.salvageShare": "Quando «{name}» ganha um [[shield|escudo]], o aliado com o escudo mais fino também recebe {percent}% desse escudo.",
   "skill.breakthrough.effect.passive.thornStorm": "Com [[kento-prickle|Espinhoso]] em {min} ou mais acúmulos, o revide também ricocheteia em outro inimigo perto do atacante com {percent}% do valor.",
   "skill.breakthrough.effect.passive.softBreath": "A cura de «{name}» aumenta {percent}% para cada inimigo em [[sleep|Sono]] no alcance (máximo {max}).",
+  "skill.breakthrough.effect.basic.dreadAegis": "Quando「{name}」acerta um inimigo que já tem[[intimidation|Intimidação]], esta unidade ganha um[[shield|escudo]]de {percent}% da vida máxima. Ativa no máximo uma vez a cada {seconds}s.",
+  "skill.breakthrough.effect.ultimate.quarryMark": "Inimigos que「{name}」realmente coloca em[[fear|Medo]]recebem {percent}% a mais de todo o dano por {seconds}s. A marca permanece mesmo após o Medo acabar.",
+  "skill.breakthrough.effect.ferocity.spreadingDread": "Durante o[[ferocity|Frenesi]], assim que um inimigo cai em[[fear|Medo]], {stacks} carga de[[intimidation|Intimidação]]se espalha para os outros inimigos próximos.",
+  "skill.breakthrough.effect.passive.terrorCarapace": "Para cada inimigo sob[[intimidation|Intimidação]]desta unidade, a[[def|Defesa]]e a[[res|Resistência]]aumentam em {percent}% (até {max}%).",
 } as const;

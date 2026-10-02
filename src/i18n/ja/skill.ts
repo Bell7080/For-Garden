@@ -363,4 +363,8 @@ export const SKILL_JA = {
   "skill.breakthrough.effect.passive.salvageShare": "「{name}」で[[shield|シールド]]が増えるとき、シールドが最も薄い味方1人にも同じシールドの{percent}%が渡る。",
   "skill.breakthrough.effect.passive.thornStorm": "[[kento-prickle|とげとげ]]が{min}層以上のとき、反撃が攻撃した敵の近くにいる別の敵1人にも{percent}%の値で跳ねる。",
   "skill.breakthrough.effect.passive.softBreath": "「{name}」の回復が、範囲内で[[sleep|睡眠]]中の敵1人につき{percent}%増える(最大{max}人)。",
+  "skill.breakthrough.effect.basic.dreadAegis": "「{name}」が既に[[intimidation|威圧]]のかかっている敵に命中すると、自身の最大HPの{percent}%の[[shield|シールド]]を纏う。{seconds}秒に1回のみ発動する。",
+  "skill.breakthrough.effect.ultimate.quarryMark": "「{name}」が実際に[[fear|恐怖]]に陥れた敵は、{seconds}秒間受ける全ダメージが{percent}%増える。恐怖が解けても印は残る。",
+  "skill.breakthrough.effect.ferocity.spreadingDread": "[[ferocity|暴走]]中、敵が[[fear|恐怖]]に陥った瞬間、その周囲の他の敵に[[intimidation|威圧]]が{stacks}層広がる。",
+  "skill.breakthrough.effect.passive.terrorCarapace": "自分が[[intimidation|威圧]]をかけた敵1体につき、[[def|防御力]]と[[res|抵抗力]]が{percent}%上昇する(最大{max}%)。",
 } as const;

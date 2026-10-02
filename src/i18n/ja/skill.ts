@@ -352,7 +352,7 @@ export const SKILL_JA = {
   "skill.breakthrough.effect.passive.huntMark": "他の味方も狙っている敵に対して、クリティカルダメージが{percent}%増える。",
   "skill.breakthrough.effect.passive.windEcho": "「{name}」が発動して[[stealth|ステルス]]に入る瞬間、生存している味方全員が必殺技ゲージを{energy}得る。",
   "skill.breakthrough.effect.basic.dreadAegis": "「{name}」が既に[[intimidation|威圧]]のかかっている敵に命中すると、自身の最大HPの{percent}%の[[shield|シールド]]を纏う。{seconds}秒に1回のみ発動する。",
-  "skill.breakthrough.effect.ultimate.roarAegis": "「{name}」が実際に[[fear|恐怖]]に陥れた敵1体につき、生存している味方全員が最大HPの{percent}%の[[shield|シールド]]を得る(最大{max}体まで数える)。",
-  "skill.breakthrough.effect.ferocity.dreadSurge": "[[ferocity|暴走]]に入った瞬間、周囲の敵全員に[[intimidation|威圧]]を{stacks}層重ねる。",
+  "skill.breakthrough.effect.ultimate.quarryMark": "「{name}」が実際に[[fear|恐怖]]に陥れた敵は、{seconds}秒間受ける全ダメージが{percent}%増える。恐怖が解けても印は残る。",
+  "skill.breakthrough.effect.ferocity.spreadingDread": "[[ferocity|暴走]]中、敵が[[fear|恐怖]]に陥った瞬間、その周囲の他の敵に[[intimidation|威圧]]が{stacks}層広がる。",
   "skill.breakthrough.effect.passive.terrorCarapace": "自分が[[intimidation|威圧]]をかけた敵1体につき、[[def|防御力]]と[[res|抵抗力]]が{percent}%上昇する(最大{max}%)。",
 } as const;

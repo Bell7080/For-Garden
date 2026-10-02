@@ -329,7 +329,7 @@ export const SKILL_DE = {
   "skill.breakthrough.effect.passive.huntMark": "Gegen Gegner, die auch ein anderer Verbündeter anvisiert, steigt der kritische Schaden um {percent}%.",
   "skill.breakthrough.effect.passive.windEcho": "Sobald 「{name}」 auslöst und in [[stealth|Tarnung]] übergeht, erhalten alle lebenden Verbündeten {energy} Ultimativ-Energie.",
   "skill.breakthrough.effect.basic.dreadAegis": "Trifft「{name}」einen Gegner, der bereits[[intimidation|Einschüchterung]]trägt, erhält diese Einheit einen[[shield|Schild]]in Höhe von {percent}% ihrer maximalen Lebenspunkte. Löst höchstens alle {seconds} s aus.",
-  "skill.breakthrough.effect.ultimate.roarAegis": "Für jeden Gegner, den「{name}」tatsächlich in[[fear|Furcht]]versetzt, erhalten alle lebenden Verbündeten einen[[shield|Schild]]in Höhe von {percent}% ihrer maximalen Lebenspunkte (zählt bis zu {max} Gegner).",
-  "skill.breakthrough.effect.ferocity.dreadSurge": "In dem Moment, in dem die[[ferocity|Raserei]]beginnt, werden bei allen nahen Gegnern {stacks} Stapel[[intimidation|Einschüchterung]]aufgebaut.",
+  "skill.breakthrough.effect.ultimate.quarryMark": "Gegner, die「{name}」tatsächlich in[[fear|Furcht]]versetzt, erhalten {seconds} s lang {percent}% mehr Schaden aus allen Quellen. Die Markierung bleibt auch nach dem Ende der Furcht.",
+  "skill.breakthrough.effect.ferocity.spreadingDread": "Während der[[ferocity|Raserei]] breitet sich, sobald ein Gegner in[[fear|Furcht]]gerät, {stacks} Stapel[[intimidation|Einschüchterung]]auf andere Gegner in der Nähe aus.",
   "skill.breakthrough.effect.passive.terrorCarapace": "Für jeden Gegner, dem diese Einheit[[intimidation|Einschüchterung]]auferlegt hat, steigen[[def|Verteidigung]]und[[res|Widerstand]]um {percent}% (bis zu {max}%).",
 } as const;

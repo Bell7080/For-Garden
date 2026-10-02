@@ -82,8 +82,8 @@ const CATEGORY: Record<EffectKind, Category> = {
   huntMark: "crit",
   windEcho: "cadence",
   dreadAegis: "survival",
-  roarAegis: "survival",
-  dreadSurge: "control",
+  quarryMark: "support",
+  spreadingDread: "control",
   terrorCarapace: "survival",
 };
 

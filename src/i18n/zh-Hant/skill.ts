@@ -329,7 +329,7 @@ export const SKILL_ZH_HANT = {
   "skill.breakthrough.effect.passive.huntMark": "對其他隊友也在鎖定的敵人，暴擊傷害提高{percent}%。",
   "skill.breakthrough.effect.passive.windEcho": "「{name}」觸發並進入[[stealth|隱身]]的瞬間，所有存活隊友獲得{energy}必殺技能量。",
   "skill.breakthrough.effect.basic.dreadAegis": "「{name}」命中已帶有[[intimidation|威壓]]的敵人時，獲得相當於自身最大生命值{percent}%的[[shield|護盾]]。每{seconds}秒最多觸發一次。",
-  "skill.breakthrough.effect.ultimate.roarAegis": "「{name}」每實際使一名敵人陷入[[fear|恐懼]]，所有存活隊友就獲得相當於其最大生命值{percent}%的[[shield|護盾]]（最多計{max}名敵人）。",
-  "skill.breakthrough.effect.ferocity.dreadSurge": "[[ferocity|暴走]]開始的瞬間，對周圍所有敵人疊加{stacks}層[[intimidation|威壓]]。",
+  "skill.breakthrough.effect.ultimate.quarryMark": "「{name}」使其真正陷入[[fear|恐懼]]的敵人，在{seconds}秒內受到的所有傷害增加{percent}%。恐懼結束後標記仍會保留。",
+  "skill.breakthrough.effect.ferocity.spreadingDread": "[[ferocity|暴走]]期間，敵人陷入[[fear|恐懼]]的瞬間，其周圍的其他敵人會被疊加{stacks}層[[intimidation|威壓]]。",
   "skill.breakthrough.effect.passive.terrorCarapace": "自身每對一名敵人施加[[intimidation|威壓]]，[[def|防禦力]]和[[res|抗性]]提高{percent}%（最高{max}%）。",
 } as const;

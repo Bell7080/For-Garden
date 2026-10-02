@@ -377,7 +377,7 @@ export const SKILL_KO = {
   "skill.breakthrough.effect.passive.huntMark": "다른 아군이 함께 노리는 적에게는 치명타 피해가 {percent}% 늘어난다.",
   "skill.breakthrough.effect.passive.windEcho": "「{name}」{name!이} 발동해 [[stealth|은신]]에 들어가는 순간 살아 있는 아군 모두가 궁극기 게이지를 {energy} 얻는다.",
   "skill.breakthrough.effect.basic.dreadAegis": "「{name}」{name!이} 이미 [[intimidation|위압]]이 걸려 있던 적을 맞히면 자기 최대 체력의 {percent}%만큼 [[shield|보호막]]을 두른다. {seconds}초에 한 번만 발동한다.",
-  "skill.breakthrough.effect.ultimate.roarAegis": "「{name}」{name!이} 실제로 [[fear|공포]]에 빠뜨린 적 한 명당 살아 있는 아군 모두가 최대 체력의 {percent}%만큼 [[shield|보호막]]을 얻는다(최대 {max}명까지 센다).",
-  "skill.breakthrough.effect.ferocity.dreadSurge": "[[ferocity|폭주]]에 들어서는 순간 주위 모든 적에게 [[intimidation|위압]]을 {stacks}겹 쌓는다.",
+  "skill.breakthrough.effect.ultimate.quarryMark": "「{name}」{name!이} 실제로 [[fear|공포]]에 빠뜨린 적은 {seconds}초 동안 받는 모든 피해가 {percent}% 늘어난다. 공포가 풀려도 표식은 남는다.",
+  "skill.breakthrough.effect.ferocity.spreadingDread": "[[ferocity|폭주]] 중 적이 [[fear|공포]]에 빠지는 순간, 그 주변의 다른 적에게 [[intimidation|위압]]이 {stacks}겹 번진다.",
   "skill.breakthrough.effect.passive.terrorCarapace": "자신이 [[intimidation|위압]]을 건 적 한 명당 [[def|방어력]]과 [[res|저항력]]이 {percent}% 오른다(최대 {max}%).",
 } as const;

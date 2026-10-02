@@ -329,7 +329,7 @@ export const SKILL_ZH_HANS = {
   "skill.breakthrough.effect.passive.huntMark": "对其他队友也在锁定的敌人，暴击伤害提高{percent}%。",
   "skill.breakthrough.effect.passive.windEcho": "「{name}」触发并进入[[stealth|隐身]]的瞬间，所有存活队友获得{energy}必杀技能量。",
   "skill.breakthrough.effect.basic.dreadAegis": "「{name}」命中已带有[[intimidation|威压]]的敌人时，获得相当于自身最大生命值{percent}%的[[shield|护盾]]。每{seconds}秒最多触发一次。",
-  "skill.breakthrough.effect.ultimate.roarAegis": "「{name}」每实际使一名敌人陷入[[fear|恐惧]]，所有存活队友就获得相当于其最大生命值{percent}%的[[shield|护盾]]（最多计{max}名敌人）。",
-  "skill.breakthrough.effect.ferocity.dreadSurge": "[[ferocity|暴走]]开始的瞬间，对周围所有敌人叠加{stacks}层[[intimidation|威压]]。",
+  "skill.breakthrough.effect.ultimate.quarryMark": "「{name}」使其真正陷入[[fear|恐惧]]的敌人，在{seconds}秒内受到的所有伤害增加{percent}%。恐惧结束后标记仍会保留。",
+  "skill.breakthrough.effect.ferocity.spreadingDread": "[[ferocity|暴走]]期间，敌人陷入[[fear|恐惧]]的瞬间，其周围的其他敌人会被叠加{stacks}层[[intimidation|威压]]。",
   "skill.breakthrough.effect.passive.terrorCarapace": "自身每对一名敌人施加[[intimidation|威压]]，[[def|防御力]]和[[res|抗性]]提高{percent}%（最高{max}%）。",
 } as const;

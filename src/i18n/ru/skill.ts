@@ -329,7 +329,7 @@ export const SKILL_RU = {
   "skill.breakthrough.effect.passive.huntMark": "По врагам, которых атакует и другой союзник, критический урон растёт на {percent}%.",
   "skill.breakthrough.effect.passive.windEcho": "Когда 「{name}」 срабатывает и входит в [[stealth|невидимость]], все живые союзники получают {energy} энергии ульты.",
   "skill.breakthrough.effect.basic.dreadAegis": "Когда「{name}」попадает по врагу, уже находящемуся под[[intimidation|Запугиванием]], этот боец получает[[shield|щит]]в размере {percent}% макс. здоровья. Срабатывает не чаще раза в {seconds} с.",
-  "skill.breakthrough.effect.ultimate.roarAegis": "За каждого врага, которого「{name}」действительно ввергает в[[fear|Страх]], все живые союзники получают[[shield|щит]]в размере {percent}% макс. здоровья (учитывается до {max} врагов).",
-  "skill.breakthrough.effect.ferocity.dreadSurge": "В момент начала[[ferocity|Неистовства]] накладывает {stacks} стак. [[intimidation|Запугивания]]на всех ближайших врагов.",
+  "skill.breakthrough.effect.ultimate.quarryMark": "Враги, которых「{name}」действительно ввергает в[[fear|Страх]], получают на {percent}% больше любого урона в течение {seconds} с. Метка остаётся, даже когда Страх закончится.",
+  "skill.breakthrough.effect.ferocity.spreadingDread": "Во время[[ferocity|Неистовства]], когда враг впадает в[[fear|Страх]], {stacks} стак. [[intimidation|Запугивания]]переходит на других врагов поблизости.",
   "skill.breakthrough.effect.passive.terrorCarapace": "За каждого врага под[[intimidation|Запугиванием]]от этого бойца[[def|Защита]]и[[res|Сопротивление]]растут на {percent}% (до {max}%).",
 } as const;

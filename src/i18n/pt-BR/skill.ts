@@ -329,7 +329,7 @@ export const SKILL_PT_BR = {
   "skill.breakthrough.effect.passive.huntMark": "Contra inimigos que outro aliado também está mirando, o dano crítico aumenta {percent}%.",
   "skill.breakthrough.effect.passive.windEcho": "Quando 「{name}」 ativa e entra em [[stealth|Furtividade]], todos os aliados vivos ganham {energy} de Energia de Suprema.",
   "skill.breakthrough.effect.basic.dreadAegis": "Quando「{name}」acerta um inimigo que já tem[[intimidation|Intimidação]], esta unidade ganha um[[shield|escudo]]de {percent}% da vida máxima. Ativa no máximo uma vez a cada {seconds}s.",
-  "skill.breakthrough.effect.ultimate.roarAegis": "Para cada inimigo que「{name}」realmente coloca em[[fear|Medo]], todos os aliados vivos ganham um[[shield|escudo]]de {percent}% da vida máxima (conta até {max} inimigos).",
-  "skill.breakthrough.effect.ferocity.dreadSurge": "No instante em que o[[ferocity|Frenesi]]começa, acumula {stacks} cargas de[[intimidation|Intimidação]]em todos os inimigos próximos.",
+  "skill.breakthrough.effect.ultimate.quarryMark": "Inimigos que「{name}」realmente coloca em[[fear|Medo]]recebem {percent}% a mais de todo o dano por {seconds}s. A marca permanece mesmo após o Medo acabar.",
+  "skill.breakthrough.effect.ferocity.spreadingDread": "Durante o[[ferocity|Frenesi]], assim que um inimigo cai em[[fear|Medo]], {stacks} carga de[[intimidation|Intimidação]]se espalha para os outros inimigos próximos.",
   "skill.breakthrough.effect.passive.terrorCarapace": "Para cada inimigo sob[[intimidation|Intimidação]]desta unidade, a[[def|Defesa]]e a[[res|Resistência]]aumentam em {percent}% (até {max}%).",
 } as const;

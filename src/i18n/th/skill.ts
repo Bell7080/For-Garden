@@ -329,7 +329,7 @@ export const SKILL_TH = {
   "skill.breakthrough.effect.passive.huntMark": "ศัตรูที่พันธมิตรคนอื่นก็กำลังเล็งอยู่ จะรับความเสียหายคริติคอลเพิ่มขึ้น {percent}%",
   "skill.breakthrough.effect.passive.windEcho": "ขณะที่「{name}」ทำงานและเข้าสู่[[stealth|ล่องหน]] พันธมิตรที่มีชีวิตทุกตัวจะได้รับพลังงานท่าไม้ตาย {energy}",
   "skill.breakthrough.effect.basic.dreadAegis": "เมื่อ「{name}」โจมตีศัตรูที่มี[[intimidation|แรงกดดัน]]อยู่แล้ว จะได้รับ[[shield|โล่]]เท่ากับ {percent}% ของ HP สูงสุดของตนเอง ทำงานได้สูงสุดหนึ่งครั้งทุก {seconds} วินาที",
-  "skill.breakthrough.effect.ultimate.roarAegis": "ทุกศัตรูที่「{name}」ทำให้เข้าสู่[[fear|ความกลัว]]จริง พันธมิตรที่ยังมีชีวิตทุกคนจะได้รับ[[shield|โล่]]เท่ากับ {percent}% ของ HP สูงสุด (นับสูงสุด {max} ตัว)",
-  "skill.breakthrough.effect.ferocity.dreadSurge": "ทันทีที่เข้าสู่[[ferocity|คลั่ง]] จะสะสม[[intimidation|แรงกดดัน]] {stacks} ชั้นให้ศัตรูทุกตัวโดยรอบ",
+  "skill.breakthrough.effect.ultimate.quarryMark": "ศัตรูที่「{name}」ทำให้เข้าสู่[[fear|ความกลัว]]จริง จะรับความเสียหายทั้งหมดเพิ่มขึ้น {percent}% เป็นเวลา {seconds} วินาที เครื่องหมายคงอยู่แม้ความกลัวจะหมดแล้ว",
+  "skill.breakthrough.effect.ferocity.spreadingDread": "ระหว่าง[[ferocity|คลั่ง]] ทันทีที่ศัตรูเข้าสู่[[fear|ความกลัว]] [[intimidation|แรงกดดัน]] {stacks} ชั้นจะแผ่ไปยังศัตรูตัวอื่นที่อยู่ใกล้",
   "skill.breakthrough.effect.passive.terrorCarapace": "ศัตรูแต่ละตัวที่ตนใส่[[intimidation|แรงกดดัน]]ไว้ จะเพิ่ม[[def|พลังป้องกัน]]และ[[res|ความต้านทาน]] {percent}% (สูงสุด {max}%)",
 } as const;

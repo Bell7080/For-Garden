@@ -1443,8 +1443,8 @@ export const RELICS: RelicDef[] = [
     },
     breakthroughEffects: {
       basic: { kind: "dreadAegis", shieldPercent: 5, cooldownSeconds: 3 },
-      ultimate: { kind: "roarAegis", shieldPercentPerFeared: 4, maxFeared: 5 },
-      ferocity: { kind: "dreadSurge", stacks: 2 },
+      ultimate: { kind: "quarryMark", seconds: 8, damageTakenPercent: 12 },
+      ferocity: { kind: "spreadingDread", radius: 240, stacks: 1 },
       passive: { kind: "terrorCarapace", percentPerIntimidated: 10, maxIntimidated: 5 },
     },
   },

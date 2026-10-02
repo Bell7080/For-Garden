@@ -2574,14 +2574,14 @@ export type UltimateBreakthrough = {
   energy: number;
 } | {
   /**
-   * 궁극기가 **실제로 겁먹은 적**을 센 만큼 살아 있는 아군 전원에게 보호막을 더 두른다(아크의 「포효의 비호」). 강인함이 통째로
-   * 막은 적은 세지 않고, 막은 `grantShield` 한 길이다. 아크 자신의 막(기본 몫 + 겁먹은 적당 몫)과는 따로 얹힌다.
+   * 궁극기로 **실제로 공포에 빠진 적**이 한동안 받는 모든 피해가 늘어난다(아크의 「떨리는 먹잇감」). 공포가 풀려도 표식은 남아 아군의 딜이
+   * 그 적에게 몰린다. 강인함이 통째로 막은 적에게는 붙지 않는다. 기절 길이·궁극기 주기·보호막은 건드리지 않는다.
    */
-  kind: "roarAegis";
-  /** 겁먹은 적 한 명당 아군 한 명이 받는 막(그 아군 최대 체력의 %). */
-  shieldPercentPerFeared: number;
-  /** 세는 적의 상한. */
-  maxFeared: number;
+  kind: "quarryMark";
+  /** 표식이 남는 시간(초). */
+  seconds: number;
+  /** 늘어나는 받는 피해(%). */
+  damageTakenPercent: number;
 } | BreakthroughNone;
 
 /**
@@ -2660,11 +2660,13 @@ export type FerocityBreakthrough = {
   extraEnergy: number;
 } | {
   /**
-   * 폭주에 **들어서는 순간** 주위 모든 적에게 위압을 한꺼번에 쌓는다(아크의 「포위망」). 피해·보호막은 없고 궁극기도 건드리지 않는다.
-   * 걸음을 빠르게 하던 안은 버렸다 — 겁먹어 달아나는 적을 뒤쫓다 아군에게서 떨어져 나가 오히려 졌다.
+   * 폭주 중 적이 **공포에 빠지는 순간** 그 주변의 다른 적에게 위압이 번진다(아크의 「번지는 공포」). 번진 위압도 위압 규칙(면역·강인함)을
+   * 그대로 따르고, 피해·궁극기 효과는 없다. 공포는 적마다 한 번씩만 걸려 연쇄가 끝난다.
    */
-  kind: "dreadSurge";
-  /** 한 번에 쌓는 위압 겹 수. */
+  kind: "spreadingDread";
+  /** 번지는 반경(px). */
+  radius: number;
+  /** 번질 때 쌓는 위압 겹 수. */
   stacks: number;
 } | BreakthroughNone;
 

@@ -361,6 +361,8 @@ export interface Fighter extends Combatant {
     relinkUsed: boolean;
     /** 평타 돌파(`dreadAegis`)가 다시 막을 두를 수 있는 전투 시각(`state.elapsed`). */
     dreadAegisReadyAt: number;
+    /** 궁극기 돌파(`quarryMark`) — 이 적이 받는 모든 피해가 늘어나는 표식. 풀리면 null이다. */
+    quarry: { remaining: number; percent: number } | null;
     /** 궁극기 돌파(`orderStrike`) — 이번 오더 동안 이미 표식이 즉시 터진 적의 ID. 오더를 새로 받으면 비운다. */
     orderStruck: string[];
     /** 평타 돌파(`farPing`)가 올려 주는 사거리(px). 열려 있지 않으면 0이다 — 매 프레임 읽는 값이라 전투가 열릴 때 한 번 굳힌다. */
@@ -1166,6 +1168,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
       stunLockouts: {},
       relinkUsed: false,
       dreadAegisReadyAt: 0,
+      quarry: null,
       orderStruck: [],
       reachFloor: isBreakthroughSlotOpen(breakthrough, "basic") && def.breakthroughEffects?.basic?.kind === "farPing" ? def.breakthroughEffects.basic.reach : 0,
       rescuePlan: isBreakthroughSlotOpen(breakthrough, "passive") && def.breakthroughEffects?.passive?.kind === "rescueShield"
@@ -2102,6 +2105,21 @@ function applyIntimidate(
   applyFear(target, effect.fearSeconds, hunt ? hunt.fearImmunitySeconds : effect.immunitySeconds, events, state, sourceId, false);
 }
 
+/** 폭주 돌파(`spreadingDread`) — 공포에 빠진 적 주변의 다른 적에게 위압을 번지게 한다. 공포는 적마다 한 번만 걸려 연쇄는 끝난다. */
+function spreadDread(feared: Fighter, sourceId: string, events: SkirmishEvent[], state: SkirmishState): void {
+  const source = findFighter(state, sourceId);
+  if (!source || !source.ferocityFever || !isFighterAlive(source)) return;
+  const plan = openedBreakthrough(source, "ferocity", (effects) => effects.ferocity);
+  const intimidate = source.def.passive.looming?.intimidate;
+  if (plan?.kind !== "spreadingDread" || !intimidate) return;
+  for (let n = 0; n < plan.stacks; n += 1) {
+    for (const other of state.fighters) {
+      if (other === feared || other.side !== feared.side || !isFighterAlive(other) || distance(feared, other) > plan.radius) continue;
+      applyIntimidate(other, intimidate, events, state, sourceId, false);
+    }
+  }
+}
+
 /**
  * 공포를 건다. 강인함이 기절과 같은 길로 줄이고(막아 낸 것도 받아 낸 것으로 센다), 완전히 막으면 걸리지 않는다.
  * `force`(궁극기가 곧바로 거는 공포)는 면역 중에도 들어가고, 이미 걸려 있으면 더 긴 쪽을 남긴다.
@@ -2131,6 +2149,7 @@ function applyFear(
   if (!was) {
     events.push({ kind: "status", fighterId: target.id, status: "fear", active: true });
     cleanseControlWithAdagio(state, target, events);
+    spreadDread(target, sourceId, events, state);
   }
   return target.fear !== null;
 }
@@ -2663,6 +2682,12 @@ function blinkToLowestDefenseEnemy(fighter: Fighter, state: SkirmishState): Figh
 }
 
 /** 지금 이 대상이 받는 피해를 몇 배로 키우는지. 화면과 계산이 같은 한 곳에서 읽는다. */
+/** 궁극기 돌파(`quarryMark`)의 표식 — 있으면 받는 피해가 그만큼 늘어난다. */
+function quarryMultiplier(target: Fighter): number {
+  const quarry = target.bt.quarry;
+  return quarry ? 1 + quarry.percent / 100 : 1;
+}
+
 export function overpaintMultiplier(target: Fighter): number {
   const overpaint = target.overpaint;
   if (!overpaint || overpaint.remaining <= 0) return 1;
@@ -4833,18 +4858,6 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, even
       for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
     }
     if (feverBreakthrough?.kind === "ambushCrit") fighter.bt.ambushCritReady = true;
-    if (feverBreakthrough?.kind === "dreadSurge") {
-      // 위압의 범위는 패시브와 같은 반경이고, 쌓는 길도 같다(면역·이미 겁먹은 적은 건너뛴다).
-      const looming = fighter.def.passive.looming;
-      if (looming) {
-        for (let n = 0; n < feverBreakthrough.stacks; n += 1) {
-          for (const other of state.fighters) {
-            if (other.side === fighter.side || !isFighterAlive(other) || distance(fighter, other) > looming.radius) continue;
-            applyIntimidate(other, looming.intimidate, [], state, fighter.id, false);
-          }
-        }
-      }
-    }
     const trait = fighter.def.ferocityTrait;
     if (trait.effectId === "stealthLeap") {
       fighter.stealthFor = trait.durationSeconds;
@@ -5399,7 +5412,7 @@ export function resolveReceivedDamage(target: Fighter, rawAmount: number): Recei
   }
   // 덧칠은 경감과 같은 최종 경계에서 곱한다 — 여기 두지 않으면 피해 경로마다 따로 곱하게 되고
   // 어느 한 곳을 빠뜨리면 "덧칠했는데 그 스킬만 안 아픈" 상태가 된다.
-  const amplified = rawAmount * overpaintMultiplier(target);
+  const amplified = rawAmount * overpaintMultiplier(target) * quarryMultiplier(target);
   // 「인」과 「절정」의 버티기는 **여기서 곱하지 않는다.** 그 둘은 최종 피해 감쇠가
   // 아니라 눈에 보이는 자원(보호막 · 대신 받기와 매초 회복)이라 이 경계를 지나지 않는다.
   const softened = Math.max(1, Math.round(amplified * (1 - Math.min(100, Math.max(0, reduction)) / 100)));
@@ -7388,6 +7401,10 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       fighter.stealthFor = remaining <= EMERGENCY_RECOVERY.epsilon ? 0 : remaining;
     }
     // 덧칠도 같은 공용 시계로 마른다. 다 마르면 슬롯을 비워 중첩이 다음 전투로 새지 않게 한다.
+    if (fighter.bt.quarry) {
+      const remaining = fighter.bt.quarry.remaining - dt;
+      fighter.bt.quarry = remaining <= EMERGENCY_RECOVERY.epsilon ? null : { ...fighter.bt.quarry, remaining };
+    }
     if (isFighterAlive(fighter) && fighter.overpaint) {
       const remaining = fighter.overpaint.remaining - dt;
       if (remaining <= EMERGENCY_RECOVERY.epsilon) fighter.overpaint = null;
@@ -7800,20 +7817,17 @@ export function fireUltimate(
     const plan = teamUltimate.selfRoar;
     attacker.energy -= ultimateCost(state, attacker, true);
     let feared = 0;
+    const fearedTargets: Fighter[] = [];
     for (const other of state.fighters) {
       if (other.side === attacker.side || !isFighterAlive(other) || distance(attacker, other) > plan.radius) continue;
-      if (applyFear(other, plan.fear.seconds, plan.fear.immunitySeconds, events, state, attacker.id, true)) feared += 1;
+      if (applyFear(other, plan.fear.seconds, plan.fear.immunitySeconds, events, state, attacker.id, true)) { feared += 1; fearedTargets.push(other); }
     }
     const percent = plan.shieldMaxHpPercent + plan.shieldPerFearedMaxHpPercent * Math.min(feared, plan.shieldMaxFeared);
     grantShield(state, attacker, attacker.id, Math.max(1, Math.round(attacker.maxHp * percent / 100)), events, 1.5);
-    // 궁극기 돌파(`roarAegis`) — 실제로 겁먹은 적 수만큼 살아 있는 아군 전원에게도 막을 두른다.
-    const aegis = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
-    if (aegis?.kind === "roarAegis" && feared > 0) {
-      const aegisPercent = aegis.shieldPercentPerFeared * Math.min(feared, aegis.maxFeared);
-      for (const ally of state.fighters) {
-        if (ally.side !== attacker.side || !isFighterAlive(ally)) continue;
-        grantShield(state, ally, attacker.id, Math.max(1, Math.round(ally.maxHp * aegisPercent / 100)), events, 1);
-      }
+    // 궁극기 돌파(`quarryMark`) — 실제로 겁먹은 적에게 받는 피해 증가 표식을 남긴다(이미 있으면 시간만 새로 센다).
+    const mark = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
+    if (mark?.kind === "quarryMark") {
+      for (const victim of fearedTargets) victim.bt.quarry = { remaining: mark.seconds, percent: mark.damageTakenPercent };
     }
     events.push({ kind: "areaImpact", attackerId: attacker.id, ultimate: true, status: "fear",
       area: { shape: "radial", x: attacker.x, y: attacker.y, radius: plan.radius } });

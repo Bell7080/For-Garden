@@ -330,7 +330,7 @@ export const SKILL_EN = {
   "skill.breakthrough.effect.passive.huntMark": "Critical damage increases by {percent}% against enemies another ally is also targeting.",
   "skill.breakthrough.effect.passive.windEcho": "When \"{name}\" triggers and this unit enters [[stealth|Stealth]], every living ally gains {energy} Ultimate gauge.",
   "skill.breakthrough.effect.basic.dreadAegis": "When \"{name}\" hits an enemy that already has [[intimidation|Dread]], this unit gains a [[shield|shield]] worth {percent}% of its max HP. Triggers at most once every {seconds}s.",
-  "skill.breakthrough.effect.ultimate.roarAegis": "For each enemy \"{name}\" actually puts into [[fear|Fear]], every living ally gains a [[shield|shield]] worth {percent}% of their max HP (counts up to {max} enemies).",
-  "skill.breakthrough.effect.ferocity.dreadSurge": "The moment [[ferocity|Frenzy]] begins, stacks [[intimidation|Dread]] {stacks} times on every nearby enemy.",
+  "skill.breakthrough.effect.ultimate.quarryMark": "Enemies that \"{name}\" actually puts into [[fear|Fear]] take {percent}% more damage from all sources for {seconds}s. The mark stays even after Fear ends.",
+  "skill.breakthrough.effect.ferocity.spreadingDread": "During [[ferocity|Frenzy]], the moment an enemy falls into [[fear|Fear]], {stacks} stack of [[intimidation|Dread]] spreads to other enemies near it.",
   "skill.breakthrough.effect.passive.terrorCarapace": "For each enemy this unit has put under [[intimidation|Dread]], [[def|Defense]] and [[res|Resistance]] increase by {percent}% (up to {max}%).",
 } as const;

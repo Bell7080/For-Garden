@@ -333,4 +333,8 @@ export const SKILL_JA = {
   "skill.breakthrough.effect.ultimate.shrapnel": "「{name}」が当たった敵の周りの他の敵にも欠片が飛び、{percent}%のダメージを与える。",
   "skill.breakthrough.effect.ferocity.ankleShot": "[[ferocity|暴走]]中、[[basic-attack|通常攻撃]]がクリティカルで命中すると、当たった敵を{seconds}秒間[[stagger|怯み]]させる。",
   "skill.breakthrough.effect.passive.highTide": "[[fog-guard|海霧の防壁]]が上限まで満ちている間、すべてのダメージが{percent}%増える。",
+  "skill.breakthrough.effect.basic.scoldTaunt": "「{name}」が当たった敵を{seconds}秒間[[taunt|挑発]]する。",
+  "skill.breakthrough.effect.ultimate.bulwarkPayback": "「{name}」が終わる瞬間、それまでに肩代わりしたダメージの{percent}%を周囲のすべての敵に[[fixed-damage|固定ダメージ]]として返す。敵1体が受けるダメージは自身の最大HPの{cap}%を超えない。",
+  "skill.breakthrough.effect.ferocity.heatOverflow": "[[ferocity|暴走]]中、[[nodonia-elation|悦び]]が最大{max}重まで溜まる。暴走が終わると{base}重まで減る。",
+  "skill.breakthrough.effect.passive.sweeterWound": "[[nodonia-elation|悦び]]1層が毎秒回復する量が、最大HPの{from}%から{to}%に増える。",
 } as const;

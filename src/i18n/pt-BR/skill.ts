@@ -310,4 +310,8 @@ export const SKILL_PT_BR = {
   "skill.breakthrough.effect.ultimate.shrapnel": "Fragmentos também voam para os outros inimigos ao redor do alvo atingido por \"{name}\", causando {percent}% de dano.",
   "skill.breakthrough.effect.ferocity.ankleShot": "Durante o [[ferocity|Frenesi]], um [[basic-attack|Ataque básico]] que acerta como crítico causa [[stagger|Cambaleio]] no alvo por {seconds} s.",
   "skill.breakthrough.effect.passive.highTide": "Enquanto a [[fog-guard|Barreira de névoa marinha]] estiver cheia até o limite, todo o dano aumenta {percent}%.",
+  "skill.breakthrough.effect.basic.scoldTaunt": "Inimigos atingidos por \"{name}\" ficam [[taunt|provocados]] por {seconds} s.",
+  "skill.breakthrough.effect.ultimate.bulwarkPayback": "Quando \"{name}\" termina, devolve {percent}% do dano recebido no lugar dos aliados a todos os inimigos próximos como [[fixed-damage|dano fixo]]. Nenhum inimigo sofre mais de {cap}% do PV máx. desta unidade.",
+  "skill.breakthrough.effect.ferocity.heatOverflow": "Durante o [[ferocity|Frenesi]], [[nodonia-elation|Euforia]] acumula até {max}. Quando o Frenesi termina, volta para {base} acúmulos.",
+  "skill.breakthrough.effect.passive.sweeterWound": "Cada acúmulo de [[nodonia-elation|Euforia]] recupera por segundo {to}% do PV máx. em vez de {from}%.",
 } as const;

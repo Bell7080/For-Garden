@@ -310,4 +310,8 @@ export const SKILL_ZH_HANT = {
   "skill.breakthrough.effect.ultimate.shrapnel": "「{name}」命中的敵人周圍的其他敵人也會被濺射的碎片擊中，受到{percent}%的傷害。",
   "skill.breakthrough.effect.ferocity.ankleShot": "[[ferocity|暴走]]期間，[[basic-attack|普通攻擊]]以暴擊命中時，使被擊中的敵人[[stagger|硬直]]{seconds}秒。",
   "skill.breakthrough.effect.passive.highTide": "[[fog-guard|海霧屏障]]達到上限期間，所有傷害提升{percent}%。",
+  "skill.breakthrough.effect.basic.scoldTaunt": "被「{name}」擊中的敵人會被[[taunt|嘲諷]]{seconds}秒。",
+  "skill.breakthrough.effect.ultimate.bulwarkPayback": "「{name}」結束的瞬間，將期間代替承受的傷害的{percent}%以[[fixed-damage|固定傷害]]返還給周圍所有敵人。每名敵人受到的傷害不超過自身最大生命的{cap}%。",
+  "skill.breakthrough.effect.ferocity.heatOverflow": "[[ferocity|暴走]]期間，[[nodonia-elation|愉悅]]最多可疊加{max}層。暴走結束後減少為{base}層。",
+  "skill.breakthrough.effect.passive.sweeterWound": "每層[[nodonia-elation|愉悅]]每秒恢復的生命從最大生命的{from}%提高到{to}%。",
 } as const;

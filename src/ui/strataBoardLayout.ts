@@ -14,7 +14,7 @@ export const STRATA_ART = { width: 941, height: 1672 } as const;
  * **밑변을 1580에서 1280으로 올렸다.** 판 아래에 전리품 액자 줄과 그 아래 「탐사 종료」가
  * 서야 하는데, 판이 1580까지 내려오던 때는 그 둘이 설 자리가 하단 라벨 줄(1652)과 겹쳤다.
  */
-export const STRATA_BOARD = { top: 360, bottom: 1280, maxWidth: 840, left: 24, baseShade: 0.32 } as const;
+export const STRATA_BOARD = { top: 360, bottom: 1280, maxWidth: 840, left: 24, /** 왼쪽 중상단 상점 칩(`SIDE_SHOP`)을 비키도록 판만 안쪽으로 들이는 거리. 범례는 제 자리에 둔다. */ shiftX: 44, baseShade: 0.32 } as const;
 
 /**
  * 판 오른쪽에 서는 범례 띠. 안개 색이 무엇을 기울이는지 그림으로 말한다.
@@ -50,7 +50,7 @@ export function coverSourceCrop(sourceWidth: number, sourceHeight: number, targe
 export function strataBoardFrame(columns: number, rows: number, screenWidth: number): StrataBoardFrame {
   const safeColumns = Math.max(1, columns);
   const safeRows = Math.max(1, rows);
-  const regionLeft = STRATA_BOARD.left;
+  const regionLeft = STRATA_BOARD.left + STRATA_BOARD.shiftX;
   const regionRight = screenWidth - STRATA_BOARD.left - STRATA_LEGEND.width - STRATA_LEGEND.gap;
   const roomWidth = Math.min(STRATA_BOARD.maxWidth, regionRight - regionLeft);
   const roomHeight = STRATA_BOARD.bottom - STRATA_BOARD.top;

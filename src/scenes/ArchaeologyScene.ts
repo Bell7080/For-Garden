@@ -32,6 +32,9 @@ import { KeywordManager } from "../managers/KeywordManager";
 import { PopupLayer } from "../ui/PopupLayer";
 import { openRuneTraitReroll } from "../ui/RuneTraitPopup";
 import { openRuneTraitOdds } from "../ui/RuneTraitOddsPopup";
+import { playTraitEffect, type TraitEffectKind } from "../ui/traitEffects";
+import { RESEARCH_SHIFT_X, researchSlotCenter } from "../ui/researchBenchLayout";
+import { RUNE_ACCENT } from "../ui/runeIcons";
 import { coverSourceCrop, STRATA_ART, STRATA_BOARD, STRATA_LEGEND, STRATA_STAGE, strataBoardFrame, strataCropPlacement, strataHaulLayout, strataLayerTextureKey, strataLegendFrame, strataStageFrame, strataTileCenter, strataTileCrop, type ScreenRect, type SourceCropRect, type StrataBoardFrame } from "../ui/strataBoardLayout";
 import { StrataRewardPop } from "../ui/StrataRewardPop";
 import { STRATA_REWARD_POP, strataRewardTier } from "../ui/strataRewardPopStyle";
@@ -1146,8 +1149,11 @@ export class ArchaeologyScene extends Phaser.Scene {
     // 판이 통째로 다시 조립되는 것으로 보인다.
     const animate = this.benchJustSlotted;
     this.benchJustSlotted = false;
+    // 상점 칩을 비켜 한 덩어리로 오른쪽으로 민다. 팝업(룬 가방)은 화면 가운데 그대로다.
+    const shifted = this.add.container(RESEARCH_SHIFT_X, 0);
+    this.view.add(shifted);
     addResearchBench({
-      scene: this, parent: this.view, popups: this.popups, keywords: this.keywords, rune, animate,
+      scene: this, parent: shifted, popups: this.popups, keywords: this.keywords, rune, animate,
       onPick: (picked) => { this.benchRuneId = picked.instanceId; this.benchJustSlotted = true; this.paintView(); },
       onClear: () => { this.benchRuneId = null; this.paintView(); },
       actions: rune === undefined ? [] : this.traitActions(rune),
@@ -1168,6 +1174,26 @@ export class ArchaeologyScene extends Phaser.Scene {
    * 잘해야 같은 등급의 다른 특성이고, 전설 위에서는 등급을 떨어뜨리는 버튼이 된다 — 눌러도
    * 나아지지 않는 칸은 준비 상태를 과장한다.
    */
+  /** 연구대 조작이 한 번에 하나만 돌게 한다. 연출이 도는 동안 같은 줄을 다시 눌러 두 번 치르지 않는다. */
+  private traitBusy = false;
+
+  /**
+   * 서버 호출 → 연출 → 터지는 순간에 결과를 화면에 반영한다.
+   *
+   * **실패를 삼키지 않는다** — 예전에는 `.then`만 있어 거절되면(고르지 않은 후보가 남은 경우 등) 버튼이
+   * 눌러도 아무 일도 없는 것처럼 보였다. 실패하면 서버의 지금 상태로 판을 다시 그려 버튼 상태를
+   * 바로잡는다.
+   */
+  private runTraitAction<T>(kind: TraitEffectKind, call: () => Promise<T>, onImpact: (result: T) => void, tint: (result: T) => number | undefined): void {
+    if (this.traitBusy) return;
+    this.traitBusy = true;
+    void call().then((result) => {
+      const spot = researchSlotCenter(BASE_WIDTH, true);
+      spot.x += RESEARCH_SHIFT_X;
+      playTraitEffect(this, kind, spot.x, spot.y, 2500, () => { this.traitBusy = false; onImpact(result); }, tint(result));
+    }).catch(() => { this.traitBusy = false; this.paintView(); });
+  }
+
   private traitActions(rune: RuneInstance): ResearchBenchAction[] {
     const owned = (itemId: string): number => session.itemInventory.find((stack) => stack.itemId === itemId)?.quantity ?? 0;
     const grant = RUNE_TRAIT_ITEMS.grant;
@@ -1182,20 +1208,20 @@ export class ArchaeologyScene extends Phaser.Scene {
         labelKey: "rune.traitAction.reroll",
         enabled: session.wallet.rawStone >= RUNE_TRAIT_RULES.rerollCost[trait.grade],
         cost: { icon: "currency-orestone", amount: RUNE_TRAIT_RULES.rerollCost[trait.grade] },
-        onPress: () => void gameApi.rerollRuneTrait({ runeInstanceId: rune.instanceId, requestId: request("trait-reroll") })
-          .then((result) => openRuneTraitReroll({
+        onPress: () => this.runTraitAction("reroll", () => gameApi.rerollRuneTrait({ runeInstanceId: rune.instanceId, requestId: request("trait-reroll") }),
+          (result) => openRuneTraitReroll({
             scene: this, popups: this.popups, keywords: this.keywords,
-            runeInstanceId: rune.instanceId, current: result.current, candidate: result.candidate,
+            runeInstanceId: result.runeInstanceId, current: result.current, candidate: result.candidate,
             upgraded: result.upgraded, onResolved: () => this.paintView(),
-          })),
+          }), (result) => RUNE_ACCENT[result.candidate.grade]),
       });
     } else {
       actions.push({
         labelKey: "rune.traitAction.grant",
         enabled: owned(grant.itemId) > 0,
         item: { itemId: grant.itemId, owned: owned(grant.itemId), cost: 1 },
-        onPress: () => void gameApi.grantRuneTrait({ runeInstanceId: rune.instanceId, itemId: grant.itemId, requestId: request("trait") })
-          .then(() => this.paintView()),
+        onPress: () => this.runTraitAction("grant", () => gameApi.grantRuneTrait({ runeInstanceId: rune.instanceId, itemId: grant.itemId, requestId: request("trait") }),
+          () => this.paintView(), (result) => result.rune.trait ? RUNE_ACCENT[result.rune.trait.grade] : undefined),
       });
     }
 
@@ -1205,8 +1231,8 @@ export class ArchaeologyScene extends Phaser.Scene {
         labelKey: "rune.traitAction.grantHigh",
         enabled: owned(grantHigh.itemId) > 0,
         item: { itemId: grantHigh.itemId, owned: owned(grantHigh.itemId), cost: 1 },
-        onPress: () => void gameApi.grantRuneTrait({ runeInstanceId: rune.instanceId, itemId: grantHigh.itemId, requestId: request("trait-high") })
-          .then(() => this.paintView()),
+        onPress: () => this.runTraitAction("refined", () => gameApi.grantRuneTrait({ runeInstanceId: rune.instanceId, itemId: grantHigh.itemId, requestId: request("trait-high") }),
+          () => this.paintView(), (result) => result.rune.trait ? RUNE_ACCENT[result.rune.trait.grade] : undefined),
       });
     }
 
@@ -1215,8 +1241,8 @@ export class ArchaeologyScene extends Phaser.Scene {
         labelKey: "rune.traitAction.upgrade",
         enabled: owned(upgrade.itemId) > 0,
         item: { itemId: upgrade.itemId, owned: owned(upgrade.itemId), cost: 1 },
-        onPress: () => void gameApi.upgradeRuneTrait({ runeInstanceId: rune.instanceId, itemId: upgrade.itemId, requestId: request("trait-up") })
-          .then(() => this.paintView()),
+        onPress: () => this.runTraitAction("crystal", () => gameApi.upgradeRuneTrait({ runeInstanceId: rune.instanceId, itemId: upgrade.itemId, requestId: request("trait-up") }),
+          () => this.paintView(), (result) => result.rune.trait ? RUNE_ACCENT[result.rune.trait.grade] : undefined),
       });
     }
     return actions;

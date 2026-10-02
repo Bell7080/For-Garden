@@ -48,4 +48,8 @@ export const STATUS_ZH_HANT = {
   "status.observation.detail": "{stacks} / {max}層 · 剩餘{time}",
   "status.butcher": "處理",
   "status.butcher.detail": "{stacks} / {max}層 · 疊滿時當場引爆",
+  "status.intimidation": "威壓",
+  "status.intimidation.detail": "{stacks} / {max}層 · 疊滿時陷入恐懼",
+  "status.fear": "恐懼",
+  "status.fear.detail": "逃跑中 · 無法普通攻擊 · {time}",
 } as const;

@@ -55,4 +55,8 @@ export const STATUS_KO = {
   "status.vandalism.detail": "{stacks} / {max}겹 · 공격력·주문력 -{percent}% · 다 차면 그 자리에서 터진다",
   "status.butcher": "손질",
   "status.butcher.detail": "{stacks} / {max}겹 · 다 차면 그 자리에서 터진다",
+  "status.intimidation": "위압",
+  "status.intimidation.detail": "{stacks} / {max}겹 · 다 차면 공포에 빠진다",
+  "status.fear": "공포",
+  "status.fear.detail": "달아나는 중 · 기본 공격 불가 · {time}",
 } as const;

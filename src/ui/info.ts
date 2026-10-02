@@ -41,6 +41,8 @@ import { addFramedIcon, addItemFrame } from "./itemFrame";
 import { FaceFrame } from "./FaceFrame";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { session } from "../state/session";
+import { motionPolicy } from "../core/settings";
+import { RewardFrame } from "./RewardFrame";
 import { addColorAssistMark, COLOR_ASSIST_LAYOUT } from "./colorAssist";
 import { addMarkChip } from "./MarkChip";
 import { addRuneCard, addRuneFrame, RUNE_ACCENT, RUNE_CENTER_Y, runeTexture } from "./runeIcons";
@@ -1587,12 +1589,42 @@ export class InfoManager {
       // 이야기는 유대 레벨로 하나씩 열린다. 아직 잠긴 것도 자리를 보여 줘 다음 목표가 된다.
       // 이야기 묶음이 있는 개체는 4·6·8·10 네 장이 열리고 장마다 해금 젬이 걸린다. 눌러서 읽는다.
       const chapters = relicStories.chapterViews(def.id);
-      const steps = chapters.length > 0
-        ? chapters.map((chapter) => ({ level: chapter.level, title: relicStoryFor(def.id)!.bondStories[chapter.level].titleCard?.title ?? chapter.storyId, chapter }))
-        : BOND_STORY_STEPS.map((step) => ({ level: step.level, title: step.title(), chapter: undefined }));
+      if (chapters.length > 0) {
+        // 4·6·8·10 네 장은 2×2 레이어로 선다 — 출격판의 던전 칸처럼 칸마다 제목과 해금 젬 액자를 갖는다.
+        const cellW = 340, cellH = 200, gap = 20;
+        chapters.forEach((chapter, index) => {
+          const cx = (index % 2 === 0 ? -1 : 1) * (cellW + gap) / 2;
+          const cy = 150 + Math.floor(index / 2) * (cellH + gap);
+          const open = chapter.unlocked;
+          const title = relicStoryFor(def.id)!.bondStories[chapter.level].titleCard?.title ?? chapter.storyId;
+          const cell = this.scene.add.container(cx, cy);
+          cell.add(drawLayer(this.scene, 0, 0, chipPoints(cellW, cellH, { bevel: { topLeft: 34, bottomRight: 34 } }), {
+            fill: open ? 0x1a2130 : 0x0d1219, alpha: open ? 0.95 : 0.7, edge: COLOR.accent, edgeAlpha: open ? 0.6 : 0.16,
+          }));
+          cell.add(this.scene.add.text(-cellW / 2 + 40, -cellH / 2 + 22, "BOND " + chapter.level, textStyle({ role: "emphasis", size: 22, color: open ? COLOR.accentText : COLOR.inkDim })).setOrigin(0, 0));
+          cell.add(this.scene.add.text(-cellW / 2 + 40, -cellH / 2 + 56, title, textStyle({ role: "display", size: 26, color: open ? COLOR.ink : COLOR.inkDim, wrap: cellW - 80 })).setOrigin(0, 0));
+          const gems = BOND_STORY_GEM_REWARD[chapter.level];
+          const claimable = open && !chapter.claimed;
+          const frame = new RewardFrame(this.scene, cellW / 2 - 70, cellH / 2 - 52, { icon: "currency-gems", amount: gems, size: 80, state: claimable ? "claimable" : chapter.claimed ? "claimed" : "normal" });
+          cell.add(frame);
+          if (!open) cell.add(this.scene.add.text(-cellW / 2 + 40, cellH / 2 - 40, t("info.bond.required", { level: chapter.level }), textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0, 0.5));
+          if (claimable && motionPolicy(session.settings).nonEssentialDistanceFactor > 0) {
+            const tween = this.scene.tweens.add({ targets: frame, scale: { from: 1, to: 1.08 }, duration: 620, yoyo: true, repeat: -1, ease: "Sine.InOut" });
+            frame.once(Phaser.GameObjects.Events.DESTROY, () => tween.remove());
+          }
+          if (open) {
+            const hit = this.scene.add.rectangle(0, 0, cellW, cellH, 0xffffff, 0).setInteractive({ useHandCursor: true });
+            hit.on("pointerup", () => startScene(this.scene, "stageStory", { storyId: chapter.storyId, exitTo: "lobby" }));
+            cell.add(hit);
+          }
+          body.add(cell);
+        });
+        return;
+      }
+      const steps = BOND_STORY_STEPS.map((step) => ({ level: step.level, title: step.title() }));
       steps.forEach((step, index) => {
         const y = 46 + index * 92;
-        const open = step.chapter ? step.chapter.unlocked : level >= step.level;
+        const open = level >= step.level;
         body.add(drawLayer(this.scene, 0, y + 30, slantedRect(700, 76, 14), {
           fill: open ? 0x1a2130 : 0x0d1219,
           alpha: open ? 0.95 : 0.7,
@@ -1600,19 +1632,12 @@ export class InfoManager {
           edgeAlpha: open ? 0.6 : 0.16,
         }));
         body.add(this.scene.add.text(-318, y + 12, step.title, textStyle({ role: "display", size: 26, color: open ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0));
-        const gems = step.chapter && !step.chapter.claimed ? BOND_STORY_GEM_REWARD[step.chapter.level] : 0;
-        const status = !open ? t("info.bond.required", { level: step.level }) : gems > 0 ? t("info.bond.chapterReward", { gems }) : t("info.bond.opened");
+        const status = !open ? t("info.bond.required", { level: step.level }) : t("info.bond.opened");
         body.add(
           this.scene.add
             .text(318, y + 18, status, textStyle({ role: "body", size: 21, color: open ? COLOR.accentText : COLOR.inkDim }))
             .setOrigin(1, 0),
         );
-        if (step.chapter && open) {
-          const chapter = step.chapter;
-          const hit = this.scene.add.rectangle(0, y + 30, 700, 76, 0xffffff, 0).setInteractive({ useHandCursor: true });
-          hit.on("pointerup", () => startScene(this.scene, "stageStory", { storyId: chapter.storyId, exitTo: "lobby" }));
-          body.add(hit);
-        }
       });
     });
   }
@@ -2746,6 +2771,7 @@ export function buildSkillViewModel(options: {
   const resistance = attacker?.def.stats.res;
   const lullabyShield = "selfLullaby" in skill && skill.selfLullaby !== undefined && resistance !== undefined
     ? Math.round(resistance * skill.selfLullaby.shieldResistancePercent / 100) : undefined;
+  const roar = "selfRoar" in skill ? skill.selfRoar : undefined;
   const whiteNoise = "kind" in skill ? (skill as Passive).whiteNoise : undefined;
   const whiteNoiseHeal = whiteNoise !== undefined && resistance !== undefined
     ? Math.round(resistance * whiteNoise.healResistancePercent / 100) : undefined;
@@ -2829,6 +2855,13 @@ export function buildSkillViewModel(options: {
       lullabyShield === undefined || !("selfLullaby" in skill) || skill.selfLullaby === undefined ? undefined : {
         id: "shield-value", term: String(lullabyShield), kind: "rule" as const,
         description: t("skill.keyword.shield.fromStat", { stat: t("skill.stat.res"), percent: skill.selfLullaby.shieldResistancePercent }),
+      },
+      // 포효의 막은 기본 몫과 한 명당 몫이 함께 서므로 태그 하나가 둘을 한 문장으로 말한다(같은 id는 첫 항목만 읽힌다).
+      roar === undefined || maxHp === undefined ? undefined : {
+        id: "shield-value", term: String(Math.round(maxHp * roar.shieldMaxHpPercent / 100)), kind: "rule" as const,
+        description: t("skill.keyword.shield.fromRoar", {
+          base: roar.shieldMaxHpPercent, per: roar.shieldPerFearedMaxHpPercent, max: roar.shieldMaxFeared,
+        }),
       },
       whiteNoiseHeal === undefined || whiteNoise === undefined ? undefined : {
         id: "heal-value", term: String(whiteNoiseHeal), kind: "rule" as const,

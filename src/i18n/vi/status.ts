@@ -48,4 +48,8 @@ export const STATUS_VI = {
   "status.observation.detail": "{stacks} / {max} tầng · còn {time}",
   "status.butcher": "Xẻ thịt",
   "status.butcher.detail": "{stacks} / {max} tầng · Nổ ngay khi đầy",
+  "status.intimidation": "Uy hiếp",
+  "status.intimidation.detail": "{stacks} / {max} tầng · Đầy thì rơi vào Hoảng sợ",
+  "status.fear": "Hoảng sợ",
+  "status.fear.detail": "Đang chạy trốn · Không đánh thường · {time}",
 } as const;

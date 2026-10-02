@@ -48,4 +48,8 @@ export const STATUS_EN = {
   "status.observation.detail": "{stacks} / {max} stacks · {time} left",
   "status.butcher": "Butcher",
   "status.butcher.detail": "{stacks} / {max} stacks · Bursts on the spot when full",
+  "status.intimidation": "Intimidation",
+  "status.intimidation.detail": "{stacks} / {max} stacks · Fear sets in when full",
+  "status.fear": "Fear",
+  "status.fear.detail": "Fleeing · No Basic Attacks · {time}",
 } as const;

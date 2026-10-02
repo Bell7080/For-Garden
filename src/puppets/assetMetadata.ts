@@ -786,3 +786,24 @@ export const IRNA_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageHeight: 1254,
   content: { left: 66, top: 54, right: 1149, bottom: 1218 },
 };
+
+/**
+ * 아크 전신(char_027): 중심1·머리1·눈1·눈2·발1·발2를 프로젝트에서 읽었다. alpha 경계는 (39,13)–(1055,1423)이다.
+ * 고개가 기울어 두 눈의 높이가 33px 다르다 — 눈높이는 두 눈의 가운데로 잰다. 후드가 머리보다 한참 위로 솟아 있어
+ * 키(1.46 m)가 작아도 로비 배율은 1 아래로 내려간다.
+ */
+export const ARK_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086,
+  imageHeight: 1448,
+  content: { left: 39, top: 13, right: 1055, bottom: 1423 },
+  joints: { center: [577, 437], head: [595, 338], eyes: [[558, 306], [620, 339]], feet: [[358, 1413], [735, 1461]] },
+  /** 로비 세로 비율: 메론 기준. 1.46 m — 눈(322.5)에서 alpha 아래 경계까지를 그 키로 맞춘다. */
+  lobbyZoom: 0.98,
+};
+
+/** 아크 SD: 중심1·머리1을 프로젝트에서 읽었으며 눈 관절은 없다. alpha 경계는 (113,31)–(1128,1224)이다. */
+export const ARK_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 113, top: 31, right: 1128, bottom: 1224 },
+};

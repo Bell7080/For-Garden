@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createSkirmish, fighterReach, fireUltimate, findFighter, refreshBleed, stepSkirmish, tryTriggerEmergencyRecovery, type Arena, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
+import { createSkirmish, fighterReach, fireUltimate, findFighter, refreshBleed, stepSkirmish, tryTriggerEmergencyRecovery, tryTriggerLowHpVanish, type Arena, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
 import { FEROCITY_RULES } from "../../src/core/ferocity";
 import { BREAKTHROUGH_STEPS, isBreakthroughSlotOpen } from "../../src/core/relicProgression";
 import { getRelic, RELICS } from "../../src/data/relics";
@@ -977,5 +977,203 @@ describe("노도니아 한계 돌파", () => {
     expect(breakthroughEffectText(nodonia, "ultimate")).toContain("고정 피해");
     expect(breakthroughEffectText(nodonia, "ferocity")).toContain("15겹");
     expect(breakthroughEffectText(nodonia, "passive")).toContain("0.4%");
+  });
+});
+
+describe("루카 한계 돌파", () => {
+  const FULL = BREAKTHROUGH_STEPS.length;
+  const NEVER = () => 0.99;
+  /** 루카와 (선택) 아군 하나 대 거의 죽지 않는 적 하나. 적은 때리지 않고 서로 붙어 선다. */
+  function lukaBattle(breakthrough: number, allies: string[] = []): SkirmishState {
+    const state = createSkirmish([getRelic("luka"), ...allies.map(getRelic)], [getRelic("toby")], ARENA, {}, { luka: breakthrough });
+    const foe = state.fighters.find((fighter) => fighter.side === "enemy")!;
+    foe.maxHp = 10_000_000; foe.hp = foe.maxHp; foe.stealthFor = 0; foe.attackCooldown = 999; foe.retargetIn = 999;
+    state.fighters.filter((fighter) => fighter.side === "player").forEach((fighter, index) => { fighter.x = 500 + index * 10; fighter.y = 1_000; });
+    foe.x = 540; foe.y = 1_000;
+    return state;
+  }
+
+  it("은 주기 치명타가 채워진 발톱이 출혈을 남긴다(별 II)", () => {
+    const run = (breakthrough: number) => {
+      const state = lukaBattle(breakthrough);
+      const luka = findFighter(state, "player-0")!;
+      const foe = state.fighters.find((fighter) => fighter.side === "enemy")!;
+      let attacks = 0; let bleedAtAttack = -1;
+      for (let tick = 0; tick < 600 && attacks < 4; tick += 1) {
+        luka.x = 500; luka.y = 1_000; foe.x = 540; foe.y = 1_000;
+        const events = stepSkirmish(state, 0.05, NEVER);
+        for (const event of events) if (event.kind === "attack" && event.attackerId === luka.id && event.skill === "basic") {
+          attacks += 1;
+          if (foe.bleed !== null && bleedAtAttack < 0) bleedAtAttack = attacks;
+        }
+      }
+      return bleedAtAttack;
+    };
+    expect(run(1)).toBe(4);
+    expect(run(0)).toBe(-1);
+  });
+
+  it("은 궁극기가 적중한 뒤 잔상이 같은 적을 한 번 더 벤다(별 III)", () => {
+    const run = (breakthrough: number, killBeforeSlash = false) => {
+      const state = lukaBattle(breakthrough);
+      const luka = findFighter(state, "player-0")!;
+      const foe = state.fighters.find((fighter) => fighter.side === "enemy")!;
+      luka.attackCooldown = 999; luka.retargetIn = 999; luka.energy = 1_000;
+      const first = fireUltimate(state, luka.id, NEVER).filter((event) => event.kind === "attack");
+      if (killBeforeSlash) foe.hp = 0;
+      const later: SkirmishEvent[] = [];
+      for (let tick = 0; tick < 20; tick += 1) later.push(...stepSkirmish(state, 0.05, NEVER));
+      const slashes = later.filter((event) => event.kind === "attack" && event.attackerId === luka.id && event.followUp === true);
+      return { first, slashes };
+    };
+    const on = run(2);
+    expect(on.slashes).toHaveLength(1);
+    // 같은 위력(100%)이라 첫 타와 비슷한 크기로 들어간다(전이는 따로).
+    const firstHit = on.first.find((event) => event.kind === "attack" && event.skill === "ultimate");
+    expect(firstHit && on.slashes[0].kind === "attack" ? on.slashes[0].amount : 0).toBeGreaterThan(0);
+    expect(run(0).slashes).toHaveLength(0);
+    expect(run(2, true).slashes).toHaveLength(0);
+  });
+
+  it("은 폭주 중 주기 치명타가 두 번째 공격마다 찬다(별 IV)", () => {
+    const secondCritical = (breakthrough: number, fever: boolean) => {
+      const state = lukaBattle(breakthrough);
+      const luka = findFighter(state, "player-0")!;
+      const foe = state.fighters.find((fighter) => fighter.side === "enemy")!;
+      luka.ferocityFever = fever; luka.ferocity = fever ? FEROCITY_RULES.max : 0;
+      const crits: boolean[] = [];
+      for (let tick = 0; tick < 600 && crits.length < 2; tick += 1) {
+        luka.x = 500; luka.y = 1_000; foe.x = 540; foe.y = 1_000;
+        if (fever) luka.ferocity = FEROCITY_RULES.max;
+        for (const event of stepSkirmish(state, 0.05, NEVER)) {
+          if (event.kind === "attack" && event.attackerId === luka.id && event.skill === "basic") crits.push(event.critical);
+        }
+      }
+      return crits[1];
+    };
+    expect(secondCritical(3, true)).toBe(true);
+    expect(secondCritical(3, false)).toBe(false);
+    expect(secondCritical(0, true)).toBe(false);
+  });
+
+  it("은 아군도 노리는 적에게만 치명타 피해가 30% 늘어난다(별 V)", () => {
+    const amount = (breakthrough: number, shared: boolean) => {
+      const state = lukaBattle(breakthrough, ["rex"]);
+      const luka = findFighter(state, "player-0")!;
+      const rex = findFighter(state, "player-1")!;
+      const foe = state.fighters.find((fighter) => fighter.side === "enemy")!;
+      rex.attackCooldown = 999; rex.retargetIn = 999; rex.targetId = shared ? foe.id : null;
+      for (let tick = 0; tick < 200; tick += 1) {
+        luka.x = 500; luka.y = 1_000; foe.x = 540; foe.y = 1_000; rex.x = 400; rex.y = 1_000;
+        rex.targetId = shared ? foe.id : null;
+        const hit = stepSkirmish(state, 0.05, () => 0).find((event) => event.kind === "attack" && event.attackerId === luka.id && event.skill === "basic");
+        if (hit && hit.kind === "attack") return hit.amount;
+      }
+      return 0;
+    };
+    const base = amount(0, true);
+    expect(amount(FULL, false)).toBe(base);
+    expect(amount(FULL, true)).toBeGreaterThan(base);
+    expect(amount(FULL, true) / base).toBeCloseTo(1.8 / 1.5, 1);
+  });
+
+  it("는 네 슬롯 모두 문장을 만든다", () => {
+    const luka = getRelic("luka");
+    expect(breakthroughEffectText(luka, "basic")).toContain("출혈");
+    expect(breakthroughEffectText(luka, "ultimate")).toContain("잔상");
+    expect(breakthroughEffectText(luka, "ferocity")).toContain("2번째");
+    expect(breakthroughEffectText(luka, "passive")).toContain("30%");
+  });
+});
+
+describe("스테라 한계 돌파", () => {
+  const FULL = BREAKTHROUGH_STEPS.length;
+  const NEVER = () => 0.99;
+  /** 스테라와 아군 렉스 대 적 하나. 렉스·적은 가만히 서 있어 게이지와 버프만 잰다. */
+  function stellaBattle(breakthrough: number): SkirmishState {
+    const state = createSkirmish([getRelic("stella"), getRelic("rex")], [getRelic("toby")], ARENA, {}, { stella: breakthrough });
+    const foe = state.fighters.find((fighter) => fighter.side === "enemy")!;
+    foe.maxHp = 10_000_000; foe.hp = foe.maxHp; foe.stealthFor = 0; foe.attackCooldown = 999; foe.retargetIn = 999;
+    const rex = findFighter(state, "player-1")!;
+    rex.attackCooldown = 999; rex.retargetIn = 999; rex.energy = 0;
+    const stella = findFighter(state, "player-0")!;
+    stella.x = 500; stella.y = 1_000; foe.x = 540; foe.y = 1_000; rex.x = 300; rex.y = 1_000;
+    return state;
+  }
+  /** 스테라의 첫 평타가 나간 직후까지 돌리고 렉스를 돌려준다. */
+  function afterFirstBasic(state: SkirmishState): void {
+    const stella = findFighter(state, "player-0")!;
+    const foe = state.fighters.find((fighter) => fighter.side === "enemy")!;
+    const rex = findFighter(state, "player-1")!;
+    for (let tick = 0; tick < 200; tick += 1) {
+      stella.x = 500; stella.y = 1_000; foe.x = 540; foe.y = 1_000; rex.x = 300; rex.y = 1_000;
+      const hit = stepSkirmish(state, 0.05, NEVER).some((event) => event.kind === "attack" && event.attackerId === stella.id && event.skill === "basic");
+      if (hit) return;
+    }
+  }
+
+  it("은 게이지를 받은 아군에게 짧게 공격 속도를 준다(별 II)", () => {
+    const run = (breakthrough: number) => {
+      const state = stellaBattle(breakthrough);
+      afterFirstBasic(state);
+      return findFighter(state, "player-1")!;
+    };
+    const rex = run(1);
+    expect(rex.tailwindFor).toBeGreaterThan(0);
+    expect(rex.tailwind?.kind === "tailwind" ? rex.tailwind.attackSpeedPercent : 0).toBe(10);
+    expect(run(0).tailwindFor).toBe(0);
+  });
+
+  it("은 이미 순풍이 걸린 아군을 약한 강화로 덮지 않는다(별 II)", () => {
+    const state = stellaBattle(1);
+    const rex = findFighter(state, "player-1")!;
+    rex.tailwindFor = 8; rex.tailwind = { kind: "tailwind", attackSpeedPercent: 20, moveSpeedPercent: 20, seconds: 10, maxHpRegenPercentPerSecond: 2 };
+    afterFirstBasic(state);
+    expect(rex.tailwind?.kind === "tailwind" ? rex.tailwind.attackSpeedPercent : 0).toBe(20);
+  });
+
+  it("은 궁극기를 쓰는 순간 아군 전원이 게이지를 25 얻는다(별 III)", () => {
+    const gain = (breakthrough: number) => {
+      const state = stellaBattle(breakthrough);
+      const stella = findFighter(state, "player-0")!;
+      stella.energy = 1_000;
+      fireUltimate(state, stella.id, NEVER);
+      return findFighter(state, "player-1")!.energy;
+    };
+    expect(gain(2) - gain(0)).toBe(25);
+  });
+
+  it("은 폭주 중 게이지가 가장 낮은 아군에게만 평타마다 5를 더 건넨다(별 IV)", () => {
+    const run = (breakthrough: number, fever: boolean) => {
+      const state = stellaBattle(breakthrough);
+      const stella = findFighter(state, "player-0")!;
+      stella.ferocityFever = fever; stella.ferocity = fever ? FEROCITY_RULES.max : 0; stella.energy = 50;
+      afterFirstBasic(state);
+      return { rex: findFighter(state, "player-1")!.energy, stella: stella.energy };
+    };
+    const base = run(0, true);
+    const pulled = run(3, true);
+    expect(pulled.rex - base.rex).toBe(5);
+    expect(pulled.stella).toBe(base.stella);
+    expect(run(3, false).rex).toBe(run(0, false).rex);
+  });
+
+  it("은 저체력 은신에 들어가는 순간 아군 전원이 게이지를 10 얻는다(별 V)", () => {
+    const run = (breakthrough: number) => {
+      const state = stellaBattle(breakthrough);
+      const stella = findFighter(state, "player-0")!;
+      stella.hp = 1;
+      expect(tryTriggerLowHpVanish(stella, state)).toBe(true);
+      return findFighter(state, "player-1")!.energy;
+    };
+    expect(run(FULL) - run(0)).toBe(10);
+  });
+
+  it("는 네 슬롯 모두 문장을 만든다", () => {
+    const stella = getRelic("stella");
+    expect(breakthroughEffectText(stella, "basic")).toContain("공격 속도");
+    expect(breakthroughEffectText(stella, "ultimate")).toContain("게이지");
+    expect(breakthroughEffectText(stella, "ferocity")).toContain("가장 낮은");
+    expect(breakthroughEffectText(stella, "passive")).toContain("은신");
   });
 });

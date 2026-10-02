@@ -48,4 +48,8 @@ export const STATUS_TH = {
   "status.observation.detail": "{stacks} / {max} ชั้น · เหลือ {time}",
   "status.butcher": "ชำแหละ",
   "status.butcher.detail": "{stacks} / {max} ชั้น · ระเบิดทันทีเมื่อเต็ม",
+  "status.intimidation": "ความข่มขวัญ",
+  "status.intimidation.detail": "{stacks} / {max} ชั้น · เต็มแล้วจะตกอยู่ในความหวาดกลัว",
+  "status.fear": "ความหวาดกลัว",
+  "status.fear.detail": "กำลังหนี · โจมตีปกติไม่ได้ · {time}",
 } as const;

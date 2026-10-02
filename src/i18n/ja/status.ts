@@ -50,4 +50,8 @@ export const STATUS_JA = {
   "status.observation.detail": "{stacks} / {max}重 · 残り{time}",
   "status.butcher": "解体",
   "status.butcher.detail": "{stacks} / {max}層 · 満ちるとその場で弾ける",
+  "status.intimidation": "威圧",
+  "status.intimidation.detail": "{stacks} / {max}層 · 満ちると恐怖に陥る",
+  "status.fear": "恐怖",
+  "status.fear.detail": "逃走中 · 通常攻撃不可 · {time}",
 } as const;

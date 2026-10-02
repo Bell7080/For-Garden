@@ -346,8 +346,10 @@ export class SaveManager {
     const ownedRelicSkinIds = [...new Set([...savedRelicSkinIds, ...defaultUnlockedRelicSkinIds()])];
     const equippedRelicSkinIds = Number(legacy.saveVersion) >= 33 && legacy.equippedRelicSkinIds && typeof legacy.equippedRelicSkinIds === "object" ? legacy.equippedRelicSkinIds : {};
     // v31 이전 저장은 일지 시스템이 없었으므로 발견/읽음 모두 빈 배열로 이관한다.
-    const discoveredInteractionJournalIds = Array.isArray(legacy.discoveredInteractionJournalIds) ? legacy.discoveredInteractionJournalIds : [];
-    const readInteractionJournalIds = Array.isArray(legacy.readInteractionJournalIds) ? legacy.readInteractionJournalIds : [];
+    // 교류 사다리를 갈아엎으며 없어진 일지 ID는 걸러 낸다 — 남겨 두면 검증이 저장 전체를 거부한다.
+    const knownJournalIds = new Set(INTERACTION_JOURNALS.map(({ id }) => id));
+    const discoveredInteractionJournalIds = Array.isArray(legacy.discoveredInteractionJournalIds) ? legacy.discoveredInteractionJournalIds.filter((id: unknown) => typeof id === "string" && knownJournalIds.has(id)) : [];
+    const readInteractionJournalIds = Array.isArray(legacy.readInteractionJournalIds) ? legacy.readInteractionJournalIds.filter((id: unknown) => typeof id === "string" && knownJournalIds.has(id)) : [];
     // 수식어 도입 전 저장은 미획득으로 시작하며 표시 문자열을 ID로 추측하지 않는다.
     const earnedProfileModifierIds = Array.isArray(legacy.earnedProfileModifierIds) ? legacy.earnedProfileModifierIds : [];
     const equippedProfileModifierIds = Array.isArray(legacy.equippedProfileModifierIds) ? legacy.equippedProfileModifierIds : [];

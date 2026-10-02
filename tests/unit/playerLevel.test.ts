@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { grantPlayerExperience, normalizePlayerLevel, PLAYER_LEVEL_CAP, playerExpForStamina, playerExpToNext } from "../../src/core/playerLevel";
-import { CONTENT_UNLOCKS, contentUnlockedBetween, isContentUnlocked, nextContentUnlock } from "../../src/core/contentUnlock";
+import { cumulativeExpToReach, naturalStaminaToReach } from "../../src/core/playerLevel";
+import { CONTENT_LEVEL_GATES_ENABLED, CONTENT_STAGE_UNLOCKS, CONTENT_UNLOCKS, contentUnlockLevel, contentUnlockedBetween, isContentUnlocked, nextContentUnlock } from "../../src/core/contentUnlock";
 import { cleanBio, createPlayerUid, isPlayerUid, nicknameProblem, normalizePlayerCard, researchDays } from "../../src/core/playerCard";
 import { PROFILE_FRAMES } from "../../src/data/profileFrames";
 import { PlayerCardManager } from "../../src/managers/PlayerCardManager";
@@ -46,20 +47,47 @@ describe("연구원 레벨", () => {
 });
 
 describe("레벨이 여는 콘텐츠", () => {
-  it("한 레벨에 둘을 열지 않고 순서대로 선다", () => {
+  it("레벨 순서대로 서고, 같은 레벨에 함께 열리는 것은 한 쌍뿐이다", () => {
     const levels = CONTENT_UNLOCKS.map(({ level }) => level);
-    expect(new Set(levels).size).toBe(levels.length);
+    const sameLevel = levels.filter((level, index) => levels.indexOf(level) !== index);
+    expect(sameLevel.sort()).toEqual([3, 4]);
+    expect(CONTENT_UNLOCKS.map(({ id }) => id as string)).not.toContain("archaeology");
+    expect(CONTENT_UNLOCKS.filter(({ level }) => level === 3).map(({ id }) => id)).toEqual(["shop", "trade"]);
+    expect(CONTENT_UNLOCKS.filter(({ level }) => level === 4).map(({ id }) => id)).toEqual(["cakeOperation", "bounty"]);
     expect([...levels].sort((a, b) => a - b)).toEqual(levels);
     expect(Math.max(...levels)).toBeLessThanOrEqual(PLAYER_LEVEL_CAP);
   });
 
+  it("개방 속도: 시간 회복만으로도 가장 늦은 콘텐츠가 이틀 안에 열린다", () => {
+    const DAILY_REGEN = (24 * 60) / 5;
+    expect(cumulativeExpToReach(1)).toBe(0);
+    expect(naturalStaminaToReach(10)).toBe(574);
+    for (const { id, level } of CONTENT_UNLOCKS) expect(naturalStaminaToReach(level), id).toBeLessThanOrEqual(DAILY_REGEN * 2);
+    // 개방 레벨이 오를수록 요구량이 줄지 않는다.
+    const needs = CONTENT_UNLOCKS.map(({ level }) => naturalStaminaToReach(level));
+    expect([...needs].sort((a, b) => a - b)).toEqual(needs);
+  });
+
+  it("개방 레벨 표", () => {
+    expect(contentUnlockLevel("excavation")).toBe(2);
+    expect(contentUnlockLevel("shop")).toBe(3);
+    expect(contentUnlockLevel("cakeOperation")).toBe(4);
+    expect(CONTENT_STAGE_UNLOCKS.archaeology).toBe("1-10");
+    expect(isContentUnlocked("archaeology", 60)).toBe(false);
+    expect(isContentUnlocked("archaeology", 1, true, new Set(["1-10"]))).toBe(true);
+    expect(CONTENT_LEVEL_GATES_ENABLED).toBe(true);
+    // 스토리·연구소·도감·임무·우편·가방·프리미엄은 표에 없어 시작부터 열려 있다.
+    expect(CONTENT_UNLOCKS.map(({ id }) => id as string)).not.toContain("lab");
+    expect(isContentUnlocked("excavation", 1)).toBe(false);
+  });
+
   it("잠금을 켜면 표의 레벨이 효력을 갖고, 끄면 모두 열려 있다", () => {
     expect(isContentUnlocked("raid", 1, false)).toBe(true);
-    expect(isContentUnlocked("raid", 19, true)).toBe(false);
-    expect(isContentUnlocked("raid", 20, true)).toBe(true);
+    expect(isContentUnlocked("raid", 8, true)).toBe(false);
+    expect(isContentUnlocked("raid", 9, true)).toBe(true);
     expect(nextContentUnlock(1, false)).toBeUndefined();
-    expect(nextContentUnlock(4, true)).toEqual({ id: "cakeOperation", level: 5 });
-    expect(contentUnlockedBetween(4, 12, true).map(({ id }) => id)).toEqual(["cakeOperation", "archaeology", "interaction", "bounty"]);
+    expect(nextContentUnlock(4, true)).toEqual({ id: "interaction", level: 5 });
+    expect(contentUnlockedBetween(4, 7, true).map(({ id }) => id)).toEqual(["interaction", "duel", "friends"]);
   });
 });
 

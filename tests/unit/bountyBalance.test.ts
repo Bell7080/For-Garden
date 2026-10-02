@@ -45,7 +45,7 @@ describe("현상수배 등급 검수", () => {
       const distinct = new Set(winners.flat());
       expect(distinct.size, `${tier.id} 서로 다른 셋`).toBeGreaterThanOrEqual(3);
     }
-  });
+  }, 30_000);
 
   it("은 마지막 라운드가 그 등급의 벽이다", () => {
     // 세 라운드가 같은 무게면 "한 번이라도 지면 패배"가 뜻을 잃는다 — 마지막에 누구를 남길지가

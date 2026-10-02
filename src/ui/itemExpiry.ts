@@ -28,7 +28,7 @@ export function remainingDetail(expiresAt: string, now = new Date()): string {
 }
 
 /** 표식의 결. 붉은 판이지만 짙게 눌러 액자 그림보다 먼저 읽히지 않게 한다. */
-export const EXPIRY_TAG = { height: 30, padX: 12, slant: 7, fontSize: 19, fill: 0x7a1f26, fillAlpha: 0.86, edge: 0xe07a7a, ink: "#ffd9d9" } as const;
+export const EXPIRY_TAG = { height: 38, padX: 14, slant: 9, fontSize: 25, fill: 0x7a1f26, fillAlpha: 0.94, edge: 0xff9a9a, ink: "#fff0f0" } as const;
 
 /**
  * 기한 표식 — 가방 칸 왼쪽 위에 앉는 작은 **빗긴 붉은 판**(`7D` · `24H` · `60M`).
@@ -42,7 +42,7 @@ export function addExpiryTag(scene: Phaser.Scene, x: number, y: number, expiresA
   const E = EXPIRY_TAG;
   const tag = scene.add.container(x, y);
   const plate = scene.add.graphics();
-  const label = scene.add.text(0, E.height / 2, "", textStyle({ role: "display", size: E.fontSize, color: E.ink })).setOrigin(0.5, 0.5);
+  const label = scene.add.text(0, E.height / 2, "", textStyle({ role: "display", size: E.fontSize, color: E.ink })).setOrigin(0.5, 0.5).setStroke("#2a0a0d", 4);
   tag.add([plate, label]);
   let shown = "";
   const repaint = (): void => {

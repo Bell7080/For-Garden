@@ -21,10 +21,10 @@ describe("FakeServer interaction API", () => {
     state.playerResearch = { ...state.playerResearch, level: 9 };
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0, now: () => now });
     await server.startInteractionDispatch({ cityId: "doppel-parlor", party: ["torika"] });
-    const both = await server.startInteractionDispatch({ cityId: "night-ward", party: ["rex"] });
+    const both = await server.startInteractionDispatch({ cityId: "doppel-lab", party: ["rex"] });
     expect(both.dispatches).toHaveLength(2);
     await expect(server.startInteractionDispatch({ cityId: "doppel-parlor", party: ["spino"] })).rejects.toThrow();
-    await expect(server.startInteractionDispatch({ cityId: "abyss-port", party: ["torika"] })).rejects.toThrow();
+    await expect(server.startInteractionDispatch({ cityId: "rust-works", party: ["torika"] })).rejects.toThrow();
   });
 
   it("돌아올 것은 출발할 때 표의 모든 줄에서 굴리고, 수령하면 그 목록 그대로 들어온다", async () => {

@@ -48,17 +48,24 @@ export function openRelicFilterPopup(
   anchor: { x: number; y: number },
   current: () => RelicFilter,
   onChange: (filter: RelicFilter) => void,
+  /**
+   * `battle`이면 편성 화면용 — 전투에 필요한 세 축(속성·직군·사거리)만 세운다. 등급과 소속은 편성을
+   * 고르는 데 쓰이지 않고 판만 길게 만든다.
+   */
+  mode: "full" | "battle" = "full",
 ): void {
-  const squads = playableSquads();
+  const battle = mode === "battle";
+  const squads = battle ? [] : playableSquads();
   const squadRows = Math.max(1, Math.ceil(squads.length / SQUAD_PER_ROW));
-  // 순서: 등급 · 속성 · 직군 · 사거리 · 소속(여러 줄이면 첫 줄만 제목을 갖는다).
+  // 순서: (등급) · 속성 · 직군 · 사거리 · (소속)(여러 줄이면 첫 줄만 제목을 갖는다).
   const sections = [
-    { chipHeight: RELIC_FILTER_POPUP.textChipHeight },
+    ...(battle ? [] : [{ chipHeight: RELIC_FILTER_POPUP.textChipHeight }]),
     { chipHeight: RELIC_FILTER_POPUP.iconChipHeight },
     { chipHeight: RELIC_FILTER_POPUP.iconChipHeight },
     { chipHeight: RELIC_FILTER_POPUP.textChipHeight },
-    ...Array.from({ length: squadRows }, (_, row) => ({ chipHeight: RELIC_FILTER_POPUP.textChipHeight, continued: row > 0 })),
+    ...(battle ? [] : Array.from({ length: squadRows }, (_, row) => ({ chipHeight: RELIC_FILTER_POPUP.textChipHeight, continued: row > 0 }))),
   ];
+  const at = battle ? { element: 0, role: 1, reach: 2 } : { rarity: 0, element: 1, role: 2, reach: 3, squad: 4 };
   const hasCondition = relicFilterCount(current()) > 0;
   const layout = relicFilterPopupLayout(sections, hasCondition);
 
@@ -76,35 +83,35 @@ export function openRelicFilterPopup(
         body.add(scene.add.text(left, y, text, textStyle({ role: "display", size: 28, color: COLOR.accentText })).setOrigin(0, 0.5));
       };
 
-      label(layout.sections[0].labelY, t("relics.filter.rarity"));
-      RARITIES.forEach((rarity, index) => {
+      if (!battle) label(layout.sections[0].labelY, t("relics.filter.rarity"));
+      if (!battle) RARITIES.forEach((rarity, index) => {
         addTextChip(scene, body, relicFilterChipX(index, RARITIES.length), layout.sections[0].chipY, relicFilterChipWidth(RARITIES.length), rarity, RARITY_TONE[rarity].chip,
           () => current().rarities.includes(rarity),
           () => onChange({ ...current(), rarities: toggleFilterValue(current().rarities, rarity) }));
       });
 
-      label(layout.sections[1].labelY, t("relics.filter.element"));
+      label(layout.sections[at.element].labelY, t("relics.filter.element"));
       ELEMENTS.forEach((element, index) => {
-        addIconChip(scene, body, relicFilterChipX(index, ELEMENTS.length), layout.sections[1].chipY, relicFilterChipWidth(ELEMENTS.length), ELEMENT_ICON[element], t(`element.${element}`),
+        addIconChip(scene, body, relicFilterChipX(index, ELEMENTS.length), layout.sections[at.element].chipY, relicFilterChipWidth(ELEMENTS.length), ELEMENT_ICON[element], t(`element.${element}`),
           () => current().elements.includes(element),
           () => onChange({ ...current(), elements: toggleFilterValue(current().elements, element) }));
       });
 
-      label(layout.sections[2].labelY, t("relics.filter.role"));
+      label(layout.sections[at.role].labelY, t("relics.filter.role"));
       ROLES.forEach((role, index) => {
-        addIconChip(scene, body, relicFilterChipX(index, ROLES.length), layout.sections[2].chipY, relicFilterChipWidth(ROLES.length), ROLE_ICON[role], t(`role.${role}`),
+        addIconChip(scene, body, relicFilterChipX(index, ROLES.length), layout.sections[at.role].chipY, relicFilterChipWidth(ROLES.length), ROLE_ICON[role], t(`role.${role}`),
           () => current().roles.includes(role),
           () => onChange({ ...current(), roles: toggleFilterValue(current().roles, role) }));
       });
 
-      label(layout.sections[3].labelY, t("relics.filter.reach"));
+      label(layout.sections[at.reach].labelY, t("relics.filter.reach"));
       REACHES.forEach((reach, index) => {
-        addTextChip(scene, body, relicFilterChipX(index, REACHES.length), layout.sections[3].chipY, relicFilterChipWidth(REACHES.length), reachLabel(reach), REACH_TONE[reach],
+        addTextChip(scene, body, relicFilterChipX(index, REACHES.length), layout.sections[at.reach].chipY, relicFilterChipWidth(REACHES.length), reachLabel(reach), REACH_TONE[reach],
           () => current().reaches.includes(reach),
           () => onChange({ ...current(), reaches: toggleFilterValue(current().reaches, reach) }));
       });
 
-      label(layout.sections[4].labelY, t("relics.filter.squad"));
+      if (!battle) label(layout.sections[4].labelY, t("relics.filter.squad"));
       squads.forEach((squad, index) => {
         const row = Math.floor(index / SQUAD_PER_ROW);
         const column = index % SQUAD_PER_ROW;

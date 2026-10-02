@@ -2,7 +2,6 @@ import Phaser from "phaser";
 import { portraitCardZoom } from "./portraitPlacement";
 import { t, type TextKey } from "../i18n";
 import { profileAvatarContent, type PlayerProfileDisplay, type PublicProfileModifier } from "../state/playerProfile";
-import type { ContentId } from "../core/contentUnlock";
 import { profileFrameOrDefault, type ProfileFrameDefinition } from "../data/profileFrames";
 import { getRelic } from "../data/relics";
 import { HoloBar, chipPoints, drawLayer, drawShapeOutline, HOLO, slantedRect } from "./holo";
@@ -33,14 +32,8 @@ function modifierColor(modifier: PublicProfileModifier): number {
 
 const hex = (color: number): string => `#${color.toString(16).padStart(6, "0")}`;
 
-/** 콘텐츠 이름은 그 콘텐츠의 화면이 이미 쓰는 문구를 빌린다 — 같은 말을 두 번 적지 않는다. */
-export function contentNameKey(id: ContentId): TextKey {
-  const keys: Record<ContentId, TextKey> = {
-    excavation: "excavation.title", interaction: "interaction.title", cakeOperation: "cake.title", bounty: "bounty.title",
-    expedition: "expedition.entry", raid: "raid.title", duel: "lobby.duel", archaeology: "nav.archaeology",
-  };
-  return keys[id];
-}
+import { contentNameKey } from "./contentLock";
+export { contentNameKey };
 
 /** 자기 카드의 각 요소를 눌렀을 때 여는 창. 편집 탭을 따로 두지 않고 고칠 것을 직접 누른다. */
 export interface ProfileEditors {
@@ -432,10 +425,16 @@ export class PlayerProfilePopup {
 
   /** 레벨 잠금을 켰을 때만 — 다음에 무엇이 열리는지 한 줄. */
   private buildNextUnlock(body: Phaser.GameObjects.Container): void {
+    const lines: string[] = [];
     const next = this.profile.nextUnlock;
-    if (!next) return;
-    const y = PLAYER_PROFILE_LAYOUT.nextUnlock.y;
-    body.add(drawGlyph(this.scene, "lock", -300, y, 30, COLOR.accent));
-    body.add(this.scene.add.text(-270, y, t("profile.nextUnlock", { level: next.level, content: t(contentNameKey(next.contentId)) }), textStyle({ role: "emphasis", size: 26, color: COLOR.ink })).setOrigin(0, 0.5));
+    if (next) lines.push(t("profile.nextUnlock", { level: next.level, content: t(contentNameKey(next.contentId)) }));
+    const stage = this.profile.nextStageUnlock;
+    if (stage) lines.push(t("profile.nextUnlockStage", { stage: stage.stageId, content: t(contentNameKey(stage.contentId)) }));
+    const gap = 38;
+    lines.forEach((line, index) => {
+      const y = PLAYER_PROFILE_LAYOUT.nextUnlock.y + (index - (lines.length - 1) / 2) * gap;
+      body.add(drawGlyph(this.scene, "lock", -300, y, 30, COLOR.accent));
+      body.add(this.scene.add.text(-270, y, line, textStyle({ role: "emphasis", size: 26, color: COLOR.ink })).setOrigin(0, 0.5));
+    });
   }
 }

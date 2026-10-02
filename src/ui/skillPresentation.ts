@@ -273,6 +273,10 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   if (trait.effectId === "sleepTantrum") return t("skill.ferocity.sleepTantrum", { percent: trait.attackSpeedPercent });
   // 공속은 올리지 않는다는 말을 따로 적지 않는다 — 오르는 것이 이 한 줄뿐이라 읽는 사람이 그 외를 가정하지 않는다.
   if (trait.effectId === "stormAim") return t("skill.ferocity.stormAim", { percent: trait.defenseIgnorePercent });
+  // 위압이 몇 겹 쌓이고 공포가 무엇인지는 태그가 말한다. 폭주가 바꾸는 두 값만 적는다.
+  if (trait.effectId === "huntInstinct") {
+    return t("skill.ferocity.huntInstinct", { stacks: 1 + trait.intimidateBonusStacks, seconds: trait.fearImmunitySeconds });
+  }
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? ""
@@ -518,6 +522,10 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
     return t("skill.passive.painfulElation");
   }
   // 졸음이 몇 겹에 잠드는지·잠이 무엇인지는 태그가 말한다. 본문은 언제·누구에게·얼마를 적는다.
+  // 몇 겹에 공포가 발동하는지는 태그가 말한다. 본문은 언제·누구에게 쌓는지만 적는다.
+  if (passive.kind === "looming" && passive.looming !== undefined) {
+    return t("skill.passive.looming", { seconds: passive.looming.intervalSeconds });
+  }
   if (passive.kind === "whiteNoise" && passive.whiteNoise !== undefined) {
     const plan = passive.whiteNoise;
     const heal = guard === undefined
@@ -733,6 +741,16 @@ export function skillDescription(
       const sentence = guard.pull.target === "farthest" ? "skill.sentence.selfGuard.farthest" : "skill.sentence.selfGuard";
       const fade = guard.shieldFadeSeconds === undefined ? "" : t("skill.sentence.selfGuard.fade", { seconds: guard.shieldFadeSeconds });
       return t(sentence, { seconds: guard.tauntSeconds, shield, reset: fade + reset + prickle + shockwave });
+    }
+    // 모두를 곧바로 겁주고 막을 두르는 궁극기. 막의 크기는 눈에 보이는 몫이라 기본과 한 명당 몫을 모두 적는다.
+    if ("selfRoar" in skill && skill.selfRoar !== undefined) {
+      const plan = skill.selfRoar;
+      const amount = (percent: number): string => stats.maxHp === undefined
+        ? t("skill.sentence.roar.percent", { percent })
+        : `[[shield-value|${Math.round(stats.maxHp * percent / 100)}]]`;
+      return t("skill.sentence.roar", {
+        base: amount(plan.shieldMaxHpPercent), per: amount(plan.shieldPerFearedMaxHpPercent), max: plan.shieldMaxFeared,
+      });
     }
     // 재우는 궁극기. 반경 안의 적을 누구를 노리는가로 갈라 재우거나 도발하고, 아군을 다독인다.
     if ("selfLullaby" in skill && skill.selfLullaby !== undefined) {
@@ -1130,6 +1148,8 @@ function statusEffectClause(effect: CombatStatusEffect): string | undefined {
   // 수압의 감속·상한·기절·터지는 피해는 태그가 말한다(쓰는 개체가 하나뿐이라 태그가 수치를 가진다).
   if (effect.kind === "pressure") return t("skill.status.pressure");
   if (effect.kind === "drowsy") return t("skill.status.drowsy");
+  // 몇 겹에 공포가 발동하는지는 태그가 말한다(쓰는 개체가 아크 하나뿐이라 태그가 수치를 가진다).
+  if (effect.kind === "intimidate") return t("skill.status.intimidate");
   // 도발은 붙잡아 두는 시간이 곧 스킬마다 다른 값이라 본문이 초를 적는다.
   if (effect.kind === "taunt") return t("skill.status.taunt", { seconds: effect.seconds });
   // 유지 시간과 상한은 이 규칙어를 쓰는 스킬마다 같아도 태그가 수치를 갖지 않으므로(모르페·디모 공용) 본문이 적는다.
@@ -1238,6 +1258,8 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effect.kind === "focusFire") return t("skill.breakthrough.effect.basic.focusFire", { name: def.basic.name, percent: trim(effect.damagePercentPerStack), max: trim((effect.maxStacks - 1) * effect.damagePercentPerStack) });
     if (effect.kind === "farPing") return t("skill.breakthrough.effect.basic.farPing", { name: def.basic.name });
     if (effect.kind === "scoldTaunt") return t("skill.breakthrough.effect.basic.scoldTaunt", { name: def.basic.name, seconds: trim(effect.tauntSeconds) });
+    if (effect.kind === "clawBleed") return t("skill.breakthrough.effect.basic.clawBleed", { name: def.basic.name });
+    if (effect.kind === "windStep") return t("skill.breakthrough.effect.basic.windStep", { name: def.basic.name, percent: trim(effect.attackSpeedPercent), seconds: trim(effect.seconds) });
     if (effect.kind === "leapPuddle") return t("skill.breakthrough.effect.basic.leapPuddle");
     if (effect.kind === "splitHealing") return t("skill.breakthrough.effect.basic.splitHealing", { percent: trim(effect.sharePercent) });
     // 주기 이름이 있으면 그것이 이 효과가 얹히는 그 한 방의 이름이다(칩에 뜨는 이름과 같다).
@@ -1260,6 +1282,8 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effect.kind === "lightChorus") return t("skill.breakthrough.effect.ultimate.lightChorus", { name: def.ultimate.name, cost: trim(effect.costReduction), percent: trim(effect.fullHpShieldPercent) });
     if (effect.kind === "orderStrike") return t("skill.breakthrough.effect.ultimate.orderStrike");
     if (effect.kind === "bulwarkPayback") return t("skill.breakthrough.effect.ultimate.bulwarkPayback", { name: def.ultimate.name, percent: trim(effect.returnPercent), cap: trim(effect.capMaxHpPercent) });
+    if (effect.kind === "afterimageSlash") return t("skill.breakthrough.effect.ultimate.afterimageSlash", { name: def.ultimate.name, seconds: trim(effect.delaySeconds), percent: trim(effect.powerPercent) });
+    if (effect.kind === "gustEnergy") return t("skill.breakthrough.effect.ultimate.gustEnergy", { name: def.ultimate.name, energy: trim(effect.energy) });
     if (effect.kind === "shrapnel") return t("skill.breakthrough.effect.ultimate.shrapnel", { name: def.ultimate.name, percent: trim(effect.powerPercent) });
     if (effect.kind === "tidalEcho") return t("skill.breakthrough.effect.ultimate.tidalEcho", { seconds: trim(effect.delaySeconds), percent: trim(effect.powerPercent) });
     if (effect.kind === "healingShield") return t("skill.breakthrough.effect.ultimate.healingShield", { percent: trim(effect.shieldPercentOfHealing) });
@@ -1278,6 +1302,8 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effect.kind === "pingStorm") return t("skill.breakthrough.effect.ferocity.pingStorm", { name: def.basic.name });
     if (effect.kind === "ambushCrit") return t("skill.breakthrough.effect.ferocity.ambushCrit");
     if (effect.kind === "heatOverflow") return t("skill.breakthrough.effect.ferocity.heatOverflow", { max: trim((def.passive.elation?.maxStacks ?? 0) + effect.extraMaxStacks), base: trim(def.passive.elation?.maxStacks ?? 0) });
+    if (effect.kind === "frenzyClaws") return t("skill.breakthrough.effect.ferocity.frenzyClaws", { name: def.basic.name, from: trim(def.basic.periodicCritical?.every ?? 0), to: trim(effect.every) });
+    if (effect.kind === "windPull") return t("skill.breakthrough.effect.ferocity.windPull", { energy: trim(effect.extraEnergy) });
     if (effect.kind === "ankleShot") return t("skill.breakthrough.effect.ferocity.ankleShot", { seconds: trim(effect.staggerSeconds) });
     if (effect.kind === "feverShare") return t("skill.breakthrough.effect.ferocity.feverShare", { percent: trim(effect.shieldPercentOfHealingDone) });
     return t("skill.breakthrough.effect.ferocity", {
@@ -1301,6 +1327,8 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
       const base = def.passive.elation?.maxHpRegenPercentPerStack ?? 0;
       return t("skill.breakthrough.effect.passive.sweeterWound", { from: trim(base), to: trim(Math.round((base + effects.passive.regenPercentPerStack) * 1000) / 1000) });
     }
+    if (effects.passive.kind === "huntMark") return t("skill.breakthrough.effect.passive.huntMark", { percent: trim(effects.passive.criticalDamagePercent) });
+    if (effects.passive.kind === "windEcho") return t("skill.breakthrough.effect.passive.windEcho", { name: def.passive.name, energy: trim(effects.passive.energy) });
     if (effects.passive.kind === "relink") return t("skill.breakthrough.effect.passive.relink");
     if (effects.passive.kind === "huntChain") return t("skill.breakthrough.effect.passive.huntChain");
     if (effects.passive.kind === "rescueShield") {

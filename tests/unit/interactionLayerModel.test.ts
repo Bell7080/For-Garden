@@ -19,10 +19,10 @@ describe("교류 층 모델", () => {
     expect(views.some((view) => view.state === "locked")).toBe(true);
   });
 
-  it("앞의 세 곳은 저장이 비어 있어도 열려 있다", () => {
+  it("앞의 두 곳은 저장이 비어 있어도 열려 있다", () => {
     // 교류에 처음 들어온 손이 빈 목록을 보면 콘텐츠가 없는 것으로 읽힌다.
     const views = interactionLayerViews(new Set(), [], NOW);
-    expect(views.slice(0, 3).map((view) => view.state)).toEqual(["idle", "idle", "idle"]);
+    expect(views.slice(0, 2).map((view) => view.state)).toEqual(["idle", "idle"]);
   });
 
   it("나가 있는 층과 다녀온 층을 남은 시간으로 가른다", () => {
@@ -39,7 +39,7 @@ describe("교류 층 모델", () => {
   });
 
   it("나가 있는 렐릭은 다시 보낼 수 없다 — 수령한 파견은 풀려난다", () => {
-    const away = relicsAwayOnInteraction([dispatch("doppel-parlor"), dispatch("night-ward", { party: ["rex", "spino"], claimed: true })]);
+    const away = relicsAwayOnInteraction([dispatch("doppel-parlor"), dispatch("doppel-lab", { party: ["rex", "spino"], claimed: true })]);
     expect([...away]).toEqual(["torika"]);
   });
 

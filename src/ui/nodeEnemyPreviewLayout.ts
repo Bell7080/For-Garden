@@ -78,6 +78,8 @@ export function isEnemyPreviewNodeVisible(nodeY: number, top: number, bottom: nu
  * 모든 줄이 함께 흔들린다 — 그리는 쪽이 마지막에 `height / 2`만 빼서 가운데 좌표로 옮긴다.
  */
 export const STORY_PREVIEW = {
+  /** 판 모서리 깎임. 판 높이를 따르면 칸을 여닫을 때 글줄 시작점(left)이 함께 움직인다. */
+  bevel: 96,
   padTop: 30,
   titleSize: 32,
   titleDivider: 92,

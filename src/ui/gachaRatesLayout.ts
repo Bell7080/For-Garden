@@ -23,8 +23,8 @@ export const GACHA_RATES = {
   tierLabelSize: 36,
   tierPercentSize: 34,
   /** 세부 줄 한 칸 — 액자가 서는 만큼의 높이다. */
-  entryStep: 84,
-  entryIcon: 68,
+  entryStep: 72,
+  entryIcon: 62,
   entryNameSize: 27,
   entryPercentSize: 27,
   /** 세부 줄이 등급 줄보다 들어가는 폭. 어느 등급의 안쪽인지를 들여쓰기가 말한다. */

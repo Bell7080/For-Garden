@@ -48,4 +48,8 @@ export const STATUS_DE = {
   "status.observation.detail": "{stacks} / {max} Stapel · noch {time}",
   "status.butcher": "Zerlegen",
   "status.butcher.detail": "{stacks} / {max} Stapel · Platzt sofort, wenn voll",
+  "status.intimidation": "Einschüchterung",
+  "status.intimidation.detail": "{stacks} / {max} Stapel · Voll: verfällt in Furcht",
+  "status.fear": "Furcht",
+  "status.fear.detail": "Flieht · Kein Standardangriff · {time}",
 } as const;

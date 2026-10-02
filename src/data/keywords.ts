@@ -151,6 +151,16 @@ export const KEYWORDS: readonly KeywordDef[] = [
     id: "sleep", term: "수면", kind: "debuff",
     description: "행동하지 못하다가 피해를 받으면 깨며, 재운 쪽 저항력의 150%만큼 마법 피해를 더 받는다. 깬 뒤 2초 동안 공격 속도가 30% 낮아진다.",
   },
+  // 위압·공포는 쓰는 개체가 아크 하나뿐이라 태그가 수치를 갖는다. 값은 패시브·일반 공격의 `intimidate` 계약과 같아야
+  // 하며 `ark.test`가 둘을 맞춰 본다.
+  {
+    id: "intimidation", term: "위압", kind: "debuff",
+    description: "피해가 없는 표식이다. 한 겹은 6초 동안 남고, 3겹이 되면 스스로 [[fear|공포]]가 발동하며 겹이 사라진다. 공포에 빠져 있거나 면역인 적에게는 쌓이지 않는다.",
+  },
+  {
+    id: "fear", term: "공포", kind: "debuff",
+    description: "2초 동안 건 쪽에게서 달아나며 [[basic-attack|기본 공격]]을 하지 못한다. 궁극기는 쓸 수 있다. 풀린 뒤 6초 동안 새 위압과 공포에 면역이 된다.",
+  },
   // 해무 방벽은 쓰는 개체가 이르나 하나뿐이라 태그가 수치를 갖는다. 값은 패시브의 `lifeStealShield` 계약과 같아야
   // 하며 `irna.test`가 둘을 맞춰 본다.
   {

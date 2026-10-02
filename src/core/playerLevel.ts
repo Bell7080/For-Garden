@@ -102,3 +102,27 @@ export function playerExpBarSegments(receipt: Pick<PlayerExpReceipt, "before" | 
   segments.push({ level: after.level, from: 0, to: playerExpRatio(after) });
   return segments;
 }
+
+/** 레벨 `level`에 닿기까지 쌓아야 하는 누적 경험치(= 누적으로 써야 하는 스테미나). 1레벨은 0. */
+export function cumulativeExpToReach(level: number): number {
+  const target = Math.max(1, Math.min(PLAYER_LEVEL_CAP, Math.floor(level)));
+  let total = 0;
+  for (let current = 1; current < target; current += 1) total += playerExpToNext(current);
+  return total;
+}
+
+/** 신규 계정이 들고 시작하는 스테미나(`createDefaultSession`의 지갑과 같은 값). */
+export const STARTING_STAMINA = 60;
+/** 에너지 드링크 한 병이 채우는 양. 레벨업 보상(`PLAYER_LEVEL_UP_REWARD`)이 이 병이다. */
+export const LEVEL_UP_DRINK_STAMINA = 60;
+
+/**
+ * 레벨 `level`에 닿기 위해 **시간 회복(5분에 1)으로 채워야 하는** 스테미나 — 이론상의 최소치.
+ *
+ * 누적 경험치에서 시작 스테미나와, 오르며 받는 드링크(레벨마다 한 병)를 뺀 값이다. 젬·광고·소탕권·임무 보상은 세지 않는다
+ * (더 빠르게 만드는 쪽의 몫). 개방 레벨을 정할 때 「성실한 계정이 며칠 만에 닿는가」를 이 값으로 잰다.
+ */
+export function naturalStaminaToReach(level: number): number {
+  const target = Math.max(1, Math.min(PLAYER_LEVEL_CAP, Math.floor(level)));
+  return Math.max(0, cumulativeExpToReach(target) - STARTING_STAMINA - (target - 1) * LEVEL_UP_DRINK_STAMINA);
+}

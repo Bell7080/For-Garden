@@ -271,6 +271,8 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   // 반경은 바닥에 그려지는 범위라 수로 적지 않는다. 수압이 무엇을 하는지는 태그가 말한다.
   if (trait.effectId === "abyssalVortex") return t("skill.ferocity.abyssalVortex", { percent: trait.attackSpeedPercent });
   if (trait.effectId === "sleepTantrum") return t("skill.ferocity.sleepTantrum", { percent: trait.attackSpeedPercent });
+  // 공속은 올리지 않는다는 말을 따로 적지 않는다 — 오르는 것이 이 한 줄뿐이라 읽는 사람이 그 외를 가정하지 않는다.
+  if (trait.effectId === "stormAim") return t("skill.ferocity.stormAim", { percent: trait.defenseIgnorePercent });
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? ""
@@ -462,6 +464,9 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
   if (passive.kind === "stalkerBlink") return t("skill.passive.stalkerBlink", { seconds: passive.value });
   if (passive.kind === "openingDive" && passive.openingCharge !== undefined) return t("skill.passive.openingCharge", { seconds: passive.openingCharge.stunSeconds });
   if (passive.kind === "basicHitAttackSpeedStack") return t("skill.passive.basicHitAttackSpeedStack", { value: passive.value });
+  // 흡혈 수치는 여기서, 나뉘는 비율·상한은 태그(`fog-guard`)가 말한다 — 쓰는 개체가 하나뿐인 규칙어라 태그가 수치를 갖는다.
+  // 치명타 확률 가산은 공통 절(`passiveCriticalClause`)이 뒤에 붙인다.
+  if (passive.kind === "tideSight") return t("skill.passive.tideSight", { percent: passive.lifeStealPoints });
   if (passive.kind === "farthestFocus") {
     // 겹당 무엇이 얼마나 오르는지는 전부 태그가 말한다 — 쓰는 개체가 하나뿐인 규칙어라
     // 태그가 수치를 갖고, 본문은 그것을 되풀이하지 않는다(출혈이 아니라 덧칠 쪽 규칙이다).
@@ -969,6 +974,11 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
   }
   if ("curseTransfer" in skill && skill.curseTransfer) {
     clauses.push({ text: t("skill.clause.curseTransfer", { percent: skill.curseTransfer.percent }), standalone: true });
+  }
+  // 방어를 얼마나 지나치는지는 스킬마다 다른 수라 본문이 적는다. 물리는 방어력, 마법은 저항력을 말한다.
+  if ("defenseIgnorePercent" in skill && skill.defenseIgnorePercent !== undefined) {
+    const key = "damageType" in skill && skill.damageType === "magical" ? "skill.clause.defenseIgnore.res" : "skill.clause.defenseIgnore.def";
+    clauses.push({ text: t(key, { percent: skill.defenseIgnorePercent }), standalone: true });
   }
   if ("energyRefundOnKill" in skill && skill.energyRefundOnKill !== undefined) {
     clauses.push({ text: t("skill.clause.energyRefundOnKill", { value: skill.energyRefundOnKill }), standalone: true });

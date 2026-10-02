@@ -301,4 +301,9 @@ export const SKILL_ZH_HANS = {
   "skill.sentence.lullaby.shieldPercent": "[[res|抗性]]的{percent}%",
   "skill.ferocity.sleepTantrum": "[[attack-speed|攻击速度]]提升{percent}%，[[basic-attack|普通攻击]]命中自身周围的所有敌人，并将被命中的敌人短暂击退。",
   "skill.keyword.shield.fromStat": "以当前{stat}的{percent}%计算的护盾。",
+  "skill.phrase.farthest": "最远的敌人",
+  "skill.clause.defenseIgnore.def": "这次攻击无视目标{percent}%的[[def|防御力]]",
+  "skill.clause.defenseIgnore.res": "这次攻击无视目标{percent}%的[[res|抗性]]",
+  "skill.passive.tideSight": "获得{percent}%吸血，所吸取的量会分给[[fog-guard|海雾屏障]]。",
+  "skill.ferocity.stormAim": "暴走期间，[[basic-attack|普通攻击]]额外无视目标{percent}%的[[def|防御力]]和[[res|抗性]]。",
 } as const;

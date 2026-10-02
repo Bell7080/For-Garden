@@ -324,4 +324,9 @@ export const SKILL_JA = {
   "skill.sentence.lullaby.shieldPercent": "[[res|抵抗力]]の{percent}%",
   "skill.ferocity.sleepTantrum": "[[attack-speed|攻撃速度]]が{percent}%増加し、[[basic-attack|基本攻撃]]が自身の周囲のすべての敵に命中して、当たった敵を短く押し返す。",
   "skill.keyword.shield.fromStat": "現在の{stat}から{percent}%を受けて計算したシールド数値だ。",
+  "skill.phrase.farthest": "最も遠い敵に",
+  "skill.clause.defenseIgnore.def": "この攻撃は対象の[[def|防御力]]を{percent}%無視する",
+  "skill.clause.defenseIgnore.res": "この攻撃は対象の[[res|抵抗力]]を{percent}%無視する",
+  "skill.passive.tideSight": "吸血{percent}%を得て、吸血した量が[[fog-guard|海霧の防壁]]に分けられる。",
+  "skill.ferocity.stormAim": "暴走中、[[basic-attack|通常攻撃]]が対象の[[def|防御力]]と[[res|抵抗力]]をさらに{percent}%無視する。",
 } as const;

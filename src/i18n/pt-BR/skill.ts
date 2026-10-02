@@ -301,4 +301,9 @@ export const SKILL_PT_BR = {
   "skill.sentence.lullaby.shieldPercent": "{percent}% da [[res|Resistência]]",
   "skill.ferocity.sleepTantrum": "A [[attack-speed|Velocidade de ataque]] sobe {percent}% e os [[basic-attack|ataques básicos]] atingem todos os inimigos ao redor, empurrando brevemente cada um.",
   "skill.keyword.shield.fromStat": "Escudo calculado a partir de {percent}% de {stat} atual.",
+  "skill.phrase.farthest": "o inimigo mais distante",
+  "skill.clause.defenseIgnore.def": "este ataque ignora {percent}% da [[def|Defesa]] do alvo",
+  "skill.clause.defenseIgnore.res": "este ataque ignora {percent}% da [[res|Resistência]] do alvo",
+  "skill.passive.tideSight": "Ganha {percent}% de roubo de vida, e o que é roubado é dividido em [[fog-guard|Barreira de névoa marinha]].",
+  "skill.ferocity.stormAim": "Em frenesi, o [[basic-attack|Ataque básico]] ignora mais {percent}% da [[def|Defesa]] e da [[res|Resistência]] do alvo.",
 } as const;

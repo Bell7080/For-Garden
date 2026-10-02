@@ -301,4 +301,9 @@ export const SKILL_ID = {
   "skill.sentence.lullaby.shieldPercent": "{percent}% [[res|Resistensi]]",
   "skill.ferocity.sleepTantrum": "[[attack-speed|Kecepatan Serang]] naik {percent}%, dan [[basic-attack|serangan dasar]] mengenai semua musuh di sekitarnya serta mendorong mundur sebentar setiap yang terkena.",
   "skill.keyword.shield.fromStat": "Perisai yang dihitung dari {percent}% {stat} saat ini.",
+  "skill.phrase.farthest": "musuh terjauh",
+  "skill.clause.defenseIgnore.def": "serangan ini mengabaikan {percent}% [[def|Pertahanan]] target",
+  "skill.clause.defenseIgnore.res": "serangan ini mengabaikan {percent}% [[res|Resistensi]] target",
+  "skill.passive.tideSight": "Mendapat {percent}% curi nyawa, dan jumlah yang dicuri dibagi ke [[fog-guard|Penghalang Kabut Laut]].",
+  "skill.ferocity.stormAim": "Saat mengamuk, [[basic-attack|Serangan Dasar]] mengabaikan tambahan {percent}% [[def|Pertahanan]] dan [[res|Resistensi]] target.",
 } as const;

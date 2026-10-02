@@ -301,4 +301,9 @@ export const SKILL_ZH_HANT = {
   "skill.sentence.lullaby.shieldPercent": "[[res|抗性]]的{percent}%",
   "skill.ferocity.sleepTantrum": "[[attack-speed|攻擊速度]]提升{percent}%，[[basic-attack|普通攻擊]]命中自身周圍的所有敵人，並將被命中的敵人短暫擊退。",
   "skill.keyword.shield.fromStat": "以當前{stat}的{percent}%計算的護盾。",
+  "skill.phrase.farthest": "最遠的敵人",
+  "skill.clause.defenseIgnore.def": "這次攻擊無視目標{percent}%的[[def|防禦力]]",
+  "skill.clause.defenseIgnore.res": "這次攻擊無視目標{percent}%的[[res|抗性]]",
+  "skill.passive.tideSight": "獲得{percent}%吸血，所吸取的量會分給[[fog-guard|海霧屏障]]。",
+  "skill.ferocity.stormAim": "暴走期間，[[basic-attack|普通攻擊]]額外無視目標{percent}%的[[def|防禦力]]和[[res|抗性]]。",
 } as const;

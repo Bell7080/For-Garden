@@ -301,4 +301,9 @@ export const SKILL_TH = {
   "skill.sentence.lullaby.shieldPercent": "{percent}% ของ[[res|ต้านทาน]]",
   "skill.ferocity.sleepTantrum": "[[attack-speed|ความเร็วโจมตี]]เพิ่มขึ้น {percent}% และ[[basic-attack|การโจมตีปกติ]]จะโดนศัตรูทุกตัวรอบตัว พร้อมผลักศัตรูที่โดนถอยไปเล็กน้อย",
   "skill.keyword.shield.fromStat": "โล่ที่คำนวณจาก {percent}% ของ{stat}ปัจจุบัน",
+  "skill.phrase.farthest": "ศัตรูที่ไกลที่สุด",
+  "skill.clause.defenseIgnore.def": "การโจมตีนี้ข้าม[[def|พลังป้องกัน]]ของเป้าหมาย {percent}%",
+  "skill.clause.defenseIgnore.res": "การโจมตีนี้ข้าม[[res|พลังต้านทาน]]ของเป้าหมาย {percent}%",
+  "skill.passive.tideSight": "ได้รับดูดเลือด {percent}% และปริมาณที่ดูดได้จะถูกแบ่งให้[[fog-guard|กำแพงหมอกทะเล]]",
+  "skill.ferocity.stormAim": "ระหว่างคลั่ง [[basic-attack|โจมตีปกติ]]จะข้าม[[def|พลังป้องกัน]]และ[[res|พลังต้านทาน]]ของเป้าหมายเพิ่มอีก {percent}%",
 } as const;

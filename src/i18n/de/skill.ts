@@ -301,4 +301,9 @@ export const SKILL_DE = {
   "skill.sentence.lullaby.shieldPercent": "{percent} % ihres [[res|Widerstands]]",
   "skill.ferocity.sleepTantrum": "[[attack-speed|Angriffstempo]] steigt um {percent} %, und [[basic-attack|Standardangriffe]] treffen alle Gegner um sie herum und stoßen jeden Getroffenen kurz zurück.",
   "skill.keyword.shield.fromStat": "Schild, berechnet aus {percent}% {stat}.",
+  "skill.phrase.farthest": "dem am weitesten entfernten Gegner",
+  "skill.clause.defenseIgnore.def": "dieser Angriff ignoriert {percent} % der [[def|Verteidigung]] des Ziels",
+  "skill.clause.defenseIgnore.res": "dieser Angriff ignoriert {percent} % der [[res|Widerstand]] des Ziels",
+  "skill.passive.tideSight": "Erhält {percent} % Lebensraub; das geraubte Leben wird auf [[fog-guard|Seenebelschild]] aufgeteilt.",
+  "skill.ferocity.stormAim": "Während der Raserei ignoriert der [[basic-attack|Normalangriff]] zusätzlich {percent} % der [[def|Verteidigung]] und des [[res|Widerstand]]s des Ziels.",
 } as const;

@@ -302,4 +302,9 @@ export const SKILL_EN = {
   "skill.sentence.lullaby.shieldPercent": "{percent}% of her [[res|Resistance]]",
   "skill.ferocity.sleepTantrum": "[[attack-speed|Attack Speed]] rises by {percent}%, and [[basic-attack|Basic Attacks]] hit every enemy around her, briefly pushing back each one hit.",
   "skill.keyword.shield.fromStat": "A shield calculated from {percent}% of the current {stat}.",
+  "skill.phrase.farthest": "the farthest enemy",
+  "skill.clause.defenseIgnore.def": "this attack ignores {percent}% of the target's [[def|Defense]]",
+  "skill.clause.defenseIgnore.res": "this attack ignores {percent}% of the target's [[res|Resistance]]",
+  "skill.passive.tideSight": "Gains {percent}% life steal, and the life stolen is split into [[fog-guard|Sea Mist Barrier]].",
+  "skill.ferocity.stormAim": "While in frenzy, [[basic-attack|Basic Attacks]] ignore an extra {percent}% of the target's [[def|Defense]] and [[res|Resistance]].",
 } as const;

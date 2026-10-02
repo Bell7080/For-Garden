@@ -766,3 +766,23 @@ export const ANKA_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageHeight: 1254,
   content: { left: 179, top: 15, right: 1075, bottom: 1239 },
 };
+
+/**
+ * 이르나 전신(char_026): 중심1·머리1·눈1·눈2·발1·발2를 프로젝트에서 읽었다. alpha 경계는 (49,12)–(1014,1427)이다.
+ * 고개가 기울어 두 눈의 높이가 35px 다르다(눈 사이 약 66px) — 눈높이는 두 눈의 가운데로 잰다.
+ */
+export const IRNA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086,
+  imageHeight: 1448,
+  content: { left: 49, top: 12, right: 1014, bottom: 1427 },
+  joints: { center: [549, 332], head: [600, 254], eyes: [[567, 230], [623, 265]], feet: [[470, 1369], [693, 1421]] },
+  /** 로비 세로 비율: 메론 기준. 1.56 m — 눈(247.5)에서 alpha 아래 경계까지를 그 키로 맞춘다. */
+  lobbyZoom: 0.981,
+};
+
+/** 이르나 SD: 중심1·머리1을 프로젝트에서 읽었으며 눈 관절은 없다. alpha 경계는 (66,54)–(1149,1218)이다. */
+export const IRNA_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 66, top: 54, right: 1149, bottom: 1218 },
+};

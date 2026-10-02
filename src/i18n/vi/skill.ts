@@ -301,4 +301,9 @@ export const SKILL_VI = {
   "skill.sentence.lullaby.shieldPercent": "{percent}% [[res|Kháng]]",
   "skill.ferocity.sleepTantrum": "[[attack-speed|Tốc đánh]] tăng {percent}%, [[basic-attack|đòn đánh thường]] trúng mọi kẻ địch xung quanh và đẩy lùi ngắn từng kẻ bị trúng.",
   "skill.keyword.shield.fromStat": "Khiên tính từ {percent}% {stat} hiện tại.",
+  "skill.phrase.farthest": "kẻ địch xa nhất",
+  "skill.clause.defenseIgnore.def": "đòn này bỏ qua {percent}% [[def|Thủ]] của mục tiêu",
+  "skill.clause.defenseIgnore.res": "đòn này bỏ qua {percent}% [[res|Kháng]] của mục tiêu",
+  "skill.passive.tideSight": "Nhận {percent}% hút máu, lượng hút được sẽ chia cho [[fog-guard|Hàng rào sương biển]].",
+  "skill.ferocity.stormAim": "Khi Cuồng bạo, [[basic-attack|Đánh thường]] bỏ qua thêm {percent}% [[def|Thủ]] và [[res|Kháng]] của mục tiêu.",
 } as const;

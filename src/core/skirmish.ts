@@ -2156,6 +2156,10 @@ function pickBySelection(state: SkirmishState, fighter: Fighter, selection: Skil
     // 동률은 편성 순서(배열 앞)가 이긴다 — 난수 없이 같은 판이 같은 표적을 고른다.
     return pool.reduce((best, other) => other.hp > best.hp ? other : best);
   }
+  if (selection === "farthest") {
+    // 시전자에게서 가장 먼 적이다. 동률은 편성 순서가 이긴다.
+    return pool.reduce((best, other) => distance(fighter, other) > distance(fighter, best) ? other : best);
+  }
   return pool.reduce((best, other) => {
     const mine = other.observation?.stacks ?? 0;
     const theirs = best.observation?.stacks ?? 0;
@@ -4830,6 +4834,31 @@ function damageHealingRate(attacker: Fighter, skill: Skill, attackingInFever: bo
     + fever + frozenBonus + (activeOrder(attacker)?.lifeStealPoints ?? 0) + (skill.damageHealingPercent ?? 0);
 }
 
+/** 「폭풍 속의 조준」 — 폭주 중인 이르나의 **기본 공격**이 방어를 더 지나치는 몫(%). 궁극기에는 얹지 않는다. */
+function stormAimIgnorePercent(attacker: Fighter, attackingInFever: boolean, useUltimate: boolean): number {
+  const trait = attacker.def.ferocityTrait;
+  return attackingInFever && !useUltimate && trait.effectId === "stormAim" ? trait.defenseIgnorePercent : 0;
+}
+
+/**
+ * 흡혈을 체력과 보호막으로 나눠 준다. 총량은 `damageHealingRate`가 정하고, 패시브의 `lifeStealShield`가
+ * 있으면 그 비율만큼을 막으로 두른다(이르나의 「해무 방벽」).
+ *
+ * 막이 상한(최대 체력의 `capMaxHpPercent`%)에 닿으면 넘치는 몫은 버리지 않고 **체력으로 되돌린다** —
+ * 상한이 흡혈 자체를 깎으면 막이 가득 찬 뒤로 전사 계약의 자가 수급이 사라진다. 막은 공용 `grantShield`
+ * 한 길로 두르므로 데스 카운트 감쇠가 그대로 걸린다.
+ */
+function drainFromDamage(state: SkirmishState, attacker: Fighter, dealt: number, rate: number, events: SkirmishEvent[]): void {
+  const total = dealt * rate / 100;
+  if (!(total > 0)) return;
+  const conversion = attacker.def.passive.lifeStealShield;
+  if (!conversion || !isFighterAlive(attacker)) { applyHealing(state, attacker, total); return; }
+  const room = Math.max(0, attacker.maxHp * conversion.capMaxHpPercent / 100 - attacker.shield.amount);
+  const shieldPart = Math.min(total * conversion.convertPercent / 100, room);
+  if (shieldPart > 0) grantShield(state, attacker, attacker.id, shieldPart, events);
+  applyHealing(state, attacker, total - shieldPart);
+}
+
 /** 아군의 원본 일반 공격 적중 하나를 소비해 폭주 중인 메테들의 스타카토를 한 번씩 발생시킨다. */
 function triggerCrescendoStaccato(state: SkirmishState, target: Fighter, events: SkirmishEvent[]): void {
   for (const mette of state.fighters) {
@@ -5736,6 +5765,8 @@ function strike(
     kind: useUltimate ? "ultimate" as const : "basic" as const,
     // 강화된 한 방만 방어·저항을 지나간다. 속성 상성과 대상 경감은 그대로 거친다.
     ignoresDefense: empowered || executionUltimate,
+    // 방어를 일부 지나치는 한 방. 스킬이 적은 값에 폭주 특성(「폭풍 속의 조준」)이 기본 공격에 더하는 몫을 합친다.
+    defenseIgnorePercent: Math.min(100, (skill.defenseIgnorePercent ?? 0) + stormAimIgnorePercent(attacker, attackingInFever, useUltimate)),
   };
   const damageAttacker = { ...attacker, def: offensiveDefinition(attacker) };
   const damageTarget = defensiveDefinition(target, state);
@@ -5823,7 +5854,7 @@ function strike(
    * 생기면 이 지점에 도달하는 HP 피해만 넘기면 규칙이 그대로 유지된다.
    */
   const healFromDamage = (dealt: number) => {
-    applyHealing(state, attacker, dealt * damageHealingRate(attacker, skill, attackingInFever, target) / 100);
+    drainFromDamage(state, attacker, dealt, damageHealingRate(attacker, skill, attackingInFever, target), events);
   };
   healFromDamage(dealt);
   // 「다 같이 덮쳐!」 — 두목이 문 자리로 살아 있는 늑대가 곧바로 제 궁극기를 쓴다.
@@ -6210,7 +6241,8 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     // 폭발형 궁극기의 위력은 총량이 아니라 **겹당 값**이라 그 대상의 겹 수만큼 곱한다.
     const scaled = detonation ? { ...skill, power: (skill.power ?? 0) * (target.overpaint?.stacks ?? 0) } : skill;
     const damageInput = { ...scaled, isCritical: critical, kind: useUltimate ? "ultimate" as const : "basic" as const,
-      ignoresDefense: executionUltimate };
+      ignoresDefense: executionUltimate,
+      defenseIgnorePercent: Math.min(100, (skill.defenseIgnorePercent ?? 0) + stormAimIgnorePercent(attacker, attackingInFever, useUltimate)) };
     const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, defensiveDefinition(target, state), damageInput)
       * traitDamageMultiplier(state, attacker, target)));
     const contributionAmount = Math.max(0, computeDamageContribution(damageAttacker, damageInput));
@@ -6224,7 +6256,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     tryTriggerEmergencyRecovery(target, state); tryTriggerLowHpVanish(target, state);
     triggerCombatAugments(state, target, "onLowHp", events);
     // 흡혈은 대상별 실제 HP 감소량만 더해 과잉 피해를 회복량으로 만들지 않는다.
-    applyHealing(state, attacker, (hpBefore - target.hp) * damageHealingRate(attacker, skill, attackingInFever, target) / 100);
+    drainFromDamage(state, attacker, hpBefore - target.hp, damageHealingRate(attacker, skill, attackingInFever, target), events);
     // 보호막 전환도 같은 값을 읽는다 — 단일과 광역에서 규칙이 갈리면 같은 걸음이 대상 수에
     // 따라 다른 일을 한다.
     if (!useUltimate) grantShieldFromDamage(attacker, hpBefore - target.hp, events, state);

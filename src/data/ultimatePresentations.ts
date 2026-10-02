@@ -95,6 +95,7 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   // 먼 적을 낚아 끌어오는 한 순간이라 당기는 끝에서만 세게 흔든다.
   mosana: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, zoomScale: 1.2, zoomMs: 112, cameraShakeIntensity: 0.011 },
   // 때리지 않고 재우는 궁극기라 흔들림을 낮춘다. 작은 몸이라 원화를 조금 키운다.
+  irna: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.98, zoomScale: 1.18, zoomMs: 130, cameraShakeIntensity: 0.008 },
   anka: { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 1.02, zoomScale: 1.16, zoomMs: 120, cameraShakeIntensity: 0.006 },
   "toby": { ...DEFAULT_ULTIMATE_PRESENTATION, cutInHoldMs: 135, zoomScale: 1.2, zoomMs: 110, cameraShakeIntensity: 0.008 },
   "amo": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, zoomScale: 1.24, zoomMs: 115, cameraShakeIntensity: 0.009 },

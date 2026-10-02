@@ -352,22 +352,37 @@ describe("도디 한계 돌파", () => {
 
 describe("파루아 한계 돌파", () => {
   /** 파루아 한 명이 적 하나를 상대한다. 돌파 단계만 갈아 끼운다. */
-  function paruaBattle(breakthrough: number): SkirmishState {
-    return createSkirmish([getRelic("parua")], [getRelic("amo")], ARENA, {}, { parua: breakthrough });
+  function paruaBattle(breakthrough: number, foes = ["amo"]): SkirmishState {
+    return createSkirmish([getRelic("parua")], foes.map(getRelic), ARENA, {}, { parua: breakthrough });
+  }
+  function setUp(state: SkirmishState): void {
+    const parua = findFighter(state, "player-0")!;
+    for (const enemy of state.fighters.filter((fighter) => fighter.side === "enemy")) {
+      enemy.x = parua.x; enemy.y = parua.y - 300; enemy.attackCooldown = 999; enemy.maxHp = 1_000_000; enemy.hp = enemy.maxHp;
+    }
   }
 
-  it("는 갈래화살 걸음의 위력을 두 배로 올린다(별 II)", () => {
-    const hit = (breakthrough: number): number => {
+  it("는 갈래화살이 1초 뒤 같은 자리로 한 번 더 날아가고 집중은 쌓지 않는다(별 II)", () => {
+    const run = (breakthrough: number): { hits: number; focus: number } => {
       const state = paruaBattle(breakthrough);
+      setUp(state);
       const parua = findFighter(state, "player-0")!;
-      const enemy = findFighter(state, "enemy-0")!;
-      enemy.x = parua.x; enemy.y = parua.y - 300; enemy.attackCooldown = 999; enemy.maxHp = 1_000_000; enemy.hp = enemy.maxHp;
       parua.basicCycleStep = 2; parua.attackCooldown = 0;
-      const events = stepSkirmish(state, 0.05, () => 0.99);
-      const attack = events.find((event) => event.kind === "attack" && event.attackerId === parua.id && event.skill === "basic");
-      return attack?.kind === "attack" ? attack.amount : 0;
+      let hits = 0;
+      for (let tick = 0; tick < 30; tick += 1) {
+        for (const event of stepSkirmish(state, 0.05, () => 0.99)) {
+          if (event.kind === "attack" && event.attackerId === parua.id && event.skill === "basic") hits += 1;
+        }
+        // 첫 갈래화살 한 번과 그 메아리만 세려고 다음 공격은 막아 둔다.
+        parua.attackCooldown = 999;
+      }
+      return { hits, focus: parua.focus };
     };
-    expect(hit(1) / hit(0)).toBeGreaterThan(1.5);
+    const before = run(0); const after = run(1);
+    expect(before.hits).toBe(1);
+    expect(after.hits).toBe(2);
+    // 메아리 화살은 집중을 쌓지 않는다.
+    expect(after.focus).toBe(before.focus);
   });
 
   it("는 궁극기의 연격을 세 발 · 8초로 늘린다(별 III)", () => {
@@ -382,38 +397,168 @@ describe("파루아 한계 돌파", () => {
     expect(cast(2)).toMatchObject({ hitCount: 3, total: 8 });
   });
 
-  it("는 폭주에 들어서는 순간 집중 한 겹마다 최대 체력 3%의 보호막을 두른다(별 IV)", () => {
+  it("는 폭주에 들어서는 순간 3초 동안 은신한다(별 IV)", () => {
     const state = paruaBattle(3);
+    setUp(state);
     const parua = findFighter(state, "player-0")!;
-    parua.focus = 10; parua.shield.amount = 0; parua.ferocity = FEROCITY_RULES.max - 0.001;
-    const enemy = findFighter(state, "enemy-0")!;
-    enemy.x = parua.x; enemy.y = parua.y - 300; enemy.attackCooldown = 999; enemy.maxHp = 1_000_000; enemy.hp = enemy.maxHp;
-    parua.attackCooldown = 0;
+    parua.ferocity = FEROCITY_RULES.max - 0.001; parua.attackCooldown = 0;
     for (let tick = 0; tick < 40 && !parua.ferocityFever; tick += 1) stepSkirmish(state, 0.05, () => 0.99);
     expect(parua.ferocityFever).toBe(true);
-    expect(parua.shield.amount).toBeGreaterThanOrEqual(Math.round(parua.maxHp * 0.03 * 10));
+    expect(parua.stealthFor).toBeGreaterThan(2);
+    // 별 셋에서는 은신하지 않는다.
+    const plain = paruaBattle(2);
+    setUp(plain);
+    const other = findFighter(plain, "player-0")!;
+    other.ferocity = FEROCITY_RULES.max - 0.001; other.attackCooldown = 0;
+    for (let tick = 0; tick < 40 && !other.ferocityFever; tick += 1) stepSkirmish(plain, 0.05, () => 0.99);
+    expect(other.stealthFor).toBe(0);
   });
 
-  it("는 집중 한 겹의 공격력을 2%에서 4%로 올린다(별 V)", () => {
-    const hit = (breakthrough: number): number => {
+  it("는 집중이 가득 차면 갈래화살이 반드시 치명타다(별 V)", () => {
+    const critical = (breakthrough: number, focus: number): boolean => {
       const state = paruaBattle(breakthrough);
+      setUp(state);
       const parua = findFighter(state, "player-0")!;
-      const enemy = findFighter(state, "enemy-0")!;
-      enemy.x = parua.x; enemy.y = parua.y - 300; enemy.attackCooldown = 999; enemy.maxHp = 1_000_000; enemy.hp = enemy.maxHp;
-      parua.focus = 10; parua.basicCycleStep = 0; parua.attackCooldown = 0;
+      parua.focus = focus; parua.basicCycleStep = 2; parua.attackCooldown = 0;
       const events = stepSkirmish(state, 0.05, () => 0.99);
-      const attack = events.find((event) => event.kind === "attack" && event.attackerId === parua.id && event.skill === "basic");
-      return attack?.kind === "attack" ? attack.amount : 0;
+      return events.some((event) => event.kind === "attack" && event.attackerId === parua.id && event.skill === "basic" && event.critical);
     };
-    // 열 겹: 공격력 +20% → +40%. 별 II의 효과는 갈래화살에만 걸리므로 첫 걸음은 영향이 없다.
-    expect(hit(BREAKTHROUGH_STEPS.length) / hit(0)).toBeCloseTo(1.4 / 1.2, 1);
+    expect(critical(BREAKTHROUGH_STEPS.length, 15)).toBe(true);
+    expect(critical(BREAKTHROUGH_STEPS.length, 14)).toBe(false);
+    expect(critical(BREAKTHROUGH_STEPS.length - 1, 15)).toBe(false);
   });
 
   it("는 네 슬롯 모두 문장을 만든다", () => {
     const parua = getRelic("parua");
-    expect(breakthroughEffectText(parua, "basic")).toContain("100%");
+    expect(breakthroughEffectText(parua, "basic")).toContain("1초 뒤 한 번 더");
     expect(breakthroughEffectText(parua, "ultimate")).toContain("3번 적중");
-    expect(breakthroughEffectText(parua, "ferocity")).toContain("들어서는 순간");
-    expect(breakthroughEffectText(parua, "passive")).toContain("4%");
+    expect(breakthroughEffectText(parua, "ferocity")).toContain("[[stealth|은신]]");
+    expect(breakthroughEffectText(parua, "passive")).toContain("반드시 치명타");
+  });
+});
+
+describe("스피나 한계 돌파", () => {
+  const FULL = BREAKTHROUGH_STEPS.length;
+  function spinoBattle(breakthrough: number, foes = ["torika", "amo"]): SkirmishState {
+    return createSkirmish([getRelic("spino")], foes.map(getRelic), ARENA, {}, { spino: breakthrough });
+  }
+  /** 스피나 곁에 적을 붙이고, 적이 때리지 못하게 공격을 멈춘다. */
+  function engageAll(state: SkirmishState): void {
+    const spino = findFighter(state, "player-0")!;
+    for (const [index, enemy] of state.fighters.filter((fighter) => fighter.side === "enemy").entries()) {
+      enemy.x = spino.x + 40 + index * 30; enemy.y = spino.y; enemy.attackCooldown = 999; enemy.maxHp = 1_000_000; enemy.hp = enemy.maxHp;
+    }
+  }
+
+  it("는 궁극기가 건 기절을 같은 적에게 8초 동안 다시 걸지 않는다(기본 규칙)", () => {
+    const state = spinoBattle(0, ["torika"]);
+    engageAll(state);
+    const spino = findFighter(state, "player-0")!;
+    const enemy = findFighter(state, "enemy-0")!;
+    const stunned = (): boolean => enemy.stunnedFor > 0;
+    spino.energy = spino.def.ultimate.cost;
+    fireUltimate(state, spino.id, () => 0.99);
+    expect(stunned()).toBe(true);
+    // 기절이 풀린 뒤 곧바로 다시 쏘아도 8초가 지나기 전에는 기절하지 않는다 — 피해는 들어간다.
+    enemy.stunnedFor = 0; spino.energy = spino.def.ultimate.cost;
+    const hp = enemy.hp;
+    fireUltimate(state, spino.id, () => 0.99);
+    expect(enemy.hp).toBeLessThan(hp);
+    expect(stunned()).toBe(false);
+    // 8초가 지난 뒤에는 다시 걸린다.
+    state.elapsed += 8; spino.energy = spino.def.ultimate.cost;
+    fireUltimate(state, spino.id, () => 0.99);
+    expect(stunned()).toBe(true);
+  });
+
+  it("는 도약이 꽂힌 적의 발밑에도 여울을 하나 더 깐다(별 II)", () => {
+    const pools = (breakthrough: number): number => {
+      const state = spinoBattle(breakthrough);
+      engageAll(state);
+      const spino = findFighter(state, "player-0")!;
+      const [first, second] = state.fighters.filter((fighter) => fighter.side === "enemy");
+      spino.shallowPools = [{ x: first.x, y: first.y, remaining: 6, total: 6 }];
+      second.x = first.x + 900; second.y = first.y;
+      spino.shallowLeapCount = spino.def.basic.shallows!.leapEveryHits - 1; spino.attackCooldown = 0;
+      stepSkirmish(state, 0.05, () => 0.99);
+      return spino.shallowPools.length;
+    };
+    expect(pools(1)).toBeGreaterThan(pools(0));
+  });
+
+  it("는 터진 여울이 1.5초 뒤 기절 없이 한 번 더 터진다(별 III)", () => {
+    const state = spinoBattle(2, ["torika"]);
+    engageAll(state);
+    const spino = findFighter(state, "player-0")!;
+    const enemy = findFighter(state, "enemy-0")!;
+    spino.shallowPools = [{ x: enemy.x, y: enemy.y, remaining: 6, total: 6 }];
+    spino.energy = spino.def.ultimate.cost;
+    fireUltimate(state, spino.id, () => 0.99);
+    expect(spino.tidalEchoes).toHaveLength(1);
+    enemy.stunnedFor = 0;
+    let echoes = 0;
+    for (let tick = 0; tick < 50; tick += 1) {
+      for (const event of stepSkirmish(state, 0.05, () => 0.99)) {
+        if (event.kind === "areaImpact" && event.attackerId === spino.id) echoes += 1;
+      }
+    }
+    expect(echoes).toBeGreaterThanOrEqual(1);
+    expect(spino.tidalEchoes).toHaveLength(0);
+    // 되돌아온 파도는 기절을 걸지 않는다.
+    expect(enemy.stunnedFor).toBe(0);
+    // 별 하나에서는 예약하지 않는다.
+    const plain = spinoBattle(1, ["torika"]);
+    engageAll(plain);
+    const other = findFighter(plain, "player-0")!;
+    other.shallowPools = [{ x: findFighter(plain, "enemy-0")!.x, y: findFighter(plain, "enemy-0")!.y, remaining: 6, total: 6 }];
+    other.energy = other.def.ultimate.cost;
+    fireUltimate(plain, other.id, () => 0.99);
+    expect(other.tidalEchoes).toHaveLength(0);
+  });
+
+  it("는 폭주에 들어선 뒤 첫 일반 공격이 반드시 치명타다(별 IV)", () => {
+    const state = spinoBattle(3, ["torika"]);
+    engageAll(state);
+    const spino = findFighter(state, "player-0")!;
+    spino.ferocity = FEROCITY_RULES.max - 0.001; spino.attackCooldown = 0;
+    expect(spino.ambushCritReady).toBe(false);
+    let firstBasic: boolean | undefined;
+    for (let tick = 0; tick < 200 && firstBasic === undefined; tick += 1) {
+      const wasFever = spino.ferocityFever;
+      for (const event of stepSkirmish(state, 0.05, () => 0.99)) {
+        if (spino.ferocityFever && event.kind === "attack" && event.attackerId === spino.id && event.skill === "basic" && !wasFever === false) firstBasic = event.critical;
+      }
+      if (spino.ferocityFever && spino.ambushCritReady) { spino.attackCooldown = 0; engageAll(state); }
+    }
+    expect(firstBasic).toBe(true);
+    expect(spino.ambushCritReady).toBe(false);
+  });
+
+  it("는 여울에 잠긴 적을 처치하면 곧바로 다음 여울로 도약한다(별 V)", () => {
+    const run = (breakthrough: number): number => {
+      const state = spinoBattle(breakthrough, ["torika", "amo"]);
+      engageAll(state);
+      const spino = findFighter(state, "player-0")!;
+      const [first, second] = state.fighters.filter((fighter) => fighter.side === "enemy");
+      first.hp = 1;
+      second.x = first.x + 900; second.y = first.y;
+      spino.shallowPools = [
+        { x: first.x, y: first.y, remaining: 6, total: 6 },
+        { x: second.x, y: second.y, remaining: 6, total: 6 },
+      ];
+      spino.targetId = first.id; spino.attackCooldown = 0; spino.shallowLeapCount = 0;
+      stepSkirmish(state, 0.05, () => 0.99);
+      return Math.hypot(spino.x - second.x, spino.y - second.y);
+    };
+    // 돌파가 열려 있으면 처치한 즉시 둘째 여울로 건너가 둘째 적 곁에 선다.
+    expect(run(FULL)).toBeLessThan(run(FULL - 1));
+  });
+
+  it("는 네 슬롯 모두 문장을 만든다", () => {
+    const spino = getRelic("spino");
+    expect(breakthroughEffectText(spino, "basic")).toContain("[[shallows|여울]]");
+    expect(breakthroughEffectText(spino, "ultimate")).toContain("1.5초 뒤 한 번 더 터진다");
+    expect(breakthroughEffectText(spino, "ferocity")).toContain("반드시 치명타");
+    expect(breakthroughEffectText(spino, "passive")).toContain("처치하면");
   });
 });

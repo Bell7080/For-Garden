@@ -340,6 +340,14 @@ export interface Fighter extends Combatant {
   feverHealingDone: number;
   /** 패시브 돌파(`rescueShield`)의 전투당 한 번뿐인 발동권을 썼는지. */
   rescueUsed: boolean;
+  /** 폭주 돌파(`ambushCrit`) — 다음 일반 공격이 반드시 치명타인가. 한 번 쓰면 꺼진다. */
+  ambushCritReady: boolean;
+  /** 궁극기 돌파(`tidalEcho`)가 되돌려 터뜨릴 여울 자리와 남은 시간. */
+  tidalEchoes: { x: number; y: number; remaining: number; power: number }[];
+  /** 평타 돌파(`arrowEcho`)가 되돌려 쏠 갈래화살. 중심·남은 시간·걸음 사본을 든다. */
+  arrowEchoes: { x: number; y: number; remaining: number; skill: Skill }[];
+  /** 같은 스킬이 건 기절을 다시 받지 않는 시각(`stunLockoutSeconds`). 키는 `시전자:스킬ID`다. */
+  stunLockouts: Record<string, number>;
   /**
    * 궁극기 돌파(`UltimateBreakthrough`)가 더 떨어뜨릴 남은 타격.
    *
@@ -936,12 +944,6 @@ export const FOCUS = {
   maxStacks: 15,
 } as const;
 
-/** 집중 한 겹이 올리는 공격력(%). 패시브 돌파(`sharperFocus`)가 열려 있으면 겹당 그만큼 더 오른다. */
-function focusAttackPercentPerStack(fighter: Fighter, base: number): number {
-  const effect = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
-  return base + (effect?.kind === "sharperFocus" ? effect.extraAttackPercentPerStack : 0);
-}
-
 /**
  * 출혈. `bleedStreak` 패시브가 남기는 상처다.
  *
@@ -1110,6 +1112,10 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     feverDamageTaken: 0,
     feverHealingDone: 0,
     rescueUsed: false,
+    ambushCritReady: false,
+    tidalEchoes: [],
+    arrowEchoes: [],
+    stunLockouts: {},
     breakthroughEcho: null,
     hastenedAttacksLeft: 0,
     instantButcherAttacksLeft: 0,
@@ -2436,7 +2442,15 @@ function applySkillStatuses(target: Fighter, skill: Skill, events: SkirmishEvent
   // 피해로 쓰러진 대상에는 지속 상태나 UI 뱃지를 새로 만들지 않는다.
   if (!isFighterAlive(target)) return;
   // 뇌진탕처럼 그 타격의 치명타 여부가 수치를 바꾸는 효과가 있어 판정 결과를 함께 넘긴다.
-  for (const effect of skill.statusEffects ?? []) applyCombatStatusEffect(target, effect, events, state, sourceId, critical);
+  for (const effect of skill.statusEffects ?? []) {
+    // 같은 스킬이 건 기절은 한 번 걸리면 일정 시간 다시 걸리지 않는다 — 피해는 그대로 들어간다.
+    if (effect.kind === "stun" && skill.stunLockoutSeconds !== undefined && sourceId !== undefined) {
+      const key = `${sourceId}:${skill.id}`;
+      if ((target.stunLockouts[key] ?? 0) > state.elapsed) continue;
+      target.stunLockouts[key] = state.elapsed + skill.stunLockoutSeconds;
+    }
+    applyCombatStatusEffect(target, effect, events, state, sourceId, critical);
+  }
 }
 
 /**
@@ -3052,7 +3066,13 @@ function openedBreakthrough<S extends BreakthroughSlot, T>(
 }
 
 /** 처치 보상은 단일·광역 공격이 같은 경계를 지나며, 다음 표적 돌진도 이곳에서 다시 준비한다. */
-function triggerBreakthroughOnKill(attacker: Fighter, useUltimate: boolean): void {
+function triggerBreakthroughOnKill(attacker: Fighter, useUltimate: boolean, victim?: Fighter): void {
+  // 패시브 돌파(`huntChain`) — 여울에 잠긴 적을 처치하면 곧바로 다음 여울로 도약한다(주기 카운트를 채운다).
+  const shallows = attacker.def.basic.shallows;
+  if (!useUltimate && victim && shallows && attacker.shallowPools.length > 0
+    && openedBreakthrough(attacker, "passive", (effects) => effects.passive)?.kind === "huntChain" && isSubmerged(attacker, victim)) {
+    attacker.shallowLeapCount = Math.max(attacker.shallowLeapCount, shallows.leapEveryHits - 1);
+  }
   if (useUltimate) {
     const effect = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
     const breakthroughRefund = effect?.kind === "execution" ? effect.energyRefundOnKill : 0;
@@ -3157,6 +3177,7 @@ function tickUltimateBreakthrough(fighter: Fighter, dt: number, state: SkirmishS
 function applyFerocityBreakthrough(fighter: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
   const taken = fighter.feverDamageTaken;
   const healingDone = fighter.feverHealingDone;
+  fighter.ambushCritReady = false;
   fighter.feverDamageTaken = 0;
   fighter.feverHealingDone = 0;
   const effect = openedBreakthrough(fighter, "ferocity", (effects) => effects.ferocity);
@@ -3273,9 +3294,6 @@ function breakthroughSkill(attacker: Fighter, useUltimate: boolean): Skill {
       maxHpPercentPerSecond: effect.maxHpPercentPerSecond * basic.bleedMultiplier,
       healingReceivedReductionPercent: basic.healingReceivedReductionPercent,
     } : effect) };
-  }
-  if (basic?.kind === "heavySplit" && skill.targeting === "splitShot") {
-    skill = { ...skill, power: (skill.power ?? 0) * (1 + basic.powerBonusPercent / 100) } as Skill;
   }
   const ferocity = openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity);
   if (attacker.ferocityFever && ferocity?.kind === "cleavingBasics") {
@@ -3791,7 +3809,7 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
       targetFighterId: fighter.id,
       skillId: fighter.def.passive.id,
       name: "집중",
-      description: `공격력 +${fighter.focus * focusAttackPercentPerStack(fighter, fighter.def.passive.value)}% · 사거리 +${fighter.focus * FOCUS.reachPerStack} · 최대 ${FOCUS.maxStacks}겹`,
+      description: `공격력 +${fighter.focus * fighter.def.passive.value}% · 사거리 +${fighter.focus * FOCUS.reachPerStack} · 최대 ${FOCUS.maxStacks}겹`,
       stacks: fighter.focus,
       timing: { kind: "permanent" },
     });
@@ -4437,11 +4455,14 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, even
     // 피해로 보호막을 짓는다.
     fighter.feverDamageTaken = 0;
     fighter.feverHealingDone = 0;
-    // 폭주 돌파(`feverFocusShield`) — 들어서는 순간의 집중이 곧 값이다. 집중이 없으면 막도 없다.
-    const focusShield = openedBreakthrough(fighter, "ferocity", (effects) => effects.ferocity);
-    if (focusShield?.kind === "feverFocusShield" && fighter.focus > 0) {
-      grantShield(state, fighter, fighter.id, Math.round(fighter.maxHp * focusShield.shieldPercentPerFocus * fighter.focus / 100), events);
+    // 폭주 돌파 — 들어서는 순간의 효과들. 개체 이름이 아니라 열린 돌파 계약만 읽는다.
+    const feverBreakthrough = openedBreakthrough(fighter, "ferocity", (effects) => effects.ferocity);
+    if (feverBreakthrough?.kind === "feverAmbush") {
+      // 숨는 순간 이미 이 개체를 노리던 적의 추적도 함께 풀어야 실제로 표적에서 벗어난다.
+      fighter.stealthFor = Math.max(fighter.stealthFor, feverBreakthrough.stealthSeconds);
+      for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
     }
+    if (feverBreakthrough?.kind === "ambushCrit") fighter.ambushCritReady = true;
     const trait = fighter.def.ferocityTrait;
     if (trait.effectId === "stealthLeap") {
       fighter.stealthFor = trait.durationSeconds;
@@ -4734,7 +4755,7 @@ function offensiveDefinition(attacker: Fighter): RelicDef {
   const vandalised = 1 - vandalismOffenseShred(attacker);
   // 집중은 겹당 `value`%씩 공격력을 올린다. 스피나의 공속 누적과 같은 자리이고, 정적 정의를
   // 바꾸지 않고 계산 시점에만 곱한다.
-  const focused = passive.kind === "farthestFocus" ? 1 + attacker.focus * focusAttackPercentPerStack(attacker, passive.value) / 100 : 1;
+  const focused = passive.kind === "farthestFocus" ? 1 + attacker.focus * passive.value / 100 : 1;
   // 치명타 확률과 마찬가지로 개체 이름이 아니라 적힌 값으로 판별한다.
   if (passive.attackPowerPercent === undefined && passive.criticalDamagePercent === undefined && conditional === 1 && vandalised === 1 && focused === 1) return attacker.def;
   return { ...attacker.def, stats: {
@@ -5315,6 +5336,13 @@ function placeShallowPool(fighter: Fighter, state: SkirmishState, around?: Fight
   const x = inside(chosen.x + (gap > 1 ? dx / gap : 0) * shallows.behindDistance, state.arena.left, state.arena.right);
   const y = inside(chosen.y + (gap > 1 ? dy / gap : 0) * shallows.behindDistance, state.arena.top, state.arena.bottom);
 
+  addShallowPoolAt(fighter, x, y);
+}
+
+/** 정해진 자리에 여울을 깐다. 기존 판과 `minSpacing`보다 가까우면 새로 만들지 않고 그 판을 갱신한다. */
+function addShallowPoolAt(fighter: Fighter, x: number, y: number): void {
+  const shallows = fighter.def.basic.shallows;
+  if (!shallows) return;
   const near = fighter.shallowPools.find((pool) => Math.hypot(x - pool.x, y - pool.y) < shallows.minSpacing);
   if (near) {
     near.x = x; near.y = y; near.remaining = shallows.seconds; near.total = shallows.seconds;
@@ -5368,6 +5396,60 @@ function tickShallows(fighter: Fighter, dt: number): void {
   fighter.shallowPools = fighter.shallowPools.filter((pool) => pool.remaining > EMERGENCY_RECOVERY.epsilon);
 }
 
+/** 궁극기 돌파(`tidalEcho`)의 시계. 시간이 다한 자리마다 같은 판정으로 한 번 더 터뜨린다. */
+function tickTidalEchoes(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  if (fighter.tidalEchoes.length === 0) return;
+  if (!isFighterAlive(fighter)) { fighter.tidalEchoes = []; return; }
+  const due: typeof fighter.tidalEchoes = [];
+  fighter.tidalEchoes = fighter.tidalEchoes.filter((echo) => {
+    echo.remaining -= dt;
+    if (echo.remaining > EMERGENCY_RECOVERY.epsilon) return true;
+    due.push(echo);
+    return false;
+  });
+  for (const echo of due) burstShallowPool(fighter, echo, echo.power, state, events);
+}
+
+/**
+ * 평타 돌파(`arrowEcho`)의 시계. 처음 표적이 있던 자리 근처의 같은 인원에게 줄어든 위력으로 한 번 더 날아간다.
+ * 집중은 쌓지 않는다 — 성장은 처음 쏜 화살의 몫이다.
+ */
+function tickArrowEchoes(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  if (fighter.arrowEchoes.length === 0) return;
+  if (!isFighterAlive(fighter)) { fighter.arrowEchoes = []; return; }
+  const due: typeof fighter.arrowEchoes = [];
+  fighter.arrowEchoes = fighter.arrowEchoes.filter((echo) => {
+    echo.remaining -= dt;
+    if (echo.remaining > EMERGENCY_RECOVERY.epsilon) return true;
+    due.push(echo);
+    return false;
+  });
+  for (const echo of due) {
+    const skill = echo.skill;
+    if (!("damageType" in skill) || skill.damageType === undefined || skill.power === undefined) continue;
+    const attacker = { ...fighter, def: offensiveDefinition(fighter) };
+    const input = { ...skill, power: skill.power, isCritical: false, kind: "basic" as const };
+    const targets = state.fighters
+      .filter((other) => other.side !== fighter.side && isFighterAlive(other))
+      .sort((a, b) => Math.hypot(a.x - echo.x, a.y - echo.y) - Math.hypot(b.x - echo.x, b.y - echo.y))
+      .slice(0, Math.max(1, skill.maxTargets ?? 1));
+    for (const other of targets) {
+      const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(other, state), input)));
+      const resolution = resolveReceivedDamage(other, raw);
+      const hpBefore = other.hp;
+      const shieldBefore = other.shield.amount; const shieldProviderId = other.shield.providerId;
+      applyDamage(other, resolution.applied, events, state);
+      const credited = recordDamageContribution(state, fighter.id, other, skill.damageType, skill.scalingStat, computeDamageContribution(attacker, input), resolution, hpBefore, shieldBefore, shieldProviderId);
+      events.push({ kind: "attack", attackerId: fighter.id, targetId: other.id, skill: "basic", amount: resolution.applied,
+        contributionAmount: credited, critical: false, animate: false, damageType: skill.damageType, mitigated: resolution.reduced < resolution.raw, followUp: true });
+      if (!isFighterAlive(other)) {
+        clearDefeatedStatuses(other);
+        events.push({ kind: "death", fighterId: other.id, sourceId: fighter.id });
+      }
+    }
+  }
+}
+
 /**
  * 깔아 둔 여울 한 곳으로 순간이동해 그 자리를 친다. 기본 공격 `leapEveryHits`회마다 부른다.
  *
@@ -5395,6 +5477,13 @@ function leapToShallowPool(fighter: Fighter, state: SkirmishState, events: Skirm
   fighter.dashX = 0; fighter.dashY = 0;
   burstShallowPool(fighter, chosen, shallows.leapPower, state, events);
   fighter.shallowPools = fighter.shallowPools.filter((pool) => pool !== chosen);
+  // 평타 돌파(`leapPuddle`) — 도약이 꽂힌 적(터진 판 안에서 가장 가까운 살아 있는 적)의 발밑에도 여울이 하나 더 깔린다.
+  if (openedBreakthrough(fighter, "basic", (effects) => effects.basic)?.kind === "leapPuddle") {
+    const struck = foes
+      .filter((foe) => isFighterAlive(foe) && Math.hypot(foe.x - chosen.x, foe.y - chosen.y) <= shallows.radius)
+      .sort((a, b) => Math.hypot(a.x - chosen.x, a.y - chosen.y) - Math.hypot(b.x - chosen.x, b.y - chosen.y))[0];
+    if (struck) addShallowPoolAt(fighter, struck.x, struck.y);
+  }
   // 뛰어든 자리가 새 표적을 정한다. 그러지 않으면 건너온 뒤에도 옛 상대를 향해 되돌아 걷는다.
   fighter.targetId = null;
   fighter.engaged = false;
@@ -5524,7 +5613,10 @@ function strike(
   if (empowered) attacker.empoweredBasic = false;
   // 확정 치명타는 RNG를 호출조차 하지 않아 이후 리플레이 난수열이 밀리지 않는다.
   // 확정 치명타는 RNG를 부르지 않는다 — 목덜미도 같다. 이후 리플레이 난수열이 밀리지 않는다.
-  const critical = forcedCritical || empowered || bleedingBite || nape > 1 || isCriticalHit(Math.min(100, criticalChance), rng());
+  // 폭주 돌파(`ambushCrit`) — 폭주에 들어선 뒤 첫 일반 공격이 반드시 치명타다. 쓰면 꺼진다.
+  const ambush = !useUltimate && attacker.ambushCritReady;
+  if (ambush) attacker.ambushCritReady = false;
+  const critical = forcedCritical || empowered || ambush || bleedingBite || nape > 1 || isCriticalHit(Math.min(100, criticalChance), rng());
   // 공속 복합 계수는 현재 기본 공속과 전투의 환희 누적을 읽되 폭주 임시 배율은 포함하지 않는다.
   const attackSpeedPower = useUltimate ? attacker.def.ultimate.attackSpeedPower ?? 0 : 0;
   // 정조준 관측 — 적 전원의 관측 겹 합산(상한까지)이 바닥 위력 위에 겹마다 얹힌다. 겹은 소모하지 않는다.
@@ -5776,7 +5868,7 @@ function strike(
 
   // 처치는 두 개체의 규칙이 함께 걸리는 자리다 — 오마카세의 게이지 환급과 다음 식재료 선택.
   if (!isFighterAlive(target)) {
-    triggerBreakthroughOnKill(attacker, useUltimate);
+    triggerBreakthroughOnKill(attacker, useUltimate, target);
     // 처치한 순간 시계를 0으로 돌려 다음 프레임에 곧바로 다음 표적으로 뛴다.
     if (attacker.def.passive.kind === "gourmetHunt") attacker.huntCooldown = 0;
     triggerCombatAugments(state, attacker, "onKill", events, target);
@@ -5936,6 +6028,13 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
       .slice(0, Math.max(1, skill.maxTargets ?? 1))
       .map((fighter) => fighter.id),
   );
+  // 평타 돌파(`arrowEcho`) — 날아간 갈래화살을 한 번 더 예약한다. 메아리 화살은 다시 메아리를 만들지 않는다.
+  const arrowBreakthrough = !useUltimate && skill.targeting === "splitShot"
+    ? openedBreakthrough(attacker, "basic", (effects) => effects.basic) : undefined;
+  if (arrowBreakthrough?.kind === "arrowEcho" && skill.power !== undefined) {
+    attacker.arrowEchoes.push({ x: requestedCenter.x, y: requestedCenter.y, remaining: arrowBreakthrough.delaySeconds,
+      skill: { ...skill, power: skill.power * arrowBreakthrough.powerPercent / 100 } as Skill });
+  }
   // 이 함수에 들어온 공격은 모두 광역이다. 은신은 단일 추적 회피이지 광역 무적이 아니므로 포함한다.
   const targets = state.fighters.filter((fighter) => fighter.side !== attacker.side && isFighterAlive(fighter)
     && (!detonation || (fighter.overpaint?.stacks ?? 0) > 0)
@@ -6003,7 +6102,10 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     // 광역도 같은 조건을 쓴다 — 대상마다 출혈 여부가 다르므로 판정도 대상마다 따로 본다.
     const bleedingBite = attackingInFever && critTrait.effectId === "rexBattleQueen"
       && critTrait.bleedingGuaranteedCritical && target.bleed !== null;
-    const critical = bleedingBite || isCriticalHit(criticalChance, rng());
+    // 패시브 돌파(`fullFocusCrit`) — 집중이 가득 차 있으면 갈래화살이 반드시 치명타다.
+    const focusCrit = !useUltimate && skill.targeting === "splitShot" && attacker.focus >= FOCUS.maxStacks
+      && openedBreakthrough(attacker, "passive", (effects) => effects.passive)?.kind === "fullFocusCrit";
+    const critical = bleedingBite || focusCrit || isCriticalHit(criticalChance, rng());
     // 덧칠 중첩은 **대상마다** 다르므로 위력도 대상마다 따로 더한다. 한 번 세어 모두에게
     // 같은 배율을 쓰면 가장 많이 칠한 적의 몫이 아무도 칠하지 않은 적에게까지 간다.
     // 폭발형 궁극기의 위력은 총량이 아니라 **겹당 값**이라 그 대상의 겹 수만큼 곱한다.
@@ -6074,7 +6176,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
       clearDefeatedStatuses(target);
       events.push({ kind: "death", fighterId: target.id, sourceId: attacker.id });
       state.log.push(`${target.def.name} 전투 불능`);
-      triggerBreakthroughOnKill(attacker, useUltimate);
+      triggerBreakthroughOnKill(attacker, useUltimate, target);
       triggerCombatAugments(state, attacker, "onKill", events, target);
     }
     state.log.push(`${attacker.def.name} → ${target.def.name} ${amount}`);
@@ -7206,7 +7308,14 @@ export function fireUltimate(
    */
   const detonate = teamUltimate.detonateShallows;
   if (detonate) {
-    for (const pool of [...attacker.shallowPools]) burstShallowPool(attacker, pool, detonate.power, state, events);
+    // 궁극기 돌파(`tidalEcho`) — 터진 자리마다 두 번째 파도를 예약한다. 기절은 없고 위력만 줄어든다.
+    const wave = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
+    for (const pool of [...attacker.shallowPools]) {
+      burstShallowPool(attacker, pool, detonate.power, state, events);
+      if (wave?.kind === "tidalEcho") {
+        attacker.tidalEchoes.push({ x: pool.x, y: pool.y, remaining: wave.delaySeconds, power: detonate.power * wave.powerPercent / 100 });
+      }
+    }
     attacker.shallowPools = [];
   }
   // 표적 선택 계약이 있는 궁극기는 공용 거리 점수 대신 그 규칙이 고른 적을 노린다.
@@ -7273,7 +7382,7 @@ export function stepSkirmish(state: SkirmishState, dt: number, rng: () => number
       drainFerocityFever(fighter, step);
       if (feverBefore && !fighter.ferocityFever) applyFerocityBreakthrough(fighter, state, events);
     });
-    state.fighters.forEach((fighter) => tickUltimateBreakthrough(fighter, step, state, events));
+    state.fighters.forEach((fighter) => { tickUltimateBreakthrough(fighter, step, state, events); tickTidalEchoes(fighter, step, state, events); tickArrowEchoes(fighter, step, state, events); });
     remaining -= step;
   }
   // 타이머 값 자체가 아니라 호출 전후 경계를 비교해 진입·연장·해제를 명확히 구분한다.

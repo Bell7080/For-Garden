@@ -293,10 +293,15 @@ export const SKILL_KO = {
   "skill.breakthrough.effect.ultimate.healingShield": "회복을 받은 아군마다 그 회복량의 {percent}%에 해당하는 [[shield|보호막]]을 얻는다. 이미 체력이 가득 찬 아군도 보호막은 얻는다.",
   "skill.breakthrough.effect.ferocity.feverShare": "[[ferocity|폭주]]가 끝날 때, 폭주 동안 준 회복량의 {percent}%를 살아 있는 아군 모두가 똑같이 나눠 [[shield|보호막]]으로 얻는다.",
   "skill.breakthrough.effect.passive.rescueShield": "전투당 한 번, 아군의 체력이 {hp}% 이하로 내려가면 그 아군이 주문력의 {percent}%에 해당하는 [[shield|보호막]]을 얻는다.",
+  "skill.breakthrough.effect.basic.leapPuddle": "도약이 꽂힌 적의 발밑에도 [[shallows|여울]]이 하나 더 깔린다.",
+  "skill.breakthrough.effect.basic.arrowEcho": "「{name}」{name!이} {seconds}초 뒤 한 번 더 날아간다. 위력은 {percent}%다.",
+  "skill.breakthrough.effect.ultimate.tidalEcho": "터진 [[shallows|여울]]이 {seconds}초 뒤 한 번 더 터진다. 위력은 {percent}%이고 기절은 걸지 않는다.",
+  "skill.breakthrough.effect.ferocity.ambushCrit": "[[ferocity|폭주]]에 들어선 뒤 첫 일반 공격이 반드시 치명타가 된다.",
+  "skill.breakthrough.effect.ferocity.feverAmbush": "[[ferocity|폭주]]에 들어서는 순간 {seconds}초 동안 [[stealth|은신]]한다.",
+  "skill.breakthrough.effect.passive.fullFocusCrit": "[[focus|집중]]이 가득 차 있는 동안 「{name}」{name!이} 반드시 치명타가 된다.",
+  "skill.breakthrough.effect.passive.huntChain": "[[shallows|여울]]에 잠긴 적을 처치하면 곧바로 다음 여울로 도약한다.",
+  "skill.clause.stunLockout": "같은 적은 한 번 기절한 뒤 {seconds}초 동안 이 기절을 다시 받지 않는다.",
   "skill.breakthrough.effect.ultimate.forestSight": "효과 동안 일반 공격이 {hits}번 적중하고, 효과가 {seconds}초 더 이어진다.",
-  "skill.breakthrough.effect.ferocity.feverFocusShield": "[[ferocity|폭주]]에 들어서는 순간, 쌓아 둔 [[focus|집중]] 한 겹마다 최대 체력의 {percent}%에 해당하는 [[shield|보호막]]을 얻는다.",
-  "skill.breakthrough.effect.passive.sharperFocus": "[[focus|집중]] 한 겹당 공격력이 {percent}% 오른다.",
-  "skill.breakthrough.effect.basic.heavySplit": "「{name}」의 위력이 {percent}% 오른다.",
 
   // ── 정보창이 스킬 쪽지에 주입하는 문맥 사전 ─────────────────────────────
   "skill.keyword.shield.fromMaxHp": "현재 최대 체력에서 {percent}%를 받아 계산한 보호막 수치다.",

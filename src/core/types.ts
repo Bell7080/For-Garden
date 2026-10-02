@@ -227,6 +227,11 @@ interface SkillBase {
    * 적어 **가끔, 조금씩** 거슬리는 정도로 둔다.
    */
   selfShieldMaxHpPercent?: number;
+  /**
+   * 이 스킬이 건 **기절** 뒤, 같은 대상이 이 스킬의 기절을 다시 받지 않는 시간(초). 피해는 그대로 들어간다.
+   * 짧은 주기로 되풀이하는 궁극기가 한 적을 영원히 기절시키는 것을 막는 계약이다.
+   */
+  stunLockoutSeconds?: number;
   shimmerBurst?: {
     /** 터지는 범위 피해의 주문력 계수(%). */
     power: number;
@@ -2285,12 +2290,16 @@ export type BasicBreakthrough = {
   sharePercent: number;
 } | {
   /**
-   * 갈래화살 걸음의 위력을 올린다(파루아). 순환의 세 걸음 중 가장 약한 걸음이라 적이 몇 명이든 한 번에 세 걸음의
-   * 평균 위력이 같아지는 쪽으로 끌어올리는 값이고, 갈라지는 인원마다 같은 위력이 들어간다.
+   * 갈래화살이 날아간 자리로 같은 화살이 **한 번 더** 따라 날아간다(파루아의 메아리 화살).
+   * 두 번째 화살은 처음 표적 근처의 같은 인원을 다시 맞히고, 집중은 쌓지 않는다.
    */
-  kind: "heavySplit";
-  /** 갈래화살 걸음 위력에 더해지는 %. */
-  powerBonusPercent: number;
+  kind: "arrowEcho";
+  delaySeconds: number;
+  /** 본 걸음 위력의 몇 %로 날아가는지. */
+  powerPercent: number;
+} | {
+  /** 도약이 꽂힌 적의 발밑에도 여울이 하나 더 깔린다(스피나). 깔린 판은 다음 도약·폭발의 후보가 된다. */
+  kind: "leapPuddle";
 } | BreakthroughNone;
 
 /**
@@ -2326,6 +2335,14 @@ export type UltimateBreakthrough = {
   kind: "forestSight";
   extraHits: number;
   extraSeconds: number;
+} | {
+  /**
+   * 궁극기로 터진 여울이 잠시 뒤 **한 번 더 터진다**(스피나의 되돌아오는 두 번째 파도).
+   * 위력은 폭발 위력의 일부이고 기절은 걸지 않는다.
+   */
+  kind: "tidalEcho";
+  delaySeconds: number;
+  powerPercent: number;
 } | BreakthroughNone;
 
 /**
@@ -2351,13 +2368,12 @@ export type FerocityBreakthrough = {
   kind: "feverShare";
   shieldPercentOfHealingDone: number;
 } | {
-  /**
-   * 폭주에 **들어서는 순간** 쌓아 둔 집중 한 겹마다 최대 체력의 일부를 보호막으로 두른다(파루아).
-   * 쌓은 힘이 곧 버티는 힘이 되지만 막은 눈에 보이는 자원이라 「받는 피해 감소」가 아니다. 끝에서 주지 않는
-   * 이유는 이 개체가 유리몸이라 막이 가장 필요한 때가 폭주에 들어서 가장 앞으로 나가는 순간이기 때문이다.
-   */
-  kind: "feverFocusShield";
-  shieldPercentPerFocus: number;
+  /** 폭주에 들어서는 순간 잠깐 **은신**한다(파루아). 암살자의 생존 몫은 은신 개념으로만 준다. */
+  kind: "feverAmbush";
+  stealthSeconds: number;
+} | {
+  /** 폭주(잠행)에 들어선 뒤 **첫 일반 공격이 반드시 치명타**가 된다(스피나의 기습). */
+  kind: "ambushCrit";
 } | BreakthroughNone;
 
 /**
@@ -2384,12 +2400,14 @@ export type PassiveBreakthrough = {
   /** 보호막의 크기 = 이 개체의 지금 주문력 × 이 값(%). */
   apPercent: number;
 } | {
+  /** 집중이 가득 차 있는 동안 갈래화살이 **반드시 치명타**가 된다(파루아). */
+  kind: "fullFocusCrit";
+} | {
   /**
-   * 집중 한 겹이 올리는 공격력을 키운다(파루아). 상한은 그대로라 같은 겹 수에서 더 세지고,
-   * 사거리(겹당 px)는 건드리지 않는다 — 공격력 축만 짙어진다.
+   * 여울에 잠긴 적을 처치하면 **곧바로 다음 여울로 도약**한다(스피나). 도약 주기 카운트를 채우는 값이라
+   * 깔아 둔 판이 없거나 아무도 잠겨 있지 않으면 뛰지 않는다.
    */
-  kind: "sharperFocus";
-  extraAttackPercentPerStack: number;
+  kind: "huntChain";
 } | BreakthroughNone;
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */

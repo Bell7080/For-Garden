@@ -423,6 +423,18 @@ export const RELICS: RelicDef[] = [
     // 내려서는 자리에 물이 고인다. 잠행이 "숨어서 옮겨 간다"에서 **사냥터를 여는 걸음**이 되어,
     // 도착하자마자 그 자리의 평타가 전부 다단히트로 들어간다.
     ferocityTrait: { name: "잠행", effectId: "stealthLeap", durationSeconds: 3, leapTarget: "lowestHpEnemy", landingDistance: 172, landingShallows: true },
+    // 별 넷이 이 개체를 **물가를 지배하는 사냥꾼**으로 완성한다 — 암살자의 몫(기동·기습·처치 연쇄)만 얹고 버티는 값은 주지 않는다.
+    // 기절 시간·게이지 환급·공속 누적은 건드리지 않는다: 궁극기 주기가 기절과 맞닿아 있어 어느 하나라도 올리면 한 적이 영원히 묶인다.
+    breakthroughEffects: {
+      // 도약이 꽂힌 적의 발밑에도 여울이 하나 더 깔린다. 4타마다 도는 주기에 얹혀 판이 둘씩 늘고, 폭발할 몫이 커진다.
+      basic: { kind: "leapPuddle" },
+      // 터진 여울이 1.5초 뒤 한 번 더 터진다(위력 50%, 기절 없음) — 물이 빠지며 되돌아오는 두 번째 파도다.
+      ultimate: { kind: "tidalEcho", delaySeconds: 1.5, powerPercent: 50 },
+      // 잠행에 들어선 뒤 첫 평타가 확정 치명타다. 은신 개념의 기습이고 폭주 한 번에 한 번이다.
+      ferocity: { kind: "ambushCrit" },
+      // 잠긴 적을 처치하면 곧바로 다음 여울로 도약한다. 사냥이 이어지는 기동 효과다.
+      passive: { kind: "huntChain" },
+    },
     passive: {
       id: "spino-passive",
       name: "전투의 환희",
@@ -497,6 +509,9 @@ export const RELICS: RelicDef[] = [
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "single",
       statusEffects: [{ kind: "stun", seconds: 3 }],
+      // 같은 적은 한 번 기절한 뒤 8초 동안 이 궁극기의 기절을 다시 받지 않는다 — 공속 누적으로 주기가 3~5초까지 줄어
+      // 기절 3초와 맞닿으므로, 한 적을 영원히 묶지 못하게 하는 기본 규칙이다. 피해는 그대로 들어간다.
+      stunLockoutSeconds: 8,
       /*
        * **깔아 둔 물을 전부 회수한다.** 이 궁극기의 값은 한 명을 세게 치는 것이 아니라
        * **여울을 몇 곳에 벌려 놓았느냐**다 — 평타로 판을 까는 일과 궁극기가 같은 축에 서고,
@@ -2979,14 +2994,14 @@ export const RELICS: RelicDef[] = [
     // 별 넷이 이 개체를 **끝까지 쌓아 가는 궁수**로 완성한다. 쌓는 속도(II·III)가 먼저 빨라지고, 쌓은 것을 지키는
     // 값(IV·V)이 뒤따른다 — 낮은 생존력이라는 전제는 지우지 않고 집중을 쌓을 시간을 번다.
     breakthroughEffects: {
-      // 순환에서 가장 약한 걸음(45)인 갈래화살의 위력을 두 배로 올려 세 걸음이 같은 무게가 된다. 갈라지는 인원마다 같은 값이 들어간다.
-      basic: { kind: "heavySplit", powerBonusPercent: 100 },
+      // 갈래화살이 1초 뒤 같은 자리로 한 번 더 날아간다(위력 50%) — 메아리 화살이다. 집중은 쌓지 않는다.
+      basic: { kind: "arrowEcho", delaySeconds: 1, powerPercent: 50 },
       // 숲이 보이는 동안의 연격이 두 발에서 세 발이 되고 5초가 8초로 늘어난다. 집중은 몇 번 쏘면 상한에 닿으므로 쌓는 속도가 아니라 쏘는 양을 늘린다.
       ultimate: { kind: "forestSight", extraHits: 1, extraSeconds: 3 },
-      // 폭주에 들어서는 순간 집중 한 겹마다 최대 체력 3%의 보호막이다(열다섯 겹이면 45%). 유리몸이라 막이 가장 필요한 때는 앞으로 나서는 그 순간이다. 「받는 피해 감소」가 아니라 보이는 막이다.
-      ferocity: { kind: "feverFocusShield", shieldPercentPerFocus: 3 },
-      // 집중 한 겹의 공격력이 2%에서 4%로 오른다(열다섯 겹이면 +30% → +60%). 늘 도는 값이라 쏘는 내내 모든 걸음이 센다.
-      passive: { kind: "sharperFocus", extraAttackPercentPerStack: 2 },
+      // 폭주에 들어서는 순간 3초 동안 숨는다 — 앞으로 나서는 순간 은신 개념으로만 몫을 준다(생존 유틸은 은신으로 한정).
+      ferocity: { kind: "feverAmbush", stealthSeconds: 3 },
+      // 집중이 가득 차면 갈래화살이 반드시 치명타다 — 열다섯 겹을 쌓는 목표가 생긴다.
+      passive: { kind: "fullFocusCrit" },
     },
     passive: {
       id: "parua-passive",

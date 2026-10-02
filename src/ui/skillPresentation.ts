@@ -1069,7 +1069,12 @@ function statusClauses(skill: DescribedSkill): SkillEffectClause[] {
   // 규칙어라 수치는 태그가 갖고 본문은 "한 겹 쌓는다"까지만 말한다.
   const stack = periodicStackKeyword(skill);
   if (stack !== undefined) return [{ text: t("skill.clause.periodicStack", { id: stack.id, term: stack.term }) }];
+  // 같은 스킬이 건 기절은 한 번 걸리면 일정 시간 다시 걸리지 않는다 — 본문이 그 시간을 적는다.
+  const lockout = "stunLockoutSeconds" in skill && stun ? skill.stunLockoutSeconds : undefined;
   if (texts.length === 0) return [];
+  if (lockout !== undefined && every === undefined) {
+    return [...texts.map((text) => ({ text })), { text: t("skill.clause.stunLockout", { seconds: lockout }), standalone: true }];
+  }
   // 주기가 있는 스킬은 상태 절을 피해 문장에 붙이지 않고 제 문장으로 세운다.
   if (every !== undefined) return [{ text: t("skill.clause.everyNth", { every, effects: texts.join(" ") }), standalone: true }];
   return texts.map((text) => ({ text }));
@@ -1213,10 +1218,11 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
         reduction: trim(effect.healingReceivedReductionPercent),
       });
     }
-    if (effect.kind === "heavySplit") {
+    if (effect.kind === "arrowEcho") {
       const arrow = def.basic.cycle?.find((step) => step.targeting === "splitShot");
-      return t("skill.breakthrough.effect.basic.heavySplit", { name: arrow?.name ?? def.basic.name, percent: trim(effect.powerBonusPercent) });
+      return t("skill.breakthrough.effect.basic.arrowEcho", { name: arrow?.name ?? def.basic.name, seconds: trim(effect.delaySeconds), percent: trim(effect.powerPercent) });
     }
+    if (effect.kind === "leapPuddle") return t("skill.breakthrough.effect.basic.leapPuddle");
     if (effect.kind === "splitHealing") return t("skill.breakthrough.effect.basic.splitHealing", { percent: trim(effect.sharePercent) });
     // 주기 이름이 있으면 그것이 이 효과가 얹히는 그 한 방의 이름이다(칩에 뜨는 이름과 같다).
     const trigger = def.basic.statusEffectStackName ?? def.basic.name;
@@ -1235,6 +1241,7 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effect.kind === "none") return undefined;
     if (effect.kind === "execution") return t("skill.breakthrough.effect.ultimate.execution", { energy: trim(effect.energyRefundOnKill) });
     if (effect.kind === "forestSight") return t("skill.breakthrough.effect.ultimate.forestSight", { hits: trim(def.ultimate.selfVolley ? def.ultimate.selfVolley.hitCount + effect.extraHits : effect.extraHits), seconds: trim(effect.extraSeconds) });
+    if (effect.kind === "tidalEcho") return t("skill.breakthrough.effect.ultimate.tidalEcho", { seconds: trim(effect.delaySeconds), percent: trim(effect.powerPercent) });
     if (effect.kind === "healingShield") return t("skill.breakthrough.effect.ultimate.healingShield", { percent: trim(effect.shieldPercentOfHealing) });
     // 피해량의 몇 %는 **명중 시점의 상대값**이라 실제 수로 바꾸지 않는다(대상마다 달라진다).
     return t("skill.breakthrough.effect.ultimate", {
@@ -1246,7 +1253,8 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     const effect = effects.ferocity;
     if (effect.kind === "none") return undefined;
     if (effect.kind === "cleavingBasics") return t("skill.breakthrough.effect.ferocity.cleavingBasics");
-    if (effect.kind === "feverFocusShield") return t("skill.breakthrough.effect.ferocity.feverFocusShield", { percent: trim(effect.shieldPercentPerFocus) });
+    if (effect.kind === "feverAmbush") return t("skill.breakthrough.effect.ferocity.feverAmbush", { seconds: trim(effect.stealthSeconds) });
+    if (effect.kind === "ambushCrit") return t("skill.breakthrough.effect.ferocity.ambushCrit");
     if (effect.kind === "feverShare") return t("skill.breakthrough.effect.ferocity.feverShare", { percent: trim(effect.shieldPercentOfHealingDone) });
     return t("skill.breakthrough.effect.ferocity", {
       percent: trim(effect.shieldPercentOfDamageTaken), seconds: trim(effect.tauntSeconds),
@@ -1257,9 +1265,11 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effects.passive.kind === "battleMaidAscension") {
       return t("skill.breakthrough.effect.passive.battleMaidAscension", { percent: trim(effects.passive.durabilityPercent) });
     }
-    if (effects.passive.kind === "sharperFocus") {
-      return t("skill.breakthrough.effect.passive.sharperFocus", { percent: trim(def.passive.value + effects.passive.extraAttackPercentPerStack) });
+    if (effects.passive.kind === "fullFocusCrit") {
+      const arrow = def.basic.cycle?.find((step) => step.targeting === "splitShot");
+      return t("skill.breakthrough.effect.passive.fullFocusCrit", { name: arrow?.name ?? def.basic.name });
     }
+    if (effects.passive.kind === "huntChain") return t("skill.breakthrough.effect.passive.huntChain");
     if (effects.passive.kind === "rescueShield") {
       return t("skill.breakthrough.effect.passive.rescueShield", { hp: trim(effects.passive.belowHpPercent), percent: trim(effects.passive.apPercent) });
     }

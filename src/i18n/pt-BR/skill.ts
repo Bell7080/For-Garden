@@ -328,4 +328,8 @@ export const SKILL_PT_BR = {
   "skill.breakthrough.effect.ferocity.windPull": "Durante o [[ferocity|Frenesi]], além da energia repartida pelos ataques básicos, o aliado com menos energia ganha mais {energy}.",
   "skill.breakthrough.effect.passive.huntMark": "Contra inimigos que outro aliado também está mirando, o dano crítico aumenta {percent}%.",
   "skill.breakthrough.effect.passive.windEcho": "Quando 「{name}」 ativa e entra em [[stealth|Furtividade]], todos os aliados vivos ganham {energy} de Energia de Suprema.",
+  "skill.breakthrough.effect.basic.dreadAegis": "Quando「{name}」acerta um inimigo que já tem[[intimidation|Intimidação]], esta unidade ganha um[[shield|escudo]]de {percent}% da vida máxima. Ativa no máximo uma vez a cada {seconds}s.",
+  "skill.breakthrough.effect.ultimate.roarAegis": "Para cada inimigo que「{name}」realmente coloca em[[fear|Medo]], todos os aliados vivos ganham um[[shield|escudo]]de {percent}% da vida máxima (conta até {max} inimigos).",
+  "skill.breakthrough.effect.ferocity.dreadSurge": "No instante em que o[[ferocity|Frenesi]]começa, acumula {stacks} cargas de[[intimidation|Intimidação]]em todos os inimigos próximos.",
+  "skill.breakthrough.effect.passive.terrorCarapace": "Para cada inimigo sob[[intimidation|Intimidação]]desta unidade, a[[def|Defesa]]e a[[res|Resistência]]aumentam em {percent}% (até {max}%).",
 } as const;

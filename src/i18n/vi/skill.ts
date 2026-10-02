@@ -328,4 +328,8 @@ export const SKILL_VI = {
   "skill.breakthrough.effect.ferocity.windPull": "Trong [[ferocity|Cuồng bạo]], ngoài năng lượng do đòn thường chia sẻ, một đồng minh có năng lượng thấp nhất nhận thêm {energy}.",
   "skill.breakthrough.effect.passive.huntMark": "Với kẻ địch mà đồng minh khác cũng đang nhắm, sát thương chí mạng tăng {percent}%.",
   "skill.breakthrough.effect.passive.windEcho": "Khi 「{name}」 kích hoạt và vào [[stealth|Tàng hình]], mọi đồng minh còn sống nhận {energy} năng lượng Tuyệt kỹ.",
+  "skill.breakthrough.effect.basic.dreadAegis": "Khi「{name}」đánh trúng kẻ địch đã bị[[intimidation|Uy hiếp]], bản thân nhận[[shield|khiên]]bằng {percent}% HP tối đa. Kích hoạt tối đa một lần mỗi {seconds} giây.",
+  "skill.breakthrough.effect.ultimate.roarAegis": "Với mỗi kẻ địch thực sự bị「{name}」đẩy vào[[fear|Sợ hãi]], mọi đồng minh còn sống nhận[[shield|khiên]]bằng {percent}% HP tối đa (tính tối đa {max} kẻ địch).",
+  "skill.breakthrough.effect.ferocity.dreadSurge": "Ngay khi vào[[ferocity|Cuồng bạo]], chồng {stacks} lớp[[intimidation|Uy hiếp]]lên mọi kẻ địch xung quanh.",
+  "skill.breakthrough.effect.passive.terrorCarapace": "Với mỗi kẻ địch bị bản thân gây[[intimidation|Uy hiếp]], [[def|Phòng thủ]]và[[res|Kháng]]tăng {percent}% (tối đa {max}%).",
 } as const;

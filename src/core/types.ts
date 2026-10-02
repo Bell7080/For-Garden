@@ -2463,6 +2463,16 @@ export type BasicBreakthrough = {
   attackSpeedPercent: number;
   /** 지속 시간(초). */
   seconds: number;
+} | {
+  /**
+   * 일반 공격이 **위압이 걸린 적**을 맞힐 때 자기 최대 체력의 일정 %를 보호막으로 두른다(아크의 「짓눌린 자의 대가」). 재사용 대기가
+   * 있어 연타로 쌓이지 않고, 막은 `grantShield` 한 길이다. 위압이 없는 적에게는 붙지 않는다.
+   */
+  kind: "dreadAegis";
+  /** 자기 최대 체력의 몇 %를 두르는지. */
+  shieldPercent: number;
+  /** 다시 두를 수 있기까지의 시간(초). */
+  cooldownSeconds: number;
 } | BreakthroughNone;
 
 /**
@@ -2562,6 +2572,16 @@ export type UltimateBreakthrough = {
   kind: "gustEnergy";
   /** 아군 한 명이 얻는 게이지. */
   energy: number;
+} | {
+  /**
+   * 궁극기가 **실제로 겁먹은 적**을 센 만큼 살아 있는 아군 전원에게 보호막을 더 두른다(아크의 「포효의 비호」). 강인함이 통째로
+   * 막은 적은 세지 않고, 막은 `grantShield` 한 길이다. 아크 자신의 막(기본 몫 + 겁먹은 적당 몫)과는 따로 얹힌다.
+   */
+  kind: "roarAegis";
+  /** 겁먹은 적 한 명당 아군 한 명이 받는 막(그 아군 최대 체력의 %). */
+  shieldPercentPerFeared: number;
+  /** 세는 적의 상한. */
+  maxFeared: number;
 } | BreakthroughNone;
 
 /**
@@ -2638,6 +2658,14 @@ export type FerocityBreakthrough = {
   kind: "windPull";
   /** 가장 낮은 아군이 평타 한 번마다 더 받는 에너지. */
   extraEnergy: number;
+} | {
+  /**
+   * 폭주에 **들어서는 순간** 주위 모든 적에게 위압을 한꺼번에 쌓는다(아크의 「포위망」). 피해·보호막은 없고 궁극기도 건드리지 않는다.
+   * 걸음을 빠르게 하던 안은 버렸다 — 겁먹어 달아나는 적을 뒤쫓다 아군에게서 떨어져 나가 오히려 졌다.
+   */
+  kind: "dreadSurge";
+  /** 한 번에 쌓는 위압 겹 수. */
+  stacks: number;
 } | BreakthroughNone;
 
 /**
@@ -2716,6 +2744,16 @@ export type PassiveBreakthrough = {
    */
   kind: "windEcho";
   energy: number;
+} | {
+  /**
+   * 위압이 걸린 적 한 명당 방어력·저항력이 늘어난다(아크의 「공포의 갑각」). 상한이 있고 눈에 보이는 상태(적 머리 위 위압 칩)에서만
+   * 오른다 — 위압이 풀리면 함께 사라진다.
+   */
+  kind: "terrorCarapace";
+  /** 위압이 걸린 적 한 명당 방어력·저항력 증가(%). */
+  percentPerIntimidated: number;
+  /** 세는 적의 상한. */
+  maxIntimidated: number;
 } | BreakthroughNone;
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */

@@ -359,6 +359,8 @@ export interface Fighter extends Combatant {
     stunLockouts: Record<string, number>;
     /** 패시브 돌파(`relink`)의 전투당 한 번뿐인 재연결을 썼는지. */
     relinkUsed: boolean;
+    /** 평타 돌파(`dreadAegis`)가 다시 막을 두를 수 있는 전투 시각(`state.elapsed`). */
+    dreadAegisReadyAt: number;
     /** 궁극기 돌파(`orderStrike`) — 이번 오더 동안 이미 표식이 즉시 터진 적의 ID. 오더를 새로 받으면 비운다. */
     orderStruck: string[];
     /** 평타 돌파(`farPing`)가 올려 주는 사거리(px). 열려 있지 않으면 0이다 — 매 프레임 읽는 값이라 전투가 열릴 때 한 번 굳힌다. */
@@ -1163,6 +1165,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
       afterimages: [],
       stunLockouts: {},
       relinkUsed: false,
+      dreadAegisReadyAt: 0,
       orderStruck: [],
       reachFloor: isBreakthroughSlotOpen(breakthrough, "basic") && def.breakthroughEffects?.basic?.kind === "farPing" ? def.breakthroughEffects.basic.reach : 0,
       rescuePlan: isBreakthroughSlotOpen(breakthrough, "passive") && def.breakthroughEffects?.passive?.kind === "rescueShield"
@@ -2079,8 +2082,17 @@ function applyIntimidate(
   sourceId: string,
   basicHit: boolean,
 ): void {
-  if (!isFighterAlive(target) || target.fear !== null || target.fearImmuneFor > EMERGENCY_RECOVERY.epsilon) return;
+  if (!isFighterAlive(target)) return;
   const source = findFighter(state, sourceId);
+  // 평타 돌파(`dreadAegis`) — 이미 위압이 걸려 있던 적을 평타로 맞히면 막을 두른다. 위압을 새로 거는 첫 타에는 붙지 않는다.
+  if (basicHit && source !== undefined && target.intimidation !== null && state.elapsed >= source.bt.dreadAegisReadyAt) {
+    const aegis = openedBreakthrough(source, "basic", (effects) => effects.basic);
+    if (aegis?.kind === "dreadAegis" && isFighterAlive(source)) {
+      source.bt.dreadAegisReadyAt = state.elapsed + aegis.cooldownSeconds;
+      grantShield(state, source, source.id, Math.max(1, Math.round(source.maxHp * aegis.shieldPercent / 100)), events, 1);
+    }
+  }
+  if (target.fear !== null || target.fearImmuneFor > EMERGENCY_RECOVERY.epsilon) return;
   const hunt = source !== undefined && source.ferocityFever && source.def.ferocityTrait.effectId === "huntInstinct"
     ? source.def.ferocityTrait : undefined;
   const gain = 1 + (basicHit && hunt ? hunt.intimidateBonusStacks : 0);
@@ -4186,6 +4198,17 @@ function strongestLivingAura(state: SkirmishState, receiverSide: Side, field: "t
     .map((provider) => provider.def.passive[field] ?? 0));
 }
 
+/** 패시브 돌파(`terrorCarapace`) — 자신이 건 위압이 살아 있는 적 한 명당 방어·저항 증가(%). 열려 있지 않으면 0이다. */
+function terrorCarapacePercent(state: SkirmishState, fighter: Fighter): number {
+  const plan = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+  if (plan?.kind !== "terrorCarapace") return 0;
+  let count = 0;
+  for (const other of state.fighters) {
+    if (other.side !== fighter.side && isFighterAlive(other) && other.intimidation?.sourceId === fighter.id) count += 1;
+  }
+  return plan.percentPerIntimidated * Math.min(count, plan.maxIntimidated);
+}
+
 /** 피해 공식에만 생존 오라의 방어력·저항력 배율을 투영하고 원본 정적 정의는 변경하지 않는다. */
 export function defensiveDefinition(target: Fighter, state: SkirmishState): Fighter {
   const bonus = strongestLivingAura(state, target.side, "teamDefenseResistancePercent");
@@ -4199,13 +4222,15 @@ export function defensiveDefinition(target: Fighter, state: SkirmishState): Figh
   // 토리카는 퍼센트가 아닌 실제값을 피해 계산용 사본에만 더해 정적 RelicDef를 보존한다.
   const torika = target.ferocityFever && target.def.ferocityTrait.effectId === "torikaBulwark" ? target.def.ferocityTrait : undefined;
   const reagentReduction = reagentResistanceReduction(target);
+  // 패시브 돌파(`terrorCarapace`)는 자신이 위압을 건 적이 서 있는 동안만 방어·저항을 올린다.
+  const carapace = terrorCarapacePercent(state, target);
   // 요람 연결(모르페)은 소환수가 살아 있는 동안만 방어·저항을 함께 올린다. 오라·모피 코트와 같은 자리에서 곱한다.
   const linked = droneLinkDefensePercent(state, target);
-  if (bonus <= 0 && furCoat <= 0 && linked <= 0 && torika === undefined && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0 && reagentReduction === 0) return target;
+  if (bonus <= 0 && furCoat <= 0 && linked <= 0 && carapace <= 0 && torika === undefined && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0 && reagentReduction === 0) return target;
   return { ...target, def: { ...target.def, stats: { ...target.def.stats,
-    def: target.def.stats.def * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + target.augmentDefensePercent / 100) + (torika?.defenseBonus ?? 0),
+    def: target.def.stats.def * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + target.augmentDefensePercent / 100) + (torika?.defenseBonus ?? 0),
     // 시약 반응은 정적 정의가 아닌 런타임 실제 감소량이며, 여러 제공자가 있어도 유효 저항은 0 아래로 내리지 않는다.
-    res: Math.max(0, target.def.stats.res * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + target.augmentResistancePercent / 100) * shred - reagentReduction + (torika?.resistanceBonus ?? 0)),
+    res: Math.max(0, target.def.stats.res * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + target.augmentResistancePercent / 100) * shred - reagentReduction + (torika?.resistanceBonus ?? 0)),
   } } };
 }
 
@@ -4808,6 +4833,18 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, even
       for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
     }
     if (feverBreakthrough?.kind === "ambushCrit") fighter.bt.ambushCritReady = true;
+    if (feverBreakthrough?.kind === "dreadSurge") {
+      // 위압의 범위는 패시브와 같은 반경이고, 쌓는 길도 같다(면역·이미 겁먹은 적은 건너뛴다).
+      const looming = fighter.def.passive.looming;
+      if (looming) {
+        for (let n = 0; n < feverBreakthrough.stacks; n += 1) {
+          for (const other of state.fighters) {
+            if (other.side === fighter.side || !isFighterAlive(other) || distance(fighter, other) > looming.radius) continue;
+            applyIntimidate(other, looming.intimidate, [], state, fighter.id, false);
+          }
+        }
+      }
+    }
     const trait = fighter.def.ferocityTrait;
     if (trait.effectId === "stealthLeap") {
       fighter.stealthFor = trait.durationSeconds;
@@ -7769,6 +7806,15 @@ export function fireUltimate(
     }
     const percent = plan.shieldMaxHpPercent + plan.shieldPerFearedMaxHpPercent * Math.min(feared, plan.shieldMaxFeared);
     grantShield(state, attacker, attacker.id, Math.max(1, Math.round(attacker.maxHp * percent / 100)), events, 1.5);
+    // 궁극기 돌파(`roarAegis`) — 실제로 겁먹은 적 수만큼 살아 있는 아군 전원에게도 막을 두른다.
+    const aegis = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
+    if (aegis?.kind === "roarAegis" && feared > 0) {
+      const aegisPercent = aegis.shieldPercentPerFeared * Math.min(feared, aegis.maxFeared);
+      for (const ally of state.fighters) {
+        if (ally.side !== attacker.side || !isFighterAlive(ally)) continue;
+        grantShield(state, ally, attacker.id, Math.max(1, Math.round(ally.maxHp * aegisPercent / 100)), events, 1);
+      }
+    }
     events.push({ kind: "areaImpact", attackerId: attacker.id, ultimate: true, status: "fear",
       area: { shape: "radial", x: attacker.x, y: attacker.y, radius: plan.radius } });
     attacker.attackCooldown = attackInterval(attacker, state);

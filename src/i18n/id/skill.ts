@@ -328,4 +328,8 @@ export const SKILL_ID = {
   "skill.breakthrough.effect.ferocity.windPull": "Selama [[ferocity|Amukan]], selain energi yang dibagikan serangan dasar, satu sekutu dengan energi terendah mendapat {energy} lagi.",
   "skill.breakthrough.effect.passive.huntMark": "Terhadap musuh yang juga dibidik sekutu lain, kerusakan kritikal naik {percent}%.",
   "skill.breakthrough.effect.passive.windEcho": "Saat 「{name}」 aktif dan masuk [[stealth|Siluman]], semua sekutu hidup mendapat {energy} Energi Ultimate.",
+  "skill.breakthrough.effect.basic.dreadAegis": "Saat「{name}」mengenai musuh yang sudah terkena[[intimidation|Intimidasi]], unit ini mendapat[[shield|perisai]]sebesar {percent}% HP maksimumnya. Aktif paling banyak sekali setiap {seconds} detik.",
+  "skill.breakthrough.effect.ultimate.roarAegis": "Untuk setiap musuh yang benar-benar dibuat[[fear|Takut]]oleh「{name}」, semua sekutu hidup mendapat[[shield|perisai]]sebesar {percent}% HP maksimum mereka (dihitung hingga {max} musuh).",
+  "skill.breakthrough.effect.ferocity.dreadSurge": "Saat[[ferocity|Mengamuk]]dimulai, menumpuk {stacks} lapis[[intimidation|Intimidasi]]pada semua musuh di sekitar.",
+  "skill.breakthrough.effect.passive.terrorCarapace": "Untuk setiap musuh yang dikenai[[intimidation|Intimidasi]]oleh unit ini, [[def|Pertahanan]]dan[[res|Resistensi]]meningkat {percent}% (maksimal {max}%).",
 } as const;

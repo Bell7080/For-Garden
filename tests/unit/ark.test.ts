@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { applyCombatStatusEffect, createSkirmish, fireUltimate, stepSkirmish, type Arena, type Fighter, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
+import { applyCombatStatusEffect, createSkirmish, defensiveDefinition, fireUltimate, stepSkirmish, type Arena, type Fighter, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
 import { combatPower } from "../../src/core/combatPower";
 import { withinRarityBand } from "../../src/core/rarityScaling";
 import { getRelic } from "../../src/data/relics";
 import { findKeyword } from "../../src/data/keywords";
-import { ferocityTraitDescription, passiveDescription, skillDescription } from "../../src/ui/skillPresentation";
+import { breakthroughEffectText, ferocityTraitDescription, passiveDescription, skillDescription } from "../../src/ui/skillPresentation";
 import { unitStatusViews } from "../../src/ui/unitStatusModel";
 
 /**
@@ -232,5 +232,112 @@ describe("아크 — 사냥 본능", () => {
 
   it("은 피해량과 궁극기는 건드리지 않는다", () => {
     expect(JSON.stringify(TRAIT)).not.toMatch(/damage|ultimate/i);
+  });
+});
+
+describe("아크 — 한계 돌파", () => {
+  const BT = ARK.breakthroughEffects!;
+  const basic = BT.basic as Extract<typeof BT.basic, { kind: "dreadAegis" }>;
+  const ultimate = BT.ultimate as Extract<typeof BT.ultimate, { kind: "roarAegis" }>;
+  const ferocity = BT.ferocity as Extract<typeof BT.ferocity, { kind: "dreadSurge" }>;
+  const passive = BT.passive as Extract<typeof BT.passive, { kind: "terrorCarapace" }>;
+
+  function withBreakthrough(breakthrough: number, enemyIds: string[] = ["amo", "toby"]) {
+    const state = createSkirmish([getRelic("ark"), getRelic("torika")], enemyIds.map((id) => getRelic(id)), ARENA, {}, { ark: breakthrough });
+    const [ark, ally] = state.fighters.filter((fighter) => fighter.side === "player");
+    const enemies = state.fighters.filter((fighter) => fighter.side === "enemy");
+    quiet(state);
+    ark.x = 500; ark.y = 900;
+    ally.x = 560; ally.y = 900;
+    enemies.forEach((enemy, index) => { enemy.x = 480 + index * 60; enemy.y = 840; enemy.stealthFor = 0; });
+    ark.loomingIn = Number.POSITIVE_INFINITY;
+    return { state, ark, ally, enemies };
+  }
+
+  it("은 네 슬롯이 모두 계약된 효과이고 받는 피해 감소를 쓰지 않는다", () => {
+    expect([basic.kind, ultimate.kind, ferocity.kind, passive.kind]).toEqual(["dreadAegis", "roarAegis", "dreadSurge", "terrorCarapace"]);
+    expect(JSON.stringify(BT)).not.toMatch(/damageReduction|energy|cooldownReduction/);
+  });
+
+  it("II — 위압이 이미 걸린 적을 평타로 맞히면 막을 두르고, 재사용 대기 안에서는 다시 두르지 않는다", () => {
+    const { state, ark, enemies } = withBreakthrough(1);
+    const [enemy] = enemies;
+    applyCombatStatusEffect(enemy, INTIMIDATE, [], state, ark.id);
+    expect(ark.shield.amount).toBe(0);
+    applyCombatStatusEffect(enemy, { ...INTIMIDATE, maxStacks: 9 }, [], state, ark.id);
+    expect(ark.shield.amount).toBeCloseTo(ark.maxHp * basic.shieldPercent / 100, 0);
+    const once = ark.shield.amount;
+    applyCombatStatusEffect(enemy, { ...INTIMIDATE, maxStacks: 9 }, [], state, ark.id);
+    expect(ark.shield.amount).toBe(once);
+    state.elapsed += basic.cooldownSeconds + 0.1;
+    applyCombatStatusEffect(enemy, { ...INTIMIDATE, maxStacks: 9 }, [], state, ark.id);
+    expect(ark.shield.amount).toBeGreaterThan(once);
+  });
+
+  it("II — 열리기 전에는 막이 없다", () => {
+    const { state, ark, enemies } = withBreakthrough(0);
+    for (let n = 0; n < 2; n += 1) applyCombatStatusEffect(enemies[0], { ...INTIMIDATE, maxStacks: 9 }, [], state, ark.id);
+    expect(ark.shield.amount).toBe(0);
+  });
+
+  it("III — 궁극기가 실제로 겁먹인 적 수만큼 아군 전원에게 막을 두른다", () => {
+    const { state, ark, ally, enemies } = withBreakthrough(2);
+    enemies[1].fearImmuneFor = 0;
+    ark.energy = 1_000;
+    fireUltimate(state, ark.id);
+    expect(ally.shield.amount).toBeCloseTo(ally.maxHp * ultimate.shieldPercentPerFeared * 2 / 100, 0);
+    const plain = withBreakthrough(1);
+    plain.ark.energy = 1_000;
+    fireUltimate(plain.state, plain.ark.id);
+    expect(plain.ally.shield.amount).toBe(0);
+  });
+
+  it("III — 아무도 겁먹지 않으면 아군 막이 없다", () => {
+    const { state, ark, ally, enemies } = withBreakthrough(2);
+    enemies.forEach((enemy) => { enemy.x = 500; enemy.y = 900 - ROAR.radius - 300; });
+    ark.energy = 1_000;
+    fireUltimate(state, ark.id);
+    expect(ally.shield.amount).toBe(0);
+  });
+
+  it("IV — 폭주에 들어서는 순간 반경 안의 적에게만 위압이 쌓이고, 궁극기·피해는 건드리지 않는다", () => {
+    const { state, ark, enemies } = withBreakthrough(3);
+    ark.attackCooldown = 0; ark.retargetIn = 0;
+    enemies[0].x = 500; enemies[0].y = 860;
+    enemies[1].x = 500; enemies[1].y = 900 - LOOMING.radius - 200;
+    ark.ferocity = 100 - 1e-6;
+    step(state, 1);
+    expect(ark.ferocityFever).toBe(true);
+    // 평타 한 겹 + 포위망 두 겹이면 세 겹이라 곧바로 공포가 발동한다 — 위압이 쌓였다는 증거는 공포이거나 남은 겹이다.
+    expect(enemies[0].fear !== null || (enemies[0].intimidation?.stacks ?? 0) >= ferocity.stacks).toBe(true);
+    expect(enemies[1].intimidation).toBeNull();
+    expect(JSON.stringify(ferocity)).not.toMatch(/damage|energy|ultimate/);
+  });
+
+  it("V — 자신이 위압을 건 적 수만큼 방어·저항이 오르고 상한을 넘지 않는다", () => {
+    const ids = Array.from({ length: passive.maxIntimidated + 2 }, () => "amo");
+    const { state, ark, enemies } = withBreakthrough(4, ids);
+    const before = defensiveDefinition(ark, state).def.stats;
+    enemies.slice(0, 2).forEach((enemy) => applyCombatStatusEffect(enemy, INTIMIDATE, [], state, ark.id));
+    const two = defensiveDefinition(ark, state).def.stats;
+    expect(two.def).toBeCloseTo(before.def * (1 + passive.percentPerIntimidated * 2 / 100), 3);
+    expect(two.res).toBeCloseTo(before.res * (1 + passive.percentPerIntimidated * 2 / 100), 3);
+    enemies.forEach((enemy) => applyCombatStatusEffect(enemy, INTIMIDATE, [], state, ark.id));
+    const all = defensiveDefinition(ark, state).def.stats;
+    expect(all.def).toBeCloseTo(before.def * (1 + passive.percentPerIntimidated * passive.maxIntimidated / 100), 3);
+  });
+
+  it("V — 위압이 공포로 바뀌어 풀리면 오른 값도 함께 사라진다", () => {
+    const { state, ark, enemies } = withBreakthrough(4);
+    const before = defensiveDefinition(ark, state).def.stats.def;
+    intimidateFully(state, ark, enemies[0]);
+    expect(defensiveDefinition(ark, state).def.stats.def).toBe(before);
+  });
+
+  it("의 효과 문구는 네 슬롯 모두 계약의 수를 말한다", () => {
+    expect(breakthroughEffectText(ARK, "basic")).toContain(`${basic.shieldPercent}%`);
+    expect(breakthroughEffectText(ARK, "ultimate")).toContain(`${ultimate.shieldPercentPerFeared}%`);
+    expect(breakthroughEffectText(ARK, "ferocity")).toContain(`${ferocity.stacks}겹`);
+    expect(breakthroughEffectText(ARK, "passive")).toContain(`${passive.percentPerIntimidated * passive.maxIntimidated}%`);
   });
 });

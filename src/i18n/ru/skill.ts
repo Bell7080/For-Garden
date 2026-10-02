@@ -328,4 +328,8 @@ export const SKILL_RU = {
   "skill.breakthrough.effect.ferocity.windPull": "Во время [[ferocity|неистовства]] помимо энергии от обычных атак союзник с наименьшей энергией получает ещё {energy}.",
   "skill.breakthrough.effect.passive.huntMark": "По врагам, которых атакует и другой союзник, критический урон растёт на {percent}%.",
   "skill.breakthrough.effect.passive.windEcho": "Когда 「{name}」 срабатывает и входит в [[stealth|невидимость]], все живые союзники получают {energy} энергии ульты.",
+  "skill.breakthrough.effect.basic.dreadAegis": "Когда「{name}」попадает по врагу, уже находящемуся под[[intimidation|Запугиванием]], этот боец получает[[shield|щит]]в размере {percent}% макс. здоровья. Срабатывает не чаще раза в {seconds} с.",
+  "skill.breakthrough.effect.ultimate.roarAegis": "За каждого врага, которого「{name}」действительно ввергает в[[fear|Страх]], все живые союзники получают[[shield|щит]]в размере {percent}% макс. здоровья (учитывается до {max} врагов).",
+  "skill.breakthrough.effect.ferocity.dreadSurge": "В момент начала[[ferocity|Неистовства]] накладывает {stacks} стак. [[intimidation|Запугивания]]на всех ближайших врагов.",
+  "skill.breakthrough.effect.passive.terrorCarapace": "За каждого врага под[[intimidation|Запугиванием]]от этого бойца[[def|Защита]]и[[res|Сопротивление]]растут на {percent}% (до {max}%).",
 } as const;

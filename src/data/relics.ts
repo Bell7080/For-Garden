@@ -610,6 +610,12 @@ export const RELICS: RelicDef[] = [
       // 주 대상의 최종 HP 손실을 기준으로, 주 대상에게서 가장 가까운 다른 적에게 전이한다.
       damageTransfer: { percent: 75, distanceOrigin: "primaryTarget" },
     },
+    breakthroughEffects: {
+      basic: { kind: "clawBleed" },
+      ultimate: { kind: "afterimageSlash", delaySeconds: 0.5, powerPercent: 60 },
+      ferocity: { kind: "frenzyClaws", every: 2 },
+      passive: { kind: "huntMark", criticalDamagePercent: 30 },
+    },
   },
   {
     id: "dodo",
@@ -909,6 +915,12 @@ export const RELICS: RelicDef[] = [
       targeting: "battlefieldAllies",
       // 지속 회복은 순풍 태그가 아니라 이 궁극기가 얹는 값이다 — 다른 개체가 건 순풍은 회복을 데려오지 않는다.
       teamBuff: { kind: "tailwind", attackSpeedPercent: 20, moveSpeedPercent: 20, seconds: 10, maxHpRegenPercentPerSecond: 2 },
+    },
+    breakthroughEffects: {
+      basic: { kind: "windStep", attackSpeedPercent: 10, seconds: 3 },
+      ultimate: { kind: "gustEnergy", energy: 25 },
+      ferocity: { kind: "windPull", extraEnergy: 5 },
+      passive: { kind: "windEcho", energy: 10 },
     },
   },
 

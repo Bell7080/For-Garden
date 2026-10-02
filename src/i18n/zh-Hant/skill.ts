@@ -314,4 +314,12 @@ export const SKILL_ZH_HANT = {
   "skill.breakthrough.effect.ultimate.bulwarkPayback": "「{name}」結束的瞬間，將期間代替承受的傷害的{percent}%以[[fixed-damage|固定傷害]]返還給周圍所有敵人。每名敵人受到的傷害不超過自身最大生命的{cap}%。",
   "skill.breakthrough.effect.ferocity.heatOverflow": "[[ferocity|暴走]]期間，[[nodonia-elation|愉悅]]最多可疊加{max}層。暴走結束後減少為{base}層。",
   "skill.breakthrough.effect.passive.sweeterWound": "每層[[nodonia-elation|愉悅]]每秒恢復的生命從最大生命的{from}%提高到{to}%。",
+  "skill.breakthrough.effect.basic.clawBleed": "「{name}」以週期暴擊命中時，使被擊中的敵人[[bleed|出血]]。",
+  "skill.breakthrough.effect.basic.windStep": "獲得「{name}」分給的必殺技能量的隊友，{seconds}秒內[[attack-speed|攻擊速度]]提升{percent}%。已有[[tailwind|順風]]的隊友不受影響。",
+  "skill.breakthrough.effect.ultimate.afterimageSlash": "「{name}」命中{seconds}秒後，殘影會再斬同一敵人一次，威力為{percent}%。敵人已倒下則不會觸發。",
+  "skill.breakthrough.effect.ultimate.gustEnergy": "施放「{name}」的瞬間，所有存活隊友獲得{energy}必殺技能量。",
+  "skill.breakthrough.effect.ferocity.frenzyClaws": "[[ferocity|暴走]]期間，「{name}」的週期暴擊由每{from}次攻擊縮短為每{to}次攻擊。",
+  "skill.breakthrough.effect.ferocity.windPull": "[[ferocity|暴走]]期間，除普通攻擊分出的能量外，能量最低的一名隊友額外獲得{energy}。",
+  "skill.breakthrough.effect.passive.huntMark": "對其他隊友也在鎖定的敵人，暴擊傷害提高{percent}%。",
+  "skill.breakthrough.effect.passive.windEcho": "「{name}」觸發並進入[[stealth|隱身]]的瞬間，所有存活隊友獲得{energy}必殺技能量。",
 } as const;

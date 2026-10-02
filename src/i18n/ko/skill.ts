@@ -362,4 +362,12 @@ export const SKILL_KO = {
   "skill.breakthrough.effect.ultimate.bulwarkPayback": "「{name}」이 끝나는 순간 그동안 대신 받은 피해의 {percent}%를 주위 모든 적에게 [[fixed-damage|고정 피해]]로 돌려준다. 적 한 명이 받는 피해는 자신의 최대 체력의 {cap}%를 넘지 않는다.",
   "skill.breakthrough.effect.ferocity.heatOverflow": "[[ferocity|폭주]] 중 [[nodonia-elation|희열]]이 최대 {max}겹까지 쌓인다. 폭주가 끝나면 {base}겹으로 줄어든다.",
   "skill.breakthrough.effect.passive.sweeterWound": "[[nodonia-elation|희열]] 한 겹이 돌리는 매초 회복이 최대 체력의 {from}%에서 {to}%로 늘어난다.",
+  "skill.breakthrough.effect.basic.clawBleed": "「{name}」{name!이} 주기 치명타로 적중하면 맞은 적에게 [[bleed|출혈]]을 남긴다.",
+  "skill.breakthrough.effect.basic.windStep": "「{name}」{name!이} 나눠 준 궁극기 게이지를 받은 아군은 {seconds}초 동안 [[attack-speed|공격 속도]]가 {percent}% 오른다. 이미 [[tailwind|순풍]]이 걸린 아군은 제외한다.",
+  "skill.breakthrough.effect.ultimate.afterimageSlash": "「{name}」{name!이} 적중하고 {seconds}초 뒤 잔상이 같은 적을 한 번 더 벤다. 위력은 {percent}%이고 적이 이미 쓰러졌으면 베지 않는다.",
+  "skill.breakthrough.effect.ultimate.gustEnergy": "「{name}」{name!을} 쓰는 순간 살아 있는 아군 모두가 궁극기 게이지를 {energy} 얻는다.",
+  "skill.breakthrough.effect.ferocity.frenzyClaws": "[[ferocity|폭주]] 중 「{name}」의 치명타 주기가 {from}번째 공격에서 {to}번째 공격마다로 짧아진다.",
+  "skill.breakthrough.effect.ferocity.windPull": "[[ferocity|폭주]] 중 일반 공격이 나눠 주는 게이지에 더해, 게이지가 가장 낮은 아군 한 명이 {energy}를 더 받는다.",
+  "skill.breakthrough.effect.passive.huntMark": "다른 아군이 함께 노리는 적에게는 치명타 피해가 {percent}% 늘어난다.",
+  "skill.breakthrough.effect.passive.windEcho": "「{name}」{name!이} 발동해 [[stealth|은신]]에 들어가는 순간 살아 있는 아군 모두가 궁극기 게이지를 {energy} 얻는다.",
 } as const;

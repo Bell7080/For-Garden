@@ -314,4 +314,12 @@ export const SKILL_RU = {
   "skill.breakthrough.effect.ultimate.bulwarkPayback": "Когда «{name}» заканчивается, {percent}% урона, принятого вместо союзников, возвращается всем врагам рядом как [[fixed-damage|фиксированный урон]]. Один враг получает не более {cap}% макс. ОЗ этого юнита.",
   "skill.breakthrough.effect.ferocity.heatOverflow": "Во время [[ferocity|неистовства]] [[nodonia-elation|упоение]] накапливается до {max} зарядов. Когда неистовство заканчивается, остаётся {base} зарядов.",
   "skill.breakthrough.effect.passive.sweeterWound": "Каждый заряд [[nodonia-elation|упоения]] восстанавливает в секунду {to}% макс. ОЗ вместо {from}%.",
+  "skill.breakthrough.effect.basic.clawBleed": "Когда 「{name}」 попадает периодическим критом, цель получает [[bleed|кровотечение]].",
+  "skill.breakthrough.effect.basic.windStep": "Союзники, получившие от 「{name}」 энергию ульты, на {seconds} с получают +{percent}% [[attack-speed|скорости атаки]]. Союзники с [[tailwind|попутным ветром]] пропускаются.",
+  "skill.breakthrough.effect.ultimate.afterimageSlash": "Через {seconds} с после попадания 「{name}」 послеобраз ещё раз рубит того же врага с силой {percent}%. Если враг уже погиб, удара нет.",
+  "skill.breakthrough.effect.ultimate.gustEnergy": "При использовании 「{name}」 все живые союзники получают {energy} энергии ульты.",
+  "skill.breakthrough.effect.ferocity.frenzyClaws": "Во время [[ferocity|неистовства]] периодический крит 「{name}」 срабатывает каждые {to} атаки вместо каждых {from}.",
+  "skill.breakthrough.effect.ferocity.windPull": "Во время [[ferocity|неистовства]] помимо энергии от обычных атак союзник с наименьшей энергией получает ещё {energy}.",
+  "skill.breakthrough.effect.passive.huntMark": "По врагам, которых атакует и другой союзник, критический урон растёт на {percent}%.",
+  "skill.breakthrough.effect.passive.windEcho": "Когда 「{name}」 срабатывает и входит в [[stealth|невидимость]], все живые союзники получают {energy} энергии ульты.",
 } as const;

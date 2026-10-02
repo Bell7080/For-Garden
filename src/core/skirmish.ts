@@ -353,6 +353,8 @@ export interface Fighter extends Combatant {
     tidalEchoes: { x: number; y: number; remaining: number; power: number }[];
     /** 평타 돌파(`arrowEcho`)가 되돌려 쏠 갈래화살. 중심·남은 시간·걸음 사본을 든다. */
     arrowEchoes: { x: number; y: number; remaining: number; skill: Skill }[];
+    /** 궁극기 돌파(`afterimageSlash`)가 되돌려 벨 표적과 남은 시간. */
+    afterimages: { targetId: string; remaining: number }[];
     /** 같은 스킬이 건 기절을 다시 받지 않는 시각(`stunLockoutSeconds`). 키는 `시전자:스킬ID`다. */
     stunLockouts: Record<string, number>;
     /** 패시브 돌파(`relink`)의 전투당 한 번뿐인 재연결을 썼는지. */
@@ -1147,6 +1149,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
       ambushCritReady: false,
       tidalEchoes: [],
       arrowEchoes: [],
+      afterimages: [],
       stunLockouts: {},
       relinkUsed: false,
       orderStruck: [],
@@ -4426,14 +4429,73 @@ function gainEnergy(fighter: Fighter, state?: SkirmishState): void {
   fighter.energy = Math.min(ULTIMATE_ENERGY_MAX, fighter.energy + fighter.def.stats.energyGain + rally);
 }
 
+/** 체력 단계형 궁극기의 충전 문턱을 지켜 게이지를 더한다. 아군에게 게이지를 나눠 주는 모든 경로가 이 함수 하나를 지난다. */
+function giveEnergy(ally: Fighter, amount: number): void {
+  const threshold = ally.def.ultimate.chargeStartsAtHpPercent;
+  if (threshold !== undefined && ally.hp / ally.maxHp * 100 > threshold) return;
+  ally.energy = Math.min(ULTIMATE_ENERGY_MAX, ally.energy + amount);
+}
+
 /** 기본 공격 한 번이 생존 아군 전체에게 나눠 주는 궁극기 게이지다. 시전자 자신도 포함한다. */
 function grantAllyEnergy(attacker: Fighter, skill: Skill, state: SkirmishState): void {
   const amount = skill.allyEnergyGain ?? 0;
   if (amount <= 0) return;
-  for (const ally of aliveFighters(state, attacker.side)) {
-    const threshold = ally.def.ultimate.chargeStartsAtHpPercent;
-    if (threshold !== undefined && ally.hp / ally.maxHp * 100 > threshold) continue;
-    ally.energy = Math.min(ULTIMATE_ENERGY_MAX, ally.energy + amount);
+  const allies = aliveFighters(state, attacker.side);
+  for (const ally of allies) giveEnergy(ally, amount);
+  // 폭주 돌파(`windPull`) — 폭주 중에는 가장 게이지가 낮은 아군 한 명이 한 번 더 받는다(전원 몫은 그대로).
+  const pull = attacker.ferocityFever ? openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity) : undefined;
+  if (pull?.kind === "windPull") {
+    const lowest = allies.reduce<Fighter | undefined>((low, ally) => !low || ally.energy < low.energy ? ally : low, undefined);
+    if (lowest) giveEnergy(lowest, pull.extraEnergy);
+  }
+  // 평타 돌파(`windStep`) — 게이지를 받은 아군에게 짧은 공격 속도 강화를 건다. 이미 순풍·오더가 걸린 아군은 덮지 않는다.
+  const step = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
+  if (step?.kind === "windStep") {
+    const buff: TeamBuff = { kind: "tailwind", attackSpeedPercent: step.attackSpeedPercent, moveSpeedPercent: 0, seconds: step.seconds, maxHpRegenPercentPerSecond: 0 };
+    for (const ally of allies) if (ally.tailwindFor <= 0) applyTeamBuff(ally, buff);
+  }
+}
+
+/** 패시브 돌파(`huntMark`) — 다른 아군이 함께 표적으로 삼은 적에게 늘어나는 치명타 피해(%p). 혼자 노리는 적에게는 0이다. */
+function huntMarkCriticalDamage(attacker: Fighter, target: Fighter, state: SkirmishState): number {
+  const mark = openedBreakthrough(attacker, "passive", (effects) => effects.passive);
+  if (mark?.kind !== "huntMark") return 0;
+  const shared = state.fighters.some((other) => other.id !== attacker.id && other.side === attacker.side
+    && isFighterAlive(other) && other.targetId === target.id);
+  return shared ? mark.criticalDamagePercent : 0;
+}
+
+/** 궁극기 돌파(`afterimageSlash`)의 시계. 시간이 다하면 살아 있는 같은 표적을 궁극기 위력의 일부로 한 번 더 벤다. */
+function tickAfterimages(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  if (fighter.bt.afterimages.length === 0) return;
+  if (!isFighterAlive(fighter)) { fighter.bt.afterimages = []; return; }
+  const due: typeof fighter.bt.afterimages = [];
+  fighter.bt.afterimages = fighter.bt.afterimages.filter((slash) => {
+    slash.remaining -= dt;
+    if (slash.remaining > EMERGENCY_RECOVERY.epsilon) return true;
+    due.push(slash);
+    return false;
+  });
+  const plan = openedBreakthrough(fighter, "ultimate", (effects) => effects.ultimate);
+  if (plan?.kind !== "afterimageSlash") return;
+  for (const slash of due) {
+    const target = findFighter(state, slash.targetId);
+    const skill = fighter.def.ultimate;
+    if (!target || !isFighterAlive(target) || !("damageType" in skill) || skill.damageType === undefined || skill.power === undefined) continue;
+    const attacker = { ...fighter, def: offensiveDefinition(fighter) };
+    const input = { ...skill, power: skill.power * plan.powerPercent / 100, isCritical: false, kind: "basic" as const };
+    const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(target, state), input)));
+    const resolution = resolveReceivedDamage(target, raw);
+    const hpBefore = target.hp;
+    const shieldBefore = target.shield.amount; const shieldProviderId = target.shield.providerId;
+    applyDamage(target, resolution.applied, events, state);
+    const credited = recordDamageContribution(state, fighter.id, target, skill.damageType, skill.scalingStat, computeDamageContribution(attacker, input), resolution, hpBefore, shieldBefore, shieldProviderId);
+    events.push({ kind: "attack", attackerId: fighter.id, targetId: target.id, skill: "basic", amount: resolution.applied,
+      contributionAmount: credited, critical: false, animate: false, damageType: skill.damageType, mitigated: resolution.reduced < resolution.raw, followUp: true });
+    if (!isFighterAlive(target)) {
+      clearDefeatedStatuses(target);
+      events.push({ kind: "death", fighterId: target.id, sourceId: fighter.id });
+    }
   }
 }
 
@@ -4989,6 +5051,9 @@ export function tryTriggerLowHpVanish(fighter: Fighter, state: SkirmishState): b
     fighter.focus = 0;
   }
   for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
+  // 패시브 돌파(`windEcho`) — 은신에 들어가는 순간 남기는 바람이 아군 전원에게 게이지를 건넨다. 발동권이 한 번뿐이라 전투당 한 번이다.
+  const echo = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+  if (echo?.kind === "windEcho") for (const ally of aliveFighters(state, fighter.side)) giveEnergy(ally, echo.energy);
   return true;
 }
 
@@ -5828,7 +5893,11 @@ function strike(
     // 행동마다 정확히 한 번 증가시키며 주기 끝은 0으로 되돌려 다음 네 공격을 독립적으로 센다.
     attacker.basicAttackCount += 1;
   }
-  const forcedCritical = periodicCritical !== undefined && attacker.basicAttackCount >= periodicCritical.every;
+  // 폭주 돌파(`frenzyClaws`) — 폭주 중에는 주기가 더 짧다. 이미 센 횟수가 새 간격을 넘었으면 이번 한 발이 곧 채우는 발이다.
+  const clawStorm = attackingInFever ? openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity) : undefined;
+  const periodEvery = periodicCritical === undefined ? 0
+    : clawStorm?.kind === "frenzyClaws" ? Math.min(periodicCritical.every, clawStorm.every) : periodicCritical.every;
+  const forcedCritical = periodicCritical !== undefined && attacker.basicAttackCount >= periodEvery;
   if (forcedCritical) attacker.basicAttackCount = 0;
   // 목덜미 — 표적이 문턱 아래면 이번 한 방이 확정 치명타에 큰 추가 피해가 된다. 판정은 **맞기 전의** 체력이다.
   const nape = napeBonus(attacker, target, skill, state, events);
@@ -5865,7 +5934,11 @@ function strike(
     // 방어를 일부 지나치는 한 방. 스킬이 적은 값에 폭주 특성(「폭풍 속의 조준」)이 기본 공격에 더하는 몫을 합친다.
     defenseIgnorePercent: Math.min(100, (skill.defenseIgnorePercent ?? 0) + stormAimIgnorePercent(attacker, attackingInFever, useUltimate)),
   };
-  const damageAttacker = { ...attacker, def: offensiveDefinition(attacker) };
+  const offense = offensiveDefinition(attacker);
+  // 패시브 돌파(`huntMark`) — 다른 아군이 함께 노리는 적에게는 치명타 피해가 늘어난다.
+  const markBonus = critical ? huntMarkCriticalDamage(attacker, target, state) : 0;
+  const damageAttacker = { ...attacker, def: markBonus > 0
+    ? { ...offense, stats: { ...offense.stats, critDamage: offense.stats.critDamage + markBonus } } : offense };
   const damageTarget = defensiveDefinition(target, state);
   const splashTrait = attacker.def.ferocityTrait;
   // 토리카의 방어력 추가 피해도 일반 물리 피해 공식(속성·대상 방어력·치명타)을 거친다.
@@ -6012,6 +6085,11 @@ function strike(
   target.dashY = (dy / gap) * SKIRMISH.knockback * power;
 
   applyStreak(attacker, target, events);
+  // 평타 돌파(`clawBleed`) — 주기 치명타가 채워진 발톱만 출혈을 남긴다. 표준 출혈이라 단일 슬롯 규칙을 그대로 지난다.
+  if (forcedCritical && !useUltimate && isFighterAlive(target) && !resolution.ignored
+    && openedBreakthrough(attacker, "basic", (effects) => effects.basic)?.kind === "clawBleed") {
+    refreshBleed(target, BLEED.seconds * attacker.statusPotencyMultiplier, BLEED.percentPerSecond, events, attacker.id);
+  }
   const augmentBleed = bleedOnAttackEffect(state.augmentEffects, attacker.def.id);
   if (augmentBleed && isFighterAlive(target)) {
     // 증강 전용 카운터가 발동 빈도를 제한하고, 실제 적용은 모든 출혈이 쓰는 단일 슬롯을 지난다.
@@ -6040,6 +6118,11 @@ function strike(
   });
   if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
   if (useUltimate) strikeShrapnel(attacker, target, damageInput, critical, state, events);
+  // 궁극기 돌파(`afterimageSlash`) — 꿰뚫은 적에게 잔상이 늦게 한 번 더 따라붙는다. 연격 둘째 타나 잔상 자신은 다시 예약하지 않는다.
+  if (useUltimate && !comboHit && isFighterAlive(target)) {
+    const slash = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
+    if (slash?.kind === "afterimageSlash") attacker.bt.afterimages.push({ targetId: target.id, remaining: slash.delaySeconds });
+  }
 
   // 덧칠된 적이 맞을 때마다 그 피해의 일부가 최저 체력 아군의 회복으로 돌아온다. 궁극기로
   // 덧칠이 지워지기 전에 정산해야 이번 타격의 몫이 빠지지 않는다.
@@ -7428,9 +7511,12 @@ export function fireUltimate(
   if (teamUltimate.targeting === "battlefieldAllies" && teamUltimate.teamBuff !== undefined) {
     // 피해도 회복도 없는 지원 궁극기다. 게이지만 쓰고 생존 아군 전체에 지속 강화를 건다.
     attacker.energy -= ultimateCost(state, attacker, true);
+    // 궁극기 돌파(`gustEnergy`) — 지나가는 바람이 아군 전원에게 게이지를 한 번 건넨다. 시전 한 번에 한 번이다.
+    const gust = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
     for (const ally of aliveFighters(state, attacker.side)) {
       applyTeamBuff(ally, teamUltimate.teamBuff);
       events.push({ kind: "teamBuff", fighterId: ally.id, buff: teamUltimate.teamBuff, sourceId: attacker.id });
+      if (gust?.kind === "gustEnergy") giveEnergy(ally, gust.energy);
     }
     attacker.attackCooldown = attackInterval(attacker, state);
     return events;
@@ -7646,7 +7732,7 @@ export function stepSkirmish(state: SkirmishState, dt: number, rng: () => number
       drainFerocityFever(fighter, step);
       if (feverBefore && !fighter.ferocityFever) applyFerocityBreakthrough(fighter, state, events);
     });
-    state.fighters.forEach((fighter) => { tickUltimateBreakthrough(fighter, step, state, events); tickTidalEchoes(fighter, step, state, events); tickArrowEchoes(fighter, step, state, events); });
+    state.fighters.forEach((fighter) => { tickUltimateBreakthrough(fighter, step, state, events); tickTidalEchoes(fighter, step, state, events); tickArrowEchoes(fighter, step, state, events); tickAfterimages(fighter, step, state, events); });
     remaining -= step;
   }
   // 타이머 값 자체가 아니라 호출 전후 경계를 비교해 진입·연장·해제를 명확히 구분한다.

@@ -314,4 +314,12 @@ export const SKILL_VI = {
   "skill.breakthrough.effect.ultimate.bulwarkPayback": "Khi \"{name}\" kết thúc, trả lại {percent}% sát thương đã chịu thay cho mọi kẻ địch xung quanh dưới dạng [[fixed-damage|sát thương cố định]]. Mỗi kẻ địch nhận không quá {cap}% HP tối đa của bản thân.",
   "skill.breakthrough.effect.ferocity.heatOverflow": "Trong [[ferocity|Cuồng bạo]], [[nodonia-elation|Hân hoan]] tích tối đa {max} tầng. Khi Cuồng bạo kết thúc, giảm xuống còn {base} tầng.",
   "skill.breakthrough.effect.passive.sweeterWound": "Mỗi tầng [[nodonia-elation|Hân hoan]] hồi mỗi giây tăng từ {from}% lên {to}% HP tối đa.",
+  "skill.breakthrough.effect.basic.clawBleed": "Khi 「{name}」 trúng chí mạng theo chu kỳ, mục tiêu bị [[bleed|Chảy máu]].",
+  "skill.breakthrough.effect.basic.windStep": "Đồng minh nhận năng lượng Tuyệt kỹ từ 「{name}」 được tăng {percent}% [[attack-speed|Tốc đánh]] trong {seconds} giây. Đồng minh đã có [[tailwind|Gió thuận]] sẽ bị bỏ qua.",
+  "skill.breakthrough.effect.ultimate.afterimageSlash": "{seconds} giây sau khi 「{name}」 trúng, tàn ảnh chém kẻ địch đó thêm một lần với {percent}% sức mạnh. Không chém nếu kẻ địch đã gục.",
+  "skill.breakthrough.effect.ultimate.gustEnergy": "Khi thi triển 「{name}」, mọi đồng minh còn sống nhận {energy} năng lượng Tuyệt kỹ.",
+  "skill.breakthrough.effect.ferocity.frenzyClaws": "Trong [[ferocity|Cuồng bạo]], chí mạng theo chu kỳ của 「{name}」 xuất hiện mỗi {to} đòn thay vì mỗi {from} đòn.",
+  "skill.breakthrough.effect.ferocity.windPull": "Trong [[ferocity|Cuồng bạo]], ngoài năng lượng do đòn thường chia sẻ, một đồng minh có năng lượng thấp nhất nhận thêm {energy}.",
+  "skill.breakthrough.effect.passive.huntMark": "Với kẻ địch mà đồng minh khác cũng đang nhắm, sát thương chí mạng tăng {percent}%.",
+  "skill.breakthrough.effect.passive.windEcho": "Khi 「{name}」 kích hoạt và vào [[stealth|Tàng hình]], mọi đồng minh còn sống nhận {energy} năng lượng Tuyệt kỹ.",
 } as const;

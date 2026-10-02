@@ -315,4 +315,12 @@ export const SKILL_EN = {
   "skill.breakthrough.effect.ultimate.bulwarkPayback": "When \"{name}\" ends, {percent}% of the damage taken on allies' behalf is returned to all nearby enemies as [[fixed-damage|Fixed Damage]]. No enemy takes more than {cap}% of this unit's Max HP.",
   "skill.breakthrough.effect.ferocity.heatOverflow": "During [[ferocity|Frenzy]], [[nodonia-elation|Elation]] stacks up to {max}. When Frenzy ends, it drops back to {base} stacks.",
   "skill.breakthrough.effect.passive.sweeterWound": "Each stack of [[nodonia-elation|Elation]] restores {to}% of Max HP per second instead of {from}%.",
+  "skill.breakthrough.effect.basic.clawBleed": "When \"{name}\" lands its periodic critical hit, the target gains [[bleed|Bleed]].",
+  "skill.breakthrough.effect.basic.windStep": "Allies who receive Ultimate gauge from \"{name}\" gain {percent}% [[attack-speed|Attack Speed]] for {seconds}s. Allies already under [[tailwind|Tailwind]] are skipped.",
+  "skill.breakthrough.effect.ultimate.afterimageSlash": "{seconds}s after \"{name}\" hits, an afterimage slashes the same enemy once more at {percent}% power. It does nothing if the enemy has already fallen.",
+  "skill.breakthrough.effect.ultimate.gustEnergy": "When \"{name}\" is cast, every living ally gains {energy} Ultimate gauge.",
+  "skill.breakthrough.effect.ferocity.frenzyClaws": "During [[ferocity|Frenzy]], the periodic critical of \"{name}\" comes every {to} attacks instead of every {from}.",
+  "skill.breakthrough.effect.ferocity.windPull": "During [[ferocity|Frenzy]], on top of the gauge shared by basic attacks, the ally with the lowest gauge gains {energy} more.",
+  "skill.breakthrough.effect.passive.huntMark": "Critical damage increases by {percent}% against enemies another ally is also targeting.",
+  "skill.breakthrough.effect.passive.windEcho": "When \"{name}\" triggers and this unit enters [[stealth|Stealth]], every living ally gains {energy} Ultimate gauge.",
 } as const;

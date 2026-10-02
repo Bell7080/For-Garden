@@ -314,4 +314,12 @@ export const SKILL_PT_BR = {
   "skill.breakthrough.effect.ultimate.bulwarkPayback": "Quando \"{name}\" termina, devolve {percent}% do dano recebido no lugar dos aliados a todos os inimigos próximos como [[fixed-damage|dano fixo]]. Nenhum inimigo sofre mais de {cap}% do PV máx. desta unidade.",
   "skill.breakthrough.effect.ferocity.heatOverflow": "Durante o [[ferocity|Frenesi]], [[nodonia-elation|Euforia]] acumula até {max}. Quando o Frenesi termina, volta para {base} acúmulos.",
   "skill.breakthrough.effect.passive.sweeterWound": "Cada acúmulo de [[nodonia-elation|Euforia]] recupera por segundo {to}% do PV máx. em vez de {from}%.",
+  "skill.breakthrough.effect.basic.clawBleed": "Quando 「{name}」 acerta com o crítico periódico, o alvo sofre [[bleed|Sangramento]].",
+  "skill.breakthrough.effect.basic.windStep": "Os aliados que recebem Energia de Suprema de 「{name}」 ganham {percent}% de [[attack-speed|Velocidade de ataque]] por {seconds} s. Aliados que já têm [[tailwind|Vento a favor]] são ignorados.",
+  "skill.breakthrough.effect.ultimate.afterimageSlash": "{seconds} s depois de 「{name}」 acertar, uma imagem residual corta o mesmo inimigo mais uma vez com {percent}% de poder. Não corta se o inimigo já caiu.",
+  "skill.breakthrough.effect.ultimate.gustEnergy": "Ao usar 「{name}」, todos os aliados vivos ganham {energy} de Energia de Suprema.",
+  "skill.breakthrough.effect.ferocity.frenzyClaws": "Durante o [[ferocity|Frenesi]], o crítico periódico de 「{name}」 ocorre a cada {to} ataques em vez de a cada {from}.",
+  "skill.breakthrough.effect.ferocity.windPull": "Durante o [[ferocity|Frenesi]], além da energia repartida pelos ataques básicos, o aliado com menos energia ganha mais {energy}.",
+  "skill.breakthrough.effect.passive.huntMark": "Contra inimigos que outro aliado também está mirando, o dano crítico aumenta {percent}%.",
+  "skill.breakthrough.effect.passive.windEcho": "Quando 「{name}」 ativa e entra em [[stealth|Furtividade]], todos os aliados vivos ganham {energy} de Energia de Suprema.",
 } as const;

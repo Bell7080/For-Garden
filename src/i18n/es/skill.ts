@@ -314,4 +314,12 @@ export const SKILL_ES = {
   "skill.breakthrough.effect.ultimate.bulwarkPayback": "Cuando «{name}» termina, devuelve el {percent}% del daño recibido en lugar de los aliados a todos los enemigos cercanos como [[fixed-damage|daño fijo]]. Ningún enemigo recibe más del {cap}% de los PV máx. de esta unidad.",
   "skill.breakthrough.effect.ferocity.heatOverflow": "Durante el [[ferocity|Frenesí]], la [[nodonia-elation|Euforia]] se acumula hasta {max} cargas. Al terminar el Frenesí, baja a {base} cargas.",
   "skill.breakthrough.effect.passive.sweeterWound": "Cada carga de [[nodonia-elation|Euforia]] recupera por segundo {to}% de los PV máx. en vez de {from}%.",
+  "skill.breakthrough.effect.basic.clawBleed": "Cuando 「{name}」 impacta con su crítico periódico, el objetivo sufre [[bleed|Sangrado]].",
+  "skill.breakthrough.effect.basic.windStep": "Los aliados que reciben Energía de Definitiva de 「{name}」 ganan un {percent}% de [[attack-speed|Velocidad de ataque]] durante {seconds} s. Se omite a los aliados que ya tienen [[tailwind|Viento a favor]].",
+  "skill.breakthrough.effect.ultimate.afterimageSlash": "{seconds} s después de que 「{name}」 impacta, una imagen residual vuelve a cortar al mismo enemigo con un {percent}% de potencia. No corta si el enemigo ya cayó.",
+  "skill.breakthrough.effect.ultimate.gustEnergy": "Al lanzar 「{name}」, todos los aliados vivos ganan {energy} de Energía de Definitiva.",
+  "skill.breakthrough.effect.ferocity.frenzyClaws": "Durante el [[ferocity|Frenesí]], el crítico periódico de 「{name}」 se produce cada {to} ataques en lugar de cada {from}.",
+  "skill.breakthrough.effect.ferocity.windPull": "Durante el [[ferocity|Frenesí]], además de la energía que reparten los ataques básicos, el aliado con menos energía gana {energy} más.",
+  "skill.breakthrough.effect.passive.huntMark": "Contra enemigos a los que otro aliado también apunta, el daño crítico aumenta un {percent}%.",
+  "skill.breakthrough.effect.passive.windEcho": "Cuando 「{name}」 se activa y entra en [[stealth|Sigilo]], todos los aliados vivos ganan {energy} de Energía de Definitiva.",
 } as const;

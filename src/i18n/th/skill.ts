@@ -314,4 +314,12 @@ export const SKILL_TH = {
   "skill.breakthrough.effect.ultimate.bulwarkPayback": "เมื่อ \"{name}\" สิ้นสุด จะคืน {percent}% ของความเสียหายที่รับแทนมาให้ศัตรูทั้งหมดรอบตัวเป็น[[fixed-damage|ความเสียหายคงที่]] ศัตรูแต่ละตัวรับความเสียหายไม่เกิน {cap}% ของ HP สูงสุดของตัวเอง",
   "skill.breakthrough.effect.ferocity.heatOverflow": "ระหว่าง[[ferocity|คลั่ง]] [[nodonia-elation|ปีติ]]สะสมได้สูงสุด {max} ชั้น เมื่อคลั่งสิ้นสุดจะลดลงเหลือ {base} ชั้น",
   "skill.breakthrough.effect.passive.sweeterWound": "[[nodonia-elation|ปีติ]]แต่ละชั้นฟื้นฟู HP ต่อวินาทีเพิ่มจาก {from}% เป็น {to}% ของ HP สูงสุด",
+  "skill.breakthrough.effect.basic.clawBleed": "เมื่อ「{name}」โดนคริติคอลตามรอบ ศัตรูที่ถูกโจมตีจะ[[bleed|เลือดไหล]]",
+  "skill.breakthrough.effect.basic.windStep": "พันธมิตรที่ได้รับพลังงานท่าไม้ตายจาก「{name}」จะมี[[attack-speed|ความเร็วโจมตี]]เพิ่มขึ้น {percent}% เป็นเวลา {seconds} วินาที พันธมิตรที่มี[[tailwind|ลมส่ง]]อยู่แล้วจะไม่ได้รับ",
+  "skill.breakthrough.effect.ultimate.afterimageSlash": "หลัง「{name}」โดน {seconds} วินาที ภาพเงาจะฟันศัตรูตัวเดิมอีกครั้งด้วยพลัง {percent}% หากศัตรูล้มไปแล้วจะไม่ฟัน",
+  "skill.breakthrough.effect.ultimate.gustEnergy": "ขณะใช้「{name}」 พันธมิตรที่มีชีวิตทุกตัวจะได้รับพลังงานท่าไม้ตาย {energy}",
+  "skill.breakthrough.effect.ferocity.frenzyClaws": "ระหว่าง[[ferocity|คลั่ง]] คริติคอลตามรอบของ「{name}」จะเกิดทุก {to} ครั้งแทนทุก {from} ครั้ง",
+  "skill.breakthrough.effect.ferocity.windPull": "ระหว่าง[[ferocity|คลั่ง]] นอกจากพลังงานที่โจมตีปกติแบ่งให้ พันธมิตรที่มีพลังงานต่ำที่สุดหนึ่งคนจะได้รับเพิ่ม {energy}",
+  "skill.breakthrough.effect.passive.huntMark": "ศัตรูที่พันธมิตรคนอื่นก็กำลังเล็งอยู่ จะรับความเสียหายคริติคอลเพิ่มขึ้น {percent}%",
+  "skill.breakthrough.effect.passive.windEcho": "ขณะที่「{name}」ทำงานและเข้าสู่[[stealth|ล่องหน]] พันธมิตรที่มีชีวิตทุกตัวจะได้รับพลังงานท่าไม้ตาย {energy}",
 } as const;

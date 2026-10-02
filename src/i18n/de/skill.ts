@@ -314,4 +314,12 @@ export const SKILL_DE = {
   "skill.breakthrough.effect.ultimate.bulwarkPayback": "Wenn „{name}“ endet, werden {percent} % des stellvertretend erlittenen Schadens als [[fixed-damage|fester Schaden]] an alle Gegner in der Nähe zurückgegeben. Kein Gegner erleidet mehr als {cap} % des max. Lebens dieser Einheit.",
   "skill.breakthrough.effect.ferocity.heatOverflow": "Während der [[ferocity|Raserei]] baut sich [[nodonia-elation|Hochgefühl]] bis zu {max} Stapel auf. Endet die Raserei, sinkt es auf {base} Stapel.",
   "skill.breakthrough.effect.passive.sweeterWound": "Jeder Stapel [[nodonia-elation|Hochgefühl]] stellt pro Sekunde {to} % statt {from} % des max. Lebens wieder her.",
+  "skill.breakthrough.effect.basic.clawBleed": "Trifft 「{name}」 mit dem periodischen kritischen Treffer, erleidet das Ziel [[bleed|Blutung]].",
+  "skill.breakthrough.effect.basic.windStep": "Verbündete, die von 「{name}」 Ultimativ-Energie erhalten, bekommen {seconds} s lang {percent}% mehr [[attack-speed|Angriffstempo]]. Verbündete mit [[tailwind|Rückenwind]] werden übersprungen.",
+  "skill.breakthrough.effect.ultimate.afterimageSlash": "{seconds} s nachdem 「{name}」 getroffen hat, schlägt ein Nachbild den Gegner noch einmal mit {percent}% Kraft. Es schlägt nicht zu, wenn der Gegner bereits gefallen ist.",
+  "skill.breakthrough.effect.ultimate.gustEnergy": "Beim Einsatz von 「{name}」 erhalten alle lebenden Verbündeten {energy} Ultimativ-Energie.",
+  "skill.breakthrough.effect.ferocity.frenzyClaws": "Während der [[ferocity|Raserei]] tritt der periodische kritische Treffer von 「{name}」 alle {to} statt alle {from} Angriffe ein.",
+  "skill.breakthrough.effect.ferocity.windPull": "Während der [[ferocity|Raserei]] erhält zusätzlich zur Energie der Normalangriffe der Verbündete mit der geringsten Energie {energy} mehr.",
+  "skill.breakthrough.effect.passive.huntMark": "Gegen Gegner, die auch ein anderer Verbündeter anvisiert, steigt der kritische Schaden um {percent}%.",
+  "skill.breakthrough.effect.passive.windEcho": "Sobald 「{name}」 auslöst und in [[stealth|Tarnung]] übergeht, erhalten alle lebenden Verbündeten {energy} Ultimativ-Energie.",
 } as const;

@@ -337,4 +337,12 @@ export const SKILL_JA = {
   "skill.breakthrough.effect.ultimate.bulwarkPayback": "「{name}」が終わる瞬間、それまでに肩代わりしたダメージの{percent}%を周囲のすべての敵に[[fixed-damage|固定ダメージ]]として返す。敵1体が受けるダメージは自身の最大HPの{cap}%を超えない。",
   "skill.breakthrough.effect.ferocity.heatOverflow": "[[ferocity|暴走]]中、[[nodonia-elation|悦び]]が最大{max}重まで溜まる。暴走が終わると{base}重まで減る。",
   "skill.breakthrough.effect.passive.sweeterWound": "[[nodonia-elation|悦び]]1層が毎秒回復する量が、最大HPの{from}%から{to}%に増える。",
+  "skill.breakthrough.effect.basic.clawBleed": "「{name}」が周期クリティカルで命中すると、当たった敵に[[bleed|出血]]を与える。",
+  "skill.breakthrough.effect.basic.windStep": "「{name}」が分け与えた必殺技ゲージを受けた味方は、{seconds}秒間[[attack-speed|攻撃速度]]が{percent}%上がる。すでに[[tailwind|追い風]]がかかっている味方は対象外。",
+  "skill.breakthrough.effect.ultimate.afterimageSlash": "「{name}」が命中して{seconds}秒後、残像が同じ敵をもう一度斬る。威力は{percent}%で、敵がすでに倒れていれば斬らない。",
+  "skill.breakthrough.effect.ultimate.gustEnergy": "「{name}」を使う瞬間、生存している味方全員が必殺技ゲージを{energy}得る。",
+  "skill.breakthrough.effect.ferocity.frenzyClaws": "[[ferocity|暴走]]中、「{name}」の周期クリティカルが{from}回目ではなく{to}回目の攻撃ごとになる。",
+  "skill.breakthrough.effect.ferocity.windPull": "[[ferocity|暴走]]中、通常攻撃が分け与えるゲージに加えて、ゲージが最も低い味方1人がさらに{energy}を受け取る。",
+  "skill.breakthrough.effect.passive.huntMark": "他の味方も狙っている敵に対して、クリティカルダメージが{percent}%増える。",
+  "skill.breakthrough.effect.passive.windEcho": "「{name}」が発動して[[stealth|ステルス]]に入る瞬間、生存している味方全員が必殺技ゲージを{energy}得る。",
 } as const;

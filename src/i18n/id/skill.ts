@@ -314,4 +314,12 @@ export const SKILL_ID = {
   "skill.breakthrough.effect.ultimate.bulwarkPayback": "Saat \"{name}\" berakhir, {percent}% kerusakan yang diterima menggantikan sekutu dikembalikan ke semua musuh di sekitar sebagai [[fixed-damage|kerusakan tetap]]. Satu musuh menerima tidak lebih dari {cap}% HP maks dirinya sendiri.",
   "skill.breakthrough.effect.ferocity.heatOverflow": "Selama [[ferocity|Amukan]], [[nodonia-elation|Kegembiraan]] menumpuk hingga {max}. Saat Amukan berakhir, turun kembali ke {base} tumpuk.",
   "skill.breakthrough.effect.passive.sweeterWound": "Setiap tumpuk [[nodonia-elation|Kegembiraan]] memulihkan per detik naik dari {from}% menjadi {to}% HP maks.",
+  "skill.breakthrough.effect.basic.clawBleed": "Saat 「{name}」 mengenai dengan kritikal berkala, target terkena [[bleed|Pendarahan]].",
+  "skill.breakthrough.effect.basic.windStep": "Sekutu yang menerima Energi Ultimate dari 「{name}」 mendapat {percent}% [[attack-speed|Kecepatan Serang]] selama {seconds} dtk. Sekutu yang sudah memiliki [[tailwind|Angin Buritan]] dilewati.",
+  "skill.breakthrough.effect.ultimate.afterimageSlash": "{seconds} dtk setelah 「{name}」 mengenai, bayangan menebas musuh yang sama sekali lagi dengan {percent}% kekuatan. Tidak menebas jika musuh sudah tumbang.",
+  "skill.breakthrough.effect.ultimate.gustEnergy": "Saat 「{name}」 digunakan, semua sekutu hidup mendapat {energy} Energi Ultimate.",
+  "skill.breakthrough.effect.ferocity.frenzyClaws": "Selama [[ferocity|Amukan]], kritikal berkala 「{name}」 muncul setiap {to} serangan, bukan setiap {from}.",
+  "skill.breakthrough.effect.ferocity.windPull": "Selama [[ferocity|Amukan]], selain energi yang dibagikan serangan dasar, satu sekutu dengan energi terendah mendapat {energy} lagi.",
+  "skill.breakthrough.effect.passive.huntMark": "Terhadap musuh yang juga dibidik sekutu lain, kerusakan kritikal naik {percent}%.",
+  "skill.breakthrough.effect.passive.windEcho": "Saat 「{name}」 aktif dan masuk [[stealth|Siluman]], semua sekutu hidup mendapat {energy} Energi Ultimate.",
 } as const;

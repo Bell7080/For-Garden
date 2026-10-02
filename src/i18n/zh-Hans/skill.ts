@@ -314,4 +314,12 @@ export const SKILL_ZH_HANS = {
   "skill.breakthrough.effect.ultimate.bulwarkPayback": "「{name}」结束的瞬间，将期间代替承受的伤害的{percent}%以[[fixed-damage|固定伤害]]返还给周围所有敌人。每名敌人受到的伤害不超过自身最大生命的{cap}%。",
   "skill.breakthrough.effect.ferocity.heatOverflow": "[[ferocity|暴走]]期间，[[nodonia-elation|愉悦]]最多可叠加{max}层。暴走结束后减少为{base}层。",
   "skill.breakthrough.effect.passive.sweeterWound": "每层[[nodonia-elation|愉悦]]每秒恢复的生命从最大生命的{from}%提高到{to}%。",
+  "skill.breakthrough.effect.basic.clawBleed": "「{name}」以周期暴击命中时，使被击中的敌人[[bleed|出血]]。",
+  "skill.breakthrough.effect.basic.windStep": "获得「{name}」分给的必杀技能量的队友，{seconds}秒内[[attack-speed|攻击速度]]提升{percent}%。已有[[tailwind|顺风]]的队友不受影响。",
+  "skill.breakthrough.effect.ultimate.afterimageSlash": "「{name}」命中{seconds}秒后，残影会再斩同一敌人一次，威力为{percent}%。敌人已倒下则不会触发。",
+  "skill.breakthrough.effect.ultimate.gustEnergy": "施放「{name}」的瞬间，所有存活队友获得{energy}必杀技能量。",
+  "skill.breakthrough.effect.ferocity.frenzyClaws": "[[ferocity|暴走]]期间，「{name}」的周期暴击由每{from}次攻击缩短为每{to}次攻击。",
+  "skill.breakthrough.effect.ferocity.windPull": "[[ferocity|暴走]]期间，除普通攻击分出的能量外，能量最低的一名队友额外获得{energy}。",
+  "skill.breakthrough.effect.passive.huntMark": "对其他队友也在锁定的敌人，暴击伤害提高{percent}%。",
+  "skill.breakthrough.effect.passive.windEcho": "「{name}」触发并进入[[stealth|隐身]]的瞬间，所有存活队友获得{energy}必杀技能量。",
 } as const;

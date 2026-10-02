@@ -40,6 +40,9 @@ describe.each(Object.entries(RELIC_STORIES))("%s 이야기 묶음", (relicId, st
   it("은 발굴 기록과 일기가 도감 정의에 그대로 서 있다", () => {
     const def = getRelic(relicId);
     expect(def.fossilRecord).toBe(story.fossilRecord);
+    expect(story.closingLine.trim().length, "일기 끝 한마디").toBeGreaterThan(0);
+    // 스쿼드 안의 담당·역할은 일지에 적지 않는다(파벌 스토리에서 푼다).
+    expect(story.diary).not.toMatch(/쁘띠 로그|스쿼드/);
     expect(def.unlockRecord).toMatchObject({ status: "recorded", text: story.diary });
   });
 });

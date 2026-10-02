@@ -42,6 +42,11 @@ export interface RelicStoryProfile {
    * 쓰지 않고 읽으며 웃게 되는 일기처럼.
    */
   diary: string;
+  /**
+   * 일기가 끝난 뒤 회색으로 서는, 그 개체가 연구원에게 건네는 한마디. 뽑기 대사와 달리 일상에서 툭 던지는
+   * 말이라 그 개체의 성격이 한 줄에 드러나야 한다.
+   */
+  closingLine: string;
   /** 일지 하단에서 < > 로 넘기는 관찰 질문 셋. */
   questions: readonly [RelicDiaryQuestion, RelicDiaryQuestion, RelicDiaryQuestion];
   /** 유대 4·6·8·10에서 하나씩 열리는 애착 스토리. */
@@ -51,4 +56,27 @@ export interface RelicStoryProfile {
    * 매번 같은 말만 하지 않게 한다.
    */
   bondLines: readonly (readonly string[])[];
+}
+
+/**
+ * 애착 스토리 한 장을 처음 읽을 때 받는 젬. 뒤 장일수록 크다 — 10은 그 개체와의 마지막 장이다.
+ * 질문(50)보다 크게 두어 유대를 올릴 이유를 보상으로도 말한다.
+ */
+export const BOND_STORY_GEM_REWARD: Readonly<Record<BondStoryLevel, number>> = { 4: 100, 6: 150, 8: 200, 10: 300 };
+
+/** 애착 스토리 장의 저장 ID. 개체와 유대 레벨이 곧 키다. */
+export function bondChapterId(relicId: string, level: BondStoryLevel): string {
+  return `${relicId}:${level}`;
+}
+
+/**
+ * 관찰 질문이 열리는 시각(UTC 자정 기준 epoch ms).
+ *
+ * 처음 만난 날에 첫 질문이 열리고 하루에 하나씩 열린다 — 처음 얻은 개체는 사흘에 걸쳐 젬이 들어온다.
+ * 처음 만난 날이 기록되지 않은 개체(기록 도입 전에 얻은 개체)는 모두 열려 있다.
+ */
+export function diaryQuestionUnlockAt(metAt: string | undefined, index: number): number {
+  if (!metAt) return 0;
+  const met = new Date(metAt);
+  return Date.UTC(met.getUTCFullYear(), met.getUTCMonth(), met.getUTCDate() + index);
 }

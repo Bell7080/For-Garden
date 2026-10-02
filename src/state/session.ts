@@ -179,6 +179,8 @@ export interface Session {
   raid: RaidState;
   /** 치즈케이크 대작전에서 지금까지 이긴 가장 높은 단계다. 씬은 GameApi를 통해서만 변경한다. */
   cakeOperation: CakeOperationState;
+  /** 렐릭 이야기(관찰 질문 답변·처음 만난 날·읽은 애착 스토리). 젬 지급은 GameApi 경계만 바꾼다. */
+  relicStory: RelicStoryState;
 }
 
 /**
@@ -322,6 +324,27 @@ export interface BountyState {
   clearedTierIds: string[];
 }
 
+/** 관찰 질문 하나에 한 답변. 질문 ID는 전 개체에서 유일하다. */
+export interface RelicStoryAnswer {
+  relicId: string;
+  questionId: string;
+  choiceId: string;
+  /** 답한 시각(ISO). */
+  answeredAt: string;
+}
+
+export interface RelicStoryState {
+  /** 렐릭별 처음 만난 시각(ISO). 키가 없는 개체(기록 도입 전 보유)는 질문이 모두 열려 있다. */
+  metAt: Record<string, string>;
+  answers: RelicStoryAnswer[];
+  /** 젬을 받은 애착 스토리 장 ID(`<relicId>:<유대 레벨>`). */
+  claimedChapterIds: string[];
+}
+
+export function createEmptyRelicStoryState(): RelicStoryState {
+  return { metAt: {}, answers: [], claimedChapterIds: [] };
+}
+
 /** 관찰 일지에 그대로 표시할 수 있는, 완료된 인터뷰의 최소 스냅샷이다. */
 export interface ObservationRecord {
   date: string;
@@ -364,6 +387,8 @@ export interface SaveData {
   saveVersion: number;
   /** 물량형 던전 진행. 런타임 상태와 같은 모양이라 변환 없이 오간다. */
   cakeOperation: CakeOperationState;
+  /** 렐릭 이야기(관찰 질문 답변·처음 만난 날·읽은 애착 스토리). 젬 지급은 GameApi 경계만 바꾼다. */
+  relicStory: RelicStoryState;
   settings: GameSettings;
   completedStoryIds: string[];
   observationRecords: ObservationRecord[];
@@ -476,6 +501,8 @@ export function createDefaultSession(): Session {
     dailyContent: { date: "", restorationEntries: 0, completedIds: [], claimedRewardIds: [] },
     // 첫 단계는 늘 열려 있으므로 아무것도 이기지 않은 상태를 -1로 둔다.
     cakeOperation: { clearedIndex: -1 },
+    // 새 계정의 시작 렐릭도 처음 만난 날부터 하루에 하나씩 질문이 열린다(기록 도입 전 저장은 모두 열려 있다).
+    relicStory: { ...createEmptyRelicStoryState(), metAt: Object.fromEntries(STARTER_RELICS.map((id) => [id, new Date().toISOString()])) },
     // 빈 날짜 키는 첫 현상수배 조회에서 서버와 같은 UTC 날짜로 정규화된다.
     bounty: { clearedTierIds: [] },
     // 기간별 연구도와 단계 수령 기록은 임무 수령 기록과 독립적으로 초기화한다.

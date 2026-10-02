@@ -6,6 +6,9 @@ import { observationQuestionForRelicAndDate } from "../data/observations";
 import { t } from "../i18n";
 import type { KeywordManager } from "../managers/KeywordManager";
 import { observations } from "../managers/ObservationManager";
+import { relicStories } from "../managers/RelicStoryManager";
+import { relicStoryFor } from "../data/relicStories";
+import { addDiaryQuestionPager } from "./DiaryQuestionPager";
 import { addPopupBackgroundImage } from "./backgrounds";
 import { addFactionMark, factionMarkBounds } from "./FactionMark";
 import { drawGlyph } from "./glyphs";
@@ -236,13 +239,14 @@ export function openObservationJournal(deps: ObservationJournalDeps, options: Ob
   // 상단 정보는 확대된 표식의 실제 왼쪽 외곽(복제 그림자 포함) 전까지만 사용한다.
   const metadataWidth = JOURNAL_SQUAD_MARK.x + markBounds.left - JOURNAL_SQUAD_MARK.metadataGap - bodyLeft;
   const identity = buildJournalIdentity(scene, identityLines, metadataWidth, journal.font.regular, journal.spacing.line);
-  const rawRecord = disclosure.access === "full" ? disclosure.record : def.catalogSummary + t("info.journal.lockedNotice");
+  // 이야기 묶음이 있는 보유 개체는 회색 칸에 **발굴 기록**만, 흰 칸에 연구원의 일기를 세우고 일기 끝에 그 개체의
+  // 한마디(회색)와 관찰 질문 쪽지를 붙인다. 묶음이 없는 개체는 예전 방식 그대로다.
+  const story = interviews && owned && disclosure.access === "full" && relicStories.hasStory(def.id) ? relicStoryFor(def.id) : undefined;
+  const rawRecord = story ? def.fossilRecord : disclosure.access === "full" ? disclosure.record : def.catalogSummary + t("info.journal.lockedNotice");
   const excavationRecord = withoutRepeatedProfileDetails(rawRecord, def.observationProfile?.height, def.observationProfile?.weight);
   const excavation = keywords.layout(excavationRecord, { width: journal.body.width, size: journal.font.large, color: COLOR.inkDim, lineSpacing: journal.spacing.line });
-  // 다른 스쿼드를 향한 동경은 unlockRecord의 관찰 문장이 담당하므로, 여기서는 소속 메모만 그린다.
-  const squad = disclosure.access === "full" && def.squadNote
-    ? scene.add.text(0, 0, def.squadNote, textStyle({ role: "body", size: journal.font.small, color: COLOR.inkDim, lineSpacing: journal.spacing.compactLine, wrap: journal.body.width })).setOrigin(0, 0)
-    : undefined;
+  // 스쿼드 안의 담당·역할(`squadNote`)은 일지에서 풀지 않는다 — 파벌 스토리에서 풀 이야기라 지금은 데이터로만 두고
+  // 화면에 세우지 않는다. 소속 엠블럼과 이름만 메타데이터 옆에 선다.
 
   /*
    * 매일의 관찰 인터뷰는 **부른 쪽이 그 영역을 원할 때만** 만든다.
@@ -250,25 +254,29 @@ export function openObservationJournal(deps: ObservationJournalDeps, options: Ob
    * 적은 복원해 데려온 개체가 아니라 인터뷰가 없고, 그대로 두면 구분선과 제목만 남은 빈
    * 칸이 판 절반을 차지한다 — 준비되지 않은 자리는 안내 문구로 채우지 않고 통째로 비운다.
    */
-  const allEntries = interviews ? observations.recordFor(def.id) : [];
+  const allEntries = interviews && !story ? observations.recordFor(def.id) : [];
   const entries = allEntries.slice(-1).reverse();
   const observationHeading = interviews
     ? scene.add.text(0, 0, t("info.journal.afterRestoration"), textStyle({ role: "emphasis", size: journal.font.regular, color: COLOR.ink })).setOrigin(0, 0)
     : undefined;
   // 이 판에는 가장 최근 관찰 기록 한 건만 둔다. 쌓인 전체 이력은 별도 레이어(관찰 기록)가
   // 한 건씩 넘겨 보여 준다.
-  const observationCopy = entries.length
+  const observationCopy = story ? (disclosure.access === "full" ? disclosure.record : "") : entries.length
     ? entries.map((entry) => t("info.journal.entry", { date: entry.date, tag: entry.personalityTag, question: entry.question, answer: entry.answer, habit: entry.discoveredHabit })).join("\n\n")
     : t("info.journal.noObservation");
   const observation = interviews
-    ? scene.add.text(0, 0, observationCopy, textStyle({ role: "body", size: entries.length ? journal.font.regular : journal.font.small, color: COLOR.ink, lineSpacing: journal.spacing.compactLine, wrap: journal.body.width })).setOrigin(0, 0)
+    ? scene.add.text(0, 0, observationCopy, textStyle({ role: "body", size: entries.length || story ? journal.font.regular : journal.font.small, color: COLOR.ink, lineSpacing: journal.spacing.compactLine, wrap: journal.body.width })).setOrigin(0, 0)
     : undefined;
   // 링크 한 줄만큼 흐름 계산에 미리 더해 둔다 — 그러지 않으면 바로 아래 인터뷰 조작과 겹친다.
+  const closing = story
+    ? scene.add.text(0, 0, story.closingLine, textStyle({ role: "body", size: journal.font.small, color: COLOR.inkDim, lineSpacing: journal.spacing.compactLine, wrap: journal.body.width })).setOrigin(0, 0)
+    : undefined;
+  const closingHeight = closing ? journal.spacing.paragraph + closing.height : 0;
   const historyLinkHeight = allEntries.length > 1 ? journal.spacing.compactLine + journal.font.small + 16 : 0;
-  const actionHeight = interviews && owned ? OBSERVATION_INTERVIEW_LAYOUT.trigger.height : 0;
+  const actionHeight = story ? journal.questionBlock.height : interviews && owned ? OBSERVATION_INTERVIEW_LAYOUT.trigger.height : 0;
   const flow = calculateObservationJournalFlow({
-    metadata: identity.height, excavation: excavation.height, squad: squad?.height ?? 0,
-    observationHeading: observationHeading?.height ?? 0, observation: (observation?.height ?? 0) + historyLinkHeight, action: actionHeight,
+    metadata: identity.height, excavation: excavation.height, squad: 0,
+    observationHeading: observationHeading?.height ?? 0, observation: (observation?.height ?? 0) + closingHeight + historyLinkHeight, action: actionHeight,
   });
 
   popups.open({ width: journal.popup.width, height: flow.popupHeight, title: t("info.journal.title"), titleSize: journal.font.title, tilt: journal.popup.tilt, ...sourceOf(from) }, (body, close) => {
@@ -285,11 +293,11 @@ export function openObservationJournal(deps: ObservationJournalDeps, options: Ob
     identity.container.setPosition(bodyLeft, flow.metadataY); content.add(identity.container);
     content.add(drawHairline(scene, 0, flow.excavationDividerY, journal.body.width, { color: COLOR.accent, alpha: 0.35 }));
     excavation.setPosition(bodyLeft, flow.excavationY); content.add(excavation);
-    if (squad && flow.squadY !== undefined) { squad.setPosition(bodyLeft, flow.squadY); content.add(squad); }
     if (observationHeading && observation && flow.observationDividerY !== undefined && flow.observationHeadingY !== undefined && flow.observationY !== undefined) {
       content.add(drawHairline(scene, 0, flow.observationDividerY, journal.body.width, { color: COLOR.accent, alpha: 0.35 }));
       observationHeading.setPosition(bodyLeft, flow.observationHeadingY); content.add(observationHeading);
       observation.setPosition(bodyLeft, flow.observationY); content.add(observation);
+      if (closing) { closing.setPosition(bodyLeft, flow.observationY + observation.height + journal.spacing.paragraph); content.add(closing); }
       if (allEntries.length > 1) {
         // 이 개체의 다른 날짜 기록은 여기 밀어 넣지 않고 전용 레이어에서 한 건씩 넘겨 본다.
         const linkY = flow.observationY + observation.height + journal.spacing.compactLine;
@@ -312,7 +320,9 @@ export function openObservationJournal(deps: ObservationJournalDeps, options: Ob
     if (squadMark) content.add(squadMark);
     if (disclosure.access === "full") content.add(scene.add.text(JOURNAL_SQUAD_MARK.x, markY + markBounds.bottom + JOURNAL_SQUAD_MARK.nameGap, SQUADS[def.squad].name, textStyle({ role: "display", size: journal.font.regular, color: COLOR.accentText, align: "center" })).setOrigin(0.5, 0));
 
-    if (interviews && owned && flow.actionY !== undefined) {
+    if (story && flow.actionY !== undefined) {
+      addDiaryQuestionPager(scene, content, bodyLeft, flow.actionY, def.id);
+    } else if (interviews && owned && flow.actionY !== undefined) {
       addInterviewTrigger(deps, def, from, content, close, flow.actionY, actionHeight);
     }
     body.add(content);

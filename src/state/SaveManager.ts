@@ -19,6 +19,8 @@ import { createArchaeologyState } from "../core/strataDig";
 import { findItem } from "../data/items";
 import { EXPEDITION_AUGMENT_IDS, EXPEDITION_REWARD_IDS } from "../data/expedition";
 import { CAKE_OPERATION_TIERS } from "../data/cakeOperation";
+import { BOND_STORY_LEVELS } from "../core/relicStory";
+import { relicStoryFor } from "../data/relicStories";
 import { BOUNTY_TIERS } from "../data/bounty";
 import { validateExpeditionMap } from "../core/expeditionMap";
 import type { ExpeditionRunState } from "./session";
@@ -44,7 +46,7 @@ function migrateV12Rune(definitionId: string): RuneInstance {
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 43;
+export const CURRENT_SAVE_VERSION = 44;
 
 /**
  * 연구도는 기간마다 상한이 다르다(일일 100 · 주간 500). 상한이 120 하나이던 때의 저장은 일일
@@ -160,6 +162,16 @@ function migrateSavedRelicIds(input: Record<string, unknown>): Record<string, un
     entry.questionId = mapObservationId(entry.questionId);
     entry.choiceId = mapObservationId(entry.choiceId);
   });
+
+  // 렐릭 이야기도 개체 ID 자리를 같이 옮긴다(처음 만난 날의 키·답변의 개체·수령한 장 ID의 앞자리).
+  const story = data.relicStory as Record<string, unknown> | undefined;
+  if (story && typeof story === "object") {
+    story.metAt = remapRecordKeys(story.metAt, "렐릭 이야기의 처음 만난 날");
+    if (Array.isArray(story.answers)) story.answers.forEach((answer) => {
+      if (answer && typeof answer === "object") (answer as Record<string, unknown>).relicId = mapId((answer as Record<string, unknown>).relicId);
+    });
+    story.claimedChapterIds = mapUniqueIdsWith(story.claimedChapterIds, (id) => typeof id === "string" && id.includes(":") ? `${mapId(id.slice(0, id.indexOf(":"))) as string}${id.slice(id.indexOf(":"))}` : id);
+  }
 
   const expedition = data.expedition as Record<string, unknown> | undefined;
   if (expedition && typeof expedition === "object") {
@@ -309,6 +321,7 @@ export class SaveManager {
       // 레이드는 판마다 평평한 객체라 판 하나씩 얕게 복사하면 된다.
       raid: { instances: state.raid.instances.map((instance) => ({ ...instance })) },
       cakeOperation: { ...state.cakeOperation },
+      relicStory: cloneRelicStory(state.relicStory),
     };
     this.validate(data);
     return data;
@@ -429,6 +442,8 @@ export class SaveManager {
     const savedCake = legacy.cakeOperation as Partial<SaveData["cakeOperation"]> | undefined;
     const cakeClearedIndex = Number.isInteger(savedCake?.clearedIndex) ? Number(savedCake?.clearedIndex) : -1;
     const cakeOperation = { clearedIndex: Math.min(Math.max(-1, cakeClearedIndex), CAKE_OPERATION_TIERS.length - 1) };
+    // 렐릭 이야기(v44) 도입 전 저장은 답변·읽은 장이 없고, 처음 만난 날이 없는 개체는 질문이 모두 열린다.
+    const relicStory = normalizeRelicStory(legacy.relicStory);
     // 현상수배 도입(v38) 전 저장은 깬 등급이 없으므로 1급만 열린 채로 시작한다. 하루 입장 제한을
     // 걷어 낸 뒤로는 예전 저장의 날짜·횟수(`date`·`entries`)를 버리고 깬 등급만 옮긴다.
     const savedBounty = legacy.bounty as Partial<SaveData["bounty"]> | undefined;
@@ -532,10 +547,10 @@ export class SaveManager {
     const itemInventory = (Array.isArray(legacy.itemInventory) ? legacy.itemInventory : [])
       .filter((stack: { itemId?: unknown }) => stack?.itemId !== "raid-sigil");
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
-    if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid } as unknown as SaveData;
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, CURRENT_SAVE_VERSION];
+    if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory } as unknown as SaveData;
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
-    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid } as unknown as SaveData;
+    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory } as unknown as SaveData;
   }
 
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
@@ -613,6 +628,26 @@ export class SaveManager {
     // 표에 없는 단계까지 이긴 것으로 적힌 저장은 소탕으로 그만큼을 바로 털 수 있어 거절한다.
     if (!data.cakeOperation || !Number.isInteger(data.cakeOperation.clearedIndex)
       || data.cakeOperation.clearedIndex < -1 || data.cakeOperation.clearedIndex >= CAKE_OPERATION_TIERS.length) fail("치즈케이크 대작전 진행 정보가 올바르지 않습니다.");
+    this.validateRelicStory(data);
+  }
+
+  /** 답변은 보유한 개체의 실제 질문·선택지만, 한 질문에 한 번만 허용한다. 읽은 장은 정해진 유대 레벨만 허용한다. */
+  private validateRelicStory(data: SaveData): void {
+    const story = data.relicStory;
+    if (!story || typeof story.metAt !== "object" || !Array.isArray(story.answers) || !Array.isArray(story.claimedChapterIds)) throw new SaveDataError("렐릭 이야기 정보가 올바르지 않습니다.");
+    if (Object.entries(story.metAt).some(([, at]) => typeof at !== "string" || !Number.isFinite(Date.parse(at)))) throw new SaveDataError("렐릭 이야기의 처음 만난 날이 올바르지 않습니다.");
+    const seen = new Set<string>();
+    for (const answer of story.answers) {
+      const question = relicStoryFor(answer.relicId)?.questions.find(({ id }) => id === answer.questionId);
+      if (!data.ownedRelicIds.includes(answer.relicId) || !question || !question.choices.some(({ id }) => id === answer.choiceId) || seen.has(answer.questionId) || !Number.isFinite(Date.parse(answer.answeredAt))) throw new SaveDataError("렐릭 관찰 질문 답변이 올바르지 않습니다.");
+      seen.add(answer.questionId);
+    }
+    const chapters = new Set<string>();
+    for (const id of story.claimedChapterIds) {
+      const [relicId, level] = id.split(":");
+      if (!data.ownedRelicIds.includes(relicId) || !relicStoryFor(relicId) || !(BOND_STORY_LEVELS as readonly number[]).includes(Number(level)) || chapters.has(id)) throw new SaveDataError("렐릭 애착 스토리 수령 정보가 올바르지 않습니다.");
+      chapters.add(id);
+    }
   }
 
   private toSession(data: SaveData): Session {
@@ -648,8 +683,23 @@ export class SaveManager {
       expedition: { ...data.expedition, claimedRewardStageIds: [...data.expedition.claimedRewardStageIds], pendingRankReward: data.expedition.pendingRankReward ? { ...data.expedition.pendingRankReward } : null, lastParty: [...data.expedition.lastParty], run: data.expedition.run ? cloneExpeditionRun(data.expedition.run) : null },
       raid: { instances: data.raid.instances.map((instance) => ({ ...instance })) },
       cakeOperation: { ...data.cakeOperation },
+      relicStory: cloneRelicStory(data.relicStory),
     };
   }
+}
+
+function cloneRelicStory(story: SaveData["relicStory"]): SaveData["relicStory"] {
+  return { metAt: { ...story.metAt }, answers: story.answers.map((answer) => ({ ...answer })), claimedChapterIds: [...story.claimedChapterIds] };
+}
+
+/** 모양이 깨진 값은 비워 두고 검증이 나머지를 맡는다 — 구 저장은 필드가 통째로 없다. */
+function normalizeRelicStory(value: unknown): SaveData["relicStory"] {
+  const source = (value && typeof value === "object" ? value : {}) as Partial<SaveData["relicStory"]>;
+  return {
+    metAt: source.metAt && typeof source.metAt === "object" ? { ...source.metAt } : {},
+    answers: Array.isArray(source.answers) ? source.answers.map((answer) => ({ ...answer })) : [],
+    claimedChapterIds: Array.isArray(source.claimedChapterIds) ? [...source.claimedChapterIds] : [],
+  };
 }
 
 /** 브라우저 앱이 공유하는 유일한 로컬 저장 진입점이다. */

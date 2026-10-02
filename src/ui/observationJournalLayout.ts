@@ -21,6 +21,8 @@ export const OBSERVATION_JOURNAL_SIZE = {
   font: { small: 30, question: 31, regular: 33, large: 35, title: 36 },
   spacing: { line: 16, compactLine: 12, section: 48, divider: 28, paragraph: 30, choiceGap: 16 },
   choice: { width: 800, height: 76, bevel: 14 },
+  /** 하단 관찰 질문 칸. 쪽을 넘겨도 판이 다시 흐르지 않도록 고정 높이로 잡는다. */
+  questionBlock: { height: 660, headerHeight: 64, chip: { width: 250, height: 60, gap: 24, bevel: 10 } },
 } as const;
 
 export interface ObservationJournalHeights {

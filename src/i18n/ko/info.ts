@@ -56,6 +56,7 @@ export const INFO_KO = {
   "info.rune.filled": "채운 자리 {count}",
 
   "info.journal.title": "관찰 일지",
+  "info.journal.fossilRecord": "발굴 기록",
   "info.journal.id": "개체번호",
   "info.journal.project": "프로젝트",
   "info.journal.origin": "기원",

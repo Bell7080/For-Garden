@@ -8,7 +8,9 @@ import type { KeywordManager } from "../managers/KeywordManager";
 import { observations } from "../managers/ObservationManager";
 import { relicStories } from "../managers/RelicStoryManager";
 import { relicStoryFor } from "../data/relicStories";
-import { addDiaryQuestionPager } from "./DiaryQuestionPager";
+import { createDiaryQuestionState, diaryQuestionStatus, renderDiaryQuestionPage } from "./DiaryQuestionPager";
+import { motionPolicy } from "../core/settings";
+import { session } from "../state/session";
 import { addPopupBackgroundImage } from "./backgrounds";
 import { addFactionMark, factionMarkBounds } from "./FactionMark";
 import { drawGlyph } from "./glyphs";
@@ -63,6 +65,10 @@ export interface ObservationJournalOptions {
    */
   interviews: boolean;
   from: JournalSource;
+  /** 이야기 묶음이 있는 개체의 발굴 기록을 펼쳐 둘지. 기본은 접힌 채다. */
+  fossilOpen?: boolean;
+  /** 열 쪽(0이 본문, 1~3이 관찰 질문). 다시 열 때 보던 쪽을 지킨다. */
+  page?: number;
 }
 
 /** 일지를 여는 두루마리 버튼. 정보창과 적 정보 팝업이 같은 한 장을 쓴다. */
@@ -244,6 +250,7 @@ export function openObservationJournal(deps: ObservationJournalDeps, options: Ob
   const story = interviews && owned && disclosure.access === "full" && relicStories.hasStory(def.id) ? relicStoryFor(def.id) : undefined;
   const rawRecord = story ? def.fossilRecord : disclosure.access === "full" ? disclosure.record : def.catalogSummary + t("info.journal.lockedNotice");
   const excavationRecord = withoutRepeatedProfileDetails(rawRecord, def.observationProfile?.height, def.observationProfile?.weight);
+  const fossilOpen = options.fossilOpen === true;
   const excavation = keywords.layout(excavationRecord, { width: journal.body.width, size: journal.font.large, color: COLOR.inkDim, lineSpacing: journal.spacing.line });
   // 스쿼드 안의 담당·역할(`squadNote`)은 일지에서 풀지 않는다 — 파벌 스토리에서 풀 이야기라 지금은 데이터로만 두고
   // 화면에 세우지 않는다. 소속 엠블럼과 이름만 메타데이터 옆에 선다.
@@ -273,9 +280,13 @@ export function openObservationJournal(deps: ObservationJournalDeps, options: Ob
     : undefined;
   const closingHeight = closing ? journal.spacing.paragraph + closing.height : 0;
   const historyLinkHeight = allEntries.length > 1 ? journal.spacing.compactLine + journal.font.small + 16 : 0;
-  const actionHeight = story ? journal.questionBlock.height : interviews && owned ? OBSERVATION_INTERVIEW_LAYOUT.trigger.height : 0;
+  const fossilHeader = story
+    ? scene.add.text(0, 0, t("info.journal.fossilRecord"), textStyle({ role: "emphasis", size: journal.font.regular, color: COLOR.inkDim })).setOrigin(0, 0)
+    : undefined;
+  const fossilBodyHeight = fossilHeader ? fossilHeader.height + (fossilOpen ? journal.spacing.compactLine + excavation.height : 0) : excavation.height;
+  const actionHeight = story ? 0 : interviews && owned ? OBSERVATION_INTERVIEW_LAYOUT.trigger.height : 0;
   const flow = calculateObservationJournalFlow({
-    metadata: identity.height, excavation: excavation.height, squad: 0,
+    metadata: identity.height, excavation: fossilBodyHeight, squad: 0,
     observationHeading: observationHeading?.height ?? 0, observation: (observation?.height ?? 0) + closingHeight + historyLinkHeight, action: actionHeight,
   });
 
@@ -292,7 +303,16 @@ export function openObservationJournal(deps: ObservationJournalDeps, options: Ob
     const content = scene.add.container(0, -flow.popupHeight / 2);
     identity.container.setPosition(bodyLeft, flow.metadataY); content.add(identity.container);
     content.add(drawHairline(scene, 0, flow.excavationDividerY, journal.body.width, { color: COLOR.accent, alpha: 0.35 }));
-    excavation.setPosition(bodyLeft, flow.excavationY); content.add(excavation);
+    if (fossilHeader) {
+      // 발굴 기록은 접힌 채 서고, 머리줄을 누르면 펼친다(다시 열어 높이를 새로 잰다).
+      fossilHeader.setPosition(bodyLeft, flow.excavationY); content.add(fossilHeader);
+      const caret = drawGlyph(scene, "caret-down", bodyLeft + fossilHeader.width + 34, flow.excavationY + fossilHeader.height / 2, 30, COLOR.inkDimHex);
+      caret.setAngle(fossilOpen ? 180 : 0); content.add(caret);
+      const toggle = scene.add.rectangle(bodyLeft + (fossilHeader.width + 80) / 2, flow.excavationY + fossilHeader.height / 2, fossilHeader.width + 80, 90, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      toggle.on("pointerup", () => { close(); openObservationJournal(deps, { ...options, fossilOpen: !fossilOpen, page: 0 }); });
+      content.add(toggle);
+      if (fossilOpen) { excavation.setPosition(bodyLeft, flow.excavationY + fossilHeader.height + journal.spacing.compactLine); content.add(excavation); } else excavation.destroy();
+    } else { excavation.setPosition(bodyLeft, flow.excavationY); content.add(excavation); }
     if (observationHeading && observation && flow.observationDividerY !== undefined && flow.observationHeadingY !== undefined && flow.observationY !== undefined) {
       content.add(drawHairline(scene, 0, flow.observationDividerY, journal.body.width, { color: COLOR.accent, alpha: 0.35 }));
       observationHeading.setPosition(bodyLeft, flow.observationHeadingY); content.add(observationHeading);
@@ -320,13 +340,12 @@ export function openObservationJournal(deps: ObservationJournalDeps, options: Ob
     if (squadMark) content.add(squadMark);
     if (disclosure.access === "full") content.add(scene.add.text(JOURNAL_SQUAD_MARK.x, markY + markBounds.bottom + JOURNAL_SQUAD_MARK.nameGap, SQUADS[def.squad].name, textStyle({ role: "display", size: journal.font.regular, color: COLOR.accentText, align: "center" })).setOrigin(0.5, 0));
 
-    if (story && flow.actionY !== undefined) {
-      addDiaryQuestionPager(scene, content, bodyLeft, flow.actionY, def.id);
-    } else if (interviews && owned && flow.actionY !== undefined) {
+    if (interviews && owned && flow.actionY !== undefined) {
       addInterviewTrigger(deps, def, from, content, close, flow.actionY, actionHeight);
     }
     body.add(content);
 
+    let viewportRect: Phaser.GameObjects.Rectangle | undefined;
     if (flow.scrollable) {
       // 휠과 손가락 드래그가 같은 clamp를 써 콘텐츠가 위아래 안전 여백 밖으로 빠지지 않는다.
       const viewportTop = -flow.popupHeight / 2 + journal.body.top;
@@ -344,8 +363,95 @@ export function openObservationJournal(deps: ObservationJournalDeps, options: Ob
       viewport.on("pointerdown", (pointer: Phaser.Input.Pointer) => { lastY = pointer.y; });
       viewport.on("pointermove", (pointer: Phaser.Input.Pointer) => { if (pointer.isDown) { move(pointer.y - lastY); lastY = pointer.y; } });
       body.add(viewport);
+      viewportRect = viewport;
     }
+    if (story) addJournalPages(deps, options, body, content, viewportRect, flow.popupHeight, def.id);
   });
+}
+
+/**
+ * 일지를 **통째로 옆쪽으로 넘긴다** — 0쪽은 본문, 1~3쪽은 관찰 질문이다.
+ *
+ * 질문을 하단에 붙여 두던 때는 글 자리를 먹어 본문이 넘쳤다. 쪽을 따로 두고 `< >` 화살표(판 양옆)·쓸어 넘기기·아래 점이
+ * 같은 `go` 한 곳을 지나며, 옮기는 것은 본문 쪽 전체라 위쪽 제목·판은 가만히 있는다.
+ */
+function addJournalPages(
+  deps: ObservationJournalDeps,
+  options: ObservationJournalOptions,
+  body: Phaser.GameObjects.Container,
+  content: Phaser.GameObjects.Container,
+  viewport: Phaser.GameObjects.Rectangle | undefined,
+  popupHeight: number,
+  relicId: string,
+): void {
+  const { scene } = deps;
+  const journal = OBSERVATION_JOURNAL_SIZE;
+  const story = relicStoryFor(relicId);
+  if (!story) return;
+  const bodyLeft = -journal.body.width / 2;
+  const total = 1 + story.questions.length;
+  const state = createDiaryQuestionState();
+  const pages: Phaser.GameObjects.Container[] = [content];
+  story.questions.forEach((_, index) => {
+    const page = scene.add.container(0, -popupHeight / 2).setVisible(false);
+    const draw = (): void => { renderDiaryQuestionPage(scene, page, bodyLeft, journal.body.top, relicId, index, state, () => { draw(); paintChrome(); }); };
+    draw();
+    body.add(page);
+    pages.push(page);
+  });
+
+  const dotY = popupHeight / 2 - 46;
+  const dots: Phaser.GameObjects.Rectangle[] = [];
+  for (let index = 0; index < total; index += 1) {
+    const dot = scene.add.rectangle((index - (total - 1) / 2) * 34, dotY, 13, 13, COLOR.inkDimHex, 0.5).setAngle(45);
+    body.add(dot); dots.push(dot);
+  }
+  const arrowX = journal.popup.width / 2 - 40;
+  const prev = drawGlyph(scene, "page-prev", -arrowX, 0, 44, COLOR.inkHex);
+  const next = drawGlyph(scene, "page-next", arrowX, 0, 44, COLOR.inkHex);
+  body.add([prev, next]);
+
+  let current = Phaser.Math.Clamp(options.page ?? 0, 0, total - 1);
+  const paintChrome = (): void => {
+    dots.forEach((dot, index) => {
+      // 지금 쪽은 강조색, 아직 답하지 않은 열린 질문은 옅은 강조색, 나머지는 회색이다.
+      const waiting = index > 0 && diaryQuestionStatus(relicId, index - 1) === "open";
+      dot.setFillStyle(index === current || waiting ? COLOR.accent : COLOR.inkDimHex, index === current ? 1 : waiting ? 0.7 : 0.45);
+      dot.setScale(index === current ? 1.25 : 1);
+    });
+    prev.setAlpha(current > 0 ? 1 : 0.3); next.setAlpha(current < total - 1 ? 1 : 0.3);
+    viewport?.setVisible(current === 0);
+  };
+  const go = (target: number): void => {
+    if (target < 0 || target >= total || target === current) return;
+    const direction = target > current ? 1 : -1;
+    const outgoing = pages[current]; const incoming = pages[target];
+    current = target; paintChrome();
+    const distance = 90 * motionPolicy(session.settings).nonEssentialDistanceFactor;
+    scene.tweens.killTweensOf([outgoing, incoming]);
+    outgoing.setAlpha(1).setX(0);
+    incoming.setVisible(true).setAlpha(0).setX(direction * distance);
+    scene.tweens.add({ targets: outgoing, x: -direction * distance, alpha: 0, duration: 140, ease: "Cubic.easeIn", onComplete: () => { outgoing.setVisible(false).setX(0).setAlpha(1); } });
+    scene.tweens.add({ targets: incoming, x: 0, alpha: 1, duration: 200, ease: "Cubic.easeOut" });
+  };
+  if (current > 0) { content.setVisible(false); pages[current].setVisible(true); }
+  paintChrome();
+  for (const [glyph, step] of [[prev, -1], [next, 1]] as const) {
+    const hit = scene.add.rectangle(glyph.x, 0, 110, 260, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerup", () => go(current + step));
+    body.add(hit);
+  }
+
+  // 판 어디서든 옆으로 쓸면 넘어간다. 세로로 더 끌린 손은 본문 스크롤의 몫이라 건드리지 않는다.
+  let start: { x: number; y: number } | undefined;
+  const onDown = (pointer: Phaser.Input.Pointer): void => { start = body.getBounds().contains(pointer.x, pointer.y) ? { x: pointer.x, y: pointer.y } : undefined; };
+  const onUp = (pointer: Phaser.Input.Pointer): void => {
+    if (!start) return;
+    const dx = pointer.x - start.x; const dy = pointer.y - start.y; start = undefined;
+    if (Math.abs(dx) > 90 && Math.abs(dx) > Math.abs(dy) * 1.5) go(current + (dx < 0 ? 1 : -1));
+  };
+  scene.input.on("pointerdown", onDown); scene.input.on("pointerup", onUp);
+  body.once(Phaser.GameObjects.Events.DESTROY, () => { scene.input.off("pointerdown", onDown); scene.input.off("pointerup", onUp); });
 }
 
 /** 오늘의 인터뷰를 여는 판 아래 버튼과 그 문답 팝업. 보유한 개체에만 선다. */

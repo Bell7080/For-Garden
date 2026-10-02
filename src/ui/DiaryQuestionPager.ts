@@ -69,6 +69,7 @@ export function renderDiaryQuestionPage(
 
   if (view.status === "locked") {
     page.add(scene.add.text(left, y, t("info.diary.locked", { days: relicStories.daysUntil(view.unlocksAt) }), textStyle({ role: "body", size: size.font.small, color: COLOR.inkDim, wrap: width })).setOrigin(0, 0));
+    addQuestionRewardFrame(scene, page, relicId, question.id, popups, rewardY, state, onChanged, "pending");
     return;
   }
 
@@ -94,6 +95,7 @@ export function renderDiaryQuestionPage(
     });
     const hintY = y + question.choices.length * (size.choice.height + size.spacing.choiceGap) + 8;
     page.add(scene.add.text(0, hintY, t("info.diary.reward", { gems: DIARY_QUESTION_GEM_REWARD }), textStyle({ role: "body", size: size.font.small, color: COLOR.inkDim, align: "center" })).setOrigin(0.5, 0));
+    addQuestionRewardFrame(scene, page, relicId, question.id, popups, rewardY, state, onChanged, "pending");
     return;
   }
 
@@ -122,12 +124,12 @@ export function renderDiaryQuestionPage(
   page.add(reply);
   y += reply.height + size.spacing.paragraph;
   page.add(scene.add.text(left, y, shown.note, textStyle({ role: "body", size: size.font.small, color: COLOR.inkDim, lineSpacing: size.spacing.compactLine, wrap: width })).setOrigin(0, 0));
-  if (!view.rewardClaimed) addQuestionRewardFrame(scene, page, relicId, question.id, popups, rewardY, state, onChanged);
+  addQuestionRewardFrame(scene, page, relicId, question.id, popups, rewardY, state, onChanged, view.rewardClaimed ? "claimed" : "claimable");
 }
 
 /**
- * 답한 질문의 **보상 아이콘** — 판 위 층(유리 한 장) 가운데에 임무의 받을 수 있는 보상처럼 숨 쉬며 서고, 누르면 보상 영수증과
- * 함께 젬이 들어온다. 받은 질문에는 서지 않는다.
+ * 질문 쪽 맨 아래 가운데의 **보상 아이콘** — 답하기 전에도 서서 얼마를 주는지 말한다.
+ * 층(유리 한 장)은 늘 같고, 답하면 **안쪽 액자만** 임무의 받을 수 있는 보상처럼 숨 쉬며 눌러서 받는다. 받은 뒤에는 어둡게 남는다.
  */
 function addQuestionRewardFrame(
   scene: Phaser.Scene,
@@ -138,24 +140,26 @@ function addQuestionRewardFrame(
   y: number,
   state: DiaryQuestionState,
   onChanged: () => void,
+  mode: "pending" | "claimable" | "claimed",
 ): void {
   const holder = scene.add.container(0, y);
-  holder.add(drawLayer(scene, 0, 0, slantedRect(420, 190, 30), { fill: 0x2e2412, alpha: 0.82, edge: COLOR.missionClaim, edgeAlpha: 0.9 }));
+  holder.add(drawLayer(scene, 0, 0, slantedRect(420, 190, 30), { fill: 0x10151c, alpha: 0.78, edge: COLOR.accent, edgeAlpha: 0.22 }));
+  const claimable = mode === "claimable";
   const frame = new RewardFrame(scene, 0, 0, {
-    icon: "currency-gems", amount: DIARY_QUESTION_GEM_REWARD, size: 128, state: "claimable",
-    onClick: () => {
+    icon: "currency-gems", amount: DIARY_QUESTION_GEM_REWARD, size: 128, state: claimable ? "claimable" : mode === "claimed" ? "claimed" : "normal",
+    onClick: claimable ? () => {
       if (state.busy) return;
       state.busy = true;
       void relicStories.claimQuestionReward(relicId, questionId)
         .then((gems) => { openRewardPopup(scene, popups, { items: currencyRecordToRewardItems({ gems }) }); })
         .catch(() => undefined)
         .finally(() => { state.busy = false; if (page.scene) onChanged(); });
-    },
+    } : undefined,
   });
   holder.add(frame);
   page.add(holder);
-  if (motionPolicy(session.settings).nonEssentialDistanceFactor > 0) {
-    const tween = scene.tweens.add({ targets: holder, scale: { from: 1, to: 1.06 }, duration: 620, yoyo: true, repeat: -1, ease: "Sine.InOut" });
-    holder.once(Phaser.GameObjects.Events.DESTROY, () => tween.remove());
+  if (claimable && motionPolicy(session.settings).nonEssentialDistanceFactor > 0) {
+    const tween = scene.tweens.add({ targets: frame, scale: { from: 1, to: 1.08 }, duration: 620, yoyo: true, repeat: -1, ease: "Sine.InOut" });
+    frame.once(Phaser.GameObjects.Events.DESTROY, () => tween.remove());
   }
 }

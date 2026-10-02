@@ -60,12 +60,12 @@ test("잠긴 층도 목록에 남아 다음에 열릴 곳을 보여 준다", asy
   // 서버 refresh 뒤 카드 렌더가 완료된 관찰값을 기다려 씬 이름만 먼저 바뀐 프레임을 읽지 않는다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.interactionLayers?.cards.length ?? 0)).toBeGreaterThan(0);
   const initial = await page.evaluate(() => window.__PF_DEBUG!.interactionLayers!);
-  // 조건 없는 첫 세 곳만 열리고, night-council부터는 각 스테이지 관문을 그대로 따른다.
-  expect(initial.cards.slice(0, 3).map(({ id, locked }) => ({ id, locked }))).toEqual([
-    { id: "doppel-parlor", locked: false }, { id: "doppel-lab", locked: false }, { id: "night-ward", locked: false },
+  // 조건 없는 첫 두 곳만 열리고, doppel-office부터는 각 스테이지 관문을 그대로 따른다.
+  expect(initial.cards.slice(0, 2).map(({ id, locked }) => ({ id, locked }))).toEqual([
+    { id: "doppel-parlor", locked: false }, { id: "doppel-lab", locked: false },
   ]);
-  expect(initial.cards.find(({ id }) => id === "night-council")?.locked).toBe(true);
-  expect(initial.cards.find(({ id }) => id === "abyss-port")?.locked).toBe(true);
+  expect(initial.cards.find(({ id }) => id === "doppel-office")?.locked).toBe(true);
+  expect(initial.cards.find(({ id }) => id === "rust-garage")?.locked).toBe(true);
 
   // 첫 카드는 목록 창에 완전히 들고, 창 아래에서 시작하는 뒤로가기 영역과 겹치지 않는다.
   const first = initial.cards[0];
@@ -80,7 +80,7 @@ test("잠긴 층도 목록에 남아 다음에 열릴 곳을 보여 준다", asy
   // 화면 밖의 잠긴 카드도 반드시 창 안으로 끌어온 뒤 누르고, 쪽지가 열리지 않음을 확인한다.
   await drag(page, [CENTER.x, INTERACTION_LAYER.viewport.bottom - 40], [CENTER.x, INTERACTION_LAYER.viewport.top + 40], { steps: 12 });
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.interactionLayers?.scrollY)).toBeLessThan(0);
-  const locked = await page.evaluate(() => window.__PF_DEBUG!.interactionLayers!.cards.find((card) => card.id === "night-council")!);
+  const locked = await page.evaluate(() => window.__PF_DEBUG!.interactionLayers!.cards.find((card) => card.id === "doppel-office")!);
   await tap(page, (locked.bounds.left + locked.bounds.right) / 2, (locked.bounds.top + locked.bounds.bottom) / 2);
   await page.waitForTimeout(400);
   expect(await page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toBeUndefined();
@@ -102,6 +102,6 @@ test("완료한 지정 스테이지에 맞춰 교류지가 열린다", async ({ 
   // 진행 상태를 반영한 서버 목록이 실제로 그려진 뒤 잠금 결과를 읽는다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.interactionLayers?.cards.length ?? 0)).toBeGreaterThan(0);
   const cards = await page.evaluate(() => window.__PF_DEBUG!.interactionLayers!.cards);
-  expect(cards.find(({ id }) => id === "night-council")?.locked).toBe(false);
-  expect(cards.find(({ id }) => id === "abyss-port")?.locked).toBe(true);
+  expect(cards.find(({ id }) => id === "doppel-office")?.locked).toBe(false);
+  expect(cards.find(({ id }) => id === "rust-garage")?.locked).toBe(true);
 });

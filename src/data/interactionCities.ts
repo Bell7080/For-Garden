@@ -101,62 +101,71 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     clueJournalId: "interaction-doppel-01", illustration: "background-interaction-doppel-parlor",
   },
   {
-    // 첫 창구(응접실)보다 **안쪽으로 한 걸음** 들어간 자리다. 응접실이 손님을 앉혀 두고 일지를
-    // 내어 주는 곳이라면, 여기는 그 일지를 실제로 쓰는 자리라 결재가 한 단계 더 걸린다.
-    id: "doppel-lab", displayName: "도플 · 중앙 연구소 외곽 연구실", department: "council",
-    description: "중앙 연구소 안쪽의 외곽 연구실. 복원 계획서에 결재가 한 번 더 필요해 오래 기다려야 한다.",
-    unlock: {}, durationMinutes: 240, partySize: { min: 1, max: 3 },
+    // 2단계: 이터널에 파견됐던 도플갱어 연구원들이 남긴 일기. 도시 ID는 외곽 연구실 시절의
+    // 것을 그대로 두어 저장(진행 중 파견·읽은 일지)이 깨지지 않는다.
+    id: "doppel-lab", displayName: "도플 · 내부 연구기관", department: "exchange",
+    description: "도플 연구소 안쪽의 내부 연구기관. 이터널에 파견됐던 연구원들이 남긴 일기가 이곳에 모인다.",
+    unlock: {}, durationMinutes: 30, partySize: { min: 1, max: 3 },
     specialty: { elements: ["water", "grass"], roles: ["support"], squads: ["rune"] },
-    rewards: [{ currency: "gold", min: 2_000, max: 5_000 }, { currency: "gems", min: 0, max: 8 }, { currency: "rawStone", min: 0, max: 300 }],
+    rewards: [{ currency: "gold", min: 800, max: 1_800 }, { currency: "fossil", min: 0, max: 1 }, { currency: "rawStone", min: 0, max: 100 }],
     clueJournalId: "interaction-doppel-lab-01", illustration: "background-interaction-doppel-lab",
   },
   {
-    id: "night-ward", displayName: "나이트 시티", department: "exchange",
-    description: "밤에도 구조 신호가 끊이지 않는 침수 외곽 의료 구역. 손이 모자라 오래 붙잡지 않는다.",
-    unlock: {}, durationMinutes: 30, partySize: { min: 1, max: 3 },
-    specialty: { elements: ["wind"], roles: ["assassin"], squads: ["gear"] },
-    rewards: [{ currency: "gold", min: 800, max: 1_800 }, { currency: "fossil", min: 0, max: 1 }, { currency: "rawStone", min: 0, max: 100 }],
-    clueJournalId: "interaction-night-01", illustration: "background-expedition-ranking",
+    // 3단계부터는 스토리 관문이 연다(§3). 렐릭의 사용처와 연구 성과, 연구 **목적**.
+    id: "doppel-office", displayName: "도플 · 관리부", department: "council",
+    description: "연구 성과와 렐릭의 사용처를 집계하는 도플의 관리부. 결재가 여러 단을 거쳐 오래 기다려야 한다.",
+    unlock: { stageId: "1-4" }, durationMinutes: 240, partySize: { min: 1, max: 3 },
+    specialty: { elements: ["water", "grass"], roles: ["support", "tank"], squads: ["rune", "eye"] },
+    rewards: [{ currency: "gold", min: 2_000, max: 5_000 }, { currency: "gems", min: 0, max: 8 }, { currency: "rawStone", min: 0, max: 300 }],
+    clueJournalId: "interaction-doppel-office-01", illustration: "background-expedition-ranking",
   },
   {
-    id: "night-council", displayName: "나이트 시티", department: "council",
-    description: "구조 기록을 넘겨받는 야간 관제탑. 협정 한 줄에 밤이 통째로 든다.",
-    unlock: { stageId: "1-4" }, durationMinutes: 480, partySize: { min: 1, max: 3 },
-    specialty: { elements: ["wind", "fire"], roles: ["tank"], squads: ["gear"] },
-    rewards: [{ currency: "gold", min: 4_500, max: 10_000 }, { currency: "gems", min: 0, max: 16 }, { currency: "rawStone", min: 0, max: 600 }],
-    clueJournalId: "interaction-night-02", illustration: "background-expedition-field",
-  },
-  {
-    id: "abyss-port", displayName: "심해 항만구", department: "exchange",
-    description: "도시 끝의 인양조가 고대 화물과 잃어버린 기록을 건져 올린다.",
-    unlock: { stageId: "1-7" }, durationMinutes: 60, partySize: { min: 1, max: 3 },
-    specialty: { elements: ["water", "wind"], roles: ["warrior"], squads: ["gear"] },
+    // 4단계: 러스트는 무거운 이야기 사이의 숨 고르기다. 세계관보다 짧은 해프닝을 맡는다.
+    id: "rust-garage", displayName: "러스트 · 정비창", department: "exchange",
+    description: "러스트의 정비창. 부서진 연구 장비를 고쳐 달라는 의뢰가 쉴 새 없이 들어온다.",
+    unlock: { stageId: "1-10" }, durationMinutes: 60, partySize: { min: 1, max: 3 },
+    specialty: { elements: ["earth", "fire"], roles: ["warrior"], squads: ["gear"] },
     rewards: [{ currency: "fossil", min: 1, max: 2 }, { currency: "gold", min: 800, max: 2_600 }, { currency: "rawStone", min: 0, max: 200 }],
-    clueJournalId: "interaction-abyss-01", illustration: "background-excavation",
+    clueJournalId: "interaction-rust-garage-01", illustration: "background-expedition-field",
   },
   {
-    id: "abyss-council", displayName: "심해 항만구", department: "council",
-    description: "인양권을 나누는 항만 위원회. 하루를 통째로 비워 두고 다녀와야 한다.",
-    unlock: { stageId: "1-10" }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
-    specialty: { elements: ["water"], roles: ["tank"], squads: ["gear", "fang"] },
-    rewards: [{ currency: "fossil", min: 4, max: 9 }, { currency: "amber", min: 0, max: 1 }, { currency: "rawStone", min: 0, max: 1_800 }],
-    clueJournalId: "interaction-abyss-02", illustration: "background-archaeology",
-  },
-  {
-    id: "ember-market", displayName: "잿불 시장구", department: "exchange",
-    description: "무너진 화력 발전소 아래 선 노천 시장. 재고가 도는 동안만 문이 열린다.",
-    unlock: { stageId: "2-5" }, durationMinutes: 120, partySize: { min: 1, max: 3 },
-    specialty: { elements: ["fire"], roles: ["assassin"], squads: ["fang"] },
-    rewards: [{ currency: "gold", min: 2_600, max: 6_000 }, { currency: "cheesecake", min: 2, max: 6 }, { currency: "rawStone", min: 0, max: 400 }],
-    clueJournalId: "interaction-ember-01", illustration: "background-shop",
-  },
-  {
-    id: "ember-council", displayName: "잿불 시장구", department: "council",
-    description: "상단주들이 모이는 잿불 회합. 값을 정하는 자리라 밤을 넘긴다.",
-    unlock: { stageId: "2-10" }, durationMinutes: 720, partySize: { min: 1, max: 3 },
-    specialty: { elements: ["fire", "earth"], roles: ["warrior"], squads: ["fang"] },
+    // 5단계: 고성능 장비의 대여 기간 연장 협상. 간간이 도플 이야기가 섞여 든다.
+    id: "rust-lease", displayName: "러스트 · 대여 관리부", department: "council",
+    description: "고성능 장비를 빌려 주는 러스트의 대여 관리부. 연장 한 건에도 긴 협상이 붙는다.",
+    unlock: { stageId: "2-5" }, durationMinutes: 720, partySize: { min: 1, max: 3 },
+    specialty: { elements: ["earth", "fire"], roles: ["tank", "warrior"], squads: ["gear"] },
     rewards: [{ currency: "gold", min: 7_000, max: 15_000 }, { currency: "amber", min: 0, max: 2 }, { currency: "rawStone", min: 0, max: 900 }],
-    clueJournalId: "interaction-ember-02", illustration: "background-sortie-cake",
+    clueJournalId: "interaction-rust-lease-01", illustration: "background-excavation",
+  },
+  {
+    // 6단계: 3단계가 받아 둔 연구 **목적**을 이어 받아, 그 연구로 얻으려던 것과 상층부의 암시를
+    // 비춘다. 상층부의 정체·목적은 단정하지 않는다(`docs/lore.md` §1.2).
+    id: "doppel-upper", displayName: "도플 · 상층부", department: "council",
+    description: "도플 연구소의 가장 높은 층. 연구의 목적을 정하는 사람들이 이곳에 앉는다.",
+    unlock: { stageId: "2-10" }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
+    specialty: { elements: ["water"], roles: ["support", "tank"], squads: ["rune", "eye"] },
+    rewards: [{ currency: "fossil", min: 4, max: 9 }, { currency: "amber", min: 0, max: 1 }, { currency: "rawStone", min: 0, max: 1_800 }],
+    clueJournalId: "interaction-doppel-upper-01", illustration: "background-archaeology",
+  },
+  {
+    // 7단계: 러스트의 중심지. 이터널의 연구 장비가 설계되고 고쳐지는 본거지다. 오디디가 쓰는
+    // 나노칩 기술의 출처가 이 도시라는 사실은 스치기만 한다.
+    id: "rust-works", displayName: "러스트 · 중앙 공방", department: "council",
+    description: "러스트의 중심에 선 거대한 공방. 연구 장비의 설계와 수리가 한곳에 모인다.",
+    unlock: { stageId: "3-5" }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
+    specialty: { elements: ["earth", "fire"], roles: ["tank", "warrior"], squads: ["gear"] },
+    rewards: [{ currency: "gold", min: 9_000, max: 20_000 }, { currency: "amber", min: 0, max: 2 }, { currency: "rawStone", min: 0, max: 1_800 }],
+    clueJournalId: "interaction-rust-works-01", illustration: "background-shop",
+  },
+  {
+    // 8단계: 오디디는 교류가 아니라 협상이다(`docs/interaction-cities.md` §5의 (b)). 오디디가
+    // 먼저 "실패 개체를 더 넘겨라"고 손을 내밀고, 거절하는 자리에서 정보를 캐 온다.
+    id: "odidi-embassy", displayName: "오디디 · 외교 접견실", department: "council",
+    description: "꿈을 연구하는 도시 오디디가 외부 손님을 맞는 접견실. 제안은 늘 그들이 먼저 꺼낸다.",
+    unlock: { stageId: "3-10" }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
+    specialty: { elements: ["wind", "water"], roles: ["assassin", "support"], squads: ["eye", "rogue"] },
+    rewards: [{ currency: "fossil", min: 5, max: 10 }, { currency: "amber", min: 0, max: 2 }, { currency: "rawStone", min: 0, max: 1_800 }],
+    clueJournalId: "interaction-odidi-embassy-01", illustration: "background-sortie-cake",
   },
 ] as const;
 

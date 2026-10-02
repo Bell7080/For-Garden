@@ -222,7 +222,8 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     const top = -layout.height / 2;
     const { y, above } = anchorEnemyPreview(this.nodeY, this.options.top, this.options.bottom, layout.height);
     this.setY(y);
-    const bevel = Math.min(width, layout.height) * 0.16;
+    // 깎임은 판 높이가 아니라 고정값이다 — 높이를 따르면 줄거리를 펼칠 때 깎임이 커져 글줄의 왼쪽 시작점이 함께 안쪽으로 밀린다.
+    const bevel = STORY_PREVIEW.bevel;
     this.add(drawLayer(this.scene, 0, 0, chipPoints(width, layout.height, { bevel: { topLeft: bevel, bottomRight: bevel } }), { fill: 0x0b0f15, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.55 }));
     this.tail = this.scene.add.graphics(); this.add(this.tail); this.drawTail(above);
     const left = -width / 2 + Math.max(56, bevel * 0.7);

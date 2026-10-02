@@ -34,3 +34,24 @@ export function addUnitNameplate(
   name0.setX(startX + level0.width + gap);
   if (parent) parent.add([level0, name0]);
 }
+
+/**
+ * 이름줄 바로 위, SD 발밑에 서는 개체 하나의 전투력.
+ *
+ * 총 전투력 판은 두 편의 무게만 말하므로, 누가 그 무게를 지는지는 개체마다 이 수가 말한다.
+ * 이름줄 위(`y`가 곧 글자 아랫선)에 가운데로 서며 발을 가리지 않도록 작고 검은 획을 두른다.
+ */
+export function addUnitPower(
+  scene: Phaser.Scene,
+  parent: Phaser.GameObjects.Container | undefined,
+  x: number,
+  y: number,
+  power: number,
+  size: number,
+  color: string,
+): Phaser.GameObjects.Text {
+  const text = scene.add.text(x, y, power.toLocaleString(), textStyle({ role: "emphasis", size, color })).setOrigin(0.5, 1);
+  text.setStroke("#05070a", 4).setShadow(0, 2, "#05070a", 3, true, true);
+  parent?.add(text);
+  return text;
+}

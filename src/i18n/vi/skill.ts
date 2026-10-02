@@ -306,4 +306,8 @@ export const SKILL_VI = {
   "skill.clause.defenseIgnore.res": "đòn này bỏ qua {percent}% [[res|Kháng]] của mục tiêu",
   "skill.passive.tideSight": "Nhận {percent}% hút máu, lượng hút được sẽ chia cho [[fog-guard|Hàng rào sương biển]].",
   "skill.ferocity.stormAim": "Khi Cuồng bạo, [[basic-attack|Đánh thường]] bỏ qua thêm {percent}% [[def|Thủ]] và [[res|Kháng]] của mục tiêu.",
+  "skill.breakthrough.effect.basic.focusFire": "Đánh liên tiếp cùng một kẻ địch sẽ làm \"{name}\" gây thêm {percent}% sát thương mỗi lần, tối đa {max}%. Đổi mục tiêu thì tính lại từ đầu.",
+  "skill.breakthrough.effect.ultimate.shrapnel": "Mảnh đạn cũng văng trúng các kẻ địch khác quanh kẻ địch bị \"{name}\" bắn trúng, gây {percent}% sát thương.",
+  "skill.breakthrough.effect.ferocity.ankleShot": "Trong [[ferocity|Cuồng bạo]], [[basic-attack|Đánh thường]] trúng chí mạng sẽ làm mục tiêu bị [[stagger|Khựng]] {seconds} giây.",
+  "skill.breakthrough.effect.passive.highTide": "Khi [[fog-guard|Hàng rào sương biển]] đầy đến giới hạn, mọi sát thương tăng {percent}%.",
 } as const;

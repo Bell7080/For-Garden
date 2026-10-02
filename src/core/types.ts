@@ -2358,6 +2358,16 @@ export type BasicBreakthrough = {
   secondsPerStack: number;
   /** 최대 겹 수(첫 타 포함). */
   maxStacks: number;
+} | {
+  /**
+   * 같은 적을 **연속으로** 맞힐수록 평타 피해가 겹마다 오른다(이르나의 표적 고정). 다른 적으로 옮기면 처음부터 센다.
+   * 한 방이 무거운 대신 느리게 쏘는 개체라, 쏜 자리를 다시 조준할수록 한 방이 더 무거워진다.
+   */
+  kind: "focusFire";
+  /** 겹 하나가 더하는 평타 피해(%). 첫 타는 겹이 없다. */
+  damagePercentPerStack: number;
+  /** 피해가 오르는 최대 겹 수(첫 타 포함). */
+  maxStacks: number;
 } | BreakthroughNone;
 
 /**
@@ -2418,6 +2428,16 @@ export type UltimateBreakthrough = {
   costReduction: number;
   /** 체력이 가득 찬 아군이 얻는 보호막(최대 체력의 %). */
   fullHpShieldPercent: number;
+} | {
+  /**
+   * 궁극기가 맞은 적 **주위의 다른 적**에게도 파편이 튄다(이르나의 파편탄). 가장 먼 적을 노리는 한 발이라 그 뒤쪽에는
+   * 적이 없을 수 있어 관통이 아니라 맞은 자리 둘레로 정했고, 3대3에서도 발동한다. 파편은 상태를 걸지 않고 게이지도 채우지 않는다.
+   */
+  kind: "shrapnel";
+  /** 맞은 적 중심에서 파편이 닿는 전장 반경(px). */
+  radius: number;
+  /** 본 궁극기 위력의 몇 %로 튀는지. */
+  powerPercent: number;
 } | BreakthroughNone;
 
 /**
@@ -2462,6 +2482,15 @@ export type FerocityBreakthrough = {
   percentPerHit: number;
   /** 오를 수 있는 최대 위력 증가(%). */
   maxPercent: number;
+} | {
+  /**
+   * 폭주 중 **치명타로 맞은 적**이 잠깐 휘청인다(이르나의 발목 사격). 일반 공격에만 걸리고 궁극기와 엮지 않는다 —
+   * 자동 전투에서 폭주와 궁극기가 겹치는 순간을 따로 셈하지 않기 위해서다(`docs/breakthrough-design.md`).
+   * 경직 시간은 공격 간격보다 짧게 둔다.
+   */
+  kind: "ankleShot";
+  /** 경직 시간(초). */
+  staggerSeconds: number;
 } | BreakthroughNone;
 
 /**
@@ -2513,6 +2542,14 @@ export type PassiveBreakthrough = {
   powerPercent: number;
   staggerSeconds: number;
   cooldownSeconds: number;
+} | {
+  /**
+   * 흡혈 보호막(`lifeStealShield`)이 **상한까지 차 있는 동안** 모든 피해가 늘어난다(이르나의 만조).
+   * 막이 상한에 닿는 순간 생기는 보상이라, 막이 깨지면 다시 사라진다.
+   */
+  kind: "highTide";
+  /** 늘어나는 피해(%). */
+  damagePercent: number;
 } | BreakthroughNone;
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */

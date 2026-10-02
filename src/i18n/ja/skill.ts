@@ -329,4 +329,8 @@ export const SKILL_JA = {
   "skill.clause.defenseIgnore.res": "この攻撃は対象の[[res|抵抗力]]を{percent}%無視する",
   "skill.passive.tideSight": "吸血{percent}%を得て、吸血した量が[[fog-guard|海霧の防壁]]に分けられる。",
   "skill.ferocity.stormAim": "暴走中、[[basic-attack|通常攻撃]]が対象の[[def|防御力]]と[[res|抵抗力]]をさらに{percent}%無視する。",
+  "skill.breakthrough.effect.basic.focusFire": "同じ敵を連続で攻撃すると、「{name}」のダメージが1回ごとに{percent}%ずつ上がる。最大{max}%まで。標的を変えると最初からになる。",
+  "skill.breakthrough.effect.ultimate.shrapnel": "「{name}」が当たった敵の周りの他の敵にも欠片が飛び、{percent}%のダメージを与える。",
+  "skill.breakthrough.effect.ferocity.ankleShot": "[[ferocity|暴走]]中、[[basic-attack|通常攻撃]]がクリティカルで命中すると、当たった敵を{seconds}秒間[[stagger|怯み]]させる。",
+  "skill.breakthrough.effect.passive.highTide": "[[fog-guard|海霧の防壁]]が上限まで満ちている間、すべてのダメージが{percent}%増える。",
 } as const;

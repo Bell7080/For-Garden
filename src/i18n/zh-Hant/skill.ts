@@ -306,4 +306,8 @@ export const SKILL_ZH_HANT = {
   "skill.clause.defenseIgnore.res": "這次攻擊無視目標{percent}%的[[res|抗性]]",
   "skill.passive.tideSight": "獲得{percent}%吸血，所吸取的量會分給[[fog-guard|海霧屏障]]。",
   "skill.ferocity.stormAim": "暴走期間，[[basic-attack|普通攻擊]]額外無視目標{percent}%的[[def|防禦力]]和[[res|抗性]]。",
+  "skill.breakthrough.effect.basic.focusFire": "連續命中同一敵人時，「{name}」的傷害每次提升{percent}%，最高{max}%。切換目標則重新計算。",
+  "skill.breakthrough.effect.ultimate.shrapnel": "「{name}」命中的敵人周圍的其他敵人也會被濺射的碎片擊中，受到{percent}%的傷害。",
+  "skill.breakthrough.effect.ferocity.ankleShot": "[[ferocity|暴走]]期間，[[basic-attack|普通攻擊]]以暴擊命中時，使被擊中的敵人[[stagger|硬直]]{seconds}秒。",
+  "skill.breakthrough.effect.passive.highTide": "[[fog-guard|海霧屏障]]達到上限期間，所有傷害提升{percent}%。",
 } as const;

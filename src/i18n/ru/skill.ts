@@ -306,4 +306,8 @@ export const SKILL_RU = {
   "skill.clause.defenseIgnore.res": "эта атака игнорирует {percent}% параметра [[res|Сопротивление]] цели",
   "skill.passive.tideSight": "Получает {percent}% вампиризм, а украденное здоровье распределяется на [[fog-guard|Морской туман-барьер]].",
   "skill.ferocity.stormAim": "Во время Неистовства [[basic-attack|Обычная атака]] дополнительно игнорирует {percent}% параметров [[def|Защита]] и [[res|Сопротивление]] цели.",
+  "skill.breakthrough.effect.basic.focusFire": "Если подряд бить одного и того же врага, «{name}» наносит на {percent}% больше урона за каждый удар, максимум {max}%. Смена цели обнуляет счёт.",
+  "skill.breakthrough.effect.ultimate.shrapnel": "Фрагменты также летят в других врагов вокруг цели, пораженной «{name}», нанося {percent}% урона.",
+  "skill.breakthrough.effect.ferocity.ankleShot": "Во время [[ferocity|неистовства]] [[basic-attack|Обычная атака]], попавшая критически, вызывает у цели [[stagger|Ошеломление]] на {seconds} с.",
+  "skill.breakthrough.effect.passive.highTide": "Пока [[fog-guard|Морской туман-барьер]] заполнен до предела, весь урон растёт на {percent}%.",
 } as const;

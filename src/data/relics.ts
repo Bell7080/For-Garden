@@ -1281,6 +1281,14 @@ export const RELICS: RelicDef[] = [
     },
     // 폭주는 공속을 올리지 않는다 — 느리게 쏘는 것이 정체성이라 한 발의 무게만 키운다.
     ferocityTrait: { name: "폭풍 속의 조준", effectId: "stormAim", defenseIgnorePercent: 25 },
+    // 한계 돌파 — 평타는 쏜 자리를 다시 조준할수록 무거워지고(표적 고정), 궁극기는 주위로 파편이 튀며, 폭주는 치명타로 맞은 적을
+    // 휘청이게 하고(궁극기와 엮지 않는다), 패시브는 해무 방벽이 가득 차 있는 동안 피해를 키운다(만조).
+    breakthroughEffects: {
+      basic: { kind: "focusFire", damagePercentPerStack: 8, maxStacks: 5 },
+      ultimate: { kind: "shrapnel", radius: 300, powerPercent: 30 },
+      ferocity: { kind: "ankleShot", staggerSeconds: 0.5 },
+      passive: { kind: "highTide", damagePercent: 15 },
+    },
     passive: {
       // kind가 tideSight인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.

@@ -1,6 +1,6 @@
 import { amplifyFerocityGain } from "./bond";
 import { deathClockSurvivalMultiplier, deathClockTickPercent, deathClockTicksAt } from "./battleClock";
-import type { Combatant } from "./combatTypes";
+import type { Combatant, DamageInput } from "./combatTypes";
 import { computeDamage, computeDamageContribution, currentAbilityPower, isCriticalHit } from "./damage";
 // 전투 HUD와 피해 공식이 동일한 현재 주문력 계산을 소비하도록 공용 헬퍼를 다시 노출한다.
 export { currentAbilityPower } from "./damage";
@@ -365,6 +365,8 @@ export interface Fighter extends Combatant {
     rescuePlan: { belowHpPercent: number; apPercent: number } | null;
     /** 평타 돌파(`staccatoChain`) — 직전에 맞힌 적과 연속 적중 수. */
     staccatoStreak: { targetId: string; count: number } | null;
+    /** 평타 돌파(`focusFire`) — 직전에 맞힌 적과 연속 적중 수. */
+    focusStreak: { targetId: string; count: number } | null;
     /** 폭주 돌파(`crescendoRamp`) — 이번 폭주에서 따라붙은 추가타 수. 폭주에 들어설 때 0으로 되돌린다. */
     crescendoHits: number;
     /** 패시브 돌파(`adagioSlam`)가 다시 내려앉을 수 있기까지 남은 시간(초). */
@@ -1150,6 +1152,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
       rescuePlan: isBreakthroughSlotOpen(breakthrough, "passive") && def.breakthroughEffects?.passive?.kind === "rescueShield"
         ? { belowHpPercent: def.breakthroughEffects.passive.belowHpPercent, apPercent: def.breakthroughEffects.passive.apPercent } : null,
       staccatoStreak: null,
+      focusStreak: null,
       crescendoHits: 0,
       adagioSlamCooldown: 0,
     },
@@ -5658,6 +5661,55 @@ function staccatoChainSkill(attacker: Fighter, target: Fighter, skill: Skill, us
     ? { ...effect, seconds: effect.seconds + (stacks - 1) * chain.secondsPerStack } : effect) } as Skill;
 }
 
+/**
+ * 이르나 돌파가 이번 한 방의 위력에 곱하는 몫 — 평타의 표적 고정(`focusFire`)과 패시브의 만조(`highTide`).
+ * 스킬 사본만 돌려준다(`staccatoChainSkill`과 같은 이유). 만조는 보호막이 상한에 닿아 있는 동안만 켜진다.
+ */
+function irnaBreakthroughSkill(attacker: Fighter, target: Fighter, skill: Skill, useUltimate: boolean): Skill {
+  let multiplier = 1;
+  if (!useUltimate) {
+    const focus = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
+    if (focus?.kind === "focusFire") {
+      const streak = attacker.bt.focusStreak?.targetId === target.id ? attacker.bt.focusStreak.count + 1 : 1;
+      attacker.bt.focusStreak = { targetId: target.id, count: streak };
+      multiplier += (Math.min(focus.maxStacks, streak) - 1) * focus.damagePercentPerStack / 100;
+    }
+  }
+  const tide = openedBreakthrough(attacker, "passive", (effects) => effects.passive);
+  const plan = attacker.def.passive.lifeStealShield;
+  if (tide?.kind === "highTide" && plan && attacker.shield.amount >= attacker.maxHp * plan.capMaxHpPercent / 100 - 0.5) {
+    multiplier *= 1 + tide.damagePercent / 100;
+  }
+  if (multiplier === 1 || !("power" in skill) || skill.power === undefined) return skill;
+  return { ...skill, power: skill.power * multiplier } as Skill;
+}
+
+/**
+ * 궁극기 돌파(`shrapnel`) — 맞은 적 주위의 다른 적에게 파편이 튄다. 상태·게이지·흡혈을 만들지 않는 순수 추가 피해다.
+ * 본 타격의 치명타 판정을 그대로 물려받아 난수를 더 쓰지 않는다.
+ */
+function strikeShrapnel(attacker: Fighter, target: Fighter, input: DamageInput, critical: boolean, state: SkirmishState, events: SkirmishEvent[]): void {
+  const effect = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
+  if (effect?.kind !== "shrapnel") return;
+  const damageAttacker = { ...attacker, def: offensiveDefinition(attacker) };
+  const shard = { ...input, power: input.power * effect.powerPercent / 100, isCritical: critical };
+  for (const other of state.fighters) {
+    if (other.side === attacker.side || other.id === target.id || !isFighterAlive(other) || distance(target, other) > effect.radius) continue;
+    const raw = Math.max(1, Math.round(computeDamage(damageAttacker, defensiveDefinition(other, state), shard)));
+    const resolution = resolveReceivedDamage(other, raw);
+    const hpBefore = other.hp; const shieldBefore = other.shield.amount; const shieldProviderId = other.shield.providerId;
+    applyDamage(other, resolution.applied, events, state);
+    const credited = recordDamageContribution(state, attacker.id, other, shard.damageType, shard.scalingStat as Exclude<typeof shard.scalingStat, "res">, computeDamageContribution(damageAttacker, shard), resolution, hpBefore, shieldBefore, shieldProviderId);
+    events.push({ kind: "attack", attackerId: attacker.id, targetId: other.id, skill: "ultimate", amount: resolution.applied,
+      contributionAmount: credited, critical, animate: false, damageType: shard.damageType, mitigated: resolution.reduced < resolution.raw });
+    if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: other.id });
+    if (!isFighterAlive(other)) {
+      clearDefeatedStatuses(other);
+      events.push({ kind: "death", fighterId: other.id, sourceId: attacker.id });
+    }
+  }
+}
+
 /** 한 번 때린다. 궁극기 여부는 호출하는 쪽이 정한다. */
 function strike(
   attacker: Fighter,
@@ -5678,7 +5730,7 @@ function strike(
   /** 지정 원형 궁극기의 사용자 선택 중심점이다. */
   targetPoint?: { x: number; y: number },
 ): void {
-  const skill = staccatoChainSkill(attacker, target, breakthroughSkill(attacker, useUltimate), useUltimate);
+  const skill = irnaBreakthroughSkill(attacker, target, staccatoChainSkill(attacker, target, breakthroughSkill(attacker, useUltimate), useUltimate), useUltimate);
   const executionUltimate = executionUltimateIsOpen(attacker, useUltimate);
   // 순수 회복 궁극기는 fireUltimate의 비공격 분기에서만 실행한다.
   if (!("damageType" in skill) || skill.damageType === undefined || skill.power === undefined) return;
@@ -5942,6 +5994,7 @@ function strike(
     ...(useUltimate || !attacker.def.basic.cycle ? {} : { basicStep: attacker.basicCycleStep % attacker.def.basic.cycle.length }),
   });
   if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
+  if (useUltimate) strikeShrapnel(attacker, target, damageInput, critical, state, events);
 
   // 덧칠된 적이 맞을 때마다 그 피해의 일부가 최저 체력 아군의 회복으로 돌아온다. 궁극기로
   // 덧칠이 지워지기 전에 정산해야 이번 타격의 몫이 빠지지 않는다.
@@ -5965,6 +6018,11 @@ function strike(
     // 기본 공격 돌파는 **주기가 채워지는 그 한 방**에만 얹힌다. 상태를 거는 판정이 곧 그
     // 주기이므로 같은 문 안에서 함께 돈다 — 따로 세면 두 셈이 한 박자씩 어긋난다.
     if (!useUltimate) applyBasicBreakthrough(attacker, state, events);
+  }
+  // 폭주 돌파(`ankleShot`) — 폭주 중 일반 공격이 치명타로 들어가면 맞은 적이 잠깐 휘청인다. 궁극기와는 엮지 않는다.
+  if (attackingInFever && !useUltimate && critical && isFighterAlive(target) && !resolution.ignored) {
+    const ankle = openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity);
+    if (ankle?.kind === "ankleShot") events.push(...applyStagger(target, ankle.staggerSeconds * attacker.statusPotencyMultiplier, state));
   }
   // 관측 발동은 상태를 건 **뒤**에 켠다 — 이번 공격이 방금 쌓은 겹도 같은 손이 함께 켠다.
   if (!useUltimate && isFighterAlive(target) && !resolution.ignored) fireObservationVolley(attacker, target, state, events);

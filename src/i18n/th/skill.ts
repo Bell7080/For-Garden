@@ -306,4 +306,8 @@ export const SKILL_TH = {
   "skill.clause.defenseIgnore.res": "การโจมตีนี้ข้าม[[res|พลังต้านทาน]]ของเป้าหมาย {percent}%",
   "skill.passive.tideSight": "ได้รับดูดเลือด {percent}% และปริมาณที่ดูดได้จะถูกแบ่งให้[[fog-guard|กำแพงหมอกทะเล]]",
   "skill.ferocity.stormAim": "ระหว่างคลั่ง [[basic-attack|โจมตีปกติ]]จะข้าม[[def|พลังป้องกัน]]และ[[res|พลังต้านทาน]]ของเป้าหมายเพิ่มอีก {percent}%",
+  "skill.breakthrough.effect.basic.focusFire": "เมื่อโจมตีศัตรูตัวเดิมติดต่อกัน ความเสียหายของ \"{name}\" จะเพิ่มขึ้นครั้งละ {percent}% สูงสุด {max}% หากเปลี่ยนเป้าหมายจะเริ่มใหม่",
+  "skill.breakthrough.effect.ultimate.shrapnel": "เศษกระสุนจะกระเด็นไปโดนศัตรูตัวอื่นรอบ ๆ ศัตรูที่ถูก \"{name}\" ยิงด้วย สร้างความเสียหาย {percent}%",
+  "skill.breakthrough.effect.ferocity.ankleShot": "ระหว่าง[[ferocity|คลั่ง]] เมื่อ[[basic-attack|โจมตีปกติ]]โดนคริติคอล ศัตรูที่ถูกยิงจะ[[stagger|ชะงัก]] {seconds} วินาที",
+  "skill.breakthrough.effect.passive.highTide": "ในขณะที่[[fog-guard|กำแพงหมอกทะเล]]เต็มถึงขีดจำกัด ความเสียหายทั้งหมดจะเพิ่มขึ้น {percent}%",
 } as const;

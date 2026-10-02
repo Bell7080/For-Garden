@@ -354,4 +354,8 @@ export const SKILL_KO = {
   "skill.ferocity.sleepTantrum": "[[attack-speed|공격 속도]]가 {percent}% 증가하고, [[basic-attack|기본 공격]]이 자신의 주위 모든 적에게 적중해 맞은 적을 짧게 밀어낸다.",
   "skill.keyword.shield.fromStat": "현재 {stat}에서 {percent}%를 받아 계산한 보호막 수치다.",
   "skill.ferocity.caffeineBubble": "폭주에 들어가는 순간 넓은 범위의 적을 {seconds}초 동안 [[taunt|도발]]한다. 폭주 중에는 [[kento-prickle|까칠]]이 한 번에 {multiplier}배로 쌓인다.",
+  "skill.breakthrough.effect.basic.focusFire": "같은 적을 연속으로 맞히면 「{name}」의 피해가 한 번마다 {percent}%씩 커진다. 최대 {max}%까지이고 다른 적으로 옮기면 처음부터다.",
+  "skill.breakthrough.effect.ultimate.shrapnel": "「{name}」에 맞은 적 주위의 다른 적에게도 파편이 튀어 {percent}%의 피해를 준다.",
+  "skill.breakthrough.effect.ferocity.ankleShot": "[[ferocity|폭주]] 중 [[basic-attack|기본 공격]]이 치명타로 적중하면 맞은 적을 {seconds}초 동안 [[stagger|경직]]시킨다.",
+  "skill.breakthrough.effect.passive.highTide": "[[fog-guard|해무 방벽]]이 상한까지 차 있는 동안 모든 피해가 {percent}% 늘어난다.",
 } as const;

@@ -41,6 +41,7 @@ const CATEGORY: Record<EffectKind, Category> = {
   leapPuddle: "mobility",
   farPing: "mobility",
   staccatoChain: "control",
+  focusFire: "damage",
   // 궁극기
   echo: "damage",
   execution: "cadence",
@@ -48,6 +49,7 @@ const CATEGORY: Record<EffectKind, Category> = {
   forestSight: "damage",
   tidalEcho: "damage",
   orderStrike: "damage",
+  shrapnel: "damage",
   lightChorus: "cadence",
   // 폭주
   feverBulwark: "survival",
@@ -57,6 +59,7 @@ const CATEGORY: Record<EffectKind, Category> = {
   ambushCrit: "crit",
   pingStorm: "damage",
   crescendoRamp: "damage",
+  ankleShot: "control",
   // 패시브
   sharedRecovery: "survival",
   battleMaidAscension: "survival",
@@ -65,6 +68,7 @@ const CATEGORY: Record<EffectKind, Category> = {
   huntChain: "mobility",
   relink: "support",
   adagioSlam: "control",
+  highTide: "damage",
 };
 
 /** 직군이 받을 수 없는 분류. 암살자·원거리 딜러는 은신이 아닌 생존 유틸과 게이지 조작을 받지 않는다. */
@@ -110,6 +114,15 @@ describe("한계 돌파 설계 규칙", () => {
       const stuns = "statusEffects" in relic.ultimate && (relic.ultimate.statusEffects ?? []).some((effect) => effect.kind === "stun");
       if (!cadence || !stuns) continue;
       expect("stunLockoutSeconds" in relic.ultimate && relic.ultimate.stunLockoutSeconds !== undefined, `${relic.name}`).toBe(true);
+    }
+  });
+
+  it("은 폭주 돌파가 궁극기와 엮이지 않는다", () => {
+    // 자동 전투에서 폭주와 궁극기가 겹치는 순간을 따로 잡거나 셈하지 않기 위해서다(docs/breakthrough-design.md §4).
+    for (const relic of RELICS) {
+      const ferocity = relic.breakthroughEffects?.ferocity;
+      if (!ferocity) continue;
+      expect(JSON.stringify(ferocity).toLowerCase(), `${relic.name} 폭주 돌파`).not.toContain("ultimate");
     }
   });
 

@@ -527,6 +527,8 @@ export interface RerollRuneTraitResponse {
   byPity: boolean;
   rawStoneSpent: number;
   wallet: Wallet;
+  /** 이전에 굴려 둔 고르지 않은 후보를 다시 연 것이다. 원석은 새로 들지 않았다. */
+  resumed?: boolean;
 }
 /** 후보를 적용할지 버릴지 고른다. */
 export interface ResolveRuneTraitRerollRequest { runeInstanceId: string; keepCandidate: boolean; requestId: string; }

@@ -27,4 +27,6 @@ export interface DamageInput {
   kind?: "basic" | "ultimate";
   /** 방어력·저항을 지나치는 고정 피해인가. 속성 상성과 경감 경계는 그대로 지난다. */
   ignoresDefense?: boolean;
+  /** 대상의 방어력·저항력을 이 비율(%)만큼 지나친다. `ignoresDefense`가 켜져 있으면 쓰이지 않는다. */
+  defenseIgnorePercent?: number;
 }

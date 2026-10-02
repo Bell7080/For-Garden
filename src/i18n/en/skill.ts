@@ -302,4 +302,13 @@ export const SKILL_EN = {
   "skill.sentence.lullaby.shieldPercent": "{percent}% of her [[res|Resistance]]",
   "skill.ferocity.sleepTantrum": "[[attack-speed|Attack Speed]] rises by {percent}%, and [[basic-attack|Basic Attacks]] hit every enemy around her, briefly pushing back each one hit.",
   "skill.keyword.shield.fromStat": "A shield calculated from {percent}% of the current {stat}.",
+  "skill.phrase.farthest": "the farthest enemy",
+  "skill.clause.defenseIgnore.def": "this attack ignores {percent}% of the target's [[def|Defense]]",
+  "skill.clause.defenseIgnore.res": "this attack ignores {percent}% of the target's [[res|Resistance]]",
+  "skill.passive.tideSight": "Gains {percent}% life steal, and the life stolen is split into [[fog-guard|Sea Mist Barrier]].",
+  "skill.ferocity.stormAim": "While in frenzy, [[basic-attack|Basic Attacks]] ignore an extra {percent}% of the target's [[def|Defense]] and [[res|Resistance]].",
+  "skill.breakthrough.effect.basic.focusFire": "Hitting the same enemy in a row makes \"{name}\" deal {percent}% more damage per hit, up to {max}%. Switching targets starts over.",
+  "skill.breakthrough.effect.ultimate.shrapnel": "Shards also fly to other enemies around the one \"{name}\" hits, dealing {percent}% damage.",
+  "skill.breakthrough.effect.ferocity.ankleShot": "During [[ferocity|Frenzy]], a [[basic-attack|Basic Attack]] that lands as a critical hit [[stagger|Staggers]] the target for {seconds}s.",
+  "skill.breakthrough.effect.passive.highTide": "While [[fog-guard|Sea Mist Barrier]] is full to its cap, all damage rises by {percent}%.",
 } as const;

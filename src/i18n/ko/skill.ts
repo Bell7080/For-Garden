@@ -38,6 +38,7 @@ export const SKILL_KO = {
   // ── 본문이 문장을 여는 대상 ──────────────────────────────────────────────
   "skill.phrase.single": "적 한 명에게",
   "skill.phrase.highestCurrentHp": "현재 체력이 가장 높은 적에게",
+  "skill.phrase.farthest": "가장 먼 적에게",
   "skill.phrase.fewestObservation": "[[observation|관측]]이 없거나 가장 적은 적에게",
   "skill.phrase.nearbyEnemies": "자신의 주위 모든 적에게",
   "skill.phrase.splitShot": "표적과 그 주위의 적에게",
@@ -103,6 +104,7 @@ export const SKILL_KO = {
   "skill.ferocity.venomousEncore": "[[attack-speed|공격 속도]]가 {percent}% 증가한다. [[basic-attack|기본 공격]]이 자신의 [[poison|중독]]에 걸리지 않은 적에게는 중독을 부여하고, 이미 걸린 적에게는 그 중독을 [[liquidate|청산]]한다.",
   "skill.ferocity.knockbackSlam": "{loaded}[[concussion|뇌진탕]]이 확정 치명타가 되고, 그 적을 [[knockback|날려버린다]]. 날려버린 뒤에는 가장 가까운 적을 표적으로 다시 지정한다.",
   "skill.ferocity.knockbackSlam.loaded": "폭주에 들어가면 [[concussion|뇌진탕]]이 곧바로 장전된다. ",
+  "skill.ferocity.stormAim": "폭주 중 [[basic-attack|기본 공격]]이 대상의 [[def|방어력]]과 [[res|저항력]]을 {percent}%만큼 더 지나친다.",
   "skill.ferocity.frenzyGaze": "폭주 중 [[basic-attack|기본 공격]]에 적중한 적을 {seconds}초 동안 [[frenzy|광란]]시킨다. [[transfer|전이]]된 타격으로는 발동하지 않는다.",
   "skill.ferocity.battleHeat": "폭주에 들어가는 순간 넓은 범위의 적을 {seconds}초 동안 [[taunt|도발]]한다. 매초 자신의 주위 모든 적에게 최대 체력의 {percent}%만큼 [[fixed-damage|고정 피해]]를 준다. 폭주 동안 [[nodonia-elation|희열]]의 회복량이 {healPercent}% 증가한다.",
   "skill.ferocity.graffitiRun": "[[move-speed|이동 속도]]가 {percent}% 증가하고 [[basic-attack|기본 공격]]을 하지 않는다. 매초 자신의 주위 모든 적에게 {damage}의 [[magical-damage|마법 피해]]를 주고 [[vandalism|밴덜리즘]]을 한 겹 쌓으며 {seconds}초 동안 [[taunt|도발]]한다.",
@@ -174,6 +176,7 @@ export const SKILL_KO = {
   "skill.passive.frostboundDominion": "상성 계산에서 물이 아닌 얼음으로 취급된다. 얼음은 풀·물·땅에 유리하고 불에 불리하며 바람과는 무상성이다. 이미 [[chill|둔화]]가 최대 중첩인 적을 때리면 그 겹을 모두 소모해 [[frozen|빙결]]시킨다.",
   "skill.passive.battleMaidMastery": "전투 시작 시, [[attack-speed|공격 속도]]·[[atk|공격력]]·치명타 확률·치명타 피해가 모두 {percent}% 오른다.",
   "skill.passive.battleMaidMastery.lifeSteal": "전투 시작 시, [[attack-speed|공격 속도]]·[[atk|공격력]]·치명타 확률·치명타 피해·흡혈이 모두 {percent}% 오른다.",
+  "skill.passive.tideSight": "흡혈 {percent}%를 얻고, 흡혈한 양이 [[fog-guard|해무 방벽]]으로 나뉜다.",
   "skill.passive.shimmerMark": "적을 타격하면 [[shimmer|반짝!]] 표식을 부여하고 [[ap|주문력]]의 {percent}% [[magical-damage|마법 피해]]를 추가로 입힌다.",
   "skill.passive.openingCharge": "전투당 한 번, 표적에게 중거리까지 다가서면 그 자리로 [[charge|돌진]]해 {seconds}초 동안 [[stun|기절]]시킨다.",
 
@@ -241,6 +244,8 @@ export const SKILL_KO = {
   "skill.clause.duoCharge.split": "[[duo|듀오]]의 궁극기 게이지가 {energy}, [[ferocity|야성]]이 {ferocity} 오른다",
   "skill.clause.damageTransfer": "그 적이 실제로 잃은 체력의 {percent}%를 가장 가까운 다른 적에게 [[transfer|전이]]한다",
   "skill.clause.curseTransfer": "그 적의 [[curse|저주]]가 이미 최대라면 실제로 잃은 체력의 {percent}%를 가장 가까운 다른 적에게 [[transfer|전이]]하고 저주를 씌운다. 그 적의 저주도 최대였다면 같은 방식으로 이어진다",
+  "skill.clause.defenseIgnore.def": "이 공격은 대상의 [[def|방어력]]을 {percent}%만큼 지나친다",
+  "skill.clause.defenseIgnore.res": "이 공격은 대상의 [[res|저항력]]을 {percent}%만큼 지나친다",
   "skill.clause.energyRefundOnKill": "이 공격으로 처치하면 궁극기 게이지를 {value} 돌려받는다",
   "skill.clause.periodicCritical": "매 {every}번째 실제 [[basic-attack|기본 공격]]은 확정 치명타가 된다",
   "skill.clause.nape": "표적의 체력이 {percent}% 이하면 [[nape|목덜미]]를 노려 확정 치명타로 피해가 {bonus}% 늘어나고, 같은 표적에게는 {seconds}초에 한 번만 터진다",
@@ -349,4 +354,8 @@ export const SKILL_KO = {
   "skill.ferocity.sleepTantrum": "[[attack-speed|공격 속도]]가 {percent}% 증가하고, [[basic-attack|기본 공격]]이 자신의 주위 모든 적에게 적중해 맞은 적을 짧게 밀어낸다.",
   "skill.keyword.shield.fromStat": "현재 {stat}에서 {percent}%를 받아 계산한 보호막 수치다.",
   "skill.ferocity.caffeineBubble": "폭주에 들어가는 순간 넓은 범위의 적을 {seconds}초 동안 [[taunt|도발]]한다. 폭주 중에는 [[kento-prickle|까칠]]이 한 번에 {multiplier}배로 쌓인다.",
+  "skill.breakthrough.effect.basic.focusFire": "같은 적을 연속으로 맞히면 「{name}」의 피해가 한 번마다 {percent}%씩 커진다. 최대 {max}%까지이고 다른 적으로 옮기면 처음부터다.",
+  "skill.breakthrough.effect.ultimate.shrapnel": "「{name}」에 맞은 적 주위의 다른 적에게도 파편이 튀어 {percent}%의 피해를 준다.",
+  "skill.breakthrough.effect.ferocity.ankleShot": "[[ferocity|폭주]] 중 [[basic-attack|기본 공격]]이 치명타로 적중하면 맞은 적을 {seconds}초 동안 [[stagger|경직]]시킨다.",
+  "skill.breakthrough.effect.passive.highTide": "[[fog-guard|해무 방벽]]이 상한까지 차 있는 동안 모든 피해가 {percent}% 늘어난다.",
 } as const;

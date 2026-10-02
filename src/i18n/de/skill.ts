@@ -301,4 +301,13 @@ export const SKILL_DE = {
   "skill.sentence.lullaby.shieldPercent": "{percent} % ihres [[res|Widerstands]]",
   "skill.ferocity.sleepTantrum": "[[attack-speed|Angriffstempo]] steigt um {percent} %, und [[basic-attack|Standardangriffe]] treffen alle Gegner um sie herum und stoßen jeden Getroffenen kurz zurück.",
   "skill.keyword.shield.fromStat": "Schild, berechnet aus {percent}% {stat}.",
+  "skill.phrase.farthest": "dem am weitesten entfernten Gegner",
+  "skill.clause.defenseIgnore.def": "dieser Angriff ignoriert {percent} % der [[def|Verteidigung]] des Ziels",
+  "skill.clause.defenseIgnore.res": "dieser Angriff ignoriert {percent} % der [[res|Widerstand]] des Ziels",
+  "skill.passive.tideSight": "Erhält {percent} % Lebensraub; das geraubte Leben wird auf [[fog-guard|Seenebelschild]] aufgeteilt.",
+  "skill.ferocity.stormAim": "Während der Raserei ignoriert der [[basic-attack|Normalangriff]] zusätzlich {percent} % der [[def|Verteidigung]] und des [[res|Widerstand]]s des Ziels.",
+  "skill.breakthrough.effect.basic.focusFire": "Trifft es denselben Gegner mehrfach hintereinander, verursacht „{name}“ pro Treffer {percent} % mehr Schaden, bis maximal {max} %. Ein Zielwechsel setzt zurück.",
+  "skill.breakthrough.effect.ultimate.shrapnel": "Auch andere Gegner um das von „{name}“ getroffene Ziel werden von Splittern getroffen und erleiden {percent} % Schaden.",
+  "skill.breakthrough.effect.ferocity.ankleShot": "Während der [[ferocity|Raserei]] lässt ein [[basic-attack|Normalangriff]], der kritisch trifft, das Ziel {seconds} s lang [[stagger|Taumeln]].",
+  "skill.breakthrough.effect.passive.highTide": "Solange das [[fog-guard|Seenebelschild]] bis zur Obergrenze gefüllt ist, steigt aller Schaden um {percent} %.",
 } as const;

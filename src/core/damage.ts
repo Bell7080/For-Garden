@@ -69,7 +69,9 @@ export function computeDamageContribution(attacker: Combatant, input: DamageInpu
 /** 실시간 난전의 공격력, 방어, 치명타, 각성, 야성, 속성 순서를 고정한 피해 공식이다. */
 export function computeDamage(attacker: Combatant, target: Combatant, input: DamageInput): number {
   // 고정 피해는 방어·저항을 0으로 두고 지나간다. 속성 상성과 대상 경감은 그대로 거친다.
-  const defense = input.ignoresDefense ? 0 : input.damageType === "physical" ? target.def.stats.def : target.def.stats.res;
+  const rawDefense = input.damageType === "physical" ? target.def.stats.def : target.def.stats.res;
+  // 일부만 지나치는 한 방(`defenseIgnorePercent`)은 방어를 그 비율만큼 깎고, 통째로 지나치는 고정 피해는 0이다.
+  const defense = input.ignoresDefense ? 0 : rawDefense * (1 - Math.min(100, Math.max(0, input.defenseIgnorePercent ?? 0)) / 100);
   const critical = input.isCritical ? attacker.def.stats.critDamage / 100 : 1;
   // **돌파는 공용 피해 배율을 주지 않는다** — 어느 개체를 뚫어도 같은 숫자가 오르면 그 개체를
   // 끝까지 키운 이유를 말하지 못한다. 돌파가 바꾸는 것은 `breakthroughEffects`뿐이다.

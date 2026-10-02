@@ -1230,6 +1230,110 @@ export const RELICS: RelicDef[] = [
   },
 
   {
+    id: "irna",
+    squad: "eye",
+    name: "이르나",
+    specimenNumber: "234",
+    projectName: "HORIZON LINE",
+    excavationSite: "미국 캔자스주 니오브라라 백악층 서부 내해 퇴적면",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "얕은 내해가 말라 굳은 백악층에서 가슴뼈의 뚜렷한 용골과 날개뼈가 접힌 채 나왔다. 부리 안쪽에는 작고 곧은 이빨이 한 줄로 남아 있어, 복원 연구는 물고기를 삼키던 새가 이빨로 먹이를 낚아채던 방식부터 확인했다.",
+    observationProfile: {
+      originYear: "약 8,500만 년 전",
+      // E.C.는 이르나의 인간형 신체 나잇대이며, 원종 화석의 연대와 독립된 값이다.
+      restorationYear: "E.C. 16년",
+      lifeStage: "성체",
+      height: "1.56 m",
+      weight: "47 kg",
+    },
+    catalogSummary: "신장 1.56m, 체중 47kg의 인간형 체격에 흑백 날개 망토와 선원 모자, 조준경을 단 장총을 갖춘 채 복원된 성체 이크티오르니스 표본.",
+    unlockRecord: { status: "recorded", text: "이르나는 복원 직후 관제탑 옥상 난간을 제 자리로 정했다. 바다가 없는 도시에서도 수평선이 있는 쪽을 정확히 가리키며, 쏘기 전에는 바람이 바뀔 때까지 숨을 길게 고르고 쏜 뒤에는 총신에 묻은 바람부터 닦는다. 말수는 적지만 관제탑 무전에는 한 번도 답을 빠뜨린 적이 없고, 관제 쪽 판단이 서면 그 지시를 입으로 한 번 따라 읊은 뒤에야 방아쇠에 손을 올리는 모습이 관찰됐다." },
+    squadNote: "시그널 아이의 해상 저격수. 관측 보고가 올라오면 가장 먼 표적 하나를 받아 한 발로 끝내고, 쏘고 난 뒤 총구에 어린 해무로 자기 몸을 가린다.",
+    // 선원 모자를 쓰고 지시를 되읊는 버릇이라 시그널 아이가 지시자에게 쓰는 「오더」를 그대로 연구원에게 돌려 쓴다.
+    researcherTitle: "오더",
+    rarity: "SR",
+    portraitAssetId: "irna",
+    origin: "이크티오르니스",
+    element: "water",
+    role: "warrior",
+    // 조준경을 단 장총으로 먼 거리에서 쏜다.
+    reachTier: "ranged",
+    // 관제탑에서 받은 표적 기록을 골드로 정산하는 자리라 발굴 특화도 골드 쪽에 붙인다.
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 130, efficiencyMultiplier: 1.05 },
+    /*
+     * **한 방이 무거운 대신 느리게 쏜다.** 공격력을 레이더 상한(200)까지 몰아 주고 공격 속도 56은 전사 중 가장 느리다(케리스 92 ·
+     * 티아 104 · 렉시아 112 · 모르페 118). 주문력은 쓰는 스킬이 하나도 없으므로 로스터 최저로 둔다.
+     * 서서 쏘는 몸이라 이동 속도도 낮다. 전투력 2219로 SR 띠(2210~2330) 안이다.
+     */
+    stats: {
+      hp: 1040,
+      def: 72,
+      res: 86,
+      atk: 200,
+      ap: 22,
+      attackSpeed: 56,
+      moveSpeed: 54,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    // 폭주는 공속을 올리지 않는다 — 느리게 쏘는 것이 정체성이라 한 발의 무게만 키운다.
+    ferocityTrait: { name: "폭풍 속의 조준", effectId: "stormAim", defenseIgnorePercent: 25 },
+    // 한계 돌파 — 평타는 쏜 자리를 다시 조준할수록 무거워지고(표적 고정), 궁극기는 주위로 파편이 튀며, 폭주는 치명타로 맞은 적을
+    // 휘청이게 하고(궁극기와 엮지 않는다), 패시브는 해무 방벽이 가득 차 있는 동안 피해를 키운다(만조).
+    breakthroughEffects: {
+      basic: { kind: "focusFire", damagePercentPerStack: 8, maxStacks: 5 },
+      ultimate: { kind: "shrapnel", radius: 300, powerPercent: 30 },
+      ferocity: { kind: "ankleShot", staggerSeconds: 0.5 },
+      passive: { kind: "highTide", damagePercent: 15 },
+    },
+    passive: {
+      // kind가 tideSight인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
+      // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
+      id: "irna-passive",
+      name: "물때를 읽는 눈",
+      kind: "tideSight",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      value: 0,
+      // 한 방 개체라 치명타가 곧 정체성이다. 태생 치명타는 전 개체 공통이라 패시브가 끌어다 쓴다(렉시아 25 · 루카 15).
+      criticalChancePercent: 20,
+      // 전사 계약의 자가 수급이다. 흡혈은 전 개체 공통 0이라 퍼센트포인트로 끌어다 쓴다.
+      lifeStealPoints: 20,
+      // 흡혈 총량은 그대로 두고 절반을 막으로 돌린다 — 멀쩡한 저격수는 회복이 비므로, 쏠수록 막이 한 겹 쌓인다.
+      lifeStealShield: { convertPercent: 50, capMaxHpPercent: 25 },
+      desc: "치명타 확률이 20% 오르고 흡혈 20%를 얻는다. 흡혈한 양의 50%는 체력 대신 보호막이 되며, 막은 최대 체력의 25%까지 쌓인다.",
+    },
+    basic: {
+      id: "irna-basic",
+      name: "장전된 한 발",
+      power: 260,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+    },
+    ultimate: {
+      id: "irna-ult",
+      name: "수평선 저격",
+      power: 650,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      cost: 160,
+      // 가장 먼 적을 노린다. 모르페의 「현재 체력이 가장 높은 적」과 표적이 겹치지 않는다.
+      targeting: "single",
+      targetSelection: "farthest",
+      // 방어를 통째로 지나는 고정 피해가 아니라 30%만 지나친다 — 두꺼운 적에게는 여전히 깎인다.
+      defenseIgnorePercent: 30,
+      // 처치하면 게이지 일부를 돌려받아, 먼 곳의 약한 적을 끊고 곧바로 다음 한 발을 준비한다.
+      energyRefundOnKill: 80,
+    },
+  },
+
+  {
     id: "meron",
     squad: "rune",
     name: "메론",

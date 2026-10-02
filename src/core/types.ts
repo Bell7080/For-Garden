@@ -43,7 +43,7 @@ export type RelicRarity = "R" | "SR" | "SSR";
  */
 export type RaitiaAssetId = "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind";
 
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
@@ -141,9 +141,17 @@ interface SkillBase {
    * 개체 이름이 아니라 이 필드 하나를 전투가 읽는다 — 「현재 체력이 가장 높은 적」과 「관측이 가장
    * 적은 적」은 모르페와 디모가 함께 쓰는 규칙이라 두 정의가 같은 말을 같은 값으로 적는다.
    * `highestCurrentHp`는 숨은 적을 거르되 남은 적이 없으면 마지막 하나를 고르고,
-   * `fewestObservation`은 겹이 같으면 가까운 쪽이다.
+   * `fewestObservation`은 겹이 같으면 가까운 쪽이다. `farthest`는 시전자에게서 **가장 먼 적**이며
+   * 동률은 편성 순서가 이긴다(이르나의 수평선 저격).
    */
-  targetSelection?: "highestCurrentHp" | "fewestObservation";
+  targetSelection?: "highestCurrentHp" | "fewestObservation" | "farthest";
+  /**
+   * 이 기술이 대상의 방어력·저항력을 **이 비율(%)만큼 지나친다.** 없으면 전부 맞는다.
+   *
+   * `ignoresDefense`(고정 피해 — 방어를 통째로 지난다)와 다른 축이다. 그쪽은 몇 개체가 쓰는 예외이고,
+   * 이쪽은 한 방이 방어를 **얼마나** 파고드는지를 값 하나로 말해 개체 이름 분기 없이 저격류가 읽는다.
+   */
+  defenseIgnorePercent?: number;
   /**
    * 목덜미 — 표적의 체력이 문턱 이하면 이번 한 방이 **확정 치명타에 큰 추가 피해**가 된다.
    *
@@ -1107,6 +1115,8 @@ export type Ultimate = Skill & {
 
 /** 패시브는 종류별로 전투 엔진이 직접 해석한다. 새 패시브는 여기에 종류를 늘려 추가한다. */
 export type PassiveKind =
+  /** 이르나 전용: 치명타 확률을 더하고, 흡혈한 몫의 일부를 회복 대신 보호막으로 두른다. */
+  | "tideSight"
   /** 체력이 절반 이하가 되면 전투당 한 번 지속 회복 */
   | "emergencyRecovery"
   /** 같은 상대를 연속으로 때리면 출혈을 남긴다 */
@@ -1277,7 +1287,9 @@ export type FerocityEffectId =
   /** 모르페 전용: 폭주 진입 시 자신과 소환수가 보호막을 두르고, 폭주 중 소환수 주위가 매초 지져진다. */
   | "overclock"
   /** 귀속 소환수 전용: 주인의 「오버클럭」을 함께 받는 몸이 실제로 얻는 강화다. */
-  | "overclockBody";
+  | "overclockBody"
+  /** 이르나 전용: 폭주 중 기본 공격이 대상의 방어를 일부 지나친다. */
+  | "stormAim";
 
 /**
  * 개체별 피버 발현 정적 데이터다.
@@ -1359,6 +1371,14 @@ export type FerocityTrait = {
        * 수치를 읽는다.
        */
       effectId: "summonPackFrenzy";
+    }
+  | {
+      /**
+       * 「폭풍 속의 조준」(이르나). 공속을 올리지 않고 **한 발의 무게만** 키운다 — 느리게 쏘는 개체의 정체성을
+       * 폭주가 흐리지 않게 하려는 것이다. 폭주 중 **기본 공격**이 방어력·저항력을 이 비율만큼 더 지나친다.
+       */
+      effectId: "stormAim";
+      defenseIgnorePercent: number;
     }
   | {
       /** 귀속 소환수 전용: 주인의 폭주를 함께 받는 몸이 실제로 얻는 강화다. */
@@ -1751,6 +1771,19 @@ export interface Passive {
    * 곱하면 0에 무엇을 곱해도 0이라, 이 축을 쓰는 개체는 값을 끌어다 쓸 방법이 없다.
    */
   lifeStealPoints?: number;
+  /**
+   * 흡혈한 양의 일부를 **회복 대신 보호막**으로 돌린다(이르나의 「해무 방벽」).
+   *
+   * 흡혈은 다친 몸만 채우므로 멀쩡한 저격수에게는 값이 비는데, 그 몫을 막으로 두르면 쏘기만 해도
+   * 한 겹이 쌓인다. 흡혈의 **총량은 그대로**이고 나뉘는 비율만 바뀐다 — 회복이 줄어든 만큼 막이 선다.
+   * 막의 총량은 최대 체력의 `capMaxHpPercent`%까지만 쌓이고, 두르는 길은 공용 `grantShield` 하나다.
+   */
+  lifeStealShield?: {
+    /** 흡혈한 양 중 막으로 두르는 몫(%). 나머지는 평소처럼 체력을 채운다. */
+    convertPercent: number;
+    /** 이 패시브로 쌓이는 막이 닿을 수 있는 선(최대 체력의 %). */
+    capMaxHpPercent: number;
+  };
   /**
    * 표적에게 **이 거리까지 다가서면** 남은 사이를 한 번에 파고든다. 전투당 한 번이다.
    *
@@ -2325,6 +2358,16 @@ export type BasicBreakthrough = {
   secondsPerStack: number;
   /** 최대 겹 수(첫 타 포함). */
   maxStacks: number;
+} | {
+  /**
+   * 같은 적을 **연속으로** 맞힐수록 평타 피해가 겹마다 오른다(이르나의 표적 고정). 다른 적으로 옮기면 처음부터 센다.
+   * 한 방이 무거운 대신 느리게 쏘는 개체라, 쏜 자리를 다시 조준할수록 한 방이 더 무거워진다.
+   */
+  kind: "focusFire";
+  /** 겹 하나가 더하는 평타 피해(%). 첫 타는 겹이 없다. */
+  damagePercentPerStack: number;
+  /** 피해가 오르는 최대 겹 수(첫 타 포함). */
+  maxStacks: number;
 } | BreakthroughNone;
 
 /**
@@ -2385,6 +2428,16 @@ export type UltimateBreakthrough = {
   costReduction: number;
   /** 체력이 가득 찬 아군이 얻는 보호막(최대 체력의 %). */
   fullHpShieldPercent: number;
+} | {
+  /**
+   * 궁극기가 맞은 적 **주위의 다른 적**에게도 파편이 튄다(이르나의 파편탄). 가장 먼 적을 노리는 한 발이라 그 뒤쪽에는
+   * 적이 없을 수 있어 관통이 아니라 맞은 자리 둘레로 정했고, 3대3에서도 발동한다. 파편은 상태를 걸지 않고 게이지도 채우지 않는다.
+   */
+  kind: "shrapnel";
+  /** 맞은 적 중심에서 파편이 닿는 전장 반경(px). */
+  radius: number;
+  /** 본 궁극기 위력의 몇 %로 튀는지. */
+  powerPercent: number;
 } | BreakthroughNone;
 
 /**
@@ -2429,6 +2482,15 @@ export type FerocityBreakthrough = {
   percentPerHit: number;
   /** 오를 수 있는 최대 위력 증가(%). */
   maxPercent: number;
+} | {
+  /**
+   * 폭주 중 **치명타로 맞은 적**이 잠깐 휘청인다(이르나의 발목 사격). 일반 공격에만 걸리고 궁극기와 엮지 않는다 —
+   * 자동 전투에서 폭주와 궁극기가 겹치는 순간을 따로 셈하지 않기 위해서다(`docs/breakthrough-design.md`).
+   * 경직 시간은 공격 간격보다 짧게 둔다.
+   */
+  kind: "ankleShot";
+  /** 경직 시간(초). */
+  staggerSeconds: number;
 } | BreakthroughNone;
 
 /**
@@ -2480,6 +2542,14 @@ export type PassiveBreakthrough = {
   powerPercent: number;
   staggerSeconds: number;
   cooldownSeconds: number;
+} | {
+  /**
+   * 흡혈 보호막(`lifeStealShield`)이 **상한까지 차 있는 동안** 모든 피해가 늘어난다(이르나의 만조).
+   * 막이 상한에 닿는 순간 생기는 보상이라, 막이 깨지면 다시 사라진다.
+   */
+  kind: "highTide";
+  /** 늘어나는 피해(%). */
+  damagePercent: number;
 } | BreakthroughNone;
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */

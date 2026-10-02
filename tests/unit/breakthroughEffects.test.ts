@@ -766,3 +766,102 @@ describe("메테 한계 돌파", () => {
     expect(breakthroughEffectText(mette, "passive")).toContain("7초에 한 번");
   });
 });
+
+describe("이르나 한계 돌파", () => {
+  const FULL = BREAKTHROUGH_STEPS.length;
+  /** 이르나 한 명과 적 셋. 돌파 단계만 갈아 끼운다. 적은 때리지 않고 체력이 사실상 무한하다. */
+  function irnaBattle(breakthrough: number): SkirmishState {
+    const state = createSkirmish([getRelic("irna")], ["amo", "toby", "torika"].map(getRelic), ARENA, {}, { irna: breakthrough });
+    for (const enemy of state.fighters.filter((fighter) => fighter.side === "enemy")) {
+      enemy.attackCooldown = 999; enemy.retargetIn = 999; enemy.maxHp = 1_000_000; enemy.hp = enemy.maxHp; enemy.stealthFor = 0;
+    }
+    const irna = findFighter(state, "player-0")!;
+    irna.x = 500; irna.y = 1_400; irna.retargetIn = 999;
+    return state;
+  }
+  /** 이르나가 지금 겨눈 적을 한 번 쏜 사건의 피해량. */
+  function shoot(state: SkirmishState, targetId: string, rng: () => number = () => 0.99): number {
+    const irna = findFighter(state, "player-0")!;
+    // 연속으로 쏘는 동안 폭주(방어 무시)가 끼어 피해가 갈리지 않도록 야성은 늘 비워 둔다.
+    irna.targetId = targetId; irna.attackCooldown = 0; irna.ferocity = 0;
+    const event = stepSkirmish(state, 0.05, rng).find((entry) => entry.kind === "attack" && entry.attackerId === irna.id && entry.skill === "basic");
+    return event && event.kind === "attack" ? event.amount : 0;
+  }
+
+  it("는 같은 적을 연속으로 맞힐수록 평타가 무거워지고 다른 적으로 옮기면 처음부터다(별 II)", () => {
+    const state = irnaBattle(1);
+    const [first, second] = state.fighters.filter((fighter) => fighter.side === "enemy");
+    first.x = 500; first.y = 1_100; second.x = 800; second.y = 1_100;
+    const irna = findFighter(state, "player-0")!;
+    const amounts = Array.from({ length: 6 }, () => shoot(state, first.id));
+    expect(amounts[1]).toBeGreaterThan(amounts[0]);
+    expect(amounts[4]).toBeGreaterThan(amounts[3]);
+    // 5겹(첫 타 포함)에서 멈춘다.
+    expect(amounts[5]).toBe(amounts[4]);
+    expect(irna.bt.focusStreak?.count).toBe(6);
+    shoot(state, second.id);
+    expect(irna.bt.focusStreak).toEqual({ targetId: second.id, count: 1 });
+    // 돌파가 없으면 세지 않는다.
+    const plain = irnaBattle(0);
+    const foe = plain.fighters.find((fighter) => fighter.side === "enemy")!;
+    foe.x = 500; foe.y = 1_100;
+    shoot(plain, foe.id);
+    expect(findFighter(plain, "player-0")!.bt.focusStreak).toBeNull();
+  });
+
+  it("은 궁극기가 맞은 적 주위의 다른 적에게 파편을 튀긴다(별 III)", () => {
+    const run = (breakthrough: number): { neighbor: number; distant: number } => {
+      const state = irnaBattle(breakthrough);
+      const [farthest, neighbor, distant] = state.fighters.filter((fighter) => fighter.side === "enemy");
+      farthest.x = 500; farthest.y = 100; neighbor.x = 620; neighbor.y = 200; distant.x = 500; distant.y = 900;
+      findFighter(state, "player-0")!.energy = 1_000;
+      fireUltimate(state, "player-0");
+      return { neighbor: neighbor.maxHp - neighbor.hp, distant: distant.maxHp - distant.hp };
+    };
+    expect(run(0)).toEqual({ neighbor: 0, distant: 0 });
+    const withShrapnel = run(2);
+    expect(withShrapnel.neighbor).toBeGreaterThan(0);
+    // 반경 밖의 적은 맞지 않는다.
+    expect(withShrapnel.distant).toBe(0);
+  });
+
+  it("은 폭주 중 치명타로 맞힌 적만 휘청이게 한다 — 궁극기와는 엮이지 않는다(별 IV)", () => {
+    const crit = (breakthrough: number, fever: boolean): number => {
+      const state = irnaBattle(breakthrough);
+      const foe = state.fighters.find((fighter) => fighter.side === "enemy")!;
+      foe.x = 500; foe.y = 1_100;
+      findFighter(state, "player-0")!.ferocityFever = fever;
+      shoot(state, foe.id, () => 0);
+      return foe.staggeredFor;
+    };
+    expect(crit(3, true)).toBeGreaterThan(0);
+    expect(crit(3, false)).toBe(0);
+    expect(crit(2, true)).toBe(0);
+    // 폭주 효과 정의는 궁극기를 건드리지 않는다.
+    expect(JSON.stringify(getRelic("irna").breakthroughEffects?.ferocity).toLowerCase()).not.toContain("ultimate");
+  });
+
+  it("은 해무 방벽이 가득 찬 동안에만 피해를 키운다(별 V)", () => {
+    const damage = (breakthrough: number, full: boolean): number => {
+      const state = irnaBattle(breakthrough);
+      const foe = state.fighters.find((fighter) => fighter.side === "enemy")!;
+      foe.x = 500; foe.y = 1_100;
+      const irna = findFighter(state, "player-0")!;
+      if (full) { irna.shield.amount = irna.maxHp * 0.25; irna.shield.providerId = irna.id; }
+      return shoot(state, foe.id);
+    };
+    const base = damage(FULL, false);
+    expect(damage(FULL, true)).toBeGreaterThan(base);
+    expect(damage(FULL, true)).toBeCloseTo(base * 1.15, -1);
+    // 돌파가 없으면 가득 차 있어도 그대로다.
+    expect(damage(0, true)).toBe(base);
+  });
+
+  it("는 네 슬롯 모두 문장을 만든다", () => {
+    const irna = getRelic("irna");
+    expect(breakthroughEffectText(irna, "basic")).toContain("연속");
+    expect(breakthroughEffectText(irna, "ultimate")).toContain("파편");
+    expect(breakthroughEffectText(irna, "ferocity")).toContain("경직");
+    expect(breakthroughEffectText(irna, "passive")).toContain("해무 방벽");
+  });
+});

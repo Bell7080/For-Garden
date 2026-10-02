@@ -271,6 +271,8 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   // 반경은 바닥에 그려지는 범위라 수로 적지 않는다. 수압이 무엇을 하는지는 태그가 말한다.
   if (trait.effectId === "abyssalVortex") return t("skill.ferocity.abyssalVortex", { percent: trait.attackSpeedPercent });
   if (trait.effectId === "sleepTantrum") return t("skill.ferocity.sleepTantrum", { percent: trait.attackSpeedPercent });
+  // 공속은 올리지 않는다는 말을 따로 적지 않는다 — 오르는 것이 이 한 줄뿐이라 읽는 사람이 그 외를 가정하지 않는다.
+  if (trait.effectId === "stormAim") return t("skill.ferocity.stormAim", { percent: trait.defenseIgnorePercent });
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? ""
@@ -462,6 +464,9 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
   if (passive.kind === "stalkerBlink") return t("skill.passive.stalkerBlink", { seconds: passive.value });
   if (passive.kind === "openingDive" && passive.openingCharge !== undefined) return t("skill.passive.openingCharge", { seconds: passive.openingCharge.stunSeconds });
   if (passive.kind === "basicHitAttackSpeedStack") return t("skill.passive.basicHitAttackSpeedStack", { value: passive.value });
+  // 흡혈 수치는 여기서, 나뉘는 비율·상한은 태그(`fog-guard`)가 말한다 — 쓰는 개체가 하나뿐인 규칙어라 태그가 수치를 갖는다.
+  // 치명타 확률 가산은 공통 절(`passiveCriticalClause`)이 뒤에 붙인다.
+  if (passive.kind === "tideSight") return t("skill.passive.tideSight", { percent: passive.lifeStealPoints });
   if (passive.kind === "farthestFocus") {
     // 겹당 무엇이 얼마나 오르는지는 전부 태그가 말한다 — 쓰는 개체가 하나뿐인 규칙어라
     // 태그가 수치를 갖고, 본문은 그것을 되풀이하지 않는다(출혈이 아니라 덧칠 쪽 규칙이다).
@@ -970,6 +975,11 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
   if ("curseTransfer" in skill && skill.curseTransfer) {
     clauses.push({ text: t("skill.clause.curseTransfer", { percent: skill.curseTransfer.percent }), standalone: true });
   }
+  // 방어를 얼마나 지나치는지는 스킬마다 다른 수라 본문이 적는다. 물리는 방어력, 마법은 저항력을 말한다.
+  if ("defenseIgnorePercent" in skill && skill.defenseIgnorePercent !== undefined) {
+    const key = "damageType" in skill && skill.damageType === "magical" ? "skill.clause.defenseIgnore.res" : "skill.clause.defenseIgnore.def";
+    clauses.push({ text: t(key, { percent: skill.defenseIgnorePercent }), standalone: true });
+  }
   if ("energyRefundOnKill" in skill && skill.energyRefundOnKill !== undefined) {
     clauses.push({ text: t("skill.clause.energyRefundOnKill", { value: skill.energyRefundOnKill }), standalone: true });
   }
@@ -1225,6 +1235,7 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
       return t("skill.breakthrough.effect.basic.arrowEcho", { name: arrow?.name ?? def.basic.name, seconds: trim(effect.delaySeconds), percent: trim(effect.powerPercent) });
     }
     if (effect.kind === "staccatoChain") return t("skill.breakthrough.effect.basic.staccatoChain", { name: def.basic.name, seconds: trim(effect.secondsPerStack), max: trim(effect.maxStacks) });
+    if (effect.kind === "focusFire") return t("skill.breakthrough.effect.basic.focusFire", { name: def.basic.name, percent: trim(effect.damagePercentPerStack), max: trim((effect.maxStacks - 1) * effect.damagePercentPerStack) });
     if (effect.kind === "farPing") return t("skill.breakthrough.effect.basic.farPing", { name: def.basic.name });
     if (effect.kind === "leapPuddle") return t("skill.breakthrough.effect.basic.leapPuddle");
     if (effect.kind === "splitHealing") return t("skill.breakthrough.effect.basic.splitHealing", { percent: trim(effect.sharePercent) });
@@ -1247,6 +1258,7 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effect.kind === "forestSight") return t("skill.breakthrough.effect.ultimate.forestSight", { hits: trim(def.ultimate.selfVolley ? def.ultimate.selfVolley.hitCount + effect.extraHits : effect.extraHits), seconds: trim(effect.extraSeconds) });
     if (effect.kind === "lightChorus") return t("skill.breakthrough.effect.ultimate.lightChorus", { name: def.ultimate.name, cost: trim(effect.costReduction), percent: trim(effect.fullHpShieldPercent) });
     if (effect.kind === "orderStrike") return t("skill.breakthrough.effect.ultimate.orderStrike");
+    if (effect.kind === "shrapnel") return t("skill.breakthrough.effect.ultimate.shrapnel", { name: def.ultimate.name, percent: trim(effect.powerPercent) });
     if (effect.kind === "tidalEcho") return t("skill.breakthrough.effect.ultimate.tidalEcho", { seconds: trim(effect.delaySeconds), percent: trim(effect.powerPercent) });
     if (effect.kind === "healingShield") return t("skill.breakthrough.effect.ultimate.healingShield", { percent: trim(effect.shieldPercentOfHealing) });
     // 피해량의 몇 %는 **명중 시점의 상대값**이라 실제 수로 바꾸지 않는다(대상마다 달라진다).
@@ -1263,6 +1275,7 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effect.kind === "crescendoRamp") return t("skill.breakthrough.effect.ferocity.crescendoRamp", { percent: trim(effect.percentPerHit), max: trim(effect.maxPercent) });
     if (effect.kind === "pingStorm") return t("skill.breakthrough.effect.ferocity.pingStorm", { name: def.basic.name });
     if (effect.kind === "ambushCrit") return t("skill.breakthrough.effect.ferocity.ambushCrit");
+    if (effect.kind === "ankleShot") return t("skill.breakthrough.effect.ferocity.ankleShot", { seconds: trim(effect.staggerSeconds) });
     if (effect.kind === "feverShare") return t("skill.breakthrough.effect.ferocity.feverShare", { percent: trim(effect.shieldPercentOfHealingDone) });
     return t("skill.breakthrough.effect.ferocity", {
       percent: trim(effect.shieldPercentOfDamageTaken), seconds: trim(effect.tauntSeconds),
@@ -1280,6 +1293,7 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effects.passive.kind === "adagioSlam") {
       return t("skill.breakthrough.effect.passive.adagioSlam", { power: trim(effects.passive.powerPercent), seconds: trim(effects.passive.staggerSeconds), cooldown: trim(effects.passive.cooldownSeconds) });
     }
+    if (effects.passive.kind === "highTide") return t("skill.breakthrough.effect.passive.highTide", { percent: trim(effects.passive.damagePercent) });
     if (effects.passive.kind === "relink") return t("skill.breakthrough.effect.passive.relink");
     if (effects.passive.kind === "huntChain") return t("skill.breakthrough.effect.passive.huntChain");
     if (effects.passive.kind === "rescueShield") {

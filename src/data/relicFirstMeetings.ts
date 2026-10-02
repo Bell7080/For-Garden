@@ -15,6 +15,7 @@ export const RELIC_FIRST_MEETINGS: Readonly<Record<string, string>> = {
   pachi: "야, 비켜! 보스 앞길은 내가 뚫는다.",
   maki: "잠깐, 나 이래 봬도 의사라고?",
   keris: "나만 봐요, 선배.",
+  irna: "수평선에 걸렸어요, 오더. 한 발이면 돼요.",
   delopi: "짜잔! 연구원님 열쇠, 여기 있어요.",
   nodonia: "아프면 말하렴, 아가. 대신 맞아 줄 테니.",
   ella: "제자리에 서 있을게요. 뒤는 맡기세요.",

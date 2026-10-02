@@ -301,4 +301,13 @@ export const SKILL_ZH_HANS = {
   "skill.sentence.lullaby.shieldPercent": "[[res|抗性]]的{percent}%",
   "skill.ferocity.sleepTantrum": "[[attack-speed|攻击速度]]提升{percent}%，[[basic-attack|普通攻击]]命中自身周围的所有敌人，并将被命中的敌人短暂击退。",
   "skill.keyword.shield.fromStat": "以当前{stat}的{percent}%计算的护盾。",
+  "skill.phrase.farthest": "最远的敌人",
+  "skill.clause.defenseIgnore.def": "这次攻击无视目标{percent}%的[[def|防御力]]",
+  "skill.clause.defenseIgnore.res": "这次攻击无视目标{percent}%的[[res|抗性]]",
+  "skill.passive.tideSight": "获得{percent}%吸血，所吸取的量会分给[[fog-guard|海雾屏障]]。",
+  "skill.ferocity.stormAim": "暴走期间，[[basic-attack|普通攻击]]额外无视目标{percent}%的[[def|防御力]]和[[res|抗性]]。",
+  "skill.breakthrough.effect.basic.focusFire": "连续命中同一敌人时，「{name}」的伤害每次提升{percent}%，最高{max}%。切换目标则重新计算。",
+  "skill.breakthrough.effect.ultimate.shrapnel": "「{name}」命中的敌人周围的其他敌人也会被溅射的碎片击中，受到{percent}%的伤害。",
+  "skill.breakthrough.effect.ferocity.ankleShot": "[[ferocity|暴走]]期间，[[basic-attack|普通攻击]]以暴击命中时，使被击中的敌人[[stagger|硬直]]{seconds}秒。",
+  "skill.breakthrough.effect.passive.highTide": "[[fog-guard|海雾屏障]]达到上限期间，所有伤害提升{percent}%。",
 } as const;

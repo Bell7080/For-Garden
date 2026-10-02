@@ -661,7 +661,7 @@ describe("스킬 설명문 양식 계약", () => {
       const borrowsSummonStats = "packAssault" in skill && skill.packAssault !== undefined;
       for (const body of bodies) {
         // 대상이 먼저다. 무엇을 때리는지 모른 채 수치부터 읽게 하지 않는다.
-        expect(body).toMatch(/^(적 한 명|자신의 주위 모든 적|표적과 그 주위의 적|전장의 모든 적|지정한 원 안의 모든 적|\[\[charge\|돌진\]\]해 뚫고 지나간 길의 모든 적|현재 체력이 가장 높은 적|\[\[observation\|관측\]\]이 없거나 가장 적은 적)에게 /);
+        expect(body).toMatch(/^(적 한 명|자신의 주위 모든 적|표적과 그 주위의 적|전장의 모든 적|지정한 원 안의 모든 적|\[\[charge\|돌진\]\]해 뚫고 지나간 길의 모든 적|현재 체력이 가장 높은 적|가장 먼 적|\[\[observation\|관측\]\]이 없거나 가장 적은 적)에게 /);
         if (borrowsSummonStats) {
           expect(body).toMatch(/\d+% 위력/);
           continue;

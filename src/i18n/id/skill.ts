@@ -301,4 +301,13 @@ export const SKILL_ID = {
   "skill.sentence.lullaby.shieldPercent": "{percent}% [[res|Resistensi]]",
   "skill.ferocity.sleepTantrum": "[[attack-speed|Kecepatan Serang]] naik {percent}%, dan [[basic-attack|serangan dasar]] mengenai semua musuh di sekitarnya serta mendorong mundur sebentar setiap yang terkena.",
   "skill.keyword.shield.fromStat": "Perisai yang dihitung dari {percent}% {stat} saat ini.",
+  "skill.phrase.farthest": "musuh terjauh",
+  "skill.clause.defenseIgnore.def": "serangan ini mengabaikan {percent}% [[def|Pertahanan]] target",
+  "skill.clause.defenseIgnore.res": "serangan ini mengabaikan {percent}% [[res|Resistensi]] target",
+  "skill.passive.tideSight": "Mendapat {percent}% curi nyawa, dan jumlah yang dicuri dibagi ke [[fog-guard|Penghalang Kabut Laut]].",
+  "skill.ferocity.stormAim": "Saat mengamuk, [[basic-attack|Serangan Dasar]] mengabaikan tambahan {percent}% [[def|Pertahanan]] dan [[res|Resistensi]] target.",
+  "skill.breakthrough.effect.basic.focusFire": "Memukul musuh yang sama berturut-turut membuat \"{name}\" memberi {percent}% lebih banyak kerusakan tiap pukulan, hingga {max}%. Berganti target mengulang dari awal.",
+  "skill.breakthrough.effect.ultimate.shrapnel": "Serpihan peluru juga melesat ke musuh lain di sekitar musuh yang terkena \"{name}\" dan memberi {percent}% kerusakan.",
+  "skill.breakthrough.effect.ferocity.ankleShot": "Selama [[ferocity|Amukan]], [[basic-attack|Serangan Dasar]] yang mengenai secara kritikal membuat target [[stagger|Goyah]] selama {seconds} dtk.",
+  "skill.breakthrough.effect.passive.highTide": "Selama [[fog-guard|Penghalang Kabut Laut]] penuh hingga batasnya, semua kerusakan naik {percent}%.",
 } as const;

@@ -301,4 +301,13 @@ export const SKILL_ES = {
   "skill.sentence.lullaby.shieldPercent": "el {percent}% de su [[res|Resistencia]]",
   "skill.ferocity.sleepTantrum": "La [[attack-speed|Velocidad de ataque]] sube un {percent}% y los [[basic-attack|ataques básicos]] golpean a todos los enemigos a su alrededor, empujando brevemente a cada uno.",
   "skill.keyword.shield.fromStat": "Escudo calculado con el {percent}% de {stat} actual.",
+  "skill.phrase.farthest": "el enemigo más lejano",
+  "skill.clause.defenseIgnore.def": "este ataque ignora el {percent}% de la [[def|Defensa]] del objetivo",
+  "skill.clause.defenseIgnore.res": "este ataque ignora el {percent}% de la [[res|Resistencia]] del objetivo",
+  "skill.passive.tideSight": "Obtiene un {percent}% de robo de vida y lo robado se reparte en [[fog-guard|Barrera de bruma marina]].",
+  "skill.ferocity.stormAim": "En frenesí, el [[basic-attack|Ataque básico]] ignora un {percent}% adicional de la [[def|Defensa]] y la [[res|Resistencia]] del objetivo.",
+  "skill.breakthrough.effect.basic.focusFire": "Golpear al mismo enemigo seguido hace que «{name}» inflija un {percent}% más de daño por golpe, hasta un {max}%. Cambiar de objetivo reinicia la cuenta.",
+  "skill.breakthrough.effect.ultimate.shrapnel": "También salen fragmentos hacia los demás enemigos alrededor del que golpea «{name}», que infligen un {percent}% de daño.",
+  "skill.breakthrough.effect.ferocity.ankleShot": "Durante el [[ferocity|Frenesí]], un [[basic-attack|Ataque básico]] que impacta como crítico provoca [[stagger|Tambaleo]] al objetivo durante {seconds} s.",
+  "skill.breakthrough.effect.passive.highTide": "Mientras la [[fog-guard|Barrera de bruma marina]] esté llena hasta su límite, todo el daño aumenta un {percent}%.",
 } as const;

@@ -10,19 +10,35 @@
  * 보이지 않고(열릴 때 자물쇠가 터지며 나타난다), 고고학 탭과 출격 안의 입구는 자물쇠가 걸린 채
  * 남는다. QA는 설정의 「레벨 만렙 · 모두 개방」으로 한 번에 연다.
  */
-export type ContentId = "excavation" | "interaction" | "cakeOperation" | "bounty" | "expedition" | "raid" | "duel" | "archaeology";
+export type ContentId = "excavation" | "interaction" | "cakeOperation" | "bounty" | "expedition" | "raid" | "duel" | "archaeology" | "shop" | "trade" | "friends";
 
 export interface ContentUnlock { id: ContentId; level: number; }
 
-/** 여는 순서이자 레벨. 같은 레벨에 둘을 열지 않는다 — 한 번에 하나씩 새것이 서야 무엇이 열렸는지 읽힌다. */
+/**
+ * 여는 순서이자 레벨. 같은 레벨에 둘을 열지 않는다 — 한 번에 하나씩 새것이 서야 무엇이 열렸는지 읽힌다.
+ *
+ * **시작부터 열려 있는 것**(표에 없다): 출격(스토리), 연구소(뽑기), 도감, 임무, 우편, 가방, 프리미엄, 이벤트, 설정.
+ * 수집형 RPG의 첫 몇 분은 「스토리 → 뽑기 → 육성 → 임무」 한 바퀴가 전부라 그 고리에 드는 것은 닫지 않는다.
+ *
+ * 차례의 기준은 「그 콘텐츠가 필요한 재화·이해가 쌓이는 때」다.
+ * - 2~4: 육성 재료를 방치·탐사로 모으는 서브 콘텐츠(발굴 → 고고학 → 교류)를 하나씩 맛보게 한다.
+ * - 5: 치즈케이크(급여·돌파 재료)를 모으는 일일 던전 — 육성이 막히기 시작하는 때다.
+ * - 6: 결투 — 편성이 갖춰진 뒤의 첫 대인 콘텐츠.
+ * - 7: 상점 — 재화가 쌓인 뒤에 쓰는 곳이다.
+ * - 8~10: 현상수배 → 친구 → 레이드. 친구는 레이드(공동 토벌)의 전제라 그 앞에 둔다.
+ * - 11~12: 무역(남는 재화 교환)과 20층 원정 — 가장 무겁고 마지막에 닿는 콘텐츠.
+ */
 export const CONTENT_UNLOCKS: readonly ContentUnlock[] = [
   { id: "excavation", level: 2 },
   { id: "archaeology", level: 3 },
   { id: "interaction", level: 4 },
   { id: "cakeOperation", level: 5 },
   { id: "duel", level: 6 },
+  { id: "shop", level: 7 },
   { id: "bounty", level: 8 },
+  { id: "friends", level: 9 },
   { id: "raid", level: 10 },
+  { id: "trade", level: 11 },
   { id: "expedition", level: 12 },
 ] as const;
 

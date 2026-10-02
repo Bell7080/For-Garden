@@ -59,6 +59,8 @@ describe("레벨이 여는 콘텐츠", () => {
     expect(contentUnlockLevel("interaction")).toBe(4);
     expect(contentUnlockLevel("duel")).toBe(6);
     expect(CONTENT_LEVEL_GATES_ENABLED).toBe(true);
+    // 스토리·연구소·도감·임무·우편·가방·프리미엄은 표에 없어 시작부터 열려 있다.
+    expect(CONTENT_UNLOCKS.map(({ id }) => id as string)).not.toContain("lab");
     expect(isContentUnlocked("excavation", 1)).toBe(false);
   });
 
@@ -68,7 +70,7 @@ describe("레벨이 여는 콘텐츠", () => {
     expect(isContentUnlocked("raid", 10, true)).toBe(true);
     expect(nextContentUnlock(1, false)).toBeUndefined();
     expect(nextContentUnlock(4, true)).toEqual({ id: "cakeOperation", level: 5 });
-    expect(contentUnlockedBetween(4, 8, true).map(({ id }) => id)).toEqual(["cakeOperation", "duel", "bounty"]);
+    expect(contentUnlockedBetween(4, 8, true).map(({ id }) => id)).toEqual(["cakeOperation", "duel", "shop", "bounty"]);
   });
 });
 

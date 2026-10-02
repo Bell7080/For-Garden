@@ -47,7 +47,7 @@ import { PlayerProfilePopup } from "../ui/PlayerProfilePopup";
 import { profileModifierManager } from "../managers/ProfileModifierManager";
 import { playerProfileDisplay, type PlayerProfileDisplay } from "../state/playerProfile";
 import { openAvatarPicker, openBioEditor, openModifierPicker, openNicknameEditor } from "../ui/PlayerProfileEditors";
-import { addLockBadge, addLockCover, collectUnlockCelebrations, consumeUnlockCelebration, contentNameKey, contentOpen, playLockPop, revealWithLockPop, UNLOCK_POP_TOTAL_MS } from "../ui/contentLock";
+import { showContentLockedToast, addLockBadge, addLockCover, collectUnlockCelebrations, consumeUnlockCelebration, contentNameKey, contentOpen, playLockPop, revealWithLockPop, UNLOCK_POP_TOTAL_MS } from "../ui/contentLock";
 import type { ContentId } from "../core/contentUnlock";
 import { managerEvents } from "../managers/ManagerEvents";
 import { PROFILE_FRAMES } from "../data/profileFrames";
@@ -412,6 +412,30 @@ export class LobbyScene extends Phaser.Scene {
    * 돌아오면 그 자리에 자물쇠가 서서 흔들리다 터지며 입구가 나타난다. (고고학 탭처럼 원래 줄에 있어야 하는 자리는 숨기지 않고
    * 자물쇠를 건 채로 둔다 — `BottomNav`.)
    */
+  /**
+   * 우측·좌측 레일 아이콘은 줄에 늘 서 있어야 하는 자리라 숨기지 않고 **자물쇠를 건 채** 둔다. 누르면 개방 레벨을 알리고, 방금 열렸으면
+   * 자물쇠가 터지며 풀린다. 입력 가드는 눌린 시점의 레벨로 판단하므로 연출 중에도 어긋나지 않는다.
+   */
+  private lockRailButton(id: ContentId, button: RailButton, size: number): void {
+    const celebrate = contentOpen(id) && consumeUnlockCelebration(id);
+    if (contentOpen(id) && !celebrate) return;
+    button.setAlpha(0.5);
+    const lock = addLockBadge(this, 0, 0, size * 0.34);
+    button.add(lock);
+    if (!celebrate) return;
+    this.unlockCelebrationUntil = this.time.now + UNLOCK_POP_TOTAL_MS + 900;
+    this.time.delayedCall(450, () => {
+      if (!lock.active) return;
+      playLockPop(this, lock);
+      this.time.delayedCall(UNLOCK_POP_TOTAL_MS - 120, () => { if (button.active) this.tweens.add({ targets: button, alpha: 1, duration: 260 }); });
+    });
+  }
+
+  /** 잠긴 입구의 눌림은 동작 대신 개방 레벨을 알린다. */
+  private guarded(id: ContentId, action: () => void): () => void {
+    return () => { if (contentOpen(id)) action(); else showContentLockedToast(this, id); };
+  }
+
   private gateEntrance(id: ContentId, button: Button, x: number, y: number): void {
     if (!contentOpen(id)) { button.setVisible(false); return; }
     if (consumeUnlockCelebration(id)) { this.unlockCelebrationUntil = this.time.now + UNLOCK_POP_TOTAL_MS + 900; revealWithLockPop(this, button, x, y); }
@@ -481,7 +505,7 @@ export class LobbyScene extends Phaser.Scene {
   /** 안내 프리팹은 이 콜백만 요청하므로 지갑 변경 없이 구현된 씬·로비 팝업으로만 이동한다. */
   private handleCurrencyAction(action: CurrencyGuideAction): void {
     if (action.kind === "scene" && action.target === "lab") startScene(this, "lab");
-    if (action.kind === "popup" && action.target === "trade") this.openTrade();
+    if (action.kind === "popup" && action.target === "trade") this.guarded("trade", () => this.openTrade())();
   }
 
   /** 오른쪽 레일에서 로비를 떠나지 않고 가방 작업판을 연다. */
@@ -745,7 +769,7 @@ export class LobbyScene extends Phaser.Scene {
       openEvents: () => this.openEvents(),
       openMail: () => this.openMail(),
       // 친구는 더 이상 준비 중 토스트가 아니라 목록과 공개 프로필 화면으로 연결된다.
-      openFriends: () => startScene(this, "friends"),
+      openFriends: this.guarded("friends", () => startScene(this, "friends")),
       // 가방은 씬 전환 없이 현재 로비 위에서 열린다.
       openInventory: () => this.openInventory(),
     });
@@ -753,6 +777,7 @@ export class LobbyScene extends Phaser.Scene {
       const button = new RailButton(this, item.bounds.x, item.bounds.y, { icon: item.icon, label: item.label, size: item.bounds.width, event: item.event, onClick: item.onClick });
       // 실제 서버 계약이 준비된 우편·친구 요청만 연결하고 Fake 데이터에서는 임의로 켜지 않는다.
       const key = item.icon === "mail" ? "mail" : item.icon === "friends" ? "friendRequest" : undefined;
+      if (item.icon === "friends") this.lockRailButton("friends", button, item.bounds.width);
       if (key) bindNotificationDot(this, button, { x: 42, y: -42 }, (listener) => notificationManager.subscribe(key, listener));
     });
   }
@@ -767,8 +792,8 @@ export class LobbyScene extends Phaser.Scene {
   private buildMissionEntry(): void {
     const entries = [
       { bounds: LOBBY_RAIL_BOUNDS.content.mission, icon: "mission", label: t("lobby.rail.mission"), accent: true, onClick: () => this.openMissions() },
-      { bounds: LOBBY_RAIL_BOUNDS.content.shop, icon: "shop", label: t("lobby.rail.shop"), accent: false, onClick: () => this.openShop() },
-      { bounds: LOBBY_RAIL_BOUNDS.content.trade, icon: "exchange", label: t("lobby.rail.trade"), accent: false, onClick: () => this.openTrade() },
+      { bounds: LOBBY_RAIL_BOUNDS.content.shop, icon: "shop", label: t("lobby.rail.shop"), accent: false, onClick: this.guarded("shop", () => this.openShop()) },
+      { bounds: LOBBY_RAIL_BOUNDS.content.trade, icon: "exchange", label: t("lobby.rail.trade"), accent: false, onClick: this.guarded("trade", () => this.openTrade()) },
     ] as const;
     // 캔버스 E2E에는 레일의 게임 상태가 아니라 실제 입력 중심만 전달한다.
     setDebugStorefrontControls({ lobby: {
@@ -780,6 +805,8 @@ export class LobbyScene extends Phaser.Scene {
     const buttons = entries.map((entry) => new RailButton(this, entry.bounds.x, entry.bounds.y, {
       icon: entry.icon, label: entry.label, size: entry.bounds.width, accent: entry.accent, onClick: entry.onClick,
     }));
+    this.lockRailButton("shop", buttons[1], entries[1].bounds.width);
+    this.lockRailButton("trade", buttons[2], entries[2].bounds.width);
     // 보상 상태의 단일 구독과 기존 팝업 연결은 위치 분리 뒤에도 그대로 유지한다.
     bindNotificationDot(this, buttons[0], { x: 42, y: -42 }, (listener) => notificationManager.subscribe("missionReward", listener));
   }

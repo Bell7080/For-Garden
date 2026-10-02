@@ -5,7 +5,7 @@ import { setDebugEnemyPreview } from "../debug";
 import { battleAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { chipPoints, drawHairline, drawLayer } from "./holo";
 import { COLOR, textStyle } from "./theme";
-import { addUnitNameplate } from "./unitNameplate";
+import { addUnitNameplate, addUnitPower } from "./unitNameplate";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addBreakthroughGradeMark } from "./rarityMark";
@@ -129,6 +129,7 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
       // 카드의 이름줄과 같은 규칙이다 — 레벨은 강조색, 이름은 흰색. 체력은 적지 않는다:
       // 붙어 볼지 정하는 데 필요한 것은 개체별 수치가 아니라 판 아래의 총 전투력 하나다.
       addUnitNameplate(this.scene, this, x, NODE_ENEMY_SLOT.nameY, growth.level, enemy.name, compact ? 24 : 30);
+      addUnitPower(this.scene, this, x, NODE_ENEMY_SLOT.nameY - 4, combatPower(enemy.stats), compact ? 20 : 24, COLOR.dangerText);
       const hit = this.scene.add.rectangle(x, ground - 70, compact ? 145 : 230, 300, 0xffffff, 0).setInteractive({ useHandCursor: true });
       // 누른 칸의 성장 상태를 함께 넘긴다 — 화면이 배열 index로 다시 찾으면 순서가 바뀌는 날 어긋난다.
       hit.on("pointerup", () => this.options.onEnemyClick(enemy, growth)); this.add(hit);
@@ -316,6 +317,7 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
       this.add(new AffinityBadge(this.scene, badgeX, badgeTop + badgeSize * 0.94, ROLE_ICON[enemy.role], badgeSize * 0.74, 0.62));
       addBreakthroughGradeMark(this.scene, this, x + half - 20, badgeTop - 4, compact ? 34 : 42, growth.breakthrough + 1);
       addUnitNameplate(this.scene, this, x, bodyTop + body.nameY, growth.level, enemy.name, compact ? 24 : 30);
+      addUnitPower(this.scene, this, x, bodyTop + body.nameY - 4, combatPower(enemy.stats), compact ? 20 : 24, COLOR.dangerText);
       const hit = this.scene.add.rectangle(x, ground - 70, compact ? 145 : 230, 300, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerup", () => this.options.onEnemyClick(enemy, growth)); this.add(hit);
       const sdHeight = (compact ? 158 : NODE_ENEMY_PREVIEW.sdHeight)

@@ -9,6 +9,7 @@ import type { BasicAttack, Skill } from "../../src/core/types";
 import { ELEMENT_TINT, ROLE_TINT, SKILL_ART_ASSETS, SKILL_ART_SLOTS, skillArtFor, skillArtKey, skillArtTint } from "../../src/ui/skillArt";
 import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageHealingLabel, damageKeyword, elationKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, passiveShieldKeyword, periodicStackKeyword, recoveryLabel, skillDescription, skillKeywordLayoutOptions, statusEffectLabel, targetingLabel } from "../../src/ui/skillPresentation";
 import type { SkillInfoViewModel } from "../../src/ui/SkillPopup";
+import { ENCOUNTER_ROLE } from "../../src/core/levelDesign";
 import { ENCOUNTER_ROLE_ICON_ASSETS, encounterRoleDescription, encounterRoleIcon, encounterRoleMultipliers, encounterRoleName } from "../../src/ui/encounterRolePresentation";
 
 /** 구워 둔 스킬 일러스트. 코드가 가리키는 파일이 실제로 있는지 확인한다. */
@@ -1128,7 +1129,7 @@ describe("코마 스킬 표시 계약", () => {
     expect(def.ultimate).toMatchObject({ targeting: "chargeLine", chargeReachMultiplier: 1.8, damageHealingPercent: 40 });
     expect(skillDescription(def.ultimate, { damage: 280 })).toBe(
       "[[charge|돌진]]해 뚫고 지나간 길의 모든 적에게 [[damage-value|280]]의 [[physical-damage|물리 피해]]를 주고,"
-      + " 입힌 피해의 40%만큼 체력을 회복한다.",
+      + " 입힌 피해의 40%만큼 체력을 회복한다. 맞은 적의 [[shield|보호막]]은 피해가 박히기 전에 모두 파괴된다.",
     );
   });
 
@@ -1394,7 +1395,9 @@ describe("적 정보창 역할 칸 표시 계약", () => {
     for (const role of ROLES) expect(encounterRoleDescription(role), role).not.toMatch(/자리다|셋이/);
     // 무리·정예는 대사가 아니라 제 배율로 선다.
     expect(encounterRoleDescription("swarm")).toBe(encounterRoleMultipliers("swarm"));
-    expect(encounterRoleDescription("elite")).toBe(encounterRoleMultipliers("elite"));
+    // 정예는 배율 줄 아래에 강인함·치유 감소 줄이 이어진다.
+    expect(encounterRoleDescription("elite").startsWith(encounterRoleMultipliers("elite"))).toBe(true);
+    expect(encounterRoleDescription("elite")).toContain(String(ENCOUNTER_ROLE.elite.healingReduction!.maxPercent));
     expect(encounterRoleDescription("normal")).toMatch(/^“.+”$/);
     expect(encounterRoleDescription("boss")).not.toContain("damage-reduction");
   });

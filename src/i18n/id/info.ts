@@ -104,4 +104,5 @@ export const INFO_ID = {
   "info.story.2": "Ep. 2 · Malam di Kandang",
   "info.story.3": "Ep. 3 · Serpihan Kenangan Lama",
   "info.story.4": "Ep. 4 · Ujung Kota Abadi",
+  "info.enemy.role.healingReduction": "Selama musuh ini hidup, pemulihan yang diterima sekutu berkurang {base}% dan naik hingga maksimal {max}% dalam {seconds} detik.",
 } as const;

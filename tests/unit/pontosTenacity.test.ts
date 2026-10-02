@@ -48,9 +48,15 @@ describe("자리가 갖는 강인함·경감", () => {
     expect(ENCOUNTER_ROLE.endless.tenacity).toBeDefined();
     expect(ENCOUNTER_ROLE.endless.damageReduction).toBeDefined();
     for (const role of ["normal", "swarm", "elite"] as const) {
-      expect(ENCOUNTER_ROLE[role].tenacity, role).toBeUndefined();
       expect(ENCOUNTER_ROLE[role].damageReduction, role).toBeUndefined();
     }
+    // 혼자 서는 정예만 보스보다 얕은 강인함과 치유 감소를 갖는다.
+    for (const role of ["normal", "swarm"] as const) {
+      expect(ENCOUNTER_ROLE[role].tenacity, role).toBeUndefined();
+      expect(ENCOUNTER_ROLE[role].healingReduction, role).toBeUndefined();
+    }
+    expect(ENCOUNTER_ROLE.elite.tenacity!.maxPercent).toBeLessThan(ENCOUNTER_ROLE.boss.tenacity!.maxPercent);
+    expect(ENCOUNTER_ROLE.elite.healingReduction).toBeDefined();
   });
 
   it("은 레이드 보스에게 경감 없이 강인함만 준다", () => {

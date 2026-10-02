@@ -726,7 +726,8 @@ export function skillDescription(
       const shockwave = guard.shockwave === undefined ? "" : t("skill.sentence.selfGuard.shockwave", { seconds: guard.shockwave.stunSeconds });
       // 가장 먼 적 하나만 낚는 궁극기는 대상이 달라 문장 머리가 다르다(나머지 절은 같다).
       const sentence = guard.pull.target === "farthest" ? "skill.sentence.selfGuard.farthest" : "skill.sentence.selfGuard";
-      return t(sentence, { seconds: guard.tauntSeconds, shield, reset: reset + prickle + shockwave });
+      const fade = guard.shieldFadeSeconds === undefined ? "" : t("skill.sentence.selfGuard.fade", { seconds: guard.shieldFadeSeconds });
+      return t(sentence, { seconds: guard.tauntSeconds, shield, reset: fade + reset + prickle + shockwave });
     }
     // 재우는 궁극기. 반경 안의 적을 누구를 노리는가로 갈라 재우거나 도발하고, 아군을 다독인다.
     if ("selfLullaby" in skill && skill.selfLullaby !== undefined) {
@@ -734,9 +735,7 @@ export function skillDescription(
       const shield = stats.resistance === undefined
         ? t("skill.sentence.lullaby.shieldPercent", { percent: plan.shieldResistancePercent })
         : `[[shield-value|${Math.round(stats.resistance * plan.shieldResistancePercent / 100)}]]`;
-      return t("skill.sentence.lullaby", {
-        seconds: plan.tauntSeconds, shield, regen: plan.regen.seconds, percent: plan.regen.missingHpPercentPerSecond,
-      });
+      return t("skill.sentence.lullaby", { seconds: plan.tauntSeconds, shield });
     }
     // 때리지 않고 자리만 잡는 궁극기. 위력을 적지 않는 이유는 그 피해가 이어질 일반 공격의
     // 몫이기 때문이다 — 여기에 수치를 적으면 같은 한 방이 위아래에서 두 수로 보인다.
@@ -908,6 +907,9 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
   }
   if ("damageHealingPercent" in skill && skill.damageHealingPercent !== undefined) {
     clauses.push({ text: t("skill.clause.damageHealing", { percent: skill.damageHealingPercent }), joinWithComma: true });
+  }
+  if ("breaksShield" in skill && skill.breaksShield === true) {
+    clauses.push({ text: t("skill.clause.breaksShield"), standalone: true });
   }
   if ("damageHealingPercentIfFrozen" in skill && skill.damageHealingPercentIfFrozen !== undefined) {
     clauses.push({ text: t("skill.clause.damageHealingIfFrozen", { percent: skill.damageHealingPercentIfFrozen }), standalone: true });

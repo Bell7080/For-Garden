@@ -104,4 +104,5 @@ export const INFO_ZH_HANT = {
   "info.story.2": "第2話 · 圍欄之夜",
   "info.story.3": "第3話 · 舊記憶的碎片",
   "info.story.4": "第4話 · 永恆之城的盡頭",
+  "info.enemy.role.healingReduction": "該敵人存活期間，我方受到的治療降低{base}%，並在{seconds}秒內逐步提高至最多{max}%。",
 } as const;

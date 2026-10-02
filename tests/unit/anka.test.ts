@@ -175,20 +175,16 @@ describe("안카 — 자장가", () => {
     expect(anka.shield.amount).toBeCloseTo(ANKA.stats.res * plan.shieldResistancePercent / 100, 0);
   });
 
-  it("은 주위 아군에게 잃은 체력에 비례한 재생을 건다", () => {
+  it("은 아군을 회복시키지 않는다", () => {
     const { state, anka, ally, enemies } = setup(["amo"]);
     enemies[0].y = 0;
     ally.hp = ally.maxHp / 2;
     anka.energy = 1_000;
-    const plan = ANKA.ultimate.selfLullaby!;
     fireUltimate(state, anka.id);
-    expect(ally.lullabyRegen?.missingHpPercentPerSecond).toBe(plan.regen.missingHpPercentPerSecond);
-    const missing = ally.maxHp - ally.hp;
     anka.whiteNoiseIn = Number.POSITIVE_INFINITY;
-    step(state, 1.02);
-    expect(ally.hp - ally.maxHp / 2).toBeCloseTo(missing * plan.regen.missingHpPercentPerSecond / 100, 0);
-    step(state, plan.regen.seconds);
-    expect(ally.lullabyRegen).toBeNull();
+    const hpAfterCast = ally.hp;
+    step(state, 5);
+    expect(ally.hp).toBeLessThanOrEqual(hpAfterCast);
   });
 });
 

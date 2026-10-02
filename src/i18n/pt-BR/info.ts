@@ -104,4 +104,5 @@ export const INFO_PT_BR = {
   "info.story.2": "Ep. 2 · Noite no recinto",
   "info.story.3": "Ep. 3 · Um fragmento de velhas memórias",
   "info.story.4": "Ep. 4 · O fim da Cidade Eterna",
+  "info.enemy.role.healingReduction": "Enquanto estiver vivo, a cura recebida pelos aliados é reduzida em {base}% e aumenta até {max}% ao longo de {seconds}s.",
 } as const;

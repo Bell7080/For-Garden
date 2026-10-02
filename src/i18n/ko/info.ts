@@ -116,4 +116,5 @@ export const INFO_KO = {
   "info.story.2": "2화 · 사육장의 밤",
   "info.story.3": "3화 · 옛 기억의 조각",
   "info.story.4": "4화 · 이터널 시티의 끝",
+  "info.enemy.role.healingReduction": "이 적이 살아 있는 동안 아군이 받는 회복이 {base}% 줄고, {seconds}초에 걸쳐 최대 {max}%까지 늘어난다.",
 } as const;

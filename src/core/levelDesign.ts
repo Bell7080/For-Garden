@@ -56,6 +56,22 @@ export interface EncounterTenacity {
 }
 
 /**
+ * **치유 감소** — 이 자리의 적이 살아 있는 동안 **상대 편이 받는 모든 회복**이 깎이고, 싸움이 길어질수록 더 깎인다.
+ *
+ * 정예는 혼자 서므로 한 명을 붙잡고 길게 치유로 버티는 편성이 가장 안전한 풀이가 된다 — 시간이 흐를수록
+ * 그 풀이가 막히도록 **경과 시간**으로 오른다. 맞은 횟수가 아니라 시간이라 제어기가 있어도 줄지 않는다.
+ * 보호막은 건드리지 않는다(막은 눈에 보이는 자원이고 데스 카운트가 따로 깎는다).
+ */
+export interface EncounterHealingReduction {
+  /** 싸움이 시작되는 순간의 감소(%). */
+  basePercent: number;
+  /** 상한(%). */
+  maxPercent: number;
+  /** 상한에 닿기까지 걸리는 시간(초). */
+  rampSeconds: number;
+}
+
+/**
  * **경감** — 체력이 깎일수록 받는 모든 피해가 줄어드는 성질. 죽지 않는 자리만 갖는다.
  *
  * 최종 피해에 곱하는 감쇠는 뚫을 방법이 없어 개체에 새로 만들지 않는다(`CLAUDE.md` 7번).
@@ -92,6 +108,8 @@ export interface EncounterRoleSpec {
   tenacity?: EncounterTenacity;
   /** 그 자리가 갖는 경감. 죽지 않는 자리만 갖는다. */
   damageReduction?: EncounterDamageReduction;
+  /** 그 자리가 갖는 치유 감소. 혼자 서는 정예가 갖는다. */
+  healingReduction?: EncounterHealingReduction;
   /**
    * **최대 체력 비례 피해(출혈·뇌진탕·빙결 해제)를 덜 받는 비율(%).**
    *
@@ -153,6 +171,14 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
     count: 1, bodyScale: 1.18,
     hpMultiplier: 3.3, attackMultiplier: 1.2,
     ttkSeconds: [18, 32], remainingHp: [0.20, 0.60],
+    /*
+     * **혼자 서는 정예도 보스처럼 막아서되 훨씬 얕게.** 태생 20%에 제어 한 번마다 10% — 여섯 번이면 상한(80)이라
+     * 기절 하나로 정예를 끝까지 잠그지 못하되 첫 몇 번의 잠금은 확실히 든다. 치유 감소는 5%에서 시작해
+     * 60초에 걸쳐 40%까지 오른다 — 길게 버티며 고치는 풀이를 시간이 닫되, 평범하게 끝나는 판은 거의 건드리지 않는다
+     * (10%에서 50%까지 40초에 올렸더니 원정 정예 10층의 권장 파티 승률이 75%에서 25%로 떨어졌다).
+     */
+    tenacity: { basePercent: 20, perControlPercent: 10, maxPercent: 80 },
+    healingReduction: { basePercent: 5, maxPercent: 40, rampSeconds: 60 },
   },
   boss: {
     /*

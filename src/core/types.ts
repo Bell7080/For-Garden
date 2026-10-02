@@ -174,6 +174,8 @@ interface SkillBase {
   /** 명중 뒤 적용할 작은 공용 상태 효과 목록이다. 기절·경직이 없는 스킬은 생략한다. */
   statusEffects?: readonly CombatStatusEffect[];
   /** 실제 HP에서 감소한 피해의 이 비율(%)을 시전자가 회복한다. 과잉 피해는 계산하지 않으며 능력치·폭주 흡혈과 합산한다. */
+  /** 맞은 적의 보호막을 피해가 박히기 **전에** 전부 깨뜨린다(코마의 궁극기). 막을 깬 몫은 피해로 세지 않는다. */
+  breaksShield?: true;
   damageHealingPercent?: number;
   /** 매디 전용: 대상이 [[frozen|빙결]] 상태일 때만, 실제 HP에서 감소한 피해의 이 비율(%)을 시전자가 회복한다. */
   damageHealingPercentIfFrozen?: number;
@@ -396,6 +398,11 @@ export type SelfGuard = {
    * 불러 놓고 그 자리에서 덮는 것이 이 궁극기이고, 그래서 도발과 보호막이 한 조작에 든다.
    */
   shieldMaxHpPercent: number;
+  /**
+   * 두른 막이 이 시간(초)에 걸쳐 일정하게 사라진다. 막이 시간이 지나면 저절로 줄어드니, 막이 남아 있는 동안
+   * 다음 궁극기가 같은 막 위에 또 쌓이는 일도 함께 줄어든다(다른 보호막은 건드리지 않는다).
+   */
+  shieldFadeSeconds?: number;
   /** 시전 순간, 보호막·끌어당김·도발 처리가 끝난 뒤 시전자 조가비의 내부 쿨다운만 0으로 되돌린다. */
   resetShellGuardCooldown?: true;
   /** 시전 순간 자신의 「까칠」을 이만큼 더 쌓는다(상한까지). */
@@ -412,7 +419,7 @@ export type SelfGuard = {
  *
  * 반경 안의 적을 **누구를 노리고 있는가**로 가른다 — 안카가 아닌 아군을 노리던 적은 곧바로 잠들고(패시브
  * 「백색소음」의 `drowsy` 잠을 그대로 쓴다), 안카를 노리던 적은 도발된다. 안카는 저항력에 비례한 보호막을
- * 두르고, 반경 안의 아군(자신 포함)은 정해진 시간 동안 **잃은 체력에 비례해** 매초 회복한다.
+ * 두른다. **아군을 회복시키지 않는다** — 재우고 끌고 막는 것이 이 궁극기의 전부이고, 회복은 패시브의 몫이다.
  */
 export type SelfLullaby = {
   radius: number;
@@ -420,8 +427,6 @@ export type SelfLullaby = {
   tauntSeconds: number;
   /** 시전 순간 얻는 보호막(자기 저항력 비율 %). */
   shieldResistancePercent: number;
-  /** 반경 안 아군의 재생 — 매초 그 순간 잃은 체력의 `missingHpPercentPerSecond`%를 돌린다. */
-  regen: { seconds: number; missingHpPercentPerSecond: number };
 };
 
 /** 자리를 잡는 계약. 은신·순간이동·다음 타격 강화를 코어가 판별할 수 있는 값으로만 적는다. */

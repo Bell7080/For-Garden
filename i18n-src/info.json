@@ -1038,5 +1038,6 @@
 "Nenhum",
 "Keine",
 "Нет"
-]
+],
+"info.enemy.role.healingReduction": ["该敌人存活期间，我方受到的治疗降低{base}%，并在{seconds}秒内逐步提高至最多{max}%。", "ขณะที่ศัตรูตัวนี้ยังมีชีวิต การฟื้นฟูที่ฝ่ายเราได้รับจะลดลง {base}% และเพิ่มขึ้นจนสูงสุด {max}% ภายใน {seconds} วินาที", "Khi kẻ địch này còn sống, lượng hồi phục đồng minh nhận giảm {base}% và tăng dần đến tối đa {max}% trong {seconds} giây.", "Selama musuh ini hidup, pemulihan yang diterima sekutu berkurang {base}% dan naik hingga maksimal {max}% dalam {seconds} detik.", "Mientras viva, la curación que reciben los aliados se reduce un {base}% y aumenta hasta un {max}% a lo largo de {seconds} s.", "Enquanto estiver vivo, a cura recebida pelos aliados é reduzida em {base}% e aumenta até {max}% ao longo de {seconds}s.", "Solange er lebt, ist die von Verbündeten erhaltene Heilung um {base}% verringert und steigt innerhalb von {seconds} s auf bis zu {max}%.", "Пока он жив, получаемое союзниками лечение снижено на {base}% и за {seconds} с растёт до {max}%."]
 }

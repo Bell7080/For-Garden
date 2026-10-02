@@ -493,8 +493,6 @@ export interface Fighter extends Combatant {
   groggy: { remaining: number; total: number; attackSpeedPercent: number } | null;
   /** 「백색소음」이 다음에 울리기까지 남은 시간(초). */
   whiteNoiseIn: number;
-  /** 「자장가」의 재생. 매초 그 순간 잃은 체력에 비례해 돌린다. */
-  lullabyRegen: { remaining: number; total: number; missingHpPercentPerSecond: number; tickIn: number; sourceId: string } | null;
   /**
    * 지금 걸린 빙결. 기절과 같은 완전 행동불가이며, `stunnedFor`와 별도 슬롯을 쓴다.
    *
@@ -1138,7 +1136,6 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     pendingWake: null,
     groggy: null,
     whiteNoiseIn: def.passive.whiteNoise?.intervalSeconds ?? 0,
-    lullabyRegen: null,
     frozen: null,
     observation: null,
     shieldFade: null,
@@ -2039,21 +2036,6 @@ function tickWhiteNoise(fighter: Fighter, dt: number, state: SkirmishState, even
     area: { shape: "radial", x: fighter.x, y: fighter.y, radius: plan.radius } });
 }
 
-/** 「자장가」의 재생 — 매초 그 순간 잃은 체력에 비례해 돌린다. 많이 다친 아군일수록 많이 돌아온다. */
-function tickLullabyRegen(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
-  const regen = fighter.lullabyRegen;
-  if (!regen) return;
-  const elapsed = Math.min(dt, Math.max(0, regen.remaining));
-  regen.remaining -= elapsed;
-  regen.tickIn -= elapsed;
-  while (regen.tickIn <= EMERGENCY_RECOVERY.epsilon) {
-    const amount = applyHealing(state, fighter, (fighter.maxHp - fighter.hp) * regen.missingHpPercentPerSecond / 100, regen.sourceId);
-    pushHeal(events, fighter, amount, "ultimate");
-    regen.tickIn += 1;
-  }
-  if (regen.remaining <= EMERGENCY_RECOVERY.epsilon) fighter.lullabyRegen = null;
-}
-
 /** 수압이 지금 깎고 있는 공격 속도·이동 속도 비율(%). */
 function pressureSlowPercent(fighter: Fighter): number {
   return fighter.pressure ? fighter.pressure.stacks * fighter.pressure.effect.speedPercentPerStack : 0;
@@ -2191,6 +2173,15 @@ function enterOverclock(fighter: Fighter, trait: Extract<RelicDef["ferocityTrait
     drone.ferocity = fighter.ferocity;
     drone.ferocityFever = true;
   }
+}
+
+/** 두른 보호막을 한 번에 깬다. 줄어들던 막의 시계도 함께 끊는다. */
+function breakShield(target: Fighter, events: SkirmishEvent[]): void {
+  if (target.shield.amount <= 0) return;
+  target.shield.amount = 0;
+  target.shield.providerId = null;
+  target.shieldFade = null;
+  events.push({ kind: "shieldDepleted", fighterId: target.id, effect: { tag: "shieldBreak", intensity: 1 } });
 }
 
 /** 서서히 줄어드는 막을 시간만큼 깎는다. 다 사라지는 순간만 사건으로 알린다. */
@@ -3589,7 +3580,6 @@ function clearDefeatedStatuses(fighter: Fighter): void {
   fighter.sleep = null;
   fighter.pendingWake = null;
   fighter.groggy = null;
-  fighter.lullabyRegen = null;
   fighter.artChannel = null;
   fighter.elation = null;
   fighter.prickle = null;
@@ -3972,6 +3962,23 @@ function ultimateCost(state: SkirmishState, fighter: Fighter, consume: boolean):
   return fighter.def.ultimate.cost * (1 - candidate.effect.payload.percent / 100);
 }
 
+/**
+ * 상대 편에 **살아 있는 정예**가 거는 치유 감소(%). 자리가 값을 갖고(`EncounterRoleSpec.healingReduction`) 싸움이
+ * 시작된 뒤 흐른 시간으로 오른다 — 여럿이면 가장 센 하나만 든다(겹치지 않는다).
+ */
+export function encounterHealingReductionPercent(state: SkirmishState, receiverSide: Side): number {
+  let strongest = 0;
+  for (const other of state.fighters) {
+    if (other.side === receiverSide || !isFighterAlive(other)) continue;
+    const role = other.def.encounterRole;
+    const plan = role === undefined ? undefined : ENCOUNTER_ROLE[role].healingReduction;
+    if (!plan) continue;
+    const ramp = plan.rampSeconds <= 0 ? 1 : Math.min(1, Math.max(0, state.elapsed / plan.rampSeconds));
+    strongest = Math.max(strongest, plan.basePercent + (plan.maxPercent - plan.basePercent) * ramp);
+  }
+  return strongest;
+}
+
 /** 현재 살아서 폭주 중인 상대 폰토스를 매 요청마다 찾아 영구 디버프 없이 회복 차단 여부를 정한다. */
 function isHealingCancelledByPontus(state: SkirmishState, target: Fighter): boolean {
   return state.fighters.some((enemy) => enemy.side !== target.side && isFighterAlive(enemy) && enemy.ferocityFever
@@ -3983,7 +3990,7 @@ function applyHealing(state: SkirmishState, target: Fighter, requested: number, 
   // 폭주 종료나 폰토스 사망은 별도 상태 정리 없이 이 현재 상태 판정만으로 즉시 차단을 해제한다.
   if (isHealingCancelledByPontus(state, target)) return 0;
   const reduction = Math.max(strongestLivingAura(state, target.side, "enemyHealingReceivedReductionPercent"),
-    target.bleed?.healingReceivedReductionPercent ?? 0);
+    target.bleed?.healingReceivedReductionPercent ?? 0, encounterHealingReductionPercent(state, target.side));
   const before = target.hp;
   // 데스 카운트의 감쇠는 보호막과 **같은 배율**을 쓴다. 한쪽만 깎으면 남은 쪽으로 버티는
   // 편성이 그대로 살아남아, 끝나지 않는 판을 끝내려던 시계가 제 일을 하지 못한다.
@@ -6000,6 +6007,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     const resolution = resolveReceivedDamage(target, rawAmount);
     const amount = resolution.applied;
     const hpBefore = target.hp;
+    if (skill.breaksShield === true) breakShield(target, events);
     const shieldBefore = target.shield.amount; const shieldProviderId = target.shield.providerId;
     applyDamage(target, amount, events, state);
     const credited = recordDamageContribution(state, packCreditId(attacker), target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, hpBefore, shieldBefore, shieldProviderId);
@@ -6783,7 +6791,6 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     resolvePendingWake(fighter, state, events);
     if (!isFighterAlive(fighter)) continue;
     tickWhiteNoise(fighter, dt, state, events);
-    tickLullabyRegen(fighter, dt, state, events);
     tickFortress(fighter, dt, state, events);
     tickAftershock(fighter, dt, rng, state, events);
     // 폭주 회복은 행동 불능과 무관한 전투 시간으로 돌아 탱커가 제어당해도 계약한 생존력을 유지한다.
@@ -7101,7 +7108,7 @@ export function fireUltimate(
   }
 
   if (teamUltimate.selfLullaby !== undefined) {
-    // 때리지 않는 궁극기다. 반경 안의 적을 누구를 노리는가로 갈라 재우거나 도발하고, 아군을 다독인다.
+    // 때리지 않는 궁극기다. 반경 안의 적을 누구를 노리는가로 갈라 재우거나 도발하고, 보호막을 두른다. 아군은 회복하지 않는다.
     const plan = teamUltimate.selfLullaby;
     const drowsy = attacker.def.passive.whiteNoise?.drowsy;
     attacker.energy -= ultimateCost(state, attacker, true);
@@ -7115,11 +7122,6 @@ export function fireUltimate(
         putToSleep(other, drowsy, events, state, attacker.id);
       }
     }
-    for (const ally of state.fighters) {
-      if (ally.side !== attacker.side || !isFighterAlive(ally) || distance(attacker, ally) > plan.radius) continue;
-      ally.lullabyRegen = { remaining: plan.regen.seconds, total: plan.regen.seconds,
-        missingHpPercentPerSecond: plan.regen.missingHpPercentPerSecond, tickIn: 1, sourceId: attacker.id };
-    }
     events.push({ kind: "areaImpact", attackerId: attacker.id, ultimate: true, status: "sleep",
       area: { shape: "radial", x: attacker.x, y: attacker.y, radius: plan.radius } });
     attacker.attackCooldown = attackInterval(attacker, state);
@@ -7132,7 +7134,15 @@ export function fireUltimate(
     const plan = teamUltimate.selfGuard;
     attacker.energy -= ultimateCost(state, attacker, true);
     // 불러 놓고 그 자리에서 덮는다 — 도발과 보호막이 한 조작에 든다.
-    grantShield(state, attacker, attacker.id, Math.max(1, Math.round(attacker.maxHp * plan.shieldMaxHpPercent / 100)), events, 1.5);
+    const guardShield = grantShield(state, attacker, attacker.id, Math.max(1, Math.round(attacker.maxHp * plan.shieldMaxHpPercent / 100)), events, 1.5);
+    if (plan.shieldFadeSeconds !== undefined && guardShield > 0) {
+      // 이미 줄어드는 막이 있으면 두 속도를 더하고 시간은 긴 쪽을 따른다 — 새 막만 따로 깎지 않는다.
+      const prior = attacker.shieldFade;
+      attacker.shieldFade = {
+        perSecond: (prior?.perSecond ?? 0) + guardShield / plan.shieldFadeSeconds,
+        remaining: Math.max(prior?.remaining ?? 0, plan.shieldFadeSeconds),
+      };
+    }
     const pulled = plan.pull.target === "farthest" ? hookFarthestEnemy(attacker, plan.pull, state) : pullEnemiesToward(attacker, plan.pull, state);
     for (const other of pulled) {
       // 데이의 짧은 도발과 **같은 경로**를 지난다. 여기서 슬롯에 직접 넣으면 원정 증강의

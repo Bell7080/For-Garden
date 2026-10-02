@@ -104,4 +104,5 @@ export const INFO_RU = {
   "info.story.2": "Эп. 2 · Ночь в вольере",
   "info.story.3": "Эп. 3 · Осколок старой памяти",
   "info.story.4": "Эп. 4 · Край Вечного города",
+  "info.enemy.role.healingReduction": "Пока он жив, получаемое союзниками лечение снижено на {base}% и за {seconds} с растёт до {max}%.",
 } as const;

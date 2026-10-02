@@ -1109,6 +1109,8 @@ export const RELICS: RelicDef[] = [
         tauntSeconds: 4,
         pull: { radius: 2000, distance: 150, target: "farthest" },
         shieldMaxHpPercent: 30,
+        // 두른 막은 도발이 끝날 즈음 다 사라진다 — 버티는 값이 막의 크기가 아니라 그동안 맞는 시간이 된다.
+        shieldFadeSeconds: 5,
       },
     },
   },
@@ -1207,7 +1209,6 @@ export const RELICS: RelicDef[] = [
         radius: 300,
         tauntSeconds: 3,
         shieldResistancePercent: 300,
-        regen: { seconds: 4, missingHpPercentPerSecond: 8 },
       },
     },
   },
@@ -2457,6 +2458,8 @@ export const RELICS: RelicDef[] = [
       // 뚫고 지나간 만큼 스스로를 되돌린다. 혼자 셋을 상대하는 자리라 궁극기가 피해만 내면
       // 주고받는 총량에서 언제나 지는 쪽이 된다.
       damageHealingPercent: 40,
+      // 맞은 적의 보호막은 피해가 박히기 전에 전부 깨진다 — 막을 깨고 딜이 박히는 순서다.
+      breaksShield: true,
     },
     // 한계 돌파 효과는 네 칸 모두 "없음"이다 — 정해 둔 효과라 나중에 이 자리에 다른 효과를 넣으면 그대로 바뀐다.
     breakthroughEffects: { basic: { kind: "none" }, ultimate: { kind: "none" }, ferocity: { kind: "none" }, passive: { kind: "none" } },

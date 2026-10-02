@@ -104,4 +104,5 @@ export const INFO_VI = {
   "info.story.2": "Tập 2 · Đêm trong chuồng",
   "info.story.3": "Tập 3 · Mảnh ký ức xưa",
   "info.story.4": "Tập 4 · Tận cùng Thành phố Vĩnh Hằng",
+  "info.enemy.role.healingReduction": "Khi kẻ địch này còn sống, lượng hồi phục đồng minh nhận giảm {base}% và tăng dần đến tối đa {max}% trong {seconds} giây.",
 } as const;

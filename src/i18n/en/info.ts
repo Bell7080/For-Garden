@@ -104,4 +104,5 @@ export const INFO_EN = {
   "info.story.2": "Ep. 2 · Night in the Enclosure",
   "info.story.3": "Ep. 3 · A Shard of Old Memory",
   "info.story.4": "Ep. 4 · The End of Eternal City",
+  "info.enemy.role.healingReduction": "While it lives, healing received by allies is reduced by {base}%, rising to {max}% over {seconds}s.",
 } as const;

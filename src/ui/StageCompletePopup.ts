@@ -20,6 +20,7 @@ import { addPlayerExpGainRow } from "./PlayerExpGainRow";
 import { addSdFootShadow } from "./SdFootShadow";
 import type { StageFirstClearReward } from "../core/stageRewards";
 import { addStageRewardFrame } from "./stageRewardFrame";
+import { openRuneInfoPopup } from "./RunePopup";
 
 /** 결과 화면이 넘기는 편성원 한 명. MVP 여부만 알면 카드 크기·발광은 이 프리팹이 정한다. */
 export interface StageCompleteFighter {
@@ -380,7 +381,16 @@ export class StageCompletePopup {
     const gap = Math.min(REWARD_ROW.gap, (WIDTH - 140 - REWARD_ROW.frame) / Math.max(1, rewards.length - 1));
     const frame = Math.min(REWARD_ROW.frame, gap - 14);
     const startX = -((rewards.length - 1) * gap) / 2;
-    rewards.forEach((reward, index) => addStageRewardFrame(this.scene, body, startX + index * gap, REWARD_ROW.y, frame, reward));
+    rewards.forEach((reward, index) => {
+      const x = startX + index * gap;
+      addStageRewardFrame(this.scene, body, x, REWARD_ROW.y, frame, reward);
+      // 받은 룬은 눌러서 그 룬의 쪽지를 볼 수 있다. 재화 액자는 공용 규칙이 안내창을 잇는다.
+      if (reward.kind !== "rune" || !reward.instanceId) return;
+      const instanceId = reward.instanceId;
+      const hit = this.scene.add.rectangle(x, REWARD_ROW.y, frame, frame, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      hit.on("pointerup", () => openRuneInfoPopup(this.scene, this.popups, { runeInstanceId: instanceId }));
+      body.add(hit);
+    });
     body.add(this.scene.add.text(0, REWARD_ROW.y + frame / 2 + 33, t("stageComplete.firstClear"), textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
   }
 

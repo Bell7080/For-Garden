@@ -103,6 +103,12 @@ describe("탐사 보상표", () => {
     }
   });
 
+  it("의 전리품은 같은 등급이라도 번호가 다른 룬 조각을 다른 칸으로 가른다", () => {
+    const keys = [0, 1, 2].map((runePart) => strataHaulKey({ kind: "rune", runeRarity: "rare", runePart: runePart as 0 | 1 | 2 }));
+    expect(new Set(keys).size).toBe(3);
+    expect(strataHaulKey({ kind: "gold" })).not.toBe(strataHaulKey({ kind: "rune", runeRarity: "rare", runePart: 0 }));
+  });
+
   it("의 화려함은 화석·호박석과 귀한 룬에서 커진다", () => {
     expect(strataRewardTier({ kind: "gold" })).toBe("common");
     expect(strataRewardTier({ kind: "rune", runeRarity: "rare" })).toBe("common");

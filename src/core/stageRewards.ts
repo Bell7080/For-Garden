@@ -6,7 +6,7 @@ import type { BattleStageDef } from "./types";
 export type StageFirstClearReward =
   | { kind: "currency"; currency: keyof Wallet; amount: number }
   /** 결과판은 발급된 룬을 그대로 그리므로 등급을 넓게 받는다. 초회 표가 주는 것은 고급·희귀뿐이다. */
-  | { kind: "rune"; rarity: RuneRarity; part: RunePart; trait?: boolean };
+  | { kind: "rune"; rarity: RuneRarity; part: RunePart; trait?: boolean; /** 받은 뒤의 결과판만 갖는다 — 눌러서 그 룬의 쪽지를 연다. */ instanceId?: string };
 
 /**
  * 그 관문의 **초회 클리어 보상 전부**를 화면에 서는 순서대로 편다.

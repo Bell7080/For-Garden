@@ -11,6 +11,8 @@ export interface RewardPopupItem {
   amount: number;
   /** 이름이 필요한 보상만 짧게 붙인다. 재화는 아이콘과 숫자만으로도 구분되므로 생략할 수 있다. */
   label?: string;
+  /** 서버가 발급한 룬 한 장. 있으면 액자가 룬 액자로 서고 누르면 그 룬의 쪽지가 열린다. */
+  runeInstanceId?: string;
 }
 
 /** 서버 재화 레코드를 공용 보상 액자 키로 바꾼다. 알 수 없는 운영 재화는 안전하게 생략한다. */
@@ -42,6 +44,6 @@ export function productGrantsToRewardItems(grants: readonly ProductGrant[], gran
     return [{ icon: { kind: "glyph", key: definition.icon.key }, amount: grant.amount, label: grant.name }];
   });
   // 완성 룬 인스턴스가 별도 배열로 내려오면 각 서버 결과의 희귀도·파츠를 그대로 그린다.
-  const runeItems = grantedRunes.map((rune) => ({ icon: `rune-${rune.rarity}-${rune.part}`, amount: 1, label: rune.customName ?? rune.baseName }));
+  const runeItems = grantedRunes.map((rune) => ({ icon: `rune-${rune.rarity}-${rune.part}`, amount: 1, label: rune.customName ?? rune.baseName, runeInstanceId: rune.instanceId }));
   return [...currencyIcons, ...otherItems, ...runeItems];
 }

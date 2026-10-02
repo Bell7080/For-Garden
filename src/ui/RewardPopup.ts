@@ -8,7 +8,16 @@ import { COLOR, textStyle } from "./theme";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { drawGlyph } from "./glyphs";
 import type { RewardPopupItem } from "./rewardPopupModel";
-import { addFramedIcon } from "./itemFrame";
+import { addFramedIcon, hasGuideOpeners } from "./itemFrame";
+import { bindCurrencyGuide } from "./currencyGuideEntry";
+import { addRuneFrame } from "./runeIcons";
+import { openRuneInfoPopup } from "./RunePopup";
+import { runePartOfTexture } from "./runePieceContent";
+import { REWARD_POPUP_GRID, rewardGridLayout } from "./rewardPopupLayout";
+import { pressIn, pressOut } from "./pressFeedback";
+import { motionPolicy } from "../core/settings";
+import { settingsManager } from "../managers/SettingsManager";
+import { session } from "../state/session";
 import type { PlayerExpReceipt } from "../core/playerLevel";
 import { addPlayerExpGainRow } from "./PlayerExpGainRow";
 import { PLAYER_EXP_ROW } from "./playerExpLayout";
@@ -41,14 +50,20 @@ export interface RewardPopupOptions {
   onConfirm?: () => void;
 }
 
-/** 모바일 안전 여백 안에서 네 칸까지 한 줄에 담고, 그 이상은 같은 줄을 가로로 훑는 낮은 규격이다. */
-const REWARD_POPUP = { width: 920, height: 360, viewport: 820, frame: 158, gap: 198, frameY: -8, expGap: 40 } as const;
+/** 한 줄 4칸을 담는 판 폭과 액자 크기. 줄 수에서 높이를 구하는 일은 `rewardGridLayout`이 맡는다. */
+const REWARD_POPUP = { width: REWARD_POPUP_GRID.width, frame: REWARD_POPUP_GRID.frame, expGap: 40 } as const;
+
+const RUNE_ICON_PATTERN = /^rune-(uncommon|rare|epic|legendary)-[012]$/;
 
 /**
  * 서버에서 이미 지급이 확정된 결과를 짧게 확인시키는 공용 팝업이다.
  *
  * 진행을 막는 선택지가 아니라 영수증에 가까우므로 바깥·본문·안내 문구 어디를 눌러도 닫힌다.
- * 호출자는 지급 계산을 넘기지 않고, 확정된 아이콘과 수량만 전달한다.
+ * 호출자는 지급 계산을 넘기지 않고, 확정된 아이콘과 수량만 전달한다. **액자는 하나도 빠짐없이
+ * 눌린다** — 영수증 안의 재화·아이템·룬·장식은 무엇이든 눌러서 안내(또는 쪽지)가 열린다. 바깥을
+ * 누르면 닫히는 팝업이라, 액자를 눌렀다는 것은 궁금해서 보고 싶다는 뜻이다.
+ *
+ * 칸이 많으면 가로로 밀지 않고 **줄이 아래로 늘어나며 촤르륵 쌓인다**(`rewardGridLayout`).
  */
 export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options: RewardPopupOptions): void {
   const items = options.items.filter((item) => item.amount > 0);
@@ -56,14 +71,16 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
     options.onConfirm?.();
     return;
   }
+  // 안내창을 아직 잇지 않은 화면에서도 영수증의 액자는 같은 창을 연다.
+  if (!hasGuideOpeners(scene)) bindCurrencyGuide({ scene, popups });
 
-  // 팝업 중심은 기준 게임 화면 중심이며 E2E에는 내용 대신 표시 칸 수와 확인 입력점만 알린다.
-  // 확인 입력점은 액자 줄 **아래**다 — 가운데를 누르면 한 칸짜리 영수증에서는 그 액자의 안내창이 열린다.
-  // 경험치 블록이 서면 판이 그만큼 위로 자라고, 영수증 줄은 판 아래쪽 절반에 그대로 남는다.
+  const layout = rewardGridLayout(items.length);
+  // 경험치 블록이 서면 판이 그만큼 위로 자라고, 영수증 줄은 판 아래쪽에 그대로 남는다.
   const expRoom = options.playerExp ? PLAYER_EXP_ROW.height + REWARD_POPUP.expGap : 0;
-  const height = REWARD_POPUP.height + expRoom;
+  const height = layout.height + expRoom;
   const shift = expRoom / 2;
-  setDebugRewardPopup(true, items.length, { x: BASE_WIDTH / 2, y: BASE_HEIGHT / 2 + 140 + shift });
+  // 확인 입력점은 마지막 줄 **아래**다 — 액자 위를 누르면 그 액자의 안내창이 열린다.
+  setDebugRewardPopup(true, items.length, { x: BASE_WIDTH / 2, y: BASE_HEIGHT / 2 + 140 + shift + layout.growHalf });
   // 확인 안내는 팝업 안이 아니라 화면 하단에 둔다. "어디를 눌러도 넘어간다"는 말은 팝업 밖의 말이다.
   let hint: Phaser.GameObjects.Text | undefined;
   popups.open({
@@ -93,31 +110,23 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
       const blockY = -height / 2 + 64 + (PLAYER_EXP_ROW.badge.height / 2 - PLAYER_EXP_ROW.badge.y);
       addPlayerExpGainRow(scene, body, blockY, options.playerExp);
     }
+    const reduced = motionPolicy(settingsManager.get()).nonEssentialRepeatFactor === 0;
     const strip = scene.add.container(0, shift);
-    const contentWidth = (items.length - 1) * REWARD_POPUP.gap + REWARD_POPUP.frame;
-    const overflow = Math.max(0, contentWidth - REWARD_POPUP.viewport);
-    // 한 개부터 네 개까지는 전체 묶음의 중심을 원점에 맞추고, 넘칠 때만 좌우 끝까지 이동시킨다.
-    const startX = -((items.length - 1) * REWARD_POPUP.gap) / 2;
     items.forEach((item, index) => {
-      const x = startX + index * REWARD_POPUP.gap;
-      // 액자·그림·그늘·수량은 어디서나 같은 공용 프리팹 한 장이 그린다. 증가량인 것은 창 제목이
-      // 이미 말하므로 `+`를 붙이지 않는다.
-      const holder = addFramedIcon(scene, strip, x, REWARD_POPUP.frameY, REWARD_POPUP.frame, typeof item.icon === "string" ? item.icon : "", {
-        amount: formatCurrency(item.amount),
-      });
-      // 계정 장식처럼 전용 텍스처가 없는 결과만 기존 홀로그램 글리프 체계로 대신한다.
-      if (typeof item.icon !== "string") holder.addAt(drawGlyph(scene, item.icon.key, 0, 0, REWARD_POPUP.frame * 0.56, COLOR.accent), 1);
-      if (item.label) strip.add(scene.add.text(x, 91, item.label, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
+      const cell = layout.cells[index]!;
+      const holder = scene.add.container(cell.x, cell.y);
+      strip.add(holder);
+      addRewardCell(scene, popups, holder, item);
+      if (item.label) strip.add(scene.add.text(cell.x, cell.labelY, item.label, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
+      if (reduced) return;
+      // 위에서 아래로, 줄 순서대로 떨어지듯 쌓인다. 첫 박자는 트윈의 `delay`가 기다린다(씬 시계가 아니다).
+      const delay = index * REWARD_POPUP_GRID.staggerMs;
+      holder.setAlpha(0).setY(cell.y - 46);
+      scene.tweens.add({ targets: holder, alpha: 1, y: cell.y, duration: 260, delay, ease: "Back.Out" });
     });
-
     body.add(strip);
 
-    // 내용만 잘라 액자들이 닫기 버튼이나 안전 여백을 침범하지 않게 한다.
-    const maskShape = scene.make.graphics({ x: body.x, y: body.y });
-    maskShape.fillStyle(0xffffff).fillRect(-REWARD_POPUP.viewport / 2, -100 + shift, REWARD_POPUP.viewport, 205);
-    strip.setMask(maskShape.createGeometryMask());
-
-    body.add(drawHairline(scene, 0, 108 + shift, 700, { color: COLOR.accent, alpha: 0.3 }));
+    body.add(drawHairline(scene, 0, 108 + shift + layout.growHalf, 700, { color: COLOR.accent, alpha: 0.3 }));
     if (options.footnote) {
       body.add(scene.add.text(0, height / 2 + 54, options.footnote, textStyle({ role: "display", size: 38, color: COLOR.sortieText }))
         .setOrigin(0.5)
@@ -125,24 +134,55 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
     }
     // 팝업 판이 아니라 화면 밑동에 반투명한 굵은 글자로 남겨, 누를 수 있는 곳이 화면 전체임을 알린다.
     hint = scene.add
-      .text(scene.scale.width / 2, scene.scale.height - 130, overflow > 0 ? t("reward.swipeHint") : t("reward.tapHint"), textStyle({ role: "emphasis", size: 30, color: COLOR.ink }))
+      .text(scene.scale.width / 2, scene.scale.height - 130, t("reward.tapHint"), textStyle({ role: "emphasis", size: 30, color: COLOR.ink }))
       .setOrigin(0.5)
       .setAlpha(0.62)
       .setDepth(4000);
     hint.setShadow(0, 3, "#000000", 4, false, true);
 
-    // 짧은 누름은 확인, 가로 끌기는 보상 줄 이동으로 갈라 눌러 닫기와 스크롤을 함께 보존한다.
-    const hit = scene.add.rectangle(0, 20, REWARD_POPUP.width, height - 80, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    let downX = 0; let stripX = 0; let dragged = false;
-    hit.on("pointerdown", (pointer: Phaser.Input.Pointer) => { downX = pointer.x; stripX = strip.x; dragged = false; });
-    hit.on("pointermove", (pointer: Phaser.Input.Pointer) => {
-      if (!pointer.isDown || overflow === 0) return;
-      const delta = pointer.x - downX; dragged ||= Math.abs(delta) > 8;
-      strip.x = Phaser.Math.Clamp(stripX + delta, -overflow / 2, overflow / 2);
-    });
-    hit.on("pointerup", () => { if (!dragged) close(); });
-    // 닫는 판은 **맨 아래**에 깐다 — 위에 덮으면 액자가 손을 받지 못해, 무엇을 받았는지 눌러 볼
-    // 수 없었다. 액자는 제 안내창(`addFramedIcon`)을 열고, 그 밖의 자리는 여전히 영수증을 닫는다.
+    // 닫는 판은 **맨 아래**에 깐다 — 위에 덮으면 액자가 손을 받지 못해 눌러 볼 수 없다.
+    const hit = scene.add.rectangle(0, 20 + layout.growHalf, REWARD_POPUP.width, height - 80, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerup", () => close());
     body.addAt(hit, 0);
+  });
+}
+
+/** 영수증 칸 하나 — 액자와 그것을 눌렀을 때 열리는 안내까지 한 곳에서 잇는다. */
+function addRewardCell(scene: Phaser.Scene, popups: PopupLayer, holder: Phaser.GameObjects.Container, item: RewardPopupItem): void {
+  const size = REWARD_POPUP.frame;
+  const texture = typeof item.icon === "string" ? item.icon : "";
+  const runeMatch = RUNE_ICON_PATTERN.exec(texture);
+  const part = runePartOfTexture(texture);
+  if (runeMatch && part !== undefined) {
+    // 룬은 가방·전리품과 같은 룬 액자다. 등급색 테두리와 주 옵션 뒷배경이 함께 선다.
+    const rune = item.runeInstanceId ? session.runeInventory.find(({ instanceId }) => instanceId === item.runeInstanceId) : undefined;
+    const rarity = (rune?.rarity ?? runeMatch[1]) as NonNullable<typeof rune>["rarity"];
+    const frame = addRuneFrame(scene, 0, 0, size, rarity, rune?.part ?? part, rune ? { mainStats: rune.mainStats, engraved: rune.engravings.length > 0 } : {});
+    holder.add(frame);
+    if (rune) addPressOpen(scene, holder, size, () => openRuneInfoPopup(scene, popups, { runeInstanceId: rune.instanceId }));
+    return;
+  }
+  // 액자·그림·그늘·수량은 어디서나 같은 공용 프리팹 한 장이 그린다. 증가량인 것은 창 제목이
+  // 이미 말하므로 `+`를 붙이지 않는다. 재화·아이템 그림은 이 프리팹이 안내창까지 잇는다.
+  const framed = addFramedIcon(scene, holder, 0, 0, size, texture, { amount: formatCurrency(item.amount) });
+  // 계정 장식처럼 전용 텍스처가 없는 결과만 기존 홀로그램 글리프 체계로 대신하고, 이름 쪽지를 연다.
+  if (typeof item.icon !== "string") {
+    framed.addAt(drawGlyph(scene, item.icon.key, 0, 0, size * 0.56, COLOR.accent), 1);
+    addPressOpen(scene, holder, size, () => openPlainNote(scene, popups, item));
+  }
+}
+
+function addPressOpen(scene: Phaser.Scene, holder: Phaser.GameObjects.Container, size: number, open: () => void): void {
+  const hit = scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
+  hit.on("pointerdown", () => pressIn(holder));
+  hit.on("pointerout", () => pressOut(holder, "normal", { pop: false }));
+  hit.on("pointerup", () => { pressOut(holder); open(); });
+  holder.add(hit);
+}
+
+/** 전용 안내창이 없는 보상(장식 등)은 이름과 수량만 읽히는 작은 쪽지를 연다. */
+function openPlainNote(scene: Phaser.Scene, popups: PopupLayer, item: RewardPopupItem): void {
+  popups.open({ width: 620, height: 300, title: item.label ?? t("reward.title"), closeOnBackdrop: true }, (body) => {
+    body.add(scene.add.text(0, 10, `×${formatCurrency(item.amount)}`, textStyle({ role: "display", size: 56, color: COLOR.accentText })).setOrigin(0.5));
   });
 }

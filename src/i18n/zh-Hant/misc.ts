@@ -187,7 +187,6 @@ export const MISC_ZH_HANT = {
   "battle.profile.down": "倒下",
   "battle.profile.ferocity": "野性 {value} / 100",
   "reward.title": "獲得獎勵",
-  "reward.swipeHint": "滑動檢視 · 點選畫面確認",
   "reward.tapHint": "點選畫面確認",
   "enemyPreview.title": "敵方編隊",
   "enemyPreview.totalPower": "總戰鬥力 {power}",

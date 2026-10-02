@@ -1859,16 +1859,6 @@
 "Erhaltene Belohnungen",
 "Полученные награды"
 ],
-"reward.swipeHint": [
-"滑动查看 · 点击画面确认",
-"ปัดเพื่อดู · แตะหน้าจอเพื่อยืนยัน",
-"Vuốt để xem · Chạm màn hình để xác nhận",
-"Geser untuk melihat · Ketuk layar untuk konfirmasi",
-"Desliza para ver · Toca la pantalla para confirmar",
-"Deslize para ver · Toque na tela para confirmar",
-"Wischen zum Durchsehen · Tippen zum Bestätigen",
-"Листайте · Коснитесь экрана, чтобы подтвердить"
-],
 "reward.tapHint": [
 "点击画面确认",
 "แตะหน้าจอเพื่อยืนยัน",

@@ -163,7 +163,7 @@ describe("노도니아 스킬 표시 계약", () => {
     const tag = elationKeyword(nodonia.passive)!;
     expect(tag).toMatchObject({ id: "nodonia-elation", term: "희열", kind: "buff" });
     expect(tag.description).toBe(
-      "한 겹마다 매초 최대 체력의 0.4%를 회복하며 최대 10겹까지 쌓인다."
+      "한 겹마다 매초 최대 체력의 0.3%를 회복하며 최대 10겹까지 쌓인다."
       + " 5초 동안 남으며 다시 맞으면 유지 시간이 처음부터 다시 흐른다.",
     );
     // **터지지 않는다.** 겹 하나하나가 곧 재생이라 채워 두는 것이 목적이지, 채워서 다른 일을

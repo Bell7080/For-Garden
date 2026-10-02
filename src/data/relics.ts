@@ -1818,11 +1818,11 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 겹 하나가 매초 돌리는 비율을 담아 둔다.
-      value: 0.4,
+      value: 0.3,
       durationSeconds: 5,
       // 궁극기(+200%)와 폭주(+50%)는 겹이 아니라 이 재생량을 더해서 키운다.
-      elation: { maxStacks: 10, maxHpRegenPercentPerStack: 0.4, seconds: 5 },
-      desc: "적에게 피격당하거나 아군 대신 맞을 때마다 희열이 한 겹 쌓여 겹당 매초 최대 체력의 0.4%를 회복한다. 최대 열 겹까지 쌓이고 5초 동안 남으며, 다시 맞으면 유지 시간이 처음부터 다시 흐른다.",
+      elation: { maxStacks: 10, maxHpRegenPercentPerStack: 0.3, seconds: 5 },
+      desc: "적에게 피격당하거나 아군 대신 맞을 때마다 희열이 한 겹 쌓여 겹당 매초 최대 체력의 0.3%를 회복한다. 최대 열 겹까지 쌓이고 5초 동안 남으며, 다시 맞으면 유지 시간이 처음부터 다시 흐른다.",
     },
     basic: {
       id: "nodonia-basic",

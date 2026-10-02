@@ -15,30 +15,30 @@ export type ContentId = "excavation" | "interaction" | "cakeOperation" | "bounty
 export interface ContentUnlock { id: ContentId; level: number; }
 
 /**
- * 여는 순서이자 레벨. 같은 레벨에 둘을 열지 않는다 — 한 번에 하나씩 새것이 서야 무엇이 열렸는지 읽힌다.
+ * 여는 순서이자 레벨. 한 번에 하나씩 새것이 서야 무엇이 열렸는지 읽히지만, **한 쌍으로 읽히는 콘텐츠는 같은 레벨에 함께 연다**
+ * (상점+무역 — 둘 다 재화를 쓰는 곳, 대작전+현상수배 — 둘 다 일일 던전).
  *
  * **시작부터 열려 있는 것**(표에 없다): 출격(스토리), 연구소(뽑기), 도감, 임무, 우편, 가방, 프리미엄, 이벤트, 설정.
  * 수집형 RPG의 첫 몇 분은 「스토리 → 뽑기 → 육성 → 임무」 한 바퀴가 전부라 그 고리에 드는 것은 닫지 않는다.
  *
  * 차례의 기준은 「그 콘텐츠가 필요한 재화·이해가 쌓이는 때」다.
- * - 2~4: 육성 재료를 방치·탐사로 모으는 서브 콘텐츠(발굴 → 고고학 → 교류)를 하나씩 맛보게 한다.
- * - 5: 치즈케이크(급여·돌파 재료)를 모으는 일일 던전 — 육성이 막히기 시작하는 때다.
- * - 6: 결투 — 편성이 갖춰진 뒤의 첫 대인 콘텐츠.
- * - 7: 상점 — 재화가 쌓인 뒤에 쓰는 곳이다.
- * - 8~10: 현상수배 → 친구 → 레이드. 친구는 레이드(공동 토벌)의 전제라 그 앞에 둔다.
- * - 11~12: 무역(남는 재화 교환)과 20층 원정 — 가장 무겁고 마지막에 닿는 콘텐츠.
+ * - 2: 발굴 — 방치형이라 가장 먼저 맛보게 한다.
+ * - 3: 상점+무역 — 재화를 쓰는 창구는 일찍 열고, 얼마나 사 모을지는 재화 공급 쪽이 조인다.
+ * - 4: 대작전+현상수배 — 급여·돌파 재료 파밍. 한꺼번에 밀고 싶어도 **적 레벨 사다리(난이도)** 가 막으므로 재화 인플레이션은 거기서 조인다.
+ * - 5~7: 고고학 → 교류 → 결투 — 서브 콘텐츠를 차례로, 결투는 편성이 갖춰진 뒤.
+ * - 8~12: 친구 → 레이드(공동 토벌이라 친구가 먼저) → 원정 — 가장 무겁고 마지막에 닿는 콘텐츠.
  */
 export const CONTENT_UNLOCKS: readonly ContentUnlock[] = [
   { id: "excavation", level: 2 },
-  { id: "archaeology", level: 3 },
-  { id: "interaction", level: 4 },
-  { id: "cakeOperation", level: 5 },
-  { id: "duel", level: 6 },
-  { id: "shop", level: 7 },
-  { id: "bounty", level: 8 },
-  { id: "friends", level: 9 },
+  { id: "shop", level: 3 },
+  { id: "trade", level: 3 },
+  { id: "cakeOperation", level: 4 },
+  { id: "bounty", level: 4 },
+  { id: "archaeology", level: 5 },
+  { id: "interaction", level: 6 },
+  { id: "duel", level: 7 },
+  { id: "friends", level: 8 },
   { id: "raid", level: 10 },
-  { id: "trade", level: 11 },
   { id: "expedition", level: 12 },
 ] as const;
 

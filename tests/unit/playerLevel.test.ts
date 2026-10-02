@@ -46,18 +46,21 @@ describe("연구원 레벨", () => {
 });
 
 describe("레벨이 여는 콘텐츠", () => {
-  it("한 레벨에 둘을 열지 않고 순서대로 선다", () => {
+  it("레벨 순서대로 서고, 같은 레벨에 함께 열리는 것은 한 쌍뿐이다", () => {
     const levels = CONTENT_UNLOCKS.map(({ level }) => level);
-    expect(new Set(levels).size).toBe(levels.length);
+    const sameLevel = levels.filter((level, index) => levels.indexOf(level) !== index);
+    expect(sameLevel.sort()).toEqual([3, 4]);
+    expect(CONTENT_UNLOCKS.filter(({ level }) => level === 3).map(({ id }) => id)).toEqual(["shop", "trade"]);
+    expect(CONTENT_UNLOCKS.filter(({ level }) => level === 4).map(({ id }) => id)).toEqual(["cakeOperation", "bounty"]);
     expect([...levels].sort((a, b) => a - b)).toEqual(levels);
     expect(Math.max(...levels)).toBeLessThanOrEqual(PLAYER_LEVEL_CAP);
   });
 
-  it("기획한 개방 레벨: 발굴 2 · 고고학 3 · 교류 4 · 결투 6", () => {
+  it("개방 레벨 표", () => {
     expect(contentUnlockLevel("excavation")).toBe(2);
-    expect(contentUnlockLevel("archaeology")).toBe(3);
-    expect(contentUnlockLevel("interaction")).toBe(4);
-    expect(contentUnlockLevel("duel")).toBe(6);
+    expect(contentUnlockLevel("shop")).toBe(3);
+    expect(contentUnlockLevel("cakeOperation")).toBe(4);
+    expect(contentUnlockLevel("archaeology")).toBe(5);
     expect(CONTENT_LEVEL_GATES_ENABLED).toBe(true);
     // 스토리·연구소·도감·임무·우편·가방·프리미엄은 표에 없어 시작부터 열려 있다.
     expect(CONTENT_UNLOCKS.map(({ id }) => id as string)).not.toContain("lab");
@@ -69,8 +72,8 @@ describe("레벨이 여는 콘텐츠", () => {
     expect(isContentUnlocked("raid", 9, true)).toBe(false);
     expect(isContentUnlocked("raid", 10, true)).toBe(true);
     expect(nextContentUnlock(1, false)).toBeUndefined();
-    expect(nextContentUnlock(4, true)).toEqual({ id: "cakeOperation", level: 5 });
-    expect(contentUnlockedBetween(4, 8, true).map(({ id }) => id)).toEqual(["cakeOperation", "duel", "shop", "bounty"]);
+    expect(nextContentUnlock(4, true)).toEqual({ id: "archaeology", level: 5 });
+    expect(contentUnlockedBetween(4, 7, true).map(({ id }) => id)).toEqual(["archaeology", "interaction", "duel"]);
   });
 });
 

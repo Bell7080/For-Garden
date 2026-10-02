@@ -340,6 +340,10 @@ export interface Fighter extends Combatant {
   feverHealingDone: number;
   /** 패시브 돌파(`rescueShield`)의 전투당 한 번뿐인 발동권을 썼는지. */
   rescueUsed: boolean;
+  /** 패시브 돌파(`relink`)의 전투당 한 번뿐인 재연결을 썼는지. */
+  relinkUsed: boolean;
+  /** 궁극기 돌파(`orderStrike`) — 이번 오더 동안 이미 표식이 즉시 터진 적의 ID. 오더를 새로 받으면 비운다. */
+  orderStruck: string[];
   /** 폭주 돌파(`ambushCrit`) — 다음 일반 공격이 반드시 치명타인가. 한 번 쓰면 꺼진다. */
   ambushCritReady: boolean;
   /** 궁극기 돌파(`tidalEcho`)가 되돌려 터뜨릴 여울 자리와 남은 시간. */
@@ -923,7 +927,10 @@ export const REACH_TIER = {
 export function fighterReach(fighter: Fighter): number {
   const trait = fighter.def.ferocityTrait;
   const feverBonus = fighter.ferocityFever && trait.effectId === "splitVolley" ? trait.reachBonus : 0;
-  return REACH_TIER[fighter.def.reachTier] + fighter.focus * FOCUS.reachPerStack + feverBonus;
+  // 평타 돌파(`farPing`)가 열려 있으면 정해진 사거리까지 올라간다 — 단계 표를 바꾸지 않고 개체의 열린 돌파만 읽는다.
+  const basic = openedBreakthrough(fighter, "basic", (effects) => effects.basic);
+  const tier = Math.max(REACH_TIER[fighter.def.reachTier], basic?.kind === "farPing" ? basic.reach : 0);
+  return tier + fighter.focus * FOCUS.reachPerStack + feverBonus;
 }
 
 /**
@@ -1113,6 +1120,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     feverHealingDone: 0,
     rescueUsed: false,
     ambushCritReady: false,
+    relinkUsed: false,
+    orderStruck: [],
     tidalEchoes: [],
     arrowEchoes: [],
     stunLockouts: {},
@@ -2463,6 +2472,8 @@ function applySkillStatuses(target: Fighter, skill: Skill, events: SkirmishEvent
 function statusEffectsLandThisHit(attacker: Fighter, skill: Skill, useUltimate: boolean): boolean {
   const every = useUltimate ? undefined : attacker.def.basic.statusEffectEvery;
   if (every === undefined || (skill.statusEffects?.length ?? 0) === 0) return true;
+  // 폭주 돌파(`pingStorm`) — 폭주 동안은 주기를 세지 않고 매번 건다. 폭주가 끝나면 세던 수에서 이어진다.
+  if (!useUltimate && attacker.ferocityFever && openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity)?.kind === "pingStorm") return true;
   attacker.statusHitCount += 1;
   if (attacker.statusHitCount < every) return false;
   attacker.statusHitCount = 0;
@@ -2479,6 +2490,7 @@ function statusEffectsLandThisHit(attacker: Fighter, skill: Skill, useUltimate: 
 function completesStatusCycle(attacker: Fighter, skill: Skill, useUltimate: boolean): boolean {
   const every = useUltimate ? undefined : attacker.def.basic.statusEffectEvery;
   if (every === undefined || (skill.statusEffects?.length ?? 0) === 0) return false;
+  if (!useUltimate && attacker.ferocityFever && openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity)?.kind === "pingStorm") return true;
   return attacker.statusHitCount + 1 >= every;
 }
 
@@ -6400,6 +6412,14 @@ function updateDuoLink(fighter: Fighter, state: SkirmishState, dt: number): void
   if (duo === undefined || !isFighterAlive(duo)) {
     // 듀오가 쓰러지면 은신도 함께 풀린다. 다시 붙을 곳이 없으므로 남은 전투는 혼자 선다.
     if (fighter.stealthFor === Number.POSITIVE_INFINITY) fighter.stealthFor = 0;
+    // 패시브 돌파(`relink`) — 쓰러진 듀오 대신 가장 가까운 아군과 새로 맺는다. 전투당 한 번이다.
+    if (fighter.duoId !== null && !fighter.relinkUsed
+      && openedBreakthrough(fighter, "passive", (effects) => effects.passive)?.kind === "relink") {
+      const next = aliveFighters(state, fighter.side)
+        .filter((ally) => ally.id !== fighter.id && ally.id !== fighter.duoId && isPartyFighter(ally))
+        .sort((a, b) => distance(fighter, a) - distance(fighter, b))[0];
+      if (next) { fighter.relinkUsed = true; fighter.duoId = next.id; fighter.duoSyncIn = 0; }
+    }
     return;
   }
   // 은신은 듀오가 건강한 동안에만 돈다 — 듀오가 위험해지는 순간 슈테도 함께 노출된다.
@@ -6429,8 +6449,11 @@ function updateDuoLink(fighter: Fighter, state: SkirmishState, dt: number): void
   const dx = duo.x - fighter.x;
   const dy = duo.y - fighter.y;
   const gap = Math.hypot(dx, dy);
-  if (gap <= link.followDistance) return;
-  const step = Math.min(gap - link.followDistance, moveSpeed(fighter, state) * dt);
+  // 평타 돌파(`farPing`)가 열려 있으면 더 멀리 떨어져 선다 — 근접 아군 곁의 광역에서 한 걸음 물러난다.
+  const farPing = openedBreakthrough(fighter, "basic", (effects) => effects.basic);
+  const followDistance = farPing?.kind === "farPing" ? Math.max(link.followDistance, farPing.followDistance) : link.followDistance;
+  if (gap <= followDistance) return;
+  const step = Math.min(gap - followDistance, moveSpeed(fighter, state) * dt);
   fighter.x += dx / gap * step;
   fighter.y += dy / gap * step;
 }
@@ -6518,6 +6541,16 @@ function triggerDuoBreakthroughRegen(state: SkirmishState, attacker: Fighter, hp
  * 쪽에서 뽑으면 같은 표식이 누가 밟느냐에 따라 다른 값이 되어, 슈테를 키운 몫이 돌아오지 않는다.
  */
 function triggerWeakpoint(state: SkirmishState, attacker: Fighter, target: Fighter, events: SkirmishEvent[]): void {
+  // 궁극기 돌파(`orderStrike`) — 오더가 걸린 듀오가 처음 때리는 적에게는 표식이 즉시 찍힌다. 적마다 한 번이다.
+  if (isFighterAlive(target) && target.weakpoint === null && activeOrder(attacker) !== undefined && !attacker.orderStruck.includes(target.id)) {
+    const spotter = state.fighters.find((other) => other.side === attacker.side && isFighterAlive(other) && other.duoId === attacker.id
+      && openedBreakthrough(other, "ultimate", (effects) => effects.ultimate)?.kind === "orderStrike");
+    const plan = spotter?.def.basic.statusEffects?.find((effect) => effect.kind === "weakpoint");
+    if (spotter && plan?.kind === "weakpoint") {
+      attacker.orderStruck.push(target.id);
+      target.weakpoint = { sourceId: spotter.id, burstPower: plan.burstPower, duoHealPercent: plan.duoHealPercent };
+    }
+  }
   const mark = target.weakpoint;
   if (mark === null || !isFighterAlive(target)) return;
   const spotter = findFighter(state, mark.sourceId);
@@ -7164,6 +7197,7 @@ export function fireUltimate(
     if (duo === undefined || !isFighterAlive(duo)) return events;
     attacker.energy -= ultimateCost(state, attacker, true);
     applyTeamBuff(duo, teamUltimate.teamBuff);
+    duo.orderStruck = [];
     events.push({ kind: "teamBuff", fighterId: duo.id, buff: teamUltimate.teamBuff, sourceId: attacker.id });
     attacker.attackCooldown = attackInterval(attacker, state);
     return events;

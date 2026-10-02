@@ -2300,6 +2300,16 @@ export type BasicBreakthrough = {
 } | {
   /** 도약이 꽂힌 적의 발밑에도 여울이 하나 더 깔린다(스피나). 깔린 판은 다음 도약·폭발의 후보가 된다. */
   kind: "leapPuddle";
+} | {
+  /**
+   * 평타가 **원거리까지** 닿고, 듀오에게서 더 멀리 떨어져 서도 지원이 이어진다(슈테의 멀리서 찍는 핑).
+   * 근접 아군 곁에 붙어 다니다 함께 광역에 맞던 지원가가 한 걸음 물러서 선다. 표식과 충전은 그대로 이어진다.
+   */
+  kind: "farPing";
+  /** 평타 사거리(px). 원거리 단계 값(`REACH_TIER.ranged`)이다. */
+  reach: number;
+  /** 듀오 곁에 붙어 서는 거리(px). */
+  followDistance: number;
 } | BreakthroughNone;
 
 /**
@@ -2343,6 +2353,12 @@ export type UltimateBreakthrough = {
   kind: "tidalEcho";
   delaySeconds: number;
   powerPercent: number;
+} | {
+  /**
+   * 오더가 걸려 있는 동안 듀오가 **처음 때리는 적마다** 약점 포착이 즉시 찍혀 터진다(슈테). 적마다 한 번이고,
+   * 오더의 지속·게이지는 건드리지 않는다.
+   */
+  kind: "orderStrike";
 } | BreakthroughNone;
 
 /**
@@ -2374,6 +2390,9 @@ export type FerocityBreakthrough = {
 } | {
   /** 폭주(잠행)에 들어선 뒤 **첫 일반 공격이 반드시 치명타**가 된다(스피나의 기습). */
   kind: "ambushCrit";
+} | {
+  /** 폭주 동안 평타가 세 걸음마다가 아니라 **매번** 표식을 찍는다(슈테). 폭주가 끝나면 주기로 돌아간다. */
+  kind: "pingStorm";
 } | BreakthroughNone;
 
 /**
@@ -2408,6 +2427,12 @@ export type PassiveBreakthrough = {
    * 깔아 둔 판이 없거나 아무도 잠겨 있지 않으면 뛰지 않는다.
    */
   kind: "huntChain";
+} | {
+  /**
+   * 듀오가 쓰러지면 가장 가까운 아군과 **새 듀오를 맺는다**(슈테). 전투당 한 번이고, 듀오가 없는 동안 꺼져 있던
+   * 은신·표식·궁극기가 다시 돈다.
+   */
+  kind: "relink";
 } | BreakthroughNone;
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */

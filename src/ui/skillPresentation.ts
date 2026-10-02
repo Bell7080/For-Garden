@@ -1222,6 +1222,7 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
       const arrow = def.basic.cycle?.find((step) => step.targeting === "splitShot");
       return t("skill.breakthrough.effect.basic.arrowEcho", { name: arrow?.name ?? def.basic.name, seconds: trim(effect.delaySeconds), percent: trim(effect.powerPercent) });
     }
+    if (effect.kind === "farPing") return t("skill.breakthrough.effect.basic.farPing", { name: def.basic.name });
     if (effect.kind === "leapPuddle") return t("skill.breakthrough.effect.basic.leapPuddle");
     if (effect.kind === "splitHealing") return t("skill.breakthrough.effect.basic.splitHealing", { percent: trim(effect.sharePercent) });
     // 주기 이름이 있으면 그것이 이 효과가 얹히는 그 한 방의 이름이다(칩에 뜨는 이름과 같다).
@@ -1241,6 +1242,7 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effect.kind === "none") return undefined;
     if (effect.kind === "execution") return t("skill.breakthrough.effect.ultimate.execution", { energy: trim(effect.energyRefundOnKill) });
     if (effect.kind === "forestSight") return t("skill.breakthrough.effect.ultimate.forestSight", { hits: trim(def.ultimate.selfVolley ? def.ultimate.selfVolley.hitCount + effect.extraHits : effect.extraHits), seconds: trim(effect.extraSeconds) });
+    if (effect.kind === "orderStrike") return t("skill.breakthrough.effect.ultimate.orderStrike");
     if (effect.kind === "tidalEcho") return t("skill.breakthrough.effect.ultimate.tidalEcho", { seconds: trim(effect.delaySeconds), percent: trim(effect.powerPercent) });
     if (effect.kind === "healingShield") return t("skill.breakthrough.effect.ultimate.healingShield", { percent: trim(effect.shieldPercentOfHealing) });
     // 피해량의 몇 %는 **명중 시점의 상대값**이라 실제 수로 바꾸지 않는다(대상마다 달라진다).
@@ -1254,6 +1256,7 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effect.kind === "none") return undefined;
     if (effect.kind === "cleavingBasics") return t("skill.breakthrough.effect.ferocity.cleavingBasics");
     if (effect.kind === "feverAmbush") return t("skill.breakthrough.effect.ferocity.feverAmbush", { seconds: trim(effect.stealthSeconds) });
+    if (effect.kind === "pingStorm") return t("skill.breakthrough.effect.ferocity.pingStorm", { name: def.basic.name });
     if (effect.kind === "ambushCrit") return t("skill.breakthrough.effect.ferocity.ambushCrit");
     if (effect.kind === "feverShare") return t("skill.breakthrough.effect.ferocity.feverShare", { percent: trim(effect.shieldPercentOfHealingDone) });
     return t("skill.breakthrough.effect.ferocity", {
@@ -1269,6 +1272,7 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
       const arrow = def.basic.cycle?.find((step) => step.targeting === "splitShot");
       return t("skill.breakthrough.effect.passive.fullFocusCrit", { name: arrow?.name ?? def.basic.name });
     }
+    if (effects.passive.kind === "relink") return t("skill.breakthrough.effect.passive.relink");
     if (effects.passive.kind === "huntChain") return t("skill.breakthrough.effect.passive.huntChain");
     if (effects.passive.kind === "rescueShield") {
       return t("skill.breakthrough.effect.passive.rescueShield", { hp: trim(effects.passive.belowHpPercent), percent: trim(effects.passive.apPercent) });

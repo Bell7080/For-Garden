@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createSkirmish, fireUltimate, findFighter, refreshBleed, stepSkirmish, tryTriggerEmergencyRecovery, type Arena, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
+import { createSkirmish, fighterReach, fireUltimate, findFighter, refreshBleed, stepSkirmish, tryTriggerEmergencyRecovery, type Arena, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
 import { FEROCITY_RULES } from "../../src/core/ferocity";
 import { BREAKTHROUGH_STEPS, isBreakthroughSlotOpen } from "../../src/core/relicProgression";
 import { getRelic, RELICS } from "../../src/data/relics";
@@ -560,5 +560,102 @@ describe("스피나 한계 돌파", () => {
     expect(breakthroughEffectText(spino, "ultimate")).toContain("1.5초 뒤 한 번 더 터진다");
     expect(breakthroughEffectText(spino, "ferocity")).toContain("반드시 치명타");
     expect(breakthroughEffectText(spino, "passive")).toContain("처치하면");
+  });
+});
+
+describe("슈테 한계 돌파", () => {
+  const FULL = BREAKTHROUGH_STEPS.length;
+  /** 렉시아(듀오) · 슈테 · 티아가 적 하나를 상대한다. 슈테의 바로 왼쪽인 렉시아가 듀오다. */
+  function shuteBattle(breakthrough: number, foes = ["torika"]): SkirmishState {
+    return createSkirmish([getRelic("rex"), getRelic("shute"), getRelic("tia")], foes.map(getRelic), ARENA, {}, { shute: breakthrough });
+  }
+  function freeze(state: SkirmishState): void {
+    for (const enemy of state.fighters.filter((fighter) => fighter.side === "enemy")) {
+      enemy.attackCooldown = 999; enemy.maxHp = 1_000_000; enemy.hp = enemy.maxHp;
+    }
+  }
+
+  it("는 평타가 원거리까지 닿고 듀오에게서 더 멀리 떨어져 선다(별 II)", () => {
+    const reach = (breakthrough: number): number => fighterReach(findFighter(shuteBattle(breakthrough), "player-1")!);
+    expect(reach(0)).toBe(360);
+    expect(reach(1)).toBe(600);
+    // 듀오가 300 떨어져 있으면 별 하나는 180까지 붙으려 걷고, 열리면 420 안이라 걷지 않는다.
+    const walked = (breakthrough: number): number => {
+      const state = shuteBattle(breakthrough);
+      freeze(state);
+      const shute = findFighter(state, "player-1")!; const duo = findFighter(state, "player-0")!;
+      duo.x = shute.x + 300; duo.y = shute.y;
+      const before = Math.hypot(duo.x - shute.x, duo.y - shute.y);
+      stepSkirmish(state, 0.05, () => 0.99);
+      return before - Math.hypot(duo.x - shute.x, duo.y - shute.y);
+    };
+    expect(walked(0)).toBeGreaterThan(walked(1));
+  });
+
+  it("는 오더 동안 듀오가 처음 때리는 적마다 표식을 즉시 찍어 터뜨린다(별 III)", () => {
+    const bursts = (breakthrough: number): number => {
+      const state = shuteBattle(breakthrough);
+      freeze(state);
+      const shute = findFighter(state, "player-1")!; const duo = findFighter(state, "player-0")!;
+      const enemy = findFighter(state, "enemy-0")!;
+      enemy.x = duo.x + 40; enemy.y = duo.y;
+      shute.energy = shute.def.ultimate.cost;
+      fireUltimate(state, shute.id, () => 0.99);
+      duo.attackCooldown = 0; shute.attackCooldown = 999;
+      let count = 0;
+      for (let tick = 0; tick < 60; tick += 1) {
+        for (const event of stepSkirmish(state, 0.05, () => 0.99)) if (event.kind === "attack" && event.skill === "weakpoint") count += 1;
+      }
+      return count;
+    };
+    // 평타 주기(세 번째)가 오기 전이라 돌파가 없으면 한 번도 터지지 않고, 있으면 첫 타격에 한 번 터진다.
+    expect(bursts(1)).toBe(0);
+    expect(bursts(2)).toBe(1);
+  });
+
+  it("는 폭주 동안 평타가 세 번째마다가 아니라 매번 표식을 찍는다(별 IV)", () => {
+    const marks = (breakthrough: number): number => {
+      const state = shuteBattle(breakthrough);
+      freeze(state);
+      const shute = findFighter(state, "player-1")!; const duo = findFighter(state, "player-0")!;
+      const enemy = findFighter(state, "enemy-0")!;
+      enemy.x = shute.x + 100; enemy.y = shute.y; duo.attackCooldown = 999;
+      shute.ferocityFever = true; shute.ferocity = FEROCITY_RULES.max; shute.attackCooldown = 0; shute.targetId = enemy.id;
+      stepSkirmish(state, 0.05, () => 0.99);
+      return enemy.weakpoint === null ? 0 : 1;
+    };
+    // 첫 걸음에서 돌파 없이는 주기가 차지 않아 표식이 없다.
+    expect(marks(2)).toBe(0);
+    expect(marks(3)).toBe(1);
+  });
+
+  it("는 듀오가 쓰러지면 가장 가까운 아군과 새 듀오를 맺는다(별 V · 전투당 한 번)", () => {
+    const state = shuteBattle(FULL);
+    freeze(state);
+    const shute = findFighter(state, "player-1")!;
+    const rex = findFighter(state, "player-0")!; const tia = findFighter(state, "player-2")!;
+    expect(shute.duoId).toBe(rex.id);
+    rex.hp = 0;
+    stepSkirmish(state, 0.05, () => 0.99);
+    expect(shute.duoId).toBe(tia.id);
+    expect(shute.relinkUsed).toBe(true);
+    // 새 듀오도 쓰러지면 다시 맺지 않는다.
+    tia.hp = 0;
+    stepSkirmish(state, 0.05, () => 0.99);
+    expect(shute.duoId).toBe(tia.id);
+    // 돌파가 없으면 맺지 않는다.
+    const plain = shuteBattle(FULL - 1);
+    freeze(plain);
+    findFighter(plain, "player-0")!.hp = 0;
+    stepSkirmish(plain, 0.05, () => 0.99);
+    expect(findFighter(plain, "player-1")!.duoId).toBe("player-0");
+  });
+
+  it("는 네 슬롯 모두 문장을 만든다", () => {
+    const shute = getRelic("shute");
+    expect(breakthroughEffectText(shute, "basic")).toContain("원거리");
+    expect(breakthroughEffectText(shute, "ultimate")).toContain("처음 때리는 적마다");
+    expect(breakthroughEffectText(shute, "ferocity")).toContain("매번");
+    expect(breakthroughEffectText(shute, "passive")).toContain("새 듀오");
   });
 });

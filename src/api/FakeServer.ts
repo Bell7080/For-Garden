@@ -2221,10 +2221,29 @@ export class FakeServer implements GameApi {
 
   async rerollRuneTrait(request: RerollRuneTraitRequest): Promise<RerollRuneTraitResponse> {
     await this.delay();
+    // 아직 고르지 않은 후보가 있으면 새로 굴리지 않고 **그 후보를 다시 내려준다** — 새로 굴리면 먼저
+    // 뽑힌 것이 조용히 사라지고, 오류로 막으면 쪽지를 닫은 뒤 재해석 버튼이 영영 눌리지 않는다.
+    // 원석은 이미 치렀으므로 다시 받지 않는다(`rawStoneSpent` 0).
+    const pending = this.state.archaeology.pendingReroll;
+    if (pending !== null) {
+      const held = this.state.runeInventory.find(({ instanceId }) => instanceId === pending.runeInstanceId);
+      if (held?.trait !== undefined) {
+        return {
+          runeInstanceId: held.instanceId,
+          current: { ...held.trait },
+          candidate: { ...pending.candidate },
+          upgraded: pending.candidate.grade !== held.trait.grade,
+          byPity: false,
+          rawStoneSpent: 0,
+          wallet: { ...this.state.wallet },
+          resumed: true,
+        };
+      }
+      // 후보가 가리키던 룬이 사라졌다면 막지 않고 버린다.
+      this.state.archaeology.pendingReroll = null;
+    }
     const current = this.ownedRune(request.runeInstanceId);
     if (current.trait === undefined) throw new GameApiError("RUNE_TRAIT_NOT_FOUND", "재해석할 특성이 없습니다.");
-    // 아직 고르지 않은 후보가 있으면 새로 굴리지 않는다 — 새로 굴리면 먼저 뽑힌 것이 조용히 사라진다.
-    if (this.state.archaeology.pendingReroll !== null) throw new GameApiError("RUNE_TRAIT_REROLL_PENDING", "아직 고르지 않은 재해석 결과가 있습니다.");
     const cost = RUNE_TRAIT_RULES.rerollCost[current.trait.grade];
     if (this.state.wallet.rawStone < cost) throw new GameApiError("INSUFFICIENT_CURRENCY", "재해석에 필요한 원석이 부족합니다.");
     const outcome = rollRuneTraitReroll({ trait: current.trait, traitIds: RUNE_TRAIT_IDS, random: this.random });

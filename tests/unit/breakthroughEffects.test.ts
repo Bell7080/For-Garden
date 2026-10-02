@@ -349,3 +349,71 @@ describe("도디 한계 돌파", () => {
     expect(breakthroughEffectText(dodo, "passive")).toContain("25% 이하");
   });
 });
+
+describe("파루아 한계 돌파", () => {
+  /** 파루아 한 명이 적 하나를 상대한다. 돌파 단계만 갈아 끼운다. */
+  function paruaBattle(breakthrough: number): SkirmishState {
+    return createSkirmish([getRelic("parua")], [getRelic("amo")], ARENA, {}, { parua: breakthrough });
+  }
+
+  it("는 갈래화살 걸음의 위력을 두 배로 올린다(별 II)", () => {
+    const hit = (breakthrough: number): number => {
+      const state = paruaBattle(breakthrough);
+      const parua = findFighter(state, "player-0")!;
+      const enemy = findFighter(state, "enemy-0")!;
+      enemy.x = parua.x; enemy.y = parua.y - 300; enemy.attackCooldown = 999; enemy.maxHp = 1_000_000; enemy.hp = enemy.maxHp;
+      parua.basicCycleStep = 2; parua.attackCooldown = 0;
+      const events = stepSkirmish(state, 0.05, () => 0.99);
+      const attack = events.find((event) => event.kind === "attack" && event.attackerId === parua.id && event.skill === "basic");
+      return attack?.kind === "attack" ? attack.amount : 0;
+    };
+    expect(hit(1) / hit(0)).toBeGreaterThan(1.5);
+  });
+
+  it("는 궁극기의 연격을 세 발 · 8초로 늘린다(별 III)", () => {
+    const cast = (breakthrough: number) => {
+      const state = paruaBattle(breakthrough);
+      const parua = findFighter(state, "player-0")!;
+      parua.energy = parua.def.ultimate.cost;
+      fireUltimate(state, parua.id, () => 0.99);
+      return parua.volley!;
+    };
+    expect(cast(1)).toMatchObject({ hitCount: 2, total: 5 });
+    expect(cast(2)).toMatchObject({ hitCount: 3, total: 8 });
+  });
+
+  it("는 폭주에 들어서는 순간 집중 한 겹마다 최대 체력 3%의 보호막을 두른다(별 IV)", () => {
+    const state = paruaBattle(3);
+    const parua = findFighter(state, "player-0")!;
+    parua.focus = 10; parua.shield.amount = 0; parua.ferocity = FEROCITY_RULES.max - 0.001;
+    const enemy = findFighter(state, "enemy-0")!;
+    enemy.x = parua.x; enemy.y = parua.y - 300; enemy.attackCooldown = 999; enemy.maxHp = 1_000_000; enemy.hp = enemy.maxHp;
+    parua.attackCooldown = 0;
+    for (let tick = 0; tick < 40 && !parua.ferocityFever; tick += 1) stepSkirmish(state, 0.05, () => 0.99);
+    expect(parua.ferocityFever).toBe(true);
+    expect(parua.shield.amount).toBeGreaterThanOrEqual(Math.round(parua.maxHp * 0.03 * 10));
+  });
+
+  it("는 집중 한 겹의 공격력을 2%에서 4%로 올린다(별 V)", () => {
+    const hit = (breakthrough: number): number => {
+      const state = paruaBattle(breakthrough);
+      const parua = findFighter(state, "player-0")!;
+      const enemy = findFighter(state, "enemy-0")!;
+      enemy.x = parua.x; enemy.y = parua.y - 300; enemy.attackCooldown = 999; enemy.maxHp = 1_000_000; enemy.hp = enemy.maxHp;
+      parua.focus = 10; parua.basicCycleStep = 0; parua.attackCooldown = 0;
+      const events = stepSkirmish(state, 0.05, () => 0.99);
+      const attack = events.find((event) => event.kind === "attack" && event.attackerId === parua.id && event.skill === "basic");
+      return attack?.kind === "attack" ? attack.amount : 0;
+    };
+    // 열 겹: 공격력 +20% → +40%. 별 II의 효과는 갈래화살에만 걸리므로 첫 걸음은 영향이 없다.
+    expect(hit(BREAKTHROUGH_STEPS.length) / hit(0)).toBeCloseTo(1.4 / 1.2, 1);
+  });
+
+  it("는 네 슬롯 모두 문장을 만든다", () => {
+    const parua = getRelic("parua");
+    expect(breakthroughEffectText(parua, "basic")).toContain("100%");
+    expect(breakthroughEffectText(parua, "ultimate")).toContain("3번 적중");
+    expect(breakthroughEffectText(parua, "ferocity")).toContain("들어서는 순간");
+    expect(breakthroughEffectText(parua, "passive")).toContain("4%");
+  });
+});

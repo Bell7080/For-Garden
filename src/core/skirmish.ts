@@ -936,6 +936,12 @@ export const FOCUS = {
   maxStacks: 15,
 } as const;
 
+/** 집중 한 겹이 올리는 공격력(%). 패시브 돌파(`sharperFocus`)가 열려 있으면 겹당 그만큼 더 오른다. */
+function focusAttackPercentPerStack(fighter: Fighter, base: number): number {
+  const effect = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+  return base + (effect?.kind === "sharperFocus" ? effect.extraAttackPercentPerStack : 0);
+}
+
 /**
  * 출혈. `bleedStreak` 패시브가 남기는 상처다.
  *
@@ -3268,6 +3274,9 @@ function breakthroughSkill(attacker: Fighter, useUltimate: boolean): Skill {
       healingReceivedReductionPercent: basic.healingReceivedReductionPercent,
     } : effect) };
   }
+  if (basic?.kind === "heavySplit" && skill.targeting === "splitShot") {
+    skill = { ...skill, power: (skill.power ?? 0) * (1 + basic.powerBonusPercent / 100) } as Skill;
+  }
   const ferocity = openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity);
   if (attacker.ferocityFever && ferocity?.kind === "cleavingBasics") {
     skill = { ...skill, targeting: "nearbyEnemies", radius: ferocity.radius };
@@ -3782,7 +3791,7 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
       targetFighterId: fighter.id,
       skillId: fighter.def.passive.id,
       name: "집중",
-      description: `공격력 +${fighter.focus * fighter.def.passive.value}% · 사거리 +${fighter.focus * FOCUS.reachPerStack} · 최대 ${FOCUS.maxStacks}겹`,
+      description: `공격력 +${fighter.focus * focusAttackPercentPerStack(fighter, fighter.def.passive.value)}% · 사거리 +${fighter.focus * FOCUS.reachPerStack} · 최대 ${FOCUS.maxStacks}겹`,
       stacks: fighter.focus,
       timing: { kind: "permanent" },
     });
@@ -4428,6 +4437,11 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, even
     // 피해로 보호막을 짓는다.
     fighter.feverDamageTaken = 0;
     fighter.feverHealingDone = 0;
+    // 폭주 돌파(`feverFocusShield`) — 들어서는 순간의 집중이 곧 값이다. 집중이 없으면 막도 없다.
+    const focusShield = openedBreakthrough(fighter, "ferocity", (effects) => effects.ferocity);
+    if (focusShield?.kind === "feverFocusShield" && fighter.focus > 0) {
+      grantShield(state, fighter, fighter.id, Math.round(fighter.maxHp * focusShield.shieldPercentPerFocus * fighter.focus / 100), events);
+    }
     const trait = fighter.def.ferocityTrait;
     if (trait.effectId === "stealthLeap") {
       fighter.stealthFor = trait.durationSeconds;
@@ -4720,7 +4734,7 @@ function offensiveDefinition(attacker: Fighter): RelicDef {
   const vandalised = 1 - vandalismOffenseShred(attacker);
   // 집중은 겹당 `value`%씩 공격력을 올린다. 스피나의 공속 누적과 같은 자리이고, 정적 정의를
   // 바꾸지 않고 계산 시점에만 곱한다.
-  const focused = passive.kind === "farthestFocus" ? 1 + attacker.focus * passive.value / 100 : 1;
+  const focused = passive.kind === "farthestFocus" ? 1 + attacker.focus * focusAttackPercentPerStack(attacker, passive.value) / 100 : 1;
   // 치명타 확률과 마찬가지로 개체 이름이 아니라 적힌 값으로 판별한다.
   if (passive.attackPowerPercent === undefined && passive.criticalDamagePercent === undefined && conditional === 1 && vandalised === 1 && focused === 1) return attacker.def;
   return { ...attacker.def, stats: {
@@ -4819,7 +4833,9 @@ export function tryTriggerLowHpVanish(fighter: Fighter, state: SkirmishState): b
   fighter.passiveTriggered = true;
   fighter.stealthFor = Math.max(fighter.stealthFor, plan.seconds);
   // 쌓아 둔 집중을 치르고 숨는다 — 숨는 값이 공짜면 그 은신은 도망이 아니라 보상이 된다.
-  if (plan.spendsFocus) fighter.focus = 0;
+  if (plan.spendsFocus) {
+    fighter.focus = 0;
+  }
   for (const other of state.fighters) if (other.targetId === fighter.id) { other.targetId = null; other.engaged = false; }
   return true;
 }
@@ -7093,7 +7109,11 @@ export function fireUltimate(
     // 피해는 이어질 그 공격들의 몫이라 여기에 위력을 적지 않는다.
     const plan = teamUltimate.selfVolley;
     attacker.energy -= ultimateCost(state, attacker, true);
-    attacker.volley = { remaining: plan.seconds, total: plan.seconds, hitCount: plan.hitCount, attackSpeedPercent: plan.attackSpeedPercent };
+    // 궁극기 돌파(`forestSight`) — 쏘는 시간과 한 번에 맞히는 타수가 늘어난다.
+    const sight = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
+    const volleySeconds = plan.seconds + (sight?.kind === "forestSight" ? sight.extraSeconds : 0);
+    attacker.volley = { remaining: volleySeconds, total: volleySeconds,
+      hitCount: plan.hitCount + (sight?.kind === "forestSight" ? sight.extraHits : 0), attackSpeedPercent: plan.attackSpeedPercent };
     // 표시용 사건을 따로 쏘지 않는다 — 궁극기 컷인이 이미 켜지고, 도는 동안은 자기 프로필의
     // 버프 칩이 남은 시간을 든다. 여기서 한 번 더 터뜨리면 같은 순간이 두 번 읽힌다.
     attacker.attackCooldown = attackInterval(attacker, state);

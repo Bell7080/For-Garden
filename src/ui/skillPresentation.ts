@@ -1213,6 +1213,10 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
         reduction: trim(effect.healingReceivedReductionPercent),
       });
     }
+    if (effect.kind === "heavySplit") {
+      const arrow = def.basic.cycle?.find((step) => step.targeting === "splitShot");
+      return t("skill.breakthrough.effect.basic.heavySplit", { name: arrow?.name ?? def.basic.name, percent: trim(effect.powerBonusPercent) });
+    }
     if (effect.kind === "splitHealing") return t("skill.breakthrough.effect.basic.splitHealing", { percent: trim(effect.sharePercent) });
     // 주기 이름이 있으면 그것이 이 효과가 얹히는 그 한 방의 이름이다(칩에 뜨는 이름과 같다).
     const trigger = def.basic.statusEffectStackName ?? def.basic.name;
@@ -1230,6 +1234,7 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     const effect = effects.ultimate;
     if (effect.kind === "none") return undefined;
     if (effect.kind === "execution") return t("skill.breakthrough.effect.ultimate.execution", { energy: trim(effect.energyRefundOnKill) });
+    if (effect.kind === "forestSight") return t("skill.breakthrough.effect.ultimate.forestSight", { hits: trim(def.ultimate.selfVolley ? def.ultimate.selfVolley.hitCount + effect.extraHits : effect.extraHits), seconds: trim(effect.extraSeconds) });
     if (effect.kind === "healingShield") return t("skill.breakthrough.effect.ultimate.healingShield", { percent: trim(effect.shieldPercentOfHealing) });
     // 피해량의 몇 %는 **명중 시점의 상대값**이라 실제 수로 바꾸지 않는다(대상마다 달라진다).
     return t("skill.breakthrough.effect.ultimate", {
@@ -1241,6 +1246,7 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     const effect = effects.ferocity;
     if (effect.kind === "none") return undefined;
     if (effect.kind === "cleavingBasics") return t("skill.breakthrough.effect.ferocity.cleavingBasics");
+    if (effect.kind === "feverFocusShield") return t("skill.breakthrough.effect.ferocity.feverFocusShield", { percent: trim(effect.shieldPercentPerFocus) });
     if (effect.kind === "feverShare") return t("skill.breakthrough.effect.ferocity.feverShare", { percent: trim(effect.shieldPercentOfHealingDone) });
     return t("skill.breakthrough.effect.ferocity", {
       percent: trim(effect.shieldPercentOfDamageTaken), seconds: trim(effect.tauntSeconds),
@@ -1250,6 +1256,9 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effects.passive.kind === "none") return undefined;
     if (effects.passive.kind === "battleMaidAscension") {
       return t("skill.breakthrough.effect.passive.battleMaidAscension", { percent: trim(effects.passive.durabilityPercent) });
+    }
+    if (effects.passive.kind === "sharperFocus") {
+      return t("skill.breakthrough.effect.passive.sharperFocus", { percent: trim(def.passive.value + effects.passive.extraAttackPercentPerStack) });
     }
     if (effects.passive.kind === "rescueShield") {
       return t("skill.breakthrough.effect.passive.rescueShield", { hp: trim(effects.passive.belowHpPercent), percent: trim(effects.passive.apPercent) });

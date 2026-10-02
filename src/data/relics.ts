@@ -2976,6 +2976,18 @@ export const RELICS: RelicDef[] = [
     // 폭주는 **거리**를 갖는다. 궁극기가 속도를 갖고 있어, 둘 다 공속을 올리면 두 슬롯이
     // 화면에서 같은 말을 한다. 순환을 기다리지 않는 갈래화살과 사거리가 함께 붙는다.
     ferocityTrait: { name: "멀리… 멀리요!", effectId: "splitVolley", reachBonus: 200 },
+    // 별 넷이 이 개체를 **끝까지 쌓아 가는 궁수**로 완성한다. 쌓는 속도(II·III)가 먼저 빨라지고, 쌓은 것을 지키는
+    // 값(IV·V)이 뒤따른다 — 낮은 생존력이라는 전제는 지우지 않고 집중을 쌓을 시간을 번다.
+    breakthroughEffects: {
+      // 순환에서 가장 약한 걸음(45)인 갈래화살의 위력을 두 배로 올려 세 걸음이 같은 무게가 된다. 갈라지는 인원마다 같은 값이 들어간다.
+      basic: { kind: "heavySplit", powerBonusPercent: 100 },
+      // 숲이 보이는 동안의 연격이 두 발에서 세 발이 되고 5초가 8초로 늘어난다. 집중은 몇 번 쏘면 상한에 닿으므로 쌓는 속도가 아니라 쏘는 양을 늘린다.
+      ultimate: { kind: "forestSight", extraHits: 1, extraSeconds: 3 },
+      // 폭주에 들어서는 순간 집중 한 겹마다 최대 체력 3%의 보호막이다(열다섯 겹이면 45%). 유리몸이라 막이 가장 필요한 때는 앞으로 나서는 그 순간이다. 「받는 피해 감소」가 아니라 보이는 막이다.
+      ferocity: { kind: "feverFocusShield", shieldPercentPerFocus: 3 },
+      // 집중 한 겹의 공격력이 2%에서 4%로 오른다(열다섯 겹이면 +30% → +60%). 늘 도는 값이라 쏘는 내내 모든 걸음이 센다.
+      passive: { kind: "sharperFocus", extraAttackPercentPerStack: 2 },
+    },
     passive: {
       id: "parua-passive",
       name: "나무가 아닌 숲을!",

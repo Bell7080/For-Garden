@@ -2283,6 +2283,14 @@ export type BasicBreakthrough = {
   kind: "splitHealing";
   /** 첫 번째 대상이 받은 회복량의 몇 %를 둘째에게 보내는지. */
   sharePercent: number;
+} | {
+  /**
+   * 갈래화살 걸음의 위력을 올린다(파루아). 순환의 세 걸음 중 가장 약한 걸음이라 적이 몇 명이든 한 번에 세 걸음의
+   * 평균 위력이 같아지는 쪽으로 끌어올리는 값이고, 갈라지는 인원마다 같은 위력이 들어간다.
+   */
+  kind: "heavySplit";
+  /** 갈래화살 걸음 위력에 더해지는 %. */
+  powerBonusPercent: number;
 } | BreakthroughNone;
 
 /**
@@ -2310,6 +2318,14 @@ export type UltimateBreakthrough = {
    */
   kind: "healingShield";
   shieldPercentOfHealing: number;
+} | {
+  /**
+   * 궁극기(`selfVolley`)의 연격 타수와 지속 시간을 늘린다(파루아). 집중은 몇 번 쏘면 상한에 닿아 쌓는 속도를
+   * 올려도 값이 없으므로, 이미 자란 손이 **더 많이, 더 오래** 쏘게 하는 것이 이 값의 전부다.
+   */
+  kind: "forestSight";
+  extraHits: number;
+  extraSeconds: number;
 } | BreakthroughNone;
 
 /**
@@ -2334,6 +2350,14 @@ export type FerocityBreakthrough = {
    */
   kind: "feverShare";
   shieldPercentOfHealingDone: number;
+} | {
+  /**
+   * 폭주에 **들어서는 순간** 쌓아 둔 집중 한 겹마다 최대 체력의 일부를 보호막으로 두른다(파루아).
+   * 쌓은 힘이 곧 버티는 힘이 되지만 막은 눈에 보이는 자원이라 「받는 피해 감소」가 아니다. 끝에서 주지 않는
+   * 이유는 이 개체가 유리몸이라 막이 가장 필요한 때가 폭주에 들어서 가장 앞으로 나가는 순간이기 때문이다.
+   */
+  kind: "feverFocusShield";
+  shieldPercentPerFocus: number;
 } | BreakthroughNone;
 
 /**
@@ -2359,6 +2383,13 @@ export type PassiveBreakthrough = {
   belowHpPercent: number;
   /** 보호막의 크기 = 이 개체의 지금 주문력 × 이 값(%). */
   apPercent: number;
+} | {
+  /**
+   * 집중 한 겹이 올리는 공격력을 키운다(파루아). 상한은 그대로라 같은 겹 수에서 더 세지고,
+   * 사거리(겹당 px)는 건드리지 않는다 — 공격력 축만 짙어진다.
+   */
+  kind: "sharperFocus";
+  extraAttackPercentPerStack: number;
 } | BreakthroughNone;
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */

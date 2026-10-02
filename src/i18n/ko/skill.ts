@@ -293,6 +293,10 @@ export const SKILL_KO = {
   "skill.breakthrough.effect.ultimate.healingShield": "회복을 받은 아군마다 그 회복량의 {percent}%에 해당하는 [[shield|보호막]]을 얻는다. 이미 체력이 가득 찬 아군도 보호막은 얻는다.",
   "skill.breakthrough.effect.ferocity.feverShare": "[[ferocity|폭주]]가 끝날 때, 폭주 동안 준 회복량의 {percent}%를 살아 있는 아군 모두가 똑같이 나눠 [[shield|보호막]]으로 얻는다.",
   "skill.breakthrough.effect.passive.rescueShield": "전투당 한 번, 아군의 체력이 {hp}% 이하로 내려가면 그 아군이 주문력의 {percent}%에 해당하는 [[shield|보호막]]을 얻는다.",
+  "skill.breakthrough.effect.ultimate.forestSight": "효과 동안 일반 공격이 {hits}번 적중하고, 효과가 {seconds}초 더 이어진다.",
+  "skill.breakthrough.effect.ferocity.feverFocusShield": "[[ferocity|폭주]]에 들어서는 순간, 쌓아 둔 [[focus|집중]] 한 겹마다 최대 체력의 {percent}%에 해당하는 [[shield|보호막]]을 얻는다.",
+  "skill.breakthrough.effect.passive.sharperFocus": "[[focus|집중]] 한 겹당 공격력이 {percent}% 오른다.",
+  "skill.breakthrough.effect.basic.heavySplit": "「{name}」의 위력이 {percent}% 오른다.",
 
   // ── 정보창이 스킬 쪽지에 주입하는 문맥 사전 ─────────────────────────────
   "skill.keyword.shield.fromMaxHp": "현재 최대 체력에서 {percent}%를 받아 계산한 보호막 수치다.",

@@ -268,6 +268,10 @@ export const SKILL_JA = {
   "skill.breakthrough.effect.ultimate.healingShield": "回復を受けた味方は、その回復量の{percent}%の[[shield|シールド]]も得る。体力が満タンの味方も得られる。",
   "skill.breakthrough.effect.ferocity.feverShare": "[[ferocity|暴走]]が終わるとき、暴走中に与えた回復量の{percent}%を、生存中の味方全員で等分して[[shield|シールド]]として得る。",
   "skill.breakthrough.effect.passive.rescueShield": "戦闘中1回、味方の体力が{hp}%以下になると、その味方は魔力の{percent}%の[[shield|シールド]]を得る。",
+  "skill.breakthrough.effect.ultimate.forestSight": "効果中、通常攻撃が{hits}回命中し、効果時間が{seconds}秒延びる。",
+  "skill.breakthrough.effect.ferocity.feverFocusShield": "[[ferocity|暴走]]に入る瞬間、溜めた[[focus|集中]]1層につき最大体力の{percent}%の[[shield|シールド]]を得る。",
+  "skill.breakthrough.effect.passive.sharperFocus": "[[focus|集中]]1層につき攻撃力が{percent}%上がる。",
+  "skill.breakthrough.effect.basic.heavySplit": "「{name}」の威力が{percent}%上がる。",
 
   "skill.keyword.shield.fromMaxHp": "現在の最大体力から{percent}%を受けて計算したシールド数値だ。",
   "skill.keyword.damage.bonus": "現在の{stat}から{percent}%を受けて計算した追加ダメージ数値だ。",

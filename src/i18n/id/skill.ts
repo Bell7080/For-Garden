@@ -310,4 +310,8 @@ export const SKILL_ID = {
   "skill.breakthrough.effect.ultimate.shrapnel": "Serpihan peluru juga melesat ke musuh lain di sekitar musuh yang terkena \"{name}\" dan memberi {percent}% kerusakan.",
   "skill.breakthrough.effect.ferocity.ankleShot": "Selama [[ferocity|Amukan]], [[basic-attack|Serangan Dasar]] yang mengenai secara kritikal membuat target [[stagger|Goyah]] selama {seconds} dtk.",
   "skill.breakthrough.effect.passive.highTide": "Selama [[fog-guard|Penghalang Kabut Laut]] penuh hingga batasnya, semua kerusakan naik {percent}%.",
+  "skill.breakthrough.effect.basic.scoldTaunt": "Musuh yang terkena \"{name}\" di-[[taunt|provokasi]] selama {seconds} dtk.",
+  "skill.breakthrough.effect.ultimate.bulwarkPayback": "Saat \"{name}\" berakhir, {percent}% kerusakan yang diterima menggantikan sekutu dikembalikan ke semua musuh di sekitar sebagai [[fixed-damage|kerusakan tetap]]. Satu musuh menerima tidak lebih dari {cap}% HP maks dirinya sendiri.",
+  "skill.breakthrough.effect.ferocity.heatOverflow": "Selama [[ferocity|Amukan]], [[nodonia-elation|Kegembiraan]] menumpuk hingga {max}. Saat Amukan berakhir, turun kembali ke {base} tumpuk.",
+  "skill.breakthrough.effect.passive.sweeterWound": "Setiap tumpuk [[nodonia-elation|Kegembiraan]] memulihkan per detik naik dari {from}% menjadi {to}% HP maks.",
 } as const;

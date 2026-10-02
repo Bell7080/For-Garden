@@ -311,4 +311,8 @@ export const SKILL_EN = {
   "skill.breakthrough.effect.ultimate.shrapnel": "Shards also fly to other enemies around the one \"{name}\" hits, dealing {percent}% damage.",
   "skill.breakthrough.effect.ferocity.ankleShot": "During [[ferocity|Frenzy]], a [[basic-attack|Basic Attack]] that lands as a critical hit [[stagger|Staggers]] the target for {seconds}s.",
   "skill.breakthrough.effect.passive.highTide": "While [[fog-guard|Sea Mist Barrier]] is full to its cap, all damage rises by {percent}%.",
+  "skill.breakthrough.effect.basic.scoldTaunt": "Enemies hit by \"{name}\" are [[taunt|Taunted]] for {seconds}s.",
+  "skill.breakthrough.effect.ultimate.bulwarkPayback": "When \"{name}\" ends, {percent}% of the damage taken on allies' behalf is returned to all nearby enemies as [[fixed-damage|Fixed Damage]]. No enemy takes more than {cap}% of this unit's Max HP.",
+  "skill.breakthrough.effect.ferocity.heatOverflow": "During [[ferocity|Frenzy]], [[nodonia-elation|Elation]] stacks up to {max}. When Frenzy ends, it drops back to {base} stacks.",
+  "skill.breakthrough.effect.passive.sweeterWound": "Each stack of [[nodonia-elation|Elation]] restores {to}% of Max HP per second instead of {from}%.",
 } as const;

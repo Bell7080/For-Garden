@@ -310,4 +310,8 @@ export const SKILL_ES = {
   "skill.breakthrough.effect.ultimate.shrapnel": "También salen fragmentos hacia los demás enemigos alrededor del que golpea «{name}», que infligen un {percent}% de daño.",
   "skill.breakthrough.effect.ferocity.ankleShot": "Durante el [[ferocity|Frenesí]], un [[basic-attack|Ataque básico]] que impacta como crítico provoca [[stagger|Tambaleo]] al objetivo durante {seconds} s.",
   "skill.breakthrough.effect.passive.highTide": "Mientras la [[fog-guard|Barrera de bruma marina]] esté llena hasta su límite, todo el daño aumenta un {percent}%.",
+  "skill.breakthrough.effect.basic.scoldTaunt": "Los enemigos alcanzados por «{name}» quedan [[taunt|provocados]] durante {seconds} s.",
+  "skill.breakthrough.effect.ultimate.bulwarkPayback": "Cuando «{name}» termina, devuelve el {percent}% del daño recibido en lugar de los aliados a todos los enemigos cercanos como [[fixed-damage|daño fijo]]. Ningún enemigo recibe más del {cap}% de los PV máx. de esta unidad.",
+  "skill.breakthrough.effect.ferocity.heatOverflow": "Durante el [[ferocity|Frenesí]], la [[nodonia-elation|Euforia]] se acumula hasta {max} cargas. Al terminar el Frenesí, baja a {base} cargas.",
+  "skill.breakthrough.effect.passive.sweeterWound": "Cada carga de [[nodonia-elation|Euforia]] recupera por segundo {to}% de los PV máx. en vez de {from}%.",
 } as const;

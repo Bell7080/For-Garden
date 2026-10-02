@@ -310,4 +310,8 @@ export const SKILL_TH = {
   "skill.breakthrough.effect.ultimate.shrapnel": "เศษกระสุนจะกระเด็นไปโดนศัตรูตัวอื่นรอบ ๆ ศัตรูที่ถูก \"{name}\" ยิงด้วย สร้างความเสียหาย {percent}%",
   "skill.breakthrough.effect.ferocity.ankleShot": "ระหว่าง[[ferocity|คลั่ง]] เมื่อ[[basic-attack|โจมตีปกติ]]โดนคริติคอล ศัตรูที่ถูกยิงจะ[[stagger|ชะงัก]] {seconds} วินาที",
   "skill.breakthrough.effect.passive.highTide": "ในขณะที่[[fog-guard|กำแพงหมอกทะเล]]เต็มถึงขีดจำกัด ความเสียหายทั้งหมดจะเพิ่มขึ้น {percent}%",
+  "skill.breakthrough.effect.basic.scoldTaunt": "ศัตรูที่โดน \"{name}\" จะถูก[[taunt|ยั่วยุ]] {seconds} วินาที",
+  "skill.breakthrough.effect.ultimate.bulwarkPayback": "เมื่อ \"{name}\" สิ้นสุด จะคืน {percent}% ของความเสียหายที่รับแทนมาให้ศัตรูทั้งหมดรอบตัวเป็น[[fixed-damage|ความเสียหายคงที่]] ศัตรูแต่ละตัวรับความเสียหายไม่เกิน {cap}% ของ HP สูงสุดของตัวเอง",
+  "skill.breakthrough.effect.ferocity.heatOverflow": "ระหว่าง[[ferocity|คลั่ง]] [[nodonia-elation|ปีติ]]สะสมได้สูงสุด {max} ชั้น เมื่อคลั่งสิ้นสุดจะลดลงเหลือ {base} ชั้น",
+  "skill.breakthrough.effect.passive.sweeterWound": "[[nodonia-elation|ปีติ]]แต่ละชั้นฟื้นฟู HP ต่อวินาทีเพิ่มจาก {from}% เป็น {to}% ของ HP สูงสุด",
 } as const;

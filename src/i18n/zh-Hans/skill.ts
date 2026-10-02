@@ -310,4 +310,8 @@ export const SKILL_ZH_HANS = {
   "skill.breakthrough.effect.ultimate.shrapnel": "「{name}」命中的敌人周围的其他敌人也会被溅射的碎片击中，受到{percent}%的伤害。",
   "skill.breakthrough.effect.ferocity.ankleShot": "[[ferocity|暴走]]期间，[[basic-attack|普通攻击]]以暴击命中时，使被击中的敌人[[stagger|硬直]]{seconds}秒。",
   "skill.breakthrough.effect.passive.highTide": "[[fog-guard|海雾屏障]]达到上限期间，所有伤害提升{percent}%。",
+  "skill.breakthrough.effect.basic.scoldTaunt": "被「{name}」击中的敌人会被[[taunt|嘲讽]]{seconds}秒。",
+  "skill.breakthrough.effect.ultimate.bulwarkPayback": "「{name}」结束的瞬间，将期间代替承受的伤害的{percent}%以[[fixed-damage|固定伤害]]返还给周围所有敌人。每名敌人受到的伤害不超过自身最大生命的{cap}%。",
+  "skill.breakthrough.effect.ferocity.heatOverflow": "[[ferocity|暴走]]期间，[[nodonia-elation|愉悦]]最多可叠加{max}层。暴走结束后减少为{base}层。",
+  "skill.breakthrough.effect.passive.sweeterWound": "每层[[nodonia-elation|愉悦]]每秒恢复的生命从最大生命的{from}%提高到{to}%。",
 } as const;

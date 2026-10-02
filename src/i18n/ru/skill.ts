@@ -310,4 +310,8 @@ export const SKILL_RU = {
   "skill.breakthrough.effect.ultimate.shrapnel": "Фрагменты также летят в других врагов вокруг цели, пораженной «{name}», нанося {percent}% урона.",
   "skill.breakthrough.effect.ferocity.ankleShot": "Во время [[ferocity|неистовства]] [[basic-attack|Обычная атака]], попавшая критически, вызывает у цели [[stagger|Ошеломление]] на {seconds} с.",
   "skill.breakthrough.effect.passive.highTide": "Пока [[fog-guard|Морской туман-барьер]] заполнен до предела, весь урон растёт на {percent}%.",
+  "skill.breakthrough.effect.basic.scoldTaunt": "Враги, пораженные «{name}», [[taunt|провоцируются]] на {seconds} с.",
+  "skill.breakthrough.effect.ultimate.bulwarkPayback": "Когда «{name}» заканчивается, {percent}% урона, принятого вместо союзников, возвращается всем врагам рядом как [[fixed-damage|фиксированный урон]]. Один враг получает не более {cap}% макс. ОЗ этого юнита.",
+  "skill.breakthrough.effect.ferocity.heatOverflow": "Во время [[ferocity|неистовства]] [[nodonia-elation|упоение]] накапливается до {max} зарядов. Когда неистовство заканчивается, остаётся {base} зарядов.",
+  "skill.breakthrough.effect.passive.sweeterWound": "Каждый заряд [[nodonia-elation|упоения]] восстанавливает в секунду {to}% макс. ОЗ вместо {from}%.",
 } as const;

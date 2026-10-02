@@ -310,4 +310,8 @@ export const SKILL_DE = {
   "skill.breakthrough.effect.ultimate.shrapnel": "Auch andere Gegner um das von „{name}“ getroffene Ziel werden von Splittern getroffen und erleiden {percent} % Schaden.",
   "skill.breakthrough.effect.ferocity.ankleShot": "Während der [[ferocity|Raserei]] lässt ein [[basic-attack|Normalangriff]], der kritisch trifft, das Ziel {seconds} s lang [[stagger|Taumeln]].",
   "skill.breakthrough.effect.passive.highTide": "Solange das [[fog-guard|Seenebelschild]] bis zur Obergrenze gefüllt ist, steigt aller Schaden um {percent} %.",
+  "skill.breakthrough.effect.basic.scoldTaunt": "Von „{name}“ getroffene Gegner werden {seconds} s lang [[taunt|verspottet]].",
+  "skill.breakthrough.effect.ultimate.bulwarkPayback": "Wenn „{name}“ endet, werden {percent} % des stellvertretend erlittenen Schadens als [[fixed-damage|fester Schaden]] an alle Gegner in der Nähe zurückgegeben. Kein Gegner erleidet mehr als {cap} % des max. Lebens dieser Einheit.",
+  "skill.breakthrough.effect.ferocity.heatOverflow": "Während der [[ferocity|Raserei]] baut sich [[nodonia-elation|Hochgefühl]] bis zu {max} Stapel auf. Endet die Raserei, sinkt es auf {base} Stapel.",
+  "skill.breakthrough.effect.passive.sweeterWound": "Jeder Stapel [[nodonia-elation|Hochgefühl]] stellt pro Sekunde {to} % statt {from} % des max. Lebens wieder her.",
 } as const;

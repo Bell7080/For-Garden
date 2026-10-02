@@ -310,4 +310,8 @@ export const SKILL_VI = {
   "skill.breakthrough.effect.ultimate.shrapnel": "Mảnh đạn cũng văng trúng các kẻ địch khác quanh kẻ địch bị \"{name}\" bắn trúng, gây {percent}% sát thương.",
   "skill.breakthrough.effect.ferocity.ankleShot": "Trong [[ferocity|Cuồng bạo]], [[basic-attack|Đánh thường]] trúng chí mạng sẽ làm mục tiêu bị [[stagger|Khựng]] {seconds} giây.",
   "skill.breakthrough.effect.passive.highTide": "Khi [[fog-guard|Hàng rào sương biển]] đầy đến giới hạn, mọi sát thương tăng {percent}%.",
+  "skill.breakthrough.effect.basic.scoldTaunt": "Kẻ địch trúng \"{name}\" bị [[taunt|Khiêu khích]] trong {seconds} giây.",
+  "skill.breakthrough.effect.ultimate.bulwarkPayback": "Khi \"{name}\" kết thúc, trả lại {percent}% sát thương đã chịu thay cho mọi kẻ địch xung quanh dưới dạng [[fixed-damage|sát thương cố định]]. Mỗi kẻ địch nhận không quá {cap}% HP tối đa của bản thân.",
+  "skill.breakthrough.effect.ferocity.heatOverflow": "Trong [[ferocity|Cuồng bạo]], [[nodonia-elation|Hân hoan]] tích tối đa {max} tầng. Khi Cuồng bạo kết thúc, giảm xuống còn {base} tầng.",
+  "skill.breakthrough.effect.passive.sweeterWound": "Mỗi tầng [[nodonia-elation|Hân hoan]] hồi mỗi giây tăng từ {from}% lên {to}% HP tối đa.",
 } as const;

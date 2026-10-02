@@ -191,7 +191,6 @@ export const MISC_EN = {
   "battle.profile.down": "Down",
   "battle.profile.ferocity": "Ferocity {value} / 100",
   "reward.title": "Rewards Gained",
-  "reward.swipeHint": "Swipe to browse · Tap the screen to confirm",
   "reward.tapHint": "Tap the screen to confirm",
   "enemyPreview.title": "Enemy Formation",
   "enemyPreview.totalPower": "Total Combat Power {power}",

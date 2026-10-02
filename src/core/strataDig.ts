@@ -279,14 +279,15 @@ export interface StrataHaulEntry {
   kind: StrataRewardKind;
   amount: number;
   runeRarity?: RuneRarity;
-  /** 룬 칸에 그릴 조각. 같은 등급의 룬이 여럿이면 처음 나온 조각을 쓴다(칸을 가르는 열쇠는 아니다). */
+  /** 룬 칸에 그릴 조각. 등급과 함께 칸을 가르는 열쇠다 — 번호가 다른 조각은 다른 그림이라 합치지 않는다. */
   runePart?: RunePart;
   itemId?: string;
 }
 
 /** 전리품 칸을 가르는 열쇠다. 화면이 줄을 다시 그려도 같은 칸이 같은 자리에 서게 한다. */
-export function strataHaulKey(entry: Pick<StrataHaulEntry, "kind" | "runeRarity" | "itemId">): string {
-  return `${entry.kind}:${entry.runeRarity ?? ""}:${entry.itemId ?? ""}`;
+export function strataHaulKey(entry: Pick<StrataHaulEntry, "kind" | "runeRarity" | "runePart" | "itemId">): string {
+  const part = entry.kind === "rune" && entry.runePart !== undefined ? entry.runePart : "";
+  return `${entry.kind}:${entry.runeRarity ?? ""}:${part}:${entry.itemId ?? ""}`;
 }
 
 /** 칸 하나가 전리품에서 갖는 열쇠 재료다. */

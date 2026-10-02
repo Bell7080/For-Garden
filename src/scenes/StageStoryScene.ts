@@ -3,6 +3,7 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { DialogueFlow, dialogueStandingOrder, type DialogueChoice, type DialogueStory } from "../core/dialogue";
 import { getRecollectionStory } from "../data/dialogues/recollections";
 import { bindDebugReadyLifecycle, setDebugReady, setDebugScene } from "../debug";
+import { relicStories } from "../managers/RelicStoryManager";
 import { storyManager } from "../managers/StoryManager";
 import { DialogueLayer } from "../ui/DialogueLayer";
 import { drawLayer, slantedRect } from "../ui/holo";
@@ -52,13 +53,20 @@ export class StageStoryScene extends Phaser.Scene {
     await this.layer?.show(this.flow.current).finally(() => this.flow.markCurrentNodeReady());
   }
 
+  /** 애착 스토리 장이면 처음 읽은 해금 젬을 서버에서 받는다. 이미 받았거나 실패해도 이야기는 그대로 끝난다. */
+  private async claimChapterGems(): Promise<void> {
+    const chapter = relicStories.chapterForStoryId(this.story.id);
+    if (!chapter) return;
+    await relicStories.claimChapter(chapter.relicId, chapter.level).catch(() => undefined);
+  }
+
   private advance(choice?: DialogueChoice): void {
     const result = this.flow.advance(choice?.id);
     if (result.effect) storyManager.applyEffect(this.story.id, result.effect);
     if (result.completed) {
       // StoryManager만 completedStoryIds를 변경하며 새 지도 씬이 해금/완료 표시를 다시 계산한다.
       storyManager.complete(this.story.id);
-      startScene(this, this.exitTo);
+      void this.claimChapterGems().finally(() => startScene(this, this.exitTo));
       return;
     }
     // 후속 노드도 같은 흐름 잠금을 사용해 Puppet 교체와 연속 입력이 경쟁하지 않게 한다.

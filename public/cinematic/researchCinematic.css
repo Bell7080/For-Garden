@@ -223,6 +223,8 @@
   box-shadow: 0 1.2cqw 2cqw #00000073;
   transition: transform 0.08s;
 }
+/* 결산에 닿았거나 건너뛰었으면 칩은 할 일이 없다. */
+.rc-root[data-phase="result"] .rc-skip, .rc-root.rc-skipped .rc-skip { display: none; }
 .rc-root .rc-skip:active { transform: translate(-50%, -50%) scale(1.08); }
 .rc-root .rc-skip[disabled] { opacity: 0.35; pointer-events: none; }
 
@@ -247,7 +249,9 @@
 }
 .archive-card.focused { opacity: 1; }
 
-.card-rotor { position: absolute; inset: 0; transform-style: preserve-3d; will-change: transform; }
+.card-rotor { position: absolute; inset: 0; transform-style: preserve-3d; -webkit-transform-style: preserve-3d; will-change: transform; }
+/* 면 숨김이 듣지 않는 엔진을 위해, 스크립트가 회전각으로 정한 보이는 면만 남긴다. */
+.archive-card[data-side="front"] .card-back, .archive-card[data-side="back"] .card-front { visibility: hidden; }
 
 .card-front, .card-back {
   position: absolute;

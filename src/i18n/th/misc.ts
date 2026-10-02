@@ -187,7 +187,6 @@ export const MISC_TH = {
   "battle.profile.down": "ล้ม",
   "battle.profile.ferocity": "ความดุร้าย {value} / 100",
   "reward.title": "ได้รับรางวัล",
-  "reward.swipeHint": "ปัดเพื่อดู · แตะหน้าจอเพื่อยืนยัน",
   "reward.tapHint": "แตะหน้าจอเพื่อยืนยัน",
   "enemyPreview.title": "การจัดทีมศัตรู",
   "enemyPreview.totalPower": "พลังต่อสู้รวม {power}",

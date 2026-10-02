@@ -51,6 +51,11 @@ export function guideForIcon(scene: Phaser.Scene, textureKey: string): (() => vo
   return item && open ? () => open(item) : undefined;
 }
 
+/** 이 씬이 재화·아이템 안내창을 이미 이었는가. 영수증이 제 손으로 잇기 전에 확인한다. */
+export function hasGuideOpeners(scene: Phaser.Scene): boolean {
+  return currencyGuideOpeners.has(scene) && itemGuideOpeners.has(scene);
+}
+
 /** 씬 하나가 제 재화 안내창을 등록한다. `src/ui/currencyGuideEntry.ts`가 유일한 호출자다. */
 export function setCurrencyGuideOpener(scene: Phaser.Scene, open: (key: WalletItemKey) => void): void {
   currencyGuideOpeners.set(scene, open);

@@ -187,7 +187,6 @@ export const MISC_ID = {
   "battle.profile.down": "Tumbang",
   "battle.profile.ferocity": "Keganasan {value} / 100",
   "reward.title": "Hadiah Didapat",
-  "reward.swipeHint": "Geser untuk melihat · Ketuk layar untuk konfirmasi",
   "reward.tapHint": "Ketuk layar untuk konfirmasi",
   "enemyPreview.title": "Formasi Musuh",
   "enemyPreview.totalPower": "Total Kekuatan Tempur {power}",

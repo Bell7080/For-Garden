@@ -59,6 +59,7 @@ function makeSession(fossil = 1000): Session {
     expedition: { weekKey: "", dayKey: "", playsToday: 0, bestScore: 0, bestAchievedAt: "", claimedRewardStageIds: [], pendingRankReward: null, allTimeBestScore: 0, lastParty: [], run: null },
     raid: createEmptyRaidState(),
     cakeOperation: { clearedIndex: -1 },
+    relicStory: { metAt: {}, answers: [], claimedChapterIds: [] },
   };
 }
 

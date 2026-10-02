@@ -56,6 +56,7 @@ export const INFO_KO = {
   "info.rune.filled": "채운 자리 {count}",
 
   "info.journal.title": "관찰 일지",
+  "info.journal.fossilRecord": "발굴 기록",
   "info.journal.id": "개체번호",
   "info.journal.project": "프로젝트",
   "info.journal.origin": "기원",
@@ -74,6 +75,12 @@ export const INFO_KO = {
   "info.journal.noInterview": "아직 기록된 인터뷰가 없습니다.",
   "info.journal.historyEntry": "Q. {question}\n\nA. {answer}\n\n발견  {habit}",
 
+  "info.diary.title": "관찰 질문 {index} / {total}",
+  "info.diary.locked": "{days}일 뒤에 열리는 질문이에요.",
+  "info.diary.reward": "답하면 젬 {gems}개를 받아요",
+  "info.diary.received": "젬 {gems}개를 받았어요",
+  "info.diary.answerChip": "답변 {n}",
+  "info.diary.answerChipMine": "답변 {n} · 내 선택",
   "info.interview.open": "관찰 인터뷰 열기",
   "info.interview.doneToday": "오늘의 관찰 인터뷰 완료",
   "info.interview.title": "관찰 인터뷰",
@@ -89,6 +96,7 @@ export const INFO_KO = {
   "info.bond.nextStep": "다음 단계",
   "info.bond.story": "유대 이야기",
   "info.bond.opened": "열림",
+  "info.bond.chapterReward": "읽으면 젬 {gems}개",
   "info.bond.required": "유대 {level} 필요",
 
   "info.stats.detail": "능력치 상세",

@@ -11,6 +11,10 @@ import { setDebugFeedButton, setDebugInfoAssetReady, setDebugInfoGemSlots, setDe
 import { formatCurrency } from "../core/formatCurrency";
 import { RELICS } from "../data/relics";
 import { KeywordManager } from "../managers/KeywordManager";
+import { relicStories } from "../managers/RelicStoryManager";
+import { BOND_STORY_GEM_REWARD } from "../core/relicStory";
+import { relicStoryFor } from "../data/relicStories";
+import { startScene } from "./screenTransition";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import {
   battleAssetFor,
@@ -1581,21 +1585,34 @@ export class InfoManager {
       });
       body.add(this.scene.add.text(-350, -20, t("info.bond.story"), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0));
       // 이야기는 유대 레벨로 하나씩 열린다. 아직 잠긴 것도 자리를 보여 줘 다음 목표가 된다.
-      BOND_STORY_STEPS.forEach((step, index) => {
+      // 이야기 묶음이 있는 개체는 4·6·8·10 네 장이 열리고 장마다 해금 젬이 걸린다. 눌러서 읽는다.
+      const chapters = relicStories.chapterViews(def.id);
+      const steps = chapters.length > 0
+        ? chapters.map((chapter) => ({ level: chapter.level, title: relicStoryFor(def.id)!.bondStories[chapter.level].titleCard?.title ?? chapter.storyId, chapter }))
+        : BOND_STORY_STEPS.map((step) => ({ level: step.level, title: step.title(), chapter: undefined }));
+      steps.forEach((step, index) => {
         const y = 46 + index * 92;
-        const open = level >= step.level;
+        const open = step.chapter ? step.chapter.unlocked : level >= step.level;
         body.add(drawLayer(this.scene, 0, y + 30, slantedRect(700, 76, 14), {
           fill: open ? 0x1a2130 : 0x0d1219,
           alpha: open ? 0.95 : 0.7,
           edge: COLOR.accent,
           edgeAlpha: open ? 0.6 : 0.16,
         }));
-        body.add(this.scene.add.text(-318, y + 12, step.title(), textStyle({ role: "display", size: 26, color: open ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0));
+        body.add(this.scene.add.text(-318, y + 12, step.title, textStyle({ role: "display", size: 26, color: open ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0));
+        const gems = step.chapter && !step.chapter.claimed ? BOND_STORY_GEM_REWARD[step.chapter.level] : 0;
+        const status = !open ? t("info.bond.required", { level: step.level }) : gems > 0 ? t("info.bond.chapterReward", { gems }) : t("info.bond.opened");
         body.add(
           this.scene.add
-            .text(318, y + 18, open ? t("info.bond.opened") : t("info.bond.required", { level: step.level }), textStyle({ role: "body", size: 21, color: open ? COLOR.accentText : COLOR.inkDim }))
+            .text(318, y + 18, status, textStyle({ role: "body", size: 21, color: open ? COLOR.accentText : COLOR.inkDim }))
             .setOrigin(1, 0),
         );
+        if (step.chapter && open) {
+          const chapter = step.chapter;
+          const hit = this.scene.add.rectangle(0, y + 30, 700, 76, 0xffffff, 0).setInteractive({ useHandCursor: true });
+          hit.on("pointerup", () => startScene(this.scene, "stageStory", { storyId: chapter.storyId, exitTo: "lobby" }));
+          body.add(hit);
+        }
       });
     });
   }

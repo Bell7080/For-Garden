@@ -39,6 +39,7 @@ function makeSession(stamina = 100, clearedIndex = -1): Session {
     dailyAdRewards: { date: "", claimsBySlot: {}, requestIds: [] },
     expedition: { weekKey: "", dayKey: "", playsToday: 0, bestScore: 0, bestAchievedAt: "", claimedRewardStageIds: [], pendingRankReward: null, allTimeBestScore: 0, lastParty: [], run: null },
     cakeOperation: { clearedIndex },
+    relicStory: { metAt: {}, answers: [], claimedChapterIds: [] },
     raid: createEmptyRaidState(),
     bounty: { clearedTierIds: [] },
   };

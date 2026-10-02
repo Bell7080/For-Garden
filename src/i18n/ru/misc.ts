@@ -187,7 +187,6 @@ export const MISC_RU = {
   "battle.profile.down": "Выбыл",
   "battle.profile.ferocity": "Ярость {value} / 100",
   "reward.title": "Полученные награды",
-  "reward.swipeHint": "Листайте · Коснитесь экрана, чтобы подтвердить",
   "reward.tapHint": "Коснитесь экрана, чтобы подтвердить",
   "enemyPreview.title": "Построение врага",
   "enemyPreview.totalPower": "Общая боевая мощь {power}",

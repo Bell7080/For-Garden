@@ -2463,6 +2463,28 @@ export type BasicBreakthrough = {
   attackSpeedPercent: number;
   /** 지속 시간(초). */
   seconds: number;
+} | {
+  /**
+   * 수압이 상한에서 터질 때 **가장 가까운 다른 적에게 수압이 옮겨 간다**(모사나의 「압력 전도」). 옮기는 겹은 상한 바로 아래까지만 쌓여
+   * 그 자리에서 또 터지지 않는다 — 터짐이 터짐을 부르는 고리는 만들지 않는다.
+   */
+  kind: "pressureConduct";
+  /** 옮겨 가는 겹 수. */
+  stacks: number;
+} | {
+  /**
+   * 일반 공격이 적중할 때 **지금 쌓인 까칠 겹만큼의 반격**을 같은 대상에게 한 번 더 얹는다(켄토의 「가시 평타」). 겹이 곧 평타 위력이 된다.
+   */
+  kind: "thornJab";
+  /** 반격 한 번의 몫에 대한 비율(%). 100이면 맞았을 때 되받는 값과 같다. */
+  powerPercent: number;
+} | {
+  /**
+   * 잠든 적을 **깨우는 아군의 그 타격**이 더 세다(안카의 「잠꼬대 기습」). 재워 모아 두고 한꺼번에 깨우는 흐름을 아군이 쓰게 한다.
+   */
+  kind: "sleepPounce";
+  /** 늘어나는 피해(%). */
+  damagePercent: number;
 } | BreakthroughNone;
 
 /**
@@ -2562,6 +2584,27 @@ export type UltimateBreakthrough = {
   kind: "gustEnergy";
   /** 아군 한 명이 얻는 게이지. */
   energy: number;
+} | {
+  /**
+   * 끌려온 적이 도발에 붙들려 있는 동안 **매초 수압이 한 겹씩 쌓인다**(모사나의 「심해 침강」). 터짐·잠금은 수압의 기존 규칙 그대로다.
+   */
+  kind: "deepSink";
+  /** 매초 쌓이는 겹 수. */
+  stacksPerSecond: number;
+} | {
+  /**
+   * 궁극기 보호막이 유지되는 동안 **막이 흡수한 피해의 일부를 가장 가까운 적에게 마법 피해로 되돌린다**(켄토의 「방벽 반사」).
+   */
+  kind: "wallReflect";
+  /** 흡수한 피해 중 되돌리는 비율(%). */
+  reflectPercent: number;
+} | {
+  /**
+   * 자장가에 도발된 적이 안카를 때릴 때마다 **졸음이 쌓인다**(안카의 「졸린 눈의 도발」). 수면은 졸음의 기존 상한 규칙으로만 든다.
+   */
+  kind: "lullabyGaze";
+  /** 한 번 때릴 때 쌓이는 겹 수. */
+  stacksPerHit: number;
 } | BreakthroughNone;
 
 /**
@@ -2638,6 +2681,31 @@ export type FerocityBreakthrough = {
   kind: "windPull";
   /** 가장 낮은 아군이 평타 한 번마다 더 받는 에너지. */
   extraEnergy: number;
+} | {
+  /**
+   * 폭주 중 수압이 쌓인 적이 **모사나 쪽으로 서서히 끌려든다**(모사나의 「소용돌이 기압차」). 밀려나는 것이 아니라 이동만 바뀌며 기절은 없다.
+   */
+  kind: "vortexDraw";
+  /** 이만큼 이상 쌓인 적만 끌려든다. */
+  minStacks: number;
+  /** 초당 끌려드는 거리(px). */
+  pullPerSecond: number;
+} | {
+  /**
+   * 폭주 중 까칠이 상한에서 터진 뒤 **0이 아니라 이 겹 수로 이어진다**(켄토의 「카페인 연쇄」). 폭주가 끝나면 원래대로 비운다.
+   */
+  kind: "heatChain";
+  /** 터진 뒤 남는 겹 수. */
+  keepStacks: number;
+} | {
+  /**
+   * 폭주 중 **적이 잠에서 깰 때 주변 적에게 졸음이 번진다**(안카의 「하품 전염」). 재운 쪽이 안카일 때만 번진다.
+   */
+  kind: "yawnContagion";
+  /** 번지는 겹 수. */
+  stacks: number;
+  /** 번지는 반경(px). */
+  radius: number;
 } | BreakthroughNone;
 
 /**
@@ -2716,6 +2784,31 @@ export type PassiveBreakthrough = {
    */
   kind: "windEcho";
   energy: number;
+} | {
+  /**
+   * 「인양 성공」의 막이 오를 때 **막이 가장 얇은 아군 한 명에게도 같은 막의 일부가 간다**(모사나의 「인양물 나누기」).
+   */
+  kind: "salvageShare";
+  /** 나누는 비율(%). */
+  sharePercent: number;
+} | {
+  /**
+   * 까칠 겹이 많을 때 **반격이 맞은 적 주변의 다른 적 한 명에게도 튄다**(켄토의 「가시 폭풍」). 튄 반격은 다시 겹을 쌓지 않는다.
+   */
+  kind: "thornStorm";
+  /** 이 겹 수 이상일 때만 튄다. */
+  minStacks: number;
+  /** 튀는 반격의 몫(%). */
+  splashPercent: number;
+} | {
+  /**
+   * 백색소음의 회복이 **그 순간 잠든 적 한 명마다** 늘어난다(안카의 「포근한 숨소리」).
+   */
+  kind: "softBreath";
+  /** 잠든 적 한 명당 늘어나는 회복(%). */
+  healPercentPerSleeper: number;
+  /** 세는 잠든 적의 상한. */
+  maxSleepers: number;
 } | BreakthroughNone;
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */

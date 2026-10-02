@@ -1,4 +1,5 @@
 import { normalizePlayerLevel, PLAYER_LEVEL_CAP } from "../core/playerLevel";
+import { STAGES } from "../data/stages";
 import { saveManager } from "../state/SaveManager";
 import { session, type Session } from "../state/session";
 
@@ -13,7 +14,14 @@ export class PlayerLevelManager {
 
   /** 만렙으로 올린다. 이미 만렙이면 false. */
   maxOutForDebug(): boolean {
-    if (this.state.playerResearch.level >= PLAYER_LEVEL_CAP) return false;
+    // 고고학처럼 스테이지 클리어로 여는 콘텐츠도 함께 열도록 1장 전체를 깬 것으로 둔다.
+    const chapterOne = STAGES.filter((stage) => stage.chapter === 1).map((stage) => stage.id);
+    const stagesChanged = chapterOne.some((id) => !this.state.cleared.has(id));
+    for (const id of chapterOne) this.state.cleared.add(id);
+    if (this.state.playerResearch.level >= PLAYER_LEVEL_CAP) {
+      if (stagesChanged && this.state === session) saveManager.save(this.state);
+      return stagesChanged;
+    }
     this.state.playerResearch = normalizePlayerLevel({ level: PLAYER_LEVEL_CAP, experience: 0 });
     if (this.state === session) saveManager.save(this.state);
     return true;

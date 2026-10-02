@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { grantPlayerExperience, normalizePlayerLevel, PLAYER_LEVEL_CAP, playerExpForStamina, playerExpToNext } from "../../src/core/playerLevel";
-import { CONTENT_LEVEL_GATES_ENABLED, CONTENT_UNLOCKS, contentUnlockLevel, contentUnlockedBetween, isContentUnlocked, nextContentUnlock } from "../../src/core/contentUnlock";
+import { CONTENT_LEVEL_GATES_ENABLED, CONTENT_STAGE_UNLOCKS, CONTENT_UNLOCKS, contentUnlockLevel, contentUnlockedBetween, isContentUnlocked, nextContentUnlock } from "../../src/core/contentUnlock";
 import { cleanBio, createPlayerUid, isPlayerUid, nicknameProblem, normalizePlayerCard, researchDays } from "../../src/core/playerCard";
 import { PROFILE_FRAMES } from "../../src/data/profileFrames";
 import { PlayerCardManager } from "../../src/managers/PlayerCardManager";
@@ -50,6 +50,7 @@ describe("레벨이 여는 콘텐츠", () => {
     const levels = CONTENT_UNLOCKS.map(({ level }) => level);
     const sameLevel = levels.filter((level, index) => levels.indexOf(level) !== index);
     expect(sameLevel.sort()).toEqual([3, 4]);
+    expect(CONTENT_UNLOCKS.map(({ id }) => id as string)).not.toContain("archaeology");
     expect(CONTENT_UNLOCKS.filter(({ level }) => level === 3).map(({ id }) => id)).toEqual(["shop", "trade"]);
     expect(CONTENT_UNLOCKS.filter(({ level }) => level === 4).map(({ id }) => id)).toEqual(["cakeOperation", "bounty"]);
     expect([...levels].sort((a, b) => a - b)).toEqual(levels);
@@ -60,7 +61,9 @@ describe("레벨이 여는 콘텐츠", () => {
     expect(contentUnlockLevel("excavation")).toBe(2);
     expect(contentUnlockLevel("shop")).toBe(3);
     expect(contentUnlockLevel("cakeOperation")).toBe(4);
-    expect(contentUnlockLevel("archaeology")).toBe(5);
+    expect(CONTENT_STAGE_UNLOCKS.archaeology).toBe("1-10");
+    expect(isContentUnlocked("archaeology", 60)).toBe(false);
+    expect(isContentUnlocked("archaeology", 1, true, new Set(["1-10"]))).toBe(true);
     expect(CONTENT_LEVEL_GATES_ENABLED).toBe(true);
     // 스토리·연구소·도감·임무·우편·가방·프리미엄은 표에 없어 시작부터 열려 있다.
     expect(CONTENT_UNLOCKS.map(({ id }) => id as string)).not.toContain("lab");
@@ -72,8 +75,8 @@ describe("레벨이 여는 콘텐츠", () => {
     expect(isContentUnlocked("raid", 9, true)).toBe(false);
     expect(isContentUnlocked("raid", 10, true)).toBe(true);
     expect(nextContentUnlock(1, false)).toBeUndefined();
-    expect(nextContentUnlock(4, true)).toEqual({ id: "archaeology", level: 5 });
-    expect(contentUnlockedBetween(4, 7, true).map(({ id }) => id)).toEqual(["archaeology", "interaction", "duel"]);
+    expect(nextContentUnlock(4, true)).toEqual({ id: "interaction", level: 5 });
+    expect(contentUnlockedBetween(4, 7, true).map(({ id }) => id)).toEqual(["interaction", "duel", "friends"]);
   });
 });
 

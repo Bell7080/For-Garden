@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { t, type TextKey } from "../i18n";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { contentUnlockedBetween, contentUnlockLevel, isContentUnlocked, type ContentId } from "../core/contentUnlock";
+import { ALL_GATED_CONTENT, CONTENT_STAGE_UNLOCKS, contentUnlockLevel, isContentUnlocked, type ContentId } from "../core/contentUnlock";
 import { motionPolicy } from "../core/settings";
 import { session } from "../state/session";
 import { drawGlyph } from "./glyphs";
@@ -20,28 +20,31 @@ export function contentNameKey(id: ContentId): TextKey {
 
 /** 지금 연구원 레벨로 그 콘텐츠가 열려 있는지. 화면이 레벨을 직접 비교하지 않는다. */
 export function contentOpen(id: ContentId): boolean {
-  return isContentUnlocked(id, session.playerResearch.level);
+  return isContentUnlocked(id, session.playerResearch.level, undefined, session.cleared);
 }
 
 /** 「LV.4 개방 · 교류」 — 프로필의 다음 개방 줄과 같은 문구다. */
 export function contentLockText(id: ContentId): string {
+  const stage = CONTENT_STAGE_UNLOCKS[id];
+  if (stage !== undefined) return t("profile.nextUnlockStage", { stage, content: t(contentNameKey(id)) });
   return t("profile.nextUnlock", { level: contentUnlockLevel(id), content: t(contentNameKey(id)) });
 }
 
 /**
- * 로비가 들어올 때마다 이전에 본 레벨과 지금 레벨을 비교해, 그 사이 새로 열린 콘텐츠를 **한 번씩만** 연출하게 모아 둔다.
+ * 로비가 들어올 때마다 이전에 본 열림 상태와 지금 상태를 비교해(레벨·스테이지 클리어 어느 쪽이든), 그 사이 새로 열린 콘텐츠를 **한 번씩만** 연출하게 모아 둔다.
  *
  * 메모리에만 둔다 — 앱을 껐다 켠 첫 진입에는 연출 없이 열린 채로 서고, 같은 세션에서 레벨이 오른 뒤 로비로 돌아올 때만
  * 터진다. 연출을 부르는 화면이 `consumeUnlockCelebration`으로 제 몫을 가져가므로 두 번 터지지 않는다.
  */
-let seenLevel: number | undefined;
+let seenOpen: Set<ContentId> | undefined;
 const pendingCelebrations = new Set<ContentId>();
 
-export function collectUnlockCelebrations(level: number = session.playerResearch.level): void {
-  const previous = seenLevel;
-  seenLevel = level;
-  if (previous === undefined || level <= previous) return;
-  for (const entry of contentUnlockedBetween(previous, level)) pendingCelebrations.add(entry.id);
+export function collectUnlockCelebrations(): void {
+  const open = new Set(ALL_GATED_CONTENT.filter((id) => contentOpen(id)));
+  const previous = seenOpen;
+  seenOpen = open;
+  if (!previous) return;
+  for (const id of open) if (!previous.has(id)) pendingCelebrations.add(id);
 }
 
 /** 이 콘텐츠의 열림 연출이 남아 있으면 true를 돌려주고 비운다. */

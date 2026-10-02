@@ -52,7 +52,7 @@ export function openRuneTraitReroll(options: {
   onResolved: () => void;
 }): void {
   const { scene, popups, keywords, candidate } = options;
-  popups.open({ width: REROLL_POPUP.width, height: REROLL_POPUP.height, title: t("rune.traitReroll.title"), dim: true, closeOnBackdrop: false }, (body, close) => {
+  popups.open({ width: REROLL_POPUP.width, height: REROLL_POPUP.height, title: t("rune.traitReroll.title"), dim: true, closeOnBackdrop: false, hideCloseButton: true }, (body, close) => {
     const top = -REROLL_POPUP.height / 2;
     const label = (y: number, key: TextKey): void => {
       body.add(scene.add.text(-REROLL_POPUP.width / 2 + 40, y, t(key), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));

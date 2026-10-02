@@ -6,8 +6,9 @@
  * 콘텐츠를 하나씩 여는 이유다. 어느 콘텐츠가 몇 레벨에 열리는지는 **이 표 하나**가 갖고,
  * 화면·서버·프로필 모두 여기서 읽는다.
  *
- * 지금은 시험 중이라 잠금을 걸지 않는다(`CONTENT_LEVEL_GATES_ENABLED`). 켜는 순간 표의 레벨이
- * 그대로 효력을 갖고, 프로필의 「다음 개방」 줄도 함께 선다.
+ * 잠금은 켜져 있다(`CONTENT_LEVEL_GATES_ENABLED`). 1레벨 계정에는 발굴·교류·결투가 로비에서
+ * 보이지 않고(열릴 때 자물쇠가 터지며 나타난다), 고고학 탭과 출격 안의 입구는 자물쇠가 걸린 채
+ * 남는다. QA는 설정의 「레벨 만렙 · 모두 개방」으로 한 번에 연다.
  */
 export type ContentId = "excavation" | "interaction" | "cakeOperation" | "bounty" | "expedition" | "raid" | "duel" | "archaeology";
 
@@ -15,18 +16,18 @@ export interface ContentUnlock { id: ContentId; level: number; }
 
 /** 여는 순서이자 레벨. 같은 레벨에 둘을 열지 않는다 — 한 번에 하나씩 새것이 서야 무엇이 열렸는지 읽힌다. */
 export const CONTENT_UNLOCKS: readonly ContentUnlock[] = [
-  { id: "excavation", level: 3 },
+  { id: "excavation", level: 2 },
+  { id: "archaeology", level: 3 },
+  { id: "interaction", level: 4 },
   { id: "cakeOperation", level: 5 },
-  { id: "archaeology", level: 7 },
-  { id: "interaction", level: 10 },
-  { id: "bounty", level: 12 },
-  { id: "expedition", level: 15 },
-  { id: "raid", level: 20 },
-  { id: "duel", level: 25 },
+  { id: "duel", level: 6 },
+  { id: "bounty", level: 8 },
+  { id: "raid", level: 10 },
+  { id: "expedition", level: 12 },
 ] as const;
 
-/** 시험 기간에는 모든 콘텐츠가 열려 있다. 정식 운영에서 true로 바꾼다. */
-export const CONTENT_LEVEL_GATES_ENABLED = false;
+/** 레벨 잠금을 거는지. 끄면 모든 콘텐츠가 열려 있다. */
+export const CONTENT_LEVEL_GATES_ENABLED = true;
 
 export function contentUnlockLevel(id: ContentId): number {
   return CONTENT_UNLOCKS.find((entry) => entry.id === id)?.level ?? 1;

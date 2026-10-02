@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { grantPlayerExperience, normalizePlayerLevel, PLAYER_LEVEL_CAP, playerExpForStamina, playerExpToNext } from "../../src/core/playerLevel";
-import { CONTENT_UNLOCKS, contentUnlockedBetween, isContentUnlocked, nextContentUnlock } from "../../src/core/contentUnlock";
+import { CONTENT_LEVEL_GATES_ENABLED, CONTENT_UNLOCKS, contentUnlockLevel, contentUnlockedBetween, isContentUnlocked, nextContentUnlock } from "../../src/core/contentUnlock";
 import { cleanBio, createPlayerUid, isPlayerUid, nicknameProblem, normalizePlayerCard, researchDays } from "../../src/core/playerCard";
 import { PROFILE_FRAMES } from "../../src/data/profileFrames";
 import { PlayerCardManager } from "../../src/managers/PlayerCardManager";
@@ -53,13 +53,22 @@ describe("레벨이 여는 콘텐츠", () => {
     expect(Math.max(...levels)).toBeLessThanOrEqual(PLAYER_LEVEL_CAP);
   });
 
+  it("기획한 개방 레벨: 발굴 2 · 고고학 3 · 교류 4 · 결투 6", () => {
+    expect(contentUnlockLevel("excavation")).toBe(2);
+    expect(contentUnlockLevel("archaeology")).toBe(3);
+    expect(contentUnlockLevel("interaction")).toBe(4);
+    expect(contentUnlockLevel("duel")).toBe(6);
+    expect(CONTENT_LEVEL_GATES_ENABLED).toBe(true);
+    expect(isContentUnlocked("excavation", 1)).toBe(false);
+  });
+
   it("잠금을 켜면 표의 레벨이 효력을 갖고, 끄면 모두 열려 있다", () => {
     expect(isContentUnlocked("raid", 1, false)).toBe(true);
-    expect(isContentUnlocked("raid", 19, true)).toBe(false);
-    expect(isContentUnlocked("raid", 20, true)).toBe(true);
+    expect(isContentUnlocked("raid", 9, true)).toBe(false);
+    expect(isContentUnlocked("raid", 10, true)).toBe(true);
     expect(nextContentUnlock(1, false)).toBeUndefined();
     expect(nextContentUnlock(4, true)).toEqual({ id: "cakeOperation", level: 5 });
-    expect(contentUnlockedBetween(4, 12, true).map(({ id }) => id)).toEqual(["cakeOperation", "archaeology", "interaction", "bounty"]);
+    expect(contentUnlockedBetween(4, 8, true).map(({ id }) => id)).toEqual(["cakeOperation", "duel", "bounty"]);
   });
 });
 

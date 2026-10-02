@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createSkirmish, fireUltimate, findFighter, refreshBleed, stepSkirmish, tryTriggerEmergencyRecovery, type Arena, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
+import { createSkirmish, fighterReach, fireUltimate, findFighter, refreshBleed, stepSkirmish, tryTriggerEmergencyRecovery, type Arena, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
 import { FEROCITY_RULES } from "../../src/core/ferocity";
 import { BREAKTHROUGH_STEPS, isBreakthroughSlotOpen } from "../../src/core/relicProgression";
 import { getRelic, RELICS } from "../../src/data/relics";
@@ -320,13 +320,13 @@ describe("도디 한계 돌파", () => {
     const enemy = findFighter(state, "enemy-0")!;
     enemy.attackCooldown = 999;
     for (const fighter of state.fighters) fighter.shield.amount = 0;
-    dodo.ferocity = FEROCITY_RULES.max; dodo.ferocityFever = true; dodo.feverHealingDone = 300;
+    dodo.ferocity = FEROCITY_RULES.max; dodo.ferocityFever = true; dodo.bt.feverHealingDone = 300;
     let ended = false;
     for (let tick = 0; tick < 400 && !ended; tick += 1) { stepSkirmish(state, 0.05); ended = !dodo.ferocityFever; }
     expect(ended).toBe(true);
     // 300의 50%를 셋이 나눈다.
     for (const id of ["player-0", "player-1", "player-2"]) expect(findFighter(state, id)!.shield.amount).toBe(50);
-    expect(dodo.feverHealingDone).toBe(0);
+    expect(dodo.bt.feverHealingDone).toBe(0);
   });
 
   it("는 아군 체력이 25% 이하로 내려가면 전투당 한 번만 주문력 보호막을 둘러 준다(별 V)", () => {
@@ -336,8 +336,8 @@ describe("도디 한계 돌파", () => {
     const enemy = findFighter(state, "enemy-0")!;
     enemy.x = tia.x + 40; enemy.y = tia.y; enemy.attackCooldown = 0;
     tia.hp = tia.maxHp * 0.26; tia.shield.amount = 0;
-    for (let tick = 0; tick < 40 && !dodo.rescueUsed; tick += 1) stepSkirmish(state, 0.05, () => 0.99);
-    expect(dodo.rescueUsed).toBe(true);
+    for (let tick = 0; tick < 40 && !dodo.bt.rescueUsed; tick += 1) stepSkirmish(state, 0.05, () => 0.99);
+    expect(dodo.bt.rescueUsed).toBe(true);
     expect(tia.shield.amount).toBeGreaterThan(0);
   });
 
@@ -347,5 +347,422 @@ describe("도디 한계 돌파", () => {
     expect(breakthroughEffectText(dodo, "ultimate")).toContain("[[shield|보호막]]");
     expect(breakthroughEffectText(dodo, "ferocity")).toContain("[[ferocity|폭주]]가 끝날 때");
     expect(breakthroughEffectText(dodo, "passive")).toContain("25% 이하");
+  });
+});
+
+describe("파루아 한계 돌파", () => {
+  /** 파루아 한 명이 적 하나를 상대한다. 돌파 단계만 갈아 끼운다. */
+  function paruaBattle(breakthrough: number, foes = ["amo"]): SkirmishState {
+    return createSkirmish([getRelic("parua")], foes.map(getRelic), ARENA, {}, { parua: breakthrough });
+  }
+  function setUp(state: SkirmishState): void {
+    const parua = findFighter(state, "player-0")!;
+    for (const enemy of state.fighters.filter((fighter) => fighter.side === "enemy")) {
+      enemy.x = parua.x; enemy.y = parua.y - 300; enemy.attackCooldown = 999; enemy.maxHp = 1_000_000; enemy.hp = enemy.maxHp;
+    }
+  }
+
+  it("는 갈래화살이 1초 뒤 같은 자리로 한 번 더 날아가고 집중은 쌓지 않는다(별 II)", () => {
+    const run = (breakthrough: number): { hits: number; focus: number } => {
+      const state = paruaBattle(breakthrough);
+      setUp(state);
+      const parua = findFighter(state, "player-0")!;
+      parua.basicCycleStep = 2; parua.attackCooldown = 0;
+      let hits = 0;
+      for (let tick = 0; tick < 30; tick += 1) {
+        for (const event of stepSkirmish(state, 0.05, () => 0.99)) {
+          if (event.kind === "attack" && event.attackerId === parua.id && event.skill === "basic") hits += 1;
+        }
+        // 첫 갈래화살 한 번과 그 메아리만 세려고 다음 공격은 막아 둔다.
+        parua.attackCooldown = 999;
+      }
+      return { hits, focus: parua.focus };
+    };
+    const before = run(0); const after = run(1);
+    expect(before.hits).toBe(1);
+    expect(after.hits).toBe(2);
+    // 메아리 화살은 집중을 쌓지 않는다.
+    expect(after.focus).toBe(before.focus);
+  });
+
+  it("는 궁극기의 연격을 세 발 · 8초로 늘린다(별 III)", () => {
+    const cast = (breakthrough: number) => {
+      const state = paruaBattle(breakthrough);
+      const parua = findFighter(state, "player-0")!;
+      parua.energy = parua.def.ultimate.cost;
+      fireUltimate(state, parua.id, () => 0.99);
+      return parua.volley!;
+    };
+    expect(cast(1)).toMatchObject({ hitCount: 2, total: 5 });
+    expect(cast(2)).toMatchObject({ hitCount: 3, total: 8 });
+  });
+
+  it("는 폭주에 들어서는 순간 3초 동안 은신한다(별 IV)", () => {
+    const state = paruaBattle(3);
+    setUp(state);
+    const parua = findFighter(state, "player-0")!;
+    parua.ferocity = FEROCITY_RULES.max - 0.001; parua.attackCooldown = 0;
+    for (let tick = 0; tick < 40 && !parua.ferocityFever; tick += 1) stepSkirmish(state, 0.05, () => 0.99);
+    expect(parua.ferocityFever).toBe(true);
+    expect(parua.stealthFor).toBeGreaterThan(2);
+    // 별 셋에서는 은신하지 않는다.
+    const plain = paruaBattle(2);
+    setUp(plain);
+    const other = findFighter(plain, "player-0")!;
+    other.ferocity = FEROCITY_RULES.max - 0.001; other.attackCooldown = 0;
+    for (let tick = 0; tick < 40 && !other.ferocityFever; tick += 1) stepSkirmish(plain, 0.05, () => 0.99);
+    expect(other.stealthFor).toBe(0);
+  });
+
+  it("는 집중이 가득 차면 갈래화살이 반드시 치명타다(별 V)", () => {
+    const critical = (breakthrough: number, focus: number): boolean => {
+      const state = paruaBattle(breakthrough);
+      setUp(state);
+      const parua = findFighter(state, "player-0")!;
+      parua.focus = focus; parua.basicCycleStep = 2; parua.attackCooldown = 0;
+      const events = stepSkirmish(state, 0.05, () => 0.99);
+      return events.some((event) => event.kind === "attack" && event.attackerId === parua.id && event.skill === "basic" && event.critical);
+    };
+    expect(critical(BREAKTHROUGH_STEPS.length, 15)).toBe(true);
+    expect(critical(BREAKTHROUGH_STEPS.length, 14)).toBe(false);
+    expect(critical(BREAKTHROUGH_STEPS.length - 1, 15)).toBe(false);
+  });
+
+  it("는 네 슬롯 모두 문장을 만든다", () => {
+    const parua = getRelic("parua");
+    expect(breakthroughEffectText(parua, "basic")).toContain("1초 뒤 한 번 더");
+    expect(breakthroughEffectText(parua, "ultimate")).toContain("3번 적중");
+    expect(breakthroughEffectText(parua, "ferocity")).toContain("[[stealth|은신]]");
+    expect(breakthroughEffectText(parua, "passive")).toContain("반드시 치명타");
+  });
+});
+
+describe("스피나 한계 돌파", () => {
+  const FULL = BREAKTHROUGH_STEPS.length;
+  function spinoBattle(breakthrough: number, foes = ["torika", "amo"]): SkirmishState {
+    return createSkirmish([getRelic("spino")], foes.map(getRelic), ARENA, {}, { spino: breakthrough });
+  }
+  /** 스피나 곁에 적을 붙이고, 적이 때리지 못하게 공격을 멈춘다. */
+  function engageAll(state: SkirmishState): void {
+    const spino = findFighter(state, "player-0")!;
+    for (const [index, enemy] of state.fighters.filter((fighter) => fighter.side === "enemy").entries()) {
+      enemy.x = spino.x + 40 + index * 30; enemy.y = spino.y; enemy.attackCooldown = 999; enemy.maxHp = 1_000_000; enemy.hp = enemy.maxHp;
+    }
+  }
+
+  it("는 궁극기가 건 기절을 같은 적에게 8초 동안 다시 걸지 않는다(기본 규칙)", () => {
+    const state = spinoBattle(0, ["torika"]);
+    engageAll(state);
+    const spino = findFighter(state, "player-0")!;
+    const enemy = findFighter(state, "enemy-0")!;
+    const stunned = (): boolean => enemy.stunnedFor > 0;
+    spino.energy = spino.def.ultimate.cost;
+    fireUltimate(state, spino.id, () => 0.99);
+    expect(stunned()).toBe(true);
+    // 기절이 풀린 뒤 곧바로 다시 쏘아도 8초가 지나기 전에는 기절하지 않는다 — 피해는 들어간다.
+    enemy.stunnedFor = 0; spino.energy = spino.def.ultimate.cost;
+    const hp = enemy.hp;
+    fireUltimate(state, spino.id, () => 0.99);
+    expect(enemy.hp).toBeLessThan(hp);
+    expect(stunned()).toBe(false);
+    // 8초가 지난 뒤에는 다시 걸린다.
+    state.elapsed += 8; spino.energy = spino.def.ultimate.cost;
+    fireUltimate(state, spino.id, () => 0.99);
+    expect(stunned()).toBe(true);
+  });
+
+  it("는 도약이 꽂힌 적의 발밑에도 여울을 하나 더 깐다(별 II)", () => {
+    const pools = (breakthrough: number): number => {
+      const state = spinoBattle(breakthrough);
+      engageAll(state);
+      const spino = findFighter(state, "player-0")!;
+      const [first, second] = state.fighters.filter((fighter) => fighter.side === "enemy");
+      spino.shallowPools = [{ x: first.x, y: first.y, remaining: 6, total: 6 }];
+      second.x = first.x + 900; second.y = first.y;
+      spino.shallowLeapCount = spino.def.basic.shallows!.leapEveryHits - 1; spino.attackCooldown = 0;
+      stepSkirmish(state, 0.05, () => 0.99);
+      return spino.shallowPools.length;
+    };
+    expect(pools(1)).toBeGreaterThan(pools(0));
+  });
+
+  it("는 터진 여울이 1.5초 뒤 기절 없이 한 번 더 터진다(별 III)", () => {
+    const state = spinoBattle(2, ["torika"]);
+    engageAll(state);
+    const spino = findFighter(state, "player-0")!;
+    const enemy = findFighter(state, "enemy-0")!;
+    spino.shallowPools = [{ x: enemy.x, y: enemy.y, remaining: 6, total: 6 }];
+    spino.energy = spino.def.ultimate.cost;
+    fireUltimate(state, spino.id, () => 0.99);
+    expect(spino.bt.tidalEchoes).toHaveLength(1);
+    enemy.stunnedFor = 0;
+    let echoes = 0;
+    for (let tick = 0; tick < 50; tick += 1) {
+      for (const event of stepSkirmish(state, 0.05, () => 0.99)) {
+        if (event.kind === "areaImpact" && event.attackerId === spino.id) echoes += 1;
+      }
+    }
+    expect(echoes).toBeGreaterThanOrEqual(1);
+    expect(spino.bt.tidalEchoes).toHaveLength(0);
+    // 되돌아온 파도는 기절을 걸지 않는다.
+    expect(enemy.stunnedFor).toBe(0);
+    // 별 하나에서는 예약하지 않는다.
+    const plain = spinoBattle(1, ["torika"]);
+    engageAll(plain);
+    const other = findFighter(plain, "player-0")!;
+    other.shallowPools = [{ x: findFighter(plain, "enemy-0")!.x, y: findFighter(plain, "enemy-0")!.y, remaining: 6, total: 6 }];
+    other.energy = other.def.ultimate.cost;
+    fireUltimate(plain, other.id, () => 0.99);
+    expect(other.bt.tidalEchoes).toHaveLength(0);
+  });
+
+  it("는 폭주에 들어선 뒤 첫 일반 공격이 반드시 치명타다(별 IV)", () => {
+    const state = spinoBattle(3, ["torika"]);
+    engageAll(state);
+    const spino = findFighter(state, "player-0")!;
+    spino.ferocity = FEROCITY_RULES.max - 0.001; spino.attackCooldown = 0;
+    expect(spino.bt.ambushCritReady).toBe(false);
+    let firstBasic: boolean | undefined;
+    for (let tick = 0; tick < 200 && firstBasic === undefined; tick += 1) {
+      const wasFever = spino.ferocityFever;
+      for (const event of stepSkirmish(state, 0.05, () => 0.99)) {
+        if (spino.ferocityFever && event.kind === "attack" && event.attackerId === spino.id && event.skill === "basic" && !wasFever === false) firstBasic = event.critical;
+      }
+      if (spino.ferocityFever && spino.bt.ambushCritReady) { spino.attackCooldown = 0; engageAll(state); }
+    }
+    expect(firstBasic).toBe(true);
+    expect(spino.bt.ambushCritReady).toBe(false);
+  });
+
+  it("는 여울에 잠긴 적을 처치하면 곧바로 다음 여울로 도약한다(별 V)", () => {
+    const run = (breakthrough: number): number => {
+      const state = spinoBattle(breakthrough, ["torika", "amo"]);
+      engageAll(state);
+      const spino = findFighter(state, "player-0")!;
+      const [first, second] = state.fighters.filter((fighter) => fighter.side === "enemy");
+      first.hp = 1;
+      second.x = first.x + 900; second.y = first.y;
+      spino.shallowPools = [
+        { x: first.x, y: first.y, remaining: 6, total: 6 },
+        { x: second.x, y: second.y, remaining: 6, total: 6 },
+      ];
+      spino.targetId = first.id; spino.attackCooldown = 0; spino.shallowLeapCount = 0;
+      stepSkirmish(state, 0.05, () => 0.99);
+      return Math.hypot(spino.x - second.x, spino.y - second.y);
+    };
+    // 돌파가 열려 있으면 처치한 즉시 둘째 여울로 건너가 둘째 적 곁에 선다.
+    expect(run(FULL)).toBeLessThan(run(FULL - 1));
+  });
+
+  it("는 네 슬롯 모두 문장을 만든다", () => {
+    const spino = getRelic("spino");
+    expect(breakthroughEffectText(spino, "basic")).toContain("[[shallows|여울]]");
+    expect(breakthroughEffectText(spino, "ultimate")).toContain("1.5초 뒤 한 번 더 터진다");
+    expect(breakthroughEffectText(spino, "ferocity")).toContain("반드시 치명타");
+    expect(breakthroughEffectText(spino, "passive")).toContain("처치하면");
+  });
+});
+
+describe("슈테 한계 돌파", () => {
+  const FULL = BREAKTHROUGH_STEPS.length;
+  /** 렉시아(듀오) · 슈테 · 티아가 적 하나를 상대한다. 슈테의 바로 왼쪽인 렉시아가 듀오다. */
+  function shuteBattle(breakthrough: number, foes = ["torika"]): SkirmishState {
+    return createSkirmish([getRelic("rex"), getRelic("shute"), getRelic("tia")], foes.map(getRelic), ARENA, {}, { shute: breakthrough });
+  }
+  function freeze(state: SkirmishState): void {
+    for (const enemy of state.fighters.filter((fighter) => fighter.side === "enemy")) {
+      enemy.attackCooldown = 999; enemy.maxHp = 1_000_000; enemy.hp = enemy.maxHp;
+    }
+  }
+
+  it("는 평타가 원거리까지 닿고 듀오에게서 더 멀리 떨어져 선다(별 II)", () => {
+    const reach = (breakthrough: number): number => fighterReach(findFighter(shuteBattle(breakthrough), "player-1")!);
+    expect(reach(0)).toBe(360);
+    expect(reach(1)).toBe(600);
+    // 듀오가 300 떨어져 있으면 별 하나는 180까지 붙으려 걷고, 열리면 420 안이라 걷지 않는다.
+    const walked = (breakthrough: number): number => {
+      const state = shuteBattle(breakthrough);
+      freeze(state);
+      const shute = findFighter(state, "player-1")!; const duo = findFighter(state, "player-0")!;
+      duo.x = shute.x + 300; duo.y = shute.y;
+      const before = Math.hypot(duo.x - shute.x, duo.y - shute.y);
+      stepSkirmish(state, 0.05, () => 0.99);
+      return before - Math.hypot(duo.x - shute.x, duo.y - shute.y);
+    };
+    expect(walked(0)).toBeGreaterThan(walked(1));
+  });
+
+  it("는 오더 동안 듀오가 처음 때리는 적마다 표식을 즉시 찍어 터뜨린다(별 III)", () => {
+    const bursts = (breakthrough: number): number => {
+      const state = shuteBattle(breakthrough);
+      freeze(state);
+      const shute = findFighter(state, "player-1")!; const duo = findFighter(state, "player-0")!;
+      const enemy = findFighter(state, "enemy-0")!;
+      enemy.x = duo.x + 40; enemy.y = duo.y;
+      shute.energy = shute.def.ultimate.cost;
+      fireUltimate(state, shute.id, () => 0.99);
+      duo.attackCooldown = 0; shute.attackCooldown = 999;
+      let count = 0;
+      for (let tick = 0; tick < 60; tick += 1) {
+        for (const event of stepSkirmish(state, 0.05, () => 0.99)) if (event.kind === "attack" && event.skill === "weakpoint") count += 1;
+      }
+      return count;
+    };
+    // 평타 주기(세 번째)가 오기 전이라 돌파가 없으면 한 번도 터지지 않고, 있으면 첫 타격에 한 번 터진다.
+    expect(bursts(1)).toBe(0);
+    expect(bursts(2)).toBe(1);
+  });
+
+  it("는 폭주 동안 평타가 세 번째마다가 아니라 매번 표식을 찍는다(별 IV)", () => {
+    const marks = (breakthrough: number): number => {
+      const state = shuteBattle(breakthrough);
+      freeze(state);
+      const shute = findFighter(state, "player-1")!; const duo = findFighter(state, "player-0")!;
+      const enemy = findFighter(state, "enemy-0")!;
+      enemy.x = shute.x + 100; enemy.y = shute.y; duo.attackCooldown = 999;
+      shute.ferocityFever = true; shute.ferocity = FEROCITY_RULES.max; shute.attackCooldown = 0; shute.targetId = enemy.id;
+      stepSkirmish(state, 0.05, () => 0.99);
+      return enemy.weakpoint === null ? 0 : 1;
+    };
+    // 첫 걸음에서 돌파 없이는 주기가 차지 않아 표식이 없다.
+    expect(marks(2)).toBe(0);
+    expect(marks(3)).toBe(1);
+  });
+
+  it("는 듀오가 쓰러지면 가장 가까운 아군과 새 듀오를 맺는다(별 V · 전투당 한 번)", () => {
+    const state = shuteBattle(FULL);
+    freeze(state);
+    const shute = findFighter(state, "player-1")!;
+    const rex = findFighter(state, "player-0")!; const tia = findFighter(state, "player-2")!;
+    expect(shute.duoId).toBe(rex.id);
+    rex.hp = 0;
+    stepSkirmish(state, 0.05, () => 0.99);
+    expect(shute.duoId).toBe(tia.id);
+    expect(shute.bt.relinkUsed).toBe(true);
+    // 새 듀오도 쓰러지면 다시 맺지 않는다.
+    tia.hp = 0;
+    stepSkirmish(state, 0.05, () => 0.99);
+    expect(shute.duoId).toBe(tia.id);
+    // 돌파가 없으면 맺지 않는다.
+    const plain = shuteBattle(FULL - 1);
+    freeze(plain);
+    findFighter(plain, "player-0")!.hp = 0;
+    stepSkirmish(plain, 0.05, () => 0.99);
+    expect(findFighter(plain, "player-1")!.duoId).toBe("player-0");
+  });
+
+  it("는 네 슬롯 모두 문장을 만든다", () => {
+    const shute = getRelic("shute");
+    expect(breakthroughEffectText(shute, "basic")).toContain("원거리");
+    expect(breakthroughEffectText(shute, "ultimate")).toContain("처음 때리는 적마다");
+    expect(breakthroughEffectText(shute, "ferocity")).toContain("매번");
+    expect(breakthroughEffectText(shute, "passive")).toContain("새 듀오");
+  });
+});
+
+describe("메테 한계 돌파", () => {
+  const FULL = BREAKTHROUGH_STEPS.length;
+  /** 메테 · 렉시아 · 티아가 적 둘을 상대한다. 돌파 단계만 갈아 끼운다. */
+  function metteBattle(breakthrough: number, foes = ["torika", "amo"]): SkirmishState {
+    return createSkirmish([getRelic("mette"), getRelic("rex"), getRelic("tia")], foes.map(getRelic), ARENA, {}, { mette: breakthrough });
+  }
+  function freeze(state: SkirmishState): void {
+    for (const enemy of state.fighters.filter((fighter) => fighter.side === "enemy")) {
+      enemy.attackCooldown = 999; enemy.maxHp = 1_000_000; enemy.hp = enemy.maxHp;
+    }
+  }
+
+  it("는 같은 적을 연속으로 맞히면 스타카토 겹이 쌓이고 다른 적으로 옮기면 처음부터다(별 II)", () => {
+    const state = metteBattle(1);
+    freeze(state);
+    const mette = findFighter(state, "player-0")!;
+    const [first, second] = state.fighters.filter((fighter) => fighter.side === "enemy");
+    first.x = mette.x; first.y = mette.y - 200; second.x = mette.x + 60; second.y = mette.y - 200;
+    const hit = (target: typeof first): number => {
+      mette.targetId = target.id; mette.attackCooldown = 0;
+      stepSkirmish(state, 0.05, () => 0.99);
+      return mette.bt.staccatoStreak?.count ?? 0;
+    };
+    expect(hit(first)).toBe(1);
+    expect(hit(first)).toBe(2);
+    expect(hit(second)).toBe(1);
+    // 별 하나에서는 세지 않는다.
+    const plain = metteBattle(0);
+    freeze(plain);
+    const other = findFighter(plain, "player-0")!;
+    const foe = findFighter(plain, "enemy-0")!;
+    foe.x = other.x; foe.y = other.y - 200; other.attackCooldown = 0; other.targetId = foe.id;
+    stepSkirmish(plain, 0.05, () => 0.99);
+    expect(other.bt.staccatoStreak).toBeNull();
+  });
+
+  it("는 궁극기 게이지를 15 줄이고 체력이 가득 찬 아군에게만 보호막을 준다(별 III)", () => {
+    expect(findFighter(metteBattle(1), "player-0")!.def.ultimate.cost).toBe(90);
+    const state = metteBattle(2);
+    freeze(state);
+    const mette = findFighter(state, "player-0")!;
+    const rex = findFighter(state, "player-1")!; const tia = findFighter(state, "player-2")!;
+    expect(mette.def.ultimate.cost).toBe(75);
+    tia.hp = tia.maxHp * 0.5;
+    for (const fighter of [mette, rex, tia]) fighter.shield.amount = 0;
+    mette.energy = mette.def.ultimate.cost;
+    fireUltimate(state, mette.id, () => 0.99);
+    // 가득 찬 렉시아는 최대 체력 8%의 보호막, 다친 티아는 회복만 받는다.
+    expect(rex.shield.amount).toBeCloseTo(rex.maxHp * 0.08, 3);
+    expect(tia.shield.amount).toBe(0);
+    expect(tia.hp).toBeGreaterThan(tia.maxHp * 0.5);
+  });
+
+  it("는 폭주 추가타 위력이 칠 때마다 커지되 +50%에서 멈춘다(별 IV)", () => {
+    const power = (hits: number, breakthrough: number): number => {
+      const state = metteBattle(breakthrough, ["torika"]);
+      freeze(state);
+      const mette = findFighter(state, "player-0")!; const enemy = findFighter(state, "enemy-0")!;
+      enemy.x = mette.x; enemy.y = mette.y - 200;
+      mette.ferocityFever = true; mette.ferocity = FEROCITY_RULES.max; mette.bt.crescendoHits = hits;
+      mette.attackCooldown = 0; mette.targetId = enemy.id;
+      const events = stepSkirmish(state, 0.05, () => 0.99);
+      const extra = events.find((event) => event.kind === "attack" && event.skill === "staccato");
+      return extra?.kind === "attack" ? extra.amount : 0;
+    };
+    const base = power(0, 3);
+    expect(power(4, 3) / base).toBeGreaterThan(1.1);
+    // 열 번을 넘겨 쌓여도 +50%를 넘지 않는다.
+    expect(power(50, 3) / base).toBeLessThan(1.52);
+    expect(power(50, 3) / base).toBeGreaterThan(1.45);
+    // 별 셋에서는 오르지 않는다.
+    expect(power(50, 2) / power(0, 2)).toBeCloseTo(1, 1);
+  });
+
+  it("는 메테의 보호막이 다 깨지면 주위 적에게 피해와 경직을 주고 7초 쉰다(별 V)", () => {
+    const state = metteBattle(FULL);
+    freeze(state);
+    const mette = findFighter(state, "player-0")!; const tia = findFighter(state, "player-2")!;
+    const [first, second] = state.fighters.filter((fighter) => fighter.side === "enemy");
+    first.x = tia.x + 50; first.y = tia.y; second.x = tia.x - 80; second.y = tia.y;
+    first.hp = first.maxHp; second.hp = second.maxHp;
+    tia.shield.amount = 1; tia.shield.providerId = mette.id;
+    first.attackCooldown = 0; first.targetId = tia.id; first.engaged = true;
+    const before = second.hp;
+    for (let tick = 0; tick < 40 && mette.bt.adagioSlamCooldown <= 0; tick += 1) stepSkirmish(state, 0.05, () => 0.99);
+    expect(mette.bt.adagioSlamCooldown).toBeGreaterThan(6);
+    expect(second.hp).toBeLessThan(before);
+    // 돌파가 없으면 내려앉지 않는다.
+    const plain = metteBattle(FULL - 1);
+    freeze(plain);
+    const other = findFighter(plain, "player-0")!; const ally = findFighter(plain, "player-2")!;
+    const foe = findFighter(plain, "enemy-0")!;
+    foe.x = ally.x + 50; foe.y = ally.y; ally.shield.amount = 1; ally.shield.providerId = other.id;
+    foe.attackCooldown = 0; foe.targetId = ally.id; foe.engaged = true;
+    for (let tick = 0; tick < 40; tick += 1) stepSkirmish(plain, 0.05, () => 0.99);
+    expect(other.bt.adagioSlamCooldown).toBe(0);
+  });
+
+  it("는 네 슬롯 모두 문장을 만든다", () => {
+    const mette = getRelic("mette");
+    expect(breakthroughEffectText(mette, "basic")).toContain("연속으로");
+    expect(breakthroughEffectText(mette, "ultimate")).toContain("15 줄고");
+    expect(breakthroughEffectText(mette, "ferocity")).toContain("50%까지");
+    expect(breakthroughEffectText(mette, "passive")).toContain("7초에 한 번");
   });
 });

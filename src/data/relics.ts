@@ -423,6 +423,18 @@ export const RELICS: RelicDef[] = [
     // 내려서는 자리에 물이 고인다. 잠행이 "숨어서 옮겨 간다"에서 **사냥터를 여는 걸음**이 되어,
     // 도착하자마자 그 자리의 평타가 전부 다단히트로 들어간다.
     ferocityTrait: { name: "잠행", effectId: "stealthLeap", durationSeconds: 3, leapTarget: "lowestHpEnemy", landingDistance: 172, landingShallows: true },
+    // 별 넷이 이 개체를 **물가를 지배하는 사냥꾼**으로 완성한다 — 암살자의 몫(기동·기습·처치 연쇄)만 얹고 버티는 값은 주지 않는다.
+    // 기절 시간·게이지 환급·공속 누적은 건드리지 않는다: 궁극기 주기가 기절과 맞닿아 있어 어느 하나라도 올리면 한 적이 영원히 묶인다.
+    breakthroughEffects: {
+      // 도약이 꽂힌 적의 발밑에도 여울이 하나 더 깔린다. 4타마다 도는 주기에 얹혀 판이 둘씩 늘고, 폭발할 몫이 커진다.
+      basic: { kind: "leapPuddle" },
+      // 터진 여울이 1.5초 뒤 한 번 더 터진다(위력 50%, 기절 없음) — 물이 빠지며 되돌아오는 두 번째 파도다.
+      ultimate: { kind: "tidalEcho", delaySeconds: 1.5, powerPercent: 50 },
+      // 잠행에 들어선 뒤 첫 평타가 확정 치명타다. 은신 개념의 기습이고 폭주 한 번에 한 번이다.
+      ferocity: { kind: "ambushCrit" },
+      // 잠긴 적을 처치하면 곧바로 다음 여울로 도약한다. 사냥이 이어지는 기동 효과다.
+      passive: { kind: "huntChain" },
+    },
     passive: {
       id: "spino-passive",
       name: "전투의 환희",
@@ -497,6 +509,9 @@ export const RELICS: RelicDef[] = [
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "single",
       statusEffects: [{ kind: "stun", seconds: 3 }],
+      // 같은 적은 한 번 기절한 뒤 8초 동안 이 궁극기의 기절을 다시 받지 않는다 — 공속 누적으로 주기가 3~5초까지 줄어
+      // 기절 3초와 맞닿으므로, 한 적을 영원히 묶지 못하게 하는 기본 규칙이다. 피해는 그대로 들어간다.
+      stunLockoutSeconds: 8,
       /*
        * **깔아 둔 물을 전부 회수한다.** 이 궁극기의 값은 한 명을 세게 치는 것이 아니라
        * **여울을 몇 곳에 벌려 놓았느냐**다 — 평타로 판을 까는 일과 궁극기가 같은 축에 서고,
@@ -2500,6 +2515,19 @@ export const RELICS: RelicDef[] = [
       attackSpeed: 88, moveSpeed: 74, critChance: 10, critDamage: 150,
       energyGain: 26, lifeSteal: 0, ferocityGain: 0,
     },
+    // 별 넷이 이 개체를 **지휘하는 연주자**로 완성한다 — 박자가 쌓이고(II), 찬가가 더 자주 울리며 넘치는 선율이 방패가 되고(III),
+    // 크레센도가 점점 커지고(IV), 무게가 내려앉는다(V). 회복 총량(잃은 체력 15%)은 건드리지 않는다.
+    breakthroughEffects: {
+      // 같은 적을 연속으로 맞히면 경직이 0.1초씩 쌓인다(최대 0.3초). 공격 간격(약 1.7초)보다 짧아 영구 경직이 되지 않고,
+      // 경직이 쌓일 때마다 저항(`gainTenacity`)도 함께 오른다.
+      basic: { kind: "staccatoChain", secondsPerStack: 0.1, maxStacks: 3 },
+      // 궁극기 게이지가 90에서 75로 줄고, 체력이 가득 차 회복할 몫이 없던 아군은 최대 체력 8%의 보호막을 얻는다.
+      ultimate: { kind: "lightChorus", costReduction: 15, fullHpShieldPercent: 8 },
+      // 크레센도 추가타는 아군 누구의 평타든 따라붙어 팀 속도로 쌓이므로, 한 번마다 +5%씩 오르되 +50%에서 멈춘다.
+      ferocity: { kind: "crescendoRamp", percentPerHit: 5, maxPercent: 50 },
+      // 메테가 둘러 준 보호막이 다 깨지는 순간 주위 적에게 공격력 150%의 마법 피해와 0.1초 경직. 7초에 한 번이다.
+      passive: { kind: "adagioSlam", radius: 260, powerPercent: 150, staggerSeconds: 0.1, cooldownSeconds: 7 },
+    },
     ferocityTrait: {
       name: "크레센도", effectId: "crescendoStaccato",
       // 추가타는 메테 atk 50%의 마법 피해이며 기존 토리카와 같은 0.1초 경직을 사용한다.
@@ -2979,6 +3007,18 @@ export const RELICS: RelicDef[] = [
     // 폭주는 **거리**를 갖는다. 궁극기가 속도를 갖고 있어, 둘 다 공속을 올리면 두 슬롯이
     // 화면에서 같은 말을 한다. 순환을 기다리지 않는 갈래화살과 사거리가 함께 붙는다.
     ferocityTrait: { name: "멀리… 멀리요!", effectId: "splitVolley", reachBonus: 200 },
+    // 별 넷이 이 개체를 **끝까지 쌓아 가는 궁수**로 완성한다. 쌓는 속도(II·III)가 먼저 빨라지고, 쌓은 것을 지키는
+    // 값(IV·V)이 뒤따른다 — 낮은 생존력이라는 전제는 지우지 않고 집중을 쌓을 시간을 번다.
+    breakthroughEffects: {
+      // 갈래화살이 1초 뒤 같은 자리로 한 번 더 날아간다(위력 50%) — 메아리 화살이다. 집중은 쌓지 않는다.
+      basic: { kind: "arrowEcho", delaySeconds: 1, powerPercent: 50 },
+      // 숲이 보이는 동안의 연격이 두 발에서 세 발이 되고 5초가 8초로 늘어난다. 집중은 몇 번 쏘면 상한에 닿으므로 쌓는 속도가 아니라 쏘는 양을 늘린다.
+      ultimate: { kind: "forestSight", extraHits: 1, extraSeconds: 3 },
+      // 폭주에 들어서는 순간 3초 동안 숨는다 — 앞으로 나서는 순간 은신 개념으로만 몫을 준다(생존 유틸은 은신으로 한정).
+      ferocity: { kind: "feverAmbush", stealthSeconds: 3 },
+      // 집중이 가득 차면 갈래화살이 반드시 치명타다 — 열다섯 겹을 쌓는 목표가 생긴다.
+      passive: { kind: "fullFocusCrit" },
+    },
     passive: {
       id: "parua-passive",
       name: "나무가 아닌 숲을!",
@@ -3097,6 +3137,19 @@ export const RELICS: RelicDef[] = [
     },
     // 폭주는 슈테 자신이 세지는 것이 아니라 **듀오를 밀어 넣는다.** 지원가의 폭주가 제 화력을
     // 올리면 그 순간만 지원가가 아니게 된다.
+    // 별 넷이 이 개체를 **멀리서 지휘하는 지원가**로 완성한다. 듀오 한 명에게 붙어 다니는 구조가 약점이었다 —
+    // 근접 아군 곁에서 함께 광역에 맞았고, 듀오가 쓰러지면 남은 슬롯이 전부 꺼졌다. 그래서 거리(II), 표식(III·IV), 재연결(V)을 얹는다.
+    // 오더의 지속·게이지는 건드리지 않는다: 공속·치명타·흡혈이 함께 붙는 강한 버프라 가동률이 오르면 위험하다.
+    breakthroughEffects: {
+      // 핑이 원거리(600)까지 날아가고 듀오에게서 420까지 떨어져 선다. 표식·충전 사거리는 그대로 이어진다.
+      basic: { kind: "farPing", reach: 600, followDistance: 420 },
+      // 오더 6초 동안 듀오가 처음 때리는 적마다 약점 포착이 즉시 찍혀 터진다(적마다 1회) — 평타의 표식과 궁극기가 한 계약으로 이어진다.
+      ultimate: { kind: "orderStrike" },
+      // 폭주 동안은 세 걸음 주기 없이 매번 표식을 찍는다 — 듀오가 때릴 때마다 터진다.
+      ferocity: { kind: "pingStorm" },
+      // 듀오가 쓰러지면 가장 가까운 아군과 새 듀오를 맺는다(전투당 1회).
+      passive: { kind: "relink" },
+    },
     ferocityTrait: {
       name: "그거 아니라니까?",
       effectId: "duoBreakthrough",

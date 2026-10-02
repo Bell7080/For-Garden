@@ -229,6 +229,11 @@ interface SkillBase {
    * 적어 **가끔, 조금씩** 거슬리는 정도로 둔다.
    */
   selfShieldMaxHpPercent?: number;
+  /**
+   * 이 스킬이 건 **기절** 뒤, 같은 대상이 이 스킬의 기절을 다시 받지 않는 시간(초). 피해는 그대로 들어간다.
+   * 짧은 주기로 되풀이하는 궁극기가 한 적을 영원히 기절시키는 것을 막는 계약이다.
+   */
+  stunLockoutSeconds?: number;
   shimmerBurst?: {
     /** 터지는 범위 피해의 주문력 계수(%). */
     power: number;
@@ -2288,6 +2293,38 @@ export type BasicBreakthrough = {
   kind: "splitHealing";
   /** 첫 번째 대상이 받은 회복량의 몇 %를 둘째에게 보내는지. */
   sharePercent: number;
+} | {
+  /**
+   * 갈래화살이 날아간 자리로 같은 화살이 **한 번 더** 따라 날아간다(파루아의 메아리 화살).
+   * 두 번째 화살은 처음 표적 근처의 같은 인원을 다시 맞히고, 집중은 쌓지 않는다.
+   */
+  kind: "arrowEcho";
+  delaySeconds: number;
+  /** 본 걸음 위력의 몇 %로 날아가는지. */
+  powerPercent: number;
+} | {
+  /** 도약이 꽂힌 적의 발밑에도 여울이 하나 더 깔린다(스피나). 깔린 판은 다음 도약·폭발의 후보가 된다. */
+  kind: "leapPuddle";
+} | {
+  /**
+   * 평타가 **원거리까지** 닿고, 듀오에게서 더 멀리 떨어져 서도 지원이 이어진다(슈테의 멀리서 찍는 핑).
+   * 근접 아군 곁에 붙어 다니다 함께 광역에 맞던 지원가가 한 걸음 물러서 선다. 표식과 충전은 그대로 이어진다.
+   */
+  kind: "farPing";
+  /** 평타 사거리(px). 원거리 단계 값(`REACH_TIER.ranged`)이다. */
+  reach: number;
+  /** 듀오 곁에 붙어 서는 거리(px). */
+  followDistance: number;
+} | {
+  /**
+   * 같은 적을 **연속으로** 맞힐수록 스타카토의 경직이 겹쳐 길어진다(메테의 박자 쌓기). 다른 적으로 옮기면 처음부터다.
+   * 한 겹이 더하는 시간과 상한은 공격 간격보다 짧게 둔다 — 경직이 다음 타격까지 이어지면 영구 경직이 된다.
+   */
+  kind: "staccatoChain";
+  /** 겹 하나가 더하는 경직(초). */
+  secondsPerStack: number;
+  /** 최대 겹 수(첫 타 포함). */
+  maxStacks: number;
 } | BreakthroughNone;
 
 /**
@@ -2315,6 +2352,39 @@ export type UltimateBreakthrough = {
    */
   kind: "healingShield";
   shieldPercentOfHealing: number;
+} | {
+  /**
+   * 궁극기(`selfVolley`)의 연격 타수와 지속 시간을 늘린다(파루아). 집중은 몇 번 쏘면 상한에 닿아 쌓는 속도를
+   * 올려도 값이 없으므로, 이미 자란 손이 **더 많이, 더 오래** 쏘게 하는 것이 이 값의 전부다.
+   */
+  kind: "forestSight";
+  extraHits: number;
+  extraSeconds: number;
+} | {
+  /**
+   * 궁극기로 터진 여울이 잠시 뒤 **한 번 더 터진다**(스피나의 되돌아오는 두 번째 파도).
+   * 위력은 폭발 위력의 일부이고 기절은 걸지 않는다.
+   */
+  kind: "tidalEcho";
+  delaySeconds: number;
+  powerPercent: number;
+} | {
+  /**
+   * 오더가 걸려 있는 동안 듀오가 **처음 때리는 적마다** 약점 포착이 즉시 찍혀 터진다(슈테). 적마다 한 번이고,
+   * 오더의 지속·게이지는 건드리지 않는다.
+   */
+  kind: "orderStrike";
+} | {
+  /**
+   * 궁극기 게이지가 **더 적게** 들고(그만큼 더 자주 나가고), 체력이 가득 차 회복할 몫이 없던 아군은 보호막을 얻는다
+   * (메테의 넘치는 선율). 회복량은 잃은 체력 비례라 과회복이 없으므로, 비어 있던 몫만 보호막으로 채운다.
+   * 게이지를 줄이는 값은 전투 스냅샷의 정의에 반영해 화면·재현이 같은 값을 읽는다.
+   */
+  kind: "lightChorus";
+  /** 줄어드는 궁극기 게이지. */
+  costReduction: number;
+  /** 체력이 가득 찬 아군이 얻는 보호막(최대 체력의 %). */
+  fullHpShieldPercent: number;
 } | BreakthroughNone;
 
 /**
@@ -2339,6 +2409,26 @@ export type FerocityBreakthrough = {
    */
   kind: "feverShare";
   shieldPercentOfHealingDone: number;
+} | {
+  /** 폭주에 들어서는 순간 잠깐 **은신**한다(파루아). 암살자의 생존 몫은 은신 개념으로만 준다. */
+  kind: "feverAmbush";
+  stealthSeconds: number;
+} | {
+  /** 폭주(잠행)에 들어선 뒤 **첫 일반 공격이 반드시 치명타**가 된다(스피나의 기습). */
+  kind: "ambushCrit";
+} | {
+  /** 폭주 동안 평타가 세 걸음마다가 아니라 **매번** 표식을 찍는다(슈테). 폭주가 끝나면 주기로 돌아간다. */
+  kind: "pingStorm";
+} | {
+  /**
+   * 폭주(크레센도) 추가타의 위력이 칠 때마다 점점 커진다(메테의 크레센도). 추가타는 **아군 누구의 평타든** 한 번씩
+   * 따라붙으므로 팀 속도로 쌓인다 — 그래서 상한을 둔다. 폭주가 끝나면 초기화된다.
+   */
+  kind: "crescendoRamp";
+  /** 추가타 한 번마다 오르는 위력(%). */
+  percentPerHit: number;
+  /** 오를 수 있는 최대 위력 증가(%). */
+  maxPercent: number;
 } | BreakthroughNone;
 
 /**
@@ -2364,6 +2454,32 @@ export type PassiveBreakthrough = {
   belowHpPercent: number;
   /** 보호막의 크기 = 이 개체의 지금 주문력 × 이 값(%). */
   apPercent: number;
+} | {
+  /** 집중이 가득 차 있는 동안 갈래화살이 **반드시 치명타**가 된다(파루아). */
+  kind: "fullFocusCrit";
+} | {
+  /**
+   * 여울에 잠긴 적을 처치하면 **곧바로 다음 여울로 도약**한다(스피나). 도약 주기 카운트를 채우는 값이라
+   * 깔아 둔 판이 없거나 아무도 잠겨 있지 않으면 뛰지 않는다.
+   */
+  kind: "huntChain";
+} | {
+  /**
+   * 듀오가 쓰러지면 가장 가까운 아군과 **새 듀오를 맺는다**(슈테). 전투당 한 번이고, 듀오가 없는 동안 꺼져 있던
+   * 은신·표식·궁극기가 다시 돈다.
+   */
+  kind: "relink";
+} | {
+  /**
+   * 메테의 보호막이 **다 깨지는 순간** 그 자리 주위의 적에게 아다지오의 무게가 내려앉는다(피해와 짧은 경직).
+   * 정화·궁극기 보호막이 모두 같은 보호막 슬롯이라 이 개체 전용 쿨다운이 따로 있다.
+   */
+  kind: "adagioSlam";
+  radius: number;
+  /** 메테 공격력의 몇 %인 마법 피해인지. */
+  powerPercent: number;
+  staggerSeconds: number;
+  cooldownSeconds: number;
 } | BreakthroughNone;
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */

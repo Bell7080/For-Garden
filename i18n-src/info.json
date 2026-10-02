@@ -529,16 +529,6 @@
 "{date}  ·  #{tag}\nF. {question}\nA. {answer}\nBefund  {habit}",
 "{date}  ·  #{tag}\nВ. {question}\nО. {answer}\nЗамечено  {habit}"
 ],
-"info.journal.noObservation": [
-"尚未记录任何观察。",
-"ยังไม่มีการบันทึกการสังเกต",
-"Chưa có quan sát nào được ghi.",
-"Belum ada observasi yang dicatat.",
-"Aún no hay observaciones registradas.",
-"Ainda não há observações registradas.",
-"Noch keine Beobachtung aufgezeichnet.",
-"Наблюдений пока нет."
-],
 "info.journal.viewAll": [
 "查看全部记录（{count}条）",
 "ดูบันทึกทั้งหมด ({count})",
@@ -578,36 +568,6 @@
 "P. {question}\n\nR. {answer}\n\nDescoberta  {habit}",
 "F. {question}\n\nA. {answer}\n\nBefund  {habit}",
 "В. {question}\n\nО. {answer}\n\nЗамечено  {habit}"
-],
-"info.interview.open": [
-"开始观察访谈",
-"เริ่มสัมภาษณ์เพื่อสังเกต",
-"Mở phỏng vấn quan sát",
-"Buka Wawancara Observasi",
-"Abrir entrevista de observación",
-"Abrir entrevista de observação",
-"Beobachtungsinterview öffnen",
-"Начать интервью-наблюдение"
-],
-"info.interview.doneToday": [
-"今日的观察访谈已完成",
-"สัมภาษณ์สังเกตวันนี้เสร็จแล้ว",
-"Đã xong phỏng vấn quan sát hôm nay",
-"Wawancara observasi hari ini selesai",
-"La entrevista de observación de hoy está hecha",
-"A entrevista de observação de hoje foi feita",
-"Das heutige Beobachtungsinterview ist erledigt",
-"Сегодняшнее интервью проведено"
-],
-"info.interview.title": [
-"观察访谈",
-"สัมภาษณ์เพื่อสังเกต",
-"Phỏng vấn quan sát",
-"Wawancara Observasi",
-"Entrevista de observación",
-"Entrevista de observação",
-"Beobachtungsinterview",
-"Интервью-наблюдение"
 ],
 "info.bond.level": [
 "羁绊 {level}",

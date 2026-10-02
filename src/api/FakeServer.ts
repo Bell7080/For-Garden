@@ -28,7 +28,7 @@ import { getRelicSkin } from "../data/relicSkins";
 import { DNA_EXCHANGE_OFFERS, WALLET_CAPS } from "../data/economy";
 import { BOND_STORY_GEM_REWARD, BOND_STORY_LEVELS, DIARY_QUESTION_GEM_REWARD, bondChapterId, diaryQuestionUnlockAt, type BondStoryLevel } from "../core/relicStory";
 import { relicStoryFor } from "../data/relicStories";
-import type { AnswerRelicQuestionRequest, AnswerRelicQuestionResponse, ClaimRelicChapterRequest, ClaimRelicChapterResponse } from "./contracts";
+import type { AnswerRelicQuestionRequest, AnswerRelicQuestionResponse, ClaimRelicChapterRequest, ClaimRelicChapterResponse, ClaimRelicQuestionRewardRequest, ClaimRelicQuestionRewardResponse } from "./contracts";
 import { EVENTS, findEventByProductId, findEventByStageId } from "../data/events";
 import type { EventDefinition } from "../data/events/types";
 import type { EnterEventStageResponse, EventListResponse } from "./contracts";
@@ -1823,8 +1823,8 @@ export class FakeServer implements GameApi {
   }
 
   /**
-   * 관찰 질문 답변 — 보유·질문·선택지·열리는 날·중복을 모두 확인한 뒤 답변 기록과 젬 지급을 한 번에 저장한다.
-   * 젬은 상한에서 깎아 주고 던지지 않는다(가득 찬 계정도 이야기는 읽을 수 있다).
+   * 관찰 질문 답변 — 보유·질문·선택지·열리는 날·중복을 확인하고 **답했다는 사실만** 저장한다(고른 답은 남기지 않는다).
+   * 젬은 답한 뒤 `claimRelicQuestionReward`로 따로 받는다.
    */
   async answerRelicQuestion(request: AnswerRelicQuestionRequest): Promise<AnswerRelicQuestionResponse> {
     await this.delay();
@@ -1836,13 +1836,25 @@ export class FakeServer implements GameApi {
     const now = this.now();
     if (now.getTime() < diaryQuestionUnlockAt(this.state.relicStory.metAt[request.relicId], index)) throw new GameApiError("RELIC_STORY_LOCKED", "아직 열리지 않은 질문입니다.");
     if (this.state.relicStory.answers.some(({ questionId }) => questionId === request.questionId)) throw new GameApiError("RELIC_STORY_ALREADY_CLAIMED", "이미 답한 질문입니다.");
+    const nextStory = { ...this.state.relicStory, answers: [...this.state.relicStory.answers, { relicId: request.relicId, questionId: request.questionId, answeredAt: now.toISOString(), claimed: false }] };
+    this.persist({ ...this.state, relicStory: nextStory });
+    this.state.relicStory = nextStory;
+    return { serverTime: now.toISOString() };
+  }
+
+  /** 답한 질문의 젬 — 답했는지·이미 받았는지를 서버 상태로 확인하고, 상한에서 깎아 주며 던지지 않는다. */
+  async claimRelicQuestionReward(request: ClaimRelicQuestionRewardRequest): Promise<ClaimRelicQuestionRewardResponse> {
+    await this.delay();
+    const answer = this.state.relicStory.answers.find(({ relicId, questionId }) => relicId === request.relicId && questionId === request.questionId);
+    if (!answer) throw new GameApiError("RELIC_STORY_LOCKED", "아직 답하지 않은 질문입니다.");
+    if (answer.claimed) throw new GameApiError("RELIC_STORY_ALREADY_CLAIMED", "이미 보상을 받은 질문입니다.");
     const gemsGranted = Math.max(0, Math.min(DIARY_QUESTION_GEM_REWARD, WALLET_CAPS.gems - this.state.wallet.gems));
     const nextWallet = { ...this.state.wallet, gems: this.state.wallet.gems + gemsGranted };
-    const nextStory = { ...this.state.relicStory, answers: [...this.state.relicStory.answers, { relicId: request.relicId, questionId: request.questionId, choiceId: request.choiceId, answeredAt: now.toISOString() }] };
+    const nextStory = { ...this.state.relicStory, answers: this.state.relicStory.answers.map((candidate) => candidate === answer ? { ...candidate, claimed: true } : candidate) };
     this.persist({ ...this.state, wallet: nextWallet, relicStory: nextStory });
     this.state.wallet = nextWallet;
     this.state.relicStory = nextStory;
-    return { gemsGranted, wallet: { ...nextWallet }, serverTime: now.toISOString() };
+    return { gemsGranted, wallet: { ...nextWallet }, serverTime: this.now().toISOString() };
   }
 
   /** 애착 스토리 장 해금 — 유대 레벨을 서버 상태로 확인하고 장마다 한 번만 젬을 준다. */

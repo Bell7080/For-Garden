@@ -310,4 +310,10 @@ export const SKILL_RU = {
   "skill.breakthrough.effect.ultimate.shrapnel": "Фрагменты также летят в других врагов вокруг цели, пораженной «{name}», нанося {percent}% урона.",
   "skill.breakthrough.effect.ferocity.ankleShot": "Во время [[ferocity|неистовства]] [[basic-attack|Обычная атака]], попавшая критически, вызывает у цели [[stagger|Ошеломление]] на {seconds} с.",
   "skill.breakthrough.effect.passive.highTide": "Пока [[fog-guard|Морской туман-барьер]] заполнен до предела, весь урон растёт на {percent}%.",
+  "skill.status.intimidate": "накапливает заряд [[intimidation|Устрашения]]",
+  "skill.passive.looming": "Каждые {seconds} с накладывает заряд [[intimidation|Устрашения]] на всех ближних врагов. Урона не наносит.",
+  "skill.sentence.roar": "Мгновенно вселяет [[fear|Страх]] во всех ближних врагов. Получает [[shield|щит]] {base} и ещё {per} за каждого напуганного врага (до {max}).",
+  "skill.sentence.roar.percent": "{percent}% макс. ОЗ",
+  "skill.keyword.shield.fromRoar": "Щит, рассчитанный из {base}% текущих макс. ОЗ плюс {per}% за каждого напуганного врага (до {max}).",
+  "skill.ferocity.huntInstinct": "В неистовстве [[basic-attack|обычные атаки]] накладывают по {stacks} зар. [[intimidation|Устрашения]], а иммунитет после [[fear|Страха]] сокращается до {seconds} с.",
 } as const;

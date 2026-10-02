@@ -310,4 +310,10 @@ export const SKILL_DE = {
   "skill.breakthrough.effect.ultimate.shrapnel": "Auch andere Gegner um das von „{name}“ getroffene Ziel werden von Splittern getroffen und erleiden {percent} % Schaden.",
   "skill.breakthrough.effect.ferocity.ankleShot": "Während der [[ferocity|Raserei]] lässt ein [[basic-attack|Normalangriff]], der kritisch trifft, das Ziel {seconds} s lang [[stagger|Taumeln]].",
   "skill.breakthrough.effect.passive.highTide": "Solange das [[fog-guard|Seenebelschild]] bis zur Obergrenze gefüllt ist, steigt aller Schaden um {percent} %.",
+  "skill.status.intimidate": "baut einen Stapel [[intimidation|Einschüchterung]] auf",
+  "skill.passive.looming": "Alle {seconds} s baut sie bei allen Gegnern in der Nähe einen Stapel [[intimidation|Einschüchterung]] auf. Verursacht keinen Schaden.",
+  "skill.sentence.roar": "Versetzt alle Gegner in der Nähe sofort in [[fear|Furcht]]. Sie erhält einen [[shield|Schild]] von {base}, dazu {per} pro verängstigtem Gegner (bis zu {max}).",
+  "skill.sentence.roar.percent": "{percent} % des max. Lebens",
+  "skill.keyword.shield.fromRoar": "Schild, berechnet aus {base} % des aktuellen max. Lebens, plus {per} % pro verängstigtem Gegner (bis zu {max}).",
+  "skill.ferocity.huntInstinct": "In der Raserei bauen [[basic-attack|Standardangriffe]] jeweils {stacks} Stapel [[intimidation|Einschüchterung]] auf, und die Immunität nach der [[fear|Furcht]] verkürzt sich auf {seconds} s.",
 } as const;

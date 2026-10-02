@@ -43,7 +43,7 @@ export type RelicRarity = "R" | "SR" | "SSR";
  */
 export type RaitiaAssetId = "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind";
 
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
@@ -303,6 +303,7 @@ export type AttackSkill = SkillBase & {
   selfBulwark?: never;
   selfVolley?: never;
   selfLullaby?: never;
+  selfRoar?: never;
 };
 
 /** 순수 회복 스킬은 damageType/power를 가질 수 없어 피해 계산에 잘못 전달되지 않는다. */
@@ -316,6 +317,7 @@ export type HealingSkill = SkillBase & {
   selfBulwark?: never;
   selfVolley?: never;
   selfLullaby?: never;
+  selfRoar?: never;
   healing: { kind: "teamMissingHpPercent"; percent: number };
 };
 
@@ -332,11 +334,12 @@ export type SetupSkill = SkillBase & {
   healing?: never;
   teamBuff?: never;
 } & (
-  | { selfSetup: SelfSetup; selfGuard?: never; selfBulwark?: never; selfVolley?: never; selfLullaby?: never }
-  | { selfSetup?: never; selfGuard: SelfGuard; selfBulwark?: never; selfVolley?: never; selfLullaby?: never }
-  | { selfSetup?: never; selfGuard?: never; selfBulwark: SelfBulwark; selfVolley?: never; selfLullaby?: never }
-  | { selfSetup?: never; selfGuard?: never; selfBulwark?: never; selfVolley: SelfVolley; selfLullaby?: never }
-  | { selfSetup?: never; selfGuard?: never; selfBulwark?: never; selfVolley?: never; selfLullaby: SelfLullaby }
+  | { selfSetup: SelfSetup; selfGuard?: never; selfBulwark?: never; selfVolley?: never; selfLullaby?: never; selfRoar?: never }
+  | { selfSetup?: never; selfGuard: SelfGuard; selfBulwark?: never; selfVolley?: never; selfLullaby?: never; selfRoar?: never }
+  | { selfSetup?: never; selfGuard?: never; selfBulwark: SelfBulwark; selfVolley?: never; selfLullaby?: never; selfRoar?: never }
+  | { selfSetup?: never; selfGuard?: never; selfBulwark?: never; selfVolley: SelfVolley; selfLullaby?: never; selfRoar?: never }
+  | { selfSetup?: never; selfGuard?: never; selfBulwark?: never; selfVolley?: never; selfLullaby: SelfLullaby; selfRoar?: never }
+  | { selfSetup?: never; selfGuard?: never; selfBulwark?: never; selfVolley?: never; selfLullaby?: never; selfRoar: SelfRoar }
 );
 
 /**
@@ -442,6 +445,25 @@ export type SelfLullaby = {
   shieldResistancePercent: number;
 };
 
+/**
+ * 포효 계약(아크의 「포식자의 포효」). 때리지 않는다.
+ *
+ * 반경 안의 모든 적을 **곧바로 공포**에 빠뜨리고(`fear` — 위압 겹을 거치지 않으며, 공포 면역 중인 적에게도 들어간다),
+ * 시전자는 보호막을 두른다. 막의 크기는 눈에 보이는 몫이다 — 기본 몫에 **실제로 공포에 빠진 적 한 명당** 얹는다.
+ * 강인함이 공포를 통째로 막은 적은 세지 않는다. 받는 피해를 줄이는 숨은 배율은 두지 않는다.
+ */
+export type SelfRoar = {
+  radius: number;
+  /** 반경 안의 적에게 거는 공포. */
+  fear: Extract<CombatStatusEffect, { kind: "fear" }>;
+  /** 시전 순간 두르는 기본 보호막(최대 체력 비율 %). */
+  shieldMaxHpPercent: number;
+  /** 공포에 빠진 적 한 명당 더하는 보호막(최대 체력 비율 %). */
+  shieldPerFearedMaxHpPercent: number;
+  /** 보호막이 세는 적의 상한. 물량형에서 막이 무한히 커지지 않게 한다. */
+  shieldMaxFeared: number;
+};
+
 /** 자리를 잡는 계약. 은신·순간이동·다음 타격 강화를 코어가 판별할 수 있는 값으로만 적는다. */
 export type SelfSetup = {
   /** 단일 대상 선택에서 제외되는 시간(초). */
@@ -488,6 +510,7 @@ export type SupportSkill = SkillBase & {
   selfBulwark?: never;
   selfVolley?: never;
   selfLullaby?: never;
+  selfRoar?: never;
   teamBuff: TeamBuff;
 };
 
@@ -940,6 +963,31 @@ export type CombatStatusEffect =
     }
   | {
       /**
+       * 위압(아크). **피해가 없는 표식**이다 — 겹이 상한에 닿으면 스스로 **공포**를 발동하고 겹이 0으로 돌아간다.
+       * 졸음 → 수면과 같은 틀이다. 겹은 새로 쌓일 때마다 시간이 처음부터 다시 흐르고, 공포 면역 중에는 쌓이지 않는다.
+       */
+      kind: "intimidate";
+      /** 이 겹에 닿으면 공포가 발동한다. */
+      maxStacks: number;
+      /** 겹이 남는 시간(초). */
+      seconds: number;
+      /** 발동하는 공포의 길이(초). 강인함이 기절과 똑같이 줄인다. */
+      fearSeconds: number;
+      /** 공포가 풀린 뒤 새 위압·공포가 들지 않는 시간(초). 영구 도주를 막는다. */
+      immunitySeconds: number;
+    }
+  | {
+      /**
+       * 공포(아크). 걸린 동안 **건 쪽에게서 달아나며 일반 공격을 하지 못한다.** 궁극기는 쓸 수 있다.
+       * 기절 슬롯과 따로 서지만 강인함·정화는 기절과 같은 길로 지난다. 이 계약을 직접 거는 것(궁극기)은
+       * 위압 겹을 거치지 않고 곧바로 걸리며 면역 중에도 들어간다 — 걸린 뒤 면역은 똑같이 켜진다.
+       */
+      kind: "fear";
+      seconds: number;
+      immunitySeconds: number;
+    }
+  | {
+      /**
        * 관측(디모). **피해가 없는 표식**이다 — 겹 자체는 아무것도 깎지 않고, 모르페의 일반 공격이
        * 적중할 때 그 겹만큼의 틱으로 켜진다(`BasicAttack.observationVolley`).
        *
@@ -1147,6 +1195,8 @@ export type PassiveKind =
   | "salvageCatch"
   /** 안카 전용: 몇 초마다 장치가 울려 주위 아군을 회복하고, 다른 아군을 때리던 주위 적에게 「졸음」을 건다. */
   | "whiteNoise"
+  /** 아크 전용: 몇 초마다 가까운 적에게 「위압」 한 겹을 쌓고, 겹이 차면 「공포」가 발동한다. 피해는 없다. */
+  | "looming"
   /** 실제 HP 피해를 받고 살아남을 때 겹(아모의 조가비 · 수쿠스이노의 흉터)을 쌓아 자신과 최저 HP 비율 아군을 보호한다. */
   | "shellGuard"
   /** 렉시아 전용: 공격 속도·공격력·치명타 확률·치명타 피해를 함께 강화한다. */
@@ -1447,6 +1497,17 @@ export type FerocityTrait = {
       attackSpeedPercent: number;
       /** 폭주 중 기본 공격이 닿는 자기 주위 반경. */
       radius: number;
+    }
+  | {
+      /**
+       * 사냥 본능(아크). 폭주 중 일반 공격이 쌓는 **위압이 더 쌓이고**, 공포가 풀린 뒤의 **면역이 짧아져** 같은 적에게
+       * 공포를 연달아 먹일 수 있다. 피해량·궁극기는 건드리지 않는다 — 공용 야성 규칙이 이미 피해를 올린다.
+       */
+      effectId: "huntInstinct";
+      /** 폭주 중 일반 공격 한 번에 위압이 더 쌓이는 겹 수. */
+      intimidateBonusStacks: number;
+      /** 폭주 중 공포가 풀린 뒤 면역(초). 계약의 값을 이 값으로 **갈아 끼운다**. */
+      fearImmunitySeconds: number;
     }
   | {
       /**
@@ -1928,6 +1989,15 @@ export interface Passive {
     shieldMaxHpPercent: number;
     /** 이 패시브가 채우는 상한(최대 체력 비율 %). 다른 막까지 합친 잔량으로 잰다. */
     capMaxHpPercent: number;
+  };
+  /**
+   * 「거대한 그림자」 계약(아크). `intervalSeconds`마다 반경 안의 **모든 적**에게 위압을 한 겹 쌓는다.
+   * 피해가 없고 거리를 벌리는 것이 전부다. 겹이 차서 터지는 공포는 일반 공격이 쌓는 위압과 같은 계약을 지난다.
+   */
+  looming?: {
+    intervalSeconds: number;
+    radius: number;
+    intimidate: Extract<CombatStatusEffect, { kind: "intimidate" }>;
   };
   /**
    * 「백색소음」 계약(안카). `intervalSeconds`마다 한 번 장치가 울린다 — 반경 안의 아군(자신 포함)은 안카

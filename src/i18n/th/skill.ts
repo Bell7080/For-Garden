@@ -310,4 +310,10 @@ export const SKILL_TH = {
   "skill.breakthrough.effect.ultimate.shrapnel": "เศษกระสุนจะกระเด็นไปโดนศัตรูตัวอื่นรอบ ๆ ศัตรูที่ถูก \"{name}\" ยิงด้วย สร้างความเสียหาย {percent}%",
   "skill.breakthrough.effect.ferocity.ankleShot": "ระหว่าง[[ferocity|คลั่ง]] เมื่อ[[basic-attack|โจมตีปกติ]]โดนคริติคอล ศัตรูที่ถูกยิงจะ[[stagger|ชะงัก]] {seconds} วินาที",
   "skill.breakthrough.effect.passive.highTide": "ในขณะที่[[fog-guard|กำแพงหมอกทะเล]]เต็มถึงขีดจำกัด ความเสียหายทั้งหมดจะเพิ่มขึ้น {percent}%",
+  "skill.status.intimidate": "สะสม[[intimidation|ความข่มขวัญ]]หนึ่งชั้น",
+  "skill.passive.looming": "ทุก {seconds} วินาที สะสม[[intimidation|ความข่มขวัญ]]หนึ่งชั้นให้ศัตรูทุกตัวรอบตัว ไม่สร้างความเสียหาย",
+  "skill.sentence.roar": "ทำให้ศัตรูทุกตัวรอบตัวตกอยู่ใน[[fear|ความหวาดกลัว]]ทันที ได้รับ[[shield|โล่]] {base} และเพิ่มอีก {per} ต่อศัตรูหนึ่งตัวที่หวาดกลัว (สูงสุด {max} ตัว)",
+  "skill.sentence.roar.percent": "{percent}% ของ HP สูงสุด",
+  "skill.keyword.shield.fromRoar": "โล่ที่คำนวณจาก {base}% ของ HP สูงสุดปัจจุบัน บวกเพิ่ม {per}% ต่อศัตรูหนึ่งตัวที่หวาดกลัว (สูงสุด {max} ตัว)",
+  "skill.ferocity.huntInstinct": "ระหว่างคลั่ง [[basic-attack|การโจมตีปกติ]]จะสะสม[[intimidation|ความข่มขวัญ]]ครั้งละ {stacks} ชั้น และภูมิคุ้มกันหลัง[[fear|ความหวาดกลัว]]หมดจะสั้นลงเหลือ {seconds} วินาที",
 } as const;

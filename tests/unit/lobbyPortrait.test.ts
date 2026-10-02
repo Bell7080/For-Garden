@@ -17,6 +17,7 @@ import {
   MOSANA_PORTRAIT_METADATA,
   ANKA_PORTRAIT_METADATA,
   IRNA_PORTRAIT_METADATA,
+  ARK_PORTRAIT_METADATA,
   TERISA_PORTRAIT_METADATA,
   MAKI_PORTRAIT_METADATA,
   MERON_PORTRAIT_METADATA,
@@ -70,6 +71,7 @@ const JOINTS: Readonly<Record<string, { eyes: readonly [readonly [number, number
   mosana: { eyes: [[381, 218], [423, 177]], core: [440, 298] },
   anka: { eyes: [[374, 220], [456, 201]], core: [426, 324] },
   irna: { eyes: [[567, 230], [623, 265]], core: [549, 332] },
+  ark: { eyes: [[558, 306], [620, 339]], core: [577, 437] },
 };
 
 /** 눈 관절 두 개의 중간 높이. 배율은 이 점에서 발끝까지의 거리로 잰다. */
@@ -105,6 +107,7 @@ const PORTRAITS: Readonly<Record<string, Omit<PuppetAsset, "url">>> = {
   mosana: MOSANA_PORTRAIT_METADATA,
   anka: ANKA_PORTRAIT_METADATA,
   irna: IRNA_PORTRAIT_METADATA,
+  ark: ARK_PORTRAIT_METADATA,
 };
 
 /** 로비에 설 수 있는 개체 = 플레이어가 애착으로 고를 수 있는 렐릭이다. */

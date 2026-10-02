@@ -310,4 +310,10 @@ export const SKILL_ES = {
   "skill.breakthrough.effect.ultimate.shrapnel": "También salen fragmentos hacia los demás enemigos alrededor del que golpea «{name}», que infligen un {percent}% de daño.",
   "skill.breakthrough.effect.ferocity.ankleShot": "Durante el [[ferocity|Frenesí]], un [[basic-attack|Ataque básico]] que impacta como crítico provoca [[stagger|Tambaleo]] al objetivo durante {seconds} s.",
   "skill.breakthrough.effect.passive.highTide": "Mientras la [[fog-guard|Barrera de bruma marina]] esté llena hasta su límite, todo el daño aumenta un {percent}%.",
+  "skill.status.intimidate": "acumula una carga de [[intimidation|Intimidación]]",
+  "skill.passive.looming": "Cada {seconds} s acumula una carga de [[intimidation|Intimidación]] en todos los enemigos cercanos. No inflige daño.",
+  "skill.sentence.roar": "Sume al instante en [[fear|Miedo]] a todos los enemigos cercanos. Obtiene un [[shield|escudo]] de {base}, más {per} por cada enemigo en Miedo (hasta {max}).",
+  "skill.sentence.roar.percent": "el {percent}% de los PV máx.",
+  "skill.keyword.shield.fromRoar": "Escudo calculado con el {base}% de los PV máx. actuales, más {per}% por cada enemigo en Miedo (hasta {max}).",
+  "skill.ferocity.huntInstinct": "Durante el frenesí, los [[basic-attack|ataques básicos]] acumulan {stacks} cargas de [[intimidation|Intimidación]] a la vez, y la inmunidad tras el [[fear|Miedo]] se reduce a {seconds} s.",
 } as const;

@@ -311,4 +311,10 @@ export const SKILL_EN = {
   "skill.breakthrough.effect.ultimate.shrapnel": "Shards also fly to other enemies around the one \"{name}\" hits, dealing {percent}% damage.",
   "skill.breakthrough.effect.ferocity.ankleShot": "During [[ferocity|Frenzy]], a [[basic-attack|Basic Attack]] that lands as a critical hit [[stagger|Staggers]] the target for {seconds}s.",
   "skill.breakthrough.effect.passive.highTide": "While [[fog-guard|Sea Mist Barrier]] is full to its cap, all damage rises by {percent}%.",
+  "skill.status.intimidate": "stacks one [[intimidation|Intimidation]]",
+  "skill.passive.looming": "Every {seconds}s, stacks one [[intimidation|Intimidation]] on every enemy around. Deals no damage.",
+  "skill.sentence.roar": "Instantly throws every enemy around into [[fear|Fear]]. Gains a [[shield|Shield]] of {base}, plus {per} for each enemy put in Fear (up to {max}).",
+  "skill.sentence.roar.percent": "{percent}% of max HP",
+  "skill.keyword.shield.fromRoar": "A shield calculated from {base}% of the current max HP, plus {per}% for each enemy put in Fear (up to {max}).",
+  "skill.ferocity.huntInstinct": "During frenzy, [[basic-attack|Basic Attacks]] stack {stacks} [[intimidation|Intimidation]] at a time, and immunity after [[fear|Fear]] ends is shortened to {seconds}s.",
 } as const;

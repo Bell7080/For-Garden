@@ -1334,6 +1334,104 @@ export const RELICS: RelicDef[] = [
   },
 
   {
+    id: "ark",
+    squad: "fang",
+    name: "아크",
+    specimenNumber: "235",
+    projectName: "LONG SHADOW",
+    excavationSite: "미국 캘리포니아주 란초 라 브레아 후기 홍적세 타르 구덩이 퇴적층",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "타르 구덩이 바닥에서 짧고 높게 솟은 얼굴뼈와 유난히 긴 앞다리뼈가 한 덩어리로 굳어 나왔다. 일어섰을 때 닿는 높이가 발굴 당시 예상을 크게 웃돌아, 복원 연구는 이 곰이 서면 어디까지 그림자를 드리웠는지를 재는 것으로 시작했다.",
+    observationProfile: {
+      originYear: "약 1만 1천 년 전",
+      // E.C.는 아크의 인간형 신체 나잇대이며, 원종 화석의 연대와 독립된 값이다.
+      restorationYear: "E.C. 14년",
+      lifeStage: "아성체",
+      height: "1.46 m",
+      weight: "41 kg",
+    },
+    catalogSummary: "신장 1.46m, 체중 41kg의 인간형 체격에 곰 머리 후드와 발톱이 달린 긴 소매, 털 달린 군화를 갖춘 채 복원된 아성체 아르크토두스 표본.",
+    // 복원 후 관찰은 성격과 실제로 목격된 행동만 남기고 발굴 기록과 겹치지 않게 쓴다.
+    unlockRecord: { status: "recorded", text: "복원 후 아크는 후드를 깊이 눌러쓴 채 복도 한가운데를 걸어 다니는데, 마주 오던 쪽이 먼저 벽에 붙어 길을 비킨다. 본인은 그 이유를 몰라 자기가 길을 막았나 싶어 한참 멈춰 서 있고, 그 모습이 후드의 그림자를 더 크게 만든다. 연구원 앞에서만 후드를 뒤로 넘기며, 관찰 중 \"마스터\"라 부르며 간식 포장을 슬며시 건넨 적이 있다." },
+    squadNote: "앱솔루트 팽의 전선 수비 담당. 밀고 들어가는 동료들 앞에 서서 상대가 먼저 물러서게 만들어 전열을 지키고, 연구원을 \"마스터\"라 부르며 지시에는 고개부터 끄덕인다.",
+    researcherTitle: "마스터",
+    rarity: "SSR",
+    portraitAssetId: "ark",
+    origin: "아르크토두스",
+    element: "earth",
+    role: "tank",
+    // 긴 소매 끝의 발톱이 닿는 거리에서 싸운다.
+    reachTier: "melee",
+    // 타르 구덩이에서 나온 개체라 발굴 특화도 화석 회수 쪽에 붙인다.
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.1, efficiencyMultiplier: 1.05 },
+    /**
+     * **버티는 값은 체력·방어·저항, 한 방은 느리고 무겁다.** 주문력을 쓰는 스킬이 없어 로스터 최저로 두고
+     * (스테라 사례), 공속 50은 탱커 중 가장 느리다(엘라 62 · 노도니아 74 · 안카 70). 공포는 피해가 없는
+     * 상태라 공격력은 평타 한 방의 무게만 맡는다. 전투력 2418로 SSR 띠(2340~2460) 안이다.
+     */
+    stats: {
+      hp: 1600,
+      def: 148,
+      res: 114,
+      atk: 110,
+      ap: 20,
+      attackSpeed: 50,
+      moveSpeed: 54,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    // 폭주 중 위압이 한 번에 두 겹 쌓이고 공포 뒤 면역이 짧아져, 같은 적에게 공포를 연달아 먹인다. 피해량·궁극기는 건드리지 않는다.
+    ferocityTrait: { name: "사냥 본능", effectId: "huntInstinct", intimidateBonusStacks: 1, fearImmunitySeconds: 1 },
+    passive: {
+      // kind가 looming인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
+      // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
+      id: "ark-passive",
+      name: "거대한 그림자",
+      kind: "looming",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 위압이 쌓이는 간격(초)을 담아 둔다.
+      value: 2.5,
+      // 3겹이면 2초 공포, 풀린 뒤 6초 면역(영구 도주를 막는다). 피해는 없다.
+      looming: {
+        intervalSeconds: 2.5,
+        radius: 240,
+        intimidate: { kind: "intimidate", maxStacks: 3, seconds: 6, fearSeconds: 2, immunitySeconds: 6 },
+      },
+      desc: "2.5초마다 주위 모든 적에게 위압이 한 겹 쌓인다. 피해는 주지 않는다.",
+    },
+    basic: {
+      id: "ark-basic",
+      name: "짓누르기",
+      power: 240,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+      statusEffects: [{ kind: "intimidate", maxStacks: 3, seconds: 6, fearSeconds: 2, immunitySeconds: 6 }],
+    },
+    ultimate: {
+      id: "ark-ult",
+      name: "포식자의 포효",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      cost: 150,
+      // 때리지 않는다. 주위 모든 적을 곧바로 공포에 빠뜨리고, 실제로 겁먹은 적 수만큼 보호막을 키운다.
+      targeting: "self",
+      selfRoar: {
+        radius: 360,
+        fear: { kind: "fear", seconds: 2, immunitySeconds: 6 },
+        shieldMaxHpPercent: 10,
+        shieldPerFearedMaxHpPercent: 6,
+        shieldMaxFeared: 5,
+      },
+    },
+  },
+
+  {
     id: "meron",
     squad: "rune",
     name: "메론",

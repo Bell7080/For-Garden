@@ -310,4 +310,10 @@ export const SKILL_ID = {
   "skill.breakthrough.effect.ultimate.shrapnel": "Serpihan peluru juga melesat ke musuh lain di sekitar musuh yang terkena \"{name}\" dan memberi {percent}% kerusakan.",
   "skill.breakthrough.effect.ferocity.ankleShot": "Selama [[ferocity|Amukan]], [[basic-attack|Serangan Dasar]] yang mengenai secara kritikal membuat target [[stagger|Goyah]] selama {seconds} dtk.",
   "skill.breakthrough.effect.passive.highTide": "Selama [[fog-guard|Penghalang Kabut Laut]] penuh hingga batasnya, semua kerusakan naik {percent}%.",
+  "skill.status.intimidate": "menumpuk satu [[intimidation|Intimidasi]]",
+  "skill.passive.looming": "Setiap {seconds} dtk menumpuk satu [[intimidation|Intimidasi]] pada semua musuh di sekitar. Tidak memberi damage.",
+  "skill.sentence.roar": "Langsung membuat semua musuh di sekitar [[fear|Ketakutan]]. Mendapat [[shield|perisai]] {base}, ditambah {per} untuk setiap musuh yang ketakutan (maks. {max}).",
+  "skill.sentence.roar.percent": "{percent}% HP maks",
+  "skill.keyword.shield.fromRoar": "Perisai yang dihitung dari {base}% HP maks saat ini, ditambah {per}% untuk setiap musuh yang ketakutan (maks. {max}).",
+  "skill.ferocity.huntInstinct": "Saat mengamuk, [[basic-attack|serangan dasar]] menumpuk {stacks} [[intimidation|Intimidasi]] sekaligus, dan kekebalan setelah [[fear|Ketakutan]] berakhir dipersingkat menjadi {seconds}d.",
 } as const;

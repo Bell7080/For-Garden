@@ -22,6 +22,9 @@ const EXCEPTIONS: Readonly<Record<string, string>> = {
   "pontos:taunt": "단독 월드 보스라 도발할 전열 자체가 없다",
   // 버티는 몫을 「심해의 압력」이 시간 누적 주문력과 잃은 체력 경감으로 낸다. 새 개체에는
   // 다시 만들지 않는 감쇠라 공용 수급 목록에 올리지 않고 이 한 줄로만 남긴다.
+  // 아크는 도발 대신 공포로 지킨다 — 적을 붙잡아 두는 것이 아니라 전열에서 밀어내고(공포는 건 쪽에게서 달아난다),
+  // 버티는 값은 눈에 보이는 보호막(포효)이다.
+  "ark:taunt": "붙잡아 두는 도발 대신 공포로 적을 전열에서 밀어낸다",
   "pontos:sustain": "심해의 압력이 잃은 체력 경감으로 버티며, 쓰러지지 않는 것이 이 개체의 설계다",
   /*
    * 레이티아 다섯 자매는 **도발하지 않고 막아선다.**
@@ -51,6 +54,7 @@ function skillSustains(skill: Skill): boolean {
     || any.selfBulwark !== undefined
     || any.selfGuard !== undefined
     || any.selfLullaby !== undefined
+    || any.selfRoar !== undefined
     || any.selfShieldMaxHpPercent !== undefined
     || (Array.isArray(any.steps) && any.steps.some((step: Record<string, unknown>) =>
       step.shieldFromDamagePercent !== undefined || step.shieldMaxHpPercent !== undefined));

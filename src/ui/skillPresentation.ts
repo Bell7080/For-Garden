@@ -273,6 +273,10 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   if (trait.effectId === "sleepTantrum") return t("skill.ferocity.sleepTantrum", { percent: trait.attackSpeedPercent });
   // 공속은 올리지 않는다는 말을 따로 적지 않는다 — 오르는 것이 이 한 줄뿐이라 읽는 사람이 그 외를 가정하지 않는다.
   if (trait.effectId === "stormAim") return t("skill.ferocity.stormAim", { percent: trait.defenseIgnorePercent });
+  // 위압이 몇 겹 쌓이고 공포가 무엇인지는 태그가 말한다. 폭주가 바꾸는 두 값만 적는다.
+  if (trait.effectId === "huntInstinct") {
+    return t("skill.ferocity.huntInstinct", { stacks: 1 + trait.intimidateBonusStacks, seconds: trait.fearImmunitySeconds });
+  }
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? ""
@@ -518,6 +522,10 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
     return t("skill.passive.painfulElation");
   }
   // 졸음이 몇 겹에 잠드는지·잠이 무엇인지는 태그가 말한다. 본문은 언제·누구에게·얼마를 적는다.
+  // 몇 겹에 공포가 발동하는지는 태그가 말한다. 본문은 언제·누구에게 쌓는지만 적는다.
+  if (passive.kind === "looming" && passive.looming !== undefined) {
+    return t("skill.passive.looming", { seconds: passive.looming.intervalSeconds });
+  }
   if (passive.kind === "whiteNoise" && passive.whiteNoise !== undefined) {
     const plan = passive.whiteNoise;
     const heal = guard === undefined
@@ -733,6 +741,16 @@ export function skillDescription(
       const sentence = guard.pull.target === "farthest" ? "skill.sentence.selfGuard.farthest" : "skill.sentence.selfGuard";
       const fade = guard.shieldFadeSeconds === undefined ? "" : t("skill.sentence.selfGuard.fade", { seconds: guard.shieldFadeSeconds });
       return t(sentence, { seconds: guard.tauntSeconds, shield, reset: fade + reset + prickle + shockwave });
+    }
+    // 모두를 곧바로 겁주고 막을 두르는 궁극기. 막의 크기는 눈에 보이는 몫이라 기본과 한 명당 몫을 모두 적는다.
+    if ("selfRoar" in skill && skill.selfRoar !== undefined) {
+      const plan = skill.selfRoar;
+      const amount = (percent: number): string => stats.maxHp === undefined
+        ? t("skill.sentence.roar.percent", { percent })
+        : `[[shield-value|${Math.round(stats.maxHp * percent / 100)}]]`;
+      return t("skill.sentence.roar", {
+        base: amount(plan.shieldMaxHpPercent), per: amount(plan.shieldPerFearedMaxHpPercent), max: plan.shieldMaxFeared,
+      });
     }
     // 재우는 궁극기. 반경 안의 적을 누구를 노리는가로 갈라 재우거나 도발하고, 아군을 다독인다.
     if ("selfLullaby" in skill && skill.selfLullaby !== undefined) {
@@ -1130,6 +1148,8 @@ function statusEffectClause(effect: CombatStatusEffect): string | undefined {
   // 수압의 감속·상한·기절·터지는 피해는 태그가 말한다(쓰는 개체가 하나뿐이라 태그가 수치를 가진다).
   if (effect.kind === "pressure") return t("skill.status.pressure");
   if (effect.kind === "drowsy") return t("skill.status.drowsy");
+  // 몇 겹에 공포가 발동하는지는 태그가 말한다(쓰는 개체가 아크 하나뿐이라 태그가 수치를 가진다).
+  if (effect.kind === "intimidate") return t("skill.status.intimidate");
   // 도발은 붙잡아 두는 시간이 곧 스킬마다 다른 값이라 본문이 초를 적는다.
   if (effect.kind === "taunt") return t("skill.status.taunt", { seconds: effect.seconds });
   // 유지 시간과 상한은 이 규칙어를 쓰는 스킬마다 같아도 태그가 수치를 갖지 않으므로(모르페·디모 공용) 본문이 적는다.

@@ -333,4 +333,10 @@ export const SKILL_JA = {
   "skill.breakthrough.effect.ultimate.shrapnel": "「{name}」が当たった敵の周りの他の敵にも欠片が飛び、{percent}%のダメージを与える。",
   "skill.breakthrough.effect.ferocity.ankleShot": "[[ferocity|暴走]]中、[[basic-attack|通常攻撃]]がクリティカルで命中すると、当たった敵を{seconds}秒間[[stagger|怯み]]させる。",
   "skill.breakthrough.effect.passive.highTide": "[[fog-guard|海霧の防壁]]が上限まで満ちている間、すべてのダメージが{percent}%増える。",
+  "skill.status.intimidate": "[[intimidation|威圧]]を1重積む",
+  "skill.passive.looming": "{seconds}秒ごとに周囲のすべての敵に[[intimidation|威圧]]を1重積む。ダメージは与えない。",
+  "skill.sentence.roar": "周囲のすべての敵を即座に[[fear|恐怖]]に陥れる。{base}の[[shield|シールド]]を得て、恐怖に陥った敵1体につき{per}を加える(最大{max}体)。",
+  "skill.sentence.roar.percent": "最大体力の{percent}%",
+  "skill.keyword.shield.fromRoar": "現在の最大体力の{base}%に、恐怖に陥った敵1体につき{per}%(最大{max}体)を加えて計算したシールド数値だ。",
+  "skill.ferocity.huntInstinct": "暴走中、[[basic-attack|通常攻撃]]が[[intimidation|威圧]]を{stacks}重ずつ積み、[[fear|恐怖]]が解けた後の免疫が{seconds}秒に短くなる。",
 } as const;

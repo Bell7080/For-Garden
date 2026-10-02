@@ -310,4 +310,10 @@ export const SKILL_ZH_HANT = {
   "skill.breakthrough.effect.ultimate.shrapnel": "「{name}」命中的敵人周圍的其他敵人也會被濺射的碎片擊中，受到{percent}%的傷害。",
   "skill.breakthrough.effect.ferocity.ankleShot": "[[ferocity|暴走]]期間，[[basic-attack|普通攻擊]]以暴擊命中時，使被擊中的敵人[[stagger|硬直]]{seconds}秒。",
   "skill.breakthrough.effect.passive.highTide": "[[fog-guard|海霧屏障]]達到上限期間，所有傷害提升{percent}%。",
+  "skill.status.intimidate": "疊加一層[[intimidation|威壓]]",
+  "skill.passive.looming": "每{seconds}秒對周圍所有敵人疊加一層[[intimidation|威壓]]。不造成傷害。",
+  "skill.sentence.roar": "立刻使周圍所有敵人陷入[[fear|恐懼]]。獲得{base}的[[shield|護盾]]，每有一名敵人陷入恐懼，護盾增加{per}(最多{max}名)。",
+  "skill.sentence.roar.percent": "最大生命的{percent}%",
+  "skill.keyword.shield.fromRoar": "以當前最大生命的{base}%，加上每名陷入恐懼的敵人{per}%(最多{max}名)計算的護盾。",
+  "skill.ferocity.huntInstinct": "暴走期間，[[basic-attack|普通攻擊]]每次疊加{stacks}層[[intimidation|威壓]]，[[fear|恐懼]]結束後的免疫縮短為{seconds}秒。",
 } as const;

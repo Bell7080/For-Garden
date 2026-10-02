@@ -310,4 +310,10 @@ export const SKILL_VI = {
   "skill.breakthrough.effect.ultimate.shrapnel": "Mảnh đạn cũng văng trúng các kẻ địch khác quanh kẻ địch bị \"{name}\" bắn trúng, gây {percent}% sát thương.",
   "skill.breakthrough.effect.ferocity.ankleShot": "Trong [[ferocity|Cuồng bạo]], [[basic-attack|Đánh thường]] trúng chí mạng sẽ làm mục tiêu bị [[stagger|Khựng]] {seconds} giây.",
   "skill.breakthrough.effect.passive.highTide": "Khi [[fog-guard|Hàng rào sương biển]] đầy đến giới hạn, mọi sát thương tăng {percent}%.",
+  "skill.status.intimidate": "cộng một tầng [[intimidation|Uy hiếp]]",
+  "skill.passive.looming": "Cứ mỗi {seconds} giây cộng một tầng [[intimidation|Uy hiếp]] lên mọi kẻ địch xung quanh. Không gây sát thương.",
+  "skill.sentence.roar": "Lập tức khiến mọi kẻ địch xung quanh rơi vào [[fear|Hoảng sợ]]. Nhận [[shield|khiên]] {base}, cộng thêm {per} cho mỗi kẻ địch bị Hoảng sợ (tối đa {max}).",
+  "skill.sentence.roar.percent": "{percent}% HP tối đa",
+  "skill.keyword.shield.fromRoar": "Khiên tính từ {base}% HP tối đa hiện tại, cộng thêm {per}% cho mỗi kẻ địch bị Hoảng sợ (tối đa {max}).",
+  "skill.ferocity.huntInstinct": "Khi Cuồng bạo, [[basic-attack|đòn đánh thường]] cộng {stacks} tầng [[intimidation|Uy hiếp]] mỗi lần, và thời gian miễn nhiễm sau khi [[fear|Hoảng sợ]] kết thúc rút còn {seconds}s.",
 } as const;

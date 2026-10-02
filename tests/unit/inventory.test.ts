@@ -123,6 +123,18 @@ describe("inventory", () => {
     expect(state.archaeology.charges).toBe(max); expect(state.itemInventory[0].quantity).toBe(2);
   });
 
+  it("남은 기간이 다른 기한 묶음은 한 칸으로 합치지 않고 사라질 순서대로 따로 세운다", () => {
+    const state = createDefaultSession(); const inventory = new InventoryManager(state);
+    const now = Date.now();
+    state.itemInventory = [{ itemId: "stamina-tonic", quantity: 5, lots: [
+      { quantity: 1, expiresAt: new Date(now + 7 * 86_400_000).toISOString() },
+      { quantity: 3, expiresAt: new Date(now + 10 * 3_600_000).toISOString() },
+      { quantity: 1, expiresAt: new Date(now + 6 * 86_400_000).toISOString() },
+    ] }];
+    const rows = inventory.list("consumable").filter(({ id }) => id === "stamina-tonic");
+    expect(rows.map(({ quantity }) => quantity)).toEqual([3, 1, 1]);
+  });
+
   it("룬·지갑·스택을 카테고리별로 합성하고 많은 행의 하단 범위를 계산한다", () => {
     const state = createDefaultSession(); const inventory = new InventoryManager(state);
     expect(inventory.list("currency").find(({ id }) => id === "gold")?.quantity).toBe(state.wallet.gold);

@@ -1,3 +1,4 @@
+import type { ItemLot } from "../core/itemLots";
 import { isValidLotStack } from "../core/itemLots";
 import type { Wallet } from "../core/gacha";
 import type { ClaimAdRewardRequest, ClaimAdRewardResponse, EngraveRuneResponse, EnhanceRuneResponse, GameApi, InventoryItemDto, RechargeStaminaResponse, RenameRuneResponse, SellRunesResponse, UseConsumableResponse } from "../api/contracts";
@@ -43,7 +44,7 @@ export function inventoryGridPosition(index: number, layout: InventoryGridLayout
 export type InventoryDisplayItem =
   | { readonly kind: "rune"; readonly category: "rune"; readonly id: string; readonly definition: ItemDefinition; readonly quantity: 1; readonly rune: RuneInstance }
   | { readonly kind: "currency"; readonly category: "currency"; readonly id: string; readonly definition: ItemDefinition; readonly quantity: number; readonly walletKey: WalletItemKey }
-  | { readonly kind: "stack"; readonly category: "consumable" | "material"; readonly id: string; readonly definition: ItemDefinition; readonly quantity: number };
+  | { readonly kind: "stack"; readonly category: "consumable" | "material"; readonly id: string; readonly definition: ItemDefinition; readonly quantity: number; /** 기한 있는 병은 남은 기간이 다른 묶음마다 한 칸이다. */ readonly lot?: ItemLot };
 
 /** 씬의 직접 상태 변경을 막고 세 저장 모델을 표시 모델로만 합성한다. */
 /** 고고학 탐사 횟수를 채우는 소비품. 가방에서는 가진 수가 0이어도 칸이 선다. */
@@ -192,7 +193,10 @@ export class InventoryManager {
     }
     const rows: InventoryDisplayItem[] = this.state.itemInventory.flatMap((stack) => {
       const definition = findItem(stack.itemId);
-      return definition?.category === category ? [{ kind: "stack" as const, category, id: stack.itemId, definition, quantity: stack.quantity }] : [];
+      if (definition?.category !== category) return [];
+      // 받은 시각이 다른 묶음은 한 칸에 합치지 않는다 — 7일 1개·6일 1개·10시간 3개가 각각 선다(사라질 순서대로).
+      if (stack.lots?.length) return [...stack.lots].sort((a, b) => Date.parse(a.expiresAt) - Date.parse(b.expiresAt)).map((lot) => ({ kind: "stack" as const, category, id: stack.itemId, definition, quantity: lot.quantity, lot }));
+      return [{ kind: "stack" as const, category, id: stack.itemId, definition, quantity: stack.quantity }];
     });
     /*
      * **탐사권은 없어도 칸이 선다** — 고고학의 「발굴권」 횟수와 같은 그림이라, 가방에 칸조차 없으면 어디서 채우는

@@ -244,7 +244,7 @@ export class InventoryPopup {
     card.add(this.scene.add.text(frameSize / 2 - 6, frameSize / 2 - 2, formatCurrency(item.quantity), textStyle({ role: "emphasis", size: 32 })).setOrigin(1, 1).setStroke("#05070a", 4).setShadow(0, 2, "#05070a", 3, true, true));
     // 기한이 있는 칸은 가장 먼저 사라질 묶음의 남은 시간을 왼쪽 위의 붉은 표식으로 붙인다 — 수량과
     // 마주 보는 자리다. 표식은 초마다 제 한 마디를 다시 적는다(`7D` → … → `24H` → … → `60M`).
-    const expiry = soonestItemExpiry(item.definition.id);
+    const expiry = item.kind === "stack" && item.lot ? { expiresAt: item.lot.expiresAt } : soonestItemExpiry(item.definition.id);
     if (expiry) card.add(addExpiryTag(this.scene, -frameSize / 2 + 4, -frameSize / 2 + 4, expiry.expiresAt));
     this.addCardInput(content, card, item, cardWidth, cardHeight);
   }
@@ -273,7 +273,7 @@ export class InventoryPopup {
     // 재화 카드는 상단 칩과 같은 안내 프리팹을 스택 위에 쌓아 가방 자체를 보존한다.
     if (item.category === "currency" && item.definition.icon.kind === "currency") { new CurrencyGuidePopup(this.scene, this.popups, this.onCurrencyAction).open(item.definition.icon.key); return; }
     new ItemGuidePopup(this.scene, this.popups).open({
-      definition: item.definition, quantity: item.quantity, expiry: soonestItemExpiry(item.definition.id),
+      definition: item.definition, quantity: item.quantity, expiry: item.kind === "stack" && item.lot ? { count: item.lot.quantity, expiresAt: item.lot.expiresAt } : soonestItemExpiry(item.definition.id),
       onUse: item.category === "consumable" ? () => this.useConsumable(item.id) : undefined,
     });
   }

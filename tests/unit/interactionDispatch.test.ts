@@ -4,16 +4,16 @@ import { autoAssignInteractionParty } from "../../src/ui/interactionLayerModel";
 import { INTERACTION_CITIES } from "../../src/data/interactionCities";
 
 // 도시 목록은 운영 중 늘어난다 — 순서가 아니라 id로 집어야 표가 커져도 같은 것을 검사한다.
-const city = INTERACTION_CITIES.find((entry) => entry.id === "night-ward")!;
-/** 조건이 걸린 도시. 앞의 세 곳은 처음부터 열려 있으므로 잠금 규칙은 뒤의 도시로 본다. */
+const city = INTERACTION_CITIES.find((entry) => entry.id === "doppel-lab")!;
+/** 조건이 걸린 도시. 앞의 두 곳은 처음부터 열려 있으므로 잠금 규칙은 뒤의 도시로 본다. */
 const gatedCity = INTERACTION_CITIES.find((entry) => entry.unlock.stageId !== undefined)!;
 /** 교류의 데이터 기반 개방·편성·시간·보상·완료 경계를 회귀 고정한다. */
 describe("interaction dispatch rules", () => {
   it("선행 관문과 1~3명 고유 소유 편성을 검증한다", () => { expect(isInteractionCityUnlocked(gatedCity, new Set())).toBe(false); expect(isInteractionCityUnlocked(gatedCity, new Set([gatedCity.unlock.stageId!]))).toBe(true); expect(isInteractionCityUnlocked(city, new Set())).toBe(true); const owned = new Set(["a", "b", "c"]); expect(validateInteractionFormation([], owned)).toBe("party_size"); expect(validateInteractionFormation(["a", "a"], owned)).toBe("duplicate"); expect(validateInteractionFormation(["x"], owned)).toBe("not_owned"); expect(validateInteractionFormation(["a", "b", "c"], owned)).toBeNull(); });
   it("인원이 적으면 덜 가져오고, 특화에 맞는 칸마다 더 가져온다", () => {
-    // 나이트 시티 교류부 — 바람 · 암살자 · 나이트 기어.
-    const plain = { element: "earth" as const, role: "tank" as const, squad: "fang" as const };
-    const specialist = { element: "wind" as const, role: "assassin" as const, squad: "gear" as const };
+    // 도플 내부 연구기관 — 물/풀 · 서포터 · 사일런트 룬.
+    const plain = { element: "fire" as const, role: "tank" as const, squad: "fang" as const };
+    const specialist = { element: "water" as const, role: "support" as const, squad: "rune" as const };
     expect(interactionSpecialtyMatches(city, specialist)).toBe(3);
     expect(interactionSpecialtyMatches(city, plain)).toBe(0);
     expect(interactionYieldFactor(city, [plain])).toBe(0.5);
@@ -27,7 +27,7 @@ describe("interaction dispatch rules", () => {
   it("예상 범위와 실제로 굴린 값이 같은 경계를 쓴다", () => {
     const gold = city.rewards.find(({ currency }) => currency === "gold")!;
     expect(interactionRewardRange(gold, 1)).toEqual({ currency: "gold", min: gold.min, max: gold.max });
-    const members = [{ element: "wind" as const, role: "assassin" as const, squad: "gear" as const }];
+    const members = [{ element: "water" as const, role: "support" as const, squad: "rune" as const }];
     const factor = interactionYieldFactor(city, members);
     for (const value of [0, 0.25, 0.5, 0.999]) {
       for (const reward of rollInteractionRewards(city, members, () => value)) {

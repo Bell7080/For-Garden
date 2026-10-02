@@ -112,6 +112,9 @@ export const SETTINGS_KO = {
   "settings.action.next": "다음",
 
   "settings.debug.grantAll": "모든 캐릭터 획득",
+  "settings.debug.maxLevel": "플레이어 레벨 만렙 · 모든 콘텐츠 개방",
+  "settings.debug.maxLevelDone": "플레이어 레벨을 LV.{level}로 올렸습니다. 로비로 돌아가면 열린 콘텐츠가 나타납니다.",
+  "settings.debug.maxLevelAlready": "이미 LV.{level}입니다.",
   "settings.debug.unlockStories": "유대 10 · 질문/스토리 전체 개방",
   "settings.debug.unlockedStories": "유대를 올린 캐릭터 {count}명. 모든 관찰 질문과 애착 스토리가 열렸습니다.",
   "settings.debug.breakthroughSet": "토리카 돌파 세트",

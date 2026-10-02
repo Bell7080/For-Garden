@@ -3,7 +3,7 @@ import { STAGES } from "../data/stages";
 import { highestClearedStage } from "../core/stageProgress";
 import { breakthroughGrade, calculateFinalStats } from "../core/relicProgression";
 import { combatPower } from "../core/combatPower";
-import { nextContentUnlock, type ContentId } from "../core/contentUnlock";
+import { nextContentUnlock, nextStageUnlock, type ContentId } from "../core/contentUnlock";
 import { researchDays } from "../core/playerCard";
 import { PLAYER_LEVEL_CAP } from "../core/playerLevel";
 import type { Element, PortraitAssetId, RelicRarity, Role } from "../core/types";
@@ -46,6 +46,8 @@ export interface PlayerProfileDisplay {
   lastActive?: string;
   /** 레벨 잠금을 켰을 때만 서는 다음 개방 콘텐츠. */
   nextUnlock?: { contentId: ContentId; level: number };
+  /** 레벨이 아니라 스테이지 클리어로 여는 다음 콘텐츠(고고학). */
+  nextStageUnlock?: { contentId: ContentId; stageId: string };
   equippedModifiers: PublicProfileModifier[];
 }
 
@@ -112,6 +114,7 @@ export function playerProfileDisplay(state: Session, equippedModifiers: readonly
   const card = state.playerCard;
   const research = state.playerResearch;
   const next = nextContentUnlock(research.level);
+  const nextStage = nextStageUnlock(state.cleared);
   return {
     // 기본 이름은 표가 아니라 부를 때 고른다 — 표는 모듈을 읽는 순간 굳어 언어를 따라오지 않는다.
     displayName: card.nickname || t("profile.defaultName"),
@@ -135,6 +138,7 @@ export function playerProfileDisplay(state: Session, equippedModifiers: readonly
     },
     collection: { owned: PLAYABLE_RELICS.filter(({ id }) => state.owned.has(id)).length, total: PLAYABLE_RELICS.length },
     ...(next ? { nextUnlock: { contentId: next.id, level: next.level } } : {}),
+    ...(nextStage ? { nextStageUnlock: { contentId: nextStage.id, stageId: nextStage.stageId } } : {}),
     equippedModifiers: equippedModifiers.map((modifier) => ({ ...modifier })),
   };
 }

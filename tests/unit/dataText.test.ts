@@ -95,6 +95,10 @@ import "../../src/core/missions";
 const NOT_DISPLAYED: Readonly<Record<string, "all" | readonly string[]>> = {
   // 증강 수치의 검수 장부. 왜 이 수치인지를 적은 기획 근거이며 화면에 뜨지 않는다.
   "../../src/data/expeditionAugmentBalance.ts": "all",
+  // **번역 전의 이야기 묶음이다 — 화면에 뜨는 글이지만 한국어를 먼저 다지는 중이라 등록을 미룬다.** 관찰 일지 글(발굴 기록·일기)은
+  // 도감 정의가 이미 번역 키를 갖고 있어 열한 언어로 서 있고, 질문·애착 스토리·유대 대사는 한국어가 확정되면 `registerDataText`·
+  // `registerDialogueTexts`로 등록하며 이 줄을 지운다. 지우지 않으면 새 언어에서 그 글만 한국어로 남는다.
+  "../../src/data/relicStories/torika.ts": "all",
   // 표본 친구의 계정 이름. 실제 이용자 풀이 생기면 서버가 주는 이름이 그대로 선다.
   "../../src/data/friends.ts": ["하늘정원", "이끼연구소"],
   // 함께 미는 모의 참가자의 계정 이름. 길드원과 친구로 교체되면 서버가 주는 이름이 그대로 선다.

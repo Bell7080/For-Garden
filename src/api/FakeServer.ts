@@ -66,7 +66,7 @@ import { calculateExpeditionNodeRewards, calculateExpeditionRunScore } from "../
 import { calculateExpeditionNodeScore, expeditionBossDamageScore } from "../core/expeditionScore";
 import { RelicProgressionManager } from "../managers/RelicProgressionManager";
 import { normalizeExpeditionState, rollExpeditionPeriods } from "../core/expeditionPeriods";
-import { addItemLot, isValidLotStack, lotExpiresAt, purgeExpiredLots, removeItemLot } from "../core/itemLots";
+import { addItemLot, isValidLotStack, lotExpiresAt, purgeExpiredLots, removeItemLot, removeItemLotAt } from "../core/itemLots";
 import { grantPlayerExperience, normalizePlayerLevel, PLAYER_LEVEL_UP_REWARD, playerExpForStamina, type PlayerExpReceipt } from "../core/playerLevel";
 import { isExpeditionRelicSnapshot } from "../core/expeditionSnapshot";
 import { partyRuneTraitEffects } from "../core/runeTraitEffects";
@@ -855,7 +855,9 @@ export class FakeServer implements GameApi {
     const appliedAmount = paidStaminaApplied(this.state.wallet.stamina, requested);
     const nextWallet = { ...this.state.wallet, stamina: this.state.wallet.stamina + appliedAmount };
     // 기한이 있는 병은 가장 먼저 사라질 묶음부터 쓴다(`removeItemLot`).
-    const nextItems = removeItemLot(this.state.itemInventory, request.itemId, request.quantity);
+    const nextItems = request.lotExpiresAt !== undefined
+      ? removeItemLotAt(this.state.itemInventory, request.itemId, request.quantity, request.lotExpiresAt)
+      : removeItemLot(this.state.itemInventory, request.itemId, request.quantity);
     if (!nextItems) throw new GameApiError("INSUFFICIENT_ITEMS", "아이템 수량이 부족합니다.");
     this.persist({ ...this.state, wallet: nextWallet, itemInventory: nextItems });
     this.state.wallet = nextWallet; this.state.itemInventory = nextItems;

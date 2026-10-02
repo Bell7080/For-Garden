@@ -60,8 +60,8 @@ export class InventoryManager {
   }
 
   /** 소비 명령의 최종 서버 스냅샷까지 같은 경계에서 반영해 화면이 DTO를 보관하지 않게 한다. */
-  async useConsumable(api: GameApi, itemId: string): Promise<UseConsumableResponse> {
-    const response = await api.useConsumable({ itemId, quantity: 1 });
+  async useConsumable(api: GameApi, itemId: string, lotExpiresAt?: string): Promise<UseConsumableResponse> {
+    const response = await api.useConsumable({ itemId, quantity: 1, ...(lotExpiresAt !== undefined ? { lotExpiresAt } : {}) });
     this.applySnapshot(response.items, response.wallet);
     return response;
   }

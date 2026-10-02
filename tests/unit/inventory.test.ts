@@ -1,3 +1,4 @@
+import { removeItemLotAt } from "../../src/core/itemLots";
 import { describe, expect, it } from "vitest";
 import { FakeServer } from "../../src/api/FakeServer";
 import { GameApiError } from "../../src/api/contracts";
@@ -133,6 +134,14 @@ describe("inventory", () => {
     ] }];
     const rows = inventory.list("consumable").filter(({ id }) => id === "stamina-tonic");
     expect(rows.map(({ quantity }) => quantity)).toEqual([3, 1, 1]);
+  });
+
+  it("묶음을 지정해 쓰면 그 묶음에서만 덜어 낸다", () => {
+    const a = new Date(Date.now() + 7 * 86_400_000).toISOString(), b = new Date(Date.now() + 10 * 3_600_000).toISOString();
+    const inv = [{ itemId: "stamina-tonic", quantity: 4, lots: [{ quantity: 1, expiresAt: a }, { quantity: 3, expiresAt: b }] }];
+    const next = removeItemLotAt(inv, "stamina-tonic", 1, a)!;
+    expect(next[0].lots).toEqual([{ quantity: 3, expiresAt: b }]);
+    expect(removeItemLotAt(inv, "stamina-tonic", 2, a)).toBeUndefined();
   });
 
   it("룬·지갑·스택을 카테고리별로 합성하고 많은 행의 하단 범위를 계산한다", () => {

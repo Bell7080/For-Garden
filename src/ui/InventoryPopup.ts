@@ -274,7 +274,7 @@ export class InventoryPopup {
     if (item.category === "currency" && item.definition.icon.kind === "currency") { new CurrencyGuidePopup(this.scene, this.popups, this.onCurrencyAction).open(item.definition.icon.key); return; }
     new ItemGuidePopup(this.scene, this.popups).open({
       definition: item.definition, quantity: item.quantity, expiry: item.kind === "stack" && item.lot ? { count: item.lot.quantity, expiresAt: item.lot.expiresAt } : soonestItemExpiry(item.definition.id),
-      onUse: item.category === "consumable" ? () => this.useConsumable(item.id) : undefined,
+      onUse: item.category === "consumable" ? () => this.useConsumable(item.id, item.kind === "stack" ? item.lot?.expiresAt : undefined) : undefined,
     });
   }
 
@@ -283,11 +283,11 @@ export class InventoryPopup {
    * (TopBar가 구독) 여기서 다시 알리지 않는다. 받은 몫은 이미 지급이 끝난 영수증이라 `RewardPopup`
    * 양식이 아니라 짧은 결과 쪽지로 알린다.
    */
-  private useConsumable(itemId: string): void {
+  private useConsumable(itemId: string, lotExpiresAt?: string): void {
     const notice = (title: TextKey, text: string): void => {
       this.popups.open({ width: 440, height: 250, title: t(title), dim: true }, (body) => body.add(this.scene.add.text(0, 0, text, textStyle({ role: "emphasis", size: 26, color: COLOR.accentText })).setOrigin(0.5)));
     };
-    void this.inventory.useConsumable(this.api, itemId).then((result) => {
+    void this.inventory.useConsumable(this.api, itemId, lotExpiresAt).then((result) => {
       const gained: TextKey = result.effect.kind === "restore_strata_charge" ? "inventory.strataChargeGained" : "inventory.staminaGained";
       notice("inventory.useDone", t(gained, { amount: result.appliedAmount }));
       if (this.view) this.render(this.view);

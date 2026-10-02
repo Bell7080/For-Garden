@@ -62,7 +62,8 @@ export interface ClaimMailRewardsResponse extends MailListResponse { claimedMail
 /** 열람 처리는 보상 수령과 분리하며 여러 행을 한 번에 읽음 처리할 수 있다. */
 export interface MarkMailsReadRequest { mailIds: string[]; }
 /** 수량은 양의 정수만 허용하며 서버가 보유량과 상한을 다시 검증한다. */
-export interface UseConsumableRequest { itemId: string; quantity: number; }
+/** `lotExpiresAt`을 주면 그 묶음에서 쓴다(가방에서 누른 칸). 없으면 가장 먼저 사라질 묶음부터다. */
+export interface UseConsumableRequest { itemId: string; quantity: number; lotExpiresAt?: string; }
 /** 실제 적용량을 반환해 상한에서 버려진 회복을 UI가 추측하지 않게 한다. */
 export interface UseConsumableResponse extends InventoryResponse { itemId: string; quantityUsed: number; effect: ItemUseEffect; appliedAmount: number; overflowAmount: number; wallet: Wallet; stamina: StaminaDto; }
 

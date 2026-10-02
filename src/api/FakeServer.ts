@@ -26,6 +26,9 @@ import { totalGrantAmount } from "../core/purchase";
 import type { ExchangeDnaRequest, ExchangeDnaResponse } from "./contracts";
 import { getRelicSkin } from "../data/relicSkins";
 import { DNA_EXCHANGE_OFFERS, WALLET_CAPS } from "../data/economy";
+import { BOND_STORY_GEM_REWARD, BOND_STORY_LEVELS, DIARY_QUESTION_GEM_REWARD, bondChapterId, diaryQuestionUnlockAt, type BondStoryLevel } from "../core/relicStory";
+import { relicStoryFor } from "../data/relicStories";
+import type { AnswerRelicQuestionRequest, AnswerRelicQuestionResponse, ClaimRelicChapterRequest, ClaimRelicChapterResponse } from "./contracts";
 import { EVENTS, findEventByProductId, findEventByStageId } from "../data/events";
 import type { EventDefinition } from "../data/events/types";
 import type { EnterEventStageResponse, EventListResponse } from "./contracts";
@@ -1143,7 +1146,9 @@ export class FakeServer implements GameApi {
     const nextPity = { ...this.state.gachaPityByGroup, [banner.pityGroupId]: groupPity };
     // 연구소의 캐릭터 연구 성공만 임무로 환산하며 방치 발굴 수확과 섞지 않는다.
     const nextMissions = applyMissionEvent(this.state.missions, { type: "relic_research_completed", count: request.count }, this.now());
-    const nextState: Session = { ...this.state, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, relicFragments: outcome.fragmentsById, gachaPityByGroup: nextPity, missions: nextMissions };
+    // 처음 만난 날은 관찰 질문이 하루에 하나씩 열리는 기준이다.
+    const nextRelicStory = outcome.newRelicIds.length === 0 ? this.state.relicStory : { ...this.state.relicStory, metAt: { ...this.state.relicStory.metAt, ...Object.fromEntries(outcome.newRelicIds.filter((id) => !(id in this.state.relicStory.metAt)).map((id) => [id, this.now().toISOString()])) } };
+    const nextState: Session = { ...this.state, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, relicFragments: outcome.fragmentsById, gachaPityByGroup: nextPity, missions: nextMissions, relicStory: nextRelicStory };
 
     // 저장 실패도 원본 메모리에 부분 반영되지 않도록 저장을 먼저 성공시킨 뒤 필드를 일괄 교체한다.
     this.persist(nextState);
@@ -1153,6 +1158,7 @@ export class FakeServer implements GameApi {
     this.state.relicFragments = outcome.fragmentsById;
     this.state.gachaPityByGroup = nextPity;
     this.state.missions = nextMissions;
+    this.state.relicStory = nextRelicStory;
     return {
       ...this.snapshot(),
       // 렐릭 획득 결과를 원래 추첨 위치에 다시 끼워 혼합 10연의 슬롯 순서를 보존한다.
@@ -1814,6 +1820,47 @@ export class FakeServer implements GameApi {
     this.persist({ ...this.state, runeInventory: nextRunes });
     this.state.runeInventory = nextRunes;
     return { rune: this.cloneRune(rune), inventory: this.runeInventoryDto() };
+  }
+
+  /**
+   * 관찰 질문 답변 — 보유·질문·선택지·열리는 날·중복을 모두 확인한 뒤 답변 기록과 젬 지급을 한 번에 저장한다.
+   * 젬은 상한에서 깎아 주고 던지지 않는다(가득 찬 계정도 이야기는 읽을 수 있다).
+   */
+  async answerRelicQuestion(request: AnswerRelicQuestionRequest): Promise<AnswerRelicQuestionResponse> {
+    await this.delay();
+    const story = relicStoryFor(request.relicId);
+    const index = story?.questions.findIndex(({ id }) => id === request.questionId) ?? -1;
+    const question = story?.questions[index];
+    if (!story || !question || !question.choices.some(({ id }) => id === request.choiceId)) throw new GameApiError("RELIC_STORY_NOT_FOUND", "존재하지 않는 관찰 질문입니다.");
+    if (!this.state.owned.has(request.relicId)) throw new GameApiError("RELIC_STORY_LOCKED", "보유한 렐릭의 질문만 답할 수 있습니다.");
+    const now = this.now();
+    if (now.getTime() < diaryQuestionUnlockAt(this.state.relicStory.metAt[request.relicId], index)) throw new GameApiError("RELIC_STORY_LOCKED", "아직 열리지 않은 질문입니다.");
+    if (this.state.relicStory.answers.some(({ questionId }) => questionId === request.questionId)) throw new GameApiError("RELIC_STORY_ALREADY_CLAIMED", "이미 답한 질문입니다.");
+    const gemsGranted = Math.max(0, Math.min(DIARY_QUESTION_GEM_REWARD, WALLET_CAPS.gems - this.state.wallet.gems));
+    const nextWallet = { ...this.state.wallet, gems: this.state.wallet.gems + gemsGranted };
+    const nextStory = { ...this.state.relicStory, answers: [...this.state.relicStory.answers, { relicId: request.relicId, questionId: request.questionId, choiceId: request.choiceId, answeredAt: now.toISOString() }] };
+    this.persist({ ...this.state, wallet: nextWallet, relicStory: nextStory });
+    this.state.wallet = nextWallet;
+    this.state.relicStory = nextStory;
+    return { gemsGranted, wallet: { ...nextWallet }, serverTime: now.toISOString() };
+  }
+
+  /** 애착 스토리 장 해금 — 유대 레벨을 서버 상태로 확인하고 장마다 한 번만 젬을 준다. */
+  async claimRelicChapter(request: ClaimRelicChapterRequest): Promise<ClaimRelicChapterResponse> {
+    await this.delay();
+    const level = (BOND_STORY_LEVELS as readonly number[]).find((candidate) => candidate === request.level) as BondStoryLevel | undefined;
+    if (!level || !relicStoryFor(request.relicId)) throw new GameApiError("RELIC_STORY_NOT_FOUND", "존재하지 않는 애착 스토리입니다.");
+    const progress = this.state.relicProgress[request.relicId];
+    if (!this.state.owned.has(request.relicId) || !progress || progress.bondLevel < level) throw new GameApiError("RELIC_STORY_LOCKED", "아직 열리지 않은 애착 스토리입니다.");
+    const chapterId = bondChapterId(request.relicId, level);
+    if (this.state.relicStory.claimedChapterIds.includes(chapterId)) throw new GameApiError("RELIC_STORY_ALREADY_CLAIMED", "이미 해금 보상을 받은 장입니다.");
+    const gemsGranted = Math.max(0, Math.min(BOND_STORY_GEM_REWARD[level], WALLET_CAPS.gems - this.state.wallet.gems));
+    const nextWallet = { ...this.state.wallet, gems: this.state.wallet.gems + gemsGranted };
+    const nextStory = { ...this.state.relicStory, claimedChapterIds: [...this.state.relicStory.claimedChapterIds, chapterId] };
+    this.persist({ ...this.state, wallet: nextWallet, relicStory: nextStory });
+    this.state.wallet = nextWallet;
+    this.state.relicStory = nextStory;
+    return { gemsGranted, wallet: { ...nextWallet }, serverTime: this.now().toISOString() };
   }
 
   /** 존재·중복·장착·상한을 모두 복제 상태에서 검증한 뒤 제거와 골드 지급을 한 번만 저장한다. */

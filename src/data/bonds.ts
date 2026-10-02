@@ -1,4 +1,5 @@
 import { registerDataText } from "../i18n";
+import { relicStoryFor } from "./relicStories";
 /** 유대 레벨별 대사 ID는 번역 문구와 분리해 콘텐츠 교체 시 저장/규칙을 건드리지 않는다. */
 const GENERIC_IDS = Array.from({ length: 11 }, (_, level) => `bond.generic.${level}`);
 export const BOND_DIALOGUE_IDS: Readonly<Record<string, readonly string[]>> = {
@@ -17,6 +18,14 @@ const GENERIC_LINES = ["아직은 조금 낯설어.", "오늘도 만났네.", "�
 
 /** 반복 터치는 같은 레벨 안에서도 문구가 바뀌도록 터치 순번을 순환시킨다. */
 export function bondDialogue(relicId: string, bondLevel: number, interactionIndex: number): { id: string; text: string } {
+  // 이야기 묶음이 있는 개체는 레벨마다 여러 줄을 두고 터치 순서대로 돌려 말한다(개체의 성격이 줄마다 드러난다).
+  const story = relicStoryFor(relicId);
+  if (story) {
+    const level = Math.max(0, Math.min(story.bondLines.length - 1, bondLevel));
+    const lines = story.bondLines[level];
+    const index = interactionIndex % lines.length;
+    return { id: `story.${relicId}.bondLine.${level}.${index}`, text: lines[index] };
+  }
   const lines = STARTER_LINES[relicId] ?? GENERIC_LINES;
   const offset = interactionIndex % 2 === 0 ? 0 : -1;
   const lineLevel = Math.max(0, Math.min(10, bondLevel + offset));

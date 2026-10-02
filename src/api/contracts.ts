@@ -137,6 +137,13 @@ export interface RenameRuneResponse { rune: RuneInstance; inventory: RuneInvento
 export interface MarkRuneRequest { runeInstanceId: string; locked?: boolean; bookmarked?: boolean; }
 /** 표시가 반영된 룬과 갱신된 인벤토리다. */
 export interface MarkRuneResponse { rune: RuneInstance; inventory: RuneInventoryDto; }
+/** 관찰 질문 한 답. 개체·질문·선택지를 모두 서버가 정적 이야기 묶음과 대조한다. */
+export interface AnswerRelicQuestionRequest { relicId: string; questionId: string; choiceId: string; }
+/** 실제로 지급한 젬(상한에서 깎일 수 있다)과 확정된 지갑이다. */
+export interface AnswerRelicQuestionResponse { gemsGranted: number; wallet: Wallet; serverTime: string; }
+/** 애착 스토리 한 장을 처음 읽은 것을 확정한다. 유대 레벨은 서버가 자기 상태로 확인한다. */
+export interface ClaimRelicChapterRequest { relicId: string; level: number; }
+export interface ClaimRelicChapterResponse { gemsGranted: number; wallet: Wallet; serverTime: string; }
 /** 장착 대상은 보유 룬, 보유 렐릭, 0부터 시작하는 세 슬롯으로 특정한다. */
 export interface EquipRuneRequest { runeInstanceId: string; relicId: string; slotIndex: number; }
 /** 장착표 변경 뒤의 단일 기준 인벤토리다. */
@@ -528,7 +535,8 @@ export interface UpgradeRuneTraitResponse { rune: RuneInstance; items: Inventory
 export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPEDITION_RUN_NOT_FOUND" | "EXPEDITION_ALREADY_SETTLED" | "EXPEDITION_ALREADY_ACTIVE" | "EXPEDITION_DAILY_LIMIT" | "EXPEDITION_SCORE_REQUIRED" | "AD_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REJECTED" | "RAID_DAILY_LIMIT" | "RAID_NOT_ENTERED" | "RAID_SCORE_REJECTED" | "RAID_REWARD_NOT_EARNED" | "RAID_NOT_FOUND" | "RAID_ENDED" | "RAID_NOT_ENDED" | "RAID_SUMMON_INVALID" | "RAID_TICKET_SHORTAGE" | "EXPEDITION_REWARD_NOT_FOUND" | "EXPEDITION_REWARD_NOT_EARNED" | "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INVALID_PURCHASE_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "BANNER_NOT_FOUND" | "BANNER_LIMIT_REACHED" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "INVALID_RUNE_SALE" | "RUNE_EQUIPPED" | "RUNE_LOCKED" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "BOUNTY_TIER_NOT_FOUND" | "BOUNTY_TIER_LOCKED" | "BOUNTY_ADMISSION_NOT_FOUND" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_STOREFRONT_MISMATCH" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "ACQUISITION_FLOW_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE"
   | "STRATA_NO_CHARGE" | "STRATA_CHARGE_FULL" | "STRATA_RUN_ACTIVE" | "STRATA_RUN_NOT_FOUND" | "STRATA_SITE_LOCKED" | "STRATA_SITE_COOLING" | "STRATA_TILE_UNAVAILABLE"
   | "RUNE_TRAIT_NOT_FOUND" | "RUNE_TRAIT_ITEM_INVALID" | "RUNE_TRAIT_MAX_GRADE" | "RUNE_TRAIT_GRADE_REACHED" | "RUNE_TRAIT_REROLL_PENDING"
-  | "CAKE_TIER_NOT_FOUND" | "CAKE_TIER_LOCKED" | "DUNGEON_NOT_CLEARED" | "SWEEP_TICKET_SHORTAGE";
+  | "CAKE_TIER_NOT_FOUND" | "CAKE_TIER_LOCKED" | "DUNGEON_NOT_CLEARED" | "SWEEP_TICKET_SHORTAGE"
+  | "RELIC_STORY_NOT_FOUND" | "RELIC_STORY_LOCKED" | "RELIC_STORY_ALREADY_CLAIMED";
 
 /**
  * 급여 응답.
@@ -841,6 +849,10 @@ export interface GameApi extends AsyncArenaProfileApi {
   renameRune(request: RenameRuneRequest): Promise<RenameRuneResponse>;
   /** 룬의 잠금·즐겨찾기 표시를 바꾼다. 잠긴 룬은 판매 경계가 직접 거부한다. */
   markRune(request: MarkRuneRequest): Promise<MarkRuneResponse>;
+  /** 관찰 질문에 답하고 젬 50개를 질문마다 한 번만 받는다. 열리는 날은 서버 시각이 정한다. */
+  answerRelicQuestion(request: AnswerRelicQuestionRequest): Promise<AnswerRelicQuestionResponse>;
+  /** 유대 레벨이 닿은 애착 스토리 한 장의 해금 젬을 한 번만 받는다. */
+  claimRelicChapter(request: ClaimRelicChapterRequest): Promise<ClaimRelicChapterResponse>;
   /** 한 룬이 전체 장착표에서 정확히 한 슬롯에만 있도록 장착한다. */
   equipRune(request: EquipRuneRequest): Promise<EquipRuneResponse>;
   /** 렐릭 슬롯을 장착표의 단일 기준에서 해제한다. */

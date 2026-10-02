@@ -13,6 +13,7 @@
  */
 
 import type Phaser from "phaser";
+import { CLOSE_INPUT_GUARD_MS } from "./closeInputGuard";
 import { activeFontFamily, FONT_FALLBACK } from "./fonts";
 import { bakeCinematicFace, bakeCinematicIcon, bakeCinematicPortrait, prewarmCinematicArt } from "./researchCinematicArt";
 import type { CinematicCardArt, CinematicReward } from "./researchCinematicModel";
@@ -239,6 +240,8 @@ export class ResearchCinematic {
   private readonly art: readonly CinematicCardArt[];
   /** 파편으로 바뀌기를 기다리는 타이머. 판을 닫을 때 남김없이 걷는다. */
   private readonly timers = new Set<number>();
+  /** 카드 앞·뒤를 따라가는 관찰자. 판을 닫을 때 걷는다. */
+  private readonly sideObservers: MutationObserver[] = [];
   /**
    * 이미 파편이 된 칸.
    *
@@ -313,6 +316,7 @@ export class ResearchCinematic {
     // 카드가 깔린 **뒤에** 그림을 채운다. 무대가 도는 동안 뒤에서 구우므로 연출이 기다리지 않고,
     // 공개 단계에 닿기 전에 도착한다. 묶음 하나가 늦거나 실패해도 그 칸만 액자로 남는다.
     this.paintCards(options.scene, options.art);
+    this.trackCardSides();
 
     this.observer = new ResizeObserver(() => this.syncBox());
     this.observer.observe(this.canvas);
@@ -367,6 +371,8 @@ export class ResearchCinematic {
    */
   skip(): void {
     if (this.introducing) return;
+    // 건너뛰기를 누른 순간부터 칩은 할 일이 없다 — 결산까지 남겨 두지 않는다.
+    this.root.classList.add("rc-skipped");
     if (this.phase === "result") { this.close(); return; }
     void this.skipAfterIntroductions();
   }
@@ -464,9 +470,11 @@ export class ResearchCinematic {
     this.timers.clear();
     // 입력은 지금 도는 사건이 지나간 **다음에** 되돌린다. 여기서 곧바로 켜면 판을 닫은 그
     // 한 번이 window까지 흘러가 뒤의 탭을 누른다.
+    // 연타하던 손이 닫히자마자 뒤 화면을 누르지 않도록 잠깐 더 막은 뒤 되돌린다.
     const restore = this.inputWasEnabled;
-    window.setTimeout(() => { this.game.input.enabled = restore; }, 0);
+    window.setTimeout(() => { this.game.input.enabled = restore; }, CLOSE_INPUT_GUARD_MS);
     this.observer.disconnect();
+    for (const observer of this.sideObservers) observer.disconnect();
     window.removeEventListener("resize", this.onWindowChange);
     window.removeEventListener("orientationchange", this.onWindowChange);
     try { this.instance.destroy(); } catch { /* 무대가 이미 죽었어도 화면은 치운다. */ }
@@ -521,6 +529,28 @@ export class ResearchCinematic {
    *
    * 그림은 뒤에서 굽는다. 묶음 하나가 늦거나 실패해도 그 칸은 액자만 남고 연출은 이어진다.
    */
+  /**
+   * 카드의 앞·뒤를 회전각으로 직접 가른다.
+   *
+   * 면 숨김(`backface-visibility`)은 일부 모바일 엔진에서 3D가 풀리면 듣지 않아, 뒷면 없이 앞면이
+   * 좌우반전으로 보였다. 회전축의 각도를 읽어 보이는 면을 정하므로 엔진 동작에 기대지 않는다.
+   */
+  private trackCardSides(): void {
+    for (const card of Array.from(this.root.querySelectorAll<HTMLElement>(".archive-card"))) {
+      const rotor = card.querySelector<HTMLElement>(".card-rotor");
+      if (!rotor) continue;
+      const sync = () => {
+        const match = /rotateY\((-?[\d.]+)deg\)/.exec(rotor.style.transform);
+        if (!match) return;
+        card.dataset.side = Math.abs(Number(match[1])) % 360 > 90 && Math.abs(Number(match[1])) % 360 < 270 ? "back" : "front";
+      };
+      sync();
+      const observer = new MutationObserver(sync);
+      observer.observe(rotor, { attributes: true, attributeFilter: ["style"] });
+      this.sideObservers.push(observer);
+    }
+  }
+
   private paintCards(scene: Phaser.Scene, art: readonly CinematicCardArt[]): void {
     const cards = Array.from(this.root.querySelectorAll<HTMLElement>(".archive-card"));
     // 1) 뼈대는 **기다리지 않고 한 번에** 세운다.

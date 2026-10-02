@@ -21,6 +21,7 @@ import { session } from "../state/session";
 import type { PlayerExpReceipt } from "../core/playerLevel";
 import { addPlayerExpGainRow } from "./PlayerExpGainRow";
 import { PLAYER_EXP_ROW } from "./playerExpLayout";
+import { guardInputAfterClose } from "./closeInputGuard";
 
 // 기존 호출부는 UI 진입점 하나만 알면 되도록 순수 표시 변환도 함께 다시 내보낸다.
 export { currencyRecordToRewardItems, productGrantsToRewardItems, type RewardPopupItem } from "./rewardPopupModel";
@@ -97,6 +98,8 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
     onClose: () => {
       hint?.destroy();
       setDebugRewardPopup(false);
+      // 연타하던 손이 닫히자마자 뒤 화면을 누르지 않게 잠깐 막는다.
+      guardInputAfterClose(scene);
       options.onConfirm?.();
     },
   }, (body, close) => {

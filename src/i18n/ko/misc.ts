@@ -171,6 +171,7 @@ export const MISC_KO = {
   "profile.record.collection": "도감 수집",
   "profile.record.unranked": "미배치",
   "profile.nextUnlock": "LV.{level} 개방 · {content}",
+  "profile.nextUnlockStage": "스테이지 {stage} 클리어 시 개방 · {content}",
   "profile.picker.title": "프로필 꾸미기",
   "profile.picker.photo": "프로필 사진",
   "profile.picker.frame": "테두리",

@@ -19,6 +19,7 @@ import { gameApi } from "../api/FakeServer";
 import { GameApiError } from "../api/contracts";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
+import { BACK_SLOT } from "../ui/popupGeometry";
 import { PortraitCard } from "../ui/PortraitCard";
 import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY, portraitGridHeadroom } from "../ui/portraitGrid";
 import { relicProgression } from "../managers/RelicProgressionManager";
@@ -32,7 +33,7 @@ import { AffinityDirection } from "../ui/AffinityDirection";
 import { AffinityBadge } from "../ui/AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "../ui/affinityIcons";
 import { addBreakthroughGradeMark } from "../ui/rarityMark";
-import { addUnitNameplate } from "../ui/unitNameplate";
+import { addUnitNameplate, addUnitPower } from "../ui/unitNameplate";
 import { combatPower } from "../core/combatPower";
 import { applyRosterView, DEFAULT_ROSTER_VIEW, type RosterView } from "../core/rosterView";
 import { RosterControls, ROSTER_CONTROLS } from "../ui/RosterControls";
@@ -86,7 +87,7 @@ const ROSTER_GRID = formationRosterGrid(BASE_WIDTH - 96);
  * 버튼 위로 그대로 자란다(실제로 그랬다). 원정 편성·도감과 같은 방식으로 이 창 안에서만
  * 흐르게 하고, 첫 줄은 머리가 잘리지 않는 공용 안전 영역만큼 내려 세운다.
  */
-const ROSTER_VIEWPORT = { top: 1026, bottom: 1500 } as const;
+const ROSTER_VIEWPORT = { top: 1026, bottom: 1640 } as const;
 /** 그리드 위 두 줄의 간격 — 아래 줄은 필터·정렬, 그 위 줄은 자동 배치 같은 편성 보조 버튼이다. */
 const ROSTER_BAR_STEP = 64;
 /** 손가락이 이 거리 이상 움직이면 편성이 아니라 스크롤로 본다. */
@@ -288,12 +289,12 @@ export class PartyScene extends Phaser.Scene {
     });
 
     this.hint = this.add
-      .text(cx, 1560, "", textStyle({ role: "body", size: 28, color: COLOR.inkDim }))
+      .text(cx, 1664, "", textStyle({ role: "body", size: 28, color: COLOR.inkDim }))
       .setOrigin(0.5, 0);
 
-    this.startButton = new Button(this, cx, 1700, {
+    this.startButton = new Button(this, cx, BACK_SLOT.y, {
       width: 560,
-      height: 150,
+      height: 130,
       label: t("party.start"),
       fontSize: 44,
       onClick: async () => {
@@ -477,6 +478,8 @@ export class PartyScene extends Phaser.Scene {
     // 체력은 적지 않는다 — 붙어 볼지 정하는 데 필요한 것은 개체별 수치가 아니라 아래의
     // 두 총 전투력이다. 이름줄은 노드 미리보기와 같은 프리팹을 쓴다(레벨 강조색·이름 흰색).
     addUnitNameplate(this, undefined, x, ENEMY_ROW + 26, enemy.level, def.name, crowded ? 24 : 30);
+    // 개체 하나의 전투력은 이름줄 바로 위, 발밑에 선다. 대치선의 총합이 누가 짊어진 무게인지 말해 준다.
+    addUnitPower(this, undefined, x, ENEMY_ROW + 22, combatPower(def.stats), crowded ? 20 : 24, COLOR.dangerText).setDepth(3);
     // **적을 누르면 상세가 열린다.** 옆에 물음표를 하나 더 세우면 SD와 표식 사이에 눌러야 할
     // 것이 둘이 되고, 정작 크게 서 있는 SD는 눌러도 아무 일이 없다.
     this.add.rectangle(x, ENEMY_ROW - PREVIEW_HEIGHT / 2, crowded ? 170 : 210, PREVIEW_HEIGHT + 70, 0xffffff, 0)
@@ -794,6 +797,7 @@ export class PartyScene extends Phaser.Scene {
         marks.add(new AffinityBadge(this, PREVIEW_COLUMNS[i] - 104, badgeTop + 49, ROLE_ICON[def.role], 38, 0.62));
         addBreakthroughGradeMark(this, marks, PREVIEW_COLUMNS[i] + 104, badgeTop - 4, 42, relicProgression.getBreakthroughGrade(id));
         addUnitNameplate(this, marks, PREVIEW_COLUMNS[i], ALLY_ROW + 26, relicProgression.getProgress(id).level, def.name, 30);
+        addUnitPower(this, marks, PREVIEW_COLUMNS[i], ALLY_ROW + 22, combatPower(relicProgression.getFinalStats(id)), 24, COLOR.accentText);
       }
 
       if (!chrome || !plate) return;

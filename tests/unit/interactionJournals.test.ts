@@ -20,7 +20,7 @@ describe("interaction journals", () => {
     expect(manager.discoverJournal("interaction-doppel-01").kind).toBe("new");
     expect(manager.markJournalRead("interaction-doppel-01")).toBe(true);
     expect(manager.markJournalRead("interaction-doppel-01")).toBe(false);
-    expect(() => manager.markJournalRead("interaction-night-01")).toThrow();
+    expect(() => manager.markJournalRead("interaction-doppel-lab-01")).toThrow();
     expect(save).toHaveBeenCalledTimes(2);
   });
 
@@ -28,9 +28,9 @@ describe("interaction journals", () => {
     const memory = new Map<string, string>();
     const storage = { getItem: (key: string) => memory.get(key) ?? null, setItem: (key: string, value: string) => { memory.set(key, value); }, removeItem: (key: string) => { memory.delete(key); } };
     const manager = new SaveManager(storage); const state = createDefaultSession();
-    state.discoveredInteractionJournalIds.add("interaction-night-01"); state.readInteractionJournalIds.add("interaction-night-01"); manager.save(state);
-    expect(manager.load()?.discoveredInteractionJournalIds).toEqual(new Set(["interaction-night-01"]));
-    expect(manager.load()?.readInteractionJournalIds).toEqual(new Set(["interaction-night-01"]));
+    state.discoveredInteractionJournalIds.add("interaction-doppel-lab-01"); state.readInteractionJournalIds.add("interaction-doppel-lab-01"); manager.save(state);
+    expect(manager.load()?.discoveredInteractionJournalIds).toEqual(new Set(["interaction-doppel-lab-01"]));
+    expect(manager.load()?.readInteractionJournalIds).toEqual(new Set(["interaction-doppel-lab-01"]));
   });
 
   it("v30 저장은 일지 목록을 빈 배열로 마이그레이션한다", () => {

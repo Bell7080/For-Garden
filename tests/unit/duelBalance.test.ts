@@ -86,5 +86,6 @@ describe("개체 대 개체 검수", () => {
      */
     expect(dian.winRate).toBeGreaterThan(0.35);
     expect(dian.winRate).toBeLessThan(0.95);
-  });
+  // 로스터 전체 라운드로빈이라 개체가 늘수록 제곱으로 늘어난다 — 기본 5초 제한은 개체 하나를 더하면 넘는다.
+  }, 30_000);
 });

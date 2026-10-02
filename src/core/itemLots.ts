@@ -65,6 +65,24 @@ export function removeItemLot<T extends LotStack>(inventory: readonly T[], itemI
   });
 }
 
+/**
+ * 지정한 묶음(`expiresAt`)에서 덜어 낸다. 가방에서 누른 칸의 병을 그대로 쓰는 길이다.
+ * 그 묶음이 없거나 모자라면 `undefined` — 부르는 쪽이 거절한다.
+ */
+export function removeItemLotAt<T extends LotStack>(inventory: readonly T[], itemId: string, quantity: number, expiresAt: string): T[] | undefined {
+  const count = Math.floor(quantity);
+  const stack = inventory.find((entry) => entry.itemId === itemId);
+  const target = stack?.lots?.find((lot) => lot.expiresAt === expiresAt);
+  if (!stack || !target || count <= 0 || target.quantity < count) return undefined;
+  return inventory.flatMap((entry) => {
+    if (entry.itemId !== itemId) return [{ ...entry }];
+    const left = entry.quantity - count;
+    if (left <= 0) return [];
+    const lots = normalizeLots(entry.lots!.map((lot) => lot.expiresAt === expiresAt ? { ...lot, quantity: lot.quantity - count } : lot));
+    return [{ ...entry, quantity: left, lots }];
+  });
+}
+
 /** 기한이 지난 묶음을 걷는다. 걷힌 수량을 함께 돌려준다. */
 export function purgeExpiredLots<T extends LotStack>(inventory: readonly T[], now: Date): { inventory: T[]; expired: number } {
   let expired = 0;

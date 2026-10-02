@@ -2746,6 +2746,7 @@ export function buildSkillViewModel(options: {
   const resistance = attacker?.def.stats.res;
   const lullabyShield = "selfLullaby" in skill && skill.selfLullaby !== undefined && resistance !== undefined
     ? Math.round(resistance * skill.selfLullaby.shieldResistancePercent / 100) : undefined;
+  const roar = "selfRoar" in skill ? skill.selfRoar : undefined;
   const whiteNoise = "kind" in skill ? (skill as Passive).whiteNoise : undefined;
   const whiteNoiseHeal = whiteNoise !== undefined && resistance !== undefined
     ? Math.round(resistance * whiteNoise.healResistancePercent / 100) : undefined;
@@ -2829,6 +2830,13 @@ export function buildSkillViewModel(options: {
       lullabyShield === undefined || !("selfLullaby" in skill) || skill.selfLullaby === undefined ? undefined : {
         id: "shield-value", term: String(lullabyShield), kind: "rule" as const,
         description: t("skill.keyword.shield.fromStat", { stat: t("skill.stat.res"), percent: skill.selfLullaby.shieldResistancePercent }),
+      },
+      // 포효의 막은 기본 몫과 한 명당 몫이 함께 서므로 태그 하나가 둘을 한 문장으로 말한다(같은 id는 첫 항목만 읽힌다).
+      roar === undefined || maxHp === undefined ? undefined : {
+        id: "shield-value", term: String(Math.round(maxHp * roar.shieldMaxHpPercent / 100)), kind: "rule" as const,
+        description: t("skill.keyword.shield.fromRoar", {
+          base: roar.shieldMaxHpPercent, per: roar.shieldPerFearedMaxHpPercent, max: roar.shieldMaxFeared,
+        }),
       },
       whiteNoiseHeal === undefined || whiteNoise === undefined ? undefined : {
         id: "heal-value", term: String(whiteNoiseHeal), kind: "rule" as const,

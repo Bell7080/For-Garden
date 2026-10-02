@@ -48,4 +48,8 @@ export const STATUS_PT_BR = {
   "status.observation.detail": "{stacks} / {max} acúmulos · restam {time}",
   "status.butcher": "Destrinche",
   "status.butcher.detail": "{stacks} / {max} acúmulos · Explode ao encher",
+  "status.intimidation": "Intimidação",
+  "status.intimidation.detail": "{stacks} / {max} acúmulos · Ao encher entra em medo",
+  "status.fear": "Medo",
+  "status.fear.detail": "Fugindo · Sem ataque básico · {time}",
 } as const;

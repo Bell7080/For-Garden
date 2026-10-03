@@ -386,6 +386,8 @@ function paintRewardCell(scene: Phaser.Scene, list: PassScrollList, row: Phaser.
       ...(ready ? { color: COLOR.missionClaim, outlineAlpha: 1 } : {}),
     });
     frame.add(addFrameAmount(scene, L.frame, formatCurrency(tile.amount)));
+    // 열지 않은 유료 칸은 액자마다 자물쇠가 선다 — 칸 끝에 하나만 두면 첫 액자는 받을 수 있는 것처럼 읽힌다.
+    if (locked && !claimed) holder.add(drawGlyph(scene, "lock", L.frame / 2 - 16, -L.frame / 2 + 16, 30, 0xd8dde6, 0.95));
     if (ready && moving) list.track(scene.tweens.add({ targets: frame, scale: { from: 1, to: Pulse.scale }, duration: Pulse.ms, yoyo: true, repeat: -1, ease: "Sine.InOut" }));
     const open = ready ? onClaim : guideForIcon(scene, tile.icon);
     if (!open) return;
@@ -400,7 +402,6 @@ function paintRewardCell(scene: Phaser.Scene, list: PassScrollList, row: Phaser.
   });
   const edge = (xs.length > 0 ? xs[xs.length - 1]! : 0) + L.frame / 2;
   if (claimed) row.add(drawGlyph(scene, "check", x + edge - 6, -L.frame / 2 + 6, 38, COLOR.accent, 1, 5));
-  else if (locked) row.add(drawGlyph(scene, "lock", x + edge - 6, -L.frame / 2 + 8, 32, 0xd8dde6, 0.95));
 }
 
 /** 미션 목록 — 레벨마다 무엇을 하면 닿는지와 지금 얼마나 왔는지. 가운데 대신 왼쪽에 같은 세로 게이지가 내려간다. */

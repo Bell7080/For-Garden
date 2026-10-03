@@ -131,6 +131,6 @@ export const LOBBY_PASS_CARD = {
   /** 다음 패스로 넘어가는 간격과 미끄러지는 시간. */
   cycleMs: 4200,
   slideMs: 460,
-  /** 넘길 때 미끄러지는 거리. 판 밖으로 나가지 않을 만큼만 — 자르는 마스크가 없다. */
-  slideDistance: 60,
+  /** 넘길 때 글이 미끄러지는 거리. 판 안쪽 여백(`pad`)보다 작아야 판 밖으로 나가지 않는다 — 자르는 마스크가 없다. */
+  slideDistance: 22,
 } as const;

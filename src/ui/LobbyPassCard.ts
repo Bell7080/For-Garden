@@ -65,7 +65,7 @@ export class LobbyPassCard {
       const target = first ? passToOpen(this.passes)?.id : keep;
       this.index = Math.max(0, this.passes.findIndex(({ id }) => id === target));
       this.current?.destroy();
-      this.current = this.paintSlide(this.index, 0);
+      this.current = this.paintSlide(this.index);
       this.paintDots();
       window.clearInterval(this.timer);
       this.timer = undefined;
@@ -80,12 +80,18 @@ export class LobbyPassCard {
     const C = LOBBY_PASS_CARD;
     const old = this.current;
     this.index = (this.index + 1) % this.passes.length;
-    const next = this.paintSlide(this.index, C.slideDistance).setAlpha(0);
+    const next = this.paintSlide(this.index).setAlpha(0);
     this.current = next;
     this.paintDots();
     this.sliding = true;
-    if (old) this.scene.tweens.add({ targets: old, x: -C.slideDistance, alpha: 0, duration: C.slideMs * 0.7, ease: "Cubic.In", onComplete: () => old.destroy() });
-    this.scene.tweens.add({ targets: next, x: 0, alpha: 1, duration: C.slideMs, delay: C.slideMs * 0.25, ease: "Cubic.Out", onComplete: () => { this.sliding = false; } });
+    // 판에 붙은 색(띠·번짐·윗선)은 제자리에서 옅어지고 짙어지기만 한다 — 옮기면 판 밖으로 삐져나온다. 글과 게이지만
+    // 판 안쪽 여백 안에서 짧게 미끄러진다.
+    const fg = (slide: Phaser.GameObjects.Container): Phaser.GameObjects.Container => slide.getData("fg") as Phaser.GameObjects.Container;
+    fg(next).x = C.slideDistance;
+    if (old) this.scene.tweens.add({ targets: old, alpha: 0, duration: C.slideMs * 0.7, ease: "Cubic.In", onComplete: () => old.destroy() });
+    if (old) this.scene.tweens.add({ targets: fg(old), x: -C.slideDistance, duration: C.slideMs * 0.7, ease: "Cubic.In" });
+    this.scene.tweens.add({ targets: next, alpha: 1, duration: C.slideMs, delay: C.slideMs * 0.25, ease: "Cubic.Out", onComplete: () => { this.sliding = false; } });
+    this.scene.tweens.add({ targets: fg(next), x: 0, duration: C.slideMs, delay: C.slideMs * 0.25, ease: "Cubic.Out" });
   }
 
   private shape(): number[] {
@@ -95,13 +101,15 @@ export class LobbyPassCard {
   }
 
   /** 패스 한 장 — 왼쪽 띠와 번지는 색, 이름·레벨, 게이지, 받을 보상(또는 진행도). */
-  private paintSlide(index: number, x: number): Phaser.GameObjects.Container {
+  private paintSlide(index: number): Phaser.GameObjects.Container {
     const C = LOBBY_PASS_CARD;
     const scene = this.scene;
     const pass = this.passes[index]!;
     const tone = PROGRESS_PASS_TONE[pass.id];
-    const slide = scene.add.container(x, 0);
+    const slide = scene.add.container(0, 0);
     this.slides.add(slide);
+    const fg = scene.add.container(0, 0);
+    slide.setData("fg", fg);
     const left = -C.width / 2;
 
     // 패스 색이 왼쪽에서 번져 들어온다 — 판은 같아도 어느 패스인지가 색으로 먼저 갈린다.
@@ -125,17 +133,18 @@ export class LobbyPassCard {
     const name = scene.add.text(contentLeft, C.nameY, this.names.get(pass.productId) ?? pass.id, textStyle({ role: "display", size: C.nameSize, color: COLOR.ink }))
       .setOrigin(0, 0.5).setStroke("#05070a", 5);
     squeezeTextToWidth(name, contentRight - levelText.width - 16 - contentLeft, 0.7);
-    slide.add([name, levelText]);
+    fg.add([name, levelText]);
 
     const barWidth = contentRight - contentLeft;
     const bar = new HoloBar(scene, contentLeft + barWidth / 2, C.gauge.y, barWidth, C.gauge.height, { color: tone, trackAlpha: 0.85, outline: true, ticks: Math.max(0, level.max - 1) });
     bar.setValue(level.fill);
-    slide.add([...bar.objects]);
+    fg.add([...bar.objects]);
 
     const ready = passReadyCount(pass);
     const note = scene.add.text(contentLeft, C.noteY, ready > 0 ? t("lobby.pass.ready", { count: ready }) : progressPassProgressLabel(pass),
       textStyle({ role: "emphasis", size: C.noteSize, color: ready > 0 ? "#ffcf7a" : COLOR.inkDim })).setOrigin(0, 0.5).setStroke("#05070a", 4);
-    slide.add(squeezeTextToWidth(note, barWidth, 0.7));
+    fg.add(squeezeTextToWidth(note, barWidth, 0.7));
+    slide.add(fg);
     if (ready > 0) {
       const breath = this.scene.tweens.add({ targets: note, alpha: { from: 1, to: 0.55 }, duration: 700, yoyo: true, repeat: -1, ease: "Sine.InOut" });
       slide.once(Phaser.GameObjects.Events.DESTROY, () => breath.remove());

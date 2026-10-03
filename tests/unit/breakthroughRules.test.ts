@@ -98,6 +98,18 @@ const CATEGORY: Record<EffectKind, Category> = {
   salvageShare: "support",
   thornStorm: "damage",
   softBreath: "survival",
+  helmetBash: "damage",
+  underline: "damage",
+  sodaFizz: "control",
+  dashBack: "damage",
+  contagiousFrenzy: "control",
+  coolingVent: "survival",
+  chainCollision: "control",
+  finalChapter: "control",
+  frostCling: "control",
+  impactCapTighten: "survival",
+  extraChapter: "damage",
+  iceShatter: "damage",
 };
 
 /** 직군이 받을 수 없는 분류. 암살자·원거리 딜러는 은신이 아닌 생존 유틸과 게이지 조작을 받지 않는다. */

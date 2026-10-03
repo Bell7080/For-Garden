@@ -1264,6 +1264,9 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effect.kind === "pressureConduct") return t("skill.breakthrough.effect.basic.pressureConduct", { stacks: trim(effect.stacks) });
     if (effect.kind === "thornJab") return t("skill.breakthrough.effect.basic.thornJab", { name: def.basic.name, percent: trim(effect.powerPercent) });
     if (effect.kind === "sleepPounce") return t("skill.breakthrough.effect.basic.sleepPounce", { percent: trim(effect.damagePercent) });
+    if (effect.kind === "helmetBash") return t("skill.breakthrough.effect.basic.helmetBash", { name: def.basic.name, percent: trim(effect.attackPercent) });
+    if (effect.kind === "underline") return t("skill.breakthrough.effect.basic.underline", { name: def.passive.name, stacks: trim(effect.stacks) });
+    if (effect.kind === "sodaFizz") return t("skill.breakthrough.effect.basic.sodaFizz", { stacks: trim(effect.stacks) });
     if (effect.kind === "leapPuddle") return t("skill.breakthrough.effect.basic.leapPuddle");
     if (effect.kind === "splitHealing") return t("skill.breakthrough.effect.basic.splitHealing", { percent: trim(effect.sharePercent) });
     // 주기 이름이 있으면 그것이 이 효과가 얹히는 그 한 방의 이름이다(칩에 뜨는 이름과 같다).
@@ -1292,6 +1295,9 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effect.kind === "deepSink") return t("skill.breakthrough.effect.ultimate.deepSink", { name: def.ultimate.name, stacks: trim(effect.stacksPerSecond) });
     if (effect.kind === "wallReflect") return t("skill.breakthrough.effect.ultimate.wallReflect", { name: def.ultimate.name, percent: trim(effect.reflectPercent) });
     if (effect.kind === "lullabyGaze") return t("skill.breakthrough.effect.ultimate.lullabyGaze", { name: def.ultimate.name, stacks: trim(effect.stacksPerHit) });
+    if (effect.kind === "dashBack") return t("skill.breakthrough.effect.ultimate.dashBack", { name: def.ultimate.name, seconds: trim(effect.delaySeconds), percent: trim(effect.powerPercent) });
+    if (effect.kind === "contagiousFrenzy") return t("skill.breakthrough.effect.ultimate.contagiousFrenzy", { stacks: trim(effect.stacks) });
+    if (effect.kind === "coolingVent") return t("skill.breakthrough.effect.ultimate.coolingVent", { name: def.ultimate.name, percent: trim(effect.healMaxHpPercentPerFrozen), max: trim(effect.maxFrozenCounted) });
     if (effect.kind === "shrapnel") return t("skill.breakthrough.effect.ultimate.shrapnel", { name: def.ultimate.name, percent: trim(effect.powerPercent) });
     if (effect.kind === "tidalEcho") return t("skill.breakthrough.effect.ultimate.tidalEcho", { seconds: trim(effect.delaySeconds), percent: trim(effect.powerPercent) });
     if (effect.kind === "healingShield") return t("skill.breakthrough.effect.ultimate.healingShield", { percent: trim(effect.shieldPercentOfHealing) });
@@ -1315,6 +1321,9 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effect.kind === "vortexDraw") return t("skill.breakthrough.effect.ferocity.vortexDraw", { min: trim(effect.minStacks) });
     if (effect.kind === "heatChain") return t("skill.breakthrough.effect.ferocity.heatChain", { count: trim(effect.keepStacks) });
     if (effect.kind === "yawnContagion") return t("skill.breakthrough.effect.ferocity.yawnContagion", { stacks: trim(effect.stacks) });
+    if (effect.kind === "chainCollision") return t("skill.breakthrough.effect.ferocity.chainCollision");
+    if (effect.kind === "finalChapter") return t("skill.breakthrough.effect.ferocity.finalChapter", { stacks: trim(effect.stacks) });
+    if (effect.kind === "frostCling") return t("skill.breakthrough.effect.ferocity.frostCling", { stacks: trim(effect.stacks) });
     if (effect.kind === "windPull") return t("skill.breakthrough.effect.ferocity.windPull", { energy: trim(effect.extraEnergy) });
     if (effect.kind === "ankleShot") return t("skill.breakthrough.effect.ferocity.ankleShot", { seconds: trim(effect.staggerSeconds) });
     if (effect.kind === "feverShare") return t("skill.breakthrough.effect.ferocity.feverShare", { percent: trim(effect.shieldPercentOfHealingDone) });
@@ -1345,6 +1354,9 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effects.passive.kind === "salvageShare") return t("skill.breakthrough.effect.passive.salvageShare", { name: def.passive.name, percent: trim(effects.passive.sharePercent) });
     if (effects.passive.kind === "thornStorm") return t("skill.breakthrough.effect.passive.thornStorm", { min: trim(effects.passive.minStacks), percent: trim(effects.passive.splashPercent) });
     if (effects.passive.kind === "softBreath") return t("skill.breakthrough.effect.passive.softBreath", { name: def.passive.name, percent: trim(effects.passive.healPercentPerSleeper), max: trim(effects.passive.maxSleepers) });
+    if (effects.passive.kind === "impactCapTighten") return t("skill.breakthrough.effect.passive.impactCapTighten", { name: def.passive.name, percent: trim(effects.passive.maxHpPercent) });
+    if (effects.passive.kind === "extraChapter") return t("skill.breakthrough.effect.passive.extraChapter", { name: def.passive.name, stacks: trim(effects.passive.extraStacks) });
+    if (effects.passive.kind === "iceShatter") return t("skill.breakthrough.effect.passive.iceShatter", { percent: trim(effects.passive.attackPercent) });
     if (effects.passive.kind === "relink") return t("skill.breakthrough.effect.passive.relink");
     if (effects.passive.kind === "huntChain") return t("skill.breakthrough.effect.passive.huntChain");
     if (effects.passive.kind === "rescueShield") {

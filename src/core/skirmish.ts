@@ -136,7 +136,7 @@ export interface Fighter extends Combatant {
    * 튕기다 멈춰 같은 기술이 화면마다 다른 무게로 읽힌다. `remaining`은 벽에 닿지 못하고
    * 맴도는 경우를 위한 안전장치일 뿐이다.
    */
-  knockback: { remaining: number; vx: number; vy: number; bouncesLeft: number } | null;
+  knockback: { remaining: number; vx: number; vy: number; bouncesLeft: number; chain?: { sourceId: string; hit: string[]; radius: number } } | null;
   /** `statusEffectEvery`가 있는 기본 공격이 실제로 몇 번 나갔는지. 그 주기에만 상태를 건다. */
   statusHitCount: number;
   /** 원정 공격 출혈의 명시된 발동 주기만 세며 스킬 상태 주기와 섞지 않는다. */
@@ -389,6 +389,10 @@ export interface Fighter extends Combatant {
     reflectBusy: boolean;
     /** 평타 돌파(`sleepPounce`) — 잠든 적을 깨우는 아군의 타격이 늘어나는 비율(%). 열려 있지 않으면 0이다. */
     sleepPouncePercent: number;
+    /** 궁극기 돌파(`dashBack`) — 첫 돌진의 출발점과 되돌아오기까지 남은 시간. `running`은 되돌아오는 돌진이 도는 동안만 켜진다. */
+    dashBack: { in: number; from: { x: number; y: number }; running: boolean } | null;
+    /** 폭주 돌파(`finalChapter`) — 광란에 걸린 채 쓰러진 몸이 기억하는 광란의 시전자. 한 번 처리하면 비운다. */
+    frenzyDeathFrom: string | null;
   };
   /**
    * 궁극기 돌파(`UltimateBreakthrough`)가 더 떨어뜨릴 남은 타격.
@@ -1192,6 +1196,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
       lullabyFor: 0,
       yawnFrom: null,
       reflectBusy: false,
+      dashBack: null,
+      frenzyDeathFrom: null,
       sleepPouncePercent: isBreakthroughSlotOpen(breakthrough, "basic") && def.breakthroughEffects?.basic?.kind === "sleepPounce" ? def.breakthroughEffects.basic.damagePercent : 0,
     },
     breakthroughEcho: null,
@@ -1678,7 +1684,12 @@ export function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEf
   if (effect.kind === "weakpoint" && sourceId !== undefined) {
     fighter.weakpoint = { sourceId, burstPower: effect.burstPower, duoHealPercent: effect.duoHealPercent };
   }
-  if (effect.kind === "curse") refreshCurse(fighter, { ...effect, seconds: effect.seconds * potency });
+  if (effect.kind === "curse") {
+    // 패시브 돌파(`extraChapter`) — 집중이 가득 찬 동안 그 시전자가 거는 저주는 상한이 더 높다.
+    const caster = sourceId ? findFighter(state, sourceId) : undefined;
+    const extra = caster ? extraChapterStacks(caster) : 0;
+    refreshCurse(fighter, { ...effect, seconds: effect.seconds * potency, maxStacks: effect.maxStacks + extra });
+  }
   if (effect.kind === "chill") refreshChill(fighter, effect);
   if (effect.kind === "drowsy" && sourceId) applyDrowsy(fighter, { ...effect, sleepSeconds: effect.sleepSeconds * potency }, events, state, sourceId);
   if (effect.kind === "intimidate" && sourceId) applyIntimidate(fighter, effect, events, state, sourceId, true);
@@ -1731,9 +1742,11 @@ function applyConcussion(
   events: SkirmishEvent[],
   state: SkirmishState,
   sourceId?: string,
+  chained = false,
 ): void {
   const attacker = sourceId ? findFighter(state, sourceId) : undefined;
-  const slam = attacker ? knockbackSlamOf(attacker) : undefined;
+  // 부딪혀 옮겨 온 뇌진탕은 평범한 한 방이다 — 확정 치명타와 날려버림까지 옮기면 한 번의 튕김이 전장을 연쇄로 날린다.
+  const slam = attacker && !chained ? knockbackSlamOf(attacker) : undefined;
   // 폭주가 확정 치명타를 얹는다. 판정을 다시 굴리지 않아 날아가는 그림과 수치가 갈리지 않는다.
   const struck = critical || slam !== undefined;
   const percent = struck ? effect.criticalMaxHpPercent : effect.maxHpPercent;
@@ -1797,6 +1810,9 @@ function launchKnockback(
     vy: (dy / gap) * trait.speed,
     bouncesLeft: trait.bounces,
   };
+  // 폭주 돌파(`chainCollision`) — 이 비행이 부딪힌 적에게 뇌진탕을 옮긴다. 한 비행에 한 적씩이다.
+  const chain = openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity);
+  if (chain?.kind === "chainCollision") target.knockback.chain = { sourceId: attacker.id, hit: [], radius: chain.radius };
   // 붙어 있던 추적을 끊어야 날아가는 동안 제자리로 되돌아오지 않는다.
   target.engaged = false;
   events.push({ kind: "knockback", fighterId: target.id, seconds: trait.seconds, bounces: trait.bounces });
@@ -2971,6 +2987,59 @@ function reactPrickle(target: Fighter, attacker: Fighter, state: SkirmishState, 
 }
 
 /** 까칠 겹 수만큼의 마법 피해를 `victim`에게 한 번 준다. 반격·가시 평타·튀는 반격이 모두 이 한 식을 지난다. */
+/**
+ * 돌파가 얹는 추가 한 방. 피해 공식·받는 피해 경계·기여도·사망 정리를 한 곳에서 지난다.
+ * 상태·반격·연쇄를 부르지 않으므로 이 한 방이 다시 무엇을 일으키지는 않는다.
+ */
+function extraStrike(owner: Fighter, victim: Fighter, power: number, stat: "atk" | "ap", damageType: "physical" | "magical", state: SkirmishState, events: SkirmishEvent[]): void {
+  if (!isFighterAlive(victim)) return;
+  const input = { power, damageType, scalingStat: stat, isCritical: false, kind: "basic" as const };
+  const raw = Math.max(1, Math.round(computeDamage(owner, defensiveDefinition(victim, state), input)));
+  const resolution = resolveReceivedDamage(victim, raw);
+  const hpBefore = victim.hp;
+  const shieldBefore = victim.shield.amount; const shieldProviderId = victim.shield.providerId;
+  applyDamage(victim, resolution.applied, events, state);
+  const credited = recordDamageContribution(state, owner.id, victim, damageType, stat,
+    computeDamageContribution(owner, input), resolution, hpBefore, shieldBefore, shieldProviderId);
+  events.push({ kind: "attack", attackerId: owner.id, targetId: victim.id, skill: "basic", amount: resolution.applied,
+    contributionAmount: credited, critical: false, animate: false, damageType, mitigated: resolution.reduced < resolution.raw });
+  if (!isFighterAlive(victim)) {
+    clearDefeatedStatuses(victim);
+    events.push({ kind: "death", fighterId: victim.id, sourceId: owner.id });
+  }
+}
+
+/** 광란에 걸린 적이 같은 편을 때리면, 맞은 적에게 광란을 건 쪽의 저주가 걸린다(케리스 `contagiousFrenzy`). */
+function contagiousFrenzy(attacker: Fighter, target: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  if (!attacker.frenzy?.sourceId || attacker.side !== target.side || !isFighterAlive(target)) return;
+  const source = findFighter(state, attacker.frenzy.sourceId);
+  if (!source) return;
+  const plan = openedBreakthrough(source, "ultimate", (effects) => effects.ultimate);
+  const curse = source.def.basic.statusEffects?.find((effect) => effect.kind === "curse");
+  if (plan?.kind !== "contagiousFrenzy" || !curse) return;
+  for (let i = 0; i < plan.stacks; i += 1) applyCombatStatusEffect(target, curse, events, state, source.id);
+}
+
+/** 폭주 중 보호막을 두른 매디를 때린 적에게 냉기가 쌓인다(`frostCling`). */
+function reactFrostCling(target: Fighter, attacker: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  if (attacker.side === target.side || !target.ferocityFever || target.shield.amount <= 0 || !isFighterAlive(attacker) || !isFighterAlive(target)) return;
+  const plan = openedBreakthrough(target, "ferocity", (effects) => effects.ferocity);
+  const chill = target.def.basic.statusEffects?.find((effect) => effect.kind === "chill");
+  if (plan?.kind !== "frostCling" || !chill) return;
+  for (let i = 0; i < plan.stacks; i += 1) applyCombatStatusEffect(attacker, chill, events, state, target.id);
+}
+
+/** 얼어 있던 적을 때리면 그 주위의 다른 적에게 냉기가 튄다(`sodaFizz`). */
+function sodaFizz(attacker: Fighter, target: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const plan = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
+  const chill = attacker.def.basic.statusEffects?.find((effect) => effect.kind === "chill");
+  if (plan?.kind !== "sodaFizz" || !chill) return;
+  for (const other of state.fighters) {
+    if (other.side === attacker.side || other.id === target.id || !isFighterAlive(other) || distance(target, other) > plan.radius) continue;
+    for (let i = 0; i < plan.stacks; i += 1) applyCombatStatusEffect(other, chill, events, state, attacker.id);
+  }
+}
+
 function prickleCounter(owner: Fighter, victim: Fighter, stacks: number, percent: number, state: SkirmishState, events: SkirmishEvent[]): void {
   const plan = owner.def.passive.prickle;
   if (!plan || stacks <= 0 || !isFighterAlive(victim)) return;
@@ -3383,6 +3452,17 @@ function tickAftershock(fighter: Fighter, dt: number, rng: () => number, state: 
  * 여기서 다시 세면 5초짜리 궁극기가 궁극기 다섯 번이 된다. 그래서 `strikeAreaAttack`을
  * 직접 부르지 않고 전용 경로를 쓴다.
  */
+/** 냉방 채널의 틱마다 얼어 있는 적 한 명당 최대 체력 비율을 회복한다(매디 `coolingVent`). */
+function ventHeal(fighter: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const plan = openedBreakthrough(fighter, "ultimate", (effects) => effects.ultimate);
+  if (plan?.kind !== "coolingVent" || !isFighterAlive(fighter)) return;
+  const frozen = state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other) && other.frozen !== null).length;
+  const counted = Math.min(frozen, plan.maxFrozenCounted);
+  if (counted <= 0) return;
+  const healed = applyHealing(state, fighter, fighter.maxHp * plan.healMaxHpPercentPerFrozen * counted / 100);
+  pushHeal(events, fighter, healed, "passive", 1);
+}
+
 function tickArtChannel(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
   const channel = fighter.artChannel;
   if (!channel) return;
@@ -3394,6 +3474,7 @@ function tickArtChannel(fighter: Fighter, dt: number, state: SkirmishState, even
 
   const ultimate = fighter.def.ultimate;
   if (!("damageType" in ultimate) || ultimate.damageType === undefined || ultimate.power === undefined) return;
+  ventHeal(fighter, state, events);
   const attacker = { ...fighter, def: offensiveDefinition(fighter) };
   const input = { ...ultimate, isCritical: false, kind: "ultimate" as const };
   // 채널링은 매초 전장 전체에 한 번씩 떨어진다. 틱마다 같은 표시를 다시 켜야 "아직 도는 중"이
@@ -3667,7 +3748,15 @@ function withoutPoison(skill: Skill): Skill {
 /** 열린 돌파를 실제 한 타격의 스킬 사본에만 투영해 정적 캐릭터 정의를 보존한다. */
 function breakthroughSkill(attacker: Fighter, useUltimate: boolean): Skill {
   let skill: Skill = useUltimate ? attacker.def.ultimate : currentBasic(attacker);
-  if (useUltimate) return skill;
+  if (useUltimate) {
+    // 되돌아오는 돌진은 줄어든 위력으로 피해와 뇌진탕만 준다 — 기절까지 다시 걸면 기절이 이어진다.
+    const back = attacker.bt.dashBack?.running ? openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate) : undefined;
+    if (back?.kind === "dashBack" && "power" in skill && skill.power !== undefined) {
+      return { ...skill, power: skill.power * back.powerPercent / 100,
+        statusEffects: skill.statusEffects?.filter((effect) => effect.kind === "concussion") } as Skill;
+    }
+    return skill;
+  }
 
   const basic = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
   if (basic?.kind === "deepBleed") {
@@ -3895,6 +3984,15 @@ function liquidatePoison(target: Fighter, state: SkirmishState, events: Skirmish
  *
  * 덧칠과 같은 갱신 규칙이다 — 중첩은 상한까지 오르고 시간은 매번 새로 센다.
  */
+/** 집중이 상한까지 쌓인 케리스가 저주에 더하는 상한(`extraChapter`). 열려 있지 않거나 덜 쌓였으면 0이다. */
+function extraChapterStacks(caster: Fighter): number {
+  const plan = openedBreakthrough(caster, "passive", (effects) => effects.passive);
+  const insight = caster.def.passive;
+  if (plan?.kind !== "extraChapter" || insight.kind !== "cursedInsight") return 0;
+  const step = caster.def.stats.ap * insight.value / 100;
+  return caster.bonusAp >= step * (insight.maxStacks ?? 1) - 1e-6 ? plan.extraStacks : 0;
+}
+
 function refreshCurse(target: Fighter, effect: Extract<CombatStatusEffect, { kind: "curse" }>): void {
   const stacks = Math.min(effect.maxStacks, (target.curse?.stacks ?? 0) + 1);
   target.curse = { remaining: effect.seconds, total: effect.seconds, stacks, percentPerStack: effect.resistancePercent, maxStacks: effect.maxStacks };
@@ -4012,6 +4110,8 @@ function clearDefeatedStatuses(fighter: Fighter): void {
   fighter.bulwark = null;
   fighter.overpaint = null;
   fighter.curse = null;
+  // 폭주 돌파(`finalChapter`)가 읽을 수 있도록 광란을 건 쪽을 남긴 뒤 비운다. 이미 비어 있으면 덮지 않는다.
+  if (fighter.frenzy?.sourceId) fighter.bt.frenzyDeathFrom = fighter.frenzy.sourceId;
   fighter.frenzy = null;
   fighter.knockback = null;
   fighter.butcher = null;
@@ -4784,6 +4884,59 @@ function huntMarkCriticalDamage(attacker: Fighter, target: Fighter, state: Skirm
  *
  * 끌어당김은 밀어내기와 달리 자리만 옮기고 기절·넉백을 만들지 않는다. 모사나 곁 `closeIn`보다 가까워지지는 않는다.
  */
+/** 궁극기 돌파(`dashBack`)의 시계. 시간이 되면 출발점을 향해 같은 돌진을 자원 없이 한 번 더 한다. */
+function tickDashBack(fighter: Fighter, dt: number, rng: () => number, state: SkirmishState, events: SkirmishEvent[]): void {
+  const back = fighter.bt.dashBack;
+  if (!back || back.running) return;
+  if (!isFighterAlive(fighter)) { fighter.bt.dashBack = null; return; }
+  const next = back.in - dt;
+  if (next > 0) { fighter.bt.dashBack = { ...back, in: next }; return; }
+  fighter.bt.dashBack = { ...back, in: 0, running: true };
+  strikeAreaAttack(fighter, rng, state, events, true, back.from, true, true);
+  fighter.bt.dashBack = null;
+}
+
+/** 튕겨 날아가는 적이 같은 편에 부딪히면 부딪힌 적에게 뇌진탕이 걸린다(`chainCollision`). 한 비행에 한 적씩이다. */
+function resolveChainCollision(flyer: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const chain = flyer.knockback?.chain;
+  if (!chain || !isFighterAlive(flyer)) return;
+  const source = findFighter(state, chain.sourceId);
+  const concussion = source?.def.basic.statusEffects?.find((effect) => effect.kind === "concussion");
+  if (!source || concussion?.kind !== "concussion") return;
+  const struck = state.fighters.find((other) => other.side === flyer.side && other.id !== flyer.id && isFighterAlive(other)
+    && other.knockback === null && !chain.hit.includes(other.id) && distance(flyer, other) <= chain.radius);
+  if (!struck) return;
+  chain.hit.push(struck.id);
+  applyConcussion(struck, concussion, false, events, state, source.id, true);
+}
+
+/** 폭주 돌파(`finalChapter`) — 광란에 걸린 채 쓰러진 적의 자리에서 주변 적에게 저주가 번진다. 쓰러진 몸마다 한 번이다. */
+function tickFinalChapter(fighter: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const sourceId = fighter.bt.frenzyDeathFrom;
+  if (sourceId === null || isFighterAlive(fighter)) return;
+  fighter.bt.frenzyDeathFrom = null;
+  const source = findFighter(state, sourceId);
+  const plan = source?.ferocityFever ? openedBreakthrough(source, "ferocity", (effects) => effects.ferocity) : undefined;
+  const curse = source?.def.basic.statusEffects?.find((effect) => effect.kind === "curse");
+  if (!source || plan?.kind !== "finalChapter" || !curse) return;
+  for (const other of state.fighters) {
+    if (other.side !== fighter.side || other.id === fighter.id || !isFighterAlive(other) || distance(fighter, other) > plan.radius) continue;
+    for (let i = 0; i < plan.stacks; i += 1) applyCombatStatusEffect(other, curse, events, state, source.id);
+  }
+}
+
+/** 빙결이 풀리는 순간 주위의 적에게 공격력 비례 물리 피해가 한 번 터진다(매디 `iceShatter`). */
+function shatterIce(frozen: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const caster = state.fighters.find((other) => other.side !== frozen.side && isFighterAlive(other)
+    && openedBreakthrough(other, "passive", (effects) => effects.passive)?.kind === "iceShatter");
+  const plan = caster ? openedBreakthrough(caster, "passive", (effects) => effects.passive) : undefined;
+  if (!caster || plan?.kind !== "iceShatter") return;
+  for (const other of state.fighters) {
+    if (other.side !== frozen.side || other.id === frozen.id || !isFighterAlive(other) || distance(frozen, other) > plan.radius) continue;
+    extraStrike(caster, other, plan.attackPercent, "atk", "physical", state, events);
+  }
+}
+
 function tickTankBreakthroughs(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
   if (fighter.bt.lullabyFor > 0) fighter.bt.lullabyFor = Math.max(0, fighter.bt.lullabyFor - dt);
   if (!isFighterAlive(fighter)) { fighter.bt.sinks = []; return; }
@@ -5173,7 +5326,7 @@ function advanceKnockback(fighter: Fighter, dt: number, arena: Arena): void {
     fighter.knockback = null;
     return;
   }
-  fighter.knockback = { remaining, vx, vy, bouncesLeft };
+  fighter.knockback = { ...flight, remaining, vx, vy, bouncesLeft };
 }
 
 /** 튕겨 날아가는 값 중 스킬이 정하지 않는 부분. 화면의 `knockbackFlight`와 같은 감쇠를 쓴다. */
@@ -5556,7 +5709,10 @@ export function resolveReceivedDamage(target: Fighter, rawAmount: number): Recei
 function applyImpactCap(target: Fighter, amount: number): number {
   const passive = target.def.passive;
   if (passive.kind !== "impactCap") return amount;
-  const cap = target.maxHp * (passive.impactCapMaxHpPercent ?? 100) / 100;
+  // 패시브 돌파(`impactCapTighten`) — 열려 있으면 상한이 더 낮아진다.
+  const tight = openedBreakthrough(target, "passive", (effects) => effects.passive);
+  const capPercent = tight?.kind === "impactCapTighten" ? Math.min(passive.impactCapMaxHpPercent ?? 100, tight.maxHpPercent) : passive.impactCapMaxHpPercent ?? 100;
+  const cap = target.maxHp * capPercent / 100;
   return amount <= cap ? amount : Math.max(1, Math.round(cap));
 }
 
@@ -6274,6 +6430,7 @@ function strike(
   // 방금 건 저주를 자기가 다시 읽어 패시브와 전이가 늘 발동한다.
   const targetWasCursed = target.curse !== null;
   const targetCurseWasMaxed = isCurseMaxed(target);
+  const targetWasFrozen = target.frozen !== null;
   // 청산 여부도 **이번 타격이 독을 바르기 전**의 상태로 정한다. 뒤에서 보면 방금 자기가 바른
   // 독을 그 자리에서 도로 터뜨려, 바르는 차례가 영영 오지 않는다.
   const encoreLiquidation = !useUltimate && attackingInFever
@@ -6369,11 +6526,18 @@ function strike(
   const periodicBonus = periodicBonusInput ? computeDamage(damageAttacker, damageTarget, periodicBonusInput) : 0;
   // 원정 공격력은 전투 스냅샷에 이미 반영됐으므로 공용 피해 공식에서 다시 곱하지 않는다.
   const pounce = sleepPounceMultiplier(state, attacker, target);
-  const rawAmount = Math.max(1, Math.round((computeDamage(damageAttacker, damageTarget, damageInput) + defenseBonus + periodicBonus)
+  // 기본 공격 돌파(`helmetBash`) — 보호막이 남아 있는 동안 평타마다 공격력 비례 물리 피해가 한 번 더 들어간다. 막은 깎지 않는다.
+  const bashPlan = !useUltimate && attacker.shield.amount > 0 ? openedBreakthrough(attacker, "basic", (effects) => effects.basic) : undefined;
+  const bashInput = bashPlan?.kind === "helmetBash"
+    ? { ...damageInput, power: bashPlan.attackPercent, scalingStat: "atk" as const, secondaryScaling: undefined, damageType: "physical" as const }
+    : undefined;
+  const bashBonus = bashInput ? computeDamage(damageAttacker, damageTarget, bashInput) : 0;
+  const rawAmount = Math.max(1, Math.round((computeDamage(damageAttacker, damageTarget, damageInput) + defenseBonus + periodicBonus + bashBonus)
     * traitDamageMultiplier(state, attacker, target) * nape * pounce));
   const contributionAmount = Math.max(0, (computeDamageContribution(damageAttacker, damageInput)
     + (defenseBonus > 0 ? computeDamageContribution(attacker, { ...damageInput, power: splashTrait.effectId === "splashDamage" ? splashTrait.defenseDamagePercent ?? 0 : 0, scalingStat: "def", damageType: "physical" }) : 0)
-    + (periodicBonusInput ? computeDamageContribution(damageAttacker, periodicBonusInput) : 0)) * nape * pounce);
+    + (periodicBonusInput ? computeDamageContribution(damageAttacker, periodicBonusInput) : 0)
+    + (bashInput ? computeDamageContribution(damageAttacker, bashInput) : 0)) * nape * pounce);
   // 방어·패시브·상성 뒤의 모든 개별 경감은 공용 HP 피해 경계에서 한 번만 적용한다.
   const resolution = resolveReceivedDamage(target, rawAmount);
   const amount = resolution.applied;
@@ -6403,6 +6567,9 @@ function strike(
     overflowPrickle(attacker, state, events);
   }
   gazeDrowsy(target, attacker, state, events);
+  contagiousFrenzy(attacker, target, state, events);
+  reactFrostCling(target, attacker, state, events);
+  if (!useUltimate && targetWasFrozen) sodaFizz(attacker, target, state, events);
   if (!useUltimate) pullStruck(attacker, target, state, events);
 
   const transfer = useUltimate ? attacker.def.ultimate.damageTransfer : undefined;
@@ -6583,7 +6750,10 @@ function strike(
     // 한 번의 공격이 사슬 길이만큼 누적되지 않는다.
     if (attacker.def.passive.kind === "cursedInsight" && targetWasCursed) {
       const step = attacker.def.stats.ap * attacker.def.passive.value / 100;
-      attacker.bonusAp = Math.min(step * (attacker.def.passive.maxStacks ?? 1), attacker.bonusAp + step);
+      // 기본 공격 돌파(`underline`) — 저주가 이미 최대인 적을 직접 적중하면 집중이 더 빨리 쌓인다.
+      const underline = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
+      const pace = underline?.kind === "underline" && targetCurseWasMaxed ? underline.stacks : 1;
+      attacker.bonusAp = Math.min(step * (attacker.def.passive.maxStacks ?? 1), attacker.bonusAp + step * pace);
     }
     // 폭주도 같은 이유로 **직접 적중**에만 걸린다.
     const gaze = attacker.def.ferocityTrait;
@@ -6802,6 +6972,9 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     // 그림만 출발점에 남겨 둔다. 이 잔상이 줄어드는 동안 몸이 길을 달려 들어간다.
     beginChargeGlide(attacker, charge.from);
     events.push({ kind: "charge", fighterId: attacker.id, from: charge.from, to: charge.to });
+    // 궁극기 돌파(`dashBack`) — 첫 돌진 뒤 출발점으로 한 번 더 뚫고 돌아온다. 돌아오는 돌진은 다시 돌아오지 않는다.
+    const back = useUltimate && attacker.bt.dashBack === null ? openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate) : undefined;
+    if (back?.kind === "dashBack") attacker.bt.dashBack = { in: back.delaySeconds, from: charge.from, running: false };
   }
 
   // 소비·팀 보조·야성 획득은 명중 수가 아니라 기술 사용 횟수에 묶는다. 되찍는 타격은 이미
@@ -6869,6 +7042,8 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     // 스킬에 맞았느냐에 따라 겹을 주기도 하고 안 주기도 한다.
     gainElation(target);
     reactPrickle(target, attacker, state, events);
+    contagiousFrenzy(attacker, target, state, events);
+    reactFrostCling(target, attacker, state, events);
     // 광역 걸음도 같은 규칙으로 끌어당긴다 — 단일과 광역에서 갈리면 같은 걸음이 대상 수에 따라 다른 일을 한다.
     if (!useUltimate) pullStruck(attacker, target, state, events);
     // 집중도 **적중마다** 쌓는다. 단일 타격 쪽에만 두면 갈래화살이 셋을 맞혀도 겹이 하나도
@@ -6927,7 +7102,8 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
       if (shield > 0) grantShield(state, ally, attacker.id, shield, events);
     }
   }
-  gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state, events);
+  // 되돌아오는 돌진은 이미 치른 한 번의 몫이라 야성을 다시 올리지 않는다.
+  if (!attacker.bt.dashBack?.running) gainFerocity(attacker, useUltimate ? FEROCITY_RULES.ultimateGain : FEROCITY_RULES.basicGain, state, events);
 }
 
 /**
@@ -7570,6 +7746,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
         const dealt = applyDamage(fighter, amount, events, state);
         events.push({ kind: "concussion", fighterId: fighter.id, amount: dealt, critical: false });
         if (!isFighterAlive(fighter)) { clearDefeatedStatuses(fighter); events.push({ kind: "death", fighterId: fighter.id }); }
+        shatterIce(fighter, state, events);
       } else {
         fighter.frozen = { ...fighter.frozen, remaining };
       }
@@ -7661,6 +7838,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     tickLooming(fighter, dt, state, events);
     tickFortress(fighter, dt, state, events);
     tickAftershock(fighter, dt, rng, state, events);
+    tickDashBack(fighter, dt, rng, state, events);
     // 폭주 회복은 행동 불능과 무관한 전투 시간으로 돌아 탱커가 제어당해도 계약한 생존력을 유지한다.
     tickFerocityRegen(fighter, dt, state, events);
     tickBattleHeatAura(fighter, dt, state, events);
@@ -7688,6 +7866,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     // 날아가는 중에는 벽을 튕기며 실제로 좌표가 움직인다. 기절과 달리 제자리에 서 있지 않다.
     if (fighter.knockback) {
       advanceKnockback(fighter, dt, state.arena);
+      resolveChainCollision(fighter, state, events);
       continue;
     }
     if (fighter.stunnedFor > 0 || fighter.staggeredFor > 0 || fighter.frozen) {
@@ -8186,7 +8365,7 @@ export function stepSkirmish(state: SkirmishState, dt: number, rng: () => number
       drainFerocityFever(fighter, step);
       if (feverBefore && !fighter.ferocityFever) applyFerocityBreakthrough(fighter, state, events);
     });
-    state.fighters.forEach((fighter) => { tickUltimateBreakthrough(fighter, step, state, events); tickTidalEchoes(fighter, step, state, events); tickArrowEchoes(fighter, step, state, events); tickAfterimages(fighter, step, state, events); tickTankBreakthroughs(fighter, step, state, events); });
+    state.fighters.forEach((fighter) => { tickUltimateBreakthrough(fighter, step, state, events); tickTidalEchoes(fighter, step, state, events); tickArrowEchoes(fighter, step, state, events); tickAfterimages(fighter, step, state, events); tickTankBreakthroughs(fighter, step, state, events); tickFinalChapter(fighter, state, events); });
     remaining -= step;
   }
   // 타이머 값 자체가 아니라 호출 전후 경계를 비교해 진입·연장·해제를 명확히 구분한다.

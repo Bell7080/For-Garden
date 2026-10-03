@@ -2495,6 +2495,19 @@ export type BasicBreakthrough = {
   kind: "sleepPounce";
   /** 늘어나는 피해(%). */
   damagePercent: number;
+} | {
+  /** 보호막이 남아 있는 동안 기본 공격마다 공격력 비례 물리 피해가 한 번 더 들어간다(파치). 막은 소모하지 않는다. */
+  kind: "helmetBash";
+  attackPercent: number;
+} | {
+  /** 저주가 최대인 적을 직접 적중하면 「열 번 찍어」의 집중이 이 수만큼씩 쌓인다(케리스). 평소에는 한 겹이다. */
+  kind: "underline";
+  stacks: number;
+} | {
+  /** 얼어 있는 적을 때리면 맞은 적 주위의 다른 적에게 냉기가 이 수만큼 튄다(매디). */
+  kind: "sodaFizz";
+  radius: number;
+  stacks: number;
 } | BreakthroughNone;
 
 /**
@@ -2625,6 +2638,20 @@ export type UltimateBreakthrough = {
   kind: "lullabyGaze";
   /** 한 번 때릴 때 쌓이는 겹 수. */
   stacksPerHit: number;
+} | {
+  /** 궁극기 돌진이 끝난 뒤 출발점으로 한 번 더 돌아온다. 두 번째는 피해와 뇌진탕만 준다(파치). */
+  kind: "dashBack";
+  delaySeconds: number;
+  powerPercent: number;
+} | {
+  /** 광란에 걸린 적이 같은 편을 때릴 때마다 맞은 적에게 저주가 이 수만큼 걸린다(케리스). */
+  kind: "contagiousFrenzy";
+  stacks: number;
+} | {
+  /** 냉방 채널의 매 틱, 얼어 있는 적 한 명당 최대 체력 비율을 회복한다(매디). */
+  kind: "coolingVent";
+  healMaxHpPercentPerFrozen: number;
+  maxFrozenCounted: number;
 } | BreakthroughNone;
 
 /**
@@ -2736,6 +2763,19 @@ export type FerocityBreakthrough = {
   stacks: number;
   /** 번지는 반경(px). */
   radius: number;
+} | {
+  /** 폭주로 튕겨 나간 적이 다른 적에게 부딪히면 부딪힌 적에게 뇌진탕이 걸린다. 튕김 한 번에 한 적씩(파치). */
+  kind: "chainCollision";
+  radius: number;
+} | {
+  /** 폭주 중 광란에 걸린 적이 쓰러지면 그 자리 주변 적에게 저주가 번진다(케리스). */
+  kind: "finalChapter";
+  radius: number;
+  stacks: number;
+} | {
+  /** 폭주 중 보호막이 남아 있는 동안 매디를 때린 적에게 냉기가 쌓인다(매디). */
+  kind: "frostCling";
+  stacks: number;
 } | BreakthroughNone;
 
 /**
@@ -2849,6 +2889,19 @@ export type PassiveBreakthrough = {
   healPercentPerSleeper: number;
   /** 세는 잠든 적의 상한. */
   maxSleepers: number;
+} | {
+  /** 한 방 상한을 더 낮춘다(최대 체력 %, 파치). */
+  kind: "impactCapTighten";
+  maxHpPercent: number;
+} | {
+  /** 집중이 가득 차면 저주 상한이 이 수만큼 늘어난다(케리스). */
+  kind: "extraChapter";
+  extraStacks: number;
+} | {
+  /** 빙결이 풀리는 순간 주위의 적에게 공격력 비례 물리 피해가 한 번 터진다(매디). */
+  kind: "iceShatter";
+  radius: number;
+  attackPercent: number;
 } | BreakthroughNone;
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */

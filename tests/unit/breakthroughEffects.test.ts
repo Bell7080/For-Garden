@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createSkirmish, fighterReach, fireUltimate, findFighter, refreshBleed, stepSkirmish, tryTriggerEmergencyRecovery, tryTriggerLowHpVanish, type Arena, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
+import { applyCombatStatusEffect, applyFrenzy, receivedDamage, createSkirmish, fighterReach, fireUltimate, findFighter, refreshBleed, stepSkirmish, tryTriggerEmergencyRecovery, tryTriggerLowHpVanish, type Arena, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
 import { FEROCITY_RULES } from "../../src/core/ferocity";
 import { BREAKTHROUGH_STEPS, isBreakthroughSlotOpen } from "../../src/core/relicProgression";
 import { getRelic, RELICS } from "../../src/data/relics";
@@ -1405,6 +1405,219 @@ describe("탱커 계약 한계 돌파 — 모사나·켄토·안카", () => {
     expect(breakthroughEffectText(getRelic("mosana"), "basic")).toContain("2겹");
     expect(breakthroughEffectText(getRelic("kento"), "ultimate")).toContain("25%");
     expect(breakthroughEffectText(getRelic("anka"), "passive")).toContain("25%");
+  });
+});
+
+describe("전사 한계 돌파 — 파치·케리스·매디", () => {
+  const NEVER = () => 0.99;
+  function setup(allyIds: string[], enemyIds: string[], breakthrough: number): SkirmishState {
+    const state = createSkirmish(allyIds.map(getRelic), enemyIds.map(getRelic), ARENA, {}, { [allyIds[0]]: breakthrough });
+    for (const fighter of state.fighters) { fighter.attackCooldown = 999; fighter.retargetIn = 999; fighter.stealthFor = 0; }
+    state.fighters.filter((fighter) => fighter.side === "enemy").forEach((foe, index) => { foe.maxHp = 10_000_000; foe.hp = foe.maxHp; foe.x = 540 + index * 60; foe.y = 1_000; });
+    const main = findFighter(state, "player-0")!;
+    main.x = 500; main.y = 1_000;
+    return state;
+  }
+  const run = (state: SkirmishState, seconds: number): SkirmishEvent[] => {
+    const events: SkirmishEvent[] = [];
+    for (let tick = 0; tick < seconds * 20; tick += 1) events.push(...stepSkirmish(state, 0.05, NEVER));
+    return events;
+  };
+  const swing = (state: SkirmishState) => {
+    const main = findFighter(state, "player-0")!;
+    main.attackCooldown = 0;
+    main.targetId = findFighter(state, "enemy-0")!.id;
+  };
+  const curseOf = (id: string) => getRelic(id).basic.statusEffects!.find((effect) => effect.kind === "curse")!;
+
+  describe("파치", () => {
+    it("은 보호막이 남아 있는 동안에만 철거 스윙에 추가 피해를 얹는다(별 II)", () => {
+      const damage = (breakthrough: number, shield: number) => {
+        const state = setup(["pachi"], ["toby"], breakthrough);
+        const pachi = findFighter(state, "player-0")!;
+        pachi.shield = { amount: shield, providerId: pachi.id };
+        swing(state);
+        const foe = findFighter(state, "enemy-0")!;
+        const before = foe.hp;
+        run(state, 0.1);
+        return before - foe.hp;
+      };
+      expect(damage(1, 500)).toBeGreaterThan(damage(0, 500));
+      expect(damage(1, 0)).toBe(damage(0, 0));
+    });
+
+    it("은 궁극기 돌진을 한 번 더 출발점으로 되돌려 돌진이 두 번이 된다(별 III)", () => {
+      const charges = (breakthrough: number) => {
+        const state = setup(["pachi"], ["toby"], breakthrough);
+        const pachi = findFighter(state, "player-0")!;
+        pachi.energy = 1_000;
+        const events = [...fireUltimate(state, pachi.id, NEVER), ...run(state, 1.6)];
+        return events.filter((event) => event.kind === "charge").length;
+      };
+      expect(charges(0)).toBe(1);
+      expect(charges(2)).toBe(2);
+    });
+
+    it("은 폭주로 튕겨 나간 적이 다른 적에게 부딪히면 뇌진탕을 옮긴다(별 IV)", () => {
+      const struck = (breakthrough: number) => {
+        const state = setup(["pachi"], ["toby", "amo"], breakthrough);
+        const pachi = findFighter(state, "player-0")!;
+        pachi.ferocityFever = true; pachi.ferocity = FEROCITY_RULES.max;
+        pachi.statusHitCount = 2;
+        const second = findFighter(state, "enemy-1")!;
+        second.x = 690; second.y = 1_000;
+        swing(state);
+        const before = second.hp;
+        run(state, 0.6);
+        return before - second.hp;
+      };
+      expect(struck(3)).toBeGreaterThan(0);
+      expect(struck(0)).toBe(0);
+    });
+
+    it("은 한 방 상한이 최대 체력의 20%로 내려가 네 방은 버틴다(별 V)", () => {
+      const applied = (breakthrough: number) => {
+        const state = setup(["pachi"], ["toby"], breakthrough);
+        const pachi = findFighter(state, "player-0")!;
+        return receivedDamage(pachi, pachi.maxHp * 10) / pachi.maxHp;
+      };
+      expect(applied(3)).toBeCloseTo(0.4, 2);
+      expect(applied(FULL_TANK)).toBeCloseTo(0.2, 2);
+    });
+  });
+
+  describe("케리스", () => {
+    it("은 저주가 최대인 적을 때리면 집중이 두 겹씩 쌓인다(별 II)", () => {
+      const gained = (breakthrough: number) => {
+        const state = setup(["keris"], ["toby"], breakthrough);
+        const foe = findFighter(state, "enemy-0")!;
+        foe.curse = { remaining: 8, total: 8, stacks: 3, percentPerStack: 15, maxStacks: 3 };
+        swing(state);
+        run(state, 0.1);
+        return findFighter(state, "player-0")!.bonusAp;
+      };
+      expect(gained(1)).toBeCloseTo(gained(0) * 2, 5);
+    });
+
+    it("은 광란에 걸린 적이 같은 편을 때리면 맞은 적에게 저주를 건다(별 III)", () => {
+      const stacks = (breakthrough: number) => {
+        const state = setup(["keris"], ["toby", "amo"], breakthrough);
+        const keris = findFighter(state, "player-0")!;
+        const [a, b] = [findFighter(state, "enemy-0")!, findFighter(state, "enemy-1")!];
+        applyFrenzy(a, { kind: "frenzy", seconds: 4, attackSpeedPercent: 50 }, keris.id);
+        a.attackCooldown = 0; a.targetId = b.id;
+        run(state, 1);
+        return b.curse?.stacks ?? 0;
+      };
+      expect(stacks(2)).toBeGreaterThan(0);
+      expect(stacks(0)).toBe(0);
+    });
+
+    it("은 폭주 중 광란에 걸린 적이 쓰러지면 주변에 저주를 번뜨린다(별 IV)", () => {
+      const stacks = (breakthrough: number) => {
+        const state = setup(["keris"], ["toby", "amo"], breakthrough);
+        const keris = findFighter(state, "player-0")!;
+        keris.ferocityFever = true; keris.ferocity = FEROCITY_RULES.max;
+        const [a, b] = [findFighter(state, "enemy-0")!, findFighter(state, "enemy-1")!];
+        a.maxHp = 100; a.hp = 1;
+        applyFrenzy(a, { kind: "frenzy", seconds: 4, attackSpeedPercent: 50 }, keris.id);
+        refreshBleed(a, 5, 50, [], keris.id);
+        run(state, 1.5);
+        return b.curse?.stacks ?? 0;
+      };
+      expect(stacks(3)).toBe(2);
+      expect(stacks(0)).toBe(0);
+    });
+
+    it("은 집중이 가득 차야 저주 상한이 한 겹 열린다(별 V)", () => {
+      const cap = (breakthrough: number, full: boolean) => {
+        const state = setup(["keris"], ["toby"], breakthrough);
+        const keris = findFighter(state, "player-0")!;
+        const passive = keris.def.passive;
+        if (passive.kind !== "cursedInsight") throw new Error("cursedInsight");
+        if (full) keris.bonusAp = keris.def.stats.ap * passive.value / 100 * (passive.maxStacks ?? 1);
+        const foe = findFighter(state, "enemy-0")!;
+        for (let i = 0; i < 6; i += 1) applyCombatStatusEffect(foe, curseOf("keris"), [], state, keris.id);
+        return foe.curse?.stacks ?? 0;
+      };
+      expect(cap(FULL_TANK, true)).toBe(4);
+      expect(cap(FULL_TANK, false)).toBe(3);
+      expect(cap(3, true)).toBe(3);
+    });
+  });
+
+  describe("매디", () => {
+    const freeze = (state: SkirmishState, id: string, remaining = 20) => {
+      findFighter(state, id)!.frozen = { remaining, total: remaining, maxHpPercentOnExpire: 0 };
+    };
+
+    it("은 얼어 있는 적을 때리면 주위의 다른 적에게 냉기가 튄다(별 II)", () => {
+      const chill = (breakthrough: number) => {
+        const state = setup(["maddy"], ["toby", "amo"], breakthrough);
+        freeze(state, "enemy-0");
+        swing(state);
+        run(state, 0.1);
+        return findFighter(state, "enemy-1")!.chill?.stacks ?? 0;
+      };
+      expect(chill(1)).toBe(1);
+      expect(chill(0)).toBe(0);
+    });
+
+    it("은 냉방 채널이 얼어 있는 적의 수만큼 체력을 되돌려 준다(별 III)", () => {
+      const healed = (breakthrough: number) => {
+        const state = setup(["maddy"], ["toby", "amo"], breakthrough);
+        const maddy = findFighter(state, "player-0")!;
+        maddy.hp = maddy.maxHp * 0.5;
+        freeze(state, "enemy-0"); freeze(state, "enemy-1");
+        maddy.energy = 1_000;
+        const before = maddy.hp;
+        fireUltimate(state, maddy.id, NEVER);
+        run(state, 2.5);
+        return maddy.hp - before;
+      };
+      expect(healed(2)).toBeGreaterThan(healed(0));
+    });
+
+    it("은 폭주 중 보호막이 남아 있으면 때린 적에게 냉기가 쌓인다(별 IV)", () => {
+      const chill = (breakthrough: number) => {
+        const state = setup(["maddy"], ["toby"], breakthrough);
+        const maddy = findFighter(state, "player-0")!;
+        maddy.ferocityFever = true; maddy.ferocity = FEROCITY_RULES.max;
+        maddy.shield = { amount: 5_000, providerId: maddy.id };
+        const foe = findFighter(state, "enemy-0")!;
+        foe.attackCooldown = 0; foe.targetId = maddy.id;
+        run(state, 0.3);
+        return foe.chill?.stacks ?? 0;
+      };
+      expect(chill(3)).toBeGreaterThan(0);
+      expect(chill(0)).toBe(0);
+    });
+
+    it("은 빙결이 풀리는 순간 주위의 적에게 물리 피해가 한 번 터진다(별 V)", () => {
+      const lost = (breakthrough: number) => {
+        const state = setup(["maddy"], ["toby", "amo"], breakthrough);
+        freeze(state, "enemy-0", 0.1);
+        const near = findFighter(state, "enemy-1")!;
+        const before = near.hp;
+        run(state, 0.5);
+        return before - near.hp;
+      };
+      expect(lost(FULL_TANK)).toBeGreaterThan(0);
+      expect(lost(3)).toBe(0);
+    });
+  });
+
+  it("은 세 개체 모두 네 슬롯 문장을 만든다", () => {
+    for (const id of ["pachi", "keris", "maddy"]) {
+      for (const slot of ["basic", "ultimate", "ferocity", "passive"] as const) {
+        const text = breakthroughEffectText(getRelic(id), slot);
+        expect(text, `${id} ${slot}`).toBeDefined();
+        expect(text, `${id} ${slot}`).not.toMatch(/\{[a-zA-Z!]+\}/);
+      }
+    }
+    expect(breakthroughEffectText(getRelic("pachi"), "passive")).toContain("20%");
+    expect(breakthroughEffectText(getRelic("pachi"), "basic")).toContain("25%");
+    expect(breakthroughEffectText(getRelic("keris"), "passive")).toContain("1겹");
   });
 });
 

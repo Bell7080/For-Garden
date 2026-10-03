@@ -1623,6 +1623,13 @@ export const RELICS: RelicDef[] = [
       speed: 2400,
       bounces: 3,
     },
+    // 한계 돌파: 헬멧 박치기(막 있는 동안 평타 추가 피해) · 돌진 왕복 · 연쇄 충돌 · 더 낮은 한 방 상한.
+    breakthroughEffects: {
+      basic: { kind: "helmetBash", attackPercent: 25 },
+      ultimate: { kind: "dashBack", delaySeconds: 0.6, powerPercent: 60 },
+      ferocity: { kind: "chainCollision", radius: 80 },
+      passive: { kind: "impactCapTighten", maxHpPercent: 20 },
+    },
     passive: {
       // kind가 impactCap인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
@@ -1835,6 +1842,13 @@ export const RELICS: RelicDef[] = [
     // 광란은 폭주에서도 나오지만 **직접 적중**에만 걸린다. 전이까지 발동하면 한 번의 공격이
     // 사슬 길이만큼 적을 돌려세워, 폭주 동안 상대 편이 통째로 멈춘 것처럼 된다.
     ferocityTrait: { name: "나만 봐", effectId: "frenzyGaze", seconds: 2, attackSpeedPercent: 50 },
+    // 한계 돌파: 밑줄 긋기(집중 2겹) · 서로 물들기 · 결말의 여운 · 한 장 더(저주 상한).
+    breakthroughEffects: {
+      basic: { kind: "underline", stacks: 2 },
+      ultimate: { kind: "contagiousFrenzy", stacks: 1 },
+      ferocity: { kind: "finalChapter", radius: 400, stacks: 2 },
+      passive: { kind: "extraChapter", extraStacks: 1 },
+    },
     passive: {
       // kind가 cursedInsight인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
@@ -3049,6 +3063,13 @@ export const RELICS: RelicDef[] = [
       ferocityGain: 0,
     },
     ferocityTrait: { name: "모피", effectId: "furCoat", cleanseAllOnEntry: true, shieldMaxHpPercent: 25, defenseResistancePercent: 100 },
+    // 한계 돌파: 사이다 거품 · 냉방 환기 · 털에 얼어붙음 · 얼음 깨기.
+    breakthroughEffects: {
+      basic: { kind: "sodaFizz", radius: 300, stacks: 1 },
+      ultimate: { kind: "coolingVent", healMaxHpPercentPerFrozen: 0.5, maxFrozenCounted: 3 },
+      ferocity: { kind: "frostCling", stacks: 1 },
+      passive: { kind: "iceShatter", radius: 300, attackPercent: 120 },
+    },
     passive: {
       // kind가 frostboundDominion인 패시브는 passiveDescription()이 구조화 필드로 문장을 만드므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.

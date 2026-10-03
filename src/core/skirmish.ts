@@ -11,6 +11,7 @@ import { augmentAppliesTo, bleedOnAttackEffect, conditionalAttackPowerMultiplier
 import type { BasicAttack, BasicAttackStep, BreakthroughEffects, CombatStatusEffect, FerocityTrait, ReachTier, RelicDef, Side, Skill, Stats, TeamBuff } from "./types";
 import { ULTIMATE_ENERGY_MAX } from "./ultimate";
 import { deriveSummonStats } from "./summonStats";
+import { PUP } from "./pup";
 import { restoreCueIntensity, stealthTransition, type CombatEffectCue } from "./combatEffects";
 import {
   accumulateDamageContribution, addContribution, contributionOwnerId, contributionSnapshot, createBattleContributions, type BattleContributionRow, type BattleContributions,
@@ -393,6 +394,10 @@ export interface Fighter extends Combatant {
     dashBack: { in: number; from: { x: number; y: number }; running: boolean } | null;
     /** 폭주 돌파(`finalChapter`) — 광란에 걸린 채 쓰러진 몸이 기억하는 광란의 시전자. 한 번 처리하면 비운다. */
     frenzyDeathFrom: string | null;
+    /** 평타 돌파(`pupLitter`) — 새끼 늑대를 부르고 나서 센 기본 공격 횟수. 부를 때마다 0으로 되돌린다. */
+    pupCount: number;
+    /** 새끼 늑대(`isPupFighter`)의 남은 수명(초). 새끼가 아닌 몸은 늘 0이다. */
+    pupLife: number;
   };
   /**
    * 궁극기 돌파(`UltimateBreakthrough`)가 더 떨어뜨릴 남은 타격.
@@ -1198,6 +1203,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
       reflectBusy: false,
       dashBack: null,
       frenzyDeathFrom: null,
+      pupCount: 0,
+      pupLife: 0,
       sleepPouncePercent: isBreakthroughSlotOpen(breakthrough, "basic") && def.breakthroughEffects?.basic?.kind === "sleepPounce" ? def.breakthroughEffects.basic.damagePercent : 0,
     },
     breakthroughEcho: null,
@@ -1349,7 +1356,37 @@ function createPackFighters(owners: readonly Fighter[], augmentEffects: readonly
     wolf.resummonRule = spec.resummon;
     wolf.facing = owner.facing;
     return wolf;
-  }));
+  })).concat(owners.flatMap((owner) => createPupPool(owner, augmentEffects)));
+}
+
+/** 새끼 늑대는 `:pup-N` 이름공간으로 서고 기여도·승패·도감에서는 주인의 몸으로만 센다. */
+export function isPupFighter(fighter: Fighter): boolean {
+  return fighter.summonOwnerId !== null && fighter.id.includes(":pup-");
+}
+
+/**
+ * 새끼 늑대 자리를 **미리 열 개 만들어 쓰러진 채로** 둔다.
+ *
+ * 전투 도중에 몸을 새로 만들면 화면이 Puppet을 비동기로 새로 세워야 하는데(`spawnFighters`는 열릴 때 한 번뿐이다), 자리를
+ * 미리 두면 부르는 일이 쓰러진 늑대를 일으키는 것(`reviveWolf`)과 같은 사건이 된다 — 화면은 새 경로를 알 필요가 없다.
+ * 평타 돌파(`pupLitter`)를 연 디안만 이 자리를 갖는다. 쿠로·시로 정의를 번갈아 쓰고, 능력치는 늑대 둘의 `PUP.statRatio`다.
+ */
+function createPupPool(owner: Fighter, augmentEffects: readonly ExpeditionAugmentEffect[]): Fighter[] {
+  const summons = owner.def.summons ?? [];
+  if (summons.length === 0 || openedBreakthrough(owner, "basic", (effects) => effects.basic)?.kind !== "pupLitter") return [];
+  return Array.from({ length: PUP.maxAlive }, (_, index) => {
+    const spec = summons[index % summons.length];
+    const ratio = PUP.statRatio;
+    const stats = deriveSummonStats(owner.def.stats, {
+      ...spec, scaling: { hp: spec.scaling.hp * ratio, atk: spec.scaling.atk * ratio, def: spec.scaling.def * ratio, res: spec.scaling.res * ratio },
+    });
+    const pup = makeFighter({ ...spec.def, stats }, owner.side, index, owner.x, owner.y, 0, 0, PUP.bodyScale, augmentEffects);
+    pup.id = `${owner.id}:pup-${index}`;
+    pup.summonOwnerId = owner.id;
+    pup.facing = owner.facing;
+    pup.hp = 0;
+    return pup;
+  });
 }
 
 /** 귀속 소환수가 낸 피해는 성장 주체인 지휘자 앞으로 쌓인다. 늑대는 제 줄을 갖지 않는다. */
@@ -1429,7 +1466,7 @@ export function createSkirmish(
   // 시작 효과는 별도의 순수 단계에서 정확히 한 번 적용하고 사건은 첫 렌더 step까지 보존한다.
   state.initialEvents = initializeSkirmishAugments(state);
   // 최초 소환도 재소환과 같은 사건을 쓴다. 씬은 어느 쪽인지 구별하지 않아도 된다.
-  state.initialEvents.push(...state.fighters.filter((wolf) => wolf.summonOwnerId !== null).map((wolf): SkirmishEvent => ({
+  state.initialEvents.push(...state.fighters.filter((wolf) => wolf.summonOwnerId !== null && isFighterAlive(wolf)).map((wolf): SkirmishEvent => ({
     kind: "packSummon", fighterId: wolf.id, ownerFighterId: wolf.summonOwnerId ?? "", x: wolf.x, y: wolf.y,
   })));
   // 무리 사냥이 있는 편만 기준 아군의 정상 최초 표적을 확정한 뒤 루카가 이를 복사한다.
@@ -6706,11 +6743,11 @@ function strike(
     : undefined;
   const bashBonus = bashInput ? computeDamage(damageAttacker, damageTarget, bashInput) : 0;
   const rawAmount = Math.max(1, Math.round((computeDamage(damageAttacker, damageTarget, damageInput) + defenseBonus + periodicBonus + bashBonus)
-    * traitDamageMultiplier(state, attacker, target) * nape * pounce * feastMultiplier));
+    * traitDamageMultiplier(state, attacker, target) * nape * pounce * feastMultiplier * packStrengthMultiplier(state, attacker)));
   const contributionAmount = Math.max(0, (computeDamageContribution(damageAttacker, damageInput)
     + (defenseBonus > 0 ? computeDamageContribution(attacker, { ...damageInput, power: splashTrait.effectId === "splashDamage" ? splashTrait.defenseDamagePercent ?? 0 : 0, scalingStat: "def", damageType: "physical" }) : 0)
     + (periodicBonusInput ? computeDamageContribution(damageAttacker, periodicBonusInput) : 0)
-    + (bashInput ? computeDamageContribution(damageAttacker, bashInput) : 0)) * nape * pounce * feastMultiplier);
+    + (bashInput ? computeDamageContribution(damageAttacker, bashInput) : 0)) * nape * pounce * feastMultiplier * packStrengthMultiplier(state, attacker));
   // 방어·패시브·상성 뒤의 모든 개별 경감은 공용 HP 피해 경계에서 한 번만 적용한다.
   const resolution = resolveReceivedDamage(target, rawAmount);
   const amount = resolution.applied;
@@ -6781,6 +6818,11 @@ function strike(
   healFromDamage(dealt);
   // 「다 같이 덮쳐!」 — 두목이 문 자리로 살아 있는 늑대가 곧바로 제 궁극기를 쓴다.
   if (useUltimate && attacker.def.ultimate.commandsPack === true) commandPack(attacker, target, rng, state, events);
+  // 궁극기 돌파(`pupRush`)·평타 돌파(`pupLitter`) — 새끼 늑대를 부른다. 궁극기 게이지와 기절에는 매이지 않는다.
+  if (useUltimate) {
+    const rush = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
+    if (rush?.kind === "pupRush") spawnPups(state, attacker, rush.count, events);
+  } else tickPupLitter(state, attacker, events);
   if (!useUltimate) grantShieldFromDamage(attacker, dealt, events, state);
   if (!useUltimate) stitchSuture(attacker, targetHpBefore - target.hp, state, events);
   if (!useUltimate) stealthAfterStep(attacker, state);
@@ -7671,7 +7713,8 @@ function triggerWeakpoint(state: SkirmishState, attacker: Fighter, target: Fight
  */
 function refreshPackGuard(state: SkirmishState): void {
   for (const owner of state.fighters.filter((fighter) => fighter.def.passive.kind === "summonCommander")) {
-    const wolves = state.fighters.filter((wolf) => wolf.summonOwnerId === owner.id);
+    // 새끼 늑대는 은신을 대신 지켜 주지 않는다 — 몇십 마리가 몰려 서도 두목이 숨는 값이 늘지 않는다.
+    const wolves = state.fighters.filter((wolf) => wolf.summonOwnerId === owner.id && !isPupFighter(wolf));
     const guarded = isFighterAlive(owner) && wolves.some(isFighterAlive);
     owner.stealthFor = guarded ? Number.POSITIVE_INFINITY : 0;
     owner.stealthBreaksOnBasic = false;
@@ -7693,6 +7736,7 @@ function advancePack(state: SkirmishState, dt: number, events: SkirmishEvent[]):
   for (const wolf of state.fighters) {
     if (wolf.summonOwnerId === null) continue;
     const owner = findFighter(state, wolf.summonOwnerId);
+    if (isPupFighter(wolf)) { advancePup(state, wolf, owner, dt, events); continue; }
     const rule = wolf.resummonRule;
     // **전투가 끝나도 늑대는 쓰러지지 않는다** — 아군과 같이 그 자리에 선 채로 결과를 맞고, 전투
     // 화면이 닫힐 때 함께 사라진다. 끝난 순간 적처럼 쓰러뜨리면 이긴 판에서도 무리가 진 것처럼 보였다.
@@ -7716,6 +7760,65 @@ function advancePack(state: SkirmishState, dt: number, events: SkirmishEvent[]):
     reviveWolf(state, owner, wolf, events);
   }
   refreshPackGuard(state);
+}
+
+/** 새끼 늑대의 수명을 흘린다. 다 되거나 주인이 쓰러지면 사라진다 — 쓰러진 자리는 다음에 부를 때 쓴다. */
+function advancePup(state: SkirmishState, pup: Fighter, owner: Fighter | undefined, dt: number, events: SkirmishEvent[]): void {
+  if (!isFighterAlive(pup) || state.phase !== "fight") return;
+  pup.bt.pupLife = Math.max(0, pup.bt.pupLife - dt);
+  if (owner && isFighterAlive(owner) && pup.bt.pupLife > 0) return;
+  pup.hp = 0;
+  clearDefeatedStatuses(pup);
+  events.push({ kind: "death", fighterId: pup.id });
+}
+
+/**
+ * 새끼 늑대를 `count`마리까지 부른다. 동시에 `PUP.maxAlive`마리를 넘지 않고 자리가 없으면 조용히 줄인다.
+ *
+ * 앞에 서는 두 늑대와 달리 은신을 대신하지 않고 승패·정산에도 들지 않는다. 주인의 앞쪽에 흩어 세우고 수명(`PUP.lifeSeconds`)이
+ * 지나면 사라지며, 주인이 이미 폭주 중이면 함께 끓는다.
+ */
+function spawnPups(state: SkirmishState, owner: Fighter, count: number, events: SkirmishEvent[]): void {
+  if (state.phase !== "fight" || !isFighterAlive(owner)) return;
+  const pool = state.fighters.filter((unit) => unit.summonOwnerId === owner.id && isPupFighter(unit));
+  const forward = owner.side === "player" ? -1 : 1;
+  for (const pup of pool) {
+    if (count <= 0) break;
+    if (isFighterAlive(pup)) continue;
+    const slot = pool.indexOf(pup);
+    pup.hp = pup.maxHp;
+    pup.bt.pupLife = PUP.lifeSeconds;
+    // 부채꼴로 흩어 세운다 — 한 점에 겹쳐 나오면 몇 마리인지 읽히지 않는다(유체화라 몸은 서로 걸리지 않는다).
+    pup.x = Math.min(state.arena.right, Math.max(state.arena.left, owner.x + (slot - (pool.length - 1) / 2) * 24));
+    pup.y = Math.min(state.arena.bottom, Math.max(state.arena.top, owner.y + forward * (70 + (slot % 3) * 22)));
+    pup.targetId = null;
+    pup.engaged = false;
+    pup.attackCooldown = 0;
+    pup.facing = owner.facing;
+    pup.ferocityFever = owner.ferocityFever;
+    pup.ferocity = owner.ferocity;
+    events.push({ kind: "packSummon", fighterId: pup.id, ownerFighterId: owner.id, x: pup.x, y: pup.y });
+    count -= 1;
+  }
+}
+
+/** 평타 돌파(`pupLitter`·`pupFrenzy`) — 기본 공격을 셀 때마다 간격이 차면 새끼 한 마리를 부른다. 폭주 중에는 간격이 더 짧다. */
+function tickPupLitter(state: SkirmishState, owner: Fighter, events: SkirmishEvent[]): void {
+  const litter = openedBreakthrough(owner, "basic", (effects) => effects.basic);
+  if (litter?.kind !== "pupLitter") return;
+  const frenzy = owner.ferocityFever ? openedBreakthrough(owner, "ferocity", (effects) => effects.ferocity) : undefined;
+  const every = frenzy?.kind === "pupFrenzy" ? Math.min(litter.every, frenzy.every) : litter.every;
+  owner.bt.pupCount += 1;
+  if (owner.bt.pupCount < every) return;
+  owner.bt.pupCount = 0;
+  spawnPups(state, owner, 1, events);
+}
+
+/** 패시브 돌파(`packStrength`) — 서 있는 늑대 한 마리마다 늘어나는 피해 배율. 열려 있지 않으면 1이다. */
+function packStrengthMultiplier(state: SkirmishState, owner: Fighter): number {
+  const plan = openedBreakthrough(owner, "passive", (effects) => effects.passive);
+  if (plan?.kind !== "packStrength") return 1;
+  return 1 + packOf(state, owner).length * plan.damagePercentPerWolf / 100;
 }
 
 /** 늑대 한 마리를 주인의 앞쪽에 다시 세운다. 재소환과 궁극기의 일으켜 세우기가 같은 경계를 쓴다. */
@@ -7766,7 +7869,7 @@ function napeBonus(attacker: Fighter, target: Fighter, skill: Skill, state: Skir
  */
 function commandPack(owner: Fighter, target: Fighter, rng: () => number, state: SkirmishState, events: SkirmishEvent[]): void {
   if (!isFighterAlive(target)) return;
-  for (const wolf of packOf(state, owner)) {
+  for (const wolf of packOf(state, owner).filter((unit) => !isPupFighter(unit))) {
     wolf.targetId = target.id;
     wolf.retargetIn = SKIRMISH.retargetSeconds;
     const cost = ultimateCost(state, wolf, false);

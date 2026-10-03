@@ -2527,6 +2527,10 @@ export type BasicBreakthrough = {
 } | {
   /** 손질이 터질 때 대상에 남아 있던 출혈 피해를 그 자리에서 몰아 입히고 출혈을 지운다(마키). */
   kind: "bleedSettle";
+} | {
+  /** 기본 공격이 이 횟수마다 새끼 늑대 한 마리를 부른다(디안). */
+  kind: "pupLitter";
+  every: number;
 } | BreakthroughNone;
 
 /**
@@ -2688,6 +2692,10 @@ export type UltimateBreakthrough = {
   /** 출혈이 걸린 적에게 궁극기 피해가 이 비율만큼 늘어난다(마키). */
   kind: "bleedFeast";
   damagePercent: number;
+} | {
+  /** 궁극기를 쓰면 새끼 늑대가 이 마리 수만큼 나와 함께 덮친다(디안). */
+  kind: "pupRush";
+  count: number;
 } | BreakthroughNone;
 
 /**
@@ -2831,6 +2839,10 @@ export type FerocityBreakthrough = {
   /** 폭주 중 공격 속도가 이 비율만큼 오른다(마키). 궁극기와 무관하다. */
   kind: "swiftHands";
   attackSpeedPercent: number;
+} | {
+  /** 폭주 중에는 새끼 늑대가 이 횟수마다 한 마리씩 나온다(디안). 궁극기와 무관하다. */
+  kind: "pupFrenzy";
+  every: number;
 } | BreakthroughNone;
 
 /**
@@ -2975,6 +2987,10 @@ export type PassiveBreakthrough = {
 } | {
   /** 도약 착지 뒤 첫 일반 공격이 확정 치명타다(마키). */
   kind: "landingAmbush";
+} | {
+  /** 서 있는 늑대(쿠로·시로·새끼) 한 마리마다 디안이 주는 피해가 이 비율만큼 늘어난다(디안). */
+  kind: "packStrength";
+  damagePercentPerWolf: number;
 } | BreakthroughNone;
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */

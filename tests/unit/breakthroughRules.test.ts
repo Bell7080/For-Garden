@@ -129,6 +129,10 @@ const CATEGORY: Record<EffectKind, Category> = {
   swiftHands: "damage",
   blightedFoe: "damage",
   landingAmbush: "crit",
+  pupLitter: "damage",
+  pupRush: "damage",
+  pupFrenzy: "damage",
+  packStrength: "damage",
 };
 
 /** 직군이 받을 수 없는 분류. 암살자·원거리 딜러는 은신이 아닌 생존 유틸과 게이지 조작을 받지 않는다. */

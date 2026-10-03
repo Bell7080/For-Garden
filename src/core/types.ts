@@ -1181,6 +1181,8 @@ export type PassiveKind =
   | "lowHpVanish"
   /** 델로피 전용: 전투가 시작되는 순간부터 정해진 시간 동안 은신한 채로 연다. */
   | "openingVanish"
+  /** 유티 전용: 전투 시작 은신(`openingStealthSeconds`)과 함께 서리깃을 두른다. 서리깃의 치명타 가산은 공용 필드가 읽는다. */
+  | "featherVeil"
   /** 디안 전용: 귀속 소환수 둘을 불러 세우며 한 마리라도 살아 있는 동안 은신한다. */
   | "summonCommander"
   /** 귀속 소환수 전용: 태생 능력치 전부가 주인의 한 축에서 파생한다. */

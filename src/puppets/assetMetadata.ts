@@ -802,7 +802,7 @@ export const ARK_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
 };
 
 /**
- * 유티라 전신(char_028): 중심1·머리1·눈1·눈2·발1·발2를 프로젝트에서 읽었다. alpha > 16 경계는 (19,20)–(1005,1502)이다.
+ * 유티 전신(char_028): 중심1·머리1·눈1·눈2·발1·발2를 프로젝트에서 읽었다. alpha > 16 경계는 (19,20)–(1005,1502)이다.
  * 고개를 숙인 자세라 두 눈의 높이가 36px 다르다 — 눈높이는 두 눈의 가운데로 잰다. 발2 관절은 그림 밖에 있어
  * 바닥선은 관절이 아니라 alpha 경계로 잡는다.
  */
@@ -815,7 +815,7 @@ export const YUTIRA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   lobbyZoom: 0.96,
 };
 
-/** 유티라 SD: 중심1·머리1·발1·발2를 프로젝트에서 읽었으며 눈 관절은 없다. alpha > 16 경계는 (69,65)–(1165,1218)이다. */
+/** 유티 SD: 중심1·머리1·발1·발2를 프로젝트에서 읽었으며 눈 관절은 없다. alpha > 16 경계는 (69,65)–(1165,1218)이다. */
 export const YUTIRA_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1254,
   imageHeight: 1254,

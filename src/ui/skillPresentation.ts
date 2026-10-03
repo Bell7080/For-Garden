@@ -405,7 +405,7 @@ function passiveLowHpStealthClause(passive: Passive): string {
 }
 
 function passiveOpeningStealthClause(passive: Passive): string {
-  if (passive.openingStealthSeconds === undefined || passive.kind === "openingVanish") return "";
+  if (passive.openingStealthSeconds === undefined || passive.kind === "openingVanish" || passive.kind === "featherVeil") return "";
   return t("skill.passive.openingStealth", { seconds: passive.openingStealthSeconds });
 }
 
@@ -508,6 +508,7 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
   }
   if (passive.kind === "overpaintSiphon") return t("skill.passive.overpaintSiphon", { percent: passive.value });
   if (passive.kind === "lowHpVanish") return t("skill.passive.lowHpVanish", { seconds: passive.durationSeconds });
+  if (passive.kind === "featherVeil") return t("skill.passive.featherVeil", { seconds: passive.durationSeconds });
   if (passive.kind === "openingVanish") return t("skill.passive.openingVanish", { seconds: passive.durationSeconds });
   if (passive.kind === "undyingTalisman") {
     // 무적·행동불가·회복·밀어냄이 한 덩어리로 일어나므로 한 문장에 순서대로 담는다.

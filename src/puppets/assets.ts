@@ -386,7 +386,7 @@ export const ARK_ASSET: PuppetAsset = {
   ...ARK_PORTRAIT_METADATA,
 };
 
-/** 28번 전신 일러스트: 유티라(유티라누스). 깃털 장식이 목과 팔을 감싼 원화다. */
+/** 28번 전신 일러스트: 유티(유티라누스). 깃털 장식이 목과 팔을 감싼 원화다. */
 export const YUTIRA_ASSET: PuppetAsset = {
   url: `${base}puppets/char_028.zip`,
   ...YUTIRA_PORTRAIT_METADATA,
@@ -752,7 +752,7 @@ export const ARK_SD_ASSET: PuppetAsset = {
   ...ARK_SD_METADATA,
 };
 
-/** 28번 SD: 유티라. */
+/** 28번 SD: 유티. */
 export const YUTIRA_SD_ASSET: PuppetAsset = {
   url: `${base}puppets/charSD_028.zip`,
   ...YUTIRA_SD_METADATA,

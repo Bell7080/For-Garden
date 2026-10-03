@@ -2834,6 +2834,11 @@ export function buildSkillViewModel(options: {
       ...breakthroughTags,
       damageDetail, shieldDetail, healDetail,
       "kind" in skill ? undefined : periodicStackKeyword(skill as Skill),
+      // 서리깃은 유티의 패시브 본문이 가리키는 개체 전용 규칙어라 그 쪽지에서만 연다.
+      "kind" in skill && (skill as Passive).kind === "featherVeil" ? {
+        id: "yuti-plume", term: t("skill.keyword.plume.term"), kind: "rule" as const,
+        description: t("skill.keyword.plume.description"),
+      } : undefined,
       // 희열은 패시브 본문이 직접 가리키는 태그라 그 쪽지에도 함께 실린다. 궁극기(끝까지 채운다)와
       // 기본 공격(겹마다 피해가 오른다)도 같은 태그를 가리키므로 그 쪽지에도 실린다.
       "kind" in skill

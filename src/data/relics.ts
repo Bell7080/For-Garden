@@ -1483,7 +1483,7 @@ export const RELICS: RelicDef[] = [
   {
     id: "yutira",
     squad: "fang",
-    name: "유티라",
+    name: "유티",
     specimenNumber: "028",
     projectName: "FROST PLUME",
     excavationSite: "중국 랴오닝성 이셴층 하부 응회암대",
@@ -1491,7 +1491,7 @@ export const RELICS: RelicDef[] = [
     fossilRecord: "화산재가 굳은 응회암판 위에 몸을 덮은 깃털의 인상이 뼈와 함께 남아 있었다. 같은 층의 다른 포식자보다 훨씬 큰 몸집이 한 장의 판에 접혀 들어간 채 나왔고, 복원 연구는 그 깃털이 어디까지 몸을 감쌌는지를 재는 일부터 시작했다.",
     observationProfile: {
       originYear: "약 1억 2,500만 년 전",
-      // E.C.는 유티라의 인간형 신체 나잇대이며, 원종 화석의 연대와 독립된 값이다.
+      // E.C.는 유티의 인간형 신체 나잇대이며, 원종 화석의 연대와 독립된 값이다.
       restorationYear: "E.C. 17년",
       lifeStage: "성체",
       height: "1.68 m",
@@ -1499,7 +1499,7 @@ export const RELICS: RelicDef[] = [
     },
     catalogSummary: "신장 1.68m, 체중 52kg의 날렵한 인간형 체격에 목과 팔을 감싼 깃털 장식이 확인된, 성체 유티라누스 화석 기반 표본.",
     // 복원 후 관찰은 성격과 실제로 목격된 행동만 남기고 발굴 기록과 겹치지 않게 쓴다.
-    unlockRecord: { status: "recorded", text: "복원 후 유티라는 큰 소리를 내지 않고도 복도 끝에서 끝까지 사람들 사이를 빠져나간다. 모두가 정면을 보고 있을 때 옆에서 나타나 깃털 한 장을 슬쩍 건네고는 자기가 한 일이 아닌 척 시선을 돌리는 버릇이 관찰됐다. 앱솔루트 팽의 화려한 선배들을 흉내 내 \"보스\"라고 부르면서도, 호칭이 어색한지 매번 말끝을 흐린다." },
+    unlockRecord: { status: "recorded", text: "복원 후 유티는 큰 소리를 내지 않고도 복도 끝에서 끝까지 사람들 사이를 빠져나간다. 모두가 정면을 보고 있을 때 옆에서 나타나 깃털 한 장을 슬쩍 건네고는 자기가 한 일이 아닌 척 시선을 돌리는 버릇이 관찰됐다. 앱솔루트 팽의 화려한 선배들을 흉내 내 \"보스\"라고 부르면서도, 호칭이 어색한지 매번 말끝을 흐린다." },
     squadNote: "앱솔루트 팽의 측면 침투 담당. 정면에서 부딪히는 동료들의 틈으로 바람처럼 파고들어 약해진 상대를 끝내고, 연구원을 \"보스\"라 부른다.",
     researcherTitle: "보스",
     rarity: "SSR",
@@ -1530,7 +1530,7 @@ export const RELICS: RelicDef[] = [
     passive: {
       id: "yutira-passive",
       name: "깃털 위장",
-      kind: "openingVanish",
+      kind: "featherVeil",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
       value: 3,
@@ -1539,7 +1539,7 @@ export const RELICS: RelicDef[] = [
       // 태생 치명타는 전 개체 공통이므로 암살자의 치명타형 정체성은 패시브가 만든다.
       criticalChancePercent: 20,
       criticalDamagePercent: 20,
-      desc: "전투 시작 시 3초 동안 은신 상태로 진입한다.",
+      desc: "전투 시작 시 3초 동안 은신 상태로 진입하고 서리깃을 두른다.",
     },
     basic: {
       id: "yutira-basic",

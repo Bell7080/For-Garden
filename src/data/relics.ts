@@ -633,7 +633,7 @@ export const RELICS: RelicDef[] = [
     observationProfile: {
       originYear: "약 400년 전",
       // E.C.는 어린 탐험대원의 인간형 신체 나잇대이며, 원종 화석의 성체 초기 단계와 독립된다.
-      restorationYear: "E.C. 13년",
+      restorationYear: "E.C. 9년",
       lifeStage: "성체 초기",
       // 토리카와 같은 전신 원화 비율을 기준으로 키를 맞추고, 인간형 체격보다 가벼운 조류 골격을 반영했다.
       height: "1.08 m",

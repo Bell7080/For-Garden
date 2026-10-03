@@ -3706,9 +3706,9 @@ export const RELICS: RelicDef[] = [
       effectType: "buff",
       value: 0,
       // 방어·저항은 고정값이 아니라 비율이다 — 레벨이 올라도 같은 몫이 든다. 화면은 실제로 오르는 값으로 보여 준다.
-      droneLink: { defenseResistancePercent: 50, regenMaxHpPercentPerSecond: 0.8 },
+      droneLink: { defenseResistancePercent: 25, regenMaxHpPercentPerSecond: 0.4 },
       // 전용 분기가 문장을 짓는다. 이 사본은 화면에 뜨지 않는 데이터 문서용이다.
-      desc: "전투 시작 시 디모를 소환한다. 디모가 살아 있는 동안 방어력과 저항력이 50% 오르고 매초 최대 체력의 0.8%를 회복한다.",
+      desc: "전투 시작 시 디모를 소환한다. 디모가 살아 있는 동안 방어력과 저항력이 25% 오르고 매초 최대 체력의 0.4%를 회복한다.",
     },
     // 약한 원거리 단일 물리 피해. 적중한 적의 관측을 발동한다(겹당 공격력 10%, 방어 무시, 소모 없음).
     basic: {

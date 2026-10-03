@@ -28,7 +28,7 @@ import { grantTiles, premiumCategoryOf, premiumFirstBonusGems, premiumGrantTiles
 import {
   PREMIUM_CARD, PREMIUM_PASS, PREMIUM_TAB_ROW, PREMIUM_TITLE, PREMIUM_WIDE,
   premiumCardHeight, premiumCardSpot, premiumCardWidth, premiumGridContentHeight, premiumGridViewport, premiumListKind,
-  premiumTabSpot, premiumTitleLeft, premiumTitleY, premiumWideInner, type PremiumListKind,
+  premiumTabSpot, premiumTitleLeft, premiumTitleY, premiumWideFrameXs, premiumWideInner, type PremiumListKind,
 } from "../ui/premiumLayout";
 import { formatCurrency } from "../core/formatCurrency";
 import { consumeSceneEntry } from "./sceneEntry";
@@ -214,18 +214,21 @@ export class PremiumScene extends Phaser.Scene {
   }
 
   /**
-   * 가로 카드 — 왼쪽에 이름과 **받는 것(액자 + 수량)**, 오른쪽에 값.
+   * 가로 카드 — 왼쪽 위에 이름, 가운데에 **받는 것(액자 + 수량)**, 그 아래 가운데에 값.
    *
    * 설명 문장은 없다 — 받는 것이 액자로 서 있다. 정기권이 매일 얹는 몫은 그 액자 왼쪽 위의 「매일」 표식이 말한다.
    */
   private paintWideCard(card: Phaser.GameObjects.Container, product: ProductDto, width: number, action: ReturnType<typeof productActionModel>): void {
     const W = PREMIUM_WIDE;
+    const S = W.stack;
     const tiles = premiumGrantTiles(product).slice(0, W.frameCap);
-    const inner = premiumWideInner(width, tiles.length);
-    const name = this.add.text(inner.left, W.nameY, product.name, textStyle({ role: "display", size: W.nameSize })).setOrigin(0, 0.5).setShadow(3, 4, "#04060a", 0, true, true);
-    card.add(squeezeTextToWidth(name, inner.priceLeft - W.priceGap - inner.left, 0.7));
+    const left = -width / 2 + W.pad;
+    const right = width / 2 - W.pad;
+    const name = this.add.text(left, S.nameY, product.name, textStyle({ role: "display", size: W.nameSize })).setOrigin(0, 0.5).setShadow(3, 4, "#04060a", 0, true, true);
+    card.add(squeezeTextToWidth(name, right - left, 0.7));
+    const xs = premiumWideFrameXs(tiles.length);
     tiles.forEach((tile, i) => {
-      const frame = this.addGrantFrame(card, inner.frames[i], W.frameY, W.frame, tile.icon, tile.amount);
+      const frame = this.addGrantFrame(card, xs[i], S.frameY, W.frame, tile.icon, tile.amount);
       if (tile.daily) {
         // 정기권이 매일 얹는 몫 — 액자 위에 걸친 작은 꼬리표가 「매일」을 말한다.
         const label = this.add.text(0, 0, t("shop.premium.daily"), textStyle({ role: "display", size: 20, color: "#101418" })).setOrigin(0.5);
@@ -236,11 +239,13 @@ export class PremiumScene extends Phaser.Scene {
         frame.add(tag);
       }
     });
-    // 정기권의 기간·권리는 칸이 없으므로 액자 아래 한 줄로 적는다.
+    this.paintPriceChip(card, product, 0, S.price.y, S.price.width, S.price.height, S.price.size, action);
+    // 값 줄 양 끝 — 왼쪽은 정기권의 기간·권리, 오른쪽은 남은 구매. 값보다 작고 흐리다.
+    const sideWidth = S.price.width / 2 + W.priceGap;
     const foot = this.passFootnote(product);
-    if (foot) card.add(this.add.text(inner.left, W.frameY + W.frame / 2 + 16, foot, textStyle({ role: "body", size: W.noteSize, color: COLOR.inkDim, wrap: inner.priceLeft - W.priceGap - inner.left })).setOrigin(0, 0));
-    this.paintPriceChip(card, product, inner.priceX, W.price.y, W.price.width, W.price.height, W.price.size, action);
-    card.add(this.add.text(inner.priceX, W.price.y + W.noteY, action.disabledReason ?? t("shop.premium.remaining", { remaining: product.remaining, limit: product.purchaseLimit }), textStyle({ role: "body", size: W.noteSize, color: product.purchasable ? COLOR.inkDim : COLOR.dangerText })).setOrigin(0.5));
+    if (foot) card.add(this.add.text(left, S.price.y, foot, textStyle({ role: "body", size: W.noteSize, color: COLOR.inkDim, wrap: -sideWidth - left })).setOrigin(0, 0.5));
+    const remaining = this.add.text(right, S.price.y, action.disabledReason ?? t("shop.premium.remaining", { remaining: product.remaining, limit: product.purchaseLimit }), textStyle({ role: "body", size: W.noteSize, color: product.purchasable ? COLOR.inkDim : COLOR.dangerText, align: "right", wrap: right - sideWidth })).setOrigin(1, 0.5);
+    card.add(remaining);
   }
 
   /**

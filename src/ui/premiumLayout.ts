@@ -72,12 +72,13 @@ export const PREMIUM_CARD = {
 /**
  * 한 줄에 하나씩 눕는 **가로 패키지 카드** — 무역 전시장과 같은 겉모습(`paintShowcaseCard`)이다.
  *
- * 묶음은 받는 것이 여럿(액자 최대 네 장)이라 두 칸 격자에 넣으면 액자가 작아진다 — 폭 전체를 쓰고 왼쪽에
- * 이름·받는 것, 오른쪽에 값을 세운다. 액자 수량은 **가방과 같은 양식**(`addFrameAmount`)이다.
+ * 묶음은 받는 것이 여럿(액자 최대 네 장)이라 두 칸 격자에 넣으면 액자가 작아진다 — 폭 전체를 쓰고 위에서부터
+ * 이름(왼쪽) → 받는 것(가운데) → 값(가운데 아래)으로 쌓는다. 액자와 값이 한 세로줄에 서야 "무엇을 얼마에"가
+ * 한눈에 읽힌다. 액자 수량은 **가방과 같은 양식**(`addFrameAmount`)이다.
  * 윗변에 꼬리표가 걸터앉아 위로 한 뼘 나오므로, 첫 카드는 그만큼 내려 서고 카드 사이도 그만큼 벌린다.
  */
 export const PREMIUM_WIDE = {
-  height: 290,
+  height: 350,
   gapY: 50,
   /** 첫 카드의 꼬리표가 창 위로 잘리지 않게 내려 서는 몫. */
   topInset: 34,
@@ -98,7 +99,19 @@ export const PREMIUM_WIDE = {
   noteY: 74,
   footY: 104,
   noteSize: 22,
+  /**
+   * 묶음 카드의 쌓는 자리(카드 중심 기준). 이름은 왼쪽 위, 액자 줄은 가운데, 값은 그 아래 가운데에 서고
+   * 남은 구매(오른쪽)·정기권 기간(왼쪽)은 값과 같은 줄 양 끝에 작게 붙는다.
+   */
+  stack: { nameY: -122, frameY: -16, price: { y: 112, width: 300, height: 76, size: 42 } },
 } as const;
+
+/** 묶음 카드의 액자 `count`장 중심 x — 가운데 정렬. */
+export function premiumWideFrameXs(count: number): number[] {
+  const { frame, frameGap } = PREMIUM_WIDE;
+  const span = count * frame + Math.max(0, count - 1) * frameGap;
+  return Array.from({ length: count }, (_, index) => -span / 2 + frame / 2 + index * (frame + frameGap));
+}
 
 /**
  * 진행 패스 카드 — 이름, 진행도 줄, 다음 마디의 보상 액자, 오른쪽에 값(열기 전) 또는 받기(연 뒤).

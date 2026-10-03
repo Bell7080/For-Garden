@@ -848,7 +848,6 @@ export class FakeServer implements GameApi {
     this.settleItemExpiry(this.now());
     const stack = this.state.itemInventory.find(({ itemId }) => itemId === request.itemId);
     if (!stack || stack.quantity < request.quantity) throw new GameApiError("INSUFFICIENT_ITEMS", "아이템 수량이 부족합니다.");
-    if (definition.useEffect.kind === "restore_strata_charge") return this.useStrataTicket(request, definition.useEffect.amount);
     // 병은 레벨 상한을 넘어 채운다 — 치른 대가를 상한에서 버리지 않는다. 막는 것은 보유 끝뿐이다.
     if (this.state.wallet.stamina >= STAMINA_HOLD_LIMIT) throw new GameApiError("STAMINA_FULL", "스테미나가 이미 가득 찼습니다.");
     const requested = definition.useEffect.amount * request.quantity;
@@ -861,28 +860,6 @@ export class FakeServer implements GameApi {
     this.state.wallet = nextWallet; this.state.itemInventory = nextItems;
     const inventory = await this.getInventory();
     return { ...inventory, itemId: request.itemId, quantityUsed: request.quantity, effect: definition.useEffect, appliedAmount, overflowAmount: requested - appliedAmount, wallet: { ...nextWallet }, stamina: this.staminaDto(this.now()) };
-  }
-
-  /**
-   * 탐사권 — 고고학 지층 탐사 가능 횟수를 채운다.
-   *
-   * 시간 충전(`settleStrataCharges`)이 상한에서 자르므로 **상한까지만** 채우고, 이미 가득이면 쓰지 않는다 —
-   * 채운 몫이 다음 정산에서 조용히 사라지면 치른 탐사권이 버려진다. 넘치는 장수는 쓰지 않고 돌려준다.
-   */
-  private async useStrataTicket(request: UseConsumableRequest, amount: number): Promise<UseConsumableResponse> {
-    this.settleStrataChargesNow();
-    const room = STRATA_CHARGE.max - this.state.archaeology.charges;
-    if (room <= 0) throw new GameApiError("STRATA_CHARGE_FULL", "탐사 횟수가 이미 가득 찼습니다.");
-    const quantityUsed = Math.min(request.quantity, Math.ceil(room / amount));
-    const appliedAmount = Math.min(room, amount * quantityUsed);
-    const nextItems = removeItemLot(this.state.itemInventory, request.itemId, quantityUsed);
-    if (!nextItems) throw new GameApiError("INSUFFICIENT_ITEMS", "아이템 수량이 부족합니다.");
-    const archaeology = { ...this.state.archaeology, charges: this.state.archaeology.charges + appliedAmount };
-    this.persist({ ...this.state, archaeology, itemInventory: nextItems });
-    this.state.archaeology = archaeology; this.state.itemInventory = nextItems;
-    const inventory = await this.getInventory();
-    const definition = findItem(request.itemId)!;
-    return { ...inventory, itemId: request.itemId, quantityUsed, effect: definition.useEffect, appliedAmount, overflowAmount: 0, wallet: { ...this.state.wallet }, stamina: this.staminaDto(this.now()) };
   }
 
   /**

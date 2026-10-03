@@ -120,7 +120,7 @@ export class InventoryPopup {
     // 매 렌더마다 비워 실제로 현재 탭에 놓인 이미지 키만 E2E에 남긴다.
     const textureKeys: string[] = [];
     setDebugInventoryTextureKeys(textureKeys);
-    const visible = this.inventory.list(this.category, this.sort, { showEmpty: true });
+    const visible = this.inventory.list(this.category, this.sort);
     // 첫 카드가 큰 작업판 제목의 세로 영역을 침범하지 않도록 기존 목록을 50px 내린다.
     // 첫 카드의 윗변을 마스크 윗변에 맞춰 아이콘/액자가 절반 잘리지 않게 한다.
     const contentStartY = VIEWPORT.y - VIEWPORT.height / 2 + INVENTORY_LAYOUT.cellHeight / 2;
@@ -288,13 +288,11 @@ export class InventoryPopup {
       this.popups.open({ width: 440, height: 250, title: t(title), dim: true }, (body) => body.add(this.scene.add.text(0, 0, text, textStyle({ role: "emphasis", size: 26, color: COLOR.accentText })).setOrigin(0.5)));
     };
     void this.inventory.useConsumable(this.api, itemId).then((result) => {
-      const gained: TextKey = result.effect.kind === "restore_strata_charge" ? "inventory.strataChargeGained" : "inventory.staminaGained";
-      notice("inventory.useDone", t(gained, { amount: result.appliedAmount }));
+      notice("inventory.useDone", t("inventory.staminaGained", { amount: result.appliedAmount }));
       if (this.view) this.render(this.view);
     }).catch((error: unknown) => {
       // 가득 찬 채로 쓰면 아무것도 빠지지 않는다. 왜 쓰이지 않았는지만 짧게 말한다.
-      if (error instanceof GameApiError && error.code === "STRATA_CHARGE_FULL") notice("inventory.useFailed", t("inventory.strataChargeFull"));
-      else if (error instanceof GameApiError && error.code === "STAMINA_FULL") notice("inventory.useFailed", t("inventory.staminaFull"));
+      if (error instanceof GameApiError && error.code === "STAMINA_FULL") notice("inventory.useFailed", t("inventory.staminaFull"));
       else console.error("소비품 사용 실패", error);
     });
   }

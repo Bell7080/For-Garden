@@ -110,17 +110,11 @@ describe("inventory", () => {
     expect((await api.useConsumable({ itemId: "stamina-tonic", quantity: 1 })).wallet.stamina).toBe(230);
   });
 
-  it("탐사권은 탐사 횟수를 상한까지만 채우고 가득 차 있으면 쓰지 않는다", async () => {
+  it("발굴권은 쓰는 소비품이 아니라 보유 수를 말하는 재료다", async () => {
     const state = createDefaultSession(); state.itemInventory = [{ itemId: "strata-ticket", quantity: 3 }];
     const api = new FakeServer(state, { latencyMs: 0 });
-    const max = state.archaeology.charges;
-    await expect(api.useConsumable({ itemId: "strata-ticket", quantity: 1 })).rejects.toMatchObject({ code: "STRATA_CHARGE_FULL" });
+    await expect(api.useConsumable({ itemId: "strata-ticket", quantity: 1 })).rejects.toBeInstanceOf(GameApiError);
     expect(state.itemInventory[0].quantity).toBe(3);
-    state.archaeology.charges = max - 1; state.archaeology.chargesUpdatedAt = new Date().toISOString();
-    const result = await api.useConsumable({ itemId: "strata-ticket", quantity: 2 });
-    // 한 칸만 비어 있었으므로 한 장만 쓰고 남은 장은 가방에 남는다.
-    expect(result.appliedAmount).toBe(1); expect(result.quantityUsed).toBe(1);
-    expect(state.archaeology.charges).toBe(max); expect(state.itemInventory[0].quantity).toBe(2);
   });
 
   it("룬·지갑·스택을 카테고리별로 합성하고 많은 행의 하단 범위를 계산한다", () => {
@@ -197,13 +191,13 @@ describe("inventory", () => {
 
 });
 
-describe("탐사권 칸", () => {
-  it("가진 수가 0이어도 소비품 탭에는 칸이 서고, 저장 목록에는 넣지 않는다", async () => {
+describe("발굴권 칸", () => {
+  it("0개면 칸이 서지 않고 가지고 있으면 재료 탭에 선다", async () => {
     const { InventoryManager } = await import("../../src/managers/InventoryManager");
-    const { session } = await import("../../src/state/session");
-    const manager = new InventoryManager(session as never);
-    expect(manager.list("consumable").some(({ id }) => id === "strata-ticket")).toBe(false);
-    const shown = manager.list("consumable", undefined, { showEmpty: true }).find(({ id }) => id === "strata-ticket");
-    expect(shown?.quantity).toBe(0);
+    const state = createDefaultSession();
+    const manager = new InventoryManager(state);
+    expect(manager.list("material").some(({ id }) => id === "strata-ticket")).toBe(false);
+    state.itemInventory = [{ itemId: "strata-ticket", quantity: 2 }];
+    expect(manager.list("material").find(({ id }) => id === "strata-ticket")?.quantity).toBe(2);
   });
 });

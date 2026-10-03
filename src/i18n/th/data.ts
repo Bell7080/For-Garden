@@ -138,7 +138,7 @@ export default {
   "item.sweep-ticket.name": "ตั๋วกวาดล้าง",
   "item.sweep-ticket.description": "กวาดล้างด่านดันเจี้ยนที่ผ่านแล้วหนึ่งครั้งโดยไม่ต้องต่อสู้",
   "item.strata-ticket.name": "ตั๋วสำรวจ",
-  "item.strata-ticket.description": "ฟื้นฟูจำนวนครั้งสำรวจชั้นหินโบราณคดี 1 ครั้ง",
+  "item.strata-ticket.description": "ใช้เปิดแหล่งโบราณคดี จำนวนที่มีคือจำนวนครั้งที่ใช้ได้",
   "currency.raidSigil.name": "ตราปราบปราม",
   "currency.raidSigil.lore": "ใบรับรองที่ออกให้ตามระยะที่ผลักบอสถอยไปได้",
   "currency.raidSigil.source.0": "สรุปผลเรดที่จบแล้ว",

@@ -5,8 +5,6 @@ export type ItemCategory = "rune" | "currency" | "consumable" | "material";
 /** 함수 대신 판별 합집합을 사용해 저장·서버 경계를 안전하게 통과시키는 사용 효과다. */
 export type ItemUseEffect =
   | { readonly kind: "restore_stamina"; readonly amount: number }
-  /** 고고학 지층 탐사 가능 횟수를 채운다. 시간 충전의 상한까지만 채우고 가득 차 있으면 쓰지 않는다. */
-  | { readonly kind: "restore_strata_charge"; readonly amount: number }
   | { readonly kind: "none" };
 
 /** 아이콘은 기존 glyph 또는 구운 재화 이미지 키를 가리키며 임의 SVG를 만들지 않는다. */
@@ -76,7 +74,7 @@ export const ITEMS = [
   // 소탕 한 번에 한 장. 멤버십이 없을 때만 들고, 던전 입구에서 광고를 보면 다섯 장씩 채워진다.
   // 고고학 지층 탐사 한 번. 시간이 채우는 횟수와 같은 몫이라 그림도 탐사 횟수 칸의 입장권 그대로다 —
   // 그 칸의 그림을 누르면 이 안내창이 열린다(`guideForIcon`).
-  { id: "strata-ticket", name: "탐사권", description: "고고학 지층 탐사 가능 횟수를 1회 채웁니다.", category: "consumable", icon: { kind: "asset", key: "item-strata-ticket" }, maxStack: 999, useEffect: { kind: "restore_strata_charge", amount: 1 } },
+  { id: "strata-ticket", name: "발굴권", description: "고고학 유적을 여는 데 쓰는 권입니다. 가진 수 그대로가 가진 횟수입니다.", category: "material", icon: { kind: "asset", key: "item-strata-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
   { id: "sweep-ticket", name: "소탕권", description: "이미 이긴 던전 단계를 전투 없이 한 번 소탕합니다.", category: "material", icon: { kind: "asset", key: "item-sweep-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
   // 전리품 상점의 두 증표. 상한을 두지 않는 이유가 곧 지갑에 둔 이유다 — 가끔 들어가 터는
   // 자리라 몇 주치가 쌓여도 버려지면 안 된다.

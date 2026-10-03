@@ -59,10 +59,10 @@ export interface RelicStoryProfile {
 }
 
 /**
- * 애착 스토리 한 장을 처음 읽을 때 받는 젬. 뒤 장일수록 크다 — 10은 그 개체와의 마지막 장이다.
+ * 애착 스토리 한 장을 처음 읽을 때 받는 젬. 네 장 모두 같은 값이다.
  * 질문(50)보다 크게 두어 유대를 올릴 이유를 보상으로도 말한다.
  */
-export const BOND_STORY_GEM_REWARD: Readonly<Record<BondStoryLevel, number>> = { 4: 100, 6: 150, 8: 200, 10: 300 };
+export const BOND_STORY_GEM_REWARD: Readonly<Record<BondStoryLevel, number>> = { 4: 100, 6: 100, 8: 100, 10: 100 };
 
 /** 애착 스토리 장의 저장 ID. 개체와 유대 레벨이 곧 키다. */
 export function bondChapterId(relicId: string, level: BondStoryLevel): string {

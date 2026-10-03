@@ -62,7 +62,7 @@ import { skillArtFor, skillArtTint, type SkillArtSlot } from "./skillArt";
 import { addSkillIconFrame, skillSlotLabel, type SkillIconFrameOptions, type SkillIconTone } from "./SkillIconFrame";
 import { encounterRoleDescription, encounterRoleIcon, encounterRoleName } from "./encounterRolePresentation";
 import type { EncounterRole } from "../core/levelDesign";
-import { squeezeTextToWidth } from "./textFit";
+import { shrinkTextToWidth, squeezeTextToWidth } from "./textFit";
 import { BREAK_CONFIRM, BREAK_STEPS, breakConfirmHeight, breakthroughStepsLayout } from "./breakthroughLayout";
 import { gameApi } from "../api/FakeServer";
 import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, type BreakthroughStep, canBreakThrough, canFeedRelic, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap, breakthroughGrade } from "../core/relicProgression";
@@ -1590,26 +1590,31 @@ export class InfoManager {
       const steps = chapters.length > 0
         ? chapters.map((chapter) => ({ level: chapter.level, title: relicStoryFor(def.id)!.bondStories[chapter.level].titleCard?.title ?? chapter.storyId, chapter }))
         : BOND_STORY_STEPS.map((step) => ({ level: step.level, title: step.title(), chapter: undefined }));
+      // 네 장이 판 안에 들어가도록 줄 간격을 좁히고, 폭은 깎인 모서리에서 한 뼘 안쪽에 둔다.
+      // 제목은 오른쪽 보상 글자와 겹치지 않는 폭까지만 쓴다.
+      const rowWidth = 660;
+      const rowHeight = 68;
       steps.forEach((step, index) => {
-        const y = 46 + index * 92;
+        const y = 26 + index * 80;
         const open = step.chapter ? step.chapter.unlocked : level >= step.level;
-        body.add(drawLayer(this.scene, 0, y + 30, slantedRect(700, 76, 14), {
+        body.add(drawLayer(this.scene, 0, y + 30, slantedRect(rowWidth, rowHeight, 14), {
           fill: open ? 0x1a2130 : 0x0d1219,
           alpha: open ? 0.95 : 0.7,
           edge: COLOR.accent,
           edgeAlpha: open ? 0.6 : 0.16,
         }));
-        body.add(this.scene.add.text(-318, y + 12, step.title, textStyle({ role: "display", size: 26, color: open ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0));
         const gems = step.chapter && !step.chapter.claimed ? BOND_STORY_GEM_REWARD[step.chapter.level] : 0;
         const status = !open ? t("info.bond.required", { level: step.level }) : gems > 0 ? t("info.bond.chapterReward", { gems }) : t("info.bond.opened");
-        body.add(
-          this.scene.add
-            .text(318, y + 18, status, textStyle({ role: "body", size: 21, color: open ? COLOR.accentText : COLOR.inkDim }))
-            .setOrigin(1, 0),
-        );
+        const statusText = this.scene.add
+          .text(rowWidth / 2 - 22, y + 30, status, textStyle({ role: "body", size: 21, color: open ? COLOR.accentText : COLOR.inkDim }))
+          .setOrigin(1, 0.5);
+        body.add(statusText);
+        const title = this.scene.add.text(-rowWidth / 2 + 22, y + 30, step.title, textStyle({ role: "display", size: 26, color: open ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0.5);
+        shrinkTextToWidth(title, rowWidth - 44 - statusText.width - 20);
+        body.add(title);
         if (step.chapter && open) {
           const chapter = step.chapter;
-          const hit = this.scene.add.rectangle(0, y + 30, 700, 76, 0xffffff, 0).setInteractive({ useHandCursor: true });
+          const hit = this.scene.add.rectangle(0, y + 30, rowWidth, rowHeight, 0xffffff, 0).setInteractive({ useHandCursor: true });
           hit.on("pointerup", () => startScene(this.scene, "stageStory", { storyId: chapter.storyId, exitTo: "lobby" }));
           body.add(hit);
         }

@@ -138,7 +138,7 @@ export default {
   "item.sweep-ticket.name": "Vé càn quét",
   "item.sweep-ticket.description": "Càn quét một lần màn hầm ngục đã vượt qua mà không cần chiến đấu.",
   "item.strata-ticket.name": "Vé thám sát",
-  "item.strata-ticket.description": "Hồi 1 lượt thám sát địa tầng Khảo cổ.",
+  "item.strata-ticket.description": "Dùng để mở di chỉ Khảo cổ. Số lượng đang có chính là số lượt.",
   "currency.raidSigil.name": "Ấn chinh phạt",
   "currency.raidSigil.lore": "Chứng nhận cấp theo mức bạn đẩy lùi được trùm.",
   "currency.raidSigil.source.0": "Quyết toán đột kích đã kết thúc",

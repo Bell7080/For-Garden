@@ -46,9 +46,6 @@ export type InventoryDisplayItem =
   | { readonly kind: "stack"; readonly category: "consumable" | "material"; readonly id: string; readonly definition: ItemDefinition; readonly quantity: number };
 
 /** 씬의 직접 상태 변경을 막고 세 저장 모델을 표시 모델로만 합성한다. */
-/** 고고학 탐사 횟수를 채우는 소비품. 가방에서는 가진 수가 0이어도 칸이 선다. */
-export const STRATA_TICKET_ITEM_ID = "strata-ticket";
-
 export class InventoryManager {
   constructor(private readonly state: Session, private readonly events: ManagerEvents = managerEvents) {}
 
@@ -175,7 +172,7 @@ export class InventoryManager {
   }
 
   /** 원본 DTO/Session 배열을 바꾸지 않고 결정적 tie-break를 포함한 안정 정렬 복사본을 만든다. */
-  list(category: ItemCategory, sort: InventorySort = DEFAULT_INVENTORY_SORT, options: { showEmpty?: boolean } = {}): readonly InventoryDisplayItem[] {
+  list(category: ItemCategory, sort: InventorySort = DEFAULT_INVENTORY_SORT): readonly InventoryDisplayItem[] {
     if (category === "rune") {
       const definition = findItem("rune")!;
       const equipped = new Set(Object.values(this.state.relicProgress).flatMap(({ heartGemSlots }) => heartGemSlots.filter((id): id is string => id !== null)));
@@ -194,14 +191,6 @@ export class InventoryManager {
       const definition = findItem(stack.itemId);
       return definition?.category === category ? [{ kind: "stack" as const, category, id: stack.itemId, definition, quantity: stack.quantity }] : [];
     });
-    /*
-     * **탐사권은 없어도 칸이 선다** — 고고학의 「발굴권」 횟수와 같은 그림이라, 가방에 칸조차 없으면 어디서 채우는
-     * 물건인지 알 길이 없다. 표시할 때만 0으로 세우고 저장·서버 응답에는 넣지 않는다(빈 묶음이 저장에 남지 않게).
-     */
-    if (options.showEmpty && category === "consumable" && !rows.some(({ id }) => id === STRATA_TICKET_ITEM_ID)) {
-      const definition = findItem(STRATA_TICKET_ITEM_ID);
-      if (definition) rows.push({ kind: "stack", category, id: definition.id, definition, quantity: 0 });
-    }
     return rows;
   }
 }

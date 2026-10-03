@@ -138,7 +138,7 @@ export default {
   "item.sweep-ticket.name": "Säuberungsticket",
   "item.sweep-ticket.description": "Führt eine Säuberung einer bereits gewonnenen Dungeon-Stufe einmal ohne Kampf durch.",
   "item.strata-ticket.name": "Erkundungsticket",
-  "item.strata-ticket.description": "Stellt 1 Erkundung der Archäologie-Schichten wieder her.",
+  "item.strata-ticket.description": "Öffnet Archäologie-Stätten. Die Anzahl, die du besitzt, entspricht deinen Versuchen.",
   "currency.raidSigil.name": "Bezwingungssiegel",
   "currency.raidSigil.lore": "Eine Bescheinigung dafür, wie weit du den Boss zurückgedrängt hast.",
   "currency.raidSigil.source.0": "Abrechnung eines beendeten Raids",

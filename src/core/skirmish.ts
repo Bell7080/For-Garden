@@ -106,7 +106,7 @@ export interface Fighter extends Combatant {
    * 개체의 주문력에서 나오기 때문이다 — 밟은 쪽의 수치로 재면 같은 표식이 누가 밟느냐에 따라
    * 다른 값이 된다.
    */
-  shimmer: { sourceId: string } | null;
+  shimmer: { sourceId: string; /** 표식이 붙어 있는 동안 받는 피해 증가(%) — `wetMark` 돌파가 표식을 남길 때 새긴다. */ takenPercent?: number } | null;
   /** 아직 여는 돌진을 쓰지 않았는가. 전투당 한 번이라 쓰면 false로 내린다. */
   openingChargeReady: boolean;
   /**
@@ -1445,7 +1445,19 @@ export function createSkirmish(
  * 프레임에 지난 겹이 한 번 더 얹힌다. 겹은 실제로 때린 순간에만 오르므로 배율만 조회하는
  * 호출부는 없다.
  */
+/** 패시브 돌파(`stitchedMight`) — 테리사의 막을 두른 아군이 더 세게 때린다. 막의 출처는 막이 말한다. */
+function stitchedMightMultiplier(state: SkirmishState, attacker: Fighter): number {
+  if (attacker.shield.amount <= 0 || attacker.shield.providerId === null) return 1;
+  const provider = findFighter(state, attacker.shield.providerId);
+  const plan = provider ? openedBreakthrough(provider, "passive", (effects) => effects.passive) : undefined;
+  return plan?.kind === "stitchedMight" ? 1 + plan.damagePercent / 100 : 1;
+}
+
 function traitDamageMultiplier(state: SkirmishState, attacker: Fighter, target: Fighter): number {
+  return traitDamageMultiplierBase(state, attacker, target) * stitchedMightMultiplier(state, attacker);
+}
+
+function traitDamageMultiplierBase(state: SkirmishState, attacker: Fighter, target: Fighter): number {
   const effects = state.augmentEffects;
   attacker.traitStreakStacks = attacker.traitStreakTargetId === target.id ? attacker.traitStreakStacks + 1 : 0;
   attacker.traitStreakTargetId = target.id;
@@ -1677,7 +1689,7 @@ export function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEf
     const attacker = sourceId ? findFighter(state, sourceId) : undefined;
     if (attacker) refreshPoison(fighter, effect.seconds * potency, poisonAmountPerSecond(attacker, fighter, effect, state), events, sourceId);
   }
-  if (effect.kind === "overpaint") refreshOverpaint(fighter, { ...effect, seconds: effect.seconds * potency });
+  if (effect.kind === "overpaint") refreshOverpaint(fighter, { ...effect, seconds: effect.seconds * potency, maxStacks: overpaintCap(sourceId ? findFighter(state, sourceId) : undefined, effect.maxStacks) });
   if (effect.kind === "concussion") applyConcussion(fighter, effect, critical, events, state, sourceId);
   if (effect.kind === "butcher") applyButcher(fighter, effect, events, state, sourceId);
   // 표식은 겹을 쌓지 않고 하나만 유지한다. 다시 찍으면 그 자리를 새 표식이 덮는다.
@@ -1826,6 +1838,26 @@ function launchKnockback(
  * 다시 칠하면 **시간은 처음부터** 다시 돌고 중첩만 하나 오른다 — 오래 유지하려면 계속 칠해야
  * 하므로, 한 번 쌓아 두고 방치하는 것으로는 파티 배율이 유지되지 않는다.
  */
+/** 궁극기 돌파(`splashPaint`) — 터뜨린 겹의 일부가 주변 적에게 새 밑그림으로 남는다. 덧칠 한 겹이면 번지지 않는다. */
+function splashPaint(attacker: Fighter, target: Fighter, stacks: number, state: SkirmishState): void {
+  const plan = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
+  const paintEffect = attacker.def.basic.statusEffects?.find((effect) => effect.kind === "overpaint");
+  if (plan?.kind !== "splashPaint" || paintEffect?.kind !== "overpaint") return;
+  const share = Math.floor(stacks * plan.sharePercent / 100);
+  if (share <= 0) return;
+  for (const other of state.fighters) {
+    if (other.side === attacker.side || other.id === target.id || !isFighterAlive(other) || distance(target, other) > plan.radius) continue;
+    for (let i = 0; i < share; i += 1) refreshOverpaint(other, { ...paintEffect, maxStacks: overpaintCap(attacker, paintEffect.maxStacks) });
+  }
+}
+
+/** 폭주 돌파(`extraLayer`) — 폭주 중인 칠하는 손이 칠하는 덧칠은 최대 겹이 더 열린다. */
+function overpaintCap(painter: Fighter | undefined, base: number): number {
+  if (!painter?.ferocityFever) return base;
+  const plan = openedBreakthrough(painter, "ferocity", (effects) => effects.ferocity);
+  return plan?.kind === "extraLayer" ? base + plan.extraStacks : base;
+}
+
 function refreshOverpaint(target: Fighter, effect: Extract<CombatStatusEffect, { kind: "overpaint" }>): void {
   const stacks = Math.min(effect.maxStacks, (target.overpaint?.stacks ?? 0) + 1);
   // `total`은 화면의 시계(남은 시간 고리)가 읽는 분모다. 화면이 스킬 정의를 다시 뒤지지 않는다.
@@ -2771,6 +2803,18 @@ function quarryMultiplier(target: Fighter): number {
   return quarry ? 1 + quarry.percent / 100 : 1;
 }
 
+/** 패시브 돌파(`vitalSketch`) — 덧칠이 최대 겹인 적에게는 칠하는 손과 같은 편의 모든 타격이 더 잘 급소에 닿는다. */
+function vitalSketchCritPoints(state: SkirmishState, attacker: Fighter, target: Fighter): number {
+  const paint = target.overpaint;
+  if (paint === null || paint.stacks < paint.maxStacks) return 0;
+  for (const ally of state.fighters) {
+    if (ally.side !== attacker.side || !isFighterAlive(ally)) continue;
+    const plan = openedBreakthrough(ally, "passive", (effects) => effects.passive);
+    if (plan?.kind === "vitalSketch") return plan.critPoints;
+  }
+  return 0;
+}
+
 export function overpaintMultiplier(target: Fighter): number {
   const overpaint = target.overpaint;
   if (!overpaint || overpaint.remaining <= 0) return 1;
@@ -3020,6 +3064,18 @@ function contagiousFrenzy(attacker: Fighter, target: Fighter, state: SkirmishSta
   for (let i = 0; i < plan.stacks; i += 1) applyCombatStatusEffect(target, curse, events, state, source.id);
 }
 
+/**
+ * 표식이 붙은 적이 티아를 때리면 그 표식이 곧바로 터진다(`touchBurst`).
+ *
+ * 터뜨림은 평소와 같은 길(`applyShimmer`)을 지나므로 막 몫·폭주 배수·게이지가 똑같이 따라온다. 표식이 없는 적에게는
+ * 아무 일도 없다 — 이 효과가 새 표식을 남기는 일은 없다.
+ */
+function reactTouchBurst(target: Fighter, attacker: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  if (attacker.side === target.side || attacker.shimmer === null || !isFighterAlive(attacker) || !isFighterAlive(target)) return;
+  if (openedBreakthrough(target, "passive", (effects) => effects.passive)?.kind !== "touchBurst") return;
+  applyShimmer(target, attacker, target.def.basic, state, events);
+}
+
 /** 폭주 중 보호막을 두른 매디를 때린 적에게 냉기가 쌓인다(`frostCling`). */
 function reactFrostCling(target: Fighter, attacker: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
   if (attacker.side === target.side || !target.ferocityFever || target.shield.amount <= 0 || !isFighterAlive(attacker) || !isFighterAlive(target)) return;
@@ -3164,8 +3220,18 @@ function stitchSuture(attacker: Fighter, dealt: number, state: SkirmishState, ev
   const ally = lowestHpRatioAlly(state, attacker.side);
   if (ally === undefined) return;
   // 상한은 대상의 몸이 정한다 — 공격력이 자란 뒤 한 대가 체력 바를 통째로 덮지 않게 한다.
-  const amount = Math.min(Math.round(dealt * plan.damagePercent / 100), Math.round(ally.maxHp * plan.maxHpCapPercent / 100));
+  // 기본 공격 돌파(`tightStitch`)는 옮기는 비율만 올리고 한 번에 두르는 상한은 건드리지 않는다.
+  const tight = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
+  const percent = plan.damagePercent + (tight?.kind === "tightStitch" ? tight.damagePercentPoints : 0);
+  const amount = Math.min(Math.round(dealt * percent / 100), Math.round(ally.maxHp * plan.maxHpCapPercent / 100));
   if (amount <= 0) return;
+  // 폭주 돌파(`doubleNeedle`) — 두 번째로 체력 비율이 낮은 아군에게도 그 막의 일부를 둘러 준다.
+  const needle = attacker.ferocityFever ? openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity) : undefined;
+  if (needle?.kind === "doubleNeedle") {
+    const second = aliveFighters(state, attacker.side).filter((candidate) => candidate.id !== ally.id)
+      .sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
+    if (second) grantShield(state, second, attacker.id, Math.round(amount * needle.sharePercent / 100), events);
+  }
   if (attacker.ferocityFever && attacker.def.ferocityTrait.effectId === "cautery") {
     const healed = applyHealing(state, ally, amount, attacker.id);
     pushHeal(events, ally, healed, "passive");
@@ -5253,13 +5319,20 @@ function applyShimmer(attacker: Fighter, target: Fighter, skill: Skill, state: S
   const passive = attacker.def.passive;
   if (passive.kind !== "shimmerMark" || !isFighterAlive(target)) return;
   if (target.shimmer === null) {
-    target.shimmer = { sourceId: attacker.id };
+    const wet = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
+    target.shimmer = wet?.kind === "wetMark" ? { sourceId: attacker.id, takenPercent: wet.takenPercent } : { sourceId: attacker.id };
     strikeShimmer(attacker, target, passive.value, state, events);
     return;
   }
   target.shimmer = null;
-  const burst = skill.shimmerBurst;
-  if (burst === undefined) return;
+  const baseBurst = skill.shimmerBurst;
+  if (baseBurst === undefined) return;
+  // 폭주 돌파(`bigWave`) — 터지는 추가 피해만 키우고 막 몫(%)은 그대로 둔다.
+  const wave = attacker.ferocityFever ? openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity) : undefined;
+  const burst = wave?.kind === "bigWave" ? { ...baseBurst, power: baseBurst.power * wave.powerMultiplier } : baseBurst;
+  // 궁극기 돌파(`splashCharge`) — 표식이 터지는 한 번마다 게이지가 찬다. 게이지 충전은 문턱 규칙을 지나는 공용 길로만 준다.
+  const charge = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
+  if (charge?.kind === "splashCharge") giveEnergy(attacker, charge.energy);
   // 터지는 자리는 표식이 묻어 있던 그 적이다. 그래서 반경 표시도 시전자가 아니라 거기서 번진다.
   events.push({ kind: "areaImpact", attackerId: attacker.id, ultimate: false, damageType: "magical",
     area: { shape: "radial", x: target.x, y: target.y, radius: burst.radius } });
@@ -5392,6 +5465,14 @@ function retargetOnFullOverpaint(attacker: Fighter, target: Fighter, state: Skir
   if (attacker.def.passive.kind !== "overpaintSiphon") return;
   const paint = target.overpaint;
   if (!paint || paint.stacks < paint.maxStacks) return;
+  // 기본 공격 돌파(`paintSpill`) — 다 칠한 적에게서 근처 적으로 밑그림이 번진다. 번지는 것은 덧칠뿐이라 피해는 없다.
+  const spill = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
+  const paintEffect = attacker.def.basic.statusEffects?.find((effect) => effect.kind === "overpaint");
+  if (spill?.kind === "paintSpill" && paintEffect?.kind === "overpaint") {
+    const near = state.fighters.filter((other) => other.side !== attacker.side && other.id !== target.id && isFighterAlive(other) && distance(target, other) <= spill.radius)
+      .sort((a, b) => distance(target, a) - distance(target, b))[0];
+    if (near) for (let i = 0; i < spill.stacks; i += 1) refreshOverpaint(near, { ...paintEffect, maxStacks: overpaintCap(attacker, paintEffect.maxStacks) });
+  }
   moveToNearestOtherEnemy(attacker, target, state);
 }
 
@@ -5689,7 +5770,7 @@ export function resolveReceivedDamage(target: Fighter, rawAmount: number): Recei
   }
   // 덧칠은 경감과 같은 최종 경계에서 곱한다 — 여기 두지 않으면 피해 경로마다 따로 곱하게 되고
   // 어느 한 곳을 빠뜨리면 "덧칠했는데 그 스킬만 안 아픈" 상태가 된다.
-  const amplified = rawAmount * overpaintMultiplier(target) * quarryMultiplier(target);
+  const amplified = rawAmount * overpaintMultiplier(target) * quarryMultiplier(target) * (1 + (target.shimmer?.takenPercent ?? 0) / 100);
   // 「인」과 「절정」의 버티기는 **여기서 곱하지 않는다.** 그 둘은 최종 피해 감쇠가
   // 아니라 눈에 보이는 자원(보호막 · 대신 받기와 매초 회복)이라 이 경계를 지나지 않는다.
   const softened = Math.max(1, Math.round(amplified * (1 - Math.min(100, Math.max(0, reduction)) / 100)));
@@ -6443,7 +6524,7 @@ function strike(
   const passiveCritPoints = attacker.def.passive.criticalChancePercent ?? 0;
   // 「오더」가 더하는 치명타 확률도 퍼센트포인트다 — 곱하면 같은 지시가 개체마다 다른 값이 된다.
   const criticalChance = attacker.def.stats.critChance + passiveCritPoints
-    + (activeOrder(attacker)?.criticalChancePoints ?? 0);
+    + (activeOrder(attacker)?.criticalChancePoints ?? 0) + vitalSketchCritPoints(state, attacker, target);
   // 「전투의 여왕은 나야.」 폭주 중에는 이미 물어뜯어 피가 흐르는 적을 다시 물면 확정 치명타다.
   // 확률을 더하지 않는 이유는 그 축을 패시브가 이미 밀고 있어 폭주가 같은 말을 반복하기 때문이다.
   const bleedingBite = attackingInFever && critTrait.effectId === "rexBattleQueen"
@@ -6569,6 +6650,7 @@ function strike(
   gazeDrowsy(target, attacker, state, events);
   contagiousFrenzy(attacker, target, state, events);
   reactFrostCling(target, attacker, state, events);
+  reactTouchBurst(target, attacker, state, events);
   if (!useUltimate && targetWasFrozen) sodaFizz(attacker, target, state, events);
   if (!useUltimate) pullStruck(attacker, target, state, events);
 
@@ -6998,7 +7080,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   for (const [index, target] of targets.entries()) {
     // 각 대상은 자기 방어력·속성·피버 경감을 사용하며 치명타도 독립 판정한다.
     const criticalChance = Math.min(100, attacker.def.stats.critChance + passiveCritPoints
-      + (activeOrder(attacker)?.criticalChancePoints ?? 0));
+      + (activeOrder(attacker)?.criticalChancePoints ?? 0) + vitalSketchCritPoints(state, attacker, target));
     // 광역도 같은 조건을 쓴다 — 대상마다 출혈 여부가 다르므로 판정도 대상마다 따로 본다.
     const bleedingBite = attackingInFever && critTrait.effectId === "rexBattleQueen"
       && critTrait.bleedingGuaranteedCritical && target.bleed !== null;
@@ -7036,7 +7118,11 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     siphonOverpaintHealing(attacker, target, hpBefore - target.hp, state, events);
     triggerDuoBreakthroughRegen(state, attacker, hpBefore - target.hp, events);
     // 완성작을 공개하고 나면 그림은 지워진다 — 쌓아 두고 매번 터뜨릴 수 있으면 상시 배율이 된다.
-    if (detonation) target.overpaint = null;
+    if (detonation) {
+      const had = target.overpaint?.stacks ?? 0;
+      target.overpaint = null;
+      splashPaint(attacker, target, had, state);
+    }
     if (!resolution.ignored) gainFerocity(target, FEROCITY_RULES.hitGain, state, events);
     // 광역으로 맞은 쪽도 희열이 오른다. 단일과 광역에서 규칙이 갈리면 같은 한 대가 어느
     // 스킬에 맞았느냐에 따라 겹을 주기도 하고 안 주기도 한다.
@@ -7044,6 +7130,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     reactPrickle(target, attacker, state, events);
     contagiousFrenzy(attacker, target, state, events);
     reactFrostCling(target, attacker, state, events);
+    reactTouchBurst(target, attacker, state, events);
     // 광역 걸음도 같은 규칙으로 끌어당긴다 — 단일과 광역에서 갈리면 같은 걸음이 대상 수에 따라 다른 일을 한다.
     if (!useUltimate) pullStruck(attacker, target, state, events);
     // 집중도 **적중마다** 쌓는다. 단일 타격 쪽에만 두면 갈래화살이 셋을 맞혀도 겹이 하나도

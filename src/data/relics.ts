@@ -777,6 +777,13 @@ export const RELICS: RelicDef[] = [
     // 물살을 타고 계속 뛰어드는 몸이라 폭주는 **버틸 숨과 손**으로 발현한다. 토리카의 폭주와
     // 같은 1초 시계를 쓰되(`torikaBulwark`) 손이 함께 빨라진다 — 그쪽은 앞에 서서 버티는
     // 값이고, 이쪽은 계속 때리면서 버티는 값이다.
+    // 한계 돌파: 젖은 표적 · 물보라 충전 · 큰 파도 · 건드리면 터진다.
+    breakthroughEffects: {
+      basic: { kind: "wetMark", takenPercent: 12 },
+      ultimate: { kind: "splashCharge", energy: 6 },
+      ferocity: { kind: "bigWave", powerMultiplier: 2 },
+      passive: { kind: "touchBurst" },
+    },
     ferocityTrait: { name: "이크티오 다이브!", effectId: "tidalVigor", attackSpeedPercent: 20, missingHpRegenPercentPerSecond: 2 },
     passive: {
       // kind가 shimmerMark인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을 만들므로
@@ -1520,6 +1527,13 @@ export const RELICS: RelicDef[] = [
       ferocityGain: 0,
     },
     // 소심해서 자기가 나서지 못하는 아이라, 폭주는 제 화력이 아니라 아군의 손을 빌리는 쪽으로 발현한다.
+    // 한계 돌파: 번진 물감 · 튀는 물감 · 한 겹 더 · 급소 그리기.
+    breakthroughEffects: {
+      basic: { kind: "paintSpill", radius: 300, stacks: 1 },
+      ultimate: { kind: "splashPaint", radius: 260, sharePercent: 50 },
+      ferocity: { kind: "extraLayer", extraStacks: 1 },
+      passive: { kind: "vitalSketch", critPoints: 25 },
+    },
     ferocityTrait: {
       name: "네? 마음에 안 드신다고요...?",
       effectId: "sharedOverpaint",
@@ -3169,6 +3183,13 @@ export const RELICS: RelicDef[] = [
     },
     // 수치를 여기 적지 않는다 — 옮기는 비율과 상한은 「가봉」 하나가 갖고, 폭주는 그 몫이
     // 보호막으로 가는지 회복으로 가는지만 바꾼다.
+    // 한계 돌파: 촘촘한 땀 · (궁극기 없음) · 덧바늘 · 입은 만큼 휘두른다.
+    breakthroughEffects: {
+      basic: { kind: "tightStitch", damagePercentPoints: 15 },
+      ultimate: { kind: "none" },
+      ferocity: { kind: "doubleNeedle", sharePercent: 50 },
+      passive: { kind: "stitchedMight", damagePercent: 15 },
+    },
     ferocityTrait: { name: "지짐", effectId: "cautery", attackSpeedPercent: 40 },
     passive: {
       // kind가 sutureStitch인 패시브는 passiveDescription()이 구조화 필드로 문장을 만드므로

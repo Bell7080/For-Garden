@@ -2508,6 +2508,19 @@ export type BasicBreakthrough = {
   kind: "sodaFizz";
   radius: number;
   stacks: number;
+} | {
+  /** 표식이 붙어 있는 동안 그 적이 받는 피해가 이 비율만큼 늘어난다(티아). 표식이 지워지면 끝난다. */
+  kind: "wetMark";
+  takenPercent: number;
+} | {
+  /** 덧칠이 최대 겹인 적을 때리면 근처 적에게 덧칠이 이 수만큼 번진다(메론). */
+  kind: "paintSpill";
+  radius: number;
+  stacks: number;
+} | {
+  /** 가봉이 옮기는 피해 비율에 이 퍼센트포인트를 더한다. 한 번에 두르는 상한은 그대로다(테리사). */
+  kind: "tightStitch";
+  damagePercentPoints: number;
 } | BreakthroughNone;
 
 /**
@@ -2652,6 +2665,15 @@ export type UltimateBreakthrough = {
   kind: "coolingVent";
   healMaxHpPercentPerFrozen: number;
   maxFrozenCounted: number;
+} | {
+  /** 표식이 터질 때마다 궁극기 게이지가 이 수만큼 찬다(티아). */
+  kind: "splashCharge";
+  energy: number;
+} | {
+  /** 궁극기가 터뜨린 덧칠 겹의 일부가 주변 적에게 덧칠로 남는다(메론). */
+  kind: "splashPaint";
+  radius: number;
+  sharePercent: number;
 } | BreakthroughNone;
 
 /**
@@ -2776,6 +2798,18 @@ export type FerocityBreakthrough = {
   /** 폭주 중 보호막이 남아 있는 동안 매디를 때린 적에게 냉기가 쌓인다(매디). */
   kind: "frostCling";
   stacks: number;
+} | {
+  /** 폭주 중 표식 폭발의 추가 피해가 이 배수로 터진다. 막 몫은 그대로다(티아). */
+  kind: "bigWave";
+  powerMultiplier: number;
+} | {
+  /** 폭주 중 덧칠 최대 겹이 이 수만큼 늘어난다(메론). */
+  kind: "extraLayer";
+  extraStacks: number;
+} | {
+  /** 폭주 중 가봉 막의 일부를 두 번째로 체력 비율이 낮은 아군에게도 준다(테리사). */
+  kind: "doubleNeedle";
+  sharePercent: number;
 } | BreakthroughNone;
 
 /**
@@ -2902,6 +2936,17 @@ export type PassiveBreakthrough = {
   kind: "iceShatter";
   radius: number;
   attackPercent: number;
+} | {
+  /** 표식이 붙은 적이 이 개체를 때리면 그 표식이 곧바로 터진다(티아). */
+  kind: "touchBurst";
+} | {
+  /** 덧칠이 최대 겹인 적에게 아군의 치명타 확률이 이 수만큼 오른다(메론). */
+  kind: "vitalSketch";
+  critPoints: number;
+} | {
+  /** 이 개체의 막을 두른 아군이 주는 피해가 이 비율만큼 늘어난다(테리사). */
+  kind: "stitchedMight";
+  damagePercent: number;
 } | BreakthroughNone;
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */

@@ -34,7 +34,7 @@ export class LobbyPassCard {
     const x = C.left + C.width / 2;
     this.frame = scene.add.container(x, C.y);
     const shape = this.shape();
-    this.frame.add(drawLayer(scene, 0, 0, shape, { fill: 0x10151d, alpha: Math.max(HOLO.glass, 0.82) }));
+    this.frame.add(drawLayer(scene, 0, 0, shape, { fill: 0x1a1f27, alpha: HOLO.glass }));
     // 기하 마스크로 자르지 않는다 — 로비 위에 뜨는 창 아래에서 마스크 그림이 창을 뚫고 비쳤다. 넘김은 짧게 미끄러지며
     // 옅어지고 짙어지는 것으로 충분하다.
     this.slides = scene.add.container(0, 0);
@@ -112,12 +112,18 @@ export class LobbyPassCard {
     slide.setData("fg", fg);
     const left = -C.width / 2;
 
-    // 패스 색이 왼쪽에서 번져 들어온다 — 판은 같아도 어느 패스인지가 색으로 먼저 갈린다.
+    // 패스 색이 왼쪽에서 번져 들어와 오른쪽 끝에서 사라진다. 다각형 채우기에는 그라데이션이 먹지 않아(첫 색 한 장으로
+    // 칠해진다) 예전에는 판 폭의 85%에서 뚝 끊기는 보라 판이 유리 판 위에 한 장 더 얹힌 것처럼 보였다 — 판과 같은
+    // 실루엣을 세로 띠로 잘라 진하기만 줄여 가며 겹친다.
     const wash = scene.add.graphics();
-    wash.fillGradientStyle(tone, 0x10151d, tone, 0x10151d, 0.34, 0, 0.34, 0);
-    // 판의 깎인 모서리 안에서만 번진다(왼쪽 위 빗변을 피해 그린다).
-    const lean0 = C.height * C.bevel;
-    wash.fillPoints(toPoints([left + lean0, -C.height / 2, left + C.width * 0.85, -C.height / 2, left + C.width * 0.85, C.height / 2, left, C.height / 2, left, -C.height / 2 + lean0]), true);
+    const body = this.shape();
+    const strips = 16;
+    for (let i = 0; i < strips; i += 1) {
+      const from = left + (C.width * i) / strips;
+      const piece = clipToColumn(body, from, from + C.width / strips + 0.5);
+      if (piece.length < 6) continue;
+      wash.fillStyle(tone, 0.3 * Math.pow(1 - i / strips, 1.6)).fillPoints(toPoints(piece), true);
+    }
     slide.add(wash);
     const stripe = scene.add.graphics();
     const lean = C.height * C.bevel;
@@ -169,4 +175,20 @@ export class LobbyPassCard {
         .fillPoints(toPoints([cx, D.y - h, cx + w, D.y, cx, D.y + h, cx - w, D.y]), true);
     });
   }
+}
+
+/** 다각형(x, y 평탄 배열)을 세로 띠 [minX, maxX]로 자른다 — 볼록 도형이면 충분하다. */
+function clipToColumn(shape: number[], minX: number, maxX: number): number[] {
+  const clip = (points: number[], keep: (x: number) => boolean, edge: number): number[] => {
+    const out: number[] = [];
+    const count = points.length / 2;
+    for (let i = 0; i < count; i += 1) {
+      const ax = points[i * 2]!, ay = points[i * 2 + 1]!;
+      const bx = points[((i + 1) % count) * 2]!, by = points[((i + 1) % count) * 2 + 1]!;
+      if (keep(ax)) out.push(ax, ay);
+      if (keep(ax) !== keep(bx)) out.push(edge, ay + ((by - ay) * (edge - ax)) / (bx - ax));
+    }
+    return out;
+  };
+  return clip(clip(shape, (x) => x >= minX, minX), (x) => x <= maxX, maxX);
 }

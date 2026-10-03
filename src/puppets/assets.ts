@@ -59,8 +59,8 @@ import {
   IRNA_SD_METADATA,
   ARK_PORTRAIT_METADATA,
   ARK_SD_METADATA,
-  YUTIRA_PORTRAIT_METADATA,
-  YUTIRA_SD_METADATA,
+  YUTI_PORTRAIT_METADATA,
+  YUTI_SD_METADATA,
   NODONIA_PORTRAIT_METADATA,
   NODONIA_SD_METADATA,
   PACHI_PORTRAIT_METADATA,
@@ -387,9 +387,9 @@ export const ARK_ASSET: PuppetAsset = {
 };
 
 /** 28번 전신 일러스트: 유티(유티라누스). 깃털 장식이 목과 팔을 감싼 원화다. */
-export const YUTIRA_ASSET: PuppetAsset = {
+export const YUTI_ASSET: PuppetAsset = {
   url: `${base}puppets/char_028.zip`,
-  ...YUTIRA_PORTRAIT_METADATA,
+  ...YUTI_PORTRAIT_METADATA,
 };
 
 /** 20번 기본 SD는 디안, `_black`은 쿠로, `_white`는 시로라는 이름 대응을 보존한다. */
@@ -531,7 +531,7 @@ const PORTRAIT_ASSETS = {
   anka: ANKA_ASSET,
   irna: IRNA_ASSET,
   ark: ARK_ASSET,
-  yutira: YUTIRA_ASSET,
+  yuti: YUTI_ASSET,
   // 늑대는 전신 원화가 따로 없다. SD 자체가 온전한 한 마리라 정보창도 같은 묶음을 세운다.
   kuro: KURO_SD_ASSET,
   dimo: DIMO_SD_ASSET,
@@ -753,9 +753,9 @@ export const ARK_SD_ASSET: PuppetAsset = {
 };
 
 /** 28번 SD: 유티. */
-export const YUTIRA_SD_ASSET: PuppetAsset = {
+export const YUTI_SD_ASSET: PuppetAsset = {
   url: `${base}puppets/charSD_028.zip`,
-  ...YUTIRA_SD_METADATA,
+  ...YUTI_SD_METADATA,
 };
 
 /** 19번 SD: 테리사. */
@@ -831,7 +831,7 @@ const ALLY_SD_ASSETS: Readonly<Record<string, PuppetAsset>> = {
   anka: ANKA_SD_ASSET,
   irna: IRNA_SD_ASSET,
   ark: ARK_SD_ASSET,
-  yutira: YUTIRA_SD_ASSET,
+  yuti: YUTI_SD_ASSET,
   kuro: KURO_SD_ASSET,
   dimo: DIMO_SD_ASSET,
   shiro: SHIRO_SD_ASSET,

@@ -806,7 +806,7 @@ export const ARK_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
  * 고개를 숙인 자세라 두 눈의 높이가 36px 다르다 — 눈높이는 두 눈의 가운데로 잰다. 발2 관절은 그림 밖에 있어
  * 바닥선은 관절이 아니라 alpha 경계로 잡는다.
  */
-export const YUTIRA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+export const YUTI_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1024,
   imageHeight: 1536,
   content: { left: 19, top: 20, right: 1005, bottom: 1502 },
@@ -816,7 +816,7 @@ export const YUTIRA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
 };
 
 /** 유티 SD: 중심1·머리1·발1·발2를 프로젝트에서 읽었으며 눈 관절은 없다. alpha > 16 경계는 (69,65)–(1165,1218)이다. */
-export const YUTIRA_SD_METADATA: Omit<PuppetAsset, "url"> = {
+export const YUTI_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1254,
   imageHeight: 1254,
   content: { left: 69, top: 65, right: 1165, bottom: 1218 },

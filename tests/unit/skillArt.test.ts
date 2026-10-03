@@ -1422,7 +1422,7 @@ describe("적 정보창 역할 칸 표시 계약", () => {
 
 describe("유티 서리깃", () => {
   it("패시브 본문이 전용 규칙어를 가리키고 개체 이름은 유티다", () => {
-    const yuti = RELICS.find((r) => r.id === "yutira")!;
+    const yuti = RELICS.find((r) => r.id === "yuti")!;
     expect(yuti.name).toBe("유티");
     expect(passiveDescription(yuti.passive)).toContain("[[yuti-plume|서리깃]]");
   });

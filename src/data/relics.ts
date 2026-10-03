@@ -1481,7 +1481,7 @@ export const RELICS: RelicDef[] = [
   },
 
   {
-    id: "yutira",
+    id: "yuti",
     squad: "fang",
     name: "유티",
     specimenNumber: "028",
@@ -1503,7 +1503,7 @@ export const RELICS: RelicDef[] = [
     squadNote: "앱솔루트 팽의 측면 침투 담당. 정면에서 부딪히는 동료들의 틈으로 바람처럼 파고들어 약해진 상대를 끝내고, 연구원을 \"보스\"라 부른다.",
     researcherTitle: "보스",
     rarity: "SSR",
-    portraitAssetId: "yutira",
+    portraitAssetId: "yuti",
     origin: "유티라누스",
     element: "wind",
     role: "assassin",
@@ -1528,7 +1528,7 @@ export const RELICS: RelicDef[] = [
     // 폭주 중 기본 공격이 깃털처럼 주변으로 흩어지고 공격 속도가 오른다. 공용 범위 전이(`splashDamage`)다.
     ferocityTrait: { name: "깃털비", effectId: "splashDamage", damagePercent: 50, radius: 150, attackSpeedBonusPercent: 25 },
     passive: {
-      id: "yutira-passive",
+      id: "yuti-passive",
       name: "깃털 위장",
       kind: "featherVeil",
       iconAssetId: "skill-icon-buff",
@@ -1542,7 +1542,7 @@ export const RELICS: RelicDef[] = [
       desc: "전투 시작 시 3초 동안 은신 상태로 진입하고 서리깃을 두른다.",
     },
     basic: {
-      id: "yutira-basic",
+      id: "yuti-basic",
       name: "깃털 표창",
       power: 95,
       iconAssetId: "skill-icon-physical",
@@ -1553,7 +1553,7 @@ export const RELICS: RelicDef[] = [
       statusEffects: [{ kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2 }],
     },
     ultimate: {
-      id: "yutira-ult",
+      id: "yuti-ult",
       name: "서리 깃털 폭풍",
       power: 240,
       iconAssetId: "skill-icon-physical",

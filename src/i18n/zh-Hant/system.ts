@@ -63,7 +63,6 @@ export const SYSTEM_ZH_HANT = {
   "mail.daily.body": "新的每日任務開始了。",
   "mail.stamina.title": "體力已完全恢復",
   "mail.stamina.body": "你的體力已完全恢復。",
-  "error.purchase.unverified": "在接入伺服器收據驗證前無法購買。",
   "error.purchase.limit": "已達購買上限。",
   "error.profile.locked": "設定記錄已鎖定。",
   "error.account.noSdk": "此版本未接入賬號平臺SDK。",

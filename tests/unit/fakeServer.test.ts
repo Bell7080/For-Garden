@@ -1251,3 +1251,46 @@ describe("스테미나 충전 경계", () => {
       .rejects.toMatchObject({ code: "INVALID_EXCHANGE_TARGET" });
   });
 });
+
+describe("플랫폼 결제 지급 확정", () => {
+  const buy = async (server: FakeServer, productId: string, tx: string) => {
+    const verified = await server.verifyPurchaseReceipt({ productId, platform: "test", receipt: `verified-receipt:${productId}:${tx}`, requestId: `verify:${tx}` });
+    return server.fulfillPlatformPurchase({ verificationId: verified.verificationId, requestId: `fulfill:${tx}` });
+  };
+  const open = () => { const state = makeSession(); return { state, server: new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-22T12:00:00Z") }) }; };
+
+  it("젬 묶음은 첫 구매에만 같은 양을 한 번 더 주고 두 번째부터는 기본량만 준다", async () => {
+    const { state, server } = open();
+    const first = await buy(server, "premium-gems-small", "tx-a");
+    expect(first.firstBonusApplied).toBe(true);
+    expect(state.wallet.gems).toBe(120);
+    const second = await buy(server, "premium-gems-small", "tx-b");
+    expect(second.firstBonusApplied).toBe(false);
+    expect(state.wallet.gems).toBe(180);
+  });
+
+  it("같은 거래는 요청을 다시 보내도 두 번 지급하지 않는다", async () => {
+    const { state, server } = open();
+    const verified = await server.verifyPurchaseReceipt({ productId: "premium-gems-small", platform: "test", receipt: "verified-receipt:premium-gems-small:tx-dup", requestId: "v" });
+    const first = await server.fulfillPlatformPurchase({ verificationId: verified.verificationId, requestId: "f1" });
+    const again = await server.fulfillPlatformPurchase({ verificationId: verified.verificationId, requestId: "f2" });
+    expect(again.firstBonusApplied).toBe(first.firstBonusApplied);
+    expect(state.wallet.gems).toBe(120);
+  });
+
+  it("한 번만 살 수 있는 패키지는 두 번째 거래를 거절하고 재화를 건드리지 않는다", async () => {
+    const { state, server } = open();
+    await buy(server, "premium-starter", "tx-1");
+    const gold = state.wallet.gold;
+    await expect(buy(server, "premium-starter", "tx-2")).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
+    expect(state.wallet.gold).toBe(gold);
+    expect(gold).toBeGreaterThanOrEqual(50_000);
+  });
+
+  it("검증되지 않은 영수증으로는 지급이 일어나지 않는다", async () => {
+    const { state, server } = open();
+    const before = { ...state.wallet };
+    await expect(server.verifyPurchaseReceipt({ productId: "premium-gems-small", platform: "test", receipt: "forged", requestId: "bad" })).rejects.toBeDefined();
+    expect(state.wallet).toEqual(before);
+  });
+});

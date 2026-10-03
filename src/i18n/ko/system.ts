@@ -84,7 +84,6 @@ export const SYSTEM_KO = {
   "mail.stamina.body": "스테미나가 모두 충전되었습니다.",
 
   // ── 화면에 그대로 서는 오류 ──────────────────────────────────────────────
-  "error.purchase.unverified": "서버 영수증 검증 연결 전에는 구매할 수 없습니다.",
   "error.purchase.limit": "구매 제한에 도달했습니다.",
   "error.profile.locked": "설정 기록이 잠금 상태입니다.",
   "error.account.noSdk": "이 빌드에는 계정 플랫폼 SDK가 연결되어 있지 않습니다.",

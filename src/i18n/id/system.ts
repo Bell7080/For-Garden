@@ -63,7 +63,6 @@ export const SYSTEM_ID = {
   "mail.daily.body": "Misi harian baru telah dimulai.",
   "mail.stamina.title": "Stamina Pulih Penuh",
   "mail.stamina.body": "Stamina Anda telah pulih penuh.",
-  "error.purchase.unverified": "Pembelian tidak tersedia sampai verifikasi struk server terhubung.",
   "error.purchase.limit": "Batas pembelian telah tercapai.",
   "error.profile.locked": "Catatan pengaturan terkunci.",
   "error.account.noSdk": "Build ini tidak terhubung ke SDK platform akun.",

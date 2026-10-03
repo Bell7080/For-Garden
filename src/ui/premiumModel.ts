@@ -1,5 +1,6 @@
 import type { ProductDto } from "../api/contracts";
 import type { PremiumCategory } from "../data/products";
+import { currencyRecordToRewardItems, productGrantsToRewardItems } from "./rewardPopupModel";
 
 /** 프리미엄 화면이 자기 storefront 상품만 보존하는 순수 표시 모델이다. */
 export function premiumModel(products: readonly ProductDto[]): ProductDto[] {
@@ -21,4 +22,39 @@ export function premiumCategoryOf(product: ProductDto): PremiumCategory {
 /** 라벨은 storefront 검증을 통과한 상품 중 그 갈래만 새 배열로 반환한다. */
 export function productsForPremiumCategory(products: readonly ProductDto[], category: PremiumCategory): ProductDto[] {
   return premiumModel(products).filter((product) => premiumCategoryOf(product) === category);
+}
+
+/** 카드에 서는 받는 것 한 칸. 그림 키와 수량, 매일 받는 몫인지만 든다. */
+export interface PremiumGrantTile {
+  /** 공용 액자가 읽는 텍스처 키(재화 그림 · 아이템 그림). */
+  icon: string;
+  amount: number;
+  /** 패스가 매일 얹는 몫 — 액자 모서리에 「매일」 표식이 선다. */
+  daily?: boolean;
+}
+
+/**
+ * 그 상품이 주는 것을 카드의 액자 목록으로 바꾼다.
+ *
+ * **지급 목록이 곧 화면이다.** 설명 문장을 따로 두지 않고 `grants`(그리고 패스가 매일 얹는 다이아)에서
+ * 그대로 만들므로, 지급을 고치면 카드가 함께 바뀐다. 그림이 없는 지급(프로필 장식)은 칸을 세우지 않고
+ * `premiumDecorationNames`가 한 줄로 알린다.
+ */
+export function premiumGrantTiles(product: Pick<ProductDto, "grants" | "passBenefit">): PremiumGrantTile[] {
+  const tiles: PremiumGrantTile[] = productGrantsToRewardItems(product.grants).flatMap((item) =>
+    typeof item.icon === "string" ? [{ icon: item.icon, amount: item.amount }] : []);
+  const daily = product.passBenefit?.dailyBonus;
+  if (daily) tiles.push(...currencyRecordToRewardItems({ [daily.currency]: daily.amount }).map((item) => ({ icon: item.icon as string, amount: item.amount, daily: true })));
+  return tiles;
+}
+
+/** 칸이 없는 지급(프로필 장식)의 이름들. */
+export function premiumDecorationNames(product: Pick<ProductDto, "grants">): string[] {
+  return product.grants.flatMap((grant) => grant.kind === "profile_decoration" ? [grant.name] : []);
+}
+
+/** 첫 구매 보너스로 같은 팩이 한 번 더 얹는 다이아 수(없거나 이미 받았으면 0). */
+export function premiumFirstBonusGems(product: Pick<ProductDto, "firstPurchaseBonus" | "firstBonusAvailable">): number {
+  if (!product.firstBonusAvailable) return 0;
+  return (product.firstPurchaseBonus ?? []).reduce((sum, grant) => grant.kind === "currency" && grant.currency === "gems" ? sum + grant.amount : sum, 0);
 }

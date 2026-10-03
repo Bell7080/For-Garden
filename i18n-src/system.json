@@ -609,16 +609,6 @@
 "Deine Ausdauer ist vollständig erholt.",
 "Ваша выносливость полностью восстановлена."
 ],
-"error.purchase.unverified": [
-"在接入服务器收据验证前无法购买。",
-"ซื้อไม่ได้จนกว่าจะเชื่อมต่อการตรวจสอบใบเสร็จของเซิร์ฟเวอร์",
-"Chưa thể mua cho đến khi kết nối xác minh biên lai máy chủ.",
-"Pembelian tidak tersedia sampai verifikasi struk server terhubung.",
-"Las compras no están disponibles hasta conectar la verificación de recibos del servidor.",
-"As compras ficam indisponíveis até a verificação de recibos do servidor ser conectada.",
-"Käufe sind erst möglich, wenn die serverseitige Belegprüfung angebunden ist.",
-"Покупки недоступны, пока не подключена серверная проверка чеков."
-],
 "error.purchase.limit": [
 "已达购买上限。",
 "ถึงขีดจำกัดการซื้อแล้ว",

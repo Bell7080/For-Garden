@@ -1,4 +1,5 @@
 import { SHOP_PRODUCTS } from "./products";
+import { PREMIUM_PRODUCTS } from "./premiumProducts";
 import { registerDataText } from "../i18n";
 import type { PremiumCategory, ProductDefinition, ProductStorefront, ShopProductIconKey } from "./products";
 
@@ -37,39 +38,26 @@ const LEGACY_PRODUCTS: readonly ProductDefinition[] = [
   // 예전 재화 교환 줄(`trade-weeds`·`trade-dna`·`trade-rune-kit`)은 지웠다 — 무역이 패키지
   // 전시장이 되면서 같은 화면에 교환소와 전시대가 함께 서면 무엇을 보는 자리인지 흐려진다.
   // 재화를 재화로 바꾸는 일은 DNA 교환이 그대로 맡는다.
-  { id: "premium-starter", storefront: "premium", category: "special", premiumCategory: "limited", iconKey: "shop-product-amber", name: "신입 연구원 패키지", description: "호박석 2개 · 플랫폼 결제 준비 중", acquisition: { kind: "platform_payment", platformProductId: "premium-starter", displayPrice: "₩4,900" }, grants: [{ kind: "currency", currency: "amber", amount: 2 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  // 후원 패스는 광고를 제거하지 않고, 기존 광고 슬롯을 같은 보상·한도의 즉시 수령 슬롯으로 바꾼다.
-  { id: "premium-monthly", storefront: "premium", category: "special", premiumCategory: "package", iconKey: "shop-product-enhancement", name: "월간 연구 후원", description: "30일간 광고 보상 즉시 수령 · 슬롯별 기존 일일 한도 · 매일 다이아 5개 · 즉시 화석 5개 · 월간 후원자 명찰", acquisition: { kind: "platform_payment", platformProductId: "premium-monthly", displayPrice: "₩14,900" }, grants: [{ kind: "currency", currency: "fossil", amount: 5 }, { kind: "profile_decoration", decorationId: "patron-monthly", name: "월간 후원자 명찰" }], passBenefit: { durationDays: 30, instantAdRewards: true, usesStandardAdRewardPolicy: true, dailyBonus: { currency: "gems", amount: 5 } }, defaultQuantity: 1, purchaseLimit: 1, refresh: "none", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  // **광고 제거 멤버십은 후원 패스와 다른 상품이다.** 후원 패스가 광고 보상을 즉시 받게 해 주는
-  // 값이라면, 이쪽은 광고 자체를 걷어 내고 그 대가로 던전 x3 배율을 연다. 한 상품에 묶지 않는
-  // 이유는 둘이 파는 것이 다르기 때문이다 — 하나는 기다림을, 하나는 광고를 없앤다.
-  { id: "premium-adfree", storefront: "premium", category: "special", premiumCategory: "package", iconKey: "shop-product-enhancement", name: "광고 제거 멤버십", description: "30일간 광고 제거 · 던전 3배율 개방 · 광고 보상 즉시 수령 · 매일 다이아 5개", acquisition: { kind: "platform_payment", platformProductId: "premium-adfree", displayPrice: "₩9,900" }, grants: [{ kind: "profile_decoration", decorationId: "patron-adfree", name: "광고 제거 멤버 표식" }], passBenefit: { durationDays: 30, instantAdRewards: true, usesStandardAdRewardPolicy: true, adFree: true, dailyBonus: { currency: "gems", amount: 5 } }, defaultQuantity: 1, purchaseLimit: 1, refresh: "none", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  // 다이아는 **그 자체를 사는 갈래**라 따로 선다. 값이 클수록 같은 원 하나가 더 많은 다이아를
-  // 주지만(규모 할인), 화면은 그 비율을 글로 적지 않는다 — 값과 받는 수가 이미 나란히 선다.
-  { id: "premium-gems-small", storefront: "premium", category: "special", premiumCategory: "gem", iconKey: "shop-product-gems", name: "다이아 소형 결정", description: "다이아 60개", acquisition: { kind: "platform_payment", platformProductId: "premium-gems-small", displayPrice: "₩1,500" }, grants: [{ kind: "currency", currency: "gems", amount: 60 }], defaultQuantity: 1, purchaseLimit: 99, refresh: "none", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "premium-gems-medium", storefront: "premium", category: "special", premiumCategory: "gem", iconKey: "shop-product-gems", name: "다이아 중형 결정", description: "다이아 330개", acquisition: { kind: "platform_payment", platformProductId: "premium-gems-medium", displayPrice: "₩7,900" }, grants: [{ kind: "currency", currency: "gems", amount: 330 }], defaultQuantity: 1, purchaseLimit: 99, refresh: "none", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "premium-gems-large", storefront: "premium", category: "special", premiumCategory: "gem", iconKey: "shop-product-gems", name: "다이아 대형 결정", description: "다이아 1,200개", acquisition: { kind: "platform_payment", platformProductId: "premium-gems-large", displayPrice: "₩25,000" }, grants: [{ kind: "currency", currency: "gems", amount: 1200 }], defaultQuantity: 1, purchaseLimit: 99, refresh: "none", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "premium-gems-huge", storefront: "premium", category: "special", premiumCategory: "gem", iconKey: "shop-product-gems", name: "다이아 특대 결정", description: "다이아 3,600개", acquisition: { kind: "platform_payment", platformProductId: "premium-gems-huge", displayPrice: "₩69,000" }, grants: [{ kind: "currency", currency: "gems", amount: 3600 }], defaultQuantity: 1, purchaseLimit: 99, refresh: "none", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  // 특가는 **주기마다 한 번씩 돌아오는** 묶음이다. 한정과 다른 점은 다시 열린다는 것뿐이라,
-  // 제한 주기(`refresh`)가 그 차이를 그대로 들고 있다.
-  { id: "premium-weekly-deal", storefront: "premium", category: "weekly", premiumCategory: "deal", iconKey: "shop-product-fossil", name: "주간 연구 특가", description: "화석 3개 · 치즈케이크 200개", acquisition: { kind: "platform_payment", platformProductId: "premium-weekly-deal", displayPrice: "₩3,900" }, grants: [{ kind: "currency", currency: "fossil", amount: 3 }, { kind: "currency", currency: "cheesecake", amount: 200 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "premium-restore-deal", storefront: "premium", category: "weekly", premiumCategory: "deal", iconKey: "shop-product-enhancement", name: "복원 가속 특가", description: "호박석 2개 · DNA 조각 40개", acquisition: { kind: "platform_payment", platformProductId: "premium-restore-deal", displayPrice: "₩9,900" }, grants: [{ kind: "currency", currency: "amber", amount: 2 }, { kind: "currency", currency: "dnaFragments", amount: 40 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  // 한정은 계정당 한 번이다. 다시 열리지 않으므로 `refresh: "once"`가 그 약속을 지킨다.
-  { id: "premium-season-crate", storefront: "premium", category: "special", premiumCategory: "limited", iconKey: "shop-product-supplies", name: "시즌 한정 표본 상자", description: "호박석 4개 · 화석 5개 · 치즈케이크 400개", acquisition: { kind: "platform_payment", platformProductId: "premium-season-crate", displayPrice: "₩19,900" }, grants: [{ kind: "currency", currency: "amber", amount: 4 }, { kind: "currency", currency: "fossil", amount: 5 }, { kind: "currency", currency: "cheesecake", amount: 400 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
 ];
 
 /** 모든 storefront를 한 카탈로그로 합치되 각 소비자는 명시적으로 경계를 고른다. */
-export const PRODUCTS: readonly ProductDefinition[] = [...SHOP_PRODUCTS, ...LEGACY_PRODUCTS];
+export const PRODUCTS: readonly ProductDefinition[] = [...SHOP_PRODUCTS, ...LEGACY_PRODUCTS, ...PREMIUM_PRODUCTS];
 
 /** 화면 모델과 서버 검증이 공유하는 명시적 storefront 목록이다. */
 export const PRODUCT_STOREFRONTS: readonly ProductStorefront[] = ["shop", "trade", "premium"];
 
 /** 프리미엄 탭 이름도 같은 방식으로 언어별 덮어쓰기를 받는다. */
 for (const tab of PREMIUM_TABS) registerDataText(tab, "label", `premium.tab.${tab.id}`);
-/** 상품 이름과 설명도 함께 등록한다. */
+/**
+ * 상품 이름과 설명도 함께 등록한다.
+ *
+ * **프리미엄 상품의 설명은 화면에 뜨지 않는다** — 카드와 결제 확인판은 지급 목록(액자 + 수량)과 값만
+ * 세우므로, 문장을 따로 두면 지급을 고칠 때 열한 언어의 옛 문장이 조용히 거짓말을 한다. 설명은
+ * 한국어 데이터 문서로만 남기고 번역 키는 두지 않는다. 이름은 화면에 서므로 등록한다.
+ */
 for (const product of PRODUCTS) {
   registerDataText(product, "name", `product.${product.id}.name`);
-  registerDataText(product, "description", `product.${product.id}.description`);
+  if (product.storefront !== "premium") registerDataText(product, "description", `product.${product.id}.description`);
 }
 
 /** 프로필 장식처럼 지급품 자체가 이름을 가진 것도 화면에 서므로 등록한다. */

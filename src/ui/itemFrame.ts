@@ -127,6 +127,8 @@ export interface FramedIconOptions extends ItemFrameOptions {
   amount?: string;
   /** 수 글자 색. 비우면 강조색이다. */
   amountColor?: string;
+  /** 수 글자 크기(액자 한 변 대비). 비우면 공용 `ITEM_FRAME.amountRatio`다 — 값이 가장 먼저 읽혀야 하는 자리(결제 카드)만 키운다. */
+  amountRatio?: number;
   /** 그림 자체의 진하기. 이미 받은 보상처럼 눌러 두어야 하는 자리만 넘긴다. */
   iconAlpha?: number;
   /**
@@ -192,7 +194,7 @@ export function addFramedIcon(
   }));
   if (options.amount !== undefined) {
     holder.add(scene.add
-      .text(size / 2 - 8, size / 2 - 6, options.amount, textStyle({ role: "display", size: Math.max(18, Math.round(size * ITEM_FRAME.amountRatio)), color: options.amountColor ?? COLOR.accentText }))
+      .text(size / 2 - 8, size / 2 - 6, options.amount, textStyle({ role: "display", size: Math.max(18, Math.round(size * (options.amountRatio ?? ITEM_FRAME.amountRatio))), color: options.amountColor ?? COLOR.accentText }))
       .setOrigin(1, 1)
       .setStroke("#000000", 6)
       .setShadow(2, 3, "#000000", 2, false, true));

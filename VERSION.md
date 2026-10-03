@@ -1,6 +1,6 @@
 # 버전 관리
 
-현재 버전: **v0.227.1**
+현재 버전: **v0.228.0**
 
 `VERSION.md`와 `package.json`의 `version`은 항상 같은 값을 쓰고, 타이틀(로딩) 화면 좌측
 하단 표기는 그 값을 그대로 읽는다. 화면에 손으로 적어 두지 않는다.
@@ -31,6 +31,16 @@
   그 이전의 초기 프로토타입 단계는 `v0.1.0` 항목 하나로 묶었다.
 
 ## 변경 이력
+
+## v0.228.0 — 2026-10-03 — 프리미엄 탭 결제 상품
+
+- **패키지는 가로로 긴 한 줄, 젬은 두 칸**으로 다시 짰다(`PREMIUM_WIDE`·`premiumListKind`). 가격은 `display` 굵은 글자 58px로 카드 오른쪽의 큰 칩에, 받는 재화는 액자 넷까지 수량 글자를 키워(`amountRatio`) 한눈에 읽힌다.
+- **상품 표는 `src/data/premiumProducts.ts` 하나다.** 신입 연구원·성장 패키지(계정당 1회), 월간 후원·광고 제거(이용권), 오늘의 보급 상자·주간 연구 특가·스태미나·발굴 장비·복원 가속·토벌 지원(주기 한정), 시즌 한정 표본 상자, 다이아 네 묶음(60/330/1200/3600). 값어치는 `TRADE_GEM_RATE`로 환산한 장부를 파일 머리에 남겼다. 가격(`displayPrice`)과 스토어 상품 ID는 `pay()` 한 곳에서만 갈아 끼운다.
+- **다이아 묶음은 첫 구매 보너스**(`firstPurchaseBonus` — 같은 양 한 번 더)를 가진다. 다시 살 수 없는 상품(`refresh` none/once)에만 허용한다. 보너스 표는 운영 값이라 조정 가능하다.
+- **서버 경계 `fulfillPlatformPurchase`**: 검증된 영수증(`verifyPurchaseReceipt`, 이제 모든 결제 상품)을 거래 ID 기준 멱등으로 지급하고 이용권은 권리를 만든다. 한도 초과는 `PURCHASE_LIMIT_REACHED`. 화면은 지갑을 건드리지 않는다.
+- **`UnsupportedPlatformPaymentAdapter`**: SDK 없는 빌드는 `unsupported`를 돌려주고 성공을 흉내 내지 않는다. 브리지가 있으면 `window.__PF_PAYMENT__`를 쓴다(`src/platform/payment.ts`). 흐름은 `runPlatformPurchase`.
+- 번역: 상품 설명은 화면에 뜨지 않아 걷어 내고(이름·지급 항목만 남김) 새 UI 문구 여섯과 상품 이름·지급 항목을 열한 언어에 더했다. 예전 `error.purchase.unverified`·`shop.premium.passBenefit`는 쓰는 곳이 없어 지웠다.
+- 남은 것: 실제 스토어 SDK 어댑터, 환불 시 회수(`docs/server-migration.md` 참고).
 
 ## v0.227.1 — 2026-10-03
 

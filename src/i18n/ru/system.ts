@@ -63,7 +63,6 @@ export const SYSTEM_RU = {
   "mail.daily.body": "Начались новые ежедневные задания.",
   "mail.stamina.title": "Выносливость полностью восстановлена",
   "mail.stamina.body": "Ваша выносливость полностью восстановлена.",
-  "error.purchase.unverified": "Покупки недоступны, пока не подключена серверная проверка чеков.",
   "error.purchase.limit": "Достигнут лимит покупок.",
   "error.profile.locked": "Запись настроек заблокирована.",
   "error.account.noSdk": "В этой сборке не подключён SDK платформы аккаунтов.",

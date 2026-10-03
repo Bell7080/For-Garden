@@ -1,4 +1,4 @@
-import type { PlatformPaymentAdapter } from "../api/PlatformPayment";
+import type { PlatformPaymentAdapter, PlatformReceipt } from "../api/PlatformPayment";
 import type { ProductAcquisition } from "../data/products";
 import { presentRewardedAd } from "../platform/rewardedAds";
 
@@ -10,11 +10,15 @@ export type ProductConfirmation =
   | { status: "daily_limit" }
   | { status: "unavailable" };
 
-/** 플랫폼 상품은 반드시 PlatformPayment 어댑터가 발급한 영수증만 확정 콜백에 전달한다. */
-export async function confirmPlatformProduct(acquisition: Extract<ProductAcquisition, { kind: "platform_payment" }>, payment: PlatformPaymentAdapter, confirmReceipt: (payload: string) => Promise<ProductConfirmation>): Promise<ProductConfirmation> {
+/**
+ * 플랫폼 상품은 반드시 PlatformPayment 어댑터가 발급한 영수증만 확정 콜백에 전달한다.
+ * SDK가 없는 빌드(`unsupported`)는 결제를 시작하지 않고 `unavailable`로 돌려준다.
+ */
+export async function confirmPlatformProduct(acquisition: Extract<ProductAcquisition, { kind: "platform_payment" }>, payment: PlatformPaymentAdapter, confirmReceipt: (payload: string, receipt: PlatformReceipt) => Promise<ProductConfirmation>): Promise<ProductConfirmation> {
   const paymentResult = await payment.requestPayment(acquisition.platformProductId);
   if (paymentResult.status === "cancelled") return { status: "cancelled" };
-  return confirmReceipt(paymentResult.receipt.payload);
+  if (paymentResult.status === "unsupported") return { status: "unavailable" };
+  return confirmReceipt(paymentResult.receipt.payload, paymentResult.receipt);
 }
 
 /** 광고 상품은 rewardedAds 모듈의 완료 토큰 외에는 서버 확정 콜백에 전달하지 않는다. */

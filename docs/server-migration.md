@@ -156,6 +156,14 @@
 어차피 동작하지 않지만, **눌러도 아무 일이 없는 칸은 준비 상태를 과장한다**(CLAUDE.md) —
 동작하지 않게 두지 말고 아예 세우지 않는다.
 
+## 11. 결제 지급 (`fulfillPlatformPurchase`)
+
+지금 `FakeServer.verifyReceipt`는 `verified-receipt:<상품>:<거래ID>` 문자열을 믿는다. 실제 서버는 **스토어
+서버(App Store Server API·Google Play Developer API)에 영수증을 직접 물어** 거래 ID를 얻어야 한다.
+거래 ID 멱등 표(`fulfilledTransactions`)는 DB 유니크 제약으로, 첫 구매 보너스 판정은 같은 트랜잭션에서
+계정×상품 구매 기록으로 한다. **환불·취소 알림을 받으면 지급한 재화를 회수하는 경로가 아직 없다** —
+스토어 알림 웹훅과 회수 정책(음수 잔액 허용 여부)을 정해야 한다.
+
 ---
 
 ## 옮기는 순서 제안

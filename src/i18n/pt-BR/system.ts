@@ -63,7 +63,6 @@ export const SYSTEM_PT_BR = {
   "mail.daily.body": "Novas missões diárias começaram.",
   "mail.stamina.title": "Estamina totalmente recuperada",
   "mail.stamina.body": "Sua Estamina foi totalmente recuperada.",
-  "error.purchase.unverified": "As compras ficam indisponíveis até a verificação de recibos do servidor ser conectada.",
   "error.purchase.limit": "O limite de compra foi atingido.",
   "error.profile.locked": "O registro de configurações está bloqueado.",
   "error.account.noSdk": "Esta versão não tem o SDK da plataforma de contas conectado.",

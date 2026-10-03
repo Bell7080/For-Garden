@@ -85,6 +85,19 @@ const CATEGORY: Record<EffectKind, Category> = {
   quarryMark: "support",
   spreadingDread: "control",
   terrorCarapace: "survival",
+  // 탱커 계약(수압·까칠·졸음)을 새 동작으로 보여 주는 효과들
+  pressureConduct: "control",
+  thornJab: "damage",
+  sleepPounce: "damage",
+  deepSink: "control",
+  wallReflect: "damage",
+  lullabyGaze: "control",
+  vortexDraw: "control",
+  heatChain: "survival",
+  yawnContagion: "control",
+  salvageShare: "support",
+  thornStorm: "damage",
+  softBreath: "survival",
 };
 
 /** 직군이 받을 수 없는 분류. 암살자·원거리 딜러는 은신이 아닌 생존 유틸과 게이지 조작을 받지 않는다. */

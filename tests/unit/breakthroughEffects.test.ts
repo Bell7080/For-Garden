@@ -1177,3 +1177,235 @@ describe("스테라 한계 돌파", () => {
     expect(breakthroughEffectText(stella, "passive")).toContain("은신");
   });
 });
+
+describe("탱커 계약 한계 돌파 — 모사나·켄토·안카", () => {
+  const NEVER = () => 0.99;
+  /** 아군 하나(+선택 아군)와 적들. 모두 가만히 서 있어 한 가지만 잰다. */
+  function setup(allyIds: string[], enemyIds: string[], breakthrough: number): SkirmishState {
+    const state = createSkirmish(allyIds.map(getRelic), enemyIds.map(getRelic), ARENA, {}, { [allyIds[0]]: breakthrough });
+    for (const fighter of state.fighters) { fighter.attackCooldown = 999; fighter.retargetIn = 999; fighter.stealthFor = 0; }
+    state.fighters.filter((fighter) => fighter.side === "enemy").forEach((foe, index) => { foe.maxHp = 10_000_000; foe.hp = foe.maxHp; foe.x = 540 + index * 60; foe.y = 1_000; });
+    const main = findFighter(state, "player-0")!;
+    main.x = 500; main.y = 1_000;
+    return state;
+  }
+  const run = (state: SkirmishState, seconds: number, hook?: () => void): SkirmishEvent[] => {
+    const events: SkirmishEvent[] = [];
+    for (let tick = 0; tick < seconds * 20; tick += 1) { hook?.(); events.push(...stepSkirmish(state, 0.05, NEVER)); }
+    return events;
+  };
+
+  describe("모사나", () => {
+    const pressure = () => getRelic("mosana").basic.statusEffects!.find((effect) => effect.kind === "pressure")!;
+    const primed = (state: SkirmishState) => {
+      const mosana = findFighter(state, "player-0")!;
+      const first = findFighter(state, "enemy-0")!;
+      const effect = pressure();
+      if (effect.kind !== "pressure") throw new Error("pressure");
+      first.pressure = { stacks: effect.maxStacks - 1, remaining: 4, total: 4, sourceId: mosana.id, effect };
+      mosana.attackCooldown = 0; mosana.targetId = first.id;
+    };
+
+    it("은 수압이 터질 때 가장 가까운 다른 적에게 2겹을 옮기되 거기서 또 터지지 않는다(별 II)", () => {
+      const result = (breakthrough: number) => {
+        const state = setup(["mosana"], ["toby", "amo"], breakthrough);
+        primed(state);
+        run(state, 1);
+        return { burst: findFighter(state, "enemy-0")!.pressureLockFor, next: findFighter(state, "enemy-1")!.pressure?.stacks ?? 0, nextLock: findFighter(state, "enemy-1")!.pressureLockFor };
+      };
+      expect(result(1).burst).toBeGreaterThan(0);
+      expect(result(1).next).toBe(2);
+      expect(result(1).nextLock).toBe(0);
+      expect(result(0).next).toBe(0);
+    });
+
+    it("은 끌려온 적에게 도발이 이어지는 동안 매초 수압을 쌓는다(별 III)", () => {
+      const result = (breakthrough: number) => {
+        const state = setup(["mosana"], ["toby"], breakthrough);
+        const mosana = findFighter(state, "player-0")!;
+        mosana.energy = 1_000;
+        fireUltimate(state, mosana.id, NEVER);
+        mosana.attackCooldown = 999;
+        run(state, 2.2);
+        const foe = findFighter(state, "enemy-0")!;
+        return foe.pressure?.stacks ?? 0;
+      };
+      expect(result(2)).toBe(2);
+      expect(result(0)).toBe(0);
+    });
+
+    it("은 폭주 중 수압이 쌓인 적을 모사나 쪽으로 끌어당기고 기절은 만들지 않는다(별 IV)", () => {
+      const result = (breakthrough: number) => {
+        const state = setup(["mosana"], ["toby"], breakthrough);
+        const mosana = findFighter(state, "player-0")!;
+        const foe = findFighter(state, "enemy-0")!;
+        const effect = pressure();
+        if (effect.kind !== "pressure") throw new Error("pressure");
+        mosana.ferocityFever = true; mosana.ferocity = FEROCITY_RULES.max;
+        foe.x = 900; foe.stunnedFor = 5;
+        foe.pressure = { stacks: 2, remaining: 4, total: 4, sourceId: mosana.id, effect };
+        run(state, 1);
+        return foe.x;
+      };
+      expect(result(0) - result(3)).toBeGreaterThan(50);
+    });
+
+    it("은 인양 성공의 막을 가장 얇은 아군에게도 절반 나눈다(별 V)", () => {
+      const result = (breakthrough: number) => {
+        const state = setup(["mosana", "rex"], ["toby"], breakthrough);
+        primed(state);
+        run(state, 1);
+        return findFighter(state, "player-1")!.shield.amount;
+      };
+      const given = result(FULL_TANK);
+      expect(given).toBeGreaterThan(0);
+      expect(result(3)).toBe(0);
+    });
+  });
+
+  describe("켄토", () => {
+    const withPrickle = (state: SkirmishState, stacks: number) => {
+      const kento = findFighter(state, "player-0")!;
+      kento.prickle = { stacks, remaining: 8, total: 8 };
+      return kento;
+    };
+    it("은 평타 적중에 지금 쌓인 겹만큼의 반격을 한 번 더 얹는다(별 II)", () => {
+      const result = (breakthrough: number) => {
+        const state = setup(["kento"], ["toby"], breakthrough);
+        const kento = withPrickle(state, 5);
+        kento.attackCooldown = 0; kento.targetId = "enemy-0";
+        return run(state, 0.5).filter((event) => event.kind === "attack" && event.attackerId === kento.id && event.animate === false).length;
+      };
+      expect(result(1)).toBeGreaterThan(result(0));
+    });
+
+    it("은 궁극기 도발이 이어지는 동안 막이 흡수한 피해를 가장 가까운 적에게 되돌린다(별 III)", () => {
+      const result = (breakthrough: number) => {
+        const state = setup(["kento"], ["toby"], breakthrough);
+        const kento = findFighter(state, "player-0")!;
+        const foe = findFighter(state, "enemy-0")!;
+        kento.energy = 1_000;
+        fireUltimate(state, kento.id, NEVER);
+        kento.attackCooldown = 999;
+        foe.attackCooldown = 0; foe.targetId = kento.id;
+        return run(state, 1).filter((event) => event.kind === "attack" && event.attackerId === kento.id && event.skill === "transfer").length;
+      };
+      expect(result(2)).toBeGreaterThan(0);
+      expect(result(0)).toBe(0);
+    });
+
+    it("은 폭주 중 겹이 상한에서 터진 뒤 5겹으로 이어진다(별 IV)", () => {
+      const result = (breakthrough: number) => {
+        const state = setup(["kento"], ["toby"], breakthrough);
+        const kento = withPrickle(state, 9);
+        kento.ferocityFever = true; kento.ferocity = FEROCITY_RULES.max;
+        const foe = findFighter(state, "enemy-0")!;
+        foe.attackCooldown = 0; foe.targetId = kento.id;
+        run(state, 0.3);
+        return kento.prickle?.stacks ?? 0;
+      };
+      expect(result(3)).toBeGreaterThanOrEqual(5);
+      expect(result(2)).toBeLessThan(5);
+    });
+
+    it("은 겹이 7 이상일 때 반격이 다른 적 한 명에게도 튄다(별 V)", () => {
+      const result = (breakthrough: number, stacks: number) => {
+        const state = setup(["kento"], ["toby", "amo"], breakthrough);
+        const kento = withPrickle(state, stacks);
+        const foe = findFighter(state, "enemy-0")!;
+        foe.attackCooldown = 0; foe.targetId = kento.id;
+        return run(state, 0.3).filter((event) => event.kind === "attack" && event.attackerId === kento.id && event.targetId === "enemy-1").length;
+      };
+      expect(result(FULL_TANK, 7)).toBeGreaterThan(0);
+      expect(result(3, 7)).toBe(0);
+      expect(result(FULL_TANK, 2)).toBe(0);
+    });
+  });
+
+  describe("안카", () => {
+    const drowsy = () => getRelic("anka").passive.whiteNoise!.drowsy;
+    const lullToSleep = (state: SkirmishState, id: string) => {
+      const anka = findFighter(state, "player-0")!;
+      const foe = findFighter(state, id)!;
+      foe.stunnedFor = 3;
+      foe.sleep = { remaining: 3, total: 3, sourceId: anka.id, effect: drowsy() };
+      return foe;
+    };
+    it("은 잠든 적을 때리는 타격이 30% 더 세다(별 II)", () => {
+      const hit = (breakthrough: number) => {
+        const state = setup(["anka"], ["toby"], breakthrough);
+        const anka = findFighter(state, "player-0")!;
+        lullToSleep(state, "enemy-0");
+        anka.attackCooldown = 0; anka.targetId = "enemy-0";
+        const event = run(state, 0.3).find((candidate) => candidate.kind === "attack" && candidate.attackerId === anka.id && candidate.animate !== false);
+        return event?.kind === "attack" ? event.amount : 0;
+      };
+      const ratio = hit(1) / hit(0);
+      expect(ratio).toBeGreaterThan(1.2);
+      expect(ratio).toBeLessThan(1.4);
+    });
+
+    it("은 자장가에 도발당한 적이 때릴 때마다 졸음이 쌓인다(별 III)", () => {
+      const result = (breakthrough: number) => {
+        const state = setup(["anka"], ["toby"], breakthrough);
+        const anka = findFighter(state, "player-0")!;
+        const foe = findFighter(state, "enemy-0")!;
+        foe.targetId = anka.id;
+        anka.energy = 1_000;
+        fireUltimate(state, anka.id, NEVER);
+        anka.attackCooldown = 999;
+        foe.attackCooldown = 0; foe.targetId = anka.id;
+        run(state, 0.3);
+        return (foe.drowsy?.stacks ?? 0) + (foe.sleep ? 99 : 0);
+      };
+      expect(result(2)).toBeGreaterThan(0);
+      expect(result(0)).toBe(0);
+    });
+
+    it("은 폭주 중 적이 깨어날 때 곁의 다른 적에게 졸음이 번진다(별 IV)", () => {
+      const result = (breakthrough: number) => {
+        const state = setup(["anka"], ["toby", "amo"], breakthrough);
+        const anka = findFighter(state, "player-0")!;
+        anka.ferocityFever = true; anka.ferocity = FEROCITY_RULES.max;
+        const sleeper = lullToSleep(state, "enemy-0");
+        sleeper.sleep!.remaining = 0.01;
+        run(state, 0.2);
+        return findFighter(state, "enemy-1")!.drowsy?.stacks ?? 0;
+      };
+      expect(result(3)).toBe(1);
+      expect(result(2)).toBe(0);
+    });
+
+    it("은 백색소음의 회복이 잠든 적 한 명마다 25% 늘어난다(별 V)", () => {
+      const heal = (breakthrough: number) => {
+        const state = setup(["anka", "rex"], ["toby"], breakthrough);
+        const anka = findFighter(state, "player-0")!;
+        const rex = findFighter(state, "player-1")!;
+        rex.x = 450; rex.y = 1_000; rex.hp = rex.maxHp * 0.3;
+        lullToSleep(state, "enemy-0");
+        anka.whiteNoiseIn = 0;
+        const before = rex.hp;
+        run(state, 0.05);
+        return rex.hp - before;
+      };
+      const ratio = heal(FULL_TANK) / heal(3);
+      expect(ratio).toBeGreaterThan(1.2);
+      expect(ratio).toBeLessThan(1.3);
+    });
+  });
+
+  it("은 세 개체 모두 네 슬롯 문장을 만든다", () => {
+    for (const id of ["mosana", "kento", "anka"]) {
+      for (const slot of ["basic", "ultimate", "ferocity", "passive"] as const) {
+        const text = breakthroughEffectText(getRelic(id), slot);
+        expect(text, `${id} ${slot}`).toBeDefined();
+        expect(text, `${id} ${slot}`).not.toMatch(/\{[a-zA-Z!]+\}/);
+      }
+    }
+    expect(breakthroughEffectText(getRelic("mosana"), "basic")).toContain("2겹");
+    expect(breakthroughEffectText(getRelic("kento"), "ultimate")).toContain("25%");
+    expect(breakthroughEffectText(getRelic("anka"), "passive")).toContain("25%");
+  });
+});
+
+const FULL_TANK = BREAKTHROUGH_STEPS.length;

@@ -1261,6 +1261,9 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effect.kind === "clawBleed") return t("skill.breakthrough.effect.basic.clawBleed", { name: def.basic.name });
     if (effect.kind === "windStep") return t("skill.breakthrough.effect.basic.windStep", { name: def.basic.name, percent: trim(effect.attackSpeedPercent), seconds: trim(effect.seconds) });
     if (effect.kind === "dreadAegis") return t("skill.breakthrough.effect.basic.dreadAegis", { name: def.basic.name, percent: trim(effect.shieldPercent), seconds: trim(effect.cooldownSeconds) });
+    if (effect.kind === "pressureConduct") return t("skill.breakthrough.effect.basic.pressureConduct", { stacks: trim(effect.stacks) });
+    if (effect.kind === "thornJab") return t("skill.breakthrough.effect.basic.thornJab", { name: def.basic.name, percent: trim(effect.powerPercent) });
+    if (effect.kind === "sleepPounce") return t("skill.breakthrough.effect.basic.sleepPounce", { percent: trim(effect.damagePercent) });
     if (effect.kind === "leapPuddle") return t("skill.breakthrough.effect.basic.leapPuddle");
     if (effect.kind === "splitHealing") return t("skill.breakthrough.effect.basic.splitHealing", { percent: trim(effect.sharePercent) });
     // 주기 이름이 있으면 그것이 이 효과가 얹히는 그 한 방의 이름이다(칩에 뜨는 이름과 같다).
@@ -1286,6 +1289,9 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effect.kind === "afterimageSlash") return t("skill.breakthrough.effect.ultimate.afterimageSlash", { name: def.ultimate.name, seconds: trim(effect.delaySeconds), percent: trim(effect.powerPercent) });
     if (effect.kind === "gustEnergy") return t("skill.breakthrough.effect.ultimate.gustEnergy", { name: def.ultimate.name, energy: trim(effect.energy) });
     if (effect.kind === "quarryMark") return t("skill.breakthrough.effect.ultimate.quarryMark", { name: def.ultimate.name, seconds: trim(effect.seconds), percent: trim(effect.damageTakenPercent) });
+    if (effect.kind === "deepSink") return t("skill.breakthrough.effect.ultimate.deepSink", { name: def.ultimate.name, stacks: trim(effect.stacksPerSecond) });
+    if (effect.kind === "wallReflect") return t("skill.breakthrough.effect.ultimate.wallReflect", { name: def.ultimate.name, percent: trim(effect.reflectPercent) });
+    if (effect.kind === "lullabyGaze") return t("skill.breakthrough.effect.ultimate.lullabyGaze", { name: def.ultimate.name, stacks: trim(effect.stacksPerHit) });
     if (effect.kind === "shrapnel") return t("skill.breakthrough.effect.ultimate.shrapnel", { name: def.ultimate.name, percent: trim(effect.powerPercent) });
     if (effect.kind === "tidalEcho") return t("skill.breakthrough.effect.ultimate.tidalEcho", { seconds: trim(effect.delaySeconds), percent: trim(effect.powerPercent) });
     if (effect.kind === "healingShield") return t("skill.breakthrough.effect.ultimate.healingShield", { percent: trim(effect.shieldPercentOfHealing) });
@@ -1306,6 +1312,9 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effect.kind === "heatOverflow") return t("skill.breakthrough.effect.ferocity.heatOverflow", { max: trim((def.passive.elation?.maxStacks ?? 0) + effect.extraMaxStacks), base: trim(def.passive.elation?.maxStacks ?? 0) });
     if (effect.kind === "frenzyClaws") return t("skill.breakthrough.effect.ferocity.frenzyClaws", { name: def.basic.name, from: trim(def.basic.periodicCritical?.every ?? 0), to: trim(effect.every) });
     if (effect.kind === "spreadingDread") return t("skill.breakthrough.effect.ferocity.spreadingDread", { stacks: trim(effect.stacks) });
+    if (effect.kind === "vortexDraw") return t("skill.breakthrough.effect.ferocity.vortexDraw", { min: trim(effect.minStacks) });
+    if (effect.kind === "heatChain") return t("skill.breakthrough.effect.ferocity.heatChain", { count: trim(effect.keepStacks) });
+    if (effect.kind === "yawnContagion") return t("skill.breakthrough.effect.ferocity.yawnContagion", { stacks: trim(effect.stacks) });
     if (effect.kind === "windPull") return t("skill.breakthrough.effect.ferocity.windPull", { energy: trim(effect.extraEnergy) });
     if (effect.kind === "ankleShot") return t("skill.breakthrough.effect.ferocity.ankleShot", { seconds: trim(effect.staggerSeconds) });
     if (effect.kind === "feverShare") return t("skill.breakthrough.effect.ferocity.feverShare", { percent: trim(effect.shieldPercentOfHealingDone) });
@@ -1333,6 +1342,9 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effects.passive.kind === "huntMark") return t("skill.breakthrough.effect.passive.huntMark", { percent: trim(effects.passive.criticalDamagePercent) });
     if (effects.passive.kind === "windEcho") return t("skill.breakthrough.effect.passive.windEcho", { name: def.passive.name, energy: trim(effects.passive.energy) });
     if (effects.passive.kind === "terrorCarapace") return t("skill.breakthrough.effect.passive.terrorCarapace", { percent: trim(effects.passive.percentPerIntimidated), max: trim(effects.passive.maxIntimidated * effects.passive.percentPerIntimidated) });
+    if (effects.passive.kind === "salvageShare") return t("skill.breakthrough.effect.passive.salvageShare", { name: def.passive.name, percent: trim(effects.passive.sharePercent) });
+    if (effects.passive.kind === "thornStorm") return t("skill.breakthrough.effect.passive.thornStorm", { min: trim(effects.passive.minStacks), percent: trim(effects.passive.splashPercent) });
+    if (effects.passive.kind === "softBreath") return t("skill.breakthrough.effect.passive.softBreath", { name: def.passive.name, percent: trim(effects.passive.healPercentPerSleeper), max: trim(effects.passive.maxSleepers) });
     if (effects.passive.kind === "relink") return t("skill.breakthrough.effect.passive.relink");
     if (effects.passive.kind === "huntChain") return t("skill.breakthrough.effect.passive.huntChain");
     if (effects.passive.kind === "rescueShield") {
@@ -1360,11 +1372,20 @@ function breakthroughHealAmount(effect: { healScalingStat: keyof Stats; healPerc
  * 이유는, 한 쪽지에 스킬의 회복과 돌파의 회복이 함께 설 수 있기 때문이다.
  */
 export function breakthroughEffectKeywords(def: RelicDef, slot: BreakthroughSlot, stats?: Stats): KeywordDef[] {
+  // 돌파 문장이 가리키는 개체 전용 규칙어(까칠·희열)는 쪽지와 같은 사전으로 눌러 읽게 한다.
+  const own: KeywordDef[] = [];
+  const effectOfSlot = def.breakthroughEffects?.[slot];
+  if (effectOfSlot && effectOfSlot.kind !== "none") {
+    const prickle = prickleKeyword(def.passive);
+    if (prickle) own.push(prickle);
+    const elation = elationKeyword(def.passive);
+    if (elation) own.push(elation);
+  }
   const effect = slot === "basic" ? def.breakthroughEffects?.basic : undefined;
-  if (!effect || effect.kind !== "periodicGuard") return [];
+  if (!effect || effect.kind !== "periodicGuard") return own;
   const heal = breakthroughHealAmount(effect, stats);
-  if (heal === undefined) return [];
-  return [{
+  if (heal === undefined) return own;
+  return [...own, {
     id: BREAKTHROUGH_HEAL_ID, term: String(heal), kind: "rule",
     description: t("skill.keyword.heal.fromStat", { stat: statScalingLabel(effect.healScalingStat), percent: trim(effect.healPercent) }),
   }];

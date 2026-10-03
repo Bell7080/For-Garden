@@ -990,6 +990,14 @@ export const RELICS: RelicDef[] = [
       name: "카페인 풍선껌", effectId: "caffeineBubble",
       taunt: { kind: "taunt", seconds: 3 }, tauntRadius: 420, prickleGainMultiplier: 2,
     },
+    // 한계 돌파 — 겹이 곧 평타 위력이 되고(가시 평타), 궁극기 막이 흡수한 피해를 되돌리며(방벽 반사), 폭주는 터진 뒤에도 겹이
+    // 이어지고(궁극기와 엮지 않는다), 패시브는 겹이 가득할 때 반격이 옆 적에게 튄다.
+    breakthroughEffects: {
+      basic: { kind: "thornJab", powerPercent: 100 },
+      ultimate: { kind: "wallReflect", reflectPercent: 25 },
+      ferocity: { kind: "heatChain", keepStacks: 5 },
+      passive: { kind: "thornStorm", minStacks: 7, splashPercent: 50 },
+    },
     passive: {
       // kind가 prickly인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
@@ -1098,6 +1106,14 @@ export const RELICS: RelicDef[] = [
     },
     // 폭주 중 공속이 오르고 평타가 자기 주위를 쓸어, 맞은 적 모두에게 수압이 쌓인다. 보호막은 따로 주지 않는다.
     ferocityTrait: { name: "심해 와류", effectId: "abyssalVortex", attackSpeedPercent: 40, radius: 200 },
+    // 한계 돌파 — 압력이 터질 때 옆 적으로 번지고(압력 전도), 끌려온 적은 도발 동안 스스로 가라앉으며(심해 침강), 폭주는 수압이 쌓인 적을
+    // 소용돌이로 끌어당기고(궁극기와 엮지 않는다), 패시브는 인양물의 막을 가장 얇은 아군에게 나눈다.
+    breakthroughEffects: {
+      basic: { kind: "pressureConduct", stacks: 2 },
+      ultimate: { kind: "deepSink", stacksPerSecond: 1 },
+      ferocity: { kind: "vortexDraw", minStacks: 2, pullPerSecond: 70 },
+      passive: { kind: "salvageShare", sharePercent: 50 },
+    },
     passive: {
       // kind가 salvageCatch인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
@@ -1194,6 +1210,14 @@ export const RELICS: RelicDef[] = [
     },
     // 폭주 중 공속이 오르고 철퇴가 자기 주위를 휩쓸어 맞은 적을 짧게 밀어낸다.
     ferocityTrait: { name: "잠투정", effectId: "sleepTantrum", attackSpeedPercent: 40, radius: 200, knockback: { seconds: 0.3, speed: 700, bounces: 0 } },
+    // 한계 돌파 — 재운 적을 깨우는 아군의 한 대가 더 아프고(잠꼬대 기습), 궁극기에 도발당한 적이 스스로 졸음을 쌓으며, 폭주는 깨어나는 적이
+    // 하품을 옮기고(궁극기와 엮지 않는다), 패시브는 잠든 적이 많을수록 소음의 회복이 포근해진다.
+    breakthroughEffects: {
+      basic: { kind: "sleepPounce", damagePercent: 30 },
+      ultimate: { kind: "lullabyGaze", stacksPerHit: 1 },
+      ferocity: { kind: "yawnContagion", stacks: 1, radius: 300 },
+      passive: { kind: "softBreath", healPercentPerSleeper: 25, maxSleepers: 3 },
+    },
     passive: {
       // kind가 whiteNoise인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.

@@ -13,7 +13,6 @@ export const LOBBY_ZH_HANT = {
   "lobby.sortie.bounty": "懸賞",
   "lobby.sortie.bounty.status": "3人車輪戰 · 金幣",
   "lobby.sortie.raid": "團隊討伐",
-  "lobby.sortie.shopTitle": "商店",
   "lobby.sortie.raid.status": "協力作戰 · 準備中",
   "lobby.expedition.resume": "繼續 · {plays}次 · 最佳 {best}",
   "lobby.expedition.weekly": "今日 {plays}次 · 最高 {best} · {quick}",

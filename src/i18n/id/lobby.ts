@@ -13,7 +13,6 @@ export const LOBBY_ID = {
   "lobby.sortie.bounty": "Buronan",
   "lobby.sortie.bounty.status": "3 Giliran · Emas",
   "lobby.sortie.raid": "Raid",
-  "lobby.sortie.shopTitle": "Toko",
   "lobby.sortie.raid.status": "Operasi Kooperatif · Dalam Persiapan",
   "lobby.expedition.resume": "Lanjutkan · {plays} kali · Terbaik {best}",
   "lobby.expedition.weekly": "Hari ini {plays} · Terbaik {best} · {quick}",

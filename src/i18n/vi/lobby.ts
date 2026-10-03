@@ -13,7 +13,6 @@ export const LOBBY_VI = {
   "lobby.sortie.bounty": "Truy nã",
   "lobby.sortie.bounty.status": "3 lượt đổi · Vàng",
   "lobby.sortie.raid": "Đột kích",
-  "lobby.sortie.shopTitle": "Cửa hàng",
   "lobby.sortie.raid.status": "Tác chiến hợp lực · Đang chuẩn bị",
   "lobby.expedition.resume": "Tiếp tục · {plays} lượt · Cao nhất {best}",
   "lobby.expedition.weekly": "Hôm nay {plays} · Cao nhất {best} · {quick}",

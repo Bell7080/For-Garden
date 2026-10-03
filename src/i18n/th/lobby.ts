@@ -13,7 +13,6 @@ export const LOBBY_TH = {
   "lobby.sortie.bounty": "ค่าหัว",
   "lobby.sortie.bounty.status": "สลับตัว 3 · ทอง",
   "lobby.sortie.raid": "เรด",
-  "lobby.sortie.shopTitle": "ร้านค้า",
   "lobby.sortie.raid.status": "ปฏิบัติการร่วม · กำลังเตรียม",
   "lobby.expedition.resume": "เล่นต่อ · {plays} รอบ · สูงสุด {best}",
   "lobby.expedition.weekly": "วันนี้ {plays} · สูงสุด {best} · {quick}",

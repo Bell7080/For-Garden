@@ -13,7 +13,6 @@ export const LOBBY_PT_BR = {
   "lobby.sortie.bounty": "Procurados",
   "lobby.sortie.bounty.status": "3 revezamentos · Ouro",
   "lobby.sortie.raid": "Raide",
-  "lobby.sortie.shopTitle": "Lojas",
   "lobby.sortie.raid.status": "Operação cooperativa · Em preparação",
   "lobby.expedition.resume": "Continuar · {plays} tentativas · Melhor {best}",
   "lobby.expedition.weekly": "Hoje {plays} · Melhor {best} · {quick}",

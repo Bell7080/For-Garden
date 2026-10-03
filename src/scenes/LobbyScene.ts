@@ -9,7 +9,6 @@ import { latinEcho } from "../ui/latinEcho";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { RailButton } from "../ui/RailButton";
-import { addSectionTitle } from "../ui/SectionTitle";
 import { drawGlyph } from "../ui/glyphs";
 import { POPUP_BODY_BEVEL_RATIO } from "../ui/popupGeometry";
 import { TopBar } from "../ui/TopBar";
@@ -89,7 +88,7 @@ const EXCHANGE_BLUE = COLOR.exchange;
 /**
  * 출격 선택판.
  *
- * 전리품 상점은 출격판 밑에 제 제목을 단 판으로 따로 선다(`SORTIE_MENU.shop`).
+ * 전리품 상점은 출격판 밑 왼쪽에 달린 작은 팝업으로 선다(`SORTIE_MENU.shop`).
  * `dimAlpha`는 뒤 로비를 은은하게만 눌러 판을 떼어 놓는다 — 짙으면 애착 렐릭이 사라진다.
  */
 /**
@@ -101,7 +100,7 @@ const EXCHANGE_BLUE = COLOR.exchange;
  */
 const SORTIE_MENU = {
   panel: { width: 980, height: 1240, offsetY: -80 },
-  shop: { gap: 32, height: 180, titleSize: 30, rowGap: 16, row: { width: 800, height: 104 } },
+  shop: { gap: 28, height: 190, pad: 20, cell: 150, cellGap: 16, icon: 74, labelSize: 28 },
   motionDelay: 2600,
   dimAlpha: 0.42,
 } as const;
@@ -654,32 +653,29 @@ export class LobbyScene extends Phaser.Scene {
   }
 
   /**
-   * 출격판 밑의 상점 판 — 본판과 같은 몸판·같은 제목표를 한 뼘 띄워 세우고, 상점을 한 줄씩 담는다.
+   * 출격판 밑 왼쪽에 달린 작은 상점 팝업 — 상점 아이콘은 정사각 그대로 두고 판만 아이콘 폭에 맞춰 좁힌다.
    *
-   * 줄은 황금빛 상점 표식 · 이름 · 화살표만 선다. 로비·연구소의 상점 칩과 같은 금색이라 「사러 간다」가
-   * 화면마다 같은 색으로 읽히고, 원화가 없어 위의 콘텐츠 칸보다 낮고 조용하다. 상점이 늘면 줄을 더하면
-   * 되고 판 높이는 줄 수에서 나온다.
+   * 본판의 왼쪽 변에 붙여 「본판에 달린 곁팝업」으로 읽히게 하고, 상점이 늘면 칸을 옆으로 더한다.
+   * 금색은 로비·연구소의 상점 칩과 같아 「사러 간다」가 화면마다 같은 색으로 읽힌다.
    */
   private addSortieShopPanel(body: Phaser.GameObjects.Container, shops: readonly { label: string; onClick: () => void }[]): void {
     const { panel, shop } = SORTIE_MENU;
-    const height = shop.height + (shops.length - 1) * (shop.row.height + shop.rowGap);
-    const centerY = panel.height / 2 + shop.gap + height / 2;
-    const unit = Math.min(panel.width, height);
-    const shape = chipPoints(panel.width, height, { bevel: { topLeft: unit * POPUP_BODY_BEVEL_RATIO, topRight: 0, bottomRight: unit * POPUP_BODY_BEVEL_RATIO, bottomLeft: 0 } });
-    body.add(drawLayer(this, 0, centerY, shape, { fill: 0x0b0f15, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.6 }));
+    const width = shop.pad * 2 + shops.length * shop.cell + (shops.length - 1) * shop.cellGap;
+    const centerX = -panel.width / 2 + width / 2;
+    const centerY = panel.height / 2 + shop.gap + shop.height / 2;
+    const unit = Math.min(width, shop.height);
+    const shape = chipPoints(width, shop.height, { bevel: { topLeft: unit * POPUP_BODY_BEVEL_RATIO, topRight: 0, bottomRight: unit * POPUP_BODY_BEVEL_RATIO, bottomLeft: 0 } });
+    body.add(drawLayer(this, centerX, centerY, shape, { fill: 0x0b0f15, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.6 }));
     // 판의 빈 곳을 누른 손이 뒤로 새지 않게 막는다(팝업 몸판과 같은 이유).
-    body.add(this.add.rectangle(0, centerY, panel.width, height, 0xffffff, 0).setInteractive());
-    addSectionTitle(this, -panel.width / 2 + unit * 0.1, centerY - height / 2, t("lobby.sortie.shopTitle"), { size: shop.titleSize, parent: body });
-    const firstY = centerY - height / 2 + shop.height / 2 + 10;
+    body.add(this.add.rectangle(centerX, centerY, width, shop.height, 0xffffff, 0).setInteractive());
     shops.forEach((entry, index) => {
-      const row = this.add.container(0, firstY + index * (shop.row.height + shop.rowGap));
-      const rowShape = chipPoints(shop.row.width, shop.row.height, { bevel: { topLeft: shop.row.height * 0.3, topRight: 0, bottomRight: shop.row.height * 0.3, bottomLeft: 0 } });
-      row.add(drawLayer(this, 0, 0, rowShape, { fill: 0x2a2418, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.8 }));
-      const left = -shop.row.width / 2;
-      row.add(drawGlyph(this, "shop", left + 72, 0, 50, COLOR.accent, 1, 3));
-      row.add(this.add.text(left + 128, 0, entry.label, textStyle({ role: "display", size: 34, color: COLOR.accentText })).setOrigin(0, 0.5));
-      row.add(drawGlyph(this, "page-next", shop.row.width / 2 - 50, 0, 32, COLOR.accent, 0.9, 3));
-      const hit = this.add.rectangle(0, 0, shop.row.width, shop.row.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      const x = centerX - width / 2 + shop.pad + shop.cell / 2 + index * (shop.cell + shop.cellGap);
+      const row = this.add.container(x, centerY);
+      const cellShape = chipPoints(shop.cell, shop.cell, { bevel: { topLeft: shop.cell * 0.22, topRight: 0, bottomRight: shop.cell * 0.22, bottomLeft: 0 } });
+      row.add(drawLayer(this, 0, 0, cellShape, { fill: 0x2a2418, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.8 }));
+      row.add(drawGlyph(this, "shop", 0, -18, shop.icon, COLOR.accent, 1, 3));
+      row.add(this.add.text(0, shop.cell / 2 - 26, entry.label, textStyle({ role: "display", size: shop.labelSize, color: COLOR.accentText })).setOrigin(0.5));
+      const hit = this.add.rectangle(0, 0, shop.cell, shop.cell, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerdown", () => pressIn(row));
       hit.on("pointerout", () => pressOut(row, "normal", { pop: false }));
       hit.on("pointerup", () => { pressOut(row); entry.onClick(); });

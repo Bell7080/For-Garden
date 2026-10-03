@@ -13,7 +13,6 @@ export const LOBBY_RU = {
   "lobby.sortie.bounty": "Розыск",
   "lobby.sortie.bounty.status": "3 смены · Золото",
   "lobby.sortie.raid": "Рейд",
-  "lobby.sortie.shopTitle": "Магазины",
   "lobby.sortie.raid.status": "Совместная операция · В подготовке",
   "lobby.expedition.resume": "Продолжить · {plays} забегов · Лучший {best}",
   "lobby.expedition.weekly": "Сегодня {plays} · Лучшее {best} · {quick}",

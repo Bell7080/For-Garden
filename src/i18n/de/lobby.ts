@@ -13,7 +13,6 @@ export const LOBBY_DE = {
   "lobby.sortie.bounty": "Kopfgeld",
   "lobby.sortie.bounty.status": "3er-Staffel · Gold",
   "lobby.sortie.raid": "Raid",
-  "lobby.sortie.shopTitle": "Shops",
   "lobby.sortie.raid.status": "Koop-Operation · In Vorbereitung",
   "lobby.expedition.resume": "Fortsetzen · {plays} Läufe · Bestwert {best}",
   "lobby.expedition.weekly": "Heute {plays} · Bestwert {best} · {quick}",

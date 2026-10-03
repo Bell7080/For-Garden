@@ -14,7 +14,6 @@ export const LOBBY_JA = {
   "lobby.sortie.bounty": "賞金首",
   "lobby.sortie.bounty.status": "タグ3回 · ゴールド",
   "lobby.sortie.raid": "レイド",
-  "lobby.sortie.shopTitle": "ショップ",
   "lobby.sortie.raid.status": "協力作戦 · 準備中",
 
   "lobby.expedition.resume": "つづきから · {plays}回 · 最高 {best}",

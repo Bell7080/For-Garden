@@ -13,7 +13,6 @@ export const LOBBY_ZH_HANS = {
   "lobby.sortie.bounty": "悬赏",
   "lobby.sortie.bounty.status": "3人车轮战 · 金币",
   "lobby.sortie.raid": "团队讨伐",
-  "lobby.sortie.shopTitle": "商店",
   "lobby.sortie.raid.status": "协力作战 · 准备中",
   "lobby.expedition.resume": "继续 · {plays}次 · 最佳 {best}",
   "lobby.expedition.weekly": "今日 {plays}次 · 最高 {best} · {quick}",

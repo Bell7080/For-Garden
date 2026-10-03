@@ -1263,10 +1263,10 @@ describe("플랫폼 결제 지급 확정", () => {
     const { state, server } = open();
     const first = await buy(server, "premium-gems-small", "tx-a");
     expect(first.firstBonusApplied).toBe(true);
-    expect(state.wallet.gems).toBe(120);
+    expect(state.wallet.gems).toBe(660);
     const second = await buy(server, "premium-gems-small", "tx-b");
     expect(second.firstBonusApplied).toBe(false);
-    expect(state.wallet.gems).toBe(180);
+    expect(state.wallet.gems).toBe(990);
   });
 
   it("같은 거래는 요청을 다시 보내도 두 번 지급하지 않는다", async () => {
@@ -1275,7 +1275,7 @@ describe("플랫폼 결제 지급 확정", () => {
     const first = await server.fulfillPlatformPurchase({ verificationId: verified.verificationId, requestId: "f1" });
     const again = await server.fulfillPlatformPurchase({ verificationId: verified.verificationId, requestId: "f2" });
     expect(again.firstBonusApplied).toBe(first.firstBonusApplied);
-    expect(state.wallet.gems).toBe(120);
+    expect(state.wallet.gems).toBe(660);
   });
 
   it("한 번만 살 수 있는 패키지는 두 번째 거래를 거절하고 재화를 건드리지 않는다", async () => {

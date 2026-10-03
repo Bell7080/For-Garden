@@ -41,7 +41,8 @@ import { relicSkinManager } from "../managers/RelicSkinManager";
 import { expeditionManager } from "../managers/ExpeditionManager";
 import { PVP_MODES } from "../data/pvpModes";
 import { ExpeditionEntryButton, sortieEntryBevel, sortieEntrySdSpot } from "../ui/ExpeditionEntryButton";
-import { ENEMY_SD_ASSETS, PONTOS_SD_ASSET, playMotion, type PuppetAsset } from "../puppets/assets";
+import { battleAssetFor, ENEMY_SD_ASSETS, PONTOS_SD_ASSET, playMotion, type PuppetAsset } from "../puppets/assets";
+import { raidSeasonKey, raidWorldBossId } from "../core/raid";
 import { loadOwnedPuppet } from "../ui/statusPuppetLoad";
 import { PlayerProfilePopup } from "../ui/PlayerProfilePopup";
 import { profileModifierManager } from "../managers/ProfileModifierManager";
@@ -588,6 +589,8 @@ export class LobbyScene extends Phaser.Scene {
         {
           content: "raid", y: 152, width: 800, height: 200, label: t("lobby.sortie.raid"), status: t("lobby.sortie.raid.status"),
           artKey: "content-raid-entry",
+          // 지금 월드 폭주에 서 있는 보스가 왼쪽에 선다(스토리 칸과 같은 쪽·같은 크기). 서버와 같은 날짜 키로 구한다.
+          sd: battleAssetFor(raidWorldBossId(raidSeasonKey(new Date()))),
           // 레이드만 임시 소개 화면을 떠났다 — 실제 시즌 판이 그 자리를 맡는다.
           onClick: () => { close(); startScene(this, "raid"); },
         },

@@ -493,6 +493,7 @@ export default {
   "product.premium-story-pass.name": "Passe de História",
   "product.premium-level-pass.name": "Passe de Nível",
   "product.premium-raid-pass.name": "Passe de Raide",
+  "product.premium-archaeology-pass.name": "Passe de Arqueologia",
   "product.premium-growth.name": "Pacote de crescimento do pesquisador",
   "product.premium-growth.grant.3": "Núcleo antigo desconhecido",
   "product.premium-daily-deal.name": "Caixa de suprimentos de hoje",

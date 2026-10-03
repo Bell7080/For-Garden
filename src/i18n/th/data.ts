@@ -493,6 +493,7 @@ export default {
   "product.premium-story-pass.name": "สตอรี่พาส",
   "product.premium-level-pass.name": "เลเวลพาส",
   "product.premium-raid-pass.name": "เรดพาส",
+  "product.premium-archaeology-pass.name": "พาสโบราณคดี",
   "product.premium-growth.name": "แพ็กเกจเติบโตนักวิจัย",
   "product.premium-growth.grant.3": "แกนโบราณไร้ชื่อ",
   "product.premium-daily-deal.name": "กล่องเสบียงประจำวัน",

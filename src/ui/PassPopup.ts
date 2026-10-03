@@ -27,7 +27,7 @@ import { squeezeTextToWidth } from "./textFit";
 
 /** 패스마다의 색. 게이지·유료 칸·탭이 같은 값을 읽는다 — 스토리는 금빛, 레벨은 초록, 레이드는 보랏빛. */
 export const PROGRESS_PASS_TONE: Readonly<Record<ProgressPassDto["id"], number>> = {
-  story: 0xe0a83e, level: 0x6fc47f, raid: 0xb48ce0,
+  story: 0xe0a83e, level: 0x6fc47f, raid: 0xb48ce0, archaeology: 0xd08a5a,
 };
 
 /** 진행도 한 줄(「스토리 클리어 12 / 30」). */

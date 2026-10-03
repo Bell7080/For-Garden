@@ -493,6 +493,7 @@ export default {
   "product.premium-story-pass.name": "剧情通行证",
   "product.premium-level-pass.name": "等级通行证",
   "product.premium-raid-pass.name": "讨伐通行证",
+  "product.premium-archaeology-pass.name": "考古通行证",
   "product.premium-growth.name": "研究员成长礼包",
   "product.premium-growth.grant.3": "未知的古代核心",
   "product.premium-daily-deal.name": "今日补给箱",

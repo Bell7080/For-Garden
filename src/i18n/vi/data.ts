@@ -493,6 +493,7 @@ export default {
   "product.premium-story-pass.name": "Thẻ Cốt truyện",
   "product.premium-level-pass.name": "Thẻ Cấp độ",
   "product.premium-raid-pass.name": "Thẻ Raid",
+  "product.premium-archaeology-pass.name": "Thẻ Khảo cổ",
   "product.premium-growth.name": "Gói trưởng thành nhà nghiên cứu",
   "product.premium-growth.grant.3": "Lõi cổ đại chưa rõ",
   "product.premium-daily-deal.name": "Hộp tiếp tế hôm nay",

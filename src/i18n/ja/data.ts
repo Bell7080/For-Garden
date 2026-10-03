@@ -676,6 +676,7 @@ export default {
   "product.premium-story-pass.name": "ストーリーパス",
   "product.premium-level-pass.name": "レベルパス",
   "product.premium-raid-pass.name": "レイドパス",
+  "product.premium-archaeology-pass.name": "考古学パス",
   "product.premium-growth.name": "研究員成長パッケージ",
   "product.premium-growth.grant.3": "未知の古代核",
   "product.premium-daily-deal.name": "本日の補給ボックス",

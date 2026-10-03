@@ -34,6 +34,7 @@ import {
   shopShelfWidth, shopShelfY, shopTabSpot, shopTitleLeft, shopTitleY,
   shopStageSettleMs,
 } from "../ui/shopLayout";
+import { addClippedHit } from "../ui/clippedHit";
 import { pressIn, pressOut } from "../ui/pressFeedback";
 
 /**
@@ -459,12 +460,7 @@ export class ShopScene extends Phaser.Scene {
      * 층이다). 누른 뒤에 거부하는 것으로는 모자라다 — 맨 위 입력이 이미 그 칸이라 점원에게 손이
      * 가지 않는다. 그래서 적중 판정 자체가 마스크와 같은 창 경계를 본다.
      */
-    const hit = this.add.rectangle(0, 0, width, SHOP_CARD.height, 0xffffff, 0).setInteractive({
-      hitArea: new Phaser.Geom.Rectangle(0, 0, width, SHOP_CARD.height),
-      hitAreaCallback: (area: Phaser.Geom.Rectangle, x: number, y: number) =>
-        Phaser.Geom.Rectangle.Contains(area, x, y) && this.insideViewport(this.input.activePointer),
-      useHandCursor: product.purchasable,
-    });
+    const hit = addClippedHit(this, card, 0, 0, width, SHOP_CARD.height, shopGridViewport, { useHandCursor: product.purchasable });
     hit.on("pointerdown", () => pressIn(card));
     hit.on("pointerout", () => pressOut(card, "normal", { pop: false }));
     hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
@@ -477,7 +473,6 @@ export class ShopScene extends Phaser.Scene {
         new PurchasePopup(this, this.popups, gameApi, session.wallet).open(product, async (result) => { this.applyPurchaseResult(result); this.notice(t("shop.exchangeDone")); await this.refresh(); });
       }
     });
-    card.add(hit);
     this.content?.add(card);
   }
 

@@ -32,6 +32,7 @@ import { formatCurrency } from "../core/formatCurrency";
 import { consumeSceneEntry } from "./sceneEntry";
 import { playSceneEntrance, startScene, slideTabPage } from "../ui/screenTransition";
 import { pressIn, pressOut } from "../ui/pressFeedback";
+import { addClippedHit } from "../ui/clippedHit";
 
 /**
  * 현금 결제 카탈로그를 인게임 재화 상점과 분리해 소유하는 독립 프리미엄 씬이다.
@@ -169,7 +170,7 @@ export class PremiumScene extends Phaser.Scene {
 
   /** 카드 전체를 덮는 입력면. 드래그로 끝난 손과 창 밖의 숨은 칸은 누름으로 치지 않는다. */
   private addCardHit(card: Phaser.GameObjects.Container, width: number, height: number, onTap: () => void): void {
-    const hit = this.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    const hit = addClippedHit(this, card, 0, 0, width, height, premiumGridViewport);
     hit.on("pointerdown", () => pressIn(card));
     hit.on("pointerout", () => pressOut(card, "normal", { pop: false }));
     hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
@@ -177,7 +178,6 @@ export class PremiumScene extends Phaser.Scene {
       if (!this.isTap(pointer)) return;
       onTap();
     });
-    card.add(hit);
   }
 
   /** 격자 안에서 일어난, 스크롤이 아닌 누름인가. GeometryMask는 그리기만 자르므로 입력도 같은 창 경계로 거른다. */
@@ -194,11 +194,10 @@ export class PremiumScene extends Phaser.Scene {
     frame.add(addFrameAmount(this, size, formatCurrency(amount)));
     const openGuide = guideForIcon(this, icon);
     if (openGuide) {
-      const hit = this.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      const hit = addClippedHit(this, frame, 0, 0, size, size, premiumGridViewport);
       hit.on("pointerdown", () => pressIn(frame));
       hit.on("pointerout", () => pressOut(frame, "normal", { pop: false }));
       hit.on("pointerup", (pointer: Phaser.Input.Pointer) => { pressOut(frame); if (this.isTap(pointer)) openGuide(); });
-      frame.add(hit);
     }
     return frame;
   }

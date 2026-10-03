@@ -661,7 +661,7 @@ describe("스킬 설명문 양식 계약", () => {
       const borrowsSummonStats = "packAssault" in skill && skill.packAssault !== undefined;
       for (const body of bodies) {
         // 대상이 먼저다. 무엇을 때리는지 모른 채 수치부터 읽게 하지 않는다.
-        expect(body).toMatch(/^(적 한 명|자신의 주위 모든 적|표적과 그 주위의 적|전장의 모든 적|지정한 원 안의 모든 적|\[\[charge\|돌진\]\]해 뚫고 지나간 길의 모든 적|현재 체력이 가장 높은 적|가장 먼 적|\[\[observation\|관측\]\]이 없거나 가장 적은 적)에게 /);
+        expect(body).toMatch(/^(적 한 명|서로 다른 적 \d+명|자신의 주위 모든 적|표적과 그 주위의 적|전장의 모든 적|지정한 원 안의 모든 적|\[\[charge\|돌진\]\]해 뚫고 지나간 길의 모든 적|현재 체력이 가장 높은 적|가장 먼 적|\[\[observation\|관측\]\]이 없거나 가장 적은 적)에게 /);
         if (borrowsSummonStats) {
           expect(body).toMatch(/\d+% 위력/);
           continue;
@@ -1417,13 +1417,5 @@ describe("적 정보창 역할 칸 표시 계약", () => {
       expect(keyword!.description, id).not.toMatch(/\d+%/);
     }
     expect(KEYWORDS.find(({ id }) => id === "scar")?.term).toBe("흉터");
-  });
-});
-
-describe("유티 서리깃", () => {
-  it("패시브 본문이 전용 규칙어를 가리키고 개체 이름은 유티다", () => {
-    const yuti = RELICS.find((r) => r.id === "yuti")!;
-    expect(yuti.name).toBe("유티");
-    expect(passiveDescription(yuti.passive)).toContain("[[yuti-plume|서리깃]]");
   });
 });

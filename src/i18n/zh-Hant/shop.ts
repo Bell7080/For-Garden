@@ -33,7 +33,7 @@ export const SHOP_ZH_HANT = {
   "shop.premium.pass.step.playerLevel": "Lv.{threshold}",
   "shop.premium.pass.step.raidRuns": "挑戰 {threshold} 次",
   "shop.premium.pass.rewardTitle": "通行證獎勵",
-  "shop.premium.unsupported": "目前版本無法使用支付。",
+  "shop.premium.unsupported": "當前版本無法使用支付。",
   "shop.premium.cancelled": "支付已取消。",
   "shop.premium.perk.instantAds": "廣告獎勵即時領取",
   "shop.premium.perk.adFree": "免廣告 · 免掃蕩券掃蕩",

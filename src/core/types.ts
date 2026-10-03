@@ -223,6 +223,13 @@ interface SkillBase {
   /** `splitShot`이 표적을 포함해 한 번에 맞히는 최대 인원이다. */
   maxTargets?: number;
   /**
+   * `splitShot`의 갈래가 적 수보다 많을 때 **남는 갈래가 같은 적에게 간다.**
+   *
+   * 갈래마다 한 번의 적중이라 적이 하나뿐이면 그 하나가 갈래 수만큼 맞고, 적중마다 붙는
+   * 상태(서리깃 겹)도 그만큼 쌓인다. 없으면 적이 모자란 갈래는 허공으로 사라진다(파루아의 갈래화살).
+   */
+  repeatOnLone?: true;
+  /**
    * 「반짝!」이 **이 스킬로 지워질 때** 그 자리에서 터지는 몫.
    *
    * 표식을 남기는 것과 지우는 것은 규칙어의 몫이라 어느 타격에서나 같다(`shimmerMark`
@@ -763,6 +770,28 @@ export type CombatStatusEffect =
       criticalMaxHpPercent: number;
     }
   | { kind: "stagger"; /** 기절 저항을 무시하는 순간 행동 차단 시간(초). */ seconds: number }
+  | {
+      /**
+       * 서리깃. 맞을 때마다 한 겹 박히고, 상한에 닿는 순간 **서리 출혈로 바뀌며 겹이 비워진다.**
+       *
+       * 손질처럼 상한에서 스스로 터지지만 터지는 것이 한 번의 피해가 아니라 **시간을 두고 깎는
+       * 출혈과 둔화**다. 서리 출혈은 중첩되지 않고 다시 터질 때 새로 갱신된다. 겹은 맞을 때마다
+       * 유지 시간이 새로 시작되고, 그 시간 안에 상한에 닿지 못하면 통째로 사라진다.
+       */
+      kind: "frostPlume";
+      /** 이 겹에 닿으면 서리 출혈로 바뀐다. */
+      maxStacks: number;
+      /** 겹이 유지되는 시간(초). 새 겹이 박힐 때마다 다시 센다. */
+      holdSeconds: number;
+      /** 서리 출혈이 시전자 공격력에서 뽑는 총 피해 비율(%). */
+      burstPower: number;
+      /** 서리 출혈이 그 피해를 나눠 입히는 시간(초). 매초 한 번 틱이 든다. */
+      burstSeconds: number;
+      /** 서리 출혈이 거는 둔화 시간(초). */
+      slowSeconds: number;
+      /** 둔화로 깎는 공격 속도·이동 속도(%). */
+      slowPercent: number;
+    }
   | {
       /**
        * 날려버림. 맞은 적이 때린 방향으로 튕겨 나가 전장 벽을 튕기며, 그동안 행동하지 못한다.
@@ -1340,6 +1369,8 @@ export type FerocityEffectId =
   | "overclock"
   /** 귀속 소환수 전용: 주인의 「오버클럭」을 함께 받는 몸이 실제로 얻는 강화다. */
   | "overclockBody"
+  /** 유티 전용: 폭주 중 갈래가 늘어나고 공격 속도가 오른다. */
+  | "extraFork"
   /** 이르나 전용: 폭주 중 기본 공격이 대상의 방어를 일부 지나친다. */
   | "stormAim";
 
@@ -1767,6 +1798,14 @@ export type FerocityTrait = {
       auraRadius: number;
     }
   | {
+      /** 폭주 중 `splitShot` 평타의 갈래가 늘고 자기 공격 속도가 오른다. 갈래가 없는 평타는 속도만 오른다. */
+      effectId: "extraFork";
+      /** 늘어나는 갈래 수. */
+      extraForks: number;
+      /** 공격 속도가 오르는 비율(%). */
+      attackSpeedBonusPercent: number;
+    }
+  | {
       /** 귀속 소환수 전용: 주인의 폭주를 함께 받는 몸이 실제로 얻는 강화다. */
       effectId: "overclockBody";
       /** 공격 속도가 오르는 비율(%). */
@@ -1899,6 +1938,16 @@ export interface Passive {
    * 「짜잔!」과 파루아의 「나무가 아닌 숲을!」이 서로 다른 패시브이면서 같은 값을 읽는다.
    */
   openingStealthSeconds?: number;
+  /**
+   * 적을 쓰러뜨리면 이 시간(초)만큼 공격 속도와 이동 속도가 함께 오른다. 다시 쓰러뜨리면 시간이 갱신된다.
+   *
+   * 룬 특성의 가속(`traitHaste`)과 다른 슬롯이다 — 그쪽은 룬이 거는 값이라 같은 칸을 쓰면 서로 덮어쓴다.
+   */
+  killHaste?: {
+    seconds: number;
+    attackSpeedPercent: number;
+    moveSpeedPercent: number;
+  };
   /**
    * 「요람에서 내려올 생각 없음」 계약. **소환수가 살아 있는 동안만** 켜지는 두 값이다.
    *

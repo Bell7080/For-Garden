@@ -142,6 +142,17 @@ const DIMO_DEF: RelicDef = {
   },
 };
 
+/** 유티의 평타·궁극기가 함께 거는 「서리깃」 계약. 한 곳에서 정해 두 슬롯의 태그가 갈리지 않게 한다. */
+const FROST_PLUME = {
+  kind: "frostPlume",
+  maxStacks: 5,
+  holdSeconds: 8,
+  burstPower: 200,
+  burstSeconds: 4,
+  slowSeconds: 3,
+  slowPercent: 30,
+} as const;
+
 export const RELICS: RelicDef[] = [
   {
     id: "rex",
@@ -1525,43 +1536,48 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    // 폭주 중 기본 공격이 깃털처럼 주변으로 흩어지고 공격 속도가 오른다. 공용 범위 전이(`splashDamage`)다.
-    ferocityTrait: { name: "깃털비", effectId: "splashDamage", damagePercent: 50, radius: 150, attackSpeedBonusPercent: 25 },
+    // 폭주 중 평타가 한 갈래 더 갈라지고 공격 속도가 오른다. 갈래 수는 일반 공격 계약이 정한다.
+    ferocityTrait: { name: "깃날비", effectId: "extraFork", extraForks: 1, attackSpeedBonusPercent: 33 },
     passive: {
       id: "yuti-passive",
-      name: "깃털 위장",
+      name: "설원의 깃털",
       kind: "featherVeil",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
-      value: 3,
-      durationSeconds: 3,
-      openingStealthSeconds: 3,
-      // 태생 치명타는 전 개체 공통이므로 암살자의 치명타형 정체성은 패시브가 만든다.
+      value: 4,
+      durationSeconds: 4,
+      openingStealthSeconds: 4,
+      // 태생 치명타·공속은 전 개체 공통이므로 암살자의 정체성은 패시브가 만든다.
       criticalChancePercent: 20,
-      criticalDamagePercent: 20,
-      desc: "전투 시작 시 3초 동안 은신 상태로 진입하고 서리깃을 두른다.",
+      attackSpeedPercent: 20,
+      killHaste: { seconds: 4, attackSpeedPercent: 50, moveSpeedPercent: 50 },
+      desc: "전투 시작 시 4초 동안 은신하고, 치명타 확률과 공격 속도가 오른다. 적을 처치하면 4초 동안 공격 속도와 이동 속도가 오른다.",
     },
     basic: {
       id: "yuti-basic",
-      name: "깃털 표창",
+      name: "갈래깃",
       power: 95,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
       targeting: "splitShot",
       maxTargets: 2,
-      statusEffects: [{ kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2 }],
+      repeatOnLone: true,
+      statusEffects: [FROST_PLUME],
     },
     ultimate: {
       id: "yuti-ult",
-      name: "서리 깃털 폭풍",
-      power: 240,
+      name: "눈보라 대소동",
+      // 한 번의 위력이다. 240을 세 번에 나눠 찍는다.
+      power: 80,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
       cost: 90,
       targeting: "targetedCircle",
       radius: 170,
+      repeatStrike: { count: 3, intervalSeconds: 0.35 },
+      statusEffects: [FROST_PLUME],
     },
   },
   {

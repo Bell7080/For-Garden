@@ -266,6 +266,9 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   if (trait.effectId === "caffeineBubble") {
     return t("skill.ferocity.caffeineBubble", { seconds: trait.taunt.seconds, multiplier: trait.prickleGainMultiplier });
   }
+  if (trait.effectId === "extraFork") {
+    return t("skill.ferocity.extraFork", { count: trait.extraForks, percent: trait.attackSpeedBonusPercent });
+  }
   if (trait.effectId === "overclockBody") {
     return t("skill.ferocity.overclockBody", { percent: trait.attackSpeedPercent, move: trait.moveSpeedPercent });
   }
@@ -312,6 +315,24 @@ export function elationKeyword(passive: Passive): KeywordDef | undefined {
     kind: "buff",
     description: t("skill.keyword.elation.description", {
       percent: plan.maxHpRegenPercentPerStack, stacks: plan.maxStacks, seconds: plan.seconds,
+    }),
+  };
+}
+
+/**
+ * 「서리깃」 태그(유티). 평타·궁극기가 쌓는 겹이 상한에서 둔화 출혈로 바뀌는 규칙을 말한다.
+ * 수치는 일반 공격이 거는 상태 계약에서 읽어 조정하면 팝업도 함께 바뀐다.
+ */
+export function plumeKeyword(def: RelicDef): KeywordDef | undefined {
+  const plume = def.basic.statusEffects?.find((effect) => effect.kind === "frostPlume");
+  if (plume === undefined || plume.kind !== "frostPlume") return undefined;
+  return {
+    id: "yuti-plume",
+    term: t("skill.keyword.plume.term"),
+    kind: "rule",
+    description: t("skill.keyword.plume.description", {
+      max: plume.maxStacks, hold: plume.holdSeconds, percent: plume.burstPower,
+      seconds: plume.burstSeconds, slowSeconds: plume.slowSeconds, slowPercent: plume.slowPercent,
     }),
   };
 }
@@ -508,7 +529,14 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
   }
   if (passive.kind === "overpaintSiphon") return t("skill.passive.overpaintSiphon", { percent: passive.value });
   if (passive.kind === "lowHpVanish") return t("skill.passive.lowHpVanish", { seconds: passive.durationSeconds });
-  if (passive.kind === "featherVeil") return t("skill.passive.featherVeil", { seconds: passive.durationSeconds });
+  if (passive.kind === "featherVeil") {
+    // 시작 은신·상시 공속·처치 가속이 한 문장으로 선다. 치명타 가산은 아래 공용 절이 따로 말한다.
+    const haste = passive.killHaste;
+    return t("skill.passive.featherVeil", {
+      seconds: passive.openingStealthSeconds ?? 0, speed: passive.attackSpeedPercent ?? 0,
+      killSeconds: haste?.seconds ?? 0, killPercent: haste?.attackSpeedPercent ?? 0,
+    });
+  }
   if (passive.kind === "openingVanish") return t("skill.passive.openingVanish", { seconds: passive.durationSeconds });
   if (passive.kind === "undyingTalisman") {
     // 무적·행동불가·회복·밀어냄이 한 덩어리로 일어나므로 한 문장에 순서대로 담는다.
@@ -908,6 +936,10 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
   if ("reagentStacks" in skill && skill.reagentStacks !== undefined) {
     clauses.push({ text: t("skill.clause.reagent", { stacks: skill.reagentStacks }) });
   }
+  // 적이 갈래보다 적을 때 남는 갈래가 어디로 가는지는 이 평타의 값이라 제 문장으로 적는다.
+  if ("repeatOnLone" in skill && skill.repeatOnLone === true) {
+    clauses.push({ text: t("skill.clause.forkLone"), standalone: true });
+  }
   // 희열 겹마다 오르는 몫은 주어가 "이 피해"라 제 문장으로 선다. 곱하는 비율이라 실제 값이 아니라 %로 남긴다
   // — 겹 수가 맞는 순간마다 달라 능력치만으로는 계산할 수 없는 값이다.
   if ("elationDamagePercentPerStack" in skill && skill.elationDamagePercentPerStack !== undefined) {
@@ -1128,6 +1160,8 @@ function statusEffectClause(effect: CombatStatusEffect): string | undefined {
   if (effect.kind === "weakpoint") return t("skill.status.weakpoint");
   // 겹 상한과 터지는 위력은 태그가 말하므로 본문은 겹이 쌓인다는 사실만 적는다.
   if (effect.kind === "butcher") return t("skill.status.butcher");
+  // 몇 겹에서 무엇으로 바뀌는지는 태그가 말한다(쓰는 개체가 하나뿐이다). 본문은 겹을 박는다는 사실만 적는다.
+  if (effect.kind === "frostPlume") return t("skill.status.frostPlume");
   if (effect.kind === "stagger") return t("skill.status.stagger");
   // 날아가는 시간·속도·튕기는 횟수는 화면에서 그대로 보이는 그림이라 본문이 수로 적지 않는다.
   if (effect.kind === "knockback") return t("skill.status.knockback");
@@ -1171,7 +1205,11 @@ function skillTargetPhrase(skill: DescribedSkill): string {
   if (targeting === "nearbyEnemies") return t("skill.phrase.nearbyEnemies");
   // 걸음 이름이 이미 「갈래화살」이고 몇 명까지 갈라지는지는 태그가 말한다 — 본문은 어디를
   // 중심으로 갈라지는지만 적어, 한 줄에서 같은 말이 두 번 나오지 않게 한다.
-  if (targeting === "splitShot") return t("skill.phrase.splitShot");
+  if (targeting === "splitShot") {
+    // 남는 갈래가 같은 적에게 가는 평타는 갈래 수가 곧 이 기술이라 대상 문장이 그 수를 적는다.
+    if ("repeatOnLone" in skill && skill.repeatOnLone === true) return t("skill.phrase.splitShotFork", { count: skill.maxTargets ?? 1 });
+    return t("skill.phrase.splitShot");
+  }
   if (targeting === "battlefieldEnemies") return t("skill.phrase.battlefieldEnemies");
   if (targeting === "targetedCircle") return t("skill.phrase.targetedCircle");
   // 돌진은 시전 시점의 자리가 아니라 지나간 길이 대상이라, 원·전장과 다른 말로 적는다.

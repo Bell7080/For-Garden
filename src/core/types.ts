@@ -2426,6 +2426,10 @@ export interface BreakthroughNone {
  * (`BasicAttack.statusEffectEvery`)을 그대로 타고 세 번에 한 번만 일어난다.
  */
 export type BasicBreakthrough = {
+  /** 서리깃이 박힌 적에게 주는 일반 공격 피해가 **그 적의 서리깃 겹마다** 늘어난다(유티의 「갈래깃」). */
+  kind: "frostBrand";
+  damagePercentPerStack: number;
+} | {
   kind: "periodicGuard";
   /** 회복량의 기준이 되는 능력치. 방어형 개체는 방어력에서 나온다. */
   healScalingStat: keyof Stats;
@@ -2592,6 +2596,10 @@ export type BasicBreakthrough = {
  * 궁극기가 세 번이 된다(채널링 궁극기와 같은 규칙이다).
  */
 export type UltimateBreakthrough = {
+  /** 되찍는 궁극기의 **마지막 타격**이 서리깃을 더 쌓는다(유티의 「눈보라 대소동」). */
+  kind: "doublePlume";
+  extraStacks: number;
+} | {
   kind: "echo";
   /** 본 타격 뒤에 더 떨어지는 횟수. */
   casts: number;
@@ -2756,6 +2764,10 @@ export type UltimateBreakthrough = {
  * 세져 그 시간만 부풀고, 끝나고 가장 약해지는 자리를 메우지 못한다.
  */
 export type FerocityBreakthrough = {
+  /** 폭주 중 치명타로 터진 일반 공격이 맞힌 적에게 서리깃을 더 박는다(유티의 「깃날비」). */
+  kind: "critPlume";
+  extraStacks: number;
+} | {
   kind: "feverBulwark";
   /** 폭주 동안 실제로 받은 피해의 몇 %를 보호막으로 돌려받는지. */
   shieldPercentOfDamageTaken: number;
@@ -2903,6 +2915,10 @@ export type FerocityBreakthrough = {
  * 패시브의 조건(체력 절반 등)을 그대로 타므로 새 발동 조건을 만들지 않는다.
  */
 export type PassiveBreakthrough = {
+  /** 전투 시작 은신이 남아 있는 동안 일반 공격 피해가 늘어난다(유티의 「설원의 깃털」). */
+  kind: "stealthStrike";
+  damagePercent: number;
+} | {
   kind: "sharedRecovery";
   /** 자기 패시브 회복량의 몇 %를 아군에게 나누는지. */
   percent: number;

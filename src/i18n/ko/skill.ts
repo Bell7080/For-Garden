@@ -434,4 +434,8 @@ export const SKILL_KO = {
   "skill.clause.forkLone": "적이 하나뿐이면 모든 갈래가 그 적에게 박힌다",
   "skill.status.frostPlume": "[[yuti-plume|서리깃]]을 한 겹 박는다",
   "skill.phrase.splitShotFork": "서로 다른 적 {count}명에게",
+  "skill.breakthrough.effect.basic.frostBrand": "[[yuti-plume|서리깃]]이 박힌 적에게 「{name}」의 피해가 서리깃 한 겹마다 {percent}%씩 커진다. 최대 {max}%까지.",
+  "skill.breakthrough.effect.ultimate.doublePlume": "「{name}」의 마지막 타격이 적마다 [[yuti-plume|서리깃]]을 {count}겹 쌓는다.",
+  "skill.breakthrough.effect.ferocity.critPlume": "폭주 중 치명타로 터진 [[basic-attack|기본 공격]]은 맞힌 적에게 [[yuti-plume|서리깃]]을 {count}겹 더 박는다.",
+  "skill.breakthrough.effect.passive.stealthStrike": "전투 시작 [[stealth|은신]]이 남아 있는 동안 [[basic-attack|기본 공격]]의 피해가 {percent}% 커진다.",
 } as const;

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { applyCombatStatusEffect, createSkirmish, fireUltimate, stepSkirmish, type Arena, type SkirmishState } from "../../src/core/skirmish";
 import { getRelic } from "../../src/data/relics";
 import { findKeyword } from "../../src/data/keywords";
-import { passiveDescription, plumeKeyword, skillDescription } from "../../src/ui/skillPresentation";
+import { breakthroughEffectText, passiveDescription, plumeKeyword, skillDescription } from "../../src/ui/skillPresentation";
 
 /**
  * 유티 — 바람 SSR 중거리 암살자. 일반 공격이 두 갈래로 갈라져 적마다 「서리깃」을 박고, 다섯 겹이 차면
@@ -127,5 +127,46 @@ describe("유티 — 처치 가속", () => {
     yuti.attackCooldown = 0;
     step(state, 0.6);
     expect(yuti.killHaste?.attackSpeedPercent).toBe(50);
+  });
+});
+
+describe("유티 — 돌파", () => {
+  function withBreakthrough(enemyIds: string[], level: number) {
+    const state = createSkirmish([YUTI], enemyIds.map((id) => getRelic(id)), ARENA, {}, { [YUTI.id]: level });
+    const yuti = state.fighters.find((fighter) => fighter.side === "player")!;
+    const enemies = state.fighters.filter((fighter) => fighter.side === "enemy");
+    for (const fighter of state.fighters) { fighter.attackCooldown = Number.POSITIVE_INFINITY; fighter.retargetIn = Number.POSITIVE_INFINITY; }
+    yuti.x = 500; yuti.y = 900; yuti.stealthFor = 0;
+    enemies.forEach((enemy, index) => { enemy.x = 460 + index * 70; enemy.y = 700; enemy.stealthFor = 0; });
+    return { state, yuti, enemies };
+  }
+
+  it("네 슬롯 문장이 모두 서 있다", () => {
+    for (const slot of ["basic", "ultimate", "ferocity", "passive"] as const) {
+      const text = breakthroughEffectText(YUTI, slot);
+      expect(text, slot).toBeDefined();
+      expect(text, slot).not.toMatch(/\{\w+\}/);
+    }
+  });
+
+  it("III 궁극기 돌파는 마지막 타격이 서리깃을 더 쌓아 4겹이 된다", () => {
+    const { state, yuti, enemies } = withBreakthrough(["amo", "toby"], 3);
+    yuti.energy = 100;
+    fireUltimate(state, yuti.id, undefined, { x: 490, y: 700 });
+    yuti.attackCooldown = Number.POSITIVE_INFINITY;
+    step(state, 1.5);
+    for (const enemy of enemies) expect(enemy.frostPlume?.stacks).toBe(4);
+  });
+
+  it("II 평타 돌파는 겹이 쌓인 적에게 더 아프게 때린다", () => {
+    const base = withBreakthrough(["amo"], 0);
+    const brand = withBreakthrough(["amo"], 1);
+    for (const { state, yuti, enemies: [enemy] } of [base, brand]) {
+      for (let n = 0; n < 4; n += 1) applyCombatStatusEffect(enemy, PLUME, [], state, yuti.id);
+      yuti.attackCooldown = 0;
+      yuti.stealthFor = 0;
+    }
+    step(base.state, 0.6); step(brand.state, 0.6);
+    expect(brand.enemies[0].hp).toBeLessThan(base.enemies[0].hp);
   });
 });

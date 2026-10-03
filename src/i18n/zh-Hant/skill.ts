@@ -386,4 +386,8 @@ export const SKILL_ZH_HANT = {
   "skill.clause.forkLone": "只剩一名敵人時，所有分叉都會命中該敵人",
   "skill.status.frostPlume": "疊加1層[[yuti-plume|霜羽]]",
   "skill.phrase.splitShotFork": "{count}名不同的敵人",
+  "skill.breakthrough.effect.basic.frostBrand": "對身上帶有[[yuti-plume|霜羽]]的敵人，「{name}」的傷害每層霜羽提升{percent}%，最高{max}%。",
+  "skill.breakthrough.effect.ultimate.doublePlume": "「{name}」的最後一擊會為每名敵人疊加{count}層[[yuti-plume|霜羽]]。",
+  "skill.breakthrough.effect.ferocity.critPlume": "暴走期間，暴擊的[[basic-attack|普通攻擊]]會再為命中的敵人疊加{count}層[[yuti-plume|霜羽]]。",
+  "skill.breakthrough.effect.passive.stealthStrike": "開場[[stealth|隱身]]持續期間，[[basic-attack|普通攻擊]]的傷害提升{percent}%。",
 } as const;

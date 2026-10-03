@@ -387,4 +387,8 @@ export const SKILL_EN = {
   "skill.clause.forkLone": "If only one enemy remains, every fork hits that enemy",
   "skill.status.frostPlume": "lodges one stack of [[yuti-plume|Frostplume]]",
   "skill.phrase.splitShotFork": "{count} different enemies",
+  "skill.breakthrough.effect.basic.frostBrand": "\"{name}\" deals {percent}% more damage per stack of [[yuti-plume|Frostplume]] on the enemy, up to {max}%.",
+  "skill.breakthrough.effect.ultimate.doublePlume": "The final hit of \"{name}\" stacks {count} [[yuti-plume|Frostplume]] on each enemy.",
+  "skill.breakthrough.effect.ferocity.critPlume": "During Frenzy, a [[basic-attack|Basic Attack]] that lands a critical hit lodges {count} more [[yuti-plume|Frostplume]] in the enemy.",
+  "skill.breakthrough.effect.passive.stealthStrike": "While the opening [[stealth|Stealth]] lasts, [[basic-attack|Basic Attack]] damage rises by {percent}%.",
 } as const;

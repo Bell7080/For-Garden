@@ -386,4 +386,8 @@ export const SKILL_RU = {
   "skill.clause.forkLone": "Если остался один враг, все ответвления попадают в него",
   "skill.status.frostPlume": "вонзает заряд [[yuti-plume|Ледяного пера]]",
   "skill.phrase.splitShotFork": "{count} разных врагов",
+  "skill.breakthrough.effect.basic.frostBrand": "«{name}» наносит на {percent}% больше урона за каждый заряд [[yuti-plume|Ледяного пера]] на враге, до {max}%.",
+  "skill.breakthrough.effect.ultimate.doublePlume": "Последний удар «{name}» накладывает на каждого врага {count} заряда [[yuti-plume|Ледяного пера]].",
+  "skill.breakthrough.effect.ferocity.critPlume": "Во время неистовства критическая [[basic-attack|обычная атака]] вонзает во врага ещё {count} заряд [[yuti-plume|Ледяного пера]].",
+  "skill.breakthrough.effect.passive.stealthStrike": "Пока длится начальная [[stealth|невидимость]], урон [[basic-attack|обычной атаки]] растёт на {percent}%.",
 } as const;

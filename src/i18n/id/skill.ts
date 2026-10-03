@@ -386,4 +386,8 @@ export const SKILL_ID = {
   "skill.clause.forkLone": "Jika hanya tersisa satu musuh, semua cabang mengenai musuh itu",
   "skill.status.frostPlume": "menancapkan satu tumpuk [[yuti-plume|Bulu Embun Beku]]",
   "skill.phrase.splitShotFork": "{count} musuh yang berbeda",
+  "skill.breakthrough.effect.basic.frostBrand": "\"{name}\" memberi {percent}% damage lebih besar untuk tiap tumpuk [[yuti-plume|Bulu Embun Beku]] pada musuh, hingga {max}%.",
+  "skill.breakthrough.effect.ultimate.doublePlume": "Serangan terakhir \"{name}\" menumpuk {count} [[yuti-plume|Bulu Embun Beku]] pada tiap musuh.",
+  "skill.breakthrough.effect.ferocity.critPlume": "Saat mengamuk, [[basic-attack|Serangan Dasar]] yang kritis menancapkan {count} [[yuti-plume|Bulu Embun Beku]] tambahan pada musuh.",
+  "skill.breakthrough.effect.passive.stealthStrike": "Selama [[stealth|Siluman]] awal pertarungan masih aktif, damage [[basic-attack|Serangan Dasar]] naik {percent}%.",
 } as const;

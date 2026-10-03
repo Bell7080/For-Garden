@@ -386,4 +386,8 @@ export const SKILL_PT_BR = {
   "skill.clause.forkLone": "Se restar só um inimigo, todas as ramificações o atingem",
   "skill.status.frostPlume": "crava uma carga de [[yuti-plume|Pluma-Geada]]",
   "skill.phrase.splitShotFork": "{count} inimigos diferentes",
+  "skill.breakthrough.effect.basic.frostBrand": "\"{name}\" causa {percent}% a mais de dano por carga de [[yuti-plume|Pluma-Geada]] no inimigo, até {max}%.",
+  "skill.breakthrough.effect.ultimate.doublePlume": "O golpe final de \"{name}\" acumula {count} cargas de [[yuti-plume|Pluma-Geada]] em cada inimigo.",
+  "skill.breakthrough.effect.ferocity.critPlume": "Durante o Frenesi, um [[basic-attack|ataque básico]] crítico crava mais {count} carga de [[yuti-plume|Pluma-Geada]] no inimigo.",
+  "skill.breakthrough.effect.passive.stealthStrike": "Enquanto a [[stealth|Furtividade]] inicial durar, o dano do [[basic-attack|ataque básico]] aumenta {percent}%.",
 } as const;

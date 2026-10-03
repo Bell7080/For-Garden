@@ -1537,6 +1537,12 @@ export const RELICS: RelicDef[] = [
       ferocityGain: 0,
     },
     // 폭주 중 평타가 한 갈래 더 갈라지고 공격 속도가 오른다. 갈래 수는 일반 공격 계약이 정한다.
+    breakthroughEffects: {
+      basic: { kind: "frostBrand", damagePercentPerStack: 4 },
+      ultimate: { kind: "doublePlume", extraStacks: 1 },
+      ferocity: { kind: "critPlume", extraStacks: 1 },
+      passive: { kind: "stealthStrike", damagePercent: 50 },
+    },
     ferocityTrait: { name: "깃날비", effectId: "extraFork", extraForks: 1, attackSpeedBonusPercent: 33 },
     passive: {
       id: "yuti-passive",

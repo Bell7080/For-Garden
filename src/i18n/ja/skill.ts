@@ -409,4 +409,8 @@ export const SKILL_JA = {
   "skill.clause.forkLone": "敵が一体だけなら、すべての分かれがその敵に刺さる",
   "skill.status.frostPlume": "[[yuti-plume|霜羽]]を一重刺す",
   "skill.phrase.splitShotFork": "それぞれ別の敵{count}体に",
+  "skill.breakthrough.effect.basic.frostBrand": "[[yuti-plume|霜羽]]が刺さった敵に対し、「{name}」のダメージが霜羽1重ごとに{percent}%ずつ上がる。最大{max}%まで。",
+  "skill.breakthrough.effect.ultimate.doublePlume": "「{name}」の最後の一撃が、敵ごとに[[yuti-plume|霜羽]]を{count}重重ねる。",
+  "skill.breakthrough.effect.ferocity.critPlume": "暴走中、クリティカルが出た[[basic-attack|基本攻撃]]は、命中した敵に[[yuti-plume|霜羽]]をさらに{count}重刺す。",
+  "skill.breakthrough.effect.passive.stealthStrike": "戦闘開始時の[[stealth|隠密]]が続いている間、[[basic-attack|基本攻撃]]のダメージが{percent}%上がる。",
 } as const;

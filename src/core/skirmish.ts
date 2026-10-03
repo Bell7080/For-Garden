@@ -362,6 +362,8 @@ export interface Fighter extends Combatant {
     rescueUsed: boolean;
     /** 폭주 돌파(`ambushCrit`) — 다음 일반 공격이 반드시 치명타인가. 한 번 쓰면 꺼진다. */
     ambushCritReady: boolean;
+    /** 궁극기 돌파(`doublePlume`) — 지금 찍는 타격이 되찍는 궁극기의 마지막인가. */
+    finalStrike: boolean;
     /** 궁극기 돌파(`tidalEcho`)가 되돌려 터뜨릴 여울 자리와 남은 시간. */
     tidalEchoes: { x: number; y: number; remaining: number; power: number }[];
     /** 평타 돌파(`arrowEcho`)가 되돌려 쏠 갈래화살. 중심·남은 시간·걸음 사본을 든다. */
@@ -1196,6 +1198,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
       feverHealingDone: 0,
       rescueUsed: false,
       ambushCritReady: false,
+      finalStrike: false,
       tidalEchoes: [],
       arrowEchoes: [],
       afterimages: [],
@@ -3606,7 +3609,9 @@ function tickAftershock(fighter: Fighter, dt: number, rng: () => number, state: 
   const remaining = shock.remaining - 1;
   const interval = fighter.def.ultimate.repeatStrike?.intervalSeconds ?? 0;
   fighter.aftershock = remaining <= 0 ? null : { remaining, in: next + interval };
+  fighter.bt.finalStrike = remaining <= 0;
   strikeAreaAttack(fighter, rng, state, events, true, undefined, true, true);
+  fighter.bt.finalStrike = false;
 }
 
 /**
@@ -3923,6 +3928,14 @@ function breakthroughSkill(attacker: Fighter, useUltimate: boolean): Skill {
     if (back?.kind === "dashBack" && "power" in skill && skill.power !== undefined) {
       return { ...skill, power: skill.power * back.powerPercent / 100,
         statusEffects: skill.statusEffects?.filter((effect) => effect.kind === "concussion") } as Skill;
+    }
+    // 눈보라 대소동 돌파 — 마지막 타격만 서리깃을 더 쌓는다. 같은 상태를 한 번 더 거는 것이 곧 겹이다.
+    const finale = attacker.bt.finalStrike ? openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate) : undefined;
+    if (finale?.kind === "doublePlume") {
+      const plume = skill.statusEffects?.find((effect) => effect.kind === "frostPlume");
+      if (plume) {
+        return { ...skill, statusEffects: [...(skill.statusEffects ?? []), ...Array.from({ length: finale.extraStacks }, () => plume)] } as Skill;
+      }
     }
     return skill;
   }
@@ -6693,6 +6706,20 @@ function strikeShrapnel(attacker: Fighter, target: Fighter, input: DamageInput, 
   }
 }
 
+/**
+ * 유티 돌파가 이번 한 방의 위력에 곱하는 몫 — 서리깃 겹이 쌓인 적에게는 일반 공격이 더 아프고(`frostBrand`),
+ * 시작 은신이 남아 있는 동안은 일반 공격이 더 아프다(`stealthStrike`). 궁극기는 건드리지 않는다.
+ */
+function frostPlumeBreakthroughMultiplier(attacker: Fighter, target: Fighter, useUltimate: boolean): number {
+  if (useUltimate) return 1;
+  let multiplier = 1;
+  const basic = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
+  if (basic?.kind === "frostBrand") multiplier += (target.frostPlume?.stacks ?? 0) * basic.damagePercentPerStack / 100;
+  const passive = openedBreakthrough(attacker, "passive", (effects) => effects.passive);
+  if (passive?.kind === "stealthStrike" && attacker.stealthFor > 0) multiplier *= 1 + passive.damagePercent / 100;
+  return multiplier;
+}
+
 /** 한 번 때린다. 궁극기 여부는 호출하는 쪽이 정한다. */
 function strike(
   attacker: Fighter,
@@ -7361,7 +7388,9 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     // 덧칠 중첩은 **대상마다** 다르므로 위력도 대상마다 따로 더한다. 한 번 세어 모두에게
     // 같은 배율을 쓰면 가장 많이 칠한 적의 몫이 아무도 칠하지 않은 적에게까지 간다.
     // 폭발형 궁극기의 위력은 총량이 아니라 **겹당 값**이라 그 대상의 겹 수만큼 곱한다.
-    const scaled = detonation ? { ...skill, power: (skill.power ?? 0) * (target.overpaint?.stacks ?? 0) } : skill;
+    const detonated = detonation ? { ...skill, power: (skill.power ?? 0) * (target.overpaint?.stacks ?? 0) } : skill;
+    const plumePower = frostPlumeBreakthroughMultiplier(attacker, target, useUltimate);
+    const scaled = plumePower === 1 || detonated.power === undefined ? detonated : { ...detonated, power: detonated.power * plumePower };
     const damageInput = { ...scaled, isCritical: critical, kind: useUltimate ? "ultimate" as const : "basic" as const,
       ignoresDefense: executionUltimate,
       defenseIgnorePercent: Math.min(100, (skill.defenseIgnorePercent ?? 0) + stormAimIgnorePercent(attacker, attackingInFever, useUltimate)) };
@@ -7429,6 +7458,13 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
       if (!resolution.ignored) applyReagentOnHit(attacker, target, skill.reagentStacks, state, events);
       // 광역 공격도 적중 대상을 하나씩 넘겨 기절 저항·행동 중단·UI 사건을 단일 공격과 공유한다.
       applySkillStatuses(target, skill, events, state, attacker.id, critical);
+      // 폭주 돌파(`critPlume`) — 폭주 중 치명타로 터진 갈래는 서리깃을 더 박는다.
+      const critPlume = critical && attackingInFever && !useUltimate
+        ? openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity) : undefined;
+      if (critPlume?.kind === "critPlume") {
+        const plume = skill.statusEffects?.find((effect) => effect.kind === "frostPlume");
+        if (plume) for (let n = 0; n < critPlume.extraStacks; n += 1) applyCombatStatusEffect(target, plume, events, state, attacker.id, critical);
+      }
       // 광역도 같은 규칙을 지난다 — 경로가 갈리면 같은 반짝이 대상 수에 따라 다른 일을 한다.
       applyShimmer(attacker, target, skill, state, events);
       if (!useUltimate) triggerCombatAugments(state, attacker, "onBasicHit", events, target);

@@ -386,4 +386,8 @@ export const SKILL_TH = {
   "skill.clause.forkLone": "หากเหลือศัตรูตัวเดียว ทุกแขนงจะปักที่ศัตรูตัวนั้น",
   "skill.status.frostPlume": "ปัก[[yuti-plume|ขนน้ำค้างแข็ง]] 1 ชั้น",
   "skill.phrase.splitShotFork": "ศัตรูที่ต่างกัน {count} ตัว",
+  "skill.breakthrough.effect.basic.frostBrand": "「{name}」สร้างความเสียหายเพิ่ม {percent}% ต่อ[[yuti-plume|ขนน้ำค้างแข็ง]]หนึ่งชั้นบนศัตรู สูงสุด {max}%",
+  "skill.breakthrough.effect.ultimate.doublePlume": "การโจมตีครั้งสุดท้ายของ「{name}」สะสม[[yuti-plume|ขนน้ำค้างแข็ง]] {count} ชั้นบนศัตรูแต่ละตัว",
+  "skill.breakthrough.effect.ferocity.critPlume": "ขณะคลั่ง การโจมตีพื้นฐานที่เกิดคริติคอลจะปัก[[yuti-plume|ขนน้ำค้างแข็ง]]เพิ่มอีก {count} ชั้นบนศัตรู",
+  "skill.breakthrough.effect.passive.stealthStrike": "ขณะที่[[stealth|สภาพล่องหน]]ตอนเริ่มการต่อสู้ยังอยู่ ความเสียหายของ[[basic-attack|การโจมตีพื้นฐาน]]เพิ่มขึ้น {percent}%",
 } as const;

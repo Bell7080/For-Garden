@@ -386,4 +386,8 @@ export const SKILL_DE = {
   "skill.clause.forkLone": "Bleibt nur ein Gegner übrig, treffen alle Verzweigungen ihn",
   "skill.status.frostPlume": "setzt einen Stapel [[yuti-plume|Frostgefieder]]",
   "skill.phrase.splitShotFork": "{count} verschiedene Gegner",
+  "skill.breakthrough.effect.basic.frostBrand": "„{name}“ verursacht pro Stapel [[yuti-plume|Frostgefieder]] auf dem Gegner {percent} % mehr Schaden, bis zu {max} %.",
+  "skill.breakthrough.effect.ultimate.doublePlume": "Der letzte Treffer von „{name}“ setzt {count} Stapel [[yuti-plume|Frostgefieder]] auf jeden Gegner.",
+  "skill.breakthrough.effect.ferocity.critPlume": "In der Raserei setzt ein kritischer [[basic-attack|Basisangriff]] {count} weiteren Stapel [[yuti-plume|Frostgefieder]] auf den Gegner.",
+  "skill.breakthrough.effect.passive.stealthStrike": "Solange die [[stealth|Tarnung]] zu Kampfbeginn anhält, steigt der Schaden des [[basic-attack|Basisangriffs]] um {percent} %.",
 } as const;

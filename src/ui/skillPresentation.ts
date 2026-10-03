@@ -1283,6 +1283,11 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
   if (slot === "basic" && effects.basic) {
     const effect = effects.basic;
     if (effect.kind === "none") return undefined;
+    if (effect.kind === "frostBrand") {
+      const plume = def.basic.statusEffects?.find((status) => status.kind === "frostPlume");
+      const max = plume?.kind === "frostPlume" ? plume.maxStacks : 1;
+      return t("skill.breakthrough.effect.basic.frostBrand", { name: def.basic.name, percent: trim(effect.damagePercentPerStack), max: trim(effect.damagePercentPerStack * max) });
+    }
     if (effect.kind === "deepBleed") {
       const bleed = def.basic.statusEffects?.find((status) => status.kind === "bleed");
       return t("skill.breakthrough.effect.basic.deepBleed", {
@@ -1330,6 +1335,7 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
   if (slot === "ultimate" && effects.ultimate) {
     const effect = effects.ultimate;
     if (effect.kind === "none") return undefined;
+    if (effect.kind === "doublePlume") return t("skill.breakthrough.effect.ultimate.doublePlume", { name: def.ultimate.name, count: trim(1 + effect.extraStacks) });
     if (effect.kind === "execution") return t("skill.breakthrough.effect.ultimate.execution", { energy: trim(effect.energyRefundOnKill) });
     if (effect.kind === "forestSight") return t("skill.breakthrough.effect.ultimate.forestSight", { hits: trim(def.ultimate.selfVolley ? def.ultimate.selfVolley.hitCount + effect.extraHits : effect.extraHits), seconds: trim(effect.extraSeconds) });
     if (effect.kind === "lightChorus") return t("skill.breakthrough.effect.ultimate.lightChorus", { name: def.ultimate.name, cost: trim(effect.costReduction), percent: trim(effect.fullHpShieldPercent) });
@@ -1361,6 +1367,7 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
   if (slot === "ferocity" && effects.ferocity) {
     const effect = effects.ferocity;
     if (effect.kind === "none") return undefined;
+    if (effect.kind === "critPlume") return t("skill.breakthrough.effect.ferocity.critPlume", { count: trim(effect.extraStacks) });
     if (effect.kind === "cleavingBasics") return t("skill.breakthrough.effect.ferocity.cleavingBasics");
     if (effect.kind === "feverAmbush") return t("skill.breakthrough.effect.ferocity.feverAmbush", { seconds: trim(effect.stealthSeconds) });
     if (effect.kind === "crescendoRamp") return t("skill.breakthrough.effect.ferocity.crescendoRamp", { percent: trim(effect.percentPerHit), max: trim(effect.maxPercent) });
@@ -1390,6 +1397,7 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
   }
   if (slot === "passive" && effects.passive) {
     if (effects.passive.kind === "none") return undefined;
+    if (effects.passive.kind === "stealthStrike") return t("skill.breakthrough.effect.passive.stealthStrike", { percent: trim(effects.passive.damagePercent) });
     if (effects.passive.kind === "battleMaidAscension") {
       return t("skill.breakthrough.effect.passive.battleMaidAscension", { percent: trim(effects.passive.durabilityPercent) });
     }

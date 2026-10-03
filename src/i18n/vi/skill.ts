@@ -386,4 +386,8 @@ export const SKILL_VI = {
   "skill.clause.forkLone": "Nếu chỉ còn một kẻ địch, mọi nhánh đều trúng kẻ địch đó",
   "skill.status.frostPlume": "cắm 1 tầng [[yuti-plume|Lông Sương]]",
   "skill.phrase.splitShotFork": "{count} kẻ địch khác nhau",
+  "skill.breakthrough.effect.basic.frostBrand": "「{name}」gây thêm {percent}% sát thương cho mỗi tầng [[yuti-plume|Lông Sương]] trên kẻ địch, tối đa {max}%.",
+  "skill.breakthrough.effect.ultimate.doublePlume": "Đòn cuối của 「{name}」 chồng {count} tầng [[yuti-plume|Lông Sương]] lên mỗi kẻ địch.",
+  "skill.breakthrough.effect.ferocity.critPlume": "Khi cuồng bạo, [[basic-attack|Đòn đánh thường]] chí mạng cắm thêm {count} tầng [[yuti-plume|Lông Sương]] vào kẻ địch bị trúng.",
+  "skill.breakthrough.effect.passive.stealthStrike": "Khi [[stealth|Tàng hình]] đầu trận còn hiệu lực, sát thương của [[basic-attack|Đòn đánh thường]] tăng {percent}%.",
 } as const;

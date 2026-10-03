@@ -386,4 +386,8 @@ export const SKILL_ES = {
   "skill.clause.forkLone": "Si solo queda un enemigo, todos los ramales lo alcanzan",
   "skill.status.frostPlume": "clava una carga de [[yuti-plume|Plumaescarcha]]",
   "skill.phrase.splitShotFork": "{count} enemigos distintos",
+  "skill.breakthrough.effect.basic.frostBrand": "«{name}» inflige un {percent}% más de daño por cada carga de [[yuti-plume|Plumaescarcha]] en el enemigo, hasta un {max}%.",
+  "skill.breakthrough.effect.ultimate.doublePlume": "El golpe final de «{name}» acumula {count} cargas de [[yuti-plume|Plumaescarcha]] en cada enemigo.",
+  "skill.breakthrough.effect.ferocity.critPlume": "Durante el Frenesí, un [[basic-attack|ataque básico]] crítico clava {count} carga más de [[yuti-plume|Plumaescarcha]] en el enemigo.",
+  "skill.breakthrough.effect.passive.stealthStrike": "Mientras dure el [[stealth|Sigilo]] inicial, el daño del [[basic-attack|ataque básico]] aumenta un {percent}%.",
 } as const;

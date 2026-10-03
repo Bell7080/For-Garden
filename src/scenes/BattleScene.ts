@@ -15,6 +15,7 @@ import {
   fireUltimate,
   isFighterAlive,
   isPartyFighter,
+  isPupFighter,
   renderPose,
   stepSkirmish,
   teamHp,
@@ -151,6 +152,7 @@ const DEATH_FLIGHT = {
  * 꾹 눌렸다가 제 모양으로 돌아오며 튀어 나간다. 매 프레임 `placePuppet`이 배율을 다시 잡으므로
  * tween이 아니라 이 값과 시작 시각으로 계산해 그 위에 곱한다.
  */
+const PUP_VIEW_ALPHA = 0.6;
 const SQUASH = { stretch: 0.55, ms: 150 } as const;
 
 /** 날아가는 동안 도는 빠르기(도/초). 튕길 때마다 방향이 바뀌지 않고 한쪽으로 계속 돈다. */
@@ -1099,6 +1101,19 @@ export class BattleScene extends Phaser.Scene {
           this.openStatusList(fighter.id);
         });
       this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, statusChips, statusHit, stunShown: false, feverTint, feverStep: -1, feverTinted: false, afterimageShown: false, tint, squashAt: -Infinity, squashDir: 1, spinDir: 1, dead: false });
+      // 새끼 늑대 자리는 쓰러진 채로 열린다 — 부르는 순간 `packSummon`이 일으켜 세울 때까지 보이지 않는다.
+      if (fighter.hp <= 0 && isPupFighter(fighter)) {
+        const idle = this.views.get(fighter.id);
+        if (idle) {
+          idle.dead = true;
+          creature.setVisible(false);
+          shadow.setVisible(false);
+          hpBar.setVisible(false);
+          statusChips.setVisible(false);
+          statusHit.disableInteractive().setVisible(false);
+          infoHit?.disableInteractive().setVisible(false);
+        }
+      }
     }
     /*
      * **한 프레임도 그려지기 전에 제자리로 보낸다.**
@@ -1519,8 +1534,13 @@ export class BattleScene extends Phaser.Scene {
     const view = this.views.get(fighterId);
     if (!view) return;
     view.dead = false;
-    view.creature.setAlpha(1).setVisible(true);
+    // 쓰러질 때 날아가던 연출이 아직 돌고 있으면 끊는다 — 새끼는 곧바로 다시 불리므로 끝나기 전에 일어설 수 있다.
+    this.tweens.killTweensOf(view.creature);
+    // 쓰러질 때 상태 칩 줄은 폐기된다. 다시 서는 몸은 새 줄을 쥔다.
+    if (!view.statusChips.scene) view.statusChips = new UnitStatusChips(this);
+    view.creature.setAlpha(isPupFighter(view.fighter) ? PUP_VIEW_ALPHA : 1).setVisible(true).setScale(1).setAngle(0);
     view.shadow.setVisible(true);
+    view.statusHit.setVisible(true);
     view.hpBar.setVisible(true).snap(view.fighter.hp / view.fighter.maxHp);
     playMotion(this, view.creature, "idle");
   }
@@ -1528,7 +1548,7 @@ export class BattleScene extends Phaser.Scene {
   /** 이 전투원이 거느린 귀속 소환수를 정의 순서대로 돌려준다. 없으면 빈 배열이다. */
   private packOfView(fighter: Fighter): Fighter[] {
     if ((fighter.def.summons ?? []).length === 0) return [];
-    return this.state.fighters.filter((wolf) => wolf.summonOwnerId === fighter.id);
+    return this.state.fighters.filter((wolf) => wolf.summonOwnerId === fighter.id && !isPupFighter(wolf));
   }
 
   /** 공격·회복·사망·종료를 각각 구분되는 연출로 옮긴다. */
@@ -2081,7 +2101,7 @@ export class BattleScene extends Phaser.Scene {
         flipX: fighter.facing < 0,
       });
       // 은신은 무적 표현이 아니다. SD 본체만 반투명하게 두고 피격 숫자·광역 피해 사건은 그대로 유지한다.
-      view.creature.setAlpha(fighter.stealthFor > 0 ? 0.45 : 1);
+      view.creature.setAlpha(fighter.stealthFor > 0 ? 0.45 : isPupFighter(fighter) ? PUP_VIEW_ALPHA : 1);
       // 폭주 중에는 한 뼘 커진다. 자리를 다시 잡은 뒤에 곱해야 매 프레임 배율이 되돌아가지 않는다.
       if (fighter.ferocityFever) view.creature.setScale(view.creature.scaleX * FEVER.scale, view.creature.scaleY * FEVER.scale);
       // 맞은 순간의 눌림도 같은 이유로 여기서 곱한다 — 가로로 길고 세로로 꾹 눌렸다 돌아온다.

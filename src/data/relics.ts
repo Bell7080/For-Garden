@@ -45,7 +45,7 @@ const KURO_DEF: RelicDef = {
     name: "무리의 몸", effectId: "packBody",
     defenseResistancePercent: 50, attackSpeedPercent: 50,
   },
-  passive: { id: "kuro-passive", name: "검은 이빨", kind: "summonDerived", iconAssetId: "skill-icon-buff", effectType: "buff", value: 0, desc: "디안이 전투 시작 시 불러내는 귀속 소환수다. 디안의 공격력이 쿠로의 공격력·체력·방어력·저항력을 정한다." },
+  passive: { id: "kuro-passive", name: "검은 이빨", kind: "summonDerived", phasesThroughFighters: true, iconAssetId: "skill-icon-buff", effectType: "buff", value: 0, desc: "디안이 전투 시작 시 불러내는 귀속 소환수다. 디안의 공격력이 쿠로의 공격력·체력·방어력·저항력을 정한다." },
   basic: { id: "kuro-basic", name: "검은 발톱", power: 45, iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", targeting: "single" },
   ultimate: {
     id: "kuro-ult", name: "검은 돌진", power: 150, iconAssetId: "skill-icon-physical", effectType: "physical",
@@ -81,7 +81,7 @@ const SHIRO_DEF: RelicDef = {
     name: "무리의 몸", effectId: "packBody",
     defenseResistancePercent: 50, attackSpeedPercent: 50,
   },
-  passive: { id: "shiro-passive", name: "흰 이빨", kind: "summonDerived", iconAssetId: "skill-icon-buff", effectType: "buff", value: 0, desc: "디안이 전투 시작 시 불러내는 귀속 소환수다. 디안의 주문력이 시로의 주문력·체력·방어력·저항력을 정한다." },
+  passive: { id: "shiro-passive", name: "흰 이빨", kind: "summonDerived", phasesThroughFighters: true, iconAssetId: "skill-icon-buff", effectType: "buff", value: 0, desc: "디안이 전투 시작 시 불러내는 귀속 소환수다. 디안의 주문력이 시로의 주문력·체력·방어력·저항력을 정한다." },
   basic: { id: "shiro-basic", name: "흰 포효", power: 45, iconAssetId: "skill-icon-magical", effectType: "magical", damageType: "magical", scalingStat: "ap", targeting: "single" },
   ultimate: {
     id: "shiro-ult", name: "흰 추격", power: 150, iconAssetId: "skill-icon-magical", effectType: "magical",
@@ -3748,6 +3748,18 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-physical", effectType: "physical", damageType: "physical", scalingStat: "atk", cost: 130, targeting: "single",
       finisher: { thresholdPercent: 30, bonusDamagePercent: 100, cooldownSeconds: 3 },
       commandsPack: true,
+    },
+    /**
+     * 한계 돌파 — **새끼 늑대**. 두 늑대는 앞을 막는 방패라 여러 마리를 더 세우는 대신, 작고 옅은 새끼를 열 마리 안팎으로
+     * 짧게 부른다. 새끼는 유체화라 몸이 서로 걸리지 않고(`phasesThroughFighters`), 은신을 대신 지키지 않으며 승패·정산에 들지
+     * 않는다. 동시에 열 마리, 10초가 지나면 사라진다. 평타 6번에 한 마리가 기본이고, 궁극기·폭주가 더 빨리·더 많이 부른다.
+     * 폭주 효과는 궁극기와 엮지 않는다(자동 전투에서 그 타이밍을 계산하기 번거롭다). 패시브는 늑대 수가 곧 피해라 몰려 설수록 세다.
+     */
+    breakthroughEffects: {
+      basic: { kind: "pupLitter", every: 6 },
+      ultimate: { kind: "pupRush", count: 3 },
+      ferocity: { kind: "pupFrenzy", every: 3 },
+      passive: { kind: "packStrength", damagePercentPerWolf: 3 },
     },
   },
   KURO_DEF,

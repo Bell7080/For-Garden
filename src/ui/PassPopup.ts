@@ -10,7 +10,7 @@ import { addCategoryTab } from "./CategoryTab";
 import { drawGlyph } from "./glyphs";
 import { chipPoints, drawLayer, drawShapeOutline, HoloBar, slantedRect, toPoints } from "./holo";
 import { addFrameAmount, addFramedIcon, guideForIcon } from "./itemFrame";
-import { PASS_POPUP, passPopupColumns, passPopupFrameXs, passPopupListHeaderY, passPopupMinScroll, passPopupPassTabs, passPopupRailFill, passPopupRowY, passPopupScrollFor, passPopupViewport } from "./passPopupLayout";
+import { PASS_POPUP, passPopupColumns, passPopupFrameXs, passPopupListHeaderY, passPopupMinScroll, passPopupPassMinScroll, passPopupPassStrip, passPopupPassTabs, passPopupRailFill, passPopupRowY, passPopupScrollFor, passPopupViewport } from "./passPopupLayout";
 import { passLevelOf, passReadyCount, storyPassStageId } from "./passPopupModel";
 import { shapeClipMask } from "./popupArt";
 import { pressIn, pressOut } from "./pressFeedback";
@@ -21,6 +21,7 @@ import type { PopupLayer } from "./PopupLayer";
 import { grantTiles } from "./premiumModel";
 import { openRewardPopup, productGrantsToRewardItems } from "./RewardPopup";
 import { addSectionTitle } from "./SectionTitle";
+import { paintShowcaseCard, showcaseCardShape } from "./showcaseCardChrome";
 import { COLOR, textStyle } from "./theme";
 import { squeezeTextToWidth } from "./textFit";
 
@@ -72,6 +73,8 @@ export async function openPassPopup(scene: Phaser.Scene, popups: PopupLayer, opt
   let mode: PassPopupMode = "reward";
   let pending = false;
   const scrolls = new Map<string, number>();
+  /** 패스 탭 줄의 가로 자리 — 다시 그려도 보던 자리에 남는다. 처음에는 고른 패스가 보이게 맞춘다. */
+  let stripScroll: number | undefined;
   const { width, height } = PASS_POPUP;
 
   popups.open({ width, height, dim: true, closeOnBackdrop: true, backButton: true, onClose: () => options.onChanged?.() }, (body) => {
@@ -97,9 +100,13 @@ export async function openPassPopup(scene: Phaser.Scene, popups: PopupLayer, opt
       const H = PASS_POPUP.header;
       root.add(scene.add.text(-inner / 2, top + H.levelY, t("lobby.pass.level", { level: level.level, max: level.max }), textStyle({ role: "display", size: H.levelSize, color: COLOR.ink }))
         .setOrigin(0, 0.5).setStroke("#000000", 6));
-      root.add(scene.add.text(inner / 2, top + H.levelY + 6, progressPassProgressLabel(pass), textStyle({ role: "emphasis", size: H.progressSize, color: COLOR.inkDim }))
+      // 열지 않은 패스면 오른쪽 위에 패키지 카드가 뜨므로, 진행도와 게이지는 카드 왼쪽까지만 쓴다.
+      const offer = !pass.owned && product ? PASS_POPUP.offer : undefined;
+      const headerRight = offer ? width / 2 - offer.inset - offer.width - offer.gap : inner / 2;
+      const headerWidth = headerRight + inner / 2;
+      root.add(scene.add.text(headerRight, top + H.levelY + 6, progressPassProgressLabel(pass), textStyle({ role: "emphasis", size: H.progressSize, color: COLOR.inkDim }))
         .setOrigin(1, 0.5));
-      const gauge = new HoloBar(scene, 0, top + H.gaugeY, inner, H.gaugeHeight, { color: tone, trackAlpha: 0.85, outline: true, ticks: Math.max(0, level.max - 1) });
+      const gauge = new HoloBar(scene, -inner / 2 + headerWidth / 2, top + H.gaugeY, headerWidth, H.gaugeHeight, { color: tone, trackAlpha: 0.85, outline: true, ticks: Math.max(0, level.max - 1) });
       gauge.setValue(level.fill);
       root.add([...gauge.objects]);
 
@@ -109,7 +116,7 @@ export async function openPassPopup(scene: Phaser.Scene, popups: PopupLayer, opt
       const focus = firstReady >= 0 ? firstReady : Math.min(level.level, level.max - 1);
       const list = mountScrollList(scene, root, pass.milestones.length, scrolls.get(key) ?? passPopupScrollFor(focus, pass.milestones.length), (value) => scrolls.set(key, value));
       if (mode === "reward") {
-        paintRewardHeader(scene, root, pass, product, tone, () => void unlock(pass, product));
+        paintRewardHeader(scene, root, pass, tone);
         paintRewardList(scene, list, pass, tone, () => void claim(pass));
       } else {
         paintMissionList(scene, root, list, pass, tone);
@@ -142,15 +149,21 @@ export async function openPassPopup(scene: Phaser.Scene, popups: PopupLayer, opt
       // 맨 아래 — 패스 탭. 받을 것이 있는 패스는 이름 뒤에 그 수가 붙는다.
       const P = PASS_POPUP.passRow;
       const tabs = passPopupPassTabs(passes.length);
+      const strip = mountPassStrip(scene, root, passes.length, passes.findIndex(({ id }) => id === pass.id), stripScroll, (value) => { stripScroll = value; });
       passes.forEach((entry, index) => {
         const name = products.get(entry.productId)?.name ?? entry.id;
         const count = passReadyCount(entry);
-        addCategoryTab(scene, root, {
-          x: tabs.xs[index]!, y: height / 2 - P.fromBottom, width: tabs.width, height: P.tabHeight,
+        strip.add(addCategoryTab(scene, undefined, {
+          x: tabs.xs[index]!, y: 0, width: tabs.width, height: P.tabHeight,
           label: count > 0 ? t("lobby.pass.tabCount", { name, count }) : name, selected: entry.id === pass.id,
-          onSelect: () => { if (passId !== entry.id) { passId = entry.id; render(); } },
-        });
+          // 옆으로 끌다 놓은 손은 탭을 고르지 않는다.
+          onSelect: () => { if (!strip.dragging() && passId !== entry.id) { passId = entry.id; render(); } },
+        }));
       });
+      strip.refresh();
+
+      // 열지 않은 패스 — 창 오른쪽 위에 떠 있는 패키지 카드. 맨 나중에 얹어 창의 무엇보다 위에 선다.
+      if (offer && product) paintPassOffer(scene, root, pass, product, tone, width / 2 - offer.inset - offer.width / 2, top + offer.centerY, () => void unlock(pass, product));
     };
 
     async function claim(pass: ProgressPassDto): Promise<void> {
@@ -271,23 +284,125 @@ function mountScrollList(scene: Phaser.Scene, root: Phaser.GameObjects.Container
   };
 }
 
-/** 보상 목록의 머리 줄(무료 · 레벨 · 패스). 열지 않은 패스면 유료 머리 자리에 여는 버튼이 선다. */
-function paintRewardHeader(scene: Phaser.Scene, root: Phaser.GameObjects.Container, pass: ProgressPassDto, product: ProductDto | undefined, tone: number, onUnlock: () => void): void {
+/**
+ * 맨 아래 패스 탭 줄 — 고정 폭 탭이 **옆으로 흐른다**. 패스가 늘어도 칸이 좁아지지 않는다.
+ *
+ * 보이는 창은 창의 오른쪽 아래 빗변을 따라 잘린다(`passPopupPassStrip`). 끌기는 이 줄의 높이 안에서 시작한 손만 잡아
+ * 위의 세로 목록과 서로 가로채지 않는다(목록은 제 창 안에서 시작한 손만 잡는다). 창 밖으로 나간 탭은 감춰 입력도 막는다.
+ */
+function mountPassStrip(scene: Phaser.Scene, root: Phaser.GameObjects.Container, count: number, selected: number, start: number | undefined, remember: (value: number) => void): {
+  add: (tab: Phaser.GameObjects.Container) => void; dragging: () => boolean; refresh: () => void;
+} {
+  const geometry = passPopupPassStrip();
+  const centerY = PASS_POPUP.height / 2 - PASS_POPUP.passRow.fromBottom;
+  const frame = scene.add.container(geometry.left, centerY);
+  root.add(frame);
+  const content = scene.add.container(0, 0);
+  frame.add(content);
+  content.setMask(shapeClipMask(scene, frame, geometry.polygon.map((value, index) => index % 2 === 0 ? value - geometry.left : value - centerY)));
+  const tabs: Phaser.GameObjects.Container[] = [];
+  const min = passPopupPassMinScroll(count);
+  const { xs, width } = passPopupPassTabs(count);
+  const visibleRight = geometry.right(centerY) - geometry.left;
+  // 처음에는 고른 패스가 다 보이는 자리에서 시작한다.
+  const initial = start ?? Math.min(0, visibleRight - ((xs[selected] ?? 0) + width / 2));
+  let scroll = Phaser.Math.Clamp(initial, min, 0);
+  let press: { x: number; scroll: number } | undefined;
+  let moved = false;
+  const apply = (value: number): void => {
+    if (!content.active) return;
+    scroll = Phaser.Math.Clamp(value, min, 0);
+    content.x = scroll;
+    remember(scroll);
+    for (const tab of tabs) tab.setVisible(tab.x + scroll + width / 2 > 0 && tab.x + scroll - width / 2 < visibleRight);
+  };
+  const local = (pointer: Phaser.Input.Pointer): Phaser.Math.Vector2 => frame.getWorldTransformMatrix().applyInverse(pointer.x, pointer.y);
+  const inside = (point: Phaser.Math.Vector2): boolean => point.x >= 0 && point.x <= visibleRight && point.y >= geometry.top - centerY && point.y <= geometry.bottom - centerY;
+  const scaleX = (): number => frame.getWorldTransformMatrix().scaleX || 1;
+  const onDown = (pointer: Phaser.Input.Pointer): void => { moved = false; press = min < 0 && inside(local(pointer)) ? { x: pointer.x, scroll } : undefined; };
+  const onMove = (pointer: Phaser.Input.Pointer): void => {
+    if (!press || !pointer.isDown) return;
+    const dx = (pointer.x - press.x) / scaleX();
+    if (!moved && Math.abs(dx) < PASS_POPUP.dragSlop) return;
+    moved = true;
+    apply(press.scroll + dx);
+  };
+  const onUp = (): void => { press = undefined; scene.time.delayedCall(0, () => { moved = false; }); };
+  scene.input.on(Phaser.Input.Events.POINTER_DOWN, onDown);
+  scene.input.on(Phaser.Input.Events.POINTER_MOVE, onMove);
+  scene.input.on(Phaser.Input.Events.POINTER_UP, onUp);
+  frame.once(Phaser.GameObjects.Events.DESTROY, () => {
+    scene.input.off(Phaser.Input.Events.POINTER_DOWN, onDown);
+    scene.input.off(Phaser.Input.Events.POINTER_MOVE, onMove);
+    scene.input.off(Phaser.Input.Events.POINTER_UP, onUp);
+  });
+  return { add: (tab) => { tabs.push(tab); content.add(tab); }, dragging: () => moved, refresh: () => apply(scroll) };
+}
+
+/** 보상 목록의 머리 줄(무료 · 레벨 · 패스). 열지 않은 패스면 유료 머리가 「잠김」이다 — 여는 곳은 오른쪽 위의 패키지 카드다. */
+function paintRewardHeader(scene: Phaser.Scene, root: Phaser.GameObjects.Container, pass: ProgressPassDto, tone: number): void {
   const columns = passPopupColumns();
   const headerY = passPopupListHeaderY();
   root.add(scene.add.text(columns.free, headerY, t("lobby.pass.column.free"), textStyle({ role: "emphasis", size: 30, color: COLOR.ink })).setOrigin(0.5));
   root.add(scene.add.text(columns.level, headerY, t("lobby.pass.column.level"), textStyle({ role: "emphasis", size: 26, color: COLOR.inkDim })).setOrigin(0.5));
-  if (pass.owned) {
-    const label = scene.add.text(columns.paid + 18, headerY, t("lobby.pass.column.paid"), textStyle({ role: "emphasis", size: 30, color: COLOR.accentText })).setOrigin(0.5);
-    root.add(label);
-    root.add(drawGlyph(scene, "check", columns.paid - label.width / 2 - 8, headerY, 32, tone, 1, 4));
-  } else {
-    const price = product?.acquisition.kind === "platform_payment" ? product.acquisition.displayPrice : "";
-    root.add(new Button(scene, columns.paid, headerY, {
-      width: PASS_POPUP.unlock.width, height: PASS_POPUP.unlock.height, variant: "primary", fontSize: 24,
-      label: price ? t("lobby.pass.unlockPrice", { price }) : t("lobby.pass.unlock"), onClick: onUnlock,
-    }));
+  const owned = pass.owned;
+  const label = scene.add.text(columns.paid + 20, headerY, t(owned ? "lobby.pass.column.paid" : "lobby.pass.column.locked"), textStyle({ role: "emphasis", size: 30, color: owned ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5);
+  root.add(label);
+  root.add(owned
+    ? drawGlyph(scene, "check", columns.paid + 20 - label.width / 2 - 24, headerY, 32, tone, 1, 4)
+    : drawGlyph(scene, "lock", columns.paid + 20 - label.width / 2 - 24, headerY, 30, 0xd8dde6, 0.9));
+}
+
+/**
+ * 패스를 여는 **패키지 카드** — 무역·프리미엄 전시대와 같은 겉모습(`paintShowcaseCard`)에 그 패스의 색을 입힌다.
+ * 꼬리표가 창 윗변 위로 걸터앉아 창 위에 한 장 더 얹힌 물건으로 읽힌다. 안에는 패스 이름, 열면 받는 유료 보상(같은 재화는
+ * 모아 많은 순으로 셋), 값이 선다. 카드 전체가 눌린다.
+ */
+function paintPassOffer(scene: Phaser.Scene, root: Phaser.GameObjects.Container, pass: ProgressPassDto, product: ProductDto, tone: number, x: number, y: number, onUnlock: () => void): void {
+  const O = PASS_POPUP.offer;
+  const card = scene.add.container(x, y);
+  root.add(card);
+  const left = -O.width / 2 + O.pad;
+  // 숨 쉬는 빛 — 창 안의 무엇보다 먼저 눈이 가야 하는 자리지만, 받을 칸의 노란 맥동과 섞이지 않게 패스 색으로 옅게 번진다.
+  const halo = drawLayer(scene, 0, 0, showcaseCardShape(O.width, O.height, 26), { fill: tone, alpha: 0.22, shadow: false }).setBlendMode(Phaser.BlendModes.ADD);
+  card.add(halo);
+  if (motionPolicy(session.settings).nonEssentialDistanceFactor > 0) {
+    const breath = scene.tweens.add({ targets: halo, alpha: { from: 0.35, to: 1 }, duration: O.breathMs, yoyo: true, repeat: -1, ease: "Sine.InOut" });
+    card.once(Phaser.GameObjects.Events.DESTROY, () => breath.remove());
   }
+  paintShowcaseCard(scene, card, { width: O.width, height: O.height, accent: tone, railX: left, tag: t("lobby.pass.unlock") });
+
+  const name = scene.add.text(left, O.nameY, product.name, textStyle({ role: "display", size: O.nameSize, color: COLOR.ink })).setOrigin(0, 0.5).setShadow(3, 4, "#04060a", 0, true, true);
+  card.add(squeezeTextToWidth(name, O.width - O.pad * 2, 0.7));
+
+  // 열면 받는 유료 보상 — 마디마다 흩어진 같은 재화를 모아 많은 순으로 셋만 세운다.
+  const totals = new Map<string, number>();
+  for (const milestone of pass.milestones) for (const tile of grantTiles(milestone.rewards)) totals.set(tile.icon, (totals.get(tile.icon) ?? 0) + tile.amount);
+  const tiles = [...totals].map(([icon, amount]) => ({ icon, amount })).slice(0, O.frameCap);
+  const span = tiles.length * O.frame + Math.max(0, tiles.length - 1) * O.frameGap;
+  tiles.forEach((tile, index) => {
+    const frame = addFramedIcon(scene, card, -span / 2 + O.frame / 2 + index * (O.frame + O.frameGap), O.frameY, O.frame, tile.icon, { plain: true });
+    frame.add(addFrameAmount(scene, O.frame, formatCurrency(tile.amount)));
+  });
+
+  // 값 — 프리미엄의 결제 상품과 같은 값 칸(깎인 판 + 굵은 강조색 값).
+  const price = product.acquisition.kind === "platform_payment" ? product.acquisition.displayPrice : "";
+  if (price) {
+    const P = O.price;
+    const bar = scene.add.container(0, P.y);
+    bar.add(drawLayer(scene, 0, 0, chipPoints(P.width, P.height, { bevel: { topLeft: 18, topRight: 0, bottomRight: 18, bottomLeft: 0 } }), { fill: 0x0d141c, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.7 }));
+    const value = scene.add.text(0, 0, price, textStyle({ role: "display", size: P.size, color: COLOR.accentText })).setOrigin(0.5).setStroke("#000000", 6).setShadow(2, 4, "#04060a", 0, true, true);
+    bar.add(squeezeTextToWidth(value, P.width - 32, 0.6));
+    card.add(bar);
+  }
+
+  const hit = scene.add.polygon(0, 0, showcaseCardShape(O.width, O.height), 0xffffff, 0).setOrigin(0, 0).setInteractive({
+    hitArea: new Phaser.Geom.Polygon(showcaseCardShape(O.width, O.height)), hitAreaCallback: Phaser.Geom.Polygon.Contains, useHandCursor: true,
+  });
+  hit.on("pointerdown", () => pressIn(card));
+  hit.on("pointerout", () => pressOut(card, "normal", { pop: false }));
+  hit.on("pointerup", () => { pressOut(card); onUnlock(); });
+  card.add(hit);
 }
 
 /**

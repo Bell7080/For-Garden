@@ -142,7 +142,7 @@ export class LobbyPassCard {
     fg.add([name, levelText]);
 
     const barWidth = contentRight - contentLeft;
-    const bar = new HoloBar(scene, contentLeft + barWidth / 2, C.gauge.y, barWidth, C.gauge.height, { color: tone, trackAlpha: 0.85, outline: true, ticks: Math.max(0, level.max - 1) });
+    const bar = new HoloBar(scene, contentLeft + barWidth / 2, C.gauge.y, barWidth, C.gauge.height, { color: tone, trackAlpha: 0.85, outline: true, ticks: Math.max(0, level.max - 1), slant: 0 });
     bar.setValue(level.fill);
     fg.add([...bar.objects]);
 

@@ -6,7 +6,7 @@ import { PREMIUM_PRODUCTS } from "../../src/data/premiumProducts";
 import { CURRENT_SAVE_VERSION, SAVE_STORAGE_KEY, SaveManager } from "../../src/state/SaveManager";
 import { createDefaultSession, type SaveData } from "../../src/state/session";
 import { passLevelOf, passReadyCount, passToOpen, storyPassStageId } from "../../src/ui/passPopupModel";
-import { passPopupContentHeight, passPopupMinScroll, passPopupRailFill, passPopupRowY, passPopupScrollFor, passPopupViewport, PASS_POPUP } from "../../src/ui/passPopupLayout";
+import { passPopupContentHeight, passPopupMinScroll, passPopupPassMinScroll, passPopupPassStrip, passPopupPassTabs, passPopupRailFill, passPopupRowY, passPopupScrollFor, passPopupViewport, PASS_POPUP } from "../../src/ui/passPopupLayout";
 
 class MemoryStorage {
   private values = new Map<string, string>();
@@ -89,6 +89,22 @@ describe("로비 패스 창 모델", () => {
     expect(passPopupRailFill(3, 15, 0)).toBe(passPopupRowY(2));
     expect(passPopupRailFill(3, 15, 0.5)).toBe(passPopupRowY(2) + PASS_POPUP.list.rowHeight / 2);
     expect(passPopupRailFill(15, 15, 0)).toBe(passPopupContentHeight(15));
+  });
+
+  it("패스 탭 줄은 고정 폭 칸이 옆으로 흐르고, 오른쪽 끝은 창의 깎인 모서리 안쪽에서 잘린다", () => {
+    // 패스가 늘어도 칸 폭은 그대로다.
+    expect(passPopupPassTabs(3).width).toBe(passPopupPassTabs(8).width);
+    expect(passPopupPassMinScroll(8)).toBeLessThan(passPopupPassMinScroll(3));
+    const strip = passPopupPassStrip();
+    const bevel = Math.min(PASS_POPUP.width, PASS_POPUP.height) * 0.14;
+    for (const y of [strip.top, strip.bottom]) {
+      // 빗변 (w/2, h/2 - bevel) → (w/2 - bevel, h/2) 안쪽에 선다.
+      const edge = PASS_POPUP.width / 2 - Math.max(0, y - (PASS_POPUP.height / 2 - bevel));
+      expect(strip.right(y)).toBeLessThan(edge);
+    }
+    // 미션·보상 줄은 패스 탭 줄 위에 겹치지 않고 붙는다.
+    const modeBottom = PASS_POPUP.height / 2 - PASS_POPUP.modeRow.fromBottom + PASS_POPUP.modeRow.tabHeight / 2;
+    expect(modeBottom).toBeLessThanOrEqual(strip.top + 22);
   });
 
   it("스토리 패스는 문턱을 관문 이름으로 읽는다", () => {

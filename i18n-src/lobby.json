@@ -299,6 +299,16 @@
 "Pass",
 "Пропуск"
 ],
+"lobby.pass.column.locked": [
+"未解锁",
+"ล็อกอยู่",
+"Đã khóa",
+"Terkunci",
+"Bloqueado",
+"Bloqueado",
+"Gesperrt",
+"Закрыто"
+],
 "lobby.pass.unlock": [
 "开启通行证",
 "ปลดล็อกพาส",
@@ -308,16 +318,6 @@
 "Ativar passe",
 "Pass freischalten",
 "Открыть пропуск"
-],
-"lobby.pass.unlockPrice": [
-"开启 {price}",
-"ปลดล็อก {price}",
-"Mở {price}",
-"Buka {price}",
-"Activar {price}",
-"Ativar {price}",
-"Freischalten {price}",
-"Открыть {price}"
 ],
 "lobby.pass.claimAll": [
 "全部领取 {count}",

@@ -34,12 +34,39 @@ export const PASS_POPUP = {
   pulse: { halo: 24, haloAlpha: 0.42, scale: 1.08, ms: 620 },
   /** 손가락이 이만큼 움직이면 누름이 아니라 끌기다. */
   dragSlop: 14,
-  /** 목록 아래 한 줄 — 왼쪽에 미션·보상 탭, 오른쪽에 받기. */
-  modeRow: { fromBottom: 196, tabWidth: 200, tabHeight: 76, tabGap: 8, button: { width: 340, height: 88 } },
-  /** 맨 아래 패스 탭 줄. */
-  passRow: { fromBottom: 78, tabHeight: 80, tabGap: 8 },
-  /** 유료 칸 머리의 열기 버튼. */
-  unlock: { width: 300, height: 56 },
+  /**
+   * 목록 아래 한 줄 — 왼쪽에 미션·보상 탭, 오른쪽에 받기. 패스 탭 줄에 바짝 붙이고 얇게 두어 목록 창을 그만큼 넓힌다.
+   */
+  modeRow: { fromBottom: 154, tabWidth: 190, tabHeight: 60, tabGap: 8, button: { width: 320, height: 66 } },
+  /**
+   * 맨 아래 패스 탭 줄 — 패스가 늘어도 칸이 줄지 않도록 **고정 폭 칸이 옆으로 흐르는 줄**이다. 오른쪽 끝은 창의 깎인
+   * 모서리(오른쪽 아래 빗변)를 따라 잘리고, 그 빗변에서 `edgeInset`만큼 물러난다.
+   */
+  passRow: { fromBottom: 78, tabWidth: 290, tabHeight: 80, tabGap: 8, edgeInset: 14 },
+  /**
+   * 패스를 열지 않았을 때 창 오른쪽 위에 **떠 있는 패키지 카드** — 무역·프리미엄 전시대의 카드와 같은 겉모습이다.
+   * 유료 칸 머리에 버튼으로 세우던 때는 「잠김」이어야 할 자리가 사는 곳이 되어, 받을 수 없는 칸과 사는 곳이 한 줄에
+   * 섞였다. 카드는 창 윗변 위로 꼬리표를 내밀어 창 위에 한 장 더 얹힌 물건으로 읽힌다.
+   * 이 카드가 서는 동안 머리 줄의 게이지와 진행도는 카드 왼쪽까지만 쓴다.
+   */
+  offer: {
+    width: 400,
+    height: 222,
+    /** 창 오른쪽 변에서 안쪽으로 물러나는 몫과 창 윗변에서 내려오는 카드 중심. */
+    inset: 22,
+    centerY: 100,
+    /** 게이지와 카드 사이. */
+    gap: 28,
+    pad: 34,
+    nameY: -72,
+    nameSize: 30,
+    frameY: -10,
+    frame: 70,
+    frameGap: 10,
+    frameCap: 3,
+    price: { y: 74, width: 300, height: 52, size: 30 },
+    breathMs: 1100,
+  },
 } as const;
 
 /** 줄 판의 세 칸 중심 x — 왼쪽 무료, 가운데 레벨, 오른쪽 유료. */
@@ -101,11 +128,33 @@ export function passPopupFrameXs(count: number): number[] {
   return Array.from({ length: count }, (_, index) => -span / 2 + frame / 2 + index * (frame + frameGap));
 }
 
-/** 패스 탭 `count`장의 중심 x와 폭. */
-export function passPopupPassTabs(count: number): { width: number; xs: number[] } {
-  const { inner, passRow } = PASS_POPUP;
-  const width = (inner - passRow.tabGap * (count - 1)) / count;
-  return { width, xs: Array.from({ length: count }, (_, index) => -inner / 2 + width / 2 + index * (width + passRow.tabGap)) };
+/** 패스 탭 `count`장의 중심 x(흐르는 줄 안, 줄의 왼쪽 끝이 0)와 폭, 줄 전체 길이. */
+export function passPopupPassTabs(count: number): { width: number; xs: number[]; span: number } {
+  const { tabWidth: width, tabGap } = PASS_POPUP.passRow;
+  return { width, xs: Array.from({ length: count }, (_, index) => width / 2 + index * (width + tabGap)), span: count * width + Math.max(0, count - 1) * tabGap };
+}
+
+/**
+ * 패스 탭 줄이 보이는 창(창 중심 기준). 왼쪽은 목록과 같은 시작선, 오른쪽은 창의 오른쪽 아래 빗변을 따라 잘린다 —
+ * 네모로 자르면 빗변 밖 허공에 탭이 걸친다. `right(y)`는 그 높이에서 보이는 오른쪽 끝이다.
+ */
+export function passPopupPassStrip(): { left: number; top: number; bottom: number; right: (y: number) => number; polygon: number[] } {
+  const { width, height, inner, passRow } = PASS_POPUP;
+  const bevel = Math.min(width, height) * 0.14;
+  const centerY = height / 2 - passRow.fromBottom;
+  const top = centerY - passRow.tabHeight / 2 - 22;
+  const bottom = centerY + passRow.tabHeight / 2 + 4;
+  const left = -inner / 2;
+  // 빗변: (width/2, height/2 - bevel) → (width/2 - bevel, height/2). 그 선에서 edgeInset만큼 안쪽으로 평행하게 민다.
+  const right = (y: number): number => Math.min(inner / 2, width / 2 - Math.max(0, y - (height / 2 - bevel)) - passRow.edgeInset * Math.SQRT2);
+  return { left, top, bottom, right, polygon: [left, top, right(top), top, right(bottom), bottom, left, bottom] };
+}
+
+/** 탭 줄이 왼쪽으로 밀릴 수 있는 끝(음수). 보이는 폭은 탭 가운데 높이에서 잰다. */
+export function passPopupPassMinScroll(count: number): number {
+  const strip = passPopupPassStrip();
+  const visible = strip.right(PASS_POPUP.height / 2 - PASS_POPUP.passRow.fromBottom) - strip.left;
+  return Math.min(0, visible - passPopupPassTabs(count).span);
 }
 
 /**
@@ -117,8 +166,11 @@ export const LOBBY_PASS_CARD = {
   y: 250,
   width: 380,
   height: 132,
-  /** 깎임은 높이의 이 비율 — 예전 0.42는 끝이 뭉툭하게 잘려 짧은 쪽지처럼 보였다. */
-  bevel: 0.2,
+  /**
+   * 깎임은 높이의 이 비율. 0.42는 끝이 뭉툭하게 잘려 짧은 쪽지처럼 보였고, 0.2도 왼쪽 빗변이 판 위의 색 띠와 게이지의
+   * 결을 비틀어 유리 판과 따로 노는 것처럼 보였다 — 모서리만 살짝 깎는다.
+   */
+  bevel: 0.08,
   stripe: 10,
   pad: 34,
   nameSize: 30,

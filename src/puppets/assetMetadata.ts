@@ -801,6 +801,28 @@ export const ARK_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   lobbyZoom: 0.98,
 };
 
+/**
+ * 유티라 전신(char_028): 중심1·머리1·눈1·눈2·발1·발2를 프로젝트에서 읽었다. alpha > 16 경계는 (19,20)–(1005,1502)이다.
+ * 고개를 숙인 자세라 두 눈의 높이가 36px 다르다 — 눈높이는 두 눈의 가운데로 잰다. 발2 관절은 그림 밖에 있어
+ * 바닥선은 관절이 아니라 alpha 경계로 잡는다.
+ */
+export const YUTIRA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1024,
+  imageHeight: 1536,
+  content: { left: 19, top: 20, right: 1005, bottom: 1502 },
+  joints: { center: [551, 323], head: [497, 227], eyes: [[470, 227], [528, 191]], feet: [[371, 1403], [517, 1629]] },
+  /** 로비 세로 비율: 메론 기준. 1.68 m — 눈(209)에서 alpha 아래 경계까지를 그 키로 맞춘다. */
+  lobbyZoom: 0.96,
+};
+
+/** 유티라 SD: 중심1·머리1·발1·발2를 프로젝트에서 읽었으며 눈 관절은 없다. alpha > 16 경계는 (69,65)–(1165,1218)이다. */
+export const YUTIRA_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 69, top: 65, right: 1165, bottom: 1218 },
+  joints: { center: [630, 616], head: [616, 474], eyes: null, feet: [[739, 1217], [529, 1193]] },
+};
+
 /** 아크 SD: 중심1·머리1을 프로젝트에서 읽었으며 눈 관절은 없다. alpha 경계는 (113,31)–(1128,1224)이다. */
 export const ARK_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1254,

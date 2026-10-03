@@ -194,7 +194,7 @@ export class IdleExcavationPopup {
   /** 연타는 기존 한 장을 유지하며 닫기는 저장되지 않은 draft를 버린다. */
   open(): void {
     if (this.body) return;
-    this.body = this.popups.open({ width: PANEL.width, height: PANEL.height, title: t("excavation.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: false, hideCloseButton: true, onClose: () => this.dispose() }, (body, close) => {
+    this.body = this.popups.open({ width: PANEL.width, height: PANEL.height, title: t("excavation.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: true, hideCloseButton: true, onClose: () => this.dispose() }, (body, close) => {
       this.closeAction = close;
       body.setName("idle-excavation-popup");
       this.showMessage(t("excavation.settling"), "loading");

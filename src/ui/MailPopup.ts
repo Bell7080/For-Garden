@@ -60,7 +60,7 @@ export class MailPopup {
     if (this.body) return;
     const { popup } = MAIL_POPUP_LAYOUT;
     const width = BASE_WIDTH - popup.widthInset; const height = BASE_HEIGHT - popup.heightInset;
-    this.popups.open({ width, height, title: t("mail.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.72, closeOnBackdrop: false, backButton: true, onClose: () => { this.unsubscribeMail?.(); this.unsubscribeMail = undefined; this.body = undefined; this.content = undefined; this.footer = undefined; this.onClose?.(); } }, (body) => {
+    this.popups.open({ width, height, title: t("mail.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.72, closeOnBackdrop: true, backButton: true, onClose: () => { this.unsubscribeMail?.(); this.unsubscribeMail = undefined; this.body = undefined; this.content = undefined; this.footer = undefined; this.onClose?.(); } }, (body) => {
       this.body = body;
       // 마스크는 판이 사는 동안만 산다 — 닫는 연출이 도는 동안에도 목록은 그려지므로 `onClose`가 아니라 판의 파괴에 건다.
       body.once(Phaser.GameObjects.Events.DESTROY, () => { this.mask?.destroy(); this.mask = undefined; this.maskShape?.destroy(); this.maskShape = undefined; });

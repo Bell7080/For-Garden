@@ -20,9 +20,7 @@ export const INVENTORY_JA = {
   "inventory.useButton": "使用する",
   "inventory.useDone": "使用完了",
   "inventory.staminaGained": "スタミナ +{amount}",
-  "inventory.strataChargeGained": "探査回数 +{amount}",
   "inventory.useFailed": "使用できません",
-  "inventory.strataChargeFull": "探査回数が満タンです",
   "inventory.staminaFull": "スタミナが満タンです",
 
   "stamina.sources": "入手先",

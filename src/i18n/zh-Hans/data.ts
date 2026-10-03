@@ -138,7 +138,7 @@ export default {
   "item.sweep-ticket.name": "扫荡券",
   "item.sweep-ticket.description": "不经战斗，对已通关的地下城阶段扫荡一次。",
   "item.strata-ticket.name": "探查券",
-  "item.strata-ticket.description": "恢复1次考古地层探查次数。",
+  "item.strata-ticket.description": "用于开启考古遗址。持有的数量就是可用次数。",
   "currency.raidSigil.name": "讨伐徽印",
   "currency.raidSigil.lore": "根据你击退首领的程度所颁发的证明。",
   "currency.raidSigil.source.0": "结束的讨伐结算",

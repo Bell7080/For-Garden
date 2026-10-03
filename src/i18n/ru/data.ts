@@ -138,7 +138,7 @@ export default {
   "item.sweep-ticket.name": "Билет зачистки",
   "item.sweep-ticket.description": "Один раз проводит зачистку уже пройденного этапа подземелья без боя.",
   "item.strata-ticket.name": "Билет разведки",
-  "item.strata-ticket.description": "Восстанавливает 1 попытку разведки слоёв Археологии.",
+  "item.strata-ticket.description": "Открывает места раскопок. Количество у вас равно числу попыток.",
   "currency.raidSigil.name": "Печать усмирения",
   "currency.raidSigil.lore": "Свидетельство о том, насколько вы оттеснили босса.",
   "currency.raidSigil.source.0": "Расчёт завершённого рейда",

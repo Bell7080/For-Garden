@@ -138,7 +138,7 @@ export default {
   "item.sweep-ticket.name": "Tiket Sapu",
   "item.sweep-ticket.description": "Menyapu sekali tahap dungeon yang sudah dimenangkan tanpa bertarung.",
   "item.strata-ticket.name": "Tiket Survei",
-  "item.strata-ticket.description": "Memulihkan 1 kesempatan survei lapisan Arkeologi.",
+  "item.strata-ticket.description": "Membuka situs Arkeologi. Jumlah yang dimiliki adalah jumlah kesempatan.",
   "currency.raidSigil.name": "Segel Penaklukan",
   "currency.raidSigil.lore": "Sertifikat yang diberikan sesuai seberapa jauh kamu memukul mundur bos.",
   "currency.raidSigil.source.0": "Penyelesaian raid yang berakhir",

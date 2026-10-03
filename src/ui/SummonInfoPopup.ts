@@ -61,7 +61,7 @@ export class SummonInfoPopup {
     const def: RelicDef = { ...summon.def, stats: deriveSummonStats(ownerStats, summon) };
     this.popups.open({
       width: L.width, height: L.height, title: t("info.summon.title"), titleSize: POPUP_TITLE_SIZE.workboard,
-      dim: true, dimAlpha: 0.64, closeOnBackdrop: false, backButton: true,
+      dim: true, dimAlpha: 0.64, closeOnBackdrop: true, backButton: true,
       onClose: () => this.dispose(),
     }, (body) => {
       const { chrome, mask, depth } = mountInfoPopupFrame(this.scene, this.popups, body, L);

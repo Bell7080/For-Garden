@@ -319,7 +319,7 @@ export default {
   "item.sweep-ticket.name": "掃討券",
   "item.sweep-ticket.description": "クリア済みのダンジョン段階を、戦闘なしで1回掃討します。",
   "item.strata-ticket.name": "探査券",
-  "item.strata-ticket.description": "考古学の地層探査可能回数を1回分回復します。",
+  "item.strata-ticket.description": "考古学の遺跡を開くための券です。持っている枚数がそのまま回数です。",
   "currency.raidSigil.name": "討伐証票",
   "currency.raidSigil.lore": "ボスを押し返した分だけ発行される討伐証書です。",
   "currency.raidSigil.source.0": "終了したレイドの精算",

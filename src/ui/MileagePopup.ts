@@ -15,7 +15,7 @@ export class MileagePopup {
   /** 같은 인스턴스가 이미 열려 있으면 두 번째 입력 차단막을 만들지 않는다. */
   open(): void {
     if (this.body) return;
-    this.body = this.popups.open({ width: 820, height: 620, title: t("mileage.title"), dim: true, closeOnBackdrop: false, onClose: () => this.dispose() }, (body, close) => {
+    this.body = this.popups.open({ width: 820, height: 620, title: t("mileage.title"), dim: true, closeOnBackdrop: true, onClose: () => this.dispose() }, (body, close) => {
       this.closeAction = close;
       // 임시 화면도 실제 보유량과 앞으로 쓰일 화면 경계만 보여 주고 가짜 교환은 제공하지 않는다.
       body.add(this.scene.add.text(0, -130, t("mileage.owned", { amount: session.wallet.dnaFragments.toLocaleString() }), textStyle({ role: "display", size: 38, color: "#ffe9a3" })).setOrigin(0.5));

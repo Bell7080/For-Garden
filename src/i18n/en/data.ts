@@ -140,7 +140,7 @@ export default {
   "item.sweep-ticket.name": "Sweep Ticket",
   "item.sweep-ticket.description": "Sweeps an already-cleared dungeon stage once without a battle.",
   "item.strata-ticket.name": "Survey Ticket",
-  "item.strata-ticket.description": "Restores 1 Archaeology strata survey attempt.",
+  "item.strata-ticket.description": "Opens Archaeology sites. The number you hold is the number of attempts you have.",
   "currency.raidSigil.name": "Subjugation Sigil",
   "currency.raidSigil.lore": "A certificate issued for how far you pushed the boss back.",
   "currency.raidSigil.source.0": "Settlement of a finished raid",

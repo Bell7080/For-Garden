@@ -118,7 +118,7 @@ const DIMO_DEF: RelicDef = {
   reachTier: "ranged",
   excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
   // 모르페의 태생 공격력 172에서 파생한 값이며, 전투에서는 성장한 공격력으로 다시 계산된다.
-  stats: { hp: 301, def: 43, res: 43, atk: 86, ap: 0, attackSpeed: 110, moveSpeed: 105, critChance: 0, critDamage: 150, energyGain: 12, lifeSteal: 0, ferocityGain: 0 },
+  stats: { hp: 301, def: 43, res: 43, atk: 86, ap: 0, attackSpeed: 80, moveSpeed: 105, critChance: 0, critDamage: 150, energyGain: 12, lifeSteal: 0, ferocityGain: 0 },
   ferocityTrait: { name: "오버클럭", effectId: "overclockBody", attackSpeedPercent: 50, moveSpeedPercent: 50 },
   passive: {
     id: "dimo-passive", name: "고공 탐색", kind: "highAltitudeRecon", iconAssetId: "skill-icon-buff", effectType: "buff", value: 0,
@@ -3719,7 +3719,7 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       targeting: "single",
-      observationVolley: { percentPerStack: 10, windowSeconds: 0.6 },
+      observationVolley: { percentPerStack: 8, windowSeconds: 0.6 },
     },
     // 현재 체력이 가장 높은 적을 저격한다. 관측은 소모하지 않는다.
     ultimate: {
@@ -3732,7 +3732,7 @@ export const RELICS: RelicDef[] = [
       cost: 160,
       targeting: "single",
       targetSelection: "highestCurrentHp",
-      observationStrike: { powerPerStack: 8, maxCountedStacks: 50 },
+      observationStrike: { powerPerStack: 6, maxCountedStacks: 50 },
     },
   },
 

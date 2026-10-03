@@ -1750,6 +1750,12 @@ export const RELICS: RelicDef[] = [
       // 폭주 직후 세 번은 기존 손질 중첩과 무관하게 즉시 터져 짧은 회복·폭딜 구간을 만든다.
       instantButcherAttacks: 3,
     },
+    breakthroughEffects: {
+      basic: { kind: "bleedSettle" },
+      ultimate: { kind: "bleedFeast", damagePercent: 30 },
+      ferocity: { kind: "swiftHands", attackSpeedPercent: 15 },
+      passive: { kind: "landingAmbush" },
+    },
     passive: {
       // kind가 gourmetHunt인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
@@ -1966,6 +1972,12 @@ export const RELICS: RelicDef[] = [
     // 바르거나 터뜨리거나 한 번에 하나만 한다. 그래서 폭주 중 실제 피해량은 공속이 정하고,
     // 공속 증가가 곧 "얼마나 자주 청산하는가"가 된다.
     ferocityTrait: { name: "초절정 도파민 중독", effectId: "venomousEncore", attackSpeedBonusPercent: 30 },
+    breakthroughEffects: {
+      basic: { kind: "poisonPulse" },
+      ultimate: { kind: "extraCard", powerPercent: 30 },
+      ferocity: { kind: "rePoison" },
+      passive: { kind: "blightedFoe", takenPercent: 10 },
+    },
     passive: {
       // kind가 openingVanish인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.

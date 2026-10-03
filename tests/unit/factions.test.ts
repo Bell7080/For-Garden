@@ -97,7 +97,7 @@ describe("렐릭 소속", () => {
     if (dodo?.unlockRecord.status === "recorded") {
       expect(dodo.unlockRecord.text).toContain("시그널 아이");
       expect(dodo.unlockRecord.text).toContain("살피고 판단");
-      expect(dodo.unlockRecord.text).toContain("먼저 갈 길을 정하려 했다");
+      expect(dodo.unlockRecord.text).toContain("먼저 갈 길을 정하려 한다");
     }
   });
 });

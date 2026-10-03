@@ -99,6 +99,7 @@ const NOT_DISPLAYED: Readonly<Record<string, "all" | readonly string[]>> = {
   // 도감 정의가 이미 번역 키를 갖고 있어 열한 언어로 서 있고, 질문·애착 스토리·유대 대사는 한국어가 확정되면 `registerDataText`·
   // `registerDialogueTexts`로 등록하며 이 줄을 지운다. 지우지 않으면 새 언어에서 그 글만 한국어로 남는다.
   "../../src/data/relicStories/torika.ts": "all",
+  "../../src/data/relicStories/dodo.ts": "all",
   // 표본 친구의 계정 이름. 실제 이용자 풀이 생기면 서버가 주는 이름이 그대로 선다.
   "../../src/data/friends.ts": ["하늘정원", "이끼연구소"],
   // 함께 미는 모의 참가자의 계정 이름. 길드원과 친구로 교체되면 서버가 주는 이름이 그대로 선다.

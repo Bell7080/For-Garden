@@ -1,4 +1,5 @@
 import type { RelicStoryProfile } from "../../core/relicStory";
+import { DODO_STORY } from "./dodo";
 import { TORIKA_STORY } from "./torika";
 
 /**
@@ -7,6 +8,7 @@ import { TORIKA_STORY } from "./torika";
  */
 export const RELIC_STORIES: Readonly<Record<string, RelicStoryProfile>> = {
   torika: TORIKA_STORY,
+  dodo: DODO_STORY,
 };
 
 export function relicStoryFor(relicId: string): RelicStoryProfile | undefined {

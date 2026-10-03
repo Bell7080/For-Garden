@@ -34,13 +34,6 @@ export function progressPassProgressLabel(pass: Pick<ProgressPassDto, "metric" |
   return t(`shop.premium.pass.metric.${pass.metric}` as TextKey, { progress: Math.min(pass.progress, pass.goal), goal: pass.goal });
 }
 
-/** 마디 하나의 문턱(「13회 클리어」·「Lv.30」·「8회 도전」). */
-export function progressPassStepLabel(metric: ProgressPassDto["metric"], threshold: number): string {
-  // 스토리는 횟수가 아니라 관문 이름으로 읽는다(「1-3」) — 본편이 한 줄이라 n번째 클리어가 곧 n번째 관문이다.
-  if (metric === "storyClears") return storyPassStageId(threshold);
-  return t(`shop.premium.pass.step.${metric}` as TextKey, { threshold });
-}
-
 /** 미션 한 줄의 문장 — 스토리는 「스토리 1-3 클리어」, 나머지는 문턱 수를 그대로 쓴다. */
 export function progressPassMissionLabel(metric: ProgressPassDto["metric"], threshold: number): string {
   if (metric === "storyClears") return t("lobby.pass.mission.storyClears", { stage: storyPassStageId(threshold) });
@@ -81,7 +74,7 @@ export async function openPassPopup(scene: Phaser.Scene, popups: PopupLayer, opt
   const scrolls = new Map<string, number>();
   const { width, height } = PASS_POPUP;
 
-  popups.open({ width, height, dim: true, closeOnBackdrop: true, onClose: () => options.onChanged?.() }, (body) => {
+  popups.open({ width, height, dim: true, closeOnBackdrop: true, backButton: true, onClose: () => options.onChanged?.() }, (body) => {
     let root = scene.add.container(0, 0);
     body.add(root);
 
@@ -319,19 +312,17 @@ function paintLevelRail(scene: Phaser.Scene, list: PassScrollList, pass: Progres
 
 /** 레벨 마름모 — 닿은 레벨은 패스 색으로 채우고, 아래에 그 레벨의 문턱(관문 이름·Lv·횟수)을 적는다. */
 function paintLevelBadge(scene: Phaser.Scene, row: Phaser.GameObjects.Container, x: number, index: number, pass: ProgressPassDto, tone: number): void {
+  // ◈ — 바깥 마름모 테두리 안에 안쪽 마름모가 차고, 그 위에 레벨 수가 선다. 닿은 레벨만 패스 색으로 찬다.
   const B = PASS_POPUP.list.badge;
-  const milestone = pass.milestones[index]!;
-  const reached = pass.progress >= milestone.threshold;
-  const shape = chipPoints(B.width, B.height, { bevel: { topLeft: B.height * 0.32, topRight: 0, bottomRight: B.height * 0.32, bottomLeft: 0 } });
-  row.add(drawLayer(scene, x, 0, shape, { fill: reached ? tone : 0x101722, alpha: reached ? 0.95 : 0.96 }));
-  row.add(drawShapeOutline(scene, x, 0, shape, { color: reached ? 0xffffff : tone, alpha: reached ? 0.7 : 0.8, width: 3 }));
-  row.add(scene.add.text(x, 0, String(index + 1), textStyle({ role: "display", size: B.size, color: reached ? "#0b0f14" : COLOR.inkDim })).setOrigin(0.5));
-  const step = scene.add.text(x, B.stepY, progressPassStepLabel(pass.metric, milestone.threshold), textStyle({ role: "emphasis", size: B.stepSize, color: reached ? COLOR.ink : COLOR.inkDim }))
-    .setOrigin(0.5);
-  squeezeTextToWidth(step, PASS_POPUP.list.levelWidth - 24, 0.6);
-  // 문턱 글자는 세로 게이지 위에 앉으므로 작은 판을 받쳐 게이지에서 떼어 놓는다.
-  row.add(drawLayer(scene, x, B.stepY, slantedRect(step.displayWidth + 20, B.stepSize + 10, 6), { fill: 0x0b1018, alpha: 0.95 }));
-  row.add(step);
+  const reached = pass.progress >= pass.milestones[index]!.threshold;
+  const diamond = (w: number, h: number): number[] => [0, -h / 2, w / 2, 0, 0, h / 2, -w / 2, 0];
+  const outer = diamond(B.outer, B.outer);
+  const inner = diamond(B.inner, B.inner);
+  row.add(drawLayer(scene, x, 0, outer, { fill: 0x0b1018, alpha: 0.96 }));
+  row.add(drawShapeOutline(scene, x, 0, outer, { color: reached ? tone : 0x5a6474, alpha: reached ? 1 : 0.9, width: 4 }));
+  row.add(drawLayer(scene, x, 0, inner, { fill: reached ? tone : 0x1a2230, alpha: reached ? 0.95 : 0.96 }));
+  row.add(drawShapeOutline(scene, x, 0, inner, { color: reached ? 0xffffff : tone, alpha: reached ? 0.75 : 0.55, width: 2 }));
+  row.add(scene.add.text(x, 1, String(index + 1), textStyle({ role: "display", size: B.size, color: reached ? "#0b0f14" : COLOR.inkDim })).setOrigin(0.5));
 }
 
 /**

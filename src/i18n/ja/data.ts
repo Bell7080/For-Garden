@@ -350,7 +350,6 @@ export default {
   "dna.dna-rune.name": "上級ルーンの製作素材",
   "dna.dna-past-event.name": "過去の探索記録 交換券",
   "premium.tab.package": "パッケージ",
-  "premium.tab.pass": "パス",
   "premium.tab.deal": "お得",
   "premium.tab.limited": "限定",
   "premium.tab.gem": "ダイヤ",

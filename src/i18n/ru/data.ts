@@ -169,7 +169,6 @@ export default {
   "dna.dna-rune.name": "Материалы для рун высокого ранга",
   "dna.dna-past-event.name": "Талон на прошлые записи",
   "premium.tab.package": "Наборы",
-  "premium.tab.pass": "Пропуски",
   "premium.tab.deal": "Выгода",
   "premium.tab.limited": "Лимит",
   "premium.tab.gem": "Алмазы",

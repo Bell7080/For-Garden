@@ -10,7 +10,9 @@ import { findItem } from "./items";
  *
  * - 결제 전에도 길 전체와 지금 어디까지 왔는지는 보인다 — 무엇을 사는지 알고 산다.
  * - 이미 지나온 마디는 산 뒤에 한꺼번에 받는다(소급). 늦게 산 사람이 손해 보지 않는다.
- * - 보상은 **후하게** 둔다(검수: 다이아 환산으로 값의 4~6배). 정기권·패스는 수집형에서 가장 효율이 좋은 상품이라는
+ * - 마디마다 **무료 칸(왼쪽)과 유료 칸(오른쪽)** 이 나란히 선다. 무료 칸은 패스를 열지 않아도 받는다 — 열기 전에도
+ *   길을 걸을 이유가 있고, 옆의 유료 칸이 무엇을 놓치는지 보여 준다.
+ * - 유료 보상은 **후하게** 둔다(검수: 다이아 환산으로 값의 4~6배). 정기권·패스는 수집형에서 가장 효율이 좋은 상품이라는
  *   기대가 있고, 그 효율은 "꾸준히 들어와야 받는다"로 지켜진다.
  *
  * 패스의 이름은 그 길을 여는 상품의 이름이다(두 곳에 적지 않는다). 패스를 여는 상품은 `premiumProducts.ts`의 같은 `productId`이고, 열렸는지는 그 상품의 구매 기록이 말한다 —
@@ -28,6 +30,9 @@ export type ProgressPassMetric = "storyClears" | "playerLevel" | "raidRuns";
 export interface ProgressPassMilestone {
   /** 이 마디에 닿는 진행도. 길 안에서 오름차순이고 겹치지 않는다. */
   threshold: number;
+  /** 누구나 받는 무료 칸(왼쪽 줄). 패스를 열지 않아도 마디에 닿으면 받는다. */
+  free: readonly ProductGrant[];
+  /** 패스를 연 사람만 받는 유료 칸(오른쪽 줄). */
   rewards: readonly ProductGrant[];
 }
 
@@ -47,52 +52,53 @@ const item = (itemId: string, amount: number): ProductGrant => ({
   kind: "item", itemId, amount,
   get name(): string { return findItem(itemId)?.name ?? itemId; },
 });
-const step = (threshold: number, ...rewards: ProductGrant[]): ProgressPassMilestone => ({ threshold, rewards });
+/** 마디 하나 — 무료 칸 하나와 유료 칸들. */
+const step = (threshold: number, free: ProductGrant, ...rewards: ProductGrant[]): ProgressPassMilestone => ({ threshold, free: [free], rewards });
 
 export const PROGRESS_PASSES: readonly ProgressPassDefinition[] = [
   {
     id: "story", productId: "premium-story-pass", metric: "storyClears",
     milestones: [
-      step(1, currency("gems", 200), currency("gold", 30_000)),
-      step(3, currency("fossil", 2), currency("cheesecake", 200)),
-      step(5, currency("gems", 300), item("stamina-tonic", 3)),
-      step(8, currency("amber", 1), currency("dnaFragments", 20)),
-      step(10, currency("gems", 500), currency("fossil", 3)),
-      step(13, currency("cheesecake", 500), currency("gold", 80_000)),
-      step(16, currency("gems", 500), currency("amber", 1)),
-      step(20, currency("fossil", 5), item("ancient-core", 1)),
-      step(25, currency("gems", 600), currency("dnaFragments", 40)),
-      step(30, currency("amber", 3), currency("gems", 1_000)),
+      step(1, currency("gold", 10_000), currency("gems", 200), currency("gold", 30_000)),
+      step(3, currency("cheesecake", 60), currency("fossil", 2), currency("cheesecake", 200)),
+      step(5, currency("gems", 50), currency("gems", 300), item("stamina-tonic", 3)),
+      step(8, currency("gold", 20_000), currency("amber", 1), currency("dnaFragments", 20)),
+      step(10, item("stamina-tonic", 1), currency("gems", 500), currency("fossil", 3)),
+      step(13, currency("cheesecake", 100), currency("cheesecake", 500), currency("gold", 80_000)),
+      step(16, currency("gems", 80), currency("gems", 500), currency("amber", 1)),
+      step(20, currency("gold", 30_000), currency("fossil", 5), item("ancient-core", 1)),
+      step(25, currency("fossil", 1), currency("gems", 600), currency("dnaFragments", 40)),
+      step(30, currency("gems", 150), currency("amber", 3), currency("gems", 1_000)),
     ],
   },
   {
     id: "level", productId: "premium-level-pass", metric: "playerLevel",
     milestones: [
-      step(5, currency("gems", 200), currency("cheesecake", 200)),
-      step(10, currency("fossil", 2), currency("gold", 50_000)),
-      step(15, currency("gems", 300), item("stamina-tonic-large", 2)),
-      step(20, currency("amber", 1), currency("dnaFragments", 20)),
-      step(25, currency("gems", 500), currency("cheesecake", 600)),
-      step(30, currency("fossil", 3), item("refined-core", 1)),
-      step(35, currency("gems", 500), currency("gold", 150_000)),
-      step(40, currency("amber", 2), currency("dnaFragments", 40)),
-      step(50, currency("gems", 800), currency("fossil", 5)),
-      step(60, currency("amber", 3), item("restoration-crystal", 1)),
+      step(5, currency("gold", 10_000), currency("gems", 200), currency("cheesecake", 200)),
+      step(10, currency("cheesecake", 80), currency("fossil", 2), currency("gold", 50_000)),
+      step(15, currency("gems", 50), currency("gems", 300), item("stamina-tonic-large", 2)),
+      step(20, item("stamina-tonic", 1), currency("amber", 1), currency("dnaFragments", 20)),
+      step(25, currency("gold", 30_000), currency("gems", 500), currency("cheesecake", 600)),
+      step(30, currency("gems", 80), currency("fossil", 3), item("refined-core", 1)),
+      step(35, currency("cheesecake", 150), currency("gems", 500), currency("gold", 150_000)),
+      step(40, currency("fossil", 1), currency("amber", 2), currency("dnaFragments", 40)),
+      step(50, currency("gold", 50_000), currency("gems", 800), currency("fossil", 5)),
+      step(60, currency("gems", 150), currency("amber", 3), item("restoration-crystal", 1)),
     ],
   },
   {
     id: "raid", productId: "premium-raid-pass", metric: "raidRuns",
     milestones: [
-      step(1, item("raid-ticket", 2), currency("gems", 100)),
-      step(3, currency("raidSigil", 100), currency("gold", 30_000)),
-      step(5, item("raid-select-ticket", 1), currency("gems", 200)),
-      step(8, item("raid-ticket", 3), currency("cheesecake", 300)),
-      step(12, currency("raidSigil", 200), currency("gems", 300)),
-      step(16, item("raid-select-ticket", 2), currency("fossil", 2)),
-      step(20, item("raid-ticket", 4), currency("gems", 400)),
-      step(25, currency("raidSigil", 300), currency("amber", 1)),
-      step(30, item("raid-select-ticket", 3), currency("gems", 500)),
-      step(40, currency("amber", 2), currency("raidSigil", 500)),
+      step(1, currency("gold", 10_000), item("raid-ticket", 2), currency("gems", 100)),
+      step(3, currency("raidSigil", 20), currency("raidSigil", 100), currency("gold", 30_000)),
+      step(5, currency("gems", 50), item("raid-select-ticket", 1), currency("gems", 200)),
+      step(8, item("raid-ticket", 1), item("raid-ticket", 3), currency("cheesecake", 300)),
+      step(12, currency("raidSigil", 40), currency("raidSigil", 200), currency("gems", 300)),
+      step(16, currency("gold", 30_000), item("raid-select-ticket", 2), currency("fossil", 2)),
+      step(20, currency("gems", 80), item("raid-ticket", 4), currency("gems", 400)),
+      step(25, currency("raidSigil", 60), currency("raidSigil", 300), currency("amber", 1)),
+      step(30, item("raid-ticket", 1), item("raid-select-ticket", 3), currency("gems", 500)),
+      step(40, currency("gems", 150), currency("amber", 2), currency("raidSigil", 500)),
     ],
   },
 ];

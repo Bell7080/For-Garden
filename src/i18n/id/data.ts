@@ -169,7 +169,6 @@ export default {
   "dna.dna-rune.name": "Bahan Rune Tingkat Tinggi",
   "dna.dna-past-event.name": "Voucher Catatan Survei Lampau",
   "premium.tab.package": "Paket",
-  "premium.tab.pass": "Pass",
   "premium.tab.deal": "Penawaran",
   "premium.tab.limited": "Terbatas",
   "premium.tab.gem": "Berlian",

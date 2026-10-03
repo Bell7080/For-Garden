@@ -169,7 +169,6 @@ export default {
   "dna.dna-rune.name": "Materiales de Runa de alto grado",
   "dna.dna-past-event.name": "Vale de registros de campo pasados",
   "premium.tab.package": "Paquetes",
-  "premium.tab.pass": "Pases",
   "premium.tab.deal": "Ofertas",
   "premium.tab.limited": "Limitado",
   "premium.tab.gem": "Diamantes",

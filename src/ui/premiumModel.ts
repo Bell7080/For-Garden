@@ -1,4 +1,4 @@
-import type { ProductDto, ProgressPassDto } from "../api/contracts";
+import type { ProductDto } from "../api/contracts";
 import type { PremiumCategory } from "../data/products";
 import { currencyRecordToRewardItems, productGrantsToRewardItems } from "./rewardPopupModel";
 
@@ -62,25 +62,4 @@ export function premiumFirstBonusGems(product: Pick<ProductDto, "firstPurchaseBo
 /** 지급 목록 하나를 액자 칸으로 바꾼다. 그림이 없는 지급은 칸을 세우지 않는다. */
 export function grantTiles(grants: ProductDto["grants"]): PremiumGrantTile[] {
   return premiumGrantTiles({ grants, passBenefit: undefined });
-}
-
-/** 진행 패스 카드의 오른쪽 칸이 무엇을 말하는가 — 열기 전엔 값, 연 뒤엔 받을 몫이나 진행 중. */
-export type ProgressPassAction = "buy" | "claim" | "progress" | "complete";
-export function progressPassAction(pass: Pick<ProgressPassDto, "owned" | "milestones">): ProgressPassAction {
-  if (!pass.owned) return "buy";
-  if (pass.milestones.some(({ state }) => state === "claimable")) return "claim";
-  return pass.milestones.every(({ state }) => state === "claimed") ? "complete" : "progress";
-}
-
-/** 지금 받을 수 있는(연 뒤) 또는 열면 곧바로 받는(열기 전) 마디 수. */
-export function progressPassReadyCount(pass: Pick<ProgressPassDto, "milestones">): number {
-  return pass.milestones.filter(({ state }) => state === "claimable" || state === "reached").length;
-}
-
-/**
- * 카드가 미리 보여 줄 마디 — 아직 받지 않은 마디 중 가장 앞의 것. 다 받았으면 없다.
- * 열기 전이면 이미 닿은 마디가 앞에 오므로 "사면 바로 받는 것"이 먼저 보인다.
- */
-export function progressPassFeatured(pass: Pick<ProgressPassDto, "milestones">): ProgressPassDto["milestones"][number] | undefined {
-  return pass.milestones.find(({ state }) => state !== "claimed");
 }

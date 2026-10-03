@@ -431,7 +431,14 @@ export interface FulfillPlatformPurchaseResponse extends PurchaseProductResponse
   firstBonusApplied: boolean;
 }
 /** 진행 패스 마디 하나 — 정적 보상과 서버가 판정한 상태(받음 · 받을 수 있음 · 닿음 · 아직). */
-export interface ProgressPassMilestoneDto { threshold: number; rewards: readonly ProductGrant[]; state: "claimed" | "claimable" | "reached" | "locked"; }
+/** 마디 하나 — 왼쪽 무료 칸(`free`·`freeState`)과 오른쪽 유료 칸(`rewards`·`state`). */
+export interface ProgressPassMilestoneDto {
+  threshold: number;
+  free: readonly ProductGrant[];
+  freeState: "claimed" | "claimable" | "locked";
+  rewards: readonly ProductGrant[];
+  state: "claimed" | "claimable" | "reached" | "locked";
+}
 /**
  * 진행 패스 한 줄. 열렸는지(`owned`)는 그 길을 여는 상품의 구매 기록이 말하고, 진행도(`progress`)는 서버가
  * 세션에서 잰다 — 화면이 클리어 수나 레벨을 다시 세지 않는다.
@@ -446,11 +453,14 @@ export interface ProgressPassDto {
   milestones: ProgressPassMilestoneDto[];
 }
 export interface ProgressPassListResponse { passes: ProgressPassDto[]; serverTime: string; }
-/** 열린 패스의 닿은 마디를 **모두** 받는다(소급 포함). 요청 ID로 멱등이다. */
+/** 닿은 마디를 **모두** 받는다 — 무료 칸은 언제나, 유료 칸은 연 패스만(소급 포함). 요청 ID로 멱등이다. */
 export interface ClaimProgressPassRequest { passId: string; requestId: string; }
 export interface ClaimProgressPassResponse extends PlayerStateDto {
   passId: string;
+  /** 받은 유료 칸의 문턱값. */
   claimedThresholds: number[];
+  /** 받은 무료 칸의 문턱값. */
+  claimedFreeThresholds: number[];
   granted: ProductGrant[];
   passes: ProgressPassDto[];
 }
@@ -837,7 +847,7 @@ export interface GameApi extends AsyncArenaProfileApi {
   fulfillPlatformPurchase(request: FulfillPlatformPurchaseRequest): Promise<FulfillPlatformPurchaseResponse>;
   /** 진행 패스 셋의 진행도·열림·마디 상태. */
   getProgressPasses(): Promise<ProgressPassListResponse>;
-  /** 열린 패스의 닿은 마디를 모두 받는다(소급 포함). */
+  /** 닿은 마디의 무료 칸과(연 패스면) 유료 칸을 모두 받는다. */
   claimProgressPass(request: ClaimProgressPassRequest): Promise<ClaimProgressPassResponse>;
   /** 검증된 거래를 기간 권리로 한 번만 활성화한다. */
   activatePass(request: ActivatePassRequest): Promise<ActivatePassResponse>;

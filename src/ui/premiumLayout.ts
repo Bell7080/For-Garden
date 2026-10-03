@@ -1,6 +1,7 @@
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 // 하단 탭의 윗변. `BottomNav`가 아니라 순수 표에서 읽어 이 자리표가 Phaser를 들여오지 않는다.
 import { LOBBY_NAV_TOP } from "./lobbyLayout";
+import type { PremiumCategory } from "../data/products";
 
 /**
  * 프리미엄 화면의 자리표.
@@ -33,7 +34,7 @@ export const PREMIUM_TITLE = { size: 34 } as const;
  * 다섯(패키지·패스·특가·한정·다이아)이 나란히 서므로 칸이 상점(셋)보다 좁다. 하단 탭 바로 위에 서고,
  * 우하단에는 뒤로가기가 없는 화면이라(하단 탭이 그 몫을 한다) 왼쪽에 붙이지 않고 화면 폭을 고르게 나눈다.
  */
-export const PREMIUM_TAB_ROW = { width: 196, height: 82, gap: 8, bottom: LOBBY_NAV_TOP - 22 } as const;
+export const PREMIUM_TAB_ROW = { width: 236, height: 82, gap: 8, bottom: LOBBY_NAV_TOP - 22 } as const;
 
 /**
  * 상품 칸 한 장.
@@ -84,20 +85,14 @@ export const PREMIUM_WIDE = {
   topInset: 34,
   /** 카드 안쪽 여백. */
   pad: 44,
-  /** 받는 것 액자 한 변과 간격. 최대 `frameCap`장이 왼쪽 열에 선다. */
+  /** 받는 것 액자 한 변과 간격. 최대 `frameCap`장이 가운데에 선다. */
   frame: 128,
   frameGap: 14,
   frameCap: 4,
   nameSize: 36,
-  nameY: -86,
-  frameY: 22,
-  /** 값 칸(오른쪽). 값 글자는 `display` 역할로 두껍게 서되 받는 것보다 앞서지 않는 크기다. */
-  price: { width: 256, height: 92, size: 42, y: 0 },
-  /** 값 칸과 왼쪽 열 사이의 최소 간격. */
+  /** 값 칸과 양 끝 곁말 사이의 최소 간격. */
   priceGap: 28,
-  /** 값 칸 아래 한 줄(남은 구매·사유)과 액자 아래 한 줄(패스 기간·권리). */
-  noteY: 74,
-  footY: 104,
+  /** 값 줄 양 끝의 곁말(남은 구매·정기권 기간). */
   noteSize: 22,
   /**
    * 묶음 카드의 쌓는 자리(카드 중심 기준). 이름은 왼쪽 위, 액자 줄은 가운데, 값은 그 아래 가운데에 서고
@@ -113,28 +108,10 @@ export function premiumWideFrameXs(count: number): number[] {
   return Array.from({ length: count }, (_, index) => -span / 2 + frame / 2 + index * (frame + frameGap));
 }
 
-/**
- * 진행 패스 카드 — 이름, 진행도 줄, 다음 마디의 보상 액자, 오른쪽에 값(열기 전) 또는 받기(연 뒤).
- * 카드를 누르면 마디 전체가 서는 길 창이 열린다.
- */
-export const PREMIUM_PASS = {
-  height: 340,
-  nameY: -104,
-  progressY: -50,
-  bar: { y: -14, height: 22 },
-  nextY: 30,
-  frame: 96,
-  frameY: 96,
-  frameGap: 14,
-  /** 다음 마디의 보상 액자 수. 마디마다 둘이다. */
-  frameCap: 4,
-} as const;
-
-/** 이 갈래의 카드가 서는 방식. 다이아만 두 칸, 패스는 진행 카드, 나머지 묶음은 한 줄에 하나다. */
-export type PremiumListKind = "wide" | "grid" | "pass";
-export function premiumListKind(category: "package" | "pass" | "deal" | "limited" | "gem"): PremiumListKind {
-  if (category === "gem") return "grid";
-  return category === "pass" ? "pass" : "wide";
+/** 이 갈래의 카드가 서는 방식. 다이아만 두 칸, 나머지 묶음은 한 줄에 하나다. */
+export type PremiumListKind = "wide" | "grid";
+export function premiumListKind(category: PremiumCategory): PremiumListKind {
+  return category === "gem" ? "grid" : "wide";
 }
 
 export interface PremiumRect { left: number; right: number; top: number; bottom: number }
@@ -167,7 +144,6 @@ export function premiumCardWidth(kind: PremiumListKind = "grid"): number {
 
 /** 카드 한 장의 높이. */
 export function premiumCardHeight(kind: PremiumListKind = "grid"): number {
-  if (kind === "pass") return PREMIUM_PASS.height;
   return kind === "wide" ? PREMIUM_WIDE.height : PREMIUM_CARD.height;
 }
 
@@ -194,20 +170,6 @@ export function premiumGridContentHeight(count: number, kind: PremiumListKind = 
   return rows * (height + PREMIUM_CARD.gapY) - PREMIUM_CARD.gapY;
 }
 
-/**
- * 가로 카드 안의 자리(카드 중심 기준). 받는 것 줄은 왼쪽 열, 값 칸은 오른쪽 열이고 둘은 서로를 넘지 않는다.
- * `frames`는 액자 `count`장의 중심 x이다.
- */
-export function premiumWideInner(width: number, count: number): {
-  left: number; frames: number[]; priceX: number; priceLeft: number; frameRight: number;
-} {
-  const { pad, frame, frameGap, price } = PREMIUM_WIDE;
-  const left = -width / 2 + pad;
-  const frames = Array.from({ length: count }, (_, index) => left + frame / 2 + index * (frame + frameGap));
-  const priceX = width / 2 - pad - price.width / 2;
-  return { left, frames, priceX, priceLeft: priceX - price.width / 2, frameRight: count > 0 ? frames[count - 1] + frame / 2 : left };
-}
-
 /** 라벨 한 장의 중심. 다섯이 화면 폭을 고르게 나눠 갖는다. */
 export function premiumTabSpot(index: number, count: number): { x: number; y: number } {
   const { width, height, gap, bottom } = PREMIUM_TAB_ROW;
@@ -218,43 +180,3 @@ export function premiumTabSpot(index: number, count: number): { x: number; y: nu
 
 /** 화면 밑동까지의 여백 판정에 쓰는 전체 높이. */
 export const PREMIUM_SCREEN_BOTTOM = BASE_HEIGHT;
-
-/**
- * 진행 패스의 길 창 — 마디가 위에서 아래로 한 줄씩 서고 밑동에 열기·받기 버튼이 선다.
- * 창 높이는 손으로 적지 않고 마디 수에서 거꾸로 구한다(`passTrackHeight`).
- */
-export const PASS_TRACK = {
-  width: 980,
-  /** 제목표 아래에서 진행도 줄까지. */
-  top: 96,
-  progressLabelY: 0,
-  barY: 46,
-  barHeight: 24,
-  /** 진행도 줄 아래에서 첫 마디까지. */
-  rowsGap: 96,
-  rowHeight: 112,
-  rowWidth: 900,
-  rowPlate: 98,
-  frame: 84,
-  frameGap: 14,
-  /** 마디 줄 안의 세 열(창 중심 기준). */
-  stepX: -416,
-  framesX: -96,
-  stateX: 420,
-  /** 마지막 마디 아래에서 버튼 줄까지와 버튼 줄의 몫. */
-  footerGap: 30,
-  footer: 170,
-  button: { width: 560, height: 104 },
-  messageGap: 80,
-} as const;
-
-export function passTrackHeight(count: number): number {
-  const { top, rowsGap, rowHeight, footerGap, footer } = PASS_TRACK;
-  return top + rowsGap + count * rowHeight + footerGap + footer;
-}
-
-/** 창 중심 기준 i번째 마디 줄의 중심 y. */
-export function passTrackRowY(index: number, count: number): number {
-  const height = passTrackHeight(count);
-  return -height / 2 + PASS_TRACK.top + PASS_TRACK.rowsGap + PASS_TRACK.rowHeight * (index + 0.5);
-}

@@ -169,7 +169,6 @@ export default {
   "dna.dna-rune.name": "Hochwertiges Runenmaterial",
   "dna.dna-past-event.name": "Gutschein für frühere Erkundungsakten",
   "premium.tab.package": "Pakete",
-  "premium.tab.pass": "Pässe",
   "premium.tab.deal": "Angebote",
   "premium.tab.limited": "Limitiert",
   "premium.tab.gem": "Diamanten",

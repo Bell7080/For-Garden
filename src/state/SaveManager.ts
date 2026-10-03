@@ -47,7 +47,7 @@ function migrateV12Rune(definitionId: string): RuneInstance {
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 45;
+export const CURRENT_SAVE_VERSION = 46;
 
 /**
  * 연구도는 기간마다 상한이 다르다(일일 100 · 주간 500). 상한이 120 하나이던 때의 저장은 일일
@@ -554,7 +554,7 @@ export class SaveManager {
       .filter((stack: { itemId?: unknown }) => stack?.itemId !== "raid-sigil");
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
     if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses } as unknown as SaveData;
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, CURRENT_SAVE_VERSION];
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
     return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses } as unknown as SaveData;
   }
@@ -641,8 +641,8 @@ export class SaveManager {
   /** 받은 마디는 그 패스의 실제 문턱값만, 한 번씩만 허용한다. 레이드 입장 수는 0 이상의 정수다. */
   private validateProgressPasses(data: SaveData): void {
     const passes = data.progressPasses;
-    if (!passes || !Number.isSafeInteger(passes.raidRuns) || passes.raidRuns < 0 || !passes.claimed || typeof passes.claimed !== "object") throw new SaveDataError("진행 패스 정보가 올바르지 않습니다.");
-    for (const [id, thresholds] of Object.entries(passes.claimed)) {
+    if (!passes || !Number.isSafeInteger(passes.raidRuns) || passes.raidRuns < 0 || !passes.claimed || typeof passes.claimed !== "object" || !passes.freeClaimed || typeof passes.freeClaimed !== "object") throw new SaveDataError("진행 패스 정보가 올바르지 않습니다.");
+    for (const [id, thresholds] of [...Object.entries(passes.claimed), ...Object.entries(passes.freeClaimed)]) {
       const pass = findProgressPass(id);
       const valid = new Set(pass?.milestones.map(({ threshold }) => threshold) ?? []);
       if (!pass || !Array.isArray(thresholds) || new Set(thresholds).size !== thresholds.length || thresholds.some((value) => !valid.has(value))) throw new SaveDataError("진행 패스 수령 정보가 올바르지 않습니다.");
@@ -708,15 +708,17 @@ export class SaveManager {
 }
 
 function cloneProgressPasses(passes: SaveData["progressPasses"]): SaveData["progressPasses"] {
-  return { raidRuns: passes.raidRuns, claimed: Object.fromEntries(Object.entries(passes.claimed).map(([id, thresholds]) => [id, [...thresholds]])) };
+  const copy = (table: Record<string, number[]>) => Object.fromEntries(Object.entries(table).map(([id, thresholds]) => [id, [...thresholds]]));
+  return { raidRuns: passes.raidRuns, claimed: copy(passes.claimed), freeClaimed: copy(passes.freeClaimed) };
 }
 
 /** 모양이 깨진 값은 비워 두고 검증이 나머지를 맡는다 — 구 저장은 필드가 통째로 없다. */
 function normalizeProgressPasses(value: unknown): SaveData["progressPasses"] {
   const source = (value && typeof value === "object" ? value : {}) as Partial<SaveData["progressPasses"]>;
   const raidRuns = Number.isSafeInteger(source.raidRuns) && Number(source.raidRuns) >= 0 ? Number(source.raidRuns) : 0;
-  const claimed = source.claimed && typeof source.claimed === "object" ? source.claimed : {};
-  return { raidRuns, claimed: Object.fromEntries(Object.entries(claimed).filter(([, list]) => Array.isArray(list)).map(([id, list]) => [id, [...list]])) };
+  // v46 전 저장은 무료 칸이 없었다 — 빈 표로 올라와 지나온 무료 칸을 모두 받을 수 있다.
+  const table = (value: unknown) => Object.fromEntries(Object.entries(value && typeof value === "object" ? value : {}).filter(([, list]) => Array.isArray(list)).map(([id, list]) => [id, [...(list as number[])]]));
+  return { raidRuns, claimed: table(source.claimed), freeClaimed: table(source.freeClaimed) };
 }
 
 function cloneRelicStory(story: SaveData["relicStory"]): SaveData["relicStory"] {

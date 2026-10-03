@@ -44,3 +44,41 @@ export function claimableProgressPassThresholds(
 export function progressPassGoal(pass: Pick<ProgressPassDefinition, "milestones">): number {
   return pass.milestones[pass.milestones.length - 1]?.threshold ?? 0;
 }
+
+/** 무료 칸의 상태 — 열림과 무관하게 닿으면 받는다. */
+export type ProgressPassFreeState = "claimed" | "claimable" | "locked";
+
+export function progressPassFreeStates(
+  pass: Pick<ProgressPassDefinition, "milestones">,
+  progress: number,
+  claimed: readonly number[],
+): ProgressPassFreeState[] {
+  const taken = new Set(claimed);
+  return pass.milestones.map(({ threshold }) => taken.has(threshold) ? "claimed" : progress >= threshold ? "claimable" : "locked");
+}
+
+/** 지금 받을 수 있는 무료 칸의 문턱값들. */
+export function claimableProgressPassFreeThresholds(
+  pass: Pick<ProgressPassDefinition, "milestones">,
+  progress: number,
+  claimed: readonly number[],
+): number[] {
+  const states = progressPassFreeStates(pass, progress, claimed);
+  return pass.milestones.flatMap(({ threshold }, index) => states[index] === "claimable" ? [threshold] : []);
+}
+
+/**
+ * 패스 레벨 — 닿은 마디 수. 게이지는 레벨 단위로 끊기고(마디 하나가 한 칸), `fill`은 다음 마디까지 온 만큼을
+ * 그 칸 안에서 채운 전체 비율(0~1)이다. 마디 사이 간격이 제각각이라 진행도를 그대로 나누면 칸과 레벨이 어긋난다.
+ */
+export function progressPassLevel(pass: Pick<ProgressPassDefinition, "milestones">, progress: number): { level: number; max: number; fill: number } {
+  const thresholds = pass.milestones.map(({ threshold }) => threshold);
+  const max = thresholds.length;
+  const level = thresholds.filter((threshold) => progress >= threshold).length;
+  if (max === 0) return { level: 0, max: 0, fill: 0 };
+  if (level >= max) return { level, max, fill: 1 };
+  const from = level === 0 ? 0 : thresholds[level - 1]!;
+  const to = thresholds[level]!;
+  const partial = to > from ? Math.max(0, Math.min(1, (progress - from) / (to - from))) : 0;
+  return { level, max, fill: (level + partial) / max };
+}

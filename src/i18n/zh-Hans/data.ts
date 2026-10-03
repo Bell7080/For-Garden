@@ -169,7 +169,6 @@ export default {
   "dna.dna-rune.name": "高级符文材料",
   "dna.dna-past-event.name": "往期调查记录兑换券",
   "premium.tab.package": "礼包",
-  "premium.tab.pass": "通行证",
   "premium.tab.deal": "特惠",
   "premium.tab.limited": "限定",
   "premium.tab.gem": "钻石",

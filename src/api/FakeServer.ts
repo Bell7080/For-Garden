@@ -10,7 +10,7 @@ import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond
 import { MISSIONS, RESEARCH_REWARD_STAGES, maxResearchPoints, mergeMissionRewards, type MissionReward, addResearchPoints, applyMissionEvent, claimResearchStages, claimableMissionIds, normalizeMissions, researchPointsForClaim, researchStageClaimId, type MissionPeriod } from "../core/missions";
 import { CHAPTERS, DAILY_RESTORATION, getStage } from "../data/stages";
 import { PROGRESS_PASSES, findProgressPass, type ProgressPassDefinition } from "../data/progressPasses";
-import { claimableProgressPassThresholds, progressPassGoal, progressPassMilestoneStates } from "../core/progressPass";
+import { claimableProgressPassFreeThresholds, claimableProgressPassThresholds, progressPassFreeStates, progressPassGoal, progressPassMilestoneStates } from "../core/progressPass";
 import { stageFirstClearRewards } from "../core/stageRewards";
 import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
 import { createEmptyProgressPassState, createInitialRelicProgress, replaceSession, session, type RaidInstanceState, type Session } from "../state/session";
@@ -21,7 +21,7 @@ import type {
   PurchaseRelicSkinRequest, PurchaseRelicSkinResponse, ClaimInteractionDispatchRequest, ClaimInteractionDispatchResponse, InteractionCitiesResponse, InteractionDispatchResponse, StartInteractionDispatchRequest } from "./contracts";
 import { ProfileModifierManager } from "../managers/ProfileModifierManager";
 import { GameApiError, persistenceFailed, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type EnterBountyRequest, type EnterBountyResponse, type CompleteBountyRequest, type CompleteBountyResponse, type BountyStatusResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse, type RechargeStaminaRequest, type RechargeStaminaResponse, type ClaimProgressPassRequest, type ClaimProgressPassResponse, type ProgressPassDto, type ProgressPassListResponse } from "./contracts";
-import type { ProductDefinition } from "../data/shopCatalog";
+import type { ProductDefinition, ProductGrant } from "../data/shopCatalog";
 import { PRODUCTS } from "../data/shopCatalog";
 import type { ProductListResponse, PurchaseProductRequest, PurchaseProductResponse } from "./contracts";
 import { totalGrantAmount } from "../core/purchase";
@@ -1675,9 +1675,10 @@ export class FakeServer implements GameApi {
   }
 
   /**
-   * 열린 패스의 닿은 마디를 모두 받는다 — 늦게 산 사람도 지나온 마디를 한꺼번에 받는다(소급).
+   * 닿은 마디를 모두 받는다 — **무료 칸은 언제나, 유료 칸은 연 패스만.** 늦게 연 사람도 지나온 유료 칸을 한꺼번에
+   * 받는다(소급).
    *
-   * 열렸는지는 그 길을 여는 상품의 구매 기록이 말하고 받은 마디만 저장한다. 지급은 상품 구매와 같은
+   * 열렸는지는 그 길을 여는 상품의 구매 기록이 말하고 받은 칸만 저장한다. 지급은 상품 구매와 같은
    * `applyProductGrants`를 지나 상한·기한 규칙이 갈리지 않는다.
    */
   async claimProgressPass(request: ClaimProgressPassRequest): Promise<ClaimProgressPassResponse> {
@@ -1689,20 +1690,30 @@ export class FakeServer implements GameApi {
     if (!pass) throw new GameApiError("PASS_NOT_FOUND", "존재하지 않는 패스입니다.");
     const passes = this.state.progressPasses ?? createEmptyProgressPassState();
     const owned = this.progressPassOwned(pass);
-    if (!owned) throw new GameApiError("PASS_NOT_FOUND", "열지 않은 패스입니다.");
+    const progress = this.progressPassProgress(pass, this.state);
     const claimed = passes.claimed[pass.id] ?? [];
-    const thresholds = claimableProgressPassThresholds(pass, this.progressPassProgress(pass, this.state), owned, claimed);
-    if (thresholds.length === 0) throw new GameApiError("NOTHING_TO_CLAIM", "받을 보상이 없습니다.");
+    const freeClaimed = passes.freeClaimed?.[pass.id] ?? [];
+    const thresholds = claimableProgressPassThresholds(pass, progress, owned, claimed);
+    const freeThresholds = claimableProgressPassFreeThresholds(pass, progress, freeClaimed);
+    if (thresholds.length === 0 && freeThresholds.length === 0) throw new GameApiError("NOTHING_TO_CLAIM", "받을 보상이 없습니다.");
     const now = this.now();
-    const grants = pass.milestones.filter(({ threshold }) => thresholds.includes(threshold)).flatMap(({ rewards }) => rewards);
+    const grants = pass.milestones.flatMap(({ threshold, free, rewards }) => [
+      ...(freeThresholds.includes(threshold) ? free : []),
+      ...(thresholds.includes(threshold) ? rewards : []),
+    ]);
     const nextWallet = { ...this.state.wallet };
     const applied = this.applyProductGrants({ grants }, 1, nextWallet, this.state.itemInventory.map((entry) => ({ ...entry })), now);
-    const nextPasses = { ...passes, claimed: { ...passes.claimed, [pass.id]: [...claimed, ...thresholds].sort((a, b) => a - b) } };
+    const merge = (list: number[], added: number[]) => [...list, ...added].sort((x, y) => x - y);
+    const nextPasses = {
+      ...passes,
+      claimed: { ...passes.claimed, [pass.id]: merge(claimed, thresholds) },
+      freeClaimed: { ...(passes.freeClaimed ?? {}), [pass.id]: merge(freeClaimed, freeThresholds) },
+    };
     const nextState: Session = { ...this.state, wallet: nextWallet, itemInventory: applied.items, progressPasses: nextPasses };
     this.persist(nextState);
     this.state.wallet = nextWallet; this.state.itemInventory = applied.items; this.state.progressPasses = nextPasses;
     const response: ClaimProgressPassResponse = {
-      ...this.snapshot(), passId: pass.id, claimedThresholds: thresholds, granted: applied.granted, passes: this.progressPassDtos(this.state),
+      ...this.snapshot(), passId: pass.id, claimedThresholds: thresholds, claimedFreeThresholds: freeThresholds, granted: applied.granted, passes: this.progressPassDtos(this.state),
     };
     this.progressPassClaims.set(request.requestId, structuredClone(response));
     return response;
@@ -1720,14 +1731,19 @@ export class FakeServer implements GameApi {
   }
 
   private progressPassDtos(state: Session): ProgressPassDto[] {
+    // 아이템 이름은 게터라 펼쳐 복사하면 사라진다 — 값으로 옮겨 담는다.
+    const cloneGrant = (reward: ProductGrant): ProductGrant => ({ ...reward, ...(reward.kind === "item" ? { name: reward.name } : {}) });
     return PROGRESS_PASSES.map((pass) => {
       const progress = this.progressPassProgress(pass, state);
       const owned = this.progressPassOwned(pass);
       const claimed = state.progressPasses?.claimed[pass.id] ?? [];
       const states = progressPassMilestoneStates(pass, progress, owned, claimed);
+      const freeStates = progressPassFreeStates(pass, progress, state.progressPasses?.freeClaimed?.[pass.id] ?? []);
       return {
         id: pass.id, productId: pass.productId, metric: pass.metric, progress, goal: progressPassGoal(pass), owned,
-        milestones: pass.milestones.map(({ threshold, rewards }, index) => ({ threshold, rewards: rewards.map((reward) => ({ ...reward, ...(reward.kind === "item" ? { name: reward.name } : {}) })), state: states[index]! })),
+        milestones: pass.milestones.map(({ threshold, free, rewards }, index) => ({
+          threshold, free: free.map(cloneGrant), freeState: freeStates[index]!, rewards: rewards.map(cloneGrant), state: states[index]!,
+        })),
       };
     });
   }

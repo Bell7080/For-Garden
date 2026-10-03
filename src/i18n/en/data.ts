@@ -171,7 +171,6 @@ export default {
   "dna.dna-rune.name": "High-grade Rune Materials",
   "dna.dna-past-event.name": "Past Survey Record Voucher",
   "premium.tab.package": "Packages",
-  "premium.tab.pass": "Passes",
   "premium.tab.deal": "Deals",
   "premium.tab.limited": "Limited",
   "premium.tab.gem": "Diamonds",

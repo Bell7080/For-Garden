@@ -192,11 +192,14 @@ export interface Session {
 export interface ProgressPassState {
   /** 지금까지 레이드에 입장한 수. 레이드 패스의 진행도다(정산하고 걷힌 판도 센다). */
   raidRuns: number;
+  /** 받은 유료 칸. */
   claimed: Record<string, number[]>;
+  /** 받은 무료 칸. 유료 칸과 따로 센다 — 무료를 먼저 받고 나중에 패스를 열 수 있다. */
+  freeClaimed: Record<string, number[]>;
 }
 
 export function createEmptyProgressPassState(): ProgressPassState {
-  return { raidRuns: 0, claimed: {} };
+  return { raidRuns: 0, claimed: {}, freeClaimed: {} };
 }
 
 /**

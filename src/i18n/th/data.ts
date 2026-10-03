@@ -169,7 +169,6 @@ export default {
   "dna.dna-rune.name": "วัสดุรูนระดับสูง",
   "dna.dna-past-event.name": "คูปองบันทึกสำรวจในอดีต",
   "premium.tab.package": "แพ็กเกจ",
-  "premium.tab.pass": "พาส",
   "premium.tab.deal": "ดีล",
   "premium.tab.limited": "จำกัด",
   "premium.tab.gem": "เพชร",

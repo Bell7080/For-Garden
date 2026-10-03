@@ -58,6 +58,9 @@ import { staminaMaxForResearchLevel } from "../core/stamina";
 import { PLAYER_LEVEL_UP_REWARD } from "../core/playerLevel";
 import { findItem } from "../data/items";
 import { MailPopup } from "../ui/MailPopup";
+import { openPassPopup } from "../ui/PassPopup";
+import type { ProgressPassDto } from "../api/contracts";
+import { passLevelOf, passReadyCount, passToOpen } from "../ui/passPopupModel";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import type { CurrencyGuideAction } from "../data/currencyGuide";
 import { powerSavingPolicy } from "../core/settings";
@@ -820,7 +823,11 @@ export class LobbyScene extends Phaser.Scene {
     this.missionsPopup.open();
   }
 
-  /** 왼쪽 위, 프로필 줄 바로 아래의 홍보 칸. 기간 상품과 공지가 들어갈 자리다. */
+  /**
+   * 왼쪽 위, 프로필 줄 바로 아래의 **패스 칸**. 스토리·레벨·레이드 패스를 한 창(`PassPopup`)에 모아 연다 —
+   * 프리미엄 상점에 패스를 세우면 사러 가는 곳과 받으러 가는 곳이 갈린다. 아랫줄은 받을 보상이 있으면 그 수,
+   * 없으면 먼저 열릴 패스의 레벨을 말한다(서버가 답하기 전에는 비워 둔다).
+   */
   private buildPromo(): void {
     const width = 300;
     const height = 132;
@@ -830,9 +837,25 @@ export class LobbyScene extends Phaser.Scene {
       bevel: { topLeft: height * 0.42, topRight: 0, bottomRight: height * 0.42, bottomLeft: 0 },
     }), { fill: 0x1a1f27, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.5 });
     this.add.text(x, y - 26, t("lobby.pass.title"), textStyle({ role: "display", size: 28 })).setOrigin(0.5);
-    this.add.text(x, y + 16, t("lobby.pass.status"), textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(0.5);
+    const status = this.add.text(x, y + 16, "", textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(0.5);
+    let openId: ProgressPassDto["id"] | undefined;
+    const refresh = (): void => {
+      void gameApi.getProgressPasses().then(({ passes }) => {
+        if (!status.active) return;
+        const picked = passToOpen(passes);
+        openId = picked?.id;
+        const ready = passes.reduce((sum: number, pass) => sum + passReadyCount(pass), 0);
+        if (ready > 0) status.setText(t("lobby.pass.ready", { count: ready }));
+        else if (picked) { const level = passLevelOf(picked); status.setText(t("lobby.pass.level", { level: level.level, max: level.max })); }
+        else status.setText("");
+      }).catch(() => undefined);
+    };
+    refresh();
     const hit = this.add.rectangle(x, y, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerup", () => this.notReady(t("lobby.pass.title")));
+    hit.on("pointerup", () => {
+      if (!this.popupLayer) return;
+      void openPassPopup(this, this.popupLayer, { api: gameApi, passId: openId, onChanged: () => { refresh(); this.topBar?.refresh(); } });
+    });
   }
 
   /** 애착 렐릭을 광장 한가운데 세우고, 전용 원화가 없을 때만 임시 색으로 구분한다. */
@@ -891,13 +914,5 @@ export class LobbyScene extends Phaser.Scene {
     // 대사 ID는 번역/분석 추적용으로 객체에 남기되 플레이어 화면에는 노출하지 않는다.
     this.dialogue.setData("dialogueId", dialogueId);
     showBondGain(this, LOBBY_BOND_MARK.x, LOBBY_BOND_MARK.y, gain, 501);
-  }
-
-  private notReady(label: string): void {
-    const toast = this.add
-      .text(BASE_WIDTH / 2, NAV_TOP - 300, t("lobby.notReady", { label }), textStyle({ role: "emphasis", size: 30, color: COLOR.accentText }))
-      .setOrigin(0.5)
-      .setDepth(500);
-    this.tweens.add({ targets: toast, alpha: 0, duration: 1200, onComplete: () => toast.destroy() });
   }
 }

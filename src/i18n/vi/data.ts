@@ -169,7 +169,6 @@ export default {
   "dna.dna-rune.name": "Nguyên liệu Rune cao cấp",
   "dna.dna-past-event.name": "Phiếu hồ sơ khảo sát cũ",
   "premium.tab.package": "Gói",
-  "premium.tab.pass": "Thẻ",
   "premium.tab.deal": "Ưu đãi",
   "premium.tab.limited": "Giới hạn",
   "premium.tab.gem": "Kim cương",

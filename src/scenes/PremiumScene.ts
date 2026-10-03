@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
-import type { ProductDto, ProgressPassDto, PurchaseProductResponse } from "../api/contracts";
+import type { ProductDto, PurchaseProductResponse } from "../api/contracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugPremiumSection, setDebugScene } from "../debug";
 import { PREMIUM_TABS, type PremiumCategory } from "../data/shopCatalog";
@@ -10,10 +10,8 @@ import { BottomNav } from "../ui/BottomNav";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { addFrameAmount, addFramedIcon, guideForIcon } from "../ui/itemFrame";
-import { chipPoints, drawLayer, drawVignette, HoloBar, slantedRect } from "../ui/holo";
+import { chipPoints, drawLayer, drawVignette, slantedRect } from "../ui/holo";
 import { paintShowcaseCard, SHOWCASE_TIER_TONE } from "../ui/showcaseCardChrome";
-import { openPassTrackPopup, progressPassProgressLabel, progressPassStepLabel, PROGRESS_PASS_TONE } from "../ui/PassTrackPopup";
-import { Button } from "../ui/Button";
 import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
 import type { PremiumSection } from "./settingsNavigation";
@@ -24,11 +22,11 @@ import { session } from "../state/session";
 import { productActionModel } from "../core/productAcquisition";
 import { addPriceBar } from "../ui/priceTag";
 import { squeezeTextToWidth } from "../ui/textFit";
-import { grantTiles, premiumCategoryOf, premiumFirstBonusGems, premiumGrantTiles, premiumModel, productsForPremiumCategory, progressPassAction, progressPassFeatured, progressPassReadyCount } from "../ui/premiumModel";
+import { premiumCategoryOf, premiumFirstBonusGems, premiumGrantTiles, premiumModel, productsForPremiumCategory } from "../ui/premiumModel";
 import {
-  PREMIUM_CARD, PREMIUM_PASS, PREMIUM_TAB_ROW, PREMIUM_TITLE, PREMIUM_WIDE,
+  PREMIUM_CARD, PREMIUM_TAB_ROW, PREMIUM_TITLE, PREMIUM_WIDE,
   premiumCardHeight, premiumCardSpot, premiumCardWidth, premiumGridContentHeight, premiumGridViewport, premiumListKind,
-  premiumTabSpot, premiumTitleLeft, premiumTitleY, premiumWideFrameXs, premiumWideInner, type PremiumListKind,
+  premiumTabSpot, premiumTitleLeft, premiumTitleY, premiumWideFrameXs, type PremiumListKind,
 } from "../ui/premiumLayout";
 import { formatCurrency } from "../core/formatCurrency";
 import { consumeSceneEntry } from "./sceneEntry";
@@ -57,7 +55,6 @@ export class PremiumScene extends Phaser.Scene {
   /** 첫 라벨은 카탈로그 순서에서 정해 화면과 데이터의 기본값이 갈리지 않게 한다. */
   private selectedCategory: PremiumCategory = PREMIUM_TABS[0].id;
   private products: ProductDto[] = [];
-  private passes: ProgressPassDto[] = [];
   private minScrollY = 0;
   private pointerDown = false;
   private pointerY = 0;
@@ -118,15 +115,14 @@ export class PremiumScene extends Phaser.Scene {
     this.content.setMask(this.viewportMask.createGeometryMask());
   }
 
-  /** 서버가 계산한 노출·제한 상태에서 유료 storefront만 골라 다시 그린다. 패스의 진행도도 함께 읽는다. */
+  /** 서버가 계산한 노출·제한 상태에서 유료 storefront만 골라 다시 그린다. */
   private async refresh(): Promise<void> {
-    const [response, passes] = await Promise.all([gameApi.getProducts("premium"), gameApi.getProgressPasses()]);
+    const response = await gameApi.getProducts("premium");
     if (!this.scene.isActive()) return;
     // storefront 판정은 검증된 모델 하나가 소유한다. 여기서 filter를 다시 쓰면 같은 규칙이
     // 두 곳에 살아, 한쪽만 고쳐도 화면은 조용히 예전 규칙으로 남는다.
     this.products = premiumModel(response.products);
-    this.passes = passes.passes;
-    // 패스를 열거나 받은 뒤에는 지갑이 바뀌었으므로 상단 줄도 함께 맞춘다.
+    // 상품을 산 뒤에는 지갑이 바뀌었으므로 상단 줄도 함께 맞춘다.
     session.wallet = { ...session.wallet, ...(await gameApi.getPlayerState()).wallet };
     if (!this.scene.isActive()) return;
     this.topBar?.refresh();
@@ -138,13 +134,7 @@ export class PremiumScene extends Phaser.Scene {
     this.content?.removeAll(true);
     const visible = productsForPremiumCategory(this.products, this.selectedCategory);
     const kind = premiumListKind(this.selectedCategory);
-    if (kind === "pass") {
-      // 패스 카드는 상품이 아니라 그 상품이 여는 길을 그린다. 길이 없는 상품은 세우지 않는다.
-      visible.forEach((product, index) => {
-        const pass = this.passes.find(({ productId }) => productId === product.id);
-        if (pass) this.addPassCard(pass, product, index);
-      });
-    } else visible.forEach((product, index) => this.addProduct(product, index, kind));
+    visible.forEach((product, index) => this.addProduct(product, index, kind));
     const view = premiumGridViewport();
     this.minScrollY = Math.min(0, view.bottom - view.top - premiumGridContentHeight(visible.length, kind));
     this.scrollTo(this.content?.y ?? 0);
@@ -288,62 +278,7 @@ export class PremiumScene extends Phaser.Scene {
     card.add(bar);
   }
 
-  /**
-   * 진행 패스 카드 — 이름 · 진행도 줄 · 다음 마디의 보상 · 오른쪽에 값(열기 전) 또는 받기(연 뒤).
-   * 카드를 누르면 마디 전체가 서는 길 창이 열린다.
-   */
-  private addPassCard(pass: ProgressPassDto, product: ProductDto, index: number): void {
-    const P = PREMIUM_PASS;
-    const W = PREMIUM_WIDE;
-    const width = premiumCardWidth("pass");
-    const height = premiumCardHeight("pass");
-    const { x, y } = premiumCardSpot(index, "pass");
-    const card = this.add.container(x, y);
-    const tone = PROGRESS_PASS_TONE[pass.id];
-    const action = progressPassAction(pass);
-    paintShowcaseCard(this, card, { width, height, accent: tone, railX: -width / 2 + W.pad, tag: t(pass.owned ? "shop.premium.pass.tag.open" : "shop.premium.pass.tag.locked") });
-    this.addCardHit(card, width, height, () => this.openPassTrack(pass, product));
-    const inner = premiumWideInner(width, 0);
-    const columnWidth = inner.priceLeft - W.priceGap - inner.left;
-    const name = this.add.text(inner.left, P.nameY, product.name, textStyle({ role: "display", size: W.nameSize })).setOrigin(0, 0.5).setShadow(3, 4, "#04060a", 0, true, true);
-    card.add(squeezeTextToWidth(name, columnWidth, 0.7));
-    card.add(this.add.text(inner.left, P.progressY, progressPassProgressLabel(pass), textStyle({ role: "emphasis", size: 26, color: COLOR.ink })).setOrigin(0, 0.5));
-    const bar = new HoloBar(this, inner.left + columnWidth / 2, P.bar.y, columnWidth, P.bar.height, { color: tone, trackAlpha: 0.85, outline: true, ticks: Math.max(0, pass.milestones.length - 1) });
-    bar.setValue(pass.goal > 0 ? Math.min(1, pass.progress / pass.goal) : 0);
-    card.add([...bar.objects]);
-    const featured = progressPassFeatured(pass);
-    card.add(this.add.text(inner.left, P.nextY, featured ? t("shop.premium.pass.next", { step: progressPassStepLabel(pass.metric, featured.threshold) }) : t("shop.premium.pass.complete"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
-    if (featured) {
-      grantTiles(featured.rewards).slice(0, P.frameCap).forEach((tile, i) => {
-        this.addGrantFrame(card, inner.left + P.frame / 2 + i * (P.frame + P.frameGap), P.frameY, P.frame, tile.icon, tile.amount);
-      });
-    }
-    // 오른쪽 칸 — 열기 전엔 값과 「지나온 보상 N개 즉시 수령」, 연 뒤엔 받기 또는 진행 상태.
-    const ready = progressPassReadyCount(pass);
-    if (action === "buy") {
-      this.paintPriceChip(card, product, inner.priceX, W.price.y, W.price.width, W.price.height, W.price.size, productActionModel(product.acquisition, { remaining: product.remaining, available: product.purchasable }));
-      if (ready > 0) card.add(this.add.text(inner.priceX, W.price.y + W.noteY, t("shop.premium.pass.retro", { count: ready }), textStyle({ role: "emphasis", size: W.noteSize, color: COLOR.accentText })).setOrigin(0.5));
-    } else if (action === "claim") {
-      const button = new Button(this, inner.priceX, W.price.y, {
-        width: W.price.width, height: W.price.height, variant: "primary", label: t("shop.premium.pass.claim", { count: ready }),
-        onClick: () => { if (this.draggedDistance <= PREMIUM_CARD.dragSlop) this.openPassTrack(pass, product); },
-      });
-      card.add(button);
-    } else {
-      card.add(this.add.text(inner.priceX, W.price.y, t(action === "complete" ? "shop.premium.pass.complete" : "shop.premium.pass.inProgress"), textStyle({ role: "emphasis", size: 26, color: COLOR.inkDim, align: "center", wrap: W.price.width })).setOrigin(0.5));
-    }
-    this.content?.add(card);
-  }
-
-  /** 길 창을 연다. 열기·받기가 끝나면 지갑과 목록을 새로 읽는다. */
-  private openPassTrack(pass: ProgressPassDto, product: ProductDto): void {
-    openPassTrackPopup(this, this.popups, {
-      api: gameApi, pass, product,
-      onChanged: async () => { await this.refresh(); },
-    });
-  }
-
-  /** 패스 카드 아래 한 줄 — 유효 기간 · 권리 · 프로필 장식 이름. 패스가 아니면 비어 있다. */
+  /** 정기권 카드 값 줄 왼쪽의 한 줄 — 유효 기간 · 권리. 정기권이 아니면 비어 있다. */
   private passFootnote(product: ProductDto): string {
     const parts: string[] = [];
     const pass = product.passBenefit;

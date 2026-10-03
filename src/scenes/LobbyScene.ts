@@ -59,8 +59,7 @@ import { PLAYER_LEVEL_UP_REWARD } from "../core/playerLevel";
 import { findItem } from "../data/items";
 import { MailPopup } from "../ui/MailPopup";
 import { openPassPopup } from "../ui/PassPopup";
-import type { ProgressPassDto } from "../api/contracts";
-import { passLevelOf, passReadyCount, passToOpen } from "../ui/passPopupModel";
+import { LobbyPassCard } from "../ui/LobbyPassCard";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import type { CurrencyGuideAction } from "../data/currencyGuide";
 import { powerSavingPolicy } from "../core/settings";
@@ -824,37 +823,15 @@ export class LobbyScene extends Phaser.Scene {
   }
 
   /**
-   * 왼쪽 위, 프로필 줄 바로 아래의 **패스 칸**. 스토리·레벨·레이드 패스를 한 창(`PassPopup`)에 모아 연다 —
-   * 프리미엄 상점에 패스를 세우면 사러 가는 곳과 받으러 가는 곳이 갈린다. 아랫줄은 받을 보상이 있으면 그 수,
-   * 없으면 먼저 열릴 패스의 레벨을 말한다(서버가 답하기 전에는 비워 둔다).
+   * 왼쪽 위, 프로필 줄 바로 아래의 **패스 카드**(`LobbyPassCard`). 스토리·레벨·레이드 패스가 한 장씩 넘어가고, 누르면
+   * 그 패스로 패스 창(`PassPopup`)이 열린다 — 프리미엄 상점에 패스를 세우면 사러 가는 곳과 받으러 가는 곳이 갈린다.
    */
   private buildPromo(): void {
-    const width = 300;
-    const height = 132;
-    const x = 30 + width / 2;
-    const y = 250;
-    drawLayer(this, x, y, chipPoints(width, height, {
-      bevel: { topLeft: height * 0.42, topRight: 0, bottomRight: height * 0.42, bottomLeft: 0 },
-    }), { fill: 0x1a1f27, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.5 });
-    this.add.text(x, y - 26, t("lobby.pass.title"), textStyle({ role: "display", size: 28 })).setOrigin(0.5);
-    const status = this.add.text(x, y + 16, "", textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(0.5);
-    let openId: ProgressPassDto["id"] | undefined;
-    const refresh = (): void => {
-      void gameApi.getProgressPasses().then(({ passes }) => {
-        if (!status.active) return;
-        const picked = passToOpen(passes);
-        openId = picked?.id;
-        const ready = passes.reduce((sum: number, pass) => sum + passReadyCount(pass), 0);
-        if (ready > 0) status.setText(t("lobby.pass.ready", { count: ready }));
-        else if (picked) { const level = passLevelOf(picked); status.setText(t("lobby.pass.level", { level: level.level, max: level.max })); }
-        else status.setText("");
-      }).catch(() => undefined);
-    };
-    refresh();
-    const hit = this.add.rectangle(x, y, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerup", () => {
+    const card: LobbyPassCard = new LobbyPassCard(this, gameApi, (passId) => {
       if (!this.popupLayer) return;
-      void openPassPopup(this, this.popupLayer, { api: gameApi, passId: openId, onChanged: () => { refresh(); this.topBar?.refresh(); } });
+      card.setVisible(false);
+      void openPassPopup(this, this.popupLayer, { api: gameApi, passId, onChanged: () => { card.setVisible(true); card.refresh(); this.topBar?.refresh(); } })
+        .catch(() => card.setVisible(true));
     });
   }
 

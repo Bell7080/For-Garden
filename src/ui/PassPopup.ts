@@ -8,10 +8,14 @@ import { platformPayment } from "../platform/payment";
 import { Button } from "./Button";
 import { addCategoryTab } from "./CategoryTab";
 import { drawGlyph } from "./glyphs";
-import { drawLayer, HoloBar, slantedRect } from "./holo";
-import { addFrameAmount, addFramedIcon } from "./itemFrame";
-import { PASS_POPUP, passPopupColumns, passPopupFrameXs, passPopupListHeaderY, passPopupPassTabs, passPopupRowY } from "./passPopupLayout";
-import { passLevelOf, passReadyCount } from "./passPopupModel";
+import { chipPoints, drawLayer, drawShapeOutline, HoloBar, slantedRect, toPoints } from "./holo";
+import { addFrameAmount, addFramedIcon, guideForIcon } from "./itemFrame";
+import { PASS_POPUP, passPopupColumns, passPopupFrameXs, passPopupListHeaderY, passPopupMinScroll, passPopupPassTabs, passPopupRailFill, passPopupRowY, passPopupScrollFor, passPopupViewport } from "./passPopupLayout";
+import { passLevelOf, passReadyCount, storyPassStageId } from "./passPopupModel";
+import { shapeClipMask } from "./popupArt";
+import { pressIn, pressOut } from "./pressFeedback";
+import { motionPolicy } from "../core/settings";
+import { session } from "../state/session";
 import { POPUP_TITLE_SIZE } from "./popupGeometry";
 import type { PopupLayer } from "./PopupLayer";
 import { grantTiles } from "./premiumModel";
@@ -32,7 +36,15 @@ export function progressPassProgressLabel(pass: Pick<ProgressPassDto, "metric" |
 
 /** 마디 하나의 문턱(「13회 클리어」·「Lv.30」·「8회 도전」). */
 export function progressPassStepLabel(metric: ProgressPassDto["metric"], threshold: number): string {
+  // 스토리는 횟수가 아니라 관문 이름으로 읽는다(「1-3」) — 본편이 한 줄이라 n번째 클리어가 곧 n번째 관문이다.
+  if (metric === "storyClears") return storyPassStageId(threshold);
   return t(`shop.premium.pass.step.${metric}` as TextKey, { threshold });
+}
+
+/** 미션 한 줄의 문장 — 스토리는 「스토리 1-3 클리어」, 나머지는 문턱 수를 그대로 쓴다. */
+export function progressPassMissionLabel(metric: ProgressPassDto["metric"], threshold: number): string {
+  if (metric === "storyClears") return t("lobby.pass.mission.storyClears", { stage: storyPassStageId(threshold) });
+  return t(`lobby.pass.mission.${metric}` as TextKey, { threshold });
 }
 
 export type PassPopupMode = "reward" | "mission";
@@ -51,10 +63,12 @@ export interface PassPopupOptions {
  * 로비의 패스 창 — 스토리·레벨·레이드 패스를 **한 창에 모아** 보여 준다.
  *
  * 위에서부터 패스 이름 → 패스 레벨과 레벨 단위로 끊긴 게이지 → 목록 → 미션·보상 탭과 받기 → 패스 탭이다.
- * 보상 목록은 마디마다 **왼쪽 무료 칸 · 가운데 레벨 · 오른쪽 유료 칸**이 주르륵 깔리고, 유료 칸 머리의 버튼으로
- * 패스를 연다(상점에는 패스를 세우지 않는다). 미션 목록은 레벨마다 무엇을 하면 닿는지를 말한다.
+ * 보상 목록은 마디마다 **왼쪽 무료 칸 · 가운데 레벨 · 오른쪽 유료 칸**이 주르륵 깔리고 창 안에서 아래로 흐른다.
+ * 가운데 레벨 열을 세로 게이지가 꿰뚫고 내려가 닿은 레벨까지 한 칸씩 차오르며, 받을 수 있는 칸은 임무처럼 노랗게
+ * 숨 쉬고 누르면 받는다. 유료 칸 머리의 버튼으로 패스를 연다(상점에는 패스를 세우지 않는다).
  *
- * 탭을 바꿔도 창을 닫았다 열지 않고 **안쪽만 다시 그린다** — 제목(패스 이름)도 안쪽이 갖는다.
+ * 탭을 바꿔도 창을 닫았다 열지 않고 **안쪽만 다시 그린다** — 제목(패스 이름)도 안쪽이 갖는다. 스크롤 자리는 패스·탭마다
+ * 기억해 받기 뒤 다시 그려도 손이 보던 줄에 남는다.
  */
 export async function openPassPopup(scene: Phaser.Scene, popups: PopupLayer, options: PassPopupOptions): Promise<void> {
   const [list, catalog] = await Promise.all([options.api.getProgressPasses(), options.api.getProducts("premium")]);
@@ -64,6 +78,7 @@ export async function openPassPopup(scene: Phaser.Scene, popups: PopupLayer, opt
   let passId = options.passId ?? passes[0]?.id;
   let mode: PassPopupMode = "reward";
   let pending = false;
+  const scrolls = new Map<string, number>();
   const { width, height } = PASS_POPUP;
 
   popups.open({ width, height, dim: true, closeOnBackdrop: true, onClose: () => options.onChanged?.() }, (body) => {
@@ -95,8 +110,18 @@ export async function openPassPopup(scene: Phaser.Scene, popups: PopupLayer, opt
       gauge.setValue(level.fill);
       root.add([...gauge.objects]);
 
-      if (mode === "reward") paintRewardList(scene, root, pass, product, tone, { onUnlock: () => void unlock(pass, product) });
-      else paintMissionList(scene, root, pass, tone);
+      // 흐르는 목록 — 처음 열면 받을 칸(없으면 지금 레벨)이 창 가운데쯤 오게 둔다.
+      const key = `${pass.id}:${mode}`;
+      const firstReady = pass.milestones.findIndex(({ freeState, state }) => freeState === "claimable" || state === "claimable");
+      const focus = firstReady >= 0 ? firstReady : Math.min(level.level, level.max - 1);
+      const list = mountScrollList(scene, root, pass.milestones.length, scrolls.get(key) ?? passPopupScrollFor(focus, pass.milestones.length), (value) => scrolls.set(key, value));
+      if (mode === "reward") {
+        paintRewardHeader(scene, root, pass, product, tone, () => void unlock(pass, product));
+        paintRewardList(scene, list, pass, tone, () => void claim(pass));
+      } else {
+        paintMissionList(scene, root, list, pass, tone);
+      }
+      list.refresh();
 
       // 목록 아래 — 왼쪽에 미션·보상 탭, 오른쪽에 받기.
       const M = PASS_POPUP.modeRow;
@@ -173,94 +198,240 @@ export async function openPassPopup(scene: Phaser.Scene, popups: PopupLayer, opt
   });
 }
 
+/** 흐르는 목록 한 장 — 줄을 더하는 곳, 끌기 중인지, 줄 가시성을 다시 맞추는 손을 함께 돌려준다. */
+interface PassScrollList {
+  content: Phaser.GameObjects.Container;
+  addRow: (row: Phaser.GameObjects.Container) => void;
+  /** 방금 손이 끌기였는가 — 줄 안의 누름은 이 값이 참이면 무시한다(끌다 놓은 손이 보상을 받지 않게). */
+  dragging: () => boolean;
+  /** 이 목록이 사는 동안만 도는 맥동을 맡긴다. */
+  track: (tween: Phaser.Tweens.Tween) => void;
+  refresh: () => void;
+}
+
 /**
- * 보상 목록 — 머리 줄(무료 · 레벨 · 패스) 아래로 마디가 주르륵 선다.
+ * 머리 줄 아래에서 탭 줄 한 뼘 위까지 — 그 창 안에서 줄이 위아래로 흐른다.
  *
- * 왼쪽 칸은 누구나, 오른쪽 칸은 패스를 연 사람만 받는다. 받은 칸은 눌러 두고 체크가 서며, 받을 수 있는 칸만
- * 그 쪽 판 윗변에 강조선이 흐른다. 패스를 열지 않았으면 오른쪽 칸 위에 자물쇠가 앉는다.
+ * 끌기는 바탕의 투명 판이 아니라 **씬의 포인터**로 잰다. 줄 안의 액자가 제 누름을 받아 가므로, 바탕 판에만 끌기를 걸면
+ * 액자 위에서 시작한 손이 목록을 움직이지 못한다. 창 밖으로 나간 줄은 감춘다 — 마스크는 그림만 자르고 입력은 막지 않는다.
  */
-function paintRewardList(scene: Phaser.Scene, root: Phaser.GameObjects.Container, pass: ProgressPassDto, product: ProductDto | undefined, tone: number, handlers: { onUnlock: () => void }): void {
+function mountScrollList(scene: Phaser.Scene, root: Phaser.GameObjects.Container, count: number, start: number, remember: (value: number) => void): PassScrollList {
+  const view = passPopupViewport();
+  const half = PASS_POPUP.width / 2;
+  const frame = scene.add.container(0, view.top);
+  root.add(frame);
+  const content = scene.add.container(0, 0);
+  frame.add(content);
+  content.setMask(shapeClipMask(scene, frame, [-half, 0, half, 0, half, view.height, -half, view.height]));
+  const rows: Phaser.GameObjects.Container[] = [];
+  const tweens: Phaser.Tweens.Tween[] = [];
+  const min = passPopupMinScroll(count);
+  let scroll = Phaser.Math.Clamp(start, min, 0);
+  let press: { y: number; scroll: number } | undefined;
+  let moved = false;
+
+  const apply = (value: number): void => {
+    if (!content.active) return;
+    scroll = Phaser.Math.Clamp(value, min, 0);
+    content.y = scroll;
+    remember(scroll);
+    const reach = PASS_POPUP.list.rowHeight / 2;
+    for (const row of rows) row.setVisible(row.y + scroll + reach > 0 && row.y + scroll - reach < view.height);
+  };
+  const local = (pointer: Phaser.Input.Pointer): Phaser.Math.Vector2 => frame.getWorldTransformMatrix().applyInverse(pointer.x, pointer.y);
+  const scaleY = (): number => frame.getWorldTransformMatrix().scaleY || 1;
+  const onDown = (pointer: Phaser.Input.Pointer): void => {
+    const point = local(pointer);
+    moved = false;
+    press = Math.abs(point.x) <= half && point.y >= 0 && point.y <= view.height ? { y: pointer.y, scroll } : undefined;
+  };
+  const onMove = (pointer: Phaser.Input.Pointer): void => {
+    if (!press || !pointer.isDown) return;
+    const dy = (pointer.y - press.y) / scaleY();
+    if (!moved && Math.abs(dy) < PASS_POPUP.dragSlop) return;
+    moved = true;
+    apply(press.scroll + dy);
+  };
+  // 놓는 손은 줄 안의 누름이 먼저 읽고 난 다음에 푼다 — 같은 사건에서 곧바로 지우면 끌기 끝이 누름으로 읽힌다.
+  const onUp = (): void => { press = undefined; scene.time.delayedCall(0, () => { moved = false; }); };
+  const onWheel = (pointer: Phaser.Input.Pointer, _objects: unknown, _dx: number, dy: number): void => {
+    const point = local(pointer);
+    if (Math.abs(point.x) <= half && point.y >= 0 && point.y <= view.height) apply(scroll - dy * 0.65);
+  };
+  scene.input.on(Phaser.Input.Events.POINTER_DOWN, onDown);
+  scene.input.on(Phaser.Input.Events.POINTER_MOVE, onMove);
+  scene.input.on(Phaser.Input.Events.POINTER_UP, onUp);
+  scene.input.on(Phaser.Input.Events.POINTER_WHEEL, onWheel);
+  frame.once(Phaser.GameObjects.Events.DESTROY, () => {
+    scene.input.off(Phaser.Input.Events.POINTER_DOWN, onDown);
+    scene.input.off(Phaser.Input.Events.POINTER_MOVE, onMove);
+    scene.input.off(Phaser.Input.Events.POINTER_UP, onUp);
+    scene.input.off(Phaser.Input.Events.POINTER_WHEEL, onWheel);
+    tweens.forEach((tween) => tween.remove());
+  });
+  return {
+    content,
+    addRow: (row) => { rows.push(row); content.add(row); },
+    dragging: () => moved,
+    track: (tween) => { tweens.push(tween); },
+    refresh: () => apply(scroll),
+  };
+}
+
+/** 보상 목록의 머리 줄(무료 · 레벨 · 패스). 열지 않은 패스면 유료 머리 자리에 여는 버튼이 선다. */
+function paintRewardHeader(scene: Phaser.Scene, root: Phaser.GameObjects.Container, pass: ProgressPassDto, product: ProductDto | undefined, tone: number, onUnlock: () => void): void {
   const columns = passPopupColumns();
-  const L = PASS_POPUP.list;
   const headerY = passPopupListHeaderY();
-  root.add(scene.add.text(columns.free, headerY, t("lobby.pass.column.free"), textStyle({ role: "emphasis", size: 28, color: COLOR.ink })).setOrigin(0.5));
-  root.add(scene.add.text(columns.level, headerY, t("lobby.pass.column.level"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
+  root.add(scene.add.text(columns.free, headerY, t("lobby.pass.column.free"), textStyle({ role: "emphasis", size: 30, color: COLOR.ink })).setOrigin(0.5));
+  root.add(scene.add.text(columns.level, headerY, t("lobby.pass.column.level"), textStyle({ role: "emphasis", size: 26, color: COLOR.inkDim })).setOrigin(0.5));
   if (pass.owned) {
-    const label = scene.add.text(columns.paid + 18, headerY, t("lobby.pass.column.paid"), textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5);
+    const label = scene.add.text(columns.paid + 18, headerY, t("lobby.pass.column.paid"), textStyle({ role: "emphasis", size: 30, color: COLOR.accentText })).setOrigin(0.5);
     root.add(label);
-    root.add(drawGlyph(scene, "check", columns.paid - label.width / 2 - 8, headerY, 30, tone, 1, 4));
+    root.add(drawGlyph(scene, "check", columns.paid - label.width / 2 - 8, headerY, 32, tone, 1, 4));
   } else {
     const price = product?.acquisition.kind === "platform_payment" ? product.acquisition.displayPrice : "";
     root.add(new Button(scene, columns.paid, headerY, {
       width: PASS_POPUP.unlock.width, height: PASS_POPUP.unlock.height, variant: "primary", fontSize: 24,
-      label: price ? t("lobby.pass.unlockPrice", { price }) : t("lobby.pass.unlock"), onClick: handlers.onUnlock,
+      label: price ? t("lobby.pass.unlockPrice", { price }) : t("lobby.pass.unlock"), onClick: onUnlock,
     }));
   }
+}
 
+/**
+ * 가운데 세로 게이지 — 줄들을 꿰뚫고 내려가며 닿은 레벨까지 패스 색으로 찬다. 레벨 마름모가 그 위에 꿰여 선다.
+ */
+function paintLevelRail(scene: Phaser.Scene, list: PassScrollList, pass: ProgressPassDto, tone: number, x: number): void {
+  const L = PASS_POPUP.list;
+  const level = passLevelOf(pass);
+  const partial = level.fill * level.max - level.level;
+  const start = passPopupRowY(0);
+  const end = passPopupRowY(pass.milestones.length - 1);
+  const fill = Math.min(end, passPopupRailFill(level.level, level.max, partial));
+  const rail = scene.add.graphics();
+  rail.fillStyle(0x05070a, 0.85).fillRect(x - L.rail / 2 - 3, start, L.rail + 6, end - start);
+  if (fill > start) rail.fillStyle(tone, 0.95).fillRect(x - L.rail / 2, start, L.rail, fill - start);
+  else if (level.level === 0 && partial > 0) rail.fillStyle(tone, 0.95).fillRect(x - L.rail / 2, start - L.rail, L.rail, L.rail);
+  // 마디 사이를 가르는 흰 금 — 칸 단위로 끊겨 내려가는 것이 보이게 한다.
+  rail.fillStyle(0xffffff, 0.5);
+  for (let index = 0; index < pass.milestones.length - 1; index += 1) rail.fillRect(x - L.rail / 2, passPopupRowY(index) + L.rowHeight / 2 - 1, L.rail, 2);
+  list.content.add(rail);
+}
+
+/** 레벨 마름모 — 닿은 레벨은 패스 색으로 채우고, 아래에 그 레벨의 문턱(관문 이름·Lv·횟수)을 적는다. */
+function paintLevelBadge(scene: Phaser.Scene, row: Phaser.GameObjects.Container, x: number, index: number, pass: ProgressPassDto, tone: number): void {
+  const B = PASS_POPUP.list.badge;
+  const milestone = pass.milestones[index]!;
+  const reached = pass.progress >= milestone.threshold;
+  const shape = chipPoints(B.width, B.height, { bevel: { topLeft: B.height * 0.32, topRight: 0, bottomRight: B.height * 0.32, bottomLeft: 0 } });
+  row.add(drawLayer(scene, x, 0, shape, { fill: reached ? tone : 0x101722, alpha: reached ? 0.95 : 0.96 }));
+  row.add(drawShapeOutline(scene, x, 0, shape, { color: reached ? 0xffffff : tone, alpha: reached ? 0.7 : 0.8, width: 3 }));
+  row.add(scene.add.text(x, 0, String(index + 1), textStyle({ role: "display", size: B.size, color: reached ? "#0b0f14" : COLOR.inkDim })).setOrigin(0.5));
+  const step = scene.add.text(x, B.stepY, progressPassStepLabel(pass.metric, milestone.threshold), textStyle({ role: "emphasis", size: B.stepSize, color: reached ? COLOR.ink : COLOR.inkDim }))
+    .setOrigin(0.5);
+  squeezeTextToWidth(step, PASS_POPUP.list.levelWidth - 24, 0.6);
+  // 문턱 글자는 세로 게이지 위에 앉으므로 작은 판을 받쳐 게이지에서 떼어 놓는다.
+  row.add(drawLayer(scene, x, B.stepY, slantedRect(step.displayWidth + 20, B.stepSize + 10, 6), { fill: 0x0b1018, alpha: 0.95 }));
+  row.add(step);
+}
+
+/**
+ * 보상 목록 — 마디가 주르륵 선다.
+ *
+ * 왼쪽 칸은 누구나, 오른쪽 칸은 패스를 연 사람만 받는다. 받은 칸은 눌러 두고 체크가 서며, 받을 수 있는 칸은
+ * 노랗게 숨 쉬고 누르면 받는다. 패스를 열지 않았으면 오른쪽 칸 위에 자물쇠가 앉는다.
+ */
+function paintRewardList(scene: Phaser.Scene, list: PassScrollList, pass: ProgressPassDto, tone: number, onClaim: () => void): void {
+  const columns = passPopupColumns();
+  const L = PASS_POPUP.list;
+  paintLevelRail(scene, list, pass, tone, columns.level);
   pass.milestones.forEach((milestone, index) => {
-    const y = passPopupRowY(index);
-    const reached = pass.progress >= milestone.threshold;
-    const row = scene.add.container(0, y);
-    // 무료 칸과 유료 칸은 판을 갈라 세운다 — 가운데 레벨 칸이 둘 사이의 경계다.
-    const sideShape = slantedRect(columns.sideWidth - 6, L.rowPlate, 16);
+    const row = scene.add.container(0, passPopupRowY(index));
+    // 무료 칸과 유료 칸은 판을 갈라 세운다 — 가운데 레벨 열이 둘 사이의 경계다.
+    const sideShape = slantedRect(columns.sideWidth - 8, L.rowPlate, 18);
     const freeReady = milestone.freeState === "claimable";
     const paidReady = milestone.state === "claimable";
-    row.add(drawLayer(scene, columns.free, 0, sideShape, { fill: 0x101722, alpha: 0.9, ...(freeReady ? { edge: tone, edgeAlpha: 0.95 } : {}) }));
-    row.add(drawLayer(scene, columns.paid, 0, sideShape, { fill: tone, alpha: 0.14, ...(paidReady ? { edge: tone, edgeAlpha: 0.95 } : {}) }));
-    row.add(drawLayer(scene, columns.paid, 0, sideShape, { fill: 0x101722, alpha: 0.72 }));
-
-    // 가운데 레벨 — 닿은 마디는 패스 색, 아직이면 흐리다. 아래 작은 줄이 그 레벨의 문턱이다.
-    row.add(scene.add.text(columns.level, -12, String(index + 1), textStyle({ role: "display", size: 40, color: reached ? COLOR.ink : COLOR.inkDim }))
-      .setOrigin(0.5).setStroke(reached ? `#${tone.toString(16).padStart(6, "0")}` : "#000000", reached ? 3 : 4));
-    const step = scene.add.text(columns.level, 28, progressPassStepLabel(pass.metric, milestone.threshold), textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5);
-    row.add(squeezeTextToWidth(step, L.levelWidth - 16, 0.6));
-
-    paintRewardCell(scene, row, columns.free, milestone.free, milestone.freeState === "claimed", false);
-    paintRewardCell(scene, row, columns.paid, milestone.rewards, milestone.state === "claimed", !pass.owned);
-    root.add(row);
+    row.add(drawLayer(scene, columns.free, 0, sideShape, { fill: 0x101722, alpha: 0.9, ...(freeReady ? { edge: COLOR.missionClaim, edgeAlpha: 0.95 } : {}) }));
+    row.add(drawLayer(scene, columns.paid, 0, sideShape, { fill: tone, alpha: 0.16, ...(paidReady ? { edge: COLOR.missionClaim, edgeAlpha: 0.95 } : {}) }));
+    row.add(drawLayer(scene, columns.paid, 0, sideShape, { fill: 0x101722, alpha: 0.7 }));
+    paintLevelBadge(scene, row, columns.level, index, pass, tone);
+    paintRewardCell(scene, list, row, columns.free, milestone.free, milestone.freeState === "claimed", false, freeReady, onClaim);
+    paintRewardCell(scene, list, row, columns.paid, milestone.rewards, milestone.state === "claimed", !pass.owned, paidReady, onClaim);
+    list.addRow(row);
   });
 }
 
-/** 칸 하나의 액자들. 받은 칸은 그림을 눌러 두고 체크를, 열지 않은 유료 칸은 자물쇠를 얹는다. */
-function paintRewardCell(scene: Phaser.Scene, row: Phaser.GameObjects.Container, x: number, grants: ProgressPassMilestoneDto["rewards"], claimed: boolean, locked: boolean): void {
+/**
+ * 칸 하나의 액자들. 받은 칸은 그림을 눌러 두고 체크를, 열지 않은 유료 칸은 자물쇠를 얹는다.
+ * 받을 수 있는 칸은 **임무의 받을 수 있는 액자와 같이** 노란 빛이 숨 쉬고 액자가 살짝 부풀었다 줄며, 누르면 받는다.
+ * 그 밖의 액자는 누르면 그 재화의 안내창이 열린다.
+ */
+function paintRewardCell(scene: Phaser.Scene, list: PassScrollList, row: Phaser.GameObjects.Container, x: number, grants: ProgressPassMilestoneDto["rewards"], claimed: boolean, locked: boolean, ready: boolean, onClaim: () => void): void {
   const L = PASS_POPUP.list;
+  const Pulse = PASS_POPUP.pulse;
   const tiles = grantTiles(grants);
   const xs = passPopupFrameXs(tiles.length);
+  const moving = motionPolicy(session.settings).nonEssentialDistanceFactor > 0;
   tiles.forEach((tile, index) => {
-    const frame = addFramedIcon(scene, row, x + xs[index]!, 0, L.frame, tile.icon, { iconAlpha: claimed ? 0.35 : locked ? 0.7 : 1 });
+    const holder = scene.add.container(x + xs[index]!, 0);
+    row.add(holder);
+    if (ready) {
+      const glow = L.frame + Pulse.halo;
+      const halo = scene.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
+      halo.fillStyle(COLOR.missionClaim, Pulse.haloAlpha).fillPoints(toPoints(chipPoints(glow, glow, { bevel: { topLeft: glow * 0.28, topRight: 0, bottomRight: glow * 0.28, bottomLeft: 0 } })), true);
+      holder.add(halo);
+      list.track(scene.tweens.add({ targets: halo, alpha: { from: 0.3, to: 1 }, duration: Pulse.ms + 80, yoyo: true, repeat: -1, ease: "Sine.InOut" }));
+    }
+    const frame = addFramedIcon(scene, holder, 0, 0, L.frame, tile.icon, {
+      plain: true, iconAlpha: claimed ? 0.35 : locked ? 0.7 : 1,
+      ...(ready ? { color: COLOR.missionClaim, outlineAlpha: 1 } : {}),
+    });
     frame.add(addFrameAmount(scene, L.frame, formatCurrency(tile.amount)));
+    if (ready && moving) list.track(scene.tweens.add({ targets: frame, scale: { from: 1, to: Pulse.scale }, duration: Pulse.ms, yoyo: true, repeat: -1, ease: "Sine.InOut" }));
+    const open = ready ? onClaim : guideForIcon(scene, tile.icon);
+    if (!open) return;
+    const hit = scene.add.rectangle(0, 0, L.frame, L.frame, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", () => { if (!ready) pressIn(frame); });
+    hit.on("pointerout", () => { if (!ready) pressOut(frame, "normal", { pop: false }); });
+    hit.on("pointerup", () => {
+      if (!ready) pressOut(frame);
+      if (!list.dragging()) open();
+    });
+    holder.add(hit);
   });
   const edge = (xs.length > 0 ? xs[xs.length - 1]! : 0) + L.frame / 2;
-  if (claimed) row.add(drawGlyph(scene, "check", x + edge - 6, -L.frame / 2 + 6, 34, COLOR.accent, 1, 5));
-  else if (locked) row.add(drawGlyph(scene, "lock", x + edge - 6, -L.frame / 2 + 8, 30, 0xd8dde6, 0.95));
+  if (claimed) row.add(drawGlyph(scene, "check", x + edge - 6, -L.frame / 2 + 6, 38, COLOR.accent, 1, 5));
+  else if (locked) row.add(drawGlyph(scene, "lock", x + edge - 6, -L.frame / 2 + 8, 32, 0xd8dde6, 0.95));
 }
 
-/** 미션 목록 — 레벨마다 무엇을 하면 닿는지와 지금 얼마나 왔는지. 닿은 레벨은 체크가 선다. */
-function paintMissionList(scene: Phaser.Scene, root: Phaser.GameObjects.Container, pass: ProgressPassDto, tone: number): void {
+/** 미션 목록 — 레벨마다 무엇을 하면 닿는지와 지금 얼마나 왔는지. 가운데 대신 왼쪽에 같은 세로 게이지가 내려간다. */
+function paintMissionList(scene: Phaser.Scene, root: Phaser.GameObjects.Container, list: PassScrollList, pass: ProgressPassDto, tone: number): void {
   const L = PASS_POPUP.list;
   const inner = PASS_POPUP.inner;
-  root.add(scene.add.text(-inner / 2 + 12, passPopupListHeaderY(), t(`lobby.pass.mission.lead.${pass.metric}` as TextKey), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim }))
+  root.add(scene.add.text(-inner / 2 + 12, passPopupListHeaderY(), t(`lobby.pass.mission.lead.${pass.metric}` as TextKey), textStyle({ role: "emphasis", size: 26, color: COLOR.inkDim }))
     .setOrigin(0, 0.5));
+  const badgeX = -inner / 2 + L.levelWidth / 2;
+  paintLevelRail(scene, list, pass, tone, badgeX);
+  const textLeft = -inner / 2 + L.levelWidth + 18;
+  const textRight = inner / 2 - 40;
   pass.milestones.forEach((milestone, index) => {
-    const y = passPopupRowY(index);
     const done = pass.progress >= milestone.threshold;
-    const row = scene.add.container(0, y);
-    row.add(drawLayer(scene, 0, 0, slantedRect(inner, L.rowPlate, 18), { fill: 0x101722, alpha: 0.9, ...(done ? { edge: tone, edgeAlpha: 0.6 } : {}) }));
-    row.add(scene.add.text(-inner / 2 + 36, -16, t("lobby.pass.levelShort", { level: index + 1 }), textStyle({ role: "display", size: 28, color: done ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0.5));
-    const label = scene.add.text(-inner / 2 + 150, -16, t(`lobby.pass.mission.${pass.metric}` as TextKey, { threshold: milestone.threshold }), textStyle({ role: "emphasis", size: 26, color: done ? COLOR.ink : COLOR.inkDim }))
+    const row = scene.add.container(0, passPopupRowY(index));
+    const plateWidth = inner - L.levelWidth;
+    row.add(drawLayer(scene, -inner / 2 + L.levelWidth + plateWidth / 2, 0, slantedRect(plateWidth, L.rowPlate, 18), { fill: 0x101722, alpha: 0.9, ...(done ? { edge: tone, edgeAlpha: 0.6 } : {}) }));
+    paintLevelBadge(scene, row, badgeX, index, pass, tone);
+    const label = scene.add.text(textLeft, -24, progressPassMissionLabel(pass.metric, milestone.threshold), textStyle({ role: "emphasis", size: 30, color: done ? COLOR.ink : COLOR.inkDim }))
       .setOrigin(0, 0.5);
-    row.add(squeezeTextToWidth(label, inner - 150 - 200, 0.7));
-    const barWidth = inner - 150 - 200;
-    const bar = new HoloBar(scene, -inner / 2 + 150 + barWidth / 2, 24, barWidth, 14, { color: tone, trackAlpha: 0.8 });
+    const barWidth = textRight - textLeft - 160;
+    row.add(squeezeTextToWidth(label, barWidth, 0.7));
+    const bar = new HoloBar(scene, textLeft + barWidth / 2, 30, barWidth, 18, { color: tone, trackAlpha: 0.85, outline: true });
     bar.setValue(Math.min(1, pass.progress / milestone.threshold));
     row.add([...bar.objects]);
     if (done) {
-      row.add(drawGlyph(scene, "check", inner / 2 - 120, 0, 34, tone, 1, 5));
-      row.add(scene.add.text(inner / 2 - 36, 0, t("lobby.pass.mission.done"), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(1, 0.5));
+      row.add(drawGlyph(scene, "check", textRight - 92, 0, 38, tone, 1, 5));
+      row.add(scene.add.text(textRight, 0, t("lobby.pass.mission.done"), textStyle({ role: "emphasis", size: 26, color: COLOR.accentText })).setOrigin(1, 0.5));
     } else {
-      row.add(scene.add.text(inner / 2 - 36, 0, `${Math.min(pass.progress, milestone.threshold)} / ${milestone.threshold}`, textStyle({ role: "emphasis", size: 26, color: COLOR.ink })).setOrigin(1, 0.5));
+      row.add(scene.add.text(textRight, 0, `${Math.min(pass.progress, milestone.threshold)} / ${milestone.threshold}`, textStyle({ role: "emphasis", size: 28, color: COLOR.ink })).setOrigin(1, 0.5));
     }
-    root.add(row);
+    list.addRow(row);
   });
 }
-

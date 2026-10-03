@@ -5,8 +5,8 @@ import { PROGRESS_PASSES, findProgressPass } from "../../src/data/progressPasses
 import { PREMIUM_PRODUCTS } from "../../src/data/premiumProducts";
 import { CURRENT_SAVE_VERSION, SAVE_STORAGE_KEY, SaveManager } from "../../src/state/SaveManager";
 import { createDefaultSession, type SaveData } from "../../src/state/session";
-import { passLevelOf, passReadyCount, passToOpen } from "../../src/ui/passPopupModel";
-import { PASS_POPUP, passPopupListBottom, passPopupRowY } from "../../src/ui/passPopupLayout";
+import { passLevelOf, passReadyCount, passToOpen, storyPassStageId } from "../../src/ui/passPopupModel";
+import { passPopupContentHeight, passPopupMinScroll, passPopupRailFill, passPopupRowY, passPopupScrollFor, passPopupViewport, PASS_POPUP } from "../../src/ui/passPopupLayout";
 
 class MemoryStorage {
   private values = new Map<string, string>();
@@ -19,9 +19,9 @@ const story = findProgressPass("story")!;
 
 describe("진행 패스 규칙", () => {
   it("열기 전에 닿은 마디는 '열면 받음', 연 뒤에는 받을 수 있음이 된다", () => {
-    expect(progressPassMilestoneStates(story, 3, false, []).slice(0, 3)).toEqual(["reached", "reached", "locked"]);
-    expect(progressPassMilestoneStates(story, 3, true, [1]).slice(0, 3)).toEqual(["claimed", "claimable", "locked"]);
-    expect(claimableProgressPassThresholds(story, 5, true, [1])).toEqual([3, 5]);
+    expect(progressPassMilestoneStates(story, 2, false, []).slice(0, 3)).toEqual(["reached", "reached", "locked"]);
+    expect(progressPassMilestoneStates(story, 2, true, [1]).slice(0, 3)).toEqual(["claimed", "claimable", "locked"]);
+    expect(claimableProgressPassThresholds(story, 5, true, [1])).toEqual([2, 4]);
     expect(claimableProgressPassThresholds(story, 5, false, [])).toEqual([]);
   });
 
@@ -39,17 +39,18 @@ describe("진행 패스 규칙", () => {
   });
 
   it("무료 칸은 열지 않아도 닿으면 받고, 따로 센다", () => {
-    expect(progressPassFreeStates(story, 3, [1]).slice(0, 3)).toEqual(["claimed", "claimable", "locked"]);
-    expect(claimableProgressPassFreeThresholds(story, 5, [1])).toEqual([3, 5]);
+    expect(progressPassFreeStates(story, 2, [1]).slice(0, 3)).toEqual(["claimed", "claimable", "locked"]);
+    expect(claimableProgressPassFreeThresholds(story, 5, [1])).toEqual([2, 4]);
     for (const pass of PROGRESS_PASSES) for (const { free } of pass.milestones) expect(free.length).toBeGreaterThan(0);
   });
 
   it("패스 레벨은 닿은 마디 수이고 게이지는 마디 한 칸씩 끊긴다", () => {
-    expect(progressPassLevel(story, 0)).toEqual({ level: 0, max: 10, fill: 0 });
-    expect(progressPassLevel(story, 1)).toEqual({ level: 1, max: 10, fill: 0.1 });
-    // 1 → 3 사이의 절반이면 두 번째 칸의 절반이 찬다.
-    expect(progressPassLevel(story, 2).fill).toBeCloseTo(0.15);
-    expect(progressPassLevel(story, 999)).toEqual({ level: 10, max: 10, fill: 1 });
+    expect(progressPassLevel(story, 0)).toEqual({ level: 0, max: 15, fill: 0 });
+    expect(progressPassLevel(story, 1)).toMatchObject({ level: 1, max: 15 });
+    expect(progressPassLevel(story, 1).fill).toBeCloseTo(1 / 15);
+    // 2 → 4 사이의 절반이면 세 번째 칸의 절반이 찬다.
+    expect(progressPassLevel(story, 3).fill).toBeCloseTo(2.5 / 15);
+    expect(progressPassLevel(story, 999)).toEqual({ level: 15, max: 15, fill: 1 });
   });
 });
 
@@ -69,10 +70,34 @@ describe("로비 패스 창 모델", () => {
     expect(passLevelOf(ready)).toMatchObject({ level: 1, max: 2 });
   });
 
-  it("마디 열 줄이 탭 줄 위에서 끝난다", () => {
-    const rows = Math.max(...PROGRESS_PASSES.map(({ milestones }) => milestones.length));
-    expect(passPopupRowY(rows - 1) + PASS_POPUP.list.rowPlate / 2).toBeLessThanOrEqual(passPopupListBottom());
+  it("열다섯 줄은 창 안에서 흐르고, 처음 여는 자리는 그 범위 안이다", () => {
+    for (const pass of PROGRESS_PASSES) expect(pass.milestones).toHaveLength(15);
+    const view = passPopupViewport();
+    expect(passPopupContentHeight(15)).toBeGreaterThan(view.height);
+    expect(passPopupMinScroll(15)).toBe(view.height - passPopupContentHeight(15));
+    for (const index of [0, 7, 14]) {
+      const scroll = passPopupScrollFor(index, 15);
+      expect(scroll).toBeLessThanOrEqual(0);
+      expect(scroll).toBeGreaterThanOrEqual(passPopupMinScroll(15));
+    }
+    // 첫 줄의 판이 창 윗변 안에서 시작한다.
+    expect(passPopupRowY(0) - PASS_POPUP.list.rowPlate / 2).toBeGreaterThanOrEqual(0);
   });
+
+  it("세로 게이지는 닿은 레벨의 줄까지 차고 다음 줄을 향해 온 만큼 더 내려간다", () => {
+    expect(passPopupRailFill(0, 15, 0)).toBe(0);
+    expect(passPopupRailFill(3, 15, 0)).toBe(passPopupRowY(2));
+    expect(passPopupRailFill(3, 15, 0.5)).toBe(passPopupRowY(2) + PASS_POPUP.list.rowHeight / 2);
+    expect(passPopupRailFill(15, 15, 0)).toBe(passPopupContentHeight(15));
+  });
+
+  it("스토리 패스는 문턱을 관문 이름으로 읽는다", () => {
+    expect(storyPassStageId(1)).toBe("1-1");
+    expect(storyPassStageId(10)).toBe("1-10");
+    expect(storyPassStageId(12)).toBe("2-2");
+    expect(storyPassStageId(30)).toBe("3-10");
+  });
+
 });
 
 describe("FakeServer 진행 패스", () => {
@@ -81,23 +106,23 @@ describe("FakeServer 진행 패스", () => {
     state.playerResearch = { ...state.playerResearch, level: 12 };
     const server = new FakeServer(state, { latencyMs: 0 });
     const free = await server.claimProgressPass({ passId: "level", requestId: "early" });
-    expect(free.claimedFreeThresholds).toEqual([5, 10]);
+    expect(free.claimedFreeThresholds).toEqual([3, 5, 8, 10]);
     expect(free.claimedThresholds).toEqual([]);
-    expect(state.progressPasses?.freeClaimed.level).toEqual([5, 10]);
+    expect(state.progressPasses?.freeClaimed.level).toEqual([3, 5, 8, 10]);
 
     state.productPurchases["premium-level-pass"] = { periodKey: "once", count: 1 };
     const gems = state.wallet.gems;
     const first = await server.claimProgressPass({ passId: "level", requestId: "claim-1" });
-    expect(first.claimedThresholds).toEqual([5, 10]);
-    expect(state.wallet.gems).toBe(gems + 200);
+    expect(first.claimedThresholds).toEqual([3, 5, 8, 10]);
+    expect(state.wallet.gems).toBe(gems + 300);
     // 같은 요청을 다시 보내도 두 번 주지 않는다.
     await expect(server.claimProgressPass({ passId: "level", requestId: "claim-1" })).resolves.toEqual(first);
-    expect(state.wallet.gems).toBe(gems + 200);
+    expect(state.wallet.gems).toBe(gems + 300);
     await expect(server.claimProgressPass({ passId: "level", requestId: "claim-2" })).rejects.toMatchObject({ code: "NOTHING_TO_CLAIM" });
 
     const listed = (await server.getProgressPasses()).passes.find(({ id }) => id === "level")!;
     expect(listed).toMatchObject({ owned: true, progress: 12 });
-    expect(listed.milestones.slice(0, 3).map(({ state: s }) => s)).toEqual(["claimed", "claimed", "locked"]);
+    expect(listed.milestones.slice(3, 6).map(({ state: s }) => s)).toEqual(["claimed", "locked", "locked"]);
   });
 });
 
@@ -114,6 +139,12 @@ describe("저장 v46 진행 패스", () => {
     const legacy = { ...saved, saveVersion: 44 } as Record<string, unknown>;
     delete legacy.progressPasses;
     expect(manager.migrate(legacy)).toMatchObject({ saveVersion: CURRENT_SAVE_VERSION, progressPasses: { raidRuns: 0, claimed: {}, freeClaimed: {} } });
+
+    // 길을 다시 짜 사라진 문턱(스토리 3·5)은 걷히고 남는 문턱(1)만 남는다.
+    const reshaped = { ...saved, progressPasses: { raidRuns: 0, claimed: { story: [1, 3, 5] }, freeClaimed: { story: [3] } } } as Record<string, unknown>;
+    expect(manager.migrate(reshaped)).toMatchObject({ progressPasses: { claimed: { story: [1] }, freeClaimed: { story: [] } } });
+    storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(reshaped));
+    expect(manager.load()!.progressPasses?.claimed.story).toEqual([1]);
 
     const v45 = { ...saved, saveVersion: 45, progressPasses: { raidRuns: 2, claimed: {} } } as Record<string, unknown>;
     expect(manager.migrate(v45)).toMatchObject({ progressPasses: { raidRuns: 2, claimed: {}, freeClaimed: {} } });

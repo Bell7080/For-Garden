@@ -219,16 +219,6 @@
 "Handel",
 "Торговля"
 ],
-"lobby.pass.title": [
-"通行证",
-"พาส",
-"Thẻ",
-"Pass",
-"Pases",
-"Passes",
-"Pässe",
-"Пропуски"
-],
 "lobby.pass.ready": [
 "可领取 {count}",
 "รับได้ {count}",
@@ -248,16 +238,6 @@
 "Nv.{level} / {max}",
 "Lv.{level} / {max}",
 "Ур.{level} / {max}"
-],
-"lobby.pass.levelShort": [
-"Lv.{level}",
-"Lv.{level}",
-"Lv.{level}",
-"Lv.{level}",
-"Nv.{level}",
-"Nv.{level}",
-"Lv.{level}",
-"Ур.{level}"
 ],
 "lobby.pass.tab.mission": [
 "任务",
@@ -360,14 +340,14 @@
 "Нечего забирать"
 ],
 "lobby.pass.mission.storyClears": [
-"通关剧情关卡 {threshold} 次",
-"ผ่านด่านเนื้อเรื่อง {threshold} ครั้ง",
-"Vượt {threshold} màn cốt truyện",
-"Selesaikan {threshold} tahap cerita",
-"Supera {threshold} fases de historia",
-"Conclua {threshold} fases da história",
-"{threshold} Story-Stufen schaffen",
-"Пройти {threshold} сюжетных этапов"
+"通关剧情关卡 {stage}",
+"ผ่านด่านเนื้อเรื่อง {stage}",
+"Vượt màn cốt truyện {stage}",
+"Selesaikan tahap cerita {stage}",
+"Supera la fase de historia {stage}",
+"Conclua a fase da história {stage}",
+"Story-Stufe {stage} schaffen",
+"Пройти сюжетный этап {stage}"
 ],
 "lobby.pass.mission.playerLevel": [
 "研究员等级达到 {threshold}",

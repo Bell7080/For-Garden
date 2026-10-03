@@ -14,7 +14,7 @@
 이유로 여기서 굽는다. 이쪽은 `sprites/background`가 아니라 `sprites/content`에 같은 이름의
 WebP로 남는다. 다른 원화 스프라이트처럼 `public/` 바로 아래를 비워 두기 위해서다.
 
-교류 도시 원화(`public/교류 배경00N.png`)는 세로 배경이 아니라 **판 안에 잘려 들어가는 가로
+교류 도시 원화(`public/교류 배경00N.png` 또는 `public/교류N.png`)는 세로 배경이 아니라 **판 안에 잘려 들어가는 가로
 그림**이라 이름만 `interaction_00N.webp`로 바꿔 굽는다. 아트 파일이 한글 이름으로 오므로 그
 이름을 그대로 키로 쓰지 않는다 — 경로에 한글이 섞이면 배포 URL 인코딩이 환경마다 갈린다.
 """
@@ -57,7 +57,10 @@ def main() -> None:
 
     backgrounds = sorted(sources(PUBLIC, "background_*") | sources(BACKGROUND_TARGET, "*"))
     contents = sorted(sources(PUBLIC, "Content*") | sources(CONTENT_TARGET, "*"))
-    interactions = sorted(sources(PUBLIC, "교류 배경*") | sources(BACKGROUND_TARGET, "교류 배경*"))
+    interactions = sorted(
+        sources(PUBLIC, "교류 배경*") | sources(BACKGROUND_TARGET, "교류 배경*")
+        | sources(PUBLIC, "교류[0-9]*") | sources(BACKGROUND_TARGET, "교류[0-9]*")
+    )
     strata_base = sorted(sources(PUBLIC, "발굴판 뒷배경") | sources(BACKGROUND_TARGET, "발굴판 뒷배경"))
     # 뒷배경도 "발굴판 *"에 걸리므로 겉장 목록은 **번호로 시작하는 것만** 본다. 함께 구우면
     # 무작위로 뽑히는 겉장이 다섯 장이 되어 아래층이 겉장으로 한 번씩 깔린다.

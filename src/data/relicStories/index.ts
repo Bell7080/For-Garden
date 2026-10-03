@@ -1,4 +1,8 @@
 import type { RelicStoryProfile } from "../../core/relicStory";
+import { DODO_STORY } from "./dodo";
+import { KENTO_STORY } from "./kento";
+import { PARUA_STORY } from "./parua";
+import { STELLA_STORY } from "./stella";
 import { TORIKA_STORY } from "./torika";
 
 /**
@@ -7,6 +11,10 @@ import { TORIKA_STORY } from "./torika";
  */
 export const RELIC_STORIES: Readonly<Record<string, RelicStoryProfile>> = {
   torika: TORIKA_STORY,
+  dodo: DODO_STORY,
+  parua: PARUA_STORY,
+  stella: STELLA_STORY,
+  kento: KENTO_STORY,
 };
 
 export function relicStoryFor(relicId: string): RelicStoryProfile | undefined {

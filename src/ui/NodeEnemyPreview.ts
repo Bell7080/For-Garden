@@ -58,6 +58,8 @@ export interface NodeEnemyPreviewOptions {
 /** 스토리와 원정 지도가 공유하는 노드 부착형 적 SD 편성 프리팹이다. */
 export class NodeEnemyPreview extends Phaser.GameObjects.Container {
   private readonly puppets = new Set<PuppetCreature>();
+  /** 컨테이너 밖 Puppet(depth + 1)보다 위에 서야 하는 글자 층. 판의 위치·투명도·배율을 따라간다. */
+  private readonly overlay: Phaser.GameObjects.Container;
   /** 꼬리는 추적 중 위/아래 방향이 바뀔 때 같은 Graphics를 다시 그린다. */
   private tail?: Phaser.GameObjects.Graphics;
   private generation = 0;
@@ -75,6 +77,10 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     this.options = options;
     scene.add.existing(this);
     this.setDepth(options.depth ?? 60).setVisible(false);
+    this.overlay = scene.add.container(this.x, this.y).setDepth(this.depth + 2).setVisible(false);
+    const syncOverlay = () => this.overlay.setPosition(this.x, this.y).setAlpha(this.alpha).setScale(this.scaleX, this.scaleY).setVisible(this.visible);
+    scene.events.on(Phaser.Scenes.Events.UPDATE, syncOverlay);
+    this.once(Phaser.GameObjects.Events.DESTROY, () => { scene.events.off(Phaser.Scenes.Events.UPDATE, syncOverlay); this.overlay.destroy(); });
     // 씬 종료와 선택 변경은 같은 폐기 경로를 사용해 늦은 비동기 로드도 채택되지 않게 한다.
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.destroy());
     this.once(Phaser.GameObjects.Events.DESTROY, () => { this.clearPuppets(); setDebugEnemyPreview(undefined); });
@@ -129,7 +135,7 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
       // 카드의 이름줄과 같은 규칙이다 — 레벨은 강조색, 이름은 흰색. 체력은 적지 않는다:
       // 붙어 볼지 정하는 데 필요한 것은 개체별 수치가 아니라 판 아래의 총 전투력 하나다.
       addUnitNameplate(this.scene, this, x, NODE_ENEMY_SLOT.nameY, growth.level, enemy.name, compact ? 24 : 30);
-      addUnitPower(this.scene, this, x, NODE_ENEMY_SLOT.nameY - 4, combatPower(enemy.stats), compact ? 20 : 24, COLOR.dangerText);
+      this.overlay.add(addUnitPower(this.scene, undefined, x, NODE_ENEMY_SLOT.nameY - 4, combatPower(enemy.stats), compact ? 20 : 24, COLOR.dangerText));
       const hit = this.scene.add.rectangle(x, ground - 70, compact ? 145 : 230, 300, 0xffffff, 0).setInteractive({ useHandCursor: true });
       // 누른 칸의 성장 상태를 함께 넘긴다 — 화면이 배열 index로 다시 찾으면 순서가 바뀌는 날 어긋난다.
       hit.on("pointerup", () => this.options.onEnemyClick(enemy, growth)); this.add(hit);
@@ -317,7 +323,7 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
       this.add(new AffinityBadge(this.scene, badgeX, badgeTop + badgeSize * 0.94, ROLE_ICON[enemy.role], badgeSize * 0.74, 0.62));
       addBreakthroughGradeMark(this.scene, this, x + half - 20, badgeTop - 4, compact ? 34 : 42, growth.breakthrough + 1);
       addUnitNameplate(this.scene, this, x, bodyTop + body.nameY, growth.level, enemy.name, compact ? 24 : 30);
-      addUnitPower(this.scene, this, x, bodyTop + body.nameY - 4, combatPower(enemy.stats), compact ? 20 : 24, COLOR.dangerText);
+      this.overlay.add(addUnitPower(this.scene, undefined, x, bodyTop + body.nameY - 4, combatPower(enemy.stats), compact ? 20 : 24, COLOR.dangerText));
       const hit = this.scene.add.rectangle(x, ground - 70, compact ? 145 : 230, 300, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerup", () => this.options.onEnemyClick(enemy, growth)); this.add(hit);
       const sdHeight = (compact ? 158 : NODE_ENEMY_PREVIEW.sdHeight)
@@ -325,6 +331,12 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
       if (!keepPuppets) void this.spawnEnemy(enemy.id, x, ground, sdHeight, generation);
       if (this.options.elite) addStageEliteMark(this.scene, this, x, ground - sdHeight - 6, compact ? 22 : 26);
     });
+  }
+
+  /** 판을 비울 때 Puppet 위에 선 글자 층도 함께 비운다. */
+  override removeAll(destroyChild?: boolean): this {
+    this.overlay?.removeAll(true);
+    return super.removeAll(destroyChild);
   }
 
   /** 노드 또는 판 밖 탭은 선택과 비동기 요청을 함께 취소해 다음 선택이 새로 출현하게 한다. */

@@ -2586,6 +2586,21 @@ export type BasicBreakthrough = {
   /** 기본 공격이 이 횟수마다 새끼 늑대 한 마리를 부른다(디안). */
   kind: "pupLitter";
   every: number;
+} | {
+  /** 마지막 걸음(끌어당기는 걸음)이 터질 때 지금 두른 막 잔량의 이 비율만큼 물리 피해를 더 준다. 막은 소모하지 않는다(엘라). */
+  kind: "releaseShield";
+  shieldPercent: number;
+} | {
+  /** 최근 이 시간 안에 새 겹이 쌓인 적을 맞히면 산개 사격의 겹당 피해가 이 비율로 오른다(모르페). */
+  kind: "freshSight";
+  percentPerStack: number;
+  windowSeconds: number;
+} | {
+  /** 평타가 적중하면 잠시 이동 속도가 오르고, 평타 위력이 현재 이동 속도에 비례해 늘어난다(데이). */
+  kind: "speedGraffiti";
+  moveSpeedPercent: number;
+  seconds: number;
+  powerPercentPerSpeedPoint: number;
 } | BreakthroughNone;
 
 /**
@@ -2755,6 +2770,17 @@ export type UltimateBreakthrough = {
   /** 궁극기를 쓰면 새끼 늑대가 이 마리 수만큼 나와 함께 덮친다(디안). */
   kind: "pupRush";
   count: number;
+} | {
+  /** 「인」이 끝나는 순간 남은 막의 이 비율을 살아 있는 아군에게 나눠 얹는다. 총량은 고정이고 머릿수로 나뉜다(엘라). */
+  kind: "shareShield";
+  sharePercent: number;
+} | {
+  /** 궁극기를 쏘기 직전 소환수가 살아 있으면 표적에 관측이 이 수만큼 먼저 쌓인다(모르페). */
+  kind: "jointObservation";
+  stacks: number;
+} | {
+  /** 채널이 끝나는 순간 낙서가 걸린 적 전원의 낙서가 한꺼번에 터진다(데이). */
+  kind: "signatureBurst";
 } | BreakthroughNone;
 
 /**
@@ -2906,6 +2932,18 @@ export type FerocityBreakthrough = {
   /** 폭주 중에는 새끼 늑대가 이 횟수마다 한 마리씩 나온다(디안). 궁극기와 무관하다. */
   kind: "pupFrenzy";
   every: number;
+} | {
+  /** 폭주 중 마지막 걸음이 쓰는 막 잔량 비율이 이 값으로 바뀐다(엘라). 궁극기와 무관하다. */
+  kind: "adamantRelease";
+  shieldPercent: number;
+} | {
+  /** 폭주 중 소환수의 일반 공격이 관측을 이 배수만큼 쌓는다(모르페). 궁극기와 무관하다. */
+  kind: "droneOverheat";
+  stackMultiplier: number;
+} | {
+  /** 폭주 중 낙서가 이 겹에 터진다(데이). */
+  kind: "closeUp";
+  maxStacks: number;
 } | BreakthroughNone;
 
 /**
@@ -3058,6 +3096,18 @@ export type PassiveBreakthrough = {
   /** 서 있는 늑대(쿠로·시로·새끼) 한 마리마다 디안이 주는 피해가 이 비율만큼 늘어난다(디안). */
   kind: "packStrength";
   damagePercentPerWolf: number;
+} | {
+  /** 마지막 걸음이 쓰는 막 잔량 비율이 상시 이만큼 늘어난다(엘라). */
+  kind: "shieldFist";
+  bonusPercent: number;
+} | {
+  /** 소환수가 살아 있는 동안 관측이 걸린 적 한 명당 공격 속도가 오른다(모르페). */
+  kind: "manyEyes";
+  attackSpeedPercentPerObserved: number;
+} | {
+  /** 낙서가 걸린 적 한 명당 방어력·저항력이 오른다(데이). */
+  kind: "muralHide";
+  defenseResistancePercentPerTagged: number;
 } | BreakthroughNone;
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */

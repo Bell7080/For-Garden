@@ -24,7 +24,7 @@ export const OPENING_RETREAT: DialogueStory = {
     { id: "away", speaker: "토비·아모·리파", body: "두고 보자아아아~!!", cast: [], leave: "blastOff", cue: "impact", nextId: "gone" },
     { id: "gone", speaker: "토리카", body: "…날아가 버렸네요. 대장님, 다치신 데는 없죠?", standing: "torika", cast: ROGUE_TRIO, act: "hop", nextId: "log" },
     { id: "log", speaker: "도디", body: "첫 전투 기록 완료! 적은 하늘의 별이 되었다… 이렇게 적어 둬야지!", standing: "dodi", act: "hopTwice", nextId: "watch" },
-    { id: "watch", speaker: "파루아", body: "…또 올 거야. 포기할 얼굴이 아니었어.", standing: "parua", act: "nod", nextId: "onward" },
+    { id: "watch", speaker: "파루아", body: "…또 올 거예요. 포기할 얼굴이 아니었어요.", standing: "parua", act: "nod", nextId: "onward" },
     { id: "onward", speaker: "토리카", body: "그럼 우리도 서둘러요. 이터널 시티까지 제가 안내할게요!", standing: "torika", act: "nod" },
   ],
 };

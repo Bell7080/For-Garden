@@ -41,10 +41,10 @@ const CHAPTER_6: DialogueStory = {
   titleCard: { title: "칭찬이 어려운 날", subtitle: "토리카 · 애착 이야기 2" },
   nodes: [
     { id: "n1", speaker: "", body: "훈련장 한쪽. 도디가 수첩을 펼쳐 놓고 토리카의 뒤를 졸졸 따라다니고 있다.", cast: [{ id: "torika", slot: "left" }, { id: "dodi", slot: "right" }], standing: "dodi", nextId: "n2" },
-    { id: "n2", speaker: "도디", body: "토리카 님, 방금 훈련 기록 봤어요! 오늘도 뿔로 막은 횟수가 쁘띠 로그 1등이에요. 세기의 대발견이라고 쓸게요!", standing: "dodi", act: "hopTwice", nextId: "n3" },
-    { id: "n3", speaker: "토리카", body: "아, 아니에요! 그건 제가 앞에 서 있었을 뿐이고…", standing: "torika", act: "shrink", nextId: "n4" },
-    { id: "n4", speaker: "도디", body: "어, 안경을 자꾸 고쳐 쓰세요! 귀가 새빨개요! 기록해야지, 기록해야지…", standing: "dodi", act: "lean", nextId: "n5" },
-    { id: "n5", speaker: "토리카", body: "기록하지 마세요오!", standing: "torika", act: "shake", nextId: "n6" },
+    { id: "n2", speaker: "도디", body: "토리카, 방금 훈련 기록 봤어! 오늘도 뿔로 막은 횟수가 쁘띠 로그 1등이야. 세기의 대발견이라고 쓸게!", standing: "dodi", act: "hopTwice", nextId: "n3" },
+    { id: "n3", speaker: "토리카", body: "아, 아니야! 그건 내가 앞에 서 있었을 뿐이고…", standing: "torika", act: "shrink", nextId: "n4" },
+    { id: "n4", speaker: "도디", body: "어, 안경을 자꾸 고쳐 쓰네! 귀가 새빨개! 기록해야지, 기록해야지…", standing: "dodi", act: "lean", nextId: "n5" },
+    { id: "n5", speaker: "토리카", body: "기록하지 마아!", standing: "torika", act: "shake", nextId: "n6" },
     { id: "n6", speaker: "연구원", body: "(토리카가 노란 안경테를 두 손으로 붙잡고 얼굴을 가리고 있다. 가린다고 가려지는 크기가 아니다.)", choices: [
       { id: "praise", label: "정말 대단했어, 토리카", nextId: "n7a" },
       { id: "snack", label: "안 보고 있을게. 간식 먹을래?", nextId: "n7b" },
@@ -122,7 +122,7 @@ export const TORIKA_STORY: RelicStoryProfile = {
         },
         {
           id: "share", label: "자기 몫보다 동료들 몫부터 헤아린다",
-          reply: "저보다 도디 선배 몫이 먼저요! 선배는 기록하다가 밥때를 놓치거든요. 아, 제 건… 남으면 먹으면 돼요.",
+          reply: "저보다 도디 몫이 먼저요! 도디는 기록하다가 밥때를 놓치거든. 아, 제 건… 남으면 먹으면 돼요.",
           note: "좋아하는 먹이를 물었는데 대답은 동료들 식단 점검이었다. 정작 본인 몫은 늘 '남으면'이다.",
         },
         {

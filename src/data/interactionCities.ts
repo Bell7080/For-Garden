@@ -117,7 +117,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     unlock: { stageId: "1-4" }, durationMinutes: 240, partySize: { min: 1, max: 3 },
     specialty: { elements: ["water", "grass"], roles: ["support", "tank"], squads: ["rune", "eye"] },
     rewards: [{ currency: "gold", min: 2_000, max: 5_000 }, { currency: "gems", min: 0, max: 8 }, { currency: "rawStone", min: 0, max: 300 }],
-    clueJournalId: "interaction-doppel-office-01", illustration: "background-expedition-ranking",
+    clueJournalId: "interaction-doppel-office-01", illustration: "background-interaction-doppel-office",
   },
   {
     // 4단계: 러스트는 무거운 이야기 사이의 숨 고르기다. 세계관보다 짧은 해프닝을 맡는다.
@@ -126,7 +126,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     unlock: { stageId: "1-10" }, durationMinutes: 60, partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["warrior"], squads: ["gear"] },
     rewards: [{ currency: "fossil", min: 1, max: 2 }, { currency: "gold", min: 800, max: 2_600 }, { currency: "rawStone", min: 0, max: 200 }],
-    clueJournalId: "interaction-rust-garage-01", illustration: "background-expedition-field",
+    clueJournalId: "interaction-rust-garage-01", illustration: "background-interaction-rust-garage",
   },
   {
     // 5단계: 고성능 장비의 대여 기간 연장 협상. 간간이 도플 이야기가 섞여 든다.
@@ -135,7 +135,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     unlock: { stageId: "2-5" }, durationMinutes: 720, partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["tank", "warrior"], squads: ["gear"] },
     rewards: [{ currency: "gold", min: 7_000, max: 15_000 }, { currency: "amber", min: 0, max: 2 }, { currency: "rawStone", min: 0, max: 900 }],
-    clueJournalId: "interaction-rust-lease-01", illustration: "background-excavation",
+    clueJournalId: "interaction-rust-lease-01", illustration: "background-interaction-rust-lease",
   },
   {
     // 6단계: 3단계가 받아 둔 연구 **목적**을 이어 받아, 그 연구로 얻으려던 것과 상층부의 암시를
@@ -145,7 +145,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     unlock: { stageId: "2-10" }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
     specialty: { elements: ["water"], roles: ["support", "tank"], squads: ["rune", "eye"] },
     rewards: [{ currency: "fossil", min: 4, max: 9 }, { currency: "amber", min: 0, max: 1 }, { currency: "rawStone", min: 0, max: 1_800 }],
-    clueJournalId: "interaction-doppel-upper-01", illustration: "background-archaeology",
+    clueJournalId: "interaction-doppel-upper-01", illustration: "background-interaction-doppel-upper",
   },
   {
     // 7단계: 러스트의 중심지. 이터널의 연구 장비가 설계되고 고쳐지는 본거지다. 오디디가 쓰는
@@ -155,7 +155,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     unlock: { stageId: "3-5" }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["tank", "warrior"], squads: ["gear"] },
     rewards: [{ currency: "gold", min: 9_000, max: 20_000 }, { currency: "amber", min: 0, max: 2 }, { currency: "rawStone", min: 0, max: 1_800 }],
-    clueJournalId: "interaction-rust-works-01", illustration: "background-shop",
+    clueJournalId: "interaction-rust-works-01", illustration: "background-interaction-rust-works",
   },
   {
     // 8단계: 오디디는 교류가 아니라 협상이다(`docs/interaction-cities.md` §5의 (b)). 오디디가
@@ -165,7 +165,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     unlock: { stageId: "3-10" }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
     specialty: { elements: ["wind", "water"], roles: ["assassin", "support"], squads: ["eye", "rogue"] },
     rewards: [{ currency: "fossil", min: 5, max: 10 }, { currency: "amber", min: 0, max: 2 }, { currency: "rawStone", min: 0, max: 1_800 }],
-    clueJournalId: "interaction-odidi-embassy-01", illustration: "background-sortie-cake",
+    clueJournalId: "interaction-odidi-embassy-01", illustration: "background-interaction-odidi-embassy",
   },
 ] as const;
 

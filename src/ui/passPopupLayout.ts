@@ -2,10 +2,11 @@
  * 로비 패스 창의 자리표(창 중심 기준).
  *
  * 위에서부터 **패스 이름(제목표) → 패스 레벨과 레벨 단위로 끊긴 게이지 → 목록(보상 또는 미션) → 미션·보상 탭과
- * 받기 → 패스 탭** 순이다. 목록은 마디 열 줄이 스크롤 없이 한 판에 들도록 줄 높이를 잡는다 — 패스는 길 전체가
- * 한눈에 보여야 지금 어디쯤인지 읽힌다.
+ * 받기 → 패스 탭** 순이다. 목록은 마디 열다섯 줄이 **창 안에서 아래로 흐른다** — 한 판에 다 넣으려고 줄을 줄이면
+ * 액자가 작아져 무엇을 받는지보다 줄 수가 먼저 읽힌다.
  *
- * 보상 줄은 **가운데에 레벨**, 왼쪽에 무료 칸, 오른쪽에 유료(패스) 칸이 선다.
+ * 보상 줄은 **가운데에 레벨**, 왼쪽에 무료 칸, 오른쪽에 유료(패스) 칸이 선다. 가운데 레벨 열에는 세로 게이지가 줄을
+ * 꿰뚫고 내려가, 닿은 레벨까지 한 칸씩 차오른다.
  */
 export const PASS_POPUP = {
   width: 1000,
@@ -16,19 +17,56 @@ export const PASS_POPUP = {
   list: {
     top: 214,
     headerHeight: 66,
-    rowHeight: 102,
-    rowPlate: 90,
+    rowHeight: 150,
+    rowPlate: 134,
     /** 가운데 레벨 칸의 폭. 양옆 칸은 남은 폭을 반씩 나눠 갖는다. */
-    levelWidth: 170,
-    frame: 78,
-    frameGap: 12,
+    levelWidth: 190,
+    frame: 108,
+    frameGap: 14,
+    /** 가운데 레벨 표식(◈) — 바깥 마름모의 대각선, 안쪽 마름모의 대각선, 레벨 수 크기. */
+    badge: { outer: 124, inner: 84, size: 34 },
+    /** 세로 게이지의 굵기. */
+    rail: 14,
+    /** 목록 맨 위·아래 여백. 첫 줄의 판이 창 윗변에 붙지 않게 한다. */
+    pad: 10,
   },
-  /** 목록 아래 한 줄 — 왼쪽에 미션·보상 탭, 오른쪽에 받기. */
-  modeRow: { fromBottom: 196, tabWidth: 200, tabHeight: 76, tabGap: 8, button: { width: 340, height: 88 } },
-  /** 맨 아래 패스 탭 줄. */
-  passRow: { fromBottom: 78, tabHeight: 80, tabGap: 8 },
-  /** 유료 칸 머리의 열기 버튼. */
-  unlock: { width: 300, height: 56 },
+  /** 받을 수 있는 칸의 노란 맥동 — 임무의 받을 수 있는 액자와 같은 결이다. */
+  pulse: { halo: 24, haloAlpha: 0.42, scale: 1.08, ms: 620 },
+  /** 손가락이 이만큼 움직이면 누름이 아니라 끌기다. */
+  dragSlop: 14,
+  /**
+   * 목록 아래 한 줄 — 왼쪽에 미션·보상 탭, 오른쪽에 받기. 패스 탭 줄에 바짝 붙이고 얇게 두어 목록 창을 그만큼 넓힌다.
+   */
+  modeRow: { fromBottom: 154, tabWidth: 190, tabHeight: 60, tabGap: 8, button: { width: 320, height: 66 } },
+  /**
+   * 맨 아래 패스 탭 줄 — 패스가 늘어도 칸이 줄지 않도록 **고정 폭 칸이 옆으로 흐르는 줄**이다. 오른쪽 끝은 창의 깎인
+   * 모서리(오른쪽 아래 빗변)를 따라 잘리고, 그 빗변에서 `edgeInset`만큼 물러난다.
+   */
+  passRow: { fromBottom: 78, tabWidth: 290, tabHeight: 80, tabGap: 8, edgeInset: 14 },
+  /**
+   * 패스를 열지 않았을 때 창 오른쪽 위에 **떠 있는 패키지 카드** — 무역·프리미엄 전시대의 카드와 같은 겉모습이다.
+   * 유료 칸 머리에 버튼으로 세우던 때는 「잠김」이어야 할 자리가 사는 곳이 되어, 받을 수 없는 칸과 사는 곳이 한 줄에
+   * 섞였다. 카드는 창 윗변 위로 꼬리표를 내밀어 창 위에 한 장 더 얹힌 물건으로 읽힌다.
+   * 이 카드가 서는 동안 머리 줄의 게이지와 진행도는 카드 왼쪽까지만 쓴다.
+   */
+  offer: {
+    width: 400,
+    height: 222,
+    /** 창 오른쪽 변에서 안쪽으로 물러나는 몫과 창 윗변에서 내려오는 카드 중심. */
+    inset: 22,
+    centerY: 100,
+    /** 게이지와 카드 사이. */
+    gap: 28,
+    pad: 34,
+    nameY: -72,
+    nameSize: 30,
+    frameY: -10,
+    frame: 70,
+    frameGap: 10,
+    frameCap: 3,
+    price: { y: 74, width: 300, height: 52, size: 30 },
+    breathMs: 1100,
+  },
 } as const;
 
 /** 줄 판의 세 칸 중심 x — 왼쪽 무료, 가운데 레벨, 오른쪽 유료. */
@@ -43,15 +81,44 @@ export function passPopupListHeaderY(): number {
   return -PASS_POPUP.height / 2 + PASS_POPUP.list.top + PASS_POPUP.list.headerHeight / 2;
 }
 
-/** i번째 줄의 중심 y. */
-export function passPopupRowY(index: number): number {
-  const { height, list } = PASS_POPUP;
-  return -height / 2 + list.top + list.headerHeight + list.rowHeight * (index + 0.5);
+/** 목록이 흐르는 창(창 중심 기준 y). 머리 줄 아래에서 탭 줄 한 뼘 위까지다. */
+export function passPopupViewport(): { top: number; bottom: number; height: number } {
+  const top = -PASS_POPUP.height / 2 + PASS_POPUP.list.top + PASS_POPUP.list.headerHeight;
+  const bottom = PASS_POPUP.height / 2 - PASS_POPUP.modeRow.fromBottom - PASS_POPUP.modeRow.tabHeight / 2 - 24;
+  return { top, bottom, height: bottom - top };
 }
 
-/** 목록이 끝나는 y — 그 아래로 탭 줄이 선다. 마디 수가 늘어 이 선을 넘으면 테스트가 잡는다. */
-export function passPopupListBottom(): number {
-  return PASS_POPUP.height / 2 - PASS_POPUP.modeRow.fromBottom - PASS_POPUP.modeRow.tabHeight / 2 - 24;
+/** i번째 줄의 중심 y — 흐르는 목록 안(창 윗변이 0)의 좌표다. */
+export function passPopupRowY(index: number): number {
+  return PASS_POPUP.list.pad + PASS_POPUP.list.rowHeight * (index + 0.5);
+}
+
+/** 줄 `count`개가 쌓인 목록 높이. */
+export function passPopupContentHeight(count: number): number {
+  return PASS_POPUP.list.pad * 2 + PASS_POPUP.list.rowHeight * count;
+}
+
+/** 목록이 올라갈 수 있는 끝(음수). 창보다 짧으면 0이라 흐르지 않는다. */
+export function passPopupMinScroll(count: number): number {
+  return Math.min(0, passPopupViewport().height - passPopupContentHeight(count));
+}
+
+/** 처음 열 때 그 줄이 창 가운데쯤 오도록 하는 스크롤 값. */
+export function passPopupScrollFor(index: number, count: number): number {
+  const target = passPopupViewport().height / 2 - passPopupRowY(index);
+  return Math.max(passPopupMinScroll(count), Math.min(0, target));
+}
+
+/**
+ * 가운데 세로 게이지가 차오른 끝(목록 안 y). 마디 하나가 한 줄이고, 닿은 레벨의 줄 가운데까지 찬 뒤 다음 줄을
+ * 향해 그 사이를 온 만큼 더 내려간다 — 위에서 한 칸씩 아래로 내려가는 느낌이 그대로 길이로 읽힌다.
+ */
+export function passPopupRailFill(level: number, max: number, partial: number): number {
+  if (max <= 0) return 0;
+  if (level >= max) return passPopupContentHeight(max);
+  const p = Math.max(0, Math.min(1, partial));
+  if (level <= 0) return passPopupRowY(0) * p;
+  return passPopupRowY(level - 1) + PASS_POPUP.list.rowHeight * p;
 }
 
 /** 칸 안 액자 `count`장의 중심 x(칸 중심 기준). */
@@ -61,9 +128,61 @@ export function passPopupFrameXs(count: number): number[] {
   return Array.from({ length: count }, (_, index) => -span / 2 + frame / 2 + index * (frame + frameGap));
 }
 
-/** 패스 탭 `count`장의 중심 x와 폭. */
-export function passPopupPassTabs(count: number): { width: number; xs: number[] } {
-  const { inner, passRow } = PASS_POPUP;
-  const width = (inner - passRow.tabGap * (count - 1)) / count;
-  return { width, xs: Array.from({ length: count }, (_, index) => -inner / 2 + width / 2 + index * (width + passRow.tabGap)) };
+/** 패스 탭 `count`장의 중심 x(흐르는 줄 안, 줄의 왼쪽 끝이 0)와 폭, 줄 전체 길이. */
+export function passPopupPassTabs(count: number): { width: number; xs: number[]; span: number } {
+  const { tabWidth: width, tabGap } = PASS_POPUP.passRow;
+  return { width, xs: Array.from({ length: count }, (_, index) => width / 2 + index * (width + tabGap)), span: count * width + Math.max(0, count - 1) * tabGap };
 }
+
+/**
+ * 패스 탭 줄이 보이는 창(창 중심 기준). 왼쪽은 목록과 같은 시작선, 오른쪽은 창의 오른쪽 아래 빗변을 따라 잘린다 —
+ * 네모로 자르면 빗변 밖 허공에 탭이 걸친다. `right(y)`는 그 높이에서 보이는 오른쪽 끝이다.
+ */
+export function passPopupPassStrip(): { left: number; top: number; bottom: number; right: (y: number) => number; polygon: number[] } {
+  const { width, height, inner, passRow } = PASS_POPUP;
+  const bevel = Math.min(width, height) * 0.14;
+  const centerY = height / 2 - passRow.fromBottom;
+  const top = centerY - passRow.tabHeight / 2 - 22;
+  const bottom = centerY + passRow.tabHeight / 2 + 4;
+  const left = -inner / 2;
+  // 빗변: (width/2, height/2 - bevel) → (width/2 - bevel, height/2). 그 선에서 edgeInset만큼 안쪽으로 평행하게 민다.
+  const right = (y: number): number => Math.min(inner / 2, width / 2 - Math.max(0, y - (height / 2 - bevel)) - passRow.edgeInset * Math.SQRT2);
+  return { left, top, bottom, right, polygon: [left, top, right(top), top, right(bottom), bottom, left, bottom] };
+}
+
+/** 탭 줄이 왼쪽으로 밀릴 수 있는 끝(음수). 보이는 폭은 탭 가운데 높이에서 잰다. */
+export function passPopupPassMinScroll(count: number): number {
+  const strip = passPopupPassStrip();
+  const visible = strip.right(PASS_POPUP.height / 2 - PASS_POPUP.passRow.fromBottom) - strip.left;
+  return Math.min(0, visible - passPopupPassTabs(count).span);
+}
+
+/**
+ * 로비의 패스 카드 — 홍보 칸 자리(프로필 줄 아래)에 한 장씩 서고, 아래 점 줄이 몇 번째 패스인지 말한다.
+ * 일정 간격으로 다음 패스가 오른쪽에서 밀려 들어온다. 모서리는 덜 깎아 가로로 긴 이름표로 읽히게 한다.
+ */
+export const LOBBY_PASS_CARD = {
+  left: 30,
+  y: 250,
+  width: 380,
+  height: 132,
+  /**
+   * 깎임은 높이의 이 비율. 0.42는 끝이 뭉툭하게 잘려 짧은 쪽지처럼 보였고, 0.2도 왼쪽 빗변이 판 위의 색 띠와 게이지의
+   * 결을 비틀어 유리 판과 따로 노는 것처럼 보였다 — 모서리만 살짝 깎는다.
+   */
+  bevel: 0.08,
+  stripe: 10,
+  pad: 34,
+  nameSize: 30,
+  levelSize: 26,
+  nameY: -30,
+  gauge: { y: 10, height: 12 },
+  noteY: 40,
+  noteSize: 20,
+  dots: { gap: 28, size: 11, y: 94 },
+  /** 다음 패스로 넘어가는 간격과 미끄러지는 시간. */
+  cycleMs: 4200,
+  slideMs: 460,
+  /** 넘길 때 글이 미끄러지는 거리. 판 안쪽 여백(`pad`)보다 작아야 판 밖으로 나가지 않는다 — 자르는 마스크가 없다. */
+  slideDistance: 22,
+} as const;

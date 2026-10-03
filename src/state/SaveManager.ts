@@ -717,7 +717,14 @@ function normalizeProgressPasses(value: unknown): SaveData["progressPasses"] {
   const source = (value && typeof value === "object" ? value : {}) as Partial<SaveData["progressPasses"]>;
   const raidRuns = Number.isSafeInteger(source.raidRuns) && Number(source.raidRuns) >= 0 ? Number(source.raidRuns) : 0;
   // v46 전 저장은 무료 칸이 없었다 — 빈 표로 올라와 지나온 무료 칸을 모두 받을 수 있다.
-  const table = (value: unknown) => Object.fromEntries(Object.entries(value && typeof value === "object" ? value : {}).filter(([, list]) => Array.isArray(list)).map(([id, list]) => [id, [...(list as number[])]]));
+  // 길을 다시 짜 문턱이 바뀌면(v0.233.0 — 열 마디 → 열다섯 마디) 새 길에 없는 문턱은 걷어 낸다. 검증이 그 값을 거절해
+  // 저장 전체가 막히지 않게 하려는 것이고, 걷힌 마디는 새 길의 문턱으로 다시 받는다.
+  const table = (value: unknown) => Object.fromEntries(Object.entries(value && typeof value === "object" ? value : {})
+    .filter(([id, list]) => Array.isArray(list) && findProgressPass(id))
+    .map(([id, list]) => {
+      const valid = new Set(findProgressPass(id)!.milestones.map(({ threshold }) => threshold));
+      return [id, [...new Set(list as number[])].filter((threshold) => valid.has(threshold))];
+    }));
   return { raidRuns, claimed: table(source.claimed), freeClaimed: table(source.freeClaimed) };
 }
 

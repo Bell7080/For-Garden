@@ -1315,6 +1315,9 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effect.kind === "wetMark") return t("skill.breakthrough.effect.basic.wetMark", { percent: trim(effect.takenPercent) });
     if (effect.kind === "poisonPulse") return t("skill.breakthrough.effect.basic.poisonPulse");
     if (effect.kind === "pupLitter") return t("skill.breakthrough.effect.basic.pupLitter", { name: def.basic.name, every: trim(effect.every) });
+    if (effect.kind === "releaseShield") return t("skill.breakthrough.effect.basic.releaseShield", { name: def.basic.cycle?.find((step) => step.pull)?.name ?? def.basic.name, percent: trim(effect.shieldPercent) });
+    if (effect.kind === "freshSight") return t("skill.breakthrough.effect.basic.freshSight", { seconds: trim(effect.windowSeconds), percent: trim(effect.percentPerStack) });
+    if (effect.kind === "speedGraffiti") return t("skill.breakthrough.effect.basic.speedGraffiti", { name: def.basic.name, seconds: trim(effect.seconds), percent: trim(effect.moveSpeedPercent), power: trim(effect.powerPercentPerSpeedPoint) });
     if (effect.kind === "bleedSettle") return t("skill.breakthrough.effect.basic.bleedSettle");
     if (effect.kind === "paintSpill") return t("skill.breakthrough.effect.basic.paintSpill", { stacks: trim(effect.stacks) });
     if (effect.kind === "tightStitch") return t("skill.breakthrough.effect.basic.tightStitch", { name: def.passive.name, percent: trim((def.passive.suture?.damagePercent ?? 0) + effect.damagePercentPoints) });
@@ -1353,6 +1356,9 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effect.kind === "splashCharge") return t("skill.breakthrough.effect.ultimate.splashCharge", { energy: trim(effect.energy) });
     if (effect.kind === "extraCard") return t("skill.breakthrough.effect.ultimate.extraCard", { name: def.ultimate.name, percent: trim(effect.powerPercent) });
     if (effect.kind === "pupRush") return t("skill.breakthrough.effect.ultimate.pupRush", { name: def.ultimate.name, count: trim(effect.count) });
+    if (effect.kind === "shareShield") return t("skill.breakthrough.effect.ultimate.shareShield", { name: def.ultimate.name, percent: trim(effect.sharePercent) });
+    if (effect.kind === "jointObservation") return t("skill.breakthrough.effect.ultimate.jointObservation", { name: def.ultimate.name, stacks: trim(effect.stacks) });
+    if (effect.kind === "signatureBurst") return t("skill.breakthrough.effect.ultimate.signatureBurst", { name: def.ultimate.name });
     if (effect.kind === "bleedFeast") return t("skill.breakthrough.effect.ultimate.bleedFeast", { name: def.ultimate.name, percent: trim(effect.damagePercent) });
     if (effect.kind === "splashPaint") return t("skill.breakthrough.effect.ultimate.splashPaint", { name: def.ultimate.name, percent: trim(effect.sharePercent) });
     if (effect.kind === "shrapnel") return t("skill.breakthrough.effect.ultimate.shrapnel", { name: def.ultimate.name, percent: trim(effect.powerPercent) });
@@ -1386,6 +1392,9 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effect.kind === "rePoison") return t("skill.breakthrough.effect.ferocity.rePoison");
     if (effect.kind === "swiftHands") return t("skill.breakthrough.effect.ferocity.swiftHands", { percent: trim(effect.attackSpeedPercent) });
     if (effect.kind === "pupFrenzy") return t("skill.breakthrough.effect.ferocity.pupFrenzy", { every: trim(effect.every) });
+    if (effect.kind === "adamantRelease") return t("skill.breakthrough.effect.ferocity.adamantRelease", { percent: trim(effect.shieldPercent) });
+    if (effect.kind === "droneOverheat") return t("skill.breakthrough.effect.ferocity.droneOverheat", { multiplier: trim(effect.stackMultiplier) });
+    if (effect.kind === "closeUp") return t("skill.breakthrough.effect.ferocity.closeUp", { stacks: trim(effect.maxStacks) });
     if (effect.kind === "extraLayer") return t("skill.breakthrough.effect.ferocity.extraLayer", { stacks: trim(effect.extraStacks) });
     if (effect.kind === "doubleNeedle") return t("skill.breakthrough.effect.ferocity.doubleNeedle", { name: def.passive.name, percent: trim(effect.sharePercent) });
     if (effect.kind === "windPull") return t("skill.breakthrough.effect.ferocity.windPull", { energy: trim(effect.extraEnergy) });
@@ -1426,6 +1435,9 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effects.passive.kind === "blightedFoe") return t("skill.breakthrough.effect.passive.blightedFoe", { percent: trim(effects.passive.takenPercent) });
     if (effects.passive.kind === "landingAmbush") return t("skill.breakthrough.effect.passive.landingAmbush");
     if (effects.passive.kind === "packStrength") return t("skill.breakthrough.effect.passive.packStrength", { percent: trim(effects.passive.damagePercentPerWolf), max: trim(effects.passive.damagePercentPerWolf * PUP.standingWolfMax) });
+    if (effects.passive.kind === "shieldFist") return t("skill.breakthrough.effect.passive.shieldFist", { percent: trim(effects.passive.bonusPercent) });
+    if (effects.passive.kind === "manyEyes") return t("skill.breakthrough.effect.passive.manyEyes", { percent: trim(effects.passive.attackSpeedPercentPerObserved) });
+    if (effects.passive.kind === "muralHide") return t("skill.breakthrough.effect.passive.muralHide", { percent: trim(effects.passive.defenseResistancePercentPerTagged) });
     if (effects.passive.kind === "vitalSketch") return t("skill.breakthrough.effect.passive.vitalSketch", { points: trim(effects.passive.critPoints) });
     if (effects.passive.kind === "stitchedMight") return t("skill.breakthrough.effect.passive.stitchedMight", { percent: trim(effects.passive.damagePercent) });
     if (effects.passive.kind === "relink") return t("skill.breakthrough.effect.passive.relink");

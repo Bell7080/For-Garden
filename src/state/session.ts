@@ -181,6 +181,22 @@ export interface Session {
   cakeOperation: CakeOperationState;
   /** 렐릭 이야기(관찰 질문 답변·처음 만난 날·읽은 애착 스토리). 젬 지급은 GameApi 경계만 바꾼다. */
   relicStory: RelicStoryState;
+  /**
+   * 진행 패스(스토리·레벨·레이드)의 받은 마디와 레이드 입장 수. 패스를 열었는지는 저장하지 않고 상품 구매 기록이
+   * 말한다. **선택 필드다** — 도입 전에 만든 세션(테스트 고정값 포함)은 비어 있고, 서버가 처음 읽을 때 빈 모양으로 채운다.
+   */
+  progressPasses?: ProgressPassState;
+}
+
+/** 진행 패스의 저장 모양. 받은 마디는 패스마다 문턱값 목록이다. */
+export interface ProgressPassState {
+  /** 지금까지 레이드에 입장한 수. 레이드 패스의 진행도다(정산하고 걷힌 판도 센다). */
+  raidRuns: number;
+  claimed: Record<string, number[]>;
+}
+
+export function createEmptyProgressPassState(): ProgressPassState {
+  return { raidRuns: 0, claimed: {} };
 }
 
 /**
@@ -395,6 +411,7 @@ export interface SaveData {
   cakeOperation: CakeOperationState;
   /** 렐릭 이야기(관찰 질문 답변·처음 만난 날·읽은 애착 스토리). 젬 지급은 GameApi 경계만 바꾼다. */
   relicStory: RelicStoryState;
+  progressPasses: ProgressPassState;
   settings: GameSettings;
   completedStoryIds: string[];
   observationRecords: ObservationRecord[];

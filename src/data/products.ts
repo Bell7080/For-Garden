@@ -89,7 +89,7 @@ export type ShopProductIconKey =
  * 재화로 사는 보급품을 가르는 기준이라 현금 상품에는 아무 뜻이 없었다. 여기는 **무엇을 사는가**로
  * 가른다: 묶음(패키지), 지금만 싼 것(특가), 기간·수량이 걸린 것(한정), 그리고 다이아 자체(젬).
  */
-export type PremiumCategory = "package" | "deal" | "limited" | "gem";
+export type PremiumCategory = "package" | "pass" | "deal" | "limited" | "gem";
 
 /** 후원 상품이 부여하는 기간제 또는 영구 계정 권리다. */
 export interface PassBenefitDefinition {

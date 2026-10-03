@@ -7,7 +7,7 @@ import { setDebugInventoryCategory, setDebugInventoryTextureKeys } from "../debu
 import { DEFAULT_INVENTORY_SORT, INVENTORY_LAYOUT, InventoryManager, inventoryGridPosition, inventoryScrollMetrics, type InventoryDisplayItem, type InventorySort } from "../managers/InventoryManager";
 import { session } from "../state/session";
 import { chipPoints, drawLayer } from "./holo";
-import { addItemFrame, ITEM_FRAME } from "./itemFrame";
+import { addFrameAmount, addItemFrame, ITEM_FRAME } from "./itemFrame";
 import { INVENTORY_TAB_LAYOUT, inventoryCategoryTabPosition } from "./inventoryTabs";
 import { addCategoryTab } from "./CategoryTab";
 import { SortControl } from "./SortControl";
@@ -241,7 +241,7 @@ export class InventoryPopup {
     // 수량은 액자 오른쪽 아래에 겹친다. 보상 액자와 같은 자리라 화면이 달라도 같은 곳을 본다.
     // 골드처럼 자릿수가 큰 재화는 K·M으로 줄여 칸을 넘지 않게 한다 — 온전한 수는 눌러서 여는
     // 안내가 말한다.
-    card.add(this.scene.add.text(frameSize / 2 - 6, frameSize / 2 - 2, formatCurrency(item.quantity), textStyle({ role: "emphasis", size: 32 })).setOrigin(1, 1).setStroke("#05070a", 4).setShadow(0, 2, "#05070a", 3, true, true));
+    card.add(addFrameAmount(this.scene, frameSize, formatCurrency(item.quantity)));
     // 기한이 있는 칸은 가장 먼저 사라질 묶음의 남은 시간을 왼쪽 위의 붉은 표식으로 붙인다 — 수량과
     // 마주 보는 자리다. 표식은 초마다 제 한 마디를 다시 적는다(`7D` → … → `24H` → … → `60M`).
     const expiry = item.kind === "stack" && item.lot ? { expiresAt: item.lot.expiresAt } : soonestItemExpiry(item.definition.id);

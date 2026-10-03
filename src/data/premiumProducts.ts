@@ -9,8 +9,9 @@ import type { ProductDefinition, ProductGrant } from "./products";
  * 둘 다 이 파일에만 있으므로, 스토어 콘솔에 상품을 올릴 때 이 표를 그대로 옮기면 되고 결제를 붙인 뒤에도
  * 화면·서버 지급 코드는 손대지 않는다.
  *
- * **지급은 전부 실제 게임 재화다.** 인게임 재화(다이아·골드·화석·호박석·치즈케이크·DNA 조각·원석)와 가방
- * 아이템(에너지 드링크·룬 가루·발굴권·토벌권)만 쓴다. 지급은 서버(`fulfillPlatformPurchase`)가 영수증을 검증한
+ * **지급은 전부 실제 게임 재화다.** 인게임 재화(다이아·골드·화석·호박석·치즈케이크·DNA 조각·원석·토벌 증표)와
+ * 실제로 쓰이는 가방 아이템(에너지 드링크·고대 핵·발굴권·소탕권·토벌권)만 쓴다. **쓰는 곳이 없는 아이템(룬 가루)과
+ * 받을 길이 없는 장식은 넣지 않는다** — 산 사람이 그것으로 할 일이 없다. 지급은 서버(`fulfillPlatformPurchase`)가 영수증을 검증한
  * 뒤에만 일어나며, 결제 SDK가 없는 빌드는 성공을 흉내 내지 않는다.
  *
  * ### 검수 장부 (시세표 `TRADE_GEM_RATE` 기준 다이아 환산)
@@ -18,14 +19,17 @@ import type { ProductDefinition, ProductGrant } from "./products";
  * ₩2,000~3,000을 받는 것의 절반 이하이며, 광고 보상(하루 몇 번의 소액)과 패스를 더한 무과금도 따라올 수 있는 선이다.
  * 다이아 한 알 ≈ ₩3.6. 반복 구매 줄은 환산 가치의 1.0~1.7배, 계정당 한 번 줄은 1.5~2배를 준다.
  * 가격표는 아래 `pay()` 호출의 두 번째 인자에만 있다.
- * - 신입 연구원 패키지 ₩4,900 · 계정당 1회 — 호박석 2(600) + 골드 50,000(100) + 치즈케이크 300(150) + 드링크 5(스테미나 300 = 다이아 150) ≈ 1,000
- * - 연구원 성장 패키지 ₩9,900 · 계정당 1회 — 골드 300,000(600) + 치즈케이크 1,500(750) + DNA 30(150) + 룬 가루 100
- * - 오늘의 보급 상자 ₩1,100 · 매일 1회 — 골드 30,000(60) + 치즈케이크 60(30) + 드링크 1(30)
- * - 주간 연구 특가 ₩3,900 · 주 1회 — 화석 3(900) + 치즈케이크 200(100)
- * - 스태미나 보급 번들 ₩5,900 · 주 2회 — 드링크 5 + 드링크+ 5 (스테미나 900 = 다이아 450)
- * - 발굴 장비 번들 ₩6,900 · 주 2회 — 발굴권 5 + 원석 1,000(200) + 룬 가루 60
- * - 복원 가속 특가 ₩9,900 · 주 1회 — 호박석 2(600) + DNA 40(200)
- * - 시즌 한정 표본 상자 ₩19,900 · 계정당 1회 · 토벌 지원 번들 ₩7,900 · 월 1회
+ * - 월간 연구 후원 ₩4,900 · 30일 — 다이아 300 + 화석 2(600) + **매일 다이아 100** ≈ 30일 3,900
+ * - 광고 제거 멤버십 ₩4,900 · 30일 — 다이아 300 + 드링크 3 + **매일 다이아 60** · 광고 제거 · 소탕권 없는 소탕
+ * - 신입 연구원 패키지 ₩1,900 · 계정당 1회 — 호박석 2(600) + 골드 50,000(100) + 치즈케이크 300(150) + 드링크 5(스테미나 300 = 다이아 150) ≈ 1,000
+ * - 연구원 성장 패키지 ₩3,900 · 계정당 1회 — 골드 300,000(600) + 치즈케이크 1,500(750) + DNA 30(150) + 고대 핵 3
+ * - 스토리·레벨·레이드 패스 ₩5,500~5,900 · 계정당 1회 — 길을 여는 값. 마디 보상은 `progressPasses.ts`의 장부
+ * - 오늘의 보급 상자 ₩1,100 · 매일 1회 — 골드 50,000(100) + 치즈케이크 100(50) + 드링크 2(60) + 화석 1(300)
+ * - 주간 연구 특가 ₩2,900 · 주 1회 — 화석 3(900) + 치즈케이크 200(100)
+ * - 스태미나 보급 번들 ₩1,900 · 주 2회 — 드링크 5 + 드링크+ 5 (스테미나 900 = 다이아 450)
+ * - 발굴 장비 번들 ₩2,900 · 주 2회 — 발굴권 5 + 원석 1,000(200) + 소탕권 5
+ * - 복원 가속 특가 ₩2,500 · 주 1회 — 호박석 2(600) + DNA 40(200)
+ * - 시즌 한정 표본 상자 ₩6,900 · 계정당 1회 · 토벌 지원 번들 ₩3,900 · 월 1회
  * - 다이아 4종 — **첫 구매 보너스는 같은 수의 다이아**(`firstPurchaseBonus`, 계정에서 그 팩을 처음 살 때 한 번)
  *
  * 반복 구매가 가능한 줄(매일·주간)이 가장 박하고, 계정당 한 번뿐인 줄이 가장 후하다 — 무역 패키지와 같은 규칙이다.
@@ -52,24 +56,24 @@ const gemPack = (id: string, name: string, amount: number, price: string): Produ
 });
 
 export const PREMIUM_PRODUCTS: readonly ProductDefinition[] = [
+  // ── 정기권 — 맨 위에 선다. 사는 순간보다 **매일 들어와 받는 몫**이 본체라 가장 후하다(30일 다이아 3,000 남짓 = 연구 10회).
+  //    후원 패스는 광고를 제거하지 않고, 기존 광고 슬롯을 같은 보상·한도의 즉시 수령 슬롯으로 바꾼다. ──
+  { id: "premium-monthly", storefront: "premium", category: "special", premiumCategory: "package", iconKey: "shop-product-enhancement", name: "월간 연구 후원", description: "", acquisition: pay("premium-monthly", "₩4,900"), grants: [currency("gems", 300), currency("fossil", 2)], passBenefit: { durationDays: 30, instantAdRewards: true, usesStandardAdRewardPolicy: true, dailyBonus: { currency: "gems", amount: 100 } }, defaultQuantity: 1, purchaseLimit: 1, refresh: "none", visibleFrom: FROM, visibleUntil: UNTIL },
+  // **광고 제거 멤버십은 후원 패스와 다른 상품이다.** 후원 패스가 광고 보상을 즉시 받게 해 주는 값이라면,
+  // 이쪽은 광고 자체를 걷어 내고 그 대가로 소탕권 없는 소탕을 연다. 하나는 기다림을, 하나는 광고를 없앤다.
+  { id: "premium-adfree", storefront: "premium", category: "special", premiumCategory: "package", iconKey: "shop-product-enhancement", name: "광고 제거 멤버십", description: "", acquisition: pay("premium-adfree", "₩4,900"), grants: [currency("gems", 300), item("stamina-tonic", "에너지 드링크", 3)], passBenefit: { durationDays: 30, instantAdRewards: true, usesStandardAdRewardPolicy: true, adFree: true, dailyBonus: { currency: "gems", amount: 60 } }, defaultQuantity: 1, purchaseLimit: 1, refresh: "none", visibleFrom: FROM, visibleUntil: UNTIL },
   // ── 패키지 ───────────────────────────────────────────────────────────────
   { id: "premium-starter", storefront: "premium", category: "special", premiumCategory: "package", iconKey: "shop-product-amber", name: "신입 연구원 패키지", description: "", acquisition: pay("premium-starter", "₩1,900"), grants: [currency("amber", 2), currency("gold", 50_000), currency("cheesecake", 300), item("stamina-tonic", "에너지 드링크", 5)], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM, visibleUntil: UNTIL },
-  { id: "premium-growth", storefront: "premium", category: "special", premiumCategory: "package", iconKey: "shop-product-enhancement", name: "연구원 성장 패키지", description: "", acquisition: pay("premium-growth", "₩3,900"), grants: [currency("gold", 300_000), currency("cheesecake", 1_500), currency("dnaFragments", 30), item("rune-dust", "룬 가루", 100)], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM, visibleUntil: UNTIL },
-  // ── 진행 패스 — 스토리·레벨·레이드 길을 걷는 사람에게 한 번에 얹는 지원 묶음. 진행도에 따라 열리는 보상 길은 아직 없고
-  //    구매 즉시 지급이다(길이 생기면 이 줄들이 그 패스의 유료 칸으로 옮겨 간다). ──
-  { id: "premium-story-pass", storefront: "premium", category: "special", premiumCategory: "package", iconKey: "shop-product-amber", name: "스토리 패스", description: "", acquisition: pay("premium-story-pass", "₩5,500"), grants: [currency("gems", 1_000), currency("amber", 2), currency("cheesecake", 1_000), currency("gold", 150_000)], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM, visibleUntil: UNTIL },
-  { id: "premium-level-pass", storefront: "premium", category: "special", premiumCategory: "package", iconKey: "shop-product-enhancement", name: "레벨 패스", description: "", acquisition: pay("premium-level-pass", "₩5,900"), grants: [currency("gems", 1_000), currency("fossil", 5), item("rune-dust", "룬 가루", 120), currency("dnaFragments", 40)], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM, visibleUntil: UNTIL },
-  { id: "premium-raid-pass", storefront: "premium", category: "special", premiumCategory: "package", iconKey: "shop-product-supplies", name: "레이드 패스", description: "", acquisition: pay("premium-raid-pass", "₩5,500"), grants: [item("raid-ticket", "토벌권", 10), item("raid-select-ticket", "선택 토벌권", 5), currency("raidSigil", 300), currency("gems", 600)], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: FROM, visibleUntil: UNTIL },
-  // 후원 패스는 광고를 제거하지 않고, 기존 광고 슬롯을 같은 보상·한도의 즉시 수령 슬롯으로 바꾼다.
-  { id: "premium-monthly", storefront: "premium", category: "special", premiumCategory: "package", iconKey: "shop-product-enhancement", name: "월간 연구 후원", description: "", acquisition: pay("premium-monthly", "₩4,900"), grants: [currency("fossil", 5), { kind: "profile_decoration", decorationId: "patron-monthly", name: "월간 후원자 명찰" }], passBenefit: { durationDays: 30, instantAdRewards: true, usesStandardAdRewardPolicy: true, dailyBonus: { currency: "gems", amount: 5 } }, defaultQuantity: 1, purchaseLimit: 1, refresh: "none", visibleFrom: FROM, visibleUntil: UNTIL },
-  // **광고 제거 멤버십은 후원 패스와 다른 상품이다.** 후원 패스가 광고 보상을 즉시 받게 해 주는 값이라면,
-  // 이쪽은 광고 자체를 걷어 내고 그 대가로 던전 x3 배율을 연다. 하나는 기다림을, 하나는 광고를 없앤다.
-  { id: "premium-adfree", storefront: "premium", category: "special", premiumCategory: "package", iconKey: "shop-product-enhancement", name: "광고 제거 멤버십", description: "", acquisition: pay("premium-adfree", "₩4,900"), grants: [{ kind: "profile_decoration", decorationId: "patron-adfree", name: "광고 제거 멤버 표식" }], passBenefit: { durationDays: 30, instantAdRewards: true, usesStandardAdRewardPolicy: true, adFree: true, dailyBonus: { currency: "gems", amount: 5 } }, defaultQuantity: 1, purchaseLimit: 1, refresh: "none", visibleFrom: FROM, visibleUntil: UNTIL },
+  { id: "premium-growth", storefront: "premium", category: "special", premiumCategory: "package", iconKey: "shop-product-enhancement", name: "연구원 성장 패키지", description: "", acquisition: pay("premium-growth", "₩3,900"), grants: [currency("gold", 300_000), currency("cheesecake", 1_500), currency("dnaFragments", 30), item("ancient-core", "미지의 고대 핵", 3)], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM, visibleUntil: UNTIL },
+  // ── 진행 패스 — 결제는 길을 **열기만** 한다. 보상은 그 길의 마디(`progressPasses.ts`)에 닿을 때마다 받으므로 지급 목록은 비어 있다. ──
+  { id: "premium-story-pass", storefront: "premium", category: "special", premiumCategory: "pass", iconKey: "shop-product-amber", name: "스토리 패스", description: "", acquisition: pay("premium-story-pass", "₩5,500"), grants: [], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM, visibleUntil: UNTIL },
+  { id: "premium-level-pass", storefront: "premium", category: "special", premiumCategory: "pass", iconKey: "shop-product-enhancement", name: "레벨 패스", description: "", acquisition: pay("premium-level-pass", "₩5,900"), grants: [], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM, visibleUntil: UNTIL },
+  { id: "premium-raid-pass", storefront: "premium", category: "special", premiumCategory: "pass", iconKey: "shop-product-supplies", name: "레이드 패스", description: "", acquisition: pay("premium-raid-pass", "₩5,500"), grants: [], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM, visibleUntil: UNTIL },
   // ── 특가 — 주기마다 다시 열리는 묶음. 한정과 다른 점은 다시 열린다는 것뿐이라 `refresh`가 그 차이를 든다. ──
   { id: "premium-daily-deal", storefront: "premium", category: "daily", premiumCategory: "deal", iconKey: "shop-product-supplies", name: "오늘의 보급 상자", description: "", acquisition: pay("premium-daily-deal", "₩1,100"), grants: [currency("gold", 50_000), currency("cheesecake", 100), item("stamina-tonic", "에너지 드링크", 2), currency("fossil", 1)], defaultQuantity: 1, purchaseLimit: 1, refresh: "daily", visibleFrom: FROM, visibleUntil: UNTIL },
   { id: "premium-weekly-deal", storefront: "premium", category: "weekly", premiumCategory: "deal", iconKey: "shop-product-fossil", name: "주간 연구 특가", description: "", acquisition: pay("premium-weekly-deal", "₩2,900"), grants: [currency("fossil", 3), currency("cheesecake", 200)], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: FROM, visibleUntil: UNTIL },
   { id: "premium-energy", storefront: "premium", category: "weekly", premiumCategory: "deal", iconKey: "shop-product-supplies", name: "스태미나 보급 번들", description: "", acquisition: pay("premium-energy", "₩1,900"), grants: [item("stamina-tonic", "에너지 드링크", 5), item("stamina-tonic-large", "에너지 드링크+", 5)], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: FROM, visibleUntil: UNTIL },
-  { id: "premium-excavation", storefront: "premium", category: "weekly", premiumCategory: "deal", iconKey: "shop-product-rune", name: "발굴 장비 번들", description: "", acquisition: pay("premium-excavation", "₩2,900"), grants: [item("strata-ticket", "발굴권", 5), currency("rawStone", 1_000), item("rune-dust", "룬 가루", 60)], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: FROM, visibleUntil: UNTIL },
+  { id: "premium-excavation", storefront: "premium", category: "weekly", premiumCategory: "deal", iconKey: "shop-product-rune", name: "발굴 장비 번들", description: "", acquisition: pay("premium-excavation", "₩2,900"), grants: [item("strata-ticket", "발굴권", 5), currency("rawStone", 1_000), item("sweep-ticket", "소탕권", 5)], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: FROM, visibleUntil: UNTIL },
   { id: "premium-restore-deal", storefront: "premium", category: "weekly", premiumCategory: "deal", iconKey: "shop-product-enhancement", name: "복원 가속 특가", description: "", acquisition: pay("premium-restore-deal", "₩2,500"), grants: [currency("amber", 2), currency("dnaFragments", 40)], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: FROM, visibleUntil: UNTIL },
   // ── 한정 — 다시 열리지 않거나 한 달에 한 번뿐이다. ──
   { id: "premium-season-crate", storefront: "premium", category: "special", premiumCategory: "limited", iconKey: "shop-product-supplies", name: "시즌 한정 표본 상자", description: "", acquisition: pay("premium-season-crate", "₩6,900"), grants: [currency("amber", 4), currency("fossil", 5), currency("cheesecake", 400)], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM, visibleUntil: UNTIL },

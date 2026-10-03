@@ -9,7 +9,7 @@ import { normalizePlayerLevel } from "../core/playerLevel";
 import { isValidLotStack } from "../core/itemLots";
 import { normalizeExpeditionState } from "../core/expeditionPeriods";
 import { maxResearchPoints } from "../core/missions";
-import { createDefaultSession, createEmptyInteractionProgress, createInitialPlayerResearchProgress, type RaidInstanceState, type RaidState, type SaveData, type Session } from "./session";
+import { createDefaultSession, createEmptyInteractionProgress, createEmptyProgressPassState, createInitialPlayerResearchProgress, type RaidInstanceState, type RaidState, type SaveData, type Session } from "./session";
 import { PROFILE_MODIFIERS } from "../data/profileModifiers";
 import { assertValidRuneInstance, type RuneInstance } from "../core/runes";
 import { normalizeSettings } from "../core/settings";
@@ -27,6 +27,7 @@ import type { ExpeditionRunState } from "./session";
 import { STAMINA_HOLD_LIMIT } from "../core/stamina";
 import { findInteractionCity } from "../data/interactionCities";
 import { WALLET_CAPS } from "../data/economy";
+import { findProgressPass } from "../data/progressPasses";
 import { INTERACTION_JOURNALS } from "../data/interactionJournals";
 import { defaultUnlockedRelicSkinIds, RELIC_SKINS } from "../data/relicSkins";
 
@@ -46,7 +47,7 @@ function migrateV12Rune(definitionId: string): RuneInstance {
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 44;
+export const CURRENT_SAVE_VERSION = 45;
 
 /**
  * 연구도는 기간마다 상한이 다르다(일일 100 · 주간 500). 상한이 120 하나이던 때의 저장은 일일
@@ -322,6 +323,7 @@ export class SaveManager {
       raid: { instances: state.raid.instances.map((instance) => ({ ...instance })) },
       cakeOperation: { ...state.cakeOperation },
       relicStory: cloneRelicStory(state.relicStory),
+      progressPasses: cloneProgressPasses(state.progressPasses ?? createEmptyProgressPassState()),
     };
     this.validate(data);
     return data;
@@ -446,6 +448,8 @@ export class SaveManager {
     const cakeOperation = { clearedIndex: Math.min(Math.max(-1, cakeClearedIndex), CAKE_OPERATION_TIERS.length - 1) };
     // 렐릭 이야기(v44) 도입 전 저장은 답변·읽은 장이 없고, 처음 만난 날이 없는 개체는 질문이 모두 열린다.
     const relicStory = normalizeRelicStory(legacy.relicStory);
+    // 진행 패스(v45) 도입 전 저장은 받은 마디도 레이드 입장 수도 없다.
+    const progressPasses = normalizeProgressPasses(legacy.progressPasses);
     // 현상수배 도입(v38) 전 저장은 깬 등급이 없으므로 1급만 열린 채로 시작한다. 하루 입장 제한을
     // 걷어 낸 뒤로는 예전 저장의 날짜·횟수(`date`·`entries`)를 버리고 깬 등급만 옮긴다.
     const savedBounty = legacy.bounty as Partial<SaveData["bounty"]> | undefined;
@@ -549,10 +553,10 @@ export class SaveManager {
     const itemInventory = (Array.isArray(legacy.itemInventory) ? legacy.itemInventory : [])
       .filter((stack: { itemId?: unknown }) => stack?.itemId !== "raid-sigil");
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
-    if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory } as unknown as SaveData;
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, CURRENT_SAVE_VERSION];
+    if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses } as unknown as SaveData;
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
-    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory } as unknown as SaveData;
+    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses } as unknown as SaveData;
   }
 
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
@@ -631,6 +635,18 @@ export class SaveManager {
     if (!data.cakeOperation || !Number.isInteger(data.cakeOperation.clearedIndex)
       || data.cakeOperation.clearedIndex < -1 || data.cakeOperation.clearedIndex >= CAKE_OPERATION_TIERS.length) fail("치즈케이크 대작전 진행 정보가 올바르지 않습니다.");
     this.validateRelicStory(data);
+    this.validateProgressPasses(data);
+  }
+
+  /** 받은 마디는 그 패스의 실제 문턱값만, 한 번씩만 허용한다. 레이드 입장 수는 0 이상의 정수다. */
+  private validateProgressPasses(data: SaveData): void {
+    const passes = data.progressPasses;
+    if (!passes || !Number.isSafeInteger(passes.raidRuns) || passes.raidRuns < 0 || !passes.claimed || typeof passes.claimed !== "object") throw new SaveDataError("진행 패스 정보가 올바르지 않습니다.");
+    for (const [id, thresholds] of Object.entries(passes.claimed)) {
+      const pass = findProgressPass(id);
+      const valid = new Set(pass?.milestones.map(({ threshold }) => threshold) ?? []);
+      if (!pass || !Array.isArray(thresholds) || new Set(thresholds).size !== thresholds.length || thresholds.some((value) => !valid.has(value))) throw new SaveDataError("진행 패스 수령 정보가 올바르지 않습니다.");
+    }
   }
 
   /** 답변은 보유한 개체의 실제 질문·선택지만, 한 질문에 한 번만 허용한다. 읽은 장은 정해진 유대 레벨만 허용한다. */
@@ -686,8 +702,21 @@ export class SaveManager {
       raid: { instances: data.raid.instances.map((instance) => ({ ...instance })) },
       cakeOperation: { ...data.cakeOperation },
       relicStory: cloneRelicStory(data.relicStory),
+      progressPasses: cloneProgressPasses(data.progressPasses),
     };
   }
+}
+
+function cloneProgressPasses(passes: SaveData["progressPasses"]): SaveData["progressPasses"] {
+  return { raidRuns: passes.raidRuns, claimed: Object.fromEntries(Object.entries(passes.claimed).map(([id, thresholds]) => [id, [...thresholds]])) };
+}
+
+/** 모양이 깨진 값은 비워 두고 검증이 나머지를 맡는다 — 구 저장은 필드가 통째로 없다. */
+function normalizeProgressPasses(value: unknown): SaveData["progressPasses"] {
+  const source = (value && typeof value === "object" ? value : {}) as Partial<SaveData["progressPasses"]>;
+  const raidRuns = Number.isSafeInteger(source.raidRuns) && Number(source.raidRuns) >= 0 ? Number(source.raidRuns) : 0;
+  const claimed = source.claimed && typeof source.claimed === "object" ? source.claimed : {};
+  return { raidRuns, claimed: Object.fromEntries(Object.entries(claimed).filter(([, list]) => Array.isArray(list)).map(([id, list]) => [id, [...list]])) };
 }
 
 function cloneRelicStory(story: SaveData["relicStory"]): SaveData["relicStory"] {

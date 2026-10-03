@@ -21,6 +21,21 @@ describe("프리미엄 상품 카탈로그", () => {
     for (const p of PREMIUM_PRODUCTS) expect((p.grants ?? []).length).toBeLessThanOrEqual(4);
     for (const c of ["package", "deal", "limited", "gem"]) expect(PREMIUM_PRODUCTS.some((p) => p.premiumCategory === c)).toBe(true);
   });
+
+  it("는 쓸 곳이 없는 재료(룬 가루)와 화면에 서지 않는 장식을 팔지 않는다", () => {
+    for (const p of PREMIUM_PRODUCTS) {
+      for (const grant of p.grants ?? []) {
+        expect(grant.kind, p.id).not.toBe("profile_decoration");
+        if (grant.kind === "item") expect(grant.itemId, p.id).not.toBe("rune-dust");
+      }
+    }
+  });
+
+  it("는 정기권 둘이 맨 위에 서고 하루 보상이 넉넉하다", () => {
+    const packages = PREMIUM_PRODUCTS.filter((p) => p.premiumCategory === "package");
+    expect(packages.slice(0, 2).map((p) => p.id)).toEqual(["premium-monthly", "premium-adfree"]);
+    for (const p of packages.slice(0, 2)) expect(p.passBenefit?.dailyBonus?.amount ?? 0).toBeGreaterThanOrEqual(60);
+  });
 });
 
 describe("플랫폼 결제 흐름", () => {

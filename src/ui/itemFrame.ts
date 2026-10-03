@@ -142,6 +142,21 @@ export interface FramedIconOptions extends ItemFrameOptions {
 }
 
 /**
+ * 가방 칸의 수량 글자 — **액자 한 변의 0.2**를 `emphasis`로 세우고 얇은 검은 획과 번지는 그림자를 두른다.
+ *
+ * 가방(액자 160 · 32px)이 기준이다. 보상 영수증의 수(`amount`)보다 차분한 양식이라, 상품 카드처럼 액자 여럿이
+ * 한 판에 늘어서는 자리는 이 한 벌로 가방과 같은 무게를 지킨다 — 화면마다 수를 키우면 같은 다이아가 어디서는
+ * 커다랗게, 어디서는 작게 선다.
+ */
+export const BAG_AMOUNT = { ratio: 0.2, min: 20, insetX: 6, insetY: 2, stroke: 4 } as const;
+export function addFrameAmount(scene: Phaser.Scene, size: number, amount: string, color: string = COLOR.ink): Phaser.GameObjects.Text {
+  return scene.add.text(size / 2 - BAG_AMOUNT.insetX, size / 2 - BAG_AMOUNT.insetY, amount, textStyle({ role: "emphasis", size: Math.max(BAG_AMOUNT.min, Math.round(size * BAG_AMOUNT.ratio)), color }))
+    .setOrigin(1, 1)
+    .setStroke("#05070a", BAG_AMOUNT.stroke)
+    .setShadow(0, 2, "#05070a", 3, true, true);
+}
+
+/**
  * 그 그림이 재화면 안내창을 여는 손을 돌려준다. 액자를 `addFramedIcon`으로 세우지 않는 전용
  * 프리팹(발굴 현황의 재화 칸)도 같은 그림이면 같은 일을 하게 한다.
  */

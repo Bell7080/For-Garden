@@ -13,7 +13,7 @@ export type { PassBenefitDefinition, PremiumCategory, ProductAcquisition, Produc
  * 목록을 통째로 바꾸기)을 하므로 생김새도 한 곳에서 나온다.
  */
 export const PREMIUM_TABS: ReadonlyArray<{ id: PremiumCategory; label: string }> = [
-  { id: "package", label: "패키지" }, { id: "deal", label: "특가" },
+  { id: "package", label: "패키지" }, { id: "pass", label: "패스" }, { id: "deal", label: "특가" },
   { id: "limited", label: "한정" }, { id: "gem", label: "젬" },
 ];
 

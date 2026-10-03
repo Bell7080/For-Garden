@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
-import type { ProductDto, PurchaseProductResponse } from "../api/contracts";
+import type { ProductDto, ProgressPassDto, PurchaseProductResponse } from "../api/contracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugPremiumSection, setDebugScene } from "../debug";
 import { PREMIUM_TABS, type PremiumCategory } from "../data/shopCatalog";
@@ -9,8 +9,11 @@ import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { BottomNav } from "../ui/BottomNav";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { addSectionTitle } from "../ui/SectionTitle";
-import { addFramedIcon } from "../ui/itemFrame";
-import { chipPoints, drawLayer, drawVignette, HOLO } from "../ui/holo";
+import { addFrameAmount, addFramedIcon, guideForIcon } from "../ui/itemFrame";
+import { chipPoints, drawLayer, drawVignette, HoloBar, slantedRect } from "../ui/holo";
+import { paintShowcaseCard, SHOWCASE_TIER_TONE } from "../ui/showcaseCardChrome";
+import { openPassTrackPopup, progressPassProgressLabel, progressPassStepLabel, PROGRESS_PASS_TONE } from "../ui/PassTrackPopup";
+import { Button } from "../ui/Button";
 import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
 import type { PremiumSection } from "./settingsNavigation";
@@ -21,9 +24,9 @@ import { session } from "../state/session";
 import { productActionModel } from "../core/productAcquisition";
 import { addPriceBar } from "../ui/priceTag";
 import { squeezeTextToWidth } from "../ui/textFit";
-import { premiumCategoryOf, premiumDecorationNames, premiumFirstBonusGems, premiumGrantTiles, premiumModel, productsForPremiumCategory } from "../ui/premiumModel";
+import { grantTiles, premiumCategoryOf, premiumFirstBonusGems, premiumGrantTiles, premiumModel, productsForPremiumCategory, progressPassAction, progressPassFeatured, progressPassReadyCount } from "../ui/premiumModel";
 import {
-  PREMIUM_CARD, PREMIUM_GRID_PRICE, PREMIUM_TAB_ROW, PREMIUM_TITLE, PREMIUM_WIDE,
+  PREMIUM_CARD, PREMIUM_PASS, PREMIUM_TAB_ROW, PREMIUM_TITLE, PREMIUM_WIDE,
   premiumCardHeight, premiumCardSpot, premiumCardWidth, premiumGridContentHeight, premiumGridViewport, premiumListKind,
   premiumTabSpot, premiumTitleLeft, premiumTitleY, premiumWideInner, type PremiumListKind,
 } from "../ui/premiumLayout";
@@ -54,6 +57,7 @@ export class PremiumScene extends Phaser.Scene {
   /** 첫 라벨은 카탈로그 순서에서 정해 화면과 데이터의 기본값이 갈리지 않게 한다. */
   private selectedCategory: PremiumCategory = PREMIUM_TABS[0].id;
   private products: ProductDto[] = [];
+  private passes: ProgressPassDto[] = [];
   private minScrollY = 0;
   private pointerDown = false;
   private pointerY = 0;
@@ -114,13 +118,18 @@ export class PremiumScene extends Phaser.Scene {
     this.content.setMask(this.viewportMask.createGeometryMask());
   }
 
-  /** 서버가 계산한 노출·제한 상태에서 유료 storefront만 골라 다시 그린다. */
+  /** 서버가 계산한 노출·제한 상태에서 유료 storefront만 골라 다시 그린다. 패스의 진행도도 함께 읽는다. */
   private async refresh(): Promise<void> {
-    const response = await gameApi.getProducts("premium");
+    const [response, passes] = await Promise.all([gameApi.getProducts("premium"), gameApi.getProgressPasses()]);
     if (!this.scene.isActive()) return;
     // storefront 판정은 검증된 모델 하나가 소유한다. 여기서 filter를 다시 쓰면 같은 규칙이
     // 두 곳에 살아, 한쪽만 고쳐도 화면은 조용히 예전 규칙으로 남는다.
     this.products = premiumModel(response.products);
+    this.passes = passes.passes;
+    // 패스를 열거나 받은 뒤에는 지갑이 바뀌었으므로 상단 줄도 함께 맞춘다.
+    session.wallet = { ...session.wallet, ...(await gameApi.getPlayerState()).wallet };
+    if (!this.scene.isActive()) return;
+    this.topBar?.refresh();
     this.renderProducts();
   }
 
@@ -129,91 +138,204 @@ export class PremiumScene extends Phaser.Scene {
     this.content?.removeAll(true);
     const visible = productsForPremiumCategory(this.products, this.selectedCategory);
     const kind = premiumListKind(this.selectedCategory);
-    visible.forEach((product, index) => this.addProduct(product, index, kind));
+    if (kind === "pass") {
+      // 패스 카드는 상품이 아니라 그 상품이 여는 길을 그린다. 길이 없는 상품은 세우지 않는다.
+      visible.forEach((product, index) => {
+        const pass = this.passes.find(({ productId }) => productId === product.id);
+        if (pass) this.addPassCard(pass, product, index);
+      });
+    } else visible.forEach((product, index) => this.addProduct(product, index, kind));
     const view = premiumGridViewport();
     this.minScrollY = Math.min(0, view.bottom - view.top - premiumGridContentHeight(visible.length, kind));
     this.scrollTo(this.content?.y ?? 0);
   }
 
-  /** 유료 카드도 공용 유리 면과 누를 때 확대되는 홀로그램 입력 규칙을 따른다. */
+  /**
+   * 상품 한 장. 겉모습은 무역 전시장과 같은 한 벌(`paintShowcaseCard`)이고, 카드 전체가 구매 확인을 연다.
+   *
+   * **입력면은 카드를 먼저, 액자를 나중에 세운다.** 액자는 제 안내창을 여는 손이 따로 있어야 하므로 카드의
+   * 입력면이 그 위를 덮으면 안 된다 — 위에 선 것이 먼저 손을 받는다.
+   */
   private addProduct(product: ProductDto, index: number, kind: PremiumListKind): void {
     const width = premiumCardWidth(kind);
     const height = premiumCardHeight(kind);
     const { x, y } = premiumCardSpot(index, kind);
     const card = this.add.container(x, y);
-    card.add(drawLayer(this, 0, 0, chipPoints(width, height, { bevel: { topLeft: 40, topRight: 0, bottomRight: 30, bottomLeft: 0 } }), { fill: 0x161d25, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.62 }));
     const action = productActionModel(product.acquisition, { remaining: product.remaining, available: product.purchasable });
+    const soldOut = !product.purchasable;
+    if (kind === "grid") {
+      paintShowcaseCard(this, card, { width, height, accent: soldOut ? COLOR.inkDimHex : COLOR.accent, dim: soldOut, railX: -width / 2 + 34 });
+    } else {
+      paintShowcaseCard(this, card, { width, height, accent: soldOut ? COLOR.inkDimHex : premiumCardTone(product), dim: soldOut, railX: -width / 2 + PREMIUM_WIDE.pad, tag: premiumCardTag(product) });
+    }
+    this.addCardHit(card, width, height, () => {
+      // 결제 비활성 상품도 상세 팝업 안에서 지급량·가격·사유를 확인한다.
+      new PurchasePopup(this, this.popups, gameApi, session.wallet).open(product, async (result) => { this.applyPurchaseResult(result); this.notice(t("shop.premium.purchased")); await this.refresh(); });
+    });
     if (kind === "wide") this.paintWideCard(card, product, width, action); else this.paintGridCard(card, product, width, action);
+    if (soldOut) card.setAlpha(PREMIUM_SOLD_OUT_ALPHA);
+    this.content?.add(card);
+  }
+
+  /** 카드 전체를 덮는 입력면. 드래그로 끝난 손과 창 밖의 숨은 칸은 누름으로 치지 않는다. */
+  private addCardHit(card: Phaser.GameObjects.Container, width: number, height: number, onTap: () => void): void {
     const hit = this.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => pressIn(card));
     hit.on("pointerout", () => pressOut(card, "normal", { pop: false }));
     hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
       pressOut(card);
-      // GeometryMask는 그리기만 자르므로 격자 밖의 숨은 칸 입력도 같은 창 경계에서 거부한다.
-      if (!this.insideViewport(pointer)) return;
-      // 스크롤 드래그가 끝난 손을 구매 탭으로 오인하지 않는다.
-      if (this.draggedDistance > PREMIUM_CARD.dragSlop) return;
-      // 결제 비활성 상품도 상세 팝업 안에서 지급량·가격·사유를 확인한다.
-      new PurchasePopup(this, this.popups, gameApi, session.wallet).open(product, async (result) => { this.applyPurchaseResult(result); this.notice(t("shop.premium.purchased")); await this.refresh(); });
+      if (!this.isTap(pointer)) return;
+      onTap();
     });
     card.add(hit);
-    this.content?.add(card);
+  }
+
+  /** 격자 안에서 일어난, 스크롤이 아닌 누름인가. GeometryMask는 그리기만 자르므로 입력도 같은 창 경계로 거른다. */
+  private isTap(pointer: Phaser.Input.Pointer): boolean {
+    return this.insideViewport(pointer) && this.draggedDistance <= PREMIUM_CARD.dragSlop;
   }
 
   /**
-   * 가로 카드 — 왼쪽에 이름과 **받는 것(액자 + 큰 수량)**, 오른쪽에 **크고 두꺼운 값**.
+   * 받는 것 액자 한 칸 — **가방 칸과 같은 양식**(공용 액자 + 가방의 수량 글자)이고, 누르면 그 재화·아이템의
+   * 안내창이 열린다. 공용 액자의 안내 입력은 스크롤 중의 손을 가르지 못하므로 같은 일을 여기서 거른다.
+   */
+  private addGrantFrame(card: Phaser.GameObjects.Container, x: number, y: number, size: number, icon: string, amount: number, options: { color?: number } = {}): Phaser.GameObjects.Container {
+    const frame = addFramedIcon(this, card, x, y, size, icon, { plain: true, color: options.color });
+    frame.add(addFrameAmount(this, size, formatCurrency(amount)));
+    const openGuide = guideForIcon(this, icon);
+    if (openGuide) {
+      const hit = this.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      hit.on("pointerdown", () => pressIn(frame));
+      hit.on("pointerout", () => pressOut(frame, "normal", { pop: false }));
+      hit.on("pointerup", (pointer: Phaser.Input.Pointer) => { pressOut(frame); if (this.isTap(pointer)) openGuide(); });
+      frame.add(hit);
+    }
+    return frame;
+  }
+
+  /**
+   * 가로 카드 — 왼쪽에 이름과 **받는 것(액자 + 수량)**, 오른쪽에 값.
    *
-   * 값과 받는 양은 이 카드에서 가장 먼저 읽혀야 하는 두 가지라 둘 다 `display` 역할로 세우고 검은 획을
-   * 두른다. 설명 문장은 없다 — 받는 것이 액자로 서 있다.
+   * 설명 문장은 없다 — 받는 것이 액자로 서 있다. 정기권이 매일 얹는 몫은 그 액자 왼쪽 위의 「매일」 표식이 말한다.
    */
   private paintWideCard(card: Phaser.GameObjects.Container, product: ProductDto, width: number, action: ReturnType<typeof productActionModel>): void {
     const W = PREMIUM_WIDE;
     const tiles = premiumGrantTiles(product).slice(0, W.frameCap);
     const inner = premiumWideInner(width, tiles.length);
-    const name = this.add.text(inner.left, W.nameY, product.name, textStyle({ role: "display", size: W.nameSize })).setOrigin(0, 0.5).setStroke("#000000", 6);
+    const name = this.add.text(inner.left, W.nameY, product.name, textStyle({ role: "display", size: W.nameSize })).setOrigin(0, 0.5).setShadow(3, 4, "#04060a", 0, true, true);
     card.add(squeezeTextToWidth(name, inner.priceLeft - W.priceGap - inner.left, 0.7));
     tiles.forEach((tile, i) => {
-      card.add(addFramedIcon(this, undefined, inner.frames[i], W.frameY, W.frame, tile.icon, { amount: formatCurrency(tile.amount), amountRatio: W.amountRatio, plain: true }));
+      const frame = this.addGrantFrame(card, inner.frames[i], W.frameY, W.frame, tile.icon, tile.amount);
       if (tile.daily) {
-        // 패스가 매일 얹는 몫 — 액자 왼쪽 위 모서리에 작은 표식으로 알린다.
-        const tag = this.add.text(inner.frames[i] - W.frame / 2 + 8, W.frameY - W.frame / 2 + 6, t("shop.premium.daily"), textStyle({ role: "display", size: 22, color: COLOR.accentText })).setOrigin(0, 0).setStroke("#000000", 5);
-        card.add(tag);
+        // 정기권이 매일 얹는 몫 — 액자 위에 걸친 작은 꼬리표가 「매일」을 말한다.
+        const label = this.add.text(0, 0, t("shop.premium.daily"), textStyle({ role: "display", size: 20, color: "#101418" })).setOrigin(0.5);
+        const tagWidth = label.width + 22;
+        const tag = this.add.container(-W.frame / 2 + tagWidth / 2 - 4, -W.frame / 2 - 2);
+        tag.add(drawLayer(this, 0, 0, slantedRect(tagWidth, 32, 10), { fill: COLOR.accent, alpha: 1, shadow: false }));
+        tag.add(label);
+        frame.add(tag);
       }
     });
-    // 패스의 기간·권리와 프로필 장식은 칸이 없으므로 액자 아래 한 줄로 적는다.
+    // 정기권의 기간·권리는 칸이 없으므로 액자 아래 한 줄로 적는다.
     const foot = this.passFootnote(product);
-    if (foot) card.add(this.add.text(inner.left, W.frameY + W.frame / 2 + 22, foot, textStyle({ role: "body", size: W.noteSize, color: COLOR.inkDim, wrap: inner.priceLeft - W.priceGap - inner.left, lineSpacing: 6 })).setOrigin(0, 0));
+    if (foot) card.add(this.add.text(inner.left, W.frameY + W.frame / 2 + 16, foot, textStyle({ role: "body", size: W.noteSize, color: COLOR.inkDim, wrap: inner.priceLeft - W.priceGap - inner.left })).setOrigin(0, 0));
     this.paintPriceChip(card, product, inner.priceX, W.price.y, W.price.width, W.price.height, W.price.size, action);
-    card.add(this.add.text(inner.priceX, W.noteY + W.price.y + W.price.height / 2 - 18, action.disabledReason ?? t("shop.premium.remaining", { remaining: product.remaining, limit: product.purchaseLimit }), textStyle({ role: "body", size: W.noteSize, color: product.purchasable ? COLOR.inkDim : COLOR.dangerText })).setOrigin(0.5));
+    card.add(this.add.text(inner.priceX, W.price.y + W.noteY, action.disabledReason ?? t("shop.premium.remaining", { remaining: product.remaining, limit: product.purchaseLimit }), textStyle({ role: "body", size: W.noteSize, color: product.purchasable ? COLOR.inkDim : COLOR.dangerText })).setOrigin(0.5));
   }
 
-  /** 두 칸 카드(다이아) — 위에 큰 액자와 수량, 아래에 큰 값. 첫 구매 보너스가 남았으면 모서리 표식이 말한다. */
+  /**
+   * 두 칸 카드(다이아) — 위에 액자, 아래에 값.
+   *
+   * **첫 구매 보너스가 남았으면 액자가 하나 더 선다** — 기본 액자 + 「+」 + 보너스 액자, 그리고 보너스 액자 위에
+   * 「/ 첫 구매 보너스」 제목표. 모서리 글자로 알리던 때는 무엇이 더 들어오는지 셈해야 했다.
+   */
   private paintGridCard(card: Phaser.GameObjects.Container, product: ProductDto, width: number, action: ReturnType<typeof productActionModel>): void {
+    const C = PREMIUM_CARD;
     const tile = premiumGrantTiles(product)[0];
-    if (tile) card.add(addFramedIcon(this, undefined, 0, PREMIUM_CARD.frameY, PREMIUM_CARD.frame, tile.icon, { amount: formatCurrency(tile.amount), amountRatio: 0.3, plain: true }));
     const bonus = premiumFirstBonusGems(product);
-    if (bonus > 0) {
-      const tag = this.add.text(-width / 2 + 26, -PREMIUM_CARD.height / 2 + 24, t("shop.premium.firstBonus", { amount: formatCurrency(bonus) }), textStyle({ role: "display", size: 24, color: COLOR.accentText })).setOrigin(0, 0).setStroke("#000000", 5);
-      card.add(squeezeTextToWidth(tag, width - 52, 0.6));
+    if (tile && bonus > 0) {
+      const B = C.bonus;
+      this.addGrantFrame(card, -B.offsetX, C.frameY, B.frame, tile.icon, tile.amount);
+      card.add(this.add.text(0, C.frameY, "+", textStyle({ role: "display", size: B.plusSize, color: COLOR.accentText })).setOrigin(0.5).setStroke("#000000", 6));
+      this.addGrantFrame(card, B.offsetX, C.frameY, B.frame, tile.icon, bonus, { color: PREMIUM_BONUS_TONE });
+      // 제목표는 보너스 액자의 왼쪽 끝에서 시작해 그 액자 위에 걸터앉는다.
+      card.add(addSectionTitle(this, B.offsetX - B.frame / 2 - B.titleSize * 0.4, C.frameY - B.frame / 2 - B.titleGap, t("shop.premium.firstBonusTitle"), { size: B.titleSize }));
+    } else if (tile) {
+      this.addGrantFrame(card, 0, C.frameY, C.frame, tile.icon, tile.amount);
     }
-    const name = this.add.text(0, PREMIUM_CARD.nameY, product.name, textStyle({ role: "display", size: 30 })).setOrigin(0.5).setStroke("#000000", 5);
+    const name = this.add.text(0, C.nameY, product.name, textStyle({ role: "display", size: 30 })).setOrigin(0.5).setShadow(3, 4, "#04060a", 0, true, true);
     // 이름 길이는 언어가 정하고 칸 폭은 둘이 나눠 갖는 고정값이라, 넘치면 글자만 가로로 줄인다.
     card.add(squeezeTextToWidth(name, width - 36, 0.7));
-    this.paintPriceChip(card, product, 0, PREMIUM_CARD.price.y - 30, width - PREMIUM_CARD.price.inset, PREMIUM_GRID_PRICE.height, PREMIUM_GRID_PRICE.size, action);
-    card.add(this.add.text(0, PREMIUM_CARD.remainingY + 14, action.disabledReason ?? t("shop.premium.remaining", { remaining: product.remaining, limit: product.purchaseLimit }), textStyle({ role: "body", size: 19, color: product.purchasable ? COLOR.inkDim : COLOR.dangerText })).setOrigin(0.5));
+    this.paintPriceChip(card, product, 0, C.price.y, width - C.price.inset, C.price.height, C.price.size, action);
+    card.add(this.add.text(0, C.remainingY, action.disabledReason ?? t("shop.premium.remaining", { remaining: product.remaining, limit: product.purchaseLimit }), textStyle({ role: "body", size: 19, color: product.purchasable ? COLOR.inkDim : COLOR.dangerText })).setOrigin(0.5));
   }
 
-  /** 값 칸. 재화로 값을 치르는 상품은 값줄, 결제 상품은 카탈로그의 값 문자열을 크고 두껍게 세운다. */
+  /** 값 칸. 재화로 값을 치르는 상품은 값줄, 결제 상품은 카탈로그의 값 문자열을 두껍게 세운다. */
   private paintPriceChip(card: Phaser.GameObjects.Container, product: ProductDto, x: number, y: number, width: number, height: number, size: number, action: ReturnType<typeof productActionModel>): void {
     if (product.acquisition.kind === "currency") {
       addPriceBar(this, card, x, y, width, undefined, product.acquisition.currency, product.acquisition.amount, { height, short: session.wallet[product.acquisition.currency] < product.acquisition.amount });
       return;
     }
     const bar = this.add.container(x, y);
-    bar.add(drawLayer(this, 0, 0, chipPoints(width, height, { bevel: { topLeft: 22, topRight: 0, bottomRight: 22, bottomLeft: 0 } }), { fill: 0x0d141c, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.7 }));
-    const price = this.add.text(0, 0, action.priceText, textStyle({ role: "display", size, color: COLOR.accentText })).setOrigin(0.5).setStroke("#000000", 7).setShadow(2, 4, "#04060a", 0, true, true);
+    bar.add(drawLayer(this, 0, 0, chipPoints(width, height, { bevel: { topLeft: 20, topRight: 0, bottomRight: 20, bottomLeft: 0 } }), { fill: 0x0d141c, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.7 }));
+    const price = this.add.text(0, 0, action.priceText, textStyle({ role: "display", size, color: COLOR.accentText })).setOrigin(0.5).setStroke("#000000", 6).setShadow(2, 4, "#04060a", 0, true, true);
     bar.add(squeezeTextToWidth(price, width - 36, 0.6));
     card.add(bar);
+  }
+
+  /**
+   * 진행 패스 카드 — 이름 · 진행도 줄 · 다음 마디의 보상 · 오른쪽에 값(열기 전) 또는 받기(연 뒤).
+   * 카드를 누르면 마디 전체가 서는 길 창이 열린다.
+   */
+  private addPassCard(pass: ProgressPassDto, product: ProductDto, index: number): void {
+    const P = PREMIUM_PASS;
+    const W = PREMIUM_WIDE;
+    const width = premiumCardWidth("pass");
+    const height = premiumCardHeight("pass");
+    const { x, y } = premiumCardSpot(index, "pass");
+    const card = this.add.container(x, y);
+    const tone = PROGRESS_PASS_TONE[pass.id];
+    const action = progressPassAction(pass);
+    paintShowcaseCard(this, card, { width, height, accent: tone, railX: -width / 2 + W.pad, tag: t(pass.owned ? "shop.premium.pass.tag.open" : "shop.premium.pass.tag.locked") });
+    this.addCardHit(card, width, height, () => this.openPassTrack(pass, product));
+    const inner = premiumWideInner(width, 0);
+    const columnWidth = inner.priceLeft - W.priceGap - inner.left;
+    const name = this.add.text(inner.left, P.nameY, product.name, textStyle({ role: "display", size: W.nameSize })).setOrigin(0, 0.5).setShadow(3, 4, "#04060a", 0, true, true);
+    card.add(squeezeTextToWidth(name, columnWidth, 0.7));
+    card.add(this.add.text(inner.left, P.progressY, progressPassProgressLabel(pass), textStyle({ role: "emphasis", size: 26, color: COLOR.ink })).setOrigin(0, 0.5));
+    const bar = new HoloBar(this, inner.left + columnWidth / 2, P.bar.y, columnWidth, P.bar.height, { color: tone, trackAlpha: 0.85, outline: true, ticks: Math.max(0, pass.milestones.length - 1) });
+    bar.setValue(pass.goal > 0 ? Math.min(1, pass.progress / pass.goal) : 0);
+    card.add([...bar.objects]);
+    const featured = progressPassFeatured(pass);
+    card.add(this.add.text(inner.left, P.nextY, featured ? t("shop.premium.pass.next", { step: progressPassStepLabel(pass.metric, featured.threshold) }) : t("shop.premium.pass.complete"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
+    if (featured) {
+      grantTiles(featured.rewards).slice(0, P.frameCap).forEach((tile, i) => {
+        this.addGrantFrame(card, inner.left + P.frame / 2 + i * (P.frame + P.frameGap), P.frameY, P.frame, tile.icon, tile.amount);
+      });
+    }
+    // 오른쪽 칸 — 열기 전엔 값과 「지나온 보상 N개 즉시 수령」, 연 뒤엔 받기 또는 진행 상태.
+    const ready = progressPassReadyCount(pass);
+    if (action === "buy") {
+      this.paintPriceChip(card, product, inner.priceX, W.price.y, W.price.width, W.price.height, W.price.size, productActionModel(product.acquisition, { remaining: product.remaining, available: product.purchasable }));
+      if (ready > 0) card.add(this.add.text(inner.priceX, W.price.y + W.noteY, t("shop.premium.pass.retro", { count: ready }), textStyle({ role: "emphasis", size: W.noteSize, color: COLOR.accentText })).setOrigin(0.5));
+    } else if (action === "claim") {
+      const button = new Button(this, inner.priceX, W.price.y, {
+        width: W.price.width, height: W.price.height, variant: "primary", label: t("shop.premium.pass.claim", { count: ready }),
+        onClick: () => { if (this.draggedDistance <= PREMIUM_CARD.dragSlop) this.openPassTrack(pass, product); },
+      });
+      card.add(button);
+    } else {
+      card.add(this.add.text(inner.priceX, W.price.y, t(action === "complete" ? "shop.premium.pass.complete" : "shop.premium.pass.inProgress"), textStyle({ role: "emphasis", size: 26, color: COLOR.inkDim, align: "center", wrap: W.price.width })).setOrigin(0.5));
+    }
+    this.content?.add(card);
+  }
+
+  /** 길 창을 연다. 열기·받기가 끝나면 지갑과 목록을 새로 읽는다. */
+  private openPassTrack(pass: ProgressPassDto, product: ProductDto): void {
+    openPassTrackPopup(this, this.popups, {
+      api: gameApi, pass, product,
+      onChanged: async () => { await this.refresh(); },
+    });
   }
 
   /** 패스 카드 아래 한 줄 — 유효 기간 · 권리 · 프로필 장식 이름. 패스가 아니면 비어 있다. */
@@ -224,8 +346,7 @@ export class PremiumScene extends Phaser.Scene {
       parts.push(pass.durationDays === null ? t("shop.premium.forever") : t("shop.premium.duration", { days: pass.durationDays }));
       parts.push(pass.adFree ? t("shop.premium.perk.adFree") : t("shop.premium.perk.instantAds"));
     }
-    parts.push(...premiumDecorationNames(product));
-    return pass || parts.length ? parts.join("  ·  ") : "";
+    return parts.join("  ·  ");
   }
 
   /** 하단 목록 교체 줄은 상점·가방과 **같은 서류철 라벨 프리팹**을 쓴다. */
@@ -316,6 +437,22 @@ export class PremiumScene extends Phaser.Scene {
     const toast = this.add.text((view.left + view.right) / 2, view.bottom - 36, message, textStyle({ role: "emphasis", size: 26, color: COLOR.accentText })).setOrigin(0.5).setDepth(500);
     this.tweens.add({ targets: toast, alpha: 0, delay: 900, duration: 500, onComplete: () => toast.destroy() });
   }
+}
+
+/** 소진된 카드의 진하기 — 무역 전시장과 같은 값이다. */
+const PREMIUM_SOLD_OUT_ALPHA = 0.52;
+/** 첫 구매 보너스 액자의 선 — 무역의 가치 배지와 같은 뜨거운 색이라 "더 들어온다"가 먼저 걸린다. */
+const PREMIUM_BONUS_TONE = 0xe0603a;
+
+/** 카드 색 — 정기권(기간 패스)은 금빛 한정과 같은 무게로, 나머지는 갱신 주기의 색이다. */
+function premiumCardTone(product: ProductDto): number {
+  return product.passBenefit ? SHOWCASE_TIER_TONE.once : SHOWCASE_TIER_TONE[product.refresh];
+}
+
+/** 꼬리표 — 정기권은 「30일 정기권」, 나머지는 무역과 같은 주기 이름이다. */
+function premiumCardTag(product: ProductDto): string {
+  if (product.passBenefit?.durationDays) return t("shop.premium.tag.membership", { days: product.passBenefit.durationDays });
+  return t(`trade.tag.${product.refresh}`);
 }
 
 /** 목록 갈래 판정은 화면이 다시 만들지 않고 순수 모델 하나만 쓴다. */

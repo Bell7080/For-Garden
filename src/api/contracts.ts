@@ -430,6 +430,30 @@ export interface FulfillPlatformPurchaseResponse extends PurchaseProductResponse
   /** 이번 지급에 첫 구매 보너스가 들어 있는가. */
   firstBonusApplied: boolean;
 }
+/** 진행 패스 마디 하나 — 정적 보상과 서버가 판정한 상태(받음 · 받을 수 있음 · 닿음 · 아직). */
+export interface ProgressPassMilestoneDto { threshold: number; rewards: readonly ProductGrant[]; state: "claimed" | "claimable" | "reached" | "locked"; }
+/**
+ * 진행 패스 한 줄. 열렸는지(`owned`)는 그 길을 여는 상품의 구매 기록이 말하고, 진행도(`progress`)는 서버가
+ * 세션에서 잰다 — 화면이 클리어 수나 레벨을 다시 세지 않는다.
+ */
+export interface ProgressPassDto {
+  id: "story" | "level" | "raid";
+  productId: string;
+  metric: "storyClears" | "playerLevel" | "raidRuns";
+  progress: number;
+  goal: number;
+  owned: boolean;
+  milestones: ProgressPassMilestoneDto[];
+}
+export interface ProgressPassListResponse { passes: ProgressPassDto[]; serverTime: string; }
+/** 열린 패스의 닿은 마디를 **모두** 받는다(소급 포함). 요청 ID로 멱등이다. */
+export interface ClaimProgressPassRequest { passId: string; requestId: string; }
+export interface ClaimProgressPassResponse extends PlayerStateDto {
+  passId: string;
+  claimedThresholds: number[];
+  granted: ProductGrant[];
+  passes: ProgressPassDto[];
+}
 /** 패스 즉시 수령은 광고 토큰 없이 권리와 서버 UTC 카운터를 검증한다. */
 export interface ClaimInstantAdRewardRequest { entitlementId: string; slotId: string; requestId: string; }
 export interface ClaimInstantAdRewardResponse extends ClaimAdRewardResponse { entitlement: PassEntitlementDto; dailyBonus?: { currency: "gems"; amount: number }; }
@@ -551,7 +575,7 @@ export interface UpgradeRuneTraitRequest { runeInstanceId: string; itemId: strin
 export interface UpgradeRuneTraitResponse { rune: RuneInstance; items: InventoryItemDto[]; }
 
 /** UI가 서버 실패 원인을 문구로 바꿀 수 있게 고정한 오류 코드다. */
-export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPEDITION_RUN_NOT_FOUND" | "EXPEDITION_ALREADY_SETTLED" | "EXPEDITION_ALREADY_ACTIVE" | "EXPEDITION_DAILY_LIMIT" | "EXPEDITION_SCORE_REQUIRED" | "AD_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REJECTED" | "RAID_DAILY_LIMIT" | "RAID_NOT_ENTERED" | "RAID_SCORE_REJECTED" | "RAID_REWARD_NOT_EARNED" | "RAID_NOT_FOUND" | "RAID_ENDED" | "RAID_NOT_ENDED" | "RAID_SUMMON_INVALID" | "RAID_TICKET_SHORTAGE" | "EXPEDITION_REWARD_NOT_FOUND" | "EXPEDITION_REWARD_NOT_EARNED" | "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INVALID_PURCHASE_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "BANNER_NOT_FOUND" | "BANNER_LIMIT_REACHED" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "INVALID_RUNE_SALE" | "RUNE_EQUIPPED" | "RUNE_LOCKED" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "BOUNTY_TIER_NOT_FOUND" | "BOUNTY_TIER_LOCKED" | "BOUNTY_ADMISSION_NOT_FOUND" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_STOREFRONT_MISMATCH" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "ACQUISITION_FLOW_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE"
+export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPEDITION_RUN_NOT_FOUND" | "EXPEDITION_ALREADY_SETTLED" | "EXPEDITION_ALREADY_ACTIVE" | "EXPEDITION_DAILY_LIMIT" | "EXPEDITION_SCORE_REQUIRED" | "AD_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REJECTED" | "RAID_DAILY_LIMIT" | "RAID_NOT_ENTERED" | "RAID_SCORE_REJECTED" | "RAID_REWARD_NOT_EARNED" | "RAID_NOT_FOUND" | "RAID_ENDED" | "RAID_NOT_ENDED" | "RAID_SUMMON_INVALID" | "RAID_TICKET_SHORTAGE" | "EXPEDITION_REWARD_NOT_FOUND" | "EXPEDITION_REWARD_NOT_EARNED" | "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INVALID_PURCHASE_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "BANNER_NOT_FOUND" | "BANNER_LIMIT_REACHED" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "INVALID_RUNE_SALE" | "RUNE_EQUIPPED" | "RUNE_LOCKED" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "BOUNTY_TIER_NOT_FOUND" | "BOUNTY_TIER_LOCKED" | "BOUNTY_ADMISSION_NOT_FOUND" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_STOREFRONT_MISMATCH" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "ACQUISITION_FLOW_REQUIRED" | "DNA_OFFER_NOT_FOUND" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE" | "NOTHING_TO_CLAIM"
   | "STRATA_NO_CHARGE" | "STRATA_CHARGE_FULL" | "STRATA_RUN_ACTIVE" | "STRATA_RUN_NOT_FOUND" | "STRATA_SITE_LOCKED" | "STRATA_SITE_COOLING" | "STRATA_TILE_UNAVAILABLE"
   | "RUNE_TRAIT_NOT_FOUND" | "RUNE_TRAIT_ITEM_INVALID" | "RUNE_TRAIT_MAX_GRADE" | "RUNE_TRAIT_GRADE_REACHED" | "RUNE_TRAIT_REROLL_PENDING"
   | "CAKE_TIER_NOT_FOUND" | "CAKE_TIER_LOCKED" | "DUNGEON_NOT_CLEARED" | "SWEEP_TICKET_SHORTAGE"
@@ -811,6 +835,10 @@ export interface GameApi extends AsyncArenaProfileApi {
   verifyPurchaseReceipt(request: VerifyPurchaseReceiptRequest): Promise<VerifyPurchaseReceiptResponse>;
   /** 검증된 플랫폼 거래를 상품 지급으로 확정한다. 패스·묶음·다이아가 모두 이 경계를 지난다. */
   fulfillPlatformPurchase(request: FulfillPlatformPurchaseRequest): Promise<FulfillPlatformPurchaseResponse>;
+  /** 진행 패스 셋의 진행도·열림·마디 상태. */
+  getProgressPasses(): Promise<ProgressPassListResponse>;
+  /** 열린 패스의 닿은 마디를 모두 받는다(소급 포함). */
+  claimProgressPass(request: ClaimProgressPassRequest): Promise<ClaimProgressPassResponse>;
   /** 검증된 거래를 기간 권리로 한 번만 활성화한다. */
   activatePass(request: ActivatePassRequest): Promise<ActivatePassResponse>;
   /** 활성 권리로 광고 슬롯의 원래 보상과 원래 UTC 일일 한도를 그대로 즉시 수령한다. */

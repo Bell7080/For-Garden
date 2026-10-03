@@ -8,17 +8,19 @@ import { BOUNTY, getBountyTier, type BountyTierDef } from "../data/bounty";
 import { BREAKTHROUGH_CAP, breakthroughFragmentCost, canBreakThrough, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap, BREAKTHROUGH_GRADE_CAP, breakthroughGrade } from "../core/relicProgression";
 import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond";
 import { MISSIONS, RESEARCH_REWARD_STAGES, maxResearchPoints, mergeMissionRewards, type MissionReward, addResearchPoints, applyMissionEvent, claimResearchStages, claimableMissionIds, normalizeMissions, researchPointsForClaim, researchStageClaimId, type MissionPeriod } from "../core/missions";
-import { DAILY_RESTORATION, getStage } from "../data/stages";
+import { CHAPTERS, DAILY_RESTORATION, getStage } from "../data/stages";
+import { PROGRESS_PASSES, findProgressPass, type ProgressPassDefinition } from "../data/progressPasses";
+import { claimableProgressPassThresholds, progressPassGoal, progressPassMilestoneStates } from "../core/progressPass";
 import { stageFirstClearRewards } from "../core/stageRewards";
 import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
-import { createInitialRelicProgress, replaceSession, session, type RaidInstanceState, type Session } from "../state/session";
+import { createEmptyProgressPassState, createInitialRelicProgress, replaceSession, session, type RaidInstanceState, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
 import { INTERACTION_CITIES, findInteractionCity } from "../data/interactionCities";
 import { interactionDurationMs, isInteractionCityUnlocked, isInteractionDispatchComplete, rollInteractionRewards, validateInteractionFormation, type InteractionMemberTraits } from "../core/interactionDispatch";
 import type {
   PurchaseRelicSkinRequest, PurchaseRelicSkinResponse, ClaimInteractionDispatchRequest, ClaimInteractionDispatchResponse, InteractionCitiesResponse, InteractionDispatchResponse, StartInteractionDispatchRequest } from "./contracts";
 import { ProfileModifierManager } from "../managers/ProfileModifierManager";
-import { GameApiError, persistenceFailed, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type EnterBountyRequest, type EnterBountyResponse, type CompleteBountyRequest, type CompleteBountyResponse, type BountyStatusResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse, type RechargeStaminaRequest, type RechargeStaminaResponse } from "./contracts";
+import { GameApiError, persistenceFailed, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type EnterBountyRequest, type EnterBountyResponse, type CompleteBountyRequest, type CompleteBountyResponse, type BountyStatusResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse, type RechargeStaminaRequest, type RechargeStaminaResponse, type ClaimProgressPassRequest, type ClaimProgressPassResponse, type ProgressPassDto, type ProgressPassListResponse } from "./contracts";
 import type { ProductDefinition } from "../data/shopCatalog";
 import { PRODUCTS } from "../data/shopCatalog";
 import type { ProductListResponse, PurchaseProductRequest, PurchaseProductResponse } from "./contracts";
@@ -124,6 +126,7 @@ export class FakeServer implements GameApi {
   private readonly verifiedTransactions = new Map<string, VerifyPurchaseReceiptResponse>();
   private readonly activationResults = new Map<string, ActivatePassResponse>();
   private readonly fulfillResults = new Map<string, FulfillPlatformPurchaseResponse>();
+  private readonly progressPassClaims = new Map<string, ClaimProgressPassResponse>();
   private readonly fulfilledTransactions = new Map<string, FulfillPlatformPurchaseResponse>();
   private readonly entitlements = new Map<string, PassEntitlementDto>();
   /** 물량형 던전의 멱등 저장소. 입장·결과·소탕이 각자의 요청 ID로 한 번만 확정된다. */
@@ -611,6 +614,9 @@ export class FakeServer implements GameApi {
     const nextState = structuredClone(this.state);
     Object.assign(nextState, { wallet: spent.wallet, playerResearch: spent.playerResearch, missions: spent.missions, itemInventory: spent.itemInventory });
     nextState.raid = { instances: [...nextState.raid.instances.filter(({ id }) => id !== updated.id), updated] };
+    // 레이드 패스의 진행도는 입장 수다 — 입장이 곧 도전 한 번을 쓰는 자리라 여기서만 센다.
+    const passes = nextState.progressPasses ?? createEmptyProgressPassState();
+    nextState.progressPasses = { ...passes, raidRuns: passes.raidRuns + 1 };
     this.commitRaidState(nextState);
     const raidDto = this.raidDto(updated, now);
     this.pendingRaidRuns.set(request.requestId, { raidId: updated.id, seasonHp: raidDto.remainingHp });
@@ -1662,6 +1668,70 @@ export class FakeServer implements GameApi {
     return { ...this.snapshot(), claimedIds: uniqueIds, claimedResearchStageIds, rewards: { mission, research }, granted: mergeMissionRewards([...mission, ...research]) };
   }
 
+  /** 진행 패스 셋의 진행도·열림·마디 상태를 서버가 판정해 내려 준다. */
+  async getProgressPasses(): Promise<ProgressPassListResponse> {
+    await this.delay();
+    return { passes: this.progressPassDtos(this.state), serverTime: this.now().toISOString() };
+  }
+
+  /**
+   * 열린 패스의 닿은 마디를 모두 받는다 — 늦게 산 사람도 지나온 마디를 한꺼번에 받는다(소급).
+   *
+   * 열렸는지는 그 길을 여는 상품의 구매 기록이 말하고 받은 마디만 저장한다. 지급은 상품 구매와 같은
+   * `applyProductGrants`를 지나 상한·기한 규칙이 갈리지 않는다.
+   */
+  async claimProgressPass(request: ClaimProgressPassRequest): Promise<ClaimProgressPassResponse> {
+    await this.delay();
+    const cached = this.progressPassClaims.get(request.requestId);
+    if (cached) return structuredClone(cached);
+    if (!request.requestId) throw new GameApiError("INVALID_STATE", "수령 요청 ID가 필요합니다.");
+    const pass = findProgressPass(request.passId);
+    if (!pass) throw new GameApiError("PASS_NOT_FOUND", "존재하지 않는 패스입니다.");
+    const passes = this.state.progressPasses ?? createEmptyProgressPassState();
+    const owned = this.progressPassOwned(pass);
+    if (!owned) throw new GameApiError("PASS_NOT_FOUND", "열지 않은 패스입니다.");
+    const claimed = passes.claimed[pass.id] ?? [];
+    const thresholds = claimableProgressPassThresholds(pass, this.progressPassProgress(pass, this.state), owned, claimed);
+    if (thresholds.length === 0) throw new GameApiError("NOTHING_TO_CLAIM", "받을 보상이 없습니다.");
+    const now = this.now();
+    const grants = pass.milestones.filter(({ threshold }) => thresholds.includes(threshold)).flatMap(({ rewards }) => rewards);
+    const nextWallet = { ...this.state.wallet };
+    const applied = this.applyProductGrants({ grants }, 1, nextWallet, this.state.itemInventory.map((entry) => ({ ...entry })), now);
+    const nextPasses = { ...passes, claimed: { ...passes.claimed, [pass.id]: [...claimed, ...thresholds].sort((a, b) => a - b) } };
+    const nextState: Session = { ...this.state, wallet: nextWallet, itemInventory: applied.items, progressPasses: nextPasses };
+    this.persist(nextState);
+    this.state.wallet = nextWallet; this.state.itemInventory = applied.items; this.state.progressPasses = nextPasses;
+    const response: ClaimProgressPassResponse = {
+      ...this.snapshot(), passId: pass.id, claimedThresholds: thresholds, granted: applied.granted, passes: this.progressPassDtos(this.state),
+    };
+    this.progressPassClaims.set(request.requestId, structuredClone(response));
+    return response;
+  }
+
+  private progressPassOwned(pass: ProgressPassDefinition): boolean {
+    return (this.state.productPurchases[pass.productId]?.count ?? 0) > 0;
+  }
+
+  /** 패스가 재는 진행도 — 스토리는 본편 관문 클리어 수, 레벨은 연구원 레벨, 레이드는 입장 수다. */
+  private progressPassProgress(pass: ProgressPassDefinition, state: Session): number {
+    if (pass.metric === "storyClears") return CHAPTERS.reduce((sum, { stages }) => sum + stages.filter(({ id }) => state.cleared.has(id)).length, 0);
+    if (pass.metric === "playerLevel") return state.playerResearch.level;
+    return state.progressPasses?.raidRuns ?? 0;
+  }
+
+  private progressPassDtos(state: Session): ProgressPassDto[] {
+    return PROGRESS_PASSES.map((pass) => {
+      const progress = this.progressPassProgress(pass, state);
+      const owned = this.progressPassOwned(pass);
+      const claimed = state.progressPasses?.claimed[pass.id] ?? [];
+      const states = progressPassMilestoneStates(pass, progress, owned, claimed);
+      return {
+        id: pass.id, productId: pass.productId, metric: pass.metric, progress, goal: progressPassGoal(pass), owned,
+        milestones: pass.milestones.map(({ threshold, rewards }, index) => ({ threshold, rewards: rewards.map((reward) => ({ ...reward, ...(reward.kind === "item" ? { name: reward.name } : {}) })), state: states[index]! })),
+      };
+    });
+  }
+
   /** 서버 시각의 노출 기간과 현재 제한 주기를 반영해 공용 카탈로그를 조회한다. */
   async getProducts(storefront: ProductDefinition["storefront"]): Promise<ProductListResponse> {
     await this.delay();
@@ -1736,7 +1806,7 @@ export class FakeServer implements GameApi {
    * 한쪽만 상한을 어긴다. 상한을 넘기면 어떤 것도 쓰지 않고 던지도록 호출부가 복제본에서만 부른다.
    */
   private applyProductGrants(
-    product: ProductDefinition,
+    product: Pick<ProductDefinition, "grants">,
     quantity: number,
     wallet: Session["wallet"],
     items: Session["itemInventory"],

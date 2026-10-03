@@ -549,6 +549,8 @@ describe("레이드 서버 경계", () => {
     expect(state.wallet.stamina).toBe(100 - cost);
     await api.enterRaid({ requestId: "e2", raidId: "world-2026-09-16" });
     expect(state.wallet.stamina).toBe(100 - cost);
+    // 입장 한 번이 레이드 패스의 진행도 한 칸이고, 같은 요청은 두 번 세지 않는다.
+    expect(state.progressPasses?.raidRuns).toBe(1);
   });
 
   it("은 스테미나가 모자라면 입장하지 않고 도전도 쓰지 않는다", async () => {

@@ -1709,7 +1709,7 @@ export class InfoManager {
     let strip: AppearanceStrip | undefined;
     this.popups.open({
       width: layout.width, height: layout.height, title: t("info.skin.title"), dim: true,
-      closeOnBackdrop: false, hideCloseButton: true,
+      closeOnBackdrop: true, hideCloseButton: true,
       onClose: () => { strip?.destroy(); strip = undefined; back?.destroy(); back = undefined; onClose(); },
     }, (body, close) => {
       back = addBackButton(this.scene, close).setDepth(this.popups.baseDepth + 500);

@@ -28,7 +28,7 @@ export class ExpeditionRankingPopup {
   open(): void {
     if (this.body) return;
     const width = BASE_WIDTH - 100; const height = BASE_HEIGHT - 180;
-    this.popups.open({ width, height, title: t("ranking.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.76, closeOnBackdrop: false, backButton: true, onClose: () => { this.destroyListMask(); this.content?.destroy(); this.content = undefined; this.body = undefined; } }, (body) => {
+    this.popups.open({ width, height, title: t("ranking.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.76, closeOnBackdrop: true, backButton: true, onClose: () => { this.destroyListMask(); this.content?.destroy(); this.content = undefined; this.body = undefined; } }, (body) => {
       this.body = body;
       /*
        * **원화는 판과 같은 실루엣으로 잘린다.** 팝업 몸판은 왼쪽 위·오른쪽 아래가 크게 깎여

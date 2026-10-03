@@ -81,7 +81,7 @@ export class EnemyInfoPopup {
       // 제목은 개체 이름이 아니라 **정보창**이다 — 이름은 판 안의 이름 블록이 이미 크게 말하고,
       // 머리글이 같은 말을 반복하면 한 창에 이름이 두 번 선다.
       width: ENEMY_INFO.width, height: ENEMY_INFO.height, title: t("info.enemy.title"), titleSize: POPUP_TITLE_SIZE.workboard,
-      dim: true, dimAlpha: 0.64, closeOnBackdrop: false, backButton: true,
+      dim: true, dimAlpha: 0.64, closeOnBackdrop: true, backButton: true,
       onClose: () => this.dispose(),
     }, (body) => {
       // 판(배경 원화·검은 면·가장자리 누르기·외곽선)과 그 위의 칸 층은 소환수 창과 같은 한 장이다.

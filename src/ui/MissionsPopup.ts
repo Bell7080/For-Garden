@@ -75,7 +75,7 @@ export class MissionsPopup {
     const { popup } = MISSIONS_POPUP_LAYOUT;
     const width = BASE_WIDTH - popup.widthInset;
     const height = BASE_HEIGHT - popup.heightInset;
-    this.popups.open({ width, height, title: t("missions.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.72, closeOnBackdrop: false, backButton: true, onClose: () => { this.destroyContent(); this.footer?.destroy(); this.footer = undefined; this.resetTimer?.remove(); this.resetTimer = undefined; this.body = undefined; this.onClose?.(); } }, (body) => {
+    this.popups.open({ width, height, title: t("missions.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.72, closeOnBackdrop: true, backButton: true, onClose: () => { this.destroyContent(); this.footer?.destroy(); this.footer = undefined; this.resetTimer?.remove(); this.resetTimer = undefined; this.body = undefined; this.onClose?.(); } }, (body) => {
       this.body = body;
       // 초기화 시각은 1초마다 글자만 갈아 끼운다 — 판을 다시 세우면 화면이 깜빡인다.
       this.resetTimer = this.scene.time.addEvent({ delay: 1000, loop: true, callback: () => this.paintReset() });

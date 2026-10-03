@@ -23,8 +23,8 @@ export const PASS_POPUP = {
     levelWidth: 190,
     frame: 108,
     frameGap: 14,
-    /** 가운데 레벨 마름모와 그 아래 문턱 글자. */
-    badge: { width: 96, height: 64, size: 38, stepY: 52, stepSize: 22 },
+    /** 가운데 레벨 표식(◈) — 바깥 마름모의 대각선, 안쪽 마름모의 대각선, 레벨 수 크기. */
+    badge: { outer: 124, inner: 84, size: 34 },
     /** 세로 게이지의 굵기. */
     rail: 14,
     /** 목록 맨 위·아래 여백. 첫 줄의 판이 창 윗변에 붙지 않게 한다. */

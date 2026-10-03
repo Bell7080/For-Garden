@@ -40,14 +40,14 @@ import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicSkinManager } from "../managers/RelicSkinManager";
 import { expeditionManager } from "../managers/ExpeditionManager";
 import { PVP_MODES } from "../data/pvpModes";
-import { ExpeditionEntryButton, sortieEntrySdSpot } from "../ui/ExpeditionEntryButton";
+import { ExpeditionEntryButton, sortieEntryBevel, sortieEntrySdSpot } from "../ui/ExpeditionEntryButton";
 import { ENEMY_SD_ASSETS, PONTOS_SD_ASSET, playMotion, type PuppetAsset } from "../puppets/assets";
 import { loadOwnedPuppet } from "../ui/statusPuppetLoad";
 import { PlayerProfilePopup } from "../ui/PlayerProfilePopup";
 import { profileModifierManager } from "../managers/ProfileModifierManager";
 import { playerProfileDisplay, type PlayerProfileDisplay } from "../state/playerProfile";
 import { openAvatarPicker, openBioEditor, openModifierPicker, openNicknameEditor } from "../ui/PlayerProfileEditors";
-import { showContentLockedToast, addLockBadge, addLockCover, collectUnlockCelebrations, consumeUnlockCelebration, contentNameKey, contentOpen, playLockPop, revealWithLockPop, UNLOCK_POP_TOTAL_MS } from "../ui/contentLock";
+import { showContentLockedToast, addLockCover, collectUnlockCelebrations, consumeUnlockCelebration, contentNameKey, contentOpen, revealWithLockPop, unlockCover, UNLOCK_POP_TOTAL_MS } from "../ui/contentLock";
 import type { ContentId } from "../core/contentUnlock";
 import { managerEvents } from "../managers/ManagerEvents";
 import { PROFILE_FRAMES } from "../data/profileFrames";
@@ -419,16 +419,12 @@ export class LobbyScene extends Phaser.Scene {
   private lockRailButton(id: ContentId, button: RailButton, size: number): void {
     const celebrate = contentOpen(id) && consumeUnlockCelebration(id);
     if (contentOpen(id) && !celebrate) return;
-    button.setAlpha(0.5);
-    const lock = addLockBadge(this, 0, 0, size * 0.34);
-    button.add(lock);
+    // 원본 칩과 같은 깎임의 덮개가 판 전체를 어둡게 덮고 한가운데에 큰 자물쇠를 건다(판을 흐리게 하면 자물쇠까지 흐려진다).
+    const cover = addLockCover(this, id, size, size, { bevel: { topLeft: size * 0.32, bottomRight: size * 0.32 } });
+    button.add(cover);
     if (!celebrate) return;
     this.unlockCelebrationUntil = this.time.now + UNLOCK_POP_TOTAL_MS + 900;
-    this.time.delayedCall(450, () => {
-      if (!lock.active) return;
-      playLockPop(this, lock);
-      this.time.delayedCall(UNLOCK_POP_TOTAL_MS - 120, () => { if (button.active) this.tweens.add({ targets: button, alpha: 1, duration: 260 }); });
-    });
+    this.time.delayedCall(450, () => { if (cover.active) unlockCover(this, cover, id); });
   }
 
   /** 잠긴 입구의 눌림은 동작 대신 개방 레벨을 알린다. */
@@ -438,7 +434,7 @@ export class LobbyScene extends Phaser.Scene {
 
   private gateEntrance(id: ContentId, button: Button, x: number, y: number): void {
     if (!contentOpen(id)) { button.setVisible(false); return; }
-    if (consumeUnlockCelebration(id)) { this.unlockCelebrationUntil = this.time.now + UNLOCK_POP_TOTAL_MS + 900; revealWithLockPop(this, button, x, y); }
+    if (consumeUnlockCelebration(id)) { this.unlockCelebrationUntil = this.time.now + UNLOCK_POP_TOTAL_MS + 900; revealWithLockPop(this, button, id, x, y); }
   }
 
   /** 연타 중에는 같은 인스턴스의 open 가드가 기존 쪽지를 유지한다. */
@@ -606,14 +602,12 @@ export class LobbyScene extends Phaser.Scene {
         const celebrate = entry.content !== undefined && contentOpen(entry.content) && consumeUnlockCelebration(entry.content);
         const sdDelay = celebrate ? 350 + UNLOCK_POP_TOTAL_MS + 250 : 0;
         if (entry.content !== undefined && (!contentOpen(entry.content) || celebrate)) {
-          const cover = addLockCover(this, entry.content, entry.width, entry.height, celebrate).setPosition(x, entry.y);
+          const cover = addLockCover(this, entry.content, entry.width, entry.height, { bevel: sortieEntryBevel(entry.height, entry.split), text: true }).setPosition(x, entry.y);
           body.add(cover);
           if (celebrate) {
-            // 막은 채 자물쇠만 흔들리다 터지고, 터진 뒤 덮개가 걷힌다.
-            const lock = addLockBadge(this, x, entry.y, 70);
-            body.add(lock);
-            this.time.delayedCall(350, () => { if (lock.active) playLockPop(this, lock); });
-            this.tweens.add({ targets: cover, alpha: 0, delay: 350 + UNLOCK_POP_TOTAL_MS - 150, duration: 240, onComplete: () => cover.destroy() });
+            // 막은 채 자물쇠가 개방 연출을 돌고, 터진 뒤 덮개가 걷힌다.
+            const content = entry.content;
+            this.time.delayedCall(350, () => { if (cover.active) unlockCover(this, cover, content); });
           }
           if (!celebrate) return;
         }

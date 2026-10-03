@@ -7,7 +7,7 @@ import { COLOR, textStyle } from "./theme";
 import { startNavScene } from "./screenTransition";
 import { NAV_TABS, navTabDirection, type NavKey } from "../core/navTabs";
 import { pressIn, pressOut } from "./pressFeedback";
-import { addLockBadge, consumeUnlockCelebration, contentOpen, playLockPop, showContentLockedToast, UNLOCK_POP_TOTAL_MS } from "./contentLock";
+import { addLockCover, consumeUnlockCelebration, contentOpen, showContentLockedToast, unlockCover } from "./contentLock";
 import type { ContentId } from "../core/contentUnlock";
 
 /** 차례와 넘김 규칙은 순수 표가 갖는다. 여기서는 그리기만 한다. */
@@ -130,19 +130,14 @@ export class BottomNav {
         (step - NAV_LABEL_GUTTER) / ACTIVE_SCALE,
       ));
       if (locked && contentId) {
-        group.setAlpha(0.5);
-        const lock = addLockBadge(scene, 0, -16, 26).setDepth(50);
-        group.add(lock);
+        // 덮개가 탭 전체를 어둡게 덮고 한가운데에 큰 자물쇠를 건다. 탭 자체를 흐리게 하면 자물쇠까지 함께 흐려진다.
+        const cover = addLockCover(scene, contentId, step - 28, 140, { bevel: { topLeft: 30, bottomRight: 30 }, blockInput: false });
+        cover.setPosition(0, 6);
+        group.add(cover);
         if (celebrate) {
           scene.time.delayedCall(500, () => {
-            if (!group.active) return;
-            group.remove(lock);
-            lock.setPosition(group.x, group.y - 16 * group.scale);
-            playLockPop(scene, lock);
-            scene.time.delayedCall(UNLOCK_POP_TOTAL_MS - 120, () => {
-              locked = false;
-              if (group.active) scene.tweens.add({ targets: group, alpha: 1, duration: 260 });
-            });
+            if (!cover.active) return;
+            unlockCover(scene, cover, contentId, () => { locked = false; });
           });
         }
       }

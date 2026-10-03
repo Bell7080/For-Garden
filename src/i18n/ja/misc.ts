@@ -155,6 +155,7 @@ export const MISC_JA = {
   "profile.record.expedition": "遠征最高スコア",
   "profile.record.collection": "図鑑収集",
   "profile.record.unranked": "未配置",
+  "content.unlocked": "{content}が開放されました！",
   "profile.nextUnlock": "LV.{level}で開放 · {content}",
   "profile.picker.title": "プロフィールカスタム",
   "profile.picker.photo": "プロフィール画像",

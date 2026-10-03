@@ -145,6 +145,7 @@ export const MISC_EN = {
   "profile.record.expedition": "Expedition Best",
   "profile.record.collection": "Archive",
   "profile.record.unranked": "Unranked",
+  "content.unlocked": "{content} unlocked!",
   "profile.nextUnlock": "Unlocks at LV.{level} · {content}",
   "profile.picker.title": "Customize Profile",
   "profile.picker.photo": "Profile Picture",

@@ -2521,6 +2521,12 @@ export type BasicBreakthrough = {
   /** 가봉이 옮기는 피해 비율에 이 퍼센트포인트를 더한다. 한 번에 두르는 상한은 그대로다(테리사). */
   kind: "tightStitch";
   damagePercentPoints: number;
+} | {
+  /** 독이 걸린 적을 평타로 맞히면 독 한 틱이 즉시 들어간다(델로피). 청산하는 타격은 이미 몰아 받으므로 제외한다. */
+  kind: "poisonPulse";
+} | {
+  /** 손질이 터질 때 대상에 남아 있던 출혈 피해를 그 자리에서 몰아 입히고 출혈을 지운다(마키). */
+  kind: "bleedSettle";
 } | BreakthroughNone;
 
 /**
@@ -2674,6 +2680,14 @@ export type UltimateBreakthrough = {
   kind: "splashPaint";
   radius: number;
   sharePercent: number;
+} | {
+  /** 강화된 한 방 직후, 같은 확정 치명·방어 무시를 물려받은 카드가 이 위력 비율로 한 장 더 나간다(델로피). */
+  kind: "extraCard";
+  powerPercent: number;
+} | {
+  /** 출혈이 걸린 적에게 궁극기 피해가 이 비율만큼 늘어난다(마키). */
+  kind: "bleedFeast";
+  damagePercent: number;
 } | BreakthroughNone;
 
 /**
@@ -2810,6 +2824,13 @@ export type FerocityBreakthrough = {
   /** 폭주 중 가봉 막의 일부를 두 번째로 체력 비율이 낮은 아군에게도 준다(테리사). */
   kind: "doubleNeedle";
   sharePercent: number;
+} | {
+  /** 폭주 중 독을 터뜨린 같은 타격에서 독을 다시 바른다(델로피). */
+  kind: "rePoison";
+} | {
+  /** 폭주 중 공격 속도가 이 비율만큼 오른다(마키). 궁극기와 무관하다. */
+  kind: "swiftHands";
+  attackSpeedPercent: number;
 } | BreakthroughNone;
 
 /**
@@ -2947,6 +2968,13 @@ export type PassiveBreakthrough = {
   /** 이 개체의 막을 두른 아군이 주는 피해가 이 비율만큼 늘어난다(테리사). */
   kind: "stitchedMight";
   damagePercent: number;
+} | {
+  /** 독이 걸려 있는 동안 그 적이 아군 누구에게나 받는 피해가 이 비율만큼 늘어난다. 독이 풀리면 끝난다(델로피). */
+  kind: "blightedFoe";
+  takenPercent: number;
+} | {
+  /** 도약 착지 뒤 첫 일반 공격이 확정 치명타다(마키). */
+  kind: "landingAmbush";
 } | BreakthroughNone;
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */

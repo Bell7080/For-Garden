@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 import { OPENING_TRAIN } from "../../src/data/dialogues/openingTrain";
 import { SAVE_STORAGE_KEY, SaveManager } from "../../src/state/SaveManager";
+import { normalizePlayerLevel, PLAYER_LEVEL_CAP } from "../../src/core/playerLevel";
 import { createDefaultSession, type Session } from "../../src/state/session";
 
 /**
@@ -20,6 +21,8 @@ function completedOpeningSave(prepare?: (session: Session) => void): string {
   });
   const session = createDefaultSession();
   session.completedStoryIds.add(OPENING_TRAIN.id);
+  // 콘텐츠가 연구원 레벨로 잠겨 있으므로 화면별 E2E는 기본으로 모두 열린 만렙에서 시작한다. 잠금을 확인하는 편만 prepare에서 되돌린다.
+  session.playerResearch = normalizePlayerLevel({ level: PLAYER_LEVEL_CAP });
   // 화면별 E2E는 저장 JSON을 직접 만들지 않고 타입이 보장된 세션만 필요한 상태로 조정한다.
   prepare?.(session);
   manager.save(session);

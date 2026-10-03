@@ -73,6 +73,54 @@ const CATEGORY: Record<EffectKind, Category> = {
   bulwarkPayback: "damage",
   heatOverflow: "survival",
   sweeterWound: "survival",
+  clawBleed: "damage",
+  windStep: "support",
+  afterimageSlash: "damage",
+  gustEnergy: "cadence",
+  frenzyClaws: "crit",
+  windPull: "cadence",
+  huntMark: "crit",
+  windEcho: "cadence",
+  dreadAegis: "survival",
+  quarryMark: "support",
+  spreadingDread: "control",
+  terrorCarapace: "survival",
+  // 탱커 계약(수압·까칠·졸음)을 새 동작으로 보여 주는 효과들
+  pressureConduct: "control",
+  thornJab: "damage",
+  sleepPounce: "damage",
+  deepSink: "control",
+  wallReflect: "damage",
+  lullabyGaze: "control",
+  vortexDraw: "control",
+  heatChain: "survival",
+  yawnContagion: "control",
+  salvageShare: "support",
+  thornStorm: "damage",
+  softBreath: "survival",
+  helmetBash: "damage",
+  underline: "damage",
+  sodaFizz: "control",
+  dashBack: "damage",
+  contagiousFrenzy: "control",
+  coolingVent: "survival",
+  chainCollision: "control",
+  finalChapter: "control",
+  frostCling: "control",
+  impactCapTighten: "survival",
+  extraChapter: "damage",
+  iceShatter: "damage",
+  wetMark: "damage",
+  paintSpill: "damage",
+  tightStitch: "support",
+  splashCharge: "cadence",
+  splashPaint: "damage",
+  bigWave: "damage",
+  extraLayer: "damage",
+  doubleNeedle: "support",
+  touchBurst: "damage",
+  vitalSketch: "crit",
+  stitchedMight: "damage",
 };
 
 /** 직군이 받을 수 없는 분류. 암살자·원거리 딜러는 은신이 아닌 생존 유틸과 게이지 조작을 받지 않는다. */
@@ -84,8 +132,11 @@ const FORBIDDEN: Partial<Record<RelicDef["role"], readonly Category[]>> = {
  * 궁극기 게이지·주기를 바꾸는 효과 중 **명시적으로 승인된 것**. 새 항목은 이유와 함께 더한다.
  * - execution: 렉시아(SSR 전사)의 처치 환급. 기절이 없는 궁극기라 체인이 생기지 않는다.
  * - lightChorus: 메테(SSR 지원가)의 게이지 −15. 회복 궁극기라 기절이 없고, 회복량은 잃은 체력 비례다.
+ * - splashCharge: 티아(R 전사)의 표식 폭발 환급(+6). 폭발은 표식을 한 번 남기고 한 번 지우는 순환이라 평타 두 번에 한 번뿐이고, 궁극기에 기절이 없어 체인이 생기지 않는다.
+ * - gustEnergy·windPull·windEcho: 스테라(SR 지원가)의 「아군에게 에너지를 준다」는 정체성. 스테라의 궁극기는 피해·기절이 없는 순풍이고,
+ *   총량은 시전 한 번(+10)·폭주 중 평타 한 번(+5, 한 명)·은신 진입 한 번(+10)으로 묶여 있어 기절 체인이 생기지 않는다.
  */
-const CADENCE_APPROVED = new Set<EffectKind>(["execution", "lightChorus"]);
+const CADENCE_APPROVED = new Set<EffectKind>(["execution", "lightChorus", "gustEnergy", "windPull", "windEcho", "splashCharge"]);
 
 function effectsOf(relic: RelicDef): { slot: keyof Slots; kind: EffectKind }[] {
   const effects = relic.breakthroughEffects;

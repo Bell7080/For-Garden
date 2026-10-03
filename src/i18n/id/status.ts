@@ -48,4 +48,8 @@ export const STATUS_ID = {
   "status.observation.detail": "{stacks} / {max} tumpuk · sisa {time}",
   "status.butcher": "Jagal",
   "status.butcher.detail": "{stacks} / {max} tumpuk · Meledak saat penuh",
+  "status.intimidation": "Intimidasi",
+  "status.intimidation.detail": "{stacks} / {max} tumpuk · Penuh: ketakutan",
+  "status.fear": "Ketakutan",
+  "status.fear.detail": "Melarikan diri · Tanpa Serangan Dasar · {time}",
 } as const;

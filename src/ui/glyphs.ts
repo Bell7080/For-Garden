@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { padlockGeometry } from "./lockStyle";
 
 /**
  * 화면에서 쓰는 선 아이콘 모음.
@@ -281,11 +282,16 @@ export function drawGlyph(
       g.strokePoints(points(-r * 0.9, -r * 0.2, -r * 0.35, -r * 0.62, r * 0.35, -r * 0.62, r * 0.9, -r * 0.2, r * 0.5, r * 0.1, r * 0.5, r * 0.85, -r * 0.5, r * 0.85, -r * 0.5, r * 0.1), true);
       g.lineBetween(0, -r * 0.62, 0, -r * 0.9);
       break;
-    case "lock":
-      // 자물쇠 — 몸통과 고리. 둥근 고리를 쓰지 않고 각지게 꺾어 다른 아이콘과 결을 맞춘다.
-      g.strokeRect(-r * 0.72, -r * 0.06, r * 1.44, r * 0.98);
-      g.strokePoints(points(-r * 0.42, -r * 0.06, -r * 0.42, -r * 0.52, -r * 0.2, -r * 0.78, r * 0.2, -r * 0.78, r * 0.42, -r * 0.52, r * 0.42, -r * 0.06), false);
+    case "lock": {
+      // 자물쇠 — `Padlock`과 같은 도형을 한 색으로 채운 실루엣. 작은 자리라 열쇠 구멍은 뚫지 않는다.
+      const geo = padlockGeometry(size);
+      g.lineStyle(geo.shackleWidth, color, alpha);
+      g.strokePoints(points(...geo.shackle), false);
+      const { x: bx, y: by, width: bw, height: bh, bevel } = geo.body;
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(bx + bevel, by, bx + bw, by, bx + bw, by + bh - bevel, bx + bw - bevel, by + bh, bx, by + bh, bx, by + bevel), true);
       break;
+    }
     case "filter":
       // 깔때기 — 목록을 좁힌다. 둥근 목 대신 각지게 꺾어 다른 아이콘과 결을 맞춘다.
       g.strokePoints(points(-r * 0.9, -r * 0.78, r * 0.9, -r * 0.78, r * 0.22, r * 0.04, r * 0.22, r * 0.86, -r * 0.22, r * 0.56, -r * 0.22, r * 0.04), true);

@@ -610,6 +610,12 @@ export const RELICS: RelicDef[] = [
       // 주 대상의 최종 HP 손실을 기준으로, 주 대상에게서 가장 가까운 다른 적에게 전이한다.
       damageTransfer: { percent: 75, distanceOrigin: "primaryTarget" },
     },
+    breakthroughEffects: {
+      basic: { kind: "clawBleed" },
+      ultimate: { kind: "afterimageSlash", delaySeconds: 0.5, powerPercent: 60 },
+      ferocity: { kind: "frenzyClaws", every: 2 },
+      passive: { kind: "huntMark", criticalDamagePercent: 30 },
+    },
   },
   {
     id: "dodo",
@@ -771,6 +777,13 @@ export const RELICS: RelicDef[] = [
     // 물살을 타고 계속 뛰어드는 몸이라 폭주는 **버틸 숨과 손**으로 발현한다. 토리카의 폭주와
     // 같은 1초 시계를 쓰되(`torikaBulwark`) 손이 함께 빨라진다 — 그쪽은 앞에 서서 버티는
     // 값이고, 이쪽은 계속 때리면서 버티는 값이다.
+    // 한계 돌파: 젖은 표적 · 물보라 충전 · 큰 파도 · 건드리면 터진다.
+    breakthroughEffects: {
+      basic: { kind: "wetMark", takenPercent: 12 },
+      ultimate: { kind: "splashCharge", energy: 6 },
+      ferocity: { kind: "bigWave", powerMultiplier: 2 },
+      passive: { kind: "touchBurst" },
+    },
     ferocityTrait: { name: "이크티오 다이브!", effectId: "tidalVigor", attackSpeedPercent: 20, missingHpRegenPercentPerSecond: 2 },
     passive: {
       // kind가 shimmerMark인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을 만들므로
@@ -910,6 +923,12 @@ export const RELICS: RelicDef[] = [
       // 지속 회복은 순풍 태그가 아니라 이 궁극기가 얹는 값이다 — 다른 개체가 건 순풍은 회복을 데려오지 않는다.
       teamBuff: { kind: "tailwind", attackSpeedPercent: 20, moveSpeedPercent: 20, seconds: 10, maxHpRegenPercentPerSecond: 2 },
     },
+    breakthroughEffects: {
+      basic: { kind: "windStep", attackSpeedPercent: 10, seconds: 3 },
+      ultimate: { kind: "gustEnergy", energy: 25 },
+      ferocity: { kind: "windPull", extraEnergy: 5 },
+      passive: { kind: "windEcho", energy: 10 },
+    },
   },
 
   {
@@ -977,6 +996,14 @@ export const RELICS: RelicDef[] = [
     ferocityTrait: {
       name: "카페인 풍선껌", effectId: "caffeineBubble",
       taunt: { kind: "taunt", seconds: 3 }, tauntRadius: 420, prickleGainMultiplier: 2,
+    },
+    // 한계 돌파 — 겹이 곧 평타 위력이 되고(가시 평타), 궁극기 막이 흡수한 피해를 되돌리며(방벽 반사), 폭주는 터진 뒤에도 겹이
+    // 이어지고(궁극기와 엮지 않는다), 패시브는 겹이 가득할 때 반격이 옆 적에게 튄다.
+    breakthroughEffects: {
+      basic: { kind: "thornJab", powerPercent: 100 },
+      ultimate: { kind: "wallReflect", reflectPercent: 25 },
+      ferocity: { kind: "heatChain", keepStacks: 5 },
+      passive: { kind: "thornStorm", minStacks: 7, splashPercent: 50 },
     },
     passive: {
       // kind가 prickly인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
@@ -1086,6 +1113,14 @@ export const RELICS: RelicDef[] = [
     },
     // 폭주 중 공속이 오르고 평타가 자기 주위를 쓸어, 맞은 적 모두에게 수압이 쌓인다. 보호막은 따로 주지 않는다.
     ferocityTrait: { name: "심해 와류", effectId: "abyssalVortex", attackSpeedPercent: 40, radius: 200 },
+    // 한계 돌파 — 압력이 터질 때 옆 적으로 번지고(압력 전도), 끌려온 적은 도발 동안 스스로 가라앉으며(심해 침강), 폭주는 수압이 쌓인 적을
+    // 소용돌이로 끌어당기고(궁극기와 엮지 않는다), 패시브는 인양물의 막을 가장 얇은 아군에게 나눈다.
+    breakthroughEffects: {
+      basic: { kind: "pressureConduct", stacks: 2 },
+      ultimate: { kind: "deepSink", stacksPerSecond: 1 },
+      ferocity: { kind: "vortexDraw", minStacks: 2, pullPerSecond: 70 },
+      passive: { kind: "salvageShare", sharePercent: 50 },
+    },
     passive: {
       // kind가 salvageCatch인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
@@ -1182,6 +1217,14 @@ export const RELICS: RelicDef[] = [
     },
     // 폭주 중 공속이 오르고 철퇴가 자기 주위를 휩쓸어 맞은 적을 짧게 밀어낸다.
     ferocityTrait: { name: "잠투정", effectId: "sleepTantrum", attackSpeedPercent: 40, radius: 200, knockback: { seconds: 0.3, speed: 700, bounces: 0 } },
+    // 한계 돌파 — 재운 적을 깨우는 아군의 한 대가 더 아프고(잠꼬대 기습), 궁극기에 도발당한 적이 스스로 졸음을 쌓으며, 폭주는 깨어나는 적이
+    // 하품을 옮기고(궁극기와 엮지 않는다), 패시브는 잠든 적이 많을수록 소음의 회복이 포근해진다.
+    breakthroughEffects: {
+      basic: { kind: "sleepPounce", damagePercent: 30 },
+      ultimate: { kind: "lullabyGaze", stacksPerHit: 1 },
+      ferocity: { kind: "yawnContagion", stacks: 1, radius: 300 },
+      passive: { kind: "softBreath", healPercentPerSleeper: 25, maxSleepers: 3 },
+    },
     passive: {
       // kind가 whiteNoise인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
@@ -1334,6 +1377,110 @@ export const RELICS: RelicDef[] = [
   },
 
   {
+    id: "ark",
+    squad: "fang",
+    name: "아크",
+    specimenNumber: "235",
+    projectName: "LONG SHADOW",
+    excavationSite: "미국 캘리포니아주 란초 라 브레아 후기 홍적세 타르 구덩이 퇴적층",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "타르 구덩이 바닥에서 짧고 높게 솟은 얼굴뼈와 유난히 긴 앞다리뼈가 한 덩어리로 굳어 나왔다. 일어섰을 때 닿는 높이가 발굴 당시 예상을 크게 웃돌아, 복원 연구는 이 곰이 서면 어디까지 그림자를 드리웠는지를 재는 것으로 시작했다.",
+    observationProfile: {
+      originYear: "약 1만 1천 년 전",
+      // E.C.는 아크의 인간형 신체 나잇대이며, 원종 화석의 연대와 독립된 값이다.
+      restorationYear: "E.C. 14년",
+      lifeStage: "아성체",
+      height: "1.46 m",
+      weight: "41 kg",
+    },
+    catalogSummary: "신장 1.46m, 체중 41kg의 인간형 체격에 곰 머리 후드와 발톱이 달린 긴 소매, 털 달린 군화를 갖춘 채 복원된 아성체 아르크토두스 표본.",
+    // 복원 후 관찰은 성격과 실제로 목격된 행동만 남기고 발굴 기록과 겹치지 않게 쓴다.
+    unlockRecord: { status: "recorded", text: "복원 후 아크는 후드를 깊이 눌러쓴 채 복도 한가운데를 걸어 다니는데, 마주 오던 쪽이 먼저 벽에 붙어 길을 비킨다. 본인은 그 이유를 몰라 자기가 길을 막았나 싶어 한참 멈춰 서 있고, 그 모습이 후드의 그림자를 더 크게 만든다. 연구원 앞에서만 후드를 뒤로 넘기며, 관찰 중 \"마스터\"라 부르며 간식 포장을 슬며시 건넨 적이 있다." },
+    squadNote: "앱솔루트 팽의 전선 수비 담당. 밀고 들어가는 동료들 앞에 서서 상대가 먼저 물러서게 만들어 전열을 지키고, 연구원을 \"마스터\"라 부르며 지시에는 고개부터 끄덕인다.",
+    researcherTitle: "마스터",
+    rarity: "SSR",
+    portraitAssetId: "ark",
+    origin: "아르크토두스",
+    element: "earth",
+    role: "tank",
+    // 긴 소매 끝의 발톱이 닿는 거리에서 싸운다.
+    reachTier: "melee",
+    // 타르 구덩이에서 나온 개체라 발굴 특화도 화석 회수 쪽에 붙인다.
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.1, efficiencyMultiplier: 1.05 },
+    /**
+     * **버티는 값은 체력·방어·저항, 한 방은 느리고 무겁다.** 주문력을 쓰는 스킬이 없어 로스터 최저로 두고
+     * (스테라 사례), 공속 50은 탱커 중 가장 느리다(엘라 62 · 노도니아 74 · 안카 70). 공포는 피해가 없는
+     * 상태라 공격력은 평타 한 방의 무게만 맡는다. 전투력 2418로 SSR 띠(2340~2460) 안이다.
+     */
+    stats: {
+      hp: 1600,
+      def: 148,
+      res: 114,
+      atk: 110,
+      ap: 20,
+      attackSpeed: 50,
+      moveSpeed: 54,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    // 폭주 중 위압이 한 번에 두 겹 쌓이고 공포 뒤 면역이 짧아져, 같은 적에게 공포를 연달아 먹인다. 피해량·궁극기는 건드리지 않는다.
+    ferocityTrait: { name: "사냥 본능", effectId: "huntInstinct", intimidateBonusStacks: 1, fearImmunitySeconds: 1 },
+    passive: {
+      // kind가 looming인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
+      // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
+      id: "ark-passive",
+      name: "거대한 그림자",
+      kind: "looming",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 위압이 쌓이는 간격(초)을 담아 둔다.
+      value: 2.5,
+      // 3겹이면 2초 공포, 풀린 뒤 6초 면역(영구 도주를 막는다). 피해는 없다.
+      looming: {
+        intervalSeconds: 2.5,
+        radius: 240,
+        intimidate: { kind: "intimidate", maxStacks: 3, seconds: 6, fearSeconds: 2, immunitySeconds: 6 },
+      },
+      desc: "2.5초마다 주위 모든 적에게 위압이 한 겹 쌓인다. 피해는 주지 않는다.",
+    },
+    basic: {
+      id: "ark-basic",
+      name: "짓누르기",
+      power: 240,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+      statusEffects: [{ kind: "intimidate", maxStacks: 3, seconds: 6, fearSeconds: 2, immunitySeconds: 6 }],
+    },
+    ultimate: {
+      id: "ark-ult",
+      name: "포식자의 포효",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      cost: 150,
+      // 때리지 않는다. 주위 모든 적을 곧바로 공포에 빠뜨리고, 실제로 겁먹은 적 수만큼 보호막을 키운다.
+      targeting: "self",
+      selfRoar: {
+        radius: 360,
+        fear: { kind: "fear", seconds: 2, immunitySeconds: 6 },
+        shieldMaxHpPercent: 10,
+        shieldPerFearedMaxHpPercent: 6,
+        shieldMaxFeared: 5,
+      },
+    },
+    breakthroughEffects: {
+      basic: { kind: "dreadAegis", shieldPercent: 5, cooldownSeconds: 3 },
+      ultimate: { kind: "quarryMark", seconds: 8, damageTakenPercent: 12 },
+      ferocity: { kind: "spreadingDread", radius: 400, stacks: 1 },
+      passive: { kind: "terrorCarapace", percentPerIntimidated: 10, maxIntimidated: 5 },
+    },
+  },
+
+  {
     id: "meron",
     squad: "rune",
     name: "메론",
@@ -1380,6 +1527,13 @@ export const RELICS: RelicDef[] = [
       ferocityGain: 0,
     },
     // 소심해서 자기가 나서지 못하는 아이라, 폭주는 제 화력이 아니라 아군의 손을 빌리는 쪽으로 발현한다.
+    // 한계 돌파: 번진 물감 · 튀는 물감 · 한 겹 더 · 급소 그리기.
+    breakthroughEffects: {
+      basic: { kind: "paintSpill", radius: 300, stacks: 1 },
+      ultimate: { kind: "splashPaint", radius: 260, sharePercent: 50 },
+      ferocity: { kind: "extraLayer", extraStacks: 1 },
+      passive: { kind: "vitalSketch", critPoints: 25 },
+    },
     ferocityTrait: {
       name: "네? 마음에 안 드신다고요...?",
       effectId: "sharedOverpaint",
@@ -1482,6 +1636,13 @@ export const RELICS: RelicDef[] = [
       // 곡선을 그리며 굴러가는 것이 아니라 **따악 맞고 튀어 나가는** 속도다.
       speed: 2400,
       bounces: 3,
+    },
+    // 한계 돌파: 헬멧 박치기(막 있는 동안 평타 추가 피해) · 돌진 왕복 · 연쇄 충돌 · 더 낮은 한 방 상한.
+    breakthroughEffects: {
+      basic: { kind: "helmetBash", attackPercent: 25 },
+      ultimate: { kind: "dashBack", delaySeconds: 0.6, powerPercent: 60 },
+      ferocity: { kind: "chainCollision", radius: 80 },
+      passive: { kind: "impactCapTighten", maxHpPercent: 20 },
     },
     passive: {
       // kind가 impactCap인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을 만들므로
@@ -1695,6 +1856,13 @@ export const RELICS: RelicDef[] = [
     // 광란은 폭주에서도 나오지만 **직접 적중**에만 걸린다. 전이까지 발동하면 한 번의 공격이
     // 사슬 길이만큼 적을 돌려세워, 폭주 동안 상대 편이 통째로 멈춘 것처럼 된다.
     ferocityTrait: { name: "나만 봐", effectId: "frenzyGaze", seconds: 2, attackSpeedPercent: 50 },
+    // 한계 돌파: 밑줄 긋기(집중 2겹) · 서로 물들기 · 결말의 여운 · 한 장 더(저주 상한).
+    breakthroughEffects: {
+      basic: { kind: "underline", stacks: 2 },
+      ultimate: { kind: "contagiousFrenzy", stacks: 1 },
+      ferocity: { kind: "finalChapter", radius: 400, stacks: 2 },
+      passive: { kind: "extraChapter", extraStacks: 1 },
+    },
     passive: {
       // kind가 cursedInsight인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
@@ -2909,6 +3077,13 @@ export const RELICS: RelicDef[] = [
       ferocityGain: 0,
     },
     ferocityTrait: { name: "모피", effectId: "furCoat", cleanseAllOnEntry: true, shieldMaxHpPercent: 25, defenseResistancePercent: 100 },
+    // 한계 돌파: 사이다 거품 · 냉방 환기 · 털에 얼어붙음 · 얼음 깨기.
+    breakthroughEffects: {
+      basic: { kind: "sodaFizz", radius: 300, stacks: 1 },
+      ultimate: { kind: "coolingVent", healMaxHpPercentPerFrozen: 0.5, maxFrozenCounted: 3 },
+      ferocity: { kind: "frostCling", stacks: 1 },
+      passive: { kind: "iceShatter", radius: 300, attackPercent: 120 },
+    },
     passive: {
       // kind가 frostboundDominion인 패시브는 passiveDescription()이 구조화 필드로 문장을 만드므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
@@ -3008,6 +3183,13 @@ export const RELICS: RelicDef[] = [
     },
     // 수치를 여기 적지 않는다 — 옮기는 비율과 상한은 「가봉」 하나가 갖고, 폭주는 그 몫이
     // 보호막으로 가는지 회복으로 가는지만 바꾼다.
+    // 한계 돌파: 촘촘한 땀 · (궁극기 없음) · 덧바늘 · 입은 만큼 휘두른다.
+    breakthroughEffects: {
+      basic: { kind: "tightStitch", damagePercentPoints: 15 },
+      ultimate: { kind: "none" },
+      ferocity: { kind: "doubleNeedle", sharePercent: 50 },
+      passive: { kind: "stitchedMight", damagePercent: 15 },
+    },
     ferocityTrait: { name: "지짐", effectId: "cautery", attackSpeedPercent: 40 },
     passive: {
       // kind가 sutureStitch인 패시브는 passiveDescription()이 구조화 필드로 문장을 만드므로

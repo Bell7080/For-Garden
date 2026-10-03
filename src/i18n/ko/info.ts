@@ -91,7 +91,6 @@ export const INFO_KO = {
   "info.bond.nextStep": "다음 단계",
   "info.bond.story": "유대 이야기",
   "info.bond.opened": "열림",
-  "info.bond.chapterReward": "읽으면 젬 {gems}개",
   "info.bond.required": "유대 {level} 필요",
 
   "info.stats.detail": "능력치 상세",

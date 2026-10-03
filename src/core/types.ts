@@ -43,7 +43,7 @@ export type RelicRarity = "R" | "SR" | "SSR";
  */
 export type RaitiaAssetId = "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind";
 
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
@@ -303,6 +303,7 @@ export type AttackSkill = SkillBase & {
   selfBulwark?: never;
   selfVolley?: never;
   selfLullaby?: never;
+  selfRoar?: never;
 };
 
 /** 순수 회복 스킬은 damageType/power를 가질 수 없어 피해 계산에 잘못 전달되지 않는다. */
@@ -316,6 +317,7 @@ export type HealingSkill = SkillBase & {
   selfBulwark?: never;
   selfVolley?: never;
   selfLullaby?: never;
+  selfRoar?: never;
   healing: { kind: "teamMissingHpPercent"; percent: number };
 };
 
@@ -332,11 +334,12 @@ export type SetupSkill = SkillBase & {
   healing?: never;
   teamBuff?: never;
 } & (
-  | { selfSetup: SelfSetup; selfGuard?: never; selfBulwark?: never; selfVolley?: never; selfLullaby?: never }
-  | { selfSetup?: never; selfGuard: SelfGuard; selfBulwark?: never; selfVolley?: never; selfLullaby?: never }
-  | { selfSetup?: never; selfGuard?: never; selfBulwark: SelfBulwark; selfVolley?: never; selfLullaby?: never }
-  | { selfSetup?: never; selfGuard?: never; selfBulwark?: never; selfVolley: SelfVolley; selfLullaby?: never }
-  | { selfSetup?: never; selfGuard?: never; selfBulwark?: never; selfVolley?: never; selfLullaby: SelfLullaby }
+  | { selfSetup: SelfSetup; selfGuard?: never; selfBulwark?: never; selfVolley?: never; selfLullaby?: never; selfRoar?: never }
+  | { selfSetup?: never; selfGuard: SelfGuard; selfBulwark?: never; selfVolley?: never; selfLullaby?: never; selfRoar?: never }
+  | { selfSetup?: never; selfGuard?: never; selfBulwark: SelfBulwark; selfVolley?: never; selfLullaby?: never; selfRoar?: never }
+  | { selfSetup?: never; selfGuard?: never; selfBulwark?: never; selfVolley: SelfVolley; selfLullaby?: never; selfRoar?: never }
+  | { selfSetup?: never; selfGuard?: never; selfBulwark?: never; selfVolley?: never; selfLullaby: SelfLullaby; selfRoar?: never }
+  | { selfSetup?: never; selfGuard?: never; selfBulwark?: never; selfVolley?: never; selfLullaby?: never; selfRoar: SelfRoar }
 );
 
 /**
@@ -442,6 +445,25 @@ export type SelfLullaby = {
   shieldResistancePercent: number;
 };
 
+/**
+ * 포효 계약(아크의 「포식자의 포효」). 때리지 않는다.
+ *
+ * 반경 안의 모든 적을 **곧바로 공포**에 빠뜨리고(`fear` — 위압 겹을 거치지 않으며, 공포 면역 중인 적에게도 들어간다),
+ * 시전자는 보호막을 두른다. 막의 크기는 눈에 보이는 몫이다 — 기본 몫에 **실제로 공포에 빠진 적 한 명당** 얹는다.
+ * 강인함이 공포를 통째로 막은 적은 세지 않는다. 받는 피해를 줄이는 숨은 배율은 두지 않는다.
+ */
+export type SelfRoar = {
+  radius: number;
+  /** 반경 안의 적에게 거는 공포. */
+  fear: Extract<CombatStatusEffect, { kind: "fear" }>;
+  /** 시전 순간 두르는 기본 보호막(최대 체력 비율 %). */
+  shieldMaxHpPercent: number;
+  /** 공포에 빠진 적 한 명당 더하는 보호막(최대 체력 비율 %). */
+  shieldPerFearedMaxHpPercent: number;
+  /** 보호막이 세는 적의 상한. 물량형에서 막이 무한히 커지지 않게 한다. */
+  shieldMaxFeared: number;
+};
+
 /** 자리를 잡는 계약. 은신·순간이동·다음 타격 강화를 코어가 판별할 수 있는 값으로만 적는다. */
 export type SelfSetup = {
   /** 단일 대상 선택에서 제외되는 시간(초). */
@@ -488,6 +510,7 @@ export type SupportSkill = SkillBase & {
   selfBulwark?: never;
   selfVolley?: never;
   selfLullaby?: never;
+  selfRoar?: never;
   teamBuff: TeamBuff;
 };
 
@@ -940,6 +963,31 @@ export type CombatStatusEffect =
     }
   | {
       /**
+       * 위압(아크). **피해가 없는 표식**이다 — 겹이 상한에 닿으면 스스로 **공포**를 발동하고 겹이 0으로 돌아간다.
+       * 졸음 → 수면과 같은 틀이다. 겹은 새로 쌓일 때마다 시간이 처음부터 다시 흐르고, 공포 면역 중에는 쌓이지 않는다.
+       */
+      kind: "intimidate";
+      /** 이 겹에 닿으면 공포가 발동한다. */
+      maxStacks: number;
+      /** 겹이 남는 시간(초). */
+      seconds: number;
+      /** 발동하는 공포의 길이(초). 강인함이 기절과 똑같이 줄인다. */
+      fearSeconds: number;
+      /** 공포가 풀린 뒤 새 위압·공포가 들지 않는 시간(초). 영구 도주를 막는다. */
+      immunitySeconds: number;
+    }
+  | {
+      /**
+       * 공포(아크). 걸린 동안 **건 쪽에게서 달아나며 일반 공격을 하지 못한다.** 궁극기는 쓸 수 있다.
+       * 기절 슬롯과 따로 서지만 강인함·정화는 기절과 같은 길로 지난다. 이 계약을 직접 거는 것(궁극기)은
+       * 위압 겹을 거치지 않고 곧바로 걸리며 면역 중에도 들어간다 — 걸린 뒤 면역은 똑같이 켜진다.
+       */
+      kind: "fear";
+      seconds: number;
+      immunitySeconds: number;
+    }
+  | {
+      /**
        * 관측(디모). **피해가 없는 표식**이다 — 겹 자체는 아무것도 깎지 않고, 모르페의 일반 공격이
        * 적중할 때 그 겹만큼의 틱으로 켜진다(`BasicAttack.observationVolley`).
        *
@@ -1147,6 +1195,8 @@ export type PassiveKind =
   | "salvageCatch"
   /** 안카 전용: 몇 초마다 장치가 울려 주위 아군을 회복하고, 다른 아군을 때리던 주위 적에게 「졸음」을 건다. */
   | "whiteNoise"
+  /** 아크 전용: 몇 초마다 가까운 적에게 「위압」 한 겹을 쌓고, 겹이 차면 「공포」가 발동한다. 피해는 없다. */
+  | "looming"
   /** 실제 HP 피해를 받고 살아남을 때 겹(아모의 조가비 · 수쿠스이노의 흉터)을 쌓아 자신과 최저 HP 비율 아군을 보호한다. */
   | "shellGuard"
   /** 렉시아 전용: 공격 속도·공격력·치명타 확률·치명타 피해를 함께 강화한다. */
@@ -1447,6 +1497,17 @@ export type FerocityTrait = {
       attackSpeedPercent: number;
       /** 폭주 중 기본 공격이 닿는 자기 주위 반경. */
       radius: number;
+    }
+  | {
+      /**
+       * 사냥 본능(아크). 폭주 중 일반 공격이 쌓는 **위압이 더 쌓이고**, 공포가 풀린 뒤의 **면역이 짧아져** 같은 적에게
+       * 공포를 연달아 먹일 수 있다. 피해량·궁극기는 건드리지 않는다 — 공용 야성 규칙이 이미 피해를 올린다.
+       */
+      effectId: "huntInstinct";
+      /** 폭주 중 일반 공격 한 번에 위압이 더 쌓이는 겹 수. */
+      intimidateBonusStacks: number;
+      /** 폭주 중 공포가 풀린 뒤 면역(초). 계약의 값을 이 값으로 **갈아 끼운다**. */
+      fearImmunitySeconds: number;
     }
   | {
       /**
@@ -1930,6 +1991,15 @@ export interface Passive {
     capMaxHpPercent: number;
   };
   /**
+   * 「거대한 그림자」 계약(아크). `intervalSeconds`마다 반경 안의 **모든 적**에게 위압을 한 겹 쌓는다.
+   * 피해가 없고 거리를 벌리는 것이 전부다. 겹이 차서 터지는 공포는 일반 공격이 쌓는 위압과 같은 계약을 지난다.
+   */
+  looming?: {
+    intervalSeconds: number;
+    radius: number;
+    intimidate: Extract<CombatStatusEffect, { kind: "intimidate" }>;
+  };
+  /**
    * 「백색소음」 계약(안카). `intervalSeconds`마다 한 번 장치가 울린다 — 반경 안의 아군(자신 포함)은 안카
    * 저항력의 `healResistancePercent`%만큼 회복하고, 반경 안의 적 가운데 **안카가 아닌 아군을 노리고 있는 적**은
    * 「졸음」 한 겹을 받는다. 안카를 노리는 적은 그대로 둔다 — 그 적은 이미 탱커가 붙잡고 있다.
@@ -2377,6 +2447,80 @@ export type BasicBreakthrough = {
   kind: "scoldTaunt";
   /** 도발 시간(초). */
   tauntSeconds: number;
+} | {
+  /**
+   * 주기 치명타가 채워지는 한 발이 맞은 적에게 **출혈**을 남긴다(루카의 「발톱 자국」). 출혈은 공용 표준 값(`BLEED`)이라 시간·비율을
+   * 여기 두지 않는다. 평타마다가 아니라 4번째 발톱에만 걸려 렉시아·마키의 출혈 빈도와 겹치지 않는다.
+   */
+  kind: "clawBleed";
+} | {
+  /**
+   * 평타로 대신 **아군에게 에너지를 건넨 순간** 그 아군들에게 짧은 공격 속도 강화를 건다(스테라의 「바람을 탄 걸음」).
+   * 이미 순풍·오더가 걸린 아군은 덮지 않는다 — 더 센 지원을 약한 강화로 갈아 끼우지 않기 위해서다.
+   */
+  kind: "windStep";
+  /** 공격 속도 증가(%). */
+  attackSpeedPercent: number;
+  /** 지속 시간(초). */
+  seconds: number;
+} | {
+  /**
+   * 일반 공격이 **위압이 걸린 적**을 맞힐 때 자기 최대 체력의 일정 %를 보호막으로 두른다(아크의 「짓눌린 자의 대가」). 재사용 대기가
+   * 있어 연타로 쌓이지 않고, 막은 `grantShield` 한 길이다. 위압이 없는 적에게는 붙지 않는다.
+   */
+  kind: "dreadAegis";
+  /** 자기 최대 체력의 몇 %를 두르는지. */
+  shieldPercent: number;
+  /** 다시 두를 수 있기까지의 시간(초). */
+  cooldownSeconds: number;
+} | {
+  /**
+   * 수압이 상한에서 터질 때 **가장 가까운 다른 적에게 수압이 옮겨 간다**(모사나의 「압력 전도」). 옮기는 겹은 상한 바로 아래까지만 쌓여
+   * 그 자리에서 또 터지지 않는다 — 터짐이 터짐을 부르는 고리는 만들지 않는다.
+   */
+  kind: "pressureConduct";
+  /** 옮겨 가는 겹 수. */
+  stacks: number;
+} | {
+  /**
+   * 일반 공격이 적중할 때 **지금 쌓인 까칠 겹만큼의 반격**을 같은 대상에게 한 번 더 얹는다(켄토의 「가시 평타」). 겹이 곧 평타 위력이 된다.
+   */
+  kind: "thornJab";
+  /** 반격 한 번의 몫에 대한 비율(%). 100이면 맞았을 때 되받는 값과 같다. */
+  powerPercent: number;
+} | {
+  /**
+   * 잠든 적을 **깨우는 아군의 그 타격**이 더 세다(안카의 「잠꼬대 기습」). 재워 모아 두고 한꺼번에 깨우는 흐름을 아군이 쓰게 한다.
+   */
+  kind: "sleepPounce";
+  /** 늘어나는 피해(%). */
+  damagePercent: number;
+} | {
+  /** 보호막이 남아 있는 동안 기본 공격마다 공격력 비례 물리 피해가 한 번 더 들어간다(파치). 막은 소모하지 않는다. */
+  kind: "helmetBash";
+  attackPercent: number;
+} | {
+  /** 저주가 최대인 적을 직접 적중하면 「열 번 찍어」의 집중이 이 수만큼씩 쌓인다(케리스). 평소에는 한 겹이다. */
+  kind: "underline";
+  stacks: number;
+} | {
+  /** 얼어 있는 적을 때리면 맞은 적 주위의 다른 적에게 냉기가 이 수만큼 튄다(매디). */
+  kind: "sodaFizz";
+  radius: number;
+  stacks: number;
+} | {
+  /** 표식이 붙어 있는 동안 그 적이 받는 피해가 이 비율만큼 늘어난다(티아). 표식이 지워지면 끝난다. */
+  kind: "wetMark";
+  takenPercent: number;
+} | {
+  /** 덧칠이 최대 겹인 적을 때리면 근처 적에게 덧칠이 이 수만큼 번진다(메론). */
+  kind: "paintSpill";
+  radius: number;
+  stacks: number;
+} | {
+  /** 가봉이 옮기는 피해 비율에 이 퍼센트포인트를 더한다. 한 번에 두르는 상한은 그대로다(테리사). */
+  kind: "tightStitch";
+  damagePercentPoints: number;
 } | BreakthroughNone;
 
 /**
@@ -2459,6 +2603,77 @@ export type UltimateBreakthrough = {
   radius: number;
   /** 적 한 명이 한 번에 받는 상한(노도니아 최대 체력의 %). */
   capMaxHpPercent: number;
+} | {
+  /**
+   * 점멸해 꿰뚫은 자리에 **잔상이 늦게 따라붙어 같은 적을 한 번 더 벤다**(루카의 「잔상 베기」). 게이지·야성은 다시 쓰지 않고
+   * 전이·상태는 없다. 그 사이 표적이 쓰러졌으면 불발이다.
+   */
+  kind: "afterimageSlash";
+  delaySeconds: number;
+  /** 본 궁극기 위력의 몇 %로 베는지. */
+  powerPercent: number;
+} | {
+  /**
+   * 궁극기를 쓰는 순간 살아 있는 아군 전원이 **궁극기 게이지를 한 번 얻는다**(스테라의 「상승 기류」). 스테라의 궁극기가
+   * 나갈 때만 한 번이므로 총량은 시전 한 번당 정해져 있다.
+   */
+  kind: "gustEnergy";
+  /** 아군 한 명이 얻는 게이지. */
+  energy: number;
+} | {
+  /**
+   * 궁극기로 **실제로 공포에 빠진 적**이 한동안 받는 모든 피해가 늘어난다(아크의 「떨리는 먹잇감」). 공포가 풀려도 표식은 남아 아군의 딜이
+   * 그 적에게 몰린다. 강인함이 통째로 막은 적에게는 붙지 않는다. 기절 길이·궁극기 주기·보호막은 건드리지 않는다.
+   */
+  kind: "quarryMark";
+  /** 표식이 남는 시간(초). */
+  seconds: number;
+  /** 늘어나는 받는 피해(%). */
+  damageTakenPercent: number;
+} | {
+  /**
+   * 끌려온 적이 도발에 붙들려 있는 동안 **매초 수압이 한 겹씩 쌓인다**(모사나의 「심해 침강」). 터짐·잠금은 수압의 기존 규칙 그대로다.
+   */
+  kind: "deepSink";
+  /** 매초 쌓이는 겹 수. */
+  stacksPerSecond: number;
+} | {
+  /**
+   * 궁극기 보호막이 유지되는 동안 **막이 흡수한 피해의 일부를 가장 가까운 적에게 마법 피해로 되돌린다**(켄토의 「방벽 반사」).
+   */
+  kind: "wallReflect";
+  /** 흡수한 피해 중 되돌리는 비율(%). */
+  reflectPercent: number;
+} | {
+  /**
+   * 자장가에 도발된 적이 안카를 때릴 때마다 **졸음이 쌓인다**(안카의 「졸린 눈의 도발」). 수면은 졸음의 기존 상한 규칙으로만 든다.
+   */
+  kind: "lullabyGaze";
+  /** 한 번 때릴 때 쌓이는 겹 수. */
+  stacksPerHit: number;
+} | {
+  /** 궁극기 돌진이 끝난 뒤 출발점으로 한 번 더 돌아온다. 두 번째는 피해와 뇌진탕만 준다(파치). */
+  kind: "dashBack";
+  delaySeconds: number;
+  powerPercent: number;
+} | {
+  /** 광란에 걸린 적이 같은 편을 때릴 때마다 맞은 적에게 저주가 이 수만큼 걸린다(케리스). */
+  kind: "contagiousFrenzy";
+  stacks: number;
+} | {
+  /** 냉방 채널의 매 틱, 얼어 있는 적 한 명당 최대 체력 비율을 회복한다(매디). */
+  kind: "coolingVent";
+  healMaxHpPercentPerFrozen: number;
+  maxFrozenCounted: number;
+} | {
+  /** 표식이 터질 때마다 궁극기 게이지가 이 수만큼 찬다(티아). */
+  kind: "splashCharge";
+  energy: number;
+} | {
+  /** 궁극기가 터뜨린 덧칠 겹의 일부가 주변 적에게 덧칠로 남는다(메론). */
+  kind: "splashPaint";
+  radius: number;
+  sharePercent: number;
 } | BreakthroughNone;
 
 /**
@@ -2520,6 +2735,81 @@ export type FerocityBreakthrough = {
   kind: "heatOverflow";
   /** 폭주 동안 늘어나는 희열 최대 겹 수. */
   extraMaxStacks: number;
+} | {
+  /**
+   * 폭주 중 **주기 치명타가 더 자주 찬다**(루카의 「발톱 폭풍」). 평타 주기만 줄이며 다른 계약은 건드리지 않는다.
+   */
+  kind: "frenzyClaws";
+  /** 폭주 중 주기 치명타가 차는 평타 간격. */
+  every: number;
+} | {
+  /**
+   * 폭주 중 평타가 아군에게 나눠 주는 에너지에 더해, **에너지가 가장 낮은 아군 한 명**에게 한 번 더 건넨다(스테라의 「뒤처진 이 끌어올리기」).
+   * 전원에게 주는 값은 그대로라 총량은 평타 한 번당 이 값만큼만 늘어난다.
+   */
+  kind: "windPull";
+  /** 가장 낮은 아군이 평타 한 번마다 더 받는 에너지. */
+  extraEnergy: number;
+} | {
+  /**
+   * 폭주 중 적이 **공포에 빠지는 순간** 그 주변의 다른 적에게 위압이 번진다(아크의 「번지는 공포」). 번진 위압도 위압 규칙(면역·강인함)을
+   * 그대로 따르고, 피해·궁극기 효과는 없다. 공포는 적마다 한 번씩만 걸려 연쇄가 끝난다.
+   */
+  kind: "spreadingDread";
+  /** 번지는 반경(px). */
+  radius: number;
+  /** 번질 때 쌓는 위압 겹 수. */
+  stacks: number;
+} | {
+  /**
+   * 폭주 중 수압이 쌓인 적이 **모사나 쪽으로 서서히 끌려든다**(모사나의 「소용돌이 기압차」). 밀려나는 것이 아니라 이동만 바뀌며 기절은 없다.
+   */
+  kind: "vortexDraw";
+  /** 이만큼 이상 쌓인 적만 끌려든다. */
+  minStacks: number;
+  /** 초당 끌려드는 거리(px). */
+  pullPerSecond: number;
+} | {
+  /**
+   * 폭주 중 까칠이 상한에서 터진 뒤 **0이 아니라 이 겹 수로 이어진다**(켄토의 「카페인 연쇄」). 폭주가 끝나면 원래대로 비운다.
+   */
+  kind: "heatChain";
+  /** 터진 뒤 남는 겹 수. */
+  keepStacks: number;
+} | {
+  /**
+   * 폭주 중 **적이 잠에서 깰 때 주변 적에게 졸음이 번진다**(안카의 「하품 전염」). 재운 쪽이 안카일 때만 번진다.
+   */
+  kind: "yawnContagion";
+  /** 번지는 겹 수. */
+  stacks: number;
+  /** 번지는 반경(px). */
+  radius: number;
+} | {
+  /** 폭주로 튕겨 나간 적이 다른 적에게 부딪히면 부딪힌 적에게 뇌진탕이 걸린다. 튕김 한 번에 한 적씩(파치). */
+  kind: "chainCollision";
+  radius: number;
+} | {
+  /** 폭주 중 광란에 걸린 적이 쓰러지면 그 자리 주변 적에게 저주가 번진다(케리스). */
+  kind: "finalChapter";
+  radius: number;
+  stacks: number;
+} | {
+  /** 폭주 중 보호막이 남아 있는 동안 매디를 때린 적에게 냉기가 쌓인다(매디). */
+  kind: "frostCling";
+  stacks: number;
+} | {
+  /** 폭주 중 표식 폭발의 추가 피해가 이 배수로 터진다. 막 몫은 그대로다(티아). */
+  kind: "bigWave";
+  powerMultiplier: number;
+} | {
+  /** 폭주 중 덧칠 최대 겹이 이 수만큼 늘어난다(메론). */
+  kind: "extraLayer";
+  extraStacks: number;
+} | {
+  /** 폭주 중 가봉 막의 일부를 두 번째로 체력 비율이 낮은 아군에게도 준다(테리사). */
+  kind: "doubleNeedle";
+  sharePercent: number;
 } | BreakthroughNone;
 
 /**
@@ -2584,6 +2874,79 @@ export type PassiveBreakthrough = {
   kind: "sweeterWound";
   /** 겹당 늘어나는 회복(최대 체력의 %p, 화면에는 %로 적는다). */
   regenPercentPerStack: number;
+} | {
+  /**
+   * 무리가 **함께 노리는 적**(다른 아군이 같이 표적으로 삼은 적)에게는 이 개체의 치명타 피해가 늘어난다(루카의 「사냥감 표식」).
+   * 혼자 노리는 적에게는 붙지 않는다.
+   */
+  kind: "huntMark";
+  /** 늘어나는 치명타 피해(%p, 화면에는 %로 적는다). */
+  criticalDamagePercent: number;
+} | {
+  /**
+   * 저체력 은신에 **들어가는 순간** 살아 있는 아군 전원이 게이지를 한 번 얻는다(스테라의 「바람의 잔향」). 전투당 한 번뿐이다.
+   */
+  kind: "windEcho";
+  energy: number;
+} | {
+  /**
+   * 위압이 걸린 적 한 명당 방어력·저항력이 늘어난다(아크의 「공포의 갑각」). 상한이 있고 눈에 보이는 상태(적 머리 위 위압 칩)에서만
+   * 오른다 — 위압이 풀리면 함께 사라진다.
+   */
+  kind: "terrorCarapace";
+  /** 위압이 걸린 적 한 명당 방어력·저항력 증가(%). */
+  percentPerIntimidated: number;
+  /** 세는 적의 상한. */
+  maxIntimidated: number;
+} | {
+  /**
+   * 「인양 성공」의 막이 오를 때 **막이 가장 얇은 아군 한 명에게도 같은 막의 일부가 간다**(모사나의 「인양물 나누기」).
+   */
+  kind: "salvageShare";
+  /** 나누는 비율(%). */
+  sharePercent: number;
+} | {
+  /**
+   * 까칠 겹이 많을 때 **반격이 맞은 적 주변의 다른 적 한 명에게도 튄다**(켄토의 「가시 폭풍」). 튄 반격은 다시 겹을 쌓지 않는다.
+   */
+  kind: "thornStorm";
+  /** 이 겹 수 이상일 때만 튄다. */
+  minStacks: number;
+  /** 튀는 반격의 몫(%). */
+  splashPercent: number;
+} | {
+  /**
+   * 백색소음의 회복이 **그 순간 잠든 적 한 명마다** 늘어난다(안카의 「포근한 숨소리」).
+   */
+  kind: "softBreath";
+  /** 잠든 적 한 명당 늘어나는 회복(%). */
+  healPercentPerSleeper: number;
+  /** 세는 잠든 적의 상한. */
+  maxSleepers: number;
+} | {
+  /** 한 방 상한을 더 낮춘다(최대 체력 %, 파치). */
+  kind: "impactCapTighten";
+  maxHpPercent: number;
+} | {
+  /** 집중이 가득 차면 저주 상한이 이 수만큼 늘어난다(케리스). */
+  kind: "extraChapter";
+  extraStacks: number;
+} | {
+  /** 빙결이 풀리는 순간 주위의 적에게 공격력 비례 물리 피해가 한 번 터진다(매디). */
+  kind: "iceShatter";
+  radius: number;
+  attackPercent: number;
+} | {
+  /** 표식이 붙은 적이 이 개체를 때리면 그 표식이 곧바로 터진다(티아). */
+  kind: "touchBurst";
+} | {
+  /** 덧칠이 최대 겹인 적에게 아군의 치명타 확률이 이 수만큼 오른다(메론). */
+  kind: "vitalSketch";
+  critPoints: number;
+} | {
+  /** 이 개체의 막을 두른 아군이 주는 피해가 이 비율만큼 늘어난다(테리사). */
+  kind: "stitchedMight";
+  damagePercent: number;
 } | BreakthroughNone;
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */

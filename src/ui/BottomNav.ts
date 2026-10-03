@@ -7,6 +7,10 @@ import { COLOR, textStyle } from "./theme";
 import { startNavScene } from "./screenTransition";
 import { NAV_TABS, navTabDirection, type NavKey } from "../core/navTabs";
 import { pressIn, pressOut } from "./pressFeedback";
+import { consumeUnlockCelebration, contentOpen, playUnlockSequence, showContentLockedToast } from "./contentLock";
+import { addPadlock } from "./Padlock";
+import { LOCK_DIM } from "./lockStyle";
+import type { ContentId } from "../core/contentUnlock";
 
 /** 차례와 넘김 규칙은 순수 표가 갖는다. 여기서는 그리기만 한다. */
 export { NAV_TABS };
@@ -21,6 +25,9 @@ export type { NavKey };
 export function navLabel(key: NavKey): string {
   return t(`nav.${key}`);
 }
+
+/** 탭이 레벨로 잠기는 콘텐츠. 숨기지 않고 자물쇠를 건 채로 남긴다 — 줄에 있어야 할 자리가 비면 화면이 덜 만든 것으로 읽힌다. */
+const NAV_CONTENT: Partial<Record<NavKey, ContentId>> = { archaeology: "archaeology" };
 
 export const NAV_TOP = BASE_HEIGHT - 180;
 
@@ -102,10 +109,15 @@ export class BottomNav {
     NAV_TABS.forEach((tab, i) => {
       const x = step * (i + 0.5);
       const active = tab.key === current;
+      const contentId = NAV_CONTENT[tab.key];
+      // 방금 열린 탭은 잠긴 모습으로 시작해 자물쇠가 터지며 풀린다.
+      const celebrate = contentId !== undefined && contentOpen(contentId) && consumeUnlockCelebration(contentId);
+      let locked = contentId !== undefined && (!contentOpen(contentId) || celebrate);
       const color = active ? COLOR.accent : 0x9aa3ad;
 
       const group = scene.add.container(x, NAV_TOP + 84);
-      group.add(drawIcon(scene, tab.key, 0, -16, color));
+      const icon = drawIcon(scene, tab.key, 0, -16, color);
+      group.add(icon);
       /*
        * **다섯이 폭을 나눠 갖는 줄이라 이름이 칸을 넘으면 옆 탭을 침범한다.**
        *
@@ -114,12 +126,35 @@ export class BottomNav {
        * 글자가 작아지면 그 탭이 덜 중요한 것처럼 읽히기 때문이다. 지금 화면인 탭은 1.12배로
        * 커지므로 그만큼을 미리 뺀 자리에 맞춘다.
        */
-      group.add(squeezeTextToWidth(
+      const label = squeezeTextToWidth(
         scene.add
           .text(0, 26, navLabel(tab.key), textStyle({ role: "emphasis", size: 26, color: active ? COLOR.accentText : COLOR.inkDim }))
           .setOrigin(0.5, 0),
         (step - NAV_LABEL_GUTTER) / ACTIVE_SCALE,
-      ));
+      );
+      group.add(label);
+      if (locked && contentId) {
+        // 판을 덮지 않고 글자와 아이콘만 가라앉힌다 — 아이콘 자리에는 같은 크기의 회색 자물쇠가 대신 선다.
+        icon.setVisible(false);
+        label.setAlpha(LOCK_DIM.labelAlpha);
+        const lock = addPadlock(scene, 0, -16, 44, { color: LOCK_DIM.lockColor, alpha: LOCK_DIM.lockAlpha * 0.7 });
+        group.add(lock);
+        if (celebrate) {
+          scene.time.delayedCall(500, () => {
+            if (!lock.active) return;
+            playUnlockSequence(scene, lock, {
+              id: contentId,
+              onStart: () => scene.tweens.add({ targets: label, alpha: 1, duration: 420, ease: "Sine.easeOut" }),
+              onOpen: () => {
+                locked = false;
+                if (!icon.active) return;
+                icon.setVisible(true).setAlpha(0).setScale(0.6);
+                scene.tweens.add({ targets: icon, alpha: 1, scale: 1, duration: 320, ease: "Back.easeOut" });
+              },
+            });
+          });
+        }
+      }
       // 지금 화면인 탭만 살짝 크다. 밑줄이나 상자 대신 크기로 알린다.
       group.setScale(active ? ACTIVE_SCALE : 1);
 
@@ -130,7 +165,10 @@ export class BottomNav {
         // 누르는 동안 공용 눌림 연출로 눌린 자리를 알린다.
         hit.on("pointerdown", () => pressIn(group));
         hit.on("pointerout", () => pressOut(group, "normal", { pop: false }));
-        hit.on("pointerup", () => startNavScene(scene, tab.scene, navTabDirection(current, tab.key)));
+        hit.on("pointerup", () => {
+          if (locked && contentId) { showContentLockedToast(scene, contentId); return; }
+          startNavScene(scene, tab.scene, navTabDirection(current, tab.key));
+        });
       }
 
       if (active) {

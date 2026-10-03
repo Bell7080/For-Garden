@@ -82,6 +82,12 @@ export interface SortieSdSpot {
   shadowOffsetY: number;
 }
 
+/** 맞닿는 변은 깎지 않는다. 왼쪽 칸은 오른쪽 아래를, 오른쪽 칸은 왼쪽 위를 곧게 둔다. 잠금 덮개도 같은 실루엣을 쓴다. */
+export function sortieEntryBevel(height: number, split?: "left" | "right"): { topLeft: number; bottomRight: number } {
+  const corner = height * 0.46;
+  return { topLeft: split === "right" ? 0 : corner, bottomRight: split === "left" ? 0 : corner };
+}
+
 /** 원정 일러스트와 출격 계열의 주황 강조를 한 입력면으로 묶는 재사용 진입 버튼이다. */
 export class ExpeditionEntryButton extends Phaser.GameObjects.Container {
   /**
@@ -96,12 +102,7 @@ export class ExpeditionEntryButton extends Phaser.GameObjects.Container {
     super(scene, x, y);
     scene.add.existing(this);
 
-    const corner = options.height * 0.46;
-    // 맞닿는 변은 깎지 않는다. 왼쪽 칸은 오른쪽 아래를, 오른쪽 칸은 왼쪽 위를 곧게 둔다.
-    const bevel = {
-      topLeft: options.split === "right" ? 0 : corner,
-      bottomRight: options.split === "left" ? 0 : corner,
-    };
+    const bevel = sortieEntryBevel(options.height, options.split);
     const shape = chipPoints(options.width, options.height, { bevel });
     // 버튼은 배경 원화와 달리 액자 예외에 해당하므로 닫힌 윤곽과 내부 비네트를 함께 사용한다.
     const accent = options.accentColor ?? COLOR.sortie;

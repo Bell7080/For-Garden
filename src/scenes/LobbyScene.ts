@@ -40,14 +40,17 @@ import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicSkinManager } from "../managers/RelicSkinManager";
 import { expeditionManager } from "../managers/ExpeditionManager";
 import { PVP_MODES } from "../data/pvpModes";
-import { ExpeditionEntryButton, sortieEntrySdSpot } from "../ui/ExpeditionEntryButton";
+import { ExpeditionEntryButton, sortieEntryBevel, sortieEntrySdSpot } from "../ui/ExpeditionEntryButton";
 import { ENEMY_SD_ASSETS, PONTOS_SD_ASSET, playMotion, type PuppetAsset } from "../puppets/assets";
 import { loadOwnedPuppet } from "../ui/statusPuppetLoad";
 import { PlayerProfilePopup } from "../ui/PlayerProfilePopup";
 import { profileModifierManager } from "../managers/ProfileModifierManager";
 import { playerProfileDisplay, type PlayerProfileDisplay } from "../state/playerProfile";
 import { openAvatarPicker, openBioEditor, openModifierPicker, openNicknameEditor } from "../ui/PlayerProfileEditors";
-import { contentNameKey } from "../ui/PlayerProfilePopup";
+import { showContentLockedToast, addLockCover, collectUnlockCelebrations, consumeUnlockCelebration, contentNameKey, contentOpen, playUnlockSequence, unlockCover, UNLOCK_POP_TOTAL_MS } from "../ui/contentLock";
+import { addPadlock } from "../ui/Padlock";
+import { LOCK_DIM } from "../ui/lockStyle";
+import type { ContentId } from "../core/contentUnlock";
 import { managerEvents } from "../managers/ManagerEvents";
 import { PROFILE_FRAMES } from "../data/profileFrames";
 import { contentUnlockedBetween } from "../core/contentUnlock";
@@ -117,6 +120,8 @@ interface SortieSdPair { body?: PuppetCreature; shadow?: PuppetCreature }
 
 /** 한 줄에 담기는 출격 콘텐츠 한 칸. 자리·크기·원화·SD를 한 표로 읽는다. */
 interface SortieEntry {
+  /** 레벨로 잠기는 콘텐츠면 그 ID. 잠겨 있으면 입구를 덮개로 막는다. */
+  content?: ContentId;
   x?: number;
   y: number;
   width: number;
@@ -161,6 +166,8 @@ export class LobbyScene extends Phaser.Scene {
   private sortieBackButton?: IconButton;
   /** 출격판 밖 왼쪽 아래에 서는 전리품 상점 입구. 판과 함께 나고 함께 사라진다. */
   private idleExcavationPopup?: IdleExcavationPopup;
+  /** 열림 연출이 끝나는 시각. 레벨업 알림이 연출 위에 겹치지 않게 그 뒤로 미룬다. */
+  private unlockCelebrationUntil = 0;
   /** 무역은 로비 수명을 보존하는 패키지 레이어다. */
   private tradePopup?: TradePopup;
   private tradeBackButton?: IconButton;
@@ -201,6 +208,7 @@ export class LobbyScene extends Phaser.Scene {
   private forgetPopups(): void {
     this.sortieBackButton = undefined;
     this.idleExcavationPopup = undefined;
+    this.unlockCelebrationUntil = 0;
     this.excavationBackButton = undefined;
     this.tradePopup = undefined;
     this.tradeBackButton = undefined;
@@ -226,6 +234,8 @@ export class LobbyScene extends Phaser.Scene {
     bindCurrencyGuide({ scene: this, popups: this.popupLayer, onAction: (action) => this.handleCurrencyAction(action) });
     this.sortieSdPuppets.clear();
 
+    // 그 사이 새로 열린 콘텐츠를 모아 둔다 — 아래 입구들이 제 몫을 가져가 자물쇠가 터지는 연출을 돈다.
+    collectUnlockCelebrations();
     this.buildPlaza();
     // 설정 아이콘은 준비 중 토스트가 아니라 등록된 환경 설정 씬으로 곧바로 이동한다.
     this.topBar = new TopBar(this, 40, { onSettings: () => startScene(this, "settings"), onProfile: (profile) => this.openPlayerProfile(profile), onCurrency: (currency) => this.openCurrencyGuide(currency) });
@@ -234,7 +244,7 @@ export class LobbyScene extends Phaser.Scene {
     this.buildMissionEntry();
 
     // 결투 — 기존 원정 자리를 독립 PvP 모드 선택 화면으로 연결한다.
-    new Button(this, LOBBY_ACTION_BOUNDS.expedition.x, LOBBY_ACTION_BOUNDS.expedition.y, {
+    const duelButton = new Button(this, LOBBY_ACTION_BOUNDS.expedition.x, LOBBY_ACTION_BOUNDS.expedition.y, {
       width: LOBBY_ACTION_BOUNDS.expedition.width,
       height: LOBBY_ACTION_BOUNDS.expedition.height,
       label: t("lobby.duel"),
@@ -242,8 +252,9 @@ export class LobbyScene extends Phaser.Scene {
       // 출격과 성격이 다른 입구라 강조 양식을 쓰지 않는다. 같은 원근만 공유한다.
       perspective: "right",
       tilt: -6,
-      onClick: () => this.openPvpMenu(),
+      onClick: this.guarded("duel", () => this.openPvpMenu()),
     });
+    this.gateEntrance("duel", duelButton);
 
     // 출격 — 로비에서 가장 큰 버튼이다. 주황빛 강조로 다른 입구와 구분한다.
     new Button(this, LOBBY_ACTION_BOUNDS.sortie.x, LOBBY_ACTION_BOUNDS.sortie.y, {
@@ -262,7 +273,7 @@ export class LobbyScene extends Phaser.Scene {
     });
 
     // 교류 — 맞은편이라 기울기와 원근을 뒤집어 `\` 방향으로 눕힌다.
-    new Button(this, 250, NAV_TOP - 400, {
+    const interactionButton = new Button(this, 250, NAV_TOP - 400, {
       width: 292,
       height: 106,
       label: t("lobby.interaction"),
@@ -272,8 +283,9 @@ export class LobbyScene extends Phaser.Scene {
       tilt: 6,
       accentColor: EXCHANGE_BLUE,
       accentTextColor: "#9fd0f0",
-      onClick: () => startScene(this, "interaction"),
+      onClick: this.guarded("interaction", () => startScene(this, "interaction")),
     });
+    this.gateEntrance("interaction", interactionButton);
 
     // 발굴 — 출격과 같은 줄에 서지만 크기는 교류와 같다. 왼쪽은 서브 콘텐츠 자리라, 오른쪽의
     // 큰 주황 버튼과 크기로 위계를 가른다. 색도 교류와 같은 푸른 계열로 묶는다.
@@ -287,11 +299,12 @@ export class LobbyScene extends Phaser.Scene {
       tilt: 6,
       accentColor: EXCHANGE_BLUE,
       accentTextColor: "#9fd0f0",
-      onClick: () => this.openIdleExcavation(),
+      onClick: this.guarded("excavation", () => this.openIdleExcavation()),
     });
     // 발굴 저장 상한 판정은 manager가 API 결과로 합성하며 버튼은 공용 점만 구독한다.
     // 외곽 사각형이 아니라 원근으로 짧아진 실제 우상단 변을 회전해 점이 판 밖 허공에 남지 않게 한다.
     const excavationDot = perspectiveButtonNotificationAnchor({ width: 292, height: 106, tall: "left", rotation: Phaser.Math.DegToRad(6), inset: 10 });
+    this.gateEntrance("excavation", excavationButton);
     bindNotificationDot(this, excavationButton, excavationDot, (listener) => notificationManager.subscribe("excavationHarvestReady", listener));
 
     new BottomNav(this, "lobby");
@@ -321,7 +334,11 @@ export class LobbyScene extends Phaser.Scene {
     else if (this.returnMenu === "duel") this.openPvpMenu(true);
     else if (this.returnMenu === "event") this.openEvents(true);
     // 되돌아간 판이 없을 때만 레벨업을 알린다 — 판 위에 겹치면 둘 다 반쯤 가린다.
-    if (!this.returnMenu) this.announcePlayerLevel();
+    if (!this.returnMenu) {
+      const wait = this.unlockCelebrationUntil - this.time.now;
+      if (wait > 0) this.time.delayedCall(wait, () => this.announcePlayerLevel());
+      else this.announcePlayerLevel();
+    }
 
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
@@ -392,6 +409,42 @@ export class LobbyScene extends Phaser.Scene {
     });
   }
 
+  /**
+   * 우측·좌측 레일 아이콘은 줄에 늘 서 있어야 하는 자리라 숨기지 않고 **자물쇠를 건 채** 둔다. 누르면 개방 레벨을 알리고, 방금 열렸으면
+   * 자물쇠가 터지며 풀린다. 입력 가드는 눌린 시점의 레벨로 판단하므로 연출 중에도 어긋나지 않는다.
+   */
+  private lockRailButton(id: ContentId, button: RailButton): void {
+    const celebrate = contentOpen(id) && consumeUnlockCelebration(id);
+    if (contentOpen(id) && !celebrate) return;
+    // 꺼진 칩처럼 판·글자가 가라앉고 아이콘 자리에 자물쇠가 선다(`RailButton.setLocked`).
+    button.setLocked();
+    if (!celebrate) return;
+    this.unlockCelebrationUntil = this.time.now + UNLOCK_POP_TOTAL_MS + 900;
+    this.time.delayedCall(450, () => { if (button.active) button.unlock(id); });
+  }
+
+  /** 잠긴 입구의 눌림은 동작 대신 개방 레벨을 알린다. */
+  private guarded(id: ContentId, action: () => void): () => void {
+    return () => { if (contentOpen(id)) action(); else showContentLockedToast(this, id); };
+  }
+
+  /**
+   * 잠긴 입구(교류·발굴·결투)는 숨기지 않고 **반투명하게** 가라앉혀 둔다 — 줄에 무엇이 있는지는 보이되 눈길을 끌지 않는다.
+   * 글자 왼쪽에 작은 자물쇠가 서고, 누르면 동작 대신 개방 레벨을 알린다. 방금 열렸으면 입구가 밝아지며 자물쇠가 풀린다.
+   */
+  private gateEntrance(id: ContentId, button: Button): void {
+    const celebrate = contentOpen(id) && consumeUnlockCelebration(id);
+    if (contentOpen(id) && !celebrate) return;
+    button.setAlpha(LOCK_DIM.entranceAlpha);
+    const lock = button.addLabelMark((size) => addPadlock(this, 0, 0, size, { color: LOCK_DIM.lockColor }));
+    if (!celebrate) return;
+    this.unlockCelebrationUntil = this.time.now + UNLOCK_POP_TOTAL_MS + 900;
+    this.time.delayedCall(450, () => {
+      if (!button.active) return;
+      playUnlockSequence(this, lock, { id, onStart: () => this.tweens.add({ targets: button, alpha: 1, duration: 420, ease: "Sine.easeOut" }) });
+    });
+  }
+
   /** 연타 중에는 같은 인스턴스의 open 가드가 기존 쪽지를 유지한다. */
   private openIdleExcavation(): void {
     if (!this.popupLayer) return;
@@ -456,7 +509,7 @@ export class LobbyScene extends Phaser.Scene {
   /** 안내 프리팹은 이 콜백만 요청하므로 지갑 변경 없이 구현된 씬·로비 팝업으로만 이동한다. */
   private handleCurrencyAction(action: CurrencyGuideAction): void {
     if (action.kind === "scene" && action.target === "lab") startScene(this, "lab");
-    if (action.kind === "popup" && action.target === "trade") this.openTrade();
+    if (action.kind === "popup" && action.target === "trade") this.guarded("trade", () => this.openTrade())();
   }
 
   /** 오른쪽 레일에서 로비를 떠나지 않고 가방 작업판을 연다. */
@@ -520,18 +573,18 @@ export class LobbyScene extends Phaser.Scene {
         // 두 던전은 각자의 전용 원화를 칩 실루엣에 물려 세운다. 같은 그림을 나눠 쓰면 나란히 선
         // 두 버튼이 한 콘텐츠의 두 갈래처럼 읽힌다.
         {
-          x: -204, y: -124, width: 392, height: 200, label: t("lobby.sortie.cake"), labelSize: 38, status: t("lobby.sortie.cake.status"), split: "left",
+          x: -204, y: -124, width: 392, height: 200, content: "cakeOperation", label: t("lobby.sortie.cake"), labelSize: 38, status: t("lobby.sortie.cake.status"), split: "left",
           artKey: "content-cake-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
           onClick: () => { close(); startScene(this, "cakeOperation"); },
         },
         {
-          x: 204, y: -124, width: 392, height: 200, label: t("lobby.sortie.bounty"), labelSize: 38, status: t("lobby.sortie.bounty.status"), split: "right",
+          x: 204, y: -124, width: 392, height: 200, content: "bounty", label: t("lobby.sortie.bounty"), labelSize: 38, status: t("lobby.sortie.bounty.status"), split: "right",
           artKey: "content-bounty-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
           onClick: () => { close(); startScene(this, "bounty"); },
         },
         // 레이드는 일일 던전 아래에서 독립된 전체 폭 콘텐츠로 읽히게 한다.
         {
-          y: 152, width: 800, height: 200, label: t("lobby.sortie.raid"), status: t("lobby.sortie.raid.status"),
+          content: "raid", y: 152, width: 800, height: 200, label: t("lobby.sortie.raid"), status: t("lobby.sortie.raid.status"),
           artKey: "content-raid-entry",
           // 레이드만 임시 소개 화면을 떠났다 — 실제 시즌 판이 그 자리를 맡는다.
           onClick: () => { close(); startScene(this, "raid"); },
@@ -539,7 +592,7 @@ export class LobbyScene extends Phaser.Scene {
         // 전용 프리팹이 Content2_001 원화, 주황 출격 위계, 확대 피드백을 한 입력면으로 유지한다.
         // 원정만 SD가 오른쪽에 서고 글자가 왼쪽 아래로 간다 — 20층 보스가 판 밖을 보는 자리다.
         {
-          y: 443, width: 800, height: 230, status: this.expeditionStatus(status), sdSide: "right", sd: PONTOS_SD_ASSET,
+          content: "expedition", y: 443, width: 800, height: 230, status: this.expeditionStatus(status), sdSide: "right", sd: PONTOS_SD_ASSET,
           onClick: () => { close(); startScene(this, "expedition"); },
         },
       ];
@@ -553,9 +606,23 @@ export class LobbyScene extends Phaser.Scene {
           sdSide, split: entry.split, onClick: entry.onClick,
         });
         body.add(button);
-        if (!entry.sd) return;
+        // 잠긴 입구는 덮개로 막고 SD도 세우지 않는다. 방금 열린 입구는 덮개의 자물쇠가 터지며 풀리고, SD는 그 뒤에 선다.
+        const celebrate = entry.content !== undefined && contentOpen(entry.content) && consumeUnlockCelebration(entry.content);
+        const sdDelay = celebrate ? 350 + UNLOCK_POP_TOTAL_MS + 250 : 0;
+        if (entry.content !== undefined && (!contentOpen(entry.content) || celebrate)) {
+          const cover = addLockCover(this, entry.content, entry.width, entry.height, { bevel: sortieEntryBevel(entry.height, entry.split), text: true }).setPosition(x, entry.y);
+          body.add(cover);
+          if (celebrate) {
+            // 막은 채 자물쇠가 개방 연출을 돌고, 터진 뒤 덮개가 걷힌다.
+            const content = entry.content;
+            this.time.delayedCall(350, () => { if (cover.active) unlockCover(this, cover, content); });
+          }
+          if (!celebrate) return;
+        }
+        const sdAsset = entry.sd;
+        if (!sdAsset) return;
         const spot = sortieEntrySdSpot(entry.width, entry.height, sdSide ?? "left");
-        void this.spawnSortieSd(entry.sd, {
+        const spawn = () => void this.spawnSortieSd(sdAsset, {
           x: BASE_WIDTH / 2 + x + spot.x,
           groundY: panelY + entry.y + spot.groundY,
           height: Math.round(spot.height * (entry.sdScale ?? 1)),
@@ -563,6 +630,7 @@ export class LobbyScene extends Phaser.Scene {
           shadowOffsetY: spot.shadowOffsetY,
           mask: button.sdMask,
         });
+        if (sdDelay > 0) this.time.delayedCall(sdDelay, spawn); else spawn();
       });
       // 돌아가기는 판 안이 아니라 다른 팝업과 같은 화면 우하단 슬롯에 선다.
       this.sortieBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: close }).setDepth(SORTIE_SD_DEPTH + 1);
@@ -703,7 +771,7 @@ export class LobbyScene extends Phaser.Scene {
       openEvents: () => this.openEvents(),
       openMail: () => this.openMail(),
       // 친구는 더 이상 준비 중 토스트가 아니라 목록과 공개 프로필 화면으로 연결된다.
-      openFriends: () => startScene(this, "friends"),
+      openFriends: this.guarded("friends", () => startScene(this, "friends")),
       // 가방은 씬 전환 없이 현재 로비 위에서 열린다.
       openInventory: () => this.openInventory(),
     });
@@ -711,6 +779,7 @@ export class LobbyScene extends Phaser.Scene {
       const button = new RailButton(this, item.bounds.x, item.bounds.y, { icon: item.icon, label: item.label, size: item.bounds.width, event: item.event, onClick: item.onClick });
       // 실제 서버 계약이 준비된 우편·친구 요청만 연결하고 Fake 데이터에서는 임의로 켜지 않는다.
       const key = item.icon === "mail" ? "mail" : item.icon === "friends" ? "friendRequest" : undefined;
+      if (item.icon === "friends") this.lockRailButton("friends", button);
       if (key) bindNotificationDot(this, button, { x: 42, y: -42 }, (listener) => notificationManager.subscribe(key, listener));
     });
   }
@@ -725,8 +794,8 @@ export class LobbyScene extends Phaser.Scene {
   private buildMissionEntry(): void {
     const entries = [
       { bounds: LOBBY_RAIL_BOUNDS.content.mission, icon: "mission", label: t("lobby.rail.mission"), accent: true, onClick: () => this.openMissions() },
-      { bounds: LOBBY_RAIL_BOUNDS.content.shop, icon: "shop", label: t("lobby.rail.shop"), accent: false, onClick: () => this.openShop() },
-      { bounds: LOBBY_RAIL_BOUNDS.content.trade, icon: "exchange", label: t("lobby.rail.trade"), accent: false, onClick: () => this.openTrade() },
+      { bounds: LOBBY_RAIL_BOUNDS.content.shop, icon: "shop", label: t("lobby.rail.shop"), accent: false, onClick: this.guarded("shop", () => this.openShop()) },
+      { bounds: LOBBY_RAIL_BOUNDS.content.trade, icon: "exchange", label: t("lobby.rail.trade"), accent: false, onClick: this.guarded("trade", () => this.openTrade()) },
     ] as const;
     // 캔버스 E2E에는 레일의 게임 상태가 아니라 실제 입력 중심만 전달한다.
     setDebugStorefrontControls({ lobby: {
@@ -738,6 +807,8 @@ export class LobbyScene extends Phaser.Scene {
     const buttons = entries.map((entry) => new RailButton(this, entry.bounds.x, entry.bounds.y, {
       icon: entry.icon, label: entry.label, size: entry.bounds.width, accent: entry.accent, onClick: entry.onClick,
     }));
+    this.lockRailButton("shop", buttons[1]);
+    this.lockRailButton("trade", buttons[2]);
     // 보상 상태의 단일 구독과 기존 팝업 연결은 위치 분리 뒤에도 그대로 유지한다.
     bindNotificationDot(this, buttons[0], { x: 42, y: -42 }, (listener) => notificationManager.subscribe("missionReward", listener));
   }

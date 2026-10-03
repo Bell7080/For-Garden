@@ -102,6 +102,18 @@ export const BACKGROUND = {
    * 자리이며 교류 두 번째 칸이 쓴다. 응접실과 같이 판 안에 `coverCrop`으로 잘려 들어간다.
    */
   interactionDoppelLab: "background-interaction-doppel-lab",
+  /** 교류 3층 — 도플 관리부. 판 안에 `coverCrop`으로 잘려 들어가는 가로 원화다. */
+  interactionDoppelOffice: "background-interaction-doppel-office",
+  /** 교류 4층 — 러스트 정비창. 판 안에 `coverCrop`으로 잘려 들어가는 가로 원화다. */
+  interactionRustGarage: "background-interaction-rust-garage",
+  /** 교류 5층 — 러스트 대여 관리부. 판 안에 `coverCrop`으로 잘려 들어가는 가로 원화다. */
+  interactionRustLease: "background-interaction-rust-lease",
+  /** 교류 6층 — 도플 상층부. 판 안에 `coverCrop`으로 잘려 들어가는 가로 원화다. */
+  interactionDoppelUpper: "background-interaction-doppel-upper",
+  /** 교류 7층 — 러스트 중앙 공방. 판 안에 `coverCrop`으로 잘려 들어가는 가로 원화다. */
+  interactionRustWorks: "background-interaction-rust-works",
+  /** 교류 8층 — 오디디 외교 접견실. 판 안에 `coverCrop`으로 잘려 들어가는 가로 원화다. */
+  interactionOdidiEmbassy: "background-interaction-odidi-embassy",
   /**
    * 타이틀(로딩) 화면 전용 원화다. 화면 자체가 로딩 화면이라 다른 배경처럼 이 표의
    * `BACKGROUND_ASSETS`(로딩 단계 안에서 읽힘)로 적재할 수 없다 — `TitleScene`이
@@ -171,6 +183,12 @@ export const BACKGROUND_ASSETS = [
   // 들어올 때 굽는 스크립트와 이 표가 같은 규칙을 읽는다.
   [BACKGROUND.interactionDoppelParlor, "sprites/background/interaction_001.webp"],
   [BACKGROUND.interactionDoppelLab, "sprites/background/interaction_002.webp"],
+  [BACKGROUND.interactionDoppelOffice, "sprites/background/interaction_003.webp"],
+  [BACKGROUND.interactionRustGarage, "sprites/background/interaction_004.webp"],
+  [BACKGROUND.interactionRustLease, "sprites/background/interaction_005.webp"],
+  [BACKGROUND.interactionDoppelUpper, "sprites/background/interaction_006.webp"],
+  [BACKGROUND.interactionRustWorks, "sprites/background/interaction_007.webp"],
+  [BACKGROUND.interactionOdidiEmbassy, "sprites/background/interaction_008.webp"],
   // 타이틀은 TitleScene이 직접 먼저 읽지만(그 화면이 곧 로딩 화면이다) 경로가 이 표에 있어야
   // 로비로 넘어간 뒤 25MB를 내리고, 되돌아왔을 때 다시 읽을 수 있다.
   [BACKGROUND.title, "sprites/background/background_011.webp"],

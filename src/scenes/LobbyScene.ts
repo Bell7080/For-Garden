@@ -9,10 +9,9 @@ import { latinEcho } from "../ui/latinEcho";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { RailButton } from "../ui/RailButton";
-import { drawGlyph } from "../ui/glyphs";
 import { POPUP_BODY_BEVEL_RATIO } from "../ui/popupGeometry";
 import { TopBar } from "../ui/TopBar";
-import { chipPoints, drawLayer, drawVignette, HOLO } from "../ui/holo";
+import { chipPoints, drawLayer, drawVignette } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { t } from "../i18n";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
@@ -69,7 +68,7 @@ import { consumeSceneEntry } from "./sceneEntry";
 import { normalizeLobbyEntry, type LobbyMenu } from "./lobbyEntry";
 import { prefetchIdlePuppets } from "../puppets/battlePrefetch";
 import { relicCollection } from "../managers/RelicCollectionManager";
-import { pressIn, pressOut } from "../ui/pressFeedback";
+import { addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
 
 /**
  * 로비에 선 애착 렐릭의 층.
@@ -101,7 +100,7 @@ const EXCHANGE_BLUE = COLOR.exchange;
  */
 const SORTIE_MENU = {
   panel: { width: 980, height: 1240, offsetY: -80 },
-  shop: { gap: 28, height: 190, pad: 20, cell: 150, cellGap: 16, icon: 74, labelSize: 28 },
+  shop: { gap: 28, pad: 20, cell: SIDE_SHOP.screen.size, cellGap: 16 },
   motionDelay: 2600,
   dimAlpha: 0.42,
 } as const;
@@ -663,27 +662,19 @@ export class LobbyScene extends Phaser.Scene {
    */
   private addSortieShopPanel(body: Phaser.GameObjects.Container, shops: readonly { label: string; onClick: () => void }[]): void {
     const { panel, shop } = SORTIE_MENU;
+    const height = shop.cell + shop.pad * 2;
     const width = shop.pad * 2 + shops.length * shop.cell + (shops.length - 1) * shop.cellGap;
     const centerX = -panel.width / 2 + width / 2;
-    const centerY = panel.height / 2 + shop.gap + shop.height / 2;
-    const unit = Math.min(width, shop.height);
-    const shape = chipPoints(width, shop.height, { bevel: { topLeft: unit * POPUP_BODY_BEVEL_RATIO, topRight: 0, bottomRight: unit * POPUP_BODY_BEVEL_RATIO, bottomLeft: 0 } });
+    const centerY = panel.height / 2 + shop.gap + height / 2;
+    const unit = Math.min(width, height);
+    const shape = chipPoints(width, height, { bevel: { topLeft: unit * POPUP_BODY_BEVEL_RATIO, topRight: 0, bottomRight: unit * POPUP_BODY_BEVEL_RATIO, bottomLeft: 0 } });
     body.add(drawLayer(this, centerX, centerY, shape, { fill: 0x0b0f15, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.6 }));
     // 판의 빈 곳을 누른 손이 뒤로 새지 않게 막는다(팝업 몸판과 같은 이유).
-    body.add(this.add.rectangle(centerX, centerY, width, shop.height, 0xffffff, 0).setInteractive());
+    body.add(this.add.rectangle(centerX, centerY, width, height, 0xffffff, 0).setInteractive());
+    // 칸은 연구소·고고학의 상점 칩과 같은 한 벌·같은 크기다.
     shops.forEach((entry, index) => {
       const x = centerX - width / 2 + shop.pad + shop.cell / 2 + index * (shop.cell + shop.cellGap);
-      const row = this.add.container(x, centerY);
-      const cellShape = chipPoints(shop.cell, shop.cell, { bevel: { topLeft: shop.cell * 0.22, topRight: 0, bottomRight: shop.cell * 0.22, bottomLeft: 0 } });
-      row.add(drawLayer(this, 0, 0, cellShape, { fill: 0x2a2418, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.8 }));
-      row.add(drawGlyph(this, "shop", 0, -18, shop.icon, COLOR.accent, 1, 3));
-      row.add(this.add.text(0, shop.cell / 2 - 26, entry.label, textStyle({ role: "display", size: shop.labelSize, color: COLOR.accentText })).setOrigin(0.5));
-      const hit = this.add.rectangle(0, 0, shop.cell, shop.cell, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerdown", () => pressIn(row));
-      hit.on("pointerout", () => pressOut(row, "normal", { pop: false }));
-      hit.on("pointerup", () => { pressOut(row); entry.onClick(); });
-      row.add(hit);
-      body.add(row);
+      body.add(addSideShopButton(this, x, centerY, shop.cell, entry.label, entry.onClick));
     });
   }
 

@@ -2199,6 +2199,13 @@ export const RELICS: RelicDef[] = [
     },
     // 굳는 순간 몸이 한 겹 덮이고, 그 상태로 권을 딱 한 바퀴(발경 3연) 몰아친다.
     ferocityTrait: { name: "금강불괴(金剛不壞)", effectId: "adamantBody", shieldMaxHpPercent: 25, hastenedAttacks: 3, attackSpeedPercent: 150 },
+    // 막이 **다음 한 방의 위력**이 된다 — 엘라는 막이 서 있는 시간이 짧아(전투의 6%) 막의 양이나 방어를 올려도 움직이지 않았다.
+    breakthroughEffects: {
+      basic: { kind: "releaseShield", shieldPercent: 20 },
+      ultimate: { kind: "shareShield", sharePercent: 50 },
+      ferocity: { kind: "adamantRelease", shieldPercent: 50 },
+      passive: { kind: "shieldFist", bonusPercent: 15 },
+    },
     passive: {
       // kind가 undyingTalisman인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
@@ -2945,6 +2952,13 @@ export const RELICS: RelicDef[] = [
       // 붙어 있어, 달리는 것 자체가 어그로인 개체의 탱킹이 폭주 중에 꺼지지 않는다.
       taunt: { kind: "taunt", seconds: 0.75 },
     },
+    // 칠하며 달리고(II), 서명으로 전부 터뜨리고(III), 가까이서 더 빨리 터지며(IV), 벽화 속에서 단단해진다(V).
+    breakthroughEffects: {
+      basic: { kind: "speedGraffiti", moveSpeedPercent: 20, seconds: 3, powerPercentPerSpeedPoint: 0.25 },
+      ultimate: { kind: "signatureBurst" },
+      ferocity: { kind: "closeUp", maxStacks: 3 },
+      passive: { kind: "muralHide", defenseResistancePercentPerTagged: 20 },
+    },
     passive: {
       // kind가 tagAndRun인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
@@ -3592,6 +3606,14 @@ export const RELICS: RelicDef[] = [
         resummon: { enabled: true, cooldownSeconds: 15, hpPercent: 70 },
       },
     ],
+    // 디모와 함께 보는 눈이 늘어난다 — 새 관측에 겹당 피해가 오르고(II), 궁극기 앞에 디모가 먼저 표식을 깔며(III),
+    // 폭주 중 디모가 두 겹씩 쌓고(IV), 눈이 많을수록 모르페가 빨라진다(V).
+    breakthroughEffects: {
+      basic: { kind: "freshSight", percentPerStack: 15, windowSeconds: 2 },
+      ultimate: { kind: "jointObservation", stacks: 5 },
+      ferocity: { kind: "droneOverheat", stackMultiplier: 2 },
+      passive: { kind: "manyEyes", attackSpeedPercentPerObserved: 5 },
+    },
     passive: {
       id: "morphe-passive",
       name: "요람에서 내려올 생각 없음",

@@ -14,6 +14,10 @@ import { openRewardPopup, productGrantsToRewardItems } from "./RewardPopup";
 import { setDebugStorefrontControls } from "../debug";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { isTradePackage, tradePackageLimitLabel, tradePackageValuePercent } from "../data/tradePackages";
+import { runPlatformPurchase } from "../api/platformPurchase";
+import type { PlatformPaymentAdapter } from "../api/PlatformPayment";
+import { platformPayment } from "../platform/payment";
+import { premiumDecorationNames, premiumFirstBonusGems, premiumGrantTiles } from "./premiumModel";
 
 /**
  * 패키지 확인판의 자리.
@@ -23,6 +27,13 @@ import { isTradePackage, tradePackageLimitLabel, tradePackageValuePercent } from
  * 총가격 줄이 없다.
  */
 const PACKAGE = { width: 820, height: 820, frame: 150, frameGap: 22, nameY: -310, valueY: -254, frameY: -140, hairlineY: -28, barWidth: 690, priceY: 58, limitY: 150, buyY: 290, statusY: 356 } as const;
+
+/**
+ * 결제(플랫폼 결제) 확인판의 자리.
+ *
+ * 받는 것(액자 최대 넷)·값·제한·결제 버튼뿐이다. 값은 카탈로그의 값 문자열을 **크고 두껍게** 세운다.
+ */
+const PLATFORM = { width: 820, height: 860, nameY: -330, frame: 150, frameGap: 20, frameY: -190, bonusY: -86, hairlineY: -40, priceY: 50, priceHeight: 112, priceSize: 62, limitY: 154, noteY: 214, buyY: 310, statusY: 380, amountRatio: 0.34 } as const;
 
 /**
  * 수량 작업판의 줄 자리.
@@ -58,6 +69,8 @@ export class PurchasePopup {
     private readonly popups: PopupLayer,
     private readonly api: GameApi,
     private readonly wallet: Wallet,
+    /** 결제 SDK 어댑터. 비우면 빌드가 가진 어댑터(`platformPayment()`)를 결제 순간에 읽는다. */
+    private readonly payment?: PlatformPaymentAdapter,
   ) {}
 
   /** 카드는 구매를 실행하지 않고 이 진입점으로 상품 원본을 전달한다. */
@@ -70,9 +83,10 @@ export class PurchasePopup {
     // 층은 팝업 층(`backButton`)이 소유한다 — 창마다 IconButton을 손으로 세우면 아래 화면이
     // 이미 쓰고 있는 같은 자리와의 층 순서를 창마다 다시 정하게 된다.
     const pack = isTradePackage(product);
-    this.popups.open({ width: PACKAGE.width, height: pack ? PACKAGE.height : QUANTITY.height, title: pack ? t("shop.purchase.package") : t("shop.purchase.confirm"), dim: true, closeOnBackdrop: true, backButton: true }, (body, close) => {
+    const platform = product.acquisition.kind === "platform_payment";
+    this.popups.open({ width: PACKAGE.width, height: platform ? PLATFORM.height : pack ? PACKAGE.height : QUANTITY.height, title: pack || platform ? t("shop.purchase.package") : t("shop.purchase.confirm"), dim: true, closeOnBackdrop: true, backButton: true }, (body, close) => {
       const view = this.scene.add.container(0, 0); body.add(view);
-      const render = (): void => { view.removeAll(true); if (pack) this.paintPackage(view, product, close, onPurchased); else this.paint(view, product, close, onPurchased); };
+      const render = (): void => { view.removeAll(true); if (platform) this.paintPlatform(view, product, close, onPurchased); else if (pack) this.paintPackage(view, product, close, onPurchased); else this.paint(view, product, close, onPurchased); };
       this.repaint = render;
       view.once(Phaser.GameObjects.Events.DESTROY, () => { this.repaint = undefined; });
       render();
@@ -177,6 +191,42 @@ export class PurchasePopup {
     if (status) view.add(this.scene.add.text(0, PACKAGE.statusY, status, textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5));
   }
 
+  /**
+   * 플랫폼 결제 상품의 확인판.
+   *
+   * 고를 것이 없다 — 받는 것(액자 + 큰 수량), 값, 제한, 결제 하나뿐이다. 첫 구매 보너스가 남은 다이아 팩은
+   * 그 몫을 액자 아래 한 줄이 말한다. 결제 SDK가 없는 빌드는 버튼을 눌러도 결제를 시작하지 않고 그 사실만
+   * 알린다(`unsupported`) — 성공을 흉내 내지 않는다.
+   */
+  private paintPlatform(view: Phaser.GameObjects.Container, product: ProductDto, close: () => void, onPurchased: (result: PurchaseProductResponse) => void | Promise<void>): void {
+    if (product.acquisition.kind !== "platform_payment") return;
+    this.quantity = 1;
+    const tiles = premiumGrantTiles(product).slice(0, 4);
+    view.add(drawLayer(this.scene, 0, -150, chipPoints(690, 330, { bevel: { topLeft: 44, topRight: 0, bottomRight: 34, bottomLeft: 0 } }), { fill: 0x141b24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.45 }));
+    view.add(this.scene.add.text(0, PLATFORM.nameY, product.name, textStyle({ role: "display", size: 38 })).setOrigin(0.5).setStroke("#000000", 6));
+    const span = tiles.length * PLATFORM.frame + Math.max(0, tiles.length - 1) * PLATFORM.frameGap;
+    tiles.forEach((tile, index) => {
+      addFramedIcon(this.scene, view, -span / 2 + PLATFORM.frame / 2 + index * (PLATFORM.frame + PLATFORM.frameGap), PLATFORM.frameY, PLATFORM.frame, tile.icon, {
+        amount: formatCurrency(tile.amount), amountRatio: PLATFORM.amountRatio, plain: true,
+      });
+    });
+    const bonus = premiumFirstBonusGems(product);
+    const extras = [...(bonus > 0 ? [t("shop.premium.firstBonus", { amount: formatCurrency(bonus) })] : []), ...premiumDecorationNames(product)];
+    if (extras.length) view.add(this.scene.add.text(0, PLATFORM.bonusY, extras.join("  ·  "), textStyle({ role: "display", size: 28, color: COLOR.accentText, align: "center", wrap: 640 })).setOrigin(0.5).setStroke("#000000", 5));
+    view.add(drawHairline(this.scene, 0, PLATFORM.hairlineY, 690, { color: COLOR.accent, alpha: 0.32 }));
+    // 값은 카탈로그가 준 문자열 그대로 — 스토어 현지 가격이 들어오면 이 자리 하나만 바뀐다.
+    view.add(drawLayer(this.scene, 0, PLATFORM.priceY, chipPoints(690, PLATFORM.priceHeight, { bevel: { topLeft: 26, topRight: 0, bottomRight: 26, bottomLeft: 0 } }), { fill: 0x0d141c, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.7 }));
+    view.add(this.scene.add.text(0, PLATFORM.priceY, product.acquisition.displayPrice, textStyle({ role: "display", size: PLATFORM.priceSize, color: COLOR.accentText })).setOrigin(0.5).setStroke("#000000", 8).setShadow(2, 4, "#04060a", 0, true, true));
+    this.addValueRow(view, PLATFORM.limitY, t("shop.purchase.limit"), tradePackageLimitLabel(product.refresh, product.purchaseLimit, product.remaining));
+
+    const canPurchase = product.purchasable && product.remaining > 0 && !this.pending;
+    const buy = new Button(this.scene, 0, PLATFORM.buyY, { width: 650, height: 92, label: this.pending ? t("shop.purchase.busy") : t("product.action.platform_payment"), fontSize: 36, variant: "primary", onClick: () => { void this.purchase(product, close, onPurchased); } }).setEnabled(canPurchase);
+    view.add(buy);
+    setDebugStorefrontControls({ purchase: { confirm: { x: BASE_CENTER.x, y: BASE_CENTER.y + PLATFORM.buyY } } });
+    const status = this.message || (!product.purchasable ? product.disabledReason ?? t("shop.purchase.blocked") : "");
+    if (status) view.add(this.scene.add.text(0, PLATFORM.statusY, status, textStyle({ role: "body", size: 22, color: COLOR.inkDim, align: "center", wrap: 680 })).setOrigin(0.5));
+  }
+
   /** 재화가 아닌 값 한 줄 — **판을 깔지 않고 글자만** 이름표와 마주 세운다. */
   private addValueRow(view: Phaser.GameObjects.Container, y: number, label: string, value: string): void {
     view.add(this.scene.add.text(QUANTITY.rowLeft, y, label, textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
@@ -206,9 +256,31 @@ export class PurchasePopup {
     this.repaint?.();
   }
 
+  /** 결제창 → 영수증 검증 → 지급 확정. 어느 단계에서 멈췄는지는 결과 하나가 말하고, 지급은 서버만 한다. */
+  private async purchasePlatform(product: ProductDto, close: () => void, onPurchased: (result: PurchaseProductResponse) => void | Promise<void>): Promise<void> {
+    if (!product.purchasable) return;
+    this.pending = true; this.message = ""; this.repaint?.();
+    const outcome = await runPlatformPurchase(this.api, this.payment ?? platformPayment(), product);
+    if (outcome.status === "purchased") {
+      close();
+      openRewardPopup(this.scene, this.popups, {
+        title: t("shop.purchase.rewardTitle"),
+        items: productGrantsToRewardItems(outcome.result.granted, outcome.result.grantedRunes),
+        onConfirm: () => { void onPurchased(outcome.result); },
+      });
+      return;
+    }
+    this.message = outcome.status === "cancelled" ? t("shop.premium.cancelled")
+      : outcome.status === "unsupported" ? t("shop.premium.unsupported")
+      : outcome.message || t("shop.purchase.failed");
+    this.pending = false; this.repaint?.();
+  }
+
   /** 서버 응답 전에는 지갑과 카탈로그를 건드리지 않고, 처리 중 모든 수량·구매 입력을 잠근다. */
   private async purchase(product: ProductDto, close: () => void, onPurchased: (result: PurchaseProductResponse) => void | Promise<void>): Promise<void> {
-    if (this.pending || product.acquisition.kind !== "currency") return;
+    if (this.pending) return;
+    if (product.acquisition.kind === "platform_payment") { await this.purchasePlatform(product, close, onPurchased); return; }
+    if (product.acquisition.kind !== "currency") return;
     const quote = quotePurchase({ unitPrice: product.acquisition.amount, remaining: product.remaining, balance: this.wallet[product.acquisition.currency] }, this.quantity);
     if (!product.purchasable || !quote.valid) return;
     this.pending = true; this.message = ""; this.repaint?.();

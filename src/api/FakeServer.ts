@@ -49,6 +49,7 @@ import { staminaCurrencyRecharge } from "../data/staminaRecharge";
 import { paidStaminaApplied, settleStamina, STAMINA_HOLD_LIMIT, staminaMaxForPlayer, staminaTiming } from "../core/stamina";
 import { InventoryManager } from "../managers/InventoryManager";
 import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, MarkRuneRequest, MarkRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse } from "./contracts";
+import type { FulfillPlatformPurchaseRequest, FulfillPlatformPurchaseResponse } from "./contracts";
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
 import { excavationHarvestStatus, excavationProductionDisplayModel, excavationStorageLimitSeconds, harvestIdleExcavation, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
 import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest, InventoryResponse, UseConsumableRequest, UseConsumableResponse } from "./contracts";
@@ -122,6 +123,8 @@ export class FakeServer implements GameApi {
   private readonly receiptResults = new Map<string, VerifyPurchaseReceiptResponse>();
   private readonly verifiedTransactions = new Map<string, VerifyPurchaseReceiptResponse>();
   private readonly activationResults = new Map<string, ActivatePassResponse>();
+  private readonly fulfillResults = new Map<string, FulfillPlatformPurchaseResponse>();
+  private readonly fulfilledTransactions = new Map<string, FulfillPlatformPurchaseResponse>();
   private readonly entitlements = new Map<string, PassEntitlementDto>();
   /** 물량형 던전의 멱등 저장소. 입장·결과·소탕이 각자의 요청 ID로 한 번만 확정된다. */
   private readonly cakeAdmissionResults = new Map<string, CakeOperationEnterResponse>();
@@ -1016,7 +1019,7 @@ export class FakeServer implements GameApi {
     const cached = this.receiptResults.get(request.requestId);
     if (cached) return { ...cached };
     const product = PRODUCTS.find(({ id }) => id === request.productId);
-    if (!request.requestId || !product?.passBenefit || product.acquisition.kind !== "platform_payment") throw new GameApiError("RECEIPT_INVALID", "후원 패스 영수증이 올바르지 않습니다.");
+    if (!request.requestId || !product || product.acquisition.kind !== "platform_payment") throw new GameApiError("RECEIPT_INVALID", "플랫폼 결제 상품의 영수증이 올바르지 않습니다.");
     const transactionId = await this.verifyReceipt(request.receipt, product.id);
     if (!transactionId) throw new GameApiError("RECEIPT_INVALID", "플랫폼 영수증을 검증할 수 없습니다.");
     const previous = this.verifiedTransactions.get(transactionId);
@@ -1049,6 +1052,53 @@ export class FakeServer implements GameApi {
     const result = { entitlement, grants: product.grants };
     this.activationResults.set(request.requestId, result);
     return { entitlement: { ...entitlement }, grants: result.grants };
+  }
+
+  /**
+   * 검증된 플랫폼 거래를 지급으로 확정한다 — 패스·묶음·다이아가 모두 이 한 길이다.
+   *
+   * 거래 ID당 **한 번만** 지급하고(같은 거래를 다른 요청 ID로 재시도해도 같은 결과), 제한 주기·첫 구매
+   * 보너스·상한 검증은 재화 구매와 같은 규칙을 쓴다. 제한을 넘은 거래는 지급하지 않고 던지므로
+   * 실제 서버에서는 이 자리에서 환불 절차를 부르면 된다(`docs/server-migration.md`).
+   */
+  async fulfillPlatformPurchase(request: FulfillPlatformPurchaseRequest): Promise<FulfillPlatformPurchaseResponse> {
+    await this.delay();
+    const cachedByRequest = this.fulfillResults.get(request.requestId);
+    if (cachedByRequest) return { ...cachedByRequest };
+    const verification = [...this.verifiedTransactions.values()].find(({ verificationId }) => verificationId === request.verificationId);
+    const product = verification && PRODUCTS.find(({ id }) => id === verification.productId);
+    if (!request.requestId || !verification || !product || product.acquisition.kind !== "platform_payment") throw new GameApiError("RECEIPT_INVALID", "검증된 플랫폼 거래가 아닙니다.");
+    const cachedByTransaction = this.fulfilledTransactions.get(verification.transactionId);
+    if (cachedByTransaction) { this.fulfillResults.set(request.requestId, cachedByTransaction); return { ...cachedByTransaction }; }
+
+    const now = this.now();
+    if (this.remaining(product, now) < 1) throw new GameApiError("PURCHASE_LIMIT_REACHED", "남은 구매 제한을 초과했습니다.");
+    const bonus = this.firstBonusAvailable(product) ? product.firstPurchaseBonus ?? [] : [];
+    const nextWallet = { ...this.state.wallet };
+    const applied = this.applyProductGrants(product, 1, nextWallet, this.state.itemInventory.map((entry) => ({ ...entry })), now, bonus);
+
+    const periodKey = this.productPeriodKey(product, now);
+    const current = this.state.productPurchases[product.id];
+    const count = (current?.periodKey === periodKey ? current.count : 0) + 1;
+    const nextPurchases = { ...this.state.productPurchases, [product.id]: { periodKey, count } };
+    this.persist({ ...this.state, wallet: nextWallet, itemInventory: applied.items, productPurchases: nextPurchases });
+    this.state.wallet = nextWallet; this.state.itemInventory = applied.items; this.state.productPurchases = nextPurchases;
+
+    let entitlement: PassEntitlementDto | undefined;
+    if (product.passBenefit) {
+      const entitlementId = `entitlement-${verification.transactionId}`;
+      const expiresAt = product.passBenefit.durationDays === null ? null : new Date(now.getTime() + product.passBenefit.durationDays * 86_400_000).toISOString();
+      entitlement = this.entitlements.get(entitlementId) ?? { entitlementId, productId: product.id, activatedAt: now.toISOString(), expiresAt, active: true, serverTime: now.toISOString() };
+      this.entitlements.set(entitlementId, entitlement);
+    }
+    const result: FulfillPlatformPurchaseResponse = {
+      ...this.snapshot(), productId: product.id, quantity: 1, granted: applied.granted, grantedRunes: [],
+      remaining: this.remaining(product, now), firstBonusApplied: bonus.length > 0,
+      ...(entitlement ? { entitlement: { ...entitlement } } : {}),
+    };
+    this.fulfilledTransactions.set(verification.transactionId, result);
+    this.fulfillResults.set(request.requestId, result);
+    return { ...result };
   }
 
   /** 광고 시청 경로와 같은 슬롯 정의·UTC 카운터를 사용하되 활성 패스만 토큰 없이 통과시킨다. */
@@ -1619,8 +1669,12 @@ export class FakeServer implements GameApi {
     // 목록 단계부터 요청 화면과 일치하는 상품만 반환해 화면별 모델이 섞인 카탈로그를 받지 않는다.
     const products = PRODUCTS.filter((product) => product.storefront === storefront && this.isVisible(product, now)).map((product) => {
       const remaining = this.remaining(product, now);
-      const premium = product.acquisition.kind === "platform_payment";
-      return { ...product, remaining, purchasable: !premium && remaining > 0, disabledReason: premium ? t("error.purchase.unverified") : remaining <= 0 ? t("error.purchase.limit") : undefined };
+      // 플랫폼 결제 상품도 제한이 남아 있으면 살 수 있는 상품이다 — 결제 SDK가 있는 빌드인지는 클라이언트의
+      // 결제 어댑터가 말하고, 지급은 영수증 검증(`fulfillPlatformPurchase`)을 지나야만 일어난다.
+      return {
+        ...product, remaining, purchasable: remaining > 0, disabledReason: remaining <= 0 ? t("error.purchase.limit") : undefined,
+        ...(product.firstPurchaseBonus ? { firstBonusAvailable: this.firstBonusAvailable(product) } : {}),
+      };
     });
     return { products, serverTime: now.toISOString() };
   }
@@ -1662,29 +1716,9 @@ export class FakeServer implements GameApi {
       : this.state.itemInventory.map((entry) => ({ ...entry }));
     const nextRunes = [...this.state.runeInventory];
     const grantedRunes: RuneInstance[] = [];
-    const granted: ProductDefinition["grants"][number][] = [];
-    // 상점은 현재 재화만 지급하며, 룬 생성은 DNA의 명시적인 인스턴스 발급 계약으로 분리한다.
-    for (const grant of product.grants) {
-      // 프로필 장식은 실제 계정 서버 전용 지급품이며 인게임 재화 구매 경로에서는 재화만 반영한다.
-      if (grant.kind === "currency") {
-        const totalGrant = totalGrantAmount(grant.amount, quantity);
-        // 총 지급량과 지갑 상한까지 복제 지갑에서 검증한 뒤에만 값을 써서 부분 지급을 남기지 않는다.
-        if (!Number.isSafeInteger(totalGrant) || nextWallet[grant.currency] + totalGrant > WALLET_CAPS[grant.currency]) throw new GameApiError("CURRENCY_LIMIT_EXCEEDED", "지급 후 재화 상한을 초과합니다.");
-        nextWallet[grant.currency] += totalGrant;
-        // 응답에는 단위 상품 정의가 아니라 실제 구매 수량이 반영된 확정 총량만 싣는다.
-        granted.push({ ...grant, amount: totalGrant });
-      }
-      // 아이템 지급도 같은 복제본에서 상한까지 검증한 뒤에만 쓴다. 룬은 여전히 DNA의 명시적
-      // 인스턴스 발급 계약이 맡으므로 여기서 만들지 않는다.
-      if (grant.kind === "item") {
-        const totalGrant = totalGrantAmount(grant.amount, quantity);
-        const cap = findItem(grant.itemId)?.maxStack ?? 9_999;
-        const stack = nextItems.find(({ itemId }) => itemId === grant.itemId);
-        if (!Number.isSafeInteger(totalGrant) || (stack?.quantity ?? 0) + totalGrant > cap) throw new GameApiError("CURRENCY_LIMIT_EXCEEDED", "지급 후 아이템 상한을 초과합니다.");
-        nextItems = this.grantItem(nextItems, grant.itemId, totalGrant, now, grant.expiresInDays).inventory;
-        granted.push({ ...grant, amount: totalGrant });
-      }
-    }
+    const applied = this.applyProductGrants(product, quantity, nextWallet, nextItems, now);
+    nextItems = applied.items;
+    const granted = applied.granted;
     const periodKey = this.productPeriodKey(product, now);
     const current = this.state.productPurchases[product.id];
     const count = (current?.periodKey === periodKey ? current.count : 0) + quantity;
@@ -1692,6 +1726,51 @@ export class FakeServer implements GameApi {
     this.persist({ ...this.state, wallet: nextWallet, runeInventory: nextRunes, itemInventory: nextItems, productPurchases: nextPurchases });
     this.state.wallet = nextWallet; this.state.runeInventory = nextRunes; this.state.itemInventory = nextItems; this.state.productPurchases = nextPurchases;
     return { ...this.snapshot(), productId, quantity, granted, grantedRunes: grantedRunes.map((rune) => this.cloneRune(rune)), remaining: Math.max(0, product.purchaseLimit - count) };
+  }
+
+  /**
+   * 상품이 주는 것을 복제 지갑·재고에 쓰고 **확정 총량**을 돌려준다.
+   *
+   * 재화 값으로 사는 구매(`purchaseProduct`)와 플랫폼 결제 확정(`fulfillPlatformPurchase`)이 같은
+   * 지급 규칙(상한 검증 · 아이템 기한 · 같은 재화 합산)을 쓰도록 한 곳에 둔다 — 두 길이 따로 지급하면
+   * 한쪽만 상한을 어긴다. 상한을 넘기면 어떤 것도 쓰지 않고 던지도록 호출부가 복제본에서만 부른다.
+   */
+  private applyProductGrants(
+    product: ProductDefinition,
+    quantity: number,
+    wallet: Session["wallet"],
+    items: Session["itemInventory"],
+    now: Date,
+    bonus: readonly ProductDefinition["grants"][number][] = [],
+  ): { items: Session["itemInventory"]; granted: ProductDefinition["grants"][number][] } {
+    let nextItems = items;
+    const granted: ProductDefinition["grants"][number][] = [];
+    const rows = [...product.grants.map((grant) => ({ grant, quantity })), ...bonus.map((grant) => ({ grant, quantity: 1 }))];
+    for (const { grant, quantity: rowQuantity } of rows) {
+      // 프로필 장식은 실제 계정 서버 전용 지급품이라 재화·아이템 지급 경로에서는 건너뛴다.
+      if (grant.kind === "currency") {
+        const total = totalGrantAmount(grant.amount, rowQuantity);
+        // 총 지급량과 지갑 상한까지 복제 지갑에서 검증한 뒤에만 값을 써서 부분 지급을 남기지 않는다.
+        if (!Number.isSafeInteger(total) || wallet[grant.currency] + total > WALLET_CAPS[grant.currency]) throw new GameApiError("CURRENCY_LIMIT_EXCEEDED", "지급 후 재화 상한을 초과합니다.");
+        wallet[grant.currency] += total;
+        granted.push({ ...grant, amount: total });
+      } else if (grant.kind === "item") {
+        const total = totalGrantAmount(grant.amount, rowQuantity);
+        const cap = findItem(grant.itemId)?.maxStack ?? 9_999;
+        const stack = nextItems.find(({ itemId }) => itemId === grant.itemId);
+        if (!Number.isSafeInteger(total) || (stack?.quantity ?? 0) + total > cap) throw new GameApiError("CURRENCY_LIMIT_EXCEEDED", "지급 후 아이템 상한을 초과합니다.");
+        nextItems = this.grantItem(nextItems, grant.itemId, total, now, grant.expiresInDays).inventory;
+        granted.push({ ...grant, amount: total });
+      }
+    }
+    // 같은 재화·아이템은 한 줄로 합쳐 영수증에 같은 그림이 두 번 서지 않게 한다.
+    const merged: ProductDefinition["grants"][number][] = [];
+    for (const row of granted) {
+      const same = merged.find((other) => (row.kind === "currency" && other.kind === "currency" && other.currency === row.currency) || (row.kind === "item" && other.kind === "item" && other.itemId === row.itemId));
+      if (same && (same.kind === "currency" || same.kind === "item") && (row.kind === "currency" || row.kind === "item")) same.amount += row.amount;
+      else merged.push({ ...row });
+    }
+    return { items: nextItems, granted: merged };
   }
 
   /** DNA 조각을 무작위 결과가 아닌 명시적으로 고른 렐릭·제작 재료·과거 재화로 교환한다. */
@@ -1941,9 +2020,23 @@ export class FakeServer implements GameApi {
 
   /** 기간 키가 바뀐 구매 기록은 0회로 간주한다. */
   private remaining(product: ProductDefinition, now: Date): number {
+    // 패스는 횟수가 아니라 **활성 권리**가 제한이다 — 영구 횟수로 막으면 만료 뒤 다시 살 수 없고, 활성인 동안
+    // 또 사면 기간이 겹쳐 아무것도 얹히지 않은 채 값만 나간다.
+    if (product.passBenefit) return this.hasActivePass(product, now) ? 0 : product.purchaseLimit;
     const record = this.state.productPurchases[product.id];
     const count = record?.periodKey === this.productPeriodKey(product, now) ? record.count : 0;
     return Math.max(0, product.purchaseLimit - count);
+  }
+
+  /** 그 패스 상품의 권리가 지금도 유효한가. */
+  private hasActivePass(product: ProductDefinition, now: Date): boolean {
+    return [...this.entitlements.values()].some((entitlement) => entitlement.productId === product.id
+      && (entitlement.expiresAt === null || now.getTime() < new Date(entitlement.expiresAt).getTime()));
+  }
+
+  /** 첫 구매 보너스는 그 상품을 한 번도 산 적 없는 계정에게만 남아 있다. */
+  private firstBonusAvailable(product: ProductDefinition): boolean {
+    return product.firstPurchaseBonus !== undefined && (this.state.productPurchases[product.id]?.count ?? 0) === 0;
   }
 
   /** 모든 스테미나 요청이 공유하는 서버 정산 경계다. */

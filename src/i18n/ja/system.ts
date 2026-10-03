@@ -70,7 +70,6 @@ export const SYSTEM_JA = {
   "mail.stamina.title": "スタミナ回復完了",
   "mail.stamina.body": "スタミナがすべて回復しました。",
 
-  "error.purchase.unverified": "サーバーのレシート検証がつながるまでは購入できません。",
   "error.purchase.limit": "購入制限に達しました。",
   "error.profile.locked": "設定記録がロック状態です。",
   "error.account.noSdk": "このビルドにはアカウントのプラットフォームSDKが接続されていません。",

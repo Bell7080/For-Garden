@@ -63,7 +63,6 @@ export const SYSTEM_VI = {
   "mail.daily.body": "Nhiệm vụ hằng ngày mới đã bắt đầu.",
   "mail.stamina.title": "Thể lực đã hồi đầy",
   "mail.stamina.body": "Thể lực của bạn đã hồi đầy.",
-  "error.purchase.unverified": "Chưa thể mua cho đến khi kết nối xác minh biên lai máy chủ.",
   "error.purchase.limit": "Đã đạt giới hạn mua.",
   "error.profile.locked": "Hồ sơ cài đặt đã bị khóa.",
   "error.account.noSdk": "Bản này chưa kết nối SDK nền tảng tài khoản.",

@@ -120,6 +120,14 @@ export interface ProductDefinition {
   /** 구매 작업판이 처음 제안할 묶음 수량이며 서버는 요청 수량을 별도로 검증한다. */
   defaultQuantity: number;
   passBenefit?: PassBenefitDefinition;
+  /**
+   * 계정에서 **처음 사는 순간에만** 얹는 보너스 지급(프리미엄 다이아).
+   *
+   * 값 하나로 "두 배"를 적지 않고 지급 목록으로 적는다 — 보너스가 다이아가 아닌 것이어도 같은 경계를 지난다.
+   * 첫 구매 여부는 구매 기록(`productPurchases`)에서 서버가 판정하므로 영구 제한(`refresh: "none"`·`"once"`)
+   * 상품에만 단다.
+   */
+  firstPurchaseBonus?: readonly ProductGrant[];
   purchaseLimit: number; refresh: ProductRefresh; visibleFrom: string; visibleUntil: string;
 }
 

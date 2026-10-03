@@ -65,6 +65,46 @@ export const PREMIUM_CARD = {
   dragSlop: 16,
 } as const;
 
+/**
+ * 한 줄에 하나씩 눕는 **가로 패키지 카드**.
+ *
+ * 묶음은 받는 것이 여럿(액자 최대 네 장)이라 두 칸 격자에 넣으면 액자가 작아져 수량이 읽히지 않는다 —
+ * 폭 전체를 쓰고 왼쪽에 이름·받는 것, 오른쪽에 **크고 두꺼운 값**을 세운다. 다이아(`gem`)만 같은 모양이 넷
+ * 반복되는 상품이라 예전 두 칸 격자를 쓴다(`premiumListKind`).
+ */
+export const PREMIUM_WIDE = {
+  height: 330,
+  gapY: 24,
+  /** 카드 안쪽 여백. */
+  pad: 34,
+  /** 받는 것 액자 한 변과 간격. 최대 `frameCap`장이 왼쪽 열에 선다. */
+  frame: 124,
+  frameGap: 16,
+  frameCap: 4,
+  /** 액자 우하단 수량 글자 비율 — 공용 액자(0.23)보다 크게 키워 받는 양이 가장 먼저 읽히게 한다. */
+  amountRatio: 0.36,
+  nameSize: 40,
+  nameY: -112,
+  frameY: 12,
+  /** 값 칸(오른쪽). 값 글자는 `display` 역할로 크고 두껍게 선다. */
+  price: { width: 330, height: 124, size: 58, y: -18 },
+  /** 값 칸과 왼쪽 열 사이의 최소 간격. */
+  priceGap: 28,
+  /** 값 칸 아래 한 줄(남은 구매·사유)과 왼쪽 아래 한 줄(패스 기간). */
+  noteY: 96,
+  footY: 134,
+  noteSize: 22,
+} as const;
+
+/** 다이아 카드의 값 칸. 두 칸 격자의 카드 안에서 크고 두껍게 선다. */
+export const PREMIUM_GRID_PRICE = { height: 92, size: 48 } as const;
+
+/** 이 갈래의 카드가 서는 방식. 다이아만 두 칸, 나머지 묶음은 한 줄에 하나다. */
+export type PremiumListKind = "wide" | "grid";
+export function premiumListKind(category: "package" | "deal" | "limited" | "gem"): PremiumListKind {
+  return category === "gem" ? "grid" : "wide";
+}
+
 export interface PremiumRect { left: number; right: number; top: number; bottom: number }
 
 /** 격자가 흐르는 창. 마스크와 입력 경계가 같은 값을 읽는다. */
@@ -86,29 +126,53 @@ export function premiumTitleHeight(): number {
 export function premiumTitleY(): number { return PREMIUM_BOARD.top; }
 export function premiumTitleLeft(): number { return premiumGridViewport().left; }
 
-/** 칸 하나의 폭. 두 칸과 그 사이 간격이 창을 정확히 나눠 갖는다. */
-export function premiumCardWidth(): number {
+/** 칸 하나의 폭. 두 칸과 그 사이 간격이 창을 정확히 나눠 갖고, 가로 카드는 창 폭 전체를 쓴다. */
+export function premiumCardWidth(kind: PremiumListKind = "grid"): number {
   const view = premiumGridViewport();
+  if (kind === "wide") return view.right - view.left;
   return (view.right - view.left - PREMIUM_CARD.gapX * (PREMIUM_CARD.columns - 1)) / PREMIUM_CARD.columns;
 }
 
+/** 카드 한 장의 높이. */
+export function premiumCardHeight(kind: PremiumListKind = "grid"): number {
+  return kind === "wide" ? PREMIUM_WIDE.height : PREMIUM_CARD.height;
+}
+
 /** 스크롤 0일 때 그 칸의 중심. 화면은 여기에 컨테이너 이동만 더한다. */
-export function premiumCardSpot(index: number): { x: number; y: number } {
+export function premiumCardSpot(index: number, kind: PremiumListKind = "grid"): { x: number; y: number } {
   const view = premiumGridViewport();
-  const width = premiumCardWidth();
+  const width = premiumCardWidth(kind);
+  const height = premiumCardHeight(kind);
+  if (kind === "wide") return { x: view.left + width / 2, y: view.top + height / 2 + index * (height + PREMIUM_WIDE.gapY) };
   const column = index % PREMIUM_CARD.columns;
   const row = Math.floor(index / PREMIUM_CARD.columns);
   return {
     x: view.left + width / 2 + column * (width + PREMIUM_CARD.gapX),
-    y: view.top + PREMIUM_CARD.height / 2 + row * (PREMIUM_CARD.height + PREMIUM_CARD.gapY),
+    y: view.top + height / 2 + row * (height + PREMIUM_CARD.gapY),
   };
 }
 
 /** 그 수만큼의 칸이 쌓인 높이. 창보다 길면 그 안에서 흐른다. */
-export function premiumGridContentHeight(count: number): number {
+export function premiumGridContentHeight(count: number, kind: PremiumListKind = "grid"): number {
   if (count <= 0) return 0;
+  const height = premiumCardHeight(kind);
+  if (kind === "wide") return count * (height + PREMIUM_WIDE.gapY) - PREMIUM_WIDE.gapY;
   const rows = Math.ceil(count / PREMIUM_CARD.columns);
-  return rows * (PREMIUM_CARD.height + PREMIUM_CARD.gapY) - PREMIUM_CARD.gapY;
+  return rows * (height + PREMIUM_CARD.gapY) - PREMIUM_CARD.gapY;
+}
+
+/**
+ * 가로 카드 안의 자리(카드 중심 기준). 받는 것 줄은 왼쪽 열, 값 칸은 오른쪽 열이고 둘은 서로를 넘지 않는다.
+ * `frames`는 액자 `count`장의 중심 x이다.
+ */
+export function premiumWideInner(width: number, count: number): {
+  left: number; frames: number[]; priceX: number; priceLeft: number; frameRight: number;
+} {
+  const { pad, frame, frameGap, price } = PREMIUM_WIDE;
+  const left = -width / 2 + pad;
+  const frames = Array.from({ length: count }, (_, index) => left + frame / 2 + index * (frame + frameGap));
+  const priceX = width / 2 - pad - price.width / 2;
+  return { left, frames, priceX, priceLeft: priceX - price.width / 2, frameRight: count > 0 ? frames[count - 1] + frame / 2 : left };
 }
 
 /** 라벨 한 장의 중심. 넷이 화면 폭을 고르게 나눠 갖는다. */

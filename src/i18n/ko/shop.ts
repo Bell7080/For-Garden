@@ -19,9 +19,14 @@ export const SHOP_KO = {
   "shop.purchase.failed": "구매에 실패했습니다.",
 
   "shop.premium.title": "프리미엄",
-  "shop.premium.passBenefit": "광고 보상 즉시 수령  ·  {duration}\n광고 이용자와 동일한 기본 보상 · 슬롯별 UTC 일일 한도",
   "shop.premium.forever": "영구",
   "shop.premium.duration": "유효 기간 {days}일",
   "shop.premium.remaining": "남은 구매 {remaining}/{limit}",
   "shop.premium.purchased": "구매가 완료되었습니다.",
+  "shop.premium.daily": "매일",
+  "shop.premium.firstBonus": "첫 구매 보너스 +{amount}",
+  "shop.premium.unsupported": "이 빌드에서는 결제를 사용할 수 없습니다.",
+  "shop.premium.cancelled": "결제가 취소되었습니다.",
+  "shop.premium.perk.instantAds": "광고 보상 즉시 수령",
+  "shop.premium.perk.adFree": "광고 제거 · 던전 3배율",
 } as const;

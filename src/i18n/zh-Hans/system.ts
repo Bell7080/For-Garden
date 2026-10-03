@@ -63,7 +63,6 @@ export const SYSTEM_ZH_HANS = {
   "mail.daily.body": "新的每日任务开始了。",
   "mail.stamina.title": "体力已完全恢复",
   "mail.stamina.body": "你的体力已完全恢复。",
-  "error.purchase.unverified": "在接入服务器收据验证前无法购买。",
   "error.purchase.limit": "已达购买上限。",
   "error.profile.locked": "设置记录已锁定。",
   "error.account.noSdk": "此版本未接入账号平台SDK。",

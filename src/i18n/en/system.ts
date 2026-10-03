@@ -63,7 +63,6 @@ export const SYSTEM_EN = {
   "mail.daily.body": "New daily missions have started.",
   "mail.stamina.title": "Stamina Fully Recovered",
   "mail.stamina.body": "Your Stamina is fully recovered.",
-  "error.purchase.unverified": "Purchases are unavailable until server receipt verification is connected.",
   "error.purchase.limit": "The purchase limit has been reached.",
   "error.profile.locked": "The settings record is locked.",
   "error.account.noSdk": "This build has no account platform SDK connected.",

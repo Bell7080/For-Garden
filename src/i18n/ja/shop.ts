@@ -19,9 +19,14 @@ export const SHOP_JA = {
   "shop.purchase.failed": "購入に失敗しました。",
 
   "shop.premium.title": "プレミアム",
-  "shop.premium.passBenefit": "広告報酬を即時受け取り  ·  {duration}\n広告利用者と同じ基本報酬 · スロットごとのUTC日次上限",
   "shop.premium.forever": "永久",
   "shop.premium.duration": "有効期間 {days}日",
   "shop.premium.remaining": "残りの購入 {remaining}/{limit}",
   "shop.premium.purchased": "購入が完了しました。",
+  "shop.premium.daily": "毎日",
+  "shop.premium.firstBonus": "初回購入ボーナス +{amount}",
+  "shop.premium.unsupported": "このビルドでは決済を利用できません。",
+  "shop.premium.cancelled": "決済がキャンセルされました。",
+  "shop.premium.perk.instantAds": "広告報酬を即時受け取り",
+  "shop.premium.perk.adFree": "広告除去 · ダンジョン3倍率",
 } as const;

@@ -417,6 +417,19 @@ export interface VerifyPurchaseReceiptResponse { verificationId: string; product
 /** 검증 결과를 권리로 바꾸는 단계도 별도 멱등 키를 가져 네트워크 재시도 중 이중 활성화를 막는다. */
 export interface ActivatePassRequest { verificationId: string; requestId: string; }
 export interface ActivatePassResponse { entitlement: PassEntitlementDto; grants: readonly ProductGrant[]; }
+/**
+ * 검증된 플랫폼 거래를 **상품 지급으로 확정**하는 요청. 패스가 아닌 묶음·다이아도 같은 경계를 지난다.
+ *
+ * 결제 SDK가 영수증을 주면 클라이언트는 `verifyPurchaseReceipt` → 이 요청 순서로만 지급을 받는다.
+ * 거래 ID당 한 번만 지급되므로 같은 거래를 다른 요청 ID로 다시 보내도 중복 지급이 없다.
+ */
+export interface FulfillPlatformPurchaseRequest { verificationId: string; requestId: string; }
+export interface FulfillPlatformPurchaseResponse extends PurchaseProductResponse {
+  /** 패스 상품이면 이번 거래가 만든(또는 이미 만든) 권리. */
+  entitlement?: PassEntitlementDto;
+  /** 이번 지급에 첫 구매 보너스가 들어 있는가. */
+  firstBonusApplied: boolean;
+}
 /** 패스 즉시 수령은 광고 토큰 없이 권리와 서버 UTC 카운터를 검증한다. */
 export interface ClaimInstantAdRewardRequest { entitlementId: string; slotId: string; requestId: string; }
 export interface ClaimInstantAdRewardResponse extends ClaimAdRewardResponse { entitlement: PassEntitlementDto; dailyBonus?: { currency: "gems"; amount: number }; }
@@ -434,7 +447,7 @@ export interface NotificationSignalsResponse { pendingFriendRequestCount: number
 export interface ClaimMissionRewardsResponse extends PlayerStateDto { claimedIds: string[]; claimedResearchStageIds: string[]; /** 임무·연구도 단계가 각각 준 것과 그 합(같은 재화는 한 줄). 상한에 깎인 뒤의 실제 지급분이다. */ rewards: { mission: MissionReward[]; research: MissionReward[] }; granted: MissionReward[]; }
 
 /** 상품 목록은 정적 정의에 서버가 계산한 현재 구매 가능 횟수를 결합한다. */
-export interface ProductDto { id: string; storefront: ProductStorefront; category: ShopCategory; lootCategory?: LootCategory; premiumCategory?: PremiumCategory; iconKey: ShopProductIconKey; name: string; description: string; acquisition: ProductAcquisition; grants: readonly ProductGrant[]; defaultQuantity: number; passBenefit?: PassBenefitDefinition; purchaseLimit: number; refresh: ProductRefresh; remaining: number; purchasable: boolean; disabledReason?: string; }
+export interface ProductDto { id: string; storefront: ProductStorefront; category: ShopCategory; lootCategory?: LootCategory; premiumCategory?: PremiumCategory; iconKey: ShopProductIconKey; name: string; description: string; acquisition: ProductAcquisition; grants: readonly ProductGrant[]; defaultQuantity: number; passBenefit?: PassBenefitDefinition; purchaseLimit: number; refresh: ProductRefresh; remaining: number; purchasable: boolean; disabledReason?: string; firstPurchaseBonus?: readonly ProductGrant[]; /** 서버가 구매 기록에서 판정한 값 — 아직 첫 구매 보너스를 받지 않았는가. */ firstBonusAvailable?: boolean; }
 /** 상품 조회 응답은 서버 시각 기준으로 노출 중인 상품만 담는다. */
 export interface ProductListResponse { products: ProductDto[]; serverTime: string; }
 /** 구매 요청은 영속 상품 ID와 사용자가 팝업에서 확정한 묶음 수량을 함께 보낸다. */
@@ -796,6 +809,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   sweepExpedition(request: SweepExpeditionRequest): Promise<SweepExpeditionResponse>;
   /** 실제 결제 서버가 플랫폼 원본 영수증을 검증하며 요청 ID 재시도에는 같은 결과를 반환한다. */
   verifyPurchaseReceipt(request: VerifyPurchaseReceiptRequest): Promise<VerifyPurchaseReceiptResponse>;
+  /** 검증된 플랫폼 거래를 상품 지급으로 확정한다. 패스·묶음·다이아가 모두 이 경계를 지난다. */
+  fulfillPlatformPurchase(request: FulfillPlatformPurchaseRequest): Promise<FulfillPlatformPurchaseResponse>;
   /** 검증된 거래를 기간 권리로 한 번만 활성화한다. */
   activatePass(request: ActivatePassRequest): Promise<ActivatePassResponse>;
   /** 활성 권리로 광고 슬롯의 원래 보상과 원래 UTC 일일 한도를 그대로 즉시 수령한다. */

@@ -63,7 +63,6 @@ export const SYSTEM_TH = {
   "mail.daily.body": "ภารกิจรายวันใหม่เริ่มแล้ว",
   "mail.stamina.title": "สตามินาฟื้นฟูเต็มแล้ว",
   "mail.stamina.body": "สตามินาของคุณฟื้นฟูเต็มแล้ว",
-  "error.purchase.unverified": "ซื้อไม่ได้จนกว่าจะเชื่อมต่อการตรวจสอบใบเสร็จของเซิร์ฟเวอร์",
   "error.purchase.limit": "ถึงขีดจำกัดการซื้อแล้ว",
   "error.profile.locked": "บันทึกการตั้งค่าถูกล็อก",
   "error.account.noSdk": "บิลด์นี้ไม่ได้เชื่อมต่อ SDK แพลตฟอร์มบัญชี",

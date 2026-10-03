@@ -63,7 +63,6 @@ export const SYSTEM_DE = {
   "mail.daily.body": "Neue tägliche Missionen haben begonnen.",
   "mail.stamina.title": "Ausdauer vollständig erholt",
   "mail.stamina.body": "Deine Ausdauer ist vollständig erholt.",
-  "error.purchase.unverified": "Käufe sind erst möglich, wenn die serverseitige Belegprüfung angebunden ist.",
   "error.purchase.limit": "Das Kauflimit ist erreicht.",
   "error.profile.locked": "Der Einstellungsdatensatz ist gesperrt.",
   "error.account.noSdk": "In dieser Version ist kein Konto-Plattform-SDK angebunden.",

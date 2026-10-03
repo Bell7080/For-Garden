@@ -61,14 +61,14 @@ export const OPENING_TRAIN: DialogueStory = {
     // ── 파루아: 도디를 붙잡으며 연구원에게 흥미를 ───────────────────────
     { id: "halt", speaker: "???", body: "도디. 너무 가까워. 연구원님이 뒤로 기울어지고 있어.", standing: "parua", cast: ROGUE_TRIO, act: "lean", nextId: "sorry" },
     { id: "sorry", speaker: "도디", body: "앗, 죄, 죄송해요! 너무 반가워서 그만…!", standing: "dodi", act: "recoil", nextId: "parua" },
-    { id: "parua", speaker: "파루아", body: "나는 파루아. 뒤를 살피는 게 내 일이야.", standing: "parua", act: "nod", nextId: "sniff" },
-    { id: "sniff", speaker: "파루아", body: "그런데 이상해. 연구원님한테서는 다른 연구원들이랑 다른 냄새가 나. …조금만 더 가까이 봐도 돼?", standing: "parua", act: "lean", nextId: "scold" },
+    { id: "parua", speaker: "파루아", body: "저는 파루아예요. 뒤를 살피는 게 제 일이에요.", standing: "parua", act: "nod", nextId: "sniff" },
+    { id: "sniff", speaker: "파루아", body: "그런데 이상해요. 연구원님한테서는 다른 연구원들이랑 다른 냄새가 나요. …조금만 더 가까이 봐도 돼요?", standing: "parua", act: "lean", nextId: "scold" },
     { id: "scold", speaker: "토리카", body: "파루아까지! 연구원님 곤란하시잖아!", standing: "torika", act: "shake", nextId: "quake" },
 
     // ── 경보: 큰 진동, 그리고 검은 베일 ───────────────────────────────
     { id: "quake", speaker: "", body: "쿠구구궁…!! 객차 전체가 크게 들썩인다.", cue: "rumble", nextId: "alarm" },
     { id: "alarm", speaker: "안내 방송", body: "경보. 경보. 선로 전방에 미확인 개체 접근. 승객 여러분은 즉시 자리를 지켜 주십시오.", cue: "alarm", nextId: "sense" },
-    { id: "sense", speaker: "파루아", body: "…앞에서 뭔가 와. 하나가 아니야.", standing: "parua", act: "tremble", nextId: "guard" },
+    { id: "sense", speaker: "파루아", body: "…앞에서 뭔가 와요. 하나가 아니에요.", standing: "parua", act: "tremble", nextId: "guard" },
     { id: "guard", speaker: "토리카", body: "연구원님, 제 뒤로 오세요! 무슨 일이 있어도 제가 막을게요!", standing: "torika", act: "hop", nextId: "veil" },
     { id: "veil", speaker: "???", body: "찾았다. Garden이 내려보낸 연구원.", standing: "koma", cast: [{ id: "koma", slot: "center", veiled: true }], cue: "rumble", nextId: "order" },
     { id: "order", speaker: "???", body: "목표 회수 작전을 개시한다. 연구원을 반드시 사로잡아라. …방주째로 떨어뜨려.", standing: "koma", act: "nod", nextId: "blast" },
@@ -77,7 +77,7 @@ export const OPENING_TRAIN: DialogueStory = {
     { id: "blast", speaker: "", body: "콰아아아앙!!", cast: [], cue: "explosion", backdrop: "battlefield", nextId: "aftermath" },
     { id: "aftermath", speaker: "토리카", body: "콜록, 콜록… 연구원님, 괜찮으세요?! 열차가… 선로 밖으로 떨어졌어요…!", standing: "torika", cast: [{ id: "torika", slot: "center" }], act: "shake", nextId: "record" },
     { id: "record", speaker: "도디", body: "대, 대장님은 무사해요! 기록… 기록해야 하는데… 아니, 지금은 그럴 때가 아니지!", standing: "dodi", cast: ROGUE_TRIO, act: "tremble", nextId: "three" },
-    { id: "three", speaker: "파루아", body: "쉿. 셋이야. 연기 너머에서 이쪽으로 오고 있어.", standing: "parua", act: "lean", nextId: "toby" },
+    { id: "three", speaker: "파루아", body: "쉿. 셋이에요. 연기 너머에서 이쪽으로 오고 있어요.", standing: "parua", act: "lean", nextId: "toby" },
 
     // ── 공멸의 우당탕탕 삼인조 ──────────────────────────────────────
     { id: "toby", speaker: "토비", body: "찾았다아! 저기 있다, 그 연구원! 이번엔 내가 제일 먼저 잡는다!", standing: "toby", cast: RAID_TRIO, act: "hopTwice", cue: "impact", nextId: "amo" },
@@ -88,7 +88,7 @@ export const OPENING_TRAIN: DialogueStory = {
     // ── 맞서는 쁘띠 로그 ──────────────────────────────────────────
     { id: "refuse", speaker: "토리카", body: "싫어요! 연구원님은… 우리 대장님이에요. 한 발짝도 못 지나가요!", standing: "torika", cast: ROGUE_TRIO, act: "hop", cue: "impact", nextId: "brave" },
     { id: "brave", speaker: "도디", body: "무, 무섭지만… 대장님을 지킨 첫 기록은 제가 쓸 거예요!", standing: "dodi", act: "tremble", nextId: "aim" },
-    { id: "aim", speaker: "파루아", body: "…화살은 준비됐어. 언제든지.", standing: "parua", act: "nod", nextId: "end" },
+    { id: "aim", speaker: "파루아", body: "…화살은 준비됐어요. 언제든지요.", standing: "parua", act: "nod", nextId: "end" },
     // 전투를 여는 외침은 토리카 한 마디뿐이다 — 곧바로 1-1이 시작되므로 구호를 길게 늘이지 않는다.
     { id: "end", speaker: "토리카", body: "대장님은 제 뒤에 계세요. …전투 개시!", standing: "torika", act: "hop", cue: "impact" },
   ],

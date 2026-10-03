@@ -47,7 +47,9 @@ import { PlayerProfilePopup } from "../ui/PlayerProfilePopup";
 import { profileModifierManager } from "../managers/ProfileModifierManager";
 import { playerProfileDisplay, type PlayerProfileDisplay } from "../state/playerProfile";
 import { openAvatarPicker, openBioEditor, openModifierPicker, openNicknameEditor } from "../ui/PlayerProfileEditors";
-import { showContentLockedToast, addLockCover, collectUnlockCelebrations, consumeUnlockCelebration, contentNameKey, contentOpen, revealWithLockPop, unlockCover, UNLOCK_POP_TOTAL_MS } from "../ui/contentLock";
+import { showContentLockedToast, addLockCover, collectUnlockCelebrations, consumeUnlockCelebration, contentNameKey, contentOpen, playUnlockSequence, unlockCover, UNLOCK_POP_TOTAL_MS } from "../ui/contentLock";
+import { addPadlock } from "../ui/Padlock";
+import { LOCK_DIM } from "../ui/lockStyle";
 import type { ContentId } from "../core/contentUnlock";
 import { managerEvents } from "../managers/ManagerEvents";
 import { PROFILE_FRAMES } from "../data/profileFrames";
@@ -250,9 +252,9 @@ export class LobbyScene extends Phaser.Scene {
       // 출격과 성격이 다른 입구라 강조 양식을 쓰지 않는다. 같은 원근만 공유한다.
       perspective: "right",
       tilt: -6,
-      onClick: () => this.openPvpMenu(),
+      onClick: this.guarded("duel", () => this.openPvpMenu()),
     });
-    this.gateEntrance("duel", duelButton, LOBBY_ACTION_BOUNDS.expedition.x, LOBBY_ACTION_BOUNDS.expedition.y);
+    this.gateEntrance("duel", duelButton);
 
     // 출격 — 로비에서 가장 큰 버튼이다. 주황빛 강조로 다른 입구와 구분한다.
     new Button(this, LOBBY_ACTION_BOUNDS.sortie.x, LOBBY_ACTION_BOUNDS.sortie.y, {
@@ -281,9 +283,9 @@ export class LobbyScene extends Phaser.Scene {
       tilt: 6,
       accentColor: EXCHANGE_BLUE,
       accentTextColor: "#9fd0f0",
-      onClick: () => startScene(this, "interaction"),
+      onClick: this.guarded("interaction", () => startScene(this, "interaction")),
     });
-    this.gateEntrance("interaction", interactionButton, 250, NAV_TOP - 400);
+    this.gateEntrance("interaction", interactionButton);
 
     // 발굴 — 출격과 같은 줄에 서지만 크기는 교류와 같다. 왼쪽은 서브 콘텐츠 자리라, 오른쪽의
     // 큰 주황 버튼과 크기로 위계를 가른다. 색도 교류와 같은 푸른 계열로 묶는다.
@@ -297,12 +299,12 @@ export class LobbyScene extends Phaser.Scene {
       tilt: 6,
       accentColor: EXCHANGE_BLUE,
       accentTextColor: "#9fd0f0",
-      onClick: () => this.openIdleExcavation(),
+      onClick: this.guarded("excavation", () => this.openIdleExcavation()),
     });
     // 발굴 저장 상한 판정은 manager가 API 결과로 합성하며 버튼은 공용 점만 구독한다.
     // 외곽 사각형이 아니라 원근으로 짧아진 실제 우상단 변을 회전해 점이 판 밖 허공에 남지 않게 한다.
     const excavationDot = perspectiveButtonNotificationAnchor({ width: 292, height: 106, tall: "left", rotation: Phaser.Math.DegToRad(6), inset: 10 });
-    this.gateEntrance("excavation", excavationButton, 250, NAV_TOP - 245);
+    this.gateEntrance("excavation", excavationButton);
     bindNotificationDot(this, excavationButton, excavationDot, (listener) => notificationManager.subscribe("excavationHarvestReady", listener));
 
     new BottomNav(this, "lobby");
@@ -408,23 +410,17 @@ export class LobbyScene extends Phaser.Scene {
   }
 
   /**
-   * 레벨로 잠긴 입구는 **숨긴다** — 잠긴 판을 늘어놓으면 처음 화면이 못 하는 것으로 가득하다. 열리는 레벨에 닿은 뒤 처음 로비로
-   * 돌아오면 그 자리에 자물쇠가 서서 흔들리다 터지며 입구가 나타난다. (고고학 탭처럼 원래 줄에 있어야 하는 자리는 숨기지 않고
-   * 자물쇠를 건 채로 둔다 — `BottomNav`.)
-   */
-  /**
    * 우측·좌측 레일 아이콘은 줄에 늘 서 있어야 하는 자리라 숨기지 않고 **자물쇠를 건 채** 둔다. 누르면 개방 레벨을 알리고, 방금 열렸으면
    * 자물쇠가 터지며 풀린다. 입력 가드는 눌린 시점의 레벨로 판단하므로 연출 중에도 어긋나지 않는다.
    */
-  private lockRailButton(id: ContentId, button: RailButton, size: number): void {
+  private lockRailButton(id: ContentId, button: RailButton): void {
     const celebrate = contentOpen(id) && consumeUnlockCelebration(id);
     if (contentOpen(id) && !celebrate) return;
-    // 원본 칩과 같은 깎임의 덮개가 판 전체를 어둡게 덮고 한가운데에 큰 자물쇠를 건다(판을 흐리게 하면 자물쇠까지 흐려진다).
-    const cover = addLockCover(this, id, size, size, { bevel: { topLeft: size * 0.32, bottomRight: size * 0.32 } });
-    button.add(cover);
+    // 꺼진 칩처럼 판·글자가 가라앉고 아이콘 자리에 자물쇠가 선다(`RailButton.setLocked`).
+    button.setLocked();
     if (!celebrate) return;
     this.unlockCelebrationUntil = this.time.now + UNLOCK_POP_TOTAL_MS + 900;
-    this.time.delayedCall(450, () => { if (cover.active) unlockCover(this, cover, id); });
+    this.time.delayedCall(450, () => { if (button.active) button.unlock(id); });
   }
 
   /** 잠긴 입구의 눌림은 동작 대신 개방 레벨을 알린다. */
@@ -432,9 +428,21 @@ export class LobbyScene extends Phaser.Scene {
     return () => { if (contentOpen(id)) action(); else showContentLockedToast(this, id); };
   }
 
-  private gateEntrance(id: ContentId, button: Button, x: number, y: number): void {
-    if (!contentOpen(id)) { button.setVisible(false); return; }
-    if (consumeUnlockCelebration(id)) { this.unlockCelebrationUntil = this.time.now + UNLOCK_POP_TOTAL_MS + 900; revealWithLockPop(this, button, id, x, y); }
+  /**
+   * 잠긴 입구(교류·발굴·결투)는 숨기지 않고 **반투명하게** 가라앉혀 둔다 — 줄에 무엇이 있는지는 보이되 눈길을 끌지 않는다.
+   * 글자 왼쪽에 작은 자물쇠가 서고, 누르면 동작 대신 개방 레벨을 알린다. 방금 열렸으면 입구가 밝아지며 자물쇠가 풀린다.
+   */
+  private gateEntrance(id: ContentId, button: Button): void {
+    const celebrate = contentOpen(id) && consumeUnlockCelebration(id);
+    if (contentOpen(id) && !celebrate) return;
+    button.setAlpha(LOCK_DIM.entranceAlpha);
+    const lock = button.addLabelMark((size) => addPadlock(this, 0, 0, size, { color: LOCK_DIM.lockColor }));
+    if (!celebrate) return;
+    this.unlockCelebrationUntil = this.time.now + UNLOCK_POP_TOTAL_MS + 900;
+    this.time.delayedCall(450, () => {
+      if (!button.active) return;
+      playUnlockSequence(this, lock, { id, onStart: () => this.tweens.add({ targets: button, alpha: 1, duration: 420, ease: "Sine.easeOut" }) });
+    });
   }
 
   /** 연타 중에는 같은 인스턴스의 open 가드가 기존 쪽지를 유지한다. */
@@ -771,7 +779,7 @@ export class LobbyScene extends Phaser.Scene {
       const button = new RailButton(this, item.bounds.x, item.bounds.y, { icon: item.icon, label: item.label, size: item.bounds.width, event: item.event, onClick: item.onClick });
       // 실제 서버 계약이 준비된 우편·친구 요청만 연결하고 Fake 데이터에서는 임의로 켜지 않는다.
       const key = item.icon === "mail" ? "mail" : item.icon === "friends" ? "friendRequest" : undefined;
-      if (item.icon === "friends") this.lockRailButton("friends", button, item.bounds.width);
+      if (item.icon === "friends") this.lockRailButton("friends", button);
       if (key) bindNotificationDot(this, button, { x: 42, y: -42 }, (listener) => notificationManager.subscribe(key, listener));
     });
   }
@@ -799,8 +807,8 @@ export class LobbyScene extends Phaser.Scene {
     const buttons = entries.map((entry) => new RailButton(this, entry.bounds.x, entry.bounds.y, {
       icon: entry.icon, label: entry.label, size: entry.bounds.width, accent: entry.accent, onClick: entry.onClick,
     }));
-    this.lockRailButton("shop", buttons[1], entries[1].bounds.width);
-    this.lockRailButton("trade", buttons[2], entries[2].bounds.width);
+    this.lockRailButton("shop", buttons[1]);
+    this.lockRailButton("trade", buttons[2]);
     // 보상 상태의 단일 구독과 기존 팝업 연결은 위치 분리 뒤에도 그대로 유지한다.
     bindNotificationDot(this, buttons[0], { x: 42, y: -42 }, (listener) => notificationManager.subscribe("missionReward", listener));
   }

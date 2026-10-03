@@ -4,7 +4,7 @@ import { motionPolicy } from "../core/settings";
 import { session } from "../state/session";
 import { chipPoints, drawLayer } from "./holo";
 import { LOCK_TOAST, toastWidth } from "./lockStyle";
-import { drawGlyph } from "./glyphs";
+import { addPadlock } from "./Padlock";
 import { COLOR, textStyle } from "./theme";
 
 export type ContentToastTone = "locked" | "unlocked";
@@ -32,7 +32,7 @@ export function showContentToast(scene: Phaser.Scene, message: string, tone: Con
   } else {
     const iconSize = 40;
     const contentWidth = iconSize + LOCK_TOAST.iconGap + label.width;
-    box.add(drawGlyph(scene, "lock", -contentWidth / 2 + iconSize / 2, 0, iconSize, COLOR.accent, 1, 4));
+    box.add(addPadlock(scene, -contentWidth / 2 + iconSize / 2, 0, iconSize, { color: COLOR.accent }));
     label.setOrigin(0, 0.5).setX(-contentWidth / 2 + iconSize + LOCK_TOAST.iconGap);
     box.add(label);
   }

@@ -7,7 +7,9 @@ import { COLOR, textStyle } from "./theme";
 import { startNavScene } from "./screenTransition";
 import { NAV_TABS, navTabDirection, type NavKey } from "../core/navTabs";
 import { pressIn, pressOut } from "./pressFeedback";
-import { addLockCover, consumeUnlockCelebration, contentOpen, showContentLockedToast, unlockCover } from "./contentLock";
+import { consumeUnlockCelebration, contentOpen, playUnlockSequence, showContentLockedToast } from "./contentLock";
+import { addPadlock } from "./Padlock";
+import { LOCK_DIM } from "./lockStyle";
 import type { ContentId } from "../core/contentUnlock";
 
 /** 차례와 넘김 규칙은 순수 표가 갖는다. 여기서는 그리기만 한다. */
@@ -114,7 +116,8 @@ export class BottomNav {
       const color = active ? COLOR.accent : 0x9aa3ad;
 
       const group = scene.add.container(x, NAV_TOP + 84);
-      group.add(drawIcon(scene, tab.key, 0, -16, color));
+      const icon = drawIcon(scene, tab.key, 0, -16, color);
+      group.add(icon);
       /*
        * **다섯이 폭을 나눠 갖는 줄이라 이름이 칸을 넘으면 옆 탭을 침범한다.**
        *
@@ -123,21 +126,32 @@ export class BottomNav {
        * 글자가 작아지면 그 탭이 덜 중요한 것처럼 읽히기 때문이다. 지금 화면인 탭은 1.12배로
        * 커지므로 그만큼을 미리 뺀 자리에 맞춘다.
        */
-      group.add(squeezeTextToWidth(
+      const label = squeezeTextToWidth(
         scene.add
           .text(0, 26, navLabel(tab.key), textStyle({ role: "emphasis", size: 26, color: active ? COLOR.accentText : COLOR.inkDim }))
           .setOrigin(0.5, 0),
         (step - NAV_LABEL_GUTTER) / ACTIVE_SCALE,
-      ));
+      );
+      group.add(label);
       if (locked && contentId) {
-        // 덮개가 탭 전체를 어둡게 덮고 한가운데에 큰 자물쇠를 건다. 탭 자체를 흐리게 하면 자물쇠까지 함께 흐려진다.
-        const cover = addLockCover(scene, contentId, step - 28, 140, { bevel: { topLeft: 30, bottomRight: 30 }, blockInput: false });
-        cover.setPosition(0, 6);
-        group.add(cover);
+        // 판을 덮지 않고 글자와 아이콘만 가라앉힌다 — 아이콘 자리에는 같은 크기의 회색 자물쇠가 대신 선다.
+        icon.setVisible(false);
+        label.setAlpha(LOCK_DIM.labelAlpha);
+        const lock = addPadlock(scene, 0, -16, 44, { color: LOCK_DIM.lockColor, alpha: LOCK_DIM.lockAlpha * 0.7 });
+        group.add(lock);
         if (celebrate) {
           scene.time.delayedCall(500, () => {
-            if (!cover.active) return;
-            unlockCover(scene, cover, contentId, () => { locked = false; });
+            if (!lock.active) return;
+            playUnlockSequence(scene, lock, {
+              id: contentId,
+              onStart: () => scene.tweens.add({ targets: label, alpha: 1, duration: 420, ease: "Sine.easeOut" }),
+              onOpen: () => {
+                locked = false;
+                if (!icon.active) return;
+                icon.setVisible(true).setAlpha(0).setScale(0.6);
+                scene.tweens.add({ targets: icon, alpha: 1, scale: 1, duration: 320, ease: "Back.easeOut" });
+              },
+            });
           });
         }
       }

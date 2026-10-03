@@ -5,7 +5,8 @@ import { motionPolicy } from "../core/settings";
 import { session } from "../state/session";
 import { showContentToast } from "./ContentToast";
 import { chipPoints, drawLayer } from "./holo";
-import { LOCK_COVER, UNLOCK_BURST, UNLOCK_SEQUENCE, UNLOCK_SEQUENCE_TOTAL_MS, padlockGeometry } from "./lockStyle";
+import { LOCK_COVER, UNLOCK_BURST, UNLOCK_MOTION, UNLOCK_SEQUENCE, UNLOCK_SEQUENCE_TOTAL_MS, padlockGeometry } from "./lockStyle";
+import { addPadlock, padlockParts } from "./Padlock";
 import { COLOR, textStyle } from "./theme";
 
 /** 콘텐츠 이름은 그 콘텐츠의 화면이 이미 쓰는 문구를 빌린다 — 같은 말을 두 번 적지 않는다. */
@@ -52,47 +53,17 @@ export function consumeUnlockCelebration(id: ContentId): boolean {
   return pendingCelebrations.delete(id);
 }
 
-/** 자물쇠 그림 한 벌 — 채운 몸통, 굵은 고리, 열쇠 구멍. 같은 모양을 `color`로 칠한다. */
-function paintPadlock(g: Phaser.GameObjects.Graphics, size: number, color: number, alpha: number, keyholeColor: number): void {
-  const geo = padlockGeometry(size);
-  g.lineStyle(geo.shackleWidth, color, alpha);
-  g.beginPath();
-  g.moveTo(geo.shackle[0], geo.shackle[1]);
-  for (let i = 2; i < geo.shackle.length; i += 2) g.lineTo(geo.shackle[i], geo.shackle[i + 1]);
-  g.strokePath();
-  g.fillStyle(color, alpha);
-  g.fillRect(geo.body.x, geo.body.y, geo.body.width, geo.body.height);
-  g.fillStyle(keyholeColor, alpha);
-  g.fillPoints(Array.from({ length: 4 }, (_, i) => new Phaser.Geom.Point(geo.keyhole[i * 2], geo.keyhole[i * 2 + 1])), true);
-}
-
-/**
- * 자물쇠 칩 — 어두운 받침 위에 **채운** 자물쇠. 선으로만 그린 자물쇠는 밝은 원화 위에서 잠겼다는 말이 읽히지 않았다.
- * 개방 연출의 하얗게 점멸하는 몫은 같은 모양을 흰색으로 한 장 더 얹어(`white`) 알파만 오가게 한다.
- */
-export function addLockBadge(scene: Phaser.Scene, x: number, y: number, size: number): Phaser.GameObjects.Container {
-  const box = scene.add.container(x, y);
-  const plateSize = size * LOCK_COVER.plateRatio;
-  box.add(drawLayer(scene, 0, 0, chipPoints(plateSize, plateSize, { bevel: { topLeft: plateSize * 0.28, bottomRight: plateSize * 0.28 } }), { fill: 0x070b10, alpha: 0.88, edge: COLOR.accent, edgeAlpha: 0.7 }));
-  const body = scene.add.graphics();
-  paintPadlock(body, size, COLOR.accent, 1, 0x070b10);
-  const white = scene.add.graphics().setAlpha(0);
-  paintPadlock(white, size, 0xffffff, 1, 0xffffff);
-  box.add(body);
-  box.add(white);
-  box.setData("white", white);
-  return box;
-}
-
 /** 열림 연출이 끝나는 시각(ms). 호출하는 화면이 뒤따르는 등장을 이 뒤에 건다. */
 export const UNLOCK_POP_TOTAL_MS = UNLOCK_SEQUENCE_TOTAL_MS;
 
-interface UnlockOptions {
+export interface UnlockOptions {
   /** 자물쇠와 함께 걷힐 덮개. */
   cover?: Phaser.GameObjects.Container;
   /** 열린 콘텐츠 — 개방 토스트가 이름을 말한다. */
   id: ContentId;
-  /** 터지는 순간(덮개가 걷히기 시작할 때) 불린다. */
+  /** 연출이 시작될 때 — 흐려 둔 칸을 이때부터 밝힌다(자물쇠가 깨어나는 박자와 함께). */
+  onStart?: () => void;
+  /** 자물쇠를 놓는 순간(덮개가 걷히기 시작할 때) 불린다. 원래 아이콘이 이때 그 자리에 들어선다. */
   onOpen?: () => void;
 }
 
@@ -102,86 +73,75 @@ function worldCenter(obj: Phaser.GameObjects.Container): { x: number; y: number 
 }
 
 /**
- * 개방 연출: 맥동 → 흔들림 → 하얗게 점멸 → 부풂 → 핑! 하며 자물쇠가 터져 나간다.
+ * 개방 연출 — 진짜 자물쇠가 풀리듯 흐른다: 깨어남(칸이 밝아지며 자물쇠가 살짝 움츠린다) → 덜컥(잦아드는 흔들림) →
+ * 찰칵(고리만 튀어 올라 옆으로 젖혀지고 한 번 하얗게 번쩍인다) → 머묾 → 놓음(자물쇠가 위로 떠오르며 녹고 덮개가 걷힌다).
  *
- * 부풀 때까지는 덮개 모양 안에 머물고(`lockMax` 이하로 자라고 덮개가 그 실루엣을 지킨다), 터지는 순간 파편은 화면 좌표로
- * 위로 튄다. 파편은 마름모이고 난수를 쓰지 않는다(번호에서 방향). 움직임 줄이기에서는 점멸·파편 없이 짧게 사라진다.
- * 터진 직후 개방 토스트가 선다.
+ * 예전에는 맥동·흔들림·점멸·부풂 뒤 파편과 함께 **터졌는데**, 잠금이 깨지는 것으로 읽혀 「열렸다」는 말이 서지 않았다.
+ * 지금은 터뜨리지 않고 옅은 마름모 섬광 하나와 위로 흩어지는 작은 조각 몇 개만 남긴다(난수 없이 번호에서 방향).
+ * 움직임 줄이기에서는 몸짓 없이 짧게 녹는다. 놓는 순간 개방 토스트가 선다.
  */
 export function playUnlockSequence(scene: Phaser.Scene, lock: Phaser.GameObjects.Container, options: UnlockOptions): void {
   const T = UNLOCK_SEQUENCE;
+  const M = UNLOCK_MOTION;
   const factor = motionPolicy(session.settings).nonEssentialDistanceFactor;
   const cover = options.cover;
-  const flash = cover?.getData("flash") as Phaser.GameObjects.Graphics | undefined;
-  const white = lock.getData("white") as Phaser.GameObjects.Graphics | undefined;
+  const parts = padlockParts(lock);
+  const size = parts?.size ?? 60;
   const open = () => {
     showContentToast(scene, t("content.unlocked", { content: t(contentNameKey(options.id)) }), "unlocked");
     options.onOpen?.();
   };
   const finish = () => { lock.destroy(); cover?.destroy(); };
+  options.onStart?.();
   if (factor < 1) {
     open();
     scene.tweens.add({ targets: cover ?? lock, alpha: 0, duration: 160, onComplete: finish });
     return;
   }
   const base = lock.scale;
+  const baseY = lock.y;
   const guard = () => lock.active;
-  // 1 맥동 — 두 번 부풀었다 가라앉는다.
-  scene.tweens.add({ targets: lock, scale: base * 1.14, duration: T.pulse / 4, yoyo: true, repeat: 1, ease: "Sine.easeInOut", onComplete: () => {
+  // 1 깨어남 — 흐린 자물쇠가 또렷해지며 한 번 움츠렸다 돌아온다.
+  scene.tweens.add({ targets: lock, alpha: 1, duration: T.wake, ease: "Sine.easeOut" });
+  scene.tweens.add({ targets: lock, scale: base * 0.9, duration: T.wake / 2, yoyo: true, ease: "Sine.easeInOut", onComplete: () => {
     if (!guard()) return;
-    // 2 흔들림
-    scene.tweens.add({ targets: lock, angle: { from: -10, to: 10 }, duration: 35, yoyo: true, repeat: Math.floor(T.shake / 70) - 1, ease: "Sine.easeInOut", onComplete: () => {
+    // 2 덜컥 — 크게 시작해 잦아드는 흔들림. 같은 폭으로 떨면 고장 난 것처럼 읽힌다.
+    scene.tweens.addCounter({ from: 0, to: 1, duration: T.jiggle, onUpdate: (tween) => {
+      const p = tween.getValue() ?? 0;
+      lock.setAngle(M.jiggleAngle * Math.sin(p * Math.PI * 2 * M.jiggleTurns) * (1 - p));
+    }, onComplete: () => {
       if (!guard()) return;
       lock.setAngle(0);
-      // 3 하얗게 점멸 — 자물쇠와 덮개 면이 함께 번쩍인다.
-      const blinkTargets = [white, flash].filter((g): g is Phaser.GameObjects.Graphics => g !== undefined);
-      scene.tweens.add({ targets: blinkTargets, alpha: { from: 0, to: 1 }, duration: T.blink / 6, yoyo: true, repeat: 2, onComplete: () => {
+      // 3 찰칵 — 고리만 튀어 올라 왼쪽 다리를 축으로 젖혀지고, 그 순간 한 번 하얗게 번쩍인다.
+      const pivotY = padlockGeometry(size).pivot.y;
+      if (parts) {
+        scene.tweens.add({ targets: parts.shackles, y: pivotY - size * M.shackleLift, angle: M.shackleTilt, duration: T.open, ease: "Back.easeOut" });
+        scene.tweens.add({ targets: parts.whites, alpha: { from: 0, to: 0.85 }, duration: T.open / 2, yoyo: true, ease: "Sine.easeOut" });
+      }
+      scene.tweens.add({ targets: lock, scale: base * 1.08, duration: T.open / 2, yoyo: true, ease: "Sine.easeOut" });
+      // 4 머묾 → 5 놓음 — 열린 자물쇠를 잠깐 보여 준 뒤 위로 떠오르며 녹인다.
+      scene.tweens.add({ targets: lock, y: baseY, delay: T.open + T.hold, duration: 1, onComplete: () => {
         if (!guard()) return;
-        // 4 부풂 — 흰 채로 커진다.
-        white?.setAlpha(1);
-        flash?.setAlpha(1);
-        scene.tweens.add({ targets: lock, scale: base * 1.4, duration: T.grow, ease: "Cubic.easeIn", onComplete: () => {
-          if (!guard()) return;
-          // 5 핑 — 섬광 + 마름모 파편이 위로 터지고 덮개가 걷힌다.
-          const { x, y } = worldCenter(lock);
-          const depth = 3500;
-          const ping = scene.add.graphics({ x, y }).setDepth(depth).setBlendMode(Phaser.BlendModes.ADD);
-          ping.fillStyle(0xffffff, UNLOCK_BURST.flashAlpha);
-          ping.fillPoints([new Phaser.Geom.Point(0, -60), new Phaser.Geom.Point(130, 0), new Phaser.Geom.Point(0, 60), new Phaser.Geom.Point(-130, 0)], true);
-          scene.tweens.add({ targets: ping, scaleX: 2.2, scaleY: 1, alpha: 0, duration: T.ping, ease: "Cubic.easeOut", onComplete: () => ping.destroy() });
-          for (let i = 0; i < UNLOCK_BURST.shards; i++) {
-            const angle = (Math.PI * 2 * i) / UNLOCK_BURST.shards + 0.3;
-            const shard = scene.add.graphics({ x, y }).setDepth(depth).setRotation(angle);
-            shard.fillStyle(i % 2 === 0 ? COLOR.accent : 0xffffff, 0.95);
-            shard.fillPoints([new Phaser.Geom.Point(0, -11), new Phaser.Geom.Point(8, 1), new Phaser.Geom.Point(0, 11), new Phaser.Geom.Point(-6, -1)], true);
-            scene.tweens.add({ targets: shard, x: x + Math.cos(angle) * UNLOCK_BURST.reach, y: y + Math.sin(angle) * UNLOCK_BURST.reach * 0.7 - UNLOCK_BURST.rise, alpha: 0, scale: 0.4, duration: T.ping + 140, ease: "Cubic.easeOut", onComplete: () => shard.destroy() });
-          }
-          lock.setVisible(false);
-          open();
-          scene.tweens.add({ targets: cover ?? lock, alpha: 0, duration: T.ping, onComplete: finish });
-        } });
+        const { x, y } = worldCenter(lock);
+        const depth = 3500;
+        const ping = scene.add.graphics({ x, y }).setDepth(depth).setBlendMode(Phaser.BlendModes.ADD);
+        ping.fillStyle(0xffffff, UNLOCK_BURST.flashAlpha);
+        ping.fillPoints([new Phaser.Geom.Point(0, -size * 0.5), new Phaser.Geom.Point(size * 1.1, 0), new Phaser.Geom.Point(0, size * 0.5), new Phaser.Geom.Point(-size * 1.1, 0)], true);
+        scene.tweens.add({ targets: ping, scaleX: 1.8, scaleY: 0.8, alpha: 0, duration: T.release, ease: "Cubic.easeOut", onComplete: () => ping.destroy() });
+        for (let i = 0; i < UNLOCK_BURST.shards; i++) {
+          // 위쪽 반원으로만 흩어진다 — 풀린 것이 떠오르는 방향이다.
+          const angle = -Math.PI * (0.15 + (0.7 * i) / Math.max(1, UNLOCK_BURST.shards - 1));
+          const shard = scene.add.graphics({ x, y }).setDepth(depth).setRotation(angle + Math.PI / 2);
+          shard.fillStyle(i % 2 === 0 ? COLOR.accent : 0xffffff, 0.9);
+          shard.fillPoints([new Phaser.Geom.Point(0, -7), new Phaser.Geom.Point(5, 1), new Phaser.Geom.Point(0, 7), new Phaser.Geom.Point(-4, -1)], true);
+          scene.tweens.add({ targets: shard, x: x + Math.cos(angle) * UNLOCK_BURST.reach, y: y + Math.sin(angle) * UNLOCK_BURST.reach - UNLOCK_BURST.rise * 0.4, alpha: 0, scale: 0.5, duration: T.release + 120, ease: "Cubic.easeOut", onComplete: () => shard.destroy() });
+        }
+        open();
+        scene.tweens.add({ targets: lock, y: baseY - size * M.releaseRise, alpha: 0, scale: base * 1.12, duration: T.release, ease: "Cubic.easeOut", onComplete: () => { if (!cover) finish(); } });
+        if (cover) scene.tweens.add({ targets: cover, alpha: 0, duration: T.release, ease: "Sine.easeIn", onComplete: finish });
       } });
     } });
   } });
-}
-
-/**
- * 숨겨 둔 요소를 **자물쇠가 터지는 자리에서** 나타나게 한다.
- *
- * 요소는 먼저 보이지 않게 두고(입력도 함께 꺼진다), 같은 자리에 큰 자물쇠를 세워 개방 연출을 돌린 뒤 한 번 튀어 오르며 선다.
- */
-export function revealWithLockPop(scene: Phaser.Scene, target: Phaser.GameObjects.Container, id: ContentId, x: number, y: number, delay = 450): void {
-  const scale = target.scale;
-  target.setVisible(false);
-  scene.time.delayedCall(delay, () => {
-    if (!scene.sys.isActive()) { target.setVisible(true); return; }
-    const lock = addLockBadge(scene, x, y, 84).setDepth(target.depth + 50);
-    playUnlockSequence(scene, lock, { id, onOpen: () => {
-      if (!target.active) return;
-      target.setVisible(true).setScale(scale * 0.82).setAlpha(0);
-      scene.tweens.add({ targets: target, alpha: 1, scale, duration: 320, ease: "Back.easeOut" });
-    } });
-  });
 }
 
 /** 잠긴 콘텐츠를 눌렀을 때 뜨는 한 줄. 어느 레벨에 열리는지만 말한다. */
@@ -194,26 +154,23 @@ export interface LockCoverOptions {
   bevel?: { topLeft?: number; topRight?: number; bottomRight?: number; bottomLeft?: number };
   /** 개방 레벨을 자물쇠 밑에 적는다(큰 판만). 작은 칸은 눌러야 토스트가 말한다. */
   text?: boolean;
-  /** 아래 입력을 이 덮개가 막고 누르면 토스트를 띄운다. 이미 위에 입력면이 있는 자리(하단 탭)는 끈다. */
+  /** 아래 입력을 이 덮개가 막고 누르면 토스트를 띄운다. 이미 위에 입력면이 있는 자리는 끈다. */
   blockInput?: boolean;
 }
 
 /**
- * 판 하나를 덮는 잠금 덮개 — 원본과 **같은 실루엣**의 어두운 면 한 장과 한가운데의 큰 자물쇠.
+ * 원화가 깔린 큰 판(출격 칸)을 덮는 잠금 덮개 — 원본과 **같은 실루엣**의 어두운 면 한 장과 한가운데의 자물쇠.
  *
- * 마스크가 아니라 도형 자체를 원본의 깎임으로 만들어 컨테이너 이동·확대와 함께 가므로 어긋나지 않는다. 중심 기준 컨테이너라
- * 부르는 쪽이 원본과 같은 좌표에 둔다. 개방 연출의 점멸용 흰 면(`flash`)을 함께 품는다.
+ * 자물쇠는 받침 판 없이 그림과 그 그림의 검은 복제 그림자만으로 선다 — 덮개가 이미 어두운 면이라 받침을 한 겹 더 깔면
+ * 판 위에 판이 쌓인다. 마스크가 아니라 도형 자체를 원본의 깎임으로 만들어 컨테이너 이동·확대와 함께 가므로 어긋나지 않는다.
  */
 export function addLockCover(scene: Phaser.Scene, id: ContentId, width: number, height: number, options: LockCoverOptions = {}): Phaser.GameObjects.Container {
   const cover = scene.add.container(0, 0);
   const shape = chipPoints(width, height, { bevel: options.bevel ?? {} });
   cover.add(drawLayer(scene, 0, 0, shape, { fill: 0x05080c, alpha: LOCK_COVER.dimAlpha, shadow: false }));
-  const flash = drawLayer(scene, 0, 0, shape, { fill: 0xffffff, alpha: 0.4, shadow: false }).setAlpha(0).setBlendMode(Phaser.BlendModes.ADD);
-  cover.add(flash);
-  cover.setData("flash", flash);
   const lockSize = Math.min(LOCK_COVER.lockMax, Math.min(width, height) * LOCK_COVER.lockRatio);
   const text = options.text === true;
-  const lock = addLockBadge(scene, 0, text ? -height * 0.1 : 0, lockSize);
+  const lock = addPadlock(scene, 0, text ? -height * 0.1 : 0, lockSize, { color: 0xeef2f6, shadow: true });
   cover.add(lock);
   cover.setData("lock", lock);
   if (text) cover.add(scene.add.text(0, height * 0.28, contentLockText(id), textStyle({ role: "emphasis", size: 30, color: COLOR.accentText })).setOrigin(0.5));

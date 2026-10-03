@@ -119,6 +119,8 @@ export class Button extends Phaser.GameObjects.Container {
   private readonly bg: Phaser.GameObjects.Rectangle;
   private readonly subText?: Phaser.GameObjects.Text;
   private readonly labelText: Phaser.GameObjects.Text;
+  private readonly plate: Phaser.GameObjects.Container;
+  private readonly labelSize: number;
   private enabledState = true;
   /** 누른 동일 포인터만 클릭을 끝낼 수 있게 기억하는 포인터 ID다. */
   private pressedPointerId?: number;
@@ -178,6 +180,8 @@ export class Button extends Phaser.GameObjects.Container {
       .setOrigin(0.5);
     plate.add(label);
     this.labelText = label;
+    this.plate = plate;
+    this.labelSize = fontSize;
     if (opts.icon) {
       // 아이콘은 글자 왼쪽에 붙고, 둘을 합친 폭이 판 가운데에 오도록 함께 민다.
       const gap = fontSize * 0.5;
@@ -283,6 +287,18 @@ export class Button extends Phaser.GameObjects.Container {
   setLabel(text: string): this {
     this.labelText.setText(text);
     return this;
+  }
+
+  /**
+   * 라벨 왼쪽에 작은 표식(잠금 자물쇠)을 붙인다. 기울어진 판 안에 넣어 글자와 같은 각도로 눕고, 라벨은 옮기지 않는다 —
+   * 표식이 걷힌 뒤 글자가 밀려 움직이면 그 순간이 한 번 더 읽힌다. `make`가 받는 수는 표식의 한 변이다.
+   */
+  addLabelMark<T extends Phaser.GameObjects.Container>(make: (size: number) => T): T {
+    const size = this.labelSize * 0.9;
+    const mark = make(size);
+    mark.setPosition(this.labelText.x - this.labelText.width / 2 - size * 0.75, this.labelText.y);
+    this.plate.add(mark);
+    return mark;
   }
 
   setSub(text: string): this {

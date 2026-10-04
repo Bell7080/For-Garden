@@ -38,7 +38,7 @@ export interface ProgressPassMilestone {
 }
 
 export interface ProgressPassDefinition {
-  id: "story" | "level" | "raid";
+  id: "story" | "level" | "raid" | "archaeology";
   /** 이 길을 여는 결제 상품. */
   productId: string;
   metric: ProgressPassMetric;
@@ -116,6 +116,28 @@ export const PROGRESS_PASSES: readonly ProgressPassDefinition[] = [
       step(35, item("raid-ticket", 1), item("raid-ticket", 3), currency("cheesecake", 400)),
       step(40, currency("gold", 30_000), currency("raidSigil", 300), currency("amber", 1)),
       step(50, currency("gems", 150), item("raid-select-ticket", 2), currency("gems", 500)),
+    ],
+  },
+  {
+    // 임시 — 패스 탭 줄이 네 칸일 때 옆으로 흐르는 스크롤을 확인하려고 더한 항목이다. 진행도는 새로 세지 않고 연구원
+    // 레벨을 빌려 쓰며(저장 구조를 건드리지 않는다), 정식 고고학 패스가 정해지면 이 항목째 지우거나 바꾼다.
+    id: "archaeology", productId: "premium-archaeology-pass", metric: "playerLevel",
+    milestones: [
+      step(3, currency("gold", 5_000), currency("gems", 100), item("strata-ticket", 1)),
+      step(5, currency("cheesecake", 40), currency("fossil", 1), currency("gold", 30_000)),
+      step(8, currency("gems", 30), currency("gems", 200), item("strata-ticket", 2)),
+      step(10, currency("gold", 10_000), currency("amber", 1), currency("cheesecake", 200)),
+      step(13, item("stamina-tonic", 1), currency("gems", 200), item("strata-ticket", 2)),
+      step(15, currency("gems", 50), currency("fossil", 2), currency("gold", 50_000)),
+      step(18, currency("cheesecake", 80), currency("gems", 300), item("strata-ticket", 3)),
+      step(20, currency("gold", 15_000), currency("amber", 1), currency("cheesecake", 400)),
+      step(25, currency("fossil", 1), currency("gems", 400), item("strata-ticket", 3)),
+      step(30, currency("gems", 60), currency("fossil", 2), currency("dnaFragments", 25)),
+      step(35, currency("cheesecake", 120), currency("gems", 400), currency("gold", 120_000)),
+      step(40, currency("gold", 25_000), currency("amber", 1), item("strata-ticket", 4)),
+      step(45, currency("gems", 80), currency("gems", 500), currency("fossil", 2)),
+      step(50, item("stamina-tonic", 1), currency("fossil", 3), currency("dnaFragments", 40)),
+      step(60, currency("gems", 150), currency("amber", 3), item("strata-ticket", 5)),
     ],
   },
 ];

@@ -43,7 +43,7 @@ export type RelicRarity = "R" | "SR" | "SSR";
  */
 export type RaitiaAssetId = "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind";
 
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
@@ -223,6 +223,13 @@ interface SkillBase {
   /** `splitShot`이 표적을 포함해 한 번에 맞히는 최대 인원이다. */
   maxTargets?: number;
   /**
+   * `splitShot`의 갈래가 적 수보다 많을 때 **남는 갈래가 같은 적에게 간다.**
+   *
+   * 갈래마다 한 번의 적중이라 적이 하나뿐이면 그 하나가 갈래 수만큼 맞고, 적중마다 붙는
+   * 상태(서리깃 겹)도 그만큼 쌓인다. 없으면 적이 모자란 갈래는 허공으로 사라진다(파루아의 갈래화살).
+   */
+  repeatOnLone?: true;
+  /**
    * 「반짝!」이 **이 스킬로 지워질 때** 그 자리에서 터지는 몫.
    *
    * 표식을 남기는 것과 지우는 것은 규칙어의 몫이라 어느 타격에서나 같다(`shimmerMark`
@@ -247,8 +254,17 @@ interface SkillBase {
     power: number;
     /** 그 범위 피해가 번지는 반경(px). */
     radius: number;
-    /** 터진 피해의 이 비율(%)만큼 시전자가 보호막을 얻는다. */
-    shieldPercent: number;
+    /**
+     * 터질 때마다 시전자가 두르는 보호막(시전자 최대 체력 %). 터진 피해에 비례하지 않는다 —
+     * 비례하면 맞힌 수가 적을 때 막이 3%대로 얇아져 한 방도 못 막았다(전수 조사 평균 3.0%).
+     */
+    shieldMaxHpPercent: number;
+    /**
+     * 이 막이 **쌓일 수 있는 상한**(시전자 최대 체력 %). 두른 막 전체가 이 선에 닿아 있으면 더 두르지 않는다.
+     * 평균 몫이 작은 막을 잦게 두르는 설계라 상한이 없으면 아무도 안 때리는 동안 최대 체력의 몇 배까지 쌓인다
+     * (데스 카운트 시험에서 190%까지 쌓여 1분 49초 보장이 15초 밀렸다).
+     */
+    capMaxHpPercent: number;
   };
   /**
    * 때린 적의 **저주가 이미 최대 중첩이면** 그 피해의 일부를 가장 가까운 다른 적에게 옮긴다.
@@ -765,6 +781,28 @@ export type CombatStatusEffect =
   | { kind: "stagger"; /** 기절 저항을 무시하는 순간 행동 차단 시간(초). */ seconds: number }
   | {
       /**
+       * 서리깃. 맞을 때마다 한 겹 박히고, 상한에 닿는 순간 **서리 출혈로 바뀌며 겹이 비워진다.**
+       *
+       * 손질처럼 상한에서 스스로 터지지만 터지는 것이 한 번의 피해가 아니라 **시간을 두고 깎는
+       * 출혈과 둔화**다. 서리 출혈은 중첩되지 않고 다시 터질 때 새로 갱신된다. 겹은 맞을 때마다
+       * 유지 시간이 새로 시작되고, 그 시간 안에 상한에 닿지 못하면 통째로 사라진다.
+       */
+      kind: "frostPlume";
+      /** 이 겹에 닿으면 서리 출혈로 바뀐다. */
+      maxStacks: number;
+      /** 겹이 유지되는 시간(초). 새 겹이 박힐 때마다 다시 센다. */
+      holdSeconds: number;
+      /** 서리 출혈이 시전자 공격력에서 뽑는 총 피해 비율(%). */
+      burstPower: number;
+      /** 서리 출혈이 그 피해를 나눠 입히는 시간(초). 매초 한 번 틱이 든다. */
+      burstSeconds: number;
+      /** 서리 출혈이 거는 둔화 시간(초). */
+      slowSeconds: number;
+      /** 둔화로 깎는 공격 속도·이동 속도(%). */
+      slowPercent: number;
+    }
+  | {
+      /**
        * 날려버림. 맞은 적이 때린 방향으로 튕겨 나가 전장 벽을 튕기며, 그동안 행동하지 못한다.
        *
        * **기절과 다른 축이다** — 기절은 제자리에서 멈추는 것이고 이쪽은 실제로 좌표가 움직인다.
@@ -1181,6 +1219,8 @@ export type PassiveKind =
   | "lowHpVanish"
   /** 델로피 전용: 전투가 시작되는 순간부터 정해진 시간 동안 은신한 채로 연다. */
   | "openingVanish"
+  /** 유티 전용: 전투 시작 은신(`openingStealthSeconds`)과 함께 서리깃을 두른다. 서리깃의 치명타 가산은 공용 필드가 읽는다. */
+  | "featherVeil"
   /** 디안 전용: 귀속 소환수 둘을 불러 세우며 한 마리라도 살아 있는 동안 은신한다. */
   | "summonCommander"
   /** 귀속 소환수 전용: 태생 능력치 전부가 주인의 한 축에서 파생한다. */
@@ -1338,6 +1378,8 @@ export type FerocityEffectId =
   | "overclock"
   /** 귀속 소환수 전용: 주인의 「오버클럭」을 함께 받는 몸이 실제로 얻는 강화다. */
   | "overclockBody"
+  /** 유티 전용: 폭주 중 갈래가 늘어나고 공격 속도가 오른다. */
+  | "extraFork"
   /** 이르나 전용: 폭주 중 기본 공격이 대상의 방어를 일부 지나친다. */
   | "stormAim";
 
@@ -1765,6 +1807,14 @@ export type FerocityTrait = {
       auraRadius: number;
     }
   | {
+      /** 폭주 중 `splitShot` 평타의 갈래가 늘고 자기 공격 속도가 오른다. 갈래가 없는 평타는 속도만 오른다. */
+      effectId: "extraFork";
+      /** 늘어나는 갈래 수. */
+      extraForks: number;
+      /** 공격 속도가 오르는 비율(%). */
+      attackSpeedBonusPercent: number;
+    }
+  | {
       /** 귀속 소환수 전용: 주인의 폭주를 함께 받는 몸이 실제로 얻는 강화다. */
       effectId: "overclockBody";
       /** 공격 속도가 오르는 비율(%). */
@@ -1897,6 +1947,16 @@ export interface Passive {
    * 「짜잔!」과 파루아의 「나무가 아닌 숲을!」이 서로 다른 패시브이면서 같은 값을 읽는다.
    */
   openingStealthSeconds?: number;
+  /**
+   * 적을 쓰러뜨리면 이 시간(초)만큼 공격 속도와 이동 속도가 함께 오른다. 다시 쓰러뜨리면 시간이 갱신된다.
+   *
+   * 룬 특성의 가속(`traitHaste`)과 다른 슬롯이다 — 그쪽은 룬이 거는 값이라 같은 칸을 쓰면 서로 덮어쓴다.
+   */
+  killHaste?: {
+    seconds: number;
+    attackSpeedPercent: number;
+    moveSpeedPercent: number;
+  };
   /**
    * 「요람에서 내려올 생각 없음」 계약. **소환수가 살아 있는 동안만** 켜지는 두 값이다.
    *
@@ -2060,15 +2120,20 @@ export interface Passive {
     stackId?: ShellGuardStackId;
   };
   /**
-   * 「가봉」 계약. 기본 공격이 깎은 HP를 아군의 보호막으로 옮기는 두 값이다.
+   * 「가봉」 계약. 일정 간격마다 기본 공격 한 번이 **강화**되고, 그 한 번이 적중하면 추가 피해와
+   * 함께 입힌 피해의 일부를 가장 위태로운 아군과 자신에게 보호막으로 꿰맨다.
    *
-   * 상한을 **대상의 최대 체력 비율**로 두는 이유는, 비율만 있으면 공격력이 자란 뒤 한 대가
-   * 아군의 체력 바를 통째로 덮는 보호막이 되어 "얼마나 버티나"가 게이지에서 읽히지 않기
-   * 때문이다. 한 번에 붙는 몫을 끊어야 여러 번 꿰매는 손이 화면에 남는다.
+   * 매 적중마다 잘게 두르던 때는 한 번이 1.6%라 한 대도 못 막았다(전수 조사). 잦게 조금이 아니라
+   * **드물게 한 덩어리**로 바꾼 것이다. 상한을 **대상의 최대 체력 비율**로 두는 이유는, 비율만 있으면
+   * 공격력이 자란 뒤 한 번이 아군의 체력 바를 통째로 덮어 "얼마나 버티나"가 읽히지 않기 때문이다.
    */
   suture?: {
-    /** 실제로 깎은 HP 중 아군에게 옮기는 비율(%). */
-    damagePercent: number;
+    /** 강화 평타가 다시 준비되기까지의 간격(초). 전투가 열린 때부터 센다. */
+    intervalSeconds: number;
+    /** 강화 평타가 적중할 때 얹는 추가 물리 피해의 공격력 계수(%). */
+    bonusPower: number;
+    /** 강화 평타가 입힌 피해(기본+추가)의 몇 %를 보호막으로 옮기는가. */
+    shieldPercent: number;
     /** 한 번에 붙을 수 있는 보호막의 상한(대상 최대 체력 %). */
     maxHpCapPercent: number;
   };
@@ -2375,6 +2440,10 @@ export interface BreakthroughNone {
  * (`BasicAttack.statusEffectEvery`)을 그대로 타고 세 번에 한 번만 일어난다.
  */
 export type BasicBreakthrough = {
+  /** 서리깃이 박힌 적에게 주는 일반 공격 피해가 **그 적의 서리깃 겹마다** 늘어난다(유티의 「갈래깃」). */
+  kind: "frostBrand";
+  damagePercentPerStack: number;
+} | {
   kind: "periodicGuard";
   /** 회복량의 기준이 되는 능력치. 방어형 개체는 방어력에서 나온다. */
   healScalingStat: keyof Stats;
@@ -2531,6 +2600,21 @@ export type BasicBreakthrough = {
   /** 기본 공격이 이 횟수마다 새끼 늑대 한 마리를 부른다(디안). */
   kind: "pupLitter";
   every: number;
+} | {
+  /** 마지막 걸음(끌어당기는 걸음)이 터질 때 지금 두른 막 잔량의 이 비율만큼 물리 피해를 더 준다. 막은 소모하지 않는다(엘라). */
+  kind: "releaseShield";
+  shieldPercent: number;
+} | {
+  /** 최근 이 시간 안에 새 겹이 쌓인 적을 맞히면 산개 사격의 겹당 피해가 이 비율로 오른다(모르페). */
+  kind: "freshSight";
+  percentPerStack: number;
+  windowSeconds: number;
+} | {
+  /** 평타가 적중하면 잠시 이동 속도가 오르고, 평타 위력이 현재 이동 속도에 비례해 늘어난다(데이). */
+  kind: "speedGraffiti";
+  moveSpeedPercent: number;
+  seconds: number;
+  powerPercentPerSpeedPoint: number;
 } | BreakthroughNone;
 
 /**
@@ -2541,6 +2625,10 @@ export type BasicBreakthrough = {
  * 궁극기가 세 번이 된다(채널링 궁극기와 같은 규칙이다).
  */
 export type UltimateBreakthrough = {
+  /** 되찍는 궁극기의 **마지막 타격**이 서리깃을 더 쌓는다(유티의 「눈보라 대소동」). */
+  kind: "doublePlume";
+  extraStacks: number;
+} | {
   kind: "echo";
   /** 본 타격 뒤에 더 떨어지는 횟수. */
   casts: number;
@@ -2696,6 +2784,17 @@ export type UltimateBreakthrough = {
   /** 궁극기를 쓰면 새끼 늑대가 이 마리 수만큼 나와 함께 덮친다(디안). */
   kind: "pupRush";
   count: number;
+} | {
+  /** 「인」이 끝나는 순간 남은 막의 이 비율을 살아 있는 아군에게 나눠 얹는다. 총량은 고정이고 머릿수로 나뉜다(엘라). */
+  kind: "shareShield";
+  sharePercent: number;
+} | {
+  /** 궁극기를 쏘기 직전 소환수가 살아 있으면 표적에 관측이 이 수만큼 먼저 쌓인다(모르페). */
+  kind: "jointObservation";
+  stacks: number;
+} | {
+  /** 채널이 끝나는 순간 낙서가 걸린 적 전원의 낙서가 한꺼번에 터진다(데이). */
+  kind: "signatureBurst";
 } | BreakthroughNone;
 
 /**
@@ -2705,6 +2804,10 @@ export type UltimateBreakthrough = {
  * 세져 그 시간만 부풀고, 끝나고 가장 약해지는 자리를 메우지 못한다.
  */
 export type FerocityBreakthrough = {
+  /** 폭주 중 치명타로 터진 일반 공격이 맞힌 적에게 서리깃을 더 박는다(유티의 「깃날비」). */
+  kind: "critPlume";
+  extraStacks: number;
+} | {
   kind: "feverBulwark";
   /** 폭주 동안 실제로 받은 피해의 몇 %를 보호막으로 돌려받는지. */
   shieldPercentOfDamageTaken: number;
@@ -2843,6 +2946,18 @@ export type FerocityBreakthrough = {
   /** 폭주 중에는 새끼 늑대가 이 횟수마다 한 마리씩 나온다(디안). 궁극기와 무관하다. */
   kind: "pupFrenzy";
   every: number;
+} | {
+  /** 폭주 중 마지막 걸음이 쓰는 막 잔량 비율이 이 값으로 바뀐다(엘라). 궁극기와 무관하다. */
+  kind: "adamantRelease";
+  shieldPercent: number;
+} | {
+  /** 폭주 중 소환수의 일반 공격이 관측을 이 배수만큼 쌓는다(모르페). 궁극기와 무관하다. */
+  kind: "droneOverheat";
+  stackMultiplier: number;
+} | {
+  /** 폭주 중 낙서가 이 겹에 터진다(데이). */
+  kind: "closeUp";
+  maxStacks: number;
 } | BreakthroughNone;
 
 /**
@@ -2852,6 +2967,10 @@ export type FerocityBreakthrough = {
  * 패시브의 조건(체력 절반 등)을 그대로 타므로 새 발동 조건을 만들지 않는다.
  */
 export type PassiveBreakthrough = {
+  /** 전투 시작 은신이 남아 있는 동안 일반 공격 피해가 늘어난다(유티의 「설원의 깃털」). */
+  kind: "stealthStrike";
+  damagePercent: number;
+} | {
   kind: "sharedRecovery";
   /** 자기 패시브 회복량의 몇 %를 아군에게 나누는지. */
   percent: number;
@@ -2991,6 +3110,18 @@ export type PassiveBreakthrough = {
   /** 서 있는 늑대(쿠로·시로·새끼) 한 마리마다 디안이 주는 피해가 이 비율만큼 늘어난다(디안). */
   kind: "packStrength";
   damagePercentPerWolf: number;
+} | {
+  /** 마지막 걸음이 쓰는 막 잔량 비율이 상시 이만큼 늘어난다(엘라). */
+  kind: "shieldFist";
+  bonusPercent: number;
+} | {
+  /** 소환수가 살아 있는 동안 관측이 걸린 적 한 명당 공격 속도가 오른다(모르페). */
+  kind: "manyEyes";
+  attackSpeedPercentPerObserved: number;
+} | {
+  /** 낙서가 걸린 적 한 명당 방어력·저항력이 오른다(데이). */
+  kind: "muralHide";
+  defenseResistancePercentPerTagged: number;
 } | BreakthroughNone;
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */

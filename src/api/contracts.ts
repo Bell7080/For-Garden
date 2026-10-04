@@ -444,7 +444,7 @@ export interface ProgressPassMilestoneDto {
  * 세션에서 잰다 — 화면이 클리어 수나 레벨을 다시 세지 않는다.
  */
 export interface ProgressPassDto {
-  id: "story" | "level" | "raid";
+  id: "story" | "level" | "raid" | "archaeology";
   productId: string;
   metric: "storyClears" | "playerLevel" | "raidRuns";
   progress: number;

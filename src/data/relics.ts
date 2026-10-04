@@ -118,7 +118,7 @@ const DIMO_DEF: RelicDef = {
   reachTier: "ranged",
   excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
   // 모르페의 태생 공격력 172에서 파생한 값이며, 전투에서는 성장한 공격력으로 다시 계산된다.
-  stats: { hp: 301, def: 43, res: 43, atk: 86, ap: 0, attackSpeed: 110, moveSpeed: 105, critChance: 0, critDamage: 150, energyGain: 12, lifeSteal: 0, ferocityGain: 0 },
+  stats: { hp: 301, def: 43, res: 43, atk: 86, ap: 0, attackSpeed: 80, moveSpeed: 105, critChance: 0, critDamage: 150, energyGain: 12, lifeSteal: 0, ferocityGain: 0 },
   ferocityTrait: { name: "오버클럭", effectId: "overclockBody", attackSpeedPercent: 50, moveSpeedPercent: 50 },
   passive: {
     id: "dimo-passive", name: "고공 탐색", kind: "highAltitudeRecon", iconAssetId: "skill-icon-buff", effectType: "buff", value: 0,
@@ -141,6 +141,17 @@ const DIMO_DEF: RelicDef = {
     statusEffects: [{ kind: "observation", seconds: 8, maxStacks: 25, stacks: 5 }],
   },
 };
+
+/** 유티의 평타·궁극기가 함께 거는 「서리깃」 계약. 한 곳에서 정해 두 슬롯의 태그가 갈리지 않게 한다. */
+const FROST_PLUME = {
+  kind: "frostPlume",
+  maxStacks: 5,
+  holdSeconds: 8,
+  burstPower: 200,
+  burstSeconds: 4,
+  slowSeconds: 3,
+  slowPercent: 30,
+} as const;
 
 export const RELICS: RelicDef[] = [
   {
@@ -814,9 +825,9 @@ export const RELICS: RelicDef[] = [
       // 표식을 다루는 손이라 한 명을 겨눈다 — 범위로 여럿을 함께 때리면 한 번 휘두를 때마다
       // 표식이 여러 장 붙었다 지워져 무엇이 표식인지 읽히지 않는다.
       targeting: "single",
-      // 반짝이 묻은 적을 때리면 그 자리에서 터뜨려 주위까지 함께 적시고, 그 피해의 일부를
-      // 제 몸에 두른다.
-      shimmerBurst: { power: 50, radius: 260, shieldPercent: 40 },
+      // 반짝이 묻은 적을 때리면 그 자리에서 터뜨려 주위까지 함께 적신다. 터질 때마다 제 최대
+      // 체력의 일부를 막으로 두른다 — 피해에 비례하던 때는 한 번이 평균 3%라 한 방도 못 막았다.
+      shimmerBurst: { power: 50, radius: 260, shieldMaxHpPercent: 6, capMaxHpPercent: 18 },
     },
     ultimate: {
       id: "tia-ult",
@@ -1480,6 +1491,101 @@ export const RELICS: RelicDef[] = [
     },
   },
 
+  {
+    id: "yuti",
+    squad: "fang",
+    name: "유티",
+    specimenNumber: "028",
+    projectName: "FROST PLUME",
+    excavationSite: "중국 랴오닝성 이셴층 하부 응회암대",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "화산재가 굳은 응회암판 위에 몸을 덮은 깃털의 인상이 뼈와 함께 남아 있었다. 같은 층의 다른 포식자보다 훨씬 큰 몸집이 한 장의 판에 접혀 들어간 채 나왔고, 복원 연구는 그 깃털이 어디까지 몸을 감쌌는지를 재는 일부터 시작했다.",
+    observationProfile: {
+      originYear: "약 1억 2,500만 년 전",
+      // E.C.는 유티의 인간형 신체 나잇대이며, 원종 화석의 연대와 독립된 값이다.
+      restorationYear: "E.C. 17년",
+      lifeStage: "성체",
+      height: "1.68 m",
+      weight: "52 kg",
+    },
+    catalogSummary: "신장 1.68m, 체중 52kg의 날렵한 인간형 체격에 목과 팔을 감싼 깃털 장식이 확인된, 성체 유티라누스 화석 기반 표본.",
+    // 복원 후 관찰은 성격과 실제로 목격된 행동만 남기고 발굴 기록과 겹치지 않게 쓴다.
+    unlockRecord: { status: "recorded", text: "복원 후 유티는 큰 소리를 내지 않고도 복도 끝에서 끝까지 사람들 사이를 빠져나간다. 모두가 정면을 보고 있을 때 옆에서 나타나 깃털 한 장을 슬쩍 건네고는 자기가 한 일이 아닌 척 시선을 돌리는 버릇이 관찰됐다. 앱솔루트 팽의 화려한 선배들을 흉내 내 \"보스\"라고 부르면서도, 호칭이 어색한지 매번 말끝을 흐린다." },
+    squadNote: "앱솔루트 팽의 측면 침투 담당. 정면에서 부딪히는 동료들의 틈으로 바람처럼 파고들어 약해진 상대를 끝내고, 연구원을 \"보스\"라 부른다.",
+    researcherTitle: "보스",
+    rarity: "SSR",
+    portraitAssetId: "yuti",
+    origin: "유티라누스",
+    element: "wind",
+    role: "assassin",
+    // 깃털을 날려 보내는 암살자라 붙지 않고 한 걸음 물러서서 쏜다.
+    reachTier: "mid",
+    // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 140, efficiencyMultiplier: 1.1 },
+    stats: {
+      hp: 860,
+      def: 48,
+      res: 50,
+      atk: 182,
+      ap: 70,
+      attackSpeed: 128,
+      moveSpeed: 118,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    // 폭주 중 평타가 한 갈래 더 갈라지고 공격 속도가 오른다. 갈래 수는 일반 공격 계약이 정한다.
+    breakthroughEffects: {
+      basic: { kind: "frostBrand", damagePercentPerStack: 4 },
+      ultimate: { kind: "doublePlume", extraStacks: 1 },
+      ferocity: { kind: "critPlume", extraStacks: 1 },
+      passive: { kind: "stealthStrike", damagePercent: 50 },
+    },
+    ferocityTrait: { name: "깃날비", effectId: "extraFork", extraForks: 1, attackSpeedBonusPercent: 33 },
+    passive: {
+      id: "yuti-passive",
+      name: "설원의 깃털",
+      kind: "featherVeil",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      value: 4,
+      durationSeconds: 4,
+      openingStealthSeconds: 4,
+      // 태생 치명타·공속은 전 개체 공통이므로 암살자의 정체성은 패시브가 만든다.
+      criticalChancePercent: 20,
+      attackSpeedPercent: 20,
+      killHaste: { seconds: 4, attackSpeedPercent: 50, moveSpeedPercent: 50 },
+      desc: "전투 시작 시 4초 동안 은신하고, 치명타 확률과 공격 속도가 오른다. 적을 처치하면 4초 동안 공격 속도와 이동 속도가 오른다.",
+    },
+    basic: {
+      id: "yuti-basic",
+      name: "갈래깃",
+      power: 95,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "splitShot",
+      maxTargets: 2,
+      repeatOnLone: true,
+      statusEffects: [FROST_PLUME],
+    },
+    ultimate: {
+      id: "yuti-ult",
+      name: "눈보라 대소동",
+      // 한 번의 위력이다. 240을 세 번에 나눠 찍는다.
+      power: 80,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      cost: 90,
+      targeting: "targetedCircle",
+      radius: 170,
+      repeatStrike: { count: 3, intervalSeconds: 0.35 },
+      statusEffects: [FROST_PLUME],
+    },
+  },
   {
     id: "meron",
     squad: "rune",
@@ -2199,6 +2305,13 @@ export const RELICS: RelicDef[] = [
     },
     // 굳는 순간 몸이 한 겹 덮이고, 그 상태로 권을 딱 한 바퀴(발경 3연) 몰아친다.
     ferocityTrait: { name: "금강불괴(金剛不壞)", effectId: "adamantBody", shieldMaxHpPercent: 25, hastenedAttacks: 3, attackSpeedPercent: 150 },
+    // 막이 **다음 한 방의 위력**이 된다 — 엘라는 막이 서 있는 시간이 짧아(전투의 6%) 막의 양이나 방어를 올려도 움직이지 않았다.
+    breakthroughEffects: {
+      basic: { kind: "releaseShield", shieldPercent: 20 },
+      ultimate: { kind: "shareShield", sharePercent: 50 },
+      ferocity: { kind: "adamantRelease", shieldPercent: 50 },
+      passive: { kind: "shieldFist", bonusPercent: 15 },
+    },
     passive: {
       // kind가 undyingTalisman인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
@@ -2945,6 +3058,13 @@ export const RELICS: RelicDef[] = [
       // 붙어 있어, 달리는 것 자체가 어그로인 개체의 탱킹이 폭주 중에 꺼지지 않는다.
       taunt: { kind: "taunt", seconds: 0.75 },
     },
+    // 칠하며 달리고(II), 서명으로 전부 터뜨리고(III), 가까이서 더 빨리 터지며(IV), 벽화 속에서 단단해진다(V).
+    breakthroughEffects: {
+      basic: { kind: "speedGraffiti", moveSpeedPercent: 20, seconds: 3, powerPercentPerSpeedPoint: 0.25 },
+      ultimate: { kind: "signatureBurst" },
+      ferocity: { kind: "closeUp", maxStacks: 3 },
+      passive: { kind: "muralHide", defenseResistancePercentPerTagged: 20 },
+    },
     passive: {
       // kind가 tagAndRun인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
       // 이 desc는 표시되지 않는 데이터 문서용 사본이다. 수치를 고치면 함수 쪽 분기도 함께 본다.
@@ -3212,8 +3332,10 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
       value: 0,
-      suture: { damagePercent: 40, maxHpCapPercent: 25 },
-      desc: "기본 공격이 적중할 때마다 그 피해의 40%만큼 자신을 포함해 현재 HP 비율이 가장 낮은 생존 아군에게 보호막을 부여한다. 한 번에 부여하는 보호막은 그 아군 최대 체력의 25%를 넘지 않는다.",
+      // 4초마다 기본 공격 한 번이 강화된다. 매 적중 40%를 잘게 두르던 때는 한 번이 1.6%로 한 대도 못
+      // 막았다 — 드물게 한 덩어리로 바꾼 값이다.
+      suture: { intervalSeconds: 4, bonusPower: 100, shieldPercent: 50, maxHpCapPercent: 25 },
+      desc: "4초마다 기본 공격 한 번이 강화된다. 강화된 기본 공격이 적중하면 공격력의 100%만큼 물리 피해를 추가로 입히고, 입힌 피해의 50%만큼 자신과 현재 HP 비율이 가장 낮은 생존 아군에게 보호막을 부여한다. 한 번에 부여하는 보호막은 그 아군 최대 체력의 25%를 넘지 않는다.",
     },
     basic: {
       id: "terisa-basic",
@@ -3237,7 +3359,7 @@ export const RELICS: RelicDef[] = [
          * 0.5초인 이유는 표적을 흩기에는 충분하고 한 대를 통째로 거르기에는 짧기 때문이다.
          */
         { name: "겉감", power: 55, selfStealthSeconds: 0.5 },
-        { name: "안감", power: 55, shieldFromDamagePercent: 50 },
+        { name: "안감", power: 55 },
         { name: "엇갈려 자르기", power: 40, targeting: "nearbyEnemies", radius: 150 },
       ],
     },
@@ -3592,6 +3714,14 @@ export const RELICS: RelicDef[] = [
         resummon: { enabled: true, cooldownSeconds: 15, hpPercent: 70 },
       },
     ],
+    // 디모와 함께 보는 눈이 늘어난다 — 새 관측에 겹당 피해가 오르고(II), 궁극기 앞에 디모가 먼저 표식을 깔며(III),
+    // 폭주 중 디모가 두 겹씩 쌓고(IV), 눈이 많을수록 모르페가 빨라진다(V).
+    breakthroughEffects: {
+      basic: { kind: "freshSight", percentPerStack: 15, windowSeconds: 2 },
+      ultimate: { kind: "jointObservation", stacks: 5 },
+      ferocity: { kind: "droneOverheat", stackMultiplier: 2 },
+      passive: { kind: "manyEyes", attackSpeedPercentPerObserved: 5 },
+    },
     passive: {
       id: "morphe-passive",
       name: "요람에서 내려올 생각 없음",
@@ -3600,9 +3730,9 @@ export const RELICS: RelicDef[] = [
       effectType: "buff",
       value: 0,
       // 방어·저항은 고정값이 아니라 비율이다 — 레벨이 올라도 같은 몫이 든다. 화면은 실제로 오르는 값으로 보여 준다.
-      droneLink: { defenseResistancePercent: 50, regenMaxHpPercentPerSecond: 0.8 },
+      droneLink: { defenseResistancePercent: 25, regenMaxHpPercentPerSecond: 0.4 },
       // 전용 분기가 문장을 짓는다. 이 사본은 화면에 뜨지 않는 데이터 문서용이다.
-      desc: "전투 시작 시 디모를 소환한다. 디모가 살아 있는 동안 방어력과 저항력이 50% 오르고 매초 최대 체력의 0.8%를 회복한다.",
+      desc: "전투 시작 시 디모를 소환한다. 디모가 살아 있는 동안 방어력과 저항력이 25% 오르고 매초 최대 체력의 0.4%를 회복한다.",
     },
     // 약한 원거리 단일 물리 피해. 적중한 적의 관측을 발동한다(겹당 공격력 10%, 방어 무시, 소모 없음).
     basic: {
@@ -3613,7 +3743,7 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       targeting: "single",
-      observationVolley: { percentPerStack: 10, windowSeconds: 0.6 },
+      observationVolley: { percentPerStack: 8, windowSeconds: 0.6 },
     },
     // 현재 체력이 가장 높은 적을 저격한다. 관측은 소모하지 않는다.
     ultimate: {
@@ -3626,7 +3756,7 @@ export const RELICS: RelicDef[] = [
       cost: 160,
       targeting: "single",
       targetSelection: "highestCurrentHp",
-      observationStrike: { powerPerStack: 8, maxCountedStacks: 50 },
+      observationStrike: { powerPerStack: 6, maxCountedStacks: 50 },
     },
   },
 

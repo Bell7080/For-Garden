@@ -325,7 +325,9 @@ describe("도디 한계 돌파", () => {
     for (let tick = 0; tick < 400 && !ended; tick += 1) { stepSkirmish(state, 0.05); ended = !dodo.ferocityFever; }
     expect(ended).toBe(true);
     // 300의 50%를 셋이 나눈다.
-    for (const id of ["player-0", "player-1", "player-2"]) expect(findFighter(state, id)!.shield.amount).toBe(50);
+    // 티아(player-1)는 제 반짝 폭발의 막이 따로 얹히므로 나눠 받은 50 이상이면 된다.
+    for (const id of ["player-0", "player-2"]) expect(findFighter(state, id)!.shield.amount).toBe(50);
+    expect(findFighter(state, "player-1")!.shield.amount).toBeGreaterThanOrEqual(50);
     expect(dodo.bt.feverHealingDone).toBe(0);
   });
 

@@ -8,7 +8,7 @@ import { t } from "../i18n";
  * 겹 수와 남은 시간을 여기서 한 번만 만들고 둘 다 이 목록만 그린다. Phaser를 들여오지 않아
  * 순서·색·문구를 테스트가 그대로 고정할 수 있다.
  */
-export type UnitStatusId = "packKuro" | "packShiro" | "packDimo" | "shell" | "scar" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism" | "weakpoint" | "shimmer" | "observation" | "pressure" | "drowsy" | "sleep" | "groggy" | "intimidation" | "fear";
+export type UnitStatusId = "packKuro" | "packShiro" | "packDimo" | "shell" | "scar" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism" | "weakpoint" | "shimmer" | "observation" | "pressure" | "drowsy" | "sleep" | "groggy" | "intimidation" | "fear" | "plume" | "frostbite";
 
 export interface UnitStatusView {
   /** 같은 상태를 제공자가 여럿 걸 수 있을 때도 HUD 객체를 덮어쓰지 않는 전투 내 키다. */
@@ -65,6 +65,9 @@ export const UNIT_STATUS_COLOR: Readonly<Record<UnitStatusId, number>> = {
   // **다음 한 방이 무엇을 할지 알리는 표식**이라는 것이 먼저 읽힌다(약점 포착과 같은 이유다).
   shimmer: 0x8fe3f0,
   butcher: 0xc07fa4,
+  // 서리깃은 박힌 깃털의 연한 하늘빛이고, 그것이 바뀐 서리 출혈은 한 단계 짙은 청록이다 — 둔화·출혈의 붉은 지속 피해와 갈린다.
+  plume: 0x9fd8f0,
+  frostbite: 0x4fb4c8,
   vandalism: 0xd45aa8,
   // 수압은 깊은 물빛이다 — 둔화·여울과 같은 물 계열이되 가장 짙어, 눌려 터지는 상태라는 것이 갈린다.
   pressure: 0x3a7fc4,
@@ -187,6 +190,24 @@ export function unitStatusViews(fighter: Fighter, pack: readonly Fighter[] = [])
       id: "bleed", name: t("status.bleed"), color: UNIT_STATUS_COLOR.bleed,
       remaining: fighter.bleed.remaining, total: Math.max(fighter.bleed.total, fighter.bleed.remaining),
       detail: t("status.bleed.detail", { percent: fighter.bleed.percent, time: seconds(fighter.bleed.remaining) }),
+    });
+  }
+  if (fighter.frostPlume && fighter.frostPlume.stacks > 0) {
+    const plume = fighter.frostPlume;
+    views.push({
+      id: "plume", name: t("status.plume"), color: UNIT_STATUS_COLOR.plume,
+      stacks: plume.stacks,
+      // 박힌 깃털은 새 겹이 들어올 때마다 시간이 다시 세어진다. 총 시간은 그 겹이 들고 있던 값이 아니라 지금 남은 쪽의 상한이다.
+      remaining: plume.remaining, total: Math.max(plume.remaining, 1),
+      detail: t("status.plume.detail", { stacks: plume.stacks, max: plume.maxStacks, time: seconds(plume.remaining) }),
+    });
+  }
+  if (fighter.frostbite) {
+    const bite = fighter.frostbite;
+    views.push({
+      id: "frostbite", name: t("status.frostbite"), color: UNIT_STATUS_COLOR.frostbite,
+      remaining: bite.remaining, total: Math.max(bite.total, bite.remaining),
+      detail: t("status.frostbite.detail", { amount: bite.amount, slow: bite.slowRemaining > 0 ? bite.slowPercent : 0, time: seconds(bite.remaining) }),
     });
   }
   if (fighter.poison) {

@@ -501,6 +501,8 @@ export class HoloBar {
   /** 채움이 시작하는 지점(0~1). 대부분의 게이지는 0이고, 막처럼 **덧대는 층만** 옮겨 앉는다. */
   private from = 0;
   private color: number;
+  /** 바탕·눈금·채움이 함께 쓰는 기울기. 채움을 다시 그릴 때도 생성 때의 값을 읽어야 `slant: 0` 게이지의 채움 끝이 `/`로 남지 않는다. */
+  private readonly slant: number;
 
   /** 복합 UI가 게이지 두 겹을 자신의 컨테이너 생명주기에 함께 묶을 때 쓰는 표시 객체다. */
   get objects(): readonly Phaser.GameObjects.Graphics[] {
@@ -547,6 +549,7 @@ export class HoloBar {
   ) {
     this.color = options.color;
     const slant = options.slant ?? Math.min(HOLO.slant, height);
+    this.slant = slant;
     if (options.shadow) {
       const { offsetX = 3, offsetY = 6, alpha = 0.55 } = options.shadow;
       this.shade = scene.add.graphics({ x: x + offsetX, y: y + offsetY });
@@ -609,7 +612,7 @@ export class HoloBar {
   }
 
   private redraw(): void {
-    const slant = Math.min(HOLO.slant, this.height);
+    const slant = this.slant;
     const filled = this.width * this.ratio;
     const begin = this.width * this.from;
     this.fill.clear();

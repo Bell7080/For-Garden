@@ -52,4 +52,8 @@ export const STATUS_VI = {
   "status.intimidation.detail": "{stacks} / {max} tầng · Đầy thì rơi vào Hoảng sợ",
   "status.fear": "Hoảng sợ",
   "status.fear.detail": "Đang chạy trốn · Không đánh thường · {time}",
+  "status.plume": "Lông Sương",
+  "status.plume.detail": "{stacks}/{max} tầng · còn {time}",
+  "status.frostbite": "Chảy máu băng",
+  "status.frostbite.detail": "Tổng {amount} sát thương · làm chậm {slow}% · còn {time}",
 } as const;

@@ -52,4 +52,8 @@ export const STATUS_ZH_HANT = {
   "status.intimidation.detail": "{stacks} / {max}層 · 疊滿時陷入恐懼",
   "status.fear": "恐懼",
   "status.fear.detail": "逃跑中 · 無法普通攻擊 · {time}",
+  "status.plume": "霜羽",
+  "status.plume.detail": "{stacks}/{max}層 · 剩餘{time}",
+  "status.frostbite": "霜凍出血",
+  "status.frostbite.detail": "共{amount}傷害 · 減速{slow}% · 剩餘{time}",
 } as const;

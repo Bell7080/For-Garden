@@ -160,14 +160,15 @@ describe("테리사 한계 돌파", () => {
   const terisaBattle = (breakthrough: number) => setup(["terisa", "torika", "dodo"], ["amo"], breakthrough);
   const shields = (events: SkirmishEvent[], fighterId: string) => events.flatMap((event) => event.kind === "shieldGranted" && event.fighterId === fighterId ? [event.amount] : []);
 
-  it("는 가봉이 옮기는 비율이 40%에서 55%로 오른다(별 II)", () => {
+  it("는 가봉이 옮기는 비율이 50%에서 65%로 오른다(별 II)", () => {
     const granted = (breakthrough: number) => {
       const state = terisaBattle(breakthrough);
       findFighter(state, "player-1")!.hp = 1;
+      findFighter(state, "player-0")!.bt.sutureIn = 0;
       return shields(swing(state, "player-0", "enemy-0"), "player-1").reduce((a, b) => a + b, 0);
     };
     expect(granted(0)).toBeGreaterThan(0);
-    expect(granted(1) / granted(0)).toBeCloseTo(55 / 40, 1);
+    expect(granted(1) / granted(0)).toBeCloseTo(65 / 50, 1);
   });
 
   it("는 궁극기 슬롯을 비워 두고 문장도 만들지 않는다(별 III)", () => {
@@ -181,6 +182,7 @@ describe("테리사 한계 돌파", () => {
       findFighter(state, "player-1")!.hp = 1;
       findFighter(state, "player-2")!.hp = findFighter(state, "player-2")!.maxHp * 0.3;
       if (fever) enterFever(state, "player-0");
+      findFighter(state, "player-0")!.bt.sutureIn = 0;
       const events = swing(state, "player-0", "enemy-0");
       return {
         first: shields(events, "player-1").reduce((a, b) => a + b, 0),
@@ -222,7 +224,7 @@ describe("4차 돌파 문구", () => {
       }
     }
     expect(breakthroughEffectText(getRelic("tia"), "basic")).toContain("12%");
-    expect(breakthroughEffectText(getRelic("terisa"), "basic")).toContain("55%");
+    expect(breakthroughEffectText(getRelic("terisa"), "basic")).toContain("65%");
     expect(breakthroughEffectText(getRelic("meron"), "passive")).toContain("25%");
   });
 });

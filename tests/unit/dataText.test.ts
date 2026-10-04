@@ -115,6 +115,7 @@ const NOT_DISPLAYED: Readonly<Record<string, "all" | readonly string[]>> = {
   "../../src/data/relicStories/maddy.ts": "all",
   "../../src/data/relicStories/ark.ts": "all",
   "../../src/data/relicStories/yuti.ts": "all",
+  "../../src/data/relicStories/teku.ts": "all",
   "../../src/data/relicStories/pachi.ts": "all",
   "../../src/data/relicStories/terisa.ts": "all",
   "../../src/data/relicStories/maki.ts": "all",

@@ -51,7 +51,7 @@ import { ExpeditionRewardPopup } from "../ui/ExpeditionRewardPopup";
 import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
 import { placePuppet, portraitAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { loadOwnedPuppet } from "../ui/statusPuppetLoad";
-import { expeditionEnemyLevel, getExpeditionEncounterEnemies } from "../data/expeditionEnemies";
+import { expeditionBossGrowth, expeditionEnemyLevel, getExpeditionEncounterEnemies } from "../data/expeditionEnemies";
 import { formatCurrency } from "../core/formatCurrency";
 import { drawInnerVignette } from "../ui/holo";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
@@ -392,7 +392,8 @@ export class ExpeditionScene extends Phaser.Scene {
       // 선택 세대가 바뀌면 프리팹이 기존 SD와 늦게 끝난 로드 요청을 함께 폐기한다.
       // 원정은 슬롯별 돌파가 없어 그 레벨에 닿는 데 필요한 단계를 쓴다 — 0으로 두면 20을 넘는
       // 층에서 정보창이 상한보다 높은 레벨을 세운다.
-      const growth = enemies.map(() => ({ level, breakthrough: requiredBreakthroughForLevel(level) }));
+      const finalBoss = node.type === "boss" && node.floor === 20;
+      const growth = enemies.map(() => ({ level, breakthrough: finalBoss ? expeditionBossGrowth().breakthrough : requiredBreakthroughForLevel(level) }));
       this.enemyPreview?.showAt(nodeY, { title: t("expedition.node.title", { floor: node.floor, type: names[node.type] }), growth, enemies, onEnemyClick: (enemy, slot) => this.enemyInfo?.show({ def: enemy, level: slot.level, breakthrough: slot.breakthrough }) });
       return;
     }
@@ -639,9 +640,9 @@ export class ExpeditionScene extends Phaser.Scene {
     // 이번 주 보스를 출격 전에 들여다보는 입구 — 지도의 보스 노드가 여는 창과 같은 레벨·같은
     // 정의를 쓴다(`handleNodeSelection`). 두 곳이 따로 정하면 같은 보스가 두 수치로 선다.
     const bossInfo = new EnemyInfoPopup(this, new PopupLayer(this, 2200));
-    const bossLevel = 20;
+    // 표기 레벨은 기획대로 LV.20이고, 돌파 효과는 실제 난전이 쓰는 단계를 그대로 보인다.
     addEnemyPortraitTap(this, RANKING.boss.tap, () => this.bossPortrait, () => bossInfo.show({
-      def: getExpeditionEncounterEnemies("boss", 20)[0], level: bossLevel, breakthrough: requiredBreakthroughForLevel(bossLevel),
+      def: getExpeditionEncounterEnemies("boss", 20)[0], level: 20, breakthrough: expeditionBossGrowth().breakthrough,
     }));
     this.renderMyScore(t("expedition.syncing"));
     void this.refreshMyScore();

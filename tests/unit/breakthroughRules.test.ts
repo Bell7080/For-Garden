@@ -149,6 +149,22 @@ const CATEGORY: Record<EffectKind, Category> = {
   shieldFist: "damage",
   manyEyes: "damage",
   muralHide: "survival",
+  // 보스(레이드·폰토스) — 회복·보호막·경감·강인함은 더하지 않는다(공유 게이지·자리가 갖는다).
+  pressStagger: "control",
+  biteMark: "damage",
+  coiledTarget: "damage",
+  piercingBeak: "damage",
+  widenArea: "damage",
+  sunkenWeight: "control",
+  unhealedMark: "control",
+  feverWidenBasic: "damage",
+  hungryStride: "mobility",
+  longFeast: "control",
+  sharpStorm: "crit",
+  pressureCrack: "damage",
+  scarMight: "damage",
+  warmBody: "damage",
+  pinningPlume: "control",
 };
 
 /** 직군이 받을 수 없는 분류. 암살자·원거리 딜러는 은신이 아닌 생존 유틸과 게이지 조작을 받지 않는다. */

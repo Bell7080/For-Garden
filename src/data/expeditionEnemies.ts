@@ -1,4 +1,4 @@
-import { applyEncounterScaling, encounterRoleFor, type EncounterRole } from "../core/levelDesign";
+import { applyEncounterScaling, encounterRoleFor, requiredBreakthroughForLevel, type EncounterRole } from "../core/levelDesign";
 import type { ExpeditionNodeType } from "../core/expeditionMap";
 import type { RelicDef } from "../core/types";
 import { getRelic } from "./relics";
@@ -84,4 +84,10 @@ export function getExpeditionEncounterEnemies(type: ExpeditionNodeType, floor: n
     ? 1
     : type === "normal" || type === "elite" || type === "horde" ? EXPEDITION_COMBAT_BALANCE[type].enemyCount : 3;
   return Array.from({ length: count }, (_, index) => pool[index % pool.length]);
+}
+
+/** 최종층 폰토스의 실제 레벨과 한계 돌파 — 정보창·난전·서버 재현이 같은 값을 읽는다. */
+export function expeditionBossGrowth(): { level: number; breakthrough: number } {
+  const level = expeditionEnemyLevel("boss", 20);
+  return { level, breakthrough: requiredBreakthroughForLevel(level) };
 }

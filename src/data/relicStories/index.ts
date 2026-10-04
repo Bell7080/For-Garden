@@ -1,10 +1,13 @@
 import type { RelicStoryProfile } from "../../core/relicStory";
+import { ANKA_STORY } from "./anka";
 import { DIAN_STORY } from "./dian";
 import { DODO_STORY } from "./dodo";
 import { ELLA_STORY } from "./ella";
 import { KENTO_STORY } from "./kento";
 import { MERON_STORY } from "./meron";
+import { MADDY_STORY } from "./maddy";
 import { METTE_STORY } from "./mette";
+import { NODONIA_STORY } from "./nodonia";
 import { PARUA_STORY } from "./parua";
 import { REX_STORY } from "./rex";
 import { SPINO_STORY } from "./spino";
@@ -29,6 +32,9 @@ export const RELIC_STORIES: Readonly<Record<string, RelicStoryProfile>> = {
   ella: ELLA_STORY,
   tia: TIA_STORY,
   dian: DIAN_STORY,
+  nodonia: NODONIA_STORY,
+  anka: ANKA_STORY,
+  maddy: MADDY_STORY,
 };
 
 export function relicStoryFor(relicId: string): RelicStoryProfile | undefined {

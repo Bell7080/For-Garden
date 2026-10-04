@@ -30,7 +30,7 @@ export const RELIC_FIRST_MEETINGS: Readonly<Record<string, string>> = {
   morphe: "다 띄워. 난 여기서 볼게.",
   kento: "아, 귀찮게… 담당관이야? 알았어, 용건부터 말해. 5분 안에 끝내자.",
   mosana: "…수심 확인. 당신, 줄 잡아. 놓치면 안 건져 줘.",
-  anka: "으음… 연구원 씨도 졸려? 같이 자자… 아, 안 돼? 그럼 재워 줄게.",
+  anka: "으음… 연구원 씨도 졸려요? 같이 자요… 아, 안 돼요? 그럼 재워 줄게요.",
   dian: "대장님은 제가 지킬게요! …아, 쿠로! 시로!",
 };
 

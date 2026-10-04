@@ -15,7 +15,7 @@ import { addPriceBar } from "./priceTag";
 import { COLOR, textStyle } from "./theme";
 import {
   APPEARANCE_PANEL, appearanceFrames, appearanceFrameSpot, appearancePageRect, appearanceStripCardX,
-  appearanceStripMinX, appearanceStripOffsetFor, appearanceStripViewport, type AppearanceRect,
+  appearanceStripContains, appearanceStripMinX, appearanceStripOffsetFor, appearanceStripViewport, isAppearanceStripTap, type AppearanceRect,
 } from "./appearancePanelLayout";
 import {
   canEquipAppearance, isAppearanceDimmed, isAppearanceUnrevealed, type AppearanceEntry, type AppearanceState,
@@ -88,6 +88,10 @@ export class AppearanceStrip {
   private maskShape?: Phaser.GameObjects.Rectangle;
   private geometryMask?: Phaser.Display.Masks.GeometryMask;
   private offset = 0;
+  private sliding = false;
+  private slideX = 0;
+  private draggedDistance = 0;
+  private removeInput?: () => void;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -167,7 +171,7 @@ export class AppearanceStrip {
     body.add(this.rail);
     this.installMask(body, view);
     entries.forEach((entry, index) => this.addCard(entry, index));
-    this.installDrag(body, view);
+    this.installDrag(body);
     this.paint();
   }
 
@@ -242,17 +246,44 @@ export class AppearanceStrip {
     this.rail.setMask(this.geometryMask);
   }
 
-  /** 띠를 손으로 밀고, 칸 밖에서 끝난 손은 고르기로 치지 않는다. */
-  private installDrag(body: Phaser.GameObjects.Container, view: { left: number; right: number; top: number; bottom: number }): void {
-    const hit = this.scene.add
-      .rectangle((view.left + view.right) / 2, (view.top + view.bottom) / 2, view.right - view.left, view.bottom - view.top, 0xffffff, 0)
-      .setInteractive({ draggable: true });
-    let dragX = 0;
-    hit.on("dragstart", (pointer: Phaser.Input.Pointer) => { dragX = pointer.x; });
-    hit.on("drag", (pointer: Phaser.Input.Pointer) => { this.slide(pointer.x - dragX); dragX = pointer.x; });
-    hit.on("wheel", (_pointer: Phaser.Input.Pointer, dx: number, dy: number) => this.slide(-(dx || dy) * 0.6));
-    body.add(hit);
-    body.sendToBack(hit);
+  /**
+   * 띠를 손으로 민다.
+   *
+   * **씬 전체 포인터로 받는다** — 칸 뒤에 draggable 면을 깔면 칸의 누름 면이 위에서 손을 먼저
+   * 받아 칸 위에서는 밀리지 않는다. 손이 띠 창 안에서 시작했는지는 팝업의 월드 행렬 역변환으로
+   * 국소 좌표를 구해 판정하고, 칸은 움직인 거리가 허용치 이하일 때만 고르기로 친다.
+   */
+  private installDrag(body: Phaser.GameObjects.Container): void {
+    const local = (pointer: Phaser.Input.Pointer): Phaser.Math.Vector2 => body.getWorldTransformMatrix().applyInverse(pointer.x, pointer.y);
+    const onDown = (pointer: Phaser.Input.Pointer): void => {
+      const point = local(pointer);
+      if (!appearanceStripContains(point.x, point.y)) return;
+      this.sliding = true; this.slideX = pointer.x; this.draggedDistance = 0;
+    };
+    const onMove = (pointer: Phaser.Input.Pointer): void => {
+      if (!this.sliding || !pointer.isDown) return;
+      const delta = pointer.x - this.slideX;
+      this.slideX = pointer.x;
+      this.draggedDistance += Math.abs(delta);
+      this.slide(delta);
+    };
+    const onUp = (): void => { this.sliding = false; };
+    const onWheel = (pointer: Phaser.Input.Pointer, _objects: unknown, dx: number, dy: number): void => {
+      const point = local(pointer);
+      if (appearanceStripContains(point.x, point.y)) this.slide(-(dx || dy) * 0.6);
+    };
+    this.scene.input.on("pointerdown", onDown);
+    this.scene.input.on("pointermove", onMove);
+    this.scene.input.on("pointerup", onUp);
+    this.scene.input.on("pointerupoutside", onUp);
+    this.scene.input.on("wheel", onWheel);
+    this.removeInput = () => {
+      this.scene.input.off("pointerdown", onDown);
+      this.scene.input.off("pointermove", onMove);
+      this.scene.input.off("pointerup", onUp);
+      this.scene.input.off("pointerupoutside", onUp);
+      this.scene.input.off("wheel", onWheel);
+    };
   }
 
   /** 띠를 미는 몫. 칸이 창을 못 채우면 움직이지 않는다. */
@@ -292,7 +323,7 @@ export class AppearanceStrip {
     card.add(this.scene.add.existing(drawLayer(this.scene, 0, strip.cardHeight / 2 - 30, slantedRect(strip.cardWidth - 16, 54, 10), { fill: 0x05070a, alpha: 0.86, shadow: false })));
     card.add(label);
     const hit = this.scene.add.rectangle(0, 0, strip.cardWidth, strip.cardHeight, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerup", () => this.focus(index));
+    hit.on("pointerup", () => { if (isAppearanceStripTap(this.draggedDistance)) this.focus(index); });
     card.add(hit);
     card.setData("glow", glow);
     card.setData("label", label);
@@ -520,6 +551,7 @@ export class AppearanceStrip {
   /** 기하 마스크와 원본 도형은 컨테이너 자식이 아니므로 소유자가 직접 파괴한다. */
   destroy(): void {
     this.heroToken += 1;
+    this.removeInput?.(); this.removeInput = undefined;
     this.rail.clearMask(true);
     this.geometryMask?.destroy(); this.geometryMask = undefined;
     this.maskShape?.destroy(); this.maskShape = undefined;

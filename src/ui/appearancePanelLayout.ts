@@ -46,7 +46,7 @@ export const APPEARANCE_PANEL = {
    * 칸이 창보다 길면 **옆으로 흐른다**. 기하 마스크는 컨테이너 이동을 물려받지 않으므로
    * 화면이 팝업의 월드 행렬로 마스크를 다시 잡는다(가방 격자와 같은 방법).
    */
-  strip: { y: 414, cardWidth: 168, cardHeight: 200, gap: 16, padX: 34 },
+  strip: { y: 414, cardWidth: 168, cardHeight: 200, gap: 16, padX: 34, dragSlop: 16 },
   /** 장착·구매. **판의 맨 밑동**이라 어느 외형을 고르든 손이 가는 자리가 움직이지 않는다. */
   action: { y: 572, width: 440, height: 84 },
 } as const;
@@ -119,6 +119,23 @@ export function appearanceStripViewport(): AppearanceRect {
     top: strip.y - strip.cardHeight / 2,
     bottom: strip.y + strip.cardHeight / 2,
   };
+}
+
+/**
+ * 띠 입력 판정 — 손이 띠 창 안에서 시작했는가.
+ *
+ * **밀기는 칸 뒤의 투명 면이 아니라 이 판정으로 받는다.** 칸마다 누름 면이 위에 얹혀 있어,
+ * 뒤 면에 draggable을 걸면 칸 위에서 시작한 손은 칸이 먼저 받아 밀리지 않는다(칸 사이 틈에서만
+ * 밀렸다). 좌표는 팝업 본문의 국소 좌표다.
+ */
+export function appearanceStripContains(x: number, y: number): boolean {
+  const view = appearanceStripViewport();
+  return x >= view.left && x <= view.right && y >= view.top && y <= view.bottom;
+}
+
+/** 손이 허용치 이하로만 움직였을 때만 칸을 고른 것으로 친다 — 밀다 뗀 손은 고르기가 아니다. */
+export function isAppearanceStripTap(draggedDistance: number): boolean {
+  return draggedDistance <= APPEARANCE_PANEL.strip.dragSlop;
 }
 
 /**

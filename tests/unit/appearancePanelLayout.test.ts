@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   APPEARANCE_PANEL, appearanceBoundsOverlap, appearanceFrames, appearancePageRect, appearancePanelRegions, appearanceStageRect,
-  appearanceStripCardX, appearanceStripContentWidth, appearanceStripMinX, appearanceStripOffsetFor, appearanceStripViewport,
+  appearanceStripCardX, appearanceStripContains, isAppearanceStripTap, appearanceStripContentWidth, appearanceStripMinX, appearanceStripOffsetFor, appearanceStripViewport,
 } from "../../src/ui/appearancePanelLayout";
 import { appearanceEntries, appearanceState, canEquipAppearance, isAppearanceDimmed, isAppearanceUnrevealed } from "../../src/ui/appearanceModel";
+import { readFileSync } from "node:fs";
 import type { RelicSkinDef } from "../../src/data/relicSkins";
 
 const skin = (id: string, extra: Partial<RelicSkinDef> = {}): RelicSkinDef => ({
@@ -145,5 +146,27 @@ describe("외형 상태", () => {
     // 실루엣으로 세우는 것은 **아직 열리지 않은 것뿐**이다 — 값만 치르면 되는 외형까지 검게
     // 누르면 무엇을 사는 중인지 화면이 말하지 못한다.
     expect(entries.map(isAppearanceUnrevealed)).toEqual([false, false, false, true]);
+  });
+});
+
+describe("외형 띠 입력 보호", () => {
+  it("손이 띠 창 안에서 시작했을 때만 민다", () => {
+    const view = appearanceStripViewport();
+    expect(appearanceStripContains((view.left + view.right) / 2, (view.top + view.bottom) / 2)).toBe(true);
+    expect(appearanceStripContains(view.left - 1, view.top + 1)).toBe(false);
+    expect(appearanceStripContains(view.left + 1, view.bottom + 1)).toBe(false);
+  });
+
+  it("밀다 뗀 손은 칸 고르기가 아니고 가만히 뗀 손은 고르기다", () => {
+    expect(isAppearanceStripTap(0)).toBe(true);
+    expect(isAppearanceStripTap(APPEARANCE_PANEL.strip.dragSlop)).toBe(true);
+    expect(isAppearanceStripTap(APPEARANCE_PANEL.strip.dragSlop + 1)).toBe(false);
+  });
+
+  it("밀기를 칸 뒤의 draggable 면에 걸지 않는다 — 칸의 누름 면이 위에서 가로챈다", () => {
+    const source = readFileSync("src/ui/AppearanceStrip.ts", "utf8");
+    expect(source).not.toMatch(/draggable:\s*true/);
+    expect(source).not.toMatch(/on\("dragstart"|on\("drag"/);
+    expect(source).toMatch(/isAppearanceStripTap\(this\.draggedDistance\)/);
   });
 });

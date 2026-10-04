@@ -84,8 +84,8 @@ describe("모르페 — 요람 연결", () => {
   it("은 디모가 살아 있는 동안만 방어력·저항력이 비율로 오른다", () => {
     const { state, morphe, dimo } = setup();
     const linked = defensiveDefinition(morphe, state).def.stats;
-    expect(linked.def).toBeCloseTo(morphe.def.stats.def * 1.5, 6);
-    expect(linked.res).toBeCloseTo(morphe.def.stats.res * 1.5, 6);
+    expect(linked.def).toBeCloseTo(morphe.def.stats.def * 1.25, 6);
+    expect(linked.res).toBeCloseTo(morphe.def.stats.res * 1.25, 6);
     dimo.hp = 0;
     const alone = defensiveDefinition(morphe, state).def.stats;
     expect(alone.def).toBe(morphe.def.stats.def);
@@ -97,7 +97,7 @@ describe("모르페 — 요람 연결", () => {
     morphe.hp = morphe.maxHp * 0.5;
     const before = morphe.hp;
     step(state, 2.05);
-    expect(morphe.hp - before).toBeCloseTo(morphe.maxHp * 0.008 * 2, 0);
+    expect(morphe.hp - before).toBeCloseTo(morphe.maxHp * 0.004 * 2, 0);
     dimo.hp = 0;
     const after = morphe.hp;
     step(state, 2.05);

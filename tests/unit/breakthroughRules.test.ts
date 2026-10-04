@@ -169,6 +169,25 @@ const CATEGORY: Record<EffectKind, Category> = {
   scarMight: "damage",
   warmBody: "damage",
   pinningPlume: "control",
+  // 적 전용 — 레이티아·토비·아모·리파·코마. 적은 버텨야 하므로 직군과 무관하게 생존 몫을 가질 수 있다.
+  fangShave: "damage",
+  pincerPair: "damage",
+  shellKnock: "control",
+  doubleDab: "support",
+  bleedingSmash: "damage",
+  cheekShield: "survival",
+  bigShell: "survival",
+  richBomb: "support",
+  chasingBlink: "mobility",
+  bloodFever: "survival",
+  feverGuard: "survival",
+  quickReaction: "support",
+  quickBlink: "mobility",
+  lightSleeper: "survival",
+  rageGain: "damage",
+  thickShell: "survival",
+  potentReaction: "damage",
+  doubleAmbush: "crit",
 };
 
 /** 직군이 받을 수 없는 분류. 암살자·원거리 딜러는 은신이 아닌 생존 유틸과 게이지 조작을 받지 않는다. */
@@ -195,6 +214,8 @@ function effectsOf(relic: RelicDef): { slot: keyof Slots; kind: EffectKind }[] {
 describe("한계 돌파 설계 규칙", () => {
   it("은 직군이 받을 수 없는 분류의 효과를 갖지 않는다", () => {
     for (const relic of RELICS) {
+      // 적 전용 개체는 버텨야 하는 자리라 직군 제한을 받지 않는다(회복·보호막 허용).
+      if (relic.enemyOnly) continue;
       const forbidden = FORBIDDEN[relic.role] ?? [];
       for (const { slot, kind } of effectsOf(relic)) {
         expect(forbidden, `${relic.name}(${relic.role}) ${slot}: ${kind} — ${CATEGORY[kind]}`).not.toContain(CATEGORY[kind]);

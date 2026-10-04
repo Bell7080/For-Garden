@@ -2673,6 +2673,28 @@ export type BasicBreakthrough = {
   sharePercent: number;
   /** 선에서 이만큼(px) 안에 선 적만 후보다. */
   halfWidth: number;
+} | {
+  /** 일반 공격이 맞은 적의 방어력을 겹마다 깎는다(레이티아). 적 전용. */
+  kind: "fangShave";
+  /** 겹당 방어력 감소(%). */
+  defensePercent: number;
+  maxStacks: number;
+  seconds: number;
+} | {
+  /** 일반 공격 N번마다 같은 피해가 한 번 더 들어간다(토비). 적 전용. */
+  kind: "pincerPair";
+  every: number;
+} | {
+  /** 일반 공격에 맞은 적이 잠깐 경직된다(아모). 적 전용. */
+  kind: "shellKnock";
+  seconds: number;
+} | {
+  /** 일반 공격이 시약을 이 수만큼 바른다(리파). 적 전용. */
+  kind: "doubleDab";
+  stacks: number;
+} | {
+  /** 일반 공격이 맞은 적에게 출혈을 남긴다(코마). 출혈은 공용 표준 값이다. 적 전용. */
+  kind: "bleedingSmash";
 } | BreakthroughNone;
 
 /**
@@ -2874,6 +2896,21 @@ export type UltimateBreakthrough = {
   kind: "unhealedMark";
   seconds: number;
   reductionPercent: number;
+} | {
+  /** 궁극기를 쓰면 자기 최대 체력의 일부를 보호막으로 두른다(레이티아). 적 전용. */
+  kind: "cheekShield";
+  shieldMaxHpPercent: number;
+} | {
+  /** 궁극기가 두르는 보호막이 최대 체력의 이 비율로 바뀐다(아모). 적 전용. */
+  kind: "bigShell";
+  shieldMaxHpPercent: number;
+} | {
+  /** 궁극기가 시약을 이 수만큼 쌓는다(리파). 적 전용. */
+  kind: "richBomb";
+  stacks: number;
+} | {
+  /** 궁극기를 쓰고 난 직후 곧바로 가장 약한 적에게 순간이동한다(코마). 적 전용. */
+  kind: "chasingBlink";
 } | BreakthroughNone;
 
 /**
@@ -3059,6 +3096,26 @@ export type FerocityBreakthrough = {
   /** 폭주 중 치명타 확률이 퍼센트포인트로 오른다(코아틀 「날 선 폭풍」). */
   kind: "sharpStorm";
   critChancePoints: number;
+} | {
+  /** 폭주 중 일반 공격과 궁극기의 피해가 이 비율만큼 체력으로 돌아온다(토비). 적 전용. */
+  kind: "bloodFever";
+  /** 더해지는 흡혈(퍼센트포인트). */
+  lifeStealPoints: number;
+} | {
+  /** 폭주 중 이 몸이 아군이 맞는 피해의 일부를 대신 받는다(아모). 적 전용. 궁극기와 무관하다. */
+  kind: "feverGuard";
+  /** 대신 받는 비율(%). */
+  percent: number;
+} | {
+  /** 폭주 중 시약이 이 겹에 닿으면 반응이 터진다(리파). 적 전용. */
+  kind: "quickReaction";
+  /** 반응이 터지는 겹 수. */
+  maxStacks: number;
+} | {
+  /** 폭주 중 순간이동 주기가 이 시간으로 줄어든다(코마). 적 전용. */
+  kind: "quickBlink";
+  /** 줄어든 주기(초). */
+  cooldownSeconds: number;
 } | BreakthroughNone;
 
 /**
@@ -3253,6 +3310,31 @@ export type PassiveBreakthrough = {
   kind: "pinningPlume";
   staggerSeconds: number;
   lockoutSeconds: number;
+} | {
+  /** 겨울잠이 **한 번 더** 돈다 — 첫 회복이 끝난 뒤 체력이 다시 절반 아래로 내려가면 같은 회복이 한 번 더 시작한다(레이티아). 적 전용. */
+  kind: "lightSleeper";
+} | {
+  /** 평타가 적중할 때마다 쌓이는 공격 속도가 이만큼 더 오른다(토비). 적 전용. */
+  kind: "rageGain";
+  /** 적중마다 더 오르는 공격 속도. */
+  extraPerHit: number;
+} | {
+  /** 조가비가 두르는 보호막이 커진다(아모). 적 전용. */
+  kind: "thickShell";
+  /** 자신에게 두르는 보호막(최대 체력의 %). */
+  selfShieldMaxHpPercent: number;
+  /** 가장 약한 아군에게 두르는 보호막(최대 체력의 %). */
+  allyShieldMaxHpPercent: number;
+} | {
+  /** 시약 반응이 거는 중독이 더 오래 이어진다(리파). 적 전용. */
+  kind: "potentReaction";
+  /** 반응 중독 지속 시간(초). */
+  poisonSeconds: number;
+} | {
+  /** 순간이동해 내려선 뒤의 일반 공격이 이 횟수만큼 연달아 확정 치명타가 된다(코마). 적 전용. */
+  kind: "doubleAmbush";
+  /** 연달아 확정 치명타가 되는 일반 공격 수. */
+  crits: number;
 } | BreakthroughNone;
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */

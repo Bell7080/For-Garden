@@ -284,26 +284,19 @@ describe("\"없음\"이라는 한계 돌파 효과", () => {
     const { breakthroughEnhances } = await import("../../src/core/relicProgression");
     const { getRelic } = await import("../../src/data/relics");
     const { breakthroughEffectText } = await import("../../src/ui/skillPresentation");
-    // 적 전용 개체는 전부 "없음"이다 — 레벨 상한을 맞추려고 돌파 단계를 들고 있을 뿐이다.
+    // 적 전용 개체는 보스도 잡졸도 네 칸 모두 제 효과를 갖는다 — "없음"은 효과를 정해 두지 않은 자리에만 남는다.
     const { RELICS } = await import("../../src/data/relics");
     const enemyIds = RELICS.filter((relic) => relic.enemyOnly).map(({ id }) => id);
-    expect(enemyIds).toEqual(expect.arrayContaining(["sukusuino", "pontos", "toby", "koma"]));
-    // 레이드 보스 셋과 폰토스는 네 칸 모두 제 효과를 갖는다 — 아래 "없음" 규칙의 대상이 아니다.
-    const bossIds = ["pontos", "sukusuino", "taboa", "quetzalcoatlus"];
-    for (const id of bossIds) {
+    expect(enemyIds).toEqual(expect.arrayContaining(["sukusuino", "pontos", "toby", "koma", "amo", "ripa", "raitia-grass"]));
+    for (const id of enemyIds) {
       const def = getRelic(id);
       for (const slot of ["basic", "ultimate", "ferocity", "passive"] as const) {
         expect(def.breakthroughEffects?.[slot]?.kind, `${id} ${slot}`).not.toBe("none");
-        expect(breakthroughEffectText(def, slot), `${id} ${slot}`).not.toBe("없음");
-      }
-    }
-    for (const id of enemyIds.filter((enemy) => !bossIds.includes(enemy))) {
-      const def = getRelic(id);
-      for (const slot of ["basic", "ultimate", "ferocity", "passive"] as const) {
-        // 규칙으로 못 박지 않고 효과 하나로 둔다 — 이 자리에 다른 효과를 넣으면 그대로 바뀐다.
-        expect(def.breakthroughEffects?.[slot]?.kind, `${id} ${slot}`).toBe("none");
-        expect(breakthroughEnhances(def, BREAKTHROUGH_CAP, slot), `${id} ${slot}`).toBe(false);
-        expect(breakthroughEffectText(def, slot)).toBe("없음");
+        expect(breakthroughEnhances(def, BREAKTHROUGH_CAP, slot), `${id} ${slot}`).toBe(true);
+        const text = breakthroughEffectText(def, slot);
+        expect(text, `${id} ${slot}`).toBeTruthy();
+        expect(text, `${id} ${slot}`).not.toBe("없음");
+        expect(text, `${id} ${slot}`).not.toContain("skill.breakthrough");
       }
     }
     // 아직 설계하지 않은 빈 슬롯은 예전대로 열리면 강화로 읽힌다.

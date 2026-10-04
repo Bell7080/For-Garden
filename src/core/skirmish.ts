@@ -368,6 +368,14 @@ export interface Fighter extends Combatant {
     rescueUsed: boolean;
     /** 폭주 돌파(`ambushCrit`) — 다음 일반 공격이 반드시 치명타인가. 한 번 쓰면 꺼진다. */
     ambushCritReady: boolean;
+    /** 적 돌파(`fangShave`) — 이 몸이 깎인 방어력의 겹·남은 시간·겹당 비율. */
+    fangShave: { remaining: number; stacks: number; percentPerStack: number } | null;
+    /** 적 돌파(`pincerPair`) — 지금까지 센 일반 공격 적중 수. */
+    pincerCount: number;
+    /** 적 돌파(`doubleAmbush`) — 순간이동 뒤 남은 확정 치명타 일반 공격 수. */
+    blinkCrits: number;
+    /** 적 돌파(`lightSleeper`) — 겨울잠이 발동한 횟수. */
+    napsUsed: number;
     /** 궁극기 돌파(`doublePlume`) — 지금 찍는 타격이 되찍는 궁극기의 마지막인가. */
     finalStrike: boolean;
     /** 궁극기 돌파(`tidalEcho`)가 되돌려 터뜨릴 여울 자리와 남은 시간. */
@@ -1227,6 +1235,10 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
       feverHealingDone: 0,
       rescueUsed: false,
       ambushCritReady: false,
+      fangShave: null,
+      pincerCount: 0,
+      blinkCrits: 0,
+      napsUsed: 0,
       finalStrike: false,
       tidalEchoes: [],
       arrowEchoes: [],
@@ -2922,9 +2934,15 @@ function tickStalkerBlink(fighter: Fighter, dt: number, state: SkirmishState): v
   if (passive.kind !== "stalkerBlink" || fighter.stunnedFor > 0 || fighter.frozen || fighter.knockback) return;
   fighter.huntCooldown -= dt;
   if (fighter.huntCooldown > 0) return;
-  fighter.huntCooldown = passive.value;
+  const quick = feverBreakthrough(fighter);
+  fighter.huntCooldown = quick?.kind === "quickBlink" ? Math.min(passive.value, quick.cooldownSeconds) : passive.value;
   // 자리를 옮기는 것 자체가 화면에서 보이는 신호라 따로 표시 사건을 만들지 않는다.
-  if (leapToLowestHpEnemy(fighter, state, fighterReach(fighter) * 0.8)) fighter.empoweredBasic = true;
+  if (leapToLowestHpEnemy(fighter, state, fighterReach(fighter) * 0.8)) {
+    fighter.empoweredBasic = true;
+    // 패시브 돌파(`doubleAmbush`) — 첫 확정 치명타 뒤로 남은 몫이 이어진다.
+    const ambush = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+    if (ambush?.kind === "doubleAmbush") fighter.bt.blinkCrits = Math.max(0, ambush.crits - 1);
+  }
 }
 
 /**
@@ -3532,11 +3550,12 @@ function consumeShellGuard(fighter: Fighter, state: SkirmishState, events: Skirm
   fighter.shellGuard = null;
   const fever = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "shellResolve" ? fighter.def.ferocityTrait : undefined;
   fighter.shellGuardCooldownRemaining = fever?.shellCooldownSecondsDuringFever ?? plan.cooldownSeconds;
-  grantProvidedShield(state, fighter, fighter, plan.selfShieldMaxHpPercent, events);
+  const thick = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+  grantProvidedShield(state, fighter, fighter, thick?.kind === "thickShell" ? thick.selfShieldMaxHpPercent : plan.selfShieldMaxHpPercent, events);
   // 자신은 후보에서 빼며 filter/find 순서를 유지해 HP 비율 동률을 기존 편성 배열 순서로 결정한다.
   const ally = state.fighters.filter((candidate) => candidate.id !== fighter.id && candidate.side === fighter.side && isFighterAlive(candidate))
     .reduce<Fighter | undefined>((best, candidate) => !best || candidate.hp / candidate.maxHp < best.hp / best.maxHp ? candidate : best, undefined);
-  if (ally) grantProvidedShield(state, fighter, ally, plan.lowestHpAllyShieldMaxHpPercent, events);
+  if (ally) grantProvidedShield(state, fighter, ally, thick?.kind === "thickShell" ? thick.allyShieldMaxHpPercent : plan.lowestHpAllyShieldMaxHpPercent, events);
 }
 
 /** 실제 HP 감소가 끝난 뒤 살아남은 대상만 겹을 받는다. 같은 타격에서 사망·불멸 판정 전 조가비가 끼어들지 않는다. */
@@ -4232,6 +4251,45 @@ function strikeBossBasicBreakthrough(attacker: Fighter, target: Fighter, input: 
   }
 }
 
+/**
+ * 적 전용 평타 돌파 넷 — 앞니 갉기(방어 깎기)·집게 두 번(N번째 적중이 한 번 더)·껍질 쿵(경직)·후려치기 출혈.
+ * 열린 계약만 읽고 개체 이름으로 분기하지 않는다. 시약을 더 바르는 `doubleDab`는 시약 훅(`reagentStacksFor`)이 읽는다.
+ */
+function strikeEnemyBasicBreakthrough(attacker: Fighter, target: Fighter, input: Parameters<typeof computeDamage>[2] & { scalingStat?: "hp" | "atk" | "ap" | "def" }, critical: boolean,
+  state: SkirmishState, events: SkirmishEvent[]): void {
+  const basic = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
+  if (!basic || !isFighterAlive(target)) return;
+  if (basic.kind === "fangShave") {
+    const stacks = Math.min(basic.maxStacks, (target.bt.fangShave?.stacks ?? 0) + 1);
+    target.bt.fangShave = { remaining: basic.seconds, stacks, percentPerStack: basic.defensePercent };
+  }
+  if (basic.kind === "shellKnock") events.push(...applyStagger(target, basic.seconds * attacker.statusPotencyMultiplier, state));
+  if (basic.kind === "bleedingSmash") refreshBleed(target, BLEED.seconds * attacker.statusPotencyMultiplier, BLEED.percentPerSecond, events, attacker.id);
+  if (basic.kind === "pincerPair") {
+    attacker.bt.pincerCount += 1;
+    if (attacker.bt.pincerCount % Math.max(1, basic.every) === 0) strikeSecondary(attacker, target, input, 100, critical, state, events);
+  }
+}
+
+/** 시약 돌파(`doubleDab`·`richBomb`)가 한 번의 적중에 더 바르는 겹 수. */
+function reagentStacksFor(attacker: Fighter, base: number | undefined, useUltimate: boolean): number | undefined {
+  if (base === undefined) return base;
+  if (useUltimate) {
+    const plan = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
+    return plan?.kind === "richBomb" ? plan.stacks : base;
+  }
+  const plan = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
+  return plan?.kind === "doubleDab" ? plan.stacks : base;
+}
+
+/** 궁극기를 쓴 직후의 적 돌파 — 볼주머니 보호막(`cheekShield`)과 곧바로 쫓는 순간이동(`chasingBlink`). */
+function afterUltimateBreakthrough(attacker: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  if (!isFighterAlive(attacker)) return;
+  const plan = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
+  if (plan?.kind === "cheekShield") grantShield(state, attacker, attacker.id, Math.max(1, Math.round(attacker.maxHp * plan.shieldMaxHpPercent / 100)), events);
+  if (plan?.kind === "chasingBlink" && attacker.def.passive.kind === "stalkerBlink") attacker.huntCooldown = 0;
+}
+
 /** 한 타격의 일부(`percent`)를 다른 적에게 따로 넣는다. 에너지·야성·연속 공격을 더 얻지 않는 부가 피해다. */
 function strikeSecondary(attacker: Fighter, secondary: Fighter, input: Parameters<typeof computeDamage>[2] & { scalingStat?: "hp" | "atk" | "ap" | "def" }, percent: number, critical: boolean,
   state: SkirmishState, events: SkirmishEvent[]): void {
@@ -4259,6 +4317,10 @@ function tickBossBreakthroughs(fighter: Fighter, dt: number, state: SkirmishStat
   if (bt.biteMark) {
     const remaining = bt.biteMark.remaining - dt;
     bt.biteMark = remaining > 0 ? { ...bt.biteMark, remaining } : null;
+  }
+  if (bt.fangShave) {
+    const remaining = bt.fangShave.remaining - dt;
+    bt.fangShave = remaining > 0 ? { ...bt.fangShave, remaining } : null;
   }
   if (bt.healCut) {
     const remaining = bt.healCut.remaining - dt;
@@ -4359,15 +4421,23 @@ export function reagentResistanceReduction(target: Fighter): number {
  * 반응 순서는 계약 그 자체다: **시약 소비 → 공용 poison 갱신 → 저항력 감소 →
  * 최저 HP 비율 생존 아군 회복**. 순서를 바꾸면 이번 독 피해량이나 회복 대상이 달라질 수 있다.
  */
+/** 패시브 돌파(`potentReaction`)가 늘리는 시약 반응 중독 시간. */
+function potentReactionSeconds(attacker: Fighter, base: number): number {
+  const plan = openedBreakthrough(attacker, "passive", (effects) => effects.passive);
+  return plan?.kind === "potentReaction" ? Math.max(base, plan.poisonSeconds) : base;
+}
+
 function applyReagentOnHit(attacker: Fighter, target: Fighter, stacks: number | undefined, state: SkirmishState, events: SkirmishEvent[]): void {
   const contract = attacker.def.passive.kind === "reagentReaction" ? attacker.def.passive.reagentReaction : undefined;
   if (!contract || !stacks || stacks <= 0 || !isFighterAlive(target)) return;
 
+  const quick = feverBreakthrough(attacker);
+  const threshold = quick?.kind === "quickReaction" ? Math.min(contract.maxStacks, quick.maxStacks) : contract.maxStacks;
   const previous = target.reagents[attacker.id]?.stacks ?? 0;
-  const next = Math.min(contract.maxStacks, previous + stacks);
+  const next = Math.min(threshold, previous + stacks);
   // 같은 제공자의 재적중은 상한을 넘기지 않되, 정확히 계약 시간부터 다시 세도록 갱신한다.
   target.reagents[attacker.id] = { stacks: next, remaining: contract.seconds, total: contract.seconds };
-  if (next < contract.maxStacks) return;
+  if (next < threshold) return;
 
   // 1) 임계 겹을 먼저 전부 소비해 반응 중 재진입이나 초과 중첩이 남지 않게 한다.
   delete target.reagents[attacker.id];
@@ -4376,7 +4446,7 @@ function applyReagentOnHit(attacker: Fighter, target: Fighter, stacks: number | 
   events.push({ kind: "combatEffect", fighterId: target.id, effect: { tag: "reagentReaction", intensity: 1 } });
   // 2) 캐릭터 전용 독을 만들지 않고 공용 POISON 계수와 기존 강한 독 갱신 규칙을 재사용한다.
   const poisonEffect: Extract<CombatStatusEffect, { kind: "poison" }> = {
-    kind: "poison", seconds: contract.reactionPoisonSeconds,
+    kind: "poison", seconds: potentReactionSeconds(attacker, contract.reactionPoisonSeconds),
     attackPercentPerSecond: POISON.attackPercentPerSecond,
     abilityPercentPerSecond: POISON.abilityPercentPerSecond,
   };
@@ -4993,8 +5063,8 @@ export function attackInterval(fighter: Fighter, state?: SkirmishState): number 
         // 보스 제출 검증이 늑대의 평상시 평타를 "너무 빠르다"로 거절한다. 다른 자기 가속과 같은 역수다.
         ? 1 / (1 + trait.attackSpeedPercent / 100)
       : fighter.ferocityFever && trait.effectId === "selfAttackSpeedMultiplier"
-        // +100%는 공격 속도 x2이고, 속도의 역수인 공격 간격은 정확히 50%가 된다.
-        ? 1 / (1 + trait.bonusPercent / 100)
+        // +100%는 공격 속도 x2이고, 속도의 역수인 공격 간격은 정확히 50%가 된다. 폭주 돌파(`swiftHands`)는 같은 합에 더해진다.
+        ? 1 / (1 + (trait.bonusPercent + swiftHandsPercent(fighter)) / 100)
       : fighter.ferocityFever && trait.effectId === "adamantBody" && fighter.hastenedAttacksLeft > 0
         // 남은 횟수가 있을 때만 빨라진다. 다 쓰면 방어 상승만 남는다.
         ? 1 / (1 + trait.attackSpeedPercent / 100)
@@ -5072,9 +5142,11 @@ export function defensiveDefinition(target: Fighter, state: SkirmishState): Figh
   const linked = droneLinkDefensePercent(state, target);
   const mural = muralHidePercent(state, target);
   const bulwark = undyingGuardPercent(target);
-  if (bonus <= 0 && furCoat <= 0 && linked <= 0 && carapace <= 0 && mural <= 0 && bulwark <= 0 && torika === undefined && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0 && reagentReduction === 0) return target;
+  // 적 돌파(`fangShave`) — 앞니에 갉인 몸은 방어력이 겹마다 깎인다. 저항은 건드리지 않는다.
+  const fang = target.bt.fangShave ? Math.max(0, 1 - target.bt.fangShave.stacks * target.bt.fangShave.percentPerStack / 100) : 1;
+  if (fang === 1 && bonus <= 0 && furCoat <= 0 && linked <= 0 && carapace <= 0 && mural <= 0 && bulwark <= 0 && torika === undefined && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0 && reagentReduction === 0) return target;
   return { ...target, def: { ...target.def, stats: { ...target.def.stats,
-    def: target.def.stats.def * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + bulwark / 100) * (1 + target.augmentDefensePercent / 100) + (torika?.defenseBonus ?? 0),
+    def: target.def.stats.def * fang * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + bulwark / 100) * (1 + target.augmentDefensePercent / 100) + (torika?.defenseBonus ?? 0),
     // 시약 반응은 정적 정의가 아닌 런타임 실제 감소량이며, 여러 제공자가 있어도 유효 저항은 0 아래로 내리지 않는다.
     res: Math.max(0, target.def.stats.res * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + bulwark / 100) * (1 + target.augmentResistancePercent / 100) * shred - reagentReduction + (torika?.resistanceBonus ?? 0)),
   } } };
@@ -5744,7 +5816,7 @@ function hookFarthestEnemy(caster: Fighter, pull: { radius: number; distance: nu
 function cleanseAllDebuffs(fighter: Fighter): void {
   fighter.stunnedFor = 0; fighter.staggeredFor = 0; fighter.frozen = null; fighter.chill = null;
   fighter.bleed = null; fighter.poison = null; fighter.curse = null; fighter.overpaint = null;
-  fighter.bt.biteMark = null; fighter.bt.healCut = null; fighter.bt.sunken = null;
+  fighter.bt.biteMark = null; fighter.bt.healCut = null; fighter.bt.sunken = null; fighter.bt.fangShave = null;
   fighter.vandalism = null; fighter.pressure = null; fighter.drowsy = null; fighter.sleep = null; fighter.groggy = null; fighter.butcher = null; fighter.frostPlume = null; fighter.frostbite = null; fighter.frenzy = null; fighter.taunted = null;
   fighter.observation = null;
   // 공포와 위압도 군중제어라 정화가 걷는다. 걷어 낸 공포는 면역을 남기지 않는다 — 정화가 면역을 만들 이유가 없다.
@@ -6121,7 +6193,9 @@ function damageHealingRate(attacker: Fighter, skill: Skill, attackingInFever: bo
   const frozenBonus = target.frozen !== null ? skill.damageHealingPercentIfFrozen ?? 0 : 0;
   // 패시브가 끌어다 쓰는 몫도 퍼센트포인트 덧셈이다 — 태생 흡혈이 전 개체 공통 0이라 곱으로는
   // 이 축을 쓰는 개체가 값을 가질 방법이 없다.
+  const blood = attackingInFever ? feverBreakthrough(attacker) : undefined;
   return attacker.def.stats.lifeSteal + (attacker.def.passive.lifeStealPoints ?? 0)
+    + (blood?.kind === "bloodFever" ? blood.lifeStealPoints : 0)
     + fever + frozenBonus + (activeOrder(attacker)?.lifeStealPoints ?? 0) + (skill.damageHealingPercent ?? 0);
 }
 
@@ -6247,7 +6321,11 @@ export function tryTriggerLowHpVanish(fighter: Fighter, state: SkirmishState): b
  */
 export function tryTriggerEmergencyRecovery(fighter: Fighter, state?: SkirmishState): boolean {
   if (fighter.def.passive.kind !== "emergencyRecovery" || !isFighterAlive(fighter)
-    || fighter.hp > fighter.maxHp * 0.5 || fighter.passiveTriggered) return false;
+    || fighter.hp > fighter.maxHp * 0.5) return false;
+  // 패시브 돌파(`lightSleeper`) — 첫 회복이 끝난 뒤에는 한 번 더 발동할 수 있다. 회복이 도는 동안에는 겹쳐 시작하지 않는다.
+  const twice = openedBreakthrough(fighter, "passive", (effects) => effects.passive)?.kind === "lightSleeper";
+  if (fighter.passiveTriggered && !(twice && fighter.bt.napsUsed < 2 && fighter.regeneration === null)) return false;
+  fighter.bt.napsUsed += 1;
 
   // 표시와 전투가 같은 값을 읽도록 지속 시간을 패시브 정의에서 가져온다.
   const duration = fighter.def.passive.durationSeconds;
@@ -6548,6 +6626,13 @@ function tryTriggerDamageStealth(fighter: Fighter, state: SkirmishState): void {
   }
 }
 
+/** 이 몸이 아군 대신 받는 비율(%) — 궁극기의 앞에 서기가 우선이고, 없으면 폭주 돌파(`feverGuard`). 대신 받지 않으면 null. */
+function bulwarkSharePercent(fighter: Fighter): number | null {
+  if (fighter.bulwark !== null) return fighter.bulwark.percent;
+  const fever = feverBreakthrough(fighter);
+  return fever?.kind === "feverGuard" ? fever.percent : null;
+}
+
 /**
  * 앞에 선 아군이 대신 받는 몫을 떼어 낸다. 실제로 넘어간 양(원래 피해 기준)을 돌려준다.
  *
@@ -6556,11 +6641,12 @@ function tryTriggerDamageStealth(fighter: Fighter, state: SkirmishState): void {
  * 받는 쪽의 처리(`resolveReceivedDamage`)만 거친다.
  */
 function shareWithBulwark(target: Fighter, amount: number, events: SkirmishEvent[], state: SkirmishState): number {
-  if (target.bulwark !== null) return 0;
+  if (target.bulwark !== null || bulwarkSharePercent(target) !== null) return 0;
   const guardian = state.fighters.find((fighter) => fighter.id !== target.id && fighter.side === target.side
-    && fighter.bulwark !== null && isFighterAlive(fighter));
-  if (!guardian?.bulwark) return 0;
-  const share = Math.round(amount * Math.min(100, Math.max(0, guardian.bulwark.percent)) / 100);
+    && bulwarkSharePercent(fighter) !== null && isFighterAlive(fighter));
+  const guardPercent = guardian ? bulwarkSharePercent(guardian) : null;
+  if (!guardian || guardPercent === null) return 0;
+  const share = Math.round(amount * Math.min(100, Math.max(0, guardPercent)) / 100);
   // 1도 되지 않는 몫까지 옮기면 화면에 숫자만 남고 실제로 바뀌는 것이 없다.
   if (share < 1) return 0;
   const resolution = resolveReceivedDamage(guardian, share);
@@ -7232,7 +7318,9 @@ function strike(
   // 폭주 돌파(`ambushCrit`) — 폭주에 들어선 뒤 첫 일반 공격이 반드시 치명타다. 쓰면 꺼진다.
   const ambush = !useUltimate && attacker.bt.ambushCritReady;
   if (ambush) attacker.bt.ambushCritReady = false;
-  const critical = forcedCritical || empowered || ambush || bleedingBite || nape > 1 || isCriticalHit(Math.min(100, criticalChance), rng());
+  const blinkCrit = !useUltimate && !empowered && attacker.bt.blinkCrits > 0;
+  if (blinkCrit) attacker.bt.blinkCrits -= 1;
+  const critical = forcedCritical || empowered || ambush || blinkCrit || bleedingBite || nape > 1 || isCriticalHit(Math.min(100, criticalChance), rng());
   // 공속 복합 계수는 현재 기본 공속과 전투의 환희 누적을 읽되 폭주 임시 배율은 포함하지 않는다.
   const attackSpeedPower = useUltimate ? attacker.def.ultimate.attackSpeedPower ?? 0 : 0;
   // 정조준 관측 — 적 전원의 관측 겹 합산(상한까지)이 바닥 위력 위에 겹마다 얹힌다. 겹은 소모하지 않는다.
@@ -7430,7 +7518,8 @@ function strike(
     // 적중 사건마다 +3을 더하므로 연격 두 타는 각각 누적되며 전투 생성 시 0으로 초기화된다.
     // **여울이 메워 준 한 대만 빠진다** — 「전투의 환희」는 이 개체의 성장 축 전체라, 그 대까지
     // 세면 물가에 선 동안 공속이 두 배 속도로 자라 판 하나가 개체의 성장률을 갈아 치운다.
-    attacker.bonusAttackSpeed += attacker.def.passive.value;
+    const rage = openedBreakthrough(attacker, "passive", (effects) => effects.passive);
+    attacker.bonusAttackSpeed += attacker.def.passive.value + (rage?.kind === "rageGain" ? rage.extraPerHit : 0);
   }
   if (!useUltimate && attacker.def.passive.kind === "farthestFocus") {
     // **적중마다** 쌓으므로 갈래화살 한 발이 셋을 맞히면 겹도 셋 오른다 — 그래서 초반 서너
@@ -7507,7 +7596,7 @@ function strike(
   // 개별 기본 공격·궁극기가 선언한 상태도 피해 처리 뒤 공용 저항/재적용 규칙을 그대로 사용한다.
   // 청산하는 타격은 같은 손으로 덧바르지 않는다 — 바르거나 터뜨리거나 한 번에 하나뿐이다.
   if (isFighterAlive(target) && !resolution.ignored) {
-    applyReagentOnHit(attacker, target, skill.reagentStacks, state, events);
+    applyReagentOnHit(attacker, target, reagentStacksFor(attacker, skill.reagentStacks, useUltimate), state, events);
   }
   if (isFighterAlive(target) && statusEffectsLandThisHit(attacker, skill, useUltimate)) {
     applySkillStatuses(target, encoreLiquidation ? withoutPoison(skill) : skill, events, state, attacker.id, critical);
@@ -7528,6 +7617,7 @@ function strike(
   }
   // 보스 평타 돌파(`biteMark`·`piercingBeak`·`pinningPlume`) — 적중한 한 대에 얹힌다.
   if (!useUltimate && !resolution.ignored) strikeBossBasicBreakthrough(attacker, target, damageInput, critical, state, events);
+  if (!useUltimate && !resolution.ignored) strikeEnemyBasicBreakthrough(attacker, target, damageInput, critical, state, events);
   // 관측 발동은 상태를 건 **뒤**에 켠다 — 이번 공격이 방금 쌓은 겹도 같은 손이 함께 켠다.
   if (!useUltimate && isFighterAlive(target) && !resolution.ignored) fireObservationVolley(attacker, target, state, events);
   // 채널링이 도는 동안에는 손이 닿은 적에게만 한 겹이 더 붙는다. 틱이 거는 상태(전장 전체)와
@@ -7932,7 +8022,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     // 죽은 대상에는 지속 상태와 상태 UI 시작 사건을 절대 남기지 않는다.
     if (isFighterAlive(target)) {
       // 피해가 무효화되지 않고 실제로 적중한 생존 대상만 모든 일반/궁극기 시약의 공용 훅을 지난다.
-      if (!resolution.ignored) applyReagentOnHit(attacker, target, skill.reagentStacks, state, events);
+      if (!resolution.ignored) applyReagentOnHit(attacker, target, reagentStacksFor(attacker, skill.reagentStacks, useUltimate), state, events);
       // 광역 공격도 적중 대상을 하나씩 넘겨 기절 저항·행동 중단·UI 사건을 단일 공격과 공유한다.
       applySkillStatuses(target, skill, events, state, attacker.id, critical);
       // 폭주 돌파(`critPlume`) — 폭주 중 치명타로 터진 갈래는 서리깃을 더 박는다.
@@ -9061,6 +9151,22 @@ export function fireUltimate(
   /** targetedCircle만 읽는 사용자 지정 전장 좌표다. */
   targetPoint?: { x: number; y: number },
 ): SkirmishEvent[] {
+  const events = fireUltimateCore(state, fighterId, rng, targetPoint);
+  // 쏜 직후의 적 돌파(`cheekShield`·`chasingBlink`)는 어떤 궁극기 갈래를 지났든 한 곳에서 건다.
+  if (events.length > 0) {
+    const caster = findFighter(state, fighterId);
+    if (caster) afterUltimateBreakthrough(caster, state, events);
+  }
+  return events;
+}
+
+function fireUltimateCore(
+  state: SkirmishState,
+  fighterId: string,
+  rng: () => number = NO_CRIT,
+  /** targetedCircle만 읽는 사용자 지정 전장 좌표다. */
+  targetPoint?: { x: number; y: number },
+): SkirmishEvent[] {
   const events: SkirmishEvent[] = [];
   const attacker = findFighter(state, fighterId);
   if (!attacker || !canFireUltimate(state, attacker)) return events;
@@ -9191,7 +9297,9 @@ export function fireUltimate(
     const plan = teamUltimate.selfGuard;
     attacker.energy -= ultimateCost(state, attacker, true);
     // 불러 놓고 그 자리에서 덮는다 — 도발과 보호막이 한 조작에 든다.
-    const guardShield = grantShield(state, attacker, attacker.id, Math.max(1, Math.round(attacker.maxHp * plan.shieldMaxHpPercent / 100)), events, 1.5);
+    const bigShell = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
+    const guardPercent = bigShell?.kind === "bigShell" ? bigShell.shieldMaxHpPercent : plan.shieldMaxHpPercent;
+    const guardShield = grantShield(state, attacker, attacker.id, Math.max(1, Math.round(attacker.maxHp * guardPercent / 100)), events, 1.5);
     if (plan.shieldFadeSeconds !== undefined && guardShield > 0) {
       // 이미 줄어드는 막이 있으면 두 속도를 더하고 시간은 긴 쪽을 따른다 — 새 막만 따로 깎지 않는다.
       const prior = attacker.shieldFade;

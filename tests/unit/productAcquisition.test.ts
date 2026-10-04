@@ -6,7 +6,7 @@ import { confirmPlatformProduct } from "../../src/core/productConfirmation";
 /** 네 가지 판별자를 모두 구체화해 계약 필드 누락을 컴파일 단계에서도 막는다. */
 const METHODS: ProductAcquisition[] = [
   { kind: "currency", currency: "fossil", amount: 100 },
-  { kind: "platform_payment", platformProductId: "pack.one", displayPrice: "₩1,000" },
+  { kind: "platform_payment", platformProductId: "pack.one", basePriceKrw: 1000 },
   { kind: "free" },
   { kind: "rewarded_ad", slotId: "shop.daily", dailyLimitUtc: 3 },
 ];

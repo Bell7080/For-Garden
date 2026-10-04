@@ -37,12 +37,12 @@ export const PASS_POPUP = {
   /**
    * 목록 아래 한 줄 — 왼쪽에 미션·보상 탭, 오른쪽에 받기. 패스 탭 줄에 바짝 붙이고 얇게 두어 목록 창을 그만큼 넓힌다.
    */
-  modeRow: { fromBottom: 154, tabWidth: 190, tabHeight: 60, tabGap: 8, button: { width: 320, height: 66 } },
+  modeRow: { fromBottom: 176, tabWidth: 190, tabHeight: 60, tabGap: 8, button: { width: 320, height: 66 } },
   /**
    * 맨 아래 패스 탭 줄 — 패스가 늘어도 칸이 줄지 않도록 **고정 폭 칸이 옆으로 흐르는 줄**이다. 오른쪽 끝은 창의 깎인
-   * 모서리(오른쪽 아래 빗변)를 따라 잘리고, 그 빗변에서 `edgeInset`만큼 물러난다.
+   * 모서리(오른쪽 아래 빗변)를 따라 잘리고, 그 빗변에서 `edgeInset`만큼 물러난다. 그 물러남은 왼쪽 여백(판 변 → 줄 시작선, `(width - inner) / 2`)과 같아서 줄이 뒷 판과 양쪽에서 같은 간격으로 앉는다 — 14px로 바싹 붙이던 때는 오른쪽 끝이 뒷 판 빗변에 눌려 비율이 맞지 않았다.
    */
-  passRow: { fromBottom: 78, tabWidth: 290, tabHeight: 80, tabGap: 8, edgeInset: 14 },
+  passRow: { fromBottom: 78, tabWidth: 290, tabHeight: 80, tabGap: 8, edgeInset: 40 },
   /**
    * 패스를 열지 않았을 때 창 오른쪽 위에 **떠 있는 패키지 카드** — 무역·프리미엄 전시대의 카드와 같은 겉모습이다.
    * 유료 칸 머리에 버튼으로 세우던 때는 「잠김」이어야 할 자리가 사는 곳이 되어, 받을 수 없는 칸과 사는 곳이 한 줄에
@@ -68,6 +68,22 @@ export const PASS_POPUP = {
     breathMs: 1100,
   },
 } as const;
+
+/**
+ * 켜진 전환 라벨이 제 중심 위로 뻗는 최대 높이(`CategoryTab`의 솟음·강조선·켜진 배율을 모두 센다).
+ * 켜진 패스 탭이 커지며 위의 미션·보상 탭을 가리지 않도록 두 줄의 간격이 이 값을 읽는다.
+ */
+export function selectedTabReach(tabHeight: number, tab: { lift: number; edgeWidth: number; selectedScale: number }): { up: number; down: number } {
+  return { up: (tabHeight / 2 + tab.lift) * tab.selectedScale + tab.edgeWidth / 2, down: (tabHeight / 2) * tab.selectedScale };
+}
+
+/** 미션·보상 탭 줄의 아래 끝과 패스 탭 줄의 위 끝 사이 빈 간격(창 아래에서 잰 높이 차). 0보다 커야 서로 가리지 않는다. */
+export function modeToPassTabGap(tab: { lift: number; edgeWidth: number; selectedScale: number }): number {
+  const { modeRow, passRow } = PASS_POPUP;
+  const modeBottom = modeRow.fromBottom - selectedTabReach(modeRow.tabHeight, tab).down;
+  const passTop = passRow.fromBottom + selectedTabReach(passRow.tabHeight, tab).up;
+  return modeBottom - passTop;
+}
 
 /** 줄 판의 세 칸 중심 x — 왼쪽 무료, 가운데 레벨, 오른쪽 유료. */
 export function passPopupColumns(): { free: number; level: number; paid: number; sideWidth: number } {

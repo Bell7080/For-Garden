@@ -497,6 +497,7 @@ export default {
   "product.premium-story-pass.name": "Story Pass",
   "product.premium-level-pass.name": "Level Pass",
   "product.premium-raid-pass.name": "Raid Pass",
+  "product.premium-archaeology-pass.name": "Archaeology Pass",
   "product.premium-growth.name": "Researcher Growth Package",
   "product.premium-growth.grant.3": "Unknown Ancient Core",
   "product.premium-daily-deal.name": "Today's Supply Crate",

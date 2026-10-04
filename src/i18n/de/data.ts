@@ -493,6 +493,7 @@ export default {
   "product.premium-story-pass.name": "Story-Pass",
   "product.premium-level-pass.name": "Level-Pass",
   "product.premium-raid-pass.name": "Raid-Pass",
+  "product.premium-archaeology-pass.name": "Archäologie-Pass",
   "product.premium-growth.name": "Forscher-Wachstumspaket",
   "product.premium-growth.grant.3": "Unbekannter uralter Kern",
   "product.premium-daily-deal.name": "Heutige Nachschubkiste",

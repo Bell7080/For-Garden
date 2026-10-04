@@ -493,6 +493,7 @@ export default {
   "product.premium-story-pass.name": "Pass Cerita",
   "product.premium-level-pass.name": "Pass Level",
   "product.premium-raid-pass.name": "Pass Raid",
+  "product.premium-archaeology-pass.name": "Pass Arkeologi",
   "product.premium-growth.name": "Paket Pertumbuhan Periset",
   "product.premium-growth.grant.3": "Inti Purba Tak Dikenal",
   "product.premium-daily-deal.name": "Peti Pasokan Hari Ini",

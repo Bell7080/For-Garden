@@ -6,7 +6,8 @@ import { PREMIUM_PRODUCTS } from "../../src/data/premiumProducts";
 import { CURRENT_SAVE_VERSION, SAVE_STORAGE_KEY, SaveManager } from "../../src/state/SaveManager";
 import { createDefaultSession, type SaveData } from "../../src/state/session";
 import { passLevelOf, passReadyCount, passToOpen, storyPassStageId } from "../../src/ui/passPopupModel";
-import { passPopupContentHeight, passPopupMinScroll, passPopupPassMinScroll, passPopupPassStrip, passPopupPassTabs, passPopupRailFill, passPopupRowY, passPopupScrollFor, passPopupViewport, PASS_POPUP } from "../../src/ui/passPopupLayout";
+import { CATEGORY_TAB } from "../../src/ui/categoryTabStyle";
+import { passPopupContentHeight, passPopupMinScroll, passPopupPassMinScroll, passPopupPassStrip, passPopupPassTabs, passPopupRailFill, passPopupRowY, passPopupScrollFor, passPopupViewport, modeToPassTabGap, PASS_POPUP } from "../../src/ui/passPopupLayout";
 
 class MemoryStorage {
   private values = new Map<string, string>();
@@ -164,5 +165,31 @@ describe("저장 v46 진행 패스", () => {
 
     const v45 = { ...saved, saveVersion: 45, progressPasses: { raidRuns: 2, claimed: {} } } as Record<string, unknown>;
     expect(manager.migrate(v45)).toMatchObject({ progressPasses: { raidRuns: 2, claimed: {}, freeClaimed: {} } });
+  });
+});
+
+describe("패스 창 탭 줄 간격", () => {
+  it("켜진 패스 탭이 솟고 커져도 위의 미션·보상 탭을 가리지 않는다", () => {
+    expect(modeToPassTabGap(CATEGORY_TAB)).toBeGreaterThanOrEqual(8);
+  });
+});
+
+describe("패스 탭 줄의 오른쪽 잘림", () => {
+  it("뒷 판 빗변과 평행하고, 빗변까지의 간격이 왼쪽 여백과 같다", () => {
+    const strip = passPopupPassStrip();
+    const { passRow, width, height, inner } = PASS_POPUP;
+    // 평행: y가 1 내려갈 때 오른쪽 끝이 정확히 1 물러난다(45도 빗변).
+    const y = height / 2 - passRow.fromBottom;
+    expect(strip.right(y) - strip.right(y + 1)).toBeCloseTo(1);
+    // 빗변까지의 수직 거리 = 가로 물러남 / √2.
+    const bevelX = width / 2 - (y - (height / 2 - Math.min(width, height) * 0.14));
+    expect((bevelX - strip.right(y)) / Math.SQRT2).toBeCloseTo((width - inner) / 2);
+  });
+
+  it("탭이 네 칸이어도 흐르는 줄은 보이는 창 안에서 끝까지 닿는다", () => {
+    const four = passPopupPassMinScroll(4);
+    expect(four).toBeLessThan(passPopupPassMinScroll(3));
+    const visible = passPopupPassStrip().right(PASS_POPUP.height / 2 - PASS_POPUP.passRow.fromBottom) - passPopupPassStrip().left;
+    expect(passPopupPassTabs(4).span + four).toBeCloseTo(visible);
   });
 });

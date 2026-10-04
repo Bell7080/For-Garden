@@ -1,3 +1,4 @@
+import { formatStorePrice } from "./storePrice";
 import { findItem } from "../data/items";
 import type { ProductAcquisition, ProductCurrency } from "../data/products";
 import { t } from "../i18n";
@@ -18,11 +19,11 @@ function actionLabel(acquisition: ProductAcquisition): string {
   return t(`product.action.${acquisition.kind}`);
 }
 
-/** 무료를 0으로 표시하지 않고 외부 결제 가격도 카탈로그가 제공한 문자열만 사용한다. */
+/** 무료를 0으로 표시하지 않고 외부 결제 가격은 카탈로그의 원화 기준 가격을 기기 지역의 화폐로 바꿔 쓴다. */
 function acquisitionText(acquisition: ProductAcquisition): string {
   if (acquisition.kind === "free") return t("product.price.free");
   if (acquisition.kind === "rewarded_ad") return t("product.price.ad", { count: acquisition.dailyLimitUtc });
-  if (acquisition.kind === "platform_payment") return acquisition.displayPrice;
+  if (acquisition.kind === "platform_payment") return formatStorePrice(acquisition.basePriceKrw);
   // 아이템 값은 재화 이름표가 아니라 그 아이템의 이름을 그대로 세운다 — 지갑 키가 아니라서
   // `currency.*` 표에 이름이 없고, 있는 척 만들면 같은 말이 두 표에 살게 된다.
   if (acquisition.kind === "item") return t("product.price.item", { amount: acquisition.amount.toLocaleString(), item: findItem(acquisition.itemId)?.name ?? acquisition.itemId });

@@ -45,7 +45,7 @@ describe("무역 패키지 운영 데이터", () => {
     // 시세가 없는 지급품(장식)은 환산하지 않는다 — 세면 가치 %가 부풀려진다.
     expect(tradeGemValue([{ kind: "profile_decoration", decorationId: "patron-monthly", name: "명찰" }])).toBe(0);
     // 재화로 값을 받지 않는 상품은 견줄 기준이 없어 %를 만들지 않는다.
-    expect(tradePackageValuePercent({ kind: "platform_payment", platformProductId: "x", displayPrice: "₩4,900" }, [])).toBeUndefined();
+    expect(tradePackageValuePercent({ kind: "platform_payment", platformProductId: "x", basePriceKrw: 4900 }, [])).toBeUndefined();
   });
 
   it("은 갱신 주기와 남은 횟수를 한 줄로 적는다", () => {

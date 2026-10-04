@@ -493,6 +493,7 @@ export default {
   "product.premium-story-pass.name": "Пропуск истории",
   "product.premium-level-pass.name": "Пропуск уровня",
   "product.premium-raid-pass.name": "Пропуск рейда",
+  "product.premium-archaeology-pass.name": "Пропуск археологии",
   "product.premium-growth.name": "Набор роста исследователя",
   "product.premium-growth.grant.3": "Неизвестное древнее ядро",
   "product.premium-daily-deal.name": "Ящик снабжения на сегодня",

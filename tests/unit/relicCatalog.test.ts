@@ -202,7 +202,7 @@ describe("relic catalog", () => {
     // 생활 설정의 핵심 문구를 각각 검증해 이후 문장 다듬기와 설정 누락을 구분할 수 있게 한다.
     expect(luka.unlockRecord.status).toBe("recorded");
     if (luka.unlockRecord.status !== "recorded") return;
-    expect(luka.unlockRecord.text).toContain("나는 루카를");
+    expect(luka.unlockRecord.text).toContain("복원 후 루카는");
     expect(luka.unlockRecord.text).toContain("집과 휴식을 무엇보다 좋아하는 단거리 달리기 선수");
     expect(luka.unlockRecord.text).toContain("다른 육식 계열 렐릭들과도 대체로 원만하게 지낸다");
     expect(luka.unlockRecord.text).toContain("연구소 소파에 길게 누워");

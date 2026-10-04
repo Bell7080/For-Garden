@@ -21,6 +21,8 @@ import { TERISA_STORY } from "./terisa";
 import { MAKI_STORY } from "./maki";
 import { DELOPI_STORY } from "./delopi";
 import { DEINA_STORY } from "./deina";
+import { LUKA_STORY } from "./luka";
+import { MOSANA_STORY } from "./mosana";
 
 /**
  * 이야기 묶음이 갖춰진 개체. 하나씩 다져 가며 늘리고, 없는 개체는 예전 방식(관찰 일지 글·일일 인터뷰·공용
@@ -49,6 +51,8 @@ export const RELIC_STORIES: Readonly<Record<string, RelicStoryProfile>> = {
   maki: MAKI_STORY,
   delopi: DELOPI_STORY,
   deina: DEINA_STORY,
+  luka: LUKA_STORY,
+  mosana: MOSANA_STORY,
 };
 
 export function relicStoryFor(relicId: string): RelicStoryProfile | undefined {

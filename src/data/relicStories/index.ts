@@ -26,6 +26,7 @@ import { MOSANA_STORY } from "./mosana";
 import { KERIS_STORY } from "./keris";
 import { SHUTE_STORY } from "./shute";
 import { MORPHE_STORY } from "./morphe";
+import { IRNA_STORY } from "./irna";
 
 /**
  * 이야기 묶음이 갖춰진 개체. 하나씩 다져 가며 늘리고, 없는 개체는 예전 방식(관찰 일지 글·일일 인터뷰·공용
@@ -59,6 +60,7 @@ export const RELIC_STORIES: Readonly<Record<string, RelicStoryProfile>> = {
   keris: KERIS_STORY,
   shute: SHUTE_STORY,
   morphe: MORPHE_STORY,
+  irna: IRNA_STORY,
 };
 
 export function relicStoryFor(relicId: string): RelicStoryProfile | undefined {

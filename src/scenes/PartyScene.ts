@@ -447,7 +447,7 @@ export class PartyScene extends Phaser.Scene {
         // 미리보기로 옮겨 둔 SD는 확정 뒤 기존 비동기 재배치 경로가 제자리에 다시 세운다.
         this.refresh();
       },
-    });
+    }, { longPressGauge: (slot) => this.picked[slot] !== undefined });
   }
 
   /** 적 하나. 노드 미리보기와 같은 어휘(속성·직군 왼쪽 위, 돌파 오른쪽 위, 레벨·이름 한 줄)로 선다. */
@@ -614,10 +614,6 @@ export class PartyScene extends Phaser.Scene {
     content.setMask(this.rosterMask.createGeometryMask());
     this.fillRoster();
     this.bindRosterScroll();
-
-    this.add
-      .text(BASE_WIDTH / 2, 1520, t("party.longPressHint"), textStyle({ role: "body", size: 24, color: COLOR.inkDim }))
-      .setOrigin(0.5, 0);
   }
 
   /**

@@ -5,7 +5,6 @@ export const PARTY_TH = {
   "party.roleHint.show": "แสดงบทบาท",
   "party.start": "เริ่มต่อสู้",
   "party.saveFailed": "บันทึกทีมไม่ได้ ตรวจสอบพื้นที่จัดเก็บแล้วลองอีกครั้ง",
-  "party.longPressHint": "กดค้างเพื่อดูรายละเอียด",
   "party.slot": "ช่อง {index}",
   "party.enemyPower": "ศัตรู {power}",
   "party.allyPower": "พันธมิตร {power}",

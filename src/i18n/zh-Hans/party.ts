@@ -5,7 +5,6 @@ export const PARTY_ZH_HANS = {
   "party.roleHint.show": "显示职能",
   "party.start": "开始战斗",
   "party.saveFailed": "无法保存编队。请检查存储空间后重试。",
-  "party.longPressHint": "长按查看详情",
   "party.slot": "{index}号位",
   "party.enemyPower": "敌方 {power}",
   "party.allyPower": "我方 {power}",

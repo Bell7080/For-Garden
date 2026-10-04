@@ -77,6 +77,7 @@ export const RUNE_TH = {
   "rune.traitReroll.candidate": "คุณลักษณะใหม่",
   "rune.traitReroll.keep": "เก็บของเดิม",
   "rune.traitReroll.apply": "ใช้คุณลักษณะใหม่",
+  "rune.traitReroll.again": "คงตัวเดิมแล้วตีความใหม่",
   "rune.traitReroll.upgraded": "ระดับเพิ่มขึ้นแล้ว",
   "rune.traitReroll.pity": "การันตีเพิ่มระดับ {done} / {total}",
 } as const;

@@ -56,4 +56,10 @@ export const STATUS_TH = {
   "status.plume.detail": "{stacks} / {max} ชั้น · เหลือ {time}",
   "status.frostbite": "เลือดไหลน้ำแข็ง",
   "status.frostbite.detail": "รวม {amount} ความเสียหาย · ชะลอ {slow}% · เหลือ {time}",
+  "status.biteMark": "รอยกัด",
+  "status.biteMark.detail": "{stacks} ชั้น · ความเสียหายที่ได้รับ +{percent}% · เหลือ {time}",
+  "status.healCut": "การรักษาลดลง",
+  "status.healCut.detail": "การรักษาที่ได้รับ −{percent}% · เหลือ {time}",
+  "status.sunken": "น้ำหนักที่จม",
+  "status.sunken.detail": "ความเร็วเคลื่อนที่และโจมตี −{percent}% · เหลือ {time}",
 } as const;

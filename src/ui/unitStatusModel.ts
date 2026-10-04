@@ -8,7 +8,7 @@ import { t } from "../i18n";
  * 겹 수와 남은 시간을 여기서 한 번만 만들고 둘 다 이 목록만 그린다. Phaser를 들여오지 않아
  * 순서·색·문구를 테스트가 그대로 고정할 수 있다.
  */
-export type UnitStatusId = "packKuro" | "packShiro" | "packDimo" | "shell" | "scar" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism" | "weakpoint" | "shimmer" | "observation" | "pressure" | "drowsy" | "sleep" | "groggy" | "intimidation" | "fear" | "plume" | "frostbite";
+export type UnitStatusId = "packKuro" | "packShiro" | "packDimo" | "shell" | "scar" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism" | "weakpoint" | "shimmer" | "observation" | "pressure" | "drowsy" | "sleep" | "groggy" | "intimidation" | "fear" | "plume" | "frostbite" | "biteMark" | "healCut" | "sunken";
 
 export interface UnitStatusView {
   /** 같은 상태를 제공자가 여럿 걸 수 있을 때도 HUD 객체를 덮어쓰지 않는 전투 내 키다. */
@@ -68,6 +68,9 @@ export const UNIT_STATUS_COLOR: Readonly<Record<UnitStatusId, number>> = {
   // 서리깃은 박힌 깃털의 연한 하늘빛이고, 그것이 바뀐 서리 출혈은 한 단계 짙은 청록이다 — 둔화·출혈의 붉은 지속 피해와 갈린다.
   plume: 0x9fd8f0,
   frostbite: 0x4fb4c8,
+  biteMark: 0xb0405a,
+  healCut: 0x7a6bb0,
+  sunken: 0x3f7fb0,
   vandalism: 0xd45aa8,
   // 수압은 깊은 물빛이다 — 둔화·여울과 같은 물 계열이되 가장 짙어, 눌려 터지는 상태라는 것이 갈린다.
   pressure: 0x3a7fc4,
@@ -274,6 +277,32 @@ export function unitStatusViews(fighter: Fighter, pack: readonly Fighter[] = [])
     views.push({
       id: "submerged", name: t("status.submerged"), color: UNIT_STATUS_COLOR.submerged,
       detail: t("status.submerged.detail", { percent: fighter.submergedIn.moveSlowPercent }),
+    });
+  }
+  if (fighter.bt.biteMark) {
+    const mark = fighter.bt.biteMark;
+    views.push({
+      id: "biteMark", name: t("status.biteMark"), color: UNIT_STATUS_COLOR.biteMark,
+      stacks: mark.stacks,
+      remaining: mark.remaining, total: Math.max(mark.total, mark.remaining),
+      detail: t("status.biteMark.detail", { stacks: mark.stacks, percent: mark.stacks * mark.percentPerStack, time: seconds(mark.remaining) }),
+    });
+  }
+  if (fighter.bt.healCut) {
+    const cut = fighter.bt.healCut;
+    views.push({
+      id: "healCut", name: t("status.healCut"), color: UNIT_STATUS_COLOR.healCut,
+      remaining: cut.remaining, total: Math.max(cut.total, cut.remaining),
+      detail: t("status.healCut.detail", { percent: cut.percent, time: seconds(cut.remaining) }),
+    });
+  }
+  if (fighter.bt.sunken && !fighter.bt.sunken.waiting) {
+    const sunk = fighter.bt.sunken;
+    views.push({
+      id: "sunken", name: t("status.sunken"), color: UNIT_STATUS_COLOR.sunken,
+      stacks: sunk.stacks,
+      remaining: sunk.remaining, total: Math.max(sunk.total, sunk.remaining),
+      detail: t("status.sunken.detail", { percent: sunk.stacks * sunk.percentPerStack, time: seconds(sunk.remaining) }),
     });
   }
   if (fighter.observation) {

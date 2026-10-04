@@ -79,6 +79,7 @@ export const RUNE_EN = {
   "rune.traitReroll.candidate": "New trait",
   "rune.traitReroll.keep": "Keep current",
   "rune.traitReroll.apply": "Apply new trait",
+  "rune.traitReroll.again": "Keep current and reroll",
   "rune.traitReroll.upgraded": "Grade raised",
   "rune.traitReroll.pity": "Grade-up pity {done} / {total}",
 } as const;

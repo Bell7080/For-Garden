@@ -1283,6 +1283,10 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
   if (slot === "basic" && effects.basic) {
     const effect = effects.basic;
     if (effect.kind === "none") return undefined;
+    if (effect.kind === "pressStagger") return t("skill.breakthrough.effect.basic.pressStagger", { seconds: trim(effect.seconds) });
+    if (effect.kind === "biteMark") return t("skill.breakthrough.effect.basic.biteMark", { percent: trim(effect.damageTakenPercent), max: trim(effect.maxStacks), seconds: trim(effect.seconds) });
+    if (effect.kind === "coiledTarget") return t("skill.breakthrough.effect.basic.coiledTarget", { percent: trim(effect.damagePercentPerStack) });
+    if (effect.kind === "piercingBeak") return t("skill.breakthrough.effect.basic.piercingBeak", { percent: trim(effect.sharePercent) });
     if (effect.kind === "frostBrand") {
       const plume = def.basic.statusEffects?.find((status) => status.kind === "frostPlume");
       const max = plume?.kind === "frostPlume" ? plume.maxStacks : 1;
@@ -1338,6 +1342,10 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
   if (slot === "ultimate" && effects.ultimate) {
     const effect = effects.ultimate;
     if (effect.kind === "none") return undefined;
+    // 범위·감속은 정의에서 읽은 기준값으로 환산해 말한다 — 반경(px)은 플레이어가 읽는 수가 아니다.
+    if (effect.kind === "widenArea") return t("skill.breakthrough.effect.ultimate.widenArea", { percent: trim(widerPercent("radius" in def.ultimate ? def.ultimate.radius : undefined, effect.radius)) });
+    if (effect.kind === "sunkenWeight") return t("skill.breakthrough.effect.ultimate.sunkenWeight", { percent: trim(effect.stacks * effect.speedPercentPerStack), seconds: trim(effect.seconds) });
+    if (effect.kind === "unhealedMark") return t("skill.breakthrough.effect.ultimate.unhealedMark", { percent: trim(effect.reductionPercent), seconds: trim(effect.seconds) });
     if (effect.kind === "doublePlume") return t("skill.breakthrough.effect.ultimate.doublePlume", { name: def.ultimate.name, count: trim(1 + effect.extraStacks) });
     if (effect.kind === "execution") return t("skill.breakthrough.effect.ultimate.execution", { energy: trim(effect.energyRefundOnKill) });
     if (effect.kind === "forestSight") return t("skill.breakthrough.effect.ultimate.forestSight", { hits: trim(def.ultimate.selfVolley ? def.ultimate.selfVolley.hitCount + effect.extraHits : effect.extraHits), seconds: trim(effect.extraSeconds) });
@@ -1373,6 +1381,10 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
   if (slot === "ferocity" && effects.ferocity) {
     const effect = effects.ferocity;
     if (effect.kind === "none") return undefined;
+    if (effect.kind === "feverWidenBasic") return t("skill.breakthrough.effect.ferocity.feverWidenBasic", { percent: trim(widerPercent("radius" in def.basic ? def.basic.radius : undefined, effect.radius)) });
+    if (effect.kind === "hungryStride") return t("skill.breakthrough.effect.ferocity.hungryStride", { percent: trim(effect.moveSpeedPercent) });
+    if (effect.kind === "longFeast") return t("skill.breakthrough.effect.ferocity.longFeast", { percent: trim(widerPercent(def.ferocityTrait.effectId === "selfAttackSpeedMultiplier" ? def.ferocityTrait.pullOnEntry?.radius : undefined, effect.radius)) });
+    if (effect.kind === "sharpStorm") return t("skill.breakthrough.effect.ferocity.sharpStorm", { percent: trim(effect.critChancePoints) });
     if (effect.kind === "critPlume") return t("skill.breakthrough.effect.ferocity.critPlume", { count: trim(effect.extraStacks) });
     if (effect.kind === "cleavingBasics") return t("skill.breakthrough.effect.ferocity.cleavingBasics");
     if (effect.kind === "feverAmbush") return t("skill.breakthrough.effect.ferocity.feverAmbush", { seconds: trim(effect.stealthSeconds) });
@@ -1406,6 +1418,10 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
   }
   if (slot === "passive" && effects.passive) {
     if (effects.passive.kind === "none") return undefined;
+    if (effects.passive.kind === "pressureCrack") return t("skill.breakthrough.effect.passive.pressureCrack", { seconds: trim(effects.passive.intervalSeconds), percent: trim(effects.passive.powerPercent) });
+    if (effects.passive.kind === "scarMight") return t("skill.breakthrough.effect.passive.scarMight", { percent: trim(effects.passive.damagePercentPerStack) });
+    if (effects.passive.kind === "warmBody") return t("skill.breakthrough.effect.passive.warmBody", { name: def.passive.name, percent: trim(effects.passive.damagePercentPerStack), max: trim(effects.passive.maxStacks) });
+    if (effects.passive.kind === "pinningPlume") return t("skill.breakthrough.effect.passive.pinningPlume", { seconds: trim(effects.passive.staggerSeconds), lock: trim(effects.passive.lockoutSeconds) });
     if (effects.passive.kind === "stealthStrike") return t("skill.breakthrough.effect.passive.stealthStrike", { percent: trim(effects.passive.damagePercent) });
     if (effects.passive.kind === "battleMaidAscension") {
       return t("skill.breakthrough.effect.passive.battleMaidAscension", { percent: trim(effects.passive.durabilityPercent) });
@@ -1493,6 +1509,11 @@ function statScalingLabel(stat: string): string {
 }
 
 /** 소수 없는 값은 소수점을 적지 않는다. `1.50초`처럼 읽히면 정밀해 보이지만 뜻은 같다. */
+/** 기준 범위(px)가 새 범위로 넓어졌을 때 몇 % 넓어지는가. 기준을 모르면 0이다(정의가 범위를 갖지 않는 스킬). */
+function widerPercent(base: number | undefined, next: number): number {
+  return base !== undefined && base > 0 ? Math.max(0, Math.round((next / base - 1) * 100)) : 0;
+}
+
 function trim(value: number): string {
   return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(2)));
 }

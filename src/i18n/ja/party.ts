@@ -5,7 +5,6 @@ export const PARTY_JA = {
   "party.roleHint.show": "推奨を表示",
   "party.start": "戦闘開始",
   "party.saveFailed": "パーティの保存に失敗した。保存領域を確認してもう一度お試しください。",
-  "party.longPressHint": "長押しで詳細情報",
   "party.slot": "{index}番の枠",
   "party.enemyPower": "敵 {power}",
   "party.allyPower": "{power} 味方",

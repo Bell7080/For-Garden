@@ -58,4 +58,10 @@ export const STATUS_JA = {
   "status.plume.detail": "{stacks} / {max}重 · 残り {time}",
   "status.frostbite": "霜の出血",
   "status.frostbite.detail": "計{amount}ダメージ · 鈍化{slow}% · 残り {time}",
+  "status.biteMark": "噛み跡",
+  "status.biteMark.detail": "{stacks}重 · 受ける被害 +{percent}% · 残り{time}",
+  "status.healCut": "回復低下",
+  "status.healCut.detail": "受ける回復 −{percent}% · 残り{time}",
+  "status.sunken": "沈む重み",
+  "status.sunken.detail": "移動・攻撃速度 −{percent}% · 残り{time}",
 } as const;

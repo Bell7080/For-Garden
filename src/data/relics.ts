@@ -3986,11 +3986,15 @@ export const RELICS: RelicDef[] = [
       statusEffects: [{ kind: "stun", seconds: 5 }],
     },
     /*
-     * **한계 돌파 효과는 네 칸 모두 "없음"이다.** 보스는 돌파 없이도 충분히 세고, 돌파 단계는 레벨
-     * 상한을 맞추려고 들고 있을 뿐이다. 칸을 비워 두지 않고 "없음"으로 적어 두는 이유는 그것이
-     * 정해 둔 효과이기 때문이다 — 나중에 이 자리에 다른 효과를 넣으면 그대로 바뀐다.
+     * **한계 돌파 효과는 보스 몸의 기본 틀만 읽는다.** 칸 하나만 켰을 때 설명문이 성립해야 하고(다른 돌파가
+     * 있다고 가정하지 않는다), 시즌 게이지가 공유라 회복·보호막·경감·강인함은 더하지 않는다.
      */
-    breakthroughEffects: { basic: { kind: "none" }, ultimate: { kind: "none" }, ferocity: { kind: "none" }, passive: { kind: "none" } },
+    breakthroughEffects: {
+      basic: { kind: "pressStagger", seconds: 0.3 },
+      ultimate: { kind: "sunkenWeight", stacks: 2, speedPercentPerStack: 8, seconds: 6 },
+      ferocity: { kind: "feverWidenBasic", radius: 620 },
+      passive: { kind: "pressureCrack", intervalSeconds: 15, powerPercent: 100 },
+    },
   },
   {
     /**
@@ -4161,11 +4165,15 @@ export const RELICS: RelicDef[] = [
       statusEffects: [{ kind: "stun", seconds: 2 }],
     },
     /*
-     * **한계 돌파 효과는 네 칸 모두 "없음"이다.** 보스는 돌파 없이도 충분히 세고, 돌파 단계는 레벨
-     * 상한을 맞추려고 들고 있을 뿐이다. 칸을 비워 두지 않고 "없음"으로 적어 두는 이유는 그것이
-     * 정해 둔 효과이기 때문이다 — 나중에 이 자리에 다른 효과를 넣으면 그대로 바뀐다.
+     * **한계 돌파 효과는 보스 몸의 기본 틀만 읽는다.** 칸 하나만 켰을 때 설명문이 성립해야 하고(다른 돌파가
+     * 있다고 가정하지 않는다), 시즌 게이지가 공유라 회복·보호막·경감·강인함은 더하지 않는다.
      */
-    breakthroughEffects: { basic: { kind: "none" }, ultimate: { kind: "none" }, ferocity: { kind: "none" }, passive: { kind: "none" } },
+    breakthroughEffects: {
+      basic: { kind: "biteMark", seconds: 8, damageTakenPercent: 4, maxStacks: 3 },
+      ultimate: { kind: "unhealedMark", seconds: 6, reductionPercent: 40 },
+      ferocity: { kind: "hungryStride", moveSpeedPercent: 50 },
+      passive: { kind: "scarMight", damagePercentPerStack: 5 },
+    },
   },
   {
     /**
@@ -4303,7 +4311,12 @@ export const RELICS: RelicDef[] = [
       selfShieldMaxHpPercent: 3,
     },
     // 수쿠스이노와 같은 이유로 네 칸 모두 "없음"이다.
-    breakthroughEffects: { basic: { kind: "none" }, ultimate: { kind: "none" }, ferocity: { kind: "none" }, passive: { kind: "none" } },
+    breakthroughEffects: {
+      basic: { kind: "coiledTarget", damagePercentPerStack: 8 },
+      ultimate: { kind: "widenArea", radius: 390 },
+      ferocity: { kind: "longFeast", radius: 490 },
+      passive: { kind: "warmBody", damagePercentPerStack: 1.2, maxStacks: 10 },
+    },
   },
   {
     /**
@@ -4433,7 +4446,12 @@ export const RELICS: RelicDef[] = [
       selfShieldMaxHpPercent: 3,
     },
     // 다른 보스와 같은 이유로 네 칸 모두 "없음"이다.
-    breakthroughEffects: { basic: { kind: "none" }, ultimate: { kind: "none" }, ferocity: { kind: "none" }, passive: { kind: "none" } },
+    breakthroughEffects: {
+      basic: { kind: "piercingBeak", sharePercent: 30, halfWidth: 140 },
+      ultimate: { kind: "widenArea", radius: 140 },
+      ferocity: { kind: "sharpStorm", critChancePoints: 8 },
+      passive: { kind: "pinningPlume", staggerSeconds: 0.5, lockoutSeconds: 3 },
+    },
   },
   {
     /**

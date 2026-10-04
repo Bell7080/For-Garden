@@ -196,12 +196,14 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
       ? ["amo", "pontos", "ripa"]
       : [...STAGE_ENEMY_FORMATION];
     /*
-     * **돌파는 적지 않는다.** 예전에는 장 번호를 그대로 돌파 단계로 썼는데(2장 1단계·3장 2단계),
-     * 그 레벨은 10~18이라 상한 20을 채운 적이 없다 — 플레이어의 손으로는 만들 수 없는 성장이다.
-     * 관문의 무게는 레벨과 야성 둘로만 낸다.
+     * **2장부터 돌파 1단계다.** 2장의 권장 레벨은 24~36이라 돌파 0의 상한(20)을 이미 넘으므로,
+     * 적도 같은 성장 위에 서야 화면의 `LV`와 돌파 등급이 맞는다. 1단계가 여는 것은 평타 효과
+     * 하나(레이티아 아닌 공멸 셋은 집게 두 번·껍질 경직·시약 2겹)뿐이라 "기본기가 한층
+     * 강해진다"가 2장의 몫이다. 3장은 새 적으로 따로 설계하므로 여기서 돌파를 적지 않는다.
      */
+    const laterChapterBreakthrough = chapter === 2 ? 1 : 0;
     const laterChapterEnemies = laterChapterIds.map((relicId, slot) =>
-      enemyGrowth(relicId, STORY_RECOMMENDED_LEVELS[globalOrder] ?? 1, 0, slot as 0 | 1 | 2));
+      enemyGrowth(relicId, STORY_RECOMMENDED_LEVELS[globalOrder] ?? 1, laterChapterBreakthrough, slot as 0 | 1 | 2));
     const enemies = chapter === 1 ? CHAPTER_ONE_ENEMIES[orderIndex] : laterChapterEnemies;
     const id = `${chapter}-${chapterOrder}`;
     const elite = enemies.length === 1;

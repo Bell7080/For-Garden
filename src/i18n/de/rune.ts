@@ -77,6 +77,7 @@ export const RUNE_DE = {
   "rune.traitReroll.candidate": "Neues Merkmal",
   "rune.traitReroll.keep": "Aktuelles behalten",
   "rune.traitReroll.apply": "Neues Merkmal übernehmen",
+  "rune.traitReroll.again": "Aktuelles behalten und neu deuten",
   "rune.traitReroll.upgraded": "Stufe erhöht",
   "rune.traitReroll.pity": "Aufstiegsgarantie {done} / {total}",
 } as const;

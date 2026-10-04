@@ -68,6 +68,7 @@ export const INFO_KO = {
   "info.journal.lifeStageValue": "{stage} · 키 {height} · 몸무게 {weight}",
   "info.journal.unknown": "미상",
   "info.journal.lockedNotice": "\n\n상세 기록은 개체 획득 후 해제됩니다.",
+  "info.journal.classified": "기밀",
   "info.journal.afterRestoration": "복원 후 관찰 기록",
   "info.journal.entry": "{date}  ·  #{tag}\nQ. {question}\nA. {answer}\n발견  {habit}",
   "info.journal.viewAll": "전체 기록 보기 ({count}건)",

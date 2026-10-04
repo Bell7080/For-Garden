@@ -9,7 +9,7 @@ import { previewSkillDamage } from "../core/damage";
 import type { BasicAttack, Element, RelicDef, RelicProgress, RelicRarity, Role, Passive, Skill, SkillIconAssetId, Stats, Ultimate } from "../core/types";
 import { setDebugFeedButton, setDebugInfoAssetReady, setDebugInfoGemSlots, setDebugInfoOpen, addDebugFeedTaps } from "../debug";
 import { formatCurrency } from "../core/formatCurrency";
-import { RELICS } from "../data/relics";
+import { PLAYABLE_RELICS, RELICS } from "../data/relics";
 import { KeywordManager } from "../managers/KeywordManager";
 import { relicStories } from "../managers/RelicStoryManager";
 import { BOND_STORY_GEM_REWARD } from "../core/relicStory";
@@ -1475,7 +1475,7 @@ export class InfoManager {
   private slideToNeighbor(step: 1 | -1): void {
     const current = this.currentDef;
     if (!current || this.sliding) return;
-    const order = RELICS;
+    const order = PLAYABLE_RELICS;
     const index = order.findIndex((def) => def.id === current.id);
     if (index === -1) return;
     const next = order[(index + step + order.length) % order.length];

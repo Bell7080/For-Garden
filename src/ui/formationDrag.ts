@@ -1,5 +1,7 @@
 import Phaser from "phaser";
-import { classifyFormationGesture, formationDropSlot, type FormationGestureCancelReason } from "./formationGestureRules";
+import { COLOR } from "./theme";
+import { LONG_PRESS, longPressProgress } from "./longPressGauge";
+import { FORMATION_GESTURE, classifyFormationGesture, formationDropSlot, type FormationGestureCancelReason } from "./formationGestureRules";
 
 export interface FormationDragSlot {
   hit: Phaser.GameObjects.Rectangle;
@@ -39,7 +41,12 @@ export function bindFormationDrag(
   scene: Phaser.Scene,
   slots: readonly FormationDragSlot[],
   callbacks: FormationGestureCallbacks,
-  options: { enabled?: () => boolean; canDrag?: () => boolean } = {},
+  options: {
+    enabled?: () => boolean;
+    canDrag?: () => boolean;
+    /** 꾹 누름이 열리는 슬롯이면 true. 주면 누르는 동안 그리드 카드와 같은 원형 게이지를 그린다. */
+    longPressGauge?: (slot: number) => boolean;
+  } = {},
 ): FormationGestureController {
   let pointerId: number | undefined;
   let source: number | undefined;
@@ -50,7 +57,41 @@ export function bindFormationDrag(
   let keyboardSlot = 0;
   let destroyed = false;
 
-  const reset = (): void => { pointerId = undefined; source = undefined; dragging = false; };
+  let gauge: Phaser.GameObjects.Graphics | undefined;
+  let gaugeTicker: (() => void) | undefined;
+  const stopGauge = (): void => {
+    if (gaugeTicker) { scene.events.off(Phaser.Scenes.Events.UPDATE, gaugeTicker); gaugeTicker = undefined; }
+    const current = gauge;
+    gauge = undefined;
+    if (!current) return;
+    scene.tweens.add({ targets: current, alpha: 0, duration: LONG_PRESS.fadeMs, onComplete: () => current.destroy() });
+  };
+  // 그리드 카드의 `bindLongPress`와 같은 게이지다 — 같은 꾹 누름이 화면마다 다르게 보이지 않는다.
+  const startGauge = (pointer: Phaser.Input.Pointer): void => {
+    stopGauge();
+    const g = scene.add.graphics().setDepth(900);
+    gauge = g;
+    const { x, y } = pointer;
+    const begin = scene.time.now;
+    const draw = (ratio: number): void => {
+      g.clear();
+      g.lineStyle(LONG_PRESS.width, COLOR.void, 0.55);
+      g.strokeCircle(x, y, LONG_PRESS.radius);
+      if (ratio <= 0) return;
+      g.lineStyle(LONG_PRESS.width, COLOR.accent, 0.95);
+      g.beginPath();
+      g.arc(x, y, LONG_PRESS.radius, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * ratio, false);
+      g.strokePath();
+    };
+    draw(0);
+    gaugeTicker = () => {
+      const now = scene.input.activePointer;
+      if (!now.isDown || Phaser.Math.Distance.Between(x, y, now.x, now.y) > LONG_PRESS.moveSlop) { stopGauge(); return; }
+      draw(longPressProgress(scene.time.now - begin, FORMATION_GESTURE.longPressMs));
+    };
+    scene.events.on(Phaser.Scenes.Events.UPDATE, gaugeTicker);
+  };
+  const reset = (): void => { stopGauge(); pointerId = undefined; source = undefined; dragging = false; };
   const cancel = (reason: FormationGestureCancelReason = "ownerClosed"): void => {
     if (source !== undefined) callbacks.cancel(reason, source);
     reset();
@@ -60,6 +101,7 @@ export function bindFormationDrag(
     if (options.enabled?.() === false) { callbacks.cancel("disabled", index); return; }
     pointerId = pointer.id; source = index; keyboardSlot = index;
     startedAt = scene.time.now; startX = pointer.worldX; startY = pointer.worldY;
+    if (callbacks.longPress && options.longPressGauge?.(index)) startGauge(pointer);
   });
   slots.forEach((slot, index) => slot.hit.on("pointerdown", downHandlers[index]));
 
@@ -67,7 +109,7 @@ export function bindFormationDrag(
     if (pointer.id !== pointerId || source === undefined || !pointer.isDown) return;
     const kind = classifyFormationGesture({ elapsedMs: scene.time.now - startedAt, startX, startY, x: pointer.worldX, y: pointer.worldY });
     if (!dragging && kind === "drag" && options.canDrag?.() !== false) {
-      dragging = true; callbacks.dragStart(source, pointer.worldX, pointer.worldY);
+      dragging = true; stopGauge(); callbacks.dragStart(source, pointer.worldX, pointer.worldY);
     }
     if (dragging) callbacks.dragMove(source, pointer.worldX, pointer.worldY);
   };

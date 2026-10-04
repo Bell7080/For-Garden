@@ -60,6 +60,7 @@ export const INFO_RU = {
   "info.journal.lifeStageValue": "{stage} · Рост {height} · Вес {weight}",
   "info.journal.unknown": "Неизвестно",
   "info.journal.lockedNotice": "\n\nПолная запись откроется, когда вы получите этот реликт.",
+  "info.journal.classified": "Секретно",
   "info.journal.afterRestoration": "Наблюдения после восстановления",
   "info.journal.entry": "{date}  ·  #{tag}\nВ. {question}\nО. {answer}\nЗамечено  {habit}",
   "info.journal.viewAll": "Все записи ({count})",

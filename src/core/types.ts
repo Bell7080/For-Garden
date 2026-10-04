@@ -2650,6 +2650,29 @@ export type BasicBreakthrough = {
   moveSpeedPercent: number;
   seconds: number;
   powerPercentPerSpeedPoint: number;
+} | {
+  /**
+   * 평타가 맞힌 적 중 **보스에 가장 가까운 한 명**을 잠깐 경직시킨다(폰토스 「압착」). 광역 평타라 전원에게 걸지 않는다.
+   * 이 효과는 다른 돌파 효과를 읽지 않는다.
+   */
+  kind: "pressStagger";
+  seconds: number;
+} | {
+  /** 평타가 적중할 때마다 그 적이 받는 모든 피해가 늘어나는 겹이 쌓인다(수쿠스이노 「물린 자국」). 덧칠과 같은 상태 슬롯을 쓴다. */
+  kind: "biteMark";
+  seconds: number;
+  damageTakenPercent: number;
+  maxStacks: number;
+} | {
+  /** 기본 평타가 건 둔화가 걸린 적을 때리면 그 적의 둔화 겹마다 평타 피해가 늘어난다(타보아 「감긴 표적」). */
+  kind: "coiledTarget";
+  damagePercentPerStack: number;
+} | {
+  /** 평타가 적중하면 보스와 표적을 잇는 선 **뒤쪽** 가장 가까운 적 한 명에게도 피해의 일부가 들어간다(코아틀 「꿰뚫는 부리」). */
+  kind: "piercingBeak";
+  sharePercent: number;
+  /** 선에서 이만큼(px) 안에 선 적만 후보다. */
+  halfWidth: number;
 } | BreakthroughNone;
 
 /**
@@ -2835,6 +2858,22 @@ export type UltimateBreakthrough = {
 } | {
   /** 채널이 끝나는 순간 낙서가 걸린 적 전원의 낙서가 한꺼번에 터진다(데이). */
   kind: "signatureBurst";
+} | {
+  /** 궁극기의 범위(반경·통로 반폭)가 넓어진다. 기절 시간·주기·상태는 건드리지 않는다(타보아 「넓은 포옹」·코아틀 「넓은 강하」). */
+  kind: "widenArea";
+  /** 넓어진 뒤의 반경(px). */
+  radius: number;
+} | {
+  /** 궁극기가 맞힌 모든 적이 **기절이 풀린 뒤** 잠시 공격 속도·이동 속도가 느려진다(폰토스 「가라앉은 몸」). 둔화 상태와 별개의 슬롯이다. */
+  kind: "sunkenWeight";
+  stacks: number;
+  speedPercentPerStack: number;
+  seconds: number;
+} | {
+  /** 궁극기가 맞힌 적은 잠시 받는 회복이 줄어든다. 출혈의 회복 감소와는 큰 쪽 하나만 적용한다(수쿠스이노 「아물지 않는 자국」). */
+  kind: "unhealedMark";
+  seconds: number;
+  reductionPercent: number;
 } | BreakthroughNone;
 
 /**
@@ -2972,9 +3011,9 @@ export type FerocityBreakthrough = {
   kind: "bigWave";
   powerMultiplier: number;
 } | {
-  /** 폭주 중 덧칠 최대 겹이 이 수만큼 늘어난다(메론). */
-  kind: "extraLayer";
-  extraStacks: number;
+  /** 폭주 중 기본 공격이 맞힌 적에게서 가장 가까운 칠하지 않은 적에게 `hops`번 옮겨 가 덧칠을 한 겹씩 건다(메론). */
+  kind: "paintChain";
+  hops: number;
 } | {
   /** 폭주 중 가봉 막의 일부를 두 번째로 체력 비율이 낮은 아군에게도 준다(테리사). */
   kind: "doubleNeedle";
@@ -2991,9 +3030,9 @@ export type FerocityBreakthrough = {
   kind: "pupFrenzy";
   every: number;
 } | {
-  /** 폭주 중 마지막 걸음이 쓰는 막 잔량 비율이 이 값으로 바뀐다(엘라). 궁극기와 무관하다. */
-  kind: "adamantRelease";
-  shieldPercent: number;
+  /** 「금강불괴」에 들어설 때 두르는 보호막이 최대 체력의 이 비율로 바뀐다(엘라). 다른 슬롯과 무관하다. */
+  kind: "adamantShield";
+  shieldMaxHpPercent: number;
 } | {
   /** 폭주 중 소환수의 일반 공격이 관측을 이 배수만큼 쌓는다(모르페). 궁극기와 무관하다. */
   kind: "droneOverheat";
@@ -3002,6 +3041,24 @@ export type FerocityBreakthrough = {
   /** 폭주 중 낙서가 이 겹에 터진다(데이). */
   kind: "closeUp";
   maxStacks: number;
+} | {
+  /** 폭주 중 평타의 범위가 넓어진다(폰토스 「넓어지는 해구」). */
+  kind: "feverWidenBasic";
+  /** 넓어진 뒤의 반경(px). */
+  radius: number;
+} | {
+  /** 폭주 중 이동 속도가 오른다(수쿠스이노 「굶주린 걸음」). */
+  kind: "hungryStride";
+  moveSpeedPercent: number;
+} | {
+  /** 폭주에 들 때 끌어오는 범위가 넓어진다(타보아 「긴 식탁」). */
+  kind: "longFeast";
+  /** 넓어진 뒤의 반경(px). */
+  radius: number;
+} | {
+  /** 폭주 중 치명타 확률이 퍼센트포인트로 오른다(코아틀 「날 선 폭풍」). */
+  kind: "sharpStorm";
+  critChancePoints: number;
 } | BreakthroughNone;
 
 /**
@@ -3160,9 +3217,14 @@ export type PassiveBreakthrough = {
   kind: "packStrength";
   damagePercentPerWolf: number;
 } | {
-  /** 마지막 걸음이 쓰는 막 잔량 비율이 상시 이만큼 늘어난다(엘라). */
-  kind: "shieldFist";
-  bonusPercent: number;
+  /**
+   * 불멸이 도는 동안의 회복 총량이 `healPercent`로 바뀌고, 불멸이 끝난 뒤 `seconds`초 동안 방어력·저항력이
+   * 각각 이 비율만큼 오른다(엘라). 이 패시브 자신의 값만 바꾼다.
+   */
+  kind: "undyingBulwark";
+  healPercent: number;
+  defenseResistancePercent: number;
+  seconds: number;
 } | {
   /** 소환수가 살아 있는 동안 관측이 걸린 적 한 명당 공격 속도가 오른다(모르페). */
   kind: "manyEyes";
@@ -3171,6 +3233,26 @@ export type PassiveBreakthrough = {
   /** 낙서가 걸린 적 한 명당 방어력·저항력이 오른다(데이). */
   kind: "muralHide";
   defenseResistancePercentPerTagged: number;
+} | {
+  /** 일정 시간마다 보스에서 **가장 먼 적** 한 명에게 마법 피해가 떨어진다(폰토스 「수압 균열」). */
+  kind: "pressureCrack";
+  intervalSeconds: number;
+  /** 주문력의 몇 %인가. */
+  powerPercent: number;
+} | {
+  /** 흉터 겹마다 공격력이 늘어난다(수쿠스이노 「쌓이는 흉터」). */
+  kind: "scarMight";
+  damagePercentPerStack: number;
+} | {
+  /** 평타가 적중해 쌓인 횟수(`basicHitAttackSpeedStack`의 누적)마다 평타 피해가 늘어난다(타보아 「달아오른 몸」). 상한은 이 효과가 갖는다. */
+  kind: "warmBody";
+  damagePercentPerStack: number;
+  maxStacks: number;
+} | {
+  /** 치명타로 적중한 평타가 표적을 경직시킨다. 같은 적에게는 재사용 대기가 있다(코아틀 「눌러 앉히는 깃」). */
+  kind: "pinningPlume";
+  staggerSeconds: number;
+  lockoutSeconds: number;
 } | BreakthroughNone;
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */

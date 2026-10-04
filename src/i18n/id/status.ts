@@ -56,4 +56,10 @@ export const STATUS_ID = {
   "status.plume.detail": "{stacks}/{max} tumpuk · sisa {time}",
   "status.frostbite": "Pendarahan Beku",
   "status.frostbite.detail": "Total {amount} damage · perlambatan {slow}% · sisa {time}",
+  "status.biteMark": "Bekas Gigitan",
+  "status.biteMark.detail": "{stacks} tumpuk · damage diterima +{percent}% · sisa {time}",
+  "status.healCut": "Pemulihan Berkurang",
+  "status.healCut.detail": "Pemulihan diterima −{percent}% · sisa {time}",
+  "status.sunken": "Beban Tenggelam",
+  "status.sunken.detail": "Kecepatan gerak dan serang −{percent}% · sisa {time}",
 } as const;

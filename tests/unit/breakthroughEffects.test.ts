@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { applyCombatStatusEffect, applyFrenzy, receivedDamage, createSkirmish, fighterReach, fireUltimate, findFighter, refreshBleed, stepSkirmish, tryTriggerEmergencyRecovery, tryTriggerLowHpVanish, type Arena, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
+import { unitStatusViews } from "../../src/ui/unitStatusModel";
+import { applyCombatStatusEffect, applyFrenzy, bossDamageMultiplier, breakthroughSkill, currentAttackSpeed, gainFerocity, moveSpeed, receivedDamage, createSkirmish, fighterReach, fireUltimate, findFighter, refreshBleed, stepSkirmish, tryTriggerEmergencyRecovery, tryTriggerLowHpVanish, type Arena, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
 import { FEROCITY_RULES } from "../../src/core/ferocity";
 import { BREAKTHROUGH_STEPS, isBreakthroughSlotOpen } from "../../src/core/relicProgression";
 import { getRelic, RELICS } from "../../src/data/relics";
@@ -1624,3 +1625,299 @@ describe("전사 한계 돌파 — 파치·케리스·매디", () => {
 });
 
 const FULL_TANK = BREAKTHROUGH_STEPS.length;
+
+describe("보스 한계 돌파 — 폰토스·수쿠스이노·타보아·코아틀", () => {
+  const BOSSES = ["pontos", "sukusuino", "taboa", "quetzalcoatlus"] as const;
+  const SLOTS = ["basic", "ultimate", "ferocity", "passive"] as const;
+
+  /** 보스 한 마리(적 0번)와 아군. 돌파 단계만 갈아 끼워 같은 판을 두 번 돌린다. */
+  function bossBattle(bossId: string, allies: string[], breakthrough: number): SkirmishState {
+    return createSkirmish(allies.map(getRelic), [getRelic(bossId)], ARENA, {}, {}, { enemyBreakthroughs: [breakthrough] });
+  }
+
+  function place(state: SkirmishState, id: string, x: number, y: number): void {
+    const fighter = findFighter(state, id)!;
+    fighter.x = x; fighter.y = y;
+  }
+
+  it("는 네 칸 모두 문장을 만들고, 한 칸이 다른 칸의 효과를 읽지 않는다", () => {
+    for (const id of BOSSES) {
+      const def = getRelic(id);
+      const effects = def.breakthroughEffects!;
+      for (const slot of SLOTS) {
+        expect(effects[slot]?.kind, `${id} ${slot}`).not.toBe("none");
+        expect(breakthroughEffectText(def, slot), `${id} ${slot}`).toBeTruthy();
+        // 한 칸의 효과 계약은 다른 칸의 효과 종류를 이름으로 부르지 않는다 — 칸 하나만 켰을 때 설명문이 성립해야 한다.
+        const others = SLOTS.filter((other) => other !== slot).map((other) => effects[other]!.kind);
+        const json = JSON.stringify(effects[slot]);
+        for (const kind of others) expect(json, `${id} ${slot}`).not.toContain(kind);
+      }
+    }
+  });
+
+  it("는 회복·보호막·경감·강인함을 더하지 않는다", () => {
+    const forbidden = /shield|guard|bulwark|regen|tenacity|reduction/i;
+    for (const id of BOSSES) {
+      for (const slot of SLOTS) {
+        const effect = getRelic(id).breakthroughEffects![slot]!;
+        expect(effect.kind, `${id} ${slot}`).not.toMatch(forbidden);
+      }
+    }
+  });
+
+  it("폰토스 II — 광역 평타가 맞힌 적 중 가장 가까운 한 명만 경직시킨다", () => {
+    const run = (breakthrough: number) => {
+      const state = bossBattle("pontos", ["torika", "amo", "rex"], breakthrough);
+      const boss = findFighter(state, "enemy-0")!;
+      place(state, "enemy-0", 500, 800);
+      place(state, "player-0", 500, 560); place(state, "player-1", 560, 880); place(state, "player-2", 440, 940);
+      boss.attackCooldown = 0;
+      for (let tick = 0; tick < 6; tick += 1) {
+        stepSkirmish(state, 0.05);
+        for (const ally of state.fighters.filter((f) => f.side === "player")) { ally.attackCooldown = 99; ally.x = ally.x; }
+      }
+      return state.fighters.filter((f) => f.side === "player").map((f) => f.staggeredFor > 0);
+    };
+    expect(run(0).some(Boolean)).toBe(false);
+    const staggered = run(1);
+    // 가장 가까운 한 명(player-1)만 걸린다.
+    expect(staggered.filter(Boolean)).toHaveLength(1);
+  });
+
+  it("폰토스 III — 해일에 맞은 적은 기절이 풀린 뒤에 느려진다", () => {
+    const state = bossBattle("pontos", ["torika"], 2);
+    const boss = findFighter(state, "enemy-0")!;
+    const ally = findFighter(state, "player-0")!;
+    boss.energy = 999;
+    const baseSpeed = moveSpeed(ally);
+    fireUltimate(state, "enemy-0");
+    expect(ally.stunnedFor).toBeGreaterThan(0);
+    // 기절이 도는 동안은 아직 느리지 않다.
+    expect(moveSpeed(ally)).toBeCloseTo(baseSpeed, 5);
+    for (let tick = 0; tick < 200 && ally.stunnedFor > 0; tick += 1) stepSkirmish(state, 0.05);
+    stepSkirmish(state, 0.05);
+    expect(ally.stunnedFor).toBe(0);
+    expect(moveSpeed(ally)).toBeCloseTo(baseSpeed * (1 - 0.16), 3);
+    expect(currentAttackSpeed(ally)).toBeLessThan(ally.def.stats.attackSpeed);
+    // 시간이 다하면 풀린다.
+    for (let tick = 0; tick < 200; tick += 1) stepSkirmish(state, 0.05);
+    expect(moveSpeed(ally)).toBeCloseTo(baseSpeed, 3);
+  });
+
+  it("폰토스 III — 별 하나에서는 해일이 느림을 남기지 않는다", () => {
+    const state = bossBattle("pontos", ["torika"], 0);
+    const ally = findFighter(state, "player-0")!;
+    findFighter(state, "enemy-0")!.energy = 999;
+    fireUltimate(state, "enemy-0");
+    expect(ally.bt.sunken).toBeNull();
+  });
+
+  it("폰토스 IV — 폭주 중에만 평타 반경이 넓어진다", () => {
+    const state = bossBattle("pontos", ["torika"], 3);
+    const boss = findFighter(state, "enemy-0")!;
+    const normal = breakthroughSkill(boss, false) as { radius: number };
+    boss.ferocityFever = true;
+    const fever = breakthroughSkill(boss, false) as { radius: number };
+    expect(normal.radius).toBe(520);
+    expect(fever.radius).toBe(620);
+  });
+
+  it("폰토스 V — 15초마다 가장 먼 적에게 마법 피해가 떨어진다", () => {
+    const run = (breakthrough: number) => {
+      const state = bossBattle("pontos", ["torika", "amo"], breakthrough);
+      const boss = findFighter(state, "enemy-0")!;
+      place(state, "enemy-0", 500, 400);
+      place(state, "player-0", 500, 500); place(state, "player-1", 500, 1400);
+      boss.attackCooldown = 999; boss.stunnedFor = 999;
+      const hits: string[] = [];
+      for (let tick = 0; tick < 17 * 20; tick += 1) {
+        for (const ally of state.fighters.filter((f) => f.side === "player")) ally.attackCooldown = 999;
+        for (const event of stepSkirmish(state, 0.05)) if (event.kind === "attack" && event.attackerId === boss.id) hits.push(event.targetId);
+      }
+      return hits;
+    };
+    expect(run(3)).toHaveLength(0);
+    const hits = run(4);
+    expect(hits).toEqual(["player-1"]);
+  });
+
+  it("수쿠스이노 II — 평타가 적중할 때마다 받는 피해 겹이 쌓이고 시간이 지나면 풀린다", () => {
+    const state = bossBattle("sukusuino", ["torika"], 1);
+    const boss = findFighter(state, "enemy-0")!;
+    const ally = findFighter(state, "player-0")!;
+    ally.attackCooldown = 999;
+    place(state, "enemy-0", 500, 700); place(state, "player-0", 500, 740);
+    for (let tick = 0; tick < 600 && (ally.bt.biteMark?.stacks ?? 0) < 2; tick += 1) {
+      boss.attackCooldown = Math.min(boss.attackCooldown, 0.1);
+      stepSkirmish(state, 0.05);
+      ally.hp = ally.maxHp;
+    }
+    expect(ally.bt.biteMark?.stacks).toBeGreaterThanOrEqual(2);
+    expect(ally.bt.biteMark!.stacks).toBeLessThanOrEqual(3);
+    boss.stunnedFor = 999;
+    for (let tick = 0; tick < 200; tick += 1) stepSkirmish(state, 0.05);
+    expect(ally.bt.biteMark).toBeNull();
+  });
+
+  it("수쿠스이노 III — 궁극기에 맞은 적은 받는 회복이 줄어든다", () => {
+    const state = bossBattle("sukusuino", ["torika"], 2);
+    const ally = findFighter(state, "player-0")!;
+    findFighter(state, "enemy-0")!.energy = 999;
+    place(state, "player-0", 500, 1200);
+    fireUltimate(state, "enemy-0", undefined, { x: ally.x, y: ally.y });
+    expect(ally.bt.healCut).toEqual({ remaining: 6, total: 6, percent: 40 });
+  });
+
+  it("수쿠스이노 IV — 폭주 중에만 이동 속도가 오른다", () => {
+    const state = bossBattle("sukusuino", ["torika"], 3);
+    const boss = findFighter(state, "enemy-0")!;
+    const base = moveSpeed(boss);
+    boss.ferocityFever = true;
+    expect(moveSpeed(boss)).toBeCloseTo(base * 1.5, 5);
+  });
+
+  it("수쿠스이노 V — 흉터 겹마다 주는 피해가 늘어난다", () => {
+    const state = bossBattle("sukusuino", ["torika"], 4);
+    const boss = findFighter(state, "enemy-0")!;
+    const ally = findFighter(state, "player-0")!;
+    expect(bossDamageMultiplier(boss, ally, false)).toBe(1);
+    boss.shellGuard = { stacks: 3, remaining: 8, total: 8 };
+    expect(bossDamageMultiplier(boss, ally, false)).toBeCloseTo(1.15, 5);
+    expect(bossDamageMultiplier(boss, ally, true)).toBeCloseTo(1.15, 5);
+    const closed = bossBattle("sukusuino", ["torika"], 3);
+    closed.fighters[1].shellGuard = { stacks: 3, remaining: 8, total: 8 };
+    expect(bossDamageMultiplier(closed.fighters[1], closed.fighters[0], false)).toBe(1);
+  });
+
+  it("타보아 II — 둔화에 걸린 표적은 겹마다 평타를 더 아프게 맞는다", () => {
+    const state = bossBattle("taboa", ["torika"], 1);
+    const boss = findFighter(state, "enemy-0")!;
+    const ally = findFighter(state, "player-0")!;
+    expect(bossDamageMultiplier(boss, ally, false)).toBe(1);
+    ally.chill = { stacks: 3, remaining: 5, total: 5, speedPercentPerStack: 8, maxStacks: 3 } as typeof ally.chill;
+    expect(bossDamageMultiplier(boss, ally, false)).toBeCloseTo(1.24, 5);
+    // 궁극기는 이 효과를 읽지 않는다.
+    expect(bossDamageMultiplier(boss, ally, true)).toBe(1);
+  });
+
+  it("보스가 건 돌파 약화는 머리 위 상태 칩으로 서고 풀리면 사라진다", () => {
+    const state = bossBattle("pontos", ["torika"], 2);
+    const ally = findFighter(state, "player-0")!;
+    expect(unitStatusViews(ally).map(({ id }) => id)).not.toContain("biteMark");
+    ally.bt.biteMark = { remaining: 8, total: 8, stacks: 2, percentPerStack: 4 };
+    ally.bt.healCut = { remaining: 6, total: 6, percent: 40 };
+    ally.bt.sunken = { waiting: false, remaining: 6, total: 6, stacks: 2, percentPerStack: 8 };
+    const ids = unitStatusViews(ally).map(({ id }) => id);
+    expect(ids).toEqual(expect.arrayContaining(["biteMark", "healCut", "sunken"]));
+    ally.bt.sunken = { waiting: true, remaining: 6, total: 6, stacks: 2, percentPerStack: 8 };
+    expect(unitStatusViews(ally).map(({ id }) => id)).not.toContain("sunken");
+  });
+
+  it("타보아 III·코아틀 III — 궁극기의 범위만 넓어지고 기절 시간은 그대로다", () => {
+    const taboa = bossBattle("taboa", ["torika"], 2);
+    const boss = findFighter(taboa, "enemy-0")!;
+    const wide = breakthroughSkill(boss, true) as { radius: number; statusEffects: readonly { kind: string; seconds?: number }[] };
+    expect(wide.radius).toBe(390);
+    expect(wide.statusEffects.find((e) => e.kind === "stun")?.seconds).toBe(1.5);
+    const coatl = bossBattle("quetzalcoatlus", ["torika"], 2);
+    const lane = breakthroughSkill(findFighter(coatl, "enemy-0")!, true) as { radius: number; statusEffects: readonly { kind: string; seconds?: number }[] };
+    expect(lane.radius).toBe(140);
+    expect(lane.statusEffects.find((e) => e.kind === "stun")?.seconds).toBe(1.5);
+    const closed = bossBattle("taboa", ["torika"], 1);
+    expect((breakthroughSkill(findFighter(closed, "enemy-0")!, true) as { radius: number }).radius).toBe(340);
+  });
+
+  it("타보아 IV — 폭주에 들 때 끌어오는 반경이 넓어진다", () => {
+    // 487 떨어진 적은 기본 반경(480) 밖이라 열려 있을 때만 끌려온다.
+    const run = (breakthrough: number) => {
+      const state = bossBattle("taboa", ["torika"], breakthrough);
+      const boss = findFighter(state, "enemy-0")!;
+      const ally = findFighter(state, "player-0")!;
+      place(state, "enemy-0", 500, 400); place(state, "player-0", 500, 887);
+      gainFerocity(boss, 100, state, []);
+      expect(boss.ferocityFever).toBe(true);
+      return 887 - ally.y;
+    };
+    expect(run(2)).toBe(0);
+    expect(run(3)).toBeGreaterThan(50);
+  });
+
+  it("타보아 V — 평타가 쌓은 횟수마다 평타 피해가 늘고 상한이 있다", () => {
+    const state = bossBattle("taboa", ["torika"], 4);
+    const boss = findFighter(state, "enemy-0")!;
+    const ally = findFighter(state, "player-0")!;
+    expect(bossDamageMultiplier(boss, ally, false)).toBe(1);
+    boss.bonusAttackSpeed = 3 * 5;
+    expect(bossDamageMultiplier(boss, ally, false)).toBeCloseTo(1.06, 5);
+    boss.bonusAttackSpeed = 3 * 40;
+    expect(bossDamageMultiplier(boss, ally, false)).toBeCloseTo(1.12, 5);
+    expect(bossDamageMultiplier(boss, ally, true)).toBe(1);
+  });
+
+  it("코아틀 II — 표적 뒤 선 위의 가장 가까운 적도 피해의 일부를 받는다", () => {
+    const run = (breakthrough: number) => {
+      const state = bossBattle("quetzalcoatlus", ["torika", "amo", "rex"], breakthrough);
+      const boss = findFighter(state, "enemy-0")!;
+      place(state, "enemy-0", 500, 400);
+      place(state, "player-0", 500, 480);   // 표적
+      place(state, "player-1", 505, 620);   // 뒤쪽 선 위
+      place(state, "player-2", 800, 450);   // 선에서 벗어남
+      for (const ally of state.fighters.filter((f) => f.side === "player")) ally.attackCooldown = 999;
+      const hurt = new Set<string>();
+      for (let tick = 0; tick < 40; tick += 1) {
+        boss.attackCooldown = Math.min(boss.attackCooldown, 0.05);
+        boss.targetId = "player-0";
+        for (const event of stepSkirmish(state, 0.05)) if (event.kind === "attack" && event.attackerId === boss.id) hurt.add(event.targetId);
+        if (hurt.size > 0) break;
+      }
+      return hurt;
+    };
+    expect([...run(0)]).not.toContain("player-1");
+    const opened = run(1);
+    expect(opened.has("player-0")).toBe(true);
+    expect(opened.has("player-1")).toBe(true);
+    expect(opened.has("player-2")).toBe(false);
+  });
+
+  it("코아틀 IV — 폭주 중에만 치명타 확률이 오른다", () => {
+    // roll 0.40: 평소 33%에서는 빗나가고 폭주 +15%(48%)에서만 치명타다.
+    const crit = (breakthrough: number, fever: boolean): boolean => {
+      const state = bossBattle("quetzalcoatlus", ["torika"], breakthrough);
+      const boss = findFighter(state, "enemy-0")!;
+      const ally = findFighter(state, "player-0")!;
+      boss.ferocityFever = fever;
+      place(state, "enemy-0", 500, 400); place(state, "player-0", 500, 450);
+      ally.attackCooldown = 999; boss.attackCooldown = 0; boss.targetId = "player-0";
+      let hit = false;
+      for (let tick = 0; tick < 10 && !hit; tick += 1) {
+        for (const event of stepSkirmish(state, 0.05, () => 0.4)) {
+          if (event.kind === "attack" && event.attackerId === boss.id && event.skill === "basic") hit = event.critical;
+        }
+      }
+      return hit;
+    };
+    expect(crit(3, false)).toBe(false);
+    expect(crit(2, true)).toBe(false);
+    expect(crit(3, true)).toBe(true);
+  });
+
+  it("코아틀 V — 치명타로 적중하면 경직시키고 같은 적에게는 재사용 대기가 있다", () => {
+    const state = bossBattle("quetzalcoatlus", ["torika"], 4);
+    const boss = findFighter(state, "enemy-0")!;
+    const ally = findFighter(state, "player-0")!;
+    place(state, "enemy-0", 500, 400); place(state, "player-0", 500, 450);
+    ally.attackCooldown = 999; boss.targetId = "player-0";
+    // 눌러 앉히는 깃이 발동한 시각은 `pinnedUntil`이 남긴다 — 기본 평타의 3타 경직과 섞이지 않는다.
+    const pinnedAt: number[] = [];
+    let last = 0;
+    for (let tick = 0; tick < 200; tick += 1) {
+      boss.attackCooldown = Math.min(boss.attackCooldown, 0.05);
+      stepSkirmish(state, 0.05, () => 0); // 늘 치명타
+      ally.hp = ally.maxHp;
+      const until = boss.bt.pinnedUntil[ally.id] ?? 0;
+      if (until !== last) { pinnedAt.push(state.elapsed); last = until; }
+    }
+    expect(pinnedAt.length).toBeGreaterThanOrEqual(2);
+    for (let i = 1; i < pinnedAt.length; i += 1) expect(pinnedAt[i] - pinnedAt[i - 1]).toBeGreaterThanOrEqual(2.9);
+  });
+});

@@ -60,6 +60,7 @@ export const INFO_DE = {
   "info.journal.lifeStageValue": "{stage} · Größe {height} · Gewicht {weight}",
   "info.journal.unknown": "Unbekannt",
   "info.journal.lockedNotice": "\n\nDer vollständige Eintrag wird freigeschaltet, sobald du dieses Relikt erhältst.",
+  "info.journal.classified": "Geheim",
   "info.journal.afterRestoration": "Beobachtungen nach der Restaurierung",
   "info.journal.entry": "{date}  ·  #{tag}\nF. {question}\nA. {answer}\nBefund  {habit}",
   "info.journal.viewAll": "Alle Einträge ansehen ({count})",

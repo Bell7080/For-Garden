@@ -56,4 +56,10 @@ export const STATUS_ZH_HANT = {
   "status.plume.detail": "{stacks}/{max}層 · 剩餘{time}",
   "status.frostbite": "霜凍出血",
   "status.frostbite.detail": "共{amount}傷害 · 減速{slow}% · 剩餘{time}",
+  "status.biteMark": "咬痕",
+  "status.biteMark.detail": "{stacks}層 · 受到傷害 +{percent}% · 剩餘{time}",
+  "status.healCut": "治療削減",
+  "status.healCut.detail": "受到的治療 −{percent}% · 剩餘{time}",
+  "status.sunken": "下沉之重",
+  "status.sunken.detail": "移動與攻擊速度 −{percent}% · 剩餘{time}",
 } as const;

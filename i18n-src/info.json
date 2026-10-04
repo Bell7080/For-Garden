@@ -509,6 +509,16 @@
 "\n\nDer vollständige Eintrag wird freigeschaltet, sobald du dieses Relikt erhältst.",
 "\n\nПолная запись откроется, когда вы получите этот реликт."
 ],
+"info.journal.classified": [
+"机密",
+"ข้อมูลลับ",
+"Tuyệt mật",
+"Rahasia",
+"Confidencial",
+"Confidencial",
+"Geheim",
+"Секретно"
+],
 "info.journal.afterRestoration": [
 "复原后观察",
 "การสังเกตหลังฟื้นคืน",

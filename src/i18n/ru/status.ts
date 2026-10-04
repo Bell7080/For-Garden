@@ -56,4 +56,10 @@ export const STATUS_RU = {
   "status.plume.detail": "{stacks}/{max} зар. · осталось {time}",
   "status.frostbite": "Ледяное кровотечение",
   "status.frostbite.detail": "Всего {amount} урона · замедление {slow}% · осталось {time}",
+  "status.biteMark": "Укус",
+  "status.biteMark.detail": "{stacks} зар. · получаемый урон +{percent}% · осталось {time}",
+  "status.healCut": "Снижение лечения",
+  "status.healCut.detail": "Получаемое лечение −{percent}% · осталось {time}",
+  "status.sunken": "Тянущий вниз груз",
+  "status.sunken.detail": "Скорость движения и атаки −{percent}% · осталось {time}",
 } as const;

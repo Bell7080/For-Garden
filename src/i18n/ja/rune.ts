@@ -81,6 +81,7 @@ export const RUNE_JA = {
   "rune.traitReroll.candidate": "新しい特性",
   "rune.traitReroll.keep": "現在を維持",
   "rune.traitReroll.apply": "新しい特性を適用",
+  "rune.traitReroll.again": "現在を維持して再解釈",
   "rune.traitReroll.upgraded": "等級上昇",
   "rune.traitReroll.pity": "等級上昇補正 {done} / {total}",
 } as const;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyCombatStatusEffect, createSkirmish, findFighter, fireUltimate, resolveReceivedDamage, stepSkirmish, type Arena, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
+import { createSkirmish, findFighter, fireUltimate, resolveReceivedDamage, stepSkirmish, type Arena, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
 import { FEROCITY_RULES } from "../../src/core/ferocity";
 import { getRelic } from "../../src/data/relics";
 import { breakthroughEffectText } from "../../src/ui/skillPresentation";
@@ -104,6 +104,7 @@ describe("티아 한계 돌파", () => {
 
 describe("메론 한계 돌파", () => {
   const meronBattle = (breakthrough: number) => setup(["meron"], ["amo", "toby"], breakthrough);
+  const threeFoes = (breakthrough: number) => setup(["meron"], ["amo", "toby", "torika"], breakthrough);
 
   it("은 덧칠이 최대 겹인 적을 때리면 근처 적에게 덧칠이 한 겹 번진다(별 II)", () => {
     const spread = (breakthrough: number) => {
@@ -129,17 +130,26 @@ describe("메론 한계 돌파", () => {
     expect(left(1)).toBe(0);
   });
 
-  it("은 폭주 중 덧칠 최대 겹이 하나 더 열린다(별 IV)", () => {
-    const stacks = (breakthrough: number, fever: boolean) => {
-      const state = meronBattle(breakthrough);
+  it("은 폭주 중 기본 공격이 가까운 적에게 두 번 옮겨 가 최대 세 명에게 덧칠을 건다(별 IV)", () => {
+    const painted = (breakthrough: number, fever: boolean) => {
+      const state = threeFoes(breakthrough);
       if (fever) enterFever(state, "player-0");
-      const brush = getRelic("meron").basic.statusEffects![0];
-      for (let i = 0; i < 6; i += 1) applyCombatStatusEffect(findFighter(state, "enemy-0")!, brush, [], state, "player-0");
-      return findFighter(state, "enemy-0")!.overpaint?.stacks ?? 0;
+      swing(state, "player-0", "enemy-0");
+      return state.fighters.filter((f) => f.side === "enemy" && (f.overpaint?.stacks ?? 0) > 0).length;
     };
-    expect(stacks(3, true)).toBe(5);
-    expect(stacks(2, true)).toBe(4);
-    expect(stacks(3, false)).toBe(4);
+    expect(painted(3, true)).toBe(3);
+    expect(painted(3, false)).toBe(1);
+    expect(painted(2, true)).toBe(1);
+  });
+
+  it("옮겨 가는 덧칠은 피해가 없고 최대 겹을 늘리지 않는다", () => {
+    const state = threeFoes(3);
+    enterFever(state, "player-0");
+    swing(state, "player-0", "enemy-0");
+    const second = findFighter(state, "enemy-1")!;
+    expect(second.hp).toBe(second.maxHp);
+    expect(second.overpaint?.stacks).toBe(1);
+    expect(second.overpaint?.maxStacks).toBe(4);
   });
 
   it("은 덧칠이 최대 겹인 적에게만 치명타 확률이 25% 오른다(별 V)", () => {

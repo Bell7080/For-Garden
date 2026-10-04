@@ -165,7 +165,7 @@ export function mockRaidWorldDamage(dayKey: string, dayProgress: number, totalHp
 /**
  * 난이도의 레벨과 그 레벨에 닿는 한계 돌파 — 적도 플레이어와 같은 성장 축을 지난다.
  *
- * 난이도가 오를 때마다 돌파가 한 칸씩 열려 보스가 그 칸의 효과를 얻는다(지금은 모두 "없음"이다).
+ * 난이도가 오를 때마다 돌파가 한 칸씩 열려 보스가 그 칸의 효과를 얻는다(각 보스의 `breakthroughEffects`).
  */
 export function raidBossGrowth(difficulty: RaidDifficulty): { level: number; breakthrough: number } {
   const level = RAID_DIFFICULTY[difficulty].level;

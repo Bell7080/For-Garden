@@ -77,6 +77,7 @@ export const RUNE_ES = {
   "rune.traitReroll.candidate": "Rasgo nuevo",
   "rune.traitReroll.keep": "Conservar actual",
   "rune.traitReroll.apply": "Aplicar rasgo nuevo",
+  "rune.traitReroll.again": "Conservar actual y reinterpretar",
   "rune.traitReroll.upgraded": "Grado aumentado",
   "rune.traitReroll.pity": "Garantía de subida {done} / {total}",
 } as const;

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createSkirmish, findFighter, fireUltimate, isFighterAlive, isPartyFighter, isPupFighter, stepSkirmish, type Arena, type SkirmishState } from "../../src/core/skirmish";
+import { FEROCITY_RULES } from "../../src/core/ferocity";
 import { PUP } from "../../src/core/pup";
 import { getRelic } from "../../src/data/relics";
 import { breakthroughEffectText } from "../../src/ui/skillPresentation";
@@ -40,26 +41,42 @@ describe("디안 새끼 늑대", () => {
     expect(pups(open).every((pup) => !isPartyFighter(pup))).toBe(true);
   });
 
-  it("은 평타 여섯 번마다 한 마리, 폭주 중에는 세 번마다 부른다", () => {
-    const state = setup(3);
+  it("은 평타 여섯 번마다 한 마리를 부른다(별 II)", () => {
+    const state = setup(1);
     for (let i = 0; i < 5; i += 1) basic(state);
     expect(standing(state)).toHaveLength(0);
     basic(state);
     expect(standing(state)).toHaveLength(1);
-    const dian = findFighter(state, "player-0")!;
-    dian.ferocityFever = true;
-    for (let i = 0; i < 3; i += 1) basic(state);
-    expect(standing(state)).toHaveLength(2);
   });
 
-  it("은 동시에 열 마리를 넘지 않고 10초 뒤 사라진다", () => {
+  it("폭주 돌파는 다른 슬롯이 닫혀 있어도 폭주 중 여섯 번마다 한 마리를 부른다(별 IV)", () => {
+    const none = { kind: "none" } as const;
+    const base = getRelic("dian");
+    const alone = { ...base, breakthroughEffects: { ...base.breakthroughEffects!, basic: none, ultimate: none, passive: none } };
+    const state = createSkirmish([alone], [getRelic("amo")], ARENA, {}, { dian: 3 });
+    for (const fighter of state.fighters) { fighter.attackCooldown = 999; fighter.retargetIn = 999; }
+    const foe = findFighter(state, "enemy-0")!;
+    foe.maxHp = 100_000_000; foe.hp = foe.maxHp; foe.x = 540; foe.y = 1_000;
+    const dian = findFighter(state, "player-0")!;
+    dian.x = 500; dian.y = 1_100;
+    expect(pups(state)).toHaveLength(PUP.maxAlive);
+    for (let i = 0; i < 6; i += 1) basic(state);
+    expect(standing(state)).toHaveLength(0);
+    dian.ferocityFever = true; dian.ferocity = FEROCITY_RULES.max;
+    for (let i = 0; i < 5; i += 1) basic(state);
+    expect(standing(state)).toHaveLength(0);
+    basic(state);
+    expect(standing(state)).toHaveLength(1);
+  });
+
+  it("은 동시에 열 마리를 넘지 않고 수명이 지나면 사라진다", () => {
     const state = setup(2);
     const dian = findFighter(state, "player-0")!;
     for (let i = 0; i < 6; i += 1) { dian.energy = 1_000; dian.targetId = "enemy-0"; fireUltimate(state, "player-0", NEVER); }
     expect(standing(state).length).toBeLessThanOrEqual(PUP.maxAlive);
     const first = standing(state);
     expect(first.length).toBeGreaterThan(0);
-    for (let t = 0; t < 24; t += 0.5) {
+    for (let t = 0; t < PUP.lifeSeconds * 2.4; t += 0.5) {
       for (const f of state.fighters) if (f.side === "enemy") { f.hp = f.maxHp; f.attackCooldown = 999; }
       for (const pup of standing(state)) pup.attackCooldown = 999;
       dian.attackCooldown = 999; dian.energy = 0;
@@ -87,6 +104,11 @@ describe("디안 새끼 늑대", () => {
     };
     // 별 IV(세 번째 칸)까지는 패시브 효과가 없고, 별 V에서 늑대 둘(쿠로·시로)만큼 6%가 붙는다.
     expect(hit(4) / hit(3)).toBeCloseTo(1.06, 1);
+  });
+
+  it("새끼의 수명은 20초다", () => {
+    expect(PUP.lifeSeconds).toBe(20);
+    expect(breakthroughEffectText(getRelic("dian"), "basic")).toContain("20초");
   });
 
   it("문구가 네 슬롯 모두 자리 표시 없이 채워진다", () => {

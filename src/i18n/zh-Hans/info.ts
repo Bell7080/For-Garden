@@ -60,6 +60,7 @@ export const INFO_ZH_HANS = {
   "info.journal.lifeStageValue": "{stage} · 身高 {height} · 体重 {weight}",
   "info.journal.unknown": "未知",
   "info.journal.lockedNotice": "\n\n获得此遗物后解锁完整记录。",
+  "info.journal.classified": "机密",
   "info.journal.afterRestoration": "复原后观察",
   "info.journal.entry": "{date}  ·  #{tag}\nQ. {question}\nA. {answer}\n发现  {habit}",
   "info.journal.viewAll": "查看全部记录（{count}条）",

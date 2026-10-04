@@ -484,7 +484,10 @@ export class LobbyScene extends Phaser.Scene {
     if (!this.popupLayer) return;
     this.eventPopup ??= new LobbyEventPopup(this, this.popupLayer, {
       instant,
-      onSelect: (event) => startScene(this, "event", { eventId: event.id }),
+      onSelect: (event) => {
+        if (event.destination?.kind === "lab") startScene(this, "lab", { bannerId: event.destination.bannerId });
+        else startScene(this, "event", { eventId: event.id });
+      },
       onClosed: () => { this.eventPopup = undefined; this.eventBackButton?.destroy(); this.eventBackButton = undefined; },
     });
     this.eventPopup.open();

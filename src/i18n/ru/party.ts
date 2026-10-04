@@ -5,7 +5,6 @@ export const PARTY_RU = {
   "party.roleHint.show": "Показать роли",
   "party.start": "Начать бой",
   "party.saveFailed": "Не удалось сохранить отряд. Проверьте место в хранилище и повторите попытку.",
-  "party.longPressHint": "Удерживайте для подробностей",
   "party.slot": "Место {index}",
   "party.enemyPower": "Враги {power}",
   "party.allyPower": "Союзники {power}",

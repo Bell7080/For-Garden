@@ -402,6 +402,8 @@ export interface Fighter extends Combatant {
     shareShieldIn: number;
     /** 패시브 돌파(`manyEyes`) — 이번 틱에 센 관측 걸린 적 수가 만든 공격 속도 증가(%). */
     manyEyesPercent: number;
+    /** 「가봉」 — 강화 평타가 준비되기까지 남은 시간(초). 0 이하면 다음 평타가 강화된다. 가봉이 없는 몸은 늘 0이다. */
+    sutureIn: number;
   };
   /**
    * 궁극기 돌파(`UltimateBreakthrough`)가 더 떨어뜨릴 남은 타격.
@@ -1211,6 +1213,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
       pupLife: 0,
       shareShieldIn: -1,
       manyEyesPercent: 0,
+      sutureIn: def.passive.kind === "sutureStitch" ? def.passive.suture?.intervalSeconds ?? 0 : 0,
       sleepPouncePercent: isBreakthroughSlotOpen(breakthrough, "basic") && def.breakthroughEffects?.basic?.kind === "sleepPounce" ? def.breakthroughEffects.basic.damagePercent : 0,
     },
     breakthroughEcho: null,
@@ -3310,13 +3313,35 @@ function lowestHpRatioAlly(state: SkirmishState, side: Side): Fighter | undefine
 }
 
 /**
- * 「가봉」 — 기본 공격이 깎은 HP의 일부를 가장 위태로운 아군에게 꿰맨다.
+ * 「가봉」 — 이번 기본 공격 행동이 **강화**되는가. 준비가 됐으면 쓰고 시계를 다시 돌린다.
  *
- * 흡혈·자기 보호막과 **같은 값**(과잉 피해를 뺀 실제 HP 손실)을 읽는다. 연격의 두 타격은
- * 각각 이 자리를 지나므로 한 번 휘두른 손이 두 번 꿰맨다 — 그것이 순환 마지막 걸음의 값이다.
+ * 행동 하나에 한 번만 묻는다 — 광역 걸음은 대상마다 이 자리를 지나므로 행동의 첫머리에서 한 번 정하고
+ * 그 값을 넘겨 쓴다. 적중 여부와 무관하게 이 행동이 곧 그 한 번이다(헛손질로 시계가 남지 않는다).
+ */
+function consumeSutureReady(attacker: Fighter): boolean {
+  const plan = attacker.def.passive.suture;
+  if (attacker.def.passive.kind !== "sutureStitch" || plan === undefined || attacker.bt.sutureIn > 0) return false;
+  attacker.bt.sutureIn = plan.intervalSeconds;
+  return true;
+}
+
+/** 강화 평타가 얹는 추가 물리 피해. 실제로 깎인 HP를 돌려준다 — 막이 먹은 몫은 세지 않는다. */
+function sutureBonusStrike(attacker: Fighter, target: Fighter, state: SkirmishState, events: SkirmishEvent[]): number {
+  const plan = attacker.def.passive.suture;
+  if (plan === undefined || !isFighterAlive(target)) return 0;
+  const before = target.hp;
+  extraStrike(attacker, target, plan.bonusPower, "atk", "physical", state, events);
+  return before - target.hp;
+}
+
+/**
+ * 「가봉」 — 강화된 기본 공격이 낸 피해 총량(기본 + 추가)의 절반을 가장 위태로운 아군과 **자신**에게 꿰맨다.
  *
- * 폭주(`cautery`) 중에는 같은 몫이 보호막이 아니라 **즉시 회복**으로 들어간다. 미리 덧대는
- * 천이 그 자리에서 지지는 손으로 바뀌는 것이 이 개체 폭주의 전부라, 비율과 상한은 그대로 쓴다.
+ * 둘이 같은 몸이면 한 번만 두른다. 상한은 받는 쪽의 최대 체력이 정한다 — 공격력이 자란 뒤 한 번이
+ * 체력 바를 통째로 덮지 않게 한다. 기본 공격 돌파(`tightStitch`)는 옮기는 비율만 올린다.
+ *
+ * 폭주(`cautery`) 중에는 같은 몫이 보호막이 아니라 **즉시 회복**으로 들어간다. 미리 덧대는 천이 그 자리에서
+ * 지지는 손으로 바뀌는 것이 이 개체 폭주의 전부라, 비율과 상한은 그대로 쓴다.
  */
 function stitchSuture(attacker: Fighter, dealt: number, state: SkirmishState, events: SkirmishEvent[]): void {
   const plan = attacker.def.passive.suture;
@@ -3324,25 +3349,27 @@ function stitchSuture(attacker: Fighter, dealt: number, state: SkirmishState, ev
   if (dealt <= 0 || !isFighterAlive(attacker)) return;
   const ally = lowestHpRatioAlly(state, attacker.side);
   if (ally === undefined) return;
-  // 상한은 대상의 몸이 정한다 — 공격력이 자란 뒤 한 대가 체력 바를 통째로 덮지 않게 한다.
-  // 기본 공격 돌파(`tightStitch`)는 옮기는 비율만 올리고 한 번에 두르는 상한은 건드리지 않는다.
   const tight = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
-  const percent = plan.damagePercent + (tight?.kind === "tightStitch" ? tight.damagePercentPoints : 0);
-  const amount = Math.min(Math.round(dealt * percent / 100), Math.round(ally.maxHp * plan.maxHpCapPercent / 100));
-  if (amount <= 0) return;
+  const percent = plan.shieldPercent + (tight?.kind === "tightStitch" ? tight.damagePercentPoints : 0);
+  const cautery = attacker.ferocityFever && attacker.def.ferocityTrait.effectId === "cautery";
+  const receivers = ally.id === attacker.id ? [attacker] : [ally, attacker];
   // 폭주 돌파(`doubleNeedle`) — 두 번째로 체력 비율이 낮은 아군에게도 그 막의 일부를 둘러 준다.
   const needle = attacker.ferocityFever ? openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity) : undefined;
-  if (needle?.kind === "doubleNeedle") {
-    const second = aliveFighters(state, attacker.side).filter((candidate) => candidate.id !== ally.id)
+  let firstAmount = 0;
+  for (const receiver of receivers) {
+    const amount = Math.min(Math.round(dealt * percent / 100), Math.round(receiver.maxHp * plan.maxHpCapPercent / 100));
+    if (amount <= 0) continue;
+    firstAmount = Math.max(firstAmount, amount);
+    if (cautery) {
+      const healed = applyHealing(state, receiver, amount, attacker.id);
+      pushHeal(events, receiver, healed, "passive");
+    } else grantShield(state, receiver, attacker.id, amount, events);
+  }
+  if (needle?.kind === "doubleNeedle" && firstAmount > 0) {
+    const second = aliveFighters(state, attacker.side).filter((candidate) => !receivers.includes(candidate))
       .sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
-    if (second) grantShield(state, second, attacker.id, Math.round(amount * needle.sharePercent / 100), events);
+    if (second) grantShield(state, second, attacker.id, Math.round(firstAmount * needle.sharePercent / 100), events);
   }
-  if (attacker.ferocityFever && attacker.def.ferocityTrait.effectId === "cautery") {
-    const healed = applyHealing(state, ally, amount, attacker.id);
-    pushHeal(events, ally, healed, "passive");
-    return;
-  }
-  grantShield(state, ally, attacker.id, amount, events);
 }
 
 /**
@@ -5546,14 +5573,17 @@ function applyShimmer(attacker: Fighter, target: Fighter, skill: Skill, state: S
   // 터지는 자리는 표식이 묻어 있던 그 적이다. 그래서 반경 표시도 시전자가 아니라 거기서 번진다.
   events.push({ kind: "areaImpact", attackerId: attacker.id, ultimate: false, damageType: "magical",
     area: { shape: "radial", x: target.x, y: target.y, radius: burst.radius } });
-  let dealt = 0;
   for (const other of state.fighters) {
     if (other.side === attacker.side || !isFighterAlive(other)) continue;
     if (other.id !== target.id && distance(target, other) > burst.radius) continue;
-    dealt += strikeShimmer(attacker, other, burst.power, state, events);
+    strikeShimmer(attacker, other, burst.power, state, events);
   }
-  if (burst.shieldPercent <= 0 || dealt <= 0 || !isFighterAlive(attacker)) return;
-  grantShield(state, attacker, attacker.id, Math.max(1, Math.round(dealt * burst.shieldPercent / 100)), events);
+  if (burst.shieldMaxHpPercent <= 0 || !isFighterAlive(attacker)) return;
+  // 두른 막 전체가 상한 아래일 때 그 선까지만 채운다 — 아무도 때리지 않는 동안 막이 끝없이 쌓이지 않게 한다.
+  const basis = attacker.shieldHpBasis ?? attacker.maxHp;
+  const room = basis * burst.capMaxHpPercent / 100 - attacker.shield.amount;
+  if (room <= 0) return;
+  grantShield(state, attacker, attacker.id, Math.max(1, Math.min(Math.round(basis * burst.shieldMaxHpPercent / 100), Math.floor(room))), events);
 }
 
 /** 반짝이 내는 추가 마법 피해 한 대. 실제로 깎인 HP를 돌려준다 — 보호막이 먹은 몫은 세지 않는다. */
@@ -6760,6 +6790,8 @@ function strike(
   // 한 번이므로 여기서 소비한다 — 궁극기 쪽에서 미리 지우면 강화가 붙을 타격이 없어진다.
   const empowered = !useUltimate && attacker.empoweredBasic;
   if (empowered) attacker.empoweredBasic = false;
+  // 「가봉」 — 준비된 강화 평타는 이 행동이 쓴다. 연격 둘째 타 이후는 같은 행동이라 묻지 않는다.
+  const sutured = !useUltimate && comboHit === undefined && consumeSutureReady(attacker);
   // 확정 치명타는 RNG를 호출조차 하지 않아 이후 리플레이 난수열이 밀리지 않는다.
   // 확정 치명타는 RNG를 부르지 않는다 — 목덜미도 같다. 이후 리플레이 난수열이 밀리지 않는다.
   // 폭주 돌파(`ambushCrit`) — 폭주에 들어선 뒤 첫 일반 공격이 반드시 치명타다. 쓰면 꺼진다.
@@ -6917,7 +6949,7 @@ function strike(
     const graffiti = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
     if (graffiti?.kind === "speedGraffiti") attacker.traitHaste = { remaining: graffiti.seconds, attackSpeedPercent: attacker.traitHaste?.attackSpeedPercent ?? 0, moveSpeedPercent: graffiti.moveSpeedPercent };
   }
-  if (!useUltimate) stitchSuture(attacker, targetHpBefore - target.hp, state, events);
+  if (sutured) stitchSuture(attacker, targetHpBefore - target.hp + sutureBonusStrike(attacker, target, state, events), state, events);
   if (!useUltimate) stealthAfterStep(attacker, state);
   // 단일 타격으로 들어와도 같은 계약이 돈다 — 경로가 갈리면 같은 기술이 대상 수에 따라 다른 일을 한다.
   shareShieldFromDamage(attacker, skill.allyShieldFromDamagePercent, targetHpBefore - target.hp, state, events);
@@ -7320,6 +7352,9 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   const damageAttacker = { ...attacker, def: offensiveDefinition(attacker) };
   // 「성의 재단」이 아군에게 나눠 두를 몫의 원천. 대상별이 아니라 이 기술의 총량이다.
   let sharedShieldSource = 0;
+  // 「가봉」 — 강화 여부는 행동 하나에 한 번 정하고, 막은 맞은 모든 적의 피해 총량으로 한 번만 꿰맨다.
+  const sutured = !useUltimate && !free && consumeSutureReady(attacker);
+  let suturedTotal = 0;
 
   for (const [index, target] of targets.entries()) {
     // 각 대상은 자기 방어력·속성·피버 경감을 사용하며 치명타도 독립 판정한다.
@@ -7357,7 +7392,6 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     // 따라 다른 일을 한다.
     if (!useUltimate) releaseShieldHit(attacker, target, state, events);
     if (!useUltimate) grantShieldFromDamage(attacker, hpBefore - target.hp, events, state);
-    if (!useUltimate) stitchSuture(attacker, hpBefore - target.hp, state, events);
     // 나눠 두르는 몫은 대상마다가 아니라 이 기술의 총량에서 나오므로 여기서 모으기만 한다.
     sharedShieldSource += hpBefore - target.hp;
     siphonOverpaintHealing(attacker, target, hpBefore - target.hp, state, events);
@@ -7416,7 +7450,9 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
       triggerCombatAugments(state, attacker, "onKill", events, target);
     }
     state.log.push(`${attacker.def.name} → ${target.def.name} ${amount}`);
+    if (sutured) suturedTotal += hpBefore - target.hp + sutureBonusStrike(attacker, target, state, events);
   }
+  if (sutured) stitchSuture(attacker, suturedTotal, state, events);
   // 광역 걸음도 같은 자리에서 사라진다 — 경로가 갈리면 같은 걸음이 대상 수에 따라 다른 일을 한다.
   if (!useUltimate) stealthAfterStep(attacker, state);
   // 이 계약은 공격 스킬만 갖는다. 좁히지 않고 읽으면 지원 궁극기까지 같은 자리를 지나간다.
@@ -8178,6 +8214,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       else fighter.frenzy = { ...fighter.frenzy, remaining };
     }
     tickShareShield(fighter, dt, state, events);
+    if (fighter.bt.sutureIn > 0 && isFighterAlive(fighter)) fighter.bt.sutureIn = Math.max(0, fighter.bt.sutureIn - dt);
     fighter.bt.manyEyesPercent = manyEyesPercent(state, fighter);
     // 룬 특성의 가속도 같은 공용 시계로 마른다. 다 흐르면 통째로 비워 남은 값이 새지 않게 한다.
     if (isFighterAlive(fighter) && fighter.traitHaste) {

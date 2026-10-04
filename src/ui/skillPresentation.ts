@@ -282,6 +282,9 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
     return t("skill.ferocity.huntInstinct", { stacks: 1 + trait.intimidateBonusStacks, seconds: trait.fearImmunitySeconds });
   }
 
+  // 즉시 리필과 마지막 탄 규칙은 태그(리필·마지막 한 방울)가 말한다. 본문은 폭주가 바꾸는 것만 적는다.
+  if (trait.effectId === "overtimeRefusal") return t("skill.ferocity.overtimeRefusal");
+
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? ""
     : t("skill.ferocity.splash.speed", { percent: trait.attackSpeedBonusPercent });
@@ -334,6 +337,32 @@ export function plumeKeyword(def: RelicDef): KeywordDef | undefined {
       max: plume.maxStacks, hold: plume.holdSeconds, percent: plume.burstPower,
       seconds: plume.burstSeconds, slowSeconds: plume.slowSeconds, slowPercent: plume.slowPercent,
     }),
+  };
+}
+
+/** 「리필」 태그(테쿠). 탄창·장전·고정 공격 속도·공격 속도의 공격력 전환을 한 자리에서 말한다. */
+export function refillKeyword(def: RelicDef): KeywordDef | undefined {
+  const refill = def.passive.refill;
+  if (def.passive.kind !== "refillMagazine" || refill === undefined) return undefined;
+  return {
+    id: "teku-refill",
+    term: t("skill.keyword.refill.term"),
+    kind: "rule",
+    description: t("skill.keyword.refill.description", {
+      magazine: refill.magazine, seconds: refill.reloadSeconds, speed: refill.fixedAttackSpeed,
+    }),
+  };
+}
+
+/** 「마지막 한 방울」 태그(테쿠). 탄창의 마지막 발이 무엇을 하는지 말한다. */
+export function lastDropKeyword(def: RelicDef): KeywordDef | undefined {
+  const last = def.basic.cycle?.find((step) => step.keywordId === "teku-last-drop");
+  if (last === undefined) return undefined;
+  return {
+    id: "teku-last-drop",
+    term: t("skill.keyword.lastDrop.term"),
+    kind: "rule",
+    description: t("skill.keyword.lastDrop.description", { heal: last.damageHealingPercent ?? 0 }),
   };
 }
 
@@ -544,6 +573,9 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
     return t("skill.passive.undyingTalisman", { seconds: passive.durationSeconds, percent: passive.value, blast });
   }
   if (passive.kind === "prickly" && passive.prickle !== undefined) return t("skill.passive.prickly");
+  if (passive.kind === "refillMagazine" && passive.refill !== undefined) {
+    return t("skill.passive.refillMagazine", { magazine: passive.refill.magazine, seconds: passive.refill.reloadSeconds });
+  }
   // 수압이 무엇이고 언제 기절시키는지는 태그가 말한다. 본문은 막이 얼마이고 어디까지 차는지만 적는다.
   if (passive.kind === "salvageCatch" && passive.salvageCatch !== undefined) {
     return t("skill.passive.salvageCatch", { percent: passive.salvageCatch.shieldMaxHpPercent, cap: passive.salvageCatch.capMaxHpPercent });
@@ -905,6 +937,13 @@ export function skillDescription(
    * 문장으로 적으면 화면의 수치가 총 피해로 읽힌다. 간격과 횟수를 절로 뒤에 붙이는 대신 대상
    * 바로 뒤에 넣어 한 문장으로 끝낸다 — 짧게 읽히고, 그 수가 곧 한 번의 값이라는 것도 함께 선다.
    */
+  if ("barrage" in skill && skill.barrage !== undefined) {
+    const { barrage } = skill;
+    return t("skill.sentence.barrage", {
+      damage: skillDamagePhrase(skill, stats), shots: barrage.shots, from: barrage.criticalFromShot,
+      shield: barrage.shieldFromCriticalPercent, cap: barrage.shieldMaxHpPercent,
+    });
+  }
   const repeat = "repeatStrike" in skill ? skill.repeatStrike : undefined;
   const repeatParts = repeat === undefined ? undefined : { ...parts, seconds: repeat.intervalSeconds, count: repeat.count };
   sentences.push(joined === undefined

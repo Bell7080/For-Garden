@@ -8,7 +8,7 @@ import { drainFerocityFever, FEROCITY_RULES } from "./ferocity";
 import { isBreakthroughSlotOpen, type BreakthroughSlot } from "./relicProgression";
 import { ENCOUNTER_ROLE, type EncounterDamageReduction, type EncounterTenacity } from "./levelDesign";
 import { augmentAppliesTo, bleedOnAttackEffect, conditionalAttackPowerMultiplier, expeditionAugmentStatMultipliers, flatStatPoints, highHpDamageMultiplier, sameTargetStreakMultiplier, type ExpeditionAugmentEffect, type ExpeditionAugmentTrigger, type ExpeditionTriggeredEffect } from "./expeditionAugments";
-import type { BasicAttack, BasicAttackStep, BreakthroughEffects, CombatStatusEffect, FerocityTrait, ReachTier, RelicDef, Side, Skill, Stats, TeamBuff } from "./types";
+import type { AttackSkill, BasicAttack, BasicAttackStep, BreakthroughEffects, CombatStatusEffect, FerocityTrait, ReachTier, RelicDef, Side, Skill, Stats, TeamBuff } from "./types";
 import { ULTIMATE_ENERGY_MAX } from "./ultimate";
 import { deriveSummonStats } from "./summonStats";
 import { PUP } from "./pup";
@@ -296,6 +296,12 @@ export interface Fighter extends Combatant {
   shieldHpBasis?: number;
   /** 기본 공격 실제 적중으로 쌓인 전투 한정 공격 속도다. 저장 모델에는 존재하지 않는다. */
   bonusAttackSpeed: number;
+  /** 「리필」 계약(테쿠) — 지금 탄창의 **모든 발**이 마지막 탄의 효과(확정 치명타·흡혈)를 갖는다. 탄창이 바뀌면 꺼진다. */
+  refillFinisherAll: boolean;
+  /** 「리필」 계약 — 추가 공격 속도가 공격력으로 바뀐 배율(1 이상). 프레임마다 다시 잰다. */
+  refillAttackRatio: number;
+  /** 연발 궁극기 한 번이 지금까지 두른 막의 합. 시전할 때마다 0에서 다시 센다. */
+  barrageShieldGranted: number;
   /**
    * `farthestFocus`가 적중마다 쌓는 전투 한정 집중 겹이다. 저장 모델에는 존재하지 않는다.
    *
@@ -1189,6 +1195,9 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     bonusAp: 0,
     immortal: false,
     bonusAttackSpeed: 0,
+    refillFinisherAll: false,
+    refillAttackRatio: 1,
+    barrageShieldGranted: 0,
     focus: 0,
     volley: null,
     shallowPools: [],
@@ -3019,8 +3028,27 @@ function currentBasic(attacker: Fighter): BasicAttack {
     name: step.name,
     power: step.power,
     statusEffects: step.statusEffects,
-    damageHealingPercent: step.damageHealingPercent,
+    // 「야근, 싫어」 — 이 탄창의 모든 발이 마지막 탄의 흡혈을 갖는다.
+    damageHealingPercent: step.damageHealingPercent ?? (attacker.refillFinisherAll ? cycle[cycle.length - 1].damageHealingPercent : undefined),
   } as BasicAttack;
+}
+
+/** 이번 평타가 확정 치명타 걸음인지. 마지막 탄이거나, 폭주로 채운 탄창의 모든 발이다. */
+function basicStepIsGuaranteedCritical(attacker: Fighter): boolean {
+  if (attacker.refillFinisherAll) return true;
+  return currentBasicStep(attacker)?.guaranteedCritical === true;
+}
+
+/**
+ * 「리필」 — 평타 한 행동이 끝난 자리에서 탄창을 센다. 탄창을 다 쓰면 쉬는 시간(재장전)이
+ * 다음 공격 대기로 들어가고, 폭주로 채운 탄창은 비는 순간 평범한 탄창으로 돌아온다.
+ * 돌려주는 값이 있으면 그것이 이번 공격 대기(초)다.
+ */
+function reloadAfterBasic(attacker: Fighter): number | undefined {
+  const refill = attacker.def.passive.kind === "refillMagazine" ? attacker.def.passive.refill : undefined;
+  if (!refill || attacker.basicCycleStep !== 0) return undefined;
+  attacker.refillFinisherAll = false;
+  return refill.reloadSeconds;
 }
 
 /**
@@ -4675,8 +4703,8 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
   return buffs;
 }
 
-/** 공격 속도가 정하는 공격 간격(초). 100이 기준이다. */
-export function currentAttackSpeed(fighter: Fighter, state?: SkirmishState): number {
+/** 공격 속도를 이루는 세 몫. 합치는 규칙은 `currentAttackSpeed`와 「리필」 계약이 각자 갖는다. */
+function attackSpeedParts(fighter: Fighter, state?: SkirmishState): { base: number; boost: number; slow: number } {
   // 전투의 환희 누적과 영구 패시브만 포함한다. 폭주처럼 시간이 정해진 임시 배율은 궁극기 계수에서 제외한다.
   const passiveSpeedPoints = fighter.def.passive.kind === "battleMaidMastery"
     ? fighter.def.passive.attackSpeedPercent ?? 0 : 0;
@@ -4716,12 +4744,32 @@ export function currentAttackSpeed(fighter: Fighter, state?: SkirmishState): num
   // 유티의 상시 공속과 처치 가속은 시간·조건이 정해진 자기 배율이라 룬 가속과 같은 자리에서 곱한다.
   const featherPercent = fighter.def.passive.kind === "featherVeil" ? fighter.def.passive.attackSpeedPercent ?? 0 : 0;
   const killHastePercent = fighter.killHaste?.attackSpeedPercent ?? 0;
-  return (fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed)
-    * (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + featherPercent / 100) * (1 + killHastePercent / 100) * (1 - frostbiteSlowPercent(fighter) / 100)
+  const slowFactor = (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressurePercent / 100) * (1 - groggyPercent / 100);
+  const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + featherPercent / 100) * (1 + killHastePercent / 100)
     * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + frenzyPercent / 100)
     * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100)
-    * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100)
-    * (1 - chillPercent / 100) * (1 - pressurePercent / 100) * (1 - groggyPercent / 100);
+    * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100);
+  return { base: fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed, boost: boostFactor, slow: slowFactor };
+}
+
+/** 공격 속도가 정하는 공격 간격(초). 100이 기준이다. */
+export function currentAttackSpeed(fighter: Fighter, state?: SkirmishState): number {
+  const parts = attackSpeedParts(fighter, state);
+  const refill = fighter.def.passive.kind === "refillMagazine" ? fighter.def.passive.refill : undefined;
+  // 「리필」 — 공속은 고정이다. 추가로 받은 몫은 속도가 아니라 공격력으로 가고, 감속만 그대로 받는다.
+  if (refill) return refill.fixedAttackSpeed * parts.slow;
+  return parts.base * parts.boost * parts.slow;
+}
+
+/**
+ * 「리필」 계약이 공속을 공격력으로 바꾸는 배율(1 이상). 추가 공속 +1%가 공격력 +1%다.
+ * 감속은 넣지 않는다 — 느려진 것은 속도로만 받고 공격력은 깎이지 않는다.
+ */
+export function refillAttackRatio(fighter: Fighter, state?: SkirmishState): number {
+  const refill = fighter.def.passive.kind === "refillMagazine" ? fighter.def.passive.refill : undefined;
+  if (!refill) return 1;
+  const parts = attackSpeedParts(fighter, state);
+  return Math.max(1, parts.base * parts.boost / Math.max(1, refill.fixedAttackSpeed));
 }
 
 /** 폭주 돌파(`swiftHands`)가 올리는 공격 속도(%). 열려 있지 않으면 0이다. */
@@ -5534,6 +5582,11 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, even
     if (trait.effectId === "adamantBody") fighter.hastenedAttacksLeft = trait.hastenedAttacks;
     if (trait.effectId === "battleHeat") tauntOnBattleHeat(fighter, trait, state, events);
     if (trait.effectId === "caffeineBubble") tauntOnBattleHeat(fighter, trait, state, events);
+    // 야근, 싫어 — 쉬지 않고 즉시 리필하고, 이때 채운 탄창은 모든 발이 마지막 탄의 효과를 갖는다.
+    if (trait.effectId === "overtimeRefusal") {
+      refillNow(fighter, state);
+      fighter.refillFinisherAll = true;
+    }
     // 똬리 속으로: 들어서는 순간 반경 안의 적을 몸 앞으로 끌어온다. 끌려온 자리가 곧 궁극기의 범위다.
     if (trait.effectId === "selfAttackSpeedMultiplier" && trait.pullOnEntry) {
       const pulled = pullEnemiesToward(fighter, trait.pullOnEntry, state);
@@ -5828,11 +5881,13 @@ function offensiveDefinition(attacker: Fighter): RelicDef {
   // 집중은 겹당 `value`%씩 공격력을 올린다. 스피나의 공속 누적과 같은 자리이고, 정적 정의를
   // 바꾸지 않고 계산 시점에만 곱한다.
   const focused = passive.kind === "farthestFocus" ? 1 + attacker.focus * passive.value / 100 : 1;
+  // 「리필」 — 공속을 고정하는 대신 추가로 받은 공속이 같은 퍼센트의 공격력이 된다.
+  const converted = passive.kind === "refillMagazine" ? attacker.refillAttackRatio : 1;
   // 치명타 확률과 마찬가지로 개체 이름이 아니라 적힌 값으로 판별한다.
-  if (passive.attackPowerPercent === undefined && passive.criticalDamagePercent === undefined && conditional === 1 && vandalised === 1 && focused === 1) return attacker.def;
+  if (passive.attackPowerPercent === undefined && passive.criticalDamagePercent === undefined && conditional === 1 && vandalised === 1 && focused === 1 && converted === 1) return attacker.def;
   return { ...attacker.def, stats: {
     ...attacker.def.stats,
-    atk: attacker.def.stats.atk * (1 + (passive.attackPowerPercent ?? 0) / 100) * conditional * vandalised * focused,
+    atk: attacker.def.stats.atk * (1 + (passive.attackPowerPercent ?? 0) / 100) * conditional * vandalised * focused * converted,
     ap: attacker.def.stats.ap * vandalised,
     critDamage: attacker.def.stats.critDamage + (passive.criticalDamagePercent ?? 0),
   } };
@@ -6851,7 +6906,7 @@ function strike(
    * 공격·회복·성장이 한꺼번에 1.4배가 되어 버티는 개체가 된다. 물가가 보태는 것은 이빨이지
    * 숨이 아니다.
    */
-  comboHit?: { grantActionResources: boolean; waterGranted?: boolean },
+  comboHit?: { grantActionResources: boolean; waterGranted?: boolean; barrageShot?: number },
   /** 지정 원형 궁극기의 사용자 선택 중심점이다. */
   targetPoint?: { x: number; y: number },
 ): void {
@@ -6873,6 +6928,10 @@ function strike(
       // 확률로 터진 연격은 예전 그대로이고, **물이 메워 준 몫만** 피해만 주는 한 대다.
       strike(attacker, target, rng, state, events, false, { grantActionResources: hit === 0 });
     }
+    return;
+  }
+  if (useUltimate && skill.barrage && comboHit === undefined) {
+    fireBarrage(attacker, skill.barrage, rng, state, events);
     return;
   }
   const basicAim = useUltimate ? undefined : skill.targeting;
@@ -6917,8 +6976,11 @@ function strike(
   const clawStorm = attackingInFever ? openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity) : undefined;
   const periodEvery = periodicCritical === undefined ? 0
     : clawStorm?.kind === "frenzyClaws" ? Math.min(periodicCritical.every, clawStorm.every) : periodicCritical.every;
-  const forcedCritical = periodicCritical !== undefined && attacker.basicAttackCount >= periodEvery;
-  if (forcedCritical) attacker.basicAttackCount = 0;
+  const barrageCritical = useUltimate && skill.barrage !== undefined && comboHit?.barrageShot !== undefined
+    && comboHit.barrageShot >= skill.barrage.criticalFromShot;
+  const forcedCritical = (periodicCritical !== undefined && attacker.basicAttackCount >= periodEvery)
+    || (!useUltimate && basicStepIsGuaranteedCritical(attacker)) || barrageCritical;
+  if (periodicCritical !== undefined && attacker.basicAttackCount >= periodEvery) attacker.basicAttackCount = 0;
   // 목덜미 — 표적이 문턱 아래면 이번 한 방이 확정 치명타에 큰 추가 피해가 된다. 판정은 **맞기 전의** 체력이다.
   const nape = napeBonus(attacker, target, skill, state, events);
   // 궁극기가 걸어 둔 강화는 실제로 나가는 일반 공격 한 번을 쓰고 사라진다. 이 타격이 곧 그
@@ -7080,6 +7142,13 @@ function strike(
     if (rush?.kind === "pupRush") spawnPups(state, attacker, rush.count, events);
   } else tickPupLitter(state, attacker, events);
   if (!useUltimate) grantShieldFromDamage(attacker, dealt, events, state);
+  else if (skill.barrage !== undefined && comboHit?.barrageShot !== undefined && comboHit.barrageShot >= skill.barrage.criticalFromShot && dealt > 0 && isFighterAlive(attacker)) {
+    // 마지막 두 발은 치명타 피해로 꽂히고, 그 피해에 비례한 막이 시전자에게 두른다. 합계는 한도에서 멈춘다.
+    const cap = attacker.maxHp * skill.barrage.shieldMaxHpPercent / 100;
+    const room = Math.max(0, cap - attacker.barrageShieldGranted);
+    const gained = Math.min(room, dealt * skill.barrage.shieldFromCriticalPercent / 100);
+    if (gained > 0) { attacker.barrageShieldGranted += gained; grantShield(state, attacker, attacker.id, Math.max(1, Math.round(gained)), events); }
+  }
   if (!useUltimate) {
     const graffiti = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
     if (graffiti?.kind === "speedGraffiti") attacker.traitHaste = { remaining: graffiti.seconds, attackSpeedPercent: attacker.traitHaste?.attackSpeedPercent ?? 0, moveSpeedPercent: graffiti.moveSpeedPercent };
@@ -7361,6 +7430,41 @@ export function replayLoggedBossAction(state: SkirmishState, relicId: string, ki
   // 명시적 보스 ID만 대조해 향후 광역 부속물 피해가 폰토스 점수에 섞이지 않게 한다.
   if (state.boss) state.boss.score += events.reduce((sum, event) => sum + (event.kind === "attack" && event.attackerId === attacker.id && event.targetId === target.id ? event.contributionAmount : 0), 0);
   return events;
+}
+
+/**
+ * 연발 궁극기(`AttackSkill.barrage`). 가까운 적부터 한 발씩 차례로 꽂고, 적이 모자라면 처음으로 돌아간다.
+ *
+ * 한 발이 곧 하나의 `strike`라 피해·치명타·상태 처리는 모두 같은 길을 지나고, 시전 비용과 게이지
+ * 충전 같은 행동 단위 자원은 첫 발에서만 처리된다. 쏜 뒤에는 평타 탄창이 곧바로 가득 찬다.
+ */
+function fireBarrage(
+  attacker: Fighter,
+  plan: NonNullable<AttackSkill["barrage"]>,
+  rng: () => number,
+  state: SkirmishState,
+  events: SkirmishEvent[],
+): void {
+  attacker.barrageShieldGranted = 0;
+  for (let shot = 1; shot <= plan.shots; shot += 1) {
+    const living = state.fighters
+      .filter((other) => other.side !== attacker.side && isFighterAlive(other) && other.stealthFor <= 0)
+      .sort((a, b) => distance(attacker, a) - distance(attacker, b));
+    // 숨은 적만 남았으면 마지막 한 명이라도 노린다 — 게이지가 찬 궁극기가 허공에 나가지 않게 한다.
+    const pool = living.length > 0 ? living : state.fighters.filter((other) => other.side !== attacker.side && isFighterAlive(other));
+    if (pool.length === 0) break;
+    strike(attacker, pool[(shot - 1) % pool.length], rng, state, events, true, { grantActionResources: shot === 1, barrageShot: shot });
+  }
+  refillNow(attacker);
+}
+
+/** 「리필」 — 탄창을 곧바로 가득 채운다. 쉬는 중이던 공격 대기도 평소 간격으로 줄어든다. */
+function refillNow(fighter: Fighter, state?: SkirmishState): void {
+  if (fighter.def.passive.kind !== "refillMagazine") return;
+  fighter.basicCycleStep = 0;
+  fighter.refillFinisherAll = false;
+  const ready = attackInterval(fighter, state);
+  if (fighter.attackCooldown > ready) fighter.attackCooldown = ready;
 }
 
 /**
@@ -8646,7 +8750,8 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
         const scored = [...events].reverse().find((event): event is Extract<SkirmishEvent, { kind: "attack" }> => event.kind === "attack" && event.attackerId === fighter.id && event.targetId === target.id);
         state.boss.score += scored?.contributionAmount ?? 0;
       }
-      fighter.attackCooldown = attackInterval(fighter, state);
+      // 「리필」 — 탄창을 다 쓴 평타는 다음 공격까지 재장전만큼 쉰다.
+      fighter.attackCooldown = (!firedUltimate ? reloadAfterBasic(fighter) : undefined) ?? attackInterval(fighter, state);
     }
   }
 
@@ -8947,6 +9052,10 @@ export function stepSkirmish(state: SkirmishState, dt: number, rng: () => number
   while (remaining > 0 && state.phase === "fight") {
     const step = Math.min(remaining, SKIRMISH.maxStep);
     const before = events.length;
+    // 「리필」 — 추가 공속이 공격력으로 바뀐 배율은 프레임마다 다시 잰다(버프가 걸리고 풀리는 대로 따라간다).
+    for (const fighter of state.fighters) {
+      if (fighter.def.passive.kind === "refillMagazine") fighter.refillAttackRatio = refillAttackRatio(fighter, state);
+    }
     advance(state, step, rng, events);
     // 이 조각이 만든 타격에는 조각의 끝 시각을 못 박는다. 씬은 프레임이 끝난 뒤에 사건을 읽어
     // 자기 시계로는 언제 맞았는지 알 수 없다.

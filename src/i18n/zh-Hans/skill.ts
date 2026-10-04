@@ -402,4 +402,11 @@ export const SKILL_ZH_HANS = {
   "skill.breakthrough.effect.passive.shieldFist": "最后一步所用的[[shield|护盾]]剩余量比例始终增加{percent}%。",
   "skill.breakthrough.effect.passive.manyEyes": "召唤物存活期间，每有一名带有[[observation|观测]]的敌人，[[attack-speed|攻击速度]]提高{percent}%。",
   "skill.breakthrough.effect.passive.muralHide": "每有一名带有[[vandalism|破坏]]的敌人，[[def|防御力]]和[[res|抗性]]提高{percent}%。",
+  "skill.keyword.refill.term": "重装",
+  "skill.keyword.lastDrop.term": "最后一滴",
+  "skill.keyword.refill.description": "普通攻击使用{magazine}发弹匣，打空后装填{seconds}秒。攻击速度固定为{speed}，符文或友方增益带来的额外攻击速度会按相同比例转化为攻击力。减速效果依然生效。释放必杀技后弹匣立即补满。",
+  "skill.keyword.lastDrop.description": "弹匣的最后一发。必定暴击，并回复造成伤害{heal}%的生命。",
+  "skill.passive.refillMagazine": "[[basic-attack|普通攻击]]使用{magazine}发弹匣，打空后装填{seconds}秒。[[teku-refill|重装]]使攻击速度固定，额外攻击速度会按相同比例转为[[atk|攻击力]]。",
+  "skill.ferocity.overtimeRefusal": "进入暴走的瞬间立即[[teku-refill|重装]]，该弹匣内的所有[[basic-attack|普通攻击]]都按[[teku-last-drop|最后一滴]]打出。",
+  "skill.sentence.barrage": "依次对最近的敌人各射出{shots}发子弹，每发造成{damage}。从第{from}发起必定暴击，并获得相当于所造成伤害{shield}%的[[shield|护盾]](最多为最大生命的{cap}%)。发射后触发[[teku-refill|重装]]。",
 } as const;

@@ -450,4 +450,11 @@ export const SKILL_KO = {
   "skill.breakthrough.effect.passive.shieldFist": "마지막 걸음이 쓰는 [[shield|보호막]] 잔량 비율이 항상 {percent}% 늘어난다.",
   "skill.breakthrough.effect.passive.manyEyes": "소환수가 살아 있는 동안 [[observation|관측]]이 걸린 적 한 명마다 [[attack-speed|공격 속도]]가 {percent}% 오른다.",
   "skill.breakthrough.effect.passive.muralHide": "[[vandalism|밴덜리즘]]이 걸린 적 한 명마다 [[def|방어력]]과 [[res|저항력]]이 {percent}% 오른다.",
+  "skill.keyword.refill.term": "리필",
+  "skill.keyword.lastDrop.term": "마지막 한 방울",
+  "skill.keyword.refill.description": "기본 공격이 {magazine}발짜리 탄창으로 나가고, 비면 {seconds}초 동안 장전한다. 공격 속도는 {speed}로 고정되며, 룬·아군 강화로 더해지는 공격 속도는 같은 비율의 공격력으로 바뀐다. 속도를 늦추는 효과는 그대로 받는다. 궁극기를 쏘면 탄창이 곧바로 가득 찬다.",
+  "skill.keyword.lastDrop.description": "탄창의 마지막 발이다. 반드시 치명타이며 준 피해의 {heal}%만큼 회복한다.",
+  "skill.passive.refillMagazine": "[[basic-attack|기본 공격]]이 {magazine}발짜리 탄창으로 나가고 비면 {seconds}초 동안 장전한다. [[teku-refill|리필]]로 공격 속도는 고정되고, 더해지는 공격 속도는 같은 비율의 [[atk|공격력]]이 된다.",
+  "skill.ferocity.overtimeRefusal": "폭주에 들어가는 순간 [[teku-refill|리필]]되고, 그 탄창의 모든 [[basic-attack|기본 공격]]이 [[teku-last-drop|마지막 한 방울]]로 나간다.",
+  "skill.sentence.barrage": "전장의 모든 적에게 가까운 순서대로 {damage}를 {shots}번 준다. {from}발째부터는 반드시 치명타이며 준 피해의 {shield}%만큼 [[shield|보호막]]을 얻는다(최대 체력의 {cap}%까지). 쏜 뒤 [[teku-refill|리필]]된다.",
 } as const;

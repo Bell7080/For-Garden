@@ -425,4 +425,11 @@ export const SKILL_JA = {
   "skill.breakthrough.effect.passive.shieldFist": "最後の一歩が使う[[shield|シールド]]残量の割合が常に{percent}%増える。",
   "skill.breakthrough.effect.passive.manyEyes": "召喚獣が生きている間、[[observation|観測]]がかかった敵1体ごとに[[attack-speed|攻撃速度]]が{percent}%上がる。",
   "skill.breakthrough.effect.passive.muralHide": "[[vandalism|ヴァンダリズム]]がかかった敵1体ごとに[[def|防御力]]と[[res|抵抗力]]が{percent}%上がる。",
+  "skill.keyword.refill.term": "リロード",
+  "skill.keyword.lastDrop.term": "最後の一滴",
+  "skill.keyword.refill.description": "通常攻撃は{magazine}発の弾倉で行われ、空になると{seconds}秒かけてリロードする。攻撃速度は{speed}に固定され、ルーンや味方の強化で加わる攻撃速度は同じ割合の攻撃力に変換される。速度を落とす効果は受ける。必殺技を撃つと弾倉が即座に満タンになる。",
+  "skill.keyword.lastDrop.description": "弾倉の最後の一発。必ずクリティカルになり、与えたダメージの{heal}%を回復する。",
+  "skill.passive.refillMagazine": "[[basic-attack|通常攻撃]]は{magazine}発の弾倉で行われ、空になると{seconds}秒リロードする。[[teku-refill|リロード]]により攻撃速度は固定され、加わる攻撃速度は同じ割合の[[atk|攻撃力]]になる。",
+  "skill.ferocity.overtimeRefusal": "暴走に入った瞬間[[teku-refill|リロード]]され、その弾倉のすべての[[basic-attack|通常攻撃]]が[[teku-last-drop|最後の一滴]]になる。",
+  "skill.sentence.barrage": "近い敵から順に{damage}を{shots}発撃つ。{from}発目からは必ずクリティカルになり、与えたダメージの{shield}%の[[shield|シールド]]を得る(最大HPの{cap}%まで)。撃った後[[teku-refill|リロード]]される。",
 } as const;

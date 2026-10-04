@@ -402,4 +402,11 @@ export const SKILL_VI = {
   "skill.breakthrough.effect.passive.shieldFist": "Tỉ lệ [[shield|khiên]] còn lại mà bước cuối sử dụng luôn tăng thêm {percent}%.",
   "skill.breakthrough.effect.passive.manyEyes": "Khi thú triệu hồi còn sống, mỗi kẻ địch dính [[observation|Quan trắc]] làm [[attack-speed|Tốc đánh]] tăng {percent}%.",
   "skill.breakthrough.effect.passive.muralHide": "Mỗi kẻ địch dính [[vandalism|Phá hoại]] làm [[def|Thủ]] và [[res|Kháng]] tăng {percent}%.",
+  "skill.keyword.refill.term": "Nạp đạn",
+  "skill.keyword.lastDrop.term": "Giọt Cuối Cùng",
+  "skill.keyword.refill.description": "Đòn đánh thường bắn từ băng đạn {magazine} viên và nạp lại trong {seconds} giây khi hết. Tốc độ đánh cố định ở {speed}; tốc độ đánh cộng thêm từ rune hoặc buff đồng minh được chuyển thành sức công theo cùng tỉ lệ. Hiệu ứng làm chậm vẫn có tác dụng. Dùng tuyệt kỹ sẽ nạp đầy băng đạn ngay.",
+  "skill.keyword.lastDrop.description": "Viên cuối cùng của băng đạn. Luôn chí mạng và hồi {heal}% sát thương gây ra.",
+  "skill.passive.refillMagazine": "[[basic-attack|Đòn đánh thường]] bắn từ băng đạn {magazine} viên, hết thì nạp lại {seconds} giây. [[teku-refill|Nạp đạn]] cố định tốc độ đánh, tốc độ đánh cộng thêm trở thành [[atk|sức công]] theo cùng tỉ lệ.",
+  "skill.ferocity.overtimeRefusal": "Ngay khi vào cuồng bạo, [[teku-refill|Nạp đạn]] được kích hoạt và mọi [[basic-attack|đòn đánh thường]] của băng đạn đó đều bắn như [[teku-last-drop|Giọt Cuối Cùng]].",
+  "skill.sentence.barrage": "Bắn {shots} phát lần lượt vào kẻ địch gần nhất, mỗi phát gây {damage}. Từ phát thứ {from} luôn chí mạng và nhận [[shield|khiên]] bằng {shield}% sát thương gây ra (tối đa {cap}% máu tối đa). Sau đó [[teku-refill|Nạp đạn]] được kích hoạt.",
 } as const;

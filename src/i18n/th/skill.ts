@@ -402,4 +402,11 @@ export const SKILL_TH = {
   "skill.breakthrough.effect.passive.shieldFist": "สัดส่วน[[shield|โล่]]ที่ก้าวสุดท้ายใช้จะเพิ่มขึ้น {percent}% เสมอ",
   "skill.breakthrough.effect.passive.manyEyes": "ขณะที่อสูรอัญเชิญยังอยู่ ศัตรูแต่ละตัวที่ติด[[observation|การจับตา]]จะเพิ่ม[[attack-speed|ความเร็วโจมตี]] {percent}%",
   "skill.breakthrough.effect.passive.muralHide": "ศัตรูแต่ละตัวที่ติด[[vandalism|ทำลายข้าวของ]]จะเพิ่ม[[def|พลังป้องกัน]]และ[[res|ต้านทาน]] {percent}%",
+  "skill.keyword.refill.term": "เติมกระสุน",
+  "skill.keyword.lastDrop.term": "หยดสุดท้าย",
+  "skill.keyword.refill.description": "การโจมตีปกติใช้แม็กกาซีน {magazine} นัด และเมื่อหมดจะบรรจุใหม่ {seconds} วินาที ความเร็วโจมตีคงที่ที่ {speed} ความเร็วโจมตีที่เพิ่มจากรูนหรือบัฟพันธมิตรจะแปลงเป็นพลังโจมตีในอัตราส่วนเดียวกัน ผลชะลอยังมีผลอยู่ เมื่อใช้ท่าไม้ตายแม็กกาซีนจะเต็มทันที",
+  "skill.keyword.lastDrop.description": "นัดสุดท้ายของแม็กกาซีน ติดคริติคอลเสมอ และฟื้นฟู {heal}% ของความเสียหายที่ทำได้",
+  "skill.passive.refillMagazine": "[[basic-attack|การโจมตีปกติ]]ใช้แม็กกาซีน {magazine} นัด หมดแล้วบรรจุใหม่ {seconds} วินาที [[teku-refill|เติมกระสุน]]ทำให้ความเร็วโจมตีคงที่ และความเร็วโจมตีที่เพิ่มจะกลายเป็น[[atk|พลังโจมตี]]ในอัตราเดียวกัน",
+  "skill.ferocity.overtimeRefusal": "ในวินาทีที่เข้าสู่โหมดคลั่ง จะ[[teku-refill|เติมกระสุน]]ทันที และ[[basic-attack|การโจมตีปกติ]]ทุกนัดของแม็กกาซีนนั้นจะเป็น[[teku-last-drop|หยดสุดท้าย]]",
+  "skill.sentence.barrage": "ยิง {shots} นัดใส่ศัตรูที่ใกล้ที่สุดตามลำดับ นัดละ {damage} ตั้งแต่นัดที่ {from} เป็นต้นไปจะคริติคอลเสมอ และได้[[shield|โล่]]เท่ากับ {shield}% ของความเสียหายที่ทำได้ (สูงสุด {cap}% ของพลังชีวิตสูงสุด) หลังยิงจะ[[teku-refill|เติมกระสุน]]",
 } as const;

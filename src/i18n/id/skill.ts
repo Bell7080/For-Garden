@@ -402,4 +402,11 @@ export const SKILL_ID = {
   "skill.breakthrough.effect.passive.shieldFist": "Rasio sisa [[shield|perisai]] yang dipakai langkah terakhir selalu bertambah {percent}%.",
   "skill.breakthrough.effect.passive.manyEyes": "Selama pemanggil hidup, setiap musuh yang terkena [[observation|Pengintaian]] menaikkan [[attack-speed|Kecepatan Serang]] sebesar {percent}%.",
   "skill.breakthrough.effect.passive.muralHide": "Setiap musuh yang terkena [[vandalism|Vandalisme]] menaikkan [[def|Pertahanan]] dan [[res|Resistensi]] sebesar {percent}%.",
+  "skill.keyword.refill.term": "Isi Ulang",
+  "skill.keyword.lastDrop.term": "Tetes Terakhir",
+  "skill.keyword.refill.description": "Serangan dasar menembak dari magasin {magazine} peluru dan mengisi ulang selama {seconds} detik saat habis. Kecepatan serang dikunci di {speed}; kecepatan serang tambahan dari rune atau buff sekutu diubah menjadi serangan dengan persentase yang sama. Efek perlambatan tetap berlaku. Menembakkan ultimate langsung mengisi penuh magasin.",
+  "skill.keyword.lastDrop.description": "Peluru terakhir di magasin. Selalu kritis dan memulihkan {heal}% dari damage yang diberikan.",
+  "skill.passive.refillMagazine": "[[basic-attack|Serangan dasar]] menembak dari magasin {magazine} peluru dan diisi ulang {seconds} detik saat kosong. [[teku-refill|Isi Ulang]] mengunci kecepatan serang, dan kecepatan serang tambahan menjadi [[atk|serangan]] dengan persentase sama.",
+  "skill.ferocity.overtimeRefusal": "Saat memasuki mengamuk, [[teku-refill|Isi Ulang]] langsung aktif dan setiap [[basic-attack|serangan dasar]] dari magasin itu menembak sebagai [[teku-last-drop|Tetes Terakhir]].",
+  "skill.sentence.barrage": "Menembak {shots} peluru bergiliran ke musuh terdekat, masing-masing memberi {damage}. Mulai peluru ke-{from}, selalu kritis dan memberi [[shield|perisai]] sebesar {shield}% dari damage (maksimal {cap}% HP maks). Setelah itu [[teku-refill|Isi Ulang]] aktif.",
 } as const;

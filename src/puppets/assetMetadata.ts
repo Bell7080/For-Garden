@@ -823,6 +823,27 @@ export const YUTI_SD_METADATA: Omit<PuppetAsset, "url"> = {
   joints: { center: [630, 616], head: [616, 474], eyes: null, feet: [[739, 1217], [529, 1193]] },
 };
 
+/**
+ * 테쿠 전신(char_029): 중심1·머리1·눈1·눈2·발1·발2를 프로젝트에서 읽었다. alpha > 16 경계는 (146,5)–(938,1443)이다.
+ * 발 관절은 그림 밖에 있어 바닥선은 관절이 아니라 alpha 경계로 잡는다.
+ */
+export const TEKU_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086,
+  imageHeight: 1448,
+  content: { left: 146, top: 5, right: 938, bottom: 1443 },
+  joints: { center: [477, 361], head: [451, 269], eyes: [[424, 261], [492, 229]], feet: [[296, 1548], [317, 1573]] },
+  /** 로비 세로 비율: 메론 기준. 1.50 m — 눈(245)에서 alpha 아래 경계까지를 그 키로 맞춘다. */
+  lobbyZoom: 0.944,
+};
+
+/** 테쿠 SD: 중심1·머리1·발1·발2를 프로젝트에서 읽었으며 눈 관절은 없다. alpha > 16 경계는 (182,19)–(1072,1235)이다. */
+export const TEKU_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254,
+  imageHeight: 1254,
+  content: { left: 182, top: 19, right: 1072, bottom: 1235 },
+  joints: { center: [575, 588], head: [521, 463], eyes: null, feet: [[630, 1219], [399, 1192]] },
+};
+
 /** 아크 SD: 중심1·머리1을 프로젝트에서 읽었으며 눈 관절은 없다. alpha 경계는 (113,31)–(1128,1224)이다. */
 export const ARK_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageWidth: 1254,

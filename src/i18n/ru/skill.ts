@@ -402,4 +402,11 @@ export const SKILL_RU = {
   "skill.breakthrough.effect.passive.shieldFist": "Доля [[shield|щит]]а, используемая последним шагом, всегда увеличена на {percent}%.",
   "skill.breakthrough.effect.passive.manyEyes": "Пока призванный жив, каждый враг под [[observation|Засечкой]] повышает [[attack-speed|скорость атаки]] на {percent}%.",
   "skill.breakthrough.effect.passive.muralHide": "За каждого врага с [[vandalism|вандализмом]] [[def|защита]] и [[res|сопротивление]] растут на {percent}%.",
+  "skill.keyword.refill.term": "Перезарядка",
+  "skill.keyword.lastDrop.term": "Последняя капля",
+  "skill.keyword.refill.description": "Обычные атаки идут из магазина на {magazine} выстрела и перезаряжаются {seconds} с, когда он пуст. Скорость атаки зафиксирована на {speed}; дополнительная скорость атаки от рун и усилений союзников переходит в силу атаки в том же процентном соотношении. Замедления по-прежнему действуют. Применение ульты мгновенно наполняет магазин.",
+  "skill.keyword.lastDrop.description": "Последний выстрел магазина. Всегда критический и лечит {heal}% нанесённого урона.",
+  "skill.passive.refillMagazine": "[[basic-attack|Обычные атаки]] идут из магазина на {magazine} выстрела, при пустом — перезарядка {seconds} с. [[teku-refill|Перезарядка]] фиксирует скорость атаки, а добавочная скорость переходит в [[atk|силу атаки]] в том же процентном соотношении.",
+  "skill.ferocity.overtimeRefusal": "При входе в неистовство срабатывает [[teku-refill|Перезарядка]], и каждая [[basic-attack|обычная атака]] из этого магазина идёт как [[teku-last-drop|Последняя капля]].",
+  "skill.sentence.barrage": "По очереди выпускает {shots} выстрела по ближайшим врагам, каждый наносит {damage}. Начиная с выстрела {from} они всегда критические и дают [[shield|щит]] в размере {shield}% нанесённого урона (до {cap}% макс. здоровья). Затем срабатывает [[teku-refill|Перезарядка]].",
 } as const;

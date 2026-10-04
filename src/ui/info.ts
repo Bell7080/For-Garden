@@ -71,7 +71,7 @@ import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, typ
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
-import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, elationKeyword, prickleKeyword, passiveShieldKeyword, periodicStackKeyword, plumeKeyword, skillDescription } from "./skillPresentation";
+import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, elationKeyword, lastDropKeyword, prickleKeyword, refillKeyword, passiveShieldKeyword, periodicStackKeyword, plumeKeyword, skillDescription } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
 import { deriveSummonStats } from "../core/summonStats";
 import { SummonInfoPopup } from "./SummonInfoPopup";
@@ -2711,6 +2711,10 @@ export function openFerocityTraitPopup(
     const elation = elationKeyword(def.passive);
     if (elation) contextualKeywords.push(elation);
   }
+  // 야근, 싫어는 리필과 마지막 한 방울을 가리키므로 그 태그를 이 쪽지에서도 눌러 읽게 한다.
+  if (def.ferocityTrait.effectId === "overtimeRefusal") {
+    for (const tag of [refillKeyword(def), lastDropKeyword(def)]) if (tag) contextualKeywords.push(tag);
+  }
   // 카페인 풍선껌은 까칠이 쌓이는 속도를 바꾸므로 그 태그를 이 쪽지에서도 눌러 읽게 한다.
   if (def.ferocityTrait.effectId === "caffeineBubble") {
     const prickle = prickleKeyword(def.passive);
@@ -2836,6 +2840,9 @@ export function buildSkillViewModel(options: {
       "kind" in skill ? undefined : periodicStackKeyword(skill as Skill),
       // 서리깃은 유티의 평타·궁극기 본문이 가리키는 개체 전용 규칙어라 그 쪽지에서 눌러 읽게 한다.
       plumeKeyword(finalDef),
+      // 리필·마지막 한 방울은 테쿠의 패시브·평타·궁극기 본문이 가리키는 개체 전용 규칙어다.
+      refillKeyword(finalDef),
+      lastDropKeyword(finalDef),
       // 희열은 패시브 본문이 직접 가리키는 태그라 그 쪽지에도 함께 실린다. 궁극기(끝까지 채운다)와
       // 기본 공격(겹마다 피해가 오른다)도 같은 태그를 가리키므로 그 쪽지에도 실린다.
       "kind" in skill

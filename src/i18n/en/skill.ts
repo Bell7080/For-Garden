@@ -403,4 +403,11 @@ export const SKILL_EN = {
   "skill.breakthrough.effect.passive.shieldFist": "The share of the [[shield|shield]] used by the final step is always increased by {percent}%.",
   "skill.breakthrough.effect.passive.manyEyes": "While the summon is alive, [[attack-speed|Attack Speed]] rises {percent}% for every enemy under [[observation|Spotting]].",
   "skill.breakthrough.effect.passive.muralHide": "For every enemy afflicted with [[vandalism|Vandalism]], [[def|Defense]] and [[res|Resistance]] rise {percent}%.",
+  "skill.keyword.refill.term": "Refill",
+  "skill.keyword.lastDrop.term": "Last Drop",
+  "skill.keyword.refill.description": "Basic attacks fire from a {magazine}-round magazine and reload for {seconds}s when it runs dry. Attack speed is fixed at {speed}; bonus attack speed from runes or ally buffs is converted into the same percentage of attack power. Slows still apply. Firing the ultimate refills the magazine at once.",
+  "skill.keyword.lastDrop.description": "The last round in the magazine. Always a critical hit, and heals for {heal}% of the damage dealt.",
+  "skill.passive.refillMagazine": "[[basic-attack|Basic attacks]] fire from a {magazine}-round magazine and reload for {seconds}s when empty. [[teku-refill|Refill]] fixes attack speed, and bonus attack speed becomes the same percentage of [[atk|attack power]].",
+  "skill.ferocity.overtimeRefusal": "On entering Frenzy, [[teku-refill|Refill]] triggers, and every [[basic-attack|basic attack]] from that magazine fires as the [[teku-last-drop|Last Drop]].",
+  "skill.sentence.barrage": "Fires {shots} shots at the nearest enemies in turn, each dealing {damage}. From shot {from} on, shots always crit and grant a [[shield|shield]] equal to {shield}% of the damage dealt (up to {cap}% of max HP). [[teku-refill|Refill]] triggers afterward.",
 } as const;

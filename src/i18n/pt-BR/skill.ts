@@ -402,4 +402,11 @@ export const SKILL_PT_BR = {
   "skill.breakthrough.effect.passive.shieldFist": "A proporção do [[shield|escudo]] usada pelo último passo sempre aumenta {percent}%.",
   "skill.breakthrough.effect.passive.manyEyes": "Enquanto a invocação estiver viva, cada inimigo sob [[observation|Avistamento]] aumenta a [[attack-speed|velocidade de ataque]] em {percent}%.",
   "skill.breakthrough.effect.passive.muralHide": "Para cada inimigo afetado por [[vandalism|Vandalismo]], a [[def|defesa]] e a [[res|resistência]] aumentam {percent}%.",
+  "skill.keyword.refill.term": "Recarga",
+  "skill.keyword.lastDrop.term": "Última Gota",
+  "skill.keyword.refill.description": "Os ataques básicos saem de um carregador de {magazine} balas e recarregam por {seconds}s ao esvaziar. A velocidade de ataque é fixa em {speed}; a velocidade de ataque extra de runas ou buffs aliados vira o mesmo percentual de ataque. Lentidões continuam valendo. Usar a suprema enche o carregador na hora.",
+  "skill.keyword.lastDrop.description": "A última bala do carregador. Sempre crítica e cura {heal}% do dano causado.",
+  "skill.passive.refillMagazine": "Os [[basic-attack|ataques básicos]] saem de um carregador de {magazine} balas e recarregam por {seconds}s ao esvaziar. [[teku-refill|Recarga]] fixa a velocidade de ataque e a extra vira o mesmo percentual de [[atk|ataque]].",
+  "skill.ferocity.overtimeRefusal": "Ao entrar em frenesi, [[teku-refill|Recarga]] é ativada e todos os [[basic-attack|ataques básicos]] desse carregador saem como a [[teku-last-drop|Última Gota]].",
+  "skill.sentence.barrage": "Dispara {shots} balas em sequência nos inimigos mais próximos, cada uma causando {damage}. A partir da bala {from}, são sempre críticas e dão um [[shield|escudo]] de {shield}% do dano causado (até {cap}% da vida máxima). Depois [[teku-refill|Recarga]] é ativada.",
 } as const;

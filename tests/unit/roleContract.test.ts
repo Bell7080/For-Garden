@@ -56,8 +56,12 @@ function skillSustains(skill: Skill): boolean {
     || any.selfLullaby !== undefined
     || any.selfRoar !== undefined
     || any.selfShieldMaxHpPercent !== undefined
+    || any.barrage !== undefined
     || (Array.isArray(any.steps) && any.steps.some((step: Record<string, unknown>) =>
-      step.shieldFromDamagePercent !== undefined || step.shieldMaxHpPercent !== undefined));
+      step.shieldFromDamagePercent !== undefined || step.shieldMaxHpPercent !== undefined))
+    // 순환 기본 공격의 한 걸음이 흡혈·보호막을 갖는 것도 실제로 돌아오는 값이다(테쿠의 마지막 한 방울).
+    || (Array.isArray(any.cycle) && any.cycle.some((step: Record<string, unknown>) =>
+      step.damageHealingPercent !== undefined || step.shieldFromDamagePercent !== undefined));
 }
 
 function passiveSustains(passive: Passive): boolean {

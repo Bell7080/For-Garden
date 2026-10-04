@@ -43,7 +43,7 @@ export type RelicRarity = "R" | "SR" | "SSR";
  */
 export type RaitiaAssetId = "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind";
 
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti" | "teku";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
@@ -288,6 +288,13 @@ interface SkillBase {
 export type AttackSkill = SkillBase & {
   damageType: DamageType;
   power: number;
+  /**
+   * **연발 궁극기**(테쿠). 한 번의 시전이 `shots`발로 나뉘어 전장의 적에게 차례로 꽂힌다 — 가까운
+   * 적부터 한 발씩, 적이 모자라면 처음으로 돌아간다. `criticalFromShot`번째 발부터는 확정 치명타이고,
+   * 그 발이 실제로 깎은 HP의 `shieldFromCriticalPercent`%가 시전자의 보호막이 된다(합계는
+   * 최대 체력의 `shieldMaxHpPercent`% 까지). 쏜 뒤에는 평타 탄창이 곧바로 가득 찬다.
+   */
+  barrage?: { shots: number; criticalFromShot: number; shieldFromCriticalPercent: number; shieldMaxHpPercent: number };
   /**
    * 위력을 어느 능력치에서 뽑을지. 생략하면 피해 종류가 정한다(물리=공격력, 마법=주문력).
    *
@@ -596,6 +603,8 @@ export type BasicAttackStep = {
    */
   keywordId?: string;
   power: number;
+  /** 이 걸음의 한 발은 난수를 쓰지 않고 반드시 치명타다(테쿠의 마지막 탄). */
+  guaranteedCritical?: true;
   /**
    * 걸음마다 혼자만 광역일 수 있다. 생략하면 단일 대상이다.
    *
@@ -1318,7 +1327,12 @@ export type PassiveKind =
    * 적을 고르고(`Skill.targetSelection`), 서서 쏘지 않고 가까운 적의 반대쪽으로 날며 쏜다(`droneGoal`).
    * 위협이 없으면 전장을 유유히 떠돈다. 유체화(`phasesThroughFighters`)와 함께 쓴다.
    */
-  | "highAltitudeRecon";
+  | "highAltitudeRecon"
+  /**
+   * 테쿠 전용: **탄창이 도는 평타.** 4발짜리 탄창(`Passive.refill`)을 다 쓰면 「리필」하느라 잠깐 쉰다.
+   * 공격 속도는 고정이고, 룬·아군 강화로 받은 추가 공격 속도는 같은 비율의 공격력으로 바뀐다.
+   */
+  | "refillMagazine";
 
 /** 전투 엔진이 판별하는 야성 특성 효과 ID다. 새 효과는 수치 계약과 함께 명시적으로 추가한다. */
 export type FerocityEffectId =
@@ -1358,6 +1372,8 @@ export type FerocityEffectId =
   | "battleHeat"
   /** 켄토 전용: 폭주 진입 시 넓게 도발하고, 폭주 중 「까칠」이 두 배로 쌓인다. */
   | "caffeineBubble"
+  /** 테쿠 전용: 폭주에 들어서는 순간 즉시 리필하고, 그 탄창의 모든 발이 마지막 탄의 효과를 갖는다. */
+  | "overtimeRefusal"
   /** 모사나 전용: 폭주 중 공격 속도가 오르고 기본 공격이 자기 주위의 모든 적을 친다. */
   | "abyssalVortex"
   /** 안카 전용: 폭주 중 공격 속도가 오르고 기본 공격이 주위를 휩쓸어 맞은 적을 짧게 밀어낸다. */
@@ -1514,6 +1530,13 @@ export type FerocityTrait = {
       hastenedAttacks: number;
       /** 그 횟수 동안 공격 속도에 더하는 비율(%)이다. */
       attackSpeedPercent: number;
+    }
+  | {
+      /**
+       * 야근, 싫어(테쿠). 폭주에 들어서는 순간 쉬지 않고 **즉시 리필**하고, 그때 채운 탄창의 모든 발이
+       * 마지막 탄의 효과(확정 치명타·흡혈)를 갖는다. 수치를 따로 두지 않는다 — 마지막 탄의 값이 곧 몫이다.
+       */
+      effectId: "overtimeRefusal";
     }
   | {
       /**
@@ -1873,6 +1896,13 @@ export interface Passive {
   attackPowerPercent?: number;
   /** 기존 치명타 확률에 곱하는 증가율(%). 25퍼센트포인트 덧셈과 달리 20%에서 25% 증가하면 25%다. */
   criticalChancePercent?: number;
+  /**
+   * **탄창(리필) 계약**(테쿠). 평타는 `magazine`발마다 한 번씩 `reloadSeconds` 동안 쉬고,
+   * 공격 속도는 늘 `fixedAttackSpeed`(정의의 `stats.attackSpeed`와 같은 값)에 묶인다.
+   * 룬·아군 강화·자기 가속으로 받은 추가 공속은 공격력에 **같은 퍼센트**로 곱해진다
+   * (공속 +1% = 공격력 +1% — 공속으로 받았을 때와 DPS가 같다). 적이 거는 감속은 그대로 받는다.
+   */
+  refill?: { magazine: number; reloadSeconds: number; fixedAttackSpeed: number };
   /** 기존 치명타 피해 배율에 곱하는 증가율(%). 160%에서 25% 증가하면 200%다. */
   criticalDamagePercent?: number;
   /**

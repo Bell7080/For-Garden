@@ -116,6 +116,7 @@ const NOT_DISPLAYED: Readonly<Record<string, "all" | readonly string[]>> = {
   "../../src/data/relicStories/ark.ts": "all",
   "../../src/data/relicStories/yuti.ts": "all",
   "../../src/data/relicStories/pachi.ts": "all",
+  "../../src/data/relicStories/terisa.ts": "all",
   // 표본 친구의 계정 이름. 실제 이용자 풀이 생기면 서버가 주는 이름이 그대로 선다.
   "../../src/data/friends.ts": ["하늘정원", "이끼연구소"],
   // 함께 미는 모의 참가자의 계정 이름. 길드원과 친구로 교체되면 서버가 주는 이름이 그대로 선다.

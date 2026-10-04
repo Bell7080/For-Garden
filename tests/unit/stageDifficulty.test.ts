@@ -159,8 +159,9 @@ const BASELINES = {
   // 1-10은 장을 닫는 벽이다(v0.174.2, 정예 공격 몫 ×1.2) — 땅 딜러 조합은 여기서 한 번 막혀
   // 뽑기나 강화를 거쳐 다시 온다.
   "1-10": { win: 0.125, hp: [0.02, 0.14] },
-  "2-5": { win: 1, hp: [0.88, 1] },
-  "2-10": { win: 1, hp: [0.89, 1] },
+  // v0.253.2: 2장을 레벨 21~30(돌파 1)으로 다시 그리며 녹화했다 — 잡졸 관문이 한 뼘 더 깎이며 지난다.
+  "2-5": { win: 1, hp: [0.78, 0.9] },
+  "2-10": { win: 1, hp: [0.79, 0.9] },
   "3-5": { win: 1, hp: [0.81, 0.93] },
   "3-9": { win: 1, hp: [0.80, 0.92] },
 } as const;
@@ -216,9 +217,9 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     for (const stageId of ["1-1", "1-7", "1-9"]) expect(winRateAt(stageId), stageId).toBeGreaterThan(0);
     // 장을 닫는 정예는 한 판도 열리지 않는다 — 셋 몫을 하나가 내는 자리라 바닥 파티가 닿지 못한다.
     expect(winRateAt("1-10")).toBe(0);
-    // 2장은 한 판이 열릴까 말까 하고, 3장은 완전히 닫힌다.
+    // 2장은 네 판 중 한 판이 열릴까 말까 하고, 3장은 완전히 닫힌다.
     for (const { stage } of STORY_STAGES) {
-      if (stage.id.startsWith("2-")) expect(winRateAt(stage.id), stage.id).toBeLessThanOrEqual(0.125);
+      if (stage.id.startsWith("2-")) expect(winRateAt(stage.id), stage.id).toBeLessThanOrEqual(0.25);
       if (stage.id.startsWith("3-")) expect(winRateAt(stage.id), stage.id).toBe(0);
     }
   });

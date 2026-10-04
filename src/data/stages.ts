@@ -1,6 +1,6 @@
 import { applyBreakthrough } from "../core/relicProgression";
 import { registerDataText } from "../i18n";
-import { applyEncounterScaling, encounterRoleFor, type EncounterRole } from "../core/levelDesign";
+import { applyEncounterScaling, encounterRoleFor, requiredBreakthroughForLevel, type EncounterRole } from "../core/levelDesign";
 import { type ChapterDef, type RelicDef, type StageBonusReward, type StageDef, type StageEnemyDef } from "../core/types";
 import { getRelic } from "./relics";
 
@@ -45,7 +45,8 @@ const STORY_RECOMMENDED_LEVELS: readonly number[] = [
   // 사다리는 여기서부터 오르기만 한다. 1-3~2-2는 검수를 실제 전장 크기로 옮기며(v0.172.6) 한 뼘씩
   // 올렸다 — 넓은 틀에서 재던 때는 같은 관문이 실제보다 훨씬 어렵게 읽혀 사다리가 낮게 잡혀 있었다.
   5, 8, 11, 13, 15, 17, 18, 19, 20, 20,
-  24, 25, 26, 27, 29, 30, 32, 33, 35, 36,
+  // 2장은 21~30 — 돌파 1단계(상한 30) 안에서 끝난다. 1장 끝(20)에서 한 칸씩 오르는 곡선이다.
+  21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
   36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
 ];
 
@@ -196,14 +197,14 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
       ? ["amo", "pontos", "ripa"]
       : [...STAGE_ENEMY_FORMATION];
     /*
-     * **2장부터 돌파 1단계다.** 2장의 권장 레벨은 24~36이라 돌파 0의 상한(20)을 이미 넘으므로,
-     * 적도 같은 성장 위에 서야 화면의 `LV`와 돌파 등급이 맞는다. 1단계가 여는 것은 평타 효과
-     * 하나(레이티아 아닌 공멸 셋은 집게 두 번·껍질 경직·시약 2겹)뿐이라 "기본기가 한층
-     * 강해진다"가 2장의 몫이다. 3장은 새 적으로 따로 설계하므로 여기서 돌파를 적지 않는다.
+     * **돌파는 레벨에서 나온다**(`requiredBreakthroughForLevel`). 2장은 21~30이라 전 관문이 돌파 1단계
+     * (상한 30)이고, 화면의 `LV`와 돌파 등급이 맞는다. 1단계가 여는 것은 평타 효과 하나뿐이라
+     * "기본기가 한층 강해진다"가 2장의 몫이다. 3장은 새 적으로 따로 설계하므로 여기서 돌파를 적지 않는다.
      */
-    const laterChapterBreakthrough = chapter === 2 ? 1 : 0;
+    const laterChapterLevel = STORY_RECOMMENDED_LEVELS[globalOrder] ?? 1;
+    const laterChapterBreakthrough = chapter === 2 ? requiredBreakthroughForLevel(laterChapterLevel) : 0;
     const laterChapterEnemies = laterChapterIds.map((relicId, slot) =>
-      enemyGrowth(relicId, STORY_RECOMMENDED_LEVELS[globalOrder] ?? 1, laterChapterBreakthrough, slot as 0 | 1 | 2));
+      enemyGrowth(relicId, laterChapterLevel, laterChapterBreakthrough, slot as 0 | 1 | 2));
     const enemies = chapter === 1 ? CHAPTER_ONE_ENEMIES[orderIndex] : laterChapterEnemies;
     const id = `${chapter}-${chapterOrder}`;
     const elite = enemies.length === 1;

@@ -118,7 +118,7 @@ const DIMO_DEF: RelicDef = {
   reachTier: "ranged",
   excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
   // 모르페의 태생 공격력 172에서 파생한 값이며, 전투에서는 성장한 공격력으로 다시 계산된다.
-  stats: { hp: 301, def: 43, res: 43, atk: 86, ap: 0, attackSpeed: 110, moveSpeed: 105, critChance: 0, critDamage: 150, energyGain: 12, lifeSteal: 0, ferocityGain: 0 },
+  stats: { hp: 301, def: 43, res: 43, atk: 86, ap: 0, attackSpeed: 80, moveSpeed: 105, critChance: 0, critDamage: 150, energyGain: 12, lifeSteal: 0, ferocityGain: 0 },
   ferocityTrait: { name: "오버클럭", effectId: "overclockBody", attackSpeedPercent: 50, moveSpeedPercent: 50 },
   passive: {
     id: "dimo-passive", name: "고공 탐색", kind: "highAltitudeRecon", iconAssetId: "skill-icon-buff", effectType: "buff", value: 0,
@@ -141,6 +141,17 @@ const DIMO_DEF: RelicDef = {
     statusEffects: [{ kind: "observation", seconds: 8, maxStacks: 25, stacks: 5 }],
   },
 };
+
+/** 유티의 평타·궁극기가 함께 거는 「서리깃」 계약. 한 곳에서 정해 두 슬롯의 태그가 갈리지 않게 한다. */
+const FROST_PLUME = {
+  kind: "frostPlume",
+  maxStacks: 5,
+  holdSeconds: 8,
+  burstPower: 200,
+  burstSeconds: 4,
+  slowSeconds: 3,
+  slowPercent: 30,
+} as const;
 
 export const RELICS: RelicDef[] = [
   {
@@ -1480,6 +1491,101 @@ export const RELICS: RelicDef[] = [
     },
   },
 
+  {
+    id: "yuti",
+    squad: "fang",
+    name: "유티",
+    specimenNumber: "028",
+    projectName: "FROST PLUME",
+    excavationSite: "중국 랴오닝성 이셴층 하부 응회암대",
+    // 발굴 기록은 장소·보존 상태·복원 연구 특징만 담고, 복원 이후 생활 관찰과 분리한다.
+    fossilRecord: "화산재가 굳은 응회암판 위에 몸을 덮은 깃털의 인상이 뼈와 함께 남아 있었다. 같은 층의 다른 포식자보다 훨씬 큰 몸집이 한 장의 판에 접혀 들어간 채 나왔고, 복원 연구는 그 깃털이 어디까지 몸을 감쌌는지를 재는 일부터 시작했다.",
+    observationProfile: {
+      originYear: "약 1억 2,500만 년 전",
+      // E.C.는 유티의 인간형 신체 나잇대이며, 원종 화석의 연대와 독립된 값이다.
+      restorationYear: "E.C. 17년",
+      lifeStage: "성체",
+      height: "1.68 m",
+      weight: "52 kg",
+    },
+    catalogSummary: "신장 1.68m, 체중 52kg의 날렵한 인간형 체격에 목과 팔을 감싼 깃털 장식이 확인된, 성체 유티라누스 화석 기반 표본.",
+    // 복원 후 관찰은 성격과 실제로 목격된 행동만 남기고 발굴 기록과 겹치지 않게 쓴다.
+    unlockRecord: { status: "recorded", text: "복원 후 유티는 큰 소리를 내지 않고도 복도 끝에서 끝까지 사람들 사이를 빠져나간다. 모두가 정면을 보고 있을 때 옆에서 나타나 깃털 한 장을 슬쩍 건네고는 자기가 한 일이 아닌 척 시선을 돌리는 버릇이 관찰됐다. 앱솔루트 팽의 화려한 선배들을 흉내 내 \"보스\"라고 부르면서도, 호칭이 어색한지 매번 말끝을 흐린다." },
+    squadNote: "앱솔루트 팽의 측면 침투 담당. 정면에서 부딪히는 동료들의 틈으로 바람처럼 파고들어 약해진 상대를 끝내고, 연구원을 \"보스\"라 부른다.",
+    researcherTitle: "보스",
+    rarity: "SSR",
+    portraitAssetId: "yuti",
+    origin: "유티라누스",
+    element: "wind",
+    role: "assassin",
+    // 깃털을 날려 보내는 암살자라 붙지 않고 한 걸음 물러서서 쏜다.
+    reachTier: "mid",
+    // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 140, efficiencyMultiplier: 1.1 },
+    stats: {
+      hp: 860,
+      def: 48,
+      res: 50,
+      atk: 182,
+      ap: 70,
+      attackSpeed: 128,
+      moveSpeed: 118,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    // 폭주 중 평타가 한 갈래 더 갈라지고 공격 속도가 오른다. 갈래 수는 일반 공격 계약이 정한다.
+    breakthroughEffects: {
+      basic: { kind: "frostBrand", damagePercentPerStack: 4 },
+      ultimate: { kind: "doublePlume", extraStacks: 1 },
+      ferocity: { kind: "critPlume", extraStacks: 1 },
+      passive: { kind: "stealthStrike", damagePercent: 50 },
+    },
+    ferocityTrait: { name: "깃날비", effectId: "extraFork", extraForks: 1, attackSpeedBonusPercent: 33 },
+    passive: {
+      id: "yuti-passive",
+      name: "설원의 깃털",
+      kind: "featherVeil",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      value: 4,
+      durationSeconds: 4,
+      openingStealthSeconds: 4,
+      // 태생 치명타·공속은 전 개체 공통이므로 암살자의 정체성은 패시브가 만든다.
+      criticalChancePercent: 20,
+      attackSpeedPercent: 20,
+      killHaste: { seconds: 4, attackSpeedPercent: 50, moveSpeedPercent: 50 },
+      desc: "전투 시작 시 4초 동안 은신하고, 치명타 확률과 공격 속도가 오른다. 적을 처치하면 4초 동안 공격 속도와 이동 속도가 오른다.",
+    },
+    basic: {
+      id: "yuti-basic",
+      name: "갈래깃",
+      power: 95,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "splitShot",
+      maxTargets: 2,
+      repeatOnLone: true,
+      statusEffects: [FROST_PLUME],
+    },
+    ultimate: {
+      id: "yuti-ult",
+      name: "눈보라 대소동",
+      // 한 번의 위력이다. 240을 세 번에 나눠 찍는다.
+      power: 80,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      cost: 90,
+      targeting: "targetedCircle",
+      radius: 170,
+      repeatStrike: { count: 3, intervalSeconds: 0.35 },
+      statusEffects: [FROST_PLUME],
+    },
+  },
   {
     id: "meron",
     squad: "rune",
@@ -3624,9 +3730,9 @@ export const RELICS: RelicDef[] = [
       effectType: "buff",
       value: 0,
       // 방어·저항은 고정값이 아니라 비율이다 — 레벨이 올라도 같은 몫이 든다. 화면은 실제로 오르는 값으로 보여 준다.
-      droneLink: { defenseResistancePercent: 50, regenMaxHpPercentPerSecond: 0.8 },
+      droneLink: { defenseResistancePercent: 25, regenMaxHpPercentPerSecond: 0.4 },
       // 전용 분기가 문장을 짓는다. 이 사본은 화면에 뜨지 않는 데이터 문서용이다.
-      desc: "전투 시작 시 디모를 소환한다. 디모가 살아 있는 동안 방어력과 저항력이 50% 오르고 매초 최대 체력의 0.8%를 회복한다.",
+      desc: "전투 시작 시 디모를 소환한다. 디모가 살아 있는 동안 방어력과 저항력이 25% 오르고 매초 최대 체력의 0.4%를 회복한다.",
     },
     // 약한 원거리 단일 물리 피해. 적중한 적의 관측을 발동한다(겹당 공격력 10%, 방어 무시, 소모 없음).
     basic: {
@@ -3637,7 +3743,7 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       targeting: "single",
-      observationVolley: { percentPerStack: 10, windowSeconds: 0.6 },
+      observationVolley: { percentPerStack: 8, windowSeconds: 0.6 },
     },
     // 현재 체력이 가장 높은 적을 저격한다. 관측은 소모하지 않는다.
     ultimate: {
@@ -3650,7 +3756,7 @@ export const RELICS: RelicDef[] = [
       cost: 160,
       targeting: "single",
       targetSelection: "highestCurrentHp",
-      observationStrike: { powerPerStack: 8, maxCountedStacks: 50 },
+      observationStrike: { powerPerStack: 6, maxCountedStacks: 50 },
     },
   },
 

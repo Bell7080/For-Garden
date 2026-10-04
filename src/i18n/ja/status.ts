@@ -54,4 +54,8 @@ export const STATUS_JA = {
   "status.intimidation.detail": "{stacks} / {max}層 · 満ちると恐怖に陥る",
   "status.fear": "恐怖",
   "status.fear.detail": "逃走中 · 通常攻撃不可 · {time}",
+  "status.plume": "霜羽",
+  "status.plume.detail": "{stacks} / {max}重 · 残り {time}",
+  "status.frostbite": "霜の出血",
+  "status.frostbite.detail": "計{amount}ダメージ · 鈍化{slow}% · 残り {time}",
 } as const;

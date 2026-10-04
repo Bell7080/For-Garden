@@ -52,4 +52,8 @@ export const STATUS_EN = {
   "status.intimidation.detail": "{stacks} / {max} stacks · Fear sets in when full",
   "status.fear": "Fear",
   "status.fear.detail": "Fleeing · No Basic Attacks · {time}",
+  "status.plume": "Frostplume",
+  "status.plume.detail": "{stacks} / {max} stacks · {time} left",
+  "status.frostbite": "Frostbite",
+  "status.frostbite.detail": "{amount} damage total · Slow {slow}% · {time} left",
 } as const;

@@ -36,6 +36,10 @@ const CATEGORY: Record<EffectKind, Category> = {
   // 기본 공격
   periodicGuard: "survival",
   deepBleed: "damage",
+  frostBrand: "damage",
+  doublePlume: "damage",
+  critPlume: "crit",
+  stealthStrike: "stealth",
   splitHealing: "survival",
   arrowEcho: "damage",
   leapPuddle: "mobility",

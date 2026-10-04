@@ -825,9 +825,9 @@ export const RELICS: RelicDef[] = [
       // 표식을 다루는 손이라 한 명을 겨눈다 — 범위로 여럿을 함께 때리면 한 번 휘두를 때마다
       // 표식이 여러 장 붙었다 지워져 무엇이 표식인지 읽히지 않는다.
       targeting: "single",
-      // 반짝이 묻은 적을 때리면 그 자리에서 터뜨려 주위까지 함께 적시고, 그 피해의 일부를
-      // 제 몸에 두른다.
-      shimmerBurst: { power: 50, radius: 260, shieldPercent: 40 },
+      // 반짝이 묻은 적을 때리면 그 자리에서 터뜨려 주위까지 함께 적신다. 터질 때마다 제 최대
+      // 체력의 일부를 막으로 두른다 — 피해에 비례하던 때는 한 번이 평균 3%라 한 방도 못 막았다.
+      shimmerBurst: { power: 50, radius: 260, shieldMaxHpPercent: 6, capMaxHpPercent: 18 },
     },
     ultimate: {
       id: "tia-ult",
@@ -3332,8 +3332,10 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
       value: 0,
-      suture: { damagePercent: 40, maxHpCapPercent: 25 },
-      desc: "기본 공격이 적중할 때마다 그 피해의 40%만큼 자신을 포함해 현재 HP 비율이 가장 낮은 생존 아군에게 보호막을 부여한다. 한 번에 부여하는 보호막은 그 아군 최대 체력의 25%를 넘지 않는다.",
+      // 4초마다 기본 공격 한 번이 강화된다. 매 적중 40%를 잘게 두르던 때는 한 번이 1.6%로 한 대도 못
+      // 막았다 — 드물게 한 덩어리로 바꾼 값이다.
+      suture: { intervalSeconds: 4, bonusPower: 100, shieldPercent: 50, maxHpCapPercent: 25 },
+      desc: "4초마다 기본 공격 한 번이 강화된다. 강화된 기본 공격이 적중하면 공격력의 100%만큼 물리 피해를 추가로 입히고, 입힌 피해의 50%만큼 자신과 현재 HP 비율이 가장 낮은 생존 아군에게 보호막을 부여한다. 한 번에 부여하는 보호막은 그 아군 최대 체력의 25%를 넘지 않는다.",
     },
     basic: {
       id: "terisa-basic",
@@ -3357,7 +3359,7 @@ export const RELICS: RelicDef[] = [
          * 0.5초인 이유는 표적을 흩기에는 충분하고 한 대를 통째로 거르기에는 짧기 때문이다.
          */
         { name: "겉감", power: 55, selfStealthSeconds: 0.5 },
-        { name: "안감", power: 55, shieldFromDamagePercent: 50 },
+        { name: "안감", power: 55 },
         { name: "엇갈려 자르기", power: 40, targeting: "nearbyEnemies", radius: 150 },
       ],
     },

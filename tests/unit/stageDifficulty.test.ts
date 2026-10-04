@@ -365,7 +365,8 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     expect(parties.favorable.map(({ id }) => id)).toEqual(["torika", "tia", "parua"]);
     // 켄토는 평타가 약하고 반격으로 싸우는 탱커라 1-1에서는 가장 늦게 적을 쓰러뜨린다 — 최악 조합이 도디·켄토로 옮겨 갔다.
     // 안카는 때리지 않고 재우는 탱커라 같은 이유로 더 늦다 — 토리카와 탱커 둘이 서는 티아·안카가 최악이다.
-    expect(parties.unfavorable.map(({ id }) => id)).toEqual(["torika", "tia", "anka"]);
+    // 티아의 반짝 폭발이 최대 체력 6%의 막을 두르게 되면서(v0.239.0) 티아가 최악에서 빠지고 도디·안카가 최악이 됐다.
+    expect(parties.unfavorable.map(({ id }) => id)).toEqual(["torika", "dodo", "anka"]);
   });
 
   it("장 목표와 허용 조정 순서를 전용 배율 없이 공개한다", () => {

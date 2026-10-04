@@ -488,7 +488,7 @@ describe("티아 스킬 표시 계약", () => {
     // 능력치를 모르는 자리에서도 어느 능력치에서 나오는 배율인지 말한다.
     expect(skillDescription(def.basic)).toBe(
       `적 한 명에게 주문력의 ${def.basic.power}% [[magical-damage|마법 피해]]를 준다.`
-      + " [[shimmer|반짝!]]이 사라질 때 그 자리에서 터져 주위 적에게 [[ap|주문력]]의 50%만큼 [[magical-damage|마법 피해]]를 입히고, 그 피해의 40%만큼 [[shield|보호막]]을 얻는다.",
+      + " [[shimmer|반짝!]]이 사라질 때 그 자리에서 터져 주위 적에게 [[ap|주문력]]의 50%만큼 [[magical-damage|마법 피해]]를 입히고, 자신의 최대 체력 6%만큼 [[shield|보호막]]을 얻는다 (최대 체력의 18%까지 쌓인다).",
     );
   });
 
@@ -513,7 +513,7 @@ describe("티아 스킬 표시 계약", () => {
     );
     // 남기는 것은 패시브, 지워질 때 터지는 것은 그 타격을 낸 스킬이다.
     expect(def.passive.kind).toBe("shimmerMark");
-    expect(def.basic.shimmerBurst).toMatchObject({ power: 50, radius: 260, shieldPercent: 40 });
+    expect(def.basic.shimmerBurst).toMatchObject({ power: 50, radius: 260, shieldMaxHpPercent: 6, capMaxHpPercent: 18 });
     expect(def.ultimate.shimmerBurst).toBeUndefined();
     expect(passiveDescription(def.passive)).toBe(
       `적을 타격하면 [[shimmer|반짝!]] 표식을 부여하고 [[ap|주문력]]의 ${def.passive.value}% [[magical-damage|마법 피해]]를 추가로 입힌다.`,
@@ -1258,8 +1258,11 @@ describe("테리사 표시 계약", () => {
     // 본문이 함께 적는다.
     if (terisa.passive.kind !== "sutureStitch") throw new Error("테리사 패시브 계약이 바뀌었다");
     const body = passiveDescription(terisa.passive);
-    expect(body).toContain("자신을 포함해 체력 비율이 가장 낮은 생존 아군");
-    expect(body).toContain(`그 피해의 ${terisa.passive.suture!.damagePercent}%`);
+    const suture = terisa.passive.suture!;
+    expect(body).toContain(`${suture.intervalSeconds}초마다`);
+    expect(body).toContain(`공격력의 ${suture.bonusPower}%만큼 [[physical-damage|물리 피해]]를 추가로`);
+    expect(body).toContain("자신과 체력 비율이 가장 낮은 생존 아군");
+    expect(body).toContain(`입힌 피해(추가 피해 포함)의 ${suture.shieldPercent}%`);
     expect(body).toContain(`최대 체력의 ${terisa.passive.suture!.maxHpCapPercent}%`);
     // 버티기를 보호막으로만 짠다 — 숨은 배율로 덜 맞게 만드는 문장이 섞이면 안 된다.
     expect(body).not.toContain("감소");
@@ -1296,7 +1299,7 @@ describe("테리사 표시 계약", () => {
     expect(skillDescription(terisa.basic, { cycleDamage: [64, 64, 46] })).toBe([
       "다음 3가지를 차례로 반복한다.",
       "「겉감」 적 한 명에게 [[damage-value|64]]의 [[physical-damage|물리 피해]]를 주고, 0.5초 동안 [[stealth|은신]]한다.",
-      "「안감」 적 한 명에게 [[damage-value|64]]의 [[physical-damage|물리 피해]]를 주고, 입힌 피해의 50%만큼 [[shield|보호막]]을 얻는다.",
+      "「안감」 적 한 명에게 [[damage-value|64]]의 [[physical-damage|물리 피해]]를 준다.",
       "「엇갈려 자르기」 자신의 주위 모든 적에게 [[damage-value|46]]의 [[physical-damage|물리 피해]]를 준다.",
     ].join("\n"));
     // 전투 엔진의 반경(px)은 문장에 새지 않고 대상 범위 문구로만 나온다.

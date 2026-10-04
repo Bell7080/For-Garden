@@ -604,9 +604,9 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
     return t("skill.passive.duoLink", { percent: passive.value });
   }
   if (passive.kind === "sutureStitch" && passive.suture !== undefined) {
-    // 자신도 후보라는 말을 함께 적는다 — 근거리에서 제일 많이 맞는 몸이 본인이라, 그 한 줄이
+    // 자신도 받는다는 말을 함께 적는다 — 근거리에서 제일 많이 맞는 몸이 본인이라, 그 한 줄이
     // 없으면 "남만 꿰매 주고 자기는 그냥 맞는 개체"로 읽힌다.
-    return t("skill.passive.sutureStitch", { percent: passive.suture.damagePercent, capPercent: passive.suture.maxHpCapPercent });
+    return t("skill.passive.sutureStitch", { seconds: passive.suture.intervalSeconds, power: passive.suture.bonusPower, percent: passive.suture.shieldPercent, capPercent: passive.suture.maxHpCapPercent });
   }
   // 표식을 남기는 것이 이 패시브의 전부다. 무엇이고 다시 맞으면 어떻게 되는지는 태그가 말한다.
   if (passive.kind === "shimmerMark") return t("skill.passive.shimmerMark", { percent: passive.value });
@@ -1084,7 +1084,7 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
    */
   if ("shimmerBurst" in skill && skill.shimmerBurst !== undefined) {
     const burst = skill.shimmerBurst;
-    clauses.push({ text: t("skill.clause.shimmerBurst", { percent: burst.power, shield: burst.shieldPercent }), standalone: true });
+    clauses.push({ text: t("skill.clause.shimmerBurst", { percent: burst.power, shield: burst.shieldMaxHpPercent, cap: burst.capMaxHpPercent }), standalone: true });
   }
   // 순간이동해서 쓴다는 것은 대상을 고르는 규칙 자체라, 대상 문구가 말하지 못하는 몫을 적는다.
   if ("blinkToLowestDefense" in skill && skill.blinkToLowestDefense === true) {
@@ -1320,7 +1320,7 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effect.kind === "speedGraffiti") return t("skill.breakthrough.effect.basic.speedGraffiti", { name: def.basic.name, seconds: trim(effect.seconds), percent: trim(effect.moveSpeedPercent), power: trim(effect.powerPercentPerSpeedPoint) });
     if (effect.kind === "bleedSettle") return t("skill.breakthrough.effect.basic.bleedSettle");
     if (effect.kind === "paintSpill") return t("skill.breakthrough.effect.basic.paintSpill", { stacks: trim(effect.stacks) });
-    if (effect.kind === "tightStitch") return t("skill.breakthrough.effect.basic.tightStitch", { name: def.passive.name, percent: trim((def.passive.suture?.damagePercent ?? 0) + effect.damagePercentPoints) });
+    if (effect.kind === "tightStitch") return t("skill.breakthrough.effect.basic.tightStitch", { name: def.passive.name, percent: trim((def.passive.suture?.shieldPercent ?? 0) + effect.damagePercentPoints) });
     if (effect.kind === "leapPuddle") return t("skill.breakthrough.effect.basic.leapPuddle");
     if (effect.kind === "splitHealing") return t("skill.breakthrough.effect.basic.splitHealing", { percent: trim(effect.sharePercent) });
     // 주기 이름이 있으면 그것이 이 효과가 얹히는 그 한 방의 이름이다(칩에 뜨는 이름과 같다).

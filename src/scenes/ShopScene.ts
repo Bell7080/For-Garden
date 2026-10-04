@@ -36,6 +36,7 @@ import {
 } from "../ui/shopLayout";
 import { addClippedHit } from "../ui/clippedHit";
 import { pressIn, pressOut } from "../ui/pressFeedback";
+import { formatRefreshCountdown, nextRefreshAt, shortestRefresh } from "../core/shopRefresh";
 
 /**
  * 일반 상품과 성장 재화를 취급하는 독립 상점 씬이다.
@@ -84,6 +85,10 @@ export class ShopScene extends Phaser.Scene {
   /** 상품 목록 위에 재사용 구매 작업판을 쌓는 전용 팝업 계층이다. */
   private readonly popups = new PopupLayer(this, 2600);
   private minScrollY = 0;
+  /** 전시대 상단 우측의 리필 시계. 열린 탭에 되살아나는 상품이 없으면 비운다. */
+  private refreshClock?: Phaser.GameObjects.Text;
+  private refreshClockText = "";
+  private refreshDueAt = 0;
   private pointerDown = false;
   private pointerY = 0;
   private draggedDistance = 0;
@@ -177,6 +182,7 @@ export class ShopScene extends Phaser.Scene {
   /** 관성은 프레임 시간에 맞춰 감쇠해 고주사율에서도 같은 거리로 멈춘다. */
   update(_time: number, delta: number): void {
     this.openEntranceGates();
+    this.tickRefreshClock();
     if (!this.pointerDown && Math.abs(this.velocityY) > 4) {
       this.scrollTo((this.content?.y ?? 0) + this.velocityY * Math.min(delta, 34) / 1000);
       this.velocityY *= Math.pow(0.9, delta / 16.67);
@@ -320,6 +326,9 @@ export class ShopScene extends Phaser.Scene {
    */
   private createTitle(): void {
     addSectionTitle(this, shopTitleLeft(), shopTitleY(), t("shop.exchangeList"), { size: SHOP_TITLE.size, parent: this.boardChrome });
+    // 왼쪽은 제목표가 서므로 같은 줄 오른쪽 끝에 굵은 붉은 글씨로 리필까지 남은 시간을 단다.
+    this.refreshClock = this.add.text(shopGridViewport().right, shopTitleY(), "", textStyle({ role: "display", size: 30, color: COLOR.dangerText })).setOrigin(1, 0.5);
+    this.boardChrome.add(this.refreshClock);
   }
 
   /**
@@ -399,6 +408,24 @@ export class ShopScene extends Phaser.Scene {
     this.minScrollY = Math.min(0, view.bottom - view.top - shopGridContentHeight(visibleProducts.length));
     this.publishControls(visibleProducts);
     this.scrollTo(this.content?.y ?? 0);
+    this.tickRefreshClock(true);
+  }
+
+  /**
+   * 열린 탭의 리필 시계.
+   *
+   * 탭 상품 중 가장 짧은 주기를 따르고(일일 `D00:`, 주간 `D6:`), 되살아나는 상품이 없으면 비운다.
+   * 분이 바뀔 때만 글자를 갈아 끼우고, 경계를 넘으면 구매 횟수가 돌아왔으므로 목록을 다시 읽는다.
+   */
+  private tickRefreshClock(force = false): void {
+    if (!this.refreshClock) return;
+    const now = Date.now();
+    const cadence = shortestRefresh(productsForShopTab(this.products, this.selectedCategory, this.storefront).map((product) => product.refresh));
+    if (!cadence) { this.refreshDueAt = 0; this.refreshClockText = ""; this.refreshClock.setText(""); return; }
+    if (!force && this.refreshDueAt !== 0 && now >= this.refreshDueAt) { this.refreshDueAt = 0; void this.refresh(); return; }
+    this.refreshDueAt = nextRefreshAt(cadence, now);
+    const text = formatRefreshCountdown(cadence, now);
+    if (text !== this.refreshClockText) { this.refreshClockText = text; this.refreshClock.setText(text); }
   }
 
   /** 카드 입력점은 현재 탭에서 실제로 생성한 칸 중심만 공개한다. */

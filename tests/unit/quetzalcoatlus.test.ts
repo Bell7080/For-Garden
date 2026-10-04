@@ -11,12 +11,12 @@ const ARENA: Arena = { left: 130, right: 950, top: 600, bottom: 1360 };
 describe("코아틀 — 셋째 레이드 보스", () => {
   const boss = getRelic("quetzalcoatlus");
 
-  it("바람 속성의 전사이고 공멸의 봉인된 적이다", () => {
+  it("바람 속성의 전사이고 공멸의 적이다", () => {
     expect(boss.element).toBe("wind");
     expect(boss.role).toBe("warrior");
     expect(boss.squad).toBe("annihilation");
     expect(boss.enemyOnly).toBe(true);
-    expect(boss.unlockRecord.status).toBe("sealed");
+    expect(boss.unlockRecord.status).toBe("recorded");
   });
 
   it("레이드 보스 풀에 서고 전신·SD 원화가 모두 연결된다", () => {

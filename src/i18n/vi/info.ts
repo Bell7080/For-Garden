@@ -60,6 +60,7 @@ export const INFO_VI = {
   "info.journal.lifeStageValue": "{stage} · Cao {height} · Nặng {weight}",
   "info.journal.unknown": "Không rõ",
   "info.journal.lockedNotice": "\n\nHồ sơ đầy đủ mở khóa khi bạn có Di vật này.",
+  "info.journal.classified": "Tuyệt mật",
   "info.journal.afterRestoration": "Quan sát sau Phục hồi",
   "info.journal.entry": "{date}  ·  #{tag}\nH. {question}\nĐ. {answer}\nPhát hiện  {habit}",
   "info.journal.viewAll": "Xem tất cả hồ sơ ({count})",

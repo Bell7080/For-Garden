@@ -56,4 +56,10 @@ export const STATUS_PT_BR = {
   "status.plume.detail": "{stacks}/{max} cargas · restam {time}",
   "status.frostbite": "Sangramento gélido",
   "status.frostbite.detail": "{amount} de dano no total · lentidão {slow}% · restam {time}",
+  "status.biteMark": "Marca de mordida",
+  "status.biteMark.detail": "{stacks} acúmulos · dano recebido +{percent}% · restam {time}",
+  "status.healCut": "Cura reduzida",
+  "status.healCut.detail": "Cura recebida −{percent}% · restam {time}",
+  "status.sunken": "Peso afundado",
+  "status.sunken.detail": "Velocidade de movimento e ataque −{percent}% · restam {time}",
 } as const;

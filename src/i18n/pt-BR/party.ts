@@ -5,7 +5,6 @@ export const PARTY_PT_BR = {
   "party.roleHint.show": "Mostrar funções",
   "party.start": "Iniciar batalha",
   "party.saveFailed": "Não foi possível salvar a equipe. Verifique o espaço de armazenamento e tente novamente.",
-  "party.longPressHint": "Toque e segure para detalhes",
   "party.slot": "Posição {index}",
   "party.enemyPower": "Inimigos {power}",
   "party.allyPower": "Aliados {power}",

@@ -63,6 +63,7 @@ export const INFO_JA = {
   "info.journal.lifeStageValue": "{stage} · 体長 {height} · 体重 {weight}",
   "info.journal.unknown": "不明",
   "info.journal.lockedNotice": "\n\n詳細な記録は個体の獲得後に解放されます。",
+  "info.journal.classified": "機密",
   "info.journal.afterRestoration": "復元後の観察記録",
   "info.journal.entry": "{date}  ·  #{tag}\nQ. {question}\nA. {answer}\n発見  {habit}",
   "info.journal.viewAll": "すべての記録を見る ({count}件)",

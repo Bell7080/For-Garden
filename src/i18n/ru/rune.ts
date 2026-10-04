@@ -77,6 +77,7 @@ export const RUNE_RU = {
   "rune.traitReroll.candidate": "Новая черта",
   "rune.traitReroll.keep": "Оставить текущую",
   "rune.traitReroll.apply": "Применить новую черту",
+  "rune.traitReroll.again": "Оставить текущую и переосмыслить заново",
   "rune.traitReroll.upgraded": "Ранг повышен",
   "rune.traitReroll.pity": "Гарантия повышения {done} / {total}",
 } as const;

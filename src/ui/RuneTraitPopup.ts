@@ -7,6 +7,9 @@ import { KeywordManager } from "../managers/KeywordManager";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { runeTraitView } from "./runeTraitPresentation";
+import { session } from "../state/session";
+import { playTraitEffect } from "./traitEffects";
+import { RUNE_ACCENT } from "./runeIcons";
 
 /**
  * 재해석 결과를 고르는 쪽지.
@@ -33,13 +36,17 @@ function paintTrait(scene: Phaser.Scene, body: Phaser.GameObjects.Container, key
 
 
 /** 재해석 결과 비교 쪽지의 세로 좌표다. */
-const REROLL_POPUP = { width: 900, height: 720, columnGap: 220 } as const;
+const REROLL_POPUP = { width: 900, height: 840, columnGap: 220 } as const;
 
 /**
  * 재해석 결과를 나란히 놓고 고르게 한다.
  *
  * **고르기 전에는 룬이 바뀌지 않는다** — 서버가 후보를 들고 있으므로 여기서 닫고 나가도
  * 원석이 사라지지 않고, 다시 들어오면 같은 후보가 기다린다.
+ *
+ * **밑동의 긴 버튼은 이 쪽지 안에서 재해석을 되풀이한다** — 기존을 유지한 채(후보를 버리고) 곧바로
+ * 다시 굴린다. 쪽지를 닫고 연구대로 돌아가 다시 누르는 왕복이 사라진다. 연출은 **새로 나올 후보 자리**에서
+ * 터지고, 터지는 순간에 후보가 갈린다.
  */
 export function openRuneTraitReroll(options: {
   scene: Phaser.Scene;
@@ -51,38 +58,85 @@ export function openRuneTraitReroll(options: {
   upgraded: boolean;
   onResolved: () => void;
 }): void {
-  const { scene, popups, keywords, candidate } = options;
+  const { scene, popups, keywords } = options;
   popups.open({ width: REROLL_POPUP.width, height: REROLL_POPUP.height, title: t("rune.traitReroll.title"), dim: true, closeOnBackdrop: false, hideCloseButton: true }, (body, close) => {
     const top = -REROLL_POPUP.height / 2;
-    const label = (y: number, key: TextKey): void => {
-      body.add(scene.add.text(-REROLL_POPUP.width / 2 + 40, y, t(key), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
-    };
-    if (options.current) {
-      label(top + 110, "rune.traitReroll.current");
-      paintTrait(scene, body, keywords, top + 158, options.current, REROLL_POPUP.width);
-    }
-    label(top + 330, "rune.traitReroll.candidate");
-    // 천장은 「지금 어디까지 왔나」만 말한다. 다음에 확정으로 오른다는 약속을 문장으로 적지
-    // 않는 이유는, 그 약속이 등급마다 다른 수라 화면에 적으면 곧 옛말이 되기 때문이다.
-    if (RUNE_TRAIT_RULES.pityThreshold[candidate.grade] > 0) {
-      body.add(scene.add.text(-REROLL_POPUP.width / 2 + 40, top + 62,
-        t("rune.traitReroll.pity", { done: candidate.upgradeMisses, total: RUNE_TRAIT_RULES.pityThreshold[candidate.grade] }),
-        textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
-    }
-    if (options.upgraded) {
-      body.add(scene.add.text(REROLL_POPUP.width / 2 - 40, top + 330, t("rune.traitReroll.upgraded"), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(1, 0.5));
-    }
-    paintTrait(scene, body, keywords, top + 378, candidate, REROLL_POPUP.width);
+    const bottom = REROLL_POPUP.height / 2;
+    const candidateY = top + 378;
+    let candidate = options.candidate;
+    let upgraded = options.upgraded;
+    let busy = false;
+    let layer: Phaser.GameObjects.Container | undefined;
 
-    const resolve = (keepCandidate: boolean): void => {
-      void gameApi.resolveRuneTraitReroll({ runeInstanceId: options.runeInstanceId, keepCandidate, requestId: `trait-pick-${Date.now()}` })
-        .then(() => { close(); options.onResolved(); });
+    const label = (parent: Phaser.GameObjects.Container, y: number, key: TextKey): void => {
+      parent.add(scene.add.text(-REROLL_POPUP.width / 2 + 40, y, t(key), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
     };
-    body.add(new Button(scene, -REROLL_POPUP.columnGap, REROLL_POPUP.height / 2 - 90, {
-      width: 360, height: 92, label: t("rune.traitReroll.keep"), onClick: () => resolve(false),
-    }));
-    body.add(new Button(scene, REROLL_POPUP.columnGap, REROLL_POPUP.height / 2 - 90, {
-      width: 360, height: 92, label: t("rune.traitReroll.apply"), variant: "primary", onClick: () => resolve(true),
-    }));
+
+    const resolve = (keepCandidate: boolean): Promise<void> =>
+      gameApi.resolveRuneTraitReroll({ runeInstanceId: options.runeInstanceId, keepCandidate, requestId: `trait-pick-${Date.now()}` }).then(() => undefined);
+
+    /** 후보와 버튼을 다시 그린다. 쪽지 자체는 닫지 않아 연속 재해석에서 판이 깜빡이지 않는다. */
+    const paint = (): void => {
+      layer?.destroy();
+      const parent = scene.add.container(0, 0);
+      layer = parent;
+      body.add(parent);
+      if (options.current) {
+        label(parent, top + 110, "rune.traitReroll.current");
+        paintTrait(scene, parent, keywords, top + 158, options.current, REROLL_POPUP.width);
+      }
+      label(parent, top + 330, "rune.traitReroll.candidate");
+      // 천장은 「지금 어디까지 왔나」만 말한다. 다음에 확정으로 오른다는 약속을 문장으로 적지
+      // 않는 이유는, 그 약속이 등급마다 다른 수라 화면에 적으면 곧 옛말이 되기 때문이다.
+      if (RUNE_TRAIT_RULES.pityThreshold[candidate.grade] > 0) {
+        parent.add(scene.add.text(-REROLL_POPUP.width / 2 + 40, top + 62,
+          t("rune.traitReroll.pity", { done: candidate.upgradeMisses, total: RUNE_TRAIT_RULES.pityThreshold[candidate.grade] }),
+          textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
+      }
+      if (upgraded) {
+        parent.add(scene.add.text(REROLL_POPUP.width / 2 - 40, top + 330, t("rune.traitReroll.upgraded"), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(1, 0.5));
+      }
+      paintTrait(scene, parent, keywords, candidateY, candidate, REROLL_POPUP.width);
+
+      parent.add(new Button(scene, -REROLL_POPUP.columnGap, bottom - 200, {
+        width: 360, height: 92, label: t("rune.traitReroll.keep"), onClick: () => {
+          if (busy) return;
+          busy = true;
+          void resolve(false).then(() => { close(); options.onResolved(); }).catch(() => { busy = false; });
+        },
+      }));
+      parent.add(new Button(scene, REROLL_POPUP.columnGap, bottom - 200, {
+        width: 360, height: 92, label: t("rune.traitReroll.apply"), variant: "primary", onClick: () => {
+          if (busy) return;
+          busy = true;
+          void resolve(true).then(() => { close(); options.onResolved(); }).catch(() => { busy = false; });
+        },
+      }));
+      // 기존 유지 후 재해석 — 비용은 지금 룬의 등급이 정한다(후보를 버리면 그 등급이 그대로다).
+      const baseGrade = (options.current ?? candidate).grade;
+      const cost = RUNE_TRAIT_RULES.rerollCost[baseGrade];
+      parent.add(new Button(scene, 0, bottom - 90, {
+        width: REROLL_POPUP.width - 80, height: 92, label: t("rune.traitReroll.again"),
+        cost: { icon: "currency-orestone", amount: cost, affordable: session.wallet.rawStone >= cost },
+        onClick: () => {
+          if (busy || session.wallet.rawStone < cost) return;
+          busy = true;
+          void resolve(false)
+            .then(() => gameApi.rerollRuneTrait({ runeInstanceId: options.runeInstanceId, requestId: `trait-reroll-${Date.now()}` }))
+            .then((next) => {
+              const spot = body.getWorldTransformMatrix().transformPoint(0, candidateY);
+              playTraitEffect(scene, "reroll", spot.x, spot.y, 2500, () => {
+                options.current = next.current;
+                candidate = next.candidate;
+                upgraded = next.upgraded;
+                busy = false;
+                paint();
+              }, RUNE_ACCENT[next.candidate.grade]);
+            })
+            .catch(() => { busy = false; });
+        },
+      }));
+    };
+    paint();
   });
 }

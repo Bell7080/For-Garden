@@ -56,4 +56,10 @@ export const STATUS_DE = {
   "status.plume.detail": "{stacks}/{max} Stapel · noch {time}",
   "status.frostbite": "Frostblutung",
   "status.frostbite.detail": "{amount} Schaden gesamt · Verlangsamung {slow} % · noch {time}",
+  "status.biteMark": "Bissmal",
+  "status.biteMark.detail": "{stacks} Stapel · erlittener Schaden +{percent}% · noch {time}",
+  "status.healCut": "Heilung gesenkt",
+  "status.healCut.detail": "Erhaltene Heilung −{percent}% · noch {time}",
+  "status.sunken": "Sinkende Last",
+  "status.sunken.detail": "Bewegungs- und Angriffstempo −{percent}% · noch {time}",
 } as const;

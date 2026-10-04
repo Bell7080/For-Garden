@@ -5,7 +5,6 @@ export const PARTY_ID = {
   "party.roleHint.show": "Tampilkan Peran",
   "party.start": "Mulai Bertarung",
   "party.saveFailed": "Tidak dapat menyimpan tim. Periksa ruang penyimpanan lalu coba lagi.",
-  "party.longPressHint": "Tekan lama untuk detail",
   "party.slot": "Slot {index}",
   "party.enemyPower": "Musuh {power}",
   "party.allyPower": "Sekutu {power}",

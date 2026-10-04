@@ -64,7 +64,7 @@ import { settleSweep, sweepRefusal, SWEEP_TICKET_ITEM, type DungeonRunCost } fro
 import type { ClaimMailRewardsRequest, ClaimMailRewardsResponse, MailDto, MailListResponse, MailRewardDto, MarkMailsReadRequest } from "./contracts";
 import { expeditionWeekKey, resolveExpeditionBossBattle } from "../core/expeditionBoss";
 import { EXPEDITION_BOSS_BALANCE, EXPEDITION_BEST_SCORE_REWARD_STAGES, EXPEDITION_DAILY_POLICY, expeditionBossSalvage, expeditionRankRewards, EXPEDITION_MAP_BALANCE, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_POLICY, QUICK_EXPEDITION_POLICY } from "../data/expedition";
-import { expeditionNodeRole } from "../data/expeditionEnemies";
+import { expeditionBossGrowth, expeditionNodeRole } from "../data/expeditionEnemies";
 import { calculateExpeditionNodeRewards, calculateExpeditionRunScore } from "../core/expeditionRewards";
 import { calculateExpeditionNodeScore, expeditionBossDamageScore } from "../core/expeditionScore";
 import { RelicProgressionManager } from "../managers/RelicProgressionManager";
@@ -343,6 +343,7 @@ export class FakeServer implements GameApi {
         allies, boss,
         initialHpPercentByRelic: Object.fromEntries(roster.map(({ relicId, currentHp }) => [relicId, currentHp])),
         augmentEffects: effects, bondLevels: growth.bondLevels, breakthroughs: growth.breakthroughs,
+        bossBreakthrough: expeditionBossGrowth().breakthrough,
         // 서버와 BattleScene이 공유하는 논리 전장 크기다.
         arena: { left: 130, right: 950, top: 600, bottom: 1360 },
       }, request.actions);
@@ -666,6 +667,7 @@ export class FakeServer implements GameApi {
         allies, boss: raidBossDef(base, instance.difficulty), balance: RAID_BOSS_BALANCE,
         percentHpBasis: raidBossPercentHpBasis(base, instance.difficulty),
         augmentEffects: growth.traitEffects, bondLevels: growth.bondLevels, breakthroughs: growth.breakthroughs,
+        bossBreakthrough: raidBossGrowth(instance.difficulty).breakthrough,
         // 전장은 화면과 **같은 표**를 읽는다 — 자리가 다르면 사거리·표적이 갈려 재현이 어긋난다.
         arena: battleArena("raid"),
         // 레이드의 보스는 남은 공유 게이지를 다 깎으면 쓰러진다 — 재현도 입장한 순간의 게이지로 그 끝을 받는다.

@@ -288,7 +288,16 @@ describe("\"없음\"이라는 한계 돌파 효과", () => {
     const { RELICS } = await import("../../src/data/relics");
     const enemyIds = RELICS.filter((relic) => relic.enemyOnly).map(({ id }) => id);
     expect(enemyIds).toEqual(expect.arrayContaining(["sukusuino", "pontos", "toby", "koma"]));
-    for (const id of enemyIds) {
+    // 레이드 보스 셋과 폰토스는 네 칸 모두 제 효과를 갖는다 — 아래 "없음" 규칙의 대상이 아니다.
+    const bossIds = ["pontos", "sukusuino", "taboa", "quetzalcoatlus"];
+    for (const id of bossIds) {
+      const def = getRelic(id);
+      for (const slot of ["basic", "ultimate", "ferocity", "passive"] as const) {
+        expect(def.breakthroughEffects?.[slot]?.kind, `${id} ${slot}`).not.toBe("none");
+        expect(breakthroughEffectText(def, slot), `${id} ${slot}`).not.toBe("없음");
+      }
+    }
+    for (const id of enemyIds.filter((enemy) => !bossIds.includes(enemy))) {
       const def = getRelic(id);
       for (const slot of ["basic", "ultimate", "ferocity", "passive"] as const) {
         // 규칙으로 못 박지 않고 효과 하나로 둔다 — 이 자리에 다른 효과를 넣으면 그대로 바뀐다.

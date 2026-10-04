@@ -77,6 +77,7 @@ export const RUNE_VI = {
   "rune.traitReroll.candidate": "Đặc tính mới",
   "rune.traitReroll.keep": "Giữ hiện tại",
   "rune.traitReroll.apply": "Dùng đặc tính mới",
+  "rune.traitReroll.again": "Giữ hiện tại và diễn giải lại",
   "rune.traitReroll.upgraded": "Đã tăng cấp bậc",
   "rune.traitReroll.pity": "Bảo đảm nâng bậc {done} / {total}",
 } as const;

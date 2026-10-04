@@ -11,6 +11,7 @@ import { createDiaryQuestionState, diaryQuestionStatus, renderDiaryQuestionPage 
 import { motionPolicy } from "../core/settings";
 import { session } from "../state/session";
 import { addPopupBackgroundImage } from "./backgrounds";
+import { CLASSIFIED_SEAL_HEIGHT, addClassifiedSeal } from "./ClassifiedSeal";
 import { addFactionMark, factionMarkBounds } from "./FactionMark";
 import { drawGlyph } from "./glyphs";
 import { addSectionTitle } from "./SectionTitle";
@@ -248,6 +249,8 @@ export function openObservationJournal(deps: ObservationJournalDeps, options: Ob
   // 한마디(회색)와 관찰 질문 쪽지를 붙인다. 묶음이 없는 개체는 예전 방식 그대로다.
   const story = interviews && owned && disclosure.access === "full" && relicStories.hasStory(def.id) ? relicStoryFor(def.id) : undefined;
   const rawRecord = story ? def.fossilRecord : disclosure.access === "full" ? disclosure.record : def.catalogSummary + t("info.journal.lockedNotice");
+  // 열람이 막힌 개체(폰토스)는 안내 문구 대신 사슬과 자물쇠가 가로지르는 「기밀」 표식을 세운다.
+  const classified = !story && disclosure.access === "full" && def.unlockRecord.status === "sealed";
   const excavationRecord = withoutRepeatedProfileDetails(rawRecord, def.observationProfile?.height, def.observationProfile?.weight);
   const fossilOpen = options.fossilOpen === true;
   const excavation = keywords.layout(excavationRecord, { width: journal.body.width, size: journal.font.large, color: COLOR.inkDim, lineSpacing: journal.spacing.line });
@@ -283,7 +286,7 @@ export function openObservationJournal(deps: ObservationJournalDeps, options: Ob
     ? scene.add.text(0, 0, t("info.journal.fossilRecord"), textStyle({ role: "emphasis", size: journal.font.regular, color: COLOR.inkDim })).setOrigin(0, 0)
     : undefined;
   const fossilExtra = fossilOpen ? journal.spacing.compactLine + excavation.height : 0;
-  const fossilBodyHeight = fossilHeader ? fossilHeader.height + fossilExtra : excavation.height;
+  const fossilBodyHeight = classified ? CLASSIFIED_SEAL_HEIGHT : fossilHeader ? fossilHeader.height + fossilExtra : excavation.height;
   // 발굴 기록을 펴도 **창은 커지지 않는다** — 그만큼 관찰 일기가 `…`로 줄어 요약된다(최소 두 줄은 남긴다).
   if (story && observation && fossilExtra > 0) {
     const lines = observation.getWrappedText();
@@ -323,6 +326,9 @@ export function openObservationJournal(deps: ObservationJournalDeps, options: Ob
       toggle.on("pointerup", () => { close(); openObservationJournal(deps, { ...options, fossilOpen: !fossilOpen, page: 0 }); });
       content.add(toggle);
       if (fossilOpen) { excavation.setPosition(bodyLeft, flow.excavationY + fossilHeader.height + journal.spacing.compactLine); content.add(excavation); } else excavation.destroy();
+    } else if (classified) {
+      excavation.destroy();
+      content.add(addClassifiedSeal(scene, journal.body.width, t("info.journal.classified")).setPosition(0, flow.excavationY + CLASSIFIED_SEAL_HEIGHT / 2));
     } else { excavation.setPosition(bodyLeft, flow.excavationY); content.add(excavation); }
     if (observation && flow.observationDividerY !== undefined && flow.observationHeadingY !== undefined && flow.observationY !== undefined) {
       content.add(drawHairline(scene, 0, flow.observationDividerY, journal.body.width, { color: COLOR.accent, alpha: 0.35 }));

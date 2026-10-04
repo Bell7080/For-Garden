@@ -60,6 +60,7 @@ export const INFO_TH = {
   "info.journal.lifeStageValue": "{stage} · ส่วนสูง {height} · น้ำหนัก {weight}",
   "info.journal.unknown": "ไม่ทราบ",
   "info.journal.lockedNotice": "\n\nบันทึกทั้งหมดจะปลดล็อกเมื่อได้รับเรลิกนี้",
+  "info.journal.classified": "ข้อมูลลับ",
   "info.journal.afterRestoration": "การสังเกตหลังฟื้นคืน",
   "info.journal.entry": "{date}  ·  #{tag}\nQ. {question}\nA. {answer}\nพบ  {habit}",
   "info.journal.viewAll": "ดูบันทึกทั้งหมด ({count})",

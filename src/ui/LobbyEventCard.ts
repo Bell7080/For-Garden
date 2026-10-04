@@ -3,6 +3,7 @@ import { t, type TextKey } from "../i18n";
 import type { LobbyEventDef } from "../data/lobbyEvents";
 import { chipPoints, drawLayer, slantedRect } from "./holo";
 import type { LobbyEventRemaining } from "./lobbyEventModel";
+import { addPopupBackgroundImage } from "./backgrounds";
 import { pressIn, pressOut } from "./pressFeedback";
 import { shrinkTextToWidth, squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
@@ -58,6 +59,17 @@ export class LobbyEventCard extends Phaser.GameObjects.Container {
       glow: { color: COLOR.event, strength: CARD.glow.strength, height: CARD.glow.height },
       edge: COLOR.event, edgeAlpha: 0.9, edgeWidth: 3,
     }));
+    // 이벤트에 어울리는 원화가 있으면 카드 뒷배경으로 깐다. 글이 서는 왼쪽은 어둡게 눌러 읽히게 하고
+    // 원화는 오른쪽에서 드러난다. 판 실루엣과 같은 도형으로 잘라 깎인 모서리 밖으로 새지 않는다.
+    if (event.backdropKey) {
+      addPopupBackgroundImage(scene, this, event.backdropKey, {
+        x: 0, y: 0, width, height, maskShape: chipPoints(width, height, { bevel: cut }), imageAlpha: 0.9, overlayStrength: 0.6,
+      });
+      const veil = scene.add.graphics();
+      veil.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.78, 0, 0.78, 0);
+      veil.fillRect(-width / 2, -height / 2, width * 0.7, height);
+      this.add(veil);
+    }
     this.add(drawLayer(scene, left - CARD.rail.inset, 0, slantedRect(CARD.rail.width, height * 0.6), {
       fill: COLOR.event, alpha: CARD.rail.alpha, shadow: false,
     }));

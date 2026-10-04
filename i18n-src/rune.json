@@ -769,6 +769,16 @@
 "Neues Merkmal übernehmen",
 "Применить новую черту"
 ],
+"rune.traitReroll.again": [
+"保留当前并重新解析",
+"คงตัวเดิมแล้วตีความใหม่",
+"Giữ hiện tại và diễn giải lại",
+"Pertahankan lalu tafsir ulang",
+"Conservar actual y reinterpretar",
+"Manter atual e reinterpretar",
+"Aktuelles behalten und neu deuten",
+"Оставить текущую и переосмыслить заново"
+],
 "rune.traitReroll.upgraded": [
 "等级已提升",
 "ระดับเพิ่มขึ้นแล้ว",

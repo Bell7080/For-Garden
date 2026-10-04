@@ -2401,9 +2401,9 @@ export const RELICS: RelicDef[] = [
     // 공개 도감 요약은 원종과 복원 외형만 설명하는 발굴 계열 데이터다.
     catalogSummary: "넓은 등판과 집게발이 복원된 바다전갈 기반 표본.",
     // 복원 후 성격 관찰은 사고를 낸 순서와 뒤늦은 수습 행동만 기록한다.
-    unlockRecord: { status: "recorded", text: "복원 후 토비는 낯선 장치를 보면 허락을 기다리지 않고 먼저 집게발을 댄다. 작동시킨 뒤에야 멈출 방법을 찾느라 뛰어다니며, 넘어뜨린 장비는 아무도 보기 전에 제자리로 돌려놓으려 한다. 훈련에서는 힘을 줄이겠다고 매번 다짐하지만 손잡이나 표적을 또 부순 다음에야 힘 조절에 실패했다는 것을 알아차린다." },
+    unlockRecord: { status: "recorded", text: "식별 기록 202. 공멸 소속으로 확인되었다. 챙 넓은 보닛에 십자 바느질이 박힌 외투를 입었고, 리본 끝마다 사슬 끝에 화살촉 모양 장식이 달려 걸을 때마다 짤랑거린다. 몸 뒤로는 반투명한 촉수 같은 꼬리가 끌린다. 처음 마주쳤을 때 낯선 장치에는 허락도 없이 먼저 손을 댔고, 작동시킨 뒤에야 멈출 방법을 찾아 뛰어다녔다. 넘어뜨린 장비는 아무도 보기 전에 제자리로 돌려놓으려 했다. 어디서 어떤 지시를 받는지는 확인되지 않았다." },
     // 복원 후 성격 관찰을 소속 내 행동으로 이어 쓰되 발굴 상태는 반복하지 않는다.
-    squadNote: "공멸의 정면 돌파 담당. 잠긴 방벽을 집게발로 먼저 뜯어 일을 키우지만, 흩어진 장비까지 주워 다음 돌입로를 열어 둔다.",
+    squadNote: "공멸의 정면 돌파 담당으로 확인된다. 잠긴 방벽을 집게발로 먼저 뜯어 일을 키우지만, 흩어진 장비까지 주워 다음 돌입로를 열어 둔다.",
     researcherTitle: "연구원",
     rarity: "R",
     portraitAssetId: "toby",
@@ -2526,9 +2526,9 @@ export const RELICS: RelicDef[] = [
     // 공개 도감 요약은 원종과 복원 외형만 설명하는 발굴 계열 데이터다.
     catalogSummary: "나선형 껍질과 격벽 구조가 복원된 암모나이트 기반 표본.",
     // 복원 후 성격 관찰은 위험에 숨는 반응과 동료를 위해 앞을 막는 행동만 기록한다.
-    unlockRecord: { status: "recorded", text: "복원 후 아모는 큰 소리나 위험 신호가 나면 곧바로 몸을 껍질 안으로 감춘다. 혼자 있을 때는 좀처럼 다시 나오지 않지만, 뒤에 동료가 남아 있으면 한참 망설이다 껍질을 끌고 앞으로 나와 길을 막는다. 상황이 끝난 뒤에는 자신이 먼저 나섰다는 말을 부정하며 다시 얼굴을 숨긴다." },
+    unlockRecord: { status: "recorded", text: "식별 기록 201. 공멸 소속으로 확인되었다. 얼굴이 반쯤 가려지는 두건과 십자 바느질이 촘촘한 외투를 입었고, 신발과 꼬리 끝에 나선 무늬 장식이 달려 있다. 큰 소리나 위험 신호가 나면 두건을 끌어내려 얼굴을 숨긴 채 움직이지 않았다. 뒤에 동료가 남아 있으면 한참 망설이다 앞으로 나와 길을 막았고, 끝난 뒤에는 자신이 먼저 나섰다는 말을 부정했다. 허리에 단 시험관과 나선 문양 인식표의 용도는 확인되지 않았다." },
     // 복원 후 성격 관찰을 소속 내 행동으로 이어 쓰되 발굴 상태는 반복하지 않는다.
-    squadNote: "공멸의 후미 방벽. 포격에는 먼저 껍질을 닫지만 작은 동료가 남으면 돌아와, 침투조가 모두 빠질 때까지 통로를 몸으로 막는다.",
+    squadNote: "공멸의 후미 방벽으로 확인된다. 포격에는 먼저 껍질을 닫지만 작은 동료가 남으면 돌아와, 침투조가 모두 빠질 때까지 통로를 몸으로 막는다.",
     researcherTitle: "연구원",
     rarity: "R",
     portraitAssetId: "amo",
@@ -2624,9 +2624,9 @@ export const RELICS: RelicDef[] = [
     // 공개 도감 요약은 원종과 복원 외형만 설명하는 발굴 계열 데이터다.
     catalogSummary: "세 구획의 등껍질과 마디 구조가 복원된 삼엽충 기반 표본.",
     // 복원 후 성격 관찰은 숨었다 나타나는 장난과 동료 물건을 옮기는 행동만 기록한다.
-    unlockRecord: { status: "recorded", text: "복원 후 리파는 모래나 얕은 물속에 몸을 숨긴 채 동료가 가까이 오기를 기다린다. 갑자기 솟아올라 놀래킨 뒤에는 웃으며 달아나고, 자리를 비운 사이 동료의 장갑이나 기록 도구를 다른 선반으로 옮겨 놓는다. 물건을 찾는 모습을 충분히 지켜본 다음에야 숨겨 둔 곳을 가리킨다." },
+    unlockRecord: { status: "recorded", text: "식별 기록 203. 공멸 소속으로 확인되었다. 지느러미처럼 뾰족한 두건과 찢어진 자락의 보라색 망토를 걸쳤고, 가시 돋친 꼬리가 뒤로 길게 뻗는다. 가슴께에 시험관과 바코드 인식표를 사슬로 걸고 있다. 모래나 얕은 물속에 숨어 있다가 솟아올라 놀래킨 뒤 웃으며 달아났고, 자리를 비운 사이 장갑과 기록 도구가 다른 선반으로 옮겨져 있었다. 한참 지켜본 뒤에야 숨긴 곳을 가리켰다. 시험관 속 내용물과 인식표의 출처는 확인되지 않았다." },
     // 복원 후 성격 관찰을 소속 내 행동으로 이어 쓰되 발굴 상태는 반복하지 않는다.
-    squadNote: "공멸의 잠복 지원가. 모래와 물속을 오가며 회복 파장을 건네고, 동료 장비를 숨겼다가 필요한 순간 버프 신호와 함께 되돌려 준다.",
+    squadNote: "공멸의 잠복 지원가로 확인된다. 모래와 물속을 오가며 회복 파장을 건네고, 동료 장비를 숨겼다가 필요한 순간 버프 신호와 함께 되돌려 준다.",
     researcherTitle: "연구원",
     rarity: "R",
     portraitAssetId: "ripa",
@@ -2753,8 +2753,8 @@ export const RELICS: RelicDef[] = [
      * 오른쪽 절반이 비어 있었다 — 플레이어가 가장 오래 마주 보는 적이 이름과 수치밖에 갖지 못했다.
      * 다른 공멸 셋과 같은 층위(복원 후 관찰 · 소속 행동 · 호칭)로 채운다.
      */
-    unlockRecord: { status: "recorded", text: "복원 후 코마는 문이 열리는 소리보다 먼저 그 앞에 가 있다. 길이 맞는지 확인하는 일은 뒤따라오는 동료에게 맡기고, 막다른 곳이면 왔던 자리로 되돌아와 다시 다른 길을 골라 달린다. 한 번 뒤를 밟기 시작한 상대는 시야에서 사라져도 놓지 않아, 훈련이 끝난 뒤에도 표적이 지나간 통로를 혼자 몇 번씩 되짚는다." },
-    squadNote: "공멸의 첨병. 돌입로가 정해지기 전에 먼저 들어가 안을 보고 오며, 흩어진 적을 한 방향으로 몰아 뒤따르는 아모와 토비 앞에 세운다.",
+    unlockRecord: { status: "recorded", text: "식별 기록 204. 공멸 소속으로 확인되었다. 얼룩무늬 후드 코트의 지퍼를 목 끝까지 올려 눈만 드러내고 서며, 두 손은 뒤로 돌린 채 꼬리 끝이 톱니처럼 갈라져 있다. 문이 열리는 소리보다 먼저 그 앞에 가 있었고, 막다른 길이면 되돌아와 다른 길을 골라 달렸다. 한 번 뒤를 밟은 상대는 시야에서 사라져도 놓지 않았다. 누구의 지시를 받아 먼저 움직이는지는 확인되지 않았다." },
+    squadNote: "공멸의 행동대장으로 확인된다. 돌입로가 정해지기 전에 먼저 들어가 안을 보고 오며, 흩어진 적을 한 방향으로 몰아 뒤따르는 동료 앞에 세운다.",
     researcherTitle: "연구원",
     /*
      * **중간보스는 SR급이다.** 공멸 3인조(토비·아모·리파)가 R 띠를 지키는 잡졸이라면 이쪽은
@@ -3986,11 +3986,15 @@ export const RELICS: RelicDef[] = [
       statusEffects: [{ kind: "stun", seconds: 5 }],
     },
     /*
-     * **한계 돌파 효과는 네 칸 모두 "없음"이다.** 보스는 돌파 없이도 충분히 세고, 돌파 단계는 레벨
-     * 상한을 맞추려고 들고 있을 뿐이다. 칸을 비워 두지 않고 "없음"으로 적어 두는 이유는 그것이
-     * 정해 둔 효과이기 때문이다 — 나중에 이 자리에 다른 효과를 넣으면 그대로 바뀐다.
+     * **한계 돌파 효과는 보스 몸의 기본 틀만 읽는다.** 칸 하나만 켰을 때 설명문이 성립해야 하고(다른 돌파가
+     * 있다고 가정하지 않는다), 시즌 게이지가 공유라 회복·보호막·경감·강인함은 더하지 않는다.
      */
-    breakthroughEffects: { basic: { kind: "none" }, ultimate: { kind: "none" }, ferocity: { kind: "none" }, passive: { kind: "none" } },
+    breakthroughEffects: {
+      basic: { kind: "pressStagger", seconds: 0.3 },
+      ultimate: { kind: "sunkenWeight", stacks: 2, speedPercentPerStack: 8, seconds: 6 },
+      ferocity: { kind: "feverWidenBasic", radius: 620 },
+      passive: { kind: "pressureCrack", intervalSeconds: 15, powerPercent: 100 },
+    },
   },
   {
     /**
@@ -4022,8 +4026,8 @@ export const RELICS: RelicDef[] = [
       weight: "318 kg",
     },
     catalogSummary: "턱과 등판이 과하게 복원된 데이노수쿠스 기반 대형 표본.",
-    unlockRecord: { status: "sealed", reason: "restricted" },
-    // 봉인된 적은 소속만 공개한다. squadNote·researcherTitle은 관계 기록 해제 전까지 넣지 않는다.
+    unlockRecord: { status: "recorded", text: "재앙 기록 004. 하천 범람원 일대에 출현했다. 아가리를 벌린 모양의 후드를 쓰고 사슬과 자물쇠 패를 온몸에 둘렀으며, 갈고리 같은 손톱과 가시 돋은 꼬리를 끌고 다녔다. 가까이 선 구조물의 외벽을 먼저 물어뜯었고, 맞서던 대상이 물러설 때까지 같은 자리를 짓뭉갰다. 어디서 나타났는지, 무엇을 노렸는지는 확인되지 않았다." },
+    // 레이드 보스는 연구원이 아는 만큼만 재앙 기록일지로 적는다. 정체·목적·내부 사정은 쓰지 않으며 squadNote·researcherTitle은 넣지 않는다.
     rarity: "SSR",
     portraitAssetId: "sukusuino",
     origin: "데이노수쿠스",
@@ -4161,11 +4165,15 @@ export const RELICS: RelicDef[] = [
       statusEffects: [{ kind: "stun", seconds: 2 }],
     },
     /*
-     * **한계 돌파 효과는 네 칸 모두 "없음"이다.** 보스는 돌파 없이도 충분히 세고, 돌파 단계는 레벨
-     * 상한을 맞추려고 들고 있을 뿐이다. 칸을 비워 두지 않고 "없음"으로 적어 두는 이유는 그것이
-     * 정해 둔 효과이기 때문이다 — 나중에 이 자리에 다른 효과를 넣으면 그대로 바뀐다.
+     * **한계 돌파 효과는 보스 몸의 기본 틀만 읽는다.** 칸 하나만 켰을 때 설명문이 성립해야 하고(다른 돌파가
+     * 있다고 가정하지 않는다), 시즌 게이지가 공유라 회복·보호막·경감·강인함은 더하지 않는다.
      */
-    breakthroughEffects: { basic: { kind: "none" }, ultimate: { kind: "none" }, ferocity: { kind: "none" }, passive: { kind: "none" } },
+    breakthroughEffects: {
+      basic: { kind: "biteMark", seconds: 8, damageTakenPercent: 4, maxStacks: 3 },
+      ultimate: { kind: "unhealedMark", seconds: 6, reductionPercent: 40 },
+      ferocity: { kind: "hungryStride", moveSpeedPercent: 50 },
+      passive: { kind: "scarMight", damagePercentPerStack: 5 },
+    },
   },
   {
     /**
@@ -4199,8 +4207,8 @@ export const RELICS: RelicDef[] = [
       weight: "146 kg",
     },
     catalogSummary: "꼬리와 비늘 외투가 과하게 복원된 티타노보아 기반 대형 표본.",
-    unlockRecord: { status: "sealed", reason: "restricted" },
-    // 봉인된 적은 소속만 공개한다. squadNote·researcherTitle은 관계 기록 해제 전까지 넣지 않는다.
+    unlockRecord: { status: "recorded", text: "재앙 기록 005. 열대 습지대 일대에 출현했다. 뱀 아가리 모양 후드를 쓰고 검붉은 비늘 무늬의 긴 꼬리를 늘어뜨렸으며, 사슬과 자물쇠 패를 장신구처럼 매달고 있었다. 가까이 선 대상을 꼬리로 감아 들어갔고, 한 번 감은 것은 쓰러질 때까지 풀지 않았다. 어디서 나타났는지, 무엇을 노렸는지는 확인되지 않았다." },
+    // 레이드 보스는 연구원이 아는 만큼만 재앙 기록일지로 적는다. 정체·목적·내부 사정은 쓰지 않으며 squadNote·researcherTitle은 넣지 않는다.
     rarity: "SSR",
     portraitAssetId: "taboa",
     origin: "티타노보아",
@@ -4303,7 +4311,12 @@ export const RELICS: RelicDef[] = [
       selfShieldMaxHpPercent: 3,
     },
     // 수쿠스이노와 같은 이유로 네 칸 모두 "없음"이다.
-    breakthroughEffects: { basic: { kind: "none" }, ultimate: { kind: "none" }, ferocity: { kind: "none" }, passive: { kind: "none" } },
+    breakthroughEffects: {
+      basic: { kind: "coiledTarget", damagePercentPerStack: 8 },
+      ultimate: { kind: "widenArea", radius: 390 },
+      ferocity: { kind: "longFeast", radius: 490 },
+      passive: { kind: "warmBody", damagePercentPerStack: 1.2, maxStacks: 10 },
+    },
   },
   {
     /**
@@ -4336,8 +4349,8 @@ export const RELICS: RelicDef[] = [
       weight: "92 kg",
     },
     catalogSummary: "목과 날개막이 과하게 복원된 케찰코아틀루스 기반 대형 표본.",
-    unlockRecord: { status: "sealed", reason: "restricted" },
-    // 봉인된 적은 소속만 공개한다. squadNote·researcherTitle은 관계 기록 해제 전까지 넣지 않는다.
+    unlockRecord: { status: "recorded", text: "재앙 기록 006. 강변 상공에 출현했다. 날개처럼 펼친 검은 망토와 뾰족한 챙 모자를 썼고, 끝이 화살촉 모양인 장식이 사슬에 달려 흔들렸다. 한참을 높은 곳에서 내려다보다 한 번에 내리꽂았으며, 날갯짓 한 번에 근처 장비가 쓸려 나갔다. 어디서 나타났는지, 무엇을 노렸는지는 확인되지 않았다." },
+    // 레이드 보스는 연구원이 아는 만큼만 재앙 기록일지로 적는다. 정체·목적·내부 사정은 쓰지 않으며 squadNote·researcherTitle은 넣지 않는다.
     rarity: "SSR",
     portraitAssetId: "quetzalcoatlus",
     origin: "케찰코아틀루스",
@@ -4433,7 +4446,12 @@ export const RELICS: RelicDef[] = [
       selfShieldMaxHpPercent: 3,
     },
     // 다른 보스와 같은 이유로 네 칸 모두 "없음"이다.
-    breakthroughEffects: { basic: { kind: "none" }, ultimate: { kind: "none" }, ferocity: { kind: "none" }, passive: { kind: "none" } },
+    breakthroughEffects: {
+      basic: { kind: "piercingBeak", sharePercent: 30, halfWidth: 140 },
+      ultimate: { kind: "widenArea", radius: 140 },
+      ferocity: { kind: "sharpStorm", critChancePoints: 8 },
+      passive: { kind: "pinningPlume", staggerSeconds: 0.5, lockoutSeconds: 3 },
+    },
   },
   {
     /**
@@ -4470,7 +4488,7 @@ export const RELICS: RelicDef[] = [
       weight: "21 kg",
     },
     catalogSummary: "앞니와 볼주머니가 과하게 복원된 겨울잠쥐 기반 표본.",
-    unlockRecord: { status: "recorded", text: "복원 후 레이티아는 잠들지 않는다. 겨울잠에 들어야 할 시기가 와도 먹기를 멈추지 않고, 볼주머니가 가득 찬 뒤에도 앞니로 계속 갉는다. 한 마리가 먹이를 찾으면 울음이 아니라 앞니 소리로 알리고, 그 소리를 들은 자매들이 같은 자리로 한꺼번에 몰려든다. 첫째는 갉은 자리에 늘 새순을 흘린다. 볼주머니에서 떨어진 씨가 발자국마다 돋아, 무리가 지나간 길이 초록으로 남는다." },
+    unlockRecord: { status: "recorded", text: "식별 기록 207. 공멸 소속으로 확인되었다. 쥐 귀가 달린 두건 잠옷을 입은 다섯 가운데 초록 매듭을 두른 개체로, 치즈 모양 주머니와 이빨 달린 슬리퍼, 끝에 리본을 맨 줄무늬 꼬리가 눈에 띈다. 먹이를 찾으면 울음 대신 앞니 소리로 알렸고, 그 소리를 들은 자매들이 같은 자리로 한꺼번에 몰려들었다. 갉은 자리에는 새순이 흘려져 있었고, 지나간 길에는 발자국마다 씨가 돋아 초록 길이 남았다. 겨울잠에 들 시기가 되어도 먹기를 멈추지 않는 이유는 확인되지 않았다." },
     squadNote: "공멸의 소모 물량. 지시받은 방향으로 한꺼번에 흘러가 통로를 메우고, 앞의 개체가 쓰러진 자리를 뒤의 개체가 그대로 밟고 넘어간다.",
     researcherTitle: "연구원",
     rarity: "R",
@@ -4584,7 +4602,7 @@ export const RELICS: RelicDef[] = [
       weight: "21 kg",
     },
     catalogSummary: "앞니와 볼주머니가 과하게 복원된 겨울잠쥐 기반 표본.",
-    unlockRecord: { status: "recorded", text: "복원 후 레이티아는 잠들지 않는다. 겨울잠에 들어야 할 시기가 와도 먹기를 멈추지 않고, 볼주머니가 가득 찬 뒤에도 앞니로 계속 갉는다. 한 마리가 먹이를 찾으면 울음이 아니라 앞니 소리로 알리고, 그 소리를 들은 자매들이 같은 자리로 한꺼번에 몰려든다. 둘째는 볼주머니가 마르지 않는다. 물을 머금은 채로 갉아 앞니 소리가 둔하게 울리고, 쓰러질 때 품고 있던 물을 한꺼번에 쏟는다." },
+    unlockRecord: { status: "recorded", text: "식별 기록 208. 공멸 소속으로 확인되었다. 같은 두건 잠옷 가운데 푸른 줄무늬 꼬리 끝에 솜뭉치를 단 개체로, 한 손은 허리에 얹고 다른 손가락은 입가에 댄 채 웃는다. 자매의 앞니 소리가 들리면 웃으며 가장 먼저 달려 나왔고, 가까워지면 손에 닿는 장비부터 앞니로 갉았다. 무리가 지나간 자리에는 젖은 발자국이 길게 이어졌다. 무엇이 그 발자국을 적시는지는 확인되지 않았다." },
     squadNote: "공멸의 소모 물량. 지시받은 방향으로 한꺼번에 흘러가 통로를 메우고, 앞의 개체가 쓰러진 자리를 뒤의 개체가 그대로 밟고 넘어간다.",
     researcherTitle: "연구원",
     rarity: "R",
@@ -4698,7 +4716,7 @@ export const RELICS: RelicDef[] = [
       weight: "21 kg",
     },
     catalogSummary: "앞니와 볼주머니가 과하게 복원된 겨울잠쥐 기반 표본.",
-    unlockRecord: { status: "recorded", text: "복원 후 레이티아는 잠들지 않는다. 겨울잠에 들어야 할 시기가 와도 먹기를 멈추지 않고, 볼주머니가 가득 찬 뒤에도 앞니로 계속 갉는다. 한 마리가 먹이를 찾으면 울음이 아니라 앞니 소리로 알리고, 그 소리를 들은 자매들이 같은 자리로 한꺼번에 몰려든다. 셋째는 앞니가 식지 않는다. 갉는 속도가 빨라 마찰만으로 잉걸이 튀고, 자매들 중 가장 먼저 먹이에 닿는다." },
+    unlockRecord: { status: "recorded", text: "식별 기록 209. 공멸 소속으로 확인되었다. 같은 두건 잠옷 가운데 분홍 체크무늬 리본을 단 개체로, 잠에서 덜 깬 얼굴로 한 손은 눈을 비비고 다른 손은 허리에 얹고 있다. 졸린 기색인데도 먹기를 멈추지 않았고, 볼주머니가 가득 찬 뒤에도 앞니로 계속 갉았다. 자매들이 몰려가면 눈을 비빈 채 그 뒤를 따라갔다. 졸음이 시늉인지 진짜인지는 확인되지 않았다." },
     squadNote: "공멸의 소모 물량. 지시받은 방향으로 한꺼번에 흘러가 통로를 메우고, 앞의 개체가 쓰러진 자리를 뒤의 개체가 그대로 밟고 넘어간다.",
     researcherTitle: "연구원",
     rarity: "R",
@@ -4812,7 +4830,7 @@ export const RELICS: RelicDef[] = [
       weight: "21 kg",
     },
     catalogSummary: "앞니와 볼주머니가 과하게 복원된 겨울잠쥐 기반 표본.",
-    unlockRecord: { status: "recorded", text: "복원 후 레이티아는 잠들지 않는다. 겨울잠에 들어야 할 시기가 와도 먹기를 멈추지 않고, 볼주머니가 가득 찬 뒤에도 앞니로 계속 갉는다. 한 마리가 먹이를 찾으면 울음이 아니라 앞니 소리로 알리고, 그 소리를 들은 자매들이 같은 자리로 한꺼번에 몰려든다. 넷째는 볼주머니에 자갈을 채운다. 무거워 가장 늦게 도착하지만 앞줄에서 가장 오래 버티고, 자매가 쓰러진 자리를 제 몸으로 메운다." },
+    unlockRecord: { status: "recorded", text: "식별 기록 210. 공멸 소속으로 확인되었다. 같은 두건 잠옷 가운데 갈색 바탕에 노란 매듭과 땋은 머리가 눈에 띄는 개체로, 꼬리 끝에 큰 털뭉치를 달았다. 앞으로 손을 뻗고 서면 자매들이 그 손끝 방향으로 한꺼번에 흘러갔고, 앞에 선 개체가 쓰러진 자리는 뒤의 개체가 그대로 밟고 넘어갔다. 손끝이 향하는 방향을 누가 정하는지는 확인되지 않았다." },
     squadNote: "공멸의 소모 물량. 지시받은 방향으로 한꺼번에 흘러가 통로를 메우고, 앞의 개체가 쓰러진 자리를 뒤의 개체가 그대로 밟고 넘어간다.",
     researcherTitle: "연구원",
     rarity: "R",
@@ -4926,7 +4944,7 @@ export const RELICS: RelicDef[] = [
       weight: "21 kg",
     },
     catalogSummary: "앞니와 볼주머니가 과하게 복원된 겨울잠쥐 기반 표본.",
-    unlockRecord: { status: "recorded", text: "복원 후 레이티아는 잠들지 않는다. 겨울잠에 들어야 할 시기가 와도 먹기를 멈추지 않고, 볼주머니가 가득 찬 뒤에도 앞니로 계속 갉는다. 한 마리가 먹이를 찾으면 울음이 아니라 앞니 소리로 알리고, 그 소리를 들은 자매들이 같은 자리로 한꺼번에 몰려든다. 다섯째는 볼주머니를 비워 둔다. 가벼운 몸으로 먼저 달려 나가 먹이의 자리를 알리고, 앞니 소리가 가장 멀리 간다." },
+    unlockRecord: { status: "recorded", text: "식별 기록 211. 공멸 소속으로 확인되었다. 같은 두건 잠옷 가운데 민트색 리본을 맨 개체로, 팔짱을 끼고 입을 꾹 다문 채 서 있다. 자매들이 먹이를 향해 몰려간 뒤에야 마지못해 뒤따랐고, 도착해서는 가장 오래 앞니를 놀렸다. 앞니 소리로 무언가를 알리는 모습은 한 번도 확인되지 않았다." },
     squadNote: "공멸의 소모 물량. 지시받은 방향으로 한꺼번에 흘러가 통로를 메우고, 앞의 개체가 쓰러진 자리를 뒤의 개체가 그대로 밟고 넘어간다.",
     researcherTitle: "연구원",
     rarity: "R",

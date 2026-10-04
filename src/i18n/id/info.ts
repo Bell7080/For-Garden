@@ -60,6 +60,7 @@ export const INFO_ID = {
   "info.journal.lifeStageValue": "{stage} · Tinggi {height} · Berat {weight}",
   "info.journal.unknown": "Tidak diketahui",
   "info.journal.lockedNotice": "\n\nCatatan lengkap terbuka setelah Anda mendapatkan Relik ini.",
+  "info.journal.classified": "Rahasia",
   "info.journal.afterRestoration": "Observasi Setelah Restorasi",
   "info.journal.entry": "{date}  ·  #{tag}\nT. {question}\nJ. {answer}\nTemuan  {habit}",
   "info.journal.viewAll": "Lihat semua catatan ({count})",

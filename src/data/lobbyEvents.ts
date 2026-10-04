@@ -1,4 +1,5 @@
 import type { TextKey } from "../i18n";
+import { BACKGROUND } from "../ui/backgroundAssets";
 
 /**
  * 로비 이벤트 목록.
@@ -20,7 +21,20 @@ export interface LobbyEventDef {
   /** ISO 시각. 기기 시계로 재며, 실제 서버가 생기면 서버 시각으로 옮긴다. */
   readonly startsAt: string;
   readonly endsAt: string;
+  /**
+   * 카드 뒷배경으로 까는 원화 키. 이벤트마다 어울리는 그림을 깔고 카드 구성도 그 그림의 결에
+   * 맞춘다. 비워 두면 기본 카드(유리 판)로 선다.
+   */
+  readonly backdropKey?: string;
+  /**
+   * 카드를 눌렀을 때 가는 곳. 비워 두면 이벤트 화면(`EventScene`)이다. 이미 있는 콘텐츠를 알리는
+   * 이벤트는 새 씬을 만들지 않고 그 콘텐츠로 곧장 잇는다(예: 픽업 모집).
+   */
+  readonly destination?: LobbyEventDestination;
 }
+
+/** 이벤트 카드가 여는 곳. */
+export type LobbyEventDestination = { readonly kind: "lab"; readonly bannerId: string };
 
 /** 목록에 서는 순서가 곧 이 배열의 순서다. */
 export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
@@ -28,6 +42,9 @@ export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
     id: "wolf-cafe",
     titleKey: "event.wolfCafe.title",
     subtitleKey: "event.wolfCafe.subtitle",
+    backdropKey: BACKGROUND.recruitDian,
+    // 디안 픽업 이벤트는 새 화면이 아니라 디안이 선 호박석 연구(픽업 모집)로 곧장 간다.
+    destination: { kind: "lab", bannerId: "amber" },
     startsAt: "2026-09-01T00:00:00+09:00",
     endsAt: "2026-12-31T23:59:59+09:00",
   },

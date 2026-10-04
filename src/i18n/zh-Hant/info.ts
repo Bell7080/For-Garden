@@ -60,6 +60,7 @@ export const INFO_ZH_HANT = {
   "info.journal.lifeStageValue": "{stage} · 身高 {height} · 體重 {weight}",
   "info.journal.unknown": "未知",
   "info.journal.lockedNotice": "\n\n獲得此遺物後解鎖完整記錄。",
+  "info.journal.classified": "機密",
   "info.journal.afterRestoration": "復原後觀察",
   "info.journal.entry": "{date}  ·  #{tag}\nQ. {question}\nA. {answer}\n發現  {habit}",
   "info.journal.viewAll": "檢視全部記錄（{count}條）",

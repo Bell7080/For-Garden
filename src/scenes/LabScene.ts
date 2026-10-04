@@ -6,6 +6,7 @@ import { gameApi } from "../api/FakeServer";
 import { GameApiError, type PullResultDto } from "../api/contracts";
 import { bannerAcceptsCount, bannerGuaranteePending, bannerPullsRemaining, canPull, pullCost, pullPayment, type Banner, type GachaPityState, type ResearchGrade } from "../core/gacha";
 import { ResearchPresentationController, highestRarity, researchSlotViews, showcaseRelicIds } from "../core/researchPresentation";
+import { consumeSceneEntry } from "./sceneEntry";
 import { BANNERS, LIMITED_RELIC_IDS } from "../data/banners";
 import { getRelic } from "../data/relics";
 import { session } from "../state/session";
@@ -111,8 +112,16 @@ export class LabScene extends Phaser.Scene {
   private cinematic?: ResearchCinematic;
   private boardRequest = 0;
 
+  /** 이번 진입이 먼저 보여 줄 배너. 이벤트 카드처럼 특정 배너로 곧장 오는 길이 넘긴다. */
+  private entryBannerId?: string;
+
   constructor() {
     super("lab");
+  }
+
+  init(data?: { bannerId?: unknown }): void {
+    this.entryBannerId = typeof data?.bannerId === "string" ? data.bannerId : undefined;
+    consumeSceneEntry(this);
   }
 
   /**
@@ -135,7 +144,8 @@ export class LabScene extends Phaser.Scene {
   create(): void {
     setDebugScene("lab");
     exposeShowcasePreview((relicId) => void this.introduceRelic(relicId));
-    this.bannerIndex = 0;
+    // 열 배너가 목록에 없으면(다 쓴 한정 배너 등) 첫 배너로 선다.
+    this.bannerIndex = Math.max(0, this.banners.findIndex(({ id }) => id === this.entryBannerId));
     this.audioScope = audioManager?.createScope();
     this.popupLayer = new PopupLayer(this, 2400);
 

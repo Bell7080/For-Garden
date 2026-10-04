@@ -34,7 +34,7 @@ import { bountyRunCost, isBountyTierUnlocked, nextBountyStep, type BountyBattleI
 import type { PartyContent } from "../data/partyContent";
 import { enterContentBattle } from "./contentBattleEntry";
 import { ENCOUNTER_ROLE, encounterRoleFor } from "../core/levelDesign";
-import { getExpeditionNodeEnemies } from "../data/expeditionEnemies";
+import { expeditionBossGrowth, getExpeditionNodeEnemies } from "../data/expeditionEnemies";
 import type { PuppetCreature, PuppetAsset } from "../puppets/assets";
 import type { ExpeditionRelicSnapshot } from "../core/expeditionSnapshot";
 import { showExpeditionRelic } from "../ui/expeditionRelicInfo";
@@ -76,7 +76,7 @@ import { anyPopupOpen, PopupLayer } from "../ui/PopupLayer";
 import { cakeOperationEnemies, cakeOperationRole, cakeOperationRunCost, getCakeOperationTier, isCakeTierUnlocked } from "../data/cakeOperation";
 import { battleArena } from "../core/battleArena";
 import { createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, createRaidSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type CakeBattleInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto, type RaidBattleInputDto } from "../core/expeditionBattle";
-import { raidBossDef, raidBossPercentHpBasis } from "../core/raid";
+import { raidBossDef, raidBossGrowth, raidBossPercentHpBasis } from "../core/raid";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import { expeditionManager, ExpeditionBossSettlementError, ExpeditionBossSettlementFlow } from "../managers/ExpeditionManager";
 import { settingsManager } from "../managers/SettingsManager";
@@ -538,6 +538,9 @@ export class BattleScene extends Phaser.Scene {
       playerInitialStates: expeditionConfig.playerInitialStates,
       augmentEffects: [...expeditionConfig.augmentEffects, ...traitEffects],
       enemyBodyScale: expeditionConfig.enemyBodyScale,
+      // 보스의 돌파 효과도 재현과 같은 값으로 싸운다(레이드는 난이도, 원정 폰토스는 최종층 레벨).
+      ...(this.battleInput.mode === "raid" ? { enemyBreakthroughs: [raidBossGrowth(this.battleInput.difficulty).breakthrough] }
+        : this.battleInput.mode === "expeditionBoss" ? { enemyBreakthroughs: [expeditionBossGrowth().breakthrough] } : {}),
       ...(this.battleInput.mode === "expeditionBoss" || this.battleInput.mode === "raid" ? { boss: (expeditionConfig as ReturnType<typeof createExpeditionBossSkirmishConfig>).boss } : {}),
     } : {
       // 일반 스테이지의 적도 능력치뿐 아니라 스킬 돌파 효과까지 슬롯별 스냅샷을 사용한다.

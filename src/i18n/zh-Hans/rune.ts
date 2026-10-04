@@ -77,6 +77,7 @@ export const RUNE_ZH_HANS = {
   "rune.traitReroll.candidate": "新特性",
   "rune.traitReroll.keep": "保留当前",
   "rune.traitReroll.apply": "应用新特性",
+  "rune.traitReroll.again": "保留当前并重新解析",
   "rune.traitReroll.upgraded": "等级已提升",
   "rune.traitReroll.pity": "升级保底 {done} / {total}",
 } as const;

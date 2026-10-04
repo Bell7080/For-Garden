@@ -41,6 +41,8 @@ export interface ExpeditionBossReplayInput {
    */
   bondLevels?: Readonly<Record<string, number>>;
   breakthroughs?: Readonly<Record<string, number>>;
+  /** 보스의 한계 돌파 단계. 화면의 난전과 같은 값을 넘겨야 보스 쪽 돌파 효과가 재현에도 선다. */
+  bossBreakthrough?: number;
   /**
    * **보스가 쓰러질 수 있는 판인가**(레이드). 켜면 보스를 정의의 체력 그대로 세우고, 쓰러뜨려 이긴
    * 판도 정상 종료로 받는다. 끄면(원정 폰토스) 예전처럼 한계 체력으로 세워 전멸만 받는다.
@@ -169,6 +171,7 @@ export function resolveExpeditionBossBattle(input: ExpeditionBossReplayInput, ac
   const bossHp = killable ? input.boss.stats.hp : Number.MAX_SAFE_INTEGER;
   const state = createSkirmish([...input.allies], [{ ...input.boss, stats: { ...input.boss.stats, hp: bossHp } }], input.arena, input.bondLevels ?? {}, input.breakthroughs ?? {}, {
     playerInitialStates: initialStates, augmentEffects: input.augmentEffects,
+    enemyBreakthroughs: [input.bossBreakthrough ?? 0],
     boss: { phases, limitSeconds: balance.maximumDurationMs / 1_000, percentHpBasis: input.percentHpBasis ?? input.boss.stats.hp, endsOnKill: killable,
       ...(input.seasonHp !== undefined ? { seasonHp: input.seasonHp } : {}) },
   });

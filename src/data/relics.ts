@@ -4026,8 +4026,8 @@ export const RELICS: RelicDef[] = [
       weight: "318 kg",
     },
     catalogSummary: "턱과 등판이 과하게 복원된 데이노수쿠스 기반 대형 표본.",
-    unlockRecord: { status: "sealed", reason: "restricted" },
-    // 봉인된 적은 소속만 공개한다. squadNote·researcherTitle은 관계 기록 해제 전까지 넣지 않는다.
+    unlockRecord: { status: "recorded", text: "재앙 기록 004. 하천 범람원 일대에 출현했다. 아가리를 벌린 모양의 후드를 쓰고 사슬과 자물쇠 패를 온몸에 둘렀으며, 갈고리 같은 손톱과 가시 돋은 꼬리를 끌고 다녔다. 가까이 선 구조물의 외벽을 먼저 물어뜯었고, 맞서던 대상이 물러설 때까지 같은 자리를 짓뭉갰다. 어디서 나타났는지, 무엇을 노렸는지는 확인되지 않았다." },
+    // 레이드 보스는 연구원이 아는 만큼만 재앙 기록일지로 적는다. 정체·목적·내부 사정은 쓰지 않으며 squadNote·researcherTitle은 넣지 않는다.
     rarity: "SSR",
     portraitAssetId: "sukusuino",
     origin: "데이노수쿠스",
@@ -4207,8 +4207,8 @@ export const RELICS: RelicDef[] = [
       weight: "146 kg",
     },
     catalogSummary: "꼬리와 비늘 외투가 과하게 복원된 티타노보아 기반 대형 표본.",
-    unlockRecord: { status: "sealed", reason: "restricted" },
-    // 봉인된 적은 소속만 공개한다. squadNote·researcherTitle은 관계 기록 해제 전까지 넣지 않는다.
+    unlockRecord: { status: "recorded", text: "재앙 기록 005. 열대 습지대 일대에 출현했다. 뱀 아가리 모양 후드를 쓰고 검붉은 비늘 무늬의 긴 꼬리를 늘어뜨렸으며, 사슬과 자물쇠 패를 장신구처럼 매달고 있었다. 가까이 선 대상을 꼬리로 감아 들어갔고, 한 번 감은 것은 쓰러질 때까지 풀지 않았다. 어디서 나타났는지, 무엇을 노렸는지는 확인되지 않았다." },
+    // 레이드 보스는 연구원이 아는 만큼만 재앙 기록일지로 적는다. 정체·목적·내부 사정은 쓰지 않으며 squadNote·researcherTitle은 넣지 않는다.
     rarity: "SSR",
     portraitAssetId: "taboa",
     origin: "티타노보아",
@@ -4349,8 +4349,8 @@ export const RELICS: RelicDef[] = [
       weight: "92 kg",
     },
     catalogSummary: "목과 날개막이 과하게 복원된 케찰코아틀루스 기반 대형 표본.",
-    unlockRecord: { status: "sealed", reason: "restricted" },
-    // 봉인된 적은 소속만 공개한다. squadNote·researcherTitle은 관계 기록 해제 전까지 넣지 않는다.
+    unlockRecord: { status: "recorded", text: "재앙 기록 006. 강변 상공에 출현했다. 날개처럼 펼친 검은 망토와 뾰족한 챙 모자를 썼고, 끝이 화살촉 모양인 장식이 사슬에 달려 흔들렸다. 한참을 높은 곳에서 내려다보다 한 번에 내리꽂았으며, 날갯짓 한 번에 근처 장비가 쓸려 나갔다. 어디서 나타났는지, 무엇을 노렸는지는 확인되지 않았다." },
+    // 레이드 보스는 연구원이 아는 만큼만 재앙 기록일지로 적는다. 정체·목적·내부 사정은 쓰지 않으며 squadNote·researcherTitle은 넣지 않는다.
     rarity: "SSR",
     portraitAssetId: "quetzalcoatlus",
     origin: "케찰코아틀루스",

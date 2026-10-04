@@ -60,6 +60,7 @@ export const INFO_PT_BR = {
   "info.journal.lifeStageValue": "{stage} · Altura {height} · Peso {weight}",
   "info.journal.unknown": "Desconhecido",
   "info.journal.lockedNotice": "\n\nO registro completo é liberado ao obter esta Relíquia.",
+  "info.journal.classified": "Confidencial",
   "info.journal.afterRestoration": "Observações após a Restauração",
   "info.journal.entry": "{date}  ·  #{tag}\nP. {question}\nR. {answer}\nDescoberta  {habit}",
   "info.journal.viewAll": "Ver todos os registros ({count})",

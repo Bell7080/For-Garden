@@ -60,6 +60,7 @@ export const INFO_EN = {
   "info.journal.lifeStageValue": "{stage} · Height {height} · Weight {weight}",
   "info.journal.unknown": "Unknown",
   "info.journal.lockedNotice": "\n\nThe full record unlocks once you obtain this Relic.",
+  "info.journal.classified": "Classified",
   "info.journal.afterRestoration": "Observations After Restoration",
   "info.journal.entry": "{date}  ·  #{tag}\nQ. {question}\nA. {answer}\nFound  {habit}",
   "info.journal.viewAll": "View all records ({count})",

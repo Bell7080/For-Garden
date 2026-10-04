@@ -81,6 +81,7 @@ export const RUNE_KO = {
   "rune.traitReroll.candidate": "새 특성",
   "rune.traitReroll.keep": "기존 유지",
   "rune.traitReroll.apply": "새 특성 적용",
+  "rune.traitReroll.again": "기존 유지 후 재해석",
   "rune.traitReroll.upgraded": "등급 상승",
   "rune.traitReroll.pity": "등급 상승 보정 {done} / {total}",
 } as const;

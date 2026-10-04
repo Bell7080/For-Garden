@@ -14,8 +14,8 @@ const TEKU = getRelic("teku");
 const REFILL = TEKU.passive.refill!;
 const BARRAGE = (TEKU.ultimate as AttackSkill).barrage!;
 
-function setup(enemyIds: string[]) {
-  const state = createSkirmish([TEKU], enemyIds.map((id) => getRelic(id)), ARENA);
+function setup(enemyIds: string[], breakthrough = 0) {
+  const state = createSkirmish([TEKU], enemyIds.map((id) => getRelic(id)), ARENA, {}, { [TEKU.id]: breakthrough });
   const teku = state.fighters.find((fighter) => fighter.side === "player")!;
   const enemies = state.fighters.filter((fighter) => fighter.side === "enemy");
   for (const fighter of state.fighters) { fighter.attackCooldown = Number.POSITIVE_INFINITY; fighter.retargetIn = Number.POSITIVE_INFINITY; }
@@ -118,5 +118,72 @@ describe("테쿠 — 궁극기와 폭주", () => {
     for (const shot of shots.slice(1, 3)) expect(shot.critical).toBe(true);
     // 효과는 그 한 탄창뿐이다 — 다 쏘고 나면 꺼진다.
     expect(teku.refillFinisherAll).toBe(false);
+  });
+});
+
+describe("테쿠 — 한계 돌파", () => {
+  it("II: 마지막 한 방울만 주위의 다른 적에게 번지고, 돌파 전에는 번지지 않는다", () => {
+    for (const [breakthrough, splashes] of [[0, false], [1, true]] as const) {
+      const { state, teku, enemies } = setup(["toby", "amo"], breakthrough);
+      teku.attackCooldown = 0;
+      enemies[0].x = 480; enemies[1].x = 540; enemies[0].y = enemies[1].y = 700;
+      const events = run(state, 14);
+      const shots = hits(events, "basic").filter((event) => event.attackerId === teku.id);
+      const sideHits = shots.filter((event) => event.targetId === enemies[1].id);
+      const main = shots.filter((event) => event.targetId === enemies[0].id);
+      expect(main.length).toBeGreaterThanOrEqual(4);
+      expect(sideHits.length > 0, `돌파 ${breakthrough}`).toBe(splashes);
+      if (splashes) expect(sideHits.every((event) => event.critical)).toBe(true);
+    }
+  });
+
+  it("III: 궁극기 보호막이 더 크고 한도도 오른다", () => {
+    const gained = (breakthrough: number) => {
+      const { state, teku } = setup(["toby"], breakthrough);
+      teku.maxHp = 100_000; teku.hp = teku.maxHp;
+      teku.energy = 100;
+      fireUltimate(state, teku.id);
+      return teku.shield.amount;
+    };
+    expect(gained(2)).toBeGreaterThan(gained(0));
+    const { state, teku } = setup(["toby"], 2);
+    teku.maxHp = 100;
+    teku.hp = 100;
+    teku.energy = 100;
+    fireUltimate(state, teku.id);
+    expect(teku.shield.amount).toBeLessThanOrEqual(40 + 1e-6);
+  });
+
+  it("IV: 폭주 동안에만 장전이 짧아진다", () => {
+    const gap = (breakthrough: number, fever: boolean) => {
+      const { state, teku } = setup(["toby"], breakthrough);
+      teku.attackCooldown = 0;
+      teku.ferocityFever = fever;
+      const events = run(state, 6);
+      const times: number[] = [];
+      let elapsed = 0;
+      for (const event of events) if (event.kind === "attack" && event.skill === "basic" && event.attackerId === teku.id) times.push(elapsed++);
+      return times.length;
+    };
+    expect(gap(3, true)).toBeGreaterThanOrEqual(gap(0, true));
+    const reload = (breakthrough: number, fever: boolean) => {
+      const { state, teku } = setup(["toby"], breakthrough);
+      teku.basicCycleStep = 3;
+      teku.attackCooldown = 0;
+      teku.ferocityFever = fever;
+      run(state, 0.1);
+      return teku.attackCooldown;
+    };
+    expect(reload(3, true)).toBeLessThan(reload(3, false));
+    expect(reload(0, true)).toBeCloseTo(reload(3, false), 1);
+  });
+
+  it("V: 장전을 시작할 때 최대 체력의 6%를 두르고 12%에서 멈춘다", () => {
+    const { state, teku } = setup(["toby"], 4);
+    teku.attackCooldown = 0;
+    teku.maxHp = 1_000; teku.hp = 1_000;
+    run(state, 40);
+    expect(teku.shield.amount).toBeLessThanOrEqual(120 + 1e-6);
+    expect(teku.shield.amount).toBeGreaterThan(0);
   });
 });

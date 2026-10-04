@@ -1632,6 +1632,12 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
+    breakthroughEffects: {
+      basic: { kind: "lastDropSplash", sharePercent: 50, radius: 260 },
+      ultimate: { kind: "richBlend", shieldFromCriticalPercent: 45, shieldMaxHpPercent: 40 },
+      ferocity: { kind: "quickReload", reloadSeconds: 0.6 },
+      passive: { kind: "reloadSip", shieldMaxHpPercent: 6, capMaxHpPercent: 12 },
+    },
     ferocityTrait: { name: "야근, 싫어", effectId: "overtimeRefusal" },
     passive: {
       id: "teku-passive",

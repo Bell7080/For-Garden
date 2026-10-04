@@ -2470,6 +2470,11 @@ export interface BreakthroughNone {
  * (`BasicAttack.statusEffectEvery`)을 그대로 타고 세 번에 한 번만 일어난다.
  */
 export type BasicBreakthrough = {
+  /** 「마지막 한 방울」이 맞은 적 주위의 다른 적에게도 그 피해의 일부가 번진다(테쿠). 상태·흡혈 없이 추가 피해만 준다. */
+  kind: "lastDropSplash";
+  sharePercent: number;
+  radius: number;
+} | {
   /** 서리깃이 박힌 적에게 주는 일반 공격 피해가 **그 적의 서리깃 겹마다** 늘어난다(유티의 「갈래깃」). */
   kind: "frostBrand";
   damagePercentPerStack: number;
@@ -2655,6 +2660,11 @@ export type BasicBreakthrough = {
  * 궁극기가 세 번이 된다(채널링 궁극기와 같은 규칙이다).
  */
 export type UltimateBreakthrough = {
+  /** 연발 궁극기가 두르는 막이 준 피해의 몇 %인지와 그 합계 상한을 키운다(테쿠의 「블렌딩A」). */
+  kind: "richBlend";
+  shieldFromCriticalPercent: number;
+  shieldMaxHpPercent: number;
+} | {
   /** 되찍는 궁극기의 **마지막 타격**이 서리깃을 더 쌓는다(유티의 「눈보라 대소동」). */
   kind: "doublePlume";
   extraStacks: number;
@@ -2834,6 +2844,10 @@ export type UltimateBreakthrough = {
  * 세져 그 시간만 부풀고, 끝나고 가장 약해지는 자리를 메우지 못한다.
  */
 export type FerocityBreakthrough = {
+  /** 폭주 동안 탄창을 다시 채우는 시간이 줄어든다(테쿠의 「야근, 싫어」). */
+  kind: "quickReload";
+  reloadSeconds: number;
+} | {
   /** 폭주 중 치명타로 터진 일반 공격이 맞힌 적에게 서리깃을 더 박는다(유티의 「깃날비」). */
   kind: "critPlume";
   extraStacks: number;
@@ -2997,6 +3011,11 @@ export type FerocityBreakthrough = {
  * 패시브의 조건(체력 절반 등)을 그대로 타므로 새 발동 조건을 만들지 않는다.
  */
 export type PassiveBreakthrough = {
+  /** 장전을 시작할 때 최대 체력 비례 보호막을 두른다. 두른 막의 합은 상한에서 멈춘다(테쿠의 「리필, 부탁」). */
+  kind: "reloadSip";
+  shieldMaxHpPercent: number;
+  capMaxHpPercent: number;
+} | {
   /** 전투 시작 은신이 남아 있는 동안 일반 공격 피해가 늘어난다(유티의 「설원의 깃털」). */
   kind: "stealthStrike";
   damagePercent: number;

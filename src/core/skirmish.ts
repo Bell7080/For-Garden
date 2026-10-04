@@ -3044,10 +3044,20 @@ function basicStepIsGuaranteedCritical(attacker: Fighter): boolean {
  * 다음 공격 대기로 들어가고, 폭주로 채운 탄창은 비는 순간 평범한 탄창으로 돌아온다.
  * 돌려주는 값이 있으면 그것이 이번 공격 대기(초)다.
  */
-function reloadAfterBasic(attacker: Fighter): number | undefined {
+function reloadAfterBasic(attacker: Fighter, state: SkirmishState, events: SkirmishEvent[]): number | undefined {
   const refill = attacker.def.passive.kind === "refillMagazine" ? attacker.def.passive.refill : undefined;
   if (!refill || attacker.basicCycleStep !== 0) return undefined;
   attacker.refillFinisherAll = false;
+  // 패시브 돌파(`reloadSip`) — 장전을 시작할 때 한 모금. 두른 막의 합은 상한에서 멈춘다.
+  const sip = openedBreakthrough(attacker, "passive", (effects) => effects.passive);
+  if (sip?.kind === "reloadSip" && isFighterAlive(attacker)) {
+    const room = Math.max(0, attacker.maxHp * sip.capMaxHpPercent / 100 - attacker.shield.amount);
+    const gained = Math.min(room, attacker.maxHp * sip.shieldMaxHpPercent / 100);
+    if (gained >= 1) grantShield(state, attacker, attacker.id, Math.round(gained), events);
+  }
+  // 폭주 돌파(`quickReload`) — 폭주 동안 장전이 짧아진다.
+  const quick = openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity);
+  if (quick?.kind === "quickReload" && attacker.ferocityFever) return Math.min(refill.reloadSeconds, quick.reloadSeconds);
   return refill.reloadSeconds;
 }
 
@@ -6857,16 +6867,29 @@ function irnaBreakthroughSkill(attacker: Fighter, target: Fighter, skill: Skill,
 function strikeShrapnel(attacker: Fighter, target: Fighter, input: DamageInput, critical: boolean, state: SkirmishState, events: SkirmishEvent[]): void {
   const effect = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
   if (effect?.kind !== "shrapnel") return;
+  splashAround(attacker, target, input, critical, state, events, effect.radius, effect.powerPercent, "ultimate");
+}
+
+/**
+ * 평타 돌파(`lastDropSplash`) — 「마지막 한 방울」이 맞은 적 주위로 피해가 번진다. 폭주로 채운 탄창은 모든 발이 마지막 한 방울이다.
+ */
+function strikeLastDropSplash(attacker: Fighter, target: Fighter, input: DamageInput, critical: boolean, wasLastDrop: boolean, state: SkirmishState, events: SkirmishEvent[]): void {
+  const effect = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
+  if (effect?.kind !== "lastDropSplash" || !wasLastDrop) return;
+  splashAround(attacker, target, input, critical, state, events, effect.radius, effect.sharePercent, "basic");
+}
+
+function splashAround(attacker: Fighter, target: Fighter, input: DamageInput, critical: boolean, state: SkirmishState, events: SkirmishEvent[], radius: number, percent: number, skillSlot: "basic" | "ultimate"): void {
   const damageAttacker = { ...attacker, def: offensiveDefinition(attacker) };
-  const shard = { ...input, power: input.power * effect.powerPercent / 100, isCritical: critical };
+  const shard = { ...input, power: input.power * percent / 100, isCritical: critical };
   for (const other of state.fighters) {
-    if (other.side === attacker.side || other.id === target.id || !isFighterAlive(other) || distance(target, other) > effect.radius) continue;
+    if (other.side === attacker.side || other.id === target.id || !isFighterAlive(other) || distance(target, other) > radius) continue;
     const raw = Math.max(1, Math.round(computeDamage(damageAttacker, defensiveDefinition(other, state), shard)));
     const resolution = resolveReceivedDamage(other, raw);
     const hpBefore = other.hp; const shieldBefore = other.shield.amount; const shieldProviderId = other.shield.providerId;
     applyDamage(other, resolution.applied, events, state);
     const credited = recordDamageContribution(state, attacker.id, other, shard.damageType, shard.scalingStat as Exclude<typeof shard.scalingStat, "res">, computeDamageContribution(damageAttacker, shard), resolution, hpBefore, shieldBefore, shieldProviderId);
-    events.push({ kind: "attack", attackerId: attacker.id, targetId: other.id, skill: "ultimate", amount: resolution.applied,
+    events.push({ kind: "attack", attackerId: attacker.id, targetId: other.id, skill: skillSlot, amount: resolution.applied,
       contributionAmount: credited, critical, animate: false, damageType: shard.damageType, mitigated: resolution.reduced < resolution.raw });
     if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: other.id });
     if (!isFighterAlive(other)) {
@@ -6978,8 +7001,10 @@ function strike(
     : clawStorm?.kind === "frenzyClaws" ? Math.min(periodicCritical.every, clawStorm.every) : periodicCritical.every;
   const barrageCritical = useUltimate && skill.barrage !== undefined && comboHit?.barrageShot !== undefined
     && comboHit.barrageShot >= skill.barrage.criticalFromShot;
+  // 이 한 발이 마지막 한 방울인가는 때리기 전에 굳힌다 — 폭주 진입이 이 타격 안에서 탄창을 채워도 이번 발은 그대로다.
+  const lastDropShot = !useUltimate && basicStepIsGuaranteedCritical(attacker);
   const forcedCritical = (periodicCritical !== undefined && attacker.basicAttackCount >= periodEvery)
-    || (!useUltimate && basicStepIsGuaranteedCritical(attacker)) || barrageCritical;
+    || lastDropShot || barrageCritical;
   if (periodicCritical !== undefined && attacker.basicAttackCount >= periodEvery) attacker.basicAttackCount = 0;
   // 목덜미 — 표적이 문턱 아래면 이번 한 방이 확정 치명타에 큰 추가 피해가 된다. 판정은 **맞기 전의** 체력이다.
   const nape = napeBonus(attacker, target, skill, state, events);
@@ -7144,9 +7169,11 @@ function strike(
   if (!useUltimate) grantShieldFromDamage(attacker, dealt, events, state);
   else if (skill.barrage !== undefined && comboHit?.barrageShot !== undefined && comboHit.barrageShot >= skill.barrage.criticalFromShot && dealt > 0 && isFighterAlive(attacker)) {
     // 마지막 두 발은 치명타 피해로 꽂히고, 그 피해에 비례한 막이 시전자에게 두른다. 합계는 한도에서 멈춘다.
-    const cap = attacker.maxHp * skill.barrage.shieldMaxHpPercent / 100;
+    const blend = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
+    const rich = blend?.kind === "richBlend" ? blend : undefined;
+    const cap = attacker.maxHp * (rich?.shieldMaxHpPercent ?? skill.barrage.shieldMaxHpPercent) / 100;
     const room = Math.max(0, cap - attacker.barrageShieldGranted);
-    const gained = Math.min(room, dealt * skill.barrage.shieldFromCriticalPercent / 100);
+    const gained = Math.min(room, dealt * (rich?.shieldFromCriticalPercent ?? skill.barrage.shieldFromCriticalPercent) / 100);
     if (gained > 0) { attacker.barrageShieldGranted += gained; grantShield(state, attacker, attacker.id, Math.max(1, Math.round(gained)), events); }
   }
   if (!useUltimate) {
@@ -7246,6 +7273,7 @@ function strike(
     if (card?.kind === "extraCard") throwExtraCard(attacker, target, damageInput, card, damageInput.damageType, state, events);
   }
   if (useUltimate) strikeShrapnel(attacker, target, damageInput, critical, state, events);
+  else strikeLastDropSplash(attacker, target, damageInput, critical, lastDropShot, state, events);
   // 궁극기 돌파(`afterimageSlash`) — 꿰뚫은 적에게 잔상이 늦게 한 번 더 따라붙는다. 연격 둘째 타나 잔상 자신은 다시 예약하지 않는다.
   if (useUltimate && !comboHit && isFighterAlive(target)) {
     const slash = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
@@ -8751,7 +8779,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
         state.boss.score += scored?.contributionAmount ?? 0;
       }
       // 「리필」 — 탄창을 다 쓴 평타는 다음 공격까지 재장전만큼 쉰다.
-      fighter.attackCooldown = (!firedUltimate ? reloadAfterBasic(fighter) : undefined) ?? attackInterval(fighter, state);
+      fighter.attackCooldown = (!firedUltimate ? reloadAfterBasic(fighter, state, events) : undefined) ?? attackInterval(fighter, state);
     }
   }
 

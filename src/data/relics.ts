@@ -3408,10 +3408,11 @@ export const RELICS: RelicDef[] = [
     },
     // 수치를 여기 적지 않는다 — 옮기는 비율과 상한은 「가봉」 하나가 갖고, 폭주는 그 몫이
     // 보호막으로 가는지 회복으로 가는지만 바꾼다.
-    // 한계 돌파: 촘촘한 땀 · (궁극기 없음) · 덧바늘 · 입은 만큼 휘두른다.
+    // 한계 돌파: 촘촘한 땀 · 넓어진 성의 · 덧바늘 · 입은 만큼 휘두른다.
     breakthroughEffects: {
       basic: { kind: "tightStitch", damagePercentPoints: 15 },
-      ultimate: { kind: "none" },
+      // 「성의」는 벤 적의 수만큼 팀이 두꺼워지는 궁극기라, 범위를 넓히면 한 번에 더 많이 베어 막이 곧바로 커진다.
+      ultimate: { kind: "widenArea", radius: 270 },
       ferocity: { kind: "doubleNeedle", sharePercent: 50 },
       passive: { kind: "stitchedMight", damagePercent: 15 },
     },

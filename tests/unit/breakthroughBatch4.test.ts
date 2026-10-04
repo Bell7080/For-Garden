@@ -181,9 +181,9 @@ describe("테리사 한계 돌파", () => {
     expect(granted(1) / granted(0)).toBeCloseTo(65 / 50, 1);
   });
 
-  it("는 궁극기 슬롯을 비워 두고 문장도 만들지 않는다(별 III)", () => {
-    expect(getRelic("terisa").breakthroughEffects?.ultimate).toEqual({ kind: "none" });
-    expect(breakthroughEffectText(getRelic("terisa"), "ultimate")).toBe("없음");
+  it("는 성의의 범위를 넓혀 더 먼 적까지 벤다(별 III)", () => {
+    expect(getRelic("terisa").breakthroughEffects?.ultimate).toEqual({ kind: "widenArea", radius: 270 });
+    expect(breakthroughEffectText(getRelic("terisa"), "ultimate")).toContain("%");
   });
 
   it("는 폭주 중 둘째로 다친 아군에게도 막의 절반을 준다(별 IV)", () => {
@@ -228,7 +228,6 @@ describe("4차 돌파 문구", () => {
     for (const id of ["tia", "meron", "terisa"]) {
       for (const slot of ["basic", "ultimate", "ferocity", "passive"] as const) {
         const text = breakthroughEffectText(getRelic(id), slot);
-        if (id === "terisa" && slot === "ultimate") { expect(text).toBe("없음"); continue; }
         expect(text, `${id} ${slot}`).toBeDefined();
         expect(text, `${id} ${slot}`).not.toMatch(/\{[a-zA-Z!]+\}/);
       }

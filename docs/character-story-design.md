@@ -3,6 +3,9 @@
 개체 하나의 "누구인가"를 **한 파일에서** 읽고 고치기 위한 묶음이다. 타입은 `src/core/relicStory.ts`,
 데이터는 `src/data/relicStories/<개체>.ts`, 등록은 `src/data/relicStories/index.ts`다. 토리카가 첫 기준이다.
 
+> **적 전용 개체는 이 묶음을 만들지 않는다.** 적은 애착·클릭 대사·유대가 없으므로 `RelicDef`의 식별 일지(`fossilRecord`·`unlockRecord`)로
+> 관리한다. 이야기 묶음은 플레이어블 전용 분류이고, 적 전용에 묶음이 없는 것은 누락이 아니다.
+
 ## 1. 한 묶음에 든 것
 
 | 필드 | 어디에 서는가 | 쓰는 법 |

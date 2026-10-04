@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { unitStatusViews } from "../../src/ui/unitStatusModel";
 import { applyCombatStatusEffect, applyFrenzy, bossDamageMultiplier, breakthroughSkill, currentAttackSpeed, gainFerocity, moveSpeed, receivedDamage, createSkirmish, fighterReach, fireUltimate, findFighter, refreshBleed, stepSkirmish, tryTriggerEmergencyRecovery, tryTriggerLowHpVanish, type Arena, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
 import { FEROCITY_RULES } from "../../src/core/ferocity";
 import { BREAKTHROUGH_STEPS, isBreakthroughSlotOpen } from "../../src/core/relicProgression";
@@ -1764,7 +1765,7 @@ describe("보스 한계 돌파 — 폰토스·수쿠스이노·타보아·코아
     findFighter(state, "enemy-0")!.energy = 999;
     place(state, "player-0", 500, 1200);
     fireUltimate(state, "enemy-0", undefined, { x: ally.x, y: ally.y });
-    expect(ally.bt.healCut).toEqual({ remaining: 6, percent: 40 });
+    expect(ally.bt.healCut).toEqual({ remaining: 6, total: 6, percent: 40 });
   });
 
   it("수쿠스이노 IV — 폭주 중에만 이동 속도가 오른다", () => {
@@ -1797,6 +1798,19 @@ describe("보스 한계 돌파 — 폰토스·수쿠스이노·타보아·코아
     expect(bossDamageMultiplier(boss, ally, false)).toBeCloseTo(1.24, 5);
     // 궁극기는 이 효과를 읽지 않는다.
     expect(bossDamageMultiplier(boss, ally, true)).toBe(1);
+  });
+
+  it("보스가 건 돌파 약화는 머리 위 상태 칩으로 서고 풀리면 사라진다", () => {
+    const state = bossBattle("pontos", ["torika"], 2);
+    const ally = findFighter(state, "player-0")!;
+    expect(unitStatusViews(ally).map(({ id }) => id)).not.toContain("biteMark");
+    ally.bt.biteMark = { remaining: 8, total: 8, stacks: 2, percentPerStack: 4 };
+    ally.bt.healCut = { remaining: 6, total: 6, percent: 40 };
+    ally.bt.sunken = { waiting: false, remaining: 6, total: 6, stacks: 2, percentPerStack: 8 };
+    const ids = unitStatusViews(ally).map(({ id }) => id);
+    expect(ids).toEqual(expect.arrayContaining(["biteMark", "healCut", "sunken"]));
+    ally.bt.sunken = { waiting: true, remaining: 6, total: 6, stacks: 2, percentPerStack: 8 };
+    expect(unitStatusViews(ally).map(({ id }) => id)).not.toContain("sunken");
   });
 
   it("타보아 III·코아틀 III — 궁극기의 범위만 넓어지고 기절 시간은 그대로다", () => {

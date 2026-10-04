@@ -56,4 +56,10 @@ export const STATUS_EN = {
   "status.plume.detail": "{stacks} / {max} stacks · {time} left",
   "status.frostbite": "Frostbite",
   "status.frostbite.detail": "{amount} damage total · Slow {slow}% · {time} left",
+  "status.biteMark": "Bite Mark",
+  "status.biteMark.detail": "{stacks} stacks · damage taken +{percent}% · {time} left",
+  "status.healCut": "Healing Cut",
+  "status.healCut.detail": "Healing received −{percent}% · {time} left",
+  "status.sunken": "Sinking Weight",
+  "status.sunken.detail": "Move and attack speed −{percent}% · {time} left",
 } as const;

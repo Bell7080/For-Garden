@@ -56,4 +56,10 @@ export const STATUS_ZH_HANS = {
   "status.plume.detail": "{stacks}/{max}层 · 剩余{time}",
   "status.frostbite": "霜冻出血",
   "status.frostbite.detail": "共{amount}伤害 · 减速{slow}% · 剩余{time}",
+  "status.biteMark": "咬痕",
+  "status.biteMark.detail": "{stacks}层 · 受到伤害 +{percent}% · 剩余{time}",
+  "status.healCut": "治疗削减",
+  "status.healCut.detail": "受到的治疗 −{percent}% · 剩余{time}",
+  "status.sunken": "下沉之重",
+  "status.sunken.detail": "移动与攻击速度 −{percent}% · 剩余{time}",
 } as const;

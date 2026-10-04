@@ -409,11 +409,11 @@ export interface Fighter extends Combatant {
     /** 패시브 돌파(`pinningPlume`) — 적마다 다음에 다시 경직시킬 수 있는 시각(전투 경과 초). */
     pinnedUntil: Record<string, number>;
     /** 궁극기 돌파(`sunkenWeight`) — 기절이 풀린 뒤 이 몸을 느리게 하는 몫. 기절이 풀리는 순간(`waiting`이 꺼질 때)부터 `remaining`이 흐른다. 받는 쪽의 값이다. */
-    sunken: { waiting: boolean; remaining: number; stacks: number; percentPerStack: number } | null;
+    sunken: { waiting: boolean; remaining: number; total: number; stacks: number; percentPerStack: number } | null;
     /** 평타 돌파(`biteMark`) — 이 몸이 받는 모든 피해를 늘리는 겹. 받는 쪽의 값이다. */
-    biteMark: { remaining: number; stacks: number; percentPerStack: number } | null;
+    biteMark: { remaining: number; total: number; stacks: number; percentPerStack: number } | null;
     /** 궁극기 돌파(`unhealedMark`) — 이 몸이 받는 회복을 줄이는 몫과 남은 시간. */
-    healCut: { remaining: number; percent: number } | null;
+    healCut: { remaining: number; total: number; percent: number } | null;
     /** 궁극기 돌파(`dashBack`) — 첫 돌진의 출발점과 되돌아오기까지 남은 시간. `running`은 되돌아오는 돌진이 도는 동안만 켜진다. */
     dashBack: { in: number; from: { x: number; y: number }; running: boolean } | null;
     /** 폭주 돌파(`finalChapter`) — 광란에 걸린 채 쓰러진 몸이 기억하는 광란의 시전자. 한 번 처리하면 비운다. */
@@ -4120,9 +4120,9 @@ function feverCritPoints(attacker: Fighter): number {
 function markUltimateVictim(attacker: Fighter, target: Fighter): void {
   const plan = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
   if (plan?.kind === "sunkenWeight") {
-    target.bt.sunken = { waiting: target.stunnedFor > 0, remaining: plan.seconds, stacks: plan.stacks, percentPerStack: plan.speedPercentPerStack };
+    target.bt.sunken = { waiting: target.stunnedFor > 0, remaining: plan.seconds, total: plan.seconds, stacks: plan.stacks, percentPerStack: plan.speedPercentPerStack };
   }
-  if (plan?.kind === "unhealedMark") target.bt.healCut = { remaining: plan.seconds, percent: plan.reductionPercent };
+  if (plan?.kind === "unhealedMark") target.bt.healCut = { remaining: plan.seconds, total: plan.seconds, percent: plan.reductionPercent };
 }
 
 /** 폰토스 평타 돌파(`pressStagger`) — 맞힌 적 중 가장 가까운 한 명을 잠깐 경직시킨다. */
@@ -4140,7 +4140,7 @@ function strikeBossBasicBreakthrough(attacker: Fighter, target: Fighter, input: 
   const basic = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
   if (basic?.kind === "biteMark" && isFighterAlive(target)) {
     const stacks = Math.min(basic.maxStacks, (target.bt.biteMark?.stacks ?? 0) + 1);
-    target.bt.biteMark = { remaining: basic.seconds, stacks, percentPerStack: basic.damageTakenPercent };
+    target.bt.biteMark = { remaining: basic.seconds, total: basic.seconds, stacks, percentPerStack: basic.damageTakenPercent };
   }
   if (basic?.kind === "piercingBeak") {
     // 보스에서 표적으로 뻗는 선의 **뒤쪽**에서 선 가까이에 선 적 가운데 표적과 가장 가까운 한 명이다.

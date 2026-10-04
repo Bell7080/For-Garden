@@ -56,4 +56,10 @@ export const STATUS_VI = {
   "status.plume.detail": "{stacks}/{max} tầng · còn {time}",
   "status.frostbite": "Chảy máu băng",
   "status.frostbite.detail": "Tổng {amount} sát thương · làm chậm {slow}% · còn {time}",
+  "status.biteMark": "Vết cắn",
+  "status.biteMark.detail": "{stacks} tầng · sát thương nhận +{percent}% · còn {time}",
+  "status.healCut": "Giảm hồi phục",
+  "status.healCut.detail": "Hồi phục nhận −{percent}% · còn {time}",
+  "status.sunken": "Sức nặng chìm",
+  "status.sunken.detail": "Tốc độ di chuyển và tấn công −{percent}% · còn {time}",
 } as const;

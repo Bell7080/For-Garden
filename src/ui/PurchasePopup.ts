@@ -1,3 +1,4 @@
+import { formatStorePrice } from "../core/storePrice";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import type { GameApi, ProductDto, PurchaseProductResponse } from "../api/contracts";
@@ -216,7 +217,7 @@ export class PurchasePopup {
     view.add(drawHairline(this.scene, 0, PLATFORM.hairlineY, 690, { color: COLOR.accent, alpha: 0.32 }));
     // 값은 카탈로그가 준 문자열 그대로 — 스토어 현지 가격이 들어오면 이 자리 하나만 바뀐다.
     view.add(drawLayer(this.scene, 0, PLATFORM.priceY, chipPoints(690, PLATFORM.priceHeight, { bevel: { topLeft: 26, topRight: 0, bottomRight: 26, bottomLeft: 0 } }), { fill: 0x0d141c, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.7 }));
-    view.add(this.scene.add.text(0, PLATFORM.priceY, product.acquisition.displayPrice, textStyle({ role: "display", size: PLATFORM.priceSize, color: COLOR.accentText })).setOrigin(0.5).setStroke("#000000", 8).setShadow(2, 4, "#04060a", 0, true, true));
+    view.add(this.scene.add.text(0, PLATFORM.priceY, formatStorePrice(product.acquisition.basePriceKrw), textStyle({ role: "display", size: PLATFORM.priceSize, color: COLOR.accentText })).setOrigin(0.5).setStroke("#000000", 8).setShadow(2, 4, "#04060a", 0, true, true));
     this.addValueRow(view, PLATFORM.limitY, t("shop.purchase.limit"), tradePackageLimitLabel(product.refresh, product.purchaseLimit, product.remaining));
 
     const canPurchase = product.purchasable && product.remaining > 0 && !this.pending;

@@ -1,3 +1,4 @@
+import { formatStorePrice } from "../core/storePrice";
 import Phaser from "phaser";
 import type { GameApi, ProductDto, ProgressPassDto, ProgressPassMilestoneDto } from "../api/contracts";
 import type { PlatformPaymentAdapter } from "../api/PlatformPayment";
@@ -386,7 +387,7 @@ function paintPassOffer(scene: Phaser.Scene, root: Phaser.GameObjects.Container,
   });
 
   // 값 — 프리미엄의 결제 상품과 같은 값 칸(깎인 판 + 굵은 강조색 값).
-  const price = product.acquisition.kind === "platform_payment" ? product.acquisition.displayPrice : "";
+  const price = product.acquisition.kind === "platform_payment" ? formatStorePrice(product.acquisition.basePriceKrw) : "";
   if (price) {
     const P = O.price;
     const bar = scene.add.container(0, P.y);

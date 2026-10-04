@@ -77,6 +77,7 @@ export const RUNE_PT_BR = {
   "rune.traitReroll.candidate": "Traço novo",
   "rune.traitReroll.keep": "Manter atual",
   "rune.traitReroll.apply": "Aplicar traço novo",
+  "rune.traitReroll.again": "Manter atual e reinterpretar",
   "rune.traitReroll.upgraded": "Grau aumentado",
   "rune.traitReroll.pity": "Garantia de aumento {done} / {total}",
 } as const;

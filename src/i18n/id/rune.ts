@@ -77,6 +77,7 @@ export const RUNE_ID = {
   "rune.traitReroll.candidate": "Sifat baru",
   "rune.traitReroll.keep": "Pertahankan",
   "rune.traitReroll.apply": "Terapkan sifat baru",
+  "rune.traitReroll.again": "Pertahankan lalu tafsir ulang",
   "rune.traitReroll.upgraded": "Tingkat naik",
   "rune.traitReroll.pity": "Jaminan naik tingkat {done} / {total}",
 } as const;

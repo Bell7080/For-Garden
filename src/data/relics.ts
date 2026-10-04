@@ -1637,7 +1637,7 @@ export const RELICS: RelicDef[] = [
     breakthroughEffects: {
       basic: { kind: "paintSpill", radius: 300, stacks: 1 },
       ultimate: { kind: "splashPaint", radius: 260, sharePercent: 50 },
-      ferocity: { kind: "extraLayer", extraStacks: 1 },
+      ferocity: { kind: "paintChain", hops: 2 },
       passive: { kind: "vitalSketch", critPoints: 25 },
     },
     ferocityTrait: {
@@ -2309,8 +2309,8 @@ export const RELICS: RelicDef[] = [
     breakthroughEffects: {
       basic: { kind: "releaseShield", shieldPercent: 20 },
       ultimate: { kind: "shareShield", sharePercent: 50 },
-      ferocity: { kind: "adamantRelease", shieldPercent: 50 },
-      passive: { kind: "shieldFist", bonusPercent: 15 },
+      ferocity: { kind: "adamantShield", shieldMaxHpPercent: 35 },
+      passive: { kind: "undyingBulwark", healPercent: 100, defenseResistancePercent: 100, seconds: 10 },
     },
     passive: {
       // kind가 undyingTalisman인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
@@ -3888,7 +3888,7 @@ export const RELICS: RelicDef[] = [
     breakthroughEffects: {
       basic: { kind: "pupLitter", every: 6 },
       ultimate: { kind: "pupRush", count: 3 },
-      ferocity: { kind: "pupFrenzy", every: 3 },
+      ferocity: { kind: "pupFrenzy", every: 6 },
       passive: { kind: "packStrength", damagePercentPerWolf: 3 },
     },
   },

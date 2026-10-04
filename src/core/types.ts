@@ -2928,9 +2928,9 @@ export type FerocityBreakthrough = {
   kind: "bigWave";
   powerMultiplier: number;
 } | {
-  /** 폭주 중 덧칠 최대 겹이 이 수만큼 늘어난다(메론). */
-  kind: "extraLayer";
-  extraStacks: number;
+  /** 폭주 중 기본 공격이 맞힌 적에게서 가장 가까운 칠하지 않은 적에게 `hops`번 옮겨 가 덧칠을 한 겹씩 건다(메론). */
+  kind: "paintChain";
+  hops: number;
 } | {
   /** 폭주 중 가봉 막의 일부를 두 번째로 체력 비율이 낮은 아군에게도 준다(테리사). */
   kind: "doubleNeedle";
@@ -2947,9 +2947,9 @@ export type FerocityBreakthrough = {
   kind: "pupFrenzy";
   every: number;
 } | {
-  /** 폭주 중 마지막 걸음이 쓰는 막 잔량 비율이 이 값으로 바뀐다(엘라). 궁극기와 무관하다. */
-  kind: "adamantRelease";
-  shieldPercent: number;
+  /** 「금강불괴」에 들어설 때 두르는 보호막이 최대 체력의 이 비율로 바뀐다(엘라). 다른 슬롯과 무관하다. */
+  kind: "adamantShield";
+  shieldMaxHpPercent: number;
 } | {
   /** 폭주 중 소환수의 일반 공격이 관측을 이 배수만큼 쌓는다(모르페). 궁극기와 무관하다. */
   kind: "droneOverheat";
@@ -3111,9 +3111,14 @@ export type PassiveBreakthrough = {
   kind: "packStrength";
   damagePercentPerWolf: number;
 } | {
-  /** 마지막 걸음이 쓰는 막 잔량 비율이 상시 이만큼 늘어난다(엘라). */
-  kind: "shieldFist";
-  bonusPercent: number;
+  /**
+   * 불멸이 도는 동안의 회복 총량이 `healPercent`로 바뀌고, 불멸이 끝난 뒤 `seconds`초 동안 방어력·저항력이
+   * 각각 이 비율만큼 오른다(엘라). 이 패시브 자신의 값만 바꾼다.
+   */
+  kind: "undyingBulwark";
+  healPercent: number;
+  defenseResistancePercent: number;
+  seconds: number;
 } | {
   /** 소환수가 살아 있는 동안 관측이 걸린 적 한 명당 공격 속도가 오른다(모르페). */
   kind: "manyEyes";

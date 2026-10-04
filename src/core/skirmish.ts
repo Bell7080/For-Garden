@@ -410,8 +410,12 @@ export interface Fighter extends Combatant {
     frenzyDeathFrom: string | null;
     /** 평타 돌파(`pupLitter`) — 새끼 늑대를 부르고 나서 센 기본 공격 횟수. 부를 때마다 0으로 되돌린다. */
     pupCount: number;
+    /** 폭주 돌파(`pupFrenzy`) — 폭주 중 센 기본 공격 횟수. 새끼를 부를 때마다 0으로 되돌린다. */
+    pupFrenzyCount: number;
     /** 새끼 늑대(`isPupFighter`)의 남은 수명(초). 새끼가 아닌 몸은 늘 0이다. */
     pupLife: number;
+    /** 패시브 돌파(`undyingBulwark`) — 불멸이 끝난 뒤 방어·저항이 오른 채로 남은 시간(초). */
+    undyingGuard: number;
     /** 궁극기 돌파(`shareShield`) — 「인」이 끝나기까지 남은 시간(초). 켜지 않았으면 음수다. */
     shareShieldIn: number;
     /** 패시브 돌파(`manyEyes`) — 이번 틱에 센 관측 걸린 적 수가 만든 공격 속도 증가(%). */
@@ -1228,7 +1232,9 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
       dashBack: null,
       frenzyDeathFrom: null,
       pupCount: 0,
+      pupFrenzyCount: 0,
       pupLife: 0,
+      undyingGuard: 0,
       shareShieldIn: -1,
       manyEyesPercent: 0,
       sutureIn: def.passive.kind === "sutureStitch" ? def.passive.suture?.intervalSeconds ?? 0 : 0,
@@ -1396,11 +1402,17 @@ export function isPupFighter(fighter: Fighter): boolean {
  *
  * 전투 도중에 몸을 새로 만들면 화면이 Puppet을 비동기로 새로 세워야 하는데(`spawnFighters`는 열릴 때 한 번뿐이다), 자리를
  * 미리 두면 부르는 일이 쓰러진 늑대를 일으키는 것(`reviveWolf`)과 같은 사건이 된다 — 화면은 새 경로를 알 필요가 없다.
- * 평타 돌파(`pupLitter`)를 연 디안만 이 자리를 갖는다. 쿠로·시로 정의를 번갈아 쓰고, 능력치는 늑대 둘의 `PUP.statRatio`다.
+ * 새끼를 부르는 돌파(평타 `pupLitter`·궁극기 `pupRush`·폭주 `pupFrenzy`) 중 하나라도 연 디안만 이 자리를 갖는다. 쿠로·시로 정의를 번갈아 쓰고, 능력치는 늑대 둘의 `PUP.statRatio`다.
  */
+function hasPupBreakthrough(owner: Fighter): boolean {
+  return openedBreakthrough(owner, "basic", (effects) => effects.basic)?.kind === "pupLitter"
+    || openedBreakthrough(owner, "ultimate", (effects) => effects.ultimate)?.kind === "pupRush"
+    || openedBreakthrough(owner, "ferocity", (effects) => effects.ferocity)?.kind === "pupFrenzy";
+}
+
 function createPupPool(owner: Fighter, augmentEffects: readonly ExpeditionAugmentEffect[]): Fighter[] {
   const summons = owner.def.summons ?? [];
-  if (summons.length === 0 || openedBreakthrough(owner, "basic", (effects) => effects.basic)?.kind !== "pupLitter") return [];
+  if (summons.length === 0 || !hasPupBreakthrough(owner)) return [];
   return Array.from({ length: PUP.maxAlive }, (_, index) => {
     const spec = summons[index % summons.length];
     const ratio = PUP.statRatio;
@@ -1757,7 +1769,7 @@ export function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEf
         blight?.kind === "blightedFoe" ? blight.takenPercent : undefined);
     }
   }
-  if (effect.kind === "overpaint") refreshOverpaint(fighter, { ...effect, seconds: effect.seconds * potency, maxStacks: overpaintCap(sourceId ? findFighter(state, sourceId) : undefined, effect.maxStacks) });
+  if (effect.kind === "overpaint") refreshOverpaint(fighter, { ...effect, seconds: effect.seconds * potency, maxStacks: effect.maxStacks });
   if (effect.kind === "concussion") applyConcussion(fighter, effect, critical, events, state, sourceId);
   if (effect.kind === "butcher") applyButcher(fighter, effect, events, state, sourceId);
   if (effect.kind === "frostPlume") applyFrostPlume(fighter, effect, events, state, sourceId);
@@ -1921,15 +1933,30 @@ function splashPaint(attacker: Fighter, target: Fighter, stacks: number, state: 
   if (share <= 0) return;
   for (const other of state.fighters) {
     if (other.side === attacker.side || other.id === target.id || !isFighterAlive(other) || distance(target, other) > plan.radius) continue;
-    for (let i = 0; i < share; i += 1) refreshOverpaint(other, { ...paintEffect, maxStacks: overpaintCap(attacker, paintEffect.maxStacks) });
+    for (let i = 0; i < share; i += 1) refreshOverpaint(other, { ...paintEffect, maxStacks: paintEffect.maxStacks });
   }
 }
 
-/** 폭주 돌파(`extraLayer`) — 폭주 중인 칠하는 손이 칠하는 덧칠은 최대 겹이 더 열린다. */
-function overpaintCap(painter: Fighter | undefined, base: number): number {
-  if (!painter?.ferocityFever) return base;
-  const plan = openedBreakthrough(painter, "ferocity", (effects) => effects.ferocity);
-  return plan?.kind === "extraLayer" ? base + plan.extraStacks : base;
+/**
+ * 폭주 돌파(`paintChain`) — 폭주 중 기본 공격이 맞힌 적에게서 가장 가까운 아직 칠하지 않은 적에게 `hops`번 옮겨 가 덧칠을 한 겹씩 건다.
+ * 옮겨 가는 것은 덧칠 한 겹뿐이라 피해는 없다. 이미 칠해진 적은 건너뛰고, 닿을 적이 없으면 거기서 멈춘다.
+ */
+function chainPaint(attacker: Fighter, target: Fighter, state: SkirmishState): void {
+  if (!attacker.ferocityFever) return;
+  const plan = openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity);
+  const paintEffect = attacker.def.basic.statusEffects?.find((effect) => effect.kind === "overpaint");
+  if (plan?.kind !== "paintChain" || paintEffect?.kind !== "overpaint") return;
+  const visited = new Set<string>([target.id]);
+  let from = target;
+  for (let hop = 0; hop < plan.hops; hop += 1) {
+    const next = state.fighters
+      .filter((other) => other.side !== attacker.side && !visited.has(other.id) && isFighterAlive(other) && other.stealthFor <= 0 && (other.overpaint?.remaining ?? 0) <= 0)
+      .sort((a, b) => distance(from, a) - distance(from, b))[0];
+    if (!next) return;
+    visited.add(next.id);
+    refreshOverpaint(next, paintEffect);
+    from = next;
+  }
 }
 
 function refreshOverpaint(target: Fighter, effect: Extract<CombatStatusEffect, { kind: "overpaint" }>): void {
@@ -3076,16 +3103,20 @@ function pushHeal(events: SkirmishEvent[], target: Fighter, amount: number, sour
   events.push({ kind: "heal", fighterId: target.id, amount, source, effect: { tag: "heal", intensity: restoreCueIntensity(amount, target.maxHp, weight) } });
 }
 
+/** 폭주 돌파(`adamantShield`) — 「금강불괴」에 들어설 때 두르는 보호막의 최대 체력 비율이 이 값으로 바뀐다. 열려 있지 않으면 기본값이다. */
+function adamantShieldPercent(fighter: Fighter, base: number): number {
+  const plan = openedBreakthrough(fighter, "ferocity", (effects) => effects.ferocity);
+  return plan?.kind === "adamantShield" ? plan.shieldMaxHpPercent : base;
+}
+
 /**
  * 평타 돌파(`releaseShield`) — 끌어당기는 마지막 걸음이 터질 때 지금 두른 막 잔량의 일정 비율이 물리 피해로 더해진다.
- * 막은 소모하지 않는다. 폭주(`adamantRelease`)가 비율을 바꾸고, 패시브(`shieldFist`)가 상시 더한다.
+ * 막은 소모하지 않는다. 이 돌파는 제 비율(`shieldPercent`)만 읽는다 — 폭주·패시브 돌파와 엮이지 않는다.
  */
 function releaseShieldHit(attacker: Fighter, target: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
   const plan = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
   if (plan?.kind !== "releaseShield" || currentBasicStep(attacker)?.pull === undefined || !isFighterAlive(target) || attacker.shield.amount <= 0) return;
-  const fever = attacker.ferocityFever ? openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity) : undefined;
-  const fist = openedBreakthrough(attacker, "passive", (effects) => effects.passive);
-  const percent = (fever?.kind === "adamantRelease" ? fever.shieldPercent : plan.shieldPercent) + (fist?.kind === "shieldFist" ? fist.bonusPercent : 0);
+  const percent = plan.shieldPercent;
   const power = attacker.shield.amount * percent / 100 / Math.max(1, offensiveDefinition(attacker).stats.atk) * 100;
   const raw = Math.max(1, Math.round(computeDamage({ ...attacker, def: offensiveDefinition(attacker) }, defensiveDefinition(target, state),
     { power, damageType: "physical", scalingStat: "atk", isCritical: false, kind: "basic" })));
@@ -4789,6 +4820,13 @@ function terrorCarapacePercent(state: SkirmishState, fighter: Fighter): number {
   return plan.percentPerIntimidated * Math.min(count, plan.maxIntimidated);
 }
 
+/** 패시브 돌파(`undyingBulwark`) — 불멸이 끝난 뒤 정해진 시간 동안 오르는 방어·저항(%). 열려 있지 않거나 끝났으면 0이다. */
+function undyingGuardPercent(fighter: Fighter): number {
+  if (fighter.bt.undyingGuard <= 0) return 0;
+  const plan = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+  return plan?.kind === "undyingBulwark" ? plan.defenseResistancePercent : 0;
+}
+
 /** 패시브 돌파(`muralHide`) — 낙서가 걸린 적 한 명당 방어·저항 증가(%). 열려 있지 않으면 0이다. */
 function muralHidePercent(state: SkirmishState, fighter: Fighter): number {
   const plan = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
@@ -4816,11 +4854,12 @@ export function defensiveDefinition(target: Fighter, state: SkirmishState): Figh
   // 요람 연결(모르페)은 소환수가 살아 있는 동안만 방어·저항을 함께 올린다. 오라·모피 코트와 같은 자리에서 곱한다.
   const linked = droneLinkDefensePercent(state, target);
   const mural = muralHidePercent(state, target);
-  if (bonus <= 0 && furCoat <= 0 && linked <= 0 && carapace <= 0 && mural <= 0 && torika === undefined && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0 && reagentReduction === 0) return target;
+  const bulwark = undyingGuardPercent(target);
+  if (bonus <= 0 && furCoat <= 0 && linked <= 0 && carapace <= 0 && mural <= 0 && bulwark <= 0 && torika === undefined && shred === 1 && target.augmentDefensePercent === 0 && target.augmentResistancePercent === 0 && reagentReduction === 0) return target;
   return { ...target, def: { ...target.def, stats: { ...target.def.stats,
-    def: target.def.stats.def * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + target.augmentDefensePercent / 100) + (torika?.defenseBonus ?? 0),
+    def: target.def.stats.def * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + bulwark / 100) * (1 + target.augmentDefensePercent / 100) + (torika?.defenseBonus ?? 0),
     // 시약 반응은 정적 정의가 아닌 런타임 실제 감소량이며, 여러 제공자가 있어도 유효 저항은 0 아래로 내리지 않는다.
-    res: Math.max(0, target.def.stats.res * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + target.augmentResistancePercent / 100) * shred - reagentReduction + (torika?.resistanceBonus ?? 0)),
+    res: Math.max(0, target.def.stats.res * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + bulwark / 100) * (1 + target.augmentResistancePercent / 100) * shred - reagentReduction + (torika?.resistanceBonus ?? 0)),
   } } };
 }
 
@@ -5531,7 +5570,10 @@ function gainFerocity(fighter: Fighter, base: number, state: SkirmishState, even
     if (trait.effectId === "knockbackSlam" && trait.loadsStatusCycleOnEntry) {
       fighter.statusHitCount = Math.max(0, (fighter.def.basic.statusEffectEvery ?? 1) - 1);
     }
-    if (trait.effectId === "adamantBody") fighter.hastenedAttacksLeft = trait.hastenedAttacks;
+    if (trait.effectId === "adamantBody") {
+      fighter.hastenedAttacksLeft = trait.hastenedAttacks;
+      grantShield(state, fighter, fighter.id, Math.max(1, Math.round(fighter.maxHp * adamantShieldPercent(fighter, trait.shieldMaxHpPercent) / 100)), events);
+    }
     if (trait.effectId === "battleHeat") tauntOnBattleHeat(fighter, trait, state, events);
     if (trait.effectId === "caffeineBubble") tauntOnBattleHeat(fighter, trait, state, events);
     // 똬리 속으로: 들어서는 순간 반경 안의 적을 몸 앞으로 끌어온다. 끌려온 자리가 곧 궁극기의 범위다.
@@ -5790,7 +5832,7 @@ function retargetOnFullOverpaint(attacker: Fighter, target: Fighter, state: Skir
   if (spill?.kind === "paintSpill" && paintEffect?.kind === "overpaint") {
     const near = state.fighters.filter((other) => other.side !== attacker.side && other.id !== target.id && isFighterAlive(other) && distance(target, other) <= spill.radius)
       .sort((a, b) => distance(target, a) - distance(target, b))[0];
-    if (near) for (let i = 0; i < spill.stacks; i += 1) refreshOverpaint(near, { ...paintEffect, maxStacks: overpaintCap(attacker, paintEffect.maxStacks) });
+    if (near) for (let i = 0; i < spill.stacks; i += 1) refreshOverpaint(near, { ...paintEffect, maxStacks: paintEffect.maxStacks });
   }
   moveToNearestOtherEnemy(attacker, target, state);
 }
@@ -6319,9 +6361,12 @@ function startUndying(fighter: Fighter, state: SkirmishState, events: SkirmishEv
   fighter.passiveTriggered = true;
   const seconds = passive.durationSeconds ?? 0;
   fighter.undying = { remaining: seconds, total: seconds };
+  // 패시브 돌파(`undyingBulwark`)는 이 패시브 자신의 값만 바꾼다 — 회복 총량이 이 값으로 오른다.
+  const bulwark = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+  const healPercent = bulwark?.kind === "undyingBulwark" ? bulwark.healPercent : passive.value ?? 0;
   // 회복은 긴급 회복과 같은 슬롯을 쓴다 — 매초 한 번씩, 정해진 시간 동안만 흐른다.
-  if (seconds > 0 && (passive.value ?? 0) > 0) {
-    fighter.regeneration = { remaining: seconds, tickIn: 1, percentPerTick: (passive.value ?? 0) / seconds };
+  if (seconds > 0 && healPercent > 0) {
+    fighter.regeneration = { remaining: seconds, tickIn: 1, percentPerTick: healPercent / seconds };
   }
   // 버티는 동안 붙어 있던 상대를 떼어 놓는다. 파치의 날려버림과 같은 궤적 규칙을 쓴다.
   const blast = passive.undyingKnockback;
@@ -7269,6 +7314,7 @@ function strike(
   if (!useUltimate) {
     // 덧칠은 바로 위의 `applySkillStatuses`에서 쌓이므로, 상한 판정도 그 뒤에 와야 이번 타격으로
     // 가득 찬 경우를 놓치지 않는다.
+    if (attackingInFever) chainPaint(attacker, target, state);
     retargetOnFullOverpaint(attacker, target, state);
     retargetAfterBasic(attacker, target, state);
   }
@@ -8087,16 +8133,27 @@ function spawnPups(state: SkirmishState, owner: Fighter, count: number, events: 
   }
 }
 
-/** 평타 돌파(`pupLitter`·`pupFrenzy`) — 기본 공격을 셀 때마다 간격이 차면 새끼 한 마리를 부른다. 폭주 중에는 간격이 더 짧다. */
+/**
+ * 평타 돌파(`pupLitter`)는 기본 공격 `every`번마다, 폭주 돌파(`pupFrenzy`)는 폭주 중 기본 공격 `every`번마다 새끼 한 마리를 부른다.
+ * 두 돌파는 저마다 제 세기(`bt.pupCount`·`bt.pupFrenzyCount`)를 갖는다 — 하나가 닫혀 있어도 다른 하나는 그대로 돈다.
+ */
 function tickPupLitter(state: SkirmishState, owner: Fighter, events: SkirmishEvent[]): void {
   const litter = openedBreakthrough(owner, "basic", (effects) => effects.basic);
-  if (litter?.kind !== "pupLitter") return;
+  if (litter?.kind === "pupLitter") {
+    owner.bt.pupCount += 1;
+    if (owner.bt.pupCount >= litter.every) {
+      owner.bt.pupCount = 0;
+      spawnPups(state, owner, 1, events);
+    }
+  }
   const frenzy = owner.ferocityFever ? openedBreakthrough(owner, "ferocity", (effects) => effects.ferocity) : undefined;
-  const every = frenzy?.kind === "pupFrenzy" ? Math.min(litter.every, frenzy.every) : litter.every;
-  owner.bt.pupCount += 1;
-  if (owner.bt.pupCount < every) return;
-  owner.bt.pupCount = 0;
-  spawnPups(state, owner, 1, events);
+  if (frenzy?.kind === "pupFrenzy") {
+    owner.bt.pupFrenzyCount += 1;
+    if (owner.bt.pupFrenzyCount >= frenzy.every) {
+      owner.bt.pupFrenzyCount = 0;
+      spawnPups(state, owner, 1, events);
+    }
+  }
 }
 
 /** 패시브 돌파(`packStrength`) — 서 있는 늑대 한 마리마다 늘어나는 피해 배율. 열려 있지 않으면 1이다. */
@@ -8425,6 +8482,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     tickElationRegen(fighter, dt, state, events);
     tickPrickle(fighter, dt);
     tickPressure(fighter, dt);
+    fighter.bt.undyingGuard = Math.max(0, fighter.bt.undyingGuard - dt);
     tickSleep(fighter, dt);
     tickFear(fighter, dt);
     resolvePendingWake(fighter, state, events);
@@ -8454,6 +8512,11 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     if (fighter.undying) {
       const remaining = fighter.undying.remaining - dt;
       fighter.undying = remaining <= EMERGENCY_RECOVERY.epsilon ? null : { ...fighter.undying, remaining };
+      // 패시브 돌파(`undyingBulwark`) — 불멸이 끝나는 순간부터 방어·저항이 한동안 오른다.
+      if (fighter.undying === null) {
+        const bulwark = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+        if (bulwark?.kind === "undyingBulwark") fighter.bt.undyingGuard = bulwark.seconds;
+      }
       fighter.hop *= recovery;
       continue;
     }

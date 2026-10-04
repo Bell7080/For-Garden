@@ -18,6 +18,9 @@ import { TIA_STORY } from "./tia";
 import { TORIKA_STORY } from "./torika";
 import { YUTI_STORY } from "./yuti";
 import { TERISA_STORY } from "./terisa";
+import { MAKI_STORY } from "./maki";
+import { DELOPI_STORY } from "./delopi";
+import { DEINA_STORY } from "./deina";
 
 /**
  * 이야기 묶음이 갖춰진 개체. 하나씩 다져 가며 늘리고, 없는 개체는 예전 방식(관찰 일지 글·일일 인터뷰·공용
@@ -43,6 +46,9 @@ export const RELIC_STORIES: Readonly<Record<string, RelicStoryProfile>> = {
   yuti: YUTI_STORY,
   pachi: PACHI_STORY,
   terisa: TERISA_STORY,
+  maki: MAKI_STORY,
+  delopi: DELOPI_STORY,
+  deina: DEINA_STORY,
 };
 
 export function relicStoryFor(relicId: string): RelicStoryProfile | undefined {

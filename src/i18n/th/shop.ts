@@ -34,4 +34,11 @@ export const SHOP_TH = {
   "shop.premium.cancelled": "ยกเลิกการชำระเงินแล้ว",
   "shop.premium.perk.instantAds": "รับรางวัลโฆษณาทันที",
   "shop.premium.perk.adFree": "ไม่มีโฆษณา · กวาดล้างโดยไม่ใช้ตั๋ว",
+  "shop.mileage.title": "ร้านค้าไมล์",
+  "shop.mileage.weekly": "แลกเปลี่ยนรายสัปดาห์",
+  "shop.mileage.daily": "แลกเปลี่ยนรายวัน",
+  "shop.mileage.specimen": "ตัวอย่าง №{number}",
+  "shop.mileage.owned": "มีแล้ว · ทะลวง {grade}",
+  "shop.mileage.unowned": "ตัวอย่างที่ยังไม่เก็บ",
+  "shop.mileage.fragments": "เศษ {count}",
 } as const;

@@ -75,7 +75,7 @@ export const GLOSSARY = {
   fossil: { note: "연구에 넣는 뽑기 재화.", forms: { ko: "화석", ja: "化石", en: "Fossil", "zh-Hans": "化石", "zh-Hant": "化石", th: "ฟอสซิล", vi: "Hóa thạch", id: "Fosil", es: "Fósil", "pt-BR": "Fóss", de: "Fossil", ru: "Окаменелост" } },
   amber: { note: "화석보다 귀한 연구 재화.", forms: { ko: "호박석", ja: "琥珀", en: "Amber", "zh-Hans": "琥珀", "zh-Hant": "琥珀", th: "อำพัน", vi: "Hổ phách", id: "Amber", es: "Ámbar", "pt-BR": "Âmbar", de: "Bernstein", ru: "Янтар" } },
   cheesecake: { note: "급여에 쓰는 경험치 아이템.", forms: { ko: "치즈케이크", ja: "チーズケーキ", en: "Cheesecake", "zh-Hans": "芝士蛋糕", "zh-Hant": "起司蛋糕", th: "ชีสเค้ก", vi: "Bánh phô mai", id: "Cheesecake", es: "Tarta de queso", "pt-BR": "Cheesecake", de: "Käsekuchen", ru: "Чизкейк" } },
-  mileage: { note: "별 다섯에 닿은 뒤의 중복이 바뀌는 공용 교환 재화.", forms: { ko: "DNA 조각", ja: "DNA片", en: "DNA Shard", "zh-Hans": "DNA片段", "zh-Hant": "DNA片段", th: "เศษ DNA", vi: "Mảnh DNA", id: "Serpihan DNA", es: "ADN", "pt-BR": "DNA", de: "DNA-Splitter", ru: "ДНК" } },
+  mileage: { note: "연구마다 적립되고 돌파를 마친 렐릭의 중복이 바뀌는 공용 재화. 마일리지 상점에서 쓴다.", forms: { ko: "DNA 마일리지", ja: "DNAマイレージ", en: "DNA Mileage", "zh-Hans": "DNA里程", "zh-Hant": "DNA里程", th: "ไมล์ DNA", vi: "Dặm DNA", id: "Mil DNA", es: "Milla", "pt-BR": "Milha", de: "DNA-Meile", ru: "ДНК" } },
 
   // ── 전투 ──────────────────────────────────────────────────────────────
   formation: { note: "세 자리에 개체를 세우는 일. 스쿼드(소속)와 다르다.", forms: { ko: "편성", ja: "編成", en: "Formation", "zh-Hans": "编队", "zh-Hant": "編隊", th: "จัดทีม", vi: "Đội hình", id: "Formasi", es: "Formaci", "pt-BR": "Formaç", de: "Formation", ru: "Построени" } },

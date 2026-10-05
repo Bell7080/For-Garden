@@ -41,7 +41,7 @@ export const INFO_KO = {
   "info.breakthrough": "한계 돌파",
   "info.breakthrough.do": "돌파하기",
   "info.breakthrough.gradeMax": "돌파 최대",
-  "info.breakthrough.alreadyMax": "이미 돌파 등급 {rarity}다. 중복은 DNA 조각으로 쌓인다.",
+  "info.breakthrough.alreadyMax": "이미 돌파 등급 {rarity}다. 중복은 DNA 마일리지로 쌓인다.",
   "info.breakthrough.fragment": "{name} 파편",
   "info.breakthrough.cheesecake": "치즈케이크",
   "info.breakthrough.need": "필요 {count}",

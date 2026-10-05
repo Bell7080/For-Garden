@@ -37,7 +37,7 @@ export const INFO_VI = {
   "info.breakthrough": "Đột phá",
   "info.breakthrough.do": "Đột phá",
   "info.breakthrough.gradeMax": "Bậc tối đa",
-  "info.breakthrough.alreadyMax": "Đã đạt Đột phá bậc {rarity}. Trùng lặp sẽ thành Mảnh DNA.",
+  "info.breakthrough.alreadyMax": "Đã đạt Đột phá bậc {rarity}. Trùng lặp sẽ thành Dặm DNA.",
   "info.breakthrough.fragment": "Mảnh {name}",
   "info.breakthrough.cheesecake": "Bánh phô mai",
   "info.breakthrough.need": "Cần {count}",

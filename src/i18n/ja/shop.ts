@@ -35,4 +35,11 @@ export const SHOP_JA = {
   "shop.premium.cancelled": "決済がキャンセルされました。",
   "shop.premium.perk.instantAds": "広告報酬を即時受け取り",
   "shop.premium.perk.adFree": "広告除去 · 掃討券なしで掃討",
+  "shop.mileage.title": "マイレージショップ",
+  "shop.mileage.weekly": "週間交換",
+  "shop.mileage.daily": "日替わり交換",
+  "shop.mileage.specimen": "標本 №{number}",
+  "shop.mileage.owned": "所持 · 突破 {grade}",
+  "shop.mileage.unowned": "未収集の標本",
+  "shop.mileage.fragments": "欠片 {count}",
 } as const;

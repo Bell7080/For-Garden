@@ -56,7 +56,7 @@ export const ITEMS = [
   { id: "gems", name: "보석", description: "도시 전역에서 통용되는 재화입니다.", category: "currency", icon: { kind: "currency", key: "gems" }, maxStack: 9_999_999, useEffect: { kind: "none" } },
   { id: "gold", name: "골드", description: "룬 세공과 성장에 사용하는 재화입니다.", category: "currency", icon: { kind: "currency", key: "gold" }, maxStack: 999_999_999, useEffect: { kind: "none" } },
   { id: "stamina", name: "스테미나", description: "탐사에 필요한 행동력입니다.", category: "currency", icon: { kind: "currency", key: "stamina" }, maxStack: 9_999, useEffect: { kind: "none" } },
-  { id: "dnaFragments", name: "DNA 조각", description: "복원 연구의 교환 재화입니다.", category: "currency", icon: { kind: "currency", key: "dnaFragments" }, maxStack: 99_999, useEffect: { kind: "none" } },
+  { id: "dnaFragments", name: "DNA 마일리지", description: "마일리지 상점에서 쓰는 교환 재화입니다.", category: "currency", icon: { kind: "currency", key: "dnaFragments" }, maxStack: 99_999, useEffect: { kind: "none" } },
   { id: "cheesecake", name: "치즈케이크", description: "렐릭에게 급여해 성장시킵니다.", category: "currency", icon: { kind: "currency", key: "cheesecake" }, maxStack: 9_999_999, useEffect: { kind: "none" } },
   { id: "rawStone", name: "원석", description: "지층 탐사로 캐낸 미가공 광물입니다. 룬 특성 재해석에 사용합니다.", category: "currency", icon: { kind: "currency", key: "rawStone" }, maxStack: 9_999_999, useEffect: { kind: "none" } },
   // 에너지 드링크는 **기본과 쎈 것 둘**이다. 회복량만 다른 같은 물건이라 한 칸에서 좌우로

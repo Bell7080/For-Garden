@@ -34,4 +34,11 @@ export const SHOP_ZH_HANS = {
   "shop.premium.cancelled": "支付已取消。",
   "shop.premium.perk.instantAds": "广告奖励即时领取",
   "shop.premium.perk.adFree": "免广告 · 免扫荡券扫荡",
+  "shop.mileage.title": "里程商店",
+  "shop.mileage.weekly": "每周兑换",
+  "shop.mileage.daily": "每日兑换",
+  "shop.mileage.specimen": "标本 №{number}",
+  "shop.mileage.owned": "已拥有 · 突破 {grade}",
+  "shop.mileage.unowned": "未收集的标本",
+  "shop.mileage.fragments": "碎片 {count}",
 } as const;

@@ -13,6 +13,8 @@ import { staminaCurrencyRecharge } from "../../src/data/staminaRecharge";
 import { STAMINA_HOLD_LIMIT, staminaMaxForPlayer } from "../../src/core/stamina";
 import { createArchaeologyState } from "../../src/core/strataDig";
 import { STRATA_SITE_COOLDOWN_MS } from "../../src/data/strataLayers";
+import { mileageWeeklyClerkId } from "../../src/data/mileageClerk";
+import { BREAKTHROUGH_GRADE_CAP } from "../../src/core/relicProgression";
 
 /** API 테스트에서 같은 옵션 구성을 재현하는 보유 룬을 만든다. */
 function makeRune(instanceId = "rune-1"): RuneInstance {
@@ -630,7 +632,8 @@ describe("FakeServer", () => {
     expect(state.relicProgress.rex).toMatchObject({ level: 1, breakthrough: 0 });
     expect(state.relicFragments.rex).toBe(9);
     expect(state.relicProgress.rex).toMatchObject({ bondLevel: 1, bondXp: 20 });
-    expect(state.wallet.dnaFragments).toBe(0);
+    // 연구 한 번마다 마일리지 1이 적립된다. 중복은 풀돌이 아니라 마일리지 전환이 일어나지 않는다.
+    expect(state.wallet.dnaFragments).toBe(10);
   });
 
   it("렐릭과 회색 재화가 섞인 10연을 순서대로 지급하고 지갑 상한을 적용한다", async () => {
@@ -828,47 +831,6 @@ describe("FakeServer 상품 카탈로그", () => {
     await expect(server.claimInstantAdReward({ ...request, requestId: "instant-4" })).rejects.toMatchObject({ code: "AD_DAILY_LIMIT" });
     now = new Date("2026-08-23T00:00:00Z");
     await expect(server.claimInstantAdReward({ ...request, requestId: "instant-next-day" })).resolves.toMatchObject({ dailyClaims: 1, dailyBonus: { currency: "gems", amount: 100 } });
-  });
-});
-
-describe("FakeServer DNA 조각 교환소와 경제 경계", () => {
-  it("선택한 보유 렐릭의 파편만 늘리고 DNA를 차감한다", async () => {
-    const state = makeSession(); state.wallet.dnaFragments = 10;
-    const response = await new FakeServer(state, { latencyMs: 0 }).exchangeDna({ offerId: "dna-fragment", relicId: "rex" });
-    expect(response).toMatchObject({ offerId: "dna-fragment", rewardKind: "relic_fragment", wallet: { dnaFragments: 0 } });
-    expect(state.relicFragments.rex).toBe(1);
-    expect(state.relicFragments.torika ?? 0).toBe(0);
-  });
-
-  it("잘못된 대상은 거부하고 같은 정의의 룬도 서로 다른 인스턴스로 지급한다", async () => {
-    const state = makeSession(); state.wallet.dnaFragments = 30;
-    const server = new FakeServer(state, { latencyMs: 0 });
-    await expect(server.exchangeDna({ offerId: "dna-fragment", relicId: "not-owned" })).rejects.toMatchObject({ code: "INVALID_EXCHANGE_TARGET" });
-    const first = await server.exchangeDna({ offerId: "dna-rune" });
-    expect(first.runeInventory.runes).toHaveLength(1);
-    expect(first.grantedRune).toEqual(first.runeInventory.runes[0]);
-    expect(state.wallet.dnaFragments).toBe(15);
-    const second = await server.exchangeDna({ offerId: "dna-rune" });
-    // 시계와 RNG가 같아도 획득 건별 인스턴스와 중첩 배열은 독립적이어야 한다.
-    expect(second.grantedRune?.instanceId).not.toBe(first.grantedRune?.instanceId);
-    expect(new Set(state.runeInventory.map(({ instanceId }) => instanceId)).size).toBe(2);
-    expect(second.grantedRune).not.toBe(state.runeInventory[0]);
-  });
-
-  it("이미 저장된 시각·순번 ID와 충돌하면 미사용 ID까지 전진한다", async () => {
-    const state = makeSession(); state.wallet.dnaFragments = 15;
-    const now = () => new Date("2026-08-22T12:00:00Z");
-    state.runeInventory = [makeRune(`rune-${now().getTime()}-0`)];
-    const response = await new FakeServer(state, { latencyMs: 0, now, random: () => 0 }).exchangeDna({ offerId: "dna-rune" });
-    expect(response.grantedRune?.instanceId).toBe(`rune-${now().getTime()}-1`);
-    expect(state.runeInventory).toHaveLength(2);
-  });
-
-  it("지급 결과가 재화 상한을 넘으면 원본 상태를 변경하지 않는다", async () => {
-    const state = makeSession(); state.wallet.dnaFragments = 5; state.wallet.fossil = 9_999_900;
-    const server = new FakeServer(state, { latencyMs: 0 });
-    await expect(server.exchangeDna({ offerId: "dna-past-event" })).rejects.toMatchObject({ code: "CURRENCY_LIMIT_EXCEEDED" });
-    expect(state.wallet).toMatchObject({ dnaFragments: 5, fossil: 9_999_900 });
   });
 });
 
@@ -1292,5 +1254,41 @@ describe("플랫폼 결제 지급 확정", () => {
     const before = { ...state.wallet };
     await expect(server.verifyPurchaseReceipt({ productId: "premium-gems-small", platform: "test", receipt: "forged", requestId: "bad" })).rejects.toBeDefined();
     expect(state.wallet).toEqual(before);
+  });
+});
+
+describe("FakeServer 마일리지 상점", () => {
+  const WEEK = new Date("2026-10-07T12:00:00Z");
+  it("주간 SSR 파편은 이번 주 점원의 파편 한 장으로 쌓이고 마일리지만 차감한다", async () => {
+    const state = makeSession(); state.wallet.dnaFragments = 100;
+    const server = new FakeServer(state, { latencyMs: 0, now: () => WEEK });
+    const clerk = mileageWeeklyClerkId(WEEK)!;
+    const result = await server.purchaseProduct({ storefront: "mileage", productId: "mileage-weekly-ssr", quantity: 1 });
+    expect(state.relicFragments[clerk]).toBe(1);
+    expect(state.wallet.dnaFragments).toBe(40);
+    expect(result.granted).toEqual([{ kind: "relic_fragment", relicId: clerk, amount: 1 }]);
+    // 주 1회 한도다.
+    await expect(server.purchaseProduct({ storefront: "mileage", productId: "mileage-weekly-ssr", quantity: 1 })).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
+    expect(state.wallet.dnaFragments).toBe(40);
+  });
+
+  it("이미 돌파 V인 점원의 파편은 값을 받기 전에 거절한다", async () => {
+    const state = makeSession(); state.wallet.dnaFragments = 100;
+    const clerk = mileageWeeklyClerkId(WEEK)!;
+    state.owned.add(clerk);
+    state.relicProgress[clerk] = { level: 1, exp: 0, breakthrough: BREAKTHROUGH_GRADE_CAP - 1, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
+    const server = new FakeServer(state, { latencyMs: 0, now: () => WEEK });
+    await expect(server.purchaseProduct({ storefront: "mileage", productId: "mileage-weekly-ssr", quantity: 1 })).rejects.toMatchObject({ code: "RELIC_MAX_BREAKTHROUGH" });
+    expect(state.wallet.dnaFragments).toBe(100);
+    expect(state.relicFragments[clerk] ?? 0).toBe(0);
+  });
+
+  it("일간 상품은 마일리지를 내고 재화를 받으며 마일리지가 모자라면 막는다", async () => {
+    const state = makeSession(); state.wallet.dnaFragments = 5;
+    const server = new FakeServer(state, { latencyMs: 0, now: () => WEEK });
+    await server.purchaseProduct({ storefront: "mileage", productId: "mileage-daily-gold", quantity: 2 });
+    expect(state.wallet).toMatchObject({ dnaFragments: 3, gold: 40_000 });
+    await expect(server.purchaseProduct({ storefront: "mileage", productId: "mileage-daily-fossil", quantity: 1 })).rejects.toBeDefined();
+    expect(state.wallet.dnaFragments).toBe(3);
   });
 });

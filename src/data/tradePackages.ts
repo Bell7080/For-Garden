@@ -51,7 +51,8 @@ export const TRADE_GEM_RATE: Readonly<Record<ProductCurrency, number>> = {
   salvageRecord: 60,
   cheesecake: 2,
   gold: 500,
-  dnaFragments: 0.2,
+  // 마일리지 1 ≈ 젬 60 — 마일리지 상점의 기준 단위(`mileageShop.ts`)와 같은 값이다. 전시대는 마일리지를 지급하지 않는다.
+  dnaFragments: 1 / 60,
 };
 
 /** 지급품 묶음 전체를 젬 값으로 환산한다. 재화가 아닌 지급품은 시세가 없으므로 세지 않는다. */
@@ -128,9 +129,9 @@ export const TRADE_PACKAGES: readonly ProductDefinition[] = [
   },
   {
     id: "trade-research-grant", storefront: "trade", category: "weekly", iconKey: "shop-product-enhancement",
-    name: "연구 보조금", description: "골드 140,000과 공용 DNA 조각 14개",
+    name: "연구 보조금", description: "골드 175,000개",
     acquisition: { kind: "currency", currency: "gems", amount: 200 },
-    grants: [{ kind: "currency", currency: "gold", amount: 140_000 }, { kind: "currency", currency: "dnaFragments", amount: 14 }],
+    grants: [{ kind: "currency", currency: "gold", amount: 175_000 }],
     defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly",
     visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z",
   },

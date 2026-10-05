@@ -114,11 +114,6 @@ export const MISC_KO = {
   "archaeology.reward.veryRare": "매우 희귀",
   "archaeology.reward.unavailable": "획득 불가",
 
-  // 마일리지
-  "mileage.title": "마일리지 상점",
-  "mileage.owned": "보유 DNA  {amount}",
-  "mileage.comingSoon": "교환 목록 준비 중",
-
   // 우편
   "mail.title": "우편함",
   "mail.claimAll": "모두 받기",

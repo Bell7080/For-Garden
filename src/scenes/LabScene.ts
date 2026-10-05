@@ -32,7 +32,6 @@ import { addBannerArrow, addBannerTitle, drawBannerPages } from "../ui/LabBanner
 import { WelcomeBannerCast } from "../ui/WelcomeBannerCast";
 import { BANNER_TONE, bannerPresentation, bannerTags, bannerTenDiscountPercent } from "../ui/labBannerPresentation";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
-import { MileagePopup } from "../ui/MileagePopup";
 import { settingsManager } from "../managers/SettingsManager";
 import { motionPolicy } from "../core/settings";
 import { colorAssistPolicy, excavationStageDuration } from "../core/settings";
@@ -99,7 +98,6 @@ export class LabScene extends Phaser.Scene {
   private audioScope?: AudioScope;
   /** 마일리지 교환은 유료 상점 씬과 분리된 연구소 로컬 레이어에만 열린다. */
   private popupLayer?: PopupLayer;
-  private mileagePopup?: MileagePopup;
   /** 결과판에 깔린 칸들. 몇 칸이 남았는지가 안내 문구와 화면 터치의 뜻을 정한다. */
   private boardTiles: ResearchSlotTile[] = [];
   /** 칸을 열기 전에 소개 장면을 돌릴 개체 — 새 렐릭과 모든 SSR(`showcaseRelicIds`). */
@@ -212,7 +210,7 @@ export class LabScene extends Phaser.Scene {
       this.presentationLayer = undefined;
       this.audioScope?.release();
       this.audioScope = undefined;
-      this.popupLayer?.closeAll(); this.popupLayer = undefined; this.mileagePopup = undefined;
+      this.popupLayer?.closeAll(); this.popupLayer = undefined;
     });
     this.showcaseRelic();
     this.refresh();
@@ -224,11 +222,9 @@ export class LabScene extends Phaser.Scene {
     playSceneEntrance(this);
   }
 
-  /** 마일리지 상점 — 임시 목록은 연구소 위에 머물며 유료 상점 씬으로 이동하지 않는다. */
+  /** 마일리지 상점 — 다른 상점과 같은 한 씬이고, 뒤로가기는 연구소로 돌아온다. */
   private openMileageShop(): void {
-    if (!this.popupLayer) return;
-    this.mileagePopup ??= new MileagePopup(this, this.popupLayer, () => { this.mileagePopup = undefined; });
-    this.mileagePopup.open();
+    startScene(this, "shop", { storefront: "mileage", returnScene: "lab" });
   }
 
   /** 양옆만 누르는 비네트. 위아래는 상단 줄과 하단 탭이 제 그라데이션을 이미 갖는다. */
@@ -407,7 +403,7 @@ export class LabScene extends Phaser.Scene {
       const response = await gameApi.pullRelics({ bannerId: banner.id, count });
       this.topBar.refresh();
       // API가 상태 반영과 저장까지 끝낸 뒤 응답하므로 이후 건너뛰기는 보상에 영향을 주지 않는다.
-      await this.playPresentation(response.results);
+      await this.playPresentation(response.results, response.mileageGained);
     } catch (error) {
       const message = error instanceof GameApiError ? error.message : t("lab.networkError");
       this.showNotice(message);
@@ -453,7 +449,7 @@ export class LabScene extends Phaser.Scene {
   }
 
   /** 서버 확정 등급을 복권처럼 암시한 뒤 균열→결과판 순서로 재생한다. */
-  private async playPresentation(results: PullResultDto[]): Promise<void> {
+  private async playPresentation(results: PullResultDto[], mileage: number): Promise<void> {
     // 한 연출 도중 설정을 다시 읽어 단계별 시간이 서로 갈리지 않도록 시작 시 스냅샷을 고정한다.
     const preferences = settingsManager.get();
     const request = this.presentation.begin();
@@ -461,7 +457,7 @@ export class LabScene extends Phaser.Scene {
     // API가 확정한 전체 결과를 순수 희귀도 정책에 넣고, 10연이어도 결과 묶음당 한 번만 울린다.
     if (hasRareExcavationResult([rarity])) settingsManager.haptic("rareExcavation");
     // 3D 연출이 서면 그것이 이 뽑기의 연출 전부다. 서지 못한 기기만 아래의 Phaser 연출을 탄다.
-    if (await this.playCinematic(results, request)) return;
+    if (await this.playCinematic(results, request, mileage)) return;
     this.presentationLayer?.destroy(true);
     const layer = this.add.container(0, 0).setDepth(900);
     this.presentationLayer = layer;
@@ -523,7 +519,7 @@ export class LabScene extends Phaser.Scene {
    *
    * 돌려주는 값은 "시네마틱이 실제로 연출을 맡았는가"다. 거짓이면 씬은 예전 연출을 재생한다.
    */
-  private async playCinematic(results: PullResultDto[], request: number): Promise<boolean> {
+  private async playCinematic(results: PullResultDto[], request: number, mileage: number): Promise<boolean> {
     // SSR이 든 판이면 전조 무대를 미리 읽어 둔다 — 카드가 뒤집힐 때쯤이면 도착해 있다.
     if (results.some((result) => result.type === "relic" && getRelic(result.relicId).rarity === "SSR")) void preloadSsrOmen()?.catch(() => undefined);
     if (!researchCinematicEnabled() || !isCinematicCount(results.length)) return false;
@@ -548,6 +544,7 @@ export class LabScene extends Phaser.Scene {
       rewards,
       art,
       reducedMotion: preferences.accessibility.reduceMotion,
+      mileage,
       introduceSlots: showcase.flatMap((relicId, index) => (relicId ? [index] : [])),
       introduce: async (index) => {
         const relicId = showcase[index];

@@ -34,4 +34,11 @@ export const SHOP_DE = {
   "shop.premium.cancelled": "Die Zahlung wurde abgebrochen.",
   "shop.premium.perk.instantAds": "Werbebelohnungen sofort erhalten",
   "shop.premium.perk.adFree": "Werbefrei · Säubern ohne Tickets",
+  "shop.mileage.title": "Meilen-Shop",
+  "shop.mileage.weekly": "Wöchentlicher Tausch",
+  "shop.mileage.daily": "Täglicher Tausch",
+  "shop.mileage.specimen": "Exemplar №{number}",
+  "shop.mileage.owned": "Im Besitz · Durchbruch {grade}",
+  "shop.mileage.unowned": "Noch nicht gesammeltes Exemplar",
+  "shop.mileage.fragments": "Splitter {count}",
 } as const;

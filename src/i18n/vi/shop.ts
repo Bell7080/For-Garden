@@ -34,4 +34,11 @@ export const SHOP_VI = {
   "shop.premium.cancelled": "Đã hủy thanh toán.",
   "shop.premium.perk.instantAds": "Nhận thưởng quảng cáo ngay",
   "shop.premium.perk.adFree": "Không quảng cáo · Càn quét không cần vé",
+  "shop.mileage.title": "Cửa hàng Dặm",
+  "shop.mileage.weekly": "Đổi hằng tuần",
+  "shop.mileage.daily": "Đổi hằng ngày",
+  "shop.mileage.specimen": "Mẫu vật №{number}",
+  "shop.mileage.owned": "Đã có · Đột phá {grade}",
+  "shop.mileage.unowned": "Mẫu vật chưa thu thập",
+  "shop.mileage.fragments": "Mảnh {count}",
 } as const;

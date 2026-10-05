@@ -42,7 +42,7 @@ export const COMMON_KO = {
   "currency.fossil": "화석",
   "currency.amber": "호박석",
   "currency.cheesecake": "치즈케이크",
-  "currency.dnaFragments": "DNA 조각",
+  "currency.dnaFragments": "DNA 마일리지",
 
   // 속성
   "element.fire": "불",

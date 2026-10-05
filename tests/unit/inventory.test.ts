@@ -30,7 +30,7 @@ describe("inventory", () => {
     // 교류 표본을 바꾸는 안내는 교류 씬의 교환소로 간다 — 한쪽이 다른 쪽을 삼키지 않게 고정한다.
     const actions = Object.values(CURRENCY_GUIDE).flatMap((entry) => "action" in entry ? [entry.action] : []);
     const targets = actions.map((action) => `${action.kind}:${action.target}`);
-    expect(targets.filter((target) => target === "popup:trade")).toHaveLength(2);
+    expect(targets.filter((target) => target === "popup:trade")).toHaveLength(1);
     expect(actions.every((action) => action.target !== "trade" || action.label === "무역 열기")).toBe(true);
     // 교환소는 파견에서만 나오는 표본을 바꾸는 창구라 지갑 재화 안내가 직접 가리키지 않는다.
     expect(targets).not.toContain("scene:interaction");

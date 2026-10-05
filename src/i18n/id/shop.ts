@@ -34,4 +34,11 @@ export const SHOP_ID = {
   "shop.premium.cancelled": "Pembayaran dibatalkan.",
   "shop.premium.perk.instantAds": "Hadiah iklan langsung diklaim",
   "shop.premium.perk.adFree": "Tanpa iklan · Sapu tanpa tiket",
+  "shop.mileage.title": "Toko Mil",
+  "shop.mileage.weekly": "Penukaran Mingguan",
+  "shop.mileage.daily": "Penukaran Harian",
+  "shop.mileage.specimen": "Spesimen №{number}",
+  "shop.mileage.owned": "Dimiliki · Terobosan {grade}",
+  "shop.mileage.unowned": "Spesimen belum terkumpul",
+  "shop.mileage.fragments": "Serpihan {count}",
 } as const;

@@ -105,9 +105,6 @@ export const MISC_JA = {
   "archaeology.reward.veryRare": "非常に希少",
   "archaeology.reward.unavailable": "入手不可",
 
-  "mileage.title": "マイレージショップ",
-  "mileage.owned": "所持DNA  {amount}",
-  "mileage.comingSoon": "交換一覧を準備中",
 
   "mail.title": "メールボックス",
   "mail.claimAll": "すべて受取",

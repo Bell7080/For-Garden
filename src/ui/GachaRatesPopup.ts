@@ -114,6 +114,7 @@ function rulesText({ banner, pity }: GachaRatesContext): string {
       t("lab.policy.pickup", { state: t(pity.pickupGuaranteed ? "lab.policy.pickupOn" : "lab.policy.pickupOff") }),
     ] : []),
     t("lab.policy.tenGuarantee"),
+    t("lab.policy.mileage"),
     t("lab.policy.duplicate"),
     t("lab.policy.duplicateMax"),
   ].map((line) => `· ${line}`).join("\n");

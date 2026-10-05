@@ -34,4 +34,11 @@ export const SHOP_ES = {
   "shop.premium.cancelled": "El pago se canceló.",
   "shop.premium.perk.instantAds": "Recompensas de anuncios al instante",
   "shop.premium.perk.adFree": "Sin anuncios · Barrido sin tickets",
+  "shop.mileage.title": "Tienda de millas",
+  "shop.mileage.weekly": "Canje semanal",
+  "shop.mileage.daily": "Canje diario",
+  "shop.mileage.specimen": "Espécimen №{number}",
+  "shop.mileage.owned": "Poseído · Ruptura {grade}",
+  "shop.mileage.unowned": "Espécimen sin recolectar",
+  "shop.mileage.fragments": "Fragmentos {count}",
 } as const;

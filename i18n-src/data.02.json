@@ -259,36 +259,6 @@
 "Ein veredeltes Material für die Runenforschung.",
 "Очищенный материал для исследования рун."
 ],
-"dna.dna-fragment.name": [
-"持有遗物的碎片",
-"เศษของเรลิกที่มี",
-"Mảnh Di vật đang có",
-"Serpihan Relik Dimiliki",
-"Fragmentos de Reliquias obtenidas",
-"Fragmentos de Relíquias obtidas",
-"Splitter eigener Relikte",
-"Фрагменты своих реликтов"
-],
-"dna.dna-rune.name": [
-"高级符文材料",
-"วัสดุรูนระดับสูง",
-"Nguyên liệu Rune cao cấp",
-"Bahan Rune Tingkat Tinggi",
-"Materiales de Runa de alto grado",
-"Materiais de Runa de alto grau",
-"Hochwertiges Runenmaterial",
-"Материалы для рун высокого ранга"
-],
-"dna.dna-past-event.name": [
-"往期调查记录兑换券",
-"คูปองบันทึกสำรวจในอดีต",
-"Phiếu hồ sơ khảo sát cũ",
-"Voucher Catatan Survei Lampau",
-"Vale de registros de campo pasados",
-"Vale de registros de campo passados",
-"Gutschein für frühere Erkundungsakten",
-"Талон на прошлые записи"
-],
 "premium.tab.package": [
 "礼包",
 "แพ็กเกจ",
@@ -659,26 +629,6 @@
 "1.500 Fossilien",
 "1500 окаменелостей"
 ],
-"product.raid-dna-supply.name": [
-"讨伐复原补给",
-"เสบียงฟื้นคืนปราบปราม",
-"Tiếp tế phục hồi chinh phạt",
-"Pasokan Restorasi Penaklukan",
-"Suministro de restauración de subyugación",
-"Suprimento de restauração de subjugação",
-"Bezwingungs-Restaurierungsvorrat",
-"Припасы восстановления усмирения"
-],
-"product.raid-dna-supply.description": [
-"DNA片段12个",
-"เศษ DNA 12",
-"12 Mảnh DNA",
-"12 Serpihan DNA",
-"12 fragmentos de ADN",
-"12 fragmentos de DNA",
-"12 DNA-Splitter",
-"12 фрагментов ДНК"
-],
 "product.raid-amber-token.name": [
 "讨伐功勋琥珀",
 "อำพันเกียรติคุณปราบปราม",
@@ -798,26 +748,6 @@
 "40 gemas",
 "40 Juwelen",
 "40 самоцветов"
-],
-"product.loot-salvage-dna.name": [
-"打捞复原样本",
-"ตัวอย่างฟื้นคืนที่กู้มา",
-"Mẫu phục hồi trục vớt",
-"Sampel Restorasi Selamatan",
-"Muestra de restauración rescatada",
-"Amostra de restauração resgatada",
-"Geborgene Restaurierungsprobe",
-"Поднятый образец восстановления"
-],
-"product.loot-salvage-dna.description": [
-"DNA片段15个",
-"เศษ DNA 15",
-"15 Mảnh DNA",
-"15 Serpihan DNA",
-"15 fragmentos de ADN",
-"15 fragmentos de DNA",
-"15 DNA-Splitter",
-"15 фрагментов ДНК"
 ],
 "product.loot-salvage-dust.name": [
 "打捞精炼粉尘",
@@ -1109,16 +1039,7 @@
 "Forschungszuschuss",
 "Грант на исследования"
 ],
-"trade.trade-research-grant.description": [
-"金币140,000与DNA片段14个",
-"ทอง 140,000 และเศษ DNA 14",
-"140.000 Vàng và 14 Mảnh DNA",
-"140.000 Emas dan 14 Serpihan DNA",
-"140.000 de oro y 14 fragmentos de ADN",
-"140.000 de ouro e 14 fragmentos de DNA",
-"140.000 Gold und 14 DNA-Splitter",
-"140 000 золота и 14 фрагментов ДНК"
-],
+"trade.trade-research-grant.description": ["金币175,000", "ทอง 175,000", "175.000 Vàng", "175.000 Emas", "175.000 de oro", "175.000 de ouro", "175.000 Gold", "175 000 золота"],
 "trade.trade-excavation-crate.name": [
 "采掘装备箱",
 "กล่องอุปกรณ์ขุดหา",

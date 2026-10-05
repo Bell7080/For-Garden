@@ -20,8 +20,9 @@ export const LAB_KO = {
   "lab.policy.pickupOff": "OFF",
   "lab.policy.pickupRate": "SSR 픽업 확률 {percent}% · 실패 시 다음 SSR 픽업 확정",
   "lab.policy.tenGuarantee": "10연 마지막 슬롯 SR 이상 보장 (SSR 천장 우선)",
+  "lab.policy.mileage": "연구 1회마다 DNA 마일리지 +1",
   "lab.policy.duplicate": "중복 보상  해당 렐릭 파편 +1 · 파편을 모아 한계 돌파",
-  "lab.policy.duplicateMax": "돌파 등급 V 달성 이후 중복은 공용 DNA 조각 +1",
+  "lab.policy.duplicateMax": "돌파 등급 V 달성 이후 중복은 DNA 마일리지로 전환 (SSR +30 · SR +8 · R +2)",
 
   "lab.skipAll": "전체 건너뛰기",
   "lab.scanning": "화석 DNA 연구 중",

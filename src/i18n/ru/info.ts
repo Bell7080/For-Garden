@@ -37,7 +37,7 @@ export const INFO_RU = {
   "info.breakthrough": "Прорыв",
   "info.breakthrough.do": "Прорыв",
   "info.breakthrough.gradeMax": "Макс. ранг",
-  "info.breakthrough.alreadyMax": "Уже прорыв {rarity}. Повторы станут фрагментами ДНК.",
+  "info.breakthrough.alreadyMax": "Уже достигнут Прорыв {rarity}. Дубликаты превратятся в мили ДНК.",
   "info.breakthrough.fragment": "Фрагмент: {name}",
   "info.breakthrough.cheesecake": "Чизкейк",
   "info.breakthrough.need": "Нужно {count}",

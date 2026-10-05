@@ -34,4 +34,11 @@ export const SHOP_ZH_HANT = {
   "shop.premium.cancelled": "支付已取消。",
   "shop.premium.perk.instantAds": "廣告獎勵即時領取",
   "shop.premium.perk.adFree": "免廣告 · 免掃蕩券掃蕩",
+  "shop.mileage.title": "里程商店",
+  "shop.mileage.weekly": "每週兌換",
+  "shop.mileage.daily": "每日兌換",
+  "shop.mileage.specimen": "標本 №{number}",
+  "shop.mileage.owned": "已擁有 · 突破 {grade}",
+  "shop.mileage.unowned": "未收集的標本",
+  "shop.mileage.fragments": "碎片 {count}",
 } as const;

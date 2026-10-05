@@ -979,36 +979,6 @@
 "Nicht erhältlich",
 "Недоступно"
 ],
-"mileage.title": [
-"里程商店",
-"ร้านค้าแลกไมล์",
-"Cửa hàng tích điểm",
-"Toko Poin",
-"Tienda de millas",
-"Loja de milhas",
-"Meilen-Shop",
-"Магазин миль"
-],
-"mileage.owned": [
-"持有DNA  {amount}",
-"DNA ที่มี  {amount}",
-"DNA đang có  {amount}",
-"DNA dimiliki  {amount}",
-"ADN en posesión  {amount}",
-"DNA em posse  {amount}",
-"DNA im Besitz  {amount}",
-"ДНК  {amount}"
-],
-"mileage.comingSoon": [
-"兑换列表准备中",
-"รายการแลกกำลังเตรียม",
-"Danh sách đổi đang chuẩn bị",
-"Daftar tukar dalam persiapan",
-"Lista de canje en preparación",
-"Lista de troca em preparação",
-"Tauschliste in Vorbereitung",
-"Список обмена готовится"
-],
 "mail.title": [
 "邮件箱",
 "กล่องจดหมาย",

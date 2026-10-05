@@ -338,6 +338,8 @@ export function resolveAcquisitions(
   /** 개체별 현재 별(1~5). 주지 않은 개체는 별 하나로 본다. */
   breakthroughGradeById: Readonly<Record<string, number>> = {},
   maxStars = 5,
+  /** 풀돌 개체의 중복 한 장이 바뀌는 마일리지 수. 주지 않으면 1이다. */
+  overflowAmountOf: (relicId: string) => number = () => 1,
 ): AcquisitionOutcome {
   const owned = new Set(ownedRelicIds);
   const fragments = { ...fragmentsById };
@@ -355,9 +357,10 @@ export function resolveAcquisitions(
     }
     duplicateRelicIds.push(relicId);
     if ((breakthroughGradeById[relicId] ?? 1) >= maxStars) {
-      // 별 다섯에 닿은 개체의 중복 한 장은 공용 DNA 조각 한 개(마일리지)로 바뀐다.
-      overflowFragments += 1;
-      slots.push({ relicId, kind: "overflow", fragments: 0, overflowFragments: 1 });
+      // 풀돌 개체의 중복은 파편으로 한 번, 파편이 쓸 곳이 없어 마일리지로 한 번 더 바뀐다(양은 등급이 정한다).
+      const amount = overflowAmountOf(relicId);
+      overflowFragments += amount;
+      slots.push({ relicId, kind: "overflow", fragments: 0, overflowFragments: amount });
     } else {
       fragments[relicId] = (fragments[relicId] ?? 0) + 1;
       slots.push({ relicId, kind: "fragment", fragments: 1, overflowFragments: 0 });

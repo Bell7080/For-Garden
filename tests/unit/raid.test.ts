@@ -368,9 +368,8 @@ describe("전리품 상점", () => {
     );
     const raid = grantsOf("raid");
     const shared = [...grantsOf("expedition")].filter((key) => raid.has(key));
-    // DNA 조각 하나만 양쪽에 둔다 — 돌파의 공용 재료라 한쪽에만 두면 그 콘텐츠를 돌지
-    // 않는 사람의 성장이 통째로 막힌다.
-    expect(shared).toEqual(["dnaFragments"]);
+    // DNA 마일리지는 마일리지 상점으로 옮겨 가 두 전리품 상점은 더 이상 겹치는 물건이 없다.
+    expect(shared).toEqual([]);
   });
 
   it("이 파는 것과 받는 값이 모두 실제로 있는 것이다", () => {

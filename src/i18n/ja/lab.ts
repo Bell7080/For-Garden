@@ -20,8 +20,9 @@ export const LAB_JA = {
   "lab.policy.pickupOff": "OFF",
   "lab.policy.pickupRate": "SSRピックアップ確率 {percent}% · 外れた場合は次のSSRがピックアップ確定",
   "lab.policy.tenGuarantee": "10連の最終スロットはSR以上保証 (SSR天井が優先)",
+  "lab.policy.mileage": "研究1回ごとにDNAマイレージ +1",
   "lab.policy.duplicate": "重複報酬  該当レリックの欠片 +1 · 欠片を集めて限界突破",
-  "lab.policy.duplicateMax": "星Vに到達した後の重複は共用DNA片 +1",
+  "lab.policy.duplicateMax": "突破ランクV到達後の重複はDNAマイレージに変換 (SSR +30 · SR +8 · R +2)",
 
   "lab.skipAll": "すべてスキップ",
   "lab.scanning": "化石DNAを研究中",

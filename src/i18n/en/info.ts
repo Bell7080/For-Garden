@@ -37,7 +37,7 @@ export const INFO_EN = {
   "info.breakthrough": "Breakthrough",
   "info.breakthrough.do": "Break Through",
   "info.breakthrough.gradeMax": "Max Grade",
-  "info.breakthrough.alreadyMax": "Already at Breakthrough grade {rarity}. Duplicates become DNA Shards.",
+  "info.breakthrough.alreadyMax": "Already at Breakthrough grade {rarity}. Duplicates become DNA Mileage.",
   "info.breakthrough.fragment": "{name} Shard",
   "info.breakthrough.cheesecake": "Cheesecake",
   "info.breakthrough.need": "Need {count}",

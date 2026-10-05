@@ -34,4 +34,11 @@ export const SHOP_RU = {
   "shop.premium.cancelled": "Оплата отменена.",
   "shop.premium.perk.instantAds": "Награды за рекламу сразу",
   "shop.premium.perk.adFree": "Без рекламы · Зачистка без билетов",
+  "shop.mileage.title": "Магазин миль",
+  "shop.mileage.weekly": "Еженедельный обмен",
+  "shop.mileage.daily": "Ежедневный обмен",
+  "shop.mileage.specimen": "Экземпляр №{number}",
+  "shop.mileage.owned": "Есть · Прорыв {grade}",
+  "shop.mileage.unowned": "Несобранный экземпляр",
+  "shop.mileage.fragments": "Фрагменты {count}",
 } as const;

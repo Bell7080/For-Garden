@@ -37,7 +37,7 @@ export const INFO_DE = {
   "info.breakthrough": "Durchbruch",
   "info.breakthrough.do": "Durchbruch",
   "info.breakthrough.gradeMax": "Höchststufe",
-  "info.breakthrough.alreadyMax": "Bereits auf Durchbruch-Stufe {rarity}. Duplikate werden zu DNA-Splittern.",
+  "info.breakthrough.alreadyMax": "Bereits auf Durchbruch-Stufe {rarity}. Duplikate werden zu DNA-Meilen.",
   "info.breakthrough.fragment": "{name}-Splitter",
   "info.breakthrough.cheesecake": "Käsekuchen",
   "info.breakthrough.need": "Benötigt {count}",

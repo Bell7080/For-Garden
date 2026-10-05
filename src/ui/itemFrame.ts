@@ -157,12 +157,16 @@ export function addFrameAmount(scene: Phaser.Scene, size: number, amount: string
 }
 
 /**
- * 상점 진열대·구매 확인판의 수량 글자 — 액자 한 변의 0.147(170에서 25px)을 `emphasis`로 세운다. 진열대와 확인판이
- * 같은 한 벌을 읽어, 눌러서 연 판의 수가 칸에서 보던 수와 다른 양식으로 서지 않는다. 앞에 `×`를 붙이지 않는다.
+ * 상점 진열대·구매 확인판의 수량 글자 — 보상 영수증의 수(`addFramedIcon`의 `amount`)와 같은 한 벌이다: 액자 한 변의
+ * `ITEM_FRAME.amountRatio`를 `display`로 세우고 검은 획과 그림자를 두른다. 진열대와 확인판이 같은 한 벌을 읽어, 눌러서 연
+ * 판의 수가 칸에서 보던 수와 다른 양식으로 서지 않는다. 앞에 `×`를 붙이지 않는다.
  */
-export const SHELF_AMOUNT = { ratio: 25 / 170, min: 18, insetX: 10, insetY: 8 } as const;
+export const SHELF_AMOUNT = { min: 22, insetX: 8, insetY: 6, stroke: 6 } as const;
 export function addShelfAmount(scene: Phaser.Scene, size: number, amount: string): Phaser.GameObjects.Text {
-  return scene.add.text(size / 2 - SHELF_AMOUNT.insetX, size / 2 - SHELF_AMOUNT.insetY, amount, textStyle({ role: "emphasis", size: Math.max(SHELF_AMOUNT.min, Math.round(size * SHELF_AMOUNT.ratio)), color: COLOR.accentText })).setOrigin(1, 1);
+  return scene.add.text(size / 2 - SHELF_AMOUNT.insetX, size / 2 - SHELF_AMOUNT.insetY, amount, textStyle({ role: "display", size: Math.max(SHELF_AMOUNT.min, Math.round(size * ITEM_FRAME.amountRatio)), color: COLOR.accentText }))
+    .setOrigin(1, 1)
+    .setStroke("#000000", SHELF_AMOUNT.stroke)
+    .setShadow(2, 3, "#000000", 2, false, true);
 }
 
 /**

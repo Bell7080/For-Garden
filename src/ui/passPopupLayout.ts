@@ -44,6 +44,11 @@ export const PASS_POPUP = {
    */
   passRow: { fromBottom: 78, tabWidth: 290, tabHeight: 80, tabGap: 8, edgeInset: 40 },
   /**
+   * 패스 넘김 화살표 — 창 좌우 가장자리, 목록 창의 세로 가운데에 걸친다. 창 바깥 여백(`(width - inner) / 2` = 40)에 앉고
+   * 안쪽 여백으로 조금 넘어오는 몫은 반투명 유리가 받는다.
+   */
+  arrow: { width: 56, height: 112, stroke: 5, edgeGap: 4, disabledAlpha: 0.28 },
+  /**
    * 패스를 열지 않았을 때 창 오른쪽 위에 **떠 있는 패키지 카드** — 무역·프리미엄 전시대의 카드와 같은 겉모습이다.
    * 유료 칸 머리에 버튼으로 세우던 때는 「잠김」이어야 할 자리가 사는 곳이 되어, 받을 수 없는 칸과 사는 곳이 한 줄에
    * 섞였다. 카드는 창 윗변 위로 꼬리표를 내밀어 창 위에 한 장 더 얹힌 물건으로 읽힌다.
@@ -202,3 +207,35 @@ export const LOBBY_PASS_CARD = {
   /** 넘길 때 글이 미끄러지는 거리. 판 안쪽 여백(`pad`)보다 작아야 판 밖으로 나가지 않는다 — 자르는 마스크가 없다. */
   slideDistance: 22,
 } as const;
+
+/** 패스 넘김 화살표의 중심 `{x, y}`(창 중심 기준). `direction`이 -1이면 왼쪽, 1이면 오른쪽이다. */
+export function passPopupArrowSpot(direction: -1 | 1): { x: number; y: number } {
+  const { width, arrow } = PASS_POPUP;
+  const view = passPopupViewport();
+  return { x: direction * (width / 2 - arrow.width / 2 - arrow.edgeGap), y: (view.top + view.bottom) / 2 };
+}
+
+/** 지금 `index`번째 패스에서 `direction` 쪽으로 넘길 수 있는가 — 순환하지 않으므로 맨 앞·맨 뒤에서는 막힌다. */
+export function passPopupCanStep(index: number, count: number, direction: -1 | 1): boolean {
+  const next = index + direction;
+  return index >= 0 && next >= 0 && next < count;
+}
+
+/** 패스 탭 줄에서 탭 가운데 높이에 보이는 폭. */
+export function passPopupPassVisibleWidth(): number {
+  const strip = passPopupPassStrip();
+  return strip.right(PASS_POPUP.height / 2 - PASS_POPUP.passRow.fromBottom) - strip.left;
+}
+
+/**
+ * `index`번째 탭이 선 뒤 탭 줄이 가야 할 스크롤 — 고른 탭을 보이는 폭의 **가운데로** 모은다(끝에서는 줄의 한계에 멈춘다).
+ * 다 보이기만 하면 움직이지 않는 탭이 생겨 줄이 따라 흐르는지 읽히지 않으므로, 한 칸 넘길 때마다 줄이 함께 흐르고
+ * 양옆의 이웃 탭이 비쳐 줄이 더 이어진다는 것이 보이게 한다. 결과는 `[passPopupPassMinScroll, 0]` 안이다.
+ */
+export function passPopupPassFollow(index: number, count: number): number {
+  const { xs } = passPopupPassTabs(count);
+  const min = passPopupPassMinScroll(count);
+  const center = xs[index];
+  if (center === undefined) return 0;
+  return Math.min(0, Math.max(min, passPopupPassVisibleWidth() / 2 - center));
+}

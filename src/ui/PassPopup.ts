@@ -6,15 +6,18 @@ import { runPlatformPurchase } from "../api/platformPurchase";
 import { formatCurrency } from "../core/formatCurrency";
 import { t, type TextKey } from "../i18n";
 import { platformPayment } from "../platform/payment";
+import { transitionTiming } from "../core/screenTransition";
 import { Button } from "./Button";
 import { addCategoryTab } from "./CategoryTab";
 import { drawGlyph } from "./glyphs";
+import { addBannerArrow } from "./LabBannerTitle";
 import { chipPoints, drawLayer, drawShapeOutline, HoloBar, slantedRect, toPoints } from "./holo";
 import { addFrameAmount, addFramedIcon, guideForIcon } from "./itemFrame";
-import { PASS_POPUP, passPopupColumns, passPopupFrameXs, passPopupListHeaderY, passPopupMinScroll, passPopupPassMinScroll, passPopupPassStrip, passPopupPassTabs, passPopupRailFill, passPopupRowY, passPopupScrollFor, passPopupViewport } from "./passPopupLayout";
+import { PASS_POPUP, passPopupArrowSpot, passPopupCanStep, passPopupColumns, passPopupFrameXs, passPopupListHeaderY, passPopupMinScroll, passPopupPassFollow, passPopupPassMinScroll, passPopupPassStrip, passPopupPassTabs, passPopupRailFill, passPopupRowY, passPopupScrollFor, passPopupViewport } from "./passPopupLayout";
 import { passLevelOf, passReadyCount, storyPassStageId } from "./passPopupModel";
 import { shapeClipMask } from "./popupArt";
 import { pressIn, pressOut } from "./pressFeedback";
+import { slideTabPage } from "./screenTransition";
 import { motionPolicy } from "../core/settings";
 import { session } from "../state/session";
 import { POPUP_TITLE_SIZE } from "./popupGeometry";
@@ -76,13 +79,39 @@ export async function openPassPopup(scene: Phaser.Scene, popups: PopupLayer, opt
   const scrolls = new Map<string, number>();
   /** 패스 탭 줄의 가로 자리 — 다시 그려도 보던 자리에 남는다. 처음에는 고른 패스가 보이게 맞춘다. */
   let stripScroll: number | undefined;
+  /** 다음에 그릴 때 돌릴 넘김 — 패스(탭·화살표)나 미션·보상이 바뀐 직후에만 서고 그린 뒤 비운다. */
+  let navigate: { from: number; to: number; strip: boolean } | undefined;
   const { width, height } = PASS_POPUP;
 
   popups.open({ width, height, dim: true, closeOnBackdrop: true, backButton: true, onClose: () => options.onChanged?.() }, (body) => {
     let root = scene.add.container(0, 0);
     body.add(root);
 
+    const passIndex = (): number => Math.max(0, passes.findIndex(({ id }) => id === passId));
+    /** 다른 패스로 간다 — 목록은 새 패스 쪽에서 밀려 들어오고 하단 탭 줄은 그 탭이 보이게 함께 흐른다. */
+    const goPass = (nextId: ProgressPassDto["id"]): void => {
+      const from = passIndex();
+      const to = passes.findIndex(({ id }) => id === nextId);
+      if (to < 0 || to === from) return;
+      passId = nextId;
+      navigate = { from, to, strip: true };
+      render();
+    };
+    const stepPass = (direction: -1 | 1): void => {
+      const from = passIndex();
+      if (pending || !passPopupCanStep(from, passes.length, direction)) return;
+      goPass(passes[from + direction]!.id);
+    };
+    const arrows = ([-1, 1] as const).map((direction) => {
+      const spot = passPopupArrowSpot(direction);
+      const arrow = addBannerArrow(scene, spot.x, spot.y, direction, () => stepPass(direction), PASS_POPUP.arrow);
+      body.add(arrow);
+      return { direction, arrow };
+    });
+
     const render = (message = ""): void => {
+      const nav = navigate;
+      navigate = undefined;
       root.destroy();
       root = scene.add.container(0, 0);
       body.add(root);
@@ -92,24 +121,27 @@ export async function openPassPopup(scene: Phaser.Scene, popups: PopupLayer, opt
       const tone = PROGRESS_PASS_TONE[pass.id];
       const top = -height / 2;
       const inner = PASS_POPUP.inner;
+      // 넘길 때 함께 밀려 들어오는 머리(패스 이름·레벨·게이지·열 이름) — 목록 판과 같은 방향으로 움직인다.
+      const head = scene.add.container(0, 0);
+      root.add(head);
 
       // 패스 이름 — 공용 팝업 제목표와 같은 자리·같은 크기다(패스를 바꾸면 함께 바뀌므로 안쪽이 갖는다).
-      addSectionTitle(scene, -width / 2 + Math.min(width, height) * 0.1, top, product?.name ?? pass.id, { size: POPUP_TITLE_SIZE.note, parent: root });
+      addSectionTitle(scene, -width / 2 + Math.min(width, height) * 0.1, top, product?.name ?? pass.id, { size: POPUP_TITLE_SIZE.note, parent: head });
 
       // 패스 레벨과 게이지 — 마디 하나가 한 칸이다.
       const level = passLevelOf(pass);
       const H = PASS_POPUP.header;
-      root.add(scene.add.text(-inner / 2, top + H.levelY, t("lobby.pass.level", { level: level.level, max: level.max }), textStyle({ role: "display", size: H.levelSize, color: COLOR.ink }))
+      head.add(scene.add.text(-inner / 2, top + H.levelY, t("lobby.pass.level", { level: level.level, max: level.max }), textStyle({ role: "display", size: H.levelSize, color: COLOR.ink }))
         .setOrigin(0, 0.5).setStroke("#000000", 6));
       // 열지 않은 패스면 오른쪽 위에 패키지 카드가 뜨므로, 진행도와 게이지는 카드 왼쪽까지만 쓴다.
       const offer = !pass.owned && product ? PASS_POPUP.offer : undefined;
       const headerRight = offer ? width / 2 - offer.inset - offer.width - offer.gap : inner / 2;
       const headerWidth = headerRight + inner / 2;
-      root.add(scene.add.text(headerRight, top + H.levelY + 6, progressPassProgressLabel(pass), textStyle({ role: "emphasis", size: H.progressSize, color: COLOR.inkDim }))
+      head.add(scene.add.text(headerRight, top + H.levelY + 6, progressPassProgressLabel(pass), textStyle({ role: "emphasis", size: H.progressSize, color: COLOR.inkDim }))
         .setOrigin(1, 0.5));
       const gauge = new HoloBar(scene, -inner / 2 + headerWidth / 2, top + H.gaugeY, headerWidth, H.gaugeHeight, { color: tone, trackAlpha: 0.85, outline: true, ticks: Math.max(0, level.max - 1) });
       gauge.setValue(level.fill);
-      root.add([...gauge.objects]);
+      head.add([...gauge.objects]);
 
       // 흐르는 목록 — 처음 열면 받을 칸(없으면 지금 레벨)이 창 가운데쯤 오게 둔다.
       const key = `${pass.id}:${mode}`;
@@ -117,10 +149,10 @@ export async function openPassPopup(scene: Phaser.Scene, popups: PopupLayer, opt
       const focus = firstReady >= 0 ? firstReady : Math.min(level.level, level.max - 1);
       const list = mountScrollList(scene, root, pass.milestones.length, scrolls.get(key) ?? passPopupScrollFor(focus, pass.milestones.length), (value) => scrolls.set(key, value));
       if (mode === "reward") {
-        paintRewardHeader(scene, root, pass, tone);
+        paintRewardHeader(scene, head, pass, tone);
         paintRewardList(scene, list, pass, tone, () => void claim(pass));
       } else {
-        paintMissionList(scene, root, list, pass, tone);
+        paintMissionList(scene, head, list, pass, tone);
       }
       list.refresh();
 
@@ -131,7 +163,12 @@ export async function openPassPopup(scene: Phaser.Scene, popups: PopupLayer, opt
         addCategoryTab(scene, root, {
           x: -inner / 2 + M.tabWidth / 2 + index * (M.tabWidth + M.tabGap), y: modeY, width: M.tabWidth, height: M.tabHeight,
           label: t(`lobby.pass.tab.${id}`), selected: mode === id,
-          onSelect: () => { if (mode !== id) { mode = id; render(); } },
+          onSelect: () => {
+            if (mode === id) return;
+            navigate = { from: mode === "mission" ? 0 : 1, to: id === "mission" ? 0 : 1, strip: false };
+            mode = id;
+            render();
+          },
         });
       });
       const ready = passReadyCount(pass);
@@ -158,10 +195,17 @@ export async function openPassPopup(scene: Phaser.Scene, popups: PopupLayer, opt
           x: tabs.xs[index]!, y: 0, width: tabs.width, height: P.tabHeight,
           label: count > 0 ? t("lobby.pass.tabCount", { name, count }) : name, selected: entry.id === pass.id,
           // 옆으로 끌다 놓은 손은 탭을 고르지 않는다.
-          onSelect: () => { if (!strip.dragging() && passId !== entry.id) { passId = entry.id; render(); } },
+          onSelect: () => { if (!strip.dragging()) goPass(entry.id); },
         }));
       });
       strip.refresh();
+      if (nav?.strip) strip.follow(passPopupPassFollow(nav.to, passes.length));
+
+      // 넘김 — 목록 판과 머리가 새 쪽에서 밀려 들어온다(움직임 줄이기에서는 곧바로 선다).
+      if (nav) slideTabPage(scene, [list.content, head], nav.from, nav.to);
+
+      // 화살표 — 맨 앞·맨 뒤에서는 그쪽이 흐려지고 눌리지 않는다. 순환하지 않는다.
+      for (const { direction, arrow } of arrows) arrow.setAlpha(passPopupCanStep(passIndex(), passes.length, direction) ? 1 : PASS_POPUP.arrow.disabledAlpha);
 
       // 열지 않은 패스 — 창 오른쪽 위에 떠 있는 패키지 카드. 맨 나중에 얹어 창의 무엇보다 위에 선다.
       if (offer && product) paintPassOffer(scene, root, pass, product, tone, width / 2 - offer.inset - offer.width / 2, top + offer.centerY, () => void unlock(pass, product));
@@ -292,7 +336,7 @@ function mountScrollList(scene: Phaser.Scene, root: Phaser.GameObjects.Container
  * 위의 세로 목록과 서로 가로채지 않는다(목록은 제 창 안에서 시작한 손만 잡는다). 창 밖으로 나간 탭은 감춰 입력도 막는다.
  */
 function mountPassStrip(scene: Phaser.Scene, root: Phaser.GameObjects.Container, count: number, selected: number, start: number | undefined, remember: (value: number) => void): {
-  add: (tab: Phaser.GameObjects.Container) => void; dragging: () => boolean; refresh: () => void;
+  add: (tab: Phaser.GameObjects.Container) => void; dragging: () => boolean; refresh: () => void; follow: (target: number) => void;
 } {
   const geometry = passPopupPassStrip();
   const centerY = PASS_POPUP.height / 2 - PASS_POPUP.passRow.fromBottom;
@@ -337,7 +381,15 @@ function mountPassStrip(scene: Phaser.Scene, root: Phaser.GameObjects.Container,
     scene.input.off(Phaser.Input.Events.POINTER_MOVE, onMove);
     scene.input.off(Phaser.Input.Events.POINTER_UP, onUp);
   });
-  return { add: (tab) => { tabs.push(tab); content.add(tab); }, dragging: () => moved, refresh: () => apply(scroll) };
+  const follow = (target: number): void => {
+    const timing = transitionTiming("tabPage", { factor: motionPolicy(session.settings).nonEssentialDistanceFactor });
+    if (timing.duration === 0 || Math.abs(target - scroll) < 1) { apply(target); return; }
+    // 줄이 한 박자 늦게 따라 흐른다 — 목록이 밀려 들어오는 동안 하단 탭이 같은 방향으로 미끄러진다.
+    const from = scroll;
+    const counter = scene.tweens.addCounter({ from: 0, to: 1, duration: Math.round(timing.duration * 1.6), ease: "Cubic.easeOut", onUpdate: () => apply(from + (target - from) * counter.getValue()!) });
+    frame.once(Phaser.GameObjects.Events.DESTROY, () => counter.remove());
+  };
+  return { add: (tab) => { tabs.push(tab); content.add(tab); }, dragging: () => moved, refresh: () => apply(scroll), follow };
 }
 
 /** 보상 목록의 머리 줄(무료 · 레벨 · 패스). 열지 않은 패스면 유료 머리가 「잠김」이다 — 여는 곳은 오른쪽 위의 패키지 카드다. */

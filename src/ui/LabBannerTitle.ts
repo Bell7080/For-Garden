@@ -186,8 +186,8 @@ function buildTag(scene: Phaser.Scene, tag: BannerTag, fill: number, accent: num
  * 연구 버튼과 같은 무게의 판을 세우면 모집 원화 양옆에 네모가 박혀 그림을 가린다. 옅은 유리
  * 한 장에 흰 꺾쇠 하나만 두고, 누르는 손맛은 공용 `pressIn`·`pressOut`이다.
  */
-export function addBannerArrow(scene: Phaser.Scene, x: number, y: number, direction: -1 | 1, onClick: () => void): Phaser.GameObjects.Container {
-  const { width, height, stroke } = LAB_TITLE.arrow;
+export function addBannerArrow(scene: Phaser.Scene, x: number, y: number, direction: -1 | 1, onClick: () => void, size: { width: number; height: number; stroke: number } = LAB_TITLE.arrow): Phaser.GameObjects.Container {
+  const { width, height, stroke } = size;
   const arrow = scene.add.container(x, y);
   arrow.add(drawLayer(scene, 0, 0, slantedRect(width, height, 10), { fill: 0x0a0d12, alpha: 0.32, shadow: false }));
   const chevron = scene.add.graphics();

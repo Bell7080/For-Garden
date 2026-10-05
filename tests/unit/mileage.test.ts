@@ -67,13 +67,26 @@ describe("마일리지 상점 상품", () => {
     expect(MILEAGE_PRODUCTS.some((p) => p.category === "daily")).toBe(true);
   });
 
-  it("값이 마일리지 기준 시세(1개 ≈ 젬 60)보다 후하지 않다", () => {
+  it("재화 상품은 시세(1개 ≈ 젬 60) 이상이되 1.5배를 넘지 않는다", () => {
     for (const product of MILEAGE_PRODUCTS) {
       if (product.acquisition.kind !== "currency") continue;
-      // 젬으로 환산할 수 없는 항목(주간 SSR 파편·소비품)은 제외하고, 환산되는 상품만 시세를 지킨다.
+      // 젬으로 환산할 수 없는 항목(주간 SSR 파편·소비품)은 제외하고, 환산되는 상품만 본다.
       if (product.grants.some((grant) => grant.kind !== "currency")) continue;
       const paid = product.acquisition.amount / TRADE_GEM_RATE.dnaFragments;
-      expect(tradeGemValue(product.grants), product.id).toBeLessThanOrEqual(paid);
+      const value = tradeGemValue(product.grants);
+      expect(value, product.id).toBeGreaterThanOrEqual(paid - 1e-9);
+      expect(value, product.id).toBeLessThanOrEqual(paid * 1.5 + 1e-9);
+    }
+  });
+
+  it("SSR 파편은 100~200, 화석·호박석은 5이고 주간 10개까지다", () => {
+    const find = (id: string) => MILEAGE_PRODUCTS.find((product) => product.id === id)!;
+    const price = (id: string) => (find(id).acquisition as { amount: number }).amount;
+    expect(price("mileage-weekly-ssr")).toBeGreaterThanOrEqual(100);
+    expect(price("mileage-weekly-ssr")).toBeLessThanOrEqual(200);
+    for (const id of ["mileage-weekly-fossil", "mileage-weekly-amber"]) {
+      expect(price(id), id).toBe(5);
+      expect(find(id).purchaseLimit, id).toBe(10);
     }
   });
 

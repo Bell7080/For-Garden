@@ -1350,26 +1350,26 @@ describe("FakeServer 룬 로테이션 상품", () => {
 describe("FakeServer 마일리지 상점", () => {
   const WEEK = new Date("2026-10-07T12:00:00Z");
   it("주간 SSR 파편은 이번 주 점원의 파편 한 장으로 쌓이고 마일리지만 차감한다", async () => {
-    const state = makeSession(); state.wallet.dnaFragments = 100;
+    const state = makeSession(); state.wallet.dnaFragments = 200;
     const server = new FakeServer(state, { latencyMs: 0, now: () => WEEK });
     const clerk = mileageWeeklyClerkId(WEEK)!;
     const result = await server.purchaseProduct({ storefront: "mileage", productId: "mileage-weekly-ssr", quantity: 1 });
     expect(state.relicFragments[clerk]).toBe(1);
-    expect(state.wallet.dnaFragments).toBe(40);
+    expect(state.wallet.dnaFragments).toBe(50);
     expect(result.granted).toEqual([{ kind: "relic_fragment", relicId: clerk, amount: 1 }]);
     // 주 1회 한도다.
     await expect(server.purchaseProduct({ storefront: "mileage", productId: "mileage-weekly-ssr", quantity: 1 })).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
-    expect(state.wallet.dnaFragments).toBe(40);
+    expect(state.wallet.dnaFragments).toBe(50);
   });
 
   it("이미 돌파 V인 점원의 파편은 값을 받기 전에 거절한다", async () => {
-    const state = makeSession(); state.wallet.dnaFragments = 100;
+    const state = makeSession(); state.wallet.dnaFragments = 200;
     const clerk = mileageWeeklyClerkId(WEEK)!;
     state.owned.add(clerk);
     state.relicProgress[clerk] = { level: 1, exp: 0, breakthrough: BREAKTHROUGH_GRADE_CAP - 1, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
     const server = new FakeServer(state, { latencyMs: 0, now: () => WEEK });
     await expect(server.purchaseProduct({ storefront: "mileage", productId: "mileage-weekly-ssr", quantity: 1 })).rejects.toMatchObject({ code: "RELIC_MAX_BREAKTHROUGH" });
-    expect(state.wallet.dnaFragments).toBe(100);
+    expect(state.wallet.dnaFragments).toBe(200);
     expect(state.relicFragments[clerk] ?? 0).toBe(0);
   });
 
@@ -1377,8 +1377,8 @@ describe("FakeServer 마일리지 상점", () => {
     const state = makeSession(); state.wallet.dnaFragments = 5;
     const server = new FakeServer(state, { latencyMs: 0, now: () => WEEK });
     await server.purchaseProduct({ storefront: "mileage", productId: "mileage-daily-gold", quantity: 2 });
-    expect(state.wallet).toMatchObject({ dnaFragments: 3, gold: 40_000 });
-    await expect(server.purchaseProduct({ storefront: "mileage", productId: "mileage-daily-fossil", quantity: 1 })).rejects.toBeDefined();
+    expect(state.wallet).toMatchObject({ dnaFragments: 3, gold: 80_000 });
+    await expect(server.purchaseProduct({ storefront: "mileage", productId: "mileage-daily-strata", quantity: 1 })).rejects.toBeDefined();
     expect(state.wallet.dnaFragments).toBe(3);
   });
 });

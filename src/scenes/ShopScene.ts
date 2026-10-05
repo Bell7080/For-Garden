@@ -20,6 +20,7 @@ import { addCategoryTab } from "../ui/CategoryTab";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { addBackButton } from "../ui/IconButton";
 import { addItemFrame, addShelfAmount, ITEM_FRAME } from "../ui/itemFrame";
+import { tradePackageValuePercent } from "../data/tradePackages";
 import { addSoldOutStamp, styleLimitCount } from "../ui/soldOutStamp";
 import { chipPoints, drawFrameVignette, drawLayer, drawVignette, HOLO, slantedRect } from "../ui/holo";
 import { DialogueBubble } from "../ui/DialogueBubble";
@@ -47,6 +48,9 @@ import { pressIn, pressOut } from "../ui/pressFeedback";
 import { addRuneFrame, runeAccentCss } from "../ui/runeIcons";
 import { productIconTexture, runeProductOf } from "../ui/productIcon";
 import { formatRefreshCountdown, nextRefreshAt, shortestRefresh, type ResettingRefresh } from "../core/shopRefresh";
+
+/** 가치 배지 — 무역 카드의 배지(`TradePackageCard`)와 같은 색이고 칸 우상단에 작게 선다. */
+const SHOP_VALUE_BADGE = { width: 150, height: 44, size: 24 } as const;
 
 /**
  * 일반 상품과 성장 재화를 취급하는 독립 상점 씬이다.
@@ -611,6 +615,14 @@ export class ShopScene extends Phaser.Scene {
         height: SHOP_CARD.price.height,
         short: session.wallet[product.acquisition.currency] < product.acquisition.amount,
       });
+    }
+    // 따로 사는 것보다 이득인 상품은 무역과 같은 가치 배지가 우상단에 선다(100%를 넘는 것만 — 골드 교환소는 늘 아래다).
+    const valuePercent = tradePackageValuePercent(product.acquisition, product.grants);
+    if (valuePercent !== undefined && valuePercent > 100) {
+      const badge = this.add.container(width / 2 - SHOP_VALUE_BADGE.width / 2 - 14, -SHOP_CARD.height / 2 + SHOP_VALUE_BADGE.height / 2 + 14);
+      badge.add(drawLayer(this, 0, 0, slantedRect(SHOP_VALUE_BADGE.width, SHOP_VALUE_BADGE.height, 12), { fill: 0xe0603a, alpha: 0.92, edge: 0xffd9a0, edgeAlpha: 0.9 }));
+      badge.add(this.add.text(0, 1, t("trade.value", { percent: valuePercent }), textStyle({ role: "display", size: SHOP_VALUE_BADGE.size, color: "#fff4e0" })).setOrigin(0.5).setShadow(2, 3, "#3a0d00", 0, true, true));
+      card.add(badge);
     }
     // 남은 횟수를 다 쓴 칸은 검은 막이 덮이고 「매진」 도장이 찍힌다 — 눌러 열어도 구매 버튼이 꺼져 있다.
     if (product.remaining <= 0) addSoldOutStamp(this, card, width, SHOP_CARD.height, { topLeft: 36, topRight: 0, bottomRight: 28, bottomLeft: 0 });

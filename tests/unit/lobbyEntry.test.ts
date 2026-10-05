@@ -147,7 +147,9 @@ describe("전리품 증표", () => {
      * 스테미나)을 그대로 세우고 있었다. 어느 자리가 무엇을 세우는지는 눈으로 확인할 수 없어
      * 이 표가 계약이다.
      */
-    expect(shopStagePresentation("shop").currencies).toBe("default");
+    expect(shopStagePresentation("shop").currencies).toBe("shop");
+    // 일반 상점은 골드와 젬만 세운다 — 쓰는 재화가 그 둘뿐이라 스테미나 칸이 자리만 먹는다.
+    expect(TOP_BAR_SLOT_KEYS.shop).toEqual(["gold", "gems"]);
     expect(shopStagePresentation("loot").currencies).toBe("loot");
     expect(shopStagePresentation("archaeology").currencies).toBe("archaeologyShop");
     // 고고학 가게에서 조작을 정하는 수는 원석 하나뿐이다.

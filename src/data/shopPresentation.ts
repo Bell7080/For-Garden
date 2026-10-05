@@ -107,14 +107,13 @@ export const LOOT_MERCHANT_LINE_KEYS: readonly TextKey[] = [
 /** 상점 화면 한 자리가 갖는 무대. 점원·배경·대사가 한 덩어리로 갈린다. */
 
 /**
- * 일반 상점의 두 갈래 — **무엇으로 사는가**.
+ * 일반 상점의 세 갈래 — **언제 오고 무엇이 이득인가**.
  *
- * 한 화면에 골드와 젬이 섞여 있으면 카드를 하나씩 눌러 봐야 무엇이 드는지 알 수 있다. 탭이
- * 지갑 한 칸을 가리키면 그 줄이 곧 「지금 내가 쓸 수 있는 것」이 되므로, **두 탭은 서로 다른
- * 품목을 판다** — 같은 것을 두 재화로 살 수 있으면 싼 쪽만 쓰이고 나머지 탭은 열 이유가 없다.
+ * 일일은 매일 돌아오는 소량, 특가는 주간·월간으로 얹히는 이득 상품, 골드는 젬으로 골드를 바꾸는 교환소다. 상단 재화는
+ * 골드와 젬 둘뿐이라(`shop` 문맥) 탭이 지갑 칸을 가리킬 필요가 없다. 같은 것을 두 탭에서 팔지 않는다.
  */
 const SHOP_CURRENCY_TABS: readonly { id: string; label: string }[] = [
-  { id: "gold", label: "골드" }, { id: "gems", label: "젬" },
+  { id: "daily", label: "일일" }, { id: "special", label: "특가" }, { id: "gold", label: "골드" },
 ];
 
 /**
@@ -192,7 +191,7 @@ export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "
     background: BACKGROUND.shop,
     titleKey: "shop.title",
     tabs: SHOP_CURRENCY_TABS,
-    currencies: "default",
+    currencies: "shop",
   },
   archaeology: {
     merchant: ARCHAEOLOGY_MERCHANT,

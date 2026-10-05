@@ -10,11 +10,11 @@ describe("shop catalog", () => {
   it("owns the requested tab order and gives every product a valid category", () => {
     // 탭 순서는 그 자리의 무대표가 갖는다 — 씬이 한 표를 고정으로 그리면 자리가 늘어도
     // 탭이 늘 그대로다.
-    expect(shopStagePresentation("shop").tabs.map(({ id }) => id)).toEqual(["gold", "gems"]);
+    expect(shopStagePresentation("shop").tabs.map(({ id }) => id)).toEqual(["daily", "special", "gold"]);
     expect(shopStagePresentation("archaeology").tabs.map(({ id }) => id)).toEqual(["special", "daily", "weekly"]);
     /*
-     * **한 상점의 갈래는 그 자리가 무엇으로 가르는지에 달렸다.** 일반 상점은 **내는 재화**로
-     * 가르고(골드 · 젬), 고고학 상점은 **언제 돌아오는 자리인가**로 가른다(특가 · 일일 · 주간).
+     * **한 상점의 갈래는 그 자리가 무엇으로 가르는지에 달렸다.** 일반 상점은 **일일 · 특가 · 골드(젬→골드 교환소)**로
+     * 가르고, 고고학 상점은 **언제 돌아오는 자리인가**로 가른다(특가 · 일일 · 주간).
      * 어느 쪽이든 상품의 갈래는 제 자리가 세운 탭 안에 있어야 한다 — 없으면 그 상품은 어느
      * 탭에도 서지 못한 채 카탈로그에만 남는다.
      */
@@ -31,6 +31,23 @@ describe("shop catalog", () => {
       if (storefront === "shop") continue;
       const expected = refresh === "daily" ? "daily" : refresh === "weekly" ? "weekly" : "special";
       expect(category, id).toBe(expected);
+    }
+  });
+
+  it("골드 탭은 시세 아래 교환소이고 일일·특가의 치즈케이크는 정형 이름과 이득 값을 갖는다", async () => {
+    const { tradePackageValuePercent } = await import("../../src/data/tradePackages");
+    const shop = PRODUCTS.filter(({ storefront }) => storefront === "shop");
+    for (const product of shop.filter(({ category }) => category === "gold")) {
+      expect(product.acquisition).toMatchObject({ kind: "currency", currency: "gems" });
+      expect(tradePackageValuePercent(product.acquisition, product.grants), product.id).toBeLessThan(100);
+    }
+    for (const product of shop.filter(({ id }) => ["shop-field-supplies", "shop-field-rations", "shop-recovery-cache", "shop-survey-crate", "shop-night-kit"].includes(id))) {
+      expect(product.name, product.id).toMatch(/^치즈케이크 \((소|중|대|특대|긴급)\)$/);
+      expect(tradePackageValuePercent(product.acquisition, product.grants), product.id).toBeGreaterThanOrEqual(100);
+    }
+    // 젬으로는 음료를 묶음으로 팔지 않는다 — 한 개씩만.
+    for (const product of shop.filter(({ acquisition }) => acquisition.kind === "currency" && acquisition.currency === "gems")) {
+      for (const grant of product.grants) if (grant.kind === "item") expect(grant.amount, product.id).toBe(1);
     }
   });
 

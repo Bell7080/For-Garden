@@ -12,7 +12,17 @@ import { COLOR, textStyle } from "./theme";
  */
 export const SOLD_OUT_STAMP = { dim: 0.58, size: 58, tilt: -0.2, startScale: 2.4, durationMs: 170 } as const;
 
-export function addSoldOutStamp(scene: Phaser.Scene, card: Phaser.GameObjects.Container, width: number, height: number, bevel: { topLeft: number; topRight: number; bottomRight: number; bottomLeft: number }): void {
+/**
+ * 도장이 이미 찍힌 상품의 기억 — 메모리에만 둔다(저장하지 않는다). 탭을 오가거나 선반을 다시 그릴 때마다 쿵 찍히면
+ * 새로 팔린 것처럼 읽히므로, 처음 찍은 뒤에는 이미 찍힌 채로 선다. 다시 살 수 있게 되면 잊어 다음 매진에 또 찍힌다.
+ */
+const stampedProducts = new Set<string>();
+
+export function forgetSoldOutStamp(key: string): void {
+  stampedProducts.delete(key);
+}
+
+export function addSoldOutStamp(scene: Phaser.Scene, card: Phaser.GameObjects.Container, width: number, height: number, bevel: { topLeft: number; topRight: number; bottomRight: number; bottomLeft: number }, key: string): void {
   card.add(drawLayer(scene, 0, 0, chipPoints(width, height, { bevel }), { fill: 0x000000, alpha: SOLD_OUT_STAMP.dim, shadow: false }));
   const stamp = scene.add.container(0, 0);
   const label = scene.add.text(0, 0, t("trade.soldOut"), textStyle({ role: "display", size: SOLD_OUT_STAMP.size, color: COLOR.dangerText })).setOrigin(0.5).setStroke("#1a0606", 6);
@@ -22,7 +32,9 @@ export function addSoldOutStamp(scene: Phaser.Scene, card: Phaser.GameObjects.Co
   stamp.add([box, label]);
   stamp.setRotation(SOLD_OUT_STAMP.tilt);
   card.add(stamp);
-  if (session.settings.accessibility.reduceMotion) return;
+  const already = stampedProducts.has(key);
+  stampedProducts.add(key);
+  if (already || session.settings.accessibility.reduceMotion) return;
   stamp.setScale(SOLD_OUT_STAMP.startScale).setAlpha(0);
   scene.tweens.add({ targets: stamp, scale: 1, alpha: 1, duration: SOLD_OUT_STAMP.durationMs, ease: "Quad.In" });
 }

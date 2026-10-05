@@ -1,7 +1,7 @@
 import { registerDataText, type TextKey } from "../i18n";
 import { ARCHAEOLOGY_CLERK_ASSET, LOOT_CLERK_ASSET, SHOP_CLERK_ASSET, type PuppetAsset } from "../puppets/assets";
 import { BACKGROUND } from "../ui/backgroundAssets";
-import type { ProductStorefront, ShopCategory } from "./products";
+import type { ProductStorefront } from "./products";
 import type { TopBarCurrencyContext } from "../ui/topBarSlots";
 
 /**
@@ -132,6 +132,11 @@ const LOOT_CATEGORY_TABS: readonly { id: string; label: string }[] = [
   { id: "raid", label: "토벌" }, { id: "expedition", label: "인양" },
 ];
 
+/** 마일리지 상점의 두 갈래. `id`는 상품의 `category`와 같은 문자열이고 이름은 다른 상점의 일일·주간 탭과 같은 `shop.tab.<id>`다. */
+const MILEAGE_TABS: readonly { id: string; label: string }[] = [
+  { id: "daily", label: "일일" }, { id: "weekly", label: "주간" },
+];
+
 export interface ShopStagePresentation {
   readonly merchant: { readonly name: string; readonly asset: PuppetAsset };
   readonly lineKeys: readonly TextKey[];
@@ -166,11 +171,6 @@ export interface ShopStagePresentation {
    * 화면이 개체 이름으로 분기하지 않도록 그 보정을 **무대표가** 갖는다. 비우면 공용 자리다.
    */
   readonly merchantSpot?: { readonly headX: number; readonly height: number };
-  /**
-   * 탭 대신 한 판 안에 쌓는 구역(마일리지 상점의 주간 · 일간). `id`는 상품의 `category`와 같은 값이다.
-   * 있으면 탭 줄을 세우지 않고, 구역마다 머리글과 리필 시계가 선다.
-   */
-  readonly sections?: readonly { readonly id: ShopCategory; readonly titleKey: TextKey }[];
   /**
    * 점원이 그 주의 SSR 개체(홀로그램 표본)이다. 이름·원화·대사는 이 표가 아니라 `mileageClerk`와 도감이 갖는다 —
    * `merchant`·`lineKeys`는 자리를 채우는 값일 뿐이라 화면이 읽지 않는다.
@@ -223,12 +223,8 @@ export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "
     lineKeys: [],
     background: BACKGROUND.lab,
     titleKey: "shop.mileage.title",
-    tabs: [],
+    tabs: MILEAGE_TABS,
     currencies: "mileage",
-    sections: [
-      { id: "weekly", titleKey: "shop.mileage.weekly" },
-      { id: "daily", titleKey: "shop.mileage.daily" },
-    ],
     hologram: true,
   },
 };
@@ -244,3 +240,4 @@ export function shopStagePresentation(storefront: ProductStorefront): ShopStageP
 /** 목록 교체 줄의 이름을 언어별로 덮어쓸 수 있게 등록한다. */
 for (const tab of [...SHOP_CURRENCY_TABS, ...SHOP_REFRESH_TABS]) registerDataText(tab, "label", `shop.tab.${tab.id}`);
 for (const tab of LOOT_CATEGORY_TABS) registerDataText(tab, "label", `shop.loot.tab.${tab.id}`);
+for (const tab of MILEAGE_TABS) registerDataText(tab, "label", `shop.tab.${tab.id}`);

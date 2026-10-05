@@ -39,8 +39,6 @@ export const SHOP_ES = {
   "shop.rune.pickPart": "Elige una ranura.",
   "shop.rune.pickMain": "Elige una ranura y dos opciones principales.",
   "shop.mileage.title": "Tienda de millas",
-  "shop.mileage.weekly": "Canje semanal",
-  "shop.mileage.daily": "Canje diario",
   "shop.mileage.specimen": "Espécimen №{number}",
   "shop.mileage.owned": "Poseído · Ruptura {grade}",
   "shop.mileage.unowned": "Espécimen sin recolectar",

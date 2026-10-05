@@ -39,8 +39,6 @@ export const SHOP_DE = {
   "shop.rune.pickPart": "Wähle einen Platz.",
   "shop.rune.pickMain": "Wähle einen Platz und zwei Hauptwerte.",
   "shop.mileage.title": "Meilen-Shop",
-  "shop.mileage.weekly": "Wöchentlicher Tausch",
-  "shop.mileage.daily": "Täglicher Tausch",
   "shop.mileage.specimen": "Exemplar №{number}",
   "shop.mileage.owned": "Im Besitz · Durchbruch {grade}",
   "shop.mileage.unowned": "Noch nicht gesammeltes Exemplar",

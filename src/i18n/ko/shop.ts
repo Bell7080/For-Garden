@@ -42,8 +42,6 @@ export const SHOP_KO = {
 
   // 마일리지 상점 — 위 주간 · 아래 일간, 점원은 그 주의 SSR 개체(홀로그램 표본)다.
   "shop.mileage.title": "마일리지 상점",
-  "shop.mileage.weekly": "주간 교환",
-  "shop.mileage.daily": "일일 교환",
   "shop.mileage.specimen": "표본 №{number}",
   "shop.mileage.owned": "보유 · 돌파 {grade}",
   "shop.mileage.unowned": "수집 전 표본",

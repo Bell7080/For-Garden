@@ -39,8 +39,6 @@ export const SHOP_PT_BR = {
   "shop.rune.pickPart": "Escolha um espaço.",
   "shop.rune.pickMain": "Escolha um espaço e duas opções principais.",
   "shop.mileage.title": "Loja de milhas",
-  "shop.mileage.weekly": "Troca semanal",
-  "shop.mileage.daily": "Troca diária",
   "shop.mileage.specimen": "Espécime №{number}",
   "shop.mileage.owned": "Possui · Ruptura {grade}",
   "shop.mileage.unowned": "Espécime ainda não coletado",

@@ -38,8 +38,6 @@
 "shop.rune.pickPart": ["请选择槽位。", "เลือกช่อง", "Hãy chọn ô.", "Pilih slot.", "Elige una ranura.", "Escolha um espaço.", "Wähle einen Platz.", "Выберите слот."],
 "shop.rune.pickMain": ["请选择槽位和两项主属性。", "เลือกช่องและค่าหลัก 2 อย่าง", "Hãy chọn ô và hai thuộc tính chính.", "Pilih slot dan dua opsi utama.", "Elige una ranura y dos opciones principales.", "Escolha um espaço e duas opções principais.", "Wähle einen Platz und zwei Hauptwerte.", "Выберите слот и два основных параметра."],
 "shop.mileage.title": ["里程商店", "ร้านค้าไมล์", "Cửa hàng Dặm", "Toko Mil", "Tienda de millas", "Loja de milhas", "Meilen-Shop", "Магазин миль"],
-"shop.mileage.weekly": ["每周兑换", "แลกเปลี่ยนรายสัปดาห์", "Đổi hằng tuần", "Penukaran Mingguan", "Canje semanal", "Troca semanal", "Wöchentlicher Tausch", "Еженедельный обмен"],
-"shop.mileage.daily": ["每日兑换", "แลกเปลี่ยนรายวัน", "Đổi hằng ngày", "Penukaran Harian", "Canje diario", "Troca diária", "Täglicher Tausch", "Ежедневный обмен"],
 "shop.mileage.specimen": ["标本 №{number}", "ตัวอย่าง №{number}", "Mẫu vật №{number}", "Spesimen №{number}", "Espécimen №{number}", "Espécime №{number}", "Exemplar №{number}", "Экземпляр №{number}"],
 "shop.mileage.owned": ["已拥有 · 突破 {grade}", "มีแล้ว · ทะลวง {grade}", "Đã có · Đột phá {grade}", "Dimiliki · Terobosan {grade}", "Poseído · Ruptura {grade}", "Possui · Ruptura {grade}", "Im Besitz · Durchbruch {grade}", "Есть · Прорыв {grade}"],
 "shop.mileage.unowned": ["未收集的标本", "ตัวอย่างที่ยังไม่เก็บ", "Mẫu vật chưa thu thập", "Spesimen belum terkumpul", "Espécimen sin recolectar", "Espécime ainda não coletado", "Noch nicht gesammeltes Exemplar", "Несобранный экземпляр"],

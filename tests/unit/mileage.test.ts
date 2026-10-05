@@ -95,10 +95,9 @@ describe("마일리지 상점 화면 구성", () => {
     expect(TOP_BAR_SLOT_KEYS.mileage).toEqual(["dnaFragments"]);
   });
 
-  it("무대 표는 탭 없이 주간·일간 두 구역과 홀로그램 점원을 가진다", () => {
+  it("무대 표는 주간·일간 두 탭과 홀로그램 점원을 가진다", () => {
     const stage = SHOP_STAGE_PRESENTATION.mileage;
-    expect(stage.tabs).toEqual([]);
-    expect(stage.sections?.map((section) => section.id)).toEqual(["weekly", "daily"]);
+    expect(stage.tabs.map((tab) => tab.id)).toEqual(["daily", "weekly"]);
     expect(stage.hologram).toBe(true);
     expect(stage.currencies).toBe("mileage");
   });

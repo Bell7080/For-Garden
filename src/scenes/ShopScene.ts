@@ -37,13 +37,13 @@ import { shapeClipMask } from "../ui/popupArt";
 import { playSceneEntrance, startScene, slideTabPage } from "../ui/screenTransition";
 import {
   SHOP_BOARD, SHOP_CARD, SHOP_ENTRANCE, SHOP_SHELF, SHOP_STAGE, SHOP_TAB_ROW, SHOP_TITLE,
-  shopBoardSize, shopSectionLayout, shopCardSpot, shopCardWidth, shopDialogueSpot, shopGridContentHeight, shopGridViewport,
+  shopBoardSize, shopCardSpot, shopCardWidth, shopDialogueSpot, shopGridContentHeight, shopGridViewport,
   shopShelfWidth, shopShelfY, shopTabSpot, shopTitleLeft, shopTitleY,
   shopStageSettleMs,
 } from "../ui/shopLayout";
 import { addClippedHit } from "../ui/clippedHit";
 import { pressIn, pressOut } from "../ui/pressFeedback";
-import { formatRefreshCountdown, nextRefreshAt, shortestRefresh, type ResettingRefresh } from "../core/shopRefresh";
+import { formatRefreshCountdown, nextRefreshAt, shortestRefresh } from "../core/shopRefresh";
 
 /**
  * 일반 상품과 성장 재화를 취급하는 독립 상점 씬이다.
@@ -97,7 +97,6 @@ export class ShopScene extends Phaser.Scene {
   private refreshClockText = "";
   private refreshDueAt = 0;
   /** 구역 머리글 오른쪽의 리필 시계들(마일리지 상점). 구역마다 주기가 달라 시계도 따로다. */
-  private sectionClocks: { text: Phaser.GameObjects.Text; cadence: ResettingRefresh; shown: string; dueAt: number }[] = [];
   /** 이번 주의 점원(마일리지 상점). 서버가 파편을 주는 개체와 같은 순수 함수가 고른다. */
   private clerkRelicId?: string;
   private pointerDown = false;
@@ -148,7 +147,6 @@ export class ShopScene extends Phaser.Scene {
     this.entranceSettled = false;
     this.merchantReady = false;
     this.entranceAt = 0;
-    this.sectionClocks = [];
     this.clerkRelicId = this.stage.hologram ? mileageWeeklyClerkId(new Date()) : undefined;
     consumeSceneEntry(this);
   }
@@ -473,8 +471,6 @@ export class ShopScene extends Phaser.Scene {
   /** 현재 서버 상태로 두 줄 격자를 재조립하고 실제 높이에서 스크롤 한계를 계산한다. */
   private renderProducts(): void {
     this.content?.removeAll(true);
-    this.sectionClocks = [];
-    if (this.stage.sections) { this.renderSections(this.stage.sections); return; }
     const visibleProducts = productsForShopTab(this.products, this.selectedCategory, this.storefront);
     // 선반을 먼저 깔고 그 위에 칸을 올린다 — 순서가 뒤집히면 선반이 칸을 가로질러 지나간다.
     const rows = Math.ceil(visibleProducts.length / SHOP_CARD.columns);
@@ -488,34 +484,6 @@ export class ShopScene extends Phaser.Scene {
   }
 
   /**
-   * 구역 판(마일리지 상점) — 위 주간 · 아래 일간을 한 번에 쌓는다.
-   *
-   * 칸·선반·구매는 일반 격자와 같은 함수를 지나고, 구역은 머리글(제목표 + 그 구역의 리필 시계)과 칸 줄을
-   * 미는 거리(`offsetY`)만 더한다.
-   */
-  private renderSections(sections: NonNullable<ShopStagePresentation["sections"]>): void {
-    const groups = sections.map((section) => ({ section, products: this.products.filter((product) => product.category === section.id) }));
-    const { sections: spots, contentHeight } = shopSectionLayout(groups.map((group) => group.products.length));
-    const view = shopGridViewport();
-    groups.forEach(({ section, products }, groupIndex) => {
-      const spot = spots[groupIndex]!;
-      this.content?.add(addSectionTitle(this, shopTitleLeft(), spot.titleY, t(section.titleKey), { size: SHOP_TITLE.size }));
-      const cadence = shortestRefresh(products.map((product) => product.refresh));
-      if (cadence) {
-        const clock = this.add.text(view.right, spot.titleY, "", textStyle({ role: "display", size: 30, color: COLOR.dangerText })).setOrigin(1, 0.5);
-        this.content?.add(clock);
-        this.sectionClocks.push({ text: clock, cadence, shown: "", dueAt: 0 });
-      }
-      for (let row = 0; row < Math.ceil(products.length / SHOP_CARD.columns); row += 1) this.addShelf(row, spot.offsetY);
-      products.forEach((product, index) => this.addProduct(product, index, spot.offsetY));
-    });
-    this.minScrollY = Math.min(0, view.bottom - view.top - contentHeight);
-    this.publishControls(this.products);
-    this.scrollTo(this.content?.y ?? 0);
-    this.tickRefreshClock(true);
-  }
-
-  /**
    * 열린 탭의 리필 시계.
    *
    * 탭 상품 중 가장 짧은 주기를 따르고(일일 `D00:`, 주간 `D6:`), 되살아나는 상품이 없으면 비운다.
@@ -524,24 +492,12 @@ export class ShopScene extends Phaser.Scene {
   private tickRefreshClock(force = false): void {
     if (!this.refreshClock) return;
     const now = Date.now();
-    if (this.stage.sections) { this.tickSectionClocks(now); return; }
     const cadence = shortestRefresh(productsForShopTab(this.products, this.selectedCategory, this.storefront).map((product) => product.refresh));
     if (!cadence) { this.refreshDueAt = 0; this.refreshClockText = ""; this.refreshClock.setText(""); return; }
     if (!force && this.refreshDueAt !== 0 && now >= this.refreshDueAt) { this.refreshDueAt = 0; void this.refresh(); return; }
     this.refreshDueAt = nextRefreshAt(cadence, now);
     const text = formatRefreshCountdown(cadence, now);
     if (text !== this.refreshClockText) { this.refreshClockText = text; this.refreshClock.setText(text); }
-  }
-
-  /** 구역마다 제 주기의 시계를 갱신한다. 어느 한 구역이 경계를 넘으면 구매 횟수가 돌아왔으므로 목록을 다시 읽는다. */
-  private tickSectionClocks(now: number): void {
-    this.refreshClock?.setText("");
-    for (const clock of this.sectionClocks) {
-      if (clock.dueAt !== 0 && now >= clock.dueAt) { clock.dueAt = 0; void this.refresh(); return; }
-      clock.dueAt = nextRefreshAt(clock.cadence, now);
-      const text = formatRefreshCountdown(clock.cadence, now);
-      if (text !== clock.shown) { clock.shown = text; clock.text.setText(text); }
-    }
   }
 
   /** 카드 입력점은 현재 탭에서 실제로 생성한 칸 중심만 공개한다. */

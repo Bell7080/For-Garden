@@ -39,8 +39,6 @@ export const SHOP_RU = {
   "shop.rune.pickPart": "Выберите слот.",
   "shop.rune.pickMain": "Выберите слот и два основных параметра.",
   "shop.mileage.title": "Магазин миль",
-  "shop.mileage.weekly": "Еженедельный обмен",
-  "shop.mileage.daily": "Ежедневный обмен",
   "shop.mileage.specimen": "Экземпляр №{number}",
   "shop.mileage.owned": "Есть · Прорыв {grade}",
   "shop.mileage.unowned": "Несобранный экземпляр",

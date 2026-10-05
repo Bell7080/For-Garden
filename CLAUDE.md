@@ -469,8 +469,8 @@
   같다. 연출 번들(`researchCinematic.js`)은 굽는 스크립트가 만든다 — 손으로 고치지 않는다.
 - **마일리지는 마일리지 상점에서만 쓴다.** 프리미엄·무역·전리품 상점에서 팔지 않고 옛 교환소 API는 없다.
   상단 재화 줄은 DNA 마일리지 한 칸(`topBarSlots`의 `mileage`)이다.
-- **한 씬, 한 판, 두 구역이다**(`ShopScene` + `SHOP_STAGE_PRESENTATION.mileage` + `shopSectionLayout`). 위가 주간,
-  아래가 일간이고 탭은 없다. 구역의 자리는 `shopLayout.ts`가 갖고 칸은 일반 격자와 같은 규칙이다.
+- **한 씬, 두 탭이다**(`ShopScene` + `SHOP_STAGE_PRESENTATION.mileage.tabs`). 주간·일간은 다른 상점과 같이 좌측 하단
+  라벨 탭으로 가른다 — 위아래 구역으로 쌓던 때는 같은 목록 교체가 이 가게에서만 다른 조작이었다.
 - **점원은 이번 주 SSR 홀로그램 표본이다**(`mileageWeeklyClerkId` — 한정·현재 픽업을 뺀 SSR이 도감 순서로 한 주씩).
   파편 상품을 고르는 서버와 점원을 세우는 화면이 **같은 함수**를 읽는다. 보유 중이면 청록 투영, 없으면 검은
   실루엣이고 대사는 「표본 상태 양호」식 형식문이 아니라 그 개체의 상태 대사 4줄(`mileage.clerk.<id>.1~4`)이다.

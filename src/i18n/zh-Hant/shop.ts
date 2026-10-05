@@ -39,8 +39,6 @@ export const SHOP_ZH_HANT = {
   "shop.rune.pickPart": "請選擇槽位。",
   "shop.rune.pickMain": "請選擇槽位和兩項主屬性。",
   "shop.mileage.title": "里程商店",
-  "shop.mileage.weekly": "每週兌換",
-  "shop.mileage.daily": "每日兌換",
   "shop.mileage.specimen": "標本 №{number}",
   "shop.mileage.owned": "已擁有 · 突破 {grade}",
   "shop.mileage.unowned": "未收集的標本",

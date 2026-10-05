@@ -177,8 +177,8 @@ export function shopTitleLeft(): number {
 }
 
 /** 그 줄의 선반이 지나가는 y. 칸 밑변 바로 아래라 칸이 선반에 놓인 것으로 읽힌다. */
-export function shopShelfY(row: number): number {
-  return shopCardSpot(row * SHOP_CARD.columns).y + SHOP_CARD.height / 2 + SHOP_SHELF.offsetY;
+export function shopShelfY(row: number, offsetY = 0): number {
+  return shopCardSpot(row * SHOP_CARD.columns, offsetY).y + SHOP_CARD.height / 2 + SHOP_SHELF.offsetY;
 }
 
 /** 선반 한 장의 폭. 칸 줄보다 조금 더 내밀어 칸이 선반 **위에** 선 것으로 보인다. */
@@ -212,16 +212,53 @@ export function shopCardWidth(): number {
   return (view.right - view.left - SHOP_CARD.gapX * (SHOP_CARD.columns - 1)) / SHOP_CARD.columns;
 }
 
-/** 스크롤 0일 때 그 칸의 중심. 화면은 여기에 컨테이너 이동만 더한다. */
-export function shopCardSpot(index: number): { x: number; y: number } {
+/**
+ * 스크롤 0일 때 그 칸의 중심. 화면은 여기에 컨테이너 이동만 더한다.
+ *
+ * `offsetY`는 구역(`shopSectionLayout`)이 칸 줄을 아래로 미는 거리다 — 구역이 없는 자리는 0이다.
+ */
+export function shopCardSpot(index: number, offsetY = 0): { x: number; y: number } {
   const view = shopGridViewport();
   const width = shopCardWidth();
   const column = index % SHOP_CARD.columns;
   const row = Math.floor(index / SHOP_CARD.columns);
   return {
     x: view.left + width / 2 + column * (width + SHOP_CARD.gapX),
-    y: view.top + SHOP_CARD.height / 2 + row * (SHOP_CARD.height + SHOP_CARD.gapY),
+    y: view.top + offsetY + SHOP_CARD.height / 2 + row * (SHOP_CARD.height + SHOP_CARD.gapY),
   };
+}
+
+/**
+ * 한 판 안의 구역(마일리지 상점의 위 주간 · 아래 일간).
+ *
+ * 탭으로 목록을 갈아 끼우지 않고 **구역 머리글 → 칸 줄**을 위에서 아래로 쌓는다 — 주간과 일간을 한눈에
+ * 비교해야 하는 자리라 한 번에 한 구역만 보이면 안 된다. 머리글은 공용 제목표이고 칸 줄은 일반 격자와
+ * 같은 규칙(`shopCardSpot`)이라 구역이 칸 크기·선반을 다시 정하지 않는다.
+ */
+export const SHOP_SECTION = {
+  /** 머리글 한 줄이 차지하는 높이. 제목표 높이에 칸과의 숨 틈을 더한다. */
+  headerHeight: 78,
+  /** 구역 사이에 더 두는 틈. 칸 줄 사이 간격(`gapY`)에 얹는다. */
+  gapAfter: 22,
+} as const;
+
+export interface ShopSectionSpot {
+  /** 머리글 제목표의 중심 y(스크롤 0). */
+  titleY: number;
+  /** 이 구역의 칸 줄을 미는 거리 — `shopCardSpot`·`shopShelfY`의 `offsetY`. */
+  offsetY: number;
+}
+
+/** 구역마다 칸 수를 받아 머리글·칸 줄의 자리와 쌓인 전체 높이를 돌려준다. */
+export function shopSectionLayout(counts: readonly number[]): { sections: ShopSectionSpot[]; contentHeight: number } {
+  const view = shopGridViewport();
+  const sections: ShopSectionSpot[] = [];
+  let top = 0;
+  for (const count of counts) {
+    sections.push({ titleY: view.top + top + shopTitleHeight() / 2, offsetY: top + SHOP_SECTION.headerHeight });
+    top += SHOP_SECTION.headerHeight + shopGridContentHeight(count) + SHOP_SECTION.gapAfter;
+  }
+  return { sections, contentHeight: Math.max(0, top - SHOP_SECTION.gapAfter) };
 }
 
 /** 그 수만큼의 칸이 쌓인 높이. 창보다 길면 그 안에서 흐른다. */

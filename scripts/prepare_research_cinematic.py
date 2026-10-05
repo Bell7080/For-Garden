@@ -38,7 +38,7 @@ TIERS_BEFORE = (
 TIERS_AFTER = (
     'var ft={GRAY:{color:"#7d848c",duration:.8,level:0},R:{color:"#5fd4ff",duration:1.05,level:1},'
     'SR:{color:"#e070f5",duration:1.65,level:2},SSR:{color:"#ffc247",duration:2.45,level:3}},'
-    'CT={gray:"GRAY"},Fq=i=>1+ft[i].level*.85,Dg=i=>'
+    'CT={gray:"GRAY",dna:0},Fq=i=>1+ft[i].level*.85,Dg=i=>'
 )
 
 # (무엇을, 무엇으로, 몇 군데) — 개수가 다르면 원본이 바뀐 것이므로 멈춘다.
@@ -117,6 +117,14 @@ PATCHES: list[tuple[str, str, int]] = [
     # 11. 건너뛰기는 **게임만** 받는다. 무대가 제 건너뛰기를 들고 있으면 같은 누름에 결산 격자가
     #     곧바로 펼쳐져, 게임이 새 렐릭 소개를 먼저 돌리기 전에 그 카드가 한 번 비쳤다.
     ('this.el("skip").addEventListener("click",()=>this.skip(),d),', "", 1),
+    # 12. 결산 상단 줄(`RESOURCE × 6 R × 1 SR × 2`)의 맨 끝에 DNA 마일리지 보너스 칩을 더한다.
+    #     값은 서버가 확정해 게임이 `CT.dna`로 넘기며, 이 에셋은 계산하지 않는다.
+    (
+        'r.appendChild(o)}}this.el("skip").disabled=',
+        'r.appendChild(o)}if(CT.dna>0){let o=document.createElement("span");'
+        'o.textContent="DNA \\xD7 "+CT.dna,r.appendChild(o)}}this.el("skip").disabled=',
+        1,
+    ),
     # 10. 화면에 낀 뿌연 것을 걷는다 — 필름 그레인·가장자리 어둠·안개를 절반 아래로 내린다.
     #    무대 조명과 등급색이 그 흐림 뒤에서 탁해 보였다.
     ("aberration:{value:0},darkness:{value:.12}", "aberration:{value:0},darkness:{value:.045}", 1),

@@ -259,36 +259,6 @@
 "Ein veredeltes Material für die Runenforschung.",
 "Очищенный материал для исследования рун."
 ],
-"dna.dna-fragment.name": [
-"持有遗物的碎片",
-"เศษของเรลิกที่มี",
-"Mảnh Di vật đang có",
-"Serpihan Relik Dimiliki",
-"Fragmentos de Reliquias obtenidas",
-"Fragmentos de Relíquias obtidas",
-"Splitter eigener Relikte",
-"Фрагменты своих реликтов"
-],
-"dna.dna-rune.name": [
-"高级符文材料",
-"วัสดุรูนระดับสูง",
-"Nguyên liệu Rune cao cấp",
-"Bahan Rune Tingkat Tinggi",
-"Materiales de Runa de alto grado",
-"Materiais de Runa de alto grau",
-"Hochwertiges Runenmaterial",
-"Материалы для рун высокого ранга"
-],
-"dna.dna-past-event.name": [
-"往期调查记录兑换券",
-"คูปองบันทึกสำรวจในอดีต",
-"Phiếu hồ sơ khảo sát cũ",
-"Voucher Catatan Survei Lampau",
-"Vale de registros de campo pasados",
-"Vale de registros de campo passados",
-"Gutschein für frühere Erkundungsakten",
-"Талон на прошлые записи"
-],
 "premium.tab.package": [
 "礼包",
 "แพ็กเกจ",
@@ -1029,16 +999,7 @@
 "Forschungszuschuss",
 "Грант на исследования"
 ],
-"trade.trade-research-grant.description": [
-"金币140,000与DNA片段14个",
-"ทอง 140,000 และเศษ DNA 14",
-"140.000 Vàng và 14 Mảnh DNA",
-"140.000 Emas dan 14 Serpihan DNA",
-"140.000 de oro y 14 fragmentos de ADN",
-"140.000 de ouro e 14 fragmentos de DNA",
-"140.000 Gold und 14 DNA-Splitter",
-"140 000 золота и 14 фрагментов ДНК"
-],
+"trade.trade-research-grant.description": ["金币175,000", "ทอง 175,000", "175.000 Vàng", "175.000 Emas", "175.000 de oro", "175.000 de ouro", "175.000 Gold", "175 000 золота"],
 "trade.trade-excavation-crate.name": [
 "采掘装备箱",
 "กล่องอุปกรณ์ขุดหา",

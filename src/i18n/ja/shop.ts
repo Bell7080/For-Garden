@@ -39,4 +39,11 @@ export const SHOP_JA = {
   "shop.rune.main": "メインオプション",
   "shop.rune.pickPart": "スロットを選んでください。",
   "shop.rune.pickMain": "スロットとメインオプションを2つ選んでください。",
+  "shop.mileage.title": "マイレージショップ",
+  "shop.mileage.weekly": "週間交換",
+  "shop.mileage.daily": "日替わり交換",
+  "shop.mileage.specimen": "標本 №{number}",
+  "shop.mileage.owned": "所持 · 突破 {grade}",
+  "shop.mileage.unowned": "未収集の標本",
+  "shop.mileage.fragments": "欠片 {count}",
 } as const;

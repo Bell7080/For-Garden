@@ -8,6 +8,11 @@ import type { Wallet } from "../core/gacha";
 import { Button } from "./Button";
 import { chipPoints, drawHairline, drawLayer, HOLO } from "./holo";
 import { addFramedIcon } from "./itemFrame";
+import { FaceFrame } from "./FaceFrame";
+import { RARITY_TONE } from "./rarityMark";
+import { findItem } from "../data/items";
+import { getRelic } from "../data/relics";
+import { mileageWeeklyClerkId } from "../data/mileageClerk";
 import { addPriceBar } from "./priceTag";
 import { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
@@ -123,17 +128,27 @@ export class PurchasePopup {
     const quote = quotePurchase({ unitPrice: acquisition.amount, remaining: product.remaining, balance }, this.quantity);
     this.quantity = quote.quantity;
     const grant = product.grants[0];
-    const unitGrant = grant?.kind === "currency" ? grant.amount : 1;
-    const grantLabel = grant?.kind === "currency" ? currencyName(grant.currency) : grant?.name ?? t("shop.purchase.grant");
+    const unitGrant = grant && "amount" in grant ? grant.amount : 1;
+    // 이번 주 SSR 파편은 서버가 구매 순간의 개체로 확정한다 — 화면은 같은 순수 함수로 그 얼굴을 미리 보여 준다.
+    const weeklyRelicId = grant?.kind === "weekly_ssr_fragment" ? mileageWeeklyClerkId(new Date()) : undefined;
+    const weeklyRelic = weeklyRelicId ? getRelic(weeklyRelicId) : undefined;
+    const grantLabel = weeklyRelic ? weeklyRelic.name : grant?.kind === "currency" ? currencyName(grant.currency) : grant?.kind === "item" ? findItem(grant.itemId)?.name ?? grant.name : grant && "name" in grant ? grant.name : t("shop.purchase.grant");
 
     // 상품 그림만 사방 액자로 두고 나머지는 홀로그램 면과 구분선만 사용한다.
     view.add(drawLayer(this.scene, 0, QUANTITY.panelY, chipPoints(QUANTITY.panelWidth, QUANTITY.panelHeight, { bevel: { topLeft: 38, topRight: 0, bottomRight: 28, bottomLeft: 0 } }), { fill: 0x141b24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.45 }));
     // **살 것을 얼굴로 먼저 읽게 한다.** 액자를 키우고 그림이 그 안을 거의 채우게 하며, 같은
     // 그림을 검게 한 겹 뒤에 깔아 실루엣을 띄운다. 이번에 실제로 받는 수는 가방·보상 액자와
     // 같은 자리(우하단)에 겹쳐, 글로 적힌 줄을 읽기 전에 그림만 보고도 알 수 있게 한다.
-    addFramedIcon(this.scene, view, -240, QUANTITY.panelY, 170, product.iconKey, {
-      amount: `×${formatCurrency(totalGrantAmount(unitGrant, quote.quantity))}`,
-    });
+    if (weeklyRelic) {
+      view.add(new FaceFrame(this.scene, -240, QUANTITY.panelY, {
+        portraitAssetId: weeklyRelic.portraitAssetId, size: 170, color: RARITY_TONE[weeklyRelic.rarity].chip, gem: RARITY_TONE[weeklyRelic.rarity].chip,
+        amount: `×${formatCurrency(totalGrantAmount(unitGrant, quote.quantity))}`,
+      }));
+    } else {
+      addFramedIcon(this.scene, view, -240, QUANTITY.panelY, 170, product.iconKey, {
+        amount: `×${formatCurrency(totalGrantAmount(unitGrant, quote.quantity))}`,
+      });
+    }
     view.add(this.scene.add.text(-125, QUANTITY.panelY - 57, product.name, textStyle({ role: "display", size: 32 })).setOrigin(0, 0.5));
     // 이번에 받는 수는 왼쪽 액자의 우하단이 이미 말한다 — 같은 수를 한 창에 두 번 적지 않는다.
     view.add(this.scene.add.text(-125, QUANTITY.panelY + 3, grantLabel, textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0, 0.5));

@@ -7,6 +7,9 @@ import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { drawGlyph } from "./glyphs";
+import { FaceFrame } from "./FaceFrame";
+import { RARITY_TONE } from "./rarityMark";
+import { getRelic } from "../data/relics";
 import type { RewardPopupItem } from "./rewardPopupModel";
 import { addFramedIcon, hasGuideOpeners } from "./itemFrame";
 import { bindCurrencyGuide } from "./currencyGuideEntry";
@@ -150,6 +153,12 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
 /** 영수증 칸 하나 — 액자와 그것을 눌렀을 때 열리는 안내까지 한 곳에서 잇는다. */
 function addRewardCell(scene: Phaser.Scene, popups: PopupLayer, holder: Phaser.GameObjects.Container, item: RewardPopupItem): void {
   const size = REWARD_POPUP.frame;
+  if (item.relicId) {
+    // 파편은 그 개체의 얼굴을 꽉 채운 유리 액자다 — 연구 결과판의 중복 파편과 같은 한 장이다.
+    const def = getRelic(item.relicId);
+    holder.add(new FaceFrame(scene, 0, 0, { portraitAssetId: def.portraitAssetId, size, color: RARITY_TONE[def.rarity].chip, gem: RARITY_TONE[def.rarity].chip, amount: formatCurrency(item.amount) }));
+    return;
+  }
   const texture = typeof item.icon === "string" ? item.icon : "";
   const runeMatch = RUNE_ICON_PATTERN.exec(texture);
   const part = runePartOfTexture(texture);

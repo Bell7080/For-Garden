@@ -29,7 +29,7 @@
 "currency.fossil": ["化石", "ฟอสซิล", "Hóa thạch", "Fosil", "Fósil", "Fóssil", "Fossil", "Окаменелость"],
 "currency.amber": ["琥珀", "อำพัน", "Hổ phách", "Amber", "Ámbar", "Âmbar", "Bernstein", "Янтарь"],
 "currency.cheesecake": ["芝士蛋糕", "ชีสเค้ก", "Bánh phô mai", "Cheesecake", "Tarta de queso", "Cheesecake", "Käsekuchen", "Чизкейк"],
-"currency.dnaFragments": ["DNA片段", "เศษ DNA", "Mảnh DNA", "Serpihan DNA", "Fragmento de ADN", "Fragmento de DNA", "DNA-Splitter", "Фрагмент ДНК"],
+"currency.dnaFragments": ["DNA里程", "ไมล์ DNA", "Dặm DNA", "Mil DNA", "Millas de ADN", "Milhas de DNA", "DNA-Meilen", "Мили ДНК"],
 "element.fire": ["火", "ไฟ", "Hỏa", "Api", "Fuego", "Fogo", "Feuer", "Огонь"],
 "element.water": ["水", "น้ำ", "Thủy", "Air", "Agua", "Água", "Wasser", "Вода"],
 "element.grass": ["草", "หญ้า", "Mộc", "Rumput", "Planta", "Planta", "Pflanze", "Трава"],

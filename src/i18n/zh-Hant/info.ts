@@ -37,7 +37,7 @@ export const INFO_ZH_HANT = {
   "info.breakthrough": "極限突破",
   "info.breakthrough.do": "進行突破",
   "info.breakthrough.gradeMax": "最高等級",
-  "info.breakthrough.alreadyMax": "已達突破等級{rarity}。重複獲得將轉為DNA片段。",
+  "info.breakthrough.alreadyMax": "已達突破等級{rarity}。重複獲得將轉為DNA里程。",
   "info.breakthrough.fragment": "{name}碎片",
   "info.breakthrough.cheesecake": "起司蛋糕",
   "info.breakthrough.need": "需要{count}",

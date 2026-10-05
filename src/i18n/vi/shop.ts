@@ -38,4 +38,11 @@ export const SHOP_VI = {
   "shop.rune.main": "Thuộc tính chính",
   "shop.rune.pickPart": "Hãy chọn ô.",
   "shop.rune.pickMain": "Hãy chọn ô và hai thuộc tính chính.",
+  "shop.mileage.title": "Cửa hàng Dặm",
+  "shop.mileage.weekly": "Đổi hằng tuần",
+  "shop.mileage.daily": "Đổi hằng ngày",
+  "shop.mileage.specimen": "Mẫu vật №{number}",
+  "shop.mileage.owned": "Đã có · Đột phá {grade}",
+  "shop.mileage.unowned": "Mẫu vật chưa thu thập",
+  "shop.mileage.fragments": "Mảnh {count}",
 } as const;

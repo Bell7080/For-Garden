@@ -37,7 +37,7 @@ export const INFO_ID = {
   "info.breakthrough": "Terobosan",
   "info.breakthrough.do": "Lakukan Terobosan",
   "info.breakthrough.gradeMax": "Tingkat Maks",
-  "info.breakthrough.alreadyMax": "Sudah di Terobosan tingkat {rarity}. Duplikat menjadi Serpihan DNA.",
+  "info.breakthrough.alreadyMax": "Sudah di Terobosan tingkat {rarity}. Duplikat menjadi Mil DNA.",
   "info.breakthrough.fragment": "Serpihan {name}",
   "info.breakthrough.cheesecake": "Cheesecake",
   "info.breakthrough.need": "Butuh {count}",

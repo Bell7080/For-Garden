@@ -24,7 +24,7 @@ const STYLE_URL = "cinematic/researchCinematic.css";
 /** 에셋이 `window`에 내놓는 것. 이름은 그 파일의 꼬리와 정확히 같아야 한다. */
 interface CinematicBundle {
   Cinematic: new (root: HTMLElement, options: CinematicOptions) => CinematicInstance;
-  text: { gray: string };
+  text: { gray: string; dna: number };
   tiers: Record<string, { color: string; duration: number; level: number }>;
 }
 
@@ -76,6 +76,8 @@ export interface ResearchCinematicOptions {
   /** 카드마다 무엇을 세울지. 순서는 `rewards`와 같다. */
   art: readonly CinematicCardArt[];
   reducedMotion: boolean;
+  /** 이 연구가 지급한 DNA 마일리지 총량. 결산 상단 줄의 맨 끝 `DNA × N` 칩이 된다. */
+  mileage: number;
   text: ResearchCinematicText;
   /**
    * 새로 만난 렐릭의 카드가 **뒤집히기 직전에** 부른다. 판은 그동안 숨고 게임이 손을 받는다.
@@ -266,6 +268,7 @@ export class ResearchCinematic {
     this.introduceSlots = new Set(options.introduceSlots
       ?? options.art.flatMap((slot, index) => (slot.frame === "portrait" ? [index] : [])));
     bundle.text.gray = options.text.gray;
+    bundle.text.dna = options.mileage;
     /*
      * **게임의 입력을 끈다.**
      *

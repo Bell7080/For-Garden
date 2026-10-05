@@ -1,6 +1,5 @@
 import type { Wallet } from "../core/gacha";
 import { STAMINA_HOLD_LIMIT } from "../core/stamina";
-import { registerDataText } from "../i18n";
 
 /** 라이브 운영에서 지급량과 소비량을 함께 검토하는 네 핵심 경제 재화다. */
 export type EconomyCurrency = "fossil" | "amber" | "cheesecake" | "dnaFragments";
@@ -31,16 +30,3 @@ export const FREE_MONTHLY_TARGETS: Readonly<Record<"daily" | "weekly" | "event" 
   story: { fossil: 10, amber: 2, cheesecake: 1_000, dnaFragments: 5 },
 };
 
-/** DNA 교환 결과는 무작위 추첨 없이 요청에서 고른 보상으로 확정된다. */
-export type DnaExchangeKind = "relic_fragment" | "rune" | "past_event_currency";
-
-/** DNA 조각 교환소의 운영 카탈로그다. targetRequired 항목만 요청에서 대상을 받는다. */
-export const DNA_EXCHANGE_OFFERS = [
-  { id: "dna-fragment", kind: "relic_fragment", name: "보유 렐릭 파편", dnaCost: 10, targetRequired: true },
-  // 교환품은 특정 정적 ID가 아니라 서버가 옵션을 생성하는 희귀도 계약만 지정한다.
-  { id: "dna-rune", kind: "rune", name: "고급 룬 제작 재료", dnaCost: 15, targetRequired: false, rarity: "uncommon" },
-  { id: "dna-past-event", kind: "past_event_currency", name: "과거 탐사 기록 교환권", dnaCost: 5, targetRequired: false, fossilAmount: 3 },
-] as const;
-
-/** DNA 교환 항목의 이름을 언어별로 덮어쓸 수 있게 등록한다. */
-for (const offer of DNA_EXCHANGE_OFFERS) registerDataText(offer, "name", `dna.${offer.id}.name`);

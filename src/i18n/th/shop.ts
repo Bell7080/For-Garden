@@ -38,4 +38,11 @@ export const SHOP_TH = {
   "shop.rune.main": "ค่าหลัก",
   "shop.rune.pickPart": "เลือกช่อง",
   "shop.rune.pickMain": "เลือกช่องและค่าหลัก 2 อย่าง",
+  "shop.mileage.title": "ร้านค้าไมล์",
+  "shop.mileage.weekly": "แลกเปลี่ยนรายสัปดาห์",
+  "shop.mileage.daily": "แลกเปลี่ยนรายวัน",
+  "shop.mileage.specimen": "ตัวอย่าง №{number}",
+  "shop.mileage.owned": "มีแล้ว · ทะลวง {grade}",
+  "shop.mileage.unowned": "ตัวอย่างที่ยังไม่เก็บ",
+  "shop.mileage.fragments": "เศษ {count}",
 } as const;

@@ -37,7 +37,7 @@ export const INFO_TH = {
   "info.breakthrough": "ทะลวงขีดจำกัด",
   "info.breakthrough.do": "ทะลวง",
   "info.breakthrough.gradeMax": "ระดับสูงสุด",
-  "info.breakthrough.alreadyMax": "ถึงระดับทะลวง {rarity} แล้ว ตัวซ้ำจะกลายเป็นเศษ DNA",
+  "info.breakthrough.alreadyMax": "ถึงระดับทะลวง {rarity} แล้ว ตัวซ้ำจะกลายเป็นไมล์ DNA",
   "info.breakthrough.fragment": "เศษ{name}",
   "info.breakthrough.cheesecake": "ชีสเค้ก",
   "info.breakthrough.need": "ต้องใช้ {count}",

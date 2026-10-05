@@ -129,11 +129,17 @@ describe("재화와 보유 반영", () => {
     expect(outcome.duplicateRelicIds).toEqual(["r-b", "r-a", "r-a"]);
   });
 
-  it("별 다섯에 닿은 개체의 중복만 공용 DNA 조각으로 바뀐다", () => {
+  it("별 다섯에 닿은 개체의 중복만 DNA 마일리지로 바뀐다", () => {
     const outcome = resolveAcquisitions(new Set(["r-a"]), {}, ["r-a", "r-a"], { "r-a": 5 });
     expect(outcome.slots.every(({ kind }) => kind === "overflow")).toBe(true);
     expect(outcome.overflowFragments).toBe(2);
     expect(outcome.fragmentsById["r-a"]).toBeUndefined();
+  });
+
+  it("전환되는 마일리지는 등급이 정한 몫을 따른다", () => {
+    const byRarity: Record<string, number> = { "r-ssr": 30, "r-sr": 8, "r-r": 2 };
+    const outcome = resolveAcquisitions(new Set(Object.keys(byRarity)), {}, ["r-ssr", "r-sr", "r-r"], { "r-ssr": 5, "r-sr": 5, "r-r": 5 }, 5, (id) => byRarity[id]);
+    expect(outcome.overflowFragments).toBe(40);
   });
 });
 

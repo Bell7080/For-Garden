@@ -38,4 +38,11 @@ export const SHOP_ID = {
   "shop.rune.main": "Opsi utama",
   "shop.rune.pickPart": "Pilih slot.",
   "shop.rune.pickMain": "Pilih slot dan dua opsi utama.",
+  "shop.mileage.title": "Toko Mil",
+  "shop.mileage.weekly": "Penukaran Mingguan",
+  "shop.mileage.daily": "Penukaran Harian",
+  "shop.mileage.specimen": "Spesimen №{number}",
+  "shop.mileage.owned": "Dimiliki · Terobosan {grade}",
+  "shop.mileage.unowned": "Spesimen belum terkumpul",
+  "shop.mileage.fragments": "Serpihan {count}",
 } as const;

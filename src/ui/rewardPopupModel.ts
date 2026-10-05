@@ -13,6 +13,8 @@ export interface RewardPopupItem {
   label?: string;
   /** 서버가 발급한 룬 한 장. 있으면 액자가 룬 액자로 서고 누르면 그 룬의 쪽지가 열린다. */
   runeInstanceId?: string;
+  /** 그 개체의 파편. 있으면 액자가 얼굴 액자(유리 조각)로 선다. */
+  relicId?: string;
 }
 
 /** 서버 재화 레코드를 공용 보상 액자 키로 바꾼다. 알 수 없는 운영 재화는 안전하게 생략한다. */
@@ -35,13 +37,18 @@ export function productGrantsToRewardItems(grants: readonly ProductGrant[], gran
   const currencyIcons = grants.flatMap((grant) => grant.kind === "currency" ? currencyRecordToRewardItems({ [grant.currency]: grant.amount }) : []);
   const otherItems = grants.flatMap((grant): RewardPopupItem[] => {
     if (grant.kind === "currency") return [];
+    // 주간 SSR 파편은 서버가 구매 순간의 개체로 풀어 내려 준다. 풀리지 않은 자리표시는 그리지 않는다.
+    if (grant.kind === "weekly_ssr_fragment") return [];
+    if (grant.kind === "relic_fragment") return [{ icon: "", amount: grant.amount, relicId: grant.relicId }];
     if (grant.kind === "profile_decoration") return [{ icon: { kind: "glyph", key: "costume" }, amount: 1, label: grant.name }];
     if (grant.kind === "rune") return [{ icon: `rune-${grant.rarity}-${grant.part}`, amount: grant.amount, label: grant.name }];
     const definition = findItem(grant.itemId);
-    if (!definition) return [{ icon: { kind: "glyph", key: "scroll" }, amount: grant.amount, label: grant.name }];
-    if (definition.icon.kind === "asset") return [{ icon: definition.icon.key, amount: grant.amount, label: grant.name }];
-    if (definition.icon.kind === "currency") return currencyRecordToRewardItems({ [definition.icon.key]: grant.amount }).map((item) => ({ ...item, label: grant.name }));
-    return [{ icon: { kind: "glyph", key: definition.icon.key }, amount: grant.amount, label: grant.name }];
+    // 이름은 아이템 정의가 있으면 그쪽을 읽는다 — 정의는 열한 언어로 옮겨져 있어 상품마다 이름을 다시 옮기지 않는다.
+    const label = definition?.name ?? grant.name;
+    if (!definition) return [{ icon: { kind: "glyph", key: "scroll" }, amount: grant.amount, label }];
+    if (definition.icon.kind === "asset") return [{ icon: definition.icon.key, amount: grant.amount, label }];
+    if (definition.icon.kind === "currency") return currencyRecordToRewardItems({ [definition.icon.key]: grant.amount }).map((item) => ({ ...item, label }));
+    return [{ icon: { kind: "glyph", key: definition.icon.key }, amount: grant.amount, label }];
   });
   // 완성 룬 인스턴스가 별도 배열로 내려오면 각 서버 결과의 희귀도·파츠를 그대로 그린다.
   const runeItems = grantedRunes.map((rune) => ({ icon: `rune-${rune.rarity}-${rune.part}`, amount: 1, label: rune.customName ?? rune.baseName, runeInstanceId: rune.instanceId }));

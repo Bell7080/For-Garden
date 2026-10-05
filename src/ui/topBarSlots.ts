@@ -28,7 +28,7 @@ export interface CurrencySlot {
  * 치즈케이크는 정보창의 급여 버튼이 "가진 수/드는 수"로 직접 말하므로, 위에 또 적으면 같은
  * 값을 두 곳에서 읽게 되고 정작 봐야 할 카드 그리드의 자리만 좁아진다.
  */
-export type TopBarCurrencyContext = "default" | "recruit" | "none" | "archaeology" | "archaeologyShop" | "loot";
+export type TopBarCurrencyContext = "default" | "recruit" | "none" | "archaeology" | "archaeologyShop" | "loot" | "mileage";
 
 const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
   default: [
@@ -69,6 +69,13 @@ const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
     { key: "raidSigil", icon: "currency-raid-sigil", compact: true, color: "#ffc98a" },
     { key: "salvageRecord", icon: "currency-salvage-record", compact: true, color: "#9fd0f0" },
   ],
+  /**
+   * 마일리지 상점. **DNA 마일리지 한 칸만 세운다** — 여기서 조작을 정하는 수는 그것 하나다.
+   * 지갑 키 `dnaFragments`가 그대로 마일리지다(별도 키·이중 표기를 만들지 않는다).
+   */
+  mileage: [
+    { key: "dnaFragments", icon: "currency-dna", compact: true, color: "#ffe9a3" },
+  ],
   none: [],
 };
 
@@ -81,5 +88,6 @@ export const TOP_BAR_SLOT_KEYS: Record<TopBarCurrencyContext, readonly WalletIte
   archaeology: SLOTS.archaeology.map(({ key }) => key),
   archaeologyShop: SLOTS.archaeologyShop.map(({ key }) => key),
   loot: SLOTS.loot.map(({ key }) => key),
+  mileage: SLOTS.mileage.map(({ key }) => key),
   none: SLOTS.none.map(({ key }) => key),
 };

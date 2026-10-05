@@ -38,4 +38,11 @@ export const SHOP_EN = {
   "shop.rune.main": "Main stats",
   "shop.rune.pickPart": "Choose a slot.",
   "shop.rune.pickMain": "Choose a slot and two main stats.",
+  "shop.mileage.title": "Mileage Shop",
+  "shop.mileage.weekly": "Weekly Exchange",
+  "shop.mileage.daily": "Daily Exchange",
+  "shop.mileage.specimen": "Specimen №{number}",
+  "shop.mileage.owned": "Owned · Breakthrough {grade}",
+  "shop.mileage.unowned": "Uncollected specimen",
+  "shop.mileage.fragments": "Shards {count}",
 } as const;

@@ -1,4 +1,5 @@
 import { TRADE_PACKAGES } from "./tradePackages";
+import { MILEAGE_PRODUCTS } from "./mileageShop";
 
 /** 상품이 노출되고 구매될 화면 경계다. ID만으로 다른 화면의 상품을 구매하지 못하게 서버 요청에도 사용한다. */
 /**
@@ -8,7 +9,7 @@ import { TRADE_PACKAGES } from "./tradePackages";
  * 아래가 전시대」라는 규칙이 이미 깊이 박혀 있어, 둘로 갈리면 선반·격자·값줄 규칙이 두 곳이
  * 되고 한쪽만 고치는 사고가 난다.
  */
-export type ProductStorefront = "shop" | "trade" | "premium" | "archaeology" | "loot";
+export type ProductStorefront = "shop" | "trade" | "premium" | "archaeology" | "loot" | "mileage";
 
 /** 일반 인게임 상점과 무역소가 공유하는 안정적인 카테고리 계약이다. */
 /**
@@ -73,7 +74,11 @@ export type ProductGrant =
    * 고른 값은 구매 요청(`runeChoice`)으로 오고 서버가 다시 검증한다 — 화면의 선택을 믿지 않는다.
    */
   | { kind: "rune"; name: string; amount: number; rarity: "uncommon" | "rare" | "epic" | "legendary"; part?: 0 | 1 | 2; choose?: "part" | "partMain" }
-  | { kind: "profile_decoration"; decorationId: string; name: string };
+  | { kind: "profile_decoration"; decorationId: string; name: string }
+  /** 한 개체의 파편. 정의에는 `relicId`가 없고 서버가 `weeklySsrFragment`를 그 주의 개체로 풀어 내려 준다. */
+  | { kind: "relic_fragment"; relicId: string; amount: number }
+  /** 마일리지 상점의 「이번 주 SSR 파편」 자리표시. 구매 순간의 주 개체(`mileageWeeklyClerkId`)로 확정된다. */
+  | { kind: "weekly_ssr_fragment"; amount: number };
 
 /** 구매 제한의 재설정 주기다. */
 /**
@@ -185,8 +190,7 @@ export const SHOP_PRODUCTS: readonly ProductDefinition[] = [
   // **레이드 탭과 품목이 겹치지 않는다** — 같은 것을 두 증표로 살 수 있으면 둘 중 싼 쪽만
   // 쓰이고 나머지 탭은 열 이유가 없어진다. 그래서 레이드는 **성장 재료**(치즈케이크·골드·
   // 화석·호박석)와 고대 핵을 맡고, 인양은 **수장된 지부에서 건져 올린 것**(원석·룬 가루·
-  // 복원 결정)과 보급품을 맡는다. DNA 조각 하나만 양쪽에 둔다 — 돌파의 공용 재료라
-  // 한쪽에만 두면 그 콘텐츠를 돌지 않는 사람의 성장이 통째로 막힌다.
+  // 복원 결정)과 보급품을 맡는다.
   { id: "loot-salvage-orestone", storefront: "loot", lootCategory: "expedition", category: "daily", iconKey: "shop-product-fossil", name: "인양 광물 회수분", description: "원석 800개", acquisition: { kind: "currency", currency: "salvageRecord", amount: 30 }, grants: [{ kind: "currency", currency: "rawStone", amount: 800 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "loot-salvage-tonic", storefront: "loot", lootCategory: "expedition", category: "daily", iconKey: "shop-product-supplies", name: "인양 보급 음료", description: "에너지 드링크 3개", acquisition: { kind: "currency", currency: "salvageRecord", amount: 25 }, grants: [{ kind: "item", itemId: "stamina-tonic", name: "에너지 드링크", amount: 3, expiresInDays: 3 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "loot-salvage-gems", storefront: "loot", lootCategory: "expedition", category: "weekly", iconKey: "shop-product-gems", name: "인양 정산 결정", description: "다이아 40개", acquisition: { kind: "currency", currency: "salvageRecord", amount: 120 }, grants: [{ kind: "currency", currency: "gems", amount: 40 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
@@ -209,6 +213,8 @@ export const SHOP_PRODUCTS: readonly ProductDefinition[] = [
   // 얼마나 더 주는지(가치 %)는 화면이 적지 않고 `tradePackages.ts`의 시세표가 환산한다.
   // 프리미엄(플랫폼 결제)은 여기 오지 않는다 — 유료 묶음은 `premium` storefront가 맡는다.
   ...TRADE_PACKAGES,
+  // **마일리지 상점.** 뽑기에서 모이는 DNA 마일리지로 사는 자리다 — 주간·일간 구역은 `category`가 가른다.
+  ...MILEAGE_PRODUCTS,
 ];
 
 /** products 모듈을 직접 소비하는 화면은 storefront로 걸러 쓴다. */

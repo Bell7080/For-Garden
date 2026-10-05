@@ -37,7 +37,7 @@ export const INFO_ES = {
   "info.breakthrough": "Ruptura",
   "info.breakthrough.do": "Hacer Ruptura",
   "info.breakthrough.gradeMax": "Grado máx.",
-  "info.breakthrough.alreadyMax": "Ya está en el grado de Ruptura {rarity}. Los duplicados se convierten en Fragmentos de ADN.",
+  "info.breakthrough.alreadyMax": "Ya está en Ruptura de grado {rarity}. Los duplicados se convierten en Millas de ADN.",
   "info.breakthrough.fragment": "Fragmento de {name}",
   "info.breakthrough.cheesecake": "Tarta de queso",
   "info.breakthrough.need": "Necesitas {count}",

@@ -3,7 +3,7 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import {
   SHOP_BOARD, SHOP_CARD, SHOP_SHELF, SHOP_STAGE, SHOP_TAB_ROW, SHOP_TOPBAR_GUARD,
   shopBoardSize, shopCardSpot, shopCardWidth, shopDialogueSpot, shopGridContentHeight, shopGridViewport,
-  shopShelfWidth, shopShelfY, shopTabSpot, shopTitleHeight, shopTitleLeft, shopTitleY,
+  shopSectionLayout, SHOP_SECTION, shopShelfWidth, shopShelfY, shopTabSpot, shopTitleHeight, shopTitleLeft, shopTitleY,
 } from "../../src/ui/shopLayout";
 import { DIALOGUE_BUBBLE } from "../../src/ui/dialogueBubbleLayout";
 
@@ -156,5 +156,25 @@ describe("상점 자리표", () => {
     // 줄은 왼쪽 여백에서 시작해 오른쪽으로 이어진다.
     expect(spots[0].x - SHOP_TAB_ROW.width / 2).toBe(SHOP_TAB_ROW.left);
     expect(spots[1].x - spots[0].x).toBe(SHOP_TAB_ROW.width + SHOP_TAB_ROW.gap);
+  });
+});
+
+describe("상점 구역 배치", () => {
+  it("구역은 머리글 → 칸 줄 순으로 겹치지 않고 아래로 쌓인다", () => {
+    const { sections, contentHeight } = shopSectionLayout([3, 6]);
+    expect(sections).toHaveLength(2);
+    expect(sections[0].offsetY).toBe(SHOP_SECTION.headerHeight);
+    // 둘째 구역은 첫 구역의 칸 줄이 끝난 뒤에서 시작한다.
+    const firstEnd = sections[0].offsetY + shopGridContentHeight(3);
+    expect(sections[1].offsetY).toBeGreaterThanOrEqual(firstEnd + SHOP_SECTION.gapAfter + SHOP_SECTION.headerHeight);
+    expect(sections[1].titleY).toBeGreaterThan(sections[0].titleY);
+    expect(contentHeight).toBe(sections[1].offsetY + shopGridContentHeight(6));
+  });
+  it("칸이 없는 구역은 머리글만 차지하고 빈 목록은 높이가 없다", () => {
+    expect(shopSectionLayout([]).contentHeight).toBe(0);
+    expect(shopSectionLayout([0]).contentHeight).toBe(SHOP_SECTION.headerHeight);
+  });
+  it("구역 오프셋은 칸 자리를 그만큼 아래로 민다", () => {
+    expect(shopCardSpot(0, 120).y - shopCardSpot(0).y).toBe(120);
   });
 });

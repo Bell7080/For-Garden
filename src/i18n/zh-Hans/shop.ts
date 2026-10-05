@@ -38,4 +38,11 @@ export const SHOP_ZH_HANS = {
   "shop.rune.main": "主属性",
   "shop.rune.pickPart": "请选择槽位。",
   "shop.rune.pickMain": "请选择槽位和两项主属性。",
+  "shop.mileage.title": "里程商店",
+  "shop.mileage.weekly": "每周兑换",
+  "shop.mileage.daily": "每日兑换",
+  "shop.mileage.specimen": "标本 №{number}",
+  "shop.mileage.owned": "已拥有 · 突破 {grade}",
+  "shop.mileage.unowned": "未收集的标本",
+  "shop.mileage.fragments": "碎片 {count}",
 } as const;

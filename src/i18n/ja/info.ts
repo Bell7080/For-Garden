@@ -38,7 +38,7 @@ export const INFO_JA = {
   "info.breakthrough": "限界突破",
   "info.breakthrough.do": "突破する",
   "info.breakthrough.gradeMax": "突破最大",
-  "info.breakthrough.alreadyMax": "すでに突破ランク{rarity}だ。重複はDNA片として貯まる。",
+  "info.breakthrough.alreadyMax": "すでに突破ランク{rarity}だ。重複はDNAマイレージとして貯まる。",
   "info.breakthrough.fragment": "{name}の欠片",
   "info.breakthrough.cheesecake": "チーズケーキ",
   "info.breakthrough.need": "必要 {count}",

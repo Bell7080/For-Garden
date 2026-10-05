@@ -1,12 +1,19 @@
 import Phaser from "phaser";
-import { t } from "../i18n";
+import { t, type TextKey } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import type { ProductDto, PurchaseProductResponse } from "../api/contracts";
 import { formatCurrency } from "../core/formatCurrency";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene, setDebugShopView, setDebugStorefrontControls } from "../debug";
-import { enableHitOnClick, spawnPuppet } from "../puppets/assets";
+import { enableHitOnClick, portraitAssetFor, spawnPuppet } from "../puppets/assets";
+import type { PuppetAsset } from "../puppets/assets";
 import { shopStagePresentation, type ShopStagePresentation } from "../data/shopPresentation";
+import { MILEAGE_CLERK_LINE_COUNT, mileageWeeklyClerkId } from "../data/mileageClerk";
+import { getRelic } from "../data/relics";
+import { breakthroughGrade, BREAKTHROUGH_GRADE_ROMAN } from "../core/relicProgression";
+import { FaceFrame } from "../ui/FaceFrame";
+import { RARITY_TONE } from "../ui/rarityMark";
+import { drawHairline } from "../ui/holo";
 import { addSceneBackground } from "../ui/backgrounds";
 import { addPriceBar } from "../ui/priceTag";
 import { addCategoryTab } from "../ui/CategoryTab";
@@ -30,13 +37,13 @@ import { shapeClipMask } from "../ui/popupArt";
 import { playSceneEntrance, startScene, slideTabPage } from "../ui/screenTransition";
 import {
   SHOP_BOARD, SHOP_CARD, SHOP_ENTRANCE, SHOP_SHELF, SHOP_STAGE, SHOP_TAB_ROW, SHOP_TITLE,
-  shopBoardSize, shopCardSpot, shopCardWidth, shopDialogueSpot, shopGridContentHeight, shopGridViewport,
+  shopBoardSize, shopSectionLayout, shopCardSpot, shopCardWidth, shopDialogueSpot, shopGridContentHeight, shopGridViewport,
   shopShelfWidth, shopShelfY, shopTabSpot, shopTitleLeft, shopTitleY,
   shopStageSettleMs,
 } from "../ui/shopLayout";
 import { addClippedHit } from "../ui/clippedHit";
 import { pressIn, pressOut } from "../ui/pressFeedback";
-import { formatRefreshCountdown, nextRefreshAt, shortestRefresh } from "../core/shopRefresh";
+import { formatRefreshCountdown, nextRefreshAt, shortestRefresh, type ResettingRefresh } from "../core/shopRefresh";
 
 /**
  * 일반 상품과 성장 재화를 취급하는 독립 상점 씬이다.
@@ -89,6 +96,10 @@ export class ShopScene extends Phaser.Scene {
   private refreshClock?: Phaser.GameObjects.Text;
   private refreshClockText = "";
   private refreshDueAt = 0;
+  /** 구역 머리글 오른쪽의 리필 시계들(마일리지 상점). 구역마다 주기가 달라 시계도 따로다. */
+  private sectionClocks: { text: Phaser.GameObjects.Text; cadence: ResettingRefresh; shown: string; dueAt: number }[] = [];
+  /** 이번 주의 점원(마일리지 상점). 서버가 파편을 주는 개체와 같은 순수 함수가 고른다. */
+  private clerkRelicId?: string;
   private pointerDown = false;
   private pointerY = 0;
   private draggedDistance = 0;
@@ -137,6 +148,8 @@ export class ShopScene extends Phaser.Scene {
     this.entranceSettled = false;
     this.merchantReady = false;
     this.entranceAt = 0;
+    this.sectionClocks = [];
+    this.clerkRelicId = this.stage.hologram ? mileageWeeklyClerkId(new Date()) : undefined;
     consumeSceneEntry(this);
   }
 
@@ -159,6 +172,7 @@ export class ShopScene extends Phaser.Scene {
     addBackButton(this, () => startScene(this, this.returnScene, this.returnMenu ? LOBBY_RETURN[this.returnMenu] : undefined)).setDepth(1000);
 
     this.createStage();
+    this.addSpecimenTag();
     this.createBoard();
     this.createViewport();
     this.createTabs();
@@ -284,11 +298,22 @@ export class ShopScene extends Phaser.Scene {
     this.speak(true);
   }
 
+  /** 점원의 이름. 홀로그램 점원은 그 주의 개체이고 이름은 도감 정의가 갖는다. */
+  private merchantName(): string {
+    return this.clerkRelicId ? getRelic(this.clerkRelicId).name : this.stage.merchant.name;
+  }
+
+  /** `index`번째 마디. 홀로그램 점원은 개체마다 제 상태 대사를 갖는다(`mileage.clerk.<개체>.<번호>`). */
+  private merchantText(index: number): string {
+    if (this.clerkRelicId) return t(`mileage.clerk.${this.clerkRelicId}.${(index % MILEAGE_CLERK_LINE_COUNT) + 1}` as TextKey);
+    return t(this.stage.lineKeys[index % this.stage.lineKeys.length]!);
+  }
+
   private speak(entering = false): void {
-    const line = this.stage.lineKeys[this.merchantLine % this.stage.lineKeys.length];
+    const text = this.merchantText(this.merchantLine);
     this.merchantLine += 1;
     const distance = motionPolicy(session.settings).nonEssentialDistanceFactor;
-    this.dialogue?.say(this.stage.merchant.name, t(line), {
+    this.dialogue?.say(this.merchantName(), text, {
       holdMs: 4200,
       // 첫 마디만 화면 조립의 일부라 왼쪽에서 밀려 들어오고, 그 뒤로는 제자리에서 떠오른다.
       slideX: entering ? SHOP_ENTRANCE.dialogue.slide * distance : 0,
@@ -342,8 +367,11 @@ export class ShopScene extends Phaser.Scene {
     // 자리는 공용 무대가 정하고, 그 원화만의 보정이 있으면 무대표가 덮어쓴다.
     const { headY } = SHOP_STAGE.merchant;
     const { headX, height } = this.stage.merchantSpot ?? SHOP_STAGE.merchant;
-    const merchant = await spawnPuppet(this, this.stage.merchant.asset, {
-      focus: { anchor: "head", x: headX, y: headY }, height, depth: 2,
+    // 홀로그램 점원은 그 주의 SSR 개체의 전신이다. 미보유 표본은 정보창과 같은 검은 실루엣으로 선다.
+    const holo = this.hologramLook();
+    const asset: PuppetAsset = this.clerkRelicId ? portraitAssetFor(getRelic(this.clerkRelicId).portraitAssetId) : this.stage.merchant.asset;
+    const merchant = await spawnPuppet(this, asset, {
+      focus: { anchor: "head", x: headX, y: headY }, height, depth: 2, ...(holo ? { tint: holo.tint } : {}),
     });
     // 비동기 로딩 사이 씬이 닫혔으면 새 Mesh를 남기지 않는다.
     if (!this.scene.isActive()) { merchant.destroy(); return; }
@@ -354,6 +382,7 @@ export class ShopScene extends Phaser.Scene {
     // 오른쪽에서 들어와 제자리에 선다. 늦게 도착해도 같은 거리를 지나 같은 자리에서 멈춘다.
     const slide = SHOP_ENTRANCE.merchant.slide * motionPolicy(session.settings).nonEssentialDistanceFactor;
     merchant.setX(headX + slide).setAlpha(0);
+    if (holo) this.addScanBand(headX);
     this.stageMask = this.make.graphics({});
     this.stageMask.fillStyle(0xffffff, 1).fillRect(0, SHOP_STAGE.top, BASE_WIDTH, SHOP_BOARD.top - SHOP_STAGE.top);
     merchant.setMask(this.stageMask.createGeometryMask());
@@ -361,7 +390,11 @@ export class ShopScene extends Phaser.Scene {
     // 빈 배경 위에 드러나, 다리 없는 상반신이 미끄러져 들어오는 것으로 보인다.
     await this.stageSettled;
     if (!this.scene.isActive()) { merchant.destroy(); return; }
-    this.tweens.add({ targets: merchant, x: headX, alpha: 1, duration: SHOP_ENTRANCE.merchant.duration, ease: "Cubic.Out" });
+    this.tweens.add({
+      targets: merchant, x: headX, alpha: holo?.alpha ?? 1, duration: SHOP_ENTRANCE.merchant.duration, ease: "Cubic.Out",
+      // 홀로그램은 들어온 뒤 아주 조금씩 일렁인다. 움직임 줄이기에서는 정지 상태로 선다.
+      onComplete: () => { if (holo && merchant.active && motionPolicy(session.settings).nonEssentialDistanceFactor > 0) this.flicker(merchant, holo.alpha); },
+    });
     /*
      * **첫 마디는 점원과 함께 들어온다.**
      *
@@ -370,6 +403,47 @@ export class ShopScene extends Phaser.Scene {
      * 「대사가 안 뜬다」로 읽혔다. 띠는 왼쪽에서, 점원은 오른쪽에서 같은 순간에 들어온다.
      */
     this.openMerchantGate();
+  }
+
+  /**
+   * 홀로그램 점원의 겉모습. 보유 표본은 청록 단색 + 반투명, 미보유 표본은 검은 실루엣이다.
+   * 점원이 아니면(일반 상점) `undefined`.
+   */
+  private hologramLook(): { tint: number; alpha: number } | undefined {
+    if (!this.clerkRelicId) return undefined;
+    return session.owned.has(this.clerkRelicId) ? { tint: 0x8fe9ff, alpha: 0.78 } : { tint: 0x06060a, alpha: 0.62 };
+  }
+
+  /** 투영이 가끔 흔들리듯 알파만 아주 조금 오간다. 난수 없이 일정한 박자라 캡처가 흔들리지 않는다. */
+  private flicker(target: Phaser.GameObjects.GameObject & { alpha: number }, base: number): void {
+    this.tweens.add({ targets: target, alpha: base - 0.08, duration: 1400, yoyo: true, repeat: -1, ease: "Sine.InOut", hold: 2200 });
+  }
+
+  /** 얇은 주사선 띠가 점원을 위아래로 천천히 훑는다. 무대 마스크 안에서만 보인다. */
+  private addScanBand(x: number): void {
+    const band = this.add.rectangle(x, SHOP_STAGE.top, 520, 6, 0xbff6ff, 0.22).setDepth(3).setBlendMode(Phaser.BlendModes.ADD);
+    band.setMask(this.stageMask?.createGeometryMask() ?? new Phaser.Display.Masks.GeometryMask(this, this.make.graphics({})));
+    if (motionPolicy(session.settings).nonEssentialDistanceFactor <= 0) { band.setY(SHOP_STAGE.top + 420).setAlpha(0.12); return; }
+    this.tweens.add({ targets: band, y: SHOP_BOARD.top, duration: 3600, repeat: -1, ease: "Linear", onRepeat: () => band.setY(SHOP_STAGE.top) });
+  }
+
+  /** 표본 번호·종·보유 현황을 홀로그램 라벨처럼 무대 왼쪽 위에 띄운다. */
+  private addSpecimenTag(): void {
+    if (!this.clerkRelicId) return;
+    const def = getRelic(this.clerkRelicId);
+    const progress = session.relicProgress[def.id];
+    const owned = session.owned.has(def.id) && progress;
+    const x = 54;
+    let y = 252;
+    const line = (text: string, color: string, size: number): void => {
+      this.add.text(x, y, text, textStyle({ role: "emphasis", size, color })).setOrigin(0, 0.5).setDepth(4).setAlpha(0.92);
+      y += size + 14;
+    };
+    drawHairline(this, x + 150, y - 12, 300, { color: 0x8fe9ff, alpha: 0.5 }).setDepth(4);
+    line(t("shop.mileage.specimen", { number: def.specimenNumber }), "#8fe9ff", 24);
+    line(`${def.name} · ${def.origin}`, "#d8f6ff", 26);
+    line(owned ? t("shop.mileage.owned", { grade: BREAKTHROUGH_GRADE_ROMAN[breakthroughGrade(progress.breakthrough) - 1] ?? "I" }) : t("shop.mileage.unowned"), owned ? "#8fe9ff" : COLOR.inkDim, 22);
+    line(t("shop.mileage.fragments", { count: formatCurrency(session.relicFragments[def.id] ?? 0) }), COLOR.inkDim, 22);
   }
 
   /** 격자 한 계층만 자르는 고정 마스크를 만들어 판 머리글과 탭 입력을 침범하지 않게 한다. */
@@ -399,6 +473,8 @@ export class ShopScene extends Phaser.Scene {
   /** 현재 서버 상태로 두 줄 격자를 재조립하고 실제 높이에서 스크롤 한계를 계산한다. */
   private renderProducts(): void {
     this.content?.removeAll(true);
+    this.sectionClocks = [];
+    if (this.stage.sections) { this.renderSections(this.stage.sections); return; }
     const visibleProducts = productsForShopTab(this.products, this.selectedCategory, this.storefront);
     // 선반을 먼저 깔고 그 위에 칸을 올린다 — 순서가 뒤집히면 선반이 칸을 가로질러 지나간다.
     const rows = Math.ceil(visibleProducts.length / SHOP_CARD.columns);
@@ -412,6 +488,34 @@ export class ShopScene extends Phaser.Scene {
   }
 
   /**
+   * 구역 판(마일리지 상점) — 위 주간 · 아래 일간을 한 번에 쌓는다.
+   *
+   * 칸·선반·구매는 일반 격자와 같은 함수를 지나고, 구역은 머리글(제목표 + 그 구역의 리필 시계)과 칸 줄을
+   * 미는 거리(`offsetY`)만 더한다.
+   */
+  private renderSections(sections: NonNullable<ShopStagePresentation["sections"]>): void {
+    const groups = sections.map((section) => ({ section, products: this.products.filter((product) => product.category === section.id) }));
+    const { sections: spots, contentHeight } = shopSectionLayout(groups.map((group) => group.products.length));
+    const view = shopGridViewport();
+    groups.forEach(({ section, products }, groupIndex) => {
+      const spot = spots[groupIndex]!;
+      this.content?.add(addSectionTitle(this, shopTitleLeft(), spot.titleY, t(section.titleKey), { size: SHOP_TITLE.size }));
+      const cadence = shortestRefresh(products.map((product) => product.refresh));
+      if (cadence) {
+        const clock = this.add.text(view.right, spot.titleY, "", textStyle({ role: "display", size: 30, color: COLOR.dangerText })).setOrigin(1, 0.5);
+        this.content?.add(clock);
+        this.sectionClocks.push({ text: clock, cadence, shown: "", dueAt: 0 });
+      }
+      for (let row = 0; row < Math.ceil(products.length / SHOP_CARD.columns); row += 1) this.addShelf(row, spot.offsetY);
+      products.forEach((product, index) => this.addProduct(product, index, spot.offsetY));
+    });
+    this.minScrollY = Math.min(0, view.bottom - view.top - contentHeight);
+    this.publishControls(this.products);
+    this.scrollTo(this.content?.y ?? 0);
+    this.tickRefreshClock(true);
+  }
+
+  /**
    * 열린 탭의 리필 시계.
    *
    * 탭 상품 중 가장 짧은 주기를 따르고(일일 `D00:`, 주간 `D6:`), 되살아나는 상품이 없으면 비운다.
@@ -420,12 +524,24 @@ export class ShopScene extends Phaser.Scene {
   private tickRefreshClock(force = false): void {
     if (!this.refreshClock) return;
     const now = Date.now();
+    if (this.stage.sections) { this.tickSectionClocks(now); return; }
     const cadence = shortestRefresh(productsForShopTab(this.products, this.selectedCategory, this.storefront).map((product) => product.refresh));
     if (!cadence) { this.refreshDueAt = 0; this.refreshClockText = ""; this.refreshClock.setText(""); return; }
     if (!force && this.refreshDueAt !== 0 && now >= this.refreshDueAt) { this.refreshDueAt = 0; void this.refresh(); return; }
     this.refreshDueAt = nextRefreshAt(cadence, now);
     const text = formatRefreshCountdown(cadence, now);
     if (text !== this.refreshClockText) { this.refreshClockText = text; this.refreshClock.setText(text); }
+  }
+
+  /** 구역마다 제 주기의 시계를 갱신한다. 어느 한 구역이 경계를 넘으면 구매 횟수가 돌아왔으므로 목록을 다시 읽는다. */
+  private tickSectionClocks(now: number): void {
+    this.refreshClock?.setText("");
+    for (const clock of this.sectionClocks) {
+      if (clock.dueAt !== 0 && now >= clock.dueAt) { clock.dueAt = 0; void this.refresh(); return; }
+      clock.dueAt = nextRefreshAt(clock.cadence, now);
+      const text = formatRefreshCountdown(clock.cadence, now);
+      if (text !== clock.shown) { clock.shown = text; clock.text.setText(text); }
+    }
   }
 
   /** 카드 입력점은 현재 탭에서 실제로 생성한 칸 중심만 공개한다. */
@@ -445,28 +561,36 @@ export class ShopScene extends Phaser.Scene {
    * 칸 밑변 바로 아래를 지나고 좌우로 한 뼘 더 내밀어, 칸이 선반 **위에 놓인 것**으로 읽히게
    * 한다. 윗변 한 줄의 강조선이 곧 선반의 모서리다 — 사방을 두르면 판때기가 하나 더 생긴다.
    */
-  private addShelf(row: number): void {
-    const shelf = drawLayer(this, (shopGridViewport().left + shopGridViewport().right) / 2, shopShelfY(row), slantedRect(shopShelfWidth(), SHOP_SHELF.height, 10), {
+  private addShelf(row: number, offsetY = 0): void {
+    const shelf = drawLayer(this, (shopGridViewport().left + shopGridViewport().right) / 2, shopShelfY(row, offsetY), slantedRect(shopShelfWidth(), SHOP_SHELF.height, 10), {
       fill: 0x060a0f, alpha: 0.95, edge: COLOR.accent, edgeAlpha: 0.55,
     });
     this.content?.add(shelf);
   }
 
   /** 일반 판은 윗선만, 상품 그림 액자만 사방 테두리와 내부 비네트를 사용한다. */
-  private addProduct(product: ProductDto, index: number): void {
+  private addProduct(product: ProductDto, index: number, offsetY = 0): void {
     const width = shopCardWidth();
-    const { x, y } = shopCardSpot(index);
+    const { x, y } = shopCardSpot(index, offsetY);
     const card = this.add.container(x, y);
     card.add(drawLayer(this, 0, 0, chipPoints(width, SHOP_CARD.height, { bevel: { topLeft: 36, topRight: 0, bottomRight: 28, bottomLeft: 0 } }), { fill: 0x182029, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.52 }));
-    const frame = addItemFrame(this, 0, SHOP_CARD.frameY, SHOP_CARD.frame);
-    // iconKey는 카탈로그가 고른 임시 상품 그림이며 최종 원화 교체에도 카드 코드는 유지된다.
-    frame.add(this.add.image(0, 0, product.iconKey).setDisplaySize(SHOP_CARD.frame * ITEM_FRAME.icon, SHOP_CARD.frame * ITEM_FRAME.icon));
-    const currencyGrant = product.grants.find((grant) => grant.kind === "currency");
-    if (currencyGrant) {
-      // 지급 수량은 액자 우하단에 공용 축약 표기로 겹쳐 작은 화면에서도 한눈에 읽힌다.
-      frame.add(this.add.text(SHOP_CARD.frame / 2 - 10, SHOP_CARD.frame / 2 - 8, formatCurrency(currencyGrant.amount), textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setOrigin(1, 1));
+    // 이번 주 SSR 파편은 상품 그림이 아니라 **그 개체의 얼굴 액자**로 선다 — 무엇을 사는지가 얼굴로 먼저 읽힌다.
+    const weeklyRelic = this.clerkRelicId && product.grants.some((grant) => grant.kind === "weekly_ssr_fragment") ? getRelic(this.clerkRelicId) : undefined;
+    if (weeklyRelic) {
+      card.add(new FaceFrame(this, 0, SHOP_CARD.frameY, {
+        portraitAssetId: weeklyRelic.portraitAssetId, size: SHOP_CARD.frame, color: RARITY_TONE[weeklyRelic.rarity].chip, gem: RARITY_TONE[weeklyRelic.rarity].chip, amount: "1",
+      }));
+    } else {
+      const frame = addItemFrame(this, 0, SHOP_CARD.frameY, SHOP_CARD.frame);
+      // iconKey는 카탈로그가 고른 임시 상품 그림이며 최종 원화 교체에도 카드 코드는 유지된다.
+      frame.add(this.add.image(0, 0, product.iconKey).setDisplaySize(SHOP_CARD.frame * ITEM_FRAME.icon, SHOP_CARD.frame * ITEM_FRAME.icon));
+      // 지급 수량은 액자 우하단에 공용 축약 표기로 겹쳐 작은 화면에서도 한눈에 읽힌다. 아이템 묶음도 같다.
+      const amountGrant = product.grants.find((grant) => grant.kind === "currency" || grant.kind === "item");
+      if (amountGrant) {
+        frame.add(this.add.text(SHOP_CARD.frame / 2 - 10, SHOP_CARD.frame / 2 - 8, formatCurrency(amountGrant.amount), textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setOrigin(1, 1));
+      }
+      card.add(frame);
     }
-    card.add(frame);
     const name = this.add.text(0, SHOP_CARD.nameY, product.name, textStyle({ role: "emphasis", size: 27 })).setOrigin(0.5);
     // 이름 길이는 언어가 정하고 칸 폭은 둘이 나눠 갖는 고정값이라, 넘치면 글자만 가로로 줄인다.
     const room = width - 36;

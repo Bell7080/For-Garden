@@ -30,7 +30,7 @@ export const COMMON_RU = {
   "currency.fossil": "Окаменелость",
   "currency.amber": "Янтарь",
   "currency.cheesecake": "Чизкейк",
-  "currency.dnaFragments": "Фрагмент ДНК",
+  "currency.dnaFragments": "Мили ДНК",
   "element.fire": "Огонь",
   "element.water": "Вода",
   "element.grass": "Трава",

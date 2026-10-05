@@ -279,16 +279,7 @@
 "Höchststufe",
 "Макс. ранг"
 ],
-"info.breakthrough.alreadyMax": [
-"已达突破等级{rarity}。重复获得将转为DNA片段。",
-"ถึงระดับทะลวง {rarity} แล้ว ตัวซ้ำจะกลายเป็นเศษ DNA",
-"Đã đạt Đột phá bậc {rarity}. Trùng lặp sẽ thành Mảnh DNA.",
-"Sudah di Terobosan tingkat {rarity}. Duplikat menjadi Serpihan DNA.",
-"Ya está en el grado de Ruptura {rarity}. Los duplicados se convierten en Fragmentos de ADN.",
-"Já está no grau de Ruptura {rarity}. Duplicatas viram Fragmentos de DNA.",
-"Bereits auf Durchbruch-Stufe {rarity}. Duplikate werden zu DNA-Splittern.",
-"Уже прорыв {rarity}. Повторы станут фрагментами ДНК."
-],
+"info.breakthrough.alreadyMax": ["已达突破等级{rarity}。重复获得将转为DNA里程。", "ถึงระดับทะลวง {rarity} แล้ว ตัวซ้ำจะกลายเป็นไมล์ DNA", "Đã đạt Đột phá bậc {rarity}. Trùng lặp sẽ thành Dặm DNA.", "Sudah di Terobosan tingkat {rarity}. Duplikat menjadi Mil DNA.", "Ya está en Ruptura de grado {rarity}. Los duplicados se convierten en Millas de ADN.", "Já está no grau de Ruptura {rarity}. Duplicatas viram Milhas de DNA.", "Bereits auf Durchbruch-Stufe {rarity}. Duplikate werden zu DNA-Meilen.", "Уже достигнут Прорыв {rarity}. Дубликаты превратятся в мили ДНК."],
 "info.breakthrough.fragment": [
 "{name}碎片",
 "เศษ{name}",

@@ -1,7 +1,7 @@
 import { registerDataText, type TextKey } from "../i18n";
 import { ARCHAEOLOGY_CLERK_ASSET, LOOT_CLERK_ASSET, SHOP_CLERK_ASSET, type PuppetAsset } from "../puppets/assets";
 import { BACKGROUND } from "../ui/backgroundAssets";
-import type { ProductStorefront } from "./products";
+import type { ProductStorefront, ShopCategory } from "./products";
 import type { TopBarCurrencyContext } from "../ui/topBarSlots";
 
 /**
@@ -166,6 +166,16 @@ export interface ShopStagePresentation {
    * 화면이 개체 이름으로 분기하지 않도록 그 보정을 **무대표가** 갖는다. 비우면 공용 자리다.
    */
   readonly merchantSpot?: { readonly headX: number; readonly height: number };
+  /**
+   * 탭 대신 한 판 안에 쌓는 구역(마일리지 상점의 주간 · 일간). `id`는 상품의 `category`와 같은 값이다.
+   * 있으면 탭 줄을 세우지 않고, 구역마다 머리글과 리필 시계가 선다.
+   */
+  readonly sections?: readonly { readonly id: ShopCategory; readonly titleKey: TextKey }[];
+  /**
+   * 점원이 그 주의 SSR 개체(홀로그램 표본)이다. 이름·원화·대사는 이 표가 아니라 `mileageClerk`와 도감이 갖는다 —
+   * `merchant`·`lineKeys`는 자리를 채우는 값일 뿐이라 화면이 읽지 않는다.
+   */
+  readonly hologram?: true;
 }
 
 /**
@@ -175,7 +185,7 @@ export interface ShopStagePresentation {
  * 쓰기 시작하면 자리가 하나 늘 때마다 씬이 길어지고, 점원만 바꾸고 배경을 빠뜨리는 사고가
  * 난다. 한 자리가 갖는 것 전부가 여기 한 줄이다.
  */
-export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "loot", ShopStagePresentation>> = {
+export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "loot" | "mileage", ShopStagePresentation>> = {
   shop: {
     merchant: SHOP_MERCHANT,
     lineKeys: SHOP_MERCHANT_LINE_KEYS,
@@ -208,12 +218,26 @@ export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "
     // 프로티아와 등신이 비슷해 같은 자리를 쓴다. 자리는 점원이 정하지 무대가 정하지 않는다.
     merchantSpot: { headX: 744, height: 1010 },
   },
+  mileage: {
+    merchant: SHOP_MERCHANT,
+    lineKeys: [],
+    background: BACKGROUND.lab,
+    titleKey: "shop.mileage.title",
+    tabs: [],
+    currencies: "mileage",
+    sections: [
+      { id: "weekly", titleKey: "shop.mileage.weekly" },
+      { id: "daily", titleKey: "shop.mileage.daily" },
+    ],
+    hologram: true,
+  },
 };
 
 /** 무역·프리미엄은 이 씬을 쓰지 않으므로 일반 상점 무대로 떨어뜨린다. */
 export function shopStagePresentation(storefront: ProductStorefront): ShopStagePresentation {
   if (storefront === "archaeology") return SHOP_STAGE_PRESENTATION.archaeology;
   if (storefront === "loot") return SHOP_STAGE_PRESENTATION.loot;
+  if (storefront === "mileage") return SHOP_STAGE_PRESENTATION.mileage;
   return SHOP_STAGE_PRESENTATION.shop;
 }
 

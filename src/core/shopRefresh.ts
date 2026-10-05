@@ -30,17 +30,19 @@ export function nextRefreshAt(refresh: ResettingRefresh, nowMs: number): number 
 }
 
 /**
- * `D6:23:48` 꼴의 남은 시간(일:시:분).
+ * `D6:23:48:12` 꼴의 남은 시간(일:시:분:초).
  *
  * 일간은 `D00:`, 주간은 한 자리, 월간은 두 자리 — 일 자리 폭만으로 어느 주기의 시계인지 읽힌다.
- * 초는 적지 않으므로 분이 바뀔 때만 다시 그리면 된다.
+ * 초까지 적으므로 1초마다 글자가 바뀐다(`D00:23:48:12`).
  */
 export function formatRefreshCountdown(refresh: ResettingRefresh, nowMs: number): string {
   const remain = Math.max(0, nextRefreshAt(refresh, nowMs) - nowMs);
-  const totalMinutes = Math.floor(remain / 60_000);
+  const totalSeconds = Math.floor(remain / 1000);
+  const totalMinutes = Math.floor(totalSeconds / 60);
   const days = Math.floor(totalMinutes / 1440);
   const hours = Math.floor((totalMinutes % 1440) / 60);
   const minutes = totalMinutes % 60;
+  const seconds = totalSeconds % 60;
   const pad = (value: number, width: number): string => String(value).padStart(width, "0");
-  return `D${pad(days, refresh === "weekly" ? 1 : 2)}:${pad(hours, 2)}:${pad(minutes, 2)}`;
+  return `D${pad(days, refresh === "weekly" ? 1 : 2)}:${pad(hours, 2)}:${pad(minutes, 2)}:${pad(seconds, 2)}`;
 }

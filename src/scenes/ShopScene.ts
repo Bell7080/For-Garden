@@ -20,6 +20,7 @@ import { addCategoryTab } from "../ui/CategoryTab";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { addBackButton } from "../ui/IconButton";
 import { addItemFrame, addShelfAmount, ITEM_FRAME } from "../ui/itemFrame";
+import { addSoldOutStamp, styleLimitCount } from "../ui/soldOutStamp";
 import { chipPoints, drawFrameVignette, drawLayer, drawVignette, HOLO, slantedRect } from "../ui/holo";
 import { DialogueBubble } from "../ui/DialogueBubble";
 import { COLOR, textStyle } from "../ui/theme";
@@ -521,7 +522,7 @@ export class ShopScene extends Phaser.Scene {
    * 열린 탭의 리필 시계.
    *
    * 탭 상품 중 가장 짧은 주기를 따르고(일일 `D00:`, 주간 `D6:`), 되살아나는 상품이 없으면 비운다.
-   * 분이 바뀔 때만 글자를 갈아 끼우고, 경계를 넘으면 구매 횟수가 돌아왔으므로 목록을 다시 읽는다.
+   * 초가 바뀔 때만 글자를 갈아 끼우고, 경계를 넘으면 구매 횟수가 돌아왔으므로 목록을 다시 읽는다.
    */
   private tickRefreshClock(force = false): void {
     if (!this.refreshClock) return;
@@ -602,7 +603,7 @@ export class ShopScene extends Phaser.Scene {
     const room = width - 36;
     if (name.width > room) name.setScale(Math.max(0.7, room / name.width), 1);
     card.add(name);
-    card.add(this.add.text(0, SHOP_CARD.remainingY, t("shop.exchangeRemaining", { remaining: formatCurrency(product.remaining), limit: formatCurrency(product.purchaseLimit) }), textStyle({ role: "body", size: 20, color: product.purchasable ? COLOR.inkDim : COLOR.dangerText })).setOrigin(0.5));
+    card.add(styleLimitCount(this.add.text(0, SHOP_CARD.remainingY, t("shop.exchangeRemaining", { remaining: formatCurrency(product.remaining), limit: formatCurrency(product.purchaseLimit) }), textStyle({ role: "emphasis", size: 27 })).setOrigin(0.5), !product.purchasable));
     // **값은 액자가 아니라 가로로 긴 줄이다**(무역 카드와 같은 한 장). 칸마다 값이 하나뿐이라
     // 작은 네모로 두면 넓은 칸 구석에 외따로 뜬 조각으로 읽힌다.
     if (product.acquisition.kind === "currency") {
@@ -611,6 +612,8 @@ export class ShopScene extends Phaser.Scene {
         short: session.wallet[product.acquisition.currency] < product.acquisition.amount,
       });
     }
+    // 남은 횟수를 다 쓴 칸은 검은 막이 덮이고 「매진」 도장이 찍힌다 — 눌러 열어도 구매 버튼이 꺼져 있다.
+    if (product.remaining <= 0) addSoldOutStamp(this, card, width, SHOP_CARD.height, { topLeft: 36, topRight: 0, bottomRight: 28, bottomLeft: 0 });
     /*
      * **창 밖으로 흘러간 칸은 손을 받지 않는다.** GeometryMask는 그리기만 자르므로, 위로 흘러가
      * 가려진 칸의 입력면이 무대 위에 그대로 남아 점원을 누른 손을 가로챘다(카드가 점원보다 위

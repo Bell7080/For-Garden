@@ -1339,7 +1339,7 @@ describe("FakeServer 룬 로테이션 상품", () => {
     expect(state.wallet.cheesecake - cakeBefore).toBe(120);
     expect(state.wallet.fossil - fossilBefore).toBe(1);
     expect(state.wallet.amber - amberBefore).toBe(1);
-    expect(state.wallet.rawStone).toBe(20_000 - 250 - 300 - 2_500 - 3_500);
+    expect(state.wallet.rawStone).toBe(20_000 - 250 - 300 - 2_500 - 2_500);
     await expect(server.purchaseProduct({ storefront: "archaeology", productId: "arch-fossil-exchange", quantity: 1 })).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
   });
 });

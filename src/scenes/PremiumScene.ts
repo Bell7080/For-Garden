@@ -233,8 +233,8 @@ export class PremiumScene extends Phaser.Scene {
     const sideWidth = S.price.width / 2 + W.priceGap;
     const foot = this.passFootnote(product);
     if (foot) card.add(this.add.text(left, S.price.y, foot, textStyle({ role: "body", size: W.noteSize, color: COLOR.inkDim, wrap: -sideWidth - left })).setOrigin(0, 0.5));
-    const remaining = this.add.text(right, S.price.y, action.disabledReason ?? t("shop.premium.remaining", { remaining: product.remaining, limit: product.purchaseLimit }), textStyle({ role: "body", size: W.noteSize, color: product.purchasable ? COLOR.inkDim : COLOR.dangerText, align: "right", wrap: right - sideWidth })).setOrigin(1, 0.5);
-    card.add(remaining);
+    const remaining = this.add.text(right, S.price.y, action.disabledReason ?? t("shop.premium.remaining", { remaining: product.remaining, limit: product.purchaseLimit }), textStyle({ role: "emphasis", size: W.noteSize + 4, color: product.purchasable ? COLOR.ink : COLOR.dangerText, align: "right", wrap: right - sideWidth })).setOrigin(1, 0.5);
+    card.add(remaining.setStroke("#05070a", 3));
   }
 
   /**
@@ -261,7 +261,7 @@ export class PremiumScene extends Phaser.Scene {
     // 이름 길이는 언어가 정하고 칸 폭은 둘이 나눠 갖는 고정값이라, 넘치면 글자만 가로로 줄인다.
     card.add(squeezeTextToWidth(name, width - 36, 0.7));
     this.paintPriceChip(card, product, 0, C.price.y, width - C.price.inset, C.price.height, C.price.size, action);
-    card.add(this.add.text(0, C.remainingY, action.disabledReason ?? t("shop.premium.remaining", { remaining: product.remaining, limit: product.purchaseLimit }), textStyle({ role: "body", size: 19, color: product.purchasable ? COLOR.inkDim : COLOR.dangerText })).setOrigin(0.5));
+    card.add(this.add.text(0, C.remainingY, action.disabledReason ?? t("shop.premium.remaining", { remaining: product.remaining, limit: product.purchaseLimit }), textStyle({ role: "emphasis", size: 25, color: product.purchasable ? COLOR.ink : COLOR.dangerText })).setOrigin(0.5).setStroke("#05070a", 3));
   }
 
   /** 값 칸. 재화로 값을 치르는 상품은 값줄, 결제 상품은 카탈로그의 값 문자열을 두껍게 세운다. */

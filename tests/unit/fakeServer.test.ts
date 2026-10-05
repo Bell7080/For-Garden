@@ -1283,37 +1283,64 @@ describe("FakeServer 룬 로테이션 상품", () => {
     const day = dayWhenOffered("arch-daily", "arch-rune-daily-rare");
     const state = makeSession(0); state.wallet.rawStone = 10_000;
     const server = new FakeServer(state, { latencyMs: 0, now: () => day });
-    await expect(server.purchaseProduct({ storefront: "archaeology", productId: "arch-rune-daily-uncommon", quantity: 1, runeChoice: { part: 0 } })).rejects.toMatchObject({ code: "PRODUCT_NOT_VISIBLE" });
+    await expect(server.purchaseProduct({ storefront: "archaeology", productId: "arch-rune-daily-uncommon", quantity: 1 })).rejects.toMatchObject({ code: "PRODUCT_NOT_VISIBLE" });
     expect(state.runeInventory).toHaveLength(0);
   });
 
-  it("은 랜덤 룬을 고른 자리로 발급하고 값을 치른다", async () => {
+  it("은 랜덤 룬을 진열이 정한 자리로 발급하고 값을 치른다", async () => {
     const day = dayWhenOffered("arch-daily", "arch-rune-daily-rare");
     const state = makeSession(0); state.wallet.rawStone = 1_000;
     const server = new FakeServer(state, { latencyMs: 0, now: () => day });
-    await expect(server.purchaseProduct({ storefront: "archaeology", productId: "arch-rune-daily-rare", quantity: 1 })).rejects.toMatchObject({ code: "RUNE_CHOICE_REQUIRED" });
-    expect(state.wallet.rawStone).toBe(1_000);
-    const result = await server.purchaseProduct({ storefront: "archaeology", productId: "arch-rune-daily-rare", quantity: 1, runeChoice: { part: 2 } });
+    const listed = (await server.getProducts("archaeology")).products.find(({ id }) => id === "arch-rune-daily-rare")!;
+    expect([0, 1, 2]).toContain(listed.runePart);
+    const result = await server.purchaseProduct({ storefront: "archaeology", productId: "arch-rune-daily-rare", quantity: 1 });
     expect(result.grantedRunes).toHaveLength(1);
-    expect(result.grantedRunes[0]).toMatchObject({ rarity: "rare", part: 2 });
+    expect(result.grantedRunes[0]).toMatchObject({ rarity: "rare", part: listed.runePart });
     expect(state.wallet.rawStone).toBe(100);
     expect(state.runeInventory).toHaveLength(1);
-    await expect(server.purchaseProduct({ storefront: "archaeology", productId: "arch-rune-daily-rare", quantity: 1, runeChoice: { part: 2 } })).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
+    await expect(server.purchaseProduct({ storefront: "archaeology", productId: "arch-rune-daily-rare", quantity: 1 })).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
+  });
+
+  it("은 자리를 요청으로 바꿀 수 없다 — 요청의 자리 값은 무시된다", async () => {
+    const day = dayWhenOffered("arch-daily", "arch-rune-daily-rare");
+    const state = makeSession(0); state.wallet.rawStone = 1_000;
+    const server = new FakeServer(state, { latencyMs: 0, now: () => day });
+    const listed = (await server.getProducts("archaeology")).products.find(({ id }) => id === "arch-rune-daily-rare")!;
+    const forged = ((listed.runePart! + 1) % 3) as 0 | 1 | 2;
+    const result = await server.purchaseProduct({ storefront: "archaeology", productId: "arch-rune-daily-rare", quantity: 1, runeChoice: { part: forged } as never });
+    expect(result.grantedRunes[0]!.part).toBe(listed.runePart);
   });
 
   it("은 지정 룬의 주 옵션을 그대로 확정하고 잘못된 선택은 차감 전에 거부한다", async () => {
     const day = dayWhenOffered("arch-weekly-a", "arch-rune-pick-rare");
     const state = makeSession(0); state.wallet.rawStone = 5_000;
     const server = new FakeServer(state, { latencyMs: 0, now: () => day });
-    for (const runeChoice of [{ part: 1 as const }, { part: 1 as const, mainKeys: ["hp", "hp"] as const }, { part: 1 as const, mainKeys: ["hp", "moveSpeed"] as never }]) {
-      await expect(server.purchaseProduct({ storefront: "archaeology", productId: "arch-rune-pick-rare", quantity: 1, runeChoice })).rejects.toMatchObject({ code: "RUNE_CHOICE_REQUIRED" });
+    const listed = (await server.getProducts("archaeology")).products.find(({ id }) => id === "arch-rune-pick-rare")!;
+    for (const runeChoice of [undefined, { mainKeys: ["hp", "hp"] as const }, { mainKeys: ["hp", "moveSpeed"] as never }]) {
+      await expect(server.purchaseProduct({ storefront: "archaeology", productId: "arch-rune-pick-rare", quantity: 1, ...(runeChoice ? { runeChoice } : {}) })).rejects.toMatchObject({ code: "RUNE_CHOICE_REQUIRED" });
     }
     expect(state.wallet.rawStone).toBe(5_000); expect(state.runeInventory).toHaveLength(0);
-    const result = await server.purchaseProduct({ storefront: "archaeology", productId: "arch-rune-pick-rare", quantity: 1, runeChoice: { part: 1, mainKeys: ["def", "res"] } });
+    const result = await server.purchaseProduct({ storefront: "archaeology", productId: "arch-rune-pick-rare", quantity: 1, runeChoice: { mainKeys: ["def", "res"] } });
     const rune = result.grantedRunes[0]!;
-    expect(rune.part).toBe(1);
+    expect(rune.part).toBe(listed.runePart);
     expect(rune.mainStats.map(({ key }) => key)).toEqual(["def", "res"]);
     expect(state.wallet.rawStone).toBe(2_600);
+  });
+
+  it("은 원석으로 골드·치즈케이크·화석·호박석을 사고 하루·주간 한도를 지킨다", async () => {
+    const state = makeSession(0); state.wallet.rawStone = 20_000;
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-09T12:00:00Z") });
+    const goldBefore = state.wallet.gold, cakeBefore = state.wallet.cheesecake, fossilBefore = state.wallet.fossil, amberBefore = state.wallet.amber;
+    await server.purchaseProduct({ storefront: "archaeology", productId: "arch-gold-exchange", quantity: 1 });
+    await server.purchaseProduct({ storefront: "archaeology", productId: "arch-cheesecake-exchange", quantity: 2 });
+    await server.purchaseProduct({ storefront: "archaeology", productId: "arch-fossil-exchange", quantity: 1 });
+    await server.purchaseProduct({ storefront: "archaeology", productId: "arch-amber-exchange", quantity: 1 });
+    expect(state.wallet.gold - goldBefore).toBe(30_000);
+    expect(state.wallet.cheesecake - cakeBefore).toBe(120);
+    expect(state.wallet.fossil - fossilBefore).toBe(1);
+    expect(state.wallet.amber - amberBefore).toBe(1);
+    expect(state.wallet.rawStone).toBe(20_000 - 250 - 300 - 2_500 - 3_500);
+    await expect(server.purchaseProduct({ storefront: "archaeology", productId: "arch-fossil-exchange", quantity: 1 })).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
   });
 });
 

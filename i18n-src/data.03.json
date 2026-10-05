@@ -191,13 +191,11 @@
 "product.mileage-weekly-amber.name": ["琥珀取出", "นำอำพันออก", "Xuất Hổ phách", "Pengeluaran Amber", "Retiro de Ámbar", "Retirada de Âmbar", "Bernstein-Ausgabe", "Вывоз янтаря"],
 "product.mileage-weekly-fossil.name": ["化石套装", "ชุดฟอสซิล", "Gói Hóa thạch", "Bundel Fosil", "Lote de Fósiles", "Pacote de Fósseis", "Fossil-Bündel", "Набор окаменелостей"],
 "product.mileage-weekly-tonic.name": ["高浓缩饮料取出", "นำเครื่องดื่มเข้มข้นออก", "Xuất đồ uống đậm đặc", "Pengeluaran Minuman Pekat", "Retiro de bebida concentrada", "Retirada de bebida concentrada", "Ausgabe konzentrierter Getränke", "Вывоз концентрированных напитков"],
-"product.mileage-weekly-dust.name": ["精炼粉尘大量取出", "นำผงบริสุทธิ์ออกจำนวนมาก", "Xuất hàng loạt bột tinh chế", "Pengeluaran Massal Debu Murni", "Retiro masivo de polvo refinado", "Retirada em massa de pó refinado", "Große Ausgabe raffinierten Staubs", "Массовый вывоз очищенной пыли"],
 "product.mileage-weekly-core.name": ["古代核心取出", "นำแกนโบราณออก", "Xuất Lõi cổ đại", "Pengeluaran Inti Purba", "Retiro de núcleo antiguo", "Retirada de núcleo antigo", "Ausgabe des uralten Kerns", "Вывоз древнего ядра"],
 "product.mileage-weekly-raid-ticket.name": ["讨伐券取出", "นำตั๋วเรดออก", "Xuất Vé đột kích", "Pengeluaran Tiket Raid", "Retiro de boleto de incursión", "Retirada de bilhete de raide", "Ausgabe von Raid-Tickets", "Вывоз билета рейда"],
 "product.mileage-daily-fossil.name": ["化石取出", "นำฟอสซิลออก", "Xuất Hóa thạch", "Pengeluaran Fosil", "Retiro de Fósil", "Retirada de Fóssil", "Fossil-Ausgabe", "Вывоз окаменелости"],
 "product.mileage-daily-gold.name": ["研究资助金", "เงินสนับสนุนการวิจัย", "Tiền hỗ trợ nghiên cứu", "Dana Dukungan Riset", "Fondos de investigación", "Verba de pesquisa", "Forschungsgelder", "Средства на исследования"],
 "product.mileage-daily-cheesecake.name": ["芝士蛋糕补给", "เสบียงชีสเค้ก", "Tiếp tế Bánh phô mai", "Pasokan Cheesecake", "Suministro de Tarta de queso", "Suprimento de Cheesecake", "Käsekuchen-Nachschub", "Запас чизкейков"],
 "product.mileage-daily-tonic.name": ["一瓶饮料", "เครื่องดื่มหนึ่งขวด", "Một chai đồ uống", "Satu Botol Minuman", "Una botella", "Uma garrafa", "Eine Flasche Getränk", "Бутылка напитка"],
-"product.mileage-daily-dust.name": ["精炼粉尘取出", "นำผงบริสุทธิ์ออก", "Xuất bột tinh chế", "Pengeluaran Debu Murni", "Retiro de polvo refinado", "Retirada de pó refinado", "Ausgabe raffinierten Staubs", "Вывоз очищенной пыли"],
 "product.mileage-daily-strata.name": ["探查券取出", "นำตั๋วสำรวจออก", "Xuất Vé thám sát", "Pengeluaran Tiket Survei", "Retiro de ticket de estudio", "Retirada de tíquete de pesquisa", "Ausgabe von Erkundungstickets", "Вывоз билета разведки"]
 }

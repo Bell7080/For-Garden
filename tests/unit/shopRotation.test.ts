@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { ROTATION_EPOCH, rotationOffer, rotationRoll, type RotationSlot } from "../../src/core/shopRotation";
+import { ROTATION_EPOCH, rotationOffer, rotationRoll, rotationRunePart, type RotationSlot } from "../../src/core/shopRotation";
 import { ROTATION_SLOTS } from "../../src/data/runeRotation";
 import { PRODUCTS } from "../../src/data/shopCatalog";
 import { RUNE_MAIN_STAT_KEYS } from "../../src/core/runes";
-import { runeShopChoice, toggleMainKey } from "../../src/core/runeShopChoice";
+import { runeMainChoice, toggleMainKey } from "../../src/core/runeShopChoice";
 
 /** epoch부터 n주의 월요일 키. */
 function weekKeys(count: number): string[] {
@@ -73,10 +73,15 @@ describe("룬 상품 선택", () => {
     expect(toggleMainKey(["hp", "atk"], "def")).toEqual(["atk", "def"]);
     expect(toggleMainKey(["hp", "atk"], "hp")).toEqual(["atk"]);
   });
-  it("은 모자라면 null이다", () => {
-    expect(runeShopChoice("part", null, [])).toBeNull();
-    expect(runeShopChoice("part", 1, [])).toEqual({ part: 1 });
-    expect(runeShopChoice("partMain", 1, ["hp"])).toBeNull();
-    expect(runeShopChoice("partMain", 1, [RUNE_MAIN_STAT_KEYS[0]!, RUNE_MAIN_STAT_KEYS[1]!])).toEqual({ part: 1, mainKeys: [RUNE_MAIN_STAT_KEYS[0], RUNE_MAIN_STAT_KEYS[1]] });
+  it("은 주 옵션이 둘 찰 때까지 null이다", () => {
+    expect(runeMainChoice([])).toBeNull();
+    expect(runeMainChoice(["hp"])).toBeNull();
+    expect(runeMainChoice([RUNE_MAIN_STAT_KEYS[0]!, RUNE_MAIN_STAT_KEYS[1]!])).toEqual({ mainKeys: [RUNE_MAIN_STAT_KEYS[0], RUNE_MAIN_STAT_KEYS[1]] });
+  });
+  it("은 칸과 기간에서만 룬의 자리를 정하고 세 자리를 모두 쓴다", () => {
+    const slot = ROTATION_SLOTS[0]!;
+    expect(rotationRunePart(slot, "2026-09-01")).toBe(rotationRunePart(slot, "2026-09-01"));
+    const seen = new Set(weekKeys(60).map((key) => rotationRunePart(slot, key)));
+    expect([...seen].sort()).toEqual([0, 1, 2]);
   });
 });

@@ -63,3 +63,21 @@ export function addExpiryTag(scene: Phaser.Scene, x: number, y: number, expiresA
   tag.once(Phaser.GameObjects.Events.DESTROY, () => timer.remove(false));
   return tag;
 }
+
+/**
+ * 상점 칸·구매창의 기한 표식 — 가방 칸과 같은 빗긴 붉은 판에 **받은 날부터 몇 일인지**(`7D`)를 적는다.
+ * 아직 내 가방에 들어오기 전이라 남은 시간이 아니라 정해진 날수이며, 줄어들지 않으므로 타이머가 없다.
+ */
+export function addExpiryDaysTag(scene: Phaser.Scene, x: number, y: number, days: number): Phaser.GameObjects.Container {
+  const E = EXPIRY_TAG;
+  const tag = scene.add.container(x, y);
+  const label = scene.add.text(0, E.height / 2, `${days}D`, textStyle({ role: "display", size: E.fontSize, color: E.ink })).setOrigin(0.5, 0.5).setStroke("#2a0a0d", 4);
+  const width = label.width + E.padX * 2;
+  label.setX(width / 2);
+  const plate = scene.add.graphics();
+  const points = toPoints(slantedRect(width, E.height, E.slant)).map((point) => new Phaser.Geom.Point(point.x + width / 2, point.y + E.height / 2));
+  plate.fillStyle(E.fill, E.fillAlpha).fillPoints(points, true);
+  plate.lineStyle(2, E.edge, 0.7).lineBetween(points[0].x, points[0].y, points[1].x, points[1].y);
+  tag.add([plate, label]);
+  return tag;
+}

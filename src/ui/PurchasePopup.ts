@@ -18,6 +18,8 @@ import { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { addRuneFrame, runeAccentCss } from "./runeIcons";
 import { productIconTexture } from "./productIcon";
+import { addExpiryDaysTag } from "./itemExpiry";
+import { productExpiryDays } from "./productExpiry";
 import { openRewardPopup, productGrantsToRewardItems } from "./RewardPopup";
 import { setDebugStorefrontControls } from "../debug";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
@@ -152,6 +154,9 @@ export class PurchasePopup {
       addFramedIcon(this.scene, view, -240, QUANTITY.panelY, 170, productIconTexture(product));
       // 진열대 칸과 같은 수량 글자(`addShelfAmount`) — `×` 없이 수만 선다.
       view.add(addShelfAmount(this.scene, 170, formatCurrency(totalGrantAmount(unitGrant, quote.quantity))).setPosition(-240 + 85 - SHELF_AMOUNT.insetX, QUANTITY.panelY + 85 - SHELF_AMOUNT.insetY));
+      // 기한 있는 소비품은 진열대 칸과 같은 유통기한 표식을 액자 왼쪽 위에 단다.
+      const expiryDays = productExpiryDays(product.grants);
+      if (expiryDays !== undefined) view.add(addExpiryDaysTag(this.scene, -240 - 85 + 4, QUANTITY.panelY - 85 + 4, expiryDays));
     }
     view.add(this.scene.add.text(-125, QUANTITY.panelY - 57, product.name, textStyle({ role: "display", size: 32 })).setOrigin(0, 0.5));
     // 이번에 받는 수는 왼쪽 액자의 우하단이 이미 말한다 — 같은 수를 한 창에 두 번 적지 않는다.

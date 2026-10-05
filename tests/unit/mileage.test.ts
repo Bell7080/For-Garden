@@ -3,6 +3,8 @@ import { MILEAGE_OVERFLOW_BY_RARITY, MILEAGE_PER_PULL, mileageForPull } from "..
 import { MILEAGE_CLERK_LINE_COUNT, mileageClerkPool, mileageWeekIndex, mileageWeeklyClerkId } from "../../src/data/mileageClerk";
 import { MILEAGE_PRODUCTS } from "../../src/data/mileageShop";
 import { SHOP_PRODUCTS } from "../../src/data/products";
+import { STAMINA_GEM_PRICING } from "../../src/core/staminaGemPricing";
+import { findItem } from "../../src/data/items";
 import { TRADE_GEM_RATE, tradeGemValue } from "../../src/data/tradePackages";
 import { BANNERS, LIMITED_RELIC_IDS } from "../../src/data/banners";
 import { PLAYABLE_RELICS } from "../../src/data/relics";
@@ -67,15 +69,33 @@ describe("마일리지 상점 상품", () => {
     expect(MILEAGE_PRODUCTS.some((p) => p.category === "daily")).toBe(true);
   });
 
-  it("재화 상품은 시세(1개 ≈ 젬 60) 이상이되 1.5배를 넘지 않는다", () => {
+  it("값이 환산되는 상품은 낸 값의 1.0~1.25배 안이고 한 번에 마일리지 2 이상이 든다", () => {
+    // 에너지 드링크는 젬 충전의 가장 싼 1단계(젬 50 → 스테미나 60)로 잰다.
+    const perStamina = STAMINA_GEM_PRICING.baseCost / 60;
     for (const product of MILEAGE_PRODUCTS) {
       if (product.acquisition.kind !== "currency") continue;
-      // 젬으로 환산할 수 없는 항목(주간 SSR 파편·소비품)은 제외하고, 환산되는 상품만 본다.
-      if (product.grants.some((grant) => grant.kind !== "currency")) continue;
+      // 젬으로 환산할 수 없는 항목(주간 SSR 파편·발굴권·핵·토벌권)은 제외한다.
+      const convertible = product.grants.every((grant) => grant.kind === "currency" || (grant.kind === "item" && findItem(grant.itemId)?.useEffect.kind === "restore_stamina"));
+      if (!convertible) continue;
       const paid = product.acquisition.amount / TRADE_GEM_RATE.dnaFragments;
-      const value = tradeGemValue(product.grants);
+      const value = tradeGemValue(product.grants) + product.grants.reduce((sum, grant) => {
+        if (grant.kind !== "item") return sum;
+        const effect = findItem(grant.itemId)?.useEffect;
+        return effect?.kind === "restore_stamina" ? sum + effect.amount * grant.amount * perStamina : sum;
+      }, 0);
       expect(value, product.id).toBeGreaterThanOrEqual(paid - 1e-9);
-      expect(value, product.id).toBeLessThanOrEqual(paid * 1.5 + 1e-9);
+      expect(value, product.id).toBeLessThanOrEqual(paid * 1.25 + 1e-9);
+      if (product.grants.some((grant) => grant.kind === "item" || grant.kind === "currency") && !product.id.includes("fossil") && !product.id.includes("amber")) {
+        expect(product.acquisition.amount, product.id).toBeGreaterThanOrEqual(2);
+      }
+    }
+  });
+
+  it("기한이 있는 에너지 드링크는 7일이다", () => {
+    for (const product of MILEAGE_PRODUCTS) {
+      for (const grant of product.grants) {
+        if (grant.kind === "item" && findItem(grant.itemId)?.useEffect.kind === "restore_stamina") expect(grant.expiresInDays, product.id).toBe(7);
+      }
     }
   });
 

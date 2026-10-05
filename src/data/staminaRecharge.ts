@@ -2,6 +2,7 @@ import { findAdRewardSlot, type AdRewardSlot } from "./adRewards";
 import { registerDataText } from "../i18n";
 import type { ItemDefinition } from "./items";
 import { findItem } from "./items";
+import { STAMINA_GEM_PRICING } from "../core/staminaGemPricing";
 
 /**
  * 스테미나를 지금 채울 수 있는 수단.
@@ -20,8 +21,11 @@ export type StaminaRechargeSource =
    * 안에서 좌우로 갈아 끼우고, 어느 것을 쓸지는 고른 사람이 정한다. 순서는 **기본이 먼저**다.
    */
   | { readonly kind: "consumable"; readonly id: string; readonly itemIds: readonly string[] }
-  /** 보유 재화를 정해진 값만큼 깎아 회복한다. 차감과 회복은 서버가 한 처리 단위로 확정한다. */
-  | { readonly kind: "currency"; readonly id: string; readonly name: string; readonly currency: "gems"; readonly cost: number; readonly amount: number }
+  /**
+   * 보유 재화를 깎아 회복한다. 차감과 회복은 서버가 한 처리 단위로 확정한다. `cost`는 **기본값**이고,
+   * `escalating`이면 오늘 채운 횟수에 따라 오른다(`src/core/staminaGemPricing.ts`).
+   */
+  | { readonly kind: "currency"; readonly id: string; readonly name: string; readonly currency: "gems"; readonly cost: number; readonly amount: number; readonly escalating?: true }
   /** 이미 있는 광고 보상 슬롯을 그대로 쓴다. 회복량·일일 한도는 그 슬롯이 소유한다. */
   | { readonly kind: "ad"; readonly id: string; readonly name: string; readonly slotId: string };
 
@@ -33,7 +37,7 @@ export type StaminaRechargeSource =
  */
 export const STAMINA_RECHARGE_SOURCES = [
   { kind: "consumable", id: "stamina-tonic", itemIds: ["stamina-tonic", "stamina-tonic-large"] },
-  { kind: "currency", id: "stamina-gems", name: "긴급 보급", currency: "gems", cost: 30, amount: 60 },
+  { kind: "currency", id: "stamina-gems", name: "긴급 보급", currency: "gems", cost: STAMINA_GEM_PRICING.baseCost, amount: 60, escalating: true },
   { kind: "ad", id: "stamina-ad", name: "보급 요청", slotId: "daily-stamina" },
 ] as const satisfies readonly StaminaRechargeSource[];
 

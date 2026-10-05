@@ -81,7 +81,12 @@ export interface PurchaseRelicSkinResponse extends PlayerStateDto { skinId: Reli
 /** 재화로 스테미나를 채우는 요청. 수단 ID는 서버 표와 대조하고 재전송은 requestId로 막는다. */
 export interface RechargeStaminaRequest { sourceId: string; requestId: string; }
 /** 실제 채운 양과 넘친 양을 함께 돌려줘 화면이 상한을 다시 계산하지 않게 한다. */
-export interface RechargeStaminaResponse extends PlayerStateDto { sourceId: string; spent: { currency: keyof Wallet; amount: number }; appliedAmount: number; overflowAmount: number; stamina: StaminaDto; }
+export interface RechargeStaminaResponse extends PlayerStateDto { sourceId: string; spent: { currency: keyof Wallet; amount: number }; appliedAmount: number; overflowAmount: number; stamina: StaminaDto; status: StaminaRechargeStatusDto; }
+/**
+ * 젬 충전의 오늘 상태. 값은 서버가 오늘 채운 횟수로 정하고, 화면은 이 응답으로 **다음 값**과 초기화 시각만 그린다.
+ * `resetsAt`은 횟수가 처음으로 돌아가는 시각(서버 UTC 자정)이다.
+ */
+export interface StaminaRechargeStatusDto { purchasedToday: number; nextCost: number; resetsAt: string; serverTime: string; }
 
 export interface StaminaDto { current: number; maximum: number; serverTime: string; updatedAt: string; nextRecoveryAt: string | null; fullAt: string | null; }
 
@@ -812,6 +817,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   useConsumable(request: UseConsumableRequest): Promise<UseConsumableResponse>;
   /** 재화 차감과 스테미나 회복을 한 처리 단위로 확정한다. 화면은 결과만 다시 읽는다. */
   rechargeStamina(request: RechargeStaminaRequest): Promise<RechargeStaminaResponse>;
+  /** 젬 충전의 오늘 횟수·다음 값·초기화 시각을 서버 기준으로 읽는다. */
+  getStaminaRechargeStatus(): Promise<StaminaRechargeStatusDto>;
   /** 값 조회·차감·외형 지급을 한 처리 단위로 확정한다. 화면은 결과만 다시 읽는다. */
   purchaseRelicSkin(request: PurchaseRelicSkinRequest): Promise<PurchaseRelicSkinResponse>;
   /** 장착 검증과 지갑 상한을 통과한 룬 판매를 서버가 원자 확정한다. */

@@ -1377,8 +1377,32 @@ describe("FakeServer 마일리지 상점", () => {
     const state = makeSession(); state.wallet.dnaFragments = 5;
     const server = new FakeServer(state, { latencyMs: 0, now: () => WEEK });
     await server.purchaseProduct({ storefront: "mileage", productId: "mileage-daily-gold", quantity: 2 });
-    expect(state.wallet).toMatchObject({ dnaFragments: 3, gold: 80_000 });
+    expect(state.wallet).toMatchObject({ dnaFragments: 1, gold: 140_000 });
     await expect(server.purchaseProduct({ storefront: "mileage", productId: "mileage-daily-strata", quantity: 1 })).rejects.toBeDefined();
-    expect(state.wallet.dnaFragments).toBe(3);
+    expect(state.wallet.dnaFragments).toBe(1);
+  });
+});
+
+describe("젬 충전 서버 경계", () => {
+  it("한 번마다 값이 누진하고 UTC 날짜가 바뀌면 처음 값으로 돌아간다", async () => {
+    let now = new Date("2026-10-05T10:00:00Z");
+    const state = makeSession(); state.wallet.gems = 5_000; state.wallet.stamina = 0;
+    const server = new FakeServer(state, { latencyMs: 0, now: () => now });
+    const spent: number[] = [];
+    for (let i = 0; i < 12; i += 1) {
+      const response = await server.rechargeStamina({ sourceId: "stamina-gems", requestId: `r${i}` });
+      spent.push(response.spent.amount);
+    }
+    expect(spent).toEqual([50, 50, 50, 50, 50, 100, 100, 100, 100, 100, 150, 150]);
+    expect((await server.getStaminaRechargeStatus())).toMatchObject({ purchasedToday: 12, nextCost: 150, resetsAt: "2026-10-06T00:00:00.000Z" });
+    now = new Date("2026-10-06T00:00:01Z");
+    expect(await server.getStaminaRechargeStatus()).toMatchObject({ purchasedToday: 0, nextCost: 50 });
+  });
+
+  it("젬이 모자라면 오른 값 기준으로 막는다", async () => {
+    const state = makeSession(); state.wallet.gems = 90; state.wallet.stamina = 0;
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-10-05T10:00:00Z") });
+    await server.rechargeStamina({ sourceId: "stamina-gems", requestId: "a" });
+    await expect(server.rechargeStamina({ sourceId: "stamina-gems", requestId: "b" })).rejects.toMatchObject({ code: "INSUFFICIENT_CURRENCY" });
   });
 });

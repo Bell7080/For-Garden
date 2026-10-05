@@ -28,6 +28,7 @@ export const INVENTORY_KO = {
   "stamina.recharge": "충전",
   "stamina.gemTitle": "젬으로 충전",
   "stamina.gemMessage": "젬을 써서 스테미나 {amount}을 채웁니다.",
+  "stamina.gemDetail": "오늘 {count}회 · {reset} 초기화",
   "stamina.spend": "사용",
   "stamina.adRemaining": "오늘 {left}/{limit}",
   "stamina.watchAd": "시청",

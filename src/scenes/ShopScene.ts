@@ -47,6 +47,8 @@ import { addClippedHit } from "../ui/clippedHit";
 import { pressIn, pressOut } from "../ui/pressFeedback";
 import { addRuneFrame, runeAccentCss } from "../ui/runeIcons";
 import { productIconTexture, runeProductOf } from "../ui/productIcon";
+import { addExpiryDaysTag } from "../ui/itemExpiry";
+import { productExpiryDays } from "../ui/productExpiry";
 import { formatRefreshCountdown, nextRefreshAt, shortestRefresh } from "../core/shopRefresh";
 
 /** 가치 배지 — 무역 카드의 배지(`TradePackageCard`)와 같은 색이고 칸 우상단에 작게 선다. */
@@ -558,6 +560,9 @@ export class ShopScene extends Phaser.Scene {
       }
       card.add(frame);
     }
+    // 기한 있는 소비품은 칸 왼쪽 위에 유통기한(`7D`)을 단다 — 가방 칸과 같은 표식이다.
+    const expiryDays = productExpiryDays(product.grants);
+    if (expiryDays !== undefined) card.add(addExpiryDaysTag(this, -SHOP_CARD.frame / 2 + 4, SHOP_CARD.frameY - SHOP_CARD.frame / 2 + 4, expiryDays));
     const name = this.add.text(0, SHOP_CARD.nameY, product.name, textStyle({ role: "emphasis", size: 27, ...(runeProduct ? { color: runeAccentCss(runeProduct.rarity) } : {}) })).setOrigin(0.5);
     // 이름 길이는 언어가 정하고 칸 폭은 둘이 나눠 갖는 고정값이라, 넘치면 글자만 가로로 줄인다.
     const room = width - 36;

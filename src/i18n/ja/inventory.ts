@@ -28,6 +28,7 @@ export const INVENTORY_JA = {
   "stamina.recharge": "チャージ",
   "stamina.gemTitle": "ジェムでチャージ",
   "stamina.gemMessage": "ジェムを使ってスタミナを{amount}回復します。",
+  "stamina.gemDetail": "本日{count}回 · {reset}にリセット",
   "stamina.spend": "使用",
   "stamina.adRemaining": "本日 {left}/{limit}",
   "stamina.watchAd": "視聴",

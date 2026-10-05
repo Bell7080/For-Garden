@@ -21,7 +21,7 @@ import { interactionDurationMs, isInteractionCityUnlocked, isInteractionDispatch
 import type {
   PurchaseRelicSkinRequest, PurchaseRelicSkinResponse, ClaimInteractionDispatchRequest, ClaimInteractionDispatchResponse, InteractionCitiesResponse, InteractionDispatchResponse, StartInteractionDispatchRequest } from "./contracts";
 import { ProfileModifierManager } from "../managers/ProfileModifierManager";
-import { GameApiError, persistenceFailed, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type EnterBountyRequest, type EnterBountyResponse, type CompleteBountyRequest, type CompleteBountyResponse, type BountyStatusResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse, type RechargeStaminaRequest, type RechargeStaminaResponse, type ClaimProgressPassRequest, type ClaimProgressPassResponse, type ProgressPassDto, type ProgressPassListResponse } from "./contracts";
+import { GameApiError, persistenceFailed, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type EnterBountyRequest, type EnterBountyResponse, type CompleteBountyRequest, type CompleteBountyResponse, type BountyStatusResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse, type RechargeStaminaRequest, type RechargeStaminaResponse, type StaminaRechargeStatusDto, type ClaimProgressPassRequest, type ClaimProgressPassResponse, type ProgressPassDto, type ProgressPassListResponse } from "./contracts";
 import type { ProductDefinition, ProductGrant } from "../data/shopCatalog";
 import { PRODUCTS } from "../data/shopCatalog";
 import type { ProductListResponse, PurchaseProductRequest, PurchaseProductResponse } from "./contracts";
@@ -52,6 +52,7 @@ import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_COMPLET
 import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonContributions, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../core/raid";
 import { battleArena } from "../core/battleArena";
 import { staminaCurrencyRecharge } from "../data/staminaRecharge";
+import { nextStaminaGemCost, nextUtcMidnight, staminaGemDayKey } from "../core/staminaGemPricing";
 import { paidStaminaApplied, settleStamina, STAMINA_HOLD_LIMIT, staminaMaxForPlayer, staminaTiming } from "../core/stamina";
 import { InventoryManager } from "../managers/InventoryManager";
 import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, MarkRuneRequest, MarkRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse } from "./contracts";
@@ -923,23 +924,47 @@ export class FakeServer implements GameApi {
     const source = staminaCurrencyRecharge(request.sourceId);
     if (!source) throw new GameApiError("INVALID_EXCHANGE_TARGET", "존재하지 않는 충전 수단입니다.");
     if (this.state.wallet.stamina >= STAMINA_HOLD_LIMIT) throw new GameApiError("STAMINA_FULL", "스테미나가 이미 가득 찼습니다.");
-    if (this.state.wallet[source.currency] < source.cost) throw new GameApiError("INSUFFICIENT_CURRENCY", "재화가 부족합니다.");
+    // 값은 요청 시점의 오늘 횟수에서만 나온다 — 화면이 보낸 값은 없다.
+    const now = this.now();
+    const purchased = this.staminaGemPurchasedToday(source.id, now);
+    const cost = source.escalating ? nextStaminaGemCost(purchased) : source.cost;
+    if (this.state.wallet[source.currency] < cost) throw new GameApiError("INSUFFICIENT_CURRENCY", "재화가 부족합니다.");
     const appliedAmount = paidStaminaApplied(this.state.wallet.stamina, source.amount);
     const nextWallet = {
       ...this.state.wallet,
-      [source.currency]: this.state.wallet[source.currency] - source.cost,
+      [source.currency]: this.state.wallet[source.currency] - cost,
       stamina: this.state.wallet.stamina + appliedAmount,
     };
-    this.persist({ ...this.state, wallet: nextWallet });
-    this.state.wallet = nextWallet;
+    const nextPurchases = source.escalating
+      ? { ...this.state.productPurchases, [source.id]: { periodKey: staminaGemDayKey(now), count: purchased + 1 } }
+      : this.state.productPurchases;
+    this.persist({ ...this.state, wallet: nextWallet, productPurchases: nextPurchases });
+    this.state.wallet = nextWallet; this.state.productPurchases = nextPurchases;
     return {
       ...this.snapshot(),
       sourceId: source.id,
-      spent: { currency: source.currency, amount: source.cost },
+      spent: { currency: source.currency, amount: cost },
       appliedAmount,
       overflowAmount: source.amount - appliedAmount,
       stamina: this.staminaDto(this.now()),
+      status: this.staminaRechargeStatus(source.id, now),
     };
+  }
+
+  async getStaminaRechargeStatus(): Promise<StaminaRechargeStatusDto> {
+    await this.delay();
+    return this.staminaRechargeStatus("stamina-gems", this.now());
+  }
+
+  /** 오늘(서버 UTC) 이 수단으로 채운 횟수. 날짜 키가 바뀌었으면 0이다 — 카운터는 구매 한도와 같은 기록(`productPurchases`)을 쓴다. */
+  private staminaGemPurchasedToday(sourceId: string, now: Date): number {
+    const record = this.state.productPurchases[sourceId];
+    return record?.periodKey === staminaGemDayKey(now) ? record.count : 0;
+  }
+
+  private staminaRechargeStatus(sourceId: string, now: Date): StaminaRechargeStatusDto {
+    const purchasedToday = this.staminaGemPurchasedToday(sourceId, now);
+    return { purchasedToday, nextCost: nextStaminaGemCost(purchasedToday), resetsAt: nextUtcMidnight(now).toISOString(), serverTime: now.toISOString() };
   }
 
   /** 서버의 단일 now 값을 캡처해 조회 정산과 응답 시각이 어긋나지 않게 한다. */

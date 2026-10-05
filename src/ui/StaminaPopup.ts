@@ -1,7 +1,8 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { remainingDetail, soonestItemExpiry } from "./itemExpiry";
-import type { AdPresentationResult, GameApi } from "../api/contracts";
+import type { AdPresentationResult, GameApi, StaminaRechargeStatusDto } from "../api/contracts";
+import { nextStaminaGemCost } from "../core/staminaGemPricing";
 import { completedAdToken } from "../data/adRewards";
 import { currencyGuide } from "../data/currencyGuide";
 import { STAMINA_RECHARGE_SOURCES, staminaAdSlot, staminaConsumable, type StaminaRechargeSource } from "../data/staminaRecharge";
@@ -20,6 +21,7 @@ import { addSectionTitle } from "./SectionTitle";
 import { staminaTimerLine } from "./staminaDisplay";
 import { heroStack, POPUP_BEVEL_RATIO, STAMINA_CELL, STAMINA_SWAP, staminaPopupLayout } from "./staminaPopupLayout";
 import { UI_ICON } from "./icons";
+import { squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
 
 /**
@@ -61,6 +63,8 @@ export class StaminaPopup {
   private tonicIndex = 0;
   private pending = false;
   private message = "";
+  /** 젬 충전의 오늘 상태. 서버가 답한 값만 담고, 답하기 전에는 기본값(0회)으로 그린다. */
+  private rechargeStatus: StaminaRechargeStatusDto | undefined;
   private repaint: (() => void) | undefined;
 
   constructor(
@@ -79,6 +83,7 @@ export class StaminaPopup {
       const render = (): void => { view.removeAll(true); this.paint(view); };
       this.repaint = render;
       render();
+      void this.api.getStaminaRechargeStatus().then((status) => { this.rechargeStatus = status; this.repaint?.(); }, () => undefined);
       // 회복 시간은 1초마다 다시 그리고, 창이 닫히면 타이머와 구독을 함께 놓는다.
       const timer = this.scene.time.addEvent({ delay: 1_000, loop: true, callback: render });
       const unsubscribe = managerEvents.subscribe("wallet", render);
@@ -158,7 +163,7 @@ export class StaminaPopup {
     cell.add(this.scene.add.text(0, CELL.gainY, `+${view.gain}`, textStyle({ role: "display", size: CELL.gainSize, color: TONE.value }))
       .setOrigin(0.5).setShadow(0, 3, "#05070a", 4, false, true));
     cell.add(this.scene.add.text(0, CELL.nameY, view.name, textStyle({ role: "emphasis", size: CELL.nameSize })).setOrigin(0.5));
-    if (view.detail) cell.add(this.scene.add.text(0, CELL.detailY, view.detail, textStyle({ role: "body", size: CELL.detailSize, color: COLOR.inkDim })).setOrigin(0.5));
+    if (view.detail) cell.add(squeezeTextToWidth(this.scene.add.text(0, CELL.detailY, view.detail, textStyle({ role: "body", size: CELL.detailSize, color: COLOR.inkDim })).setOrigin(0.5), width - CELL.padX * 2));
     const button = new Button(this.scene, 0, CELL.buttonY, {
       width: width - CELL.padX * 2, height: CELL.buttonHeight, label: view.label, fontSize: 24, variant: "primary",
       cost: view.cost, onClick: () => this.request(source),
@@ -192,15 +197,17 @@ export class StaminaPopup {
     }
     if (source.kind === "currency") {
       const held = session.wallet[source.currency];
+      const cost = this.gemCost(source);
       return {
         texture: CURRENCY_ICON_BY_WALLET[source.currency],
         name: source.name,
         gain: source.amount,
-        detail: "",
+        // 누진 값이라 오늘 몇 번째인지와 값이 처음으로 돌아가는 날짜를 함께 말한다.
+        detail: source.escalating && this.rechargeStatus ? t("stamina.gemDetail", { count: this.rechargeStatus.purchasedToday, reset: formatResetStamp(this.rechargeStatus.resetsAt) }) : "",
         owned: held,
         label: t("stamina.recharge"),
-        enabled: held >= source.cost,
-        cost: { icon: "currency-gems", amount: source.cost, affordable: held >= source.cost },
+        enabled: held >= cost,
+        cost: { icon: "currency-gems", amount: cost, affordable: held >= cost },
       };
     }
     const ad = staminaAdSlot(source.slotId);
@@ -217,6 +224,11 @@ export class StaminaPopup {
       label: t("stamina.watchAd"),
       enabled: ad !== undefined && used < limit && !full,
     };
+  }
+
+  /** 이번에 치를 젬. 누진 수단은 서버가 알려 준 오늘 횟수에서 같은 순수 규칙으로 읽는다. */
+  private gemCost(source: Extract<StaminaRechargeSource, { kind: "currency" }>): number {
+    return source.escalating ? this.rechargeStatus?.nextCost ?? nextStaminaGemCost(0) : source.cost;
   }
 
   /** 지금 고른 소비품. 목록이 줄어도 범위를 벗어나지 않게 항상 나머지로 돌린다. */
@@ -251,11 +263,12 @@ export class StaminaPopup {
     if (this.pending) return;
     if (source.kind !== "currency") { void this.run(source); return; }
     const held = session.wallet[source.currency];
+    const cost = this.gemCost(source);
     this.popups.confirm({
       title: t("stamina.gemTitle"),
       message: t("stamina.gemMessage", { amount: source.amount }),
-      costs: [{ iconKey: CURRENCY_ICON_BY_WALLET[source.currency], amount: source.cost }],
-      balance: { iconKey: CURRENCY_ICON_BY_WALLET[source.currency], before: held, after: held - source.cost },
+      costs: [{ iconKey: CURRENCY_ICON_BY_WALLET[source.currency], amount: cost }],
+      balance: { iconKey: CURRENCY_ICON_BY_WALLET[source.currency], before: held, after: held - cost },
       confirmLabel: t("stamina.recharge"),
     }, () => { void this.run(source); });
   }
@@ -266,7 +279,7 @@ export class StaminaPopup {
     this.pending = true; this.message = ""; this.repaint?.();
     try {
       if (source.kind === "consumable") await this.inventory.useConsumable(this.api, this.selectedTonic(source));
-      else if (source.kind === "currency") await this.inventory.rechargeStamina(this.api, source.id);
+      else if (source.kind === "currency") this.rechargeStatus = (await this.inventory.rechargeStamina(this.api, source.id)).status;
       else await this.watchAd(source.slotId);
     } catch {
       this.message = t("stamina.rechargeFailed");
@@ -292,4 +305,11 @@ function panelShape(width: number, height: number): number[] {
 /** 재전송으로 같은 광고 보상이 두 번 확정되지 않게 한다. */
 function adRequestId(): string {
   return globalThis.crypto?.randomUUID?.() ?? `stamina-ad-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+/** 초기화 시각을 「10/6 09:00」처럼 기기 시각대로 적는다. 날짜가 곧 「오늘 값이 언제 처음으로 돌아가나」의 답이다. */
+function formatResetStamp(iso: string): string {
+  const date = new Date(iso);
+  const pad = (value: number): string => String(value).padStart(2, "0");
+  return `${date.getMonth() + 1}/${date.getDate()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }

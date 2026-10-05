@@ -34,4 +34,8 @@ export const SHOP_VI = {
   "shop.premium.cancelled": "Đã hủy thanh toán.",
   "shop.premium.perk.instantAds": "Nhận thưởng quảng cáo ngay",
   "shop.premium.perk.adFree": "Không quảng cáo · Càn quét không cần vé",
+  "shop.rune.part": "Ô",
+  "shop.rune.main": "Thuộc tính chính",
+  "shop.rune.pickPart": "Hãy chọn ô.",
+  "shop.rune.pickMain": "Hãy chọn ô và hai thuộc tính chính.",
 } as const;

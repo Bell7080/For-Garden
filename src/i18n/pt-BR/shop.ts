@@ -34,4 +34,8 @@ export const SHOP_PT_BR = {
   "shop.premium.cancelled": "O pagamento foi cancelado.",
   "shop.premium.perk.instantAds": "Recompensas de anúncios na hora",
   "shop.premium.perk.adFree": "Sem anúncios · Varredura sem tickets",
+  "shop.rune.part": "Espaço",
+  "shop.rune.main": "Opções principais",
+  "shop.rune.pickPart": "Escolha um espaço.",
+  "shop.rune.pickMain": "Escolha um espaço e duas opções principais.",
 } as const;

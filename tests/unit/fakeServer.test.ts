@@ -3,6 +3,8 @@ import { stageFirstClearRewards } from "../../src/core/stageRewards";
 import { getBattleStage } from "../../src/data/stages";
 import { EXPEDITION_NODE_REWARD_BALANCE, expeditionBossSalvage, expeditionRankRewards } from "../../src/data/expedition";
 import { FakeServer } from "../../src/api/FakeServer";
+import { rotationOffer } from "../../src/core/shopRotation";
+import { rotationSlot } from "../../src/data/runeRotation";
 import { breakthroughFragmentCost, BREAKTHROUGH_STEPS, RELIC_LEVEL_CAP } from "../../src/core/relicProgression";
 import { GameApiError } from "../../src/api/contracts";
 import { createEmptyRaidState, createInitialPlayerResearchProgress, createEmptyPlayerCard, type Session } from "../../src/state/session";
@@ -1292,5 +1294,63 @@ describe("플랫폼 결제 지급 확정", () => {
     const before = { ...state.wallet };
     await expect(server.verifyPurchaseReceipt({ productId: "premium-gems-small", platform: "test", receipt: "forged", requestId: "bad" })).rejects.toBeDefined();
     expect(state.wallet).toEqual(before);
+  });
+});
+
+describe("FakeServer 룬 로테이션 상품", () => {
+  /** 칸이 그 상품을 고른 가장 이른 날(UTC 정오). */
+  function dayWhenOffered(slotId: string, productId: string, from = "2026-08-03"): Date {
+    const slot = rotationSlot(slotId)!;
+    for (let offset = 0; offset < 600; offset += 1) {
+      const date = new Date(`${from}T12:00:00Z`); date.setUTCDate(date.getUTCDate() + offset);
+      const key = slot.period === "daily" ? date.toISOString().slice(0, 10) : (() => { const monday = new Date(date); monday.setUTCDate(monday.getUTCDate() - ((monday.getUTCDay() + 6) % 7)); return monday.toISOString().slice(0, 10); })();
+      if (rotationOffer(slot, key) === productId) return date;
+    }
+    throw new Error("칸이 열리는 날을 찾지 못했다");
+  }
+
+  it("은 칸이 고른 상품만 목록에 선다", async () => {
+    const day = dayWhenOffered("arch-daily", "arch-rune-daily-rare");
+    const server = new FakeServer(makeSession(0), { latencyMs: 0, now: () => day });
+    const ids = (await server.getProducts("archaeology")).products.map(({ id }) => id);
+    expect(ids).toContain("arch-rune-daily-rare");
+    expect(ids).not.toContain("arch-rune-daily-uncommon");
+  });
+
+  it("은 열리지 않은 날의 룬 상품 구매를 거부한다", async () => {
+    const day = dayWhenOffered("arch-daily", "arch-rune-daily-rare");
+    const state = makeSession(0); state.wallet.rawStone = 10_000;
+    const server = new FakeServer(state, { latencyMs: 0, now: () => day });
+    await expect(server.purchaseProduct({ storefront: "archaeology", productId: "arch-rune-daily-uncommon", quantity: 1, runeChoice: { part: 0 } })).rejects.toMatchObject({ code: "PRODUCT_NOT_VISIBLE" });
+    expect(state.runeInventory).toHaveLength(0);
+  });
+
+  it("은 랜덤 룬을 고른 자리로 발급하고 값을 치른다", async () => {
+    const day = dayWhenOffered("arch-daily", "arch-rune-daily-rare");
+    const state = makeSession(0); state.wallet.rawStone = 1_000;
+    const server = new FakeServer(state, { latencyMs: 0, now: () => day });
+    await expect(server.purchaseProduct({ storefront: "archaeology", productId: "arch-rune-daily-rare", quantity: 1 })).rejects.toMatchObject({ code: "RUNE_CHOICE_REQUIRED" });
+    expect(state.wallet.rawStone).toBe(1_000);
+    const result = await server.purchaseProduct({ storefront: "archaeology", productId: "arch-rune-daily-rare", quantity: 1, runeChoice: { part: 2 } });
+    expect(result.grantedRunes).toHaveLength(1);
+    expect(result.grantedRunes[0]).toMatchObject({ rarity: "rare", part: 2 });
+    expect(state.wallet.rawStone).toBe(100);
+    expect(state.runeInventory).toHaveLength(1);
+    await expect(server.purchaseProduct({ storefront: "archaeology", productId: "arch-rune-daily-rare", quantity: 1, runeChoice: { part: 2 } })).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
+  });
+
+  it("은 지정 룬의 주 옵션을 그대로 확정하고 잘못된 선택은 차감 전에 거부한다", async () => {
+    const day = dayWhenOffered("arch-weekly-a", "arch-rune-pick-rare");
+    const state = makeSession(0); state.wallet.rawStone = 5_000;
+    const server = new FakeServer(state, { latencyMs: 0, now: () => day });
+    for (const runeChoice of [{ part: 1 as const }, { part: 1 as const, mainKeys: ["hp", "hp"] as const }, { part: 1 as const, mainKeys: ["hp", "moveSpeed"] as never }]) {
+      await expect(server.purchaseProduct({ storefront: "archaeology", productId: "arch-rune-pick-rare", quantity: 1, runeChoice })).rejects.toMatchObject({ code: "RUNE_CHOICE_REQUIRED" });
+    }
+    expect(state.wallet.rawStone).toBe(5_000); expect(state.runeInventory).toHaveLength(0);
+    const result = await server.purchaseProduct({ storefront: "archaeology", productId: "arch-rune-pick-rare", quantity: 1, runeChoice: { part: 1, mainKeys: ["def", "res"] } });
+    const rune = result.grantedRunes[0]!;
+    expect(rune.part).toBe(1);
+    expect(rune.mainStats.map(({ key }) => key)).toEqual(["def", "res"]);
+    expect(state.wallet.rawStone).toBe(2_600);
   });
 });

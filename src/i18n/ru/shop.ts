@@ -34,4 +34,8 @@ export const SHOP_RU = {
   "shop.premium.cancelled": "Оплата отменена.",
   "shop.premium.perk.instantAds": "Награды за рекламу сразу",
   "shop.premium.perk.adFree": "Без рекламы · Зачистка без билетов",
+  "shop.rune.part": "Слот",
+  "shop.rune.main": "Основные параметры",
+  "shop.rune.pickPart": "Выберите слот.",
+  "shop.rune.pickMain": "Выберите слот и два основных параметра.",
 } as const;

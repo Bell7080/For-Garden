@@ -34,4 +34,8 @@ export const SHOP_DE = {
   "shop.premium.cancelled": "Die Zahlung wurde abgebrochen.",
   "shop.premium.perk.instantAds": "Werbebelohnungen sofort erhalten",
   "shop.premium.perk.adFree": "Werbefrei · Säubern ohne Tickets",
+  "shop.rune.part": "Platz",
+  "shop.rune.main": "Hauptwerte",
+  "shop.rune.pickPart": "Wähle einen Platz.",
+  "shop.rune.pickMain": "Wähle einen Platz und zwei Hauptwerte.",
 } as const;

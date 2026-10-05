@@ -34,4 +34,8 @@ export const SHOP_ZH_HANS = {
   "shop.premium.cancelled": "支付已取消。",
   "shop.premium.perk.instantAds": "广告奖励即时领取",
   "shop.premium.perk.adFree": "免广告 · 免扫荡券扫荡",
+  "shop.rune.part": "槽位",
+  "shop.rune.main": "主属性",
+  "shop.rune.pickPart": "请选择槽位。",
+  "shop.rune.pickMain": "请选择槽位和两项主属性。",
 } as const;

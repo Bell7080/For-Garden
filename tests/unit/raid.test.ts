@@ -368,9 +368,9 @@ describe("전리품 상점", () => {
     );
     const raid = grantsOf("raid");
     const shared = [...grantsOf("expedition")].filter((key) => raid.has(key));
-    // DNA 조각 하나만 양쪽에 둔다 — 돌파의 공용 재료라 한쪽에만 두면 그 콘텐츠를 돌지
-    // 않는 사람의 성장이 통째로 막힌다.
-    expect(shared).toEqual(["dnaFragments"]);
+    // 룬 한 장만 양쪽에 둔다 — 룬은 어디서 사든 같은 룬이고 주 무대가 고고학이라, 두 증표 모두
+    // 가끔(주간 로테이션 칸) 같은 종류를 조금씩 다른 값으로 판다. 연구 재화·DNA 조각 상품은 없다.
+    expect(shared).toEqual(["rune"]);
   });
 
   it("이 파는 것과 받는 값이 모두 실제로 있는 것이다", () => {

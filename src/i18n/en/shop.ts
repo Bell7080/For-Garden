@@ -34,4 +34,8 @@ export const SHOP_EN = {
   "shop.premium.cancelled": "The payment was cancelled.",
   "shop.premium.perk.instantAds": "Ad rewards claimed instantly",
   "shop.premium.perk.adFree": "No ads · Sweep without tickets",
+  "shop.rune.part": "Slot",
+  "shop.rune.main": "Main stats",
+  "shop.rune.pickPart": "Choose a slot.",
+  "shop.rune.pickMain": "Choose a slot and two main stats.",
 } as const;

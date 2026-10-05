@@ -34,4 +34,8 @@ export const SHOP_ID = {
   "shop.premium.cancelled": "Pembayaran dibatalkan.",
   "shop.premium.perk.instantAds": "Hadiah iklan langsung diklaim",
   "shop.premium.perk.adFree": "Tanpa iklan · Sapu tanpa tiket",
+  "shop.rune.part": "Slot",
+  "shop.rune.main": "Opsi utama",
+  "shop.rune.pickPart": "Pilih slot.",
+  "shop.rune.pickMain": "Pilih slot dan dua opsi utama.",
 } as const;

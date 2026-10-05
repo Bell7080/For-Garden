@@ -34,4 +34,8 @@ export const SHOP_ES = {
   "shop.premium.cancelled": "El pago se canceló.",
   "shop.premium.perk.instantAds": "Recompensas de anuncios al instante",
   "shop.premium.perk.adFree": "Sin anuncios · Barrido sin tickets",
+  "shop.rune.part": "Ranura",
+  "shop.rune.main": "Opciones principales",
+  "shop.rune.pickPart": "Elige una ranura.",
+  "shop.rune.pickMain": "Elige una ranura y dos opciones principales.",
 } as const;

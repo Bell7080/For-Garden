@@ -35,4 +35,8 @@ export const SHOP_KO = {
   "shop.premium.cancelled": "결제가 취소되었습니다.",
   "shop.premium.perk.instantAds": "광고 보상 즉시 수령",
   "shop.premium.perk.adFree": "광고 제거 · 소탕권 없이 소탕",
+  "shop.rune.part": "자리",
+  "shop.rune.main": "주 옵션",
+  "shop.rune.pickPart": "자리를 골라 주세요.",
+  "shop.rune.pickMain": "자리와 주 옵션 둘을 골라 주세요.",
 } as const;

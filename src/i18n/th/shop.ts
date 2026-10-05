@@ -34,4 +34,8 @@ export const SHOP_TH = {
   "shop.premium.cancelled": "ยกเลิกการชำระเงินแล้ว",
   "shop.premium.perk.instantAds": "รับรางวัลโฆษณาทันที",
   "shop.premium.perk.adFree": "ไม่มีโฆษณา · กวาดล้างโดยไม่ใช้ตั๋ว",
+  "shop.rune.part": "ช่อง",
+  "shop.rune.main": "ค่าหลัก",
+  "shop.rune.pickPart": "เลือกช่อง",
+  "shop.rune.pickMain": "เลือกช่องและค่าหลัก 2 อย่าง",
 } as const;

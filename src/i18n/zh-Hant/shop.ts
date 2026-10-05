@@ -34,4 +34,8 @@ export const SHOP_ZH_HANT = {
   "shop.premium.cancelled": "支付已取消。",
   "shop.premium.perk.instantAds": "廣告獎勵即時領取",
   "shop.premium.perk.adFree": "免廣告 · 免掃蕩券掃蕩",
+  "shop.rune.part": "槽位",
+  "shop.rune.main": "主屬性",
+  "shop.rune.pickPart": "請選擇槽位。",
+  "shop.rune.pickMain": "請選擇槽位和兩項主屬性。",
 } as const;

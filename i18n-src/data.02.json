@@ -639,66 +639,6 @@
 "30.000 Gold",
 "30 000 золота"
 ],
-"product.raid-fossil-crate.name": [
-"讨伐标本箱",
-"กล่องตัวอย่างปราบปราม",
-"Hòm mẫu vật chinh phạt",
-"Peti Spesimen Penaklukan",
-"Caja de especímenes de subyugación",
-"Caixa de espécimes de subjugação",
-"Bezwingungs-Exemplarkiste",
-"Ящик экземпляров усмирения"
-],
-"product.raid-fossil-crate.description": [
-"化石1,500个",
-"ฟอสซิล 1,500",
-"1.500 Hóa thạch",
-"1.500 Fosil",
-"1.500 fósiles",
-"1.500 fósseis",
-"1.500 Fossilien",
-"1500 окаменелостей"
-],
-"product.raid-dna-supply.name": [
-"讨伐复原补给",
-"เสบียงฟื้นคืนปราบปราม",
-"Tiếp tế phục hồi chinh phạt",
-"Pasokan Restorasi Penaklukan",
-"Suministro de restauración de subyugación",
-"Suprimento de restauração de subjugação",
-"Bezwingungs-Restaurierungsvorrat",
-"Припасы восстановления усмирения"
-],
-"product.raid-dna-supply.description": [
-"DNA片段12个",
-"เศษ DNA 12",
-"12 Mảnh DNA",
-"12 Serpihan DNA",
-"12 fragmentos de ADN",
-"12 fragmentos de DNA",
-"12 DNA-Splitter",
-"12 фрагментов ДНК"
-],
-"product.raid-amber-token.name": [
-"讨伐功勋琥珀",
-"อำพันเกียรติคุณปราบปราม",
-"Hổ phách công trạng chinh phạt",
-"Amber Jasa Penaklukan",
-"Ámbar al mérito de subyugación",
-"Âmbar de mérito da subjugação",
-"Bezwingungs-Verdienstbernstein",
-"Янтарь за заслуги в усмирении"
-],
-"product.raid-amber-token.description": [
-"琥珀15个",
-"อำพัน 15",
-"15 Hổ phách",
-"15 Amber",
-"15 de ámbar",
-"15 âmbares",
-"15 Bernstein",
-"15 янтаря"
-],
 "product.raid-ancient-core.name": [
 "讨伐古代核心",
 "แกนโบราณปราบปราม",
@@ -798,26 +738,6 @@
 "40 gemas",
 "40 Juwelen",
 "40 самоцветов"
-],
-"product.loot-salvage-dna.name": [
-"打捞复原样本",
-"ตัวอย่างฟื้นคืนที่กู้มา",
-"Mẫu phục hồi trục vớt",
-"Sampel Restorasi Selamatan",
-"Muestra de restauración rescatada",
-"Amostra de restauração resgatada",
-"Geborgene Restaurierungsprobe",
-"Поднятый образец восстановления"
-],
-"product.loot-salvage-dna.description": [
-"DNA片段15个",
-"เศษ DNA 15",
-"15 Mảnh DNA",
-"15 Serpihan DNA",
-"15 fragmentos de ADN",
-"15 fragmentos de DNA",
-"15 DNA-Splitter",
-"15 фрагментов ДНК"
 ],
 "product.loot-salvage-dust.name": [
 "打捞精炼粉尘",

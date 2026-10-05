@@ -34,8 +34,10 @@ import type { AnswerRelicQuestionRequest, AnswerRelicQuestionResponse, ClaimReli
 import { EVENTS, findEventByProductId, findEventByStageId } from "../data/events";
 import type { EventDefinition } from "../data/events/types";
 import type { EnterEventStageResponse, EventListResponse } from "./contracts";
-import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, runePartLabel, type RunePart, engraveRune as applyRuneEngraving, enhanceRune as applyRuneEnhancement, runeEnhancementAttempts, runeEnhancementIncrease, type RuneInstance, type RuneRarity } from "../core/runes";
+import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, runePartLabel, RUNE_MAIN_STAT_KEYS, type RuneMainStatKey, type RunePart, engraveRune as applyRuneEngraving, enhanceRune as applyRuneEnhancement, runeEnhancementAttempts, runeEnhancementIncrease, type RuneInstance, type RuneRarity } from "../core/runes";
 import { runeEnhancementGoldCost, runeSellValue } from "../data/runes";
+import { rotationOffer } from "../core/shopRotation";
+import { rotationSlot } from "../data/runeRotation";
 import { canGrantRuneTraitAtLeast, canUpgradeRuneTraitGrade, grantRuneTrait as rollRuneTrait, rerollRuneTrait as rollRuneTraitReroll, RUNE_TRAIT_RULES, upgradeRuneTraitGrade, type RuneTrait } from "../core/runeTraits";
 import { RUNE_TRAIT_IDS, RUNE_TRAIT_ITEMS } from "../data/runeTraits";
 import { beginStrataSiteCooldown, canDigStrataTile, createStrataBoard, digStrataTile as digTile, nextStrataChargeAt, rollStrataResearchItem, rollStrataRuneRarity, settleStrataCharges, strataBoardView, strataSiteCooldownUntil } from "../core/strataDig";
@@ -1804,6 +1806,16 @@ export class FakeServer implements GameApi {
       : this.state.itemInventory.map((entry) => ({ ...entry }));
     const nextRunes = [...this.state.runeInventory];
     const grantedRunes: RuneInstance[] = [];
+    // 룬 지급은 요청의 선택(자리·주 옵션)을 **서버가 다시 검증한** 뒤 서버 난수로 확정한다.
+    for (const grant of product.grants) {
+      if (grant.kind !== "rune") continue;
+      const choice = this.resolveRuneChoice(grant, request.runeChoice);
+      for (let count = 0; count < quantity * grant.amount; count += 1) {
+        const rune = this.createGrantedRune(grant.rarity, [...nextRunes, ...grantedRunes], choice.part, choice.mainKeys);
+        grantedRunes.push(rune);
+      }
+    }
+    nextRunes.push(...grantedRunes);
     const applied = this.applyProductGrants(product, quantity, nextWallet, nextItems, now);
     nextItems = applied.items;
     const granted = applied.granted;
@@ -1814,6 +1826,17 @@ export class FakeServer implements GameApi {
     this.persist({ ...this.state, wallet: nextWallet, runeInventory: nextRunes, itemInventory: nextItems, productPurchases: nextPurchases });
     this.state.wallet = nextWallet; this.state.runeInventory = nextRunes; this.state.itemInventory = nextItems; this.state.productPurchases = nextPurchases;
     return { ...this.snapshot(), productId, quantity, granted, grantedRunes: grantedRunes.map((rune) => this.cloneRune(rune)), remaining: Math.max(0, product.purchaseLimit - count) };
+  }
+
+  /** 룬 상품의 선택을 검증해 확정 자리·주 옵션으로 바꾼다. 고를 수 없는 것을 고른 요청은 거절한다. */
+  private resolveRuneChoice(grant: Extract<ProductDefinition["grants"][number], { kind: "rune" }>, choice: PurchaseProductRequest["runeChoice"]): { part: RunePart; mainKeys?: readonly [RuneMainStatKey, RuneMainStatKey] } {
+    if (grant.part !== undefined) return { part: grant.part };
+    const part = choice?.part;
+    if (part !== 0 && part !== 1 && part !== 2) throw new GameApiError("RUNE_CHOICE_REQUIRED", "룬을 끼울 자리를 골라야 합니다.");
+    if (grant.choose !== "partMain") return { part };
+    const keys = choice?.mainKeys;
+    if (!keys || keys.length !== 2 || keys[0] === keys[1] || !keys.every((key) => RUNE_MAIN_STAT_KEYS.includes(key))) throw new GameApiError("RUNE_CHOICE_REQUIRED", "서로 다른 주 옵션 둘을 골라야 합니다.");
+    return { part, mainKeys: [keys[0], keys[1]] };
   }
 
   /**
@@ -2080,7 +2103,12 @@ export class FakeServer implements GameApi {
   }
 
   /** 노출 판정은 클라이언트 시간이 아니라 주입 가능한 서버 시간만 사용한다. */
-  private isVisible(product: ProductDefinition, now: Date): boolean { return now >= new Date(product.visibleFrom) && now < new Date(product.visibleUntil); }
+  private isVisible(product: ProductDefinition, now: Date): boolean {
+    if (!(now >= new Date(product.visibleFrom) && now < new Date(product.visibleUntil))) return false;
+    // 로테이션 칸의 상품은 그 기간에 칸이 **이 상품을 골랐을 때만** 선다 — 서버 시각과 기간 키만 읽는다.
+    const slot = product.rotationSlot ? rotationSlot(product.rotationSlot) : undefined;
+    return !product.rotationSlot || (slot !== undefined && rotationOffer(slot, this.productPeriodKey(product, now)) === product.id);
+  }
 
   /** 시작 포함·종료 제외 규칙을 주입된 서버 시각 한 곳에서 계산한다. */
   private eventStatus(event: EventDefinition, now: Date): "upcoming" | "active" | "ended" {
@@ -2455,7 +2483,7 @@ export class FakeServer implements GameApi {
   }
 
   /** 희귀도 계약만 받아 옵션과 고유 ID를 서버가 소유하는 새 룬 인스턴스로 발급한다. */
-  private createGrantedRune(rarity: RuneRarity, inventory: readonly RuneInstance[], fixedPart?: RunePart): RuneInstance {
+  private createGrantedRune(rarity: RuneRarity, inventory: readonly RuneInstance[], fixedPart?: RunePart, mainKeys?: readonly [RuneMainStatKey, RuneMainStatKey]): RuneInstance {
     const occupied = new Set(inventory.map(({ instanceId }) => instanceId));
     let instanceId: string;
     // 저장 데이터에 같은 시각 기반 ID가 있어도 순번을 전진시키며 실제 미사용 ID를 고른다.
@@ -2463,7 +2491,7 @@ export class FakeServer implements GameApi {
     // 자리도 서버가 정한다. 어느 칸의 룬이 나올지는 획득의 일부다.
     // 초회 보상처럼 미리 보여 준 조각이 있으면 그 자리를 그대로 쓴다.
     const part = fixedPart ?? Math.min(2, Math.floor(this.random() * 3)) as RunePart;
-    return { ...generateRune({ instanceId, baseName: t("rune.baseName", { part: runePartLabel(part) }), rarity, part, random: this.random }), sequence: this.now().getTime() * 1000 + this.runeIssueSequence };
+    return { ...generateRune({ instanceId, baseName: t("rune.baseName", { part: runePartLabel(part) }), rarity, part, random: this.random, ...(mainKeys ? { mainKeys } : {}) }), sequence: this.now().getTime() * 1000 + this.runeIssueSequence };
   }
 
   /** 보유 인벤토리에서만 룬을 찾아 존재 여부와 소유권을 한 번에 확정한다. */

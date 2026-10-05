@@ -198,14 +198,23 @@ export interface CreateRuneInput {
   part: RunePart;
   /** 각 키의 생성 수치(%). 생성 가능한 모든 키가 있어야 한다. */
   statValues: Readonly<Record<RuneStatKey, number>>;
+  /** 주면 주 옵션 둘을 무작위로 뽑지 않고 이 두 키로 지정한다(서로 달라야 한다). */
+  mainKeys?: readonly [RuneMainStatKey, RuneMainStatKey];
   /** [0, 1) 값을 반환하는 난수 함수다. 테스트와 서버가 결과를 재현할 수 있도록 주입한다. */
   random: () => number;
 }
 
-/** 고정 밸런스 표로 신규 룬을 생성할 때 호출자가 제공하는 식별 정보와 RNG다. */
+/**
+ * 고정 밸런스 표로 신규 룬을 생성할 때 호출자가 제공하는 식별 정보와 RNG다.
+ *
+ * `mainKeys`를 주면 주 옵션 둘을 무작위로 뽑지 않고 그 두 키로 **지정**한다(상점의 지정 룬).
+ * 보조 옵션은 지정해도 여전히 무작위다.
+ */
 export type GenerateRuneInput = Omit<CreateRuneInput, "statValues">;
 
 const MAIN_KEYS: readonly RuneMainStatKey[] = ["hp", "atk", "ap", "def", "res"];
+/** 주 옵션이 될 수 있는 다섯 키. 상점의 지정 룬이 고르는 후보 목록이기도 하다. */
+export const RUNE_MAIN_STAT_KEYS: readonly RuneMainStatKey[] = MAIN_KEYS;
 const SUB_KEYS: readonly RuneSubStatKey[] = ["moveSpeed", "attackSpeed", "lifeSteal", "critChance", "critDamage", "ferocityGain", "energyGain"];
 
 /** 원본 배열을 바꾸지 않고 중복 없는 키를 뽑는다. 난수가 [0, 1) 밖이면 즉시 거부한다. */
@@ -222,7 +231,7 @@ function sampleKeys<K>(keys: readonly K[], count: number, random: () => number):
 
 /** 주 옵션 2개와 희귀도별 보조 옵션을 중복 없이 생성하고 완전한 신규 인스턴스를 반환한다. */
 export function createRuneInstance(input: CreateRuneInput): RuneInstance {
-  const mainStats = sampleKeys(MAIN_KEYS, 2, input.random).map((key) => ({ key, value: input.statValues[key] })) as [RuneStatOption<RuneMainStatKey>, RuneStatOption<RuneMainStatKey>];
+  const mainStats = (input.mainKeys ?? sampleKeys(MAIN_KEYS, 2, input.random)).map((key) => ({ key, value: input.statValues[key] })) as [RuneStatOption<RuneMainStatKey>, RuneStatOption<RuneMainStatKey>];
   const subStats = sampleKeys(SUB_KEYS, RUNE_SUB_STAT_COUNTS[input.rarity], input.random).map((key) => ({ key, value: input.statValues[key] }));
   const rune: RuneInstance = {
     instanceId: input.instanceId,

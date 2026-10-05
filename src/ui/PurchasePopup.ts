@@ -18,6 +18,8 @@ import { isTradePackage, tradePackageLimitLabel, tradePackageValuePercent } from
 import { runPlatformPurchase } from "../api/platformPurchase";
 import type { PlatformPaymentAdapter } from "../api/PlatformPayment";
 import { platformPayment } from "../platform/payment";
+import { RUNE_MAIN_STAT_KEYS, runePartLabel, type RuneMainStatKey, type RunePart } from "../core/runes";
+import { runeShopChoice, toggleMainKey } from "../core/runeShopChoice";
 import { premiumDecorationNames, premiumFirstBonusGems, premiumGrantTiles } from "./premiumModel";
 
 /**
@@ -52,6 +54,19 @@ const QUANTITY = {
   buyY: 360, statusY: 420,
 } as const;
 
+/**
+ * 룬 확인판의 자리. 위에서부터 얼굴 판 → 자리 칩 → (지정 룬이면) 주 옵션 칩 → 값 → 제한 → 확정이다.
+ * 랜덤 룬은 주 옵션 줄이 없어 그 아래가 한 줄만큼 위로 올라온다(`mainBlock`).
+ */
+const RUNE = {
+  width: 820, panelY: -350, panelWidth: 690, panelHeight: 200,
+  partLabelY: -210, partY: -150, partChipWidth: 214, partChipGap: 24, chipHeight: 70,
+  mainLabelY: -70, mainY: -10, mainChipWidth: 128, mainChipGap: 10,
+  /** 주 옵션 줄이 서는 만큼 아래가 밀린다. */
+  mainBlock: 150,
+  priceY: 100, remainingY: 192, buyY: 316, statusY: 376, baseHeight: 820,
+} as const;
+
 /** 값 줄 넷의 자리. `0`이 가격, `1`이 개수, `2`가 총가격, `3`이 남은 제한이다. */
 function quantityRowY(index: number): number {
   return QUANTITY.rowTop + index * QUANTITY.rowStep;
@@ -60,6 +75,9 @@ function quantityRowY(index: number): number {
 /** 신규 상점과 무역이 같은 수량·표시·요청 잠금을 쓰는 공용 구매 작업판이다. */
 export class PurchasePopup {
   private quantity = 1;
+  /** 룬 상품에서 고른 자리·주 옵션. 판을 열 때마다 비운다. */
+  private runePart: RunePart | null = null;
+  private runeMains: RuneMainStatKey[] = [];
   private pending = false;
   private message = "";
   private repaint?: () => void;
@@ -78,6 +96,8 @@ export class PurchasePopup {
   open(product: ProductDto, onPurchased: (result: PurchaseProductResponse) => void | Promise<void>): void {
     // 카탈로그가 제안한 기본 수량도 잔액·제한 quote를 거쳐 실제 가능한 범위로 정규화된다.
     this.quantity = product.defaultQuantity; this.pending = false; this.message = "";
+    this.runePart = null; this.runeMains = [];
+    const runeKind = runeChoiceKind(product);
     // 확인 창은 아직 아무것도 쓰지 않은 자리라 **판 밖을 눌러도 닫힌다** — 사지 않기로 한
     // 손이 오른쪽 위 X를 찾아 올라가야 할 이유가 없다. 실제 차감은 확정 버튼만 한다.
     // 돌아가기는 모서리 X가 아니라 다른 작업판과 같은 **우하단 공용 슬롯**에 선다. 자리와
@@ -85,9 +105,9 @@ export class PurchasePopup {
     // 이미 쓰고 있는 같은 자리와의 층 순서를 창마다 다시 정하게 된다.
     const pack = isTradePackage(product);
     const platform = product.acquisition.kind === "platform_payment";
-    this.popups.open({ width: PACKAGE.width, height: platform ? PLATFORM.height : pack ? PACKAGE.height : QUANTITY.height, title: pack || platform ? t("shop.purchase.package") : t("shop.purchase.confirm"), dim: true, closeOnBackdrop: true, backButton: true }, (body, close) => {
+    this.popups.open({ width: PACKAGE.width, height: platform ? PLATFORM.height : pack ? PACKAGE.height : runeKind ? RUNE.baseHeight + (runeKind === "partMain" ? RUNE.mainBlock : 0) : QUANTITY.height, title: pack || platform ? t("shop.purchase.package") : t("shop.purchase.confirm"), dim: true, closeOnBackdrop: true, backButton: true }, (body, close) => {
       const view = this.scene.add.container(0, 0); body.add(view);
-      const render = (): void => { view.removeAll(true); if (platform) this.paintPlatform(view, product, close, onPurchased); else if (pack) this.paintPackage(view, product, close, onPurchased); else this.paint(view, product, close, onPurchased); };
+      const render = (): void => { view.removeAll(true); if (platform) this.paintPlatform(view, product, close, onPurchased); else if (pack) this.paintPackage(view, product, close, onPurchased); else if (runeKind) this.paintRune(view, product, runeKind, close, onPurchased); else this.paint(view, product, close, onPurchased); };
       this.repaint = render;
       view.once(Phaser.GameObjects.Events.DESTROY, () => { this.repaint = undefined; });
       render();
@@ -143,6 +163,55 @@ export class PurchasePopup {
     view.add(buy);
     const status = this.message || (!product.purchasable ? product.disabledReason ?? t("shop.purchase.blocked") : !quote.valid ? t("shop.purchase.needMore") : "");
     if (status) view.add(this.scene.add.text(0, QUANTITY.statusY, status, textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5));
+  }
+
+  /**
+   * 룬 한 장의 확인판 — 자리(와 지정 룬이면 주 옵션 둘)를 **먼저 고르고** 산다.
+   *
+   * 룬은 자리마다 하나뿐이라 3번 자리가 필요한 사람에게 1번 자리 룬은 쓸모가 없다. 고르는 값은 서버가
+   * 다시 검증하므로 여기서는 고르지 않으면 구매가 꺼지는 것까지만 맡는다. 수량은 늘 1이다.
+   */
+  private paintRune(view: Phaser.GameObjects.Container, product: ProductDto, kind: "part" | "partMain", close: () => void, onPurchased: (result: PurchaseProductResponse) => void | Promise<void>): void {
+    if (product.acquisition.kind !== "currency") return;
+    const acquisition = product.acquisition;
+    this.quantity = 1;
+    const shift = kind === "partMain" ? RUNE.mainBlock : 0;
+    view.add(drawLayer(this.scene, 0, RUNE.panelY, chipPoints(RUNE.panelWidth, RUNE.panelHeight, { bevel: { topLeft: 38, topRight: 0, bottomRight: 28, bottomLeft: 0 } }), { fill: 0x141b24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.45 }));
+    addFramedIcon(this.scene, view, -240, RUNE.panelY, 150, product.iconKey, { amount: "×1" });
+    view.add(this.scene.add.text(-135, RUNE.panelY - 30, product.name, textStyle({ role: "display", size: 34 })).setOrigin(0, 0.5));
+    view.add(this.scene.add.text(-135, RUNE.panelY + 28, product.description, textStyle({ role: "body", size: 22, color: COLOR.inkDim, wrap: 400 })).setOrigin(0, 0.5));
+
+    view.add(this.scene.add.text(RUNE.panelWidth / -2, RUNE.partLabelY, t("shop.rune.part"), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0.5));
+    const partSpan = 3 * RUNE.partChipWidth + 2 * RUNE.partChipGap;
+    ([0, 1, 2] as const).forEach((part, index) => {
+      const chip = new Button(this.scene, -partSpan / 2 + RUNE.partChipWidth / 2 + index * (RUNE.partChipWidth + RUNE.partChipGap), RUNE.partY, {
+        width: RUNE.partChipWidth, height: RUNE.chipHeight, label: runePartLabel(part), fontSize: 26,
+        variant: this.runePart === part ? "primary" : "default",
+        onClick: () => { if (this.pending) return; this.runePart = part; this.repaint?.(); },
+      }).setEnabled(!this.pending);
+      view.add(chip);
+    });
+    if (kind === "partMain") {
+      view.add(this.scene.add.text(RUNE.panelWidth / -2, RUNE.mainLabelY, t("shop.rune.main"), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0.5));
+      const mainSpan = 5 * RUNE.mainChipWidth + 4 * RUNE.mainChipGap;
+      RUNE_MAIN_STAT_KEYS.forEach((key, index) => {
+        const chip = new Button(this.scene, -mainSpan / 2 + RUNE.mainChipWidth / 2 + index * (RUNE.mainChipWidth + RUNE.mainChipGap), RUNE.mainY, {
+          width: RUNE.mainChipWidth, height: RUNE.chipHeight, label: t(`stat.${key}`), fontSize: 22,
+          variant: this.runeMains.includes(key) ? "primary" : "default",
+          onClick: () => { if (this.pending) return; this.runeMains = toggleMainKey(this.runeMains, key); this.repaint?.(); },
+        }).setEnabled(!this.pending);
+        view.add(chip);
+      });
+    }
+    const balance = this.wallet[acquisition.currency];
+    view.add(drawHairline(this.scene, 0, RUNE.priceY + shift - 62, QUANTITY.rowWidth, { color: COLOR.accent, alpha: 0.32 }));
+    this.addPriceRow(view, RUNE.priceY + shift, t("shop.purchase.price"), acquisition.currency, acquisition.amount, { short: balance < acquisition.amount });
+    this.addValueRow(view, RUNE.remainingY + shift, t("shop.purchase.remaining"), `${formatCurrency(product.remaining)} / ${formatCurrency(product.purchaseLimit)}`);
+    const choice = runeShopChoice(kind, this.runePart, this.runeMains);
+    const canPurchase = product.purchasable && balance >= acquisition.amount && choice !== null && !this.pending;
+    view.add(new Button(this.scene, 0, RUNE.buyY + shift, { width: 650, height: 86, label: this.pending ? t("shop.purchase.busy") : t("shop.purchase.buy"), fontSize: 31, variant: "primary", onClick: () => { void this.purchase(product, close, onPurchased); } }).setEnabled(canPurchase));
+    const status = this.message || (!product.purchasable ? product.disabledReason ?? t("shop.purchase.blocked") : choice === null ? t(kind === "partMain" ? "shop.rune.pickMain" : "shop.rune.pickPart") : balance < acquisition.amount ? t("shop.purchase.needMore") : "");
+    if (status) view.add(this.scene.add.text(0, RUNE.statusY + shift, status, textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5));
   }
 
   /**
@@ -284,9 +353,13 @@ export class PurchasePopup {
     if (product.acquisition.kind !== "currency") return;
     const quote = quotePurchase({ unitPrice: product.acquisition.amount, remaining: product.remaining, balance: this.wallet[product.acquisition.currency] }, this.quantity);
     if (!product.purchasable || !quote.valid) return;
+    // 룬 상품은 고르기 전에는 사지 못한다 — 서버도 같은 이유로 거절하지만 요청을 보내기 전에 막는다.
+    const runeKind = runeChoiceKind(product);
+    const runeChoice = runeKind ? runeShopChoice(runeKind, this.runePart, this.runeMains) : undefined;
+    if (runeKind && !runeChoice) return;
     this.pending = true; this.message = ""; this.repaint?.();
     try {
-      const result = await this.api.purchaseProduct({ storefront: product.storefront, productId: product.id, quantity: quote.quantity });
+      const result = await this.api.purchaseProduct({ storefront: product.storefront, productId: product.id, quantity: quote.quantity, ...(runeChoice ? { runeChoice } : {}) });
       // 작업판을 먼저 없애 입력면이 겹치지 않게 한 뒤, 더 높은 공용 계층에 서버 영수증만 연다.
       close();
       openRewardPopup(this.scene, this.popups, {
@@ -300,6 +373,12 @@ export class PurchasePopup {
       this.pending = false; this.repaint?.();
     }
   }
+}
+
+/** 이 상품이 사는 쪽에게 룬의 자리(와 주 옵션)를 고르게 하는가. 아니면 `undefined`. */
+function runeChoiceKind(product: ProductDto): "part" | "partMain" | undefined {
+  for (const grant of product.grants) if (grant.kind === "rune" && grant.part === undefined) return grant.choose;
+  return undefined;
 }
 
 /** PurchasePopup은 중앙 고정 작업판이므로 좌표 변환 기준도 한 상수로 둔다. */

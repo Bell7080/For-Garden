@@ -43,12 +43,12 @@ export function productGrantsToRewardItems(grants: readonly ProductGrant[], gran
     if (grant.kind === "profile_decoration") return [{ icon: { kind: "glyph", key: "costume" }, amount: 1, label: grant.name }];
     if (grant.kind === "rune") return [{ icon: `rune-${grant.rarity}-${grant.part}`, amount: grant.amount, label: grant.name }];
     const definition = findItem(grant.itemId);
-    // 이름은 아이템 정의가 있으면 그쪽을 읽는다 — 정의는 열한 언어로 옮겨져 있어 상품마다 이름을 다시 옮기지 않는다.
-    const label = definition?.name ?? grant.name;
-    if (!definition) return [{ icon: { kind: "glyph", key: "scroll" }, amount: grant.amount, label }];
-    if (definition.icon.kind === "asset") return [{ icon: definition.icon.key, amount: grant.amount, label }];
-    if (definition.icon.kind === "currency") return currencyRecordToRewardItems({ [definition.icon.key]: grant.amount }).map((item) => ({ ...item, label }));
-    return [{ icon: { kind: "glyph", key: definition.icon.key }, amount: grant.amount, label }];
+    // 가방 아이템은 재화와 같은 양식으로 액자와 수량만 세운다 — 에너지 드링크만 이름이 붙어 보상 칸 양식이 갈렸다.
+    // 이름은 아이템 안내창이 말하므로 영수증에는 적지 않는다(룬·프로필 장식만 이름으로 가려 읽는다).
+    if (!definition) return [{ icon: { kind: "glyph", key: "scroll" }, amount: grant.amount }];
+    if (definition.icon.kind === "asset") return [{ icon: definition.icon.key, amount: grant.amount }];
+    if (definition.icon.kind === "currency") return currencyRecordToRewardItems({ [definition.icon.key]: grant.amount });
+    return [{ icon: { kind: "glyph", key: definition.icon.key }, amount: grant.amount }];
   });
   // 완성 룬 인스턴스가 별도 배열로 내려오면 각 서버 결과의 희귀도·파츠를 그대로 그린다.
   const runeItems = grantedRunes.map((rune) => ({ icon: `rune-${rune.rarity}-${rune.part}`, amount: 1, label: rune.customName ?? rune.baseName, runeInstanceId: rune.instanceId }));

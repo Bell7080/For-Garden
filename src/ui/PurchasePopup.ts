@@ -69,11 +69,12 @@ const QUANTITY = {
  * 올라온다(`mainBlock`).
  */
 const RUNE = {
-  width: 820, panelY: -300, panelWidth: 690, panelHeight: 330, frame: 270,
-  mainLabelY: -100, mainY: -42, mainChipWidth: 128, mainChipGap: 10, chipHeight: 70,
+  /** 다른 확인판(수량 작업판)과 같은 창 높이·판 폭을 쓴다 — 룬만 크게 서면 창 밖으로 어긋난다. */
+  height: QUANTITY.height, panelY: -245, panelWidth: QUANTITY.panelWidth, panelHeight: 280, frame: 230,
+  mainLabelY: -68, mainY: -12, mainChipWidth: 128, mainChipGap: 10, chipHeight: 70,
   /** 주 옵션 줄이 서는 만큼 아래가 밀린다. */
-  mainBlock: 120,
-  priceY: -28, remainingY: 64, buyY: 190, statusY: 250, baseHeight: 720,
+  mainBlock: 150,
+  priceY: -50, remainingY: 42, buyY: QUANTITY.buyY, statusY: QUANTITY.statusY,
 } as const;
 
 /** 값 줄 넷의 자리. `0`이 가격, `1`이 개수, `2`가 총가격, `3`이 남은 제한이다. */
@@ -113,7 +114,7 @@ export class PurchasePopup {
     // 이미 쓰고 있는 같은 자리와의 층 순서를 창마다 다시 정하게 된다.
     const pack = isTradePackage(product);
     const platform = product.acquisition.kind === "platform_payment";
-    this.popups.open({ width: PACKAGE.width, height: platform ? PLATFORM.height : pack ? PACKAGE.height : runeKind ? RUNE.baseHeight + (runeKind === "main" ? RUNE.mainBlock : 0) : QUANTITY.height, title: pack || platform ? t("shop.purchase.package") : t("shop.purchase.confirm"), dim: true, closeOnBackdrop: true, backButton: true }, (body, close) => {
+    this.popups.open({ width: PACKAGE.width, height: platform ? PLATFORM.height : pack ? PACKAGE.height : runeKind ? RUNE.height : QUANTITY.height, title: pack || platform ? t("shop.purchase.package") : t("shop.purchase.confirm"), dim: true, closeOnBackdrop: true, backButton: true }, (body, close) => {
       const view = this.scene.add.container(0, 0); body.add(view);
       const render = (): void => { view.removeAll(true); if (platform) this.paintPlatform(view, product, close, onPurchased); else if (pack) this.paintPackage(view, product, close, onPurchased); else if (runeKind) this.paintRune(view, product, runeKind, close, onPurchased); else this.paint(view, product, close, onPurchased); };
       this.repaint = render;
@@ -200,9 +201,9 @@ export class PurchasePopup {
     view.add(drawLayer(this.scene, 0, RUNE.panelY, chipPoints(RUNE.panelWidth, RUNE.panelHeight, { bevel: { topLeft: 38, topRight: 0, bottomRight: 28, bottomLeft: 0 } }), { fill: 0x141b24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.45 }));
     view.add(addRuneFrame(this.scene, -215, RUNE.panelY, RUNE.frame, rarity, part));
     const tone = rarity ? runeAccentCss(rarity) : COLOR.ink;
-    view.add(this.scene.add.text(-55, RUNE.panelY - 62, product.name, textStyle({ role: "display", size: 38, color: tone })).setOrigin(0, 0.5));
-    view.add(this.scene.add.text(-55, RUNE.panelY, runePartLabel(part), textStyle({ role: "emphasis", size: 30, color: COLOR.accentText })).setOrigin(0, 0.5));
-    view.add(this.scene.add.text(-55, RUNE.panelY + 62, product.description, textStyle({ role: "body", size: 22, color: COLOR.inkDim, wrap: 330 })).setOrigin(0, 0.5));
+    view.add(this.scene.add.text(-75, RUNE.panelY - 62, product.name, textStyle({ role: "display", size: 34, color: tone })).setOrigin(0, 0.5));
+    view.add(this.scene.add.text(-75, RUNE.panelY, runePartLabel(part), textStyle({ role: "emphasis", size: 30, color: COLOR.accentText })).setOrigin(0, 0.5));
+    view.add(this.scene.add.text(-75, RUNE.panelY + 62, product.description, textStyle({ role: "body", size: 22, color: COLOR.inkDim, wrap: 330 })).setOrigin(0, 0.5));
 
     if (kind === "main") {
       view.add(this.scene.add.text(RUNE.panelWidth / -2, RUNE.mainLabelY, t("shop.rune.main"), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0.5));
@@ -223,9 +224,9 @@ export class PurchasePopup {
     const choice = kind === "main" ? runeMainChoice(this.runeMains) : undefined;
     const ready = kind !== "main" || choice !== null;
     const canPurchase = product.purchasable && balance >= acquisition.amount && ready && !this.pending;
-    view.add(new Button(this.scene, 0, RUNE.buyY + shift, { width: 650, height: 86, label: this.pending ? t("shop.purchase.busy") : t("shop.purchase.buy"), fontSize: 31, variant: "primary", onClick: () => { void this.purchase(product, close, onPurchased); } }).setEnabled(canPurchase));
+    view.add(new Button(this.scene, 0, RUNE.buyY, { width: 650, height: 86, label: this.pending ? t("shop.purchase.busy") : t("shop.purchase.buy"), fontSize: 31, variant: "primary", onClick: () => { void this.purchase(product, close, onPurchased); } }).setEnabled(canPurchase));
     const status = this.message || (!product.purchasable ? product.disabledReason ?? t("shop.purchase.blocked") : !ready ? t("shop.rune.pickMain") : balance < acquisition.amount ? t("shop.purchase.needMore") : "");
-    if (status) view.add(this.scene.add.text(0, RUNE.statusY + shift, status, textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5));
+    if (status) view.add(this.scene.add.text(0, RUNE.statusY, status, textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5));
   }
 
   /**

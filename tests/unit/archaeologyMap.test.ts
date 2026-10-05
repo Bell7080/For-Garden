@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { archaeologySiteAvailability, clampArchaeologyCamera, isArchaeologyMapDrag, resolveArchaeologyFocusSite, rewardExpectationRating, strataRewardExpectedAmount, strataRewardProbability } from "../../src/core/archaeologyMap";
+import { ARCHAEOLOGY_RATING_RATIO_THRESHOLDS, archaeologySiteAvailability, clampArchaeologyCamera, isArchaeologyMapDrag, resolveArchaeologyFocusSite, rewardExpectationRating, siteRewardRating, strataRewardExpectedAmount, strataRewardProbability } from "../../src/core/archaeologyMap";
 import { ARCHAEOLOGY_SITES } from "../../src/data/archaeologySites";
 import { findStrataLayer, STRATA_REWARD_DISPLAY } from "../../src/data/strataLayers";
 
@@ -43,7 +43,7 @@ describe("archaeology map rules", () => {
       expect({ columns: layer.columns, rows: layer.rows }, site.id).toEqual(site.board);
     }
     const gate = ARCHAEOLOGY_SITES.find(({ id }) => id === "garden-gate")!;
-    expect(gate.connectionIds.length).toBeGreaterThanOrEqual(3);
+    expect(gate.connectionIds.length).toBeGreaterThanOrEqual(2);
     // 같은 판이 나란히 서지 않도록 지층을 섞어 쓴다.
     expect(new Set(ARCHAEOLOGY_SITES.map(({ layerId }) => layerId)).size).toBeGreaterThanOrEqual(4);
     /*
@@ -59,7 +59,17 @@ describe("archaeology map rules", () => {
     expect(strataRewardProbability(layer, "rawStone")).toBeGreaterThan(strataRewardProbability(layer, "rune"));
     expect(strataRewardExpectedAmount(layer, "rawStone")).toBeGreaterThan(0);
     expect(rewardExpectationRating(layer, "rawStone").state).toBe("rated");
-    expect(rewardExpectationRating(findStrataLayer("abyss")!, "rawStone").filled).toBe(5);
+    expect(rewardExpectationRating(findStrataLayer("abyss")!, "rawStone").filled).toBe(10);
+  });
+
+  it("ten-step gauge keeps late steps distinguishable and crystals lift a low site toward the cap", () => {
+    expect(ARCHAEOLOGY_RATING_RATIO_THRESHOLDS).toHaveLength(10);
+    const gate = ARCHAEOLOGY_SITES.find(({ id }) => id === "garden-gate")!;
+    const fresh = siteRewardRating(gate, "rawStone", 0);
+    const ripe = siteRewardRating(gate, "rawStone", 2);
+    expect(fresh.filled).toBeGreaterThanOrEqual(1);
+    expect(ripe.filled).toBeGreaterThan(fresh.filled);
+    expect(ripe.filled).toBeLessThanOrEqual(10);
   });
 
   it("does not exaggerate unavailable or sub-one-percent rewards with a minimum filled cell", () => {
@@ -80,7 +90,7 @@ describe("archaeology map rules", () => {
   });
 
   it("restores active, valid selected, then highest unlocked sites in priority order", () => {
-    const unlocked = new Set(["garden-gate", "collapsed-greenhouse", "sunken-archive"]);
+    const unlocked = new Set(["garden-gate", "rust-canal", "sunken-archive"]);
     const states = ARCHAEOLOGY_SITES.map(({ id }) => ({ siteId: id, unlocked: unlocked.has(id) }));
     // 진행 판은 잠금 정책이 바뀐 경우에도 이미 지불한 판의 위치를 잃지 않는다.
     expect(resolveArchaeologyFocusSite(ARCHAEOLOGY_SITES, states, "deep-sanctum", "garden-gate")?.id).toBe("deep-sanctum");
@@ -92,8 +102,8 @@ describe("archaeology map rules", () => {
 });
 
 describe("1레벨 탐사 지도와 횟수", () => {
-  it("1레벨에 열리는 유적이 셋이고 탐사 횟수 상한은 셋이다", async () => {
-    expect(ARCHAEOLOGY_SITES.filter((site) => site.minimumLevel <= 1)).toHaveLength(3);
+  it("1레벨에 열리는 유적이 둘이고 탐사 횟수 상한은 셋이다", async () => {
+    expect(ARCHAEOLOGY_SITES.filter((site) => site.minimumLevel <= 1)).toHaveLength(2);
     const { STRATA_CHARGE } = await import("../../src/data/strataLayers");
     expect(STRATA_CHARGE.max).toBe(3);
   });

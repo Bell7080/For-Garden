@@ -530,7 +530,13 @@ export interface ArchaeologyStateResponse {
    * `cooldownUntil`은 그 유적이 다시 열리는 시각이고, 지금 열려 있으면 `null`이다 — 남은
    * 시간을 내려보내면 응답이 오는 동안 흐른 몫만큼 화면이 늦된 수를 센다.
    */
-  sites: Array<{ siteId: string; unlocked: boolean; completed: boolean; missingLevel: number; cooldownUntil: string | null }>;
+  sites: Array<{
+    siteId: string; unlocked: boolean; completed: boolean; missingLevel: number; cooldownUntil: string | null;
+    /** 방치로 맺힌 결정 단계(0이면 없음). 다음 판을 열 때 굳는다. */
+    crystalStage: number;
+    /** 다음 결정이 맺히는 시각이다. 이미 마지막 단계거나 결정이 없는 유적이면 null이다. */
+    nextCrystalAt: string | null;
+  }>;
   serverTime: string;
 }
 /** 판을 새로 여는 요청이다. 클라이언트는 지층만 고르고 판 내용은 주장하지 못한다. */

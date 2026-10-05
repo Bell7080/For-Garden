@@ -495,6 +495,11 @@ export class HoloBar {
   private readonly halo?: Phaser.GameObjects.Graphics;
   /** 최대치 테두리와 칸 나눔. 켜지 않은 게이지에는 없다. */
   private readonly frame?: Phaser.GameObjects.Graphics;
+  /** 채움 위를 훑는 밝은 띠. `shimmer`를 켠 게이지만 갖는다. */
+  private readonly sheen?: Phaser.GameObjects.Graphics;
+  private sheenTween?: Phaser.Tweens.Tween;
+  /** 띠의 위치(0~1). 트윈이 올리고 채움을 다시 그릴 때 함께 읽는다. */
+  private sheenPhase = 0;
   private ratio = 1;
   /** 빛무리 설정. 켜 두면 채움을 다시 그릴 때 같은 값으로 함께 그린다. */
   private readonly glow?: { spread?: number; alpha?: number };
@@ -507,7 +512,7 @@ export class HoloBar {
   /** 복합 UI가 게이지 두 겹을 자신의 컨테이너 생명주기에 함께 묶을 때 쓰는 표시 객체다. */
   get objects(): readonly Phaser.GameObjects.Graphics[] {
     // 층 순서 그대로 돌려준다 — 그림자 → 홈 → 빛무리 → 채움 → 테두리.
-    return [this.shade, this.track, this.halo, this.fill, this.frame]
+    return [this.shade, this.track, this.halo, this.fill, this.sheen, this.frame]
       .filter((object): object is Phaser.GameObjects.Graphics => object !== undefined);
   }
 
@@ -545,6 +550,13 @@ export class HoloBar {
        * 정작 읽어야 할 눈금과 수치가 그 속에 묻힌다(이펙트의 섬광과 같은 이유다).
        */
       glow?: { spread?: number; alpha?: number };
+      /**
+       * 채움 위를 느리게 훑는 밝은 띠로 게이지가 일렁이게 한다.
+       *
+       * 움직임 줄이기에서는 호출하는 쪽이 켜지 않는다(`motionPolicy`). 겹쳐 밝아지는 합성이라
+       * 아주 옅게만 깐다 — 눈금과 수치보다 먼저 읽히면 안 된다.
+       */
+      shimmer?: boolean;
     },
   ) {
     this.color = options.color;
@@ -564,6 +576,13 @@ export class HoloBar {
     this.glow = options.glow;
     this.fill = scene.add.graphics({ x, y });
     // 테두리와 눈금은 채움 위에 얹혀야 채워진 자리에서도 칸이 보인다.
+    if (options.shimmer) {
+      this.sheen = scene.add.graphics({ x, y }).setBlendMode(Phaser.BlendModes.ADD);
+      this.sheenTween = scene.tweens.addCounter({
+        from: 0, to: 1, duration: 2600, repeat: -1,
+        onUpdate: (tween) => { this.sheenPhase = tween.getValue() ?? 0; this.drawSheen(); },
+      });
+    }
     this.frame = options.outline || options.ticks ? scene.add.graphics({ x, y }) : undefined;
     if (this.frame) {
       const half = { w: width / 2, h: height / 2 };
@@ -611,12 +630,35 @@ export class HoloBar {
     return this;
   }
 
+  /** 채움 구간 안에서만 비스듬한 띠 하나를 그린다. 구간 밖으로 나간 몫은 잘라 낸다. */
+  private drawSheen(): void {
+    if (!this.sheen) return;
+    this.sheen.clear();
+    const begin = this.width * this.from;
+    const end = this.width * this.ratio;
+    if (end - begin <= 0) return;
+    const bandWidth = Math.max(18, this.height * 1.6);
+    const travel = end - begin + bandWidth * 2;
+    const start = begin - bandWidth + travel * this.sheenPhase;
+    const a = Math.max(begin, start);
+    const b = Math.min(end, start + bandWidth);
+    if (b <= a) return;
+    const left = -this.width / 2;
+    const s = this.slant / 2;
+    this.sheen.fillStyle(0xffffff, 0.2);
+    this.sheen.fillPoints(
+      toPoints([left + a + s, -this.height / 2, left + b + s, -this.height / 2, left + b - s, this.height / 2, left + a - s, this.height / 2]),
+      true,
+    );
+  }
+
   private redraw(): void {
     const slant = this.slant;
     const filled = this.width * this.ratio;
     const begin = this.width * this.from;
     this.fill.clear();
     this.halo?.clear();
+    this.drawSheen();
     if (filled - begin <= 0) return;
     if (this.halo && this.glow) {
       // 채움과 같은 사다리꼴을 사방으로 조금 키워 옅게 한 겹만 깐다.
@@ -654,6 +696,8 @@ export class HoloBar {
     this.track.destroy();
     this.halo?.destroy();
     this.fill.destroy();
+    this.sheenTween?.remove();
+    this.sheen?.destroy();
     this.frame?.destroy();
   }
 }

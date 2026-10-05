@@ -7,9 +7,10 @@ import { strataBoardHaul, strataHaulKey, type StrataBoardView, type StrataHaulEn
 import { composeStrataFog, strataFogFields } from "../core/strataFog";
 import { strataLegend } from "../core/strataLegend";
 import { motionPolicy } from "../core/settings";
+import { strataRunModifiers } from "../core/strataCrystal";
 import { findStrataLayer } from "../data/strataLayers";
 import { ARCHAEOLOGY_SITES, type ArchaeologySiteDefinition } from "../data/archaeologySites";
-import { resolveArchaeologyFocusSite, rewardExpectationRating } from "../core/archaeologyMap";
+import { resolveArchaeologyFocusSite, siteRewardRating, type ArchaeologyPreviewReward } from "../core/archaeologyMap";
 import { archaeologySitePopupLayout } from "../ui/archaeologySitePopupLayout";
 import { archaeologyRatingColor, STRATA_FOG_TONE } from "../ui/strataTones";
 import { ArchaeologyMapView } from "../ui/ArchaeologyMapView";
@@ -480,6 +481,7 @@ export class ArchaeologyScene extends Phaser.Scene {
         states: this.siteStates.map((state) => ({
           ...state,
           cooldownUntilMs: state.cooldownUntil === null ? null : Date.parse(state.cooldownUntil),
+          crystalStage: state.crystalStage,
         })),
         focusSiteId: focus?.id,
         onSelect: (site) => {
@@ -830,17 +832,18 @@ export class ArchaeologyScene extends Phaser.Scene {
    * 버튼뿐이라 뒤를 눌러 닫을 수 없었다. 창 높이는 손으로 적지 않고 **보상 줄 수에서 거꾸로**
    * 구한다(`archaeologySitePopupLayout`).
    *
-   * **기대 획득은 별이 아니라 다섯 칸 게이지다.** 별 다섯 개가 세 줄이면 열다섯 개가 반짝여
+   * **기대 획득은 별이 아니라 열 칸 게이지다.** 별 다섯 개가 세 줄이면 열다섯 개가 반짝여
    * 어느 보상이 센지보다 별이 먼저 읽혔다 — 길이와 색은 세지 않아도 견줄 수 있다.
    */
   private openSitePreview(site: ArchaeologySiteDefinition): void {
     const state = this.siteStates.find((entry) => entry.siteId === site.id);
     const layer = findStrataLayer(site.layerId);
     if (!state || !layer) return;
-    const rewards: Array<["rawStone" | "rune" | "gold", TextKey]> = [
-      ["rawStone", "archaeology.reward.rawStone"], ["rune", "archaeology.reward.rune"], ["gold", "archaeology.reward.gold"],
+    const rewards: Array<[ArchaeologyPreviewReward, TextKey]> = [
+      ["rawStone", "archaeology.reward.rawStone"], ["rune", "archaeology.reward.rune"], ["currency", "archaeology.reward.currency"],
     ];
-    const spot = archaeologySitePopupLayout(rewards.length);
+    const modifiers = strataRunModifiers(site, state.crystalStage);
+    const spot = archaeologySitePopupLayout(rewards.length, (site.crystal?.length ?? 0) > 0);
     const coolingUntil = state.cooldownUntil === null ? null : Date.parse(state.cooldownUntil);
     const cooling = coolingUntil !== null && Number.isFinite(coolingUntil) && coolingUntil > Date.now();
     const startable = state.unlocked && !cooling && this.charges > 0;
@@ -852,7 +855,7 @@ export class ArchaeologyScene extends Phaser.Scene {
       body.add(this.add.text(0, spot.subtitleY,
         // 굴착 횟수는 「8/8」이 아니라 이름이 붙은 한 마디여야 한다 — 미리보기에는 아직 쓴
         // 횟수가 없어 같은 수 둘이 마주 보면 무엇을 세는 자리인지 말하지 못한다.
-        `${layer.columns}×${layer.rows}  ·  ${t("archaeology.map.digs", { count: layer.digs })}  ·  ${t("archaeology.map.recommended", { level: site.recommendedLevel })}`,
+        `${layer.columns}×${layer.rows}  ·  ${t("archaeology.map.digs", { count: layer.digs + modifiers.digs })}  ·  ${t("archaeology.map.recommended", { level: site.recommendedLevel })}`,
         textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0.5));
 
       // 기대 획득 판. 제목표가 윗변에 걸터앉는 화면 전체의 문법을 그대로 쓴다.
@@ -863,17 +866,19 @@ export class ArchaeologyScene extends Phaser.Scene {
       addSectionTitle(this, -spot.panel.width / 2 + 26, -spot.panel.height / 2, t("archaeology.reward.expected"), { size: 28, parent: panel });
 
       rewards.forEach(([kind, key], index) => {
-        const rating = rewardExpectationRating(layer, kind);
+        const rating = siteRewardRating(site, kind, state.crystalStage);
         const y = spot.rowYs[index] - spot.panel.y;
         panel.add(this.add.text(spot.labelX, y, t(key), textStyle({ role: "emphasis", size: 29 })).setOrigin(0, 0.5));
         /*
-         * 게이지는 화면 전체가 쓰는 `HoloBar` 한 장이다 — 칸 넷을 나누는 눈금과 최대치를
-         * 두르는 흰 선이 「다섯 중 몇」을 세지 않고 읽히게 한다.
+         * 게이지는 화면 전체가 쓰는 `HoloBar` 한 장이다 — 칸 아홉을 나누는 눈금과 최대치를
+         * 두르는 흰 선이 「열 중 몇」을 세지 않고 읽히게 한다.
          */
         const bar = new HoloBar(this, spot.gaugeX, y, spot.gauge.width, spot.gauge.height, {
-          color: archaeologyRatingColor(rating.filled), trackAlpha: 0.82, outline: true, ticks: 4,
+          color: archaeologyRatingColor(kind, rating.filled), trackAlpha: 0.82, outline: true, ticks: 9,
+          // 원석 게이지만 보랏빛이 일렁인다. 움직임 줄이기에서는 가만히 선다.
+          shimmer: kind === "rawStone" && motionPolicy(session.settings).nonEssentialDistanceFactor > 0,
         });
-        bar.setValue(rating.filled / 5);
+        bar.setValue(rating.filled / 10);
         panel.add([...bar.objects]);
         /*
          * **게이지 하나에 뜻을 맡기지 않는다.** 색과 길이를 읽지 못해도 같은 줄의 글자가
@@ -886,6 +891,18 @@ export class ArchaeologyScene extends Phaser.Scene {
         panel.add(this.add.text(spot.gaugeX, y, label,
           textStyle({ role: "emphasis", size: 21, color: COLOR.ink })).setOrigin(0.5).setStroke("#05070a", 5));
       });
+
+      // 결정: 방치로 맺힌 단계와 다음 단계까지 남은 시간. 맺힐 결정이 없는 유적에는 이 줄이 없다.
+      if ((site.crystal?.length ?? 0) > 0) {
+        const nextAt = state.nextCrystalAt === null ? null : Date.parse(state.nextCrystalAt);
+        const crystalText = state.crystalStage > 0
+          ? t("archaeology.crystal.stage", { stage: state.crystalStage, digs: modifiers.digs })
+          : t("archaeology.crystal.none");
+        const nextText = nextAt !== null && Number.isFinite(nextAt) && nextAt > Date.now()
+          ? `  ·  ${t("archaeology.crystal.next", { time: formatCountdown(nextAt - Date.now()) })}` : "";
+        body.add(this.add.text(0, spot.crystalY, crystalText + nextText,
+          textStyle({ role: "emphasis", size: 25, color: state.crystalStage > 0 ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
+      }
 
       /*
        * 못 들어가는 이유는 저마다 다르고 지금 할 일도 그만큼 다르다 — 레벨을 올린다,

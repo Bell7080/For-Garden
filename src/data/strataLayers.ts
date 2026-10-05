@@ -23,8 +23,13 @@ export type StrataRewardKind =
   /** 특성 연구에 쓰는 아이템 하나. 어느 아이템인지는 서버가 정한다. */
   | "researchItem";
 
-/** 유적 미리보기가 같은 이름으로 합쳐 보여 주는 플레이어 보상 그룹이다. */
-export type StrataRewardDisplayGroup = "rawStone" | "rune" | "gold" | "fossil" | "amber" | "gems" | "cheesecake" | "researchMaterial";
+/**
+ * 유적 미리보기가 같은 이름으로 합쳐 보여 주는 플레이어 보상 그룹이다.
+ *
+ * **원석 / 룬 / 재화 셋이다.** 재화는 골드·치즈케이크·젬·화석·호박석을 한 줄로 묶은 것이라
+ * 서로 다른 단위를 견주려면 무역 시세표(`TRADE_GEM_RATE`)의 젬 환산을 거친다.
+ */
+export type StrataRewardDisplayGroup = "rawStone" | "rune" | "currency" | "researchMaterial";
 
 /**
  * 내부 추첨 종류를 플레이어 표시 그룹과 공개 단계에 연결하는 유일한 표다.
@@ -41,11 +46,11 @@ export const STRATA_REWARD_DISPLAY: Readonly<Record<StrataRewardKind, {
   empty: { group: null, preview: false, reveal: false },
   rawStone: { group: "rawStone", preview: true, reveal: true },
   rune: { group: "rune", preview: true, reveal: true },
-  gold: { group: "gold", preview: true, reveal: true },
-  fossil: { group: "fossil", preview: false, reveal: true },
-  amber: { group: "amber", preview: false, reveal: true },
-  gems: { group: "gems", preview: false, reveal: true },
-  cheesecake: { group: "cheesecake", preview: false, reveal: true },
+  gold: { group: "currency", preview: true, reveal: true },
+  fossil: { group: "currency", preview: true, reveal: true },
+  amber: { group: "currency", preview: true, reveal: true },
+  gems: { group: "currency", preview: true, reveal: true },
+  cheesecake: { group: "currency", preview: true, reveal: true },
   researchItem: { group: "researchMaterial", preview: false, reveal: true },
 };
 
@@ -87,8 +92,8 @@ export interface StrataLayerDefinition {
  * **5×5에 여덟 번**이다. 세로 화면에서 칸 하나가 손가락에 충분히 크고 한 판이 30초 남짓에
  * 끝나며, 열지 않은 칸이 절반 넘게 남아 「다음엔 저기」라는 미련이 남는다.
  *
- * 수량은 20초짜리 전투 한 판의 보상과 견주어 잡았다 — 한 판을 다 파면 원석이 재해석 한 번
- * (고급 80)에 조금 못 미치게 모인다. 두 판이면 한 번 돌릴 수 있다.
+ * 원석은 기본값이고 유적마다 배율(`ArchaeologySiteDefinition.yield`)이 곱해진다 — 재해석 한 번(고급
+ * 80)을 하루 접속 몇 번으로 돌릴 수 있는지가 기준이다(`docs/archaeology.md`).
  */
 export const STRATA_LAYERS: readonly StrataLayerDefinition[] = [
   {
@@ -101,9 +106,9 @@ export const STRATA_LAYERS: readonly StrataLayerDefinition[] = [
     rewards: [
       // 꽝은 없다 — 빈 흙 자리를 소량의 골드·원석이 메운다.
       { kind: "gold", weight: { soil: 20, teal: 16, gold: 12, deep: 10 }, min: 150, max: 400 },
-      { kind: "rawStone", weight: { soil: 14, teal: 10, gold: 8, deep: 8 }, min: 2, max: 5 },
+      { kind: "rawStone", weight: { soil: 14, teal: 10, gold: 8, deep: 8 }, min: 2, max: 6 },
       { kind: "gold", weight: { soil: 26, teal: 22, gold: 16, deep: 12 }, min: 400, max: 1200 },
-      { kind: "rawStone", weight: { soil: 22, teal: 30, gold: 26, deep: 22 }, min: 6, max: 18 },
+      { kind: "rawStone", weight: { soil: 22, teal: 30, gold: 26, deep: 22 }, min: 7, max: 22 },
       { kind: "cheesecake", weight: { soil: 10, teal: 10, gold: 9, deep: 8 }, min: 40, max: 120 },
       // **화석·호박석 칸은 한 개씩만 나온다.** 한 개가 곧 한 번이라(배너의 `costOne`), 수량을 1로 두고
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
@@ -122,9 +127,9 @@ export const STRATA_LAYERS: readonly StrataLayerDefinition[] = [
     rewards: [
       // 꽝은 없다 — 빈 흙 자리를 소량의 골드·원석이 메운다.
       { kind: "gold", weight: { soil: 18, teal: 14, gold: 10, deep: 8 }, min: 200, max: 500 },
-      { kind: "rawStone", weight: { soil: 12, teal: 9, gold: 7, deep: 6 }, min: 3, max: 6 },
+      { kind: "rawStone", weight: { soil: 12, teal: 9, gold: 7, deep: 6 }, min: 4, max: 7 },
       { kind: "gold", weight: { soil: 25, teal: 22, gold: 18, deep: 14 }, min: 600, max: 1500 },
-      { kind: "rawStone", weight: { soil: 25, teal: 32, gold: 30, deep: 26 }, min: 8, max: 22 },
+      { kind: "rawStone", weight: { soil: 25, teal: 32, gold: 30, deep: 26 }, min: 10, max: 26 },
       { kind: "cheesecake", weight: { soil: 10, teal: 10, gold: 9, deep: 8 }, min: 50, max: 140 },
       // **화석·호박석 칸은 한 개씩만 나온다.** 한 개가 곧 한 번이라(배너의 `costOne`), 수량을 1로 두고
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
@@ -149,9 +154,9 @@ export const STRATA_LAYERS: readonly StrataLayerDefinition[] = [
     rewards: [
       // 꽝은 없다 — 빈 흙 자리를 소량의 골드·원석이 메운다.
       { kind: "gold", weight: { soil: 20, teal: 15, gold: 11, deep: 9 }, min: 180, max: 450 },
-      { kind: "rawStone", weight: { soil: 12, teal: 9, gold: 7, deep: 7 }, min: 3, max: 6 },
+      { kind: "rawStone", weight: { soil: 12, teal: 9, gold: 7, deep: 7 }, min: 4, max: 7 },
       { kind: "gold", weight: { soil: 26, teal: 22, gold: 18, deep: 14 }, min: 500, max: 1300 },
-      { kind: "rawStone", weight: { soil: 24, teal: 32, gold: 28, deep: 24 }, min: 7, max: 20 },
+      { kind: "rawStone", weight: { soil: 24, teal: 32, gold: 28, deep: 24 }, min: 8, max: 24 },
       { kind: "cheesecake", weight: { soil: 10, teal: 10, gold: 9, deep: 8 }, min: 45, max: 130 },
       // **화석·호박석 칸은 한 개씩만 나온다.** 한 개가 곧 한 번이라(배너의 `costOne`), 수량을 1로 두고
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
@@ -175,9 +180,9 @@ export const STRATA_LAYERS: readonly StrataLayerDefinition[] = [
     rewards: [
       // 꽝은 없다 — 빈 흙 자리를 소량의 골드·원석이 메운다.
       { kind: "gold", weight: { soil: 16, teal: 13, gold: 9, deep: 7 }, min: 250, max: 600 },
-      { kind: "rawStone", weight: { soil: 12, teal: 9, gold: 7, deep: 6 }, min: 3, max: 7 },
+      { kind: "rawStone", weight: { soil: 12, teal: 9, gold: 7, deep: 6 }, min: 4, max: 8 },
       { kind: "gold", weight: { soil: 24, teal: 21, gold: 18, deep: 13 }, min: 800, max: 1800 },
-      { kind: "rawStone", weight: { soil: 26, teal: 33, gold: 32, deep: 28 }, min: 9, max: 24 },
+      { kind: "rawStone", weight: { soil: 26, teal: 33, gold: 32, deep: 28 }, min: 11, max: 29 },
       { kind: "cheesecake", weight: { soil: 10, teal: 10, gold: 9, deep: 8 }, min: 60, max: 170 },
       // **화석·호박석 칸은 한 개씩만 나온다.** 한 개가 곧 한 번이라(배너의 `costOne`), 수량을 1로 두고
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
@@ -195,9 +200,9 @@ export const STRATA_LAYERS: readonly StrataLayerDefinition[] = [
     rewards: [
       // 꽝은 없다 — 빈 흙 자리를 소량의 골드·원석이 메운다.
       { kind: "gold", weight: { soil: 14, teal: 11, gold: 8, deep: 6 }, min: 300, max: 700 },
-      { kind: "rawStone", weight: { soil: 11, teal: 9, gold: 7, deep: 6 }, min: 4, max: 8 },
+      { kind: "rawStone", weight: { soil: 11, teal: 9, gold: 7, deep: 6 }, min: 5, max: 10 },
       { kind: "gold", weight: { soil: 22, teal: 20, gold: 16, deep: 12 }, min: 900, max: 2000 },
-      { kind: "rawStone", weight: { soil: 28, teal: 34, gold: 34, deep: 30 }, min: 10, max: 26 },
+      { kind: "rawStone", weight: { soil: 28, teal: 34, gold: 34, deep: 30 }, min: 12, max: 31 },
       { kind: "cheesecake", weight: { soil: 10, teal: 10, gold: 9, deep: 8 }, min: 80, max: 220 },
       // **화석·호박석 칸은 한 개씩만 나온다.** 한 개가 곧 한 번이라(배너의 `costOne`), 수량을 1로 두고
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
@@ -241,18 +246,6 @@ export const STRATA_CHARGE = {
   /** 한 번이 차는 데 걸리는 시간(ms). 세 시간마다 하나다. */
   intervalMs: 3 * 60 * 60 * 1000,
 } as const;
-
-/**
- * 한 번 파고 난 유적이 다시 열릴 때까지의 시간(ms).
- *
- * **다섯 번을 한 자리에 쏟지 못하게 하는 손잡이다.** 횟수만 있고 자리에 제한이 없던 때는
- * 가장 깊은 유적 하나를 다섯 번 연달아 파는 것이 언제나 최선이라, 지도가 아무리 넓어져도
- * 실제로 누르는 노드는 하나뿐이었다. 한 자리를 판 뒤 여섯 시간이 잠기면 그 다섯 번은
- * **서로 다른 다섯 자리**로 흩어진다.
- *
- * 충전 간격(3시간)의 두 배다 — 한 바퀴 도는 동안 처음 판 자리가 다시 열린다.
- */
-export const STRATA_SITE_COOLDOWN_MS = 6 * 60 * 60 * 1000;
 
 /**
  * 겉장 원화의 장수.

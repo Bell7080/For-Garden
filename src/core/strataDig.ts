@@ -8,8 +8,10 @@
  * 다른 것이 나오고, 「저 구역이 특별해 보인다」는 판단이 아무것도 가리키지 않게 된다.
  */
 
-import { findStrataLayer, STRATA_ART_COUNT, STRATA_CHARGE, STRATA_RUNE_TILES, STRATA_RUNE_UNCOMMON_SHARE, STRATA_SITE_COOLDOWN_MS, type StrataLayerDefinition, type StrataRewardKind, type StrataZoneTone } from "../data/strataLayers";
+import { findStrataLayer, STRATA_ART_COUNT, STRATA_CHARGE, STRATA_RUNE_TILES, STRATA_RUNE_UNCOMMON_SHARE, type StrataLayerDefinition, type StrataRewardKind, type StrataZoneTone } from "../data/strataLayers";
+import { findArchaeologySite } from "../data/archaeologySites";
 import { RUNE_TRAIT_ITEMS } from "../data/runeTraits";
+import { strataRunModifiers } from "./strataCrystal";
 import { timeAccrualWindow } from "./timeAccrual";
 import type { RunePart, RuneRarity } from "./runes";
 import type { RuneTrait } from "./runeTraits";
@@ -60,6 +62,13 @@ export interface StrataBoard {
   zones: StrataZone[];
   /** 남은 발굴 횟수다. 0이면 판이 끝났다. */
   digsLeft: number;
+  /**
+   * 이 판의 총 굴착 횟수다(지층 기본 + 결정 몫). 결정 때문에 지층 정의와 갈리므로 판이 들고 다닌다.
+   * 이 필드가 없는 예전 저장의 판은 지층 정의를 따른다.
+   */
+  digsMax?: number;
+  /** 판을 열 때 굳힌 결정 단계(0~). 판을 연 뒤에는 방치 시간이 더 흘러도 바뀌지 않는다. */
+  crystalStage?: number;
 }
 
 /** 클라이언트에게 보이는 칸이다. **아직 열지 않은 칸의 내용은 담지 않는다.** */
@@ -88,6 +97,8 @@ export interface StrataBoardView {
   digsMax: number;
   /** 아직 사용할 수 있는 굴착 횟수다. 0이면 마지막 결과를 확인한 뒤 판을 닫는다. */
   digsLeft: number;
+  /** 이 판이 열릴 때 맺혀 있던 결정 단계다(0이면 없음). */
+  crystalStage: number;
 }
 
 /** 주입된 [0, 1) 난수를 검사한다. 손상된 값을 조용히 0으로 다루지 않는다. */
@@ -206,7 +217,7 @@ function fitRuneTileCount(layer: StrataLayerDefinition, tiles: StrataTile[], ran
 }
 
 /** 새 판을 만든다. 모든 칸의 내용이 이 순간 정해지고 그 뒤로는 바뀌지 않는다. */
-export function createStrataBoard(input: { layerId: string; siteId?: string; random: () => number }): StrataBoard {
+export function createStrataBoard(input: { layerId: string; siteId?: string; crystalStage?: number; random: () => number }): StrataBoard {
   const layer = findStrataLayer(input.layerId);
   if (layer === undefined) throw new Error("알 수 없는 지층입니다.");
   const { zones, zoneOf } = assignZones(layer, input.random);
@@ -218,13 +229,21 @@ export function createStrataBoard(input: { layerId: string; siteId?: string; ran
     return { index, zone, kind: row.kind, amount, revealed: false };
   });
   fitRuneTileCount(layer, tiles, input.random);
+  // 유적 배율은 칸이 정해진 **뒤에** 수량에만 곱한다 — 어느 칸이 무엇인지(난수)는 배율과 무관해야 같은
+  // 씨앗이 결정 단계에 따라 다른 판 모양을 만들지 않는다. 룬 칸 수를 맞추며 바뀐 원석 칸도 함께 곱한다.
+  const crystalStage = Math.max(0, Math.floor(input.crystalStage ?? 0));
+  const modifiers = strataRunModifiers(input.siteId ? findArchaeologySite(input.siteId) : undefined, crystalStage);
+  for (const tile of tiles) {
+    if (tile.kind === "rawStone") tile.amount = Math.max(1, Math.round(tile.amount * modifiers.stoneYield));
+    else if (tile.kind === "gold") tile.amount = Math.max(1, Math.round(tile.amount * modifiers.goldYield));
+  }
   for (const tile of tiles) {
     const tone = zones[tile.zone].tone;
     if (tile.kind === "rune") Object.assign(tile, withRuneDetail(layer, tone, input.random));
     else if (tile.kind === "researchItem") tile.itemId = rollStrataResearchItem(input.random);
   }
   const art = 1 + Math.floor(roll(input.random) * STRATA_ART_COUNT);
-  return { layerId: layer.id, ...(input.siteId ? { siteId: input.siteId } : {}), art, columns: layer.columns, rows: layer.rows, tiles, zones, digsLeft: layer.digs };
+  return { layerId: layer.id, ...(input.siteId ? { siteId: input.siteId } : {}), art, columns: layer.columns, rows: layer.rows, tiles, zones, digsLeft: layer.digs + modifiers.digs, digsMax: layer.digs + modifiers.digs, ...(crystalStage > 0 ? { crystalStage } : {}) };
 }
 
 /** 파기 전에 그 칸을 팔 수 있는지 판정한다. 상태를 바꾸지 않는다. */
@@ -261,8 +280,9 @@ export function strataBoardView(board: StrataBoard): StrataBoardView {
     columns: board.columns,
     rows: board.rows,
     zones: board.zones.map((zone) => ({ ...zone })),
-    digsMax: layer.digs,
+    digsMax: board.digsMax ?? layer.digs,
     digsLeft: board.digsLeft,
+    crystalStage: board.crystalStage ?? 0,
     tiles: board.tiles.map((tile) => tile.revealed
       ? {
         index: tile.index, zone: tile.zone, revealed: true, kind: tile.kind, amount: tile.amount,
@@ -343,6 +363,13 @@ export interface ArchaeologyState {
    */
   siteCooldowns: Record<string, string>;
   /**
+   * 유적을 마지막으로 닫은 시각이다(유적 ID → ISO 문자열). 결정은 이 시각에서 센다.
+   *
+   * 재사용 대기(`siteCooldowns`)와 따로 두는 이유는 대기가 지나면 항목을 정리해도 되지만 방치 시간은
+   * 정리하면 안 되기 때문이다. 옛 저장은 대기 시각에서 거꾸로 구해 채운다(`SaveManager`).
+   */
+  siteLastDigAt: Record<string, string>;
+  /**
    * 재해석해 두고 아직 고르지 않은 특성 후보다.
    *
    * 서버가 들고 있는 이유는 **고르기 전에 앱이 꺼져도 원석이 사라지지 않게** 하기 위해서다 —
@@ -353,7 +380,7 @@ export interface ArchaeologyState {
 
 /** 새 계정의 고고학 상태다. 횟수는 가득 찬 채로 시작한다. */
 export function createArchaeologyState(): ArchaeologyState {
-  return { charges: STRATA_CHARGE.max, chargesUpdatedAt: null, board: null, unlockedSiteIds: ["garden-gate"], completedSiteIds: [], lastSelectedSiteId: null, siteCooldowns: {}, pendingReroll: null };
+  return { charges: STRATA_CHARGE.max, chargesUpdatedAt: null, board: null, unlockedSiteIds: ["garden-gate"], completedSiteIds: [], lastSelectedSiteId: null, siteCooldowns: {}, siteLastDigAt: {}, pendingReroll: null };
 }
 
 /** 서버 시각까지 끝난 구간만 채운다. 시각이 역행하면 기준점을 뒤로 옮기지 않는다. */
@@ -380,15 +407,15 @@ export function nextStrataChargeAt(charges: number, updatedAt: string): string |
  * **손상된 값은 조용히 「열려 있음」으로 만들지 않는다** — 읽을 수 없는 시각은 대기가
  * 통째로 사라지는 쪽이 아니라 지금 막 시작한 것으로 본다.
  */
-export function strataSiteCooldownUntil(cooldowns: Readonly<Record<string, string>>, siteId: string, now: Date): string | null {
+export function strataSiteCooldownUntil(cooldowns: Readonly<Record<string, string>>, siteId: string, now: Date, cooldownMs: number): string | null {
   const raw = cooldowns[siteId];
   if (raw === undefined) return null;
   const until = Date.parse(raw);
-  if (!Number.isFinite(until)) return new Date(now.getTime() + STRATA_SITE_COOLDOWN_MS).toISOString();
+  if (!Number.isFinite(until)) return new Date(now.getTime() + cooldownMs).toISOString();
   return until > now.getTime() ? new Date(until).toISOString() : null;
 }
 
-/** 한 판을 끝낸 유적에 재사용 대기를 건다. 끝낸 방식(다 팜·중간 종료)과 무관하게 같은 시간이다. */
-export function beginStrataSiteCooldown(cooldowns: Readonly<Record<string, string>>, siteId: string, now: Date): Record<string, string> {
-  return { ...cooldowns, [siteId]: new Date(now.getTime() + STRATA_SITE_COOLDOWN_MS).toISOString() };
+/** 한 판을 끝낸 유적에 재사용 대기를 건다. 끝낸 방식(다 팜·중간 종료)과 무관하게 그 유적의 같은 시간이다. */
+export function beginStrataSiteCooldown(cooldowns: Readonly<Record<string, string>>, siteId: string, now: Date, cooldownMs: number): Record<string, string> {
+  return { ...cooldowns, [siteId]: new Date(now.getTime() + cooldownMs).toISOString() };
 }

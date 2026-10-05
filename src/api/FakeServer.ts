@@ -41,6 +41,7 @@ import { rotationOffer, rotationRunePart } from "../core/shopRotation";
 import { rotationSlot } from "../data/runeRotation";
 import { canGrantRuneTraitAtLeast, canUpgradeRuneTraitGrade, grantRuneTrait as rollRuneTrait, rerollRuneTrait as rollRuneTraitReroll, RUNE_TRAIT_RULES, upgradeRuneTraitGrade, type RuneTrait } from "../core/runeTraits";
 import { RUNE_TRAIT_IDS, RUNE_TRAIT_ITEMS } from "../data/runeTraits";
+import { nextStrataCrystalAt, siteCooldownMs, strataCrystalStage } from "../core/strataCrystal";
 import { beginStrataSiteCooldown, canDigStrataTile, createStrataBoard, digStrataTile as digTile, nextStrataChargeAt, rollStrataResearchItem, rollStrataRuneRarity, settleStrataCharges, strataBoardView, strataSiteCooldownUntil } from "../core/strataDig";
 import { findStrataLayer, STRATA_CHARGE } from "../data/strataLayers";
 import { ARCHAEOLOGY_SITES, findArchaeologySite } from "../data/archaeologySites";
@@ -2247,7 +2248,10 @@ export class FakeServer implements GameApi {
           missingLevel: availability.missingLevel,
           // 재사용 대기는 해금과 다른 축이다 — 열려 있지만 지금은 못 들어가는 자리를 화면이
           // 「잠김」과 같은 말로 부르면 레벨을 올리면 열리는 줄 안다.
-          cooldownUntil: strataSiteCooldownUntil(this.state.archaeology.siteCooldowns, site.id, this.now()),
+          cooldownUntil: strataSiteCooldownUntil(this.state.archaeology.siteCooldowns, site.id, this.now(), siteCooldownMs(site)),
+          // 결정은 마지막으로 판 시각에서만 센다. 다음 단계 시각을 함께 내려 화면이 남은 시간을 셀 수 있게 한다.
+          crystalStage: strataCrystalStage(site, this.state.archaeology.siteLastDigAt[site.id], this.now()),
+          nextCrystalAt: nextStrataCrystalAt(site, this.state.archaeology.siteLastDigAt[site.id], this.now()),
         };
       }),
       serverTime: this.now().toISOString(),
@@ -2277,13 +2281,15 @@ export class FakeServer implements GameApi {
     if (this.state.archaeology.board !== null) throw new GameApiError("STRATA_RUN_ACTIVE", "아직 끝나지 않은 탐사가 있습니다.");
     if (this.state.archaeology.charges <= 0) throw new GameApiError("STRATA_NO_CHARGE", "탐사 횟수가 부족합니다.");
     // 같은 자리를 연달아 파는 것만 막는다. 대기 중인 유적은 해금 상태와 무관하게 거절한다.
-    if (site && strataSiteCooldownUntil(this.state.archaeology.siteCooldowns, site.id, this.now()) !== null) {
+    if (site && strataSiteCooldownUntil(this.state.archaeology.siteCooldowns, site.id, this.now(), siteCooldownMs(site)) !== null) {
       throw new GameApiError("STRATA_SITE_COOLING", "아직 다시 탐사할 수 없는 유적입니다.");
     }
     this.state.archaeology.charges -= 1;
     // 가득 찬 상태에서 하나를 쓰는 순간이 곧 다음 충전이 시작되는 시각이다.
     this.state.archaeology.chargesUpdatedAt = this.now().toISOString();
-    this.state.archaeology.board = createStrataBoard({ layerId, siteId: site?.id, random: this.random });
+    // 결정 단계는 판을 여는 이 순간 굳힌다 — 판을 연 뒤에 방치 시간이 더 흘러도 이미 연 판은 그대로다.
+    const crystalStage = site ? strataCrystalStage(site, this.state.archaeology.siteLastDigAt[site.id], this.now()) : 0;
+    this.state.archaeology.board = createStrataBoard({ layerId, siteId: site?.id, crystalStage, random: this.random });
     this.persist(this.state);
     return this.archaeologyDto();
   }
@@ -2298,7 +2304,10 @@ export class FakeServer implements GameApi {
   private closeStrataBoard(siteId: string | undefined): void {
     if (siteId) {
       if (!this.state.archaeology.completedSiteIds.includes(siteId)) this.state.archaeology.completedSiteIds.push(siteId);
-      this.state.archaeology.siteCooldowns = beginStrataSiteCooldown(this.state.archaeology.siteCooldowns, siteId, this.now());
+      // 카탈로그에서 사라진 유적의 진행 판도 끝낼 수 있어야 하므로 옛 기본 대기(6시간)로 닫는다.
+      const site = findArchaeologySite(siteId);
+      this.state.archaeology.siteCooldowns = beginStrataSiteCooldown(this.state.archaeology.siteCooldowns, siteId, this.now(), site ? siteCooldownMs(site) : 6 * 60 * 60 * 1000);
+      this.state.archaeology.siteLastDigAt = { ...this.state.archaeology.siteLastDigAt, [siteId]: this.now().toISOString() };
     }
     this.state.archaeology.board = null;
   }

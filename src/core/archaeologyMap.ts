@@ -1,17 +1,21 @@
-import type { ArchaeologySiteDefinition } from "../data/archaeologySites";
-import { STRATA_LAYERS, STRATA_REWARD_DISPLAY, type StrataLayerDefinition, type StrataRewardDisplayGroup, type StrataZoneTone } from "../data/strataLayers";
+import { ARCHAEOLOGY_SITES, type ArchaeologySiteDefinition } from "../data/archaeologySites";
+import { STRATA_LAYERS, STRATA_REWARD_DISPLAY, findStrataLayer, type StrataLayerDefinition, type StrataRewardDisplayGroup, type StrataRewardKind, type StrataZoneTone } from "../data/strataLayers";
+import { TRADE_GEM_RATE } from "../data/tradePackages";
+import { NEUTRAL_RUN_MODIFIERS, strataRunModifiers, type StrataRunModifiers } from "./strataCrystal";
 
 /**
- * 같은 보상 그룹의 최고 유적 대비 기대 수량 비율을 **다섯 칸 중 몇 칸**으로 나누는 유일한 표다.
+ * 같은 보상 그룹의 최고 유적 대비 기대 수량 비율을 **열 칸 중 몇 칸**으로 나누는 유일한 표다.
  *
  * 예전에는 이 수가 별의 개수였다. 별 다섯 개는 세어야 알 수 있고 세 줄이 나란히 서면 열다섯
- * 개가 반짝여 어느 보상이 센지보다 별이 먼저 읽혔다 — 지금은 같은 수가 다섯 칸짜리 게이지의
- * 채움이라, 세지 않고 길이로 견준다.
+ * 개가 반짝여 어느 보상이 센지보다 별이 먼저 읽혔다 — 지금은 같은 수가 열 칸짜리 게이지의
+ * 채움이라, 세지 않고 길이로 견준다. 다섯 칸일 때는 「545」「555」처럼 뒤쪽 칸이 서로 구분되지 않아 열 칸으로 나눴다.
  */
-export const ARCHAEOLOGY_RATING_RATIO_THRESHOLDS = [0, 0.2, 0.4, 0.6, 0.8] as const;
+export const ARCHAEOLOGY_RATING_RATIO_THRESHOLDS = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] as const;
 /** 한 판에서 한 번이라도 나올 확률이 이 값보다 낮으면 칸 대신 희귀 상태로 말한다. */
 export const ARCHAEOLOGY_VERY_RARE_CHANCE = 0.01;
-export type ArchaeologyPreviewReward = Extract<StrataRewardDisplayGroup, "rawStone" | "rune" | "gold">;
+/** 미리보기가 세우는 보상 그룹과 그 차례다. 원석 → 룬 → 재화. */
+export const ARCHAEOLOGY_PREVIEW_GROUPS = ["rawStone", "rune", "currency"] as const;
+export type ArchaeologyPreviewReward = Extract<StrataRewardDisplayGroup, "rawStone" | "rune" | "currency">;
 
 /** 구역 출현 가중치와 그 구역의 실제 보상 가중치를 합성한 한 칸의 실질 확률이다. */
 export function strataRewardProbability(layer: StrataLayerDefinition, group: ArchaeologyPreviewReward): number {
@@ -26,10 +30,28 @@ export function strataRewardProbability(layer: StrataLayerDefinition, group: Arc
 }
 
 /**
+ * 재화 한 개가 젬으로 얼마인가. **무역 시세표(`TRADE_GEM_RATE`) 하나를 읽는다** — 화석 한 개와 치즈케이크
+ * 한 개를 견주는 값을 여기서 따로 적으면 시세를 고칠 때 이 게이지만 옛 값으로 남는다.
+ */
+function gemValueOf(kind: StrataRewardKind): number {
+  switch (kind) {
+    case "gold": case "cheesecake": case "gems": case "fossil": case "amber": return 1 / TRADE_GEM_RATE[kind];
+    default: return 0;
+  }
+}
+
+/** 한 칸이 그 종류일 때의 수량 배율이다. 원석은 전량, 골드는 제곱근만, 나머지는 수량이 안 는다. */
+function amountMultiplier(kind: StrataRewardKind, modifiers: StrataRunModifiers): number {
+  return kind === "rawStone" ? modifiers.stoneYield : kind === "gold" ? modifiers.goldYield : 1;
+}
+
+/**
  * 구역 확률 × 해당 구역의 보상 확률 × 수량 중간값 × 굴착 횟수로 한 유적의 기대 획득량을 구한다.
  * 따라서 별은 특정 타일의 위치나 정확한 드롭률이 아니라, 판 전체를 다 팠을 때의 상대적 기대다.
+ *
+ * **재화 그룹은 젬으로 환산한 값이다.** 원석·룬은 개수지만 재화는 종류가 섞여 있어 단위가 하나여야 한다.
  */
-export function strataRewardExpectedAmount(layer: StrataLayerDefinition, group: ArchaeologyPreviewReward): number {
+export function strataRewardExpectedAmount(layer: StrataLayerDefinition, group: ArchaeologyPreviewReward, modifiers: StrataRunModifiers = NEUTRAL_RUN_MODIFIERS): number {
   const tones = Object.keys(layer.toneWeight) as StrataZoneTone[];
   const toneTotal = tones.reduce((sum, tone) => sum + Math.max(0, layer.toneWeight[tone]), 0);
   if (toneTotal <= 0) return 0;
@@ -38,27 +60,53 @@ export function strataRewardExpectedAmount(layer: StrataLayerDefinition, group: 
     if (rewardTotal <= 0) return total;
     const expectedInTone = layer.rewards.reduce((sum, reward) => {
       if (STRATA_REWARD_DISPLAY[reward.kind].group !== group) return sum;
-      const averageAmount = (Math.max(0, reward.min) + Math.max(0, reward.max)) / 2;
-      return sum + (Math.max(0, reward.weight[tone]) / rewardTotal) * averageAmount;
+      const averageAmount = (Math.max(0, reward.min) + Math.max(0, reward.max)) / 2 * amountMultiplier(reward.kind, modifiers);
+      const unit = group === "currency" ? gemValueOf(reward.kind) : 1;
+      return sum + (Math.max(0, reward.weight[tone]) / rewardTotal) * averageAmount * unit;
     }, 0);
     return total + (Math.max(0, layer.toneWeight[tone]) / toneTotal) * expectedInTone;
   }, 0);
-  return perDig * Math.max(0, layer.digs);
+  return perDig * Math.max(0, layer.digs + modifiers.digs);
 }
 
-/** 다섯 칸 게이지의 채움이다. `filled`는 `state`가 `rated`일 때만 뜻이 있다. */
-export type ArchaeologyRewardRating = { readonly state: "unavailable" | "veryRare" | "rated"; readonly filled: 0 | 1 | 2 | 3 | 4 | 5 };
+/** 열 칸 게이지의 채움이다. `filled`는 `state`가 `rated`일 때만 뜻이 있다. */
+export type ArchaeologyRewardRating = { readonly state: "unavailable" | "veryRare" | "rated"; readonly filled: number };
+
+function ratingOf(expected: number, perRunChance: number, maximum: number): ArchaeologyRewardRating {
+  if (expected <= 0) return { state: "unavailable", filled: 0 };
+  if (perRunChance < ARCHAEOLOGY_VERY_RARE_CHANCE) return { state: "veryRare", filled: 0 };
+  const ratio = maximum > 0 ? expected / maximum : 0;
+  const filled = ARCHAEOLOGY_RATING_RATIO_THRESHOLDS.filter((threshold) => ratio > threshold).length;
+  return { state: "rated", filled };
+}
 
 /** 같은 보상끼리 유적 전체 기대량을 비교하며, 0과 1% 미만은 억지로 한 칸을 주지 않는다. */
 export function rewardExpectationRating(layer: StrataLayerDefinition, group: ArchaeologyPreviewReward, referenceLayers: readonly StrataLayerDefinition[] = STRATA_LAYERS): ArchaeologyRewardRating {
-  const expected = strataRewardExpectedAmount(layer, group);
-  if (expected <= 0) return { state: "unavailable", filled: 0 };
   const perRunChance = 1 - ((1 - strataRewardProbability(layer, group)) ** Math.max(0, layer.digs));
-  if (perRunChance < ARCHAEOLOGY_VERY_RARE_CHANCE) return { state: "veryRare", filled: 0 };
   const maximum = Math.max(...referenceLayers.map((candidate) => strataRewardExpectedAmount(candidate, group)), 0);
-  const ratio = maximum > 0 ? expected / maximum : 0;
-  const filled = ARCHAEOLOGY_RATING_RATIO_THRESHOLDS.filter((threshold) => ratio > threshold).length as 1 | 2 | 3 | 4 | 5;
-  return { state: "rated", filled };
+  return ratingOf(strataRewardExpectedAmount(layer, group), perRunChance, maximum);
+}
+
+/**
+ * 한 유적이 **지금 결정 단계에서** 내는 기대도를 열 칸으로 말한다.
+ *
+ * 기준(최대치)은 모든 유적의 모든 결정 단계 중 가장 큰 값이다 — 그래야 장기 방치로 맺힌 저레벨 유적이 기준을
+ * 넘어 10칸을 넘치지 않고, 결정이 올라갈수록 게이지가 실제로 길어진다.
+ */
+export function siteRewardRating(site: ArchaeologySiteDefinition, group: ArchaeologyPreviewReward, crystalStage = 0, sites: readonly ArchaeologySiteDefinition[] = ARCHAEOLOGY_SITES): ArchaeologyRewardRating {
+  const layer = findStrataLayer(site.layerId);
+  if (!layer) return { state: "unavailable", filled: 0 };
+  const modifiers = strataRunModifiers(site, crystalStage);
+  const perRunChance = 1 - ((1 - strataRewardProbability(layer, group)) ** Math.max(0, layer.digs + modifiers.digs));
+  let maximum = 0;
+  for (const candidate of sites) {
+    const candidateLayer = findStrataLayer(candidate.layerId);
+    if (!candidateLayer) continue;
+    for (let stage = 0; stage <= (candidate.crystal?.length ?? 0); stage += 1) {
+      maximum = Math.max(maximum, strataRewardExpectedAmount(candidateLayer, group, strataRunModifiers(candidate, stage)));
+    }
+  }
+  return ratingOf(strataRewardExpectedAmount(layer, group, modifiers), perRunChance, maximum);
 }
 
 /**

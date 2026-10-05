@@ -689,16 +689,6 @@
 "Gartentor",
 "Врата сада"
 ],
-"archaeology.site.collapsed-greenhouse.name": [
-"倒塌温室",
-"เรือนกระจกถล่ม",
-"Nhà kính sụp đổ",
-"Rumah Kaca Runtuh",
-"Invernadero derrumbado",
-"Estufa desabada",
-"Eingestürztes Gewächshaus",
-"Обрушенная оранжерея"
-],
 "archaeology.site.rust-canal.name": [
 "锈蚀运河",
 "คลองสนิม",
@@ -709,16 +699,6 @@
 "Rostkanal",
 "Ржавый канал"
 ],
-"archaeology.site.ash-terrace.name": [
-"灰烬阶地",
-"ลานขั้นเถ้าถ่าน",
-"Thềm tro",
-"Teras Abu",
-"Terraza de ceniza",
-"Terraço de cinzas",
-"Aschenterrasse",
-"Пепельная терраса"
-],
 "archaeology.site.sunken-archive.name": [
 "沉没书库",
 "หอเอกสารจมน้ำ",
@@ -728,36 +708,6 @@
 "Arquivo submerso",
 "Versunkenes Archiv",
 "Затонувший архив"
-],
-"archaeology.site.lantern-shaft.name": [
-"灯笼竖井",
-"ปล่องตะเกียง",
-"Giếng đèn lồng",
-"Sumur Lentera",
-"Pozo de linternas",
-"Poço das lanternas",
-"Laternenschacht",
-"Шахта фонарей"
-],
-"archaeology.site.bone-quarry.name": [
-"骨骸采石场",
-"เหมืองกระดูก",
-"Mỏ xương",
-"Tambang Tulang",
-"Cantera de huesos",
-"Pedreira de ossos",
-"Knochenbruch",
-"Костяной карьер"
-],
-"archaeology.site.mirror-cistern.name": [
-"镜面蓄水池",
-"อ่างเก็บน้ำกระจก",
-"Bể chứa gương",
-"Tangki Cermin",
-"Cisterna espejo",
-"Cisterna espelhada",
-"Spiegelzisterne",
-"Зеркальная цистерна"
 ],
 "archaeology.site.glass-furnace.name": [
 "玻璃熔炉",
@@ -939,25 +889,25 @@
 "Rune",
 "Руна"
 ],
-"archaeology.reward.gold": [
-"金币",
-"ทอง",
-"Vàng",
-"Emas",
-"Oro",
-"Ouro",
-"Gold",
-"Золото"
+"archaeology.reward.currency": [
+"货币",
+"สกุลเงิน",
+"Tiền tệ",
+"Mata uang",
+"Divisas",
+"Moedas",
+"Währung",
+"Валюта"
 ],
 "archaeology.reward.grade": [
-"{count}/5",
-"{count}/5",
-"{count}/5",
-"{count}/5",
-"{count}/5",
-"{count}/5",
-"{count}/5",
-"{count}/5"
+"{count}/10",
+"{count}/10",
+"{count}/10",
+"{count}/10",
+"{count}/10",
+"{count}/10",
+"{count}/10",
+"{count}/10"
 ],
 "archaeology.reward.veryRare": [
 "非常稀有",
@@ -978,6 +928,36 @@
 "Indisponível",
 "Nicht erhältlich",
 "Недоступно"
+],
+"archaeology.crystal.stage": [
+"结晶 {stage} 阶 · 挖掘 +{digs}",
+"ผลึก {stage} ขั้น · ขุด +{digs}",
+"Tinh thể bậc {stage} · Đào +{digs}",
+"Kristal tahap {stage} · Gali +{digs}",
+"Cristal {stage} · Excavaciones +{digs}",
+"Cristal {stage} · Escavações +{digs}",
+"Kristall {stage} · Grabungen +{digs}",
+"Кристалл {stage} · Раскопок +{digs}"
+],
+"archaeology.crystal.none": [
+"无结晶",
+"ไม่มีผลึก",
+"Chưa có tinh thể",
+"Belum ada kristal",
+"Sin cristal",
+"Sem cristal",
+"Kein Kristall",
+"Нет кристалла"
+],
+"archaeology.crystal.next": [
+"距下次结晶 {time}",
+"ผลึกถัดไปใน {time}",
+"Tinh thể tiếp theo sau {time}",
+"Kristal berikutnya {time}",
+"Próximo cristal en {time}",
+"Próximo cristal em {time}",
+"Nächster Kristall in {time}",
+"Следующий кристалл через {time}"
 ],
 "mail.title": [
 "邮件箱",

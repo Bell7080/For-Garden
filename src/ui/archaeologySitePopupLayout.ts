@@ -20,12 +20,14 @@ const BASE = {
   /** 유적 이름은 몸판 윗변에 걸터앉는 공용 제목표가 맡는다 — 창 안의 첫 줄은 판 규격이다. */
   subtitleTop: 72,
   subtitleToPanel: 44,
-  /** 기대 획득 한 줄의 높이. 이름표와 다섯 칸 게이지가 마주 본다. */
+  /** 기대 획득 한 줄의 높이. 이름표와 열 칸 게이지가 마주 본다. */
   rowHeight: 74,
   /** 제목표가 윗변에 걸터앉으므로 판 안의 첫 줄은 그보다 아래에서 시작한다. */
   panelPadTop: 54,
   panelPadBottom: 24,
   panelToReason: 48,
+  /** 결정 줄이 서는 사이는 판과 이유 줄 사이에 한 줄을 더한다. */
+  crystalLine: 46,
   reasonToButton: 64,
   buttonHeight: 92,
   bottomPad: 42,
@@ -43,6 +45,8 @@ export interface ArchaeologySitePopupLayout {
   labelX: number;
   gaugeX: number;
   gauge: { width: number; height: number };
+  /** 결정 줄의 중심 y. 결정이 없는 유적에서는 쓰지 않는다. */
+  crystalY: number;
   reasonY: number;
   buttonY: number;
   buttonWidth: number;
@@ -52,16 +56,18 @@ export interface ArchaeologySitePopupLayout {
 }
 
 /** 보상 줄 수만 받으면 창 하나의 모든 자리가 나온다. */
-export function archaeologySitePopupLayout(rows: number): ArchaeologySitePopupLayout {
+export function archaeologySitePopupLayout(rows: number, withCrystal = false): ArchaeologySitePopupLayout {
   const safeRows = Math.max(1, Math.floor(rows));
   const panelHeight = BASE.panelPadTop + safeRows * BASE.rowHeight + BASE.panelPadBottom;
+  const extra = withCrystal ? BASE.crystalLine : 0;
   const height = BASE.subtitleTop + BASE.subtitleToPanel
-    + panelHeight + BASE.panelToReason + BASE.reasonToButton + BASE.buttonHeight / 2 + BASE.bottomPad;
+    + panelHeight + BASE.panelToReason + BASE.reasonToButton + BASE.buttonHeight / 2 + BASE.bottomPad + extra;
   const top = -height / 2;
   const subtitleY = top + BASE.subtitleTop;
   const panelTop = subtitleY + BASE.subtitleToPanel;
   const panelWidth = BASE.width - BASE.padX * 2;
-  const reasonY = panelTop + panelHeight + BASE.panelToReason;
+  const crystalY = panelTop + panelHeight + BASE.panelToReason;
+  const reasonY = crystalY + extra;
   const buttonY = reasonY + BASE.reasonToButton;
   const buttonWidth = (panelWidth - 28) / 2;
   return {
@@ -74,6 +80,7 @@ export function archaeologySitePopupLayout(rows: number): ArchaeologySitePopupLa
     // 게이지는 판 오른쪽 변에서 물러나 선다. 이름표는 왼쪽에 붙어 둘이 마주 본다.
     gaugeX: panelWidth / 2 - 26 - BASE.gauge.width / 2,
     gauge: BASE.gauge,
+    crystalY,
     reasonY,
     buttonY,
     buttonWidth,

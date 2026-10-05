@@ -384,6 +384,16 @@ export class SaveManager {
       siteCooldowns: savedArchaeology?.siteCooldowns && typeof savedArchaeology.siteCooldowns === "object"
         ? Object.fromEntries(Object.entries(savedArchaeology.siteCooldowns).filter(([, until]) => typeof until === "string"))
         : {},
+      /*
+       * 방치 시간(결정)을 몰랐던 저장은 재사용 대기 시각에서 거꾸로 구한다 — 그때의 대기는 모든 유적이
+       * 여섯 시간이었으므로 열리는 시각에서 여섯 시간을 빼면 마지막으로 닫은 시각이다. 대기 항목이 이미
+       * 정리된 유적은 판 기록이 없는 것으로 두어 결정 0단계에서 시작한다(없던 보너스를 소급하지 않는다).
+       */
+      siteLastDigAt: savedArchaeology?.siteLastDigAt && typeof savedArchaeology.siteLastDigAt === "object"
+        ? Object.fromEntries(Object.entries(savedArchaeology.siteLastDigAt).filter(([, at]) => typeof at === "string"))
+        : Object.fromEntries(Object.entries(savedArchaeology?.siteCooldowns ?? {})
+          .filter(([, until]) => typeof until === "string" && Number.isFinite(Date.parse(until)))
+          .map(([siteId, until]) => [siteId, new Date(Date.parse(until as string) - 6 * 60 * 60 * 1000).toISOString()])),
     };
     const savedExcavation = Number(legacy.saveVersion) >= 18 && legacy.idleExcavation && typeof legacy.idleExcavation === "object"
       ? legacy.idleExcavation as Partial<SaveData["idleExcavation"]> : undefined;

@@ -28,18 +28,25 @@ export const STRATA_ZONE_TONE: Readonly<Record<StrataZoneTone, { readonly color:
 } as const;
 
 /**
- * 기대도 게이지 다섯 칸의 색.
- *
- * 한 칸만 찬 줄과 다섯 칸이 찬 줄이 같은 색이면 길이를 견주어야 알 수 있다 — 아래에서
- * 위로 갈수록 등급색을 따라 올라가 **색만으로도** 어느 보상이 센지 읽힌다.
+ * 기대도 게이지의 색은 **보상 그룹**이 정한다 — 원석은 보랏빛, 룬은 비취(초록~파랑), 재화는
+ * 주황~노랑. 길이는 열 칸 중 몇 칸이냐가 말하고, 색은 무엇의 게이지인지를 말한다.
+ * 채움이 찰수록 같은 계열에서 밝은 쪽으로 올라가 색만으로도 센 줄이 읽힌다.
  */
-export const ARCHAEOLOGY_RATING_TONE: readonly number[] = [
-  COLOR.inkDimHex, COLOR.rarityR, COLOR.raritySR, COLOR.raritySSR, COLOR.raritySSRLight,
-];
+export const ARCHAEOLOGY_GROUP_TONE: Readonly<Record<"rawStone" | "rune" | "currency", { readonly low: number; readonly high: number }>> = {
+  rawStone: { low: COLOR.archaeologyStone, high: 0xd2b4ff },
+  rune: { low: 0x2fb6b0, high: 0x6fe3a8 },
+  currency: { low: COLOR.archaeologyCurrency, high: 0xffd84a },
+};
 
-/** 다섯 칸 중 몇 칸이 찼는지로 그 줄의 색을 고른다. 빈 줄은 가장 흐린 색이다. */
-export function archaeologyRatingColor(filled: number): number {
-  return ARCHAEOLOGY_RATING_TONE[Math.min(ARCHAEOLOGY_RATING_TONE.length - 1, Math.max(0, filled - 1))];
+/** 게이지 열 칸 중 `filled`칸이 찼을 때의 색. 가득 찰수록 그룹의 밝은 쪽으로 기운다. */
+export function archaeologyRatingColor(group: "rawStone" | "rune" | "currency", filled: number): number {
+  const tone = ARCHAEOLOGY_GROUP_TONE[group];
+  const t = Math.min(1, Math.max(0, (filled - 1) / 9));
+  const mix = (a: number, b: number): number => Math.round(a + (b - a) * t);
+  const r = mix((tone.low >> 16) & 0xff, (tone.high >> 16) & 0xff);
+  const g = mix((tone.low >> 8) & 0xff, (tone.high >> 8) & 0xff);
+  const b = mix(tone.low & 0xff, tone.high & 0xff);
+  return (r << 16) | (g << 8) | b;
 }
 
 /**

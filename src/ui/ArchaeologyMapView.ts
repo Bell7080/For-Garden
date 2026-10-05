@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { BUTTON_DRAG_CANCEL_DISTANCE } from "./Button";
 import { archaeologyNodeState, isArchaeologyMapDrag, type ArchaeologyNodeState } from "../core/archaeologyMap";
-import { STRATA_SITE_COOLDOWN_MS } from "../data/strataLayers";
+import { siteCooldownMs } from "../core/strataCrystal";
 import type { ArchaeologySiteDefinition } from "../data/archaeologySites";
 import { ARCHAEOLOGY_MAP_LAYOUT, clampArchaeologyMapOffset } from "./archaeologyMapLayout";
 import { chipPoints, drawLayer, drawShapeOutline, HOLO, toPoints } from "./holo";
@@ -10,6 +10,10 @@ import { drawGlyph } from "./glyphs";
 import { formatCountdown } from "../core/formatCountdown";
 import { t, type TextKey } from "../i18n";
 import { COLOR, textStyle } from "./theme";
+import { motionPolicy } from "../core/settings";
+import { session } from "../state/session";
+
+function motionOn(): boolean { return motionPolicy(session.settings).nonEssentialDistanceFactor > 0; }
 
 export interface ArchaeologyMapSiteState {
   siteId: string;
@@ -17,6 +21,8 @@ export interface ArchaeologyMapSiteState {
   completed: boolean;
   /** 그 유적이 다시 열리는 시각(ms). 지금 열려 있으면 `null`이다. */
   cooldownUntilMs?: number | null;
+  /** 방치로 맺힌 결정 단계. 0이면 맺히지 않았다. */
+  crystalStage?: number;
 }
 export interface ArchaeologyMapViewOptions {
   top: number; bottom: number;
@@ -56,7 +62,7 @@ export class ArchaeologyMapView extends Phaser.GameObjects.Container {
   /** 생성 프레임의 포인터 입력과 초기 중앙 배치를 섞지 않기 위한 한 프레임짜리 잠금이다. */
   private restoring = true;
   /** 매초 남은 시간을 고쳐 쓰는 대기 중 노드의 글자와 그 위를 덮는 부채꼴이다. */
-  private readonly cooling: Array<{ until: number; text: Phaser.GameObjects.Text; wedge: Phaser.GameObjects.Graphics; shape: number[] }> = [];
+  private readonly cooling: Array<{ until: number; totalMs: number; text: Phaser.GameObjects.Text; wedge: Phaser.GameObjects.Graphics; shape: number[] }> = [];
   /** 노드마다 고른 상태. 자동화에 자리와 함께 알린다. */
   private readonly kinds = new Map<string, ArchaeologyNodeState>();
 
@@ -107,6 +113,15 @@ export class ArchaeologyMapView extends Phaser.GameObjects.Container {
       if (kind === "locked") node.add(drawGlyph(scene, "lock", 0, 0, size * 0.42, COLOR.inkDimHex, 0.85));
       else node.add(scene.add.text(0, 0, style.mark, textStyle({ role: "display", size: Math.round(size * 0.36), color: style.markColor })).setOrigin(0.5));
       node.add(scene.add.text(0, size / 2 + NODE_LABEL.nameGap, t(site.nameKey as TextKey), textStyle({ role: "display", size: NODE_LABEL.nameSize, color: style.nameColor })).setOrigin(0.5));
+      // 결정: 방치로 맺힌 단계만큼 노드 오른쪽 위에 마름모가 반짝인다(단계가 오를수록 많다).
+      const crystalStage = state?.crystalStage ?? 0;
+      if (crystalStage > 0) {
+        for (let i = 0; i < crystalStage; i += 1) {
+          const gem = scene.add.text(size / 2 - 6 - i * 26, -size / 2 + 4, "◆", textStyle({ role: "display", size: 28, color: `#${COLOR.archaeologyStone.toString(16).padStart(6, "0")}` })).setOrigin(0.5).setStroke("#05070a", 5);
+          node.add(gem);
+          if (scene.tweens && motionOn()) scene.tweens.add({ targets: gem, alpha: 0.45, duration: 900 + i * 220, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+        }
+      }
       this.world.add(node);
 
       if (kind === "cooling" && cooldownUntilMs !== null) {
@@ -117,7 +132,7 @@ export class ArchaeologyMapView extends Phaser.GameObjects.Container {
         const stateText = scene.add.text(0, size / 2 + NODE_LABEL.nameGap + NODE_LABEL.stateGap, "",
           textStyle({ role: "emphasis", size: NODE_LABEL.stateSize, color: COLOR.accentText })).setOrigin(0.5);
         node.add(stateText);
-        this.cooling.push({ until: cooldownUntilMs, text: stateText, wedge, shape });
+        this.cooling.push({ until: cooldownUntilMs, totalMs: siteCooldownMs(site), text: stateText, wedge, shape });
       }
 
       const hit = scene.add.rectangle(site.x, site.y, ARCHAEOLOGY_MAP_LAYOUT.hitSize, ARCHAEOLOGY_MAP_LAYOUT.hitSize, 0xffffff, 0.001).setInteractive({ useHandCursor: true });
@@ -149,7 +164,7 @@ export class ArchaeologyMapView extends Phaser.GameObjects.Container {
       if (!entry.text.active) continue;
       const remaining = Math.max(0, entry.until - now);
       entry.text.setText(t("archaeology.map.cooling", { time: formatCountdown(remaining) }));
-      const points = clockWedgeOnShape(toPoints(entry.shape), 1 - remaining / STRATA_SITE_COOLDOWN_MS);
+      const points = clockWedgeOnShape(toPoints(entry.shape), 1 - remaining / entry.totalMs);
       entry.wedge.clear();
       if (points.length >= 3) entry.wedge.fillStyle(COLOR.void, 0.62).fillPoints(points.map(({ x, y }) => new Phaser.Geom.Point(x, y)), true);
     }

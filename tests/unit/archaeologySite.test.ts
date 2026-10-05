@@ -1,33 +1,35 @@
 import { describe, expect, it } from "vitest";
 import { archaeologyNodeState } from "../../src/core/archaeologyMap";
 import { beginStrataSiteCooldown, createArchaeologyState, strataSiteCooldownUntil } from "../../src/core/strataDig";
-import { STRATA_SITE_COOLDOWN_MS } from "../../src/data/strataLayers";
+import { findArchaeologySite } from "../../src/data/archaeologySites";
+import { siteCooldownMs } from "../../src/core/strataCrystal";
 import { archaeologySitePopupLayout, POPUP_BODY_BEVEL_RATIO } from "../../src/ui/archaeologySitePopupLayout";
 import { archaeologyRatingColor, STRATA_ZONE_TONE } from "../../src/ui/strataTones";
 
 const NOW = new Date("2026-03-01T00:00:00.000Z");
+const COOLDOWN_MS = siteCooldownMs(findArchaeologySite("garden-gate")!);
 
 describe("유적 재사용 대기", () => {
   it("는 판 적 없는 자리를 잠그지 않는다", () => {
     expect(createArchaeologyState().siteCooldowns).toEqual({});
-    expect(strataSiteCooldownUntil({}, "garden-gate", NOW)).toBeNull();
+    expect(strataSiteCooldownUntil({}, "garden-gate", NOW, COOLDOWN_MS)).toBeNull();
   });
 
   it("는 여섯 시간 뒤에 저절로 풀린다", () => {
-    const cooldowns = beginStrataSiteCooldown({}, "garden-gate", NOW);
-    expect(strataSiteCooldownUntil(cooldowns, "garden-gate", NOW)).toBe(new Date(NOW.getTime() + STRATA_SITE_COOLDOWN_MS).toISOString());
+    const cooldowns = beginStrataSiteCooldown({}, "garden-gate", NOW, COOLDOWN_MS);
+    expect(strataSiteCooldownUntil(cooldowns, "garden-gate", NOW, COOLDOWN_MS)).toBe(new Date(NOW.getTime() + COOLDOWN_MS).toISOString());
     // 충전 간격(3시간)의 두 배다 — 한 바퀴 도는 동안 처음 판 자리가 다시 열린다.
-    const justBefore = new Date(NOW.getTime() + STRATA_SITE_COOLDOWN_MS - 1000);
-    expect(strataSiteCooldownUntil(cooldowns, "garden-gate", justBefore)).not.toBeNull();
-    expect(strataSiteCooldownUntil(cooldowns, "garden-gate", new Date(NOW.getTime() + STRATA_SITE_COOLDOWN_MS))).toBeNull();
+    const justBefore = new Date(NOW.getTime() + COOLDOWN_MS - 1000);
+    expect(strataSiteCooldownUntil(cooldowns, "garden-gate", justBefore, COOLDOWN_MS)).not.toBeNull();
+    expect(strataSiteCooldownUntil(cooldowns, "garden-gate", new Date(NOW.getTime() + COOLDOWN_MS), COOLDOWN_MS)).toBeNull();
     // 다른 자리는 함께 잠기지 않는다 — 다섯 번이 서로 다른 자리로 흩어지게 하는 것이 이 규칙의 뜻이다.
-    expect(strataSiteCooldownUntil(cooldowns, "rust-canal", NOW)).toBeNull();
+    expect(strataSiteCooldownUntil(cooldowns, "rust-canal", NOW, COOLDOWN_MS)).toBeNull();
   });
 
   it("는 읽을 수 없는 시각을 「열려 있음」으로 만들지 않는다", () => {
     // 손상된 저장이 제한을 통째로 지우는 쪽보다, 지금 막 시작한 것으로 보는 쪽이 안전하다.
-    expect(strataSiteCooldownUntil({ "garden-gate": "어제" }, "garden-gate", NOW))
-      .toBe(new Date(NOW.getTime() + STRATA_SITE_COOLDOWN_MS).toISOString());
+    expect(strataSiteCooldownUntil({ "garden-gate": "어제" }, "garden-gate", NOW, COOLDOWN_MS))
+      .toBe(new Date(NOW.getTime() + COOLDOWN_MS).toISOString());
   });
 });
 
@@ -92,9 +94,13 @@ describe("구역 색", () => {
   });
 
   it("의 기대도 게이지는 칸이 찰수록 다른 색으로 선다", () => {
-    const colors = [1, 2, 3, 4, 5].map((filled) => archaeologyRatingColor(filled));
-    expect(new Set(colors).size).toBe(5);
-    // 빈 줄도 색을 고르지 못해 던지지 않는다.
-    expect(archaeologyRatingColor(0)).toBe(colors[0]);
+    for (const group of ["rawStone", "rune", "currency"] as const) {
+      const colors = [1, 4, 7, 10].map((filled) => archaeologyRatingColor(group, filled));
+      expect(new Set(colors).size).toBe(4);
+      // 빈 줄도 색을 고르지 못해 던지지 않는다.
+      expect(archaeologyRatingColor(group, 0)).toBe(colors[0]);
+    }
+    // 그룹은 색으로 갈린다 — 원석 보랏빛 · 룬 비취 · 재화 주황.
+    expect(new Set(["rawStone", "rune", "currency"].map((g) => archaeologyRatingColor(g as "rawStone", 5))).size).toBe(3);
   });
 });

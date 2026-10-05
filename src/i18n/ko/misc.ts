@@ -82,13 +82,8 @@ export const MISC_KO = {
   "archaeology.title": "고 고 학",
   // 유적 지도 정적 데이터는 이 키만 참조해 표시 문장을 품지 않는다.
   "archaeology.site.garden-gate.name": "정원의 관문",
-  "archaeology.site.collapsed-greenhouse.name": "무너진 온실",
   "archaeology.site.rust-canal.name": "녹슨 수로",
-  "archaeology.site.ash-terrace.name": "재의 단구",
   "archaeology.site.sunken-archive.name": "수몰 기록고",
-  "archaeology.site.lantern-shaft.name": "등불 갱도",
-  "archaeology.site.bone-quarry.name": "뼈의 채석장",
-  "archaeology.site.mirror-cistern.name": "거울 저수조",
   "archaeology.site.glass-furnace.name": "유리 용광로",
   "archaeology.site.deep-sanctum.name": "심층 성소",
   "archaeology.site.hollow-spire.name": "텅 빈 첨탑",
@@ -108,11 +103,14 @@ export const MISC_KO = {
   "archaeology.reward.expected": "기대 획득",
   "archaeology.reward.rawStone": "원석",
   "archaeology.reward.rune": "룬",
-  "archaeology.reward.gold": "골드",
+  "archaeology.reward.currency": "재화",
   // 별 문자에만 의미를 맡기지 않도록 화면에 함께 읽히는 등급 문구다.
-  "archaeology.reward.grade": "{count}/5",
+  "archaeology.reward.grade": "{count}/10",
   "archaeology.reward.veryRare": "매우 희귀",
   "archaeology.reward.unavailable": "획득 불가",
+  "archaeology.crystal.stage": "결정 {stage}단계 · 굴착 +{digs}",
+  "archaeology.crystal.none": "결정 없음",
+  "archaeology.crystal.next": "다음 결정까지 {time}",
 
   // 우편
   "mail.title": "우편함",

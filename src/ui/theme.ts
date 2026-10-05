@@ -77,6 +77,10 @@ export const COLOR = {
   raritySRAlt: 0x9b78c7,
   raritySSR: 0xe0a83e,
   raritySSRLight: 0xffd37a,
+  /** 고고학 기대도 게이지의 보상 그룹 색 — 원석 보랏빛, 룬 비취, 재화 주황~노랑. */
+  archaeologyStone: 0xa57be0,
+  archaeologyRune: 0x3fc9a2,
+  archaeologyCurrency: 0xf3a53a,
   /** 야성은 연붉은색에서 시작해 차오를수록 짙어지고, 피버에서 가장 붉다. 한 계열로 묶는다. */
   ferocityLow: 0xe09a94,
   ferocityWarning: 0xe8675e,

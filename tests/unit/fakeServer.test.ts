@@ -14,7 +14,10 @@ import { WALLET_CAPS } from "../../src/data/economy";
 import { staminaCurrencyRecharge } from "../../src/data/staminaRecharge";
 import { STAMINA_HOLD_LIMIT, staminaMaxForPlayer } from "../../src/core/stamina";
 import { createArchaeologyState } from "../../src/core/strataDig";
-import { STRATA_SITE_COOLDOWN_MS } from "../../src/data/strataLayers";
+import { siteCooldownMs } from "../../src/core/strataCrystal";
+import { findArchaeologySite } from "../../src/data/archaeologySites";
+
+const STRATA_SITE_COOLDOWN_MS = siteCooldownMs(findArchaeologySite("garden-gate")!);
 import { mileageWeeklyClerkId } from "../../src/data/mileageClerk";
 import { BREAKTHROUGH_GRADE_CAP } from "../../src/core/relicProgression";
 

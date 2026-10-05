@@ -41,7 +41,7 @@ export class BattleHealthBar {
   /** 머리 위 체력 바와 같은 설정을 쓰는 프로필 전용 반응 배율이다. */
   private readonly motionFactor: number;
 
-  get objects(): readonly Phaser.GameObjects.Graphics[] {
+  get objects(): readonly (Phaser.GameObjects.Graphics | Phaser.GameObjects.Image)[] {
     return [...this.trail.objects, ...this.value.objects, ...this.shield.objects, ...this.frame.objects];
   }
 

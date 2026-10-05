@@ -16,7 +16,7 @@ describe("공용 보상 팝업 표시 모델", () => {
       { kind: "profile_decoration", decorationId: "badge", name: "연구원 명찰" },
     ])).toEqual([
       { icon: "currency-cheesecake", amount: 200 },
-      { icon: "item-rune-dust", amount: 3, label: "룬 가루" },
+      { icon: "item-rune-dust", amount: 3 },
       { icon: "rune-rare-1", amount: 1, label: "희귀 룬" },
       { icon: { kind: "glyph", key: "costume" }, amount: 1, label: "연구원 명찰" },
     ]);

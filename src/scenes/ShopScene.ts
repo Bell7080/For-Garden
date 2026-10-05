@@ -19,7 +19,7 @@ import { addPriceBar } from "../ui/priceTag";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { addBackButton } from "../ui/IconButton";
-import { addItemFrame, ITEM_FRAME } from "../ui/itemFrame";
+import { addItemFrame, addShelfAmount, ITEM_FRAME } from "../ui/itemFrame";
 import { chipPoints, drawFrameVignette, drawLayer, drawVignette, HOLO, slantedRect } from "../ui/holo";
 import { DialogueBubble } from "../ui/DialogueBubble";
 import { COLOR, textStyle } from "../ui/theme";
@@ -593,7 +593,7 @@ export class ShopScene extends Phaser.Scene {
       // 지급 수량은 액자 우하단에 공용 축약 표기로 겹쳐 작은 화면에서도 한눈에 읽힌다. 아이템 묶음도 같다.
       const amountGrant = product.grants.find((grant) => grant.kind === "currency" || grant.kind === "item");
       if (amountGrant) {
-        frame.add(this.add.text(SHOP_CARD.frame / 2 - 10, SHOP_CARD.frame / 2 - 8, formatCurrency(amountGrant.amount), textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setOrigin(1, 1));
+        frame.add(addShelfAmount(this, SHOP_CARD.frame, formatCurrency(amountGrant.amount)));
       }
       card.add(frame);
     }

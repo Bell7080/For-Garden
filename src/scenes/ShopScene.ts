@@ -21,7 +21,7 @@ import { addSectionTitle } from "../ui/SectionTitle";
 import { addBackButton } from "../ui/IconButton";
 import { addItemFrame, addShelfAmount, ITEM_FRAME } from "../ui/itemFrame";
 import { tradePackageValuePercent } from "../data/tradePackages";
-import { addSoldOutStamp, styleLimitCount } from "../ui/soldOutStamp";
+import { addSoldOutStamp, forgetSoldOutStamp, styleLimitCount } from "../ui/soldOutStamp";
 import { chipPoints, drawFrameVignette, drawLayer, drawVignette, HOLO, slantedRect } from "../ui/holo";
 import { DialogueBubble } from "../ui/DialogueBubble";
 import { COLOR, textStyle } from "../ui/theme";
@@ -581,7 +581,8 @@ export class ShopScene extends Phaser.Scene {
       card.add(badge);
     }
     // 남은 횟수를 다 쓴 칸은 검은 막이 덮이고 「매진」 도장이 찍힌다 — 눌러 열어도 구매 버튼이 꺼져 있다.
-    if (product.remaining <= 0) addSoldOutStamp(this, card, width, SHOP_CARD.height, { topLeft: 36, topRight: 0, bottomRight: 28, bottomLeft: 0 });
+    if (product.remaining <= 0) addSoldOutStamp(this, card, width, SHOP_CARD.height, { topLeft: 36, topRight: 0, bottomRight: 28, bottomLeft: 0 }, product.id);
+    else forgetSoldOutStamp(product.id);
     /*
      * **창 밖으로 흘러간 칸은 손을 받지 않는다.** GeometryMask는 그리기만 자르므로, 위로 흘러가
      * 가려진 칸의 입력면이 무대 위에 그대로 남아 점원을 누른 손을 가로챘다(카드가 점원보다 위

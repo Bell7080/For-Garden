@@ -1,7 +1,7 @@
-import type { RuneMainStatKey, RunePart } from "./runes";
+import type { RuneMainStatKey } from "./runes";
 
-/** 룬 상품에서 사는 쪽이 고른 값. 구매 요청의 `runeChoice`와 같은 모양이다. */
-export interface RuneShopChoice { part: RunePart; mainKeys?: readonly [RuneMainStatKey, RuneMainStatKey] }
+/** 지정 룬 상품에서 사는 쪽이 고른 값(자리는 진열이 정한다). 구매 요청의 `runeChoice`와 같은 모양이다. */
+export interface RuneShopChoice { mainKeys: readonly [RuneMainStatKey, RuneMainStatKey] }
 
 /**
  * 주 옵션 칩을 눌렀을 때의 선택 목록.
@@ -14,9 +14,7 @@ export function toggleMainKey(selected: readonly RuneMainStatKey[], key: RuneMai
   return [...selected, key].slice(-2);
 }
 
-/** 선택이 끝났으면 요청에 실을 값, 모자라면 `null`(구매 버튼이 꺼진다). 서버가 같은 규칙으로 다시 검증한다. */
-export function runeShopChoice(kind: "part" | "partMain", part: RunePart | null, mains: readonly RuneMainStatKey[]): RuneShopChoice | null {
-  if (part === null) return null;
-  if (kind === "part") return { part };
-  return mains.length === 2 ? { part, mainKeys: [mains[0]!, mains[1]!] } : null;
+/** 주 옵션 둘이 찼으면 요청에 실을 값, 모자라면 `null`(구매 버튼이 꺼진다). 서버가 같은 규칙으로 다시 검증한다. */
+export function runeMainChoice(mains: readonly RuneMainStatKey[]): RuneShopChoice | null {
+  return mains.length === 2 ? { mainKeys: [mains[0]!, mains[1]!] } : null;
 }

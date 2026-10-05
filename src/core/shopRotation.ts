@@ -73,3 +73,14 @@ export function rotationOffer(slot: RotationSlot, periodKey: string): string | n
   const pick = Math.floor(rotationRoll(`${slot.id}:pick:${periodKey}`) * slot.candidates.length);
   return slot.candidates[Math.min(slot.candidates.length - 1, pick)] ?? null;
 }
+
+/**
+ * 그 기간에 룬 칸이 내놓는 룬의 **자리**(0~2).
+ *
+ * 룬은 상점에 서는 순간부터 자리가 정해져 있다 — 사는 쪽이 자리를 고르게 하면 3번 자리만 필요한 사람이
+ * 그 한 칸을 기다려 고르기만 하면 되어 「어느 주에 무엇이 나오는가」가 사라진다. 자리도 칸 ID와 기간 키에서만
+ * 시드하므로 서버와 화면이 같은 답을 읽는다.
+ */
+export function rotationRunePart(slot: Pick<RotationSlot, "id">, periodKey: string): 0 | 1 | 2 {
+  return Math.min(2, Math.floor(rotationRoll(`${slot.id}:part:${periodKey}`) * 3)) as 0 | 1 | 2;
+}

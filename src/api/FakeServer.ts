@@ -37,7 +37,7 @@ import type { EventDefinition } from "../data/events/types";
 import type { EnterEventStageResponse, EventListResponse } from "./contracts";
 import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, runePartLabel, RUNE_MAIN_STAT_KEYS, type RuneMainStatKey, type RunePart, engraveRune as applyRuneEngraving, enhanceRune as applyRuneEnhancement, runeEnhancementAttempts, runeEnhancementIncrease, type RuneInstance, type RuneRarity } from "../core/runes";
 import { runeEnhancementGoldCost, runeSellValue } from "../data/runes";
-import { rotationOffer } from "../core/shopRotation";
+import { rotationOffer, rotationRunePart } from "../core/shopRotation";
 import { rotationSlot } from "../data/runeRotation";
 import { canGrantRuneTraitAtLeast, canUpgradeRuneTraitGrade, grantRuneTrait as rollRuneTrait, rerollRuneTrait as rollRuneTraitReroll, RUNE_TRAIT_RULES, upgradeRuneTraitGrade, type RuneTrait } from "../core/runeTraits";
 import { RUNE_TRAIT_IDS, RUNE_TRAIT_ITEMS } from "../data/runeTraits";
@@ -1767,6 +1767,7 @@ export class FakeServer implements GameApi {
       // 결제 어댑터가 말하고, 지급은 영수증 검증(`fulfillPlatformPurchase`)을 지나야만 일어난다.
       return {
         ...product, remaining, purchasable: remaining > 0, disabledReason: remaining <= 0 ? t("error.purchase.limit") : undefined,
+        ...(this.runePartOf(product, now) !== undefined ? { runePart: this.runePartOf(product, now) } : {}),
         ...(product.firstPurchaseBonus ? { firstBonusAvailable: this.firstBonusAvailable(product) } : {}),
       };
     });
@@ -1813,7 +1814,7 @@ export class FakeServer implements GameApi {
     // 룬 지급은 요청의 선택(자리·주 옵션)을 **서버가 다시 검증한** 뒤 서버 난수로 확정한다.
     for (const grant of product.grants) {
       if (grant.kind !== "rune") continue;
-      const choice = this.resolveRuneChoice(grant, request.runeChoice);
+      const choice = this.resolveRuneChoice(grant, this.runePartOf(product, now), request.runeChoice);
       for (let count = 0; count < quantity * grant.amount; count += 1) {
         const rune = this.createGrantedRune(grant.rarity, [...nextRunes, ...grantedRunes], choice.part, choice.mainKeys);
         grantedRunes.push(rune);
@@ -1841,12 +1842,19 @@ export class FakeServer implements GameApi {
     return { ...this.snapshot(), productId, quantity, granted, grantedRunes: grantedRunes.map((rune) => this.cloneRune(rune)), remaining: Math.max(0, product.purchaseLimit - count) };
   }
 
-  /** 룬 상품의 선택을 검증해 확정 자리·주 옵션으로 바꾼다. 고를 수 없는 것을 고른 요청은 거절한다. */
-  private resolveRuneChoice(grant: Extract<ProductDefinition["grants"][number], { kind: "rune" }>, choice: PurchaseProductRequest["runeChoice"]): { part: RunePart; mainKeys?: readonly [RuneMainStatKey, RuneMainStatKey] } {
-    if (grant.part !== undefined) return { part: grant.part };
-    const part = choice?.part;
-    if (part !== 0 && part !== 1 && part !== 2) throw new GameApiError("RUNE_CHOICE_REQUIRED", "룬을 끼울 자리를 골라야 합니다.");
-    if (grant.choose !== "partMain") return { part };
+  /** 룬 상품이 이 기간에 내놓는 자리. 로테이션 칸이 정하고, 칸이 없는 상품은 지급 정의의 고정 자리를 쓴다. */
+  private runePartOf(product: ProductDefinition, now: Date): RunePart | undefined {
+    const grant = product.grants.find((candidate) => candidate.kind === "rune");
+    if (grant?.kind !== "rune") return undefined;
+    if (grant.part !== undefined) return grant.part;
+    const slot = product.rotationSlot ? rotationSlot(product.rotationSlot) : undefined;
+    return slot ? rotationRunePart(slot, this.productPeriodKey(product, now)) : undefined;
+  }
+
+  /** 룬 상품의 확정 자리와, 주 옵션을 고르는 상품이면 그 선택을 검증한다. 고를 수 없는 것을 고른 요청은 거절한다. */
+  private resolveRuneChoice(grant: Extract<ProductDefinition["grants"][number], { kind: "rune" }>, part: RunePart | undefined, choice: PurchaseProductRequest["runeChoice"]): { part: RunePart; mainKeys?: readonly [RuneMainStatKey, RuneMainStatKey] } {
+    if (part === undefined) throw new GameApiError("RUNE_CHOICE_REQUIRED", "룬의 자리가 정해지지 않은 상품입니다.");
+    if (grant.choose !== "main") return { part };
     const keys = choice?.mainKeys;
     if (!keys || keys.length !== 2 || keys[0] === keys[1] || !keys.every((key) => RUNE_MAIN_STAT_KEYS.includes(key))) throw new GameApiError("RUNE_CHOICE_REQUIRED", "서로 다른 주 옵션 둘을 골라야 합니다.");
     return { part, mainKeys: [keys[0], keys[1]] };

@@ -29,7 +29,6 @@ export const MILEAGE_PRODUCTS: readonly ProductDefinition[] = [
   mileage("mileage-weekly-amber", "weekly", "shop-product-amber", "호박석 반출", "호박석 1개", 15, 1, [{ kind: "currency", currency: "amber", amount: 1 }]),
   mileage("mileage-weekly-fossil", "weekly", "shop-product-fossil", "화석 묶음", "화석 5개", 25, 1, [{ kind: "currency", currency: "fossil", amount: 5 }]),
   mileage("mileage-weekly-tonic", "weekly", "shop-product-supplies", "고농축 음료 반출", "에너지 드링크+ 3개", 5, 2, [{ kind: "item", itemId: "stamina-tonic-large", name: "에너지 드링크+", amount: 3, expiresInDays: 3 }]),
-  mileage("mileage-weekly-dust", "weekly", "shop-product-rune", "정제 가루 대량 반출", "룬 가루 100개", 8, 2, [{ kind: "item", itemId: "rune-dust", name: "룬 가루", amount: 100 }]),
   mileage("mileage-weekly-core", "weekly", "shop-product-ancient-core", "고대 핵 반출", "미지의 고대 핵 1개", 25, 1, [{ kind: "item", itemId: "ancient-core", name: "미지의 고대 핵", amount: 1 }]),
   mileage("mileage-weekly-raid-ticket", "weekly", "shop-product-supplies", "토벌권 반출", "토벌권 1장", 10, 2, [{ kind: "item", itemId: "raid-ticket", name: "토벌권", amount: 1 }]),
   // 일간 — 매일 들러 소량씩 바꾸는 일반 품목.
@@ -37,6 +36,5 @@ export const MILEAGE_PRODUCTS: readonly ProductDefinition[] = [
   mileage("mileage-daily-gold", "daily", "shop-product-fossil", "연구 지원금", "골드 20,000개", 1, 3, [{ kind: "currency", currency: "gold", amount: 20_000 }]),
   mileage("mileage-daily-cheesecake", "daily", "shop-product-supplies", "치즈케이크 보급", "치즈케이크 100개", 1, 3, [{ kind: "currency", currency: "cheesecake", amount: 100 }]),
   mileage("mileage-daily-tonic", "daily", "shop-product-supplies", "음료 한 병", "에너지 드링크 1개", 1, 2, [{ kind: "item", itemId: "stamina-tonic", name: "에너지 드링크", amount: 1, expiresInDays: 3 }]),
-  mileage("mileage-daily-dust", "daily", "shop-product-rune", "정제 가루 반출", "룬 가루 40개", 2, 1, [{ kind: "item", itemId: "rune-dust", name: "룬 가루", amount: 40 }]),
   mileage("mileage-daily-strata", "daily", "shop-product-supplies", "발굴권 반출", "발굴권 1장", 2, 1, [{ kind: "item", itemId: "strata-ticket", name: "발굴권", amount: 1 }]),
 ];

@@ -61,7 +61,7 @@ for (const tab of PREMIUM_TABS) registerDataText(tab, "label", `premium.tab.${ta
 for (const product of PRODUCTS) {
   registerDataText(product, "name", `product.${product.id}.name`);
   // 마일리지 상품의 설명은 화면에 뜨지 않는다 — 카드가 이름·남은 횟수·값만 세우므로 프리미엄과 같은 이유로 둔다.
-  if (product.storefront !== "premium" && product.storefront !== "mileage") registerDataText(product, "description", `product.${product.id}.description`);
+  if (product.storefront !== "premium" && product.storefront !== "mileage" && product.description !== "") registerDataText(product, "description", `product.${product.id}.description`);
 }
 
 /** 프로필 장식처럼 지급품 자체가 이름을 가진 것도 화면에 서므로 등록한다. */

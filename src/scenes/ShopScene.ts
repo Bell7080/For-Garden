@@ -43,6 +43,8 @@ import {
 } from "../ui/shopLayout";
 import { addClippedHit } from "../ui/clippedHit";
 import { pressIn, pressOut } from "../ui/pressFeedback";
+import { addRuneFrame, runeAccentCss } from "../ui/runeIcons";
+import { productIconTexture, runeProductOf } from "../ui/productIcon";
 import { formatRefreshCountdown, nextRefreshAt, shortestRefresh, type ResettingRefresh } from "../core/shopRefresh";
 
 /**
@@ -575,15 +577,19 @@ export class ShopScene extends Phaser.Scene {
     const card = this.add.container(x, y);
     card.add(drawLayer(this, 0, 0, chipPoints(width, SHOP_CARD.height, { bevel: { topLeft: 36, topRight: 0, bottomRight: 28, bottomLeft: 0 } }), { fill: 0x182029, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.52 }));
     // 이번 주 SSR 파편은 상품 그림이 아니라 **그 개체의 얼굴 액자**로 선다 — 무엇을 사는지가 얼굴로 먼저 읽힌다.
+    const runeProduct = runeProductOf(product);
     const weeklyRelic = this.clerkRelicId && product.grants.some((grant) => grant.kind === "weekly_ssr_fragment") ? getRelic(this.clerkRelicId) : undefined;
     if (weeklyRelic) {
       card.add(new FaceFrame(this, 0, SHOP_CARD.frameY, {
         portraitAssetId: weeklyRelic.portraitAssetId, size: SHOP_CARD.frame, color: RARITY_TONE[weeklyRelic.rarity].chip, gem: RARITY_TONE[weeklyRelic.rarity].chip, amount: "1",
       }));
+    } else if (runeProduct) {
+      // 룬은 상점에 서는 순간 등급과 자리가 정해져 있다 — 가방의 룬 카드와 같은 액자에 그 조각이 크게 선다.
+      card.add(addRuneFrame(this, 0, SHOP_CARD.frameY, SHOP_CARD.frame, runeProduct.rarity, runeProduct.part));
     } else {
       const frame = addItemFrame(this, 0, SHOP_CARD.frameY, SHOP_CARD.frame);
-      // iconKey는 카탈로그가 고른 임시 상품 그림이며 최종 원화 교체에도 카드 코드는 유지된다.
-      frame.add(this.add.image(0, 0, product.iconKey).setDisplaySize(SHOP_CARD.frame * ITEM_FRAME.icon, SHOP_CARD.frame * ITEM_FRAME.icon));
+      // 그림은 첫 지급품에서 나온다(`productIconTexture`) — 가방에 들어오는 것과 같은 그림이 칸에 선다.
+      frame.add(this.add.image(0, 0, productIconTexture(product)).setDisplaySize(SHOP_CARD.frame * ITEM_FRAME.icon, SHOP_CARD.frame * ITEM_FRAME.icon));
       // 지급 수량은 액자 우하단에 공용 축약 표기로 겹쳐 작은 화면에서도 한눈에 읽힌다. 아이템 묶음도 같다.
       const amountGrant = product.grants.find((grant) => grant.kind === "currency" || grant.kind === "item");
       if (amountGrant) {
@@ -591,7 +597,7 @@ export class ShopScene extends Phaser.Scene {
       }
       card.add(frame);
     }
-    const name = this.add.text(0, SHOP_CARD.nameY, product.name, textStyle({ role: "emphasis", size: 27 })).setOrigin(0.5);
+    const name = this.add.text(0, SHOP_CARD.nameY, product.name, textStyle({ role: "emphasis", size: 27, ...(runeProduct ? { color: runeAccentCss(runeProduct.rarity) } : {}) })).setOrigin(0.5);
     // 이름 길이는 언어가 정하고 칸 폭은 둘이 나눠 갖는 고정값이라, 넘치면 글자만 가로로 줄인다.
     const room = width - 36;
     if (name.width > room) name.setScale(Math.max(0.7, room / name.width), 1);

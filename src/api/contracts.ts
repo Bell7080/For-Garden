@@ -480,14 +480,14 @@ export interface NotificationSignalsResponse { pendingFriendRequestCount: number
 export interface ClaimMissionRewardsResponse extends PlayerStateDto { claimedIds: string[]; claimedResearchStageIds: string[]; /** 임무·연구도 단계가 각각 준 것과 그 합(같은 재화는 한 줄). 상한에 깎인 뒤의 실제 지급분이다. */ rewards: { mission: MissionReward[]; research: MissionReward[] }; granted: MissionReward[]; }
 
 /** 상품 목록은 정적 정의에 서버가 계산한 현재 구매 가능 횟수를 결합한다. */
-export interface ProductDto { id: string; storefront: ProductStorefront; category: ShopCategory; lootCategory?: LootCategory; premiumCategory?: PremiumCategory; iconKey: ShopProductIconKey; name: string; description: string; acquisition: ProductAcquisition; grants: readonly ProductGrant[]; defaultQuantity: number; passBenefit?: PassBenefitDefinition; purchaseLimit: number; refresh: ProductRefresh; remaining: number; purchasable: boolean; disabledReason?: string; firstPurchaseBonus?: readonly ProductGrant[]; /** 서버가 구매 기록에서 판정한 값 — 아직 첫 구매 보너스를 받지 않았는가. */ firstBonusAvailable?: boolean; }
+export interface ProductDto { id: string; storefront: ProductStorefront; category: ShopCategory; lootCategory?: LootCategory; premiumCategory?: PremiumCategory; iconKey: ShopProductIconKey; name: string; description: string; acquisition: ProductAcquisition; grants: readonly ProductGrant[]; defaultQuantity: number; passBenefit?: PassBenefitDefinition; purchaseLimit: number; refresh: ProductRefresh; remaining: number; purchasable: boolean; disabledReason?: string; firstPurchaseBonus?: readonly ProductGrant[]; /** 서버가 구매 기록에서 판정한 값 — 아직 첫 구매 보너스를 받지 않았는가. */ firstBonusAvailable?: boolean; /** 룬 상품이 이 기간에 내놓는 룬의 자리. 서버가 로테이션 칸에서 정해 내려 주며, 사는 쪽은 고르지 않는다. */ runePart?: RunePart; }
 /** 상품 조회 응답은 서버 시각 기준으로 노출 중인 상품만 담는다. */
 export interface ProductListResponse { products: ProductDto[]; serverTime: string; }
 /** 구매 요청은 영속 상품 ID와 사용자가 팝업에서 확정한 묶음 수량을 함께 보낸다. */
 export interface PurchaseProductRequest {
   storefront: ProductStorefront; productId: string; quantity: number;
-  /** 룬 상품에서 사는 쪽이 고른 자리와 (지정 룬이면) 주 옵션 둘. 서버가 상품 계약에 맞는지 다시 검증한다. */
-  runeChoice?: { part: 0 | 1 | 2; mainKeys?: readonly [RuneMainStatKey, RuneMainStatKey] };
+  /** 주 옵션을 고르는 룬 상품(지정 룬)에서 사는 쪽이 고른 주 옵션 둘. 자리는 서버가 정한다. 서버가 상품 계약에 맞는지 다시 검증한다. */
+  runeChoice?: { mainKeys: readonly [RuneMainStatKey, RuneMainStatKey] };
 }
 /** 인게임 상품의 차감·지급·제한 갱신이 모두 끝난 뒤의 응답이다. */
 export interface PurchaseProductResponse extends PlayerStateDto { productId: string; quantity: number; /** 상품 정의가 아니라 이번 처리에서 서버가 확정한 총 지급 결과다. */ granted: readonly ProductGrant[]; remaining: number; /** 이번 구매에서 서버가 생성한 완성 룬들이다. */ grantedRunes: RuneInstance[]; }

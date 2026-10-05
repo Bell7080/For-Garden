@@ -35,6 +35,11 @@ export const RUNE_ACCENT: Record<HeartGemRarity, number> = {
   legendary: 0xff4a54,
 };
 
+/** 등급 색을 글자 칠에 쓰는 CSS 문자열로. 상점 룬 이름이 액자와 같은 등급 색으로 선다. */
+export function runeAccentCss(rarity: HeartGemRarity): string {
+  return `#${RUNE_ACCENT[rarity].toString(16).padStart(6, "0")}`;
+}
+
 export function runeTexture(rarity: HeartGemRarity | undefined, index: number): string {
   return rarity ? `rune-${rarity}-${index}` : `rune-empty-${index}`;
 }

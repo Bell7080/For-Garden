@@ -610,14 +610,14 @@
 "30 000 золота"
 ],
 "product.raid-ancient-core.name": [
-"讨伐古代核心",
-"แกนโบราณปราบปราม",
-"Lõi cổ đại chinh phạt",
-"Inti Purba Penaklukan",
-"Núcleo antiguo de subyugación",
-"Núcleo antigo de subjugação",
-"Uralter Bezwingungskern",
-"Древнее ядро усмирения"
+"未知的古代核心",
+"แกนโบราณไร้ชื่อ",
+"Lõi cổ đại chưa rõ",
+"Inti Purba Tak Dikenal",
+"Núcleo antiguo desconocido",
+"Núcleo antigo desconhecido",
+"Unbekannter uralter Kern",
+"Неизвестное древнее ядро"
 ],
 "product.raid-ancient-core.description": [
 "未知的古代核心1个",
@@ -630,14 +630,14 @@
 "1 неизвестное древнее ядро"
 ],
 "product.raid-refined-core.name": [
-"讨伐精炼核心",
-"แกนขัดเกลาปราบปราม",
-"Lõi tinh luyện chinh phạt",
-"Inti Murni Penaklukan",
-"Núcleo refinado de subyugación",
-"Núcleo refinado de subjugação",
-"Veredelter Bezwingungskern",
-"Очищенное ядро усмирения"
+"精炼的古代核心",
+"แกนโบราณที่ขัดเกลา",
+"Lõi cổ đại tinh luyện",
+"Inti Purba Murni",
+"Núcleo antiguo refinado",
+"Núcleo antigo refinado",
+"Veredelter uralter Kern",
+"Очищенное древнее ядро"
 ],
 "product.raid-refined-core.description": [
 "精炼的古代核心1个",
@@ -709,35 +709,15 @@
 "40 Juwelen",
 "40 самоцветов"
 ],
-"product.loot-salvage-dust.name": [
-"打捞精炼粉尘",
-"ฝุ่นขัดเกลาที่กู้มา",
-"Bụi tinh chế trục vớt",
-"Debu Olahan Selamatan",
-"Polvo de refinado rescatado",
-"Pó de refino resgatado",
-"Geborgener Veredelungsstaub",
-"Поднятая очищающая пыль"
-],
-"product.loot-salvage-dust.description": [
-"符文粉尘40个",
-"ฝุ่นรูน 40",
-"40 Bụi Rune",
-"40 Debu Rune",
-"40 de polvo de runa",
-"40 pós de runa",
-"40 Runenstaub",
-"40 рунной пыли"
-],
 "product.loot-salvage-crystal.name": [
-"打捞复原结晶",
-"ผลึกฟื้นคืนที่กู้มา",
-"Tinh thể phục hồi trục vớt",
-"Kristal Restorasi Selamatan",
-"Cristal de restauración rescatado",
-"Cristal de restauração resgatado",
-"Geborgener Restaurierungskristall",
-"Поднятый кристалл восстановления"
+"完全复原结晶",
+"ผลึกฟื้นคืนสมบูรณ์",
+"Tinh thể Phục hồi hoàn toàn",
+"Kristal Restorasi Penuh",
+"Cristal de restauración total",
+"Cristal de restauração total",
+"Kristall der vollständigen Restaurierung",
+"Кристалл полного восстановления"
 ],
 "product.loot-salvage-crystal.description": [
 "完全复原结晶1个",
@@ -1050,45 +1030,55 @@
 "Monatlich",
 "Ежемесячно"
 ],
-"product.arch-dust-permit.name": [
-"精炼粉尘许可证",
-"ใบอนุญาตฝุ่นขัดเกลา",
-"Giấy phép bụi tinh chế",
-"Izin Debu Olahan",
-"Permiso de polvo refinado",
-"Licença de pó refinado",
-"Genehmigung für Veredelungsstaub",
-"Разрешение на очищенную пыль"
+"product.arch-gold-exchange.name": [
+"金币",
+"ทอง",
+"Vàng",
+"Emas",
+"Oro",
+"Ouro",
+"Gold",
+"Золото"
 ],
-"product.arch-dust-permit.description": [
-"符文粉尘 x40",
-"ฝุ่นรูน x40",
-"Bụi Rune x40",
-"Debu Rune x40",
-"Polvo de runa x40",
-"Pó de runa x40",
-"Runenstaub x40",
-"Рунная пыль x40"
+"product.arch-cheesecake-exchange.name": [
+"芝士蛋糕",
+"ชีสเค้ก",
+"Bánh phô mai",
+"Cheesecake",
+"Tarta de queso",
+"Cheesecake",
+"Käsekuchen",
+"Чизкейк"
 ],
-"product.arch-dust-permit.grant.0": [
-"符文粉尘",
-"ฝุ่นรูน",
-"Bụi Rune",
-"Debu Rune",
-"Polvo de runa",
-"Pó de runa",
-"Runenstaub",
-"Рунная пыль"
+"product.arch-fossil-exchange.name": [
+"化石",
+"ฟอสซิล",
+"Hóa thạch",
+"Fosil",
+"Fósil",
+"Fóssil",
+"Fossil",
+"Окаменелость"
+],
+"product.arch-amber-exchange.name": [
+"琥珀",
+"อำพัน",
+"Hổ phách",
+"Amber",
+"Ámbar",
+"Âmbar",
+"Bernstein",
+"Янтарь"
 ],
 "product.arch-ancient-core.name": [
-"古代核心许可证",
-"ใบอนุญาตแกนโบราณ",
-"Giấy phép lõi cổ đại",
-"Izin Inti Purba",
-"Permiso de núcleo antiguo",
-"Licença de núcleo antigo",
-"Genehmigung für uralte Kerne",
-"Разрешение на древнее ядро"
+"未知的古代核心",
+"แกนโบราณไร้ชื่อ",
+"Lõi cổ đại chưa rõ",
+"Inti Purba Tak Dikenal",
+"Núcleo antiguo desconocido",
+"Núcleo antigo desconhecido",
+"Unbekannter uralter Kern",
+"Неизвестное древнее ядро"
 ],
 "product.arch-ancient-core.description": [
 "未知的古代核心1个",
@@ -1101,14 +1091,14 @@
 "1 неизвестное древнее ядро"
 ],
 "product.arch-refined-core.name": [
-"精炼核心许可证",
-"ใบอนุญาตแกนขัดเกลา",
-"Giấy phép lõi tinh luyện",
-"Izin Inti Murni",
-"Permiso de núcleo refinado",
-"Licença de núcleo refinado",
-"Genehmigung für veredelte Kerne",
-"Разрешение на очищенное ядро"
+"精炼的古代核心",
+"แกนโบราณที่ขัดเกลา",
+"Lõi cổ đại tinh luyện",
+"Inti Purba Murni",
+"Núcleo antiguo refinado",
+"Núcleo antigo refinado",
+"Veredelter uralter Kern",
+"Очищенное древнее ядро"
 ],
 "product.arch-refined-core.description": [
 "精炼的古代核心1个",
@@ -1121,14 +1111,14 @@
 "1 очищенное древнее ядро"
 ],
 "product.arch-restoration-crystal.name": [
-"复原结晶执照",
-"ใบอนุญาตผลึกฟื้นคืน",
-"Giấy phép tinh thể phục hồi",
-"Lisensi Kristal Restorasi",
-"Licencia de cristal de restauración",
-"Licença de cristal de restauração",
-"Lizenz für Restaurierungskristalle",
-"Лицензия на кристалл восстановления"
+"完全复原结晶",
+"ผลึกฟื้นคืนสมบูรณ์",
+"Tinh thể Phục hồi hoàn toàn",
+"Kristal Restorasi Penuh",
+"Cristal de restauración total",
+"Cristal de restauração total",
+"Kristall der vollständigen Restaurierung",
+"Кристалл полного восстановления"
 ],
 "product.arch-restoration-crystal.description": [
 "完全复原结晶1个",
@@ -1189,16 +1179,6 @@
 "Bebida energética",
 "Energydrink",
 "Энергетик"
-],
-"product.loot-salvage-dust.grant.0": [
-"符文粉尘",
-"ฝุ่นรูน",
-"Bụi Rune",
-"Debu Rune",
-"Polvo de runa",
-"Pó de runa",
-"Runenstaub",
-"Рунная пыль"
 ],
 "product.loot-salvage-crystal.grant.0": [
 "完全复原结晶",

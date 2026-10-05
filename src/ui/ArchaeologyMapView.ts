@@ -47,7 +47,7 @@ const NODE_STYLE: Readonly<Record<ArchaeologyNodeState, {
   active: { fill: 0x2a1a12, alpha: 0.95, edge: COLOR.sortie, edgeAlpha: 0.95, mark: "▶", markColor: COLOR.sortieText, nameColor: COLOR.sortieText },
   available: { fill: 0x121a1e, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.9, mark: "◆", markColor: COLOR.accentText, nameColor: COLOR.ink },
   cooling: { fill: 0x10161b, alpha: 0.86, edge: COLOR.strataFrameGlow, edgeAlpha: 0.6, mark: "◆", markColor: COLOR.inkDim, nameColor: COLOR.inkDim },
-  completed: { fill: 0x121a1e, alpha: 0.7, edge: COLOR.accent, edgeAlpha: 0.45, mark: "✓", markColor: COLOR.accentText, nameColor: COLOR.inkDim },
+  completed: { fill: 0x121a1e, alpha: 0.7, edge: COLOR.accent, edgeAlpha: 0.45, mark: "◆", markColor: COLOR.accentText, nameColor: COLOR.inkDim },
   locked: { fill: 0x0d1013, alpha: 0.72, edge: COLOR.panelEdge, edgeAlpha: 0.5, mark: "", markColor: COLOR.inkDim, nameColor: COLOR.inkDim },
 } as const;
 
@@ -115,7 +115,16 @@ export class ArchaeologyMapView extends Phaser.GameObjects.Container {
       node.add(scene.add.text(0, size / 2 + NODE_LABEL.nameGap, t(site.nameKey as TextKey), textStyle({ role: "display", size: NODE_LABEL.nameSize, color: style.nameColor })).setOrigin(0.5));
       // 결정: 방치로 맺힌 단계만큼 노드 오른쪽 위에 마름모가 반짝인다(단계가 오를수록 많다).
       const crystalStage = state?.crystalStage ?? 0;
-      if (crystalStage > 0) {
+      if (crystalStage > 0 && kind !== "locked") {
+        // 칩 바깥에서도 결정이 읽히도록 칩 모양 안쪽이 결정색으로 은은히 숨 쉰다. 마스크 없이 칩 도형만 칠하고,
+        // 단계가 오를수록 더 밝고 더 자주 빛난다. 겹쳐 밝아지는 합성이라 이름·표식보다 먼저 읽히지 않게 옅게 둔다.
+        const glow = scene.add.graphics();
+        glow.fillStyle(COLOR.archaeologyStone, 1).fillPoints(toPoints(shape), true);
+        glow.setBlendMode(Phaser.BlendModes.ADD);
+        const peak = Math.min(0.3, 0.1 + crystalStage * 0.05);
+        glow.setAlpha(motionOn() ? 0 : peak * 0.6);
+        node.addAt(glow, 1);
+        if (scene.tweens && motionOn()) scene.tweens.add({ targets: glow, alpha: peak, duration: 1100, yoyo: true, hold: 300, repeat: -1, repeatDelay: Math.max(600, 2600 - crystalStage * 500), ease: "Sine.easeInOut" });
         for (let i = 0; i < crystalStage; i += 1) {
           const gem = scene.add.text(size / 2 - 6 - i * 26, -size / 2 + 4, "◆", textStyle({ role: "display", size: 28, color: `#${COLOR.archaeologyStone.toString(16).padStart(6, "0")}` })).setOrigin(0.5).setStroke("#05070a", 5);
           node.add(gem);

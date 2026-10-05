@@ -36,7 +36,7 @@ import { LOBBY_RETURN, normalizeLobbyEntry, type LobbyMenu } from "./lobbyEntry"
 import { shapeClipMask } from "../ui/popupArt";
 import { playSceneEntrance, startScene, slideTabPage } from "../ui/screenTransition";
 import {
-  SHOP_BOARD, SHOP_CARD, SHOP_ENTRANCE, SHOP_SHELF, SHOP_STAGE, SHOP_TAB_ROW, SHOP_TITLE,
+  SHOP_BOARD, SHOP_CARD, SHOP_ENTRANCE, SHOP_SHELF, SHOP_REFRESH_CLOCK, SHOP_STAGE, SHOP_TAB_ROW, SHOP_TITLE,
   shopBoardSize, shopSectionLayout, shopCardSpot, shopCardWidth, shopDialogueSpot, shopGridContentHeight, shopGridViewport,
   shopShelfWidth, shopShelfY, shopTabSpot, shopTitleLeft, shopTitleY,
   shopStageSettleMs,
@@ -354,7 +354,7 @@ export class ShopScene extends Phaser.Scene {
   private createTitle(): void {
     addSectionTitle(this, shopTitleLeft(), shopTitleY(), t("shop.exchangeList"), { size: SHOP_TITLE.size, parent: this.boardChrome });
     // 왼쪽은 제목표가 서므로 같은 줄 오른쪽 끝에 굵은 붉은 글씨로 리필까지 남은 시간을 단다.
-    this.refreshClock = this.add.text(shopGridViewport().right, shopTitleY(), "", textStyle({ role: "display", size: 30, color: COLOR.dangerText })).setOrigin(1, 0.5);
+    this.refreshClock = this.add.text(shopGridViewport().right, shopTitleY() + SHOP_REFRESH_CLOCK.offsetY, "", textStyle({ role: "display", size: SHOP_REFRESH_CLOCK.size, color: COLOR.dangerText })).setOrigin(1, 0.5);
     this.boardChrome.add(this.refreshClock);
   }
 
@@ -504,7 +504,7 @@ export class ShopScene extends Phaser.Scene {
       this.content?.add(addSectionTitle(this, shopTitleLeft(), spot.titleY, t(section.titleKey), { size: SHOP_TITLE.size }));
       const cadence = shortestRefresh(products.map((product) => product.refresh));
       if (cadence) {
-        const clock = this.add.text(view.right, spot.titleY, "", textStyle({ role: "display", size: 30, color: COLOR.dangerText })).setOrigin(1, 0.5);
+        const clock = this.add.text(view.right, spot.titleY + SHOP_REFRESH_CLOCK.offsetY, "", textStyle({ role: "display", size: SHOP_REFRESH_CLOCK.size, color: COLOR.dangerText })).setOrigin(1, 0.5);
         this.content?.add(clock);
         this.sectionClocks.push({ text: clock, cadence, shown: "", dueAt: 0 });
       }

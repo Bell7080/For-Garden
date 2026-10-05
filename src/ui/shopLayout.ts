@@ -146,6 +146,12 @@ export const SHOP_TITLE = {
   size: 34,
 } as const;
 
+/**
+ * 리필 시계(`D6:23:48`). 제목표와 같은 줄 오른쪽 끝에 서되, 판 윗변에 걸치지 않고 안쪽으로 내려앉는다.
+ * `offsetY`는 제목줄 기준 아래로 민 양이고, 첫 칸 줄(`viewportTopPad` 60) 위에서 끝나도록 잡는다.
+ */
+export const SHOP_REFRESH_CLOCK = { size: 40, offsetY: 22 } as const;
+
 /** 제목표 한 장의 높이. `addSectionTitle`이 글자 크기에서 잡는 값과 같다. */
 export function shopTitleHeight(): number {
   return Math.round(SHOP_TITLE.size * 1.52);

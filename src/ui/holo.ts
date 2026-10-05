@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { COLOR } from "./theme";
+import { gaugeFogPixels, gaugeSweepAlpha } from "../core/gaugeFog";
 
 /**
  * 홀로그램 UI의 생김새 토큰.
@@ -495,11 +496,21 @@ export class HoloBar {
   private readonly halo?: Phaser.GameObjects.Graphics;
   /** 최대치 테두리와 칸 나눔. 켜지 않은 게이지에는 없다. */
   private readonly frame?: Phaser.GameObjects.Graphics;
-  /** 채움 위를 훑는 밝은 띠. `shimmer`를 켠 게이지만 갖는다. */
+  /**
+   * 채움 안에 깔리는 안개 두 겹. `shimmer`를 켠 게이지만 갖는다.
+   *
+   * 결은 채움 모양(`/` 기울기 포함)대로 **구워 잘라** 둔다 — 기하 마스크는 컨테이너 이동을
+   * 물려받지 않아 팝업이 떠오르는 동안 어긋난다. 채움 구간이 바뀔 때만 다시 굽는다.
+   */
+  private readonly fogLayers: Phaser.GameObjects.Image[] = [];
+  private readonly fogTextures: Phaser.Textures.CanvasTexture[] = [];
+  private fogBaked = "";
+  private readonly fogSeed: number = 0;
+  /** 안개 위를 가끔 훑고 지나가는 빛띠. 양 끝이 녹는다. */
   private readonly sheen?: Phaser.GameObjects.Graphics;
-  private sheenTween?: Phaser.Tweens.Tween;
-  /** 띠의 위치(0~1). 트윈이 올리고 채움을 다시 그릴 때 함께 읽는다. */
-  private sheenPhase = 0;
+  private readonly ambientTweens: Phaser.Tweens.Tween[] = [];
+  /** 띠의 위치(0~1). 지나가지 않는 동안은 음수로 두어 그리지 않는다. */
+  private sheenPhase = -1;
   private ratio = 1;
   /** 빛무리 설정. 켜 두면 채움을 다시 그릴 때 같은 값으로 함께 그린다. */
   private readonly glow?: { spread?: number; alpha?: number };
@@ -510,10 +521,10 @@ export class HoloBar {
   private readonly slant: number;
 
   /** 복합 UI가 게이지 두 겹을 자신의 컨테이너 생명주기에 함께 묶을 때 쓰는 표시 객체다. */
-  get objects(): readonly Phaser.GameObjects.Graphics[] {
-    // 층 순서 그대로 돌려준다 — 그림자 → 홈 → 빛무리 → 채움 → 테두리.
-    return [this.shade, this.track, this.halo, this.fill, this.sheen, this.frame]
-      .filter((object): object is Phaser.GameObjects.Graphics => object !== undefined);
+  get objects(): readonly (Phaser.GameObjects.Graphics | Phaser.GameObjects.Image)[] {
+    // 층 순서 그대로 돌려준다 — 그림자 → 홈 → 빛무리 → 채움 → 안개 → 빛띠 → 테두리.
+    return [this.shade, this.track, this.halo, this.fill, ...this.fogLayers, this.sheen, this.frame]
+      .filter((object): object is Phaser.GameObjects.Graphics | Phaser.GameObjects.Image => object !== undefined);
   }
 
   constructor(
@@ -551,12 +562,14 @@ export class HoloBar {
        */
       glow?: { spread?: number; alpha?: number };
       /**
-       * 채움 위를 느리게 훑는 밝은 띠로 게이지가 일렁이게 한다.
+       * 채움 안에 안개를 깔아 게이지가 일렁이게 한다(고고학 탐사 판 안개와 같은 문법).
        *
-       * 움직임 줄이기에서는 호출하는 쪽이 켜지 않는다(`motionPolicy`). 겹쳐 밝아지는 합성이라
-       * 아주 옅게만 깐다 — 눈금과 수치보다 먼저 읽히면 안 된다.
+       * 경계를 서로 다르게 비튼 두 겹이 **진하기만** 엇갈리고, 가끔 양 끝이 녹는 빛띠가 훑는다.
+       * 겹쳐 밝아지는 합성이라 옅게만 깐다 — 눈금과 수치보다 먼저 읽히면 안 된다.
+       * `still`이면(움직임 줄이기) 결만 서고 움직이지 않는다. `phase`는 같은 화면의 여러 줄이
+       * 한꺼번에 깜빡이지 않도록 박자와 무늬를 어긋나게 한다.
        */
-      shimmer?: boolean;
+      shimmer?: { still?: boolean; phase?: number };
     },
   ) {
     this.color = options.color;
@@ -577,11 +590,30 @@ export class HoloBar {
     this.fill = scene.add.graphics({ x, y });
     // 테두리와 눈금은 채움 위에 얹혀야 채워진 자리에서도 칸이 보인다.
     if (options.shimmer) {
-      this.sheen = scene.add.graphics({ x, y }).setBlendMode(Phaser.BlendModes.ADD);
-      this.sheenTween = scene.tweens.addCounter({
-        from: 0, to: 1, duration: 2600, repeat: -1,
-        onUpdate: (tween) => { this.sheenPhase = tween.getValue() ?? 0; this.drawSheen(); },
-      });
+      const { still = false, phase = 0 } = options.shimmer;
+      this.fogSeed = phase;
+      const canvasWidth = Math.ceil(width + slant);
+      const canvasHeight = Math.ceil(height);
+      for (let variant = 0; variant < 2; variant += 1) {
+        const key = `gauge-fog-${HoloBar.fogSerial += 1}`;
+        const texture = scene.textures.createCanvas(key, canvasWidth, canvasHeight);
+        if (texture === null) continue;
+        this.fogTextures.push(texture);
+        this.fogLayers.push(scene.add.image(x, y, key).setBlendMode(Phaser.BlendModes.ADD)
+          .setAlpha(variant === 0 ? 1 : still ? 0.45 : 0.25));
+      }
+      if (!still) {
+        const [first, second] = this.fogLayers;
+        const lag = phase * 700;
+        if (first) this.ambientTweens.push(scene.tweens.add({ targets: first, alpha: 0.35, duration: 2600, yoyo: true, repeat: -1, ease: "Sine.InOut", delay: lag }));
+        if (second) this.ambientTweens.push(scene.tweens.add({ targets: second, alpha: 0.95, duration: 3300, yoyo: true, repeat: -1, ease: "Sine.InOut", delay: 400 + lag }));
+        this.sheen = scene.add.graphics({ x, y }).setBlendMode(Phaser.BlendModes.ADD);
+        this.ambientTweens.push(scene.tweens.addCounter({
+          from: 0, to: 1, duration: 2200, repeat: -1, repeatDelay: 2600, delay: 900 + phase * 900,
+          onUpdate: (tween) => { this.sheenPhase = tween.getValue() ?? 0; this.drawSheen(); },
+          onRepeat: () => { this.sheenPhase = -1; this.drawSheen(); },
+        }));
+      }
     }
     this.frame = options.outline || options.ticks ? scene.add.graphics({ x, y }) : undefined;
     if (this.frame) {
@@ -597,7 +629,12 @@ export class HoloBar {
       }
     }
     this.redraw();
+    // 팝업이 닫히며 컨테이너째 지워져도 트윈과 구운 텍스처가 남지 않게 채움의 수명에 묶는다.
+    if (this.fogLayers.length > 0 || this.sheen) this.fill.once(Phaser.GameObjects.Events.DESTROY, () => this.releaseFog());
   }
+
+  /** 구운 안개 텍스처 키가 겹치지 않게 세는 번호. */
+  private static fogSerial = 0;
 
   setValue(ratio: number, color?: number): void {
     this.setRange(0, ratio, color);
@@ -630,26 +667,71 @@ export class HoloBar {
     return this;
   }
 
-  /** 채움 구간 안에서만 비스듬한 띠 하나를 그린다. 구간 밖으로 나간 몫은 잘라 낸다. */
+  /**
+   * 채움 구간 안에서만 빛띠 하나를 그린다. 구간 밖으로 나간 몫은 잘라 낸다.
+   *
+   * 한 장의 사다리꼴이 아니라 **진하기가 다른 가는 띠 여럿**으로 쌓아 양 끝이 녹게 한다 —
+   * 끝이 끊긴 네모는 빛이 아니라 네모가 지나간 것으로 읽힌다.
+   */
   private drawSheen(): void {
-    if (!this.sheen) return;
+    if (!this.sheen || !this.sheen.active) return;
     this.sheen.clear();
+    if (this.sheenPhase < 0) return;
     const begin = this.width * this.from;
     const end = this.width * this.ratio;
     if (end - begin <= 0) return;
-    const bandWidth = Math.max(18, this.height * 1.6);
-    const travel = end - begin + bandWidth * 2;
-    const start = begin - bandWidth + travel * this.sheenPhase;
-    const a = Math.max(begin, start);
-    const b = Math.min(end, start + bandWidth);
-    if (b <= a) return;
+    const half = Math.max(24, this.height * 2);
+    const center = begin - half + (end - begin + half * 2) * this.sheenPhase;
     const left = -this.width / 2;
     const s = this.slant / 2;
-    this.sheen.fillStyle(0xffffff, 0.2);
-    this.sheen.fillPoints(
-      toPoints([left + a + s, -this.height / 2, left + b + s, -this.height / 2, left + b - s, this.height / 2, left + a - s, this.height / 2]),
-      true,
-    );
+    const strips = 12;
+    for (let index = 0; index < strips; index += 1) {
+      const from = center - half + (half * 2 * index) / strips;
+      const a = Math.max(begin, from);
+      const b = Math.min(end, from + (half * 2) / strips);
+      if (b <= a) continue;
+      const offset = (from + half / strips - center) / half;
+      this.sheen.fillStyle(0xffffff, 0.24 * gaugeSweepAlpha(offset));
+      this.sheen.fillPoints(
+        toPoints([left + a + s, -this.height / 2, left + b + s, -this.height / 2, left + b - s, this.height / 2, left + a - s, this.height / 2]),
+        true,
+      );
+    }
+  }
+
+  /** 안개 결을 지금 채움 구간대로 다시 굽는다. 구간과 색이 그대로면 굽지 않는다. */
+  private bakeFog(): void {
+    if (this.fogTextures.length === 0) return;
+    const signature = `${this.from}:${this.ratio}:${this.color}`;
+    if (signature === this.fogBaked) return;
+    this.fogBaked = signature;
+    const s = this.slant / 2;
+    this.fogTextures.forEach((texture, variant) => {
+      const context = texture.getContext();
+      if (!context) return;
+      const { width, height } = texture;
+      context.clearRect(0, 0, width, height);
+      context.putImageData(new ImageData(new Uint8ClampedArray(gaugeFogPixels({ width, height, color: this.color, variant, seed: this.fogSeed })), width, height), 0, 0);
+      // 채움 밖의 결을 **덮지 않고 지운다**(`bakeFaceTexture`와 같은 방법).
+      const begin = this.width * this.from + s;
+      const filled = this.width * this.ratio + s;
+      context.globalCompositeOperation = "destination-in";
+      context.beginPath();
+      context.moveTo(begin + s, 0); context.lineTo(filled + s, 0);
+      context.lineTo(filled - s, height); context.lineTo(begin - s, height);
+      context.closePath();
+      context.fill();
+      context.globalCompositeOperation = "source-over";
+      texture.refresh();
+    });
+  }
+
+  /** 안개 트윈과 구운 텍스처를 걷는다. */
+  private releaseFog(): void {
+    this.ambientTweens.forEach((tween) => tween.remove());
+    this.ambientTweens.length = 0;
+    for (const texture of this.fogTextures) texture.manager.exists(texture.key) && texture.manager.remove(texture.key);
+    this.fogTextures.length = 0;
   }
 
   private redraw(): void {
@@ -659,6 +741,7 @@ export class HoloBar {
     this.fill.clear();
     this.halo?.clear();
     this.drawSheen();
+    this.bakeFog();
     if (filled - begin <= 0) return;
     if (this.halo && this.glow) {
       // 채움과 같은 사다리꼴을 사방으로 조금 키워 옅게 한 겹만 깐다.
@@ -696,8 +779,8 @@ export class HoloBar {
     this.track.destroy();
     this.halo?.destroy();
     this.fill.destroy();
-    this.sheenTween?.remove();
     this.sheen?.destroy();
+    this.fogLayers.forEach((layer) => layer.destroy());
     this.frame?.destroy();
   }
 }

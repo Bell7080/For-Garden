@@ -875,8 +875,9 @@ export class ArchaeologyScene extends Phaser.Scene {
          */
         const bar = new HoloBar(this, spot.gaugeX, y, spot.gauge.width, spot.gauge.height, {
           color: archaeologyRatingColor(kind, rating.filled), trackAlpha: 0.82, outline: true, ticks: 9,
-          // 원석 게이지만 보랏빛이 일렁인다. 움직임 줄이기에서는 가만히 선다.
-          shimmer: kind === "rawStone" && motionPolicy(session.settings).nonEssentialDistanceFactor > 0,
+          // 세 줄 모두 탐사 판과 같은 안개가 일렁인다. 줄마다 박자를 어긋나게 해 한꺼번에 깜빡이지
+          // 않게 하고, 움직임 줄이기에서는 결만 서고 움직이지 않는다.
+          shimmer: { still: motionPolicy(session.settings).nonEssentialDistanceFactor === 0, phase: index },
         });
         bar.setValue(rating.filled / 10);
         panel.add([...bar.objects]);

@@ -28,9 +28,14 @@ export interface CurrencySlot {
  * 치즈케이크는 정보창의 급여 버튼이 "가진 수/드는 수"로 직접 말하므로, 위에 또 적으면 같은
  * 값을 두 곳에서 읽게 되고 정작 봐야 할 카드 그리드의 자리만 좁아진다.
  */
-export type TopBarCurrencyContext = "default" | "recruit" | "none" | "archaeology" | "archaeologyShop" | "loot" | "mileage";
+export type TopBarCurrencyContext = "default" | "shop" | "recruit" | "none" | "archaeology" | "archaeologyShop" | "loot" | "mileage";
 
 const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
+  /** 일반 상점은 골드와 젬만 세운다 — 여기서 쓰는 재화는 그 둘뿐이라 스테미나 칸이 자리만 먹는다. */
+  shop: [
+    { key: "gold", icon: "currency-gold", compact: true, color: "#ffdf9a" },
+    { key: "gems", icon: "currency-gems", color: "#cfe6ff" },
+  ],
   default: [
     { key: "gems", icon: "currency-gems", color: "#cfe6ff" },
     { key: "gold", icon: "currency-gold", compact: true, color: "#ffdf9a" },
@@ -84,6 +89,7 @@ export const TOP_BAR_SLOTS = SLOTS;
 /** 자리별로 세우는 재화 키만 뽑는다. 무엇이 어디에 서는지를 테스트가 이 값으로 잰다. */
 export const TOP_BAR_SLOT_KEYS: Record<TopBarCurrencyContext, readonly WalletItemKey[]> = {
   default: SLOTS.default.map(({ key }) => key),
+  shop: SLOTS.shop.map(({ key }) => key),
   recruit: SLOTS.recruit.map(({ key }) => key),
   archaeology: SLOTS.archaeology.map(({ key }) => key),
   archaeologyShop: SLOTS.archaeologyShop.map(({ key }) => key),

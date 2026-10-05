@@ -7,7 +7,7 @@ import { quotePurchase, totalGrantAmount } from "../core/purchase";
 import type { Wallet } from "../core/gacha";
 import { Button } from "./Button";
 import { chipPoints, drawHairline, drawLayer, HOLO } from "./holo";
-import { addFramedIcon } from "./itemFrame";
+import { addFramedIcon, addShelfAmount, SHELF_AMOUNT } from "./itemFrame";
 import { FaceFrame } from "./FaceFrame";
 import { RARITY_TONE } from "./rarityMark";
 import { findItem } from "../data/items";
@@ -146,12 +146,12 @@ export class PurchasePopup {
     if (weeklyRelic) {
       view.add(new FaceFrame(this.scene, -240, QUANTITY.panelY, {
         portraitAssetId: weeklyRelic.portraitAssetId, size: 170, color: RARITY_TONE[weeklyRelic.rarity].chip, gem: RARITY_TONE[weeklyRelic.rarity].chip,
-        amount: `×${formatCurrency(totalGrantAmount(unitGrant, quote.quantity))}`,
+        amount: formatCurrency(totalGrantAmount(unitGrant, quote.quantity)),
       }));
     } else {
-      addFramedIcon(this.scene, view, -240, QUANTITY.panelY, 170, productIconTexture(product), {
-        amount: `×${formatCurrency(totalGrantAmount(unitGrant, quote.quantity))}`,
-      });
+      addFramedIcon(this.scene, view, -240, QUANTITY.panelY, 170, productIconTexture(product));
+      // 진열대 칸과 같은 수량 글자(`addShelfAmount`) — `×` 없이 수만 선다.
+      view.add(addShelfAmount(this.scene, 170, formatCurrency(totalGrantAmount(unitGrant, quote.quantity))).setPosition(-240 + 85 - SHELF_AMOUNT.insetX, QUANTITY.panelY + 85 - SHELF_AMOUNT.insetY));
     }
     view.add(this.scene.add.text(-125, QUANTITY.panelY - 57, product.name, textStyle({ role: "display", size: 32 })).setOrigin(0, 0.5));
     // 이번에 받는 수는 왼쪽 액자의 우하단이 이미 말한다 — 같은 수를 한 창에 두 번 적지 않는다.

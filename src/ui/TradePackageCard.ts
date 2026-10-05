@@ -98,7 +98,7 @@ export class TradePackageCard extends Phaser.GameObjects.Container {
       }
     }
     // 왜 지금 못 사는지는 제한 줄이 그대로 말한다(`소진`). 개발 상태 문구를 따로 적지 않는다.
-    this.add(scene.add.text(metrics.right, metrics.limitY, view.limitLabel, textStyle({ role: "emphasis", size: 22, color: view.soldOut ? COLOR.dangerText : COLOR.inkDim }))
+    this.add(scene.add.text(metrics.right, metrics.limitY, view.limitLabel, textStyle({ role: "emphasis", size: 27, color: view.soldOut ? COLOR.dangerText : COLOR.ink }))
       .setOrigin(1, 0.5)
       .setShadow(2, 3, "#04060a", 0, true, true));
 

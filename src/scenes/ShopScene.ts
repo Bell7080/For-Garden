@@ -19,7 +19,9 @@ import { addPriceBar } from "../ui/priceTag";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { addBackButton } from "../ui/IconButton";
-import { addItemFrame, ITEM_FRAME } from "../ui/itemFrame";
+import { addItemFrame, addShelfAmount, ITEM_FRAME } from "../ui/itemFrame";
+import { tradePackageValuePercent } from "../data/tradePackages";
+import { addSoldOutStamp, styleLimitCount } from "../ui/soldOutStamp";
 import { chipPoints, drawFrameVignette, drawLayer, drawVignette, HOLO, slantedRect } from "../ui/holo";
 import { DialogueBubble } from "../ui/DialogueBubble";
 import { COLOR, textStyle } from "../ui/theme";
@@ -46,6 +48,9 @@ import { pressIn, pressOut } from "../ui/pressFeedback";
 import { addRuneFrame, runeAccentCss } from "../ui/runeIcons";
 import { productIconTexture, runeProductOf } from "../ui/productIcon";
 import { formatRefreshCountdown, nextRefreshAt, shortestRefresh } from "../core/shopRefresh";
+
+/** 가치 배지 — 무역 카드의 배지(`TradePackageCard`)와 같은 색이고 칸 우상단에 작게 선다. */
+const SHOP_VALUE_BADGE = { width: 150, height: 44, size: 24 } as const;
 
 /**
  * 일반 상품과 성장 재화를 취급하는 독립 상점 씬이다.
@@ -489,7 +494,7 @@ export class ShopScene extends Phaser.Scene {
    * 열린 탭의 리필 시계.
    *
    * 탭 상품 중 가장 짧은 주기를 따르고(일일 `D00:`, 주간 `D6:`), 되살아나는 상품이 없으면 비운다.
-   * 분이 바뀔 때만 글자를 갈아 끼우고, 경계를 넘으면 구매 횟수가 돌아왔으므로 목록을 다시 읽는다.
+   * 초가 바뀔 때만 글자를 갈아 끼우고, 경계를 넘으면 구매 횟수가 돌아왔으므로 목록을 다시 읽는다.
    */
   private tickRefreshClock(force = false): void {
     if (!this.refreshClock) return;
@@ -549,7 +554,7 @@ export class ShopScene extends Phaser.Scene {
       // 지급 수량은 액자 우하단에 공용 축약 표기로 겹쳐 작은 화면에서도 한눈에 읽힌다. 아이템 묶음도 같다.
       const amountGrant = product.grants.find((grant) => grant.kind === "currency" || grant.kind === "item");
       if (amountGrant) {
-        frame.add(this.add.text(SHOP_CARD.frame / 2 - 10, SHOP_CARD.frame / 2 - 8, formatCurrency(amountGrant.amount), textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setOrigin(1, 1));
+        frame.add(addShelfAmount(this, SHOP_CARD.frame, formatCurrency(amountGrant.amount)));
       }
       card.add(frame);
     }
@@ -558,7 +563,7 @@ export class ShopScene extends Phaser.Scene {
     const room = width - 36;
     if (name.width > room) name.setScale(Math.max(0.7, room / name.width), 1);
     card.add(name);
-    card.add(this.add.text(0, SHOP_CARD.remainingY, t("shop.exchangeRemaining", { remaining: formatCurrency(product.remaining), limit: formatCurrency(product.purchaseLimit) }), textStyle({ role: "body", size: 20, color: product.purchasable ? COLOR.inkDim : COLOR.dangerText })).setOrigin(0.5));
+    card.add(styleLimitCount(this.add.text(0, SHOP_CARD.remainingY, t("shop.exchangeRemaining", { remaining: formatCurrency(product.remaining), limit: formatCurrency(product.purchaseLimit) }), textStyle({ role: "emphasis", size: 27 })).setOrigin(0.5), !product.purchasable));
     // **값은 액자가 아니라 가로로 긴 줄이다**(무역 카드와 같은 한 장). 칸마다 값이 하나뿐이라
     // 작은 네모로 두면 넓은 칸 구석에 외따로 뜬 조각으로 읽힌다.
     if (product.acquisition.kind === "currency") {
@@ -567,6 +572,16 @@ export class ShopScene extends Phaser.Scene {
         short: session.wallet[product.acquisition.currency] < product.acquisition.amount,
       });
     }
+    // 따로 사는 것보다 이득인 상품은 무역과 같은 가치 배지가 우상단에 선다(100%를 넘는 것만 — 골드 교환소는 늘 아래다).
+    const valuePercent = tradePackageValuePercent(product.acquisition, product.grants);
+    if (valuePercent !== undefined && valuePercent > 100) {
+      const badge = this.add.container(width / 2 - SHOP_VALUE_BADGE.width / 2 - 14, -SHOP_CARD.height / 2 + SHOP_VALUE_BADGE.height / 2 + 14);
+      badge.add(drawLayer(this, 0, 0, slantedRect(SHOP_VALUE_BADGE.width, SHOP_VALUE_BADGE.height, 12), { fill: 0xe0603a, alpha: 0.92, edge: 0xffd9a0, edgeAlpha: 0.9 }));
+      badge.add(this.add.text(0, 1, t("trade.value", { percent: valuePercent }), textStyle({ role: "display", size: SHOP_VALUE_BADGE.size, color: "#fff4e0" })).setOrigin(0.5).setShadow(2, 3, "#3a0d00", 0, true, true));
+      card.add(badge);
+    }
+    // 남은 횟수를 다 쓴 칸은 검은 막이 덮이고 「매진」 도장이 찍힌다 — 눌러 열어도 구매 버튼이 꺼져 있다.
+    if (product.remaining <= 0) addSoldOutStamp(this, card, width, SHOP_CARD.height, { topLeft: 36, topRight: 0, bottomRight: 28, bottomLeft: 0 });
     /*
      * **창 밖으로 흘러간 칸은 손을 받지 않는다.** GeometryMask는 그리기만 자르므로, 위로 흘러가
      * 가려진 칸의 입력면이 무대 위에 그대로 남아 점원을 누른 손을 가로챘다(카드가 점원보다 위

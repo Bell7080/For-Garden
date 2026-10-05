@@ -157,6 +157,15 @@ export function addFrameAmount(scene: Phaser.Scene, size: number, amount: string
 }
 
 /**
+ * 상점 진열대·구매 확인판의 수량 글자 — 액자 한 변의 0.147(170에서 25px)을 `emphasis`로 세운다. 진열대와 확인판이
+ * 같은 한 벌을 읽어, 눌러서 연 판의 수가 칸에서 보던 수와 다른 양식으로 서지 않는다. 앞에 `×`를 붙이지 않는다.
+ */
+export const SHELF_AMOUNT = { ratio: 25 / 170, min: 18, insetX: 10, insetY: 8 } as const;
+export function addShelfAmount(scene: Phaser.Scene, size: number, amount: string): Phaser.GameObjects.Text {
+  return scene.add.text(size / 2 - SHELF_AMOUNT.insetX, size / 2 - SHELF_AMOUNT.insetY, amount, textStyle({ role: "emphasis", size: Math.max(SHELF_AMOUNT.min, Math.round(size * SHELF_AMOUNT.ratio)), color: COLOR.accentText })).setOrigin(1, 1);
+}
+
+/**
  * 그 그림이 재화면 안내창을 여는 손을 돌려준다. 액자를 `addFramedIcon`으로 세우지 않는 전용
  * 프리팹(발굴 현황의 재화 칸)도 같은 그림이면 같은 일을 하게 한다.
  */

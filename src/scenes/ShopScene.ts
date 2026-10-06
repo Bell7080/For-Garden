@@ -219,7 +219,7 @@ export class ShopScene extends Phaser.Scene {
    */
   private createStage(): void {
     const { centerX, width, bottom } = shopDialogueSpot();
-    this.dialogue = new DialogueBubble(this, { centerX, width, y: bottom, bodySize: 27, nameSize: 26, depth: 5 });
+    this.dialogue = new DialogueBubble(this, { centerX, width, y: bottom, bodySize: 30, nameSize: 28, depth: 5 });
   }
 
   /**

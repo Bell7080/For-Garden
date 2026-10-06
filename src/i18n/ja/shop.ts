@@ -24,7 +24,7 @@ export const SHOP_JA = {
   "shop.premium.remaining": "残りの購入 {remaining}/{limit}",
   "shop.premium.purchased": "購入が完了しました。",
   "shop.premium.daily": "毎日",
-  "shop.premium.valueMultiple": "お得度 ×{multiple}",
+  "shop.premium.valueMultiple": "お得度 {multiple}",
   "shop.premium.firstBonus": "初回購入ボーナス +{amount}",
   "shop.premium.firstBonusTitle": "初回購入ボーナス",
   "shop.premium.tag.membership": "{days}日間パス",

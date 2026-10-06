@@ -23,7 +23,7 @@ export const SHOP_EN = {
   "shop.premium.remaining": "Purchases left {remaining}/{limit}",
   "shop.premium.purchased": "The purchase is complete.",
   "shop.premium.daily": "Daily",
-  "shop.premium.valueMultiple": "Value ×{multiple}",
+  "shop.premium.valueMultiple": "Value {multiple}",
   "shop.premium.firstBonus": "First-purchase bonus +{amount}",
   "shop.premium.firstBonusTitle": "First Purchase Bonus",
   "shop.premium.tag.membership": "{days}-Day Pass",

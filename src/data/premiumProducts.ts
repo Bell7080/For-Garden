@@ -15,24 +15,17 @@ import type { ProductDefinition, ProductGrant } from "./products";
  * 뒤에만 일어나며, 결제 SDK가 없는 빌드는 성공을 흉내 내지 않는다.
  *
  * ### 검수 장부 (시세표 `TRADE_GEM_RATE` 기준 다이아 환산)
- * 연구 한 번(화석·호박석 1개) = 다이아 300. **한 번 뽑는 값은 ₩1,000 안팎**(소형 팩 ₩1,090 → 특대 ₩770)으로 잡았다 — 상업 수집형이 뽑기 한 번에
- * ₩2,000~3,000을 받는 것의 절반 이하이며, 광고 보상(하루 몇 번의 소액)과 패스를 더한 무과금도 따라올 수 있는 선이다.
- * 다이아 한 알 ≈ ₩3.6. 반복 구매 줄은 환산 가치의 1.0~1.7배, 계정당 한 번 줄은 1.5~2배를 준다.
- * 가격표는 아래 `pay()` 호출의 두 번째 인자에만 있다.
- * - 월간 연구 후원 ₩4,900 · 30일 — 다이아 300 + 화석 2(600) + **매일 다이아 150** ≈ 30일 5,400(같은 값 젬 팩의 3.6배 — 출석해야 받는다)
- * - 광고 제거 멤버십 ₩4,900 · 30일 — 다이아 300 + 드링크 3 + **매일 다이아 100** · 광고 제거 · 소탕권 없는 소탕
- * - 신입 연구원 패키지 ₩1,900 · 계정당 1회 — 호박석 2(600) + 골드 50,000(100) + 치즈케이크 300(150) + 드링크 5(스테미나 300 = 다이아 150) ≈ 1,000
- * - 연구원 성장 패키지 ₩3,900 · 계정당 1회 — 골드 300,000(600) + 치즈케이크 1,500(750) + DNA 30(150) + 고대 핵 3
- * - 스토리·레벨·레이드 패스 ₩5,500~5,900 · 계정당 1회 — 길을 여는 값. 마디 보상은 `progressPasses.ts`의 장부
- * - 오늘의 보급 상자 ₩1,100 · 매일 1회 — 골드 50,000(100) + 치즈케이크 100(50) + 드링크 2(60) + 화석 1(300)
- * - 주간 연구 특가 ₩2,900 · 주 1회 — 화석 3(900) + 치즈케이크 200(100)
- * - 스태미나 보급 번들 ₩1,900 · 주 2회 — 드링크 5 + 드링크+ 5 (스테미나 900 = 다이아 450)
- * - 발굴 장비 번들 ₩2,900 · 주 2회 — 발굴권 5 + 원석 1,000(200) + 소탕권 5
- * - 복원 가속 특가 ₩2,500 · 주 1회 — 호박석 2(600) + DNA 40(200)
- * - 시즌 한정 표본 상자 ₩6,900 · 계정당 1회 · 토벌 지원 번들 ₩3,900 · 월 1회
+ * 연구 한 번(화석·호박석 1개) = 다이아 300, **10회 = 3,000**. 가치 배수의 기준은 중형 팩(₩3.25/다이아)이고, 화면의 배지가 같은 식을 읽는다.
+ * **재구매가 안 되는 줄(계정당 1회·월 1회)은 2.5~3.3배, 매일·매주 줄은 2.0~2.5배, 다이아 팩은 1.0~1.3배**다 — 다이아만 반복해서 사는 것이
+ * 가장 손해이고, 한정 패키지가 가장 이득이어야 사는 이유가 된다. 가격표는 아래 `pay()` 호출의 두 번째 인자에만 있다.
+ * - 연구 시작 ₩3,300(정가 9,900)·계정당 1회 — 화석 10 / 표본 확보 ₩9,900·1회 — 다이아 4,000 + 화석 10 + 호박석 10(= 1만 다이아)
+ * - 월간 화석·호박석 ₩3,900·월 1회 — 10개씩(2.5배) / 월간 복원 보급 ₩29,900 — 다이아 12,000 + 각 30개(3.3배) / 대량 ₩59,000(2.5배)
+ * - 백 번의 복원 ₩39,000·월 1회 — 화석·호박석 50개씩(2.5배) / 대규모 복원 ₩79,000·계정당 1회 — 다이아 3만 + 각 50개 + 원석(2.5배)
+ * - 월간 연구 후원 ₩4,900·30일 — 매일 출석해 받는 몫까지 3.6배 / 광고 제거 멤버십 ₩4,900·30일
+ * - 신입 연구원 ₩1,900·1회 — 다이아 1,000 + 골드·치즈케이크·드링크(3.3배) · 연구원 성장 ₩3,900·1회(3.0배) · 시즌 표본 상자 ₩6,900·1회(2.8배)
+ * - 오늘의 보급 상자 ₩1,100·매일(2.5배) · 주간 연구 특가 ₩2,900·주 1회(2.0배) · 복원 가속 ₩2,500·주 1회(2.0배)
+ * - 스태미나 보급 ₩1,900·주 2회(2.0배) · 발굴 장비 ₩2,900·주 2회 · 토벌 지원 ₩3,900·월 1회(2.5배)
  * - 다이아 4종 — **첫 구매 보너스는 같은 수의 다이아**(`firstPurchaseBonus`, 계정에서 그 팩을 처음 살 때 한 번)
- *
- * 반복 구매가 가능한 줄(매일·주간)이 가장 박하고, 계정당 한 번뿐인 줄이 가장 후하다 — 무역 패키지와 같은 규칙이다.
  */
 const FROM = "2026-01-01T00:00:00Z";
 const UNTIL = "2030-01-01T00:00:00Z";
@@ -57,6 +50,9 @@ const gemPack = (id: string, name: string, amount: number, price: number): Produ
 });
 
 export const PREMIUM_PRODUCTS: readonly ProductDefinition[] = [
+  // ── 계정당 한 번뿐인 파격가 — **맨 위에서 홍보한다.** 3배 안팎의 값어치를 주고 다시 살 수 없어, 첫 구매의 문턱을 낮추는 줄이다. ──
+  { id: "premium-starter", storefront: "premium", category: "special", premiumCategory: "package", iconKey: "shop-product-amber", name: "신입 연구원 패키지", description: "", acquisition: pay("premium-starter", 1_900, 3_800), grants: [currency("gems", 1_000), currency("gold", 100_000), currency("cheesecake", 600), item("stamina-tonic", "에너지 드링크", 8)], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM, visibleUntil: UNTIL },
+  { id: "premium-research-start", storefront: "premium", category: "special", premiumCategory: "package", iconKey: "shop-product-fossil", name: "연구 시작 패키지", description: "", acquisition: pay("premium-research-start", 3_300, 9_900), grants: [currency("fossil", 10)], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM, visibleUntil: UNTIL },
   // ── 정기권 — 맨 위에 선다. 사는 순간보다 **매일 들어와 받는 몫**이 본체라 가장 후하다(30일 다이아 4,800 = 연구 16회).
   //    후원 패스는 광고를 제거하지 않고, 기존 광고 슬롯을 같은 보상·한도의 즉시 수령 슬롯으로 바꾼다. ──
   { id: "premium-monthly", storefront: "premium", category: "special", premiumCategory: "package", iconKey: "shop-product-enhancement", name: "월간 연구 후원", description: "", acquisition: pay("premium-monthly", 4_900), grants: [currency("gems", 300), currency("fossil", 2)], passBenefit: { durationDays: 30, instantAdRewards: true, usesStandardAdRewardPolicy: true, dailyBonus: { currency: "gems", amount: 150 } }, defaultQuantity: 1, purchaseLimit: 1, refresh: "none", visibleFrom: FROM, visibleUntil: UNTIL },
@@ -64,22 +60,30 @@ export const PREMIUM_PRODUCTS: readonly ProductDefinition[] = [
   // 이쪽은 광고 자체를 걷어 내고 그 대가로 소탕권 없는 소탕을 연다. 하나는 기다림을, 하나는 광고를 없앤다.
   { id: "premium-adfree", storefront: "premium", category: "special", premiumCategory: "package", iconKey: "shop-product-enhancement", name: "광고 제거 멤버십", description: "", acquisition: pay("premium-adfree", 4_900), grants: [currency("gems", 300), item("stamina-tonic", "에너지 드링크", 3)], passBenefit: { durationDays: 30, instantAdRewards: true, usesStandardAdRewardPolicy: true, adFree: true, dailyBonus: { currency: "gems", amount: 100 } }, defaultQuantity: 1, purchaseLimit: 1, refresh: "none", visibleFrom: FROM, visibleUntil: UNTIL },
   // ── 패키지 ───────────────────────────────────────────────────────────────
-  { id: "premium-starter", storefront: "premium", category: "special", premiumCategory: "package", iconKey: "shop-product-amber", name: "신입 연구원 패키지", description: "", acquisition: pay("premium-starter", 1_900, 3_800), grants: [currency("amber", 2), currency("gold", 50_000), currency("cheesecake", 300), item("stamina-tonic", "에너지 드링크", 5)], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM, visibleUntil: UNTIL },
-  { id: "premium-growth", storefront: "premium", category: "special", premiumCategory: "package", iconKey: "shop-product-enhancement", name: "연구원 성장 패키지", description: "", acquisition: pay("premium-growth", 3_900), grants: [currency("gold", 375_000), currency("cheesecake", 1_500), item("ancient-core", "미지의 고대 핵", 3)], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM, visibleUntil: UNTIL },
+  // ── 연구 패키지 — **계정당 한 번·한 달에 한 번뿐인 줄은 같은 값 젬 팩의 2.5~3.3배**를 준다. 다시 살 수 없으니 후하게 두어도 인플레가 없고,
+  //    반대로 젬 팩은 몇 번이고 살 수 있어 이 줄보다 늘 박하다. 뽑기권은 **10회 단위**(화석·호박석 10개 = 젬 3,000)로만 묶는다. ──
+  { id: "premium-research-light", storefront: "premium", category: "special", premiumCategory: "package", iconKey: "shop-product-amber", name: "표본 확보 패키지", description: "", acquisition: pay("premium-research-light", 9_900), grants: [currency("gems", 4_000), currency("fossil", 10), currency("amber", 10)], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM, visibleUntil: UNTIL },
+  { id: "premium-growth", storefront: "premium", category: "special", premiumCategory: "package", iconKey: "shop-product-enhancement", name: "연구원 성장 패키지", description: "", acquisition: pay("premium-growth", 3_900), grants: [currency("gold", 600_000), currency("cheesecake", 3_000), item("ancient-core", "미지의 고대 핵", 3), currency("fossil", 3)], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM, visibleUntil: UNTIL },
   // ── 진행 패스 — 결제는 길을 **열기만** 한다. 보상은 그 길의 마디(`progressPasses.ts`)에 닿을 때마다 받으므로 지급 목록은 비어 있다. ──
   { id: "premium-story-pass", storefront: "premium", category: "special", premiumCategory: "pass", iconKey: "shop-product-amber", name: "스토리 패스", description: "", acquisition: pay("premium-story-pass", 5_500), grants: [], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM, visibleUntil: UNTIL },
   { id: "premium-level-pass", storefront: "premium", category: "special", premiumCategory: "pass", iconKey: "shop-product-enhancement", name: "레벨 패스", description: "", acquisition: pay("premium-level-pass", 5_900), grants: [], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM, visibleUntil: UNTIL },
   { id: "premium-raid-pass", storefront: "premium", category: "special", premiumCategory: "pass", iconKey: "shop-product-supplies", name: "레이드 패스", description: "", acquisition: pay("premium-raid-pass", 5_500), grants: [], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM, visibleUntil: UNTIL },
   { id: "premium-archaeology-pass", storefront: "premium", category: "special", premiumCategory: "pass", iconKey: "shop-product-supplies", name: "고고학 패스", description: "", acquisition: pay("premium-archaeology-pass", 5_900), grants: [], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM, visibleUntil: UNTIL },
   // ── 특가 — 주기마다 다시 열리는 묶음. 한정과 다른 점은 다시 열린다는 것뿐이라 `refresh`가 그 차이를 든다. ──
-  { id: "premium-daily-deal", storefront: "premium", category: "daily", premiumCategory: "deal", iconKey: "shop-product-supplies", name: "오늘의 보급 상자", description: "", acquisition: pay("premium-daily-deal", 1_100, 2_200), grants: [currency("gold", 50_000), currency("cheesecake", 100), item("stamina-tonic", "에너지 드링크", 2), currency("fossil", 1)], defaultQuantity: 1, purchaseLimit: 1, refresh: "daily", visibleFrom: FROM, visibleUntil: UNTIL },
-  { id: "premium-weekly-deal", storefront: "premium", category: "weekly", premiumCategory: "deal", iconKey: "shop-product-fossil", name: "주간 연구 특가", description: "", acquisition: pay("premium-weekly-deal", 2_900), grants: [currency("fossil", 3), currency("cheesecake", 200)], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: FROM, visibleUntil: UNTIL },
-  { id: "premium-energy", storefront: "premium", category: "weekly", premiumCategory: "deal", iconKey: "shop-product-supplies", name: "스태미나 보급 번들", description: "", acquisition: pay("premium-energy", 1_900), grants: [item("stamina-tonic", "에너지 드링크", 5), item("stamina-tonic-large", "에너지 드링크+", 5)], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: FROM, visibleUntil: UNTIL },
-  { id: "premium-excavation", storefront: "premium", category: "weekly", premiumCategory: "deal", iconKey: "shop-product-rune", name: "발굴 장비 번들", description: "", acquisition: pay("premium-excavation", 2_900), grants: [item("strata-ticket", "발굴권", 5), currency("rawStone", 1_000), item("sweep-ticket", "소탕권", 5)], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: FROM, visibleUntil: UNTIL },
-  { id: "premium-restore-deal", storefront: "premium", category: "weekly", premiumCategory: "deal", iconKey: "shop-product-enhancement", name: "복원 가속 특가", description: "", acquisition: pay("premium-restore-deal", 2_500), grants: [currency("amber", 2), currency("gold", 100_000)], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: FROM, visibleUntil: UNTIL },
+  { id: "premium-daily-deal", storefront: "premium", category: "daily", premiumCategory: "deal", iconKey: "shop-product-supplies", name: "오늘의 보급 상자", description: "", acquisition: pay("premium-daily-deal", 1_100, 2_200), grants: [currency("gold", 100_000), currency("cheesecake", 300), item("stamina-tonic", "에너지 드링크", 4), currency("fossil", 1)], defaultQuantity: 1, purchaseLimit: 1, refresh: "daily", visibleFrom: FROM, visibleUntil: UNTIL },
+  { id: "premium-weekly-deal", storefront: "premium", category: "weekly", premiumCategory: "deal", iconKey: "shop-product-fossil", name: "주간 연구 특가", description: "", acquisition: pay("premium-weekly-deal", 2_900), grants: [currency("fossil", 5), currency("cheesecake", 600)], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: FROM, visibleUntil: UNTIL },
+  { id: "premium-energy", storefront: "premium", category: "weekly", premiumCategory: "deal", iconKey: "shop-product-supplies", name: "스태미나 보급 번들", description: "", acquisition: pay("premium-energy", 1_900), grants: [item("stamina-tonic", "에너지 드링크", 8), item("stamina-tonic-large", "에너지 드링크+", 8)], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: FROM, visibleUntil: UNTIL },
+  { id: "premium-excavation", storefront: "premium", category: "weekly", premiumCategory: "deal", iconKey: "shop-product-rune", name: "발굴 장비 번들", description: "", acquisition: pay("premium-excavation", 2_900), grants: [item("strata-ticket", "발굴권", 5), currency("rawStone", 2_000), item("sweep-ticket", "소탕권", 5), currency("fossil", 2)], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: FROM, visibleUntil: UNTIL },
+  { id: "premium-restore-deal", storefront: "premium", category: "weekly", premiumCategory: "deal", iconKey: "shop-product-enhancement", name: "복원 가속 특가", description: "", acquisition: pay("premium-restore-deal", 2_500), grants: [currency("amber", 4), currency("gold", 150_000)], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: FROM, visibleUntil: UNTIL },
   // ── 한정 — 다시 열리지 않거나 한 달에 한 번뿐이다. ──
-  { id: "premium-season-crate", storefront: "premium", category: "special", premiumCategory: "limited", iconKey: "shop-product-supplies", name: "시즌 한정 표본 상자", description: "", acquisition: pay("premium-season-crate", 6_900), grants: [currency("amber", 4), currency("fossil", 5), currency("cheesecake", 400)], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM, visibleUntil: UNTIL },
-  { id: "premium-raid-bundle", storefront: "premium", category: "special", premiumCategory: "limited", iconKey: "shop-product-enhancement", name: "토벌 지원 번들", description: "", acquisition: pay("premium-raid-bundle", 3_900), grants: [item("raid-ticket", "토벌권", 5), item("raid-select-ticket", "선택 토벌권", 2), currency("raidSigil", 100)], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: FROM, visibleUntil: UNTIL },
+  { id: "premium-season-crate", storefront: "premium", category: "special", premiumCategory: "limited", iconKey: "shop-product-supplies", name: "시즌 한정 표본 상자", description: "", acquisition: pay("premium-season-crate", 6_900), grants: [currency("amber", 10), currency("gems", 2_500), currency("cheesecake", 800)], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM, visibleUntil: UNTIL },
+  { id: "premium-raid-bundle", storefront: "premium", category: "special", premiumCategory: "limited", iconKey: "shop-product-enhancement", name: "토벌 지원 번들", description: "", acquisition: pay("premium-raid-bundle", 3_900), grants: [item("raid-ticket", "토벌권", 5), item("raid-select-ticket", "선택 토벌권", 2), currency("gems", 1_500), currency("fossil", 5)], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: FROM, visibleUntil: UNTIL },
+  { id: "premium-monthly-fossil", storefront: "premium", category: "special", premiumCategory: "limited", iconKey: "shop-product-fossil", name: "월간 화석 패키지", description: "", acquisition: pay("premium-monthly-fossil", 3_900), grants: [currency("fossil", 10)], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: FROM, visibleUntil: UNTIL },
+  { id: "premium-monthly-amber", storefront: "premium", category: "special", premiumCategory: "limited", iconKey: "shop-product-amber", name: "월간 호박석 패키지", description: "", acquisition: pay("premium-monthly-amber", 3_900), grants: [currency("amber", 10)], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: FROM, visibleUntil: UNTIL },
+  { id: "premium-monthly-mid", storefront: "premium", category: "special", premiumCategory: "limited", iconKey: "shop-product-enhancement", name: "월간 복원 보급 패키지", description: "", acquisition: pay("premium-monthly-mid", 29_900), grants: [currency("gems", 12_000), currency("fossil", 30), currency("amber", 30)], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: FROM, visibleUntil: UNTIL },
+  { id: "premium-monthly-heavy", storefront: "premium", category: "special", premiumCategory: "limited", iconKey: "shop-product-enhancement", name: "월간 복원 대량 패키지", description: "", acquisition: pay("premium-monthly-heavy", 59_000), grants: [currency("gems", 22_000), currency("fossil", 40), currency("amber", 40)], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: FROM, visibleUntil: UNTIL },
+  { id: "premium-hundred", storefront: "premium", category: "special", premiumCategory: "limited", iconKey: "shop-product-fossil", name: "백 번의 복원 패키지", description: "", acquisition: pay("premium-hundred", 39_000), grants: [currency("fossil", 50), currency("amber", 50)], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: FROM, visibleUntil: UNTIL },
+  { id: "premium-research-grand", storefront: "premium", category: "special", premiumCategory: "limited", iconKey: "shop-product-enhancement", name: "대규모 복원 패키지", description: "", acquisition: pay("premium-research-grand", 79_000), grants: [currency("gems", 30_000), currency("fossil", 50), currency("amber", 50), currency("rawStone", 5_000)], defaultQuantity: 1, purchaseLimit: 1, refresh: "once", visibleFrom: FROM, visibleUntil: UNTIL },
   // ── 다이아 — 그 자체를 사는 갈래. 값이 클수록 같은 원 하나가 더 많은 다이아를 준다(규모 할인). ──
   gemPack("premium-gems-small", "다이아 소형 결정", 330, 1_200),
   gemPack("premium-gems-medium", "다이아 중형 결정", 1_200, 3_900),

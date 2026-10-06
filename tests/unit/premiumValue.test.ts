@@ -35,3 +35,15 @@ describe("프리미엄 가치 배수·할인", () => {
     expect(tradePackageValuePercent({ kind: "currency", currency: "salvageRecord", amount: 30 }, [{ kind: "currency", currency: "rawStone", amount: 800 }])).toBeUndefined();
   });
 });
+
+describe("프리미엄 가치 띠", () => {
+  it("재구매가 안 되는 한정 줄은 2.5배 이상, 다이아 팩보다 늘 후하다", () => {
+    for (const p of PREMIUM_PRODUCTS.filter((q) => q.premiumCategory === "limited" || q.id === "premium-starter" || q.id === "premium-growth" || q.id === "premium-research-start" || q.id === "premium-research-light")) {
+      expect(premiumValueMultiple(p as unknown as ProductDto, PREMIUM_GEM_PER_KRW) ?? 0, p.id).toBeGreaterThanOrEqual(2.5);
+    }
+  });
+
+  it("연구권은 10개 단위로만 묶는다", () => {
+    for (const p of PREMIUM_PRODUCTS) for (const g of p.grants) if (g.kind === "currency" && (g.currency === "fossil" || g.currency === "amber") && /research|monthly-|hundred/.test(p.id)) expect(g.amount % 10, p.id).toBe(0);
+  });
+});

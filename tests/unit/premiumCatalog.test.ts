@@ -31,10 +31,10 @@ describe("프리미엄 상품 카탈로그", () => {
     }
   });
 
-  it("는 정기권 둘이 맨 위에 서고 하루 보상이 넉넉하다", () => {
+  it("는 계정당 한 번뿐인 파격가 둘이 맨 위, 정기권 둘이 그다음이고 하루 보상이 넉넉하다", () => {
     const packages = PREMIUM_PRODUCTS.filter((p) => p.premiumCategory === "package");
-    expect(packages.slice(0, 2).map((p) => p.id)).toEqual(["premium-monthly", "premium-adfree"]);
-    for (const p of packages.slice(0, 2)) expect(p.passBenefit?.dailyBonus?.amount ?? 0).toBeGreaterThanOrEqual(60);
+    expect(packages.slice(0, 4).map((p) => p.id)).toEqual(["premium-starter", "premium-research-start", "premium-monthly", "premium-adfree"]);
+    for (const p of packages.slice(2, 4)) expect(p.passBenefit?.dailyBonus?.amount ?? 0).toBeGreaterThanOrEqual(60);
   });
 });
 

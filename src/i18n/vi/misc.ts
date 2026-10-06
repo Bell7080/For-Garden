@@ -42,6 +42,7 @@ export const MISC_VI = {
   "shop.haine.line3": "Giảm giá? Được thôi, bớt cho chút. Lần sau tôi lấy gấp đôi là được.",
   "shop.haine.line4": "Trong túi còn nữa mà. Giấu cũng vô ích — tai tôi thính lắm.",
   "shop.haine.line5": "Lại đến nhé. Không mua cũng được — đằng nào bạn cũng quay lại tới khi mua thôi.",
+  "shop.merchant.line0": "Ch-chào mừng ạ…! Đây là A-LAB24. Cứ thong thả xem nhé.",
   "shop.merchant.line1": "Ch-chào mừng ạ…! Hàng về hôm nay đều đã lên kệ. Cứ thong thả xem nhé.",
   "shop.merchant.line2": "K-kệ này tôi tự xếp. Nếu có gì lệch… xin cứ vờ như không thấy.",
   "shop.merchant.line3": "Kiểm kho xong hết rồi! …Chắc vậy. Để tôi đếm lại lần nữa.",

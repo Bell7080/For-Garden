@@ -38,7 +38,7 @@ registerDataText(SHOP_MERCHANT, "name", "shopClerk.obi.name");
  * `src/i18n`이 갖고, 여기는 **순서만** 소유한다.
  */
 export const SHOP_MERCHANT_LINE_KEYS: readonly TextKey[] = [
-  "shop.merchant.line1", "shop.merchant.line2", "shop.merchant.line3",
+  "shop.merchant.line0", "shop.merchant.line1", "shop.merchant.line2", "shop.merchant.line3",
   "shop.merchant.line4", "shop.merchant.line5",
 ];
 

@@ -125,7 +125,8 @@ export function openRuneTraitReroll(options: {
             .then(() => gameApi.rerollRuneTrait({ runeInstanceId: options.runeInstanceId, requestId: `trait-reroll-${Date.now()}` }))
             .then((next) => {
               const spot = body.getWorldTransformMatrix().transformPoint(0, candidateY);
-              playTraitEffect(scene, "reroll", spot.x, spot.y, 2500, () => {
+              // 쪽지 층(`popups.baseDepth`~) 위에 올린다 — 고정 높이로 두면 팝업 뒤에 가려 값만 바뀐 것처럼 보인다.
+              playTraitEffect(scene, "reroll", spot.x, spot.y, popups.baseDepth + 100, () => {
                 options.current = next.current;
                 candidate = next.candidate;
                 upgraded = next.upgraded;

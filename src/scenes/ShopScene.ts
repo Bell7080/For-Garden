@@ -8,7 +8,7 @@ import { setDebugScene, setDebugShopView, setDebugStorefrontControls } from "../
 import { enableHitOnClick, portraitAssetFor, spawnPuppet } from "../puppets/assets";
 import type { PuppetAsset } from "../puppets/assets";
 import { shopStagePresentation, type ShopStagePresentation } from "../data/shopPresentation";
-import { MILEAGE_CLERK_LINE_COUNT, mileageWeeklyClerkId } from "../data/mileageClerk";
+import { MILEAGE_CLERK_LINE_COUNT, mileageFragmentRelicId, mileageWeeklyClerkId } from "../data/mileageClerk";
 import { getRelic } from "../data/relics";
 import { breakthroughGrade, BREAKTHROUGH_GRADE_ROMAN } from "../core/relicProgression";
 import { FaceFrame } from "../ui/FaceFrame";
@@ -539,9 +539,10 @@ export class ShopScene extends Phaser.Scene {
     const { x, y } = shopCardSpot(index, offsetY);
     const card = this.add.container(x, y);
     card.add(drawLayer(this, 0, 0, chipPoints(width, SHOP_CARD.height, { bevel: { topLeft: 36, topRight: 0, bottomRight: 28, bottomLeft: 0 } }), { fill: 0x182029, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.52 }));
-    // 이번 주 SSR 파편은 상품 그림이 아니라 **그 개체의 얼굴 액자**로 선다 — 무엇을 사는지가 얼굴로 먼저 읽힌다.
+    // 마일리지 파편(주간 SSR·주간 SR·일간 R)은 상품 그림이 아니라 **그 개체의 얼굴 액자**로 선다 — 무엇을 사는지가 얼굴로 먼저 읽힌다.
     const runeProduct = runeProductOf(product);
-    const weeklyRelic = this.clerkRelicId && product.grants.some((grant) => grant.kind === "weekly_ssr_fragment") ? getRelic(this.clerkRelicId) : undefined;
+    const fragmentRelicId = product.grants.map((grant) => mileageFragmentRelicId(grant, new Date())).find((id) => id !== undefined);
+    const weeklyRelic = fragmentRelicId ? getRelic(fragmentRelicId) : undefined;
     if (weeklyRelic) {
       card.add(new FaceFrame(this, 0, SHOP_CARD.frameY, {
         portraitAssetId: weeklyRelic.portraitAssetId, size: SHOP_CARD.frame, color: RARITY_TONE[weeklyRelic.rarity].chip, gem: RARITY_TONE[weeklyRelic.rarity].chip, amount: "1",

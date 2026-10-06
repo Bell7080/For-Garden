@@ -13,7 +13,9 @@ import { FaceFrame } from "./FaceFrame";
 import { RARITY_TONE } from "./rarityMark";
 import { findItem } from "../data/items";
 import { getRelic } from "../data/relics";
-import { mileageWeeklyClerkId } from "../data/mileageClerk";
+import { mileageFragmentRelicId } from "../data/mileageClerk";
+import { settingsManager } from "../managers/SettingsManager";
+import { playNewRelicShowcase } from "./NewRelicShowcase";
 import { addPriceBar } from "./priceTag";
 import { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
@@ -137,7 +139,7 @@ export class PurchasePopup {
     const grant = product.grants[0];
     const unitGrant = grant && "amount" in grant ? grant.amount : 1;
     // 이번 주 SSR 파편은 서버가 구매 순간의 개체로 확정한다 — 화면은 같은 순수 함수로 그 얼굴을 미리 보여 준다.
-    const weeklyRelicId = grant?.kind === "weekly_ssr_fragment" ? mileageWeeklyClerkId(new Date()) : undefined;
+    const weeklyRelicId = grant ? mileageFragmentRelicId(grant, new Date()) : undefined;
     const weeklyRelic = weeklyRelicId ? getRelic(weeklyRelicId) : undefined;
     const grantLabel = weeklyRelic ? weeklyRelic.name : grant?.kind === "currency" ? currencyName(grant.currency) : grant?.kind === "item" ? findItem(grant.itemId)?.name ?? grant.name : grant && "name" in grant ? grant.name : t("shop.purchase.grant");
 
@@ -370,6 +372,12 @@ export class PurchasePopup {
     this.pending = false; this.repaint?.();
   }
 
+  /** 새로 만난 개체의 소개 장면. 연구소와 같은 깊이·접근성 설정으로 돌고 닫힐 때까지 기다린다. */
+  private async introduceRelic(relicId: string): Promise<void> {
+    const { accessibility } = settingsManager.get();
+    await playNewRelicShowcase(this.scene, relicId, { depth: 1300, reduceMotion: accessibility.reduceMotion, reduceFlashes: accessibility.reduceFlashes });
+  }
+
   /** 서버 응답 전에는 지갑과 카탈로그를 건드리지 않고, 처리 중 모든 수량·구매 입력을 잠근다. */
   private async purchase(product: ProductDto, close: () => void, onPurchased: (result: PurchaseProductResponse) => void | Promise<void>): Promise<void> {
     if (this.pending) return;
@@ -386,6 +394,8 @@ export class PurchasePopup {
       const result = await this.api.purchaseProduct({ storefront: product.storefront, productId: product.id, quantity: quote.quantity, ...(runeChoice ? { runeChoice } : {}) });
       // 작업판을 먼저 없애 입력면이 겹치지 않게 한 뒤, 더 높은 공용 계층에 서버 영수증만 연다.
       close();
+      // 파편을 사서 처음 만난 개체는 뽑기와 같은 새 캐릭터 연출(SSR이면 전조 포함)을 거친 뒤 영수증이 선다.
+      for (const relicId of result.newRelicIds ?? []) await this.introduceRelic(relicId);
       openRewardPopup(this.scene, this.popups, {
         title: t("shop.purchase.rewardTitle"),
         items: productGrantsToRewardItems(result.granted, result.grantedRunes),

@@ -165,6 +165,7 @@ export default {
   "item.rune-dust.name": "ฝุ่นรูน",
   "item.rune-dust.description": "วัสดุขัดเกลาที่ใช้ในการวิจัยรูน",
   "premium.tab.package": "แพ็กเกจ",
+  "premium.tab.pass": "พาส",
   "premium.tab.deal": "ดีล",
   "premium.tab.limited": "จำกัด",
   "premium.tab.gem": "เพชร",

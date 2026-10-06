@@ -165,6 +165,7 @@ export default {
   "item.rune-dust.name": "Polvo de runa",
   "item.rune-dust.description": "Un material refinado para la investigación de Runas.",
   "premium.tab.package": "Paquetes",
+  "premium.tab.pass": "Pase",
   "premium.tab.deal": "Ofertas",
   "premium.tab.limited": "Limitado",
   "premium.tab.gem": "Diamantes",

@@ -165,6 +165,7 @@ export default {
   "item.rune-dust.name": "Debu Rune",
   "item.rune-dust.description": "Bahan olahan untuk riset Rune.",
   "premium.tab.package": "Paket",
+  "premium.tab.pass": "Pass",
   "premium.tab.deal": "Penawaran",
   "premium.tab.limited": "Terbatas",
   "premium.tab.gem": "Berlian",

@@ -165,6 +165,7 @@ export default {
   "item.rune-dust.name": "符文粉塵",
   "item.rune-dust.description": "用於符文研究的精煉材料。",
   "premium.tab.package": "禮包",
+  "premium.tab.pass": "通行證",
   "premium.tab.deal": "特惠",
   "premium.tab.limited": "限定",
   "premium.tab.gem": "鑽石",

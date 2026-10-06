@@ -165,6 +165,7 @@ export default {
   "item.rune-dust.name": "Рунная пыль",
   "item.rune-dust.description": "Очищенный материал для исследования рун.",
   "premium.tab.package": "Наборы",
+  "premium.tab.pass": "Пропуск",
   "premium.tab.deal": "Выгода",
   "premium.tab.limited": "Лимит",
   "premium.tab.gem": "Алмазы",

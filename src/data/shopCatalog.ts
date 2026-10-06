@@ -12,11 +12,11 @@ export type { PassBenefitDefinition, PremiumCategory, ProductAcquisition, Produc
  * 상점·가방과 **같은 서류철 라벨 한 장**(`CategoryTab`)을 쓴다 — 같은 손짓으로 같은 일(보는
  * 목록을 통째로 바꾸기)을 하므로 생김새도 한 곳에서 나온다.
  *
- * **패스는 여기 서지 않는다** — 스토리·레벨·레이드 패스는 로비의 패스 창(`PassPopup`)이 한데 모아 보여 주고,
- * 그 창의 유료 줄에서 연다. 상점에도 세우면 같은 길이 두 곳에서 다른 모양으로 읽힌다.
+ * **패스는 두 곳에서 산다** — 로비의 패스 창(`PassPopup`)과 이 화면의 「패스」 라벨이다. 같은 상품·같은 결제 경계라
+ * 어디서 사도 적용과 이미 지난 마디의 소급이 똑같다. 카드의 액자는 지급 목록이 아니라 유료 칸 전체의 합이다(`premiumGrantTiles`).
  */
 export const PREMIUM_TABS: ReadonlyArray<{ id: PremiumCategory; label: string }> = [
-  { id: "package", label: "패키지" }, { id: "deal", label: "특가" },
+  { id: "package", label: "패키지" }, { id: "pass", label: "패스" }, { id: "deal", label: "특가" },
   { id: "limited", label: "한정" }, { id: "gem", label: "젬" },
 ];
 

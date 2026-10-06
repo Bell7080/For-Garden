@@ -165,6 +165,7 @@ export default {
   "item.rune-dust.name": "Bụi Rune",
   "item.rune-dust.description": "Vật liệu tinh chế dùng trong nghiên cứu Rune.",
   "premium.tab.package": "Gói",
+  "premium.tab.pass": "Thẻ tháng",
   "premium.tab.deal": "Ưu đãi",
   "premium.tab.limited": "Giới hạn",
   "premium.tab.gem": "Kim cương",

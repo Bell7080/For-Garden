@@ -165,6 +165,7 @@ export default {
   "item.rune-dust.name": "Runenstaub",
   "item.rune-dust.description": "Ein veredeltes Material für die Runenforschung.",
   "premium.tab.package": "Pakete",
+  "premium.tab.pass": "Pass",
   "premium.tab.deal": "Angebote",
   "premium.tab.limited": "Limitiert",
   "premium.tab.gem": "Diamanten",

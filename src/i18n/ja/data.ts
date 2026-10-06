@@ -346,6 +346,7 @@ export default {
   "item.rune-dust.name": "ルーンの粉",
   "item.rune-dust.description": "ルーン研究に使われる精製素材です。",
   "premium.tab.package": "パッケージ",
+  "premium.tab.pass": "パス",
   "premium.tab.deal": "お得",
   "premium.tab.limited": "限定",
   "premium.tab.gem": "ダイヤ",

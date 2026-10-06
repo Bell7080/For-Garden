@@ -42,6 +42,7 @@ export const MISC_DE = {
   "shop.haine.line3": "Rabatt? Klar, ich lass was nach. Nächstes Mal nehm ich eben das Doppelte.",
   "shop.haine.line4": "Da ist noch mehr in der Tasche. Verstecken bringt nichts — ich hab gute Ohren.",
   "shop.haine.line5": "Komm wieder. Du musst nichts kaufen — du kommst eh, bis du's tust.",
+  "shop.merchant.line0": "W-willkommen…! Hier ist A-LAB24. Lass dir Zeit.",
   "shop.merchant.line1": "W-willkommen…! Alles, was heute reinkam, steht schon im Regal. Lass dir Zeit.",
   "shop.merchant.line2": "D-dieses Regal hab ich selbst eingeräumt. Wenn etwas schief aussieht… bitte tu so, als hättest du's nicht gesehen.",
   "shop.merchant.line3": "Inventur ist fertig! …Wahrscheinlich. Ich zähl lieber noch mal.",

@@ -28,7 +28,7 @@ export const ITEM_ICON_FALLBACK = "scroll" as const;
  */
 export type WalletItemKey =
   | "fossil" | "amber" | "gems" | "gold" | "stamina" | "dnaFragments" | "cheesecake" | "rawStone"
-  | "raidSigil" | "salvageRecord";
+  | "raidSigil" | "salvageRecord" | "duelEmblem";
 
 /** 소비품 회복이 넘지 못하는 현재 계정의 행동력 상한이다. */
 
@@ -80,6 +80,8 @@ export const ITEMS = [
   // 자리라 몇 주치가 쌓여도 버려지면 안 된다.
   { id: "raidSigil", name: "토벌 증표", description: "레이드 보스를 밀어낸 몫으로 받는 증표입니다. 전리품 상점에서 교환합니다.", category: "currency", icon: { kind: "currency", key: "raidSigil" }, maxStack: 9_999_999, useEffect: { kind: "none" } },
   { id: "salvageRecord", name: "인양 기록", description: "수장된 지부에서 건져 올린 것을 적어 둔 기록입니다. 전리품 상점에서 교환합니다.", category: "currency", icon: { kind: "currency", key: "salvageRecord" }, maxStack: 9_999_999, useEffect: { kind: "none" } },
+  // 결투장의 전용 재화. 시즌마다 갈아엎지 않는 영구 재화라 증표들과 같이 지갑에 둔다.
+  { id: "duelEmblem", name: "투사의 휘장", description: "결투장에서 싸운 몫으로 받는 휘장입니다. 결투 상점에서 교환합니다.", category: "currency", icon: { kind: "currency", key: "duelEmblem" }, maxStack: 9_999_999, useEffect: { kind: "none" } },
 ] as const satisfies readonly ItemDefinition[];
 
 /** 외부 입력 ID는 반드시 정적 카탈로그를 통과한다. */

@@ -25,6 +25,7 @@ export const COMMON_ID = {
   "currency.rawStone": "Batu Mentah",
   "currency.raidSigil": "Segel Penaklukan",
   "currency.salvageRecord": "Catatan Penyelamatan",
+  "currency.duelEmblem": "Lencana Petarung",
   "currency.gold": "Emas",
   "currency.gems": "Permata",
   "currency.fossil": "Fosil",

@@ -24,6 +24,7 @@
 "currency.rawStone": ["原石", "หินดิบ", "Đá thô", "Batu Mentah", "Piedra en bruto", "Pedra bruta", "Rohstein", "Необработанный камень"],
 "currency.raidSigil": ["讨伐徽印", "ตราปราบปราม", "Ấn chinh phạt", "Segel Penaklukan", "Sello de subyugación", "Selo de subjugação", "Bezwingungssiegel", "Печать усмирения"],
 "currency.salvageRecord": ["打捞记录", "บันทึกกู้ซาก", "Hồ sơ trục vớt", "Catatan Penyelamatan", "Registro de rescate", "Registro de resgate", "Bergungsprotokoll", "Запись спасения"],
+"currency.duelEmblem": ["斗士徽章", "เครื่องหมายนักสู้", "Huy hiệu Đấu sĩ", "Lencana Petarung", "Insignia del Combatiente", "Insígnia do Combatente", "Kämpferabzeichen", "Знак бойца"],
 "currency.gold": ["金币", "ทอง", "Vàng", "Emas", "Oro", "Ouro", "Gold", "Золото"],
 "currency.gems": ["宝石", "เจม", "Ngọc", "Permata", "Gema", "Gema", "Juwel", "Самоцвет"],
 "currency.fossil": ["化石", "ฟอสซิล", "Hóa thạch", "Fosil", "Fósil", "Fóssil", "Fossil", "Окаменелость"],

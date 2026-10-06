@@ -44,7 +44,7 @@ export type LootCategory = "raid" | "expedition";
  * 지급에는 골드가 섞이기 때문이다. 셋 다 서버가 같은 지갑 키를 원자 차감·지급하므로 다른
  * 경로를 만들지 않는다.
  */
-export type ProductCurrency = "fossil" | "amber" | "cheesecake" | "dnaFragments" | "gems" | "gold" | "rawStone" | "raidSigil" | "salvageRecord";
+export type ProductCurrency = "fossil" | "amber" | "cheesecake" | "dnaFragments" | "gems" | "gold" | "rawStone" | "raidSigil" | "salvageRecord" | "duelEmblem";
 
 /** 가격 숫자와 획득 절차를 분리한 판별 합집합이며 외부 절차의 필수 식별자를 타입으로 강제한다. */
 export type ProductAcquisition =

@@ -1,5 +1,6 @@
 /** 씬 사이를 오가는 런타임 상태다. JSON 경계에서는 반드시 SaveData로 변환한다. */
 
+import type { DuelState } from "../core/duelState";
 import type { RaidDifficulty } from "../data/raid";
 import type { GachaPityState, Wallet } from "../core/gacha";
 import type { RelicProgress, RelicSkinId } from "../core/types";
@@ -186,6 +187,11 @@ export interface Session {
    * 말한다. **선택 필드다** — 도입 전에 만든 세션(테스트 고정값 포함)은 비어 있고, 서버가 처음 읽을 때 빈 모양으로 채운다.
    */
   progressPasses?: ProgressPassState;
+  /**
+   * 결투장 점수·도전권·편성·전적. **선택 필드다** — 도입 전에 만든 세션(테스트 고정값 포함)은 비어 있고,
+   * 서버가 처음 읽을 때 빈 모양으로 채운다(`createEmptyDuelState`).
+   */
+  duel?: DuelState;
 }
 
 /** 진행 패스의 저장 모양. 받은 마디는 패스마다 문턱값 목록이다. */
@@ -415,6 +421,7 @@ export interface SaveData {
   /** 렐릭 이야기(관찰 질문 답변·처음 만난 날·읽은 애착 스토리). 젬 지급은 GameApi 경계만 바꾼다. */
   relicStory: RelicStoryState;
   progressPasses: ProgressPassState;
+  duel: DuelState;
   settings: GameSettings;
   completedStoryIds: string[];
   observationRecords: ObservationRecord[];
@@ -516,7 +523,7 @@ export function createDefaultSession(): Session {
     bookmarked: new Set<string>(),
     // 임시 뽑기 테스트 지급: 화석·호박석 배너를 각각 100회의 10연속 복원까지 확인할 수 있다.
     // 정식 경제 밸런스를 적용할 때는 fossil 12 / amber 5으로 되돌리고 이 주석도 제거한다.
-    wallet: { fossil: 900, amber: 450, gems: 120, gold: 25_400, stamina: 60, dnaFragments: 0, cheesecake: 0, rawStone: STARTER_RUNE_TRAIT_KIT.rawStone, raidSigil: 0, salvageRecord: 0 },
+    wallet: { fossil: 900, amber: 450, gems: 120, gold: 25_400, stamina: 60, dnaFragments: 0, cheesecake: 0, rawStone: STARTER_RUNE_TRAIT_KIT.rawStone, raidSigil: 0, salvageRecord: 0, duelEmblem: 0 },
     // 첫 FakeServer 요청이 서버 시각으로 안전하게 초기화한다.
     staminaUpdatedAt: "",
     gachaPityByGroup: Object.fromEntries([...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].map((id) => [id, { pullsSinceSsr: 0, pickupGuaranteed: false }])),

@@ -25,6 +25,7 @@ export const COMMON_ZH_HANT = {
   "currency.rawStone": "原石",
   "currency.raidSigil": "討伐徽印",
   "currency.salvageRecord": "打撈記錄",
+  "currency.duelEmblem": "鬥士徽章",
   "currency.gold": "金幣",
   "currency.gems": "寶石",
   "currency.fossil": "化石",

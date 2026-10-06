@@ -597,7 +597,7 @@ export interface UpgradeRuneTraitRequest { runeInstanceId: string; itemId: strin
 export interface UpgradeRuneTraitResponse { rune: RuneInstance; items: InventoryItemDto[]; }
 
 /** UI가 서버 실패 원인을 문구로 바꿀 수 있게 고정한 오류 코드다. */
-export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPEDITION_RUN_NOT_FOUND" | "EXPEDITION_ALREADY_SETTLED" | "EXPEDITION_ALREADY_ACTIVE" | "EXPEDITION_DAILY_LIMIT" | "EXPEDITION_SCORE_REQUIRED" | "AD_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REJECTED" | "RAID_DAILY_LIMIT" | "RAID_NOT_ENTERED" | "RAID_SCORE_REJECTED" | "RAID_REWARD_NOT_EARNED" | "RAID_NOT_FOUND" | "RAID_ENDED" | "RAID_NOT_ENDED" | "RAID_SUMMON_INVALID" | "RAID_TICKET_SHORTAGE" | "EXPEDITION_REWARD_NOT_FOUND" | "EXPEDITION_REWARD_NOT_EARNED" | "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INVALID_PURCHASE_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "BANNER_NOT_FOUND" | "BANNER_LIMIT_REACHED" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RELIC_MAX_BREAKTHROUGH" | "RUNE_CHOICE_REQUIRED" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "INVALID_RUNE_SALE" | "RUNE_EQUIPPED" | "RUNE_LOCKED" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "BOUNTY_TIER_NOT_FOUND" | "BOUNTY_TIER_LOCKED" | "BOUNTY_ADMISSION_NOT_FOUND" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_STOREFRONT_MISMATCH" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "ACQUISITION_FLOW_REQUIRED" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE" | "NOTHING_TO_CLAIM"
+export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPEDITION_RUN_NOT_FOUND" | "EXPEDITION_ALREADY_SETTLED" | "EXPEDITION_ALREADY_ACTIVE" | "EXPEDITION_DAILY_LIMIT" | "EXPEDITION_SCORE_REQUIRED" | "AD_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REJECTED" | "RAID_DAILY_LIMIT" | "RAID_NOT_ENTERED" | "RAID_SCORE_REJECTED" | "RAID_REWARD_NOT_EARNED" | "RAID_NOT_FOUND" | "RAID_ENDED" | "RAID_NOT_ENDED" | "RAID_SUMMON_INVALID" | "RAID_TICKET_SHORTAGE" | "EXPEDITION_REWARD_NOT_FOUND" | "EXPEDITION_REWARD_NOT_EARNED" | "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INVALID_PURCHASE_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "BANNER_NOT_FOUND" | "BANNER_LIMIT_REACHED" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RELIC_MAX_BREAKTHROUGH" | "RUNE_CHOICE_REQUIRED" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "INVALID_RUNE_SALE" | "RUNE_EQUIPPED" | "RUNE_LOCKED" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "BOUNTY_TIER_NOT_FOUND" | "BOUNTY_TIER_LOCKED" | "BOUNTY_ADMISSION_NOT_FOUND" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_STOREFRONT_MISMATCH" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "ACQUISITION_FLOW_REQUIRED" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE" | "NOTHING_TO_CLAIM" | "DUEL_OPPONENT_NOT_FOUND" | "DUEL_NO_ATTEMPTS" | "DUEL_ATTEMPT_LIMIT" | "DUEL_INVALID_TEAM" | "DUEL_ADMISSION_NOT_FOUND"
   | "STRATA_NO_CHARGE" | "STRATA_CHARGE_FULL" | "STRATA_RUN_ACTIVE" | "STRATA_RUN_NOT_FOUND" | "STRATA_SITE_LOCKED" | "STRATA_SITE_COOLING" | "STRATA_TILE_UNAVAILABLE"
   | "RUNE_TRAIT_NOT_FOUND" | "RUNE_TRAIT_ITEM_INVALID" | "RUNE_TRAIT_MAX_GRADE" | "RUNE_TRAIT_GRADE_REACHED" | "RUNE_TRAIT_REROLL_PENDING"
   | "CAKE_TIER_NOT_FOUND" | "CAKE_TIER_LOCKED" | "DUNGEON_NOT_CLEARED" | "SWEEP_TICKET_SHORTAGE"
@@ -659,6 +659,54 @@ export interface CompleteBountyRequest { tierId: string; requestId: string; vict
 export interface CompleteBountyResponse extends PlayerStateDto { tierId: string; victory: boolean; clearedRounds: number; goldEarned: number; firstClear: boolean; clearedTierIds: string[]; staminaSpent: number; staminaRefunded: number; playerExp?: PlayerExpReceipt; }
 /** 깬 등급을 조회한다. 하루 입장 제한은 없다. */
 export interface BountyStatusResponse { clearedTierIds: string[]; serverTime: string; }
+
+/* ── 결투장 ── 규칙은 `core/duelArena.ts`, 저장 모양은 `core/duelState.ts`가 갖는다. */
+
+/** 상대 방어덱 한 칸. **가려진 칸은 `relicId`가 없다** — 화면이 누구인지 알 방법을 응답에서 지운다. */
+export interface DuelOpponentUnitDto { relicId: string | null; level: number; breakthrough: number; power: number; }
+export interface DuelOpponentDto {
+  id: string; displayName: string; score: number; tierId: import("../core/duelArena").DuelTierId; division: number | null;
+  favoriteRelicId: string; totalPower: number;
+  /** 이기면 오르는 점수와 지면 내려가는 점수(보호 전). 화면이 셈하지 않는다. */
+  winDelta: number; lossDelta: number;
+  units: DuelOpponentUnitDto[];
+}
+export interface DuelStatusResponse {
+  seasonId: string; seasonEndsAt: string; score: number; tierId: import("../core/duelArena").DuelTierId; division: number | null;
+  /** 표본과 합친 순위. 한 판도 치르지 않았으면 없다. */
+  rank: number | null; wins: number; losses: number;
+  attemptsLeft: number; attemptsPurchased: number;
+  /** 다음 추가 도전권의 젬. 오늘 더 살 수 없으면 없다. */
+  nextAttemptPrice: number | null;
+  /** 다음 새로고침의 젬(무료면 0). */
+  nextRefreshPrice: number;
+  /** 지금 내 티어에서 상대 방어덱이 가려지는 칸 수. */
+  blindCount: number;
+  opponents: DuelOpponentDto[];
+  attack: string[]; defense: string[]; blindChoice: string[];
+  /** 게시한 방어덱에서 실제로 가려지는 순서(고른 것 → 전투력 순). */
+  defenseBlindOrder: string[];
+  pendingSeasonReward: { seasonId: string; tierId: import("../core/duelArena").DuelTierId; duelEmblem: number; gems: number } | null;
+  history: import("../core/duelState").DuelHistoryEntry[];
+  serverTime: string;
+}
+export interface SetDuelDefenseRequest { relicIds: string[]; blindChoice: string[]; }
+export interface EnterDuelRequest { opponentId: string; relicIds: string[]; requestId: string; }
+/** 상대 방어덱 전체(가린 칸 포함). 전투가 세워야 하므로 입장 뒤에만 내려 준다. */
+export interface DuelBattleUnitDto { relicId: string; level: number; breakthrough: number; stats: import("../core/types").Stats; }
+export interface EnterDuelResponse extends PlayerStateDto {
+  requestId: string; opponentId: string; opponentName: string; opponentScore: number;
+  units: DuelBattleUnitDto[]; hiddenRelicIds: string[];
+}
+export interface ResolveDuelRequest { requestId: string; won: boolean; }
+export interface ResolveDuelResponse extends PlayerStateDto {
+  won: boolean; scoreBefore: number; scoreAfter: number; delta: number;
+  tierBefore: import("../core/duelArena").DuelTierId; tierAfter: import("../core/duelArena").DuelTierId;
+  duelEmblem: number; gems: number; newlyReachedTierIds: import("../core/duelArena").DuelTierId[];
+}
+export interface DuelRankingEntryDto { rank: number; displayName: string; score: number; tierId: import("../core/duelArena").DuelTierId; favoriteRelicId: string; isMe: boolean; }
+export interface DuelRankingResponse { entries: DuelRankingEntryDto[]; me: DuelRankingEntryDto | null; seasonEndsAt: string; }
+export interface ClaimDuelSeasonRewardResponse extends PlayerStateDto { seasonId: string; tierId: import("../core/duelArena").DuelTierId; duelEmblem: number; gems: number; }
 
 /** 로비 터치 결과는 중복 여부와 대사 UI가 표시할 유대 변화량을 돌려준다. */
 export interface LobbyInteractionResponse extends PlayerStateDto { relicId: string; bondXpEarned: number; bondLevelsGained: number; }
@@ -893,6 +941,21 @@ export interface GameApi extends AsyncArenaProfileApi {
   sweepBounty(request: DungeonSweepRequest): Promise<DungeonSweepResponse>;
   /** 세 라운드의 결과를 확정한다. 이긴 판만 골드를 주고 다음 등급을 연다. */
   completeBounty(request: CompleteBountyRequest): Promise<CompleteBountyResponse>;
+  /** 결투장 상태. 날짜·시즌 넘김과 상대 후보 세우기가 이 조회에서 확정된다. */
+  getDuelStatus(): Promise<DuelStatusResponse>;
+  /** 상대 후보 셋을 새로 세운다. 하루 무료 횟수 뒤로는 젬이 든다. */
+  refreshDuelOpponents(): Promise<DuelStatusResponse>;
+  /** 오늘 도전권 하나를 젬으로 더 산다. */
+  buyDuelAttempt(): Promise<DuelStatusResponse>;
+  /** 방어덱과 먼저 가릴 렐릭을 게시한다. */
+  setDuelDefense(request: SetDuelDefenseRequest): Promise<DuelStatusResponse>;
+  /** 도전권 하나를 쓰고 상대 방어덱 전체를 받는다. */
+  enterDuel(request: EnterDuelRequest): Promise<EnterDuelResponse>;
+  /** 결과 확정 — 점수·휘장·첫 도달 젬. 같은 입장은 한 번만 확정된다. */
+  resolveDuel(request: ResolveDuelRequest): Promise<ResolveDuelResponse>;
+  getDuelRanking(): Promise<DuelRankingResponse>;
+  /** 끝난 시즌의 티어 보상을 받는다. */
+  claimDuelSeasonReward(): Promise<ClaimDuelSeasonRewardResponse>;
   /** 이벤트 목록과 활성 상태는 서버 시각으로만 계산한다. */
   getEvents(): Promise<EventListResponse>;
   /** 종료된 이벤트 전투의 입장을 API 경계에서 차단한다. */

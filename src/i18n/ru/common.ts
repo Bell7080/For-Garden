@@ -25,6 +25,7 @@ export const COMMON_RU = {
   "currency.rawStone": "Необработанный камень",
   "currency.raidSigil": "Печать усмирения",
   "currency.salvageRecord": "Запись спасения",
+  "currency.duelEmblem": "Знак бойца",
   "currency.gold": "Золото",
   "currency.gems": "Самоцвет",
   "currency.fossil": "Окаменелость",

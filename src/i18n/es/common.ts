@@ -25,6 +25,7 @@ export const COMMON_ES = {
   "currency.rawStone": "Piedra en bruto",
   "currency.raidSigil": "Sello de subyugación",
   "currency.salvageRecord": "Registro de rescate",
+  "currency.duelEmblem": "Insignia del Combatiente",
   "currency.gold": "Oro",
   "currency.gems": "Gema",
   "currency.fossil": "Fósil",

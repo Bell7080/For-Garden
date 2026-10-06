@@ -20,6 +20,7 @@ export const WALLET_CAPS: Readonly<Record<keyof Wallet, number>> = {
   // 쌓여도 버려지면 그 상점의 경험 자체가 무너진다.
   raidSigil: 9_999_999,
   salvageRecord: 9_999_999,
+  duelEmblem: 9_999_999,
 };
 
 /** 문서의 월간 무과금 수급 계산이 참조하는 30일/4주 기준 목표 지급량이다. */

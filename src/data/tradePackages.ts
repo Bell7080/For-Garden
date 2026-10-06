@@ -49,6 +49,7 @@ export const TRADE_GEM_RATE: Readonly<Record<ProductCurrency, number>> = {
   // 시세만 채워 표를 비우지 않으며, 올릴 때 다시 잰다.
   raidSigil: 60,
   salvageRecord: 60,
+  duelEmblem: 60,
   cheesecake: 2,
   gold: 500,
   // 마일리지 1 ≈ 젬 60 — 마일리지 상점의 기준 단위(`mileageShop.ts`)와 같은 값이다. 전시대는 마일리지를 지급하지 않는다.
@@ -65,7 +66,7 @@ export function tradeGemValue(grants: readonly ProductGrant[]): number {
  * (증표 20개로 치즈케이크 400개를 사면 60,000%). 가치 배지·환산에서 뺀다.
  */
 export function isGemUnconvertible(currency: keyof typeof TRADE_GEM_RATE): boolean {
-  return currency === "raidSigil" || currency === "salvageRecord";
+  return currency === "raidSigil" || currency === "salvageRecord" || currency === "duelEmblem";
 }
 
 /**

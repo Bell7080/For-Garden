@@ -25,6 +25,7 @@ export const COMMON_TH = {
   "currency.rawStone": "หินดิบ",
   "currency.raidSigil": "ตราปราบปราม",
   "currency.salvageRecord": "บันทึกกู้ซาก",
+  "currency.duelEmblem": "เครื่องหมายนักสู้",
   "currency.gold": "ทอง",
   "currency.gems": "เจม",
   "currency.fossil": "ฟอสซิล",

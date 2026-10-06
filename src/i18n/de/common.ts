@@ -25,6 +25,7 @@ export const COMMON_DE = {
   "currency.rawStone": "Rohstein",
   "currency.raidSigil": "Bezwingungssiegel",
   "currency.salvageRecord": "Bergungsprotokoll",
+  "currency.duelEmblem": "Kämpferabzeichen",
   "currency.gold": "Gold",
   "currency.gems": "Juwel",
   "currency.fossil": "Fossil",

@@ -14,7 +14,8 @@ export type CurrencyIconKey =
   | "currency-dna"
   | "currency-orestone"
   | "currency-raid-sigil"
-  | "currency-salvage-record";
+  | "currency-salvage-record"
+  | "currency-duel-emblem";
 
 export const CURRENCY_ICON_ASSETS: ReadonlyArray<readonly [CurrencyIconKey, string]> = [
   ["currency-gems", "/sprites/currency/crystal.webp"],
@@ -27,6 +28,8 @@ export const CURRENCY_ICON_ASSETS: ReadonlyArray<readonly [CurrencyIconKey, stri
   ["currency-orestone", "/sprites/currency/orestone.webp"],
   ["currency-raid-sigil", "/sprites/currency/raid-sigil.webp"],
   ["currency-salvage-record", "/sprites/currency/salvage-record.webp"],
+  // 투사의 휘장 — 결투장의 붉은 뿔 해골 깃발을 줄인 자리표시 원화다. 전용 원화가 오면 이 파일만 바꾼다.
+  ["currency-duel-emblem", "/sprites/currency/duel-emblem.webp"],
 ];
 
 /** 저장 지갑 키를 실제 구운 WebP 텍스처로 바꾸는 공용 단일 매핑이다. */
@@ -35,4 +38,5 @@ export const CURRENCY_ICON_BY_WALLET = {
   fossil: "currency-fossil", amber: "currency-amber", cheesecake: "currency-cheesecake",
   dnaFragments: "currency-dna", rawStone: "currency-orestone",
   raidSigil: "currency-raid-sigil", salvageRecord: "currency-salvage-record",
+  duelEmblem: "currency-duel-emblem",
 } as const satisfies Record<import("../data/items").WalletItemKey, CurrencyIconKey>;

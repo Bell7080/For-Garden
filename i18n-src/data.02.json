@@ -99,6 +99,56 @@
 "Bergungstausch im Beute-Shop",
 "Обмен спасённого в магазине трофеев"
 ],
+"currency.duelEmblem.name": [
+"斗士徽章",
+"เครื่องหมายนักสู้",
+"Huy hiệu Đấu sĩ",
+"Lencana Petarung",
+"Insignia del Combatiente",
+"Insígnia do Combatente",
+"Kämpferabzeichen",
+"Знак бойца"
+],
+"currency.duelEmblem.lore": [
+"在斗技场旗帜下战斗所获得的徽章。",
+"เครื่องหมายที่มอบให้ตามการต่อสู้ใต้ธงของสนามดวล",
+"Huy hiệu trao cho mỗi trận chiến dưới lá cờ đấu trường.",
+"Lencana yang diberikan atas setiap pertarungan di bawah panji arena.",
+"Una insignia otorgada por cada combate librado bajo el estandarte de la arena.",
+"Uma insígnia concedida por cada luta travada sob o estandarte da arena.",
+"Ein Abzeichen für jeden Kampf unter dem Banner der Arena.",
+"Знак, который вручают за каждый бой под знаменем арены."
+],
+"currency.duelEmblem.source.0": [
+"斗技场战斗",
+"การต่อสู้ในสนามดวล",
+"Trận đấu trường",
+"Pertarungan arena",
+"Combates de la arena",
+"Lutas da arena",
+"Arenakämpfe",
+"Бои на арене"
+],
+"currency.duelEmblem.source.1": [
+"斗技场赛季结算",
+"การสรุปผลฤดูกาลสนามดวล",
+"Quyết toán mùa đấu trường",
+"Penyelesaian musim arena",
+"Liquidación de temporada de la arena",
+"Acerto de temporada da arena",
+"Arena-Saisonabrechnung",
+"Итоги сезона арены"
+],
+"currency.duelEmblem.use.0": [
+"决斗商店兑换",
+"แลกที่ร้านค้าดวล",
+"Đổi ở Cửa hàng đấu",
+"Tukar di Toko Duel",
+"Canje en la Tienda de duelo",
+"Troca na Loja de duelo",
+"Tausch im Duell-Shop",
+"Обмен в магазине дуэлей"
+],
 "item.rawStone.name": [
 "原石",
 "หินดิบ",
@@ -538,6 +588,26 @@
 "Um registro do que foi resgatado das filiais submersas. Troque na Loja de espólios.",
 "Ein Protokoll dessen, was aus den versunkenen Zweigstellen geborgen wurde. Im Beute-Shop eintauschbar.",
 "Запись о поднятом из затонувших филиалов. Обменяйте в магазине трофеев."
+],
+"item.duelEmblem.name": [
+"斗士徽章",
+"เครื่องหมายนักสู้",
+"Huy hiệu Đấu sĩ",
+"Lencana Petarung",
+"Insignia del Combatiente",
+"Insígnia do Combatente",
+"Kämpferabzeichen",
+"Знак бойца"
+],
+"item.duelEmblem.description": [
+"在斗技场战斗所获得的徽章。可在决斗商店兑换。",
+"เครื่องหมายที่ได้จากการต่อสู้ในสนามดวล แลกได้ที่ร้านค้าดวล",
+"Huy hiệu nhận được khi chiến đấu ở đấu trường. Đổi ở Cửa hàng đấu.",
+"Lencana yang didapat dari bertarung di arena. Tukarkan di Toko Duel.",
+"Una insignia obtenida al combatir en la arena. Canjéala en la Tienda de duelo.",
+"Uma insígnia obtida ao lutar na arena. Troque na Loja de duelo.",
+"Ein Abzeichen für Kämpfe in der Arena. Im Duell-Shop eintauschbar.",
+"Знак за бои на арене. Обменяйте в магазине дуэлей."
 ],
 "shop.loot.tab.raid": [
 "讨伐",

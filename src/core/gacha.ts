@@ -33,6 +33,8 @@ export interface Wallet {
    */
   raidSigil: number;
   salvageRecord: number;
+  /** 결투장의 투사의 휘장. 결투 상점에서만 쓴다. */
+  duelEmblem: number;
 }
 
 /** 배너 비용으로 쓸 수 있는 재화만 허용하고 보상 재료는 제외한다. */

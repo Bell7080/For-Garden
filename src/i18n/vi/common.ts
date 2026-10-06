@@ -25,6 +25,7 @@ export const COMMON_VI = {
   "currency.rawStone": "Đá thô",
   "currency.raidSigil": "Ấn chinh phạt",
   "currency.salvageRecord": "Hồ sơ trục vớt",
+  "currency.duelEmblem": "Huy hiệu Đấu sĩ",
   "currency.gold": "Vàng",
   "currency.gems": "Ngọc",
   "currency.fossil": "Hóa thạch",

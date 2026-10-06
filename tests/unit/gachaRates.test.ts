@@ -85,7 +85,7 @@ describe("확률표 창 자리", () => {
 });
 
 describe("모자란 연구 재화는 젬으로 채운다", () => {
-  const wallet = (fossil: number, gems: number) => ({ fossil, amber: 0, gems, gold: 0, stamina: 0, dnaFragments: 0, cheesecake: 0, rawStone: 0, raidSigil: 0, salvageRecord: 0 });
+  const wallet = (fossil: number, gems: number) => ({ fossil, amber: 0, gems, gold: 0, stamina: 0, dnaFragments: 0, cheesecake: 0, rawStone: 0, raidSigil: 0, salvageRecord: 0, duelEmblem: 0 });
   const fossil = getBanner("fossil");
 
   it("가진 연구 재화를 먼저 쓰고 모자란 한 개마다 젬 300이다", () => {

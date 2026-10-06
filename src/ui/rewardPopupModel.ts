@@ -24,6 +24,7 @@ export function currencyRecordToRewardItems(rewards: Readonly<Record<string, num
     gems: "currency-gems", amber: "currency-amber", stamina: "currency-stamina", dnaFragments: "currency-dna",
     // 전리품 증표도 영수증에 선다 — 빠져 있던 때는 원정에서 받은 인양 기록이 결과판에서 조용히 사라졌다.
     salvageRecord: "currency-salvage-record", raidSigil: "currency-raid-sigil", rawStone: "currency-orestone",
+    duelEmblem: "currency-duel-emblem",
   };
   return Object.entries(rewards).flatMap(([currency, amount]) => {
     const icon = icons[currency];

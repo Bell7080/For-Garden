@@ -25,6 +25,7 @@ export const COMMON_PT_BR = {
   "currency.rawStone": "Pedra bruta",
   "currency.raidSigil": "Selo de subjugação",
   "currency.salvageRecord": "Registro de resgate",
+  "currency.duelEmblem": "Insígnia do Combatente",
   "currency.gold": "Ouro",
   "currency.gems": "Gema",
   "currency.fossil": "Fóssil",

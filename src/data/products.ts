@@ -56,7 +56,7 @@ export type ProductAcquisition =
    * 새로 만들지 않고 재료 칸에 산다. 차감은 교류 교환소와 **같은 재고 경계**를 지난다.
    */
   | { kind: "item"; itemId: string; amount: number }
-  | { kind: "platform_payment"; platformProductId: string; basePriceKrw: number }
+  | { kind: "platform_payment"; platformProductId: string; basePriceKrw: number; /** 할인 전 정가(원화). 있으면 카드가 정가를 긋고 할인율을 단다. */ listPriceKrw?: number }
   | { kind: "free" }
   | { kind: "rewarded_ad"; slotId: string; dailyLimitUtc: number };
 

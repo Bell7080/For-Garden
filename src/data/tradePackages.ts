@@ -57,7 +57,15 @@ export const TRADE_GEM_RATE: Readonly<Record<ProductCurrency, number>> = {
 
 /** 지급품 묶음 전체를 젬 값으로 환산한다. 재화가 아닌 지급품은 시세가 없으므로 세지 않는다. */
 export function tradeGemValue(grants: readonly ProductGrant[]): number {
-  return grants.reduce((sum, grant) => grant.kind === "currency" ? sum + grant.amount / TRADE_GEM_RATE[grant.currency] : sum, 0);
+  return grants.reduce((sum, grant) => grant.kind === "currency" && !isGemUnconvertible(grant.currency) ? sum + grant.amount / TRADE_GEM_RATE[grant.currency] : sum, 0);
+}
+
+/**
+ * 젬으로 살 수 없는 증표 둘 — 시세표 값은 칸을 채우려는 임시 값이라 비교에 쓰면 터무니없는 배수가 나온다
+ * (증표 20개로 치즈케이크 400개를 사면 60,000%). 가치 배지·환산에서 뺀다.
+ */
+export function isGemUnconvertible(currency: keyof typeof TRADE_GEM_RATE): boolean {
+  return currency === "raidSigil" || currency === "salvageRecord";
 }
 
 /**
@@ -67,7 +75,7 @@ export function tradeGemValue(grants: readonly ProductGrant[]): number {
  * 환산하지 못한 것과 딱 맞는 것이 같은 숫자로 보인다.
  */
 export function tradePackageValuePercent(acquisition: ProductAcquisition, grants: readonly ProductGrant[]): number | undefined {
-  if (acquisition.kind !== "currency") return undefined;
+  if (acquisition.kind !== "currency" || isGemUnconvertible(acquisition.currency)) return undefined;
   const cost = acquisition.amount / TRADE_GEM_RATE[acquisition.currency];
   if (cost <= 0) return undefined;
   return Math.round((tradeGemValue(grants) / cost) * 100);

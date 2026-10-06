@@ -29,6 +29,8 @@ import {
   premiumTabSpot, premiumTitleLeft, premiumTitleY, premiumWideFrameXs, type PremiumListKind,
 } from "../ui/premiumLayout";
 import { formatCurrency } from "../core/formatCurrency";
+import { formatStorePrice } from "../core/storePrice";
+import { addListPrice, addPremiumValueBadges } from "../ui/premiumValueBadge";
 import { consumeSceneEntry } from "./sceneEntry";
 import { playSceneEntrance, startScene, slideTabPage } from "../ui/screenTransition";
 import { pressIn, pressOut } from "../ui/pressFeedback";
@@ -168,6 +170,9 @@ export class PremiumScene extends Phaser.Scene {
     this.content?.add(card);
   }
 
+  /** 가로 카드의 반높이 — 우상단 배지가 윗변에 붙는 자리. */
+  private premiumCardHalfHeight(): number { return premiumCardHeight("wide") / 2; }
+
   /** 카드 전체를 덮는 입력면. 드래그로 끝난 손과 창 밖의 숨은 칸은 누름으로 치지 않는다. */
   private addCardHit(card: Phaser.GameObjects.Container, width: number, height: number, onTap: () => void): void {
     const hit = addClippedHit(this, card, 0, 0, width, height, premiumGridViewport);
@@ -229,6 +234,7 @@ export class PremiumScene extends Phaser.Scene {
       }
     });
     this.paintPriceChip(card, product, 0, S.price.y, S.price.width, S.price.height, S.price.size, action);
+    addPremiumValueBadges(this, card, product, right, -this.premiumCardHalfHeight() + 16);
     // 값 줄 양 끝 — 왼쪽은 정기권의 기간·권리, 오른쪽은 남은 구매. 값보다 작고 흐리다.
     const sideWidth = S.price.width / 2 + W.priceGap;
     const foot = this.passFootnote(product);
@@ -272,8 +278,12 @@ export class PremiumScene extends Phaser.Scene {
     }
     const bar = this.add.container(x, y);
     bar.add(drawLayer(this, 0, 0, chipPoints(width, height, { bevel: { topLeft: 20, topRight: 0, bottomRight: 20, bottomLeft: 0 } }), { fill: 0x0d141c, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.7 }));
-    const price = this.add.text(0, 0, action.priceText, textStyle({ role: "display", size, color: COLOR.accentText })).setOrigin(0.5).setStroke("#000000", 6).setShadow(2, 4, "#04060a", 0, true, true);
-    bar.add(squeezeTextToWidth(price, width - 36, 0.6));
+    const acquisition = product.acquisition;
+    const listed = acquisition.kind === "platform_payment" && acquisition.listPriceKrw !== undefined && acquisition.listPriceKrw > acquisition.basePriceKrw ? acquisition.listPriceKrw : undefined;
+    const price = this.add.text(listed === undefined ? 0 : width * 0.17, 0, action.priceText, textStyle({ role: "display", size, color: COLOR.accentText })).setOrigin(0.5).setStroke("#000000", 6).setShadow(2, 4, "#04060a", 0, true, true);
+    bar.add(squeezeTextToWidth(price, (listed === undefined ? width : width * 0.58) - 36, 0.6));
+    // 할인이 걸린 상품은 정가를 긋고 값 왼쪽에 작게 세운다.
+    if (listed !== undefined) addListPrice(this, bar, -width * 0.25, 0, formatStorePrice(listed), Math.round(size * 0.55));
     card.add(bar);
   }
 

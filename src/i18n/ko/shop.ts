@@ -24,6 +24,7 @@ export const SHOP_KO = {
   "shop.premium.remaining": "남은 구매 {remaining}/{limit}",
   "shop.premium.purchased": "구매가 완료되었습니다.",
   "shop.premium.daily": "매일",
+  "shop.premium.valueMultiple": "가치 ×{multiple}",
   "shop.premium.firstBonus": "첫 구매 보너스 +{amount}",
   "shop.premium.firstBonusTitle": "첫 구매 보너스",
   "shop.premium.tag.membership": "{days}일 정기권",

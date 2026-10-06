@@ -830,12 +830,12 @@ describe("FakeServer 상품 카탈로그", () => {
     const request = { entitlementId: entitlement.entitlementId, slotId: "daily-stamina", requestId: "instant-1" };
     const first = await server.claimInstantAdReward(request);
     await expect(server.claimInstantAdReward(request)).resolves.toMatchObject({ dailyClaims: 1, wallet: first.wallet });
-    expect(first).toMatchObject({ reward: { kind: "currency", currency: "stamina", amount: 10 }, dailyBonus: { currency: "gems", amount: 100 }, dailyRemaining: 2 });
+    expect(first).toMatchObject({ reward: { kind: "currency", currency: "stamina", amount: 10 }, dailyBonus: { currency: "gems", amount: 150 }, dailyRemaining: 2 });
     await server.claimInstantAdReward({ ...request, requestId: "instant-2" });
     await server.claimInstantAdReward({ ...request, requestId: "instant-3" });
     await expect(server.claimInstantAdReward({ ...request, requestId: "instant-4" })).rejects.toMatchObject({ code: "AD_DAILY_LIMIT" });
     now = new Date("2026-08-23T00:00:00Z");
-    await expect(server.claimInstantAdReward({ ...request, requestId: "instant-next-day" })).resolves.toMatchObject({ dailyClaims: 1, dailyBonus: { currency: "gems", amount: 100 } });
+    await expect(server.claimInstantAdReward({ ...request, requestId: "instant-next-day" })).resolves.toMatchObject({ dailyClaims: 1, dailyBonus: { currency: "gems", amount: 150 } });
   });
 });
 

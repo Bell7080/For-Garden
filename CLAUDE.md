@@ -475,7 +475,7 @@
   (`enterDuel`·`setDuelDefense`)로만 저장한다. 도전권은 입장에서 쓰고 결과 확정(`resolveDuel`)은 영수증으로 한 번만 받는다.
 - **방어하는 쪽은 v1에서 점수를 잃지 않는다.** 실제 서버가 생겨 상대가 사람이 되면 그때 정한다(`docs/server-migration.md`).
 - **결투 상점의 값은 휘장 1 = 젬 0.5**(`DUEL_EMBLEM_GEM_VALUE`)로 재고 받는 것이 1.0~1.25배 안에 든다(`duelShop.test`). 젬으로 휘장을
-  사는 길은 두지 않는다. 점원 카르나(가칭)의 이름·원화·대사는 `SHOP_STAGE_PRESENTATION.duel` 한 줄이 갖는다.
+  사는 길은 두지 않는다. 점원 록스우의 이름·원화·대사는 `SHOP_STAGE_PRESENTATION.duel` 한 줄이 갖는다.
 
 ## 마일리지 상점 — DNA 마일리지
 

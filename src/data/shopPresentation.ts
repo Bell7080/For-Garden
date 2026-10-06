@@ -137,21 +137,27 @@ const DUEL_TABS: readonly { id: string; label: string }[] = [
 ];
 
 /**
- * 결투 상점 무대에 서는 점원 — **카르나**(가칭).
+ * 결투 상점 무대에 서는 점원 — **록스우**.
  *
- * 뿔과 긴 꼬리, 팔의 비늘 무늬로 보아 카르노타우루스 계열의 복원 개체로 잡았다. 결투장 문 앞에서 휘장을 받는
- * 자리라, 수줍게 권하는 오비·값의 근거를 대는 프로티아·값을 즐기는 하이네와 달리 **말수가 적고 이긴 사람을 알아본다.**
+ * 결투장에서 물러난 **전 챔피언**이고, 지금은 문 앞에서 도전자의 휘장을 받는다. 생김새가 곧 성격이다 — 반쯤 감긴 눈과
+ * 머리 뒤로 넘긴 팔은 나른할 만큼 **느긋하고**, 팔의 붉은 흉터는 자랑이 아니라 **진 날의 기록**이며, 꼬리 끝에 매단
+ * 금속 표는 **자기를 이긴 사람의 수**다. 허리에 줄줄이 늘어진 사슬과 표도 같은 결로 「지나간 판」을 달고 다니는 것이다.
+ *
+ * 다른 점원과 **결이 갈리는 자리**가 여기 있다. 오비는 수줍게 권하고, 프로티아는 값의 근거를 대며, 하이네는 값을 즐긴다 —
+ * 셋 다 **파는 사람**이다. 록스우는 팔려고 하지 않는다. 말이 짧고, 물건이 아니라 **사는 사람의 판**을 보며, 진 판을 더
+ * 쳐준다. 그래서 대사는 권유가 아니라 무심한 한 마디이고, 이기라고 다그치지도 않는다.
+ *
  * 이름은 다른 점원과 같은 이유로 이 표가 소유한다 — 도감에 서지 않는 상점 전용 개체다.
  */
 export const DUEL_MERCHANT: { readonly name: string; readonly asset: PuppetAsset } = {
-  name: "카르나",
+  name: "록스우",
   asset: DUEL_CLERK_ASSET,
 };
 
-registerDataText(DUEL_MERCHANT, "name", "shopClerk.carna.name");
+registerDataText(DUEL_MERCHANT, "name", "shopClerk.roxwoo.name");
 
-/** 카르나가 돌아가며 하는 말. 순서만 여기 있고 문장은 `src/i18n`이 갖는다. */
-const DUEL_MERCHANT_LINE_KEYS: readonly TextKey[] = ["duel.shop.line1", "duel.shop.line2", "duel.shop.line3"];
+/** 록스우가 돌아가며 하는 말. 순서만 여기 있고 문장은 `src/i18n`이 갖는다. */
+const DUEL_MERCHANT_LINE_KEYS: readonly TextKey[] = ["duel.shop.line1", "duel.shop.line2", "duel.shop.line3", "duel.shop.line4", "duel.shop.line5"];
 
 /** 마일리지 상점의 두 갈래. `id`는 상품의 `category`와 같은 문자열이고 이름은 다른 상점의 일일·주간 탭과 같은 `shop.tab.<id>`다. */
 const MILEAGE_TABS: readonly { id: string; label: string }[] = [

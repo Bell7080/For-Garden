@@ -1801,5 +1801,5 @@ export default {
   "product.duel-weekly-tonic.name": "เครื่องดื่มนักสู้เข้มข้น",
   "product.duel-monthly-refined-core.name": "แกนโบราณที่ขัดเกลา",
   "product.duel-monthly-crystal.name": "ผลึกฟื้นคืนสมบูรณ์",
-  "shopClerk.carna.name": "คาร์นา",
+  "shopClerk.roxwoo.name": "ร็อกซู",
 };

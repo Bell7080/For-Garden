@@ -556,7 +556,7 @@ export const LOOT_CLERK_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
 };
 
 /**
- * 결투 상점 점원 **카르나**의 전신. ZIP의 alpha 경계(> 16)와 `puppet.json` 관절을 실측했다.
+ * 결투 상점 점원 **록스우**의 전신. ZIP의 alpha 경계(> 16)와 `puppet.json` 관절을 실측했다.
  * 발 관절이 캔버스 밖에 박혀 있지만 상점 무대는 머리 관절만 쓴다.
  */
 export const DUEL_CLERK_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {

@@ -1801,5 +1801,5 @@ export default {
   "product.duel-weekly-tonic.name": "Концентрированный напиток бойца",
   "product.duel-monthly-refined-core.name": "Очищенное древнее ядро",
   "product.duel-monthly-crystal.name": "Кристалл полного восстановления",
-  "shopClerk.carna.name": "Карна",
+  "shopClerk.roxwoo.name": "Роксу",
 };

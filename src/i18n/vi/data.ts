@@ -1801,5 +1801,5 @@ export default {
   "product.duel-weekly-tonic.name": "Đồ uống đấu sĩ cô đặc",
   "product.duel-monthly-refined-core.name": "Lõi cổ đại tinh luyện",
   "product.duel-monthly-crystal.name": "Tinh thể Phục hồi hoàn toàn",
-  "shopClerk.carna.name": "Carna",
+  "shopClerk.roxwoo.name": "Roxwoo",
 };

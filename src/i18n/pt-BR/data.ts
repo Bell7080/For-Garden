@@ -1801,5 +1801,5 @@ export default {
   "product.duel-weekly-tonic.name": "Bebida concentrada do gladiador",
   "product.duel-monthly-refined-core.name": "Núcleo antigo refinado",
   "product.duel-monthly-crystal.name": "Cristal de restauração total",
-  "shopClerk.carna.name": "Carna",
+  "shopClerk.roxwoo.name": "Roxwoo",
 };

@@ -1838,5 +1838,5 @@ export default {
   "product.duel-weekly-tonic.name": "濃縮闘士のドリンク",
   "product.duel-monthly-refined-core.name": "精製された古代核",
   "product.duel-monthly-crystal.name": "完全復元結晶",
-  "shopClerk.carna.name": "カルナ",
+  "shopClerk.roxwoo.name": "ロクスウ",
 };

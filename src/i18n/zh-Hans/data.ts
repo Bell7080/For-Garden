@@ -1801,5 +1801,5 @@ export default {
   "product.duel-weekly-tonic.name": "浓缩斗士饮料",
   "product.duel-monthly-refined-core.name": "精炼的古代核心",
   "product.duel-monthly-crystal.name": "完全复原结晶",
-  "shopClerk.carna.name": "卡尔娜",
+  "shopClerk.roxwoo.name": "洛克斯乌",
 };

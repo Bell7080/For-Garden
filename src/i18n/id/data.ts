@@ -1801,5 +1801,5 @@ export default {
   "product.duel-weekly-tonic.name": "Minuman Petarung Pekat",
   "product.duel-monthly-refined-core.name": "Inti Purba Murni",
   "product.duel-monthly-crystal.name": "Kristal Restorasi Penuh",
-  "shopClerk.carna.name": "Carna",
+  "shopClerk.roxwoo.name": "Roxwoo",
 };

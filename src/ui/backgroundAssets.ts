@@ -39,6 +39,7 @@ export const BACKGROUND = {
    * 같은 이유다.
    */
   lootShop: "background-loot-shop",
+  duelShop: "background-duel-shop",
   /**
    * 연구소 모집판의 **배너 원화**.
    *
@@ -160,6 +161,7 @@ export const BACKGROUND_ASSETS = [
   [BACKGROUND.shop, "sprites/background/background_013.webp"],
   [BACKGROUND.archaeologyShop, "sprites/background/background_015.webp"],
   [BACKGROUND.lootShop, "sprites/background/background_016.webp"],
+  [BACKGROUND.duelShop, "sprites/background/duel_shop.webp"],
   [BACKGROUND.recruitFossil, "sprites/background/background_017.webp"],
   [BACKGROUND.recruitDian, "sprites/background/recruit_dian.webp"],
   [BACKGROUND.recruitWelcome, "sprites/background/recruit_welcome.webp"],

@@ -1,4 +1,5 @@
 import type { ProductDto } from "../api/contracts";
+import { progressPassForProduct } from "../data/progressPasses";
 import { tradeGemValue } from "../data/tradePackages";
 
 /**
@@ -14,14 +15,17 @@ export const PREMIUM_ITEM_GEM_VALUE: Readonly<Record<string, number>> = {
 /** 배수를 단 상품의 최소 배수. 이보다 낮으면 "이득"이라 말할 수 없어 배지를 세우지 않는다. */
 export const PREMIUM_VALUE_BADGE_MIN = 1.1;
 
-type ValueInput = Pick<ProductDto, "acquisition" | "grants" | "passBenefit"> & Partial<Pick<ProductDto, "premiumCategory">>;
+type ValueInput = Pick<ProductDto, "acquisition" | "grants" | "passBenefit"> & Partial<Pick<ProductDto, "premiumCategory" | "id">>;
 
 /** 지급품(+정기권이 매일 얹는 다이아의 기간 합)을 다이아 값으로 환산한다. */
-export function premiumGemValue(product: Pick<ProductDto, "grants" | "passBenefit">): number {
-  const items = product.grants.reduce((sum, grant) => grant.kind === "item" ? sum + (PREMIUM_ITEM_GEM_VALUE[grant.itemId] ?? 0) * grant.amount : sum, 0);
+export function premiumGemValue(product: Pick<ProductDto, "grants" | "passBenefit"> & { id?: string }): number {
+  // 진행 패스는 지급 목록이 비어 있고 값은 유료 칸 전체에 있다 — 끝까지 걸었을 때의 합이다.
+  const pass = product.id === undefined ? undefined : progressPassForProduct(product.id);
+  const grants = pass ? pass.milestones.flatMap((milestone) => milestone.rewards) : product.grants;
+  const items = grants.reduce((sum, grant) => grant.kind === "item" ? sum + (PREMIUM_ITEM_GEM_VALUE[grant.itemId] ?? 0) * grant.amount : sum, 0);
   const daily = product.passBenefit?.dailyBonus;
   const stipend = daily && daily.currency === "gems" ? daily.amount * (product.passBenefit?.durationDays ?? 0) : 0;
-  return tradeGemValue(product.grants) + items + stipend;
+  return tradeGemValue(grants) + items + stipend;
 }
 
 /**

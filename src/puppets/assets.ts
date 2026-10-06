@@ -38,6 +38,7 @@ import {
   KURO_SD_METADATA,
   LEXIA_PORTRAIT_METADATA,
   LOOT_CLERK_PORTRAIT_METADATA,
+  DUEL_CLERK_PORTRAIT_METADATA,
   LUKA_PORTRAIT_METADATA,
   MADDY_PORTRAIT_METADATA,
   MADDY_SD_METADATA,
@@ -236,6 +237,12 @@ export const ARCHAEOLOGY_CLERK_ASSET: PuppetAsset = {
 export const LOOT_CLERK_ASSET: PuppetAsset = {
   url: `${base}puppets/char_shop_loot.zip`,
   ...LOOT_CLERK_PORTRAIT_METADATA,
+};
+
+/** 결투 상점 점원의 전신. 다른 점원과 같은 이유로 `PORTRAIT_ASSETS`에 넣지 않는다. */
+export const DUEL_CLERK_ASSET: PuppetAsset = {
+  url: `${base}puppets/char_shop_duel.zip`,
+  ...DUEL_CLERK_PORTRAIT_METADATA,
 };
 
 /** 토리카 skin001 전신: 기본 외형과 독립 측정한 카드·로비·정보창 배치를 사용한다. */

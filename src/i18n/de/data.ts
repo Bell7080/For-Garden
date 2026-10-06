@@ -170,6 +170,7 @@ export default {
   "item.rune-dust.name": "Runenstaub",
   "item.rune-dust.description": "Ein veredeltes Material für die Runenforschung.",
   "premium.tab.package": "Pakete",
+  "premium.tab.pass": "Pass",
   "premium.tab.deal": "Angebote",
   "premium.tab.limited": "Limitiert",
   "premium.tab.gem": "Diamanten",
@@ -1800,4 +1801,5 @@ export default {
   "product.duel-weekly-tonic.name": "Konzentriertes Gladiatorengetränk",
   "product.duel-monthly-refined-core.name": "Veredelter uralter Kern",
   "product.duel-monthly-crystal.name": "Kristall der vollständigen Restaurierung",
+  "shopClerk.carna.name": "Carna",
 };

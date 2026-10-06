@@ -170,6 +170,7 @@ export default {
   "item.rune-dust.name": "ฝุ่นรูน",
   "item.rune-dust.description": "วัสดุขัดเกลาที่ใช้ในการวิจัยรูน",
   "premium.tab.package": "แพ็กเกจ",
+  "premium.tab.pass": "พาส",
   "premium.tab.deal": "ดีล",
   "premium.tab.limited": "จำกัด",
   "premium.tab.gem": "เพชร",
@@ -1800,4 +1801,5 @@ export default {
   "product.duel-weekly-tonic.name": "เครื่องดื่มนักสู้เข้มข้น",
   "product.duel-monthly-refined-core.name": "แกนโบราณที่ขัดเกลา",
   "product.duel-monthly-crystal.name": "ผลึกฟื้นคืนสมบูรณ์",
+  "shopClerk.carna.name": "คาร์นา",
 };

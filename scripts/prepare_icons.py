@@ -65,6 +65,8 @@ ART: dict[str, tuple[str, tuple[float, float, float] | None] | tuple[str, tuple[
     "sprites/items/stamina-tonic-large.webp": ("에너지드링크+(120회복).png", None),
     "sprites/currency/raid-sigil.webp": ("토벌증표.webp", None),
     "sprites/currency/salvage-record.webp": ("인양기록.webp", None),
+    # 결투장의 투사의 휘장. 결투 상점의 값이고 결투 결과판·상단 줄에 선다.
+    "sprites/currency/duel-emblem.webp": ("battlecoin.webp", None),
     # 소탕권(던전 소탕에 드는 표)과 발굴권(고고학 유적에 들어가는 입장권). 발굴권은 재화가 아니라
     # 조작 횟수라 UI 아이콘 자리에 굽는다.
     "sprites/items/sweep-ticket.webp": ("소탕권.png", None),
@@ -97,6 +99,7 @@ RECENTER: dict[str, float] = {
     "sprites/items/stamina-tonic-large.webp": 0.78,
     "sprites/currency/raid-sigil.webp": 0.8,
     "sprites/currency/salvage-record.webp": 0.8,
+    "sprites/currency/duel-emblem.webp": 0.8,
     # 토벌권은 가로로 긴 표라 긴 변을 조금 더 채운다 — 0.8이면 세로가 얇아 액자 안에서 작아 보인다.
     "sprites/items/raid-ticket.webp": 0.86,
     "sprites/items/raid-select-ticket.webp": 0.86,

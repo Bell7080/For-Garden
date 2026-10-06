@@ -1,5 +1,5 @@
 import { registerDataText, type TextKey } from "../i18n";
-import { ARCHAEOLOGY_CLERK_ASSET, LOOT_CLERK_ASSET, SHOP_CLERK_ASSET, type PuppetAsset } from "../puppets/assets";
+import { ARCHAEOLOGY_CLERK_ASSET, DUEL_CLERK_ASSET, LOOT_CLERK_ASSET, SHOP_CLERK_ASSET, type PuppetAsset } from "../puppets/assets";
 import { BACKGROUND } from "../ui/backgroundAssets";
 import type { ProductStorefront } from "./products";
 import type { TopBarCurrencyContext } from "../ui/topBarSlots";
@@ -137,9 +137,20 @@ const DUEL_TABS: readonly { id: string; label: string }[] = [
 ];
 
 /**
- * 결투 상점의 점원 대사. 전용 점원 원화가 오기 전까지 하이네가 **자리표시**로 선다 — 증표를 값으로 바꾸는 일을
- * 즐기는 같은 결이라 말투가 어긋나지 않는다. 원화가 오면 `SHOP_STAGE_PRESENTATION.duel`의 점원만 갈아 끼운다.
+ * 결투 상점 무대에 서는 점원 — **카르나**(가칭).
+ *
+ * 뿔과 긴 꼬리, 팔의 비늘 무늬로 보아 카르노타우루스 계열의 복원 개체로 잡았다. 결투장 문 앞에서 휘장을 받는
+ * 자리라, 수줍게 권하는 오비·값의 근거를 대는 프로티아·값을 즐기는 하이네와 달리 **말수가 적고 이긴 사람을 알아본다.**
+ * 이름은 다른 점원과 같은 이유로 이 표가 소유한다 — 도감에 서지 않는 상점 전용 개체다.
  */
+export const DUEL_MERCHANT: { readonly name: string; readonly asset: PuppetAsset } = {
+  name: "카르나",
+  asset: DUEL_CLERK_ASSET,
+};
+
+registerDataText(DUEL_MERCHANT, "name", "shopClerk.carna.name");
+
+/** 카르나가 돌아가며 하는 말. 순서만 여기 있고 문장은 `src/i18n`이 갖는다. */
 const DUEL_MERCHANT_LINE_KEYS: readonly TextKey[] = ["duel.shop.line1", "duel.shop.line2", "duel.shop.line3"];
 
 /** 마일리지 상점의 두 갈래. `id`는 상품의 `category`와 같은 문자열이고 이름은 다른 상점의 일일·주간 탭과 같은 `shop.tab.<id>`다. */
@@ -238,14 +249,15 @@ export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "
     hologram: true,
   },
   duel: {
-    merchant: LOOT_MERCHANT,
+    merchant: DUEL_MERCHANT,
     lineKeys: DUEL_MERCHANT_LINE_KEYS,
-    // 결투장 입구가 아니라 결투가 벌어지는 자리를 깐다 — 들어온 화면의 배경을 그대로 쓰면 어디로 왔는지 말하지 못한다.
-    background: BACKGROUND.duelField,
+    background: BACKGROUND.duelShop,
     titleKey: "shop.duel.title",
     tabs: DUEL_TABS,
     currencies: "duel",
-    merchantSpot: { headX: 744, height: 1010 },
+    // 머리 관절 오른쪽에 그려진 몫이 440px(캔버스 1024)이라 공용 자리면 오른쪽 변을 넘는다 — 프로티아와 같은 자리에서
+    // 배율 0.71로 세우면 오른쪽 끝이 1,055에 든다.
+    merchantSpot: { headX: 744, height: 1060 },
   },
 };
 

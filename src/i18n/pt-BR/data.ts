@@ -170,6 +170,7 @@ export default {
   "item.rune-dust.name": "Pó de runa",
   "item.rune-dust.description": "Um material refinado usado na pesquisa de Runas.",
   "premium.tab.package": "Pacotes",
+  "premium.tab.pass": "Passe",
   "premium.tab.deal": "Ofertas",
   "premium.tab.limited": "Limitado",
   "premium.tab.gem": "Diamantes",
@@ -1800,4 +1801,5 @@ export default {
   "product.duel-weekly-tonic.name": "Bebida concentrada do gladiador",
   "product.duel-monthly-refined-core.name": "Núcleo antigo refinado",
   "product.duel-monthly-crystal.name": "Cristal de restauração total",
+  "shopClerk.carna.name": "Carna",
 };

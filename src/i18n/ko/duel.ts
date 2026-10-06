@@ -56,7 +56,7 @@ export const DUEL_KO = {
   "duel.history.win": "승",
   "duel.history.loss": "패",
   "shop.duel.title": "결투 상점",
-  "duel.shop.line1": "휘장 냄새가 나는데? 오늘도 이기고 왔구나. 히히.",
-  "duel.shop.line2": "진 판의 휘장도 휘장이야. 값은 똑같이 쳐 줄게.",
-  "duel.shop.line3": "주간 화석은 금방 빠져. 아껴 두지 말라는 뜻이야.",
+  "duel.shop.line1": "휘장을 들고 왔네. 오늘 판은 어땠어?",
+  "duel.shop.line2": "진 판의 휘장도 휘장이야. 값은 똑같이 쳐 줘.",
+  "duel.shop.line3": "주간 화석은 금방 빠져. 오래 고민하지 마.",
 } as const;

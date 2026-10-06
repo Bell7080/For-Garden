@@ -122,3 +122,16 @@ export function cinematicCardArt(
     return { frame: "icon", iconKey: source.icon(kind), amount: source.amount(view.amount) } as const;
   });
 }
+
+/**
+ * 결산 격자에 닿은 뒤 화면을 눌러도 닫히지 않는 시간(실제 시간, ms).
+ *
+ * 건너뛰기를 누르거나 연출을 넘기던 연타가 곧바로 결산을 닫아 버려 뽑은 것을 한 번도
+ * 보지 못했다. 닫은 뒤의 보호(`CLOSE_INPUT_GUARD_MS`)와 짝이다.
+ */
+export const RESULT_TAP_LOCK_MS = 500;
+
+/** 결산 격자에서 지금 닫아도 되는가. 시계는 부르는 쪽이 넘긴다(순수). */
+export function canCloseResult(now: number, lockedUntil: number): boolean {
+  return now >= lockedUntil;
+}

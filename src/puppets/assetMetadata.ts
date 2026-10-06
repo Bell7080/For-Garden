@@ -555,6 +555,16 @@ export const LOOT_CLERK_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   joints: { center: [525, 359], head: [566, 244], eyes: [[533, 219], [598, 260]], feet: [[411, 1359], [794, 1254]] },
 };
 
+/**
+ * 결투 상점 점원 **카르나**의 전신. ZIP의 alpha 경계(> 16)와 `puppet.json` 관절을 실측했다.
+ * 발 관절이 캔버스 밖에 박혀 있지만 상점 무대는 머리 관절만 쓴다.
+ */
+export const DUEL_CLERK_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1024, imageHeight: 1536,
+  content: { left: 42, top: 8, right: 981, bottom: 1509 },
+  joints: { center: [512, 295], head: [541, 194], eyes: [[520, 157], [561, 189]], feet: [[292, 1538], [919, 1678]] },
+};
+
 /*
  * **레이티아 다섯 자매의 실측값.**
  *

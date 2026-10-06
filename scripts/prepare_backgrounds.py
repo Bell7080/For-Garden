@@ -39,6 +39,11 @@ RECRUIT_BACKGROUNDS = {
     "스타팅가챠배경": "recruit_welcome",
 }
 
+# 상점 무대 원화의 원본 이름 → 구운 이름. 무대표(`SHOP_STAGE_PRESENTATION`)가 이 그림을 가리킨다.
+SHOP_BACKGROUNDS = {
+    "battleshopbackground": "duel_shop",
+}
+
 
 def bake(source: Path, target: Path) -> None:
     """크기는 그대로 두고 압축만 바꾼 뒤 원본을 지운다."""
@@ -71,7 +76,10 @@ def main() -> None:
     recruits = sorted(
         path for stem in RECRUIT_BACKGROUNDS for path in sources(PUBLIC, stem) | sources(BACKGROUND_TARGET, stem)
     )
-    if not backgrounds and not contents and not interactions and not strata_base and not strata_layers and not stories and not recruits:
+    shops = sorted(
+        path for stem in SHOP_BACKGROUNDS for path in sources(PUBLIC, stem) | sources(BACKGROUND_TARGET, stem)
+    )
+    if not backgrounds and not contents and not interactions and not strata_base and not strata_layers and not stories and not recruits and not shops:
         print("구울 원본이 없다. public/background_00N.png 또는 public/ContentN_00M.png를 올린 뒤 다시 실행한다.")
         return
     for source in backgrounds:
@@ -90,6 +98,8 @@ def main() -> None:
         bake(source, BACKGROUND_TARGET / f"{STORY_BACKGROUNDS[source.stem]}.webp")
     for source in recruits:
         bake(source, BACKGROUND_TARGET / f"{RECRUIT_BACKGROUNDS[source.stem]}.webp")
+    for source in shops:
+        bake(source, BACKGROUND_TARGET / f"{SHOP_BACKGROUNDS[source.stem]}.webp")
 
 
 if __name__ == "__main__":

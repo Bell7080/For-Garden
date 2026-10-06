@@ -170,6 +170,7 @@ export default {
   "item.rune-dust.name": "Bụi Rune",
   "item.rune-dust.description": "Vật liệu tinh chế dùng trong nghiên cứu Rune.",
   "premium.tab.package": "Gói",
+  "premium.tab.pass": "Thẻ tháng",
   "premium.tab.deal": "Ưu đãi",
   "premium.tab.limited": "Giới hạn",
   "premium.tab.gem": "Kim cương",
@@ -1800,4 +1801,5 @@ export default {
   "product.duel-weekly-tonic.name": "Đồ uống đấu sĩ cô đặc",
   "product.duel-monthly-refined-core.name": "Lõi cổ đại tinh luyện",
   "product.duel-monthly-crystal.name": "Tinh thể Phục hồi hoàn toàn",
+  "shopClerk.carna.name": "Carna",
 };

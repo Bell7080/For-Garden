@@ -170,6 +170,7 @@ export default {
   "item.rune-dust.name": "Debu Rune",
   "item.rune-dust.description": "Bahan olahan untuk riset Rune.",
   "premium.tab.package": "Paket",
+  "premium.tab.pass": "Pass",
   "premium.tab.deal": "Penawaran",
   "premium.tab.limited": "Terbatas",
   "premium.tab.gem": "Berlian",
@@ -1800,4 +1801,5 @@ export default {
   "product.duel-weekly-tonic.name": "Minuman Petarung Pekat",
   "product.duel-monthly-refined-core.name": "Inti Purba Murni",
   "product.duel-monthly-crystal.name": "Kristal Restorasi Penuh",
+  "shopClerk.carna.name": "Carna",
 };

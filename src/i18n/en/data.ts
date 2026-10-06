@@ -172,6 +172,7 @@ export default {
   "item.rune-dust.name": "Rune Dust",
   "item.rune-dust.description": "A refined material used in Rune research.",
   "premium.tab.package": "Packages",
+  "premium.tab.pass": "Passes",
   "premium.tab.deal": "Deals",
   "premium.tab.limited": "Limited",
   "premium.tab.gem": "Diamonds",
@@ -1824,4 +1825,5 @@ export default {
   "product.duel-weekly-tonic.name": "Concentrated Gladiator's Drink",
   "product.duel-monthly-refined-core.name": "Refined Ancient Core",
   "product.duel-monthly-crystal.name": "Full Restoration Crystal",
+  "shopClerk.carna.name": "Carna",
 };

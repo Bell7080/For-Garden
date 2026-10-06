@@ -351,6 +351,7 @@ export default {
   "item.rune-dust.name": "ルーンの粉",
   "item.rune-dust.description": "ルーン研究に使われる精製素材です。",
   "premium.tab.package": "パッケージ",
+  "premium.tab.pass": "パス",
   "premium.tab.deal": "お得",
   "premium.tab.limited": "限定",
   "premium.tab.gem": "ダイヤ",
@@ -1837,4 +1838,5 @@ export default {
   "product.duel-weekly-tonic.name": "濃縮闘士のドリンク",
   "product.duel-monthly-refined-core.name": "精製された古代核",
   "product.duel-monthly-crystal.name": "完全復元結晶",
+  "shopClerk.carna.name": "カルナ",
 };

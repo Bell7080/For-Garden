@@ -131,10 +131,10 @@ describe("FakeServer 진행 패스", () => {
     const gems = state.wallet.gems;
     const first = await server.claimProgressPass({ passId: "level", requestId: "claim-1" });
     expect(first.claimedThresholds).toEqual([3, 5, 8, 10]);
-    expect(state.wallet.gems).toBe(gems + 300);
+    expect(state.wallet.gems).toBe(gems + 650);
     // 같은 요청을 다시 보내도 두 번 주지 않는다.
     await expect(server.claimProgressPass({ passId: "level", requestId: "claim-1" })).resolves.toEqual(first);
-    expect(state.wallet.gems).toBe(gems + 300);
+    expect(state.wallet.gems).toBe(gems + 650);
     await expect(server.claimProgressPass({ passId: "level", requestId: "claim-2" })).rejects.toMatchObject({ code: "NOTHING_TO_CLAIM" });
 
     const listed = (await server.getProgressPasses()).passes.find(({ id }) => id === "level")!;
@@ -191,5 +191,32 @@ describe("패스 탭 줄의 오른쪽 잘림", () => {
     expect(four).toBeLessThan(passPopupPassMinScroll(3));
     const visible = passPopupPassStrip().right(PASS_POPUP.height / 2 - PASS_POPUP.passRow.fromBottom) - passPopupPassStrip().left;
     expect(passPopupPassTabs(4).span + four).toBeCloseTo(visible);
+  });
+});
+
+describe("패스 유료 칸의 짜임", () => {
+  it("마디마다 다양한 보상 하나 + 다이아 고정이고, 길 끝의 다이아가 가장 크다", () => {
+    for (const pass of PROGRESS_PASSES) {
+      for (const { rewards } of pass.milestones) {
+        expect(rewards, pass.id).toHaveLength(2);
+        expect(rewards[0]!.kind === "currency" && rewards[0]!.currency === "gems", pass.id).toBe(false);
+        expect(rewards[1]).toMatchObject({ kind: "currency", currency: "gems" });
+      }
+      const gems = pass.milestones.map(({ rewards }) => (rewards[1] as { amount: number }).amount);
+      expect([...gems].sort((a, b) => a - b)).toEqual(gems);
+      expect(gems[gems.length - 1]).toBeGreaterThanOrEqual(gems[gems.length - 2]! * 1.5);
+    }
+  });
+
+  it("패스 카드는 프리미엄 탭에서도 같은 상품으로 팔리고, 값어치는 길 끝까지 걸었을 때의 합으로 센다", async () => {
+    const { premiumGemValue, premiumValueMultiple } = await import("../../src/core/premiumValue");
+    const { PREMIUM_GEM_PER_KRW } = await import("../../src/data/premiumProducts");
+    for (const id of ["premium-story-pass", "premium-level-pass", "premium-raid-pass"]) {
+      const product = PREMIUM_PRODUCTS.find((p) => p.id === id)! as never;
+      expect(premiumGemValue(product)).toBeGreaterThan(4_000);
+      const multiple = premiumValueMultiple(product, PREMIUM_GEM_PER_KRW)!;
+      expect(multiple, id).toBeGreaterThanOrEqual(2.5);
+      expect(multiple, id).toBeLessThanOrEqual(4);
+    }
   });
 });

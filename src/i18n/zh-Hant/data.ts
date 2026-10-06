@@ -170,6 +170,7 @@ export default {
   "item.rune-dust.name": "符文粉塵",
   "item.rune-dust.description": "用於符文研究的精煉材料。",
   "premium.tab.package": "禮包",
+  "premium.tab.pass": "通行證",
   "premium.tab.deal": "特惠",
   "premium.tab.limited": "限定",
   "premium.tab.gem": "鑽石",
@@ -1800,4 +1801,5 @@ export default {
   "product.duel-weekly-tonic.name": "濃縮鬥士飲料",
   "product.duel-monthly-refined-core.name": "精煉的古代核心",
   "product.duel-monthly-crystal.name": "完全復原結晶",
+  "shopClerk.carna.name": "卡爾娜",
 };

@@ -16,7 +16,7 @@ import type Phaser from "phaser";
 import { CLOSE_INPUT_GUARD_MS } from "./closeInputGuard";
 import { activeFontFamily, FONT_FALLBACK } from "./fonts";
 import { bakeCinematicFace, bakeCinematicIcon, bakeCinematicPortrait, prewarmCinematicArt } from "./researchCinematicArt";
-import type { CinematicCardArt, CinematicReward } from "./researchCinematicModel";
+import { canCloseResult, RESULT_TAP_LOCK_MS, type CinematicCardArt, type CinematicReward } from "./researchCinematicModel";
 
 const SCRIPT_URL = "cinematic/researchCinematic.js";
 const STYLE_URL = "cinematic/researchCinematic.css";
@@ -376,7 +376,7 @@ export class ResearchCinematic {
     if (this.introducing) return;
     // 건너뛰기를 누른 순간부터 칩은 할 일이 없다 — 결산까지 남겨 두지 않는다.
     this.root.classList.add("rc-skipped");
-    if (this.phase === "result") { this.close(); return; }
+    if (this.phase === "result") { this.closeResult(); return; }
     void this.skipAfterIntroductions();
   }
 
@@ -491,8 +491,17 @@ export class ResearchCinematic {
    *
    * 여기서 닫지 않는다 — 결산 격자를 한 번은 보여 줘야 하고, 닫는 것은 화면을 누르는 손이다.
    */
+  private resultLockedUntil = 0;
+
+  /** 결산을 닫는다. 막 닿은 직후의 연타는 삼킨다. */
+  private closeResult(): void {
+    if (!canCloseResult(performance.now(), this.resultLockedUntil)) return;
+    this.close();
+  }
+
   private settleResult(): void {
     this.reachedResult = true;
+    this.resultLockedUntil = performance.now() + RESULT_TAP_LOCK_MS;
     for (const timer of this.timers) window.clearTimeout(timer);
     this.timers.clear();
     // 건너뛰어 곧장 온 칸도 파편으로 세운다. 격자에 원화와 파편이 섞이면 무엇이 중복인지
@@ -508,7 +517,7 @@ export class ResearchCinematic {
    */
   private tap(): void {
     if (this.introducing) return;
-    if (this.phase === "result") { this.close(); return; }
+    if (this.phase === "result") { this.closeResult(); return; }
     const next = this.instance.peekReveal?.();
     if (next?.step === "flip" && this.introduceSlots.has(next.index) && !this.introduced.has(next.index) && this.introduce) {
       // 새로 만난 렐릭 — 카드를 뒤집기 **전에** 먼저 소개하고, 돌아와서 뒤집는다.

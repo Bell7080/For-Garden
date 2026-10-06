@@ -28,7 +28,7 @@ import type { ProductListResponse, PurchaseProductRequest, PurchaseProductRespon
 import { totalGrantAmount } from "../core/purchase";
 import { getRelicSkin } from "../data/relicSkins";
 import { WALLET_CAPS } from "../data/economy";
-import { mileageWeeklyClerkId } from "../data/mileageClerk";
+import { mileageFragmentRelicId } from "../data/mileageClerk";
 import { BOND_STORY_GEM_REWARD, BOND_STORY_LEVELS, DIARY_QUESTION_GEM_REWARD, bondChapterId, diaryQuestionUnlockAt, type BondStoryLevel } from "../core/relicStory";
 import { relicStoryFor } from "../data/relicStories";
 import type { AnswerRelicQuestionRequest, AnswerRelicQuestionResponse, ClaimRelicChapterRequest, ClaimRelicChapterResponse, ClaimRelicQuestionRewardRequest, ClaimRelicQuestionRewardResponse } from "./contracts";
@@ -1847,25 +1847,41 @@ export class FakeServer implements GameApi {
       }
     }
     nextRunes.push(...grantedRunes);
-    // 마일리지 상점의 주간 SSR 파편은 개체 파편 장부(`relicFragments`)에 쓴다. 이미 돌파 V인 개체의 파편은 쓸 곳이 없어
-    // 값을 치르기 전에 거절한다.
-    const nextFragments = { ...this.state.relicFragments };
-    if (product.grants.some((grant) => grant.kind === "weekly_ssr_fragment")) {
-      const clerkId = mileageWeeklyClerkId(now);
-      if (!clerkId) throw new GameApiError("PRODUCT_NOT_VISIBLE", "현재 교환할 수 있는 파편이 없습니다.");
-      const progress = this.state.relicProgress[clerkId];
+    // 마일리지 상점의 파편(주간 SSR·주간 SR·일간 R)은 개체 파편 장부(`relicFragments`)에 쓴다. 이미 돌파 V인 개체의 파편은
+    // 쓸 곳이 없어 값을 치르기 전에 거절한다.
+    for (const grant of product.grants) {
+      if (grant.kind !== "weekly_ssr_fragment" && grant.kind !== "rotating_fragment") continue;
+      const fragmentRelicId = mileageFragmentRelicId(grant, now);
+      if (!fragmentRelicId) throw new GameApiError("PRODUCT_NOT_VISIBLE", "현재 교환할 수 있는 파편이 없습니다.");
+      const progress = this.state.relicProgress[fragmentRelicId];
       if (progress && breakthroughGrade(progress.breakthrough) >= BREAKTHROUGH_GRADE_CAP) throw new GameApiError("RELIC_MAX_BREAKTHROUGH", "이미 돌파를 끝마친 렐릭입니다.");
     }
+    const nextFragments = { ...this.state.relicFragments };
     const applied = this.applyProductGrants(product, quantity, nextWallet, nextItems, now, [], nextFragments);
     nextItems = applied.items;
     const granted = applied.granted;
+    // 미보유 개체의 파편을 처음 사면 뽑기와 같이 그 개체를 **획득**한다 — 첫 한 장은 파편이 아니라 개체 자체다.
+    // 파편 장부에는 나머지(중복 몫)만 남고, 응답의 `newRelicIds`가 화면의 새 캐릭터 연출을 부른다.
+    const newRelicIds: string[] = [];
+    const nextOwned = new Set(this.state.owned);
+    const nextProgress = { ...this.state.relicProgress };
+    let nextRelicStory = this.state.relicStory;
+    for (const row of granted) {
+      if (row.kind !== "relic_fragment" || nextOwned.has(row.relicId)) continue;
+      nextOwned.add(row.relicId);
+      newRelicIds.push(row.relicId);
+      nextFragments[row.relicId] = Math.max(0, (nextFragments[row.relicId] ?? 0) - 1);
+      if (!nextProgress[row.relicId]) nextProgress[row.relicId] = grantBondXp(createInitialRelicProgress(), BOND_XP_REWARD.firstAcquisition).progress;
+      if (!(row.relicId in nextRelicStory.metAt)) nextRelicStory = { ...nextRelicStory, metAt: { ...nextRelicStory.metAt, [row.relicId]: now.toISOString() } };
+    }
     const periodKey = this.productPeriodKey(product, now);
     const current = this.state.productPurchases[product.id];
     const count = (current?.periodKey === periodKey ? current.count : 0) + quantity;
     const nextPurchases = { ...this.state.productPurchases, [product.id]: { periodKey, count } };
-    this.persist({ ...this.state, wallet: nextWallet, runeInventory: nextRunes, itemInventory: nextItems, productPurchases: nextPurchases, relicFragments: nextFragments });
+    this.persist({ ...this.state, wallet: nextWallet, runeInventory: nextRunes, itemInventory: nextItems, productPurchases: nextPurchases, relicFragments: nextFragments, owned: nextOwned, relicProgress: nextProgress, relicStory: nextRelicStory });
     this.state.wallet = nextWallet; this.state.runeInventory = nextRunes; this.state.itemInventory = nextItems; this.state.productPurchases = nextPurchases; this.state.relicFragments = nextFragments;
-    return { ...this.snapshot(), productId, quantity, granted, grantedRunes: grantedRunes.map((rune) => this.cloneRune(rune)), remaining: Math.max(0, product.purchaseLimit - count) };
+    this.state.owned = nextOwned; this.state.relicProgress = nextProgress; this.state.relicStory = nextRelicStory;
+    return { ...this.snapshot(), productId, quantity, granted, grantedRunes: grantedRunes.map((rune) => this.cloneRune(rune)), remaining: Math.max(0, product.purchaseLimit - count), newRelicIds };
   }
 
   /** 룬 상품이 이 기간에 내놓는 자리. 로테이션 칸이 정하고, 칸이 없는 상품은 지급 정의의 고정 자리를 쓴다. */
@@ -1921,9 +1937,9 @@ export class FakeServer implements GameApi {
         if (!Number.isSafeInteger(total) || (stack?.quantity ?? 0) + total > cap) throw new GameApiError("CURRENCY_LIMIT_EXCEEDED", "지급 후 아이템 상한을 초과합니다.");
         nextItems = this.grantItem(nextItems, grant.itemId, total, now, grant.expiresInDays).inventory;
         granted.push({ ...grant, amount: total });
-      } else if (grant.kind === "relic_fragment" || grant.kind === "weekly_ssr_fragment") {
+      } else if (grant.kind === "relic_fragment" || grant.kind === "weekly_ssr_fragment" || grant.kind === "rotating_fragment") {
         if (!fragments) throw new GameApiError("ACQUISITION_FLOW_REQUIRED", "파편 지급은 전용 확정 절차가 필요합니다.");
-        const relicId = grant.kind === "relic_fragment" ? grant.relicId : mileageWeeklyClerkId(now);
+        const relicId = grant.kind === "relic_fragment" ? grant.relicId : mileageFragmentRelicId(grant, now);
         if (!relicId) throw new GameApiError("PRODUCT_NOT_VISIBLE", "현재 교환할 수 있는 파편이 없습니다.");
         const total = totalGrantAmount(grant.amount, rowQuantity);
         fragments[relicId] = (fragments[relicId] ?? 0) + total;

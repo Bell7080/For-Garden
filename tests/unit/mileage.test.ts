@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { MILEAGE_OVERFLOW_BY_RARITY, MILEAGE_PER_PULL, mileageForPull } from "../../src/core/mileage";
-import { MILEAGE_CLERK_LINE_COUNT, mileageClerkPool, mileageWeekIndex, mileageWeeklyClerkId } from "../../src/data/mileageClerk";
+import { MILEAGE_CLERK_LINE_COUNT, mileageClerkPool, mileageRotatingFragmentId, mileageRotationPool, mileageWeekIndex, mileageWeeklyClerkId } from "../../src/data/mileageClerk";
 import { MILEAGE_PRODUCTS } from "../../src/data/mileageShop";
 import { SHOP_PRODUCTS } from "../../src/data/products";
 import { STAMINA_GEM_PRICING } from "../../src/core/staminaGemPricing";
@@ -107,6 +107,24 @@ describe("마일리지 상점 상품", () => {
     for (const id of ["mileage-weekly-fossil", "mileage-weekly-amber"]) {
       expect(price(id), id).toBe(5);
       expect(find(id).purchaseLimit, id).toBe(10);
+    }
+  });
+
+  it("SR·R 파편은 SSR 파편과 같은 5배 비율(중복 마일리지 × 5)이다", () => {
+    const price = (id: string) => (MILEAGE_PRODUCTS.find((product) => product.id === id)!.acquisition as { amount: number }).amount;
+    expect(price("mileage-weekly-sr")).toBe(MILEAGE_OVERFLOW_BY_RARITY.SR * 5);
+    expect(price("mileage-daily-r")).toBe(MILEAGE_OVERFLOW_BY_RARITY.R * 5);
+    expect(price("mileage-weekly-ssr")).toBe(MILEAGE_OVERFLOW_BY_RARITY.SSR * 5);
+  });
+
+  it("주간 SR·일간 R 파편은 기간 안에서 같은 개체이고 후보 안에서 돈다", () => {
+    const day = new Date("2026-10-07T01:00:00Z");
+    expect(mileageRotatingFragmentId("R", "daily", day)).toBe(mileageRotatingFragmentId("R", "daily", new Date("2026-10-07T23:59:59Z")));
+    expect(mileageRotatingFragmentId("SR", "weekly", day)).toBe(mileageRotatingFragmentId("SR", "weekly", new Date("2026-10-11T23:59:59Z")));
+    for (const [rarity, period] of [["SR", "weekly"], ["R", "daily"]] as const) {
+      const seen = new Set(Array.from({ length: 60 }, (_, index) => mileageRotatingFragmentId(rarity, period, new Date(day.getTime() + index * (period === "weekly" ? 7 : 1) * 86_400_000))));
+      expect(seen.size, rarity).toBeGreaterThan(1);
+      for (const id of seen) expect(mileageRotationPool(rarity)).toContain(id);
     }
   });
 

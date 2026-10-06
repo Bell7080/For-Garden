@@ -495,7 +495,7 @@ export interface PurchaseProductRequest {
   runeChoice?: { mainKeys: readonly [RuneMainStatKey, RuneMainStatKey] };
 }
 /** 인게임 상품의 차감·지급·제한 갱신이 모두 끝난 뒤의 응답이다. */
-export interface PurchaseProductResponse extends PlayerStateDto { productId: string; quantity: number; /** 상품 정의가 아니라 이번 처리에서 서버가 확정한 총 지급 결과다. */ granted: readonly ProductGrant[]; remaining: number; /** 이번 구매에서 서버가 생성한 완성 룬들이다. */ grantedRunes: RuneInstance[]; }
+export interface PurchaseProductResponse extends PlayerStateDto { productId: string; quantity: number; /** 상품 정의가 아니라 이번 처리에서 서버가 확정한 총 지급 결과다. */ granted: readonly ProductGrant[]; remaining: number; /** 이번 구매에서 서버가 생성한 완성 룬들이다. */ grantedRunes: RuneInstance[]; /** 이번 구매로 처음 획득한 개체(파편 상품). 화면이 새 캐릭터 연출을 돌리는 근거다. 없으면 새 개체가 없다. */ newRelicIds?: readonly string[]; }
 
 /** 발굴 요청에는 클라이언트가 선택한 배너와 횟수만 보낸다. */
 export interface PullRequest {

@@ -38,7 +38,7 @@ export function productGrantsToRewardItems(grants: readonly ProductGrant[], gran
   const otherItems = grants.flatMap((grant): RewardPopupItem[] => {
     if (grant.kind === "currency") return [];
     // 주간 SSR 파편은 서버가 구매 순간의 개체로 풀어 내려 준다. 풀리지 않은 자리표시는 그리지 않는다.
-    if (grant.kind === "weekly_ssr_fragment") return [];
+    if (grant.kind === "weekly_ssr_fragment" || grant.kind === "rotating_fragment") return [];
     if (grant.kind === "relic_fragment") return [{ icon: "", amount: grant.amount, relicId: grant.relicId }];
     if (grant.kind === "profile_decoration") return [{ icon: { kind: "glyph", key: "costume" }, amount: 1, label: grant.name }];
     if (grant.kind === "rune") return [{ icon: `rune-${grant.rarity}-${grant.part}`, amount: grant.amount, label: grant.name }];

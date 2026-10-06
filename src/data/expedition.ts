@@ -95,10 +95,10 @@ export const EXPEDITION_NODE_REWARD_BALANCE = {
   fossil: { perNode: { min: 0, max: 1 }, runCap: 1 },
   gems: { perNode: { min: 0, max: 2 }, runCap: 24 },
   /**
-   * 인양 기록 — 노드를 넘을 때마다 10~20(정예 ×1.75 · 무리 ×1.4)이 쌓이고 한 런 상한은 300이다.
-   * 전리품 상점의 재화라 한 판에 손에 쥐는 몫이 상점 가격(`products.ts`)을 정한다. 폰토스 피해와 주간 보상은 따로 더해진다.
+   * 인양 기록 — 노드를 넘을 때마다 **소소하게** 쌓인다. 전리품 상점의 재화라 한 판에 몇 개라도 손에
+   * 쥐어져야 원정을 돌 이유가 상점까지 이어진다. 큰 몫은 폰토스 피해와 주간 보상이 맡는다.
    */
-  salvageRecord: { perNode: { min: 10, max: 20 }, runCap: 300 },
+  salvageRecord: { perNode: { min: 2, max: 5 }, runCap: 90 },
 } as const;
 
 /**
@@ -129,7 +129,7 @@ export const EXPEDITION_TREASURE_REWARD_BALANCE = {
   gold: { min: 520, max: 900 },
   fossil: { min: 1, max: 1 },
   gems: { min: 3, max: 5 },
-  salvageRecord: { min: 25, max: 40 },
+  salvageRecord: { min: 6, max: 10 },
 } as const;
 
 /** 빠른 원정은 서버가 보유한 유효 최고 점수의 이 비율만 보상 점수로 환산한다. */

@@ -79,7 +79,9 @@ export type ProductGrant =
   /** 한 개체의 파편. 정의에는 `relicId`가 없고 서버가 `weeklySsrFragment`를 그 주의 개체로 풀어 내려 준다. */
   | { kind: "relic_fragment"; relicId: string; amount: number }
   /** 마일리지 상점의 「이번 주 SSR 파편」 자리표시. 구매 순간의 주 개체(`mileageWeeklyClerkId`)로 확정된다. */
-  | { kind: "weekly_ssr_fragment"; amount: number };
+  | { kind: "weekly_ssr_fragment"; amount: number }
+  /** 마일리지 상점의 「주간 SR / 일간 R 파편」 자리표시. 구매 순간의 기간(`mileageFragmentRelicId`)으로 개체가 확정된다. */
+  | { kind: "rotating_fragment"; rarity: "SR" | "R"; period: "weekly" | "daily"; amount: number };
 
 /** 구매 제한의 재설정 주기다. */
 /**

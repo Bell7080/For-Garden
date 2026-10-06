@@ -18,7 +18,7 @@ import { siteCooldownMs } from "../../src/core/strataCrystal";
 import { findArchaeologySite } from "../../src/data/archaeologySites";
 
 const STRATA_SITE_COOLDOWN_MS = siteCooldownMs(findArchaeologySite("garden-gate")!);
-import { mileageWeeklyClerkId } from "../../src/data/mileageClerk";
+import { mileageRotatingFragmentId, mileageWeeklyClerkId } from "../../src/data/mileageClerk";
 import { BREAKTHROUGH_GRADE_CAP } from "../../src/core/relicProgression";
 
 /** API 테스트에서 같은 옵션 구성을 재현하는 보유 룬을 만든다. */
@@ -1349,17 +1349,47 @@ describe("FakeServer 룬 로테이션 상품", () => {
 
 describe("FakeServer 마일리지 상점", () => {
   const WEEK = new Date("2026-10-07T12:00:00Z");
-  it("주간 SSR 파편은 이번 주 점원의 파편 한 장으로 쌓이고 마일리지만 차감한다", async () => {
+  it("미보유 점원의 주간 SSR 파편을 처음 사면 파편이 아니라 그 개체를 획득하고 newRelicIds로 알린다", async () => {
     const state = makeSession(); state.wallet.dnaFragments = 200;
     const server = new FakeServer(state, { latencyMs: 0, now: () => WEEK });
     const clerk = mileageWeeklyClerkId(WEEK)!;
+    expect(state.owned.has(clerk)).toBe(false);
     const result = await server.purchaseProduct({ storefront: "mileage", productId: "mileage-weekly-ssr", quantity: 1 });
-    expect(state.relicFragments[clerk]).toBe(1);
+    expect(result.newRelicIds).toEqual([clerk]);
+    expect(state.owned.has(clerk)).toBe(true);
+    expect(state.relicProgress[clerk]).toBeDefined();
+    expect(state.relicFragments[clerk] ?? 0).toBe(0);
+    expect(state.relicStory.metAt[clerk]).toBeDefined();
     expect(state.wallet.dnaFragments).toBe(50);
     expect(result.granted).toEqual([{ kind: "relic_fragment", relicId: clerk, amount: 1 }]);
     // 주 1회 한도다.
     await expect(server.purchaseProduct({ storefront: "mileage", productId: "mileage-weekly-ssr", quantity: 1 })).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
     expect(state.wallet.dnaFragments).toBe(50);
+  });
+
+  it("이미 가진 점원의 파편은 연출 없이 파편 장부에만 쌓인다", async () => {
+    const state = makeSession(); state.wallet.dnaFragments = 200;
+    const clerk = mileageWeeklyClerkId(WEEK)!;
+    state.owned.add(clerk);
+    state.relicProgress[clerk] = { level: 1, exp: 0, breakthrough: 0, bondLevel: 0, bondXp: 0, lastLobbyInteractionDate: "", heartGemSlots: [null, null, null] };
+    const server = new FakeServer(state, { latencyMs: 0, now: () => WEEK });
+    const result = await server.purchaseProduct({ storefront: "mileage", productId: "mileage-weekly-ssr", quantity: 1 });
+    expect(result.newRelicIds).toEqual([]);
+    expect(state.relicFragments[clerk]).toBe(1);
+  });
+
+  it("주간 SR 파편과 일간 R 파편은 그 기간의 개체 한 장이고 처음이면 획득한다", async () => {
+    const state = makeSession(); state.wallet.dnaFragments = 100;
+    const server = new FakeServer(state, { latencyMs: 0, now: () => WEEK });
+    const sr = mileageRotatingFragmentId("SR", "weekly", WEEK)!;
+    const r = mileageRotatingFragmentId("R", "daily", WEEK)!;
+    const first = await server.purchaseProduct({ storefront: "mileage", productId: "mileage-weekly-sr", quantity: 1 });
+    expect(first.newRelicIds).toEqual([sr]);
+    expect(first.granted).toEqual([{ kind: "relic_fragment", relicId: sr, amount: 1 }]);
+    const second = await server.purchaseProduct({ storefront: "mileage", productId: "mileage-daily-r", quantity: 1 });
+    expect(second.newRelicIds).toEqual([r]);
+    expect(state.wallet.dnaFragments).toBe(100 - 40 - 10);
+    await expect(server.purchaseProduct({ storefront: "mileage", productId: "mileage-daily-r", quantity: 1 })).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
   });
 
   it("이미 돌파 V인 점원의 파편은 값을 받기 전에 거절한다", async () => {

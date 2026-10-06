@@ -11,7 +11,7 @@ const BADGE = { height: 44, size: 24, gap: 10, pad: 22, slant: 12 } as const;
 /** 가치 배수 문장. 배지와 구매 확인판이 같은 글자를 읽는다. */
 export function premiumValueLabel(product: Pick<ProductDto, "acquisition" | "grants" | "passBenefit" | "premiumCategory">): string | undefined {
   const multiple = premiumValueMultiple(product, PREMIUM_GEM_PER_KRW);
-  return multiple === undefined ? undefined : t("shop.premium.valueMultiple", { multiple: multiple.toFixed(1) });
+  return multiple === undefined ? undefined : t("shop.premium.valueMultiple", { multiple: `${Math.round(multiple * 100)}%` });
 }
 
 /**

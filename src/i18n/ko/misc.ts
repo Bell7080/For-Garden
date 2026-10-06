@@ -48,6 +48,7 @@ export const MISC_KO = {
   "shop.haine.line3": "깎아 달라고? 좋아, 깎아 줄게. 대신 다음에 두 배로 받을 거야.",
   "shop.haine.line4": "그거 주머니에 더 있지. 숨겨도 소용없어, 나 귀 밝아.",
   "shop.haine.line5": "또 와. 안 사도 괜찮아 — 어차피 살 때까지 올 거잖아?",
+  "shop.merchant.line0": "어, 어서 오세요…! A-LAB24입니다. 천천히 둘러보세요.",
   "shop.merchant.line1": "오, 오셔서 감사합니다…! 오늘 들어온 건 다 꺼내 뒀어요. 천천히 보세요.",
   "shop.merchant.line2": "이, 이쪽 선반은 제가 정리했어요. 삐뚤어진 건… 못 본 척해 주세요.",
   "shop.merchant.line3": "재고 확인은 다 끝냈습니다! …아마도요. 한 번만 더 세어 볼게요.",

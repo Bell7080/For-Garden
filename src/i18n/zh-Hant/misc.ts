@@ -42,6 +42,7 @@ export const MISC_ZH_HANT = {
   "shop.haine.line3": "打折？行啊，給你便宜點。下次收你雙倍就是了。",
   "shop.haine.line4": "你口袋裡還有吧。藏也沒用，我耳朵可靈了。",
   "shop.haine.line5": "下次再來。不買也沒關係——反正你會一直來到買為止。",
+  "shop.merchant.line0": "歡、歡迎光臨……！這裡是 A-LAB24。請慢慢看。",
   "shop.merchant.line1": "歡、歡迎光臨……！今天到的貨都擺上架了。請慢慢看。",
   "shop.merchant.line2": "這、這個貨架是我自己整理的。如果有歪的地方……請當作沒看見。",
   "shop.merchant.line3": "庫存清點全部完成！……應該吧。我再數一遍。",

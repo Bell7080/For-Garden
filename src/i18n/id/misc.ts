@@ -42,6 +42,7 @@ export const MISC_ID = {
   "shop.haine.line3": "Diskon? Boleh, kupotong sedikit. Lain kali kuambil dua kali lipat.",
   "shop.haine.line4": "Sakumu masih ada isinya. Menyembunyikannya tak ada gunanya — telingaku tajam.",
   "shop.haine.line5": "Datang lagi ya. Tak usah beli — kamu akan terus datang sampai membeli.",
+  "shop.merchant.line0": "S-selamat datang…! Ini A-LAB24. Silakan lihat-lihat.",
   "shop.merchant.line1": "S-selamat datang…! Semua barang yang datang hari ini sudah di rak. Silakan lihat-lihat.",
   "shop.merchant.line2": "A-aku sendiri yang merapikan rak ini. Kalau ada yang miring… tolong pura-pura tidak lihat.",
   "shop.merchant.line3": "Cek stok sudah beres! …Mungkin. Biar kuhitung sekali lagi.",

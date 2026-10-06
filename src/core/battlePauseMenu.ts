@@ -7,6 +7,7 @@ import type { BattleSceneInputDto } from "./expeditionBattle";
  *   해도 잃는 것이 없다(`leave`). 다시 하기는 편성 화면과 같은 입장을 다시 지난다.
  * - 레이드와 원정 보스는 **친 만큼이 점수**다. 입장이 도전 한 번을 이미 썼으므로 다시 하기는 두지 않고,
  *   나가기는 그 자리에서 판을 끝내 **지금까지의 피해로 정산**한다(`forfeit`).
+ * - 결투는 입장이 도전권을 썼으므로 다시 하기가 없고, 나가기는 그 판을 **패배로** 끝낸다(`forfeit`).
  * - 원정 노드는 스무 층 한 판의 한 칸이라 그만두면 그 판 전체가 끝난다. 일시 정지 판에서 잘못 누를
  *   자리를 두지 않는다 — 설정과 계속하기만 선다.
  */
@@ -17,6 +18,7 @@ export interface BattlePauseActions {
 
 export function battlePauseActions(mode: BattleSceneInputDto["mode"]): BattlePauseActions {
   if (mode === "stage" || mode === "cake" || mode === "bounty") return { retry: true, exit: "leave" };
-  if (mode === "raid" || mode === "expeditionBoss") return { retry: false, exit: "forfeit" };
+  // 결투는 도전권을 입장에서 썼다 — 나가면 그 판을 진 것으로 끝낸다.
+  if (mode === "raid" || mode === "expeditionBoss" || mode === "duel") return { retry: false, exit: "forfeit" };
   return { retry: false, exit: null };
 }

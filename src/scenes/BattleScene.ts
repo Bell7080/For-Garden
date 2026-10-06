@@ -75,7 +75,7 @@ import { relicProgression } from "../managers/RelicProgressionManager";
 import { anyPopupOpen, PopupLayer } from "../ui/PopupLayer";
 import { cakeOperationEnemies, cakeOperationRole, cakeOperationRunCost, getCakeOperationTier, isCakeTierUnlocked } from "../data/cakeOperation";
 import { battleArena } from "../core/battleArena";
-import { createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, createRaidSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type CakeBattleInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto, type RaidBattleInputDto } from "../core/expeditionBattle";
+import { createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, createRaidSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type CakeBattleInputDto, type DuelBattleInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto, type RaidBattleInputDto } from "../core/expeditionBattle";
 import { raidBossDef, raidBossGrowth, raidBossPercentHpBasis } from "../core/raid";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import { expeditionManager, ExpeditionBossSettlementError, ExpeditionBossSettlementFlow } from "../managers/ExpeditionManager";
@@ -500,6 +500,8 @@ export class BattleScene extends Phaser.Scene {
     // 현상수배는 한 라운드에 한 명만 선다 — 편성 칸의 순서가 곧 나가는 순서다.
     const partyIds = this.battleInput.mode === "expedition" || this.battleInput.mode === "expeditionBoss" ? this.battleInput.relics.map(({ relicId }) => relicId)
       : this.battleInput.mode === "bounty" ? [session.party[this.battleInput.round] ?? session.party[0]]
+      // 결투는 입장이 확정한 공격덱으로 싸운다 — 그 사이 편성을 바꿔도 이 판은 그 셋이다.
+      : this.battleInput.mode === "duel" ? [...this.battleInput.attack]
       : session.party;
     // **원정은 떠난 순간의 모습으로 싸운다**(`ExpeditionRelicSnapshot`). 스무 층 도중에 급여·돌파·
     // 룬·외형을 바꿔도 이 런의 전투는 출발할 때 굳힌 값만 읽는다. 그 밖의 전투는 지금 성장이다.
@@ -522,6 +524,8 @@ export class BattleScene extends Phaser.Scene {
         : this.battleInput.mode === "raid" ? [raidBossDef(getRelic(this.battleInput.bossRelicId), this.battleInput.difficulty)]
         // 현상수배의 정예도 스테이지와 같은 성장 경로를 지난다. 전용 배율은 만들지 않는다.
         : this.battleInput.mode === "bounty" ? [bountyRoundEnemy(getBountyTier(this.battleInput.tierId).rounds[this.battleInput.round])]
+        // 결투의 상대는 입장 영수증이 굳힌 성장 능력치 그대로다. 씬이 레벨에서 다시 구하지 않는다.
+        : this.battleInput.mode === "duel" ? this.battleInput.units.map((unit) => ({ ...getRelic(unit.relicId), stats: { ...unit.stats } }))
         : getStageEnemies(stage);
     const expeditionConfig = this.battleInput.mode === "expedition" ? createExpeditionSkirmishConfig(this.battleInput, players, stageEnemies)
       : this.battleInput.mode === "expeditionBoss" ? createExpeditionBossSkirmishConfig(this.battleInput, players, stageEnemies)
@@ -548,7 +552,7 @@ export class BattleScene extends Phaser.Scene {
       augmentEffects: traitEffects,
       // 대작전·현상수배는 스테이지의 슬롯별 돌파 표를 읽지 않고, 정보창과 같은 배치 표
       // (`placedEnemyIndex`)의 돌파를 쓴다 — 두 곳이 따로 정하면 창이 말한 돌파 효과가 전투에 없다.
-      enemyBreakthroughs: cakeTier || this.battleInput.mode === "bounty"
+      enemyBreakthroughs: cakeTier || this.battleInput.mode === "bounty" || this.battleInput.mode === "duel"
         ? [...placedEnemyIndex(this.battleInput, stage, stageEnemies).values()].map(({ breakthrough }) => breakthrough)
         : stageEnemyGrowth(stage).map(({ breakthrough }) => breakthrough),
       /*
@@ -556,7 +560,8 @@ export class BattleScene extends Phaser.Scene {
        * 넷 이상이 몰려오는 무리는 작다 — 열다섯 몸이 보통 크기로 들어차면 전장이 몸으로 덮여
        * 체력 바와 피해 수치가 그 뒤로 숨는다.
        */
-      enemyBodyScale: ENCOUNTER_ROLE[cakeTier ? cakeOperationRole(cakeTier) : encounterRoleFor(
+      // 결투의 상대는 아군과 같은 몸이다 — 유형 몫이 없는 대칭 판이다.
+      enemyBodyScale: ENCOUNTER_ROLE[cakeTier ? cakeOperationRole(cakeTier) : this.battleInput.mode === "duel" ? "normal" : encounterRoleFor(
         stageEnemies.length,
         { elite: stage.elite === true || this.battleInput.mode === "bounty" },
       )].bodyScale,
@@ -584,7 +589,8 @@ export class BattleScene extends Phaser.Scene {
     // 2로 싸우다가 멤버십이 확인되는 순간 3으로 돌아간다(`resolveBattleMembership`).
     this.battleMember = false;
     this.battleSpeed = usableBattleSpeed(battleSettings.battleSpeed, false);
-    this.autoUltimate = battleSettings.autoUltimate;
+    // 결투는 양쪽 모두 자동 궁극기로만 싸운다 — 수동 개입이 비동기 상대와의 판을 가르지 않게 한다.
+    this.autoUltimate = this.battleInput.mode === "duel" || battleSettings.autoUltimate;
     this.ultimateSequenceActive = false;
     this.ultimateSequence = createUltimateSequenceState();
     this.currentUltimateFighterId = null;
@@ -873,6 +879,8 @@ export class BattleScene extends Phaser.Scene {
       label: this.autoUltimate ? t("battle.chip.autoOn") : t("battle.chip.autoOff"),
       width,
       onClick: () => {
+        // 결투는 자동으로 고정이다. 눌러도 꺼지지 않고 저장값도 건드리지 않는다.
+        if (this.battleInput.mode === "duel") return;
         this.autoUltimate = !this.autoUltimate;
         // 자동 궁극기도 배속과 같은 플레이 습관이므로 토글하는 즉시 저장한다.
         settingsManager.update({ game: { autoUltimate: this.autoUltimate } });
@@ -927,7 +935,7 @@ export class BattleScene extends Phaser.Scene {
     ];
     if (actions.retry) rows.push({ label: t("battle.pause.retry"), onPress: () => popups.confirm({ title: t("battle.pause.retry"), message: t("battle.pause.retryConfirm"), confirmLabel: t("battle.pause.retry") }, () => this.retryBattle()) });
     if (actions.exit === "leave") rows.push({ label: t("battle.pause.exit"), destructive: true, onPress: () => popups.confirm({ title: t("battle.pause.exit"), message: t("battle.pause.exitConfirm"), confirmLabel: t("battle.pause.exit"), destructive: true }, () => this.leaveBattle()) });
-    if (actions.exit === "forfeit") rows.push({ label: t("battle.pause.exit"), destructive: true, onPress: (close) => popups.confirm({ title: t("battle.pause.exit"), message: t("battle.pause.forfeitConfirm"), confirmLabel: t("battle.pause.exit"), destructive: true }, () => { close(); this.finishBattle("defeat"); }) });
+    if (actions.exit === "forfeit") rows.push({ label: t("battle.pause.exit"), destructive: true, onPress: (close) => popups.confirm({ title: t("battle.pause.exit"), message: this.battleInput.mode === "duel" ? t("duel.pause.forfeitConfirm") : t("battle.pause.forfeitConfirm"), confirmLabel: t("battle.pause.exit"), destructive: true }, () => { close(); this.finishBattle("defeat"); }) });
     const button = { width: 420, height: 86, gap: 20, top: 120, bottom: 70 };
     const height = button.top + rows.length * button.height + (rows.length - 1) * button.gap + button.bottom;
     popups.open({ width: 560, height, title: t("battle.pause.title"), dim: true, closeOnBackdrop: true }, (body, close) => {
@@ -966,7 +974,7 @@ export class BattleScene extends Phaser.Scene {
     this.lastStepAt = now;
     const game = settingsManager.get().game;
     this.battleSpeed = usableBattleSpeed(game.battleSpeed, this.battleMember);
-    this.autoUltimate = game.autoUltimate;
+    this.autoUltimate = this.battleInput.mode === "duel" || game.autoUltimate;
     this.refreshSpeedChip();
     this.autoChip.setLabel(this.autoUltimate ? t("battle.chip.autoOn") : t("battle.chip.autoOff")).setActive(this.autoUltimate);
     if (this.reopenPauseOnWake) { this.reopenPauseOnWake = false; this.openPauseMenu(); }
@@ -995,6 +1003,7 @@ export class BattleScene extends Phaser.Scene {
     const input = this.battleInput;
     if (input.mode === "cake") { startScene(this, "cakeOperation", { tierId: input.tierId }); return; }
     if (input.mode === "bounty") { startScene(this, "bounty", { tierId: input.tierId }); return; }
+    if (input.mode === "duel") { startScene(this, "duel"); return; }
     startScene(this, this.stageExit());
   }
 
@@ -1204,6 +1213,8 @@ export class BattleScene extends Phaser.Scene {
   private useUltimate(fighter: Fighter): void {
     // 수동 입력은 연출 중 큐에 넣지 않는다. 연타가 다음 궁극기로 예약되는 오해를 막는다.
     if (this.finished || !this.spawned || performance.now() < this.fightStartsAt || this.ultimateSequenceActive || !canFireUltimate(this.state, fighter)) return;
+    // 결투는 수동 발동이 없다 — 자동 궁극기만 판을 움직인다.
+    if (this.battleInput.mode === "duel") return;
     if (enqueueUltimate(this.ultimateSequence, fighter.id)) void this.pumpUltimateQueue();
   }
 
@@ -2488,6 +2499,7 @@ export class BattleScene extends Phaser.Scene {
     if (this.battleInput.mode === "expedition") { this.finishExpeditionBattle(this.battleInput, won); return; }
     if (this.battleInput.mode === "cake") { void this.finishCakeOperation(this.battleInput, won); return; }
     if (this.battleInput.mode === "bounty") { void this.finishBountyRound(this.battleInput, won); return; }
+    if (this.battleInput.mode === "duel") { void this.finishDuel(this.battleInput, won); return; }
     const stage = getBattleStage(session.selectedStageId ?? "1-1");
     if (!won) { this.finishStageDefeat(stage); return; }
     void this.finishStageVictory(stage);
@@ -2704,6 +2716,43 @@ export class BattleScene extends Phaser.Scene {
       ] },
       replay, fighters, onOpenContribution: openContribution, staminaRefunded: settled.staminaRefunded,
       onConfirm: () => { if (!chosen && this.scene.isActive()) toBounty(); },
+    });
+  }
+
+  /**
+   * 결투 결과. 도전권은 입장에서 썼으므로 다시 하기가 없고, 이기든 지든 휘장이 들어온다 — 진 판도
+   * 같은 결산창(`defeat`)에 받은 휘장과 점수 변화가 선다. 닫으면 결투장으로 돌아간다.
+   */
+  private async finishDuel(input: DuelBattleInputDto, won: boolean): Promise<void> {
+    const fighters = this.stageCompleteFighters();
+    const popups = new PopupLayer(this, 2200);
+    const openContribution = (onClosed: () => void): void => this.openContributionPopup(popups, onClosed);
+    let settled;
+    try {
+      settled = await gameApi.resolveDuel({ requestId: input.requestId, won });
+    } catch {
+      if (!this.scene.isActive()) return;
+      this.showResultFailure(() => void this.finishDuel(input, won), () => this.scene.start("duel"));
+      return;
+    }
+    if (!this.scene.isActive()) return;
+    const toDuel = (): void => { this.scene.start("duel"); };
+    let chosen = false;
+    const go = (run: () => void) => () => { chosen = true; run(); };
+    const items = currencyRecordToRewardItems({ duelEmblem: settled.duelEmblem, gems: settled.gems });
+    const sign = settled.delta > 0 ? "+" : "";
+    const footnote = t("duel.result.score", { score: settled.scoreAfter.toLocaleString(), delta: `${sign}${settled.delta}` });
+    const onConfirm = (): void => { if (!chosen && this.scene.isActive()) toDuel(); };
+    if (settled.won) {
+      new StageCompletePopup(this, popups).open({ reward: { kind: "loot", items, footnote }, fighters, onOpenContribution: openContribution, onConfirm });
+      return;
+    }
+    new StageCompletePopup(this, popups).open({
+      reward: { kind: "defeat", items, footnote, actions: [
+        { label: t("stageComplete.toRelics"), onPress: go(() => this.scene.start("relics")) },
+        { label: t("duel.result.toDuel"), onPress: go(toDuel) },
+      ] },
+      fighters, onOpenContribution: openContribution, onConfirm,
     });
   }
 

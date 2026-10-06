@@ -1828,4 +1828,13 @@ export default {
   "product.mileage-daily-cheesecake.name": "チーズケーキ補給",
   "product.mileage-daily-tonic.name": "ドリンク1本",
   "product.mileage-daily-strata.name": "探査券の搬出",
+  "product.duel-daily-cheesecake.name": "決闘補給給餌",
+  "product.duel-daily-gold.name": "決闘報奨金",
+  "product.duel-daily-tonic.name": "闘士のドリンク",
+  "product.duel-weekly-fossil.name": "化石",
+  "product.duel-weekly-amber.name": "琥珀",
+  "product.duel-weekly-gems.name": "決闘精算結晶",
+  "product.duel-weekly-tonic.name": "濃縮闘士のドリンク",
+  "product.duel-monthly-refined-core.name": "精製された古代核",
+  "product.duel-monthly-crystal.name": "完全復元結晶",
 };

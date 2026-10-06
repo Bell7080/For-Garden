@@ -131,6 +131,17 @@ const LOOT_CATEGORY_TABS: readonly { id: string; label: string }[] = [
   { id: "raid", label: "토벌" }, { id: "expedition", label: "인양" },
 ];
 
+/** 결투 상점의 세 갈래 — 언제 돌아오는 자리인가. `id`는 상품의 `category`이고 이름은 다른 상점과 같은 `shop.tab.<id>`다. */
+const DUEL_TABS: readonly { id: string; label: string }[] = [
+  { id: "daily", label: "일일" }, { id: "weekly", label: "주간" }, { id: "special", label: "특가" },
+];
+
+/**
+ * 결투 상점의 점원 대사. 전용 점원 원화가 오기 전까지 하이네가 **자리표시**로 선다 — 증표를 값으로 바꾸는 일을
+ * 즐기는 같은 결이라 말투가 어긋나지 않는다. 원화가 오면 `SHOP_STAGE_PRESENTATION.duel`의 점원만 갈아 끼운다.
+ */
+const DUEL_MERCHANT_LINE_KEYS: readonly TextKey[] = ["duel.shop.line1", "duel.shop.line2", "duel.shop.line3"];
+
 /** 마일리지 상점의 두 갈래. `id`는 상품의 `category`와 같은 문자열이고 이름은 다른 상점의 일일·주간 탭과 같은 `shop.tab.<id>`다. */
 const MILEAGE_TABS: readonly { id: string; label: string }[] = [
   { id: "daily", label: "일일" }, { id: "weekly", label: "주간" },
@@ -184,7 +195,7 @@ export interface ShopStagePresentation {
  * 쓰기 시작하면 자리가 하나 늘 때마다 씬이 길어지고, 점원만 바꾸고 배경을 빠뜨리는 사고가
  * 난다. 한 자리가 갖는 것 전부가 여기 한 줄이다.
  */
-export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "loot" | "mileage", ShopStagePresentation>> = {
+export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "loot" | "mileage" | "duel", ShopStagePresentation>> = {
   shop: {
     merchant: SHOP_MERCHANT,
     lineKeys: SHOP_MERCHANT_LINE_KEYS,
@@ -226,6 +237,16 @@ export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "
     currencies: "mileage",
     hologram: true,
   },
+  duel: {
+    merchant: LOOT_MERCHANT,
+    lineKeys: DUEL_MERCHANT_LINE_KEYS,
+    // 결투장 입구가 아니라 결투가 벌어지는 자리를 깐다 — 들어온 화면의 배경을 그대로 쓰면 어디로 왔는지 말하지 못한다.
+    background: BACKGROUND.duelField,
+    titleKey: "shop.duel.title",
+    tabs: DUEL_TABS,
+    currencies: "duel",
+    merchantSpot: { headX: 744, height: 1010 },
+  },
 };
 
 /** 무역·프리미엄은 이 씬을 쓰지 않으므로 일반 상점 무대로 떨어뜨린다. */
@@ -233,10 +254,12 @@ export function shopStagePresentation(storefront: ProductStorefront): ShopStageP
   if (storefront === "archaeology") return SHOP_STAGE_PRESENTATION.archaeology;
   if (storefront === "loot") return SHOP_STAGE_PRESENTATION.loot;
   if (storefront === "mileage") return SHOP_STAGE_PRESENTATION.mileage;
+  if (storefront === "duel") return SHOP_STAGE_PRESENTATION.duel;
   return SHOP_STAGE_PRESENTATION.shop;
 }
 
 /** 목록 교체 줄의 이름을 언어별로 덮어쓸 수 있게 등록한다. */
 for (const tab of [...SHOP_CURRENCY_TABS, ...SHOP_REFRESH_TABS]) registerDataText(tab, "label", `shop.tab.${tab.id}`);
 for (const tab of LOOT_CATEGORY_TABS) registerDataText(tab, "label", `shop.loot.tab.${tab.id}`);
+for (const tab of DUEL_TABS) registerDataText(tab, "label", `shop.tab.${tab.id}`);
 for (const tab of MILEAGE_TABS) registerDataText(tab, "label", `shop.tab.${tab.id}`);

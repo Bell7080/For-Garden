@@ -1791,4 +1791,13 @@ export default {
   "product.mileage-daily-cheesecake.name": "เสบียงชีสเค้ก",
   "product.mileage-daily-tonic.name": "เครื่องดื่มหนึ่งขวด",
   "product.mileage-daily-strata.name": "นำตั๋วสำรวจออก",
+  "product.duel-daily-cheesecake.name": "เสบียงการดวล",
+  "product.duel-daily-gold.name": "ค่าหัวการดวล",
+  "product.duel-daily-tonic.name": "เครื่องดื่มนักสู้",
+  "product.duel-weekly-fossil.name": "ฟอสซิล",
+  "product.duel-weekly-amber.name": "อำพัน",
+  "product.duel-weekly-gems.name": "ผลึกสรุปผลการดวล",
+  "product.duel-weekly-tonic.name": "เครื่องดื่มนักสู้เข้มข้น",
+  "product.duel-monthly-refined-core.name": "แกนโบราณที่ขัดเกลา",
+  "product.duel-monthly-crystal.name": "ผลึกฟื้นคืนสมบูรณ์",
 };

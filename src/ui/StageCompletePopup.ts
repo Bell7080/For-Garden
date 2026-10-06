@@ -55,6 +55,8 @@ export type StageCompleteReward =
       actions: readonly StageCompleteAction[];
       /** 지는 길에도 걷어 온 것이 있으면(원정 전멸 정산) 버튼 위에 같은 액자 줄로 선다. */
       items?: readonly RewardPopupItem[];
+      /** 액자 줄 아래 한 줄(결투의 점수 변화). 버튼은 그만큼 내려선다. */
+      footnote?: string;
     };
 
 /** 실패 결산창의 버튼 한 장. 무엇을 하면 강해지는지만 말한다. */
@@ -122,7 +124,7 @@ const REWARD_ROW = { y: 320, frame: 132, gap: 168 } as const;
  * 자리는 고를 것이 하나뿐인 영수증이 아니라 **다음에 어디로 갈지**를 고르는 자리라 줄마다
  * 한 번씩 읽혀야 한다.
  */
-const DEFEAT_ACTIONS = { top: 272, width: 420, height: 86, gap: 18, belowLoot: 416 } as const;
+const DEFEAT_ACTIONS = { top: 272, width: 420, height: 86, gap: 18, belowLoot: 416, footnoteShift: 84 } as const;
 
 /** 진 판에서 돌려준 스테미나 한 줄. 판 밑변 가까이, 버튼 줄보다 한참 아래에 선다. */
 const STAMINA_REFUND_Y = HEIGHT / 2 - 64;
@@ -210,9 +212,10 @@ export class StageCompletePopup {
       }
       else if (options.reward.kind === "defeat") {
         const carried = (options.reward.items ?? []).filter(({ amount }) => amount > 0);
-        if (carried.length > 0) this.buildLoot(body, carried);
+        const footnote = carried.length > 0 ? options.reward.footnote : undefined;
+        if (carried.length > 0) this.buildLoot(body, carried, footnote);
         const actions = options.replay ? [options.replay, ...options.reward.actions] : options.reward.actions;
-        this.buildDefeatActions(body, close, actions, carried.length > 0);
+        this.buildDefeatActions(body, close, actions, carried.length > 0, footnote !== undefined);
         if ((options.staminaRefunded ?? 0) > 0) {
           body.add(this.scene.add
             .text(0, STAMINA_REFUND_Y, t("stageComplete.staminaRefunded", { amount: options.staminaRefunded ?? 0 }), textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
@@ -267,8 +270,8 @@ export class StageCompletePopup {
    * "보상 없음" 같은 문장을 적으면 플레이어가 지금 할 일은 바뀌지 않는다. 대신 강해지는 길로
    * 가는 입구를 세운다. 어느 길인지는 부르는 쪽(전투 화면)이 정하고 이 판은 줄만 쌓는다.
    */
-  private buildDefeatActions(body: Phaser.GameObjects.Container, close: () => void, actions: readonly StageCompleteAction[], belowLoot: boolean): void {
-    const top = belowLoot ? DEFEAT_ACTIONS.belowLoot : DEFEAT_ACTIONS.top;
+  private buildDefeatActions(body: Phaser.GameObjects.Container, close: () => void, actions: readonly StageCompleteAction[], belowLoot: boolean, belowFootnote = false): void {
+    const top = (belowLoot ? DEFEAT_ACTIONS.belowLoot : DEFEAT_ACTIONS.top) + (belowFootnote ? DEFEAT_ACTIONS.footnoteShift : 0);
     actions.forEach((action, index) => {
       const y = top + index * (DEFEAT_ACTIONS.height + DEFEAT_ACTIONS.gap);
       body.add(new Button(this.scene, 0, y, {

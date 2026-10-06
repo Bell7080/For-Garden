@@ -161,8 +161,31 @@ export interface CakeBattleInputDto {
   requestId: string;
 }
 
-/** 일반 스테이지 진입과 원정·레이드·대작전·현상수배 진입을 명시적으로 구분하는 전투 씬 입력 계약이다. */
-export type BattleSceneInputDto = ExpeditionBattleInputDto | ExpeditionBossBattleInputDto | StageBattleInputDto | RaidBattleInputDto | CakeBattleInputDto | BountyBattleInputDto;
+/** 결투장 상대 한 명 — 입장 영수증이 굳힌 성장 능력치 그대로 선다. */
+export interface DuelBattleUnit {
+  relicId: string;
+  level: number;
+  breakthrough: number;
+  stats: RelicDef["stats"];
+}
+
+/**
+ * 결투장 입장.
+ *
+ * 도전권은 **입장에서 이미 썼다**(`enterDuel`). 아군은 입장이 확정한 공격덱, 적은 그 영수증의 방어덱이다 —
+ * 전투 씬이 `session.party`나 상대 정의를 다시 읽으면 입장과 전투가 다른 편성을 본다.
+ */
+export interface DuelBattleInputDto {
+  mode: "duel";
+  requestId: string;
+  attack: readonly string[];
+  opponentName: string;
+  opponentScore: number;
+  units: readonly DuelBattleUnit[];
+}
+
+/** 일반 스테이지 진입과 원정·레이드·대작전·현상수배·결투 진입을 명시적으로 구분하는 전투 씬 입력 계약이다. */
+export type BattleSceneInputDto = ExpeditionBattleInputDto | ExpeditionBossBattleInputDto | StageBattleInputDto | RaidBattleInputDto | CakeBattleInputDto | BountyBattleInputDto | DuelBattleInputDto;
 
 /** Phaser가 생략·빈 data 또는 직전 data를 건네도 매 진입의 입력만으로 새 DTO를 만든다. */
 export function normalizeBattleSceneInput(input?: unknown): BattleSceneInputDto {
@@ -174,6 +197,9 @@ export function normalizeBattleSceneInput(input?: unknown): BattleSceneInputDto 
     if (candidate.mode === "raid" && typeof candidate.raidId === "string" && typeof candidate.bossRelicId === "string" && isRaidDifficulty(candidate.difficulty) && typeof candidate.requestId === "string" && typeof candidate.seasonHp === "number" && Number.isFinite(candidate.seasonHp)) return candidate;
     // 현상수배는 라운드 번호까지 있어야 한 판이 이어진다 — 판별값만 남은 입력은 스토리로 돌린다.
     if (candidate.mode === "bounty" && typeof candidate.tierId === "string" && typeof candidate.requestId === "string") return candidate;
+    // 결투는 영수증과 양 편 셋이 모두 있어야 한다 — 하나라도 빠지면 어느 판의 결과인지 붙일 수 없다.
+    if (candidate.mode === "duel" && typeof candidate.requestId === "string" && Array.isArray(candidate.attack) && candidate.attack.length === 3
+      && Array.isArray(candidate.units) && candidate.units.length === 3 && typeof candidate.opponentName === "string" && Number.isFinite(candidate.opponentScore)) return candidate;
     // 스토리는 돌아갈 곳 하나만 이어받는다. 모르는 값은 기본 길(지도)로 수렴시킨다.
     if (candidate.mode === "stage" && candidate.exitTo === "lobby") {
       return typeof candidate.epilogueStoryId === "string"

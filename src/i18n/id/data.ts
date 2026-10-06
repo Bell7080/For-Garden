@@ -1791,4 +1791,13 @@ export default {
   "product.mileage-daily-cheesecake.name": "Pasokan Cheesecake",
   "product.mileage-daily-tonic.name": "Satu Botol Minuman",
   "product.mileage-daily-strata.name": "Pengeluaran Tiket Survei",
+  "product.duel-daily-cheesecake.name": "Ransum Duel",
+  "product.duel-daily-gold.name": "Hadiah Duel",
+  "product.duel-daily-tonic.name": "Minuman Petarung",
+  "product.duel-weekly-fossil.name": "Fosil",
+  "product.duel-weekly-amber.name": "Amber",
+  "product.duel-weekly-gems.name": "Kristal Penyelesaian Duel",
+  "product.duel-weekly-tonic.name": "Minuman Petarung Pekat",
+  "product.duel-monthly-refined-core.name": "Inti Purba Murni",
+  "product.duel-monthly-crystal.name": "Kristal Restorasi Penuh",
 };

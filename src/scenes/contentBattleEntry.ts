@@ -1,7 +1,7 @@
 import type Phaser from "phaser";
 import { gameApi } from "../api/FakeServer";
 import type { BountyBattleInputDto } from "../core/bountyRun";
-import type { CakeBattleInputDto, RaidBattleInputDto } from "../core/expeditionBattle";
+import type { CakeBattleInputDto, DuelBattleInputDto, RaidBattleInputDto } from "../core/expeditionBattle";
 import type { PartyContent } from "../data/partyContent";
 import { rememberPlayerExp } from "../managers/PlayerExpReceipts";
 import { session } from "../state/session";
@@ -18,8 +18,19 @@ import { startScene } from "../ui/screenTransition";
  * 값을 확인할 뿐이고, 연구원 경험치 영수증도 결과 확정이 돌려준다. 레이드만 입장에서 스테미나와 도전
  * 한 번을 함께 쓰므로 그 경험치는 여기서 결과판에 맡겨 둔다(`rememberPlayerExp`).
  */
-export async function enterContentBattle(scene: Phaser.Scene, content: PartyContent): Promise<void> {
+export async function enterContentBattle(scene: Phaser.Scene, content: PartyContent, relicIds: readonly string[] = []): Promise<void> {
   const requestId = globalThis.crypto?.randomUUID?.() ?? `${content.content}-entry-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  if (content.content === "duel") {
+    // 도전권은 입장이 쓰고, 상대의 가려진 칸까지 영수증이 실제 편성으로 돌려준다.
+    const admission = await gameApi.enterDuel({ opponentId: content.opponent.id, relicIds: [...relicIds], requestId });
+    startScene(scene, "battle", {
+      mode: "duel", requestId: admission.requestId, attack: [...relicIds], opponentName: admission.opponentName,
+      opponentScore: admission.opponentScore, units: admission.units,
+    } satisfies DuelBattleInputDto);
+    return;
+  }
+  // 방어덱 게시는 전투가 아니다 — 편성 화면이 따로 저장한다.
+  if (content.content === "duelDefense") return;
   if (content.content === "raid") {
     const admission = await gameApi.enterRaid({ raidId: content.raidId, requestId });
     rememberPlayerExp(admission.playerExp);

@@ -19,7 +19,7 @@ describe("편성 화면의 콘텐츠", () => {
     ];
     for (const content of contents) {
       for (const { def, level, breakthrough } of partyPreview(content, STAGE).shown) {
-        expect(isGrowthReachable(level, breakthrough), `${content.content} ${def.id} LV.${level} 돌파 ${breakthrough}`).toBe(true);
+        expect(isGrowthReachable(level, breakthrough), `${content.content} ${def?.id} LV.${level} 돌파 ${breakthrough}`).toBe(true);
       }
     }
   });
@@ -38,7 +38,7 @@ describe("편성 화면의 콘텐츠", () => {
   it("현상수배는 세 라운드의 정예가 라운드 번호를 달고 선다", () => {
     const preview = partyPreview({ content: "bounty", tierId: BOUNTY_TIERS[0].id}, STAGE);
     expect(preview.shown.map(({ round }) => round)).toEqual([1, 2, 3]);
-    expect(preview.shown.map(({ def }) => def.id)).toEqual(BOUNTY_TIERS[0].rounds.map(({ relicId }) => relicId));
+    expect(preview.shown.map(({ def }) => def?.id)).toEqual(BOUNTY_TIERS[0].rounds.map(({ relicId }) => relicId));
     expect(preview.role).toBe("normal");
   });
 
@@ -46,7 +46,7 @@ describe("편성 화면의 콘텐츠", () => {
     const tier = CAKE_OPERATION_TIERS[4];
     const preview = partyPreview({ content: "cake", tierId: tier.id}, STAGE);
     expect(preview.shown).toHaveLength(5);
-    expect(new Set(preview.shown.map(({ def }) => def.element)).size).toBe(5);
+    expect(new Set(preview.shown.map(({ def }) => def?.element)).size).toBe(5);
     expect(preview.all).toHaveLength(tier.enemyCount);
     expect(preview.hordeCount).toBe(tier.enemyCount);
     expect(preview.role).toBe("swarm");
@@ -55,11 +55,33 @@ describe("편성 화면의 콘텐츠", () => {
   it("레이드는 그 판의 보스 하나가 그 난이도의 레벨로 보스 유형으로 선다", () => {
     const preview = partyPreview({ content: "raid", raidId: "r1", bossRelicId: RAID_SEASON_BOSS.relicId, difficulty: "normal" }, STAGE);
     expect(preview.shown).toHaveLength(1);
-    expect(preview.shown[0].def.id).toBe(RAID_SEASON_BOSS.relicId);
+    expect(preview.shown[0].def?.id).toBe(RAID_SEASON_BOSS.relicId);
     expect(preview.shown[0].level).toBe(30);
     expect(partyPreview({ content: "raid", raidId: "w", bossRelicId: RAID_SEASON_BOSS.relicId, difficulty: "rampage" }, STAGE).shown[0].level).toBe(RAID_SEASON_BOSS.level);
     // 판 안에서 눕지 않아도 공유 체력은 끝내 깎여 죽는다 — 불사가 아니라 보스(강인함만)다.
     expect(preview.role).toBe("boss");
-    expect(preview.shown[0].def.encounterRole).toBe("boss");
+    expect(preview.shown[0].def?.encounterRole).toBe("boss");
+  });
+
+  it("결투는 가려진 칸을 비워 두고 보이는 칸만 상성 계산에 넣는다", () => {
+    const opponent = { id: "duel-npc-1", displayName: "x", score: 1500, totalPower: 9_999, units: [
+      { relicId: "torika", level: 30, breakthrough: 1, power: 3000 },
+      { relicId: null, level: 30, breakthrough: 1, power: 3300 },
+      { relicId: "dodo", level: 30, breakthrough: 1, power: 3699 },
+    ] };
+    const content = normalizePartyContent({ content: "duel", opponent, attack: ["rex", 3] });
+    expect(content).toMatchObject({ content: "duel", attack: ["rex"] });
+    const preview = partyPreview(content, STAGE);
+    expect(preview.shown.map(({ def }) => def?.id ?? null)).toEqual(["torika", null, "dodo"]);
+    expect(preview.all).toHaveLength(2);
+    expect(preview.totalPower).toBe(9_999);
+    // 상대가 셋이 아니면 어느 판인지 모른다 — 스토리로 수렴한다.
+    expect(normalizePartyContent({ content: "duel", opponent: { ...opponent, units: [] } })).toEqual({ content: "stage" });
+  });
+
+  it("방어덱 편성은 편성에 없는 가림을 버린다", () => {
+    expect(normalizePartyContent({ content: "duelDefense", defense: ["a", "b", "c"], blindChoice: ["c", "z", "a"] }))
+      .toEqual({ content: "duelDefense", defense: ["a", "b", "c"], blindChoice: ["c", "a"] });
+    expect(partyPreview({ content: "duelDefense", defense: [], blindChoice: [] }, STAGE).shown).toEqual([]);
   });
 });

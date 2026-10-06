@@ -1791,4 +1791,13 @@ export default {
   "product.mileage-daily-cheesecake.name": "Tiếp tế Bánh phô mai",
   "product.mileage-daily-tonic.name": "Một chai đồ uống",
   "product.mileage-daily-strata.name": "Xuất Vé thám sát",
+  "product.duel-daily-cheesecake.name": "Khẩu phần quyết đấu",
+  "product.duel-daily-gold.name": "Tiền thưởng quyết đấu",
+  "product.duel-daily-tonic.name": "Đồ uống đấu sĩ",
+  "product.duel-weekly-fossil.name": "Hóa thạch",
+  "product.duel-weekly-amber.name": "Hổ phách",
+  "product.duel-weekly-gems.name": "Tinh thể quyết toán quyết đấu",
+  "product.duel-weekly-tonic.name": "Đồ uống đấu sĩ cô đặc",
+  "product.duel-monthly-refined-core.name": "Lõi cổ đại tinh luyện",
+  "product.duel-monthly-crystal.name": "Tinh thể Phục hồi hoàn toàn",
 };

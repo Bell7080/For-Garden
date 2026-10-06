@@ -1791,4 +1791,13 @@ export default {
   "product.mileage-daily-cheesecake.name": "Запас чизкейков",
   "product.mileage-daily-tonic.name": "Бутылка напитка",
   "product.mileage-daily-strata.name": "Вывоз билета разведки",
+  "product.duel-daily-cheesecake.name": "Паёк дуэлянта",
+  "product.duel-daily-gold.name": "Награда дуэлянта",
+  "product.duel-daily-tonic.name": "Напиток бойца",
+  "product.duel-weekly-fossil.name": "Окаменелость",
+  "product.duel-weekly-amber.name": "Янтарь",
+  "product.duel-weekly-gems.name": "Кристалл расчёта дуэли",
+  "product.duel-weekly-tonic.name": "Концентрированный напиток бойца",
+  "product.duel-monthly-refined-core.name": "Очищенное древнее ядро",
+  "product.duel-monthly-crystal.name": "Кристалл полного восстановления",
 };

@@ -46,6 +46,12 @@ export function placedEnemyIndex(
       def, level, breakthrough: requiredBreakthroughForLevel(level),
     }]));
   }
+  // 결투의 상대는 입장 영수증이 그 개체의 레벨·돌파를 함께 굳혔다 — 정보창도 그 값을 읽는다.
+  if (input.mode === "duel") {
+    return new Map(enemyDefs.map((def, index) => [`enemy-${index}`, {
+      def, level: input.units[index]?.level ?? 1, breakthrough: input.units[index]?.breakthrough ?? 0,
+    }]));
+  }
   // 원정은 노드 하나가 한 레벨을 쓰고, 돌파는 그 레벨에 닿는 데 필요한 단계다.
   const expeditionLevel = input.mode === "expedition" ? expeditionEnemyLevel(input.nodeType, input.floor)
     : input.mode === "expeditionBoss" ? expeditionEnemyLevel("boss", 20) : undefined;

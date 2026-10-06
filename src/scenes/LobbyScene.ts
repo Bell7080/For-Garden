@@ -544,11 +544,16 @@ export class LobbyScene extends Phaser.Scene {
           // 무엇을 하는 모드인지 첫 줄만 남긴다. 나머지는 상세가 말한다.
           status: mode.scope.split("\n")[0],
           artKey: mode.artKey,
-          onClick: () => { close(); startScene(this, "pvpPreview", { mode: mode.id }); },
+          // 결투장만 실제 화면이 열린다. 나머지 셋은 아직 자리표시다.
+          onClick: () => { close(); if (mode.id === "arena") startScene(this, "duel"); else startScene(this, "pvpPreview", { mode: mode.id }); },
         }));
       });
       // 돌아가기는 판 안이 아니라 출격과 같은 화면 우하단 슬롯에 선다.
       this.sortieBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: close }).setDepth(SORTIE_SD_DEPTH + 1);
+      // 결투 상점도 출격판과 같은 곁팝업에 선다 — 같은 「사러 간다」가 두 판에서 같은 자리·같은 모양이다.
+      this.addSortieShopPanel(body, { width: PVP_MENU.panel.width, height: layout.height }, [
+        { label: t("shop.duel.title"), onClick: () => { close(); startScene(this, "shop", { storefront: "duel", returnScene: "lobby", returnMenu: "duel" }); } },
+      ]);
     });
   }
 
@@ -637,7 +642,7 @@ export class LobbyScene extends Phaser.Scene {
       // 돌아가기는 판 안이 아니라 다른 팝업과 같은 화면 우하단 슬롯에 선다.
       this.sortieBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: close }).setDepth(SORTIE_SD_DEPTH + 1);
       // 상점은 본판 밑의 제 판에 선다. 판과 함께 여닫히도록 본판(`body`)에 넣는다.
-      this.addSortieShopPanel(body, [
+      this.addSortieShopPanel(body, SORTIE_MENU.panel, [
         { label: t("shop.loot.title"), onClick: () => { close(); startScene(this, "shop", { storefront: "loot", returnScene: "lobby", returnMenu: "sortie" }); } },
       ]);
       // 세워 둔 SD가 가끔 한 번씩 움직인다. 다섯 칸이 동시에 뛰면 무엇을 고르는 화면인지 흐려지므로
@@ -659,8 +664,8 @@ export class LobbyScene extends Phaser.Scene {
    * 본판의 왼쪽 변에 붙여 「본판에 달린 곁팝업」으로 읽히게 하고, 상점이 늘면 칸을 옆으로 더한다.
    * 금색은 로비·연구소의 상점 칩과 같아 「사러 간다」가 화면마다 같은 색으로 읽힌다.
    */
-  private addSortieShopPanel(body: Phaser.GameObjects.Container, shops: readonly { label: string; onClick: () => void }[]): void {
-    const { panel, shop } = SORTIE_MENU;
+  private addSortieShopPanel(body: Phaser.GameObjects.Container, panel: { readonly width: number; readonly height: number }, shops: readonly { label: string; onClick: () => void }[]): void {
+    const { shop } = SORTIE_MENU;
     const height = shop.cell + shop.pad * 2;
     const width = shop.pad * 2 + shops.length * shop.cell + (shops.length - 1) * shop.cellGap;
     const centerX = -panel.width / 2 + width / 2;

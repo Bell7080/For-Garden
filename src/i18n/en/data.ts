@@ -1815,4 +1815,13 @@ export default {
   "product.mileage-daily-cheesecake.name": "Cheesecake Supply",
   "product.mileage-daily-tonic.name": "A Bottle of Drink",
   "product.mileage-daily-strata.name": "Survey Ticket Withdrawal",
+  "product.duel-daily-cheesecake.name": "Duel Ration",
+  "product.duel-daily-gold.name": "Duel Bounty",
+  "product.duel-daily-tonic.name": "Gladiator's Drink",
+  "product.duel-weekly-fossil.name": "Fossil",
+  "product.duel-weekly-amber.name": "Amber",
+  "product.duel-weekly-gems.name": "Duel Settlement Crystal",
+  "product.duel-weekly-tonic.name": "Concentrated Gladiator's Drink",
+  "product.duel-monthly-refined-core.name": "Refined Ancient Core",
+  "product.duel-monthly-crystal.name": "Full Restoration Crystal",
 };

@@ -28,7 +28,7 @@ export interface CurrencySlot {
  * 치즈케이크는 정보창의 급여 버튼이 "가진 수/드는 수"로 직접 말하므로, 위에 또 적으면 같은
  * 값을 두 곳에서 읽게 되고 정작 봐야 할 카드 그리드의 자리만 좁아진다.
  */
-export type TopBarCurrencyContext = "default" | "shop" | "recruit" | "none" | "archaeology" | "archaeologyShop" | "loot" | "mileage";
+export type TopBarCurrencyContext = "default" | "shop" | "recruit" | "none" | "archaeology" | "archaeologyShop" | "loot" | "mileage" | "duel";
 
 const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
   /** 일반 상점은 골드와 젬만 세운다 — 여기서 쓰는 재화는 그 둘뿐이라 스테미나 칸이 자리만 먹는다. */
@@ -70,6 +70,11 @@ const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
    * 로비·도감에 세우면 평소 조작을 바꾸지 않는 수가 두 칸을 먹고, 정작 자주 보는 젬·골드·
    * 스테미나가 밀린다. 증표가 조작을 정하는 자리는 이 상점과 그 콘텐츠뿐이다.
    */
+  /** 결투장·결투 상점. 휘장이 상점의 값이고, 젬은 도전권·새로고침의 값이다. */
+  duel: [
+    { key: "duelEmblem", icon: "currency-duel-emblem", compact: true, color: "#ffb3a0" },
+    { key: "gems", icon: "currency-gems", color: "#cfe6ff" },
+  ],
   loot: [
     { key: "raidSigil", icon: "currency-raid-sigil", compact: true, color: "#ffc98a" },
     { key: "salvageRecord", icon: "currency-salvage-record", compact: true, color: "#9fd0f0" },
@@ -95,5 +100,6 @@ export const TOP_BAR_SLOT_KEYS: Record<TopBarCurrencyContext, readonly WalletIte
   archaeologyShop: SLOTS.archaeologyShop.map(({ key }) => key),
   loot: SLOTS.loot.map(({ key }) => key),
   mileage: SLOTS.mileage.map(({ key }) => key),
+  duel: SLOTS.duel.map(({ key }) => key),
   none: SLOTS.none.map(({ key }) => key),
 };

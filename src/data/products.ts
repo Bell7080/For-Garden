@@ -1,5 +1,6 @@
 import { TRADE_PACKAGES } from "./tradePackages";
 import { MILEAGE_PRODUCTS } from "./mileageShop";
+import { DUEL_PRODUCTS } from "./duelShop";
 
 /** 상품이 노출되고 구매될 화면 경계다. ID만으로 다른 화면의 상품을 구매하지 못하게 서버 요청에도 사용한다. */
 /**
@@ -9,7 +10,7 @@ import { MILEAGE_PRODUCTS } from "./mileageShop";
  * 아래가 전시대」라는 규칙이 이미 깊이 박혀 있어, 둘로 갈리면 선반·격자·값줄 규칙이 두 곳이
  * 되고 한쪽만 고치는 사고가 난다.
  */
-export type ProductStorefront = "shop" | "trade" | "premium" | "archaeology" | "loot" | "mileage";
+export type ProductStorefront = "shop" | "trade" | "premium" | "archaeology" | "loot" | "mileage" | "duel";
 
 /** 일반 인게임 상점과 무역소가 공유하는 안정적인 카테고리 계약이다. */
 /**
@@ -226,6 +227,8 @@ export const SHOP_PRODUCTS: readonly ProductDefinition[] = [
   ...TRADE_PACKAGES,
   // **마일리지 상점.** 뽑기에서 모이는 DNA 마일리지로 사는 자리다 — 주간·일간 구역은 `category`가 가른다.
   ...MILEAGE_PRODUCTS,
+  // **결투 상점.** 결투장에서 모은 투사의 휘장으로만 사는 자리다 — 일일·주간·특가는 `category`가 가른다.
+  ...DUEL_PRODUCTS,
 ];
 
 /** products 모듈을 직접 소비하는 화면은 storefront로 걸러 쓴다. */

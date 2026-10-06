@@ -55,6 +55,7 @@ import { consumeSceneEntry } from "./sceneEntry";
 import { getBountyTier } from "../data/bounty";
 import { getCakeOperationTier } from "../data/cakeOperation";
 import { addSdFootShadow } from "../ui/SdFootShadow";
+import { duelBlindOrder } from "../core/duelArena";
 
 /**
  * 미리보기 전장.
@@ -70,6 +71,8 @@ const FRONT_LINE = PARTY_PREVIEW.frontLine;
 const PREVIEW_HEIGHT = PARTY_PREVIEW.height;
 /** 두 편의 총 전투력이 마주 보는 줄. 대치선 위에 걸터앉는다. */
 const POWER_ROW = PARTY_PREVIEW.frontLine;
+/** 방어덱 가림 표식 — 아군 SD 머리 위, 대치선 판 아래다. */
+const BLIND_CHIP_Y = PARTY_PREVIEW.allyRow - PARTY_PREVIEW.height - 26;
 
 /**
  * 보유 렐릭 그리드의 배치표.
@@ -166,6 +169,8 @@ export class PartyScene extends Phaser.Scene {
   private hint!: Phaser.GameObjects.Text;
   /** 자동 배치와 자리별 방향 표식이 함께 참조하는 이번 스테이지의 적 정의다. */
   private enemies: RelicDef[] = [];
+  /** 방어덱 편성에서 고른 가림 순서. 비우면 전투력 순으로 저절로 가린다. */
+  private blindChoice: string[] = [];
   /**
    * 지금 편성과 이번 스테이지의 적 SD를 미리 읽는다.
    *
@@ -176,7 +181,7 @@ export class PartyScene extends Phaser.Scene {
     prefetchBattleSds(
       formationMembers(this.picked),
       // 물량형은 같은 자매가 되풀이되므로 대표 얼굴만 읽으면 된다.
-      this.preview.shown.map(({ def }) => def.id),
+      this.preview.shown.flatMap(({ def }) => (def ? [def.id] : [])),
     );
   }
 
@@ -211,7 +216,13 @@ export class PartyScene extends Phaser.Scene {
   create(): void {
     setDebugScene("party");
     // 직전 스토리 편성만 복원한다. 원정·발굴은 각 콘텐츠가 소유한 별도 저장 필드를 유지한다.
-    this.picked = toFormationSlots(relicCollection.validParty, 3);
+    // 결투는 제 편성을 따로 갖는다 — 공격은 지난 공격덱, 방어는 게시한 방어덱에서 시작한다.
+    // 스토리 편성(`session.party`)을 건드리지 않는다.
+    const owned = new Set(relicCollection.owned.map(({ id }) => id));
+    const duelStart = this.content.content === "duel" ? this.content.attack : this.content.content === "duelDefense" ? this.content.defense : undefined;
+    const duelPicks = duelStart?.filter((id) => owned.has(id));
+    this.picked = toFormationSlots(duelPicks && duelPicks.length === 3 ? duelPicks : relicCollection.validParty, 3);
+    this.blindChoice = this.content.content === "duelDefense" ? [...this.content.blindChoice] : [];
     this.selectedSlot = undefined;
     this.cards.clear();
     this.rosterView = DEFAULT_ROSTER_VIEW;
@@ -221,7 +232,7 @@ export class PartyScene extends Phaser.Scene {
     const cx = BASE_WIDTH / 2;
     // 편성 미리보기와 실제 전투가 같은 전장 원화를 공유해 출전 흐름을 시각적으로 잇는다.
     // 어느 콘텐츠가 어느 전장에 서는지는 전투와 같은 표(`BATTLE_FIELD_BACKGROUND`)가 갖는다.
-    addSceneBackground(this, battleFieldBackground(this.content.content));
+    addSceneBackground(this, battleFieldBackground(this.content.content === "duelDefense" ? "duel" : this.content.content));
     this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.42).setDepth(-29);
 
     const stage = getBattleStage(session.selectedStageId ?? "1-1");
@@ -295,7 +306,7 @@ export class PartyScene extends Phaser.Scene {
     this.startButton = new Button(this, cx, BACK_SLOT.y, {
       width: 560,
       height: 130,
-      label: t("party.start"),
+      label: this.content.content === "duelDefense" ? t("duel.party.saveDefense") : t("party.start"),
       fontSize: 44,
       onClick: async () => {
         // 첫 유효 클릭에서 즉시 잠가 같은 프레임의 빠른 연속 입력도 한 번만 처리한다.
@@ -303,6 +314,17 @@ export class PartyScene extends Phaser.Scene {
         this.isEnteringBattle = true;
         this.startButton.setEnabled(false);
 
+        // 결투는 스토리 편성을 저장하지 않는다 — 공격덱은 입장이, 방어덱은 게시가 서버에 남긴다.
+        if (this.content.content === "duel" || this.content.content === "duelDefense") {
+          try {
+            await this.enterBattle();
+          } catch (error) {
+            const view = partyEntryErrorView(error instanceof GameApiError ? error : undefined);
+            this.hint.setText(view.message);
+            this.restoreEntryControls();
+          }
+          return;
+        }
         // 로컬 편성 저장과 서버 입장은 실패 원인과 복구 행동이 다르므로 서로 다른 예외 경계로 둔다.
         try {
           // 화면에 그린 뒤 보유 상태가 바뀔 수 있으므로 전환 직전에 매니저에서 다시 검증한다.
@@ -453,6 +475,15 @@ export class PartyScene extends Phaser.Scene {
   /** 적 하나. 노드 미리보기와 같은 어휘(속성·직군 왼쪽 위, 돌파 오른쪽 위, 레벨·이름 한 줄)로 선다. */
   private addPreviewEnemy(enemy: PartyPreviewEnemy, x: number, bodyScale: number, elite: boolean, crowded: boolean): void {
     const { def } = enemy;
+    // 결투의 가려진 칸 — 누구인지는 말하지 않고 레벨과 전투력만 남긴다.
+    if (!def) {
+      addSdFootShadow(this, x, ENEMY_ROW + 4, 190 * bodyScale).setDepth(-12);
+      this.add.text(x, ENEMY_ROW - PREVIEW_HEIGHT * 0.45, "?", textStyle({ role: "display", size: 120, color: COLOR.inkDim }))
+        .setOrigin(0.5).setShadow(0, 6, "#05070a", 10, false, true).setDepth(3);
+      addUnitNameplate(this, undefined, x, ENEMY_ROW + 26, enemy.level, t("duel.hidden"), 30);
+      addUnitPower(this, undefined, x, ENEMY_ROW + 22, enemy.power ?? 0, 24, COLOR.dangerText).setDepth(3);
+      return;
+    }
     // 받침은 SD(-10)보다 뒤에 둬야 발을 덮지 않는다.
     addSdFootShadow(this, x, ENEMY_ROW + 4, (crowded ? 150 : 190) * bodyScale).setDepth(-12);
     void this.standSD(def.id, x, ENEMY_ROW, true, bodyScale);
@@ -491,6 +522,8 @@ export class PartyScene extends Phaser.Scene {
   /** 머리글. 스토리는 관문 번호와 이름, 던전은 콘텐츠 이름과 단계다. */
   private title(stage: ReturnType<typeof getBattleStage>): string {
     const content = this.content;
+    if (content.content === "duel") return t("duel.party.attackTitle", { name: content.opponent.displayName });
+    if (content.content === "duelDefense") return t("duel.party.defenseTitle");
     if (content.content === "raid") return t("raid.title");
     if (content.content === "bounty") return getBountyTier(content.tierId).name;
     if (content.content === "cake") return `${t("cake.title")}  ${getCakeOperationTier(content.tierId).name}`;
@@ -499,7 +532,12 @@ export class PartyScene extends Phaser.Scene {
 
   /** 전투 시작이 부르는 입장 — 결과판의 「다시 하기」와 같은 길이다(`enterContentBattle`). */
   private async enterBattle(): Promise<void> {
-    await enterContentBattle(this, this.content);
+    if (this.content.content === "duelDefense") {
+      await gameApi.setDuelDefense({ relicIds: formationMembers(this.picked), blindChoice: this.blindChoice.filter((id) => this.picked.includes(id)) });
+      startScene(this, "duel");
+      return;
+    }
+    await enterContentBattle(this, this.content, formationMembers(this.picked));
   }
 
   /** 뒤로가기는 들어온 입구로 돌아간다. 던전은 고르던 단계를 그대로 되살린다. */
@@ -507,6 +545,7 @@ export class PartyScene extends Phaser.Scene {
     const content = this.content;
     // 레이드 편성에서 나가는 길은 목록이 아니라 고른 그 판이다 — 한 단계 앞이다.
     if (content.content === "raid") startScene(this, "raid", { raidId: content.raidId });
+    else if (content.content === "duel" || content.content === "duelDefense") startScene(this, "duel");
     else if (content.content === "bounty") startScene(this, "bounty", { tierId: content.tierId });
     else if (content.content === "cake") startScene(this, "cakeOperation", { tierId: content.tierId });
     else startScene(this, "stageMap");
@@ -813,7 +852,10 @@ export class PartyScene extends Phaser.Scene {
     for (const { creature } of moving.values()) creature.destroy();
 
     // 어느 편이 센지는 두 수가 마주 보는 것으로 말한다. 표시·정렬 전용 값이라 전투에는 쓰지 않는다.
-    this.enemyPowerText?.setText(t("party.enemyPower", { power: this.enemies.reduce((sum, def) => sum + combatPower(def.stats), 0).toLocaleString() }));
+    const enemyPower = this.preview.totalPower ?? this.enemies.reduce((sum, def) => sum + combatPower(def.stats), 0);
+    // 방어덱 편성에는 마주 선 편이 없다 — 아군 무게만 남긴다.
+    this.enemyPowerText?.setText(this.content.content === "duelDefense" ? "" : t("party.enemyPower", { power: enemyPower.toLocaleString() }));
+    if (this.content.content === "duelDefense" && chrome) this.paintBlindChips(chrome, members);
     this.allyPowerText?.setText(t("party.allyPower", { power: members.reduce((sum, id) => sum + combatPower(relicProgression.getFinalStats(id)), 0).toLocaleString() }));
 
     this.refreshButtonState();
@@ -827,6 +869,29 @@ export class PartyScene extends Phaser.Scene {
       selectedSlot: this.selectedSlot,
     });
     this.hint.setText(members.length === 3 ? t("party.ready") : t("party.needMore", { count: 3 - members.length }));
+  }
+
+  /**
+   * 방어덱의 가림 표식. 상대 점수가 높을수록 앞에서부터 하나, 둘이 `?`로 가려진다 — 고르지 않은
+   * 자리는 전투력 순으로 저절로 채워지고(흐린 글자), 누르면 그 자리를 직접 고른다(강조색).
+   */
+  private paintBlindChips(chrome: Phaser.GameObjects.Container, members: readonly string[]): void {
+    const powered = members.map((relicId) => ({ relicId, power: combatPower(relicProgression.getFinalStats(relicId)) }));
+    const order = duelBlindOrder(powered, this.blindChoice);
+    this.picked.forEach((id, slot) => {
+      if (!id) return;
+      const at = order.indexOf(id);
+      const chosen = this.blindChoice.includes(id);
+      const label = at >= 0 ? t("duel.blind.slot", { index: at + 1 }) : t("duel.blind.open");
+      chrome.add(new Button(this, PREVIEW_COLUMNS[slot], BLIND_CHIP_Y, {
+        width: 170, height: 52, label, fontSize: 22, variant: chosen ? "primary" : undefined,
+        onClick: () => {
+          this.blindChoice = chosen ? this.blindChoice.filter((other) => other !== id)
+            : this.blindChoice.length < 2 ? [...this.blindChoice, id] : [this.blindChoice[1], id];
+          this.refresh();
+        },
+      }).setAlpha(at >= 0 ? 1 : 0.7));
+    });
   }
 
   /** 선택 수와 전투 진입 잠금을 함께 반영해 버튼 활성 상태를 한곳에서 계산한다. */

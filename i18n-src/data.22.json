@@ -1,0 +1,11 @@
+{
+"product.duel-daily-cheesecake.name": ["决斗口粮", "เสบียงการดวล", "Khẩu phần quyết đấu", "Ransum Duel", "Ración de duelo", "Ração de duelo", "Duellration", "Паёк дуэлянта"],
+"product.duel-daily-gold.name": ["决斗赏金", "ค่าหัวการดวล", "Tiền thưởng quyết đấu", "Hadiah Duel", "Recompensa de duelo", "Recompensa de duelo", "Duellprämie", "Награда дуэлянта"],
+"product.duel-daily-tonic.name": ["斗士饮料", "เครื่องดื่มนักสู้", "Đồ uống đấu sĩ", "Minuman Petarung", "Bebida del gladiador", "Bebida do gladiador", "Gladiatorengetränk", "Напиток бойца"],
+"product.duel-weekly-fossil.name": ["化石", "ฟอสซิล", "Hóa thạch", "Fosil", "Fósil", "Fóssil", "Fossil", "Окаменелость"],
+"product.duel-weekly-amber.name": ["琥珀", "อำพัน", "Hổ phách", "Amber", "Ámbar", "Âmbar", "Bernstein", "Янтарь"],
+"product.duel-weekly-gems.name": ["决斗结算结晶", "ผลึกสรุปผลการดวล", "Tinh thể quyết toán quyết đấu", "Kristal Penyelesaian Duel", "Cristal de liquidación de duelo", "Cristal de acerto de duelo", "Duell-Abrechnungskristall", "Кристалл расчёта дуэли"],
+"product.duel-weekly-tonic.name": ["浓缩斗士饮料", "เครื่องดื่มนักสู้เข้มข้น", "Đồ uống đấu sĩ cô đặc", "Minuman Petarung Pekat", "Bebida concentrada del gladiador", "Bebida concentrada do gladiador", "Konzentriertes Gladiatorengetränk", "Концентрированный напиток бойца"],
+"product.duel-monthly-refined-core.name": ["精炼的古代核心", "แกนโบราณที่ขัดเกลา", "Lõi cổ đại tinh luyện", "Inti Purba Murni", "Núcleo antiguo refinado", "Núcleo antigo refinado", "Veredelter uralter Kern", "Очищенное древнее ядро"],
+"product.duel-monthly-crystal.name": ["完全复原结晶", "ผลึกฟื้นคืนสมบูรณ์", "Tinh thể Phục hồi hoàn toàn", "Kristal Restorasi Penuh", "Cristal de restauración total", "Cristal de restauração total", "Kristall der vollständigen Restaurierung", "Кристалл полного восстановления"]
+}

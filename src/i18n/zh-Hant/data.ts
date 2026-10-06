@@ -1791,4 +1791,13 @@ export default {
   "product.mileage-daily-cheesecake.name": "起司蛋糕補給",
   "product.mileage-daily-tonic.name": "一瓶飲料",
   "product.mileage-daily-strata.name": "探查券取出",
+  "product.duel-daily-cheesecake.name": "決鬥口糧",
+  "product.duel-daily-gold.name": "決鬥賞金",
+  "product.duel-daily-tonic.name": "鬥士飲料",
+  "product.duel-weekly-fossil.name": "化石",
+  "product.duel-weekly-amber.name": "琥珀",
+  "product.duel-weekly-gems.name": "決鬥結算結晶",
+  "product.duel-weekly-tonic.name": "濃縮鬥士飲料",
+  "product.duel-monthly-refined-core.name": "精煉的古代核心",
+  "product.duel-monthly-crystal.name": "完全復原結晶",
 };

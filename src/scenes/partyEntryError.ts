@@ -17,5 +17,7 @@ export function partyEntryErrorView(error?: GameApiError): PartyEntryErrorView {
   if (error?.code === "INSUFFICIENT_STAMINA") {
     return { message: t("partyEntry.noStamina"), openStaminaPopup: true };
   }
+  if (error?.code === "DUEL_NO_ATTEMPTS") return { message: t("duel.error.noAttempts"), openStaminaPopup: false };
+  if (error?.code === "DUEL_OPPONENT_NOT_FOUND") return { message: t("duel.error.opponentGone"), openStaminaPopup: false };
   return { message: t("partyEntry.failed"), openStaminaPopup: false };
 }

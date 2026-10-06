@@ -16,7 +16,7 @@ function scene(page: Page): Promise<string | undefined> {
   return page.evaluate(() => window.__PF_DEBUG?.scene);
 }
 
-test("로비 결투 판에서 네 PvP 상세 화면을 열고 공용 뒤로가기로 왕복한다", async ({ page }) => {
+test("로비 결투 판에서 결투장과 세 PvP 상세 화면을 열고 공용 뒤로가기로 왕복한다", async ({ page }) => {
   await startAfterOpening(page);
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => scene(page)).toBe("lobby");
@@ -26,8 +26,13 @@ test("로비 결투 판에서 네 PvP 상세 화면을 열고 공용 뒤로가�
     await tapUntil(page, LOBBY_ACTION_BOUNDS.expedition.x, LOBBY_ACTION_BOUNDS.expedition.y, async () =>
       ((await page.evaluate(() => window.__PF_DEBUG?.popupTitles)) ?? []).includes("결투"));
     await tap(page, BASE_WIDTH / 2, MENU_CENTERS[index]);
-    await expect.poll(() => scene(page)).toBe("pvpPreview");
-    await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.screenTitle)).toBe(mode.title);
+    // 결투장만 실제 화면이 열리고, 나머지 셋은 범위만 말하는 자리표시다.
+    if (mode.id === "arena") {
+      await expect.poll(() => scene(page)).toBe("duel");
+    } else {
+      await expect.poll(() => scene(page)).toBe("pvpPreview");
+      await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.screenTitle)).toBe(mode.title);
+    }
     // 상세의 공용 뒤로가기는 선택 씬이 아니라 로비로 돌아간다.
     await tap(page, BACK_SLOT.x, BACK_SLOT.y);
     await expect.poll(() => scene(page)).toBe(PVP_RETURN_SCENE.preview);

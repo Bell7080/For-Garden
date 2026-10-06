@@ -1791,4 +1791,13 @@ export default {
   "product.mileage-daily-cheesecake.name": "Käsekuchen-Nachschub",
   "product.mileage-daily-tonic.name": "Eine Flasche Getränk",
   "product.mileage-daily-strata.name": "Ausgabe von Erkundungstickets",
+  "product.duel-daily-cheesecake.name": "Duellration",
+  "product.duel-daily-gold.name": "Duellprämie",
+  "product.duel-daily-tonic.name": "Gladiatorengetränk",
+  "product.duel-weekly-fossil.name": "Fossil",
+  "product.duel-weekly-amber.name": "Bernstein",
+  "product.duel-weekly-gems.name": "Duell-Abrechnungskristall",
+  "product.duel-weekly-tonic.name": "Konzentriertes Gladiatorengetränk",
+  "product.duel-monthly-refined-core.name": "Veredelter uralter Kern",
+  "product.duel-monthly-crystal.name": "Kristall der vollständigen Restaurierung",
 };

@@ -1791,4 +1791,13 @@ export default {
   "product.mileage-daily-cheesecake.name": "Suministro de Tarta de queso",
   "product.mileage-daily-tonic.name": "Una botella",
   "product.mileage-daily-strata.name": "Retiro de ticket de estudio",
+  "product.duel-daily-cheesecake.name": "Ración de duelo",
+  "product.duel-daily-gold.name": "Recompensa de duelo",
+  "product.duel-daily-tonic.name": "Bebida del gladiador",
+  "product.duel-weekly-fossil.name": "Fósil",
+  "product.duel-weekly-amber.name": "Ámbar",
+  "product.duel-weekly-gems.name": "Cristal de liquidación de duelo",
+  "product.duel-weekly-tonic.name": "Bebida concentrada del gladiador",
+  "product.duel-monthly-refined-core.name": "Núcleo antiguo refinado",
+  "product.duel-monthly-crystal.name": "Cristal de restauración total",
 };

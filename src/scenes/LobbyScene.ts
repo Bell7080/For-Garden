@@ -38,6 +38,7 @@ import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicSkinManager } from "../managers/RelicSkinManager";
 import { expeditionManager } from "../managers/ExpeditionManager";
 import { PVP_MODES } from "../data/pvpModes";
+import { PVP_MENU, pvpEntryHeight, pvpMenuLayout } from "../ui/pvpLayout";
 import { ExpeditionEntryButton, sortieEntryBevel, sortieEntrySdSpot } from "../ui/ExpeditionEntryButton";
 import { battleAssetFor, ENEMY_SD_ASSETS, PONTOS_SD_ASSET, playMotion, type PuppetAsset } from "../puppets/assets";
 import { raidSeasonKey, raidWorldBossId } from "../core/raid";
@@ -104,13 +105,6 @@ const SORTIE_MENU = {
   motionDelay: 2600,
   dimAlpha: 0.42,
 } as const;
-/**
- * 결투 선택판.
- *
- * 출격과 같은 폭·같은 칸 프리팹을 쓰되 SD와 원화가 없어 판이 낮다. 네 모드가 같은 크기로
- * 나란히 서므로 어느 하나가 기본 선택처럼 보이지 않는다.
- */
-const PVP_MENU = { panel: { width: 980, height: 1000 }, entry: { width: 800, height: 170 }, firstY: -285, stepY: 190 } as const;
 /** 팝업 판(2000) 위. 화면에 직접 세우는 SD는 판보다 앞에 서야 버튼 위로 빠져나온다. */
 const SORTIE_SD_DEPTH = 2101;
 /** 복제 그림자의 색과 진하기. 카드 원화의 그림자와 같은 결로 눌러 둔다. */
@@ -538,16 +532,18 @@ export class LobbyScene extends Phaser.Scene {
    */
   private openPvpMenu(instant = false): void {
     if (!this.popupLayer || this.popupLayer.isOpen) return;
-    const panel = PVP_MENU.panel;
-    this.popupLayer.open({ width: panel.width, height: panel.height, title: t("lobby.duel"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.24, closeOnBackdrop: true, hideCloseButton: true, instant, onClose: () => this.clearSortieChrome() }, (body, close) => {
+    const layout = pvpMenuLayout(PVP_MODES.map((mode) => mode.id));
+    // 출격판과 같은 자리·같은 암전 — 두 입구가 한 벌의 판으로 읽혀야 한다.
+    const panelY = BASE_HEIGHT / 2 + PVP_MENU.panel.offsetY;
+    this.popupLayer.open({ width: PVP_MENU.panel.width, height: layout.height, y: panelY, title: t("lobby.duel"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: SORTIE_MENU.dimAlpha, closeOnBackdrop: true, hideCloseButton: true, instant, onClose: () => this.clearSortieChrome() }, (body, close) => {
       PVP_MODES.forEach((mode, index) => {
-        const y = PVP_MENU.firstY + index * PVP_MENU.stepY;
-        body.add(new ExpeditionEntryButton(this, 0, y, {
-          width: PVP_MENU.entry.width, height: PVP_MENU.entry.height,
+        body.add(new ExpeditionEntryButton(this, 0, layout.centers[index], {
+          width: PVP_MENU.entry.width, height: pvpEntryHeight(mode.id),
           // 라벨은 판에서 한 줄로 선다 — 2×2 칸에서 쓰던 줄바꿈은 가로로 긴 칸에서 빈 줄이 된다.
           label: mode.label.replace("\n", " "), labelSize: 38,
           // 무엇을 하는 모드인지 첫 줄만 남긴다. 나머지는 상세가 말한다.
           status: mode.scope.split("\n")[0],
+          artKey: mode.artKey,
           onClick: () => { close(); startScene(this, "pvpPreview", { mode: mode.id }); },
         }));
       });

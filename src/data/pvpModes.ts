@@ -11,11 +11,13 @@ export interface PvpModeDefinition {
   title: string;
   /** 구현 상태가 아니라 해당 모드에서 수행할 전투의 범위만 설명한다. */
   scope: string;
+  /** 선택판 칸에 까는 입구 원화(`loadingSteps`의 콘텐츠 원화 키). 없으면 원화 없는 칸이다. */
+  artKey?: string;
 }
 
 /** 배열 순서가 곧 2×2 선택판의 읽기 순서(좌→우, 위→아래)다. */
 export const PVP_MODES: readonly PvpModeDefinition[] = [
-  { id: "arena", label: "결투장", title: "결투장", scope: "사전 편성된 공격팀으로 상대의 방어팀과 전투" },
+  { id: "arena", label: "결투장", title: "결투장", scope: "사전 편성된 공격팀으로 상대의 방어팀과 전투", artKey: "content-duel-entry" },
   { id: "boss-duel", label: "우두머리\n결정전", title: "우두머리 결정전", scope: "양측 최강 렐릭의 1:1 전투\n초기에는 준비된 상대 풀 사용" },
   { id: "brawl", label: "대난투", title: "대난투", scope: "6:6 결투" },
   { id: "training", label: "연습 훈련", title: "연습 훈련", scope: "허수아비 또는 아군 렐릭을 이용한\n1:1~3:3 훈련" },

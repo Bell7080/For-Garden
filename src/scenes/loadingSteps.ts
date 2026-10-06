@@ -69,6 +69,8 @@ const CONTENT_ART_ASSETS = [
   ["content-bounty-entry", "sprites/content/Content4_001.webp"],
   // Content5_001은 그 아래 전체 폭으로 선 레이드 입구의 버튼 일러스트다.
   ["content-raid-entry", "sprites/content/Content5_001.webp"],
+  // Content6_001은 결투 선택판의 결투장 입구 일러스트다.
+  ["content-duel-entry", "sprites/content/Content6_001.webp"],
   // journal_001은 관찰 일지 판 안에서 원본 크기를 유지한 채 잘라 쓰는 종이 질감 원화다.
   ["content-observation-journal", "sprites/content/journal_001.webp"],
 ] as const;

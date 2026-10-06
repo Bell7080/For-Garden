@@ -86,12 +86,19 @@ export const BACKGROUND = {
   cakeField: "background-cake-field",
   bountyField: "background-bounty-field",
   raidField: "background-raid-field",
+  /** 결투장 3대3 전투 필드다(Content6_001field). */
+  duelField: "background-duel-field",
   /** 케이크 대작전 진입 화면 배경이다(Content3_001background). */
   sortieCake: "background-sortie-cake",
   /** 현상수배 진입 화면 배경이다(Content4_001background). */
   sortieBounty: "background-sortie-bounty",
   /** 레이드 진입 화면 배경이다(Content5_001background). */
   sortieRaid: "background-sortie-raid",
+  /**
+   * 결투장 화면과 결투 상점 무대의 배경이다(Content6_001background). 전용 원화를 더 받으면
+   * 이 키가 가리키는 파일만 바꾼다 — 화면은 키로만 읽는다.
+   */
+  sortieDuel: "background-sortie-duel",
   /**
    * 복제인간 연구 도시 **도플**의 중앙 응접실이다. 교류 첫 창구가 쓰는 가로 원화이며,
    * 화면 배경이 아니라 층 버튼과 도시 쪽지 안에서 `coverCrop`으로 잘려 들어간다.
@@ -174,10 +181,12 @@ export const BACKGROUND_ASSETS = [
   [BACKGROUND.sortieCake, "sprites/content/Content3_001background.webp"],
   [BACKGROUND.sortieBounty, "sprites/content/Content4_001background.webp"],
   [BACKGROUND.sortieRaid, "sprites/content/Content5_001background.webp"],
+  [BACKGROUND.sortieDuel, "sprites/content/Content6_001background.webp"],
   // 세 콘텐츠의 전투 필드. 부트가 미리 읽지 않으므로 그 전투에 들어갈 때만 메모리를 차지한다.
   [BACKGROUND.cakeField, "sprites/content/Content3_001field.webp"],
   [BACKGROUND.bountyField, "sprites/content/Content4_001field.webp"],
   [BACKGROUND.raidField, "sprites/content/Content5_001field.webp"],
+  [BACKGROUND.duelField, "sprites/content/Content6_001field.webp"],
   // 교류 도시 원화는 세로 화면 배경이 아니라 판 안에 잘려 들어가는 가로 그림이다. 그래서
   // 파일 이름도 세로 배경 번호를 쓰지 않고 `interaction_00N`으로 갈라 둔다 — 새 도시 원화가
   // 들어올 때 굽는 스크립트와 이 표가 같은 규칙을 읽는다.
@@ -221,6 +230,7 @@ export const BATTLE_FIELD_BACKGROUND = {
   cake: BACKGROUND.cakeField,
   bounty: BACKGROUND.bountyField,
   raid: BACKGROUND.raidField,
+  duel: BACKGROUND.duelField,
 } as const;
 
 /** 진입 데이터가 어떤 모드를 들고 와도 표에 있는 키 하나로 수렴시킨다. */

@@ -1,6 +1,6 @@
 # 버전 관리
 
-현재 버전: **v0.261.0**
+현재 버전: **v0.261.1**
 
 `VERSION.md`와 `package.json`의 `version`은 항상 같은 값을 쓰고, 타이틀(로딩) 화면 좌측
 하단 표기는 그 값을 그대로 읽는다. 화면에 손으로 적어 두지 않는다.
@@ -31,6 +31,16 @@
   그 이전의 초기 프로토타입 단계는 `v0.1.0` 항목 하나로 묶었다.
 
 ## 변경 이력
+
+## v0.261.1
+
+- **결투장 원화 세 장을 연결했다.** `public`에 올라온 결투장 버튼·씬배경·필드 PNG를 `Content6_001`·`Content6_001background`·
+  `Content6_001field` WebP로 굽고(한글 파일명 제거, 원본 삭제) 키 `content-duel-entry`·`BACKGROUND.sortieDuel`·`BACKGROUND.duelField`로
+  등록했다. 전장 표(`BATTLE_FIELD_BACKGROUND.duel`)와 바닥 경계(`BATTLE_ARENA.duel` — 관중석 벽이 내려와 바닥이 약 1,000부터라
+  top 1,040)도 함께 더해 결투 전투가 들어오면 그 자리에 선다.
+- **결투 선택판의 여백을 출격판과 같은 문법으로 맞췄다**(`src/ui/pvpLayout.ts`의 `PVP_MENU`·`pvpMenuLayout`). 판 윗변~첫 칸 100,
+  칸 사이 76, 마지막 칸~밑변 62(곁팝업 자리)이고 판을 출격판만큼 올리며 암전도 같다. 판 높이는 손으로 적지 않고 칸 높이에서
+  거꾸로 구하며, 원화를 가진 결투장 칸만 한 뼘 높다. E2E도 같은 배치표로 칸을 누른다.
 
 ## v0.261.0
 

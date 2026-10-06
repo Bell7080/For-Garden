@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ResearchSlotView } from "../../src/core/researchPresentation";
-import { cinematicCardArt, cinematicRewards, isCinematicCount } from "../../src/ui/researchCinematicModel";
+import { canCloseResult, cinematicCardArt, cinematicRewards, isCinematicCount, RESULT_TAP_LOCK_MS } from "../../src/ui/researchCinematicModel";
 
 const TEXT = {
   relic: (relicId: string) => ({ name: `이름-${relicId}`, project: `PROJECT ${relicId}` }),
@@ -94,5 +94,14 @@ describe("연구 시네마틱 카드 계약", () => {
     expect(isCinematicCount(10)).toBe(true);
     expect(isCinematicCount(0)).toBe(false);
     expect(isCinematicCount(5)).toBe(false);
+  });
+});
+
+describe("결산 연타 보호", () => {
+  it("결산에 닿은 뒤 보호 시간이 지나야 닫힌다", () => {
+    const until = 1000 + RESULT_TAP_LOCK_MS;
+    expect(canCloseResult(1000, until)).toBe(false);
+    expect(canCloseResult(until - 1, until)).toBe(false);
+    expect(canCloseResult(until, until)).toBe(true);
   });
 });

@@ -24,7 +24,7 @@ import { PortraitCard } from "../ui/PortraitCard";
 import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY, portraitGridHeadroom } from "../ui/portraitGrid";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
-import { drawLayer, HOLO, slantedRect } from "../ui/holo";
+import { chipPoints, drawLayer, HOLO, slantedRect } from "../ui/holo";
 import { addSceneBackground, battleFieldBackground } from "../ui/backgrounds";
 import { autoPickParty, RECOMMENDED_SLOT_ROLES, relicAffinityDirection } from "../core/partyAffinity";
 import { settingsManager } from "../managers/SettingsManager";
@@ -41,7 +41,7 @@ import { formationMembers, tapFormationSlot, tapRosterRelic, toFormationSlots } 
 import { prefetchBattlePuppets as prefetchBattleSds } from "../puppets/battlePrefetch";
 import { moveFormationSlot } from "../core/formation";
 import { addFormationRemoveChip, addFormationSlotPlate, addFormationSlotSelection } from "../ui/formationSlotChrome";
-import { PARTY_ALLY_PLATE, PARTY_POWER_PLATE, PARTY_PREVIEW, PARTY_PREVIEW_COLUMNS, partyAllyGroundOffset, partyAllyPlateBox, partyAllySlotBox, partyPreviewEnemyColumns, partyPreviewEnemyScale } from "../ui/partyPreviewLayout";
+import { PARTY_ALLY_PLATE, PARTY_DEFENSE, PARTY_POWER_PLATE, PARTY_PREVIEW, PARTY_PREVIEW_COLUMNS, partyAllyGroundOffset, partyAllyPlateBox, partyAllySlotBox, partyPreviewEnemyColumns, partyPreviewEnemyScale } from "../ui/partyPreviewLayout";
 import { bindFormationDrag } from "../ui/formationDrag";
 import { FORMATION_DRAG_VISUAL } from "../ui/formationDragVisual";
 import { createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
@@ -55,7 +55,13 @@ import { consumeSceneEntry } from "./sceneEntry";
 import { getBountyTier } from "../data/bounty";
 import { getCakeOperationTier } from "../data/cakeOperation";
 import { addSdFootShadow } from "../ui/SdFootShadow";
-import { duelBlindOrder } from "../core/duelArena";
+import { DUEL_START_SCORE, duelBlindOrder, duelDivisionNumeral, duelStanding } from "../core/duelArena";
+import { playerProfileDisplay, profileAvatarContent } from "../state/playerProfile";
+import { ProfileAvatar } from "../ui/ProfileAvatar";
+import { addDuelTierEmblem } from "../ui/DuelTierEmblem";
+import { DUEL_TIER_COLOR } from "../ui/duelLayout";
+import { addSectionTitle } from "../ui/SectionTitle";
+import { squeezeTextToWidth } from "../ui/textFit";
 
 /**
  * 미리보기 전장.
@@ -302,6 +308,11 @@ export class PartyScene extends Phaser.Scene {
     this.hint = this.add
       .text(cx, 1664, "", textStyle({ role: "body", size: 28, color: COLOR.inkDim }))
       .setOrigin(0.5, 0);
+    // 방어덱은 그 자리를 전투력 줄에 내주고, 몇 명이 더 필요한지는 위 프로필 판 밑동 오른쪽이 말한다.
+    if (this.content.content === "duelDefense") {
+      const H = PARTY_DEFENSE.header;
+      this.hint.setPosition(BASE_WIDTH / 2 + H.width / 2 - 40, H.y + H.hintY).setOrigin(1, 0.5);
+    }
 
     this.startButton = new Button(this, cx, BACK_SLOT.y, {
       width: 560,
@@ -412,16 +423,20 @@ export class PartyScene extends Phaser.Scene {
     // 맨 글자로 섰는데 그 자리가 곧 아군 SD의 머리라 정수리에 얹혔고, 밝은 배경 원화 위에서는
     // 그림자만으로 떨어져 나오지도 못했다. 판이 배경과 글자를 가르고, 대치선은 그 판 양옆으로
     // 이어져 "여기가 두 편이 마주 보는 자리"를 한 번 더 말한다.
-    drawLayer(this, BASE_WIDTH / 2, POWER_ROW, slantedRect(PARTY_POWER_PLATE.width, PARTY_POWER_PLATE.height), {
+    // 방어덱은 마주 볼 편이 없어 그 줄을 편성 목록 아래(저장 버튼 바로 위)로 내린다(`PARTY_DEFENSE`).
+    const powerY = allyOnly ? PARTY_DEFENSE.powerY : POWER_ROW;
+    drawLayer(this, BASE_WIDTH / 2, powerY, slantedRect(PARTY_POWER_PLATE.width, PARTY_POWER_PLATE.height), {
       fill: COLOR.panel,
       alpha: HOLO.glass,
       edge: COLOR.panelEdge,
       edgeAlpha: 0.85,
-    });
+    }).setDepth(allyOnly ? 4 : 0);
+    if (allyOnly) this.paintDefenseHeader();
     this.allyPowerText = this.add
-      .text(allyOnly ? BASE_WIDTH / 2 : BASE_WIDTH / 2 + 30, POWER_ROW, "", textStyle({ role: "display", size: 30, color: COLOR.accentText }))
+      .text(allyOnly ? BASE_WIDTH / 2 : BASE_WIDTH / 2 + 30, powerY, "", textStyle({ role: "display", size: 30, color: COLOR.accentText }))
       .setOrigin(allyOnly ? 0.5 : 0, 0.5)
-      .setShadow(0, 3, "#05070a", 4, false, true);
+      .setShadow(0, 3, "#05070a", 4, false, true)
+      .setDepth(allyOnly ? 4 : 0);
     if (!allyOnly) {
       this.enemyPowerText = this.add
         .text(BASE_WIDTH / 2 - 30, POWER_ROW, "", textStyle({ role: "display", size: 30, color: COLOR.dangerText }))
@@ -877,6 +892,34 @@ export class PartyScene extends Phaser.Scene {
       selectedSlot: this.selectedSlot,
     });
     this.hint.setText(members.length === 3 ? t("party.ready") : t("party.needMore", { count: 3 - members.length }));
+  }
+
+  /**
+   * 방어덱 편성 위 — **상대에게 보이는 내 모습**. 결투장의 전투 프로필과 같은 얼굴(`ProfileAvatar` — 사진·테두리)·
+   * 이름·레벨·티어·점수를 한 판에 세운다. 마주 선 적이 없는 화면이라 그 자리가 통째로 비어 있었다.
+   */
+  private paintDefenseHeader(): void {
+    const H = PARTY_DEFENSE.header;
+    const panel = this.add.container(BASE_WIDTH / 2, H.y);
+    panel.add(drawLayer(this, 0, 0, chipPoints(H.width, H.height), { fill: 0x101720, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.4 }));
+    panel.add(addSectionTitle(this, -H.width / 2, -H.height / 2, t("duel.profile.title"), { size: 28 }));
+    const profile = playerProfileDisplay(session);
+    panel.add(new ProfileAvatar(this, H.avatarX, H.avatarY, {
+      size: H.avatarSize, frameId: profile.frameId,
+      portraitAssetId: profile.avatar?.portraitAssetId, fallback: profileAvatarContent(profile, () => false).fallback,
+    }));
+    const name = squeezeTextToWidth(this.add.text(H.textX, H.nameY, profile.displayName, textStyle({ role: "display", size: 40, color: COLOR.ink })).setOrigin(0, 0.5), 380);
+    panel.add(name);
+    panel.add(this.add.text(name.x + name.displayWidth + 16, H.nameY + 3, `LV.${profile.level}`, textStyle({ role: "display", size: 30, color: COLOR.accentText })).setOrigin(0, 0.5));
+    const duel = session.duel;
+    if (duel) panel.add(this.add.text(H.width / 2 - 40, H.nameY, t("duel.record", { wins: duel.wins, losses: duel.losses }), textStyle({ role: "emphasis", size: 26, color: COLOR.inkDim })).setOrigin(1, 0.5));
+    const score = duel?.score ?? DUEL_START_SCORE;
+    const standing = duelStanding(score);
+    addDuelTierEmblem(this, panel, H.textX + H.emblemSize / 2, H.tierY, H.emblemSize, standing.tier.id);
+    const tone = DUEL_TIER_COLOR[standing.tier.id];
+    const tierName = this.add.text(H.textX + H.emblemSize + 14, H.tierY, `${t(`duel.tier.${standing.tier.id}`)} ${duelDivisionNumeral(standing.division)}`.trim(), textStyle({ role: "display", size: 32, color: tone.text })).setOrigin(0, 0.5);
+    panel.add(tierName);
+    panel.add(this.add.text(tierName.x + tierName.displayWidth + 18, H.tierY + 2, t("duel.score", { score: score.toLocaleString() }), textStyle({ role: "emphasis", size: 26, color: COLOR.ink })).setOrigin(0, 0.5));
   }
 
   /**

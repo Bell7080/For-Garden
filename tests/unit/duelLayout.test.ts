@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DUEL_OPPONENT_COUNT, DUEL_TIERS } from "../../src/core/duelArena";
 import { BASE_HEIGHT } from "../../src/config/gameConfig";
+import { PROFILE_FRAME_REACH } from "../../src/ui/profileFrameGeometry";
 import { RANKING_LIST } from "../../src/ui/expeditionRankingLayout";
 import { duelHistoryAge } from "../../src/core/duelState";
 import { CATEGORY_TAB } from "../../src/ui/categoryTabStyle";
@@ -52,12 +53,16 @@ describe("결투장 무대 자리", () => {
 
 describe("전투 프로필", () => {
   const P = DUEL_PROFILE;
-  it("애착 렐릭 카드와 오른쪽 줄이 판 안에서 겹치지 않는다", () => {
-    expect(P.card.x - P.card.size / 2).toBeGreaterThanOrEqual(-P.width / 2 + P.padX);
-    expect(P.card.x + P.card.size / 2).toBeLessThan(P.rows.labelX);
-    expect(P.card.y - P.card.size / 2).toBeGreaterThan(P.header.divider);
-    expect(P.card.levelY + 14).toBeLessThan(P.height / 2);
-    expect(duelProfileRowY(0) - P.rows.emblemSize / 2).toBeGreaterThan(P.header.divider);
+  it("플레이어 얼굴(테두리 장식까지)과 오른쪽 줄이 판 안에서 겹치지 않는다", () => {
+    const reach = P.avatar.size * PROFILE_FRAME_REACH;
+    expect(P.avatar.x - reach).toBeGreaterThanOrEqual(-P.width / 2 + P.padX);
+    expect(P.avatar.x + reach).toBeLessThan(P.rows.labelX);
+    expect(P.avatar.x + P.avatar.nameRoom / 2).toBeLessThan(P.rows.labelX);
+    // 판 윗변에 걸터앉는 제목표(약 24px) 아래에서 시작한다.
+    expect(P.avatar.y - reach).toBeGreaterThan(-P.height / 2 + 24);
+    expect(P.avatar.y + reach).toBeLessThan(P.avatar.nameY - 20);
+    expect(P.avatar.recordY + 16).toBeLessThan(P.height / 2);
+    expect(duelProfileRowY(0) - P.rows.emblemSize / 2).toBeGreaterThan(-P.height / 2 + 24);
     expect(duelProfileRowY(3) + P.rows.bonusChip.height / 2).toBeLessThan(P.height / 2);
     expect(P.rows.emblemX + P.rows.emblemSize / 2).toBeLessThan(P.rows.valueX);
   });

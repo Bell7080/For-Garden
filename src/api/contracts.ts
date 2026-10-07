@@ -676,7 +676,8 @@ export interface DuelStatusResponse {
   /** 지금 연승과 이번 시즌 최장 연승. 다음 판을 이기면 얹히는 연승 보너스(없으면 0). */
   winStreak: number; bestStreak: number; nextStreakBonus: number;
   /** 이번 시즌 닿았던 가장 높은 티어와 지난 시즌을 마친 티어(지난 시즌을 치르지 않았으면 없다). */
-  seasonBestTierId: import("../core/duelArena").DuelTierId; lastSeasonTierId: import("../core/duelArena").DuelTierId | null;
+  seasonBestScore: number; seasonBestTierId: import("../core/duelArena").DuelTierId;
+  lastSeasonTierId: import("../core/duelArena").DuelTierId | null; lastSeasonScore: number | null;
   attemptsLeft: number; attemptsPurchased: number;
   /** 다음 추가 도전권의 젬. 오늘 더 살 수 없으면 없다. */
   nextAttemptPrice: number | null;

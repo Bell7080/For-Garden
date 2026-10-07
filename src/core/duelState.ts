@@ -69,6 +69,8 @@ export interface DuelState {
   seasonBestScore: number;
   /** 지난 시즌을 마친 티어. 지난 시즌에 한 판도 치르지 않았으면 없다. */
   lastSeasonTierId: DuelTierId | null;
+  /** 지난 시즌을 마친 점수(리셋 전). 티어가 없으면 0이다. */
+  lastSeasonScore: number;
 }
 
 export const DUEL_HISTORY_LIMIT = 10;
@@ -78,7 +80,7 @@ export function createEmptyDuelState(): DuelState {
     seasonId: "", score: DUEL_START_SCORE, wins: 0, losses: 0, reachedTierIds: [],
     dayKey: "", attemptsUsed: 0, attemptsPurchased: 0, attemptsFromAds: 0, refreshesUsed: 0, candidateIds: [],
     attack: [], defense: [], blindChoice: [], pendingSeasonReward: null, history: [],
-    winStreak: 0, bestStreak: 0, seasonBestScore: DUEL_START_SCORE, lastSeasonTierId: null,
+    winStreak: 0, bestStreak: 0, seasonBestScore: DUEL_START_SCORE, lastSeasonTierId: null, lastSeasonScore: 0,
   };
 }
 
@@ -123,6 +125,7 @@ export function normalizeDuelState(value: unknown, ownedRelicIds: readonly strin
     && typeof entry.won === "boolean" && Number.isSafeInteger(entry.delta)).slice(0, DUEL_HISTORY_LIMIT).map(normalizeHistoryEntry) : [];
   const defense = team(source.defense);
   const score = isCount(source.score) ? source.score : DUEL_START_SCORE;
+  const lastSeasonTierId = typeof source.lastSeasonTierId === "string" && getDuelTier(source.lastSeasonTierId) ? source.lastSeasonTierId as DuelTierId : null;
   return {
     seasonId: typeof source.seasonId === "string" ? source.seasonId : "",
     score,
@@ -145,7 +148,8 @@ export function normalizeDuelState(value: unknown, ownedRelicIds: readonly strin
     bestStreak: isCount(source.bestStreak) ? source.bestStreak : 0,
     // 이 칸이 생기기 전의 저장은 지금 점수가 곧 이번 시즌 최고다.
     seasonBestScore: isCount(source.seasonBestScore) ? Math.max(source.seasonBestScore, score) : score,
-    lastSeasonTierId: typeof source.lastSeasonTierId === "string" && getDuelTier(source.lastSeasonTierId) ? source.lastSeasonTierId as DuelTierId : null,
+    lastSeasonTierId,
+    lastSeasonScore: lastSeasonTierId && isCount(source.lastSeasonScore) ? source.lastSeasonScore : 0,
   };
 }
 
@@ -169,7 +173,10 @@ export function rollDuelPeriods(state: DuelState, now: Date): DuelState {
     const played = next.seasonId !== "" && next.wins + next.losses > 0;
     if (played) next.pendingSeasonReward = { seasonId: next.seasonId, tierId: duelTier(next.score).id };
     // 처음 여는 계정(빈 시즌)은 지난 시즌이 없다. 판을 치르지 않고 넘어간 시즌도 남기지 않는다.
-    if (next.seasonId !== "") next.lastSeasonTierId = played ? duelTier(next.score).id : null;
+    if (next.seasonId !== "") {
+      next.lastSeasonTierId = played ? duelTier(next.score).id : null;
+      next.lastSeasonScore = played ? next.score : 0;
+    }
     next.score = next.seasonId === "" ? next.score : duelSeasonResetScore(next.score);
     next.reachedTierIds = DUEL_TIERS.filter(({ floor }) => floor <= next.score).map(({ id }) => id);
     next.wins = 0;

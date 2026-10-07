@@ -24,7 +24,7 @@ export interface DuelOpponentPopupHandlers {
 /**
  * 상대 선택 — 결투장 무대의 [도전]이 여는 창.
  *
- * 줄 하나가 상대 하나이고, 왼쪽의 얼굴(그 상대의 애착 렐릭)과 아래 점수가 "누구인가"를, 가운데의
+ * 줄 하나가 상대 하나이고, 왼쪽의 얼굴(그 상대의 애착 렐릭)과 이름·티어 옆의 점수가 "누구인가"를, 가운데의
  * 방어덱 셋이 "무엇과 붙나"를 말한다. 가려진 칸은 `?` 액자다. 이기고 지면 얼마나 오르내리는지는
  * 적지 않는다 — 고르는 근거는 상대의 점수·티어·덱이고, 증감까지 서면 늘 가장 많이 오르는 줄만 누르게 된다.
  */
@@ -46,14 +46,15 @@ export function openDuelOpponentPopup(scene: Phaser.Scene, popups: PopupLayer, s
 function paintRow(scene: Phaser.Scene, body: Phaser.GameObjects.Container, status: DuelStatusResponse, opponent: DuelOpponentDto, y: number, onChallenge: () => void): void {
   const tone = DUEL_TIER_COLOR[opponent.tierId];
   body.add(drawLayer(scene, 0, y, chipPoints(P.rowWidth, P.rowHeight), { fill: 0x171d25, alpha: HOLO.glass, edge: tone.fill, edgeAlpha: 0.55 }));
-  // 얼굴과 그 아래 점수 — 드러나 있는 렐릭 중 가장 아끼는 얼굴이다(가린 칸은 서버가 이미 비켜 준다).
-  body.add(new FaceFrame(scene, P.faceX, y - 18, { portraitAssetId: getRelic(opponent.favoriteRelicId).portraitAssetId, size: P.faceSize, color: tone.fill }));
-  body.add(scene.add.text(P.faceX, y + P.faceSize / 2 + 2, opponent.score.toLocaleString(), textStyle({ role: "display", size: 26, color: tone.text })).setOrigin(0.5, 0).setStroke("#05070a", 5));
+  // 얼굴 — 드러나 있는 렐릭 중 가장 아끼는 얼굴이다(가린 칸은 서버가 이미 비켜 준다).
+  body.add(new FaceFrame(scene, P.faceX, y, { portraitAssetId: getRelic(opponent.favoriteRelicId).portraitAssetId, size: P.faceSize, color: tone.fill }));
 
   body.add(squeezeTextToWidth(scene.add.text(P.textX, y - 62, opponent.displayName, textStyle({ role: "display", size: 32, color: COLOR.ink })).setOrigin(0, 0.5), P.textRoom));
   addDuelTierEmblem(scene, body, P.textX + 20, y - 8, 40, opponent.tierId);
   const tierName = `${t(`duel.tier.${opponent.tierId}`)} ${duelDivisionNumeral(opponent.division)}`.trim();
-  body.add(scene.add.text(P.textX + 50, y - 8, tierName, textStyle({ role: "emphasis", size: 24, color: tone.text })).setOrigin(0, 0.5));
+  // 점수는 티어 바로 옆 — 같은 티어 안에서 얼마나 위인지를 한 줄로 읽는다.
+  const tierLine = scene.add.text(P.textX + 50, y - 8, `${tierName}  ${t("duel.score", { score: opponent.score.toLocaleString() })}`, textStyle({ role: "emphasis", size: 24, color: tone.text })).setOrigin(0, 0.5);
+  body.add(squeezeTextToWidth(tierLine, P.textRoom - 50));
   body.add(scene.add.text(P.textX, y + 40, t("duel.power", { power: opponent.totalPower.toLocaleString() }), textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
 
   opponent.units.forEach((unit, index) => {

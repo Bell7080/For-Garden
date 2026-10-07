@@ -34,16 +34,16 @@ export const DUEL_SCREEN = {
 } as const;
 
 /**
- * 전투 프로필 판 안 — 판 가운데가 0인 로컬 좌표다. 왼쪽이 애착 렐릭 카드, 오른쪽이 티어 셋과 연승 줄이다.
+ * 전투 프로필 판 안 — 판 가운데가 0인 로컬 좌표다. 왼쪽이 플레이어 얼굴(프로필 사진 + 테두리)과 이름·레벨·전적,
+ * 오른쪽이 티어 셋과 연승 줄이다. 얼굴의 테두리 장식은 가운데에서 `size × PROFILE_FRAME_REACH`까지 뻗는다.
  */
 export const DUEL_PROFILE = {
   y: DUEL_SCREEN.profile.y,
   width: DUEL_SCREEN.width,
   height: DUEL_SCREEN.profile.bottom - DUEL_SCREEN.profile.top,
   padX: 40,
-  header: { y: -267, divider: -222, nameRoom: 380 },
-  card: { x: -275, y: -20, size: 280, nameY: 160, levelY: 202 },
-  rows: { labelX: -90, emblemX: 90, emblemSize: 64, valueX: 136, firstY: -145, gap: 115, bonusChip: { width: 220, height: 54 } },
+  avatar: { x: -275, y: -80, size: 210, nameY: 110, nameRoom: 330, levelY: 152, recordY: 194 },
+  rows: { labelX: -90, emblemX: 90, emblemSize: 64, valueX: 136, firstY: -195, gap: 130, bonusChip: { width: 220, height: 54 } },
 } as const;
 
 /** 프로필 오른쪽 줄 `index`(0 현재 · 1 시즌 최고 · 2 지난 시즌 · 3 연승)의 중심 y. */
@@ -73,7 +73,7 @@ export function duelHistoryMinScroll(rows: number): number {
 /**
  * 상대 선택 팝업 — 줄 하나가 상대 하나다. `y`는 팝업 가운데가 0인 로컬 좌표다.
  *
- * 줄 안은 왼쪽부터 **애착 렐릭 얼굴(아래 점수) → 이름·티어·전투력 → 방어덱 셋 → 도전**이다.
+ * 줄 안은 왼쪽부터 **애착 렐릭 얼굴 → 이름·티어(옆에 점수)·전투력 → 방어덱 셋 → 도전**이다.
  */
 export const DUEL_OPPONENT_POPUP = {
   width: 980,
@@ -86,8 +86,8 @@ export const DUEL_OPPONENT_POPUP = {
   faceSize: 120,
   textX: -290,
   /** 이름·티어 줄이 쓸 수 있는 폭 — 넘치면 글자를 가로로 누른다. */
-  textRoom: 260,
-  unitX: 30,
+  textRoom: 300,
+  unitX: 60,
   unitGap: 94,
   unitSize: 86,
   challengeX: 375,

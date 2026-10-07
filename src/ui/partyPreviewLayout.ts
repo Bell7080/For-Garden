@@ -119,3 +119,15 @@ export function partyPowerPlateBounds(): { top: number; bottom: number; left: nu
     right: cx + PARTY_POWER_PLATE.width / 2,
   };
 }
+
+/**
+ * 결투 방어덱 편성의 자리 — 마주 선 편이 없어 대치선 위가 통째로 비는 화면이다.
+ *
+ * 그 위에는 **상대에게 보이는 내 모습**(얼굴·이름·레벨·티어·점수)을 결투장의 전투 프로필과 같은 문법으로
+ * 세우고, 전투력은 대치선이 아니라 **편성 목록 아래**로 내린다 — 비교할 상대가 없으니 그 수는 고르는 동안
+ * 늘 위에 떠 있을 이유가 없고, 저장 버튼 바로 위에서 "이 셋으로 얼마인가"를 마지막에 말한다.
+ */
+export const PARTY_DEFENSE = {
+  header: { y: 330, width: 960, height: 300, avatarX: -330, avatarY: 10, avatarSize: 170, textX: -190, nameY: -50, tierY: 40, emblemSize: 64, hintY: 105 },
+  powerY: 1690,
+} as const;

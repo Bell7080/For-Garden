@@ -74,7 +74,7 @@ import { ultimatePresentationFor } from "../data/ultimatePresentations";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { anyPopupOpen, PopupLayer } from "../ui/PopupLayer";
 import { cakeOperationEnemies, cakeOperationRole, cakeOperationRunCost, getCakeOperationTier, isCakeTierUnlocked } from "../data/cakeOperation";
-import { battleArena } from "../core/battleArena";
+import { BATTLE_FIELD_FRAMING, battleArena } from "../core/battleArena";
 import { createExpeditionBossSkirmishConfig, createExpeditionSkirmishConfig, createRaidSkirmishConfig, expeditionBattleResults, normalizeBattleSceneInput, type BattleSceneInputDto, type CakeBattleInputDto, type DuelBattleInputDto, type ExpeditionBattleInputDto, type ExpeditionBossBattleInputDto, type RaidBattleInputDto } from "../core/expeditionBattle";
 import { raidBossDef, raidBossGrowth, raidBossPercentHpBasis } from "../core/raid";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
@@ -610,7 +610,7 @@ export class BattleScene extends Phaser.Scene {
     this.effects.setArena(this.state.arena);
 
     // 어느 모드가 어느 전장에 서는지는 씬이 아니라 `BATTLE_FIELD_BACKGROUND` 한 표가 갖는다.
-    addSceneBackground(this, battleFieldBackground(this.battleInput.mode), -30);
+    addSceneBackground(this, battleFieldBackground(this.battleInput.mode), -30, BATTLE_FIELD_FRAMING[this.battleInput.mode]);
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.28).setDepth(-29);
     /*
      * **머리글과 「AUTO BATTLE」은 세우지 않는다.**

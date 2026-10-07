@@ -102,6 +102,7 @@ export function addSceneBackground(
   scene: Phaser.Scene,
   texture: string,
   depth = -30,
+  framing?: { zoom: number; anchorX: number; anchorY: number },
 ): Phaser.GameObjects.Image {
   // 아직 안 올라온 원화는 Phaser의 물음표 텍스처로 뜨므로, 도착하기 전에는 투명한 1×1로
   // 세워 두고 검은 화면만 보인다 — 로딩 화면과 같은 태도다(조립 과정을 보여 주지 않는다).
@@ -109,7 +110,9 @@ export function addSceneBackground(
   const image = scene.add.image(BASE_WIDTH / 2, BASE_HEIGHT / 2, ready ? texture : "__DEFAULT").setDepth(depth);
   if (!ready) image.setAlpha(0);
   useBackgroundTexture(scene, image, texture, (loaded) => {
-    loaded.setScale(Math.max(BASE_WIDTH / loaded.width, BASE_HEIGHT / loaded.height));
+    loaded.setScale(Math.max(BASE_WIDTH / loaded.width, BASE_HEIGHT / loaded.height) * (framing?.zoom ?? 1));
+    // 키운 원화는 가운데가 아니라 고정한 모서리(우하단이면 좌측·상단)를 기준으로 잘려 나간다.
+    if (framing) loaded.setOrigin(framing.anchorX, framing.anchorY).setPosition(BASE_WIDTH * framing.anchorX, BASE_HEIGHT * framing.anchorY);
     if (loaded.alpha < 1) scene.tweens.add({ targets: loaded, alpha: 1, duration: 160 });
   });
   return image;

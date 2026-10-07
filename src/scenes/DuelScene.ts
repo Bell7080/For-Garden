@@ -8,7 +8,7 @@ import { DUEL_DIVISION_SPAN, DUEL_TIERS, duelDivisionNumeral, duelStanding, type
 import { playerProfileDisplay, profileAvatarContent } from "../state/playerProfile";
 import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
-import { Button } from "../ui/Button";
+import { Button, DESTRUCTIVE_BUTTON_STYLE } from "../ui/Button";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
@@ -18,22 +18,20 @@ import { openDuelTicketPopup } from "../ui/DuelTicketPopup";
 import { DuelRankingPopup } from "../ui/DuelRankingPopup";
 import { addDuelTierEmblem } from "../ui/DuelTierEmblem";
 import { DUEL_PROFILE as P, DUEL_SCREEN as S, DUEL_TIER_COLOR, duelProfileRowY, duelTabX } from "../ui/duelLayout";
-import { FaceFrame } from "../ui/FaceFrame";
 import { ProfileAvatar } from "../ui/ProfileAvatar";
 import { chipPoints, drawLayer, drawVignette, HoloBar, slantedRect } from "../ui/holo";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { squeezeTextToWidth } from "../ui/textFit";
 import { addBackButton } from "../ui/IconButton";
 import { PopupLayer } from "../ui/PopupLayer";
-import { pressIn, pressOut } from "../ui/pressFeedback";
 import { RailButton } from "../ui/RailButton";
+import { NotificationDot } from "../ui/NotificationDot";
 import { openRewardPopup } from "../ui/RewardPopup";
 import { currencyRecordToRewardItems } from "../ui/rewardPopupModel";
 import { playSceneEntrance, slideTabPage, startScene } from "../ui/screenTransition";
 import { addSideShopButton } from "../ui/sideShop";
 import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
-import { getRelic } from "../data/relics";
 import { LOBBY_RETURN } from "./lobbyEntry";
 
 /** 두 갈래. 씬 하나 안에서 판만 갈아 끼운다(가방·고고학과 같은 좌하단 라벨). */
@@ -42,8 +40,10 @@ const TABS: ReadonlyArray<{ key: DuelTab; labelKey: TextKey }> = [
   { key: "battle", labelKey: "duel.tab.battle" },
   { key: "history", labelKey: "duel.tab.history" },
 ];
-/** 결투 도전권 — 하루 다섯 장이 채워지는 몫의 그림이다(발굴권과 같은 방식, 전용 원화는 자리표시). */
+/** 결투 도전권 — 하루 다섯 장이 채워지는 몫의 그림이다(발굴권과 같은 방식). */
 const DUEL_TICKET_ICON = "item-duel-ticket";
+/** [방어] 판의 바탕 — 짙은 남빛 유리. [도전]의 붉은 판(`CONFIRM_DIALOG.destructiveFill`)과 같은 짙기다. */
+const DUEL_DEFENSE_FILL = 0x142338;
 
 /**
  * 결투장 — 3대3 자동전투 방어전.
@@ -247,65 +247,46 @@ export class DuelScene extends Phaser.Scene {
     if (index > 0) panel.add(this.add.rectangle((rows.labelX + P.width / 2 - P.padX) / 2, y - rows.gap / 2, P.width / 2 - P.padX - rows.labelX, 1, COLOR.panelEdge, 0.35));
   }
 
-  /** 왼쪽 아래 [방어] — 게시한 방어덱 셋의 얼굴이 판 안에 서고, 누르면 방어덱 편성으로 간다. */
+  /**
+   * 왼쪽 아래 [방어] — 누르면 방어덱 편성으로 간다. **푸른 강조 버튼**이다(로비의 교류·발굴과 같은 푸른 결):
+   * 지키는 조작이라 붉은 [도전]과 색으로 갈린다. 방어덱 얼굴 셋을 판 안에 세우던 때는 버튼이 작은 판 셋으로
+   * 쪼개져 읽혔고, 누가 서 있는지는 편성 화면이 이미 크게 보여 준다. 방어덱이 비었으면 오른쪽 위에 빨간 점이 선다.
+   */
   private paintDefense(status: DuelStatusResponse): void {
-    const { y, height, defense, faceSize, faceGap } = S.actions;
-    const x = defense.x + defense.width / 2;
-    const panel = this.add.container(x, y);
-    this.view.add(panel);
-    const empty = status.defense.length === 0;
-    panel.add(drawLayer(this, 0, 0, chipPoints(defense.width, height), { fill: 0x141b24, alpha: 0.94, edge: empty ? COLOR.danger : COLOR.accent, edgeAlpha: 0.75 }));
-    for (let index = 0; index < 3; index += 1) {
-      const relicId = status.defense[index];
-      const fx = (index - 1) * faceGap;
-      if (relicId) panel.add(new FaceFrame(this, fx, -22, { portraitAssetId: getRelic(relicId).portraitAssetId, size: faceSize }));
-      else panel.add(drawLayer(this, fx, -22, chipPoints(faceSize, faceSize), { fill: 0x05070a, alpha: 0.6, shadow: false }));
-    }
-    panel.add(this.add.text(0, height / 2 - 28, t("duel.defense.label"), textStyle({ role: "display", size: 32, color: empty ? COLOR.dangerText : COLOR.ink })).setOrigin(0.5));
-    const hit = this.add.rectangle(0, 0, defense.width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerdown", () => pressIn(panel));
-    hit.on("pointerout", () => pressOut(panel, "normal", { pop: false }));
-    hit.on("pointerup", () => {
-      pressOut(panel);
-      if (this.busy) return;
-      startScene(this, "party", { content: "duelDefense", defense: status.defense, blindChoice: status.blindChoice });
+    const { y, height, defense } = S.actions;
+    const button = new Button(this, defense.x + defense.width / 2, y, {
+      width: defense.width, height, label: t("duel.defense.label"), fontSize: 46, variant: "primary",
+      fill: DUEL_DEFENSE_FILL, accentColor: COLOR.exchange, accentTextColor: COLOR.exchangeText,
+      onClick: () => {
+        if (this.busy) return;
+        startScene(this, "party", { content: "duelDefense", defense: status.defense, blindChoice: status.blindChoice });
+      },
     });
-    panel.add(hit);
+    button.fitLabel(defense.labelRoom);
+    this.view.add(button);
+    // 방어덱이 비었으면 빨간 점 하나만 단다 — 라벨을 붉히면 푸른 판이 붉게 읽혀 [도전]과 색이 섞인다.
+    if (status.defense.length === 0) new NotificationDot(this, button, { x: defense.width / 2 - 16, y: -height / 2 + 14 });
   }
 
   /**
    * 오른쪽 아래 [도전] — 이 화면의 주 조작. 상대 선택 창을 연다.
    *
-   * **유리판이 아니라 강조색으로 꽉 채운 평판이다.** 옆의 [방어]가 어두운 유리판이라 같은 문법의 강조 버튼(점 무늬·
-   * 윤곽선)을 두면 두 판의 무게가 비슷하게 읽혔다 — 색 면 하나와 어두운 글자로 "여기를 누른다"를 말한다.
-   * 모양은 [방어]와 같은 깎인 칩이라 두 판이 한 줄로 묶인다.
+   * **붉은 강조 버튼**이다 — 다른 화면의 강조 버튼과 같은 판(깎인 유리판 · 두 줄 · 점무늬)을 쓰고 색만 붉다. 도전권
+   * 그림은 붉은 판에 묻히지 않도록 검은 그림자를 한 뼘 떼어 깐다(`artShadow`).
    */
   private paintChallenge(status: DuelStatusResponse): void {
     const { y, height, challenge } = S.actions;
-    const panel = this.add.container(challenge.x + challenge.width / 2, y);
-    this.view.add(panel);
-    const enabled = status.opponents.length > 0;
-    panel.add(drawLayer(this, 0, 0, chipPoints(challenge.width, height), { fill: COLOR.accent, alpha: 0.96 }));
-    // 윗변 아래 한 줄만 밝게 — 평판에 두께를 얹지 않고 빛이 닿는 변만 말한다.
-    panel.add(this.add.rectangle(0, -height / 2 + 10, challenge.width - height * 0.9, 3, 0xffffff, 0.35));
-    const label = this.add.text(0, 0, t("duel.challenge"), textStyle({ role: "display", size: 56, color: "#141820" })).setOrigin(0.5);
-    const art = 92;
-    const gap = 18;
-    const total = art + gap + label.width;
-    label.setX(-total / 2 + art + gap + label.width / 2);
-    panel.add(this.add.image(-total / 2 + art / 2, 0, DUEL_TICKET_ICON).setDisplaySize(art, art));
-    panel.add(label);
-    if (!enabled) { panel.setAlpha(0.4); return; }
-    const hit = this.add.rectangle(0, 0, challenge.width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerdown", () => pressIn(panel, "primary"));
-    hit.on("pointerout", () => pressOut(panel, "primary", { pop: false }));
-    hit.on("pointerup", () => {
-      pressOut(panel, "primary");
-      if (this.busy) return;
-      // 도전권이 없으면 상대를 고르게 한 뒤 막지 않고, 곧바로 채우는 창을 연다.
-      if (status.attemptsLeft > 0) this.openOpponents(); else this.openTicketPopup();
+    const button = new Button(this, challenge.x + challenge.width / 2, y, {
+      width: challenge.width, height, label: t("duel.challenge"), fontSize: 56, ...DESTRUCTIVE_BUTTON_STYLE,
+      art: DUEL_TICKET_ICON, artShadow: { x: 7, y: 9, alpha: 0.7 },
+      onClick: () => {
+        if (this.busy) return;
+        // 도전권이 없으면 상대를 고르게 한 뒤 막지 않고, 곧바로 채우는 창을 연다.
+        if (status.attemptsLeft > 0) this.openOpponents(); else this.openTicketPopup();
+      },
     });
-    panel.add(hit);
+    button.setEnabled(status.opponents.length > 0);
+    this.view.add(button);
   }
 
   /** 결투 도전권 창. 사거나 광고로 받으면 새 상태로 화면을 다시 그린다. */

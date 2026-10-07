@@ -25,8 +25,11 @@ export const DUEL_SCREEN = {
   /** 전투 프로필 판의 세로 자리(`DUEL_PROFILE`이 판 안을 갖는다). */
   profile: { y: 1035, top: 710, bottom: 1360 },
   seasonReward: { y: 1450, width: 300, height: 72 },
-  /** 하단 두 조작. 방어는 작은 판, 도전은 화면의 주 조작이라 크다. */
-  actions: { y: 1650, height: 160, defense: { x: 60, width: 330 }, challenge: { x: 410, width: 610 }, faceSize: 78, faceGap: 90 },
+  /**
+   * 하단 두 조작 — 공용 강조 버튼(`Button`의 `primary`) 둘. 방어는 푸른 작은 판, 도전은 화면의 주 조작이라 붉고 크다.
+   * 강조 버튼은 양 끝을 높이의 0.52만큼 깎으므로 방어 판의 남는 폭(`labelRoom`)에 라벨이 들어야 한다.
+   */
+  actions: { y: 1650, height: 140, defense: { x: 60, width: 330, labelRoom: 140 }, challenge: { x: 410, width: 610 } },
   /** 좌하단 라벨 줄 — 가방·고고학과 같은 `CategoryTab`. 오른쪽 아래는 공용 뒤로가기 자리다. */
   tabs: { y: BASE_HEIGHT - 96, width: 240, height: 84, gap: 16 },
   /** 전적 탭 목록. */

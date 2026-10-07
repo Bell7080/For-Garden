@@ -84,10 +84,9 @@ const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
     { key: "duelEmblem", icon: "currency-duel-emblem", compact: true, color: "#ffb3a0" },
     { key: "duelTicket", icon: "item-duel-ticket", color: "#ffe9a3" },
   ],
-  /** 결투 상점. 휘장이 상점의 값이다. */
+  /** 결투 상점. **휘장 한 칸만 세운다** — 이 가게의 값은 휘장뿐이고 젬으로 사는 칸이 없다. */
   duel: [
     { key: "duelEmblem", icon: "currency-duel-emblem", compact: true, color: "#ffb3a0" },
-    { key: "gems", icon: "currency-gems", color: "#cfe6ff" },
   ],
   loot: [
     { key: "raidSigil", icon: "currency-raid-sigil", compact: true, color: "#ffc98a" },

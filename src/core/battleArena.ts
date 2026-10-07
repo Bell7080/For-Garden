@@ -22,9 +22,10 @@ export const BATTLE_ARENA = {
   cake: { ...BASE_ARENA, top: 720 },
   bounty: { ...BASE_ARENA, top: 770 },
   raid: { ...BASE_ARENA, top: 860 },
-  // 결투장 필드는 관중석 벽이 아래까지 내려와 바닥이 화면 절반을 넘겨서야 시작한다(실측 약 1,000).
-  // 바닥이 얕아 한 뼘 안쪽(1,040)에 세우면 두 편이 코앞에서 시작했다 — 적은 관중석 벽 밑동, 바닥 끝선에 바짝 붙여 세운다.
-  duel: { ...BASE_ARENA, top: 970 },
+  // 결투장 필드는 관중석 벽이 아래까지 내려와 바닥이 얕았다(원본 기준 1,000~1,400) — 두 편이 코앞에서 시작했다.
+  // 그래서 원화를 `BATTLE_FIELD_FRAMING.duel`만큼 키워 좌측·상단을 잘라 내고(우하단 고정) 땅을 넓혔다.
+  // 확대 뒤 바닥은 실측 약 670~1,440이라 관중석 벽 밑동(740)부터 앞 난간 앞(1,360)까지를 전장으로 쓴다.
+  duel: { ...BASE_ARENA, top: 740 },
 } as const satisfies Record<string, Arena>;
 
 export type BattleArenaMode = keyof typeof BATTLE_ARENA;
@@ -33,3 +34,14 @@ export type BattleArenaMode = keyof typeof BATTLE_ARENA;
 export function battleArena(mode: string): Arena {
   return { ...(BATTLE_ARENA[mode as BattleArenaMode] ?? BASE_ARENA) };
 }
+
+/**
+ * 전장 원화를 화면에 놓는 방식. 기본은 화면을 꽉 채우는 `cover`(배율 1, 가운데)이고,
+ * 땅이 얕은 원화만 `zoom`으로 키운 뒤 `anchor`(0 = 왼쪽·위, 1 = 오른쪽·아래) 반대편을 잘라 낸다.
+ * 위 `BATTLE_ARENA`의 땅 높이는 이 표의 틀로 잰 값이라 둘을 함께 고친다.
+ */
+export interface FieldFraming { zoom: number; anchorX: number; anchorY: number }
+
+export const BATTLE_FIELD_FRAMING: Readonly<Record<string, FieldFraming>> = {
+  duel: { zoom: 1.35, anchorX: 1, anchorY: 1 },
+};

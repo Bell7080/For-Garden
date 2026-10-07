@@ -55,6 +55,7 @@ export const SETTINGS_KO = {
   "settings.play.damageNumbers": "피해 숫자",
   "settings.play.shortenExcavation": "연구 연출 단축",
   "settings.play.powerSaving": "절전 모드",
+  "settings.play.lobbyAtmosphere": "로비 빛 효과",
   "settings.play.graphicsQuality": "그래픽 품질",
   "settings.play.quality.high": "높음",
   "settings.play.quality.balanced": "균형",

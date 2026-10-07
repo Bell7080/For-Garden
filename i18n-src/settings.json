@@ -41,6 +41,7 @@
 "settings.play.damageNumbers": ["伤害数字", "ตัวเลขความเสียหาย", "Số sát thương", "Angka Kerusakan", "Números de daño", "Números de dano", "Schadenszahlen", "Цифры урона"],
 "settings.play.shortenExcavation": ["缩短研究演出", "ย่อการแสดงผลการวิจัย", "Rút gọn trình diễn Nghiên cứu", "Persingkat Sekuens Riset", "Acortar secuencia de Investigación", "Encurtar sequência de Pesquisa", "Forschungssequenz kürzen", "Сократить показ исследования"],
 "settings.play.powerSaving": ["省电模式", "โหมดประหยัดพลังงาน", "Tiết kiệm pin", "Hemat Daya", "Ahorro de energía", "Economia de energia", "Energiesparen", "Энергосбережение"],
+"settings.play.lobbyAtmosphere": ["大厅光效", "เอฟเฟกต์แสงในล็อบบี้", "Hiệu ứng ánh sáng sảnh", "Efek Cahaya Lobi", "Iluminación del vestíbulo", "Iluminação do saguão", "Lobby-Beleuchtung", "Освещение лобби"],
 "settings.play.graphicsQuality": ["画质", "คุณภาพกราฟิก", "Chất lượng đồ họa", "Kualitas Grafis", "Calidad gráfica", "Qualidade gráfica", "Grafikqualität", "Качество графики"],
 "settings.play.quality.high": ["高", "สูง", "Cao", "Tinggi", "Alta", "Alta", "Hoch", "Высокое"],
 "settings.play.quality.balanced": ["均衡", "สมดุล", "Cân bằng", "Seimbang", "Equilibrada", "Equilibrada", "Ausgewogen", "Сбалансированное"],

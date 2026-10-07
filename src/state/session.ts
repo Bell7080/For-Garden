@@ -33,6 +33,8 @@ export interface GameSettings {
     screenShake: boolean; damageNumbers: boolean; shortenExcavation: boolean; battleUiMotion: "default" | "reduced" | "off";
     /** 비전투 장식의 갱신 예산만 낮추며 접근성의 움직임 감소 선택과 별도로 저장한다. */
     powerSaving: boolean;
+    /** 로비 역광·빛 알갱이. 꺼도 연출 외에는 아무것도 달라지지 않는다. */
+    lobbyAtmosphere: boolean;
     /** 파티클·후처리·전신 렌더 배율만 결정하며 `presentationPolicy`가 유일한 소비 경계다. */
     graphicsQuality: "high" | "balanced" | "low";
     /** Phaser 런타임 시간 설정에서만 프레임 제한으로 소비하며 코어 dt와 배속은 바꾸지 않는다. */

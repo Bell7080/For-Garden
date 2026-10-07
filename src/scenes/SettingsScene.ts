@@ -234,6 +234,7 @@ export class SettingsScene extends Phaser.Scene {
       ([["settings.play.screenShake",'screenShake'],["settings.play.damageNumbers",'damageNumbers'],["settings.play.shortenExcavation",'shortenExcavation']] as const).forEach(([a,b]) => toggle(t(a),'presentation',b));
       // 기존 SettingsToggle의 행·강조·입력 피드백을 그대로 쓰며 접근성 선택과 별도 필드로 저장한다.
       toggle(t("settings.play.powerSaving"),'presentation','powerSaving');
+      toggle(t("settings.play.lobbyAtmosphere"),'presentation','lobbyAtmosphere');
       // 홀로그램 선택 행의 강조색·눌림 확대를 그대로 재사용한다.
       const qualityKeys = { high: "settings.play.quality.high", balanced: "settings.play.quality.balanced", low: "settings.play.quality.low" } as const;
       this.content.add(new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,t("settings.play.graphicsQuality"),s.presentation.graphicsQuality,['high','balanced','low'] as const,v=>settingsManager.update({presentation:{graphicsQuality:v}}),v=>t(qualityKeys[v]))); y+=SETTINGS_ROW.step; divider();

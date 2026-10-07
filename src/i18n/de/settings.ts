@@ -42,6 +42,7 @@ export const SETTINGS_DE = {
   "settings.play.damageNumbers": "Schadenszahlen",
   "settings.play.shortenExcavation": "Forschungssequenz kürzen",
   "settings.play.powerSaving": "Energiesparen",
+  "settings.play.lobbyAtmosphere": "Lobby-Beleuchtung",
   "settings.play.graphicsQuality": "Grafikqualität",
   "settings.play.quality.high": "Hoch",
   "settings.play.quality.balanced": "Ausgewogen",

@@ -42,6 +42,7 @@ export const SETTINGS_TH = {
   "settings.play.damageNumbers": "ตัวเลขความเสียหาย",
   "settings.play.shortenExcavation": "ย่อการแสดงผลการวิจัย",
   "settings.play.powerSaving": "โหมดประหยัดพลังงาน",
+  "settings.play.lobbyAtmosphere": "เอฟเฟกต์แสงในล็อบบี้",
   "settings.play.graphicsQuality": "คุณภาพกราฟิก",
   "settings.play.quality.high": "สูง",
   "settings.play.quality.balanced": "สมดุล",

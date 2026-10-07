@@ -751,7 +751,7 @@ export class LobbyScene extends Phaser.Scene {
     // 가운데를 비워 두므로 얼굴은 그대로 밝고 어깨 밖으로 벗어난 자락만 함께 잦아든다.
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: LOBBY_PORTRAIT_DEPTH + 1, strength: 0.62 });
     // 역광은 렐릭 뒤, 빛 알갱이는 렐릭 앞 비네트 아래에 선다. 색은 애착 렐릭이 정해지면 입힌다.
-    this.atmosphere = new LobbyAtmosphere(this, { glow: LOBBY_PORTRAIT_DEPTH - 1, motes: LOBBY_PORTRAIT_DEPTH + 0.5 });
+    this.atmosphere = session.settings.presentation.lobbyAtmosphere ? new LobbyAtmosphere(this, { glow: LOBBY_PORTRAIT_DEPTH - 1, motes: LOBBY_PORTRAIT_DEPTH + 0.5 }) : undefined;
     // **하단 탭 위에 바닥 띠를 깔지 않는다.** 예전에는 무대 바닥선부터 탭 윗변까지 80px짜리
     // 반투명 검정을 한 겹 얹고 그 위에 금색 선을 그었다 — 글자 대비를 위한 것이었는데, 탭 줄이
     // 이미 제 `drawGlassFade`로 아래로 짙어지므로 그 위에 더 깔린 띠는 대비를 보태지 않고

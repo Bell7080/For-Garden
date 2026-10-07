@@ -42,6 +42,7 @@ export const SETTINGS_ID = {
   "settings.play.damageNumbers": "Angka Kerusakan",
   "settings.play.shortenExcavation": "Persingkat Sekuens Riset",
   "settings.play.powerSaving": "Hemat Daya",
+  "settings.play.lobbyAtmosphere": "Efek Cahaya Lobi",
   "settings.play.graphicsQuality": "Kualitas Grafis",
   "settings.play.quality.high": "Tinggi",
   "settings.play.quality.balanced": "Seimbang",

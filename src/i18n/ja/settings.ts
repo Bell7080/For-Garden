@@ -47,6 +47,7 @@ export const SETTINGS_JA = {
   "settings.play.damageNumbers": "ダメージ表示",
   "settings.play.shortenExcavation": "研究演出の短縮",
   "settings.play.powerSaving": "省電力モード",
+  "settings.play.lobbyAtmosphere": "ロビーの光演出",
   "settings.play.graphicsQuality": "グラフィック品質",
   "settings.play.quality.high": "高",
   "settings.play.quality.balanced": "バランス",

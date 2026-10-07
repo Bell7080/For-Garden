@@ -24,7 +24,7 @@ import { openRewardPopup } from "./RewardPopup";
 import { setDebugMailPopup } from "../debug";
 import { pressIn, pressOut } from "./pressFeedback";
 import { managerEvents } from "../managers/ManagerEvents";
-import { isMailExpired, MAIL_DETAIL_LAYOUT, mailDetailRail, MAIL_POPUP_LAYOUT, mailListRows, mailRemaining, mailRewardSlots, mailRewardX, mailTabOf, mailTabX, sortMails, type MailTab } from "./mailPopupLayout";
+import { isMailExpired, MAIL_DETAIL_LAYOUT, mailDetailRail, MAIL_POPUP_LAYOUT, mailListRows, mailRemaining, mailRewardSlots, mailRewardX, sortMailRewards, mailTabOf, mailTabX, sortMails, type MailTab } from "./mailPopupLayout";
 
 const TABS: readonly MailTab[] = ["reward", "notice"];
 
@@ -171,7 +171,7 @@ export class MailPopup {
     // 첨부 줄 뒤에 얕은 홈을 깔아 "이 봉투에 든 것"이 한 줄로 묶여 읽히게 한다.
     const trayWidth = mailRewardX(rewards.maxVisible - 1) - mailRewardX(0) + rewards.size + 24;
     parent.add(drawLayer(this.scene, mailRewardX(0) - rewards.size / 2 - 12 + trayWidth / 2, stripY, slantedRect(trayWidth, rewards.size + 20, 14), { fill: 0x05070a, alpha: 0.45 }));
-    const { shown, overflow } = mailRewardSlots(mail.rewards);
+    const { shown, overflow } = mailRewardSlots(sortMailRewards(mail.rewards));
     shown.forEach((reward, index) => {
       const frame = addFramedIcon(this.scene, parent, mailRewardX(index), stripY, rewards.size, mailRewardTexture(reward), {
         amount: formatCurrency(reward.amount), iconAlpha: dim ? 0.4 : 1, outlineAlpha: dim ? 0.35 : undefined, color: dim ? 0x68717d : undefined,
@@ -239,7 +239,7 @@ export class MailPopup {
       body.add(text);
       if (!hasRewards) return;
       addSectionTitle(this.scene, left - 20, L.attachTitleY, t("mail.attachments", { count: mail.rewards.length }), { size: 26, parent: body });
-      this.addDetailRail(body, mail.rewards, expired || mail.claimed);
+      this.addDetailRail(body, sortMailRewards(mail.rewards), expired || mail.claimed);
       if (claimable) {
         body.add(new Button(this.scene, 0, L.claim.y, { width: L.claim.width, height: L.claim.height, label: t("mail.claim"), variant: "primary", onClick: () => { close?.(); void this.claim([mail.id]); } }));
       } else {

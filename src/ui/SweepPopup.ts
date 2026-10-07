@@ -1,3 +1,4 @@
+import { sortByRewardPriority } from "../data/rewardPriority";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { maxSweepCount, settleSweep, sweepRefusal, SWEEP_TICKET_ITEM, type DungeonRunCost } from "../core/dungeonShortcut";
@@ -160,7 +161,7 @@ export function openSweepPopup(scene: Phaser.Scene, popups: PopupLayer, options:
 
       // 받을 것 — 한 판의 보상 × 배율.
       next.add(scene.add.text(0, top + L.reward.titleY, t("dungeon.sweep.expected"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
-      const rewards = Object.entries(settlement.rewards).filter(([, amount]) => amount > 0);
+      const rewards = sortByRewardPriority(Object.entries(settlement.rewards).filter(([, amount]) => amount > 0), ([currency]) => currency);
       rewards.forEach(([currency, amount], index) => {
         const rx = (index - (rewards.length - 1) / 2) * L.reward.gap;
         const key = CURRENCY_ICON_BY_WALLET[currency as keyof typeof CURRENCY_ICON_BY_WALLET];

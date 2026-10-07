@@ -1,3 +1,4 @@
+import { sortByRewardPriority } from "../data/rewardPriority";
 import type { Wallet } from "./gacha";
 import type { RunePart, RuneRarity } from "./runes";
 import type { BattleStageDef } from "./types";
@@ -20,5 +21,6 @@ export function stageFirstClearRewards(stage: Pick<BattleStageDef, "rewards">): 
   for (const bonus of stage.rewards.firstClearBonus ?? []) {
     if (bonus.kind === "rune" || bonus.amount > 0) rewards.push(bonus);
   }
-  return rewards;
+  // 순서는 보상 중요도 표가 정한다 — 미리보기·결과판·서버 지급이 모두 이 목록을 읽는다.
+  return sortByRewardPriority(rewards, (reward) => reward.kind === "rune" ? "rune" : reward.currency);
 }

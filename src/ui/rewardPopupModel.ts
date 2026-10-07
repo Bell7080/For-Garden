@@ -3,6 +3,7 @@ import { findItem } from "../data/items";
 import type { ProductGrant } from "../data/shopCatalog";
 import type { CurrencyIconKey } from "./currencyIcons";
 import type { GlyphName } from "./glyphs";
+import { sortRewardItems } from "./rewardOrder";
 
 /** Phaser 없이 검증할 수 있는 공용 보상 액자 한 칸의 표시 계약이다. */
 export interface RewardPopupItem {
@@ -26,10 +27,11 @@ export function currencyRecordToRewardItems(rewards: Readonly<Record<string, num
     salvageRecord: "currency-salvage-record", raidSigil: "currency-raid-sigil", rawStone: "currency-orestone",
     duelEmblem: "currency-duel-emblem",
   };
-  return Object.entries(rewards).flatMap(([currency, amount]) => {
+  // 순서는 중요도 표(`REWARD_PRIORITY`) 하나가 정한다 — 호출부마다 객체 키 순서에 기대지 않는다.
+  return sortRewardItems(Object.entries(rewards).flatMap(([currency, amount]): RewardPopupItem[] => {
     const icon = icons[currency];
     return icon && amount > 0 ? [{ icon, amount: Math.floor(amount) }] : [];
-  });
+  }));
 }
 
 /** 서버가 확정한 상품 지급 결과를 정의 재계산 없이 보상 액자 표시 모델로만 변환한다. */
@@ -53,5 +55,5 @@ export function productGrantsToRewardItems(grants: readonly ProductGrant[], gran
   });
   // 완성 룬 인스턴스가 별도 배열로 내려오면 각 서버 결과의 희귀도·파츠를 그대로 그린다.
   const runeItems = grantedRunes.map((rune) => ({ icon: `rune-${rune.rarity}-${rune.part}`, amount: 1, label: rune.customName ?? rune.baseName, runeInstanceId: rune.instanceId }));
-  return [...currencyIcons, ...otherItems, ...runeItems];
+  return sortRewardItems([...currencyIcons, ...otherItems, ...runeItems]);
 }

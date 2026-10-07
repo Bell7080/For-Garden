@@ -63,6 +63,7 @@ import { LobbyPassCard } from "../ui/LobbyPassCard";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import type { CurrencyGuideAction } from "../data/currencyGuide";
 import { powerSavingPolicy } from "../core/settings";
+import { LobbyAtmosphere } from "../ui/LobbyAtmosphere";
 import { TRANSITION } from "../core/screenTransition";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { consumeSceneEntry } from "./sceneEntry";
@@ -145,6 +146,7 @@ export class LobbyScene extends Phaser.Scene {
   private favorite?: PuppetCreature;
   /** 비동기 외형 로딩이 역순으로 끝나도 마지막 요청 하나만 남기는 세대 번호다. */
   private favoriteRequest = 0;
+  private atmosphere?: LobbyAtmosphere;
   /** 같은 방문 중 반복 터치의 대사 변형 순번이며 보상 중복 판정은 서버 날짜가 담당한다. */
   private interactionIndex = 0;
   private interactionPending = false;
@@ -748,6 +750,8 @@ export class LobbyScene extends Phaser.Scene {
     // 위에 혼자 밝은 인물이 떠 한 장면이 아니라 배경에 오려 붙인 스티커로 보였다 — 비네트는
     // 가운데를 비워 두므로 얼굴은 그대로 밝고 어깨 밖으로 벗어난 자락만 함께 잦아든다.
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: LOBBY_PORTRAIT_DEPTH + 1, strength: 0.62 });
+    // 역광은 렐릭 뒤, 빛 알갱이는 렐릭 앞 비네트 아래에 선다. 색은 애착 렐릭이 정해지면 입힌다.
+    this.atmosphere = new LobbyAtmosphere(this, { glow: LOBBY_PORTRAIT_DEPTH - 1, motes: LOBBY_PORTRAIT_DEPTH + 0.5 });
     // **하단 탭 위에 바닥 띠를 깔지 않는다.** 예전에는 무대 바닥선부터 탭 윗변까지 80px짜리
     // 반투명 검정을 한 겹 얹고 그 위에 금색 선을 그었다 — 글자 대비를 위한 것이었는데, 탭 줄이
     // 이미 제 `drawGlassFade`로 아래로 짙어지므로 그 위에 더 깔린 띠는 대비를 보태지 않고
@@ -848,6 +852,7 @@ export class LobbyScene extends Phaser.Scene {
     // 교체가 확정된 뒤 이전 Puppet을 파괴해 로비에는 언제나 최신 외형 하나만 남긴다.
     this.favorite?.destroy();
     this.favorite = nextFavorite;
+    this.atmosphere?.setRelic(def.element, def.role);
     enableHitOnClick(this, nextFavorite);
     nextFavorite.on("pointerup", () => this.interactWithFavorite(def.id));
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => nextFavorite.destroy());

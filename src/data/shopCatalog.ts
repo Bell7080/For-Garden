@@ -16,8 +16,9 @@ export type { PassBenefitDefinition, PremiumCategory, ProductAcquisition, Produc
  * 어디서 사도 적용과 이미 지난 마디의 소급이 똑같다. 카드의 액자는 지급 목록이 아니라 유료 칸 전체의 합이다(`premiumGrantTiles`).
  */
 export const PREMIUM_TABS: ReadonlyArray<{ id: PremiumCategory; label: string }> = [
-  { id: "package", label: "패키지" }, { id: "pass", label: "패스" }, { id: "deal", label: "특가" },
-  { id: "limited", label: "한정" }, { id: "gem", label: "젬" },
+  { id: "limited", label: "한정" }, { id: "pass", label: "패스" }, { id: "deal", label: "특가" },
+  { id: "subscription", label: "구독" }, { id: "daily", label: "일간" }, { id: "weekly", label: "주간" },
+  { id: "monthly", label: "월간" }, { id: "gem", label: "젬" },
 ];
 
 /** 임시 상품 그림 등록표이며 최종 원화가 준비되면 경로만 교체한다. */

@@ -10,8 +10,13 @@ import { BottomNav } from "../ui/BottomNav";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { addFrameAmount, addFramedIcon, guideForIcon } from "../ui/itemFrame";
-import { chipPoints, drawLayer, drawVignette, slantedRect } from "../ui/holo";
-import { paintShowcaseCard, SHOWCASE_TIER_TONE } from "../ui/showcaseCardChrome";
+import { chipPoints, drawLayer, drawShapeOutline, drawVignette, slantedRect } from "../ui/holo";
+import { paintShowcaseCard, SHOWCASE_TIER_TONE, showcaseCardShape } from "../ui/showcaseCardChrome";
+import { addAdRewardCard } from "../ui/AdRewardCard";
+import { remainingDetail } from "../ui/itemExpiry";
+import { openRewardPopup, productGrantsToRewardItems } from "../ui/RewardPopup";
+import { motionPolicy } from "../core/settings";
+import { adSlotStatus, watchAdSlot } from "./adSlotFlow";
 import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
 import type { PremiumSection } from "./settingsNavigation";
@@ -19,6 +24,7 @@ import { PopupLayer } from "../ui/PopupLayer";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { PurchasePopup } from "../ui/PurchasePopup";
 import { session } from "../state/session";
+import { findAdRewardSlot } from "../data/adRewards";
 import { productActionModel } from "../core/productAcquisition";
 import { addPriceBar } from "../ui/priceTag";
 import { squeezeTextToWidth } from "../ui/textFit";
@@ -63,6 +69,12 @@ export class PremiumScene extends Phaser.Scene {
   private pointerY = 0;
   private draggedDistance = 0;
   private velocityY = 0;
+  /** 서버 시각 − 기기 시각. 한정 상품의 남은 시간을 기기 시계에 맡기지 않는다. */
+  private serverOffsetMs = 0;
+  /** 한정 카드의 붉은 남은 시간 글자 — 초마다 갈아 끼운다. */
+  private limitedClocks: { text: Phaser.GameObjects.Text; until: string }[] = [];
+  private clockElapsed = 0;
+  private claiming = false;
 
   constructor() { super("premium"); }
 
@@ -103,6 +115,11 @@ export class PremiumScene extends Phaser.Scene {
 
   /** 관성은 프레임 시간에 맞춰 감쇠해 고주사율에서도 같은 거리로 멈춘다. */
   update(_time: number, delta: number): void {
+    this.clockElapsed += delta;
+    if (this.clockElapsed >= 1000) {
+      this.clockElapsed = 0;
+      for (const clock of this.limitedClocks) if (clock.text.active) clock.text.setText(this.limitedText(clock.until));
+    }
     if (!this.pointerDown && Math.abs(this.velocityY) > 4) {
       this.scrollTo((this.content?.y ?? 0) + this.velocityY * Math.min(delta, 34) / 1000);
       this.velocityY *= Math.pow(0.9, delta / 16.67);
@@ -125,6 +142,7 @@ export class PremiumScene extends Phaser.Scene {
     // storefront 판정은 검증된 모델 하나가 소유한다. 여기서 filter를 다시 쓰면 같은 규칙이
     // 두 곳에 살아, 한쪽만 고쳐도 화면은 조용히 예전 규칙으로 남는다.
     this.products = premiumModel(response.products);
+    this.serverOffsetMs = Date.parse(response.serverTime) - Date.now();
     // 상품을 산 뒤에는 지갑이 바뀌었으므로 상단 줄도 함께 맞춘다.
     session.wallet = { ...session.wallet, ...(await gameApi.getPlayerState()).wallet };
     if (!this.scene.isActive()) return;
@@ -135,11 +153,15 @@ export class PremiumScene extends Phaser.Scene {
   /** 현재 라벨의 상품만 그 갈래의 모양(가로 한 줄 · 두 칸 격자)으로 다시 조립하고 스크롤 한계를 계산한다. */
   private renderProducts(): void {
     this.content?.removeAll(true);
+    this.limitedClocks = [];
     const visible = productsForPremiumCategory(this.products, this.selectedCategory);
     const kind = premiumListKind(this.selectedCategory);
     visible.forEach((product, index) => this.addProduct(product, index, kind));
+    // 젬 탭 끝에는 광고 보고 젬을 받는 칸이 하나 더 선다.
+    const extra = this.selectedCategory === "gem" ? 1 : 0;
+    if (extra) this.addGemAdCard(visible.length, kind);
     const view = premiumGridViewport();
-    this.minScrollY = Math.min(0, view.bottom - view.top - premiumGridContentHeight(visible.length, kind));
+    this.minScrollY = Math.min(0, view.bottom - view.top - premiumGridContentHeight(visible.length + extra, kind));
     this.scrollTo(this.content?.y ?? 0);
   }
 
@@ -155,18 +177,23 @@ export class PremiumScene extends Phaser.Scene {
     const { x, y } = premiumCardSpot(index, kind);
     const card = this.add.container(x, y);
     const action = productActionModel(product.acquisition, { remaining: product.remaining, available: product.purchasable });
-    const soldOut = !product.purchasable;
+    const subscribed = product.subscription !== undefined;
+    // 이용 중인 구독은 살 수 없지만 소진된 상품이 아니다 — 흐리게 가라앉히지 않고 테두리가 맥동한다.
+    const soldOut = !product.purchasable && !subscribed;
     if (kind === "grid") {
       paintShowcaseCard(this, card, { width, height, accent: soldOut ? COLOR.inkDimHex : COLOR.accent, dim: soldOut, railX: -width / 2 + 34 });
     } else {
       paintShowcaseCard(this, card, { width, height, accent: soldOut ? COLOR.inkDimHex : premiumCardTone(product), dim: soldOut, railX: -width / 2 + PREMIUM_WIDE.pad, tag: premiumCardTag(product) });
     }
     this.addCardHit(card, width, height, () => {
+      if (product.acquisition.kind === "free") { if (product.purchasable) void this.claimFree(product); else this.notice(t("shop.premium.freeClaimed")); return; }
+      if (subscribed) { void this.claimSubscriptionDaily(product); return; }
       // 결제 비활성 상품도 상세 팝업 안에서 지급량·가격·사유를 확인한다.
       new PurchasePopup(this, this.popups, gameApi, session.wallet).open(product, async (result) => { this.applyPurchaseResult(result); this.notice(t("shop.premium.purchased")); await this.refresh(); });
     });
     if (kind === "wide") this.paintWideCard(card, product, width, action); else this.paintGridCard(card, product, width, action);
     if (soldOut) card.setAlpha(PREMIUM_SOLD_OUT_ALPHA);
+    if (subscribed) this.addActivePulse(card, width, height);
     this.content?.add(card);
   }
 
@@ -223,9 +250,10 @@ export class PremiumScene extends Phaser.Scene {
     const xs = premiumWideFrameXs(tiles.length);
     tiles.forEach((tile, i) => {
       const frame = this.addGrantFrame(card, xs[i], S.frameY, W.frame, tile.icon, tile.amount);
-      if (tile.daily) {
-        // 정기권이 매일 얹는 몫 — 액자 위에 걸친 작은 꼬리표가 「매일」을 말한다.
-        const label = this.add.text(0, 0, t("shop.premium.daily"), textStyle({ role: "display", size: 20, color: "#101418" })).setOrigin(0.5);
+      const tagText = tile.daily ? t("shop.premium.daily") : tile.badge ? t(`shop.premium.badge.${tile.badge}`) : undefined;
+      if (tagText) {
+        // 정기권이 매일 얹는 몫(「매일」)·패스의 즉시 몫(「즉시」)·길의 몫(「패스」) — 액자 위에 걸친 작은 꼬리표가 말한다.
+        const label = this.add.text(0, 0, tagText, textStyle({ role: "display", size: 20, color: "#101418" })).setOrigin(0.5);
         const tagWidth = label.width + 22;
         const tag = this.add.container(-W.frame / 2 + tagWidth / 2 - 4, -W.frame / 2 - 2);
         tag.add(drawLayer(this, 0, 0, slantedRect(tagWidth, 32, 10), { fill: COLOR.accent, alpha: 1, shadow: false }));
@@ -233,13 +261,25 @@ export class PremiumScene extends Phaser.Scene {
         frame.add(tag);
       }
     });
+    // 즉시 보상과 패스 보상 사이의 「+」.
+    const split = tiles.findIndex((tile) => tile.badge === "pass");
+    if (split > 0) card.add(this.add.text((xs[split - 1] + xs[split]) / 2, S.frameY, "+", textStyle({ role: "display", size: 44, color: COLOR.accentText })).setOrigin(0.5).setStroke("#000000", 6));
     this.paintPriceChip(card, product, 0, S.price.y, S.price.width, S.price.height, S.price.size, action);
     addPremiumValueBadges(this, card, product, right, -this.premiumCardHalfHeight() + 16);
     // 값 줄 양 끝 — 왼쪽은 정기권의 기간·권리, 오른쪽은 남은 구매. 값보다 작고 흐리다.
     const sideWidth = S.price.width / 2 + W.priceGap;
     const foot = this.passFootnote(product);
-    if (foot) card.add(this.add.text(left, S.price.y, foot, textStyle({ role: "body", size: W.noteSize, color: COLOR.inkDim, wrap: -sideWidth - left })).setOrigin(0, 0.5));
-    const remaining = this.add.text(right, S.price.y, action.disabledReason ?? t("shop.premium.remaining", { remaining: product.remaining, limit: product.purchaseLimit }), textStyle({ role: "emphasis", size: W.noteSize + 4, color: product.purchasable ? COLOR.ink : COLOR.dangerText, align: "right", wrap: right - sideWidth })).setOrigin(1, 0.5);
+    if (product.premiumCategory === "limited" && product.visibleUntil) {
+      // 한정 상품의 남은 시간은 붉게 — 놓치면 사라진다.
+      const clock = this.add.text(left, S.price.y, this.limitedText(product.visibleUntil), textStyle({ role: "emphasis", size: W.noteSize + 2, color: COLOR.dangerText, wrap: -sideWidth - left })).setOrigin(0, 0.5).setStroke("#05070a", 3);
+      card.add(clock);
+      this.limitedClocks.push({ text: clock, until: product.visibleUntil });
+    } else if (foot) card.add(this.add.text(left, S.price.y, foot, textStyle({ role: "body", size: W.noteSize, color: COLOR.inkDim, wrap: -sideWidth - left })).setOrigin(0, 0.5));
+    const subscribed = product.subscription !== undefined;
+    const remainingText = subscribed ? t(product.subscription?.dailyBonusClaimed ? "shop.premium.dailyClaimed" : "shop.premium.claimDaily")
+      : product.acquisition.kind === "free" && !product.purchasable ? t("shop.premium.freeClaimed")
+      : action.disabledReason ?? t("shop.premium.remaining", { remaining: product.remaining, limit: product.purchaseLimit });
+    const remaining = this.add.text(right, S.price.y, remainingText, textStyle({ role: "emphasis", size: W.noteSize + 4, color: subscribed ? COLOR.accentText : product.purchasable ? COLOR.ink : COLOR.dangerText, align: "right", wrap: right - sideWidth })).setOrigin(1, 0.5);
     card.add(remaining.setStroke("#05070a", 3));
   }
 
@@ -292,10 +332,77 @@ export class PremiumScene extends Phaser.Scene {
     const parts: string[] = [];
     const pass = product.passBenefit;
     if (pass) {
-      parts.push(pass.durationDays === null ? t("shop.premium.forever") : t("shop.premium.duration", { days: pass.durationDays }));
-      parts.push(pass.adFree ? t("shop.premium.perk.adFree") : t("shop.premium.perk.instantAds"));
+      // 갱신 주기를 먼저 말한다. 이용 중이면 다음 갱신일이, 아니면 권리 한 줄이 그 뒤에 선다.
+      parts.push(pass.durationDays === null ? t("shop.premium.forever") : t("shop.premium.renewal", { days: pass.durationDays }));
+      const until = product.subscription?.expiresAt;
+      if (until) parts.push(t("shop.premium.renewsOn", { date: new Date(until).toLocaleDateString() }));
+      else parts.push(pass.adFree ? t("shop.premium.perk.adFree") : t("shop.premium.perk.instantAds"));
     }
     return parts.join("  ·  ");
+  }
+
+  /** 한정 상품의 남은 시간 한 줄. 서버 시각을 기준으로 센다. */
+  private limitedText(until: string): string {
+    return t("shop.premium.limitedLeft", { time: remainingDetail(until, new Date(Date.now() + this.serverOffsetMs)) });
+  }
+
+  /** 이용 중인 구독의 활성 표시 — 카드 모양을 따라 도는 테두리가 숨 쉰다. 움직임 줄이기에서는 가만히 선다. */
+  private addActivePulse(card: Phaser.GameObjects.Container, width: number, height: number): void {
+    const outline = drawShapeOutline(this, 0, 0, showcaseCardShape(width, height, 3), { color: COLOR.accent, alpha: 1, width: 5 });
+    card.add(outline);
+    if (motionPolicy(session.settings).nonEssentialDistanceFactor === 0) { outline.setAlpha(0.85); return; }
+    outline.setAlpha(0.35);
+    this.tweens.add({ targets: outline, alpha: 1, duration: 900, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+  }
+
+  /** 무료 보급을 주기마다 한 번 받는다. 값이 없어 확인판 없이 곧바로 서버 경계를 지난다. */
+  private async claimFree(product: ProductDto): Promise<void> {
+    if (this.claiming) return;
+    this.claiming = true;
+    try {
+      const result = await gameApi.purchaseProduct({ storefront: "premium", productId: product.id, quantity: 1 });
+      this.applyPurchaseResult(result);
+      openRewardPopup(this, this.popups, { items: productGrantsToRewardItems(result.granted) });
+      await this.refresh();
+    } catch { this.notice(t("shop.premium.adFailed")); } finally { this.claiming = false; }
+  }
+
+  /** 이용 중인 구독의 오늘 몫을 받는다. 하루에 한 번이다. */
+  private async claimSubscriptionDaily(product: ProductDto): Promise<void> {
+    if (this.claiming) return;
+    if (product.subscription?.dailyBonusClaimed) { this.notice(t("shop.premium.dailyClaimed")); return; }
+    this.claiming = true;
+    try {
+      const result = await gameApi.claimPassDailyBonus({ productId: product.id, requestId: globalThis.crypto?.randomUUID?.() ?? `daily-${Date.now()}` });
+      this.applyPurchaseResult(result);
+      openRewardPopup(this, this.popups, { items: productGrantsToRewardItems(result.granted) });
+      await this.refresh();
+    } catch { this.notice(t("shop.premium.adFailed")); } finally { this.claiming = false; }
+  }
+
+  /** 젬 탭 끝의 「광고 보고 젬 받기」 칸. */
+  private addGemAdCard(index: number, kind: PremiumListKind): void {
+    const slotId = "gem-ad";
+    const slot = findAdRewardSlot(slotId);
+    if (!slot || slot.reward.kind !== "currency") return;
+    const status = adSlotStatus(slotId);
+    const { x, y } = premiumCardSpot(index, kind);
+    addAdRewardCard(this, this.content!, {
+      x, y, width: premiumCardWidth(kind), height: premiumCardHeight(kind), currency: "gems", amount: slot.reward.amount,
+      title: t("shop.premium.adTitle"), remaining: status.remaining, limit: status.limit,
+      clip: premiumGridViewport, isTap: (pointer) => this.isTap(pointer),
+      onWatch: () => void this.watchGemAd(),
+    });
+  }
+
+  private async watchGemAd(): Promise<void> {
+    if (this.claiming) return;
+    this.claiming = true;
+    try {
+      if (!(await watchAdSlot("gem-ad"))) { this.notice(t("stamina.adCancelled")); return; }
+      this.topBar?.refresh();
+      await this.refresh();
+    } catch { this.notice(t("shop.premium.adFailed")); } finally { this.claiming = false; }
   }
 
   /** 하단 목록 교체 줄은 상점·가방과 **같은 서류철 라벨 프리팹**을 쓴다. */

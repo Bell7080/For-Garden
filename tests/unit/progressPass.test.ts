@@ -33,9 +33,10 @@ describe("진행 패스 규칙", () => {
       expect(new Set(thresholds).size).toBe(thresholds.length);
       expect(progressPassGoal(pass)).toBe(thresholds[thresholds.length - 1]);
       const product = PREMIUM_PRODUCTS.find(({ id }) => id === pass.productId)!;
-      expect(product.premiumCategory).toBe("pass");
-      // 패스는 사는 순간 쏟아 주지 않는다 — 보상은 길의 마디가 준다.
-      expect(product.grants ?? []).toEqual([]);
+      // 레이드 패스는 30일 구독이다 — 그 밖의 패스는 패스 칸에 선다.
+      expect(product.premiumCategory).toBe(pass.id === "raid" ? "subscription" : "pass");
+      // 사는 순간의 즉시 보상은 재화·발굴권뿐이고, 나머지는 길의 마디가 준다.
+      for (const grant of product.grants ?? []) expect(["currency", "item"]).toContain(grant.kind);
     }
   });
 

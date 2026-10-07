@@ -261,9 +261,10 @@ export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "
     titleKey: "shop.duel.title",
     tabs: DUEL_TABS,
     currencies: "duel",
-    // 머리 관절 오른쪽에 그려진 몫이 440px(캔버스 1024)이라 공용 자리면 오른쪽 변을 넘는다 — 프로티아와 같은 자리에서
-    // 배율 0.71로 세우면 오른쪽 끝이 1,055에 든다.
-    merchantSpot: { headX: 744, height: 1060 },
+    // 전신이 캔버스를 위아래로 꽉 채운 원화라 키로 배율을 잡으면 얼굴이 다른 점원보다 한참 작다(두 눈 사이 37px ↔
+    // 하이네 58px). 얼굴이 맞먹도록 키를 늘리고, 머리 뒤로 젖힌 팔꿈치만 오른쪽 변에 걸리게 둔다 — 들고 있는 것이
+    // 아니라 몸이라 잘려도 무엇이 잘렸는지 흐려지지 않는다. 뿔 끝은 재화 줄 아래(머리끝 y≈167)에 든다.
+    merchantSpot: { headX: 744, height: 1560 },
   },
 };
 

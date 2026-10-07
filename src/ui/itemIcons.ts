@@ -25,8 +25,8 @@ export const ITEM_RASTER_ICON_ASSETS = [
   ["item-sweep-ticket", "sprites/items/sweep-ticket.webp"],
   // 탐사권은 고고학의 탐사 횟수 칸과 같은 입장권 그림이다 — 두 자리가 같은 물건을 말한다.
   ["item-strata-ticket", "sprites/ui/ticket.webp"],
-  // 결투 도전권 — 전용 원화가 오기 전까지 입장권 그림을 빌린다. 원화가 오면 이 줄의 경로만 바꾼다.
-  ["item-duel-ticket", "sprites/ui/ticket.webp"],
+  // 결투 도전권 — 보석 장식의 전용 표(`prepare_icons.py`가 굽는다).
+  ["item-duel-ticket", "sprites/items/duel-ticket.webp"],
   ["item-ancient-core", "sprites/items/ancient-core.webp"],
   ["item-refined-core", "sprites/items/refined-core.webp"],
   ["item-restoration-crystal", "sprites/items/restoration-crystal.webp"],

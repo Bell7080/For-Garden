@@ -71,6 +71,8 @@ ART: dict[str, tuple[str, tuple[float, float, float] | None] | tuple[str, tuple[
     # 조작 횟수라 UI 아이콘 자리에 굽는다.
     "sprites/items/sweep-ticket.webp": ("소탕권.png", None),
     "sprites/ui/ticket.webp": ("발굴권.png", None),
+    # 결투 도전권. 하루 횟수라 지갑 재화가 아니지만 상단 줄·충전 창·[도전] 버튼에 같은 액자 규격으로 선다.
+    "sprites/items/duel-ticket.webp": ("보석 장식의 결투장 티켓.webp", None),
     # 토벌권 둘. 가방의 재료지만 레이드 목록 머리에 액자로 서므로 같은 규격으로 굽는다.
     "sprites/items/raid-ticket.webp": ("토벌권.webp", None),
     "sprites/items/raid-select-ticket.webp": ("선택 토벌권.webp", None),
@@ -105,6 +107,7 @@ RECENTER: dict[str, float] = {
     "sprites/items/raid-select-ticket.webp": 0.86,
     "sprites/items/sweep-ticket.webp": 0.86,
     "sprites/ui/ticket.webp": 0.86,
+    "sprites/items/duel-ticket.webp": 0.86,
     # 새 화석·호박석은 캔버스의 0.9 넘게 채워, 그대로 넣으면 상단 재화 줄에서 둘만 혼자 컸다 —
     # 기존 재화(0.64~0.82)의 띠로 되돌린다. 둘은 네모진 덩어리라 알파 상자를 거의 꽉 채워, 같은
     # 비율이면 동전·보석보다 무겁게 보인다 — 그만큼 조금 더 작게 앉힌다.

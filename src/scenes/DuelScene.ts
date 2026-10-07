@@ -40,7 +40,7 @@ const TABS: ReadonlyArray<{ key: DuelTab; labelKey: TextKey }> = [
   { key: "battle", labelKey: "duel.tab.battle" },
   { key: "history", labelKey: "duel.tab.history" },
 ];
-/** 결투 도전권 — 하루 다섯 장이 채워지는 몫의 그림이다(발굴권과 같은 방식, 전용 원화는 자리표시). */
+/** 결투 도전권 — 하루 다섯 장이 채워지는 몫의 그림이다(발굴권과 같은 방식). */
 const DUEL_TICKET_ICON = "item-duel-ticket";
 /** [방어] 판의 바탕 — 짙은 남빛 유리. [도전]의 붉은 판(`CONFIRM_DIALOG.destructiveFill`)과 같은 짙기다. */
 const DUEL_DEFENSE_FILL = 0x142338;

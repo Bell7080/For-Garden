@@ -42,6 +42,7 @@ export const SETTINGS_VI = {
   "settings.play.damageNumbers": "Số sát thương",
   "settings.play.shortenExcavation": "Rút gọn trình diễn Nghiên cứu",
   "settings.play.powerSaving": "Tiết kiệm pin",
+  "settings.play.lobbyAtmosphere": "Hiệu ứng ánh sáng sảnh",
   "settings.play.graphicsQuality": "Chất lượng đồ họa",
   "settings.play.quality.high": "Cao",
   "settings.play.quality.balanced": "Cân bằng",

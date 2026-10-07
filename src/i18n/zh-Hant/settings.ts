@@ -42,6 +42,7 @@ export const SETTINGS_ZH_HANT = {
   "settings.play.damageNumbers": "傷害數字",
   "settings.play.shortenExcavation": "縮短研究演出",
   "settings.play.powerSaving": "省電模式",
+  "settings.play.lobbyAtmosphere": "大廳光效",
   "settings.play.graphicsQuality": "畫質",
   "settings.play.quality.high": "高",
   "settings.play.quality.balanced": "均衡",

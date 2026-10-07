@@ -134,6 +134,8 @@ export default {
   "item.raid-ticket.description": "Membuka raid untuk dihadapi bersama teman. Bos dan tingkat kesulitan dipilih acak.",
   "item.raid-select-ticket.name": "Tiket Raid Pilihan",
   "item.raid-select-ticket.description": "Membuka raid untuk dihadapi bersama teman. Kamu memilih bos dan tingkat kesulitan.",
+  "item.duel-ticket.name": "Tiket Tantangan Duel",
+  "item.duel-ticket.description": "Memakai 1 tiket saat menantang lawan di Arena Duel. Diisi ulang 5 tiket setiap hari.",
   "item.sweep-ticket.name": "Tiket Sapu",
   "item.sweep-ticket.description": "Menyapu sekali tahap dungeon yang sudah dimenangkan tanpa bertarung.",
   "item.strata-ticket.name": "Tiket Survei",

@@ -134,6 +134,8 @@ export default {
   "item.raid-ticket.description": "Abre una incursión para afrontarla con amigos. El jefe y la dificultad se eligen al azar.",
   "item.raid-select-ticket.name": "Boleto de incursión a elección",
   "item.raid-select-ticket.description": "Abre una incursión para afrontarla con amigos. Tú eliges el jefe y la dificultad.",
+  "item.duel-ticket.name": "Ticket de desafío de duelo",
+  "item.duel-ticket.description": "Se usa 1 al desafiar a un rival en la Arena de duelos. Se recargan 5 cada día.",
   "item.sweep-ticket.name": "Ticket de barrido",
   "item.sweep-ticket.description": "Hace un barrido de una etapa de mazmorra ya superada, una vez, sin combatir.",
   "item.strata-ticket.name": "Ticket de estudio",

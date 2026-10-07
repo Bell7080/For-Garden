@@ -134,6 +134,8 @@ export default {
   "item.raid-ticket.description": "เปิดเรดเพื่อสู้ร่วมกับเพื่อน บอสและระดับความยากสุ่มเลือก",
   "item.raid-select-ticket.name": "ตั๋วเรดแบบเลือก",
   "item.raid-select-ticket.description": "เปิดเรดเพื่อสู้ร่วมกับเพื่อน เลือกบอสและระดับความยากเองได้",
+  "item.duel-ticket.name": "ตั๋วท้าดวล",
+  "item.duel-ticket.description": "ใช้ 1 ใบเมื่อท้าคู่ต่อสู้ในสนามดวล เติมให้วันละ 5 ใบ",
   "item.sweep-ticket.name": "ตั๋วกวาดล้าง",
   "item.sweep-ticket.description": "กวาดล้างด่านดันเจี้ยนที่ผ่านแล้วหนึ่งครั้งโดยไม่ต้องต่อสู้",
   "item.strata-ticket.name": "ตั๋วสำรวจ",

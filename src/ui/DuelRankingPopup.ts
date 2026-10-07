@@ -2,15 +2,18 @@ import Phaser from "phaser";
 import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import type { DuelRankingEntryDto, GameApi } from "../api/contracts";
+import type { DuelTierId } from "../core/duelArena";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { getRelic } from "../data/relics";
 import { Button } from "./Button";
 import { addClippedHit } from "./clippedHit";
 import { addDuelTierEmblem } from "./DuelTierEmblem";
-import { DUEL_TIER_COLOR } from "./duelLayout";
+import { DUEL_PODIUM, DUEL_RANKING_TIER_BUTTON, DUEL_TIER_COLOR } from "./duelLayout";
+import { openDuelTierGuide } from "./DuelGuidePopups";
+import { squeezeTextToWidth } from "./textFit";
 import { RANKING_LIST, rankingMedal, rankingRowY, rankingScrollMetrics } from "./expeditionRankingLayout";
 import { FaceFrame } from "./FaceFrame";
-import { chipPoints, drawLayer, HOLO } from "./holo";
+import { chipPoints, drawLayer, HOLO, slantedRect } from "./holo";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 
@@ -22,13 +25,18 @@ import { COLOR, textStyle } from "./theme";
 export class DuelRankingPopup {
   private body?: Phaser.GameObjects.Container;
 
-  constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly api: GameApi = gameApi) {}
+  constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly currentTier: DuelTierId, private readonly api: GameApi = gameApi) {}
 
   open(): void {
     if (this.body) return;
     const width = BASE_WIDTH - 100; const height = BASE_HEIGHT - 180;
     this.popups.open({ width, height, title: t("duel.link.ranking"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.76, closeOnBackdrop: true, backButton: true, onClose: () => { this.body = undefined; } }, (body) => {
       this.body = body;
+      // 티어 안내는 순위표 안에서 연다 — "몇 등인가" 다음에 읽는 것이 "어느 티어부터 무엇을 받나"다.
+      body.add(new Button(this.scene, width / 2 - DUEL_RANKING_TIER_BUTTON.right, -height / 2 + DUEL_RANKING_TIER_BUTTON.top, {
+        width: DUEL_RANKING_TIER_BUTTON.width, height: DUEL_RANKING_TIER_BUTTON.height, label: t("duel.link.tiers"), icon: "arena-tier", fontSize: 26,
+        onClick: () => openDuelTierGuide(this.scene, this.popups, this.currentTier),
+      }));
       void this.load(body);
     });
   }
@@ -51,7 +59,10 @@ export class DuelRankingPopup {
     if (me) this.renderRow(content, me, -720);
     else content.add(this.scene.add.text(0, -720, t("duel.rank.none"), textStyle({ role: "emphasis", size: 28, color: COLOR.inkDim })).setOrigin(0.5));
 
-    const metrics = rankingScrollMetrics(entries.length);
+    // 시상대는 목록 머리로 함께 흐른다 — 줄 규격은 원정 순위표와 같게 두고 목록만 그만큼 내려선다.
+    const podium = entries.length > 0 ? DUEL_PODIUM.height : 0;
+    const base = rankingScrollMetrics(entries.length);
+    const metrics = { ...base, minY: Math.min(0, base.minY - podium) };
     const list = this.scene.add.container(0, metrics.startY);
     const matrix = body.getWorldTransformMatrix();
     const center = matrix.transformPoint(0, metrics.viewportCenterY);
@@ -65,7 +76,8 @@ export class DuelRankingPopup {
     // 마스크는 그것이 자르는 판과 같은 목숨을 산다 — 닫히는 연출 동안에도 판이 그려지므로 판이 죽을 때 함께 푼다.
     body.once(Phaser.GameObjects.Events.DESTROY, () => { list.clearMask(true); maskShape.destroy(); });
     content.add(list);
-    entries.forEach((entry, index) => this.renderRow(list, entry, rankingRowY(index)));
+    if (podium > 0) this.renderPodium(list, entries.slice(0, 3));
+    entries.forEach((entry, index) => this.renderRow(list, entry, podium + rankingRowY(index)));
 
     let offset = 0; let dragY = 0;
     const move = (delta: number): void => { offset = Phaser.Math.Clamp(offset + delta, metrics.minY, 0); list.y = metrics.startY + offset; };
@@ -77,6 +89,26 @@ export class DuelRankingPopup {
     hit.on("drag", (pointer: Phaser.Input.Pointer) => { move(pointer.y - dragY); dragY = pointer.y; });
     hit.on("wheel", (_pointer: Phaser.Input.Pointer, _dx: number, dy: number) => move(-dy * 0.65));
     content.sendToBack(hit);
+  }
+
+  /** 1·2·3등의 단 — 가운데가 1등이고 가장 높다. 단의 색은 순위표 줄의 금·은·동과 같다. */
+  private renderPodium(parent: Phaser.GameObjects.Container, top: readonly DuelRankingEntryDto[]): void {
+    top.forEach((entry, index) => {
+      const spot = DUEL_PODIUM.spots[index];
+      const medal = rankingMedal(entry.rank);
+      if (!spot || !medal) return;
+      const plinthY = DUEL_PODIUM.baseY - spot.plinth / 2;
+      parent.add(drawLayer(this.scene, spot.x, plinthY, slantedRect(DUEL_PODIUM.plinthWidth, spot.plinth), {
+        fill: medal.fill, alpha: 0.94, edge: medal.edge, edgeAlpha: 0.95, glow: { color: medal.edge, strength: 0.22, height: 0.8 },
+      }));
+      parent.add(this.scene.add.text(spot.x, plinthY, `${entry.rank}`, textStyle({ role: "display", size: Math.min(56, spot.plinth - 8), color: medal.text })).setOrigin(0.5));
+      const faceY = DUEL_PODIUM.baseY - spot.plinth - 44 - spot.face / 2;
+      if (entry.favoriteRelicId) {
+        parent.add(new FaceFrame(this.scene, spot.x, faceY, { portraitAssetId: getRelic(entry.favoriteRelicId).portraitAssetId, size: spot.face, color: medal.edge }));
+      }
+      parent.add(squeezeTextToWidth(this.scene.add.text(spot.x, DUEL_PODIUM.baseY - spot.plinth - 10, entry.displayName, textStyle({ role: "emphasis", size: 24, color: medal.text }))
+        .setOrigin(0.5, 1).setStroke("#05070a", 5), DUEL_PODIUM.plinthWidth));
+    });
   }
 
   private renderRow(parent: Phaser.GameObjects.Container, entry: DuelRankingEntryDto, y: number): void {

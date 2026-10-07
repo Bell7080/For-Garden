@@ -18,7 +18,16 @@ export interface DuelHistoryEntry {
   won: boolean;
   /** 이 판으로 바뀐 내 점수(보호로 깎인 몫을 뺀 실제 값). */
   delta: number;
+  /**
+   * 상대의 얼굴·티어·덱 — 전적 탭이 줄마다 세운다. 이 칸이 생기기 전의 기록에는 없으므로 없으면 그 자리를
+   * 비워 두고 선다(저장 마이그레이션 없음). 싸운 뒤의 기록이라 가렸던 칸도 드러난 채로 남는다.
+   */
+  opponentTierId?: DuelTierId;
+  opponentFavoriteRelicId?: string;
+  opponentUnits?: DuelHistoryUnit[];
 }
+
+export interface DuelHistoryUnit { relicId: string; level: number; }
 
 /** 끝난 시즌의 정산 대기. 결투장 화면이 받기를 세운다. */
 export interface DuelSeasonRewardPending {
@@ -67,7 +76,7 @@ export function cloneDuelState(state: DuelState): DuelState {
     ...state, reachedTierIds: [...state.reachedTierIds], candidateIds: [...state.candidateIds],
     attack: [...state.attack], defense: [...state.defense], blindChoice: [...state.blindChoice],
     pendingSeasonReward: state.pendingSeasonReward ? { ...state.pendingSeasonReward } : null,
-    history: state.history.map((entry) => ({ ...entry })),
+    history: state.history.map((entry) => ({ ...entry, ...(entry.opponentUnits ? { opponentUnits: entry.opponentUnits.map((unit) => ({ ...unit })) } : {}) })),
   };
 }
 
@@ -79,6 +88,20 @@ const stringList = (value: unknown, limit: number): string[] =>
  * 저장에서 읽은 값을 받아들일 수 있는 모양으로 좁힌다. 결투장 도입(v47) 전 저장은 빈 상태로
  * 시작한다 — 잃을 기록이 없다. 보유하지 않은 렐릭은 편성에서 걷는다.
  */
+/** 전적 한 줄의 덧붙은 칸(티어·얼굴·덱)은 읽을 수 있을 때만 남긴다 — 옛 기록은 그 칸 없이 선다. */
+function normalizeHistoryEntry(entry: DuelHistoryEntry): DuelHistoryEntry {
+  const { opponentTierId, opponentFavoriteRelicId, opponentUnits, ...base } = entry;
+  const units = Array.isArray(opponentUnits)
+    ? opponentUnits.filter((unit): unit is DuelHistoryUnit => !!unit && typeof unit.relicId === "string" && isCount(unit.level)).slice(0, 3).map(({ relicId, level }) => ({ relicId, level }))
+    : [];
+  return {
+    ...base,
+    ...(typeof opponentTierId === "string" && getDuelTier(opponentTierId) ? { opponentTierId } : {}),
+    ...(typeof opponentFavoriteRelicId === "string" ? { opponentFavoriteRelicId } : {}),
+    ...(units.length > 0 ? { opponentUnits: units } : {}),
+  };
+}
+
 export function normalizeDuelState(value: unknown, ownedRelicIds: readonly string[]): DuelState {
   const source = (value && typeof value === "object" ? value : {}) as Partial<Record<keyof DuelState, unknown>>;
   const owned = new Set(ownedRelicIds);
@@ -86,7 +109,7 @@ export function normalizeDuelState(value: unknown, ownedRelicIds: readonly strin
   const reward = source.pendingSeasonReward as Partial<DuelSeasonRewardPending> | null | undefined;
   const history = Array.isArray(source.history) ? source.history.filter((entry): entry is DuelHistoryEntry =>
     !!entry && typeof entry.at === "string" && typeof entry.opponentName === "string" && Number.isSafeInteger(entry.opponentScore)
-    && typeof entry.won === "boolean" && Number.isSafeInteger(entry.delta)).slice(0, DUEL_HISTORY_LIMIT).map((entry) => ({ ...entry })) : [];
+    && typeof entry.won === "boolean" && Number.isSafeInteger(entry.delta)).slice(0, DUEL_HISTORY_LIMIT).map(normalizeHistoryEntry) : [];
   const defense = team(source.defense);
   return {
     seasonId: typeof source.seasonId === "string" ? source.seasonId : "",
@@ -142,4 +165,18 @@ export function rollDuelPeriods(state: DuelState, now: Date): DuelState {
     next.refreshesUsed = 0;
   }
   return next;
+}
+
+/**
+ * 전적 한 줄의 「얼마 전」. 1분 안이면 `now`, 그 뒤로는 분 → 시간 → 일 중 가장 큰 단위 하나만 쓴다.
+ * 읽을 수 없는 시각이나 미래 시각(기기 시계가 뒤로 간 경우)은 `now`로 수렴한다.
+ */
+export function duelHistoryAge(at: string, nowMs: number): { unit: "now" | "minute" | "hour" | "day"; value: number } {
+  const elapsed = nowMs - Date.parse(at);
+  if (!Number.isFinite(elapsed) || elapsed < 60_000) return { unit: "now", value: 0 };
+  const minutes = Math.floor(elapsed / 60_000);
+  if (minutes < 60) return { unit: "minute", value: minutes };
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return { unit: "hour", value: hours };
+  return { unit: "day", value: Math.floor(hours / 24) };
 }

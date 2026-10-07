@@ -134,6 +134,8 @@ export default {
   "item.raid-ticket.description": "開啟與好友一同挑戰的討伐。首領與難度隨機決定。",
   "item.raid-select-ticket.name": "自選討伐券",
   "item.raid-select-ticket.description": "開啟與好友一同挑戰的討伐。可自行選擇首領與難度。",
+  "item.duel-ticket.name": "決鬥挑戰券",
+  "item.duel-ticket.description": "在決鬥場向對手發起挑戰時消耗1張。每天補充5張。",
   "item.sweep-ticket.name": "掃蕩券",
   "item.sweep-ticket.description": "不經戰鬥，對已通關的地下城階段掃蕩一次。",
   "item.strata-ticket.name": "探查券",

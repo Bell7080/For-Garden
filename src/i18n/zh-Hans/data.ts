@@ -134,6 +134,8 @@ export default {
   "item.raid-ticket.description": "开启与好友一同挑战的讨伐。首领与难度随机决定。",
   "item.raid-select-ticket.name": "自选讨伐券",
   "item.raid-select-ticket.description": "开启与好友一同挑战的讨伐。可自行选择首领与难度。",
+  "item.duel-ticket.name": "决斗挑战券",
+  "item.duel-ticket.description": "在决斗场向对手发起挑战时消耗1张。每天补充5张。",
   "item.sweep-ticket.name": "扫荡券",
   "item.sweep-ticket.description": "不经战斗，对已通关的地下城阶段扫荡一次。",
   "item.strata-ticket.name": "探查券",

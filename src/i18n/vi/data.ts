@@ -134,6 +134,8 @@ export default {
   "item.raid-ticket.description": "Mở một đột kích để cùng bạn bè thách đấu. Trùm và độ khó được chọn ngẫu nhiên.",
   "item.raid-select-ticket.name": "Vé đột kích chọn lọc",
   "item.raid-select-ticket.description": "Mở một đột kích để cùng bạn bè thách đấu. Bạn tự chọn trùm và độ khó.",
+  "item.duel-ticket.name": "Vé khiêu chiến đấu trường",
+  "item.duel-ticket.description": "Dùng 1 vé khi khiêu chiến đối thủ ở Đấu trường. Mỗi ngày được nạp lại 5 vé.",
   "item.sweep-ticket.name": "Vé càn quét",
   "item.sweep-ticket.description": "Càn quét một lần màn hầm ngục đã vượt qua mà không cần chiến đấu.",
   "item.strata-ticket.name": "Vé thám sát",

@@ -808,5 +808,25 @@
 "Recupera 1 tentativa de pesquisa de estratos da Arqueologia.",
 "Stellt 1 Erkundung der Archäologie-Schichten wieder her.",
 "Восстанавливает 1 попытку разведки слоёв Археологии."
+],
+"item.duel-ticket.name": [
+"决斗挑战券",
+"ตั๋วท้าดวล",
+"Vé khiêu chiến đấu trường",
+"Tiket Tantangan Duel",
+"Ticket de desafío de duelo",
+"Tíquete de desafio de duelo",
+"Duell-Herausforderungsticket",
+"Билет вызова на дуэль"
+],
+"item.duel-ticket.description": [
+"在决斗场向对手发起挑战时消耗1张。每天补充5张。",
+"ใช้ 1 ใบเมื่อท้าคู่ต่อสู้ในสนามดวล เติมให้วันละ 5 ใบ",
+"Dùng 1 vé khi khiêu chiến đối thủ ở Đấu trường. Mỗi ngày được nạp lại 5 vé.",
+"Memakai 1 tiket saat menantang lawan di Arena Duel. Diisi ulang 5 tiket setiap hari.",
+"Se usa 1 al desafiar a un rival en la Arena de duelos. Se recargan 5 cada día.",
+"Usa 1 ao desafiar um oponente na Arena de duelos. Recarrega 5 por dia.",
+"Wird beim Herausfordern eines Gegners in der Duellarena verbraucht. Täglich werden 5 aufgefüllt.",
+"Тратится 1 при вызове соперника на арене дуэлей. Каждый день пополняется до 5."
 ]
 }

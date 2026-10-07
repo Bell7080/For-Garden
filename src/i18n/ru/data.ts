@@ -134,6 +134,8 @@ export default {
   "item.raid-ticket.description": "Открывает рейд для игры с друзьями. Босс и сложность выбираются случайно.",
   "item.raid-select-ticket.name": "Билет рейда на выбор",
   "item.raid-select-ticket.description": "Открывает рейд для игры с друзьями. Босса и сложность выбираете вы.",
+  "item.duel-ticket.name": "Билет вызова на дуэль",
+  "item.duel-ticket.description": "Тратится 1 при вызове соперника на арене дуэлей. Каждый день пополняется до 5.",
   "item.sweep-ticket.name": "Билет зачистки",
   "item.sweep-ticket.description": "Один раз проводит зачистку уже пройденного этапа подземелья без боя.",
   "item.strata-ticket.name": "Билет разведки",

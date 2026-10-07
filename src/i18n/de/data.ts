@@ -134,6 +134,8 @@ export default {
   "item.raid-ticket.description": "Öffnet einen Raid für dich und deine Freunde. Boss und Schwierigkeit werden zufällig bestimmt.",
   "item.raid-select-ticket.name": "Wahl-Raid-Ticket",
   "item.raid-select-ticket.description": "Öffnet einen Raid für dich und deine Freunde. Boss und Schwierigkeit wählst du selbst.",
+  "item.duel-ticket.name": "Duell-Herausforderungsticket",
+  "item.duel-ticket.description": "Wird beim Herausfordern eines Gegners in der Duellarena verbraucht. Täglich werden 5 aufgefüllt.",
   "item.sweep-ticket.name": "Säuberungsticket",
   "item.sweep-ticket.description": "Führt eine Säuberung einer bereits gewonnenen Dungeon-Stufe einmal ohne Kampf durch.",
   "item.strata-ticket.name": "Erkundungsticket",

@@ -28,7 +28,7 @@ import type { ProductListResponse, PurchaseProductRequest, PurchaseProductRespon
 import { totalGrantAmount } from "../core/purchase";
 import { getRelicSkin } from "../data/relicSkins";
 import { applyDuelScore, DUEL_BATTLE_REWARD, DUEL_DAILY_ATTEMPTS, DUEL_MAX_BLIND, duelBlindCount, duelBlindOrder, duelExtraAttemptPrice, duelHiddenRelicIds, duelNewlyReachedTiers, duelRefreshPrice, duelScoreDelta, duelSeasonEndsAt, duelStanding, duelTier, getDuelTier, pickDuelOpponents } from "../core/duelArena";
-import { createEmptyDuelState, DUEL_HISTORY_LIMIT, rollDuelPeriods, type DuelHistoryEntry, type DuelState } from "../core/duelState";
+import { createEmptyDuelState, DUEL_HISTORY_LIMIT, rollDuelPeriods, type DuelHistoryEntry, type DuelHistoryUnit, type DuelState } from "../core/duelState";
 import { duelNpcPool, findDuelNpc } from "../core/duelNpcPool";
 import { combatPower } from "../core/combatPower";
 import type { ClaimDuelSeasonRewardResponse, DuelRankingResponse, DuelStatusResponse, EnterDuelRequest, EnterDuelResponse, ResolveDuelRequest, ResolveDuelResponse, SetDuelDefenseRequest } from "./contracts";
@@ -189,7 +189,7 @@ export class FakeServer implements GameApi {
   /** 결투장 입장 영수증. 재전송은 같은 상대·같은 도전권으로 돌려준다. */
   private readonly duelAdmissionResults = new Map<string, EnterDuelResponse>();
   /** 입장했지만 아직 결과가 오지 않은 결투. 결과 확정은 이 표에 있는 판만 받는다. */
-  private readonly pendingDuels = new Map<string, { opponentId: string; opponentName: string; opponentScore: number }>();
+  private readonly pendingDuels = new Map<string, { opponentId: string; opponentName: string; opponentScore: number; favoriteRelicId: string; units: DuelHistoryUnit[] }>();
   private readonly duelResolveResults = new Map<string, ResolveDuelResponse>();
 
   constructor(
@@ -1682,7 +1682,7 @@ export class FakeServer implements GameApi {
       attack: [...duel.attack], defense: [...duel.defense], blindChoice: [...duel.blindChoice],
       defenseBlindOrder: duelBlindOrder(duel.defense.map((relicId) => ({ relicId, power: this.duelRelicPower(relicId) })), duel.blindChoice),
       pendingSeasonReward: reward && rewardTier ? { ...reward, duelEmblem: rewardTier.seasonReward.duelEmblem, gems: rewardTier.seasonReward.gems } : null,
-      history: duel.history.map((entry) => ({ ...entry })),
+      history: duel.history.map((entry) => ({ ...entry, ...(entry.opponentUnits ? { opponentUnits: entry.opponentUnits.map((unit) => ({ ...unit })) } : {}) })),
       serverTime: now.toISOString(),
     };
   }
@@ -1760,7 +1760,7 @@ export class FakeServer implements GameApi {
     const next: DuelState = { ...duel, attemptsUsed: duel.attemptsUsed + 1, attack: [...request.relicIds] };
     this.persist({ ...this.state, duel: next });
     this.state.duel = next;
-    this.pendingDuels.set(request.requestId, { opponentId: npc.id, opponentName: npc.displayName, opponentScore: npc.score });
+    this.pendingDuels.set(request.requestId, { opponentId: npc.id, opponentName: npc.displayName, opponentScore: npc.score, favoriteRelicId: npc.favoriteRelicId, units: npc.units.map(({ relicId, level }) => ({ relicId, level })) });
     const response: EnterDuelResponse = {
       ...this.snapshot(), requestId: request.requestId, opponentId: npc.id, opponentName: npc.displayName, opponentScore: npc.score,
       units: npc.units.map(({ relicId, level, breakthrough, stats }) => ({ relicId, level, breakthrough, stats: { ...stats } })),
@@ -1787,7 +1787,10 @@ export class FakeServer implements GameApi {
     wallet.duelEmblem += emblem;
     const gems = Math.max(0, Math.min(reached.reduce((sum, tier) => sum + tier.firstReachGems, 0), WALLET_CAPS.gems - wallet.gems));
     wallet.gems += gems;
-    const entry: DuelHistoryEntry = { at: now.toISOString(), opponentName: pending.opponentName, opponentScore: pending.opponentScore, won: request.won, delta: scoreAfter - scoreBefore };
+    const entry: DuelHistoryEntry = {
+      at: now.toISOString(), opponentName: pending.opponentName, opponentScore: pending.opponentScore, won: request.won, delta: scoreAfter - scoreBefore,
+      opponentTierId: duelStanding(pending.opponentScore).tier.id, opponentFavoriteRelicId: pending.favoriteRelicId, opponentUnits: pending.units.map((unit) => ({ ...unit })),
+    };
     const next: DuelState = {
       ...duel, score: scoreAfter, wins: duel.wins + (request.won ? 1 : 0), losses: duel.losses + (request.won ? 0 : 1),
       reachedTierIds: [...duel.reachedTierIds, ...reached.map(({ id }) => id)],

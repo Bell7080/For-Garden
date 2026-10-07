@@ -474,6 +474,10 @@
 - **결투 편성은 `session.party`를 건드리지 않는다** — 공용 편성 화면의 `duel`(공격덱)·`duelDefense`(방어덱) 갈래가 서버 경계
   (`enterDuel`·`setDuelDefense`)로만 저장한다. 도전권은 입장에서 쓰고 결과 확정(`resolveDuel`)은 영수증으로 한 번만 받는다.
 - **방어하는 쪽은 v1에서 점수를 잃지 않는다.** 실제 서버가 생겨 상대가 사람이 되면 그때 정한다(`docs/server-migration.md`).
+- **결투장 씬은 내 자리를 보여 주는 무대다**(`DuelScene` + 자리 `duelLayout.ts`). 가운데 티어 휘장 → 점수 게이지 → 애착 렐릭 SD, 아래 [방어]·[도전],
+  맨 아래 왼쪽 「대전」·「전적」 라벨 탭이다. 상대 고르기는 [도전]이 여는 창(`DuelOpponentPopup`), 순위는 왼쪽 칩이 여는 판(시상대 + 「티어」 버튼),
+  전적은 탭(`DuelHistoryList`)이다 — 씬에 상대 줄·링크를 다시 쌓지 않는다. 도전권 그림은 `duel-ticket` 아이템이며(발굴권과 같이 그림·안내만 맡고
+  남은 횟수는 서버의 하루 횟수다), 원화가 오면 `itemIcons.ts`의 경로만 바꾼다.
 - **결투 상점의 값은 휘장 1 = 젬 0.5**(`DUEL_EMBLEM_GEM_VALUE`)로 재고 받는 것이 1.0~1.25배 안에 든다(`duelShop.test`). 젬으로 휘장을
   사는 길은 두지 않는다. 점원 록스우의 이름·원화·대사는 `SHOP_STAGE_PRESENTATION.duel` 한 줄이 갖는다.
 

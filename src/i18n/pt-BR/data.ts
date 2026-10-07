@@ -134,6 +134,8 @@ export default {
   "item.raid-ticket.description": "Abre uma raide para enfrentar com amigos. O chefe e a dificuldade são sorteados.",
   "item.raid-select-ticket.name": "Bilhete de raide à escolha",
   "item.raid-select-ticket.description": "Abre uma raide para enfrentar com amigos. Você escolhe o chefe e a dificuldade.",
+  "item.duel-ticket.name": "Tíquete de desafio de duelo",
+  "item.duel-ticket.description": "Usa 1 ao desafiar um oponente na Arena de duelos. Recarrega 5 por dia.",
   "item.sweep-ticket.name": "Tíquete de varredura",
   "item.sweep-ticket.description": "Faz uma varredura de uma etapa de masmorra já vencida, uma vez, sem batalha.",
   "item.strata-ticket.name": "Tíquete de pesquisa",

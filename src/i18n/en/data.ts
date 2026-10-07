@@ -136,6 +136,8 @@ export default {
   "item.raid-ticket.description": "Opens a raid to take on with friends. The boss and difficulty are chosen at random.",
   "item.raid-select-ticket.name": "Select Raid Ticket",
   "item.raid-select-ticket.description": "Opens a raid to take on with friends. You choose the boss and difficulty.",
+  "item.duel-ticket.name": "Duel Challenge Ticket",
+  "item.duel-ticket.description": "Spend one to challenge an opponent in the Duel Arena. Five are refilled every day.",
   "item.sweep-ticket.name": "Sweep Ticket",
   "item.sweep-ticket.description": "Sweeps an already-cleared dungeon stage once without a battle.",
   "item.strata-ticket.name": "Survey Ticket",

@@ -315,6 +315,8 @@ export default {
   "item.raid-ticket.description": "フレンドと一緒に挑むレイドを開きます。ボスと難易度はランダムで決まります。",
   "item.raid-select-ticket.name": "選択討伐券",
   "item.raid-select-ticket.description": "フレンドと一緒に挑むレイドを開きます。ボスと難易度を選んで開きます。",
+  "item.duel-ticket.name": "決闘挑戦券",
+  "item.duel-ticket.description": "決闘場で相手に挑むときに1枚使います。毎日5枚補充されます。",
   "item.sweep-ticket.name": "掃討券",
   "item.sweep-ticket.description": "クリア済みのダンジョン段階を、戦闘なしで1回掃討します。",
   "item.strata-ticket.name": "探査券",

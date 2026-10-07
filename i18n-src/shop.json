@@ -18,7 +18,6 @@
 "shop.purchase.failed": ["购买失败。", "การซื้อล้มเหลว", "Mua thất bại.", "Pembelian gagal.", "La compra falló.", "A compra falhou.", "Der Kauf ist fehlgeschlagen.", "Покупка не удалась."],
 "shop.premium.title": ["高级", "พรีเมียม", "Cao cấp", "Premium", "Premium", "Premium", "Premium", "Премиум"],
 "shop.premium.forever": ["永久", "ถาวร", "Vĩnh viễn", "Permanen", "Permanente", "Permanente", "Dauerhaft", "Навсегда"],
-"shop.premium.duration": ["有效期{days}天", "ใช้ได้ {days} วัน", "Hiệu lực {days} ngày", "Berlaku {days} hari", "Válido {days} días", "Válido por {days} dias", "{days} Tage gültig", "Действует {days} дн."],
 "shop.premium.remaining": ["剩余可购 {remaining}/{limit}", "ซื้อได้อีก {remaining}/{limit}", "Lượt mua còn {remaining}/{limit}", "Sisa pembelian {remaining}/{limit}", "Compras restantes {remaining}/{limit}", "Compras restantes {remaining}/{limit}", "Verbleibende Käufe {remaining}/{limit}", "Осталось покупок {remaining}/{limit}"],
 "shop.premium.purchased": ["购买完成。", "ซื้อสำเร็จแล้ว", "Đã mua xong.", "Pembelian selesai.", "Compra completada.", "Compra concluída.", "Kauf abgeschlossen.", "Покупка завершена."],
 "shop.premium.daily": ["每日", "รายวัน", "Mỗi ngày", "Harian", "Diario", "Diário", "Täglich", "Ежедневно"],

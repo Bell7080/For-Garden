@@ -19,7 +19,6 @@ export const SHOP_TH = {
   "shop.purchase.failed": "การซื้อล้มเหลว",
   "shop.premium.title": "พรีเมียม",
   "shop.premium.forever": "ถาวร",
-  "shop.premium.duration": "ใช้ได้ {days} วัน",
   "shop.premium.remaining": "ซื้อได้อีก {remaining}/{limit}",
   "shop.premium.purchased": "ซื้อสำเร็จแล้ว",
   "shop.premium.daily": "รายวัน",

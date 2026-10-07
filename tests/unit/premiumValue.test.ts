@@ -9,7 +9,7 @@ const dto = (id: string): ProductDto => PREMIUM_PRODUCTS.find((product) => produ
 describe("프리미엄 가치 배수·할인", () => {
   it("기준은 중형 다이아 팩의 효율이다", () => {
     const medium = PREMIUM_PRODUCTS.find((product) => product.id === "premium-gems-medium")!;
-    expect(PREMIUM_GEM_PER_KRW).toBeCloseTo(1_200 / (medium.acquisition as { basePriceKrw: number }).basePriceKrw, 6);
+    expect(PREMIUM_GEM_PER_KRW).toBeCloseTo(1_500 / (medium.acquisition as { basePriceKrw: number }).basePriceKrw, 6);
   });
 
   it("월간 정기권은 출석을 다 채우면 같은 값 젬 팩의 3배 이상이고 광고제거보다 후하다", () => {

@@ -19,7 +19,6 @@ export const SHOP_ID = {
   "shop.purchase.failed": "Pembelian gagal.",
   "shop.premium.title": "Premium",
   "shop.premium.forever": "Permanen",
-  "shop.premium.duration": "Berlaku {days} hari",
   "shop.premium.remaining": "Sisa pembelian {remaining}/{limit}",
   "shop.premium.purchased": "Pembelian selesai.",
   "shop.premium.daily": "Harian",

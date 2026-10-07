@@ -41,7 +41,7 @@ const NAV_LABEL_GUTTER = 18;
  * 아이콘은 아직 그림이 없어 선으로 그린다. 채운 덩어리 대신 얇은 선을 쓰는 이유는, 하단 바에
  * 판때기가 없어서 굵은 실루엣이 배경 원화 위에 얼룩처럼 보이기 때문이다.
  */
-function drawIcon(scene: Phaser.Scene, key: NavKey, x: number, y: number, color: number): Phaser.GameObjects.Graphics {
+export function drawIcon(scene: Phaser.Scene, key: NavKey, x: number, y: number, color: number): Phaser.GameObjects.Graphics {
   const g = scene.add.graphics({ x, y });
   g.lineStyle(3, color, 1);
   switch (key) {

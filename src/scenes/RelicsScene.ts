@@ -32,6 +32,8 @@ import {
 } from "../ui/relicGridLayout";
 import { openElementChartPopup } from "../ui/affinityPopups";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
+import { consumeSceneEntry } from "./sceneEntry";
+import { getRelic } from "../data/relics";
 import {
   EMPTY_RELIC_FILTER,
   matchesRelicFilter,
@@ -121,8 +123,16 @@ export class RelicsScene extends Phaser.Scene {
     if (this.scrollEnabled()) this.scrollTo(this.content.y - dy * 0.8);
   };
 
+  /** 결과판의 강해지는 길이 곧장 정보창을 열어 달라고 넘긴 렐릭. 한 번 열고 비운다. */
+  private pendingOpenRelicId?: string;
+
   constructor() {
     super("relics");
+  }
+
+  init(data?: { openRelicId?: string }): void {
+    this.pendingOpenRelicId = typeof data?.openRelicId === "string" ? data.openRelicId : undefined;
+    consumeSceneEntry(this);
   }
 
   create(): void {
@@ -202,6 +212,10 @@ export class RelicsScene extends Phaser.Scene {
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
+    // 강해지는 길로 들어왔으면 그 렐릭의 정보창이 곧장 열린다 — 도감에서 다시 찾지 않는다.
+    const openId = this.pendingOpenRelicId;
+    this.pendingOpenRelicId = undefined;
+    if (openId && relicCollection.owns(openId)) this.info.showRelic(getRelic(openId), true);
   }
 
   /** 모바일 관성은 프레임 시간으로 감쇠하며, 이동한 프레임마다 카드 내부 마스크도 동기화한다. */

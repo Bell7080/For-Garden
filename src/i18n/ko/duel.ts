@@ -2,7 +2,6 @@
 export const DUEL_KO = {
   "duel.ranking.me": "나",
   "duel.pause.forfeitConfirm": "이 결투를 패배로 끝냅니다.",
-  "duel.result.score": "점수 {score} ({delta})",
   "duel.result.toDuel": "결투장으로",
   "duel.result.streak": "{streak}연승 보너스 +{bonus}",
   "duel.hidden": "???",

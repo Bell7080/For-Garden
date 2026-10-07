@@ -190,12 +190,13 @@ export const MISC_JA = {
   "stageComplete.firstClear": "初回クリア報酬",
   "stageComplete.staminaRefunded": "スタミナが返還されました (+{amount})",
   "stageComplete.repeatClear": "反復クリア報酬",
-  "stageComplete.toResearch": "研究所",
-  "stageComplete.toRelics": "レリック強化",
   "stageComplete.replay": "もう一度",
   "stageComplete.next": "次のステージ",
+  "stageComplete.settlement": "精算",
+  "growth.relicEnhance": "レリック強化",
+  "growth.runeCraft": "ルーン研磨",
+  "growth.party": "編成変更",
   "stageComplete.exit": "退出",
-  "stageComplete.toMap": "マップへ",
 
 
   "battle.profile.down": "戦闘不能",

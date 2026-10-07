@@ -81,8 +81,8 @@ export function duelStreakBonus(streak: number): number {
   return Math.min(DUEL_STREAK_BONUS.max, (Math.floor(streak) - DUEL_STREAK_BONUS.from + 1) * DUEL_STREAK_BONUS.perStep);
 }
 
-/** 한 판의 투사의 휘장. 진 판도 조금 준다 — 도전권을 쓴 몫이다. */
-export const DUEL_BATTLE_REWARD = { win: 20, loss: 8 } as const;
+/** 한 판의 투사의 휘장. 이긴 판만 받는다 — 진 판은 점수가 깎이는 것이 결말이다. */
+export const DUEL_BATTLE_REWARD = { win: 20, loss: 0 } as const;
 
 /** 시즌 길이와 기준점(월요일 00:00 UTC). 시즌 번호는 이 기준에서 몇 번째 28일인가다. */
 export const DUEL_SEASON_DAYS = 28;

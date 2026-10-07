@@ -1759,36 +1759,6 @@
 "Wiederholungsbelohnungen",
 "Награды за повтор"
 ],
-"stageComplete.toResearch": [
-"研究所",
-"ห้องวิจัย",
-"Viện nghiên cứu",
-"Lab Riset",
-"Lab. de Investigación",
-"Laboratório de Pesquisa",
-"Forschungslabor",
-"Лаб. исследований"
-],
-"stageComplete.toRelics": [
-"强化遗物",
-"เสริมพลังเรลิก",
-"Cường hóa Di vật",
-"Perkuat Relik",
-"Fortalecer Reliquias",
-"Fortalecer Relíquias",
-"Relikte stärken",
-"Усилить реликты"
-],
-"stageComplete.toMap": [
-"返回地图",
-"ไปที่แผนที่",
-"Về bản đồ",
-"Ke Peta",
-"Al mapa",
-"Ao mapa",
-"Zur Karte",
-"К карте"
-],
 "battle.profile.down": [
 "倒下",
 "ล้ม",

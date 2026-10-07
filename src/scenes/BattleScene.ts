@@ -108,6 +108,8 @@ import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
 import { stepBattleScoreMotion } from "../ui/battleScoreMotion";
 import { stepUltimateCharge } from "../ui/ultimateChargeMotion";
 import { RewardFrame } from "../ui/RewardFrame";
+import { growthPaths, type GrowthPath } from "../core/growthPaths";
+import { contentOpen } from "../ui/contentLock";
 import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
 import { ExpeditionScoreDetailPopup } from "../ui/ExpeditionScoreDetailPopup";
 import { BOSS_RESULT_LAYOUT, bossResultUtilityBounds } from "../ui/bossResultLayout";
@@ -793,6 +795,7 @@ export class BattleScene extends Phaser.Scene {
         items: currencyRecordToRewardItems(Object.fromEntries(result.granted.map(({ currency, amount }) => [currency, amount]))),
         // 이번 판이 공유 게이지에 들인 점수 하나만 선다 — 누적 기여까지 한 줄에 이어 붙이면 무엇이 이번 판의 몫인지 흐려진다.
         footnote: t("raid.result.score", { score: result.runDamage.toLocaleString() }),
+        settlement: true,
       },
       replay,
       fighters: this.stageCompleteFighters(),
@@ -2545,6 +2548,7 @@ export class BattleScene extends Phaser.Scene {
         onPress: () => { chosen = true; this.replayContent({ content: "stage" }, () => startScene(this, exitTo)); },
       },
       staminaRefunded,
+      growth: this.defeatGrowth("party", () => { chosen = true; }),
       fighters: this.stageCompleteFighters(),
       onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
       // 버튼을 고르지 않고 판을 닫으면 원래 가던 곳(지도, 오프닝에서 왔으면 로비)으로 돌아간다.
@@ -2635,10 +2639,10 @@ export class BattleScene extends Phaser.Scene {
         reward: won ? { kind: "loot", items } : {
           kind: "defeat",
           actions: [
-            { label: t("stageComplete.toRelics"), onPress: go(() => this.scene.start("relics")) },
             { label: t("cake.title"), onPress: go(back) },
           ],
         },
+        growth: won ? undefined : this.defeatGrowth("party", () => { chosen = true; }),
         replay: replayable ? { label: t("stageComplete.replay"), onPress: go(() => this.replayContent({ content: "cake", tierId: input.tierId }, back)) } : undefined,
         staminaRefunded: result.staminaRefunded,
         fighters: this.stageCompleteFighters(),
@@ -2710,10 +2714,9 @@ export class BattleScene extends Phaser.Scene {
     // 닫는 기본 길과 같아 「다시 하기」가 서면 그 자리를 넘긴다(넷이면 판 밑으로 넘친다).
     new StageCompletePopup(this, popups).open({
       reward: { kind: "defeat", actions: [
-        { label: t("stageComplete.toResearch"), onPress: go(() => this.scene.start("lab")) },
-        { label: t("stageComplete.toRelics"), onPress: go(() => this.scene.start("relics")) },
         ...(replay ? [] : [{ label: t("bounty.result.toBounty"), onPress: go(toBounty) }]),
       ] },
+      growth: this.defeatGrowth("party", () => { chosen = true; }),
       replay, fighters, onOpenContribution: openContribution, staminaRefunded: settled.staminaRefunded,
       onConfirm: () => { if (!chosen && this.scene.isActive()) toBounty(); },
     });
@@ -2740,22 +2743,42 @@ export class BattleScene extends Phaser.Scene {
     let chosen = false;
     const go = (run: () => void) => () => { chosen = true; run(); };
     const items = currencyRecordToRewardItems({ duelEmblem: settled.duelEmblem, gems: settled.gems });
-    const sign = settled.delta > 0 ? "+" : "";
-    const score = t("duel.result.score", { score: settled.scoreAfter.toLocaleString(), delta: `${sign}${settled.delta}` });
-    // 연승 보너스가 얹힌 판은 그 몫을 함께 말한다 — 증감이 평소보다 큰 까닭이 결과판에서 읽혀야 한다.
-    const footnote = settled.streakBonus > 0 ? `${score}  ·  ${t("duel.result.streak", { streak: settled.winStreak, bonus: settled.streakBonus })}` : score;
+    // 티어 블록(휘장 · 게이지 · 증감)이 점수를 말하고, 연승 보너스도 그 블록이 함께 적는다.
+    const standing = { scoreBefore: settled.scoreBefore, scoreAfter: settled.scoreAfter, streakBonus: settled.streakBonus, winStreak: settled.winStreak };
     const onConfirm = (): void => { if (!chosen && this.scene.isActive()) toDuel(); };
     if (settled.won) {
-      new StageCompletePopup(this, popups).open({ reward: { kind: "loot", items, footnote }, fighters, onOpenContribution: openContribution, onConfirm });
+      new StageCompletePopup(this, popups).open({ reward: { kind: "loot", items }, standing, fighters, onOpenContribution: openContribution, onConfirm });
       return;
     }
     new StageCompletePopup(this, popups).open({
-      reward: { kind: "defeat", items, footnote, actions: [
-        { label: t("stageComplete.toRelics"), onPress: go(() => this.scene.start("relics")) },
+      // 진 판은 받는 것이 없다 — 보상 줄 대신 강해지는 길이 선다. 편성은 결투장에서 상대를 고르며 바꾼다.
+      reward: { kind: "defeat", actions: [
         { label: t("duel.result.toDuel"), onPress: go(toDuel) },
       ] },
+      standing, growth: this.defeatGrowth("duel", () => { chosen = true; }),
       fighters, onOpenContribution: openContribution, onConfirm,
     });
+  }
+
+  /**
+   * 진 판의 **강해지는 길 타일**. 어느 길이 서는지는 편성 상태가 정하고(`growthPaths`), 모드마다 다른 것은
+   * 편성 바꾸기가 돌아가는 곳(`partyScene`)뿐이다. 고른 길이 있으면 판을 닫는 기본 길은 서지 않는다(`markChosen`).
+   */
+  private defeatGrowth(partyScene: string, markChosen: () => void): { paths: readonly GrowthPath[]; onPick: (path: GrowthPath) => void } {
+    const paths = growthPaths({ party: session.party, relicProgress: session.relicProgress, runeInventory: session.runeInventory, archaeologyOpen: contentOpen("archaeology") });
+    return {
+      paths,
+      onPick: (path) => {
+        markChosen();
+        switch (path.id) {
+          case "relicEnhance":
+          case "runeCraft": startScene(this, "relics", { openRelicId: path.relicId }); return;
+          case "lab": startScene(this, "lab"); return;
+          case "archaeology": startScene(this, "archaeology"); return;
+          case "party": startScene(this, partyScene); return;
+        }
+      },
+    };
   }
 
   /**
@@ -2808,15 +2831,11 @@ export class BattleScene extends Phaser.Scene {
             let chosen = false;
             new StageCompletePopup(this, popups).open({
               reward: {
-                kind: "defeat",
-                // 전멸이어도 그때까지 걷은 것은 이미 지갑에 들어갔다 — 그 영수증을 따로 띄우지
-                // 않고 같은 판의 보상 줄이 그대로 말한다.
+                kind: "loot",
+                // 원정은 이기고 진 판이 아니라 **정산**이다 — 전멸이어도 그때까지 걷은 것은 이미 지갑에 들어갔고,
+                // 그 영수증을 같은 판의 보상 줄이 그대로 말한다.
                 items: currencyRecordToRewardItems(settlement.granted),
-                actions: [
-                  { label: t("stageComplete.toResearch"), onPress: () => { chosen = true; startScene(this, "lab"); } },
-                  { label: t("stageComplete.toRelics"), onPress: () => { chosen = true; startScene(this, "relics"); } },
-                  { label: t("stageComplete.toMap"), onPress: () => { chosen = true; startScene(this, "lobby"); } },
-                ],
+                settlement: true,
               },
               fighters: this.stageCompleteFighters(),
               onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),

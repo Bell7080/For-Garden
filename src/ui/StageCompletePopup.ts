@@ -17,6 +17,9 @@ import { spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { loadOwnedPuppet } from "./statusPuppetLoad";
 import { takePlayerExp } from "../managers/PlayerExpReceipts";
 import { addPlayerExpGainRow } from "./PlayerExpGainRow";
+import { addDuelStandingRow, type DuelStandingResult } from "./DuelStandingRow";
+import { addGrowthPathTiles, GROWTH_TILES } from "./GrowthPathTiles";
+import type { GrowthPath } from "../core/growthPaths";
 import { addSdFootShadow } from "./SdFootShadow";
 import type { StageFirstClearReward } from "../core/stageRewards";
 import { addStageRewardFrame } from "./stageRewardFrame";
@@ -41,7 +44,11 @@ export type StageCompleteReward =
    * 반복 판이면 치즈케이크 한 장이다.
    */
   | { kind: "storyClear"; cheesecakeEarned: number; firstClear: boolean; firstClearRewards?: readonly StageFirstClearReward[] }
-  | { kind: "loot"; items: readonly RewardPopupItem[]; footnote?: string }
+  /**
+   * `settlement`은 이기고 진 것이 아닌 **정산**(원정·레이드) — 표제가 승리 축포 없이 중립이다. 친 만큼이 점수라
+   * 이긴 판도 진 판도 없고, 그래서 강해지는 길 타일도 서지 않는다.
+   */
+  | { kind: "loot"; items: readonly RewardPopupItem[]; footnote?: string; settlement?: boolean }
   /**
    * 작전 실패.
    *
@@ -95,7 +102,22 @@ export interface StageCompletePopupOptions {
    * 다음에 할 일이라, 이 줄이 버튼보다 먼저 읽히면 안 된다. 경험치 블록은 서지 않는다(오르지 않았다).
    */
   staminaRefunded?: number;
+  /**
+   * 결투의 티어·점수 변화. 있으면 경험치 블록 자리에 **티어 블록**이 서고(휘장 · 티어 · 게이지 · 증감),
+   * 그 아래 내용은 한 블록만큼 내려선다. 이기고 진 판이 같은 블록을 쓴다.
+   */
+  standing?: DuelStandingResult;
+  /**
+   * 진 판의 **강해지는 길 타일**. 있으면 버튼 줄 위에 타일 줄이 서고, 눌린 길은 `onPick`이 맡는다
+   * (판 닫기는 이 팝업이 한다). 길 자체는 `growthPaths`가 편성 상태에서 정한다.
+   */
+  growth?: { paths: readonly GrowthPath[]; onPick: (path: GrowthPath) => void };
 }
+
+/** 결투 티어 블록이 경험치 블록 자리를 쓸 때 그 아래 내용이 내려서는 만큼. */
+const STANDING_SHIFT = 150;
+/** 티어 블록의 가운데(휘장 중심). 기여도 버튼 바로 아래다. */
+const STANDING_Y = 150;
 
 const WIDTH = 940;
 /** 판 높이. 표제는 판 윗변에서, 그 아래 조각들은 판 가운데에서 잰다. */
@@ -149,10 +171,14 @@ const SD = { mvp: { width: 200, height: 300 }, side: { width: 150, height: 220 }
  * MVP 편성, 기여도 그래프 입구를 얹는다.
  */
 export class StageCompletePopup {
+  /** 이번 판의 보상·버튼 줄이 내려서는 만큼. 티어 블록이 선 판만 0이 아니다. */
+  private shiftY = 0;
+
   constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer) {}
 
   open(options: StageCompletePopupOptions): void {
     const defeated = options.reward.kind === "defeat";
+    this.shiftY = options.standing ? STANDING_SHIFT : 0;
     // 이 판의 입장이 올린 경험치. 진 판도 스테미나를 썼으므로 함께 선다. 한 번 꺼내면 비워진다.
     const expReceipt = takePlayerExp();
     const loot = options.reward.kind === "loot" ? options.reward.items.filter(({ amount }) => amount > 0) : [];
@@ -190,7 +216,7 @@ export class StageCompletePopup {
       closeCatcher.on("pointerup", close);
       body.add(closeCatcher);
 
-      this.buildTitle(body, defeated);
+      this.buildTitle(body, defeated, options.reward.kind === "loot" && options.reward.settlement === true);
       // SD는 body 바깥, 팝업 층 바로 위에 화면 좌표로 세운다.
       puppetLayer = this.scene.add.container(0, 0).setDepth((body.parentContainer?.depth ?? 0) + 1);
       this.buildFighterPuppets(body, puppetLayer, puppets, () => disposed, options.fighters);
@@ -202,7 +228,8 @@ export class StageCompletePopup {
       });
       body.add(attackButton);
       // 경험치를 올린 판이면 그 블록이, 아니면(원정처럼 스테미나를 쓰지 않는 판) 얇은 구분선이 같은 자리에 선다.
-      if (expReceipt) addPlayerExpGainRow(this.scene, body, EXP_ROW_Y, expReceipt);
+      if (options.standing) addDuelStandingRow(this.scene, body, STANDING_Y, options.standing);
+      else if (expReceipt) addPlayerExpGainRow(this.scene, body, EXP_ROW_Y, expReceipt);
       else body.add(drawHairline(this.scene, 0, EXP_ROW_Y, WIDTH - 140, { color: defeated ? COLOR.danger : COLOR.accent, alpha: 0.3 }));
       if (options.reward.kind === "storyClear") {
         if (clearRewards.length > 0) this.buildFirstClearRewards(body, clearRewards);
@@ -215,7 +242,14 @@ export class StageCompletePopup {
         const footnote = carried.length > 0 ? options.reward.footnote : undefined;
         if (carried.length > 0) this.buildLoot(body, carried, footnote);
         const actions = options.replay ? [options.replay, ...options.reward.actions] : options.reward.actions;
-        this.buildDefeatActions(body, close, actions, carried.length > 0, footnote !== undefined);
+        const growth = options.growth;
+        // 타일 줄은 받은 것(액자 줄) 바로 아래, 없으면 보상 자리에서 시작하고 버튼 줄은 그 아래로 밀린다.
+        const tilesTop = (carried.length > 0 ? DEFEAT_ACTIONS.belowLoot - 43 : DEFEAT_ACTIONS.top - 43) + (footnote !== undefined ? DEFEAT_ACTIONS.footnoteShift : 0) + this.shiftY;
+        if (growth && growth.paths.length > 0) {
+          addGrowthPathTiles(this.scene, body, tilesTop, growth.paths, (path) => { growth.onPick(path); close(); });
+        }
+        const actionsTop = growth && growth.paths.length > 0 ? tilesTop + GROWTH_TILES.height + 20 + DEFEAT_ACTIONS.height / 2 : undefined;
+        this.buildDefeatActions(body, close, actions, carried.length > 0, footnote !== undefined, actionsTop);
         if ((options.staminaRefunded ?? 0) > 0) {
           body.add(this.scene.add
             .text(0, STAMINA_REFUND_Y, t("stageComplete.staminaRefunded", { amount: options.staminaRefunded ?? 0 }), textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
@@ -244,13 +278,19 @@ export class StageCompletePopup {
    * 아무것도 서지 않으며, 커졌다 줄어드는 대신 조금 위에서 미끄러져 내려와 멈춘다. 글자만
    * 바꾸면 같은 축포가 진 판에서도 터진다.
    */
-  private buildTitle(body: Phaser.GameObjects.Container, defeated: boolean): void {
+  private buildTitle(body: Phaser.GameObjects.Container, defeated: boolean, settlement = false): void {
     const y = -HEIGHT / 2 + 108;
     const title = this.scene.add
-      .text(0, y, defeated ? "Defeat" : "Victory!", textStyle({ role: "display", size: 64, color: defeated ? COLOR.dangerText : COLOR.accentText }))
+      .text(0, y, settlement ? t("stageComplete.settlement") : defeated ? "Defeat" : "Victory!", textStyle({ role: "display", size: 64, color: settlement ? COLOR.ink : defeated ? COLOR.dangerText : COLOR.accentText }))
       .setOrigin(0.5);
     title.setShadow(0, 4, "#000000", 6, false, true);
     body.add(title);
+    if (settlement) {
+      // 축포도 가라앉음도 없이 위에서 조용히 내려앉는다.
+      title.setY(y - 20).setAlpha(0);
+      this.scene.tweens.add({ targets: title, y, alpha: 1, duration: 320, ease: "Cubic.Out" });
+      return;
+    }
     if (defeated) {
       title.setY(y - 34).setAlpha(0);
       this.scene.tweens.add({ targets: title, y, alpha: 1, duration: 380, ease: "Cubic.Out" });
@@ -270,8 +310,8 @@ export class StageCompletePopup {
    * "보상 없음" 같은 문장을 적으면 플레이어가 지금 할 일은 바뀌지 않는다. 대신 강해지는 길로
    * 가는 입구를 세운다. 어느 길인지는 부르는 쪽(전투 화면)이 정하고 이 판은 줄만 쌓는다.
    */
-  private buildDefeatActions(body: Phaser.GameObjects.Container, close: () => void, actions: readonly StageCompleteAction[], belowLoot: boolean, belowFootnote = false): void {
-    const top = (belowLoot ? DEFEAT_ACTIONS.belowLoot : DEFEAT_ACTIONS.top) + (belowFootnote ? DEFEAT_ACTIONS.footnoteShift : 0);
+  private buildDefeatActions(body: Phaser.GameObjects.Container, close: () => void, actions: readonly StageCompleteAction[], belowLoot: boolean, belowFootnote = false, topOverride?: number): void {
+    const top = topOverride ?? (belowLoot ? DEFEAT_ACTIONS.belowLoot : DEFEAT_ACTIONS.top) + (belowFootnote ? DEFEAT_ACTIONS.footnoteShift : 0) + this.shiftY;
     actions.forEach((action, index) => {
       const y = top + index * (DEFEAT_ACTIONS.height + DEFEAT_ACTIONS.gap);
       body.add(new Button(this.scene, 0, y, {
@@ -408,8 +448,9 @@ export class StageCompletePopup {
    * 보탰는가**라, 줄 아래 글자 한 줄이 그 몫을 맡는다(`RewardPopup`의 `footnote`와 같은 규칙).
    */
   private buildLoot(body: Phaser.GameObjects.Container, items: readonly RewardPopupItem[], footnote?: string): void {
+    const rowY = REWARD_ROW.y + this.shiftY;
     if (items.length === 0) {
-      if (footnote) this.buildFootnote(body, REWARD_ROW.y, footnote);
+      if (footnote) this.buildFootnote(body, rowY, footnote);
       return;
     }
     // 넉 장까지는 판 안에 들어오고, 그보다 많으면 칸 사이만 좁혀 같은 줄에 담는다 — 여기는
@@ -418,14 +459,14 @@ export class StageCompletePopup {
     const startX = -((items.length - 1) * gap) / 2;
     items.forEach((item, index) => {
       const x = startX + index * gap;
-      const holder = addFramedIcon(this.scene, body, x, REWARD_ROW.y, REWARD_ROW.frame, typeof item.icon === "string" ? item.icon : "", {
+      const holder = addFramedIcon(this.scene, body, x, rowY, REWARD_ROW.frame, typeof item.icon === "string" ? item.icon : "", {
         amount: formatCurrency(item.amount),
       });
       // 계정 장식처럼 전용 텍스처가 없는 결과만 기존 홀로그램 글리프 체계로 대신한다.
       if (typeof item.icon !== "string") holder.addAt(drawGlyph(this.scene, item.icon.key, 0, 0, REWARD_ROW.frame * 0.56, COLOR.accent), 1);
-      if (item.label) body.add(this.scene.add.text(x, REWARD_ROW.y + REWARD_ROW.frame / 2 + 26, item.label, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
+      if (item.label) body.add(this.scene.add.text(x, rowY + REWARD_ROW.frame / 2 + 26, item.label, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
     });
-    if (footnote) this.buildFootnote(body, REWARD_ROW.y + REWARD_ROW.frame / 2 + 66, footnote);
+    if (footnote) this.buildFootnote(body, rowY + REWARD_ROW.frame / 2 + 66, footnote);
   }
 
   /** 이번 판이 점수를 얼마나 보탰는가. 재화가 아니므로 액자가 아니라 글자 한 줄이다. */

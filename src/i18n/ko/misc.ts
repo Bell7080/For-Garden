@@ -205,12 +205,13 @@ export const MISC_KO = {
   "stageComplete.firstClear": "초회 클리어 보상",
   "stageComplete.staminaRefunded": "스테미나가 반환되었습니다 (+{amount})",
   "stageComplete.repeatClear": "반복 클리어 보상",
-  "stageComplete.toResearch": "연구소",
-  "stageComplete.toRelics": "렐릭 강화",
   "stageComplete.replay": "다시 하기",
   "stageComplete.next": "다음 단계",
   "stageComplete.exit": "나가기",
-  "stageComplete.toMap": "지도로",
+  "stageComplete.settlement": "정산",
+  "growth.relicEnhance": "렐릭 강화",
+  "growth.runeCraft": "룬 세공",
+  "growth.party": "편성 바꾸기",
 
   // 전투 프로필·보상
   "battle.profile.down": "전투 불능",

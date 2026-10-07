@@ -35,9 +35,9 @@ describe("결투장 무대 자리", () => {
     expect(S.actions.y + S.actions.height / 2).toBeLessThan(backTop);
   });
 
-  it("방어 판의 얼굴 셋이 판 안에 든다", () => {
-    const { defense, faceSize, faceGap } = S.actions;
-    expect(faceGap + faceSize / 2).toBeLessThan(defense.width / 2);
+  it("방어 판은 강조 버튼의 깎인 양 끝을 빼고도 라벨 자리가 남는다", () => {
+    const { defense, height } = S.actions;
+    expect(defense.width - 2 * height * 0.52).toBeGreaterThanOrEqual(defense.labelRoom);
   });
 
   it("좌하단 라벨 두 장이 뒤로가기 자리를 비운다", () => {
@@ -141,7 +141,7 @@ describe("티어 색", () => {
 describe("결투 도전권 — 상단 칸과 충전 창", () => {
   it("결투장 상단은 젬 대신 휘장과 도전권을 세우고, 결투 상점은 그대로다", () => {
     expect(TOP_BAR_SLOT_KEYS.duelArena).toEqual(["duelEmblem", "duelTicket"]);
-    expect(TOP_BAR_SLOT_KEYS.duel).toEqual(["duelEmblem", "gems"]);
+    expect(TOP_BAR_SLOT_KEYS.duel).toEqual(["duelEmblem"]);
   });
 
   it("충전 창은 스테미나 창과 같은 표를 칸 둘·사용처 없이 쓰고, 판과 칸이 몸판 안에 든다", () => {

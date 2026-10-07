@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { drawGlyph, type GlyphName } from "./glyphs";
 import type { CurrencyIconKey } from "./currencyIcons";
 import { chipPoints, drawLayer, HOLO, perspectiveRect, slantedRect } from "./holo";
+import { squeezeTextToWidth } from "./textFit";
 import { CONFIRM_DIALOG } from "./confirmDialogLayout";
 import { COLOR, textStyle } from "./theme";
 import { settingsManager } from "../managers/SettingsManager";
@@ -75,6 +76,11 @@ export interface ButtonOptions {
    * 검은 그림자를 한 겹 깔아 앉힌다 — 버튼 판 안에 액자를 넣으면 판이 두 겹이 되므로 액자는 쓰지 않는다.
    */
   art?: string;
+  /**
+   * 그림 아이콘 뒤 검은 그림자의 어긋남(px). 기본은 비용 표기와 같은 얕은 한 겹이고, 밝은 판 위에서 그림이
+   * 판에 묻히는 자리(결투장 [도전]의 도전권)만 한 뼘 더 떼어 놓는다.
+   */
+  artShadow?: { x: number; y: number; alpha?: number };
   /**
    * 라벨 오른쪽에 박는 비용.
    *
@@ -196,7 +202,8 @@ export class Button extends Phaser.GameObjects.Container {
       label.setX(-total / 2 + artSize + gap + label.width / 2);
       const artX = -total / 2 + artSize / 2;
       const artY = hasSub ? -14 : 0;
-      plate.add(scene.add.image(artX + 3, artY + 4, opts.art).setDisplaySize(artSize, artSize).setTint(0x05070a).setAlpha(0.55));
+      const shadow = opts.artShadow ?? { x: 3, y: 4 };
+      plate.add(scene.add.image(artX + shadow.x, artY + shadow.y, opts.art).setDisplaySize(artSize, artSize).setTint(0x05070a).setAlpha(shadow.alpha ?? 0.55));
       plate.add(scene.add.image(artX, artY, opts.art).setDisplaySize(artSize, artSize));
     }
     if (opts.cost) {
@@ -286,6 +293,12 @@ export class Button extends Phaser.GameObjects.Container {
   /** 라벨을 바꾼다. 한 버튼이 기준을 돌아가며 맡는 정렬 같은 곳에서 쓴다. */
   setLabel(text: string): this {
     this.labelText.setText(text);
+    return this;
+  }
+
+  /** 라벨을 폭 안으로 가로로만 누른다(`squeezeTextToWidth`). 언어마다 길이가 다른 라벨이 좁은 판에 설 때 쓴다. */
+  fitLabel(maxWidth: number): this {
+    squeezeTextToWidth(this.labelText, maxWidth);
     return this;
   }
 

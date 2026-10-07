@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   applyDuelScore, DUEL_MAX_BLIND, DUEL_TIERS, duelBlindCount, duelBlindOrder, duelDivisionNumeral, duelExtraAttemptPrice,
   duelHiddenRelicIds, duelNewlyReachedTiers, duelRefreshPrice, duelScoreDelta, duelSeasonEndsAt, duelSeasonId,
-  duelSeasonResetScore, duelStanding, pickDuelOpponents,
+  duelSeasonResetScore, duelStanding, duelStreakBonus, pickDuelOpponents,
 } from "../../src/core/duelArena";
 
 describe("결투장 티어", () => {
@@ -77,16 +77,20 @@ describe("결투장 블라인드", () => {
 });
 
 describe("결투장 상대 고르기·값", () => {
-  it("낮음·비슷함·높음 셋을 점수 순으로 고른다", () => {
+  it("아래 둘·비슷함·위 둘, 다섯을 점수 순으로 고른다", () => {
     const pool = Array.from({ length: 60 }, (_, i) => ({ id: `n${i}`, score: i * 50 }));
     const picked = pickDuelOpponents(pool, 1_000, () => 0.5);
-    expect(picked).toHaveLength(3);
-    expect(picked[0].score).toBeLessThan(1_000);
-    expect(picked[2].score).toBeGreaterThan(1_000);
+    expect(picked).toHaveLength(5);
+    expect(new Set(picked.map(({ id }) => id)).size).toBe(5);
+    expect(picked[1].score).toBeLessThan(1_000);
+    expect(picked[3].score).toBeGreaterThan(1_000);
   });
-  it("후보가 모자라도 셋을 채운다", () => {
-    const pool = [{ id: "x", score: 5_000 }, { id: "y", score: 5_100 }, { id: "z", score: 6_000 }];
-    expect(pickDuelOpponents(pool, 0, () => 0)).toHaveLength(3);
+  it("후보가 모자라도 있는 만큼 채운다", () => {
+    const pool = Array.from({ length: 6 }, (_, i) => ({ id: `f${i}`, score: 5_000 + i * 100 }));
+    expect(pickDuelOpponents(pool, 0, () => 0)).toHaveLength(5);
+  });
+  it("연승 보너스는 2연승부터 2점씩, 10점에서 멈춘다", () => {
+    expect([0, 1, 2, 3, 4, 5, 6, 7, 20].map(duelStreakBonus)).toEqual([0, 0, 2, 4, 6, 8, 10, 10, 10]);
   });
   it("추가 도전권과 새로고침의 값", () => {
     expect(duelExtraAttemptPrice(0)).toBe(50);

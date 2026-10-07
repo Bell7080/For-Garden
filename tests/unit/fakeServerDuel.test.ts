@@ -3,7 +3,7 @@ import { FakeServer } from "../../src/api/FakeServer";
 import { createEmptyRaidState, createInitialPlayerResearchProgress, createEmptyPlayerCard, type Session } from "../../src/state/session";
 import { createDefaultSettings } from "../../src/core/settings";
 import { createArchaeologyState } from "../../src/core/strataDig";
-import { DUEL_BATTLE_REWARD, DUEL_DAILY_ATTEMPTS, DUEL_FREE_REFRESHES, DUEL_REFRESH_GEMS, duelSeasonEndsAt } from "../../src/core/duelArena";
+import { DUEL_BATTLE_REWARD, DUEL_DAILY_ATTEMPTS, DUEL_FREE_REFRESHES, DUEL_OPPONENT_COUNT, DUEL_REFRESH_GEMS, duelScoreDelta, duelSeasonEndsAt, duelStreakBonus } from "../../src/core/duelArena";
 
 let clock = new Date("2026-10-06T12:00:00Z");
 const NOW = () => clock;
@@ -50,11 +50,12 @@ const make = (state: Session) => new FakeServer(state, { latencyMs: 0, now: NOW,
 const TEAM = ["torika", "rex", "dodo"];
 
 describe("FakeServer 결투장", () => {
-  it("처음 열면 브론즈 0점에 상대 셋과 도전권 다섯이 선다", async () => {
+  it("처음 열면 브론즈 0점에 상대 다섯과 도전권 다섯이 선다", async () => {
     clock = new Date("2026-10-06T12:00:00Z");
     const status = await make(makeSession()).getDuelStatus();
     expect(status).toMatchObject({ score: 0, tierId: "bronze", division: 4, rank: null, attemptsLeft: DUEL_DAILY_ATTEMPTS, blindCount: 0 });
-    expect(status.opponents).toHaveLength(3);
+    expect(status.opponents).toHaveLength(DUEL_OPPONENT_COUNT);
+    expect(status).toMatchObject({ winStreak: 0, bestStreak: 0, nextStreakBonus: 0, seasonBestTierId: "bronze", lastSeasonTierId: null });
     expect(status.opponents.every(({ units }) => units.every(({ relicId }) => relicId !== null))).toBe(true);
   });
 
@@ -67,7 +68,8 @@ describe("FakeServer 결투장", () => {
     expect(admission.units).toHaveLength(3);
     expect((await server.getDuelStatus()).attemptsLeft).toBe(DUEL_DAILY_ATTEMPTS - 1);
     const result = await server.resolveDuel({ requestId: "d1", won: true });
-    expect(result.delta).toBe(target.winDelta);
+    expect(result.delta).toBe(duelScoreDelta(0, target.score, true));
+    expect(result).toMatchObject({ winStreak: 1, streakBonus: 0 });
     expect(result.duelEmblem).toBe(DUEL_BATTLE_REWARD.win);
     expect(state.wallet.duelEmblem).toBe(DUEL_BATTLE_REWARD.win);
     // 재전송은 같은 영수증 — 두 번 주지 않는다.
@@ -75,6 +77,26 @@ describe("FakeServer 결투장", () => {
     expect(state.wallet.duelEmblem).toBe(DUEL_BATTLE_REWARD.win);
     expect(state.duel?.history[0]).toMatchObject({ won: true, opponentName: target.displayName });
     await expect(server.resolveDuel({ requestId: "nope", won: true })).rejects.toMatchObject({ code: "DUEL_ADMISSION_NOT_FOUND" });
+  });
+
+  it("연승은 이긴 판에 보너스를 얹고, 지면 끊긴다", async () => {
+    const state = makeSession();
+    const server = make(state);
+    const play = async (requestId: string, won: boolean) => {
+      const { opponents, score } = await server.getDuelStatus();
+      const target = opponents[2];
+      await server.enterDuel({ opponentId: target.id, relicIds: TEAM, requestId });
+      return { result: await server.resolveDuel({ requestId, won }), base: duelScoreDelta(score, target.score, won), before: score };
+    };
+    await play("s1", true);
+    expect((await server.getDuelStatus()).nextStreakBonus).toBe(duelStreakBonus(2));
+    const second = await play("s2", true);
+    expect(second.result).toMatchObject({ winStreak: 2, streakBonus: duelStreakBonus(2) });
+    expect(second.result.scoreAfter).toBe(second.before + second.base + duelStreakBonus(2));
+    await play("s3", false);
+    const after = await server.getDuelStatus();
+    expect(after).toMatchObject({ winStreak: 0, bestStreak: 2, nextStreakBonus: 0 });
+    expect(state.duel?.seasonBestScore).toBe(second.result.scoreAfter);
   });
 
   it("세워 둔 상대가 아니거나 편성이 틀리면 거절한다", async () => {

@@ -1,5 +1,5 @@
 import {
-  DUEL_DAILY_ATTEMPTS, DUEL_START_SCORE, DUEL_TIERS, duelDayKey, duelSeasonId, duelSeasonResetScore, duelTier, getDuelTier, type DuelTierId,
+  DUEL_DAILY_ATTEMPTS, DUEL_OPPONENT_COUNT, DUEL_START_SCORE, DUEL_TIERS, duelDayKey, duelSeasonId, duelSeasonResetScore, duelTier, getDuelTier, type DuelTierId,
 } from "./duelArena";
 
 /**
@@ -50,7 +50,7 @@ export interface DuelState {
   /** 광고로 오늘 더 받은 도전권. 젬 구매(`attemptsPurchased`)와 따로 세야 다음 구매 값이 광고에 밀려 오르지 않는다. */
   attemptsFromAds: number;
   refreshesUsed: number;
-  /** 지금 세워 둔 상대 후보 셋(NPC ID). */
+  /** 지금 세워 둔 상대 후보(NPC ID, `DUEL_OPPONENT_COUNT`명). */
   candidateIds: string[];
   /** 마지막으로 싸운 공격덱. 다음 편성의 시작값이다. */
   attack: string[];
@@ -61,6 +61,14 @@ export interface DuelState {
   pendingSeasonReward: DuelSeasonRewardPending | null;
   /** 최근 판부터. 길이는 `DUEL_HISTORY_LIMIT`까지. */
   history: DuelHistoryEntry[];
+  /** 지금 이어지는 연승. 지면 0, 시즌이 넘어가도 0이다. 이긴 판의 연승 보너스(`duelStreakBonus`)가 이 수를 읽는다. */
+  winStreak: number;
+  /** 이번 시즌 가장 길었던 연승. */
+  bestStreak: number;
+  /** 이번 시즌 닿았던 가장 높은 점수 — 「이번 시즌 최고 티어」가 이 점수의 티어다. */
+  seasonBestScore: number;
+  /** 지난 시즌을 마친 티어. 지난 시즌에 한 판도 치르지 않았으면 없다. */
+  lastSeasonTierId: DuelTierId | null;
 }
 
 export const DUEL_HISTORY_LIMIT = 10;
@@ -70,6 +78,7 @@ export function createEmptyDuelState(): DuelState {
     seasonId: "", score: DUEL_START_SCORE, wins: 0, losses: 0, reachedTierIds: [],
     dayKey: "", attemptsUsed: 0, attemptsPurchased: 0, attemptsFromAds: 0, refreshesUsed: 0, candidateIds: [],
     attack: [], defense: [], blindChoice: [], pendingSeasonReward: null, history: [],
+    winStreak: 0, bestStreak: 0, seasonBestScore: DUEL_START_SCORE, lastSeasonTierId: null,
   };
 }
 
@@ -113,9 +122,10 @@ export function normalizeDuelState(value: unknown, ownedRelicIds: readonly strin
     !!entry && typeof entry.at === "string" && typeof entry.opponentName === "string" && Number.isSafeInteger(entry.opponentScore)
     && typeof entry.won === "boolean" && Number.isSafeInteger(entry.delta)).slice(0, DUEL_HISTORY_LIMIT).map(normalizeHistoryEntry) : [];
   const defense = team(source.defense);
+  const score = isCount(source.score) ? source.score : DUEL_START_SCORE;
   return {
     seasonId: typeof source.seasonId === "string" ? source.seasonId : "",
-    score: isCount(source.score) ? source.score : DUEL_START_SCORE,
+    score,
     wins: isCount(source.wins) ? source.wins : 0,
     losses: isCount(source.losses) ? source.losses : 0,
     reachedTierIds: stringList(source.reachedTierIds, DUEL_TIERS.length).filter((id): id is DuelTierId => getDuelTier(id) !== undefined),
@@ -124,13 +134,18 @@ export function normalizeDuelState(value: unknown, ownedRelicIds: readonly strin
     attemptsPurchased: isCount(source.attemptsPurchased) ? source.attemptsPurchased : 0,
     attemptsFromAds: isCount(source.attemptsFromAds) ? source.attemptsFromAds : 0,
     refreshesUsed: isCount(source.refreshesUsed) ? source.refreshesUsed : 0,
-    candidateIds: stringList(source.candidateIds, 3),
+    candidateIds: stringList(source.candidateIds, DUEL_OPPONENT_COUNT),
     attack: team(source.attack),
     defense,
     blindChoice: stringList(source.blindChoice, 2).filter((id) => defense.includes(id)),
     pendingSeasonReward: reward && typeof reward.seasonId === "string" && reward.tierId && getDuelTier(reward.tierId)
       ? { seasonId: reward.seasonId, tierId: reward.tierId } : null,
     history,
+    winStreak: isCount(source.winStreak) ? source.winStreak : 0,
+    bestStreak: isCount(source.bestStreak) ? source.bestStreak : 0,
+    // 이 칸이 생기기 전의 저장은 지금 점수가 곧 이번 시즌 최고다.
+    seasonBestScore: isCount(source.seasonBestScore) ? Math.max(source.seasonBestScore, score) : score,
+    lastSeasonTierId: typeof source.lastSeasonTierId === "string" && getDuelTier(source.lastSeasonTierId) ? source.lastSeasonTierId as DuelTierId : null,
   };
 }
 
@@ -153,10 +168,15 @@ export function rollDuelPeriods(state: DuelState, now: Date): DuelState {
   if (next.seasonId !== seasonId) {
     const played = next.seasonId !== "" && next.wins + next.losses > 0;
     if (played) next.pendingSeasonReward = { seasonId: next.seasonId, tierId: duelTier(next.score).id };
+    // 처음 여는 계정(빈 시즌)은 지난 시즌이 없다. 판을 치르지 않고 넘어간 시즌도 남기지 않는다.
+    if (next.seasonId !== "") next.lastSeasonTierId = played ? duelTier(next.score).id : null;
     next.score = next.seasonId === "" ? next.score : duelSeasonResetScore(next.score);
     next.reachedTierIds = DUEL_TIERS.filter(({ floor }) => floor <= next.score).map(({ id }) => id);
     next.wins = 0;
     next.losses = 0;
+    next.winStreak = 0;
+    next.bestStreak = 0;
+    next.seasonBestScore = next.score;
     next.candidateIds = [];
     next.seasonId = seasonId;
   }

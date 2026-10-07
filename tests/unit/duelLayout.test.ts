@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { DUEL_TIERS } from "../../src/core/duelArena";
+import { DUEL_OPPONENT_COUNT, DUEL_TIERS } from "../../src/core/duelArena";
+import { BASE_HEIGHT } from "../../src/config/gameConfig";
+import { RANKING_LIST } from "../../src/ui/expeditionRankingLayout";
 import { duelHistoryAge } from "../../src/core/duelState";
 import { CATEGORY_TAB } from "../../src/ui/categoryTabStyle";
 import { BACK_BUTTON_SIZE, BACK_SLOT } from "../../src/ui/popupGeometry";
 import { insidePopupBody, staminaPopupLayout } from "../../src/ui/staminaPopupLayout";
 import { TOP_BAR_SLOT_KEYS } from "../../src/ui/topBarSlots";
 import {
-  DUEL_OPPONENT_POPUP, DUEL_PODIUM, DUEL_SCREEN, DUEL_TIER_COLOR, duelHistoryMinScroll, duelHistoryRowY, duelOpponentPopupHeight, duelOpponentRowY, duelTabX,
+  DUEL_OPPONENT_POPUP, DUEL_PODIUM, DUEL_PROFILE, DUEL_RANKING_VIEW, DUEL_SCREEN, DUEL_TIER_COLOR, duelHistoryMinScroll, duelHistoryRowY, duelOpponentPopupHeight, duelOpponentRowY, duelProfileRowY, duelTabX,
 } from "../../src/ui/duelLayout";
 
 const S = DUEL_SCREEN;
@@ -14,12 +16,13 @@ const backTop = BACK_SLOT.y - BACK_BUTTON_SIZE / 2;
 const backLeft = BACK_SLOT.x - BACK_BUTTON_SIZE / 2;
 
 describe("결투장 무대 자리", () => {
-  it("위에서부터 휘장 → 게이지 → 무대 → 방어·도전 → 라벨이 겹치지 않고 쌓인다", () => {
+  it("위에서부터 휘장 → 게이지 → 전투 프로필 → 방어·도전 → 라벨이 겹치지 않고 쌓인다", () => {
     expect(S.emblem.y + S.emblem.size * 0.54).toBeLessThan(S.tierName.y - 23);
     expect(S.tierName.y + 23).toBeLessThan(S.gauge.y - S.gauge.nextSize / 2);
-    expect(S.stage.groundY - S.stage.height).toBeGreaterThan(S.gauge.y + S.gauge.nextSize / 2);
-    expect(S.record.y).toBeGreaterThan(S.stage.groundY);
-    expect(S.seasonReward.y - S.seasonReward.height / 2).toBeGreaterThan(S.record.y + 20);
+    // 프로필 판 윗변에 걸터앉는 제목표(약 21px)까지 게이지 아래에 든다.
+    expect(S.profile.top - 24).toBeGreaterThan(S.gauge.y + S.gauge.nextSize / 2);
+    expect((S.profile.top + S.profile.bottom) / 2).toBe(S.profile.y);
+    expect(S.seasonReward.y - S.seasonReward.height / 2).toBeGreaterThan(S.profile.bottom + 20);
     expect(S.actions.y - S.actions.height / 2).toBeGreaterThan(S.seasonReward.y + S.seasonReward.height / 2);
     expect(S.tabs.y - S.tabs.height / 2 - CATEGORY_TAB.lift).toBeGreaterThan(S.actions.y + S.actions.height / 2);
   });
@@ -47,11 +50,26 @@ describe("결투장 무대 자리", () => {
   });
 });
 
+describe("전투 프로필", () => {
+  const P = DUEL_PROFILE;
+  it("애착 렐릭 카드와 오른쪽 줄이 판 안에서 겹치지 않는다", () => {
+    expect(P.card.x - P.card.size / 2).toBeGreaterThanOrEqual(-P.width / 2 + P.padX);
+    expect(P.card.x + P.card.size / 2).toBeLessThan(P.rows.labelX);
+    expect(P.card.y - P.card.size / 2).toBeGreaterThan(P.header.divider);
+    expect(P.card.levelY + 14).toBeLessThan(P.height / 2);
+    expect(duelProfileRowY(0) - P.rows.emblemSize / 2).toBeGreaterThan(P.header.divider);
+    expect(duelProfileRowY(3) + P.rows.bonusChip.height / 2).toBeLessThan(P.height / 2);
+    expect(P.rows.emblemX + P.rows.emblemSize / 2).toBeLessThan(P.rows.valueX);
+  });
+});
+
 describe("상대 선택 창", () => {
-  it("창 높이는 줄 수에서 거꾸로 구하고, 줄은 창 안에 든다", () => {
-    const height = duelOpponentPopupHeight(3);
-    expect(duelOpponentRowY(0, 3) - DUEL_OPPONENT_POPUP.rowHeight / 2).toBeGreaterThan(-height / 2);
-    expect(duelOpponentRowY(2, 3) + DUEL_OPPONENT_POPUP.rowHeight / 2).toBeLessThan(height / 2 - DUEL_OPPONENT_POPUP.refresh.height);
+  it("다섯 줄을 담는 창이 화면 안에 들고, 줄은 새로고침 위에서 끝난다", () => {
+    const count = DUEL_OPPONENT_COUNT;
+    const height = duelOpponentPopupHeight(count);
+    expect(height).toBeLessThan(BASE_HEIGHT - 200);
+    expect(duelOpponentRowY(0, count) - DUEL_OPPONENT_POPUP.rowHeight / 2).toBeGreaterThan(-height / 2);
+    expect(duelOpponentRowY(count - 1, count) + DUEL_OPPONENT_POPUP.rowHeight / 2).toBeLessThan(height / 2 - DUEL_OPPONENT_POPUP.refresh.height);
   });
 
   it("얼굴·글줄·방어덱·도전 버튼이 줄 안에서 겹치지 않는다", () => {
@@ -61,6 +79,15 @@ describe("상대 선택 창", () => {
     expect(P.textX + P.textRoom).toBeLessThan(P.unitX - P.unitSize / 2);
     expect(P.unitX + P.unitGap * 2 + P.unitSize / 2).toBeLessThan(P.challengeX - P.challengeWidth / 2);
     expect(P.challengeX + P.challengeWidth / 2).toBeLessThan(P.rowWidth / 2);
+  });
+});
+
+describe("순위표", () => {
+  it("내 줄은 목록 창 아래, 구분선 밑에 붙박이고 판 안에 든다", () => {
+    const V = DUEL_RANKING_VIEW;
+    expect(V.viewport.bottom).toBeLessThan(V.divider);
+    expect(V.meY - RANKING_LIST.rowHeight * 1.04 / 2).toBeGreaterThan(V.divider);
+    expect(V.meY + RANKING_LIST.rowHeight * 1.04 / 2).toBeLessThan((BASE_HEIGHT - 180) / 2);
   });
 });
 

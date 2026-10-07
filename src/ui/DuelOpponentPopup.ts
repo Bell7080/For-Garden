@@ -25,8 +25,8 @@ export interface DuelOpponentPopupHandlers {
  * 상대 선택 — 결투장 무대의 [도전]이 여는 창.
  *
  * 줄 하나가 상대 하나이고, 왼쪽의 얼굴(그 상대의 애착 렐릭)과 아래 점수가 "누구인가"를, 가운데의
- * 방어덱 셋이 "무엇과 붙나"를 말한다. 가려진 칸은 `?` 액자다. 화면이 점수 변화를 셈하지 않고
- * 서버가 준 `winDelta`·`lossDelta`를 그대로 적는다.
+ * 방어덱 셋이 "무엇과 붙나"를 말한다. 가려진 칸은 `?` 액자다. 이기고 지면 얼마나 오르내리는지는
+ * 적지 않는다 — 고르는 근거는 상대의 점수·티어·덱이고, 증감까지 서면 늘 가장 많이 오르는 줄만 누르게 된다.
  */
 export function openDuelOpponentPopup(scene: Phaser.Scene, popups: PopupLayer, status: DuelStatusResponse, handlers: DuelOpponentPopupHandlers): void {
   const count = status.opponents.length;
@@ -66,10 +66,8 @@ function paintRow(scene: Phaser.Scene, body: Phaser.GameObjects.Container, statu
     body.add(scene.add.text(x, y + P.unitSize / 2 - 14, `LV.${unit.level}`, textStyle({ role: "emphasis", size: 20, color: COLOR.accentText })).setOrigin(0.5, 0));
   });
 
-  // 점수 변화는 도전 버튼 위의 한 줄 — 누르기 전에 걸린 것이 읽혀야 한다.
-  body.add(scene.add.text(P.challengeX, y - P.challengeHeight / 2 - 4, `+${opponent.winDelta} / ${opponent.lossDelta}`, textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(0.5, 1));
-  body.add(new Button(scene, P.challengeX, y + 14, {
-    width: P.challengeWidth, height: P.challengeHeight - 24, label: t("duel.challenge"), fontSize: 32, variant: "primary",
+  body.add(new Button(scene, P.challengeX, y, {
+    width: P.challengeWidth, height: P.challengeHeight, label: t("duel.challenge"), fontSize: 32, variant: "primary",
     onClick: onChallenge,
   }).setEnabled(status.attemptsLeft > 0));
 }

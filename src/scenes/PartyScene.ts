@@ -378,8 +378,12 @@ export class PartyScene extends Phaser.Scene {
    * 어디서는 표식, 어디서는 문장이 된다.
    */
   private buildPreview(preview: PartyPreview): void {
+    // **방어덱 편성에는 마주 선 편이 없다** — 원정 편성처럼 아군만 선다. 대치선·VS·적 전투력을 세우면
+    // 빈 적진과 0을 마주 보는 판이 되어, 누구와 싸우는지 모르는 편성이 아니라 적을 빠뜨린 화면으로 읽힌다.
+    const allyOnly = this.content.content === "duelDefense";
+    this.enemyPowerText = undefined;
     // 두 줄 사이의 대치선.
-    this.add
+    if (!allyOnly) this.add
       .line(0, 0, 120, FRONT_LINE, BASE_WIDTH - 120, FRONT_LINE, COLOR.panelEdge)
       .setOrigin(0)
       .setLineWidth(2)
@@ -414,15 +418,17 @@ export class PartyScene extends Phaser.Scene {
       edge: COLOR.panelEdge,
       edgeAlpha: 0.85,
     });
-    this.enemyPowerText = this.add
-      .text(BASE_WIDTH / 2 - 30, POWER_ROW, "", textStyle({ role: "display", size: 30, color: COLOR.dangerText }))
-      .setOrigin(1, 0.5)
-      .setShadow(0, 3, "#05070a", 4, false, true);
     this.allyPowerText = this.add
-      .text(BASE_WIDTH / 2 + 30, POWER_ROW, "", textStyle({ role: "display", size: 30, color: COLOR.accentText }))
-      .setOrigin(0, 0.5)
+      .text(allyOnly ? BASE_WIDTH / 2 : BASE_WIDTH / 2 + 30, POWER_ROW, "", textStyle({ role: "display", size: 30, color: COLOR.accentText }))
+      .setOrigin(allyOnly ? 0.5 : 0, 0.5)
       .setShadow(0, 3, "#05070a", 4, false, true);
-    this.add.text(BASE_WIDTH / 2, POWER_ROW, "VS", textStyle({ role: "display", size: 24, color: COLOR.inkDim })).setOrigin(0.5, 0.5);
+    if (!allyOnly) {
+      this.enemyPowerText = this.add
+        .text(BASE_WIDTH / 2 - 30, POWER_ROW, "", textStyle({ role: "display", size: 30, color: COLOR.dangerText }))
+        .setOrigin(1, 0.5)
+        .setShadow(0, 3, "#05070a", 4, false, true);
+      this.add.text(BASE_WIDTH / 2, POWER_ROW, "VS", textStyle({ role: "display", size: 24, color: COLOR.inkDim })).setOrigin(0.5, 0.5);
+    }
 
     PREVIEW_COLUMNS.forEach((x, slot) => {
       // 칸의 밑판은 편성이 바뀔 때마다 다시 그리므로 여기서 세우지 않는다 — 서 있는 자리와 빈
@@ -853,10 +859,12 @@ export class PartyScene extends Phaser.Scene {
 
     // 어느 편이 센지는 두 수가 마주 보는 것으로 말한다. 표시·정렬 전용 값이라 전투에는 쓰지 않는다.
     const enemyPower = this.preview.totalPower ?? this.enemies.reduce((sum, def) => sum + combatPower(def.stats), 0);
-    // 방어덱 편성에는 마주 선 편이 없다 — 아군 무게만 남긴다.
-    this.enemyPowerText?.setText(this.content.content === "duelDefense" ? "" : t("party.enemyPower", { power: enemyPower.toLocaleString() }));
+    // 방어덱 편성에는 적 전투력 줄 자체가 없다(`buildPreview`의 `allyOnly`).
+    this.enemyPowerText?.setText(t("party.enemyPower", { power: enemyPower.toLocaleString() }));
     if (this.content.content === "duelDefense" && chrome) this.paintBlindChips(chrome, members);
-    this.allyPowerText?.setText(t("party.allyPower", { power: members.reduce((sum, id) => sum + combatPower(relicProgression.getFinalStats(id)), 0).toLocaleString() }));
+    const allyPower = members.reduce((sum, id) => sum + combatPower(relicProgression.getFinalStats(id)), 0).toLocaleString();
+    // 마주 선 편이 없으면 「N 아군」처럼 VS 오른쪽에 붙던 꼴이 아니라 전투력 한 줄로 선다.
+    this.allyPowerText?.setText(this.content.content === "duelDefense" ? t("duel.power", { power: allyPower }) : t("party.allyPower", { power: allyPower }));
 
     this.refreshButtonState();
     // 자동 배치 직후 방향 표식이 실제로 나타났는지 캔버스 밖 E2E가 판별하는 읽기 전용 수치다.

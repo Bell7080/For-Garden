@@ -23,7 +23,8 @@ export const BATTLE_ARENA = {
   bounty: { ...BASE_ARENA, top: 770 },
   raid: { ...BASE_ARENA, top: 860 },
   // 결투장 필드는 관중석 벽이 아래까지 내려와 바닥이 화면 절반을 넘겨서야 시작한다(실측 약 1,000).
-  duel: { ...BASE_ARENA, top: 1_040 },
+  // 바닥이 얕아 한 뼘 안쪽(1,040)에 세우면 두 편이 코앞에서 시작했다 — 적은 관중석 벽 밑동, 바닥 끝선에 바짝 붙여 세운다.
+  duel: { ...BASE_ARENA, top: 970 },
 } as const satisfies Record<string, Arena>;
 
 export type BattleArenaMode = keyof typeof BATTLE_ARENA;

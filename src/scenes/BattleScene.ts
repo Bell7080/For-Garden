@@ -2741,7 +2741,9 @@ export class BattleScene extends Phaser.Scene {
     const go = (run: () => void) => () => { chosen = true; run(); };
     const items = currencyRecordToRewardItems({ duelEmblem: settled.duelEmblem, gems: settled.gems });
     const sign = settled.delta > 0 ? "+" : "";
-    const footnote = t("duel.result.score", { score: settled.scoreAfter.toLocaleString(), delta: `${sign}${settled.delta}` });
+    const score = t("duel.result.score", { score: settled.scoreAfter.toLocaleString(), delta: `${sign}${settled.delta}` });
+    // 연승 보너스가 얹힌 판은 그 몫을 함께 말한다 — 증감이 평소보다 큰 까닭이 결과판에서 읽혀야 한다.
+    const footnote = settled.streakBonus > 0 ? `${score}  ·  ${t("duel.result.streak", { streak: settled.winStreak, bonus: settled.streakBonus })}` : score;
     const onConfirm = (): void => { if (!chosen && this.scene.isActive()) toDuel(); };
     if (settled.won) {
       new StageCompletePopup(this, popups).open({ reward: { kind: "loot", items, footnote }, fighters, onOpenContribution: openContribution, onConfirm });

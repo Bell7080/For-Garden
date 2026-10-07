@@ -4,9 +4,8 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
 import { gameApi } from "../api/FakeServer";
 import { GameApiError, type DuelStatusResponse } from "../api/contracts";
-import { DUEL_DIVISION_SPAN, DUEL_TIERS, duelDivisionNumeral, duelStanding } from "../core/duelArena";
-import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
-import { spawnPuppet } from "../puppets/assets";
+import { DUEL_DIVISION_SPAN, DUEL_TIERS, duelDivisionNumeral, duelStanding, type DuelTierId } from "../core/duelArena";
+import { playerProfileDisplay } from "../state/playerProfile";
 import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
@@ -18,9 +17,12 @@ import { openDuelOpponentPopup } from "../ui/DuelOpponentPopup";
 import { openDuelTicketPopup } from "../ui/DuelTicketPopup";
 import { DuelRankingPopup } from "../ui/DuelRankingPopup";
 import { addDuelTierEmblem } from "../ui/DuelTierEmblem";
-import { DUEL_SCREEN as S, DUEL_TIER_COLOR, duelTabX } from "../ui/duelLayout";
+import { DUEL_PROFILE as P, DUEL_SCREEN as S, DUEL_TIER_COLOR, duelProfileRowY, duelTabX } from "../ui/duelLayout";
 import { FaceFrame } from "../ui/FaceFrame";
-import { chipPoints, drawLayer, drawVignette, HoloBar } from "../ui/holo";
+import { chipPoints, drawLayer, drawVignette, HoloBar, slantedRect } from "../ui/holo";
+import { RARITY_TONE } from "../ui/rarityMark";
+import { addSectionTitle } from "../ui/SectionTitle";
+import { squeezeTextToWidth } from "../ui/textFit";
 import { addBackButton } from "../ui/IconButton";
 import { PopupLayer } from "../ui/PopupLayer";
 import { pressIn, pressOut } from "../ui/pressFeedback";
@@ -28,7 +30,6 @@ import { RailButton } from "../ui/RailButton";
 import { openRewardPopup } from "../ui/RewardPopup";
 import { currencyRecordToRewardItems } from "../ui/rewardPopupModel";
 import { playSceneEntrance, slideTabPage, startScene } from "../ui/screenTransition";
-import { addSdFootShadow } from "../ui/SdFootShadow";
 import { addSideShopButton } from "../ui/sideShop";
 import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
@@ -47,15 +48,14 @@ const DUEL_TICKET_ICON = "item-duel-ticket";
 /**
  * 결투장 — 3대3 자동전투 방어전.
  *
- * 「대전」 탭은 **내 자리를 보여 주는 무대**다: 티어 휘장과 점수 게이지, 애착 렐릭, 그 아래
- * 방어·도전 두 조작. 오늘 남은 도전권은 상단 줄이 말하고, 누르면 충전 창이 열린다. 상대는 [도전]이 여는 창이, 순위는 왼쪽 칩이 연다. 「전적」 탭은 최근 판의 목록이다.
+ * 「대전」 탭은 **내 자리를 보여 주는 무대**다: 티어 휘장과 점수 게이지, 그 아래 **전투 프로필**
+ * (이름·레벨·애착 렐릭 카드·현재/시즌 최고/지난 시즌 티어·연승), 맨 아래 방어·도전 두 조작. 오늘 남은 도전권은 상단 줄이 말하고, 누르면 충전 창이 열린다. 상대는 [도전]이 여는 창이, 순위는 왼쪽 칩이 연다. 「전적」 탭은 최근 판의 목록이다.
  * 싸움은 공용 편성 화면(`PartyScene`의 `duel`)과 전투 씬이 맡고, 점수·도전권·상대는 전부 서버
  * (`getDuelStatus`)가 정한다 — 화면이 점수를 셈하거나 상대를 고르지 않는다.
  */
 export class DuelScene extends Phaser.Scene {
   private popups!: PopupLayer;
   private view!: Phaser.GameObjects.Container;
-  private stage!: Phaser.GameObjects.Container;
   private tabRow!: Phaser.GameObjects.Container;
   private tab: DuelTab = "battle";
   private status?: DuelStatusResponse;
@@ -74,8 +74,6 @@ export class DuelScene extends Phaser.Scene {
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.42).setDepth(-25);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: -20, strength: 0.7 });
     this.popups = new PopupLayer(this, 2000);
-    // 무대(애착 렐릭)는 상태를 다시 그려도 그대로 선다 — 도전권 하나 샀다고 SD가 빠졌다 들어오면 새로 연 화면처럼 읽힌다.
-    this.stage = this.add.container(0, 0);
     this.view = this.add.container(0, 0);
     this.tabRow = this.add.container(0, 0);
     // 상단은 휘장과 **오늘 남은 도전권**이다. 도전권 칸을 누르면 젬 구매·광고 충전이 있는 창이 열린다.
@@ -87,7 +85,6 @@ export class DuelScene extends Phaser.Scene {
       .setShadow(0, 4, "#05070a", 6, false, true);
     addBackButton(this, () => startScene(this, "lobby", LOBBY_RETURN.duel));
     this.paintTabs();
-    this.paintStage();
     void this.fetchStatus();
     playSceneEntrance(this);
   }
@@ -108,7 +105,6 @@ export class DuelScene extends Phaser.Scene {
     this.status = status;
     setDebugScene("duel", `${status.tierId}:${status.score}:${this.tab}`);
     this.view.removeAll(true);
-    this.stage.setVisible(this.tab === "battle");
     if (this.tab === "battle") this.paintBattle(status);
     else paintDuelHistory(this, this.view, status.history, Date.parse(status.serverTime));
   }
@@ -126,7 +122,7 @@ export class DuelScene extends Phaser.Scene {
           this.tab = key;
           this.paintTabs();
           if (this.status) this.paint(this.status);
-          slideTabPage(this, [this.view, this.stage], from, index);
+          slideTabPage(this, [this.view], from, index);
         },
       });
     });
@@ -140,9 +136,9 @@ export class DuelScene extends Phaser.Scene {
     view.add(this.add.text(S.side, S.season.y, t("duel.season.endsIn", { days: Math.floor(days), hours: Math.floor((days % 1) * 24) }), textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0, 0.5));
     this.paintSideChips(status);
     this.paintStanding(status);
-    view.add(this.add.text(S.stage.x, S.record.y, t("duel.record", { wins: status.wins, losses: status.losses }), textStyle({ role: "emphasis", size: 28, color: COLOR.ink })).setOrigin(0.5).setStroke("#05070a", 6));
+    this.paintProfile(status);
     if (status.pendingSeasonReward) {
-      view.add(new Button(this, S.stage.x, S.seasonReward.y, {
+      view.add(new Button(this, BASE_WIDTH / 2, S.seasonReward.y, {
         width: S.seasonReward.width, height: S.seasonReward.height, label: t("duel.seasonReward.claim"), fontSize: 26, variant: "primary",
         onClick: () => void this.claimSeasonReward(),
       }));
@@ -190,18 +186,74 @@ export class DuelScene extends Phaser.Scene {
     }
   }
 
-  /** 애착 렐릭이 투영 바닥 위에서 숨 쉰다. 씬이 사는 동안 한 번만 세운다. */
-  private paintStage(): void {
-    const { x, groundY, height, shadow } = S.stage;
-    addSdFootShadow(this, x, groundY, shadow, this.stage);
-    const relicId = session.favorite;
-    if (!relicId) return;
-    void spawnPuppet(this, relicAppearanceManager.sdAssetFor(relicId), { x, groundY, height, depth: 0 }).then((puppet) => {
-      if (!this.stage.active) { puppet.destroy(); return; }
-      puppet.setAlpha(0);
-      this.stage.add(puppet);
-      this.tweens.add({ targets: puppet, alpha: 1, duration: 260 });
-    }).catch(() => undefined);
+  /**
+   * 가운데 — **전투 프로필**. 누구인가(이름·연구원 레벨) → 누구를 아끼는가(애착 렐릭 카드) → 어디까지 왔나
+   * (현재·이번 시즌 최고·지난 시즌 티어, 연승)를 한 판에 모은다. 애착 렐릭 SD 하나만 서 있던 때는 이 화면이
+   * 내 자리를 보여 주는 무대인데 정작 내 기록은 휘장 하나뿐이었다.
+   *
+   * 이름·레벨·애착 렐릭은 프로필 카드와 같은 모델(`playerProfileDisplay`)에서, 티어·연승은 서버 상태에서만 읽는다.
+   */
+  private paintProfile(status: DuelStatusResponse): void {
+    const panel = this.add.container(BASE_WIDTH / 2, P.y);
+    this.view.add(panel);
+    const halfW = P.width / 2; const halfH = P.height / 2;
+    panel.add(drawLayer(this, 0, 0, chipPoints(P.width, P.height), { fill: 0x101720, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.4 }));
+    panel.add(addSectionTitle(this, -halfW, -halfH, t("duel.profile.title"), { size: 28 }));
+
+    const profile = playerProfileDisplay(session);
+    const name = this.add.text(-halfW + P.padX, P.header.y, profile.displayName, textStyle({ role: "display", size: 40, color: COLOR.ink })).setOrigin(0, 0.5);
+    squeezeTextToWidth(name, P.header.nameRoom);
+    panel.add(name);
+    panel.add(this.add.text(name.x + name.displayWidth + 16, P.header.y + 3, `LV.${profile.level}`, textStyle({ role: "display", size: 30, color: COLOR.accentText })).setOrigin(0, 0.5));
+    panel.add(this.add.text(halfW - P.padX, P.header.y, t("duel.record", { wins: status.wins, losses: status.losses }), textStyle({ role: "emphasis", size: 28, color: COLOR.ink })).setOrigin(1, 0.5));
+    panel.add(this.add.rectangle(0, P.header.divider, P.width - P.padX * 2, 2, COLOR.accent, 0.3));
+
+    // 왼쪽 — 애착 렐릭 카드. 액자는 구워 두는 그림이라 상태를 다시 그려도 깜빡이지 않는다.
+    const favorite = profile.competitiveStats.favoriteRelic;
+    const card = P.card;
+    if (favorite) {
+      const tone = RARITY_TONE[favorite.rarity];
+      panel.add(new FaceFrame(this, card.x, card.y, { portraitAssetId: favorite.portraitAssetId, size: card.size, color: tone.chip }));
+      panel.add(squeezeTextToWidth(this.add.text(card.x, card.nameY, favorite.displayName, textStyle({ role: "display", size: 30, color: tone.ink })).setOrigin(0.5).setStroke("#05070a", 5), card.size));
+      panel.add(this.add.text(card.x, card.levelY, `LV.${favorite.level}  ·  ${t("duel.power", { power: favorite.power.toLocaleString() })}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
+    } else {
+      panel.add(drawLayer(this, card.x, card.y, chipPoints(card.size, card.size), { fill: 0x05070a, alpha: 0.6, shadow: false }));
+      panel.add(this.add.text(card.x, card.nameY, t("profile.noFavorite"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
+    }
+
+    // 오른쪽 — 티어 셋과 연승. 줄마다 이름표(회색) · 휘장 · 값.
+    const division = duelDivisionNumeral(status.division);
+    this.paintProfileTier(panel, 0, t("duel.profile.current"), status.tierId, `${t(`duel.tier.${status.tierId}`)} ${division}`.trim(), t("duel.score", { score: status.score.toLocaleString() }));
+    this.paintProfileTier(panel, 1, t("duel.profile.seasonBest"), status.seasonBestTierId, t(`duel.tier.${status.seasonBestTierId}`));
+    this.paintProfileTier(panel, 2, t("duel.profile.lastSeason"), status.lastSeasonTierId, status.lastSeasonTierId ? t(`duel.tier.${status.lastSeasonTierId}`) : t("duel.profile.noRecord"));
+
+    const y = duelProfileRowY(3);
+    panel.add(this.add.rectangle((P.rows.labelX + halfW - P.padX) / 2, y - P.rows.gap / 2, halfW - P.padX - P.rows.labelX, 1, COLOR.panelEdge, 0.35));
+    panel.add(this.add.text(P.rows.labelX, y, t("duel.profile.streak"), textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
+    const streakColor = status.winStreak > 0 ? COLOR.accentText : COLOR.inkDim;
+    panel.add(this.add.text(P.rows.emblemX - P.rows.emblemSize / 2, y, t("duel.profile.streakValue", { streak: status.winStreak }), textStyle({ role: "display", size: 34, color: streakColor })).setOrigin(0, 0.5));
+    if (status.nextStreakBonus > 0) {
+      // 다음 판을 이기면 얹히는 몫. 연승이 이어지는 동안만 서는 칩이다.
+      const chip = P.rows.bonusChip;
+      const cx = halfW - P.padX - chip.width / 2;
+      panel.add(drawLayer(this, cx, y, slantedRect(chip.width, chip.height), { fill: 0x3a2a10, alpha: 0.94, edge: COLOR.accent, edgeAlpha: 0.9, glow: { color: COLOR.accent, strength: 0.25, height: 0.8 } }));
+      panel.add(this.add.text(cx, y, t("duel.profile.streakBonus", { bonus: status.nextStreakBonus }), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0.5));
+    } else {
+      panel.add(this.add.text(halfW - P.padX, y, t("duel.profile.bestStreak", { streak: status.bestStreak }), textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(1, 0.5));
+    }
+  }
+
+  /** 전투 프로필의 티어 한 줄. 티어가 없으면(지난 시즌을 치르지 않았으면) 휘장 없이 흐린 글만 선다. */
+  private paintProfileTier(panel: Phaser.GameObjects.Container, index: number, label: string, tierId: DuelTierId | null, value: string, sub?: string): void {
+    const { rows } = P;
+    const y = duelProfileRowY(index);
+    panel.add(this.add.text(rows.labelX, y, label, textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
+    if (tierId) addDuelTierEmblem(this, panel, rows.emblemX, y, rows.emblemSize, tierId);
+    const color = tierId ? DUEL_TIER_COLOR[tierId].text : COLOR.inkDim;
+    const style = tierId ? textStyle({ role: "display", size: 30, color }) : textStyle({ role: "emphasis", size: 24, color });
+    panel.add(this.add.text(tierId ? rows.valueX : rows.emblemX - rows.emblemSize / 2, y, value, style).setOrigin(0, 0.5));
+    if (sub) panel.add(this.add.text(P.width / 2 - P.padX, y, sub, textStyle({ role: "emphasis", size: 24, color: COLOR.ink })).setOrigin(1, 0.5));
+    if (index > 0) panel.add(this.add.rectangle((rows.labelX + P.width / 2 - P.padX) / 2, y - rows.gap / 2, P.width / 2 - P.padX - rows.labelX, 1, COLOR.panelEdge, 0.35));
   }
 
   /** 왼쪽 아래 [방어] — 게시한 방어덱 셋의 얼굴이 판 안에 서고, 누르면 방어덱 편성으로 간다. */

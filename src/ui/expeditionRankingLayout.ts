@@ -61,9 +61,9 @@ export interface RankingScrollMetrics {
   minY: number;
 }
 
-/** 줄 수에서 창 크기와 스크롤 한계를 구한다. 줄이 적으면 아예 움직이지 않는다. */
-export function rankingScrollMetrics(rows: number): RankingScrollMetrics {
-  const { viewport, rowHeight, rowGap } = RANKING_LIST;
+/** 줄 수에서 창 크기와 스크롤 한계를 구한다. 줄이 적으면 아예 움직이지 않는다. 창을 달리 쓰는 순위표(결투장)는 `viewport`를 넘긴다. */
+export function rankingScrollMetrics(rows: number, viewport: { top: number; bottom: number } = RANKING_LIST.viewport): RankingScrollMetrics {
+  const { rowHeight, rowGap } = RANKING_LIST;
   const viewportHeight = viewport.bottom - viewport.top;
   const content = Math.max(0, rows) * (rowHeight + rowGap) - (rows > 0 ? rowGap : 0);
   return {

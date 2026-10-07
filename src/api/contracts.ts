@@ -667,14 +667,16 @@ export interface DuelOpponentUnitDto { relicId: string | null; level: number; br
 export interface DuelOpponentDto {
   id: string; displayName: string; score: number; tierId: import("../core/duelArena").DuelTierId; division: number | null;
   favoriteRelicId: string; totalPower: number;
-  /** 이기면 오르는 점수와 지면 내려가는 점수(보호 전). 화면이 셈하지 않는다. */
-  winDelta: number; lossDelta: number;
   units: DuelOpponentUnitDto[];
 }
 export interface DuelStatusResponse {
   seasonId: string; seasonEndsAt: string; score: number; tierId: import("../core/duelArena").DuelTierId; division: number | null;
   /** 표본과 합친 순위. 한 판도 치르지 않았으면 없다. */
   rank: number | null; wins: number; losses: number;
+  /** 지금 연승과 이번 시즌 최장 연승. 다음 판을 이기면 얹히는 연승 보너스(없으면 0). */
+  winStreak: number; bestStreak: number; nextStreakBonus: number;
+  /** 이번 시즌 닿았던 가장 높은 티어와 지난 시즌을 마친 티어(지난 시즌을 치르지 않았으면 없다). */
+  seasonBestTierId: import("../core/duelArena").DuelTierId; lastSeasonTierId: import("../core/duelArena").DuelTierId | null;
   attemptsLeft: number; attemptsPurchased: number;
   /** 다음 추가 도전권의 젬. 오늘 더 살 수 없으면 없다. */
   nextAttemptPrice: number | null;
@@ -703,6 +705,8 @@ export interface ResolveDuelResponse extends PlayerStateDto {
   won: boolean; scoreBefore: number; scoreAfter: number; delta: number;
   tierBefore: import("../core/duelArena").DuelTierId; tierAfter: import("../core/duelArena").DuelTierId;
   duelEmblem: number; gems: number; newlyReachedTierIds: import("../core/duelArena").DuelTierId[];
+  /** 이 판 뒤의 연승과, 이 판에 얹힌 연승 보너스(`delta`에 이미 들어 있다). */
+  winStreak: number; streakBonus: number;
 }
 export interface DuelRankingEntryDto { rank: number; displayName: string; score: number; tierId: import("../core/duelArena").DuelTierId; favoriteRelicId: string; isMe: boolean; }
 export interface DuelRankingResponse { entries: DuelRankingEntryDto[]; me: DuelRankingEntryDto | null; seasonEndsAt: string; }

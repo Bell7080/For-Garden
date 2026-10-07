@@ -8,7 +8,7 @@ import { getRelic } from "../data/relics";
 import { Button } from "./Button";
 import { addClippedHit } from "./clippedHit";
 import { addDuelTierEmblem } from "./DuelTierEmblem";
-import { DUEL_PODIUM, DUEL_RANKING_TIER_BUTTON, DUEL_TIER_COLOR } from "./duelLayout";
+import { DUEL_PODIUM, DUEL_RANKING_TIER_BUTTON, DUEL_RANKING_VIEW, DUEL_TIER_COLOR } from "./duelLayout";
 import { openDuelTierGuide } from "./DuelGuidePopups";
 import { squeezeTextToWidth } from "./textFit";
 import { RANKING_LIST, rankingMedal, rankingRowY, rankingScrollMetrics } from "./expeditionRankingLayout";
@@ -19,8 +19,8 @@ import { COLOR, textStyle } from "./theme";
 
 /**
  * 결투장 순위 — 원정 순위표와 **같은 줄 규격**(`RANKING_LIST`)·같은 금은동을 쓴다. 다른 것은 점수 옆에
- * 작은 티어 표식이 선다는 것뿐이다. 순위표 위에는 내 줄이 따로 한 번 더 서서, 100등 밖이어도 내 자리가
- * 보인다.
+ * 작은 티어 표식이 선다는 것뿐이다. 순위표 **아래에** 내 줄이 붙박여 한 번 더 서서, 목록을 어디까지 내려도,
+ * 100등 밖이어도 내 자리가 보인다(`DUEL_RANKING_VIEW`).
  */
 export class DuelRankingPopup {
   private body?: Phaser.GameObjects.Container;
@@ -55,13 +55,14 @@ export class DuelRankingPopup {
   }
 
   private render(body: Phaser.GameObjects.Container, content: Phaser.GameObjects.Container, entries: readonly DuelRankingEntryDto[], me: DuelRankingEntryDto | null): void {
-    // 내 줄은 목록 위에 따로 선다 — 순위를 매기지 않은 판(아직 한 판도 안 함)이면 서지 않는다.
-    if (me) this.renderRow(content, me, -720);
-    else content.add(this.scene.add.text(0, -720, t("duel.rank.none"), textStyle({ role: "emphasis", size: 28, color: COLOR.inkDim })).setOrigin(0.5));
+    // 내 줄은 목록 아래에 붙박여 선다 — 순위를 매기지 않은 판(아직 한 판도 안 함)이면 「순위 없음」만 선다.
+    content.add(this.scene.add.rectangle(0, DUEL_RANKING_VIEW.divider, RANKING_LIST.rowWidth, 2, COLOR.accent, 0.45));
+    if (me) this.renderRow(content, me, DUEL_RANKING_VIEW.meY);
+    else content.add(this.scene.add.text(0, DUEL_RANKING_VIEW.meY, t("duel.rank.none"), textStyle({ role: "emphasis", size: 28, color: COLOR.inkDim })).setOrigin(0.5));
 
     // 시상대는 목록 머리로 함께 흐른다 — 줄 규격은 원정 순위표와 같게 두고 목록만 그만큼 내려선다.
     const podium = entries.length > 0 ? DUEL_PODIUM.height : 0;
-    const base = rankingScrollMetrics(entries.length);
+    const base = rankingScrollMetrics(entries.length, DUEL_RANKING_VIEW.viewport);
     const metrics = { ...base, minY: Math.min(0, base.minY - podium) };
     const list = this.scene.add.container(0, metrics.startY);
     const matrix = body.getWorldTransformMatrix();

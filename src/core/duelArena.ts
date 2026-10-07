@@ -61,6 +61,22 @@ export const DUEL_EXTRA_ATTEMPT_PRICES: readonly number[] = [50, 50, 100, 100, 1
 /** 상대 후보 새로고침 — 하루 무료 횟수와 그다음부터의 젬 값. */
 export const DUEL_FREE_REFRESHES = 3;
 export const DUEL_REFRESH_GEMS = 20;
+/** 한 번에 세우는 상대 후보 수. */
+export const DUEL_OPPONENT_COUNT = 5;
+
+/**
+ * 연승 보너스 — 이긴 판에 얹는 점수. 2연승부터 연승 한 단계마다 2점, 6연승의 10점에서 멈춘다.
+ *
+ * 점수만 얹고 휘장·보상은 건드리지 않는다. 지면 연승이 0으로 돌아가고, 시즌이 넘어가도 0이다.
+ */
+export const DUEL_STREAK_BONUS = { from: 2, perStep: 2, max: 10 } as const;
+
+/** 이 판으로 `streak`연승이 되었을 때 얹는 점수. */
+export function duelStreakBonus(streak: number): number {
+  if (!Number.isFinite(streak) || streak < DUEL_STREAK_BONUS.from) return 0;
+  return Math.min(DUEL_STREAK_BONUS.max, (Math.floor(streak) - DUEL_STREAK_BONUS.from + 1) * DUEL_STREAK_BONUS.perStep);
+}
+
 /** 한 판의 투사의 휘장. 진 판도 조금 준다 — 도전권을 쓴 몫이다. */
 export const DUEL_BATTLE_REWARD = { win: 20, loss: 8 } as const;
 
@@ -206,14 +222,14 @@ export function duelNewlyReachedTiers(before: number, after: number, reached: re
 }
 
 /**
- * 상대 후보 셋 — **낮음·비슷함·높음**.
+ * 상대 후보 다섯 — **훨씬 낮음·낮음·비슷함·높음·훨씬 높음**.
  *
- * 셋이 모두 비슷하면 고를 이유가 없고, 셋이 무작위면 매번 가장 약한 쪽만 누른다. 아래로는 쉬운
- * 판(덜 오른다), 위로는 어려운 판(더 오른다)이 늘 하나씩 선다. 칸이 비면 남은 중 가장 가까운 쪽으로 채운다.
+ * 다섯이 모두 비슷하면 고를 이유가 없고, 무작위면 매번 가장 약한 쪽만 누른다. 아래로는 쉬운
+ * 판(덜 오른다), 위로는 어려운 판(더 오른다)이 늘 둘씩 선다. 칸이 비면 남은 중 가장 가까운 쪽으로 채운다.
  */
 export function pickDuelOpponents<T extends { id: string; score: number }>(pool: readonly T[], myScore: number, random: () => number, exclude: readonly string[] = []): T[] {
   const candidates = pool.filter(({ id }) => !exclude.includes(id));
-  const bands: Array<[number, number]> = [[-320, -40], [-60, 60], [40, 360]];
+  const bands: Array<[number, number]> = [[-420, -160], [-200, -40], [-60, 60], [40, 200], [160, 440]];
   const picked: T[] = [];
   for (const [low, high] of bands) {
     const inBand = candidates.filter((entry) => !picked.includes(entry) && entry.score - myScore >= low && entry.score - myScore <= high);
@@ -222,7 +238,7 @@ export function pickDuelOpponents<T extends { id: string; score: number }>(pool:
   const rest = candidates
     .filter((entry) => !picked.includes(entry))
     .sort((a, b) => Math.abs(a.score - myScore) - Math.abs(b.score - myScore));
-  while (picked.length < 3 && rest.length > 0) picked.push(rest.shift()!);
+  while (picked.length < DUEL_OPPONENT_COUNT && rest.length > 0) picked.push(rest.shift()!);
   return picked.sort((a, b) => a.score - b.score);
 }
 

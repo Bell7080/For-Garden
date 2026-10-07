@@ -477,7 +477,9 @@
 - **결투장 씬은 내 자리를 보여 주는 무대다**(`DuelScene` + 자리 `duelLayout.ts`). 가운데 티어 휘장 → 점수 게이지 → 애착 렐릭 SD, 아래 [방어]·[도전],
   맨 아래 왼쪽 「대전」·「전적」 라벨 탭이다. 상대 고르기는 [도전]이 여는 창(`DuelOpponentPopup`), 순위는 왼쪽 칩이 여는 판(시상대 + 「티어」 버튼),
   전적은 탭(`DuelHistoryList`)이다 — 씬에 상대 줄·링크를 다시 쌓지 않는다. 도전권 그림은 `duel-ticket` 아이템이며(발굴권과 같이 그림·안내만 맡고
-  남은 횟수는 서버의 하루 횟수다), 원화가 오면 `itemIcons.ts`의 경로만 바꾼다.
+  남은 횟수는 서버의 하루 횟수다), 원화가 오면 `itemIcons.ts`의 경로만 바꾼다. **남은 도전권은 상단 줄이 `3/5`로 말하고**(`duelArena` 슬롯 — 지갑이
+  아니라 `duelAttemptsLeft`), 누르면 스테미나 창과 같은 양식의 `DuelTicketPopup`이 젬 구매·광고(`duel-attempt`) 두 칸을 세운다. 광고 몫은
+  `attemptsFromAds`로 따로 세어 젬 값 누진을 건드리지 않는다.
 - **결투 상점의 값은 휘장 1 = 젬 0.5**(`DUEL_EMBLEM_GEM_VALUE`)로 재고 받는 것이 1.0~1.25배 안에 든다(`duelShop.test`). 젬으로 휘장을
   사는 길은 두지 않는다. 점원 록스우의 이름·원화·대사는 `SHOP_STAGE_PRESENTATION.duel` 한 줄이 갖는다.
 

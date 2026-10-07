@@ -239,6 +239,7 @@ export default {
   "adReward.daily-stamina.text": "體力10",
   "adReward.daily-cheesecake.text": "起司蛋糕20",
   "adReward.sweep-tickets.text": "掃蕩券 5",
+  "adReward.duel-attempt.text": "決鬥挑戰券 1",
   "adReward.excavation-harvest.text": "當前收穫 ×1.5",
   "adReward.excavation-storage.text": "至下次結算前最多儲存8小時",
   "adReward.excavation-speed.text": "產量 ×1.5 · 60分鐘",

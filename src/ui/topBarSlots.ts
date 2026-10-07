@@ -10,9 +10,15 @@
 import type { CurrencyIconKey } from "./currencyIcons";
 import type { WalletItemKey } from "../data/items";
 
+/**
+ * 칸 하나가 읽는 값. 대개 지갑 칸이지만 **결투 도전권**만 지갑이 아니라 결투장의 오늘 횟수다
+ * (`duelAttemptsLeft`) — 하루가 지나면 사라지는 횟수라 지갑에 두면 저장에 남는다.
+ */
+export type TopBarSlotKey = WalletItemKey | "duelTicket";
+
 export interface CurrencySlot {
-  key: WalletItemKey;
-  icon: CurrencyIconKey;
+  key: TopBarSlotKey;
+  icon: CurrencyIconKey | "item-duel-ticket";
   /** 자릿수가 크게 늘어나는 재화만 K·M으로 줄인다. */
   compact?: boolean;
   color?: string;
@@ -28,7 +34,7 @@ export interface CurrencySlot {
  * 치즈케이크는 정보창의 급여 버튼이 "가진 수/드는 수"로 직접 말하므로, 위에 또 적으면 같은
  * 값을 두 곳에서 읽게 되고 정작 봐야 할 카드 그리드의 자리만 좁아진다.
  */
-export type TopBarCurrencyContext = "default" | "shop" | "recruit" | "none" | "archaeology" | "archaeologyShop" | "loot" | "mileage" | "duel";
+export type TopBarCurrencyContext = "default" | "shop" | "recruit" | "none" | "archaeology" | "archaeologyShop" | "loot" | "mileage" | "duel" | "duelArena";
 
 const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
   /** 일반 상점은 골드와 젬만 세운다 — 여기서 쓰는 재화는 그 둘뿐이라 스테미나 칸이 자리만 먹는다. */
@@ -70,7 +76,15 @@ const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
    * 로비·도감에 세우면 평소 조작을 바꾸지 않는 수가 두 칸을 먹고, 정작 자주 보는 젬·골드·
    * 스테미나가 밀린다. 증표가 조작을 정하는 자리는 이 상점과 그 콘텐츠뿐이다.
    */
-  /** 결투장·결투 상점. 휘장이 상점의 값이고, 젬은 도전권·새로고침의 값이다. */
+  /**
+   * 결투장. 휘장과 **오늘 남은 도전권**(`3/5`) — 이 화면의 조작을 정하는 수는 그 둘이다. 젬은 도전권을
+   * 누르면 여는 충전 창이 값으로 보여 주므로 위에 따로 세우지 않는다.
+   */
+  duelArena: [
+    { key: "duelEmblem", icon: "currency-duel-emblem", compact: true, color: "#ffb3a0" },
+    { key: "duelTicket", icon: "item-duel-ticket", color: "#ffe9a3" },
+  ],
+  /** 결투 상점. 휘장이 상점의 값이다. */
   duel: [
     { key: "duelEmblem", icon: "currency-duel-emblem", compact: true, color: "#ffb3a0" },
     { key: "gems", icon: "currency-gems", color: "#cfe6ff" },
@@ -92,7 +106,7 @@ const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
 export const TOP_BAR_SLOTS = SLOTS;
 
 /** 자리별로 세우는 재화 키만 뽑는다. 무엇이 어디에 서는지를 테스트가 이 값으로 잰다. */
-export const TOP_BAR_SLOT_KEYS: Record<TopBarCurrencyContext, readonly WalletItemKey[]> = {
+export const TOP_BAR_SLOT_KEYS: Record<TopBarCurrencyContext, readonly TopBarSlotKey[]> = {
   default: SLOTS.default.map(({ key }) => key),
   shop: SLOTS.shop.map(({ key }) => key),
   recruit: SLOTS.recruit.map(({ key }) => key),
@@ -101,5 +115,6 @@ export const TOP_BAR_SLOT_KEYS: Record<TopBarCurrencyContext, readonly WalletIte
   loot: SLOTS.loot.map(({ key }) => key),
   mileage: SLOTS.mileage.map(({ key }) => key),
   duel: SLOTS.duel.map(({ key }) => key),
+  duelArena: SLOTS.duelArena.map(({ key }) => key),
   none: SLOTS.none.map(({ key }) => key),
 };

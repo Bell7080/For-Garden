@@ -3,6 +3,8 @@ import { DUEL_TIERS } from "../../src/core/duelArena";
 import { duelHistoryAge } from "../../src/core/duelState";
 import { CATEGORY_TAB } from "../../src/ui/categoryTabStyle";
 import { BACK_BUTTON_SIZE, BACK_SLOT } from "../../src/ui/popupGeometry";
+import { insidePopupBody, staminaPopupLayout } from "../../src/ui/staminaPopupLayout";
+import { TOP_BAR_SLOT_KEYS } from "../../src/ui/topBarSlots";
 import {
   DUEL_OPPONENT_POPUP, DUEL_PODIUM, DUEL_SCREEN, DUEL_TIER_COLOR, duelHistoryMinScroll, duelHistoryRowY, duelOpponentPopupHeight, duelOpponentRowY, duelTabX,
 } from "../../src/ui/duelLayout";
@@ -12,14 +14,13 @@ const backTop = BACK_SLOT.y - BACK_BUTTON_SIZE / 2;
 const backLeft = BACK_SLOT.x - BACK_BUTTON_SIZE / 2;
 
 describe("결투장 무대 자리", () => {
-  it("위에서부터 휘장 → 게이지 → 무대 → 도전권 줄 → 방어·도전 → 라벨이 겹치지 않고 쌓인다", () => {
+  it("위에서부터 휘장 → 게이지 → 무대 → 방어·도전 → 라벨이 겹치지 않고 쌓인다", () => {
     expect(S.emblem.y + S.emblem.size * 0.54).toBeLessThan(S.tierName.y - 23);
     expect(S.tierName.y + 23).toBeLessThan(S.gauge.y - S.gauge.nextSize / 2);
     expect(S.stage.groundY - S.stage.height).toBeGreaterThan(S.gauge.y + S.gauge.nextSize / 2);
     expect(S.record.y).toBeGreaterThan(S.stage.groundY);
     expect(S.seasonReward.y - S.seasonReward.height / 2).toBeGreaterThan(S.record.y + 20);
-    expect(S.ticket.y - S.ticket.buyHeight / 2).toBeGreaterThan(S.seasonReward.y + S.seasonReward.height / 2);
-    expect(S.actions.y - S.actions.height / 2).toBeGreaterThan(S.ticket.y + S.ticket.buyHeight / 2);
+    expect(S.actions.y - S.actions.height / 2).toBeGreaterThan(S.seasonReward.y + S.seasonReward.height / 2);
     expect(S.tabs.y - S.tabs.height / 2 - CATEGORY_TAB.lift).toBeGreaterThan(S.actions.y + S.actions.height / 2);
   });
 
@@ -102,5 +103,24 @@ describe("순위표 시상대", () => {
 describe("티어 색", () => {
   it("여덟 티어가 모두 제 색을 갖는다", () => {
     for (const { id } of DUEL_TIERS) expect(DUEL_TIER_COLOR[id]).toBeDefined();
+  });
+});
+
+describe("결투 도전권 — 상단 칸과 충전 창", () => {
+  it("결투장 상단은 젬 대신 휘장과 도전권을 세우고, 결투 상점은 그대로다", () => {
+    expect(TOP_BAR_SLOT_KEYS.duelArena).toEqual(["duelEmblem", "duelTicket"]);
+    expect(TOP_BAR_SLOT_KEYS.duel).toEqual(["duelEmblem", "gems"]);
+  });
+
+  it("충전 창은 스테미나 창과 같은 표를 칸 둘·사용처 없이 쓰고, 판과 칸이 몸판 안에 든다", () => {
+    const layout = staminaPopupLayout(0, 2, false);
+    const [left, right] = layout.cell.centers;
+    expect(left! + right!).toBeCloseTo(0, 5);
+    expect(insidePopupBody(layout, layout.hero)).toBe(true);
+    for (const x of [left!, right!]) {
+      expect(Math.abs(x) + layout.cell.width / 2).toBeLessThanOrEqual(layout.hero.width / 2 + 0.001);
+    }
+    expect(insidePopupBody(layout, { y: layout.cell.y, width: layout.hero.width, height: layout.cell.height })).toBe(true);
+    expect(layout.height).toBeLessThan(staminaPopupLayout(1).height);
   });
 });

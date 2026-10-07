@@ -7,7 +7,7 @@ import { BASE_HEIGHT } from "../config/gameConfig";
  * **Phaser 없는 순수 표**다 — 판끼리 겹치지 않는지는 눈으로 확인할 수 없는 값이라 화면과 회귀 테스트가
  * 같은 표를 읽는다(`tests/unit/duelLayout.test.ts`). 화면 폭은 1080, 좌표는 화면 좌표다.
  *
- * 씬은 **내 자리를 보여 주는 무대**다 — 위에서부터 티어 휘장 → 점수 게이지 → 애착 렐릭 → 도전권 줄 →
+ * 씬은 **내 자리를 보여 주는 무대**다 — 위에서부터 티어 휘장 → 점수 게이지 → 애착 렐릭 →
  * 방어·도전 → 좌하단 「대전」·「전적」 라벨이다. 상대 고르기는 도전이 여는 팝업, 순위는 왼쪽 칩이 연다.
  * 한 화면에 상대 셋·방어덱·링크 줄까지 쌓던 때는 무엇이 이 화면의 주 조작인지가 크기로 읽히지 않았다.
  */
@@ -26,8 +26,6 @@ export const DUEL_SCREEN = {
   stage: { x: 540, groundY: 1290, height: 400, shadow: 280 },
   record: { y: 1346 },
   seasonReward: { y: 1430, width: 300, height: 72 },
-  /** 도전권 줄 — 입장권 그림·이름·남은 수, 오른쪽 끝에 추가 구매. */
-  ticket: { y: 1508, icon: 60, buyX: 900, buyWidth: 240, buyHeight: 68 },
   /** 하단 두 조작. 방어는 작은 판, 도전은 화면의 주 조작이라 크다. */
   actions: { y: 1650, height: 160, defense: { x: 60, width: 330 }, challenge: { x: 410, width: 610 }, faceSize: 78, faceGap: 90 },
   /** 좌하단 라벨 줄 — 가방·고고학과 같은 `CategoryTab`. 오른쪽 아래는 공용 뒤로가기 자리다. */

@@ -81,12 +81,13 @@ export const STAMINA_CELL = {
 } as const;
 
 /**
- * 창 하나의 모든 자리를 한 번에 만든다.
+ * 창 하나의 모든 자리를 한 번에 만든다. 결투 도전권 창도 같은 표를 칸 둘·사용처 없이 쓴다 —
+ * 「지금 얼마 남았나 → 지금 채우는 수단」이라는 같은 일을 하는 창이 다른 모양이면 안 된다.
  *
  * 높이를 손으로 적지 않고 **쌓인 내용에서 거꾸로 구한다** — 사용처 줄이 늘거나 칸 높이를 고치면
  * 창이 저절로 그만큼 자라, 마지막 줄이 판 밖으로 밀려나는 일이 생기지 않는다.
  */
-export function staminaPopupLayout(useRows: number, cells = 3): StaminaPopupLayout {
+export function staminaPopupLayout(useRows: number, cells = 3, withUses = true): StaminaPopupLayout {
   const inner = BASE.width - BASE.padX * 2;
   const cellWidth = (inner - BASE.cellGap * (cells - 1)) / cells;
 
@@ -99,7 +100,8 @@ export function staminaPopupLayout(useRows: number, cells = 3): StaminaPopupLayo
   const hairlineTop = cellBottom + BASE.cellsToHairline;
   const usesTitleTop = hairlineTop + BASE.hairlineToTitle;
   const firstRowTop = usesTitleTop + BASE.titleToRow;
-  const height = firstRowTop + Math.max(0, useRows - 1) * BASE.usesRowHeight + BASE.bottomPad;
+  // 획득처·사용처 구역이 없는 창(결투 도전권)은 충전 칸 밑에서 끝난다.
+  const height = withUses ? firstRowTop + Math.max(0, useRows - 1) * BASE.usesRowHeight + BASE.bottomPad : cellBottom + BASE.bottomPad;
   const top = -height / 2;
 
   const heroY = top + heroTop + BASE.heroHeight / 2;

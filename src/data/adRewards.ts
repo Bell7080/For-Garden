@@ -14,11 +14,13 @@ export type AdReward =
   | { readonly kind: "excavation_effect"; readonly effect: ExcavationAdEffect }
   /** 가방에 쌓이는 아이템. 지금은 소탕권 하나뿐이라 ID를 그 값으로 못 박는다. */
   | { readonly kind: "item"; readonly itemId: "sweep-ticket"; readonly quantity: number }
+  /** 결투 도전권. 가방이 아니라 결투장의 오늘 횟수에 더해진다 — 하루가 지나면 기본 몫과 함께 사라진다. */
+  | { readonly kind: "duel_attempt"; readonly quantity: number }
   /** 실제 점수와 지급량은 광고 검증 뒤 서버 기록만으로 계산한다. */
   | { readonly kind: "quick_expedition"; readonly scoreRatio: number };
 
 /** 광고 노출 위치는 일반 보급과 발굴 화면만 허용한다. */
-export type AdPlacement = "shop_free_supplies" | "daily_mission_rewards" | "idle_excavation" | "quick_expedition" | "dungeon_sweep";
+export type AdPlacement = "shop_free_supplies" | "daily_mission_rewards" | "idle_excavation" | "quick_expedition" | "dungeon_sweep" | "duel_arena";
 
 /** 서버 운영 설정의 원본이 되는 허용 슬롯 정의다. */
 export interface AdRewardSlot { readonly id: string; readonly displayText: string; readonly reward: AdReward; readonly dailyLimitUtc: number; readonly weeklyLimitUtc?: number; readonly placement: AdPlacement; }
@@ -35,6 +37,8 @@ export const AD_REWARD_SLOTS = [
   { id: "excavation-speed", displayText: "생산 1.5배 · 60분", reward: { kind: "excavation_effect", effect: { kind: "production_speed", multiplier: 1.5, durationSeconds: 3_600, refresh: "replace_expiry" } }, dailyLimitUtc: 2, placement: "idle_excavation" },
   // 소탕권 다섯 장. 멤버십이 없는 사람이 던전 소탕을 쓰는 길이다 — 한 번에 한 장이 든다.
   { id: "sweep-tickets", displayText: "소탕권 5", reward: { kind: "item", itemId: "sweep-ticket", quantity: 5 }, dailyLimitUtc: 3, placement: "dungeon_sweep" },
+  // 결투 도전권 한 장. 젬 구매와 따로 세어 젬 값의 누진을 밀어 올리지 않는다.
+  { id: "duel-attempt", displayText: "결투 도전권 1", reward: { kind: "duel_attempt", quantity: 1 }, dailyLimitUtc: 3, placement: "duel_arena" },
   // 기준 점수가 없거나 광고 검증이 실패하면 서버가 지급을 거절하며 횟수도 소비하지 않는다.
   { id: "quick-expedition", displayText: "빠른 원정", reward: { kind: "quick_expedition", scoreRatio: 0.25 }, dailyLimitUtc: 2, weeklyLimitUtc: 5, placement: "quick_expedition" },
 ] as const satisfies readonly AdRewardSlot[];

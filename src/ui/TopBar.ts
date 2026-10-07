@@ -13,6 +13,8 @@ import { managerEvents } from "../managers/ManagerEvents";
 import { compactTopBarName, TOP_BAR_LAYOUT } from "./topBarLayout";
 import type { WalletItemKey } from "../data/items";
 import { staminaMaxForPlayer } from "../core/stamina";
+import { DUEL_DAILY_ATTEMPTS } from "../core/duelArena";
+import { createEmptyDuelState, duelAttemptsLeft, rollDuelPeriods } from "../core/duelState";
 import { TOP_BAR_SLOTS as SLOTS, type CurrencySlot, type TopBarCurrencyContext } from "./topBarSlots";
 import { pressIn, pressOut } from "./pressFeedback";
 
@@ -21,6 +23,8 @@ export type { TopBarCurrencyContext };
 /** 상단 줄에는 공개 표시 모델과 공개 동작만 들어오며 인증 비밀을 받을 자리가 없다. */
 export interface TopBarOptions {
   onSettings?: () => void; onProfile?: (profile: PlayerProfileDisplay) => void; onCurrency?: (currency: WalletItemKey) => void; currencies?: TopBarCurrencyContext; profile?: boolean;
+  /** 결투 도전권 칸의 누름. 지갑 칸이 아니라 `onCurrency`로 넘길 수 없다. */
+  onDuelTicket?: () => void;
   /**
    * 줄 전체를 올려 앉힐 깊이. 흐르는 지도처럼 그 위로 다른 층이 지나가는 화면에서만 준다 —
    * 비우면 예전처럼 만든 순서대로 쌓인다.
@@ -83,7 +87,7 @@ export class TopBar {
     const span = slots.length * SLOT.width + (slots.length - 1) * SLOT.gap;
     const first = BASE_WIDTH * CLUSTER_CENTER - span / 2 + SLOT.width / 2;
     slots.forEach((slot, index) => {
-      this.slots.push({ slot, text: this.buildSlot(scene, first + index * (SLOT.width + SLOT.gap), y + 46, slot, options.onCurrency) });
+      this.slots.push({ slot, text: this.buildSlot(scene, first + index * (SLOT.width + SLOT.gap), y + 46, slot, options) });
     });
 
     // 설정 — 오른쪽 끝. 콜백이 없는 장면에서는 장식만 남기고 보이지 않는 입력면을 만들지
@@ -114,9 +118,11 @@ export class TopBar {
   destroy(): void { this.unsubscribe.splice(0).forEach((unsubscribe) => unsubscribe()); }
 
   /** 재화 한 칸. 생김새는 `CurrencyChip` 한 곳이 정하고 여기서는 자리와 색만 고른다. */
-  private buildSlot(scene: Phaser.Scene, cx: number, cy: number, slot: CurrencySlot, onCurrency?: (currency: WalletItemKey) => void): Phaser.GameObjects.Text {
-    // 스테미나만 한 칸에 두 수(현재/최대)를 적으므로 글자를 한 뼘 줄인다.
-    return addCurrencyChip(scene, cx, cy, slot.icon, { color: slot.color, currency: slot.key, onClick: onCurrency, valueRatio: slot.key === "stamina" ? 0.32 : undefined });
+  private buildSlot(scene: Phaser.Scene, cx: number, cy: number, slot: CurrencySlot, options: TopBarOptions): Phaser.GameObjects.Text {
+    // 스테미나·도전권은 한 칸에 두 수(현재/최대)를 적으므로 글자를 한 뼘 줄인다.
+    const valueRatio = slot.key === "stamina" || slot.key === "duelTicket" ? 0.32 : undefined;
+    if (slot.key === "duelTicket") return addCurrencyChip(scene, cx, cy, slot.icon, { color: slot.color, valueRatio, onPress: options.onDuelTicket });
+    return addCurrencyChip(scene, cx, cy, slot.icon, { color: slot.color, currency: slot.key, onClick: options.onCurrency, valueRatio });
   }
 
   /** 왼쪽 위 플레이어 칩. 아바타가 없을 때만 표시 이름 머리글자를 넣는다. */
@@ -165,6 +171,8 @@ export class TopBar {
 
   refresh(): void {
     for (const { slot, text } of this.slots) {
+      // 도전권은 하루 기본 몫과 함께 읽어야 뜻이 서는 횟수다 — 스테미나와 같은 `남은/기본` 한 덩어리.
+      if (slot.key === "duelTicket") { text.setText(`${duelAttemptsLeft(rollDuelPeriods(session.duel ?? createEmptyDuelState(), new Date()))}/${DUEL_DAILY_ATTEMPTS}`); continue; }
       const amount = session.wallet[slot.key];
       // 스테미나만 상한과 함께 읽어야 뜻이 서는 재화다. 현재와 최대를 **같은 양식·같은 색**으로
       // 한 덩어리로 적고, 회복 시간처럼 지금 당장 조작을 바꾸지 않는 수는 눌러서 여는 창이 맡는다.

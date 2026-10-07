@@ -420,6 +420,7 @@ export default {
   "adReward.daily-stamina.text": "スタミナ 10",
   "adReward.daily-cheesecake.text": "チーズケーキ 20",
   "adReward.sweep-tickets.text": "掃討券 5",
+  "adReward.duel-attempt.text": "決闘挑戦券 1",
   "adReward.excavation-harvest.text": "現在の収穫 1.5倍",
   "adReward.excavation-storage.text": "次の精算まで最大8時間保管",
   "adReward.excavation-speed.text": "生産 1.5倍 · 60分",

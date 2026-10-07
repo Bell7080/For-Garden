@@ -239,6 +239,7 @@ export default {
   "adReward.daily-stamina.text": "Выносливость 10",
   "adReward.daily-cheesecake.text": "Чизкейк 20",
   "adReward.sweep-tickets.text": "Билет зачистки 5",
+  "adReward.duel-attempt.text": "Билет вызова на дуэль 1",
   "adReward.excavation-harvest.text": "Текущий сбор ×1,5",
   "adReward.excavation-storage.text": "Хранить до 8 часов до следующего расчёта",
   "adReward.excavation-speed.text": "Добыча ×1,5 · 60 мин",

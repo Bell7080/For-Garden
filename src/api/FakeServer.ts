@@ -27,8 +27,8 @@ import { PRODUCTS } from "../data/shopCatalog";
 import type { ProductListResponse, PurchaseProductRequest, PurchaseProductResponse } from "./contracts";
 import { totalGrantAmount } from "../core/purchase";
 import { getRelicSkin } from "../data/relicSkins";
-import { applyDuelScore, DUEL_BATTLE_REWARD, DUEL_DAILY_ATTEMPTS, DUEL_MAX_BLIND, duelBlindCount, duelBlindOrder, duelExtraAttemptPrice, duelHiddenRelicIds, duelNewlyReachedTiers, duelRefreshPrice, duelScoreDelta, duelSeasonEndsAt, duelStanding, duelTier, getDuelTier, pickDuelOpponents } from "../core/duelArena";
-import { createEmptyDuelState, DUEL_HISTORY_LIMIT, rollDuelPeriods, type DuelHistoryEntry, type DuelHistoryUnit, type DuelState } from "../core/duelState";
+import { applyDuelScore, DUEL_BATTLE_REWARD, DUEL_MAX_BLIND, duelBlindCount, duelBlindOrder, duelExtraAttemptPrice, duelHiddenRelicIds, duelNewlyReachedTiers, duelRefreshPrice, duelScoreDelta, duelSeasonEndsAt, duelStanding, duelTier, getDuelTier, pickDuelOpponents } from "../core/duelArena";
+import { createEmptyDuelState, DUEL_HISTORY_LIMIT, duelAttemptsLeft, rollDuelPeriods, type DuelHistoryEntry, type DuelHistoryUnit, type DuelState } from "../core/duelState";
 import { duelNpcPool, findDuelNpc } from "../core/duelNpcPool";
 import { combatPower } from "../core/combatPower";
 import type { ClaimDuelSeasonRewardResponse, DuelRankingResponse, DuelStatusResponse, EnterDuelRequest, EnterDuelResponse, ResolveDuelRequest, ResolveDuelResponse, SetDuelDefenseRequest } from "./contracts";
@@ -1046,10 +1046,13 @@ export class FakeServer implements GameApi {
     const nextAds = { date, claimsBySlot: { ...current.claimsBySlot, [slot.id]: nextClaims }, requestIds: [...current.requestIds, request.requestId] };
     const walletBefore = { ...this.state.wallet };
     const applied = this.applyAdReward(slot.reward, now);
-    const nextState = { ...this.state, wallet: applied.wallet, idleExcavation: applied.excavation, itemInventory: applied.itemInventory, dailyAdRewards: nextAds };
+    // 결투 도전권은 오늘의 결투장 횟수에 더한다. 광고와 결투장은 같은 UTC 날짜로 하루를 넘기므로 함께 사라진다.
+    const duelToday = slot.reward.kind === "duel_attempt" ? this.duelNow(now) : undefined;
+    const duel = duelToday && slot.reward.kind === "duel_attempt" ? { ...duelToday, attemptsFromAds: duelToday.attemptsFromAds + slot.reward.quantity } : this.state.duel;
+    const nextState = { ...this.state, wallet: applied.wallet, idleExcavation: applied.excavation, itemInventory: applied.itemInventory, dailyAdRewards: nextAds, duel };
     // 상한 검증과 영속화가 성공하기 전에는 메모리 세션을 변경하지 않는다.
     this.persist(nextState);
-    this.state.wallet = applied.wallet; this.state.idleExcavation = applied.excavation; this.state.itemInventory = applied.itemInventory; this.state.dailyAdRewards = nextAds;
+    this.state.wallet = applied.wallet; this.state.idleExcavation = applied.excavation; this.state.itemInventory = applied.itemInventory; this.state.dailyAdRewards = nextAds; this.state.duel = duel;
     if (slot.reward.kind === "quick_expedition") this.quickWeek.claims += 1;
     // 실제 지갑 증가분과 주간 잔량은 저장 성공 뒤의 서버 스냅샷에서만 만든다.
     const granted: Partial<Record<keyof Session["wallet"], number>> = {};
@@ -1674,7 +1677,7 @@ export class FakeServer implements GameApi {
       seasonId: duel.seasonId, seasonEndsAt: duelSeasonEndsAt(now).toISOString(), score: duel.score,
       tierId: standing.tier.id, division: standing.division, rank: this.duelMyRank(duel),
       wins: duel.wins, losses: duel.losses,
-      attemptsLeft: Math.max(0, DUEL_DAILY_ATTEMPTS + duel.attemptsPurchased - duel.attemptsUsed),
+      attemptsLeft: duelAttemptsLeft(duel),
       attemptsPurchased: duel.attemptsPurchased,
       nextAttemptPrice: duelExtraAttemptPrice(duel.attemptsPurchased) ?? null,
       nextRefreshPrice: duelRefreshPrice(duel.refreshesUsed),
@@ -1755,7 +1758,7 @@ export class FakeServer implements GameApi {
     this.assertDuelTeam(request.relicIds);
     const npc = duel.candidateIds.includes(request.opponentId) ? findDuelNpc(duel.seasonId, request.opponentId) : undefined;
     if (!npc) throw new GameApiError("DUEL_OPPONENT_NOT_FOUND", "지금 세워 둔 상대가 아닙니다.");
-    if (duel.attemptsUsed >= DUEL_DAILY_ATTEMPTS + duel.attemptsPurchased) throw new GameApiError("DUEL_NO_ATTEMPTS", "오늘의 도전권을 모두 썼습니다.");
+    if (duelAttemptsLeft(duel) <= 0) throw new GameApiError("DUEL_NO_ATTEMPTS", "오늘의 도전권을 모두 썼습니다.");
     // 도전권은 입장에서 쓴다 — 끊긴 판을 다시 들어가 같은 상대를 고르는 요령이 없어진다.
     const next: DuelState = { ...duel, attemptsUsed: duel.attemptsUsed + 1, attack: [...request.relicIds] };
     this.persist({ ...this.state, duel: next });
@@ -2792,6 +2795,8 @@ export class FakeServer implements GameApi {
       // 쌓을 수 있는 한도(`maxStack`)까지만 채운다 — 넘치는 몫은 깎아서 준다(던지지 않는다).
       return { wallet, excavation, itemInventory: this.grantItem(itemInventory, reward.itemId, reward.quantity, now).inventory };
     }
+    // 결투 도전권은 지갑·가방이 아니라 결투장 상태에 더한다 — `claimAdReward`가 그 몫을 따로 확정한다.
+    if (reward.kind === "duel_attempt") return { wallet, excavation, itemInventory };
     // 효과 적용 직전까지를 먼저 정산해야 새 배율이 과거 생산에 소급되지 않는다.
     excavation = settleIdleExcavation(excavation, now, RELICS, this.state.relicProgress);
     const effect = reward.effect;

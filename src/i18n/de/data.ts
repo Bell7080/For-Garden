@@ -239,6 +239,7 @@ export default {
   "adReward.daily-stamina.text": "Ausdauer 10",
   "adReward.daily-cheesecake.text": "Käsekuchen 20",
   "adReward.sweep-tickets.text": "Säuberungsticket 5",
+  "adReward.duel-attempt.text": "Duell-Herausforderungsticket 1",
   "adReward.excavation-harvest.text": "Aktuelle Ernte ×1,5",
   "adReward.excavation-storage.text": "Bis zur nächsten Abrechnung bis zu 8 Stunden lagern",
   "adReward.excavation-speed.text": "Produktion ×1,5 · 60 Min.",

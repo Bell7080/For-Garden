@@ -101,6 +101,25 @@ describe("FakeServer 결투장", () => {
     expect(state.wallet.gems).toBe(gems - empty.nextAttemptPrice!);
   });
 
+  it("광고는 도전권 한 장을 더하고, 젬 구매 값을 밀어 올리지 않으며, 하루가 지나면 사라진다", async () => {
+    clock = new Date("2026-10-06T12:00:00Z");
+    const state = makeSession();
+    const server = make(state);
+    const before = await server.getDuelStatus();
+    const claim = (requestId: string) => server.claimAdReward({ slotId: "duel-attempt", verificationToken: "verified:duel-attempt", requestId });
+    await claim("ad1");
+    const after = await server.getDuelStatus();
+    expect(after.attemptsLeft).toBe(before.attemptsLeft + 1);
+    expect(after.nextAttemptPrice).toBe(before.nextAttemptPrice);
+    expect(state.wallet.gems).toBe(10_000);
+    await claim("ad2"); await claim("ad3");
+    await expect(claim("ad4")).rejects.toMatchObject({ code: "AD_DAILY_LIMIT" });
+    expect((await server.getDuelStatus()).attemptsLeft).toBe(DUEL_DAILY_ATTEMPTS + 3);
+    clock = new Date("2026-10-07T00:00:01Z");
+    expect((await server.getDuelStatus()).attemptsLeft).toBe(DUEL_DAILY_ATTEMPTS);
+    clock = new Date("2026-10-06T12:00:00Z");
+  });
+
   it("새로고침은 무료 횟수 뒤로 젬이 든다", async () => {
     const state = makeSession();
     const server = make(state);

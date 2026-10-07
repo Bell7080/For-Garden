@@ -241,6 +241,7 @@ export default {
   "adReward.daily-stamina.text": "Stamina 10",
   "adReward.daily-cheesecake.text": "Cheesecake 20",
   "adReward.sweep-tickets.text": "Sweep Ticket 5",
+  "adReward.duel-attempt.text": "Duel Challenge Ticket 1",
   "adReward.excavation-harvest.text": "Current harvest ×1.5",
   "adReward.excavation-storage.text": "Store up to 8 hours until the next settlement",
   "adReward.excavation-speed.text": "Production ×1.5 · 60 min",

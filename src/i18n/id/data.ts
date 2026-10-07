@@ -239,6 +239,7 @@ export default {
   "adReward.daily-stamina.text": "Stamina 10",
   "adReward.daily-cheesecake.text": "Cheesecake 20",
   "adReward.sweep-tickets.text": "Tiket Sapu 5",
+  "adReward.duel-attempt.text": "Tiket Tantangan Duel 1",
   "adReward.excavation-harvest.text": "Panen saat ini ×1.5",
   "adReward.excavation-storage.text": "Simpan hingga 8 jam sampai penyelesaian berikutnya",
   "adReward.excavation-speed.text": "Produksi ×1.5 · 60 menit",

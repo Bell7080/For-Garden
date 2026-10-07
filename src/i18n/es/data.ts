@@ -239,6 +239,7 @@ export default {
   "adReward.daily-stamina.text": "Estamina 10",
   "adReward.daily-cheesecake.text": "Tarta de queso 20",
   "adReward.sweep-tickets.text": "Ticket de barrido 5",
+  "adReward.duel-attempt.text": "Ticket de desafío de duelo 1",
   "adReward.excavation-harvest.text": "Cosecha actual ×1.5",
   "adReward.excavation-storage.text": "Almacena hasta 8 horas hasta la siguiente liquidación",
   "adReward.excavation-speed.text": "Producción ×1.5 · 60 min",

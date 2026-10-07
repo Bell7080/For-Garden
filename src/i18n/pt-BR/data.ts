@@ -239,6 +239,7 @@ export default {
   "adReward.daily-stamina.text": "Estamina 10",
   "adReward.daily-cheesecake.text": "Cheesecake 20",
   "adReward.sweep-tickets.text": "Tíquete de varredura 5",
+  "adReward.duel-attempt.text": "Tíquete de desafio de duelo 1",
   "adReward.excavation-harvest.text": "Colheita atual ×1.5",
   "adReward.excavation-storage.text": "Armazena até 8 horas até o próximo acerto",
   "adReward.excavation-speed.text": "Produção ×1.5 · 60 min",

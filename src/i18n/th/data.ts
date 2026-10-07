@@ -239,6 +239,7 @@ export default {
   "adReward.daily-stamina.text": "สตามินา 10",
   "adReward.daily-cheesecake.text": "ชีสเค้ก 20",
   "adReward.sweep-tickets.text": "ตั๋วกวาดล้าง 5",
+  "adReward.duel-attempt.text": "ตั๋วท้าดวล 1",
   "adReward.excavation-harvest.text": "ผลเก็บเกี่ยวปัจจุบัน ×1.5",
   "adReward.excavation-storage.text": "เก็บได้สูงสุด 8 ชั่วโมงจนถึงการสรุปผลครั้งถัดไป",
   "adReward.excavation-speed.text": "ผลผลิต ×1.5 · 60 นาที",

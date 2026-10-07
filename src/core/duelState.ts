@@ -1,5 +1,5 @@
 import {
-  DUEL_START_SCORE, DUEL_TIERS, duelDayKey, duelSeasonId, duelSeasonResetScore, duelTier, getDuelTier, type DuelTierId,
+  DUEL_DAILY_ATTEMPTS, DUEL_START_SCORE, DUEL_TIERS, duelDayKey, duelSeasonId, duelSeasonResetScore, duelTier, getDuelTier, type DuelTierId,
 } from "./duelArena";
 
 /**
@@ -47,6 +47,8 @@ export interface DuelState {
   dayKey: string;
   attemptsUsed: number;
   attemptsPurchased: number;
+  /** 광고로 오늘 더 받은 도전권. 젬 구매(`attemptsPurchased`)와 따로 세야 다음 구매 값이 광고에 밀려 오르지 않는다. */
+  attemptsFromAds: number;
   refreshesUsed: number;
   /** 지금 세워 둔 상대 후보 셋(NPC ID). */
   candidateIds: string[];
@@ -66,7 +68,7 @@ export const DUEL_HISTORY_LIMIT = 10;
 export function createEmptyDuelState(): DuelState {
   return {
     seasonId: "", score: DUEL_START_SCORE, wins: 0, losses: 0, reachedTierIds: [],
-    dayKey: "", attemptsUsed: 0, attemptsPurchased: 0, refreshesUsed: 0, candidateIds: [],
+    dayKey: "", attemptsUsed: 0, attemptsPurchased: 0, attemptsFromAds: 0, refreshesUsed: 0, candidateIds: [],
     attack: [], defense: [], blindChoice: [], pendingSeasonReward: null, history: [],
   };
 }
@@ -120,6 +122,7 @@ export function normalizeDuelState(value: unknown, ownedRelicIds: readonly strin
     dayKey: typeof source.dayKey === "string" ? source.dayKey : "",
     attemptsUsed: isCount(source.attemptsUsed) ? source.attemptsUsed : 0,
     attemptsPurchased: isCount(source.attemptsPurchased) ? source.attemptsPurchased : 0,
+    attemptsFromAds: isCount(source.attemptsFromAds) ? source.attemptsFromAds : 0,
     refreshesUsed: isCount(source.refreshesUsed) ? source.refreshesUsed : 0,
     candidateIds: stringList(source.candidateIds, 3),
     attack: team(source.attack),
@@ -162,9 +165,18 @@ export function rollDuelPeriods(state: DuelState, now: Date): DuelState {
     next.dayKey = dayKey;
     next.attemptsUsed = 0;
     next.attemptsPurchased = 0;
+    next.attemptsFromAds = 0;
     next.refreshesUsed = 0;
   }
   return next;
+}
+
+/**
+ * 오늘 남은 도전권. 하루 기본 몫에 젬으로 산 몫과 광고로 받은 몫을 더하고 쓴 만큼 뺀다.
+ * 서버(입장·상태)와 상단 줄이 같은 함수를 읽는다 — 한쪽만 광고 몫을 빼먹으면 「0/5」인데 입장이 되는 일이 생긴다.
+ */
+export function duelAttemptsLeft(state: Pick<DuelState, "attemptsUsed" | "attemptsPurchased" | "attemptsFromAds">): number {
+  return Math.max(0, DUEL_DAILY_ATTEMPTS + state.attemptsPurchased + state.attemptsFromAds - state.attemptsUsed);
 }
 
 /**

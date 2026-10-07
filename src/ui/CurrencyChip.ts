@@ -40,6 +40,8 @@ export interface CurrencyChipOptions {
   /** 안내 진입을 원하는 호출부만 키와 콜백을 함께 주며, 없으면 입력면을 만들지 않는다. */
   currency?: WalletItemKey;
   onClick?: (currency: WalletItemKey) => void;
+  /** 지갑 칸이 아닌 칸(결투 도전권)의 누름. 주면 `currency`·`onClick` 대신 이것을 부른다. */
+  onPress?: () => void;
 }
 
 /** 값 텍스트를 돌려준다. 갱신은 부르는 쪽이 `setText`로 한다. */
@@ -47,7 +49,7 @@ export function addCurrencyChip(
   scene: Phaser.Scene,
   x: number,
   y: number,
-  icon: CurrencyIconKey,
+  icon: CurrencyIconKey | "item-duel-ticket",
   options: CurrencyChipOptions = {},
 ): Phaser.GameObjects.Text {
   const width = options.width ?? CURRENCY_CHIP.width;
@@ -70,12 +72,13 @@ export function addCurrencyChip(
     .setShadow(2, 5, "#05070a", 6, false, true);
   chip.add(value);
   options.parent?.add(chip);
-  if (options.currency && options.onClick) {
+  const press = options.onPress ?? (options.currency && options.onClick ? () => options.onClick?.(options.currency!) : undefined);
+  if (press) {
     // 투명 입력면은 보이는 칩 전체와 일치하고 눌림은 칸 하나를 통째로 키워 알린다.
     const hit = scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => pressIn(chip));
     hit.on("pointerout", () => pressOut(chip, "normal", { pop: false }));
-    hit.on("pointerup", () => { pressOut(chip); options.onClick?.(options.currency!); });
+    hit.on("pointerup", () => { pressOut(chip); press(); });
     chip.add(hit);
   }
   return value;

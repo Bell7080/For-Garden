@@ -4,18 +4,18 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
 import { gameApi } from "../api/FakeServer";
 import { GameApiError, type DuelStatusResponse } from "../api/contracts";
-import { DUEL_DAILY_ATTEMPTS, DUEL_DIVISION_SPAN, DUEL_TIERS, duelDivisionNumeral, duelStanding } from "../core/duelArena";
-import { findItem } from "../data/items";
+import { DUEL_DIVISION_SPAN, DUEL_TIERS, duelDivisionNumeral, duelStanding } from "../core/duelArena";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { spawnPuppet } from "../puppets/assets";
 import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
 import { addCategoryTab } from "../ui/CategoryTab";
-import { openCurrencyGuide, openItemGuide } from "../ui/currencyGuideEntry";
+import { openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
 import { paintDuelHistory } from "../ui/DuelHistoryList";
 import { openDuelOpponentPopup } from "../ui/DuelOpponentPopup";
+import { openDuelTicketPopup } from "../ui/DuelTicketPopup";
 import { DuelRankingPopup } from "../ui/DuelRankingPopup";
 import { addDuelTierEmblem } from "../ui/DuelTierEmblem";
 import { DUEL_SCREEN as S, DUEL_TIER_COLOR, duelTabX } from "../ui/duelLayout";
@@ -47,8 +47,8 @@ const DUEL_TICKET_ICON = "item-duel-ticket";
 /**
  * 결투장 — 3대3 자동전투 방어전.
  *
- * 「대전」 탭은 **내 자리를 보여 주는 무대**다: 티어 휘장과 점수 게이지, 애착 렐릭, 그 아래 도전권 줄과
- * 방어·도전 두 조작. 상대는 [도전]이 여는 창이, 순위는 왼쪽 칩이 연다. 「전적」 탭은 최근 판의 목록이다.
+ * 「대전」 탭은 **내 자리를 보여 주는 무대**다: 티어 휘장과 점수 게이지, 애착 렐릭, 그 아래
+ * 방어·도전 두 조작. 오늘 남은 도전권은 상단 줄이 말하고, 누르면 충전 창이 열린다. 상대는 [도전]이 여는 창이, 순위는 왼쪽 칩이 연다. 「전적」 탭은 최근 판의 목록이다.
  * 싸움은 공용 편성 화면(`PartyScene`의 `duel`)과 전투 씬이 맡고, 점수·도전권·상대는 전부 서버
  * (`getDuelStatus`)가 정한다 — 화면이 점수를 셈하거나 상대를 고르지 않는다.
  */
@@ -78,7 +78,11 @@ export class DuelScene extends Phaser.Scene {
     this.stage = this.add.container(0, 0);
     this.view = this.add.container(0, 0);
     this.tabRow = this.add.container(0, 0);
-    new TopBar(this, 40, { profile: false, currencies: "duel", onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency) });
+    // 상단은 휘장과 **오늘 남은 도전권**이다. 도전권 칸을 누르면 젬 구매·광고 충전이 있는 창이 열린다.
+    new TopBar(this, 40, {
+      profile: false, currencies: "duelArena", onDuelTicket: () => this.openTicketPopup(),
+      onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency),
+    });
     this.add.text(S.side, S.title.y, t("lobby.duel"), textStyle({ role: "display", size: 54, color: COLOR.ink })).setOrigin(0, 0.5)
       .setShadow(0, 4, "#05070a", 6, false, true);
     addBackButton(this, () => startScene(this, "lobby", LOBBY_RETURN.duel));
@@ -143,7 +147,6 @@ export class DuelScene extends Phaser.Scene {
         onClick: () => void this.claimSeasonReward(),
       }));
     }
-    this.paintTicket(status);
     this.paintDefense(status);
     this.paintChallenge(status);
   }
@@ -201,40 +204,6 @@ export class DuelScene extends Phaser.Scene {
     }).catch(() => undefined);
   }
 
-  /** 도전권 줄 — 입장권 그림(누르면 안내창)·이름·남은 수, 오른쪽 끝에 젬으로 한 장 더. */
-  private paintTicket(status: DuelStatusResponse): void {
-    const { y, icon, buyX, buyWidth, buyHeight } = S.ticket;
-    const iconX = S.side + icon / 2 + 4;
-    const holder = this.add.container(iconX, y, [this.add.image(0, 0, DUEL_TICKET_ICON).setDisplaySize(icon, icon)]);
-    const ticket = findItem("duel-ticket");
-    if (ticket) {
-      const hit = this.add.rectangle(0, 0, icon + 24, icon + 24, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerdown", () => pressIn(holder));
-      hit.on("pointerout", () => pressOut(holder, "normal", { pop: false }));
-      hit.on("pointerup", () => { pressOut(holder); openItemGuide({ scene: this, popups: this.popups }, ticket); });
-      holder.add(hit);
-    }
-    this.view.add(holder);
-    const textX = iconX + icon / 2 + 16;
-    this.view.add(this.add.text(textX, y - 16, t("duel.ticket.label"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
-    this.view.add(this.add.text(textX, y + 18, `${status.attemptsLeft}/${DUEL_DAILY_ATTEMPTS}`, textStyle({ role: "display", size: 34, color: status.attemptsLeft > 0 ? COLOR.accentText : COLOR.dangerText })).setOrigin(0, 0.5));
-
-    const price = status.nextAttemptPrice;
-    this.view.add(new Button(this, buyX, y, {
-      width: buyWidth, height: buyHeight, fontSize: 24,
-      label: price === null ? t("duel.attempts.soldOut") : t("duel.attempts.buyTitle"),
-      cost: price === null ? undefined : { icon: CURRENCY_ICON_BY_WALLET.gems, amount: price, affordable: session.wallet.gems >= price },
-      onClick: () => {
-        if (price === null) return;
-        this.popups.confirm({
-          title: t("duel.attempts.buyTitle"), message: t("duel.attempts.buyMessage"), confirmLabel: t("duel.attempts.buyTitle"),
-          costs: [{ iconKey: CURRENCY_ICON_BY_WALLET.gems, amount: price }],
-          balance: { iconKey: CURRENCY_ICON_BY_WALLET.gems, before: session.wallet.gems, after: session.wallet.gems - price },
-        }, () => void this.run(() => gameApi.buyDuelAttempt()));
-      },
-    }).setEnabled(price !== null));
-  }
-
   /** 왼쪽 아래 [방어] — 게시한 방어덱 셋의 얼굴이 판 안에 서고, 누르면 방어덱 편성으로 간다. */
   private paintDefense(status: DuelStatusResponse): void {
     const { y, height, defense, faceSize, faceGap } = S.actions;
@@ -266,8 +235,16 @@ export class DuelScene extends Phaser.Scene {
     const { y, height, challenge } = S.actions;
     this.view.add(new Button(this, challenge.x + challenge.width / 2, y, {
       width: challenge.width, height, label: t("duel.challenge"), fontSize: 52, variant: "primary", decorDots: true, art: DUEL_TICKET_ICON,
-      onClick: () => this.openOpponents(),
+      // 도전권이 없으면 상대를 고르게 한 뒤 막지 않고, 곧바로 채우는 창을 연다.
+      onClick: () => (status.attemptsLeft > 0 ? this.openOpponents() : this.openTicketPopup()),
     }).setEnabled(status.opponents.length > 0));
+  }
+
+  /** 결투 도전권 창. 사거나 광고로 받으면 새 상태로 화면을 다시 그린다. */
+  private openTicketPopup(): void {
+    const status = this.status;
+    if (!status || this.busy) return;
+    openDuelTicketPopup(this, this.popups, gameApi, status, { onStatus: (next) => { if (this.scene.isActive()) this.paint(next); } });
   }
 
   private openOpponents(): void {

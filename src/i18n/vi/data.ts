@@ -239,6 +239,7 @@ export default {
   "adReward.daily-stamina.text": "Thể lực 10",
   "adReward.daily-cheesecake.text": "Bánh phô mai 20",
   "adReward.sweep-tickets.text": "Vé càn quét 5",
+  "adReward.duel-attempt.text": "Vé khiêu chiến đấu trường 1",
   "adReward.excavation-harvest.text": "Thu hoạch hiện tại ×1.5",
   "adReward.excavation-storage.text": "Chứa tối đa 8 giờ đến lần quyết toán sau",
   "adReward.excavation-speed.text": "Sản lượng ×1.5 · 60 phút",

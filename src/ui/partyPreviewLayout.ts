@@ -68,10 +68,10 @@ export interface PreviewBox {
 }
 
 /** 아군 자리의 입력면·드래그 칸. SD가 차지하는 높이 그대로다. */
-export function partyAllySlotBox(slot: number): PreviewBox {
+export function partyAllySlotBox(slot: number, lift = 0): PreviewBox {
   return {
     x: PARTY_PREVIEW_COLUMNS[slot],
-    y: PARTY_PREVIEW.allyRow - PARTY_PREVIEW.height / 2,
+    y: PARTY_PREVIEW.allyRow - lift - PARTY_PREVIEW.height / 2,
     width: PARTY_PREVIEW.slotWidth,
     height: PARTY_PREVIEW.height,
   };
@@ -85,11 +85,11 @@ export function partyAllySlotBox(slot: number): PreviewBox {
  */
 export const PARTY_ALLY_PLATE = { top: 608, bottom: 846 } as const;
 
-export function partyAllyPlateBox(slot: number): PreviewBox {
+export function partyAllyPlateBox(slot: number, lift = 0): PreviewBox {
   const height = PARTY_ALLY_PLATE.bottom - PARTY_ALLY_PLATE.top;
   return {
     x: PARTY_PREVIEW_COLUMNS[slot],
-    y: PARTY_ALLY_PLATE.top + height / 2,
+    y: PARTY_ALLY_PLATE.top - lift + height / 2,
     width: PARTY_PREVIEW.slotWidth,
     height,
   };
@@ -123,11 +123,25 @@ export function partyPowerPlateBounds(): { top: number; bottom: number; left: nu
 /**
  * 결투 방어덱 편성의 자리 — 마주 선 편이 없어 대치선 위가 통째로 비는 화면이다.
  *
- * 그 위에는 **상대에게 보이는 내 모습**(얼굴·이름·레벨·티어·점수)을 결투장의 전투 프로필과 같은 문법으로
- * 세우고, 전투력은 대치선이 아니라 **편성 목록 아래**로 내린다 — 비교할 상대가 없으니 그 수는 고르는 동안
- * 늘 위에 떠 있을 이유가 없고, 저장 버튼 바로 위에서 "이 셋으로 얼마인가"를 마지막에 말한다.
+ * 그 빈자리를 판으로 채우지 않고 **아군 SD 줄을 통째로 끌어올린다**(`lift` — 칸 판·입력면·가림 표식·이름줄이
+ * 함께 오른다). 전투력은 비교할 상대가 없으니 대치선이 아니라 **SD 이름줄 바로 아래**(`powerGap`)에 서고,
+ * 그렇게 비운 만큼 편성 목록이 위에서 시작해(`rosterTop`) 한 줄 더 보인다.
  */
 export const PARTY_DEFENSE = {
-  header: { y: 330, width: 960, height: 300, avatarX: -330, avatarY: 10, avatarSize: 170, textX: -190, nameY: -50, tierY: 40, emblemSize: 64, hintY: 105 },
-  powerY: 1690,
+  lift: 340,
+  /** 끌어올린 아군 발끝 줄에서 전투력 판 중심까지. 이름줄(발끝 아래 +26부터)을 피한다. */
+  powerGap: 112,
+  /** 편성 목록 창의 윗변. 자동 배치 줄이 전투력 판 아래에 서도록 잡는다. */
+  rosterTop: 790,
 } as const;
+
+/** 방어덱의 아군 발끝 줄. */
+export function partyDefenseAllyRow(): number {
+  return PARTY_PREVIEW.allyRow - PARTY_DEFENSE.lift;
+}
+
+/** 방어덱 전투력 판의 위아래. */
+export function partyDefensePowerBounds(): { top: number; bottom: number } {
+  const y = partyDefenseAllyRow() + PARTY_DEFENSE.powerGap;
+  return { top: y - PARTY_POWER_PLATE.height / 2, bottom: y + PARTY_POWER_PLATE.height / 2 };
+}

@@ -64,7 +64,8 @@ function paintRow(scene: Phaser.Scene, body: Phaser.GameObjects.Container, statu
       body.add(addItemFrame(scene, x, y - 20, P.unitSize, { color: COLOR.inkDimHex }));
       body.add(scene.add.text(x, y - 20, "?", textStyle({ role: "display", size: 52, color: COLOR.inkDim })).setOrigin(0.5));
     }
-    body.add(scene.add.text(x, y + P.unitSize / 2 - 14, `LV.${unit.level}`, textStyle({ role: "emphasis", size: 20, color: COLOR.accentText })).setOrigin(0.5, 0));
+    // 가려진 칸은 레벨도 말하지 않는다 — 레벨이 서면 그 칸이 누구인지 좁혀진다.
+    if (unit.relicId) body.add(scene.add.text(x, y + P.unitSize / 2 - 14, `LV.${unit.level}`, textStyle({ role: "emphasis", size: 20, color: COLOR.accentText })).setOrigin(0.5, 0));
   });
 
   body.add(new Button(scene, P.challengeX, y, {

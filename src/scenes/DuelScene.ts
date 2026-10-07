@@ -273,14 +273,39 @@ export class DuelScene extends Phaser.Scene {
     panel.add(hit);
   }
 
-  /** 오른쪽 아래 [도전] — 이 화면의 주 조작. 상대 선택 창을 연다. */
+  /**
+   * 오른쪽 아래 [도전] — 이 화면의 주 조작. 상대 선택 창을 연다.
+   *
+   * **유리판이 아니라 강조색으로 꽉 채운 평판이다.** 옆의 [방어]가 어두운 유리판이라 같은 문법의 강조 버튼(점 무늬·
+   * 윤곽선)을 두면 두 판의 무게가 비슷하게 읽혔다 — 색 면 하나와 어두운 글자로 "여기를 누른다"를 말한다.
+   * 모양은 [방어]와 같은 깎인 칩이라 두 판이 한 줄로 묶인다.
+   */
   private paintChallenge(status: DuelStatusResponse): void {
     const { y, height, challenge } = S.actions;
-    this.view.add(new Button(this, challenge.x + challenge.width / 2, y, {
-      width: challenge.width, height, label: t("duel.challenge"), fontSize: 52, variant: "primary", decorDots: true, art: DUEL_TICKET_ICON,
+    const panel = this.add.container(challenge.x + challenge.width / 2, y);
+    this.view.add(panel);
+    const enabled = status.opponents.length > 0;
+    panel.add(drawLayer(this, 0, 0, chipPoints(challenge.width, height), { fill: COLOR.accent, alpha: 0.96 }));
+    // 윗변 아래 한 줄만 밝게 — 평판에 두께를 얹지 않고 빛이 닿는 변만 말한다.
+    panel.add(this.add.rectangle(0, -height / 2 + 10, challenge.width - height * 0.9, 3, 0xffffff, 0.35));
+    const label = this.add.text(0, 0, t("duel.challenge"), textStyle({ role: "display", size: 56, color: "#141820" })).setOrigin(0.5);
+    const art = 92;
+    const gap = 18;
+    const total = art + gap + label.width;
+    label.setX(-total / 2 + art + gap + label.width / 2);
+    panel.add(this.add.image(-total / 2 + art / 2, 0, DUEL_TICKET_ICON).setDisplaySize(art, art));
+    panel.add(label);
+    if (!enabled) { panel.setAlpha(0.4); return; }
+    const hit = this.add.rectangle(0, 0, challenge.width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", () => pressIn(panel, "primary"));
+    hit.on("pointerout", () => pressOut(panel, "primary", { pop: false }));
+    hit.on("pointerup", () => {
+      pressOut(panel, "primary");
+      if (this.busy) return;
       // 도전권이 없으면 상대를 고르게 한 뒤 막지 않고, 곧바로 채우는 창을 연다.
-      onClick: () => (status.attemptsLeft > 0 ? this.openOpponents() : this.openTicketPopup()),
-    }).setEnabled(status.opponents.length > 0));
+      if (status.attemptsLeft > 0) this.openOpponents(); else this.openTicketPopup();
+    });
+    panel.add(hit);
   }
 
   /** 결투 도전권 창. 사거나 광고로 받으면 새 상태로 화면을 다시 그린다. */

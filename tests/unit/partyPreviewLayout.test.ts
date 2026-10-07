@@ -12,6 +12,9 @@ import {
   partyPreviewEnemyColumns,
   partyPreviewEnemyScale,
   PARTY_PREVIEW_CROWD,
+  PARTY_DEFENSE,
+  partyDefenseAllyRow,
+  partyDefensePowerBounds,
 } from "../../src/ui/partyPreviewLayout";
 import { ENCOUNTER_ROLE } from "../../src/core/levelDesign";
 
@@ -117,5 +120,23 @@ describe("편성 칸의 추천 직군", () => {
     // 양옆 칸은 아이콘 둘이 선다.
     expect(2 * hint.iconSize + hint.gap).toBeLessThan(plate.width - 40);
     expect(hint.alpha).toBeLessThan(0.8);
+  });
+});
+
+describe("결투 방어덱 편성", () => {
+  const row = partyDefenseAllyRow();
+  it("아군 줄을 끌어올려도 가림 표식이 화면 제목 아래에 선다", () => {
+    // 가림 표식(높이 52)은 발끝 줄에서 SD 높이 + 26 위다. 제목은 y 70, 46px이다.
+    expect(row - PARTY_PREVIEW.height - 26 - 26).toBeGreaterThan(70 + 46);
+  });
+  it("칸 판·입력면이 함께 오른다", () => {
+    expect(partyAllySlotBox(1, PARTY_DEFENSE.lift).y).toBe(row - PARTY_PREVIEW.height / 2);
+    expect(partyAllyPlateBox(1, PARTY_DEFENSE.lift).y).toBe(partyAllyPlateBox(1).y - PARTY_DEFENSE.lift);
+  });
+  it("전투력 판은 이름줄 아래, 편성 목록 위에 선다", () => {
+    const power = partyDefensePowerBounds();
+    // 이름줄은 발끝 아래 +26부터 30px 글자다.
+    expect(power.top).toBeGreaterThan(row + 26 + 34);
+    expect(power.bottom).toBeLessThan(PARTY_DEFENSE.rosterTop);
   });
 });

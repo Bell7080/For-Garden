@@ -24,7 +24,7 @@ import { PortraitCard } from "../ui/PortraitCard";
 import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY, portraitGridHeadroom } from "../ui/portraitGrid";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
-import { chipPoints, drawLayer, HOLO, slantedRect } from "../ui/holo";
+import { drawLayer, HOLO, slantedRect } from "../ui/holo";
 import { addSceneBackground, battleFieldBackground } from "../ui/backgrounds";
 import { autoPickParty, RECOMMENDED_SLOT_ROLES, relicAffinityDirection } from "../core/partyAffinity";
 import { settingsManager } from "../managers/SettingsManager";
@@ -41,7 +41,7 @@ import { formationMembers, tapFormationSlot, tapRosterRelic, toFormationSlots } 
 import { prefetchBattlePuppets as prefetchBattleSds } from "../puppets/battlePrefetch";
 import { moveFormationSlot } from "../core/formation";
 import { addFormationRemoveChip, addFormationSlotPlate, addFormationSlotSelection } from "../ui/formationSlotChrome";
-import { PARTY_ALLY_PLATE, PARTY_DEFENSE, PARTY_POWER_PLATE, PARTY_PREVIEW, PARTY_PREVIEW_COLUMNS, partyAllyGroundOffset, partyAllyPlateBox, partyAllySlotBox, partyPreviewEnemyColumns, partyPreviewEnemyScale } from "../ui/partyPreviewLayout";
+import { PARTY_ALLY_PLATE, PARTY_DEFENSE, PARTY_POWER_PLATE, partyDefenseAllyRow, PARTY_PREVIEW, PARTY_PREVIEW_COLUMNS, partyAllyGroundOffset, partyAllyPlateBox, partyAllySlotBox, partyPreviewEnemyColumns, partyPreviewEnemyScale } from "../ui/partyPreviewLayout";
 import { bindFormationDrag } from "../ui/formationDrag";
 import { FORMATION_DRAG_VISUAL } from "../ui/formationDragVisual";
 import { createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
@@ -55,13 +55,7 @@ import { consumeSceneEntry } from "./sceneEntry";
 import { getBountyTier } from "../data/bounty";
 import { getCakeOperationTier } from "../data/cakeOperation";
 import { addSdFootShadow } from "../ui/SdFootShadow";
-import { DUEL_START_SCORE, duelBlindOrder, duelDivisionNumeral, duelStanding } from "../core/duelArena";
-import { playerProfileDisplay, profileAvatarContent } from "../state/playerProfile";
-import { ProfileAvatar } from "../ui/ProfileAvatar";
-import { addDuelTierEmblem } from "../ui/DuelTierEmblem";
-import { DUEL_TIER_COLOR } from "../ui/duelLayout";
-import { addSectionTitle } from "../ui/SectionTitle";
-import { squeezeTextToWidth } from "../ui/textFit";
+import { duelBlindOrder } from "../core/duelArena";
 
 /**
  * 미리보기 전장.
@@ -71,14 +65,13 @@ import { squeezeTextToWidth } from "../ui/textFit";
  */
 const PREVIEW_COLUMNS = PARTY_PREVIEW_COLUMNS;
 const ENEMY_ROW = PARTY_PREVIEW.enemyRow;
-const ALLY_ROW = PARTY_PREVIEW.allyRow;
 /** 두 줄을 가르는 대치선. 적 이름표 아래, 아군 머리 위에 놓는다. */
 const FRONT_LINE = PARTY_PREVIEW.frontLine;
 const PREVIEW_HEIGHT = PARTY_PREVIEW.height;
 /** 두 편의 총 전투력이 마주 보는 줄. 대치선 위에 걸터앉는다. */
 const POWER_ROW = PARTY_PREVIEW.frontLine;
-/** 방어덱 가림 표식 — 아군 SD 머리 위, 대치선 판 아래다. */
-const BLIND_CHIP_Y = PARTY_PREVIEW.allyRow - PARTY_PREVIEW.height - 26;
+/** 가림 표식이 아군 발끝 줄에서 위로 떨어진 거리 — SD 머리 위, 칸 판 윗변에 걸친다. */
+const BLIND_CHIP_RISE = PARTY_PREVIEW.height + 26;
 
 /**
  * 보유 렐릭 그리드의 배치표.
@@ -193,6 +186,13 @@ export class PartyScene extends Phaser.Scene {
 
   /** 자동 배치 버튼의 실제 중심. `create`에서 한 번 계산해 `refresh`가 그대로 다시 쓴다. */
   private autoButtonPosition = { x: 0, y: 0 };
+  /**
+   * 아군 줄을 끌어올린 거리와 그 결과 — 방어덱은 마주 선 편이 없어 SD 줄이 위로 오르고 목록이 넓어진다
+   * (`PARTY_DEFENSE`). 다른 편성은 모두 0이다.
+   */
+  private allyLift = 0;
+  private allyRow: number = PARTY_PREVIEW.allyRow;
+  private rosterViewport: { top: number; bottom: number } = ROSTER_VIEWPORT;
   private info!: CharacterInfoManager;
   /** 같은 정보창을 적 문맥으로 하나 더 둔다. 아군 창과 문맥이 섞이지 않게 창을 나눈다. */
   private enemyInfo!: EnemyInfoPopup;
@@ -234,6 +234,10 @@ export class PartyScene extends Phaser.Scene {
     this.rosterView = DEFAULT_ROSTER_VIEW;
     this.allySlots = [];
     this.isEnteringBattle = false;
+    const defense = this.content.content === "duelDefense";
+    this.allyLift = defense ? PARTY_DEFENSE.lift : 0;
+    this.allyRow = defense ? partyDefenseAllyRow() : PARTY_PREVIEW.allyRow;
+    this.rosterViewport = defense ? { ...ROSTER_VIEWPORT, top: PARTY_DEFENSE.rosterTop } : ROSTER_VIEWPORT;
 
     const cx = BASE_WIDTH / 2;
     // 편성 미리보기와 실제 전투가 같은 전장 원화를 공유해 출전 흐름을 시각적으로 잇는다.
@@ -263,7 +267,7 @@ export class PartyScene extends Phaser.Scene {
     // **카드 윗변이 아니라 머리 끝을 기준으로 띄운다.** 카드 몸체만 피하면 칩 밖으로 빠져나온
     // 정수리(도디처럼 머리가 큰 원화)가 버튼과 겹친다 — 그리드의 보이는 윗선은 몸체가 아니라
     // 머리 끝이다.
-    const firstRowY = portraitGridFirstRowY(ROSTER_VIEWPORT.top, ROSTER_GRID.cardHeight, PORTRAIT_GRID_MASK_GAP);
+    const firstRowY = portraitGridFirstRowY(this.rosterViewport.top, ROSTER_GRID.cardHeight, PORTRAIT_GRID_MASK_GAP);
     const headTop = firstRowY - ROSTER_GRID.cardHeight / 2 - portraitGridHeadroom(ROSTER_GRID.cardHeight);
     this.autoButtonPosition = {
       x: rosterRightEdge() - autoButtonWidth / 2,
@@ -308,11 +312,6 @@ export class PartyScene extends Phaser.Scene {
     this.hint = this.add
       .text(cx, 1664, "", textStyle({ role: "body", size: 28, color: COLOR.inkDim }))
       .setOrigin(0.5, 0);
-    // 방어덱은 그 자리를 전투력 줄에 내주고, 몇 명이 더 필요한지는 위 프로필 판 밑동 오른쪽이 말한다.
-    if (this.content.content === "duelDefense") {
-      const H = PARTY_DEFENSE.header;
-      this.hint.setPosition(BASE_WIDTH / 2 + H.width / 2 - 40, H.y + H.hintY).setOrigin(1, 0.5);
-    }
 
     this.startButton = new Button(this, cx, BACK_SLOT.y, {
       width: 560,
@@ -423,20 +422,18 @@ export class PartyScene extends Phaser.Scene {
     // 맨 글자로 섰는데 그 자리가 곧 아군 SD의 머리라 정수리에 얹혔고, 밝은 배경 원화 위에서는
     // 그림자만으로 떨어져 나오지도 못했다. 판이 배경과 글자를 가르고, 대치선은 그 판 양옆으로
     // 이어져 "여기가 두 편이 마주 보는 자리"를 한 번 더 말한다.
-    // 방어덱은 마주 볼 편이 없어 그 줄을 편성 목록 아래(저장 버튼 바로 위)로 내린다(`PARTY_DEFENSE`).
-    const powerY = allyOnly ? PARTY_DEFENSE.powerY : POWER_ROW;
+    // 방어덱은 마주 볼 편이 없어 그 줄을 끌어올린 아군 이름줄 바로 아래에 세운다(`PARTY_DEFENSE`).
+    const powerY = allyOnly ? this.allyRow + PARTY_DEFENSE.powerGap : POWER_ROW;
     drawLayer(this, BASE_WIDTH / 2, powerY, slantedRect(PARTY_POWER_PLATE.width, PARTY_POWER_PLATE.height), {
       fill: COLOR.panel,
       alpha: HOLO.glass,
       edge: COLOR.panelEdge,
       edgeAlpha: 0.85,
-    }).setDepth(allyOnly ? 4 : 0);
-    if (allyOnly) this.paintDefenseHeader();
+    });
     this.allyPowerText = this.add
       .text(allyOnly ? BASE_WIDTH / 2 : BASE_WIDTH / 2 + 30, powerY, "", textStyle({ role: "display", size: 30, color: COLOR.accentText }))
       .setOrigin(allyOnly ? 0.5 : 0, 0.5)
-      .setShadow(0, 3, "#05070a", 4, false, true)
-      .setDepth(allyOnly ? 4 : 0);
+      .setShadow(0, 3, "#05070a", 4, false, true);
     if (!allyOnly) {
       this.enemyPowerText = this.add
         .text(BASE_WIDTH / 2 - 30, POWER_ROW, "", textStyle({ role: "display", size: 30, color: COLOR.dangerText }))
@@ -449,9 +446,9 @@ export class PartyScene extends Phaser.Scene {
       // 칸의 밑판은 편성이 바뀔 때마다 다시 그리므로 여기서 세우지 않는다 — 서 있는 자리와 빈
       // 자리가 다른 것을 담기 때문이다(발굴·원정·파견과 같은 공용 판 한 장).
       // 칸의 좌측 하단에 붙여 SD가 비동기로 도착해도 표식 위치가 흔들리지 않게 한다.
-      const affinityDirection = new AffinityDirection(this, x - 82, ALLY_ROW - 20).setDepth(2);
+      const affinityDirection = new AffinityDirection(this, x - 82, this.allyRow - 20).setDepth(2);
       // SD와 같은 높이의 투명 슬롯 면이 입력을 소유해 Puppet 로딩 성공 여부가 조작을 바꾸지 않는다.
-      const box = partyAllySlotBox(slot);
+      const box = partyAllySlotBox(slot, this.allyLift);
       const hit = this.add.rectangle(box.x, box.y, box.width, box.height, 0xffffff, 0)
         .setName(`party-ally-slot-${slot + 1}`).setDepth(3).setInteractive({ useHandCursor: true });
       this.allySlots.push({ affinityDirection, request: 0, hit });
@@ -464,16 +461,16 @@ export class PartyScene extends Phaser.Scene {
     this.allyMarks = this.add.container(0, 0).setDepth(6);
     // 공용 표현기는 화면 좌표 Puppet을 기존 placePuppet 콜백으로 옮겨 컨테이너 변환에 기대지 않는다.
     this.dragVisual = createFormationDragVisualController({
-      scene: this, slots: PREVIEW_COLUMNS.map((_x, slot) => partyAllySlotBox(slot)),
+      scene: this, slots: PREVIEW_COLUMNS.map((_x, slot) => partyAllySlotBox(slot, this.allyLift)),
       formation: () => this.picked, color: COLOR.ally, zoneDepth: -11, dimDepth: -13,
       // 감광은 아군 칸이 사는 띠만 덮는다. 대치선부터 덮으면 그 위에 걸터앉은 전투력 판까지 함께
       // 어두워져, 끄는 동안 두 편의 무게가 먼저 사라진다.
-      dimBounds: { x: BASE_WIDTH / 2, y: (PARTY_ALLY_PLATE.top + ALLY_ROW + 120) / 2, width: BASE_WIDTH, height: ALLY_ROW + 120 - PARTY_ALLY_PLATE.top },
+      dimBounds: { x: BASE_WIDTH / 2, y: (PARTY_ALLY_PLATE.top - this.allyLift + this.allyRow + 120) / 2, width: BASE_WIDTH, height: this.allyRow + 120 - PARTY_ALLY_PLATE.top + this.allyLift },
       renderPreview: ({ preview, pointer }) => this.placeDragPreview(preview, pointer.x, pointer.y),
       restore: () => this.restoreDragPuppets(),
     });
     // 보유 카드의 상세 정보 장기 누름과 겹치지 않도록 드래그 시작점은 이 상단 SD 입력면뿐이다.
-    bindFormationDrag(this, this.allySlots.map((slot, index) => ({ hit: slot.hit, ...partyAllySlotBox(index) })), {
+    bindFormationDrag(this, this.allySlots.map((slot, index) => ({ hit: slot.hit, ...partyAllySlotBox(index, this.allyLift) })), {
       // 배열과 저장은 `drop`에서만 바뀐다. 아래 둘은 화면에만 손대므로 취소해도 편성이 남지 않는다.
       dragStart: (slot, x, y) => this.dragVisual?.beginDrag(slot, x, y),
       dragMove: (slot, x, y) => this.dragVisual?.moveDrag(slot, x, y),
@@ -496,13 +493,14 @@ export class PartyScene extends Phaser.Scene {
   /** 적 하나. 노드 미리보기와 같은 어휘(속성·직군 왼쪽 위, 돌파 오른쪽 위, 레벨·이름 한 줄)로 선다. */
   private addPreviewEnemy(enemy: PartyPreviewEnemy, x: number, bodyScale: number, elite: boolean, crowded: boolean): void {
     const { def } = enemy;
-    // 결투의 가려진 칸 — 누구인지는 말하지 않고 레벨과 전투력만 남긴다.
+    // 결투의 가려진 칸 — 누구인지도, 레벨·개체 전투력도 말하지 않는다. 그 둘이 서면 칸이 누구인지 좁혀진다
+    // (상대 창과 같은 규칙). 그 몫은 대치선의 총 전투력에만 든다.
     if (!def) {
       addSdFootShadow(this, x, ENEMY_ROW + 4, 190 * bodyScale).setDepth(-12);
       this.add.text(x, ENEMY_ROW - PREVIEW_HEIGHT * 0.45, "?", textStyle({ role: "display", size: 120, color: COLOR.inkDim }))
         .setOrigin(0.5).setShadow(0, 6, "#05070a", 10, false, true).setDepth(3);
-      addUnitNameplate(this, undefined, x, ENEMY_ROW + 26, enemy.level, t("duel.hidden"), 30);
-      addUnitPower(this, undefined, x, ENEMY_ROW + 22, enemy.power ?? 0, 24, COLOR.dangerText).setDepth(3);
+      this.add.text(x, ENEMY_ROW + 26, t("duel.hidden"), textStyle({ role: "display", size: 30, color: COLOR.inkDim }))
+        .setOrigin(0.5, 0).setStroke("#05070a", 4).setShadow(0, 2, "#05070a", 3, true, true).setDepth(3);
       return;
     }
     // 받침은 SD(-10)보다 뒤에 둬야 발을 덮지 않는다.
@@ -609,7 +607,7 @@ export class PartyScene extends Phaser.Scene {
         return;
       }
       const target = preview.findIndex((other) => other.relicId === relicId);
-      placePuppet(creature, relicAppearanceManager.battleAssetFor(relicId), { x: PREVIEW_COLUMNS[target < 0 ? index : target], groundY: ALLY_ROW, height: PREVIEW_HEIGHT, flipX: false });
+      placePuppet(creature, relicAppearanceManager.battleAssetFor(relicId), { x: PREVIEW_COLUMNS[target < 0 ? index : target], groundY: this.allyRow, height: PREVIEW_HEIGHT, flipX: false });
       creature.setDepth(-10).setAlpha(target === index ? 1 : FORMATION_DRAG_VISUAL.previewAlpha);
     });
   }
@@ -619,7 +617,7 @@ export class PartyScene extends Phaser.Scene {
     this.allySlots.forEach((slot, index) => {
       const relicId = this.picked[index];
       if (!slot.creature || !relicId) return;
-      placePuppet(slot.creature, relicAppearanceManager.battleAssetFor(relicId), { x: PREVIEW_COLUMNS[index], groundY: ALLY_ROW, height: PREVIEW_HEIGHT, flipX: false });
+      placePuppet(slot.creature, relicAppearanceManager.battleAssetFor(relicId), { x: PREVIEW_COLUMNS[index], groundY: this.allyRow, height: PREVIEW_HEIGHT, flipX: false });
       slot.creature.setDepth(-10).setAlpha(1);
     });
   }
@@ -650,7 +648,7 @@ export class PartyScene extends Phaser.Scene {
     slot.creature = undefined;
     if (!relicId) return;
 
-    const creature = await this.standSD(relicId, PREVIEW_COLUMNS[index], ALLY_ROW, false);
+    const creature = await this.standSD(relicId, PREVIEW_COLUMNS[index], this.allyRow, false);
     if (!creature) return;
     // 기다리는 사이 편성이 바뀌었다면 방금 세운 SD는 쓰지 않는다.
     if (request !== slot.request) {
@@ -670,7 +668,7 @@ export class PartyScene extends Phaser.Scene {
     const content = this.add.container(0, 0);
     this.rosterContent = content;
     this.rosterMask = this.make.graphics({});
-    this.rosterMask.fillStyle(0xffffff, 1).fillRect(0, ROSTER_VIEWPORT.top, BASE_WIDTH, ROSTER_VIEWPORT.bottom - ROSTER_VIEWPORT.top);
+    this.rosterMask.fillStyle(0xffffff, 1).fillRect(0, this.rosterViewport.top, BASE_WIDTH, this.rosterViewport.bottom - this.rosterViewport.top);
     content.setMask(this.rosterMask.createGeometryMask());
     this.fillRoster();
     this.bindRosterScroll();
@@ -684,14 +682,14 @@ export class PartyScene extends Phaser.Scene {
     const content = this.rosterContent;
     if (!content) return;
     const { columns: cols, cardWidth: cardW, cardHeight: cardH, rowStep } = ROSTER_GRID;
-    const startY = portraitGridFirstRowY(ROSTER_VIEWPORT.top, cardH, PORTRAIT_GRID_MASK_GAP);
+    const startY = portraitGridFirstRowY(this.rosterViewport.top, cardH, PORTRAIT_GRID_MASK_GAP);
     content.removeAll(true);
     this.cards.clear();
     const powerOf = (relic: RelicDef): number => combatPower(relicProgression.getFinalStats(relic.id));
     const roster = applyRosterView(relicCollection.owned, this.rosterView, powerOf);
     setDebugGridCards("party", Object.fromEntries(roster.map((relic, i) => [relic.id, {
       x: rosterColumnX(i % cols), y: startY + Math.floor(i / cols) * rowStep,
-    }])), this.rosterScrollY, ROSTER_VIEWPORT);
+    }])), this.rosterScrollY, this.rosterViewport);
     roster.forEach((relic, i) => {
       const x = rosterColumnX(i % cols);
       const y = startY + Math.floor(i / cols) * rowStep;
@@ -715,7 +713,7 @@ export class PartyScene extends Phaser.Scene {
     });
     const rows = Math.ceil(roster.length / cols);
     const contentHeight = rows > 0 ? PORTRAIT_GRID_MASK_GAP + portraitGridContentHeight(rows, rowStep, cardH) : 0;
-    const viewportHeight = ROSTER_VIEWPORT.bottom - ROSTER_VIEWPORT.top;
+    const viewportHeight = this.rosterViewport.bottom - this.rosterViewport.top;
     // 도감과 같은 28px 여유를 아래에도 둬 마지막 줄 밑변이 마스크 경계에 겹쳐 깎이지 않게 한다.
     this.rosterMinScroll = Math.min(0, viewportHeight - contentHeight - 28);
     this.scrollRosterTo(0);
@@ -724,7 +722,7 @@ export class PartyScene extends Phaser.Scene {
   /** 창 안에서만 흐르게 하는 휠·드래그 배선. 씬이 내려갈 때 리스너와 마스크를 함께 뗀다. */
   private bindRosterScroll(): void {
     const inViewport = (pointer: Phaser.Input.Pointer): boolean =>
-      pointer.worldY >= ROSTER_VIEWPORT.top && pointer.worldY <= ROSTER_VIEWPORT.bottom;
+      pointer.worldY >= this.rosterViewport.top && pointer.worldY <= this.rosterViewport.bottom;
     const onDown = (pointer: Phaser.Input.Pointer): void => {
       if (!inViewport(pointer) || this.rosterMinScroll === 0) return;
       this.rosterDragging = true;
@@ -848,20 +846,20 @@ export class PartyScene extends Phaser.Scene {
       // 자리는 왼쪽부터 순서 그대로이고, 그 글자가 정작 이름줄보다 아래에서 자리만 차지했다.
       if (marks && id) {
         const def = getRelic(id);
-        const badgeTop = ALLY_ROW - PREVIEW_HEIGHT + 34;
+        const badgeTop = this.allyRow - PREVIEW_HEIGHT + 34;
         marks.add(new AffinityBadge(this, PREVIEW_COLUMNS[i] - 104, badgeTop, ELEMENT_ICON[def.element], 52, 0.62));
         marks.add(new AffinityBadge(this, PREVIEW_COLUMNS[i] - 104, badgeTop + 49, ROLE_ICON[def.role], 38, 0.62));
         addBreakthroughGradeMark(this, marks, PREVIEW_COLUMNS[i] + 104, badgeTop - 4, 42, relicProgression.getBreakthroughGrade(id));
-        addUnitNameplate(this, marks, PREVIEW_COLUMNS[i], ALLY_ROW + 26, relicProgression.getProgress(id).level, def.name, 30);
-        addUnitPower(this, marks, PREVIEW_COLUMNS[i], ALLY_ROW + 22, combatPower(relicProgression.getFinalStats(id)), 24, COLOR.accentText);
+        addUnitNameplate(this, marks, PREVIEW_COLUMNS[i], this.allyRow + 26, relicProgression.getProgress(id).level, def.name, 30);
+        addUnitPower(this, marks, PREVIEW_COLUMNS[i], this.allyRow + 22, combatPower(relicProgression.getFinalStats(id)), 24, COLOR.accentText);
       }
 
       if (!chrome || !plate) return;
-      const box = partyAllySlotBox(i);
+      const box = partyAllySlotBox(i, this.allyLift);
       if (i === this.selectedSlot) addFormationSlotSelection(this, plate, box, COLOR.ally);
       // 고른 칸 밑판 **위에** 칸 판을 깐다(발굴과 같은 순서). 밑판이 칸 판을 덮으면 고른 자리만
       // 다른 색 유리가 되어, 판이 아니라 칠이 바뀐 것처럼 보인다.
-      addFormationSlotPlate(this, plate, partyAllyPlateBox(i), {
+      addFormationSlotPlate(this, plate, partyAllyPlateBox(i, this.allyLift), {
         occupied: Boolean(id), index: i, groundOffset: partyAllyGroundOffset(),
         recommendedRoles: settingsManager.get().game.formationRoleHint ? RECOMMENDED_SLOT_ROLES[i] : undefined,
       });
@@ -888,38 +886,10 @@ export class PartyScene extends Phaser.Scene {
       visibleAffinityDirections: this.allySlots.filter((slot) => slot.affinityDirection.visible).length,
       selectedCount: members.length,
       // 입력면 중심을 공개해 E2E가 SD 로딩이나 하드코딩 좌표에 의존하지 않게 한다.
-      slots: PREVIEW_COLUMNS.map((x) => ({ x, y: ALLY_ROW - PREVIEW_HEIGHT / 2 })),
+      slots: PREVIEW_COLUMNS.map((x) => ({ x, y: this.allyRow - PREVIEW_HEIGHT / 2 })),
       selectedSlot: this.selectedSlot,
     });
     this.hint.setText(members.length === 3 ? t("party.ready") : t("party.needMore", { count: 3 - members.length }));
-  }
-
-  /**
-   * 방어덱 편성 위 — **상대에게 보이는 내 모습**. 결투장의 전투 프로필과 같은 얼굴(`ProfileAvatar` — 사진·테두리)·
-   * 이름·레벨·티어·점수를 한 판에 세운다. 마주 선 적이 없는 화면이라 그 자리가 통째로 비어 있었다.
-   */
-  private paintDefenseHeader(): void {
-    const H = PARTY_DEFENSE.header;
-    const panel = this.add.container(BASE_WIDTH / 2, H.y);
-    panel.add(drawLayer(this, 0, 0, chipPoints(H.width, H.height), { fill: 0x101720, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.4 }));
-    panel.add(addSectionTitle(this, -H.width / 2, -H.height / 2, t("duel.profile.title"), { size: 28 }));
-    const profile = playerProfileDisplay(session);
-    panel.add(new ProfileAvatar(this, H.avatarX, H.avatarY, {
-      size: H.avatarSize, frameId: profile.frameId,
-      portraitAssetId: profile.avatar?.portraitAssetId, fallback: profileAvatarContent(profile, () => false).fallback,
-    }));
-    const name = squeezeTextToWidth(this.add.text(H.textX, H.nameY, profile.displayName, textStyle({ role: "display", size: 40, color: COLOR.ink })).setOrigin(0, 0.5), 380);
-    panel.add(name);
-    panel.add(this.add.text(name.x + name.displayWidth + 16, H.nameY + 3, `LV.${profile.level}`, textStyle({ role: "display", size: 30, color: COLOR.accentText })).setOrigin(0, 0.5));
-    const duel = session.duel;
-    if (duel) panel.add(this.add.text(H.width / 2 - 40, H.nameY, t("duel.record", { wins: duel.wins, losses: duel.losses }), textStyle({ role: "emphasis", size: 26, color: COLOR.inkDim })).setOrigin(1, 0.5));
-    const score = duel?.score ?? DUEL_START_SCORE;
-    const standing = duelStanding(score);
-    addDuelTierEmblem(this, panel, H.textX + H.emblemSize / 2, H.tierY, H.emblemSize, standing.tier.id);
-    const tone = DUEL_TIER_COLOR[standing.tier.id];
-    const tierName = this.add.text(H.textX + H.emblemSize + 14, H.tierY, `${t(`duel.tier.${standing.tier.id}`)} ${duelDivisionNumeral(standing.division)}`.trim(), textStyle({ role: "display", size: 32, color: tone.text })).setOrigin(0, 0.5);
-    panel.add(tierName);
-    panel.add(this.add.text(tierName.x + tierName.displayWidth + 18, H.tierY + 2, t("duel.score", { score: score.toLocaleString() }), textStyle({ role: "emphasis", size: 26, color: COLOR.ink })).setOrigin(0, 0.5));
   }
 
   /**
@@ -934,7 +904,7 @@ export class PartyScene extends Phaser.Scene {
       const at = order.indexOf(id);
       const chosen = this.blindChoice.includes(id);
       const label = at >= 0 ? t("duel.blind.slot", { index: at + 1 }) : t("duel.blind.open");
-      chrome.add(new Button(this, PREVIEW_COLUMNS[slot], BLIND_CHIP_Y, {
+      chrome.add(new Button(this, PREVIEW_COLUMNS[slot], this.allyRow - BLIND_CHIP_RISE, {
         width: 170, height: 52, label, fontSize: 22, variant: chosen ? "primary" : undefined,
         onClick: () => {
           this.blindChoice = chosen ? this.blindChoice.filter((other) => other !== id)

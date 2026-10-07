@@ -26,6 +26,11 @@ function drawnFramesPerSecond(refreshHz: number, limitRate: number, frames = 600
 }
 
 describe("프레임 제한 경계", () => {
+  it("120 제한은 120Hz에서 매 프레임을 그리고 60Hz에서는 주사율만큼만 그린다", () => {
+    expect(drawnFramesPerSecond(120, frameLimitRate(120))).toBeCloseTo(120, 0);
+    expect(drawnFramesPerSecond(60, frameLimitRate(120))).toBeCloseTo(60, 0);
+  });
+
   it("1000/limit를 그대로 쓰면 60Hz에서 프레임이 절반으로 깎인다", () => {
     // 이 테스트는 고친 값이 아니라 **고치기 전 값**을 세워 둔다. 누가 다시 1000/limit로 되돌리면
     // 어떤 일이 벌어지는지가 여기 남아 있어야 한다(v0.83.0의 실제 증상이다).

@@ -2579,6 +2579,66 @@
 "Nächste Stufe",
 "Следующий этап"
 ],
+"stageComplete.settlement": [
+"结算",
+"สรุปผล",
+"Quyết toán",
+"Penyelesaian",
+"Liquidación",
+"Liquidação",
+"Abrechnung",
+"Итоги"
+],
+"growth.relicEnhance": [
+"遗物强化",
+"อัปเกรดเรลิก",
+"Cường hóa di vật",
+"Perkuat Relik",
+"Mejorar reliquia",
+"Aprimorar relíquia",
+"Relikt stärken",
+"Усилить реликт"
+],
+"growth.runeCraft": [
+"符文打磨",
+"เจียระไนรูน",
+"Mài rune",
+"Asah Rune",
+"Tallar runas",
+"Lapidar runas",
+"Runen veredeln",
+"Огранка рун"
+],
+"growth.party": [
+"更换编队",
+"เปลี่ยนการจัดทีม",
+"Đổi đội hình",
+"Ubah Formasi",
+"Cambiar formación",
+"Mudar formação",
+"Formation ändern",
+"Сменить построение"
+],
+"archaeology.legend.title": [
+"地层色调",
+"สีของชั้นดิน",
+"Màu địa tầng",
+"Warna Strata",
+"Tono del estrato",
+"Tom do estrato",
+"Schichtfarbe",
+"Цвет пласта"
+],
+"content.unlocked": [
+"{content} 已开放!",
+"เปิด {content} แล้ว!",
+"Đã mở {content}!",
+"{content} terbuka!",
+"¡{content} desbloqueado!",
+"{content} desbloqueado!",
+"{content} freigeschaltet!",
+"{content} открыто!"
+],
 "stageComplete.exit": [
 "退出",
 "ออก",

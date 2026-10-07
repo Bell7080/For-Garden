@@ -12,7 +12,8 @@ export const TEXT_SCALES = [1, 1.15, 1.3] as const;
 export const BATTLE_UI_MOTIONS = ["default", "reduced", "off"] as const;
 /** 저장 보정과 렌더 정책이 공유하는 품질·프레임 허용 목록이다. */
 export const GRAPHICS_QUALITIES = ["high", "balanced", "low"] as const;
-export const FRAME_RATE_LIMITS = [30, 60] as const;
+export const FRAME_RATE_LIMITS = [30, 60, 120] as const;
+export type FrameRateLimit = typeof FRAME_RATE_LIMITS[number];
 export type GraphicsQuality = typeof GRAPHICS_QUALITIES[number];
 export type BattleUiMotion = typeof BATTLE_UI_MOTIONS[number];
 

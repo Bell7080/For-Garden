@@ -106,14 +106,21 @@ export type ShopProductIconKey =
  * 재화로 사는 보급품을 가르는 기준이라 현금 상품에는 아무 뜻이 없었다. 여기는 **무엇을 사는가**로
  * 가른다: 묶음(패키지), 지금만 싼 것(특가), 기간·수량이 걸린 것(한정), 그리고 다이아 자체(젬).
  */
-export type PremiumCategory = "package" | "pass" | "deal" | "limited" | "gem";
+export type PremiumCategory = "limited" | "pass" | "deal" | "subscription" | "daily" | "weekly" | "monthly" | "gem";
+
+/** 구독이 하루에 한 번 얹는 몫. 아이템이면 이름은 아이템 정의에서 읽으므로 ID와 수량만 든다. */
+export type PassDailyBonus =
+  | { currency: "gems"; amount: number }
+  | { itemId: string; amount: number };
 
 /** 후원 상품이 부여하는 기간제 또는 영구 계정 권리다. */
 export interface PassBenefitDefinition {
   durationDays: number | null;
-  instantAdRewards: true;
-  usesStandardAdRewardPolicy: true;
-  dailyBonus: { currency: "gems"; amount: number };
+  /** 광고 보상을 즉시 받는 후원 권리. 레이드 구독처럼 광고와 무관한 구독은 적지 않는다. */
+  instantAdRewards?: true;
+  usesStandardAdRewardPolicy?: true;
+  /** 이용 중 하루에 한 번 받는 몫. 재화(다이아) 또는 가방 아이템 하나. */
+  dailyBonus: PassDailyBonus;
   /**
    * 광고를 없애고, 광고 제거 멤버십 전용 조작을 연다(던전 x3 배율).
    *

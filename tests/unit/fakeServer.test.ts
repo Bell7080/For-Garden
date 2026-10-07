@@ -848,6 +848,18 @@ describe("FakeServer 광고 보상 경계", () => {
     expect(state.dailyAdRewards).toEqual({ date: "2026-08-22", claimsBySlot: { "daily-stamina": 1 }, requestIds: ["ad-request-1"] });
   });
 
+  it("고고학 원석 100 · 전리품 증표 5+5 광고는 하루 세 번까지 지갑에 들어간다", async () => {
+    const state = makeSession();
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-22T12:00:00Z") });
+    const raw = state.wallet.rawStone; const sigil = state.wallet.raidSigil; const record = state.wallet.salvageRecord;
+    for (let index = 0; index < 3; index += 1) {
+      await server.claimAdReward({ slotId: "archaeology-ad", verificationToken: "verified:archaeology-ad", requestId: `raw-${index}` });
+      await server.claimAdReward({ slotId: "loot-ad", verificationToken: "verified:loot-ad", requestId: `loot-${index}` });
+    }
+    expect(state.wallet).toMatchObject({ rawStone: raw + 300, raidSigil: sigil + 15, salvageRecord: record + 15 });
+    await expect(server.claimAdReward({ slotId: "loot-ad", verificationToken: "verified:loot-ad", requestId: "loot-over" })).rejects.toMatchObject({ code: "AD_DAILY_LIMIT" });
+  });
+
   it("잘못된 토큰·중복 ID·일일 초과는 지급 없이 거부하고 다음 UTC 일자에 초기화한다", async () => {
     const state = makeSession(); let now = new Date("2026-08-22T12:00:00Z");
     const server = new FakeServer(state, { latencyMs: 0, now: () => now });
@@ -1230,10 +1242,10 @@ describe("플랫폼 결제 지급 확정", () => {
     const { state, server } = open();
     const first = await buy(server, "premium-gems-small", "tx-a");
     expect(first.firstBonusApplied).toBe(true);
-    expect(state.wallet.gems).toBe(660);
+    expect(state.wallet.gems).toBe(700);
     const second = await buy(server, "premium-gems-small", "tx-b");
     expect(second.firstBonusApplied).toBe(false);
-    expect(state.wallet.gems).toBe(990);
+    expect(state.wallet.gems).toBe(1_050);
   });
 
   it("같은 거래는 요청을 다시 보내도 두 번 지급하지 않는다", async () => {
@@ -1242,7 +1254,7 @@ describe("플랫폼 결제 지급 확정", () => {
     const first = await server.fulfillPlatformPurchase({ verificationId: verified.verificationId, requestId: "f1" });
     const again = await server.fulfillPlatformPurchase({ verificationId: verified.verificationId, requestId: "f2" });
     expect(again.firstBonusApplied).toBe(first.firstBonusApplied);
-    expect(state.wallet.gems).toBe(660);
+    expect(state.wallet.gems).toBe(700);
   });
 
   it("한 번만 살 수 있는 패키지는 두 번째 거래를 거절하고 재화를 건드리지 않는다", async () => {

@@ -24,7 +24,8 @@ export function premiumGemValue(product: Pick<ProductDto, "grants" | "passBenefi
   const grants = pass ? pass.milestones.flatMap((milestone) => milestone.rewards) : product.grants;
   const items = grants.reduce((sum, grant) => grant.kind === "item" ? sum + (PREMIUM_ITEM_GEM_VALUE[grant.itemId] ?? 0) * grant.amount : sum, 0);
   const daily = product.passBenefit?.dailyBonus;
-  const stipend = daily && daily.currency === "gems" ? daily.amount * (product.passBenefit?.durationDays ?? 0) : 0;
+  const days = product.passBenefit?.durationDays ?? 0;
+  const stipend = !daily ? 0 : "currency" in daily ? daily.amount * days : (PREMIUM_ITEM_GEM_VALUE[daily.itemId] ?? 0) * daily.amount * days;
   return tradeGemValue(grants) + items + stipend;
 }
 

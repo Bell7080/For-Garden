@@ -36,7 +36,7 @@ export interface GameSettings {
     /** 파티클·후처리·전신 렌더 배율만 결정하며 `presentationPolicy`가 유일한 소비 경계다. */
     graphicsQuality: "high" | "balanced" | "low";
     /** Phaser 런타임 시간 설정에서만 프레임 제한으로 소비하며 코어 dt와 배속은 바꾸지 않는다. */
-    frameRateLimit: 30 | 60;
+    frameRateLimit: 30 | 60 | 120;
   };
   /** `reduceFlashes`와 `colorAssist`는 공용 효과·의미 표식 경계에서 소비한다. 필수 대사는 숨기지 않는다. */
   accessibility: { textScale: 1 | 1.15 | 1.3; reduceMotion: boolean; reduceFlashes: boolean; colorAssist: boolean };

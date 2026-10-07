@@ -20,7 +20,6 @@ export const SHOP_JA = {
 
   "shop.premium.title": "プレミアム",
   "shop.premium.forever": "永久",
-  "shop.premium.duration": "有効期間 {days}日",
   "shop.premium.remaining": "残りの購入 {remaining}/{limit}",
   "shop.premium.purchased": "購入が完了しました。",
   "shop.premium.daily": "毎日",

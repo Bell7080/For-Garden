@@ -62,8 +62,8 @@ describe("프리미엄 목록 갈래", () => {
     }
   });
 
-  it("는 갈래를 적지 않은 상품도 목록에서 사라지지 않게 패키지로 본다", () => {
+  it("는 갈래를 적지 않은 상품도 목록에서 사라지지 않게 특가로 본다", () => {
     // 사라진 상품은 화면 어디에도 없어 빠뜨린 것을 알아챌 방법이 없다.
-    expect(premiumCategoryOf({ } as ProductDto)).toBe("package");
+    expect(premiumCategoryOf({ } as ProductDto)).toBe("deal");
   });
 });

@@ -19,7 +19,6 @@ export const SHOP_RU = {
   "shop.purchase.failed": "Покупка не удалась.",
   "shop.premium.title": "Премиум",
   "shop.premium.forever": "Навсегда",
-  "shop.premium.duration": "Действует {days} дн.",
   "shop.premium.remaining": "Осталось покупок {remaining}/{limit}",
   "shop.premium.purchased": "Покупка завершена.",
   "shop.premium.daily": "Ежедневно",

@@ -19,7 +19,6 @@ export const SHOP_VI = {
   "shop.purchase.failed": "Mua thất bại.",
   "shop.premium.title": "Cao cấp",
   "shop.premium.forever": "Vĩnh viễn",
-  "shop.premium.duration": "Hiệu lực {days} ngày",
   "shop.premium.remaining": "Lượt mua còn {remaining}/{limit}",
   "shop.premium.purchased": "Đã mua xong.",
   "shop.premium.daily": "Mỗi ngày",

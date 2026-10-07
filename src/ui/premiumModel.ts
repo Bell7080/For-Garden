@@ -14,12 +14,12 @@ export function premiumModel(products: readonly ProductDto[]): ProductDto[] {
 /**
  * 그 상품이 어느 라벨 아래 서는가.
  *
- * **갈래를 적지 않은 상품은 패키지로 본다.** 카탈로그에 새 상품을 넣으면서 갈래를 빠뜨려도
+ * **갈래를 적지 않은 상품은 특가로 본다.** 카탈로그에 새 상품을 넣으면서 갈래를 빠뜨려도
  * 목록에서 사라지지 않게 하려는 것이다 — 사라진 상품은 화면 어디에도 없어 빠뜨린 것을
  * 알아챌 방법이 없다.
  */
 export function premiumCategoryOf(product: ProductDto): PremiumCategory {
-  return product.premiumCategory ?? "package";
+  return product.premiumCategory ?? "deal";
 }
 
 /** 라벨은 storefront 검증을 통과한 상품 중 그 갈래만 새 배열로 반환한다. */
@@ -34,6 +34,8 @@ export interface PremiumGrantTile {
   amount: number;
   /** 패스가 매일 얹는 몫 — 액자 모서리에 「매일」 표식이 선다. */
   daily?: boolean;
+  /** 패스 카드에서 이 액자가 사는 순간(`instant`)의 몫인지 패스 길(`pass`)의 몫인지 말하는 꼬리표. */
+  badge?: "instant" | "pass";
 }
 
 /**
@@ -46,11 +48,18 @@ export interface PremiumGrantTile {
 export function premiumGrantTiles(product: Pick<ProductDto, "grants" | "passBenefit"> & { id?: string }): PremiumGrantTile[] {
   // 진행 패스는 사는 순간 주는 것이 없고 길의 마디가 준다 — 카드에는 유료 칸 전체의 합을 세워 무엇을 사는지 말한다.
   const pass = product.id === undefined ? undefined : progressPassForProduct(product.id);
-  if (pass) return progressPassPaidTiles(pass.milestones.flatMap((milestone) => milestone.rewards));
+  if (pass) {
+    // 즉시 보상 + 패스 보상 — 사는 순간 받는 몫이 먼저, 길 전체의 합이 그 뒤에 선다.
+    const instant: PremiumGrantTile[] = productGrantsToRewardItems(product.grants).flatMap((item) =>
+      typeof item.icon === "string" ? [{ icon: item.icon, amount: item.amount, badge: "instant" as const }] : []);
+    const track = progressPassPaidTiles(pass.milestones.flatMap((milestone) => milestone.rewards)).map((tile) => ({ ...tile, badge: "pass" as const }));
+    return [...instant, ...track];
+  }
   const tiles: PremiumGrantTile[] = productGrantsToRewardItems(product.grants).flatMap((item) =>
     typeof item.icon === "string" ? [{ icon: item.icon, amount: item.amount }] : []);
   const daily = product.passBenefit?.dailyBonus;
-  if (daily) tiles.push(...currencyRecordToRewardItems({ [daily.currency]: daily.amount }).map((item) => ({ icon: item.icon as string, amount: item.amount, daily: true })));
+  if (daily && "currency" in daily) tiles.push(...currencyRecordToRewardItems({ [daily.currency]: daily.amount }).map((item) => ({ icon: item.icon as string, amount: item.amount, daily: true })));
+  if (daily && "itemId" in daily) tiles.push(...grantTiles([{ kind: "item", itemId: daily.itemId, name: daily.itemId, amount: daily.amount }]).map((tile) => ({ ...tile, daily: true })));
   return sortByRewardPriority(tiles, (tile) => rewardKeyOfIcon(tile.icon));
 }
 

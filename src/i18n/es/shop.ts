@@ -19,7 +19,6 @@ export const SHOP_ES = {
   "shop.purchase.failed": "La compra falló.",
   "shop.premium.title": "Premium",
   "shop.premium.forever": "Permanente",
-  "shop.premium.duration": "Válido {days} días",
   "shop.premium.remaining": "Compras restantes {remaining}/{limit}",
   "shop.premium.purchased": "Compra completada.",
   "shop.premium.daily": "Diario",

@@ -19,12 +19,12 @@ export const BASE_HEIGHT = 1920;
 export const FRAME_LIMIT_MARGIN = 0.9;
 
 /** 기기 주사율과 무관하게 이 제한에서 실제로 쓸 누적 경계(ms). */
-export function frameLimitRate(limit: 30 | 60): number {
+export function frameLimitRate(limit: 30 | 60 | 120): number {
   return (1000 / limit) * FRAME_LIMIT_MARGIN;
 }
 
 /** Phaser TimeStep의 단일 런타임 경계에서만 렌더/업데이트 호출 빈도를 바꾼다. */
-export function applyFrameRateLimit(game: Phaser.Game, limit: 30 | 60): void {
+export function applyFrameRateLimit(game: Phaser.Game, limit: 30 | 60 | 120): void {
   // TimeStep은 공개 setter가 없으나 시작 시 같은 필드로 limit를 구성하므로 이 어댑터 밖에서 내부값을 만지지 않는다.
   const loop = game.loop as Phaser.Core.TimeStep & { fpsLimit: number; hasFpsLimit: boolean; _limitRate: number };
   loop.fpsLimit = limit;

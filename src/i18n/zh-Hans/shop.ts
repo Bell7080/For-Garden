@@ -19,7 +19,6 @@ export const SHOP_ZH_HANS = {
   "shop.purchase.failed": "购买失败。",
   "shop.premium.title": "高级",
   "shop.premium.forever": "永久",
-  "shop.premium.duration": "有效期{days}天",
   "shop.premium.remaining": "剩余可购 {remaining}/{limit}",
   "shop.premium.purchased": "购买完成。",
   "shop.premium.daily": "每日",

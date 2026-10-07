@@ -34,7 +34,7 @@ export const PREMIUM_TITLE = { size: 34 } as const;
  * 다섯(패키지·패스·특가·한정·다이아)이 나란히 서므로 칸이 상점(셋)보다 좁다. 하단 탭 바로 위에 서고,
  * 우하단에는 뒤로가기가 없는 화면이라(하단 탭이 그 몫을 한다) 왼쪽에 붙이지 않고 화면 폭을 고르게 나눈다.
  */
-export const PREMIUM_TAB_ROW = { width: 200, height: 82, gap: 8, bottom: LOBBY_NAV_TOP - 22 } as const;
+export const PREMIUM_TAB_ROW = { width: 124, height: 82, gap: 6, bottom: LOBBY_NAV_TOP - 22 } as const;
 
 /**
  * 상품 칸 한 장.
@@ -170,7 +170,7 @@ export function premiumGridContentHeight(count: number, kind: PremiumListKind = 
   return rows * (height + PREMIUM_CARD.gapY) - PREMIUM_CARD.gapY;
 }
 
-/** 라벨 한 장의 중심. 다섯이 화면 폭을 고르게 나눠 갖는다. */
+/** 라벨 한 장의 중심. 여덟이 화면 폭을 고르게 나눠 갖는다. */
 export function premiumTabSpot(index: number, count: number): { x: number; y: number } {
   const { width, height, gap, bottom } = PREMIUM_TAB_ROW;
   const total = width * count + gap * (count - 1);

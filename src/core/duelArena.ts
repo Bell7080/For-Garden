@@ -84,6 +84,29 @@ export function duelStreakBonus(streak: number): number {
 /** 한 판의 투사의 휘장. 이긴 판만 받는다 — 진 판은 점수가 깎이는 것이 결말이다. */
 export const DUEL_BATTLE_REWARD = { win: 20, loss: 0 } as const;
 
+/**
+ * 처음부터 세워 두는 방어덱 — 신규 계정의 기본 편성과 같은 셋(파루아·토리카·도디). 방어덱을 비워 두면
+ * 아무도 나를 칠 수 없어 「안 세우면 안 맞는다」는 길이 생기므로, 비면 늘 이 셋으로 채운다.
+ */
+export const DUEL_DEFAULT_DEFENSE: readonly string[] = ["parua", "torika", "dodo"];
+
+/**
+ * 방어전 — 표본 상대가 내 방어덱을 치는 판. 실제 서버가 생기기 전까지 서버가 시간에 맞춰 대신 굴린다.
+ *
+ * `intervalHours`마다 한 판이 들어오고, 오래 비웠다 와도 한 번에 `catchUpLimit`판까지만 쌓인다(그 너머는
+ * 버린다). 이기면 `win`만큼 오르고 지면 `loss`만큼 **소폭** 깎인다 — 공격 판보다 작게 두는 이유는 고를 수
+ * 없는 판이라서다. 이길 확률은 방어덱 전투력의 몫(`mine / (mine + theirs)`)을 `minWinChance`~`maxWinChance`로
+ * 자른 값이다. 연승·도전권·싸운 상대와는 무관하다.
+ */
+export const DUEL_DEFENSE_SIM = { intervalHours: 4, catchUpLimit: 3, win: 5, loss: 3, minWinChance: 0.25, maxWinChance: 0.85 } as const;
+
+/** 방어전 한 판을 이길 확률. 전투력이 둘 다 0이면 반반이다. */
+export function duelDefenseWinChance(mine: number, theirs: number): number {
+  const total = Math.max(0, mine) + Math.max(0, theirs);
+  const share = total > 0 ? Math.max(0, mine) / total : 0.5;
+  return clamp(share, DUEL_DEFENSE_SIM.minWinChance, DUEL_DEFENSE_SIM.maxWinChance);
+}
+
 /** 시즌 길이와 기준점(월요일 00:00 UTC). 시즌 번호는 이 기준에서 몇 번째 28일인가다. */
 export const DUEL_SEASON_DAYS = 28;
 const DUEL_SEASON_EPOCH = Date.UTC(2026, 0, 5);

@@ -28,8 +28,9 @@ import type { ProductListResponse, PurchaseProductRequest, PurchaseProductRespon
 import { totalGrantAmount } from "../core/purchase";
 import { getRelicSkin } from "../data/relicSkins";
 import { applyDuelScore, DUEL_BATTLE_REWARD, DUEL_MAX_BLIND, DUEL_OPPONENT_COUNT, duelStreakBonus, duelBlindCount, duelBlindOrder, duelExtraAttemptPrice, duelHiddenRelicIds, duelNewlyReachedTiers, duelAllOpponentsFought, duelFreeRefreshesLeft, duelRefreshPrice, duelScoreDelta, duelTierRose, duelSeasonEndsAt, duelStanding, duelTier, getDuelTier, pickDuelOpponents } from "../core/duelArena";
-import { createEmptyDuelState, DUEL_HISTORY_LIMIT, duelAttemptsLeft, rollDuelPeriods, type DuelHistoryEntry, type DuelHistoryUnit, type DuelState } from "../core/duelState";
+import { DUEL_HISTORY_LIMIT, normalizeDuelState, duelAttemptsLeft, rollDuelPeriods, type DuelHistoryEntry, type DuelHistoryUnit, type DuelState } from "../core/duelState";
 import { duelNpcPool, findDuelNpc } from "../core/duelNpcPool";
+import { simulateDuelDefenses } from "../core/duelDefense";
 import { combatPower } from "../core/combatPower";
 import type { ClaimDuelSeasonRewardResponse, DuelRankingResponse, DuelStatusResponse, EnterDuelRequest, EnterDuelResponse, ResolveDuelRequest, ResolveDuelResponse, SetDuelDefenseRequest } from "./contracts";
 import { WALLET_CAPS } from "../data/economy";
@@ -62,7 +63,7 @@ import { paidStaminaApplied, settleStamina, STAMINA_HOLD_LIMIT, staminaMaxForPla
 import { InventoryManager } from "../managers/InventoryManager";
 import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, MarkRuneRequest, MarkRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse } from "./contracts";
 import type { FulfillPlatformPurchaseRequest, FulfillPlatformPurchaseResponse } from "./contracts";
-import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
+import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, ClaimPassDailyBonusRequest, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
 import { excavationHarvestStatus, excavationProductionDisplayModel, excavationStorageLimitSeconds, harvestIdleExcavation, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
 import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest, InventoryResponse, UseConsumableRequest, UseConsumableResponse } from "./contracts";
 import type { EnterRaidRequest, EnterRaidResponse, RaidDto, RaidListResponse, RaidRewardDto, SettleRaidRequest, SettleRaidResponse, SubmitRaidDamageRequest, SubmitRaidDamageResponse, SummonRaidRequest, SummonRaidResponse } from "./contracts";
@@ -1063,6 +1064,32 @@ export class FakeServer implements GameApi {
     return { ...this.snapshot(), slotId: slot.id, reward: slot.reward, dailyClaims: nextClaims, dailyRemaining: slot.dailyLimitUtc - nextClaims, granted, weeklyRemaining, excavation: this.cloneExcavation(applied.excavation), serverTime: now.toISOString() };
   }
 
+  /** 활성 구독이 매일 얹는 몫을 UTC 하루에 한 번 지급한다. 광고와 무관하게 권리만 확인한다. */
+  async claimPassDailyBonus(request: ClaimPassDailyBonusRequest): Promise<PurchaseProductResponse> {
+    await this.delay();
+    const now = this.now(); const date = now.toISOString().slice(0, 10);
+    const product = PRODUCTS.find(({ id }) => id === request.productId);
+    if (!product?.passBenefit) throw new GameApiError("PASS_NOT_FOUND", "구독 상품을 찾을 수 없습니다.");
+    const entitlement = [...this.entitlements.values()].find((e) => e.productId === product.id && (e.expiresAt === null || now.getTime() < new Date(e.expiresAt).getTime()));
+    if (!entitlement) throw new GameApiError("PASS_NOT_FOUND", "활성화된 구독이 없습니다.");
+    if (this.bonusClaimDates.get(entitlement.entitlementId) === date) throw new GameApiError("PASS_BONUS_CLAIMED", "오늘 몫을 이미 받았습니다.");
+    const bonus = product.passBenefit.dailyBonus;
+    const wallet = { ...this.state.wallet };
+    let items = this.state.itemInventory.map((entry) => ({ ...entry }));
+    let granted: ProductDefinition["grants"][number];
+    if ("currency" in bonus) {
+      wallet.gems = Math.min(WALLET_CAPS.gems, wallet.gems + bonus.amount);
+      granted = { kind: "currency", currency: "gems", amount: bonus.amount };
+    } else {
+      items = this.grantItem(items, bonus.itemId, bonus.amount, now).inventory;
+      granted = { kind: "item", itemId: bonus.itemId, name: findItem(bonus.itemId)?.name ?? bonus.itemId, amount: bonus.amount };
+    }
+    this.persist({ ...this.state, wallet, itemInventory: items });
+    this.state.wallet = wallet; this.state.itemInventory = items;
+    this.bonusClaimDates.set(entitlement.entitlementId, date);
+    return { ...this.snapshot(), productId: product.id, quantity: 1, granted: [granted], grantedRunes: [], remaining: 0 };
+  }
+
   /** 요청 ID와 플랫폼 거래 ID를 모두 고유 키로 취급해 같은 영수증 검증을 반복 실행하지 않는다. */
   async verifyPurchaseReceipt(request: VerifyPurchaseReceiptRequest): Promise<VerifyPurchaseReceiptResponse> {
     await this.delay();
@@ -1168,7 +1195,8 @@ export class FakeServer implements GameApi {
     const current = this.state.dailyAdRewards.date === date ? this.state.dailyAdRewards : { date, claimsBySlot: {}, requestIds: [] };
     const dailyClaims = current.claimsBySlot[slot.id] ?? 0;
     if (dailyClaims >= slot.dailyLimitUtc) throw new GameApiError("AD_DAILY_LIMIT", "오늘 받을 수 있는 광고 보상을 모두 받았습니다.");
-    const bonus = this.bonusClaimDates.get(stored.entitlementId) === date ? undefined : product.passBenefit.dailyBonus;
+    const rawBonus = product.passBenefit.dailyBonus;
+    const bonus = this.bonusClaimDates.get(stored.entitlementId) === date || !("currency" in rawBonus) ? undefined : rawBonus;
     const walletBefore = { ...this.state.wallet };
     const applied = this.applyAdReward(slot.reward, now); const nextWallet = applied.wallet;
     if (bonus) nextWallet.gems += bonus.amount;
@@ -1639,16 +1667,22 @@ export class FakeServer implements GameApi {
    * 다섯째 상대와의 판은 입장에서 싸운 것으로 적히므로 그 판이 끝난 뒤의 첫 조회가 새 상대를 세운다.
    */
   private duelNow(now: Date): DuelState {
-    const current = this.state.duel ?? createEmptyDuelState();
+    const current = this.state.duel ?? normalizeDuelState(undefined, [...this.state.owned]);
     let next = rollDuelPeriods(current, now);
     const pool = duelNpcPool(next.seasonId);
     if (next.candidateIds.length !== DUEL_OPPONENT_COUNT || next.candidateIds.some((id) => !pool.some((npc) => npc.id === id))
       || duelAllOpponentsFought(next.candidateIds, next.foughtIds)) {
       next = { ...next, candidateIds: pickDuelOpponents(pool, next.score, this.random, next.candidateIds).map(({ id }) => id), foughtIds: [] };
     }
-    if (JSON.stringify(next) !== JSON.stringify(current)) {
-      this.persist({ ...this.state, duel: next });
-      this.state.duel = next;
+    // 그사이 들어온 방어전을 굴린다. 처음 닿은 티어의 젬은 공격 판과 같이 곧바로 지갑에 든다.
+    const defensePower = next.defense.reduce((sum, relicId) => sum + this.duelRelicPower(relicId), 0);
+    const defended = simulateDuelDefenses(next, now, pool, defensePower, this.random);
+    next = defended.state;
+    const wallet = { ...this.state.wallet };
+    wallet.gems += Math.max(0, Math.min(defended.reachedTiers.reduce((sum, tier) => sum + tier.firstReachGems, 0), WALLET_CAPS.gems - wallet.gems));
+    if (JSON.stringify(next) !== JSON.stringify(current) || wallet.gems !== this.state.wallet.gems) {
+      this.persist({ ...this.state, wallet, duel: next });
+      this.state.wallet = wallet; this.state.duel = next;
     }
     return next;
   }
@@ -1689,7 +1723,7 @@ export class FakeServer implements GameApi {
       nextAttemptPrice: duelExtraAttemptPrice(duel.attemptsPurchased) ?? null,
       nextRefreshPrice: duelRefreshPrice(duel.refreshesUsed), freeRefreshesLeft: duelFreeRefreshesLeft(duel.refreshesUsed),
       blindCount, opponents,
-      attack: [...duel.attack], defense: [...duel.defense], blindChoice: [...duel.blindChoice],
+      attack: [...duel.attack], defense: [...duel.defense], defenseIsDefault: !duel.defenseCustomized, blindChoice: [...duel.blindChoice],
       defenseBlindOrder: duelBlindOrder(duel.defense.map((relicId) => ({ relicId, power: this.duelRelicPower(relicId) })), duel.blindChoice),
       pendingSeasonReward: reward && rewardTier ? { ...reward, duelEmblem: rewardTier.seasonReward.duelEmblem, gems: rewardTier.seasonReward.gems } : null,
       history: duel.history.map((entry) => ({ ...entry, ...(entry.opponentUnits ? { opponentUnits: entry.opponentUnits.map((unit) => ({ ...unit })) } : {}) })),
@@ -1749,7 +1783,7 @@ export class FakeServer implements GameApi {
     const now = this.now();
     this.assertDuelTeam(request.relicIds);
     const blindChoice = [...new Set(request.blindChoice)].filter((id) => request.relicIds.includes(id)).slice(0, DUEL_MAX_BLIND);
-    const next: DuelState = { ...this.duelNow(now), defense: [...request.relicIds], blindChoice };
+    const next: DuelState = { ...this.duelNow(now), defense: [...request.relicIds], defenseCustomized: true, blindChoice };
     this.persist({ ...this.state, duel: next });
     this.state.duel = next;
     return this.duelStatusDto(next, now);
@@ -2036,6 +2070,7 @@ export class FakeServer implements GameApi {
         ...product, remaining, purchasable: remaining > 0, disabledReason: remaining <= 0 ? t("error.purchase.limit") : undefined,
         ...(this.runePartOf(product, now) !== undefined ? { runePart: this.runePartOf(product, now) } : {}),
         ...(product.firstPurchaseBonus ? { firstBonusAvailable: this.firstBonusAvailable(product) } : {}),
+        ...this.subscriptionInfo(product, now),
       };
     });
     return { products, serverTime: now.toISOString() };
@@ -2057,10 +2092,12 @@ export class FakeServer implements GameApi {
     if (owningEvent) this.assertEventActive(owningEvent, now);
     if (!this.isVisible(product, now)) throw new GameApiError("PRODUCT_NOT_VISIBLE", "현재 노출 기간이 아닌 상품입니다.");
     // FakeServer는 플랫폼 성공이나 영수증을 만들지 않는다. 유료 지급은 실제 검증 서버의 책임이다.
-    if (product.acquisition.kind !== "currency" && product.acquisition.kind !== "item") throw new GameApiError("ACQUISITION_FLOW_REQUIRED", "상품 획득 방식의 전용 확정 절차가 필요합니다.");
+    if (product.acquisition.kind !== "currency" && product.acquisition.kind !== "item" && product.acquisition.kind !== "free") throw new GameApiError("ACQUISITION_FLOW_REQUIRED", "상품 획득 방식의 전용 확정 절차가 필요합니다.");
     const remaining = this.remaining(product, now);
     if (quantity > remaining) throw new GameApiError("PURCHASE_LIMIT_REACHED", "남은 구매 제한을 초과했습니다.");
-    const totalPrice = totalGrantAmount(product.acquisition.amount, quantity);
+    // 무료 보급은 값이 없고 주기마다 한 번만 받는다.
+    if (product.acquisition.kind === "free" && quantity !== 1) throw new GameApiError("INVALID_PURCHASE_QUANTITY", "구매 수량이 올바르지 않습니다.");
+    const totalPrice = product.acquisition.kind === "free" ? 0 : totalGrantAmount(product.acquisition.amount, quantity);
     if (!Number.isSafeInteger(totalPrice)) throw new GameApiError("INVALID_PURCHASE_QUANTITY", "구매 수량이 올바르지 않습니다.");
     // 값은 지갑에서 나가거나 재고에서 나간다. 두 갈래 모두 **지급 전에** 모자람을 먼저 거절해
     // 부분 차감을 남기지 않는다.
@@ -2423,6 +2460,14 @@ export class FakeServer implements GameApi {
     const record = this.state.productPurchases[product.id];
     const count = record?.periodKey === this.productPeriodKey(product, now) ? record.count : 0;
     return Math.max(0, product.purchaseLimit - count);
+  }
+
+  /** 활성 구독의 만료 시각과 오늘 몫 수령 여부. 구독이 아니거나 비활성이면 비어 있다. */
+  private subscriptionInfo(product: ProductDefinition, now: Date): { subscription?: { expiresAt: string | null; dailyBonusClaimed: boolean } } {
+    if (!product.passBenefit) return {};
+    const entitlement = [...this.entitlements.values()].find((e) => e.productId === product.id && (e.expiresAt === null || now.getTime() < new Date(e.expiresAt).getTime()));
+    if (!entitlement) return {};
+    return { subscription: { expiresAt: entitlement.expiresAt, dailyBonusClaimed: this.bonusClaimDates.get(entitlement.entitlementId) === now.toISOString().slice(0, 10) } };
   }
 
   /** 그 패스 상품의 권리가 지금도 유효한가. */
@@ -2798,6 +2843,10 @@ export class FakeServer implements GameApi {
     if (reward.kind === "currency") {
       // 스테미나 광고도 레벨 상한을 넘어 채운다. 깎는 것은 계정 보유 끝뿐이다.
       wallet[reward.currency] = Math.min(WALLET_CAPS[reward.currency], wallet[reward.currency] + reward.amount);
+      return { wallet, excavation, itemInventory };
+    }
+    if (reward.kind === "currencies") {
+      for (const grant of reward.grants) wallet[grant.currency] = Math.min(WALLET_CAPS[grant.currency], wallet[grant.currency] + grant.amount);
       return { wallet, excavation, itemInventory };
     }
     if (reward.kind === "quick_expedition") {

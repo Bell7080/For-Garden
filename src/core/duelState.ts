@@ -1,5 +1,5 @@
 import {
-  DUEL_DAILY_ATTEMPTS, DUEL_OPPONENT_COUNT, DUEL_START_SCORE, DUEL_TIERS, duelDayKey, duelSeasonId, duelSeasonResetScore, duelTier, getDuelTier, type DuelTierId,
+  DUEL_DAILY_ATTEMPTS, DUEL_DEFAULT_DEFENSE, DUEL_OPPONENT_COUNT, DUEL_START_SCORE, DUEL_TIERS, duelDayKey, duelSeasonId, duelSeasonResetScore, duelTier, getDuelTier, type DuelTierId,
 } from "./duelArena";
 
 /**
@@ -25,6 +25,8 @@ export interface DuelHistoryEntry {
   opponentTierId?: DuelTierId;
   opponentFavoriteRelicId?: string;
   opponentUnits?: DuelHistoryUnit[];
+  /** 표본 상대가 내 방어덱을 친 판(`won`은 내가 막아 냈는가)이면 `"defense"`. 없으면 내가 건 공격 판이다. */
+  side?: "defense";
 }
 
 export interface DuelHistoryUnit { relicId: string; level: number; }
@@ -59,8 +61,15 @@ export interface DuelState {
   foughtIds: string[];
   /** 마지막으로 싸운 공격덱. 다음 편성의 시작값이다. */
   attack: string[];
-  /** 게시한 방어덱. 비어 있으면 아직 세우지 않았다. */
+  /**
+   * 게시한 방어덱. 비지 않는다 — 비면 기본 셋(`DUEL_DEFAULT_DEFENSE`) 중 보유한 렐릭으로 채운다. 아무도 칠 수
+   * 없는 빈 덱으로 방어전을 피하는 길을 막는다.
+   */
   defense: string[];
+  /** 방어덱을 직접 세운 적이 있는가. 기본 셋 그대로면 `false`이고 결투장의 [방어] 버튼이 빨간 점을 단다. */
+  defenseCustomized: boolean;
+  /** 방어전을 마지막으로 굴린 시각. 빈 값은 아직 시계를 세우지 않았다(첫 조회가 지금으로 세운다). */
+  defenseSimAt: string;
   /** 방어덱에서 먼저 가릴 렐릭. 비어 있으면 전투력 순으로 저절로 가린다. */
   blindChoice: string[];
   pendingSeasonReward: DuelSeasonRewardPending | null;
@@ -84,7 +93,7 @@ export function createEmptyDuelState(): DuelState {
   return {
     seasonId: "", score: DUEL_START_SCORE, wins: 0, losses: 0, reachedTierIds: [],
     dayKey: "", attemptsUsed: 0, attemptsPurchased: 0, attemptsFromAds: 0, refreshesUsed: 0, candidateIds: [], foughtIds: [],
-    attack: [], defense: [], blindChoice: [], pendingSeasonReward: null, history: [],
+    attack: [], defense: [...DUEL_DEFAULT_DEFENSE], defenseCustomized: false, defenseSimAt: "", blindChoice: [], pendingSeasonReward: null, history: [],
     winStreak: 0, bestStreak: 0, seasonBestScore: DUEL_START_SCORE, lastSeasonTierId: null, lastSeasonScore: 0,
   };
 }
@@ -104,11 +113,11 @@ const stringList = (value: unknown, limit: number): string[] =>
 
 /**
  * 저장에서 읽은 값을 받아들일 수 있는 모양으로 좁힌다. 결투장 도입(v47) 전 저장은 빈 상태로
- * 시작한다 — 잃을 기록이 없다. 보유하지 않은 렐릭은 편성에서 걷는다.
+ * 시작한다 — 잃을 기록이 없다. 보유하지 않은 렐릭은 편성에서 걷고, 방어덱이 비면 기본 셋으로 채운다.
  */
 /** 전적 한 줄의 덧붙은 칸(티어·얼굴·덱)은 읽을 수 있을 때만 남긴다 — 옛 기록은 그 칸 없이 선다. */
 function normalizeHistoryEntry(entry: DuelHistoryEntry): DuelHistoryEntry {
-  const { opponentTierId, opponentFavoriteRelicId, opponentUnits, ...base } = entry;
+  const { opponentTierId, opponentFavoriteRelicId, opponentUnits, side, ...base } = entry;
   const units = Array.isArray(opponentUnits)
     ? opponentUnits.filter((unit): unit is DuelHistoryUnit => !!unit && typeof unit.relicId === "string" && isCount(unit.level)).slice(0, 3).map(({ relicId, level }) => ({ relicId, level }))
     : [];
@@ -117,6 +126,7 @@ function normalizeHistoryEntry(entry: DuelHistoryEntry): DuelHistoryEntry {
     ...(typeof opponentTierId === "string" && getDuelTier(opponentTierId) ? { opponentTierId } : {}),
     ...(typeof opponentFavoriteRelicId === "string" ? { opponentFavoriteRelicId } : {}),
     ...(units.length > 0 ? { opponentUnits: units } : {}),
+    ...(side === "defense" ? { side } : {}),
   };
 }
 
@@ -128,7 +138,11 @@ export function normalizeDuelState(value: unknown, ownedRelicIds: readonly strin
   const history = Array.isArray(source.history) ? source.history.filter((entry): entry is DuelHistoryEntry =>
     !!entry && typeof entry.at === "string" && typeof entry.opponentName === "string" && Number.isSafeInteger(entry.opponentScore)
     && typeof entry.won === "boolean" && Number.isSafeInteger(entry.delta)).slice(0, DUEL_HISTORY_LIMIT).map(normalizeHistoryEntry) : [];
-  const defense = team(source.defense);
+  const savedDefense = team(source.defense);
+  // 비어 있으면 기본 셋으로 채운다. 이 칸이 생기기 전(v49) 저장은 덱을 세워 두었으면 직접 세운 것으로 본다.
+  const defense = savedDefense.length > 0 ? savedDefense : DUEL_DEFAULT_DEFENSE.filter((id) => owned.has(id));
+  const defenseCustomized = savedDefense.length > 0 && (typeof source.defenseCustomized === "boolean" ? source.defenseCustomized : true);
+  const defenseSimAt = typeof source.defenseSimAt === "string" && Number.isFinite(Date.parse(source.defenseSimAt)) ? source.defenseSimAt : "";
   const candidateIds = stringList(source.candidateIds, DUEL_OPPONENT_COUNT);
   const score = isCount(source.score) ? source.score : DUEL_START_SCORE;
   const lastSeasonTierId = typeof source.lastSeasonTierId === "string" && getDuelTier(source.lastSeasonTierId) ? source.lastSeasonTierId as DuelTierId : null;
@@ -147,6 +161,8 @@ export function normalizeDuelState(value: unknown, ownedRelicIds: readonly strin
     foughtIds: stringList(source.foughtIds, DUEL_OPPONENT_COUNT).filter((id) => candidateIds.includes(id)),
     attack: team(source.attack),
     defense,
+    defenseCustomized,
+    defenseSimAt,
     blindChoice: stringList(source.blindChoice, 2).filter((id) => defense.includes(id)),
     pendingSeasonReward: reward && typeof reward.seasonId === "string" && reward.tierId && getDuelTier(reward.tierId)
       ? { seasonId: reward.seasonId, tierId: reward.tierId } : null,
@@ -193,6 +209,8 @@ export function rollDuelPeriods(state: DuelState, now: Date): DuelState {
     next.seasonBestScore = next.score;
     next.candidateIds = [];
     next.foughtIds = [];
+    // 방어전 시계도 새 시즌에서 다시 선다 — 지난 시즌에 쌓인 시간으로 새 시즌 점수를 움직이지 않는다.
+    next.defenseSimAt = "";
     next.seasonId = seasonId;
   }
   const dayKey = duelDayKey(now);

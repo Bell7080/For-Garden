@@ -15,14 +15,15 @@ import { COLOR, textStyle } from "./theme";
 const H = DUEL_SCREEN.history;
 const ROW_WIDTH = DUEL_SCREEN.width;
 /** 줄 안의 자리 — 줄 가운데가 0이다. */
-const ROW = { resultX: -400, faceX: -268, nameX: -204, nameRoom: 290, unitX: 128, unitGap: 74, deltaX: 404, deltaWidth: 128, deltaHeight: 64 } as const;
+const ROW = { resultX: -400, faceX: -268, nameX: -204, nameRoom: 290, unitX: 128, unitGap: 74, deltaX: 404, deltaWidth: 128, deltaHeight: 64, sideWidth: 84, sideHeight: 30 } as const;
 
 const AGE_KEY: Record<Exclude<ReturnType<typeof duelHistoryAge>["unit"], "now">, TextKey> = {
   minute: "duel.history.ago.minute", hour: "duel.history.ago.hour", day: "duel.history.ago.day",
 };
 
 /**
- * 결투장 「전적」 탭 — 최근 판부터 한 줄씩. 줄은 **결과 → 상대(얼굴·이름·티어·덱) → 점수 변화** 순이다.
+ * 결투장 「전적」 탭 — 최근 판부터 한 줄씩. 줄은 **공격/방어 표식·결과 → 상대(얼굴·이름·티어·덱) → 점수 변화** 순이다.
+ * 방어 줄은 표본 상대가 내 방어덱을 친 판이고, 결과(승·패)는 내가 막아 냈는가다.
  *
  * 줄이 창보다 길면 판 안에서만 흐른다(목록을 담은 컨테이너만 움직이고 마스크는 화면 좌표에 고정).
  * 기록이 없으면 제목표만 서고 칸을 비운다 — "아직 기록이 없다"는 지금 할 일을 바꾸지 않는다.
@@ -58,9 +59,13 @@ function paintRow(scene: Phaser.Scene, list: Phaser.GameObjects.Container, entry
   const tone = entry.opponentTierId ? DUEL_TIER_COLOR[entry.opponentTierId] : undefined;
   list.add(drawLayer(scene, 0, y, chipPoints(ROW_WIDTH, H.rowHeight), { fill: entry.won ? 0x1d2630 : 0x241a1f, alpha: HOLO.glass, edge: color, edgeAlpha: 0.6 }));
 
-  list.add(scene.add.text(ROW.resultX, y - 22, entry.won ? t("duel.history.win") : t("duel.history.loss"), textStyle({ role: "display", size: 38, color: entry.won ? COLOR.accentText : COLOR.dangerText })).setOrigin(0.5));
+  // 공격·방어 표식 — 결과 위의 작은 칩. 방어는 [방어] 버튼과 같은 푸른빛, 공격은 [도전]과 같은 붉은빛이다.
+  const defense = entry.side === "defense";
+  list.add(drawLayer(scene, ROW.resultX, y - 56, slantedRect(ROW.sideWidth, ROW.sideHeight), { fill: defense ? COLOR.exchange : COLOR.danger, alpha: 0.85, shadow: false }));
+  list.add(squeezeTextToWidth(scene.add.text(ROW.resultX, y - 56, t(defense ? "duel.history.side.defense" : "duel.history.side.attack"), textStyle({ role: "emphasis", size: 20, color: "#0b0f14" })).setOrigin(0.5), ROW.sideWidth - 14));
+  list.add(scene.add.text(ROW.resultX, y - 8, entry.won ? t("duel.history.win") : t("duel.history.loss"), textStyle({ role: "display", size: 38, color: entry.won ? COLOR.accentText : COLOR.dangerText })).setOrigin(0.5));
   const age = duelHistoryAge(entry.at, nowMs);
-  list.add(scene.add.text(ROW.resultX, y + 30, age.unit === "now" ? t("duel.history.ago.now") : t(AGE_KEY[age.unit], { value: age.value }), textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
+  list.add(scene.add.text(ROW.resultX, y + 40, age.unit === "now" ? t("duel.history.ago.now") : t(AGE_KEY[age.unit], { value: age.value }), textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
 
   if (entry.opponentFavoriteRelicId) {
     list.add(new FaceFrame(scene, ROW.faceX, y, { portraitAssetId: getRelic(entry.opponentFavoriteRelicId).portraitAssetId, size: H.faceSize, color: tone?.fill ?? COLOR.panelEdge }));

@@ -28,8 +28,9 @@ import type { ProductListResponse, PurchaseProductRequest, PurchaseProductRespon
 import { totalGrantAmount } from "../core/purchase";
 import { getRelicSkin } from "../data/relicSkins";
 import { applyDuelScore, DUEL_BATTLE_REWARD, DUEL_MAX_BLIND, DUEL_OPPONENT_COUNT, duelStreakBonus, duelBlindCount, duelBlindOrder, duelExtraAttemptPrice, duelHiddenRelicIds, duelNewlyReachedTiers, duelAllOpponentsFought, duelFreeRefreshesLeft, duelRefreshPrice, duelScoreDelta, duelTierRose, duelSeasonEndsAt, duelStanding, duelTier, getDuelTier, pickDuelOpponents } from "../core/duelArena";
-import { createEmptyDuelState, DUEL_HISTORY_LIMIT, duelAttemptsLeft, rollDuelPeriods, type DuelHistoryEntry, type DuelHistoryUnit, type DuelState } from "../core/duelState";
+import { DUEL_HISTORY_LIMIT, normalizeDuelState, duelAttemptsLeft, rollDuelPeriods, type DuelHistoryEntry, type DuelHistoryUnit, type DuelState } from "../core/duelState";
 import { duelNpcPool, findDuelNpc } from "../core/duelNpcPool";
+import { simulateDuelDefenses } from "../core/duelDefense";
 import { combatPower } from "../core/combatPower";
 import type { ClaimDuelSeasonRewardResponse, DuelRankingResponse, DuelStatusResponse, EnterDuelRequest, EnterDuelResponse, ResolveDuelRequest, ResolveDuelResponse, SetDuelDefenseRequest } from "./contracts";
 import { WALLET_CAPS } from "../data/economy";
@@ -1639,16 +1640,22 @@ export class FakeServer implements GameApi {
    * 다섯째 상대와의 판은 입장에서 싸운 것으로 적히므로 그 판이 끝난 뒤의 첫 조회가 새 상대를 세운다.
    */
   private duelNow(now: Date): DuelState {
-    const current = this.state.duel ?? createEmptyDuelState();
+    const current = this.state.duel ?? normalizeDuelState(undefined, [...this.state.owned]);
     let next = rollDuelPeriods(current, now);
     const pool = duelNpcPool(next.seasonId);
     if (next.candidateIds.length !== DUEL_OPPONENT_COUNT || next.candidateIds.some((id) => !pool.some((npc) => npc.id === id))
       || duelAllOpponentsFought(next.candidateIds, next.foughtIds)) {
       next = { ...next, candidateIds: pickDuelOpponents(pool, next.score, this.random, next.candidateIds).map(({ id }) => id), foughtIds: [] };
     }
-    if (JSON.stringify(next) !== JSON.stringify(current)) {
-      this.persist({ ...this.state, duel: next });
-      this.state.duel = next;
+    // 그사이 들어온 방어전을 굴린다. 처음 닿은 티어의 젬은 공격 판과 같이 곧바로 지갑에 든다.
+    const defensePower = next.defense.reduce((sum, relicId) => sum + this.duelRelicPower(relicId), 0);
+    const defended = simulateDuelDefenses(next, now, pool, defensePower, this.random);
+    next = defended.state;
+    const wallet = { ...this.state.wallet };
+    wallet.gems += Math.max(0, Math.min(defended.reachedTiers.reduce((sum, tier) => sum + tier.firstReachGems, 0), WALLET_CAPS.gems - wallet.gems));
+    if (JSON.stringify(next) !== JSON.stringify(current) || wallet.gems !== this.state.wallet.gems) {
+      this.persist({ ...this.state, wallet, duel: next });
+      this.state.wallet = wallet; this.state.duel = next;
     }
     return next;
   }
@@ -1689,7 +1696,7 @@ export class FakeServer implements GameApi {
       nextAttemptPrice: duelExtraAttemptPrice(duel.attemptsPurchased) ?? null,
       nextRefreshPrice: duelRefreshPrice(duel.refreshesUsed), freeRefreshesLeft: duelFreeRefreshesLeft(duel.refreshesUsed),
       blindCount, opponents,
-      attack: [...duel.attack], defense: [...duel.defense], blindChoice: [...duel.blindChoice],
+      attack: [...duel.attack], defense: [...duel.defense], defenseIsDefault: !duel.defenseCustomized, blindChoice: [...duel.blindChoice],
       defenseBlindOrder: duelBlindOrder(duel.defense.map((relicId) => ({ relicId, power: this.duelRelicPower(relicId) })), duel.blindChoice),
       pendingSeasonReward: reward && rewardTier ? { ...reward, duelEmblem: rewardTier.seasonReward.duelEmblem, gems: rewardTier.seasonReward.gems } : null,
       history: duel.history.map((entry) => ({ ...entry, ...(entry.opponentUnits ? { opponentUnits: entry.opponentUnits.map((unit) => ({ ...unit })) } : {}) })),
@@ -1749,7 +1756,7 @@ export class FakeServer implements GameApi {
     const now = this.now();
     this.assertDuelTeam(request.relicIds);
     const blindChoice = [...new Set(request.blindChoice)].filter((id) => request.relicIds.includes(id)).slice(0, DUEL_MAX_BLIND);
-    const next: DuelState = { ...this.duelNow(now), defense: [...request.relicIds], blindChoice };
+    const next: DuelState = { ...this.duelNow(now), defense: [...request.relicIds], defenseCustomized: true, blindChoice };
     this.persist({ ...this.state, duel: next });
     this.state.duel = next;
     return this.duelStatusDto(next, now);

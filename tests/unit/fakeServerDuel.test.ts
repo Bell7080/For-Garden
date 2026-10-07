@@ -243,4 +243,17 @@ describe("FakeServer 결투장", () => {
     expect(ranking.me?.isMe).toBe(true);
     expect(ranking.entries.map(({ rank }) => rank)).toEqual(Array.from({ length: 100 }, (_, i) => i + 1));
   });
+  it("방어덱은 기본 셋으로 서고, 직접 세우면 기본 표시가 꺼진다. 시간이 지나면 방어전이 전적에 남는다", async () => {
+    clock = new Date("2026-10-06T12:00:00Z");
+    const server = make(makeSession());
+    const first = await server.getDuelStatus();
+    expect(first.defense).toEqual(["torika", "dodo"]);
+    expect(first.defenseIsDefault).toBe(true);
+    clock = new Date("2026-10-06T20:30:00Z");
+    const later = await server.getDuelStatus();
+    expect(later.history.filter(({ side }) => side === "defense")).toHaveLength(2);
+    expect(later.score).toBe(later.history.reduce((sum, { delta }) => Math.max(0, sum + delta), 0));
+    const set = await server.setDuelDefense({ relicIds: TEAM, blindChoice: [] });
+    expect(set.defenseIsDefault).toBe(false);
+  });
 });

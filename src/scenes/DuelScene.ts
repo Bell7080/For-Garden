@@ -264,8 +264,8 @@ export class DuelScene extends Phaser.Scene {
     });
     button.fitLabel(defense.labelRoom);
     this.view.add(button);
-    // 방어덱이 비었으면 빨간 점 하나만 단다 — 라벨을 붉히면 푸른 판이 붉게 읽혀 [도전]과 색이 섞인다.
-    if (status.defense.length === 0) new NotificationDot(this, button, { x: defense.width / 2 - 16, y: -height / 2 + 14 });
+    // 방어덱이 아직 기본 셋 그대로면 빨간 점 하나만 단다 — 라벨을 붉히면 푸른 판이 붉게 읽혀 [도전]과 색이 섞인다.
+    if (status.defenseIsDefault) new NotificationDot(this, button, { x: defense.width / 2 - 16, y: -height / 2 + 14 });
   }
 
   /**

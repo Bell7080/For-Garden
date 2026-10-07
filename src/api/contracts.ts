@@ -691,6 +691,8 @@ export interface DuelStatusResponse {
   blindCount: number;
   opponents: DuelOpponentDto[];
   attack: string[]; defense: string[]; blindChoice: string[];
+  /** 방어덱이 아직 기본 셋 그대로인가(직접 세운 적이 없다). [방어] 버튼의 빨간 점이 읽는다. */
+  defenseIsDefault: boolean;
   /** 게시한 방어덱에서 실제로 가려지는 순서(고른 것 → 전투력 순). */
   defenseBlindOrder: string[];
   pendingSeasonReward: { seasonId: string; tierId: import("../core/duelArena").DuelTierId; duelEmblem: number; gems: number } | null;

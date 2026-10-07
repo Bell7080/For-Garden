@@ -1,4 +1,4 @@
-import { cloneDuelState, createEmptyDuelState, isValidDuelState, normalizeDuelState } from "../core/duelState";
+import { cloneDuelState, isValidDuelState, normalizeDuelState } from "../core/duelState";
 import { PLAYABLE_RELICS } from "../data/relics";
 import { isRaidDifficulty } from "../data/raid";
 import { STAGES } from "../data/stages";
@@ -48,7 +48,7 @@ function migrateV12Rune(definitionId: string): RuneInstance {
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 48;
+export const CURRENT_SAVE_VERSION = 49;
 
 /**
  * 연구도는 기간마다 상한이 다르다(일일 100 · 주간 500). 상한이 120 하나이던 때의 저장은 일일
@@ -325,7 +325,7 @@ export class SaveManager {
       cakeOperation: { ...state.cakeOperation },
       relicStory: cloneRelicStory(state.relicStory),
       progressPasses: cloneProgressPasses(state.progressPasses ?? createEmptyProgressPassState()),
-      duel: cloneDuelState(state.duel ?? createEmptyDuelState()),
+      duel: state.duel ? cloneDuelState(state.duel) : normalizeDuelState(undefined, [...state.owned]),
     };
     this.validate(data);
     return data;
@@ -462,7 +462,7 @@ export class SaveManager {
     const relicStory = normalizeRelicStory(legacy.relicStory);
     // 진행 패스(v45) 도입 전 저장은 받은 마디도 레이드 입장 수도 없다.
     const progressPasses = normalizeProgressPasses(legacy.progressPasses);
-    // 결투장(v47) 도입 전 저장은 점수 0·빈 편성으로 시작한다. 잃을 기록이 없다.
+    // 결투장(v47) 도입 전 저장은 점수 0으로 시작한다. 잃을 기록이 없다. v49부터 빈 방어덱은 기본 셋으로 채운다.
     const duel = normalizeDuelState(legacy.duel, Array.isArray(legacy.ownedRelicIds) ? legacy.ownedRelicIds as string[] : []);
     // 현상수배 도입(v38) 전 저장은 깬 등급이 없으므로 1급만 열린 채로 시작한다. 하루 입장 제한을
     // 걷어 낸 뒤로는 예전 저장의 날짜·횟수(`date`·`entries`)를 버리고 깬 등급만 옮긴다.
@@ -568,7 +568,7 @@ export class SaveManager {
       .filter((stack: { itemId?: unknown }) => stack?.itemId !== "raid-sigil");
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
     if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel } as unknown as SaveData;
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, CURRENT_SAVE_VERSION];
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
     return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel } as unknown as SaveData;
   }

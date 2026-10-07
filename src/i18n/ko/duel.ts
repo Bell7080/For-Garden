@@ -73,6 +73,8 @@ export const DUEL_KO = {
   "duel.profile.streakBonus": "연승 효과 +{bonus}",
   "duel.history.win": "승",
   "duel.history.loss": "패",
+  "duel.history.side.attack": "공격",
+  "duel.history.side.defense": "방어",
   "shop.duel.title": "결투 상점",
   "duel.shop.line1": "…왔구나. 휘장은 거기 내려놔. 세는 건 내가 할게.",
   "duel.shop.line2": "팔의 흉터? 진 날마다 하나씩. 이긴 날은 남는 게 없어.",

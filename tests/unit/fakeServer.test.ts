@@ -848,6 +848,18 @@ describe("FakeServer 광고 보상 경계", () => {
     expect(state.dailyAdRewards).toEqual({ date: "2026-08-22", claimsBySlot: { "daily-stamina": 1 }, requestIds: ["ad-request-1"] });
   });
 
+  it("고고학 원석 100 · 전리품 증표 5+5 광고는 하루 세 번까지 지갑에 들어간다", async () => {
+    const state = makeSession();
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-22T12:00:00Z") });
+    const raw = state.wallet.rawStone; const sigil = state.wallet.raidSigil; const record = state.wallet.salvageRecord;
+    for (let index = 0; index < 3; index += 1) {
+      await server.claimAdReward({ slotId: "archaeology-ad", verificationToken: "verified:archaeology-ad", requestId: `raw-${index}` });
+      await server.claimAdReward({ slotId: "loot-ad", verificationToken: "verified:loot-ad", requestId: `loot-${index}` });
+    }
+    expect(state.wallet).toMatchObject({ rawStone: raw + 300, raidSigil: sigil + 15, salvageRecord: record + 15 });
+    await expect(server.claimAdReward({ slotId: "loot-ad", verificationToken: "verified:loot-ad", requestId: "loot-over" })).rejects.toMatchObject({ code: "AD_DAILY_LIMIT" });
+  });
+
   it("잘못된 토큰·중복 ID·일일 초과는 지급 없이 거부하고 다음 UTC 일자에 초기화한다", async () => {
     const state = makeSession(); let now = new Date("2026-08-22T12:00:00Z");
     const server = new FakeServer(state, { latencyMs: 0, now: () => now });

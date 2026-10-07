@@ -1815,6 +1815,8 @@ export default {
   "shopClerk.roxwoo.name": "Roxwoo",
   "adReward.gem-ad.text": "Gems 10",
   "adReward.gold-ad.text": "Gold 5,000",
+  "adReward.archaeology-ad.text": "Raw Stone 100",
+  "adReward.loot-ad.text": "Subjugation Sigil 5 · Salvage Record 5",
   "premium.tab.subscription": "Subscription",
   "premium.tab.daily": "Daily",
   "premium.tab.weekly": "Weekly",

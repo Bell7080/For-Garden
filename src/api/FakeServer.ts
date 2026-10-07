@@ -2845,6 +2845,10 @@ export class FakeServer implements GameApi {
       wallet[reward.currency] = Math.min(WALLET_CAPS[reward.currency], wallet[reward.currency] + reward.amount);
       return { wallet, excavation, itemInventory };
     }
+    if (reward.kind === "currencies") {
+      for (const grant of reward.grants) wallet[grant.currency] = Math.min(WALLET_CAPS[grant.currency], wallet[grant.currency] + grant.amount);
+      return { wallet, excavation, itemInventory };
+    }
     if (reward.kind === "quick_expedition") {
       // 기준 점수와 비율은 모두 서버 소유이며 클라이언트 요청에는 어느 값도 없다.
       const referenceScore = this.expeditionReferenceScore(now);

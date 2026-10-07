@@ -14,6 +14,8 @@ export interface AdRewardCardOptions {
   x: number; y: number; width: number; height: number;
   /** 받는 재화와 수량 — 액자 한 장으로 선다. */
   currency: keyof typeof CURRENCY_ICON_BY_WALLET; amount: number;
+  /** 같이 받는 재화. 있으면 액자가 둘 이상 나란히 선다. */
+  extras?: readonly { currency: keyof typeof CURRENCY_ICON_BY_WALLET; amount: number }[];
   title: string;
   /** 오늘 남은 횟수와 한도. 다 받았으면 버튼이 꺼진다. */
   remaining: number; limit: number;
@@ -36,8 +38,13 @@ export function addAdRewardCard(scene: Phaser.Scene, parent: Phaser.GameObjects.
   const card = scene.add.container(options.x, options.y);
   card.add(drawLayer(scene, 0, 0, chipPoints(width, height, { bevel: { topLeft: 36, topRight: 0, bottomRight: 28, bottomLeft: 0 } }), { fill: 0x182029, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.52 }));
   const frameSize = Math.round(height * 0.4);
-  const frame = addFramedIcon(scene, card, 0, -height * 0.2, frameSize, CURRENCY_ICON_BY_WALLET[options.currency], { plain: true });
-  frame.add(addFrameAmount(scene, frameSize, formatCurrency(options.amount)));
+  const gains = [{ currency: options.currency, amount: options.amount }, ...(options.extras ?? [])];
+  const gap = Math.round(frameSize * 0.2);
+  gains.forEach((gain, index) => {
+    const x = (index - (gains.length - 1) / 2) * (frameSize + gap);
+    const frame = addFramedIcon(scene, card, x, -height * 0.2, frameSize, CURRENCY_ICON_BY_WALLET[gain.currency], { plain: true });
+    frame.add(addFrameAmount(scene, frameSize, formatCurrency(gain.amount)));
+  });
   const name = scene.add.text(0, height * 0.08, options.title, textStyle({ role: "display", size: 30 })).setOrigin(0.5).setShadow(3, 4, "#04060a", 0, true, true);
   card.add(squeezeTextToWidth(name, width - 36, 0.7));
   card.add(scene.add.text(0, height * 0.19, t("shop.premium.adLeft", { remaining: options.remaining, limit: options.limit }), textStyle({ role: "emphasis", size: 25, color: done ? COLOR.dangerText : COLOR.ink })).setOrigin(0.5).setStroke("#05070a", 3));

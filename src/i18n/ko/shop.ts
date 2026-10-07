@@ -35,6 +35,8 @@ export const SHOP_KO = {
   "shop.premium.adLeft": "오늘 {remaining}/{limit}",
   "shop.premium.adFailed": "광고 보상을 받지 못했습니다.",
   "shop.goldAdTitle": "광고 보고 골드 받기",
+  "shop.archaeologyAdTitle": "광고 보고 원석 받기",
+  "shop.lootAdTitle": "광고 보고 증표 받기",
   "shop.premium.daily": "매일",
   "shop.premium.valueMultiple": "가치 {multiple}",
   "shop.premium.firstBonus": "첫 구매 보너스 +{amount}",

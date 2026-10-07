@@ -34,6 +34,8 @@ export const SHOP_EN = {
   "shop.premium.adLeft": "Today {remaining}/{limit}",
   "shop.premium.adFailed": "Could not claim the ad reward.",
   "shop.goldAdTitle": "Watch an ad for gold",
+  "shop.archaeologyAdTitle": "Watch an ad for raw stone",
+  "shop.lootAdTitle": "Watch an ad for sigils",
   "shop.premium.daily": "Daily",
   "shop.premium.valueMultiple": "Value {multiple}",
   "shop.premium.firstBonus": "First-purchase bonus +{amount}",

@@ -486,11 +486,12 @@ export class ShopScene extends Phaser.Scene {
     const visibleProducts = productsForShopTab(this.products, this.selectedCategory, this.storefront);
     // 선반을 먼저 깔고 그 위에 칸을 올린다 — 순서가 뒤집히면 선반이 칸을 가로질러 지나간다.
     // 일반 상점의 골드 탭 끝에는 광고 보고 골드를 받는 칸이 하나 더 선다.
-    const goldAd = this.storefront === "shop" && this.selectedCategory === "gold" ? 1 : 0;
+    const adSpec = this.stage.ad;
+    const goldAd = adSpec && (!adSpec.tabs || adSpec.tabs.includes(this.selectedCategory)) ? 1 : 0;
     const rows = Math.ceil((visibleProducts.length + goldAd) / SHOP_CARD.columns);
     for (let row = 0; row < rows; row += 1) this.addShelf(row);
     visibleProducts.forEach((product, index) => this.addProduct(product, index));
-    if (goldAd) this.addGoldAdCard(visibleProducts.length);
+    if (goldAd) this.addAdCard(visibleProducts.length);
     const view = shopGridViewport();
     this.minScrollY = Math.min(0, view.bottom - view.top - shopGridContentHeight(visibleProducts.length + goldAd));
     this.publishControls(visibleProducts);
@@ -617,23 +618,28 @@ export class ShopScene extends Phaser.Scene {
     this.content?.add(card);
   }
 
-  /** 골드 탭 끝의 「광고 보고 골드 받기」 칸. 지급과 횟수는 서버가 확정한다. */
-  private addGoldAdCard(index: number): void {
-    const slot = findAdRewardSlot("gold-ad");
-    if (!slot || slot.reward.kind !== "currency" || !this.content) return;
-    const status = adSlotStatus("gold-ad");
+  /** 가게마다 표(`stage.ad`)가 정한 「광고 보고 받기」 칸. 지급과 횟수는 서버가 확정한다. */
+  private addAdCard(index: number): void {
+    const spec = this.stage.ad;
+    const slot = spec ? findAdRewardSlot(spec.slotId) : undefined;
+    if (!spec || !slot || !this.content) return;
+    const grants = slot.reward.kind === "currency" ? [{ currency: slot.reward.currency, amount: slot.reward.amount }]
+      : slot.reward.kind === "currencies" ? slot.reward.grants : [];
+    const [first, ...extras] = grants;
+    if (!first) return;
+    const status = adSlotStatus(spec.slotId);
     const { x, y } = shopCardSpot(index);
     addAdRewardCard(this, this.content, {
-      x, y, width: shopCardWidth(), height: SHOP_CARD.height, currency: "gold", amount: slot.reward.amount,
-      title: t("shop.goldAdTitle"), remaining: status.remaining, limit: status.limit,
+      x, y, width: shopCardWidth(), height: SHOP_CARD.height, currency: first.currency, amount: first.amount, extras,
+      title: t(spec.titleKey), remaining: status.remaining, limit: status.limit,
       clip: shopGridViewport, isTap: (pointer) => this.insideViewport(pointer) && this.draggedDistance <= SHOP_CARD.dragSlop,
-      onWatch: () => void this.watchGoldAd(),
+      onWatch: () => void this.watchAd(spec.slotId),
     });
   }
 
-  private async watchGoldAd(): Promise<void> {
+  private async watchAd(slotId: string): Promise<void> {
     try {
-      if (!(await watchAdSlot("gold-ad"))) { this.notice(t("stamina.adCancelled")); return; }
+      if (!(await watchAdSlot(slotId))) { this.notice(t("stamina.adCancelled")); return; }
       this.topBar?.refresh();
       this.renderProducts();
     } catch { this.notice(t("shop.premium.adFailed")); }

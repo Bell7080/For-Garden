@@ -96,7 +96,7 @@ describe("결투장 상대 고르기·값", () => {
     expect(duelExtraAttemptPrice(0)).toBe(50);
     expect(duelExtraAttemptPrice(99)).toBeUndefined();
     expect(duelRefreshPrice(0)).toBe(0);
-    expect(duelRefreshPrice(3)).toBeGreaterThan(0);
+    expect([0, 1, 2, 3, 4, 5, 6, 7, 8, 30].map(duelRefreshPrice)).toEqual([0, 0, 0, 20, 40, 60, 80, 100, 100, 100]);
   });
 });
 

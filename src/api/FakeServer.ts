@@ -27,7 +27,7 @@ import { PRODUCTS } from "../data/shopCatalog";
 import type { ProductListResponse, PurchaseProductRequest, PurchaseProductResponse } from "./contracts";
 import { totalGrantAmount } from "../core/purchase";
 import { getRelicSkin } from "../data/relicSkins";
-import { applyDuelScore, DUEL_BATTLE_REWARD, DUEL_MAX_BLIND, DUEL_OPPONENT_COUNT, duelStreakBonus, duelBlindCount, duelBlindOrder, duelExtraAttemptPrice, duelHiddenRelicIds, duelNewlyReachedTiers, duelRefreshPrice, duelScoreDelta, duelSeasonEndsAt, duelStanding, duelTier, getDuelTier, pickDuelOpponents } from "../core/duelArena";
+import { applyDuelScore, DUEL_BATTLE_REWARD, DUEL_MAX_BLIND, DUEL_OPPONENT_COUNT, duelStreakBonus, duelBlindCount, duelBlindOrder, duelExtraAttemptPrice, duelHiddenRelicIds, duelNewlyReachedTiers, duelAllOpponentsFought, duelFreeRefreshesLeft, duelRefreshPrice, duelScoreDelta, duelTierRose, duelSeasonEndsAt, duelStanding, duelTier, getDuelTier, pickDuelOpponents } from "../core/duelArena";
 import { createEmptyDuelState, DUEL_HISTORY_LIMIT, duelAttemptsLeft, rollDuelPeriods, type DuelHistoryEntry, type DuelHistoryUnit, type DuelState } from "../core/duelState";
 import { duelNpcPool, findDuelNpc } from "../core/duelNpcPool";
 import { combatPower } from "../core/combatPower";
@@ -1634,13 +1634,17 @@ export class FakeServer implements GameApi {
 
   /* ── 결투장 ────────────────────────────────────────────────────────────────── */
 
-  /** 날짜·시즌을 넘기고 상대 후보가 비어 있으면 세운 상태. 저장까지 확정한다. */
+  /**
+   * 날짜·시즌을 넘기고, 상대 후보가 비었거나 다섯 모두와 싸웠으면 새로 세운 상태. 저장까지 확정한다.
+   * 다섯째 상대와의 판은 입장에서 싸운 것으로 적히므로 그 판이 끝난 뒤의 첫 조회가 새 상대를 세운다.
+   */
   private duelNow(now: Date): DuelState {
     const current = this.state.duel ?? createEmptyDuelState();
     let next = rollDuelPeriods(current, now);
     const pool = duelNpcPool(next.seasonId);
-    if (next.candidateIds.length !== DUEL_OPPONENT_COUNT || next.candidateIds.some((id) => !pool.some((npc) => npc.id === id))) {
-      next = { ...next, candidateIds: pickDuelOpponents(pool, next.score, this.random).map(({ id }) => id) };
+    if (next.candidateIds.length !== DUEL_OPPONENT_COUNT || next.candidateIds.some((id) => !pool.some((npc) => npc.id === id))
+      || duelAllOpponentsFought(next.candidateIds, next.foughtIds)) {
+      next = { ...next, candidateIds: pickDuelOpponents(pool, next.score, this.random, next.candidateIds).map(({ id }) => id), foughtIds: [] };
     }
     if (JSON.stringify(next) !== JSON.stringify(current)) {
       this.persist({ ...this.state, duel: next });
@@ -1668,6 +1672,7 @@ export class FakeServer implements GameApi {
         favoriteRelicId: hidden.has(npc.favoriteRelicId) ? npc.units.find(({ relicId }) => !hidden.has(relicId))!.relicId : npc.favoriteRelicId,
         totalPower: npc.units.reduce((sum, { power }) => sum + power, 0),
         units: npc.units.map(({ relicId, level, breakthrough, power }) => ({ relicId: hidden.has(relicId) ? null : relicId, level, breakthrough, power })),
+        fought: duel.foughtIds.includes(npc.id),
       }];
     });
     const reward = duel.pendingSeasonReward;
@@ -1682,7 +1687,7 @@ export class FakeServer implements GameApi {
       attemptsLeft: duelAttemptsLeft(duel),
       attemptsPurchased: duel.attemptsPurchased,
       nextAttemptPrice: duelExtraAttemptPrice(duel.attemptsPurchased) ?? null,
-      nextRefreshPrice: duelRefreshPrice(duel.refreshesUsed),
+      nextRefreshPrice: duelRefreshPrice(duel.refreshesUsed), freeRefreshesLeft: duelFreeRefreshesLeft(duel.refreshesUsed),
       blindCount, opponents,
       attack: [...duel.attack], defense: [...duel.defense], blindChoice: [...duel.blindChoice],
       defenseBlindOrder: duelBlindOrder(duel.defense.map((relicId) => ({ relicId, power: this.duelRelicPower(relicId) })), duel.blindChoice),
@@ -1711,7 +1716,7 @@ export class FakeServer implements GameApi {
     const price = duelRefreshPrice(duel.refreshesUsed);
     if (this.state.wallet.gems < price) throw new GameApiError("INSUFFICIENT_CURRENCY", "젬이 부족합니다.");
     const candidateIds = pickDuelOpponents(duelNpcPool(duel.seasonId), duel.score, this.random, duel.candidateIds).map(({ id }) => id);
-    const next: DuelState = { ...duel, candidateIds, refreshesUsed: duel.refreshesUsed + 1 };
+    const next: DuelState = { ...duel, candidateIds, foughtIds: [], refreshesUsed: duel.refreshesUsed + 1 };
     const wallet = { ...this.state.wallet, gems: this.state.wallet.gems - price };
     this.persist({ ...this.state, wallet, duel: next });
     this.state.wallet = wallet; this.state.duel = next;
@@ -1760,9 +1765,11 @@ export class FakeServer implements GameApi {
     this.assertDuelTeam(request.relicIds);
     const npc = duel.candidateIds.includes(request.opponentId) ? findDuelNpc(duel.seasonId, request.opponentId) : undefined;
     if (!npc) throw new GameApiError("DUEL_OPPONENT_NOT_FOUND", "지금 세워 둔 상대가 아닙니다.");
+    if (duel.foughtIds.includes(npc.id)) throw new GameApiError("DUEL_OPPONENT_FOUGHT", "이미 싸운 상대입니다.");
     if (duelAttemptsLeft(duel) <= 0) throw new GameApiError("DUEL_NO_ATTEMPTS", "오늘의 도전권을 모두 썼습니다.");
     // 도전권은 입장에서 쓴다 — 끊긴 판을 다시 들어가 같은 상대를 고르는 요령이 없어진다.
-    const next: DuelState = { ...duel, attemptsUsed: duel.attemptsUsed + 1, attack: [...request.relicIds] };
+    // 싸운 상대도 입장에서 적는다 — 끊고 나와 같은 상대를 다시 고를 수 없다.
+    const next: DuelState = { ...duel, attemptsUsed: duel.attemptsUsed + 1, attack: [...request.relicIds], foughtIds: [...duel.foughtIds, npc.id] };
     this.persist({ ...this.state, duel: next });
     this.state.duel = next;
     this.pendingDuels.set(request.requestId, { opponentId: npc.id, opponentName: npc.displayName, opponentScore: npc.score, favoriteRelicId: npc.favoriteRelicId, units: npc.units.map(({ relicId, level }) => ({ relicId, level })) });
@@ -1803,8 +1810,10 @@ export class FakeServer implements GameApi {
       ...duel, score: scoreAfter, wins: duel.wins + (request.won ? 1 : 0), losses: duel.losses + (request.won ? 0 : 1),
       reachedTierIds: [...duel.reachedTierIds, ...reached.map(({ id }) => id)],
       winStreak, bestStreak: Math.max(duel.bestStreak, winStreak), seasonBestScore: Math.max(duel.seasonBestScore, scoreAfter),
-      // 싸운 뒤에는 새 상대가 선다 — 같은 상대를 되풀이해 고르는 판이 되지 않게.
-      candidateIds: pickDuelOpponents(duelNpcPool(duel.seasonId), scoreAfter, this.random, [pending.opponentId]).map(({ id }) => id),
+      // 티어가 오르면 새 티어에 맞는 상대가 선다. 다섯 모두와 싸운 경우는 다음 조회(`duelNow`)가 세운다.
+      ...(duelTierRose(scoreBefore, scoreAfter)
+        ? { candidateIds: pickDuelOpponents(duelNpcPool(duel.seasonId), scoreAfter, this.random, duel.candidateIds).map(({ id }) => id), foughtIds: [] }
+        : {}),
       history: [entry, ...duel.history].slice(0, DUEL_HISTORY_LIMIT),
     };
     const missions = applyMissionEvent(this.state.missions, { type: "battle_completed", victory: request.won }, now);

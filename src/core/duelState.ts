@@ -52,6 +52,11 @@ export interface DuelState {
   refreshesUsed: number;
   /** 지금 세워 둔 상대 후보(NPC ID, `DUEL_OPPONENT_COUNT`명). */
   candidateIds: string[];
+  /**
+   * 지금 후보 중 이미 싸운 상대(입장에서 적는다). 다섯 모두와 싸우거나 티어가 오르면 후보와 함께 비운다 —
+   * 같은 상대를 되풀이해 고를 수 없고, 남은 후보는 싸울 때마다 갈아엎히지 않는다.
+   */
+  foughtIds: string[];
   /** 마지막으로 싸운 공격덱. 다음 편성의 시작값이다. */
   attack: string[];
   /** 게시한 방어덱. 비어 있으면 아직 세우지 않았다. */
@@ -78,7 +83,7 @@ export const DUEL_HISTORY_LIMIT = 10;
 export function createEmptyDuelState(): DuelState {
   return {
     seasonId: "", score: DUEL_START_SCORE, wins: 0, losses: 0, reachedTierIds: [],
-    dayKey: "", attemptsUsed: 0, attemptsPurchased: 0, attemptsFromAds: 0, refreshesUsed: 0, candidateIds: [],
+    dayKey: "", attemptsUsed: 0, attemptsPurchased: 0, attemptsFromAds: 0, refreshesUsed: 0, candidateIds: [], foughtIds: [],
     attack: [], defense: [], blindChoice: [], pendingSeasonReward: null, history: [],
     winStreak: 0, bestStreak: 0, seasonBestScore: DUEL_START_SCORE, lastSeasonTierId: null, lastSeasonScore: 0,
   };
@@ -86,7 +91,7 @@ export function createEmptyDuelState(): DuelState {
 
 export function cloneDuelState(state: DuelState): DuelState {
   return {
-    ...state, reachedTierIds: [...state.reachedTierIds], candidateIds: [...state.candidateIds],
+    ...state, reachedTierIds: [...state.reachedTierIds], candidateIds: [...state.candidateIds], foughtIds: [...state.foughtIds],
     attack: [...state.attack], defense: [...state.defense], blindChoice: [...state.blindChoice],
     pendingSeasonReward: state.pendingSeasonReward ? { ...state.pendingSeasonReward } : null,
     history: state.history.map((entry) => ({ ...entry, ...(entry.opponentUnits ? { opponentUnits: entry.opponentUnits.map((unit) => ({ ...unit })) } : {}) })),
@@ -124,6 +129,7 @@ export function normalizeDuelState(value: unknown, ownedRelicIds: readonly strin
     !!entry && typeof entry.at === "string" && typeof entry.opponentName === "string" && Number.isSafeInteger(entry.opponentScore)
     && typeof entry.won === "boolean" && Number.isSafeInteger(entry.delta)).slice(0, DUEL_HISTORY_LIMIT).map(normalizeHistoryEntry) : [];
   const defense = team(source.defense);
+  const candidateIds = stringList(source.candidateIds, DUEL_OPPONENT_COUNT);
   const score = isCount(source.score) ? source.score : DUEL_START_SCORE;
   const lastSeasonTierId = typeof source.lastSeasonTierId === "string" && getDuelTier(source.lastSeasonTierId) ? source.lastSeasonTierId as DuelTierId : null;
   return {
@@ -137,7 +143,8 @@ export function normalizeDuelState(value: unknown, ownedRelicIds: readonly strin
     attemptsPurchased: isCount(source.attemptsPurchased) ? source.attemptsPurchased : 0,
     attemptsFromAds: isCount(source.attemptsFromAds) ? source.attemptsFromAds : 0,
     refreshesUsed: isCount(source.refreshesUsed) ? source.refreshesUsed : 0,
-    candidateIds: stringList(source.candidateIds, DUEL_OPPONENT_COUNT),
+    candidateIds,
+    foughtIds: stringList(source.foughtIds, DUEL_OPPONENT_COUNT).filter((id) => candidateIds.includes(id)),
     attack: team(source.attack),
     defense,
     blindChoice: stringList(source.blindChoice, 2).filter((id) => defense.includes(id)),
@@ -185,6 +192,7 @@ export function rollDuelPeriods(state: DuelState, now: Date): DuelState {
     next.bestStreak = 0;
     next.seasonBestScore = next.score;
     next.candidateIds = [];
+    next.foughtIds = [];
     next.seasonId = seasonId;
   }
   const dayKey = duelDayKey(now);

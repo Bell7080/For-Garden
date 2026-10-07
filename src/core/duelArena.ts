@@ -58,9 +58,13 @@ export const DUEL_START_SCORE = 0;
 export const DUEL_DAILY_ATTEMPTS = 5;
 /** 젬으로 더 사는 도전권 — 오늘 몇 번째 구매인지가 값을 정한다. 길이가 곧 하루 한도다. */
 export const DUEL_EXTRA_ATTEMPT_PRICES: readonly number[] = [50, 50, 100, 100, 150];
-/** 상대 후보 새로고침 — 하루 무료 횟수와 그다음부터의 젬 값. */
+/** 상대 후보 새로고침 — 하루 무료 횟수. */
 export const DUEL_FREE_REFRESHES = 3;
-export const DUEL_REFRESH_GEMS = 20;
+/**
+ * 무료를 다 쓴 뒤의 젬 값 — 오늘 몇 번째 유료 새로고침인지가 값을 정하고 끝 값에서 멈춘다.
+ * 값이 늘 같으면 마음에 드는 상대가 설 때까지 젬으로 돌리는 것이 언제나 남는 장사다.
+ */
+export const DUEL_REFRESH_PRICES: readonly number[] = [20, 40, 60, 80, 100];
 /** 한 번에 세우는 상대 후보 수. */
 export const DUEL_OPPONENT_COUNT = 5;
 
@@ -183,7 +187,23 @@ export function duelExtraAttemptPrice(purchasedToday: number): number | undefine
 
 /** 새로고침 한 번의 젬 값. 무료 횟수가 남았으면 0이다. */
 export function duelRefreshPrice(refreshesUsed: number): number {
-  return refreshesUsed < DUEL_FREE_REFRESHES ? 0 : DUEL_REFRESH_GEMS;
+  if (refreshesUsed < DUEL_FREE_REFRESHES) return 0;
+  return DUEL_REFRESH_PRICES[Math.min(refreshesUsed - DUEL_FREE_REFRESHES, DUEL_REFRESH_PRICES.length - 1)];
+}
+
+/** 오늘 남은 무료 새로고침. */
+export function duelFreeRefreshesLeft(refreshesUsed: number): number {
+  return Math.max(0, DUEL_FREE_REFRESHES - refreshesUsed);
+}
+
+/** 세워 둔 상대 모두와 싸웠는가 — 그러면 새 상대가 선다. */
+export function duelAllOpponentsFought(candidateIds: readonly string[], foughtIds: readonly string[]): boolean {
+  return candidateIds.length > 0 && candidateIds.every((id) => foughtIds.includes(id));
+}
+
+/** 티어(디비전이 아니라 브론즈·실버 같은 큰 칸)가 올랐는가 — 그러면 새 티어에 맞는 상대가 선다. */
+export function duelTierRose(scoreBefore: number, scoreAfter: number): boolean {
+  return duelTierIndex(scoreAfter) > duelTierIndex(scoreBefore);
 }
 
 /** UTC 날짜 키. 도전권·새로고침이 이 키로 하루를 가른다. */

@@ -3,7 +3,8 @@ import { FakeServer } from "../../src/api/FakeServer";
 import { createEmptyRaidState, createInitialPlayerResearchProgress, createEmptyPlayerCard, type Session } from "../../src/state/session";
 import { createDefaultSettings } from "../../src/core/settings";
 import { createArchaeologyState } from "../../src/core/strataDig";
-import { DUEL_BATTLE_REWARD, DUEL_DAILY_ATTEMPTS, DUEL_FREE_REFRESHES, DUEL_OPPONENT_COUNT, DUEL_REFRESH_GEMS, duelScoreDelta, duelSeasonEndsAt, duelStreakBonus } from "../../src/core/duelArena";
+import { createEmptyDuelState } from "../../src/core/duelState";
+import { DUEL_BATTLE_REWARD, DUEL_DAILY_ATTEMPTS, DUEL_FREE_REFRESHES, DUEL_OPPONENT_COUNT, DUEL_REFRESH_PRICES, duelScoreDelta, duelSeasonEndsAt, duelStreakBonus } from "../../src/core/duelArena";
 
 let clock = new Date("2026-10-06T12:00:00Z");
 const NOW = () => clock;
@@ -84,7 +85,7 @@ describe("FakeServer 결투장", () => {
     const server = make(state);
     const play = async (requestId: string, won: boolean) => {
       const { opponents, score } = await server.getDuelStatus();
-      const target = opponents[2];
+      const target = opponents.find(({ fought }) => !fought)!;
       await server.enterDuel({ opponentId: target.id, relicIds: TEAM, requestId });
       return { result: await server.resolveDuel({ requestId, won }), base: duelScoreDelta(score, target.score, won), before: score };
     };
@@ -111,7 +112,7 @@ describe("FakeServer 결투장", () => {
     const server = make(state);
     for (let index = 0; index < DUEL_DAILY_ATTEMPTS; index += 1) {
       const { opponents } = await server.getDuelStatus();
-      await server.enterDuel({ opponentId: opponents[0].id, relicIds: TEAM, requestId: `a${index}` });
+      await server.enterDuel({ opponentId: opponents.find(({ fought }) => !fought)!.id, relicIds: TEAM, requestId: `a${index}` });
       await server.resolveDuel({ requestId: `a${index}`, won: false });
     }
     const empty = await server.getDuelStatus();
@@ -142,14 +143,64 @@ describe("FakeServer 결투장", () => {
     clock = new Date("2026-10-06T12:00:00Z");
   });
 
-  it("새로고침은 무료 횟수 뒤로 젬이 든다", async () => {
+  it("새로고침은 무료 횟수 뒤로 젬이 들고, 할 때마다 값이 오른다", async () => {
     const state = makeSession();
     const server = make(state);
-    await server.getDuelStatus();
+    expect((await server.getDuelStatus()).freeRefreshesLeft).toBe(DUEL_FREE_REFRESHES);
     for (let index = 0; index < DUEL_FREE_REFRESHES; index += 1) await server.refreshDuelOpponents();
     expect(state.wallet.gems).toBe(10_000);
-    await server.refreshDuelOpponents();
-    expect(state.wallet.gems).toBe(10_000 - DUEL_REFRESH_GEMS);
+    let spent = 0;
+    for (const price of [...DUEL_REFRESH_PRICES, DUEL_REFRESH_PRICES.at(-1)!]) {
+      const status = await server.getDuelStatus();
+      expect(status).toMatchObject({ freeRefreshesLeft: 0, nextRefreshPrice: price });
+      await server.refreshDuelOpponents();
+      spent += price;
+      expect(state.wallet.gems).toBe(10_000 - spent);
+    }
+    clock = new Date("2026-10-07T00:00:01Z");
+    expect(await server.getDuelStatus()).toMatchObject({ freeRefreshesLeft: DUEL_FREE_REFRESHES, nextRefreshPrice: 0 });
+    clock = new Date("2026-10-06T12:00:00Z");
+  });
+
+  it("싸운 상대는 남은 후보와 함께 그대로 서고 다시 고를 수 없다", async () => {
+    const state = makeSession();
+    const server = make(state);
+    const before = await server.getDuelStatus();
+    const target = before.opponents[1];
+    await server.enterDuel({ opponentId: target.id, relicIds: TEAM, requestId: "f1" });
+    await server.resolveDuel({ requestId: "f1", won: false });
+    const after = await server.getDuelStatus();
+    expect(after.opponents.map(({ id }) => id)).toEqual(before.opponents.map(({ id }) => id));
+    expect(after.opponents.filter(({ fought }) => fought).map(({ id }) => id)).toEqual([target.id]);
+    await expect(server.enterDuel({ opponentId: target.id, relicIds: TEAM, requestId: "f2" })).rejects.toMatchObject({ code: "DUEL_OPPONENT_FOUGHT" });
+  });
+
+  it("다섯 모두와 싸우면 새 상대가 선다", async () => {
+    const state = makeSession();
+    const server = make(state);
+    await server.buyDuelAttempt();
+    const first = (await server.getDuelStatus()).opponents.map(({ id }) => id);
+    for (const [index, id] of first.entries()) {
+      await server.enterDuel({ opponentId: id, relicIds: TEAM, requestId: `all${index}` });
+      await server.resolveDuel({ requestId: `all${index}`, won: false });
+    }
+    const next = await server.getDuelStatus();
+    expect(next.opponents.every(({ fought }) => !fought)).toBe(true);
+    expect(next.opponents.some(({ id }) => first.includes(id))).toBe(false);
+  });
+
+  it("티어가 오르면 새 상대가 선다", async () => {
+    const state = makeSession();
+    state.duel = { ...createEmptyDuelState(), score: 395, seasonBestScore: 395 };
+    const server = make(state);
+    const before = await server.getDuelStatus();
+    const target = before.opponents.at(-1)!;
+    await server.enterDuel({ opponentId: target.id, relicIds: TEAM, requestId: "up" });
+    const result = await server.resolveDuel({ requestId: "up", won: true });
+    expect(result.tierAfter).toBe("silver");
+    const after = await server.getDuelStatus();
+    expect(after.opponents.every(({ fought }) => !fought)).toBe(true);
+    expect(after.opponents.map(({ id }) => id)).not.toEqual(before.opponents.map(({ id }) => id));
   });
 
   it("방어덱과 가릴 렐릭을 게시한다", async () => {

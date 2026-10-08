@@ -9,6 +9,7 @@ import { UI_ICON } from "./icons";
 import { addSectionTitle } from "./SectionTitle";
 import { COLOR, textStyle } from "./theme";
 import { setDebugPopupTitles } from "../debug";
+import { audioManager } from "../managers/AudioManager";
 import { playPopupClose, playPopupOpen } from "./screenTransition";
 import { BACK_SLOT, POPUP_BACK_BUTTON_DEPTH, POPUP_BODY_BEVEL_RATIO, POPUP_CLOSE_LAYOUT, POPUP_TITLE_SIZE, tiltedPopupSize } from "./popupGeometry";
 import { pressIn, pressOut } from "./pressFeedback";
@@ -252,7 +253,7 @@ export class PopupLayer {
         fill: options.destructive ? CONFIRM_DIALOG.destructiveFill : CONFIRM_DIALOG.confirmFill,
         decorDots: true,
         ...(options.destructive ? DESTRUCTIVE_BUTTON_STYLE : {}),
-        onClick: () => { close(); onConfirm(); },
+        onClick: () => { audioManager?.playUi("ui.confirm"); close(); onConfirm(); },
       }));
     });
   }
@@ -393,7 +394,7 @@ export class PopupLayer {
     // 화면이 새로고침된 것처럼 깜빡인다.
     const refreshed = this.takeRefreshedLayer(options.title);
     if (options.instant || refreshed) { layer.setAlpha(1); body.setScale(1); }
-    else playPopupOpen(this.scene, layer, body);
+    else { audioManager?.playUi("ui.panel.open"); playPopupOpen(this.scene, layer, body); }
 
     if (options.title) this.titleByLayer.set(layer, options.title);
     this.bodyByLayer.set(layer, body);
@@ -505,7 +506,7 @@ export class PopupLayer {
     // 판의 버튼이 화면 우하단에 남아, 아래 화면의 뒤로가기 대신 그것이 눌린다.
     this.backByLayer.get(layer)?.destroy();
     this.backByLayer.delete(layer);
-    if (body) playPopupClose(this.scene, layer, body, () => layer.destroy());
+    if (body) { audioManager?.playUi("ui.panel.close"); playPopupClose(this.scene, layer, body, () => layer.destroy()); }
     else layer.destroy();
     onClose?.();
     this.publishDebugTitles();

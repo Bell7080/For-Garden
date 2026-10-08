@@ -91,3 +91,32 @@ describe("AudioManager", () => {
     expect(second.volume).toBeCloseTo(0.1);
   });
 });
+
+describe("AudioManager UI 소리", () => {
+  it("ui 버스는 효과음 설정을 따르고 큐 보정을 곱한다", () => {
+    const { audio, settings, backend } = setup();
+    settings.update({ sound: { masterVolume: 0.5, effectsVolume: 0.4 } });
+    expect(audio.volume("ui")).toBeCloseTo(0.2);
+    audio.playUi("ui.click");
+    expect(backend.sounds[0].volume).toBeCloseTo(0.2 * 0.6);
+    settings.update({ sound: { effectsMuted: true } });
+    expect(backend.sounds[0].volume).toBe(0);
+  });
+
+  it("같은 큐를 연타해도 사운드 인스턴스를 늘리지 않고 앞 소리를 끊고 다시 울린다", () => {
+    const { audio, backend } = setup();
+    audio.playUi("ui.click");
+    audio.playUi("ui.click");
+    audio.playUi("ui.click");
+    expect(backend.sounds).toHaveLength(1);
+    audio.playUi("ui.tab");
+    expect(backend.sounds).toHaveLength(2);
+  });
+
+  it("에셋이 없으면 조용히 건너뛴다", () => {
+    const { audio, backend } = setup();
+    backend.available = false;
+    expect(audio.playUi("ui.click")).toBe(false);
+    expect(backend.sounds).toHaveLength(0);
+  });
+});

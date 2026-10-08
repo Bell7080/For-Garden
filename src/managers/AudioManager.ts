@@ -3,10 +3,23 @@ import type { GameSettings } from "../state/session";
 import { settingsManager, type SettingsManager } from "./SettingsManager";
 
 /** 중앙 믹서가 구분하는 출력 버스다. */
-export type AudioBus = "music" | "sfx" | "voice";
+export type AudioBus = "music" | "sfx" | "ui" | "voice";
 
 /** 실제 에셋이 추가되기 전에도 호출부가 의미만 전달하도록 고정한 지원 사운드 목록이다. */
-export type AudioCue = "research.crack";
+export type AudioCue = "research.crack" | UiCue;
+
+/** 버튼·팝업·탭처럼 화면 조작에 붙는 소리다. 씬이 고르지 않고 공용 UI 경계가 `playUi`로 부른다. */
+export type UiCue = "ui.click" | "ui.panel.open" | "ui.panel.close" | "ui.tab" | "ui.confirm" | "ui.deny";
+
+/** UI 소리의 에셋 목록이다. **임시 시안**이며 같은 이름의 파일을 바꿔 끼우면 코드는 그대로다. */
+export const UI_SOUND_ASSETS: ReadonlyArray<readonly [key: string, path: string]> = [
+  ["ui-click", "audio/ui/ui-click.mp3"],
+  ["ui-panel-open", "audio/ui/ui-panel-open.mp3"],
+  ["ui-panel-close", "audio/ui/ui-panel-close.mp3"],
+  ["ui-tab", "audio/ui/ui-tab.mp3"],
+  ["ui-confirm", "audio/ui/ui-confirm.mp3"],
+  ["ui-deny", "audio/ui/ui-deny.mp3"],
+];
 
 /** Phaser 사운드를 테스트 대역으로 바꿀 수 있게 하는 최소 재생 인스턴스 계약이다. */
 export interface ManagedSound {
@@ -36,15 +49,24 @@ export interface AudioScope {
   release(): void;
 }
 
-const CUES: Record<AudioCue, { key: string; bus: AudioBus }> = {
+/** `gain`은 시안마다 들쭉날쭉한 크기를 맞추는 큐별 보정이다(버스 볼륨에 곱한다). */
+const CUES: Record<AudioCue, { key: string; bus: AudioBus; gain?: number }> = {
   // 연구소 획득 연구의 균열음이다. 배치형 자원 발굴과 분리하며, 에셋이 없을 때는 의도적으로 무음 폴백한다.
   "research.crack": { key: "sfx-research-crack", bus: "sfx" },
+  "ui.click": { key: "ui-click", bus: "ui", gain: 0.6 },
+  "ui.panel.open": { key: "ui-panel-open", bus: "ui", gain: 0.7 },
+  "ui.panel.close": { key: "ui-panel-close", bus: "ui", gain: 0.6 },
+  "ui.tab": { key: "ui-tab", bus: "ui", gain: 0.6 },
+  "ui.confirm": { key: "ui-confirm", bus: "ui", gain: 0.8 },
+  "ui.deny": { key: "ui-deny", bus: "ui", gain: 0.8 },
 };
 
 /** master × category × mute 공식을 유일하게 계산하고 Phaser Sound 수명을 소유한다. */
 export class AudioManager {
   private readonly sounds = new Map<ManagedSound, AudioBus>();
   private music?: ManagedSound;
+  /** UI 소리는 큐마다 사운드 하나를 재사용한다 — 연타하면 앞 소리를 끊고 다시 울려 인스턴스가 쌓이지 않는다. */
+  private readonly uiSounds = new Map<UiCue, ManagedSound>();
   private hidden = false;
   private disposed = false;
   private readonly onSettings = (event: Event): void => this.applySettings((event as CustomEvent<GameSettings>).detail);
@@ -57,8 +79,9 @@ export class AudioManager {
 
   /** 현재 설정에 따른 버스의 최종 출력값(master × category × mute)을 반환한다. */
   volume(bus: AudioBus, value: GameSettings = this.settings.get()): number {
-    const category = bus === "music" ? value.sound.musicVolume : bus === "sfx" ? value.sound.effectsVolume : value.sound.voiceVolume;
-    const muted = value.sound.masterMuted || (bus === "music" ? value.sound.musicMuted : bus === "sfx" ? value.sound.effectsMuted : value.sound.voiceMuted);
+    // ui 버스는 별도 슬라이더가 생기기 전까지 효과음 설정을 따른다. 버스는 분리돼 있어 나중에 설정 줄만 더하면 된다.
+    const category = bus === "music" ? value.sound.musicVolume : bus === "sfx" || bus === "ui" ? value.sound.effectsVolume : value.sound.voiceVolume;
+    const muted = value.sound.masterMuted || (bus === "music" ? value.sound.musicMuted : bus === "sfx" || bus === "ui" ? value.sound.effectsMuted : value.sound.voiceMuted);
     return muted ? 0 : value.sound.masterVolume * category;
   }
 
@@ -75,6 +98,21 @@ export class AudioManager {
         owned.clear();
       },
     };
+  }
+
+  /** 화면 조작 소리를 한 번 울린다. 씬 수명과 무관하며 에셋이 없거나 앱이 숨겨져 있으면 조용히 건너뛴다. */
+  playUi(cue: UiCue): boolean {
+    const definition = CUES[cue];
+    if (this.disposed || this.hidden || !this.backend.has(definition.key)) return false;
+    let sound = this.uiSounds.get(cue);
+    if (!sound) {
+      sound = this.backend.create(definition.key, false);
+      this.uiSounds.set(cue, sound);
+      this.sounds.set(sound, definition.bus);
+    }
+    sound.stop();
+    sound.setVolume(this.volume(definition.bus) * (definition.gain ?? 1));
+    return sound.play();
   }
 
   /** 배경음을 짧게 교차 전환하며 음소거 중인 새 트랙도 0에서 시작시킨다. */
@@ -116,7 +154,7 @@ export class AudioManager {
     const definition = CUES[cue];
     if (this.disposed || this.hidden || !this.backend.has(definition.key)) return false;
     const sound = this.backend.create(definition.key, false);
-    sound.setVolume(this.volume(definition.bus));
+    sound.setVolume(this.volume(definition.bus) * (definition.gain ?? 1));
     this.sounds.set(sound, definition.bus);
     owned.add(sound);
     return sound.play();
@@ -125,11 +163,18 @@ export class AudioManager {
   private applySettings(value: GameSettings): void {
     for (const [sound, bus] of this.sounds) {
       this.backend.cancelFade(sound);
-      sound.setVolume(this.hidden ? 0 : this.volume(bus, value));
+      sound.setVolume(this.hidden ? 0 : this.volume(bus, value) * this.gainOf(sound));
     }
   }
 
+  /** UI 소리는 큐별 보정이 있어 설정이 바뀌어도 그 비율을 지킨다. */
+  private gainOf(sound: ManagedSound): number {
+    for (const [cue, ui] of this.uiSounds) if (ui === sound) return CUES[cue].gain ?? 1;
+    return 1;
+  }
+
   private remove(sound: ManagedSound): void {
+    for (const [cue, ui] of this.uiSounds) if (ui === sound) this.uiSounds.delete(cue);
     this.backend.cancelFade(sound);
     sound.stop();
     sound.destroy();

@@ -3,6 +3,7 @@ import { preloadPuppetAssets, PUPPET_PRELOAD_GROUPS } from "../puppets/assets";
 import { BACKGROUND_ASSETS, BACKGROUND_BOOT_KEYS } from "../ui/backgrounds";
 import { loadGameFonts } from "../ui/fonts";
 import { loadDataOverlay, loadTextCatalog } from "../i18n";
+import { UI_SOUND_ASSETS } from "../managers/AudioManager";
 import { settingsManager } from "../managers/SettingsManager";
 import { UI_ICON_ASSETS, UI_RASTER_ICON_ASSETS } from "../ui/icons";
 import { AFFINITY_ICON_ASSETS } from "../ui/affinityIcons";
@@ -112,6 +113,11 @@ export const LOADING_STEPS: ReadonlyArray<LoadingStep> = [
       const language = settingsManager.get().game.language;
       return Promise.all([loadGameFonts(language), loadTextCatalog(language), loadDataOverlay(language)]).then(() => undefined);
     },
+  },
+  {
+    label: "화면 조작음",
+    // 아주 작은 파일 여섯 개다. 실패해도 소리만 없고 게임은 그대로 진행한다(없는 에셋은 조용히 건너뛴다).
+    run: (scene) => loadWithPhaser(scene, () => UI_SOUND_ASSETS.forEach(([key, path]) => scene.load.audio(key, path))),
   },
   {
     label: "배경 원화",

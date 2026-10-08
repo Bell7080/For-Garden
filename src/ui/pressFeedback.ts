@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { motionPolicy } from "../core/settings";
+import { audioManager } from "../managers/AudioManager";
 import { settingsManager } from "../managers/SettingsManager";
 import { PRESS_FEEDBACK, type PressTier } from "./pressFeedbackStyle";
 
@@ -55,6 +56,8 @@ export function pressIn(target: Pressable, tier: PressTier = "normal"): void {
   // 튕겨 돌아오는 중이 아니고 눌려 있지도 않을 때만 지금 배율을 제자리로 삼는다.
   if (!state.pressed && !state.tween) state.rest = target.scaleX;
   state.pressed = true;
+  // 눌리는 소리도 이 한 곳이 소유한다 — 손이 닿는 순간 울려야 반응이 늦지 않다.
+  audioManager?.playUi("ui.click");
   stop(state);
   const spec = PRESS_FEEDBACK.tiers[tier];
   state.tween = target.scene.tweens.add({ targets: target, scale: state.rest * spec.down, duration: spec.downMs, ease: "Quad.Out" });

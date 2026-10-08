@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { motionPolicy } from "../core/settings";
 import { transitionTiming, type TransitionMotion } from "../core/screenTransition";
 import { session } from "../state/session";
+import { audioManager } from "../managers/AudioManager";
 
 /**
  * 화면이 갈리는 **한 가지 방법**.
@@ -177,6 +178,7 @@ function disableInput(object: Phaser.GameObjects.GameObject): void {
  */
 export function slideTabPage(scene: Phaser.Scene, targets: readonly (Phaser.GameObjects.Components.Transform & Phaser.GameObjects.Components.AlphaSingle & Phaser.GameObjects.GameObject)[], from: number, to: number): void {
   if (from === to || from < 0 || to < 0) return;
+  audioManager?.playUi("ui.tab");
   const timing = transitionTiming("tabPage", currentMotion());
   const direction = Math.sign(to - from);
   for (const target of targets) {

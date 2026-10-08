@@ -1,3 +1,4 @@
+import { sortByRewardPriority } from "../data/rewardPriority";
 import type { MailDto } from "../api/contracts";
 
 /**
@@ -59,6 +60,11 @@ export function sortMails(mails: readonly MailDto[], tab: MailTab, nowMs: number
   };
   return mails.filter((mail) => mailTabOf(mail) === tab)
     .sort((a, b) => rank(a) - rank(b) || Date.parse(b.sentAt) - Date.parse(a.sentAt));
+}
+
+/** 첨부물을 보상 중요도 순으로 세운다 — 재화는 지갑 키, 아이템은 아이템 ID가 키다. */
+export function sortMailRewards<T extends { kind: string; currency?: string; itemId?: string }>(rewards: readonly T[]): T[] {
+  return sortByRewardPriority(rewards, (reward) => (reward.kind === "currency" ? reward.currency : reward.itemId) ?? "");
 }
 
 /** 첨부 줄에 세울 칸과 넘친 수. 넘치면 마지막 칸을 `+N`에 내준다. */

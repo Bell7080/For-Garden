@@ -1,3 +1,4 @@
+import { sortByRewardPriority } from "../data/rewardPriority";
 import type { ProductDto } from "../api/contracts";
 import { t } from "../i18n";
 import type { ProductCurrency } from "../data/products";
@@ -51,7 +52,7 @@ export function tradePackageViews(products: readonly ProductDto[]): TradePackage
       valueLabel: percent === undefined ? undefined : t("trade.value", { percent }),
       cost: product.acquisition.kind === "currency" ? { currency: product.acquisition.currency, amount: product.acquisition.amount } : undefined,
       // 재화가 아닌 지급품(룬·장식)은 아직 이 전시장에 없다. 생기면 액자 그림만 늘린다.
-      grants: product.grants.flatMap((grant) => grant.kind === "currency" ? [{ currency: grant.currency, amount: grant.amount }] : []),
+      grants: sortByRewardPriority(product.grants.flatMap((grant) => grant.kind === "currency" ? [{ currency: grant.currency, amount: grant.amount }] : []), (grant) => grant.currency),
       limitLabel: tradePackageLimitLabel(product.refresh, product.purchaseLimit, product.remaining),
       refresh: product.refresh,
       tag: t(`trade.tag.${product.refresh}`),

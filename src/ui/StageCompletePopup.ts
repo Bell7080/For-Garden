@@ -1,3 +1,4 @@
+import { sortRewardItems } from "./rewardOrder";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { formatCurrency } from "../core/formatCurrency";
@@ -447,7 +448,8 @@ export class StageCompletePopup {
    * 점수 증가분은 액자로 세우지 않는다 — 지갑에 들어온 재화가 아니라 **이번 판이 얼마를
    * 보탰는가**라, 줄 아래 글자 한 줄이 그 몫을 맡는다(`RewardPopup`의 `footnote`와 같은 규칙).
    */
-  private buildLoot(body: Phaser.GameObjects.Container, items: readonly RewardPopupItem[], footnote?: string): void {
+  private buildLoot(body: Phaser.GameObjects.Container, rawItems: readonly RewardPopupItem[], footnote?: string): void {
+    const items = sortRewardItems(rawItems);
     const rowY = REWARD_ROW.y + this.shiftY;
     if (items.length === 0) {
       if (footnote) this.buildFootnote(body, rowY, footnote);

@@ -211,4 +211,9 @@ describe("편성 추천 직군 표시", () => {
   it("1.5배속을 저장이 받아들인다", () => {
     expect(normalizeSettings({ game: { battleSpeed: 1.5 } }).game.battleSpeed).toBe(1.5);
   });
+  it("로비 빛 효과는 기본으로 켜져 있고 저장값만 따른다", () => {
+    expect(normalizeSettings({}).presentation.lobbyAtmosphere).toBe(true);
+    expect(normalizeSettings({ presentation: { lobbyAtmosphere: false } }).presentation.lobbyAtmosphere).toBe(false);
+    expect(normalizeSettings({ presentation: { lobbyAtmosphere: "no" } }).presentation.lobbyAtmosphere).toBe(true);
+  });
 });

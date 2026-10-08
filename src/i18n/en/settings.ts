@@ -42,6 +42,7 @@ export const SETTINGS_EN = {
   "settings.play.damageNumbers": "Damage Numbers",
   "settings.play.shortenExcavation": "Shorten Research Sequence",
   "settings.play.powerSaving": "Power Saving",
+  "settings.play.lobbyAtmosphere": "Lobby Lighting",
   "settings.play.graphicsQuality": "Graphics Quality",
   "settings.play.quality.high": "High",
   "settings.play.quality.balanced": "Balanced",

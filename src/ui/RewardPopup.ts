@@ -11,6 +11,7 @@ import { FaceFrame } from "./FaceFrame";
 import { RARITY_TONE } from "./rarityMark";
 import { getRelic } from "../data/relics";
 import type { RewardPopupItem } from "./rewardPopupModel";
+import { sortRewardItems } from "./rewardOrder";
 import { addFramedIcon, hasGuideOpeners } from "./itemFrame";
 import { bindCurrencyGuide } from "./currencyGuideEntry";
 import { addRuneFrame } from "./runeIcons";
@@ -69,7 +70,7 @@ const RUNE_ICON_PATTERN = /^rune-(uncommon|rare|epic|legendary)-[012]$/;
  * 칸이 많으면 가로로 밀지 않고 **줄이 아래로 늘어나며 촤르륵 쌓인다**(`rewardGridLayout`).
  */
 export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options: RewardPopupOptions): void {
-  const items = options.items.filter((item) => item.amount > 0);
+  const items = sortRewardItems(options.items.filter((item) => item.amount > 0));
   if (items.length === 0) {
     options.onConfirm?.();
     return;

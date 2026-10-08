@@ -42,6 +42,7 @@ export const SETTINGS_RU = {
   "settings.play.damageNumbers": "Цифры урона",
   "settings.play.shortenExcavation": "Сократить показ исследования",
   "settings.play.powerSaving": "Энергосбережение",
+  "settings.play.lobbyAtmosphere": "Освещение лобби",
   "settings.play.graphicsQuality": "Качество графики",
   "settings.play.quality.high": "Высокое",
   "settings.play.quality.balanced": "Сбалансированное",

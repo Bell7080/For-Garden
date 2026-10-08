@@ -42,6 +42,7 @@ export const SETTINGS_PT_BR = {
   "settings.play.damageNumbers": "Números de dano",
   "settings.play.shortenExcavation": "Encurtar sequência de Pesquisa",
   "settings.play.powerSaving": "Economia de energia",
+  "settings.play.lobbyAtmosphere": "Iluminação do saguão",
   "settings.play.graphicsQuality": "Qualidade gráfica",
   "settings.play.quality.high": "Alta",
   "settings.play.quality.balanced": "Equilibrada",

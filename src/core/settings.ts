@@ -146,7 +146,7 @@ export function createDefaultSettings(): GameSettings {
     vibration: { enabled: true, combatHit: true, ultimate: true, excavationResult: true, uiInput: true },
     // 무료 모집·이벤트·우편은 현재 예약/서버 푸시 계약이 없어 선택값을 저장하지 않는다.
     notifications: { enabled: false, staminaFull: true, dailyMission: true, quietHours: true, quietHoursStart: "22:00", quietHoursEnd: "08:00", lastScheduledIds: {} },
-    presentation: { screenShake: true, damageNumbers: true, shortenExcavation: false, battleUiMotion: "default", powerSaving: false, graphicsQuality: "high", frameRateLimit: 60 },
+    presentation: { screenShake: true, damageNumbers: true, shortenExcavation: false, battleUiMotion: "default", powerSaving: false, lobbyAtmosphere: true, graphicsQuality: "high", frameRateLimit: 60 },
     // 현재 대사는 보이스의 보조 자막이 아니라 필수 진행 정보이므로 숨김 설정을 제공하지 않는다.
     accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
@@ -172,7 +172,7 @@ export function normalizeSettings(value: unknown): GameSettings {
     sound: { masterVolume: volume(s.masterVolume, d.sound.masterVolume), musicVolume: volume(s.musicVolume, d.sound.musicVolume), effectsVolume: volume(s.effectsVolume, d.sound.effectsVolume), voiceVolume: volume(s.voiceVolume, d.sound.voiceVolume), masterMuted: bool(s.masterMuted, d.sound.masterMuted), musicMuted: bool(s.musicMuted, d.sound.musicMuted), effectsMuted: bool(s.effectsMuted, d.sound.effectsMuted), voiceMuted: bool(s.voiceMuted, d.sound.voiceMuted) },
     vibration: { enabled: bool(v.enabled, d.vibration.enabled), combatHit: bool(v.combatHit, d.vibration.combatHit), ultimate: bool(v.ultimate, d.vibration.ultimate), excavationResult: bool(v.excavationResult, d.vibration.excavationResult), uiInput: bool(v.uiInput, d.vibration.uiInput) },
     notifications: { enabled: bool(n.enabled, d.notifications.enabled), staminaFull: bool(n.staminaFull, d.notifications.staminaFull), dailyMission: bool(n.dailyMission, d.notifications.dailyMission), quietHours: bool(n.quietHours, d.notifications.quietHours), quietHoursStart: /^([01]\d|2[0-3]):[0-5]\d$/.test(String(n.quietHoursStart)) ? String(n.quietHoursStart) : d.notifications.quietHoursStart, quietHoursEnd: /^([01]\d|2[0-3]):[0-5]\d$/.test(String(n.quietHoursEnd)) ? String(n.quietHoursEnd) : d.notifications.quietHoursEnd, lastScheduledIds: Object.fromEntries(Object.entries(record(n.lastScheduledIds)).filter(([key, id]) => ["staminaFull", "dailyMission"].includes(key) && typeof id === "string" && id.length <= 120)) },
-    presentation: { screenShake: bool(p.screenShake, d.presentation.screenShake), damageNumbers: bool(p.damageNumbers, d.presentation.damageNumbers), shortenExcavation: bool(p.shortenExcavation, d.presentation.shortenExcavation), powerSaving: bool(p.powerSaving, d.presentation.powerSaving),
+    presentation: { screenShake: bool(p.screenShake, d.presentation.screenShake), damageNumbers: bool(p.damageNumbers, d.presentation.damageNumbers), shortenExcavation: bool(p.shortenExcavation, d.presentation.shortenExcavation), powerSaving: bool(p.powerSaving, d.presentation.powerSaving), lobbyAtmosphere: bool(p.lobbyAtmosphere, d.presentation.lobbyAtmosphere),
       // 필드가 없던 모든 저장은 기존 연출과 같은 기본 강도로 명시 이관한다.
       battleUiMotion: allowed(p.battleUiMotion, BATTLE_UI_MOTIONS, d.presentation.battleUiMotion),
       // 새 명시값이 있으면 예전 토글보다 우선하고, 없을 때만 true를 low로 이관한다.

@@ -2,6 +2,8 @@ import type { ProductDto } from "../api/contracts";
 import type { PremiumCategory } from "../data/products";
 import { progressPassForProduct } from "../data/progressPasses";
 import { currencyRecordToRewardItems, productGrantsToRewardItems } from "./rewardPopupModel";
+import { rewardKeyOfIcon } from "./rewardOrder";
+import { sortByRewardPriority } from "../data/rewardPriority";
 
 /** 프리미엄 화면이 자기 storefront 상품만 보존하는 순수 표시 모델이다. */
 export function premiumModel(products: readonly ProductDto[]): ProductDto[] {
@@ -58,15 +60,14 @@ export function premiumGrantTiles(product: Pick<ProductDto, "grants" | "passBene
   const daily = product.passBenefit?.dailyBonus;
   if (daily && "currency" in daily) tiles.push(...currencyRecordToRewardItems({ [daily.currency]: daily.amount }).map((item) => ({ icon: item.icon as string, amount: item.amount, daily: true })));
   if (daily && "itemId" in daily) tiles.push(...grantTiles([{ kind: "item", itemId: daily.itemId, name: daily.itemId, amount: daily.amount }]).map((tile) => ({ ...tile, daily: true })));
-  return tiles;
+  return sortByRewardPriority(tiles, (tile) => rewardKeyOfIcon(tile.icon));
 }
 
-/** 패스 유료 칸의 같은 재화를 모은 액자 목록 — 다이아가 맨 앞이고 나머지는 많은 순이다. */
+/** 패스 유료 칸의 같은 재화를 모은 액자 목록 — 순서는 중요도 표가 정한다. */
 export function progressPassPaidTiles(rewards: ProductDto["grants"]): PremiumGrantTile[] {
   const totals = new Map<string, number>();
   for (const tile of grantTiles(rewards)) totals.set(tile.icon, (totals.get(tile.icon) ?? 0) + tile.amount);
-  const gems = grantTiles([{ kind: "currency", currency: "gems", amount: 1 }])[0]?.icon;
-  return [...totals].map(([icon, amount]) => ({ icon, amount })).sort((a, b) => (a.icon === gems ? -1 : b.icon === gems ? 1 : b.amount - a.amount));
+  return sortByRewardPriority([...totals].map(([icon, amount]) => ({ icon, amount })), (tile) => rewardKeyOfIcon(tile.icon));
 }
 
 /** 칸이 없는 지급(프로필 장식)의 이름들. */

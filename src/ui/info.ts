@@ -546,6 +546,8 @@ export class InfoManager {
 
   /** 정보창이 닫힐 때 목록 화면이 카드 표시를 다시 맞출 수 있게 알린다. */
   onClose?: () => void;
+  /** 정보창이 (다시) 열릴 때마다 불린다. 뒤 화면이 그리기를 멈추는 데 쓴다. */
+  onOpen?: () => void;
   /** 급여·돌파가 지갑을 바꾼 직후 소유 씬의 상단 재화 줄을 갱신하는 경계다. */
   onWalletChange?: () => void;
 
@@ -2101,6 +2103,7 @@ export class InfoManager {
     this.root.setVisible(true);
     this.chrome.setVisible(true);
     setDebugInfoOpen(true);
+    this.onOpen?.();
     // 급여 버튼 자리를 **열 때마다** 알린다. 만들 때 한 번만 알리면, 씬을 오갈 때 새 창이 먼저
     // 알린 값을 옛 창이 사라지며 지워 버린다 — 그 뒤로는 아무도 다시 알리지 않는다.
     // 판이 제자리를 잡은 다음 프레임에 재야 기울임과 이동이 반영된 실제 좌표가 나온다.

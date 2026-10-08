@@ -8,6 +8,7 @@ import type { RelicDef } from "../core/types";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { session } from "../state/session";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
+import { ScissorContainer } from "../ui/ScissorContainer";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { TopBar } from "../ui/TopBar";
 import { PortraitCard } from "../ui/PortraitCard";
@@ -91,8 +92,7 @@ export class RelicsScene extends Phaser.Scene {
   /** 지금 격자가 그려진 값(`gridSignature`). 정보창을 닫을 때 바뀐 것이 없으면 다시 세우지 않는다. */
   private shownSignature = "";
   /** 카드·구분선·미보유 제목을 함께 움직이고 한 번에 잘라 내는 유일한 콘텐츠 계층이다. */
-  private content!: Phaser.GameObjects.Container;
-  private viewportMask?: Phaser.GameObjects.Graphics;
+  private content!: ScissorContainer;
   private contentBottom = VIEWPORT_TOP;
   /** 카드가 **놓인 자리**로 잰 그리드의 끝. 들어오는 연출의 임시 좌표와 섞이지 않는다. */
   private gridBottom = VIEWPORT_TOP;
@@ -139,13 +139,11 @@ export class RelicsScene extends Phaser.Scene {
     setDebugScene("relics");
     this.debugCards = {};
     this.cards.clear();
-    this.content = this.add.container(0, 0);
-    // 화면 좌표에 고정된 마스크는 콘텐츠가 움직여도 제목·탭 영역을 절대 침범하지 않는다.
-    this.viewportMask = this.make.graphics();
-    // 단일 기하 마스크가 정렬 조작 아래와 BottomNav 위에서 그리드를 확실히 끊는다.
-    // BitmapMask의 반투명 띠는 일부 렌더러에서 씬 배경까지 사라진 듯 보이게 하므로 사용하지 않는다.
-    this.viewportMask.fillStyle(0xffffff, 1).fillRect(0, VIEWPORT_TOP, BASE_WIDTH, VIEWPORT_BOTTOM - VIEWPORT_TOP);
-    this.content.setMask(this.viewportMask.createGeometryMask());
+    // 화면 좌표에 고정된 사각형이 콘텐츠가 움직여도 제목·탭 영역을 절대 침범하지 않는다.
+    // 스크롤 영역은 사각형이라 스텐실 마스크가 아니라 scissor로 자른다(`ScissorContainer`) —
+    // 스텐실은 렌더 묶음을 끊어 카드가 많은 도감의 프레임을 깎았다.
+    this.content = new ScissorContainer(this, 0, 0).setClip({ x: 0, y: VIEWPORT_TOP, width: BASE_WIDTH, height: VIEWPORT_BOTTOM - VIEWPORT_TOP });
+    this.add.existing(this.content);
 
     const cx = BASE_WIDTH / 2;
     // background_002를 렐릭 탭의 야외 유적 전경으로 사용한다.
@@ -198,7 +196,13 @@ export class RelicsScene extends Phaser.Scene {
     // 정보창을 닫을 때마다 격자를 통째로 다시 세우면 카드 원화가 모두 빠졌다 다시 들어와,
     // 캐릭터 한 명을 들여다보고 나올 때마다 도감이 새로고침된 것처럼 깜빡였다. 격자에 서는 값이
     // 실제로 바뀐 때만 다시 세운다(`gridSignature`).
-    this.info.onClose = () => { if (this.gridSignature() !== this.shownSignature) this.refresh(); };
+    // 정보창은 화면을 통째로 덮으므로 열려 있는 동안 뒤의 그리드는 그리지 않는다 — 보이지 않는
+    // 카드 수십 장이 마스크 포함으로 매 프레임 그려지며 정보창의 프레임을 깎았다.
+    this.info.onOpen = () => { this.content.setVisible(false); };
+    this.info.onClose = () => {
+      this.content.setVisible(true);
+      if (this.gridSignature() !== this.shownSignature) this.refresh();
+    };
     // 서버가 재화 차감을 확정한 직후 정보창과 상단 줄이 같은 세션 지갑을 다시 읽는다.
     this.info.onWalletChange = () => this.topBar.refresh();
     // manager 사건을 받으면 열린 정보창 뒤의 도감 카드도 같은 resolver 결과로 즉시 재조립한다.
@@ -224,7 +228,6 @@ export class RelicsScene extends Phaser.Scene {
       this.scrollTo(this.content.y + this.velocityY * Math.min(delta, 34) / 1000);
       this.velocityY *= Math.pow(0.9, delta / 16.67);
     }
-    this.syncCardMasks();
   }
 
   /**
@@ -432,8 +435,6 @@ export class RelicsScene extends Phaser.Scene {
       this.input.off("pointerup", this.onPointerUp);
       this.input.off("pointerupoutside", this.onPointerUp);
       this.input.off("wheel", this.onWheel);
-      this.viewportMask?.destroy();
-      this.viewportMask = undefined;
       setDebugRelicScroll(undefined);
       setDebugGridCards("relics", undefined);
     });

@@ -27,7 +27,7 @@ import { InteractionScene } from "./scenes/InteractionScene";
 import { DuelScene } from "./scenes/DuelScene";
 import { PvpPreviewScene } from "./scenes/PvpPreviewScene";
 import { EventScene } from "./scenes/EventScene";
-import { setDebugWebglRestore } from "./debug";
+import { setDebugWebglRestore, debugPerfEnabled, publishDebugPerf } from "./debug";
 
 const game = new Phaser.Game({
   // Puppet 원본 indexed mesh를 GPU로 직접 그리므로 중복 정점을 만드는 Canvas 폴백은 사용하지 않는다.
@@ -88,6 +88,19 @@ game.events.on(Phaser.Core.Events.POST_RENDER, () => {
   renderedFramesAfterRestore += 1;
   setDebugWebglRestore({ restoredEvents, renderedFramesAfterRestore, renderingResumed: true });
 });
+
+// `?perf=1`로 열면 1초마다 실제 프레임과 Puppet 갱신 횟수를 왼쪽 위에 적는다(프레임 저하 진단용).
+if (debugPerfEnabled) {
+  let perfFrames = 0; let perfSince = performance.now();
+  game.events.on(Phaser.Core.Events.POST_RENDER, () => {
+    perfFrames += 1;
+    const now = performance.now();
+    if (now - perfSince < 1000) return;
+    const active = game.scene.getScenes(true).map((s) => s.scene.key).filter((k) => k !== "EffectOverlayScene").join("+");
+    publishDebugPerf(perfFrames, active || "-");
+    perfFrames = 0; perfSince = now;
+  });
+}
 
 // Phaser Sound 생성과 브라우저 수명 주기 처리는 씬이 아니라 중앙 오디오 관리자에 연결한다.
 initializeAudioManager(game);

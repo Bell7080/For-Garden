@@ -198,6 +198,42 @@ export interface DebugState {
    * 여러 편이 동시에 죽는다. 누를 곳은 화면이 알려 준다.
    */
   archaeologyMap?: { nodes: Array<DebugPoint & { siteId: string; state: string }> };
+  /**
+   * 프레임 측정값(초 단위 창). `?perf=1`로 열었을 때만 채운다.
+   * `frames`는 실제로 그려진 프레임, `puppetUpdates`는 그 사이 Puppet이 적분한 횟수(개체 합),
+   * `puppets`는 살아 있는 Puppet 수, `stepMs`는 Puppet 갱신 한 번의 평균 비용이다.
+   */
+  perf?: { scene: string; frames: number; puppetUpdates: number; puppets: number; stepMs: number };
+}
+
+const perfWindow = { updates: 0, ms: 0 };
+const perfEnabled = typeof location !== "undefined" && /[?&]perf=1/.test(location.search);
+
+/** Puppet 갱신 한 번의 소요 시간을 센다. 측정이 꺼져 있으면 아무것도 하지 않는다. */
+export function countDebugPuppetUpdate(ms: number): void {
+  if (!perfEnabled) return;
+  perfWindow.updates += 1; perfWindow.ms += ms;
+}
+export const debugPerfEnabled = perfEnabled;
+
+/** 1초 창이 끝날 때마다 호출해 게시하고 창을 비운다. */
+export function publishDebugPerf(frames: number, scene: string): void {
+  if (!perfEnabled) return;
+  const state = ensure();
+  const puppets = Object.values(state.puppetContainers ?? {}).reduce((sum, n) => sum + n, 0);
+  state.perf = {
+    scene, frames, puppetUpdates: perfWindow.updates, puppets,
+    stepMs: perfWindow.updates > 0 ? Math.round((perfWindow.ms / perfWindow.updates) * 100) / 100 : 0,
+  };
+  perfWindow.updates = 0; perfWindow.ms = 0;
+  let el = document.getElementById("pf-perf");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "pf-perf";
+    el.style.cssText = "position:fixed;left:4px;top:4px;z-index:99999;padding:3px 6px;background:rgba(0,0,0,.7);color:#7CFC9A;font:11px monospace;pointer-events:none;white-space:pre";
+    document.body.appendChild(el);
+  }
+  el.textContent = `${scene}\nfps ${frames}  upd ${state.perf.puppetUpdates}/${puppets}  ${state.perf.stepMs}ms`;
 }
 
 /** 자동화에 공개하는 좌표는 누를 중심점 두 숫자만 가진다. */

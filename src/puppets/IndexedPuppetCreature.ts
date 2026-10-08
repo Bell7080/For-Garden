@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import type { PlayOptions, Puppet } from "puppetforge";
 import { advancePuppet, puppetElapsedMs } from "./runtimeStep";
+import { countDebugPuppetUpdate, debugPerfEnabled } from "../debug";
 import { puppetAffineUniform, puppetShaderAlpha } from "./renderTransform";
 
 /** GPU 프로그램과 정적 attribute 위치는 렌더러 하나당 한 번만 만든다. */
@@ -285,8 +286,10 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     this.decorativeUpdateCredit -= 1;
     const elapsed = puppetElapsedMs(loop.rawDelta, delta, loopElapsed);
     // 편집기보다 긴 프레임을 한 번에 적분하면 pinnedSoft 발 주변의 spring이 튀므로 잘게 나눈다.
+    const started = debugPerfEnabled ? performance.now() : 0;
     const next = advancePuppet(this.puppet, elapsed / 1000);
     if (next) this.positions = next;
+    if (debugPerfEnabled) countDebugPuppetUpdate(performance.now() - started);
   }
 
   /** 최초 렌더 때만 GPU Buffer를 만들며, UV와 index는 이후 다시 올리지 않는다. */

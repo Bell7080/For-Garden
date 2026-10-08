@@ -2576,16 +2576,12 @@ export class BattleScene extends Phaser.Scene {
       let chosen = false;
       const canEnter = session.wallet.stamina >= CONTENT_STAMINA_COSTS.normalStage;
       const upcoming = nextBattleStage(STAGES, stage.id, isStageUnlocked);
-      const toMap = () => startScene(this, this.stageExit());
       const clearActions: StageCompleteAction[] | undefined = opening ? undefined : [
         ...(upcoming ? [{
           label: t("stageComplete.next"), primary: true, disabled: !canEnter,
-          onPress: () => { chosen = true; session.selectedStageId = upcoming.id; this.replayContent({ content: "stage" }, toMap); },
+          // 다음 전투로 곧바로 들어가지 않고, 지도에서 고를 때와 같이 다음 관문의 편성 화면을 연다.
+          onPress: () => { chosen = true; session.selectedStageId = upcoming.id; startScene(this, "party"); },
         }] : []),
-        {
-          label: t("stageComplete.replay"), disabled: !canEnter,
-          onPress: () => { chosen = true; this.replayContent({ content: "stage" }, toMap); },
-        },
         { label: t("stageComplete.exit"), danger: true, onPress: () => undefined },
       ];
       new StageCompletePopup(this, popups).open({

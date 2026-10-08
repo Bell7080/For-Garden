@@ -265,7 +265,7 @@ describe("FakeServer", () => {
     await server.getIdleExcavation();
     await server.saveExcavationFormation({ requestId: "formation-1", assignedRelicIds: ["torika", "rex", "dodo"] });
     now = new Date("2026-08-20T04:00:00Z"); await server.getIdleExcavation();
-    expect(state.idleExcavation.unclaimed).toEqual({ gold: 535.5, cheesecake: 0, rawStone: 5.28, gems: 2.24 });
+    expect(state.idleExcavation.unclaimed).toEqual({ gold: 2142, cheesecake: 0, rawStone: 31.68, gems: 4.48 });
   });
 
   it("v18 신규 재화 소급분은 서버 기준 시각과 보관 상한으로 한 번만 정산한다", async () => {
@@ -279,7 +279,7 @@ describe("FakeServer", () => {
     const repeated = await server.getIdleExcavation();
     // 24시간 미접속이어도 기본 보관 시간(8시간)만 계산하며, 같은 서버 시각의 재조회는 다시 지급하지 않는다.
     expect(first.excavation.unclaimed).toEqual(repeated.excavation.unclaimed);
-    expect(first.excavation.unclaimed).toMatchObject({ rawStone: 10.56, gems: 4.48 });
+    expect(first.excavation.unclaimed).toMatchObject({ rawStone: 63.36, gems: 8.96 });
     expect(first.excavation.retroactiveExcavationGrantVersion).toBe(1);
   });
 
@@ -299,7 +299,7 @@ describe("FakeServer", () => {
     expect(first.remaining).toEqual({ gold: 0, cheesecake: 0, rawStone: 0, gems: 0 });
   });
 
-  it.each([[534.429, 0.499, false], [535.5, 0.5, true], [1_071, 1, true]] as const)("발굴 저장 비율 %s를 서버 응답의 %s와 알림 %s로 확정한다", async (gold, ratio, notice) => {
+  it.each([[2_137.716, 0.499, false], [2_142, 0.5, true], [4_284, 1, true]] as const)("발굴 저장 비율 %s를 서버 응답의 %s와 알림 %s로 확정한다", async (gold, ratio, notice) => {
     const state = makeSession(); const now = new Date("2026-08-20T00:00:00Z");
     state.idleExcavation.assignedRelicIds = ["torika", null, null]; state.idleExcavation.lastSettledAt = now.toISOString();
     state.idleExcavation.unclaimed = { gold, cheesecake: 0, rawStone: 0, gems: 0 };
@@ -312,7 +312,7 @@ describe("FakeServer", () => {
     state.wallet.gold = WALLET_CAPS.gold; state.idleExcavation.assignedRelicIds = ["torika", null, null]; state.idleExcavation.lastSettledAt = now.toISOString();
     state.idleExcavation.unclaimed = { gold: 535.55, cheesecake: 0, rawStone: 0, gems: 0 };
     const response = await new FakeServer(state, { latencyMs: 0, now: () => now }).harvestExcavation({ requestId: "notice-discard" });
-    expect(response.discarded.gold).toBe(535); expect(response.storageFillRatio).toBeCloseTo(0.55 / 1_071); expect(response.harvestNotice).toBe(false);
+    expect(response.discarded.gold).toBe(535); expect(response.storageFillRatio).toBeCloseTo(0.55 / 4_284); expect(response.harvestNotice).toBe(false);
   });
 
   it("두 기기의 연속 수확처럼 서로 다른 요청은 첫 호출만 기존 누적량을 받는다", async () => {
@@ -345,8 +345,9 @@ describe("FakeServer", () => {
     const state = makeSession(); state.idleExcavation.assignedRelicIds = ["torika", null, null];
     state.idleExcavation.lastSettledAt = "2026-01-01T00:00:00Z";
     const result = await new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-20T00:00:00Z") }).harvestExcavation({ requestId: "long-away" });
-    // 기본 저장 시간은 8시간이므로 수개월 경과를 그대로 곱하지 않는다(133.875/h × 8 = 1,071).
-    expect(result.granted.gold).toBe(1_071); expect(result.remaining.gold).toBe(0);
+    // 기본 저장 시간은 8시간이므로 수개월 경과를 그대로 곱하지 않는다(535.5/h × 8 = 4,284).
+    // 한도를 가득 채워 걷었으므로 수확 보너스 10%가 얹힌다(4,284 × 1.1 = 4,712).
+    expect(result.granted.gold).toBe(4_712); expect(result.fullBonus.gold).toBe(true); expect(result.remaining.gold).toBe(0);
     expect(result.excavation.lastSettledAt).toBe("2026-08-20T00:00:00.000Z");
   });
   it("강화 요청의 선택 정보만 받아 서버 난수·골드 차감·룬 갱신을 함께 확정한다", async () => {

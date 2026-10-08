@@ -171,8 +171,6 @@ export default {
   "item.stamina-tonic.description": "Restores 60 Stamina.",
   "item.stamina-tonic-large.name": "Energy Drink+",
   "item.stamina-tonic-large.description": "Restores 120 Stamina.",
-  "item.rune-dust.name": "Rune Dust",
-  "item.rune-dust.description": "A refined material used in Rune research.",
   "premium.tab.pass": "Passes",
   "premium.tab.deal": "Deals",
   "premium.tab.limited": "Limited",

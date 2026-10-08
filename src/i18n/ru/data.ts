@@ -169,8 +169,6 @@ export default {
   "item.stamina-tonic.description": "Восстанавливает 60 выносливости.",
   "item.stamina-tonic-large.name": "Энергетик+",
   "item.stamina-tonic-large.description": "Восстанавливает 120 выносливости.",
-  "item.rune-dust.name": "Рунная пыль",
-  "item.rune-dust.description": "Очищенный материал для исследования рун.",
   "premium.tab.pass": "Пропуск",
   "premium.tab.deal": "Выгода",
   "premium.tab.limited": "Лимит",

@@ -12,9 +12,8 @@
  * 조용히 빈 텍스처가 되는 정도가 아니라 게임이 시작되지 않는다(스테미나 토닉 두 장이 실제로
  * 그랬다). 새 아이콘을 더할 때는 **확장자를 보고** 둘 중 맞는 표에 넣는다.
  */
-export const ITEM_ICON_ASSETS = [
-  ["item-rune-dust", "sprites/items/rune-dust.svg"],
-] as const;
+/** 지금은 임시 SVG가 남은 아이템이 없다(룬 가루가 마지막이었다). 새 임시 그림이 오면 여기에 더한다. */
+export const ITEM_ICON_ASSETS: readonly (readonly [string, string])[] = [];
 
 /** 이미 구워 둔 WebP로 오는 아이콘. 벡터가 아니라 그림 한 장이라 그대로 읽는다. */
 export const ITEM_RASTER_ICON_ASSETS = [

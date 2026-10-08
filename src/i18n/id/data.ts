@@ -169,8 +169,6 @@ export default {
   "item.stamina-tonic.description": "Memulihkan 60 Stamina.",
   "item.stamina-tonic-large.name": "Minuman Energi+",
   "item.stamina-tonic-large.description": "Memulihkan 120 Stamina.",
-  "item.rune-dust.name": "Debu Rune",
-  "item.rune-dust.description": "Bahan olahan untuk riset Rune.",
   "premium.tab.pass": "Pass",
   "premium.tab.deal": "Penawaran",
   "premium.tab.limited": "Terbatas",

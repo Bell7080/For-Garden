@@ -169,8 +169,6 @@ export default {
   "item.stamina-tonic.description": "ฟื้นฟูสตามินา 60",
   "item.stamina-tonic-large.name": "เครื่องดื่มชูกำลัง+",
   "item.stamina-tonic-large.description": "ฟื้นฟูสตามินา 120",
-  "item.rune-dust.name": "ฝุ่นรูน",
-  "item.rune-dust.description": "วัสดุขัดเกลาที่ใช้ในการวิจัยรูน",
   "premium.tab.pass": "พาส",
   "premium.tab.deal": "ดีล",
   "premium.tab.limited": "จำกัด",

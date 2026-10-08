@@ -169,8 +169,6 @@ export default {
   "item.stamina-tonic.description": "Stellt 60 Ausdauer wieder her.",
   "item.stamina-tonic-large.name": "Energydrink+",
   "item.stamina-tonic-large.description": "Stellt 120 Ausdauer wieder her.",
-  "item.rune-dust.name": "Runenstaub",
-  "item.rune-dust.description": "Ein veredeltes Material für die Runenforschung.",
   "premium.tab.pass": "Pass",
   "premium.tab.deal": "Angebote",
   "premium.tab.limited": "Limitiert",

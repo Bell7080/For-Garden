@@ -15,7 +15,7 @@ export const REWARD_PRIORITY: readonly string[] = [
   // 핵심 재화
   "gems", "fossil", "amber", "gold", "cheesecake",
   // 성장 재료
-  "restoration-crystal", "refined-core", "ancient-core", "rune-dust",
+  "restoration-crystal", "refined-core", "ancient-core",
   // 행동력
   "stamina-tonic-large", "stamina-tonic", "stamina",
   // 입장권

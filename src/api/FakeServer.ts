@@ -64,7 +64,7 @@ import { InventoryManager } from "../managers/InventoryManager";
 import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, MarkRuneRequest, MarkRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse } from "./contracts";
 import type { FulfillPlatformPurchaseRequest, FulfillPlatformPurchaseResponse } from "./contracts";
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, ClaimPassDailyBonusRequest, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
-import { excavationHarvestStatus, excavationProductionDisplayModel, excavationStorageLimitSeconds, harvestIdleExcavation, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
+import { excavationHarvestStatus, excavationProductionDisplayModel, excavationStorageCapacity, excavationStorageLimitSeconds, harvestIdleExcavation, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
 import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest, InventoryResponse, UseConsumableRequest, UseConsumableResponse } from "./contracts";
 import type { EnterRaidRequest, EnterRaidResponse, RaidDto, RaidListResponse, RaidRewardDto, SettleRaidRequest, SettleRaidResponse, SubmitRaidDamageRequest, SubmitRaidDamageResponse, SummonRaidRequest, SummonRaidResponse } from "./contracts";
 import type { ClaimExpeditionRewardRequest, ClaimExpeditionRewardResponse, CompleteExpeditionNodeRequest, CompleteExpeditionNodeResponse, ExpeditionLeaderboardResponse, ExpeditionWeeklyBestResponse, SettleExpeditionRunRequest, SettleExpeditionRunResponse, SubmitExpeditionBossScoreRequest, SubmitExpeditionBossScoreResponse, SweepExpeditionRequest, SweepExpeditionResponse } from "./contracts";
@@ -1003,17 +1003,18 @@ export class FakeServer implements GameApi {
   /** 정산·정수화·지갑 상한·미수확 차감을 한 번 저장한 뒤에만 성공 응답을 캐시한다. */
   async harvestExcavation(request: HarvestExcavationRequest): Promise<HarvestExcavationResponse> {
     await this.delay(); const cached = this.excavationHarvestResults.get(request.requestId);
-    if (cached) return { ...cached, excavation: this.cloneExcavation(cached.excavation), wallet: { ...cached.wallet }, granted: { ...cached.granted }, discarded: { ...cached.discarded }, remaining: { ...cached.remaining } };
+    if (cached) return { ...cached, excavation: this.cloneExcavation(cached.excavation), wallet: { ...cached.wallet }, granted: { ...cached.granted }, discarded: { ...cached.discarded }, remaining: { ...cached.remaining }, fullBonus: { ...cached.fullBonus } };
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "수확 요청 ID가 필요합니다.");
     const now = this.now(); const settled = settleIdleExcavation(this.state.idleExcavation, now, RELICS, this.state.relicProgress);
-    const result = harvestIdleExcavation(settled, this.state.wallet);
+    const capacity = excavationStorageCapacity(excavationProductionDisplayModel(settled.assignedRelicIds, RELICS, this.state.relicProgress).totalsPerHour, excavationStorageLimitSeconds(settled, now));
+    const result = harvestIdleExcavation(settled, this.state.wallet, capacity);
     // 실제로 걷어 들인 것이 있을 때만 수확 임무를 센다 — 빈 손으로 누른 것은 수확이 아니다.
     const harvested = Object.values(result.granted).some((amount) => (amount ?? 0) > 0);
     const nextMissions = harvested ? applyMissionEvent(this.state.missions, { type: "excavation_harvested" }, now) : this.state.missions;
     const nextState = { ...this.state, idleExcavation: result.state, wallet: result.wallet, missions: nextMissions };
     this.persist(nextState); this.state.idleExcavation = result.state; this.state.wallet = result.wallet; this.state.missions = nextMissions;
     // 응답의 기준 시각·잔량·지갑은 같은 persist가 성공한 바로 그 트랜잭션 스냅샷이다.
-    const response = { ...this.idleExcavationResponse(result.state, now), wallet: { ...result.wallet }, granted: { ...result.granted }, discarded: { ...result.discarded }, remaining: { ...result.state.unclaimed } };
+    const response = { ...this.idleExcavationResponse(result.state, now), wallet: { ...result.wallet }, granted: { ...result.granted }, discarded: { ...result.discarded }, remaining: { ...result.state.unclaimed }, fullBonus: { ...result.fullBonus } };
     this.excavationHarvestResults.set(request.requestId, response); return response;
   }
 

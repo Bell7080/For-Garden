@@ -169,8 +169,6 @@ export default {
   "item.stamina-tonic.description": "Recupera 60 de Estamina.",
   "item.stamina-tonic-large.name": "Bebida energética+",
   "item.stamina-tonic-large.description": "Recupera 120 de Estamina.",
-  "item.rune-dust.name": "Pó de runa",
-  "item.rune-dust.description": "Um material refinado usado na pesquisa de Runas.",
   "premium.tab.pass": "Passe",
   "premium.tab.deal": "Ofertas",
   "premium.tab.limited": "Limitado",

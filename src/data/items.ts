@@ -66,7 +66,6 @@ export const ITEMS = [
   { id: "ancient-core", name: "미지의 고대 핵", description: "룬에 특성 한 줄을 새로 부여합니다. 이미 특성이 있으면 지우고 다시 부여합니다.", category: "material", icon: { kind: "asset", key: "item-ancient-core" }, maxStack: 999, useEffect: { kind: "none" } },
   { id: "refined-core", name: "정제된 고대 핵", description: "영웅 이상 등급의 특성을 확정으로 부여합니다. 이미 영웅 이상인 특성에는 사용할 수 없습니다.", category: "material", icon: { kind: "asset", key: "item-refined-core" }, maxStack: 999, useEffect: { kind: "none" } },
   { id: "restoration-crystal", name: "완전 복원 결정", description: "특성의 종류는 그대로 두고 등급을 전설로 확정 상승시킵니다. 이미 전설인 특성에는 사용할 수 없습니다.", category: "material", icon: { kind: "asset", key: "item-restoration-crystal" }, maxStack: 999, useEffect: { kind: "none" } },
-  { id: "rune-dust", name: "룬 가루", description: "룬 연구에 쓰이는 정제 재료입니다.", category: "material", icon: { kind: "asset", key: "item-rune-dust" }, maxStack: 999, useEffect: { kind: "none" } },
   // 레이드를 여는 두 토벌권. 소모하는 입장권이라 지갑이 아니라 가방의 재료다 — 상단 줄에 늘
   // 서는 재화가 아니고, 레이드 목록 머리에서만 몇 장 남았는지 말한다.
   { id: "raid-ticket", name: "토벌권", description: "친구와 함께 치는 레이드를 엽니다. 보스와 난이도는 무작위로 정해집니다.", category: "material", icon: { kind: "asset", key: "item-raid-ticket" }, maxStack: 999, useEffect: { kind: "none" } },

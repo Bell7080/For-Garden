@@ -336,8 +336,6 @@ export default {
   "item.stamina-tonic.description": "スタミナを60回復します。",
   "item.stamina-tonic-large.name": "エナジードリンク+",
   "item.stamina-tonic-large.description": "スタミナを120回復します。",
-  "item.rune-dust.name": "ルーンの粉",
-  "item.rune-dust.description": "ルーン研究に使われる精製素材です。",
   "premium.tab.pass": "パス",
   "premium.tab.deal": "お得",
   "premium.tab.limited": "限定",

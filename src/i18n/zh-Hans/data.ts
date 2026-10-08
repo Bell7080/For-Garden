@@ -169,8 +169,6 @@ export default {
   "item.stamina-tonic.description": "恢复60体力。",
   "item.stamina-tonic-large.name": "能量饮料+",
   "item.stamina-tonic-large.description": "恢复120体力。",
-  "item.rune-dust.name": "符文粉尘",
-  "item.rune-dust.description": "用于符文研究的精炼材料。",
   "premium.tab.pass": "通行证",
   "premium.tab.deal": "特惠",
   "premium.tab.limited": "限定",

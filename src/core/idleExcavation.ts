@@ -115,6 +115,16 @@ export interface IdleExcavationState {
 /** 레벨 하나와 한계 돌파 한 단계가 주는 명시적인 생산 증가율이다. */
 export const EXCAVATION_GROWTH = { perLevel: 0.02, perBreakthrough: 0.1 } as const;
 
+/**
+ * 재화별 기본 생산 배율. 개체의 `baseProductionPerHour`는 그대로 두고 이 표 하나가 발굴 전체의
+ * 체감 규모를 정한다 — 개체 45개의 수치를 일일이 고치면 다음 조정 때 또 45곳을 건드려야 한다.
+ * 젬은 유료 재화라 일부러 낮게 둔다.
+ */
+export const EXCAVATION_PRODUCTION_SCALE: Readonly<Record<ExcavationCurrency, number>> = { gold: 4, cheesecake: 4, rawStone: 6, gems: 2 };
+
+/** 보관 한도를 가득 채워 걷으면 그 재화에 얹히는 수확 보너스(10%)다. */
+export const EXCAVATION_FULL_HARVEST_BONUS = 1.1;
+
 /** UI의 다이아는 희소하므로 일반 재화보다 레벨/돌파 성장률을 낮게 제한한다. */
 const EXCAVATION_GROWTH_BY_CURRENCY: Readonly<Record<ExcavationCurrency, { perLevel: number; perBreakthrough: number }>> = {
   gold: EXCAVATION_GROWTH, cheesecake: EXCAVATION_GROWTH, rawStone: EXCAVATION_GROWTH,
@@ -144,7 +154,7 @@ export function validateExcavationFormation(assignedRelicIds: IdleExcavationStat
 
 /** 허용된 성장값만으로 한 렐릭의 시간당 생산 상세를 계산한다. */
 export function relicExcavationProduction(def: RelicDef, progress: Pick<RelicProgress, "level" | "breakthrough">): RelicExcavationProduction {
-  const basePerHour = def.excavationTrait.baseProductionPerHour * def.excavationTrait.efficiencyMultiplier;
+  const basePerHour = def.excavationTrait.baseProductionPerHour * def.excavationTrait.efficiencyMultiplier * EXCAVATION_PRODUCTION_SCALE[def.excavationTrait.primaryCurrency];
   const growth = EXCAVATION_GROWTH_BY_CURRENCY[def.excavationTrait.primaryCurrency];
   // 표시 단계에서도 정산과 같은 소수 정규화를 사용해 UI에 부동소수 오차가 새지 않게 한다.
   const levelIncreasePerHour = fixedAmount(basePerHour * Math.max(0, progress.level - 1) * growth.perLevel);
@@ -231,14 +241,17 @@ export function settleIdleExcavation(state: IdleExcavationState, serverNow: Date
 }
 
 /** 정수 부분만 지갑에 옮기며 지갑 상한 밖의 정수는 버리고 소수 잔량만 보존한다. */
-export function harvestIdleExcavation(state: IdleExcavationState, wallet: Wallet): { state: IdleExcavationState; wallet: Wallet; granted: Record<ExcavationCurrency, number>; discarded: Record<ExcavationCurrency, number> } {
+export function harvestIdleExcavation(state: IdleExcavationState, wallet: Wallet, capacity?: Readonly<Record<ExcavationCurrency, number>>): { state: IdleExcavationState; wallet: Wallet; granted: Record<ExcavationCurrency, number>; discarded: Record<ExcavationCurrency, number>; fullBonus: Record<ExcavationCurrency, boolean> } {
   const nextWallet = { ...wallet }; const unclaimed = { ...state.unclaimed };
   const granted = emptyExcavationAmounts(); const discarded = emptyExcavationAmounts();
+  const fullBonus = Object.fromEntries(EXCAVATION_CURRENCIES.map((currency) => [currency, false])) as Record<ExcavationCurrency, boolean>;
   for (const currency of EXCAVATION_CURRENCIES) {
     // Math.floor로 재화별 정수 지급을 고정하고 1 미만 생산분은 다음 수확으로 이월한다.
-    const harvestable = Math.floor(unclaimed[currency] * (state.pendingHarvestMultiplier ?? 1)); const room = Math.max(0, WALLET_CAPS[currency] - nextWallet[currency]);
+    // 한도를 가득 채운 재화만 보너스를 받는다 — 걷을 때가 아니라 꽉 찰 때까지 둔 보람이다.
+    fullBonus[currency] = capacity !== undefined && capacity[currency] > 0 && unclaimed[currency] >= capacity[currency];
+    const harvestable = Math.floor(unclaimed[currency] * (state.pendingHarvestMultiplier ?? 1) * (fullBonus[currency] ? EXCAVATION_FULL_HARVEST_BONUS : 1)); const room = Math.max(0, WALLET_CAPS[currency] - nextWallet[currency]);
     granted[currency] = Math.min(harvestable, room); discarded[currency] = harvestable - granted[currency];
     nextWallet[currency] += granted[currency]; unclaimed[currency] = fixedAmount(unclaimed[currency] - Math.floor(unclaimed[currency]));
   }
-  return { state: { ...state, assignedRelicIds: [...state.assignedRelicIds], unclaimed, pendingHarvestMultiplier: 1 }, wallet: nextWallet, granted, discarded };
+  return { state: { ...state, assignedRelicIds: [...state.assignedRelicIds], unclaimed, pendingHarvestMultiplier: 1 }, wallet: nextWallet, granted, discarded, fullBonus };
 }

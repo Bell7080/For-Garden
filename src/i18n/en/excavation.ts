@@ -10,6 +10,7 @@ export const EXCAVATION_EN = {
   "excavation.harvestBusy": "Harvesting…",
   "excavation.harvest": "Harvest",
   "excavation.rewardTitle": "Excavation Rewards",
+  "excavation.rewardTitleFull": "Full Storage Bonus +10%",
   "excavation.harvestFailed": "The harvest failed. Please retry with the same request.",
   "excavation.ad.unavailable": "Even when ads are unavailable, a normal harvest still works.",
   "excavation.ad.cancelled": "The ad was cancelled or is not ready. Please use a normal harvest.",

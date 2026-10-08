@@ -12,6 +12,7 @@ export const EXCAVATION_KO = {
   "excavation.harvestBusy": "수확 중…",
   "excavation.harvest": "수확",
   "excavation.rewardTitle": "발굴 보상 획득",
+  "excavation.rewardTitleFull": "가득 채운 수확 보너스 +10%",
   "excavation.harvestFailed": "수확하지 못했습니다. 같은 요청으로 다시 시도해 주세요.",
 
   "excavation.ad.unavailable": "광고를 이용할 수 없어도 일반 수확은 계속할 수 있습니다.",

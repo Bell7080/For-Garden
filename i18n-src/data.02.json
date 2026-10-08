@@ -289,26 +289,6 @@
 "Stellt 120 Ausdauer wieder her.",
 "Восстанавливает 120 выносливости."
 ],
-"item.rune-dust.name": [
-"符文粉尘",
-"ฝุ่นรูน",
-"Bụi Rune",
-"Debu Rune",
-"Polvo de runa",
-"Pó de runa",
-"Runenstaub",
-"Рунная пыль"
-],
-"item.rune-dust.description": [
-"用于符文研究的精炼材料。",
-"วัสดุขัดเกลาที่ใช้ในการวิจัยรูน",
-"Vật liệu tinh chế dùng trong nghiên cứu Rune.",
-"Bahan olahan untuk riset Rune.",
-"Un material refinado para la investigación de Runas.",
-"Um material refinado usado na pesquisa de Runas.",
-"Ein veredeltes Material für die Runenforschung.",
-"Очищенный материал для исследования рун."
-],
 "premium.tab.package": [
 "礼包",
 "แพ็กเกจ",

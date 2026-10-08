@@ -159,14 +159,14 @@ describe("inventory", () => {
   });
 
   it("서버 조회 한 번으로 룬·지갑·스택을 함께 반영한 뒤 list만 표시 기준으로 사용한다", async () => {
-    const serverState = createDefaultSession(); serverState.wallet.gold = 4321; serverState.itemInventory = [{ itemId: "rune-dust", quantity: 17 }];
+    const serverState = createDefaultSession(); serverState.wallet.gold = 4321; serverState.itemInventory = [{ itemId: "ancient-core", quantity: 17 }];
     const clientState = createDefaultSession(); clientState.wallet.gold = 1; clientState.itemInventory = [{ itemId: "stamina-tonic", quantity: 9 }];
     const manager = new InventoryManager(clientState);
     // 실제 API DTO 경계를 통과시켜 세 저장 영역이 같은 응답 스냅샷으로 교체되는지 고정한다.
     await manager.refresh(new FakeServer(serverState, { latencyMs: 0 }));
     expect(manager.list("currency").find(({ id }) => id === "gold")?.quantity).toBe(4321);
     expect(manager.list("consumable")).toEqual([]);
-    expect(manager.list("material")[0]).toMatchObject({ id: "rune-dust", quantity: 17 });
+    expect(manager.list("material")[0]).toMatchObject({ id: "ancient-core", quantity: 17 });
   });
 
   it("세공·각인·이름 변경도 목록 갱신 신호를 함께 낸다", async () => {

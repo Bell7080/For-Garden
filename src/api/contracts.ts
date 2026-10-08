@@ -114,6 +114,8 @@ export interface HarvestExcavationResponse extends IdleExcavationResponse {
   wallet: Wallet;
   /** 정수 수확 뒤 다음 수확으로 이월한 자원별 소수 누적량이다. */
   remaining: Record<ExcavationCurrency, number>;
+  /** 보관 한도를 가득 채워 걷어 수확 보너스를 받은 재화다. */
+  fullBonus: Record<ExcavationCurrency, boolean>;
 }
 
 /** 룬 장착 위치다. 슬롯 값은 정적 정의 ID가 아닌 룬 인스턴스 ID다. */

@@ -11,12 +11,12 @@ describe("공용 보상 팝업 표시 모델", () => {
     // amount는 구매 수량을 다시 곱하지 않고 서버가 준 확정 총량 그대로여야 한다.
     expect(productGrantsToRewardItems([
       { kind: "currency", currency: "cheesecake", amount: 200 },
-      { kind: "item", itemId: "rune-dust", name: "룬 가루", amount: 3 },
+      { kind: "item", itemId: "ancient-core", name: "미지의 고대 핵", amount: 3 },
       { kind: "rune", name: "희귀 룬", amount: 1, rarity: "rare", part: 1 },
       { kind: "profile_decoration", decorationId: "badge", name: "연구원 명찰" },
     ])).toEqual([
       { icon: "currency-cheesecake", amount: 200 },
-      { icon: "item-rune-dust", amount: 3 },
+      { icon: "item-ancient-core", amount: 3 },
       { icon: "rune-rare-1", amount: 1, label: "희귀 룬" },
       { icon: { kind: "glyph", key: "costume" }, amount: 1, label: "연구원 명찰" },
     ]);

@@ -19,7 +19,7 @@ test("가방은 로비를 유지하고 카테고리 탭과 많은 항목 스크�
   test.setTimeout(240_000);
   await startAfterOpening(page, (state) => {
     // 저장 검증을 통과하는 실제 두 스택으로 카테고리 전환과 목록 행을 준비한다.
-    state.itemInventory = [{ itemId: "stamina-tonic", quantity: 10 }, { itemId: "rune-dust", quantity: 500 }];
+    state.itemInventory = [{ itemId: "stamina-tonic", quantity: 10 }, { itemId: "ancient-core", quantity: 500 }];
     // 서로 다른 등급과 조각 위치를 넣어 가방이 일반 하트 glyph가 아닌 개별 WebP를 고르는지 고정한다.
     const values = Object.fromEntries(["hp", "atk", "ap", "def", "res", "moveSpeed", "attackSpeed", "lifeSteal", "critChance", "critDamage", "ferocityGain", "energyGain"].map((key) => [key, 10])) as Record<RuneStatKey, number>;
     state.runeInventory = [

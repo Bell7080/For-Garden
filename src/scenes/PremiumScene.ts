@@ -13,6 +13,8 @@ import { addFrameAmount, addFramedIcon, guideForIcon } from "../ui/itemFrame";
 import { chipPoints, drawLayer, drawShapeOutline, drawVignette, slantedRect } from "../ui/holo";
 import { paintShowcaseCard, SHOWCASE_TIER_TONE, showcaseCardShape } from "../ui/showcaseCardChrome";
 import { addAdRewardCard } from "../ui/AdRewardCard";
+import { addStatusSticker, forgetStatusStickers } from "../ui/soldOutStamp";
+import { premiumStatusOf, type PremiumStatus } from "../ui/premiumStatus";
 import { remainingDetail } from "../ui/itemExpiry";
 import { openRewardPopup, productGrantsToRewardItems } from "../ui/RewardPopup";
 import { motionPolicy } from "../core/settings";
@@ -156,10 +158,12 @@ export class PremiumScene extends Phaser.Scene {
     this.limitedClocks = [];
     const visible = productsForPremiumCategory(this.products, this.selectedCategory);
     const kind = premiumListKind(this.selectedCategory);
-    visible.forEach((product, index) => this.addProduct(product, index, kind));
-    // 젬 탭 끝에는 광고 보고 젬을 받는 칸이 하나 더 선다.
-    const extra = this.selectedCategory === "gem" ? 1 : 0;
-    if (extra) this.addGemAdCard(visible.length, kind);
+    // 광고 칸은 젬 탭의 맨 위(1번), 일간 탭에서는 「일일 무료 보급」 바로 아래에 끼어든다.
+    const freeDailyIndex = visible.findIndex((product) => product.id === DAILY_FREE_PRODUCT_ID);
+    const adAt = this.selectedCategory === "gem" ? 0 : this.selectedCategory === "daily" && freeDailyIndex >= 0 ? freeDailyIndex + 1 : -1;
+    visible.forEach((product, index) => this.addProduct(product, adAt >= 0 && index >= adAt ? index + 1 : index, kind));
+    const extra = adAt >= 0 ? 1 : 0;
+    if (adAt >= 0) { if (this.selectedCategory === "gem") this.addGemAdCard(adAt, kind); else this.addDailyAdCard(adAt, kind); }
     const view = premiumGridViewport();
     this.minScrollY = Math.min(0, view.bottom - view.top - premiumGridContentHeight(visible.length + extra, kind));
     this.scrollTo(this.content?.y ?? 0);
@@ -195,6 +199,11 @@ export class PremiumScene extends Phaser.Scene {
     if (soldOut) card.setAlpha(PREMIUM_SOLD_OUT_ALPHA);
     if (subscribed) this.addActivePulse(card, width, height);
     this.content?.add(card);
+    // 상태 딱지는 흐려진 카드의 알파를 물려받지 않도록 카드 곁에 따로 붙인다.
+    const status = premiumStatusOf(product);
+    const stickerKey = `${product.id}:${status ?? ""}`;
+    if (status && this.content) addStatusSticker(this, this.content, x, y + (kind === "grid" ? -70 : -10), t(`shop.premium.sticker.${status}`), STICKER_TONE[status], stickerKey);
+    else forgetStatusStickers(product.id);
   }
 
   /** 가로 카드의 반높이 — 우상단 배지가 윗변에 붙는 자리. */
@@ -389,7 +398,7 @@ export class PremiumScene extends Phaser.Scene {
     const { x, y } = premiumCardSpot(index, kind);
     addAdRewardCard(this, this.content!, {
       x, y, width: premiumCardWidth(kind), height: premiumCardHeight(kind), currency: "gems", amount: slot.reward.amount,
-      title: t("shop.premium.adTitle"), remaining: status.remaining, limit: status.limit,
+      title: t("shop.premium.adTitle"), badge: t("shop.premium.adDeal"), remaining: status.remaining, limit: status.limit,
       clip: premiumGridViewport, isTap: (pointer) => this.isTap(pointer),
       onWatch: () => void this.watchGemAd(),
     });
@@ -400,6 +409,61 @@ export class PremiumScene extends Phaser.Scene {
     this.claiming = true;
     try {
       if (!(await watchAdSlot("gem-ad"))) { this.notice(t("stamina.adCancelled")); return; }
+      this.topBar?.refresh();
+      await this.refresh();
+    } catch { this.notice(t("shop.premium.adFailed")); } finally { this.claiming = false; }
+  }
+
+  /**
+   * 일간 탭의 「일일 보급 추가」 — 무료 보급을 받은 뒤 광고를 보고 같은 묶음을 하루 두 번 더 받는다.
+   * 받는 것은 서버 슬롯(`daily-bonus-ad`)에서 읽어 액자로 세우고, 무료 보급 전에는 버튼이 잠겨 있다.
+   */
+  private addDailyAdCard(index: number, kind: PremiumListKind): void {
+    const slot = findAdRewardSlot("daily-bonus-ad");
+    if (!slot || slot.reward.kind !== "currencies") return;
+    const W = PREMIUM_WIDE;
+    const S = W.stack;
+    const width = premiumCardWidth(kind);
+    const height = premiumCardHeight(kind);
+    const { x, y } = premiumCardSpot(index, kind);
+    const status = adSlotStatus(slot.id);
+    const freeClaimed = this.products.some((product) => product.id === DAILY_FREE_PRODUCT_ID && !product.purchasable);
+    const done = status.remaining <= 0;
+    const open = freeClaimed && !done;
+    const card = this.add.container(x, y);
+    paintShowcaseCard(this, card, { width, height, accent: SHOWCASE_TIER_TONE.daily, dim: false, railX: -width / 2 + W.pad, tag: t("shop.premium.dailyAdTag") });
+    const left = -width / 2 + W.pad;
+    const right = width / 2 - W.pad;
+    const name = this.add.text(left, S.nameY, t("shop.premium.dailyAdTitle"), textStyle({ role: "display", size: W.nameSize })).setOrigin(0, 0.5).setShadow(3, 4, "#04060a", 0, true, true);
+    card.add(squeezeTextToWidth(name, right - left, 0.7));
+    const tiles = premiumGrantTiles({
+      grants: [
+        ...slot.reward.grants.flatMap((grant) => grant.currency === "stamina" ? [] : [{ kind: "currency" as const, currency: grant.currency, amount: grant.amount }]),
+        ...(slot.reward.items ?? []).map((item) => ({ kind: "item" as const, itemId: item.itemId, name: item.itemId, amount: item.quantity })),
+      ],
+    }).slice(0, W.frameCap);
+    const xs = premiumWideFrameXs(tiles.length);
+    tiles.forEach((tile, i) => this.addGrantFrame(card, xs[i], S.frameY, W.frame, tile.icon, tile.amount));
+    const bar = this.add.container(0, S.price.y);
+    bar.add(drawLayer(this, 0, 0, chipPoints(S.price.width + 120, S.price.height, { bevel: { topLeft: 20, topRight: 0, bottomRight: 20, bottomLeft: 0 } }), { fill: 0x0d141c, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.7 }));
+    const label = this.add.text(0, 0, t(freeClaimed ? "shop.premium.dailyAdWatch" : "shop.premium.dailyAdLocked"), textStyle({ role: "display", size: 34, color: open ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5).setStroke("#000000", 6);
+    bar.add(squeezeTextToWidth(label, S.price.width + 120 - 40, 0.6));
+    card.add(bar);
+    card.add(this.add.text(right, S.price.y, t("shop.premium.adLeft", { remaining: status.remaining, limit: status.limit }), textStyle({ role: "emphasis", size: W.noteSize + 4, color: done ? COLOR.dangerText : COLOR.ink, align: "right" })).setOrigin(1, 0.5).setStroke("#05070a", 3));
+    if (!open) card.setAlpha(PREMIUM_SOLD_OUT_ALPHA + 0.2);
+    this.addCardHit(card, width, height, () => {
+      if (!freeClaimed) { this.notice(t("shop.premium.dailyAdLocked")); return; }
+      if (done) { this.notice(t("shop.premium.dailyClaimed")); return; }
+      void this.watchDailyAd();
+    });
+    this.content?.add(card);
+  }
+
+  private async watchDailyAd(): Promise<void> {
+    if (this.claiming) return;
+    this.claiming = true;
+    try {
+      if (!(await watchAdSlot("daily-bonus-ad"))) { this.notice(t("stamina.adCancelled")); return; }
       this.topBar?.refresh();
       await this.refresh();
     } catch { this.notice(t("shop.premium.adFailed")); } finally { this.claiming = false; }
@@ -494,6 +558,17 @@ export class PremiumScene extends Phaser.Scene {
     this.tweens.add({ targets: toast, alpha: 0, delay: 900, duration: 500, onComplete: () => toast.destroy() });
   }
 }
+
+/** 「일일 무료 보급」 — 추가 광고 칸이 바로 아래에 붙는 무료 수령 상품. */
+const DAILY_FREE_PRODUCT_ID = "premium-free-daily";
+
+/** 상태 딱지의 색 — 끝난 것은 붉게, 이용 중·받은 것은 강조색으로. */
+const STICKER_TONE: Record<PremiumStatus, { text: string; line: number }> = {
+  purchased: { text: COLOR.accentText, line: COLOR.accent },
+  claimed: { text: COLOR.accentText, line: COLOR.accent },
+  subscribed: { text: COLOR.accentText, line: COLOR.accent },
+  soldOut: { text: COLOR.dangerText, line: 0xe07a7a },
+};
 
 /** 소진된 카드의 진하기 — 무역 전시장과 같은 값이다. */
 const PREMIUM_SOLD_OUT_ALPHA = 0.52;

@@ -860,6 +860,30 @@ describe("FakeServer 광고 보상 경계", () => {
     await expect(server.claimAdReward({ slotId: "loot-ad", verificationToken: "verified:loot-ad", requestId: "loot-over" })).rejects.toMatchObject({ code: "AD_DAILY_LIMIT" });
   });
 
+  it("젬 광고는 한 번에 50젬이고 하루 세 번까지다", async () => {
+    const state = makeSession();
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-22T12:00:00Z") });
+    const before = state.wallet.gems;
+    for (let index = 0; index < 3; index += 1) await server.claimAdReward({ slotId: "gem-ad", verificationToken: "verified:gem-ad", requestId: `gem-${index}` });
+    expect(state.wallet.gems).toBe(before + 150);
+    await expect(server.claimAdReward({ slotId: "gem-ad", verificationToken: "verified:gem-ad", requestId: "gem-over" })).rejects.toMatchObject({ code: "AD_DAILY_LIMIT" });
+  });
+
+  it("일일 보급 추가 광고는 무료 보급을 받은 뒤에만, 하루 두 번 같은 묶음(드링크 포함)을 준다", async () => {
+    const state = makeSession();
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-22T12:00:00Z") });
+    const ad = (id: string) => server.claimAdReward({ slotId: "daily-bonus-ad", verificationToken: "verified:daily-bonus-ad", requestId: id });
+    await expect(ad("early")).rejects.toMatchObject({ code: "AD_PREREQUISITE" });
+    await server.purchaseProduct({ storefront: "premium", productId: "premium-free-daily", quantity: 1 });
+    const wallet = { ...state.wallet };
+    const tonics = () => state.itemInventory.find(({ itemId }) => itemId === "stamina-tonic")?.quantity ?? 0;
+    const tonicBefore = tonics();
+    await ad("one"); await ad("two");
+    expect(state.wallet).toMatchObject({ gold: wallet.gold + 20_000, cheesecake: wallet.cheesecake + 60, gems: wallet.gems + 20 });
+    expect(tonics()).toBe(tonicBefore + 2);
+    await expect(ad("three")).rejects.toMatchObject({ code: "AD_DAILY_LIMIT" });
+  });
+
   it("잘못된 토큰·중복 ID·일일 초과는 지급 없이 거부하고 다음 UTC 일자에 초기화한다", async () => {
     const state = makeSession(); let now = new Date("2026-08-22T12:00:00Z");
     const server = new FakeServer(state, { latencyMs: 0, now: () => now });

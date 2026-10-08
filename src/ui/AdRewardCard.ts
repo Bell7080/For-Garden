@@ -4,7 +4,7 @@ import { t } from "../i18n";
 import type { ClipRect } from "./clipRect";
 import { addClippedHit } from "./clippedHit";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
-import { chipPoints, drawLayer } from "./holo";
+import { chipPoints, drawLayer, slantedRect } from "./holo";
 import { addFrameAmount, addFramedIcon } from "./itemFrame";
 import { pressIn, pressOut } from "./pressFeedback";
 import { squeezeTextToWidth } from "./textFit";
@@ -17,6 +17,8 @@ export interface AdRewardCardOptions {
   /** 같이 받는 재화. 있으면 액자가 둘 이상 나란히 선다. */
   extras?: readonly { currency: keyof typeof CURRENCY_ICON_BY_WALLET; amount: number }[];
   title: string;
+  /** 칸 오른쪽 위에 걸리는 강조 꼬리표(예: 「특가」). 다른 광고보다 후한 칸만 단다. */
+  badge?: string;
   /** 오늘 남은 횟수와 한도. 다 받았으면 버튼이 꺼진다. */
   remaining: number; limit: number;
   /** 스크롤 창 — 창 밖으로 흐른 칸이 손을 가로채지 않게 입력면이 같은 경계를 읽는다. */
@@ -54,6 +56,14 @@ export function addAdRewardCard(scene: Phaser.Scene, parent: Phaser.GameObjects.
   bar.add(drawLayer(scene, 0, 0, chipPoints(buttonWidth, buttonHeight, { bevel: { topLeft: 20, topRight: 0, bottomRight: 20, bottomLeft: 0 } }), { fill: 0x0d141c, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.7 }));
   bar.add(scene.add.text(0, 0, t("shop.premium.adWatch"), textStyle({ role: "display", size: 34, color: COLOR.accentText })).setOrigin(0.5).setStroke("#000000", 6));
   card.add(bar);
+  if (options.badge) {
+    const label = scene.add.text(0, 0, options.badge, textStyle({ role: "display", size: 26, color: "#101418" })).setOrigin(0.5);
+    const tagWidth = label.width + 30;
+    const tag = scene.add.container(width / 2 - tagWidth / 2 - 18, -height / 2 + 26);
+    tag.add(drawLayer(scene, 0, 0, slantedRect(tagWidth, 38, 12), { fill: COLOR.accent, alpha: 1, shadow: false }));
+    tag.add(label);
+    card.add(tag);
+  }
   if (done) card.setAlpha(0.52);
   else {
     const hit = addClippedHit(scene, card, 0, 0, width, height, options.clip, { useHandCursor: true });

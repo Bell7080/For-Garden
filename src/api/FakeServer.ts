@@ -2,7 +2,7 @@ import { bannerAcceptsCount, canPull, pull, resolveAcquisitions, spend } from ".
 import { MILEAGE_OVERFLOW_BY_RARITY, mileageForPull } from "../core/mileage";
 import { BANNERS } from "../data/banners";
 import { RELICS } from "../data/relics";
-import { AD_REWARD_SLOTS, findAdRewardSlot, type AdReward } from "../data/adRewards";
+import { AD_REWARD_SLOTS, findAdRewardSlot, type AdReward, type AdRewardSlot } from "../data/adRewards";
 import { consumeRestorationEntry, normalizeDailyContent } from "../core/dailyContent";
 import { bountyRunCost, isBountyTierUnlocked, markBountyTierCleared } from "../core/bountyRun";
 import { BOUNTY, getBountyTier, type BountyTierDef } from "../data/bounty";
@@ -1037,6 +1037,7 @@ export class FakeServer implements GameApi {
     const current = this.state.dailyAdRewards.date === date ? this.state.dailyAdRewards : { date, claimsBySlot: {}, requestIds: [] };
     const dailyClaims = current.claimsBySlot[slot.id] ?? 0;
     if (dailyClaims >= slot.dailyLimitUtc) throw new GameApiError("AD_DAILY_LIMIT", "오늘 받을 수 있는 광고 보상을 모두 받았습니다.");
+    this.assertAdPrerequisite(slot, now);
     if (slot.reward.kind === "quick_expedition") {
       const weekKey = expeditionWeekKey(now); if (this.quickWeek.weekKey !== weekKey) this.quickWeek = { weekKey, claims: 0 };
       if (this.quickWeek.claims >= QUICK_EXPEDITION_POLICY.weeklyLimitUtc) throw new GameApiError("AD_WEEKLY_LIMIT", "이번 주 빠른 원정 횟수를 모두 사용했습니다.");
@@ -1088,6 +1089,13 @@ export class FakeServer implements GameApi {
     this.state.wallet = wallet; this.state.itemInventory = items;
     this.bonusClaimDates.set(entitlement.entitlementId, date);
     return { ...this.snapshot(), productId: product.id, quantity: 1, granted: [granted], grantedRunes: [], remaining: 0 };
+  }
+
+  /** 무료 수령을 먼저 받아야 열리는 광고 슬롯(일간 보급의 추가 몫)은 그 상품의 오늘 몫이 소진됐을 때만 받는다. */
+  private assertAdPrerequisite(slot: AdRewardSlot, now: Date): void {
+    if (!slot.requiresClaimedProductId) return;
+    const product = PRODUCTS.find(({ id }) => id === slot.requiresClaimedProductId);
+    if (!product || this.remaining(product, now) > 0) throw new GameApiError("AD_PREREQUISITE", "먼저 무료 보급을 받아야 합니다.");
   }
 
   /** 요청 ID와 플랫폼 거래 ID를 모두 고유 키로 취급해 같은 영수증 검증을 반복 실행하지 않는다. */
@@ -1195,6 +1203,7 @@ export class FakeServer implements GameApi {
     const current = this.state.dailyAdRewards.date === date ? this.state.dailyAdRewards : { date, claimsBySlot: {}, requestIds: [] };
     const dailyClaims = current.claimsBySlot[slot.id] ?? 0;
     if (dailyClaims >= slot.dailyLimitUtc) throw new GameApiError("AD_DAILY_LIMIT", "오늘 받을 수 있는 광고 보상을 모두 받았습니다.");
+    this.assertAdPrerequisite(slot, now);
     const rawBonus = product.passBenefit.dailyBonus;
     const bonus = this.bonusClaimDates.get(stored.entitlementId) === date || !("currency" in rawBonus) ? undefined : rawBonus;
     const walletBefore = { ...this.state.wallet };
@@ -1202,8 +1211,8 @@ export class FakeServer implements GameApi {
     if (bonus) nextWallet.gems += bonus.amount;
     const nextClaims = dailyClaims + 1;
     const nextAds = { date, claimsBySlot: { ...current.claimsBySlot, [slot.id]: nextClaims }, requestIds: [...current.requestIds, request.requestId] };
-    this.persist({ ...this.state, wallet: nextWallet, idleExcavation: applied.excavation, dailyAdRewards: nextAds });
-    this.state.wallet = nextWallet; this.state.idleExcavation = applied.excavation; this.state.dailyAdRewards = nextAds;
+    this.persist({ ...this.state, wallet: nextWallet, idleExcavation: applied.excavation, itemInventory: applied.itemInventory, dailyAdRewards: nextAds });
+    this.state.wallet = nextWallet; this.state.idleExcavation = applied.excavation; this.state.itemInventory = applied.itemInventory; this.state.dailyAdRewards = nextAds;
     if (bonus) this.bonusClaimDates.set(stored.entitlementId, date);
     const entitlement = { ...stored, active: true, serverTime: now.toISOString() };
     const granted: Partial<Record<keyof Session["wallet"], number>> = {};
@@ -2847,7 +2856,10 @@ export class FakeServer implements GameApi {
     }
     if (reward.kind === "currencies") {
       for (const grant of reward.grants) wallet[grant.currency] = Math.min(WALLET_CAPS[grant.currency], wallet[grant.currency] + grant.amount);
-      return { wallet, excavation, itemInventory };
+      // 함께 주는 가방 아이템은 단일 아이템 광고와 같은 경계(`grantItem`)로 쌓는다.
+      let items: Session["itemInventory"] = itemInventory;
+      for (const item of reward.items ?? []) items = this.grantItem(items, item.itemId, item.quantity, now).inventory;
+      return { wallet, excavation, itemInventory: items };
     }
     if (reward.kind === "quick_expedition") {
       // 기준 점수와 비율은 모두 서버 소유이며 클라이언트 요청에는 어느 값도 없다.

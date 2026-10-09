@@ -1,10 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { BASE_WIDTH } from "../../src/config/gameConfig";
 import { LOBBY_NAV_TOP } from "../../src/ui/lobbyLayout";
 import {
   PREMIUM_BOARD, PREMIUM_CARD, PREMIUM_TAB_ROW,
   premiumCardSpot, premiumCardWidth, premiumGridContentHeight, premiumGridViewport,
-  premiumTabSpot, premiumTitleHeight, premiumTitleLeft, premiumTitleY,
+  premiumTabMinScroll, premiumTabScrollFor, premiumTabSpot, premiumTabStep, premiumTabStrip, premiumTitleHeight, premiumTitleLeft, premiumTitleY,
 } from "../../src/ui/premiumLayout";
 import { PREMIUM_TABS, PRODUCTS } from "../../src/data/shopCatalog";
 import { premiumCategoryOf } from "../../src/ui/premiumModel";
@@ -36,13 +35,30 @@ describe("프리미엄 자리표", () => {
     expect(width).toBeGreaterThan(400);
   });
 
-  it("의 라벨 넷이 화면 폭 안에서 서로 겹치지 않는다", () => {
-    const spots = PREMIUM_TABS.map((_, index) => premiumTabSpot(index, PREMIUM_TABS.length));
-    expect(spots[0].x - PREMIUM_TAB_ROW.width / 2).toBeGreaterThanOrEqual(0);
-    expect(spots[spots.length - 1].x + PREMIUM_TAB_ROW.width / 2).toBeLessThanOrEqual(BASE_WIDTH);
-    for (let i = 1; i < spots.length; i += 1) {
-      expect(spots[i].x - spots[i - 1].x).toBeGreaterThanOrEqual(PREMIUM_TAB_ROW.width);
+  it("의 라벨 줄은 옆으로 흐르며 첫 라벨이 창 왼쪽에 붙고 이웃이 비친다", () => {
+    const strip = premiumTabStrip();
+    const n = PREMIUM_TABS.length;
+    expect(premiumTabSpot(0).x - PREMIUM_TAB_ROW.width / 2).toBeCloseTo(strip.left, 6);
+    expect(premiumTabMinScroll(n)).toBeLessThan(0);
+    // 라벨이 지금보다 넓다(여덟을 한 줄에 깔던 때는 124).
+    expect(PREMIUM_TAB_ROW.width).toBeGreaterThan(124);
+    for (let i = 1; i < n; i += 1) {
+      expect(premiumTabSpot(i).x - premiumTabSpot(i - 1).x).toBeGreaterThanOrEqual(PREMIUM_TAB_ROW.width);
     }
+    for (let i = 0; i < n; i += 1) {
+      const scroll = premiumTabScrollFor(i, n);
+      expect(scroll).toBeLessThanOrEqual(0);
+      expect(scroll).toBeGreaterThanOrEqual(premiumTabMinScroll(n));
+    }
+    expect(premiumTabScrollFor(0, n)).toBe(0);
+    expect(premiumTabScrollFor(n - 1, n)).toBe(premiumTabMinScroll(n));
+  });
+
+  it("의 쓸어 넘기기는 처음·끝에서 멈춘다", () => {
+    expect(premiumTabStep(0, 8, -1)).toBe(0);
+    expect(premiumTabStep(7, 8, 1)).toBe(7);
+    expect(premiumTabStep(3, 8, 1)).toBe(4);
+    expect(premiumTabStep(3, 8, -1)).toBe(2);
   });
 
   it("의 칸 두 줄이 창보다 길어 목록이 흐른다", () => {

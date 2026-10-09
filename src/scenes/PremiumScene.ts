@@ -34,7 +34,7 @@ import { premiumCategoryOf, premiumFirstBonusGems, premiumGrantTiles, premiumMod
 import {
   PREMIUM_CARD, PREMIUM_TAB_ROW, PREMIUM_TITLE, PREMIUM_WIDE,
   premiumCardHeight, premiumCardSpot, premiumCardWidth, premiumGridContentHeight, premiumGridViewport, premiumListKind,
-  premiumTabSpot, premiumTitleLeft, premiumTitleY, premiumWideFrameXs, type PremiumListKind,
+  PREMIUM_SWIPE, premiumTabScrollFor, premiumTabSpot, premiumTabStep, premiumTabStrip, premiumTitleLeft, premiumTitleY, premiumWideFrameXs, type PremiumListKind,
 } from "../ui/premiumLayout";
 import { formatCurrency } from "../core/formatCurrency";
 import { formatStorePrice } from "../core/storePrice";
@@ -56,6 +56,11 @@ export class PremiumScene extends Phaser.Scene {
   /** 흐르는 격자. 스크롤은 이 컨테이너의 y 하나가 갖는다. */
   private content?: Phaser.GameObjects.Container;
   private tabRow?: Phaser.GameObjects.Container;
+  private tabMask?: Phaser.GameObjects.Graphics;
+  /** 입력 한 번이 가로 쓸기인지 세로 스크롤인지. 14px 안에서 정한다. */
+  private pointerAxis: "none" | "x" | "y" = "none";
+  private pointerStartX = 0;
+  private swipeX = 0;
   private viewportMask?: Phaser.GameObjects.Graphics;
   /** 서버 지갑 스냅샷을 적용한 뒤 현재 화면의 잔액 표시를 즉시 갱신한다. */
   private topBar?: TopBar;
@@ -109,6 +114,7 @@ export class PremiumScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.removeScrollInput();
       this.viewportMask?.destroy(); this.viewportMask = undefined;
+      this.tabMask?.destroy(); this.tabMask = undefined;
     });
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
@@ -469,28 +475,45 @@ export class PremiumScene extends Phaser.Scene {
     } catch { this.notice(t("shop.premium.adFailed")); } finally { this.claiming = false; }
   }
 
-  /** 하단 목록 교체 줄은 상점·가방과 **같은 서류철 라벨 프리팹**을 쓴다. */
-  private createTabs(): void {
+  /**
+   * 하단 목록 교체 줄은 상점·가방과 같은 서류철 라벨 프리팹이다. 여덟을 한 줄에 깔면 칸이 좁아지므로
+   * 라벨을 넓게 세운 줄을 옆으로 흘리고, 고른 라벨은 창 가운데로 모인다.
+   */
+  private createTabs(animateFrom?: number): void {
     this.tabRow?.destroy();
-    this.tabRow = this.add.container(0, 0).setDepth(9);
+    const row = this.add.container(0, 0).setDepth(9);
+    this.tabRow = row;
+    if (!this.tabMask) {
+      const strip = premiumTabStrip();
+      this.tabMask = this.make.graphics();
+      this.tabMask.fillStyle(0xffffff, 1).fillRect(strip.left, strip.top, strip.right - strip.left, strip.bottom - strip.top);
+    }
+    row.setMask(this.tabMask.createGeometryMask());
     PREMIUM_TABS.forEach((tab, index) => {
-      const { x, y } = premiumTabSpot(index, PREMIUM_TABS.length);
-      addCategoryTab(this, this.tabRow, {
+      const { x, y } = premiumTabSpot(index);
+      addCategoryTab(this, row, {
         x, y, width: PREMIUM_TAB_ROW.width, height: PREMIUM_TAB_ROW.height,
         label: tab.label, selected: tab.id === this.selectedCategory,
         onSelect: () => this.selectCategory(tab.id),
       });
     });
+    const target = premiumTabScrollFor(this.selectedIndex(), PREMIUM_TABS.length);
+    if (animateFrom === undefined || animateFrom === target) { row.x = target; return; }
+    row.x = animateFrom;
+    this.tweens.add({ targets: row, x: target, duration: 220, ease: "Cubic.easeOut" });
   }
+
+  private selectedIndex(): number { return PREMIUM_TABS.findIndex((tab) => tab.id === this.selectedCategory); }
 
   /** 라벨을 바꾸면 이전 스크롤을 버리고 그 갈래의 첫 상품부터 다시 보여 준다. */
   private selectCategory(category: PremiumCategory): void {
     if (category === this.selectedCategory) return;
     const indexOf = (id: PremiumCategory): number => PREMIUM_TABS.findIndex((tab) => tab.id === id);
     const from = indexOf(this.selectedCategory);
+    const rowFrom = this.tabRow?.x;
     this.selectedCategory = category;
     if (this.content) this.content.y = 0;
-    this.createTabs();
+    this.createTabs(rowFrom);
     this.renderProducts();
     if (this.content) slideTabPage(this, [this.content], from, indexOf(category));
   }
@@ -526,6 +549,9 @@ export class PremiumScene extends Phaser.Scene {
   private readonly onPointerDown = (pointer: Phaser.Input.Pointer): void => {
     if (!this.insideViewport(pointer)) return;
     this.pointerDown = true;
+    this.pointerAxis = "none";
+    this.pointerStartX = pointer.x;
+    this.swipeX = 0;
     this.pointerY = pointer.y;
     this.draggedDistance = 0;
     this.velocityY = 0;
@@ -535,12 +561,31 @@ export class PremiumScene extends Phaser.Scene {
     if (!this.pointerDown || !pointer.isDown) return;
     const delta = pointer.y - this.pointerY;
     this.pointerY = pointer.y;
+    const dx = pointer.x - this.pointerStartX;
+    if (this.pointerAxis === "none") {
+      const total = this.draggedDistance + Math.abs(delta);
+      if (Math.abs(dx) > PREMIUM_SWIPE.lock && Math.abs(dx) > total) this.pointerAxis = "x";
+      else if (total > PREMIUM_SWIPE.lock) this.pointerAxis = "y";
+    }
+    if (this.pointerAxis === "x") {
+      this.swipeX = dx;
+      this.draggedDistance += Math.abs(delta) + 1;
+      return;
+    }
     this.draggedDistance += Math.abs(delta);
     this.velocityY = delta * 60;
     this.scrollTo((this.content?.y ?? 0) + delta);
   };
 
-  private readonly onPointerUp = (): void => { this.pointerDown = false; };
+  /** 가로로 충분히 쓸었으면 이웃 라벨로 넘긴다 — 왼쪽으로 쓸면 다음 갈래다. */
+  private readonly onPointerUp = (): void => {
+    const swiped = this.pointerDown && this.pointerAxis === "x" && Math.abs(this.swipeX) >= PREMIUM_SWIPE.distance;
+    this.pointerDown = false;
+    if (!swiped) return;
+    const index = this.selectedIndex();
+    const next = premiumTabStep(index, PREMIUM_TABS.length, this.swipeX < 0 ? 1 : -1);
+    if (next !== index) this.selectCategory(PREMIUM_TABS[next].id);
+  };
 
   private readonly onWheel = (_pointer: Phaser.Input.Pointer, _objects: Phaser.GameObjects.GameObject[], _dx: number, dy: number): void => {
     this.scrollTo((this.content?.y ?? 0) - dy * 0.8);

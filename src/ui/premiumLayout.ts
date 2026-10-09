@@ -34,7 +34,7 @@ export const PREMIUM_TITLE = { size: 34 } as const;
  * 다섯(패키지·패스·특가·한정·다이아)이 나란히 서므로 칸이 상점(셋)보다 좁다. 하단 탭 바로 위에 서고,
  * 우하단에는 뒤로가기가 없는 화면이라(하단 탭이 그 몫을 한다) 왼쪽에 붙이지 않고 화면 폭을 고르게 나눈다.
  */
-export const PREMIUM_TAB_ROW = { width: 124, height: 82, gap: 6, bottom: LOBBY_NAV_TOP - 22 } as const;
+export const PREMIUM_TAB_ROW = { width: 214, height: 82, gap: 8, bottom: LOBBY_NAV_TOP - 22, edge: 24 } as const;
 
 /**
  * 상품 칸 한 장.
@@ -170,13 +170,43 @@ export function premiumGridContentHeight(count: number, kind: PremiumListKind = 
   return rows * (height + PREMIUM_CARD.gapY) - PREMIUM_CARD.gapY;
 }
 
-/** 라벨 한 장의 중심. 여덟이 화면 폭을 고르게 나눠 갖는다. */
-export function premiumTabSpot(index: number, count: number): { x: number; y: number } {
-  const { width, height, gap, bottom } = PREMIUM_TAB_ROW;
-  const total = width * count + gap * (count - 1);
-  const left = (BASE_WIDTH - total) / 2;
-  return { x: left + width / 2 + index * (width + gap), y: bottom - height / 2 };
+/**
+ * 라벨 줄이 보이는 창. 여덟을 한 줄에 다 깔면 칸이 좁아지므로 라벨은 넓게 세우고 줄을 옆으로 흘린다 —
+ * 패스 팝업의 탭 줄과 같은 문법이다. 창 밖으로 나간 이웃은 마스크가 자른다.
+ */
+export function premiumTabStrip(): { left: number; right: number; top: number; bottom: number } {
+  const { height, bottom, edge } = PREMIUM_TAB_ROW;
+  return { left: edge, right: BASE_WIDTH - edge, top: bottom - height - 8, bottom: bottom + 8 };
 }
+
+/** 줄 좌표(스크롤 0)에서 라벨 한 장의 중심. 첫 라벨이 창 왼쪽 끝에 붙는다. */
+export function premiumTabSpot(index: number): { x: number; y: number } {
+  const { width, height, gap, bottom } = PREMIUM_TAB_ROW;
+  return { x: premiumTabStrip().left + width / 2 + index * (width + gap), y: bottom - height / 2 };
+}
+
+/** 줄이 왼쪽으로 밀릴 수 있는 끝(음수). 다 보이면 0이다. */
+export function premiumTabMinScroll(count: number): number {
+  const { width, gap } = PREMIUM_TAB_ROW;
+  const strip = premiumTabStrip();
+  const span = count * width + Math.max(0, count - 1) * gap;
+  return Math.min(0, strip.right - strip.left - span);
+}
+
+/** `index`번째 라벨을 창 가운데로 모으는 스크롤. 끝에서는 줄의 한계에 멈춘다. */
+export function premiumTabScrollFor(index: number, count: number): number {
+  const strip = premiumTabStrip();
+  const centered = (strip.left + strip.right) / 2 - premiumTabSpot(index).x;
+  return Math.max(premiumTabMinScroll(count), Math.min(0, centered));
+}
+
+/** 쓸어 넘기기로 이동할 라벨. 처음·끝에서는 그대로다. direction 1 = 다음. */
+export function premiumTabStep(index: number, count: number, direction: -1 | 1): number {
+  return Math.max(0, Math.min(count - 1, index + direction));
+}
+
+/** 가로로 쓸어 넘겼다고 보는 거리와, 세로 스크롤과 갈리는 판정 거리. */
+export const PREMIUM_SWIPE = { distance: 90, lock: 14 } as const;
 
 /** 화면 밑동까지의 여백 판정에 쓰는 전체 높이. */
 export const PREMIUM_SCREEN_BOTTOM = BASE_HEIGHT;

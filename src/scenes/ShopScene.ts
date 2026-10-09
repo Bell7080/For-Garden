@@ -490,8 +490,9 @@ export class ShopScene extends Phaser.Scene {
     const goldAd = adSpec && (!adSpec.tabs || adSpec.tabs.includes(this.selectedCategory)) ? 1 : 0;
     const rows = Math.ceil((visibleProducts.length + goldAd) / SHOP_CARD.columns);
     for (let row = 0; row < rows; row += 1) this.addShelf(row);
-    visibleProducts.forEach((product, index) => this.addProduct(product, index));
-    if (goldAd) this.addAdCard(visibleProducts.length);
+    // 광고 칸은 언제나 목록 맨 위(1번)에 서고 상품들은 한 칸씩 밀린다.
+    if (goldAd) this.addAdCard(0);
+    visibleProducts.forEach((product, index) => this.addProduct(product, index + goldAd));
     const view = shopGridViewport();
     this.minScrollY = Math.min(0, view.bottom - view.top - shopGridContentHeight(visibleProducts.length + goldAd));
     this.publishControls(visibleProducts);

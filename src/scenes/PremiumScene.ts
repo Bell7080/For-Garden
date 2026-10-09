@@ -12,7 +12,7 @@ import { addSectionTitle } from "../ui/SectionTitle";
 import { addFrameAmount, addFramedIcon, guideForIcon } from "../ui/itemFrame";
 import { chipPoints, drawLayer, drawShapeOutline, drawVignette, slantedRect } from "../ui/holo";
 import { paintShowcaseCard, SHOWCASE_TIER_TONE, showcaseCardShape } from "../ui/showcaseCardChrome";
-import { addAdRewardCard } from "../ui/AdRewardCard";
+import { addAdCountLabel, addAdRewardCard } from "../ui/AdRewardCard";
 import { addStatusSticker, forgetStatusStickers } from "../ui/soldOutStamp";
 import { premiumStatusOf, type PremiumStatus } from "../ui/premiumStatus";
 import { remainingDetail } from "../ui/itemExpiry";
@@ -164,12 +164,18 @@ export class PremiumScene extends Phaser.Scene {
     this.limitedClocks = [];
     const visible = productsForPremiumCategory(this.products, this.selectedCategory);
     const kind = premiumListKind(this.selectedCategory);
-    // 광고 칸은 젬 탭의 맨 위(1번), 일간 탭에서는 「일일 무료 보급」 바로 아래에 끼어든다.
-    const freeDailyIndex = visible.findIndex((product) => product.id === DAILY_FREE_PRODUCT_ID);
-    const adAt = this.selectedCategory === "gem" ? 0 : this.selectedCategory === "daily" && freeDailyIndex >= 0 ? freeDailyIndex + 1 : -1;
-    visible.forEach((product, index) => this.addProduct(product, adAt >= 0 && index >= adAt ? index + 1 : index, kind));
-    const extra = adAt >= 0 ? 1 : 0;
-    if (adAt >= 0) { if (this.selectedCategory === "gem") this.addGemAdCard(adAt, kind); else this.addDailyAdCard(adAt, kind); }
+    // 광고 칸은 젬 탭의 맨 위(1번)다. 일간 탭은 별도 광고 칸이 없고, 1번 「일일 무료 보급」을 받으면 같은 자리가 광고 칸으로 바뀐다.
+    const gem = this.selectedCategory === "gem";
+    const ordered = this.selectedCategory === "daily"
+      ? [...visible].sort((a, b) => Number(b.id === DAILY_FREE_PRODUCT_ID) - Number(a.id === DAILY_FREE_PRODUCT_ID))
+      : visible;
+    const offset = gem ? 1 : 0;
+    ordered.forEach((product, index) => {
+      if (product.id === DAILY_FREE_PRODUCT_ID && !product.purchasable) this.addDailyAdCard(index, kind);
+      else this.addProduct(product, index + offset, kind);
+    });
+    if (gem) this.addGemAdCard(0, kind);
+    const extra = offset;
     const view = premiumGridViewport();
     this.minScrollY = Math.min(0, view.bottom - view.top - premiumGridContentHeight(visible.length + extra, kind));
     this.scrollTo(this.content?.y ?? 0);
@@ -433,9 +439,8 @@ export class PremiumScene extends Phaser.Scene {
     const height = premiumCardHeight(kind);
     const { x, y } = premiumCardSpot(index, kind);
     const status = adSlotStatus(slot.id);
-    const freeClaimed = this.products.some((product) => product.id === DAILY_FREE_PRODUCT_ID && !product.purchasable);
     const done = status.remaining <= 0;
-    const open = freeClaimed && !done;
+    const open = !done;
     const card = this.add.container(x, y);
     paintShowcaseCard(this, card, { width, height, accent: SHOWCASE_TIER_TONE.daily, dim: false, railX: -width / 2 + W.pad, tag: t("shop.premium.dailyAdTag") });
     const left = -width / 2 + W.pad;
@@ -452,13 +457,10 @@ export class PremiumScene extends Phaser.Scene {
     tiles.forEach((tile, i) => this.addGrantFrame(card, xs[i], S.frameY, W.frame, tile.icon, tile.amount));
     const bar = this.add.container(0, S.price.y);
     bar.add(drawLayer(this, 0, 0, chipPoints(S.price.width + 120, S.price.height, { bevel: { topLeft: 20, topRight: 0, bottomRight: 20, bottomLeft: 0 } }), { fill: 0x0d141c, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.7 }));
-    const label = this.add.text(0, 0, t(freeClaimed ? "shop.premium.dailyAdWatch" : "shop.premium.dailyAdLocked"), textStyle({ role: "display", size: 34, color: open ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5).setStroke("#000000", 6);
-    bar.add(squeezeTextToWidth(label, S.price.width + 120 - 40, 0.6));
+    addAdCountLabel(this, bar, 0, 0, status.remaining, status.limit, done, Math.round(S.price.height * 0.7));
     card.add(bar);
-    card.add(this.add.text(right, S.price.y, t("shop.premium.adLeft", { remaining: status.remaining, limit: status.limit }), textStyle({ role: "emphasis", size: W.noteSize + 4, color: done ? COLOR.dangerText : COLOR.ink, align: "right" })).setOrigin(1, 0.5).setStroke("#05070a", 3));
     if (!open) card.setAlpha(PREMIUM_SOLD_OUT_ALPHA + 0.2);
     this.addCardHit(card, width, height, () => {
-      if (!freeClaimed) { this.notice(t("shop.premium.dailyAdLocked")); return; }
       if (done) { this.notice(t("shop.premium.dailyClaimed")); return; }
       void this.watchDailyAd();
     });

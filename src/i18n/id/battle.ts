@@ -29,6 +29,7 @@ export const BATTLE_ID = {
   "battle.chip.autoOff": "Ultimate OFF",
   "battle.chip.skipOn": "Lewati Cut-in",
   "battle.chip.skipOff": "Cut-in ON",
+  "battle.tutorial.ultimate": "Ultimate siap! Ketuk kartu yang bersinar untuk memakainya",
   "battle.gauge.frenzy": "Amukan {value} / {max}",
   "battle.gauge.ferocity": "Keganasan {value} / {max}",
   "battle.result.saveFailed": "Tidak dapat menyimpan hasil",

@@ -27,6 +27,7 @@
 "battle.chip.autoOn": ["必杀技 ON", "ท่าไม้ตาย ON", "Tuyệt kỹ BẬT", "Ultimate ON", "Definitiva ON", "Suprema ON", "Ultimativ AN", "Ульта ВКЛ"],
 "battle.chip.autoOff": ["必杀技 OFF", "ท่าไม้ตาย OFF", "Tuyệt kỹ TẮT", "Ultimate OFF", "Definitiva OFF", "Suprema OFF", "Ultimativ AUS", "Ульта ВЫКЛ"],
 "battle.chip.skipOn": ["跳过特写", "ข้ามคัตอิน", "Bỏ qua cắt cảnh", "Lewati Cut-in", "Omitir cinemática", "Pular cinemática", "Einblendung aus", "Без вставок"],
+"battle.tutorial.ultimate": ["必杀技已就绪！点击发光的卡片来使用", "ท่าไม้ตายพร้อมแล้ว! แตะการ์ดที่เรืองแสงเพื่อใช้", "Tuyệt kỹ đã sẵn sàng! Chạm vào thẻ phát sáng để dùng", "Ultimate siap! Ketuk kartu yang bersinar untuk memakainya", "¡Definitiva lista! Toca la tarjeta brillante para usarla", "Suprema pronta! Toque no cartão brilhante para usá-la", "Ultimativ bereit! Tippe auf die leuchtende Karte", "Ультимейт готов! Нажмите на светящуюся карту"],
 "battle.chip.skipOff": ["特写 ON", "คัตอิน ON", "Cắt cảnh BẬT", "Cut-in ON", "Cinemática ON", "Cinemática ON", "Einblendung AN", "Вставки ВКЛ"],
 "battle.gauge.frenzy": ["暴走 {value} / {max}", "คลั่ง {value} / {max}", "Cuồng bạo {value} / {max}", "Amukan {value} / {max}", "Frenesí {value} / {max}", "Frenesi {value} / {max}", "Raserei {value} / {max}", "Неистовство {value} / {max}"],
 "battle.gauge.ferocity": ["野性 {value} / {max}", "ความดุร้าย {value} / {max}", "Dã tính {value} / {max}", "Keganasan {value} / {max}", "Ferocidad {value} / {max}", "Ferocidade {value} / {max}", "Wildheit {value} / {max}", "Ярость {value} / {max}"],

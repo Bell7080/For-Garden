@@ -60,7 +60,7 @@ export type DialogueCue = "rumble" | "alarm" | "explosion" | "impact";
 export type DialogueLeave = "blastOff";
 
 /** 이야기의 배경. 키와 원화의 대응은 `dialogueStageLayout.ts`의 표가 갖는다. */
-export type DialogueBackdrop = "train" | "battlefield";
+export type DialogueBackdrop = "train" | "battlefield" | "relics";
 
 /**
  * 선택 결과는 실행 함수가 아니라 제한된 명령만 가진다.

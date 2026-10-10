@@ -165,6 +165,8 @@ const UNIT_HEIGHT = 210;
 /** 보통 몸의 발밑 그림자 폭. 몸집(`bodyScale`)만큼 줄어든다. */
 const BATTLE_FOOT_SHADOW_WIDTH = 140;
 const PROFILE_TOP = 1430;
+/** 오프닝 궁극기 안내: 전장·HUD 전부 위, 팝업(2200~) 아래. 밝히는 카드는 +1, 글자는 +2. */
+const TUTORIAL_DEPTH = 2000;
 /**
  * 조작 칩은 프로필 줄 바로 위 우하단에 모인다. 전장을 가리지 않고 엄지가 닿는 자리다.
  *
@@ -370,6 +372,11 @@ export class BattleScene extends Phaser.Scene {
   private autoUltimate = false;
   /** 공개적으로 읽기 쉬운 입력 잠금. 토큰 큐와 항상 함께 갱신한다. */
   private ultimateSequenceActive = false;
+  /**
+   * 오프닝 1-1의 궁극기 안내. 처음 켜진 카드 하나만 밝히고 나머지는 어둡게 덮은 채 시간을 멈춘다.
+   * 한 번 쓰면(`done`) 다시 열리지 않는다.
+   */
+  private ultimateTutorial: { fighterId: string; done: boolean; active: boolean; layer?: Phaser.GameObjects.GameObject[] } = { fighterId: "", done: false, active: false };
   /** 자동 동시 준비를 직렬화하고 오래된 async 완료를 구분하는 순수 상태다. */
   private ultimateSequence: UltimateSequenceState = createUltimateSequenceState();
   /** 현재 컷인. 전투·씬 종료 정리에서 즉시 거두기 위한 참조다. */
@@ -590,9 +597,11 @@ export class BattleScene extends Phaser.Scene {
     // 멤버십은 서버에 물어야 알 수 있어 **닫힌 쪽에서 시작한다** — 저장에 3이 있으면 답이 올 때까지
     // 2로 싸우다가 멤버십이 확인되는 순간 3으로 돌아간다(`resolveBattleMembership`).
     this.battleMember = false;
-    this.battleSpeed = usableBattleSpeed(battleSettings.battleSpeed, false);
+    this.battleSpeed = this.openingBattle() ? 1 : usableBattleSpeed(battleSettings.battleSpeed, false);
     // 결투는 양쪽 모두 자동 궁극기로만 싸운다 — 수동 개입이 비동기 상대와의 판을 가르지 않게 한다.
-    this.autoUltimate = this.battleInput.mode === "duel" || battleSettings.autoUltimate;
+    // 오프닝 첫 전투는 궁극기를 손으로 쓰는 법을 익히는 판이라 자동도 꺼 둔다.
+    this.autoUltimate = this.battleInput.mode === "duel" || (!this.openingBattle() && battleSettings.autoUltimate);
+    this.ultimateTutorial = { fighterId: "", done: false, active: false };
     this.ultimateSequenceActive = false;
     this.ultimateSequence = createUltimateSequenceState();
     this.currentUltimateFighterId = null;
@@ -912,6 +921,8 @@ export class BattleScene extends Phaser.Scene {
     });
     // 전장 아래쪽에 서므로 SD·체력 바보다 앞에 둔다.
     for (const chip of [this.speedChip, this.autoChip, this.presentationChip, this.contributionChip]) chip.setDepth(BATTLE_CONTROLS.depth);
+    // 오프닝 첫 전투는 배속·자동 궁극기·연출 스킵을 막는다 — 칩을 감추고 입력도 받지 않는다.
+    if (this.openingBattle()) for (const chip of [this.speedChip, this.autoChip, this.presentationChip]) chip.setVisible(false).disableInteractive();
     // 복원된 값도 첫 클릭 전부터 켜짐 색으로 읽히게 한다.
     this.refreshSpeedChip();
     this.autoChip.setActive(this.autoUltimate);
@@ -976,8 +987,8 @@ export class BattleScene extends Phaser.Scene {
     // 멈춰 있던 시간이 한 프레임에 한꺼번에 흘러들지 않게 한다.
     this.lastStepAt = now;
     const game = settingsManager.get().game;
-    this.battleSpeed = usableBattleSpeed(game.battleSpeed, this.battleMember);
-    this.autoUltimate = this.battleInput.mode === "duel" || game.autoUltimate;
+    this.battleSpeed = this.openingBattle() ? 1 : usableBattleSpeed(game.battleSpeed, this.battleMember);
+    this.autoUltimate = this.battleInput.mode === "duel" || (!this.openingBattle() && game.autoUltimate);
     this.refreshSpeedChip();
     this.autoChip.setLabel(this.autoUltimate ? t("battle.chip.autoOn") : t("battle.chip.autoOff")).setActive(this.autoUltimate);
     if (this.reopenPauseOnWake) { this.reopenPauseOnWake = false; this.openPauseMenu(); }
@@ -1022,6 +1033,7 @@ export class BattleScene extends Phaser.Scene {
    * 성공을 흉내 내어 여는 길을 두지 않는다.
    */
   private resolveBattleMembership(): void {
+    if (this.openingBattle()) return;
     const saved = settingsManager.get().game.battleSpeed;
     void gameApi.getPlayerState().then((state) => {
       if (!this.scene.isActive() || !this.speedChip) return;
@@ -1218,6 +1230,11 @@ export class BattleScene extends Phaser.Scene {
     if (this.finished || !this.spawned || performance.now() < this.fightStartsAt || this.ultimateSequenceActive || !canFireUltimate(this.state, fighter)) return;
     // 결투는 수동 발동이 없다 — 자동 궁극기만 판을 움직인다.
     if (this.battleInput.mode === "duel") return;
+    // 안내 중에는 밝힌 카드만 받는다. 그 카드를 누르는 순간 안내가 걷히고 시간이 다시 흐른다.
+    if (this.ultimateTutorial.active) {
+      if (fighter.id !== this.ultimateTutorial.fighterId) return;
+      this.endUltimateTutorial();
+    }
     if (enqueueUltimate(this.ultimateSequence, fighter.id)) void this.pumpUltimateQueue();
   }
 
@@ -1252,7 +1269,7 @@ export class BattleScene extends Phaser.Scene {
       // 전신 컷인 한 장으로 "누가 무엇을 쓰는가"를 알린다. 다만 포효를 기다리지 않고 컷인이
       // 빠지는 즉시 친다 — 전투 중 여러 번 반복되는 연출이라 길이가 곧 기다림이다.
       const base = view.creature.scaleX;
-      const skipPresentation = settingsManager.get().game.skipUltimatePresentation;
+      const skipPresentation = this.ultimatePresentationSkipped();
       // 컷인·확대·공격·복귀가 이 한 계산값을 공유한다. 전투 배속과 스킵을 단계마다 다시
       // 해석하면 서로 다른 시간축이 생기므로 pump 진입 시 한 번만 고정한다.
       const timing = ultimatePresentationTiming(skipPresentation);
@@ -1515,7 +1532,51 @@ export class BattleScene extends Phaser.Scene {
     // **펼친 기여도 판은 전투를 멈추지 않는다.** 그 판은 창이 아니라 화면 한쪽에 붙는 순위표라,
     // 열어 둔 채로 순위가 실시간으로 바뀌는 것을 보는 것이 그 판의 쓸모다 — 멈추면 열어 볼
     // 때마다 전투가 서고, 다시 접을 때까지 아무 일도 일어나지 않는다.
-    return anyPopupOpen() || (this.allyInfoRef?.isOpen ?? false);
+    return anyPopupOpen() || (this.allyInfoRef?.isOpen ?? false) || this.ultimateTutorial.active;
+  }
+
+  /** 오프닝에서 곧장 들어온 첫 전투(1-1). 이 판만 조작을 막고 궁극기 사용법을 안내한다. */
+  private openingBattle(): boolean {
+    return this.battleInput.mode === "stage" && this.battleInput.epilogueStoryId !== undefined;
+  }
+
+  /** 오프닝 첫 전투는 컷인을 끄는 설정을 따르지 않는다. */
+  private ultimatePresentationSkipped(): boolean {
+    return !this.openingBattle() && settingsManager.get().game.skipUltimatePresentation;
+  }
+
+  /**
+   * 처음 궁극기가 켜진 카드를 밝히고 나머지를 어둡게 덮는다. 동시에 켜지면 토리카가 먼저다.
+   * 시간은 멈추고(`simulationPaused`), 그 카드를 눌러 궁극기를 쓰면 어둠이 걷히며 이어진다.
+   */
+  private maybeStartUltimateTutorial(): void {
+    const tutorial = this.ultimateTutorial;
+    if (!this.openingBattle() || tutorial.done || tutorial.active || this.finished || this.ultimateSequenceActive || performance.now() < this.fightStartsAt) return;
+    const ready = this.profiles.filter((profile) => profile.ready && canFireUltimate(this.state, profile.fighter));
+    const pick = ready.find((profile) => profile.fighter.def.id === "torika") ?? ready[0];
+    if (!pick) return;
+    tutorial.active = true;
+    tutorial.fighterId = pick.fighter.id;
+    const dim = this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, 0x000000, 0.62)
+      .setDepth(TUTORIAL_DEPTH).setInteractive();
+    const text = this.add.text(BASE_WIDTH / 2, PROFILE_TOP - 120, t("battle.tutorial.ultimate"), textStyle({ role: "display", size: 44, color: COLOR.accentText }))
+      .setOrigin(0.5).setDepth(TUTORIAL_DEPTH + 2).setShadow(3, 4, "#05070a", 0, true, true);
+    const arrow = this.add.text(pick.prefab.x, PROFILE_TOP - 40, "▼", textStyle({ role: "display", size: 56, color: COLOR.accentText }))
+      .setOrigin(0.5).setDepth(TUTORIAL_DEPTH + 2);
+    if (this.motion.battleUiFactor > 0) this.tweens.add({ targets: arrow, y: arrow.y + 18, duration: 520, yoyo: true, repeat: -1, ease: "Sine.InOut" });
+    pick.prefab.setDepth(TUTORIAL_DEPTH + 1);
+    tutorial.layer = [dim, text, arrow];
+  }
+
+  /** 안내를 걷고 시간을 다시 흘린다. 궁극기를 눌렀을 때와 씬이 닫힐 때 부른다. */
+  private endUltimateTutorial(): void {
+    const tutorial = this.ultimateTutorial;
+    tutorial.layer?.forEach((object) => { this.tweens.killTweensOf(object); object.destroy(); });
+    tutorial.layer = undefined;
+    tutorial.active = false;
+    tutorial.done = true;
+    this.profiles.find((profile) => profile.fighter.id === tutorial.fighterId)?.prefab.setDepth(0);
+    this.lastStepAt = performance.now();
   }
 
   /** 제한 주기 또는 카테고리 입력 때만 코어의 불변 표시 스냅샷을 프리팹에 전달한다. */
@@ -2244,6 +2305,7 @@ export class BattleScene extends Phaser.Scene {
       profile.prefab.setBuffs(models, () => this.openBuffList(fighter.id));
     }
     this.refreshOpenBuff();
+    this.maybeStartUltimateTutorial();
   }
 
   /** 누른 순간의 객체를 보관하지 않고 안정적인 런타임 ID만 선택해 다음 프레임부터 다시 조회한다. */
@@ -2432,7 +2494,7 @@ export class BattleScene extends Phaser.Scene {
       enemyHp: teamHp(this.state, "enemy"),
       speed: this.battleSpeed,
       autoUltimate: this.autoUltimate,
-      skipUltimatePresentation: settingsManager.get().game.skipUltimatePresentation,
+      skipUltimatePresentation: this.ultimatePresentationSkipped(),
       ultimateSequenceActive: this.ultimateSequenceActive,
       ultimateQueue: [...this.ultimateSequence.queue],
       // 머리 위 칩은 Canvas 안에만 있어 DOM으로 자리를 알 수 없다. 그린 그대로만 노출한다.

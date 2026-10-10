@@ -29,6 +29,7 @@ export const BATTLE_EN = {
   "battle.chip.autoOff": "Ultimate OFF",
   "battle.chip.skipOn": "Skip Cut-in",
   "battle.chip.skipOff": "Cut-in ON",
+  "battle.tutorial.ultimate": "Ultimate ready! Tap the glowing card to use it",
   "battle.gauge.frenzy": "Frenzy {value} / {max}",
   "battle.gauge.ferocity": "Ferocity {value} / {max}",
   "battle.result.saveFailed": "Could not save the result",

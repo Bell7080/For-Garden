@@ -29,6 +29,7 @@ export const BATTLE_TH = {
   "battle.chip.autoOff": "ท่าไม้ตาย OFF",
   "battle.chip.skipOn": "ข้ามคัตอิน",
   "battle.chip.skipOff": "คัตอิน ON",
+  "battle.tutorial.ultimate": "ท่าไม้ตายพร้อมแล้ว! แตะการ์ดที่เรืองแสงเพื่อใช้",
   "battle.gauge.frenzy": "คลั่ง {value} / {max}",
   "battle.gauge.ferocity": "ความดุร้าย {value} / {max}",
   "battle.result.saveFailed": "บันทึกผลไม่ได้",

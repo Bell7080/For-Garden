@@ -29,6 +29,7 @@ export const BATTLE_ZH_HANT = {
   "battle.chip.autoOff": "必殺技 OFF",
   "battle.chip.skipOn": "跳過特寫",
   "battle.chip.skipOff": "特寫 ON",
+  "battle.tutorial.ultimate": "必殺技已就緒！點選發光的卡片來使用",
   "battle.gauge.frenzy": "暴走 {value} / {max}",
   "battle.gauge.ferocity": "野性 {value} / {max}",
   "battle.result.saveFailed": "無法儲存結果",

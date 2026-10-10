@@ -61,9 +61,10 @@ export interface GameSettings {
 /**
  * 처음 시작할 때 쥐어 주는 렐릭. 전용 전신과 SD가 완성된 개체를 기본 도감에 연다.
  *
+ * 일반 빌드는 기본 편성의 셋(토리카·도디·파루아)만 쥐어 주고, QA 빌드는 확인용으로 일곱을 연다.
  * 파루아가 들어 있는 이유는 기본 편성(아래) 때문이다 — 편성은 보유한 개체만 세울 수 있다.
  */
-const STARTER_RELICS = ["torika", "rex", "spino", "luka", "dodo", "mette", "parua"];
+const STARTER_RELICS = QA_TOOLS_ENABLED ? ["torika", "rex", "spino", "luka", "dodo", "mette", "parua"] : ["torika", "dodo", "parua"];
 /**
  * 기본 편성은 **오프닝의 쁘띠 로그 셋**(토리카·도디·파루아)이다.
  *

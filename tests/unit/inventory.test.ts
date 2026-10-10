@@ -222,3 +222,13 @@ describe("발굴권 칸", () => {
     expect(manager.list("material").find(({ id }) => id === "strata-ticket")?.quantity).toBe(2);
   });
 });
+
+describe("가방 표시 목록", () => {
+  it("보유량 0인 재화는 칸을 세우지 않고 서버용 list는 모든 재화 행을 유지한다", () => {
+    const state = createDefaultSession(); state.wallet.gold = 0; state.wallet.gems = 5;
+    const inventory = new InventoryManager(state);
+    expect(inventory.displayList("currency").map(({ id }) => id)).not.toContain("gold");
+    expect(inventory.displayList("currency").map(({ id }) => id)).toContain("gems");
+    expect(inventory.list("currency").map(({ id }) => id)).toContain("gold");
+  });
+});

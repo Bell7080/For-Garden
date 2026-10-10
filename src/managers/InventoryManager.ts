@@ -172,6 +172,15 @@ export class InventoryManager {
     return response;
   }
 
+  /**
+   * 화면에 세울 칸. 하나도 없는 재화는 칸을 세우지 않는다 — 빈 칸이 먼저 읽혀 가진 것이 묻히고,
+   * 얻으면 그때 나타난다. 서버 DTO는 모든 재화 행이 필요하므로(`list`) 거르는 것은 표시뿐이다.
+   */
+  displayList(category: ItemCategory, sort: InventorySort = DEFAULT_INVENTORY_SORT): readonly InventoryDisplayItem[] {
+    const rows = this.list(category, sort);
+    return category === "currency" ? rows.filter((row) => row.quantity > 0) : rows;
+  }
+
   /** 원본 DTO/Session 배열을 바꾸지 않고 결정적 tie-break를 포함한 안정 정렬 복사본을 만든다. */
   list(category: ItemCategory, sort: InventorySort = DEFAULT_INVENTORY_SORT): readonly InventoryDisplayItem[] {
     if (category === "rune") {

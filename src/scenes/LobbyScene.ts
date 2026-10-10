@@ -770,6 +770,8 @@ export class LobbyScene extends Phaser.Scene {
     const rail = createLobbyUtilityRail({
       openEvents: () => this.openEvents(),
       openMail: () => this.openMail(),
+      // 길드 화면은 아직 없다 — 잠금이 풀려도 누름은 아무 일도 하지 않는다(준비 중 문구는 화면에 세우지 않는다).
+      openGuild: this.guarded("guild", () => undefined),
       // 친구는 더 이상 준비 중 토스트가 아니라 목록과 공개 프로필 화면으로 연결된다.
       openFriends: this.guarded("friends", () => startScene(this, "friends")),
       // 가방은 씬 전환 없이 현재 로비 위에서 열린다.
@@ -780,6 +782,7 @@ export class LobbyScene extends Phaser.Scene {
       // 실제 서버 계약이 준비된 우편·친구 요청만 연결하고 Fake 데이터에서는 임의로 켜지 않는다.
       const key = item.icon === "mail" ? "mail" : item.icon === "friends" ? "friendRequest" : undefined;
       if (item.icon === "friends") this.lockRailButton("friends", button);
+      if (item.icon === "guild") this.lockRailButton("guild", button);
       if (key) bindNotificationDot(this, button, { x: 42, y: -42 }, (listener) => notificationManager.subscribe(key, listener));
     });
   }

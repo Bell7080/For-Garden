@@ -2260,16 +2260,6 @@
 "Forschungsstadt zur Restaurierung ausgestorbener Tiere",
 "Город исследований восстановления вымерших животных"
 ],
-"title.replayOpening": [
-"重看开场",
-"ดูฉากเปิดอีกครั้ง",
-"Xem lại mở đầu",
-"Putar Ulang Pembuka",
-"Ver prólogo de nuevo",
-"Rever abertura",
-"Einleitung erneut ansehen",
-"Пересмотреть пролог"
-],
 "nav.archaeology": [
 "考古学",
 "โบราณคดี",
@@ -2650,5 +2640,9 @@
 "Überspringen (Dev)",
 "Пропустить (разработка)"
 ],
+"opening.skip": ["跳过", "ข้าม", "Bỏ qua", "Lewati", "Saltar", "Pular", "Überspringen", "Пропустить"],
+"opening.skip.title": ["跳过", "ข้าม", "Bỏ qua", "Lewati", "Saltar", "Pular", "Überspringen", "Пропустить"],
+"opening.skip.message": ["确定要跳过吗？", "ต้องการข้ามจริงหรือไม่?", "Bạn có chắc muốn bỏ qua không?", "Yakin ingin melewati?", "¿Seguro que quieres saltar?", "Tem certeza de que quer pular?", "Wirklich überspringen?", "Вы уверены, что хотите пропустить?"],
+"rail.guild": ["公会", "กิลด์", "Bang hội", "Guild", "Gremio", "Guilda", "Gilde", "Гильдия"],
 "profile.nextUnlockStage": ["通关关卡{stage}后开放 · {content}", "ปลดล็อกเมื่อผ่านด่าน {stage} · {content}", "Mở khóa khi hoàn thành màn {stage} · {content}", "Terbuka setelah menamatkan Stage {stage} · {content}", "Se desbloquea al superar la fase {stage} · {content}", "Liberado ao concluir a fase {stage} · {content}", "Wird mit Abschluss von Stage {stage} freigeschaltet · {content}", "Откроется после прохождения этапа {stage} · {content}"]
 }

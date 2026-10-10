@@ -14,14 +14,17 @@ import { DialogueLayer } from "../ui/DialogueLayer";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { playStoryTitleCard } from "../ui/StoryTitleCard";
 import { Button } from "../ui/Button";
+import { addSkipButton } from "../ui/IconButton";
+import { PopupLayer } from "../ui/PopupLayer";
+import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { t } from "../i18n";
 
 /**
- * 개발자용 임시 건너뛰기. 켜 두면 오프닝 상단에 버튼이 서고, 누르면 오프닝을 완료로 저장한 뒤
+ * 개발자용 건너뛰기. QA 빌드에서만 오프닝 상단에 버튼이 서고, 누르면 오프닝을 완료로 저장한 뒤
  * 1-1 전투까지 건너뛰고 곧장 로비로 간다. 1-1 클리어는 주지 않는다(지도에서 그대로 칠 수 있다).
- * 정식 빌드 전에 `false`로 끄거나 버튼째 걷어 낸다.
+ * 일반 빌드의 스킵은 대사만 건너뛰고 전투로 이어지는 우하단 버튼(`addStorySkip`)이다.
  */
-const OPENING_DEV_SKIP_ENABLED = true;
+const OPENING_DEV_SKIP_ENABLED = QA_TOOLS_ENABLED;
 
 /**
  * 정적 오프닝 데이터를 순회하고, 끝나면 곧장 1-1 전투로 넘기는 전용 화면이다.
@@ -36,6 +39,7 @@ const OPENING_DEV_SKIP_ENABLED = true;
 export class OpeningScene extends Phaser.Scene {
   private flow = new DialogueFlow(OPENING_TRAIN);
   private layer?: DialogueLayer;
+  private popups!: PopupLayer;
   /** 마지막 입력이 겹쳐도 완료 저장과 다음 화면(1-1 또는 로비) 전환은 한 번만 수행한다. */
   private transitioningOut = false;
 
@@ -55,11 +59,21 @@ export class OpeningScene extends Phaser.Scene {
     // 첫 노드 정보를 먼저 게시하되 DialogueFlow 잠금은 제목표와 Puppet 표시가 끝날 때까지 유지한다.
     setDebugDialogue(this.flow.current);
     void this.openStory();
+    this.popups = new PopupLayer(this, 2500);
+    this.addStorySkip();
     if (OPENING_DEV_SKIP_ENABLED) this.addDevSkip();
     setDebugReady(true);
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
+  }
+
+  /** 대사만 건너뛰는 스킵. 묻고 나서 정상 완료와 같은 길(완료 저장 → 1-1 전투)로 간다. */
+  private addStorySkip(): void {
+    addSkipButton(this, t("opening.skip"), () => {
+      if (this.transitioningOut) return;
+      this.popups.confirm({ title: t("opening.skip.title"), message: t("opening.skip.message"), confirmLabel: t("opening.skip") }, () => this.finishStory());
+    });
   }
 
   /** 개발자용 임시 건너뛰기 — 제목표·대사판보다 위에 선다. */
@@ -105,22 +119,30 @@ export class OpeningScene extends Phaser.Scene {
       prefetchBattlePuppets(session.party, FIXED_STAGE_ENEMIES);
     }
     if (result.completed) {
-      // 완료를 확인한 즉시 후속 입력을 영구 차단해 저장과 씬 전환을 한 번만 수행한다.
-      this.transitioningOut = true;
-      const firstRun = !storyManager.isCompleted(OPENING_TRAIN.id);
-      try {
-        storyManager.complete(OPENING_TRAIN.id);
-      } catch (error) {
-        // 저장 실패는 다음 실행에서 오프닝을 다시 보여 주는 복구로 남기고 현재 세션의 진행은 계속한다.
-        console.error("오프닝 완료 저장 실패", error);
-      }
-      // 로비의 비동기 Puppet까지 준비되기 전 오프닝의 true를 자동화가 재사용하지 않게 먼저 내린다.
-      setDebugReady(false);
-      // 로딩을 기다리는 지연이 아니라 현재 pointerup 처리와 DialogueLayer 종료를 다음 Phaser 틱으로 분리한다.
-      this.time.delayedCall(0, () => { if (firstRun) void this.enterFirstBattle(); else startScene(this, "lobby"); });
+      this.finishStory();
       return;
     }
     void this.showCurrentNode(result.node!);
+  }
+
+  /** 마지막 입력이 겹쳐도 완료 저장과 다음 화면(1-1 또는 로비) 전환은 한 번만 수행한다. */
+  private finishStory(): void {
+    if (this.transitioningOut) return;
+    // 완료를 확인한 즉시 후속 입력을 영구 차단해 저장과 씬 전환을 한 번만 수행한다.
+    this.transitioningOut = true;
+    const firstRun = !storyManager.isCompleted(OPENING_TRAIN.id);
+    // 대사를 건너뛰어도 곧 싸울 SD는 읽어 둔다(폭파 큐를 지나지 않았을 수 있다).
+    if (firstRun) prefetchBattlePuppets(session.party, FIXED_STAGE_ENEMIES);
+    try {
+      storyManager.complete(OPENING_TRAIN.id);
+    } catch (error) {
+      // 저장 실패는 다음 실행에서 오프닝을 다시 보여 주는 복구로 남기고 현재 세션의 진행은 계속한다.
+      console.error("오프닝 완료 저장 실패", error);
+    }
+    // 로비의 비동기 Puppet까지 준비되기 전 오프닝의 true를 자동화가 재사용하지 않게 먼저 내린다.
+    setDebugReady(false);
+    // 로딩을 기다리는 지연이 아니라 현재 pointerup 처리와 DialogueLayer 종료를 다음 Phaser 틱으로 분리한다.
+    this.time.delayedCall(0, () => { if (firstRun) void this.enterFirstBattle(); else startScene(this, "lobby"); });
   }
 
   /**

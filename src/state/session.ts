@@ -506,13 +506,16 @@ export function createDefaultSession(): Session {
     // 등급을 올려 보는 길이 지층 탐사 없이도 열려 있어야 한다. 정식 수급이 붙으면 함께 지운다.
     // 토벌권은 친구 레이드를 여는 입장권이다. 처음 들어온 사람이 레이드 목록의 소환을 한 번은
     // 눌러 볼 수 있게 몇 장 쥐여 준다 — 그 뒤로는 전리품 상점에서 증표로 바꾼다.
-    itemInventory: [
-      // 시작 병도 기한이 있다 — 기한 없는 병이 섞이면 가방이 무엇이 언제 사라지는지 말하지 못한다.
-      { itemId: "stamina-tonic", quantity: 3, lots: [{ quantity: 3, expiresAt: lotExpiresAt(new Date(), 7) }] },
-      { itemId: "raid-ticket", quantity: 3 },
-      { itemId: "raid-select-ticket", quantity: 1 },
-      ...STARTER_RUNE_TRAIT_KIT.items.map((entry) => ({ ...entry })),
-    ],
+    // 시작 지급(에너지 드링크·토벌권·특성 아이템)은 QA 빌드에서만 준다 — 일반 빌드의 가방은 비어서 시작한다.
+    itemInventory: QA_TOOLS_ENABLED
+      ? [
+        // 시작 병도 기한이 있다 — 기한 없는 병이 섞이면 가방이 무엇이 언제 사라지는지 말하지 못한다.
+        { itemId: "stamina-tonic", quantity: 3, lots: [{ quantity: 3, expiresAt: lotExpiresAt(new Date(), 7) }] },
+        { itemId: "raid-ticket", quantity: 3 },
+        { itemId: "raid-select-ticket", quantity: 1 },
+        ...STARTER_RUNE_TRAIT_KIT.items.map((entry) => ({ ...entry })),
+      ]
+      : [],
     // 서버 첫 조회가 현재 시각을 기준점으로 확정하며 기본 보관 시간은 서버 상수가 정한다.
     idleExcavation: createIdleExcavationState(),
     archaeology: createArchaeologyState(),

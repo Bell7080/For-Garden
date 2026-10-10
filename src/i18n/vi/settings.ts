@@ -103,4 +103,9 @@ export const SETTINGS_VI = {
   "settings.debug.alreadyMax": "Nhân vật đó đã ở Đột phá bậc V.",
   "settings.debug.grantedRelics": "Đã trao {count} nhân vật mới.",
   "settings.debug.alreadyAll": "Bạn đã có mọi nhân vật.",
+  "settings.debug.maxLevel": "Cấp người chơi tối đa · Mở khóa mọi nội dung",
+  "settings.debug.maxLevelAlready": "Đã là LV.{level} rồi.",
+  "settings.debug.maxLevelDone": "Đã nâng cấp người chơi lên LV.{level}. Quay lại sảnh để xem nội dung đã mở khóa.",
+  "settings.debug.unlockStories": "Gắn kết 10 · Mở khóa mọi câu hỏi/câu chuyện",
+  "settings.debug.unlockedStories": "Đã nâng Gắn kết cho {count} nhân vật. Mọi câu hỏi quan sát và câu chuyện Yêu thích đã được mở khóa.",
 } as const;

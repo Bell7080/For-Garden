@@ -103,4 +103,9 @@ export const SETTINGS_PT_BR = {
   "settings.debug.alreadyMax": "Esse personagem já está no grau de Ruptura V.",
   "settings.debug.grantedRelics": "Foram concedidos {count} personagens novos.",
   "settings.debug.alreadyAll": "Você já tem todos os personagens.",
+  "settings.debug.maxLevel": "Nível de jogador máximo · Liberar todo o conteúdo",
+  "settings.debug.maxLevelAlready": "Já está no LV.{level}.",
+  "settings.debug.maxLevelDone": "Nível de jogador elevado para LV.{level}. Volte ao saguão para ver o conteúdo liberado.",
+  "settings.debug.unlockStories": "Vínculo 10 · Liberar todas as perguntas/histórias",
+  "settings.debug.unlockedStories": "O Vínculo de {count} personagens foi elevado. Todas as perguntas de observação e histórias Favoritas foram liberadas.",
 } as const;

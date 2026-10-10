@@ -102,4 +102,10 @@ export const INFO_ZH_HANS = {
   "info.story.3": "第3话 · 旧记忆的碎片",
   "info.story.4": "第4话 · 永恒之城的尽头",
   "info.enemy.role.healingReduction": "该敌人存活期间，我方受到的治疗降低{base}%，并在{seconds}秒内逐步提高至最多{max}%。",
+  "info.diary.answerChip": "回答 {n}",
+  "info.diary.locked": "这个提问将在{days}天后开放。",
+  "info.diary.reward": "回答即可获得{gems}颗宝石",
+  "info.diary.title": "观察提问 {index} / {total}",
+  "info.journal.diaryTitle": "观察日记",
+  "info.journal.fossilRecord": "采掘记录",
 } as const;

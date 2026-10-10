@@ -799,16 +799,7 @@
 "Duell-Herausforderungsticket 1",
 "Билет вызова на дуэль 1"
 ],
-"item.strata-ticket.name": [
-"探查券",
-"ตั๋วสำรวจ",
-"Vé thám sát",
-"Tiket Survei",
-"Ticket de estudio",
-"Tíquete de pesquisa",
-"Erkundungsticket",
-"Билет разведки"
-],
+"item.strata-ticket.name": ["发掘券", "ตั๋วขุดค้น", "Vé khai quật", "Tiket Penggalian", "Ticket de excavación", "Tíquete de escavação", "Grabungsticket", "Билет на раскопки"],
 "item.strata-ticket.description": [
 "恢复1次考古地层探查次数。",
 "ฟื้นฟูจำนวนครั้งสำรวจชั้นหินโบราณคดี 1 ครั้ง",

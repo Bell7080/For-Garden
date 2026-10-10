@@ -46,4 +46,5 @@ export const RAID_TH = {
   "raid.reward.killFailed": "ล้มเหลว",
   "raid.reward.note": "เมื่อเรดจบ ให้สรุปผลรับรางวัลในแท็บเสร็จสิ้น",
   "raid.result.score": "คะแนน {score}",
+  "shop.loot.title": "ร้านค้าของรางวัล",
 } as const;

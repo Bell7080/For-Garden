@@ -46,4 +46,5 @@ export const RAID_ID = {
   "raid.reward.killFailed": "Gagal",
   "raid.reward.note": "Setelah raid berakhir, selesaikan di tab Selesai untuk menerima",
   "raid.result.score": "Skor {score}",
+  "shop.loot.title": "Toko Jarahan",
 } as const;

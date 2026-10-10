@@ -46,4 +46,5 @@ export const RAID_EN = {
   "raid.reward.killFailed": "Failed",
   "raid.reward.note": "Once the raid ends, settle it from the Completed tab",
   "raid.result.score": "Score {score}",
+  "shop.loot.title": "Loot Shop",
 } as const;

@@ -111,4 +111,10 @@ export const INFO_JA = {
   "info.story.3": "第3話 · 古い記憶のかけら",
   "info.story.4": "第4話 · エターナルシティの果て",
   "info.enemy.role.healingReduction": "この敵が生きている間、味方が受ける回復が{base}%減り、{seconds}秒かけて最大{max}%まで増える。",
+  "info.diary.answerChip": "回答 {n}",
+  "info.diary.locked": "この質問は{days}日後に開きます。",
+  "info.diary.reward": "答えるとジェムを{gems}個もらえます",
+  "info.diary.title": "観察質問 {index} / {total}",
+  "info.journal.diaryTitle": "観察日記",
+  "info.journal.fossilRecord": "採掘記録",
 } as const;

@@ -103,4 +103,9 @@ export const SETTINGS_ZH_HANT = {
   "settings.debug.alreadyMax": "該角色已達突破等級V。",
   "settings.debug.grantedRelics": "已發放{count}名新角色。",
   "settings.debug.alreadyAll": "你已擁有所有角色。",
+  "settings.debug.maxLevel": "玩家等級滿級 · 開放全部內容",
+  "settings.debug.maxLevelAlready": "已經是LV.{level}了。",
+  "settings.debug.maxLevelDone": "已將玩家等級提升至LV.{level}。返回大廳後即可看到已開放的內容。",
+  "settings.debug.unlockStories": "羈絆10 · 開放全部提問/故事",
+  "settings.debug.unlockedStories": "已提升羈絆的角色有{count}名。所有觀察提問和最愛故事均已開放。",
 } as const;

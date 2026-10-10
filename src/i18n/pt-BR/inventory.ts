@@ -27,6 +27,7 @@ export const INVENTORY_PT_BR = {
   "stamina.recharge": "Recarregar",
   "stamina.gemTitle": "Recarregar com gemas",
   "stamina.gemMessage": "Use gemas para recuperar {amount} de estamina.",
+  "stamina.gemDetail": "Hoje {count}x · reinicia {reset}",
   "stamina.spend": "Usar",
   "stamina.adRemaining": "Hoje {left}/{limit}",
   "stamina.watchAd": "Assistir",

@@ -266,4 +266,5 @@ export const MISC_VI = {
   "stageMap.nextZone": "Khu tiếp theo",
   "stageMap.replay": "Xem lại",
   "stageMap.readRecord": "Đọc hồ sơ",
+  "profile.nextUnlockStage": "Mở khóa khi hoàn thành màn {stage} · {content}",
 } as const;

@@ -268,4 +268,5 @@ export const MISC_EN = {
   "stageMap.nextZone": "Next Zone",
   "stageMap.replay": "Replay",
   "stageMap.readRecord": "Read Record",
+  "profile.nextUnlockStage": "Unlocks on clearing Stage {stage} · {content}",
 } as const;

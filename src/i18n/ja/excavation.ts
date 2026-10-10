@@ -29,4 +29,5 @@ export const EXCAVATION_JA = {
   "excavation.editTitle": "配置編集",
   "excavation.editTitleSlot": "配置編集 · スロット {slot}/3",
   "excavation.formationFailed": "編成を保存できませんでした。接続を確認してもう一度お試しください。",
+  "excavation.rewardTitleFull": "満杯収穫ボーナス +10%",
 } as const;

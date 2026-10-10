@@ -46,4 +46,5 @@ export const RAID_VI = {
   "raid.reward.killFailed": "Thất bại",
   "raid.reward.note": "Khi đột kích kết thúc, quyết toán ở thẻ Hoàn thành để nhận",
   "raid.result.score": "Điểm {score}",
+  "shop.loot.title": "Cửa hàng chiến lợi phẩm",
 } as const;

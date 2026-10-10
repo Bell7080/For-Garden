@@ -113,4 +113,9 @@ export const SETTINGS_JA = {
   "settings.debug.alreadyMax": "すでに星五まで育てたキャラクターです。",
   "settings.debug.grantedRelics": "新しいキャラクター{count}体を所持状態にしました。",
   "settings.debug.alreadyAll": "すでにすべてのキャラクターを所持しています。",
+  "settings.debug.maxLevel": "プレイヤーレベル最大 · 全コンテンツ開放",
+  "settings.debug.maxLevelAlready": "すでにLV.{level}です。",
+  "settings.debug.maxLevelDone": "プレイヤーレベルをLV.{level}に上げました。ロビーに戻ると開放されたコンテンツが表示されます。",
+  "settings.debug.unlockStories": "絆10 · 質問/ストーリー全開放",
+  "settings.debug.unlockedStories": "絆を上げたキャラクターは{count}体です。すべての観察質問とお気に入りストーリーが開放されました。",
 } as const;

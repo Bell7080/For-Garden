@@ -10,6 +10,7 @@ export const EXCAVATION_ID = {
   "excavation.harvestBusy": "Memanen…",
   "excavation.harvest": "Panen",
   "excavation.rewardTitle": "Hadiah Penggalian",
+  "excavation.rewardTitleFull": "Bonus Panen Penuh +10%",
   "excavation.harvestFailed": "Panen gagal. Coba lagi dengan permintaan yang sama.",
   "excavation.ad.unavailable": "Meski iklan tidak tersedia, panen biasa tetap bisa.",
   "excavation.ad.cancelled": "Iklan dibatalkan atau belum siap. Gunakan panen biasa.",

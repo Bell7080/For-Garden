@@ -10,6 +10,7 @@ export const EXCAVATION_RU = {
   "excavation.harvestBusy": "Сбор…",
   "excavation.harvest": "Собрать",
   "excavation.rewardTitle": "Награды раскопок",
+  "excavation.rewardTitleFull": "Бонус за полное хранилище +10%",
   "excavation.harvestFailed": "Сбор не удался. Повторите тот же запрос.",
   "excavation.ad.unavailable": "Даже без рекламы обычный сбор доступен.",
   "excavation.ad.cancelled": "Реклама отменена или не готова. Используйте обычный сбор.",

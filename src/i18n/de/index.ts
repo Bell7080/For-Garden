@@ -25,5 +25,6 @@ import { SYSTEM_DE } from "./system";
 import { RAID_DE } from "./raid";
 import { BOUNTY_DE } from "./bounty";
 import { DUNGEON_DE } from "./dungeon";
+import { DUEL_DE } from "./duel";
 
-export default { ...SETTINGS_DE, ...LOBBY_DE, ...COMMON_DE, ...INFO_DE, ...STATUS_DE, ...LAB_DE, ...EXPEDITION_DE, ...BATTLE_DE, ...CAKE_OPERATION_DE, ...EXCAVATION_DE, ...AUGMENT_DE, ...FRIENDS_DE, ...RUNE_DE, ...PARTY_DE, ...EXPEDITION_REWARD_DE, ...SAVE_CONFLICT_DE, ...INTERACTION_DE, ...SHOP_DE, ...MISSIONS_DE, ...INVENTORY_DE, ...MISC_DE, ...SKILL_DE, ...SYSTEM_DE, ...RAID_DE, ...BOUNTY_DE, ...DUNGEON_DE };
+export default { ...SETTINGS_DE, ...LOBBY_DE, ...COMMON_DE, ...INFO_DE, ...STATUS_DE, ...LAB_DE, ...EXPEDITION_DE, ...BATTLE_DE, ...CAKE_OPERATION_DE, ...EXCAVATION_DE, ...AUGMENT_DE, ...FRIENDS_DE, ...RUNE_DE, ...PARTY_DE, ...EXPEDITION_REWARD_DE, ...SAVE_CONFLICT_DE, ...INTERACTION_DE, ...SHOP_DE, ...MISSIONS_DE, ...INVENTORY_DE, ...MISC_DE, ...SKILL_DE, ...SYSTEM_DE, ...RAID_DE, ...BOUNTY_DE, ...DUNGEON_DE, ...DUEL_DE };

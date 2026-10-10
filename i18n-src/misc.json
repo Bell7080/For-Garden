@@ -309,16 +309,7 @@
 "Archäologie-Shop",
 "Магазин археологии"
 ],
-"shop.loot.title": [
-"战利品商店",
-"ร้านค้าของรางวัล",
-"Cửa hàng chiến lợi phẩm",
-"Toko Jarahan",
-"Tienda de botín",
-"Loja de espólios",
-"Beute-Shop",
-"Магазин трофеев"
-],
+"shop.loot.title": ["战利品商店", "ร้านค้าของรางวัล", "Cửa hàng chiến lợi phẩm", "Toko Jarahan", "Tienda de botín", "Loja de espólios", "Beute-Shop", "Магазин трофеев"],
 "shop.protia.line1": [
 "刚从戈壁运上来的货。价格早就定好了，别想砍价。",
 "ของเพิ่งขึ้นมาจากโกบี ราคาตั้งไว้แล้ว เลิกคิดจะต่อรองซะ",
@@ -2658,5 +2649,6 @@
 "Pular (Dev)",
 "Überspringen (Dev)",
 "Пропустить (разработка)"
-]
+],
+"profile.nextUnlockStage": ["通关关卡{stage}后开放 · {content}", "ปลดล็อกเมื่อผ่านด่าน {stage} · {content}", "Mở khóa khi hoàn thành màn {stage} · {content}", "Terbuka setelah menamatkan Stage {stage} · {content}", "Se desbloquea al superar la fase {stage} · {content}", "Liberado ao concluir a fase {stage} · {content}", "Wird mit Abschluss von Stage {stage} freigeschaltet · {content}", "Откроется после прохождения этапа {stage} · {content}"]
 }

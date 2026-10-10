@@ -44,5 +44,6 @@
 "raid.reward.killNo": ["进行中", "กำลังดำเนินการ", "Đang diễn ra", "Berlangsung", "En curso", "Em andamento", "Laufend", "Идёт"],
 "raid.reward.killFailed": ["失败", "ล้มเหลว", "Thất bại", "Gagal", "Fallida", "Falhou", "Gescheitert", "Неудача"],
 "raid.reward.note": ["讨伐结束后，在「已完成」分页结算领取", "เมื่อเรดจบ ให้สรุปผลรับรางวัลในแท็บเสร็จสิ้น", "Khi đột kích kết thúc, quyết toán ở thẻ Hoàn thành để nhận", "Setelah raid berakhir, selesaikan di tab Selesai untuk menerima", "Cuando termine la incursión, liquídala en la pestaña Completadas", "Quando a raide terminar, faça o acerto na aba Concluídas", "Nach dem Raid in der Registerkarte „Abgeschlossen“ abrechnen", "После окончания рейда получите расчёт во вкладке «Завершены»"],
-"raid.result.score": ["得分 {score}", "คะแนน {score}", "Điểm {score}", "Skor {score}", "Puntuación {score}", "Pontuação {score}", "Punkte {score}", "Очки {score}"]
+"raid.result.score": ["得分 {score}", "คะแนน {score}", "Điểm {score}", "Skor {score}", "Puntuación {score}", "Pontuação {score}", "Punkte {score}", "Очки {score}"],
+"shop.loot.title": ["战利品商店", "ร้านค้าของรางวัล", "Cửa hàng chiến lợi phẩm", "Toko Jarahan", "Tienda de botín", "Loja de espólios", "Beute-Shop", "Магазин трофеев"]
 }

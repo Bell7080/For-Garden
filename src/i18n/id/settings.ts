@@ -103,4 +103,9 @@ export const SETTINGS_ID = {
   "settings.debug.alreadyMax": "Karakter itu sudah di Terobosan tingkat V.",
   "settings.debug.grantedRelics": "{count} karakter baru telah diberikan.",
   "settings.debug.alreadyAll": "Anda sudah memiliki semua karakter.",
+  "settings.debug.maxLevel": "Level pemain maks · Buka semua konten",
+  "settings.debug.maxLevelAlready": "Sudah LV.{level}.",
+  "settings.debug.maxLevelDone": "Level pemain dinaikkan ke LV.{level}. Kembali ke lobi untuk melihat konten yang terbuka.",
+  "settings.debug.unlockStories": "Ikatan 10 · Buka semua pertanyaan/cerita",
+  "settings.debug.unlockedStories": "{count} karakter dinaikkan Ikatannya. Semua pertanyaan observasi dan cerita Favorit telah terbuka.",
 } as const;

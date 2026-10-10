@@ -529,16 +529,7 @@
 "Parua",
 "Паруа"
 ],
-"dialogue.opening-train.parua.body": [
-"我是帕鲁娅。负责看守后方。",
-"ฉันคือปารัว หน้าที่ของฉันคือระวังหลัง",
-"Tớ là Parua. Canh chừng phía sau là việc của tớ.",
-"Aku Parua. Mengawasi bagian belakang adalah tugasku.",
-"Soy Parua. Vigilar la retaguardia es mi trabajo.",
-"Sou a Parua. Vigiar a retaguarda é o meu trabalho.",
-"Ich bin Parua. Den Rücken zu decken ist meine Aufgabe.",
-"Я Паруа. Прикрывать тыл — моя работа."
-],
+"dialogue.opening-train.parua.body": ["我是帕鲁娅。负责看守后方，这是我的工作。", "ฉันคือปารัว หน้าที่ของฉันคือระวังหลัง", "Tớ là Parua. Canh chừng phía sau là việc của tớ.", "Aku Parua. Mengawasi bagian belakang adalah tugasku.", "Soy Parua. Vigilar la retaguardia es mi trabajo.", "Sou a Parua. Vigiar a retaguarda é o meu trabalho.", "Ich bin Parua. Den Rücken zu decken ist meine Aufgabe.", "Я Паруа. Прикрывать тыл — моя работа."],
 "dialogue.opening-train.sniff.speaker": [
 "帕鲁娅",
 "ปารัว",
@@ -549,16 +540,7 @@
 "Parua",
 "Паруа"
 ],
-"dialogue.opening-train.sniff.body": [
-"不过好奇怪。你的气味和其他研究员不一样。……我可以靠近点看看吗？",
-"แต่แปลกจัง กลิ่นของคุณต่างจากนักวิจัยคนอื่น …ขอดูใกล้ ๆ หน่อยได้ไหม?",
-"Nhưng lạ thật. Mùi của bạn khác với những nhà nghiên cứu khác. …Tớ nhìn gần hơn chút được không?",
-"Tapi aneh. Baumu berbeda dari periset lain. ...Boleh aku lihat lebih dekat?",
-"Pero es raro. Hueles distinto a los demás investigadores. …¿Puedo mirarte más de cerca?",
-"Mas é estranho. Seu cheiro é diferente dos outros pesquisadores. …Posso olhar mais de perto?",
-"Aber seltsam. Du riechst anders als die anderen Forscher. … Darf ich genauer hinsehen?",
-"Но странно. Ты пахнешь не так, как другие исследователи. …Можно взглянуть поближе?"
-],
+"dialogue.opening-train.sniff.body": ["不过好奇怪。你身上的气味和其他研究员不一样。……我可以再靠近一点看看吗？", "แต่แปลกจัง กลิ่นของคุณต่างจากนักวิจัยคนอื่น …ขอดูใกล้ ๆ อีกนิดได้ไหม?", "Nhưng lạ thật. Mùi của bạn khác với những nhà nghiên cứu khác. …Tớ nhìn gần hơn chút nữa được không?", "Tapi aneh. Baumu berbeda dari periset lain. ...Boleh aku lihat sedikit lebih dekat?", "Pero es raro. Hueles distinto a los demás investigadores. …¿Puedo mirarte un poquito más de cerca?", "Mas é estranho. Seu cheiro é diferente dos outros pesquisadores. …Posso olhar só um pouquinho mais de perto?", "Aber seltsam. Du riechst anders als die anderen Forscher. … Darf ich noch ein bisschen genauer hinsehen?", "Но странно. Ты пахнешь не так, как другие исследователи. …Можно взглянуть чуть поближе?"],
 "dialogue.opening-train.scold.speaker": [
 "托莉卡",
 "โทริกะ",
@@ -619,16 +601,7 @@
 "Parua",
 "Паруа"
 ],
-"dialogue.opening-train.sense.body": [
-"……前面有东西来了。不止一个。",
-"…มีอะไรมาจากข้างหน้า ไม่ใช่แค่ตัวเดียว",
-"…Có gì đó đang tới từ phía trước. Không chỉ một.",
-"...Ada sesuatu datang dari depan. Lebih dari satu.",
-"…Algo viene por delante. Más de uno.",
-"…Tem algo vindo da frente. Mais de um.",
-"… Da kommt etwas von vorn. Mehr als eins.",
-"…Спереди что-то приближается. И не одно."
-],
+"dialogue.opening-train.sense.body": ["……前面有东西过来了。不止一个。", "…มีอะไรมาจากข้างหน้า ไม่ใช่แค่ตัวเดียว", "…Có gì đó đang tới từ phía trước. Không chỉ một.", "...Ada sesuatu datang dari depan. Lebih dari satu.", "…Algo viene por delante. Más de uno.", "…Tem algo vindo da frente. Mais de um.", "… Da kommt etwas von vorn. Mehr als eins.", "…Спереди что-то приближается. И не одно."],
 "dialogue.opening-train.guard.speaker": [
 "托莉卡",
 "โทริกะ",
@@ -749,16 +722,7 @@
 "Parua",
 "Паруа"
 ],
-"dialogue.opening-train.three.body": [
-"嘘。三个。正穿过烟雾往这边来。",
-"ชู่ว สามตัว กำลังฝ่าควันมาทางนี้",
-"Suỵt. Ba đứa. Đang băng qua khói tới đây.",
-"Ssst. Tiga. Datang ke sini menembus asap.",
-"Chsss. Tres. Vienen hacia aquí entre el humo.",
-"Shh. Três. Vindo para cá pela fumaça.",
-"Pst. Drei. Sie kommen durch den Rauch hierher.",
-"Тсс. Трое. Идут сюда сквозь дым."
-],
+"dialogue.opening-train.three.body": ["嘘。三个。正穿过烟雾朝这边来。", "ชู่ว สามตัว กำลังฝ่าควันมาทางนี้", "Suỵt. Ba đứa. Đang băng qua khói tới đây.", "Ssst. Tiga. Datang ke sini menembus asap.", "Chsss. Tres. Vienen hacia aquí entre el humo.", "Shh. Três. Vindo para cá pela fumaça.", "Pst. Drei. Sie kommen durch den Rauch hierher.", "Тсс. Трое. Идут сюда сквозь дым."],
 "dialogue.opening-train.toby.speaker": [
 "托比",
 "โทบี",
@@ -889,16 +853,7 @@
 "Parua",
 "Паруа"
 ],
-"dialogue.opening-train.aim.body": [
-"……箭已经准备好了。随时可以。",
-"…ลูกธนูพร้อมแล้ว เมื่อไหร่ก็ได้",
-"…Mũi tên sẵn sàng rồi. Lúc nào cũng được.",
-"...Panahku siap. Kapan pun kau siap.",
-"…Mi flecha está lista. Cuando quieras.",
-"…Minha flecha está pronta. Quando quiser.",
-"… Mein Pfeil ist bereit. Wann immer ihr wollt.",
-"…Стрела готова. Когда скажешь."
-],
+"dialogue.opening-train.aim.body": ["……箭已经准备好了。随时都可以。", "…ลูกธนูพร้อมแล้ว เมื่อไหร่ก็ได้", "…Mũi tên sẵn sàng rồi. Lúc nào cũng được.", "...Panahku siap. Kapan pun kau siap.", "…Mi flecha está lista. Cuando quieras.", "…Minha flecha está pronta. Quando quiser.", "… Mein Pfeil ist bereit. Wann immer ihr wollt.", "…Стрела готова. Когда скажешь."],
 "dialogue.opening-train.end.speaker": [
 "托莉卡",
 "โทริกะ",
@@ -1069,16 +1024,7 @@
 "Parua",
 "Паруа"
 ],
-"dialogue.opening-retreat.watch.body": [
-"……他们还会回来的。那不是会放弃的表情。",
-"…พวกนั้นจะกลับมาอีก สีหน้าแบบนั้นไม่ใช่คนที่ยอมแพ้",
-"…Chúng sẽ quay lại. Đó không phải vẻ mặt của kẻ bỏ cuộc.",
-"...Mereka akan kembali. Itu bukan wajah yang menyerah.",
-"…Volverán. Esas no eran caras de rendirse.",
-"…Eles vão voltar. Aquelas não eram caras de quem desiste.",
-"… Die kommen wieder. Das waren keine Gesichter, die aufgeben.",
-"…Они вернутся. Это были не те лица, что сдаются."
-],
+"dialogue.opening-retreat.watch.body": ["……他们还会回来的。那不是会放弃的表情。", "…พวกนั้นจะกลับมาอีก สีหน้าแบบนั้นไม่ใช่คนที่ยอมแพ้", "…Chúng sẽ quay lại. Đó không phải vẻ mặt của kẻ bỏ cuộc.", "...Mereka akan kembali. Itu bukan wajah yang menyerah.", "…Volverán. Esas no eran caras de rendirse.", "…Eles vão voltar. Aquelas não eram caras de quem desiste.", "… Die kommen wieder. Das waren keine Gesichter, die aufgeben.", "…Они вернутся. Это были не те лица, что сдаются."],
 "dialogue.opening-retreat.onward.speaker": [
 "托莉卡",
 "โทริกะ",

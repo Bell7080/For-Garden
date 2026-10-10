@@ -266,4 +266,5 @@ export const MISC_TH = {
   "stageMap.nextZone": "เขตถัดไป",
   "stageMap.replay": "ดูอีกครั้ง",
   "stageMap.readRecord": "อ่านบันทึก",
+  "profile.nextUnlockStage": "ปลดล็อกเมื่อผ่านด่าน {stage} · {content}",
 } as const;

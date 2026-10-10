@@ -10,6 +10,7 @@ export const EXCAVATION_ZH_HANS = {
   "excavation.harvestBusy": "收获中…",
   "excavation.harvest": "收获",
   "excavation.rewardTitle": "获得采掘奖励",
+  "excavation.rewardTitleFull": "满仓收获加成 +10%",
   "excavation.harvestFailed": "收获失败。请用相同请求重试。",
   "excavation.ad.unavailable": "即使无法观看广告，也可以普通收获。",
   "excavation.ad.cancelled": "广告已取消或尚未就绪。请使用普通收获。",

@@ -46,4 +46,5 @@ export const RAID_ES = {
   "raid.reward.killFailed": "Fallida",
   "raid.reward.note": "Cuando termine la incursión, liquídala en la pestaña Completadas",
   "raid.result.score": "Puntuación {score}",
+  "shop.loot.title": "Tienda de botín",
 } as const;

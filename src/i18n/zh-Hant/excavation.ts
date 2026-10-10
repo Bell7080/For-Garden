@@ -10,6 +10,7 @@ export const EXCAVATION_ZH_HANT = {
   "excavation.harvestBusy": "收穫中…",
   "excavation.harvest": "收穫",
   "excavation.rewardTitle": "獲得採掘獎勵",
+  "excavation.rewardTitleFull": "滿倉收穫加成 +10%",
   "excavation.harvestFailed": "收穫失敗。請用相同請求重試。",
   "excavation.ad.unavailable": "即使無法觀看廣告，也可以普通收穫。",
   "excavation.ad.cancelled": "廣告已取消或尚未就緒。請使用普通收穫。",

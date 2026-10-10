@@ -266,4 +266,5 @@ export const MISC_ID = {
   "stageMap.nextZone": "Zona Berikutnya",
   "stageMap.replay": "Putar Ulang",
   "stageMap.readRecord": "Baca Catatan",
+  "profile.nextUnlockStage": "Terbuka setelah menamatkan Stage {stage} · {content}",
 } as const;

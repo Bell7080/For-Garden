@@ -266,4 +266,5 @@ export const MISC_PT_BR = {
   "stageMap.nextZone": "Próxima zona",
   "stageMap.replay": "Rever",
   "stageMap.readRecord": "Ler registro",
+  "profile.nextUnlockStage": "Liberado ao concluir a fase {stage} · {content}",
 } as const;

@@ -103,4 +103,9 @@ export const SETTINGS_TH = {
   "settings.debug.alreadyMax": "ตัวละครนั้นอยู่ที่ระดับทะลวง V แล้ว",
   "settings.debug.grantedRelics": "มอบตัวละครใหม่ {count} ตัวแล้ว",
   "settings.debug.alreadyAll": "คุณมีตัวละครครบทุกตัวแล้ว",
+  "settings.debug.maxLevel": "เลเวลผู้เล่นสูงสุด · ปลดล็อกคอนเทนต์ทั้งหมด",
+  "settings.debug.maxLevelAlready": "เป็น LV.{level} อยู่แล้ว",
+  "settings.debug.maxLevelDone": "เพิ่มเลเวลผู้เล่นเป็น LV.{level} แล้ว กลับไปที่ล็อบบี้เพื่อดูคอนเทนต์ที่ปลดล็อก",
+  "settings.debug.unlockStories": "สายสัมพันธ์ 10 · ปลดล็อกคำถาม/เรื่องราวทั้งหมด",
+  "settings.debug.unlockedStories": "ตัวละครที่เพิ่มสายสัมพันธ์: {count} ตัว ปลดล็อกคำถามการสังเกตและเรื่องราวโปรดทั้งหมดแล้ว",
 } as const;

@@ -459,16 +459,6 @@
 "Formation und Kampf dieser Operation öffnen später",
 "Построение и бой этой операции откроются позже"
 ],
-"inventory.strataChargeGained": [
-"探查次数 +{amount}",
-"จำนวนครั้งสำรวจ +{amount}",
-"Lượt thám sát +{amount}",
-"Kesempatan survei +{amount}",
-"Intentos de estudio +{amount}",
-"Tentativas de pesquisa +{amount}",
-"Erkundungen +{amount}",
-"Попытки разведки +{amount}"
-],
 "inventory.useFailed": [
 "无法使用",
 "ใช้ไม่ได้",
@@ -479,16 +469,6 @@
 "Nicht nutzbar",
 "Нельзя использовать"
 ],
-"inventory.strataChargeFull": [
-"探查次数已满",
-"จำนวนครั้งสำรวจเต็มแล้ว",
-"Lượt thám sát đã đầy",
-"Kesempatan survei sudah penuh",
-"Los intentos de estudio están llenos",
-"As tentativas de pesquisa estão cheias",
-"Erkundungen sind voll",
-"Попытки разведки заполнены"
-],
 "inventory.staminaFull": [
 "体力已满",
 "สตามินาเต็มแล้ว",
@@ -498,5 +478,6 @@
 "A estamina está cheia",
 "Ausdauer ist voll",
 "Выносливость заполнена"
-]
+],
+"stamina.gemDetail": ["今日{count}次 · {reset}重置", "วันนี้ {count} ครั้ง · รีเซ็ต {reset}", "Hôm nay {count} lần · đặt lại {reset}", "Hari ini {count}x · reset {reset}", "Hoy {count} veces · se reinicia {reset}", "Hoje {count}x · reinicia {reset}", "Heute {count}× · Reset {reset}", "Сегодня {count} раз · сброс {reset}"]
 }

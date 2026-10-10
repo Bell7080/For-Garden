@@ -103,4 +103,9 @@ export const SETTINGS_RU = {
   "settings.debug.alreadyMax": "Этот персонаж уже на прорыве V.",
   "settings.debug.grantedRelics": "Выдано новых персонажей: {count}.",
   "settings.debug.alreadyAll": "У вас уже есть все персонажи.",
+  "settings.debug.maxLevel": "Максимальный уровень игрока · Открыть весь контент",
+  "settings.debug.maxLevelAlready": "Уже LV.{level}.",
+  "settings.debug.maxLevelDone": "Уровень игрока повышен до LV.{level}. Вернитесь в лобби, чтобы увидеть открывшийся контент.",
+  "settings.debug.unlockStories": "Связь 10 · Открыть все вопросы и истории",
+  "settings.debug.unlockedStories": "Связь повышена у персонажей: {count}. Все вопросы наблюдения и истории Любимчика открыты.",
 } as const;

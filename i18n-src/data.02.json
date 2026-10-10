@@ -289,16 +289,6 @@
 "Stellt 120 Ausdauer wieder her.",
 "Восстанавливает 120 выносливости."
 ],
-"premium.tab.package": [
-"礼包",
-"แพ็กเกจ",
-"Gói",
-"Paket",
-"Paquetes",
-"Pacotes",
-"Pakete",
-"Наборы"
-],
 "premium.tab.deal": [
 "特惠",
 "ดีล",
@@ -1620,16 +1610,7 @@
 "Lass sie alle los. Ich sehe von hier aus zu.",
 "Выпускай всех. Я посмотрю отсюда."
 ],
-"firstMeeting.dian": [
-"我会保护你的，队长！……啊，克罗！希罗！",
-"ฉันจะปกป้องคุณเองค่ะ กัปตัน! …อ๊ะ คุโระ! ชิโระ!",
-"Em sẽ bảo vệ anh, Đội trưởng! …A, Kuro! Shiro!",
-"Aku akan melindungimu, Kapten! …Ah, Kuro! Shiro!",
-"¡Yo te protegeré, Capitán! …¡Ah, Kuro! ¡Shiro!",
-"Eu vou te proteger, Capitão! …Ah, Kuro! Shiro!",
-"Ich beschütze dich, Captain! …Ah, Kuro! Shiro!",
-"Я защищу тебя, капитан! …Ой, Куро! Широ!"
-],
+"firstMeeting.dian": ["我会保护你的，队长！……啊，克罗！希罗！", "ฉันจะปกป้องคุณเองค่ะ กัปตัน! …อ๊ะ คุโระ! ชิโระ!", "Em sẽ bảo vệ anh, Đội trưởng! …A, Kuro! Shiro!", "Aku akan melindungimu, Kapten! …Ah, Kuro! Shiro!", "¡Yo te protegeré, Capitán! …¡Ah, Kuro! ¡Shiro!", "Eu vou te proteger, Capitão! …Ah, Kuro! Shiro!", "Ich beschütze dich, Captain! …Ah, Kuro! Shiro!", "Я защищу тебя, капитан! …Ой, Куро! Широ!"],
 "event.greatAuk.stage.name": [
 "大海雀海岸发掘地",
 "แหล่งขุดค้นชายฝั่งนกอัลก์ใหญ่",

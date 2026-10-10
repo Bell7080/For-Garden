@@ -46,4 +46,5 @@ export const RAID_PT_BR = {
   "raid.reward.killFailed": "Falhou",
   "raid.reward.note": "Quando a raide terminar, faça o acerto na aba Concluídas",
   "raid.result.score": "Pontuação {score}",
+  "shop.loot.title": "Loja de espólios",
 } as const;

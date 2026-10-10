@@ -25,5 +25,6 @@ import { SYSTEM_ID } from "./system";
 import { RAID_ID } from "./raid";
 import { BOUNTY_ID } from "./bounty";
 import { DUNGEON_ID } from "./dungeon";
+import { DUEL_ID } from "./duel";
 
-export default { ...SETTINGS_ID, ...LOBBY_ID, ...COMMON_ID, ...INFO_ID, ...STATUS_ID, ...LAB_ID, ...EXPEDITION_ID, ...BATTLE_ID, ...CAKE_OPERATION_ID, ...EXCAVATION_ID, ...AUGMENT_ID, ...FRIENDS_ID, ...RUNE_ID, ...PARTY_ID, ...EXPEDITION_REWARD_ID, ...SAVE_CONFLICT_ID, ...INTERACTION_ID, ...SHOP_ID, ...MISSIONS_ID, ...INVENTORY_ID, ...MISC_ID, ...SKILL_ID, ...SYSTEM_ID, ...RAID_ID, ...BOUNTY_ID, ...DUNGEON_ID };
+export default { ...SETTINGS_ID, ...LOBBY_ID, ...COMMON_ID, ...INFO_ID, ...STATUS_ID, ...LAB_ID, ...EXPEDITION_ID, ...BATTLE_ID, ...CAKE_OPERATION_ID, ...EXCAVATION_ID, ...AUGMENT_ID, ...FRIENDS_ID, ...RUNE_ID, ...PARTY_ID, ...EXPEDITION_REWARD_ID, ...SAVE_CONFLICT_ID, ...INTERACTION_ID, ...SHOP_ID, ...MISSIONS_ID, ...INVENTORY_ID, ...MISC_ID, ...SKILL_ID, ...SYSTEM_ID, ...RAID_ID, ...BOUNTY_ID, ...DUNGEON_ID, ...DUEL_ID };

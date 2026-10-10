@@ -102,4 +102,10 @@ export const INFO_ID = {
   "info.story.3": "Ep. 3 · Serpihan Kenangan Lama",
   "info.story.4": "Ep. 4 · Ujung Kota Abadi",
   "info.enemy.role.healingReduction": "Selama musuh ini hidup, pemulihan yang diterima sekutu berkurang {base}% dan naik hingga maksimal {max}% dalam {seconds} detik.",
+  "info.diary.answerChip": "Jawaban {n}",
+  "info.diary.locked": "Pertanyaan ini terbuka dalam {days} hari.",
+  "info.diary.reward": "Jawab untuk mendapat {gems} Permata",
+  "info.diary.title": "Pertanyaan Observasi {index} / {total}",
+  "info.journal.diaryTitle": "Diari Observasi",
+  "info.journal.fossilRecord": "Catatan Penggalian",
 } as const;

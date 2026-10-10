@@ -288,4 +288,5 @@ export const MISC_JA = {
   "stageMap.nextZone": "次の区域",
   "stageMap.replay": "もう一度見る",
   "stageMap.readRecord": "記録を読む",
+  "profile.nextUnlockStage": "ステージ{stage}クリアで開放 · {content}",
 } as const;

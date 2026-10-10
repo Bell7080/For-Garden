@@ -27,6 +27,7 @@ export const INVENTORY_DE = {
   "stamina.recharge": "Aufladen",
   "stamina.gemTitle": "Mit Juwelen aufladen",
   "stamina.gemMessage": "Mit Juwelen {amount} Ausdauer wiederherstellen.",
+  "stamina.gemDetail": "Heute {count}× · Reset {reset}",
   "stamina.spend": "Einsetzen",
   "stamina.adRemaining": "Heute {left}/{limit}",
   "stamina.watchAd": "Ansehen",

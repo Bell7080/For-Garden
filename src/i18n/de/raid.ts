@@ -46,4 +46,5 @@ export const RAID_DE = {
   "raid.reward.killFailed": "Gescheitert",
   "raid.reward.note": "Nach dem Raid in der Registerkarte „Abgeschlossen“ abrechnen",
   "raid.result.score": "Punkte {score}",
+  "shop.loot.title": "Beute-Shop",
 } as const;

@@ -25,5 +25,6 @@ import { SYSTEM_RU } from "./system";
 import { RAID_RU } from "./raid";
 import { BOUNTY_RU } from "./bounty";
 import { DUNGEON_RU } from "./dungeon";
+import { DUEL_RU } from "./duel";
 
-export default { ...SETTINGS_RU, ...LOBBY_RU, ...COMMON_RU, ...INFO_RU, ...STATUS_RU, ...LAB_RU, ...EXPEDITION_RU, ...BATTLE_RU, ...CAKE_OPERATION_RU, ...EXCAVATION_RU, ...AUGMENT_RU, ...FRIENDS_RU, ...RUNE_RU, ...PARTY_RU, ...EXPEDITION_REWARD_RU, ...SAVE_CONFLICT_RU, ...INTERACTION_RU, ...SHOP_RU, ...MISSIONS_RU, ...INVENTORY_RU, ...MISC_RU, ...SKILL_RU, ...SYSTEM_RU, ...RAID_RU, ...BOUNTY_RU, ...DUNGEON_RU };
+export default { ...SETTINGS_RU, ...LOBBY_RU, ...COMMON_RU, ...INFO_RU, ...STATUS_RU, ...LAB_RU, ...EXPEDITION_RU, ...BATTLE_RU, ...CAKE_OPERATION_RU, ...EXCAVATION_RU, ...AUGMENT_RU, ...FRIENDS_RU, ...RUNE_RU, ...PARTY_RU, ...EXPEDITION_REWARD_RU, ...SAVE_CONFLICT_RU, ...INTERACTION_RU, ...SHOP_RU, ...MISSIONS_RU, ...INVENTORY_RU, ...MISC_RU, ...SKILL_RU, ...SYSTEM_RU, ...RAID_RU, ...BOUNTY_RU, ...DUNGEON_RU, ...DUEL_RU };

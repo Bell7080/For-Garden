@@ -25,5 +25,6 @@ import { SYSTEM_TH } from "./system";
 import { RAID_TH } from "./raid";
 import { BOUNTY_TH } from "./bounty";
 import { DUNGEON_TH } from "./dungeon";
+import { DUEL_TH } from "./duel";
 
-export default { ...SETTINGS_TH, ...LOBBY_TH, ...COMMON_TH, ...INFO_TH, ...STATUS_TH, ...LAB_TH, ...EXPEDITION_TH, ...BATTLE_TH, ...CAKE_OPERATION_TH, ...EXCAVATION_TH, ...AUGMENT_TH, ...FRIENDS_TH, ...RUNE_TH, ...PARTY_TH, ...EXPEDITION_REWARD_TH, ...SAVE_CONFLICT_TH, ...INTERACTION_TH, ...SHOP_TH, ...MISSIONS_TH, ...INVENTORY_TH, ...MISC_TH, ...SKILL_TH, ...SYSTEM_TH, ...RAID_TH, ...BOUNTY_TH, ...DUNGEON_TH };
+export default { ...SETTINGS_TH, ...LOBBY_TH, ...COMMON_TH, ...INFO_TH, ...STATUS_TH, ...LAB_TH, ...EXPEDITION_TH, ...BATTLE_TH, ...CAKE_OPERATION_TH, ...EXCAVATION_TH, ...AUGMENT_TH, ...FRIENDS_TH, ...RUNE_TH, ...PARTY_TH, ...EXPEDITION_REWARD_TH, ...SAVE_CONFLICT_TH, ...INTERACTION_TH, ...SHOP_TH, ...MISSIONS_TH, ...INVENTORY_TH, ...MISC_TH, ...SKILL_TH, ...SYSTEM_TH, ...RAID_TH, ...BOUNTY_TH, ...DUNGEON_TH, ...DUEL_TH };

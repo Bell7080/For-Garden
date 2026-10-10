@@ -102,4 +102,10 @@ export const INFO_RU = {
   "info.story.3": "Эп. 3 · Осколок старой памяти",
   "info.story.4": "Эп. 4 · Край Вечного города",
   "info.enemy.role.healingReduction": "Пока он жив, получаемое союзниками лечение снижено на {base}% и за {seconds} с растёт до {max}%.",
+  "info.diary.answerChip": "Ответ {n}",
+  "info.diary.locked": "Этот вопрос откроется через {days} дн.",
+  "info.diary.reward": "Ответьте и получите самоцветов: {gems}",
+  "info.diary.title": "Вопрос наблюдения {index} / {total}",
+  "info.journal.diaryTitle": "Дневник наблюдений",
+  "info.journal.fossilRecord": "Запись о раскопках",
 } as const;

@@ -103,4 +103,9 @@ export const SETTINGS_ZH_HANS = {
   "settings.debug.alreadyMax": "该角色已达突破等级V。",
   "settings.debug.grantedRelics": "已发放{count}名新角色。",
   "settings.debug.alreadyAll": "你已拥有所有角色。",
+  "settings.debug.maxLevel": "玩家等级满级 · 开放全部内容",
+  "settings.debug.maxLevelAlready": "已经是LV.{level}了。",
+  "settings.debug.maxLevelDone": "已将玩家等级提升至LV.{level}。返回大厅后即可看到已开放的内容。",
+  "settings.debug.unlockStories": "羁绊10 · 开放全部提问/故事",
+  "settings.debug.unlockedStories": "已提升羁绊的角色有{count}名。所有观察提问和最爱故事均已开放。",
 } as const;

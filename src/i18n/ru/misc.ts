@@ -266,4 +266,5 @@ export const MISC_RU = {
   "stageMap.nextZone": "Следующая зона",
   "stageMap.replay": "Повтор",
   "stageMap.readRecord": "Читать запись",
+  "profile.nextUnlockStage": "Откроется после прохождения этапа {stage} · {content}",
 } as const;

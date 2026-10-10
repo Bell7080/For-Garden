@@ -103,4 +103,9 @@ export const SETTINGS_DE = {
   "settings.debug.alreadyMax": "Dieser Charakter ist bereits auf Durchbruch-Stufe V.",
   "settings.debug.grantedRelics": "{count} neue Charaktere wurden gewährt.",
   "settings.debug.alreadyAll": "Du besitzt bereits alle Charaktere.",
+  "settings.debug.maxLevel": "Spielerlevel max. · Alle Inhalte freischalten",
+  "settings.debug.maxLevelAlready": "Bereits LV.{level}.",
+  "settings.debug.maxLevelDone": "Spielerlevel auf LV.{level} erhöht. Kehre in die Lobby zurück, um die freigeschalteten Inhalte zu sehen.",
+  "settings.debug.unlockStories": "Bindung 10 · Alle Fragen/Geschichten freischalten",
+  "settings.debug.unlockedStories": "Bindung von {count} Charakteren erhöht. Alle Beobachtungsfragen und Favorit-Geschichten sind freigeschaltet.",
 } as const;

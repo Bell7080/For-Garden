@@ -103,4 +103,9 @@ export const SETTINGS_EN = {
   "settings.debug.alreadyMax": "That character is already at Breakthrough grade V.",
   "settings.debug.grantedRelics": "{count} new characters have been granted.",
   "settings.debug.alreadyAll": "You already own every character.",
+  "settings.debug.maxLevel": "Max Player Level · Unlock All Content",
+  "settings.debug.maxLevelAlready": "Already LV.{level}.",
+  "settings.debug.maxLevelDone": "Player level raised to LV.{level}. Return to the lobby to see the unlocked content.",
+  "settings.debug.unlockStories": "Bond 10 · Unlock All Questions/Stories",
+  "settings.debug.unlockedStories": "{count} characters had their Bond raised. All observation questions and Favorite stories are now unlocked.",
 } as const;

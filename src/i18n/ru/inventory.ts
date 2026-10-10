@@ -27,6 +27,7 @@ export const INVENTORY_RU = {
   "stamina.recharge": "Пополнить",
   "stamina.gemTitle": "Восполнить самоцветами",
   "stamina.gemMessage": "Потратить самоцветы и восстановить выносливость: {amount}.",
+  "stamina.gemDetail": "Сегодня {count} раз · сброс {reset}",
   "stamina.spend": "Потратить",
   "stamina.adRemaining": "Сегодня {left}/{limit}",
   "stamina.watchAd": "Смотреть",

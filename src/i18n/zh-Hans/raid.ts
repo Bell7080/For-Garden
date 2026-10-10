@@ -46,4 +46,5 @@ export const RAID_ZH_HANS = {
   "raid.reward.killFailed": "失败",
   "raid.reward.note": "讨伐结束后，在「已完成」分页结算领取",
   "raid.result.score": "得分 {score}",
+  "shop.loot.title": "战利品商店",
 } as const;

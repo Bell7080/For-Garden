@@ -102,4 +102,10 @@ export const INFO_PT_BR = {
   "info.story.3": "Ep. 3 · Um fragmento de velhas memórias",
   "info.story.4": "Ep. 4 · O fim da Cidade Eterna",
   "info.enemy.role.healingReduction": "Enquanto estiver vivo, a cura recebida pelos aliados é reduzida em {base}% e aumenta até {max}% ao longo de {seconds}s.",
+  "info.diary.answerChip": "Resposta {n}",
+  "info.diary.locked": "Esta pergunta abre em {days} dias.",
+  "info.diary.reward": "Responda para receber {gems} gemas",
+  "info.diary.title": "Pergunta de observação {index} / {total}",
+  "info.journal.diaryTitle": "Diário de observação",
+  "info.journal.fossilRecord": "Registro de escavação",
 } as const;

@@ -266,4 +266,5 @@ export const MISC_ZH_HANT = {
   "stageMap.nextZone": "下一區域",
   "stageMap.replay": "重看",
   "stageMap.readRecord": "閱讀記錄",
+  "profile.nextUnlockStage": "通關關卡{stage}後開放 · {content}",
 } as const;

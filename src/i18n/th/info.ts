@@ -102,4 +102,10 @@ export const INFO_TH = {
   "info.story.3": "ตอนที่ 3 · เศษเสี้ยวความทรงจำเก่า",
   "info.story.4": "ตอนที่ 4 · สุดปลายนครนิรันดร์",
   "info.enemy.role.healingReduction": "ขณะที่ศัตรูตัวนี้ยังมีชีวิต การฟื้นฟูที่ฝ่ายเราได้รับจะลดลง {base}% และเพิ่มขึ้นจนสูงสุด {max}% ภายใน {seconds} วินาที",
+  "info.diary.answerChip": "คำตอบ {n}",
+  "info.diary.locked": "คำถามนี้จะเปิดในอีก {days} วัน",
+  "info.diary.reward": "ตอบเพื่อรับเจม {gems} เม็ด",
+  "info.diary.title": "คำถามการสังเกต {index} / {total}",
+  "info.journal.diaryTitle": "ไดอารี่การสังเกต",
+  "info.journal.fossilRecord": "บันทึกการขุด",
 } as const;

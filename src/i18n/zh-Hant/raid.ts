@@ -46,4 +46,5 @@ export const RAID_ZH_HANT = {
   "raid.reward.killFailed": "失敗",
   "raid.reward.note": "討伐結束後，在「已完成」分頁結算領取",
   "raid.result.score": "得分 {score}",
+  "shop.loot.title": "戰利品商店",
 } as const;

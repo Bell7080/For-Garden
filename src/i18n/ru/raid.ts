@@ -46,4 +46,5 @@ export const RAID_RU = {
   "raid.reward.killFailed": "Неудача",
   "raid.reward.note": "После окончания рейда получите расчёт во вкладке «Завершены»",
   "raid.result.score": "Очки {score}",
+  "shop.loot.title": "Магазин трофеев",
 } as const;

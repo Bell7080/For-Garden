@@ -10,6 +10,7 @@ export const EXCAVATION_TH = {
   "excavation.harvestBusy": "กำลังเก็บ…",
   "excavation.harvest": "เก็บเกี่ยว",
   "excavation.rewardTitle": "รางวัลการขุดหา",
+  "excavation.rewardTitleFull": "โบนัสเก็บเกี่ยวเต็มคลัง +10%",
   "excavation.harvestFailed": "เก็บเกี่ยวล้มเหลว ลองใหม่ด้วยคำขอเดิม",
   "excavation.ad.unavailable": "แม้ดูโฆษณาไม่ได้ ก็ยังเก็บเกี่ยวแบบปกติได้",
   "excavation.ad.cancelled": "โฆษณาถูกยกเลิกหรือยังไม่พร้อม ใช้การเก็บเกี่ยวแบบปกติ",

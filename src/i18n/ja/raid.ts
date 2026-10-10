@@ -46,4 +46,5 @@ export const RAID_JA = {
   "raid.reward.killFailed": "失敗",
   "raid.reward.note": "レイドが終わると完了タブで精算して受け取ります",
   "raid.result.score": "スコア {score}",
+  "shop.loot.title": "戦利品ショップ",
 } as const;

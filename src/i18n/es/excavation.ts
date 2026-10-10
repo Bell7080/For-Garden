@@ -10,6 +10,7 @@ export const EXCAVATION_ES = {
   "excavation.harvestBusy": "Cosechando…",
   "excavation.harvest": "Cosechar",
   "excavation.rewardTitle": "Recompensas de excavación",
+  "excavation.rewardTitleFull": "Bono de cosecha completa +10%",
   "excavation.harvestFailed": "La cosecha falló. Reintenta con la misma solicitud.",
   "excavation.ad.unavailable": "Aunque no haya anuncios, la cosecha normal sigue disponible.",
   "excavation.ad.cancelled": "El anuncio se canceló o no está listo. Usa la cosecha normal.",

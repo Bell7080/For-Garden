@@ -27,6 +27,7 @@ export const INVENTORY_TH = {
   "stamina.recharge": "เติม",
   "stamina.gemTitle": "เติมด้วยเจม",
   "stamina.gemMessage": "ใช้เจมเพื่อฟื้นสตามินา {amount}",
+  "stamina.gemDetail": "วันนี้ {count} ครั้ง · รีเซ็ต {reset}",
   "stamina.spend": "ใช้",
   "stamina.adRemaining": "วันนี้ {left}/{limit}",
   "stamina.watchAd": "ดู",

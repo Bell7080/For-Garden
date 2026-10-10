@@ -42,7 +42,7 @@ const ODDS = {
   entryPad: 10,
   /** 특성 제목표 한 줄이 드는 높이. */
   titleRoom: 62,
-  bottomPad: 44,
+  bottomPad: 56,
 } as const;
 
 /** 소수점이 있는 값만 한 자리를 남긴다. `1.5`와 `10`이 한 줄에 같은 모양으로 서지 않게 한다. */

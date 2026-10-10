@@ -38,7 +38,7 @@ export const GACHA_RATES = {
   /** 규칙 제목표에서 규칙 글까지. */
   notesTitleRoom: 58,
   notesSize: 24,
-  bottomPad: 44,
+  bottomPad: 56,
   /**
    * 창이 넘지 않을 높이 — 윗변(`screenTop`)에서 판 밖 우하단 뒤로가기(`BACK_SLOT`) 위까지다.
    * 넘으면 규칙 글이 아니라 창 배치가 잘못된 것이다.

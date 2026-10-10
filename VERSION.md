@@ -1,6 +1,6 @@
 # 버전 관리
 
-현재 버전: **v0.274.9**
+현재 버전: **v0.274.10**
 
 `VERSION.md`와 `package.json`의 `version`은 항상 같은 값을 쓰고, 타이틀(로딩) 화면 좌측
 하단 표기는 그 값을 그대로 읽는다. 화면에 손으로 적어 두지 않는다.
@@ -31,6 +31,10 @@
   그 이전의 초기 프로토타입 단계는 `v0.1.0` 항목 하나로 묶었다.
 
 ## 변경 이력
+
+## v0.274.10
+
+테스트 주소가 일반 빌드로 나오던 것을 고쳤다. `vercel.json`의 `buildCommand`(`vite build`)는 대시보드의 빌드 명령보다 앞서서, 테스트 프로젝트에 `npm run build:qa`를 적어 두어도 무시되고 두 주소가 같은 일반 빌드였다. 이제 `buildCommand`가 `scripts/vercel-build.mjs`를 부르고, 그 스크립트가 모드를 고른다 — 환경 변수 `FORGARDEN_BUILD`(`qa`·`production`)가 있으면 그 값, 없으면 프로젝트의 프로덕션 주소(`VERCEL_PROJECT_PRODUCTION_URL`)가 `forgarden.test`·`forgarden-test`로 시작할 때만 `qa`, 그 밖에는 언제나 일반 빌드다(모르면 치트가 꺼진 쪽으로 떨어진다).
 
 ## v0.274.9
 

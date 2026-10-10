@@ -11,6 +11,8 @@ import { session } from "../state/session";
 import { playTraitEffect } from "./traitEffects";
 import { RUNE_ACCENT } from "./runeIcons";
 
+const hex = (color: number): string => `#${color.toString(16).padStart(6, "0")}`;
+
 /**
  * 재해석 결과를 고르는 쪽지.
  *
@@ -25,13 +27,21 @@ function paintTrait(scene: Phaser.Scene, body: Phaser.GameObjects.Container, key
     return;
   }
   const view = runeTraitView(trait);
-  const grade = scene.add.text(-width / 2 + 40, y, `[${view.gradeLabel}]`, textStyle({ role: "emphasis", size: 26, color: COLOR.inkDim })).setOrigin(0, 0.5);
+  // 등급은 **특성 자신의 등급색**이다 — 연구대·룬 쪽지와 같은 양식이라 같은 [전설]이 창마다 다른 색으로 서지 않는다.
+  const tone = RUNE_ACCENT[trait.grade];
+  const left = -width / 2 + 40;
+  const grade = scene.add.text(left, y, `[${view.gradeLabel}]`, textStyle({ role: "emphasis", size: 30, color: hex(tone) })).setOrigin(0, 0.5);
   body.add(grade);
-  body.add(scene.add.text(grade.x + grade.width + 14, y, view.name, textStyle({ role: "display", size: 34, color: COLOR.accentText })).setOrigin(0, 0.5));
+  body.add(scene.add.text(grade.x + grade.width + 14, y, view.name, textStyle({ role: "display", size: 34 })).setOrigin(0, 0.5));
   // 본문은 규칙어 태그를 그대로 담고 있으므로 그리는 일은 공용 경계 하나가 맡는다.
   const text = keywords.layout(view.description, { width: width - 80, size: 26, color: COLOR.ink });
-  text.setPosition(-width / 2 + 40, y + 40);
+  text.setPosition(left, y + 40);
   body.add(text);
+  // 블록 왼쪽의 얇은 세로 띠가 그 등급을 한 번 더 말해, 현재·후보 두 블록의 등급을 나란히 견주게 한다.
+  const bar = scene.add.graphics();
+  bar.fillStyle(tone, 0.85);
+  bar.fillRect(left - 20, y - 22, 5, 62 + text.getBounds().height);
+  body.add(bar);
 }
 
 

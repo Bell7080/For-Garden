@@ -1,3 +1,4 @@
+import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { playerCardManager } from "../managers/PlayerCardManager";
 import Phaser from "phaser";
 import type { RaidBattleInputDto } from "../core/expeditionBattle";
@@ -37,18 +38,21 @@ export class BootScene extends Phaser.Scene {
       // 사람에게도 한국어가 남는다. 타이틀이 표가 온 뒤에 고른다.
       this.registry.set("saveRecoveryNotice", "title.saveRecovered" satisfies TextKey);
     }
-    // 임시 지급: 가방이 비어 있으면 세공을 만져 볼 시작 룬을 넣어 준다. 정식 획득 경로가
-    // 생기면 이 한 줄과 매니저의 `grantStarterRunes`를 함께 지운다.
-    relicProgression.grantStarterRunes();
-    // 임시 지급: 특성 재해석·부여를 만져 볼 원석과 아이템을 하한까지 채운다. 이미 저장이 있는
-    // 계정도 채워야 해서 룬 지급과 달리 매번 지나간다. 정식 수급이 붙으면 이 줄도 함께 지운다.
-    relicProgression.grantRuneTraitTestKit();
-    // 임시 지급: 이미 저장이 있는 계정도 레이드를 소환해 볼 수 있게 토벌권을 하한까지 채운다.
-    relicProgression.grantRaidTicketTestKit();
-    // 임시 지급: 레이드 완료 탭이 어떻게 서는지 볼 수 있게 끝난 판 표본을 넣는다.
-    relicProgression.grantRaidHistoryTestKit();
-    // 임시 지급: 광고 SDK가 없는 웹 빌드에서도 소탕을 만져 볼 수 있게 소탕권을 하한까지 채운다.
-    relicProgression.grantSweepTicketTestKit();
+    // 임시 지급은 전부 QA 빌드에서만 한다. 일반 빌드는 실서버 경제가 붙기 전까지 아무것도 얹지 않는다.
+    if (QA_TOOLS_ENABLED) {
+      // 임시 지급: 가방이 비어 있으면 세공을 만져 볼 시작 룬을 넣어 준다. 정식 획득 경로가
+      // 생기면 이 한 줄과 매니저의 `grantStarterRunes`를 함께 지운다.
+      relicProgression.grantStarterRunes();
+      // 임시 지급: 특성 재해석·부여를 만져 볼 원석과 아이템을 하한까지 채운다. 이미 저장이 있는
+      // 계정도 채워야 해서 룬 지급과 달리 매번 지나간다. 정식 수급이 붙으면 이 줄도 함께 지운다.
+      relicProgression.grantRuneTraitTestKit();
+      // 임시 지급: 이미 저장이 있는 계정도 레이드를 소환해 볼 수 있게 토벌권을 하한까지 채운다.
+      relicProgression.grantRaidTicketTestKit();
+      // 임시 지급: 레이드 완료 탭이 어떻게 서는지 볼 수 있게 끝난 판 표본을 넣는다.
+      relicProgression.grantRaidHistoryTestKit();
+      // 임시 지급: 광고 SDK가 없는 웹 빌드에서도 소탕을 만져 볼 수 있게 소탕권을 하한까지 채운다.
+      relicProgression.grantSweepTicketTestKit();
+    }
     // 공개 UID와 연구 개시일은 계정이 처음 설 때 한 번만 정해진다. 이전 저장도 여기서 채운다.
     playerCardManager.ensureIdentity();
     // 저장에서 복원한 접근성 배율을 어떤 씬도 생성되기 전에 공용 텍스트 계층에 반영한다.

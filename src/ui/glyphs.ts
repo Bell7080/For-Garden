@@ -20,6 +20,7 @@ export type GlyphName =
   | "shop"
   | "mail"
   | "friends"
+  | "guild"
   | "exchange"
   | "event"
   | "settings"
@@ -183,6 +184,19 @@ export function drawGlyph(
       // 봉투.
       g.strokeRect(-r * 0.9, -r * 0.6, r * 1.8, r * 1.2);
       g.strokePoints(points(-r * 0.9, -r * 0.6, 0, r * 0.15, r * 0.9, -r * 0.6), false);
+      break;
+    case "guild":
+      // 방패 문장 — 모서리를 각지게 맞춘다.
+      g.beginPath();
+      g.moveTo(-r * 0.75, -r * 0.8);
+      g.lineTo(r * 0.75, -r * 0.8);
+      g.lineTo(r * 0.75, r * 0.1);
+      g.lineTo(0, r * 0.95);
+      g.lineTo(-r * 0.75, r * 0.1);
+      g.closePath();
+      g.strokePath();
+      g.lineBetween(0, -r * 0.8, 0, r * 0.95);
+      g.lineBetween(-r * 0.75, -r * 0.25, r * 0.75, -r * 0.25);
       break;
     case "friends":
       // 어깨를 나란히 한 둘.

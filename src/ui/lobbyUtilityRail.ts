@@ -6,6 +6,7 @@ import { LOBBY_RAIL_BOUNDS } from "./lobbyLayout";
 export interface LobbyUtilityRailActions {
   openEvents: () => void;
   openMail: () => void;
+  openGuild: () => void;
   openFriends: () => void;
   openInventory: () => void;
 }
@@ -16,6 +17,7 @@ export function createLobbyUtilityRail(actions: LobbyUtilityRailActions) {
   return [
     { bounds: LOBBY_RAIL_BOUNDS.utility.event, icon: "event", label: t("lobby.rail.event"), event: true, onClick: actions.openEvents },
     { bounds: LOBBY_RAIL_BOUNDS.utility.mail, icon: "mail", label: t("rail.mail"), event: false, onClick: actions.openMail },
+    { bounds: LOBBY_RAIL_BOUNDS.utility.guild, icon: "guild", label: t("rail.guild"), event: false, onClick: actions.openGuild },
     { bounds: LOBBY_RAIL_BOUNDS.utility.friends, icon: "friends", label: t("rail.friends"), event: false, onClick: actions.openFriends },
     { bounds: LOBBY_RAIL_BOUNDS.utility.inventory, icon: UI_ICON.bag, label: t("rail.bag"), event: false, onClick: actions.openInventory },
   ] as const;

@@ -5,7 +5,6 @@ import { bindDebugReadyLifecycle, setDebugReady, setDebugScene } from "../debug"
 import { COLOR, textStyle } from "../ui/theme";
 import { OPENING_TRAIN } from "../data/dialogues/openingTrain";
 import { storyManager } from "../managers/StoryManager";
-import { Button } from "../ui/Button";
 import { LoadingDiamonds } from "../ui/LoadingDiamonds";
 import { LoadingPercent } from "../ui/LoadingPercent";
 import {
@@ -36,7 +35,7 @@ const TITLE_LOGOTYPE_RATIO = 1024 / 1536;
  */
 const TITLE_LOGOTYPE_CONTENT = { top: 0.3135, bottom: 0.6963, left: 0.0677, right: 0.9518 } as const;
 
-/** 보이는 글자의 윗변이 놓일 자리. 좌상단 회상 버튼 아래에서 시작한다. */
+/** 보이는 글자의 윗변이 놓일 자리.  */
 const TITLE_LOGO_TOP = 150;
 
 /**
@@ -394,14 +393,7 @@ export class TitleScene extends Phaser.Scene {
       repeat: -1,
     });
 
-    if (storyManager.isCompleted(OPENING_TRAIN.id)) {
-      // 회상은 이 화면의 주된 조작이 아니라 이미 본 사람을 위한 곁길이다. 가운데를 비우고
-      // 좌상단에 작게 둬 제목과 배경 원화를 가리지 않는다.
-      // 완료 플래그를 지우지 않으므로 선택 보상이 다시 지급되지 않는다.
-      new Button(this, 150, 92, { width: 220, height: 64, label: t("title.replayOpening"), fontSize: 24, onClick: () => startScene(this, "opening") });
-    }
-
-    // 회상 버튼이 먼저 눌리도록 화면 전체 히트영역은 가장 아래 깊이에 깔고 pointerup에서 확정한다.
+    // 화면 전체 히트영역은 가장 아래 깊이에 깔고 pointerup에서 확정한다.
     const tapAnywhere = this.add
       .zone(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT)
       .setInteractive({ useHandCursor: true })

@@ -2,6 +2,7 @@ import { availableBattleSpeeds } from "../core/battleControls";
 import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
+import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { settingsManager } from "../managers/SettingsManager";
 import { LANGUAGE_NATIVE_NAME, SELECTABLE_LANGUAGE_IDS } from "../core/language";
 import { loadGameFonts } from "../ui/fonts";
@@ -311,15 +312,18 @@ export class SettingsScene extends Phaser.Scene {
     // 환경설정 복원은 일반 강조색으로 두어 위험색을 쓰는 진행 삭제·계정 탈퇴와 시각적으로 구분한다.
     this.addTextAction(90, y, t("settings.support.resetSettings"), () => this.confirmSettingsReset()); y += SETTINGS_SUPPORT.actionStep;
     this.addTextAction(90, y, t("settings.support.resetSave"), () => this.confirmLocalReset(), true); y += SETTINGS_SUPPORT.actionStep;
-    // 스타터 렐릭 추가처럼 저장 마이그레이션이 소급하지 않는 변경을 QA가 재설치 없이 확인하는 임시 진입점이다.
-    this.addTextAction(90, y, t("settings.debug.grantAll"), () => this.grantAllRelics()); y += SETTINGS_SUPPORT.actionStep;
-    // 렐릭 이야기(관찰 질문 셋·애착 스토리 넷)는 처음 만난 날과 유대 4~10이 열어 주므로, 확인용으로 한 번에 모두 연다.
-    // 콘텐츠가 연구원 레벨로 잠겨 있어, 뒤쪽 콘텐츠 확인용으로 레벨을 만렙으로 올려 한 번에 모두 연다.
-    this.addTextAction(90, y, t("settings.debug.maxLevel"), () => this.maxOutPlayerLevel()); y += SETTINGS_SUPPORT.actionStep;
-    this.addTextAction(90, y, t("settings.debug.unlockStories"), () => this.unlockAllStories()); y += SETTINGS_SUPPORT.actionStep;
-    // 한계 돌파는 레벨 상한·파편·치즈케이크 셋이 동시에 맞아야 열리는 조작이라, 재료 없이는
-    // 그 화면과 별마다 열리는 개체 효과를 확인할 방법이 없다. 재료만 주고 돌파는 사람이 누른다.
-    this.addTextAction(90, y, t("settings.debug.breakthroughSet"), () => this.grantBreakthroughSet("torika")); y += SETTINGS_SUPPORT.actionStep;
+    // 치트·개발용 조작은 QA 빌드(`--mode qa`)에서만 선다. 일반 빌드에서는 분기째 지워진다.
+    if (QA_TOOLS_ENABLED) {
+      // 스타터 렐릭 추가처럼 저장 마이그레이션이 소급하지 않는 변경을 QA가 재설치 없이 확인하는 임시 진입점이다.
+      this.addTextAction(90, y, t("settings.debug.grantAll"), () => this.grantAllRelics()); y += SETTINGS_SUPPORT.actionStep;
+      // 렐릭 이야기(관찰 질문 셋·애착 스토리 넷)는 처음 만난 날과 유대 4~10이 열어 주므로, 확인용으로 한 번에 모두 연다.
+      // 콘텐츠가 연구원 레벨로 잠겨 있어, 뒤쪽 콘텐츠 확인용으로 레벨을 만렙으로 올려 한 번에 모두 연다.
+      this.addTextAction(90, y, t("settings.debug.maxLevel"), () => this.maxOutPlayerLevel()); y += SETTINGS_SUPPORT.actionStep;
+      this.addTextAction(90, y, t("settings.debug.unlockStories"), () => this.unlockAllStories()); y += SETTINGS_SUPPORT.actionStep;
+      // 한계 돌파는 레벨 상한·파편·치즈케이크 셋이 동시에 맞아야 열리는 조작이라, 재료 없이는
+      // 그 화면과 별마다 열리는 개체 효과를 확인할 방법이 없다. 재료만 주고 돌파는 사람이 누른다.
+      this.addTextAction(90, y, t("settings.debug.breakthroughSet"), () => this.grantBreakthroughSet("torika")); y += SETTINGS_SUPPORT.actionStep;
+    }
     this.addTextAction(90, y, t("settings.support.withdraw"), () => this.confirmAccountAction(t("settings.support.withdraw"), t("settings.support.withdrawNotice"), () => accountApi.requestWithdrawal()), true); y += 110;
     return y;
   }

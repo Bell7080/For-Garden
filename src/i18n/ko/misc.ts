@@ -275,8 +275,11 @@ export const MISC_KO = {
   // 타이틀
   "title.saveRecovered": "저장 데이터를 확인할 수 없어 안전한 초기 상태로 복구했습니다.",
   "title.subtitle": "멸종 동물 복원 연구 도시",
-  "title.replayOpening": "오프닝 회상",
   "opening.devSkip": "스킵 (개발용)",
+  "opening.skip": "스킵",
+  "opening.skip.title": "스킵",
+  "opening.skip.message": "정말 스킵하시겠습니까?",
+  "rail.guild": "길드",
 
   // 하단 탭·레일
   "nav.archaeology": "고고학",

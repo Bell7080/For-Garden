@@ -1,5 +1,6 @@
 /** 씬 사이를 오가는 런타임 상태다. JSON 경계에서는 반드시 SaveData로 변환한다. */
 
+import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import type { DuelState } from "../core/duelState";
 import type { RaidDifficulty } from "../data/raid";
 import type { GachaPityState, Wallet } from "../core/gacha";
@@ -60,9 +61,10 @@ export interface GameSettings {
 /**
  * 처음 시작할 때 쥐어 주는 렐릭. 전용 전신과 SD가 완성된 개체를 기본 도감에 연다.
  *
+ * 일반 빌드는 기본 편성의 셋(토리카·도디·파루아)만 쥐어 주고, QA 빌드는 확인용으로 일곱을 연다.
  * 파루아가 들어 있는 이유는 기본 편성(아래) 때문이다 — 편성은 보유한 개체만 세울 수 있다.
  */
-const STARTER_RELICS = ["torika", "rex", "spino", "luka", "dodo", "mette", "parua"];
+const STARTER_RELICS = QA_TOOLS_ENABLED ? ["torika", "rex", "spino", "luka", "dodo", "mette", "parua"] : ["torika", "dodo", "parua"];
 /**
  * 기본 편성은 **오프닝의 쁘띠 로그 셋**(토리카·도디·파루아)이다.
  *
@@ -504,13 +506,16 @@ export function createDefaultSession(): Session {
     // 등급을 올려 보는 길이 지층 탐사 없이도 열려 있어야 한다. 정식 수급이 붙으면 함께 지운다.
     // 토벌권은 친구 레이드를 여는 입장권이다. 처음 들어온 사람이 레이드 목록의 소환을 한 번은
     // 눌러 볼 수 있게 몇 장 쥐여 준다 — 그 뒤로는 전리품 상점에서 증표로 바꾼다.
-    itemInventory: [
-      // 시작 병도 기한이 있다 — 기한 없는 병이 섞이면 가방이 무엇이 언제 사라지는지 말하지 못한다.
-      { itemId: "stamina-tonic", quantity: 3, lots: [{ quantity: 3, expiresAt: lotExpiresAt(new Date(), 7) }] },
-      { itemId: "raid-ticket", quantity: 3 },
-      { itemId: "raid-select-ticket", quantity: 1 },
-      ...STARTER_RUNE_TRAIT_KIT.items.map((entry) => ({ ...entry })),
-    ],
+    // 시작 지급(에너지 드링크·토벌권·특성 아이템)은 QA 빌드에서만 준다 — 일반 빌드의 가방은 비어서 시작한다.
+    itemInventory: QA_TOOLS_ENABLED
+      ? [
+        // 시작 병도 기한이 있다 — 기한 없는 병이 섞이면 가방이 무엇이 언제 사라지는지 말하지 못한다.
+        { itemId: "stamina-tonic", quantity: 3, lots: [{ quantity: 3, expiresAt: lotExpiresAt(new Date(), 7) }] },
+        { itemId: "raid-ticket", quantity: 3 },
+        { itemId: "raid-select-ticket", quantity: 1 },
+        ...STARTER_RUNE_TRAIT_KIT.items.map((entry) => ({ ...entry })),
+      ]
+      : [],
     // 서버 첫 조회가 현재 시각을 기준점으로 확정하며 기본 보관 시간은 서버 상수가 정한다.
     idleExcavation: createIdleExcavationState(),
     archaeology: createArchaeologyState(),
@@ -525,7 +530,9 @@ export function createDefaultSession(): Session {
     bookmarked: new Set<string>(),
     // 임시 뽑기 테스트 지급: 화석·호박석 배너를 각각 100회의 10연속 복원까지 확인할 수 있다.
     // 정식 경제 밸런스를 적용할 때는 fossil 12 / amber 5으로 되돌리고 이 주석도 제거한다.
-    wallet: { fossil: 900, amber: 450, gems: 120, gold: 25_400, stamina: 60, dnaFragments: 0, cheesecake: 0, rawStone: STARTER_RUNE_TRAIT_KIT.rawStone, raidSigil: 0, salvageRecord: 0, duelEmblem: 0 },
+    wallet: QA_TOOLS_ENABLED
+      ? { fossil: 900, amber: 450, gems: 120, gold: 25_400, stamina: 60, dnaFragments: 0, cheesecake: 0, rawStone: STARTER_RUNE_TRAIT_KIT.rawStone, raidSigil: 0, salvageRecord: 0, duelEmblem: 0 }
+      : { fossil: 0, amber: 0, gems: 0, gold: 0, stamina: 60, dnaFragments: 0, cheesecake: 0, rawStone: 0, raidSigil: 0, salvageRecord: 0, duelEmblem: 0 },
     // 첫 FakeServer 요청이 서버 시각으로 안전하게 초기화한다.
     staminaUpdatedAt: "",
     gachaPityByGroup: Object.fromEntries([...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].map((id) => [id, { pullsSinceSsr: 0, pickupGuaranteed: false }])),

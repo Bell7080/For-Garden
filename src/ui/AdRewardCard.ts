@@ -9,6 +9,7 @@ import { UI_ICON } from "./icons";
 import { pressIn, pressOut } from "./pressFeedback";
 import { squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
+import { paintShowcaseCard, SHOWCASE_TIER_TONE } from "./showcaseCardChrome";
 
 export interface AdRewardCardOptions {
   x: number; y: number; width: number; height: number;
@@ -38,7 +39,8 @@ export function addAdRewardCard(scene: Phaser.Scene, parent: Phaser.GameObjects.
   const { width, height } = options;
   const done = options.remaining <= 0;
   const card = scene.add.container(options.x, options.y);
-  card.add(drawLayer(scene, 0, 0, chipPoints(width, height, { bevel: { topLeft: 36, topRight: 0, bottomRight: 28, bottomLeft: 0 } }), { fill: 0x182029, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.52 }));
+  // 다른 상품 칸과 같은 전시대 겉모습(빗금·면 무늬)을 쓴다. 꼬리표는 격자 첫 줄에서 창 위로 잘리지 않게 칸 안쪽 오른쪽 위에 둔다.
+  paintShowcaseCard(scene, card, { width, height, accent: SHOWCASE_TIER_TONE.daily, dim: done, railX: -width / 2 + 34, stageY: 0 });
   const frameSize = Math.round(height * 0.4);
   const gains = [{ currency: options.currency, amount: options.amount }, ...(options.extras ?? [])];
   const gap = Math.round(frameSize * 0.2);

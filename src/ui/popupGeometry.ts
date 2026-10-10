@@ -12,10 +12,13 @@ export function tiltedPopupSize(width: number, height: number, tilt = 0): { widt
 /**
  * 팝업 몸판이 왼쪽 위·오른쪽 아래를 깎는 깊이(짧은 변 대비).
  *
+ * 14%일 때는 빗변이 급격해 바닥 가까이의 버튼·탭 줄·글줄이 반쯤 걸려 삐져나와 보였다.
+ * 8%로 얕게 하되 안전 검사(`fitsInsidePopupBevel`)는 두 모서리를 모두 본다.
+ *
  * 판 뒤에 원화를 까는 화면은 **같은 실루엣으로 잘라야** 그림이 깎인 모서리 밖으로 삐져나오지
  * 않는다. 값이 두 곳에 있으면 한쪽만 고쳐 그때부터 한 창 안에 판이 두 장 보인다.
  */
-export const POPUP_BODY_BEVEL_RATIO = 0.14;
+export const POPUP_BODY_BEVEL_RATIO = 0.08;
 
 /**
  * 쪽지와 화면을 대부분 차지하는 작업판이 공유하는 제목 위계다.
@@ -52,6 +55,29 @@ export function popupTitleBand(size: number): number {
 export function popupLeftEdgeAt(width: number, height: number, y: number): number {
   const bevel = Math.min(width, height) * POPUP_BODY_BEVEL_RATIO;
   return y >= bevel ? -width / 2 : -width / 2 + (bevel - y);
+}
+
+/**
+ * 판 오른쪽 경계의 x — **오른쪽 아래 깎임 안에서는 대각선이다.**
+ *
+ * `y`는 판 윗변에서 아래로 잰 거리다. 바닥 가까이에 버튼·탭 줄을 세울 때 `width / 2`를
+ * 기준으로 잡으면 아래쪽에서만 조용히 판 밖으로 나온다.
+ */
+export function popupRightEdgeAt(width: number, height: number, y: number): number {
+  const bevel = Math.min(width, height) * POPUP_BODY_BEVEL_RATIO;
+  const fromBottom = height - y;
+  return fromBottom >= bevel ? width / 2 : width / 2 - (bevel - fromBottom);
+}
+
+/**
+ * 오른쪽 아래 깎임 안에 상자 하나가 온전히 드는가. 상자의 **오른쪽 아래 꼭짓점**만 보면 된다.
+ */
+export function fitsInsideBottomRightBevel(
+  panel: { width: number; height: number },
+  box: { right: number; bottom: number },
+  margin = 0,
+): boolean {
+  return box.right + margin <= popupRightEdgeAt(panel.width, panel.height, box.bottom + margin);
 }
 
 /**

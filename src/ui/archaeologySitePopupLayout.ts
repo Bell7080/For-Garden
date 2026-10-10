@@ -7,7 +7,7 @@
  */
 
 /** 팝업 몸판과 같은 비율 규칙으로 깎는다. 이 값은 `PopupLayer`가 쓰는 것과 반드시 같아야 한다. */
-export const POPUP_BODY_BEVEL_RATIO = 0.14;
+export { POPUP_BODY_BEVEL_RATIO } from "./popupGeometry";
 
 const BASE = {
   width: 880,

@@ -10,6 +10,7 @@ import { runeTraitView } from "./runeTraitPresentation";
 import { session } from "../state/session";
 import { playTraitEffect } from "./traitEffects";
 import { RUNE_ACCENT } from "./runeIcons";
+import { REROLL_AGAIN, REROLL_POPUP } from "./runeTraitRerollLayout";
 
 const hex = (color: number): string => `#${color.toString(16).padStart(6, "0")}`;
 
@@ -44,9 +45,6 @@ function paintTrait(scene: Phaser.Scene, body: Phaser.GameObjects.Container, key
   body.add(bar);
 }
 
-
-/** 재해석 결과 비교 쪽지의 세로 좌표다. */
-const REROLL_POPUP = { width: 900, height: 840, columnGap: 220 } as const;
 
 /**
  * 재해석 결과를 나란히 놓고 고르게 한다.
@@ -125,8 +123,9 @@ export function openRuneTraitReroll(options: {
       // 기존 유지 후 재해석 — 비용은 지금 룬의 등급이 정한다(후보를 버리면 그 등급이 그대로다).
       const baseGrade = (options.current ?? candidate).grade;
       const cost = RUNE_TRAIT_RULES.rerollCost[baseGrade];
-      parent.add(new Button(scene, 0, bottom - 90, {
-        width: REROLL_POPUP.width - 80, height: 92, label: t("rune.traitReroll.again"),
+      // 밑변이 오른쪽 아래 깎임(`popupRightEdgeAt`) 안에 16px 여유로 들도록 폭을 정한다.
+      parent.add(new Button(scene, 0, bottom - REROLL_AGAIN.fromBottom, {
+        width: REROLL_AGAIN.width, height: REROLL_AGAIN.height, label: t("rune.traitReroll.again"),
         cost: { icon: "currency-orestone", amount: cost, affordable: session.wallet.rawStone >= cost },
         onClick: () => {
           if (busy || session.wallet.rawStone < cost) return;

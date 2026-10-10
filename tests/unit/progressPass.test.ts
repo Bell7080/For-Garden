@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { FakeServer } from "../../src/api/FakeServer";
 import { claimableProgressPassFreeThresholds, claimableProgressPassThresholds, progressPassFreeStates, progressPassGoal, progressPassLevel, progressPassMilestoneStates } from "../../src/core/progressPass";
+import { POPUP_BODY_BEVEL_RATIO } from "../../src/ui/popupGeometry";
 import { PROGRESS_PASSES, findProgressPass } from "../../src/data/progressPasses";
 import { PREMIUM_PRODUCTS } from "../../src/data/premiumProducts";
 import { CURRENT_SAVE_VERSION, SAVE_STORAGE_KEY, SaveManager } from "../../src/state/SaveManager";
@@ -98,7 +99,7 @@ describe("로비 패스 창 모델", () => {
     expect(passPopupPassTabs(3).width).toBe(passPopupPassTabs(8).width);
     expect(passPopupPassMinScroll(8)).toBeLessThan(passPopupPassMinScroll(3));
     const strip = passPopupPassStrip();
-    const bevel = Math.min(PASS_POPUP.width, PASS_POPUP.height) * 0.14;
+    const bevel = Math.min(PASS_POPUP.width, PASS_POPUP.height) * POPUP_BODY_BEVEL_RATIO;
     for (const y of [strip.top, strip.bottom]) {
       // 빗변 (w/2, h/2 - bevel) → (w/2 - bevel, h/2) 안쪽에 선다.
       const edge = PASS_POPUP.width / 2 - Math.max(0, y - (PASS_POPUP.height / 2 - bevel));
@@ -183,7 +184,7 @@ describe("패스 탭 줄의 오른쪽 잘림", () => {
     const y = height / 2 - passRow.fromBottom;
     expect(strip.right(y) - strip.right(y + 1)).toBeCloseTo(1);
     // 빗변까지의 수직 거리 = 가로 물러남 / √2.
-    const bevelX = width / 2 - (y - (height / 2 - Math.min(width, height) * 0.14));
+    const bevelX = width / 2 - (y - (height / 2 - Math.min(width, height) * POPUP_BODY_BEVEL_RATIO));
     expect((bevelX - strip.right(y)) / Math.SQRT2).toBeCloseTo((width - inner) / 2);
   });
 

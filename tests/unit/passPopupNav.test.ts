@@ -19,11 +19,13 @@ describe("패스 창 넘김", () => {
   });
 
   it("탭 줄은 고른 탭을 가운데로 모으며 첫 칸을 넘겨도 흐르고 끝을 넘지 않는다", () => {
-    const count = 4;
+    // 깎임을 얕게 한 뒤 보이는 폭이 넓어져 네 칸은 한 번에 보인다 — 흐름은 여섯 칸으로 본다.
+    const count = 6;
+    const picks = [0, 2, 3, 5];
     const min = passPopupPassMinScroll(count);
     const { xs } = passPopupPassTabs(count);
     const visible = passPopupPassVisibleWidth();
-    const scrolls = [0, 1, 2, 3].map((index) => passPopupPassFollow(index, count));
+    const scrolls = picks.map((index) => passPopupPassFollow(index, count));
     expect(scrolls[0]).toBe(0);
     for (const scroll of scrolls) {
       expect(scroll).toBeGreaterThanOrEqual(min);
@@ -35,8 +37,8 @@ describe("패스 창 넘김", () => {
     expect(scrolls[3]).toBe(min);
     // 고른 탭은 늘 보이는 폭 안에 있다.
     scrolls.forEach((scroll, index) => {
-      expect(xs[index]! + scroll).toBeGreaterThan(0);
-      expect(xs[index]! + scroll).toBeLessThan(visible);
+      expect(xs[picks[index]!]! + scroll).toBeGreaterThan(0);
+      expect(xs[picks[index]!]! + scroll).toBeLessThan(visible);
     });
   });
 });

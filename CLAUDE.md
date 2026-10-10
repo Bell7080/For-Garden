@@ -2609,7 +2609,9 @@
 
 치트·개발용 조작(설정 지원 탭의 `settings.debug.*`, 원정 20층 바로가기 등)은 반드시 `src/core/buildFlavor.ts`의
 `QA_TOOLS_ENABLED`로 감싼다. `vite build --mode qa`(`npm run build:qa`)로 만든 테스트 주소에서만 서고 일반 빌드에는 버튼이
-없다. E2E용 `--mode test`와 섞지 않는다 — 그 모드는 3D 연출을 꺼 버린다.
+없다. E2E용 `--mode test`는 같은 도구를 켜 두지만 3D 연출을 꺼 버리므로 사람이 보는 QA 빌드에는 쓰지 않는다.
+**표본 친구·가짜 레이드 참가자·시작 재화·임시 지급도 같은 스위치 뒤에만 둔다** — 일반 빌드는 실서버가 붙기 전까지
+아무것도 얹지 않는다. 실서버 연동의 순서와 방침은 `docs/supabase-plan.md`가 갖는다.
 
 ## 변경 전 확인
 

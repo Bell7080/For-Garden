@@ -1,5 +1,6 @@
 import { applyEncounterScaling, type EncounterRole } from "./levelDesign";
 import { RAID_DIFFICULTY, RAID_MOCK_PARTICIPANTS, RAID_SEASON_TOTAL_HP, RAID_SUMMON_DIFFICULTIES, RAID_BOSS_POOL, type RaidDifficulty } from "../data/raid";
+import { QA_TOOLS_ENABLED } from "./buildFlavor";
 import { PREVIEW_FRIENDS } from "../data/friends";
 import { requiredBreakthroughForLevel } from "./levelDesign";
 import type { RelicDef } from "./types";
@@ -139,6 +140,7 @@ function seedHash(seed: string): number {
  * 순서가 날마다 바뀐다.
  */
 export function mockRaidContributions(dayKey: string, dayProgress: number, twoRunBase = 30_000): RaidContributionInput[] {
+  if (!QA_TOOLS_ENABLED) return [];
   const played = Math.min(1, Math.max(0.15, dayProgress / 0.7));
   return RAID_MOCK_PARTICIPANTS.map(({ id, displayName, favoriteRelicId, pace }) => {
     // 흔들림은 0.78~1.22 사이라 같은 pace를 가진 둘도 날마다 앞뒤가 바뀐다.
@@ -156,6 +158,7 @@ export function mockRaidContributions(dayKey: string, dayProgress: number, twoRu
  * 100%를 넘는 날만 토벌되고, 나머지 날은 깎은 만큼의 보상만 나간다 — 잡지 못해도 되는 보스다.
  */
 export function mockRaidWorldDamage(dayKey: string, dayProgress: number, totalHp: number = RAID_SEASON_TOTAL_HP): number {
+  if (!QA_TOOLS_ENABLED) return 0;
   const reach = 0.55 + seedHash(`${dayKey}:world`) * 0.55;
   // 초반에 빨리 밀리고 저녁에 느려지는 곡선이다 — 접속이 몰리는 시간을 흉내 낸다.
   const curve = 1 - (1 - Math.min(1, Math.max(0, dayProgress))) ** 2;
@@ -211,6 +214,7 @@ export function raidBossDef(base: RelicDef, difficulty: RaidDifficulty = "rampag
  * 언제 읽어도 같은 값이다.
  */
 export function mockSummonRaidDamage(raidId: string, elapsedRatio: number, totalHp: number): number {
+  if (!QA_TOOLS_ENABLED) return 0;
   const reach = 0.6 + seedHash(`${raidId}:reach`) * 0.7;
   const curve = 1 - (1 - Math.min(1, Math.max(0, elapsedRatio))) ** 2;
   return Math.floor(totalHp * reach * curve);

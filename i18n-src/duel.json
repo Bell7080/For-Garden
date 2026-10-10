@@ -35,7 +35,7 @@
 "duel.refresh.free": ["刷新对手 {left}/{limit}", "รีเฟรชคู่ต่อสู้ {left}/{limit}", "Làm mới đối thủ {left}/{limit}", "Segarkan lawan {left}/{limit}", "Renovar rivales {left}/{limit}", "Atualizar oponentes {left}/{limit}", "Gegner neu mischen {left}/{limit}", "Обновить соперников {left}/{limit}"],
 "duel.refresh.title": ["刷新对手", "รีเฟรชคู่ต่อสู้", "Làm mới đối thủ", "Segarkan Lawan", "Renovar rivales", "Atualizar oponentes", "Gegner neu mischen", "Обновить соперников"],
 "duel.refresh.message": ["花费宝石重新挑选对手。每刷新一次，费用就会上涨。", "ใช้เจมเพื่อสุ่มคู่ต่อสู้ใหม่ ยิ่งรีเฟรชมาก ราคาก็ยิ่งเพิ่มขึ้น", "Dùng Ngọc để chọn lại đối thủ. Mỗi lần làm mới, giá lại tăng.", "Gunakan Permata untuk memilih lawan baru. Harganya naik setiap kali disegarkan.", "Gasta Gemas para elegir nuevos rivales. El precio sube con cada renovación.", "Gaste Gemas para escolher novos oponentes. O custo aumenta a cada atualização.", "Mische mit Juwelen neue Gegner. Der Preis steigt mit jedem Mal.", "Потратьте самоцветы, чтобы выбрать новых соперников. С каждым обновлением цена растёт."],
-"duel.fought": ["已对战", "ต่อสู้แล้ว", "Đã đấu", "Sudah bertarung", "Combate hecho", "Luta feita", "Gekämpft", "Бой сыгран"],
+"duel.fought": ["已对战", "ต่อสู้แล้ว", "Đã đấu", "Sudah bertarung", "Ya combatido", "Luta feita", "Gekämpft", "Бой сыгран"],
 "duel.power": ["战斗力 {power}", "พลังต่อสู้ {power}", "Lực chiến {power}", "Kekuatan Tempur {power}", "Poder de combate {power}", "Poder de Combate {power}", "Kampfkraft {power}", "Мощь {power}"],
 "duel.challenge": ["挑战", "ท้าชิง", "Thách đấu", "Tantang", "Desafiar", "Desafiar", "Herausfordern", "Вызвать"],
 "duel.link.ranking": ["排名", "อันดับ", "Xếp hạng", "Peringkat", "Clasificación", "Classificação", "Rangliste", "Рейтинг"],

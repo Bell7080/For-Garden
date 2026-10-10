@@ -28,6 +28,9 @@ import { DuelScene } from "./scenes/DuelScene";
 import { PvpPreviewScene } from "./scenes/PvpPreviewScene";
 import { EventScene } from "./scenes/EventScene";
 import { setDebugWebglRestore, debugPerfEnabled, publishDebugPerf } from "./debug";
+import { installCjkWrap } from "./ui/cjkWrap";
+
+installCjkWrap();
 
 const game = new Phaser.Game({
   // Puppet 원본 indexed mesh를 GPU로 직접 그리므로 중복 정점을 만드는 Canvas 폴백은 사용하지 않는다.

@@ -1,7 +1,7 @@
 /** Duel arena (3v3 auto-battle defense) and duel shop text. */
 export const DUEL_EN = {
   "duel.ranking.me": "Me",
-  "duel.pause.forfeitConfirm": "This duel will end in a defeat.",
+  "duel.pause.forfeitConfirm": "This duel will end in defeat.",
   "duel.result.toDuel": "To the Duel Arena",
   "duel.result.streak": "{streak}-win streak bonus +{bonus}",
   "duel.hidden": "???",
@@ -54,7 +54,7 @@ export const DUEL_EN = {
   "duel.tab.history": "Record",
   "duel.gauge.max": "MAX",
   "duel.ticket.label": "Duel Challenge Ticket",
-  "duel.ticketPopup.reset": "Resets to the default {count} in {time}",
+  "duel.ticketPopup.reset": "Resets to the default {count} tickets in {time}",
   "duel.ticketPopup.gemName": "Buy with Gems",
   "duel.ticketPopup.gemDetail": "Today {count}/{limit}",
   "duel.ticketPopup.buy": "Buy",

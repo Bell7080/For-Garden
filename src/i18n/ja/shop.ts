@@ -89,7 +89,7 @@ export const SHOP_JA = {
   "mileage.clerk.yuti.1": "ボス……さっき後ろに羽を一枚置いてきたんですけど……あ、私がやったんじゃなくて。",
   "mileage.clerk.yuti.2": "投影だから、人の間を通り抜けても引っかからないんです。……これはちょっとズルい気もして。",
   "mileage.clerk.yuti.3": "先輩たちみたいにかっこよく話してみたいんですけど、語尾がどうしても……そ、その、つまり。",
-  "mileage.clerk.yuti.4": "今日は誰にも私のことを見られませんでした。いいことですよね？……いいこと、ですよね？",
+  "mileage.clerk.yuti.4": "今日は誰にも気づかれませんでした。いいことですよね？……いいこと、ですよね？",
   "shop.archaeologyAdTitle": "広告を見て原石をもらう",
   "shop.goldAdTitle": "広告を見てゴールドをもらう",
   "shop.lootAdTitle": "広告を見て証票をもらう",

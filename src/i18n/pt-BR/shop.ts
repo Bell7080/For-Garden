@@ -73,7 +73,7 @@ export const SHOP_PT_BR = {
   "mileage.clerk.ella.2": "Os jovens de hoje são impacientes. Até neste painel correm para apertar primeiro, Pesquisador.",
   "mileage.clerk.ella.3": "Os talismãs não podem molhar, por isso em dias de chuva fico sob o beiral. Uma projeção pode se molhar, então hoje ao menos é cômodo.",
   "mileage.clerk.ella.4": "Se ouvir o som do pincel, finja que não ouviu. Quem escreve muitas vezes não é quem quebrou.",
-  "mileage.clerk.maki.1": "Pesquisador, recebi seu pedido de consulta. Nada de recusar. Hoje você precisa de alguém de olho.",
+  "mileage.clerk.maki.1": "Pesquisador, recebi seu pedido de consulta. Nada de recusar. Hoje é bom ter alguém de olho em você.",
   "mileage.clerk.maki.2": "Os ossos estão encaixados e os ingredientes, preparados. Quem é o número um do ranking da sala de cuidados, nem preciso dizer, certo?",
   "mileage.clerk.maki.3": "Como sou uma projeção, minha cauda é translúcida, mas levanta do mesmo jeito. Olha, está de pé, não está?",
   "mileage.clerk.maki.4": "Primeiro vou ver se algo dói. Mesmo que diga que não, vou conferir uma vez assim mesmo.",

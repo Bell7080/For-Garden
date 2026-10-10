@@ -30,7 +30,7 @@ export const DUEL_RU = {
   "duel.rank.value": "{rank}-е место",
   "duel.record": "{wins} поб. {losses} пор.",
   "duel.seasonReward.claim": "Забрать награду сезона",
-  "duel.attempts.soldOut": "На сегодня всё",
+  "duel.attempts.soldOut": "На сегодня лимит исчерпан",
   "duel.attempts.buyTitle": "Купить билет вызова",
   "duel.attempts.buyMessage": "Купить один билет вызова за самоцветы.",
   "duel.refresh.free": "Обновить соперников {left}/{limit}",

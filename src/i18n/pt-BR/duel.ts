@@ -36,7 +36,7 @@ export const DUEL_PT_BR = {
   "duel.refresh.free": "Atualizar oponentes {left}/{limit}",
   "duel.refresh.title": "Atualizar oponentes",
   "duel.refresh.message": "Gaste Gemas para escolher novos oponentes. O custo aumenta a cada atualização.",
-  "duel.fought": "Luta feita",
+  "duel.fought": "Duelo concluído",
   "duel.power": "Poder de Combate {power}",
   "duel.challenge": "Desafiar",
   "duel.link.ranking": "Classificação",

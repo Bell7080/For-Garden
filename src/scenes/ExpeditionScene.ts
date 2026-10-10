@@ -1,3 +1,4 @@
+import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import Phaser from "phaser";
 import { UI_ICON } from "../ui/icons";
 import { RECOMMENDED_SLOT_ROLES } from "../core/partyAffinity";
@@ -757,7 +758,7 @@ export class ExpeditionScene extends Phaser.Scene {
     this.selected = toFormationSlots(saved.length === 3 ? saved : [...session.owned].slice(0, 3), 3);
     this.selectedSlot = undefined;
     this.add.text(BASE_WIDTH / 2, 292, t("expedition.party.title"), textStyle({ role: "emphasis", size: 32 })).setOrigin(0.5);
-    if (import.meta.env.DEV) {
+    if (QA_TOOLS_ENABLED) {
       // 임시 개발 도구: Session을 건드리지 않고 매니저가 만든 실제 20층 노드를 열어 미리보기와 출격 흐름을 그대로 검수한다.
       new Button(this, 170, 292, { width: 230, height: 68, label: t("expedition.party.devFloor"), fontSize: 21, fill: 0x3b2330, accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, onClick: () => this.openDevelopmentBossShortcut() });
     }

@@ -1,3 +1,4 @@
+import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { generateExpeditionMap } from "../core/expeditionMap";
 import { applyExpeditionAfterBattleHeal, applyExpeditionRest, expeditionAfterBattleHealPercent } from "../core/expeditionAugments";
 import { calculateExpeditionRunScore, expeditionRewardRandom, expeditionRewardRule, generateExpeditionAugmentOffers, validateExpeditionAugmentChoice, type ExpeditionAugmentSelection } from "../core/expeditionRewards";
@@ -54,8 +55,8 @@ export class ExpeditionManager {
     private readonly state: Session = session,
     private readonly saves: Pick<SaveManager, "save"> = saveManager,
     private readonly serverNow: () => Date = () => new Date(),
-    /** 테스트가 production 경계를 검증할 수 있게 주입하되, 실제 빌드는 Vite의 제거 가능한 DEV 플래그만 따른다. */
-    private readonly developmentToolsEnabled: boolean = import.meta.env?.DEV === true,
+    /** 테스트가 production 경계를 검증할 수 있게 주입하되, 실제 빌드는 QA 빌드 스위치(`buildFlavor`)만 따른다. */
+    private readonly developmentToolsEnabled: boolean = QA_TOOLS_ENABLED,
   ) {}
 
   /** 주차를 서버 UTC에 맞춘 뒤 UI용 독립 사본을 반환한다. */

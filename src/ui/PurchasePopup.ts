@@ -7,7 +7,10 @@ import { formatCurrency } from "../core/formatCurrency";
 import { quotePurchase, totalGrantAmount } from "../core/purchase";
 import type { Wallet } from "../core/gacha";
 import { Button } from "./Button";
-import { chipPoints, drawHairline, drawLayer, HOLO } from "./holo";
+import { chipPoints, drawHairline, drawLayer, drawShapeOutline, HOLO, slantedRect } from "./holo";
+import { pressIn, pressOut } from "./pressFeedback";
+import { addShowcaseFace } from "./showcaseCardFace";
+import { POPUP_BODY_BEVEL_RATIO } from "./popupGeometry";
 import { addFramedIcon, addShelfAmount, SHELF_AMOUNT } from "./itemFrame";
 import { FaceFrame } from "./FaceFrame";
 import { RARITY_TONE } from "./rarityMark";
@@ -41,14 +44,14 @@ import { premiumDecorationNames, premiumFirstBonusGems, premiumGrantTiles } from
  * 영수증도 하나다. 다른 것은 고를 것이 수량이 아니라 "살까 말까"뿐이라는 점이고, 그래서 ±와
  * 총가격 줄이 없다.
  */
-const PACKAGE = { width: 820, height: 820, frame: 150, frameGap: 22, nameY: -310, valueY: -254, frameY: -140, hairlineY: -28, barWidth: 690, priceY: 58, limitY: 150, buyY: 290, statusY: 356 } as const;
+const PACKAGE = { width: 820, height: 720, frame: 150, frameGap: 22, nameY: -250, valueY: -194, frameY: -80, panelY: -120, hairlineY: 32, barWidth: 650, limitY: 90, buyY: 194, buyHeight: 104, statusY: 274 } as const;
 
 /**
  * 결제(플랫폼 결제) 확인판의 자리.
  *
  * 받는 것(액자 최대 넷)·값·제한·결제 버튼뿐이다. 값은 카탈로그의 값 문자열을 **크고 두껍게** 세운다.
  */
-const PLATFORM = { width: 820, height: 860, nameY: -330, frame: 150, frameGap: 20, frameY: -190, bonusY: -86, hairlineY: -40, priceY: 50, priceHeight: 112, priceSize: 62, limitY: 154, noteY: 214, buyY: 310, statusY: 380, amountRatio: 0.34 } as const;
+const PLATFORM = { width: 820, height: 740, nameY: -280, frame: 150, frameGap: 20, panelY: -100, frameY: -140, bonusY: -36, hairlineY: 10, limitY: 62, buyY: 178, buyHeight: 116, priceSize: 62, statusY: 262, amountRatio: 0.34 } as const;
 
 /**
  * 수량 작업판의 줄 자리.
@@ -252,7 +255,7 @@ export class PurchasePopup {
     const grants = product.grants.flatMap((grant) => grant.kind === "currency" ? [grant] : []);
     const percent = tradePackageValuePercent(acquisition, product.grants);
 
-    view.add(drawLayer(this.scene, 0, -180, chipPoints(690, 330, { bevel: { topLeft: 44, topRight: 0, bottomRight: 34, bottomLeft: 0 } }), { fill: 0x141b24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.45 }));
+    this.addDisplayPanel(view, PACKAGE.height, PACKAGE.panelY, PACKAGE.frameY + PACKAGE.frame / 2);
     view.add(this.scene.add.text(0, PACKAGE.nameY, product.name, textStyle({ role: "display", size: 36 })).setOrigin(0.5));
     if (percent !== undefined) {
       view.add(this.scene.add.text(0, PACKAGE.valueY, t("shop.purchase.value", { percent }), textStyle({ role: "display", size: 27, color: COLOR.accentText })).setOrigin(0.5));
@@ -267,17 +270,16 @@ export class PurchasePopup {
     });
 
     view.add(drawHairline(this.scene, 0, PACKAGE.hairlineY, 690, { color: COLOR.accent, alpha: 0.32 }));
-    // **묶음의 값은 액자가 아니라 가로로 긴 줄이다.** 받는 것이 이미 큰 액자 여럿으로 서 있어,
-    // 값까지 작은 네모로 두면 판 오른쪽에 외따로 뜬 조각으로 읽힌다.
-    addPriceBar(this.scene, view, 0, PACKAGE.priceY, PACKAGE.barWidth, t("shop.purchase.price"), acquisition.currency, acquisition.amount, {
-      short: this.wallet[acquisition.currency] < acquisition.amount,
-    });
     this.addValueRow(view, PACKAGE.limitY, t("shop.purchase.limit"), tradePackageLimitLabel(product.refresh, product.purchaseLimit, product.remaining));
 
+    // **값이 곧 구매 버튼이다.** 값 줄과 확정 버튼을 따로 세우면 같은 결정을 두 번 읽는다 — 얼마인지를 보고
+    // 그 자리를 누르면 산다.
     const balance = this.wallet[acquisition.currency];
     const canPurchase = product.purchasable && product.remaining > 0 && balance >= acquisition.amount && !this.pending;
-    const buy = new Button(this.scene, 0, PACKAGE.buyY, { width: 650, height: 86, label: this.pending ? t("shop.purchase.busy") : t("shop.purchase.buy"), fontSize: 31, variant: "primary", onClick: () => { void this.purchase(product, close, onPurchased); } }).setEnabled(canPurchase);
-    view.add(buy);
+    this.addPriceButton(view, PACKAGE.buyY, PACKAGE.barWidth, PACKAGE.buyHeight, canPurchase, () => { void this.purchase(product, close, onPurchased); }, (button) => {
+      if (this.pending) button.add(this.scene.add.text(0, 0, t("shop.purchase.busy"), textStyle({ role: "display", size: 40, color: COLOR.accentText })).setOrigin(0.5));
+      else addPriceBar(this.scene, button, 0, 0, PACKAGE.barWidth, undefined, acquisition.currency, acquisition.amount, { height: PACKAGE.buyHeight, plate: false, valueSize: 52, short: balance < acquisition.amount });
+    });
     // 수량 조작이 없으므로 공개하는 입력 중심도 확정 하나뿐이다.
     setDebugStorefrontControls({ purchase: { confirm: { x: BASE_CENTER.x, y: BASE_CENTER.y + PACKAGE.buyY } } });
     const status = this.message || (!product.purchasable ? product.disabledReason ?? t("shop.purchase.blocked") : balance < acquisition.amount ? t("shop.purchase.needCurrency") : "");
@@ -295,7 +297,7 @@ export class PurchasePopup {
     if (product.acquisition.kind !== "platform_payment") return;
     this.quantity = 1;
     const tiles = premiumGrantTiles(product).slice(0, 4);
-    view.add(drawLayer(this.scene, 0, -150, chipPoints(690, 330, { bevel: { topLeft: 44, topRight: 0, bottomRight: 34, bottomLeft: 0 } }), { fill: 0x141b24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.45 }));
+    this.addDisplayPanel(view, PLATFORM.height, PLATFORM.panelY, PLATFORM.frameY + PLATFORM.frame / 2);
     view.add(this.scene.add.text(0, PLATFORM.nameY, product.name, textStyle({ role: "display", size: 38 })).setOrigin(0.5).setStroke("#000000", 6));
     const span = tiles.length * PLATFORM.frame + Math.max(0, tiles.length - 1) * PLATFORM.frameGap;
     tiles.forEach((tile, index) => {
@@ -307,20 +309,54 @@ export class PurchasePopup {
     const extras = [...(bonus > 0 ? [t("shop.premium.firstBonus", { amount: formatCurrency(bonus) })] : []), ...premiumDecorationNames(product)];
     if (extras.length) view.add(this.scene.add.text(0, PLATFORM.bonusY, extras.join("  ·  "), textStyle({ role: "display", size: 28, color: COLOR.accentText, align: "center", wrap: 640 })).setOrigin(0.5).setStroke("#000000", 5));
     view.add(drawHairline(this.scene, 0, PLATFORM.hairlineY, 690, { color: COLOR.accent, alpha: 0.32 }));
-    // 값은 카탈로그가 준 문자열 그대로 — 스토어 현지 가격이 들어오면 이 자리 하나만 바뀐다.
-    view.add(drawLayer(this.scene, 0, PLATFORM.priceY, chipPoints(690, PLATFORM.priceHeight, { bevel: { topLeft: 26, topRight: 0, bottomRight: 26, bottomLeft: 0 } }), { fill: 0x0d141c, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.7 }));
-    const listed = product.acquisition.listPriceKrw !== undefined && product.acquisition.listPriceKrw > product.acquisition.basePriceKrw ? product.acquisition.listPriceKrw : undefined;
-    view.add(this.scene.add.text(listed === undefined ? 0 : 110, PLATFORM.priceY, formatStorePrice(product.acquisition.basePriceKrw), textStyle({ role: "display", size: PLATFORM.priceSize, color: COLOR.accentText })).setOrigin(0.5).setStroke("#000000", 8).setShadow(2, 4, "#04060a", 0, true, true));
-    if (listed !== undefined) addListPrice(this.scene, view, -170, PLATFORM.priceY, formatStorePrice(listed), 34);
-    addPremiumValueBadges(this.scene, view, product, 345, -150 - 165 + 14);
+    addPremiumValueBadges(this.scene, view, product, 345, PLATFORM.panelY - 165 + 14);
     this.addValueRow(view, PLATFORM.limitY, t("shop.purchase.limit"), tradePackageLimitLabel(product.refresh, product.purchaseLimit, product.remaining));
 
+    // **값이 곧 결제 버튼이다** — 카탈로그가 준 값 문자열을 크고 두껍게 세우고 그 판을 누르면 결제가 시작된다.
     const canPurchase = product.purchasable && product.remaining > 0 && !this.pending;
-    const buy = new Button(this.scene, 0, PLATFORM.buyY, { width: 650, height: 92, label: this.pending ? t("shop.purchase.busy") : t("product.action.platform_payment"), fontSize: 36, variant: "primary", onClick: () => { void this.purchase(product, close, onPurchased); } }).setEnabled(canPurchase);
-    view.add(buy);
+    const acquisition = product.acquisition;
+    this.addPriceButton(view, PLATFORM.buyY, 650, PLATFORM.buyHeight, canPurchase, () => { void this.purchase(product, close, onPurchased); }, (button) => {
+      if (this.pending) { button.add(this.scene.add.text(0, 0, t("shop.purchase.busy"), textStyle({ role: "display", size: 44, color: COLOR.accentText })).setOrigin(0.5)); return; }
+      const listed = acquisition.listPriceKrw !== undefined && acquisition.listPriceKrw > acquisition.basePriceKrw ? acquisition.listPriceKrw : undefined;
+      button.add(this.scene.add.text(listed === undefined ? 0 : 110, 0, formatStorePrice(acquisition.basePriceKrw), textStyle({ role: "display", size: PLATFORM.priceSize, color: COLOR.accentText })).setOrigin(0.5).setStroke("#000000", 8).setShadow(2, 4, "#04060a", 0, true, true));
+      if (listed !== undefined) addListPrice(this.scene, button, -170, 0, formatStorePrice(listed), 34);
+    });
     setDebugStorefrontControls({ purchase: { confirm: { x: BASE_CENTER.x, y: BASE_CENTER.y + PLATFORM.buyY } } });
     const status = this.message || (!product.purchasable ? product.disabledReason ?? t("shop.purchase.blocked") : "");
     if (status) view.add(this.scene.add.text(0, PLATFORM.statusY, status, textStyle({ role: "body", size: 22, color: COLOR.inkDim, align: "center", wrap: 680 })).setOrigin(0.5));
+  }
+
+  /**
+   * 확인판 몸판 전체에 카드와 같은 면 무늬(◆ 격자 + 광휘)를 깔고, 받는 것이 서는 판은 은은한 반투명
+   * 검정 한 겹으로 남긴다. `stageY`는 몸판 중심 기준 액자 밑변이다.
+   */
+  private addDisplayPanel(view: Phaser.GameObjects.Container, popupHeight: number, y: number, stageY: number): void {
+    const width = PACKAGE.width;
+    const unit = Math.min(width, popupHeight) * POPUP_BODY_BEVEL_RATIO;
+    const bodyShape = chipPoints(width, popupHeight, { bevel: { topLeft: unit, topRight: 0, bottomRight: unit, bottomLeft: 0 } });
+    addShowcaseFace(this.scene, view, 0, 0, { width, height: popupHeight, shape: bodyShape, accent: COLOR.accent, stageY });
+    view.add(drawLayer(this.scene, 0, y, chipPoints(690, 330, { bevel: { topLeft: 44, topRight: 0, bottomRight: 34, bottomLeft: 0 } }), { fill: 0x000000, alpha: 0.32, shadow: false }));
+  }
+
+  /**
+   * **값이 곧 버튼인 판** — 패키지·결제 확인판의 맨 아래. 검은 판 위에 금빛 값만 세우고, 판 전체가
+   * 누름을 받는다. 살 수 없으면 판이 가라앉고 누름을 받지 않는다.
+   */
+  private addPriceButton(view: Phaser.GameObjects.Container, y: number, width: number, height: number, enabled: boolean, onClick: () => void, paint: (button: Phaser.GameObjects.Container) => void): void {
+    const button = this.scene.add.container(0, y);
+    const shape = slantedRect(width, height, 22);
+    button.add(drawLayer(this.scene, 0, 0, shape, {
+      fill: 0x06080b, alpha: 0.96, sheen: 0.04, edge: COLOR.accent, edgeAlpha: 1, edgeWidth: 4,
+    }));
+    button.add(drawShapeOutline(this.scene, 0, 0, shape, { color: COLOR.accent, alpha: 0.55, width: 2 }));
+    paint(button);
+    view.add(button);
+    if (!enabled) { button.setAlpha(0.5); return; }
+    const hit = this.scene.add.zone(0, 0, width, height).setInteractive({ useHandCursor: true });
+    button.add(hit);
+    hit.on("pointerdown", () => pressIn(button));
+    hit.on("pointerout", () => pressOut(button, "normal", { pop: false }));
+    hit.on("pointerup", () => { pressOut(button); onClick(); });
   }
 
   /** 재화가 아닌 값 한 줄 — **판을 깔지 않고 글자만** 이름표와 마주 세운다. */

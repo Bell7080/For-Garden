@@ -148,18 +148,19 @@ export function addPriceBar(
   label: string | undefined,
   currency: WalletItemKey,
   amount: number,
-  options: { short?: boolean; height?: number; iconAlpha?: number } = {},
+  options: { short?: boolean; height?: number; iconAlpha?: number; valueSize?: number; plate?: boolean } = {},
 ): Phaser.GameObjects.Container {
   const height = options.height ?? PRICE_BAR.height;
   const bar = scene.add.container(x, y);
-  bar.add(drawLayer(scene, 0, 0, slantedRect(width, height), {
+  // 판은 부르는 쪽이 따로 깔 수 있다(값이 곧 버튼인 구매 확인판) — 그때는 글자와 그림만 세운다.
+  if (options.plate !== false) bar.add(drawLayer(scene, 0, 0, slantedRect(width, height), {
     fill: 0x141b24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.45,
   }));
   if (label !== undefined) {
     bar.add(scene.add.text(-width / 2 + PRICE_BAR.padX, 0, label, textStyle({ role: "body", size: PRICE_BAR.labelSize, color: COLOR.inkDim })).setOrigin(0, 0.5));
   }
   const value = scene.add
-    .text(0, 0, formatCurrency(amount), textStyle({ role: "display", size: PRICE_BAR.valueSize, color: options.short ? COLOR.dangerText : COLOR.accentText }))
+    .text(0, 0, formatCurrency(amount), textStyle({ role: "display", size: options.valueSize ?? PRICE_BAR.valueSize, color: options.short ? COLOR.dangerText : COLOR.accentText }))
     .setOrigin(1, 0.5)
     .setScale(1, 1.08)
     .setAlpha(options.iconAlpha ?? 1)

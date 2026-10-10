@@ -54,3 +54,10 @@ describe("현금 결제 팝업 틀", () => {
     }
   });
 });
+
+import { PURCHASE_ITEM_GLOW } from "../../src/ui/purchaseFrameLayout";
+describe("상품 뒤 발광", () => {
+  it("겹쳐도 합성 상한 0.6을 넘지 않는다", () => {
+    expect(PURCHASE_ITEM_GLOW.layers * PURCHASE_ITEM_GLOW.alphaPerLayer).toBeLessThan(0.6);
+  });
+});

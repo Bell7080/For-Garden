@@ -197,9 +197,9 @@ export class PremiumScene extends Phaser.Scene {
     // 이용 중인 구독은 살 수 없지만 소진된 상품이 아니다 — 흐리게 가라앉히지 않고 테두리가 맥동한다.
     const soldOut = !product.purchasable && !subscribed;
     if (kind === "grid") {
-      paintShowcaseCard(this, card, { width, height, accent: soldOut ? COLOR.inkDimHex : COLOR.accent, dim: soldOut, railX: -width / 2 + 34 });
+      paintShowcaseCard(this, card, { width, height, accent: soldOut ? COLOR.inkDimHex : COLOR.accent, dim: soldOut, railX: -width / 2 + 34, stageY: PREMIUM_CARD.frameY + PREMIUM_CARD.frame / 2 });
     } else {
-      paintShowcaseCard(this, card, { width, height, accent: soldOut ? COLOR.inkDimHex : premiumCardTone(product), dim: soldOut, railX: -width / 2 + PREMIUM_WIDE.pad, tag: premiumCardTag(product) });
+      paintShowcaseCard(this, card, { width, height, accent: soldOut ? COLOR.inkDimHex : premiumCardTone(product), dim: soldOut, railX: -width / 2 + PREMIUM_WIDE.pad, tag: premiumCardTag(product), stageY: PREMIUM_WIDE.stack.frameY + PREMIUM_WIDE.frame / 2 });
     }
     this.addCardHit(card, width, height, () => {
       if (product.acquisition.kind === "free") { if (product.purchasable) void this.claimFree(product); else this.notice(t("shop.premium.freeClaimed")); return; }
@@ -442,7 +442,7 @@ export class PremiumScene extends Phaser.Scene {
     const done = status.remaining <= 0;
     const open = !done;
     const card = this.add.container(x, y);
-    paintShowcaseCard(this, card, { width, height, accent: SHOWCASE_TIER_TONE.daily, dim: false, railX: -width / 2 + W.pad, tag: t("shop.premium.dailyAdTag") });
+    paintShowcaseCard(this, card, { width, height, accent: SHOWCASE_TIER_TONE.daily, dim: false, railX: -width / 2 + W.pad, tag: t("shop.premium.dailyAdTag"), stageY: PREMIUM_WIDE.stack.frameY + PREMIUM_WIDE.frame / 2 });
     const left = -width / 2 + W.pad;
     const right = width / 2 - W.pad;
     const name = this.add.text(left, S.nameY, t("shop.premium.dailyAdTitle"), textStyle({ role: "display", size: W.nameSize })).setOrigin(0, 0.5).setShadow(3, 4, "#04060a", 0, true, true);

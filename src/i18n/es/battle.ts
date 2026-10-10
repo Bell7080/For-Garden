@@ -29,6 +29,7 @@ export const BATTLE_ES = {
   "battle.chip.autoOff": "Definitiva OFF",
   "battle.chip.skipOn": "Omitir cinemática",
   "battle.chip.skipOff": "Cinemática ON",
+  "battle.tutorial.ultimate": "¡Definitiva lista! Toca la tarjeta brillante para usarla",
   "battle.gauge.frenzy": "Frenesí {value} / {max}",
   "battle.gauge.ferocity": "Ferocidad {value} / {max}",
   "battle.result.saveFailed": "No se pudo guardar el resultado",

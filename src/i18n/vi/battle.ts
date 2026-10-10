@@ -29,6 +29,7 @@ export const BATTLE_VI = {
   "battle.chip.autoOff": "Tuyệt kỹ TẮT",
   "battle.chip.skipOn": "Bỏ qua cắt cảnh",
   "battle.chip.skipOff": "Cắt cảnh BẬT",
+  "battle.tutorial.ultimate": "Tuyệt kỹ đã sẵn sàng! Chạm vào thẻ phát sáng để dùng",
   "battle.gauge.frenzy": "Cuồng bạo {value} / {max}",
   "battle.gauge.ferocity": "Dã tính {value} / {max}",
   "battle.result.saveFailed": "Không thể lưu kết quả",

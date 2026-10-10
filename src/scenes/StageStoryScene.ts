@@ -6,7 +6,6 @@ import { bindDebugReadyLifecycle, setDebugReady, setDebugScene } from "../debug"
 import { relicStories } from "../managers/RelicStoryManager";
 import { storyManager } from "../managers/StoryManager";
 import { DialogueLayer } from "../ui/DialogueLayer";
-import { drawLayer, slantedRect } from "../ui/holo";
 import { COLOR } from "../ui/theme";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { playStoryTitleCard } from "../ui/StoryTitleCard";
@@ -29,11 +28,7 @@ export class StageStoryScene extends Phaser.Scene {
     this.flow = new DialogueFlow(this.story);
     setDebugScene("stageStory");
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void).setDepth(-40);
-    this.layer = new DialogueLayer(this, (choice) => this.advance(choice), { backdrop: this.story.backdrop });
-    // 배경 원화가 없는 이야기만 기존 홀로그램 면을 깐다. 원화가 있으면 그 판이 원화를 가린다.
-    if (!this.layer.stage.hasBackdrop) {
-      drawLayer(this, BASE_WIDTH / 2, 560, slantedRect(880, 720), { fill: 0x141920, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.25 }).setDepth(-20);
-    }
+    this.layer = new DialogueLayer(this, (choice) => this.advance(choice), { backdrop: this.story.backdrop ?? "relics" });
     this.layer.prefetch(dialogueStandingOrder(this.story));
     void this.openStory();
     setDebugReady(true);

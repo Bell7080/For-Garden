@@ -274,6 +274,8 @@ export const DIALOGUE_BACKDROP: Readonly<Record<DialogueBackdrop, string>> = {
   train: BACKGROUND.storyTrain,
   // 폭파 뒤 전장은 1-1이 실제로 싸우는 스토리 전장이다 — 오프닝이 끝나는 자리가 곧 첫 관문이다.
   battlefield: BACKGROUND.combat,
+  // 배경을 정하지 않은 이야기(애착·곁 이야기 등)의 기본 무대 — 렐릭 도감 탭과 같은 원화다.
+  relics: BACKGROUND.relics,
 };
 
 /**

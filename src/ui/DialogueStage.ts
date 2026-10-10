@@ -186,7 +186,12 @@ export class DialogueStage {
     const leavers = [...this.members.values()]
       .filter(({ id }) => !nextIds.has(id))
       .sort((a, b) => DIALOGUE_SLOT_ORDER[a.slot] - DIALOGUE_SLOT_ORDER[b.slot]);
-    leavers.forEach((member, index) => this.dismiss(member, node.leave, index, leavers.length));
+    const departures = leavers.map((member, index) => this.dismiss(member, node.leave, index, leavers.length));
+    // 날아가며 퇴장하는 동안은 다음 인물을 들이지 않는다 — 날아가기가 끝나 사라진 뒤에 들어와야 겹치지 않는다.
+    if (node.leave === "blastOff") {
+      await Promise.all(departures);
+      if (!isCurrent()) return;
+    }
 
     const arrivals = next.filter(({ id }) => !this.members.has(id));
     for (const entry of next) {
@@ -254,14 +259,15 @@ export class DialogueStage {
   }
 
   /** 무대를 떠나는 사람. 곧바로 장부에서 빼 다음 노드가 같은 사람을 다시 세울 수 있게 한다. */
-  private dismiss(member: StageMember, leave?: DialogueLeave, order = 0, total = 1): void {
+  private dismiss(member: StageMember, leave?: DialogueLeave, order = 0, total = 1): Promise<void> {
     this.members.delete(member.id);
     this.stopAct(member);
     const { creature } = member;
-    if (!this.scene.tweens || !creature.active) { creature.destroy(); return; }
+    if (!this.scene.tweens || !creature.active) { creature.destroy(); return Promise.resolve(); }
     this.scene.tweens.killTweensOf(creature);
-    if (leave === "blastOff") { this.blastOff(member, order, total); return; }
+    if (leave === "blastOff") return this.blastOff(member, order, total);
     this.scene.tweens.add({ targets: creature, alpha: 0, duration: DIALOGUE_ENTRANCE.exitMs, onComplete: () => creature.destroy() });
+    return Promise.resolve();
   }
 
   /**
@@ -269,7 +275,7 @@ export class DialogueStage {
    * 마름모 하나가 반짝인다. 몸짓이 도는 동안은 idle을 멈춰 날아가는 몸이 한 덩어리로 읽힌다.
    * 움직임 줄이기를 켜면 거리와 회전을 줄인다 — 퇴장 자체는 이야기의 한 박자라 없애지 않는다.
    */
-  private blastOff(member: StageMember, order: number, total: number): void {
+  private blastOff(member: StageMember, order: number, total: number): Promise<void> {
     const { creature } = member;
     const spec = DIALOGUE_BLAST_OFF;
     const factor = this.distanceFactor();
@@ -286,7 +292,7 @@ export class DialogueStage {
     // TweenChain은 `delay`를 주면 시작 대기 상태에서 영영 빠져나오지 못해, 차례가 0인 한 명
     // (왼쪽 아모)만 날아가고 나머지는 배경에 그대로 남았다.
     const wait = order * spec.staggerMs;
-    this.scene.tweens.chain({
+    return new Promise<void>((resolve) => this.scene.tweens.chain({
       targets: creature,
       tweens: [
         ...(wait > 0 ? [{ y: creature.y, duration: wait }] : []),
@@ -304,8 +310,9 @@ export class DialogueStage {
         creature.destroy();
         // 별은 마지막 사람이 닿을 때 한 번만 — 셋이 하나의 별이 된다.
         if (!this.terminated && order === total - 1) this.twinkle(Phaser.Math.Clamp(targetX, 60, BASE_WIDTH - 60), spec.twinkleY);
+        resolve();
       },
-    });
+    }));
   }
 
   /** 날아간 자리에서 한 번 반짝이는 마름모. 동그라미가 아니라 좌우를 어긋나게 깎은 마름모다. */

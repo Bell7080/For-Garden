@@ -31,6 +31,7 @@ export const BATTLE_JA = {
   "battle.chip.autoOff": "必殺 OFF",
   "battle.chip.skipOn": "演出スキップ",
   "battle.chip.skipOff": "演出 ON",
+  "battle.tutorial.ultimate": "必殺技の準備完了！光っているカードをタップして使おう",
 
   "battle.gauge.frenzy": "暴走 {value} / {max}",
   "battle.gauge.ferocity": "野性 {value} / {max}",

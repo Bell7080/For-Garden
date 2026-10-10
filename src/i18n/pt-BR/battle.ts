@@ -29,6 +29,7 @@ export const BATTLE_PT_BR = {
   "battle.chip.autoOff": "Suprema OFF",
   "battle.chip.skipOn": "Pular cinemática",
   "battle.chip.skipOff": "Cinemática ON",
+  "battle.tutorial.ultimate": "Suprema pronta! Toque no cartão brilhante para usá-la",
   "battle.gauge.frenzy": "Frenesi {value} / {max}",
   "battle.gauge.ferocity": "Ferocidade {value} / {max}",
   "battle.result.saveFailed": "Não foi possível salvar o resultado",

@@ -70,10 +70,11 @@ export class OpeningScene extends Phaser.Scene {
 
   /** 대사만 건너뛰는 스킵. 묻고 나서 정상 완료와 같은 길(완료 저장 → 1-1 전투)로 간다. */
   private addStorySkip(): void {
+    // 대사 화면(깊이 600)과 섬광(650) 위에 서야 한다 — 뒤로가기 깊이(50)로 두면 대사 화면에 가려 보이지 않는다.
     addSkipButton(this, t("opening.skip"), () => {
       if (this.transitioningOut) return;
       this.popups.confirm({ title: t("opening.skip.title"), message: t("opening.skip.message"), confirmLabel: t("opening.skip") }, () => this.finishStory());
-    });
+    }).setDepth(700);
   }
 
   /** 개발자용 임시 건너뛰기 — 제목표·대사판보다 위에 선다. */

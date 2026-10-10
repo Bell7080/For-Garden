@@ -29,6 +29,7 @@ export const BATTLE_RU = {
   "battle.chip.autoOff": "Ульта ВЫКЛ",
   "battle.chip.skipOn": "Без вставок",
   "battle.chip.skipOff": "Вставки ВКЛ",
+  "battle.tutorial.ultimate": "Ультимейт готов! Нажмите на светящуюся карту",
   "battle.gauge.frenzy": "Неистовство {value} / {max}",
   "battle.gauge.ferocity": "Ярость {value} / {max}",
   "battle.result.saveFailed": "Не удалось сохранить итог",

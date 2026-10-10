@@ -29,6 +29,7 @@ export const BATTLE_DE = {
   "battle.chip.autoOff": "Ultimativ AUS",
   "battle.chip.skipOn": "Einblendung aus",
   "battle.chip.skipOff": "Einblendung AN",
+  "battle.tutorial.ultimate": "Ultimativ bereit! Tippe auf die leuchtende Karte",
   "battle.gauge.frenzy": "Raserei {value} / {max}",
   "battle.gauge.ferocity": "Wildheit {value} / {max}",
   "battle.result.saveFailed": "Ergebnis konnte nicht gespeichert werden",

@@ -31,6 +31,7 @@ export const BATTLE_KO = {
   "battle.chip.autoOff": "궁극 OFF",
   "battle.chip.skipOn": "연출 스킵",
   "battle.chip.skipOff": "연출 ON",
+  "battle.tutorial.ultimate": "궁극기가 준비됐어요! 빛나는 카드를 눌러 사용하세요",
 
   "battle.gauge.frenzy": "폭주 {value} / {max}",
   "battle.gauge.ferocity": "야성 {value} / {max}",

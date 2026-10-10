@@ -510,6 +510,11 @@
 - **결투 상점의 값은 휘장 1 = 젬 0.5**(`DUEL_EMBLEM_GEM_VALUE`)로 재고 받는 것이 1.0~1.25배 안에 든다(`duelShop.test`). 젬으로 휘장을
   사는 길은 두지 않는다. 점원 록스우의 이름·원화·대사는 `SHOP_STAGE_PRESENTATION.duel` 한 줄이 갖는다.
 
+- **현금 결제 팝업은 틀 하나와 테마 다섯이다**(`PurchasePopup.paintPlatform` + `src/core/purchaseTheme.ts`). 상품마다 팝업을 따로 꾸미지 않는다 —
+  전환에 보탬이 되는 것은 장식이 아니라 상품과 가격만 크게 보이는 것이라, 상품 줄을 가로로 펴고 그 아래 가격·결제만 세운다(자리 `purchaseFrameLayout.ts`).
+  테마(고고학·뽑기·재화·패스·기본)는 배경색·조명·장식 값만 바꾸고(`purchaseThemeStyle.ts`), 상품은 지급 목록에서 규칙으로 갈린다. 새 상품은 표를 늘리지 않고,
+  규칙이 맞지 않을 때만 `PURCHASE_THEME_OVERRIDES`에 한 줄 적는다.
+
 ## 마일리지 상점 — DNA 마일리지
 
 지갑 키는 `dnaFragments` 그대로이고(저장 마이그레이션 없음) **화면 이름만 「DNA 마일리지」**다. 용어는

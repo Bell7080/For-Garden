@@ -77,8 +77,8 @@ export const DUEL_JA = {
   "duel.history.side.defense": "防衛",
   "shop.duel.title": "決闘ショップ",
   "duel.shop.line1": "…来たんだ。徽章はそこに置いて。数えるのはこっちでやる。",
-  "duel.shop.line2": "腕の傷？ 負けた日に一つずつ。勝った日は何も残らない。",
-  "duel.shop.line3": "尻尾の先の印は、私に勝った人の数。まだ二人だけだけど。",
+  "duel.shop.line2": "何を買うか決めた？ 決まってないなら、もう一回りして見てきなよ。",
+  "duel.shop.line3": "それ、先週より一つ減ってるね。必要なら今のうちに持っていきな。",
   "duel.shop.line4": "負けた試合の徽章も同じように数えてあげる。負けた日のほうが多くを教えてくれるから。",
   "duel.shop.line5": "急ぐことはない。闘技場は明日も開いているから。",
 } as const;

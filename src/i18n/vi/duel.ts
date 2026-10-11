@@ -77,8 +77,8 @@ export const DUEL_VI = {
   "duel.history.side.defense": "Phòng thủ",
   "shop.duel.title": "Cửa hàng Đấu tay đôi",
   "duel.shop.line1": "…Đến rồi à. Để huy hiệu ở đó đi. Việc đếm cứ để tôi.",
-  "duel.shop.line2": "Vết sẹo trên tay ấy hả? Mỗi ngày thua thêm một vết. Ngày thắng thì chẳng để lại gì.",
-  "duel.shop.line3": "Dấu ở chóp đuôi là số người đã thắng tôi. Hiện mới chỉ có hai thôi.",
+  "duel.shop.line2": "Chọn được món nào chưa? Chưa thì đi dạo thêm một vòng rồi quay lại.",
+  "duel.shop.line3": "Món đó ít hơn tuần trước một cái rồi. Cần thì lấy luôn bây giờ đi.",
   "duel.shop.line4": "Huy hiệu từ trận thua tôi cũng tính y như vậy. Ngày thua dạy được nhiều hơn mà.",
   "duel.shop.line5": "Không cần vội. Đấu trường ngày mai vẫn mở mà.",
 } as const;

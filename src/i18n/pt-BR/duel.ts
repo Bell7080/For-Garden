@@ -77,8 +77,8 @@ export const DUEL_PT_BR = {
   "duel.history.side.defense": "Defesa",
   "shop.duel.title": "Loja de duelo",
   "duel.shop.line1": "…Você veio. Deixe a insígnia ali. Eu faço a contagem.",
-  "duel.shop.line2": "As cicatrizes no braço? Uma para cada dia em que perco. Nos dias em que ganho, não sobra nada.",
-  "duel.shop.line3": "As marcas na ponta da cauda são o número de pessoas que me venceram. Por enquanto, só duas.",
+  "duel.shop.line2": "Já decidiu o que comprar? Se não, dê mais uma volta e volte.",
+  "duel.shop.line3": "Esse tem um a menos que na semana passada. Se precisar, leve agora.",
   "duel.shop.line4": "As insígnias das lutas perdidas eu conto do mesmo jeito. Os dias de derrota ensinam mais.",
   "duel.shop.line5": "Sem pressa. A arena também abre amanhã.",
 } as const;

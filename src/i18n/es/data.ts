@@ -1736,7 +1736,7 @@ export default {
   "relic.teku.ferocity.name": "Sin horas extra",
   "relic.teku.basic.name": "Transfusión de cafeína",
   "relic.teku.ultimate.name": "Mezcla A - Matcha 99%",
-  "firstMeeting.teku": "Recarga, por favor, Capitán. ...Ah, digo el cargador, no mi vaso.",
+  "firstMeeting.teku": "Una recarga, por favor, Capitán. No me apresuraré.",
   "relic.teku.basic.step.0": "Transfusión de cafeína",
   "relic.teku.basic.step.1": "Transfusión de cafeína",
   "relic.teku.basic.step.2": "Transfusión de cafeína",

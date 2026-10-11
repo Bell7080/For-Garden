@@ -77,8 +77,8 @@ export const DUEL_ID = {
   "duel.history.side.defense": "Bertahan",
   "shop.duel.title": "Toko Duel",
   "duel.shop.line1": "…Kamu datang. Taruh lencananya di sana. Biar aku yang menghitung.",
-  "duel.shop.line2": "Bekas luka di lenganku? Satu untuk setiap hari aku kalah. Di hari menang, tak ada yang tersisa.",
-  "duel.shop.line3": "Tanda di ujung ekorku adalah jumlah orang yang pernah mengalahkanku. Baru dua orang, sih.",
+  "duel.shop.line2": "Sudah putuskan mau beli apa? Kalau belum, keliling sekali lagi lalu kembali.",
+  "duel.shop.line3": "Yang itu berkurang satu dari minggu lalu. Kalau butuh, ambil sekarang.",
   "duel.shop.line4": "Lencana dari pertandingan yang kalah juga kuhitung sama. Hari kalah mengajarkan lebih banyak.",
   "duel.shop.line5": "Tak perlu buru-buru. Arena besok juga buka.",
 } as const;

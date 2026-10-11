@@ -77,8 +77,8 @@ export const DUEL_KO = {
   "duel.history.side.defense": "방어",
   "shop.duel.title": "결투 상점",
   "duel.shop.line1": "…왔구나. 휘장은 거기 내려놔. 세는 건 내가 할게.",
-  "duel.shop.line2": "팔의 흉터? 진 날마다 하나씩. 이긴 날은 남는 게 없어.",
-  "duel.shop.line3": "꼬리 끝의 표는 날 이긴 사람 수야. 아직 둘뿐이지만.",
+  "duel.shop.line2": "뭘 살지 정했어? 못 정했으면 한 바퀴 더 돌아보고 와.",
+  "duel.shop.line3": "그건 지난주보다 하나 줄었네. 필요하면 지금 가져가.",
   "duel.shop.line4": "진 판의 휘장도 똑같이 쳐 줘. 진 날이 더 많이 가르쳐 주거든.",
   "duel.shop.line5": "서두를 거 없어. 결투장은 내일도 열려 있으니까.",
 } as const;

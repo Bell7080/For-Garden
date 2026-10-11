@@ -68,7 +68,7 @@ export const DUEL_TH = {
   "duel.profile.lastSeason": "ซีซันที่แล้ว",
   "duel.profile.streak": "ชนะติดต่อกัน",
   "duel.profile.streakValue": "ชนะติดต่อกัน {streak} ครั้ง",
-  "duel.profile.bestStreak": "สูงสุด ชนะติดต่อกัน {streak} ครั้ง",
+  "duel.profile.bestStreak": "ชนะติดต่อกันสูงสุด {streak} ครั้ง",
   "duel.profile.noRecord": "ไม่มีบันทึก",
   "duel.profile.streakBonus": "โบนัสชนะติดต่อกัน +{bonus}",
   "duel.history.win": "ชนะ",

@@ -479,5 +479,5 @@
 "Ausdauer ist voll",
 "Выносливость заполнена"
 ],
-"stamina.gemDetail": ["今日{count}次 · {reset}重置", "วันนี้ {count} ครั้ง · รีเซ็ต {reset}", "Hôm nay {count} lần · đặt lại {reset}", "Hari ini {count}x · reset {reset}", "Hoy {count} veces · se reinicia {reset}", "Hoje {count}x · reinicia {reset}", "Heute {count}× · Reset {reset}", "Сегодня {count} раз · сброс {reset}"]
+"stamina.gemDetail": ["今日{count}次 · {reset}重置", "วันนี้ {count} ครั้ง · รีเซ็ต {reset}", "Hôm nay {count} lần · đặt lại {reset}", "Hari ini {count}x · atur ulang {reset}", "Hoy {count} veces · se reinicia {reset}", "Hoje {count}x · reinicia {reset}", "Heute {count}× · Reset {reset}", "Сегодня {count} раз · сброс {reset}"]
 }

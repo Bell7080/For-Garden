@@ -67,7 +67,7 @@
 "duel.profile.lastSeason": ["上赛季", "ซีซันที่แล้ว", "Mùa trước", "Musim Lalu", "Temporada pasada", "Temporada passada", "Letzte Saison", "Прошлый сезон"],
 "duel.profile.streak": ["连胜", "ชนะติดต่อกัน", "Chuỗi thắng", "Menang Beruntun", "Racha de victorias", "Sequência de vitórias", "Siegesserie", "Серия побед"],
 "duel.profile.streakValue": ["{streak}连胜", "ชนะติดต่อกัน {streak} ครั้ง", "Thắng liên tiếp {streak}", "{streak} kali menang beruntun", "Racha de {streak}", "{streak} vitórias seguidas", "{streak} Siege in Folge", "{streak} побед подряд"],
-"duel.profile.bestStreak": ["最高{streak}连胜", "สูงสุด ชนะติดต่อกัน {streak} ครั้ง", "Cao nhất: thắng liên tiếp {streak}", "Terbaik {streak} kali menang beruntun", "Mejor racha: {streak}", "Melhor sequência: {streak}", "Bestwert: {streak} in Folge", "Лучшая серия: {streak}"],
+"duel.profile.bestStreak": ["最高{streak}连胜", "ชนะติดต่อกันสูงสุด {streak} ครั้ง", "Cao nhất: thắng liên tiếp {streak}", "Terbaik {streak} kali menang beruntun", "Mejor racha: {streak}", "Melhor sequência: {streak}", "Bestwert: {streak} in Folge", "Лучшая серия: {streak}"],
 "duel.profile.noRecord": ["暂无记录", "ไม่มีบันทึก", "Chưa có ghi nhận", "Belum ada catatan", "Sin registro", "Sem registro", "Keine Daten", "Нет записей"],
 "duel.profile.streakBonus": ["连胜加成 +{bonus}", "โบนัสชนะติดต่อกัน +{bonus}", "Hiệu ứng chuỗi thắng +{bonus}", "Bonus beruntun +{bonus}", "Bono de racha +{bonus}", "Bônus de sequência +{bonus}", "Serienbonus +{bonus}", "Бонус серии +{bonus}"],
 "duel.history.win": ["胜", "ชนะ", "Thắng", "Menang", "Victoria", "Vitória", "Sieg", "Победа"],

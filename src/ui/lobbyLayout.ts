@@ -36,10 +36,12 @@ export const LOBBY_RAIL_BOUNDS = {
  * 지금은 레일 세 줄이 끝나는 아래, 결투 버튼이 시작하는 위의 빈 띠에 선다: 얼굴도 가리지
  * 않고 조작도 가리지 않는 유일한 자리다.
  *
+ * 오른쪽 끝은 가방 아래의 메뉴 단추(`LOBBY_MENU_BUTTON`) 왼쪽에서 끝난다 — 폭이 그보다 넓으면 단추를 덮는다.
+ *
  * 높이는 여기서 정하지 않는다 — 공용 대사창이 실제 글 높이에서 거꾸로 구하고, 밑변을 여기에
  * 걸므로 대사가 길어져도 결투 버튼 쪽으로 자라지 않는다.
  */
-export const LOBBY_DIALOGUE = { centerX: BASE_WIDTH / 2, width: 960, bottom: 1265 } as const;
+export const LOBBY_DIALOGUE = { centerX: 480, width: 860, bottom: 1265 } as const;
 
 /**
  * 오른 유대를 알리는 표식의 자리.

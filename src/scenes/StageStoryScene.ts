@@ -9,6 +9,7 @@ import { DialogueLayer } from "../ui/DialogueLayer";
 import { COLOR } from "../ui/theme";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { playStoryTitleCard } from "../ui/StoryTitleCard";
+import type { SceneRoute } from "./stageStoryRoute";
 
 /** 지도 서브 노드의 정적 대사를 재생하고 완료 저장 뒤 지도를 새로 만드는 전용 씬이다. */
 export class StageStoryScene extends Phaser.Scene {
@@ -17,11 +18,14 @@ export class StageStoryScene extends Phaser.Scene {
   private layer?: DialogueLayer;
   /** 이야기가 끝나면 갈 곳. 지도에서 연 곁 이야기는 지도로, 전투 뒤에 이어진 막은 넘겨준 곳으로 간다. */
   private exitTo = "stageMap";
+  /** 있으면 `exitTo` 대신 이 길로 이어 간다 — 전 대사 뒤 편성, 후 대사 뒤 결과판의 다음 길. */
+  private then?: SceneRoute;
 
   constructor() { super("stageStory"); }
 
-  create(data: { storyId: string; exitTo?: "lobby" | "stageMap" }): void {
+  create(data: { storyId: string; exitTo?: "lobby" | "stageMap"; then?: SceneRoute }): void {
     this.exitTo = data.exitTo ?? "stageMap";
+    this.then = data.then;
     // 대사 씬도 다른 ready 소유 씬과 같은 시작/종료 초기화 규칙을 사용한다.
     bindDebugReadyLifecycle(this.events);
     this.story = getRecollectionStory(data.storyId);
@@ -61,7 +65,10 @@ export class StageStoryScene extends Phaser.Scene {
     if (result.completed) {
       // StoryManager만 completedStoryIds를 변경하며 새 지도 씬이 해금/완료 표시를 다시 계산한다.
       storyManager.complete(this.story.id);
-      void this.claimChapterGems().finally(() => startScene(this, this.exitTo));
+      void this.claimChapterGems().finally(() => {
+        if (this.then) startScene(this, this.then.scene, this.then.data);
+        else startScene(this, this.exitTo);
+      });
       return;
     }
     // 후속 노드도 같은 흐름 잠금을 사용해 Puppet 교체와 연속 입력이 경쟁하지 않게 한다.

@@ -1,3 +1,4 @@
+import { goRoute, partyRoute } from "./stageStoryRoute";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
@@ -353,7 +354,7 @@ export class StageMapScene extends Phaser.Scene {
         return;
       }
       session.selectedStageId = stage.id;
-      startScene(this, "party");
+      goRoute(this, partyRoute(stage.id));
     }
   }
 

@@ -71,6 +71,8 @@ import { normalizeLobbyEntry, type LobbyMenu } from "./lobbyEntry";
 import { prefetchIdlePuppets } from "../puppets/battlePrefetch";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
+import { LobbyMenuTray, LOBBY_MENU_GLYPH } from "../ui/LobbyMenuTray";
+import { RecollectionPopup } from "../ui/RecollectionPopup";
 
 /**
  * 로비에 선 애착 렐릭의 층.
@@ -240,6 +242,7 @@ export class LobbyScene extends Phaser.Scene {
     this.topBar = new TopBar(this, 40, { onSettings: () => startScene(this, "settings"), onProfile: (profile) => this.openPlayerProfile(profile), onCurrency: (currency) => this.openCurrencyGuide(currency) });
     this.buildPromo();
     this.buildUtilityRail();
+    this.buildMenuTray();
     this.buildMissionEntry();
 
     // 결투 — 기존 원정 자리를 독립 PvP 모드 선택 화면으로 연결한다.
@@ -767,6 +770,23 @@ export class LobbyScene extends Phaser.Scene {
    * 늘 쓰지만 화면의 주인공은 아닌 편의 기능들이다. 캐릭터를 가리지 않도록 가장자리에 세우고
    * 크기도 출격·교류보다 한참 작게 둔다.
    */
+  /**
+   * 가방 아래의 메뉴(햄버거). 누르면 옆에서 한 줄짜리 판이 나와 회고·업적을 고른다.
+   * 업적은 아직 열리지 않은 자리라 누름이 아무 일도 하지 않는다(준비 중 문구는 세우지 않는다).
+   */
+  private buildMenuTray(): void {
+    new LobbyMenuTray(this, [
+      { icon: LOBBY_MENU_GLYPH.recollection, label: t("lobby.menu.recollection"), onClick: () => this.openRecollection() },
+      { icon: LOBBY_MENU_GLYPH.achievement, label: t("lobby.menu.achievement"), onClick: () => undefined },
+    ]);
+  }
+
+  /** 본 이야기를 모아 다시 읽는 회고를 로비 위에서 연다. 고른 이야기는 끝나면 로비로 돌아온다. */
+  private openRecollection(): void {
+    if (!this.popupLayer) return;
+    new RecollectionPopup(this, this.popupLayer, (storyId) => startScene(this, "stageStory", { storyId, exitTo: "lobby" })).open();
+  }
+
   private buildUtilityRail(): void {
     // 우편·친구·가방은 각각 입력 중심 하나만 가져야 한 번의 탭이 한 동작으로 이어진다.
     const rail = createLobbyUtilityRail({

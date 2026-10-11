@@ -35,6 +35,9 @@ export type ReachTier = "melee" | "mid" | "ranged";
  * 떨어져서 때리는 개체가 **무엇을 날리는가** — 표시 전용이고 전투 규칙은 읽지 않는다.
  * 활은 화살, 총은 탄환을 쏘게 하려고 개체 이름이 아니라 이 칸 하나로 가른다.
  */
+/** 근접 평타가 **어떻게 닿는가** — 표시 전용. 생략하면 강타다. */
+export type StrikeKind = "slash" | "claw" | "bite" | "smash";
+
 export type ProjectileKind = "bullet" | "arrow" | "volley" | "note" | "paper" | "signal" | "card" | "feather";
 
 /** 프로토타입 렐릭 희귀도. 배열 순서에 기대지 말고 가챠 규칙의 명시적 우선순위를 사용한다. */
@@ -2424,6 +2427,8 @@ export interface RelicDef {
    * 무엇을 쥐고 싸우는지(활·장총·현악·카드)가 원화에 서 있으면 적는다.
    */
   projectile?: ProjectileKind;
+  /** 근접 평타의 결(`StrikeKind`). 칼·집게는 베기, 발톱은 발톱, 턱은 물기이고 생략하면 강타다. */
+  strike?: StrikeKind;
   /** 전투 수치나 장착 룬과 섞이지 않는 정적 방치 발굴 특화다. */
   excavationTrait: ExcavationTrait;
   stats: Stats;

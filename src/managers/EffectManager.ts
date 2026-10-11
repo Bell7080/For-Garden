@@ -1,8 +1,8 @@
 import Phaser from "phaser";
-import { allowBurst, AREA_IMPACT, INK_HIT, INK_PROJECTILE, inkStarStyle, lightenColor, projectilePosition, BATTLEFIELD_WASH_HOLD, BATTLEFIELD_WASH_RISE, EFFECT_BUDGET, EFFECT_PRESETS, EFFECT_TAP_COLOR, GROUND_SURFACE, REACH_STRIKE, SUSTAINED_COMBAT_EFFECT, type BurstSpec, type EffectKind } from "../ui/effectPresets";
+import { allowBurst, AREA_IMPACT, INK_HIT, INK_PROJECTILE, INK_STRIKE, inkStarStyle, lightenColor, projectilePosition, BATTLEFIELD_WASH_HOLD, BATTLEFIELD_WASH_RISE, EFFECT_BUDGET, EFFECT_PRESETS, EFFECT_TAP_COLOR, GROUND_SURFACE, REACH_STRIKE, SUSTAINED_COMBAT_EFFECT, type BurstSpec, type EffectKind } from "../ui/effectPresets";
 import { EFFECT_TEXTURE, ensureEffectTextures } from "../ui/effectTextures";
 import { ensureInkTextures } from "../ui/inkTextures";
-import { INK_STYLE, inkTextureKey } from "../ui/inkShapes";
+import { INK_STYLE, inkTextureKey, type InkShapeId } from "../ui/inkShapes";
 import { healVisual, SHIELD_AURA_SHAPE, shieldAuraStyle, shieldGainVisual } from "../ui/restoreEffects";
 import { lashPoints } from "../ui/reachStrikeShape";
 import { flashPolicy, inkBlotPoints, mawTeeth, slashPoints, SIGNATURE_SPECS, type CombatPalette, type SignatureId, type StrokePoint } from "../ui/signatureEffects";
@@ -11,7 +11,7 @@ import { battlefieldWashBands, groundAreaStyle, laneAreaPoints, radialAreaPoints
 import { COLOR, textStyle } from "../ui/theme";
 import { motionPolicy, presentationPolicy, type GraphicsQuality, type MotionPolicy } from "../core/settings";
 import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
-import type { ProjectileKind } from "../core/types";
+import type { ProjectileKind, StrikeKind } from "../core/types";
 
 /**
  * 이펙트의 단일 소유자.
@@ -500,8 +500,7 @@ export class EffectManager {
     const lash = REACH_STRIKE.lash;
     const slot = this.acquireRing();
     slot.openedAt = now;
-    const graphics = slot.graphics.clear().setPosition(0, 0).setAlpha(1).setDepth(this.depth)
-      .setBlendMode(Phaser.BlendModes.ADD).setVisible(true);
+    const graphics = slot.graphics.clear().setPosition(0, 0).setAlpha(1).setDepth(this.depth).setVisible(true);
     // 두 자리를 통째로 잇지 않고 **닿는 쪽 끝**만 그린다. 길 가운데를 비워 그 위로 날아가는
     // 탄환이 보이게 하는 것이 이 시작점의 유일한 목적이다.
     const root = {
@@ -527,13 +526,102 @@ export class EffectManager {
         const midX = (root.x + to.x) / 2 + nx * swing;
         const midY = (root.y + to.y) / 2 + ny * swing;
         graphics.clear();
-        graphics.fillStyle(color, lash.alpha * (1 - state.t * state.t));
-        graphics.fillPoints(lashPoints(root, { x: midX, y: midY }, to, lash.rootWidth, lash.tipWidth), true);
+        const alpha = lash.alpha * (1 - state.t * state.t);
+        const points = lashPoints(root, { x: midX, y: midY }, to, lash.rootWidth, lash.tipWidth);
+        graphics.fillStyle(color, alpha);
+        graphics.fillPoints(points, true);
+        // 잉크 결 — 채찍을 먹선으로 둘러 밝은 원화 위에서도 떨어져 나오게 한다.
+        const [thin, thick] = lash.inkWidth;
+        graphics.lineStyle(thin + (thick - thin) * (1 - state.t), INK_COLOR, alpha);
+        graphics.strokePoints(points, true);
       },
       onComplete: () => {
         graphics.clear().setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL);
         slot.tween = undefined;
       },
+    });
+  }
+
+  /**
+   * 근접 평타의 결 — 베기·발톱·물기·강타(`INK_STRIKE`). 공용 별 위에 한 겹 얹는다.
+   *
+   * 같은 프레임의 타격 예산을 함께 쓴다 — 별이 버려진 프레임에는 획도 그리지 않는다.
+   */
+  meleeStrike(
+    at: { x: number; y: number },
+    feet: { x: number; y: number },
+    kind: StrikeKind,
+    color: number,
+    facing: number,
+    scale = 1,
+  ): void {
+    this.rollFrame();
+    if (this.openedThisFrame > EFFECT_BUDGET.perFrame) return;
+    const flip = facing < 0 ? -1 : 1;
+    if (kind === "smash") {
+      const smash = INK_STRIKE.smash;
+      this.openRing(feet.x, feet.y, smash.radius * scale, smash.ms, smash.width, lightenColor(color, 0.25), 0, true);
+      return;
+    }
+    if (kind === "slash") {
+      const slash = INK_STRIKE.slash;
+      this.openInkPiece("blade", color, slash.ms, 0, (image, t) => {
+        const grow = Math.min(1, t / slash.growUntil);
+        const size = (slash.from + (slash.to - slash.from) * (1 - (1 - grow) ** 3)) * scale;
+        image.setPosition(at.x + slash.drift * t * flip, at.y)
+          .setRotation((slash.tilt + t * slash.turn) * flip)
+          .setScale(size * flip, size * 0.95);
+      });
+      return;
+    }
+    if (kind === "claw") {
+      const claw = INK_STRIKE.claw;
+      for (let mark = 0; mark < claw.count; mark += 1) {
+        const offset = (mark - (claw.count - 1) / 2) * claw.gap * scale;
+        this.openInkPiece("streak", color, claw.ms, mark * claw.gapMs, (image, t) => {
+          const grow = Math.min(1, t / claw.growUntil);
+          const length = (claw.from + (claw.to - claw.from) * (1 - (1 - grow) ** 3)) * scale;
+          image.setPosition(at.x + (offset * 0.9 - 28 + claw.drift * t) * flip, at.y + offset * 0.45 - 20 + claw.drift * t)
+            .setRotation(claw.tilt * flip)
+            .setScale(length * flip, scale);
+        });
+      }
+      return;
+    }
+    // 물기 — 위아래 두 턱이 한 박자에 닫힌다.
+    const bite = INK_STRIKE.bite;
+    for (const jaw of [-1, 1]) {
+      this.openInkPiece("blade", color, bite.ms, 0, (image, t) => {
+        const shut = Math.min(1, t / bite.shutAt);
+        const gap = bite.open - (bite.open - bite.close) * (1 - (1 - shut) ** 3);
+        image.setPosition(at.x, at.y + jaw * gap * scale)
+          .setRotation(jaw < 0 ? 0 : Math.PI)
+          .setScale(bite.scale * scale * flip, bite.scale * scale);
+      });
+    }
+  }
+
+  /** 잉크 조각 한 장을 수명 동안 `place`로 움직이고, 끝 무렵에만 옅어지게 한다. */
+  private openInkPiece(
+    shape: InkShapeId,
+    color: number,
+    ms: number,
+    delay: number,
+    place: (image: Phaser.GameObjects.Image, t: number) => void,
+  ): void {
+    const image = this.scene.add.image(0, 0, inkTextureKey(shape)).setTint(color).setDepth(this.depth).setVisible(false);
+    const state = { t: 0 };
+    this.scene.tweens.add({
+      targets: state,
+      t: 1,
+      delay,
+      duration: ms,
+      onStart: () => image.setVisible(true),
+      onUpdate: () => {
+        place(image, state.t);
+        image.setAlpha(state.t < INK_STRIKE.fadeFrom ? 1 : 1 - (state.t - INK_STRIKE.fadeFrom) / (1 - INK_STRIKE.fadeFrom));
+      },
+      onComplete: () => image.destroy(),
     });
   }
 

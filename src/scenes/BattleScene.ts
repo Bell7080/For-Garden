@@ -1921,12 +1921,22 @@ export class BattleScene extends Phaser.Scene {
           : event.basicStep !== undefined ? "basicStep"
           : undefined;
         const attackerHeight = UNIT_HEIGHT * attacker.fighter.bodyScale;
-        if (moment) {
-          this.playSignature(attacker, moment, { x: target.fighter.x, y: target.fighter.y - height * 0.5 }, {
-            from: { x: attacker.fighter.x, y: attacker.fighter.y - attackerHeight * 0.5 },
-            step: event.basicStep,
-            scale: target.fighter.bodyScale,
-          });
+        const signed = moment !== undefined && this.playSignature(attacker, moment, { x: target.fighter.x, y: target.fighter.y - height * 0.5 }, {
+          from: { x: attacker.fighter.x, y: attacker.fighter.y - attackerHeight * 0.5 },
+          step: event.basicStep,
+          scale: target.fighter.bodyScale,
+        });
+        // 근접 평타는 무엇으로 쳤는지(베기·발톱·물기·강타)를 한 획 얹는다. 전용 연출이 그 순간을
+        // 이미 맡았으면 겹치지 않는다.
+        if (!signed && event.skill !== "ultimate" && attacker.fighter.def.reachTier === "melee") {
+          this.effects.meleeStrike(
+            { x: target.fighter.x, y: target.fighter.y - height * 0.5 },
+            { x: target.fighter.x, y: target.fighter.y },
+            attacker.fighter.def.strike ?? "smash",
+            this.effectColor(attacker),
+            target.fighter.x - attacker.fighter.x,
+            target.fighter.bodyScale,
+          );
         }
       }
       // 떨어져서 때리는 개체는 사이를 잇는 것이 없으면 맞은 자리에 숫자만 뜬다. 근거리는 몸이
@@ -1998,9 +2008,10 @@ export class BattleScene extends Phaser.Scene {
   private playSignature(
     actor: FighterView, moment: SignatureMoment, at: { x: number; y: number },
     options: { from?: { x: number; y: number }; step?: number; scale?: number } = {},
-  ): void {
+  ): boolean {
     const id = signatureFor(actor.fighter.def.id, moment);
     if (id) this.effects.signature(id, at, this.palette(actor), options);
+    return id !== undefined;
   }
 
   /**

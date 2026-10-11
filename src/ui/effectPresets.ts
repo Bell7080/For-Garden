@@ -344,8 +344,10 @@ export const REACH_STRIKE = {
     bend: 0.13,
     /** 뻗었다 걷히기까지(ms). 다음 평타보다 반드시 짧아야 잔상이 겹치지 않는다. */
     ms: 130,
-    /** 가장 진할 때의 알파. 겹쳐 밝아지는 합성이라 낮게 둔다. */
-    alpha: 0.66,
+    /** 가장 진할 때의 알파. 먹선을 두르므로 또렷하게 둔다. */
+    alpha: 0.95,
+    /** 먹선 두께 — 뻗은 순간이 가장 굵고 걷히며 가늘어진다(px). */
+    inkWidth: [1.5, 5] as const,
   },
 } as const;
 
@@ -403,6 +405,20 @@ export const INK_PROJECTILE: {
   /** 탄환 꼬리가 몸 뒤로 떨어진 거리(px)와 진하기. */
   trail: { offset: 76, alpha: 0.8, lighten: 0.35 },
 };
+
+/**
+ * 근접 평타가 닿는 결(`RelicDef.strike`) — 몸이 붙어 있어 무엇으로 쳤는지가 곧 그 개체다.
+ * 공용 별 위에 한 겹만 얹고, 3배속 한 프레임에서도 획 하나가 남도록 짧고 굵게 둔다. 값은 게임 픽셀이다.
+ */
+export const INK_STRIKE = {
+  // 칼날은 SD 몸통보다 작게 둔다 — 1.15배로 세웠을 때 맞은 개체를 통째로 덮었다.
+  slash: { ms: 170, from: 0.35, to: 0.7, growUntil: 0.45, drift: 30, tilt: -0.55, turn: 0.5 },
+  claw: { ms: 160, count: 3, gapMs: 38, gap: 34, tilt: 0.92, from: 0.35, to: 1.05, growUntil: 0.4, drift: 38 },
+  bite: { ms: 180, scale: 0.5, open: 40, close: 6, shutAt: 0.45 },
+  smash: { ms: 300, radius: 150, width: 5 },
+  /** 획이 진하기를 잃기 시작하는 시점(수명 비율). */
+  fadeFrom: 0.5,
+} as const;
 
 /** 투사체가 `t`(0~1)에 서는 자리. 활처럼 휘는 것은 위로 솟았다 내려온다. */
 export function projectilePosition(

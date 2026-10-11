@@ -38,6 +38,7 @@ const KURO_DEF: RelicDef = {
   element: "fire",
   role: "warrior",
   reachTier: "melee",
+  strike: "claw",
   excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
   // 디안의 태생 공격력 160에서 파생한 값이며, 전투에서는 성장한 공격력으로 다시 계산된다.
   stats: { hp: 422, def: 67, res: 67, atk: 158, ap: 0, attackSpeed: 104, moveSpeed: 109, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 0 },
@@ -74,6 +75,7 @@ const SHIRO_DEF: RelicDef = {
   element: "fire",
   role: "assassin",
   reachTier: "melee",
+  strike: "slash",
   excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
   // 디안의 태생 주문력 158에서 파생한 값이며, 전투에서는 성장한 주문력으로 다시 계산된다.
   stats: { hp: 422, def: 70, res: 74, atk: 0, ap: 155, attackSpeed: 96, moveSpeed: 100, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 0 },
@@ -182,6 +184,7 @@ export const RELICS: RelicDef[] = [
     role: "warrior",
     // 송곳니로 물어뜯는 근접 물리 딜러.
     reachTier: "melee",
+    strike: "bite",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
     excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.2, efficiencyMultiplier: 1.10 },
     stats: {
@@ -415,6 +418,7 @@ export const RELICS: RelicDef[] = [
     role: "assassin",
     // 악어턱으로 물어뜯는 근접 암살자.
     reachTier: "melee",
+    strike: "bite",
     // 치즈케이크 생산 계약은 수중 발굴 특화이며 전투 역할을 바꿔도 기존 생산성을 보존한다.
     excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 2.4, efficiencyMultiplier: 1.10 },
     // 낮은 HP·방어력은 렉시아보다 낮은 생존력을, 높은 공격·공속·이속은 암살자의 선공 능력을 보장한다.
@@ -567,6 +571,7 @@ export const RELICS: RelicDef[] = [
     role: "assassin",
     // 발톱으로 파고드는 근접 암살자.
     reachTier: "melee",
+    strike: "claw",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 137.5, efficiencyMultiplier: 1.08 },
     stats: {
@@ -1104,6 +1109,7 @@ export const RELICS: RelicDef[] = [
     role: "tank",
     // 꼬리가 닿는 거리에서 싸운다. 멀리 있는 적은 궁극기가 끌어온다.
     reachTier: "melee",
+    strike: "slash",
     excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.16, efficiencyMultiplier: 1.08 },
     /**
      * **방어·저항이 곧 손이다** — 수압이 터지는 피해가 두 수치에서 나오므로 둘을 고르게 높이고, 평타
@@ -1929,6 +1935,7 @@ export const RELICS: RelicDef[] = [
     role: "assassin",
     // 손질은 붙어서 한다.
     reachTier: "melee",
+    strike: "slash",
     // 재료를 다루는 손이라 발굴 특화도 치즈케이크 쪽에 붙인다.
     excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 2.28, efficiencyMultiplier: 1.12 },
     // 가장 약해진 적을 골라 뛰어드는 개체라 발이 가장 빠르고, 칼을 쓰는 손이라 공격력이 높다.
@@ -2512,6 +2519,7 @@ export const RELICS: RelicDef[] = [
     role: "warrior",
     // 갈퀴로 할퀴는 근접 허스크.
     reachTier: "melee",
+    strike: "slash",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1.00 },
     // 기존의 강한 물리 공격과 빠른 발은 보존한다. 다만 암살자가 아닌 전사로 확정했으므로
@@ -2893,6 +2901,7 @@ export const RELICS: RelicDef[] = [
     role: "assassin",
     // 전열 사이를 빠르게 파고드는 근접 중간보스다.
     reachTier: "melee",
+    strike: "slash",
     // 적 전용 개체지만 데이터 계약을 완성하기 위해 비전투 특성도 영구 정의에 둔다.
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1.00 },
     /*
@@ -3410,6 +3419,7 @@ export const RELICS: RelicDef[] = [
     role: "support",
     // 제 손으로 직접 잘라야 아군이 꿰매지므로 적 한가운데로 파고드는 지원가다.
     reachTier: "melee",
+    strike: "slash",
     excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 2.04, efficiencyMultiplier: 1.08 },
     /*
      * 근거리 지원가라 전사보다 두껍고 탱커보다는 얇은 자리에 선다(전투력 2303, SR 띠 안).
@@ -4623,6 +4633,7 @@ export const RELICS: RelicDef[] = [
     role: "tank",
     // 앞니로 갉는 개체라 붙어야 때린다.
     reachTier: "melee",
+    strike: "bite",
     excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 1.4, efficiencyMultiplier: 1.00 },
     stats: {
       // 다섯이 같은 몸이라 오각형은 한 벌이고, 공속·이속만 자매마다 다르다. 전투력은 전부
@@ -4742,6 +4753,7 @@ export const RELICS: RelicDef[] = [
     role: "tank",
     // 앞니로 갉는 개체라 붙어야 때린다.
     reachTier: "melee",
+    strike: "bite",
     excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 1.4, efficiencyMultiplier: 1.00 },
     stats: {
       // 다섯이 같은 몸이라 오각형은 한 벌이고, 공속·이속만 자매마다 다르다. 전투력은 전부
@@ -4861,6 +4873,7 @@ export const RELICS: RelicDef[] = [
     role: "tank",
     // 앞니로 갉는 개체라 붙어야 때린다.
     reachTier: "melee",
+    strike: "bite",
     excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 1.4, efficiencyMultiplier: 1.00 },
     stats: {
       // 다섯이 같은 몸이라 오각형은 한 벌이고, 공속·이속만 자매마다 다르다. 전투력은 전부
@@ -4980,6 +4993,7 @@ export const RELICS: RelicDef[] = [
     role: "tank",
     // 앞니로 갉는 개체라 붙어야 때린다.
     reachTier: "melee",
+    strike: "bite",
     excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 1.4, efficiencyMultiplier: 1.00 },
     stats: {
       // 다섯이 같은 몸이라 오각형은 한 벌이고, 공속·이속만 자매마다 다르다. 전투력은 전부
@@ -5099,6 +5113,7 @@ export const RELICS: RelicDef[] = [
     role: "tank",
     // 앞니로 갉는 개체라 붙어야 때린다.
     reachTier: "melee",
+    strike: "bite",
     excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 1.4, efficiencyMultiplier: 1.00 },
     stats: {
       // 다섯이 같은 몸이라 오각형은 한 벌이고, 공속·이속만 자매마다 다르다. 전투력은 전부

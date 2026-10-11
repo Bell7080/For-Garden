@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { lashPoints } from "../../src/ui/reachStrikeShape";
-import { INK_PROJECTILE, projectilePosition, REACH_STRIKE } from "../../src/ui/effectPresets";
+import { INK_PROJECTILE, INK_STRIKE, projectilePosition, REACH_STRIKE } from "../../src/ui/effectPresets";
 import { getRelic, RELICS } from "../../src/data/relics";
 
 /**
@@ -86,5 +86,23 @@ describe("채찍이 비우는 길", () => {
     // 사라져 무엇이 때렸는지 남지 않는다.
     expect(REACH_STRIKE.lash.startAt).toBeGreaterThan(0.15);
     expect(REACH_STRIKE.lash.startAt).toBeLessThan(0.6);
+  });
+});
+
+describe("근접 평타의 결", () => {
+  it("은 근접 개체에만 적고, 렉시아는 물고 루카는 할퀸다", () => {
+    for (const relic of RELICS) {
+      if (relic.strike !== undefined) expect(relic.reachTier, relic.id).toBe("melee");
+    }
+    expect(getRelic("rex").strike).toBe("bite");
+    expect(getRelic("luka").strike).toBe("claw");
+    expect(getRelic("torika").strike).toBeUndefined();
+  });
+
+  it("은 다음 평타보다 짧게 끝난다", () => {
+    expect(INK_STRIKE.slash.ms).toBeLessThan(300);
+    expect(INK_STRIKE.bite.ms).toBeLessThan(300);
+    expect(INK_STRIKE.smash.ms).toBeLessThanOrEqual(300);
+    expect(INK_STRIKE.claw.ms + INK_STRIKE.claw.gapMs * (INK_STRIKE.claw.count - 1)).toBeLessThan(300);
   });
 });

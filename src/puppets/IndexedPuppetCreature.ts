@@ -13,6 +13,7 @@ interface SharedGpuProgram {
   transform: WebGLUniformLocation;
   viewport: WebGLUniformLocation;
   tint: WebGLUniformLocation;
+  fill: WebGLUniformLocation;
   alpha: WebGLUniformLocation;
   sampler: WebGLUniformLocation;
 }
@@ -51,6 +52,14 @@ function watchContextRestore(renderer: Phaser.Renderer.WebGL.WebGLRenderer): voi
   });
 }
 
+/** 몸 뒤에 겹쳐 그리는 한 겹. 변위는 월드 픽셀, 색은 실루엣을 채우는 한 색(기본 검정)이다. */
+export interface PuppetAfterimage {
+  dx: number;
+  dy: number;
+  alpha: number;
+  color?: number;
+}
+
 const VERTEX_SHADER = `
 attribute vec2 aPosition;
 attribute vec2 aUv;
@@ -69,11 +78,14 @@ const FRAGMENT_SHADER = `
 precision mediump float;
 uniform sampler2D uTexture;
 uniform vec3 uTint;
+uniform vec4 uFill;
 uniform float uAlpha;
 varying vec2 vUv;
 void main() {
   vec4 color = texture2D(uTexture, vUv);
-  gl_FragColor = vec4(color.rgb * uTint, color.a * uAlpha);
+  // uFill.a만큼 원화 대신 한 색으로 채운다(실루엣). 원화가 미리 곱해진 알파라 채움도 알파를 곱한다.
+  vec3 rgb = mix(color.rgb * uTint, uFill.rgb * color.a, uFill.a);
+  gl_FragColor = vec4(rgb, color.a * uAlpha);
 }`;
 
 /** 셰이더 컴파일 오류는 조용히 빈 캐릭터를 만들지 않고 부트 단계에서 원인을 드러낸다. */
@@ -119,6 +131,7 @@ function createProgram(gl: WebGLRenderingContext): SharedGpuProgram {
     transform: uniform("uTransform"),
     viewport: uniform("uViewport"),
     tint: uniform("uTint"),
+    fill: uniform("uFill"),
     alpha: uniform("uAlpha"),
     sampler: uniform("uTexture"),
   };
@@ -195,7 +208,9 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
    * 늘고 `spawnPuppet`은 비동기라 0.1초짜리 돌진이 끝난 뒤에야 도착한다. 여기서는 이미 바인딩한
    * program과 버퍼를 그대로 두고 행렬·색·알파만 갈아 끼우므로 겹 하나가 draw 한 번이다.
    */
-  private afterimages: readonly { dx: number; dy: number; alpha: number }[] = [];
+  private afterimages: readonly PuppetAfterimage[] = [];
+  /** 몸 위에 얇게 얹는 한 색. 폭주의 붉은 기운처럼 원화를 그대로 두고 색만 한 겹 덮는다. */
+  private bodyFill: { color: number; amount: number } = { color: 0, amount: 0 };
   /**
    * 동작을 그 자리에서 멈춘다. 멈춘 동안의 시간은 버린다 — 풀면 멈춘 프레임에서 그대로 이어지고
    * 지나간 만큼을 한꺼번에 따라잡지 않는다(따라잡으면 풀리는 순간 자세가 툭 튄다).
@@ -239,8 +254,14 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
    * 변위는 **월드 픽셀**이라 카메라·부모 변환을 화면이 다시 계산하지 않는다 — 그릴 때 좌표만
    * 잠깐 옮겨 같은 경로로 행렬을 만들기 때문이다.
    */
-  setAfterimages(steps: readonly { dx: number; dy: number; alpha: number }[]): this {
+  setAfterimages(steps: readonly PuppetAfterimage[]): this {
     this.afterimages = steps;
+    return this;
+  }
+
+  /** 몸 위에 한 색을 `amount`(0~1)만큼 덮는다. 0이면 원화 그대로다. */
+  setBodyFill(color: number, amount: number): this {
+    this.bodyFill = { color, amount: Phaser.Math.Clamp(amount, 0, 1) };
     return this;
   }
 
@@ -358,7 +379,8 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
        *
        * 좌표를 잠깐 옮겨 같은 `GetCalcMatrix` 경로를 지나는 이유는, 변위를 행렬에 직접 더하면
        * 부모 컨테이너의 배율·회전이 그 변위에 먹지 않아 확대된 화면에서 잔상만 어긋나기
-       * 때문이다. 색은 검게 고정한다 — 개체 색으로 채우면 잔상이 아니라 발광이 된다.
+       * 때문이다. 색은 기본이 검정이다 — 개체 색으로 채우면 잔상이 아니라 발광이 된다. 폭주 테두리처럼
+       * 몸 둘레로 비껴 세우는 겹만 `color`로 제 색을 갖는다.
        */
       const baseX = this.x;
       const baseY = this.y;
@@ -367,7 +389,9 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
         this.y = baseY + ghost.dy;
         const ghostCalc = Phaser.GameObjects.GetCalcMatrix(this, camera, parentMatrix).calc;
         gl.uniformMatrix3fv(shared.transform, false, puppetAffineUniform(ghostCalc, this.displayOriginX, this.displayOriginY, this.flipX, this.flipY));
-        gl.uniform3f(shared.tint, 0, 0, 0);
+        gl.uniform3f(shared.tint, 1, 1, 1);
+        const ghostColor = ghost.color ?? 0;
+        gl.uniform4f(shared.fill, ((ghostColor >> 16) & 0xff) / 255, ((ghostColor >> 8) & 0xff) / 255, (ghostColor & 0xff) / 255, 1);
         gl.uniform1f(shared.alpha, puppetShaderAlpha(this.alpha * ghost.alpha, camera.alpha));
         gl.drawElements(gl.TRIANGLES, this.indices.length, gl.UNSIGNED_SHORT, 0);
       }
@@ -385,6 +409,8 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
         ((this.tintTopLeft >> 8) & 0xff) / 255,
         (this.tintTopLeft & 0xff) / 255,
       );
+      const fill = this.bodyFill;
+      gl.uniform4f(shared.fill, ((fill.color >> 16) & 0xff) / 255, ((fill.color >> 8) & 0xff) / 255, (fill.color & 0xff) / 255, fill.amount);
       // Container renderer가 호출 직전에 누적 부모 alpha를 this.alpha에 곱하므로 카메라 alpha만 마저 합친다.
       gl.uniform1f(shared.alpha, puppetShaderAlpha(this.alpha, camera.alpha));
       gl.drawElements(gl.TRIANGLES, this.indices.length, gl.UNSIGNED_SHORT, 0);

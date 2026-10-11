@@ -39,7 +39,7 @@ import { expeditionBossGrowth, getExpeditionNodeEnemies } from "../data/expediti
 import type { PuppetCreature, PuppetAsset } from "../puppets/assets";
 import type { ExpeditionRelicSnapshot } from "../core/expeditionSnapshot";
 import { showExpeditionRelic } from "../ui/expeditionRelicInfo";
-import { battleAssetFor, cancelMotion, flashHit, isHitFlashing, placePuppet, playMotion, sdAssetForSkin, spawnPuppet, tintPuppet } from "../puppets/assets";
+import { battleAssetFor, cancelMotion, flashHit, placePuppet, playMotion, sdAssetForSkin, spawnPuppet } from "../puppets/assets";
 import { isStageUnlocked, session } from "../state/session";
 import { addSceneBackground, battleFieldBackground } from "../ui/backgrounds";
 import { battlefieldWashBands, statusAreaColor } from "../ui/groundAreas";
@@ -103,6 +103,8 @@ import { CombatEffectPresenter, type CombatEffectTarget } from "../managers/Comb
 import { knockbackFlightPath } from "../ui/knockbackFlight";
 import { ensureEffectTextures } from "../ui/effectTextures";
 import { chargeAfterimageSteps } from "../ui/chargeAfterimage";
+import { FEVER_INK, feverBodyFill, feverFade, feverOutlineSteps, feverPulse } from "../ui/feverInk";
+import type { PuppetAfterimage } from "../puppets/IndexedPuppetCreature";
 import { attackDamagePopupRequest, type DamageFlavor, type DebuffId } from "../ui/damageNumbers";
 import { openBattleBuffListPopup, openBattleBuffPopup, type BattleBuffListItem, type BattleBuffPopupController } from "../ui/BattleBuffPopup";
 import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
@@ -191,38 +193,16 @@ const METER_EASE = 6;
  * 폭주 연출.
  *
  * **주위에 빛을 두르지 않는다.** 발광을 겹쳐 두면 밝은 배경 원화 위에서 하얗게 떠 정작 봐야 할
- * 캐릭터가 그 속에 묻힌다. 대신 SD가 한 뼘 커지고 **일러스트 자체에 그 개체의 스킬 아이콘 색을
- * 필터처럼 입힌다.** 색은 제자리에 머물지 않고 옅은 쪽과 짙은 쪽을 오가며 울그락불그락 끓는다.
+ * 캐릭터가 그 속에 묻힌다. 대신 SD가 한 뼘 커지고 몸 둘레에 먹선과 붉은 띠가 경보처럼 숨 쉰다
+ * (`feverInk.ts`). 원화는 거의 물들이지 않는다 — 누구인지가 흐려지면 안 된다.
  */
 const FEVER = {
   scale: 1.1,
-  /** 필터가 가장 옅을 때와 짙을 때의 섞는 비율. 낮으면 원화의 색이, 높으면 폭주색이 이긴다. */
-  mixLow: 0.28,
-  mixHigh: 0.62,
-  /** 색이 한 번 오가는 데 걸리는 시간(ms). 숨보다 조금 빠르게 끓는다. */
-  pulseMs: 620,
-  /**
-   * 색 단계 수.
-   *
-   * 매 프레임 새 색을 칠하면 Puppet의 모든 조각에 tint를 다시 먹여야 해 그만큼이 그대로 프레임
-   * 비용이 된다. 단계로 끊으면 한 주기에 이만큼만 칠하고도 눈에는 이어져 보인다.
-   */
-  pulseSteps: 10,
 } as const;
 
-/** 지금 폭주 필터가 어느 단계인지. 0이 가장 옅고 마지막이 가장 짙다. */
-function feverPulseStep(now: number): number {
-  const wave = 0.5 - Math.cos((now / FEVER.pulseMs) * Math.PI * 2) / 2;
-  return Math.min(FEVER.pulseSteps - 1, Math.floor(wave * FEVER.pulseSteps));
-}
+/** 빠직 표식이 서는 높이 — 몸 높이에 대한 비율(머리 옆, 체력 바보다 조금 아래). */
+const FEVER_HEAD_RATIO = 0.95;
 
-/** 두 색을 비율대로 섞는다. 폭주 중 몸에 제 색을 옅게 얹을 때 쓴다. */
-function mixTint(base: number, other: number, amount: number): number {
-  const blend = (shift: number): number => Math.round(
-    (((base >> shift) & 0xff) * (1 - amount)) + (((other >> shift) & 0xff) * amount),
-  );
-  return (blend(16) << 16) | (blend(8) << 8) | blend(0);
-}
 
 /**
  * 전장 안에서의 앞뒤 순서.
@@ -258,11 +238,13 @@ interface FighterView {
   stunShown: boolean;
   /** 그 개체의 속성·직군을 섞은 색. 폭주 필터와 이펙트 색이 여기서 나온다. */
   feverTint: number;
-  /** 마지막으로 칠한 폭주 필터 단계. 같은 단계면 다시 칠하지 않는다. */
-  feverStep: number;
+  /** 폭주가 시작된 시각(ms). 테두리 두께·사이렌·빠직 표식의 박자가 여기서 센다. */
+  feverAt: number;
+  /** 폭주가 끝난 시각(ms). 테두리가 녹아 없어지는 동안만 값이 있다. */
+  feverEndedAt: number | undefined;
   /** 피격 섬광이 끝난 뒤 되돌릴 원래 색. */
   tint: number;
-  /** 지금 몸이 폭주 색으로 물들어 있는지. 상태가 바뀔 때만 다시 칠한다. */
+  /** 지금 폭주 중인지. 들고 나는 순간을 가르는 마지막 값이다. */
   feverTinted: boolean;
   /** 지금 돌진 잔상이 서 있는지. 돌진이 끝난 프레임에 한 번만 지우기 위한 값이다. */
   afterimageShown: boolean;
@@ -1128,7 +1110,7 @@ export class BattleScene extends Phaser.Scene {
           event.stopPropagation();
           this.openStatusList(fighter.id);
         });
-      this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, statusChips, statusHit, stunShown: false, feverTint, feverStep: -1, feverTinted: false, afterimageShown: false, tint, squashAt: -Infinity, squashDir: 1, spinDir: 1, dead: false });
+      this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, statusChips, statusHit, stunShown: false, feverTint, feverAt: 0, feverEndedAt: undefined, feverTinted: false, afterimageShown: false, tint, squashAt: -Infinity, squashDir: 1, spinDir: 1, dead: false });
       // 새끼 늑대 자리는 쓰러진 채로 열린다 — 부르는 순간 `packSummon`이 일으켜 세울 때까지 보이지 않는다.
       if (fighter.hp <= 0 && isPupFighter(fighter)) {
         const idle = this.views.get(fighter.id);
@@ -2058,6 +2040,8 @@ export class BattleScene extends Phaser.Scene {
     const view = this.views.get(fighterId);
     if (!view || view.dead) return;
     view.dead = true;
+    // 쓰러진 몸은 폭주 테두리·붉은 기운 없이 날아간다 — 다음 프레임부터는 syncViews가 이 몸을 건너뛴다.
+    view.creature.setAfterimages([]).setBodyFill(0, 0);
     this.combatEffects.remove(fighterId);
     view.shadow.setVisible(false);
     view.hpBar.setVisible(false);
@@ -2182,6 +2166,7 @@ export class BattleScene extends Phaser.Scene {
 
   /** 좌표·방향·체력 바·앞뒤 순서를 시뮬레이션 상태에 맞춘다. */
   private syncViews(): void {
+    const feverMarks: Parameters<EffectManager["syncFeverMarks"]>[0][number][] = [];
     this.views.forEach((view) => {
       if (view.dead) return;
       const { fighter } = view;
@@ -2214,26 +2199,39 @@ export class BattleScene extends Phaser.Scene {
       }
       // 아래에 선 캐릭터가 앞에 오도록 발 높이로 앞뒤를 정한다.
       view.creature.setDepth(Math.round(fighter.y / 10) + DEPTH.unitBase);
-      // 폭주는 빛이 아니라 **필터**다. 일러스트에 그 개체의 스킬 아이콘 색을 입히고, 섞는
-      // 비율이 옅은 쪽과 짙은 쪽을 오가며 울그락불그락 끓는다.
+      // 폭주는 빛이 아니라 **화난 테두리**다(`feverInk.ts`). 몸을 먹과 붉은 띠로 비껴 그려
+      // 테두리를 세우고 그 두께가 경보처럼 숨 쉰다. 발밑 사이렌과 빠직 표식은 이펙트가 맡는다.
+      const now = this.time.now;
       const fever = fighter.ferocityFever;
       if (fever !== view.feverTinted) {
         view.feverTinted = fever;
-        view.feverStep = -1;
-        // 폭주가 풀리는 순간에만 원래 색으로 한 번 되돌린다.
-        if (!fever) tintPuppet(view.creature, view.tint);
-        // 폭주에 **드는 순간**만 한 겹 밀려난다. 유지되는 동안은 필터가 맡는다.
-        else this.effects.burst("fever", pose.x, pose.y - unitHeight * 0.5, { color: view.feverTint, scale: fighter.bodyScale });
+        if (fever) {
+          view.feverAt = now;
+          view.feverEndedAt = undefined;
+          // 폭주에 **드는 순간**만 한 겹 밀려난다. 유지되는 동안은 테두리가 맡는다.
+          this.effects.burst("fever", pose.x, pose.y - unitHeight * 0.5, { color: view.feverTint, scale: fighter.bodyScale });
+        } else view.feverEndedAt = now;
       }
-      // 피격 섬광이 도는 동안에는 칠하지 않는다 — 덮어쓰면 맞은 티가 그 프레임에 사라진다.
-      if (fever && !isHitFlashing(view.creature)) {
-        // 단계가 바뀐 프레임에만 다시 칠한다. 매 프레임 칠하면 Puppet 조각 전부에 tint를
-        // 다시 먹여야 해 그만큼이 그대로 프레임 비용이 된다.
-        const step = feverPulseStep(this.time.now);
-        if (step !== view.feverStep) {
-          view.feverStep = step;
-          tintPuppet(view.creature, this.bodyTint(view));
-        }
+      let outline: PuppetAfterimage[] = [];
+      const fadingOut = view.feverEndedAt !== undefined && now - view.feverEndedAt < FEVER_INK.fadeOutMs;
+      if (view.feverTinted || fadingOut) {
+        const age = now - view.feverAt;
+        const fade = feverFade(age, view.feverTinted ? undefined : now - (view.feverEndedAt ?? now));
+        const pulse = feverPulse(age);
+        outline = feverOutlineSteps(pulse, fade, fighter.bodyScale);
+        view.creature.setBodyFill(FEVER_INK.bodyFill.color, feverBodyFill(pulse, fade));
+        feverMarks.push({
+          id: fighter.id,
+          x: pose.x,
+          feetY: pose.y,
+          headY: pose.y - unitHeight * FEVER_HEAD_RATIO,
+          scale: fighter.bodyScale,
+          ageMs: age,
+          fade,
+        });
+      } else if (view.feverEndedAt !== undefined) {
+        view.feverEndedAt = undefined;
+        view.creature.setBodyFill(0, 0);
       }
       /*
        * **돌진은 3배속에서 순간이동으로 보인다.** 그림이 출발점에서 끝점까지 따라붙는 시간이
@@ -2244,7 +2242,9 @@ export class BattleScene extends Phaser.Scene {
        * **돌진일 때만 세운다.** `dashX`·`dashY`는 피격 변위도 함께 쓰는 자리라, 맞을 때마다
        * 잔상이 뜨면 난전 내내 몸이 여러 겹으로 보인다.
        */
-      const ghosts = fighter.chargeGlide > 0 ? chargeAfterimageSteps(fighter.dashX, fighter.dashY) : [];
+      const charge = fighter.chargeGlide > 0 ? chargeAfterimageSteps(fighter.dashX, fighter.dashY) : [];
+      // 폭주 테두리를 먼저(더 뒤에) 두고 돌진 잔상을 그 위에 얹는다.
+      const ghosts = outline.length > 0 ? [...outline, ...charge] : charge;
       // 빈 목록도 한 번은 넘겨야 돌진이 끝난 프레임에 잔상이 지워진다.
       if (ghosts.length > 0 || view.afterimageShown) {
         view.afterimageShown = ghosts.length > 0;
@@ -2284,6 +2284,7 @@ export class BattleScene extends Phaser.Scene {
       if (statuses.length > 0) view.statusHit.setInteractive({ useHandCursor: true });
       else view.statusHit.disableInteractive();
     });
+    this.effects.syncFeverMarks(feverMarks);
   }
 
   private refreshProfiles(): void {
@@ -2372,11 +2373,9 @@ export class BattleScene extends Phaser.Scene {
    * 폭주 중에는 원래 색에 그 개체의 폭주색을 섞되, 섞는 비율이 현재 맥동 단계를 따라 오간다.
    */
   private bodyTint(view: FighterView): number {
-    if (!view.feverTinted) return view.tint;
-    const step = view.feverStep < 0 ? feverPulseStep(this.time.now) : view.feverStep;
-    const wave = step / (FEVER.pulseSteps - 1);
-    return mixTint(view.tint, view.feverTint, FEVER.mixLow + (FEVER.mixHigh - FEVER.mixLow) * wave);
+    return view.tint;
   }
+
 
   /**
    * 게이지와 수치를 실제 값으로 **스르륵** 따라붙인다.

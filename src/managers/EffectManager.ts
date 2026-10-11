@@ -3,6 +3,7 @@ import { allowBurst, AREA_IMPACT, INK_AREA, INK_HIT, INK_RESTORE, INK_PROJECTILE
 import { EFFECT_TEXTURE, ensureEffectTextures } from "../ui/effectTextures";
 import { ensureInkTextures } from "../ui/inkTextures";
 import { INK_STYLE, inkTextureKey, type InkShapeId } from "../ui/inkShapes";
+import { FEVER_INK, feverAngerPlacement, feverSirenRings } from "../ui/feverInk";
 import { healVisual, SHIELD_AURA_SHAPE, shieldAuraStyle, shieldGainVisual } from "../ui/restoreEffects";
 import { lashPoints } from "../ui/reachStrikeShape";
 import { flashPolicy, inkBlotPoints, mawTeeth, slashPoints, SIGNATURE_SPECS, type CombatPalette, type SignatureId, type StrokePoint } from "../ui/signatureEffects";
@@ -206,6 +207,7 @@ export class EffectManager {
   private readonly crosses: Phaser.GameObjects.Image[] = [];
   /** 몸을 두른 보호막. 전투원마다 한 장이고 두께 단계가 바뀐 프레임에만 다시 그린다. */
   private lastFocusAt: number | undefined;
+  private readonly feverMarks = new Map<string, { siren: Phaser.GameObjects.Graphics; anger: Phaser.GameObjects.Image }>();
   private readonly shieldAuras = new Map<string, { graphics: Phaser.GameObjects.Graphics; key: string }>();
   private frame = -1;
   private openedThisFrame = 0;
@@ -1054,6 +1056,52 @@ export class EffectManager {
     }
   }
 
+  /**
+   * 폭주 중인 개체의 발밑 사이렌과 머리 옆 빠직 표식(💢)을 맞춘다. 매 프레임 부른다.
+   *
+   * 몸의 테두리는 개체 자신이 그리고(`setAfterimages`), 여기서는 몸 밖의 둘만 맡는다. 목록에서
+   * 빠진 개체(폭주가 끝나 다 녹았거나 쓰러졌다)는 곧바로 걷는다.
+   */
+  syncFeverMarks(targets: readonly { id: string; x: number; feetY: number; headY: number; scale: number; ageMs: number; fade: number }[]): void {
+    const seen = new Set<string>();
+    for (const target of targets) {
+      seen.add(target.id);
+      let mark = this.feverMarks.get(target.id);
+      if (!mark) {
+        mark = {
+          siren: this.scene.add.graphics().setDepth(this.groundDepth),
+          anger: this.scene.add.image(0, 0, inkTextureKey("anger")).setTint(FEVER_INK.anger.color).setDepth(this.bodyDepth),
+        };
+        this.feverMarks.set(target.id, mark);
+      }
+      const siren = FEVER_INK.siren;
+      const graphics = mark.siren.clear().setPosition(target.x, target.feetY).setVisible(true);
+      for (const ring of feverSirenRings(target.ageMs)) {
+        const points = radialAreaPoints(ring.radius * target.scale).map((point) => new Phaser.Geom.Point(point.x, point.y));
+        const alpha = target.fade * ring.strength;
+        graphics.fillStyle(FEVER_INK.anger.color, siren.fillAlpha * alpha);
+        graphics.fillPoints(points, true);
+        graphics.lineStyle(siren.inkWidth[0] + (siren.inkWidth[1] - siren.inkWidth[0]) * ring.strength, INK_COLOR, alpha);
+        graphics.strokePoints(points, true);
+        graphics.lineStyle(siren.lineWidth[0] + (siren.lineWidth[1] - siren.lineWidth[0]) * ring.strength, FEVER_INK.red[1], alpha);
+        graphics.strokePoints(points, true);
+      }
+      const placement = feverAngerPlacement(target.ageMs);
+      mark.anger
+        .setPosition(target.x + placement.side * FEVER_INK.anger.side * target.scale, target.headY + FEVER_INK.anger.lift * target.scale)
+        .setRotation(placement.side * FEVER_INK.anger.tilt)
+        .setScale(placement.scale * target.fade * target.scale)
+        .setAlpha(target.fade)
+        .setVisible(target.fade > 0);
+    }
+    for (const [id, mark] of this.feverMarks) {
+      if (seen.has(id)) continue;
+      mark.siren.destroy();
+      mark.anger.destroy();
+      this.feverMarks.delete(id);
+    }
+  }
+
   private sustainedKey(fighterId: string, effectId: string): string { return `${fighterId}\u0000${effectId}`; }
 
   /** 짧은 평행 박자선은 현악기의 빠른 활놀림을 말하며, 낮은 알파라 폭주 필터를 가리지 않는다. */
@@ -1371,6 +1419,8 @@ export class EffectManager {
     this.projectiles.length = 0;
     this.crosses.forEach((image) => { this.scene.tweens.killTweensOf(image); image.destroy(); });
     this.crosses.length = 0;
+    this.feverMarks.forEach((mark) => { mark.siren.destroy(); mark.anger.destroy(); });
+    this.feverMarks.clear();
     this.shieldAuras.forEach((aura) => aura.graphics.destroy());
     this.shieldAuras.clear();
     this.lastAt.clear();

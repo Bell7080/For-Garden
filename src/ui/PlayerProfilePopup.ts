@@ -22,6 +22,7 @@ import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { powerSavingPolicy } from "../core/settings";
 import { session } from "../state/session";
 import { pressIn, pressOut } from "./pressFeedback";
+import { Button, DESTRUCTIVE_BUTTON_STYLE } from "./Button";
 import { PlayerLevelTreePopup } from "./PlayerLevelTreePopup";
 import { addSdFootShadow } from "./SdFootShadow";
 
@@ -44,6 +45,9 @@ export interface ProfileEditors {
   modifiers?: () => void;
 }
 
+/** 친구 카드 밑동의 조작 한 칸. 즐겨찾기·친구 삭제처럼 그 사람에게 하는 일이다. */
+export interface ProfileAction { label: string; destructive?: boolean; onClick: () => void }
+
 /**
  * 플레이어 카드 — 수집형 RPG의 프로필 한 장.
  *
@@ -62,7 +66,7 @@ export class PlayerProfilePopup {
     /** 자기 카드에만 온다 — 각 요소를 누르면 그 요소만 고치는 창이 열린다. 친구 카드에는 없다. */
     private readonly editors?: ProfileEditors,
     /** 친구 카드: 머리글과, 애착 렐릭을 눌렀을 때 여는 읽기 전용 정보창. */
-    private readonly options: { title?: string; onFavorite?: () => void } = {},
+    private readonly options: { title?: string; onFavorite?: () => void; actions?: readonly ProfileAction[] } = {},
   ) {}
 
   open(options: { instant?: boolean } = {}): void {
@@ -79,6 +83,7 @@ export class PlayerProfilePopup {
       this.buildShowcase(body, frame);
       this.buildRecords(body);
       this.buildNextUnlock(body);
+      this.buildActions(body);
     });
   }
 
@@ -435,6 +440,21 @@ export class PlayerProfilePopup {
       const y = PLAYER_PROFILE_LAYOUT.nextUnlock.y + (index - (lines.length - 1) / 2) * gap;
       body.add(drawGlyph(this.scene, "lock", -300, y, 30, COLOR.accent));
       body.add(this.scene.add.text(-270, y, line, textStyle({ role: "emphasis", size: 26, color: COLOR.ink })).setOrigin(0, 0.5));
+    });
+  }
+  /** 카드 밑동의 조작 줄 — 칸 수와 상관없이 같은 폭으로 나눠 서고, 파괴적인 조작은 확인 창과 같은 붉은 판이다. */
+  private buildActions(body: Phaser.GameObjects.Container): void {
+    const actions = this.options.actions ?? [];
+    if (actions.length === 0) return;
+    const { actions: slot, showcase } = PLAYER_PROFILE_LAYOUT;
+    const width = Math.floor((showcase.width - slot.gap * (actions.length - 1)) / actions.length);
+    actions.forEach((action, index) => {
+      const x = -showcase.width / 2 + width / 2 + index * (width + slot.gap);
+      body.add(new Button(this.scene, x, slot.y, {
+        width, height: slot.height, label: action.label, fontSize: slot.fontSize,
+        ...(action.destructive ? DESTRUCTIVE_BUTTON_STYLE : {}),
+        onClick: action.onClick,
+      }));
     });
   }
 }

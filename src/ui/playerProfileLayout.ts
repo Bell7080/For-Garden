@@ -48,6 +48,8 @@ export const PLAYER_PROFILE_LAYOUT = {
   },
   records: { titleY: 184, firstY: 286, rowGap: 168, columnX: 222, width: 426, height: 150 },
   nextUnlock: { y: 600 },
+  /** 친구 카드 밑동의 조작 줄(즐겨찾기·삭제). 다음 해금 줄이 없는 친구 카드가 그 자리를 쓴다. */
+  actions: { y: 636, height: 88, gap: 16, fontSize: 32 },
 } as const;
 
 /** 긴 사용자 문자열은 실제 Text bounds가 예약 영역을 넘기 전에 유니코드 단위로 줄인다. */

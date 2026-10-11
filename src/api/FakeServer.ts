@@ -1,4 +1,5 @@
 import { bannerAcceptsCount, canPull, pull, resolveAcquisitions, spend } from "../core/gacha";
+import { socialApi } from "./FakeSocialServer";
 import { MILEAGE_OVERFLOW_BY_RARITY, mileageForPull } from "../core/mileage";
 import { BANNERS } from "../data/banners";
 import { RELICS } from "../data/relics";
@@ -1940,7 +1941,7 @@ export class FakeServer implements GameApi {
   /** 우편의 실제 읽음 상태를 공용 알림 신호에 합성한다. */
   async getNotificationSignals() {
     await this.delay();
-    return { pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: this.mailListDto().unreadCount };
+    return { pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: 0, unreadMailCount: this.mailListDto().unreadCount };
   }
 
   /** 검증·보상 지급·수령 표시를 하나의 저장으로 확정해 재요청 중복 지급을 막는다. */

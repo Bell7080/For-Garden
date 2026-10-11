@@ -869,16 +869,6 @@
 "Auf der Spur eines neuen Exemplars",
 "Выслеживаю новый экземпляр"
 ],
-"friend.friend-haneul.lastActive": [
-"刚刚",
-"เมื่อสักครู่",
-"Vừa xong",
-"Baru saja",
-"Justo ahora",
-"Agora mesmo",
-"Gerade eben",
-"Только что"
-],
 "friend.friend-moss.status": [
 "今天也在慢慢复原中",
 "วันนี้ก็ค่อย ๆ ฟื้นคืนอีกเช่นเคย",
@@ -888,16 +878,6 @@
 "Hoje também restaurando devagar",
 "Auch heute wieder in Ruhe restaurieren",
 "И сегодня восстанавливаю не спеша"
-],
-"friend.friend-moss.lastActive": [
-"12分钟前",
-"12 นาทีที่แล้ว",
-"12 phút trước",
-"12 menit lalu",
-"Hace 12 minutos",
-"Há 12 minutos",
-"Vor 12 Minuten",
-"12 минут назад"
 ],
 "friend.friend-haneul.highestStage": [
 "2-5 赤红峡谷",

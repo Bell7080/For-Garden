@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { allowBurst, AREA_IMPACT, INK_HIT, INK_PROJECTILE, INK_STRIKE, inkStarStyle, lightenColor, projectilePosition, BATTLEFIELD_WASH_HOLD, BATTLEFIELD_WASH_RISE, EFFECT_BUDGET, EFFECT_PRESETS, EFFECT_TAP_COLOR, GROUND_SURFACE, REACH_STRIKE, SUSTAINED_COMBAT_EFFECT, type BurstSpec, type EffectKind } from "../ui/effectPresets";
+import { allowBurst, AREA_IMPACT, INK_AREA, INK_HIT, INK_PROJECTILE, INK_STRIKE, inkStarStyle, lightenColor, projectilePosition, BATTLEFIELD_WASH_HOLD, BATTLEFIELD_WASH_RISE, EFFECT_BUDGET, EFFECT_PRESETS, EFFECT_TAP_COLOR, GROUND_SURFACE, REACH_STRIKE, SUSTAINED_COMBAT_EFFECT, type BurstSpec, type EffectKind } from "../ui/effectPresets";
 import { EFFECT_TEXTURE, ensureEffectTextures } from "../ui/effectTextures";
 import { ensureInkTextures } from "../ui/inkTextures";
 import { INK_STYLE, inkTextureKey, type InkShapeId } from "../ui/inkShapes";
@@ -149,6 +149,28 @@ function groundDiamond(radius: number): Phaser.Geom.Point[] {
 }
 
 /** 풀에서 꺼내 쓰는 탄환 한 알. */
+/**
+ * 순간 범위 한 겹을 잉크 결로 칠한다 — 색면, 밝힌 안쪽 셀 그늘, 먹선, 그 위의 밝힌 색 선.
+ * 값은 `INK_AREA` 한 표에서 온다.
+ */
+function paintInkArea(
+  graphics: Phaser.GameObjects.Graphics,
+  outline: Phaser.Geom.Point[],
+  core: Phaser.Geom.Point[],
+  color: number,
+  fade: number,
+  spec: typeof INK_AREA,
+): void {
+  graphics.fillStyle(color, spec.fillAlpha * fade);
+  graphics.fillPoints(outline, true);
+  graphics.fillStyle(lightenColor(color, spec.coreLighten), spec.coreAlpha * fade);
+  graphics.fillPoints(core, true);
+  graphics.lineStyle(spec.inkWidth, INK_COLOR, spec.inkAlpha * fade);
+  graphics.strokePoints(outline, true);
+  graphics.lineStyle(spec.lineWidth, lightenColor(color, spec.lineLighten), fade);
+  graphics.strokePoints(outline, true);
+}
+
 /** 날아가는 잉크 조각 한 알과 그 꼬리. 풀에서 꺼내 다시 쓴다. */
 interface ProjectileSlot {
   image: Phaser.GameObjects.Image;
@@ -330,14 +352,29 @@ export class EffectManager {
       const breath = 1 + GROUND_SURFACE.breathAmplitude
         * Math.sin(nowSeconds / GROUND_SURFACE.breathSeconds * Math.PI * 2);
       const alpha = slot.fade * breath;
-      const points = radialAreaPoints(shown.radius).map((point) => new Phaser.Geom.Point(point.x, point.y));
+      const diamond = (radius: number): Phaser.Geom.Point[] =>
+        radialAreaPoints(radius).map((point) => new Phaser.Geom.Point(point.x, point.y));
       const graphics = slot.graphics.clear().setPosition(shown.x, shown.y).setVisible(true);
-      graphics.fillStyle(COLOR.void, GROUND_SURFACE.backdropAlpha * alpha);
-      graphics.fillPoints(points, true);
-      graphics.fillStyle(color, GROUND_SURFACE.fillAlpha * alpha);
-      graphics.fillPoints(points, true);
-      graphics.lineStyle(GROUND_SURFACE.lineWidth, color, GROUND_SURFACE.lineAlpha * alpha);
-      graphics.strokePoints(points, true);
+      const surfaceInk = INK_AREA.surface;
+      // 물결은 판보다 먼저 깐다 — 경계의 먹선이 언제나 맨 위에서 판의 끝을 쥔다.
+      graphics.fillStyle(color, surfaceInk.fillAlpha * alpha);
+      graphics.fillPoints(diamond(shown.radius), true);
+      graphics.fillStyle(lightenColor(color, INK_AREA.coreLighten), surfaceInk.coreAlpha * alpha);
+      graphics.fillPoints(diamond(shown.radius * INK_AREA.coreScale), true);
+      for (let index = 0; index < surfaceInk.ripples; index += 1) {
+        const phase = (nowSeconds / surfaceInk.rippleSeconds + index / surfaceInk.ripples) % 1;
+        const ripple = diamond(shown.radius * (surfaceInk.rippleFrom + (1 - surfaceInk.rippleFrom) * phase));
+        const rippleAlpha = surfaceInk.rippleAlpha * (1 - phase) * slot.fade;
+        graphics.lineStyle(surfaceInk.rippleWidth, INK_COLOR, rippleAlpha);
+        graphics.strokePoints(ripple, true);
+        graphics.lineStyle(surfaceInk.rippleWidth / 2, lightenColor(color, surfaceInk.rippleLighten), rippleAlpha);
+        graphics.strokePoints(ripple, true);
+      }
+      const edge = diamond(shown.radius);
+      graphics.lineStyle(surfaceInk.inkWidth, INK_COLOR, surfaceInk.inkAlpha * slot.fade);
+      graphics.strokePoints(edge, true);
+      graphics.lineStyle(INK_AREA.lineWidth, lightenColor(color, INK_AREA.lineLighten), surfaceInk.lineAlpha * alpha);
+      graphics.strokePoints(edge, true);
     }
   }
 
@@ -347,7 +384,7 @@ export class EffectManager {
    * 숫자만 셋이 한꺼번에 뜨면 왜 함께 맞았는지 읽히지 않는다. 반투명한 면 한 겹이 벌어졌다
    * 꺼지면서 "여기까지가 범위였다"를 한 번에 말한다. SD보다 뒤에 깔려 아무도 가리지 않는다.
    *
-   * **양식은 하나뿐이다** — 채움 한 겹과 테두리선 한 줄. 무엇에 맞는지와 누가 깔았는지는
+   * **양식은 하나뿐이다** — 색면과 밝힌 안쪽 한 겹, 먹선과 그 위의 색 선(`INK_AREA`). 무엇에 맞는지와 누가 깔았는지는
    * 무늬가 아니라 **색**이 말하고(`groundAreas.ts`), 순간과 지속은 남아 있는 시간이 가른다.
    * 모양은 판정이 쓴 것을 그대로 받는다 — 돌진을 원으로 그리면 보여 준 범위와 맞은 범위가 갈린다.
    */
@@ -369,24 +406,19 @@ export class EffectManager {
       targets: state,
       t: 1,
       duration: style.ms,
-      ease: "Cubic.Out",
+      ease: "Linear",
       onUpdate: () => {
-        const grow = AREA_IMPACT.growFrom + (1 - AREA_IMPACT.growFrom) * state.t;
-        // 진하기는 끝에서만 급히 빠진다. 처음부터 선형으로 옅어지면 벌어지는 동안 이미 사라진다.
-        const fade = 1 - state.t * state.t;
-        const points = (shape.shape === "radial"
-          ? radialAreaPoints(shape.radius * grow)
-          : laneAreaPoints(shape.from, shape.to, shape.halfWidth * grow)
+        // 처음 3할 동안 벌어지고, 6할까지 그대로 머문 뒤 빠진다 — 벌어지는 동안 이미 옅어지면
+        // 무엇이 지나갔는지 눈에 남지 않는다.
+        const opened = Math.min(1, state.t / INK_AREA.growUntil);
+        const grow = AREA_IMPACT.growFrom + (1 - AREA_IMPACT.growFrom) * (1 - (1 - opened) ** 3);
+        const fade = state.t < INK_AREA.holdUntil ? 1 : 1 - (state.t - INK_AREA.holdUntil) / (1 - INK_AREA.holdUntil);
+        const outline = (scale: number): Phaser.Geom.Point[] => (shape.shape === "radial"
+          ? radialAreaPoints(shape.radius * grow * scale)
+          : laneAreaPoints(shape.from, shape.to, shape.halfWidth * grow * scale)
         ).map((point) => new Phaser.Geom.Point(point.x, point.y));
         graphics.clear();
-        // 색면 아래에 검은 겹을 먼저 깐다 — 밝은 배경 원화 위에서는 옅은 색 한 겹이 통째로
-        // 묻힌다(보통 피해의 흰빛이 특히 그렇다). 머리 위 체력 바와 같은 해법이다.
-        graphics.fillStyle(COLOR.void, style.backdropAlpha * fade);
-        graphics.fillPoints(points, true);
-        graphics.fillStyle(color, style.fillAlpha * fade);
-        graphics.fillPoints(points, true);
-        graphics.lineStyle(style.lineWidth, color, style.lineAlpha * fade);
-        graphics.strokePoints(points, true);
+        paintInkArea(graphics, outline(1), outline(INK_AREA.coreScale), color, fade, INK_AREA);
       },
       onComplete: () => {
         graphics.clear().setVisible(false);

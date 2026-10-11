@@ -307,6 +307,47 @@ export const BATTLEFIELD_WASH_RISE = 0.45;
 export const BATTLEFIELD_WASH_HOLD = 0.5;
 
 /**
+ * 범위와 장판의 **잉크 결**.
+ *
+ * 홀로그램 시절의 옅은 색면 + 검은 밑판은 밝은 원화 위에서 경계가 흐렸다. 잉크 결에서는 경계를
+ * **먹선 한 줄**이 쥐고, 그 안쪽에 같은 색을 한 톤 밝힌 선이 한 줄 더 돈다(조각의 흰 면 + 먹선과
+ * 같은 문법). 안쪽 6할에는 밝힌 색을 한 겹 더 깔아 가운데가 솟아 보이게 한다 — 무늬가 아니라
+ * 셀 그늘이다. 순간 범위는 처음 3할 동안 벌어지고 6할까지 그대로 머문 뒤 빠진다(그래야 벌어지는
+ * 동안 이미 사라지지 않는다).
+ */
+export const INK_AREA = {
+  // 보통 피해의 흰빛은 0.3이면 밝은 바닥 위에서 판이 통째로 하얗게 떴다.
+  fillAlpha: 0.24,
+  coreScale: 0.6,
+  coreAlpha: 0.16,
+  coreLighten: 0.35,
+  inkWidth: 8,
+  inkAlpha: 0.9,
+  lineWidth: 3,
+  lineLighten: 0.25,
+  growUntil: 0.3,
+  holdUntil: 0.6,
+  /**
+   * 고여 있는 장판(여울). 계속 떠 있는 면이라 순간 범위보다 한 단계 옅고, 먹선도 가늘고 옅다 —
+   * 시안 그대로의 굵은 먹선은 판 위에 선 SD보다 먼저 읽혔다. 안에서 바깥으로 번지는 물결 셋이
+   * 고여 있다는 것을 말한다(크기는 판이 아니라 물결만 움직인다 — 경계는 흔들리지 않는다).
+   */
+  surface: {
+    fillAlpha: 0.2,
+    coreAlpha: 0.12,
+    inkWidth: 5,
+    inkAlpha: 0.55,
+    lineAlpha: 0.6,
+    ripples: 3,
+    rippleSeconds: 1.1,
+    rippleFrom: 0.18,
+    rippleWidth: 4,
+    rippleAlpha: 0.45,
+    rippleLighten: 0.5,
+  },
+} as const;
+
+/**
  * 멀리서 때리는 타격이 **가는 길**.
  *
  * 사거리를 나눈 뒤로 중·원거리 개체는 떨어진 자리에서 때리는데, 화면에는 맞은 쪽에서만

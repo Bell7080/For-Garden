@@ -45,7 +45,8 @@ function makeSession(stamina = 100, clearedIndex = -1): Session {
   };
 }
 
-const make = (state: Session) => new FakeServer(state, { latencyMs: 0, now: NOW });
+// 난수 0이면 토벌권 덤이 떨어지지 않는다 — 가방은 소탕권만 본다.
+const make = (state: Session) => new FakeServer(state, { latencyMs: 0, random: () => 0, now: NOW });
 
 /** 광고 제거 멤버십을 실제 구매 경로로 켠다 — 서버가 권리 목록을 보고 소탕권을 건너뛴다. */
 async function buyAdFreeMembership(server: FakeServer, suffix: string): Promise<void> {

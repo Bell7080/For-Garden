@@ -563,7 +563,8 @@ describe("FakeServer", () => {
     const state = makeSession();
     state.wallet.stamina = 100;
     state.itemInventory = [{ itemId: "sweep-ticket", quantity: 4 }];
-    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-19T04:00:00Z") });
+    // 난수 0이면 토벌권 덤이 떨어지지 않는다 — 소탕권 차감만 본다.
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0, now: () => new Date("2026-09-19T04:00:00Z") });
     await expect(server.sweepBounty({ tierId: "bounty-1", requestId: "early", count: 1 })).rejects.toMatchObject({ code: "DUNGEON_NOT_CLEARED" });
     await server.enterBounty({ tierId: "bounty-1", requestId: "clear" });
     await server.completeBounty({ tierId: "bounty-1", requestId: "clear", victory: true, clearedRounds: 3 });

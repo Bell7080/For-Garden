@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { allowBurst, AREA_IMPACT, BATTLEFIELD_WASH_HOLD, BATTLEFIELD_WASH_RISE, EFFECT_BUDGET, EFFECT_PRESETS, EFFECT_TAP_COLOR, GROUND_SURFACE, REACH_STRIKE, SUSTAINED_COMBAT_EFFECT, type BurstSpec, type EffectKind } from "../ui/effectPresets";
 import { EFFECT_TEXTURE, ensureEffectTextures } from "../ui/effectTextures";
+import { ensureInkTextures } from "../ui/inkTextures";
 import { healVisual, SHIELD_AURA_SHAPE, shieldAuraStyle, shieldGainVisual } from "../ui/restoreEffects";
 import { lashPoints } from "../ui/reachStrikeShape";
 import { flashPolicy, inkBlotPoints, mawTeeth, slashPoints, SIGNATURE_SPECS, type CombatPalette, type SignatureId, type StrokePoint } from "../ui/signatureEffects";
@@ -191,6 +192,7 @@ export class EffectManager {
     this.flashes = flashPolicy(options.reduceFlashes ?? false);
     this.damageNumbers = options.damageNumbers;
     ensureEffectTextures(scene);
+    ensureInkTextures(scene);
     // 씬이 꺼질 때 emitter·풀을 함께 정리한다. 씬 재진입마다 쌓이면 텍스처는 하나여도
     // 표시 객체가 배로 늘어난다.
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.destroy());

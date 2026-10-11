@@ -89,6 +89,12 @@ export function signatureFor(relicId: string, moment: SignatureMoment): Signatur
  * 알파가 낮은 이유는 밝은 배경 원화 위에서 조금만 진해도 SD와 피해 숫자가 그 속에 묻히기
  * 때문이다 — **예쁜 캐릭터를 가리는 순간 이펙트는 타격감이 아니라 방해다.**
  */
+/**
+ * 전용 연출의 먹선 두께(px). 전장의 다른 잉크 조각과 같은 결로 — 색면 위에 먹선이 경계를 쥔다.
+ * 겹쳐 밝아지는 합성은 쓰지 않는다(밝은 원화 위에서 하얗게 뭉갰다).
+ */
+export const SIGNATURE_INK_WIDTH = 5;
+
 export const SIGNATURE_SPECS = {
   /**
    * 렉시아 — 위아래 턱이 맞물린다.
@@ -107,9 +113,8 @@ export const SIGNATURE_SPECS = {
     gap: 104,
     /** 닫히기까지(ms). 궁극기 컷인 뒤라 짧아야 기다림이 되지 않는다. */
     ms: 190,
-    /** 닫힌 뒤 남는 섬광의 지름(px)과 시간(ms). */
+    /** 맞물린 뒤 서는 잉크 별의 크기(px) — 120이 일반 공격의 별 한 배다. */
     flash: 150,
-    flashMs: 220,
     fillAlpha: 0.72,
     edgeWidth: 4,
   },
@@ -179,8 +184,8 @@ export const SIGNATURE_SPECS = {
    * 얇게 얹어 "누가 그었나"만 남긴다.
    */
   ellaInkStroke: {
-    /** 먹의 색. 개체 색으로 칠하면 획이 아니라 발광이 된다. */
-    ink: 0x14181a,
+    /** 먹의 색 — 전장의 잉크선과 같은 먹이다. 개체 색으로 칠하면 획이 아니라 발광이 된다. */
+    ink: 0x2e2836,
     inkAlpha: 0.62,
     /** 획 둘레에 얹는 속성색의 진하기. 진해지면 먹이 아니라 색칠이 된다. */
     edgeAlpha: 0.34,

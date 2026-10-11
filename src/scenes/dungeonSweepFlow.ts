@@ -5,7 +5,7 @@ import { t } from "../i18n";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { session } from "../state/session";
 import type { PopupLayer } from "../ui/PopupLayer";
-import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
+import { dungeonRewardItems, openRewardPopup } from "../ui/RewardPopup";
 import { openSweepPopup } from "../ui/SweepPopup";
 import { playSweepSkirmish } from "../ui/SweepSkirmish";
 import { sweepTicketState, watchSweepTicketAd } from "./dungeonSweepTickets";
@@ -71,11 +71,11 @@ async function run(flow: DungeonSweepFlow, count: number): Promise<void> {
   const heroId = session.favorite && session.owned.has(session.favorite) ? session.favorite : relicCollection.validParty[0] ?? session.favorite;
   const skirmish = playSweepSkirmish(scene, { heroId, enemyId: flow.enemyId, count, fieldKey: flow.fieldKey, depth: SKIRMISH_DEPTH });
   // 응답이 오는 대로 확정된 보상을 넘긴다 — 그 뒤의 타격부터 그 아이콘이 튀어나온다.
-  const request = flow.request(count).then((result) => { skirmish.setRewards(currencyRecordToRewardItems(result.granted)); return result; });
+  const request = flow.request(count).then((result) => { skirmish.setRewards(dungeonRewardItems(result.granted, result.bonusItems)); return result; });
   try {
     const [result] = await Promise.all([request, skirmish.done]);
     if (!scene.scene.isActive()) return;
-    openRewardPopup(scene, popups, { title: t("dungeon.sweep.title"), items: currencyRecordToRewardItems(result.granted), playerExp: result.playerExp });
+    openRewardPopup(scene, popups, { title: t("dungeon.sweep.title"), items: dungeonRewardItems(result.granted, result.bonusItems), playerExp: result.playerExp });
   } catch {
     skirmish.close();
     flow.onFailed?.();

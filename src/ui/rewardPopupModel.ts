@@ -35,6 +35,12 @@ export function currencyRecordToRewardItems(rewards: Readonly<Record<string, num
   }));
 }
 
+/** 재화 지급에 이긴 판의 덤(토벌권 등 가방 아이템)을 함께 붙인 한 줄 — 결과판·소탕 영수증이 같은 함수를 지난다. */
+export function dungeonRewardItems(granted: Readonly<Record<string, number>>, bonusItems: readonly { itemId: string; amount: number }[] = []): RewardPopupItem[] {
+  const bonus = productGrantsToRewardItems(bonusItems.map(({ itemId, amount }) => ({ kind: "item" as const, itemId, name: itemId, amount })));
+  return sortRewardItems([...currencyRecordToRewardItems(granted), ...bonus]);
+}
+
 /**
  * 광고 보상 응답을 보상 액자 목록으로 바꾼다. 재화는 서버 지갑의 전후 차이(`granted`)만 읽고,
  * 가방 아이템·결투 도전권은 슬롯 정의에서 읽는다. 발굴 효과·빠른 원정은 제 화면이 결과를 보여 주므로 비운다.

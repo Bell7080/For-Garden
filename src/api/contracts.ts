@@ -280,6 +280,8 @@ export interface CakeOperationCompleteResponse extends PlayerStateDto {
   granted: Partial<Record<keyof Wallet, number>>;
   /** 이 판으로 새 단계가 열렸는가. */
   unlockedNextTier: boolean;
+  /** 이긴 판에 가끔 얹히는 덤(토벌권). 없으면 빈 목록이다. */
+  bonusItems?: import("../core/raidTicketDrops").BonusItemDrop[];
   /** 이 판에서 실제로 쓴 스테미나(진 판은 0)와 돌려준 몫. */
   staminaSpent: number;
   staminaRefunded: number;
@@ -302,6 +304,8 @@ export interface DungeonSweepRequest {
 /** 소탕 결과. 스테미나·소탕권 차감과 보상 지급이 전투 없이 한 처리로 끝난다. */
 export interface DungeonSweepResponse extends PlayerStateDto {
   tierId: string;
+  /** 소탕한 판마다 굴린 덤(토벌권). 없으면 빈 목록이다. */
+  bonusItems?: import("../core/raidTicketDrops").BonusItemDrop[];
   count: number;
   staminaSpent: number;
   ticketsSpent: number;
@@ -660,7 +664,7 @@ export interface EnterBountyResponse extends PlayerStateDto { tierId: string; re
 /** 세 라운드의 결과를 한 번에 확정한다. 진 판도 보내 기록이 이긴 판만의 것이 되지 않게 한다. */
 export interface CompleteBountyRequest { tierId: string; requestId: string; victory: boolean; clearedRounds: number; }
 /** 골드 지급과 등급 해금을 한 처리로 확정하고 화면이 다시 계산하지 않게 결과만 돌려준다. */
-export interface CompleteBountyResponse extends PlayerStateDto { tierId: string; victory: boolean; clearedRounds: number; goldEarned: number; firstClear: boolean; clearedTierIds: string[]; staminaSpent: number; staminaRefunded: number; playerExp?: PlayerExpReceipt; }
+export interface CompleteBountyResponse extends PlayerStateDto { tierId: string; victory: boolean; clearedRounds: number; goldEarned: number; firstClear: boolean; clearedTierIds: string[]; staminaSpent: number; staminaRefunded: number; playerExp?: PlayerExpReceipt; bonusItems?: import("../core/raidTicketDrops").BonusItemDrop[]; }
 /** 깬 등급을 조회한다. 하루 입장 제한은 없다. */
 export interface BountyStatusResponse { clearedTierIds: string[]; serverTime: string; }
 
@@ -844,6 +848,22 @@ export interface SweepExpeditionRequest { requestId: string; }
 /** 소탕은 점수를 남기지 않고 노드 클리어 보상의 몫만 준다(`EXPEDITION_SWEEP_POLICY`). */
 export interface SweepExpeditionResponse extends PlayerStateDto { weekKey: string; granted: Record<string, number>; playsToday: number; }
 
+/* ── 출석 ── 규칙은 `core/attendance.ts`, 보상표는 `data/attendance.ts`가 갖는다. */
+
+/** 한 줄(신규·정규)의 지금 모습. 칸마다 받는 것까지 함께 내려 화면이 표를 따로 읽지 않는다. */
+export interface AttendanceTrackDto {
+  id: import("../core/attendance").AttendanceTrackId;
+  claimed: number;
+  claimableToday: boolean;
+  /** 이 줄이 닫히는 시각. 정규는 첫 칸을 받기 전이면 `null`이다. */
+  endsAt: string | null;
+  days: MailRewardDto[][];
+}
+/** 지금 서 있는 줄만 싣는다(끝난 신규 출석은 빠진다). `autoShow`는 오늘 로비가 저절로 판을 열어야 하는가다. */
+export interface AttendanceStatusResponse { tracks: AttendanceTrackDto[]; autoShow: boolean; serverTime: string; }
+export interface ClaimAttendanceRequest { trackId: import("../core/attendance").AttendanceTrackId; requestId: string; }
+export interface ClaimAttendanceResponse extends AttendanceStatusResponse { trackId: import("../core/attendance").AttendanceTrackId; day: number; granted: MailRewardDto[]; wallet: Wallet; items: InventoryItemDto[]; }
+
 /** 실제 HTTP API로 교체할 때도 씬이 의존할 단 하나의 통신 인터페이스다. */
 export interface GameApi extends AsyncArenaProfileApi {
   getInteractionCities(): Promise<InteractionCitiesResponse>;
@@ -856,6 +876,12 @@ export interface GameApi extends AsyncArenaProfileApi {
   claimMailRewards(request: ClaimMailRewardsRequest): Promise<ClaimMailRewardsResponse>;
   /** 열람한 우편을 읽음으로 확정한다. */
   markMailsRead(request: MarkMailsReadRequest): Promise<MailListResponse>;
+  /** 오늘의 출석 상태(신규·정규)를 조회한다. */
+  getAttendance(): Promise<AttendanceStatusResponse>;
+  /** 한 줄의 오늘 칸을 받는다. 같은 날 두 번 받지 못하고 같은 요청 ID는 같은 결과를 돌려준다. */
+  claimAttendance(request: ClaimAttendanceRequest): Promise<ClaimAttendanceResponse>;
+  /** 로비가 오늘 출석 판을 저절로 열었음을 남긴다 — 하루에 한 번만 저절로 연다. */
+  markAttendanceAutoShown(): Promise<void>;
   /** 서버 UTC 주차의 최고/누적 기록을 조회한다. */
   getExpeditionWeeklyBest(): Promise<ExpeditionWeeklyBestResponse>;
   /** 동작열을 서버 편성으로 재현하고 전멸 결과만 점수로 제출한다. */

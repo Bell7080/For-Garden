@@ -1,0 +1,35 @@
+import type { AttendanceStatusResponse, ClaimAttendanceResponse, GameApi } from "../api/contracts";
+import { gameApi } from "../api/FakeServer";
+import type { AttendanceTrackId } from "../core/attendance";
+import { session, type Session } from "../state/session";
+import { managerEvents, type ManagerEvents } from "./ManagerEvents";
+import { notificationManager } from "./NotificationManager";
+
+/**
+ * 출석의 서버 경계와 지급 결과의 로컬 반영을 한곳에서 소유한다(우편의 `MailManager`와 같은 규칙).
+ *
+ * 화면은 칸을 눌렀다는 것만 넘기고 지갑·가방을 직접 더하지 않는다 — 서버가 확정한 스냅샷만 세션에 옮기고
+ * 로비 입구의 빨간 점은 받은 뒤 곧바로 다시 읽는다.
+ */
+export class AttendanceManager {
+  constructor(private readonly api: GameApi, private readonly state: Session, private readonly events: ManagerEvents = managerEvents) {}
+
+  status(): Promise<AttendanceStatusResponse> { return this.api.getAttendance(); }
+
+  /** 로비가 오늘 저절로 열었다는 것을 서버에 남긴다. 실패해도 판은 이미 열렸으므로 삼킨다. */
+  markAutoShown(): Promise<void> { return this.api.markAttendanceAutoShown().catch(() => undefined); }
+
+  async claim(trackId: AttendanceTrackId, requestId: string = crypto.randomUUID()): Promise<ClaimAttendanceResponse> {
+    const result = await this.api.claimAttendance({ trackId, requestId });
+    this.state.wallet = { ...result.wallet };
+    this.state.itemInventory = result.items
+      .filter(({ category }) => category === "consumable" || category === "material")
+      .map(({ definitionId, quantity, lots }) => ({ itemId: definitionId, quantity, ...(lots ? { lots: lots.map((lot) => ({ ...lot })) } : {}) }));
+    this.events.publish("wallet", { wallet: this.state.wallet });
+    this.events.publishInventory();
+    void notificationManager.refresh().catch(() => undefined);
+    return result;
+  }
+}
+
+export const attendanceManager = new AttendanceManager(gameApi, session);

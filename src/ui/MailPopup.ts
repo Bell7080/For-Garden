@@ -14,13 +14,13 @@ import { drawGlyph } from "./glyphs";
 import { addFramedIcon, addItemFrame } from "./itemFrame";
 import type { PopupLayer } from "./PopupLayer";
 import { POPUP_TITLE_SIZE } from "./PopupLayer";
-import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { COLOR, textStyle } from "./theme";
 import { addSectionTitle } from "./SectionTitle";
 import { fitTextToBox } from "./textFit";
 import { shapeClipMask } from "./popupArt";
 import { openCurrencyGuide, openItemGuide } from "./currencyGuideEntry";
 import { openRewardPopup } from "./RewardPopup";
+import { rewardDtoTexture } from "./rewardDtoIcon";
 import { setDebugMailPopup } from "../debug";
 import { pressIn, pressOut } from "./pressFeedback";
 import { managerEvents } from "../managers/ManagerEvents";
@@ -28,12 +28,8 @@ import { isMailExpired, MAIL_DETAIL_LAYOUT, mailDetailRail, MAIL_POPUP_LAYOUT, m
 
 const TABS: readonly MailTab[] = ["reward", "notice"];
 
-/** 첨부물 한 칸의 그림 키. 재화는 지갑 아이콘, 아이템은 제 정의의 그림이다. */
-function mailRewardTexture(reward: MailRewardDto): string {
-  if (reward.kind === "currency") return CURRENCY_ICON_BY_WALLET[reward.currency];
-  const icon = findItem(reward.itemId)?.icon;
-  return icon?.kind === "asset" ? icon.key : icon?.kind === "currency" ? CURRENCY_ICON_BY_WALLET[icon.key] : "";
-}
+/** 첨부물 한 칸의 그림 키 — 출석과 같은 한 규칙이다. */
+const mailRewardTexture = rewardDtoTexture;
 
 /**
  * 우편함 — **우편**(받을 것이 든 봉투)과 **안내**(읽을 글)를 두 탭으로 가른다.

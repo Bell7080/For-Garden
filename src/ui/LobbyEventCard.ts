@@ -1,10 +1,20 @@
 import Phaser from "phaser";
 import { t, type TextKey } from "../i18n";
-import type { LobbyEventDef } from "../data/lobbyEvents";
+import type { AttendanceTrackDto } from "../api/contracts";
+import { ATTENDANCE_DAYS } from "../core/attendance";
+import { motionPolicy } from "../core/settings";
+import { session } from "../state/session";
 import { chipPoints, drawLayer, slantedRect } from "./holo";
-import type { LobbyEventRemaining } from "./lobbyEventModel";
+import { lobbyEventRemaining, type LobbyEventEntry, type LobbyEventRemaining } from "./lobbyEventModel";
 import { addPopupBackgroundImage } from "./backgrounds";
+import { spawnEventCardSd } from "./eventCardSd";
 import { pressIn, pressOut } from "./pressFeedback";
+import { startPuppetHop } from "./puppetHop";
+import { addFramedIcon } from "./itemFrame";
+import { rewardDtoTexture } from "./rewardDtoIcon";
+import { sortRewardItems } from "./rewardOrder";
+import { NotificationDot } from "./NotificationDot";
+import { ATTENDANCE_CAST, ATTENDANCE_PILE, ATTENDANCE_SPARKLES, ATTENDANCE_TONE } from "./attendanceStyle";
 import { shrinkTextToWidth, squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
 
@@ -19,8 +29,12 @@ const CARD = {
   rail: { width: 10, inset: 16, alpha: 0.9 },
   titleSize: 40,
   subtitleSize: 26,
-  /** 남은 기간 칩. 카드 오른쪽 아래에 앉는다. */
+  /** 남은 기간 칩. SD 반대쪽 아래에 앉는다. */
   remaining: { width: 196, height: 50, size: 24, inset: 26 },
+  /** SD는 출격판 칸과 같은 자리 규칙을 쓰되 한 뼘 작게 세운다(출격 스토리 칸과 같은 배율). */
+  sdScale: 0.9,
+  /** 출석 카드의 진행 마름모 줄. */
+  pips: { gap: 30, half: 9 },
 } as const;
 
 const REMAINING_KEY: Readonly<Record<LobbyEventRemaining["unit"], TextKey>> = {
@@ -29,70 +43,51 @@ const REMAINING_KEY: Readonly<Record<LobbyEventRemaining["unit"], TextKey>> = {
   minutes: "event.remaining.minutes",
 };
 
+const ATTENDANCE_TITLE: Readonly<Record<AttendanceTrackDto["id"], TextKey>> = {
+  newcomer: "event.attendance.newcomer.title",
+  regular: "event.attendance.regular.title",
+};
+
 export interface LobbyEventCardOptions {
   width: number;
   height: number;
-  event: LobbyEventDef;
-  remaining: LobbyEventRemaining;
+  entry: LobbyEventEntry;
+  now: number;
   onClick: () => void;
 }
 
 /**
  * 로비 이벤트 판의 한 장.
  *
- * **카드 자체가 버튼이다** — 무역처럼 줄 끝에 「들어가기」를 세우지 않는다. 이름이 크게, 부제가
- * 그 아래 흐리게, 남은 기간이 오른쪽 아래 노란 칩으로 선다.
+ * **카드 자체가 버튼이다** — 무역처럼 줄 끝에 「들어가기」를 세우지 않는다. 카드마다 그 이벤트에서 얻는 것으로
+ * 꾸민다: 픽업은 그 개체의 모집 원화와 SD가, 출석은 뛰노는 SD와 받을 보상이 선다. SD는 출격판과 같이 몸은
+ * 칸 안에 갇히고 머리만 윗변 밖으로 빠져나온다.
  */
 export class LobbyEventCard extends Phaser.GameObjects.Container {
-  constructor(scene: Phaser.Scene, x: number, y: number, options: LobbyEventCardOptions) {
+  private dot?: NotificationDot;
+  private pipRow?: Phaser.GameObjects.Container;
+  private readonly hops: Phaser.Tweens.Tween[] = [];
+
+  constructor(scene: Phaser.Scene, x: number, y: number, private readonly options: LobbyEventCardOptions) {
     super(scene, x, y);
-    const { width, height, event, remaining } = options;
+    const { width, height, entry } = options;
     const bevel = Math.min(width, height) * CARD.bevel;
     const cut = { topLeft: bevel, topRight: 0, bottomRight: bevel, bottomLeft: 0 };
-    const left = -width / 2 + CARD.padX;
+    const shape = chipPoints(width, height, { bevel: cut });
+    const tone = entry.kind === "attendance" ? ATTENDANCE_TONE[entry.track.id] : undefined;
+    const accent = tone?.color ?? COLOR.event;
 
     for (const { grow, offsetY, alpha } of CARD.shadow) {
       this.add(drawLayer(scene, 0, offsetY, chipPoints(width + grow, height + grow, { bevel: cut }), { fill: 0x000000, alpha, shadow: false }));
     }
-    this.add(drawLayer(scene, 0, 0, chipPoints(width, height, { bevel: cut }), {
-      fill: CARD.fill, alpha: CARD.fillAlpha, sheen: 0.05,
-      glow: { color: COLOR.event, strength: CARD.glow.strength, height: CARD.glow.height },
-      edge: COLOR.event, edgeAlpha: 0.9, edgeWidth: 3,
-    }));
-    // 이벤트에 어울리는 원화가 있으면 카드 뒷배경으로 깐다. 글이 서는 왼쪽은 어둡게 눌러 읽히게 하고
-    // 원화는 오른쪽에서 드러난다. 판 실루엣과 같은 도형으로 잘라 깎인 모서리 밖으로 새지 않는다.
-    if (event.backdropKey) {
-      addPopupBackgroundImage(scene, this, event.backdropKey, {
-        x: 0, y: 0, width, height, maskShape: chipPoints(width, height, { bevel: cut }), imageAlpha: 0.9, overlayStrength: 0.6,
-      });
-      const veil = scene.add.graphics();
-      veil.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.78, 0, 0.78, 0);
-      veil.fillRect(-width / 2, -height / 2, width * 0.7, height);
-      this.add(veil);
-    }
-    this.add(drawLayer(scene, left - CARD.rail.inset, 0, slantedRect(CARD.rail.width, height * 0.6), {
-      fill: COLOR.event, alpha: CARD.rail.alpha, shadow: false,
+    this.add(drawLayer(scene, 0, 0, shape, {
+      fill: tone?.fill ?? CARD.fill, alpha: CARD.fillAlpha, sheen: 0.05,
+      glow: { color: accent, strength: CARD.glow.strength, height: CARD.glow.height },
+      edge: accent, edgeAlpha: 0.9, edgeWidth: 3,
     }));
 
-    const textWidth = width - CARD.padX * 2;
-    const title = scene.add.text(left, -height / 2 + 64, t(event.titleKey), textStyle({ role: "display", size: CARD.titleSize, color: COLOR.ink }))
-      .setOrigin(0, 0.5)
-      .setShadow(3, 4, "#04060a", 0, true, true);
-    shrinkTextToWidth(title, textWidth);
-    this.add(title);
-    const subtitle = scene.add.text(left, -height / 2 + 116, t(event.subtitleKey), textStyle({ role: "body", size: CARD.subtitleSize, color: COLOR.inkDim }))
-      .setOrigin(0, 0.5);
-    shrinkTextToWidth(subtitle, textWidth);
-    this.add(subtitle);
-
-    const chip = CARD.remaining;
-    const chipX = width / 2 - chip.inset - chip.width / 2 - bevel * 0.4;
-    const chipY = height / 2 - chip.inset - chip.height / 2;
-    this.add(drawLayer(scene, chipX, chipY, slantedRect(chip.width, chip.height), { fill: 0x000000, alpha: 0.55, shadow: false, edge: COLOR.event, edgeAlpha: 0.7 }));
-    const remainingText = scene.add.text(chipX, chipY, t(REMAINING_KEY[remaining.unit], { value: remaining.value }), textStyle({ role: "emphasis", size: chip.size, color: COLOR.eventText }))
-      .setOrigin(0.5);
-    squeezeTextToWidth(remainingText, chip.width - 24);
-    this.add(remainingText);
+    if (entry.kind === "event") this.paintEvent(shape, bevel);
+    else this.paintAttendance(entry.track, shape, bevel);
 
     const hit = scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => pressIn(this));
@@ -100,5 +95,204 @@ export class LobbyEventCard extends Phaser.GameObjects.Container {
     hit.on("pointerup", () => { pressOut(this); options.onClick(); });
     this.add(hit);
     this.setSize(width, height);
+    this.once(Phaser.GameObjects.Events.DESTROY, () => this.hops.forEach((tween) => tween.remove()));
+  }
+
+  /** 출석을 받은 뒤 판을 다시 세우지 않고 빨간 점과 진행 마름모만 갈아 끼운다. */
+  setAttendance(track: AttendanceTrackDto): void {
+    if (this.options.entry.kind !== "attendance") return;
+    this.setDot(track.claimableToday);
+    this.paintPips(track);
+  }
+
+  private setDot(visible: boolean): void {
+    if (visible && !this.dot) this.dot = new NotificationDot(this.scene, this, { x: this.options.width / 2 - 18, y: -this.options.height / 2 + 18 });
+    if (!visible && this.dot) { this.dot.destroy(true); this.dot = undefined; }
+  }
+
+  /* ── 기간 이벤트 ───────────────────────────────────────────────────────── */
+
+  private paintEvent(shape: number[], bevel: number): void {
+    if (this.options.entry.kind !== "event") return;
+    const { scene } = this;
+    const { width, height, entry, now } = this.options;
+    const event = entry.event;
+    const sdSide = event.sd?.side;
+    // 이벤트에 어울리는 원화가 있으면 카드 뒷배경으로 깐다. 글이 서는 쪽은 어둡게 눌러 읽히게 하고 원화는
+    // 반대쪽에서 드러난다. 판 실루엣과 같은 도형으로 잘라 깎인 모서리 밖으로 새지 않는다.
+    if (event.backdropKey) {
+      const frame = event.backdropFrame ?? { zoom: 1, offsetX: 0, offsetY: 0 };
+      addPopupBackgroundImage(scene, this, event.backdropKey, {
+        x: frame.offsetX, y: 0, width: width * frame.zoom, height, imageOffsetY: frame.offsetY,
+        maskShape: shape.map((value, index) => (index % 2 === 0 ? value - frame.offsetX : value)),
+        imageAlpha: 0.9, overlayStrength: 0.6,
+      });
+      const veil = scene.add.graphics();
+      veil.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.8, 0, 0.8, 0);
+      veil.fillRect(-width / 2, -height / 2, width * 0.62, height);
+      this.add(veil);
+    }
+    const left = -width / 2 + CARD.padX;
+    this.add(drawLayer(scene, left - CARD.rail.inset, 0, slantedRect(CARD.rail.width, height * 0.6), { fill: COLOR.event, alpha: CARD.rail.alpha, shadow: false }));
+    // 글은 SD가 서지 않는 쪽 절반 남짓을 쓴다.
+    const textWidth = sdSide ? width * 0.56 : width - CARD.padX * 2;
+    const title = scene.add.text(left, -height / 2 + 62, t(event.titleKey), textStyle({ role: "display", size: CARD.titleSize, color: COLOR.eventText }))
+      .setOrigin(0, 0.5)
+      .setStroke("#1a1206", 8)
+      .setShadow(3, 5, "#04060a", 0, true, true);
+    shrinkTextToWidth(title, textWidth);
+    this.add(title);
+    const subtitle = scene.add.text(left, -height / 2 + 112, t(event.subtitleKey), textStyle({ role: "body", size: CARD.subtitleSize, color: COLOR.ink }))
+      .setOrigin(0, 0.5)
+      .setShadow(2, 3, "#04060a", 0, true, true);
+    shrinkTextToWidth(subtitle, textWidth);
+    this.add(subtitle);
+
+    // 남은 기간 칩 — SD가 오른쪽이면 글 아래 왼쪽에, 아니면 오른쪽 아래에 앉는다.
+    const chip = CARD.remaining;
+    const chipX = sdSide === "right" ? left + chip.width / 2 : width / 2 - chip.inset - chip.width / 2 - bevel * 0.4;
+    const chipY = height / 2 - chip.inset - chip.height / 2;
+    this.addRemainingChip(chipX, chipY, lobbyEventRemaining(event.endsAt, now), COLOR.event, COLOR.eventText);
+
+    if (event.sd) this.addSd(event.sd.relicId, event.sd.side, shape, bevel, { hop: false });
+  }
+
+  /* ── 출석 ───────────────────────────────────────────────────────────────── */
+
+  private paintAttendance(track: AttendanceTrackDto, shape: number[], bevel: number): void {
+    const { scene } = this;
+    const { width, height } = this.options;
+    const tone = ATTENDANCE_TONE[track.id];
+    const lavish = track.id === "newcomer";
+    // 출석 카드의 바닥은 제 색으로 아래에서 은은하게 물든다 — 신규는 더 짙게.
+    const wash = scene.add.graphics();
+    wash.fillGradientStyle(tone.deep, tone.deep, tone.deep, tone.deep, 0, 0, lavish ? 0.55 : 0.36, lavish ? 0.55 : 0.36);
+    wash.fillPoints(shape.reduce<Phaser.Geom.Point[]>((points, value, index) => (index % 2 === 0 ? [...points, new Phaser.Geom.Point(value, shape[index + 1])] : points), []), true);
+    this.add(wash);
+
+    // 신규: 가운데 제목 + 수북한 보상 더미, 좌우로 둘이 뛴다.
+    // 정규: 왼쪽에 토리카 혼자, 오른쪽에 제목과 가지런한 보상 한 줄.
+    const centerX = lavish ? 0 : -width / 2 + 330;
+    const textOriginX = lavish ? 0.5 : 0;
+    const textWidth = lavish ? 360 : width - 330 - CARD.padX;
+    const title = scene.add.text(centerX, -height / 2 + 50, t(ATTENDANCE_TITLE[track.id]), textStyle({ role: "display", size: lavish ? 42 : 38, color: tone.text }))
+      .setOrigin(textOriginX, 0.5)
+      .setStroke(tone.stroke, 9)
+      .setShadow(3, 5, "#04060a", 0, true, true);
+    shrinkTextToWidth(title, textWidth);
+    this.add(title);
+
+    this.pipRow = scene.add.container(centerX, -height / 2 + 94);
+    this.add(this.pipRow);
+    this.paintPips(track);
+
+    const textures = [...new Set(track.days.flat().map(rewardDtoTexture).filter(Boolean))];
+    const ordered = sortRewardItems(textures.map((icon) => ({ icon }))).map(({ icon }) => icon as string);
+    if (lavish) this.addRewardPile(ordered, tone.color, 0, 40);
+    else this.addRewardRow(ordered, centerX, height / 2 - 52, textWidth);
+
+    ATTENDANCE_CAST[track.id].forEach((cast, index) => this.addSd(cast.relicId, cast.side, shape, bevel, { hop: true, index: lavish ? index : 1 }));
+    this.setDot(track.claimableToday);
+  }
+
+  /** 진행 마름모 일곱 + 남은 기간. 받은 칸은 제 색으로 차고 오늘 받을 칸은 테두리만 밝게 선다. */
+  private paintPips(track: AttendanceTrackDto): void {
+    const row = this.pipRow;
+    if (!row) return;
+    row.removeAll(true);
+    const tone = ATTENDANCE_TONE[track.id];
+    const lavish = track.id === "newcomer";
+    const { gap, half } = CARD.pips;
+    const remaining = track.endsAt ? t(REMAINING_KEY[lobbyEventRemaining(track.endsAt, this.options.now).unit], { value: lobbyEventRemaining(track.endsAt, this.options.now).value }) : "";
+    const label = this.scene.add.text(0, 0, `${track.claimed}/${ATTENDANCE_DAYS}${remaining ? `  ·  ${remaining}` : ""}`, textStyle({ role: "emphasis", size: 22, color: COLOR.ink }))
+      .setOrigin(0, 0.5)
+      .setShadow(2, 3, "#04060a", 0, true, true);
+    const pipsWidth = gap * (ATTENDANCE_DAYS - 1);
+    const total = pipsWidth + half + 22 + label.width;
+    const start = lavish ? -total / 2 + half : half;
+    for (let index = 0; index < ATTENDANCE_DAYS; index += 1) {
+      const filled = index < track.claimed;
+      const today = track.claimableToday && index === track.claimed;
+      const pip = this.scene.add.graphics({ x: start + index * gap, y: 0 });
+      const points = [new Phaser.Geom.Point(0, -half * 1.3), new Phaser.Geom.Point(half, 0), new Phaser.Geom.Point(0, half * 1.3), new Phaser.Geom.Point(-half, 0)];
+      pip.fillStyle(0x000000, 0.5).fillPoints(points.map((point) => new Phaser.Geom.Point(point.x + 2, point.y + 3)), true);
+      pip.fillStyle(filled ? tone.color : 0x05070a, filled ? 1 : 0.7).fillPoints(points, true);
+      pip.lineStyle(2, tone.color, today ? 1 : filled ? 0 : 0.45).strokePoints(points, true);
+      row.add(pip);
+      if (today && motionPolicy(session.settings).nonEssentialRepeatFactor > 0) {
+        this.scene.tweens.add({ targets: pip, scale: 1.35, duration: 520, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+      }
+    }
+    label.setX(start + pipsWidth + half + 22);
+    row.add(label);
+  }
+
+  /** 신규 카드 가운데의 수북한 보상 더미 — 액자 없이 그림과 검은 복제 그림자, 뒤에 깔리는 마름모 빛, 반짝임. */
+  private addRewardPile(textures: readonly string[], color: number, x: number, y: number): void {
+    const { scene } = this;
+    const pile = scene.add.container(x, y);
+    // 뒤로 깔리는 빛은 납작한 마름모 세 겹이다(동그라미·밝아지는 합성을 쓰지 않는다).
+    const glow = scene.add.graphics();
+    [{ w: 190, h: 70, a: 0.16 }, { w: 140, h: 52, a: 0.2 }, { w: 90, h: 34, a: 0.26 }].forEach(({ w, h, a }) => {
+      glow.fillStyle(color, a).fillPoints([new Phaser.Geom.Point(0, 30 - h), new Phaser.Geom.Point(w, 30), new Phaser.Geom.Point(0, 30 + h), new Phaser.Geom.Point(-w, 30)], true);
+    });
+    pile.add(glow);
+    ATTENDANCE_PILE.forEach((spot, index) => {
+      const key = textures[index];
+      if (!key || !scene.textures.exists(key)) return;
+      const shadow = scene.add.image(spot.x + 5, spot.y + 7, key).setTint(0x05070a).setAlpha(0.55).setRotation(spot.rotation);
+      const image = scene.add.image(spot.x, spot.y, key).setRotation(spot.rotation);
+      const fit = (target: Phaser.GameObjects.Image) => target.setScale(spot.size / Math.max(target.width, target.height));
+      fit(shadow); fit(image);
+      pile.add([shadow, image]);
+    });
+    const motion = motionPolicy(session.settings);
+    ATTENDANCE_SPARKLES.forEach((spark, index) => {
+      const star = scene.add.graphics({ x: spark.x, y: spark.y });
+      const r = spark.size;
+      star.fillStyle(0xfff4c2, 1).fillPoints([
+        new Phaser.Geom.Point(0, -r), new Phaser.Geom.Point(r * 0.22, -r * 0.22), new Phaser.Geom.Point(r, 0), new Phaser.Geom.Point(r * 0.22, r * 0.22),
+        new Phaser.Geom.Point(0, r), new Phaser.Geom.Point(-r * 0.22, r * 0.22), new Phaser.Geom.Point(-r, 0), new Phaser.Geom.Point(-r * 0.22, -r * 0.22),
+      ], true);
+      pile.add(star);
+      if (motion.nonEssentialRepeatFactor > 0) {
+        star.setAlpha(0).setScale(0.4);
+        scene.tweens.add({ targets: star, alpha: 1, scale: 1, duration: 360, yoyo: true, delay: index * 310, repeat: -1, repeatDelay: 900 + index * 170, ease: "Sine.easeOut" });
+      } else star.setAlpha(0.7);
+    });
+    this.add(pile);
+  }
+
+  /** 정규 카드의 가지런한 보상 한 줄 — 공용 액자에 수 없이 그림만. */
+  private addRewardRow(textures: readonly string[], left: number, y: number, width: number): void {
+    const size = 60;
+    const gap = 12;
+    const count = Math.min(textures.length, Math.floor((width + gap) / (size + gap)));
+    textures.slice(0, count).forEach((key, index) => {
+      addFramedIcon(this.scene, this, left + size / 2 + index * (size + gap), y, size, key, { plain: true });
+    });
+  }
+
+  private addRemainingChip(x: number, y: number, remaining: LobbyEventRemaining, color: number, text: string): void {
+    const chip = CARD.remaining;
+    this.add(drawLayer(this.scene, x, y, slantedRect(chip.width, chip.height), { fill: 0x000000, alpha: 0.6, shadow: false, edge: color, edgeAlpha: 0.7 }));
+    const label = this.scene.add.text(x, y, t(REMAINING_KEY[remaining.unit], { value: remaining.value }), textStyle({ role: "emphasis", size: chip.size, color: text })).setOrigin(0.5);
+    squeezeTextToWidth(label, chip.width - 24);
+    this.add(label);
+  }
+
+  /** SD 한 기를 칸에 세운다(자리·마스크는 `spawnEventCardSd`). 카드의 자식이라 판과 함께 떠오르고 함께 사라진다. */
+  private addSd(relicId: string, side: "left" | "right", shape: number[], bevel: number, motion: { hop: boolean; index?: number }): void {
+    const { scene } = this;
+    const { width, height } = this.options;
+    void spawnEventCardSd(scene, this, relicId, side, { width, height, shape, bevel, scale: CARD.sdScale })
+      .then((puppet) => {
+        if (!this.active) { puppet.destroy(); return; }
+        // 입력면과 빨간 점보다 아래, 원화·글보다 위에 선다.
+        const hitIndex = this.list.findIndex((child) => child instanceof Phaser.GameObjects.Rectangle && child.input);
+        this.addAt(puppet, hitIndex >= 0 ? hitIndex : this.list.length);
+        if (motion.hop) this.hops.push(startPuppetHop(scene, puppet, motion.index ?? 0));
+      })
+      .catch(() => undefined);
   }
 }

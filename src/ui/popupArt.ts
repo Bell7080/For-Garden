@@ -55,6 +55,38 @@ export function shapeClipMask(
   return graphics.createGeometryMask();
 }
 
+/**
+ * 여러 도형의 합집합 마스크 — 위 규칙을 도형 여럿에 쓴다. 칸 몸통 + 윗변 밖 머리 띠처럼 SD를 칸 안에 가두되
+ * 머리만 빠져나오게 할 때 쓴다(출격판 SD와 같은 결).
+ */
+export function shapesClipMask(
+  scene: Phaser.Scene,
+  owner: Phaser.GameObjects.GameObject & { getWorldTransformMatrix: () => Phaser.GameObjects.Components.TransformMatrix },
+  shapes: readonly (readonly number[])[],
+): Phaser.Display.Masks.GeometryMask {
+  const graphics = scene.make.graphics({});
+  const sync = (): void => {
+    if (!owner.active || !graphics.active) return;
+    const matrix = owner.getWorldTransformMatrix();
+    graphics.clear().fillStyle(0xffffff, 1);
+    for (const shape of shapes) {
+      const points: Phaser.Geom.Point[] = [];
+      for (let index = 0; index < shape.length; index += 2) {
+        const point = matrix.transformPoint(shape[index], shape[index + 1]);
+        points.push(new Phaser.Geom.Point(point.x, point.y));
+      }
+      graphics.fillPoints(points, true);
+    }
+  };
+  scene.events.on(Phaser.Scenes.Events.PRE_RENDER, sync);
+  sync();
+  owner.once(Phaser.GameObjects.Events.DESTROY, () => {
+    scene.events.off(Phaser.Scenes.Events.PRE_RENDER, sync);
+    graphics.destroy();
+  });
+  return graphics.createGeometryMask();
+}
+
 /** 팝업 몸판과 같은 실루엣의 마스크. 위 공용 규칙을 판의 로컬 원점에 그대로 쓴다. */
 export function popupBodyShapeMask(
   scene: Phaser.Scene,

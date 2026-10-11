@@ -1,3 +1,4 @@
+import { strataRaidTicketTile } from "./raidTicketDrops";
 /**
  * 지층 탐사의 순수 규칙이다.
  *
@@ -241,6 +242,13 @@ export function createStrataBoard(input: { layerId: string; siteId?: string; cry
     const tone = zones[tile.zone].tone;
     if (tile.kind === "rune") Object.assign(tile, withRuneDetail(layer, tone, input.random));
     else if (tile.kind === "researchItem") tile.itemId = rollStrataResearchItem(input.random);
+  }
+  // 판 한 장에 가끔 토벌권 칸이 섞인다(화석처럼 드문 덤). 골드·원석 칸 하나를 바꾸어 귀한 칸의 확률을 건드리지 않는다.
+  const raidTicket = strataRaidTicketTile(input.random);
+  const plain = tiles.filter((tile) => tile.kind === "gold" || tile.kind === "rawStone");
+  if (raidTicket !== null && plain.length > 0) {
+    const pick = plain[Math.min(plain.length - 1, Math.floor(roll(input.random) * plain.length))];
+    pick.kind = "researchItem"; pick.amount = 1; pick.itemId = raidTicket;
   }
   const art = 1 + Math.floor(roll(input.random) * STRATA_ART_COUNT);
   return { layerId: layer.id, ...(input.siteId ? { siteId: input.siteId } : {}), art, columns: layer.columns, rows: layer.rows, tiles, zones, digsLeft: layer.digs + modifiers.digs, digsMax: layer.digs + modifiers.digs, ...(crystalStage > 0 ? { crystalStage } : {}) };

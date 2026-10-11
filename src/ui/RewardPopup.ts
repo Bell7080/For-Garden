@@ -28,7 +28,7 @@ import { PLAYER_EXP_ROW } from "./playerExpLayout";
 import { guardInputAfterClose } from "./closeInputGuard";
 
 // 기존 호출부는 UI 진입점 하나만 알면 되도록 순수 표시 변환도 함께 다시 내보낸다.
-export { currencyRecordToRewardItems, productGrantsToRewardItems, type RewardPopupItem } from "./rewardPopupModel";
+export { currencyRecordToRewardItems, dungeonRewardItems, productGrantsToRewardItems, type RewardPopupItem } from "./rewardPopupModel";
 
 /** 상자 개봉·임무 수령·발굴 수확이 공유할 수 있는 한 개의 확정 보상 표기다. */
 export interface RewardPopupOptions {

@@ -22,6 +22,9 @@ import { PopupLayer, POPUP_TITLE_SIZE } from "../ui/PopupLayer";
 import { IdleExcavationPopup } from "../ui/IdleExcavationPopup";
 import { TradePopup } from "../ui/TradePopup";
 import { LobbyEventPopup } from "../ui/LobbyEventPopup";
+import { openAttendancePopup } from "../ui/AttendancePopup";
+import { attendanceManager } from "../managers/AttendanceManager";
+import { ATTENDANCE_TRACK_IDS } from "../core/attendance";
 import { BACK_SLOT, IconButton } from "../ui/IconButton";
 import { UI_ICON } from "../ui/icons";
 import { InventoryPopup } from "../ui/InventoryPopup";
@@ -102,6 +105,13 @@ const EXCHANGE_BLUE = COLOR.exchange;
  * 속한 것인지 애매했다 — 판 밑에 한 뼘 띄워 **제 제목을 단 판**(`shop`)을 따로 세우고 거기에 상점을
  * 한 줄씩 담는다. 그 자리를 내려고 본판을 `panel.offsetY`만큼 올린다(칸끼리의 자리는 그대로).
  */
+/**
+ * 출석 판을 저절로 여는가. E2E 빌드(`test`)에서는 열지 않는다 — 로비를 확인하는 모든 스펙이 그 판에 가린다.
+ */
+const ATTENDANCE_AUTO_POPUP = import.meta.env?.MODE !== "test";
+/** 다른 판(레벨업 알림 등)이 닫히기를 기다리는 간격과 횟수. 넘기면 오늘은 저절로 열지 않는다. */
+const ATTENDANCE_AUTO_WAIT = { stepMs: 400, tries: 60 } as const;
+
 const SORTIE_MENU = {
   panel: { width: 980, height: 1240, offsetY: -80 },
   shop: { gap: 28, pad: 20, cell: SIDE_SHOP.screen.size, cellGap: 16 },
@@ -340,6 +350,8 @@ export class LobbyScene extends Phaser.Scene {
       const wait = this.unlockCelebrationUntil - this.time.now;
       if (wait > 0) this.time.delayedCall(wait, () => this.announcePlayerLevel());
       else this.announcePlayerLevel();
+      // 오늘 처음 로비에 왔고 받을 출석이 있으면 출석 판이 저절로 열린다 — 개방 연출·레벨업 알림이 끝난 뒤에.
+      if (ATTENDANCE_AUTO_POPUP) this.time.delayedCall(Math.max(0, wait) + TRANSITION.sceneIn.duration, () => this.autoOpenAttendance());
     }
 
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
@@ -409,6 +421,33 @@ export class LobbyScene extends Phaser.Scene {
       this.tweens.add({ targets: next, scale: 1, duration: 420, ease: "Back.easeOut" });
       lines.forEach((line, index) => body.add(this.add.text(0, top + 250 + index * 52, line, textStyle({ role: "emphasis", size: 26, color: COLOR.ink })).setOrigin(0.5)));
     });
+  }
+
+  /**
+   * 오늘 처음 로비에 들어왔을 때 받을 출석이 있으면 판을 저절로 연다 — 신규가 먼저, 닫으면 정규가 이어 선다.
+   * 하루에 한 번만 연다(서버가 연 날을 기억한다). 다른 판이 떠 있으면 닫히기를 기다린다.
+   */
+  private autoOpenAttendance(): void {
+    void attendanceManager.status().then((status) => {
+      if (!status.autoShow || !this.sys.isActive()) return;
+      const queue = ATTENDANCE_TRACK_IDS
+        .map((id) => status.tracks.find((track) => track.id === id))
+        .filter((track): track is NonNullable<typeof track> => Boolean(track?.claimableToday));
+      if (queue.length === 0) return;
+      const openNext = (): void => {
+        const track = queue.shift();
+        if (!track || !this.popupLayer || !this.sys.isActive()) return;
+        openAttendancePopup(this, this.popupLayer, track, { onClosed: () => this.time.delayedCall(0, () => this.whenPopupsClear(openNext)) });
+      };
+      this.whenPopupsClear(() => { void attendanceManager.markAutoShown(); openNext(); });
+    }).catch(() => undefined);
+  }
+
+  /** 떠 있는 판이 없을 때 `action`을 부른다. 오래 닫히지 않으면 그만둔다. */
+  private whenPopupsClear(action: () => void, tries = 0): void {
+    if (!this.sys.isActive() || !this.popupLayer) return;
+    if (!this.popupLayer.isOpen) { action(); return; }
+    if (tries < ATTENDANCE_AUTO_WAIT.tries) this.time.delayedCall(ATTENDANCE_AUTO_WAIT.stepMs, () => this.whenPopupsClear(action, tries + 1));
   }
 
   /**
@@ -802,7 +841,8 @@ export class LobbyScene extends Phaser.Scene {
     rail.forEach((item) => {
       const button = new RailButton(this, item.bounds.x, item.bounds.y, { icon: item.icon, label: item.label, size: item.bounds.width, event: item.event, onClick: item.onClick });
       // 실제 서버 계약이 준비된 우편·친구 요청만 연결하고 Fake 데이터에서는 임의로 켜지 않는다.
-      const key = item.icon === "mail" ? "mail" : item.icon === "friends" ? "friendRequest" : undefined;
+      // 이벤트 입구는 오늘 받을 출석이 남아 있으면 점이 선다.
+      const key = item.icon === "mail" ? "mail" : item.icon === "friends" ? "friendRequest" : item.icon === "event" ? "newEvent" : undefined;
       if (item.icon === "friends") this.lockRailButton("friends", button);
       if (item.icon === "guild") this.lockRailButton("guild", button);
       if (key) bindNotificationDot(this, button, { x: 42, y: -42 }, (listener) => notificationManager.subscribe(key, listener));

@@ -34,6 +34,10 @@ export const LOBBY_KO = {
   "event.wolfCafe.subtitle": "늑대 카페의 손님을 맞이하는 기간 한정 이벤트",
   "event.autumnHarvest.title": "가을 수확제",
   "event.autumnHarvest.subtitle": "매일 들러 수확 선물을 받는 이벤트",
+  "event.attendance.newcomer.title": "신규 연구원 7일 출석",
+  "event.attendance.regular.title": "정규 출석",
+  "attendance.day": "{day}일차",
+  "attendance.reward.title": "출석 보상",
 
   "lobby.pass.ready": "받을 보상 {count}",
   "lobby.pass.level": "Lv.{level} / {max}",

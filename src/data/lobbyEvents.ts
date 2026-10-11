@@ -27,6 +27,13 @@ export interface LobbyEventDef {
    */
   readonly backdropKey?: string;
   /**
+   * 원화의 어느 부분을 카드에 세우는가 — 카드 폭 대비 확대(`zoom`, 1이면 폭에 꼭 맞춘다)와 원화를 옮기는
+   * 거리. 세로로 긴 모집 원화는 가운데를 자르면 무릎께가 서므로 얼굴께가 오도록 내린다.
+   */
+  readonly backdropFrame?: { readonly zoom: number; readonly offsetX: number; readonly offsetY: number };
+  /** 카드에 세우는 SD. 출격판처럼 몸은 칸 안에 갇히고 머리만 윗변 밖으로 빠져나온다. */
+  readonly sd?: { readonly relicId: string; readonly side: "left" | "right" };
+  /**
    * 카드를 눌렀을 때 가는 곳. 비워 두면 이벤트 화면(`EventScene`)이다. 이미 있는 콘텐츠를 알리는
    * 이벤트는 새 씬을 만들지 않고 그 콘텐츠로 곧장 잇는다(예: 픽업 모집).
    */
@@ -43,6 +50,9 @@ export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
     titleKey: "event.wolfCafe.title",
     subtitleKey: "event.wolfCafe.subtitle",
     backdropKey: BACKGROUND.recruitDian,
+    // 모집 원화는 세로로 길어 그대로 자르면 무릎께가 선다 — 한 뼘 키워 얼굴께를 카드 가운데로 내린다.
+    backdropFrame: { zoom: 1.22, offsetX: 90, offsetY: 336 },
+    sd: { relicId: "dian", side: "right" },
     // 디안 픽업 이벤트는 새 화면이 아니라 디안이 선 호박석 연구(픽업 모집)로 곧장 간다.
     destination: { kind: "lab", bannerId: "amber" },
     startsAt: "2026-09-01T00:00:00+09:00",

@@ -2,6 +2,8 @@
 
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import type { DuelState } from "../core/duelState";
+import { createEmptyAttendanceState, type AttendanceState } from "../core/attendance";
+import { createEmptyRaidTicketDropState, type RaidTicketDropState } from "../core/raidTicketDrops";
 import type { RaidDifficulty } from "../data/raid";
 import type { GachaPityState, Wallet } from "../core/gacha";
 import type { RelicProgress, RelicSkinId } from "../core/types";
@@ -196,6 +198,15 @@ export interface Session {
    * 서버가 처음 읽을 때 빈 모양으로 채운다(`createEmptyDuelState`).
    */
   duel?: DuelState;
+  /**
+   * 받은 우편 ID. 메모리에만 두면 다시 켤 때마다 같은 선물을 또 받는다. **선택 필드다** — 도입 전에 만든 세션은
+   * 비어 있고 서버가 빈 목록으로 읽는다.
+   */
+  claimedMailIds?: string[];
+  /** 신규·정규 출석(`core/attendance.ts`). 선택 필드이며 서버가 처음 읽을 때 빈 모양으로 채운다. */
+  attendance?: AttendanceState;
+  /** 오늘 떨어진 토벌권 수(`core/raidTicketDrops.ts`). 선택 필드다. */
+  raidTicketDrops?: RaidTicketDropState;
 }
 
 /** 진행 패스의 저장 모양. 받은 마디는 패스마다 문턱값 목록이다. */
@@ -426,6 +437,9 @@ export interface SaveData {
   relicStory: RelicStoryState;
   progressPasses: ProgressPassState;
   duel: DuelState;
+  claimedMailIds: string[];
+  attendance: AttendanceState;
+  raidTicketDrops: RaidTicketDropState;
   settings: GameSettings;
   completedStoryIds: string[];
   observationRecords: ObservationRecord[];
@@ -556,6 +570,10 @@ export function createDefaultSession(): Session {
     expedition: { weekKey: "", dayKey: "", playsToday: 0, bestScore: 0, bestAchievedAt: "", claimedRewardStageIds: [], pendingRankReward: null, allTimeBestScore: 0, lastParty: [], run: null },
     // 빈 시즌 키도 첫 레이드 조회에서 서버와 같은 UTC 주차로 정규화된다.
     raid: createEmptyRaidState(),
+    // 부트가 세션을 통째로 갈아 끼울 때(`replaceSession`) 지난 계정의 값이 남지 않게 빈 값을 명시한다.
+    claimedMailIds: [],
+    attendance: createEmptyAttendanceState(),
+    raidTicketDrops: createEmptyRaidTicketDropState(),
   };
 }
 

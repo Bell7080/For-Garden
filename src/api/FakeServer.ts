@@ -1,10 +1,14 @@
+import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { bannerAcceptsCount, canPull, pull, resolveAcquisitions, spend } from "../core/gacha";
 import { socialApi } from "./FakeSocialServer";
 import { MILEAGE_OVERFLOW_BY_RARITY, mileageForPull } from "../core/mileage";
 import { BANNERS } from "../data/banners";
 import { RELICS } from "../data/relics";
 import { AD_REWARD_SLOTS, findAdRewardSlot, type AdReward, type AdRewardSlot } from "../data/adRewards";
-import { consumeRestorationEntry, normalizeDailyContent } from "../core/dailyContent";
+import { consumeRestorationEntry, normalizeDailyContent, utcDateKey } from "../core/dailyContent";
+import { ATTENDANCE_TRACK_IDS, attendanceTrackView, claimAttendanceDay, normalizeAttendanceState, rollAttendance, type AttendanceState } from "../core/attendance";
+import { ATTENDANCE_REWARDS } from "../data/attendance";
+import { normalizeRaidTicketDropState, rollRaidTicketDrops, type BonusItemDrop } from "../core/raidTicketDrops";
 import { bountyRunCost, isBountyTierUnlocked, markBountyTierCleared } from "../core/bountyRun";
 import { BOUNTY, getBountyTier, type BountyTierDef } from "../data/bounty";
 import { BREAKTHROUGH_CAP, breakthroughFragmentCost, canBreakThrough, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap, BREAKTHROUGH_GRADE_CAP, breakthroughGrade } from "../core/relicProgression";
@@ -73,7 +77,7 @@ import type { EnterStageRequest, EnterStageResponse, StageClearGrantDto } from "
 import type { CakeOperationCompleteRequest, CakeOperationCompleteResponse, CakeOperationEnterResponse, CakeOperationRunRequest, DungeonSweepRequest, DungeonSweepResponse } from "./contracts";
 import { cakeOperationRunCost, cakeOperationTierIndex, getCakeOperationTier, isCakeTierUnlocked } from "../data/cakeOperation";
 import { settleSweep, sweepRefusal, SWEEP_TICKET_ITEM, type DungeonRunCost } from "../core/dungeonShortcut";
-import type { ClaimMailRewardsRequest, ClaimMailRewardsResponse, MailDto, MailListResponse, MailRewardDto, MarkMailsReadRequest } from "./contracts";
+import type { AttendanceStatusResponse, ClaimAttendanceRequest, ClaimAttendanceResponse, ClaimMailRewardsRequest, ClaimMailRewardsResponse, MailDto, MailListResponse, MailRewardDto, MarkMailsReadRequest } from "./contracts";
 import { expeditionWeekKey, resolveExpeditionBossBattle } from "../core/expeditionBoss";
 import { EXPEDITION_BOSS_BALANCE, EXPEDITION_BEST_SCORE_REWARD_STAGES, EXPEDITION_DAILY_POLICY, expeditionBossSalvage, expeditionRankRewards, EXPEDITION_MAP_BALANCE, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_POLICY, QUICK_EXPEDITION_POLICY } from "../data/expedition";
 import { expeditionBossGrowth, expeditionNodeRole } from "../data/expeditionEnemies";
@@ -193,6 +197,7 @@ export class FakeServer implements GameApi {
   /** 입장했지만 아직 결과가 오지 않은 결투. 결과 확정은 이 표에 있는 판만 받는다. */
   private readonly pendingDuels = new Map<string, { opponentId: string; opponentName: string; opponentScore: number; favoriteRelicId: string; units: DuelHistoryUnit[] }>();
   private readonly duelResolveResults = new Map<string, ResolveDuelResponse>();
+  private readonly attendanceClaimResults = new Map<string, ClaimAttendanceResponse>();
 
   constructor(
     private readonly state: Session = session,
@@ -211,15 +216,27 @@ export class FakeServer implements GameApi {
     this.mails = [
       { id: "launch-gift", title: t("mail.launch.title"), sender: t("mail.launch.sender"), body: t("mail.launch.body"), sentAt: "2026-08-30T00:00:00.000Z", expiresAt: "2099-12-31T23:59:59.000Z", read: false, claimed: false, rewards: [
         { kind: "currency", currency: "gems", amount: 300 }, { kind: "currency", currency: "gold", amount: 50_000 }, { kind: "currency", currency: "cheesecake", amount: 200 },
-        { kind: "currency", currency: "fossil", amount: 3 }, { kind: "currency", currency: "amber", amount: 1 }, { kind: "currency", currency: "dnaFragments", amount: 20 },
+        // 화석 8개 — 첫 복원 연구(10연 · 화석 8)를 받자마자 한 번 돌릴 수 있는 몫이다.
+        { kind: "currency", currency: "fossil", amount: 8 }, { kind: "currency", currency: "amber", amount: 1 }, { kind: "currency", currency: "dnaFragments", amount: 20 },
         { kind: "item", itemId: "stamina-tonic", amount: 3, expiresInDays: 5 }, { kind: "item", itemId: "ancient-core", amount: 2 },
       ] },
       { id: "update-notice", title: t("mail.update.title"), sender: t("mail.update.sender"), body: t("mail.update.body"), sentAt: "2026-08-30T00:00:00.000Z", expiresAt: null, read: false, claimed: false, rewards: [] },
+      // 아래는 우편함의 여러 모양(받을 것·안내·받은 것·만료)을 만져 보는 표본이다 — QA 빌드에만 선다.
+      ...(QA_TOOLS_ENABLED ? [
       { id: "welcome-supply", title: t("mail.welcome.title"), sender: t("mail.welcome.sender"), body: t("mail.welcome.body"), sentAt: "2026-08-29T00:00:00.000Z", expiresAt: "2099-12-31T23:59:59.000Z", read: false, claimed: false, rewards: [{ kind: "currency", currency: "gold", amount: 1200 }] },
       { id: "field-notice", title: t("mail.notice.title"), sender: t("mail.notice.sender"), body: t("mail.notice.body"), sentAt: "2026-08-28T00:00:00.000Z", expiresAt: null, read: false, claimed: false, rewards: [] },
       { id: "archive-gift", title: t("mail.archive.title"), sender: t("mail.archive.sender"), body: t("mail.archive.body"), sentAt: "2026-08-27T00:00:00.000Z", expiresAt: null, read: true, claimed: true, rewards: [{ kind: "currency", currency: "gems", amount: 10 }] },
       { id: "expired-supply", title: t("mail.expired.title"), sender: t("mail.expired.sender"), body: t("mail.expired.body"), sentAt: "2026-08-01T00:00:00.000Z", expiresAt: "2026-08-10T00:00:00.000Z", read: true, claimed: false, rewards: [{ kind: "currency", currency: "fossil", amount: 1 }] },
+      ] satisfies MailDto[] : []),
     ];
+    // 받은 우편은 저장이 기억한다 — 메모리에만 두면 다시 켤 때마다 같은 선물을 또 받는다.
+    this.applySavedMailClaims();
+  }
+
+  /** 저장에 남은 수령 기록을 우편 목록에 옮긴다. 세션이 통째로 바뀐 뒤(부트)에도 첫 조회 전에 다시 지난다. */
+  private applySavedMailClaims(): void {
+    const claimed = new Set(this.state.claimedMailIds ?? []);
+    for (const mail of this.mails) if (claimed.has(mail.id) && mail.rewards.length > 0) { mail.claimed = true; mail.read = true; }
   }
 
   /** 이름 대신 렐릭의 정적 특성(속성·직군·스쿼드)만 파견 규칙 입력으로 투영한다. */
@@ -280,12 +297,12 @@ export class FakeServer implements GameApi {
   }
 
   /** 읽음·수령·만료를 현재 서버 시각으로 집계한 복제본만 외부에 제공한다. */
-  async getMails(): Promise<MailListResponse> { await this.delay(); this.rollExpedition(this.now()); return this.mailListDto(); }
+  async getMails(): Promise<MailListResponse> { await this.delay(); this.rollExpedition(this.now()); this.applySavedMailClaims(); return this.mailListDto(); }
 
   /** 존재·만료·기수령을 모두 검증한 뒤 지급과 상태 변경을 한 처리로 확정한다. */
   async claimMailRewards(request: ClaimMailRewardsRequest): Promise<ClaimMailRewardsResponse> {
     await this.delay(); const cached = this.mailClaimResults.get(request.requestId); if (cached) return structuredClone(cached);
-    this.rollExpedition(this.now());
+    this.rollExpedition(this.now()); this.applySavedMailClaims();
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "우편 수령 요청 ID가 필요합니다.");
     const ids = [...new Set(request.mailIds)]; const nowMs = this.now().getTime(); const targets = ids.map((id) => this.mails.find((mail) => mail.id === id));
     if (targets.some((mail) => !mail)) throw new GameApiError("INVALID_STATE", "존재하지 않는 우편입니다.");
@@ -298,6 +315,8 @@ export class FakeServer implements GameApi {
       granted.push({ ...reward });
     }
     claimable.forEach((mail) => { mail.claimed = true; mail.read = true; });
+    // 순위 우편은 대기를 비우는 것으로 다시 서지 않으므로 기록하지 않는다(주마다 같은 이름이 새로 선다).
+    this.state.claimedMailIds = [...new Set([...(this.state.claimedMailIds ?? []), ...claimable.map(({ id }) => id).filter((id) => !id.startsWith("expedition-rank:"))])];
     // 순위 보상 우편은 저장의 대기에서 세운 것이다 — 받았으면 대기를 비워 다시 서지 않게 한다.
     const pendingRank = this.state.expedition.pendingRankReward;
     if (pendingRank && claimable.some(({ id }) => id === `expedition-rank:${pendingRank.weekKey}`)) this.state.expedition = { ...this.state.expedition, pendingRankReward: null };
@@ -309,8 +328,65 @@ export class FakeServer implements GameApi {
   /** 안내 우편도 열람 즉시 점에서 빠지도록 읽음 상태만 안전하게 변경한다. */
   async markMailsRead(request: MarkMailsReadRequest): Promise<MailListResponse> { await this.delay(); const ids = new Set(request.mailIds); this.mails.forEach((mail) => { if (ids.has(mail.id)) mail.read = true; }); return this.mailListDto(); }
 
+  /* ── 출석 ─────────────────────────────────────────────────────────────────── */
+
+  /** 오늘에 맞춰 넘긴 출석 상태. 바뀌었으면 저장까지 확정한다(신규 출석의 시작일이 처음 정해지는 자리다). */
+  private attendanceNow(now: Date): AttendanceState {
+    const current = normalizeAttendanceState(this.state.attendance);
+    const rolled = rollAttendance(current, now);
+    if (JSON.stringify(rolled) !== JSON.stringify(this.state.attendance)) { this.state.attendance = rolled; this.persist(this.state); }
+    return rolled;
+  }
+
+  private attendanceDto(state: AttendanceState, now: Date): AttendanceStatusResponse {
+    const views = ATTENDANCE_TRACK_IDS.map((id) => attendanceTrackView(state, id, now)).filter(({ open }) => open);
+    const tracks = views.map((view) => ({ id: view.id, claimed: view.claimed, claimableToday: view.claimableToday, endsAt: view.endsAt, days: ATTENDANCE_REWARDS[view.id].map((day) => day.map((reward) => ({ ...reward }))) }));
+    const autoShow = tracks.some(({ claimableToday }) => claimableToday) && state.autoShownDay !== utcDateKey(now);
+    return { tracks, autoShow, serverTime: now.toISOString() };
+  }
+
+  async getAttendance(): Promise<AttendanceStatusResponse> {
+    await this.delay(); const now = this.now();
+    return this.attendanceDto(this.attendanceNow(now), now);
+  }
+
+  /** 오늘의 칸 하나를 받는다. 지급은 우편과 같은 상한 규칙(재화는 깎고, 아이템은 가방 한도까지)을 쓴다. */
+  async claimAttendance(request: ClaimAttendanceRequest): Promise<ClaimAttendanceResponse> {
+    await this.delay(); const cached = this.attendanceClaimResults.get(request.requestId); if (cached) return structuredClone(cached);
+    if (!request.requestId) throw new GameApiError("INVALID_STATE", "출석 요청 ID가 필요합니다.");
+    if (!ATTENDANCE_TRACK_IDS.includes(request.trackId)) throw new GameApiError("INVALID_STATE", "알 수 없는 출석입니다.");
+    const now = this.now();
+    const claimed = claimAttendanceDay(this.attendanceNow(now), request.trackId, now);
+    if (!claimed) throw new GameApiError("INVALID_STATE", "오늘은 받을 출석이 없습니다.");
+    const granted: MailRewardDto[] = [];
+    for (const reward of ATTENDANCE_REWARDS[request.trackId][claimed.day - 1] ?? []) {
+      if (reward.kind === "currency") {
+        const applied = Math.max(0, Math.min(reward.amount, WALLET_CAPS[reward.currency] - this.state.wallet[reward.currency]));
+        this.state.wallet[reward.currency] += applied;
+        granted.push({ ...reward, amount: applied });
+      } else {
+        const result = this.grantItem(this.state.itemInventory, reward.itemId, reward.amount, now, reward.expiresInDays);
+        this.state.itemInventory = result.inventory;
+        granted.push({ ...reward, amount: result.added });
+      }
+    }
+    this.state.attendance = claimed.state;
+    this.persist(this.state);
+    const response: ClaimAttendanceResponse = { ...this.attendanceDto(claimed.state, now), trackId: request.trackId, day: claimed.day, granted: granted.filter(({ amount }) => amount > 0), wallet: { ...this.state.wallet }, items: (await this.getInventory()).items };
+    this.attendanceClaimResults.set(request.requestId, structuredClone(response));
+    return response;
+  }
+
+  async markAttendanceAutoShown(): Promise<void> {
+    await this.delay(); const now = this.now();
+    const state = this.attendanceNow(now);
+    if (state.autoShownDay === utcDateKey(now)) return;
+    this.state.attendance = { ...state, autoShownDay: utcDateKey(now) };
+    this.persist(this.state);
+  }
+
   /** 모든 우편 응답이 동일한 만료·집계 규칙을 공유한다. */
-  private mailListDto(): MailListResponse { const serverTime = this.now().toISOString(); const nowMs = Date.parse(serverTime); const mails = structuredClone(this.mails); return { mails, serverTime, unreadCount: mails.filter((mail) => !mail.read && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs)).length, claimableCount: mails.filter((mail) => !mail.claimed && mail.rewards.length > 0 && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs)).length }; }
+  private mailListDto(): MailListResponse { this.applySavedMailClaims(); const serverTime = this.now().toISOString(); const nowMs = Date.parse(serverTime); const mails = structuredClone(this.mails); return { mails, serverTime, unreadCount: mails.filter((mail) => !mail.read && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs)).length, claimableCount: mails.filter((mail) => !mail.claimed && mail.rewards.length > 0 && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs)).length }; }
 
   /** 실제 통신처럼 다음 비동기 구간을 거친 뒤 직렬화 가능한 복사본을 돌려준다. */
   async getPlayerState(): Promise<PlayerStateDto> {
@@ -1465,11 +1541,30 @@ export class FakeServer implements GameApi {
     const granted = this.grantDungeonRewards(nextWallet, settlement.rewards);
     let nextMissions = spentMissions;
     for (let index = 0; index < settlement.count; index += 1) nextMissions = applyMissionEvent(nextMissions, { type: "battle_completed", victory: true }, now);
-    const nextItems = spentItems.flatMap((entry) => entry.itemId !== SWEEP_TICKET_ITEM || settlement.ticketCost === 0 ? [entry]
+    const ticketItems = spentItems.flatMap((entry) => entry.itemId !== SWEEP_TICKET_ITEM || settlement.ticketCost === 0 ? [entry]
       : entry.quantity > settlement.ticketCost ? [{ ...entry, quantity: entry.quantity - settlement.ticketCost }] : []);
+    // 소탕도 이긴 판과 같은 몫의 덤을 굴린다 — 판마다 한 번씩.
+    const { items: nextItems, drops: bonusItems } = this.rollBonusDrops(settlement.count, ticketItems, now);
     this.persist({ ...this.state, wallet: nextWallet, playerResearch: nextResearch, missions: nextMissions, itemInventory: nextItems });
     this.state.wallet = nextWallet; this.state.playerResearch = nextResearch; this.state.missions = nextMissions; this.state.itemInventory = nextItems;
-    return { ...this.snapshot(), tierId, count: settlement.count, staminaSpent: settlement.staminaCost, ticketsSpent: settlement.ticketCost, granted, playerExp };
+    return { ...this.snapshot(), tierId, count: settlement.count, staminaSpent: settlement.staminaCost, ticketsSpent: settlement.ticketCost, granted, playerExp, bonusItems };
+  }
+
+  /**
+   * 이긴 판 `runs`번의 토벌권 덤을 굴려 가방에 넣고 오늘 받은 수를 적는다(`core/raidTicketDrops.ts`).
+   * 가방 한도를 넘기는 몫은 깎고, 영수증에는 실제로 들어간 몫만 싣는다.
+   */
+  private rollBonusDrops(runs: number, items: Session["itemInventory"], now: Date): { items: Session["itemInventory"]; drops: BonusItemDrop[] } {
+    const rolled = rollRaidTicketDrops(normalizeRaidTicketDropState(this.state.raidTicketDrops), runs, now, this.random);
+    let inventory = items;
+    const drops: BonusItemDrop[] = [];
+    for (const drop of rolled.drops) {
+      const result = this.grantItem(inventory, drop.itemId, drop.amount, now);
+      inventory = result.inventory;
+      if (result.added > 0) drops.push({ itemId: drop.itemId, amount: result.added });
+    }
+    this.state.raidTicketDrops = rolled.state;
+    return { items: inventory, drops };
   }
 
   /** 지갑 상한을 넘기지 않고 지급하며, 실제로 늘어난 몫만 돌려준다. */
@@ -1525,7 +1620,7 @@ export class FakeServer implements GameApi {
       request.victory && this.state.party.includes(id) ? grantBondXp(progress, BOND_XP_REWARD.partyVictory).progress : progress]));
     const nextMissions = applyMissionEvent(spent?.missions ?? this.state.missions, { type: "battle_completed", victory: request.victory }, this.now());
     const nextResearch = spent?.playerResearch ?? this.state.playerResearch;
-    const nextItems = spent?.itemInventory ?? this.state.itemInventory;
+    const { items: nextItems, drops: bonusItems } = this.rollBonusDrops(request.victory ? 1 : 0, spent?.itemInventory ?? this.state.itemInventory, this.now());
     this.persist({ ...this.state, wallet: nextWallet, cakeOperation: nextCake, relicProgress: nextProgress, missions: nextMissions, playerResearch: nextResearch, itemInventory: nextItems });
     this.state.wallet = nextWallet; this.state.cakeOperation = nextCake; this.state.relicProgress = nextProgress; this.state.missions = nextMissions;
     this.state.playerResearch = nextResearch; this.state.itemInventory = nextItems;
@@ -1533,7 +1628,7 @@ export class FakeServer implements GameApi {
     pending?.delete(request.requestId);
     if (pending?.size === 0) this.pendingCakeAdmissions.delete(tier.id);
     const response: CakeOperationCompleteResponse = {
-      ...this.snapshot(), tierId: tier.id, victory: request.victory, granted, unlockedNextTier,
+      ...this.snapshot(), tierId: tier.id, victory: request.victory, granted, unlockedNextTier, bonusItems,
       staminaSpent: spent ? cost : 0, staminaRefunded: spent ? 0 : cost, ...(spent ? { playerExp: spent.playerExp } : {}),
     };
     this.cakeCompletionResults.set(request.requestId, structuredClone(response));
@@ -1660,14 +1755,14 @@ export class FakeServer implements GameApi {
     const nextBounty = victory ? markBountyTierCleared(this.state.bounty, tier.id) : { clearedTierIds: [...this.state.bounty.clearedTierIds] };
     const nextMissions = applyMissionEvent(spent?.missions ?? this.state.missions, { type: "battle_completed", victory }, now);
     const nextResearch = spent?.playerResearch ?? this.state.playerResearch;
-    const nextItems = spent?.itemInventory ?? this.state.itemInventory;
+    const { items: nextItems, drops: bonusItems } = this.rollBonusDrops(victory ? 1 : 0, spent?.itemInventory ?? this.state.itemInventory, now);
     this.persist({ ...this.state, wallet: nextWallet, bounty: nextBounty, missions: nextMissions, playerResearch: nextResearch, itemInventory: nextItems });
     this.state.wallet = nextWallet; this.state.bounty = nextBounty; this.state.missions = nextMissions;
     this.state.playerResearch = nextResearch; this.state.itemInventory = nextItems;
     this.pendingBountyRuns.delete(request.requestId);
     return {
       ...this.snapshot(), tierId: tier.id, victory, clearedRounds: request.clearedRounds, goldEarned, firstClear, clearedTierIds: [...nextBounty.clearedTierIds],
-      staminaSpent: spent ? cost : 0, staminaRefunded: spent ? 0 : cost, ...(spent ? { playerExp: spent.playerExp } : {}),
+      staminaSpent: spent ? cost : 0, staminaRefunded: spent ? 0 : cost, ...(spent ? { playerExp: spent.playerExp } : {}), bonusItems,
     };
   }
 
@@ -1941,7 +2036,10 @@ export class FakeServer implements GameApi {
   /** 우편의 실제 읽음 상태를 공용 알림 신호에 합성한다. */
   async getNotificationSignals() {
     await this.delay();
-    return { pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: 0, unreadMailCount: this.mailListDto().unreadCount };
+    // 이벤트 입구의 점은 오늘 받을 출석이 남았는가로 켠다.
+    const now = this.now();
+    const attendance = this.attendanceDto(this.attendanceNow(now), now);
+    return { pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length, unreadMailCount: this.mailListDto().unreadCount };
   }
 
   /** 검증·보상 지급·수령 표시를 하나의 저장으로 확정해 재요청 중복 지급을 막는다. */

@@ -508,5 +508,9 @@
 "Passe todos os dias para receber presentes da colheita",
 "Schau täglich vorbei und hol dir Erntegeschenke ab",
 "Заходите каждый день за подарками урожая"
-]
+],
+"event.attendance.newcomer.title": ["新人研究员7日签到", "เช็กอิน 7 วันนักวิจัยใหม่", "Điểm danh 7 ngày nhà nghiên cứu mới", "Absen 7 Hari Periset Baru", "Asistencia de 7 días: nuevo investigador", "Presença de 7 dias: novo pesquisador", "7-Tage-Anmeldung für neue Forschende", "7-дневный вход нового исследователя"],
+"event.attendance.regular.title": ["每日签到", "เช็กอินประจำวัน", "Điểm danh hằng ngày", "Absen Harian", "Asistencia diaria", "Presença diária", "Tägliche Anmeldung", "Ежедневный вход"],
+"attendance.day": ["第{day}天", "วันที่ {day}", "Ngày {day}", "Hari {day}", "Día {day}", "Dia {day}", "Tag {day}", "День {day}"],
+"attendance.reward.title": ["签到奖励", "รางวัลเช็กอิน", "Phần thưởng điểm danh", "Hadiah Absen", "Recompensa de asistencia", "Recompensa de presença", "Anmeldebelohnung", "Награда за вход"]
 }

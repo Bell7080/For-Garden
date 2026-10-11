@@ -84,7 +84,7 @@ import { settingsManager } from "../managers/SettingsManager";
 import { motionPolicy, type MotionPolicy } from "../core/settings";
 import type { RaidDto, SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse, SubmitRaidDamageResponse } from "../api/contracts";
 import { GameApiError } from "../api/contracts";
-import { currencyRecordToRewardItems } from "../ui/RewardPopup";
+import { currencyRecordToRewardItems, dungeonRewardItems } from "../ui/RewardPopup";
 import { BATTLE_CLOCK_LAYOUT, BATTLE_CONTROLS, BATTLE_STATUS_LAYOUT, RAID_BATTLE_HUD } from "../ui/battleStatusLayout";
 import { RAID_HP_BAR_COLOR } from "../ui/raidLayout";
 import { CONFIRM_DIALOG } from "../ui/confirmDialogLayout";
@@ -2705,7 +2705,7 @@ export class BattleScene extends Phaser.Scene {
       if (!this.scene.isActive()) return;
       rememberPlayerExp(result.playerExp);
       const popups = new PopupLayer(this, 2200);
-      const items = currencyRecordToRewardItems(result.granted);
+      const items = dungeonRewardItems(result.granted, result.bonusItems);
       // 버튼이 닫기를 먼저 부르지 않지만 닫힘이 기본 길(`onConfirm`)을 부르므로, 고른 길이 있으면 기본 길은 서지 않는다.
       let chosen = false;
       const go = (run: () => void) => () => { chosen = true; run(); };
@@ -2781,7 +2781,7 @@ export class BattleScene extends Phaser.Scene {
     const replay = replayable ? { label: t("stageComplete.replay"), onPress: go(() => this.replayContent({ content: "bounty", tierId: input.tierId }, toBounty)) } : undefined;
     if (step.kind === "clear") {
       new StageCompletePopup(this, popups).open({
-        reward: { kind: "loot", items: currencyRecordToRewardItems({ gold: settled.goldEarned }) },
+        reward: { kind: "loot", items: dungeonRewardItems({ gold: settled.goldEarned }, settled.bonusItems) },
         replay, fighters, onOpenContribution: openContribution,
         onConfirm: () => { if (!chosen && this.scene.isActive()) toBounty(); },
       });

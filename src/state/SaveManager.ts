@@ -1,3 +1,5 @@
+import { cloneAttendanceState, createEmptyAttendanceState, isValidAttendanceState, normalizeAttendanceState } from "../core/attendance";
+import { createEmptyRaidTicketDropState, isValidRaidTicketDropState, normalizeRaidTicketDropState } from "../core/raidTicketDrops";
 import { cloneDuelState, isValidDuelState, normalizeDuelState } from "../core/duelState";
 import { PLAYABLE_RELICS } from "../data/relics";
 import { isRaidDifficulty } from "../data/raid";
@@ -326,6 +328,9 @@ export class SaveManager {
       relicStory: cloneRelicStory(state.relicStory),
       progressPasses: cloneProgressPasses(state.progressPasses ?? createEmptyProgressPassState()),
       duel: state.duel ? cloneDuelState(state.duel) : normalizeDuelState(undefined, [...state.owned]),
+      claimedMailIds: [...new Set(state.claimedMailIds ?? [])],
+      attendance: cloneAttendanceState(state.attendance ?? createEmptyAttendanceState()),
+      raidTicketDrops: { ...(state.raidTicketDrops ?? createEmptyRaidTicketDropState()) },
     };
     this.validate(data);
     return data;
@@ -464,6 +469,10 @@ export class SaveManager {
     const progressPasses = normalizeProgressPasses(legacy.progressPasses);
     // 결투장(v47) 도입 전 저장은 점수 0으로 시작한다. 잃을 기록이 없다. v49부터 빈 방어덱은 기본 셋으로 채운다.
     const duel = normalizeDuelState(legacy.duel, Array.isArray(legacy.ownedRelicIds) ? legacy.ownedRelicIds as string[] : []);
+    // 우편 수령·출석·토벌권 덤은 v49 위에 더한 칸이라 없으면 빈 모양으로 채운다(저장 버전을 올리지 않는다).
+    const claimedMailIds = Array.isArray(legacy.claimedMailIds) ? [...new Set((legacy.claimedMailIds as unknown[]).filter((id): id is string => typeof id === "string"))] : [];
+    const attendance = normalizeAttendanceState(legacy.attendance);
+    const raidTicketDrops = normalizeRaidTicketDropState(legacy.raidTicketDrops);
     // 현상수배 도입(v38) 전 저장은 깬 등급이 없으므로 1급만 열린 채로 시작한다. 하루 입장 제한을
     // 걷어 낸 뒤로는 예전 저장의 날짜·횟수(`date`·`entries`)를 버리고 깬 등급만 옮긴다.
     const savedBounty = legacy.bounty as Partial<SaveData["bounty"]> | undefined;
@@ -567,10 +576,10 @@ export class SaveManager {
     const itemInventory = (Array.isArray(legacy.itemInventory) ? legacy.itemInventory : [])
       .filter((stack: { itemId?: unknown }) => stack?.itemId !== "raid-sigil");
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
-    if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel } as unknown as SaveData;
+    if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel, claimedMailIds, attendance, raidTicketDrops } as unknown as SaveData;
     const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
-    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel } as unknown as SaveData;
+    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel, claimedMailIds, attendance, raidTicketDrops } as unknown as SaveData;
   }
 
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
@@ -651,6 +660,9 @@ export class SaveManager {
     this.validateRelicStory(data);
     this.validateProgressPasses(data);
     if (!isValidDuelState(data.duel, data.ownedRelicIds)) fail("결투장 진행 정보가 올바르지 않습니다.");
+    if (!Array.isArray(data.claimedMailIds) || data.claimedMailIds.some((id) => typeof id !== "string") || new Set(data.claimedMailIds).size !== data.claimedMailIds.length) fail("우편 수령 정보가 올바르지 않습니다.");
+    if (!isValidAttendanceState(data.attendance)) fail("출석 정보가 올바르지 않습니다.");
+    if (!isValidRaidTicketDropState(data.raidTicketDrops)) fail("토벌권 획득 정보가 올바르지 않습니다.");
   }
 
   /** 받은 마디는 그 패스의 실제 문턱값만, 한 번씩만 허용한다. 레이드 입장 수는 0 이상의 정수다. */
@@ -719,6 +731,9 @@ export class SaveManager {
       relicStory: cloneRelicStory(data.relicStory),
       progressPasses: cloneProgressPasses(data.progressPasses),
       duel: cloneDuelState(data.duel),
+      claimedMailIds: [...data.claimedMailIds],
+      attendance: cloneAttendanceState(data.attendance),
+      raidTicketDrops: { ...data.raidTicketDrops },
     };
   }
 }

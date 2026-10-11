@@ -1,3 +1,4 @@
+import { goRoute, partyRoute, victoryRoute } from "./stageStoryRoute";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
@@ -2642,7 +2643,11 @@ export class BattleScene extends Phaser.Scene {
         ...(upcoming ? [{
           label: t("stageComplete.next"), primary: true, disabled: !canEnter,
           // 다음 전투로 곧바로 들어가지 않고, 지도에서 고를 때와 같이 다음 관문의 편성 화면을 연다.
-          onPress: () => { chosen = true; session.selectedStageId = upcoming.id; startScene(this, "party"); },
+          onPress: () => {
+            chosen = true; session.selectedStageId = upcoming.id;
+            // 방금 이긴 관문의 후 대사 → 다음 관문의 전 대사 → 편성 순으로 이어진다.
+            goRoute(this, victoryRoute(stage.id, partyRoute(upcoming.id)));
+          },
         }] : []),
         { label: t("stageComplete.exit"), danger: true, onPress: () => undefined },
       ];
@@ -2662,7 +2667,7 @@ export class BattleScene extends Phaser.Scene {
           // 이긴 판에 이어지는 이야기가 있으면 그것을 거쳐 나간다(오프닝 1-1 → 공멸 삼인조의 퇴각).
           const epilogue = this.battleInput.mode === "stage" ? this.battleInput.epilogueStoryId : undefined;
           if (epilogue) startScene(this, "stageStory", { storyId: epilogue, exitTo: this.stageExit() });
-          else startScene(this, this.stageExit());
+          else goRoute(this, victoryRoute(stage.id, { scene: this.stageExit() }));
         },
       });
     } catch {

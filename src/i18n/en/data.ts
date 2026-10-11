@@ -7,7 +7,7 @@
 export default {
 
   // ── Stages, chapters, currencies, items and operational data ─────────────────────────────────────────────────────────────
-  "stage.1-1.name": "Quarantine Zone",
+  "stage.1-1.name": "The Falling Ark",
   "stage.1-1.situation": "You got out of the burning carriage. The city is still far off.",
   "stage.1-2.name": "Collapsed Greenhouse",
   "stage.1-2.situation": "The pursuit team climbs down over the broken glass roof.",

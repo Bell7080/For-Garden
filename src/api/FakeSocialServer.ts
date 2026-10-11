@@ -1,6 +1,6 @@
 import {
   FRIEND_LIMIT, FRIEND_POINTS_PER_RENTAL, FRIEND_REQUEST_LIMIT, helperRentalAvailability, matchesUserQuery,
-  type FriendRelation, type UserSearchMode,
+  type FriendRelation,
 } from "../core/social";
 import { PREVIEW_DIRECTORY } from "../data/friendDirectory";
 import type { FriendProfile } from "../data/friends";
@@ -122,10 +122,10 @@ export class FakeSocialServer {
     return { incoming: list(this.incoming), outgoing: list(this.outgoing), requestLimit: FRIEND_REQUEST_LIMIT, serverTime: this.now() };
   }
 
-  /** 이름(부분 일치) 또는 고유 ID(정확히 일치)로 찾는다. `selfUid`는 자기 자신을 결과에서 뺀다. */
-  async searchUsers(request: { mode: UserSearchMode; query: string; selfUid?: string }): Promise<UserSearchResponse> {
+  /** 한 검색어로 이름(부분 일치)과 고유 ID(정확히 일치)를 함께 찾는다. `selfUid`는 자기 자신을 결과에서 뺀다. */
+  async searchUsers(request: { query: string; selfUid?: string }): Promise<UserSearchResponse> {
     const users = [...this.profiles.values()]
-      .filter((profile) => profile.uid !== request.selfUid && matchesUserQuery(profile, request.mode, request.query))
+      .filter((profile) => profile.uid !== request.selfUid && matchesUserQuery(profile, request.query))
       .sort((a, b) => b.lastActiveAt - a.lastActiveAt)
       .map((profile): UserSearchEntry => ({ profile: cloneProfile(profile), relation: this.relationOf(profile.id) }));
     return { users, serverTime: this.now() };

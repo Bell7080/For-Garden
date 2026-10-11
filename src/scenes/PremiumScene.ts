@@ -12,6 +12,8 @@ import { addSectionTitle } from "../ui/SectionTitle";
 import { addFrameAmount, addFramedIcon, guideForIcon } from "../ui/itemFrame";
 import { chipPoints, drawLayer, drawShapeOutline, drawVignette, slantedRect } from "../ui/holo";
 import { paintShowcaseCard, SHOWCASE_TIER_TONE, showcaseCardShape } from "../ui/showcaseCardChrome";
+import { purchaseThemeOf } from "../core/purchaseTheme";
+import { PURCHASE_THEME_STYLE } from "../ui/purchaseThemeStyle";
 import { AD_CARD_BEVEL, addAdCountLabel, addAdRewardCard } from "../ui/AdRewardCard";
 import { addSoldOutStamp, addStatusSticker, forgetSoldOutStamp, forgetStatusStickers } from "../ui/soldOutStamp";
 import { premiumStatusOf, type PremiumStatus } from "../ui/premiumStatus";
@@ -197,7 +199,7 @@ export class PremiumScene extends Phaser.Scene {
     // 이용 중인 구독은 살 수 없지만 소진된 상품이 아니다 — 흐리게 가라앉히지 않고 테두리가 맥동한다.
     const soldOut = !product.purchasable && !subscribed;
     if (kind === "grid") {
-      paintShowcaseCard(this, card, { width, height, accent: soldOut ? COLOR.inkDimHex : COLOR.accent, dim: soldOut, railX: -width / 2 + 34, stageY: PREMIUM_CARD.frameY + PREMIUM_CARD.frame / 2 });
+      paintShowcaseCard(this, card, { width, height, accent: soldOut ? COLOR.inkDimHex : premiumCardTone(product), dim: soldOut, railX: -width / 2 + 34, stageY: PREMIUM_CARD.frameY + PREMIUM_CARD.frame / 2 });
     } else {
       paintShowcaseCard(this, card, { width, height, accent: soldOut ? COLOR.inkDimHex : premiumCardTone(product), dim: soldOut, railX: -width / 2 + PREMIUM_WIDE.pad, tag: premiumCardTag(product), stageY: PREMIUM_WIDE.stack.frameY + PREMIUM_WIDE.frame / 2 });
     }
@@ -209,7 +211,7 @@ export class PremiumScene extends Phaser.Scene {
     });
     if (kind === "wide") this.paintWideCard(card, product, width, action); else this.paintGridCard(card, product, width, action);
     if (soldOut) card.setAlpha(PREMIUM_SOLD_OUT_ALPHA);
-    if (subscribed) this.addActivePulse(card, width, height);
+    if (subscribed) this.addActivePulse(card, width, height, premiumCardTone(product));
     this.content?.add(card);
     // 상태 딱지는 흐려진 카드의 알파를 물려받지 않도록 카드 곁에 따로 붙인다.
     const status = premiumStatusOf(product);
@@ -368,8 +370,8 @@ export class PremiumScene extends Phaser.Scene {
   }
 
   /** 이용 중인 구독의 활성 표시 — 카드 모양을 따라 도는 테두리가 숨 쉰다. 움직임 줄이기에서는 가만히 선다. */
-  private addActivePulse(card: Phaser.GameObjects.Container, width: number, height: number): void {
-    const outline = drawShapeOutline(this, 0, 0, showcaseCardShape(width, height, 3), { color: COLOR.accent, alpha: 1, width: 5 });
+  private addActivePulse(card: Phaser.GameObjects.Container, width: number, height: number, color: number): void {
+    const outline = drawShapeOutline(this, 0, 0, showcaseCardShape(width, height, 3), { color, alpha: 1, width: 5 });
     card.add(outline);
     if (motionPolicy(session.settings).nonEssentialDistanceFactor === 0) { outline.setAlpha(0.85); return; }
     outline.setAlpha(0.35);
@@ -625,9 +627,9 @@ const PREMIUM_SOLD_OUT_ALPHA = 0.52;
 /** 첫 구매 보너스 액자의 선 — 무역의 가치 배지와 같은 뜨거운 색이라 "더 들어온다"가 먼저 걸린다. */
 const PREMIUM_BONUS_TONE = 0xe0603a;
 
-/** 카드 색 — 정기권(기간 패스)은 금빛 한정과 같은 무게로, 나머지는 갱신 주기의 색이다. */
+/** 카드 색 — 구매 팝업과 같은 테마 색이다(`purchaseThemeOf` → `PURCHASE_THEME_STYLE`). 갱신 주기는 꼬리표 글자가 말한다. */
 function premiumCardTone(product: ProductDto): number {
-  return product.passBenefit ? SHOWCASE_TIER_TONE.once : SHOWCASE_TIER_TONE[product.refresh];
+  return PURCHASE_THEME_STYLE[purchaseThemeOf(product)].accent;
 }
 
 /** 꼬리표 — 정기권은 「30일 정기권」, 나머지는 무역과 같은 주기 이름이다. */

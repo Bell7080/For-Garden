@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { PURCHASE_THEME_IDS, purchaseThemeOf } from "../../src/core/purchaseTheme";
 import { PRODUCTS } from "../../src/data/shopCatalog";
@@ -59,5 +60,14 @@ import { PURCHASE_ITEM_GLOW } from "../../src/ui/purchaseFrameLayout";
 describe("상품 뒤 발광", () => {
   it("겹쳐도 합성 상한 0.6을 넘지 않는다", () => {
     expect(PURCHASE_ITEM_GLOW.layers * PURCHASE_ITEM_GLOW.alphaPerLayer).toBeLessThan(0.6);
+  });
+});
+
+describe("프리미엄 카드 색", () => {
+  it("카드 강조색은 구매 팝업이 읽는 테마 표 하나에서 나온다", () => {
+    const src = readFileSync("src/scenes/PremiumScene.ts", "utf8");
+    expect(src).toContain("PURCHASE_THEME_STYLE[purchaseThemeOf(product)].accent");
+    expect(src).not.toMatch(/SHOWCASE_TIER_TONE\[product\.refresh\]/);
+    expect(src).not.toMatch(/accent: soldOut \? COLOR\.inkDimHex : COLOR\.accent,/);
   });
 });

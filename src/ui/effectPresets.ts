@@ -93,7 +93,7 @@ export const EFFECT_PRESETS: Record<EffectKind, BurstSpec> = {
   },
   ultimate: {
     shards: 9, speed: [420, 780], gravity: 40, life: [360, 560], shardScale: 1.5,
-    rings: 2, ringRadius: 216, ringMs: 420, ringWidth: 11, flash: 140, flashAlpha: 0.55, flashMs: 300, spin: 200, ink: { star: 1.1 },
+    rings: 2, ringRadius: 216, ringMs: 420, ringWidth: 11, flash: 140, flashAlpha: 0.55, flashMs: 300, spin: 200, ink: { star: 1.4 },
   },
   passive: {
     // 패시브는 스스로 발동하는 조용한 효과라 파문 없이 위로 떠오르는 파편 몇 조각뿐이다.
@@ -305,6 +305,64 @@ export const AREA_IMPACT = {
  */
 export const BATTLEFIELD_WASH_RISE = 0.45;
 export const BATTLEFIELD_WASH_HOLD = 0.5;
+
+/**
+ * 회복·보호막·궁극기의 잉크 결.
+ *
+ * - **회복**은 밝아지는 초록 기운 대신 발밑에 초록 마름모 한 겹(먹선)이 벌어지고, 잉크 십자가
+ *   톡 커지며(살짝 넘쳤다 돌아온다) 솟는다.
+ * - **보호막**은 두른 원 밖에 먹선을 한 겹 깔고 안쪽 선을 흰색이 아니라 막 색을 밝힌 톤으로 긋는다.
+ *   깨지는 순간은 막 조각 아홉이 바깥으로 흩어지고 붉은 별이 선다(맞은 쪽이 아군이든 적이든
+ *   "막이 깨졌다"는 받는 쪽의 사건이다).
+ * - **궁극기**는 처음 맞은 자리에서 집중선이 안으로 조여 든다. 광역이 셋을 함께 때려도 집중선은
+ *   한 번뿐이다(`focus.gapMs` 안의 두 번째부터는 건너뛴다).
+ */
+export const INK_RESTORE = {
+  heal: { feetOffset: 86, diamond: [0.34, 0.5], fillAlpha: 0.3, inkWidth: 7, crossPop: 1.15, crossPopAt: 0.35 },
+  shield: { inkExtra: 4, innerLighten: 0.35, breakShards: 9, breakRadius: 76, breakTravel: 140, breakMs: 420, breakStar: 1.1 },
+  focus: { rays: 16, inner: 660, travel: 300, length: 280, widths: [10, 16, 22], ms: 280, alpha: 0.85, gapMs: 400 },
+} as const;
+
+/**
+ * 범위와 장판의 **잉크 결**.
+ *
+ * 홀로그램 시절의 옅은 색면 + 검은 밑판은 밝은 원화 위에서 경계가 흐렸다. 잉크 결에서는 경계를
+ * **먹선 한 줄**이 쥐고, 그 안쪽에 같은 색을 한 톤 밝힌 선이 한 줄 더 돈다(조각의 흰 면 + 먹선과
+ * 같은 문법). 안쪽 6할에는 밝힌 색을 한 겹 더 깔아 가운데가 솟아 보이게 한다 — 무늬가 아니라
+ * 셀 그늘이다. 순간 범위는 처음 3할 동안 벌어지고 6할까지 그대로 머문 뒤 빠진다(그래야 벌어지는
+ * 동안 이미 사라지지 않는다).
+ */
+export const INK_AREA = {
+  // 보통 피해의 흰빛은 0.3이면 밝은 바닥 위에서 판이 통째로 하얗게 떴다.
+  fillAlpha: 0.24,
+  coreScale: 0.6,
+  coreAlpha: 0.16,
+  coreLighten: 0.35,
+  inkWidth: 8,
+  inkAlpha: 0.9,
+  lineWidth: 3,
+  lineLighten: 0.25,
+  growUntil: 0.3,
+  holdUntil: 0.6,
+  /**
+   * 고여 있는 장판(여울). 계속 떠 있는 면이라 순간 범위보다 한 단계 옅고, 먹선도 가늘고 옅다 —
+   * 시안 그대로의 굵은 먹선은 판 위에 선 SD보다 먼저 읽혔다. 안에서 바깥으로 번지는 물결 셋이
+   * 고여 있다는 것을 말한다(크기는 판이 아니라 물결만 움직인다 — 경계는 흔들리지 않는다).
+   */
+  surface: {
+    fillAlpha: 0.2,
+    coreAlpha: 0.12,
+    inkWidth: 5,
+    inkAlpha: 0.55,
+    lineAlpha: 0.6,
+    ripples: 3,
+    rippleSeconds: 1.1,
+    rippleFrom: 0.18,
+    rippleWidth: 4,
+    rippleAlpha: 0.45,
+    rippleLighten: 0.5,
+  },
+} as const;
 
 /**
  * 멀리서 때리는 타격이 **가는 길**.

@@ -166,3 +166,32 @@ describe("전장은 잉크 결, 메뉴는 홀로그램 결", () => {
     expect(lightenColor(0x800000, 0.5)).toBe(0xc08080);
   });
 });
+
+describe("범위·장판의 잉크 결", () => {
+  it("고여 있는 장판은 순간 범위보다 한 단계 옅다", async () => {
+    const { INK_AREA } = await import("../../src/ui/effectPresets");
+    expect(INK_AREA.surface.fillAlpha).toBeLessThan(INK_AREA.fillAlpha);
+    expect(INK_AREA.surface.inkWidth).toBeLessThan(INK_AREA.inkWidth);
+    expect(INK_AREA.surface.inkAlpha).toBeLessThan(INK_AREA.inkAlpha);
+  });
+
+  it("벌어지기를 마친 뒤에도 한동안 머물렀다가 빠진다", async () => {
+    const { INK_AREA } = await import("../../src/ui/effectPresets");
+    expect(INK_AREA.growUntil).toBeGreaterThan(0);
+    expect(INK_AREA.holdUntil).toBeGreaterThan(INK_AREA.growUntil);
+    expect(INK_AREA.holdUntil).toBeLessThan(1);
+    expect(INK_AREA.coreScale).toBeLessThan(1);
+  });
+});
+
+describe("회복·보호막·궁극기의 잉크 결", () => {
+  it("궁극기의 별은 일반 공격보다 한참 크다", () => {
+    expect(EFFECT_PRESETS.ultimate.ink!.star).toBeGreaterThanOrEqual(EFFECT_PRESETS.basic.ink!.star * 1.7);
+  });
+
+  it("집중선은 안으로 조여 들고, 광역 한 번에 한 번만 선다", async () => {
+    const { INK_RESTORE } = await import("../../src/ui/effectPresets");
+    expect(INK_RESTORE.focus.travel).toBeLessThan(INK_RESTORE.focus.inner);
+    expect(INK_RESTORE.focus.gapMs).toBeGreaterThan(INK_RESTORE.focus.ms);
+  });
+});

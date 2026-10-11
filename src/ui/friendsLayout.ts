@@ -15,6 +15,8 @@ export const FRIENDS_SCREEN = {
   list: { top: 340, bottom: 1730 },
   row: { height: 168, gap: 14 },
   tabs: { y: BASE_HEIGHT - 96, width: 240, height: 84, gap: 16 },
+  /** 신청 탭의 알림 점 — 라벨 글자 오른쪽 끝에서 `gap`만큼 띄우고 글자 중심보다 `rise`만큼 올려 어깨에 앉힌다. */
+  tabDot: { radius: 9, gap: 6, rise: 12 },
 } as const;
 
 /** 라벨 탭 `index`의 가운데 x. */
@@ -43,8 +45,8 @@ export function friendsMinScroll(rows: number): number {
  */
 export const FRIEND_ROW = {
   avatar: { x: -355, size: 112 },
-  /** 접속 중 초록 원 — 얼굴 오른쪽 아래 모서리에 걸친다. */
-  online: { dx: 42, dy: 42, radius: 14 },
+  /** 접속 중 초록 원 — 마지막 접속 글자 왼쪽에 `gap`만큼 띄워 선다. */
+  online: { gap: 10, radius: 8 },
   textX: -275,
   nameY: -44,
   levelY: -4,
@@ -81,7 +83,6 @@ export const FRIENDS_CONTROLS = {
   filter: { width: 170, height: 64, gap: 12 },
   subTab: { width: 240, height: 64, gap: 12 },
   bulk: { width: 180, height: 64, gap: 12 },
-  mode: { width: 150, height: 64, gap: 12 },
   search: { width: 160, height: 64, gap: 12 },
   /** 정렬 칩과 방향 칩(도감과 같은 한 장). */
   sort: { width: 240, dirWidth: 80, gap: 12 },
@@ -103,13 +104,12 @@ export function friendsSortX(): number {
   return FRIENDS_SCREEN.side + FRIENDS_SCREEN.width - dirWidth - gap - width / 2;
 }
 
-/** 찾기 줄: 방식 칩 둘 · 입력 칸 · 검색 버튼. 입력 칸은 남은 폭을 모두 쓴다. */
-export function friendsSearchRow(): { modeX: (index: number) => number; input: { x: number; width: number }; button: { x: number } } {
-  const { mode, search } = FRIENDS_CONTROLS;
-  const left = FRIENDS_SCREEN.side + 2 * mode.width + mode.gap + 16;
+/** 찾기 줄: 입력 칸 하나 · 검색 버튼. 이름과 고유 ID를 한 칸에서 찾으므로 입력 칸이 남은 폭을 모두 쓴다. */
+export function friendsSearchRow(): { input: { x: number; width: number }; button: { x: number } } {
+  const { search } = FRIENDS_CONTROLS;
+  const left = FRIENDS_SCREEN.side;
   const right = FRIENDS_SCREEN.side + FRIENDS_SCREEN.width - search.width - search.gap;
   return {
-    modeX: (index) => friendsChipX(index, mode),
     input: { x: (left + right) / 2, width: right - left },
     button: { x: FRIENDS_SCREEN.side + FRIENDS_SCREEN.width - search.width / 2 },
   };

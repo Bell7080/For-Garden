@@ -6,12 +6,12 @@ const SELF = "000000001";
 describe("친구 신청 흐름", () => {
   it("이름과 고유 ID로 찾고 자기 자신은 뺀다", async () => {
     const s = new FakeSocialServer();
-    const byName = await s.searchUsers({ mode: "name", query: "하늘" });
+    const byName = await s.searchUsers({ query: "하늘" });
     expect(byName.users.map((u) => u.profile.id)).toContain("friend-haneul");
-    const byUid = await s.searchUsers({ mode: "uid", query: "418207735" });
+    const byUid = await s.searchUsers({ query: "418207735" });
     expect(byUid.users).toHaveLength(1);
     expect(byUid.users[0].relation).toBe("friend");
-    const self = await s.searchUsers({ mode: "uid", query: "418207735", selfUid: "418207735" });
+    const self = await s.searchUsers({ query: "418207735", selfUid: "418207735" });
     expect(self.users).toHaveLength(0);
   });
 

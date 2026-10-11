@@ -4,8 +4,8 @@ import { socialApi, SocialApiError, type FriendListResponse, type FriendRequestE
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import {
   defaultFriendSortDirection, FRIEND_FILTERS, FRIEND_REQUEST_LIMIT, FRIEND_SORT_MODES, DAILY_HELPER_LIMIT, helperRentalAvailability,
-  isOnline, lastActiveAge, normalizeSearchQuery, USER_SEARCH_MODES, viewFriends,
-  type FriendFilter, type FriendSortMode, type UserSearchMode,
+  isOnline, lastActiveAge, normalizeSearchQuery, viewFriends,
+  type FriendFilter, type FriendSortMode,
 } from "../core/social";
 import type { FriendProfile } from "../data/friends";
 import { profileFrameOrDefault } from "../data/profileFrames";
@@ -91,7 +91,6 @@ export class FriendsScene extends Phaser.Scene {
   private sort: FriendSortMode = "lastActive";
   private descending = true;
   private requestView: RequestView = "incoming";
-  private searchMode: UserSearchMode = "name";
   private searchQuery = "";
   /** 검색을 눌러 받은 결과. `undefined`면 아직 검색하지 않아 추천이 선다. */
   private searchResults?: UserSearchEntry[];
@@ -117,7 +116,7 @@ export class FriendsScene extends Phaser.Scene {
   create(): void {
     setDebugScene("friends");
     this.tab = "friends"; this.filter = "all"; this.sort = "lastActive"; this.descending = true;
-    this.requestView = "incoming"; this.searchMode = "name"; this.searchQuery = ""; this.searchResults = undefined;
+    this.requestView = "incoming"; this.searchQuery = ""; this.searchResults = undefined;
     this.friendData = undefined; this.requestData = undefined; this.recommendations = [];
     this.list = undefined; this.sortControl = undefined; this.scrollOffset = 0; this.minScroll = 0; this.busy = false;
 
@@ -156,7 +155,7 @@ export class FriendsScene extends Phaser.Scene {
       this.friendData = friends; this.requestData = requests; this.recommendations = recommended.users;
       // 검색 결과 줄의 관계 표시도 새 응답과 같은 시점의 것이어야 한다.
       if (this.searchResults) {
-        const response = await socialApi.searchUsers({ mode: this.searchMode, query: this.searchQuery, selfUid: this.selfUid });
+        const response = await socialApi.searchUsers({ query: this.searchQuery, selfUid: this.selfUid });
         if (!this.scene.isActive()) return;
         this.searchResults = response.users;
       }
@@ -190,10 +189,14 @@ export class FriendsScene extends Phaser.Scene {
           slideTabPage(this, [this.view], from, index);
         },
       });
-      // 받은 신청이 있는 동안 신청 탭 글자 옆에 빨간 점이 선다.
+      // 받은 신청이 있는 동안 신청 탭 글자 오른쪽 어깨에 빨간 점이 선다. 모서리가 아니라 글자를 기준으로
+      // 잡아야 깎인 모서리·솟는 켜진 라벨·줄어든 글자에서도 점이 라벨에 붙어 읽힌다.
       if (key === "requests" && (this.requestData?.incoming.length ?? 0) > 0) {
-        const dot = this.add.circle(S.tabs.width / 2 - 26, -S.tabs.height / 2 + 10, 10, 0xe5484d).setStrokeStyle(3, 0xffffff, 1);
-        tab.add(dot);
+        const label = tab.list.find((item): item is Phaser.GameObjects.Text => item instanceof Phaser.GameObjects.Text);
+        if (label) {
+          const dot = this.add.circle(label.x + label.displayWidth / 2 + S.tabDot.gap + S.tabDot.radius, label.y - S.tabDot.rise, S.tabDot.radius, 0xe5484d);
+          tab.add(dot);
+        }
       }
     });
   }
@@ -256,7 +259,7 @@ export class FriendsScene extends Phaser.Scene {
     });
     if (this.requestView === "incoming" && incoming > 0) {
       const buttons = [
-        { label: t("friends.requests.declineAll"), tone: "neutral" as const, run: () => socialApi.declineAllRequests() },
+        { label: t("friends.requests.declineAll"), tone: "danger" as const, run: () => socialApi.declineAllRequests() },
         { label: t("friends.requests.acceptAll"), tone: "accent" as const, run: () => socialApi.acceptAllRequests() },
       ];
       buttons.forEach((button, index) => {
@@ -274,16 +277,9 @@ export class FriendsScene extends Phaser.Scene {
     if (this.searchResults) this.addSummary(t("friends.summary.results", { count: this.searchResults.length }));
     else this.addSummary(t("friends.summary.recommend"));
     const row = friendsSearchRow();
-    USER_SEARCH_MODES.forEach((mode, index) => {
-      addFriendChip(this, this.controls, row.modeX(index), y, C.mode.width, C.mode.height, t(`friends.search.mode.${mode}`), this.searchMode === mode, () => {
-        if (this.searchMode === mode) return;
-        this.searchMode = mode;
-        this.paintControls();
-      });
-    });
     const field = new TextInputField(this, row.input.x, y, {
       width: row.input.width, height: C.search.height, value: this.searchQuery, maxGlyphs: SEARCH_MAX_GLYPHS,
-      ariaLabel: t(`friends.search.aria.${this.searchMode}`), fontSize: 28,
+      ariaLabel: t("friends.search.aria"), fontSize: 28,
       onChange: (value) => { this.searchQuery = value; },
     });
     this.controls.add(field);
@@ -294,11 +290,11 @@ export class FriendsScene extends Phaser.Scene {
   }
 
   private async runSearch(): Promise<void> {
-    const query = normalizeSearchQuery(this.searchMode, this.searchQuery);
+    const query = normalizeSearchQuery(this.searchQuery);
     try {
       // 비운 채 누르면 검색을 접고 추천으로 돌아간다.
       if (query.length === 0) { this.searchResults = undefined; }
-      else this.searchResults = (await socialApi.searchUsers({ mode: this.searchMode, query, selfUid: this.selfUid })).users;
+      else this.searchResults = (await socialApi.searchUsers({ query, selfUid: this.selfUid })).users;
     } catch { return; }
     if (!this.scene.isActive()) return;
     this.paintControls(); this.paintList();
@@ -376,9 +372,6 @@ export class FriendsScene extends Phaser.Scene {
     row.add(new ProfileAvatar(this, R.avatar.x, 0, {
       size: R.avatar.size, frameId: frame.id, portraitAssetId: relic.portraitAssetId, fallback: Array.from(profile.displayName.trim())[0] ?? "?",
     }));
-    if (isOnline(profile.lastActiveAt, this.nowMs)) {
-      row.add(this.add.circle(R.avatar.x + R.online.dx, R.online.dy, R.online.radius, ONLINE_COLOR).setStrokeStyle(4, 0x0b0f14, 1));
-    }
     const room = textRight - R.textX;
     row.add(squeezeTextToWidth(this.add.text(R.textX, R.nameY, compactProfileText(profile.displayName, 12), textStyle({ role: "display", size: 36 })).setOrigin(0, 0.5), room));
     const level = this.add.text(R.textX, R.levelY, t("friends.researchLevel", { level: profile.level }), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0.5);
@@ -420,7 +413,10 @@ export class FriendsScene extends Phaser.Scene {
       star.on("pointerup", () => { if (this.canTap()) void this.mutate(() => socialApi.setFavorite(friend.id, !favorite), true); });
       const age = this.ageText(friend.lastActiveAt);
       const online = isOnline(friend.lastActiveAt, this.nowMs);
-      row.add(this.add.text(S.width / 2 - R.padRight, R.age.y, age, textStyle({ role: "body", size: 22, color: online ? hex(ONLINE_COLOR) : COLOR.inkDim })).setOrigin(1, 0.5));
+      const ageLabel = this.add.text(S.width / 2 - R.padRight, R.age.y, age, textStyle({ role: "body", size: 22, color: online ? hex(ONLINE_COLOR) : COLOR.inkDim })).setOrigin(1, 0.5);
+      row.add(ageLabel);
+      // 접속 중 초록 점은 얼굴이 아니라 접속 상태 글자 왼쪽에 선다.
+      if (online) row.add(this.add.circle(ageLabel.x - ageLabel.displayWidth - R.online.gap - R.online.radius, R.age.y, R.online.radius, ONLINE_COLOR));
     });
   }
 
@@ -437,10 +433,10 @@ export class FriendsScene extends Phaser.Scene {
       const y = 0;
       const press = (run: () => Promise<unknown>) => () => { void this.mutate(run); };
       if (incoming) {
-        addRowButton(this, row, friendRowButtonX(0, 2), y, R.button.width, R.button.height, t("friends.action.decline"), "neutral", this.clip, this.canTap, press(() => socialApi.declineRequest(profile.id)));
+        addRowButton(this, row, friendRowButtonX(0, 2), y, R.button.width, R.button.height, t("friends.action.decline"), "danger", this.clip, this.canTap, press(() => socialApi.declineRequest(profile.id)));
         addRowButton(this, row, friendRowButtonX(1, 2), y, R.button.width, R.button.height, t("friends.action.accept"), "accent", this.clip, this.canTap, press(() => socialApi.acceptRequest(profile.id)));
       } else {
-        addRowButton(this, row, friendRowButtonX(0, 1), y, R.button.width, R.button.height, t("friends.action.cancel"), "neutral", this.clip, this.canTap, press(() => socialApi.cancelRequest(profile.id)));
+        addRowButton(this, row, friendRowButtonX(0, 1), y, R.button.width, R.button.height, t("friends.action.cancel"), "danger", this.clip, this.canTap, press(() => socialApi.cancelRequest(profile.id)));
       }
     });
   }

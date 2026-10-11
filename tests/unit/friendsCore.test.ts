@@ -37,12 +37,13 @@ describe("친구 보기 규칙", () => {
     expect(viewFriends(friends, { ...base, favoriteIds, filter: "all", sort: "name", descending: false })[0].id).toBe("c");
   });
 
-  it("검색어는 방식에 맞게 정리하고 맞춘다", () => {
-    expect(normalizeSearchQuery("uid", "418-207 735abc")).toBe("418207735");
+  it("한 검색어로 이름과 고유 ID를 함께 맞춘다", () => {
+    expect(normalizeSearchQuery("  하늘 ")).toBe("하늘");
     const user = { displayName: "하늘정원", uid: "418207735" };
-    expect(matchesUserQuery(user, "name", "하늘")).toBe(true);
-    expect(matchesUserQuery(user, "name", "")).toBe(false);
-    expect(matchesUserQuery(user, "uid", "418207735")).toBe(true);
-    expect(matchesUserQuery(user, "uid", "4182")).toBe(false);
+    expect(matchesUserQuery(user, "하늘")).toBe(true);
+    expect(matchesUserQuery(user, "")).toBe(false);
+    expect(matchesUserQuery(user, "418207735")).toBe(true);
+    expect(matchesUserQuery(user, "418-207 735")).toBe(true);
+    expect(matchesUserQuery(user, "4182")).toBe(false);
   });
 });

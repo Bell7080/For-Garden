@@ -4,6 +4,7 @@ import type { ClipRect } from "./clipRect";
 import { drawLayer, drawShapeEdge, slantedRect } from "./holo";
 import { pressIn, pressOut } from "./pressFeedback";
 import { squeezeTextToWidth } from "./textFit";
+import { CONFIRM_DIALOG } from "./confirmDialogLayout";
 import { COLOR, textStyle } from "./theme";
 
 /** 조작 줄의 칩 한 장 — 필터·방식·하위 탭이 같은 손짓으로 같은 일(보는 것을 고르기)을 하므로 한 장이다. */
@@ -29,11 +30,12 @@ export function addFriendChip(
   return chip;
 }
 
-export type RowButtonTone = "accent" | "neutral" | "disabled";
+export type RowButtonTone = "accent" | "neutral" | "danger" | "disabled";
 
 const TONE = {
   accent: { fill: 0x2b2a1b, edge: COLOR.accent, edgeAlpha: 0.95, text: COLOR.accentText },
   neutral: { fill: 0x1b2029, edge: COLOR.panelEdge, edgeAlpha: 0.7, text: COLOR.ink },
+  danger: { fill: CONFIRM_DIALOG.destructiveFill, edge: COLOR.danger, edgeAlpha: 0.95, text: COLOR.ink },
   disabled: { fill: 0x0d1218, edge: COLOR.panelEdge, edgeAlpha: 0.3, text: COLOR.inkDim },
 } as const;
 

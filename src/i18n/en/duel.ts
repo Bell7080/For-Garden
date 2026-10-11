@@ -77,8 +77,8 @@ export const DUEL_EN = {
   "duel.history.side.defense": "Defense",
   "shop.duel.title": "Duel Shop",
   "duel.shop.line1": "…You made it. Leave the insignia over there. I'll do the counting.",
-  "duel.shop.line2": "The scars on my arm? One for every day I lost. On days I win, nothing's left.",
-  "duel.shop.line3": "The marks on my tail tip are the number of people who've beaten me. Only two so far.",
+  "duel.shop.line2": "Decided what to buy? If not, take another lap around and come back.",
+  "duel.shop.line3": "That one's down by one since last week. If you need it, take it now.",
   "duel.shop.line4": "I'll count the insignia from lost matches the same. The days you lose teach you more.",
   "duel.shop.line5": "No need to rush. The arena's open tomorrow, too.",
 } as const;

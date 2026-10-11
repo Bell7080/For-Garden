@@ -77,8 +77,8 @@ export const DUEL_ES = {
   "duel.history.side.defense": "Defensa",
   "shop.duel.title": "Tienda de duelo",
   "duel.shop.line1": "…Has venido. Deja la insignia ahí. Yo me encargo de contar.",
-  "duel.shop.line2": "¿Las cicatrices del brazo? Una por cada día que pierdo. Los días que gano no queda nada.",
-  "duel.shop.line3": "Las marcas en la punta de la cola son las personas que me han vencido. Por ahora solo dos.",
+  "duel.shop.line2": "¿Ya decidiste qué comprar? Si no, date otra vuelta y vuelve.",
+  "duel.shop.line3": "Ese tiene uno menos que la semana pasada. Si lo necesitas, llévatelo ya.",
   "duel.shop.line4": "Las insignias de los combates perdidos las cuento igual. Los días de derrota enseñan más.",
   "duel.shop.line5": "No hay prisa. La arena también abre mañana.",
 } as const;

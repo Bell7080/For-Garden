@@ -77,8 +77,8 @@ export const DUEL_DE = {
   "duel.history.side.defense": "Verteidigung",
   "shop.duel.title": "Duell-Shop",
   "duel.shop.line1": "…Du bist da. Leg das Abzeichen dort hin. Das Zählen übernehme ich.",
-  "duel.shop.line2": "Die Narben am Arm? Eine für jeden Tag, an dem ich verliere. An Siegestagen bleibt nichts zurück.",
-  "duel.shop.line3": "Die Markierungen an meiner Schwanzspitze zählen, wer mich besiegt hat. Bisher nur zwei.",
+  "duel.shop.line2": "Schon entschieden, was du kaufst? Wenn nicht, dreh noch eine Runde und komm wieder.",
+  "duel.shop.line3": "Davon ist seit letzter Woche einer weniger da. Wenn du es brauchst, nimm es jetzt mit.",
   "duel.shop.line4": "Abzeichen aus verlorenen Kämpfen zähle ich genauso mit. Verlorene Tage lehren mehr.",
   "duel.shop.line5": "Keine Eile. Die Arena ist morgen auch geöffnet.",
 } as const;

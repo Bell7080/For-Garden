@@ -1758,7 +1758,7 @@ export default {
   "relic.teku.ferocity.name": "No Overtime",
   "relic.teku.basic.name": "Caffeine Transfusion",
   "relic.teku.ultimate.name": "Blend A - Matcha 99%",
-  "firstMeeting.teku": "Refill, please, Captain. ...Oh, I mean the magazine, not my cup.",
+  "firstMeeting.teku": "Refill, please, Captain. I won't rush.",
   "relic.teku.basic.step.0": "Caffeine Transfusion",
   "relic.teku.basic.step.1": "Caffeine Transfusion",
   "relic.teku.basic.step.2": "Caffeine Transfusion",

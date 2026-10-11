@@ -77,8 +77,8 @@ export const DUEL_ZH_HANS = {
   "duel.history.side.defense": "防守",
   "shop.duel.title": "决斗商店",
   "duel.shop.line1": "……来了啊。徽章放那边就行。数就交给我。",
-  "duel.shop.line2": "手臂上的伤疤?输一天就多一道。赢的日子什么都不会留下。",
-  "duel.shop.line3": "尾巴尖上的标记,是赢过我的人数。目前才两个人就是了。",
+  "duel.shop.line2": "决定买什么了吗？还没决定的话，再去逛一圈回来。",
+  "duel.shop.line3": "那个比上周少了一个。需要的话现在就拿走。",
   "duel.shop.line4": "输掉的那场的徽章我也一样给你算。输的日子教给你的更多。",
   "duel.shop.line5": "不用急。竞技场明天也开着。",
 } as const;

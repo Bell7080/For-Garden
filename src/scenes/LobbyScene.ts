@@ -37,7 +37,7 @@ import { createLobbyUtilityRail } from "../ui/lobbyUtilityRail";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicSkinManager } from "../managers/RelicSkinManager";
 import { expeditionManager } from "../managers/ExpeditionManager";
-import { PVP_MODES } from "../data/pvpModes";
+import { PVP_MODES, PVP_MODE_SELECT_ENABLED } from "../data/pvpModes";
 import { PVP_MENU, pvpEntryHeight, pvpMenuLayout } from "../ui/pvpLayout";
 import { ExpeditionEntryButton, sortieEntryBevel, sortieEntrySdSpot } from "../ui/ExpeditionEntryButton";
 import { battleAssetFor, ENEMY_SD_ASSETS, PONTOS_SD_ASSET, playMotion, type PuppetAsset } from "../puppets/assets";
@@ -197,7 +197,9 @@ export class LobbyScene extends Phaser.Scene {
    * 열 때마다 출격판이 저절로 뜬다.
    */
   init(data?: unknown): void {
-    this.returnMenu = normalizeLobbyEntry(data);
+    const entryMenu = normalizeLobbyEntry(data);
+    // 선택판을 꺼 두면 결투장에서 돌아와도 열 판이 없다 — 일반 로비로 서서 레벨업 알림도 그대로 돈다.
+    this.returnMenu = entryMenu === "duel" && !PVP_MODE_SELECT_ENABLED ? undefined : entryMenu;
     consumeSceneEntry(this);
   }
 
@@ -249,7 +251,7 @@ export class LobbyScene extends Phaser.Scene {
       // 출격과 성격이 다른 입구라 강조 양식을 쓰지 않는다. 같은 원근만 공유한다.
       perspective: "right",
       tilt: -6,
-      onClick: this.guarded("duel", () => this.openPvpMenu()),
+      onClick: this.guarded("duel", () => (PVP_MODE_SELECT_ENABLED ? this.openPvpMenu() : startScene(this, "duel"))),
     });
     this.gateEntrance("duel", duelButton);
 

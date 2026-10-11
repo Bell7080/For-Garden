@@ -126,9 +126,9 @@ function battleStage(id: string): BattleStageDef {
 const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole, BattleArenaMode, number, number][] = [
   ["스토리 1-1", 5, () => getStageEnemies(battleStage("1-1")), "normal", "stage", 13.3, 0.88],
   ["스토리 1-9", 14, () => getStageEnemies(battleStage("1-9")), "normal", "stage", 16.9, 0.87],
-  ["스토리 1-5 정예", 10, () => getStageEnemies(battleStage("1-5")), "elite", "stage", 12.4, 0.76],
+  ["스토리 1-5 정예", 10, () => getStageEnemies(battleStage("1-5")), "elite", "stage", 21.2, 0.56],
   // 엘라 「금강불괴」의 진입 막이 실제로 지급되면서(v0.250.2) 43.7 → 45.8로 늘었다.
-  ["스토리 1-10 정예", 15, () => getStageEnemies(battleStage("1-10")), "elite", "stage", 45.8, 0.07],
+  ["스토리 1-10 정예", 15, () => getStageEnemies(battleStage("1-10")), "elite", "stage", 51.9, 0.07],
   ["스토리 3-9", 44, () => getStageEnemies(battleStage("3-9")), "normal", "stage", 20.1, 0.85],
   ["현상수배 1단계", 5, () => [bountyRoundEnemy(BOUNTY_TIERS[0].rounds[0])], "normal", "bounty", 5.6, 0.83],
   ["현상수배 5단계", 60, () => [bountyRoundEnemy(BOUNTY_TIERS[4].rounds[0])], "normal", "bounty", 8.2, 0.74],
@@ -136,7 +136,7 @@ const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole,
   ["대작전 8단계", 60, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", "cake", 65.1, 0.61],
   ["원정 일반 5층", 10, () => getExpeditionEncounterEnemies("normal", 5), "normal", "expedition", 14.3, 0.96],
   // 정예가 보호막을 깨고(코마) 치유를 깎는 자리가 되어 평균이 37.3 → 29.5로 줄고 띠 안에 들었다.
-  ["원정 정예 10층", 20, () => getExpeditionEncounterEnemies("elite", 10), "elite", "expedition", 29.5, 0.39],
+  ["원정 정예 10층", 20, () => getExpeditionEncounterEnemies("elite", 10), "elite", "expedition", 66.8, 0.07],
   ["원정 무리 15층", 30, () => getExpeditionEncounterEnemies("horde", 15), "swarm", "expedition", 14.1, 0.76],
 ];
 
@@ -166,11 +166,13 @@ describe("콘텐츠별 전투 시간 실측", () => {
      * 승률·잔여 체력은 그대로라 벽은 그대로 벽이다. 원정은 레벨 디자인을 다시 할 때 함께 본다.
      * **정예에 강인함·치유 감소를 얹고 코마의 궁극기가 막을 깨게 하자** 1-10은 61.2 → 43.7초(막과 치유가 먼저
      * 닫혀 전멸이 빨라졌다)로, 원정 10층은 목표 띠 안(29.5초)으로 들어왔다.
+     * **v0.275.14에서 정예 체력 몫을 ×3.3 → ×8로 올렸다**(응태 결정 — 1-5를 정예답게, 1-10은 직접 깨 보며 조율). 1-5는 12 → 21초로
+     * 띠 안에 들어왔고, 1-10은 52초·원정 10층은 67초(사실상 못 깸)로 띠를 벗어났다. 원정 정예는 레벨 디자인을 다시 할 때 함께 본다.
      */
     const offTarget = AUDIT.filter(([, , , role, , ttk, hp]) => !isEncounterOnTarget(role, { ttkSeconds: ttk, remainingHp: hp }));
     expect(offTarget.map(([label]) => label)).toEqual([
-      "스토리 1-9", "스토리 1-5 정예", "스토리 1-10 정예", "스토리 3-9",
-      "현상수배 1단계", "현상수배 5단계", "대작전 8단계", "원정 일반 5층",
+      "스토리 1-9", "스토리 1-10 정예", "스토리 3-9",
+      "현상수배 1단계", "현상수배 5단계", "대작전 8단계", "원정 일반 5층", "원정 정예 10층",
     ]);
   });
 });

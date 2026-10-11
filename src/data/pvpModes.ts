@@ -23,6 +23,13 @@ export const PVP_MODES: readonly PvpModeDefinition[] = [
   { id: "training", label: "연습 훈련", title: "연습 훈련", scope: "허수아비 또는 아군 렐릭을 이용한\n1:1~3:3 훈련" },
 ] as const;
 
+/**
+ * **PVP 입구가 모드 선택판을 먼저 여는가.** 꺼 두면 로비의 PVP 버튼이 팝업 없이 곧바로 결투장으로 간다(응태 결정 10-11).
+ * 우두머리 결정전·대난투·연습 훈련은 지우지 않고 남겨 두었다 — 모든 사람이 같은 최강 렐릭을 쓰면 답이 없다는
+ * 우려로 미뤘으며, 다시 열 때는 이 값만 켜면 선택판이 돌아온다.
+ */
+export const PVP_MODE_SELECT_ENABLED = false;
+
 /** 잘못된 외부 진입이 있더라도 첫 모드로 안전하게 수렴시키는 순수 조회 경계다. */
 export function getPvpMode(id: unknown): PvpModeDefinition {
   return PVP_MODES.find((mode) => mode.id === id) ?? PVP_MODES[0];

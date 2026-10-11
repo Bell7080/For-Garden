@@ -12,8 +12,8 @@ import { addSectionTitle } from "../ui/SectionTitle";
 import { addFrameAmount, addFramedIcon, guideForIcon } from "../ui/itemFrame";
 import { chipPoints, drawLayer, drawShapeOutline, drawVignette, slantedRect } from "../ui/holo";
 import { paintShowcaseCard, SHOWCASE_TIER_TONE, showcaseCardShape } from "../ui/showcaseCardChrome";
-import { addAdCountLabel, addAdRewardCard } from "../ui/AdRewardCard";
-import { addStatusSticker, forgetStatusStickers } from "../ui/soldOutStamp";
+import { AD_CARD_BEVEL, addAdCountLabel, addAdRewardCard } from "../ui/AdRewardCard";
+import { addSoldOutStamp, addStatusSticker, forgetSoldOutStamp, forgetStatusStickers } from "../ui/soldOutStamp";
 import { premiumStatusOf, type PremiumStatus } from "../ui/premiumStatus";
 import { remainingDetail } from "../ui/itemExpiry";
 import { openRewardPopup, productGrantsToRewardItems } from "../ui/RewardPopup";
@@ -412,7 +412,7 @@ export class PremiumScene extends Phaser.Scene {
       x, y, width: premiumCardWidth(kind), height: premiumCardHeight(kind), currency: "gems", amount: slot.reward.amount,
       title: t("shop.premium.adTitle"), badge: t("shop.premium.adDeal"), remaining: status.remaining, limit: status.limit,
       clip: premiumGridViewport, isTap: (pointer) => this.isTap(pointer),
-      onWatch: () => void this.watchGemAd(),
+      onWatch: () => void this.watchGemAd(), stampKey: slotId,
     });
   }
 
@@ -420,9 +420,11 @@ export class PremiumScene extends Phaser.Scene {
     if (this.claiming) return;
     this.claiming = true;
     try {
-      if (!(await watchAdSlot("gem-ad"))) { this.notice(t("stamina.adCancelled")); return; }
+      const items = await watchAdSlot("gem-ad");
+      if (!items) { this.notice(t("stamina.adCancelled")); return; }
       this.topBar?.refresh();
       await this.refresh();
+      openRewardPopup(this, this.popups, { items });
     } catch { this.notice(t("shop.premium.adFailed")); } finally { this.claiming = false; }
   }
 
@@ -440,7 +442,6 @@ export class PremiumScene extends Phaser.Scene {
     const { x, y } = premiumCardSpot(index, kind);
     const status = adSlotStatus(slot.id);
     const done = status.remaining <= 0;
-    const open = !done;
     const card = this.add.container(x, y);
     paintShowcaseCard(this, card, { width, height, accent: SHOWCASE_TIER_TONE.daily, dim: false, railX: -width / 2 + W.pad, tag: t("shop.premium.dailyAdTag"), stageY: PREMIUM_WIDE.stack.frameY + PREMIUM_WIDE.frame / 2 });
     const left = -width / 2 + W.pad;
@@ -459,7 +460,7 @@ export class PremiumScene extends Phaser.Scene {
     bar.add(drawLayer(this, 0, 0, chipPoints(S.price.width + 120, S.price.height, { bevel: { topLeft: 20, topRight: 0, bottomRight: 20, bottomLeft: 0 } }), { fill: 0x0d141c, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.7 }));
     addAdCountLabel(this, bar, 0, 0, status.remaining, status.limit, done, Math.round(S.price.height * 0.7));
     card.add(bar);
-    if (!open) card.setAlpha(PREMIUM_SOLD_OUT_ALPHA + 0.2);
+    if (done) addSoldOutStamp(this, card, width, height, AD_CARD_BEVEL, slot.id); else forgetSoldOutStamp(slot.id);
     this.addCardHit(card, width, height, () => {
       if (done) { this.notice(t("shop.premium.dailyClaimed")); return; }
       void this.watchDailyAd();
@@ -471,9 +472,11 @@ export class PremiumScene extends Phaser.Scene {
     if (this.claiming) return;
     this.claiming = true;
     try {
-      if (!(await watchAdSlot("daily-bonus-ad"))) { this.notice(t("stamina.adCancelled")); return; }
+      const items = await watchAdSlot("daily-bonus-ad");
+      if (!items) { this.notice(t("stamina.adCancelled")); return; }
       this.topBar?.refresh();
       await this.refresh();
+      openRewardPopup(this, this.popups, { items });
     } catch { this.notice(t("shop.premium.adFailed")); } finally { this.claiming = false; }
   }
 

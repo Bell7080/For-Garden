@@ -1,3 +1,4 @@
+import type { ClaimAdRewardResponse } from "../api/contracts";
 import type { RuneInstance } from "../core/runes";
 import { findItem } from "../data/items";
 import type { ProductGrant } from "../data/shopCatalog";
@@ -32,6 +33,20 @@ export function currencyRecordToRewardItems(rewards: Readonly<Record<string, num
     const icon = icons[currency];
     return icon && amount > 0 ? [{ icon, amount: Math.floor(amount) }] : [];
   }));
+}
+
+/**
+ * 광고 보상 응답을 보상 액자 목록으로 바꾼다. 재화는 서버 지갑의 전후 차이(`granted`)만 읽고,
+ * 가방 아이템·결투 도전권은 슬롯 정의에서 읽는다. 발굴 효과·빠른 원정은 제 화면이 결과를 보여 주므로 비운다.
+ */
+export function adRewardToRewardItems(response: Pick<ClaimAdRewardResponse, "reward" | "granted">): RewardPopupItem[] {
+  const { reward } = response;
+  const items: ProductGrant[] = [];
+  if (reward.kind === "item") items.push({ kind: "item", itemId: reward.itemId, name: reward.itemId, amount: reward.quantity });
+  else if (reward.kind === "duel_attempt") items.push({ kind: "item", itemId: "duel-ticket", name: "duel-ticket", amount: reward.quantity });
+  else if (reward.kind === "currencies") for (const item of reward.items ?? []) items.push({ kind: "item", itemId: item.itemId, name: item.itemId, amount: item.quantity });
+  const currencies = reward.kind === "currency" || reward.kind === "currencies" ? currencyRecordToRewardItems(response.granted as Record<string, number>) : [];
+  return sortRewardItems([...currencies, ...productGrantsToRewardItems(items)]);
 }
 
 /** 서버가 확정한 상품 지급 결과를 정의 재계산 없이 보상 액자 표시 모델로만 변환한다. */

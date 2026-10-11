@@ -54,7 +54,9 @@ export function openDungeonSweep(flow: DungeonSweepFlow): void {
     onWatchAd: async () => {
       try {
         const daily = await watchSweepTicketAd();
-        if (daily) flow.setDailyAdRewards(daily);
+        if (!daily) return;
+        flow.setDailyAdRewards(daily.dailyAdRewards);
+        openRewardPopup(scene, popups, { items: daily.items });
       } catch {
         // 지급이 서지 않았다 — 가방과 횟수는 그대로다.
       }

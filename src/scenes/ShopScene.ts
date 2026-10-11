@@ -21,6 +21,7 @@ import { addSectionTitle } from "../ui/SectionTitle";
 import { addBackButton } from "../ui/IconButton";
 import { addItemFrame, addShelfAmount, ITEM_FRAME } from "../ui/itemFrame";
 import { tradePackageValuePercent } from "../data/tradePackages";
+import { openRewardPopup } from "../ui/RewardPopup";
 import { addSoldOutStamp, forgetSoldOutStamp, styleLimitCount } from "../ui/soldOutStamp";
 import { chipPoints, drawFrameVignette, drawLayer, drawVignette, HOLO, slantedRect } from "../ui/holo";
 import { DialogueBubble } from "../ui/DialogueBubble";
@@ -634,15 +635,17 @@ export class ShopScene extends Phaser.Scene {
       x, y, width: shopCardWidth(), height: SHOP_CARD.height, currency: first.currency, amount: first.amount, extras,
       title: t(spec.titleKey), remaining: status.remaining, limit: status.limit,
       clip: shopGridViewport, isTap: (pointer) => this.insideViewport(pointer) && this.draggedDistance <= SHOP_CARD.dragSlop,
-      onWatch: () => void this.watchAd(spec.slotId),
+      onWatch: () => void this.watchAd(spec.slotId), stampKey: spec.slotId,
     });
   }
 
   private async watchAd(slotId: string): Promise<void> {
     try {
-      if (!(await watchAdSlot(slotId))) { this.notice(t("stamina.adCancelled")); return; }
+      const items = await watchAdSlot(slotId);
+      if (!items) { this.notice(t("stamina.adCancelled")); return; }
       this.topBar?.refresh();
       this.renderProducts();
+      openRewardPopup(this, this.popups, { items });
     } catch { this.notice(t("shop.premium.adFailed")); }
   }
 

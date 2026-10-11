@@ -16,6 +16,8 @@ import { UI_ICON } from "./icons";
 import { addFramedIcon } from "./itemFrame";
 import { remainingDetail } from "./itemExpiry";
 import { PopupLayer } from "./PopupLayer";
+import { openRewardPopup } from "./RewardPopup";
+import { adRewardToRewardItems } from "./rewardPopupModel";
 import { addSectionTitle } from "./SectionTitle";
 import { heroStack, POPUP_BEVEL_RATIO, STAMINA_CELL as CELL, staminaPopupLayout } from "./staminaPopupLayout";
 import { squeezeTextToWidth } from "./textFit";
@@ -78,8 +80,10 @@ export function openDuelTicketPopup(scene: Phaser.Scene, popups: PopupLayer, api
   const watchAd = (): void => void run(async () => {
     const verificationToken = completedAdToken(await presentAd(AD_SLOT_ID));
     if (!verificationToken) { message = t("stamina.adCancelled"); return undefined; }
-    await inventory.claimAdReward(api, { slotId: AD_SLOT_ID, verificationToken, requestId: adRequestId() });
-    return api.getDuelStatus();
+    const response = await inventory.claimAdReward(api, { slotId: AD_SLOT_ID, verificationToken, requestId: adRequestId() });
+    const status = await api.getDuelStatus();
+    openRewardPopup(scene, popups, { items: adRewardToRewardItems(response) });
+    return status;
   });
 
   const paint = (view: Phaser.GameObjects.Container): void => {

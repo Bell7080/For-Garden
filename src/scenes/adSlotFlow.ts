@@ -3,6 +3,7 @@ import { completedAdToken, findAdRewardSlot } from "../data/adRewards";
 import { InventoryManager } from "../managers/InventoryManager";
 import { presentRewardedAd } from "../platform/rewardedAds";
 import { session } from "../state/session";
+import { adRewardToRewardItems, type RewardPopupItem } from "../ui/rewardPopupModel";
 
 const inventory = new InventoryManager(session);
 
@@ -14,13 +15,14 @@ export function adSlotStatus(slotId: string): { used: number; limit: number; rem
 }
 
 /**
- * 광고를 보고 그 슬롯의 보상을 받는다. 취소·SDK 미준비는 성공을 흉내 내지 않고 `false`를 돌려준다.
+ * 광고를 보고 그 슬롯의 보상을 받는다. 취소·SDK 미준비는 성공을 흉내 내지 않고 `undefined`를 돌려준다.
+ * 성공하면 서버가 확정한 보상 액자 목록을 돌려주고, 부르는 쪽이 `openRewardPopup`으로 알린다.
  * 지급과 횟수 확정은 서버가 하고, 가방·지갑은 그 결과를 다시 읽는다.
  */
-export async function watchAdSlot(slotId: string): Promise<boolean> {
+export async function watchAdSlot(slotId: string): Promise<RewardPopupItem[] | undefined> {
   const verificationToken = completedAdToken(await presentRewardedAd(slotId));
-  if (!verificationToken) return false;
+  if (!verificationToken) return undefined;
   const requestId = globalThis.crypto?.randomUUID?.() ?? `ad-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  await inventory.claimAdReward(gameApi, { slotId, verificationToken, requestId });
-  return true;
+  const response = await inventory.claimAdReward(gameApi, { slotId, verificationToken, requestId });
+  return adRewardToRewardItems(response);
 }

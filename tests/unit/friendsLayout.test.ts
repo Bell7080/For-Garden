@@ -41,13 +41,13 @@ describe("친구 화면 배치", () => {
     expect(friendsSortX() - FRIENDS_CONTROLS.sort.width / 2).toBeGreaterThan(friendsChipX(2, filter) + filter.width / 2);
   });
 
-  it("찾기 줄의 입력 칸은 방식 칩과 검색 버튼 사이에 선다", () => {
+  it("찾기 줄의 입력 칸은 왼쪽 여백부터 검색 버튼 앞까지 선다", () => {
     const row = friendsSearchRow();
     const inputLeft = row.input.x - row.input.width / 2;
     const inputRight = row.input.x + row.input.width / 2;
-    expect(inputLeft).toBeGreaterThan(row.modeX(1) + FRIENDS_CONTROLS.mode.width / 2);
+    expect(inputLeft).toBe(FRIENDS_SCREEN.side);
     expect(inputRight).toBeLessThan(row.button.x - FRIENDS_CONTROLS.search.width / 2);
-    expect(row.input.width).toBeGreaterThan(200);
+    expect(row.input.width).toBeGreaterThan(500);
   });
 
   it("스크롤 한계는 줄이 적으면 0이다", () => {

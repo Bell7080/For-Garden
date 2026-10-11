@@ -39,10 +39,6 @@ export type FriendSortMode = (typeof FRIEND_SORT_MODES)[number];
 export const FRIEND_FILTERS = ["all", "favorite", "online"] as const;
 export type FriendFilter = (typeof FRIEND_FILTERS)[number];
 
-/** 찾기 방식. 이름은 부분 일치, 고유 ID(UID)는 정확히 일치한다. */
-export const USER_SEARCH_MODES = ["name", "uid"] as const;
-export type UserSearchMode = (typeof USER_SEARCH_MODES)[number];
-
 /** 한 이용자와 나의 관계. 차단한 이용자는 검색·추천에서 빠지므로 여기에는 없다. */
 export type FriendRelation = "none" | "friend" | "incoming" | "outgoing";
 
@@ -110,16 +106,19 @@ export function viewFriends<T extends FriendListItem>(friends: readonly T[], opt
   });
 }
 
-/** 입력 칸의 글자를 찾기용으로 다듬는다. 앞뒤 공백을 걷고, UID는 숫자만 남긴다. */
-export function normalizeSearchQuery(mode: UserSearchMode, raw: string): string {
-  const trimmed = raw.trim();
-  return mode === "uid" ? trimmed.replace(/\D/g, "") : trimmed;
+/** 입력 칸의 글자를 찾기용으로 다듬는다. 앞뒤 공백만 걷는다. */
+export function normalizeSearchQuery(raw: string): string {
+  return raw.trim();
 }
 
-/** 이름은 대소문자를 가리지 않는 부분 일치, UID는 정확히 일치한다. 빈 검색어는 아무와도 맞지 않는다. */
-export function matchesUserQuery(user: { displayName: string; uid: string }, mode: UserSearchMode, query: string): boolean {
-  const normalized = normalizeSearchQuery(mode, query);
+/**
+ * 이름과 고유 ID를 한 칸에서 함께 찾는다. 이름은 대소문자를 가리지 않는 부분 일치,
+ * UID는 입력에서 숫자만 남겨 정확히 일치한다(`418-207 735`도 맞는다). 빈 검색어는 아무와도 맞지 않는다.
+ */
+export function matchesUserQuery(user: { displayName: string; uid: string }, query: string): boolean {
+  const normalized = normalizeSearchQuery(query);
   if (normalized.length === 0) return false;
-  if (mode === "uid") return user.uid === normalized;
-  return user.displayName.toLocaleLowerCase().includes(normalized.toLocaleLowerCase());
+  if (user.displayName.toLocaleLowerCase().includes(normalized.toLocaleLowerCase())) return true;
+  const digits = normalized.replace(/\D/g, "");
+  return digits.length > 0 && user.uid === digits;
 }

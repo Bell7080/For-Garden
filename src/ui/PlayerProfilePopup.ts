@@ -41,7 +41,7 @@ export interface ProfileEditors {
   avatar: () => void;
   nickname: () => void;
   bio: () => void;
-  /** 얻은 수식어가 하나도 없으면 비운다 — 고를 것이 없는 줄은 눌리지 않는다. */
+  /** 수식어 탭을 연다 — 얻은 것이 없어도 어떤 수식어가 있는지는 볼 수 있다. */
   modifiers?: () => void;
 }
 
@@ -142,7 +142,10 @@ export class PlayerProfilePopup {
 
     if (this.editors?.modifiers) {
       const rowWidth = header.textRight - left;
-      if (this.profile.equippedModifiers.length === 0) body.add(drawGlyph(this.scene, "edit", left + 18, header.modifierY, 24, COLOR.accent, 0.7));
+      if (this.profile.equippedModifiers.length === 0) {
+        body.add(this.scene.add.text(left, header.modifierY, t("profile.modifier.none"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
+        body.add(drawGlyph(this.scene, "edit", left + 150, header.modifierY, 24, COLOR.accent, 0.7));
+      }
       this.bindEdit(body, undefined, left + rowWidth / 2, header.modifierY, rowWidth, modifiers.height + 8, this.editors.modifiers);
     }
 

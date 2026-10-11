@@ -1480,15 +1480,25 @@
 "Wieder änderbar ab {time}",
 "Снова можно сменить с {time}"
 ],
-"profile.edit.modifier": [
-"称号（最多{max}个）",
-"ฉายา (สูงสุด {max})",
-"Danh hiệu (tối đa {max})",
-"Gelar (maks. {max})",
-"Títulos (hasta {max})",
-"Títulos (até {max})",
-"Titel (bis zu {max})",
-"Титулы (до {max})"
+"profile.picker.modifier": [
+"称号",
+"ฉายา",
+"Danh hiệu",
+"Gelar",
+"Títulos",
+"Títulos",
+"Titel",
+"Титулы"
+],
+"profile.modifier.none": [
+"无称号",
+"ไม่มีฉายา",
+"Chưa có danh hiệu",
+"Tanpa gelar",
+"Sin título",
+"Sem título",
+"Kein Titel",
+"Нет титула"
 ],
 "profile.edit.frameLocked": [
 "LV.{level}",

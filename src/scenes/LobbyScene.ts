@@ -46,7 +46,7 @@ import { loadOwnedPuppet } from "../ui/statusPuppetLoad";
 import { PlayerProfilePopup } from "../ui/PlayerProfilePopup";
 import { profileModifierManager } from "../managers/ProfileModifierManager";
 import { playerProfileDisplay, type PlayerProfileDisplay } from "../state/playerProfile";
-import { openAvatarPicker, openBioEditor, openModifierPicker, openNicknameEditor } from "../ui/PlayerProfileEditors";
+import { openAvatarPicker, openBioEditor, openNicknameEditor } from "../ui/PlayerProfileEditors";
 import { showContentLockedToast, addLockCover, collectUnlockCelebrations, consumeUnlockCelebration, contentNameKey, contentOpen, playUnlockSequence, unlockCover, UNLOCK_POP_TOTAL_MS } from "../ui/contentLock";
 import { addPadlock } from "../ui/Padlock";
 import { LOCK_DIM } from "../ui/lockStyle";
@@ -369,7 +369,7 @@ export class LobbyScene extends Phaser.Scene {
         avatar: edit((done) => openAvatarPicker(this, layer, done)),
         nickname: edit((done) => openNicknameEditor(this, layer, done)),
         bio: edit((done) => openBioEditor(this, layer, done)),
-        ...(profileModifierManager.earned().length > 0 ? { modifiers: edit((done) => openModifierPicker(this, layer, done)) } : {}),
+        modifiers: edit((done) => openAvatarPicker(this, layer, done, "modifier")),
       });
       this.playerProfilePopup.open({ instant });
     });

@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { allowBurst, AREA_IMPACT, INK_AREA, INK_HIT, INK_PROJECTILE, INK_STRIKE, inkStarStyle, lightenColor, projectilePosition, BATTLEFIELD_WASH_HOLD, BATTLEFIELD_WASH_RISE, EFFECT_BUDGET, EFFECT_PRESETS, EFFECT_TAP_COLOR, GROUND_SURFACE, REACH_STRIKE, SUSTAINED_COMBAT_EFFECT, type BurstSpec, type EffectKind } from "../ui/effectPresets";
+import { allowBurst, AREA_IMPACT, INK_AREA, INK_HIT, INK_RESTORE, INK_PROJECTILE, INK_STRIKE, inkStarStyle, lightenColor, projectilePosition, BATTLEFIELD_WASH_HOLD, BATTLEFIELD_WASH_RISE, EFFECT_BUDGET, EFFECT_PRESETS, EFFECT_TAP_COLOR, GROUND_SURFACE, REACH_STRIKE, SUSTAINED_COMBAT_EFFECT, type BurstSpec, type EffectKind } from "../ui/effectPresets";
 import { EFFECT_TEXTURE, ensureEffectTextures } from "../ui/effectTextures";
 import { ensureInkTextures } from "../ui/inkTextures";
 import { INK_STYLE, inkTextureKey, type InkShapeId } from "../ui/inkShapes";
@@ -205,6 +205,7 @@ export class EffectManager {
   /** 회복 십자 풀. 파문과 같은 이유로 다시 쓴다. */
   private readonly crosses: Phaser.GameObjects.Image[] = [];
   /** 몸을 두른 보호막. 전투원마다 한 장이고 두께 단계가 바뀐 프레임에만 다시 그린다. */
+  private lastFocusAt: number | undefined;
   private readonly shieldAuras = new Map<string, { graphics: Phaser.GameObjects.Graphics; key: string }>();
   private frame = -1;
   private openedThisFrame = 0;
@@ -786,6 +787,7 @@ export class EffectManager {
       this.openRing(x, y, spec.ringRadius * scale * (1 + ring * 0.42), spec.ringMs + ring * 90, spec.ringWidth, ring === 0 ? color : 0xffffff, ring * 70, spec.ink !== undefined);
     }
     if (spec.ink) {
+      if (kind === "ultimate") this.openFocusLines(x, y, now);
       if (spec.ink.star > 0) this.openInkStar(x, y, spec.ink.star * scale, color, options);
     } else if (spec.flash > 0) this.openFlash(x, y, spec.flash * scale, spec.flashMs, spec.flashAlpha, color);
   }
@@ -844,7 +846,7 @@ export class EffectManager {
       return;
     }
     if (method === "shieldHit") { this.openRing(x, y, 94 * scale, 180, 7, options.color); return; }
-    if (method === "shieldBreak") { this.burst("death", x, y, { color: options.color, scale: scale * 0.8 }); return; }
+    if (method === "shieldBreak") { this.shieldShatter(x, y, scale, options.color); return; }
     if (method === "reagentReaction") {
       // 전용 애니메이션 에셋을 만들지 않고 기존 파문 풀을 크기가 다른 세 수포처럼 벌린다.
       // 한 사건에서만 이 묶음을 열기 때문에 독 시작·회복 사건이 뒤따라도 다시 재생되지 않는다.
@@ -871,7 +873,7 @@ export class EffectManager {
     this.lastAt.set("heal", now);
     this.openedThisFrame += 1;
     const visual = healVisual(intensity);
-    this.openFlash(x, y + 10, visual.glowSize, visual.lifeMs * 0.7, visual.glowAlpha, color);
+    this.openHealDiamond(x, y + INK_RESTORE.heal.feetOffset, visual.glowSize, visual.lifeMs * 0.7, color);
     const count = Math.max(1, Math.round(visual.crosses * this.quality.particleRatio));
     for (let index = 0; index < count; index += 1) {
       // 난수 없이 몸 둘레에 고르게 벌린다 — 같은 회복이 늘 같은 그림을 그린다.
@@ -885,14 +887,20 @@ export class EffectManager {
     let image = this.crosses.find((candidate) => !candidate.visible);
     if (!image) {
       if (this.crosses.length >= EFFECT_BUDGET.maxRings) return;
-      image = this.scene.add.image(0, 0, EFFECT_TEXTURE.cross).setVisible(false);
+      image = this.scene.add.image(0, 0, inkTextureKey("cross")).setVisible(false);
       this.crosses.push(image);
     }
     const cross = image.setPosition(x, y).setTint(color).setDepth(this.depth).setAlpha(0).setDisplaySize(size * 0.4, size * 0.4).setVisible(true);
+    const { crossPop, crossPopAt } = INK_RESTORE.heal;
     this.scene.tweens.add({
       targets: cross, delay, duration: ms, y: y - rise, ease: "Quad.Out",
-      displayWidth: size, displayHeight: size,
-      onUpdate: (tween) => { const p = tween.progress; cross.setAlpha(p < 0.2 ? p / 0.2 : 1 - ((p - 0.2) / 0.8) ** 2); },
+      onUpdate: (tween) => {
+        const p = tween.progress;
+        // 톡 넘쳤다가 제 크기로 돌아온다 — 잉크 조각은 밝아지며 번지지 않으므로 크기가 "솟았다"를 말한다.
+        const grow = p < crossPopAt ? 0.4 + (crossPop - 0.4) * (p / crossPopAt) : crossPop - (crossPop - 1) * Math.min(1, (p - crossPopAt) / crossPopAt);
+        cross.setDisplaySize(size * grow, size * grow);
+        cross.setAlpha(p < 0.15 ? p / 0.15 : p < 0.6 ? 1 : 1 - (p - 0.6) / 0.4);
+      },
       onComplete: () => cross.setVisible(false),
     });
   }
@@ -911,13 +919,96 @@ export class EffectManager {
           // 크게 벌어진 원이 몸 둘레로 조여 들며 굵어진다 — 막이 몸에 붙는 순간이다.
           const scale = 1.5 - state.t * 0.5;
           graphics.clear();
-          graphics.lineStyle(visual.width * (0.5 + state.t * 0.5), color, visual.alpha * (1 - state.t * 0.6));
+          const width = visual.width * (0.5 + state.t * 0.5);
+          const alpha = visual.alpha * (1 - state.t * 0.6);
+          graphics.lineStyle(width + INK_RESTORE.shield.inkExtra, INK_COLOR, alpha);
+          graphics.strokeEllipse(0, 0, 150 * scale, 190 * scale);
+          graphics.lineStyle(width, color, alpha);
           graphics.strokeEllipse(0, 0, 150 * scale, 190 * scale);
         },
         onComplete: () => { graphics.clear().setVisible(false); slot.tween = undefined; },
       });
     }
-    this.openFlash(x, y, 150, 300, visual.glowAlpha, color);
+  }
+
+  /** 회복 발밑의 초록 마름모 — 먹선이 경계를 쥐고 벌어지며 옅어진다. */
+  private openHealDiamond(x: number, y: number, size: number, ms: number, color: number): void {
+    const slot = this.acquireRing();
+    slot.openedAt = this.scene.time.now;
+    const graphics = slot.graphics.clear().setPosition(x, y).setAlpha(1).setDepth(this.groundDepth).setVisible(true);
+    const spec = INK_RESTORE.heal;
+    const state = { t: 0 };
+    slot.tween = this.scene.tweens.add({
+      targets: state, t: 1, duration: ms, ease: "Cubic.Out",
+      onUpdate: () => {
+        const radius = size * (spec.diamond[0] + (spec.diamond[1] - spec.diamond[0]) * state.t);
+        const points = radialAreaPoints(radius).map((point) => new Phaser.Geom.Point(point.x, point.y));
+        const fade = 1 - state.t;
+        graphics.clear();
+        graphics.fillStyle(color, spec.fillAlpha * fade);
+        graphics.fillPoints(points, true);
+        graphics.lineStyle(spec.inkWidth, INK_COLOR, 0.9 * fade);
+        graphics.strokePoints(points, true);
+      },
+      onComplete: () => { graphics.clear().setVisible(false); slot.tween = undefined; },
+    });
+  }
+
+  /** 보호막이 깨지는 순간 — 막 조각이 몸 둘레에서 바깥으로 흩어지고 붉은 별이 선다. */
+  private shieldShatter(x: number, y: number, scale: number, color: number): void {
+    const now = this.rollFrame();
+    if (this.openedThisFrame >= EFFECT_BUDGET.perFrame) return;
+    this.openedThisFrame += 1;
+    const spec = INK_RESTORE.shield;
+    const count = Math.max(4, Math.round(spec.breakShards * this.quality.particleRatio));
+    for (let index = 0; index < count; index += 1) {
+      // 난수 없이 고르게 돈다 — 같은 깨짐이 늘 같은 그림을 그린다.
+      const angle = (index / count) * Math.PI * 2 + 0.2;
+      this.openInkPiece("ringShard", color, spec.breakMs, 0, (image, t) => {
+        const distance = (spec.breakRadius + spec.breakTravel * (1 - (1 - t) ** 3)) * scale;
+        image.setPosition(x + Math.cos(angle) * distance, y + Math.sin(angle) * distance * 1.08)
+          .setRotation(angle + Math.PI / 2 + t * 2)
+          .setScale(scale);
+      });
+    }
+    this.openInkStar(x, y, spec.breakStar * scale, color, { incoming: true });
+    this.lastAt.set("shield", now);
+  }
+
+  /**
+   * 궁극기의 집중선 — 맞은 자리를 향해 먹 빗살이 안으로 조여 든다. 광역이 여럿을 함께 때려도
+   * 한 번뿐이다.
+   */
+  private openFocusLines(x: number, y: number, now: number): void {
+    const spec = INK_RESTORE.focus;
+    if (this.lastFocusAt !== undefined && now - this.lastFocusAt < spec.gapMs) return;
+    this.lastFocusAt = now;
+    const slot = this.acquireRing();
+    slot.openedAt = now;
+    const graphics = slot.graphics.clear().setPosition(x, y).setAlpha(1).setDepth(this.depth).setVisible(true);
+    const state = { t: 0 };
+    slot.tween = this.scene.tweens.add({
+      targets: state, t: 1, duration: spec.ms,
+      onUpdate: () => {
+        const eased = 1 - (1 - state.t) ** 3;
+        const inner = spec.inner - spec.travel * eased;
+        graphics.clear().fillStyle(INK_COLOR, spec.alpha * (1 - state.t));
+        for (let ray = 0; ray < spec.rays; ray += 1) {
+          // 홀수 빗살을 조금 비틀어 고른 바큇살로 보이지 않게 한다.
+          const angle = (ray / spec.rays) * Math.PI * 2 + (ray % 2) * 0.12;
+          const half = spec.widths[ray % spec.widths.length] / 2;
+          const outer = inner + spec.length;
+          const cos = Math.cos(angle);
+          const sin = Math.sin(angle);
+          graphics.fillTriangle(
+            cos * inner, sin * inner,
+            cos * outer - sin * half, sin * outer + cos * half,
+            cos * outer + sin * half, sin * outer - cos * half,
+          );
+        }
+      },
+      onComplete: () => { graphics.clear().setVisible(false); slot.tween = undefined; },
+    });
   }
 
   /**
@@ -945,10 +1036,13 @@ export class EffectManager {
         aura.graphics.clear();
         aura.graphics.fillStyle(target.color, style.fillAlpha);
         aura.graphics.fillEllipse(0, 0, width, height);
+        // 먹선이 바깥을 쥐고 그 위에 막 색이 선다 — 밝은 원화 위에서도 막의 경계가 떨어져 나온다.
+        aura.graphics.lineStyle(style.width + INK_RESTORE.shield.inkExtra, INK_COLOR, style.alpha);
+        aura.graphics.strokeEllipse(0, 0, width, height);
         aura.graphics.lineStyle(style.width, target.color, style.alpha);
         aura.graphics.strokeEllipse(0, 0, width, height);
-        // 안쪽에 가는 흰 선 한 줄 — 막의 두께가 선 두 줄 사이의 폭으로 읽힌다.
-        aura.graphics.lineStyle(1.5, 0xffffff, style.alpha * 0.5);
+        // 안쪽에 가는 밝힌 선 한 줄 — 막의 두께가 선 두 줄 사이의 폭으로 읽힌다.
+        aura.graphics.lineStyle(1.5, lightenColor(target.color, INK_RESTORE.shield.innerLighten), style.alpha * 0.7);
         aura.graphics.strokeEllipse(0, 0, width - style.width * 2.4, height - style.width * 2.4);
       }
       aura.graphics.setPosition(target.x, target.y - target.height * 0.5).setVisible(true);

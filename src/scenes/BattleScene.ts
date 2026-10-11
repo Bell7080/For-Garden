@@ -2103,7 +2103,8 @@ export class BattleScene extends Phaser.Scene {
       })),
       onComplete: () => {
         // 마지막은 번쩍이다. 조용히 오므라들면 여섯이 함께 쓰러질 때 언제 사라졌는지 모른다.
-        this.effects.burst("death", view.creature.x, view.creature.y, { color: view.feverTint, scale: view.fighter.bodyScale * 1.4 });
+        // 날아간 끝에서 노란 별 하나가 반짝인다 — "날아가 별이 됐다".
+        this.effects.burst("death", view.creature.x, view.creature.y, { color: view.feverTint, scale: view.fighter.bodyScale * 1.4, critical: true });
         this.tweens.add({
           targets: view.creature,
           scale: 0,

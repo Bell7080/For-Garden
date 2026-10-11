@@ -93,7 +93,7 @@ export const EFFECT_PRESETS: Record<EffectKind, BurstSpec> = {
   },
   ultimate: {
     shards: 9, speed: [420, 780], gravity: 40, life: [360, 560], shardScale: 1.5,
-    rings: 2, ringRadius: 216, ringMs: 420, ringWidth: 11, flash: 140, flashAlpha: 0.55, flashMs: 300, spin: 200, ink: { star: 1.1 },
+    rings: 2, ringRadius: 216, ringMs: 420, ringWidth: 11, flash: 140, flashAlpha: 0.55, flashMs: 300, spin: 200, ink: { star: 1.4 },
   },
   passive: {
     // 패시브는 스스로 발동하는 조용한 효과라 파문 없이 위로 떠오르는 파편 몇 조각뿐이다.
@@ -305,6 +305,23 @@ export const AREA_IMPACT = {
  */
 export const BATTLEFIELD_WASH_RISE = 0.45;
 export const BATTLEFIELD_WASH_HOLD = 0.5;
+
+/**
+ * 회복·보호막·궁극기의 잉크 결.
+ *
+ * - **회복**은 밝아지는 초록 기운 대신 발밑에 초록 마름모 한 겹(먹선)이 벌어지고, 잉크 십자가
+ *   톡 커지며(살짝 넘쳤다 돌아온다) 솟는다.
+ * - **보호막**은 두른 원 밖에 먹선을 한 겹 깔고 안쪽 선을 흰색이 아니라 막 색을 밝힌 톤으로 긋는다.
+ *   깨지는 순간은 막 조각 아홉이 바깥으로 흩어지고 붉은 별이 선다(맞은 쪽이 아군이든 적이든
+ *   "막이 깨졌다"는 받는 쪽의 사건이다).
+ * - **궁극기**는 처음 맞은 자리에서 집중선이 안으로 조여 든다. 광역이 셋을 함께 때려도 집중선은
+ *   한 번뿐이다(`focus.gapMs` 안의 두 번째부터는 건너뛴다).
+ */
+export const INK_RESTORE = {
+  heal: { feetOffset: 86, diamond: [0.34, 0.5], fillAlpha: 0.3, inkWidth: 7, crossPop: 1.15, crossPopAt: 0.35 },
+  shield: { inkExtra: 4, innerLighten: 0.35, breakShards: 9, breakRadius: 76, breakTravel: 140, breakMs: 420, breakStar: 1.1 },
+  focus: { rays: 16, inner: 660, travel: 300, length: 280, widths: [10, 16, 22], ms: 280, alpha: 0.85, gapMs: 400 },
+} as const;
 
 /**
  * 범위와 장판의 **잉크 결**.

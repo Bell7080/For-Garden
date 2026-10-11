@@ -183,3 +183,15 @@ describe("범위·장판의 잉크 결", () => {
     expect(INK_AREA.coreScale).toBeLessThan(1);
   });
 });
+
+describe("회복·보호막·궁극기의 잉크 결", () => {
+  it("궁극기의 별은 일반 공격보다 한참 크다", () => {
+    expect(EFFECT_PRESETS.ultimate.ink!.star).toBeGreaterThanOrEqual(EFFECT_PRESETS.basic.ink!.star * 1.7);
+  });
+
+  it("집중선은 안으로 조여 들고, 광역 한 번에 한 번만 선다", async () => {
+    const { INK_RESTORE } = await import("../../src/ui/effectPresets");
+    expect(INK_RESTORE.focus.travel).toBeLessThan(INK_RESTORE.focus.inner);
+    expect(INK_RESTORE.focus.gapMs).toBeGreaterThan(INK_RESTORE.focus.ms);
+  });
+});

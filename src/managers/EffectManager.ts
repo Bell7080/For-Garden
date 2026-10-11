@@ -1,7 +1,8 @@
 import Phaser from "phaser";
-import { allowBurst, AREA_IMPACT, BATTLEFIELD_WASH_HOLD, BATTLEFIELD_WASH_RISE, EFFECT_BUDGET, EFFECT_PRESETS, EFFECT_TAP_COLOR, GROUND_SURFACE, REACH_STRIKE, SUSTAINED_COMBAT_EFFECT, type BurstSpec, type EffectKind } from "../ui/effectPresets";
+import { allowBurst, AREA_IMPACT, INK_HIT, inkStarStyle, BATTLEFIELD_WASH_HOLD, BATTLEFIELD_WASH_RISE, EFFECT_BUDGET, EFFECT_PRESETS, EFFECT_TAP_COLOR, GROUND_SURFACE, REACH_STRIKE, SUSTAINED_COMBAT_EFFECT, type BurstSpec, type EffectKind } from "../ui/effectPresets";
 import { EFFECT_TEXTURE, ensureEffectTextures } from "../ui/effectTextures";
 import { ensureInkTextures } from "../ui/inkTextures";
+import { INK_STYLE, inkTextureKey } from "../ui/inkShapes";
 import { healVisual, SHIELD_AURA_SHAPE, shieldAuraStyle, shieldGainVisual } from "../ui/restoreEffects";
 import { lashPoints } from "../ui/reachStrikeShape";
 import { flashPolicy, inkBlotPoints, mawTeeth, slashPoints, SIGNATURE_SPECS, type CombatPalette, type SignatureId, type StrokePoint } from "../ui/signatureEffects";
@@ -67,6 +68,10 @@ export interface BurstOptions {
   direction?: number;
   /** 이펙트 전체 크기 배율. 큰 적을 때릴 때만 키운다. */
   scale?: number;
+  /** 치명타였나. 잉크 별이 노랗게 한 등급 크게 선다. */
+  critical?: boolean;
+  /** 우리 편이 맞았나. 잉크 별이 붉게 선다(피해 수치와 같은 축). */
+  incoming?: boolean;
   /** 수치 글자가 완전히 사라진 뒤 한 번 불린다. 표시 개수를 세는 곳만 쓴다. */
   onDone?: () => void;
 }
@@ -111,6 +116,9 @@ interface SustainedSlot { graphics: Phaser.GameObjects.Graphics; tween?: Phaser.
 export type CombatVisualMethod = "heal" | "shieldGain" | "shieldHit" | "shieldBreak" | "stealthEnter" | "stealthExit" | "reagentReaction";
 
 /** 마름모 파문 한 겹. 원이 아니라 각진 네 꼭짓점이라 SD의 각진 UI와 같은 결로 읽힌다. */
+/** 잉크 조각의 먹색. 굽는 표(`INK_STYLE.ink`)와 같은 값이다. */
+const INK_COLOR = Phaser.Display.Color.HexStringToColor(INK_STYLE.ink).color;
+
 function strokeDiamond(
   graphics: Phaser.GameObjects.Graphics,
   radius: number,
@@ -212,17 +220,20 @@ export class EffectManager {
   private emitterFor(kind: EffectKind, spec: BurstSpec): Phaser.GameObjects.Particles.ParticleEmitter {
     const existing = this.emitters.get(kind);
     if (existing) return existing;
-    const emitter = this.scene.add.particles(0, 0, EFFECT_TEXTURE.shard, {
+    // 전장의 잉크 결은 잉크 조각을 보통 합성으로 그린다 — 밝아지는 합성은 밝은 원화 위에서 하얗게
+    // 묻혔다. 메뉴의 홀로그램 결만 예전 파편을 밝게 겹친다.
+    const ink = spec.ink !== undefined;
+    const emitter = this.scene.add.particles(0, 0, ink ? inkTextureKey("shard") : EFFECT_TEXTURE.shard, {
       lifespan: { min: spec.life[0], max: spec.life[1] },
       speed: { min: spec.speed[0], max: spec.speed[1] },
       angle: { min: 0, max: 360 },
       gravityY: spec.gravity,
       // 시작 배율에서 0까지 줄어들며 사라지므로 화면에 잔해가 남지 않는다.
-      scale: { start: spec.shardScale, end: 0, ease: "Quad.Out" },
+      scale: { start: spec.shardScale * (ink ? INK_HIT.shardScale : 1), end: 0, ease: "Quad.Out" },
       alpha: { start: 1, end: 0, ease: "Quad.In" },
       // 마름모가 돌면서 폭이 변해 반짝이는 것처럼 보인다.
       rotate: { start: 0, end: spec.spin },
-      blendMode: Phaser.BlendModes.ADD,
+      blendMode: ink ? Phaser.BlendModes.NORMAL : Phaser.BlendModes.ADD,
       emitting: false,
     }).setDepth(this.depth);
     this.emitters.set(kind, emitter);
@@ -250,7 +261,7 @@ export class EffectManager {
    * 벌어지면서 **선이 얇아지고 흐려진다** — 굵기를 유지한 채 커지기만 하면 파문이 아니라
    * 커지는 마름모 하나로 보인다.
    */
-  private openRing(x: number, y: number, radius: number, ms: number, width: number, color: number, delay = 0): void {
+  private openRing(x: number, y: number, radius: number, ms: number, width: number, color: number, delay = 0, ink = false): void {
     const slot = this.acquireRing();
     slot.openedAt = this.scene.time.now;
     const graphics = slot.graphics.clear().setPosition(x, y).setAlpha(1).setDepth(this.depth).setVisible(true);
@@ -266,7 +277,11 @@ export class EffectManager {
         graphics.clear();
         // 진하기는 끝에서만 급히 빠진다. 시작부터 선형으로 옅어지면 벌어지는 동안 이미 사라져
         // 무엇이 지나갔는지 눈에 남지 않는다.
-        strokeDiamond(graphics, grown, Math.max(1, width * (1 - state.t * 0.7)), color, 1 - state.t * state.t);
+        const lineWidth = Math.max(1, width * (1 - state.t * 0.7));
+        const alpha = 1 - state.t * state.t;
+        // 잉크 결은 색 선 밑에 먹선을 한 겹 깐다 — 밝은 원화 위에서도 파문이 떨어져 나온다.
+        if (ink) strokeDiamond(graphics, grown, lineWidth + INK_HIT.ringInkExtra, INK_COLOR, alpha);
+        strokeDiamond(graphics, grown, lineWidth, color, alpha);
       },
       onComplete: () => {
         graphics.clear().setVisible(false);
@@ -595,9 +610,40 @@ export class EffectManager {
     }
     for (let ring = 0; ring < Math.ceil(spec.rings * this.quality.ringRatio); ring += 1) {
       // 두 겹째는 조금 늦게, 조금 더 크게 벌어져 한 겹이 두 번 밀려나는 것처럼 보인다.
-      this.openRing(x, y, spec.ringRadius * scale * (1 + ring * 0.42), spec.ringMs + ring * 90, spec.ringWidth, ring === 0 ? color : 0xffffff, ring * 70);
+      this.openRing(x, y, spec.ringRadius * scale * (1 + ring * 0.42), spec.ringMs + ring * 90, spec.ringWidth, ring === 0 ? color : 0xffffff, ring * 70, spec.ink !== undefined);
     }
-    if (spec.flash > 0) this.openFlash(x, y, spec.flash * scale, spec.flashMs, spec.flashAlpha, color);
+    if (spec.ink) {
+      if (spec.ink.star > 0) this.openInkStar(x, y, spec.ink.star * scale, color, options);
+    } else if (spec.flash > 0) this.openFlash(x, y, spec.flash * scale, spec.flashMs, spec.flashAlpha, color);
+  }
+
+  /**
+   * 맞은 자리의 잉크 별 — 작게 서서 팡 벌어졌다가 또렷한 채로 머물고, 끝에서만 옅어진다.
+   *
+   * 밝아지는 섬광과 달리 겹쳐도 하얗게 뭉개지지 않는다. 별 하나가 "여기 맞았다"를 말하므로
+   * 낮은 품질에서도 생략하지 않는다.
+   */
+  private openInkStar(x: number, y: number, size: number, color: number, options: BurstOptions): void {
+    const style = inkStarStyle(color, options);
+    const peak = size * style.scale;
+    const star = this.scene.add.image(x, y, inkTextureKey("star"))
+      .setTint(style.color)
+      .setRotation(Phaser.Math.FloatBetween(-0.3, 0.3))
+      .setScale(peak * INK_HIT.starFrom)
+      .setDepth(this.depth);
+    const state = { t: 0 };
+    this.scene.tweens.add({
+      targets: state,
+      t: 1,
+      duration: style.ms,
+      onUpdate: () => {
+        const grow = Math.min(1, state.t / INK_HIT.starPeakAt);
+        const eased = 1 - (1 - grow) ** 3;
+        star.setScale(peak * (INK_HIT.starFrom + (1 - INK_HIT.starFrom) * eased));
+        star.setAlpha(state.t < INK_HIT.starFadeAt ? 1 : 1 - (state.t - INK_HIT.starFadeAt) / (1 - INK_HIT.starFadeAt));
+      },
+      onComplete: () => star.destroy(),
+    });
   }
 
   /**

@@ -69,6 +69,12 @@ export interface BurstSpec {
   flashMs: number;
   /** 파편이 회전하는 초당 각도. 마름모라 돌면 반짝이는 것처럼 보인다. */
   spin: number;
+  /**
+   * 전장의 잉크 결(`inkShapes.ts`). 주면 파편이 잉크 조각으로 서고, 밝아지는 섬광 대신 맞은 자리에
+   * **잉크 별**이 팡 벌어졌다 꺼진다(`star`는 별의 배율, 0이면 별 없이 조각만). 메뉴의 홀로그램
+   * 결(탭·세공)은 이 칸을 갖지 않는다.
+   */
+  ink?: { star: number };
 }
 
 /**
@@ -80,21 +86,21 @@ export interface BurstSpec {
 export const EFFECT_PRESETS: Record<EffectKind, BurstSpec> = {
   basic: {
     shards: 5, speed: [260, 460], gravity: 90, life: [220, 340], shardScale: 0.85,
-    rings: 1, ringRadius: 74, ringMs: 240, ringWidth: 5, flash: 38, flashAlpha: 0.3, flashMs: 150, spin: 260,
+    rings: 1, ringRadius: 74, ringMs: 240, ringWidth: 5, flash: 38, flashAlpha: 0.3, flashMs: 150, spin: 260, ink: { star: 0.78 },
   },
   ultimate: {
     shards: 9, speed: [420, 780], gravity: 40, life: [360, 560], shardScale: 1.5,
-    rings: 2, ringRadius: 216, ringMs: 420, ringWidth: 11, flash: 140, flashAlpha: 0.55, flashMs: 300, spin: 200,
+    rings: 2, ringRadius: 216, ringMs: 420, ringWidth: 11, flash: 140, flashAlpha: 0.55, flashMs: 300, spin: 200, ink: { star: 1.1 },
   },
   passive: {
     // 패시브는 스스로 발동하는 조용한 효과라 파문 없이 위로 떠오르는 파편 몇 조각뿐이다.
     shards: 4, speed: [120, 220], gravity: -150, life: [420, 620], shardScale: 0.7,
-    rings: 0, ringRadius: 0, ringMs: 0, ringWidth: 0, flash: 36, flashAlpha: 0.42, flashMs: 260, spin: 140,
+    rings: 0, ringRadius: 0, ringMs: 0, ringWidth: 0, flash: 36, flashAlpha: 0.42, flashMs: 260, spin: 140, ink: { star: 0 },
   },
   fever: {
     // 폭주는 몸에서 바깥으로 밀려나는 한 겹이다. 파편은 크고 느리게 벌어진다.
     shards: 7, speed: [300, 520], gravity: -60, life: [400, 620], shardScale: 1.2,
-    rings: 1, ringRadius: 168, ringMs: 380, ringWidth: 9, flash: 96, flashAlpha: 0.42, flashMs: 320, spin: 180,
+    rings: 1, ringRadius: 168, ringMs: 380, ringWidth: 9, flash: 96, flashAlpha: 0.42, flashMs: 320, spin: 180, ink: { star: 0.9 },
   },
   heal: {
     shards: 5, speed: [90, 190], gravity: -260, life: [520, 760], shardScale: 0.72,
@@ -107,7 +113,7 @@ export const EFFECT_PRESETS: Record<EffectKind, BurstSpec> = {
   },
   death: {
     shards: 8, speed: [220, 480], gravity: -110, life: [420, 700], shardScale: 1.05,
-    rings: 1, ringRadius: 138, ringMs: 340, ringWidth: 7, flash: 80, flashAlpha: 0.42, flashMs: 260, spin: 300,
+    rings: 1, ringRadius: 138, ringMs: 340, ringWidth: 7, flash: 80, flashAlpha: 0.42, flashMs: 260, spin: 300, ink: { star: 0.9 },
   },
   tap: {
     // 홀로그램 장비를 누른 자리. 파편을 뿌리지 않고 얇은 파문 한 겹만 빠르게 지나간다.
@@ -117,7 +123,7 @@ export const EFFECT_PRESETS: Record<EffectKind, BurstSpec> = {
   tapBattle: {
     // 전장은 단순한 SD가 뚜따시하는 화면이라 조작도 작게 톡 튄다. 파문 없이 조각 셋뿐이다.
     shards: 3, speed: [140, 260], gravity: -80, life: [200, 300], shardScale: 0.42,
-    rings: 0, ringRadius: 0, ringMs: 0, ringWidth: 0, flash: 30, flashAlpha: 0.45, flashMs: 150, spin: 320,
+    rings: 0, ringRadius: 0, ringMs: 0, ringWidth: 0, flash: 30, flashAlpha: 0.45, flashMs: 150, spin: 320, ink: { star: 0 },
   },
   craftSuccess: {
     // 세공 성공은 "깡" 하고 박힌다. 조각이 위로 튀고 파문 한 겹이 빠르게 벌어진다 — 메뉴의
@@ -138,6 +144,55 @@ export const EFFECT_PRESETS: Record<EffectKind, BurstSpec> = {
     rings: 2, ringRadius: 168, ringMs: 340, ringWidth: 9, flash: 116, flashAlpha: 0.6, flashMs: 260, spin: 240,
   },
 };
+
+/**
+ * 잉크 결 타격의 값.
+ *
+ * 별은 **누가 맞았나**를 피해 수치와 같은 축으로 말한다 — 우리 편이 맞으면 붉은 별, 치명타는 노란 별이
+ * 한 등급 크게, 그 밖에는 때린 쪽의 색을 한 톤 밝힌 별이다. 섬광을 겹쳐 밝히지 않으므로 밝은 원화
+ * 위에서도 잉크선이 별을 떼어 놓는다.
+ */
+export const INK_HIT = {
+  /** 잉크 조각 텍스처가 홀로그램 파편보다 커서 같은 배율이면 무겁다. 배율에 곱한다. */
+  shardScale: 0.7,
+  /** 치명타 별은 일반 별의 이 배수다. */
+  criticalStar: 1.6,
+  /** 별이 벌어졌다 꺼지는 시간(ms). 치명타만 조금 길다. */
+  starMs: 190,
+  criticalStarMs: 260,
+  /** 별이 처음 서는 배율과 최대로 벌어지는 시점(수명 비율). */
+  starFrom: 0.35,
+  starPeakAt: 0.45,
+  /** 별이 진하기를 잃기 시작하는 시점(수명 비율). 그 전까지는 또렷하다. */
+  starFadeAt: 0.55,
+  /** 때린 쪽 색을 흰색 쪽으로 이만큼 밝혀 별을 칠한다. */
+  lighten: 0.3,
+  /** 우리 편이 맞은 별 — 피해 수치의 아군 피격 색(`INCOMING_DAMAGE_TONE`)의 가운데 톤이다. */
+  incomingColor: 0xf9705f,
+  /** 치명타 별 — 피해 수치의 치명타 색(`CRITICAL_COLOR`)과 같다. */
+  criticalColor: 0xffd24a,
+  /** 파문 밑에 까는 잉크선이 색 선보다 굵은 몫(px). */
+  ringInkExtra: 4,
+} as const;
+
+/** 색을 흰색 쪽으로 `amount`(0~1)만큼 밝힌다. */
+export function lightenColor(color: number, amount: number): number {
+  const channel = (shift: number): number => {
+    const value = (color >> shift) & 0xff;
+    return Math.round(value + (255 - value) * amount);
+  };
+  return (channel(16) << 16) | (channel(8) << 8) | channel(0);
+}
+
+/** 잉크 별의 색과 배율. 아군 피격이 치명타보다 먼저다(피해 수치와 같은 우선순위). */
+export function inkStarStyle(color: number, options: { critical?: boolean; incoming?: boolean }): { color: number; scale: number; ms: number } {
+  const critical = options.critical === true && options.incoming !== true;
+  return {
+    color: options.incoming ? INK_HIT.incomingColor : critical ? INK_HIT.criticalColor : lightenColor(color, INK_HIT.lighten),
+    scale: critical ? INK_HIT.criticalStar : 1,
+    ms: critical ? INK_HIT.criticalStarMs : INK_HIT.starMs,
+  };
+}
 
 /**
  * 화면을 누른 자리의 색.

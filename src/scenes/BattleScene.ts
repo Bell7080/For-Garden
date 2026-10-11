@@ -1910,6 +1910,8 @@ export class BattleScene extends Phaser.Scene {
         color: this.effectColor(attacker),
         direction,
         scale: target.fighter.bodyScale,
+        critical: popupRequest.critical,
+        incoming: popupRequest.incoming,
       });
       // 그 개체를 그 개체답게 만드는 순간이면 공용 파편 위에 전용 연출이 한 겹 더 선다.
       // **순간은 사건에서 읽는다** — 어느 개체가 무엇을 갖는지는 씬이 아니라 표가 안다.

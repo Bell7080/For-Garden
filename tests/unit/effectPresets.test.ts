@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { allowBurst, AREA_IMPACT, EFFECT_BUDGET, EFFECT_PRESETS, EFFECT_TAP_COLOR, SUSTAINED_COMBAT_EFFECT, type EffectKind } from "../../src/ui/effectPresets";
+import { allowBurst, AREA_IMPACT, INK_HIT, inkStarStyle, lightenColor, EFFECT_BUDGET, EFFECT_PRESETS, EFFECT_TAP_COLOR, SUSTAINED_COMBAT_EFFECT, type EffectKind } from "../../src/ui/effectPresets";
 
 const KINDS = Object.keys(EFFECT_PRESETS) as EffectKind[];
 
@@ -135,5 +135,34 @@ describe("광역 범위 바닥 표시", () => {
 
   it("궁극기 범위가 더 오래 남아 무엇이 컸는지 알린다", () => {
     expect(AREA_IMPACT.ultimateMs).toBeGreaterThan(AREA_IMPACT.ms);
+  });
+});
+
+describe("전장은 잉크 결, 메뉴는 홀로그램 결", () => {
+  const BATTLE: EffectKind[] = ["basic", "ultimate", "passive", "fever", "death", "tapBattle"];
+  const MENU: EffectKind[] = ["tap", "craftSuccess", "craftFail", "craftEngrave"];
+
+  it("전장의 타격은 잉크 조각으로 서고 메뉴 조작은 그대로다", () => {
+    for (const kind of BATTLE) expect(EFFECT_PRESETS[kind].ink, kind).toBeDefined();
+    for (const kind of MENU) expect(EFFECT_PRESETS[kind].ink, kind).toBeUndefined();
+  });
+
+  it("궁극기 별이 일반 공격 별보다 크다", () => {
+    expect(EFFECT_PRESETS.ultimate.ink!.star).toBeGreaterThan(EFFECT_PRESETS.basic.ink!.star);
+  });
+
+  it("별 색은 아군 피격 → 치명타 → 때린 쪽 색 순으로 정한다", () => {
+    const color = 0x4fa8e4;
+    expect(inkStarStyle(color, { incoming: true, critical: true }).color).toBe(INK_HIT.incomingColor);
+    expect(inkStarStyle(color, { incoming: true, critical: true }).scale).toBe(1);
+    expect(inkStarStyle(color, { critical: true }).color).toBe(INK_HIT.criticalColor);
+    expect(inkStarStyle(color, { critical: true }).scale).toBeGreaterThan(1);
+    expect(inkStarStyle(color, {}).color).toBe(lightenColor(color, INK_HIT.lighten));
+  });
+
+  it("밝히기는 흰색 쪽으로만 간다", () => {
+    expect(lightenColor(0x000000, 1)).toBe(0xffffff);
+    expect(lightenColor(0x336699, 0)).toBe(0x336699);
+    expect(lightenColor(0x800000, 0.5)).toBe(0xc08080);
   });
 });

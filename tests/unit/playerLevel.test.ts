@@ -163,8 +163,8 @@ describe("플레이어 카드", () => {
 });
 
 describe("프로필 사진·테두리 선택창", () => {
-  it("창 높이는 두 탭 중 긴 목록에서 구해 탭을 바꿔도 같다", async () => {
-    const { AVATAR_PICKER, avatarPickerHeight, modifierPickerHeight, TEXT_EDITOR } = await import("../../src/ui/playerProfileLayout");
+  it("창 높이는 세 탭 중 긴 목록에서 구해 탭을 바꿔도 같다", async () => {
+    const { AVATAR_PICKER, avatarPickerHeight, TEXT_EDITOR } = await import("../../src/ui/playerProfileLayout");
     const height = avatarPickerHeight(22, PROFILE_FRAMES.length);
     expect(height).toBeLessThan(1760);
     // 격자 다섯 칸이 창 폭 안에 든다.
@@ -174,7 +174,12 @@ describe("프로필 사진·테두리 선택창", () => {
     expect(frameWidth).toBeLessThan(AVATAR_PICKER.width - 40);
     // 미리보기 → 탭 → 목록이 겹치지 않는다(장식이 얼굴보다 한 뼘 크다).
     expect(AVATAR_PICKER.preview.y + AVATAR_PICKER.preview.size * 0.65).toBeLessThan(AVATAR_PICKER.tabs.y - AVATAR_PICKER.tabs.height / 2);
-    expect(modifierPickerHeight(4)).toBeGreaterThan(modifierPickerHeight(1));
+    // 수식어 탭도 같은 창 안에 들고(세 탭이 폭 안에), 목록이 길면 창이 그만큼 커진다.
+    const tabsWidth = 3 * AVATAR_PICKER.tabs.width + 2 * AVATAR_PICKER.tabs.gap;
+    expect(tabsWidth).toBeLessThan(AVATAR_PICKER.width - 40);
+    const modifierWidth = AVATAR_PICKER.modifiers.columns * AVATAR_PICKER.modifiers.width + (AVATAR_PICKER.modifiers.columns - 1) * AVATAR_PICKER.modifiers.gap;
+    expect(modifierWidth).toBeLessThan(AVATAR_PICKER.width - 40);
+    expect(avatarPickerHeight(1, 1, 30)).toBeGreaterThan(avatarPickerHeight(1, 1, 3));
     expect(TEXT_EDITOR.saveY + TEXT_EDITOR.save.height / 2).toBeLessThan(TEXT_EDITOR.height / 2);
   });
 });

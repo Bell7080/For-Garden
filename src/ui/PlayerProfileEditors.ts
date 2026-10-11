@@ -14,10 +14,11 @@ import { drawGlyph } from "./glyphs";
 import { addCategoryTab } from "./CategoryTab";
 import { FaceFrame } from "./FaceFrame";
 import { ProfileAvatar } from "./ProfileAvatar";
-import { AVATAR_PICKER, avatarPickerHeight, compactProfileText, MODIFIER_PICKER, modifierPickerHeight, TEXT_EDITOR } from "./playerProfileLayout";
+import { AVATAR_PICKER, avatarPickerHeight, compactProfileText, TEXT_EDITOR } from "./playerProfileLayout";
 import { session } from "../state/session";
 import { playerProfileDisplay, profileAvatarContent } from "../state/playerProfile";
 import { pressIn, pressOut } from "./pressFeedback";
+import { PROFILE_MODIFIERS } from "../data/profileModifiers";
 
 const hex = (color: number): string => `#${color.toString(16).padStart(6, "0")}`;
 
@@ -25,16 +26,17 @@ const hex = (color: number): string => `#${color.toString(16).padStart(6, "0")}`
  * 프로필 카드의 요소를 하나씩 고치는 작은 창들.
  *
  * **편집 탭을 따로 두지 않는다** — 고칠 것을 카드에서 바로 누르면 그것만 고치는 창이 뜬다.
- * 얼굴을 누르면 사진·테두리, 이름을 누르면 닉네임, 소개 줄을 누르면 한 줄 소개, 수식어 줄을 누르면
- * 수식어다. 창은 카드 위에 겹치지 않고 카드를 닫은 자리에 서며, 닫히면 카드가 새 값으로 다시 선다.
+ * 얼굴을 누르면 사진·테두리·수식어, 이름을 누르면 닉네임, 소개 줄을 누르면 한 줄 소개, 수식어 줄을 누르면
+ * 같은 창의 수식어 탭이다. 창은 카드 위에 겹치지 않고 카드를 닫은 자리에 서며, 닫히면 카드가 새 값으로 다시 선다.
  * 검증과 저장은 매니저가 한다.
  */
 
-/** 사진·테두리 선택창 — 위에 지금 모습의 미리보기, 그 아래 두 라벨로 목록을 갈아 끼운다. 누르는 즉시 입는다. */
-export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone: () => void, startTab: "photo" | "frame" = "photo"): void {
+/** 사진·테두리 선택창 — 위에 지금 모습의 미리보기, 그 아래 세 라벨로 목록을 갈아 끼운다. 누르는 즉시 입는다. */
+export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone: () => void, startTab: "photo" | "frame" | "modifier" = "photo"): void {
   const owned = relicCollection.owned;
   const frames = playerCardManager.frames();
-  const height = avatarPickerHeight(owned.length, frames.length);
+  const modifiers = PROFILE_MODIFIERS;
+  const height = avatarPickerHeight(owned.length, frames.length, modifiers.length);
   const top = -height / 2;
   let tab = startTab;
   layer.open({ width: AVATAR_PICKER.width, height, title: t("profile.picker.title"), dim: true, closeOnBackdrop: true, onClose: onDone }, (body) => {
@@ -56,10 +58,11 @@ export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone:
     const paintTabs = (): void => {
       tabs.removeAll(true);
       const { width, height: tabHeight, gap } = AVATAR_PICKER.tabs;
-      ([["photo", "profile.picker.photo"], ["frame", "profile.picker.frame"]] as const).forEach(([id, labelKey], index) => {
+      const order = ["photo", "frame", "modifier"] as const;
+      ([["photo", "profile.picker.photo"], ["frame", "profile.picker.frame"], ["modifier", "profile.picker.modifier"]] as const).forEach(([id, labelKey], index) => {
         addCategoryTab(scene, tabs, {
-          x: (index - 0.5) * (width + gap), y: 0, width, height: tabHeight, label: t(labelKey), selected: tab === id, face: "down",
-          onSelect: () => { if (tab === id) return; const from = 1 - index; tab = id; paintTabs(); paintList(); slideTabPage(scene, [list], from, index); },
+          x: (index - 1) * (width + gap), y: 0, width, height: tabHeight, label: t(labelKey), selected: tab === id, face: "down",
+          onSelect: () => { if (tab === id) return; const from = order.indexOf(tab); tab = id; paintTabs(); paintList(); slideTabPage(scene, [list], from, index); },
         });
       });
     };
@@ -88,6 +91,39 @@ export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone:
             if (chosen) return;
             playerCardManager.setAvatar(relic.id);
             paintPreview(); paintList();
+          });
+          item.add(hit);
+          list.add(item);
+        });
+        return;
+      }
+      if (tab === "modifier") {
+        // 얻지 못한 수식어도 목록에는 서서 무엇이 있는지 보인다. 얻은 것만 눌러 입고 벗는다(최대 셋, 고른 순서가 카드의 순서).
+        const { columns, width, height: cellHeight, gap } = AVATAR_PICKER.modifiers;
+        const earnedIds = new Set(profileModifierManager.earned().map(({ id }) => id));
+        const equippedIds = profileModifierManager.equipped().map(({ id }) => id);
+        modifiers.forEach((modifier, index) => {
+          const x = ((index % columns) - (columns - 1) / 2) * (width + gap);
+          const y = AVATAR_PICKER.modifiers.top + cellHeight / 2 + Math.floor(index / columns) * (cellHeight + gap);
+          const unlocked = earnedIds.has(modifier.id);
+          const order = equippedIds.indexOf(modifier.id);
+          const on = order >= 0;
+          const color = PROFILE_MODIFIER_RARITY_COLOR[modifier.rarity];
+          const shape = chipPoints(width, cellHeight, { bevel: { topLeft: 14, topRight: 0, bottomRight: 14, bottomLeft: 0 } });
+          const item = scene.add.container(x, y);
+          item.add(drawLayer(scene, 0, 0, shape, { fill: 0x161d26, alpha: on ? 0.96 : HOLO.glass, edge: color, edgeAlpha: on ? 1 : unlocked ? 0.4 : 0.2 }));
+          if (on) item.add(drawShapeOutline(scene, 0, 0, shape, { color, alpha: 0.9, width: 3 }));
+          const label = scene.add.text(unlocked ? 0 : 12, 0, compactProfileText(modifier.displayName, 9), textStyle({ role: "emphasis", size: 24, color: on ? hex(color) : COLOR.inkDim })).setOrigin(0.5);
+          if (!unlocked) { label.setAlpha(0.55); item.add(drawGlyph(scene, "lock", -width / 2 + 34, 0, 22, COLOR.inkDimHex)); }
+          item.add(label);
+          if (on) item.add(scene.add.text(width / 2 - 14, -cellHeight / 2 + 14, String(order + 1), textStyle({ role: "display", size: 18, color: hex(color) })).setOrigin(1, 0.5));
+          const hit = scene.add.rectangle(0, 0, width, cellHeight, 0xffffff, 0).setInteractive({ useHandCursor: unlocked });
+          hit.on("pointerup", () => {
+            if (!unlocked) return;
+            if (on) profileModifierManager.equip(equippedIds.filter((id) => id !== modifier.id));
+            else if (equippedIds.length < MAX_EQUIPPED_PROFILE_MODIFIERS) profileModifierManager.equip([...equippedIds, modifier.id]);
+            else return;
+            paintList();
           });
           item.add(hit);
           list.add(item);
@@ -204,48 +240,4 @@ export function openBioEditor(scene: Phaser.Scene, layer: PopupLayer, onDone: ()
     maxGlyphs: BIO_MAX_LENGTH,
     save: (value) => playerCardManager.setBio(value),
   }, onDone);
-}
-
-/** 수식어 고르기 — 얻은 것만 서고 최대 셋. 고른 순서가 카드에 서는 순서다. */
-export function openModifierPicker(scene: Phaser.Scene, layer: PopupLayer, onDone: () => void): void {
-  const earned = profileModifierManager.earned();
-  let chosen = profileModifierManager.equipped().map(({ id }) => id);
-  const height = modifierPickerHeight(earned.length);
-  const top = -height / 2;
-  layer.open({ width: MODIFIER_PICKER.width, height, title: t("profile.edit.modifier", { max: MAX_EQUIPPED_PROFILE_MODIFIERS }), dim: true, closeOnBackdrop: true, onClose: onDone }, (body, close) => {
-    const grid = scene.add.container(0, top);
-    body.add(grid);
-    const { columns, cell, gap } = MODIFIER_PICKER;
-    const rows = Math.max(1, Math.ceil(earned.length / columns));
-    const paint = (): void => {
-      grid.removeAll(true);
-      earned.forEach((modifier, index) => {
-        const x = ((index % columns) - (columns - 1) / 2) * (cell.width + gap);
-        const y = MODIFIER_PICKER.top + cell.height / 2 + Math.floor(index / columns) * (cell.height + gap);
-        const order = chosen.indexOf(modifier.id);
-        const on = order >= 0;
-        const color = PROFILE_MODIFIER_RARITY_COLOR[modifier.rarity];
-        const shape = chipPoints(cell.width, cell.height, { bevel: { topLeft: 14, topRight: 0, bottomRight: 14, bottomLeft: 0 } });
-        const item = scene.add.container(x, y);
-        item.add(drawLayer(scene, 0, 0, shape, { fill: 0x161d26, alpha: on ? 0.96 : HOLO.glass, edge: color, edgeAlpha: on ? 1 : 0.4 }));
-        if (on) item.add(drawShapeOutline(scene, 0, 0, shape, { color, alpha: 0.9, width: 3 }));
-        item.add(scene.add.text(0, 0, compactProfileText(modifier.displayName, 9), textStyle({ role: "emphasis", size: 22, color: on ? hex(color) : COLOR.inkDim })).setOrigin(0.5));
-        if (on) item.add(scene.add.text(cell.width / 2 - 14, -cell.height / 2 + 13, String(order + 1), textStyle({ role: "display", size: 18, color: hex(color) })).setOrigin(1, 0.5));
-        const hit = scene.add.rectangle(0, 0, cell.width, cell.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-        hit.on("pointerup", () => {
-          if (on) chosen = chosen.filter((id) => id !== modifier.id);
-          else if (chosen.length < MAX_EQUIPPED_PROFILE_MODIFIERS) chosen = [...chosen, modifier.id];
-          paint();
-        });
-        item.add(hit);
-        grid.add(item);
-      });
-    };
-    paint();
-    const saveY = top + MODIFIER_PICKER.top + rows * (cell.height + gap) + MODIFIER_PICKER.saveGap;
-    body.add(new Button(scene, 0, saveY, {
-      ...MODIFIER_PICKER.save, label: t("profile.edit.save"), fontSize: 28, variant: "primary",
-      onClick: () => { profileModifierManager.equip(chosen); close(); },
-    }));
-  });
 }

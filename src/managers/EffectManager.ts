@@ -6,7 +6,7 @@ import { INK_STYLE, inkTextureKey, type InkShapeId } from "../ui/inkShapes";
 import { FEVER_INK, feverAngerPlacement, feverSirenRings } from "../ui/feverInk";
 import { healVisual, SHIELD_AURA_SHAPE, shieldAuraStyle, shieldGainVisual } from "../ui/restoreEffects";
 import { lashPoints } from "../ui/reachStrikeShape";
-import { flashPolicy, inkBlotPoints, mawTeeth, slashPoints, SIGNATURE_SPECS, type CombatPalette, type SignatureId, type StrokePoint } from "../ui/signatureEffects";
+import { flashPolicy, inkBlotPoints, mawTeeth, slashPoints, SIGNATURE_INK_WIDTH, SIGNATURE_SPECS, type CombatPalette, type SignatureId, type StrokePoint } from "../ui/signatureEffects";
 import { damagePopupStyle, risingAlpha, shouldShowDamagePopup, type DamagePopupRequest } from "../ui/damageNumbers";
 import { battlefieldWashBands, groundAreaStyle, laneAreaPoints, radialAreaPoints, type GroundAreaRequest, type GroundAreaShape, type GroundAreaStyle } from "../ui/groundAreas";
 import { COLOR, textStyle } from "../ui/theme";
@@ -1301,12 +1301,14 @@ export class EffectManager {
         const moved = points.map((point) => ({ x: point.x, y: point.y + gap * side }));
         graphics.fillStyle(palette.main, spec.fillAlpha * fade);
         graphics.fillPoints(moved, true);
-        graphics.lineStyle(spec.edgeWidth, palette.sub, fade);
+        graphics.lineStyle(SIGNATURE_INK_WIDTH + spec.edgeWidth * 0.5, INK_COLOR, fade);
+        graphics.strokePoints(moved, true);
+        graphics.lineStyle(spec.edgeWidth * 0.5, palette.sub, fade);
         graphics.strokePoints(moved, true);
       }
     });
-    // 맞물린 순간에 섬광 한 장. 턱이 닫히기 전에 터지면 무는 그림이 지워진다.
-    this.scene.time.delayedCall(spec.ms, () => this.openFlash(at.x, at.y, spec.flash * scale, spec.flashMs, 0.5, palette.main));
+    // 맞물린 순간에 잉크 별 한 장. 턱이 닫히기 전에 터지면 무는 그림이 지워진다.
+    this.scene.time.delayedCall(spec.ms, () => this.openInkStar(at.x, at.y, (spec.flash / 120) * scale, palette.main, {}));
   }
 
   /** 스피나 — 베인 자국 둘이 박자를 두고 지나간다. 두 번 때렸다는 것이 사이로 읽힌다. */
@@ -1317,9 +1319,12 @@ export class EffectManager {
     const cut = (angle: number, length: number, delay: number): void => {
       this.scene.time.delayedCall(delay, () => {
         const points = slashPoints({ x: 0, y: 0 }, angle, length, spec.rootWidth, spec.tipWidth);
-        this.openShape(at.x, at.y, spec.ms, this.scene.time.now, this.depth, true, (graphics, t) => {
-          graphics.fillStyle(palette.main, spec.alpha * (1 - t * t));
+        this.openShape(at.x, at.y, spec.ms, this.scene.time.now, this.depth, false, (graphics, t) => {
+          const fade = 1 - t * t;
+          graphics.fillStyle(palette.main, spec.alpha * fade);
           graphics.fillPoints(points, true);
+          graphics.lineStyle(SIGNATURE_INK_WIDTH * 0.7, INK_COLOR, fade);
+          graphics.strokePoints(points, true);
         });
       });
     };
@@ -1336,17 +1341,24 @@ export class EffectManager {
     this.openShape(at.x, at.y, spec.ms, now, this.groundDepth, false, (graphics, t) => {
       const fade = 1 - t * t;
       const grown = radius * (0.45 + 0.55 * t);
-      graphics.lineStyle(spec.ringWidth * (1 - t * 0.6), palette.main, spec.alpha * fade);
-      graphics.strokePoints([
+      const ringWidth = spec.ringWidth * (1 - t * 0.6);
+      const ring = [
         { x: 0, y: -grown * spec.squash }, { x: grown, y: 0 },
         { x: 0, y: grown * spec.squash }, { x: -grown, y: 0 },
-      ], true);
-      graphics.lineStyle(spec.crackWidth, palette.sub, spec.alpha * fade);
-      for (let crack = 0; crack < spec.cracks; crack += 1) {
-        // 금은 고르게 벌어지지 않는다 — 각을 조금씩 어긋나게 두어야 별이 아니라 균열이 된다.
-        const angle = (crack / spec.cracks) * Math.PI * 2 + 0.4 + crack * 0.17;
-        const length = spec.crackLength * scale * (0.6 + 0.4 * t);
-        graphics.lineBetween(0, 0, Math.cos(angle) * length, Math.sin(angle) * length * spec.squash);
+      ];
+      // 먹선을 먼저 굵게, 그 위에 색 선 — 금도 같은 두 겹이다.
+      graphics.lineStyle(ringWidth + SIGNATURE_INK_WIDTH, INK_COLOR, fade);
+      graphics.strokePoints(ring, true);
+      graphics.lineStyle(ringWidth, palette.main, spec.alpha * fade);
+      graphics.strokePoints(ring, true);
+      for (const [width, color, alpha] of [[spec.crackWidth + SIGNATURE_INK_WIDTH, INK_COLOR, fade], [spec.crackWidth, palette.sub, spec.alpha * fade]] as const) {
+        graphics.lineStyle(width, color, alpha);
+        for (let crack = 0; crack < spec.cracks; crack += 1) {
+          // 금은 고르게 벌어지지 않는다 — 각을 조금씩 어긋나게 두어야 별이 아니라 균열이 된다.
+          const angle = (crack / spec.cracks) * Math.PI * 2 + 0.4 + crack * 0.17;
+          const length = spec.crackLength * scale * (0.6 + 0.4 * t);
+          graphics.lineBetween(0, 0, Math.cos(angle) * length, Math.sin(angle) * length * spec.squash);
+        }
       }
     });
   }
@@ -1356,7 +1368,7 @@ export class EffectManager {
     const spec = SIGNATURE_SPECS.nodoniaShare;
     const dx = to.x - from.x;
     const dy = to.y - from.y;
-    this.openShape(0, 0, spec.ms, now, this.depth, true, (graphics, t) => {
+    this.openShape(0, 0, spec.ms, now, this.depth, false, (graphics, t) => {
       // 길 전체를 잇지 않고 **한 토막이 흘러간다**. 통째로 이으면 두 사람을 묶은 줄이 되어
       // 무엇이 어느 쪽으로 옮겨 갔는지 방향이 사라진다.
       const head = Math.min(1, t + spec.span);
@@ -1364,11 +1376,15 @@ export class EffectManager {
       const root: StrokePoint = { x: from.x + dx * tail, y: from.y + dy * tail };
       const tip: StrokePoint = { x: from.x + dx * head, y: from.y + dy * head };
       const mid: StrokePoint = { x: (root.x + tip.x) / 2, y: (root.y + tip.y) / 2 };
-      graphics.fillStyle(palette.main, spec.alpha * (1 - t * t));
-      graphics.fillPoints(lashPoints(root, mid, tip, spec.thickness, spec.thickness * 0.3), true);
+      const fade = 1 - t * t;
+      const points = lashPoints(root, mid, tip, spec.thickness, spec.thickness * 0.3);
+      graphics.fillStyle(palette.main, spec.alpha * fade);
+      graphics.fillPoints(points, true);
+      graphics.lineStyle(SIGNATURE_INK_WIDTH * 0.7, INK_COLOR, fade);
+      graphics.strokePoints(points, true);
     });
     // 도착한 자리에서 한 겹 인다. 흐름이 닿는 시각과 맞춰야 두 사건으로 보이지 않는다.
-    this.scene.time.delayedCall(spec.ms * 0.7, () => this.openRing(to.x, to.y, spec.ringRadius, spec.ringMs, spec.ringWidth, palette.sub));
+    this.scene.time.delayedCall(spec.ms * 0.7, () => this.openRing(to.x, to.y, spec.ringRadius, spec.ringMs, spec.ringWidth, palette.sub, 0, true));
   }
 
   /**

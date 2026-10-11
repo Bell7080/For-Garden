@@ -113,3 +113,10 @@ describe("도형은 그 자리에서 읽혀야 한다", () => {
     expect(spec.squash).toBeLessThan(0.5);
   });
 });
+
+describe("전용 연출의 잉크 결", () => {
+  it("엘라의 먹은 전장 잉크선과 같은 먹이다", async () => {
+    const { INK_STYLE } = await import("../../src/ui/inkShapes");
+    expect(`#${SIGNATURE_SPECS.ellaInkStroke.ink.toString(16).padStart(6, "0")}`).toBe(INK_STYLE.ink);
+  });
+});

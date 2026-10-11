@@ -1,3 +1,6 @@
+import type { ProjectileKind } from "../core/types";
+import type { InkShapeId } from "./inkShapes";
+
 /**
  * 이펙트 한 방의 **순수 배치표**.
  *
@@ -344,25 +347,83 @@ export const REACH_STRIKE = {
     /** 가장 진할 때의 알파. 겹쳐 밝아지는 합성이라 낮게 둔다. */
     alpha: 0.66,
   },
-  bullet: {
-    /**
-     * 탄환 한 알의 길이·두께(px). 마름모 한 조각이라 나는 방향으로 길게 눕는다.
-     *
-     * 두께는 반드시 채찍의 뿌리보다 두껍다 — 얇으면 같은 길 위에서 채찍에 통째로 묻힌다.
-     */
-    length: 50,
-    thickness: 18,
-    /** 날아가는 시간(ms). 거리와 무관하게 고정이라 먼 적일수록 빨라 보인다. */
-    ms: 150,
-    /** 지나온 자리에 남는 옅은 꼬리의 길이 배수. */
-    trail: 1.9,
-    alpha: 0.85,
-    /** 살아 있는 탄환의 상한. 넘으면 가장 오래된 것을 즉시 회수한다. */
-    maxLive: 10,
-    /** 채찍보다 몇 겹 위에 그릴지. 같은 깊이에 두면 나중에 열린 채찍이 탄환을 덮는다. */
-    depthLift: 2,
-  },
 } as const;
+
+/**
+ * 떨어져서 때리는 평타가 **날리는 것** — 잉크 조각 하나가 실제로 날아간다(`RelicDef.projectile`).
+ *
+ * 길이는 고정이고 자리만 옮긴다. 경로만큼 늘이면 먼 적일수록 화살이 엿가락이 된다. 피해는 이미
+ * 확정된 뒤라 시간도 거리와 무관하게 짧게 고정해 숫자보다 늦게 닿지 않게 한다.
+ */
+export interface ProjectileSpec {
+  shape: InkShapeId;
+  scale: number;
+  /** 몸 뒤로 꼬리를 단다(탄환). */
+  trail?: boolean;
+  /** 위로 솟는 높이(길이 대비). */
+  arc?: number;
+  /** 옆으로 일렁이는 폭(px). */
+  wave?: number;
+  /** 초당 회전(라디안). */
+  spin?: number;
+  /** 카드처럼 뒤집히며 난다. */
+  flip?: boolean;
+}
+
+export const INK_PROJECTILE: {
+  ms: number;
+  fadeFrom: number;
+  maxLive: number;
+  depthLift: number;
+  volley: { count: number; gapMs: number; spread: number };
+  kinds: Record<ProjectileKind, ProjectileSpec>;
+  trail: { offset: number; alpha: number; lighten: number };
+} = {
+  /** 날아가는 시간(ms). */
+  ms: 160,
+  /** 마지막 이 비율 동안 옅어지며 닿는다. */
+  fadeFrom: 0.9,
+  /** 살아 있는 투사체의 상한. 넘으면 가장 오래된 것을 즉시 회수한다. */
+  maxLive: 14,
+  /** 채찍보다 몇 겹 위에 그릴지. 같은 깊이에 두면 나중에 열린 채찍이 투사체를 덮는다. */
+  depthLift: 2,
+  /** 연사 한 번에 나가는 발 수와 발 사이 간격(ms), 옆으로 벌어지는 폭(px). */
+  volley: { count: 3, gapMs: 45, spread: 22 },
+  /** 종류마다 굽힌 조각·배율·움직임. `spin`은 초당 회전(라디안), `flip`은 카드처럼 뒤집히며 난다. */
+  kinds: {
+    bullet: { shape: "bullet", scale: 0.9, trail: true },
+    arrow: { shape: "arrow", scale: 0.95, arc: 0.09 },
+    volley: { shape: "bullet", scale: 0.72, trail: true },
+    note: { shape: "note", scale: 0.95, wave: 22 },
+    paper: { shape: "paper", scale: 0.95, spin: 24 },
+    signal: { shape: "signal", scale: 0.9 },
+    card: { shape: "card", scale: 0.95, flip: true },
+    feather: { shape: "feather", scale: 0.95, arc: 0.06 },
+  },
+  /** 탄환 꼬리가 몸 뒤로 떨어진 거리(px)와 진하기. */
+  trail: { offset: 76, alpha: 0.8, lighten: 0.35 },
+};
+
+/** 투사체가 `t`(0~1)에 서는 자리. 활처럼 휘는 것은 위로 솟았다 내려온다. */
+export function projectilePosition(
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  kind: ProjectileKind,
+  t: number,
+): { x: number; y: number } {
+  const spec = INK_PROJECTILE.kinds[kind];
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const length = Math.hypot(dx, dy) || 1;
+  let x = from.x + dx * t;
+  let y = from.y + dy * t - (spec.arc ?? 0) * length * 4 * t * (1 - t);
+  if (spec.wave) {
+    const sway = Math.sin(t * Math.PI * 3) * spec.wave;
+    x += (-dy / length) * sway;
+    y += (dx / length) * sway;
+  }
+  return { x, y };
+}
 
 /**
  * 유지 효과의 순수한 도형/움직임 배치표다. 색은 캐릭터의 `skillArtTint()`가 정하므로 이곳에

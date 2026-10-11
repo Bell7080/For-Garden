@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { allowBurst, AREA_IMPACT, INK_HIT, inkStarStyle, BATTLEFIELD_WASH_HOLD, BATTLEFIELD_WASH_RISE, EFFECT_BUDGET, EFFECT_PRESETS, EFFECT_TAP_COLOR, GROUND_SURFACE, REACH_STRIKE, SUSTAINED_COMBAT_EFFECT, type BurstSpec, type EffectKind } from "../ui/effectPresets";
+import { allowBurst, AREA_IMPACT, INK_HIT, INK_PROJECTILE, inkStarStyle, lightenColor, projectilePosition, BATTLEFIELD_WASH_HOLD, BATTLEFIELD_WASH_RISE, EFFECT_BUDGET, EFFECT_PRESETS, EFFECT_TAP_COLOR, GROUND_SURFACE, REACH_STRIKE, SUSTAINED_COMBAT_EFFECT, type BurstSpec, type EffectKind } from "../ui/effectPresets";
 import { EFFECT_TEXTURE, ensureEffectTextures } from "../ui/effectTextures";
 import { ensureInkTextures } from "../ui/inkTextures";
 import { INK_STYLE, inkTextureKey } from "../ui/inkShapes";
@@ -11,6 +11,7 @@ import { battlefieldWashBands, groundAreaStyle, laneAreaPoints, radialAreaPoints
 import { COLOR, textStyle } from "../ui/theme";
 import { motionPolicy, presentationPolicy, type GraphicsQuality, type MotionPolicy } from "../core/settings";
 import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
+import type { ProjectileKind } from "../core/types";
 
 /**
  * 이펙트의 단일 소유자.
@@ -148,8 +149,10 @@ function groundDiamond(radius: number): Phaser.Geom.Point[] {
 }
 
 /** 풀에서 꺼내 쓰는 탄환 한 알. */
-interface BulletSlot {
+/** 날아가는 잉크 조각 한 알과 그 꼬리. 풀에서 꺼내 다시 쓴다. */
+interface ProjectileSlot {
   image: Phaser.GameObjects.Image;
+  trail: Phaser.GameObjects.Image;
   tween?: Phaser.Tweens.Tween;
   openedAt: number;
 }
@@ -173,7 +176,7 @@ export class EffectManager {
   private readonly rings: RingSlot[] = [];
   private readonly numbers: NumberSlot[] = [];
   /** 날아가는 탄환 풀. 파문과 같은 이유로 다시 쓴다 — 평타마다 새로 만들면 GC가 프레임을 끊는다. */
-  private readonly bullets: BulletSlot[] = [];
+  private readonly projectiles: ProjectileSlot[] = [];
   private readonly lastAt = new Map<EffectKind, number>();
   /** 같은 전투원의 복수 제공자 효과를 보존하는 런타임 Fighter ID + 효과 ID 복합 키다. */
   private readonly sustained = new Map<string, SustainedSlot>();
@@ -455,12 +458,36 @@ export class EffectManager {
    * 것이 없어 **맞은 자리에 숫자만 뜬다.** 씬은 두 자리와 사거리 단계만 넘기고, 무엇을
    * 그릴지는 `REACH_STRIKE` 한 표가 정한다.
    */
-  reachStrike(from: { x: number; y: number }, to: { x: number; y: number }, tier: "mid" | "ranged", color: number): void {
+  reachStrike(
+    from: { x: number; y: number },
+    to: { x: number; y: number },
+    tier: "mid" | "ranged",
+    color: number,
+    projectile?: ProjectileKind,
+  ): void {
     const now = this.rollFrame();
     if (this.openedThisFrame >= EFFECT_BUDGET.perFrame) return;
     this.openedThisFrame += 1;
-    if (tier === "mid") this.openLash(from, to, color, now);
-    else this.openBullet(from, to, color, now);
+    // 중거리는 무엇을 날린다고 적힌 개체(카드·깃털)만 던지고 나머지는 채찍으로 친다.
+    if (tier === "mid" && projectile === undefined) {
+      this.openLash(from, to, color, now);
+      return;
+    }
+    const kind = projectile ?? "signal";
+    if (kind !== "volley") {
+      this.openProjectile(from, to, kind, color, now, 0);
+      return;
+    }
+    // 연사는 몇 발이 조금씩 어긋나 나간다 — 한 알이면 산개 사격이 저격처럼 읽힌다.
+    const { count, gapMs, spread } = INK_PROJECTILE.volley;
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const length = Math.hypot(dx, dy) || 1;
+    for (let shot = 0; shot < count; shot += 1) {
+      const side = (shot - (count - 1) / 2) * spread;
+      const aim = { x: to.x + (-dy / length) * side, y: to.y + (dx / length) * side };
+      this.openProjectile(from, aim, kind, color, now, shot * gapMs);
+    }
   }
 
   /**
@@ -510,54 +537,80 @@ export class EffectManager {
     });
   }
 
-  /** 풀에서 탄환 한 알을 꺼낸다. 상한을 넘으면 가장 오래된 것을 즉시 회수한다. */
-  private acquireBullet(): BulletSlot {
-    const free = this.bullets.find((slot) => !slot.image.visible);
+  /** 풀에서 투사체 한 알을 꺼낸다. 상한을 넘으면 가장 오래된 것을 즉시 회수한다. */
+  private acquireProjectile(): ProjectileSlot {
+    const free = this.projectiles.find((slot) => !slot.image.visible && slot.tween === undefined);
     if (free) return free;
-    if (this.bullets.length >= REACH_STRIKE.bullet.maxLive) {
-      const oldest = this.bullets.reduce((old, slot) => (slot.openedAt < old.openedAt ? slot : old));
+    if (this.projectiles.length >= INK_PROJECTILE.maxLive) {
+      const oldest = this.projectiles.reduce((old, slot) => (slot.openedAt < old.openedAt ? slot : old));
       oldest.tween?.stop();
+      oldest.tween = undefined;
       oldest.image.setVisible(false);
+      oldest.trail.setVisible(false);
       return oldest;
     }
-    const slot: BulletSlot = {
-      image: this.scene.add.image(0, 0, EFFECT_TEXTURE.shard).setVisible(false).setBlendMode(Phaser.BlendModes.ADD),
+    const slot: ProjectileSlot = {
+      image: this.scene.add.image(0, 0, inkTextureKey("signal")).setVisible(false),
+      trail: this.scene.add.image(0, 0, inkTextureKey("trail")).setVisible(false),
       openedAt: 0,
     };
-    this.bullets.push(slot);
+    this.projectiles.push(slot);
     return slot;
   }
 
   /**
-   * 탄환 — 실제로 날아간다.
+   * 투사체 — 잉크 조각 하나가 **실제로 날아간다**(`INK_PROJECTILE`).
    *
-   * 피해는 이미 확정된 뒤라 연출이 늦으면 숫자가 먼저 뜨고 총알이 나중에 닿는다. 그래서
-   * 거리와 무관하게 시간을 고정해 **먼 적일수록 빨라 보이게** 한다.
+   * 피해는 이미 확정된 뒤라 연출이 늦으면 숫자가 먼저 뜨고 화살이 나중에 닿는다. 그래서 거리와
+   * 무관하게 시간을 고정해 **먼 적일수록 빨라 보이게** 한다. 길이는 늘이지 않는다.
    */
-  private openBullet(from: { x: number; y: number }, to: { x: number; y: number }, color: number, now: number): void {
-    const bullet = REACH_STRIKE.bullet;
-    const slot = this.acquireBullet();
+  private openProjectile(
+    from: { x: number; y: number },
+    to: { x: number; y: number },
+    kind: ProjectileKind,
+    color: number,
+    now: number,
+    delay: number,
+  ): void {
+    const spec = INK_PROJECTILE.kinds[kind];
+    const slot = this.acquireProjectile();
     slot.openedAt = now;
-    const angle = Phaser.Math.RadToDeg(Math.atan2(to.y - from.y, to.x - from.x));
-    const image = slot.image
-      .setPosition(from.x, from.y)
-      .setDisplaySize(bullet.length, bullet.thickness)
-      .setAngle(angle)
-      .setTint(color)
-      .setAlpha(bullet.alpha)
-      // 채찍보다 한 겹 위다. 같은 깊이에 두면 나중에 열린 채찍이 탄환을 덮는다.
-      .setDepth(this.depth + bullet.depthLift)
-      .setVisible(true);
+    // 채찍보다 한 겹 위다. 같은 깊이에 두면 나중에 열린 채찍이 투사체를 덮는다.
+    const depth = this.depth + INK_PROJECTILE.depthLift;
+    const image = slot.image.setTexture(inkTextureKey(spec.shape)).setTint(color).setScale(spec.scale)
+      .setPosition(from.x, from.y).setAlpha(1).setDepth(depth).setVisible(false);
+    const trail = slot.trail.setTint(lightenColor(color, INK_PROJECTILE.trail.lighten)).setDepth(depth - 0.5).setVisible(false);
+    const state = { t: 0 };
     slot.tween = this.scene.tweens.add({
-      targets: image,
-      x: to.x,
-      y: to.y,
-      // 날면서 뒤로 늘어나 지나온 자리가 꼬리로 남는다. 잔상 객체를 따로 만들지 않는 방법이다.
-      displayWidth: bullet.length * bullet.trail,
-      duration: bullet.ms,
-      ease: "Quad.In",
+      targets: state,
+      t: 1,
+      delay,
+      duration: INK_PROJECTILE.ms,
+      onStart: () => {
+        image.setVisible(true);
+        trail.setVisible(spec.trail === true);
+      },
+      onUpdate: () => {
+        const at = projectilePosition(from, to, kind, state.t);
+        const ahead = projectilePosition(from, to, kind, Math.min(1, state.t + 0.02));
+        const heading = Math.atan2(ahead.y - at.y, ahead.x - at.x);
+        const fade = state.t < INK_PROJECTILE.fadeFrom ? 1 : 1 - (state.t - INK_PROJECTILE.fadeFrom) / (1 - INK_PROJECTILE.fadeFrom);
+        image.setPosition(at.x, at.y).setAlpha(fade);
+        if (spec.spin) image.setRotation(state.t * INK_PROJECTILE.ms / 1000 * spec.spin);
+        else if (kind === "note") image.setRotation(Math.sin(state.t * 9) * 0.3);
+        else if (spec.flip) image.setRotation(heading + Math.PI / 2).setScale(spec.scale * Math.cos(state.t * Math.PI * 5), spec.scale);
+        else image.setRotation(heading);
+        if (spec.trail) {
+          const back = INK_PROJECTILE.trail.offset * spec.scale;
+          trail.setPosition(at.x - Math.cos(heading) * back, at.y - Math.sin(heading) * back)
+            .setRotation(heading)
+            .setScale(spec.scale)
+            .setAlpha(INK_PROJECTILE.trail.alpha * Math.min(1, state.t / 0.2) * fade);
+        }
+      },
       onComplete: () => {
         image.setVisible(false);
+        trail.setVisible(false);
         slot.tween = undefined;
       },
     });
@@ -1100,8 +1153,8 @@ export class EffectManager {
     this.rings.length = 0;
     this.numbers.forEach((slot) => { slot.tweens.forEach((tween) => tween.stop()); slot.label.destroy(); });
     this.numbers.length = 0;
-    this.bullets.forEach((slot) => { slot.tween?.stop(); slot.image.destroy(); });
-    this.bullets.length = 0;
+    this.projectiles.forEach((slot) => { slot.tween?.stop(); slot.image.destroy(); slot.trail.destroy(); });
+    this.projectiles.length = 0;
     this.crosses.forEach((image) => { this.scene.tweens.killTweensOf(image); image.destroy(); });
     this.crosses.length = 0;
     this.shieldAuras.forEach((aura) => aura.graphics.destroy());

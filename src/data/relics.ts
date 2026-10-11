@@ -116,6 +116,7 @@ const DIMO_DEF: RelicDef = {
   element: "wind",
   role: "support",
   reachTier: "ranged",
+  projectile: "signal",
   excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
   // 모르페의 태생 공격력 172에서 파생한 값이며, 전투에서는 성장한 공격력으로 다시 계산된다.
   stats: { hp: 301, def: 43, res: 43, atk: 86, ap: 0, attackSpeed: 80, moveSpeed: 105, critChance: 0, critDamage: 150, energyGain: 12, lifeSteal: 0, ferocityGain: 0 },
@@ -660,6 +661,7 @@ export const RELICS: RelicDef[] = [
     role: "support",
     // 깃펜을 든 조수라 겁이 많아 한 걸음 뒤에서 거든다.
     reachTier: "mid",
+    projectile: "feather",
     // 다이아는 희소 재화라 1시간 생산량을 1 미만으로 두고 수확 시에만 내림한다.
     // 보석은 희소성을 유지하되 기본 보관 시간에 슬롯 하나가 최소 정수 넷을 만든다.
     excavationTrait: { primaryCurrency: "gems", baseProductionPerHour: 0.5, efficiencyMultiplier: 1.12 },
@@ -1312,6 +1314,7 @@ export const RELICS: RelicDef[] = [
     role: "warrior",
     // 조준경을 단 장총으로 먼 거리에서 쏜다.
     reachTier: "ranged",
+    projectile: "bullet",
     // 관제탑에서 받은 표적 기록을 골드로 정산하는 자리라 발굴 특화도 골드 쪽에 붙인다.
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 130, efficiencyMultiplier: 1.05 },
     /*
@@ -1520,6 +1523,7 @@ export const RELICS: RelicDef[] = [
     role: "assassin",
     // 깃털을 날려 보내는 암살자라 붙지 않고 한 걸음 물러서서 쏜다.
     reachTier: "mid",
+    projectile: "feather",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 140, efficiencyMultiplier: 1.1 },
     stats: {
@@ -2030,6 +2034,7 @@ export const RELICS: RelicDef[] = [
     role: "warrior",
     // 서가 사이에서 글로 싸우는 마법형이라 붙지 않는다.
     reachTier: "ranged",
+    projectile: "paper",
     // 장서를 정리하며 나오는 기록 자산이라 발굴 특화도 골드 회수 쪽에 붙인다.
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 132.5, efficiencyMultiplier: 1.06 },
     /*
@@ -2150,6 +2155,7 @@ export const RELICS: RelicDef[] = [
     role: "assassin",
     // 손을 벗어나 날아가는 카드라 붙지 않고 한 걸음 물러서서 던진다.
     reachTier: "mid",
+    projectile: "card",
     // 남의 주머니에서 나온 것을 되돌려 주는 손이라 발굴 특화도 골드 회수 쪽에 붙인다.
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 130, efficiencyMultiplier: 1.07 },
     // 유일한 혼합형이다. 카드 한 장이 손끝 힘과 발라 둔 독을 함께 쓰므로 공격력과 주문력을
@@ -3027,6 +3033,7 @@ export const RELICS: RelicDef[] = [
     role: "support",
     // 활을 켜는 자리는 무대 뒤편이다.
     reachTier: "ranged",
+    projectile: "note",
     // 물리형 지원가의 견고함을 운영에서도 드러내도록 화석 생산 특화를 부여했다.
     excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.2, efficiencyMultiplier: 1.12 },
     stats: {
@@ -3522,6 +3529,7 @@ export const RELICS: RelicDef[] = [
     role: "assassin",
     // 로스터에서 세 번째 원거리 개체이며, 사거리는 집중이 자라면서 함께 늘어난다.
     reachTier: "ranged",
+    projectile: "arrow",
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 105, efficiencyMultiplier: 1.06 },
     /*
      * **공격력에 전부 몰아준 유리몸이다.** 체력·방어·저항이 로스터 최하급이고 공격력은 SR
@@ -3775,6 +3783,7 @@ export const RELICS: RelicDef[] = [
     role: "warrior",
     // 본인이 나가는 것이 아니라 드론이 나간다. 사거리는 그 비막이 닿는 거리다.
     reachTier: "ranged",
+    projectile: "volley",
     /*
      * 고공에서 노출 지점을 찍어 주는 담당이라 발굴 특화는 화석 쪽이다.
      *
@@ -3908,6 +3917,7 @@ export const RELICS: RelicDef[] = [
     element: "fire",
     role: "assassin",
     reachTier: "ranged",
+    projectile: "signal",
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 145, efficiencyMultiplier: 1.10 },
     /**
      * 생존 셋과 이동 속도를 로스터 최저로 내주고 공격 속도와 두 공격 축을 최고로 가져간다.

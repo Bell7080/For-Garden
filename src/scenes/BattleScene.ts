@@ -1940,6 +1940,7 @@ export class BattleScene extends Phaser.Scene {
           { x: target.fighter.x, y: target.fighter.y - height * 0.5 },
           reachTier,
           this.effectColor(attacker),
+          attacker.fighter.def.projectile,
         );
       }
     }

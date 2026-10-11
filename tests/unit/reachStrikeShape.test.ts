@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { lashPoints } from "../../src/ui/reachStrikeShape";
-import { REACH_STRIKE } from "../../src/ui/effectPresets";
+import { INK_PROJECTILE, projectilePosition, REACH_STRIKE } from "../../src/ui/effectPresets";
+import { getRelic, RELICS } from "../../src/data/relics";
 
 /**
  * 채찍 리본의 도형 계약.
@@ -44,18 +45,38 @@ describe("채찍 리본", () => {
   });
 });
 
-describe("탄환", () => {
-  it("은 다음 평타보다 짧게 날아간다", () => {
-    // 연출이 길면 피해 숫자가 먼저 뜨고 총알이 나중에 닿는다.
-    expect(REACH_STRIKE.bullet.ms).toBeLessThan(300);
-    expect(REACH_STRIKE.lash.ms).toBeLessThan(REACH_STRIKE.bullet.ms);
+describe("투사체", () => {
+  it("는 다음 평타보다 짧게 날아가고 채찍보다 길다", () => {
+    // 연출이 길면 피해 숫자가 먼저 뜨고 화살이 나중에 닿는다.
+    expect(INK_PROJECTILE.ms).toBeLessThan(300);
+    expect(REACH_STRIKE.lash.ms).toBeLessThan(INK_PROJECTILE.ms);
   });
 
-  it("은 채찍보다 두껍고 한 겹 위에 선다", () => {
-    // 중거리 적과 원거리 아군이 맞붙으면 둘이 같은 길 위에 겹친다. 얇거나 같은 깊이면
-    // 나중에 열린 채찍이 탄환을 통째로 덮어 무엇이 날아갔는지 보이지 않는다.
-    expect(REACH_STRIKE.bullet.thickness).toBeGreaterThan(REACH_STRIKE.lash.rootWidth);
-    expect(REACH_STRIKE.bullet.depthLift).toBeGreaterThan(0);
+  it("는 채찍보다 한 겹 위에 선다", () => {
+    // 중거리 적과 원거리 아군이 맞붙으면 둘이 같은 길 위에 겹친다. 같은 깊이면 나중에 열린
+    // 채찍이 투사체를 통째로 덮어 무엇이 날아갔는지 보이지 않는다.
+    expect(INK_PROJECTILE.depthLift).toBeGreaterThan(0);
+  });
+
+  it("는 출발점에서 떠나 맞은 자리에 닿는다 — 휘는 것도 끝점은 같다", () => {
+    const from = { x: 100, y: 800 };
+    const to = { x: 500, y: 300 };
+    for (const kind of Object.keys(INK_PROJECTILE.kinds) as (keyof typeof INK_PROJECTILE.kinds)[]) {
+      const start = projectilePosition(from, to, kind, 0);
+      const end = projectilePosition(from, to, kind, 1);
+      expect(start.x).toBeCloseTo(from.x, 5);
+      expect(start.y).toBeCloseTo(from.y, 5);
+      expect(end.x).toBeCloseTo(to.x, 5);
+      expect(end.y).toBeCloseTo(to.y, 5);
+    }
+  });
+
+  it("는 무기를 쥔 원거리·중거리 개체에만 적는다", () => {
+    for (const relic of RELICS) {
+      if (relic.projectile !== undefined) expect(relic.reachTier, relic.id).not.toBe("melee");
+    }
+    expect(getRelic("parua").projectile).toBe("arrow");
+    expect(getRelic("irna").projectile).toBe("bullet");
   });
 });
 

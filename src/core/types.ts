@@ -31,6 +31,12 @@ export type Role = "warrior" | "tank" | "assassin" | "support";
  */
 export type ReachTier = "melee" | "mid" | "ranged";
 
+/**
+ * 떨어져서 때리는 개체가 **무엇을 날리는가** — 표시 전용이고 전투 규칙은 읽지 않는다.
+ * 활은 화살, 총은 탄환을 쏘게 하려고 개체 이름이 아니라 이 칸 하나로 가른다.
+ */
+export type ProjectileKind = "bullet" | "arrow" | "volley" | "note" | "paper" | "signal" | "card" | "feather";
+
 /** 프로토타입 렐릭 희귀도. 배열 순서에 기대지 말고 가챠 규칙의 명시적 우선순위를 사용한다. */
 export type RelicRarity = "R" | "SR" | "SSR";
 
@@ -2413,6 +2419,11 @@ export interface RelicDef {
    * 없게 필수로 두는 이유는 기본값이 있으면 아무도 고르지 않기 때문이다.
    */
   reachTier: ReachTier;
+  /**
+   * 평타가 날리는 것(`ProjectileKind`). 원거리는 생략하면 신호 마름모, 중거리는 생략하면 채찍이다.
+   * 무엇을 쥐고 싸우는지(활·장총·현악·카드)가 원화에 서 있으면 적는다.
+   */
+  projectile?: ProjectileKind;
   /** 전투 수치나 장착 룬과 섞이지 않는 정적 방치 발굴 특화다. */
   excavationTrait: ExcavationTrait;
   stats: Stats;

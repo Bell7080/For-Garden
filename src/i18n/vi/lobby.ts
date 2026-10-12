@@ -27,7 +27,7 @@ export const LOBBY_VI = {
   "event.remaining.hours": "Còn {value} giờ",
   "event.remaining.minutes": "Còn {value} phút",
   "event.wolfCafe.title": "Quán cà phê Sói vụng về",
-  "event.wolfCafe.subtitle": "Sự kiện giới hạn đón khách ở Quán cà phê Sói",
+  "event.wolfCafe.subtitle": "Sự kiện Pick Up giới hạn Dian!",
   "event.autumnHarvest.title": "Lễ hội thu hoạch mùa thu",
   "event.autumnHarvest.subtitle": "Ghé mỗi ngày để nhận quà thu hoạch",
   "event.attendance.newcomer.title": "Điểm danh 7 ngày nhà nghiên cứu mới",

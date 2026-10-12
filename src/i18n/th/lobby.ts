@@ -27,7 +27,7 @@ export const LOBBY_TH = {
   "event.remaining.hours": "เหลือ {value} ชม.",
   "event.remaining.minutes": "เหลือ {value} นาที",
   "event.wolfCafe.title": "คาเฟ่หมาป่าจอมวุ่นวาย",
-  "event.wolfCafe.subtitle": "อีเวนต์จำกัดเวลาต้อนรับแขกของคาเฟ่หมาป่า",
+  "event.wolfCafe.subtitle": "อีเวนต์ Pick Up เดียนจำกัดเวลา!",
   "event.autumnHarvest.title": "เทศกาลเก็บเกี่ยวฤดูใบไม้ร่วง",
   "event.autumnHarvest.subtitle": "แวะมาทุกวันเพื่อรับของขวัญจากการเก็บเกี่ยว",
   "event.attendance.newcomer.title": "เช็กอิน 7 วันนักวิจัยใหม่",

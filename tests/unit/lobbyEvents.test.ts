@@ -3,9 +3,13 @@ import { findLobbyEvent, LOBBY_EVENTS, type LobbyEventDef } from "../../src/data
 import { activeLobbyEvents, lobbyEventListLayout, lobbyEventRemaining } from "../../src/ui/lobbyEventModel";
 
 const at = (iso: string) => Date.parse(iso);
-const sample = (id: string, startsAt: string, endsAt: string): LobbyEventDef => ({ id, titleKey: "event.title", subtitleKey: "event.title", startsAt, endsAt });
+const sample = (id: string, startsAt: string, endsAt: string): LobbyEventDef => ({ id, titleKey: "event.title", subtitleKey: "event.title", backdropKey: "background-lobby", startsAt, endsAt });
 
 describe("로비 이벤트", () => {
+  it("모든 이벤트 카드가 같은 양식으로 선다 — 원화 뒷배경을 반드시 갖는다", () => {
+    for (const event of LOBBY_EVENTS) expect(event.backdropKey, event.id).toMatch(/^background-/);
+  });
+
   it("는 ID가 겹치지 않고 기간이 앞뒤로 맞는다", () => {
     expect(new Set(LOBBY_EVENTS.map(({ id }) => id)).size).toBe(LOBBY_EVENTS.length);
     for (const event of LOBBY_EVENTS) expect(Date.parse(event.startsAt), event.id).toBeLessThan(Date.parse(event.endsAt));

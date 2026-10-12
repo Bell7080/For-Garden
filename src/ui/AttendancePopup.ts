@@ -18,7 +18,7 @@ import { addAttendanceStamp, playAttendanceStamp } from "./attendanceStamp";
 import { ATTENDANCE_CAST, ATTENDANCE_TONE, attendancePanelLayout, type AttendancePanelLayout } from "./attendanceStyle";
 import { spawnEventCardSd } from "./eventCardSd";
 import { startPuppetHop } from "./puppetHop";
-import { shrinkTextToWidth } from "./textFit";
+import { shrinkTextToWidth, squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
 
 const TITLE: Readonly<Record<AttendanceTrackDto["id"], TextKey>> = {
@@ -44,14 +44,17 @@ const LOOK = {
   /** 액자 왼쪽 위에 걸친 일차 이름표, 오른쪽 위의 「오늘」, 덤 액자의 광고 표식. */
   dayTag: { size: 30, padX: 14, height: 46, stroke: 6 },
   todayTag: { size: 22, padX: 12, height: 34 },
-  adTag: { icon: 40, padX: 10, height: 46 },
+  /** 덤 액자 아래 변 가운데에 걸리는 광고 라벨 — 광고 그림 + 「광고 보상」. */
+  adLabel: { icon: 30, size: 22, padX: 12, gap: 6, height: 38 },
   /** 받은 액자를 누르는 어둠, 아직 열리지 않은 덤 액자를 잠그는 어둠과 그 위의 광고 표식. */
   claimedDim: 0.55,
   lockDim: 0.66,
   lockIcon: 0.4,
   stampRatio: 0.86,
-  /** 오늘 받을 액자가 숨 쉬는 빛과 배율. */
-  pulse: { grow: 26, alpha: 0.55, scale: 1.06, duration: 640 },
+  /** 오늘 받을 액자가 숨 쉬는 배율과, 액자 자체의 테두리에서 번지는 빛. */
+  pulse: { scale: 1.08, glowWidth: 7, glowAlpha: 0.35, duration: 620 },
+  /** 판이 떠오른 뒤 오늘 칸을 저절로 받기까지 — 판이 서는 것을 한 번 보고 나서 인장이 찍힌다. */
+  autoClaimDelayMs: 520,
   /** 인장이 박힌 뒤 영수증이 뜨기까지. 「쾅」을 한 번 보고 나서 받은 것이 선다. */
   receiptDelayMs: 260,
 } as const;
@@ -68,9 +71,10 @@ type TileState = "claimed" | "today" | "ahead" | "missed";
  * 출석 판 — 위에 꾸민 머리띠, 아래에 **보상 액자 일곱이 그대로 놓인다**(왼쪽 3×2 + 오른쪽 일곱째).
  *
  * 칸 판을 깔지 않는다. 액자 하나가 하루이고, 일차는 액자 모서리에 걸친 이름표가 말한다. 받은 액자는 눌린 채 인장이
- * 찍혀 있고 **오늘 받을 액자만 숨 쉰다.** 누르면 서버가 확정한 뒤 인장이 쾅 찍히고 공용 영수증이 받은 것을 세운다.
+ * 찍혀 있고 **오늘 받을 액자만 숨 쉰다.** 판이 서면 오늘 칸은 저절로 받아 인장이 쾅 찍히고 공용 영수증이 받은 것을 세운다.
  * 그 밖의 액자는 누르면 그 재화·아이템의 안내창이 열린다 — 이름을 적지 않아도 무엇인지 그 자리에서 읽힌다.
- * 정규는 액자마다 아래에 **같은 크기의 광고 덤 액자**가 쌓이고, 그날 칸을 받기 전에는 광고 표식으로 잠겨 있다.
+ * 정규는 액자마다 아래에 **같은 크기의 광고 덤 액자**가 쌓이고(아래 변에 광고 라벨), 그날 칸을 받기 전에는 잠겨 있다.
+ * 덤은 광고를 보는 일이라 저절로 받지 않고 손으로 연다.
  *
  * 머리띠는 이벤트 카드와 같은 문법이다 — 큰 제목, 받은 수, 진행 마름모, SD. 기한이 있는 줄(정규)만 오른쪽 위에
  * 상점과 같은 붉은 시계가 선다.
@@ -132,15 +136,20 @@ export function openAttendancePopup(scene: Phaser.Scene, popups: PopupLayer, tra
       });
     };
 
+    let todayMain: TileHandle | undefined;
     const paint = (): void => {
       grid.removeAll(true);
+      todayMain = undefined;
       for (const rect of layout.tiles) {
         const index = rect.day - 1;
         const reward = current.days[index];
         const mainState: TileState = index < current.claimed ? "claimed" : current.claimableToday && index === current.claimed ? "today" : "ahead";
         if (reward) {
           const main = addTile(scene, grid, { x: rect.x, y: rect.y, size: rect.size, day: rect.day, reward, state: mainState, kind: "main", track: current });
-          if (mainState === "today") main.onTap = () => claim(main, () => attendanceManager.claim(current.id));
+          if (mainState === "today") {
+            main.onTap = () => claim(main, () => attendanceManager.claim(current.id));
+            todayMain = main;
+          }
         }
         const adReward = current.adDays?.[index];
         if (rect.adY === undefined || !adReward) continue;
@@ -152,6 +161,9 @@ export function openAttendancePopup(scene: Phaser.Scene, popups: PopupLayer, tra
       }
     };
     paint();
+    // 오늘 칸은 누르지 않아도 받는다 — 판이 서면 인장이 찍히고 보상 팝업으로 이어진다. 광고 덤만 손으로 연다.
+    const auto = todayMain;
+    if (auto) scene.time.delayedCall(LOOK.autoClaimDelayMs, () => { if (auto.container.active) auto.onTap?.(); });
   });
 }
 
@@ -278,27 +290,35 @@ function addTile(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, spec
   const bevel = size * LOOK.bevel;
   const cut = (grow: number) => ({ topLeft: bevel + grow * 0.35, topRight: 0, bottomRight: bevel + grow * 0.35, bottomLeft: 0 });
 
-  // 오늘 받을 액자만 바깥으로 빛이 번지며 숨 쉰다.
-  if (today) {
-    const glow = drawLayer(scene, 0, 0, chipPoints(size + LOOK.pulse.grow, size + LOOK.pulse.grow, { bevel: cut(LOOK.pulse.grow) }), { fill: tone.color, alpha: LOOK.pulse.alpha, shadow: false });
-    container.add(glow);
-    const tween = motionPolicy(session.settings).nonEssentialRepeatFactor > 0
-      ? scene.tweens.add({ targets: glow, alpha: 0.12, scaleX: LOOK.pulse.scale, scaleY: LOOK.pulse.scale, duration: LOOK.pulse.duration, yoyo: true, repeat: -1, ease: "Sine.easeInOut" })
-      : undefined;
-    handle.stopPulse = () => { tween?.remove(); glow.destroy(); };
-  }
+  // 액자는 제 그릇(`art`)에 담는다 — 오늘 칸은 그 그릇이 통째로 숨 쉬고 테두리가 빛난다. 누르는 손맛은 바깥 그릇이
+  // 맡으므로 두 배율이 서로를 덮지 않는다.
+  const art = scene.add.container(0, 0);
+  container.add(art);
 
   const tint = Math.min(1, LOOK.tileTint.from + LOOK.tileTint.step * (spec.day - 1));
   const fill = Phaser.Display.Color.ObjectToColor(Phaser.Display.Color.Interpolate.ColorWithColor(
     Phaser.Display.Color.ValueToColor(tone.fill), Phaser.Display.Color.ValueToColor(tone.deep), 100, Math.round(tint * 100),
   )).color;
   const texture = rewardDtoTexture(spec.reward);
-  addFramedIcon(scene, container, 0, 0, size, texture, {
+  addFramedIcon(scene, art, 0, 0, size, texture, {
     amount: formatCurrency(spec.reward.amount), color: tone.color, plain: true, fill, fillAlpha: 0.97,
     outlineWidth: today ? 4 : undefined, outlineAlpha: today ? 1 : undefined,
   });
 
   const shape = chipPoints(size, size, { bevel: cut(0) });
+  if (today) {
+    // 빛은 뒤에 까는 판이 아니라 액자 테두리 자체에서 번진다 — 굵은 선 위에 가는 선을 겹쳐 가장자리만 달아오른다.
+    const points = shape.reduce<Phaser.Geom.Point[]>((list, value, index) => (index % 2 === 0 ? [...list, new Phaser.Geom.Point(value, shape[index + 1])] : list), []);
+    const glow = scene.add.graphics();
+    glow.lineStyle(LOOK.pulse.glowWidth * 2, tone.color, 0.35).strokePoints(points, true);
+    glow.lineStyle(LOOK.pulse.glowWidth, tone.color, 0.9).strokePoints(points, true);
+    art.add(glow);
+    const tween = motionPolicy(session.settings).nonEssentialRepeatFactor > 0
+      ? scene.tweens.add({ targets: art, scaleX: LOOK.pulse.scale, scaleY: LOOK.pulse.scale, duration: LOOK.pulse.duration, yoyo: true, repeat: -1, ease: "Sine.easeInOut" })
+      : undefined;
+    const fade = tween ? scene.tweens.add({ targets: glow, alpha: LOOK.pulse.glowAlpha, duration: LOOK.pulse.duration, yoyo: true, repeat: -1, ease: "Sine.easeInOut" }) : undefined;
+    handle.stopPulse = () => { tween?.remove(); fade?.remove(); art.setScale(1); glow.destroy(); };
+  }
   // 받은·지나간 액자는 눌러 둔다. 아직 열리지 않은 덤 액자는 광고 표식으로 잠근다.
   if (state === "claimed" || state === "missed") container.add(drawLayer(scene, 0, 0, shape, { fill: 0x000000, alpha: LOOK.claimedDim, shadow: false }));
   if (kind === "ad" && (state === "ahead" || state === "missed")) {
@@ -309,12 +329,12 @@ function addTile(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, spec
   }
   if (state === "claimed") container.add(addAttendanceStamp(scene, 0, 0, size * LOOK.stampRatio, tone.color));
 
-  // 모서리 이름표 — 본 액자는 일차, 덤 액자는 광고 표식. 액자 윗변에 걸쳐 액자가 「그날」로 읽히게 한다.
+  // 본 액자는 윗변에 일차 이름표가 걸려 「그날」로 읽히고, 덤 액자는 아래 변에 광고 라벨이 걸린다.
   const lit = today || spec.day === ATTENDANCE_DAYS;
   if (kind === "main") {
     container.add(addTag(scene, -size / 2 - 8, -size / 2, t("attendance.day", { day: spec.day }), LOOK.dayTag, lit ? tone.color : 0x05070a, lit ? "#05070a" : COLOR.ink, "left"));
   } else {
-    container.add(addAdTag(scene, -size / 2 - 8, -size / 2, today ? tone.color : 0x05070a, today ? 0x05070a : 0xe8ecf2));
+    container.add(addAdLabel(scene, 0, size / 2, size, today ? tone.color : 0x05070a, today ? "#05070a" : COLOR.ink, today ? 0x05070a : 0xe8ecf2));
   }
   if (today) container.add(addTag(scene, size / 2 + 8, -size / 2, t("attendance.today"), LOOK.todayTag, tone.color, "#05070a", "right"));
 
@@ -356,12 +376,19 @@ function addTag(
   return tag;
 }
 
-/** 덤 액자의 광고 표식 — 일차 이름표와 같은 자리·같은 판에 광고 그림 하나. */
-function addAdTag(scene: Phaser.Scene, x: number, y: number, fill: number, tint: number): Phaser.GameObjects.Container {
-  const spec = LOOK.adTag;
-  const tag = scene.add.container(x, y);
-  const width = spec.icon + spec.padX * 2;
-  tag.add(drawLayer(scene, width / 2, 0, chipPoints(width, spec.height, { bevel: { topLeft: 9, topRight: 0, bottomRight: 9, bottomLeft: 0 } }), { fill, alpha: 0.96, shadow: { x: 0, y: 4 } }));
-  tag.add(scene.add.image(width / 2, 0, UI_ICON.ad).setDisplaySize(spec.icon, spec.icon).setTint(tint));
-  return tag;
+/** 덤 액자 아래 변 가운데에 걸리는 광고 라벨 — 광고 그림 + 「광고 보상」. 판의 가운데가 `(x, y)`에 온다. */
+function addAdLabel(scene: Phaser.Scene, x: number, y: number, maxWidth: number, fill: number, color: string, tint: number): Phaser.GameObjects.Container {
+  const spec = LOOK.adLabel;
+  const label = scene.add.container(x, y);
+  const text = scene.add.text(0, 0, t("inventory.source.ad"), textStyle({ role: "display", size: spec.size, color })).setOrigin(0, 0.5);
+  if (color !== "#05070a") text.setStroke("#04060a", 5);
+  // 라벨은 액자 폭을 넘지 않는다 — 긴 언어는 글자만 가로로 누른다.
+  squeezeTextToWidth(text, maxWidth - spec.padX * 2 - spec.icon - spec.gap);
+  const width = spec.padX * 2 + spec.icon + spec.gap + text.displayWidth;
+  label.add(drawLayer(scene, 0, 0, chipPoints(width, spec.height, { bevel: { topLeft: 9, topRight: 0, bottomRight: 9, bottomLeft: 0 } }), { fill, alpha: 0.96, shadow: { x: 0, y: 4 } }));
+  const left = -width / 2 + spec.padX;
+  label.add(scene.add.image(left + spec.icon / 2, 0, UI_ICON.ad).setDisplaySize(spec.icon, spec.icon).setTint(tint));
+  text.setX(left + spec.icon + spec.gap);
+  label.add(text);
+  return label;
 }

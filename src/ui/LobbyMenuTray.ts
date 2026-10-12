@@ -17,7 +17,8 @@ export interface LobbyMenuItem {
  * 로비 메뉴 — 가방 아래 햄버거 단추와, 누르면 단추가 사라지고 그 자리에서 펼쳐지는 한 줄짜리 판.
  *
  * 판은 전투 기여도 판과 같은 문법이다: 화면 밖에서 밀려 들어오고, 접으면 **완전히** 나간다. 판 밖을
- * 누르거나 칩을 누르면 접힌다.
+ * 누르면 접힌다. 칩을 눌러 연 창(회고 등)이 떠 있는 동안과 창을 닫는 누름에는 접히지 않고 판이 그대로
+ * 남는다 — 창을 닫고 돌아왔을 때 다른 칩을 바로 이어 고를 수 있어야 한다.
  */
 export class LobbyMenuTray {
   private readonly tray: Phaser.GameObjects.Container;
@@ -26,8 +27,11 @@ export class LobbyMenuTray {
   private button?: Phaser.GameObjects.Container;
   private slide?: Phaser.Tweens.Tween;
   private outsideTap?: (pointer: Phaser.Input.Pointer) => void;
+  private outsideDown?: () => void;
+  /** 누르기 시작한 순간 창이 떠 있었는가 — 창을 닫는 누름이 떼는 시점에 판까지 접지 않게 한다. */
+  private pressedOverPopup = false;
 
-  constructor(private readonly scene: Phaser.Scene, items: readonly LobbyMenuItem[], depth = 320) {
+  constructor(private readonly scene: Phaser.Scene, items: readonly LobbyMenuItem[], depth = 320, private readonly isPopupOpen: () => boolean = () => false) {
     this.layout = lobbyMenuTrayLayout(items.length);
     const { bounds, chips, slideOut } = this.layout;
 
@@ -38,7 +42,7 @@ export class LobbyMenuTray {
     items.forEach((item, index) => {
       const chip = new RailButton(scene, chips[index].x, chips[index].y, {
         icon: item.icon, label: item.label, size: LOBBY_MENU_TRAY.chip,
-        onClick: () => { this.close(); item.onClick(); },
+        onClick: () => item.onClick(),
       });
       this.tray.add(chip);
     });
@@ -78,7 +82,13 @@ export class LobbyMenuTray {
     // 판 밖을 누르면 접힌다. 칩을 누른 같은 틱에 닫히지 않도록 다음 틱에 건다.
     this.scene.time.delayedCall(0, () => {
       if (!this.open) return;
-      this.outsideTap = (pointer) => { if (!this.contains(pointer)) this.close(); };
+      this.outsideDown = () => { this.pressedOverPopup = this.isPopupOpen(); };
+      this.outsideTap = (pointer) => {
+        const blocked = this.pressedOverPopup || this.isPopupOpen();
+        this.pressedOverPopup = false;
+        if (!blocked && !this.contains(pointer)) this.close();
+      };
+      this.scene.input.on("pointerdown", this.outsideDown);
       this.scene.input.on("pointerup", this.outsideTap);
     });
   }
@@ -87,7 +97,9 @@ export class LobbyMenuTray {
     if (!this.open) return;
     this.open = false;
     this.button?.setVisible(true);
+    if (this.outsideDown) { this.scene.input.off("pointerdown", this.outsideDown); this.outsideDown = undefined; }
     if (this.outsideTap) { this.scene.input.off("pointerup", this.outsideTap); this.outsideTap = undefined; }
+    this.pressedOverPopup = false;
     this.moveTo(this.layout.slideOut, () => this.tray.setVisible(false));
   }
 

@@ -5,7 +5,8 @@ import { ATTENDANCE_DAYS } from "../core/attendance";
 import { motionPolicy } from "../core/settings";
 import { session } from "../state/session";
 import { chipPoints, drawLayer, slantedRect } from "./holo";
-import { lobbyEventRemaining, type LobbyEventEntry, type LobbyEventRemaining } from "./lobbyEventModel";
+import type { LobbyEventEntry } from "./lobbyEventModel";
+import { formatDayCountdown } from "../core/formatCountdown";
 import { addPopupBackgroundImage } from "./backgrounds";
 import { spawnEventCardSd } from "./eventCardSd";
 import { pressIn, pressOut } from "./pressFeedback";
@@ -15,7 +16,7 @@ import { rewardDtoTexture } from "./rewardDtoIcon";
 import { sortRewardItems } from "./rewardOrder";
 import { NotificationDot } from "./NotificationDot";
 import { ATTENDANCE_CAST, ATTENDANCE_PILE, ATTENDANCE_SPARKLES, ATTENDANCE_TONE } from "./attendanceStyle";
-import { shrinkTextToWidth, squeezeTextToWidth } from "./textFit";
+import { shrinkTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
 
 /** 카드 한 장의 겹과 자리. 무역 전시장 카드와 같은 문법(뒤로 번지는 어둠 · 윗변 강조선 · 왼쪽 빗금)이다. */
@@ -29,8 +30,11 @@ const CARD = {
   rail: { width: 10, inset: 16, alpha: 0.9 },
   titleSize: 40,
   subtitleSize: 26,
-  /** 남은 기간 칩. SD 반대쪽 아래에 앉는다. */
-  remaining: { width: 196, height: 50, size: 24, inset: 26 },
+  /**
+   * 남은 기간 시계 — 상점 리필 시계와 같은 굵은 붉은 `D00:HH:MM:SS`. **모든 카드에서 같은 자리**(글 줄 맨 아래
+   * 왼쪽)에 선다 — SD는 글의 반대쪽에 서므로 시계와 겹치지 않는다. 초마다 갈아 끼운다.
+   */
+  clock: { size: 32, inset: 30 },
   /** SD는 출격판 칸과 같은 자리 규칙을 쓰되 한 뼘 작게 세운다(출격 스토리 칸과 같은 배율). */
   sdScale: 0.9,
   /** 출석 카드의 진행 마름모 줄. 신규 카드는 둘 사이 좁은 가운데에 서므로 한 뼘 촘촘하다. */
@@ -40,13 +44,9 @@ const CARD = {
    * (`inset` 168)에 세우면 몸이 가운데 제목과 진행 줄을 덮는다.
    */
   lavish: { sdInset: 104, sdScale: 0.8, textWidth: 330, pileY: 50 },
+  /** 정규 출석 카드의 보상 한 줄 높이 — 진행 줄과 맨 아래 시계 사이. */
+  regularRewardY: 22,
 } as const;
-
-const REMAINING_KEY: Readonly<Record<LobbyEventRemaining["unit"], TextKey>> = {
-  days: "event.remaining.days",
-  hours: "event.remaining.hours",
-  minutes: "event.remaining.minutes",
-};
 
 const ATTENDANCE_TITLE: Readonly<Record<AttendanceTrackDto["id"], TextKey>> = {
   newcomer: "event.attendance.newcomer.title",
@@ -153,11 +153,7 @@ export class LobbyEventCard extends Phaser.GameObjects.Container {
     shrinkTextToWidth(subtitle, textWidth);
     this.add(subtitle);
 
-    // 남은 기간 칩 — SD가 오른쪽이면 글 아래 왼쪽에, 아니면 오른쪽 아래에 앉는다.
-    const chip = CARD.remaining;
-    const chipX = sdSide === "right" ? left + chip.width / 2 : width / 2 - chip.inset - chip.width / 2 - bevel * 0.4;
-    const chipY = height / 2 - chip.inset - chip.height / 2;
-    this.addRemainingChip(chipX, chipY, lobbyEventRemaining(event.endsAt, now), COLOR.event, COLOR.eventText);
+    this.addClock(left, event.endsAt, now);
 
     if (event.sd) this.addSd(event.sd.relicId, event.sd.side, shape, bevel, { hop: false });
   }
@@ -175,28 +171,29 @@ export class LobbyEventCard extends Phaser.GameObjects.Container {
     wash.fillPoints(shape.reduce<Phaser.Geom.Point[]>((points, value, index) => (index % 2 === 0 ? [...points, new Phaser.Geom.Point(value, shape[index + 1])] : points), []), true);
     this.add(wash);
 
-    // 신규: 가운데 제목 + 수북한 보상 더미, 좌우로 둘이 뛴다.
-    // 정규: 왼쪽에 토리카 혼자, 오른쪽에 제목과 가지런한 보상 한 줄.
-    const centerX = lavish ? 0 : -width / 2 + 330;
+    // 신규: 가운데 제목 + 수북한 보상 더미, 좌우로 둘이 뛴다(기한이 없어 시계가 없다).
+    // 정규: 기간 이벤트와 같이 글이 왼쪽, 토리카가 오른쪽에 혼자 서고 글 줄 맨 아래에 붉은 시계가 선다.
+    const centerX = lavish ? 0 : -width / 2 + CARD.padX;
     const textOriginX = lavish ? 0.5 : 0;
-    const textWidth = lavish ? CARD.lavish.textWidth : width - 330 - CARD.padX;
-    const title = scene.add.text(centerX, -height / 2 + 50, t(ATTENDANCE_TITLE[track.id]), textStyle({ role: "display", size: lavish ? 42 : 38, color: tone.text }))
+    const textWidth = lavish ? CARD.lavish.textWidth : width * 0.56;
+    const title = scene.add.text(centerX, -height / 2 + (lavish ? 50 : 46), t(ATTENDANCE_TITLE[track.id]), textStyle({ role: "display", size: lavish ? 42 : 38, color: tone.text }))
       .setOrigin(textOriginX, 0.5)
       .setStroke(tone.stroke, 9)
       .setShadow(3, 5, "#04060a", 0, true, true);
     shrinkTextToWidth(title, textWidth);
     this.add(title);
 
-    this.pipRow = scene.add.container(centerX, -height / 2 + 94);
+    this.pipRow = scene.add.container(centerX, -height / 2 + (lavish ? 94 : 88));
     this.add(this.pipRow);
     this.paintPips(track);
 
     const textures = [...new Set(track.days.map(rewardDtoTexture).filter(Boolean))];
     const ordered = sortRewardItems(textures.map((icon) => ({ icon }))).map(({ icon }) => icon as string);
     if (lavish) this.addRewardPile(ordered, tone.color, 0, CARD.lavish.pileY);
-    else this.addRewardRow(ordered, centerX, height / 2 - 52, textWidth);
+    else this.addRewardRow(ordered, centerX, CARD.regularRewardY, textWidth);
+    if (track.endsAt) this.addClock(centerX, track.endsAt, this.options.now);
 
-    ATTENDANCE_CAST[track.id].forEach((cast, index) => this.addSd(cast.relicId, cast.side, shape, bevel, { hop: true, index: lavish ? index : 1, lavish }));
+    ATTENDANCE_CAST[track.id].forEach((cast, index) => this.addSd(cast.relicId, cast.cardSide ?? cast.side, shape, bevel, { hop: true, index: lavish ? index : 1, lavish }));
     this.setDot(track.claimableToday);
   }
 
@@ -209,8 +206,8 @@ export class LobbyEventCard extends Phaser.GameObjects.Container {
     const lavish = track.id === "newcomer";
     const { half } = CARD.pips;
     const gap = lavish ? CARD.pips.lavishGap : CARD.pips.gap;
-    const remaining = track.endsAt ? t(REMAINING_KEY[lobbyEventRemaining(track.endsAt, this.options.now).unit], { value: lobbyEventRemaining(track.endsAt, this.options.now).value }) : "";
-    const label = this.scene.add.text(0, 0, `${track.claimed}/${ATTENDANCE_DAYS}${remaining ? `  ·  ${remaining}` : ""}`, textStyle({ role: "emphasis", size: lavish ? CARD.pips.lavishLabelSize : CARD.pips.labelSize, color: COLOR.ink }))
+    // 남은 기간은 붉은 시계가 따로 말한다 — 여기는 받은 수만.
+    const label = this.scene.add.text(0, 0, `${track.claimed}/${ATTENDANCE_DAYS}`, textStyle({ role: "emphasis", size: lavish ? CARD.pips.lavishLabelSize : CARD.pips.labelSize, color: COLOR.ink }))
       .setOrigin(0, 0.5)
       .setShadow(2, 3, "#04060a", 0, true, true);
     const pipsWidth = gap * (ATTENDANCE_DAYS - 1);
@@ -279,12 +276,21 @@ export class LobbyEventCard extends Phaser.GameObjects.Container {
     });
   }
 
-  private addRemainingChip(x: number, y: number, remaining: LobbyEventRemaining, color: number, text: string): void {
-    const chip = CARD.remaining;
-    this.add(drawLayer(this.scene, x, y, slantedRect(chip.width, chip.height), { fill: 0x000000, alpha: 0.6, shadow: false, edge: color, edgeAlpha: 0.7 }));
-    const label = this.scene.add.text(x, y, t(REMAINING_KEY[remaining.unit], { value: remaining.value }), textStyle({ role: "emphasis", size: chip.size, color: text })).setOrigin(0.5);
-    squeezeTextToWidth(label, chip.width - 24);
-    this.add(label);
+  /** 남은 기간 시계 — 글 줄 맨 아래 왼쪽(`x`가 글의 왼쪽 끝). 초마다 갈아 끼우고 카드와 함께 멈춘다. */
+  private addClock(x: number, endsAt: string, now: number): void {
+    const { scene } = this;
+    const end = Date.parse(endsAt);
+    // 판이 열린 시각(`now`)과 기기 시계의 차이를 그대로 따라간다 — 카드가 받은 기준 시각에서 흐른 만큼만 줄인다.
+    const offset = now - Date.now();
+    const clock = scene.add.text(x, this.options.height / 2 - CARD.clock.inset, "", textStyle({ role: "display", size: CARD.clock.size, color: COLOR.dangerText }))
+      .setOrigin(0, 0.5)
+      .setStroke("#04060a", 7)
+      .setShadow(2, 4, "#000000", 0, true, true);
+    this.add(clock);
+    const tick = (): void => { clock.setText(formatDayCountdown(end - (Date.now() + offset))); };
+    tick();
+    const timer = scene.time.addEvent({ delay: 1000, loop: true, callback: tick });
+    this.once(Phaser.GameObjects.Events.DESTROY, () => timer.remove());
   }
 
   /** SD 한 기를 칸에 세운다(자리·마스크는 `spawnEventCardSd`). 카드의 자식이라 판과 함께 떠오르고 함께 사라진다. */

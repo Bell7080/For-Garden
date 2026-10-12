@@ -11,10 +11,14 @@ export const ATTENDANCE_TONE: Readonly<Record<AttendanceTrackId, { color: number
   regular: { color: 0x6fa8d6, text: "#9fd0f0", fill: 0x0b131c, deep: 0x1d4566, stroke: "#06121e" },
 };
 
-/** 카드에 서는 SD — 렐릭 ID와 쪽. 신규는 파루아·도디가 좌우에서, 정규는 토리카 혼자 뛴다. */
-export const ATTENDANCE_CAST: Readonly<Record<AttendanceTrackId, readonly { relicId: string; side: "left" | "right" }[]>> = {
+/**
+ * 출석에 서는 SD — 렐릭 ID와 쪽. 신규는 파루아·도디가 좌우에서, 정규는 토리카 혼자 뛴다. `side`는 출석 판 머리띠의
+ * 자리(정규는 오른쪽 위에 시계가 서므로 왼쪽), `cardSide`는 이벤트 카드의 자리다(카드는 기간 이벤트와 같이 글이
+ * 왼쪽이라 오른쪽).
+ */
+export const ATTENDANCE_CAST: Readonly<Record<AttendanceTrackId, readonly { relicId: string; side: "left" | "right"; cardSide?: "left" | "right" }[]>> = {
   newcomer: [{ relicId: "parua", side: "left" }, { relicId: "dodo", side: "right" }],
-  regular: [{ relicId: "torika", side: "left" }],
+  regular: [{ relicId: "torika", side: "left", cardSide: "right" }],
 };
 
 /**
@@ -38,61 +42,69 @@ export const ATTENDANCE_SPARKLES: readonly { x: number; y: number; size: number 
 ];
 
 /**
- * 출석 판 안 일곱 칸의 자리 — 3칸 두 줄 + 넓은 일곱째 띠.
+ * 출석 판의 자리 — 위에 꾸민 머리띠(큰 제목 · 진행 · 남은 시간 · SD), 아래에 **왼쪽 3×2 + 오른쪽 일곱째**.
  *
- * 칸마다 받는 것이 하나라 칸을 크게 세운다. 정규는 본 칸 아래에 **광고 덤 칸**(`ad`)이 한 장 더 붙는다 — 본 칸과
- * 같은 폭으로 붙여 「이 날의 덤」으로 읽히게 하고, 그만큼 칸이 길어진다. 칸 안의 자리(`main`·`ad`)는 칸 가운데가 0이다.
+ * 칸 판을 깔지 않고 **보상 액자 하나하나를 그대로 올려 둔다** — 판 안에 액자를 넣으면 액자가 두 겹으로 보이고
+ * 받는 것보다 칸이 먼저 읽힌다. 일차는 액자 왼쪽 위 모서리에 걸친 이름표가 말한다. 일곱째는 오른쪽 열에 한 뼘 크게,
+ * 두 줄 사이 가운데 높이에 선다. 정규는 액자마다 아래에 **같은 크기의 광고 덤 액자**가 쌓인다.
+ * 좌표는 판 가운데가 0이다.
  */
-export interface AttendanceSlotRect {
+export interface AttendanceTileRect {
   day: number;
   x: number;
+  /** 본 보상 액자의 가운데 높이와 한 변. */
   y: number;
+  size: number;
+  /** 광고 덤 액자의 가운데 높이(같은 한 변). 정규에만 있다. */
+  adY?: number;
+}
+
+export interface AttendancePanelLayout {
   width: number;
   height: number;
-  main: { y: number; height: number };
-  ad?: { y: number; height: number };
+  /** 꾸민 머리띠 — 가운데 높이와 폭·높이. */
+  banner: { y: number; width: number; height: number };
+  tiles: AttendanceTileRect[];
 }
 
 export const ATTENDANCE_PANEL = {
   width: 940,
-  /** 제목표 아래 머리줄(진행·남은 기간)의 높이. */
-  header: 124,
-  /** 칸이 서는 안쪽 폭 — 세 칸과 두 틈이 이 폭을 채운다. */
+  /** 머리띠와 격자가 서는 안쪽 폭. */
   inner: 840,
-  columns: 3,
-  gap: 24,
-  rowGap: 22,
-  /** 본 칸의 높이와, 덤 칸의 높이·본 칸과의 틈. */
-  mainHeight: 270,
-  adHeight: 100,
-  adGap: 10,
-  bottomPad: 64,
+  /** 판 윗변에서 머리띠까지 — 제목표와 머리띠 위로 빠져나오는 SD 머리가 이 안에 든다. */
+  bannerTop: 150,
+  bannerHeight: 220,
+  /** 머리띠 아래에서 첫 줄 액자 윗변까지 — 일차 이름표가 액자 윗변에 걸쳐 그만큼 솟는다. */
+  gridGap: 64,
+  /** 액자 한 변(일곱째는 한 뼘 크다)과 본 액자·덤 액자 사이, 두 줄 사이. */
+  tile: 168,
+  finaleTile: 204,
+  adGap: 32,
+  rowGap: 64,
+  bottomPad: 72,
 } as const;
 
-/** 판 높이와 일곱 칸의 자리(판 가운데가 0). `withAd`면 칸마다 덤 칸이 붙는다. */
-export function attendancePanelLayout(withAd: boolean): { width: number; height: number; headerY: number; slots: AttendanceSlotRect[] } {
-  const { width, header, inner, columns, gap, rowGap, mainHeight, adHeight, adGap, bottomPad } = ATTENDANCE_PANEL;
-  const slotHeight = mainHeight + (withAd ? adGap + adHeight : 0);
-  const rows = 3;
-  const height = header + slotHeight * rows + rowGap * (rows - 1) + bottomPad;
-  const cellWidth = (inner - gap * (columns - 1)) / columns;
+/** 판 높이와 머리띠·일곱 액자의 자리. `withAd`면 액자마다 덤 액자가 아래에 쌓인다. */
+export function attendancePanelLayout(withAd: boolean): AttendancePanelLayout {
+  const { width, inner, bannerTop, bannerHeight, gridGap, tile, finaleTile, adGap, rowGap, bottomPad } = ATTENDANCE_PANEL;
+  const unit = (size: number): number => size + (withAd ? adGap + size : 0);
+  const height = bannerTop + bannerHeight + gridGap + unit(tile) * 2 + rowGap + bottomPad;
+  const top = -height / 2;
+  const banner = { y: top + bannerTop + bannerHeight / 2, width: inner, height: bannerHeight };
+  const gridTop = top + bannerTop + bannerHeight + gridGap;
+  // 세 열과 일곱째 열이 안쪽 폭을 고르게 나눈다(틈 셋이 같다).
+  const gap = (inner - tile * 3 - finaleTile) / 3;
   const left = -inner / 2;
-  const top = -height / 2 + header;
-  const parts = (): Pick<AttendanceSlotRect, "main" | "ad"> => ({
-    main: { y: -slotHeight / 2 + mainHeight / 2, height: mainHeight },
-    ...(withAd ? { ad: { y: slotHeight / 2 - adHeight / 2, height: adHeight } } : {}),
-  });
-  const slots: AttendanceSlotRect[] = [];
+  const tiles: AttendanceTileRect[] = [];
   for (let index = 0; index < 6; index += 1) {
-    const column = index % columns;
-    const row = Math.floor(index / columns);
-    slots.push({
-      day: index + 1,
-      x: left + cellWidth / 2 + column * (cellWidth + gap),
-      y: top + slotHeight / 2 + row * (slotHeight + rowGap),
-      width: cellWidth, height: slotHeight, ...parts(),
-    });
+    const column = index % 3;
+    const row = Math.floor(index / 3);
+    const y = gridTop + tile / 2 + row * (unit(tile) + rowGap);
+    tiles.push({ day: index + 1, x: left + tile / 2 + column * (tile + gap), y, size: tile, ...(withAd ? { adY: y + tile + adGap } : {}) });
   }
-  slots.push({ day: 7, x: 0, y: top + slotHeight / 2 + 2 * (slotHeight + rowGap), width: inner, height: slotHeight, ...parts() });
-  return { width, height, headerY: -height / 2 + header / 2 + 22, slots };
+  // 일곱째 묶음(본 + 덤)의 가운데를 두 줄 묶음의 가운데 사이에 둔다.
+  const middle = gridTop + (unit(tile) * 2 + rowGap) / 2;
+  const finaleY = middle - unit(finaleTile) / 2 + finaleTile / 2;
+  tiles.push({ day: 7, x: inner / 2 - finaleTile / 2, y: finaleY, size: finaleTile, ...(withAd ? { adY: finaleY + finaleTile + adGap } : {}) });
+  return { width, height, banner, tiles };
 }

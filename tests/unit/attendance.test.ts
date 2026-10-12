@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { FakeServer } from "../../src/api/FakeServer";
 import {
   ATTENDANCE_DAYS, attendanceClaimable, attendanceTrackView, claimAttendanceAdBonus, claimAttendanceDay, createEmptyAttendanceState, isValidAttendanceState,
-  NEWCOMER_ATTENDANCE_WINDOW_DAYS, REGULAR_ATTENDANCE_WINDOW_DAYS, rollAttendance, type AttendanceState,
+  REGULAR_ATTENDANCE_WINDOW_DAYS, rollAttendance, type AttendanceState,
 } from "../../src/core/attendance";
 import { createEmptyRaidTicketDropState, RAID_TICKET_DROP, rollRaidTicketDrops, strataRaidTicketTile } from "../../src/core/raidTicketDrops";
 import { ATTENDANCE_AD_REWARDS, ATTENDANCE_AD_SLOT_ID, ATTENDANCE_REWARDS } from "../../src/data/attendance";
@@ -84,13 +84,13 @@ describe("출석", () => {
     expect(claims).toEqual([1, 2, 3, 4, 1]);
   });
 
-  it("신규는 14일 안에만 열리고, 다 받은 다음 날부터 서지 않는다", () => {
+  it("신규는 기한이 없고, 다 받은 다음 날부터 서지 않는다", () => {
     const { state, claims } = walk(10, [], "newcomer");
     expect(claims).toEqual([1, 2, 3, 4, 5, 6, 7]);
     expect(attendanceTrackView(rollAttendance(state, day(9)), "newcomer", day(9)).open).toBe(false);
     const idle = rollAttendance(createEmptyAttendanceState(), day(0));
-    expect(attendanceTrackView(idle, "newcomer", day(NEWCOMER_ATTENDANCE_WINDOW_DAYS - 1)).claimableToday).toBe(true);
-    expect(attendanceTrackView(idle, "newcomer", day(NEWCOMER_ATTENDANCE_WINDOW_DAYS)).open).toBe(false);
+    expect(attendanceTrackView(idle, "newcomer", day(400)).claimableToday).toBe(true);
+    expect(attendanceTrackView(idle, "newcomer", day(400)).endsAt).toBeNull();
   });
 
   it("넘긴 상태는 저장 검증을 지난다", () => {
@@ -134,24 +134,28 @@ describe("토벌권 덤", () => {
 });
 
 describe("출석 판·이벤트 목록", () => {
-  it.each([false, true])("일곱 칸이 판 안에 들고 세 줄 폭이 같으며 겹치지 않는다 (광고 덤 %s)", (withAd) => {
+  it.each([false, true])("일곱 액자가 판 안에 들고 일곱째는 두 줄 사이 가운데에 서며 겹치지 않는다 (광고 덤 %s)", (withAd) => {
     const layout = attendancePanelLayout(withAd);
-    expect(layout.slots.map(({ day: value }) => value)).toEqual([1, 2, 3, 4, 5, 6, 7]);
-    const edges = (row: typeof layout.slots) => [Math.min(...row.map((slot) => slot.x - slot.width / 2)), Math.max(...row.map((slot) => slot.x + slot.width / 2))];
-    expect(edges(layout.slots.slice(0, 3))).toEqual(edges(layout.slots.slice(3, 6)));
-    expect(edges(layout.slots.slice(0, 3))).toEqual(edges(layout.slots.slice(6)));
-    for (const slot of layout.slots) {
-      expect(slot.y + slot.height / 2).toBeLessThan(layout.height / 2 - 40);
-      expect(slot.y - slot.height / 2).toBeGreaterThan(layout.headerY + 30);
-      expect(slot.x - slot.width / 2).toBeGreaterThan(-layout.width / 2 + 40);
-      expect(Boolean(slot.ad)).toBe(withAd);
-      if (slot.ad) expect(slot.main.y + slot.main.height / 2).toBeLessThan(slot.ad.y - slot.ad.height / 2);
+    expect(layout.tiles.map(({ day: value }) => value)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    // 일차 이름표가 윗변에 걸쳐 솟으므로 액자 상자를 그만큼 위로 넓혀 잰다.
+    const boxes = layout.tiles.flatMap((tile) => [tile.y, ...(tile.adY !== undefined ? [tile.adY] : [])].map((y) => ({
+      left: tile.x - tile.size / 2, right: tile.x + tile.size / 2, top: y - tile.size / 2 - 24, bottom: y + tile.size / 2,
+    })));
+    expect(boxes).toHaveLength(withAd ? 14 : 7);
+    for (const box of boxes) {
+      expect(box.left).toBeGreaterThanOrEqual(-layout.width / 2 + 40);
+      expect(box.right).toBeLessThanOrEqual(layout.width / 2 - 40);
+      expect(box.top).toBeGreaterThan(layout.banner.y + layout.banner.height / 2);
+      expect(box.bottom).toBeLessThan(layout.height / 2 - 40);
     }
-    for (const a of layout.slots) for (const b of layout.slots) {
+    for (const a of boxes) for (const b of boxes) {
       if (a === b) continue;
-      const apart = a.x + a.width / 2 <= b.x - b.width / 2 || b.x + b.width / 2 <= a.x - a.width / 2 || a.y + a.height / 2 <= b.y - b.height / 2 || b.y + b.height / 2 <= a.y - a.height / 2;
-      expect(apart).toBe(true);
+      expect(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top).toBe(true);
     }
+    for (const tile of layout.tiles) expect(Boolean(tile.adY)).toBe(withAd);
+    const [first, , , fourth, , , finale] = layout.tiles;
+    const groupMiddle = (tile: typeof finale) => (tile.y - tile.size / 2 + (tile.adY ?? tile.y) + tile.size / 2) / 2;
+    expect(groupMiddle(finale)).toBeCloseTo((groupMiddle(first) + groupMiddle(fourth)) / 2, 5);
   });
 
   it("출석이 기간 이벤트보다 먼저 선다", () => {

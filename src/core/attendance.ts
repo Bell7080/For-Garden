@@ -3,8 +3,8 @@ import { utcDateKey } from "./dailyContent";
 /**
  * 출석의 **저장 모양**과 하루 넘김 규칙 — 신규 7일과 정규 7일 두 줄이다.
  *
- * - **신규**는 계정이 처음 선 날부터 14일 안에 일곱 칸을 받는다. 빠진 날은 이어 받는다(하루에 한 칸).
- *   14일이 지나거나 일곱 칸을 다 받으면 끝나고 다시 열리지 않는다.
+ * - **신규**는 기한이 없다. 빠진 날은 이어 받고(하루에 한 칸), 일곱 칸을 다 받으면 끝나 다시 열리지 않는다.
+ *   한때 계정 시작부터 14일 창을 두었는데, 신규 출석은 붙잡아 두려는 판이라 놓친 사람을 내쫓을 이유가 없어 걷었다.
  * - **정규**는 일곱 칸을 하루에 한 칸씩 이어 받는다. 첫 칸을 받은 날부터 10일(일곱 칸 + 유예 3일)이 한 바퀴이고,
  *   그 안에 다 받으면 **다음 날 곧바로** 새 바퀴가 열린다. 10일이 지나도록 다 받지 못하면 남은 칸은 사라지고
  *   1일차부터 다시 시작한다.
@@ -13,8 +13,6 @@ import { utcDateKey } from "./dailyContent";
  */
 
 export const ATTENDANCE_DAYS = 7;
-/** 신규 출석이 열려 있는 날수(계정 시작일 포함). */
-export const NEWCOMER_ATTENDANCE_WINDOW_DAYS = 14;
 /** 정규 출석 한 바퀴의 날수(첫 칸을 받은 날 포함 — 일곱 칸 + 유예 3일). */
 export const REGULAR_ATTENDANCE_WINDOW_DAYS = 10;
 
@@ -104,12 +102,12 @@ export function rollAttendance(state: AttendanceState, now: Date): AttendanceSta
 /** 한 줄의 지금 모습 — 판이 그대로 그린다. */
 export interface AttendanceTrackView {
   id: AttendanceTrackId;
-  /** 이 줄을 아직 세우는가. 신규는 끝나면(다 받았거나 기한이 지나면) 서지 않는다. */
+  /** 이 줄을 아직 세우는가. 신규는 다 받으면 서지 않는다. */
   open: boolean;
   claimed: number;
   /** 오늘 받을 수 있는가. 참이면 `claimed`번째 칸(0부터)이 오늘의 칸이다. */
   claimableToday: boolean;
-  /** 이 줄이 닫히는 시각(ISO, 그 날짜가 지나는 자정). 정규는 바퀴가 시작되기 전이면 `null`. */
+  /** 이 줄이 닫히는 시각(ISO, 그 날짜가 지나는 자정). 신규는 기한이 없어 늘 `null`, 정규는 바퀴가 시작되기 전이면 `null`. */
   endsAt: string | null;
   /** 이 바퀴에서 광고 덤을 받은 일차. */
   adClaimed: number[];
@@ -129,11 +127,10 @@ export function attendanceTrackView(state: AttendanceState, id: AttendanceTrackI
   const track = state[id];
   const claimedToday = track.lastClaimDay === today;
   if (id === "newcomer") {
-    const inWindow = track.startDay !== "" && dayKeyDistance(track.startDay, today) < NEWCOMER_ATTENDANCE_WINDOW_DAYS;
     const done = track.claimed >= ATTENDANCE_DAYS;
     // 일곱째 칸을 받은 날은 그 도장을 보도록 판을 남긴다 — 다음 날부터 서지 않는다.
-    const open = inWindow && (!done || claimedToday);
-    return { id, open, claimed: track.claimed, claimableToday: open && !done && !claimedToday, endsAt: track.startDay ? windowEnd(track.startDay, NEWCOMER_ATTENDANCE_WINDOW_DAYS) : null, adClaimed: [], adClaimableToday: false };
+    const open = !done || claimedToday;
+    return { id, open, claimed: track.claimed, claimableToday: open && !done && !claimedToday, endsAt: null, adClaimed: [], adClaimableToday: false };
   }
   return {
     id, open: true, claimed: track.claimed,

@@ -847,21 +847,22 @@ export class EffectManager {
       this.shieldPulse(x, y, options.intensity, options.color);
       return;
     }
-    if (method === "shieldHit") { this.openRing(x, y, 94 * scale, 180, 7, options.color); return; }
+    if (method === "shieldHit") { this.openRing(x, y, 94 * scale, 180, 7, options.color, 0, true); return; }
     if (method === "shieldBreak") { this.shieldShatter(x, y, scale, options.color); return; }
     if (method === "reagentReaction") {
       // 전용 애니메이션 에셋을 만들지 않고 기존 파문 풀을 크기가 다른 세 수포처럼 벌린다.
       // 한 사건에서만 이 묶음을 열기 때문에 독 시작·회복 사건이 뒤따라도 다시 재생되지 않는다.
-      this.openRing(x - 24 * scale, y + 8 * scale, 22 * scale, 260, 3, options.color);
-      this.openRing(x + 4 * scale, y - 14 * scale, 34 * scale, 330, 3, options.color, 35);
-      this.openRing(x + 31 * scale, y + 3 * scale, 18 * scale, 240, 2, options.color, 75);
+      this.openRing(x - 24 * scale, y + 8 * scale, 22 * scale, 260, 3, options.color, 0, true);
+      this.openRing(x + 4 * scale, y - 14 * scale, 34 * scale, 330, 3, options.color, 35, true);
+      this.openRing(x + 31 * scale, y + 3 * scale, 18 * scale, 240, 2, options.color, 75, true);
       return;
     }
     // 진입은 윤곽이 밖으로 분해되고 해제는 작은 윤곽부터 커져 역방향으로 재결합한다.
     if (method === "stealthEnter") this.burst("passive", x, y, { color: options.color, scale });
     else {
-      this.openRing(x, y, 108 * scale, 320, 6, options.color);
-      this.openFlash(x, y, 54 * scale, 260, 0.3, options.color);
+      // 전장의 결이라 밝아지는 섬광 대신 잉크 별 하나가 "여기서 드러났다"를 말한다.
+      this.openRing(x, y, 108 * scale, 320, 6, options.color, 0, true);
+      this.openInkStar(x, y, 0.7 * scale, options.color, {});
     }
   }
 

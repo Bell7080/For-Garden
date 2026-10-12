@@ -237,6 +237,7 @@ export const MISC_ES = {
   "score.bossDamage": "Puntuación de daño a Pontos",
   "title.saveRecovered": "No se pudieron verificar los datos guardados, así que se restauró un estado inicial seguro.",
   "title.subtitle": "Ciudad de Investigación y Restauración de Animales Extintos",
+  "title.enter": "TOCA PARA ENTRAR",
   "opening.devSkip": "Saltar (Dev)",
   "opening.skip": "Saltar",
   "opening.skip.title": "Saltar",

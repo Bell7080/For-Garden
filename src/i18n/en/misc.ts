@@ -239,6 +239,7 @@ export const MISC_EN = {
   "score.bossDamage": "Pontos damage score",
   "title.saveRecovered": "The save data could not be verified, so a safe initial state was restored.",
   "title.subtitle": "Restoration Research City for Extinct Animals",
+  "title.enter": "TAP TO ENTER",
   "opening.devSkip": "Skip (Dev)",
   "opening.skip": "Skip",
   "opening.skip.title": "Skip",

@@ -276,6 +276,7 @@ export const MISC_KO = {
   // 타이틀
   "title.saveRecovered": "저장 데이터를 확인할 수 없어 안전한 초기 상태로 복구했습니다.",
   "title.subtitle": "멸종 동물 복원 연구 도시",
+  "title.enter": "탭하여 입장",
   "opening.devSkip": "스킵 (개발용)",
   "opening.skip": "스킵",
   "opening.skip.title": "스킵",

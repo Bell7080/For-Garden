@@ -237,6 +237,7 @@ export const MISC_ZH_HANS = {
   "score.bossDamage": "蓬托斯伤害分数",
   "title.saveRecovered": "无法验证存档数据，已恢复为安全的初始状态。",
   "title.subtitle": "灭绝动物复原研究都市",
+  "title.enter": "点击进入",
   "opening.devSkip": "跳过（开发用）",
   "opening.skip": "跳过",
   "opening.skip.title": "跳过",

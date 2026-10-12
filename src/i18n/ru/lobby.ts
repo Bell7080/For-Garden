@@ -31,6 +31,7 @@ export const LOBBY_RU = {
   "event.autumnHarvest.title": "Осенний праздник урожая",
   "event.autumnHarvest.subtitle": "Заходите каждый день за подарками урожая",
   "event.attendance.newcomer.title": "7-дневный вход нового исследователя",
+  "event.attendance.noDeadline": "Без срока!",
   "event.attendance.regular.title": "Ежедневный вход",
   "attendance.day": "День {day}",
   "attendance.reward.title": "Награда за вход",

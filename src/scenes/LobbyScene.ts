@@ -822,7 +822,7 @@ export class LobbyScene extends Phaser.Scene {
     new LobbyMenuTray(this, [
       { icon: LOBBY_MENU_GLYPH.recollection, label: t("lobby.menu.recollection"), onClick: () => this.openRecollection() },
       { icon: LOBBY_MENU_GLYPH.achievement, label: t("lobby.menu.achievement"), onClick: () => undefined },
-    ]);
+    ], undefined, () => this.popupLayer?.isOpen ?? false);
   }
 
   /** 본 이야기를 모아 다시 읽는 회고를 로비 위에서 연다. 고른 이야기는 끝나면 로비로 돌아온다. */

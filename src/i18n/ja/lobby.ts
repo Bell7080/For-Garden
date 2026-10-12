@@ -34,6 +34,7 @@ export const LOBBY_JA = {
   "event.autumnHarvest.title": "秋の収穫祭",
   "event.autumnHarvest.subtitle": "毎日立ち寄って収穫の贈り物を受け取るイベント",
   "event.attendance.newcomer.title": "新人研究員 7日間ログイン",
+  "event.attendance.noDeadline": "期限なし！",
   "event.attendance.regular.title": "通常ログイン",
   "attendance.day": "{day}日目",
   "attendance.reward.title": "ログイン報酬",

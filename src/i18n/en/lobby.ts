@@ -31,6 +31,7 @@ export const LOBBY_EN = {
   "event.autumnHarvest.title": "Autumn Harvest Festival",
   "event.autumnHarvest.subtitle": "Drop by every day to collect harvest gifts",
   "event.attendance.newcomer.title": "New Researcher 7-Day Check-in",
+  "event.attendance.noDeadline": "No deadline!",
   "event.attendance.regular.title": "Daily Check-in",
   "attendance.day": "Day {day}",
   "attendance.reward.title": "Check-in Reward",

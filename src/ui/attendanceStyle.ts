@@ -22,10 +22,10 @@ export const ATTENDANCE_CAST: Readonly<Record<AttendanceTrackId, readonly { reli
 
 /**
  * 출석 카드의 뒷배경 원화 — 이벤트 카드 양식(`LobbyEventDef.backdropKey`·`backdropFrame`)과 같은 값이다.
- * 신규는 금빛 정비창, 정규는 토리카가 앉은 원화(토리카가 그 카드의 SD다).
+ * 신규는 첫 복원 연구 모집 원화의 위쪽(벽의 공룡 무늬가 카드 가운데 오도록 내려 잡는다 — 옆으로 밀면 원화가 카드 폭을 못 덮어 한쪽에 빈 띠가 남는다), 정규는 토리카가 앉은 원화(토리카가 그 카드의 SD다).
  */
 export const ATTENDANCE_CARD_ART: Readonly<Record<AttendanceTrackId, { key: string; frame: { zoom: number; offsetX: number; offsetY: number } }>> = {
-  newcomer: { key: BACKGROUND.interactionRustWorks, frame: { zoom: 1, offsetX: 0, offsetY: 0 } },
+  newcomer: { key: BACKGROUND.recruitWelcome, frame: { zoom: 1, offsetX: 0, offsetY: 210 } },
   regular: { key: BACKGROUND.title, frame: { zoom: 1.22, offsetX: 90, offsetY: 200 } },
 };
 

@@ -35,6 +35,10 @@ const CARD = {
    * 왼쪽)에 선다 — SD는 글의 반대쪽에 서므로 시계와 겹치지 않는다. 초마다 갈아 끼운다.
    */
   clock: { size: 32, inset: 30 },
+  /** 기한이 없는 출석 줄의 「기한 없음!」 — 기울기(도)·튀는 높이·반짝이 크기. */
+  noDeadline: { angle: -4, bob: 4, sparkle: 11 },
+  /** 원화 위 글 쪽 어둠 — 왼쪽 끝 진하기·덮는 폭(카드 폭 비율)·겹 수. */
+  veil: { alpha: 0.8, span: 0.62, bands: 10 },
   /** SD는 출격판 칸과 같은 자리 규칙을 쓰되 한 뼘 작게 세운다(출격 스토리 칸과 같은 배율). */
   sdScale: 0.9,
   /** 출석 카드의 진행 마름모 줄(부제 자리). */
@@ -75,8 +79,11 @@ export class LobbyEventCard extends Phaser.GameObjects.Container {
     const tone = entry.kind === "attendance" ? ATTENDANCE_TONE[entry.track.id] : undefined;
     const accent = tone?.color ?? COLOR.event;
 
+    // 그림자는 카드를 바깥으로 민 같은 실루엣이다 — 깎임을 그대로 두고 상자만 키우면 깎인 두 모서리에서 그림자가
+    // 카드의 빗변 밖으로 뿔처럼 삐져나온다. 45° 빗변을 d만큼 밀면 깎임은 (2 − √2)·d 늘어난다(키운 폭은 2d).
     for (const { grow, offsetY, alpha } of CARD.shadow) {
-      this.add(drawLayer(scene, 0, offsetY, chipPoints(width + grow, height + grow, { bevel: cut }), { fill: 0x000000, alpha, shadow: false }));
+      const grown = bevel + grow * (1 - Math.SQRT1_2);
+      this.add(drawLayer(scene, 0, offsetY, chipPoints(width + grow, height + grow, { bevel: { topLeft: grown, topRight: 0, bottomRight: grown, bottomLeft: 0 } }), { fill: 0x000000, alpha, shadow: false }));
     }
     this.add(drawLayer(scene, 0, 0, shape, {
       fill: tone?.fill ?? CARD.fill, alpha: CARD.fillAlpha, sheen: 0.05,
@@ -139,9 +146,14 @@ export class LobbyEventCard extends Phaser.GameObjects.Container {
         maskShape: shape.map((value, index) => (index % 2 === 0 ? value - frame.offsetX : value)),
         imageAlpha: 0.9, overlayStrength: 0.6,
       });
+      // 글 쪽 어둠도 카드 실루엣 안에서만 진다 — 네모로 깔면 깎인 왼쪽 위 모서리 밖에 검은 삼각형이 남는다.
+      // 다각형에는 그라데이션이 없으므로, 왼쪽부터 점점 좁게 잘라 낸 조각을 같은 알파로 겹쳐 오른쪽으로 옅어지게 한다.
       const veil = scene.add.graphics();
-      veil.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.8, 0, 0.8, 0);
-      veil.fillRect(-width / 2, -height / 2, width * 0.62, height);
+      const bands = CARD.veil.bands;
+      veil.fillStyle(0x000000, CARD.veil.alpha / bands);
+      for (let index = 1; index <= bands; index += 1) {
+        veil.fillPoints(clipLeftOf(shape, -width / 2 + (width * CARD.veil.span * index) / bands), true);
+      }
       this.add(veil);
     }
     const left = -width / 2 + CARD.padX;
@@ -189,6 +201,8 @@ export class LobbyEventCard extends Phaser.GameObjects.Container {
       sd: cast ? { relicId: cast.relicId, side: cast.cardSide ?? cast.side, hop: true } : undefined,
       endsAt: track.endsAt,
     });
+    // 기한이 없는 신규 줄은 시계 자리에 「기한 없음!」이 통통 튄다 — 비워 두면 언제 끝나는지 몰라 서두르게 된다.
+    if (track.id === "newcomer") this.addNoDeadline(left, tone);
     this.pipRow = this.scene.add.container(left, lineY);
     // 진행 줄은 SD·입력면보다 아래, 원화·어둠보다 위에 선다.
     this.add(this.pipRow);
@@ -241,6 +255,33 @@ export class LobbyEventCard extends Phaser.GameObjects.Container {
     this.once(Phaser.GameObjects.Events.DESTROY, () => timer.remove());
   }
 
+  /** 시계 자리의 「기한 없음!」 — 줄 색 글자를 살짝 기울여 세우고 천천히 통통 튀게 한다. */
+  private addNoDeadline(x: number, tone: { color: number; text: string; stroke: string }): void {
+    const { scene } = this;
+    const y = this.options.height / 2 - CARD.clock.inset;
+    const label = scene.add.text(x, y, t("event.attendance.noDeadline"), textStyle({ role: "display", size: CARD.clock.size, color: tone.text }))
+      .setOrigin(0, 0.5)
+      .setAngle(CARD.noDeadline.angle)
+      .setStroke(tone.stroke, 7)
+      .setShadow(2, 4, "#000000", 0, true, true);
+    this.add(label);
+    // 글 끝에 같은 색 마름모 둘이 반짝인다.
+    const sparkles = [0, 1].map((index) => {
+      const size = CARD.noDeadline.sparkle * (index === 0 ? 1 : 0.62);
+      const spark = scene.add.graphics({ x: x + label.displayWidth + 14 + index * 22, y: y - 12 + index * 18 });
+      spark.fillStyle(tone.color, 1).fillPoints([
+        new Phaser.Geom.Point(0, -size), new Phaser.Geom.Point(size * 0.42, 0), new Phaser.Geom.Point(0, size), new Phaser.Geom.Point(-size * 0.42, 0),
+      ], true);
+      this.add(spark);
+      return spark;
+    });
+    if (motionPolicy(session.settings).nonEssentialRepeatFactor <= 0) return;
+    scene.tweens.add({ targets: label, y: y - CARD.noDeadline.bob, duration: 640, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+    sparkles.forEach((spark, index) => {
+      scene.tweens.add({ targets: spark, scale: 0.4, alpha: 0.5, duration: 520, delay: index * 260, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+    });
+  }
+
   /** SD 한 기를 칸에 세운다(자리·마스크는 `spawnEventCardSd`). 카드의 자식이라 판과 함께 떠오르고 함께 사라진다. */
   private addSd(relicId: string, side: "left" | "right", shape: number[], bevel: number, hop: boolean): void {
     const { scene } = this;
@@ -255,4 +296,21 @@ export class LobbyEventCard extends Phaser.GameObjects.Container {
       })
       .catch(() => undefined);
   }
+}
+
+/** 다각형(평평한 [x, y, …])에서 `x` 왼쪽 부분만 남긴다 — 볼록한 카드 실루엣을 세로선 하나로 자르는 반평면 자르기. */
+function clipLeftOf(shape: readonly number[], limit: number): Phaser.Geom.Point[] {
+  const points: Phaser.Geom.Point[] = [];
+  for (let index = 0; index < shape.length; index += 2) points.push(new Phaser.Geom.Point(shape[index], shape[index + 1]));
+  const out: Phaser.Geom.Point[] = [];
+  points.forEach((current, index) => {
+    const next = points[(index + 1) % points.length];
+    const inside = current.x <= limit;
+    if (inside) out.push(current);
+    if (inside !== (next.x <= limit)) {
+      const ratio = (limit - current.x) / (next.x - current.x);
+      out.push(new Phaser.Geom.Point(limit, current.y + (next.y - current.y) * ratio));
+    }
+  });
+  return out;
 }

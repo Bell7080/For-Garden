@@ -31,6 +31,7 @@ export const LOBBY_VI = {
   "event.autumnHarvest.title": "Lễ hội thu hoạch mùa thu",
   "event.autumnHarvest.subtitle": "Ghé mỗi ngày để nhận quà thu hoạch",
   "event.attendance.newcomer.title": "Điểm danh 7 ngày nhà nghiên cứu mới",
+  "event.attendance.noDeadline": "Không giới hạn!",
   "event.attendance.regular.title": "Điểm danh hằng ngày",
   "attendance.day": "Ngày {day}",
   "attendance.reward.title": "Phần thưởng điểm danh",

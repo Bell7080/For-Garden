@@ -35,6 +35,7 @@ export const LOBBY_KO = {
   "event.autumnHarvest.title": "가을 수확제",
   "event.autumnHarvest.subtitle": "매일 들러 수확 선물을 받는 이벤트",
   "event.attendance.newcomer.title": "신규 연구원 7일 출석",
+  "event.attendance.noDeadline": "기한 없음!",
   "event.attendance.regular.title": "정규 출석",
   "attendance.day": "{day}일차",
   "attendance.reward.title": "출석 보상",

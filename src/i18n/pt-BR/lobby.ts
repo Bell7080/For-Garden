@@ -31,6 +31,7 @@ export const LOBBY_PT_BR = {
   "event.autumnHarvest.title": "Festival da colheita de outono",
   "event.autumnHarvest.subtitle": "Passe todos os dias para receber presentes da colheita",
   "event.attendance.newcomer.title": "Presença de 7 dias: novo pesquisador",
+  "event.attendance.noDeadline": "Sem prazo!",
   "event.attendance.regular.title": "Presença diária",
   "attendance.day": "Dia {day}",
   "attendance.reward.title": "Recompensa de presença",

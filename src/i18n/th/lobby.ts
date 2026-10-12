@@ -31,6 +31,7 @@ export const LOBBY_TH = {
   "event.autumnHarvest.title": "เทศกาลเก็บเกี่ยวฤดูใบไม้ร่วง",
   "event.autumnHarvest.subtitle": "แวะมาทุกวันเพื่อรับของขวัญจากการเก็บเกี่ยว",
   "event.attendance.newcomer.title": "เช็กอิน 7 วันนักวิจัยใหม่",
+  "event.attendance.noDeadline": "ไม่มีกำหนดเวลา!",
   "event.attendance.regular.title": "เช็กอินประจำวัน",
   "attendance.day": "วันที่ {day}",
   "attendance.reward.title": "รางวัลเช็กอิน",

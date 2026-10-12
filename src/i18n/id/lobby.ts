@@ -31,6 +31,7 @@ export const LOBBY_ID = {
   "event.autumnHarvest.title": "Festival Panen Musim Gugur",
   "event.autumnHarvest.subtitle": "Mampir setiap hari untuk menerima hadiah panen",
   "event.attendance.newcomer.title": "Absen 7 Hari Periset Baru",
+  "event.attendance.noDeadline": "Tanpa batas waktu!",
   "event.attendance.regular.title": "Absen Harian",
   "attendance.day": "Hari {day}",
   "attendance.reward.title": "Hadiah Absen",

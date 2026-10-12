@@ -31,6 +31,7 @@ export const LOBBY_ZH_HANS = {
   "event.autumnHarvest.title": "秋季丰收祭",
   "event.autumnHarvest.subtitle": "每天来领取丰收礼物的活动",
   "event.attendance.newcomer.title": "新人研究员7日签到",
+  "event.attendance.noDeadline": "没有期限！",
   "event.attendance.regular.title": "每日签到",
   "attendance.day": "第{day}天",
   "attendance.reward.title": "签到奖励",

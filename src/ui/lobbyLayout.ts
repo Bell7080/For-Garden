@@ -10,21 +10,24 @@ export interface LobbyInputBounds { x: number; y: number; width: number; height:
 const RAIL = { leftX: 106, rightX: BASE_WIDTH - 106, top: 640, step: 152, size: 96 } as const;
 
 /** 역할별 레일 배치표: 임무 콘텐츠는 왼쪽, 가방을 포함한 편의 기능은 오른쪽에 분리한다. */
+export const LOBBY_RAIL_STEP = RAIL.step;
+export const LOBBY_RAIL_SIZE = RAIL.size;
 export const LOBBY_RAIL_BOUNDS = {
   content: {
+    // 이벤트는 왼쪽 줄 맨 위(1번 자리)에 선다.
+    event: { x: RAIL.leftX, y: RAIL.top - RAIL.step, width: RAIL.size, height: RAIL.size },
     mission: { x: RAIL.leftX, y: RAIL.top, width: RAIL.size, height: RAIL.size },
     shop: { x: RAIL.leftX, y: RAIL.top + RAIL.step, width: RAIL.size, height: RAIL.size },
     // 무역은 상점 바로 아래에 선다. 사는 곳과 바꾸는 곳이라 같은 콘텐츠 레일에 이웃하되,
     trade: { x: RAIL.leftX, y: RAIL.top + RAIL.step * 2, width: RAIL.size, height: RAIL.size },
   },
   utility: {
-    // 이벤트는 오른쪽 줄 맨 위, 우편보다 한 칸 위에 선다. 우편 아래에 길드가 끼어 친구·가방이 한 칸씩 밀렸다.
-    event: { x: RAIL.rightX, y: RAIL.top - RAIL.step, width: RAIL.size, height: RAIL.size },
-    mail: { x: RAIL.rightX, y: RAIL.top, width: RAIL.size, height: RAIL.size },
+    // 오른쪽 줄은 우편이 맨 위다. 가방 아래 한 칸은 같은 간격으로 햄버거 메뉴가 잇는다(`LOBBY_MENU_BUTTON`).
+    mail: { x: RAIL.rightX, y: RAIL.top - RAIL.step, width: RAIL.size, height: RAIL.size },
     // 길드는 우편 바로 아래·친구 바로 위에 선다.
-    guild: { x: RAIL.rightX, y: RAIL.top + RAIL.step, width: RAIL.size, height: RAIL.size },
-    friends: { x: RAIL.rightX, y: RAIL.top + RAIL.step * 2, width: RAIL.size, height: RAIL.size },
-    inventory: { x: RAIL.rightX, y: RAIL.top + RAIL.step * 3, width: RAIL.size, height: RAIL.size },
+    guild: { x: RAIL.rightX, y: RAIL.top, width: RAIL.size, height: RAIL.size },
+    friends: { x: RAIL.rightX, y: RAIL.top + RAIL.step, width: RAIL.size, height: RAIL.size },
+    inventory: { x: RAIL.rightX, y: RAIL.top + RAIL.step * 2, width: RAIL.size, height: RAIL.size },
   },
 } as const satisfies Record<string, Record<string, LobbyInputBounds>>;
 

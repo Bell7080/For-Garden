@@ -237,6 +237,7 @@ export const MISC_TH = {
   "score.bossDamage": "คะแนนความเสียหายต่อพอนทอส",
   "title.saveRecovered": "ตรวจสอบข้อมูลเซฟไม่ได้ จึงกู้คืนเป็นสถานะเริ่มต้นที่ปลอดภัย",
   "title.subtitle": "นครวิจัยการฟื้นคืนสัตว์สูญพันธุ์",
+  "title.enter": "แตะเพื่อเข้าสู่เกม",
   "opening.devSkip": "ข้าม (สำหรับพัฒนา)",
   "opening.skip": "ข้าม",
   "opening.skip.title": "ข้าม",

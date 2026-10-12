@@ -237,6 +237,7 @@ export const MISC_ID = {
   "score.bossDamage": "Skor kerusakan Pontos",
   "title.saveRecovered": "Data simpanan tidak dapat diverifikasi, jadi keadaan awal yang aman dipulihkan.",
   "title.subtitle": "Kota Riset Restorasi Hewan Punah",
+  "title.enter": "KETUK UNTUK MASUK",
   "opening.devSkip": "Lewati (Dev)",
   "opening.skip": "Lewati",
   "opening.skip.title": "Lewati",

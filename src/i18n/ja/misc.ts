@@ -256,6 +256,7 @@ export const MISC_JA = {
 
   "title.saveRecovered": "セーブデータを確認できなかったため、安全な初期状態に復元しました。",
   "title.subtitle": "絶滅動物復元研究都市",
+  "title.enter": "タップして入場",
   "opening.devSkip": "スキップ（開発用）",
   "opening.skip": "スキップ",
   "opening.skip.title": "スキップ",

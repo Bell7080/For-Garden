@@ -237,6 +237,7 @@ export const MISC_DE = {
   "score.bossDamage": "Schadenspunkte gegen Pontos",
   "title.saveRecovered": "Der Speicherstand konnte nicht geprüft werden, daher wurde ein sicherer Anfangszustand wiederhergestellt.",
   "title.subtitle": "Forschungsstadt zur Restaurierung ausgestorbener Tiere",
+  "title.enter": "ZUM STARTEN TIPPEN",
   "opening.devSkip": "Überspringen (Dev)",
   "opening.skip": "Überspringen",
   "opening.skip.title": "Überspringen",

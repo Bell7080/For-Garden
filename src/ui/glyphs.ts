@@ -44,6 +44,7 @@ export type GlyphName =
   | "filter"
   | "search"
   | "caret-down"
+  | "globe"
   | "affinity"
   | "sort-arrow"
   | "check";
@@ -70,6 +71,12 @@ export function drawGlyph(
   const r = size / 2;
   g.lineStyle(lineWidth ?? Math.max(2, size * 0.09), color, alpha);
   switch (name) {
+    case "globe":
+      // 각진 팔각 윤곽 + 세로 자오선 마름모 + 적도선. 둥근 선을 쓰지 않는 아이콘 결을 따른다.
+      g.strokePoints(points(-r * 0.4, -r, r * 0.4, -r, r, -r * 0.4, r, r * 0.4, r * 0.4, r, -r * 0.4, r, -r, r * 0.4, -r, -r * 0.4), true);
+      g.strokePoints(points(0, -r, r * 0.42, 0, 0, r, -r * 0.42, 0), true);
+      g.lineBetween(-r, 0, r, 0);
+      break;
     case "arena-tier":
       // 공용 각진 방패/계급선으로 티어를 표현해 각 씬이 배지를 다시 조립하지 않게 한다.
       g.strokePoints(points(-r * 0.75, -r * 0.85, r * 0.75, -r * 0.85, r * 0.58, r * 0.38, 0, r * 0.9, -r * 0.58, r * 0.38), true);

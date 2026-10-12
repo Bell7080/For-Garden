@@ -237,6 +237,7 @@ export const MISC_VI = {
   "score.bossDamage": "Điểm sát thương lên Pontos",
   "title.saveRecovered": "Không thể xác minh dữ liệu lưu nên đã khôi phục về trạng thái ban đầu an toàn.",
   "title.subtitle": "Thành phố Nghiên cứu Phục hồi Động vật Tuyệt chủng",
+  "title.enter": "CHẠM ĐỂ VÀO",
   "opening.devSkip": "Bỏ qua (Dev)",
   "opening.skip": "Bỏ qua",
   "opening.skip.title": "Bỏ qua",

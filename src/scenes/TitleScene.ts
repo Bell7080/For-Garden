@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { t, type TextKey } from "../i18n";
+import { loadDataOverlay, loadTextCatalog, t, type TextKey } from "../i18n";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import { bindDebugReadyLifecycle, setDebugReady, setDebugScene } from "../debug";
 import { COLOR, textStyle } from "../ui/theme";
@@ -18,6 +18,12 @@ import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { drawCornerShroud, drawVignette } from "../ui/holo";
 import packageInfo from "../../package.json";
 import { startScene } from "../ui/screenTransition";
+import { settingsManager } from "../managers/SettingsManager";
+import { LANGUAGE_NATIVE_NAME, SELECTABLE_LANGUAGE_IDS } from "../core/language";
+import { activeFontFamily, loadGameFonts } from "../ui/fonts";
+import { PopupLayer } from "../ui/PopupLayer";
+import { openChoicePicker } from "../ui/SettingsPicker";
+import { TitleActionRow } from "../ui/TitleActionRow";
 
 /** 타이틀 로고타입(글자 대신 쓰는 그림)의 텍스처 키다. 원본은 1536×1024 비율이다. */
 const TITLE_LOGOTYPE_KEY = "title-logotype";
@@ -108,6 +114,10 @@ export class TitleScene extends Phaser.Scene {
   private revealed = false;
   /** 제목 연출도 영상이 시작하지 않는 기기에서 한 번은 반드시 열려야 하므로 같은 빗장을 쓴다. */
   private headerOpened = false;
+  /** 언어가 바뀌면 문장을 다시 읽어 갈아 끼울 글자들. 그릴 때 문장을 굳히지 않고 읽는 법을 들고 있다. */
+  private localized: Array<{ text: Phaser.GameObjects.Text; read: () => string }> = [];
+  private actionRow?: TitleActionRow;
+  private popups?: PopupLayer;
 
   constructor() {
     super("title");
@@ -119,6 +129,9 @@ export class TitleScene extends Phaser.Scene {
     setDebugScene("title");
     this.revealed = false;
     this.headerOpened = false;
+    this.localized = [];
+    this.actionRow = undefined;
+    this.popups = new PopupLayer(this, 3000);
 
     const cx = BASE_WIDTH / 2;
     // 최소 리소스가 도착할 때까지 화면은 검다. 조립 과정을 보여 주지 않기 위해서다.
@@ -265,10 +278,10 @@ export class TitleScene extends Phaser.Scene {
 
     // 판때기를 받치지 않는다. 글자 모양 그대로 진 복제 그림자가 대비를 만들고 배경은 비친다.
     const lines = [
-      ...this.addShadowedText(cx, subtitleY, "ETERNAL CITY",
+      ...this.addShadowedText(cx, subtitleY, () => "ETERNAL CITY",
         textStyle({ role: "emphasis", size: 40, color: COLOR.accentText }),
         textStyle({ role: "emphasis", size: 40, color: "#000000" })),
-      ...this.addShadowedText(cx, descY, t("title.subtitle"),
+      ...this.addShadowedText(cx, descY, () => t("title.subtitle"),
         textStyle({ role: "body", size: 30, color: COLOR.inkDim }),
         textStyle({ role: "body", size: 30, color: "#000000" })),
     ];
@@ -298,7 +311,7 @@ export class TitleScene extends Phaser.Scene {
   private addShadowedText(
     x: number,
     y: number,
-    text: string,
+    read: () => string,
     style: Phaser.Types.GameObjects.Text.TextStyle,
     // 그림자도 같은 역할·같은 크기여야 획이 어긋나지 않는다. 색만 검다.
     shadowStyle: Phaser.Types.GameObjects.Text.TextStyle,
@@ -306,13 +319,15 @@ export class TitleScene extends Phaser.Scene {
   ): readonly Phaser.GameObjects.Text[] {
     const size = Number.parseInt(String(shadowStyle.fontSize ?? "30"), 10);
     const shadow = this.add
-      .text(x + TITLE_SHADOW.textOffset.x, y + TITLE_SHADOW.textOffset.y, text, shadowStyle)
+      .text(x + TITLE_SHADOW.textOffset.x, y + TITLE_SHADOW.textOffset.y, read(), shadowStyle)
       .setOrigin(0.5)
       // 획 둘레로 번지는 검은 띠가 실제 배경이 되어 대비를 배경 원화에서 떼어 놓는다.
       .setStroke("#000000", Math.round(size * TITLE_SHADOW.haloRatio))
       .setAlpha(TITLE_SHADOW.alpha)
       .setDepth(-11);
-    return [shadow, this.add.text(x, y, text, style).setOrigin(0.5).setDepth(-10)];
+    const main = this.add.text(x, y, read(), style).setOrigin(0.5).setDepth(-10);
+    this.localized.push({ text: shadow, read }, { text: main, read });
+    return [shadow, main];
   }
 
   /**
@@ -380,10 +395,20 @@ export class TitleScene extends Phaser.Scene {
   /** 다섯 칸이 다 찬 뒤에만 부른다. 이때부터 화면 어디를 눌러도 다음으로 넘어간다. */
   private showEntry(cx: number): void {
     const prompt = this.add
-      .text(cx, LOADING_PROMPT_Y, "TAP TO ENTER", textStyle({ role: "emphasis", size: 36 }))
+      .text(cx, LOADING_PROMPT_Y, t("title.enter"), textStyle({ role: "emphasis", size: 36 }))
       .setOrigin(0.5)
       // 이 자리는 배경 원화의 밝은 부분과 겹칠 수 있어 검은 그림자로 대비를 만든다.
       .setShadow(0, 3, "#000000", 6, true, true);
+
+    this.localized.push({ text: prompt, read: () => t("title.enter") });
+    // 하단 버튼 줄. 지금은 언어 하나이고 로그인·계정 전환이 같은 줄에 이어 붙는다.
+    this.actionRow = new TitleActionRow(this, [
+      {
+        icon: "globe",
+        label: () => LANGUAGE_NATIVE_NAME[settingsManager.get().game.language],
+        onClick: () => this.openLanguagePicker(),
+      },
+    ]);
 
     this.tweens.add({
       targets: prompt,
@@ -402,6 +427,35 @@ export class TitleScene extends Phaser.Scene {
       startScene(this, storyManager.isCompleted(OPENING_TRAIN.id) ? "lobby" : "opening");
     });
 
+    // 로딩 중 먼저 그려진 글자(부제)가 문구표보다 앞섰을 수 있으므로 한 번 더 읽는다.
+    this.relocalize();
     setDebugReady(true);
+  }
+
+  /** 설정의 언어 줄과 같은 선택창·같은 저장 경로다. 둘이 어긋나지 않는다. */
+  private openLanguagePicker(): void {
+    if (!this.popups || SELECTABLE_LANGUAGE_IDS.length < 2) return;
+    openChoicePicker(this, this.popups, {
+      title: t("settings.play.language"),
+      value: settingsManager.get().game.language,
+      choices: SELECTABLE_LANGUAGE_IDS,
+      display: (id) => LANGUAGE_NATIVE_NAME[id],
+      onPick: (id) => {
+        settingsManager.update({ game: { language: id } });
+        // 글꼴 스택과 문구표가 함께 바뀌므로 둘 다 도착한 뒤에 글자를 갈아 끼운다.
+        void Promise.all([loadGameFonts(id), loadTextCatalog(id), loadDataOverlay(id)]).then(() => {
+          if (this.scene.isActive()) this.relocalize();
+        });
+      },
+    });
+  }
+
+  /** 타이틀 글자를 지금 언어의 문장·글꼴로 갈아 끼운다. 씬을 다시 세우지 않아 연출이 끊기지 않는다. */
+  private relocalize(): void {
+    this.localized.forEach(({ text, read }) => {
+      if (!text.active) return;
+      text.setFontFamily(activeFontFamily()).setText(read());
+    });
+    this.actionRow?.relocalize();
   }
 }

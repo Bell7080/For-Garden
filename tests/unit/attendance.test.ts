@@ -137,10 +137,10 @@ describe("출석 판·이벤트 목록", () => {
   it.each([false, true])("일곱 액자가 판 안에 들고 일곱째는 두 줄 사이 가운데에 서며 겹치지 않는다 (광고 덤 %s)", (withAd) => {
     const layout = attendancePanelLayout(withAd);
     expect(layout.tiles.map(({ day: value }) => value)).toEqual([1, 2, 3, 4, 5, 6, 7]);
-    // 일차 이름표는 본 액자 윗변에, 광고 라벨은 덤 액자 아래 변에 걸쳐 나오므로 그만큼 넓혀 잰다.
+    // 일차 이름표와 광고 라벨은 모두 액자 왼쪽 위에 걸쳐 솟으므로 윗변을 그만큼 넓혀 잰다.
     const boxes = layout.tiles.flatMap((tile) => [
       { left: tile.x - tile.size / 2, right: tile.x + tile.size / 2, top: tile.y - tile.size / 2 - 24, bottom: tile.y + tile.size / 2 },
-      ...(tile.adY !== undefined ? [{ left: tile.x - tile.size / 2, right: tile.x + tile.size / 2, top: tile.adY - tile.size / 2, bottom: tile.adY + tile.size / 2 + 24 }] : []),
+      ...(tile.adY !== undefined ? [{ left: tile.x - tile.size / 2, right: tile.x + tile.size / 2, top: tile.adY - tile.size / 2 - 24, bottom: tile.adY + tile.size / 2 }] : []),
     ]);
     expect(boxes).toHaveLength(withAd ? 14 : 7);
     for (const box of boxes) {

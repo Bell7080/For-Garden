@@ -9,7 +9,7 @@ import { attendanceManager } from "../managers/AttendanceManager";
 import { session } from "../state/session";
 import { chipPoints, drawLayer } from "./holo";
 import { UI_ICON } from "./icons";
-import { addFramedIcon, guideForIcon } from "./itemFrame";
+import { addFramedIcon, guideForIcon, itemFrameShape } from "./itemFrame";
 import { type PopupLayer } from "./PopupLayer";
 import { pressIn, pressOut } from "./pressFeedback";
 import { openRewardPopup } from "./RewardPopup";
@@ -28,7 +28,6 @@ const TITLE: Readonly<Record<AttendanceTrackDto["id"], TextKey>> = {
 
 /** 판의 결. 값은 이 표에만 있다. */
 const LOOK = {
-  bevel: 0.12,
   /** 머리띠 — 큰 제목, 받은 수, 진행 마름모, 오른쪽 위 붉은 시계, 좌우의 SD. */
   banner: {
     titleSize: 54, titleY: -52, titleWidth: 360,
@@ -44,7 +43,7 @@ const LOOK = {
   /** 액자 왼쪽 위에 걸친 일차 이름표, 오른쪽 위의 「오늘」, 덤 액자의 광고 표식. */
   dayTag: { size: 30, padX: 14, height: 46, stroke: 6 },
   todayTag: { size: 22, padX: 12, height: 34 },
-  /** 덤 액자 아래 변 가운데에 걸리는 광고 라벨 — 광고 그림 + 「광고 보상」. */
+  /** 덤 액자 왼쪽 위(일차 이름표 자리)에 걸리는 광고 라벨 — 광고 그림 + 「광고 보상」. */
   adLabel: { icon: 30, size: 22, padX: 12, gap: 6, height: 38 },
   /** 받은 액자를 누르는 어둠, 아직 열리지 않은 덤 액자를 잠그는 어둠과 그 위의 광고 표식. */
   claimedDim: 0.55,
@@ -287,8 +286,6 @@ function addTile(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, spec
   parent.add(container);
   const handle: TileHandle = { container, size, stopPulse: () => undefined };
   const today = state === "today";
-  const bevel = size * LOOK.bevel;
-  const cut = (grow: number) => ({ topLeft: bevel + grow * 0.35, topRight: 0, bottomRight: bevel + grow * 0.35, bottomLeft: 0 });
 
   // 액자는 제 그릇(`art`)에 담는다 — 오늘 칸은 그 그릇이 통째로 숨 쉬고 테두리가 빛난다. 누르는 손맛은 바깥 그릇이
   // 맡으므로 두 배율이 서로를 덮지 않는다.
@@ -305,7 +302,9 @@ function addTile(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, spec
     outlineWidth: today ? 4 : undefined, outlineAlpha: today ? 1 : undefined,
   });
 
-  const shape = chipPoints(size, size, { bevel: cut(0) });
+  // 빛·어둠·잠금은 모두 액자와 **같은 실루엣**(`itemFrameShape`)을 덮는다 — 깎임을 따로 적으면 덮개만 다른 각도로
+  // 깎여 액자 모서리 밖으로 삐져나온다.
+  const shape = itemFrameShape(size);
   if (today) {
     // 빛은 뒤에 까는 판이 아니라 액자 테두리 자체에서 번진다 — 굵은 선 위에 가는 선을 겹쳐 가장자리만 달아오른다.
     const points = shape.reduce<Phaser.Geom.Point[]>((list, value, index) => (index % 2 === 0 ? [...list, new Phaser.Geom.Point(value, shape[index + 1])] : list), []);
@@ -329,14 +328,15 @@ function addTile(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, spec
   }
   if (state === "claimed") container.add(addAttendanceStamp(scene, 0, 0, size * LOOK.stampRatio, tone.color));
 
-  // 본 액자는 윗변에 일차 이름표가 걸려 「그날」로 읽히고, 덤 액자는 아래 변에 광고 라벨이 걸린다.
+  // 본 액자는 왼쪽 위에 일차 이름표가 걸려 「그날」로 읽히고, 덤 액자는 일차가 필요 없어 같은 자리에 광고 라벨이 걸린다.
   const lit = today || spec.day === ATTENDANCE_DAYS;
   if (kind === "main") {
     container.add(addTag(scene, -size / 2 - 8, -size / 2, t("attendance.day", { day: spec.day }), LOOK.dayTag, lit ? tone.color : 0x05070a, lit ? "#05070a" : COLOR.ink, "left"));
   } else {
-    container.add(addAdLabel(scene, 0, size / 2, size, today ? tone.color : 0x05070a, today ? "#05070a" : COLOR.ink, today ? 0x05070a : 0xe8ecf2));
+    container.add(addAdLabel(scene, -size / 2 - 8, -size / 2, size, today ? tone.color : 0x05070a, today ? "#05070a" : COLOR.ink, today ? 0x05070a : 0xe8ecf2));
   }
-  if (today) container.add(addTag(scene, size / 2 + 8, -size / 2, t("attendance.today"), LOOK.todayTag, tone.color, "#05070a", "right"));
+  // 「오늘」은 본 액자에만 건다 — 덤 액자는 광고 라벨이 같은 윗변을 쓰고, 오늘이면 그 라벨이 줄 색으로 켜져 이미 말한다.
+  if (today && kind === "main") container.add(addTag(scene, size / 2 + 8, -size / 2, t("attendance.today"), LOOK.todayTag, tone.color, "#05070a", "right"));
 
   const openGuide = guideForIcon(scene, texture);
   const hit = scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
@@ -376,7 +376,7 @@ function addTag(
   return tag;
 }
 
-/** 덤 액자 아래 변 가운데에 걸리는 광고 라벨 — 광고 그림 + 「광고 보상」. 판의 가운데가 `(x, y)`에 온다. */
+/** 덤 액자 왼쪽 위에 걸리는 광고 라벨 — 광고 그림 + 「광고 보상」. 일차 이름표처럼 판의 왼쪽 끝이 `x`, 가운데 높이가 `y`에 온다. */
 function addAdLabel(scene: Phaser.Scene, x: number, y: number, maxWidth: number, fill: number, color: string, tint: number): Phaser.GameObjects.Container {
   const spec = LOOK.adLabel;
   const label = scene.add.container(x, y);
@@ -385,8 +385,8 @@ function addAdLabel(scene: Phaser.Scene, x: number, y: number, maxWidth: number,
   // 라벨은 액자 폭을 넘지 않는다 — 긴 언어는 글자만 가로로 누른다.
   squeezeTextToWidth(text, maxWidth - spec.padX * 2 - spec.icon - spec.gap);
   const width = spec.padX * 2 + spec.icon + spec.gap + text.displayWidth;
-  label.add(drawLayer(scene, 0, 0, chipPoints(width, spec.height, { bevel: { topLeft: 9, topRight: 0, bottomRight: 9, bottomLeft: 0 } }), { fill, alpha: 0.96, shadow: { x: 0, y: 4 } }));
-  const left = -width / 2 + spec.padX;
+  label.add(drawLayer(scene, width / 2, 0, chipPoints(width, spec.height, { bevel: { topLeft: 9, topRight: 0, bottomRight: 9, bottomLeft: 0 } }), { fill, alpha: 0.96, shadow: { x: 0, y: 4 } }));
+  const left = spec.padX;
   label.add(scene.add.image(left + spec.icon / 2, 0, UI_ICON.ad).setDisplaySize(spec.icon, spec.icon).setTint(tint));
   text.setX(left + spec.icon + spec.gap);
   label.add(text);

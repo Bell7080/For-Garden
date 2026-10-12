@@ -20,8 +20,8 @@ import type { AttendanceTrackId } from "../core/attendance";
 export const ATTENDANCE_REWARDS: Readonly<Record<AttendanceTrackId, readonly MailRewardDto[]>> = {
   newcomer: [
     { kind: "currency", currency: "gems", amount: 1_500 },
-    { kind: "currency", currency: "fossil", amount: 5 },
     { kind: "item", itemId: "stamina-tonic", amount: 6, expiresInDays: 7 },
+    { kind: "currency", currency: "fossil", amount: 5 },
     { kind: "currency", currency: "gems", amount: 2_000 },
     { kind: "currency", currency: "amber", amount: 5 },
     { kind: "item", itemId: "strata-ticket", amount: 3 },

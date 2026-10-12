@@ -333,7 +333,7 @@ function addTile(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, spec
   if (kind === "main") {
     container.add(addTag(scene, -size / 2 - 8, -size / 2, t("attendance.day", { day: spec.day }), LOOK.dayTag, lit ? tone.color : 0x05070a, lit ? "#05070a" : COLOR.ink, "left"));
   } else {
-    container.add(addAdLabel(scene, -size / 2 - 8, -size / 2, size, today ? tone.color : 0x05070a, today ? "#05070a" : COLOR.ink, today ? 0x05070a : 0xe8ecf2));
+    container.add(addAdLabel(scene, -size / 2 - 8, -size / 2, size, today ? tone.color : 0x05070a, today ? "#05070a" : COLOR.ink));
   }
   // 「오늘」은 본 액자에만 건다 — 덤 액자는 광고 라벨이 같은 윗변을 쓰고, 오늘이면 그 라벨이 줄 색으로 켜져 이미 말한다.
   if (today && kind === "main") container.add(addTag(scene, size / 2 + 8, -size / 2, t("attendance.today"), LOOK.todayTag, tone.color, "#05070a", "right"));
@@ -377,7 +377,7 @@ function addTag(
 }
 
 /** 덤 액자 왼쪽 위에 걸리는 광고 라벨 — 광고 그림 + 「광고 보상」. 일차 이름표처럼 판의 왼쪽 끝이 `x`, 가운데 높이가 `y`에 온다. */
-function addAdLabel(scene: Phaser.Scene, x: number, y: number, maxWidth: number, fill: number, color: string, tint: number): Phaser.GameObjects.Container {
+function addAdLabel(scene: Phaser.Scene, x: number, y: number, maxWidth: number, fill: number, color: string): Phaser.GameObjects.Container {
   const spec = LOOK.adLabel;
   const label = scene.add.container(x, y);
   const text = scene.add.text(0, 0, t("inventory.source.ad"), textStyle({ role: "display", size: spec.size, color })).setOrigin(0, 0.5);
@@ -387,7 +387,8 @@ function addAdLabel(scene: Phaser.Scene, x: number, y: number, maxWidth: number,
   const width = spec.padX * 2 + spec.icon + spec.gap + text.displayWidth;
   label.add(drawLayer(scene, width / 2, 0, chipPoints(width, spec.height, { bevel: { topLeft: 9, topRight: 0, bottomRight: 9, bottomLeft: 0 } }), { fill, alpha: 0.96, shadow: { x: 0, y: 4 } }));
   const left = spec.padX;
-  label.add(scene.add.image(left + spec.icon / 2, 0, UI_ICON.ad).setDisplaySize(spec.icon, spec.icon).setTint(tint));
+  // 광고 아이콘은 원화라 물들이지 않는다 — 켜진 판 색에 맞춰 검게 칠하면 그림이 검은 덩어리가 된다.
+  label.add(scene.add.image(left + spec.icon / 2, 0, UI_ICON.ad).setDisplaySize(spec.icon, spec.icon));
   text.setX(left + spec.icon + spec.gap);
   label.add(text);
   return label;

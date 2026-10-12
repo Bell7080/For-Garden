@@ -109,9 +109,9 @@ describe("출석", () => {
     const gems = state.wallet.gems;
     const result = await server.claimAttendance({ trackId: "newcomer", requestId: "a" });
     expect(result.day).toBe(1);
-    expect(state.wallet.gems - gems).toBe(1_000);
+    expect(state.wallet.gems - gems).toBe(1_500);
     await server.claimAttendance({ trackId: "newcomer", requestId: "a" });
-    expect(state.wallet.gems - gems).toBe(1_000);
+    expect(state.wallet.gems - gems).toBe(1_500);
     await expect(server.claimAttendance({ trackId: "newcomer", requestId: "b" })).rejects.toThrow();
     await server.markAttendanceAutoShown();
     expect((await server.getAttendance()).autoShow).toBe(false);

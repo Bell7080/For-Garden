@@ -7,8 +7,8 @@ import type { TextKey } from "../i18n";
  * 정하지 않은 아이템에 빈 칸이나 「없음」을 세우면 찾을 곳을 만들어 낸다. 새 수급처가 붙으면 여기에 한 줄을 더한다.
  */
 export const ITEM_SOURCE_KEYS: Readonly<Record<string, readonly TextKey[]>> = {
-  "raid-ticket": ["inventory.source.dungeonDrop", "inventory.source.strata", "inventory.source.attendance", "inventory.source.premium"],
-  "raid-select-ticket": ["inventory.source.dungeonDropRare", "inventory.source.strataRare", "inventory.source.attendance", "inventory.source.raidPass"],
+  "raid-ticket": ["inventory.source.dungeonDrop", "inventory.source.strata", "inventory.source.premium"],
+  "raid-select-ticket": ["inventory.source.dungeonDropRare", "inventory.source.strataRare", "inventory.source.raidPass"],
   "stamina-tonic": ["inventory.source.levelUp", "inventory.source.attendance", "inventory.source.shops", "inventory.source.ad"],
   "strata-ticket": ["inventory.source.attendance", "inventory.source.shops", "inventory.source.premium"],
   "sweep-ticket": ["inventory.source.ad", "inventory.source.premium"],

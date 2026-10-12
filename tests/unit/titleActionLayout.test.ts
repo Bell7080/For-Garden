@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
-import { TITLE_ACTION_ROW, titleActionSlots } from "../../src/ui/titleActionLayout";
+import { TITLE_ACTION_ROW, TITLE_LOADING_LAYOUT, titleActionSlots } from "../../src/ui/titleActionLayout";
 
 describe("타이틀 하단 버튼 줄", () => {
   it("1~3개 모두 가운데 정렬이고 화면 안에서 서로 겹치지 않는다", () => {
@@ -24,7 +24,9 @@ describe("타이틀 하단 버튼 줄", () => {
 
   it("로딩 칸 아래, 화면 안에 선다", () => {
     const top = TITLE_ACTION_ROW.centerY - TITLE_ACTION_ROW.height / 2;
-    expect(top).toBeGreaterThanOrEqual(BASE_HEIGHT * 0.94 + 30);
+    const { diamondsY, diamondRadius, buttonGap, promptY } = TITLE_LOADING_LAYOUT;
+    expect(top - (diamondsY + diamondRadius)).toBeGreaterThanOrEqual(buttonGap);
+    expect(promptY).toBeLessThan(diamondsY - diamondRadius);
     expect(TITLE_ACTION_ROW.centerY + TITLE_ACTION_ROW.height / 2).toBeLessThanOrEqual(BASE_HEIGHT);
   });
 

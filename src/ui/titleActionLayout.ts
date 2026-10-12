@@ -31,3 +31,17 @@ export function titleActionSlots(count: number): readonly TitleActionSlot[] {
   const left = (BASE_WIDTH - total) / 2;
   return Array.from({ length: n }, (_, i) => ({ x: left + buttonWidth / 2 + i * (buttonWidth + gap), width: buttonWidth }));
 }
+
+/**
+ * 타이틀 중단의 로딩 줄 자리. 아래 버튼 줄과 안전한 여백을 두려고 한곳에서 정한다.
+ * 진입 문구(로딩 중에는 진행률 숫자)가 위, 로딩 칸이 그 아래이며 칸 아래 끝이 버튼 줄 윗변에서
+ * `TITLE_LOADING_LAYOUT.buttonGap` 이상 떨어져 있어야 한다(`titleActionLayout.test.ts`).
+ */
+export const TITLE_LOADING_LAYOUT = {
+  promptY: BASE_HEIGHT * 0.86,
+  diamondsY: BASE_HEIGHT * 0.91,
+  /** 로딩 칸 한 개의 바깥 반지름(`LoadingDiamonds`의 OUTER). */
+  diamondRadius: 30,
+  /** 로딩 칸 아래 끝과 버튼 줄 윗변 사이에 최소로 남기는 여백. */
+  buttonGap: 56,
+} as const;

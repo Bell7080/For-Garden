@@ -24,6 +24,7 @@ import { activeFontFamily, loadGameFonts } from "../ui/fonts";
 import { PopupLayer } from "../ui/PopupLayer";
 import { openChoicePicker } from "../ui/SettingsPicker";
 import { TitleActionRow } from "../ui/TitleActionRow";
+import { TITLE_LOADING_LAYOUT } from "../ui/titleActionLayout";
 
 /** 타이틀 로고타입(글자 대신 쓰는 그림)의 텍스처 키다. 원본은 1536×1024 비율이다. */
 const TITLE_LOGOTYPE_KEY = "title-logotype";
@@ -96,7 +97,7 @@ const TITLE_REVEAL = {
  * 로딩 중에는 진행률 숫자가, 다 찬 뒤에는 진입 문구가 **같은 자리를** 이어받는다. 둘이 함께
  * 서는 순간은 없으므로 자리를 나누면 오히려 무엇을 기다리는지가 두 곳으로 갈린다.
  */
-const LOADING_PROMPT_Y = BASE_HEIGHT * 0.89;
+const LOADING_PROMPT_Y = TITLE_LOADING_LAYOUT.promptY;
 
 /**
  * 타이틀이자 로딩 화면.
@@ -204,7 +205,7 @@ export class TitleScene extends Phaser.Scene {
       .setOrigin(0, 1)
       .setAlpha(0.7);
 
-    const diamonds = new LoadingDiamonds(this, cx, BASE_HEIGHT * 0.94, LOADING_STEPS.length);
+    const diamonds = new LoadingDiamonds(this, cx, TITLE_LOADING_LAYOUT.diamondsY, LOADING_STEPS.length);
     // 칸은 "몇 개 남았나"를, 이 숫자는 "얼마나 왔나"를 말한다. 다 차면 그 자리를 진입 문구가
     // 그대로 이어받으므로 같은 y에 세운다.
     const percent = new LoadingPercent(this, cx, LOADING_PROMPT_Y);

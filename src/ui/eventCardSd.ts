@@ -16,9 +16,9 @@ export function spawnEventCardSd(
   owner: Phaser.GameObjects.Container,
   relicId: string,
   side: "left" | "right",
-  card: { width: number; height: number; shape: number[]; bevel: number; scale: number },
+  card: { width: number; height: number; shape: number[]; bevel: number; scale: number; inset?: number },
 ): Promise<EventCardPuppet> {
-  const spot = sortieEntrySdSpot(card.width, card.height, side);
+  const spot = sortieEntrySdSpot(card.width, card.height, side, card.inset);
   // 띠는 윗변 아래로 깎인 모서리 깊이만큼 더 내려간다 — 그러지 않으면 `/`로 잘린 모서리가 머리 옆을 벤다.
   const top = -card.height / 2;
   const bandBottom = top + card.bevel;

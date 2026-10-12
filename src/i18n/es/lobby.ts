@@ -34,6 +34,8 @@ export const LOBBY_ES = {
   "event.attendance.regular.title": "Asistencia diaria",
   "attendance.day": "Día {day}",
   "attendance.reward.title": "Recompensa de asistencia",
+  "attendance.today": "Hoy",
+  "attendance.claimFailed": "No se pudo registrar. Toca de nuevo.",
   "lobby.pass.ready": "{count} listas",
   "lobby.pass.level": "Nv.{level} / {max}",
   "lobby.pass.tab.mission": "Misiones",

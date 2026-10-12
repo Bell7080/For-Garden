@@ -512,5 +512,7 @@
 "event.attendance.newcomer.title": ["新人研究员7日签到", "เช็กอิน 7 วันนักวิจัยใหม่", "Điểm danh 7 ngày nhà nghiên cứu mới", "Absen 7 Hari Periset Baru", "Asistencia de 7 días: nuevo investigador", "Presença de 7 dias: novo pesquisador", "7-Tage-Anmeldung für neue Forschende", "7-дневный вход нового исследователя"],
 "event.attendance.regular.title": ["每日签到", "เช็กอินประจำวัน", "Điểm danh hằng ngày", "Absen Harian", "Asistencia diaria", "Presença diária", "Tägliche Anmeldung", "Ежедневный вход"],
 "attendance.day": ["第{day}天", "วันที่ {day}", "Ngày {day}", "Hari {day}", "Día {day}", "Dia {day}", "Tag {day}", "День {day}"],
+"attendance.today": ["今天", "วันนี้", "Hôm nay", "Hari ini", "Hoy", "Hoje", "Heute", "Сегодня"],
+"attendance.claimFailed": ["签到失败，请再点一次。", "เช็กอินไม่สำเร็จ โปรดแตะอีกครั้ง", "Không thể điểm danh. Hãy chạm lại.", "Gagal absen. Ketuk sekali lagi.", "No se pudo registrar. Toca de nuevo.", "Não foi possível fazer o check-in. Toque novamente.", "Check-in fehlgeschlagen. Bitte erneut tippen.", "Не удалось отметиться. Нажмите ещё раз."],
 "attendance.reward.title": ["签到奖励", "รางวัลเช็กอิน", "Phần thưởng điểm danh", "Hadiah Absen", "Recompensa de asistencia", "Recompensa de presença", "Anmeldebelohnung", "Награда за вход"]
 }

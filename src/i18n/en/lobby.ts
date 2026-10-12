@@ -34,6 +34,8 @@ export const LOBBY_EN = {
   "event.attendance.regular.title": "Daily Check-in",
   "attendance.day": "Day {day}",
   "attendance.reward.title": "Check-in Reward",
+  "attendance.today": "Today",
+  "attendance.claimFailed": "Couldn't check in. Please tap again.",
   "lobby.pass.ready": "{count} rewards ready",
   "lobby.pass.level": "Lv.{level} / {max}",
   "lobby.pass.tab.mission": "Missions",

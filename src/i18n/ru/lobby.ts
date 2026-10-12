@@ -34,6 +34,8 @@ export const LOBBY_RU = {
   "event.attendance.regular.title": "Ежедневный вход",
   "attendance.day": "День {day}",
   "attendance.reward.title": "Награда за вход",
+  "attendance.today": "Сегодня",
+  "attendance.claimFailed": "Не удалось отметиться. Нажмите ещё раз.",
   "lobby.pass.ready": "Готово: {count}",
   "lobby.pass.level": "Ур.{level} / {max}",
   "lobby.pass.tab.mission": "Задания",

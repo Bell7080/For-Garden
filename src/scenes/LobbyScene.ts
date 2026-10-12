@@ -430,14 +430,19 @@ export class LobbyScene extends Phaser.Scene {
   private autoOpenAttendance(): void {
     void attendanceManager.status().then((status) => {
       if (!status.autoShow || !this.sys.isActive()) return;
-      const queue = ATTENDANCE_TRACK_IDS
-        .map((id) => status.tracks.find((track) => track.id === id))
-        .filter((track): track is NonNullable<typeof track> => Boolean(track?.claimableToday));
+      const queue = ATTENDANCE_TRACK_IDS.filter((id) => status.tracks.some((track) => track.id === id && track.claimableToday));
       if (queue.length === 0) return;
+      // 다음 판은 **열기 직전에 서버에서 다시 읽는다.** 앞 판을 받는 사이 상태가 바뀌므로(지갑·덤·바퀴),
+      // 로비에 들어올 때 읽어 둔 모습으로 세우면 판이 실제와 어긋난다.
       const openNext = (): void => {
-        const track = queue.shift();
-        if (!track || !this.popupLayer || !this.sys.isActive()) return;
-        openAttendancePopup(this, this.popupLayer, track, { onClosed: () => this.time.delayedCall(0, () => this.whenPopupsClear(openNext)) });
+        const id = queue.shift();
+        if (!id || !this.popupLayer || !this.sys.isActive()) return;
+        void attendanceManager.status().then((fresh) => {
+          const track = fresh.tracks.find((entry) => entry.id === id);
+          if (!this.popupLayer || !this.sys.isActive()) return;
+          if (!track?.claimableToday) { openNext(); return; }
+          openAttendancePopup(this, this.popupLayer, track, { onClosed: () => this.time.delayedCall(0, () => this.whenPopupsClear(openNext)) });
+        }).catch(() => undefined);
       };
       this.whenPopupsClear(() => { void attendanceManager.markAutoShown(); openNext(); });
     }).catch(() => undefined);

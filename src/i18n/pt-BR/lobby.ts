@@ -34,6 +34,8 @@ export const LOBBY_PT_BR = {
   "event.attendance.regular.title": "Presença diária",
   "attendance.day": "Dia {day}",
   "attendance.reward.title": "Recompensa de presença",
+  "attendance.today": "Hoje",
+  "attendance.claimFailed": "Não foi possível fazer o check-in. Toque novamente.",
   "lobby.pass.ready": "{count} prontas",
   "lobby.pass.level": "Nv.{level} / {max}",
   "lobby.pass.tab.mission": "Missões",

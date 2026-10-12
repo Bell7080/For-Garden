@@ -1,5 +1,6 @@
 import type { MailRewardDto } from "../api/contracts";
 import { findItem } from "../data/items";
+import { t, type TextKey } from "../i18n";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 
 /**
@@ -12,4 +13,10 @@ export function rewardDtoTexture(reward: MailRewardDto): string {
   if (reward.kind === "currency") return CURRENCY_ICON_BY_WALLET[reward.currency];
   const icon = findItem(reward.itemId)?.icon;
   return icon?.kind === "asset" ? icon.key : icon?.kind === "currency" ? CURRENCY_ICON_BY_WALLET[icon.key] : "";
+}
+
+/** 같은 보상 한 줄의 이름 — 재화는 화면 공용 재화 이름, 아이템은 제 정의의 이름이다. */
+export function rewardDtoName(reward: MailRewardDto): string {
+  if (reward.kind === "currency") return t(`currency.${reward.currency}` as TextKey);
+  return findItem(reward.itemId)?.name ?? "";
 }

@@ -6,8 +6,8 @@ import { BANNERS } from "../data/banners";
 import { RELICS } from "../data/relics";
 import { AD_REWARD_SLOTS, findAdRewardSlot, type AdReward, type AdRewardSlot } from "../data/adRewards";
 import { consumeRestorationEntry, normalizeDailyContent, utcDateKey } from "../core/dailyContent";
-import { ATTENDANCE_TRACK_IDS, attendanceTrackView, claimAttendanceDay, normalizeAttendanceState, rollAttendance, type AttendanceState } from "../core/attendance";
-import { ATTENDANCE_REWARDS } from "../data/attendance";
+import { ATTENDANCE_TRACK_IDS, attendanceTrackView, claimAttendanceAdBonus, claimAttendanceDay, normalizeAttendanceState, rollAttendance, type AttendanceState } from "../core/attendance";
+import { ATTENDANCE_AD_REWARDS, ATTENDANCE_AD_SLOT_ID, ATTENDANCE_REWARDS } from "../data/attendance";
 import { normalizeRaidTicketDropState, rollRaidTicketDrops, type BonusItemDrop } from "../core/raidTicketDrops";
 import { bountyRunCost, isBountyTierUnlocked, markBountyTierCleared } from "../core/bountyRun";
 import { BOUNTY, getBountyTier, type BountyTierDef } from "../data/bounty";
@@ -77,7 +77,7 @@ import type { EnterStageRequest, EnterStageResponse, StageClearGrantDto } from "
 import type { CakeOperationCompleteRequest, CakeOperationCompleteResponse, CakeOperationEnterResponse, CakeOperationRunRequest, DungeonSweepRequest, DungeonSweepResponse } from "./contracts";
 import { cakeOperationRunCost, cakeOperationTierIndex, getCakeOperationTier, isCakeTierUnlocked } from "../data/cakeOperation";
 import { settleSweep, sweepRefusal, SWEEP_TICKET_ITEM, type DungeonRunCost } from "../core/dungeonShortcut";
-import type { AttendanceStatusResponse, ClaimAttendanceRequest, ClaimAttendanceResponse, ClaimMailRewardsRequest, ClaimMailRewardsResponse, MailDto, MailListResponse, MailRewardDto, MarkMailsReadRequest } from "./contracts";
+import type { AttendanceStatusResponse, ClaimAttendanceAdRequest, ClaimAttendanceRequest, ClaimAttendanceResponse, ClaimMailRewardsRequest, ClaimMailRewardsResponse, MailDto, MailListResponse, MailRewardDto, MarkMailsReadRequest } from "./contracts";
 import { expeditionWeekKey, resolveExpeditionBossBattle } from "../core/expeditionBoss";
 import { EXPEDITION_BOSS_BALANCE, EXPEDITION_BEST_SCORE_REWARD_STAGES, EXPEDITION_DAILY_POLICY, expeditionBossSalvage, expeditionRankRewards, EXPEDITION_MAP_BALANCE, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_POLICY, QUICK_EXPEDITION_POLICY } from "../data/expedition";
 import { expeditionBossGrowth, expeditionNodeRole } from "../data/expeditionEnemies";
@@ -340,7 +340,12 @@ export class FakeServer implements GameApi {
 
   private attendanceDto(state: AttendanceState, now: Date): AttendanceStatusResponse {
     const views = ATTENDANCE_TRACK_IDS.map((id) => attendanceTrackView(state, id, now)).filter(({ open }) => open);
-    const tracks = views.map((view) => ({ id: view.id, claimed: view.claimed, claimableToday: view.claimableToday, endsAt: view.endsAt, days: ATTENDANCE_REWARDS[view.id].map((day) => day.map((reward) => ({ ...reward }))) }));
+    const tracks = views.map((view) => ({
+      id: view.id, claimed: view.claimed, claimableToday: view.claimableToday, endsAt: view.endsAt,
+      days: ATTENDANCE_REWARDS[view.id].map((reward) => ({ ...reward })),
+      ...(view.id === "regular" ? { adDays: ATTENDANCE_AD_REWARDS.map((reward) => ({ ...reward })) } : {}),
+      adClaimed: view.adClaimed, adClaimableToday: view.adClaimableToday,
+    }));
     const autoShow = tracks.some(({ claimableToday }) => claimableToday) && state.autoShownDay !== utcDateKey(now);
     return { tracks, autoShow, serverTime: now.toISOString() };
   }
@@ -358,22 +363,36 @@ export class FakeServer implements GameApi {
     const now = this.now();
     const claimed = claimAttendanceDay(this.attendanceNow(now), request.trackId, now);
     if (!claimed) throw new GameApiError("INVALID_STATE", "오늘은 받을 출석이 없습니다.");
+    return this.settleAttendance(request.requestId, claimed.state, request.trackId, claimed.day, ATTENDANCE_REWARDS[request.trackId][claimed.day - 1], now);
+  }
+
+  /** 정규 출석의 오늘 칸에 붙은 광고 덤을 받는다. 광고 완료 토큰을 먼저 확인하고, 하루 한 번만 준다. */
+  async claimAttendanceAd(request: ClaimAttendanceAdRequest): Promise<ClaimAttendanceResponse> {
+    await this.delay(); const cached = this.attendanceClaimResults.get(request.requestId); if (cached) return structuredClone(cached);
+    if (!request.requestId) throw new GameApiError("INVALID_STATE", "출석 요청 ID가 필요합니다.");
+    if (!request.verificationToken || !(await this.verifyAdToken(request.verificationToken, ATTENDANCE_AD_SLOT_ID))) throw new GameApiError("AD_TOKEN_INVALID", "광고 완료를 확인할 수 없습니다.");
+    const now = this.now();
+    const claimed = claimAttendanceAdBonus(this.attendanceNow(now), now);
+    if (!claimed) throw new GameApiError("INVALID_STATE", "오늘 받을 광고 덤이 없습니다.");
+    return this.settleAttendance(request.requestId, claimed.state, "regular", claimed.day, ATTENDANCE_AD_REWARDS[claimed.day - 1], now);
+  }
+
+  /** 출석 한 칸(본 몫·광고 덤)을 지급하고 저장한다. 지급은 우편과 같은 상한 규칙(재화는 깎고, 아이템은 가방 한도까지)이다. */
+  private async settleAttendance(requestId: string, next: AttendanceState, trackId: ClaimAttendanceRequest["trackId"], day: number, reward: MailRewardDto | undefined, now: Date): Promise<ClaimAttendanceResponse> {
     const granted: MailRewardDto[] = [];
-    for (const reward of ATTENDANCE_REWARDS[request.trackId][claimed.day - 1] ?? []) {
-      if (reward.kind === "currency") {
-        const applied = Math.max(0, Math.min(reward.amount, WALLET_CAPS[reward.currency] - this.state.wallet[reward.currency]));
-        this.state.wallet[reward.currency] += applied;
-        granted.push({ ...reward, amount: applied });
-      } else {
-        const result = this.grantItem(this.state.itemInventory, reward.itemId, reward.amount, now, reward.expiresInDays);
-        this.state.itemInventory = result.inventory;
-        granted.push({ ...reward, amount: result.added });
-      }
+    if (reward?.kind === "currency") {
+      const applied = Math.max(0, Math.min(reward.amount, WALLET_CAPS[reward.currency] - this.state.wallet[reward.currency]));
+      this.state.wallet[reward.currency] += applied;
+      granted.push({ ...reward, amount: applied });
+    } else if (reward) {
+      const result = this.grantItem(this.state.itemInventory, reward.itemId, reward.amount, now, reward.expiresInDays);
+      this.state.itemInventory = result.inventory;
+      granted.push({ ...reward, amount: result.added });
     }
-    this.state.attendance = claimed.state;
+    this.state.attendance = next;
     this.persist(this.state);
-    const response: ClaimAttendanceResponse = { ...this.attendanceDto(claimed.state, now), trackId: request.trackId, day: claimed.day, granted: granted.filter(({ amount }) => amount > 0), wallet: { ...this.state.wallet }, items: (await this.getInventory()).items };
-    this.attendanceClaimResults.set(request.requestId, structuredClone(response));
+    const response: ClaimAttendanceResponse = { ...this.attendanceDto(next, now), trackId, day, granted: granted.filter(({ amount }) => amount > 0), wallet: { ...this.state.wallet }, items: (await this.getInventory()).items };
+    this.attendanceClaimResults.set(requestId, structuredClone(response));
     return response;
   }
 

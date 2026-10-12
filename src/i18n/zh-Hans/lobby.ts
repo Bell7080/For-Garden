@@ -34,6 +34,8 @@ export const LOBBY_ZH_HANS = {
   "event.attendance.regular.title": "每日签到",
   "attendance.day": "第{day}天",
   "attendance.reward.title": "签到奖励",
+  "attendance.today": "今天",
+  "attendance.claimFailed": "签到失败，请再点一次。",
   "lobby.pass.ready": "可领取 {count}",
   "lobby.pass.level": "Lv.{level} / {max}",
   "lobby.pass.tab.mission": "任务",

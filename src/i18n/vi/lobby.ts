@@ -34,6 +34,8 @@ export const LOBBY_VI = {
   "event.attendance.regular.title": "Điểm danh hằng ngày",
   "attendance.day": "Ngày {day}",
   "attendance.reward.title": "Phần thưởng điểm danh",
+  "attendance.today": "Hôm nay",
+  "attendance.claimFailed": "Không thể điểm danh. Hãy chạm lại.",
   "lobby.pass.ready": "Có thể nhận {count}",
   "lobby.pass.level": "Lv.{level} / {max}",
   "lobby.pass.tab.mission": "Nhiệm vụ",

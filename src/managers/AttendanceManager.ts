@@ -1,5 +1,8 @@
 import type { AttendanceStatusResponse, ClaimAttendanceResponse, GameApi } from "../api/contracts";
 import { gameApi } from "../api/FakeServer";
+import { ATTENDANCE_AD_SLOT_ID } from "../data/attendance";
+import { completedAdToken } from "../data/adRewards";
+import { presentRewardedAd } from "../platform/rewardedAds";
 import type { AttendanceTrackId } from "../core/attendance";
 import { session, type Session } from "../state/session";
 import { managerEvents, type ManagerEvents } from "./ManagerEvents";
@@ -20,7 +23,20 @@ export class AttendanceManager {
   markAutoShown(): Promise<void> { return this.api.markAttendanceAutoShown().catch(() => undefined); }
 
   async claim(trackId: AttendanceTrackId, requestId: string = crypto.randomUUID()): Promise<ClaimAttendanceResponse> {
-    const result = await this.api.claimAttendance({ trackId, requestId });
+    return this.apply(await this.api.claimAttendance({ trackId, requestId }));
+  }
+
+  /**
+   * 정규 출석의 오늘 칸에 붙은 광고 덤 — 광고를 보이고, 끝까지 봤을 때만 서버에 받으러 간다.
+   * 취소·SDK 미준비는 성공을 흉내 내지 않고 `undefined`를 돌려준다.
+   */
+  async claimAd(present: (slotId: string) => ReturnType<typeof presentRewardedAd> = presentRewardedAd, requestId: string = crypto.randomUUID()): Promise<ClaimAttendanceResponse | undefined> {
+    const verificationToken = completedAdToken(await present(ATTENDANCE_AD_SLOT_ID));
+    if (!verificationToken) return undefined;
+    return this.apply(await this.api.claimAttendanceAd({ verificationToken, requestId }));
+  }
+
+  private apply(result: ClaimAttendanceResponse): ClaimAttendanceResponse {
     this.state.wallet = { ...result.wallet };
     this.state.itemInventory = result.items
       .filter(({ category }) => category === "consumable" || category === "material")

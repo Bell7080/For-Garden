@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { FakeServer } from "../../src/api/FakeServer";
 import {
-  ATTENDANCE_DAYS, attendanceClaimable, attendanceTrackView, claimAttendanceDay, createEmptyAttendanceState, isValidAttendanceState,
+  ATTENDANCE_DAYS, attendanceClaimable, attendanceTrackView, claimAttendanceAdBonus, claimAttendanceDay, createEmptyAttendanceState, isValidAttendanceState,
   NEWCOMER_ATTENDANCE_WINDOW_DAYS, REGULAR_ATTENDANCE_WINDOW_DAYS, rollAttendance, type AttendanceState,
 } from "../../src/core/attendance";
 import { createEmptyRaidTicketDropState, RAID_TICKET_DROP, rollRaidTicketDrops, strataRaidTicketTile } from "../../src/core/raidTicketDrops";
-import { ATTENDANCE_REWARDS } from "../../src/data/attendance";
+import { ATTENDANCE_AD_REWARDS, ATTENDANCE_AD_SLOT_ID, ATTENDANCE_REWARDS } from "../../src/data/attendance";
+import { isCleanPaidAmount } from "../../src/core/paidAmountUnit";
 import { RAID_SELECT_TICKET_ITEM, RAID_TICKET_ITEM } from "../../src/data/raid";
 import { createDefaultSession } from "../../src/state/session";
 import { attendancePanelLayout } from "../../src/ui/attendanceStyle";
@@ -26,11 +27,43 @@ function walk(days: number, skip: readonly number[] = [], track: "newcomer" | "r
 }
 
 describe("출석", () => {
-  it("보상표는 두 줄 모두 일곱 칸이고 수량은 양수다", () => {
-    for (const rows of Object.values(ATTENDANCE_REWARDS)) {
+  it("보상표는 두 줄 모두 일곱 칸, 칸마다 하나이고 수량은 깔끔한 단위다", () => {
+    for (const rows of [...Object.values(ATTENDANCE_REWARDS), ATTENDANCE_AD_REWARDS]) {
       expect(rows).toHaveLength(ATTENDANCE_DAYS);
-      for (const row of rows) for (const reward of row) expect(reward.amount).toBeGreaterThan(0);
+      for (const reward of rows) {
+        expect(reward.amount).toBeGreaterThan(0);
+        expect(isCleanPaidAmount(reward.amount)).toBe(true);
+      }
     }
+  });
+
+  it("광고 덤은 그날 받은 칸에만 하루 한 번 붙는다", () => {
+    const first = claimAttendanceDay(createEmptyAttendanceState(), "regular", day(0))!;
+    expect(claimAttendanceAdBonus(createEmptyAttendanceState(), day(0))).toBeNull();
+    const ad = claimAttendanceAdBonus(first.state, day(0))!;
+    expect(ad.day).toBe(1);
+    expect(claimAttendanceAdBonus(ad.state, day(0))).toBeNull();
+    // 다음 날은 그날 칸을 받기 전에는 덤이 없고, 지나간 1일차 덤은 다시 열리지 않는다.
+    expect(claimAttendanceAdBonus(first.state, day(1))).toBeNull();
+    const second = claimAttendanceDay(first.state, "regular", day(1))!;
+    expect(claimAttendanceAdBonus(second.state, day(1))?.day).toBe(2);
+    expect(isValidAttendanceState(ad.state)).toBe(true);
+  });
+
+  it("신규를 받은 같은 날 정규도 받는다 — 두 줄은 서로를 막지 않는다", async () => {
+    const state = createDefaultSession();
+    const server = new FakeServer(state, { latencyMs: 0, now: () => day(0), random: () => 0 });
+    await server.markAttendanceAutoShown();
+    expect((await server.claimAttendance({ trackId: "newcomer", requestId: "n" })).day).toBe(1);
+    const regular = await server.claimAttendance({ trackId: "regular", requestId: "r" });
+    expect(regular.day).toBe(1);
+    expect(regular.tracks.find(({ id }) => id === "regular")?.adClaimableToday).toBe(true);
+    await expect(server.claimAttendanceAd({ requestId: "x", verificationToken: "bogus" })).rejects.toThrow();
+    const gems = state.wallet.gold;
+    const ad = await server.claimAttendanceAd({ requestId: "a", verificationToken: `verified:${ATTENDANCE_AD_SLOT_ID}` });
+    expect(state.wallet.gold - gems).toBe(ATTENDANCE_AD_REWARDS[0]!.amount);
+    expect(ad.tracks.find(({ id }) => id === "regular")?.adClaimed).toEqual([1]);
+    await expect(server.claimAttendanceAd({ requestId: "b", verificationToken: `verified:${ATTENDANCE_AD_SLOT_ID}` })).rejects.toThrow();
   });
 
   it("하루에 한 칸만 받는다", () => {
@@ -76,9 +109,9 @@ describe("출석", () => {
     const gems = state.wallet.gems;
     const result = await server.claimAttendance({ trackId: "newcomer", requestId: "a" });
     expect(result.day).toBe(1);
-    expect(state.wallet.gems - gems).toBe(600);
+    expect(state.wallet.gems - gems).toBe(1_000);
     await server.claimAttendance({ trackId: "newcomer", requestId: "a" });
-    expect(state.wallet.gems - gems).toBe(600);
+    expect(state.wallet.gems - gems).toBe(1_000);
     await expect(server.claimAttendance({ trackId: "newcomer", requestId: "b" })).rejects.toThrow();
     await server.markAttendanceAutoShown();
     expect((await server.getAttendance()).autoShow).toBe(false);
@@ -101,19 +134,28 @@ describe("토벌권 덤", () => {
 });
 
 describe("출석 판·이벤트 목록", () => {
-  it("일곱 칸이 판 안에 들고 두 줄 폭이 같다", () => {
-    const layout = attendancePanelLayout();
+  it.each([false, true])("일곱 칸이 판 안에 들고 세 줄 폭이 같으며 겹치지 않는다 (광고 덤 %s)", (withAd) => {
+    const layout = attendancePanelLayout(withAd);
     expect(layout.slots.map(({ day: value }) => value)).toEqual([1, 2, 3, 4, 5, 6, 7]);
     const edges = (row: typeof layout.slots) => [Math.min(...row.map((slot) => slot.x - slot.width / 2)), Math.max(...row.map((slot) => slot.x + slot.width / 2))];
-    expect(edges(layout.slots.slice(0, 4))).toEqual(edges(layout.slots.slice(4)));
+    expect(edges(layout.slots.slice(0, 3))).toEqual(edges(layout.slots.slice(3, 6)));
+    expect(edges(layout.slots.slice(0, 3))).toEqual(edges(layout.slots.slice(6)));
     for (const slot of layout.slots) {
       expect(slot.y + slot.height / 2).toBeLessThan(layout.height / 2 - 40);
+      expect(slot.y - slot.height / 2).toBeGreaterThan(layout.headerY + 30);
       expect(slot.x - slot.width / 2).toBeGreaterThan(-layout.width / 2 + 40);
+      expect(Boolean(slot.ad)).toBe(withAd);
+      if (slot.ad) expect(slot.main.y + slot.main.height / 2).toBeLessThan(slot.ad.y - slot.ad.height / 2);
+    }
+    for (const a of layout.slots) for (const b of layout.slots) {
+      if (a === b) continue;
+      const apart = a.x + a.width / 2 <= b.x - b.width / 2 || b.x + b.width / 2 <= a.x - a.width / 2 || a.y + a.height / 2 <= b.y - b.height / 2 || b.y + b.height / 2 <= a.y - a.height / 2;
+      expect(apart).toBe(true);
     }
   });
 
   it("출석이 기간 이벤트보다 먼저 선다", () => {
-    const track = { id: "regular" as const, claimed: 0, claimableToday: true, endsAt: null, days: [] };
+    const track = { id: "regular" as const, claimed: 0, claimableToday: true, endsAt: null, days: [], adClaimed: [], adClaimableToday: false };
     const entries = lobbyEventEntries([track], Date.parse("2026-10-01T00:00:00Z"));
     expect(entries[0].kind).toBe("attendance");
     expect(entries.slice(1).every(({ kind }) => kind === "event")).toBe(true);

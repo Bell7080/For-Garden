@@ -38,6 +38,8 @@ export const LOBBY_KO = {
   "event.attendance.regular.title": "정규 출석",
   "attendance.day": "{day}일차",
   "attendance.reward.title": "출석 보상",
+  "attendance.today": "오늘",
+  "attendance.claimFailed": "출석을 받지 못했습니다. 다시 눌러 주세요.",
 
   "lobby.pass.ready": "받을 보상 {count}",
   "lobby.pass.level": "Lv.{level} / {max}",

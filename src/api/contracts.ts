@@ -857,12 +857,21 @@ export interface AttendanceTrackDto {
   claimableToday: boolean;
   /** 이 줄이 닫히는 시각. 정규는 첫 칸을 받기 전이면 `null`이다. */
   endsAt: string | null;
-  days: MailRewardDto[][];
+  /** 일곱 칸 각각의 받는 것(칸마다 하나). */
+  days: MailRewardDto[];
+  /** 칸 아래의 광고 덤(정규만). 없는 줄은 덤 칸을 세우지 않는다. */
+  adDays?: MailRewardDto[];
+  /** 이 바퀴에서 광고 덤을 받은 일차. */
+  adClaimed: number[];
+  /** 오늘 받은 칸의 광고 덤을 지금 받을 수 있는가. */
+  adClaimableToday: boolean;
 }
 /** 지금 서 있는 줄만 싣는다(끝난 신규 출석은 빠진다). `autoShow`는 오늘 로비가 저절로 판을 열어야 하는가다. */
 export interface AttendanceStatusResponse { tracks: AttendanceTrackDto[]; autoShow: boolean; serverTime: string; }
 export interface ClaimAttendanceRequest { trackId: import("../core/attendance").AttendanceTrackId; requestId: string; }
 export interface ClaimAttendanceResponse extends AttendanceStatusResponse { trackId: import("../core/attendance").AttendanceTrackId; day: number; granted: MailRewardDto[]; wallet: Wallet; items: InventoryItemDto[]; }
+/** 정규 출석의 오늘 칸에 붙은 광고 덤을 받는다. 광고 완료 토큰은 출석 광고 자리(`ATTENDANCE_AD_SLOT_ID`)의 것이어야 한다. */
+export interface ClaimAttendanceAdRequest { verificationToken: string; requestId: string; }
 
 /** 실제 HTTP API로 교체할 때도 씬이 의존할 단 하나의 통신 인터페이스다. */
 export interface GameApi extends AsyncArenaProfileApi {
@@ -880,6 +889,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   getAttendance(): Promise<AttendanceStatusResponse>;
   /** 한 줄의 오늘 칸을 받는다. 같은 날 두 번 받지 못하고 같은 요청 ID는 같은 결과를 돌려준다. */
   claimAttendance(request: ClaimAttendanceRequest): Promise<ClaimAttendanceResponse>;
+  /** 정규 출석의 오늘 받은 칸에 붙은 광고 덤을 받는다. 하루 한 번이고 같은 요청 ID는 같은 결과를 돌려준다. */
+  claimAttendanceAd(request: ClaimAttendanceAdRequest): Promise<ClaimAttendanceResponse>;
   /** 로비가 오늘 출석 판을 저절로 열었음을 남긴다 — 하루에 한 번만 저절로 연다. */
   markAttendanceAutoShown(): Promise<void>;
   /** 서버 UTC 주차의 최고/누적 기록을 조회한다. */

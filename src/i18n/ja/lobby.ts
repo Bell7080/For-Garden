@@ -37,6 +37,8 @@ export const LOBBY_JA = {
   "event.attendance.regular.title": "通常ログイン",
   "attendance.day": "{day}日目",
   "attendance.reward.title": "ログイン報酬",
+  "attendance.today": "本日",
+  "attendance.claimFailed": "受け取れませんでした。もう一度タップしてください。",
 
   "lobby.pass.ready": "受取可能 {count}",
   "lobby.pass.level": "Lv.{level} / {max}",

@@ -34,6 +34,8 @@ export const LOBBY_TH = {
   "event.attendance.regular.title": "เช็กอินประจำวัน",
   "attendance.day": "วันที่ {day}",
   "attendance.reward.title": "รางวัลเช็กอิน",
+  "attendance.today": "วันนี้",
+  "attendance.claimFailed": "เช็กอินไม่สำเร็จ โปรดแตะอีกครั้ง",
   "lobby.pass.ready": "รับได้ {count}",
   "lobby.pass.level": "Lv.{level} / {max}",
   "lobby.pass.tab.mission": "ภารกิจ",

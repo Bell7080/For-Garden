@@ -22,45 +22,77 @@ export const ATTENDANCE_CAST: Readonly<Record<AttendanceTrackId, readonly { reli
  * 것부터 차례로 채운다(자리 수보다 보상 종류가 적으면 남는 자리는 비운다).
  */
 export const ATTENDANCE_PILE: readonly { x: number; y: number; size: number; rotation: number }[] = [
-  { x: -96, y: 30, size: 66, rotation: -0.22 },
-  { x: 96, y: 30, size: 66, rotation: 0.22 },
-  { x: 0, y: 12, size: 84, rotation: 0 },
-  { x: -50, y: 50, size: 74, rotation: -0.1 },
-  { x: 50, y: 50, size: 74, rotation: 0.12 },
+  { x: -92, y: 4, size: 58, rotation: -0.22 },
+  { x: 92, y: 4, size: 58, rotation: 0.22 },
+  { x: 0, y: -8, size: 74, rotation: 0 },
+  { x: -46, y: 22, size: 64, rotation: -0.1 },
+  { x: 46, y: 22, size: 64, rotation: 0.12 },
 ];
 
-/** 더미 둘레에서 깜빡이는 네 갈래 반짝임 자리(더미 중심 기준). 난수 없이 번호에서 박자를 정한다. */
+/**
+ * 더미 둘레에서 깜빡이는 네 갈래 반짝임 자리(더미 중심 기준). 난수 없이 번호에서 박자를 정한다. 더미와 반짝임은 위로는
+ * 진행 줄, 아래로는 카드 밑변 안에 들도록 작게 모은다.
+ */
 export const ATTENDANCE_SPARKLES: readonly { x: number; y: number; size: number }[] = [
-  { x: -128, y: -8, size: 16 }, { x: 132, y: 4, size: 14 }, { x: -60, y: -24, size: 12 }, { x: 70, y: -20, size: 18 }, { x: 0, y: 84, size: 12 },
+  { x: -126, y: -14, size: 14 }, { x: 128, y: -6, size: 13 }, { x: -58, y: -32, size: 11 }, { x: 66, y: -30, size: 15 }, { x: 0, y: 40, size: 10 },
 ];
 
-/** 출석 판 안 일곱 칸의 자리. 4칸 + (2칸 + 넓은 일곱째 칸)으로 두 줄을 같은 폭으로 채운다. */
-export interface AttendanceSlotRect { day: number; x: number; y: number; width: number; height: number }
+/**
+ * 출석 판 안 일곱 칸의 자리 — 3칸 두 줄 + 넓은 일곱째 띠.
+ *
+ * 칸마다 받는 것이 하나라 칸을 크게 세운다. 정규는 본 칸 아래에 **광고 덤 칸**(`ad`)이 한 장 더 붙는다 — 본 칸과
+ * 같은 폭으로 붙여 「이 날의 덤」으로 읽히게 하고, 그만큼 칸이 길어진다. 칸 안의 자리(`main`·`ad`)는 칸 가운데가 0이다.
+ */
+export interface AttendanceSlotRect {
+  day: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  main: { y: number; height: number };
+  ad?: { y: number; height: number };
+}
 
 export const ATTENDANCE_PANEL = {
   width: 940,
-  /** 제목표 아래 머리줄(남은 기간·진행 마름모)의 높이. */
-  header: 150,
-  slot: { width: 190, height: 236, gap: 20, rowGap: 26 },
-  bottomPad: 72,
+  /** 제목표 아래 머리줄(진행·남은 기간)의 높이. */
+  header: 124,
+  /** 칸이 서는 안쪽 폭 — 세 칸과 두 틈이 이 폭을 채운다. */
+  inner: 840,
+  columns: 3,
+  gap: 24,
+  rowGap: 22,
+  /** 본 칸의 높이와, 덤 칸의 높이·본 칸과의 틈. */
+  mainHeight: 270,
+  adHeight: 100,
+  adGap: 10,
+  bottomPad: 64,
 } as const;
 
-/** 판 높이와 일곱 칸의 자리(판 가운데가 0). */
-export function attendancePanelLayout(): { width: number; height: number; headerY: number; slots: AttendanceSlotRect[] } {
-  const { width, header, slot, bottomPad } = ATTENDANCE_PANEL;
-  const height = header + slot.height * 2 + slot.rowGap + bottomPad;
-  const rowWidth = slot.width * 4 + slot.gap * 3;
-  const left = -rowWidth / 2;
+/** 판 높이와 일곱 칸의 자리(판 가운데가 0). `withAd`면 칸마다 덤 칸이 붙는다. */
+export function attendancePanelLayout(withAd: boolean): { width: number; height: number; headerY: number; slots: AttendanceSlotRect[] } {
+  const { width, header, inner, columns, gap, rowGap, mainHeight, adHeight, adGap, bottomPad } = ATTENDANCE_PANEL;
+  const slotHeight = mainHeight + (withAd ? adGap + adHeight : 0);
+  const rows = 3;
+  const height = header + slotHeight * rows + rowGap * (rows - 1) + bottomPad;
+  const cellWidth = (inner - gap * (columns - 1)) / columns;
+  const left = -inner / 2;
   const top = -height / 2 + header;
+  const parts = (): Pick<AttendanceSlotRect, "main" | "ad"> => ({
+    main: { y: -slotHeight / 2 + mainHeight / 2, height: mainHeight },
+    ...(withAd ? { ad: { y: slotHeight / 2 - adHeight / 2, height: adHeight } } : {}),
+  });
   const slots: AttendanceSlotRect[] = [];
-  for (let index = 0; index < 4; index += 1) {
-    slots.push({ day: index + 1, x: left + slot.width / 2 + index * (slot.width + slot.gap), y: top + slot.height / 2, width: slot.width, height: slot.height });
+  for (let index = 0; index < 6; index += 1) {
+    const column = index % columns;
+    const row = Math.floor(index / columns);
+    slots.push({
+      day: index + 1,
+      x: left + cellWidth / 2 + column * (cellWidth + gap),
+      y: top + slotHeight / 2 + row * (slotHeight + rowGap),
+      width: cellWidth, height: slotHeight, ...parts(),
+    });
   }
-  const secondY = top + slot.height + slot.rowGap + slot.height / 2;
-  for (let index = 0; index < 2; index += 1) {
-    slots.push({ day: index + 5, x: left + slot.width / 2 + index * (slot.width + slot.gap), y: secondY, width: slot.width, height: slot.height });
-  }
-  const wide = slot.width * 2 + slot.gap;
-  slots.push({ day: 7, x: left + (slot.width + slot.gap) * 2 + wide / 2, y: secondY, width: wide, height: slot.height });
-  return { width, height, headerY: -height / 2 + header / 2 + 18, slots };
+  slots.push({ day: 7, x: 0, y: top + slotHeight / 2 + 2 * (slotHeight + rowGap), width: inner, height: slotHeight, ...parts() });
+  return { width, height, headerY: -height / 2 + header / 2 + 22, slots };
 }

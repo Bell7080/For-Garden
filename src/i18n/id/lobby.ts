@@ -34,6 +34,8 @@ export const LOBBY_ID = {
   "event.attendance.regular.title": "Absen Harian",
   "attendance.day": "Hari {day}",
   "attendance.reward.title": "Hadiah Absen",
+  "attendance.today": "Hari ini",
+  "attendance.claimFailed": "Gagal absen. Ketuk sekali lagi.",
   "lobby.pass.ready": "{count} hadiah siap",
   "lobby.pass.level": "Lv.{level} / {max}",
   "lobby.pass.tab.mission": "Misi",

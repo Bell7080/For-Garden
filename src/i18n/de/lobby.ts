@@ -34,6 +34,8 @@ export const LOBBY_DE = {
   "event.attendance.regular.title": "Tägliche Anmeldung",
   "attendance.day": "Tag {day}",
   "attendance.reward.title": "Anmeldebelohnung",
+  "attendance.today": "Heute",
+  "attendance.claimFailed": "Check-in fehlgeschlagen. Bitte erneut tippen.",
   "lobby.pass.ready": "{count} bereit",
   "lobby.pass.level": "Lv.{level} / {max}",
   "lobby.pass.tab.mission": "Missionen",

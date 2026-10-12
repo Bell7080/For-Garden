@@ -28,6 +28,11 @@ export interface AttendanceTrackState {
   claimed: number;
   /** 마지막으로 받은 UTC 날짜. 같은 날 두 칸을 받지 못하게 한다. */
   lastClaimDay: string;
+  /**
+   * 이 바퀴에서 광고 덤을 받은 일차(1~7, 오름차순). 정규만 쓴다 — 덤은 **그날 받은 칸**에만 붙으므로
+   * 하루에 한 번이고, 지나간 날의 덤은 다시 열리지 않는다.
+   */
+  adClaimed: number[];
 }
 
 export interface AttendanceState {
@@ -38,7 +43,11 @@ export interface AttendanceState {
 }
 
 export function createEmptyAttendanceState(): AttendanceState {
-  return { newcomer: { startDay: "", claimed: 0, lastClaimDay: "" }, regular: { startDay: "", claimed: 0, lastClaimDay: "" }, autoShownDay: "" };
+  return { newcomer: emptyTrack(), regular: emptyTrack(), autoShownDay: "" };
+}
+
+function emptyTrack(lastClaimDay = ""): AttendanceTrackState {
+  return { startDay: "", claimed: 0, lastClaimDay, adClaimed: [] };
 }
 
 const DAY_KEY = /^\d{4}-\d{2}-\d{2}$/;
@@ -47,7 +56,12 @@ const claimedCount = (value: unknown): number => (Number.isInteger(value) && (va
 
 function normalizeTrack(value: unknown): AttendanceTrackState {
   const source = (value && typeof value === "object" ? value : {}) as Partial<Record<keyof AttendanceTrackState, unknown>>;
-  return { startDay: dayKeyOrEmpty(source.startDay), claimed: claimedCount(source.claimed), lastClaimDay: dayKeyOrEmpty(source.lastClaimDay) };
+  const claimed = claimedCount(source.claimed);
+  // 덤은 받은 칸에만 붙는다 — 아직 받지 않은 일차의 덤 기록은 버린다.
+  const adClaimed = Array.isArray(source.adClaimed)
+    ? [...new Set(source.adClaimed.filter((day): day is number => Number.isInteger(day) && (day as number) >= 1 && (day as number) <= claimed))].sort((a, b) => a - b)
+    : [];
+  return { startDay: dayKeyOrEmpty(source.startDay), claimed, lastClaimDay: dayKeyOrEmpty(source.lastClaimDay), adClaimed };
 }
 
 export function normalizeAttendanceState(value: unknown): AttendanceState {
@@ -62,7 +76,7 @@ export function isValidAttendanceState(value: unknown): value is AttendanceState
 }
 
 export function cloneAttendanceState(state: AttendanceState): AttendanceState {
-  return { newcomer: { ...state.newcomer }, regular: { ...state.regular }, autoShownDay: state.autoShownDay };
+  return { newcomer: { ...state.newcomer, adClaimed: [...(state.newcomer.adClaimed ?? [])] }, regular: { ...state.regular, adClaimed: [...(state.regular.adClaimed ?? [])] }, autoShownDay: state.autoShownDay };
 }
 
 /** 두 UTC 날짜 키 사이의 날수(`to - from`). */
@@ -82,7 +96,7 @@ export function rollAttendance(state: AttendanceState, now: Date): AttendanceSta
   if (regular.startDay) {
     const lapDone = regular.claimed >= ATTENDANCE_DAYS && regular.lastClaimDay !== today;
     const expired = dayKeyDistance(regular.startDay, today) >= REGULAR_ATTENDANCE_WINDOW_DAYS;
-    if (lapDone || expired) next.regular = { startDay: "", claimed: 0, lastClaimDay: regular.lastClaimDay };
+    if (lapDone || expired) next.regular = emptyTrack(regular.lastClaimDay);
   }
   return next;
 }
@@ -97,6 +111,10 @@ export interface AttendanceTrackView {
   claimableToday: boolean;
   /** 이 줄이 닫히는 시각(ISO, 그 날짜가 지나는 자정). 정규는 바퀴가 시작되기 전이면 `null`. */
   endsAt: string | null;
+  /** 이 바퀴에서 광고 덤을 받은 일차. */
+  adClaimed: number[];
+  /** 오늘 받은 칸의 광고 덤을 지금 받을 수 있는가(정규만). 참이면 `claimed`번째 일차(1부터)의 덤이다. */
+  adClaimableToday: boolean;
 }
 
 function windowEnd(startDay: string, days: number): string {
@@ -115,12 +133,14 @@ export function attendanceTrackView(state: AttendanceState, id: AttendanceTrackI
     const done = track.claimed >= ATTENDANCE_DAYS;
     // 일곱째 칸을 받은 날은 그 도장을 보도록 판을 남긴다 — 다음 날부터 서지 않는다.
     const open = inWindow && (!done || claimedToday);
-    return { id, open, claimed: track.claimed, claimableToday: open && !done && !claimedToday, endsAt: track.startDay ? windowEnd(track.startDay, NEWCOMER_ATTENDANCE_WINDOW_DAYS) : null };
+    return { id, open, claimed: track.claimed, claimableToday: open && !done && !claimedToday, endsAt: track.startDay ? windowEnd(track.startDay, NEWCOMER_ATTENDANCE_WINDOW_DAYS) : null, adClaimed: [], adClaimableToday: false };
   }
   return {
     id, open: true, claimed: track.claimed,
     claimableToday: track.claimed < ATTENDANCE_DAYS && !claimedToday,
     endsAt: track.startDay ? windowEnd(track.startDay, REGULAR_ATTENDANCE_WINDOW_DAYS) : null,
+    adClaimed: [...track.adClaimed],
+    adClaimableToday: claimedToday && track.claimed >= 1 && !track.adClaimed.includes(track.claimed),
   };
 }
 
@@ -131,7 +151,16 @@ export function claimAttendanceDay(state: AttendanceState, id: AttendanceTrackId
   const today = utcDateKey(now);
   const track = rolled[id];
   const day = track.claimed + 1;
-  rolled[id] = { startDay: track.startDay || today, claimed: day, lastClaimDay: today };
+  rolled[id] = { startDay: track.startDay || today, claimed: day, lastClaimDay: today, adClaimed: [...track.adClaimed] };
+  return { state: rolled, day };
+}
+
+/** 정규 출석에서 오늘 받은 칸의 광고 덤을 받은 상태. 받을 수 없으면 `null`이다(오늘 칸을 아직 안 받았거나 이미 받았다). */
+export function claimAttendanceAdBonus(state: AttendanceState, now: Date): { state: AttendanceState; day: number } | null {
+  const rolled = rollAttendance(state, now);
+  if (!attendanceTrackView(rolled, "regular", now).adClaimableToday) return null;
+  const day = rolled.regular.claimed;
+  rolled.regular = { ...rolled.regular, adClaimed: [...rolled.regular.adClaimed, day].sort((a, b) => a - b) };
   return { state: rolled, day };
 }
 

@@ -52,9 +52,10 @@ export interface IllustratedSortieButtonOptions {
  * 카드 그리드의 머리처럼 SD도 버튼 윗변 밖으로 조금 빠져나온다 — 그래서 키를 버튼보다 크게
  * 잡고 발끝은 아래 변 안쪽에 둔다. 씬은 이 값을 화면 좌표로 옮겨 그대로 세운다.
  */
-export function sortieEntrySdSpot(width: number, height: number, side: "left" | "right"): SortieSdSpot {
+export function sortieEntrySdSpot(width: number, height: number, side: "left" | "right", insetOverride?: number): SortieSdSpot {
   // 칸 안쪽으로 충분히 들여 세운다. 가장자리에 붙이면 옆 칸이나 판 밖으로 몸이 넘어간다.
-  const inset = Math.min(168, width * 0.3);
+  // 가운데에 글이 서는 칸(출석 신규 카드처럼 둘이 좌우에 서는 칸)만 더 바깥으로 붙여 글 자리를 비운다.
+  const inset = insetOverride ?? Math.min(168, width * 0.3);
   return {
     x: side === "left" ? -width / 2 + inset : width / 2 - inset,
     // 발끝을 아래 변 **밖**에 두면 다리가 판에 잘리고 상반신만 남는다. 카드가 얼굴을 크게

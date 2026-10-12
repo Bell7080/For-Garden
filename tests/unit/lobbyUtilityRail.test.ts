@@ -21,11 +21,12 @@ describe("lobby utility rail", () => {
     expect(actions.openEvents).not.toHaveBeenCalled();
   });
 
-  it("puts the yellow event entrance at the top of the right rail", () => {
+  it("puts the yellow event entrance at the top of the left rail", () => {
     const rail = createLobbyUtilityRail({ openEvents: vi.fn(), openMail: vi.fn(), openGuild: vi.fn(), openFriends: vi.fn(), openInventory: vi.fn() });
     const top = [...rail].sort((a, b) => a.bounds.y - b.bounds.y)[0];
     expect(top.icon).toBe("event");
     expect(top.event).toBe(true);
+    expect(top.bounds).toBe(LOBBY_RAIL_BOUNDS.content.event);
     expect(rail.filter(({ event }) => event)).toHaveLength(1);
   });
 });

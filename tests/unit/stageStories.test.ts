@@ -67,9 +67,17 @@ describe("로비 메뉴 자리", () => {
     for (const body of [0, 30 * 3]) expect(lobbyBoundsIntersect(dialogue(body), LOBBY_MENU_BUTTON)).toBe(false);
   });
 
-  it("판은 화면 안에서 단추 왼쪽에 서고 칩이 판 안에 든다", () => {
+  it("가방과 단추의 간격은 다른 레일 칸 사이와 같다", () => {
+    const bag = LOBBY_RAIL_BOUNDS.utility.inventory;
+    const friends = LOBBY_RAIL_BOUNDS.utility.friends;
+    expect(LOBBY_MENU_BUTTON.width).toBe(bag.width);
+    expect(LOBBY_MENU_BUTTON.y - bag.y).toBe(bag.y - friends.y);
+  });
+
+  it("판은 사라진 단추 자리에 오른쪽 끝과 세로 중심을 맞춰 서고 칩이 판 안에 든다", () => {
     const { bounds, chips } = lobbyMenuTrayLayout(2);
-    expect(bounds.x + bounds.width / 2).toBeLessThan(LOBBY_MENU_BUTTON.x - LOBBY_MENU_BUTTON.width / 2);
+    expect(bounds.x + bounds.width / 2).toBe(LOBBY_MENU_BUTTON.x + LOBBY_MENU_BUTTON.width / 2);
+    expect(bounds.y).toBe(LOBBY_MENU_BUTTON.y);
     expect(bounds.x - bounds.width / 2).toBeGreaterThan(0);
     for (const chip of chips) expect(Math.abs(chip.x - bounds.x)).toBeLessThan(bounds.width / 2);
   });

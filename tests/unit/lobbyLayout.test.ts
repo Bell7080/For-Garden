@@ -8,8 +8,10 @@ describe("lobby input layout", () => {
   it("keeps mission, shop, and trade ordered on the content rail", () => {
     // 상점(사는 곳)과 무역(바꾸는 곳)은 서로 다른 기능이라 각자 슬롯을 갖는다. 교환소는
     // 교류 씬 안에 있으므로 이 레일에 서지 않는다.
-    const { mission, shop, trade } = LOBBY_RAIL_BOUNDS.content;
-    expect(Object.keys(LOBBY_RAIL_BOUNDS.content)).toEqual(["mission", "shop", "trade"]);
+    const { event, mission, shop, trade } = LOBBY_RAIL_BOUNDS.content;
+    expect(Object.keys(LOBBY_RAIL_BOUNDS.content)).toEqual(["event", "mission", "shop", "trade"]);
+    expect(event.x).toBe(mission.x);
+    expect(event.y).toBeLessThan(mission.y);
     expect(mission.x).toBe(shop.x);
     expect(shop.x).toBe(trade.x);
     expect(mission.y).toBeLessThan(shop.y);

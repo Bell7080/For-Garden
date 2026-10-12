@@ -27,7 +27,7 @@ export const LOBBY_RU = {
   "event.remaining.hours": "Осталось {value} ч",
   "event.remaining.minutes": "Осталось {value} мин",
   "event.wolfCafe.title": "Суматошное «Волчье кафе»",
-  "event.wolfCafe.subtitle": "Ограниченное событие: встречаем гостей «Волчьего кафе»",
+  "event.wolfCafe.subtitle": "Ограниченное событие Pick Up: Диан!",
   "event.autumnHarvest.title": "Осенний праздник урожая",
   "event.autumnHarvest.subtitle": "Заходите каждый день за подарками урожая",
   "event.attendance.newcomer.title": "7-дневный вход нового исследователя",

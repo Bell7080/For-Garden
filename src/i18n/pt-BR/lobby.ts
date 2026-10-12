@@ -27,7 +27,7 @@ export const LOBBY_PT_BR = {
   "event.remaining.hours": "Restam {value} h",
   "event.remaining.minutes": "Restam {value} min",
   "event.wolfCafe.title": "O atrapalhado Café do Lobo",
-  "event.wolfCafe.subtitle": "Evento por tempo limitado para receber os clientes do Café do Lobo",
+  "event.wolfCafe.subtitle": "Evento de Pick Up limitado de Dian!",
   "event.autumnHarvest.title": "Festival da colheita de outono",
   "event.autumnHarvest.subtitle": "Passe todos os dias para receber presentes da colheita",
   "event.attendance.newcomer.title": "Presença de 7 dias: novo pesquisador",

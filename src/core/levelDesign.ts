@@ -171,9 +171,11 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
      * **v0.275.14에서 ×8로 올렸다**(응태 결정). 1-5의 R 토비가 12초에 끝나 정예답지 않았고, 1-10은 직접 깨 보며 조율하기로 했다.
      * 1-5는 21초(띠 안), 1-10은 편성에 따라 승률 0 ~ 1.00이다. **원정 정예 10층은 29.5 → 67초로 띠를 벗어나 사실상 열리지 않는다** —
      * 같은 표를 읽기 때문이며, 원정 레벨을 다시 풀 때 함께 본다(`levelDesign.test`의 검수 기록).
+     *
+     * **v0.282.9에서 ×4로 내렸다**(응태 결정). 직접 R 토비로 1-5를 떠 봤는데 이기지 못해, ×8이 R 단독 편성에는 과했다.
      */
     count: 1, bodyScale: 1.18,
-    hpMultiplier: 8, attackMultiplier: 1.2,
+    hpMultiplier: 4, attackMultiplier: 1.2,
     ttkSeconds: [18, 32], remainingHp: [0.20, 0.60],
     /*
      * **혼자 서는 정예도 보스처럼 막아서되 훨씬 얕게.** 태생 20%에 제어 한 번마다 10% — 여섯 번이면 상한(80)이라

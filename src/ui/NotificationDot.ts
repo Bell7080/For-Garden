@@ -30,7 +30,8 @@ export function bindNotificationDot(
 ): () => void {
   let dot: NotificationDot | undefined;
   const unsubscribe = subscribe((visible) => {
-    if (!scene.sys.isActive() || !target.active) return;
+    // create 도중에 구독하면 첫 값이 곧바로 불리므로 만드는 중인 씬도 받아 준다.
+    if ((!scene.sys.isActive() && scene.sys.settings.status !== Phaser.Scenes.CREATING) || !target.active) return;
     if (visible && !dot) dot = new NotificationDot(scene, target, options);
     if (!visible && dot) { dot.destroy(true); dot = undefined; }
   });

@@ -11,6 +11,8 @@ import { consumeUnlockCelebration, contentOpen, playUnlockSequence, showContentL
 import { addPadlock } from "./Padlock";
 import { LOCK_DIM } from "./lockStyle";
 import type { ContentId } from "../core/contentUnlock";
+import { notificationManager } from "../managers/NotificationManager";
+import { bindNotificationDot } from "./NotificationDot";
 
 /** 차례와 넘김 규칙은 순수 표가 갖는다. 여기서는 그리기만 한다. */
 export { NAV_TABS };
@@ -155,6 +157,8 @@ export class BottomNav {
           });
         }
       }
+      // 받을 무료 보급이 남아 있으면 프리미엄 탭에 점을 세운다.
+      if (tab.key === "premium") bindNotificationDot(scene, group, { x: 34, y: -40 }, (listener) => notificationManager.subscribe("premiumFree", listener));
       // 지금 화면인 탭만 살짝 크다. 밑줄이나 상자 대신 크기로 알린다.
       group.setScale(active ? ACTIVE_SCALE : 1);
 

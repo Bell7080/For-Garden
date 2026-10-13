@@ -3,6 +3,9 @@ import { gameApi } from "../api/FakeServer";
 import { deriveNotificationState, EMPTY_NOTIFICATION_STATE, type NotificationKey, type NotificationState } from "../core/notifications";
 import { managerEvents, type ManagerEvents } from "./ManagerEvents";
 
+const FREE_CATEGORIES = ["daily", "weekly", "monthly"] as const;
+const FREE_KEYS = ["premiumFreeDaily", "premiumFreeWeekly", "premiumFreeMonthly"] as const;
+
 /** API별 상태를 한 번 합성하고 키별 변경만 씬에 배포하는 알림 상태의 단일 소유자다. */
 export class NotificationManager {
   private state: NotificationState = EMPTY_NOTIFICATION_STATE;
@@ -49,6 +52,7 @@ export class NotificationManager {
       pendingFriendRequestCount: signals.status === "fulfilled" ? signals.value.pendingFriendRequestCount : Number(previous.friendRequest),
       unseenEventCount: signals.status === "fulfilled" ? signals.value.unseenEventCount : Number(previous.newEvent),
       unreadMailCount: signals.status === "fulfilled" ? signals.value.unreadMailCount : Number(previous.mail),
+      freeSupplyCategories: signals.status === "fulfilled" ? signals.value.freeSupplyCategories ?? [] : FREE_CATEGORIES.filter((_, index) => previous[FREE_KEYS[index]]),
     });
     // 전체 조회 결과도 같은 manager 이벤트 계약으로 발행해 UI 구독 경로를 하나로 유지한다.
     this.state = next; this.events.publishNotification(next);

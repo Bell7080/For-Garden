@@ -53,8 +53,8 @@ export const SHOP_KO = {
   "shop.premium.pass.rewardTitle": "패스 보상",
   "shop.premium.unsupported": "이 빌드에서는 결제를 사용할 수 없습니다.",
   "shop.premium.cancelled": "결제가 취소되었습니다.",
-  "shop.premium.perk.instantAds": "광고 보상 즉시 수령",
-  "shop.premium.perk.adFree": "광고 제거 · 소탕권 없이 소탕",
+  "shop.premium.perk.raidTicket": "매일 선택 토벌권 {count}장 지급",
+  "shop.premium.perk.adRemoval": "광고 즉시 제거",
   "shop.rune.main": "주 옵션",
   "shop.rune.pickMain": "주 옵션 둘을 골라 주세요.",
 

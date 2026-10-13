@@ -215,10 +215,9 @@ export class FakeServer implements GameApi {
     // 절대 시각을 고정해 테스트와 개발 빌드에서 내용·순서가 언제나 같게 한다.
     this.mails = [
       { id: "launch-gift", title: t("mail.launch.title"), sender: t("mail.launch.sender"), body: t("mail.launch.body"), sentAt: "2026-08-30T00:00:00.000Z", expiresAt: "2099-12-31T23:59:59.000Z", read: false, claimed: false, rewards: [
-        { kind: "currency", currency: "gems", amount: 300 }, { kind: "currency", currency: "gold", amount: 50_000 }, { kind: "currency", currency: "cheesecake", amount: 200 },
-        // 화석 8개 — 첫 복원 연구(10연 · 화석 8)를 받자마자 한 번 돌릴 수 있는 몫이다.
-        { kind: "currency", currency: "fossil", amount: 8 }, { kind: "currency", currency: "amber", amount: 1 }, { kind: "currency", currency: "dnaFragments", amount: 20 },
-        { kind: "item", itemId: "stamina-tonic", amount: 3, expiresInDays: 5 }, { kind: "item", itemId: "ancient-core", amount: 2 },
+        // 첫 접속 감사 패키지 — 화석 10·호박석 10(연구 20번 값, 젬 6,000)을 뼈대로 젬·골드·치즈케이크도 그 무게에 맞춰 화려하게 얹는다.
+        { kind: "currency", currency: "gems", amount: 700 }, { kind: "currency", currency: "gold", amount: 100_000 }, { kind: "currency", currency: "cheesecake", amount: 450 },
+        { kind: "currency", currency: "fossil", amount: 10 }, { kind: "currency", currency: "amber", amount: 10 },
       ] },
       { id: "update-notice", title: t("mail.update.title"), sender: t("mail.update.sender"), body: t("mail.update.body"), sentAt: "2026-08-30T00:00:00.000Z", expiresAt: null, read: false, claimed: false, rewards: [] },
       // 아래는 우편함의 여러 모양(받을 것·안내·받은 것·만료)을 만져 보는 표본이다 — QA 빌드에만 선다.
@@ -2058,7 +2057,18 @@ export class FakeServer implements GameApi {
     // 이벤트 입구의 점은 오늘 받을 출석이 남았는가로 켠다.
     const now = this.now();
     const attendance = this.attendanceDto(this.attendanceNow(now), now);
-    return { pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length, unreadMailCount: this.mailListDto().unreadCount };
+    return { pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length, unreadMailCount: this.mailListDto().unreadCount, freeSupplyCategories: this.freeSupplyCategories(now) };
+  }
+
+  /** 받을 수 있는 무료 보급이 남은 프리미엄 탭 — 목록의 `purchasable`과 같은 판정을 읽는다. */
+  private freeSupplyCategories(now: Date): Array<"daily" | "weekly" | "monthly"> {
+    const found = new Set<"daily" | "weekly" | "monthly">();
+    for (const product of PRODUCTS) {
+      if (product.storefront !== "premium" || product.acquisition.kind !== "free" || !this.isVisible(product, now) || this.remaining(product, now) <= 0) continue;
+      const category = product.premiumCategory;
+      if (category === "daily" || category === "weekly" || category === "monthly") found.add(category);
+    }
+    return [...found];
   }
 
   /** 검증·보상 지급·수령 표시를 하나의 저장으로 확정해 재요청 중복 지급을 막는다. */

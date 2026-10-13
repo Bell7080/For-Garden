@@ -14,7 +14,7 @@ describe("MailManager", () => {
 
   it("이미 수령한 우편은 다시 지급하지 않는다", async () => { const { manager, state } = setup(); const gems = state.wallet.gems; const result = await manager.claim(["archive-gift"], "claimed"); expect(result.claimedMailIds).toEqual([]); expect(state.wallet.gems).toBe(gems); });
 
-  it("일괄 수령 요청을 같은 멱등 키로 반복해도 지갑은 한 번만 증가한다", async () => { const { manager, state } = setup(); const list = await manager.list(); const gold = state.wallet.gold; const first = await manager.claim(manager.claimableIds(list), "all-idempotent"); const repeated = await manager.claim(manager.claimableIds(list), "all-idempotent"); expect(first.claimedMailIds).toEqual(["launch-gift", "welcome-supply"]); expect(repeated).toEqual(first); expect(state.wallet.gold).toBe(gold + 50_000 + 1200); });
+  it("일괄 수령 요청을 같은 멱등 키로 반복해도 지갑은 한 번만 증가한다", async () => { const { manager, state } = setup(); const list = await manager.list(); const gold = state.wallet.gold; const first = await manager.claim(manager.claimableIds(list), "all-idempotent"); const repeated = await manager.claim(manager.claimableIds(list), "all-idempotent"); expect(first.claimedMailIds).toEqual(["launch-gift", "welcome-supply"]); expect(repeated).toEqual(first); expect(state.wallet.gold).toBe(gold + 100_000 + 1200); });
 
   it("한 수령 확정 응답으로 TopBar·가방·우편 알림 구독을 함께 한 번 갱신한다", async () => {
     const state = createDefaultSession(); const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-30T00:00:00.000Z") });

@@ -36,8 +36,8 @@ describe("장착 외형 resolver 일관성", () => {
   });
 
   it("스토리 고정 토리카는 세션 resolver 대신 정적 기본 전신을 사용한다", () => {
-    // 서사 연출은 플레이어 대표/편성 외형과 다른 고정 캐스팅이므로 이야기 무대(DialogueStage)의 표를 직접 고정한다.
-    expect(DIALOGUE_SOURCE).toContain("torika: TORIKA_ASSET");
+    // 서사 연출은 플레이어 대표/편성 외형과 다른 고정 캐스팅이므로 이야기 무대(DialogueStage)가 도감의 정적 원화 표(portraitAssetFor)를 직접 읽는다.
+    expect(DIALOGUE_SOURCE).toContain("portraitAssetFor(id)");
     expect(DIALOGUE_SOURCE).not.toContain("relicAppearanceManager.portraitAssetFor");
   });
 });

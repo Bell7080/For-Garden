@@ -7,6 +7,7 @@
  */
 import type { DialogueStory } from "../../core/dialogue";
 import { registerDataText } from "../../i18n";
+import { speakerStanding } from "./speakerStanding";
 
 export function registerDialogueTexts(story: DialogueStory): void {
   if (story.titleCard) {
@@ -14,6 +15,9 @@ export function registerDialogueTexts(story: DialogueStory): void {
     registerDataText(story.titleCard, "subtitle", `dialogue.${story.id}.subtitle`);
   }
   for (const node of story.nodes) {
+    // 화자가 전신 원화를 가진 사람이면 따로 적지 않아도 말하는 순간 그 얼굴이 선다. 이름은 번역 등록
+    // 전(한국어 원문)에 읽어야 한다 — 등록하면 화자 이름이 언어를 따라 바뀐다.
+    if (!node.standing && node.speaker) node.standing = speakerStanding(node.speaker);
     const key = `dialogue.${story.id}.${node.id}`;
     // 화자가 빈 노드는 지문이다. 옮길 이름이 없으므로 등록하지 않는다 — 등록하면 번역 표가
     // 빈 값을 채워야 하는데 표는 빈 값을 받지 않는다.

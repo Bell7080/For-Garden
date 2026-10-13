@@ -1,7 +1,7 @@
+import type { PortraitAssetId } from "./types";
+
 /** 정적 대사 데이터가 참조할 수 있는 스탠딩 원화 키다. 런타임 객체는 데이터에 넣지 않는다. */
-export type DialogueStandingAsset =
-  | "torika" | "lexia" | "seira" | "dodi" | "parua"
-  | "koma" | "toby" | "amo" | "ripa";
+export type DialogueStandingAsset = PortraitAssetId | "obi";
 
 /** 스탠딩이 서는 세 자리. 좌표는 화면이 아니라 `dialogueStageLayout.ts` 한 표가 갖는다. */
 export type DialogueStageSlot = "left" | "center" | "right";
@@ -16,6 +16,11 @@ export interface DialogueCastMember {
   id: DialogueStandingAsset;
   slot: DialogueStageSlot;
   veiled?: boolean;
+  /**
+   * 무전·통신 너머의 목소리. 만나지 못하고 들리는 사람이라 **얼굴 부분을 검게 눌러 실루엣으로 두고
+   * 몸은 푸른 홀로그램 투영**으로 세운다(마일리지 상점의 점원과 같은 결). 직접 만나면 적지 않는다.
+   */
+  remote?: boolean;
 }
 
 /**
@@ -41,7 +46,26 @@ export type DialogueAct =
   /** 뒤로 움찔 물러났다 돌아온다 — 당황. */
   | "recoil"
   /** 아래로 움츠러들었다 천천히 돌아온다 — 부끄러움. */
-  | "shrink";
+  | "shrink"
+  /** 퍽 맞은 듯 세로로 꾹 눌렸다가 탱 하고 돌아온다 — 충격·타격. */
+  | "squash"
+  /** 말랑하게 늘었다 줄었다 하며 통통 튄다 — 신남·장난. */
+  | "bounce"
+  /** 푸르게 질려 잘게 떨다가 서서히 돌아온다 — 겁먹음. */
+  | "fright"
+  /** 붉게 빠직하며 부풀어 떤다 — 분노·폭주. */
+  | "rage"
+  /** 하얗게 질려 휘청인다 — 얼이 빠짐. */
+  | "faint"
+  /** 으쓱하며 한 뼘 부풀었다 돌아온다 — 자랑·우쭐. */
+  | "puff";
+
+/**
+ * 장면에 붙는 안내 표지. 사람이 아닌 목소리(방송·경고·시스템·관제)가 말할 때 화면 가운데에
+ * **글자 딱지**로 서서 지금 말하는 주체를 확실히 보여 준다 — 이름표만으로는 캐릭터가 없는
+ * 장면에서 누구의 말인지 읽히지 않는다.
+ */
+export type DialogueSign = "announce" | "warning" | "system" | "broadcast" | "tower";
 
 /**
  * 화면 전체의 연출. 스탠딩이 아니라 **장면**에 일어나는 일이다.
@@ -94,6 +118,10 @@ export interface DialogueNode {
   cue?: DialogueCue;
   /** 이 노드에서 무대를 떠나는 사람이 어떻게 나가는가. `cast`로 빠진 사람에게만 걸린다. */
   leave?: DialogueLeave;
+  /** 사람이 아닌 목소리의 딱지. 적은 노드에만 뜨고, 적지 않은 노드에서는 걷힌다. */
+  sign?: DialogueSign;
+  /** `standing`이 무대에 없어 혼자 서게 될 때 무전 목소리로 세울지. `cast`를 적은 노드는 멤버가 갖는다. */
+  remote?: boolean;
   /** 이 노드에서 배경을 바꾼다. `explosion`과 함께 적으면 섬광 속에서 갈린다. */
   backdrop?: DialogueBackdrop;
   nextId?: string;
@@ -118,20 +146,31 @@ export interface DialogueStory {
 /** 이 노드를 지난 뒤 무대에 선 사람. 무대를 적지 않은 노드는 앞 무대를 그대로 물려받는다. */
 export function resolveDialogueCast(
   previous: readonly DialogueCastMember[],
-  node: Pick<DialogueNode, "cast" | "standing">,
+  node: Pick<DialogueNode, "cast" | "standing" | "leave" | "remote">,
 ): readonly DialogueCastMember[] {
   const cast = node.cast ?? previous;
   if (!node.standing || cast.some(({ id }) => id === node.standing)) return cast;
+  // **떠나는 화자는 다시 세우지 않는다.** `leave`가 걸린 노드에서 화자가 무대에서 빠졌다면 그 화자가
+  // 대사를 외치며 날아가는 것이다 — 가운데에 혼자 다시 세우면 화자는 남고 남은 아군이 대신 날아간다.
+  if (node.leave) return cast;
+  // 이 노드의 무대를 직접 적었는데 화자만 빠져 있고 화자가 앞 무대에 서 있었다면, 화자는 이 대사를 하며
+  // 떠나는 것이다(퇴장 대사). 가운데에 혼자 다시 세우면 남은 사람들이 대신 사라진다.
+  if (node.cast && previous.some(({ id }) => id === node.standing)) return cast;
   // 무대에 없는 화자는 혼자 가운데에 선다. 짧은 이야기가 `cast` 없이 `standing`만 적어도 된다.
-  return [{ id: node.standing, slot: "center" }];
+  return [{ id: node.standing, slot: "center", ...(node.remote ? { remote: true } : {}) }];
 }
 
 /** 이야기가 쓰는 스탠딩을 처음 서는 순서대로 모은다. 미리 읽기가 이 순서를 따른다. */
-export function dialogueStandingOrder(story: DialogueStory): DialogueStandingAsset[] {
+export function dialogueStandingOrder(
+  story: DialogueStory,
+  /** 스탠딩을 적지 않은 노드의 화자를 원화로 잇는 규칙. 데이터 계층이 넘긴다. */
+  bySpeaker?: (speaker: string) => DialogueStandingAsset | undefined,
+): DialogueStandingAsset[] {
   const seen = new Set<DialogueStandingAsset>();
   for (const node of story.nodes) {
     for (const member of node.cast ?? []) seen.add(member.id);
-    if (node.standing) seen.add(node.standing);
+    const standing = node.standing ?? (node.speaker ? bySpeaker?.(node.speaker) : undefined);
+    if (standing) seen.add(standing);
   }
   return [...seen];
 }

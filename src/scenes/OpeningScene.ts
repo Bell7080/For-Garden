@@ -1,3 +1,4 @@
+import { speakerStanding } from "../data/dialogues/speakerStanding";
 import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { DialogueFlow, dialogueStandingOrder, type DialogueChoice } from "../core/dialogue";
@@ -55,7 +56,7 @@ export class OpeningScene extends Phaser.Scene {
     // 배경 원화가 도착하기 전과 원화가 없는 빌드에서도 빈 캔버스가 아니라 어두운 판이 선다.
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void).setDepth(-40);
     this.layer = new DialogueLayer(this, (choice) => this.advance(choice), { backdrop: OPENING_TRAIN.backdrop });
-    this.layer.prefetch(dialogueStandingOrder(OPENING_TRAIN));
+    this.layer.prefetch(dialogueStandingOrder(OPENING_TRAIN, speakerStanding));
     // 첫 노드 정보를 먼저 게시하되 DialogueFlow 잠금은 제목표와 Puppet 표시가 끝날 때까지 유지한다.
     setDebugDialogue(this.flow.current);
     void this.openStory();

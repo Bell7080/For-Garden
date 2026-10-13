@@ -1,3 +1,4 @@
+import { speakerStanding } from "../data/dialogues/speakerStanding";
 import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { DialogueFlow, dialogueStandingOrder, type DialogueChoice, type DialogueStory } from "../core/dialogue";
@@ -40,7 +41,7 @@ export class StageStoryScene extends Phaser.Scene {
     setDebugScene("stageStory");
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void).setDepth(-40);
     this.layer = new DialogueLayer(this, (choice) => this.advance(choice), { backdrop: this.story.backdrop ?? "relics" });
-    this.layer.prefetch(dialogueStandingOrder(this.story));
+    this.layer.prefetch(dialogueStandingOrder(this.story, speakerStanding));
     void this.openStory();
     this.popups = new PopupLayer(this, 2500);
     this.addStorySkip();

@@ -146,7 +146,7 @@ export interface DialogueStory {
 /** 이 노드를 지난 뒤 무대에 선 사람. 무대를 적지 않은 노드는 앞 무대를 그대로 물려받는다. */
 export function resolveDialogueCast(
   previous: readonly DialogueCastMember[],
-  node: Pick<DialogueNode, "cast" | "standing" | "leave" | "remote">,
+  node: Pick<DialogueNode, "cast" | "standing" | "leave" | "remote"> & { speaker?: string },
 ): readonly DialogueCastMember[] {
   const cast = node.cast ?? previous;
   if (!node.standing || cast.some(({ id }) => id === node.standing)) return cast;
@@ -156,6 +156,16 @@ export function resolveDialogueCast(
   // 이 노드의 무대를 직접 적었는데 화자만 빠져 있고 화자가 앞 무대에 서 있었다면, 화자는 이 대사를 하며
   // 떠나는 것이다(퇴장 대사). 가운데에 혼자 다시 세우면 남은 사람들이 대신 사라진다.
   if (node.cast && previous.some(({ id }) => id === node.standing)) return cast;
+  // 혼자 서 있던 사람과 주고받는 말이면 그 사람을 지우지 않고 곁에 세운다. 둘이 번갈아 말하는 장면에서
+  // 말할 때마다 상대가 사라지면 대화가 아니라 독백 둘로 읽힌다. 지문(화자가 빈 노드)은 장면을 새로 여는
+  // 자리라 여전히 혼자 세운다.
+  if (node.speaker && previous.length === 1) {
+    const other = previous[0]!;
+    return [
+      { ...other, slot: "left" },
+      { id: node.standing, slot: "right", ...(node.remote ? { remote: true } : {}) },
+    ];
+  }
   // 무대에 없는 화자는 혼자 가운데에 선다. 짧은 이야기가 `cast` 없이 `standing`만 적어도 된다.
   return [{ id: node.standing, slot: "center", ...(node.remote ? { remote: true } : {}) }];
 }

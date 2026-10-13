@@ -104,6 +104,15 @@ describe("버그 — 날아가는 사람", () => {
     // 앞 무대에 없던 화자는 여전히 혼자 가운데에 선다.
     expect(resolveDialogueCast(before, { standing: "lexia", cast })).toEqual([{ id: "lexia", slot: "center" }]);
   });
+
+  it("혼자 서 있던 사람과 주고받는 말은 상대를 지우지 않고 곁에 세운다", () => {
+    const solo: DialogueCastMember[] = [{ id: "stella", slot: "center" }];
+    expect(resolveDialogueCast(solo, { standing: "kento", speaker: "켄토" })).toEqual([
+      { id: "stella", slot: "left" }, { id: "kento", slot: "right" },
+    ]);
+    // 지문(화자가 빈 노드)은 장면을 새로 여는 자리라 혼자 세운다.
+    expect(resolveDialogueCast(solo, { standing: "kento", speaker: "" })).toEqual([{ id: "kento", slot: "center" }]);
+  });
 });
 
 describe("티아", () => {

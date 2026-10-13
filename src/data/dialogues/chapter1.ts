@@ -81,7 +81,7 @@ export const STAGE_1_5_POST: DialogueStory = {
     { id: "what", speaker: "토리카", body: "…지금 뭐 하세요?", standing: "torika", act: "lean" },
     { id: "excuse", speaker: "토비", body: "아, 아무것도! 정리야! 원래 이렇게 있었던 거라고!", standing: "toby", act: "shake" },
     { id: "label", speaker: "도디", body: "방금 선반 이름표랑 맞춰서 놓으셨는데요. 꼼꼼하시네요.", standing: "dodi", cast: [{ id: "dodi", slot: "center" }, { id: "torika", slot: "left" }, { id: "toby", slot: "right" }], act: "nod" },
-    { id: "away", speaker: "토비", body: "보, 보지 마! 코마한테는 말하지 마라! 다음엔 진짜 이긴다~!", standing: "toby", cast: [{ id: "dodi", slot: "center" }, { id: "torika", slot: "left" }], act: "hopTwice", leave: "blastOff", cue: "impact" },
+    { id: "away", speaker: "토비", body: "보, 보지 마! 코마한테는 말하지 마! 다음엔 진짜 이긴다~!", standing: "toby", cast: [{ id: "dodi", slot: "center" }, { id: "torika", slot: "left" }], act: "hopTwice", leave: "blastOff", cue: "impact" },
   ]),
 };
 
@@ -129,12 +129,12 @@ export const STAGE_1_8_PRE: DialogueStory = {
     { id: "sit", speaker: "", body: "지하 배수로. 수문 손잡이 위에 베일을 쓴 작은 그림자가 앉아 있다. 반짝이는 조각을 소매에 하나씩 넣는 중이다.", standing: "torika", cast: ROGUE_TRIO },
     { id: "tia", speaker: "티아", body: "앗, 연구원님…! 저, 저는 그냥 보급 회수 중이에요! 수문 점검도 하는 중이고요!", cast: TIA_TRIO, act: "recoil" },
     { id: "same", speaker: "토리카", body: "혹시 티아? 우리랑 같은 쁘띠 로그잖아요!", standing: "torika", act: "hop" },
-    { id: "veil", speaker: "티아", body: "저, 이름 불러 주시면 저도 모르게 달려가 버려요. 그러니까 조금만 있다가요, 연구원님! 마음의 준비가 필요해요!", act: "bounce" },
+    { id: "veil", speaker: "티아", body: "연구원님이 제 이름을 불러 주시면 저도 모르게 달려가 버려요. 그러니까 조금만 있다가요! 마음의 준비가 필요해요!", act: "bounce" },
     { id: "useless", speaker: "토리카", body: "그 반짝이는 조각들은 어디에 쓰는 거예요? 별 쓸모는 없어 보이는데…", standing: "torika", act: "lean" },
     { id: "droop", speaker: "티아", body: "쓸모… 없어요? 이거 다 제 보물인데…", act: "faint" },
     { id: "oops", speaker: "토리카", body: "아, 아니에요! 반짝반짝해서 예쁘다는 뜻이었어요!", standing: "torika", act: "shake" },
     { id: "cheer", speaker: "티아", body: "정말요? 에헤헤… 그럼 연구원님께만 특별히 하나 보여 드릴게요!", act: "hopTwice" },
-    { id: "trail", speaker: "티아", body: "코마 님이 지나간 길이라면 이 수문 아래로 이어져 있어요. 제가 아는 건 그게 다예요, 진짜로요!", act: "nod" },
+    { id: "trail", speaker: "티아", body: "코마가 지나간 길이라면 이 수문 아래로 이어져 있어요. 제가 아는 건 그게 다예요, 진짜로요!", act: "nod" },
     { id: "scent", speaker: "파루아", body: "…물 냄새 위로 다른 발자국이 있어요. 아까 그 물속 장난꾼 같기도 하고요.", standing: "parua", act: "lean" },
     { id: "laugh", speaker: "티아", body: "아까 물속에서 누가 웃었어요. 저 아니에요! 진짜 저 아니고요… 조심하세요, 연구원님.", act: "shake" },
     { id: "gift", speaker: "티아", body: "수문은 제가 열어 드릴게요! 이건 가는 길에 쓰세요. 아, 처음 주운 조각은 안 돼요. 그건 제 소매에 있어야 해요!", act: "puff" },

@@ -40,6 +40,9 @@ import { purchaseThemeOf } from "../core/purchaseTheme";
 import { addPurchaseBackdrop } from "./purchaseBackdrop";
 import { PURCHASE_THEME_STYLE } from "./purchaseThemeStyle";
 import { PURCHASE_FRAME, PURCHASE_ITEM_GLOW, purchaseFrameSlots } from "./purchaseFrameLayout";
+import { addSubscriptionNoticeChip, openSubscriptionNoticePopup, subscriptionNoticeLine } from "./SubscriptionNoticePopup";
+import { SUBSCRIPTION_NOTICE } from "./subscriptionNoticeLayout";
+import { squeezeTextToWidth } from "./textFit";
 
 /**
  * 패키지 확인판의 자리.
@@ -311,6 +314,16 @@ export class PurchasePopup {
     const extras = [...(bonus > 0 ? [t("shop.premium.firstBonus", { amount: formatCurrency(bonus) })] : []), ...premiumDecorationNames(product)];
     if (extras.length) view.add(this.scene.add.text(0, P.bonusY, extras.join("  ·  "), textStyle({ role: "display", size: 28, color: accent, align: "center", wrap: 800 })).setOrigin(0.5).setStroke("#000000", 5));
     addPremiumValueBadges(this.scene, view, product, P.width / 2 - 56, P.badgeTop);
+    // 기간제 정기권은 자동 결제·해지 안내를 값 버튼 위에 한 줄로 세우고, 자세한 내용은 ⓘ가 연다.
+    const periodDays = product.passBenefit?.durationDays;
+    if (periodDays) {
+      const notice = { price: formatStorePrice(product.acquisition.basePriceKrw), days: periodDays };
+      const N = SUBSCRIPTION_NOTICE.line;
+      const line = this.scene.add.text(0, P.renewalY, subscriptionNoticeLine(notice), textStyle({ role: "emphasis", size: N.size, color: COLOR.ink })).setOrigin(0.5).setStroke("#000000", 4);
+      squeezeTextToWidth(line, N.room, 0.6);
+      view.add(line);
+      addSubscriptionNoticeChip(this.scene, view, line.width * line.scaleX / 2 + N.chipGap, P.renewalY, () => openSubscriptionNoticePopup(this.scene, this.popups, notice));
+    }
     // 구매 제한은 걸려 있을 때만 작게 알린다.
     if (product.refresh !== "none" || product.purchaseLimit > 0) view.add(this.scene.add.text(0, P.limitY, `${t("shop.purchase.limit")}  ${tradePackageLimitLabel(product.refresh, product.purchaseLimit, product.remaining)}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
 

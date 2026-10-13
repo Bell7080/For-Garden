@@ -7,6 +7,8 @@ export const PURCHASE_FRAME = {
   nameY: -392, badgeTop: -352,
   frameY: -105, frameGap: 24, frameMax: 240,
   bonusY: 50,
+  /** 정기권만 서는 자동 결제 안내 한 줄 — 보너스 줄과 제한 줄 사이. */
+  renewalY: 100,
   limitY: 150,
   /** 값이 곧 결제 버튼이다 — 검은 판 위에 금빛 값만 서고 판 전체가 누름을 받는다. */
   buyY: 268, buyHeight: 150, buyWidth: 780,
@@ -36,6 +38,7 @@ export function purchaseFrameBoxes(count: number): FrameBox[] {
     { name: "name", top: P.nameY - 24, bottom: P.nameY + 24 },
     { name: "frames", top: P.frameY - size / 2, bottom: P.frameY + size / 2 },
     { name: "bonus", top: P.bonusY - 20, bottom: P.bonusY + 20 },
+    { name: "renewal", top: P.renewalY - 16, bottom: P.renewalY + 16 },
     { name: "limit", top: P.limitY - 18, bottom: P.limitY + 18 },
     { name: "buy", top: P.buyY - P.buyHeight / 2, bottom: P.buyY + P.buyHeight / 2 },
     { name: "status", top: P.statusY - 16, bottom: P.statusY + 16 },

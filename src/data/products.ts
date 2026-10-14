@@ -116,6 +116,8 @@ export type PassDailyBonus =
 /** 후원 상품이 부여하는 기간제 또는 영구 계정 권리다. */
 export interface PassBenefitDefinition {
   durationDays: number | null;
+  /** 스토어 정기결제. 생략한 기간제 패스는 만료 후 자동으로 갱신하지 않는다. */
+  autoRenew?: true;
   /** 광고 보상을 즉시 받는 후원 권리. 레이드 구독처럼 광고와 무관한 구독은 적지 않는다. */
   instantAdRewards?: true;
   usesStandardAdRewardPolicy?: true;

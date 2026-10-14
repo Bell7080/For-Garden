@@ -81,4 +81,6 @@ export const SYSTEM_JA = {
   "error.expedition.settle": "スコアは送信しましたが精算を終えられませんでした。",
   "error.persist.state": "ゲームの状態を保存できませんでした。",
   "error.persist.expeditionScore": "遠征スコアを保存できませんでした。",
+  "mail.subscription.title": "{product} デイリー補給",
+  "mail.subscription.body": "本日のログイン報酬です。メールの保管期限内にチケットをお受け取りください。",
 } as const;

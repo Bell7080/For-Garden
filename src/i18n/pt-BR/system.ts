@@ -74,4 +74,6 @@ export const SYSTEM_PT_BR = {
   "error.expedition.settle": "A pontuação foi enviada, mas o acerto não terminou.",
   "error.persist.state": "Não foi possível salvar o estado do jogo.",
   "error.persist.expeditionScore": "Não foi possível salvar a pontuação da expedição.",
+  "mail.subscription.title": "Suprimento diário de {product}",
+  "mail.subscription.body": "Sua recompensa diária de login. Resgate seu bilhete antes de o correio expirar.",
 } as const;

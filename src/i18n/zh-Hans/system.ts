@@ -74,4 +74,6 @@ export const SYSTEM_ZH_HANS = {
   "error.expedition.settle": "分数已提交，但结算未完成。",
   "error.persist.state": "无法保存游戏状态。",
   "error.persist.expeditionScore": "无法保存远征分数。",
+  "mail.subscription.title": "{product} 每日补给",
+  "mail.subscription.body": "今日登录奖励。请在邮件到期前领取票券。",
 } as const;

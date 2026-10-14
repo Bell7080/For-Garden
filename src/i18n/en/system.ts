@@ -74,4 +74,6 @@ export const SYSTEM_EN = {
   "error.expedition.settle": "The score was submitted but the settlement did not finish.",
   "error.persist.state": "Could not save the game state.",
   "error.persist.expeditionScore": "Could not save the expedition score.",
+  "mail.subscription.title": "{product} daily supply",
+  "mail.subscription.body": "Your daily login reward. Claim your ticket before this mail expires.",
 } as const;

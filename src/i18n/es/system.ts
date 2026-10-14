@@ -74,4 +74,6 @@ export const SYSTEM_ES = {
   "error.expedition.settle": "Se envió la puntuación pero la liquidación no terminó.",
   "error.persist.state": "No se pudo guardar el estado del juego.",
   "error.persist.expeditionScore": "No se pudo guardar la puntuación de la expedición.",
+  "mail.subscription.title": "Suministro diario de {product}",
+  "mail.subscription.body": "Tu recompensa diaria de inicio de sesión. Recoge tu ticket antes de que caduque el correo.",
 } as const;

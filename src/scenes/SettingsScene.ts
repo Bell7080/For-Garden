@@ -1,4 +1,5 @@
-import { availableBattleSpeeds } from "../core/battleControls";
+import { availableBattleSpeeds, usableBattleSpeed } from "../core/battleControls";
+import { gameApi } from "../api/FakeServer";
 import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
@@ -64,6 +65,7 @@ export class SettingsScene extends Phaser.Scene {
   private readonly popups = new PopupLayer(this, 3000);
   private accountState: AccountState = { kind: "guest", provider: "guest", maskedId: "GUEST-••••" };
   private accountBusy = false;
+  private battleMember = false;
   /** 검증을 마친 반환 경로만 보관해 탭 재시작 뒤에도 원래 화면을 잃지 않는다. */
   private returnScene: SettingsReturnScene = "lobby";
   private returnData?: SettingsEntryData["returnData"];
@@ -74,6 +76,7 @@ export class SettingsScene extends Phaser.Scene {
   constructor() { super("settings"); }
 
   create(): void {
+    this.battleMember = false;
     // 고정 제목과 탭은 스크롤 마스크 밖에 두어 현재 위치와 전환점을 항상 볼 수 있게 한다.
     // 디버그 채널의 제목은 화면에 그리지 않고 E2E가 어느 화면인지 확인하는 데만 쓴다. 언어를
     // 따라 바뀌면 그 확인이 언어마다 갈리므로 한국어 그대로 둔다.
@@ -87,6 +90,11 @@ export class SettingsScene extends Phaser.Scene {
     const maskShape = this.make.graphics({ x: 0, y: 0 }, false);
     maskShape.fillStyle(0xffffff).fillRect(34, SETTINGS_HEAD.contentTop - 10, 1012, 1430);
     this.content.setMask(maskShape.createGeometryMask()); this.buildRows();
+    void gameApi.getPlayerState().then((state) => {
+      if (!this.scene.isActive()) return;
+      this.battleMember = state.adFreeMembership;
+      if (this.activeTab === "play") this.buildRows();
+    }).catch(() => undefined);
     void accountApi.getState().then(result => { if (result.ok && this.scene.isActive()) { this.accountState = result.value; if (this.activeTab === "support") this.buildRows(); } });
     // 88px 이상 행뿐 아니라 빈 여백도 드래그를 받아 긴 탭의 스크롤이 끊기지 않는다.
     const zone = this.add.zone(BASE_WIDTH / 2, SETTINGS_HEAD.contentTop + 705, BASE_WIDTH, 1430).setInteractive({ draggable: true }).setDepth(-1);
@@ -244,7 +252,7 @@ export class SettingsScene extends Phaser.Scene {
       const motionKeys = { default: "settings.play.motion.default", reduced: "settings.play.motion.reduced", off: "settings.play.motion.off" } as const;
       this.content.add(new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,t("settings.play.battleUiMotion"),s.presentation.battleUiMotion,['default','reduced','off'] as const,v=>settingsManager.update({presentation:{battleUiMotion:v}}),v=>t(motionKeys[v]))); y+=SETTINGS_ROW.step; divider();
       // 인게임 배속 칩과 같은 1·2·3배 선택지를 보여 주며 SettingsManager가 즉시 저장한다.
-      this.content.add(new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,t("settings.play.battleSpeed"),s.game.battleSpeed,availableBattleSpeeds(false),v=>settingsManager.update({game:{battleSpeed:v}}))); y+=SETTINGS_ROW.step; divider();
+      this.content.add(new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,t("settings.play.battleSpeed"),usableBattleSpeed(s.game.battleSpeed,this.battleMember),availableBattleSpeeds(this.battleMember),v=>settingsManager.update({game:{battleSpeed:v}}))); y+=SETTINGS_ROW.step; divider();
       toggle(t("settings.play.autoUltimate"),'game','autoUltimate');
       this.content.add(new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,t("settings.play.textSpeed"),s.game.textSpeed,[0.5,1,2] as const,v=>settingsManager.update({game:{textSpeed:v}}))); y+=SETTINGS_ROW.step; divider();
       // 목록·표기는 core/language.ts 한 표가 갖는다. 각 언어는 제 이름으로 서야 지금 화면을

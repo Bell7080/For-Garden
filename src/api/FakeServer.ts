@@ -145,14 +145,14 @@ export class FakeServer implements GameApi {
   private readonly fulfillResults = new Map<string, FulfillPlatformPurchaseResponse>();
   private readonly progressPassClaims = new Map<string, ClaimProgressPassResponse>();
   private readonly fulfilledTransactions = new Map<string, FulfillPlatformPurchaseResponse>();
-  private readonly entitlements = new Map<string, PassEntitlementDto>();
+  private get entitlements(): Map<string, PassEntitlementDto> { return new Map(Object.entries(this.state.serverJournal?.subscriptionEntitlements ?? {})); }
   /** 물량형 던전의 멱등 저장소. 입장·결과·소탕이 각자의 요청 ID로 한 번만 확정된다. */
   private readonly cakeAdmissionResults = new Map<string, CakeOperationEnterResponse>();
   private readonly cakeCompletionResults = new Map<string, CakeOperationCompleteResponse>();
   private readonly cakeSweepResults = new Map<string, DungeonSweepResponse>();
   private readonly pendingCakeAdmissions = new Map<string, Set<string>>();
   private readonly instantClaimResults = new Map<string, ClaimInstantAdRewardResponse>();
-  private readonly bonusClaimDates = new Map<string, string>();
+  private get bonusClaimDates(): Map<string, string> { return new Map(Object.entries(this.state.serverJournal?.subscriptionBonusDates ?? {})); }
   /** 실제 서버의 멱등 테이블을 흉내 내며 성공한 발굴 변경 응답만 보관한다. */
   private readonly excavationFormationResults = new Map<string, IdleExcavationResponse>();
   private readonly excavationHarvestResults = new Map<string, HarvestExcavationResponse>();
@@ -282,7 +282,7 @@ export class FakeServer implements GameApi {
   }
 
   /** 읽음·수령·만료를 현재 서버 시각으로 집계한 복제본만 외부에 제공한다. */
-  async getMails(): Promise<MailListResponse> { await this.delay(); this.rollExpedition(this.now()); this.applySavedMailClaims(); return this.mailListDto(); }
+  async getMails(): Promise<MailListResponse> { await this.delay(); this.rollExpedition(this.now()); this.syncSubscriptionMails(this.now()); this.applySavedMailClaims(); return this.mailListDto(); }
 
   /** 존재·만료·기수령을 모두 검증한 뒤 지급과 상태 변경을 한 처리로 확정한다. */
   async claimMailRewards(request: ClaimMailRewardsRequest): Promise<ClaimMailRewardsResponse> {
@@ -290,7 +290,7 @@ export class FakeServer implements GameApi {
     const identity = JSON.stringify([...new Set(request.mailIds)].sort());
     const cached = this.readReceipt<ClaimMailRewardsResponse>("mail", request.requestId, identity);
     if (cached) return { ...cached, ...this.mailListDto(), wallet: { ...this.state.wallet }, items: this.inventoryDto(this.state).items };
-    this.rollExpedition(this.now()); this.applySavedMailClaims();
+    this.rollExpedition(this.now()); this.syncSubscriptionMails(this.now()); this.applySavedMailClaims();
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "우편 수령 요청 ID가 필요합니다.");
     const ids = [...new Set(request.mailIds)]; const nowMs = this.now().getTime(); const targets = ids.map((id) => this.mails.find((mail) => mail.id === id));
     if (targets.some((mail, index) => !mail && !this.state.claimedMailIds?.includes(ids[index]))) throw new GameApiError("INVALID_STATE", "존재하지 않는 우편입니다.");
@@ -406,7 +406,47 @@ export class FakeServer implements GameApi {
   }
 
   /** 모든 우편 응답이 동일한 만료·집계 규칙을 공유한다. */
-  private mailListDto(): MailListResponse { this.applySavedMailClaims(); const serverTime = this.now().toISOString(); const nowMs = Date.parse(serverTime); const mails = structuredClone(this.mails); return { mails, serverTime, unreadCount: mails.filter((mail) => !mail.read && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs)).length, claimableCount: mails.filter((mail) => !mail.claimed && mail.rewards.length > 0 && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs)).length }; }
+  private setSubscriptionEntitlement(candidate: Session, entitlement: PassEntitlementDto): void {
+    const journal = candidate.serverJournal ?? emptyServerJournal();
+    candidate.serverJournal = { ...journal, subscriptionEntitlements: { ...journal.subscriptionEntitlements, [entitlement.entitlementId]: structuredClone(entitlement) } };
+  }
+
+  private setSubscriptionBonusDate(candidate: Session, entitlementId: string, date: string): void {
+    const journal = candidate.serverJournal ?? emptyServerJournal();
+    candidate.serverJournal = { ...journal, subscriptionBonusDates: { ...journal.subscriptionBonusDates, [entitlementId]: date } };
+  }
+
+  private subscriptionMailId(entitlementId: string, date: string): string { return `subscription:${entitlementId}:${date}`; }
+
+  /** 접속한 UTC 날짜마다 티켓 우편 하나를 저장한다. 지난 접속일의 미수령 우편은 7일간 남는다. */
+  private syncSubscriptionMails(now: Date): void {
+    const journal = this.state.serverJournal ?? emptyServerJournal();
+    const saved = journal.subscriptionMails ?? {};
+    const pending = Object.fromEntries(Object.entries(saved).filter(([, mail]) => Date.parse(mail.expiresAt) > now.getTime()));
+    let changed = Object.keys(saved).length !== Object.keys(pending).length;
+    const date = now.toISOString().slice(0, 10);
+    for (const entitlement of this.entitlements.values()) {
+      if (entitlement.expiresAt !== null && Date.parse(entitlement.expiresAt) <= now.getTime()) continue;
+      if (Date.parse(entitlement.activatedAt) > now.getTime()) continue;
+      const product = PRODUCTS.find(({ id }) => id === entitlement.productId);
+      const bonus = product?.passBenefit?.dailyBonus;
+      if (!bonus || !("itemId" in bonus)) continue;
+      const id = this.subscriptionMailId(entitlement.entitlementId, date);
+      if (pending[id] || this.state.claimedMailIds?.includes(id)) continue;
+      pending[id] = { entitlementId: entitlement.entitlementId, productId: entitlement.productId, sentAt: now.toISOString(), expiresAt: new Date(now.getTime() + 7 * 86_400_000).toISOString(), itemId: bonus.itemId, amount: bonus.amount };
+      changed = true;
+    }
+    if (changed) this.commitRaidState({ ...this.state, serverJournal: { ...journal, subscriptionMails: pending } });
+    for (const [id, mail] of Object.entries(pending)) {
+      if (this.mails.some((entry) => entry.id === id)) continue;
+      const product = PRODUCTS.find((entry) => entry.id === mail.productId);
+      this.mails.unshift({ id, title: t("mail.subscription.title", { product: product?.name ?? mail.productId }), sender: t("mail.launch.sender"),
+        body: t("mail.subscription.body"), sentAt: mail.sentAt, expiresAt: mail.expiresAt, read: false, claimed: false,
+        rewards: [{ kind: "item", itemId: mail.itemId, amount: mail.amount }] });
+    }
+  }
+
+  private mailListDto(): MailListResponse { this.syncSubscriptionMails(this.now()); this.applySavedMailClaims(); const serverTime = this.now().toISOString(); const nowMs = Date.parse(serverTime); const mails = structuredClone(this.mails); return { mails, serverTime, unreadCount: mails.filter((mail) => !mail.read && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs)).length, claimableCount: mails.filter((mail) => !mail.claimed && mail.rewards.length > 0 && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs)).length }; }
 
   /** 실제 통신처럼 다음 비동기 구간을 거친 뒤 직렬화 가능한 복사본을 돌려준다. */
   async getPlayerState(): Promise<PlayerStateDto> {
@@ -711,7 +751,7 @@ export class FakeServer implements GameApi {
     // 로컬 저장 용량을 제한한다. 활성 런의 영수증은 정산될 때까지 보존한다.
     const protectedRun = next.expedition.run?.runId;
     const entries = Object.entries(journal.receipts);
-    journal.receipts = Object.fromEntries(entries.filter(([, receipt], index) => index >= entries.length - 256 || (protectedRun && receipt.identity.includes(protectedRun))));
+    journal.receipts = Object.fromEntries(entries.filter(([key, receipt], index) => key.startsWith('["platformTransaction",') || index >= entries.length - 256 || (protectedRun && receipt.identity.includes(protectedRun))));
     next.serverJournal = journal;
   }
 
@@ -1240,20 +1280,19 @@ export class FakeServer implements GameApi {
     if (!entitlement) throw new GameApiError("PASS_NOT_FOUND", "활성화된 구독이 없습니다.");
     if (this.bonusClaimDates.get(entitlement.entitlementId) === date) throw new GameApiError("PASS_BONUS_CLAIMED", "오늘 몫을 이미 받았습니다.");
     const bonus = product.passBenefit.dailyBonus;
-    const wallet = { ...this.state.wallet };
-    let items = this.state.itemInventory.map((entry) => ({ ...entry }));
-    let granted: ProductDefinition["grants"][number];
-    if ("currency" in bonus) {
-      wallet.gems = Math.min(WALLET_CAPS.gems, wallet.gems + bonus.amount);
-      granted = { kind: "currency", currency: "gems", amount: bonus.amount };
-    } else {
-      items = this.grantItem(items, bonus.itemId, bonus.amount, now).inventory;
-      granted = { kind: "item", itemId: bonus.itemId, name: findItem(bonus.itemId)?.name ?? bonus.itemId, amount: bonus.amount };
+    if ("itemId" in bonus) {
+      this.syncSubscriptionMails(now);
+      const mailId = this.subscriptionMailId(entitlement.entitlementId, date);
+      if (this.state.claimedMailIds?.includes(mailId)) throw new GameApiError("PASS_BONUS_CLAIMED", "오늘 몫을 이미 받았습니다.");
+      const receipt = await this.claimMailRewards({ mailIds: [mailId], requestId: request.requestId });
+      return { ...this.snapshot(), productId: product.id, quantity: 1, granted: receipt.granted.flatMap((reward) => reward.kind === "item" ? [{ ...reward, name: findItem(reward.itemId)?.name ?? reward.itemId }] : []), grantedRunes: [], remaining: 0 };
     }
-    this.persist({ ...this.state, wallet, itemInventory: items });
-    this.state.wallet = wallet; this.state.itemInventory = items;
-    this.bonusClaimDates.set(entitlement.entitlementId, date);
-    return { ...this.snapshot(), productId: product.id, quantity: 1, granted: [granted], grantedRunes: [], remaining: 0 };
+    const candidate = structuredClone(this.state);
+    const amount = Math.max(0, Math.min(bonus.amount, WALLET_CAPS.gems - candidate.wallet.gems));
+    candidate.wallet.gems += amount;
+    this.setSubscriptionBonusDate(candidate, entitlement.entitlementId, date);
+    this.commitRaidState(candidate);
+    return { ...this.snapshot(), productId: product.id, quantity: 1, granted: [{ kind: "currency", currency: "gems", amount }], grantedRunes: [], remaining: 0 };
   }
 
   /** 무료 수령을 먼저 받아야 열리는 광고 슬롯(일간 보급의 추가 몫)은 그 상품의 오늘 몫이 소진됐을 때만 받는다. */
@@ -1292,13 +1331,13 @@ export class FakeServer implements GameApi {
     const expiresAt = product.passBenefit.durationDays === null ? null : new Date(now.getTime() + product.passBenefit.durationDays * 86_400_000).toISOString();
     const entitlement = existing ?? { entitlementId, productId: product.id, activatedAt: now.toISOString(), expiresAt, active: true, serverTime: now.toISOString() };
     if (!existing) {
-      // 거래당 최초 활성화에서만 즉시 재화를 지급해 다른 요청 ID로 재시도해도 중복 지급되지 않는다.
-      const nextWallet = { ...this.state.wallet };
-      for (const grant of product.grants) if (grant.kind === "currency") nextWallet[grant.currency] += grant.amount;
-      this.persist({ ...this.state, wallet: nextWallet });
-      this.state.wallet = nextWallet;
+      if (this.hasActivePass(product, now)) throw new GameApiError("PURCHASE_LIMIT_REACHED", "이미 활성 구독이 있습니다.");
+      const candidate = structuredClone(this.state);
+      const applied = this.applyProductGrants(product, 1, candidate.wallet, candidate.itemInventory, now);
+      candidate.itemInventory = applied.items;
+      this.setSubscriptionEntitlement(candidate, entitlement);
+      this.commitRaidState(candidate);
     }
-    this.entitlements.set(entitlementId, entitlement);
     const result = { entitlement, grants: product.grants };
     this.activationResults.set(request.requestId, result);
     return { entitlement: { ...entitlement }, grants: result.grants };
@@ -1318,11 +1357,14 @@ export class FakeServer implements GameApi {
     const verification = [...this.verifiedTransactions.values()].find(({ verificationId }) => verificationId === request.verificationId);
     const product = verification && PRODUCTS.find(({ id }) => id === verification.productId);
     if (!request.requestId || !verification || !product || product.acquisition.kind !== "platform_payment") throw new GameApiError("RECEIPT_INVALID", "검증된 플랫폼 거래가 아닙니다.");
+    const durable = this.readReceipt<FulfillPlatformPurchaseResponse>("platformTransaction", verification.transactionId, product.id);
+    if (durable) return { ...durable, ...this.snapshot() };
     const cachedByTransaction = this.fulfilledTransactions.get(verification.transactionId);
     if (cachedByTransaction) { this.fulfillResults.set(request.requestId, cachedByTransaction); return { ...cachedByTransaction }; }
 
     const now = this.now();
-    if (this.remaining(product, now) < 1) throw new GameApiError("PURCHASE_LIMIT_REACHED", "남은 구매 제한을 초과했습니다.");
+    const renewing = product.passBenefit?.autoRenew ? [...this.entitlements.values()].find((entry) => entry.productId === product.id && (entry.expiresAt === null || Date.parse(entry.expiresAt) > now.getTime())) : undefined;
+    if (!renewing && this.remaining(product, now) < 1) throw new GameApiError("PURCHASE_LIMIT_REACHED", "남은 구매 제한을 초과했습니다.");
     const bonus = this.firstBonusAvailable(product) ? product.firstPurchaseBonus ?? [] : [];
     const nextWallet = { ...this.state.wallet };
     const applied = this.applyProductGrants(product, 1, nextWallet, this.state.itemInventory.map((entry) => ({ ...entry })), now, bonus);
@@ -1331,16 +1373,25 @@ export class FakeServer implements GameApi {
     const current = this.state.productPurchases[product.id];
     const count = (current?.periodKey === periodKey ? current.count : 0) + 1;
     const nextPurchases = { ...this.state.productPurchases, [product.id]: { periodKey, count } };
-    this.persist({ ...this.state, wallet: nextWallet, itemInventory: applied.items, productPurchases: nextPurchases });
-    this.state.wallet = nextWallet; this.state.itemInventory = applied.items; this.state.productPurchases = nextPurchases;
-
+    const candidate = structuredClone(this.state);
+    candidate.wallet = nextWallet; candidate.itemInventory = applied.items; candidate.productPurchases = nextPurchases;
     let entitlement: PassEntitlementDto | undefined;
     if (product.passBenefit) {
       const entitlementId = `entitlement-${verification.transactionId}`;
-      const expiresAt = product.passBenefit.durationDays === null ? null : new Date(now.getTime() + product.passBenefit.durationDays * 86_400_000).toISOString();
-      entitlement = this.entitlements.get(entitlementId) ?? { entitlementId, productId: product.id, activatedAt: now.toISOString(), expiresAt, active: true, serverTime: now.toISOString() };
-      this.entitlements.set(entitlementId, entitlement);
+      const periodStart = Math.max(now.getTime(), renewing?.expiresAt ? Date.parse(renewing.expiresAt) : now.getTime());
+      const expiresAt = product.passBenefit.durationDays === null ? null : new Date(periodStart + product.passBenefit.durationDays * 86_400_000).toISOString();
+      // 검증된 새 갱신 거래가 기존 권리를 대체한다. 일일 지급 권리가 두 개로 늘어나지 않는다.
+      if (renewing) this.setSubscriptionEntitlement(candidate, { ...renewing, expiresAt: now.toISOString(), active: false });
+      entitlement = { entitlementId, productId: product.id, activatedAt: now.toISOString(), expiresAt, active: true, serverTime: now.toISOString() };
+      this.setSubscriptionEntitlement(candidate, entitlement);
+      const claimedDate = renewing && this.bonusClaimDates.get(renewing.entitlementId);
+      if (claimedDate) this.setSubscriptionBonusDate(candidate, entitlementId, claimedDate);
     }
+    this.recordReceipt(candidate, "platformTransaction", verification.transactionId, product.id, {
+      productId: product.id, quantity: 1, granted: applied.granted, grantedRunes: [], remaining: 0, firstBonusApplied: bonus.length > 0,
+      ...(entitlement ? { entitlement } : {}),
+    });
+    this.commitRaidState(candidate);
     const result: FulfillPlatformPurchaseResponse = {
       ...this.snapshot(), productId: product.id, quantity: 1, granted: applied.granted, grantedRunes: [],
       remaining: this.remaining(product, now), firstBonusApplied: bonus.length > 0,
@@ -1363,7 +1414,7 @@ export class FakeServer implements GameApi {
     const slot = findAdRewardSlot(request.slotId);
     if (!slot) throw new GameApiError("AD_SLOT_NOT_FOUND", "존재하지 않는 광고 슬롯입니다.");
     const product = PRODUCTS.find(({ id }) => id === stored.productId);
-    if (!request.requestId || !product?.passBenefit) throw new GameApiError("PASS_NOT_FOUND", "후원 상품 정책을 찾을 수 없습니다.");
+    if (!request.requestId || !product?.passBenefit?.instantAdRewards) throw new GameApiError("PASS_NOT_FOUND", "광고 즉시 수령 권리가 없습니다.");
     const date = now.toISOString().slice(0, 10);
     const current = this.state.dailyAdRewards.date === date ? this.state.dailyAdRewards : { date, claimsBySlot: {}, requestIds: [] };
     const dailyClaims = current.claimsBySlot[slot.id] ?? 0;
@@ -1373,12 +1424,13 @@ export class FakeServer implements GameApi {
     const bonus = this.bonusClaimDates.get(stored.entitlementId) === date || !("currency" in rawBonus) ? undefined : rawBonus;
     const walletBefore = { ...this.state.wallet };
     const applied = this.applyAdReward(slot.reward, now); const nextWallet = applied.wallet;
-    if (bonus) nextWallet.gems += bonus.amount;
+    if (bonus) nextWallet.gems = Math.min(WALLET_CAPS.gems, nextWallet.gems + bonus.amount);
     const nextClaims = dailyClaims + 1;
     const nextAds = { date, claimsBySlot: { ...current.claimsBySlot, [slot.id]: nextClaims }, requestIds: [...current.requestIds, request.requestId] };
-    this.persist({ ...this.state, wallet: nextWallet, idleExcavation: applied.excavation, itemInventory: applied.itemInventory, dailyAdRewards: nextAds });
-    this.state.wallet = nextWallet; this.state.idleExcavation = applied.excavation; this.state.itemInventory = applied.itemInventory; this.state.dailyAdRewards = nextAds;
-    if (bonus) this.bonusClaimDates.set(stored.entitlementId, date);
+    const candidate = structuredClone(this.state);
+    candidate.wallet = nextWallet; candidate.idleExcavation = applied.excavation; candidate.itemInventory = applied.itemInventory; candidate.dailyAdRewards = nextAds;
+    if (bonus) this.setSubscriptionBonusDate(candidate, stored.entitlementId, date);
+    this.commitRaidState(candidate);
     const entitlement = { ...stored, active: true, serverTime: now.toISOString() };
     const granted: Partial<Record<keyof Session["wallet"], number>> = {};
     for (const key of Object.keys(nextWallet) as (keyof Session["wallet"])[]) { const amount = nextWallet[key] - walletBefore[key]; if (amount > 0) granted[key] = amount; }
@@ -2674,7 +2726,7 @@ export class FakeServer implements GameApi {
     if (!product.passBenefit) return {};
     const entitlement = [...this.entitlements.values()].find((e) => e.productId === product.id && (e.expiresAt === null || now.getTime() < new Date(e.expiresAt).getTime()));
     if (!entitlement) return {};
-    return { subscription: { expiresAt: entitlement.expiresAt, dailyBonusClaimed: this.bonusClaimDates.get(entitlement.entitlementId) === now.toISOString().slice(0, 10) } };
+    return { subscription: { expiresAt: entitlement.expiresAt, dailyBonusClaimed: this.bonusClaimDates.get(entitlement.entitlementId) === now.toISOString().slice(0, 10) || !!this.state.claimedMailIds?.includes(this.subscriptionMailId(entitlement.entitlementId, now.toISOString().slice(0, 10))) } };
   }
 
   /** 그 패스 상품의 권리가 지금도 유효한가. */

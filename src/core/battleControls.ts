@@ -1,3 +1,5 @@
+import { QA_TOOLS_ENABLED } from "./buildFlavor";
+
 /**
  * 플레이어가 순환할 수 있는 고정 전투 배속이다. 임의 배율은 리플레이 시간축을 복잡하게 만든다.
  *
@@ -13,12 +15,8 @@ export const FREE_BATTLE_SPEEDS: readonly BattleSpeed[] = [1, 1.5, 2];
 /** 멤버십이 있어야 열리는 배속. */
 export const MEMBER_BATTLE_SPEEDS: readonly BattleSpeed[] = [3];
 
-/**
- * **3배속을 멤버십으로 잠그는지.** 시험 기간이라 지금은 꺼 두어 누구나 3배속까지 쓴다 —
- * 잠금 규칙과 멤버십 판정은 그대로 두고 이 값 하나만 켜면 다시 잠긴다(`CONTENT_LEVEL_GATES_ENABLED`와
- * 같은 방식). 켜기 전까지 화면·설정·저장 모두 네 단계를 받는다.
- */
-export const MEMBER_BATTLE_SPEED_GATE_ENABLED = false;
+/** 일반 서버는 멤버십이 있어야 3배속을 열며 QA에서는 자유롭게 검증한다. */
+export const MEMBER_BATTLE_SPEED_GATE_ENABLED = !QA_TOOLS_ENABLED;
 
 /** 지금 이 사람이 고를 수 있는 배속들. `gated`는 테스트가 잠긴 상태를 따로 확인할 때만 넘긴다. */
 export function availableBattleSpeeds(member: boolean, gated: boolean = MEMBER_BATTLE_SPEED_GATE_ENABLED): readonly BattleSpeed[] {

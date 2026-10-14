@@ -74,4 +74,6 @@ export const SYSTEM_ID = {
   "error.expedition.settle": "Skor terkirim tetapi penyelesaian belum tuntas.",
   "error.persist.state": "Tidak dapat menyimpan status permainan.",
   "error.persist.expeditionScore": "Tidak dapat menyimpan skor ekspedisi.",
+  "mail.subscription.title": "Pasokan harian {product}",
+  "mail.subscription.body": "Hadiah login harianmu. Ambil tiket sebelum surat ini kedaluwarsa.",
 } as const;

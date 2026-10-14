@@ -33,7 +33,7 @@ import { session } from "../state/session";
 import { findAdRewardSlot } from "../data/adRewards";
 import { productActionModel } from "../core/productAcquisition";
 import { addPriceBar } from "../ui/priceTag";
-import { squeezeTextToWidth } from "../ui/textFit";
+import { fitTextToBox, squeezeTextToWidth } from "../ui/textFit";
 import { premiumCategoryOf, premiumFirstBonusGems, premiumGrantTiles, premiumModel, productsForPremiumCategory } from "../ui/premiumModel";
 import {
   PREMIUM_CARD, PREMIUM_TAB_ROW, PREMIUM_TITLE, PREMIUM_WIDE,
@@ -47,6 +47,8 @@ import { consumeSceneEntry } from "./sceneEntry";
 import { playSceneEntrance, startScene, slideTabPage } from "../ui/screenTransition";
 import { pressIn, pressOut } from "../ui/pressFeedback";
 import { addClippedHit } from "../ui/clippedHit";
+import { UI_ICON } from "../ui/icons";
+import { addRewardExpiryTag } from "../ui/rewardExpiry";
 
 /**
  * 현금 결제 카탈로그를 인게임 재화 상점과 분리해 소유하는 독립 프리미엄 씬이다.
@@ -250,6 +252,7 @@ export class PremiumScene extends Phaser.Scene {
   private addGrantFrame(card: Phaser.GameObjects.Container, x: number, y: number, size: number, icon: string, amount: number, options: { color?: number } = {}): Phaser.GameObjects.Container {
     const frame = addFramedIcon(this, card, x, y, size, icon, { plain: true, color: options.color });
     frame.add(addFrameAmount(this, size, formatCurrency(amount)));
+    addRewardExpiryTag(this, frame, size, { icon, amount });
     const openGuide = guideForIcon(this, icon);
     if (openGuide) {
       const hit = addClippedHit(this, frame, 0, 0, size, size, premiumGridViewport);
@@ -274,6 +277,7 @@ export class PremiumScene extends Phaser.Scene {
     const name = this.add.text(left, S.nameY, product.name, textStyle({ role: "display", size: W.nameSize })).setOrigin(0, 0.5).setShadow(3, 4, "#04060a", 0, true, true);
     card.add(squeezeTextToWidth(name, right - left, 0.7));
     const xs = premiumWideFrameXs(tiles.length);
+    if (product.passBenefit?.adFree) this.addMembershipBenefits(card, width);
     tiles.forEach((tile, i) => {
       const frame = this.addGrantFrame(card, xs[i], S.frameY, W.frame, tile.icon, tile.amount);
       const tagText = tile.daily ? t("shop.premium.daily") : tile.badge ? t(`shop.premium.badge.${tile.badge}`) : undefined;
@@ -300,10 +304,14 @@ export class PremiumScene extends Phaser.Scene {
       const clock = this.add.text(left, S.price.y, this.limitedText(product.visibleUntil), textStyle({ role: "emphasis", size: W.noteSize + 2, color: COLOR.dangerText, wrap: -sideWidth - left })).setOrigin(0, 0.5).setStroke("#05070a", 3);
       card.add(clock);
       this.limitedClocks.push({ text: clock, until: product.visibleUntil });
-    } else if (this.passPerkText(product)) {
-      card.add(this.add.text(left, S.price.y - 50, foot, textStyle({ role: "body", size: W.noteSize, color: COLOR.inkDim, wrap: -sideWidth - left })).setOrigin(0, 0.5));
+    } else if (this.passPerkText(product) && !product.passBenefit?.adFree) {
+      const note = this.add.text(left, S.price.y - 50, foot, textStyle({ role: "body", size: W.noteSize, color: COLOR.inkDim })).setOrigin(0, 0.5);
+      card.add(fitTextToBox(note, { width: -sideWidth - left, height: 54 }, { size: W.noteSize, minSize: 16 }));
       this.addPassPerk(card, this.passPerkText(product)!, left, S.price.y + 8, -sideWidth - left);
-    } else if (foot) card.add(this.add.text(left, S.price.y, foot, textStyle({ role: "body", size: W.noteSize, color: COLOR.inkDim, wrap: -sideWidth - left })).setOrigin(0, 0.5));
+    } else if (foot) {
+      const note = this.add.text(left, S.price.y, foot, textStyle({ role: "body", size: W.noteSize, color: COLOR.inkDim })).setOrigin(0, 0.5);
+      card.add(fitTextToBox(note, { width: -sideWidth - left, height: 54 }, { size: W.noteSize, minSize: 16 }));
+    }
     const subscribed = product.subscription !== undefined;
     const remainingText = subscribed ? t(product.subscription?.dailyBonusClaimed ? "shop.premium.dailyClaimed" : "shop.premium.claimDaily")
       : product.acquisition.kind === "free" && !product.purchasable ? t("shop.premium.freeClaimed")
@@ -362,9 +370,9 @@ export class PremiumScene extends Phaser.Scene {
     const pass = product.passBenefit;
     if (pass) {
       // 갱신 주기를 먼저 말한다. 이용 중이면 다음 갱신일이, 아니면 권리 한 줄이 그 뒤에 선다.
-      parts.push(pass.durationDays === null ? t("shop.premium.forever") : t("shop.premium.renewal", { days: pass.durationDays }));
+      parts.push(pass.durationDays === null ? t("shop.premium.forever") : t(pass.autoRenew ? "shop.premium.renewal" : "shop.premium.fixedTerm", { days: pass.durationDays }));
       const until = product.subscription?.expiresAt;
-      if (until) parts.push(t("shop.premium.renewsOn", { date: new Date(until).toLocaleDateString() }));
+      if (until) return t(pass.autoRenew ? "shop.premium.renewsOn" : "shop.premium.expiresOn", { date: new Date(until).toLocaleDateString() });
     }
     return parts.join("  ·  ");
   }
@@ -379,16 +387,29 @@ export class PremiumScene extends Phaser.Scene {
     if (pass.adFree) return t("shop.premium.perk.adRemoval");
     const bonus = pass.dailyBonus;
     if ("itemId" in bonus && bonus.itemId === "raid-select-ticket") return t("shop.premium.perk.raidTicket", { count: bonus.amount });
+    if ("itemId" in bonus && bonus.itemId === "strata-ticket") return t("shop.premium.perk.archaeologyTicket", { count: bonus.amount });
     return undefined;
+  }
+
+  /** 보상 양옆에 광고 금지와 3배속을 크게 세워 멤버십의 실제 혜택을 먼저 읽게 한다. */
+  private addMembershipBenefits(card: Phaser.GameObjects.Container, width: number): void {
+    const x = width / 2 - 148;
+    const ad = this.add.image(-x, -18, UI_ICON.ad).setDisplaySize(86, 86);
+    const prohibition = this.add.graphics().lineStyle(8, 0xf0846c, 1);
+    prohibition.strokeCircle(-x, -18, 47);
+    prohibition.lineBetween(-x - 34, -52, -x + 34, 16);
+    const speed = this.add.text(x, -18, "3x▶", textStyle({ role: "display", size: 48, color: COLOR.accentText })).setOrigin(0.5).setStroke("#05070a", 5);
+    const label = this.add.text(x, 47, t("shop.premium.perk.speed"), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0.5);
+    card.add([ad, prohibition, speed, squeezeTextToWidth(label, 216, 0.65)]);
   }
 
   /** 값 줄 왼쪽에 또렷한 글씨로 서는 혜택 레이어. 갱신 주기 같은 작은 글 위에 따로 얹는다. */
   private addPassPerk(card: Phaser.GameObjects.Container, text: string, left: number, y: number, maxWidth: number): void {
     const label = this.add.text(0, 0, text, textStyle({ role: "display", size: 28, color: COLOR.accentText })).setOrigin(0, 0.5).setStroke("#000000", 5).setShadow(2, 3, "#04060a", 0, true, true);
-    squeezeTextToWidth(label, maxWidth - 36, 0.6);
-    const width = label.width * label.scaleX + 36;
+    fitTextToBox(label, { width: maxWidth - 36, height: 52 }, { size: 28, minSize: 18 });
+    const width = Math.min(maxWidth, label.width + 36);
     const plate = this.add.container(left, y);
-    plate.add(drawLayer(this, width / 2, 0, slantedRect(width, 48, 12), { fill: 0x0d141c, alpha: 0.9, shadow: false }));
+    plate.add(drawLayer(this, width / 2, 0, slantedRect(width, Math.max(48, label.height + 12), 12), { fill: 0x0d141c, alpha: 0.9, shadow: false }));
     label.setX(18);
     plate.add(label);
     card.add(plate);
@@ -664,12 +685,14 @@ const PREMIUM_BONUS_TONE = 0xe0603a;
 
 /** 카드 색 — 구매 팝업과 같은 테마 색이다(`purchaseThemeOf` → `PURCHASE_THEME_STYLE`). 갱신 주기는 꼬리표 글자가 말한다. */
 function premiumCardTone(product: ProductDto): number {
+  if (product.passBenefit?.adFree) return COLOR.accent;
   return PURCHASE_THEME_STYLE[purchaseThemeOf(product)].accent;
 }
 
 /** 꼬리표 — 정기권은 「30일 정기권」, 나머지는 무역과 같은 주기 이름이다. */
 function premiumCardTag(product: ProductDto): string {
-  if (product.passBenefit?.durationDays) return t("shop.premium.tag.membership", { days: product.passBenefit.durationDays });
+  if (product.passBenefit?.adFree) return t("shop.premium.recommended");
+  if (product.passBenefit?.durationDays) return t(product.passBenefit.autoRenew ? "shop.premium.tag.membership" : "shop.premium.fixedTerm", { days: product.passBenefit.durationDays });
   return t(`trade.tag.${product.refresh}`);
 }
 

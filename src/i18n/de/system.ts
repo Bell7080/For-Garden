@@ -74,4 +74,6 @@ export const SYSTEM_DE = {
   "error.expedition.settle": "Die Punkte wurden übermittelt, aber die Abrechnung wurde nicht abgeschlossen.",
   "error.persist.state": "Der Spielstand konnte nicht gespeichert werden.",
   "error.persist.expeditionScore": "Die Expedition-Punkte konnten nicht gespeichert werden.",
+  "mail.subscription.title": "{product}: Tagesvorrat",
+  "mail.subscription.body": "Deine tägliche Anmeldebelohnung. Hole dein Ticket ab, bevor diese Post abläuft.",
 } as const;

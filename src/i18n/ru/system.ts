@@ -74,4 +74,6 @@ export const SYSTEM_RU = {
   "error.expedition.settle": "Счёт отправлен, но расчёт не завершён.",
   "error.persist.state": "Не удалось сохранить состояние игры.",
   "error.persist.expeditionScore": "Не удалось сохранить очки экспедиции.",
+  "mail.subscription.title": "Ежедневное снабжение: {product}",
+  "mail.subscription.body": "Награда за ежедневный вход. Заберите билет до истечения срока почты.",
 } as const;

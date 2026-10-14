@@ -95,4 +95,6 @@ export const SYSTEM_KO = {
   "error.expedition.settle": "점수는 제출했지만 정산을 마치지 못했습니다.",
   "error.persist.state": "게임 상태를 저장하지 못했습니다.",
   "error.persist.expeditionScore": "원정 점수를 저장하지 못했습니다.",
+  "mail.subscription.title": "{product} 일일 보급",
+  "mail.subscription.body": "오늘 접속 보상입니다. 우편 보관 기간 안에 티켓을 받아 주세요.",
 } as const;

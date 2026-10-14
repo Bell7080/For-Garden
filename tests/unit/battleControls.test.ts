@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   BATTLE_OPENING_HOLD_MS, MEMBER_BATTLE_SPEED_GATE_ENABLED, availableBattleSpeeds, battleFightStartsAt, battleSpeedTier, nextBattleSpeed, usableBattleSpeed, ultimateCutInDurations, scaleUltimateDuration, shouldWaitForUltimatePresentation, ultimatePresentationTiming,
   ULTIMATE_CUT_IN_TIMING, ULTIMATE_MIN_DURATION_MS, ULTIMATE_RECOVERY_RATIO,
@@ -22,11 +22,22 @@ describe("전투 배속", () => {
     expect(nextBattleSpeed(3, false, true)).toBe(1);
   });
 
-  it("시험 기간에는 잠금을 꺼 두어 멤버십 없이도 3배속까지 돈다", () => {
+  it("QA 빌드에서는 멤버십 없이도 3배속까지 돈다", () => {
     expect(MEMBER_BATTLE_SPEED_GATE_ENABLED).toBe(false);
     expect(availableBattleSpeeds(false)).toEqual([1, 1.5, 2, 3]);
     expect(nextBattleSpeed(2, false)).toBe(3);
     expect(usableBattleSpeed(3, false)).toBe(3);
+  });
+
+  it("일반 빌드에서 저장된 3배속은 비구독자에게 2배속으로 내려간다", async () => {
+    vi.stubEnv("MODE", "production"); vi.stubEnv("DEV", false); vi.resetModules();
+    try {
+      const production = await import("../../src/core/battleControls");
+      expect(production.MEMBER_BATTLE_SPEED_GATE_ENABLED).toBe(true);
+      expect(production.availableBattleSpeeds(false)).toEqual([1, 1.5, 2]);
+      expect(production.usableBattleSpeed(3, false)).toBe(2);
+      expect(production.availableBattleSpeeds(true)).toEqual([1, 1.5, 2, 3]);
+    } finally { vi.unstubAllEnvs(); vi.resetModules(); }
   });
 
   it("배속 칩의 켜짐 세기는 단계마다 오른다", () => {

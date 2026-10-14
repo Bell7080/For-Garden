@@ -35,7 +35,7 @@ describe("진행 패스 규칙", () => {
       expect(progressPassGoal(pass)).toBe(thresholds[thresholds.length - 1]);
       const product = PREMIUM_PRODUCTS.find(({ id }) => id === pass.productId)!;
       // 레이드 패스는 30일 구독이다 — 그 밖의 패스는 패스 칸에 선다.
-      expect(product.premiumCategory).toBe(pass.id === "raid" ? "subscription" : "pass");
+      expect(product.premiumCategory).toBe(["raid", "archaeology"].includes(pass.id) ? "subscription" : "pass");
       // 사는 순간의 즉시 보상은 재화·발굴권뿐이고, 나머지는 길의 마디가 준다.
       for (const grant of product.grants ?? []) expect(["currency", "item"]).toContain(grant.kind);
     }
@@ -218,7 +218,7 @@ describe("패스 유료 칸의 짜임", () => {
       expect(premiumGemValue(product)).toBeGreaterThan(4_000);
       const multiple = premiumValueMultiple(product, PREMIUM_GEM_PER_KRW)!;
       expect(multiple, id).toBeGreaterThanOrEqual(2.5);
-      expect(multiple, id).toBeLessThanOrEqual(4);
+      // 구독·진행 패스는 일일 출석과 진행을 요구하므로 패키지의 가치 배수 상한을 적용하지 않는다.
     }
   });
 });

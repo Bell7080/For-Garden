@@ -1,4 +1,5 @@
 import { formatStorePrice } from "../core/storePrice";
+import { addRewardExpiryTag } from "./rewardExpiry";
 import { addListPrice, addPremiumValueBadges } from "./premiumValueBadge";
 import Phaser from "phaser";
 import { t } from "../i18n";
@@ -308,21 +309,26 @@ export class PurchasePopup {
     this.addItemGlow(view, P.frameY, style.light);
     view.add(this.scene.add.text(0, P.nameY, product.name, textStyle({ role: "display", size: 44 })).setOrigin(0.5).setStroke("#000000", 7));
     tiles.forEach((tile, index) => {
-      addFramedIcon(this.scene, view, slots.xs[index], P.frameY, slots.size, tile.icon, { amount: formatCurrency(tile.amount), amountRatio: 0.3, plain: true });
+      const frame = addFramedIcon(this.scene, view, slots.xs[index], P.frameY, slots.size, tile.icon, { amount: formatCurrency(tile.amount), amountRatio: 0.3, plain: true });
+      addRewardExpiryTag(this.scene, frame, slots.size, tile);
+      if (tile.daily) view.add(this.scene.add.text(slots.xs[index], P.frameY - slots.size / 2 - 20, t("shop.premium.daily"), textStyle({ role: "display", size: 24, color: accent })).setOrigin(0.5).setStroke("#000000", 4));
     });
     const bonus = premiumFirstBonusGems(product);
-    const extras = [...(bonus > 0 ? [t("shop.premium.firstBonus", { amount: formatCurrency(bonus) })] : []), ...premiumDecorationNames(product)];
+    const extras = [...(bonus > 0 ? [t("shop.premium.firstBonus", { amount: formatCurrency(bonus) })] : []), ...premiumDecorationNames(product), ...(product.passBenefit?.adFree ? [t("shop.premium.perk.adRemoval")] : [])];
     if (extras.length) view.add(this.scene.add.text(0, P.bonusY, extras.join("  ·  "), textStyle({ role: "display", size: 28, color: accent, align: "center", wrap: 800 })).setOrigin(0.5).setStroke("#000000", 5));
     addPremiumValueBadges(this.scene, view, product, P.width / 2 - 56, P.badgeTop);
     // 기간제 정기권은 자동 결제·해지 안내를 값 버튼 위에 한 줄로 세우고, 자세한 내용은 ⓘ가 연다.
     const periodDays = product.passBenefit?.durationDays;
-    if (periodDays) {
+    if (periodDays && product.passBenefit?.autoRenew) {
       const notice = { price: formatStorePrice(product.acquisition.basePriceKrw), days: periodDays };
       const N = SUBSCRIPTION_NOTICE.line;
       const line = this.scene.add.text(0, P.renewalY, subscriptionNoticeLine(notice), textStyle({ role: "emphasis", size: N.size, color: COLOR.ink })).setOrigin(0.5).setStroke("#000000", 4);
       squeezeTextToWidth(line, N.room, 0.6);
       view.add(line);
       addSubscriptionNoticeChip(this.scene, view, line.width * line.scaleX / 2 + N.chipGap, P.renewalY, () => openSubscriptionNoticePopup(this.scene, this.popups, notice));
+    } else if (periodDays) {
+      const line = this.scene.add.text(0, P.renewalY, t("shop.premium.noRenewal", { days: periodDays }), textStyle({ role: "emphasis", size: SUBSCRIPTION_NOTICE.line.size, color: COLOR.ink })).setOrigin(0.5).setStroke("#000000", 4);
+      view.add(squeezeTextToWidth(line, SUBSCRIPTION_NOTICE.line.room, 0.6));
     }
     // 구매 제한은 걸려 있을 때만 작게 알린다.
     if (product.refresh !== "none" || product.purchaseLimit > 0) view.add(this.scene.add.text(0, P.limitY, `${t("shop.purchase.limit")}  ${tradePackageLimitLabel(product.refresh, product.purchaseLimit, product.remaining)}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0.5));

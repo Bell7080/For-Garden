@@ -74,4 +74,6 @@ export const SYSTEM_VI = {
   "error.expedition.settle": "Đã gửi điểm nhưng quyết toán chưa xong.",
   "error.persist.state": "Không thể lưu trạng thái trò chơi.",
   "error.persist.expeditionScore": "Không thể lưu điểm Viễn chinh.",
+  "mail.subscription.title": "Tiếp tế hằng ngày: {product}",
+  "mail.subscription.body": "Phần thưởng đăng nhập hôm nay. Nhận vé trước khi thư hết hạn.",
 } as const;

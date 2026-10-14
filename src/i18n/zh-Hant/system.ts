@@ -74,4 +74,6 @@ export const SYSTEM_ZH_HANT = {
   "error.expedition.settle": "分數已提交，但結算未完成。",
   "error.persist.state": "無法儲存遊戲狀態。",
   "error.persist.expeditionScore": "無法儲存遠征分數。",
+  "mail.subscription.title": "{product} 每日補給",
+  "mail.subscription.body": "今日登入獎勵。請在郵件到期前領取票券。",
 } as const;

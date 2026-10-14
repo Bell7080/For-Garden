@@ -90,19 +90,11 @@ export type RaidDifficulty = "easy" | "normal" | "hard" | "rampage";
 
 export interface RaidDifficultySpec {
   level: number;
-  /**
-   * **판 안에 서는 보스 한 마리의 최대 체력** — 머리 위 체력 바가 곧 이 값이다.
-   *
-   * 난이도마다 두 배씩 단단해진다. 모든 판이 같은 몸(2만 5천)을 쓰던 때는 보통과 어려움의 체력
-   * 바가 똑같이 서서, 레벨 차이(+15% 남짓)만으로는 무엇이 어려워졌는지 화면이 말하지 못했다.
-   */
+  /** 공유 체력을 산정하는 밸런스 단위. 보호막 기준도 이 값을 사용한다. 실제 입장 HP는 남은 공유 HP다. */
   bodyHp: number;
-  /**
-   * **이 판을 토벌하려면 보스를 몇 번 쓰러뜨려야 하나.** 공유 체력은 `bodyHp × kills`에서 나온다 —
-   * 따로 적어 두면 머리 위 바 한 줄이 공유 게이지의 몇 칸인지 아무도 말할 수 없다.
-   */
+  /** 공유 체력 배수. 처치/부활 횟수가 아니다. */
   kills: number;
-  /** 공유 체력. `bodyHp × kills`로만 만든다(`raidDifficulty`). */
+  /** 단일 보스의 전체 공유 HP. `bodyHp × kills`. */
   totalHp: number;
   /** 판이 열려 있는 시간. 토벌되면 그 전에 끝난다. */
   lifetimeHours: number;
@@ -111,10 +103,7 @@ export interface RaidDifficultySpec {
 
 const raidDifficulty = (spec: Omit<RaidDifficultySpec, "totalHp">): RaidDifficultySpec => ({ ...spec, totalHp: spec.bodyHp * spec.kills });
 
-/*
- * 한 번 처치 = 공유 게이지의 `1 / kills`다. 쉬움은 여섯 번(한 칸 16.7%), 보통 여덟 번, 어려움 열 번,
- * 월드 폭주는 마흔 번이라 한 사람이 혼자 잡는 판이 아니다. 몸은 쉬움 2만 5천 → 5만 → 10만 → 25만.
- */
+/** 단일 공유 HP 풀이다. 여러 몸을 처치하거나 부활시키는 단계는 없다. */
 export const RAID_DIFFICULTY: Record<RaidDifficulty, RaidDifficultySpec> = {
   easy: raidDifficulty({ level: 20, bodyHp: 25_000, kills: 6, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 10_000, total: 8, kill: 5 } }),
   normal: raidDifficulty({ level: 30, bodyHp: 50_000, kills: 8, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15_000, total: 14, kill: 8 } }),

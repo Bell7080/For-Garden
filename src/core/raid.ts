@@ -74,7 +74,7 @@ export interface RaidSeasonProgress {
 /** 누적 피해가 총량을 넘겨도 남은 체력은 0에서 멈추고 비율은 0~1을 벗어나지 않는다. */
 export function raidSeasonProgress(dealtDamage: number, totalHp: number = RAID_SEASON_TOTAL_HP): RaidSeasonProgress {
   const total = Math.max(0, Math.floor(totalHp));
-  const dealt = Math.max(0, Math.floor(dealtDamage));
+  const dealt = Math.min(total, Math.max(0, Math.floor(dealtDamage)));
   const remainingHp = Math.max(0, total - dealt);
   return { totalHp: total, dealtDamage: dealt, remainingHp, remainingRatio: total > 0 ? remainingHp / total : 0, defeated: total > 0 && dealt >= total };
 }
@@ -188,7 +188,7 @@ function raidBossScaledStats(base: RelicDef, difficulty: RaidDifficulty): RelicD
 /**
  * 최대 체력 비례 피해(출혈·뇌진탕)가 레이드 보스에게서 재는 체력 — **성장으로 얻은 체력**이다.
  *
- * 판 안의 최대 체력은 공유 게이지의 한 칸(`RaidDifficultySpec.bodyHp`)이라 성장 체력의 여러 배다. 그
+ * 판 안의 최대 체력은 입장 당시 남은 공유 HP라 성장 체력의 여러 배다. 그
  * 값으로 비율을 재던 때는 출혈 한 번이 판 전체의 타격보다 컸다 — 비율 피해는 **그 개체가 얼마나
  * 단단한가**를 재야 하므로 세기의 몫(레벨·유형)에서 잰다.
  */
@@ -198,11 +198,7 @@ export function raidBossPercentHpBasis(base: RelicDef, difficulty: RaidDifficult
 
 export function raidBossDef(base: RelicDef, difficulty: RaidDifficulty = "rampage"): RelicDef {
   const scaled = raidBossScaledStats(base, difficulty);
-  /*
-   * **최대 체력만 성장이 아니라 난이도의 몸(`bodyHp`)에서 나온다.** 나머지 넷은 유형 표와 레벨이
-   * 그대로 정한다. 그 몸 하나가 공유 게이지의 한 칸이라, 머리 위 체력 바를 한 번 비우면 공유
-   * 게이지가 정확히 `1 / kills`만큼 줄어든다 — 두 줄이 같은 단위를 쓴다.
-   */
+  // 정의의 HP는 보호막 기준이다. 입장은 남은 공유 HP로 바꾸고, 비율 피해는 위의 성장 기준을 쓴다.
   return { ...base, encounterRole: RAID_BOSS_ROLE, stats: { ...scaled, hp: RAID_DIFFICULTY[difficulty].bodyHp } };
 }
 

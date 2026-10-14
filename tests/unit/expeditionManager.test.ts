@@ -220,8 +220,8 @@ describe("ExpeditionManager", () => {
     expect(shortcut.ok).toBe(true);
     const boss = state.expedition.run!.nodes.find(({ type }) => type === "boss")!;
     const before = { requestId: state.expedition.run!.bossSubmissionId, settlementId: state.expedition.run!.bossSettlementId };
-    expect(manager.prepareBossRequests(boss.id)).toEqual(before);
-    expect(manager.prepareBossRequests(boss.id)).toEqual(before);
+    expect(manager.prepareBossRequests(boss.id)).toEqual({ ...before, replayVersion: 2 });
+    expect(manager.prepareBossRequests(boss.id)).toEqual({ ...before, replayVersion: 2 });
     expect(new Set([state.expedition.run!.bossSubmissionId]).size).toBe(1);
   });
 

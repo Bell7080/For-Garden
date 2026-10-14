@@ -228,6 +228,7 @@ function normalizeExpeditionRun(value: unknown, ownedIds: readonly string[]): Ex
     && Array.isArray(run.selectedAugments) && run.selectedAugments.every(({ augmentId, targetRelicId }) => EXPEDITION_AUGMENT_IDS.includes(augmentId as never) && (targetRelicId === undefined || relicIds.includes(targetRelicId)))
     && (run.pendingAugmentReward === null || (typeof run.pendingAugmentReward.seed === "string" && nodeIds.includes(run.pendingAugmentReward.nodeId) && Number.isInteger(run.pendingAugmentReward.round) && run.pendingAugmentReward.round > 0 && Number.isInteger(run.pendingAugmentReward.totalRounds) && run.pendingAugmentReward.totalRounds >= run.pendingAugmentReward.round && Array.isArray(run.pendingAugmentReward.offers)))
     && rewardsValid && Number.isFinite(run.bossDamage) && run.bossDamage >= 0 && Number.isFinite(run.normalNodeScoreTotal) && run.normalNodeScoreTotal >= 0 && Number.isFinite(run.bossDamageScore) && run.bossDamageScore >= 0 && Number.isFinite(run.runScore) && run.runScore >= 0 && Number.isFinite(run.bestScore) && run.bestScore >= 0 && typeof run.settled === "boolean" && (run.settlementId === null || typeof run.settlementId === "string")
+    && (run.bossReplayVersion === undefined || run.bossReplayVersion === 2)
     && (run.bossSubmissionId === null || typeof run.bossSubmissionId === "string") && (run.bossSettlementId === null || typeof run.bossSettlementId === "string");
   return valid ? cloneExpeditionRun(run) : null;
 }
@@ -821,6 +822,7 @@ function isRaidInstance(value: unknown): value is RaidInstanceState {
     && (raid.summonerName === undefined || typeof raid.summonerName === "string")
     && typeof raid.summonedByMe === "boolean"
     && Number.isInteger(raid.myDamage) && raid.myDamage! >= 0
+    && (raid.appliedDamage === undefined || Number.isInteger(raid.appliedDamage) && raid.appliedDamage >= 0 && raid.appliedDamage <= raid.myDamage!)
     && Number.isInteger(raid.attemptsUsed) && raid.attemptsUsed! >= 0
     && typeof raid.settled === "boolean";
 }

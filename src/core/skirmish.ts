@@ -693,7 +693,7 @@ export interface ActiveCombatBuff {
 
 /** 불사 원정 보스의 시간 단계다. 초당 피해는 아군 전체에 동일하게 적용된다. */
 export interface SkirmishBossPhase { startsAt: number; damagePerSecond: number; label: string }
-/** 화면과 정산이 읽는 보스 상태로, 점수는 경감·보호막 후 HP에 실제 적용된 피해다. */
+/** 레이드는 실제 HP 피해, 불사 원정은 경감 전 화력 점수다. 화면과 재현은 같은 장부를 읽는다. */
 export interface SkirmishBossState {
   /** 적 부속물을 불사화하지 않도록 유일하게 추적하는 보스 전투원 ID다. */
   fighterId: string;
@@ -1394,7 +1394,7 @@ export function percentHpDamage(target: Pick<Fighter, "maxHp" | "percentHpBasis"
 
 /** 보스를 때린 고정 피해도 점수에 든다 — 체력 줄은 줄었는데 점수가 그대로면 두 수가 갈린다. */
 function scoreBossFixedDamage(state: SkirmishState, target: Fighter, amount: number): void {
-  if (state.boss && target.id === state.boss.fighterId && amount > 0) state.boss.score += amount;
+  if (state.boss && state.boss.seasonHp === undefined && target.id === state.boss.fighterId && amount > 0) state.boss.score += amount;
 }
 
 /**
@@ -2703,7 +2703,7 @@ function fireObservationVolley(attacker: Fighter, target: Fighter, state: Skirmi
     const shieldBefore = target.shield.amount; const shieldProviderId = target.shield.providerId;
     applyDamage(target, resolution.applied, events, state);
     const credited = recordDamageContribution(state, packCreditId(attacker), target, "physical", "atk", computeDamageContribution(offense, input), resolution, hpBefore, shieldBefore, shieldProviderId);
-    if (state.boss && target.id === state.boss.fighterId) state.boss.score += credited;
+    if (state.boss && state.boss.seasonHp === undefined && target.id === state.boss.fighterId) state.boss.score += credited;
     events.push({ kind: "observationTick", attackerId: attacker.id, fighterId: target.id, amount: resolution.applied, index, count, windowSeconds: plan.windowSeconds });
     if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
     tryTriggerEmergencyRecovery(target, state); tryTriggerLowHpVanish(target, state);
@@ -2792,7 +2792,7 @@ function tickOverclockAura(fighter: Fighter, dt: number, state: SkirmishState, e
       const shieldBefore = other.shield.amount; const shieldProviderId = other.shield.providerId;
       applyDamage(other, resolution.applied, events, state);
       const credited = recordDamageContribution(state, fighter.id, other, "physical", "atk", computeDamageContribution(attacker, input), resolution, hpBefore, shieldBefore, shieldProviderId);
-      if (state.boss && other.id === state.boss.fighterId) state.boss.score += credited;
+      if (state.boss && state.boss.seasonHp === undefined && other.id === state.boss.fighterId) state.boss.score += credited;
       // 휘두르지 않고 떠 있는 것이 때리므로 시전 모션을 틀지 않는다(`animate: false`).
       events.push({ kind: "attack", attackerId: fighter.id, targetId: other.id, skill: "basic", amount: resolution.applied,
         contributionAmount: credited, critical: false, animate: false, damageType: "physical", mitigated: resolution.reduced < resolution.raw });
@@ -6554,6 +6554,8 @@ function applyDamage(target: Fighter, amount: number, events: SkirmishEvent[], s
     target.undyingPending = true;
   }
   const dealt = hpBefore - target.hp;
+  // Raid score and shared HP use actual HP damage, after shields, mitigation and death prevention.
+  if (state.boss?.seasonHp !== undefined && target.id === state.boss.fighterId) state.boss.score += Math.max(0, dealt);
   // 보호막에 전부 막힌 타격은 "피해를 입은" 것이 아니므로 발동권을 쓰지 않는다.
   if (dealt > 0 && isFighterAlive(target)) tryTriggerDamageStealth(target, state);
   // 모든 피해 원천이 지나온 마지막 관문에서만 지급한다. 실제 HP 손실 0·전투 불능은 제외해
@@ -7762,7 +7764,7 @@ export function replayLoggedBossAction(state: SkirmishState, relicId: string, ki
   // 그 게이지로 쓴 다음 궁극기가 "게이지가 모자란다"로 거절된다.
   if (!events.some((event) => event.kind === "attack" && event.attackerId === attacker.id)) gainEnergy(attacker, state);
   // 명시적 보스 ID만 대조해 향후 광역 부속물 피해가 폰토스 점수에 섞이지 않게 한다.
-  if (state.boss) state.boss.score += events.reduce((sum, event) => sum + (event.kind === "attack" && event.attackerId === attacker.id && event.targetId === target.id ? event.contributionAmount : 0), 0);
+  if (state.boss && state.boss.seasonHp === undefined) state.boss.score += events.reduce((sum, event) => sum + (event.kind === "attack" && event.attackerId === attacker.id && event.targetId === target.id ? event.contributionAmount : 0), 0);
   return events;
 }
 
@@ -9102,7 +9104,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
         breakStealthOnBasic(fighter);
       }
       // 명시적 보스 ID에 맞은 경감 전 기여만 점수로 옮겨 실제 HP 피해·부속물 피해와 분리한다.
-      if (state.boss && target.id === state.boss.fighterId) {
+      if (state.boss && state.boss.seasonHp === undefined && target.id === state.boss.fighterId) {
         const scored = [...events].reverse().find((event): event is Extract<SkirmishEvent, { kind: "attack" }> => event.kind === "attack" && event.attackerId === fighter.id && event.targetId === target.id);
         state.boss.score += scored?.contributionAmount ?? 0;
       }
@@ -9398,7 +9400,7 @@ function fireUltimateCore(
   // 궁극기 돌파도 같은 자리에서 시계를 켠다 — 시전 순간이 첫 타격이고 되풀이는 그 뒤부터다.
   armUltimateBreakthrough(attacker);
   // 수동 궁극기도 평타와 동일하게 명시적 보스 ID의 경감 전 기여만 점수화한다.
-  if (state.boss && target.id === state.boss.fighterId) {
+  if (state.boss && state.boss.seasonHp === undefined && target.id === state.boss.fighterId) {
     state.boss.score += events.reduce((sum, event) => sum + (event.kind === "attack" && event.attackerId === attacker.id && event.targetId === state.boss!.fighterId ? event.contributionAmount : 0), 0);
   }
   // 방금 크게 휘둘렀으니 다음 평타까지의 간격도 새로 센다.

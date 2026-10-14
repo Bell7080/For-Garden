@@ -739,9 +739,11 @@ export interface EventListResponse { events: EventDto[]; serverTime: string; }
 export interface EnterEventStageResponse { eventId: string; stage: StageDef; serverTime: string; }
 
 /** 클라이언트 점수가 아니라 재연산 가능한 동작열만 받는 주간 보스 제출 계약이다. */
-export interface SubmitExpeditionBossScoreRequest { requestId: string; runId?: string; nodeId?: string; actions: ExpeditionBossAction[]; }
+export interface SubmitExpeditionBossScoreRequest { replayVersion?: 2; requestId: string; runId?: string; nodeId?: string; actions: ExpeditionBossAction[]; }
 /** 전멸 순간 서버가 확정한 점수와 최고/누적 기록이다. */
 export interface SubmitExpeditionBossScoreResponse {
+  /** Actual HP damage for the contribution chart, separate from converted expedition points. */
+  verifiedDamage?: number;
   weekKey: string;
   /** 이전 클라이언트 호환용이며 runScore와 같다. */ score: number;
   /** 이번 폰토스 전투에서 확정된 피해 점수만 담는다. */ bossDamageScore: number;
@@ -834,15 +836,15 @@ export interface SummonRaidResponse extends PlayerStateDto { raid: RaidDto; tick
  * 도전을 제출에서 세던 때는 입장에 값이 없어, 판을 열어 보고 마음에 들지 않으면 나가는 길이
  * 공짜였다. 다른 콘텐츠처럼 입장이 비용을 확정하고, 제출은 그 입장 영수증(`requestId`)으로만 받는다.
  */
-export interface EnterRaidRequest { requestId: string; raidId: string; }
-export interface EnterRaidResponse extends PlayerStateDto { raid: RaidDto; requestId: string; staminaSpent: number; playerExp: PlayerExpReceipt; refundPolicy: "no-refund-after-admission"; relics?: { relicId: string; snapshot: ExpeditionRelicSnapshot }[]; }
+export interface EnterRaidRequest { replayVersion?: 2; requestId: string; raidId: string; }
+export interface EnterRaidResponse extends PlayerStateDto { replayVersion?: 2; raid: RaidDto; requestId: string; staminaSpent: number; playerExp: PlayerExpReceipt; refundPolicy: "no-refund-after-admission"; relics?: { relicId: string; snapshot: ExpeditionRelicSnapshot }[]; }
 /**
  * 원정 보스와 **같은 재현 규칙**을 쓴다 — 클라이언트 피해 숫자는 받지 않는다.
  * `requestId`는 그 판의 **입장 영수증**이다 — 입장하지 않은 판의 피해는 받지 않는다.
  */
-export interface SubmitRaidDamageRequest { requestId: string; raidId: string; actions: ExpeditionBossAction[]; }
+export interface SubmitRaidDamageRequest { replayVersion?: 2; requestId: string; raidId: string; actions: ExpeditionBossAction[]; }
 /** 한 판이 확정된 뒤의 그 레이드 상태와, 그 판의 피해에 비례해 곧바로 지급된 것이다. */
-export interface SubmitRaidDamageResponse extends PlayerStateDto { raid: RaidDto; runDamage: number; endedAtMs: number; granted: RaidRewardDto[]; }
+export interface SubmitRaidDamageResponse extends PlayerStateDto { /** Shared HP actually removed; personal runDamage survives concurrent kills. */ sharedDamage?: number; raid: RaidDto; runDamage: number; endedAtMs: number; granted: RaidRewardDto[]; }
 /** 끝난 판의 정산. 참여한 판만, 한 번만 받는다. */
 export interface SettleRaidRequest { requestId: string; raidId: string; }
 export interface SettleRaidResponse extends PlayerStateDto { raid: RaidDto; granted: RaidRewardDto[]; alreadySettled: boolean; }

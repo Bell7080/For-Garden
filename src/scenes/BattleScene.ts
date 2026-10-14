@@ -1,3 +1,5 @@
+import { expeditionBossDamageScore } from "../core/expeditionScore";
+import { BOSS_STEP_MS, bossBattleRandom } from "../core/bossSimulation";
 import { goRoute, partyRoute, victoryRoute } from "./stageStoryRoute";
 import Phaser from "phaser";
 import { t } from "../i18n";
@@ -316,6 +318,7 @@ export class BattleScene extends Phaser.Scene {
   private pausePopups?: PopupLayer;
   private pendingResult?: () => void;
   /** 보스 제출에는 코어가 실제로 낸 공격 종류와 시각만 기록하며 피해 숫자는 넣지 않는다. */
+  private bossStepRemainder = 0;
   private bossActions: ExpeditionBossAction[] = [];
   /** 레이드 제출의 멱등 키. 재시도가 같은 ID를 써야 성공한 제출이 두 번 쌓이지 않는다. */
   /** 성공 응답은 결과 UI보다 오래 살아 UI 생성 중단 뒤에도 같은 영수증으로 복구된다. */
@@ -420,7 +423,7 @@ export class BattleScene extends Phaser.Scene {
    * 것이 없는 수다.
    */
   private buildBossScoreHud(): void {
-    this.bossScoreShown = expeditionManager.status().run?.normalNodeScoreTotal ?? 0;
+    this.bossScoreShown = this.battleInput.mode === "expeditionBoss" ? expeditionManager.status().run?.normalNodeScoreTotal ?? 0 : 0;
     this.bossScoreTarget = this.bossScoreShown;
     this.bossScoreScale = 1;
     const raid = this.battleInput.mode === "raid";
@@ -458,7 +461,7 @@ export class BattleScene extends Phaser.Scene {
     });
     bar.objects.forEach((object) => object.setDepth(hud.depth));
     const value = stroke(this.add.text(left, hud.valueY, "", textStyle({ role: "display", size: 24, color: COLOR.ink })).setOrigin(0, 0.5));
-    this.raidSeasonHud = { bar, value, remaining: season.remainingHp, total: season.totalHp, shown: -1 };
+    this.raidSeasonHud = { bar, value, remaining: this.battleInput.seasonHp, total: season.totalHp, shown: -1 };
     this.paintRaidSeasonHud();
   }
 
@@ -561,7 +564,9 @@ export class BattleScene extends Phaser.Scene {
       )].bodyScale,
     });
     // 테스트 초기 상태는 코어 생성이 끝난 단 한 경계에서만 적용해 씬 로직과 전투 공식을 오염시키지 않는다.
-    this.rng = battleRandom();
+    this.bossStepRemainder = 0;
+    this.rng = (this.battleInput.mode === "raid" || this.battleInput.mode === "expeditionBoss") && this.battleInput.replayVersion === 2
+      ? bossBattleRandom(this.battleInput.mode === "raid" ? this.battleInput.requestId : JSON.stringify([this.battleInput.runId, this.battleInput.nodeId])) : battleRandom();
     applyBattleTestPreset(this.state);
     this.views.clear();
     this.profiles = [];
@@ -729,7 +734,7 @@ export class BattleScene extends Phaser.Scene {
     // 요청 ID는 그 판의 **입장 영수증**이다 — 재시도도 같은 ID라 성공한 제출이 두 번 쌓이지 않는다.
     const requestId = this.battleInput.requestId;
     try {
-      const result = await gameApi.submitRaidDamage({ requestId, raidId, actions });
+      const result = await gameApi.submitRaidDamage({ requestId, raidId, actions, replayVersion: this.battleInput.replayVersion });
       completeBossSettlementAttempt(this.bossSettlementFailureState);
       this.showRaidResult(result);
     } catch (error) {
@@ -777,9 +782,9 @@ export class BattleScene extends Phaser.Scene {
         this.bossLeaving = true;
         // 다른 콘텐츠의 「다시 하기」처럼 **입장부터** 지난다. 거절되면 전장이 아니라 그 판으로 돌아간다.
         const requestId = globalThis.crypto?.randomUUID?.() ?? `raid-entry-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-        void gameApi.enterRaid({ raidId: input.raidId, requestId }).then((admission) => {
+        void gameApi.enterRaid({ replayVersion: 2, raidId: input.raidId, requestId }).then((admission) => {
           rememberPlayerExp(admission.playerExp);
-          this.scene.start("boot", { destination: "raidBattle", raidBattle: { mode: "raid", raidId: input.raidId, bossRelicId: input.bossRelicId, difficulty: input.difficulty, requestId: admission.requestId, seasonHp: admission.raid.remainingHp, relics: admission.relics } satisfies RaidBattleInputDto });
+          this.scene.start("boot", { destination: "raidBattle", raidBattle: { mode: "raid", raidId: input.raidId, bossRelicId: input.bossRelicId, difficulty: input.difficulty, requestId: admission.requestId, seasonHp: admission.raid.remainingHp, relics: admission.relics, replayVersion: admission.replayVersion } satisfies RaidBattleInputDto });
         }).catch(() => { this.scene.start("boot", { destination: "raid", raidId: result.raid.id }); });
       },
     } : undefined;
@@ -809,8 +814,8 @@ export class BattleScene extends Phaser.Scene {
 
   /** 서버 총점과 정산 재화를 같은 결과 화면 안의 독립된 위계로 보여 준다. */
   private showBossResult(score: SubmitExpeditionBossScoreResponse, settlement: SettleExpeditionRunResponse): void {
-    // 서버 재검증 총점은 머리글에만 더하고 확정 당시의 개별 행동 분배는 다시 시뮬레이션하지 않는다.
-    if (this.contributionResult) this.contributionResult = withConfirmedAttackTotal(this.contributionResult, score.bossDamageScore);
+    // 원정 환산 점수를 피해량 머리글에 넣지 않는다. 실제 HP 피해 장부만 비교한다.
+    if (this.contributionResult && score.verifiedDamage !== undefined) this.contributionResult = withConfirmedAttackTotal(this.contributionResult, score.verifiedDamage);
     // 최종판은 전장 HUD·잔존 피해 숫자까지 완전히 덮어 별도 화면처럼 읽히게 한다.
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.96).setDepth(5000);
     const layout = BOSS_RESULT_LAYOUT;
@@ -1416,17 +1421,24 @@ export class BattleScene extends Phaser.Scene {
     if (this.ultimateSequenceActive) return;
     // battleSpeed는 코어 시간에 여기서 정확히 한 번만 곱한다. 궁극기 연출 배율은 tween/Puppet에만
     // 쓰고 stepSkirmish에 넣지 않으므로 피해량·공격 주기·게이지 충전이 이중 가속되지 않는다.
-    const events = stepSkirmish(this.state, dt * this.battleSpeed, this.rng);
+    const events: SkirmishEvent[] = [];
+    if ((this.battleInput.mode === "raid" || this.battleInput.mode === "expeditionBoss") && this.battleInput.replayVersion === 2) {
+      this.bossStepRemainder += Math.min(0.25, dt) * this.battleSpeed * 1_000;
+      while (this.bossStepRemainder >= BOSS_STEP_MS && this.state.phase === "fight") {
+        events.push(...stepSkirmish(this.state, BOSS_STEP_MS / 1_000, this.rng));
+        this.bossStepRemainder -= BOSS_STEP_MS;
+      }
+    } else events.push(...stepSkirmish(this.state, dt * this.battleSpeed, this.rng));
     // 코어가 센 시간을 그대로 적는다. 배속은 이미 위에서 한 번 곱해졌으므로 시계도 그만큼 빨리 돈다.
     this.clockLabel?.setText(formatBattleClock(this.state.elapsed));
     this.paintDeathClock();
     if (this.state.boss) {
       const boss = this.state.boss; const phase = boss.phases[boss.phaseIndex];
-      const normalScore = expeditionManager.status().run?.normalNodeScoreTotal ?? 0;
+      const normalScore = this.battleInput.mode === "expeditionBoss" ? expeditionManager.status().run?.normalNodeScoreTotal ?? 0 : 0;
       const previousTarget = this.bossScoreTarget;
       // 코어의 누적은 소수까지 세지만(다단히트 반올림 편향을 막는다) 화면에 서는 것은 점수라
       // 정수다 — 여기서 반올림하지 않으면 `5,934.48`이 그대로 선다.
-      this.bossScoreTarget = normalScore + Math.round(boss.score);
+      this.bossScoreTarget = normalScore + (this.battleInput.mode === "expeditionBoss" ? expeditionBossDamageScore(Math.round(boss.score)) : Math.round(boss.score));
       const scoreMotion = stepBattleScoreMotion(this.bossScoreShown, this.bossScoreTarget, elapsed);
       this.bossScoreShown = scoreMotion.shown;
       // 새 타격의 크기로 즉시 부풀고, 다음 프레임부터 원래 크기로 가라앉아 강한 공격을 숫자 무게로 보여 준다.
@@ -1857,7 +1869,7 @@ export class BattleScene extends Phaser.Scene {
       // 늑대 돌진의 뒤따르는 피해는 서버가 그 한 번에서 다시 만든다.
       const replayKind = event.skill === "staccato" || event.skill === "shimmer" || event.skill === "weakpoint" ? "basic" : event.skill;
       // 프레임이 끝난 지금이 아니라 코어가 못 박은 타격 시각을 적는다(`at`).
-      if (replayKind === "basic") this.bossActions.push({ elapsedMs: Math.round((event.at ?? this.state.elapsed) * 1_000), actorId: attacker.fighter.def.id, kind: replayKind });
+      if (replayKind === "basic" && (!(this.battleInput.mode === "raid" || this.battleInput.mode === "expeditionBoss") || this.battleInput.replayVersion !== 2)) this.bossActions.push({ elapsedMs: Math.round((event.at ?? this.state.elapsed) * 1_000), actorId: attacker.fighter.def.id, kind: replayKind });
     }
     // 한 광역 기술의 후속 피해 사건은 피격 표현만 만들고 시전자 모션은 첫 사건에서 한 번만 튼다.
     const playback = attacker && event.animate !== false ? playMotion(this, attacker.creature, "attack", motionSpeedMultiplier) : undefined;

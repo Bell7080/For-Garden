@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { addScreenInputBlocker } from "./screenInputBlocker";
 import type { RelicDef } from "../core/types";
 import { spawnPuppet } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
@@ -90,8 +91,7 @@ export class UltimateCutIn extends Phaser.GameObjects.Container {
 
     // 밝은 전장에서도 이름이 묻히지 않도록 화면 전체를 한 번 누른다 — 판과 따로 선다.
     this.dim = scene.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, 0x000000, CUT_IN.dimAlpha).setDepth(CUT_IN.depth - 1).setAlpha(0);
-    this.tapBlocker = scene.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, 0xffffff, 0)
-      .setDepth(CUT_IN.depth + 1).setVisible(false).setInteractive();
+    this.tapBlocker = addScreenInputBlocker(scene, BASE_WIDTH, BASE_HEIGHT, CUT_IN.depth + 1);
     this.tapBlocker.on("pointerdown", (_pointer: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
       event.stopPropagation();
       this.skipPressAllowed = scene.time.now >= this.skipAllowedAt;

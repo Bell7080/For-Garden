@@ -270,6 +270,8 @@ export interface RaidInstanceState {
   summonedByMe: boolean;
   /** 이 판에서 내가 민 피해의 합(최대 두 판). 정산이 읽는 값이다. */
   myDamage: number;
+  /** Actual shared HP removed, independent of verified personal contribution. */
+  appliedDamage?: number;
   attemptsUsed: number;
   settled: boolean;
 }
@@ -315,6 +317,7 @@ export interface ExpeditionRunState {
   /** 성공한 정산 요청의 고유 키이며 null이면 아직 지갑 이전 전이다. */
   settlementId: string | null;
   /** 보스 제출과 정산 사이 재접속도 같은 서버 멱등 키로 복구한다. */
+  bossReplayVersion?: 2;
   bossSubmissionId: string | null;
   bossSettlementId: string | null;
 }

@@ -172,15 +172,16 @@ export class ExpeditionManager {
   }
 
   /** 보스를 누르는 순간 두 멱등 키를 먼저 저장해 어느 비동기 경계에서 종료돼도 복원한다. */
-  prepareBossRequests(nodeId: string): { requestId: string; settlementId: string } | null {
+  prepareBossRequests(nodeId: string): { requestId: string; settlementId: string; replayVersion: 2 } | null {
     const run = this.state.expedition.run;
     const node = run?.nodes.find(({ id }) => id === nodeId);
     if (!run || node?.type !== "boss" || run.settled) return null;
     const next = structuredClone(run);
+    next.bossReplayVersion = 2;
     next.bossSubmissionId ??= `${run.runId}:${nodeId}:boss-score`;
     next.bossSettlementId ??= `${run.runId}:boss-completed`;
     this.commit({ ...this.state.expedition, run: next });
-    return { requestId: next.bossSubmissionId, settlementId: next.bossSettlementId };
+    return { requestId: next.bossSubmissionId, settlementId: next.bossSettlementId, replayVersion: 2 };
   }
 
   /** 서버가 검증한 보스 피해만 진행 저장에 합치며, 재응답은 같은 노드를 두 번 완료하지 않는다. */
@@ -329,11 +330,11 @@ export class ExpeditionBossSettlementFlow {
 
   constructor(private readonly api: Pick<GameApi, "submitExpeditionBossScore" | "settleExpeditionRun">, private readonly manager: Pick<ExpeditionManager, "applyBossScore">) {}
 
-  async finish(input: { requestId: string; settlementId: string; runId: string; nodeId: string }, actions: readonly ExpeditionBossAction[]): Promise<ExpeditionBossFinalResult> {
+  async finish(input: { replayVersion?: 2; requestId: string; settlementId: string; runId: string; nodeId: string }, actions: readonly ExpeditionBossAction[]): Promise<ExpeditionBossFinalResult> {
     let score = this.scores.get(input.requestId);
     if (!score) {
       try {
-        score = await this.api.submitExpeditionBossScore({ requestId: input.requestId, runId: input.runId, nodeId: input.nodeId, actions: [...actions] });
+        score = await this.api.submitExpeditionBossScore({ replayVersion: input.replayVersion, requestId: input.requestId, runId: input.runId, nodeId: input.nodeId, actions: [...actions] });
       } catch (error) { throw new ExpeditionBossSettlementError("score", error); }
       this.scores.set(input.requestId, score);
     }

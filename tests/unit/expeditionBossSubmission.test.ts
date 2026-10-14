@@ -135,7 +135,8 @@ function settlementHarness(failOnce?: PersistPhase) {
   const settle = vi.spyOn(server, "settleExpeditionRun");
   const requests = manager.prepareBossRequests(boss.id)!;
   const request = { ...requests, runId: state.expedition.run!.runId, nodeId: boss.id };
-  const actions = fightAndLog(["torika", "rex", "spino"], 1);
+  // v2 logs only player ultimate controls; basics are simulated automatically.
+  const actions: ExpeditionBossAction[] = [];
   // 준비 단계의 manager 저장은 finish 순서 검증 대상이 아니므로 실제 왕복 직전에 기록만 비운다.
   commitOrder.length = 0;
   return { state, manager, server, flow: new ExpeditionBossSettlementFlow(server, manager), request, actions, walletBefore, managerSaves, serverPersists, commitOrder, persistSession, submit, settle };

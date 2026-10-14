@@ -25,6 +25,7 @@ export interface ExpeditionBattleInputDto {
 
 /** 20층 불사 보스는 일반 난전과 종료 조건이 달라 입력부터 명시적으로 분리한다. */
 export interface ExpeditionBossBattleInputDto {
+  replayVersion?: 2;
   mode: "expeditionBoss";
   runId: string;
   nodeId: string;
@@ -135,6 +136,7 @@ export interface StageBattleInputDto {
  * 체력을 이어받지 않고 늘 온전한 상태로 시작하기 때문이다.
  */
 export interface RaidBattleInputDto {
+  replayVersion?: 2;
   relics?: readonly { relicId: string; snapshot: ExpeditionRelicSnapshot }[];
   mode: "raid";
   /** 어느 판의 체력을 깎는가. 월드 폭주든 친구가 연 판이든 같은 입력이다. */

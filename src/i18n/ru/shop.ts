@@ -121,7 +121,7 @@ export const SHOP_RU = {
   "mileage.clerk.yuti.4": "Сегодня меня никто не заметил. Это же хорошо? …Ведь хорошо?",
   "shop.premium.perk.speed": "Бой на скорости 3×",
   "shop.premium.recommended": "Рекомендуем",
-  "shop.premium.perk.archaeologyTicket": "Ежедневно {count} билет на раскопки · Почта",
+  "shop.premium.perk.archaeologyTicket": "Ежедневно {count} билет на раскопки",
   "shop.premium.fixedTerm": "Доступ на {days} дн.",
   "shop.premium.expiresOn": "Истекает {date}",
   "shop.premium.noRenewal": "Доступ на {days} дн. · Без автопродления",

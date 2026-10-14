@@ -121,7 +121,7 @@ export const SHOP_PT_BR = {
   "mileage.clerk.yuti.4": "Hoje ninguém me viu. Isso é bom, né? …É bom, não é?",
   "shop.premium.perk.speed": "Velocidade de batalha 3×",
   "shop.premium.recommended": "Recomendado",
-  "shop.premium.perk.archaeologyTicket": "{count} bilhete de escavação por dia · Correio",
+  "shop.premium.perk.archaeologyTicket": "{count} bilhete de escavação por dia",
   "shop.premium.fixedTerm": "Acesso por {days} dias",
   "shop.premium.expiresOn": "Expira em {date}",
   "shop.premium.noRenewal": "Acesso por {days} dias · Sem renovação automática",

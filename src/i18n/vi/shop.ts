@@ -121,7 +121,7 @@ export const SHOP_VI = {
   "mileage.clerk.yuti.4": "Hôm nay chẳng ai thấy em cả. Là chuyện tốt đúng không? …Là chuyện tốt, đúng không?",
   "shop.premium.perk.speed": "Tốc độ chiến đấu 3×",
   "shop.premium.recommended": "Đề xuất",
-  "shop.premium.perk.archaeologyTicket": "{count} vé khai thác mỗi ngày · Thư",
+  "shop.premium.perk.archaeologyTicket": "{count} vé khai thác mỗi ngày",
   "shop.premium.fixedTerm": "Dùng trong {days} ngày",
   "shop.premium.expiresOn": "Hết hạn {date}",
   "shop.premium.noRenewal": "Dùng trong {days} ngày · Không tự động gia hạn",

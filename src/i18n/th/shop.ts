@@ -121,7 +121,7 @@ export const SHOP_TH = {
   "mileage.clerk.yuti.4": "วันนี้ไม่มีใครเห็นฉันเลย เป็นเรื่องดีใช่ไหม… เรื่องดีจริงๆ ใช่ไหม",
   "shop.premium.perk.speed": "ความเร็วความเร็วต่อสู้ 3×",
   "shop.premium.recommended": "แนะนำ",
-  "shop.premium.perk.archaeologyTicket": "ตั๋วขุดค้น {count} ใบต่อวัน · จดหมาย",
+  "shop.premium.perk.archaeologyTicket": "ตั๋วขุดค้น {count} ใบต่อวัน",
   "shop.premium.fixedTerm": "ใช้งาน {days} วัน",
   "shop.premium.expiresOn": "หมดอายุ {date}",
   "shop.premium.noRenewal": "ใช้งาน {days} วัน · ไม่ต่ออายุอัตโนมัติ",

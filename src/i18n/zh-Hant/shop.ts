@@ -121,7 +121,7 @@ export const SHOP_ZH_HANT = {
   "mileage.clerk.yuti.4": "今天沒有任何人看到我。這是好事吧？……是好事，對吧？",
   "shop.premium.perk.speed": "戰鬥3倍速",
   "shop.premium.recommended": "推薦",
-  "shop.premium.perk.archaeologyTicket": "每日採掘券{count}張 · 郵件發送",
+  "shop.premium.perk.archaeologyTicket": "每日採掘券{count}張",
   "shop.premium.fixedTerm": "有效{days}天",
   "shop.premium.expiresOn": "{date}到期",
   "shop.premium.noRenewal": "有效{days}天 · 不自動續訂",

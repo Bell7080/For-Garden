@@ -122,7 +122,7 @@ export const SHOP_JA = {
   "shop.premium.sticker.subscribed": "利用中",
   "shop.premium.perk.speed": "バトル3倍速",
   "shop.premium.recommended": "おすすめ",
-  "shop.premium.perk.archaeologyTicket": "毎日採掘券{count}枚 · メール配布",
+  "shop.premium.perk.archaeologyTicket": "毎日採掘券{count}枚",
   "shop.premium.fixedTerm": "{days}日間利用",
   "shop.premium.expiresOn": "{date}まで",
   "shop.premium.noRenewal": "{days}日間利用 · 自動更新なし",

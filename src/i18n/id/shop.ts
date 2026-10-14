@@ -121,7 +121,7 @@ export const SHOP_ID = {
   "mileage.clerk.yuti.4": "Hari ini tak ada yang melihatku. Itu hal bagus, kan? …Hal bagus, kan?",
   "shop.premium.perk.speed": "Kecepatan tempur 3×",
   "shop.premium.recommended": "Rekomendasi",
-  "shop.premium.perk.archaeologyTicket": "{count} tiket penggalian harian · Surat",
+  "shop.premium.perk.archaeologyTicket": "{count} tiket penggalian harian",
   "shop.premium.fixedTerm": "Akses {days} hari",
   "shop.premium.expiresOn": "Berakhir {date}",
   "shop.premium.noRenewal": "Akses {days} hari · Tanpa perpanjangan otomatis",

@@ -125,7 +125,7 @@ export const SHOP_KO = {
   "mileage.clerk.morphe.4": "표식은 다 달아 뒀어… 담당관이 걷지 않아도 되게. 이만하면 충분하지?",
   "shop.premium.perk.speed": "전투 3배속",
   "shop.premium.recommended": "추천",
-  "shop.premium.perk.archaeologyTicket": "매일 발굴권 {count}장 · 우편 지급",
+  "shop.premium.perk.archaeologyTicket": "매일 발굴권 {count}장 지급",
   "shop.premium.fixedTerm": "{days}일 이용",
   "shop.premium.expiresOn": "{date} 만료",
   "shop.premium.noRenewal": "{days}일간 이용 · 자동 갱신 없음",

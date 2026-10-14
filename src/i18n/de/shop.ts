@@ -121,7 +121,7 @@ export const SHOP_DE = {
   "mileage.clerk.yuti.4": "Heute hat mich niemand gesehen. Das ist doch gut, oder? … Das ist doch gut, oder?",
   "shop.premium.perk.speed": "3× Kampftempo",
   "shop.premium.recommended": "Empfohlen",
-  "shop.premium.perk.archaeologyTicket": "Täglich {count} Grabungsticket · Post",
+  "shop.premium.perk.archaeologyTicket": "Täglich {count} Grabungsticket",
   "shop.premium.fixedTerm": "{days} Tage gültig",
   "shop.premium.expiresOn": "Endet am {date}",
   "shop.premium.noRenewal": "{days} Tage gültig · Keine automatische Verlängerung",

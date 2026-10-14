@@ -121,7 +121,7 @@ export const SHOP_EN = {
   "mileage.clerk.yuti.4": "Nobody saw me today. That's a good thing, right? ...It's a good thing, right?",
   "shop.premium.perk.speed": "3× battle speed",
   "shop.premium.recommended": "Recommended",
-  "shop.premium.perk.archaeologyTicket": "Daily excavation ticket ×{count} · Mail",
+  "shop.premium.perk.archaeologyTicket": "Daily excavation ticket ×{count}",
   "shop.premium.fixedTerm": "{days}-day access",
   "shop.premium.expiresOn": "Expires {date}",
   "shop.premium.noRenewal": "{days}-day access · No automatic renewal",

@@ -5,7 +5,7 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { COLOR, textStyle } from "./theme";
 import type { UltimatePresentation } from "../data/ultimatePresentations";
-import { ultimateCutInDurations, type UltimatePresentationTiming } from "../core/battleControls";
+import { ULTIMATE_CUT_IN_MIN_VISIBLE_MS, ultimateCutInDurations, type UltimatePresentationTiming } from "../core/battleControls";
 import { CUT_IN_HALFTONE, CUT_IN_PORTRAIT_PUSH, CUT_IN_STREAKS, CUT_IN_SWEEP, CUT_IN_TITLE, CUT_IN_PUSH_ANGLE, cutInPushDirection } from "./ultimateCutInStyle";
 import { presentationPolicy } from "../core/settings";
 import { flashPolicy } from "./signatureEffects";
@@ -67,6 +67,9 @@ export class UltimateCutIn extends Phaser.GameObjects.Container {
   private readonly syncMasks: () => void;
   /** 판과 따로 제자리에서 옅어졌다 짙어지는 어둠. */
   private readonly dim: Phaser.GameObjects.Rectangle;
+  private readonly tapBlocker: Phaser.GameObjects.Rectangle;
+  private skipAllowedAt = Infinity;
+  private skipPressAllowed = false;
   private readonly halftone?: Phaser.GameObjects.TileSprite;
   private readonly streaks: Phaser.GameObjects.Graphics[] = [];
   private readonly sweep?: Phaser.GameObjects.Rectangle;
@@ -87,6 +90,19 @@ export class UltimateCutIn extends Phaser.GameObjects.Container {
 
     // 밝은 전장에서도 이름이 묻히지 않도록 화면 전체를 한 번 누른다 — 판과 따로 선다.
     this.dim = scene.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, 0x000000, CUT_IN.dimAlpha).setDepth(CUT_IN.depth - 1).setAlpha(0);
+    this.tapBlocker = scene.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, 0xffffff, 0)
+      .setDepth(CUT_IN.depth + 1).setVisible(false).setInteractive();
+    this.tapBlocker.on("pointerdown", (_pointer: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
+      event.stopPropagation();
+      this.skipPressAllowed = scene.time.now >= this.skipAllowedAt;
+    });
+    this.tapBlocker.on("pointerup", (_pointer: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
+      event.stopPropagation();
+      const allowed = this.skipPressAllowed && scene.time.now >= this.skipAllowedAt;
+      this.skipPressAllowed = false;
+      if (allowed) this.destroy();
+    });
+    this.tapBlocker.on("pointerout", () => { this.skipPressAllowed = false; });
 
     // 마스크와 유리면이 서로 어긋나지 않도록 한 순수 배치 결과를 함께 사용한다.
     const layout = ultimateCutInMaskLayout(BASE_WIDTH);
@@ -227,6 +243,9 @@ export class UltimateCutIn extends Phaser.GameObjects.Container {
     if (this.disposed) return;
     const [enterMs, holdMs, exitMs] = ultimateCutInDurations(this.presentation.cutInHoldMs, timing.skipLeadIn);
     if (enterMs + holdMs + exitMs === 0) return;
+    this.skipAllowedAt = this.scene.time.now + ULTIMATE_CUT_IN_MIN_VISIBLE_MS;
+    this.skipPressAllowed = false;
+    this.tapBlocker.setVisible(true);
     const flashes = flashPolicy(this.policy.reduceFlashes);
     // 섬광 감소에서는 투명→불투명 점멸 대신 화면 밖 이동만으로 진입을 알린다.
     this.setX(-BASE_WIDTH).setAlpha(flashes.fadeFromTransparent ? 0 : 1).setVisible(true);
@@ -332,6 +351,7 @@ export class UltimateCutIn extends Phaser.GameObjects.Container {
     // Scene 이벤트는 Container 파괴만으로 해제되지 않으므로 등록한 정확한 콜백을 먼저 제거한다.
     this.scene.events.off(Phaser.Scenes.Events.PRE_RENDER, this.syncMasks);
     this.dim.destroy();
+    this.tapBlocker.destroy();
     super.destroy(fromScene);
     // 마스크는 그것이 자르는 판과 같은 목숨을 산다 — 판이 먼저 죽은 뒤에 푼다.
     this.portraitMask.destroy();

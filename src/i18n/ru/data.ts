@@ -480,7 +480,7 @@ export default {
   "product.premium-monthly-heavy.name": "Ежемесячный большой пакет восстановления",
   "product.premium-hundred.name": "Пакет «Сто восстановлений»",
   "product.premium-research-grand.name": "Крупный пакет восстановления",
-  "product.premium-adfree.name": "Подписка «Без рекламы»",
+  "product.premium-adfree.name": "Членство для сосредоточенных исследований",
   "product.premium-story-pass.name": "Пропуск истории",
   "product.premium-level-pass.name": "Пропуск уровня",
   "product.premium-raid-pass.name": "Пропуск рейда",
@@ -6154,4 +6154,6 @@ export default {
   "story.yuti.q.yuti-title.like.note": "Когда ей сказали, что обращение нравится, ответила, что продолжит так говорить. Добавила, что ничего страшного, если голос затихает.",
   "story.yuti.q.yuti-title.like.reply": "Правда…? Тогда я буду так и говорить. Даже если голос затихает. «Босс» чуть легче, чем «Хозяин», и мне это нравится.",
   "story.yuti.q.yuti-title.prompt": "Почему Юти договаривает вполголоса, когда зовёт «Босс»?",
+  "product.premium-raid-pass.grant.2": "Билет рейда",
+
 };

@@ -92,7 +92,9 @@ export const ULTIMATE_MIN_DURATION_MS = 24;
  * 고르기(`BATTLE_OPENING_HOLD_MS`)와 같은 이유로 이 시간은 전투가 아니라 **보는 사람의 몫**이다.
  * 머무는 시간은 개체마다 다른 무게(`cutInHoldMs`)를 `holdScale`배로 늘리고 바닥을 깐다.
  */
-export const ULTIMATE_CUT_IN_TIMING = { enterMs: 300, holdBaseMs: 300, holdScale: 2, exitMs: 240 } as const;
+export const ULTIMATE_CUT_IN_TIMING = { enterMs: 260, holdBaseMs: 260, holdScale: 1.6, exitMs: 210 } as const;
+/** 원화와 스킬 이름이 모두 드러난 뒤에만 새 탭으로 컷인을 넘긴다. */
+export const ULTIMATE_CUT_IN_MIN_VISIBLE_MS = 650;
 export const ULTIMATE_RECOVERY_RATIO = 0.55;
 
 /**

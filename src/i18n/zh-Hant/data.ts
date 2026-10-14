@@ -480,7 +480,7 @@ export default {
   "product.premium-monthly-heavy.name": "每月復原大量禮包",
   "product.premium-hundred.name": "百次復原禮包",
   "product.premium-research-grand.name": "大規模復原禮包",
-  "product.premium-adfree.name": "免廣告會員",
+  "product.premium-adfree.name": "專注研究會員",
   "product.premium-story-pass.name": "劇情通行證",
   "product.premium-level-pass.name": "等級通行證",
   "product.premium-raid-pass.name": "討伐通行證",
@@ -6154,4 +6154,6 @@ export default {
   "story.yuti.q.yuti-title.like.note": "告訴她喜歡這個稱呼，她說會繼續用下去，還補充說話尾含糊也沒關係。",
   "story.yuti.q.yuti-title.like.reply": "真的嗎……？那我就繼續這麼叫。就算話尾含糊也一樣。“老大”比“主人”稍微輕鬆一點，我喜歡。",
   "story.yuti.q.yuti-title.prompt": "尤蒂為什麼叫“老大”的時候總是含糊其辭？",
+  "product.premium-raid-pass.grant.2": "討伐券",
+
 };

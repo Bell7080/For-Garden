@@ -480,7 +480,7 @@ export default {
   "product.premium-monthly-heavy.name": "แพ็กเกจฟื้นฟูจำนวนมากรายเดือน",
   "product.premium-hundred.name": "แพ็กเกจฟื้นฟูร้อยครั้ง",
   "product.premium-research-grand.name": "แพ็กเกจฟื้นฟูขนาดใหญ่",
-  "product.premium-adfree.name": "สมาชิกไม่มีโฆษณา",
+  "product.premium-adfree.name": "สมาชิกวิจัยมุ่งเน้น",
   "product.premium-story-pass.name": "สตอรี่พาส",
   "product.premium-level-pass.name": "เลเวลพาส",
   "product.premium-raid-pass.name": "เรดพาส",
@@ -6154,4 +6154,6 @@ export default {
   "story.yuti.q.yuti-title.like.note": "เมื่อบอกว่าชอบคำเรียกนั้น เธอตอบว่าจะใช้ต่อไป และเสริมว่าเสียงอ่อนตอนท้ายก็ไม่เป็นไร",
   "story.yuti.q.yuti-title.like.reply": "จริงเหรอ…? งั้นฉันจะใช้ต่อไป ถึงเสียงจะอ่อนตอนท้ายก็เถอะ คำว่าบอสเบากว่านายท่านนิดหน่อย ฉันเลยชอบ",
   "story.yuti.q.yuti-title.prompt": "ทำไมยูทิถึงพูดคำว่า「บอส」แล้วเสียงอ่อนลงตอนท้าย?",
+  "product.premium-raid-pass.grant.2": "ตั๋วเรด",
+
 };

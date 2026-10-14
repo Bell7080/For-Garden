@@ -480,7 +480,7 @@ export default {
   "product.premium-monthly-heavy.name": "Paquete mensual de restauración a granel",
   "product.premium-hundred.name": "Paquete de cien restauraciones",
   "product.premium-research-grand.name": "Paquete de restauración a gran escala",
-  "product.premium-adfree.name": "Membresía sin anuncios",
+  "product.premium-adfree.name": "Membresía de investigación enfocada",
   "product.premium-story-pass.name": "Pase de historia",
   "product.premium-level-pass.name": "Pase de nivel",
   "product.premium-raid-pass.name": "Pase de incursión",
@@ -6154,4 +6154,6 @@ export default {
   "story.yuti.q.yuti-title.like.note": "Al decirle que te gusta el tratamiento, respondió que seguirá usándolo. Añadió que no pasa nada si la voz se apaga al final.",
   "story.yuti.q.yuti-title.like.reply": "¿De verdad…? Entonces seguiré usándolo. Aunque se me apague la voz al final. «Jefe» es un poco más ligero que «Amo», y eso me gusta.",
   "story.yuti.q.yuti-title.prompt": "¿Por qué a Yuti se le apaga la voz al decir «Jefe»?",
+  "product.premium-raid-pass.grant.2": "Boleto de incursión",
+
 };

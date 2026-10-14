@@ -480,7 +480,7 @@ export default {
   "product.premium-monthly-heavy.name": "Pacote mensal de restauração em massa",
   "product.premium-hundred.name": "Pacote de cem restaurações",
   "product.premium-research-grand.name": "Pacote de restauração em larga escala",
-  "product.premium-adfree.name": "Assinatura sem anúncios",
+  "product.premium-adfree.name": "Clube de pesquisa focada",
   "product.premium-story-pass.name": "Passe de História",
   "product.premium-level-pass.name": "Passe de Nível",
   "product.premium-raid-pass.name": "Passe de Raide",
@@ -6154,4 +6154,6 @@ export default {
   "story.yuti.q.yuti-title.like.note": "Ao ouvir que gosta do tratamento, respondeu que vai continuar usando. Acrescentou que não tem problema a voz falhar no final.",
   "story.yuti.q.yuti-title.like.reply": "Sério…? Então vou continuar usando. Mesmo que a voz falhe no final. \"Chefe\" é um pouco mais leve que \"Mestre\", e eu gosto disso.",
   "story.yuti.q.yuti-title.prompt": "Por que a Yuti deixa a frase pela metade ao dizer \"Chefe\"?",
+  "product.premium-raid-pass.grant.2": "Bilhete de raide",
+
 };

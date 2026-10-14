@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { CUT_IN_HALFTONE, CUT_IN_STREAKS, CUT_IN_SWEEP, CUT_IN_TITLE, cutInPushDirection } from "../../src/ui/ultimateCutInStyle";
+import { ULTIMATE_CUT_IN_MIN_VISIBLE_MS, ULTIMATE_CUT_IN_TIMING } from "../../src/core/battleControls";
 
 describe("궁극기 컷인의 결", () => {
+  it("탭 스킵 보호는 스킬 이름의 펼침이 끝날 때까지 유지한다", () => {
+    const revealEndsAt = ULTIMATE_CUT_IN_TIMING.enterMs * 0.45 + CUT_IN_TITLE.wipe.skillDelay + CUT_IN_TITLE.wipe.ms;
+    expect(ULTIMATE_CUT_IN_MIN_VISIBLE_MS).toBeGreaterThanOrEqual(revealEndsAt);
+  });
   it("은 왼쪽 아래에서 오른쪽 위로 밀어 올린다", () => {
     const push = cutInPushDirection();
     expect(push.x).toBeGreaterThan(0);

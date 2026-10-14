@@ -480,7 +480,7 @@ export default {
   "product.premium-monthly-heavy.name": "Paket Restorasi Massal Bulanan",
   "product.premium-hundred.name": "Paket Seratus Restorasi",
   "product.premium-research-grand.name": "Paket Restorasi Besar",
-  "product.premium-adfree.name": "Keanggotaan Bebas Iklan",
+  "product.premium-adfree.name": "Keanggotaan Riset Fokus",
   "product.premium-story-pass.name": "Pass Cerita",
   "product.premium-level-pass.name": "Pass Level",
   "product.premium-raid-pass.name": "Pass Raid",
@@ -6154,4 +6154,6 @@ export default {
   "story.yuti.q.yuti-title.like.note": "Saat dikatakan kamu suka sebutan itu, ia menjawab akan terus memakainya. Ia menambahkan bahwa suara yang melemah di ujung tidak apa-apa.",
   "story.yuti.q.yuti-title.like.reply": "Sungguh…? Kalau begitu akan terus kupakai. Walau suaraku melemah di ujung. \"Bos\" sedikit lebih ringan daripada \"Tuan\", aku suka itu.",
   "story.yuti.q.yuti-title.prompt": "Kenapa Yuti melemahkan suaranya di ujung saat memanggil \"Bos\"?",
+  "product.premium-raid-pass.grant.2": "Tiket Raid",
+
 };

@@ -55,7 +55,7 @@ export function premiumGrantTiles(product: Pick<ProductDto, "grants" | "passBene
   // 상품에는 즉시 구성품만 세운다. 진행 마디의 합계는 패스 화면에서 확인한다.
   const pass = product.id === undefined ? undefined : progressPassForProduct(product.id);
   const tiles: PremiumGrantTile[] = productGrantsToRewardItems(product.grants).flatMap((item) =>
-    typeof item.icon === "string" ? [{ icon: item.icon, amount: item.amount, ...(pass ? { badge: "instant" as const } : {}) }] : []);
+    typeof item.icon === "string" ? [{ icon: item.icon, amount: item.amount, ...(pass && !product.passBenefit ? { badge: "instant" as const } : {}) }] : []);
   const daily = product.passBenefit?.dailyBonus;
   if (daily && "currency" in daily) tiles.push(...currencyRecordToRewardItems({ [daily.currency]: daily.amount }).map((item) => ({ icon: item.icon as string, amount: item.amount, daily: true })));
   if (daily && "itemId" in daily) tiles.push(...grantTiles([{ kind: "item", itemId: daily.itemId, name: daily.itemId, amount: daily.amount }]).map((tile) => ({ ...tile, daily: true })));

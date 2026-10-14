@@ -484,7 +484,7 @@ export default {
   "product.premium-monthly-heavy.name": "Monthly Restoration Bulk Package",
   "product.premium-hundred.name": "Hundred Restorations Package",
   "product.premium-research-grand.name": "Grand Restoration Package",
-  "product.premium-adfree.name": "Ad-Free Membership",
+  "product.premium-adfree.name": "Focused Research Membership",
   "product.premium-story-pass.name": "Story Pass",
   "product.premium-level-pass.name": "Level Pass",
   "product.premium-raid-pass.name": "Raid Pass",
@@ -6179,4 +6179,6 @@ export default {
   "story.yuti.q.yuti-title.like.note": "Told the title suits her, she said she would keep using it. She added that trailing off is fine.",
   "story.yuti.q.yuti-title.like.reply": "Really…? Then I'll keep using it. Even if my voice trails off. \"Boss\" is a little lighter than \"Master,\" and I like that.",
   "story.yuti.q.yuti-title.prompt": "Why does Yuti trail off when she says \"Boss\"?",
+  "product.premium-raid-pass.grant.2": "Raid Ticket",
+
 };

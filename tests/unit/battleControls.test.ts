@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import {
   BATTLE_OPENING_HOLD_MS, MEMBER_BATTLE_SPEED_GATE_ENABLED, availableBattleSpeeds, battleFightStartsAt, battleSpeedTier, nextBattleSpeed, usableBattleSpeed, ultimateCutInDurations, scaleUltimateDuration, shouldWaitForUltimatePresentation, ultimatePresentationTiming,
-  ULTIMATE_CUT_IN_TIMING, ULTIMATE_MIN_DURATION_MS, ULTIMATE_RECOVERY_RATIO,
+  ULTIMATE_CUT_IN_MIN_VISIBLE_MS, ULTIMATE_CUT_IN_TIMING, ULTIMATE_MIN_DURATION_MS, ULTIMATE_RECOVERY_RATIO,
 } from "../../src/core/battleControls";
 
 /** 배속 버튼이 허용된 세 단계 밖으로 벗어나지 않는지 검증한다. */
@@ -69,8 +69,10 @@ describe("궁극기 연출 시간축", () => {
     const durations = ultimateCutInDurations(150, false);
     // 배속을 인자로 받지 않는다 — 1배속이든 3배속이든 같은 시간이 읽힌다.
     expect(durations).toEqual([ULTIMATE_CUT_IN_TIMING.enterMs, ULTIMATE_CUT_IN_TIMING.holdBaseMs + 150 * ULTIMATE_CUT_IN_TIMING.holdScale, ULTIMATE_CUT_IN_TIMING.exitMs]);
-    expect(durations.reduce((sum, duration) => sum + duration, 0)).toBeGreaterThanOrEqual(1000);
+    expect(durations.reduce((sum, duration) => sum + duration, 0)).toBeGreaterThanOrEqual(900);
     expect(ultimateCutInDurations(150, true)).toEqual([0, 0, 0]);
+    expect(durations.reduce((sum, duration) => sum + duration, 0)).toBeLessThan(1140);
+    expect(ULTIMATE_CUT_IN_MIN_VISIBLE_MS).toBeLessThan(durations[0] + durations[1]);
   });
 
   it("결정타는 공격 모션과 확대 복귀를 종료 대기 조건으로 삼지 않는다", () => {

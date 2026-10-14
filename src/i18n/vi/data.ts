@@ -480,7 +480,7 @@ export default {
   "product.premium-monthly-heavy.name": "Gói Phục hồi số lượng lớn hằng tháng",
   "product.premium-hundred.name": "Gói Một trăm lần phục hồi",
   "product.premium-research-grand.name": "Gói Phục hồi quy mô lớn",
-  "product.premium-adfree.name": "Hội viên xóa quảng cáo",
+  "product.premium-adfree.name": "Hội viên nghiên cứu tập trung",
   "product.premium-story-pass.name": "Thẻ Cốt truyện",
   "product.premium-level-pass.name": "Thẻ Cấp độ",
   "product.premium-raid-pass.name": "Thẻ Raid",
@@ -6154,4 +6154,6 @@ export default {
   "story.yuti.q.yuti-title.like.note": "Khi nói thích cách gọi đó, cô đáp sẽ tiếp tục dùng. Cô nói thêm rằng bỏ lửng cuối câu cũng không sao.",
   "story.yuti.q.yuti-title.like.reply": "Thật ạ…? Vậy em sẽ tiếp tục dùng. Dù cuối câu có bỏ lửng đi nữa. Đại ca nghe nhẹ nhàng hơn Chủ nhân một chút, em thích vậy.",
   "story.yuti.q.yuti-title.prompt": "Sao Yuti lại bỏ lửng cuối câu mỗi khi gọi 「Đại ca」?",
+  "product.premium-raid-pass.grant.2": "Vé đột kích",
+
 };

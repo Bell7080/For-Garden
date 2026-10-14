@@ -49,6 +49,8 @@ import { pressIn, pressOut } from "../ui/pressFeedback";
 import { addClippedHit } from "../ui/clippedHit";
 import { UI_ICON } from "../ui/icons";
 import { addRewardExpiryTag } from "../ui/rewardExpiry";
+import { wrapDialogueText } from "../core/dialogueTextWrap";
+import { settingsManager } from "../managers/SettingsManager";
 
 /**
  * 현금 결제 카탈로그를 인게임 재화 상점과 분리해 소유하는 독립 프리미엄 씬이다.
@@ -394,13 +396,19 @@ export class PremiumScene extends Phaser.Scene {
   /** 보상 양옆에 광고 금지와 3배속을 크게 세워 멤버십의 실제 혜택을 먼저 읽게 한다. */
   private addMembershipBenefits(card: Phaser.GameObjects.Container, width: number): void {
     const x = width / 2 - 148;
+    const adShadow = this.add.image(-x + 4, -12, UI_ICON.ad).setDisplaySize(86, 86).setTint(0x04060a).setAlpha(0.9);
     const ad = this.add.image(-x, -18, UI_ICON.ad).setDisplaySize(86, 86);
+    const prohibitionShadow = this.add.graphics({ x: 4, y: 6 }).lineStyle(11, 0x04060a, 0.9);
+    prohibitionShadow.strokeCircle(-x, -18, 47);
+    prohibitionShadow.lineBetween(-x - 34, -52, -x + 34, 16);
     const prohibition = this.add.graphics().lineStyle(8, 0xf0846c, 1);
     prohibition.strokeCircle(-x, -18, 47);
     prohibition.lineBetween(-x - 34, -52, -x + 34, 16);
-    const speed = this.add.text(x, -18, "3x▶", textStyle({ role: "display", size: 48, color: COLOR.accentText })).setOrigin(0.5).setStroke("#05070a", 5);
-    const label = this.add.text(x, 47, t("shop.premium.perk.speed"), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0.5);
-    card.add([ad, prohibition, speed, squeezeTextToWidth(label, 216, 0.65)]);
+    const speed = this.add.text(x, -18, "3x▶", textStyle({ role: "display", size: 48, color: COLOR.accentText })).setOrigin(0.5).setStroke("#05070a", 7).setShadow(4, 6, "#04060a", 3, true, true);
+    const label = this.add.text(x, 54, t("shop.premium.perk.speed"), textStyle({ role: "display", size: 26, color: COLOR.accentText, align: "center" })).setOrigin(0.5).setStroke("#04060a", 5).setShadow(3, 4, "#04060a", 2, true, true);
+    label.setWordWrapCallback((text: string, object: Phaser.GameObjects.Text) => wrapDialogueText(text, object.style.wordWrapWidth ?? 216,
+      (value) => object.context.measureText(value).width, settingsManager.get().game.language));
+    card.add([adShadow, ad, prohibitionShadow, prohibition, speed, fitTextToBox(label, { width: 216, height: 54 }, { size: 26, minSize: 18 })]);
   }
 
   /** 값 줄 왼쪽에 또렷한 글씨로 서는 혜택 레이어. 갱신 주기 같은 작은 글 위에 따로 얹는다. */

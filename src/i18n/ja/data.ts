@@ -649,7 +649,7 @@ export default {
   "product.premium-monthly-heavy.name": "月間復元大量パッケージ",
   "product.premium-hundred.name": "百回の復元パッケージ",
   "product.premium-research-grand.name": "大規模復元パッケージ",
-  "product.premium-adfree.name": "広告削除メンバーシップ",
+  "product.premium-adfree.name": "集中研究メンバーシップ",
   "product.premium-story-pass.name": "ストーリーパス",
   "product.premium-level-pass.name": "レベルパス",
   "product.premium-raid-pass.name": "レイドパス",
@@ -6192,4 +6192,6 @@ export default {
   "story.yuti.q.yuti-title.like.note": "その呼び方が気に入っていると伝えると、使い続けると答えた。語尾が濁ってもいい、と付け加えた。",
   "story.yuti.q.yuti-title.like.reply": "本当ですか……？ それなら、これからも使います。語尾が濁っても。ボスって、マスターより少し軽くて好きなんです。",
   "story.yuti.q.yuti-title.prompt": "ユティはどうして「ボス」と呼ぶとき語尾を濁すの？",
+  "product.premium-raid-pass.grant.2": "討伐券",
+
 };

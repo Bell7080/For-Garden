@@ -480,7 +480,7 @@ export default {
   "product.premium-monthly-heavy.name": "Monatliches Restaurierungs-Großpaket",
   "product.premium-hundred.name": "Hundert-Restaurierungen-Paket",
   "product.premium-research-grand.name": "Großes Restaurierungspaket",
-  "product.premium-adfree.name": "Werbefreie Mitgliedschaft",
+  "product.premium-adfree.name": "Fokus-Forschungsmitgliedschaft",
   "product.premium-story-pass.name": "Story-Pass",
   "product.premium-level-pass.name": "Level-Pass",
   "product.premium-raid-pass.name": "Raid-Pass",
@@ -6154,4 +6154,6 @@ export default {
   "story.yuti.q.yuti-title.like.note": "Als man ihr sagte, dass die Anrede gefällt, antwortete sie, sie werde sie weiter benutzen. Sie fügte hinzu, dass es nichts mache, wenn die Stimme verklingt.",
   "story.yuti.q.yuti-title.like.reply": "Wirklich…? Dann benutze ich sie weiter. Auch wenn meine Stimme am Ende verklingt. „Boss“ ist ein bisschen leichter als „Meister“, das gefällt mir.",
   "story.yuti.q.yuti-title.prompt": "Warum lässt Yuti beim Wort „Boss“ die Stimme verklingen?",
+  "product.premium-raid-pass.grant.2": "Raid-Ticket",
+
 };

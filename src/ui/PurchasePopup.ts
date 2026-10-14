@@ -43,7 +43,7 @@ import { PURCHASE_THEME_STYLE } from "./purchaseThemeStyle";
 import { PURCHASE_FRAME, PURCHASE_ITEM_GLOW, purchaseFrameSlots } from "./purchaseFrameLayout";
 import { addSubscriptionNoticeChip, openSubscriptionNoticePopup, subscriptionNoticeLine } from "./SubscriptionNoticePopup";
 import { SUBSCRIPTION_NOTICE } from "./subscriptionNoticeLayout";
-import { squeezeTextToWidth } from "./textFit";
+import { fitTextToBox, squeezeTextToWidth } from "./textFit";
 
 /**
  * 패키지 확인판의 자리.
@@ -307,7 +307,9 @@ export class PurchasePopup {
     const slots = purchaseFrameSlots(tiles.length);
     this.addDisplayPanel(view, P.height, P.frameY, P.frameY + slots.size / 2, { width: P.width, accent: style.accent, panelWidth: P.inner, panelHeight: slots.size + 70 });
     this.addItemGlow(view, P.frameY, style.light);
-    view.add(this.scene.add.text(0, P.nameY, product.name, textStyle({ role: "display", size: 44 })).setOrigin(0.5).setStroke("#000000", 7));
+    const name = this.scene.add.text(0, P.nameY, product.name, textStyle({ role: "display", size: 44 })).setOrigin(0.5).setStroke("#000000", 7);
+    name.setWordWrapCallback((text: string) => [text]);
+    view.add(fitTextToBox(name, { width: P.width - 112, height: 70 }, { size: 44, minSize: 26 }));
     tiles.forEach((tile, index) => {
       const frame = addFramedIcon(this.scene, view, slots.xs[index], P.frameY, slots.size, tile.icon, { amount: formatCurrency(tile.amount), amountRatio: 0.3, plain: true });
       addRewardExpiryTag(this.scene, frame, slots.size, tile);
@@ -315,7 +317,10 @@ export class PurchasePopup {
     });
     const bonus = premiumFirstBonusGems(product);
     const extras = [...(bonus > 0 ? [t("shop.premium.firstBonus", { amount: formatCurrency(bonus) })] : []), ...premiumDecorationNames(product), ...(product.passBenefit?.adFree ? [t("shop.premium.perk.adRemoval")] : [])];
-    if (extras.length) view.add(this.scene.add.text(0, P.bonusY, extras.join("  ·  "), textStyle({ role: "display", size: 28, color: accent, align: "center", wrap: 800 })).setOrigin(0.5).setStroke("#000000", 5));
+    if (extras.length) {
+      const extra = this.scene.add.text(0, P.bonusY, extras.join("  ·  "), textStyle({ role: "display", size: 28, color: accent, align: "center" })).setOrigin(0.5).setStroke("#000000", 5);
+      view.add(fitTextToBox(extra, { width: 800, height: 56 }, { size: 28, minSize: 20 }));
+    }
     addPremiumValueBadges(this.scene, view, product, P.width / 2 - 56, P.badgeTop);
     // 기간제 정기권은 자동 결제·해지 안내를 값 버튼 위에 한 줄로 세우고, 자세한 내용은 ⓘ가 연다.
     const periodDays = product.passBenefit?.durationDays;

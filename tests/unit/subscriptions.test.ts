@@ -37,7 +37,7 @@ describe("구독 상품과 일일 우편", () => {
     for (const id of ["premium-story-pass", "premium-level-pass", "premium-raid-pass", "premium-archaeology-pass"]) {
       const tiles = premiumGrantTiles(product(id));
       expect(tiles.some((tile) => tile.badge === "pass")).toBe(false);
-      expect(tiles.filter((tile) => tile.badge === "instant")).toHaveLength(3);
+      expect(tiles.filter((tile) => tile.badge === "instant")).toHaveLength(product(id).passBenefit ? 0 : 3);
       expect(tiles.length).toBeLessThanOrEqual(4);
     }
   });

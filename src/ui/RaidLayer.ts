@@ -176,7 +176,7 @@ export function addRaidLayer(
   layer.add(shadowed(scene.add
     .text(barWidth / 2, height / 2 - hp.labelUp, t("raid.world.percent", { percent }), textStyle({ role: "display", size: 30, color: COLOR.ink }))
     .setOrigin(1, 0.5), 6));
-  if (completed && raid.settlement.length > 0 && !raid.settled && handlers.onSettle) addSettleCover(scene, layer, shape, width - slant, height, settle, handlers.onSettle);
+  if (completed && !raid.pendingRequestId && raid.settlement.length > 0 && !raid.settled && handlers.onSettle) addSettleCover(scene, layer, shape, width - slant, height, settle, handlers.onSettle);
   return layer;
 }
 

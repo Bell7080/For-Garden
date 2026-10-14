@@ -9,6 +9,7 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { chipPoints, drawHairline, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
 import { drawGlyph } from "./glyphs";
 import { addFramedIcon } from "./itemFrame";
+import { addRewardExpiryTag } from "./rewardExpiry";
 import type { RewardPopupItem } from "./rewardPopupModel";
 import { Button, DESTRUCTIVE_BUTTON_STYLE } from "./Button";
 import type { PopupLayer } from "./PopupLayer";
@@ -464,6 +465,7 @@ export class StageCompletePopup {
       const holder = addFramedIcon(this.scene, body, x, rowY, REWARD_ROW.frame, typeof item.icon === "string" ? item.icon : "", {
         amount: formatCurrency(item.amount),
       });
+      addRewardExpiryTag(this.scene, holder, REWARD_ROW.frame, item);
       // 계정 장식처럼 전용 텍스처가 없는 결과만 기존 홀로그램 글리프 체계로 대신한다.
       if (typeof item.icon !== "string") holder.addAt(drawGlyph(this.scene, item.icon.key, 0, 0, REWARD_ROW.frame * 0.56, COLOR.accent), 1);
       if (item.label) body.add(this.scene.add.text(x, rowY + REWARD_ROW.frame / 2 + 26, item.label, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));

@@ -10,6 +10,9 @@ import { DIALOGUE_OVERSCAN, DIALOGUE_PANEL_TOP } from "./dialogueStageLayout";
 import { drawGlassFade, drawHairline } from "./holo";
 import { addSectionTitle } from "./SectionTitle";
 import { COLOR, textStyle } from "./theme";
+import { wrapDialogueText } from "../core/dialogueTextWrap";
+import { fitTextToBox } from "./textFit";
+import { activeFontFamily } from "./fonts";
 
 const PANEL_TOP = DIALOGUE_PANEL_TOP;
 
@@ -21,7 +24,7 @@ const PANEL_TOP = DIALOGUE_PANEL_TOP;
  * 같은 빗금으로 서므로, 짧은 한마디든 긴 이야기든 "누가 말하는가"가 한 양식으로 읽힌다.
  * 이름과 본문을 가르던 자리도 그 선 하나가 대신해 본문이 한 줄만큼 위로 올라온다.
  */
-const PANEL_TEXT = { nameX: 82, bodyX: 92, bodyY: PANEL_TOP + 74, nameSize: 34 } as const;
+const PANEL_TEXT = { nameX: 82, bodyX: 92, bodyY: PANEL_TOP + 74, nameSize: 34, bodySize: 38 } as const;
 
 /** 1080×1920 안전 영역 안에서 모든 스토리가 공유하는 대사/선택/스탠딩 표시다. */
 export class DialogueLayer extends Phaser.GameObjects.Container {
@@ -70,7 +73,9 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
       if (this.isTyping) { this.finishTyping(); return; }
       this.onAdvance();
     });
-    this.bodyText = scene.add.text(PANEL_TEXT.bodyX, PANEL_TEXT.bodyY, "", textStyle({ role: "body", size: 36, wrap: BASE_WIDTH - 184, lineSpacing: DIALOGUE_BUBBLE.lineSpacing + 6 }));
+    this.bodyText = scene.add.text(PANEL_TEXT.bodyX, PANEL_TEXT.bodyY, "", textStyle({ role: "body", size: PANEL_TEXT.bodySize, wrap: BASE_WIDTH - 184, lineSpacing: DIALOGUE_BUBBLE.lineSpacing + 6 }));
+    this.bodyText.setWordWrapCallback((text: string, object: Phaser.GameObjects.Text) => wrapDialogueText(text, object.style.wordWrapWidth ?? BASE_WIDTH - 184,
+      (value) => object.context.measureText(value).width, settingsManager.get().game.language));
     this.nextMark = scene.add.text(BASE_WIDTH - 100, PANEL_TOP + 464, "▼", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5);
     this.add([glass, topLine, blocker, this.bodyText, this.nextMark]);
     this.setDepth(600);
@@ -119,6 +124,9 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
     const characters = Array.from(body);
     const timing = this.playbackClock.timingFor(body);
     this.fullBody = body;
+    // 전체 문장으로 먼저 맞춰 타이핑 도중 글자 크기가 흔들리지 않게 한다.
+    this.bodyText.setFontFamily(activeFontFamily()).setText(body);
+    fitTextToBox(this.bodyText, { width: BASE_WIDTH - 184, height: 350 }, { size: PANEL_TEXT.bodySize, minSize: 26, step: 1 });
     this.bodyText.setText("");
     this.nextMark.setVisible(false);
     this.isTyping = characters.length > 0;

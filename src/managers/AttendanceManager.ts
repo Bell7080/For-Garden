@@ -7,6 +7,7 @@ import type { AttendanceTrackId } from "../core/attendance";
 import { session, type Session } from "../state/session";
 import { managerEvents, type ManagerEvents } from "./ManagerEvents";
 import { notificationManager } from "./NotificationManager";
+import { InventoryManager } from "./InventoryManager";
 
 /**
  * 출석의 서버 경계와 지급 결과의 로컬 반영을 한곳에서 소유한다(우편의 `MailManager`와 같은 규칙).
@@ -37,12 +38,7 @@ export class AttendanceManager {
   }
 
   private apply(result: ClaimAttendanceResponse): ClaimAttendanceResponse {
-    this.state.wallet = { ...result.wallet };
-    this.state.itemInventory = result.items
-      .filter(({ category }) => category === "consumable" || category === "material")
-      .map(({ definitionId, quantity, lots }) => ({ itemId: definitionId, quantity, ...(lots ? { lots: lots.map((lot) => ({ ...lot })) } : {}) }));
-    this.events.publish("wallet", { wallet: this.state.wallet });
-    this.events.publishInventory();
+    new InventoryManager(this.state, this.events).applySnapshot(result.items, result.wallet);
     void notificationManager.refresh().catch(() => undefined);
     return result;
   }

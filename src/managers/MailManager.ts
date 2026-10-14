@@ -1,6 +1,7 @@
 import type { ClaimMailRewardsResponse, GameApi, MailDto, MailListResponse } from "../api/contracts";
 import type { Session } from "../state/session";
 import { managerEvents, type ManagerEvents } from "./ManagerEvents";
+import { InventoryManager } from "./InventoryManager";
 
 /** 우편 API의 신뢰 경계와 지급 결과의 로컬 반영을 한곳에서 소유한다. */
 export class MailManager {
@@ -19,10 +20,9 @@ export class MailManager {
   async claim(mailIds: readonly string[], requestId: string = crypto.randomUUID()): Promise<ClaimMailRewardsResponse> {
     const result = await this.api.claimMailRewards({ requestId, mailIds: [...new Set(mailIds)] }); this.assertList(result);
     // 서버 확정 스냅샷만 반영하며 UI가 보상 합계를 직접 더하지 않는다.
-    this.state.wallet = { ...result.wallet };
-    this.state.itemInventory = result.items.filter(({ category }) => category === "consumable" || category === "material").map(({ definitionId, quantity, lots }) => ({ itemId: definitionId, quantity, ...(lots ? { lots: lots.map((lot) => ({ ...lot })) } : {}) }));
+    new InventoryManager(this.state, this.events).applySnapshot(result.items, result.wallet);
     // 한 확정 영수증에서 지갑·가방·우편·알림을 동기 발행해 후속 API 조회로 시점이 갈리지 않게 한다.
-    this.events.publish("wallet", { wallet: this.state.wallet }); this.events.publishInventory(); this.publishMail(result);
+    this.publishMail(result);
     return structuredClone(result);
   }
 

@@ -233,6 +233,7 @@ describe("FakeServer", () => {
     const manager = new (await import("../../src/managers/ExpeditionManager")).ExpeditionManager(state, { save: () => undefined }, () => new Date("2026-08-25T12:00:00Z"));
     manager.start(["torika", "rex", "dodo"]);
     const originalRun = state.expedition.run;
+    originalRun!.currentNodeId = originalRun!.nodes.find(({ type }) => type === "boss")!.predecessorIds[0];
     const originalRunSnapshot = structuredClone(originalRun);
     const originalAllTimeBestScore = state.expedition.allTimeBestScore;
     let fail = true;
@@ -982,6 +983,8 @@ describe("FakeServer 원정 정산", () => {
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0.5, now: () => now });
     const runId = state.expedition.run!.runId;
     const bossNode = state.expedition.run!.nodes.find(({ type }) => type === "boss")!;
+    // 보스 제출 경계만 검증하므로 서버 저장을 19층 도달 상태로 준비한다.
+    state.expedition.run!.currentNodeId = bossNode.predecessorIds[0];
     state.expedition.run!.bossSubmissionId = `${runId}:${bossNode.id}:weekly-boss-once`;
     const actions = Array.from({ length: 5 }, (_, index) => ["torika", "rex", "dodo"].map((actorId) => (
       { elapsedMs: index * 2_000, actorId, kind: "basic" as const }
@@ -1058,6 +1061,8 @@ describe("FakeServer 원정 정산", () => {
     const normalNode = state.expedition.run!.nodes.find(({ floor }) => floor === 1)!;
     await server.completeExpeditionNode({ requestId: "before-boss", runId, nodeId: normalNode.id, relicHp: [100, 90, 80] });
     const bossNode = state.expedition.run!.nodes.find(({ type }) => type === "boss")!;
+    // 보스 제출 경계만 검증하므로 서버 저장을 19층 도달 상태로 준비한다.
+    state.expedition.run!.currentNodeId = bossNode.predecessorIds[0];
     state.expedition.run!.bossSubmissionId = `${runId}:${bossNode.id}:boss-score`;
     // 실제 피해량 없이 각 렐릭의 공용 공속 쿨다운을 만족하는 기본 공격 입력이다.
     const bossActions = Array.from({ length: 5 }, (_, index) => ["torika", "rex", "dodo"].map((actorId) => ({ elapsedMs: index * 2_000, actorId, kind: "basic" as const }))).flat();
@@ -1079,7 +1084,10 @@ describe("FakeServer 원정 정산", () => {
     const state = makeSession();
     const manager = new (await import("../../src/managers/ExpeditionManager")).ExpeditionManager(state, { save: () => undefined }, () => new Date("2026-08-25T12:00:00Z"));
     manager.start(["torika", "rex", "dodo"]); state.expedition.run!.runScore = 88_000; state.expedition.run!.normalNodeScoreTotal = 88_000; state.expedition.run!.bestScore = 88_000; state.expedition.bestScore = 12_000;
-    const server = new FakeServer(state, { latencyMs: 0 });
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
+    const boss = state.expedition.run!.nodes.find(({ type }) => type === "boss")!;
+    state.expedition.run!.currentNodeId = boss.predecessorIds[0];
+    await server.submitExpeditionBossScore({ requestId: "verified-boss", runId: state.expedition.run!.runId, nodeId: boss.id, actions: [] });
 
     await server.settleExpeditionRun({ runId: state.expedition.run!.runId, settlementId: "boss-complete", outcome: "completed" });
     expect(state.expedition.bestScore).toBe(88_000);

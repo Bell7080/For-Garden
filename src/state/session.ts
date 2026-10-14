@@ -3,6 +3,7 @@
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import type { DuelState } from "../core/duelState";
 import { createEmptyAttendanceState, type AttendanceState } from "../core/attendance";
+import { emptyServerJournal, type ServerJournal } from "../core/serverJournal";
 import { createEmptyRaidTicketDropState, type RaidTicketDropState } from "../core/raidTicketDrops";
 import type { RaidDifficulty } from "../data/raid";
 import type { GachaPityState, Wallet } from "../core/gacha";
@@ -207,6 +208,7 @@ export interface Session {
   attendance?: AttendanceState;
   /** 오늘 떨어진 토벌권 수(`core/raidTicketDrops.ts`). 선택 필드다. */
   raidTicketDrops?: RaidTicketDropState;
+  serverJournal?: ServerJournal;
 }
 
 /** 진행 패스의 저장 모양. 받은 마디는 패스마다 문턱값 목록이다. */
@@ -331,6 +333,8 @@ export interface ExpeditionState {
   claimedRewardStageIds: string[];
   /** 지난주 기록이 받을 순위 보상. 우편으로 받으면 비워진다(`rollExpeditionPeriods`). */
   pendingRankReward: { weekKey: string; score: number; achievedAt: string } | null;
+  /** 미수령 보상이 여러 주 쌓이면 첫 보상 뒤의 대기를 보존한다. */
+  pendingRankRewards?: { weekKey: string; score: number; achievedAt: string }[];
   /** 주간과 무관하게 지금까지 달성한 가장 높은 점수다. 소탕이 이 값의 비율만 참조한다. */
   allTimeBestScore: number;
   /** 마지막으로 성공 출발한 원정 전용 편성이다. 스토리 파티·발굴 배치와 서로 덮어쓰지 않는다. */
@@ -440,6 +444,7 @@ export interface SaveData {
   claimedMailIds: string[];
   attendance: AttendanceState;
   raidTicketDrops: RaidTicketDropState;
+  serverJournal?: ServerJournal;
   settings: GameSettings;
   completedStoryIds: string[];
   observationRecords: ObservationRecord[];
@@ -573,6 +578,7 @@ export function createDefaultSession(): Session {
     // 부트가 세션을 통째로 갈아 끼울 때(`replaceSession`) 지난 계정의 값이 남지 않게 빈 값을 명시한다.
     claimedMailIds: [],
     attendance: createEmptyAttendanceState(),
+    serverJournal: emptyServerJournal(),
     raidTicketDrops: createEmptyRaidTicketDropState(),
   };
 }

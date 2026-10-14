@@ -9,7 +9,8 @@ import { BREAKTHROUGH_CAP } from "../core/relicProgression";
 import type { RelicProgress } from "../core/types";
 import { normalizePlayerCard } from "../core/playerCard";
 import { normalizePlayerLevel } from "../core/playerLevel";
-import { isValidLotStack } from "../core/itemLots";
+import { isValidLotStack, repairLegacyLotStacks } from "../core/itemLots";
+import { emptyServerJournal, isValidServerJournal } from "../core/serverJournal";
 import { normalizeExpeditionState } from "../core/expeditionPeriods";
 import { maxResearchPoints } from "../core/missions";
 import { createDefaultSession, createEmptyInteractionProgress, createEmptyProgressPassState, createInitialPlayerResearchProgress, type RaidInstanceState, type RaidState, type SaveData, type Session } from "./session";
@@ -50,7 +51,7 @@ function migrateV12Rune(definitionId: string): RuneInstance {
 
 /** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
 export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 49;
+export const CURRENT_SAVE_VERSION = 50;
 
 /**
  * 연구도는 기간마다 상한이 다르다(일일 100 · 주간 500). 상한이 120 하나이던 때의 저장은 일일
@@ -331,6 +332,7 @@ export class SaveManager {
       claimedMailIds: [...new Set(state.claimedMailIds ?? [])],
       attendance: cloneAttendanceState(state.attendance ?? createEmptyAttendanceState()),
       raidTicketDrops: { ...(state.raidTicketDrops ?? createEmptyRaidTicketDropState()) },
+      serverJournal: structuredClone(state.serverJournal ?? emptyServerJournal()),
     };
     this.validate(data);
     return data;
@@ -573,11 +575,11 @@ export class SaveManager {
     // v20 이전에는 중첩 가방이 없었다. 지갑과 룬은 기존 단일 기준에 남겨 빈 스택만 보충한다.
     // 재료 칸에 있던 토벌 증표는 위에서 지갑으로 옮겼으므로 여기서 걷어 낸다 — 남겨 두면
     // 같은 증표가 가방과 지갑 두 곳에 서고, 검증이 "재화는 가방에 없다"로 저장을 되돌린다.
-    const itemInventory = (Array.isArray(legacy.itemInventory) ? legacy.itemInventory : [])
-      .filter((stack: { itemId?: unknown }) => stack?.itemId !== "raid-sigil");
+    const itemInventory = repairLegacyLotStacks((Array.isArray(legacy.itemInventory) ? legacy.itemInventory : [])
+      .filter((stack: { itemId?: unknown }) => stack?.itemId !== "raid-sigil"));
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
     if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel, claimedMailIds, attendance, raidTicketDrops } as unknown as SaveData;
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, CURRENT_SAVE_VERSION];
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
     return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel, claimedMailIds, attendance, raidTicketDrops } as unknown as SaveData;
   }
@@ -663,6 +665,10 @@ export class SaveManager {
     if (!Array.isArray(data.claimedMailIds) || data.claimedMailIds.some((id) => typeof id !== "string") || new Set(data.claimedMailIds).size !== data.claimedMailIds.length) fail("우편 수령 정보가 올바르지 않습니다.");
     if (!isValidAttendanceState(data.attendance)) fail("출석 정보가 올바르지 않습니다.");
     if (!isValidRaidTicketDropState(data.raidTicketDrops)) fail("토벌권 획득 정보가 올바르지 않습니다.");
+    if (data.serverJournal !== undefined && !isValidServerJournal(data.serverJournal)) fail("서버 처리 영수증이 올바르지 않습니다.");
+    if (data.expedition.pendingRankRewards !== undefined && (!Array.isArray(data.expedition.pendingRankRewards)
+      || data.expedition.pendingRankRewards.some((reward) => !reward || typeof reward.weekKey !== "string" || !Number.isInteger(reward.score) || reward.score <= 0 || typeof reward.achievedAt !== "string")
+      || new Set([data.expedition.pendingRankReward, ...data.expedition.pendingRankRewards].filter(Boolean).map((reward) => reward!.weekKey)).size !== data.expedition.pendingRankRewards.length + (data.expedition.pendingRankReward ? 1 : 0))) fail("원정 주간 보상 대기가 올바르지 않습니다.");
   }
 
   /** 받은 마디는 그 패스의 실제 문턱값만, 한 번씩만 허용한다. 레이드 입장 수는 0 이상의 정수다. */
@@ -733,6 +739,7 @@ export class SaveManager {
       duel: cloneDuelState(data.duel),
       claimedMailIds: [...data.claimedMailIds],
       attendance: cloneAttendanceState(data.attendance),
+      serverJournal: structuredClone(data.serverJournal ?? emptyServerJournal()),
       raidTicketDrops: { ...data.raidTicketDrops },
     };
   }

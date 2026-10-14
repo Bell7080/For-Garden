@@ -86,7 +86,7 @@ export class InventoryManager {
   }
 
   /** 전체 DTO를 먼저 검증·정규화하고 모두 성공한 뒤에만 Session 세 영역을 함께 교체한다. */
-  private applySnapshot(items: readonly InventoryItemDto[], expectedWallet?: Wallet): void {
+  applySnapshot(items: readonly InventoryItemDto[], expectedWallet?: Wallet): void {
     const ids = new Set<string>();
     const wallet = {} as Wallet;
     const walletKeys = new Set<WalletItemKey>();

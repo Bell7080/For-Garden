@@ -26,6 +26,7 @@ import type { PlayerExpReceipt } from "../core/playerLevel";
 import { addPlayerExpGainRow } from "./PlayerExpGainRow";
 import { PLAYER_EXP_ROW } from "./playerExpLayout";
 import { guardInputAfterClose } from "./closeInputGuard";
+import { addRewardExpiryTag } from "./rewardExpiry";
 
 // 기존 호출부는 UI 진입점 하나만 알면 되도록 순수 표시 변환도 함께 다시 내보낸다.
 export { currencyRecordToRewardItems, dungeonRewardItems, productGrantsToRewardItems, type RewardPopupItem } from "./rewardPopupModel";
@@ -175,6 +176,7 @@ function addRewardCell(scene: Phaser.Scene, popups: PopupLayer, holder: Phaser.G
   // 액자·그림·그늘·수량은 어디서나 같은 공용 프리팹 한 장이 그린다. 증가량인 것은 창 제목이
   // 이미 말하므로 `+`를 붙이지 않는다. 재화·아이템 그림은 이 프리팹이 안내창까지 잇는다.
   const framed = addFramedIcon(scene, holder, 0, 0, size, texture, { amount: formatCurrency(item.amount) });
+  addRewardExpiryTag(scene, framed, size, item);
   // 계정 장식처럼 전용 텍스처가 없는 결과만 기존 홀로그램 글리프 체계로 대신하고, 이름 쪽지를 연다.
   if (typeof item.icon !== "string") {
     framed.addAt(drawGlyph(scene, item.icon.key, 0, 0, size * 0.56, COLOR.accent), 1);

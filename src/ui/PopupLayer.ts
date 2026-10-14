@@ -72,6 +72,8 @@ export interface PopupOptions {
   anchor?: { x: number; y: number };
   /** 닫힐 때 부르는 콜백. 누른 버튼이 눌린 상태를 되돌릴 때 쓴다. */
   onClose?: () => void;
+  /** 비동기 확정·연출 중에는 모든 닫기 경로를 잠깐 보호한다. */
+  canClose?: () => boolean;
   /**
    * 제 등장 연출 없이 **완성된 채로** 선다.
    *
@@ -121,6 +123,7 @@ export class PopupLayer {
   private readonly stack: Phaser.GameObjects.Container[] = [];
   /** 외부 뒤로가기가 `closeTop`을 호출해도 팝업 소유자의 정리 콜백을 빠뜨리지 않는다. */
   private readonly onCloseByLayer = new Map<Phaser.GameObjects.Container, (() => void) | undefined>();
+  private readonly canCloseByLayer = new Map<Phaser.GameObjects.Container, (() => boolean) | undefined>();
   /** 판 소유자가 나중에 채운 내용 위로 머리글을 다시 올릴 수 있게 판별 본문마다 보관한다. */
   private readonly chromeByBody = new Map<Phaser.GameObjects.Container, Phaser.GameObjects.GameObject[]>();
   /** 제목 있는 팝업만 E2E 관찰용으로 기록한다. Canvas 밖에서는 지금 무엇이 열려 있는지 알 방법이 없다. */
@@ -161,6 +164,7 @@ export class PopupLayer {
     this.scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       openLayerCount -= this.stack.length;
       this.stack.length = 0;
+      this.canCloseByLayer.clear();
       this.shutdownHooked = false;
       this.trackLive();
       this.publishDebugTitles();
@@ -326,6 +330,7 @@ export class PopupLayer {
 
     // 닫기 경로(내부 X·배경·외부 뒤로가기)에 관계없이 정리 콜백은 close() 한 곳에서 정확히 한 번 돈다.
     this.onCloseByLayer.set(layer, options.onClose);
+    this.canCloseByLayer.set(layer, options.canClose);
     const close = (): void => { this.close(layer); };
     const titleChrome: Phaser.GameObjects.GameObject[] = [];
     if (options.title) {
@@ -459,7 +464,11 @@ export class PopupLayer {
   }
 
   closeAll(): void {
-    while (this.stack.length > 0) this.closeTop();
+    while (this.stack.length > 0) {
+      const top = this.stack[this.stack.length - 1];
+      this.closeTop();
+      if (this.stack[this.stack.length - 1] === top) break;
+    }
   }
 
   /**
@@ -493,6 +502,8 @@ export class PopupLayer {
   private close(layer: Phaser.GameObjects.Container): void {
     const index = this.stack.indexOf(layer);
     if (index === -1) return;
+    if (this.canCloseByLayer.get(layer)?.() === false) return;
+    this.canCloseByLayer.delete(layer);
     this.stack.splice(index, 1);
     openLayerCount -= 1;
     const closedTitle = this.titleByLayer.get(layer);

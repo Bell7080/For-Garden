@@ -347,7 +347,7 @@ export class MailPopup {
   private async claim(ids: string[]): Promise<void> {
     if (!ids.length) return;
     const result = await this.manager.claim(ids);
-    const items = result.granted.map((reward) => ({ icon: mailRewardTexture(reward), amount: reward.amount })).filter(({ icon, amount }) => icon && amount > 0);
+    const items = result.granted.map((reward) => ({ icon: mailRewardTexture(reward), amount: reward.amount, ...(reward.kind === "item" && reward.expiresInDays !== undefined ? { expiresInDays: reward.expiresInDays } : {}) })).filter(({ icon, amount }) => icon && amount > 0);
     if (items.length) openRewardPopup(this.scene, this.popups, { title: t("mail.rewardTitle"), items });
   }
   private async readAll(ids: string[]): Promise<void> { if (!ids.length) return; await this.manager.readAll(ids); }

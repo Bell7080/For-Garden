@@ -84,10 +84,11 @@ import { expeditionBossGrowth, expeditionNodeRole } from "../data/expeditionEnem
 import { calculateExpeditionNodeRewards, calculateExpeditionRunScore } from "../core/expeditionRewards";
 import { calculateExpeditionNodeScore, expeditionBossDamageScore } from "../core/expeditionScore";
 import { RelicProgressionManager } from "../managers/RelicProgressionManager";
-import { normalizeExpeditionState, rollExpeditionPeriods } from "../core/expeditionPeriods";
+import { normalizeExpeditionState, rollExpeditionPeriods, expeditionRankRewardQueue } from "../core/expeditionPeriods";
+import { emptyServerJournal } from "../core/serverJournal";
 import { addItemLot, isValidLotStack, lotExpiresAt, purgeExpiredLots, removeItemLot, removeItemLotAt } from "../core/itemLots";
 import { grantPlayerExperience, normalizePlayerLevel, PLAYER_LEVEL_UP_REWARD, playerExpForStamina, type PlayerExpReceipt } from "../core/playerLevel";
-import { isExpeditionRelicSnapshot } from "../core/expeditionSnapshot";
+import { isExpeditionRelicSnapshot, captureExpeditionRelicSnapshot } from "../core/expeditionSnapshot";
 import { partyRuneTraitEffects } from "../core/runeTraitEffects";
 import type { ExpeditionAugmentEffect } from "../core/expeditionAugments";
 import { expeditionBattleEffects } from "../core/expeditionBattle";
@@ -157,20 +158,8 @@ export class FakeServer implements GameApi {
   private readonly excavationHarvestResults = new Map<string, HarvestExcavationResponse>();
   /** 개발용 결정론적 메모리 기록이다. 운영 서버가 점수·순위·보상 수령을 최종 소유해야 한다. */
   // 원정 주간 기록은 저장(`session.expedition`)이 갖는다 — 메모리에만 두던 때는 새로 고침마다 이번 주 최고 기록과 보상 수령이 사라졌다.
-  private readonly bossSubmissionResults = new Map<string, SubmitExpeditionBossScoreResponse>();
   private readonly bossRewardResults = new Map<string, ClaimExpeditionRewardResponse>();
-  // 레이드도 원정과 같은 멱등 영수증을 쓴다 — 같은 요청 ID가 다시 오면 저장을 건드리지 않는다.
-  private readonly raidSubmissionResults = new Map<string, SubmitRaidDamageResponse>();
-  private readonly raidAdmissionResults = new Map<string, EnterRaidResponse>();
-  /** 입장했지만 아직 피해를 내지 않은 판. 입장 영수증 → 판 ID. */
-  /** 입장 영수증 → 그 판과 입장한 순간의 남은 공유 체력. 재현은 이 값으로 보스를 세운다(`seasonHp`). */
-  private readonly pendingRaidRuns = new Map<string, { raidId: string; seasonHp: number }>();
-  private readonly raidSettleResults = new Map<string, SettleRaidResponse>();
   private readonly raidSummonResults = new Map<string, SummonRaidResponse>();
-  /** 운영 DB의 런 ID/정산 ID 고유 제약과 빠른 원정 주간 카운터를 흉내 낸다. */
-  private readonly expeditionSettlementResults = new Map<string, SettleExpeditionRunResponse>();
-  /** 운영 DB의 requestId 고유 제약을 흉내 내 동일 노드 재요청을 같은 응답으로 돌린다. */
-  private readonly expeditionNodeResults = new Map<string, CompleteExpeditionNodeResponse>();
   /** 소탕도 정산과 같은 멱등 계약을 흉내 낸다. */
   private readonly expeditionSweepResults = new Map<string, SweepExpeditionResponse>();
 
@@ -179,8 +168,6 @@ export class FakeServer implements GameApi {
   private runeIssueSequence = 0;
   /** 개발 서버 재시작마다 같은 우편 원본에서 시작하되 읽음·수령 상태는 인스턴스 안에서만 변한다. */
   private readonly mails: MailDto[];
-  /** 네트워크 재전송은 최초 영수증을 그대로 돌려줘 첨부물이 두 번 지급되지 않게 한다. */
-  private readonly mailClaimResults = new Map<string, ClaimMailRewardsResponse>();
   /** 운영 DB의 requestId 고유 제약을 흉내 내 판매 재전송에 최초 확정 영수증을 돌려준다. */
   private readonly runeSaleResults = new Map<string, SellRunesResponse>();
   /** 일반 스테이지 입장 재전송이 중복 승리 대기 건을 만들지 않게 하는 서버 영수증 표다. */
@@ -197,7 +184,6 @@ export class FakeServer implements GameApi {
   /** 입장했지만 아직 결과가 오지 않은 결투. 결과 확정은 이 표에 있는 판만 받는다. */
   private readonly pendingDuels = new Map<string, { opponentId: string; opponentName: string; opponentScore: number; favoriteRelicId: string; units: DuelHistoryUnit[] }>();
   private readonly duelResolveResults = new Map<string, ResolveDuelResponse>();
-  private readonly attendanceClaimResults = new Map<string, ClaimAttendanceResponse>();
 
   constructor(
     private readonly state: Session = session,
@@ -300,28 +286,41 @@ export class FakeServer implements GameApi {
 
   /** 존재·만료·기수령을 모두 검증한 뒤 지급과 상태 변경을 한 처리로 확정한다. */
   async claimMailRewards(request: ClaimMailRewardsRequest): Promise<ClaimMailRewardsResponse> {
-    await this.delay(); const cached = this.mailClaimResults.get(request.requestId); if (cached) return structuredClone(cached);
+    await this.delay();
+    const identity = JSON.stringify([...new Set(request.mailIds)].sort());
+    const cached = this.readReceipt<ClaimMailRewardsResponse>("mail", request.requestId, identity);
+    if (cached) return { ...cached, ...this.mailListDto(), wallet: { ...this.state.wallet }, items: this.inventoryDto(this.state).items };
     this.rollExpedition(this.now()); this.applySavedMailClaims();
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "우편 수령 요청 ID가 필요합니다.");
     const ids = [...new Set(request.mailIds)]; const nowMs = this.now().getTime(); const targets = ids.map((id) => this.mails.find((mail) => mail.id === id));
-    if (targets.some((mail) => !mail)) throw new GameApiError("INVALID_STATE", "존재하지 않는 우편입니다.");
-    const claimable = (targets as MailDto[]).filter((mail) => mail.rewards.length > 0 && !mail.claimed && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs));
+    if (targets.some((mail, index) => !mail && !this.state.claimedMailIds?.includes(ids[index]))) throw new GameApiError("INVALID_STATE", "존재하지 않는 우편입니다.");
+    const claimable = targets.filter((mail): mail is MailDto => !!mail && mail.rewards.length > 0 && !mail.claimed && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs));
     const granted: MailRewardDto[] = [];
+    const candidate = structuredClone(this.state);
     for (const mail of claimable) for (const reward of mail.rewards) {
       if (!Number.isInteger(reward.amount) || reward.amount <= 0) throw new GameApiError("INVALID_STATE", "올바르지 않은 우편 보상입니다.");
-      if (reward.kind === "currency") this.state.wallet[reward.currency] = Math.min(WALLET_CAPS[reward.currency], this.state.wallet[reward.currency] + reward.amount);
-      else { const definition = findItem(reward.itemId); if (!definition || definition.category === "rune" || definition.category === "currency") throw new GameApiError("INVALID_STATE", "올바르지 않은 우편 아이템입니다."); this.state.itemInventory = this.grantItem(this.state.itemInventory, reward.itemId, reward.amount, new Date(nowMs), reward.expiresInDays).inventory; }
-      granted.push({ ...reward });
+      if (reward.kind === "currency") {
+        const amount = Math.min(reward.amount, WALLET_CAPS[reward.currency] - candidate.wallet[reward.currency]);
+        candidate.wallet[reward.currency] += amount;
+        if (amount > 0) granted.push({ ...reward, amount });
+      } else {
+        const definition = findItem(reward.itemId);
+        if (!definition || definition.category === "rune" || definition.category === "currency") throw new GameApiError("INVALID_STATE", "올바르지 않은 우편 아이템입니다.");
+        const result = this.grantItem(candidate.itemInventory, reward.itemId, reward.amount, new Date(nowMs), reward.expiresInDays);
+        candidate.itemInventory = result.inventory;
+        if (result.added > 0) granted.push({ ...reward, amount: result.added });
+      }
     }
-    claimable.forEach((mail) => { mail.claimed = true; mail.read = true; });
-    // 순위 우편은 대기를 비우는 것으로 다시 서지 않으므로 기록하지 않는다(주마다 같은 이름이 새로 선다).
-    this.state.claimedMailIds = [...new Set([...(this.state.claimedMailIds ?? []), ...claimable.map(({ id }) => id).filter((id) => !id.startsWith("expedition-rank:"))])];
+    // 순위 우편도 수령 ID를 남겨 재접속 뒤 같은 우편을 재요청해도 안전하게 처리한다.
+    candidate.claimedMailIds = [...new Set([...(candidate.claimedMailIds ?? []), ...claimable.map(({ id }) => id)])];
     // 순위 보상 우편은 저장의 대기에서 세운 것이다 — 받았으면 대기를 비워 다시 서지 않게 한다.
-    const pendingRank = this.state.expedition.pendingRankReward;
-    if (pendingRank && claimable.some(({ id }) => id === `expedition-rank:${pendingRank.weekKey}`)) this.state.expedition = { ...this.state.expedition, pendingRankReward: null };
-    this.persist(this.state);
-    const list = this.mailListDto(); const response = { ...list, claimedMailIds: claimable.map(({ id }) => id), granted, wallet: { ...this.state.wallet }, items: (await this.getInventory()).items };
-    this.mailClaimResults.set(request.requestId, structuredClone(response)); return response;
+    const queue = expeditionRankRewardQueue(candidate.expedition).filter((reward) => !claimable.some(({ id }) => id === `expedition-rank:${reward.weekKey}`));
+    candidate.expedition = { ...candidate.expedition, pendingRankReward: queue[0] ?? null, pendingRankRewards: queue.slice(1) };
+    this.recordReceipt(candidate, "mail", request.requestId, identity, { claimedMailIds: claimable.map(({ id }) => id), granted });
+    this.commitRaidState(candidate);
+    claimable.forEach((mail) => { mail.claimed = true; mail.read = true; });
+    const list = this.mailListDto(); const response = { ...list, claimedMailIds: claimable.map(({ id }) => id), granted, wallet: { ...this.state.wallet }, items: this.inventoryDto(this.state).items };
+    return response;
   }
 
   /** 안내 우편도 열람 즉시 점에서 빠지도록 읽음 상태만 안전하게 변경한다. */
@@ -333,7 +332,7 @@ export class FakeServer implements GameApi {
   private attendanceNow(now: Date): AttendanceState {
     const current = normalizeAttendanceState(this.state.attendance);
     const rolled = rollAttendance(current, now);
-    if (JSON.stringify(rolled) !== JSON.stringify(this.state.attendance)) { this.state.attendance = rolled; this.persist(this.state); }
+    if (JSON.stringify(rolled) !== JSON.stringify(this.state.attendance)) this.commitRaidState({ ...this.state, attendance: rolled });
     return rolled;
   }
 
@@ -356,7 +355,8 @@ export class FakeServer implements GameApi {
 
   /** 오늘의 칸 하나를 받는다. 지급은 우편과 같은 상한 규칙(재화는 깎고, 아이템은 가방 한도까지)을 쓴다. */
   async claimAttendance(request: ClaimAttendanceRequest): Promise<ClaimAttendanceResponse> {
-    await this.delay(); const cached = this.attendanceClaimResults.get(request.requestId); if (cached) return structuredClone(cached);
+    await this.delay(); const cached = this.readReceipt<ClaimAttendanceResponse>("attendance", request.requestId, request.trackId);
+    if (cached) return { ...cached, ...this.attendanceDto(this.attendanceNow(this.now()), this.now()), wallet: { ...this.state.wallet }, items: this.inventoryDto(this.state).items };
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "출석 요청 ID가 필요합니다.");
     if (!ATTENDANCE_TRACK_IDS.includes(request.trackId)) throw new GameApiError("INVALID_STATE", "알 수 없는 출석입니다.");
     const now = this.now();
@@ -367,31 +367,34 @@ export class FakeServer implements GameApi {
 
   /** 정규 출석의 오늘 칸에 붙은 광고 덤을 받는다. 광고 완료 토큰을 먼저 확인하고, 하루 한 번만 준다. */
   async claimAttendanceAd(request: ClaimAttendanceAdRequest): Promise<ClaimAttendanceResponse> {
-    await this.delay(); const cached = this.attendanceClaimResults.get(request.requestId); if (cached) return structuredClone(cached);
+    await this.delay(); const cached = this.readReceipt<ClaimAttendanceResponse>("attendanceAd", request.requestId, "regular");
+    if (cached) return { ...cached, ...this.attendanceDto(this.attendanceNow(this.now()), this.now()), wallet: { ...this.state.wallet }, items: this.inventoryDto(this.state).items };
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "출석 요청 ID가 필요합니다.");
     if (!request.verificationToken || !(await this.verifyAdToken(request.verificationToken, ATTENDANCE_AD_SLOT_ID))) throw new GameApiError("AD_TOKEN_INVALID", "광고 완료를 확인할 수 없습니다.");
     const now = this.now();
     const claimed = claimAttendanceAdBonus(this.attendanceNow(now), now);
     if (!claimed) throw new GameApiError("INVALID_STATE", "오늘 받을 광고 덤이 없습니다.");
-    return this.settleAttendance(request.requestId, claimed.state, "regular", claimed.day, ATTENDANCE_AD_REWARDS[claimed.day - 1], now);
+    return this.settleAttendance(request.requestId, claimed.state, "regular", claimed.day, ATTENDANCE_AD_REWARDS[claimed.day - 1], now, "attendanceAd");
   }
 
   /** 출석 한 칸(본 몫·광고 덤)을 지급하고 저장한다. 지급은 우편과 같은 상한 규칙(재화는 깎고, 아이템은 가방 한도까지)이다. */
-  private async settleAttendance(requestId: string, next: AttendanceState, trackId: ClaimAttendanceRequest["trackId"], day: number, reward: MailRewardDto | undefined, now: Date): Promise<ClaimAttendanceResponse> {
+  private async settleAttendance(requestId: string, next: AttendanceState, trackId: ClaimAttendanceRequest["trackId"], day: number, reward: MailRewardDto | undefined, now: Date, operation = "attendance"): Promise<ClaimAttendanceResponse> {
+    const candidate = structuredClone(this.state);
     const granted: MailRewardDto[] = [];
     if (reward?.kind === "currency") {
-      const applied = Math.max(0, Math.min(reward.amount, WALLET_CAPS[reward.currency] - this.state.wallet[reward.currency]));
-      this.state.wallet[reward.currency] += applied;
+      const applied = Math.max(0, Math.min(reward.amount, WALLET_CAPS[reward.currency] - candidate.wallet[reward.currency]));
+      candidate.wallet[reward.currency] += applied;
       granted.push({ ...reward, amount: applied });
     } else if (reward) {
-      const result = this.grantItem(this.state.itemInventory, reward.itemId, reward.amount, now, reward.expiresInDays);
-      this.state.itemInventory = result.inventory;
+      const result = this.grantItem(candidate.itemInventory, reward.itemId, reward.amount, now, reward.expiresInDays);
+      candidate.itemInventory = result.inventory;
       granted.push({ ...reward, amount: result.added });
     }
-    this.state.attendance = next;
-    this.persist(this.state);
-    const response: ClaimAttendanceResponse = { ...this.attendanceDto(next, now), trackId, day, granted: granted.filter(({ amount }) => amount > 0), wallet: { ...this.state.wallet }, items: (await this.getInventory()).items };
-    this.attendanceClaimResults.set(requestId, structuredClone(response));
+    candidate.attendance = next;
+    this.recordReceipt(candidate, operation, requestId, trackId, { ...this.attendanceDto(next, now), trackId, day, granted: granted.filter(({ amount }) => amount > 0) });
+    this.commitRaidState(candidate);
+    const response: ClaimAttendanceResponse = { ...this.attendanceDto(next, now), trackId, day, granted: granted.filter(({ amount }) => amount > 0), wallet: { ...this.state.wallet }, items: this.inventoryDto(this.state).items };
+
     return response;
   }
 
@@ -399,8 +402,7 @@ export class FakeServer implements GameApi {
     await this.delay(); const now = this.now();
     const state = this.attendanceNow(now);
     if (state.autoShownDay === utcDateKey(now)) return;
-    this.state.attendance = { ...state, autoShownDay: utcDateKey(now) };
-    this.persist(this.state);
+    this.commitRaidState({ ...this.state, attendance: { ...state, autoShownDay: utcDateKey(now) } });
   }
 
   /** 모든 우편 응답이 동일한 만료·집계 규칙을 공유한다. */
@@ -421,7 +423,9 @@ export class FakeServer implements GameApi {
 
   /** 제출된 피해 숫자를 신뢰하지 않고 서버 편성의 정적 전투력으로 동작열을 완전히 재생한다. */
   async submitExpeditionBossScore(request: SubmitExpeditionBossScoreRequest): Promise<SubmitExpeditionBossScoreResponse> {
-    await this.delay(); const cached = this.bossSubmissionResults.get(request.requestId); if (cached) return { ...cached };
+    await this.delay();
+    const identity = JSON.stringify([request.runId ?? "", request.nodeId ?? ""]);
+    const cached = this.readReceipt<SubmitExpeditionBossScoreResponse>("expeditionBoss", request.requestId, identity); if (cached) return cached;
     if (!request.requestId) throw new GameApiError("EXPEDITION_SCORE_REJECTED", "점수 제출 요청 ID가 필요합니다.");
     const now = this.now();
     const run = request.runId ? this.state.expedition.run : null;
@@ -431,6 +435,8 @@ export class FakeServer implements GameApi {
       // 이 좁은 경계는 행동 재현·서버 편성·최대 점수처럼 실제 제출 거절 사유만 변환한다.
       // 아래 저장 및 상태 반영 오류는 이 블록 밖에서 PERSISTENCE_FAILED로 전파한다.
       if (request.runId && (!run || run.runId !== request.runId || !run.nodes.some(({ id, type }) => id === request.nodeId && type === "boss"))) throw new Error("INVALID_RUN");
+      if (run && !run.nodes.find(({ id }) => id === run.currentNodeId)?.successorIds.includes(request.nodeId!)) throw new Error("BOSS_NOT_REACHED");
+      if (run?.bossSubmissionId && run.bossSubmissionId !== request.requestId) throw new Error("ALREADY_SUBMITTED");
       const roster = run?.relics ?? this.state.party.map((relicId) => ({ relicId, currentHp: 100, alive: true }));
       // 원정은 떠날 때 굳힌 스냅샷의 유대·돌파·룬으로 싸운다 — 화면의 전투와 같은 값이다.
       const growth = this.partyBattleGrowth(roster.map((entry) => ({ relicId: entry.relicId, snapshot: "snapshot" in entry && isExpeditionRelicSnapshot(entry.snapshot) ? entry.snapshot : undefined })));
@@ -473,6 +479,7 @@ export class FakeServer implements GameApi {
     // 공유 run을 건드리지 않는 완전한 후보 상태에 피해·런 점수·역대 최고점을 모두 먼저 확정한다.
     const nextState = structuredClone(this.state);
     if (nextState.expedition.run) {
+      nextState.expedition.run.bossSubmissionId = request.requestId;
       nextState.expedition.run.bossDamage = runScore.bossDamageScore;
       nextState.expedition.run.bossDamageScore = runScore.bossDamageScore;
       nextState.expedition.run.runScore = runScore.runScore;
@@ -481,6 +488,9 @@ export class FakeServer implements GameApi {
     nextState.expedition = { ...weekly, run: nextState.expedition.run, allTimeBestScore: Math.max(weekly.allTimeBestScore, runScore.runScore) };
     if (improved) { nextState.expedition.bestScore = runScore.runScore; nextState.expedition.bestAchievedAt = now.toISOString(); }
     if (nextState.expedition.run && bossSalvage > 0) nextState.expedition.run.pendingRewards.salvageRecord = (nextState.expedition.run.pendingRewards.salvageRecord ?? 0) + bossSalvage;
+    const bestScore = nextState.expedition.bestScore;
+    const response = { weekKey: nextState.expedition.weekKey, score: runScore.runScore, normalNodeScoreTotal: runScore.normalNodeScoreTotal, bossDamageScore: runScore.bossDamageScore, runScore: runScore.runScore, bestScore, bossSalvage, improved, endedAtMs: result.endedAtMs, rankBefore: weekly.bestScore > 0 ? this.expeditionRank(weekly.bestScore) : null, rankAfter: this.expeditionRank(bestScore) ?? 1 };
+    this.recordReceipt(nextState, "expeditionBoss", request.requestId, identity, response);
     try {
       // 검증 성공 뒤의 저장만 공용 저장 실패로 바꾸며, 원래 Storage/SaveManager 오류는 cause에 보존한다.
       this.persist(nextState);
@@ -490,9 +500,7 @@ export class FakeServer implements GameApi {
     // 단 한 번의 저장이 성공한 뒤 루트 세션 정체성을 보존해 후보를 적용하고, 캐시와 영수증도 그 뒤 확정한다.
     if (this.state === session) replaceSession(nextState);
     else Object.assign(this.state, nextState);
-    const bestScore = this.state.expedition.bestScore;
-    const response = { weekKey: this.state.expedition.weekKey, score: runScore.runScore, normalNodeScoreTotal: runScore.normalNodeScoreTotal, bossDamageScore: runScore.bossDamageScore, runScore: runScore.runScore, bestScore, bossSalvage, improved, endedAtMs: result.endedAtMs, rankBefore: weekly.bestScore > 0 ? this.expeditionRank(weekly.bestScore) : null, rankAfter: this.expeditionRank(bestScore) ?? 1 };
-    this.bossSubmissionResults.set(request.requestId, response);
+
     return { ...response };
   }
 
@@ -597,6 +605,10 @@ export class FakeServer implements GameApi {
       : mockSummonContributions(instance.id, others);
     const mine = { playerId: "local-player", displayName: t("profile.defaultName"), damage: instance.myDamage, isMe: true, favoriteRelicId: this.state.favorite };
     return {
+      ...(() => {
+        const pending = Object.entries(this.state.serverJournal?.raidAdmissions ?? {}).find(([, admission]) => admission.raidId === instance.id && Date.parse(admission.expiresAt) >= now.getTime());
+        return pending ? { pendingRequestId: pending[0] } : {};
+      })(),
       id: instance.id, kind: instance.kind, bossRelicId: instance.bossRelicId, difficulty: instance.difficulty,
       bossLevel: growth.level, bossBreakthrough: growth.breakthrough,
       summonerName: instance.summonerName, summonedByMe: instance.summonedByMe,
@@ -627,7 +639,7 @@ export class FakeServer implements GameApi {
     const raids = this.raidInstances(now).map((instance) => this.raidDto(instance, now, limit))
       // 끝난 판은 **받을 것이 남은 판만** 선다 — 정산을 마친 판이 「정산 완료」로 남아 있으면 완료 탭이
       // 받을 판과 받은 판이 섞인 기록장이 되고, 끝난 판은 칠 수도 없어 눌러도 할 일이 없다.
-      .filter((raid) => raid.status === "active" || (raid.myDamage > 0 && !raid.settled))
+      .filter((raid) => raid.status === "active" || raid.pendingRequestId || (raid.myDamage > 0 && !raid.settled))
       .sort((a, b) => (a.status === b.status ? 0 : a.status === "active" ? -1 : 1)
         || (a.kind === b.kind ? 0 : a.kind === "world" ? -1 : 1)
         || (a.status === "active" ? Date.parse(a.endsAt) - Date.parse(b.endsAt) : Date.parse(b.endsAt) - Date.parse(a.endsAt)));
@@ -682,6 +694,27 @@ export class FakeServer implements GameApi {
     else Object.assign(this.state, nextState);
   }
 
+  private readReceipt<T>(operation: string, id: string, identity: string): T | undefined {
+    const receipt = this.state.serverJournal?.receipts[JSON.stringify([operation, id])];
+    if (!receipt) return undefined;
+    if (receipt.identity !== identity) throw new GameApiError("INVALID_STATE", "다른 요청에 사용된 처리 ID입니다.");
+    return structuredClone(receipt.result) as T;
+  }
+
+  private recordReceipt(next: Session, operation: string, id: string, identity: string, result: object): void {
+    const journal = structuredClone(next.serverJournal ?? emptyServerJournal());
+    // 재전송은 보상 영수증을 복원하되 현재 계정 스냅샷을 과거로 되돌리지 않는다.
+    const snapshotKeys = new Set(["wallet", "items", "playerResearch", "stamina", "gachaPityByGroup", "ownedRelicIds", "relicProgress", "relicFragments", "party", "favorite", "clearedStageIds", "dailyContent", "missions", "runeInventory", "dailyAdRewards", "adFreeMembership", "cakeOperation"]);
+    const compact = Object.fromEntries(Object.entries(result).filter(([key, value]) => !snapshotKeys.has(key) && value !== undefined));
+    if (compact.raid) compact.raid = { ...(compact.raid as RaidDto), entries: [], pendingRequestId: undefined };
+    journal.receipts[JSON.stringify([operation, id])] = { identity, result: JSON.parse(JSON.stringify(compact)) as Record<string, unknown> };
+    // 로컬 저장 용량을 제한한다. 활성 런의 영수증은 정산될 때까지 보존한다.
+    const protectedRun = next.expedition.run?.runId;
+    const entries = Object.entries(journal.receipts);
+    journal.receipts = Object.fromEntries(entries.filter(([, receipt], index) => index >= entries.length - 256 || (protectedRun && receipt.identity.includes(protectedRun))));
+    next.serverJournal = journal;
+  }
+
   /**
    * 보스 재현이 편성에 새기는 계정별 값 — 유대·한계 돌파·낀 룬의 특성.
    *
@@ -709,8 +742,8 @@ export class FakeServer implements GameApi {
    */
   async enterRaid(request: EnterRaidRequest): Promise<EnterRaidResponse> {
     await this.delay();
-    const cached = this.raidAdmissionResults.get(request.requestId);
-    if (cached) return structuredClone(cached);
+    const cached = this.readReceipt<EnterRaidResponse>("raidEnter", request.requestId, request.raidId);
+    if (cached) return { ...cached, ...this.snapshot(), relics: structuredClone(this.state.serverJournal?.raidAdmissions[request.requestId]?.relics) };
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "입장 요청 ID가 필요합니다.");
     const now = this.now();
     this.normalizeRaid(now);
@@ -718,6 +751,7 @@ export class FakeServer implements GameApi {
     if (!instance) throw new GameApiError("RAID_NOT_FOUND", "존재하지 않는 레이드입니다.");
     if (this.raidDto(instance, now).status !== "active") throw new GameApiError("RAID_ENDED", "이미 끝난 레이드입니다.");
     if (instance.attemptsUsed >= RAID_ATTEMPTS_PER_RAID) throw new GameApiError("RAID_DAILY_LIMIT", "이 레이드의 도전 횟수를 모두 사용했습니다.");
+    if (this.state.party.length !== 3 || new Set(this.state.party).size !== 3 || this.state.party.some((id) => !this.state.owned.has(id))) throw new GameApiError("INVALID_STATE", "레이드 편성이 올바르지 않습니다.");
     const cost = raidRunStamina(instance.difficulty);
     this.settleStaminaNow(now);
     if (this.state.wallet.stamina < cost) throw new GameApiError("INSUFFICIENT_STAMINA", "스테미나가 부족합니다.");
@@ -729,14 +763,23 @@ export class FakeServer implements GameApi {
     // 레이드 패스의 진행도는 입장 수다 — 입장이 곧 도전 한 번을 쓰는 자리라 여기서만 센다.
     const passes = nextState.progressPasses ?? createEmptyProgressPassState();
     nextState.progressPasses = { ...passes, raidRuns: passes.raidRuns + 1 };
-    this.commitRaidState(nextState);
     const raidDto = this.raidDto(updated, now);
-    this.pendingRaidRuns.set(request.requestId, { raidId: updated.id, seasonHp: raidDto.remainingHp });
+    const result = { raid: raidDto, requestId: request.requestId, staminaSpent: cost, playerExp: spent.playerExp, refundPolicy: "no-refund-after-admission" as const };
+    this.recordReceipt(nextState, "raidEnter", request.requestId, request.raidId, result);
+    nextState.serverJournal!.raidAdmissions[request.requestId] = {
+      raidId: updated.id, seasonHp: raidDto.remainingHp,
+      expiresAt: new Date(now.getTime() + RAID_BOSS_BALANCE.maximumDurationMs + 600_000).toISOString(),
+      relics: this.state.party.map((relicId) => ({ relicId, snapshot: captureExpeditionRelicSnapshot(RELICS.find(({ id }) => id === relicId)!, this.state.relicProgress[relicId] ?? createInitialRelicProgress(), this.state.runeInventory, this.state.equippedRelicSkinIds[relicId]) })),
+    };
+    nextState.serverJournal!.raidAdmissions = Object.fromEntries(Object.entries(nextState.serverJournal!.raidAdmissions).filter(([, admission]) => Date.parse(admission.expiresAt) >= now.getTime()));
+    this.commitRaidState(nextState);
+
     const response: EnterRaidResponse = {
       ...this.snapshot(), raid: raidDto, requestId: request.requestId,
       staminaSpent: cost, playerExp: spent.playerExp, refundPolicy: "no-refund-after-admission",
+      relics: structuredClone(nextState.serverJournal!.raidAdmissions[request.requestId].relics),
     };
-    this.raidAdmissionResults.set(request.requestId, structuredClone(response));
+
     return response;
   }
 
@@ -748,29 +791,30 @@ export class FakeServer implements GameApi {
    */
   async submitRaidDamage(request: SubmitRaidDamageRequest): Promise<SubmitRaidDamageResponse> {
     await this.delay();
-    const cached = this.raidSubmissionResults.get(request.requestId);
-    if (cached) return structuredClone(cached);
+    const cached = this.readReceipt<SubmitRaidDamageResponse>("raidSubmit", request.requestId, request.raidId);
+    if (cached) return { ...cached, ...this.snapshot() };
     if (!request.requestId) throw new GameApiError("RAID_SCORE_REJECTED", "피해 제출 요청 ID가 필요합니다.");
     const now = this.now();
     this.normalizeRaid(now);
     const instance = this.raidInstances(now).find(({ id }) => id === request.raidId);
     if (!instance) throw new GameApiError("RAID_NOT_FOUND", "존재하지 않는 레이드입니다.");
-    if (this.raidDto(instance, now).status !== "active") throw new GameApiError("RAID_ENDED", "이미 끝난 레이드입니다.");
     // 도전은 입장에서 이미 셌다 — 제출은 그 입장 영수증으로만 받는다.
-    const admission = this.pendingRaidRuns.get(request.requestId);
-    if (admission?.raidId !== instance.id) throw new GameApiError("RAID_NOT_ENTERED", "입장하지 않은 레이드 판입니다.");
+    const admission = this.state.serverJournal?.raidAdmissions[request.requestId];
+    if (admission?.raidId !== instance.id) throw new GameApiError(this.raidDto(instance, now).status === "active" ? "RAID_NOT_ENTERED" : "RAID_ENDED", "유효한 레이드 입장 영수증이 없습니다.");
+    if (now.getTime() > Date.parse(admission.expiresAt)) throw new GameApiError("RAID_ENDED", "입장한 판의 제출 유예가 끝났습니다.");
 
     let result: ReturnType<typeof resolveExpeditionBossBattle>;
     try {
       const progression = new RelicProgressionManager(this.state);
-      const allies = this.state.party.map((id) => {
+      const roster = admission.relics;
+      const allies = roster.map(({ relicId: id, snapshot }) => {
         const relic = RELICS.find((entry) => entry.id === id);
         if (!relic || !this.state.owned.has(id)) throw new Error("INVALID_PARTY");
-        return { ...relic, stats: progression.getFinalStats(id) };
+        return { ...relic, stats: snapshot ? { ...snapshot.stats } : progression.getFinalStats(id) };
       });
       // 유대·돌파·룬 특성도 화면의 난전과 **같은 값**을 새긴다. 룬 특성(전투 시작 가속 등)이 재현에서만
       // 빠지면 실제 판의 평타가 "너무 빠르다"가 되어 제출 전체가 거절된다.
-      const growth = this.partyBattleGrowth(this.state.party.map((relicId) => ({ relicId })));
+      const growth = this.partyBattleGrowth(roster);
       const base = RELICS.find(({ id }) => id === instance.bossRelicId);
       if (!base) throw new Error("INVALID_BOSS_DEFINITION");
       // 성장은 화면과 **같은 함수**를 지난다. 서버만 따로 계산하면 보여 준 레벨과 갈린다.
@@ -793,20 +837,24 @@ export class FakeServer implements GameApi {
 
     // **한 판의 상한은 남은 공유 게이지뿐이다.** 몸 한 줄(`bodyHp`)에 묶던 때는 52,000점을 내도 25,000만
     // 깎였다. 입장한 사이 다른 참가자가 더 깎았을 수 있으므로 지금 남은 몫에서 자른다.
-    const remainingNow = this.raidDto(instance, now).remainingHp;
+    // 종료 뒤 유효한 입장 영수증은 입장 당시 남은 몫으로 정산한다.
+    const remainingNow = this.raidDto(instance, now).status === "active" ? this.raidDto(instance, now).remainingHp : Math.max(0, Math.min(admission.seasonHp, RAID_DIFFICULTY[instance.difficulty].totalHp - instance.myDamage));
     const runDamage = Math.min(remainingNow, Math.max(0, Math.floor(result.totalDamage)));
     const gold = raidRunGold(runDamage, RAID_RUN_GOLD_PER_DAMAGE);
     const updated: RaidInstanceState = { ...instance, myDamage: instance.myDamage + runDamage };
     const nextState = structuredClone(this.state);
     nextState.raid = { instances: [...nextState.raid.instances.filter(({ id }) => id !== updated.id), updated] };
     nextState.wallet = { ...nextState.wallet, gold: Math.min(WALLET_CAPS.gold, nextState.wallet.gold + gold) };
+    const resultReceipt = { raid: this.raidDto(updated, now), runDamage, endedAtMs: result.endedAtMs, granted: gold > 0 ? [{ currency: "gold", name: findItem("gold")?.name ?? "gold", amount: gold }] : [] };
+    this.recordReceipt(nextState, "raidSubmit", request.requestId, request.raidId, resultReceipt);
+    delete nextState.serverJournal!.raidAdmissions[request.requestId];
     this.commitRaidState(nextState);
     const response: SubmitRaidDamageResponse = {
       ...this.snapshot(), raid: this.raidDto(updated, now), runDamage, endedAtMs: result.endedAtMs,
       granted: gold > 0 ? [{ currency: "gold", name: findItem("gold")?.name ?? "gold", amount: gold }] : [],
     };
-    this.raidSubmissionResults.set(request.requestId, response);
-    this.pendingRaidRuns.delete(request.requestId);
+
+
     return structuredClone(response);
   }
 
@@ -818,14 +866,16 @@ export class FakeServer implements GameApi {
    */
   async settleRaid(request: SettleRaidRequest): Promise<SettleRaidResponse> {
     await this.delay();
-    const cached = this.raidSettleResults.get(request.requestId);
-    if (cached) return structuredClone(cached);
+    const cached = this.readReceipt<SettleRaidResponse>("raidSettle", request.requestId, request.raidId);
+    if (cached) return { ...cached, ...this.snapshot() };
+    if (!request.requestId) throw new GameApiError("INVALID_STATE", "정산 요청 ID가 필요합니다.");
     const now = this.now();
     this.normalizeRaid(now);
     const instance = this.raidInstances(now).find(({ id }) => id === request.raidId);
     if (!instance) throw new GameApiError("RAID_NOT_FOUND", "존재하지 않는 레이드입니다.");
     const dto = this.raidDto(instance, now);
     if (dto.status !== "completed") throw new GameApiError("RAID_NOT_ENDED", "아직 끝나지 않은 레이드입니다.");
+    if (dto.pendingRequestId) throw new GameApiError("RAID_NOT_ENDED", "입장한 판의 점수 제출이 아직 남아 있습니다.");
     if (dto.settlement.length === 0) throw new GameApiError("RAID_REWARD_NOT_EARNED", "참여하지 않은 레이드입니다.");
     const alreadySettled = instance.settled;
     if (!alreadySettled) {
@@ -834,22 +884,29 @@ export class FakeServer implements GameApi {
       for (const reward of dto.settlement) {
         nextState.wallet = { ...nextState.wallet, [reward.currency]: Math.min(WALLET_CAPS[reward.currency], nextState.wallet[reward.currency] + reward.amount) };
       }
+      this.recordReceipt(nextState, "raidSettle", request.requestId, request.raidId, { raid: { ...dto, settled: true }, granted: dto.settlement, alreadySettled: false });
       this.commitRaidState(nextState);
     }
     const settled = this.raidInstances(now).find(({ id }) => id === request.raidId) ?? { ...instance, settled: true };
     const response: SettleRaidResponse = { ...this.snapshot(), raid: this.raidDto(settled, now), granted: alreadySettled ? [] : dto.settlement, alreadySettled };
-    this.raidSettleResults.set(request.requestId, response);
+
     return structuredClone(response);
   }
 
   /** 정상 종료와 포기를 같은 트랜잭션으로 처리하며 런당 최초 정산만 지갑에 반영한다. */
   async settleExpeditionRun(request: SettleExpeditionRunRequest): Promise<SettleExpeditionRunResponse> {
     await this.delay();
-    const cached = this.expeditionSettlementResults.get(request.settlementId);
-    if (cached) return structuredClone(cached);
+    const identity = JSON.stringify([request.runId, request.outcome]);
+    const cached = this.readReceipt<SettleExpeditionRunResponse>("expeditionSettle", request.settlementId, identity);
+    if (cached) return { ...cached, ...this.snapshot() };
     const run = this.state.expedition.run;
     if (!request.settlementId || !run || run.runId !== request.runId) throw new GameApiError("EXPEDITION_RUN_NOT_FOUND", "정산할 원정 런이 없습니다.");
     if (run.settled || run.settlementId) throw new GameApiError("EXPEDITION_ALREADY_SETTLED", "이미 정산한 원정 런입니다.");
+    const boss = run.nodes.find(({ type }) => type === "boss");
+    if ((request.outcome !== "completed" && request.outcome !== "abandoned") || (request.outcome === "completed"
+      && (!boss || !run.bossSubmissionId || !this.readReceipt("expeditionBoss", run.bossSubmissionId, JSON.stringify([run.runId, boss.id]))))) {
+      throw new GameApiError("EXPEDITION_SCORE_REJECTED", "보스 결과가 확정되지 않은 원정입니다.");
+    }
     const wallet = { ...this.state.wallet }; const granted: Record<string, number> = {};
     // 임시 보상은 계정 지갑 상한까지의 정수만 이전하고 초과분은 지급하지 않는다.
     for (const [currency, raw] of Object.entries(run.pendingRewards)) {
@@ -870,15 +927,19 @@ export class FakeServer implements GameApi {
       bestAchievedAt: improved ? this.now().toISOString() : weekly.bestAchievedAt,
       run: null,
     };
-    this.persist({ ...this.state, wallet, expedition }); this.state.wallet = wallet; this.state.expedition = expedition;
-    const response = { ...this.snapshot(), runId: run.runId, settlementId: request.settlementId, outcome: request.outcome, granted };
-    this.expeditionSettlementResults.set(request.settlementId, response); return structuredClone(response);
+    const result = { runId: run.runId, settlementId: request.settlementId, outcome: request.outcome, granted };
+    const candidate = { ...this.state, wallet, expedition };
+    this.recordReceipt(candidate, "expeditionSettle", request.settlementId, identity, result);
+    this.commitRaidState(candidate);
+    const response = { ...this.snapshot(), ...result };
+    return structuredClone(response);
   }
 
   /** 도달성과 HP를 검증한 뒤 서버 난수로 보상과 방문을 한 번에 저장한다. */
   async completeExpeditionNode(request: CompleteExpeditionNodeRequest): Promise<CompleteExpeditionNodeResponse> {
     await this.delay();
-    const cached = this.expeditionNodeResults.get(request.requestId);
+    const identity = JSON.stringify([request.runId, request.nodeId]);
+    const cached = this.readReceipt<CompleteExpeditionNodeResponse>("expeditionNode", request.requestId, identity);
     if (cached) return structuredClone(cached);
     const run = this.state.expedition.run;
     const node = run?.nodes.find(({ id }) => id === request.nodeId);
@@ -905,9 +966,11 @@ export class FakeServer implements GameApi {
     const cappedCurrencies = Object.keys(EXPEDITION_NODE_REWARD_BALANCE).filter((currency) => (next.pendingRewards[currency] ?? 0) >= EXPEDITION_NODE_REWARD_BALANCE[currency as keyof typeof EXPEDITION_NODE_REWARD_BALANCE].runCap);
     next.lastNodeRewards = { nodeId: node.id, nodeScore, rewards, cappedCurrencies };
     const expedition = { ...this.state.expedition, run: next };
-    this.persist({ ...this.state, expedition }); this.state.expedition = expedition;
     const response = { runId: run.runId, nodeId: node.id, nodeScore, rewards, pendingRewards: { ...next.pendingRewards }, cappedCurrencies, alreadyCompleted: false };
-    this.expeditionNodeResults.set(request.requestId, response);
+    const candidate = { ...this.state, expedition };
+    this.recordReceipt(candidate, "expeditionNode", request.requestId, identity, response);
+    this.commitRaidState(candidate);
+
     return structuredClone(response);
   }
 
@@ -952,10 +1015,16 @@ export class FakeServer implements GameApi {
   async getInventory(): Promise<InventoryResponse> {
     await this.delay();
     this.settleItemExpiry(this.now());
-    const manager = new InventoryManager(this.state);
-    const lotsOf = (itemId: string) => this.state.itemInventory.find((entry) => entry.itemId === itemId)?.lots;
+    return this.inventoryDto(this.state);
+  }
+
+  private inventoryDto(state: Session): InventoryResponse {
+    const manager = new InventoryManager(state);
     // DTO는 상태 식별자만 운반하고 표시 이름·아이콘은 클라이언트 manager가 로컬 카탈로그로 정규화한다.
-    return { items: (["rune", "currency", "consumable", "material"] as const).flatMap((category) => manager.list(category).map((item) => ({ id: item.id, definitionId: item.definition.id, category: item.category, quantity: item.quantity, ...(item.kind === "rune" ? { rune: this.cloneRune(item.rune) } : {}), ...(item.kind !== "rune" && lotsOf(item.definition.id) ? { lots: lotsOf(item.definition.id)!.map((lot) => ({ ...lot })) } : {}) }))) };
+    return { items: [
+      ...(["rune", "currency"] as const).flatMap((category) => manager.list(category).map((item) => ({ id: item.id, definitionId: item.definition.id, category: item.category, quantity: item.quantity, ...(item.kind === "rune" ? { rune: this.cloneRune(item.rune) } : {}) }))),
+      ...state.itemInventory.map((stack) => ({ id: stack.itemId, definitionId: stack.itemId, category: findItem(stack.itemId)!.category, quantity: stack.quantity, ...(stack.lots ? { lots: stack.lots.map((lot) => ({ ...lot })) } : {}) })),
+    ] };
   }
 
   /** 보유량과 상한을 복제 상태에서 검증한 뒤 차감·효과·저장을 한 번에 확정한다. */
@@ -3094,7 +3163,7 @@ export class FakeServer implements GameApi {
   private rollExpedition(now: Date): Session["expedition"] {
     const current = normalizeExpeditionState(this.state.expedition);
     const next = rollExpeditionPeriods(current, now);
-    if (next !== current || !("dayKey" in this.state.expedition)) this.state.expedition = next;
+    if (next !== current || !("dayKey" in this.state.expedition)) this.commitRaidState({ ...this.state, expedition: next });
     this.syncExpeditionRankMail();
     return this.state.expedition;
   }
@@ -3118,10 +3187,9 @@ export class FakeServer implements GameApi {
    * 저장(`pendingRankReward`)이 갖고 우편은 매번 거기서 다시 세운다 — 받으면 대기가 비워진다.
    */
   private syncExpeditionRankMail(): void {
-    const pending = this.state.expedition.pendingRankReward;
-    if (!pending) return;
+    for (const pending of expeditionRankRewardQueue(this.state.expedition)) {
     const id = `expedition-rank:${pending.weekKey}`;
-    if (this.mails.some((mail) => mail.id === id)) return;
+    if (this.mails.some((mail) => mail.id === id)) continue;
     const rank = this.expeditionRank(pending.score) ?? 1;
     const sentAt = new Date(`${pending.weekKey}T00:00:00.000Z`); sentAt.setUTCDate(sentAt.getUTCDate() + 7);
     const rewards = Object.entries(expeditionRankRewards(rank)).map(([currency, amount]) => ({ kind: "currency" as const, currency: currency as keyof Session["wallet"], amount: amount ?? 0 })).filter(({ amount }) => amount > 0);
@@ -3130,6 +3198,7 @@ export class FakeServer implements GameApi {
       body: t("mail.expeditionRank.body", { rank, score: pending.score.toLocaleString() }),
       sentAt: sentAt.toISOString(), expiresAt: null, read: false, claimed: false, rewards,
     });
+    }
   }
 
 

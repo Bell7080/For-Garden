@@ -494,11 +494,13 @@ export class BattleScene extends Phaser.Scene {
       : this.battleInput.mode === "bounty" ? [session.party[this.battleInput.round] ?? session.party[0]]
       // 결투는 입장이 확정한 공격덱으로 싸운다 — 그 사이 편성을 바꿔도 이 판은 그 셋이다.
       : this.battleInput.mode === "duel" ? [...this.battleInput.attack]
+      : this.battleInput.mode === "raid" && this.battleInput.relics ? this.battleInput.relics.map(({ relicId }) => relicId)
       : session.party;
     // **원정은 떠난 순간의 모습으로 싸운다**(`ExpeditionRelicSnapshot`). 스무 층 도중에 급여·돌파·
     // 룬·외형을 바꿔도 이 런의 전투는 출발할 때 굳힌 값만 읽는다. 그 밖의 전투는 지금 성장이다.
     const expeditionMode = this.battleInput.mode === "expedition" || this.battleInput.mode === "expeditionBoss";
-    this.frozenRelics = expeditionMode ? new Map(partyIds.map((id) => [id, expeditionManager.snapshotFor(id)])) : undefined;
+    this.frozenRelics = expeditionMode ? new Map(partyIds.map((id) => [id, expeditionManager.snapshotFor(id)]))
+      : this.battleInput.mode === "raid" && this.battleInput.relics ? new Map(this.battleInput.relics.map(({ relicId, snapshot }) => [relicId, snapshot])) : undefined;
     const frozen = this.frozenRelics;
     const bonds = Object.fromEntries(partyIds.map((id) => [id, frozen?.get(id)?.bondLevel ?? session.relicProgress[id]?.bondLevel ?? 0]));
     // 각성 단계도 같은 방식으로 스냅샷을 넘긴다. 전투 코어는 저장 상태를 직접 읽지 않는다.
@@ -777,7 +779,7 @@ export class BattleScene extends Phaser.Scene {
         const requestId = globalThis.crypto?.randomUUID?.() ?? `raid-entry-${Date.now()}-${Math.random().toString(36).slice(2)}`;
         void gameApi.enterRaid({ raidId: input.raidId, requestId }).then((admission) => {
           rememberPlayerExp(admission.playerExp);
-          this.scene.start("boot", { destination: "raidBattle", raidBattle: { mode: "raid", raidId: input.raidId, bossRelicId: input.bossRelicId, difficulty: input.difficulty, requestId, seasonHp: admission.raid.remainingHp } satisfies RaidBattleInputDto });
+          this.scene.start("boot", { destination: "raidBattle", raidBattle: { mode: "raid", raidId: input.raidId, bossRelicId: input.bossRelicId, difficulty: input.difficulty, requestId: admission.requestId, seasonHp: admission.raid.remainingHp, relics: admission.relics } satisfies RaidBattleInputDto });
         }).catch(() => { this.scene.start("boot", { destination: "raid", raidId: result.raid.id }); });
       },
     } : undefined;

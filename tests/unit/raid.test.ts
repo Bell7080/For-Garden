@@ -591,8 +591,9 @@ describe("레이드 서버 경계", () => {
     const state = makeRaidSession();
     state.party = [];
     const api = serverAt(state, "2026-09-16T12:00:00Z");
-    await api.enterRaid({ requestId: "s2", raidId: "world-2026-09-16" });
-    await expect(api.submitRaidDamage({ requestId: "s2", raidId: "world-2026-09-16", actions: [] }))
-      .rejects.toMatchObject({ code: "RAID_SCORE_REJECTED" });
+    const before = { ...state.wallet };
+    await expect(api.enterRaid({ requestId: "s2", raidId: "world-2026-09-16" })).rejects.toMatchObject({ code: "INVALID_STATE" });
+    expect(state.wallet).toEqual(before);
+    expect(state.raid.instances).toEqual([]);
   });
 });

@@ -19,6 +19,7 @@ import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import type { PlayerResearchProgress } from "../state/session";
 import type { PlayerExpReceipt } from "../core/playerLevel";
 import type { ItemLot } from "../core/itemLots";
+import type { ExpeditionRelicSnapshot } from "../core/expeditionSnapshot";
 import type { ExpeditionRewardCurrency } from "../data/expedition";
 import type { AsyncArenaProfileApi } from "./asyncArenaContracts";
 import type { InteractionCity } from "../data/interactionCities";
@@ -789,6 +790,8 @@ export interface RaidRewardDto { currency: WalletItemKey; name: string; amount: 
  * 받는 것은 끝난 뒤 정산 한 번뿐이다.
  */
 export interface RaidDto {
+  /** 아직 제출하지 않은 입장 영수증. 유예 안에는 추가 비용 없이 판을 다시 시작할 수 있다. */
+  pendingRequestId?: string;
   id: string;
   kind: "world" | "summon";
   bossRelicId: string;
@@ -832,7 +835,7 @@ export interface SummonRaidResponse extends PlayerStateDto { raid: RaidDto; tick
  * 공짜였다. 다른 콘텐츠처럼 입장이 비용을 확정하고, 제출은 그 입장 영수증(`requestId`)으로만 받는다.
  */
 export interface EnterRaidRequest { requestId: string; raidId: string; }
-export interface EnterRaidResponse extends PlayerStateDto { raid: RaidDto; requestId: string; staminaSpent: number; playerExp: PlayerExpReceipt; refundPolicy: "no-refund-after-admission"; }
+export interface EnterRaidResponse extends PlayerStateDto { raid: RaidDto; requestId: string; staminaSpent: number; playerExp: PlayerExpReceipt; refundPolicy: "no-refund-after-admission"; relics?: { relicId: string; snapshot: ExpeditionRelicSnapshot }[]; }
 /**
  * 원정 보스와 **같은 재현 규칙**을 쓴다 — 클라이언트 피해 숫자는 받지 않는다.
  * `requestId`는 그 판의 **입장 영수증**이다 — 입장하지 않은 판의 피해는 받지 않는다.

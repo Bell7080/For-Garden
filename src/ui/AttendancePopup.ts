@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { t, type TextKey } from "../i18n";
 import type { AttendanceTrackDto, ClaimAttendanceResponse, MailRewardDto } from "../api/contracts";
+import { GameApiError } from "../api/contracts";
 import { ATTENDANCE_DAYS } from "../core/attendance";
 import { formatDayCountdown } from "../core/formatCountdown";
 import { formatCurrency } from "../core/formatCurrency";
@@ -53,7 +54,7 @@ const LOOK = {
   /** 오늘 받을 액자가 숨 쉬는 배율과, 액자 자체의 테두리에서 번지는 빛. */
   pulse: { scale: 1.08, glowWidth: 7, glowAlpha: 0.35, duration: 620 },
   /** 판이 떠오른 뒤 오늘 칸을 저절로 받기까지 — 판이 서는 것을 한 번 보고 나서 인장이 찍힌다. */
-  autoClaimDelayMs: 520,
+  autoClaimDelayMs: 120,
   /** 인장이 박힌 뒤 영수증이 뜨기까지. 「쾅」을 한 번 보고 나서 받은 것이 선다. */
   receiptDelayMs: 260,
 } as const;
@@ -83,9 +84,11 @@ export function openAttendancePopup(scene: Phaser.Scene, popups: PopupLayer, tra
   const layout = attendancePanelLayout(Boolean(track.adDays?.length));
   let current = track;
   let busy = false;
+  let closeLocked = track.claimableToday;
   popups.open({
     width: layout.width, height: layout.height,
     dim: true, closeOnBackdrop: true, backButton: true,
+    canClose: () => !closeLocked,
     onClose: () => options.onClosed?.(),
   }, (body) => {
     const tray = layout.banner.y + layout.banner.height / 2 + LOOK.tray.pad;
@@ -103,35 +106,49 @@ export function openAttendancePopup(scene: Phaser.Scene, popups: PopupLayer, tra
     /** 받은 것을 영수증으로 세운다. 판이 이미 닫혔어도 받은 것은 알린다(장면이 살아 있을 때만). */
     const receipt = (result: ClaimAttendanceResponse, onDone?: () => void): void => {
       if (!scene.sys.isActive()) return;
-      const items = result.granted.map((reward) => ({ icon: rewardDtoTexture(reward), amount: reward.amount })).filter(({ icon, amount }) => icon && amount > 0);
+      const items = result.granted.map((reward) => ({ icon: rewardDtoTexture(reward), amount: reward.amount, ...(reward.kind === "item" && reward.expiresInDays !== undefined ? { expiresInDays: reward.expiresInDays } : {}) })).filter(({ icon, amount }) => icon && amount > 0);
       openRewardPopup(scene, popups, { title: t("attendance.reward.title"), items, onConfirm: onDone });
     };
 
     const claim = (tile: TileHandle, run: () => Promise<ClaimAttendanceResponse | undefined>): void => {
       if (busy) return;
       busy = true;
+      closeLocked = true;
       notice.setText("");
       void run().then((result) => {
         if (!result) {
           busy = false;
+          closeLocked = false;
           if (notice.active) notice.setText(t("stamina.adCancelled"));
           return;
         }
         current = result.tracks.find(({ id }) => id === current.id) ?? current;
         options.onClaimed?.(result);
         // 판이 이미 닫혔으면 인장 없이 영수증만 세운다 — 받은 것을 알리지 않으면 받았는지 알 수 없다.
-        if (!tile.container.active) { busy = false; receipt(result); return; }
+        if (!tile.container.active) { busy = false; closeLocked = false; receipt(result); return; }
         banner.setProgress(current);
         tile.stopPulse();
         playAttendanceStamp(scene, tile.container, 0, 0, tile.size * LOOK.stampRatio, tone.color, {
-          onDone: () => scene.time.delayedCall(LOOK.receiptDelayMs, () => receipt(result, () => {
-            busy = false;
-            if (grid.active) paint();
-          })),
+          onImpact: () => {
+            closeLocked = false;
+            // 도장이 보인 뒤 판을 닫아도 영수증 타이머는 씬에 남긴다.
+            scene.time.delayedCall(LOOK.receiptDelayMs, () => receipt(result, () => {
+              busy = false;
+              if (grid.active) paint();
+            }));
+          },
         });
-      }).catch(() => {
+      }).catch(async (error: unknown) => {
         busy = false;
-        if (notice.active) notice.setText(t("attendance.claimFailed"));
+        closeLocked = false;
+        if (notice.active) notice.setText(error instanceof GameApiError && error.code === "PERSISTENCE_FAILED" ? t("battle.settle.persistenceFailed") : t("attendance.claimFailed"));
+        // 다른 판에서 이미 받았거나 응답만 잃었으면 서버 모습으로 도장을 복원한다.
+        try {
+          const fresh = (await attendanceManager.status()).tracks.find(({ id }) => id === current.id);
+          if (fresh && grid.active && !fresh.claimableToday) {
+            current = fresh; banner.setProgress(current); paint(); notice.setText("");
+          }
+        } catch { /* 조회도 실패하면 원래 실패 안내와 닫기 경로를 유지한다. */ }
       });
     };
 

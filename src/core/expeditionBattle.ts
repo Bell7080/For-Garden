@@ -10,6 +10,7 @@ import { ENCOUNTER_ROLE } from "./levelDesign";
 import { RAID_BOSS_ROLE } from "./raid";
 import type { FighterInitialState, SkirmishBossPhase, SkirmishRelicResult } from "./skirmish";
 import type { BountyBattleInputDto } from "./bountyRun";
+import type { ExpeditionRelicSnapshot } from "./expeditionSnapshot";
 
 /** 원정 씬이 전투 씬에 넘기는 직렬화 가능한 입력이다. 전투 씬은 Session 편성을 추측하지 않는다. */
 export interface ExpeditionBattleInputDto {
@@ -134,6 +135,7 @@ export interface StageBattleInputDto {
  * 체력을 이어받지 않고 늘 온전한 상태로 시작하기 때문이다.
  */
 export interface RaidBattleInputDto {
+  relics?: readonly { relicId: string; snapshot: ExpeditionRelicSnapshot }[];
   mode: "raid";
   /** 어느 판의 체력을 깎는가. 월드 폭주든 친구가 연 판이든 같은 입력이다. */
   raidId: string;

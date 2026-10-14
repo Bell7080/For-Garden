@@ -283,7 +283,7 @@ export class RaidScene extends Phaser.Scene {
     const stack = raidLayerStack(raids.map(({ kind }) => kind));
     raids.forEach((raid, index) => addRaidLayer(this, layers, raid, stack.centers[index]!, {
       // 끝난 판은 칠 수 없으니 판으로 넘어가지 않는다 — 정산은 층을 덮는 덮개가 그 자리에서 맡는다.
-      onTap: () => { if (!this.dragged && raid.status !== "completed") this.openRaid(raid.id); },
+      onTap: () => { if (!this.dragged && (raid.status !== "completed" || raid.pendingRequestId)) this.openRaid(raid.id); },
       onSettle: (dismiss) => { if (!this.dragged) void this.settle(raid.id, dismiss); },
     }));
     const viewportHeight = RAID_LIST.viewport.bottom - RAID_LIST.viewport.top;
@@ -570,6 +570,16 @@ export class RaidScene extends Phaser.Scene {
   private renderActions(content: Phaser.GameObjects.Container, raid: RaidDto): void {
     const { sortie, y } = RAID_ACTIONS;
     const common = { width: sortie.width, height: sortie.height, fontSize: 36, variant: "primary" as const, accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText };
+    if (raid.pendingRequestId) {
+      content.add(new Button(this, sortie.centerX, y, { ...common, label: t("stageComplete.replay"), onClick: () => {
+        if (this.busy) return;
+        this.busy = true;
+        void gameApi.enterRaid({ raidId: raid.id, requestId: raid.pendingRequestId! }).then((admission) => {
+          if (this.scene.isActive()) startScene(this, "battle", { mode: "raid", raidId: raid.id, bossRelicId: raid.bossRelicId, difficulty: raid.difficulty, requestId: admission.requestId, seasonHp: admission.raid.remainingHp, relics: admission.relics });
+        }).catch(() => { this.busy = false; void this.refreshList(); });
+      } }));
+      return;
+    }
     if (raid.status === "completed") {
       // 참여하지 않았거나 이미 받은 판은 받을 것이 없다 — 눌러도 아무 일이 없는 칸은 세우지 않는다.
       if (raid.settlement.length === 0 || raid.settled) return;

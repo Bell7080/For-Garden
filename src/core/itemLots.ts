@@ -11,6 +11,21 @@
 export interface ItemLot { quantity: number; expiresAt: string; }
 export interface LotStack { itemId: string; quantity: number; lots?: ItemLot[]; }
 
+/** v49 가방 DTO가 만료 묶음별 행마다 전체 lots를 복제한 저장만 복구한다. */
+export function repairLegacyLotStacks<T extends LotStack>(inventory: readonly T[]): T[] {
+  const groups = new Map<string, T[]>();
+  for (const stack of inventory) groups.set(stack.itemId, [...(groups.get(stack.itemId) ?? []), stack]);
+  return [...groups.values()].flatMap((group) => {
+    const first = group[0];
+    const lots = first.lots;
+    if (group.length > 1 && lots?.length && group.every((stack) => JSON.stringify(stack.lots) === JSON.stringify(lots))
+      && group.reduce((sum, stack) => sum + stack.quantity, 0) === lots.reduce((sum, lot) => sum + lot.quantity, 0)) {
+      return [{ ...first, quantity: lots.reduce((sum, lot) => sum + lot.quantity, 0), lots: lots.map((lot) => ({ ...lot })) }];
+    }
+    return group.map((stack) => ({ ...stack, ...(stack.lots ? { lots: stack.lots.map((lot) => ({ ...lot })) } : {}) }));
+  });
+}
+
 const DAY_MS = 86_400_000;
 
 /** 기한 날수는 1~7일 사이로만 받는다 — 더 짧으면 받자마자 사라지고, 더 길면 기한이 뜻을 잃는다. */

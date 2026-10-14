@@ -34,7 +34,7 @@ export async function enterContentBattle(scene: Phaser.Scene, content: PartyCont
   if (content.content === "raid") {
     const admission = await gameApi.enterRaid({ raidId: content.raidId, requestId });
     rememberPlayerExp(admission.playerExp);
-    startScene(scene, "battle", { mode: "raid", raidId: content.raidId, bossRelicId: content.bossRelicId, difficulty: content.difficulty, requestId, seasonHp: admission.raid.remainingHp } satisfies RaidBattleInputDto);
+    startScene(scene, "battle", { mode: "raid", raidId: content.raidId, bossRelicId: content.bossRelicId, difficulty: content.difficulty, requestId: admission.requestId, seasonHp: admission.raid.remainingHp, relics: admission.relics } satisfies RaidBattleInputDto);
     return;
   }
   if (content.content === "bounty") {

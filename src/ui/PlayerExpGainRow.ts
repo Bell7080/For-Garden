@@ -6,6 +6,7 @@ import { findItem } from "../data/items";
 import { session } from "../state/session";
 import { chipPoints, drawLayer, drawShapeOutline, HoloBar } from "./holo";
 import { addFramedIcon } from "./itemFrame";
+import { addRewardExpiryTag } from "./rewardExpiry";
 import { COLOR, textStyle } from "./theme";
 import { PLAYER_EXP_ROW } from "./playerExpLayout";
 
@@ -69,6 +70,9 @@ export function addPlayerExpGainRow(scene: Phaser.Scene, body: Phaser.GameObject
     const holder = item?.icon.kind === "asset"
       ? addFramedIcon(scene, block, L.reward.x, 0, L.reward.size, item.icon.key, { amount: `×${reward.quantity}` })
       : undefined;
+    if (holder && item?.icon.kind === "asset") addRewardExpiryTag(scene, holder, L.reward.size, {
+      icon: item.icon.key, amount: reward.quantity, ...(reward.expiresInDays !== undefined ? { expiresInDays: reward.expiresInDays } : {}),
+    });
     if (still) return;
     label.setScale(0.4);
     scene.tweens.add({ targets: label, scale: 1, duration: 280, ease: "Back.Out" });

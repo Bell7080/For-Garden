@@ -61,7 +61,7 @@ describe("레벨이 여는 콘텐츠", () => {
   it("개방 속도: 시간 회복만으로도 가장 늦은 콘텐츠가 이틀 안에 열린다", () => {
     const DAILY_REGEN = (24 * 60) / 5;
     expect(cumulativeExpToReach(1)).toBe(0);
-    expect(naturalStaminaToReach(10)).toBe(574);
+    expect(naturalStaminaToReach(10)).toBe(470);
     for (const { id, level } of CONTENT_UNLOCKS) expect(naturalStaminaToReach(level), id).toBeLessThanOrEqual(DAILY_REGEN * 2);
     // 개방 레벨이 오를수록 요구량이 줄지 않는다.
     const needs = CONTENT_UNLOCKS.map(({ level }) => naturalStaminaToReach(level));

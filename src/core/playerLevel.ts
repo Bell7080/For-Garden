@@ -24,6 +24,9 @@ export const PLAYER_LEVEL_UP_REWARD = { itemId: "stamina-tonic", quantity: 1, ex
 /** 1 스테미나가 주는 경험치. 운영 조정은 이 수 하나만 움직인다. */
 export const PLAYER_EXP_PER_STAMINA = 1;
 
+/** 1→2, 2→3, 3→4, 4→5 레벨의 요구 경험치. 5레벨부터는 아래 공식. */
+const EARLY_EXP_TO_NEXT: readonly number[] = [18, 36, 60, 85];
+
 /**
  * 다음 레벨까지 드는 경험치.
  *
@@ -32,7 +35,10 @@ export const PLAYER_EXP_PER_STAMINA = 1;
  * 60레벨은 매일 채워 쓰는 계정이 몇 달에 걸쳐 닿는다(누적 약 8만 8천).
  */
 export function playerExpToNext(level: number): number {
-  const k = Math.max(0, Math.min(PLAYER_LEVEL_CAP, Math.floor(level)) - 1);
+  // 1~4레벨은 한 판(스테미나 6)이 주는 6 EXP 기준으로 낮춘다 — 1-3에서 2렙, 상점(3렙)이 1-9쯤이다.
+  const early = EARLY_EXP_TO_NEXT[Math.floor(level) - 1];
+  if (early !== undefined) return early;
+  const k =Math.max(0, Math.min(PLAYER_LEVEL_CAP, Math.floor(level)) - 1);
   return Math.round(50 + 15 * k + 0.9 * k * k);
 }
 

@@ -564,6 +564,8 @@ describe("FakeServer", () => {
     const state = makeSession();
     state.wallet.stamina = 100;
     state.itemInventory = [{ itemId: "sweep-ticket", quantity: 4 }];
+    // 레벨업 드링크가 가방에 섞이지 않게 중반 레벨에서 시작한다.
+    state.playerResearch = { level: 20, experience: 0, experienceToNext: 1 };
     // 난수 0이면 토벌권 덤이 떨어지지 않는다 — 소탕권 차감만 본다.
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0, now: () => new Date("2026-09-19T04:00:00Z") });
     await expect(server.sweepBounty({ tierId: "bounty-1", requestId: "early", count: 1 })).rejects.toMatchObject({ code: "DUNGEON_NOT_CLEARED" });

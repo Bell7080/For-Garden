@@ -26,6 +26,8 @@ import { addSceneBackground, ensureBackgroundTexture } from "./backgrounds";
 import {
   DIALOGUE_ACTS,
   DIALOGUE_ACT_FILL,
+  DIALOGUE_ACT_GLOW,
+  actGlowSteps,
   DIALOGUE_ALARM,
   DIALOGUE_REMOTE,
   DIALOGUE_SIGN,
@@ -68,10 +70,8 @@ interface StageMember {
   creature: PuppetCreature;
   slot: DialogueCastMember["slot"];
   veiled: boolean;
-  /** 무전 너머의 목소리 — 푸른 투영 + 얼굴 실루엣. */
+  /** 무전 너머의 목소리 — 옅은 푸른 투영. 얼굴은 가리지 않는다. */
   remote: boolean;
-  /** 얼굴을 덮는 어둠(무전 목소리만). 몸짓을 따라 움직인다. */
-  face?: Phaser.GameObjects.Graphics;
   /** 투영이 일렁이는 트윈(무전 목소리만). */
   flicker?: Phaser.Tweens.Tween;
   /** 들어오는 움직임이 끝나 제 자리에 선 뒤인가. 투영의 일렁임은 그 뒤에만 알파를 만진다. */
@@ -289,7 +289,6 @@ export class DialogueStage {
     this.members.delete(member.id);
     this.stopAct(member);
     const { creature } = member;
-    this.dropFace(member, leave === "blastOff");
     if (!this.scene.tweens || !creature.active) { creature.destroy(); return Promise.resolve(); }
     this.scene.tweens.killTweensOf(creature);
     if (leave === "blastOff") return this.blastOff(member, order, total);
@@ -400,7 +399,6 @@ export class DialogueStage {
     for (const member of this.members.values()) {
       const speaking = member.id === speaker;
       member.creature.setDepth(speaking ? DIALOGUE_FOCUS.speakerDepth : DIALOGUE_FOCUS.listenerDepth);
-      member.face?.setDepth(member.creature.depth + 0.5);
       if (member.veiled) continue;
       const lit = member.remote ? DIALOGUE_REMOTE.tint : 0xffffff;
       const dim = member.remote ? DIALOGUE_REMOTE.dimTint : DIALOGUE_FOCUS.dimTint;
@@ -469,13 +467,19 @@ export class DialogueStage {
         amount: step.fill ?? 0,
         duration: step.ms,
         ease: step.ease === "Back.Out" ? "Quad.Out" : step.ease,
-        onUpdate: () => { if (creature.active) creature.setBodyFill(color, proxy.amount); },
+        onUpdate: () => { if (creature.active) this.paintActGlow(creature, color, proxy.amount); },
       })),
       onComplete: () => {
         member.fillAct = undefined;
-        if (creature.active) creature.setBodyFill(color, 0);
+        if (creature.active) this.paintActGlow(creature, color, 0);
       },
     });
+  }
+
+  /** 감정 몸짓의 색 — 몸에는 옅게만 덮고 둘레에 빛을 번지게 한다. */
+  private paintActGlow(creature: PuppetCreature, color: number, amount: number): void {
+    creature.setBodyFill(color, amount * DIALOGUE_ACT_GLOW.bodyShare);
+    creature.setAfterimages(actGlowSteps(color, amount));
   }
 
   /** 도는 몸짓을 끊는다. 멈춰 둔 idle·눌린 배율·덮인 색도 함께 되돌려, 끊긴 몸짓이 인물을 굳혀 두지 않게 한다. */
@@ -491,6 +495,7 @@ export class DialogueStage {
     if (!interrupted) return;
     creature.setScale(member.restScale);
     creature.setBodyFill(0xffffff, 0);
+    creature.setAfterimages([]);
   }
 
   // ── 무전 너머의 목소리 ─────────────────────────────────────────────
@@ -504,13 +509,9 @@ export class DialogueStage {
       const member = this.members.get(entry.id);
       if (!member) continue;
       const remote = entry.remote === true;
-      if (remote === member.remote && (!remote || member.face)) continue;
+      if (remote === member.remote) continue;
       member.remote = remote;
-      if (remote) this.addFace(member);
-      else {
-        this.dropFace(member, false);
-        if (member.creature.active) this.scene.tweens.add({ targets: member.creature, alpha: 1, duration: DIALOGUE_ENTRANCE.moveMs });
-      }
+      if (!remote && member.creature.active) this.scene.tweens.add({ targets: member.creature, alpha: 1, duration: DIALOGUE_ENTRANCE.moveMs });
     }
     this.focus(this.cast.length ? this.focusedSpeaker : undefined);
   }
@@ -518,45 +519,12 @@ export class DialogueStage {
   /** 마지막으로 `focus`에 넘긴 화자. 무전 여부만 바뀔 때 같은 화자로 색을 다시 맞춘다. */
   private focusedSpeaker?: DialogueStandingAsset;
 
-  /** 머리 관절 둘레에 번지는 검은 타원 — 얼굴만 실루엣으로 눌린다. 판이 아니라 겹친 타원이라 가장자리가 녹는다. */
-  private addFace(member: StageMember): void {
-    if (member.face) return;
-    const spec = DIALOGUE_REMOTE.face;
-    const face = this.scene.add.graphics().setDepth(member.creature.depth + 0.5).setAlpha(0);
-    for (let layer = 0; layer < spec.layers; layer += 1) {
-      const grow = 1 - (layer / spec.layers) * 0.55;
-      face.fillStyle(spec.color, spec.alphaPerLayer);
-      face.fillEllipse(0, spec.offsetY, spec.radiusX * 2 * grow, spec.radiusY * 2 * grow);
-    }
-    face.setMask(this.mask);
-    member.face = face;
-    this.syncFace(member);
-    this.scene.tweens.add({ targets: face, alpha: 1, duration: DIALOGUE_ENTRANCE.enterMs });
-  }
-
-  private dropFace(member: StageMember, instant: boolean): void {
-    const { face } = member;
-    if (!face) return;
-    member.face = undefined;
-    if (instant || !this.scene.tweens) { face.destroy(); return; }
-    this.scene.tweens.add({ targets: face, alpha: 0, duration: DIALOGUE_ENTRANCE.exitMs, onComplete: () => face.destroy() });
-  }
-
-  /** 얼굴 어둠을 몸의 지금 자리·배율에 붙인다. 몸짓으로 몸이 뛰거나 눌려도 얼굴이 따라간다. */
-  private syncFace(member: StageMember): void {
-    const { face, creature } = member;
-    if (!face?.active || !creature.active) return;
-    face.setPosition(creature.x + member.headOffset.x * creature.scaleX, creature.y + member.headOffset.y * creature.scaleY);
-    face.setScale(creature.scaleX / member.unitScale, creature.scaleY / member.unitScale);
-  }
-
-  /** 매 프레임: 무전 목소리의 얼굴 어둠을 따라 붙이고, 투영이 가끔 일렁이게 알파를 오간다. */
+  /** 매 프레임: 무전 목소리의 투영이 가끔 일렁이게 알파를 오간다. */
   private updateRemote(time: number): void {
     if (this.terminated) return;
     const flicker = motionPolicy(settingsManager.get()).nonEssentialRepeatFactor > 0;
     for (const member of this.members.values()) {
       if (!member.remote) continue;
-      this.syncFace(member);
       if (!member.settled || !member.creature.active) continue;
       const wave = flicker ? 0.5 + 0.5 * Math.sin((time / DIALOGUE_REMOTE.flickerMs) * Math.PI * 2) : 0;
       member.creature.setAlpha(DIALOGUE_REMOTE.alpha - DIALOGUE_REMOTE.flickerAlpha * wave);
@@ -722,7 +690,6 @@ export class DialogueStage {
     for (const member of [...this.members.values()]) {
       this.members.delete(member.id);
       this.stopAct(member);
-      this.dropFace(member, true);
       member.creature.destroy();
     }
     this.cast = [];
@@ -804,7 +771,7 @@ export class DialogueStage {
     this.alarm = undefined;
     this.sign = undefined;
     this.scene.events.off(Phaser.Scenes.Events.UPDATE, this.updateRemote, this);
-    for (const member of this.members.values()) { member.face?.destroy(); member.creature.destroy(); }
+    for (const member of this.members.values()) { member.creature.destroy(); }
     this.members.clear();
     this.mask.destroy();
     this.maskGraphics.destroy();

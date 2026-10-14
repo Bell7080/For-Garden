@@ -161,6 +161,32 @@ export const DIALOGUE_ACT_FILL: Readonly<Partial<Record<DialogueAct, number>>> =
 };
 
 /**
+ * 감정 몸짓의 빛. 몸 전체를 단색으로 덮으면 원화가 물든 것처럼만 읽혀 몸에 덮는 몫은 옅게
+ * (`bodyShare`)만 남기고, 나머지는 몸 둘레로 번지는 **발광**이 맡는다. 몸짓 한 걸음의 `fill`이 곧 두 쪽의 세기다.
+ * 안쪽 고리일수록 진하고 바깥은 옅어 가장자리가 녹는다.
+ */
+export const DIALOGUE_ACT_GLOW = {
+  bodyShare: 0.2,
+  directions: 12,
+  /** 몸에서 떨어진 거리(px)와 그 고리의 진하기 몫. */
+  rings: [
+    { distance: 7, alpha: 0.5 },
+    { distance: 15, alpha: 0.3 },
+    { distance: 26, alpha: 0.16 },
+  ],
+} as const;
+
+/** 몸 뒤에 겹칠 발광 고리들. `amount`는 몸짓 한 걸음의 `fill`(0~1)이고 0이면 비어 있다. 바깥 고리가 먼저(뒤)다. */
+export function actGlowSteps(color: number, amount: number): { dx: number; dy: number; alpha: number; color: number }[] {
+  if (amount <= 0.01) return [];
+  const { rings, directions } = DIALOGUE_ACT_GLOW;
+  return [...rings].reverse().flatMap(({ distance, alpha }) => Array.from({ length: directions }, (_, index) => {
+    const angle = (index / directions) * Math.PI * 2;
+    return { dx: Math.cos(angle) * distance, dy: Math.sin(angle) * distance, alpha: alpha * Math.min(1, amount * 1.4), color };
+  }));
+}
+
+/**
  * 스탠딩 연출. **모든 줄은 제자리(0, 0)로 끝난다** — 끝나지 않으면 다음 연출이 어긋난
  * 자리에서 시작해 대사가 쌓일수록 인물이 조금씩 흘러내린다.
  *
@@ -272,19 +298,17 @@ export const DIALOGUE_ACTS: Readonly<Record<DialogueAct, readonly DialogueActSte
 /**
  * 무전 너머의 목소리(`remote`)의 겉모습.
  *
- * 마일리지 상점의 홀로그램 점원과 같은 결이다 — 푸른 단색 + 반투명으로 투영처럼 서고, 직접 만나지
- * 못하는 사람이라 **얼굴은 검은 실루엣으로 눌러 둔다.** 말하는 사람은 더 밝고, 나머지는 가라앉는다.
- * 얼굴을 덮는 어둠은 머리 관절 둘레의 번지는 타원이라 판때기처럼 보이지 않는다.
+ * 마일리지 상점의 홀로그램 점원과 같은 결이되, 캐릭터가 먼저 읽히도록 **거의 불투명하고 옅은 푸른빛**만
+ * 씌운다. 얼굴은 가리지 않는다 — 검게 누르거나 짙게 투명하게 하면 누구인지 보이지 않았다.
+ * 말하는 사람은 더 밝고, 나머지는 가라앉는다.
  */
 export const DIALOGUE_REMOTE = {
-  tint: 0x8fe9ff,
-  dimTint: 0x4a7b88,
-  alpha: 0.82,
+  tint: 0xdff6ff,
+  dimTint: 0x8a9fa8,
+  alpha: 0.96,
   /** 투영이 일렁이는 폭. 알파만 아주 조금 오간다. */
-  flickerAlpha: 0.1,
+  flickerAlpha: 0.04,
   flickerMs: 1500,
-  /** 얼굴 어둠: 머리 관절 기준 반지름(배율 1 기준 px)과 겹의 수·겹당 진하기. */
-  face: { radiusX: 118, radiusY: 138, layers: 4, alphaPerLayer: 0.2, color: 0x03070c, offsetY: -6 },
 } as const;
 
 /**

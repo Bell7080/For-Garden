@@ -4,7 +4,7 @@ import { CHAPTER_1_STORIES, STAGE_1_5_POST, STAGE_1_6_POST, STAGE_1_8_PRE, STAGE
 import { CHAPTER_2_STORIES } from "../../src/data/dialogues/chapter2";
 import { OPENING_TRAIN } from "../../src/data/dialogues/openingTrain";
 import { speakerStanding } from "../../src/data/dialogues/speakerStanding";
-import { DIALOGUE_ACTS, DIALOGUE_ACT_FILL, DIALOGUE_REMOTE, DIALOGUE_SIGN } from "../../src/ui/dialogueStageLayout";
+import { DIALOGUE_ACTS, DIALOGUE_ACT_FILL, DIALOGUE_ACT_GLOW, actGlowSteps, DIALOGUE_REMOTE, DIALOGUE_SIGN } from "../../src/ui/dialogueStageLayout";
 
 /** 흐름을 따라 노드마다 그 순간의 무대를 돌려준다(화자 이름으로 스탠딩을 잇는 규칙 포함). */
 function walk(nodes: readonly DialogueNode[], start: string) {
@@ -50,9 +50,17 @@ describe("딱지와 무전", () => {
     expect(OPENING_TRAIN.nodes.find(({ id }) => id === "sense")!.sign).toBeUndefined();
   });
 
-  it("의 투영은 얼굴 어둠이 반투명 겹으로 쌓인다", () => {
-    expect(DIALOGUE_REMOTE.face.layers).toBeGreaterThan(1);
-    expect(DIALOGUE_REMOTE.face.layers * DIALOGUE_REMOTE.face.alphaPerLayer).toBeGreaterThan(0.5);
+  it("의 투영은 얼굴을 가리지 않고 거의 불투명하다", () => {
+    expect("face" in DIALOGUE_REMOTE).toBe(false);
+    expect(DIALOGUE_REMOTE.alpha - DIALOGUE_REMOTE.flickerAlpha).toBeGreaterThan(0.9);
+  });
+
+  it("의 감정 몸짓은 몸에는 옅게 덮고 둘레에 안쪽이 진한 발광을 깐다", () => {
+    expect(DIALOGUE_ACT_GLOW.bodyShare).toBeLessThan(0.3);
+    const alphas = DIALOGUE_ACT_GLOW.rings.map((ring) => ring.alpha);
+    expect([...alphas].sort((a, b) => b - a)).toEqual(alphas);
+    expect(actGlowSteps(0xff2f2f, 0)).toEqual([]);
+    expect(actGlowSteps(0xff2f2f, 0.5)).toHaveLength(DIALOGUE_ACT_GLOW.rings.length * DIALOGUE_ACT_GLOW.directions);
   });
 
   it("1-6 후의 스테라·켄토는 무전 목소리로 가운데에 서고 곁의 둘은 그대로 남는다", () => {

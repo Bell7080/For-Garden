@@ -10,7 +10,7 @@ import { RAID_TRIO, ROGUE_TRIO } from "./openingTrain";
  * 누른 뒤 편성 전에, 후 대사는 이긴 뒤 결과판을 닫고 나서 **처음 한 번만** 흐른다.
  *
  * 공멸은 연구원을 해치려는 쪽이 아니라 데려가려는 쪽이라 대사에 적의가 없다. 코마가 흘리는 「위」는
- * 상층부인지 누군가의 지시인지 정하지 않는다. 무전 너머의 목소리(스테라·켄토)와 문 너머의 오비는 푸른 투영 위에 얼굴만 검게 누른 실루엣으로 세운다.
+ * 상층부인지 누군가의 지시인지 정하지 않는다. 무전 너머의 목소리(스테라·켄토)와 문 너머의 오비는 옅은 푸른 투영으로 세운다(얼굴은 가리지 않는다).
  */
 
 /** 만나지 못하고 들리는 목소리 하나를 가운데에 세우고 곁에 두 사람을 둔다. */
@@ -127,17 +127,17 @@ export const STAGE_1_8_PRE: DialogueStory = {
   backdrop: "battlefield",
   nodes: linear([
     { id: "sit", speaker: "", body: "지하 배수로. 수문 손잡이 위에 베일을 쓴 작은 그림자가 앉아 있다. 반짝이는 조각을 소매에 하나씩 넣는 중이다.", standing: "torika", cast: ROGUE_TRIO },
-    { id: "tia", speaker: "티아", body: "앗, 연구원님…! 저, 저는 그냥 보급 회수 중이에요! 수문 점검도 하는 중이고요!", cast: TIA_TRIO, act: "recoil" },
-    { id: "same", speaker: "토리카", body: "혹시 티아? 우리랑 같은 쁘띠 로그잖아요!", standing: "torika", act: "hop" },
-    { id: "veil", speaker: "티아", body: "연구원님이 제 이름을 불러 주시면 저도 모르게 달려가 버려요. 그러니까 조금만 있다가요! 마음의 준비가 필요해요!", act: "bounce" },
-    { id: "useless", speaker: "토리카", body: "그 반짝이는 조각들은 어디에 쓰는 거예요? 별 쓸모는 없어 보이는데…", standing: "torika", act: "lean" },
-    { id: "droop", speaker: "티아", body: "쓸모… 없어요? 이거 다 제 보물인데…", act: "faint" },
-    { id: "oops", speaker: "토리카", body: "아, 아니에요! 반짝반짝해서 예쁘다는 뜻이었어요!", standing: "torika", act: "shake" },
-    { id: "cheer", speaker: "티아", body: "정말요? 에헤헤… 그럼 연구원님께만 특별히 하나 보여 드릴게요!", act: "hopTwice" },
-    { id: "trail", speaker: "티아", body: "코마가 지나간 길이라면 이 수문 아래로 이어져 있어요. 제가 아는 건 그게 다예요, 진짜로요!", act: "nod" },
+    { id: "tia", speaker: "티아", body: "앗, 들켰다…! 연구원님도 계셨네요! 저, 저는 그냥 보급 회수 중이에요! 수문 점검도 하는 중이고요!", cast: TIA_TRIO, act: "recoil" },
+    { id: "same", speaker: "토리카", body: "어, 티아잖아! 여기서 뭐 해? 설마 또 반짝이는 거 주워?", standing: "torika", act: "hop" },
+    { id: "veil", speaker: "티아", body: "토리카도 있었네! 아니, 연구원님이 제 이름을 불러 주시면 저도 모르게 달려가 버려요. 그러니까 조금만 있다가요! 마음의 준비가 필요해요!", act: "bounce" },
+    { id: "useless", speaker: "토리카", body: "그 반짝이는 조각들은 어디에 쓰는 거야? 별 쓸모는 없어 보이는데…", standing: "torika", act: "lean" },
+    { id: "droop", speaker: "티아", body: "쓸모… 없어? 이거 다 내 보물인데…", act: "faint" },
+    { id: "oops", speaker: "토리카", body: "아, 아니야! 반짝반짝해서 예쁘다는 뜻이었어!", standing: "torika", act: "shake" },
+    { id: "cheer", speaker: "티아", body: "정말? 에헤헤… 그럼 토리카한테도 특별히 하나 보여 줄게! 연구원님도 같이 보세요!", act: "hopTwice" },
+    { id: "trail", speaker: "티아", body: "코마가 지나간 길이라면 이 수문 아래로 이어져 있어요, 연구원님. 내가 아는 건 그게 다야, 진짜로!", act: "nod" },
     { id: "scent", speaker: "파루아", body: "…물 냄새 위로 다른 발자국이 있어요. 아까 그 물속 장난꾼 같기도 하고요.", standing: "parua", act: "lean" },
-    { id: "laugh", speaker: "티아", body: "아까 물속에서 누가 웃었어요. 저 아니에요! 진짜 저 아니고요… 조심하세요, 연구원님.", act: "shake" },
-    { id: "gift", speaker: "티아", body: "수문은 제가 열어 드릴게요! 이건 가는 길에 쓰세요. 아, 처음 주운 조각은 안 돼요. 그건 제 소매에 있어야 해요!", act: "puff" },
+    { id: "laugh", speaker: "티아", body: "아까 물속에서 누가 웃었어. 나 아니야! 진짜 나 아니고… 파루아도 조심해. 연구원님도요.", act: "shake" },
+    { id: "gift", speaker: "티아", body: "수문은 내가 열어 줄게! 연구원님, 이건 가는 길에 쓰세요. 아, 처음 주운 조각은 안 돼! 그건 내 소매에 있어야 해!", act: "puff" },
   ]),
 };
 
@@ -148,9 +148,9 @@ export const STAGE_1_9_PRE: DialogueStory = {
   backdrop: "battlefield",
   nodes: linear([
     { id: "knock", speaker: "", body: "오프닝 열차가 닿았어야 할 정거장. 플랫폼 끝 봉쇄문이 안쪽에서 쿵쿵 울린다.", standing: "dodi", cast: ROGUE_TRIO },
-    { id: "inside", speaker: "오비", body: "누, 누구세요? 열차가 오늘 안 와서… 문이 잠겨 버렸어요!", cast: VOICE("obi", "dodi", "parua"), act: "tremble" },
-    { id: "who", speaker: "도디", body: "보급 담당님이세요? 저희 쁘띠 로그예요! 기다리세요!", standing: "dodi", act: "hopTwice" },
-    { id: "watch", speaker: "오비", body: "다행이다… 그런데 문 앞에 뭔가 서성이는 소리가 나요. 아까부터 \"이 문은 안 열려 있어야 해\" 하고 중얼거리고요.", act: "fright" },
+    { id: "inside", speaker: "오비", body: "아와와… 누, 누구 있어요? 열차가 오늘 안 와서 문이 잠겨 버렸어요… 도와줘…!", cast: VOICE("obi", "dodi", "parua"), act: "tremble" },
+    { id: "who", speaker: "도디", body: "오비야? 거기 갇힌 거야? 우리 쁘띠 로그야, 조금만 기다려!", standing: "dodi", act: "hopTwice" },
+    { id: "watch", speaker: "오비", body: "다행이다… 도디, 파루아도 있구나! 그런데 문 앞에 뭔가 서성이는 소리가 나. 아까부터 \"이 문은 안 열려 있어야 해\" 하고 중얼거려…!", act: "fright" },
     { id: "sense", speaker: "파루아", body: "…발소리가 문 앞에 모여 있어요. 열려면 싸워야 해요.", standing: "parua", act: "lean" },
   ]),
 };
@@ -162,11 +162,11 @@ export const STAGE_1_9_POST: DialogueStory = {
   backdrop: "battlefield",
   nodes: linear([
     { id: "open", speaker: "", body: "문이 열린다. 안에서 상자를 끌어안은 앳된 아이가 비틀거리며 나온다.", standing: "torika", cast: ROGUE_TRIO },
-    { id: "obi", speaker: "오비", body: "고, 고맙습니다! 저는 오비예요. 이 정거장 보급 검수를 하던 중이었어요.", cast: [{ id: "torika", slot: "left" }, { id: "obi", slot: "center" }, { id: "dodi", slot: "right" }], act: "bounce" },
-    { id: "store", speaker: "토리카", body: "A-LAB24 편의점 유니폼이네요! 도시에도 있었어요?", standing: "torika", act: "hop" },
-    { id: "lab", speaker: "오비", body: "네, 중앙 연구소 1층이에요. 오늘 열차 재고가 못 들어와서… 이건 폐기 직전이라 몰래 챙긴 거예요.", act: "shrink" },
+    { id: "obi", speaker: "오비", body: "고, 고마워…! 아, 연구원님도 고맙습니다! 저는 오비예요. 이 정거장 보급 검수를 하던 중이었어요.", cast: [{ id: "torika", slot: "left" }, { id: "obi", slot: "center" }, { id: "dodi", slot: "right" }], act: "bounce" },
+    { id: "store", speaker: "토리카", body: "A-LAB24 편의점 유니폼이다! 도시에도 있었어?", standing: "torika", act: "hop" },
+    { id: "lab", speaker: "오비", body: "응, 중앙 연구소 1층이야. 오늘 열차 재고가 못 들어와서… 연구원님, 이건 폐기 직전이라 몰래 챙긴 거예요.", act: "shrink" },
     { id: "gift", speaker: "오비", body: "치즈케이크랑 에너지 드링크예요. 기한이 오늘까지라서요. 드세요, 아깝잖아요.", act: "nod" },
-    { id: "dodi", speaker: "도디", body: "기한 직전 재고! 이건 \"구호 물자\"로 적어 둘게요!", standing: "dodi", act: "hopTwice" },
+    { id: "dodi", speaker: "도디", body: "기한 직전 재고! 이건 \"구호 물자\"로 적어 둘게!", standing: "dodi", act: "hopTwice" },
     { id: "wait", speaker: "오비", body: "연구소에서 기다릴게요. 거기 오시면 정식으로 팔 수 있어요!", act: "bounce" },
   ]),
 };

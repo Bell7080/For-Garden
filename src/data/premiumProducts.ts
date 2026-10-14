@@ -29,7 +29,7 @@ import type { ProductDefinition, ProductGrant } from "./products";
  * - 연구 시작 ₩3,300(정가 9,900)·계정당 1회 — 화석 10 + 젬 1,000 / 표본 확보 ₩9,900·1회 — 다이아 4,000 + 화석 10 + 호박석 10(= 1만 다이아)
  * - 월간 화석·호박석 ₩3,900·월 1회 — 10개씩 + 젬 1,000 / 월간 복원 보급 ₩29,900 — 다이아 10,000 + 각 30개(3.0배) / 대량 ₩59,000 — 다이아 25,000 + 각 40개(2.7배)
  * - 백 번의 복원 ₩39,000·월 1회 — 화석·호박석 50개씩(2.5배) / 대규모 복원 ₩79,000·계정당 1회 — 다이아 3만 + 각 50개 + 골드 50만(원석을 빼고 골드로 대신)
- * - 월간 연구 후원 ₩9,900·30일 — 즉시 젬 3,000 + 매일 젬 300 / 광고 제거 멤버십 ₩9,900·30일 — 즉시 젬 3,500 + 매일 젬 100 + 3배속 / 레이드 구독 ₩6,900·30일 — 매일 선택 토벌권 1개
+ * - 월간 연구 후원 ₩9,900·30일 — 즉시 젬 3,000 + 매일 젬 300 / 광고 제거 멤버십 ₩9,900·30일 — 즉시 젬 3,000 + 매일 젬 100 + 3배속 / 레이드 구독 ₩6,900·30일 — 매일 선택 토벌권 1개
  * - 신입 연구원 ₩1,900·1회 — 다이아 1,000 + 골드·치즈케이크·드링크(3.3배) · 연구원 성장 ₩3,900·1회 + 젬 1,000 · 시즌 표본 상자 ₩6,900·1회(2.8배)
  * - 오늘의 보급 상자 ₩1,100·매일(2.5배) · 주간 연구 특가 ₩2,900·주 1회 + 젬 500 · 복원 가속 ₩2,500·주 1회 + 젬 500
  * - 스토리·레벨 패스 ₩9,900 · 고고학 패스 ₩7,900 — 유료 칸은 마디마다 **다양한 보상 하나 + 다이아 고정**이고, 사는 순간 **즉시 보상**(젬 3,000 · 고고학 젬 2,500 + 발굴권 5)을 따로 받는다. 값은 `progressPasses.ts`
@@ -81,7 +81,7 @@ export const PREMIUM_PRODUCTS: readonly ProductDefinition[] = [
   // ── 구독 — 30일 단위로 갱신되는 정기권. 사는 순간보다 **이용 중 매일 받는 몫**이 본체라, 패스와 같이 가치 배수 상한이 없다. ──
   { id: "premium-monthly", storefront: "premium", category: "special", premiumCategory: "subscription", iconKey: "shop-product-enhancement", name: "월간 연구 후원", description: "", acquisition: pay("premium-monthly", 9_900), grants: [currency("gems", 3_000)], passBenefit: { durationDays: 30, autoRenew: true, dailyBonus: { currency: "gems", amount: 300 } }, defaultQuantity: 1, purchaseLimit: 1, refresh: "none", visibleFrom: FROM, visibleUntil: UNTIL },
   // 광고 제거는 광고 즉시 수령·소탕권 없는 소탕·전투 3배속을 제공한다. 젬 전용 구독에는 광고 권리가 없다.
-  { id: "premium-adfree", storefront: "premium", category: "special", premiumCategory: "subscription", iconKey: "shop-product-enhancement", name: "광고 제거 멤버십", description: "", acquisition: pay("premium-adfree", 9_900), grants: [currency("gems", 3_500), item("stamina-tonic", "에너지 드링크", 3)], passBenefit: { durationDays: 30, autoRenew: true, instantAdRewards: true, usesStandardAdRewardPolicy: true, adFree: true, dailyBonus: { currency: "gems", amount: 100 } }, defaultQuantity: 1, purchaseLimit: 1, refresh: "none", visibleFrom: FROM, visibleUntil: UNTIL },
+  { id: "premium-adfree", storefront: "premium", category: "special", premiumCategory: "subscription", iconKey: "shop-product-enhancement", name: "광고 제거 멤버십", description: "", acquisition: pay("premium-adfree", 9_900), grants: [currency("gems", 3_000), item("stamina-tonic", "에너지 드링크", 3)], passBenefit: { durationDays: 30, autoRenew: true, instantAdRewards: true, usesStandardAdRewardPolicy: true, adFree: true, dailyBonus: { currency: "gems", amount: 100 } }, defaultQuantity: 1, purchaseLimit: 1, refresh: "none", visibleFrom: FROM, visibleUntil: UNTIL },
   // **레이드 구독** — 레이드 패스를 30일 구독으로 바꿨다. 이용 중 매일 선택 토벌권 한 장을 받고, 길의 마디 보상으로도 선택 토벌권이 나온다.
   { id: "premium-raid-pass", storefront: "premium", category: "special", premiumCategory: "subscription", iconKey: "shop-product-supplies", name: "레이드 패스", description: "", acquisition: pay("premium-raid-pass", 6_900), grants: [currency("gems", 2_000), currency("fossil", 5), currency("cheesecake", 500)], passBenefit: { durationDays: 30, dailyBonus: { itemId: "raid-select-ticket", amount: 1 } }, defaultQuantity: 1, purchaseLimit: 1, refresh: "none", visibleFrom: FROM, visibleUntil: UNTIL },
   // ── 일간 — 무료 한 칸이 맨 위, 이어서 매일 다시 열리는 묶음. ──

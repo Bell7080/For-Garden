@@ -21,9 +21,9 @@ async function buy(server: FakeServer, id: string, tx = id) {
 const product = (id: string) => PREMIUM_PRODUCTS.find((entry) => entry.id === id)!;
 
 describe("구독 상품과 일일 우편", () => {
-  it("광고 제거는 9,900원·3,500젬이며 순수 젬 구독은 9,900원·매일 3배 젬을 준다", () => {
+  it("광고 제거는 9,900원·3,000젬이며 순수 젬 구독은 9,900원·매일 3배 젬을 준다", () => {
     expect(product("premium-adfree").acquisition).toMatchObject({ basePriceKrw: 9_900 });
-    expect(product("premium-adfree").grants).toContainEqual({ kind: "currency", currency: "gems", amount: 3_500 });
+    expect(product("premium-adfree").grants).toContainEqual({ kind: "currency", currency: "gems", amount: 3_000 });
     expect(product("premium-monthly").acquisition).toMatchObject({ basePriceKrw: 9_900 });
     expect(product("premium-monthly").grants).toEqual([{ kind: "currency", currency: "gems", amount: 3_000 }]);
     expect(product("premium-monthly").grants.every((grant) => grant.kind === "currency" && grant.currency === "gems")).toBe(true);
@@ -41,14 +41,14 @@ describe("구독 상품과 일일 우편", () => {
       expect(tiles.length).toBeLessThanOrEqual(4);
     }
   });
-  it("두 패스는 같은 ID로 양쪽 탭에 있고 구독 맨 위·맨 아래 순서가 일정하다", () => {
+  it("두 패스는 같은 ID로 양쪽 탭에 있고 광고 제거·젬 구독 순서가 일정하다", () => {
     const dtos = PREMIUM_PRODUCTS as unknown as ProductDto[];
     for (const tab of ["pass", "subscription"] as const) {
       const ids = productsForPremiumCategory(dtos, tab).map((entry) => entry.id);
       expect(ids).toContain("premium-raid-pass"); expect(ids).toContain("premium-archaeology-pass"); expect(new Set(ids).size).toBe(ids.length);
     }
     const list = productsForPremiumCategory(dtos, "subscription");
-    expect(list[0].id).toBe("premium-adfree"); expect(list.at(-1)?.id).toBe("premium-monthly");
+    expect(list[0].id).toBe("premium-adfree"); expect(list[1].id).toBe("premium-monthly");
     expect(premiumGrantTiles(product("premium-archaeology-pass"))).toContainEqual({ icon: "item-strata-ticket", amount: 1, daily: true });
   });
   it.each([["premium-raid-pass", "raid-select-ticket"], ["premium-archaeology-pass", "strata-ticket"]])("%s의 접속 우편은 재접속·다른 탭 수령에서도 하루 한 번만 지급된다", async (id, ticket) => {

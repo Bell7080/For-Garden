@@ -30,7 +30,7 @@ export function productsForPremiumCategory(products: readonly ProductDto[], cate
 }
 
 function subscriptionOrder(product: ProductDto): number {
-  return product.id === "premium-adfree" ? 0 : product.id === "premium-monthly" ? 2 : 1;
+  return product.id === "premium-adfree" ? 0 : product.id === "premium-monthly" ? 1 : 2;
 }
 
 /** 카드에 서는 받는 것 한 칸. 그림 키와 수량, 매일 받는 몫인지만 든다. */

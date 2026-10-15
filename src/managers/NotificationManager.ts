@@ -16,6 +16,9 @@ export class NotificationManager {
   constructor(private readonly api: GameApi, private readonly events: ManagerEvents = managerEvents) {
     // 받을 임무 보상 수가 바뀌면 곧바로 다시 읽는다 — 로비 판 위에서 급여·수확으로 임무가 차도 점이 선다.
     api.subscribeMissionNotice?.(() => this.queueRefresh());
+    events.subscribe("inventory", () => this.queueRefresh());
+    // 부분 영수증(우편 등)도 구독 UI의 유무와 무관하게 다음 조회의 기준 상태로 보관한다.
+    events.subscribe("notification", ({ state }) => { this.state = { ...state }; this.refreshGeneration += 1; });
   }
 
   /** 한 처리에서 저장이 여러 번 일어나도 한 번만 다시 읽는다. 실패는 기존 상태를 둔다. */
@@ -52,6 +55,8 @@ export class NotificationManager {
       pendingFriendRequestCount: signals.status === "fulfilled" ? signals.value.pendingFriendRequestCount : Number(previous.friendRequest),
       unseenEventCount: signals.status === "fulfilled" ? signals.value.unseenEventCount : Number(previous.newEvent),
       unreadMailCount: signals.status === "fulfilled" ? signals.value.unreadMailCount : Number(previous.mail),
+      claimableMailCount: signals.status === "fulfilled" ? signals.value.claimableMailCount ?? 0 : Number(previous.mail),
+      claimablePassCount: signals.status === "fulfilled" ? signals.value.claimablePassCount ?? 0 : Number(previous.passReward),
       freeSupplyCategories: signals.status === "fulfilled" ? signals.value.freeSupplyCategories ?? [] : FREE_CATEGORIES.filter((_, index) => previous[FREE_KEYS[index]]),
     });
     // 전체 조회 결과도 같은 manager 이벤트 계약으로 발행해 UI 구독 경로를 하나로 유지한다.

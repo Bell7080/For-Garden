@@ -34,6 +34,6 @@ export class MailManager {
 
   /** 우편 응답이 아는 신호만 교체하고 다른 알림 키는 보존한다. */
   private publishMail(result: MailListResponse): void {
-    this.events.publish("mail", { list: result }); this.events.publishMailNotification(result.unreadCount > 0);
+    this.events.publish("mail", { list: result }); this.events.publishMailNotification(result.unreadCount > 0 || result.claimableCount > 0);
   }
 }

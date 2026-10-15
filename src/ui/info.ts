@@ -81,7 +81,7 @@ import { relicSkinManager } from "../managers/RelicSkinManager";
 import { pressIn, pressOut } from "./pressFeedback";
 import { FeedTapEffect } from "./feedTapEffect";
 import { settingsManager } from "../managers/SettingsManager";
-import { FEED_TAP, feedHoldDelay } from "./feedTapStyle";
+import { FEED_TAP, FeedHoldRepeater } from "./feedTapStyle";
 import { addSdFootShadow } from "./SdFootShadow";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
@@ -296,9 +296,6 @@ type BreakthroughCost =
   | { kind: "level"; label: string; need: number; have: number }
   | { kind: "fragment"; label: string; need: number; have: number }
   | { kind: "currency"; texture: string; label: string; need: number; have: number };
-
-/** 이만큼 누르고 있으면 한 번에 급여 팝업이 열린다(ms). */
-const FEED_HOLD_MS = 420;
 
 /** 옆 캐릭터로 넘어가는 데 필요한 가로 이동(px). */
 const SWIPE_DISTANCE = 110;
@@ -525,13 +522,7 @@ export class InfoManager {
   /** 값이 바뀔 때마다 아이콘과 수를 다시 가운데로 모은다. */
   private feedCostLayout?: () => void;
   private feedHold?: Phaser.Time.TimerEvent;
-  /**
-   * 손을 쉬면 여러 레벨 쪽지를 여는 타이머. 다시 누르면 취소된다.
-   *
-   * **씬 시계가 아니라 벽시계로 잰다.** 씬 타이머는 프레임이 돌아야 흐르므로 메인 스레드가 바쁜
-   * 자리에서는 0.7초가 몇 초로 늘어나, 손을 쉬었는데도 쪽지가 한참 뒤에 떴다.
-   */
-  private feedBulkTimer?: ReturnType<typeof setTimeout>;
+  private repaintFeedBulk?: () => void;
   /** 아직 서버로 보내지 않은 급여 횟수. 도는 요청이 끝나면 한 번에 보낸다. */
   private feedQueue = 0;
   private feedInFlight = 0;
@@ -779,9 +770,6 @@ export class InfoManager {
     const hit = this.scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     // 누를 때마다 치즈케이크 한 조각이 튀어 오르고 연속 수(×N)가 선다. 버튼의 자식이라 함께 사라진다.
     const tapEffect = new FeedTapEffect(this.scene, container, { x: 0, y: -height / 2 + 10 }, { x: width / 2 - 36, y: -height / 2 - 30 });
-    let heldFrom = 0;
-    let repeated = false;
-    let served = false;
     /**
      * **한 번 누르면 한 번 먹인다 — 서버 응답을 기다리지 않는다.** 예전에는 요청이 도는 동안 들어온
      * 누름을 버려, 빠르게 두드리면 절반 넘게 헛손질이 됐다. 이제 누름은 줄(`feedQueue`)에 쌓이고,
@@ -790,56 +778,36 @@ export class InfoManager {
      */
     const serveOnce = (): void => {
       if (!this.canQueueFeed()) return;
-      served = true;
       addDebugFeedTaps(1, 0);
       tapEffect.tap();
       settingsManager.haptic("uiTap");
       this.enqueueFeed(1);
     };
     hit.on("pointerdown", () => {
-      if (this.feedPopupOpen) return;
-      this.cancelFeedBulk();
+      if (!this.canQueueFeed()) return;
+      this.openFeedBulk(hit.getBounds());
       pressIn(container, "feed");
-      heldFrom = this.scene.time.now;
-      repeated = false;
-      served = false;
       serveOnce();
-      // **꾹 누르면 점점 빨라진다**(`feedHoldDelay`) — 한 박자씩 같은 간격으로 먹이던 때는 누르고
-      // 있어도 두드리는 것보다 느렸다. 한 번 먹일 때마다 다음 간격을 새로 잡는다.
       this.feedHold?.remove();
-      let repeat = 0;
-      const schedule = (): void => {
-        this.feedHold = this.scene.time.delayedCall(feedHoldDelay(repeat), () => {
-          repeat += 1;
-          repeated = true;
-          serveOnce();
-          if (heldFrom !== 0 && container.active) schedule();
-        });
-      };
-      schedule();
+      const repeater = new FeedHoldRepeater();
+      let lastAt = performance.now();
+      const relicId = this.currentDef?.id;
+      this.feedHold = this.scene.time.addEvent({ delay: FEED_TAP.hold.minMs, loop: true, callback: () => {
+        if (!container.active || !this.isOpen || !this.scene.input.activePointer.isDown || this.currentDef?.id !== relicId) { this.feedHold?.remove(); return; }
+        const now = performance.now();
+        const count = repeater.advance(now - lastAt);
+        lastAt = now;
+        for (let i = 0; i < count; i += 1) serveOnce();
+      } });
     });
     const release = (opened: boolean): void => {
       pressOut(container, "feed", { pop: opened });
-      // **제스처의 소유권을 먼저 가져온다.** `pointerup`과 `pointerupoutside`가 잇달아 와도 한 번만 처리한다.
-      const startedAt = heldFrom;
-      heldFrom = 0;
+      // 원래 버튼의 입력은 보조 쪽지가 열린 상태에서도 끝까지 이 버튼이 처리한다.
       this.feedHold?.remove();
       this.feedHold = undefined;
-      if (startedAt === 0 || !opened || !served) return;
-      const wasHold = repeated || this.scene.time.now - startedAt >= FEED_HOLD_MS;
-      // 한 번에 여러 레벨을 채우는 쪽지는 **손이 쉴 때** 연다. 누를 때마다 열면 그 판이 버튼 위를 덮어
-      // 연타가 거기서 끊긴다. 꾹 누른 손은 이미 멈춘 손이라 곧바로 연다.
-      this.cancelFeedBulk();
-      const relicId = this.currentDef?.id;
-      this.feedBulkTimer = setTimeout(() => {
-        this.feedBulkTimer = undefined;
-        // 기다리는 사이 창이 닫혔거나 옆 렐릭으로 넘어갔으면 열지 않는다.
-        if (!container.active || !this.scene.sys.isActive() || this.currentDef?.id !== relicId) return;
-        void this.flushFeeds().then(() => { if (heldFrom === 0 && container.active) this.openFeedBulk(x, y + height / 2); });
-      }, wasHold ? 0 : FEED_TAP.bulkIdleMs);
     };
     hit.on("pointerup", () => release(true));
-    // 손을 **뗀 자리**로 판단한다. 벗어남은 되풀이 급여만 멈추고, 쪽지를 열지 말지는 떼는 순간에 정한다.
+    // 버튼 밖으로 움직이면 연속 급여를 멈춘다.
     hit.on("pointerupoutside", () => release(false));
     hit.on("pointerout", () => { this.feedHold?.remove(); this.feedHold = undefined; });
     container.add(hit);
@@ -1141,7 +1109,7 @@ export class InfoManager {
    * 여기서도 크게 읽어야 하는 것은 레벨 수가 아니라 **나가는 치즈케이크 수**다. 한 번에
    * 수십 번을 먹이는 자리라 지갑이 얼마나 줄어드는지 모르고 누르면 안 된다.
    */
-  private openFeedBulk(x: number, y: number): void {
+  private openFeedBulk(bounds: Phaser.Geom.Rectangle): void {
     if (this.feedPopupOpen || this.popups.isOpen) return;
     const def = this.currentDef;
     if (!def) return;
@@ -1155,24 +1123,30 @@ export class InfoManager {
     this.feedPopupOpen = true;
     this.popups.open({
       width: 500,
-      height: 250,
-      x,
-      y: y + 150,
+      height: 190,
+      x: bounds.centerX,
+      y: bounds.bottom + 112,
       title: t("info.feed.bulk"),
       hideCloseButton: true,
       closeOnBackdrop: true,
-      onClose: () => { this.feedPopupOpen = false; },
+      inputPassthrough: { x: bounds.x - 8, y: bounds.y - 8, width: bounds.width + 16, height: bounds.height + 16 },
+      onClose: () => { this.feedPopupOpen = false; this.repaintFeedBulk = undefined; },
     }, (body, close) => {
       // **쪽지는 한 번 먹였다고 닫히지 않는다.** 한 레벨씩 올리는 일은 보통 연달아 일어나므로,
       // 누를 때마다 닫히면 같은 자리를 다시 길게 눌러 쪽지를 여는 손이 매번 더 든다. 값과
       // 남은 여력만 다시 적고 그대로 남아, 화면의 다른 곳을 누를 때까지 이어서 누를 수 있다.
-      const paint = (): void => { if (this.feedPopupOpen) this.paintFeedBulk(body, close, paint); };
+      // 본문만 갱신해 공용 제목·입력 차단판·날아가는 조각은 유지한다.
+      const content = this.scene.add.container(0, 0);
+      body.add(content);
+      const burst = new FeedTapEffect(this.scene, body, { x: 0, y: 0 });
+      const paint = (): void => { if (content.active && this.feedPopupOpen) this.paintFeedBulk(content, close, paint, burst); };
+      this.repaintFeedBulk = paint;
       paint();
     });
   }
 
   /** 한 번에 급여 쪽지의 내용. 먹일 때마다 값이 달라지므로 같은 판 위에 다시 그린다. */
-  private paintFeedBulk(body: Phaser.GameObjects.Container, close: () => void, repaint: () => void): void {
+  private paintFeedBulk(body: Phaser.GameObjects.Container, close: () => void, repaint: () => void, burst: FeedTapEffect): void {
     body.removeAll(true);
     const def = this.currentDef;
     if (!def) { close(); return; }
@@ -1180,16 +1154,12 @@ export class InfoManager {
     // 상한에 닿는 순간 쪽지가 스스로 닫힌다 — 더 먹일 수 없는 판에 남아 있을 이유가 없고,
     // 다음에 할 일(한계 돌파)은 별 옆의 버튼이 제 자리에서 말한다.
     if (progress.level >= relicLevelCap(progress.breakthrough)) { close(); return; }
-    // 조각은 판 **바깥** 겹에서 터진다 — 먹일 때마다 판을 다시 적으므로(`removeAll`) 판 안에 두면
-    // 날아가던 조각이 다시 그리는 순간 함께 지워진다.
-    const host = body.parentContainer ?? body;
-    const burst = new FeedTapEffect(this.scene, host, { x: body.x, y: body.y });
     ([[t("info.feed.one"), 1], [t("info.feed.ten"), 10]] as const).forEach(([label, levels], index) => {
       const bx = index === 0 ? -118 : 118;
       const cost = this.feedsForLevels(levels) * FEED_UNIT.cheesecake;
       const enough = session.wallet.cheesecake >= cost;
       // 칸 하나를 한 덩어리로 묶어야 눌림이 판·이름·값줄을 함께 누른다.
-      const option = this.scene.add.container(bx, 12);
+      const option = this.scene.add.container(bx, 0);
       option.add(drawLayer(this.scene, 0, 0, slantedRect(212, 116, 14), { fill: 0x3d2f12, alpha: 0.92, edge: FEED_AMBER, edgeAlpha: enough ? 0.8 : 0.3 }));
       option.add(this.scene.add.text(0, -34, label, textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
       // 버튼과 같은 값줄이다. 여기서 바뀌는 것은 오른쪽 수(한 번에 나가는 양)뿐이다.
@@ -1207,7 +1177,7 @@ export class InfoManager {
       // 달라지므로, 남겨 두기만 하고 값을 그대로 두면 화면이 거짓말을 한다.
       hit.on("pointerup", () => {
         pressOut(option, "feed");
-        burst.from({ x: body.x + bx, y: body.y + 12 - 40 }).feast(levels >= 10 ? FEED_TAP.pieces.tenLevels : FEED_TAP.pieces.level);
+        burst.from({ x: body.x + bx, y: body.y - 40 }).feast(levels >= 10 ? FEED_TAP.pieces.tenLevels : FEED_TAP.pieces.level);
         settingsManager.haptic("uiTap");
         // 버튼으로 두드려 쌓인 몫이 먼저 나가야 이 칸이 셈한 값이 맞는다.
         void this.flushFeeds().then(() => this.feedLevels(levels)).then(repaint);
@@ -1245,11 +1215,6 @@ export class InfoManager {
     const cap = relicLevelCap(progress.breakthrough);
     if (progress.level >= cap) return false;
     return queued < this.feedsForLevels(cap - progress.level);
-  }
-
-  private cancelFeedBulk(): void {
-    if (this.feedBulkTimer !== undefined) clearTimeout(this.feedBulkTimer);
-    this.feedBulkTimer = undefined;
   }
 
   private enqueueFeed(count: number): void {
@@ -1301,6 +1266,7 @@ export class InfoManager {
     } finally {
       this.feeding = false;
       this.refreshGrowth();
+      this.repaintFeedBulk?.();
     }
     return changed;
   }

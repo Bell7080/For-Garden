@@ -2200,7 +2200,9 @@ export class FakeServer implements GameApi {
     // 이벤트 입구의 점은 오늘 받을 출석이 남았는가로 켠다.
     const now = this.now();
     const attendance = this.attendanceDto(this.attendanceNow(now), now);
-    return { pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length, unreadMailCount: this.mailListDto().unreadCount, freeSupplyCategories: this.freeSupplyCategories(now) };
+    const mail = this.mailListDto();
+    const claimablePassCount = this.progressPassDtos(this.state).reduce((sum, pass) => sum + pass.milestones.filter((stage) => stage.freeState === "claimable" || stage.state === "claimable").length, 0);
+    return { claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length, unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now) };
   }
 
   /** 받을 수 있는 무료 보급이 남은 프리미엄 탭 — 목록의 `purchasable`과 같은 판정을 읽는다. */

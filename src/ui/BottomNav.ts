@@ -158,7 +158,7 @@ export class BottomNav {
         }
       }
       // 받을 무료 보급이 남아 있으면 프리미엄 탭에 점을 세운다.
-      if (tab.key === "premium") bindNotificationDot(scene, group, { x: 34, y: -40 }, (listener) => notificationManager.subscribe("premiumFree", listener));
+      if (tab.key === "premium") bindNotificationDot(scene, group, { x: 34, y: -40 }, (listener) => notificationManager.subscribe("premiumNotice", listener));
       // 지금 화면인 탭만 살짝 크다. 밑줄이나 상자 대신 크기로 알린다.
       group.setScale(active ? ACTIVE_SCALE : 1);
 

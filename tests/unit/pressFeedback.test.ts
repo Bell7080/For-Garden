@@ -2,7 +2,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PRESS_FEEDBACK } from "../../src/ui/pressFeedbackStyle";
-import { FEED_TAP, feedArcPoint, feedBurstPath, feedComboVisible, feedHoldDelay } from "../../src/ui/feedTapStyle";
+import { FEED_TAP, feedArcPoint, feedBurstPath, feedComboVisible, feedHoldDelay, feedCakeScale, FeedHoldRepeater } from "../../src/ui/feedTapStyle";
 
 function sources(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -45,6 +45,13 @@ describe("급여 한 번의 손맛", () => {
     expect(feedBurstPath(0, 3, 0).dx).not.toBe(feedBurstPath(0, 3, 1).dx);
   });
 
+  it("조각은 크고 작게 달라지고 버튼 반폭보다 넓게 퍼진다", () => {
+    const sizes = Array.from({ length: 20 }, (_, i) => feedCakeScale(i, 3));
+    expect(Math.max(...sizes) / Math.min(...sizes)).toBeGreaterThan(2.5);
+    const paths = Array.from({ length: 5 }, (_, i) => feedBurstPath(i, 5, 3));
+    expect(Math.max(...paths.map((p) => p.dx)) - Math.min(...paths.map((p) => p.dx))).toBeGreaterThan(400);
+  });
+
   it("은 많이 먹일수록 많이 터진다 — 한 번 < 1레벨 < 10레벨", () => {
     const { tap, level, tenLevels } = FEED_TAP.pieces;
     expect(tap).toBeLessThan(level);
@@ -57,6 +64,20 @@ describe("급여 한 번의 손맛", () => {
     delays.slice(1).forEach((delay, index) => expect(delay).toBeLessThanOrEqual(delays[index]));
     expect(delays[0]).toBe(FEED_TAP.hold.startMs);
     expect(delays.at(-1)).toBe(FEED_TAP.hold.minMs);
+    const fullSpeed = delays.findIndex((delay) => delay === FEED_TAP.hold.minMs);
+    expect(delays.slice(0, fullSpeed).reduce((sum, ms) => sum + ms, 0)).toBeLessThan(350);
+    expect(FEED_TAP.hold.minMs).toBeLessThanOrEqual(16);
+  });
+
+  it("낮은 FPS에서도 시간을 합산하고 오래 멈췄다가 돌아와도 급여 폭주를 막는다", () => {
+    const fast = new FeedHoldRepeater();
+    const slow = new FeedHoldRepeater();
+    const fastCount = Array.from({ length: 60 }, () => fast.advance(1000 / 60)).reduce((a, b) => a + b, 0);
+    const slowCount = Array.from({ length: 10 }, () => slow.advance(100)).reduce((a, b) => a + b, 0);
+    expect(slowCount).toBe(fastCount);
+    expect(fastCount).toBeGreaterThan(40);
+    expect(slow.advance(60_000)).toBeLessThanOrEqual(16);
+    expect(slow.advance(0)).toBe(0);
   });
 
   it("의 연속 표시는 두 번째 누름부터 서고, 반짝임은 셋을 넘지 않는다", () => {

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { notificationManager } from "../managers/NotificationManager";
 import { NOTIFICATION_DOT_STYLE, rotatedNotificationAnchor, type NotificationAnchorOptions } from "./notificationDotStyle";
 export { NOTIFICATION_DOT_STYLE } from "./notificationDotStyle";
 
@@ -28,6 +29,7 @@ export function bindNotificationDot(
   options: NotificationDotOptions,
   subscribe: (listener: (visible: boolean) => void) => () => void,
 ): () => void {
+  watchNotificationClock(scene);
   let dot: NotificationDot | undefined;
   const unsubscribe = subscribe((visible) => {
     // create 도중에 구독하면 첫 값이 곧바로 불리므로 만드는 중인 씬도 받아 준다.
@@ -35,8 +37,33 @@ export function bindNotificationDot(
     if (visible && !dot) dot = new NotificationDot(scene, target, options);
     if (!visible && dot) { dot.destroy(true); dot = undefined; }
   });
-  const dispose = () => { unsubscribe(); dot?.destroy(true); dot = undefined; };
+  let disposed = false;
+  const dispose = () => {
+    if (disposed) return;
+    disposed = true;
+    unsubscribe(); dot?.destroy(true); dot = undefined;
+    scene.events.off(Phaser.Scenes.Events.SHUTDOWN, dispose);
+    target.off(Phaser.GameObjects.Events.DESTROY, dispose);
+  };
   // 씬 종료 뒤 늦은 API 응답이 파괴된 컨테이너를 만지지 않도록 구독을 먼저 끊는다.
   scene.events.once(Phaser.Scenes.Events.SHUTDOWN, dispose);
+  target.once(Phaser.GameObjects.Events.DESTROY, dispose);
   return dispose;
+}
+
+/** 서버 시간으로 바뀌는 무료 보급·우편 만료·발굴을 화면 재진입 없이 확인한다. 씬당 한 시계만 둔다. */
+const notificationClocks = new WeakSet<Phaser.Scene>();
+function watchNotificationClock(scene: Phaser.Scene): void {
+  if (notificationClocks.has(scene)) return;
+  notificationClocks.add(scene);
+  const refresh = (): void => { if (scene.sys.isActive()) void notificationManager.refresh().catch(() => undefined); };
+  const clock = scene.time.addEvent({ delay: 15_000, loop: true, callback: refresh });
+  scene.game.events.on(Phaser.Core.Events.FOCUS, refresh);
+  scene.events.on(Phaser.Scenes.Events.WAKE, refresh);
+  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+    clock.remove();
+    scene.game.events.off(Phaser.Core.Events.FOCUS, refresh);
+    scene.events.off(Phaser.Scenes.Events.WAKE, refresh);
+    notificationClocks.delete(scene);
+  });
 }

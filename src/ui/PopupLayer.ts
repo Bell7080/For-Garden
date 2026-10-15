@@ -42,6 +42,8 @@ export interface PopupOptions {
   tilt?: number;
   /** 판 바깥을 눌러 닫을 수 있는지. 무엇을 고르는 팝업은 끄고 읽는 팝업은 켠다. */
   closeOnBackdrop?: boolean;
+  /** 이 화면 좌표 영역의 입력은 뒤의 원래 조작으로 보낸다(급여 연속 입력). */
+  inputPassthrough?: { x: number; y: number; width: number; height: number };
   /**
    * 뒤 화면을 어둡게 덮을지.
    *
@@ -309,8 +311,14 @@ export class PopupLayer {
     // 바깥을 눌러 닫을 수 있게 투명한 판을 깐다. 명시한 강도는 중첩 암전이 과해지는 것을 막는다.
     const dimAlpha = options.dim ? Phaser.Math.Clamp(options.dimAlpha ?? 0.55, 0, 1) : 0;
     const backdrop = this.scene.add
-      .rectangle(screen.width / 2, screen.height / 2, screen.width, screen.height, 0x05070a, dimAlpha)
-      .setInteractive();
+      .rectangle(screen.width / 2, screen.height / 2, screen.width, screen.height, 0x05070a, dimAlpha);
+    if (options.inputPassthrough) {
+      const area = options.inputPassthrough;
+      backdrop.setInteractive(new Phaser.Geom.Rectangle(0, 0, screen.width, screen.height), (_hitArea: unknown, x: number, y: number) =>
+        !(x >= area.x && x <= area.x + area.width && y >= area.y && y <= area.y + area.height));
+    } else {
+      backdrop.setInteractive();
+    }
     layer.add(backdrop);
 
     const body = this.scene.add.container(cx, cy);

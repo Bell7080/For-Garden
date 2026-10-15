@@ -1,5 +1,5 @@
 /** 화면 이름과 무관하게 서버 상태에서 판별할 수 있는 공용 알림 키다. */
-export const NOTIFICATION_KEYS = ["missionReward", "excavationHarvestReady", "friendRequest", "newEvent", "mail", "premiumFree", "premiumFreeDaily", "premiumFreeWeekly", "premiumFreeMonthly"] as const;
+export const NOTIFICATION_KEYS = ["missionReward", "excavationHarvestReady", "friendRequest", "newEvent", "mail", "premiumFree", "premiumFreeDaily", "premiumFreeWeekly", "premiumFreeMonthly", "passReward", "premiumNotice"] as const;
 export type NotificationKey = (typeof NOTIFICATION_KEYS)[number];
 
 /** API 응답을 합성하기 전의 최소 조건이며, 항목이 없으면 추측하지 않고 false로 둔다. */
@@ -9,6 +9,8 @@ export interface NotificationConditions {
   pendingFriendRequestCount: number;
   unseenEventCount: number;
   unreadMailCount: number;
+  claimableMailCount?: number;
+  claimablePassCount?: number;
   /** 아직 받지 않은 무료 보급이 남은 프리미엄 탭. 알려 주지 않으면 없는 것으로 둔다. */
   freeSupplyCategories?: readonly string[];
 }
@@ -23,7 +25,9 @@ export function deriveNotificationState(conditions: NotificationConditions): Not
     excavationHarvestReady: conditions.excavationHarvestReady,
     friendRequest: conditions.pendingFriendRequestCount > 0,
     newEvent: conditions.unseenEventCount > 0,
-    mail: conditions.unreadMailCount > 0,
+    mail: conditions.unreadMailCount > 0 || (conditions.claimableMailCount ?? 0) > 0,
+    passReward: (conditions.claimablePassCount ?? 0) > 0,
+    premiumNotice: (conditions.freeSupplyCategories?.length ?? 0) > 0 || (conditions.claimablePassCount ?? 0) > 0,
     premiumFree: (conditions.freeSupplyCategories?.length ?? 0) > 0,
     premiumFreeDaily: conditions.freeSupplyCategories?.includes("daily") ?? false,
     premiumFreeWeekly: conditions.freeSupplyCategories?.includes("weekly") ?? false,

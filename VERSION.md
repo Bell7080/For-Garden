@@ -1,6 +1,6 @@
 # 버전 관리
 
-현재 버전: **v0.284.8**
+현재 버전: **v0.285.0**
 
 `VERSION.md`와 `package.json`의 `version`은 항상 같은 값을 쓰고, 타이틀(로딩) 화면 좌측
 하단 표기는 그 값을 그대로 읽는다. 화면에 손으로 적어 두지 않는다.
@@ -31,6 +31,12 @@
   그 이전의 초기 프로토타입 단계는 `v0.1.0` 항목 하나로 묶었다.
 
 ## 변경 이력
+
+## v0.285.0 — Supabase 백엔드 뼈대(테스트 프로젝트)
+
+- `forgarden-test` Supabase 프로젝트(서울)를 만들고 `supabase/migrations`에 첫 마이그레이션을 남겼다: `players`·`admin_roles`(RLS 켬, 본인 행 읽기만), `is_admin()`, 연결 확인 `ping()`, 가입 시 `players` 자동 생성. 쓰기 경로는 아직 없다.
+- `src/api/backendPing.ts`: 공개 키로 `ping`만 부르는 연결 확인. 설정이 없으면 `unsupported`. 아직 어느 화면에도 연결하지 않았고 `GameApi` 구현은 그대로 `FakeServer`다. QA 빌드용 환경변수 예시는 `.env.qa.example`.
+- 마이그레이션 원본은 게임 저장소의 `supabase/`이며 어드민·홈페이지도 같은 프로젝트를 본다(`docs/supabase-plan.md` 1단계).
 
 ## v0.284.8 — 즉시 급여 보조 버튼·연속 급여 가속과 알림 누락 보완
 

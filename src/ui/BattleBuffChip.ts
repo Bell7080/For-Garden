@@ -12,6 +12,9 @@ import { pressIn, pressOut } from "./pressFeedback";
 /** 전투 프로필에 붙는 작은 버프 액자. 진행 Graphics는 생성 후 지우고 다시 그려 재사용한다. */
 export class BattleBuffChip extends Phaser.GameObjects.Container {
   private readonly progress = this.scene.add.graphics();
+  private progressKind?: string;
+  private progressRatio = -1;
+  private progressSize = -1;
   private readonly hit: Phaser.GameObjects.Rectangle;
   /** 겹 수 글자. 겹이 오르내릴 때 칩을 다시 만들지 않고 이 글자만 갈아 끼운다. */
   private stacksText?: Phaser.GameObjects.Text;
@@ -87,6 +90,8 @@ export class BattleBuffChip extends Phaser.GameObjects.Container {
 
   private redraw(size: number): void {
     const model = battleBuffProgress(this.timing);
+    if (model.kind === this.progressKind && model.remainingRatio === this.progressRatio && size === this.progressSize) return;
+    this.progressKind = model.kind; this.progressRatio = model.remainingRatio; this.progressSize = size;
     const radius = size / 2 - 3;
     this.progress.clear();
     if (model.kind === "conditional" || model.kind === "permanent") {

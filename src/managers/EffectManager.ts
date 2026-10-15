@@ -113,7 +113,7 @@ export interface SustainedEffectTarget {
 }
 
 /** 코어 활성 목록과 함께 사는 재사용 그래픽이다. 매 프레임 새 객체를 만들지 않아 GC를 피한다. */
-interface SustainedSlot { graphics: Phaser.GameObjects.Graphics; tween?: Phaser.Tweens.Tween; tag: SustainedTag }
+interface SustainedSlot { graphics: Phaser.GameObjects.Graphics; tween?: Phaser.Tweens.Tween; tag: SustainedTag; color?: number }
 
 export type CombatVisualMethod = "heal" | "shieldGain" | "shieldHit" | "shieldBreak" | "stealthEnter" | "stealthExit" | "reagentReaction";
 
@@ -173,6 +173,8 @@ function paintInkArea(
 }
 
 /** 날아가는 잉크 조각 한 알과 그 꼬리. 풀에서 꺼내 다시 쓴다. */
+interface InkPieceSlot { image: Phaser.GameObjects.Image; tween?: Phaser.Tweens.Tween; openedAt: number }
+
 interface ProjectileSlot {
   image: Phaser.GameObjects.Image;
   trail: Phaser.GameObjects.Image;
@@ -200,6 +202,7 @@ export class EffectManager {
   private readonly numbers: NumberSlot[] = [];
   /** 날아가는 탄환 풀. 파문과 같은 이유로 다시 쓴다 — 평타마다 새로 만들면 GC가 프레임을 끊는다. */
   private readonly projectiles: ProjectileSlot[] = [];
+  private readonly inkPieces: InkPieceSlot[] = [];
   private readonly lastAt = new Map<EffectKind, number>();
   /** 같은 전투원의 복수 제공자 효과를 보존하는 런타임 Fighter ID + 효과 ID 복합 키다. */
   private readonly sustained = new Map<string, SustainedSlot>();
@@ -644,9 +647,23 @@ export class EffectManager {
     delay: number,
     place: (image: Phaser.GameObjects.Image, t: number) => void,
   ): void {
-    const image = this.scene.add.image(0, 0, inkTextureKey(shape)).setTint(color).setDepth(this.depth).setVisible(false);
+    let slot = this.inkPieces.find((entry) => entry.tween === undefined);
+    if (!slot) {
+      if (this.inkPieces.length >= INK_STRIKE.maxLive) {
+        slot = this.inkPieces.reduce((oldest, entry) => entry.openedAt < oldest.openedAt ? entry : oldest);
+        slot.tween?.stop();
+      } else {
+        slot = { image: this.scene.add.image(0, 0, inkTextureKey(shape)).setVisible(false), openedAt: 0 };
+        this.inkPieces.push(slot);
+      }
+    }
+    const piece = slot;
+    piece.openedAt = this.scene.time.now;
+    const image = piece.image.setVisible(false).setActive(true).setTexture(inkTextureKey(shape)).setTint(color).setDepth(this.depth).setAlpha(1);
+    // Phaser의 onStart와 첫 onUpdate 사이에도 렌더가 돈다. 숨긴 상태에서 위치·크기·회전을 먼저 확정한다.
+    place(image, 0);
     const state = { t: 0 };
-    this.scene.tweens.add({
+    piece.tween = this.scene.tweens.add({
       targets: state,
       t: 1,
       delay,
@@ -656,7 +673,7 @@ export class EffectManager {
         place(image, state.t);
         image.setAlpha(state.t < INK_STRIKE.fadeFrom ? 1 : 1 - (state.t - INK_STRIKE.fadeFrom) / (1 - INK_STRIKE.fadeFrom));
       },
-      onComplete: () => image.destroy(),
+      onComplete: () => { image.setVisible(false).setActive(false); piece.tween = undefined; },
     });
   }
 
@@ -704,33 +721,30 @@ export class EffectManager {
       .setPosition(from.x, from.y).setAlpha(1).setDepth(depth).setVisible(false);
     const trail = slot.trail.setTint(lightenColor(color, INK_PROJECTILE.trail.lighten)).setDepth(depth - 0.5).setVisible(false);
     const state = { t: 0 };
+    const paint = (): void => {
+      const at = projectilePosition(from, to, kind, state.t);
+      const ahead = projectilePosition(from, to, kind, Math.min(1, state.t + 0.02));
+      const heading = Math.atan2(ahead.y - at.y, ahead.x - at.x);
+      const fade = state.t < INK_PROJECTILE.fadeFrom ? 1 : 1 - (state.t - INK_PROJECTILE.fadeFrom) / (1 - INK_PROJECTILE.fadeFrom);
+      image.setPosition(at.x, at.y).setAlpha(fade);
+      if (spec.spin) image.setRotation(state.t * INK_PROJECTILE.ms / 1000 * spec.spin);
+      else if (kind === "note") image.setRotation(Math.sin(state.t * 9) * 0.3);
+      else if (spec.flip) image.setRotation(heading + Math.PI / 2).setScale(spec.scale * Math.cos(state.t * Math.PI * 5), spec.scale);
+      else image.setRotation(heading);
+      if (spec.trail) {
+        const back = INK_PROJECTILE.trail.offset * spec.scale;
+        trail.setPosition(at.x - Math.cos(heading) * back, at.y - Math.sin(heading) * back)
+          .setRotation(heading)
+          .setScale(spec.scale)
+          .setAlpha(INK_PROJECTILE.trail.alpha * Math.min(1, state.t / 0.2) * fade);
+      }
+    };
+    // 재사용한 꼬리의 이전 좌표·각도·알파도 표시 전에 초기화한다. 별도 프레임 콜백은 추가하지 않는다.
+    paint();
     slot.tween = this.scene.tweens.add({
-      targets: state,
-      t: 1,
-      delay,
-      duration: INK_PROJECTILE.ms,
-      onStart: () => {
-        image.setVisible(true);
-        trail.setVisible(spec.trail === true);
-      },
-      onUpdate: () => {
-        const at = projectilePosition(from, to, kind, state.t);
-        const ahead = projectilePosition(from, to, kind, Math.min(1, state.t + 0.02));
-        const heading = Math.atan2(ahead.y - at.y, ahead.x - at.x);
-        const fade = state.t < INK_PROJECTILE.fadeFrom ? 1 : 1 - (state.t - INK_PROJECTILE.fadeFrom) / (1 - INK_PROJECTILE.fadeFrom);
-        image.setPosition(at.x, at.y).setAlpha(fade);
-        if (spec.spin) image.setRotation(state.t * INK_PROJECTILE.ms / 1000 * spec.spin);
-        else if (kind === "note") image.setRotation(Math.sin(state.t * 9) * 0.3);
-        else if (spec.flip) image.setRotation(heading + Math.PI / 2).setScale(spec.scale * Math.cos(state.t * Math.PI * 5), spec.scale);
-        else image.setRotation(heading);
-        if (spec.trail) {
-          const back = INK_PROJECTILE.trail.offset * spec.scale;
-          trail.setPosition(at.x - Math.cos(heading) * back, at.y - Math.sin(heading) * back)
-            .setRotation(heading)
-            .setScale(spec.scale)
-            .setAlpha(INK_PROJECTILE.trail.alpha * Math.min(1, state.t / 0.2) * fade);
-        }
-      },
+      targets: state, t: 1, delay, duration: INK_PROJECTILE.ms,
+      onStart: () => { image.setVisible(true); trail.setVisible(spec.trail === true); },
+      onUpdate: paint,
       onComplete: () => {
         image.setVisible(false);
         trail.setVisible(false);
@@ -1113,10 +1127,9 @@ export class EffectManager {
   }
 
   /** 얇은 질주 궤적은 대상 쪽으로 모이며, 메테의 몸 주변 평행 박자선과 실루엣/방향이 다르다. */
-  private drawLuka(graphics: Phaser.GameObjects.Graphics, color: number, aimX?: number, aimY?: number): void {
+  private drawLuka(graphics: Phaser.GameObjects.Graphics, color: number): void {
     const spec = SUSTAINED_COMBAT_EFFECT.luka;
-    const angle = Math.atan2((aimY ?? graphics.y) - graphics.y, (aimX ?? graphics.x + 1) - graphics.x);
-    graphics.clear().lineStyle(spec.lineWidth, color, spec.alpha).setRotation(angle);
+    graphics.clear().lineStyle(spec.lineWidth, color, spec.alpha);
     for (let lane = -1; lane <= 1; lane += 1) {
       const offset = lane * spec.spacing;
       graphics.lineBetween(-spec.length * 0.55, offset, spec.length * 0.45, offset * 0.35);
@@ -1130,6 +1143,7 @@ export class EffectManager {
       const key = this.sustainedKey(target.fighterId, target.effectId);
       seen.add(key);
       let slot = this.sustained.get(key);
+      if (slot && slot.tag !== target.tag) { this.removeSustained(key); slot = undefined; }
       if (!slot) {
         const graphics = this.scene.add.graphics().setDepth(this.bodyDepth);
         // 모션 감소가 0이면 무한 tween을 만들지 않고 정적인 홀로그램 표식만 유지한다.
@@ -1140,11 +1154,14 @@ export class EffectManager {
         this.sustained.set(key, slot);
       }
       slot.graphics.setPosition(target.x, target.y);
-      if (target.tag === "stealthActive") {
-        slot.graphics.clear().setRotation(0).lineStyle(2, COLOR.inkDimHex, 0.22).strokePoints(groundDiamond(72), true);
-      } else if (target.tag === "metteStaccatoActive") {
-        slot.graphics.setRotation(0); this.drawMette(slot.graphics, target.color);
-      } else this.drawLuka(slot.graphics, target.color, target.aimX, target.aimY);
+      if (slot.color !== target.color) {
+        if (target.tag === "stealthActive") slot.graphics.clear().lineStyle(2, COLOR.inkDimHex, 0.22).strokePoints(groundDiamond(72), true);
+        else if (target.tag === "metteStaccatoActive") this.drawMette(slot.graphics, target.color);
+        else this.drawLuka(slot.graphics, target.color);
+        slot.color = target.color;
+      }
+      slot.graphics.setRotation(target.tag === "lukaSharedTargetHasteActive"
+        ? Math.atan2((target.aimY ?? target.y) - target.y, (target.aimX ?? target.x + 1) - target.x) : 0);
     }
     for (const key of this.sustained.keys()) if (!seen.has(key)) this.removeSustained(key);
   }
@@ -1434,6 +1451,8 @@ export class EffectManager {
     this.numbers.length = 0;
     this.projectiles.forEach((slot) => { slot.tween?.stop(); slot.image.destroy(); slot.trail.destroy(); });
     this.projectiles.length = 0;
+    this.inkPieces.forEach((slot) => { slot.tween?.stop(); slot.image.destroy(); });
+    this.inkPieces.length = 0;
     this.crosses.forEach((image) => { this.scene.tweens.killTweensOf(image); image.destroy(); });
     this.crosses.length = 0;
     this.feverMarks.forEach((mark) => { mark.siren.destroy(); mark.anger.destroy(); });

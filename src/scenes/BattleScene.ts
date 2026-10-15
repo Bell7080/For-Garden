@@ -1,3 +1,4 @@
+import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { expeditionBossDamageScore } from "../core/expeditionScore";
 import { BOSS_STEP_MS, bossBattleRandom } from "../core/bossSimulation";
 import { goRoute, partyRoute, victoryRoute } from "./stageStoryRoute";
@@ -907,7 +908,7 @@ export class BattleScene extends Phaser.Scene {
     // 했다. 자리는 `CONTRIBUTION_TOGGLE` 한 곳이 정한다.
     this.contributionChip = new ControlChip(this, CONTRIBUTION_TOGGLE.x, CONTRIBUTION_TOGGLE.y, {
       icon: "bar-chart", label: t("battle.contribution"), width: CONTRIBUTION_TOGGLE.width, height: CONTRIBUTION_TOGGLE.height,
-      onClick: () => { this.contributionPanel?.toggle(); this.contributionChip.setActive(this.contributionPanel?.state.expanded ?? false); this.refreshDebug(); },
+      onClick: () => { this.contributionPanel?.toggle(); this.refreshContribution(true); this.contributionChip.setActive(this.contributionPanel?.state.expanded ?? false); this.refreshDebug(); },
     });
     // 전장 아래쪽에 서므로 SD·체력 바보다 앞에 둔다.
     for (const chip of [this.speedChip, this.autoChip, this.presentationChip, this.contributionChip]) chip.setDepth(BATTLE_CONTROLS.depth);
@@ -1578,7 +1579,7 @@ export class BattleScene extends Phaser.Scene {
 
   /** 제한 주기 또는 카테고리 입력 때만 코어의 불변 표시 스냅샷을 프리팹에 전달한다. */
   private refreshContribution(force = false, now = performance.now()): void {
-    if (!this.contributionPanel || (!force && now < this.contributionRefreshAt)) return;
+    if (!this.contributionPanel || (!force && (!this.contributionPanel.state.expanded || now < this.contributionRefreshAt))) return;
     // 순위가 바뀌는 것을 보는 판이라 갱신이 너무 느리면 값이 뚝뚝 끊겨 보인다. 줄이 자리를
     // 옮기는 tween(260ms)보다 짧게 두면 옮기는 중에 다시 옮기라고 하므로 그보다 길게 잡는다.
     this.contributionRefreshAt = now + 300;
@@ -2512,6 +2513,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private refreshDebug(): void {
+    if (!QA_TOOLS_ENABLED) return;
     setDebugBattle({
       phase: this.state.phase,
       elapsed: Math.round(this.state.elapsed * 10) / 10,

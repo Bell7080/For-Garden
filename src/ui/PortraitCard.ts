@@ -138,6 +138,7 @@ interface ManagedPortraitOverlay extends PortraitAlphaOverlay {
   alpha: number;
   radius: number;
   ratio: number;
+  paintedRatio?: number;
   head?: Phaser.GameObjects.Image;
   headMask: Phaser.GameObjects.Graphics;
 }
@@ -685,6 +686,10 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   /** 몸통과 머리 마스크에 완전히 같은 12시 시작·시계 방향 부채꼴을 그린다. */
   private paintMaskOverlay(overlay: ManagedPortraitOverlay, ratio: number): void {
     overlay.ratio = Phaser.Math.Clamp(ratio, 0, 1);
+    // 게이지가 멈췄거나 0/100%에 머무는 동안 같은 부채꼴을 다시 만들지 않는다.
+    // 부모 이동·카드 눌림에 따른 월드 마스크 위치는 그대로 동기화한다.
+    if (overlay.paintedRatio === overlay.ratio) { this.syncMask(); return; }
+    overlay.paintedRatio = overlay.ratio;
     overlay.body.clear();
     overlay.headMask.clear();
     if (overlay.ratio >= 1) return;

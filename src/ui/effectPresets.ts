@@ -469,6 +469,8 @@ export const INK_PROJECTILE: {
  * 공용 별 위에 한 겹만 얹고, 3배속 한 프레임에서도 획 하나가 남도록 짧고 굵게 둔다. 값은 게임 픽셀이다.
  */
 export const INK_STRIKE = {
+  /** 지연 중인 조각까지 포함한 풀 상한. 초과 시 가장 오래된 연출만 회수한다. */
+  maxLive: 32,
   // 칼날은 SD 몸통보다 작게 둔다 — 1.15배로 세웠을 때 맞은 개체를 통째로 덮었다.
   slash: { ms: 170, from: 0.35, to: 0.7, growUntil: 0.45, drift: 30, tilt: -0.55, turn: 0.5 },
   claw: { ms: 160, count: 3, gapMs: 38, gap: 34, tilt: 0.92, from: 0.35, to: 1.05, growUntil: 0.4, drift: 38 },

@@ -77,6 +77,8 @@ export class BattleProfile extends Phaser.GameObjects.Container {
   private readonly battleUiMotion: BattleUiMotion;
   /** 최대 개수를 넘긴 마지막 집계 칩이 전체 목록 열기 의도를 씬으로 전달한다. */
   private overflowChip?: BattleBuffChip;
+  private overflowKey?: string;
+  private onOverflowPress?: () => void;
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: BattleProfileOptions) {
     super(scene, x, y);
@@ -180,14 +182,19 @@ export class BattleProfile extends Phaser.GameObjects.Container {
       this.buffContainer.add(container);
     }
     // 집계 칩은 실제 버프와 키/슬롯 생명주기를 섞지 않고 마지막 고정 슬롯만 사용한다.
-    this.overflowChip?.destroy(true);
-    this.overflowChip = undefined;
-    if (overflow > 0) {
-      const model = models[visibleCount];
-      const { container } = this.createBuffChip(model, L.buffRow.maxVisible - 1, `+${overflow}`, onOverflowPress);
-      this.overflowChip = container;
-      this.buffContainer.add(container);
-    }
+    this.onOverflowPress = onOverflowPress;
+    const model = overflow > 0 ? models[visibleCount] : undefined;
+    const key = model ? `${this.buffKey(model.buff)}:${model.buff.skillId}:${model.buff.timing.kind}:${model.sourceRelic.id}:${model.fallbackIcon ?? ""}:${overflow}` : undefined;
+    if (key !== this.overflowKey) {
+      this.overflowChip?.destroy(true);
+      this.overflowChip = undefined;
+      this.overflowKey = key;
+      if (model) {
+        const { container } = this.createBuffChip(model, L.buffRow.maxVisible - 1, `+${overflow}`, () => this.onOverflowPress?.());
+        this.overflowChip = container;
+        this.buffContainer.add(container);
+      }
+    } else if (model) this.overflowChip?.setTiming(model.buff.timing, L.buffRow.chipSize).setStacks(model.buff.stacks);
     return this;
   }
 

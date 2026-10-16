@@ -11,8 +11,10 @@
 - `src/api`: 씬이 의존하는 서버 인터페이스와 임시 FakeServer 구현을 둔다. 재화 차감과 가챠
   난수 결과는 씬에서 계산하지 말고 반드시 이 경계를 통과시킨다.
   계정/인증과 원격 저장 메타데이터는 `AccountApi`가 소유한다. **보안상 인증 토큰은 절대로
-  `Session`·`SaveData`·`localStorage`에 넣지 않고** 플랫폼 보안 저장소 또는 HttpOnly 서버
-  세션에만 둔다. SDK가 없는 빌드는 성공을 흉내 내지 않고 `unsupported`를 반환한다.
+  `Session`·`SaveData`에 넣지 않고** 플랫폼 보안 저장소 또는 HttpOnly 서버 세션에 둔다.
+  **예외 하나: 출시 전 웹 빌드의 게스트 토큰만 `webTokenStore.ts`가 `localStorage`에 둘 수 있다**
+  (응태 결정) — 플레이어·결제가 없는 동안만 허용한 임시 예외이고 **결제가 붙기 전, 정식 출시 전에
+  반드시 없앤다**(출시 차단 항목, `docs/release-fixture-cleanup.md`). 다른 어떤 곳에도 새 예외를 만들지 않는다. SDK가 없는 빌드는 성공을 흉내 내지 않고 `unsupported`를 반환한다.
 - `src/data`: 캐릭터, 배너, 스테이지처럼 운영 중 늘어나는 정적 정의를 둔다.
   대사 원문과 분기는 `src/data/dialogues`에 `DialogueStory` 정적 데이터로 두고 씬에 하드코딩하지
   않는다. 노드는 ID·화자·본문·스탠딩·표정/모션·다음 ID·선택지를 표현한다.

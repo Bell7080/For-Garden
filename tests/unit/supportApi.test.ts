@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SupportApi, type RpcCaller } from "../../src/api/SupportApi";
-import { createQaTokenStore } from "../../src/api/qaTokenStore";
+import { createWebTokenStore } from "../../src/api/webTokenStore";
 import { installBackend } from "../../src/api/backendSession";
 import { accountApi } from "../../src/api/AccountApi";
 
@@ -34,11 +34,11 @@ describe("SupportApi", () => {
   });
 });
 
-describe("QA 토큰 보관소와 연결", () => {
+describe("웹 토큰 보관소와 연결", () => {
   it("보관소는 저장·복원·삭제하고 깨진 값은 null로 본다", async () => {
     const mem = new Map<string, string>();
     const storage = { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => void mem.set(k, v), removeItem: (k: string) => void mem.delete(k) };
-    const store = createQaTokenStore(storage)!;
+    const store = createWebTokenStore(storage)!;
     expect(store).not.toBeNull();
     const tokens = { accessToken: "a", refreshToken: "r", expiresAtMs: 5, userId: "u" };
     await store.save(tokens);

@@ -39,3 +39,10 @@
 - 타입 검사·클라이언트 production 빌드·서버 ESM 재빌드 성공. 기존 서버 ESM 구동 검사도 통과했다.
 - `test:build-isolation`, `test:release-fixtures` 통과. 실제 모듈의 production/qa/test 동작과 정상 보상 유지 여부를 확인했다.
 - DB나 외부 검증 서비스, 전체 E2E는 실행하지 않았다. 주입 검증기를 사용한 검사는 실제 사업자 연동 완료를 뜻하지 않는다.
+
+
+## 출시 차단 — 웹 토큰 보관소(`src/api/webTokenStore.ts`)
+
+- 웹 빌드는 게스트 로그인 토큰을 `localStorage`에 둔다(v0.296.1, 응태 결정). 플레이어와 결제가 없는 출시 전에만 허용한 임시 예외다.
+- **결제가 붙기 전, 정식 출시 전에 반드시 없앤다.** 앱 빌드는 키체인/키스토어 어댑터를 `TokenStore`로 주입하고, 남는 웹 배포는 HttpOnly 서버 세션으로 바꾼다. 그 뒤 `webTokenStore.ts`·`installBackend`의 기본 보관소·CLAUDE.md의 예외 문단을 함께 지운다.
+- 게스트는 기기를 잃으면 계정을 되찾을 수 없으므로 소셜 연동도 같은 시점의 선행 조건이다.

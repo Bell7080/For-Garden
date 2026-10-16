@@ -38,6 +38,7 @@ import { consumeSceneEntry } from "./sceneEntry";
 import { findItem } from "../data/items";
 import { openItemGuide } from "../ui/currencyGuideEntry";
 import { pressIn, pressOut } from "../ui/pressFeedback";
+import { withBusy } from "../ui/BusyOverlay";
 
 /**
  * 지난번에 받은 레이드 목록. 씬이 다시 설 때 이것으로 먼저 그려 빈 목록이 한 박자 서지 않게 한다.
@@ -389,7 +390,7 @@ export class RaidScene extends Phaser.Scene {
     this.busy = true;
     const requestId = globalThis.crypto?.randomUUID?.() ?? `raid-summon-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     try {
-      const result = await gameApi.summonRaid({ requestId, ...select });
+      const result = await withBusy(this, gameApi.summonRaid({ requestId, ...select }));
       if (!this.scene.isActive()) return;
       setDebugRaidStage("summon");
       playRaidSummonCinematic(this, {
@@ -429,7 +430,7 @@ export class RaidScene extends Phaser.Scene {
   /** 서버 스냅샷 하나로 머리글·게이지·목록·조작을 한 번에 다시 그린다. 판이 없으면 목록으로 간다. */
   private async refresh(): Promise<void> {
     try {
-      const raid = (await gameApi.getRaids(RANKING_VISIBLE_RANKS)).raids.find(({ id }) => id === this.raidId);
+      const raid = (await withBusy(this, gameApi.getRaids(RANKING_VISIBLE_RANKS))).raids.find(({ id }) => id === this.raidId);
       if (!this.scene.isActive()) return;
       // 걷힌 판(정산을 마치고 오래 지난 판)으로 돌아온 진입은 목록으로 되돌린다.
       if (!raid) { startScene(this, "raid", { tab: this.tab } satisfies RaidSceneData); return; }

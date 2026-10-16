@@ -56,6 +56,7 @@ import { getBountyTier } from "../data/bounty";
 import { getCakeOperationTier } from "../data/cakeOperation";
 import { addSdFootShadow } from "../ui/SdFootShadow";
 import { duelBlindOrder } from "../core/duelArena";
+import { withBusy } from "../ui/BusyOverlay";
 
 /**
  * 미리보기 전장.
@@ -552,7 +553,7 @@ export class PartyScene extends Phaser.Scene {
   /** 전투 시작이 부르는 입장 — 결과판의 「다시 하기」와 같은 길이다(`enterContentBattle`). */
   private async enterBattle(): Promise<void> {
     if (this.content.content === "duelDefense") {
-      await gameApi.setDuelDefense({ relicIds: formationMembers(this.picked), blindChoice: this.blindChoice.filter((id) => this.picked.includes(id)) });
+      await withBusy(this, gameApi.setDuelDefense({ relicIds: formationMembers(this.picked), blindChoice: this.blindChoice.filter((id) => this.picked.includes(id)) }));
       startScene(this, "duel");
       return;
     }

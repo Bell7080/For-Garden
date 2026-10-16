@@ -799,6 +799,196 @@
 "Legende des Gartens",
 "Легенда сада"
 ],
+"modifier.millionaire.name": [
+"百万富翁",
+"เศรษฐีเงินล้าน",
+"Triệu phú",
+"Jutawan",
+"Fortuna millonaria",
+"Fortuna milionária",
+"Millionär",
+"Миллионер"
+],
+"modifier.specimen-curator.name": [
+"标本管理员",
+"ผู้ดูแลตัวอย่าง",
+"Người giữ mẫu vật",
+"Kurator Spesimen",
+"Espécimen bajo custodia",
+"Guarda do espécime",
+"Exemplar-Kurator",
+"Хранитель экземпляров"
+],
+"modifier.limit-breaker.name": [
+"超越极限之人",
+"ผู้ก้าวข้ามขีดจำกัด",
+"Người vượt giới hạn",
+"Penembus Batas",
+"Más allá del límite",
+"Além do limite",
+"Grenzbrecher",
+"Сквозь пределы"
+],
+"modifier.kind-researcher.name": [
+"温柔的研究员",
+"นักวิจัยใจดี",
+"Nhà nghiên cứu dịu dàng",
+"Periset yang Lembut",
+"Investigación con cariño",
+"Pesquisa com carinho",
+"Sanfte Forschung",
+"Исследования с заботой"
+],
+"modifier.chief-researcher.name": [
+"首席研究员",
+"หัวหน้านักวิจัย",
+"Trưởng nhóm nghiên cứu",
+"Kepala Riset",
+"Jefatura de investigación",
+"Chefia de pesquisa",
+"Forschungsleitung",
+"Глава исследований"
+],
+"modifier.veteran.name": [
+"百战老将",
+"ผู้ผ่านร้อยสมรภูมิ",
+"Lão luyện trăm trận",
+"Veteran Seratus Laga",
+"Cien batallas",
+"Cem batalhas",
+"Hundert Schlachten",
+"Сто сражений"
+],
+"modifier.front-breaker.name": [
+"战线突破者",
+"ผู้ฝ่าแนวหน้า",
+"Người phá phòng tuyến",
+"Penembus Garis Depan",
+"Ruptura del frente",
+"Ruptura da linha de frente",
+"Frontbrecher",
+"Прорыв фронта"
+],
+"modifier.arena-ruler.name": [
+"决斗场的支配者",
+"ผู้ครองสนามประลอง",
+"Bá chủ đấu trường",
+"Penguasa Arena",
+"Dominio de la arena",
+"Domínio da arena",
+"Herrschaft der Arena",
+"Власть над ареной"
+],
+"modifier.raid-captain.name": [
+"讨伐队长",
+"หัวหน้าหน่วยปราบ",
+"Đội trưởng thảo phạt",
+"Kapten Penakluk",
+"Capitanía de asalto",
+"Capitania de ataque",
+"Raidführung",
+"Глава рейда"
+],
+"modifier.deep-salvager.name": [
+"深海打捞者",
+"นักกู้ซากใต้ทะเลลึก",
+"Người trục vớt biển sâu",
+"Penyelamat Laut Dalam",
+"Rescate abisal",
+"Resgate abissal",
+"Tiefseebergung",
+"Глубоководный подъём"
+],
+"modifier.fossil-appraiser.name": [
+"化石鉴定师",
+"ผู้ประเมินฟอสซิล",
+"Giám định hóa thạch",
+"Penilai Fosil",
+"Ojo para fósiles",
+"Olho para fósseis",
+"Fossilgutachten",
+"Знаток окаменелостей"
+],
+"modifier.city-envoy.name": [
+"都市使节",
+"ทูตแห่งนคร",
+"Sứ giả các thành phố",
+"Utusan Kota",
+"Embajada de las ciudades",
+"Embaixada das cidades",
+"Gesandtschaft der Städte",
+"Посол городов"
+],
+"modifier.story-collector.name": [
+"故事收藏家",
+"นักสะสมเรื่องราว",
+"Người sưu tầm câu chuyện",
+"Pengumpul Kisah",
+"Colección de historias",
+"Coleção de histórias",
+"Geschichtensammlung",
+"Собиратель историй"
+],
+"modifier.cheesecake-artisan.name": [
+"芝士蛋糕匠人",
+"ช่างชีสเค้ก",
+"Nghệ nhân bánh phô mai",
+"Ahli Cheesecake",
+"Arte de la tarta de queso",
+"Arte do cheesecake",
+"Käsekuchen-Kunst",
+"Мастерство чизкейка"
+],
+"modifier.tireless.name": [
+"不知疲倦",
+"ไม่รู้จักเหนื่อย",
+"Không biết mệt",
+"Tak Kenal Lelah",
+"Sin descanso",
+"Sem descanso",
+"Unermüdlich",
+"Без устали"
+],
+"modifier.diligent-researcher.name": [
+"勤勉的研究员",
+"นักวิจัยผู้ขยัน",
+"Nhà nghiên cứu chăm chỉ",
+"Periset Tekun",
+"Investigación constante",
+"Pesquisa constante",
+"Fleißige Forschung",
+"Усердие в исследованиях"
+],
+"modifier.challenger.name": [
+"巅峰挑战者",
+"ผู้ท้าชิงจุดสูงสุด",
+"Kẻ thách thức đỉnh cao",
+"Penantang Puncak",
+"Aspirante a la cima",
+"Desafiante do topo",
+"Gipfelherausforderung",
+"Покорение вершины"
+],
+"modifier.stratum-explorer.name": [
+"地层探索家",
+"นักสำรวจชั้นหิน",
+"Nhà thám hiểm địa tầng",
+"Penjelajah Lapisan",
+"Exploración de estratos",
+"Exploração de estratos",
+"Schichtenforschung",
+"Исследование пластов"
+],
+"modifier.walking-codex.name": [
+"行走的图鉴",
+"สารานุกรมเดินได้",
+"Bách khoa biết đi",
+"Ensiklopedia Berjalan",
+"Enciclopedia andante",
+"Enciclopédia ambulante",
+"Wandelndes Lexikon",
+"Ходячая энциклопедия"
+],
 "profileFrame.field.name": [
 "现场研究员",
 "นักวิจัยภาคสนาม",

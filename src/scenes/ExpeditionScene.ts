@@ -71,6 +71,7 @@ import { createFormationDragVisualController, type FormationDragVisualController
 import { consumeSceneEntry } from "./sceneEntry";
 import { playSceneEntrance, startScene, restartScene } from "../ui/screenTransition";
 import { LOBBY_RETURN } from "./lobbyEntry";
+import { withBusy } from "../ui/BusyOverlay";
 
 /** 편성 목록은 어디서나 네 칸이 한 줄이다. 카드 크기와 줄 간격은 폭에서 공용 규칙이 구한다. */
 const ROSTER = formationRosterGrid(BASE_WIDTH - 96);
@@ -444,7 +445,7 @@ export class ExpeditionScene extends Phaser.Scene {
     if (!run) { this.nodeTransitionPending = false; return; }
     try {
       // 보상 필드가 없는 완료 계약이므로 재화 종류나 수량을 위조할 수 없다.
-      const result = await gameApi.completeExpeditionNode({ requestId: `${run.runId}:${node.id}`, runId: run.runId, nodeId: node.id, relicHp: run.relics.map(({ currentHp }) => currentHp) });
+      const result = await withBusy(this, gameApi.completeExpeditionNode({ requestId: `${run.runId}:${node.id}`, runId: run.runId, nodeId: node.id, relicHp: run.relics.map(({ currentHp }) => currentHp) }));
       // 전리품을 주웠으면 영수증 한 장으로 알린다 — 지도의 합계만 슬쩍 늘면 무엇을 주웠는지 읽히지 않는다.
       // 영수증은 화면 아무 곳이나 눌러 닫히고, 닫히면 지도가 새 합계로 다시 선다.
       const items = currencyRecordToRewardItems(result.rewards);
@@ -624,7 +625,7 @@ export class ExpeditionScene extends Phaser.Scene {
     const run = expeditionManager.status().run; if (!run) return;
     const reward = Object.values(run.pendingRewards).reduce((sum, amount) => sum + Math.floor(amount), 0);
     this.popups.confirm({ title: t("expedition.abandon.title"), message: t("expedition.abandon.body", { reward: reward.toLocaleString() }), confirmLabel: t("expedition.abandon.confirm"), destructive: true }, async () => {
-      const settlement = await gameApi.settleExpeditionRun({ runId: run.runId, settlementId: `${run.runId}:abandon`, outcome: "abandoned" });
+      const settlement = await withBusy(this, gameApi.settleExpeditionRun({ runId: run.runId, settlementId: `${run.runId}:abandon`, outcome: "abandoned" }));
       // 지갑 상한 적용 뒤 실제 들어온 양만 영수증에 표시하고 확인 후 로비로 돌아간다.
       openRewardPopup(this, this.popups, { title: t("expedition.abandon.settle"), items: currencyRecordToRewardItems(settlement.granted), onConfirm: () => startScene(this, "lobby") });
     });
@@ -709,7 +710,7 @@ export class ExpeditionScene extends Phaser.Scene {
   /** 내 최고 순위는 순위표에만 있으므로 두 조회를 함께 묶는다. */
   private async refreshMyScore(): Promise<void> {
     try {
-      const [best, leaderboard] = await Promise.all([gameApi.getExpeditionWeeklyBest(), gameApi.getExpeditionLeaderboard(10)]);
+      const [best, leaderboard] = await withBusy(this, Promise.all([gameApi.getExpeditionWeeklyBest(), gameApi.getExpeditionLeaderboard(10)]));
       if (!this.scene.isActive() || this.stage !== "ranking") return;
       if (best.weekKey !== leaderboard.weekKey) { this.renderMyScore(t("expedition.weekly.rolled")); return; }
       const mine = leaderboard.entries.find((entry) => entry.isMe);
@@ -736,7 +737,7 @@ export class ExpeditionScene extends Phaser.Scene {
     this.sweepPending = true; this.sweepButton?.setEnabled(false);
     try {
       const requestId = globalThis.crypto?.randomUUID?.() ?? `expedition-sweep-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      const result = await gameApi.sweepExpedition({ requestId });
+      const result = await withBusy(this, gameApi.sweepExpedition({ requestId }));
       openRewardPopup(this, this.popups, { title: t("expedition.sweep.done"), items: currencyRecordToRewardItems(result.granted), onConfirm: () => restartScene(this) });
     } catch (error) {
       const code = error instanceof GameApiError ? error.code : undefined;

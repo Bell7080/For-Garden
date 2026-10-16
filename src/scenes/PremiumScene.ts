@@ -51,6 +51,7 @@ import { UI_ICON } from "../ui/icons";
 import { addRewardExpiryTag } from "../ui/rewardExpiry";
 import { wrapDialogueText } from "../core/dialogueTextWrap";
 import { settingsManager } from "../managers/SettingsManager";
+import { withBusy } from "../ui/BusyOverlay";
 
 /**
  * 현금 결제 카탈로그를 인게임 재화 상점과 분리해 소유하는 독립 프리미엄 씬이다.
@@ -154,14 +155,14 @@ export class PremiumScene extends Phaser.Scene {
 
   /** 서버가 계산한 노출·제한 상태에서 유료 storefront만 골라 다시 그린다. */
   private async refresh(): Promise<void> {
-    const response = await gameApi.getProducts("premium");
+    const response = await withBusy(this, gameApi.getProducts("premium"));
     if (!this.scene.isActive()) return;
     // storefront 판정은 검증된 모델 하나가 소유한다. 여기서 filter를 다시 쓰면 같은 규칙이
     // 두 곳에 살아, 한쪽만 고쳐도 화면은 조용히 예전 규칙으로 남는다.
     this.products = premiumModel(response.products);
     this.serverOffsetMs = Date.parse(response.serverTime) - Date.now();
     // 상품을 산 뒤에는 지갑이 바뀌었으므로 상단 줄도 함께 맞춘다.
-    session.wallet = { ...session.wallet, ...(await gameApi.getPlayerState()).wallet };
+    session.wallet = { ...session.wallet, ...(await withBusy(this, gameApi.getPlayerState())).wallet };
     if (!this.scene.isActive()) return;
     this.topBar?.refresh();
     this.renderProducts();
@@ -442,7 +443,7 @@ export class PremiumScene extends Phaser.Scene {
     if (this.claiming) return;
     this.claiming = true;
     try {
-      const result = await gameApi.purchaseProduct({ storefront: "premium", productId: product.id, quantity: 1 });
+      const result = await withBusy(this, gameApi.purchaseProduct({ storefront: "premium", productId: product.id, quantity: 1 }));
       this.applyPurchaseResult(result);
       openRewardPopup(this, this.popups, { items: productGrantsToRewardItems(result.granted) });
       await this.refresh();
@@ -456,7 +457,7 @@ export class PremiumScene extends Phaser.Scene {
     if (product.subscription?.dailyBonusClaimed) { this.notice(t("shop.premium.dailyClaimed")); return; }
     this.claiming = true;
     try {
-      const result = await gameApi.claimPassDailyBonus({ productId: product.id, requestId: globalThis.crypto?.randomUUID?.() ?? `daily-${Date.now()}` });
+      const result = await withBusy(this, gameApi.claimPassDailyBonus({ productId: product.id, requestId: globalThis.crypto?.randomUUID?.() ?? `daily-${Date.now()}` }));
       this.applyPurchaseResult(result);
       openRewardPopup(this, this.popups, { items: productGrantsToRewardItems(result.granted) });
       await this.refresh();

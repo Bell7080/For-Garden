@@ -5,6 +5,7 @@ import type { DuelState } from "../core/duelState";
 import { createEmptyAttendanceState, type AttendanceState } from "../core/attendance";
 import { emptyServerJournal, type ServerJournal } from "../core/serverJournal";
 import { createEmptyRaidTicketDropState, type RaidTicketDropState } from "../core/raidTicketDrops";
+import { createEmptyAchievementState, type AchievementState } from "../core/achievementState";
 import type { RaidDifficulty } from "../data/raid";
 import type { GachaPityState, Wallet } from "../core/gacha";
 import type { RelicProgress, RelicSkinId } from "../core/types";
@@ -208,6 +209,8 @@ export interface Session {
   attendance?: AttendanceState;
   /** 오늘 떨어진 토벌권 수(`core/raidTicketDrops.ts`). 선택 필드다. */
   raidTicketDrops?: RaidTicketDropState;
+  /** 업적에서 받은 단계와 최고 보유 골드(`core/achievements.ts`). 선택 필드다. */
+  achievements?: AchievementState;
   serverJournal?: ServerJournal;
 }
 
@@ -447,6 +450,7 @@ export interface SaveData {
   claimedMailIds: string[];
   attendance: AttendanceState;
   raidTicketDrops: RaidTicketDropState;
+  achievements: AchievementState;
   serverJournal?: ServerJournal;
   settings: GameSettings;
   completedStoryIds: string[];
@@ -583,6 +587,7 @@ export function createDefaultSession(): Session {
     attendance: createEmptyAttendanceState(),
     serverJournal: emptyServerJournal(),
     raidTicketDrops: createEmptyRaidTicketDropState(),
+    achievements: createEmptyAchievementState(),
   };
 }
 

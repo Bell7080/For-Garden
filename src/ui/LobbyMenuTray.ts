@@ -6,11 +6,16 @@ import { RailButton } from "./RailButton";
 import { pressIn, pressOut } from "./pressFeedback";
 import { session } from "../state/session";
 import { COLOR } from "./theme";
+import type { NotificationKey } from "../core/notifications";
+import { notificationManager } from "../managers/NotificationManager";
+import { bindNotificationDot } from "./NotificationDot";
 
 export interface LobbyMenuItem {
   icon: GlyphName;
   label: string;
   onClick: () => void;
+  /** 받을 것이 남았을 때 칩과 접힌 단추에 빨간 점을 세우는 알림. */
+  notice?: NotificationKey;
 }
 
 /**
@@ -45,9 +50,17 @@ export class LobbyMenuTray {
         onClick: () => item.onClick(),
       });
       this.tray.add(chip);
+      if (item.notice) bindNotificationDot(scene, chip, { x: 42, y: -42 }, (listener) => notificationManager.subscribe(item.notice!, listener));
     });
 
     this.buildButton(depth + 1);
+    // 접힌 단추도 같은 점을 단다 — 판을 열기 전에 안에 받을 것이 있다는 것이 보여야 한다.
+    const notices = items.flatMap((item) => (item.notice ? [item.notice] : []));
+    if (this.button && notices.length > 0) bindNotificationDot(scene, this.button, { x: LOBBY_MENU_BUTTON.width / 2 - 8, y: -LOBBY_MENU_BUTTON.width / 2 + 8 }, (listener) => {
+      const visible = new Map<NotificationKey, boolean>();
+      const offs = notices.map((key) => notificationManager.subscribe(key, (on) => { visible.set(key, on); listener([...visible.values()].some(Boolean)); }));
+      return () => offs.forEach((off) => off());
+    });
   }
 
   /** 가로줄 셋짜리 단추. 칸 하나가 곧 입력면이다. */

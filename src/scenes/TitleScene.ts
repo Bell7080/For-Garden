@@ -24,6 +24,8 @@ import { LANGUAGE_NATIVE_NAME, SELECTABLE_LANGUAGE_IDS } from "../core/language"
 import { activeFontFamily, loadGameFonts } from "../ui/fonts";
 import { PopupLayer } from "../ui/PopupLayer";
 import { openChoicePicker } from "../ui/SettingsPicker";
+import { accountApi } from "../api/AccountApi";
+import { saveManager } from "../state/SaveManager";
 import { TitleActionRow } from "../ui/TitleActionRow";
 import { TITLE_LOADING_LAYOUT } from "../ui/titleActionLayout";
 
@@ -414,6 +416,11 @@ export class TitleScene extends Phaser.Scene {
         label: () => LANGUAGE_NATIVE_NAME[settingsManager.get().game.language],
         onClick: () => this.openLanguagePicker(),
       },
+      {
+        icon: "friends",
+        label: () => t("title.switchAccount"),
+        onClick: () => this.confirmSwitchAccount(),
+      },
     ]);
 
     this.tweens.add({
@@ -486,6 +493,33 @@ export class TitleScene extends Phaser.Scene {
         });
       },
     });
+  }
+
+  /**
+   * 로그아웃이 성공한 뒤에만 이 기기의 로컬 저장을 지운다 — 미지원·통신 실패로 끝나면 아무것도 잃지 않는다.
+   * 이후 부트가 저장 검증을 다시 거쳐 새 계정으로 시작한다.
+   */
+  private confirmSwitchAccount(): void {
+    if (!this.popups) return;
+    this.popups.confirm(
+      { title: t("title.switchAccount"), message: t("title.switchAccount.body"), confirmLabel: t("title.switchAccount"), destructive: true },
+      () => {
+        void accountApi.logout().then((result) => {
+          if (!this.scene.isActive()) return;
+          if (result.ok) {
+            saveManager.reset();
+            startScene(this, "boot");
+            return;
+          }
+          this.popups?.confirm({
+            title: t("settings.account.notice"),
+            message: t(result.code === "unsupported" ? "settings.account.unsupported" : "settings.account.network"),
+            confirmLabel: t("settings.action.confirm"),
+            cancelLabel: false,
+          });
+        });
+      },
+    );
   }
 
   /** 타이틀 글자를 지금 언어의 문장·글꼴로 갈아 끼운다. 씬을 다시 세우지 않아 연출이 끊기지 않는다. */

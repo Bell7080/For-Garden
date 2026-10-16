@@ -32,6 +32,7 @@ import { bindNotificationDot } from "../ui/NotificationDot";
 import { perspectiveButtonNotificationAnchor } from "../ui/notificationDotStyle";
 import { notificationManager } from "../managers/NotificationManager";
 import { MissionsPopup } from "../ui/MissionsPopup";
+import { AchievementsPopup } from "../ui/AchievementsPopup";
 import { lobbyPortraitPlacement } from "../ui/portraitPlacement";
 import { LOBBY_ACTION_BOUNDS, LOBBY_BOND_MARK, LOBBY_DIALOGUE, LOBBY_RAIL_BOUNDS } from "../ui/lobbyLayout";
 import { DialogueBubble } from "../ui/DialogueBubble";
@@ -816,13 +817,19 @@ export class LobbyScene extends Phaser.Scene {
    */
   /**
    * 가방 아래의 메뉴(햄버거). 누르면 옆에서 한 줄짜리 판이 나와 회고·업적을 고른다.
-   * 업적은 아직 열리지 않은 자리라 누름이 아무 일도 하지 않는다(준비 중 문구는 세우지 않는다).
+   * 받을 업적 단계가 남아 있으면 업적 칩과 접힌 단추에 빨간 점이 선다.
    */
   private buildMenuTray(): void {
     new LobbyMenuTray(this, [
       { icon: LOBBY_MENU_GLYPH.recollection, label: t("lobby.menu.recollection"), onClick: () => this.openRecollection() },
-      { icon: LOBBY_MENU_GLYPH.achievement, label: t("lobby.menu.achievement"), onClick: () => undefined },
+      { icon: LOBBY_MENU_GLYPH.achievement, label: t("lobby.menu.achievement"), onClick: () => this.openAchievements(), notice: "achievementReward" },
     ], undefined, () => this.popupLayer?.isOpen ?? false);
+  }
+
+  /** 업적 창을 로비 위에서 연다 — 임무 기록과 같은 판이다. */
+  private openAchievements(): void {
+    if (!this.popupLayer) return;
+    new AchievementsPopup(this, this.popupLayer, gameApi, () => this.topBar?.refresh()).open();
   }
 
   /** 본 이야기를 모아 다시 읽는 회고를 로비 위에서 연다. 고른 이야기는 끝나면 로비로 돌아온다. */

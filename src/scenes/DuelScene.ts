@@ -33,6 +33,7 @@ import { addSideShopButton } from "../ui/sideShop";
 import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
 import { LOBBY_RETURN } from "./lobbyEntry";
+import { withBusy } from "../ui/BusyOverlay";
 
 /** 두 갈래. 씬 하나 안에서 판만 갈아 끼운다(가방·고고학과 같은 좌하단 라벨). */
 type DuelTab = "battle" | "history";
@@ -91,7 +92,7 @@ export class DuelScene extends Phaser.Scene {
 
   private async fetchStatus(): Promise<void> {
     try {
-      const status = await gameApi.getDuelStatus();
+      const status = await withBusy(this, gameApi.getDuelStatus());
       if (this.scene.isActive()) this.paint(status);
     } catch {
       if (!this.scene.isActive()) return;
@@ -337,7 +338,7 @@ export class DuelScene extends Phaser.Scene {
     if (this.busy) return;
     this.busy = true;
     try {
-      const claimed = await gameApi.claimDuelSeasonReward();
+      const claimed = await withBusy(this, gameApi.claimDuelSeasonReward());
       if (!this.scene.isActive()) return;
       openRewardPopup(this, this.popups, { items: currencyRecordToRewardItems({ duelEmblem: claimed.duelEmblem, gems: claimed.gems }), onConfirm: () => void this.fetchStatus() });
     } catch (error) {

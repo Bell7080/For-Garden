@@ -12,6 +12,7 @@ import { BACK_SLOT } from "./IconButton";
 import { tradePopupFailureModel, TradePopupRequestGate, tradePackageViews, tradePopupModel } from "./tradePopupModel";
 import { tradePackageCenters, tradePackageLayout } from "./tradePackageLayout";
 import { TradePackageCard } from "./TradePackageCard";
+import { withBusy } from "./BusyOverlay";
 
 /** 팝업 본문 원점은 화면 중앙이므로 E2E에 넘길 입력 중심만 이 기준으로 절대 좌표로 옮긴다. */
 const BASE_CENTER = { x: 540, y: 960 } as const;
@@ -65,7 +66,7 @@ export class TradePopup {
     this.generation = generation;
     try {
       // API await는 팝업 종료·새 세대 시작과 경합하므로 응답을 적용하기 전에 수명을 다시 확인한다.
-      const response = await this.api.getProducts("trade");
+      const response = await withBusy(this.scene, this.api.getProducts("trade"));
       // 닫힌 뒤 또는 다른 세대에 도착한 성공 응답은 파괴된 Phaser 자식층을 만지지 않고 폐기한다.
       if (!this.isCurrent(generation)) return;
       this.products = tradePopupModel(response.products);

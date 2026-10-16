@@ -277,6 +277,8 @@ export const MISC_KO = {
   "title.saveRecovered": "저장 데이터를 확인할 수 없어 안전한 초기 상태로 복구했습니다.",
   "title.subtitle": "멸종 동물 복원 연구 도시",
   "title.enter": "탭하여 입장",
+  "title.switchAccount": "계정 변경",
+  "title.switchAccount.body": "다른 계정으로 시작합니다. 이 기기의 로컬 저장 데이터가 삭제됩니다. 서버에 연동된 진행은 유지됩니다.",
   "title.gate.maintenance.title": "점검 중",
   "title.gate.maintenance.default": "서버 점검 중입니다. 잠시 후 다시 시도해 주세요.",
   "title.gate.maintenance.until": "종료 예정: {time}",

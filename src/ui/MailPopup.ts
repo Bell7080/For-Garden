@@ -25,6 +25,7 @@ import { setDebugMailPopup } from "../debug";
 import { pressIn, pressOut } from "./pressFeedback";
 import { managerEvents } from "../managers/ManagerEvents";
 import { isMailExpired, MAIL_DETAIL_LAYOUT, mailDetailRail, MAIL_POPUP_LAYOUT, mailListRows, mailRemaining, mailRewardSlots, mailRewardX, sortMailRewards, mailTabOf, mailTabX, sortMails, type MailTab } from "./mailPopupLayout";
+import { withBusy } from "./BusyOverlay";
 
 const TABS: readonly MailTab[] = ["reward", "notice"];
 
@@ -346,7 +347,7 @@ export class MailPopup {
   /** 받은 것은 임무·발굴과 같은 영수증으로 알린다 — 지갑 숫자만 슬쩍 바뀌면 무엇이 들어왔는지 모른다. */
   private async claim(ids: string[]): Promise<void> {
     if (!ids.length) return;
-    const result = await this.manager.claim(ids);
+    const result = await withBusy(this.scene, this.manager.claim(ids));
     const items = result.granted.map((reward) => ({ icon: mailRewardTexture(reward), amount: reward.amount, ...(reward.kind === "item" && reward.expiresInDays !== undefined ? { expiresInDays: reward.expiresInDays } : {}) })).filter(({ icon, amount }) => icon && amount > 0);
     if (items.length) openRewardPopup(this.scene, this.popups, { title: t("mail.rewardTitle"), items });
   }

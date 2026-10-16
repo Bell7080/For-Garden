@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { withBusy } from "../ui/BusyOverlay";
 import { t, type TextKey } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import type { ProductDto, PurchaseProductResponse } from "../api/contracts";
@@ -473,7 +474,8 @@ export class ShopScene extends Phaser.Scene {
 
   /** 서버의 storefront 경계를 신뢰하되 독립 상점 씬에서는 shop 상품만 렌더링한다. */
   private async refresh(): Promise<void> {
-    const response = await gameApi.getProducts(this.storefront);
+    // 상점에 들어갈 때·산 뒤 목록을 다시 읽을 때 응답이 늦으면 기다림 막이 선다(짧으면 서지 않는다).
+    const response = await withBusy(this, gameApi.getProducts(this.storefront));
     if (!this.scene.isActive()) return;
     // storefront 판정은 검증된 모델 하나가 소유한다. 여기서 filter를 다시 쓰면 같은 규칙이
     // 두 곳에 살아, 한쪽만 고쳐도 화면은 조용히 예전 규칙으로 남는다.

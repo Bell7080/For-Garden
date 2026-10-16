@@ -34,6 +34,9 @@ export const PROFILE_MODIFIERS: readonly ProfileModifierDefinition[] = [
   { id: "cheesecake-artisan", displayName: "치즈케이크 장인", rarity: "rare", acquisitionConditionId: "achievement:feeding" },
   { id: "tireless", displayName: "지칠 줄 모르는", rarity: "epic", acquisitionConditionId: "achievement:stamina" },
   { id: "diligent-researcher", displayName: "성실한 연구원", rarity: "epic", acquisitionConditionId: "achievement:diligence" },
+  { id: "challenger", displayName: "정점의 도전자", rarity: "legendary", acquisitionConditionId: "achievement:duel-tier" },
+  { id: "stratum-explorer", displayName: "지층 탐사가", rarity: "rare", acquisitionConditionId: "achievement:archaeologist" },
+  { id: "walking-codex", displayName: "걸어 다니는 도감", rarity: "legendary", acquisitionConditionId: "achievement:codex-complete" },
 ] as const;
 
 /** 손상되거나 삭제된 ID를 표시명으로 추측하지 않도록 안전하게 정의를 찾는다. */

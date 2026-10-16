@@ -25,7 +25,8 @@ export const ACHIEVEMENTS_POPUP_LAYOUT = {
   },
   footer: {
     tabY: 652,
-    tab: { width: 172, height: 76, gap: 8, left: -470 },
+    /** 일곱 칸(전체 + 갈래 여섯)이 오른쪽 아래 뒤로가기 자리를 비우고 한 줄에 든다. */
+    tab: { width: 122, height: 76, gap: 6, left: -470 },
     claim: { x: 0, y: 772, width: 380, height: 92 },
   },
 } as const;
@@ -35,7 +36,9 @@ export const ACHIEVEMENT_CATEGORY_TONE: Readonly<Record<AchievementCategory, num
   growth: 0x7fd36b,
   battle: 0xd85f34,
   explore: 0x6fa8d6,
+  collection: 0xb98be0,
   daily: 0xd8b978,
+  feat: 0xf0e2b6,
 };
 
 /** 탭은 「전체」가 첫 칸이고 그 뒤로 갈래가 선다. */

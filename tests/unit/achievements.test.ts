@@ -4,6 +4,7 @@ import { achievementFacts, achievementRewardTotals, claimAchievements, createEmp
 import { applyMissionEvent } from "../../src/core/missions";
 import { ACHIEVEMENT_GEM_BUDGET, ACHIEVEMENT_SERIES } from "../../src/data/achievements";
 import { PROFILE_MODIFIERS } from "../../src/data/profileModifiers";
+import { PLAYABLE_RELICS } from "../../src/data/relics";
 import { KO } from "../../src/i18n/ko";
 import { SaveManager } from "../../src/state/SaveManager";
 import { createDefaultSession, type Session } from "../../src/state/session";
@@ -14,7 +15,9 @@ describe("업적 표", () => {
   it("의 단계는 오르막이고 업적 ID는 겹치지 않는다", () => {
     expect(new Set(ACHIEVEMENT_SERIES.map(({ id }) => id)).size).toBe(ACHIEVEMENT_SERIES.length);
     for (const series of ACHIEVEMENT_SERIES) {
-      expect(series.tiers.length, series.id).toBeGreaterThanOrEqual(3);
+      // 기록(단발)만 한 단계이고, 나머지는 점점 어려워지는 셋 이상의 단계다.
+      if (series.category === "feat") expect(series.tiers.length, series.id).toBe(1);
+      else expect(series.tiers.length, series.id).toBeGreaterThanOrEqual(3);
       series.tiers.forEach((tier, index) => {
         expect(tier.reward.amount, series.id).toBeGreaterThan(0);
         if (index > 0) expect(tier.target, series.id).toBeGreaterThan(series.tiers[index - 1].target);
@@ -45,7 +48,10 @@ describe("업적 표", () => {
   it("의 모든 업적은 이름과 목표 문구를 갖는다", () => {
     for (const series of ACHIEVEMENT_SERIES) {
       expect(KO[`achievement.series.${series.id}` as keyof typeof KO], series.id).toBeTruthy();
-      expect(KO[`achievement.objective.${series.metric}` as keyof typeof KO], series.metric).toContain("{value}");
+      const objective = KO[`achievement.objective.${series.metric}` as keyof typeof KO];
+      expect(objective, series.metric).toBeTruthy();
+      // 단계가 오르는 업적은 문턱을 문장에 넣는다. 단발 기록만 "도감 완성"처럼 수 없이 말해도 된다.
+      if (series.category !== "feat") expect(objective, series.metric).toContain("{value}");
     }
   });
 });
@@ -74,6 +80,32 @@ describe("업적 수령", () => {
     missions = applyMissionEvent(missions, { type: "battle_completed", victory: false }, NOW);
     missions = applyMissionEvent(missions, { type: "battle_completed", victory: true }, new Date("2026-10-30T09:00:00.000Z"));
     expect(missions.lifetime?.battle_completed).toBe(2);
+  });
+});
+
+describe("단발 기록", () => {
+  it("은 지금 편성과 보유에서 읽고, 숨은 편성 기록은 신규 계정의 기본 편성으로 밟지 못한다", () => {
+    const fresh = achievementFacts(createDefaultSession());
+    for (const series of ACHIEVEMENT_SERIES.filter(({ hidden }) => hidden)) expect(fresh[series.metric], series.id).toBeLessThan(series.tiers[0].target);
+    const state = createDefaultSession();
+    const relics = PLAYABLE_RELICS;
+    const picks: string[] = [];
+    for (const relic of relics) if (!picks.some((id) => relics.find((r) => r.id === id)!.squad === relic.squad)) picks.push(relic.id);
+    state.party = picks.slice(0, 3);
+    for (const relic of relics) state.owned.add(relic.id);
+    const facts = achievementFacts(state);
+    expect(facts.partySquads).toBe(3);
+    expect(facts.codexComplete).toBe(1);
+    expect(facts.elementsOwned).toBe(5);
+    expect(facts.squadsOwned).toBe(5);
+    const claim = claimAchievements(createEmptyAchievementState(), facts, ["allied-party", "codex-complete"]);
+    expect(claim.completedSeriesIds.sort()).toEqual(["allied-party", "codex-complete"]);
+  });
+
+  it("의 숨은 업적은 서버 응답이 숨김을 함께 내려 준다", async () => {
+    const list = await new FakeServer(createDefaultSession(), { latencyMs: 0, now: () => NOW, random: () => 0.5 }).getAchievements();
+    expect(list.series.find(({ id }) => id === "allied-party")?.hidden).toBe(true);
+    expect(list.series.find(({ id }) => id === "wealth")?.hidden).toBeUndefined();
   });
 });
 

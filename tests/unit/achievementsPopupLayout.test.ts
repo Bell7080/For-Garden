@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
-import { ACHIEVEMENT_SERIES } from "../../src/data/achievements";
+import { ACHIEVEMENT_CATEGORIES, ACHIEVEMENT_SERIES } from "../../src/data/achievements";
 import { ACHIEVEMENTS_POPUP_LAYOUT, achievementListContentHeight, achievementsTabX, orderAchievements } from "../../src/ui/achievementsPopupLayout";
 
 describe("업적 창", () => {
@@ -16,8 +16,8 @@ describe("업적 창", () => {
     expect(footer.claim.y + footer.claim.height / 2).toBeLessThan(height / 2);
   });
 
-  it("의 탭 다섯은 판 안에 들고 오른쪽 아래 뒤로가기 자리를 비운다", () => {
-    const last = achievementsTabX(4) + footer.tab.width / 2;
+  it("의 탭(전체 + 갈래)은 판 안에 들고 오른쪽 아래 뒤로가기 자리를 비운다", () => {
+    const last = achievementsTabX(ACHIEVEMENT_CATEGORIES.length) + footer.tab.width / 2;
     expect(achievementsTabX(0) - footer.tab.width / 2).toBeGreaterThan(-width / 2);
     expect(last).toBeLessThan(width / 2 - 60);
   });

@@ -2436,12 +2436,17 @@ var ACHIEVEMENT_KO = {
   "achievement.category.growth": "\uC131\uC7A5",
   "achievement.category.battle": "\uC804\uD22C",
   "achievement.category.explore": "\uD0D0\uC0AC",
+  "achievement.category.collection": "\uC218\uC9D1",
   "achievement.category.daily": "\uC77C\uC0C1",
+  "achievement.category.feat": "\uAE30\uB85D",
   "achievement.claimAll": "\uBAA8\uB450 \uBC1B\uAE30",
   "achievement.rewardTitle": "\uC5C5\uC801 \uBCF4\uC0C1",
   "achievement.summary.tiers": "\uB2EC\uC131 \uB2E8\uACC4",
   "achievement.summary.modifiers": "\uC218\uC2DD\uC5B4 {earned}/{total}",
   "achievement.state.complete": "\uC644\uB8CC",
+  "achievement.state.feat": "\uB2E8\uBC1C \uAE30\uB85D",
+  "achievement.state.hidden": "\uC228\uC740 \uAE30\uB85D",
+  "achievement.objective.hidden": "???",
   "achievement.tier": "{current}/{total}\uB2E8\uACC4",
   "achievement.modifierEarned": "\uC218\uC2DD\uC5B4 \u300C{name}\u300D \uD68D\uB4DD!",
   "achievement.series.wealth": "\uBD80\uC758 \uCD95\uC801",
@@ -2463,6 +2468,28 @@ var ACHIEVEMENT_KO = {
   "achievement.series.stamina": "\uC26C\uC9C0 \uC54A\uB294 \uC190",
   "achievement.series.diligence": "\uC131\uC2E4\uD55C \uD558\uB8E8",
   "achievement.series.greetings": "\uB85C\uBE44\uC758 \uC778\uC0AC",
+  "achievement.series.level-cap": "\uC815\uC810\uC758 \uD45C\uBCF8",
+  "achievement.series.rune-artisan": "\uAC01\uC778 \uACF5\uBC29",
+  "achievement.series.bounty-hunter": "\uD604\uC0C1\uC218\uBC30 \uC0AC\uB0E5\uAFBC",
+  "achievement.series.cake-operation": "\uCE58\uC988\uCF00\uC774\uD06C \uB300\uC791\uC804",
+  "achievement.series.duel-tier": "\uACB0\uD22C\uC7A5\uC758 \uACC4\uB2E8",
+  "achievement.series.archaeologist": "\uC9C0\uCE35\uC758 \uAE30\uC5B5",
+  "achievement.series.journals": "\uB2E4\uB978 \uB3C4\uC2DC\uC758 \uAE30\uB85D",
+  "achievement.series.interviewer": "\uAD00\uCC30 \uC778\uD130\uBDF0",
+  "achievement.series.chapter-reader": "\uC560\uCC29\uC758 \uC7A5",
+  "achievement.series.ssr-collector": "\uD76C\uADC0 \uD45C\uBCF8",
+  "achievement.series.rune-hoarder": "\uB8EC \uBCF4\uAD00\uD568",
+  "achievement.series.legendary-runes": "\uC804\uC124\uC758 \uC870\uAC01",
+  "achievement.series.modifiers": "\uC774\uB984 \uC55E\uC758 \uB9D0",
+  "achievement.series.codex-complete": "\uB3C4\uAC10 \uC644\uC131",
+  "achievement.series.all-elements": "\uB2E4\uC12F \uAC08\uB798\uC758 \uC228",
+  "achievement.series.all-squads": "\uB2E4\uC12F \uC2A4\uCFFC\uB4DC",
+  "achievement.series.perfect-relic": "\uC644\uC804\uD55C \uBCF5\uC6D0",
+  "achievement.series.rune-set": "\uBE48\uD2C8\uC5C6\uB294 \uD558\uD2B8",
+  "achievement.series.named": "\uC5F0\uAD6C\uC6D0\uC758 \uC774\uB984",
+  "achievement.series.mono-element-party": "\uD55C \uAC08\uB798\uC758 \uC228",
+  "achievement.series.allied-party": "\uC138 \uC2A4\uCFFC\uB4DC\uC758 \uC5F0\uD569",
+  "achievement.series.ssr-party": "\uB208\uBD80\uC2E0 \uC138 \uC0AC\uB78C",
   "achievement.objective.goldPeak": "\uACE8\uB4DC {value} \uBCF4\uC720",
   "achievement.objective.relicsOwned": "\uB810\uB9AD {value}\uC885 \uBCF4\uC720",
   "achievement.objective.maxRelicLevel": "\uB810\uB9AD \uD55C \uBA85\uC744 \uB808\uBCA8 {value}\uAE4C\uC9C0 \uC131\uC7A5",
@@ -2481,7 +2508,29 @@ var ACHIEVEMENT_KO = {
   "achievement.objective.feedings": "\uAE09\uC5EC {value}\uD68C",
   "achievement.objective.staminaSpent": "\uC2A4\uD14C\uBBF8\uB098 {value} \uC0AC\uC6A9",
   "achievement.objective.dailyMissionsClaimed": "\uC77C\uC77C \uC784\uBB34 {value}\uD68C \uC644\uB8CC",
-  "achievement.objective.lobbyGreetings": "\uB85C\uBE44 \uAD50\uB958 {value}\uD68C"
+  "achievement.objective.lobbyGreetings": "\uB85C\uBE44 \uAD50\uB958 {value}\uD68C",
+  "achievement.objective.relicsAtLevelCap": "\uB810\uB9AD {value}\uBA85\uC744 \uCD5C\uB300 \uB808\uBCA8\uAE4C\uC9C0 \uC131\uC7A5",
+  "achievement.objective.runesEngraved": "\uAC01\uC778\uC744 \uB9C8\uCE5C \uB8EC {value}\uAC1C \uBCF4\uC720",
+  "achievement.objective.bountyTiersCleared": "\uD604\uC0C1\uC218\uBC30 {value}\uB4F1\uAE09 \uB3CC\uD30C",
+  "achievement.objective.cakeTiersCleared": "\uCE58\uC988\uCF00\uC774\uD06C \uB300\uC791\uC804 {value}\uB2E8\uACC4 \uC2B9\uB9AC",
+  "achievement.objective.duelTierReached": "\uACB0\uD22C\uC7A5 \uD2F0\uC5B4 {value}\uB2E8\uACC4 \uB3C4\uB2EC",
+  "achievement.objective.archaeologySitesCompleted": "\uACE0\uACE0\uD559 \uC720\uC801 {value}\uACF3 \uD0D0\uC0AC \uC644\uB8CC",
+  "achievement.objective.observationAnswers": "\uAD00\uCC30 \uC9C8\uBB38 {value}\uAC1C \uB2F5\uBCC0",
+  "achievement.objective.relicChaptersRead": "\uC560\uCC29 \uC2A4\uD1A0\uB9AC {value}\uC7A5 \uC5F4\uB78C",
+  "achievement.objective.journalsRead": "\uAD50\uB958 \uAE30\uB85D {value}\uD3B8 \uC5F4\uB78C",
+  "achievement.objective.ssrOwned": "SSR \uB810\uB9AD {value}\uC885 \uBCF4\uC720",
+  "achievement.objective.runesOwned": "\uB8EC {value}\uAC1C \uBCF4\uC720",
+  "achievement.objective.legendaryRunes": "\uC804\uC124 \uB8EC {value}\uAC1C \uBCF4\uC720",
+  "achievement.objective.modifiersEarned": "\uC218\uC2DD\uC5B4 {value}\uAC1C \uD68D\uB4DD",
+  "achievement.objective.codexComplete": "\uB3C4\uAC10\uC758 \uBAA8\uB4E0 \uB810\uB9AD \uBCF4\uC720",
+  "achievement.objective.elementsOwned": "\uC18D\uC131 {value}\uAC00\uC9C0\uC758 \uB810\uB9AD\uC744 \uBAA8\uB450 \uBCF4\uC720",
+  "achievement.objective.squadsOwned": "\uC2A4\uCFFC\uB4DC {value}\uACF3\uC758 \uB810\uB9AD\uC744 \uBAA8\uB450 \uBCF4\uC720",
+  "achievement.objective.perfectRelics": "\uCD5C\uB300 \uB808\uBCA8 \xB7 \uD55C\uACC4 \uB3CC\uD30C \xB7 \uC720\uB300 \uCD5C\uB300\uB97C \uBAA8\uB450 \uC774\uB8EC \uB810\uB9AD",
+  "achievement.objective.fullyRunedRelics": "\uB8EC \uC138 \uCE78\uC744 \uBAA8\uB450 \uCC44\uC6B4 \uB810\uB9AD",
+  "achievement.objective.nicknameSet": "\uB2C9\uB124\uC784 \uC815\uD558\uAE30",
+  "achievement.objective.partySameElement": "\uAC19\uC740 \uC18D\uC131 \uC14B\uC73C\uB85C \uD3B8\uC131",
+  "achievement.objective.partySquads": "\uC11C\uB85C \uB2E4\uB978 \uC2A4\uCFFC\uB4DC {value}\uACF3\uC758 \uB810\uB9AD\uC73C\uB85C \uD3B8\uC131",
+  "achievement.objective.partySsr": "SSR \uB810\uB9AD {value}\uBA85\uC73C\uB85C \uD3B8\uC131"
 };
 
 // src/i18n/ko/index.ts
@@ -16767,27 +16816,53 @@ var tiers = (targets, rewards) => targets.map((target, index) => ({ target, rewa
 var ACHIEVEMENT_SERIES = [
   // ── 성장 ──
   { id: "wealth", category: "growth", metric: "goldPeak", tiers: tiers([1e4, 1e5, 1e6, 1e7, 1e8], [gems(5), gems(10), gems(20), gems(40), gems(80)]), modifierId: "millionaire" },
-  { id: "collector", category: "growth", metric: "relicsOwned", tiers: tiers([5, 10, 15, 20, 25], [gems(10), gems(15), gems(20), gems(30), gems(50)]), modifierId: "specimen-curator" },
   { id: "nurture", category: "growth", metric: "maxRelicLevel", tiers: tiers([10, 20, 40, 60], [cheesecake(50), cheesecake(100), cheesecake(200), cheesecake(400)]) },
+  { id: "level-cap", category: "growth", metric: "relicsAtLevelCap", tiers: tiers([1, 3, 5, 10], [gems(10), gems(15), gems(20), gems(30)]) },
   { id: "limit-break", category: "growth", metric: "relicsMaxBreakthrough", tiers: tiers([1, 3, 5, 10], [gems(20), gems(30), gems(40), gems(60)]), modifierId: "limit-breaker" },
   { id: "bond", category: "growth", metric: "relicsMaxBond", tiers: tiers([1, 5, 10], [gems(20), gems(30), gems(50)]), modifierId: "kind-researcher" },
+  { id: "rune-artisan", category: "growth", metric: "runesEngraved", tiers: tiers([1, 5, 20, 50], [gold(1e4), gold(3e4), gold(6e4), gold(1e5)]) },
   { id: "research-level", category: "growth", metric: "playerLevel", tiers: tiers([10, 20, 30, 40, 50, 60], [gems(10), gems(15), gems(20), gems(25), gems(30), gems(50)]), modifierId: "chief-researcher" },
   // ── 전투 ──
   { id: "victories", category: "battle", metric: "victories", tiers: tiers([10, 50, 200, 500, 1e3, 3e3], [gems(5), gems(10), gems(15), gems(20), gems(30), gems(50)]), modifierId: "veteran" },
   { id: "frontline", category: "battle", metric: "storyStagesCleared", tiers: tiers([10, 20, 30], [gems(20), gems(30), gems(50)]), modifierId: "front-breaker" },
+  { id: "bounty-hunter", category: "battle", metric: "bountyTiersCleared", tiers: tiers([1, 2, 3, 4, 5], [gems(5), gems(10), gems(15), gems(20), gems(30)]) },
+  { id: "cake-operation", category: "battle", metric: "cakeTiersCleared", tiers: tiers([1, 3, 5, 8], [cheesecake(100), cheesecake(200), cheesecake(300), cheesecake(500)]) },
   { id: "duelist", category: "battle", metric: "duelWins", tiers: tiers([1, 10, 50, 150, 300], [gems(5), gems(10), gems(20), gems(30), gems(50)]), modifierId: "arena-ruler" },
+  // 결투장 티어는 0(브론즈)부터 센다 — 실버(1)에서 시작해 챌린저(7)에서 끝난다.
+  { id: "duel-tier", category: "battle", metric: "duelTierReached", tiers: tiers([1, 2, 3, 4, 5, 6, 7], [gems(5), gems(5), gems(10), gems(10), gems(15), gems(20), gems(30)]), modifierId: "challenger" },
   { id: "raider", category: "battle", metric: "raidRuns", tiers: tiers([1, 10, 50, 150], [gems(5), gems(15), gems(25), gems(40)]), modifierId: "raid-captain" },
   { id: "salvager", category: "battle", metric: "expeditionBest", tiers: tiers([1e4, 3e4, 65e3, 11e4, 2e5], [gems(10), gems(15), gems(20), gems(30), gems(50)]), modifierId: "deep-salvager" },
   // ── 탐사 ──
   { id: "fossil-lab", category: "explore", metric: "researchPulls", tiers: tiers([10, 50, 100, 300, 1e3], [gems(5), gems(10), gems(15), gems(25), gems(40)]), modifierId: "fossil-appraiser" },
+  { id: "archaeologist", category: "explore", metric: "archaeologySitesCompleted", tiers: tiers([1, 3, 5, 8], [gems(10), gems(15), gems(20), gems(30)]), modifierId: "stratum-explorer" },
   { id: "harvest", category: "explore", metric: "harvests", tiers: tiers([10, 50, 200, 500], [gold(1e4), gold(3e4), gold(6e4), gold(1e5)]) },
   { id: "dispatch", category: "explore", metric: "dispatches", tiers: tiers([5, 30, 100, 300], [gems(5), gems(10), gems(20), gems(30)]), modifierId: "city-envoy" },
+  { id: "journals", category: "explore", metric: "journalsRead", tiers: tiers([1, 3, 5], [gold(1e4), gold(2e4), gold(4e4)]) },
   { id: "storyteller", category: "explore", metric: "storiesRead", tiers: tiers([5, 15, 25], [gems(10), gems(20), gems(30)]), modifierId: "story-collector" },
+  { id: "interviewer", category: "explore", metric: "observationAnswers", tiers: tiers([5, 20, 50, 100], [gems(5), gems(10), gems(15), gems(20)]) },
+  { id: "chapter-reader", category: "explore", metric: "relicChaptersRead", tiers: tiers([1, 5, 15, 30], [gems(5), gems(10), gems(15), gems(20)]) },
+  // ── 수집 ──
+  { id: "collector", category: "collection", metric: "relicsOwned", tiers: tiers([5, 10, 15, 20], [gems(10), gems(15), gems(20), gems(30)]), modifierId: "specimen-curator" },
+  { id: "ssr-collector", category: "collection", metric: "ssrOwned", tiers: tiers([1, 3, 6, 9, 12], [gems(10), gems(15), gems(20), gems(30), gems(40)]) },
+  { id: "rune-hoarder", category: "collection", metric: "runesOwned", tiers: tiers([10, 50, 150], [gold(1e4), gold(3e4), gold(6e4)]) },
+  { id: "legendary-runes", category: "collection", metric: "legendaryRunes", tiers: tiers([1, 5, 10], [gems(10), gems(20), gems(30)]) },
+  { id: "modifiers", category: "collection", metric: "modifiersEarned", tiers: tiers([3, 8, 15], [gems(10), gems(20), gems(30)]) },
   // ── 일상 ──
   { id: "feeding", category: "daily", metric: "feedings", tiers: tiers([10, 100, 500, 2e3], [gems(5), gems(10), gems(20), gems(30)]), modifierId: "cheesecake-artisan" },
   { id: "stamina", category: "daily", metric: "staminaSpent", tiers: tiers([1e3, 1e4, 5e4, 2e5], [gems(5), gems(15), gems(30), gems(50)]), modifierId: "tireless" },
   { id: "diligence", category: "daily", metric: "dailyMissionsClaimed", tiers: tiers([20, 100, 500, 2e3], [gems(10), gems(20), gems(30), gems(50)]), modifierId: "diligent-researcher" },
-  { id: "greetings", category: "daily", metric: "lobbyGreetings", tiers: tiers([10, 50, 200, 500], [gold(1e4), gold(3e4), gold(5e4), gold(1e5)]) }
+  { id: "greetings", category: "daily", metric: "lobbyGreetings", tiers: tiers([10, 50, 200, 500], [gold(1e4), gold(3e4), gold(5e4), gold(1e5)]) },
+  // ── 기록 — 단계 없이 한 번 밟으면 끝난다 ──
+  { id: "codex-complete", category: "feat", metric: "codexComplete", tiers: tiers([1], [gems(50)]), modifierId: "walking-codex" },
+  { id: "all-elements", category: "feat", metric: "elementsOwned", tiers: tiers([5], [gems(20)]) },
+  { id: "all-squads", category: "feat", metric: "squadsOwned", tiers: tiers([5], [gems(20)]) },
+  { id: "perfect-relic", category: "feat", metric: "perfectRelics", tiers: tiers([1], [gems(30)]) },
+  { id: "rune-set", category: "feat", metric: "fullyRunedRelics", tiers: tiers([1], [gold(3e4)]) },
+  { id: "named", category: "feat", metric: "nicknameSet", tiers: tiers([1], [gold(1e4)]) },
+  // 숨은 편성 장난 — 신규 계정의 기본 편성(같은 스쿼드 · 속성 셋)으로는 밟지 못하는 것만 둔다.
+  { id: "mono-element-party", category: "feat", metric: "partySameElement", tiers: tiers([1], [gems(10)]), hidden: true },
+  { id: "allied-party", category: "feat", metric: "partySquads", tiers: tiers([3], [gems(10)]), hidden: true },
+  { id: "ssr-party", category: "feat", metric: "partySsr", tiers: tiers([3], [gems(10)]), hidden: true }
 ];
 
 // src/core/achievementState.ts
@@ -18608,7 +18683,10 @@ var PROFILE_MODIFIERS = [
   { id: "story-collector", displayName: "\uC774\uC57C\uAE30 \uC218\uC9D1\uAC00", rarity: "rare", acquisitionConditionId: "achievement:storyteller" },
   { id: "cheesecake-artisan", displayName: "\uCE58\uC988\uCF00\uC774\uD06C \uC7A5\uC778", rarity: "rare", acquisitionConditionId: "achievement:feeding" },
   { id: "tireless", displayName: "\uC9C0\uCE60 \uC904 \uBAA8\uB974\uB294", rarity: "epic", acquisitionConditionId: "achievement:stamina" },
-  { id: "diligent-researcher", displayName: "\uC131\uC2E4\uD55C \uC5F0\uAD6C\uC6D0", rarity: "epic", acquisitionConditionId: "achievement:diligence" }
+  { id: "diligent-researcher", displayName: "\uC131\uC2E4\uD55C \uC5F0\uAD6C\uC6D0", rarity: "epic", acquisitionConditionId: "achievement:diligence" },
+  { id: "challenger", displayName: "\uC815\uC810\uC758 \uB3C4\uC804\uC790", rarity: "legendary", acquisitionConditionId: "achievement:duel-tier" },
+  { id: "stratum-explorer", displayName: "\uC9C0\uCE35 \uD0D0\uC0AC\uAC00", rarity: "rare", acquisitionConditionId: "achievement:archaeologist" },
+  { id: "walking-codex", displayName: "\uAC78\uC5B4 \uB2E4\uB2C8\uB294 \uB3C4\uAC10", rarity: "legendary", acquisitionConditionId: "achievement:codex-complete" }
 ];
 function findProfileModifier(id) {
   return PROFILE_MODIFIERS.find((definition) => definition.id === id);
@@ -26202,6 +26280,13 @@ function achievementFacts(state) {
   const progress = playable.map(({ id }) => state.relicProgress[id]).filter((entry) => entry !== void 0);
   const maxBreakthrough = BREAKTHROUGH_STEPS.length;
   const storyStageIds = CHAPTERS.flatMap(({ stages }) => stages.map(({ id }) => id));
+  const levelCap = relicLevelCap(maxBreakthrough);
+  const ownedDefs = playable;
+  const runes = state.runeInventory ?? [];
+  const partyDefs = state.party.map((id) => PLAYABLE_RELICS.find((relic) => relic.id === id)).filter((relic) => relic !== void 0);
+  const partyFull = partyDefs.length === 3;
+  const reachedDuel = (state.duel?.reachedTierIds ?? []).map((id) => DUEL_TIERS.findIndex((tier) => tier.id === id));
+  const bountyIds = new Set(BOUNTY_TIERS.map(({ id }) => id));
   return {
     goldPeak: Math.max(state.achievements?.goldPeak ?? 0, state.wallet.gold),
     relicsOwned: playable.length,
@@ -26221,7 +26306,31 @@ function achievementFacts(state) {
     feedings: lifetime.salary_given ?? 0,
     staminaSpent: lifetime.stamina_spent ?? 0,
     dailyMissionsClaimed: lifetime.daily_mission_claimed ?? 0,
-    lobbyGreetings: lifetime.lobby_interaction ?? 0
+    lobbyGreetings: lifetime.lobby_interaction ?? 0,
+    relicsAtLevelCap: progress.filter((entry) => entry.level >= levelCap).length,
+    runesEngraved: runes.filter((rune) => rune.engravings.length > 0).length,
+    bountyTiersCleared: new Set((state.bounty?.clearedTierIds ?? []).filter((id) => bountyIds.has(id))).size,
+    cakeTiersCleared: Math.max(0, (state.cakeOperation?.clearedIndex ?? -1) + 1),
+    duelTierReached: Math.max(0, ...reachedDuel),
+    archaeologySitesCompleted: new Set(state.archaeology?.completedSiteIds ?? []).size,
+    observationAnswers: state.relicStory?.answers.length ?? 0,
+    relicChaptersRead: state.relicStory?.claimedChapterIds.length ?? 0,
+    journalsRead: state.readInteractionJournalIds.size,
+    ssrOwned: ownedDefs.filter(({ rarity }) => rarity === "SSR").length,
+    runesOwned: runes.length,
+    legendaryRunes: runes.filter(({ rarity }) => rarity === "legendary").length,
+    modifiersEarned: new Set(state.earnedProfileModifierIds).size,
+    // 도감 완성은 개체가 늘면 다시 닫힌다 — 다만 이미 받은 기록은 저장이 지킨다.
+    codexComplete: PLAYABLE_RELICS.length > 0 && playable.length === PLAYABLE_RELICS.length ? 1 : 0,
+    elementsOwned: new Set(ownedDefs.map(({ element }) => element)).size,
+    squadsOwned: new Set(ownedDefs.map(({ squad }) => squad)).size,
+    perfectRelics: progress.filter((entry) => entry.level >= levelCap && entry.breakthrough >= maxBreakthrough && entry.bondLevel >= BOND_LEVEL_CAP).length,
+    fullyRunedRelics: progress.filter((entry) => entry.heartGemSlots.length > 0 && entry.heartGemSlots.every((slot) => slot !== null)).length,
+    // 편성 장난은 지금 세워 둔 편성에서 읽는다 — 세 칸이 다 찼을 때만 센다.
+    partySameElement: partyFull && new Set(partyDefs.map(({ element }) => element)).size === 1 ? 1 : 0,
+    partySquads: partyFull ? new Set(partyDefs.map(({ squad }) => squad)).size : 0,
+    partySsr: partyFull ? partyDefs.filter(({ rarity }) => rarity === "SSR").length : 0,
+    nicknameSet: state.playerCard?.nickname ? 1 : 0
   };
 }
 function achievedTierCount(series, value) {
@@ -29433,7 +29542,8 @@ var FakeServer = class {
         tiers: definition.tiers.map(({ target, reward }) => ({ target, reward: { ...reward } })),
         claimedTiers,
         claimableTiers: claimableTierCount(definition, value, claimedTiers),
-        ...definition.modifierId ? { modifier: { id: definition.modifierId, earned: earned.has(definition.modifierId) } } : {}
+        ...definition.modifierId ? { modifier: { id: definition.modifierId, earned: earned.has(definition.modifierId) } } : {},
+        ...definition.hidden ? { hidden: true } : {}
       };
     });
     const withModifier = series.filter(({ modifier }) => modifier !== void 0);

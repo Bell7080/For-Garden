@@ -2321,6 +2321,7 @@ export class FakeServer implements GameApi {
         tiers: definition.tiers.map(({ target, reward }) => ({ target, reward: { ...reward } })),
         claimedTiers, claimableTiers: claimableTierCount(definition, value, claimedTiers),
         ...(definition.modifierId ? { modifier: { id: definition.modifierId, earned: earned.has(definition.modifierId) } } : {}),
+        ...(definition.hidden ? { hidden: true as const } : {}),
       };
     });
     const withModifier = series.filter(({ modifier }) => modifier !== undefined);

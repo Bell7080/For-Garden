@@ -196,18 +196,23 @@ export class AchievementsPopup {
     // 머리 줄 — 갈래 이름, 단계 마름모, 오른쪽 끝에 n/m단계(또는 완료).
     const eyebrow = this.scene.add.text(left, rowLayout.eyebrowY, t(`achievement.category.${series.category}` as TextKey), textStyle({ role: "emphasis", size: 20, color: hexColor(categoryTone) })).setOrigin(0, 0.5).setAlpha(complete ? 0.6 : 1);
     row.add(eyebrow);
-    const pips = this.scene.add.graphics({ x: left + eyebrow.width + 22, y: rowLayout.eyebrowY });
-    for (let tier = 0; tier < tierCount; tier += 1) {
-      const x = tier * rowLayout.pipGap;
-      const claimed = tier < series.claimedTiers;
-      const open = !claimed && tier < series.claimedTiers + series.claimableTiers;
-      pips.fillStyle(0x05070a, 0.9).fillPoints(diamond(rowLayout.pipSize + 3).map((p) => new Phaser.Geom.Point(p.x + x, p.y)), true);
-      if (claimed) pips.fillStyle(complete ? 0x8a8f96 : COLOR.missionClaim, 1).fillPoints(diamond(rowLayout.pipSize).map((p) => new Phaser.Geom.Point(p.x + x, p.y)), true);
-      else if (open) pips.fillStyle(0xffcf7a, 1).fillPoints(diamond(rowLayout.pipSize).map((p) => new Phaser.Geom.Point(p.x + x, p.y)), true);
-      else pips.lineStyle(2, 0xffffff, 0.55).strokePoints(diamond(rowLayout.pipSize - 1).map((p) => new Phaser.Geom.Point(p.x + x, p.y)), true);
+    // 단발 기록은 마름모 하나로 셀 단계가 없어 머리 줄에 마름모 대신 「단발 기록」·「숨은 기록」을 단다.
+    const single = tierCount === 1;
+    const veiled = series.hidden === true && series.claimedTiers + series.claimableTiers === 0;
+    if (!single) {
+      const pips = this.scene.add.graphics({ x: left + eyebrow.width + 22, y: rowLayout.eyebrowY });
+      for (let tier = 0; tier < tierCount; tier += 1) {
+        const x = tier * rowLayout.pipGap;
+        const claimed = tier < series.claimedTiers;
+        const open = !claimed && tier < series.claimedTiers + series.claimableTiers;
+        pips.fillStyle(0x05070a, 0.9).fillPoints(diamond(rowLayout.pipSize + 3).map((p) => new Phaser.Geom.Point(p.x + x, p.y)), true);
+        if (claimed) pips.fillStyle(complete ? 0x8a8f96 : COLOR.missionClaim, 1).fillPoints(diamond(rowLayout.pipSize).map((p) => new Phaser.Geom.Point(p.x + x, p.y)), true);
+        else if (open) pips.fillStyle(0xffcf7a, 1).fillPoints(diamond(rowLayout.pipSize).map((p) => new Phaser.Geom.Point(p.x + x, p.y)), true);
+        else pips.lineStyle(2, 0xffffff, 0.55).strokePoints(diamond(rowLayout.pipSize - 1).map((p) => new Phaser.Geom.Point(p.x + x, p.y)), true);
+      }
+      row.add(pips);
     }
-    row.add(pips);
-    const stateLabel = complete ? t("achievement.state.complete") : t("achievement.tier", { current: series.claimedTiers, total: tierCount });
+    const stateLabel = complete ? t("achievement.state.complete") : single ? t(series.hidden ? "achievement.state.hidden" : "achievement.state.feat") : t("achievement.tier", { current: series.claimedTiers, total: tierCount });
     const state = this.scene.add.text(textRight, rowLayout.eyebrowY, stateLabel, textStyle({ role: "emphasis", size: 22, color: claimable ? "#ffcf7a" : COLOR.inkDim })).setOrigin(1, 0.5);
     row.add(state);
 
@@ -237,13 +242,16 @@ export class AchievementsPopup {
     const nextIndex = Math.min(series.claimedTiers + series.claimableTiers, tierCount - 1);
     const shownIndex = complete ? tierCount - 1 : claimable ? series.claimedTiers : nextIndex;
     const target = series.tiers[shownIndex].target;
-    const objective = this.scene.add.text(left, rowLayout.objectiveY, t(`achievement.objective.${series.metric}` as TextKey, { value: formatCurrency(target) }), textStyle({ role: "body", size: 23, color: complete ? COLOR.inkDim : "#c8ced6" })).setOrigin(0, 0.5);
+    // 숨은 기록은 닿기 전에 목표도 진행도도 말하지 않는다 — 편성 장난은 들키면 장난이 아니다.
+    const objectiveText = veiled ? t("achievement.objective.hidden") : t(`achievement.objective.${series.metric}` as TextKey, { value: formatCurrency(target) });
+    const objective = this.scene.add.text(left, rowLayout.objectiveY, objectiveText, textStyle({ role: "body", size: 23, color: complete ? COLOR.inkDim : "#c8ced6" })).setOrigin(0, 0.5);
     squeezeTextToWidth(objective, textRight - left);
     row.add(objective);
-    const progress = this.scene.add.text(textRight, rowLayout.barY, `${formatCurrency(Math.min(series.value, target))} / ${formatCurrency(target)}`, textStyle({ role: "emphasis", size: 22, color: dim })).setOrigin(1, 0.5);
+    const progressText = veiled ? "? / ?" : `${formatCurrency(Math.min(series.value, target))} / ${formatCurrency(target)}`;
+    const progress = this.scene.add.text(textRight, rowLayout.barY, progressText, textStyle({ role: "emphasis", size: 22, color: dim })).setOrigin(1, 0.5);
     const barWidth = Math.max(200, progress.x - progress.width - 20 - left);
     const bar = new HoloBar(this.scene, left + barWidth / 2, rowLayout.barY, barWidth, 18, { color: claimable || complete ? COLOR.missionClaim : categoryTone, trackAlpha: 0.86, outline: true }).addTo(row);
-    bar.setValue(Math.min(1, series.value / Math.max(1, target))); this.bars.push(bar);
+    bar.setValue(veiled ? 0 : Math.min(1, series.value / Math.max(1, target))); this.bars.push(bar);
     row.add(progress);
 
     // 보상 액자 — 받을 단계가 있으면 그 단계, 없으면 다음 단계, 다 밟았으면 마지막 단계(받은 채로).
@@ -269,7 +277,7 @@ export class AchievementsPopup {
     }
   }
 
-  /** 하단 줄 — 갈래 탭 다섯과 모두 받기. 다른 갈래에 받을 것이 남아 있으면 그 라벨에 호박빛 점이 선다. */
+  /** 하단 줄 — 갈래 탭(전체 + 여섯)과 모두 받기. 다른 갈래에 받을 것이 남아 있으면 그 라벨에 호박빛 점이 선다. */
   private renderFooter(): void {
     if (!this.body || !this.data) return;
     this.footer?.destroy();

@@ -959,6 +959,36 @@
 "Fleißige Forschung",
 "Усердие в исследованиях"
 ],
+"modifier.challenger.name": [
+"巅峰挑战者",
+"ผู้ท้าชิงจุดสูงสุด",
+"Kẻ thách thức đỉnh cao",
+"Penantang Puncak",
+"Aspirante a la cima",
+"Desafiante do topo",
+"Gipfelherausforderung",
+"Покорение вершины"
+],
+"modifier.stratum-explorer.name": [
+"地层探索家",
+"นักสำรวจชั้นหิน",
+"Nhà thám hiểm địa tầng",
+"Penjelajah Lapisan",
+"Exploración de estratos",
+"Exploração de estratos",
+"Schichtenforschung",
+"Исследование пластов"
+],
+"modifier.walking-codex.name": [
+"行走的图鉴",
+"สารานุกรมเดินได้",
+"Bách khoa biết đi",
+"Ensiklopedia Berjalan",
+"Enciclopedia andante",
+"Enciclopédia ambulante",
+"Wandelndes Lexikon",
+"Ходячая энциклопедия"
+],
 "profileFrame.field.name": [
 "现场研究员",
 "นักวิจัยภาคสนาม",

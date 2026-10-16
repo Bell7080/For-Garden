@@ -1,6 +1,8 @@
 import { ACHIEVEMENT_SERIES, type AchievementMetric, type AchievementSeries } from "../data/achievements";
 import { BOND_LEVEL_CAP } from "./bond";
-import { BREAKTHROUGH_STEPS } from "./relicProgression";
+import { BREAKTHROUGH_STEPS, relicLevelCap } from "./relicProgression";
+import { DUEL_TIERS } from "./duelArena";
+import { BOUNTY_TIERS } from "../data/bounty";
 import { mergeMissionRewards, type MissionReward } from "./missions";
 import { CHAPTERS } from "../data/stages";
 import { PLAYABLE_RELICS } from "../data/relics";
@@ -30,6 +32,13 @@ export function achievementFacts(state: Session): AchievementFacts {
   const progress = playable.map(({ id }) => state.relicProgress[id]).filter((entry) => entry !== undefined);
   const maxBreakthrough = BREAKTHROUGH_STEPS.length;
   const storyStageIds = CHAPTERS.flatMap(({ stages }) => stages.map(({ id }) => id));
+  const levelCap = relicLevelCap(maxBreakthrough);
+  const ownedDefs = playable;
+  const runes = state.runeInventory ?? [];
+  const partyDefs = state.party.map((id) => PLAYABLE_RELICS.find((relic) => relic.id === id)).filter((relic) => relic !== undefined);
+  const partyFull = partyDefs.length === 3;
+  const reachedDuel = (state.duel?.reachedTierIds ?? []).map((id) => DUEL_TIERS.findIndex((tier) => tier.id === id));
+  const bountyIds = new Set(BOUNTY_TIERS.map(({ id }) => id));
   return {
     goldPeak: Math.max(state.achievements?.goldPeak ?? 0, state.wallet.gold),
     relicsOwned: playable.length,
@@ -50,6 +59,30 @@ export function achievementFacts(state: Session): AchievementFacts {
     staminaSpent: lifetime.stamina_spent ?? 0,
     dailyMissionsClaimed: lifetime.daily_mission_claimed ?? 0,
     lobbyGreetings: lifetime.lobby_interaction ?? 0,
+    relicsAtLevelCap: progress.filter((entry) => entry.level >= levelCap).length,
+    runesEngraved: runes.filter((rune) => rune.engravings.length > 0).length,
+    bountyTiersCleared: new Set((state.bounty?.clearedTierIds ?? []).filter((id) => bountyIds.has(id))).size,
+    cakeTiersCleared: Math.max(0, (state.cakeOperation?.clearedIndex ?? -1) + 1),
+    duelTierReached: Math.max(0, ...reachedDuel),
+    archaeologySitesCompleted: new Set(state.archaeology?.completedSiteIds ?? []).size,
+    observationAnswers: state.relicStory?.answers.length ?? 0,
+    relicChaptersRead: state.relicStory?.claimedChapterIds.length ?? 0,
+    journalsRead: state.readInteractionJournalIds.size,
+    ssrOwned: ownedDefs.filter(({ rarity }) => rarity === "SSR").length,
+    runesOwned: runes.length,
+    legendaryRunes: runes.filter(({ rarity }) => rarity === "legendary").length,
+    modifiersEarned: new Set(state.earnedProfileModifierIds).size,
+    // 도감 완성은 개체가 늘면 다시 닫힌다 — 다만 이미 받은 기록은 저장이 지킨다.
+    codexComplete: PLAYABLE_RELICS.length > 0 && playable.length === PLAYABLE_RELICS.length ? 1 : 0,
+    elementsOwned: new Set(ownedDefs.map(({ element }) => element)).size,
+    squadsOwned: new Set(ownedDefs.map(({ squad }) => squad)).size,
+    perfectRelics: progress.filter((entry) => entry.level >= levelCap && entry.breakthrough >= maxBreakthrough && entry.bondLevel >= BOND_LEVEL_CAP).length,
+    fullyRunedRelics: progress.filter((entry) => entry.heartGemSlots.length > 0 && entry.heartGemSlots.every((slot) => slot !== null)).length,
+    // 편성 장난은 지금 세워 둔 편성에서 읽는다 — 세 칸이 다 찼을 때만 센다.
+    partySameElement: partyFull && new Set(partyDefs.map(({ element }) => element)).size === 1 ? 1 : 0,
+    partySquads: partyFull ? new Set(partyDefs.map(({ squad }) => squad)).size : 0,
+    partySsr: partyFull ? partyDefs.filter(({ rarity }) => rarity === "SSR").length : 0,
+    nicknameSet: state.playerCard?.nickname ? 1 : 0,
   };
 }
 

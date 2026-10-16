@@ -2,6 +2,8 @@ import { expect, test } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
 import { captureGame, tap, tapAndWait } from "./canvasInput";
 import { LOBBY_MENU_BUTTON, lobbyMenuTrayLayout } from "../../src/ui/lobbyMenuLayout";
+import { ACHIEVEMENT_CATEGORIES } from "../../src/data/achievements";
+import { ACHIEVEMENTS_POPUP_LAYOUT, achievementsTabX } from "../../src/ui/achievementsPopupLayout";
 
 const WIDTH = 1080; const HEIGHT = 1920;
 
@@ -19,4 +21,8 @@ test("로비 메뉴의 업적 칩은 업적 창을 연다", async ({ page }) => 
   await tapAndWait(page, chips[1].x, chips[1].y, () => window.__PF_DEBUG?.popupTitles, ["업적"]);
   await page.waitForTimeout(600);
   await captureGame(page, `test-results/${test.info().project.name}-achievements-popup.png`);
+  // 마지막 갈래(기록) — 단발·숨은 업적이 선다.
+  await tap(page, WIDTH / 2 + achievementsTabX(ACHIEVEMENT_CATEGORIES.indexOf("feat") + 1), HEIGHT / 2 + ACHIEVEMENTS_POPUP_LAYOUT.footer.tabY);
+  await page.waitForTimeout(500);
+  await captureGame(page, `test-results/${test.info().project.name}-achievements-feat.png`);
 });

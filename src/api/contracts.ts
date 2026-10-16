@@ -509,6 +509,8 @@ export interface AchievementSeriesDto {
   claimableTiers: number;
   /** 마지막 단계를 받으면 열리는 수식어와, 이미 얻었는가. */
   modifier?: { id: string; earned: boolean };
+  /** 숨은 업적 — 닿기 전에는 목표를 가린다. */
+  hidden?: true;
 }
 export interface AchievementListResponse { series: AchievementSeriesDto[]; claimableCount: number; completedTiers: number; totalTiers: number; earnedModifierCount: number; totalModifierCount: number; }
 /** 업적 수령 뒤의 상태. 받은 단계·끝난 업적·열린 수식어와 실제 지급분(상한에 깎인 뒤)을 싣는다. */

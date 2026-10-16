@@ -1,3 +1,4 @@
+import { QA_TOOLS_ENABLED } from "./core/buildFlavor";
 /**
  * Phaser는 캔버스 안에 직접 그리기 때문에 DOM에서 현재 상태를 확인할 수 없다.
  * E2E(Playwright) 테스트가 씬 전환과 전투 진행을 검증할 수 있도록 최소한의 상태만 window에 노출한다.
@@ -207,10 +208,11 @@ export interface DebugState {
 }
 
 const perfWindow = { updates: 0, ms: 0 };
-const perfEnabled = typeof location !== "undefined" && /[?&]perf=1/.test(location.search);
+const perfEnabled = QA_TOOLS_ENABLED && typeof location !== "undefined" && /[?&]perf=1/.test(location.search);
 
 /** Puppet 갱신 한 번의 소요 시간을 센다. 측정이 꺼져 있으면 아무것도 하지 않는다. */
 export function countDebugPuppetUpdate(ms: number): void {
+  if (!QA_TOOLS_ENABLED) return;
   if (!perfEnabled) return;
   perfWindow.updates += 1; perfWindow.ms += ms;
 }
@@ -218,6 +220,7 @@ export const debugPerfEnabled = perfEnabled;
 
 /** 1초 창이 끝날 때마다 호출해 게시하고 창을 비운다. */
 export function publishDebugPerf(frames: number, scene: string): void {
+  if (!QA_TOOLS_ENABLED) return;
   if (!perfEnabled) return;
   const state = ensure();
   const puppets = Object.values(state.puppetContainers ?? {}).reduce((sum, n) => sum + n, 0);
@@ -230,7 +233,7 @@ export function publishDebugPerf(frames: number, scene: string): void {
   if (!el) {
     el = document.createElement("div");
     el.id = "pf-perf";
-    el.style.cssText = "position:fixed;left:4px;top:4px;z-index:99999;padding:3px 6px;background:rgba(0,0,0,.7);color:#7CFC9A;font:11px monospace;pointer-events:none;white-space:pre";
+    el.style.cssText = "position:fixed;left:4px;top:4px;z-index:99999;padding:3px 6px;background:rgba(0,0,0,.7);color:#7CFC9A;font:12px monospace;pointer-events:none;white-space:pre";
     document.body.appendChild(el);
   }
   el.textContent = `${scene}\nfps ${frames}  upd ${state.perf.puppetUpdates}/${puppets}  ${state.perf.stepMs}ms`;
@@ -251,6 +254,7 @@ function ensure(): DebugState {
 }
 
 export function setDebugScene(scene: string, screenTitle?: string): void {
+  if (!QA_TOOLS_ENABLED) return;
   const state = ensure();
   state.scene = scene;
   // 이전 씬의 제목이 남아 거짓 양성이 되지 않도록 씬 전환마다 함께 초기화한다.
@@ -265,26 +269,36 @@ export function setDebugScene(scene: string, screenTitle?: string): void {
 
 /** 현재 화면이 실제로 만든 상점 입력 중심만 병합하며 상품/지갑 데이터는 받지 않는다. */
 export function setDebugStorefrontControls(controls: Partial<NonNullable<DebugState["storefrontControls"]>> | undefined): void {
+  if (!QA_TOOLS_ENABLED) return;
   const state = ensure(); state.storefrontControls = controls ? { ...state.storefrontControls, ...controls } : undefined;
 }
 
 /** 탭 재렌더와 스크롤 clamp 결과를 그대로 게시한다. */
-export function setDebugShopView(view: DebugState["shopView"]): void { ensure().shopView = view; }
+export function setDebugShopView(view: DebugState["shopView"]): void {
+  if (!QA_TOOLS_ENABLED) return;
+  ensure().shopView = view;
+}
 
 /** Canvas 밖에서 목록 구현을 복제하지 않도록 교류 씬이 계산한 표시 계약을 그대로 게시한다. */
-export function setDebugInteractionLayers(layers: DebugState["interactionLayers"]): void { ensure().interactionLayers = layers; }
+export function setDebugInteractionLayers(layers: DebugState["interactionLayers"]): void {
+  if (!QA_TOOLS_ENABLED) return;
+  ensure().interactionLayers = layers;
+}
 
 export function setDebugReady(ready: boolean): void {
+  if (!QA_TOOLS_ENABLED) return;
   ensure().ready = ready;
 }
 
 /** 화면이 실제 표시를 시작한 대사만 복사해 E2E가 UI 구현을 재계산하지 않게 한다. */
 export function setDebugDialogue(node: { id: string; body: string } | undefined): void {
+  if (!QA_TOOLS_ENABLED) return;
   ensure().dialogue = node ? { nodeId: node.id, body: node.body } : undefined;
 }
 
 /** 공용 대사 띠가 서고 지는 것을 그대로 옮긴다. 띠 자신만 부르므로 화면마다 갈리지 않는다. */
 export function setDebugBubble(line: { name: string; body: string } | undefined): void {
+  if (!QA_TOOLS_ENABLED) return;
   ensure().bubble = line;
 }
 
@@ -295,68 +309,99 @@ export function setDebugBubble(line: { name: string; body: string } | undefined)
  * 순간과 SHUTDOWN 순간 모두 false로 돌려, 다음 씬이 준비 완료를 선언하기 전 이전 true가 남지 않는다.
  */
 export function bindDebugReadyLifecycle(events: { once(event: string, listener: () => void): unknown }): void {
+  if (!QA_TOOLS_ENABLED) return;
   setDebugReady(false);
   events.once("shutdown", () => setDebugReady(false));
 }
 
 /** 비동기 가방 조회와 탭 재구성이 끝난 시점의 사용자 표시 상태만 공개한다. */
 export function setDebugInventoryCategory(category: DebugState["inventoryCategory"]): void {
+  if (!QA_TOOLS_ENABLED) return;
   ensure().inventoryCategory = category;
 }
 
 /** 실제 우편 응답 집계만 노출해 E2E가 점 해제와 수령 가능 수 변화를 확인한다. */
-export function setDebugMailPopup(state: DebugState["mailPopup"]): void { ensure().mailPopup = state; }
+export function setDebugMailPopup(state: DebugState["mailPopup"]): void {
+  if (!QA_TOOLS_ENABLED) return;
+  ensure().mailPopup = state;
+}
 
 /** 뒤집힌 칸이 몇 장 남았는지만 알린다. 어느 칸에 무엇이 들었는지는 열기 전까지 공개하지 않는다. */
-export function setDebugResearchBoard(board: DebugState["researchBoard"]): void { ensure().researchBoard = board; }
-export function setDebugRelicShowcase(showcase: DebugState["relicShowcase"]): void { ensure().relicShowcase = showcase; }
+export function setDebugResearchBoard(board: DebugState["researchBoard"]): void {
+  if (!QA_TOOLS_ENABLED) return;
+  ensure().researchBoard = board;
+}
+export function setDebugRelicShowcase(showcase: DebugState["relicShowcase"]): void {
+  if (!QA_TOOLS_ENABLED) return;
+  ensure().relicShowcase = showcase;
+}
 
 /** Canvas 바깥 테스트가 판의 구현을 복제하지 않고 지층 입력·공개 경계만 읽게 한다. */
-export function setDebugArchaeologyDig(state: DebugState["archaeologyDig"]): void { ensure().archaeologyDig = state; }
+export function setDebugArchaeologyDig(state: DebugState["archaeologyDig"]): void {
+  if (!QA_TOOLS_ENABLED) return;
+  ensure().archaeologyDig = state;
+}
 
 /** 지도 노드의 자리와 상태만 알린다. 어느 유적에 무엇이 들었는지는 공개하지 않는다. */
-export function setDebugArchaeologyMap(state: DebugState["archaeologyMap"]): void { ensure().archaeologyMap = state; }
+export function setDebugArchaeologyMap(state: DebugState["archaeologyMap"]): void {
+  if (!QA_TOOLS_ENABLED) return;
+  ensure().archaeologyMap = state;
+}
 
 /** 현재 탭을 다시 그릴 때 실제 이미지로 사용한 키만 복사해 이전 렌더의 잔여값을 막는다. */
 export function setDebugInventoryTextureKeys(keys: readonly string[] | undefined): void {
+  if (!QA_TOOLS_ENABLED) return;
   ensure().inventoryTextureKeys = keys ? [...keys] : undefined;
 }
 
 export function setDebugBattle(battle: DebugBattle | undefined): void {
+  if (!QA_TOOLS_ENABLED) return;
   ensure().battle = battle;
 }
 
 /** 결과 수치 자체는 서버 영수증 테스트가 맡고 E2E에는 표시·입력 계약만 공개한다. */
-export function setDebugBossResult(result: DebugState["bossResult"]): void { ensure().bossResult = result; }
+export function setDebugBossResult(result: DebugState["bossResult"]): void {
+  if (!QA_TOOLS_ENABLED) return;
+  ensure().bossResult = result;
+}
 
 /** 편성 UI의 실제 렌더 상태만 복사해 노출하고 게임 규칙 입력에는 사용하지 않는다. */
-export function setDebugRaidStage(stage: DebugState["raidStage"]): void { ensure().raidStage = stage; }
+export function setDebugRaidStage(stage: DebugState["raidStage"]): void {
+  if (!QA_TOOLS_ENABLED) return;
+  ensure().raidStage = stage;
+}
 
 export function setDebugParty(party: DebugState["party"]): void {
+  if (!QA_TOOLS_ENABLED) return;
   ensure().party = party;
 }
 
 /** 원정 렐릭 ID 대신 슬롯 좌표와 표시 인원수만 E2E에 전달한다. */
 export function setDebugExpeditionFormation(formation: DebugState["expeditionFormation"]): void {
+  if (!QA_TOOLS_ENABLED) return;
   ensure().expeditionFormation = formation;
 }
 
 /** 모바일 E2E가 칸과 교체 고스트가 실제 드래그 동안 함께 뜨는지만 관찰한다. */
 export function setDebugFormationDragVisual(visual: DebugState["formationDragVisual"]): void {
+  if (!QA_TOOLS_ENABLED) return;
   ensure().formationDragVisual = visual;
 }
 
 /** 프리미엄 화면의 현재 표시 섹션만 공개하며 상품이나 결제 상태는 포함하지 않는다. */
 export function setDebugPremiumSection(section: DebugState["premiumSection"]): void {
+  if (!QA_TOOLS_ENABLED) return;
   ensure().premiumSection = section;
 }
 
 /** 게임 상태가 아닌 도감 스크롤의 현재 렌더 지오메트리만 E2E에 공개한다. */
 export function setDebugRelicScroll(scroll: DebugState["relicScroll"]): void {
+  if (!QA_TOOLS_ENABLED) return;
   ensure().relicScroll = scroll;
 }
 
 export function setDebugInfoOpen(open: boolean): void {
+  if (!QA_TOOLS_ENABLED) return;
   ensure().infoOpen = open;
   if (!open) ensure().infoAssetReady = undefined;
 }
@@ -368,12 +413,14 @@ export function setDebugGridCards(
   offsetY = 0,
   viewport: { top: number; bottom: number } = { top: 0, bottom: 1920 },
 ): void {
+  if (!QA_TOOLS_ENABLED) return;
   const state = ensure(); const grids = state.gridCards ?? (state.gridCards = {});
   if (!cards) { delete grids[scene]; return; }
   grids[scene] = { offsetY, viewportTop: viewport.top, viewportBottom: viewport.bottom, cards };
 }
 
 export function setDebugGridOffset(scene: "relics" | "party", offsetY: number): void {
+  if (!QA_TOOLS_ENABLED) return;
   const grid = ensure().gridCards?.[scene];
   if (grid) grid.offsetY = offsetY;
 }
@@ -385,38 +432,50 @@ export function setDebugGridOffset(scene: "relics" | "party", offsetY: number): 
  * 읽어 수가 영원히 0으로 보였고, 기다리던 검사가 시간만 채우고 실패했다.
  */
 export function changeDebugPuppetContainers(scene: string, delta: number): void {
+  if (!QA_TOOLS_ENABLED) return;
   const state = ensure(); const counts = state.puppetContainers ?? (state.puppetContainers = {});
   counts[scene] = Math.max(0, (counts[scene] ?? 0) + delta);
 }
 
 /** 정보창이 실제로 채운 두 비동기 에셋의 완료 여부만 병합한다. */
 export function setDebugInfoAssetReady(part: Partial<NonNullable<DebugState["infoAssetReady"]>> | undefined): void {
+  if (!QA_TOOLS_ENABLED) return;
   ensure().infoAssetReady = part ? { portrait: false, sd: false, ...ensure().infoAssetReady, ...part } : undefined;
 }
 
 /** 브라우저 WebGL 사건과 Phaser post-render 관찰값을 그대로 게시한다. */
-export function setDebugWebglRestore(state: DebugState["webglRestore"]): void { ensure().webglRestore = state; }
+export function setDebugWebglRestore(state: DebugState["webglRestore"]): void {
+  if (!QA_TOOLS_ENABLED) return;
+  ensure().webglRestore = state;
+}
 
 /** 임무 API 응답을 그린 뒤의 선택 탭만 게시한다. */
-export function setDebugMissionsPeriod(period: DebugState["missionsPeriod"]): void { ensure().missionsPeriod = period; }
+export function setDebugMissionsPeriod(period: DebugState["missionsPeriod"]): void {
+  if (!QA_TOOLS_ENABLED) return;
+  ensure().missionsPeriod = period;
+}
 
 /** Canvas 프로필 칩의 열기·닫기 흐름만 자동화가 관찰하게 한다. */
 export function setDebugPlayerProfileOpen(open: boolean): void {
+  if (!QA_TOOLS_ENABLED) return;
   ensure().playerProfileOpen = open || undefined;
 }
 
 /** Canvas 밖 E2E가 공용 노드 편성판의 실제 렌더 지오메트리만 읽게 한다. */
 export function setDebugEnemyPreview(preview: DebugState["enemyPreview"]): void {
+  if (!QA_TOOLS_ENABLED) return;
   ensure().enemyPreview = preview;
 }
 
 /** Canvas 내부 팝업의 사용자 가시 상태만 노출하며 게임 진행값에는 사용하지 않는다. */
 export function setDebugIdleExcavationPopup(state: DebugState["idleExcavationPopup"]): void {
+  if (!QA_TOOLS_ENABLED) return;
   ensure().idleExcavationPopup = state;
 }
 
 /** Canvas 슬롯의 사용자 입력 계약만 E2E에 복사한다. */
 export function setDebugIdleExcavationSlots(slots: DebugState["idleExcavationSlots"], selectedSlot?: number): void {
+  if (!QA_TOOLS_ENABLED) return;
   const state = ensure(); state.idleExcavationSlots = slots; state.idleExcavationSelectedSlot = selectedSlot;
   // 새 현황 렌더는 SD 완료 목록도 새로 시작해 이전 세대가 E2E 성공으로 오인되지 않게 한다.
   if (!slots || selectedSlot === undefined) state.idleExcavationSdReady = undefined;
@@ -424,21 +483,25 @@ export function setDebugIdleExcavationSlots(slots: DebugState["idleExcavationSlo
 
 /** SD의 렌더 가능 검증을 통과한 슬롯만 누적한다. */
 export function setDebugIdleExcavationSdReady(index: number): void {
+  if (!QA_TOOLS_ENABLED) return;
   const state = ensure(); state.idleExcavationSdReady = [...new Set([...(state.idleExcavationSdReady ?? []), index])];
 }
 
 /** 광고 토큰이나 서버 원문 없이 사용자가 보는 발굴 버튼 상태만 복사한다. */
 export function setDebugExcavationAdOffers(offers: DebugState["excavationAdOffers"]): void {
+  if (!QA_TOOLS_ENABLED) return;
   ensure().excavationAdOffers = offers;
 }
 
 /** 발굴 UI의 렌더 좌표만 복사하며 실제 지갑이나 편성은 의도적으로 받지 않는다. */
 export function setDebugIdleExcavationControls(controls: DebugState["idleExcavationControls"]): void {
+  if (!QA_TOOLS_ENABLED) return;
   ensure().idleExcavationControls = controls;
 }
 
 /** 보상 내용은 숨기고 팝업 열림·표시 칸 수·확인 입력점만 Canvas E2E에 전달한다. */
 export function setDebugRewardPopup(open: boolean, itemCount?: number, confirm?: { x: number; y: number }): void {
+  if (!QA_TOOLS_ENABLED) return;
   const state = ensure();
   state.rewardPopup = open || undefined;
   state.rewardPopupItemCount = open ? itemCount : undefined;
@@ -446,6 +509,7 @@ export function setDebugRewardPopup(open: boolean, itemCount?: number, confirm?:
 }
 
 export function setDebugProgress(wallet: { fossil: number; amber: number; gold?: number }, owned: Set<string>): void {
+  if (!QA_TOOLS_ENABLED) return;
   const state = ensure();
   state.wallet = { ...wallet };
   state.owned = [...owned];
@@ -459,6 +523,7 @@ export function setDebugProgress(wallet: { fossil: number; amber: number; gold?:
  * 두면 이름이 바뀌는 순간 조용히 빗나간다. 보상 팝업의 확인 버튼과 같은 방식으로 자리만 알린다.
  */
 export function setDebugRuneForgeRename(point: { x: number; y: number } | undefined): void {
+  if (!QA_TOOLS_ENABLED) return;
   ensure().runeForgeRename = point;
 }
 
@@ -470,6 +535,7 @@ export function setDebugRuneForgeRename(point: { x: number; y: number } | undefi
  * 눌러 그냥 닫아 버리고**, 실패는 "세공 화면이 안 열린다"로만 보인다.
  */
 export function setDebugRuneNoteCraft(point: { x: number; y: number } | undefined): void {
+  if (!QA_TOOLS_ENABLED) return;
   ensure().runeNoteCraft = point;
 }
 
@@ -482,12 +548,14 @@ export function setDebugRuneNoteCraft(point: { x: number; y: number } | undefine
  */
 /** 급여 누름·확정 수를 더한다. 정보창이 새로 열리면 0부터 센다. */
 export function addDebugFeedTaps(served: number, confirmed: number): void {
+  if (!QA_TOOLS_ENABLED) return;
   const state = ensure();
   const current = state.feedTaps ?? { served: 0, confirmed: 0 };
   state.feedTaps = { served: current.served + served, confirmed: current.confirmed + confirmed };
 }
 
 export function setDebugFeedButton(point: { x: number; y: number } | undefined): void {
+  if (!QA_TOOLS_ENABLED) return;
   ensure().feedButton = point;
 }
 
@@ -499,10 +567,12 @@ export function setDebugFeedButton(point: { x: number; y: number } | undefined):
  * 늘리는 대신 **칠해졌는지 자체를** 알린다.
  */
 export function setDebugInfoGemSlots(slots: (string | null)[] | undefined): void {
+  if (!QA_TOOLS_ENABLED) return;
   ensure().infoGemSlots = slots;
 }
 
 export function setDebugPopupTitles(titles: string[]): void {
+  if (!QA_TOOLS_ENABLED) return;
   ensure().popupTitles = titles.length > 0 ? titles : undefined;
 }
 
@@ -513,11 +583,13 @@ export function setDebugPopupTitles(titles: string[]): void {
  * 길어지면 E2E 실패 메시지에서 어느 자리가 넘쳤는지 읽히지 않는다.
  */
 export function countFittedText(): void {
+  if (!QA_TOOLS_ENABLED) return;
   const state = ensure();
   state.fittedText = (state.fittedText ?? 0) + 1;
 }
 
 export function reportClampedText(text: string, width: number, room: number): void {
+  if (!QA_TOOLS_ENABLED) return;
   const state = ensure();
   const list = state.clampedText ?? (state.clampedText = []);
   if (list.some((entry) => entry.text === text && entry.room === room)) return;

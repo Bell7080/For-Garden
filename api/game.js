@@ -17615,6 +17615,15 @@ function replaceSession(next) {
 // src/state/SaveManager.ts
 init_define_import_meta_env();
 
+// src/core/saveStorage.ts
+init_define_import_meta_env();
+var LOCAL_SAVE_FLAVOR = false ? "test" : QA_TOOLS_ENABLED ? "qa" : "production";
+var LOCAL_SAVE_STORAGE_KEYS = {
+  production: "eternal-city.production.local-save",
+  qa: "eternal-city.qa.local-save",
+  test: "eternal-city.test.local-save"
+};
+
 // src/core/duelState.ts
 init_define_import_meta_env();
 
@@ -24045,7 +24054,7 @@ function migrateV12Rune(definitionId) {
   if (!rune) throw new Error(`\uC54C \uC218 \uC5C6\uB294 v12 Heart Gem id: ${definitionId}`);
   return cloneRune(rune);
 }
-var SAVE_STORAGE_KEY = "eternal-city.local-save";
+var SAVE_STORAGE_KEY = LOCAL_SAVE_STORAGE_KEYS[LOCAL_SAVE_FLAVOR];
 var CURRENT_SAVE_VERSION = 50;
 function clampResearchPoints(saved) {
   const clamp2 = (period) => {
@@ -24175,13 +24184,15 @@ function normalizeExpeditionRun(value, ownedIds) {
 }
 var INTERACTION_SLOT_LIMIT = 32;
 var SaveManager = class {
-  constructor(storage = globalThis.localStorage) {
+  constructor(storage = globalThis.localStorage, flavor = LOCAL_SAVE_FLAVOR) {
     this.storage = storage;
+    this.storageKey = LOCAL_SAVE_STORAGE_KEYS[flavor];
   }
   storage;
+  storageKey;
   /** JSON 배열을 런타임 Set으로 되돌린 검증 완료 세션을 반환한다. */
   load() {
-    const raw = this.storage?.getItem(SAVE_STORAGE_KEY);
+    const raw = this.storage?.getItem(this.storageKey);
     if (raw === null || raw === void 0) return null;
     let parsed;
     try {
@@ -24214,7 +24225,7 @@ var SaveManager = class {
   /** 상태 확정 경계에서 Set을 배열로 바꾸고 한 번에 교체 저장한다. */
   save(state) {
     const data = this.toSaveData(state);
-    this.storage?.setItem(SAVE_STORAGE_KEY, JSON.stringify(data));
+    this.storage?.setItem(this.storageKey, JSON.stringify(data));
   }
   /** Set과 중첩 객체를 JSON 안전 복사본으로 바꾸는 단일 변환점이다. */
   toSaveData(state) {
@@ -24281,7 +24292,7 @@ var SaveManager = class {
   }
   /** 로그아웃/계정 전환에서 사용할 저장 제거다. 새게임 UI를 만들지는 않는다. */
   reset() {
-    this.storage?.removeItem(SAVE_STORAGE_KEY);
+    this.storage?.removeItem(this.storageKey);
   }
   /** 버전 없는 초기 프로토타입 저장을 명시적으로 v1 계약에 올린다. */
   migrate(input) {

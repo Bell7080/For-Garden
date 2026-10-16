@@ -1,8 +1,12 @@
+import { LOCAL_SAVE_STORAGE_KEYS } from "../../src/core/saveStorage";
 import type { Page } from "@playwright/test";
 import { OPENING_TRAIN } from "../../src/data/dialogues/openingTrain";
-import { SAVE_STORAGE_KEY, SaveManager } from "../../src/state/SaveManager";
+import { SaveManager } from "../../src/state/SaveManager";
 import { normalizePlayerLevel, PLAYER_LEVEL_CAP } from "../../src/core/playerLevel";
 import { createDefaultSession, type Session } from "../../src/state/session";
+
+/** Node에서 헬퍼를 실행해도 브라우저의 --mode test 저장 공간을 명시적으로 고른다. */
+export const E2E_SAVE_STORAGE_KEY = LOCAL_SAVE_STORAGE_KEYS.test;
 
 /**
  * 오프닝을 이미 본 상태의 저장 데이터를 만든다.
@@ -18,7 +22,7 @@ function completedOpeningSave(prepare?: (session: Session) => void): string {
       stored = value;
     },
     removeItem: () => undefined,
-  });
+  }, "test");
   const session = createDefaultSession();
   session.completedStoryIds.add(OPENING_TRAIN.id);
   // 콘텐츠가 연구원 레벨로 잠겨 있으므로 화면별 E2E는 기본으로 모두 열린 만렙에서 시작한다. 잠금을 확인하는 편만 prepare에서 되돌린다.
@@ -42,7 +46,7 @@ export async function startAfterOpening(page: Page, prepare?: (session: Session)
   // 그래서 제 저장을 잃고 `interaction`이 비어 있는 상태로 이어갔다. 씨앗은 처음 한 번만 심는다.
   await page.addInitScript(
     ([key, value]) => { if (!window.localStorage.getItem(key)) window.localStorage.setItem(key, value); },
-    [SAVE_STORAGE_KEY, save] as const,
+    [E2E_SAVE_STORAGE_KEY, save] as const,
   );
   await page.goto("/");
   await page.waitForFunction(() => window.__PF_DEBUG?.ready === true);

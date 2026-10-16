@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { QA_TOOLS_ENABLED } from "./core/buildFlavor";
 import "./style.css";
 import { BASE_WIDTH, BASE_HEIGHT } from "./config/gameConfig";
 import { BootScene } from "./scenes/BootScene";
@@ -76,23 +77,25 @@ const game = new Phaser.Game({
 });
 
 // 모바일 백그라운드 복귀를 검증하도록 DOM 사건과 실제 Phaser 렌더 재개만 관찰한다.
-let restoredEvents = 0; let renderedFramesAfterRestore = 0; let waitingForRestoredRender = false;
-setDebugWebglRestore({ restoredEvents, renderedFramesAfterRestore, renderingResumed: false });
-game.canvas.addEventListener("webglcontextlost", () => {
-  renderedFramesAfterRestore = 0; waitingForRestoredRender = true;
+if (QA_TOOLS_ENABLED) {
+  let restoredEvents = 0; let renderedFramesAfterRestore = 0; let waitingForRestoredRender = false;
   setDebugWebglRestore({ restoredEvents, renderedFramesAfterRestore, renderingResumed: false });
-});
-game.canvas.addEventListener("webglcontextrestored", () => {
-  restoredEvents += 1; waitingForRestoredRender = true;
-  setDebugWebglRestore({ restoredEvents, renderedFramesAfterRestore, renderingResumed: false });
-});
-game.events.on(Phaser.Core.Events.POST_RENDER, () => {
-  if (!waitingForRestoredRender) return;
-  renderedFramesAfterRestore += 1;
-  setDebugWebglRestore({ restoredEvents, renderedFramesAfterRestore, renderingResumed: true });
-});
+  game.canvas.addEventListener("webglcontextlost", () => {
+    renderedFramesAfterRestore = 0; waitingForRestoredRender = true;
+    setDebugWebglRestore({ restoredEvents, renderedFramesAfterRestore, renderingResumed: false });
+  });
+  game.canvas.addEventListener("webglcontextrestored", () => {
+    restoredEvents += 1; waitingForRestoredRender = true;
+    setDebugWebglRestore({ restoredEvents, renderedFramesAfterRestore, renderingResumed: false });
+  });
+  game.events.on(Phaser.Core.Events.POST_RENDER, () => {
+    if (!waitingForRestoredRender) return;
+    renderedFramesAfterRestore += 1;
+    setDebugWebglRestore({ restoredEvents, renderedFramesAfterRestore, renderingResumed: true });
+  });
+}
 
-// `?perf=1`로 열면 1초마다 실제 프레임과 Puppet 갱신 횟수를 왼쪽 위에 적는다(프레임 저하 진단용).
+// QA/test/dev에서 `?perf=1`로 열면 1초마다 실제 프레임과 Puppet 갱신 횟수를 왼쪽 위에 적는다(프레임 저하 진단용).
 if (debugPerfEnabled) {
   let perfFrames = 0; let perfSince = performance.now();
   game.events.on(Phaser.Core.Events.POST_RENDER, () => {

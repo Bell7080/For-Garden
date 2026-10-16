@@ -54,8 +54,9 @@ import { rotationSlot } from "../data/runeRotation";
 import { canGrantRuneTraitAtLeast, canUpgradeRuneTraitGrade, grantRuneTrait as rollRuneTrait, rerollRuneTrait as rollRuneTraitReroll, RUNE_TRAIT_RULES, upgradeRuneTraitGrade, type RuneTrait } from "../core/runeTraits";
 import { RUNE_TRAIT_IDS, RUNE_TRAIT_ITEMS } from "../data/runeTraits";
 import { nextStrataCrystalAt, siteCooldownMs, strataCrystalStage } from "../core/strataCrystal";
-import { beginStrataSiteCooldown, canDigStrataTile, createStrataBoard, digStrataTile as digTile, nextStrataChargeAt, rollStrataResearchItem, rollStrataRuneRarity, settleStrataCharges, strataBoardView, strataSiteCooldownUntil } from "../core/strataDig";
+import { beginStrataSiteCooldown, canDigStrataTile, createStrataBoard, digStrataTile as digTile, absorbStrataTickets, nextStrataChargeAt, rollStrataResearchItem, rollStrataRuneRarity, settleStrataCharges, strataBoardView, strataSiteCooldownUntil } from "../core/strataDig";
 import { findStrataLayer, STRATA_CHARGE } from "../data/strataLayers";
+const STRATA_TICKET_ITEM = "strata-ticket";
 import { ARCHAEOLOGY_SITES, findArchaeologySite } from "../data/archaeologySites";
 import { archaeologySiteAvailability } from "../core/archaeologyMap";
 import type { AbandonStrataRunRequest, ArchaeologyStateResponse, DigStrataTileRequest, DigStrataTileResponse, GrantRuneTraitRequest, GrantRuneTraitResponse, RerollRuneTraitRequest, RerollRuneTraitResponse, ResolveRuneTraitRerollRequest, ResolveRuneTraitRerollResponse, StartStrataRunRequest, UpgradeRuneTraitRequest, UpgradeRuneTraitResponse } from "./contracts";
@@ -3355,6 +3356,8 @@ export class FakeServer implements GameApi {
   }
 
   private persist(next: Session): void {
+    // 발굴권은 고고학 입장 횟수 그 자체다 — 어느 경로로 받았든 가방에 남기지 않고 횟수에 더한다(`max` 초과 허용).
+    this.absorbStrataTicketsInto(next);
     // 모든 쓰기 API가 공유하는 마지막 경계에서 음수·상한·중복을 저장 전에 차단한다.
     this.validateState(next);
     // validateState의 도메인 오류는 그대로 두고 실제 저장 장치 오류만 공용 API 실패로 분류한다.
@@ -3365,6 +3368,18 @@ export class FakeServer implements GameApi {
       throw persistenceFailed(error);
     }
     this.signalMissionNotice(next);
+  }
+
+  private absorbStrataTicketsInto(next: Session): void {
+    const stack = next.itemInventory.find((entry) => entry.itemId === STRATA_TICKET_ITEM);
+    if (!stack || stack.quantity <= 0) return;
+    const { charges, absorbed } = absorbStrataTickets(next.archaeology.charges, stack.quantity);
+    if (absorbed <= 0) return;
+    const rest = removeItemLot(next.itemInventory, STRATA_TICKET_ITEM, absorbed);
+    if (!rest) return;
+    next.itemInventory = rest;
+    // 가득 찬 상태에서 처음 받은 횟수라면 충전 시계는 건드리지 않는다(이미 `max` 이상이면 시계가 돌지 않는다).
+    next.archaeology = { ...next.archaeology, charges, chargesUpdatedAt: next.archaeology.chargesUpdatedAt ?? this.now().toISOString() };
   }
 
   /** 실제 HTTP 서버로 옮겨도 그대로 적용할 API 응답 직전 불변식 검사다. */

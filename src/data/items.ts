@@ -73,7 +73,7 @@ export const ITEMS = [
   // 소탕 한 번에 한 장. 멤버십이 없을 때만 들고, 던전 입구에서 광고를 보면 다섯 장씩 채워진다.
   // 고고학 지층 탐사 한 번. 시간이 채우는 횟수와 같은 몫이라 그림도 탐사 횟수 칸의 입장권 그대로다 —
   // 그 칸의 그림을 누르면 이 안내창이 열린다(`guideForIcon`).
-  { id: "strata-ticket", name: "발굴권", description: "고고학 유적을 여는 데 쓰는 권입니다. 가진 수 그대로가 가진 횟수입니다.", category: "material", icon: { kind: "asset", key: "item-strata-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "strata-ticket", name: "발굴권", description: "고고학 유적을 여는 횟수입니다. 3시간마다 하나씩 3개까지 차고, 상점·보상으로 받은 것은 3개를 넘겨 쌓입니다.", category: "material", icon: { kind: "asset", key: "item-strata-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
   // 결투장 도전 한 번. 하루 다섯 장이 채워지는 몫과 같은 것이라 결투장의 도전권 줄이 이 그림을 쓴다 —
   // 그 줄의 그림을 누르면 이 안내창이 열린다. 전용 원화가 오기 전까지 입장권 그림을 빌려 쓴다.
   { id: "duel-ticket", name: "결투 도전권", description: "결투장에서 상대에게 도전할 때 한 장 씁니다. 매일 다섯 장이 채워집니다.", category: "material", icon: { kind: "asset", key: "item-duel-ticket" }, maxStack: 999, useEffect: { kind: "none" } },

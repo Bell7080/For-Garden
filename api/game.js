@@ -16416,7 +16416,7 @@ var ITEMS = [
   // 소탕 한 번에 한 장. 멤버십이 없을 때만 들고, 던전 입구에서 광고를 보면 다섯 장씩 채워진다.
   // 고고학 지층 탐사 한 번. 시간이 채우는 횟수와 같은 몫이라 그림도 탐사 횟수 칸의 입장권 그대로다 —
   // 그 칸의 그림을 누르면 이 안내창이 열린다(`guideForIcon`).
-  { id: "strata-ticket", name: "\uBC1C\uAD74\uAD8C", description: "\uACE0\uACE0\uD559 \uC720\uC801\uC744 \uC5EC\uB294 \uB370 \uC4F0\uB294 \uAD8C\uC785\uB2C8\uB2E4. \uAC00\uC9C4 \uC218 \uADF8\uB300\uB85C\uAC00 \uAC00\uC9C4 \uD69F\uC218\uC785\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-strata-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "strata-ticket", name: "\uBC1C\uAD74\uAD8C", description: "\uACE0\uACE0\uD559 \uC720\uC801\uC744 \uC5EC\uB294 \uD69F\uC218\uC785\uB2C8\uB2E4. 3\uC2DC\uAC04\uB9C8\uB2E4 \uD558\uB098\uC529 3\uAC1C\uAE4C\uC9C0 \uCC28\uACE0, \uC0C1\uC810\xB7\uBCF4\uC0C1\uC73C\uB85C \uBC1B\uC740 \uAC83\uC740 3\uAC1C\uB97C \uB118\uACA8 \uC313\uC785\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-strata-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
   // 결투장 도전 한 번. 하루 다섯 장이 채워지는 몫과 같은 것이라 결투장의 도전권 줄이 이 그림을 쓴다 —
   // 그 줄의 그림을 누르면 이 안내창이 열린다. 전용 원화가 오기 전까지 입장권 그림을 빌려 쓴다.
   { id: "duel-ticket", name: "\uACB0\uD22C \uB3C4\uC804\uAD8C", description: "\uACB0\uD22C\uC7A5\uC5D0\uC11C \uC0C1\uB300\uC5D0\uAC8C \uB3C4\uC804\uD560 \uB54C \uD55C \uC7A5 \uC501\uB2C8\uB2E4. \uB9E4\uC77C \uB2E4\uC12F \uC7A5\uC774 \uCC44\uC6CC\uC9D1\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-duel-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
@@ -17236,7 +17236,12 @@ var DEFAULT_STRATA_LAYER_ID = STRATA_LAYERS[0].id;
 var STRATA_CHARGE = {
   max: 3,
   /** 한 번이 차는 데 걸리는 시간(ms). 세 시간마다 하나다. */
-  intervalMs: 3 * 60 * 60 * 1e3
+  intervalMs: 3 * 60 * 60 * 1e3,
+  /**
+   * 발굴권(`strata-ticket`)·보상으로 받은 횟수가 쌓일 수 있는 끝. **시간이 채우는 몫만 `max`에서 멈춘다** —
+   * 스테미나처럼 대가를 치른 몫은 `max`를 넘겨 쌓이고(깎지 않는다), 막는 것은 이 보유 끝뿐이다.
+   */
+  holdLimit: 999
 };
 var STRATA_ART_COUNT = 4;
 
@@ -17442,7 +17447,7 @@ function createArchaeologyState() {
   return { charges: STRATA_CHARGE.max, chargesUpdatedAt: null, board: null, unlockedSiteIds: ["garden-gate"], completedSiteIds: [], lastSelectedSiteId: null, siteCooldowns: {}, siteLastDigAt: {}, pendingReroll: null };
 }
 function settleStrataCharges(charges, updatedAt, now) {
-  const safe = Math.min(STRATA_CHARGE.max, Math.max(0, Math.floor(Number.isFinite(charges) ? charges : 0)));
+  const safe = Math.min(STRATA_CHARGE.holdLimit, Math.max(0, Math.floor(Number.isFinite(charges) ? charges : 0)));
   const accrual = timeAccrualWindow(updatedAt, now, Math.max(0, STRATA_CHARGE.max - safe) * STRATA_CHARGE.intervalMs);
   if (!accrual.accepted) return { charges: safe, updatedAt: updatedAt ?? now.toISOString() };
   const nowIso = new Date(accrual.window.serverNowMs).toISOString();
@@ -17450,6 +17455,11 @@ function settleStrataCharges(charges, updatedAt, now) {
   const recovered = Math.min(STRATA_CHARGE.max - safe, Math.floor(accrual.window.elapsedMs / STRATA_CHARGE.intervalMs));
   const nextMs = safe + recovered >= STRATA_CHARGE.max ? accrual.window.serverNowMs : accrual.window.startMs + recovered * STRATA_CHARGE.intervalMs;
   return { charges: safe + recovered, updatedAt: new Date(nextMs).toISOString() };
+}
+function absorbStrataTickets(charges, tickets) {
+  const room = Math.max(0, STRATA_CHARGE.holdLimit - Math.max(0, Math.floor(charges)));
+  const absorbed = Math.min(room, Math.max(0, Math.floor(tickets)));
+  return { charges: charges + absorbed, absorbed };
 }
 function nextStrataChargeAt(charges, updatedAt) {
   if (charges >= STRATA_CHARGE.max) return null;
@@ -24897,13 +24907,13 @@ var MILEAGE_PRODUCTS = [
   mileage("mileage-weekly-fossil", "weekly", "shop-product-fossil", "\uD654\uC11D \uBC18\uCD9C", "\uD654\uC11D 1\uAC1C", 5, 10, [{ kind: "currency", currency: "fossil", amount: 1 }]),
   mileage("mileage-weekly-tonic", "weekly", "shop-product-supplies", "\uACE0\uB18D\uCD95 \uC74C\uB8CC \uBC18\uCD9C", "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C+ 2\uAC1C", 3, 2, [{ kind: "item", itemId: "stamina-tonic-large", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C+", amount: 2, expiresInDays: 7 }]),
   mileage("mileage-weekly-core", "weekly", "shop-product-ancient-core", "\uACE0\uB300 \uD575 \uBC18\uCD9C", "\uBBF8\uC9C0\uC758 \uACE0\uB300 \uD575 1\uAC1C", 25, 1, [{ kind: "item", itemId: "ancient-core", name: "\uBBF8\uC9C0\uC758 \uACE0\uB300 \uD575", amount: 1 }]),
-  mileage("mileage-weekly-raid-ticket", "weekly", "shop-product-supplies", "\uD1A0\uBC8C\uAD8C \uBC18\uCD9C", "\uD1A0\uBC8C\uAD8C 1\uC7A5", 10, 2, [{ kind: "item", itemId: "raid-ticket", name: "\uD1A0\uBC8C\uAD8C", amount: 1 }]),
+  mileage("mileage-weekly-raid-ticket", "weekly", "shop-product-supplies", "\uD1A0\uBC8C\uAD8C \uBC18\uCD9C", "\uD1A0\uBC8C\uAD8C 1\uC7A5", 2, 2, [{ kind: "item", itemId: "raid-ticket", name: "\uD1A0\uBC8C\uAD8C", amount: 1 }]),
   // 일간 — 매일 들러 소량씩 바꾸는 일반 품목.
   mileage("mileage-daily-r", "daily", "shop-product-enhancement", "\uC624\uB298\uC758 R \uD30C\uD3B8", "\uC624\uB298\uC758 R \uD30C\uD3B8 1\uAC1C", 10, 1, [{ kind: "rotating_fragment", rarity: "R", period: "daily", amount: 1 }]),
   mileage("mileage-daily-gold", "daily", "shop-product-fossil", "\uC5F0\uAD6C \uC9C0\uC6D0\uAE08", "\uACE8\uB4DC 70,000\uAC1C", 2, 2, [{ kind: "currency", currency: "gold", amount: 7e4 }]),
   mileage("mileage-daily-cheesecake", "daily", "shop-product-supplies", "\uCE58\uC988\uCF00\uC774\uD06C \uBCF4\uAE09", "\uCE58\uC988\uCF00\uC774\uD06C 280\uAC1C", 2, 2, [{ kind: "currency", currency: "cheesecake", amount: 280 }]),
   mileage("mileage-daily-tonic", "daily", "shop-product-supplies", "\uC74C\uB8CC \uD55C \uBCD1", "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C 3\uAC1C", 2, 1, [{ kind: "item", itemId: "stamina-tonic", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C", amount: 3, expiresInDays: 7 }]),
-  mileage("mileage-daily-strata", "daily", "shop-product-supplies", "\uBC1C\uAD74\uAD8C \uBC18\uCD9C", "\uBC1C\uAD74\uAD8C 1\uC7A5", 5, 1, [{ kind: "item", itemId: "strata-ticket", name: "\uBC1C\uAD74\uAD8C", amount: 1 }])
+  mileage("mileage-daily-strata", "daily", "shop-product-supplies", "\uBC1C\uAD74\uAD8C \uBC18\uCD9C", "\uBC1C\uAD74\uAD8C 1\uC7A5", 2, 1, [{ kind: "item", itemId: "strata-ticket", name: "\uBC1C\uAD74\uAD8C", amount: 1 }])
 ];
 
 // src/data/duelShop.ts
@@ -25781,9 +25791,13 @@ var InventoryManager = class {
       if (stack.lots?.length) return [...stack.lots].sort((a, b) => Date.parse(a.expiresAt) - Date.parse(b.expiresAt)).map((lot) => ({ kind: "stack", category, id: stack.itemId, definition, quantity: lot.quantity, lot }));
       return [{ kind: "stack", category, id: stack.itemId, definition, quantity: stack.quantity }];
     });
+    const ticket = findItem(STRATA_TICKET_ITEM);
+    const charges = this.state.archaeology?.charges ?? 0;
+    if (ticket?.category === category && charges > 0) rows.push({ kind: "stack", category, id: ticket.id, definition: ticket, quantity: charges });
     return rows;
   }
 };
+var STRATA_TICKET_ITEM = "strata-ticket";
 function rechargeRequestId() {
   return globalThis.crypto?.randomUUID?.() ?? `stamina-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
@@ -26350,6 +26364,7 @@ var SettingsManager = class extends EventTarget {
 var settingsManager = new SettingsManager();
 
 // src/api/FakeServer.ts
+var STRATA_TICKET_ITEM2 = "strata-ticket";
 var MAX_RUNE_NAME_LENGTH = 20;
 var FakeServer = class {
   constructor(state = session, options = {}) {
@@ -29549,6 +29564,7 @@ var FakeServer = class {
     return this.spendStamina(Math.max(0, Math.min(cost, this.state.wallet.stamina)));
   }
   persist(next) {
+    this.absorbStrataTicketsInto(next);
     this.validateState(next);
     try {
       if (this.persistSession) this.persistSession(next);
@@ -29557,6 +29573,16 @@ var FakeServer = class {
       throw persistenceFailed(error);
     }
     this.signalMissionNotice(next);
+  }
+  absorbStrataTicketsInto(next) {
+    const stack = next.itemInventory.find((entry) => entry.itemId === STRATA_TICKET_ITEM2);
+    if (!stack || stack.quantity <= 0) return;
+    const { charges, absorbed } = absorbStrataTickets(next.archaeology.charges, stack.quantity);
+    if (absorbed <= 0) return;
+    const rest = removeItemLot(next.itemInventory, STRATA_TICKET_ITEM2, absorbed);
+    if (!rest) return;
+    next.itemInventory = rest;
+    next.archaeology = { ...next.archaeology, charges, chargesUpdatedAt: next.archaeology.chargesUpdatedAt ?? this.now().toISOString() };
   }
   /** 실제 HTTP 서버로 옮겨도 그대로 적용할 API 응답 직전 불변식 검사다. */
   validateState(next) {

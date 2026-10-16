@@ -14,6 +14,9 @@ const UNTIL = "2030-01-01T00:00:00Z";
  * (`tests/unit/mileage.test.ts`). 기한이 있는 소비품은 7일을 기본으로 한다. 주간은 월요일, 일간은 매일 UTC
  * 자정에 돌아온다.
  *
+ * **발굴권·토벌권은 젬으로 환산되지 않아 검증 대상 밖이지만 값은 프리미엄 장부와 맞춘다**(발굴권 1장 ≈ 젬 100, 토벌권 ≈ 50 —
+ * `docs/premium-pricing-review.md`). 시세로는 마일리지 1~2에 해당하고 "한 번에 2 이상" 규칙에 따라 2로 둔다. 화석·호박석(5)과 같은 값이던 때는 발굴권이 화석 한 개와 같았다.
+ *
  * 구역은 `category`(`weekly`·`daily`)로 가른다 — 화면이 좌측 하단 라벨 탭으로 갈아 끼운다.
  */
 function mileage(
@@ -35,11 +38,11 @@ export const MILEAGE_PRODUCTS: readonly ProductDefinition[] = [
   mileage("mileage-weekly-fossil", "weekly", "shop-product-fossil", "화석 반출", "화석 1개", 5, 10, [{ kind: "currency", currency: "fossil", amount: 1 }]),
   mileage("mileage-weekly-tonic", "weekly", "shop-product-supplies", "고농축 음료 반출", "에너지 드링크+ 2개", 3, 2, [{ kind: "item", itemId: "stamina-tonic-large", name: "에너지 드링크+", amount: 2, expiresInDays: 7 }]),
   mileage("mileage-weekly-core", "weekly", "shop-product-ancient-core", "고대 핵 반출", "미지의 고대 핵 1개", 25, 1, [{ kind: "item", itemId: "ancient-core", name: "미지의 고대 핵", amount: 1 }]),
-  mileage("mileage-weekly-raid-ticket", "weekly", "shop-product-supplies", "토벌권 반출", "토벌권 1장", 10, 2, [{ kind: "item", itemId: "raid-ticket", name: "토벌권", amount: 1 }]),
+  mileage("mileage-weekly-raid-ticket", "weekly", "shop-product-supplies", "토벌권 반출", "토벌권 1장", 2, 2, [{ kind: "item", itemId: "raid-ticket", name: "토벌권", amount: 1 }]),
   // 일간 — 매일 들러 소량씩 바꾸는 일반 품목.
   mileage("mileage-daily-r", "daily", "shop-product-enhancement", "오늘의 R 파편", "오늘의 R 파편 1개", 10, 1, [{ kind: "rotating_fragment", rarity: "R", period: "daily", amount: 1 }]),
   mileage("mileage-daily-gold", "daily", "shop-product-fossil", "연구 지원금", "골드 70,000개", 2, 2, [{ kind: "currency", currency: "gold", amount: 70_000 }]),
   mileage("mileage-daily-cheesecake", "daily", "shop-product-supplies", "치즈케이크 보급", "치즈케이크 280개", 2, 2, [{ kind: "currency", currency: "cheesecake", amount: 280 }]),
   mileage("mileage-daily-tonic", "daily", "shop-product-supplies", "음료 한 병", "에너지 드링크 3개", 2, 1, [{ kind: "item", itemId: "stamina-tonic", name: "에너지 드링크", amount: 3, expiresInDays: 7 }]),
-  mileage("mileage-daily-strata", "daily", "shop-product-supplies", "발굴권 반출", "발굴권 1장", 5, 1, [{ kind: "item", itemId: "strata-ticket", name: "발굴권", amount: 1 }]),
+  mileage("mileage-daily-strata", "daily", "shop-product-supplies", "발굴권 반출", "발굴권 1장", 2, 1, [{ kind: "item", itemId: "strata-ticket", name: "발굴권", amount: 1 }]),
 ];

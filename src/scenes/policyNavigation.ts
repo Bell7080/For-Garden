@@ -9,8 +9,8 @@ export interface PolicyWindow {
 
 /** 정책 문서를 새 탭으로 열고, 브라우저가 팝업을 막으면 현재 탭에서 반드시 다시 연다. */
 export function openPolicyDocument(path: PolicyPath, browser: PolicyWindow = window): void {
-  // 절대 URL을 넘기면 하위 경로에서 실행되는 배포와 직접 접근에서도 같은 출처를 유지할 수 있다.
-  const url = new URL(path, browser.location.href).toString();
+  // 운영 문서는 홈페이지에서 버전과 원문을 한곳에 관리한다.
+  const url = new URL(path, "https://forgarden-web.vercel.app").toString();
   const openedWindow = browser.open(url, "_blank", "noopener,noreferrer");
   if (!openedWindow) browser.location.assign(url);
 }

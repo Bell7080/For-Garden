@@ -1,3 +1,4 @@
+import { E2E_SAVE_STORAGE_KEY } from "./openingSave";
 import { test, expect } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
 import { captureGame, tap } from "./canvasInput";
@@ -19,8 +20,8 @@ const LANGUAGE_ROW = { x: 800, y: settingsRowY(10) } as const;
 const GAME_TAB = { x: settingsTabX(2, 5, BASE_WIDTH), y: 176 } as const;
 
 const scene = (page: import("@playwright/test").Page) => page.evaluate(() => window.__PF_DEBUG?.scene);
-const savedGame = (page: import("@playwright/test").Page) => page.evaluate(() =>
-  JSON.parse(localStorage.getItem("eternal-city.local-save")!).settings.game as { language: string; textSpeed: number });
+const savedGame = (page: import("@playwright/test").Page) => page.evaluate((saveKey) =>
+  JSON.parse(localStorage.getItem(saveKey)!).settings.game as { language: string; textSpeed: number }, E2E_SAVE_STORAGE_KEY);
 
 /**
  * **언어를 바꾸면 화면이 실제로 그 언어로 다시 그려지는가.**

@@ -1,3 +1,4 @@
+import { E2E_SAVE_STORAGE_KEY } from "./openingSave";
 import { test, expect } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
 import { clearFormationSlot } from "./formationSlotTap";
@@ -266,11 +267,11 @@ test("출격 선택판에서 원정대 3기를 골라 진행 중 상태로 저�
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.expeditionFormation?.selectedCount)).toBe(3);
   await tapGame(page, BASE_WIDTH / 2, 1680);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
-  await expect.poll(() => page.evaluate(() => {
+  await expect.poll(() => page.evaluate((saveKey) => {
     // 저장에는 파생값(active)이 아니라 진행 중 런만 들어간다. 편성 3기는 run.relics가 갖는다.
-    const raw = window.localStorage.getItem("eternal-city.local-save");
+    const raw = window.localStorage.getItem(saveKey);
     return raw ? JSON.parse(raw).expedition?.run?.relics?.length : 0;
-  })).toBe(3);
+  }, E2E_SAVE_STORAGE_KEY)).toBe(3);
   await captureGame(page, `test-results/${test.info().project.name}-expedition-active.png`);
 });
 
@@ -319,7 +320,7 @@ test("폰토스 종료 결과판에서 로비로 이동하면 원정은 비활�
   const lobby = (await page.evaluate(() => window.__PF_DEBUG?.bossResult?.lobby))!;
   await tapGame(page, lobby.x, lobby.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
-  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("eternal-city.local-save")!).expedition.run)).toBeNull();
+  await expect.poll(() => page.evaluate((saveKey) => JSON.parse(localStorage.getItem(saveKey)!).expedition.run, E2E_SAVE_STORAGE_KEY)).toBeNull();
 });
 
 test("원정 전투 노드는 지도 안 공용 편성판을 붙이고 적 상세 정보창으로 진입한다", async ({ page }) => {
@@ -544,7 +545,7 @@ test("그래픽 품질 세 단계는 1080×1920 게임 탭의 시각 요소를 �
   await captureGame(page, `test-results/${test.info().project.name}-settings-quality-high-1080x1920.png`);
   await tapGame(page, 800, settingsRowY(PLAY_ROW.graphicsQuality)); await captureGame(page, `test-results/${test.info().project.name}-settings-quality-balanced-1080x1920.png`);
   await tapGame(page, 800, settingsRowY(PLAY_ROW.graphicsQuality)); await captureGame(page, `test-results/${test.info().project.name}-settings-quality-low-1080x1920.png`);
-  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("eternal-city.local-save")!).settings.presentation.graphicsQuality)).toBe("low");
+  await expect.poll(() => page.evaluate((saveKey) => JSON.parse(localStorage.getItem(saveKey)!).settings.presentation.graphicsQuality, E2E_SAVE_STORAGE_KEY)).toBe("low");
 });
 
 test("설정 탭은 텍스트 확대·스크롤·두 단계 초기화를 좁은 모바일에서 안전하게 처리한다", async ({ page }) => {
@@ -557,14 +558,14 @@ test("설정 탭은 텍스트 확대·스크롤·두 단계 초기화를 좁은 
   await tapGame(page, settingsTab("alerts"), SETTINGS_TAB_Y); await captureGame(page, `test-results/${test.info().project.name}-settings-notifications.png`);
   await tapGame(page, settingsTab("sound"), SETTINGS_TAB_Y);
   // 새 고정 헤더 아래 첫 사운드 슬라이더가 88px 이상의 터치 행으로 저장을 즉시 반영한다.
-  await tapGame(page, 800, settingsRowY(0)); let saved = await page.evaluate(() => localStorage.getItem("eternal-city.local-save")); expect(saved).toContain('"masterVolume"');
+  await tapGame(page, 800, settingsRowY(0)); let saved = await page.evaluate((saveKey) => localStorage.getItem(saveKey), E2E_SAVE_STORAGE_KEY); expect(saved).toContain('"masterVolume"');
   // 게임 탭은 새 두 선택 행 아래에서도 전투 UI 움직임을 기본→감소로 즉시 저장한다.
   await tapGame(page, settingsTab("play"), SETTINGS_TAB_Y); await tapGame(page, 800, settingsRowY(PLAY_ROW.battleUiMotion));
-  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("eternal-city.local-save")!).settings.presentation.battleUiMotion)).toBe("reduced");
+  await expect.poll(() => page.evaluate((saveKey) => JSON.parse(localStorage.getItem(saveKey)!).settings.presentation.battleUiMotion, E2E_SAVE_STORAGE_KEY)).toBe("reduced");
   await captureGame(page, `test-results/${test.info().project.name}-settings-battle-ui-motion.png`);
   // 접근성 탭에서 공용 텍스트 배율을 올린 뒤 재생성된 탭이 잘리지 않는지 캡처한다.
   await tapGame(page, settingsTab("access"), SETTINGS_TAB_Y); await tapGame(page, 800, settingsRowY(0));
-  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("eternal-city.local-save")!).settings.accessibility.textScale)).toBe(1.15);
+  await expect.poll(() => page.evaluate((saveKey) => JSON.parse(localStorage.getItem(saveKey)!).settings.accessibility.textScale, E2E_SAVE_STORAGE_KEY)).toBe(1.15);
   await captureGame(page, `test-results/${test.info().project.name}-settings-accessibility-expanded.png`);
   // 지원·데이터 탭은 자체 높이에 종속되어 스크롤되고 초기화 팝업이 배경 입력을 가로막는다.
   await tapGame(page, settingsTab("support"), SETTINGS_TAB_Y); await page.mouse.wheel(0, 800); await captureGame(page, `test-results/${test.info().project.name}-settings-support-scrolled.png`);
@@ -575,7 +576,7 @@ test("설정 탭은 텍스트 확대·스크롤·두 단계 초기화를 좁은 
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles ?? [])).toContain("저장 데이터 초기화");
   await tapGame(page, CONFIRM_BUTTON.x, CONFIRM_BUTTON.y);
   // 첫 확인은 두 번째 단계를 열 뿐이라 저장은 아직 남아 있어야 한다.
-  saved = await page.evaluate(() => localStorage.getItem("eternal-city.local-save")); expect(saved).not.toBeNull();
+  saved = await page.evaluate((saveKey) => localStorage.getItem(saveKey), E2E_SAVE_STORAGE_KEY); expect(saved).not.toBeNull();
   await tapGame(page, CONFIRM_BUTTON.x, CONFIRM_BUTTON.y);
   /*
    * **지워졌는지는 열쇠가 사라졌는지로 보지 않는다.**
@@ -585,10 +586,10 @@ test("설정 탭은 텍스트 확대·스크롤·두 단계 초기화를 좁은 
    * 따르므로 내용까지 달라진다). 확인해야 하는 것은 열쇠가 아니라 **진행이 비었는가**이므로,
    * 오프닝 완료 기록이 사라졌는지를 본다.
    */
-  await expect.poll(() => page.evaluate(() => {
-    const raw = localStorage.getItem("eternal-city.local-save");
+  await expect.poll(() => page.evaluate((saveKey) => {
+    const raw = localStorage.getItem(saveKey);
     return raw === null ? [] : (JSON.parse(raw).completedStoryIds as string[]);
-  })).toEqual([]);
+  }, E2E_SAVE_STORAGE_KEY)).toEqual([]);
   /*
    * 검증 이후 다음 케이스에 영향을 주지 않도록 오프닝 완료 저장을 다시 준비한다.
    *
@@ -597,9 +598,9 @@ test("설정 탭은 텍스트 확대·스크롤·두 단계 초기화를 좁은 
    * 아직 보지 않은 상태로 이어져, 다음 줄에서 로비 대신 오프닝이 떴다.
    */
   await startAfterOpening(page);
-  await page.evaluate(() => localStorage.removeItem("eternal-city.local-save"));
+  await page.evaluate((saveKey) => localStorage.removeItem(saveKey), E2E_SAVE_STORAGE_KEY);
   await page.reload(); await page.waitForFunction(() => window.__PF_DEBUG?.ready === true); await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby"); expect(await page.evaluate(() => JSON.parse(localStorage.getItem("eternal-city.local-save")!).settings.sound.masterVolume)).toBeGreaterThan(0);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby"); expect(await page.evaluate((saveKey) => JSON.parse(localStorage.getItem(saveKey)!).settings.sound.masterVolume, E2E_SAVE_STORAGE_KEY)).toBeGreaterThan(0);
   await tapGame(page, BASE_WIDTH - 58, 86); await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("settings"); await tapGame(page, BASE_WIDTH - 106, BASE_HEIGHT - 120);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
 });
@@ -611,7 +612,7 @@ test("피해 숫자 토글을 끄면 전투 피해 팝업 Text 객체를 만들�
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("settings");
   // 게임 탭의 실제 "피해 숫자" 토글을 눌러 저장 경계부터 전투 생성 옵션까지 함께 통과시킨다.
   await tapGame(page, settingsTab("play"), SETTINGS_TAB_Y); await tapGame(page, 800, settingsRowY(PLAY_ROW.damageNumbers));
-  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("eternal-city.local-save")!).settings.presentation.damageNumbers)).toBe(false);
+  await expect.poll(() => page.evaluate((saveKey) => JSON.parse(localStorage.getItem(saveKey)!).settings.presentation.damageNumbers, E2E_SAVE_STORAGE_KEY)).toBe(false);
   await tapGame(page, BASE_WIDTH - 106, BASE_HEIGHT - 120);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
 

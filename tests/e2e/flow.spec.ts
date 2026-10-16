@@ -1,3 +1,4 @@
+import { E2E_SAVE_STORAGE_KEY } from "./openingSave";
 import { test, expect, type Page } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
 // 캔버스 입력은 한 곳이 소유한다 — 스펙마다 두면 느린 구현이 그대로 살아남는다.
@@ -112,7 +113,7 @@ async function enterBattle(page: Page, prepare?: Parameters<typeof startAfterOpe
 
 test("스토리 전투 확정 편성은 다음 스테이지 준비 저장에 유지된다", async ({ page }) => {
   await enterBattle(page);
-  const savedParty = await page.evaluate(() => JSON.parse(localStorage.getItem("eternal-city.local-save") ?? "null")?.party);
+  const savedParty = await page.evaluate((saveKey) => JSON.parse(localStorage.getItem(saveKey) ?? "null")?.party, E2E_SAVE_STORAGE_KEY);
   // 다음 스테이지 PartyScene도 이 저장 순서를 최초 카드·SD·3/3 상태에 그대로 사용한다.
   //
   // `enterBattle`이 고르는 순서는 토리카 → 렉시아 → 스피나이고, 편성은 **고른 순서**로 선다.
@@ -124,14 +125,14 @@ test("스토리 전투 확정 편성은 다음 스테이지 준비 저장에 유
 
 test("원정 종료 뒤에도 다음 원정 전용 편성 저장은 스토리·발굴과 독립적으로 유지된다", async ({ page }) => {
   await startAfterOpening(page);
-  const snapshot = await page.evaluate(() => {
-    const value = JSON.parse(localStorage.getItem("eternal-city.local-save") ?? "null");
+  const snapshot = await page.evaluate((saveKey) => {
+    const value = JSON.parse(localStorage.getItem(saveKey) ?? "null");
     // 실제 종료 저장과 같은 모양으로 run만 닫혀도 마지막 확정 편성이 남는 회귀 계약을 확인한다.
     value.expedition.lastParty = ["spino", "rex", "torika"];
     value.expedition.run = null;
-    localStorage.setItem("eternal-city.local-save", JSON.stringify(value));
+    localStorage.setItem(saveKey, JSON.stringify(value));
     return { lastParty: value.expedition.lastParty, party: value.party, excavation: value.idleExcavation.assignedRelicIds };
-  });
+  }, E2E_SAVE_STORAGE_KEY);
   expect(snapshot.lastParty).toEqual(["spino", "rex", "torika"]);
   expect(snapshot.lastParty).not.toEqual(snapshot.party);
   expect(snapshot.lastParty).not.toEqual(snapshot.excavation);
@@ -207,7 +208,7 @@ test("전투 결과판에 연구원 경험치가 차오르고 레벨이 오르�
   // 줄이 끝까지 찼다가 다시 차오르는 연출이 끝난 뒤에 찍는다.
   await page.waitForTimeout(2500);
   await captureGame(page, `test-results/${testInfo.project.name}-battle-result-player-exp-1080x1920.png`);
-  const bottles = await page.evaluate(() => JSON.parse(localStorage.getItem("eternal-city.local-save") ?? "null")?.itemInventory?.find((entry: { itemId: string }) => entry.itemId === "stamina-tonic-large")?.quantity ?? 0);
+  const bottles = await page.evaluate((saveKey) => JSON.parse(localStorage.getItem(saveKey) ?? "null")?.itemInventory?.find((entry: { itemId: string }) => entry.itemId === "stamina-tonic-large")?.quantity ?? 0, E2E_SAVE_STORAGE_KEY);
   expect(bottles).toBeGreaterThanOrEqual(1);
 });
 

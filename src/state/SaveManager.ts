@@ -1,3 +1,4 @@
+import { LOCAL_SAVE_FLAVOR, LOCAL_SAVE_STORAGE_KEYS, type LocalSaveFlavor } from "../core/saveStorage";
 import { cloneAttendanceState, createEmptyAttendanceState, isValidAttendanceState, normalizeAttendanceState } from "../core/attendance";
 import { createEmptyRaidTicketDropState, isValidRaidTicketDropState, normalizeRaidTicketDropState } from "../core/raidTicketDrops";
 import { cloneDuelState, isValidDuelState, normalizeDuelState } from "../core/duelState";
@@ -49,8 +50,8 @@ function migrateV12Rune(definitionId: string): RuneInstance {
   return cloneRune(rune);
 }
 
-/** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
-export const SAVE_STORAGE_KEY = "eternal-city.local-save";
+/** 일반·QA·자동화는 같은 origin에서도 서로 다른 로컬 기록을 사용한다. */
+export const SAVE_STORAGE_KEY = LOCAL_SAVE_STORAGE_KEYS[LOCAL_SAVE_FLAVOR];
 export const CURRENT_SAVE_VERSION = 50;
 
 /**
@@ -238,11 +239,15 @@ function normalizeExpeditionRun(value: unknown, ownedIds: readonly string[]): Ex
 const INTERACTION_SLOT_LIMIT = 32;
 
 export class SaveManager {
-  constructor(private readonly storage: StorageLike | undefined = globalThis.localStorage) {}
+  private readonly storageKey: string;
+
+  constructor(private readonly storage: StorageLike | undefined = globalThis.localStorage, flavor: LocalSaveFlavor = LOCAL_SAVE_FLAVOR) {
+    this.storageKey = LOCAL_SAVE_STORAGE_KEYS[flavor];
+  }
 
   /** JSON 배열을 런타임 Set으로 되돌린 검증 완료 세션을 반환한다. */
   load(): Session | null {
-    const raw = this.storage?.getItem(SAVE_STORAGE_KEY);
+    const raw = this.storage?.getItem(this.storageKey);
     if (raw === null || raw === undefined) return null;
     let parsed: unknown;
     try {
@@ -272,7 +277,7 @@ export class SaveManager {
   /** 상태 확정 경계에서 Set을 배열로 바꾸고 한 번에 교체 저장한다. */
   save(state: Session): void {
     const data = this.toSaveData(state);
-    this.storage?.setItem(SAVE_STORAGE_KEY, JSON.stringify(data));
+    this.storage?.setItem(this.storageKey, JSON.stringify(data));
   }
 
   /** Set과 중첩 객체를 JSON 안전 복사본으로 바꾸는 단일 변환점이다. */
@@ -341,7 +346,7 @@ export class SaveManager {
 
   /** 로그아웃/계정 전환에서 사용할 저장 제거다. 새게임 UI를 만들지는 않는다. */
   reset(): void {
-    this.storage?.removeItem(SAVE_STORAGE_KEY);
+    this.storage?.removeItem(this.storageKey);
   }
 
   /** 버전 없는 초기 프로토타입 저장을 명시적으로 v1 계약에 올린다. */

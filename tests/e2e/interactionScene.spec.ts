@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
-import { SAVE_STORAGE_KEY } from "../../src/state/SaveManager";
+import { E2E_SAVE_STORAGE_KEY as SAVE_STORAGE_KEY } from "./openingSave";
 import { drag, tap, tapUntil } from "./canvasInput";
 import { INTERACTION_LAYER, interactionLayerSpot } from "../../src/ui/interactionLayerLayout";
 import { INTERACTION_CITY_POPUP_SPOTS } from "../../src/ui/interactionCityLayout";

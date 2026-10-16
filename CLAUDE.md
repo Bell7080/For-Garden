@@ -2644,6 +2644,10 @@
 **표본 친구·가짜 레이드 참가자·시작 재화·임시 지급도 같은 스위치 뒤에만 둔다** — 일반 빌드는 실서버가 붙기 전까지
 아무것도 얹지 않는다. 실서버 연동의 순서와 방침은 `docs/supabase-plan.md`가 갖는다.
 
+- **로컬 저장도 빌드별로 분리한다.** `src/core/saveStorage.ts`의 production/qa/test 키를 사용한다. 구형 공용 `eternal-city.local-save`는 출처가 없어 자동 이관·삭제하지 않는다. 일반·QA·test 모두 새 키에서 시작하며, 구형 정상 진행의 복원은 별도 검증·명시적 이관을 요구한다. `SaveData`/원격 DTO에는 키나 로컬 빌드 필드를 섞지 않는다.
+- `npm run dev`는 QA 도구와 qa 저장을 사용한다. `vite --mode production`도 DEV가 true면 QA다. 일반 조건 검증은 `npm run build` 산출물로 한다. E2E의 Node 헬퍼는 `tests/e2e/openingSave.ts`의 `E2E_SAVE_STORAGE_KEY`를 브라우저에 인자로 넘긴다. 키를 문자열로 복제하거나 Node의 `import.meta.env`로 추측하지 않는다.
+- `src/debug.ts`의 관측 함수와 `?perf=1`은 QA/test/dev 전용이다. 새 관측 함수를 만들 때도 `QA_TOOLS_ENABLED`로 보호한다. 일반 빌드에 `__PF_DEBUG`와 측정 오버레이가 남으면 안 된다.
+
 ## 변경 전 확인
 
 **main에는 작업 브랜치보다 먼저 올린다.** Vercel은 이미 빌드한 커밋을 다시 빌드하지 않아, 같은 커밋을

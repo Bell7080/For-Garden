@@ -52,6 +52,11 @@ describe("SupabaseAccountApi", () => {
     expect(await api.getState()).toMatchObject({ ok: false, code: "unsupported" });
   });
 
+  it("가입 자체가 막혀 있어도 unsupported", async () => {
+    const { api } = setup(() => json({ error_code: "signup_disabled" }, 422));
+    expect(await api.getState()).toMatchObject({ ok: false, code: "unsupported" });
+  });
+
   it("저장이 없으면 null, 있으면 메타데이터를 해석한다", async () => {
     let body: unknown = null;
     const { api } = setup((path) => (path.includes("signup") ? json(session(1, 2_000_000)) : json(body)));

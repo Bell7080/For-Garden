@@ -173,7 +173,7 @@ export class SupabaseAccountApi implements AccountApi {
     const j = (await res.json().catch(() => null)) as Record<string, unknown> | null;
     if (!res.ok) {
       // 서버에서 익명 가입이 꺼져 있으면 게스트 계정을 만들 수 없다 — 실패를 성공으로 꾸미지 않는다.
-      if (j?.error_code === "anonymous_provider_disabled") return fail("unsupported", t("error.account.guestDisabled"));
+      if (j?.error_code === "anonymous_provider_disabled" || j?.error_code === "signup_disabled") return fail("unsupported", t("error.account.guestDisabled"));
       return fail("network-error", t("error.account.authFailed", { status: res.status }));
     }
     const user = j?.user as { id?: string } | undefined;

@@ -19,6 +19,13 @@
   `localStorage`에 넣지 않는다**(CLAUDE.md). 웹은 Supabase 세션 쿠키/HttpOnly 경로, 앱은 보안 저장소.
 - **서버 시계가 기준이다.** 기기 시계로 재던 모든 만료·주기·쿨다운은 서버 `now()`로 옮긴다.
 
+## 0.5 운영 환경 현황 (v0.286.0, `forgarden-test`)
+
+- 보안 기본값: 모든 테이블 RLS, 기본 권한 회수, 권한 판정 함수는 `private` 스키마(API 비노출), 쓰기는 전부 security definer 함수 + 감사 기록.
+- 구성: 계정 상태·재화 장부·우편·쿠폰·점검/최소 버전(`operations_core`), 문의/신고(`support`), 공지 편집(`notice_editor`).
+- 클라이언트: 어드민 `ops.js`, 홈페이지 `/api/support`, 게임 `src/api/backendConfig.ts`(`get_public_config`; 점검/강제 업데이트 판정 `configGate`).
+- 4단계(지갑 API)에서 `reward_assets`·`player_assets`·`asset_ledger`를 실제 지갑 소유 구조로 키운다. 키는 Wallet 키와 일치해야 한다.
+
 ## 1. 우선순위
 
 | 단계 | 내용 | 이유 | 관련 항목 (`server-migration.md`) |

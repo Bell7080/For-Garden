@@ -12,6 +12,7 @@ import { setDataLanguage, setTextLanguage, type TextKey } from "../i18n";
 import { matchLanguage } from "../core/language";
 import { EffectOverlayScene } from "./EffectOverlayScene";
 import { settingsManager } from "../managers/SettingsManager";
+import { installBackend } from "../api/backendSession";
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -20,6 +21,8 @@ export class BootScene extends Phaser.Scene {
 
   create(data?: { destination?: "lobby" | "raid" | "raidBattle"; raidId?: string; raidBattle?: RaidBattleInputDto }): void {
     setDebugScene("boot");
+    // 서버 연결은 보안 저장소와 설정이 있는 빌드에서만 선다. 호출은 쓸 때 처음 일어나므로 부팅을 기다리게 하지 않는다.
+    installBackend();
     let firstRun = false;
     try {
       const loaded = saveManager.load();

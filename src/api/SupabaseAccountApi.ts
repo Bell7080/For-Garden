@@ -114,6 +114,9 @@ export class SupabaseAccountApi implements AccountApi {
     };
   }
 
+  /** 로그인한 계정으로 DB 함수를 부른다. 토큰은 이 클래스 밖으로 나가지 않고 호출 결과만 나간다. */
+  async callRpc(name: string, args: Record<string, unknown>): Promise<AccountResult<unknown>> { return this.rpc(name, args); }
+
   private async rpc(name: string, args: Record<string, unknown>): Promise<AccountResult<unknown>> {
     const auth = await this.ensureTokens();
     if (!auth.ok) return auth;

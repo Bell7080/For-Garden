@@ -1,9 +1,7 @@
 /* 생성물: npm run build:server */
-"use strict";
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+import { createRequire as __cr } from "node:module";
+const require = __cr(import.meta.url);
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __esm = (fn, res, err) => function __init() {
   if (err) throw err[0];
   try {
@@ -12,19 +10,6 @@ var __esm = (fn, res, err) => function __init() {
     throw err = [e], e;
   }
 };
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // <define:import.meta.env>
 var init_define_import_meta_env = __esm({
@@ -33,11 +18,6 @@ var init_define_import_meta_env = __esm({
 });
 
 // src/server/vercelEntry.ts
-var vercelEntry_exports = {};
-__export(vercelEntry_exports, {
-  default: () => handler
-});
-module.exports = __toCommonJS(vercelEntry_exports);
 init_define_import_meta_env();
 
 // src/server/gameHandler.ts
@@ -29857,3 +29837,6 @@ async function handler(req, res) {
     res.status(500).json({ ok: false, code: "internal" });
   }
 }
+export {
+  handler as default
+};

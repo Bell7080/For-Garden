@@ -45,6 +45,9 @@
 - Playwright 준비 헬퍼와 저장 검증은 Node 실행 환경의 모드 추측 대신 test 키를 명시적으로 사용한다. 기존 공용 키의 하드코딩도 제거했다.
 - 클로드가 진행하는 Supabase 계정·지갑·우편·쿠폰·가챠 이전은 변경하지 않는다. 로컬 저장 분리는 원격 프로젝트 분리나 서버 저장의 신뢰 검증을 대신하지 않는다. 검증 범위와 이관 주의사항은 `docs/local-save-isolation.md`에 기록한다.
 
+## v0.290.1 — 서버 함수 ESM 수정(테스트 주소에서 500 확인)
+
+- `package.json`이 `type: module`이라 CJS로 묶은 `api/game.js`가 Vercel에서 `FUNCTION_INVOCATION_FAILED`로 죽었다. ESM으로 묶고 `require` 심을 넣었다. 가짜 Supabase 서버를 세워 묶음 파일 그대로 인증→상태 조회→메서드 실행→거절 경로를 확인했고, 회귀 테스트가 ESM 형태를 지킨다.
 
 ## v0.289.0 — 서버 소유 상태(5단계): 서버가 FakeServer 규칙을 대신 실행
 

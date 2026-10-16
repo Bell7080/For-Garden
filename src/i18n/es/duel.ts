@@ -10,6 +10,7 @@ export const DUEL_ES = {
   "duel.party.saveDefense": "Guardar defensa",
   "duel.blind.slot": "Oculto {index}",
   "duel.blind.open": "Revelar",
+  "duel.error.unavailable": "Los combates de la arena aún no están disponibles.",
   "duel.error.noAttempts": "Has usado todos los tickets de desafío de hoy.",
   "duel.error.opponentFought": "Ya te has enfrentado a este rival. Elige a otro.",
   "duel.error.opponentGone": "La lista de rivales ha cambiado. Elige de nuevo.",

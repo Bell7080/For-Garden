@@ -1,7 +1,7 @@
 {
   "name": "for-garden",
   "private": true,
-  "version": "0.290.1",
+  "version": "0.291.0",
   "type": "module",
   "description": "For - Garden — 이터널 시티. 멸종 동물 복원 연구 도시를 무대로 한 세로형 모바일 수집형 RPG.",
   "scripts": {
@@ -19,7 +19,8 @@
     "test:e2e:smoke": "playwright test --project=functional-chromium --grep-invert @slow",
     "test:e2e:full": "playwright test",
     "build:server": "node scripts/build-server.mjs",
-    "test:build-isolation": "node scripts/check-build-isolation.mjs"
+    "test:build-isolation": "node scripts/check-build-isolation.mjs",
+    "test:release-fixtures": "node scripts/check-release-fixtures.mjs"
   },
   "dependencies": {
     "phaser": "^3.90.0",

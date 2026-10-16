@@ -10,6 +10,7 @@ export const DUEL_KO = {
   "duel.party.saveDefense": "방어덱 저장",
   "duel.blind.slot": "가림 {index}",
   "duel.blind.open": "공개",
+  "duel.error.unavailable": "결투장 대전은 아직 준비 중입니다.",
   "duel.error.noAttempts": "오늘의 도전권을 모두 썼습니다.",
   "duel.error.opponentFought": "이미 싸운 상대입니다. 다른 상대를 골라 주세요.",
   "duel.error.opponentGone": "상대 목록이 바뀌었습니다. 다시 골라 주세요.",

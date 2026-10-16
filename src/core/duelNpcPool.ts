@@ -1,3 +1,4 @@
+import { QA_TOOLS_ENABLED } from "./buildFlavor";
 import { DUEL_NPC_NAMES } from "../data/duelNpcs";
 import { PLAYABLE_RELICS } from "../data/relics";
 import { combatPower } from "./combatPower";
@@ -41,6 +42,7 @@ const DUEL_NPC_TOP_SCORE = 3_200;
 const cache = new Map<string, DuelNpc[]>();
 
 export function duelNpcPool(seasonId: string): DuelNpc[] {
+  if (!QA_TOOLS_ENABLED) return [];
   const cached = cache.get(seasonId);
   if (cached) return cached;
   const random = expeditionRewardRandom(`duel-npc:${seasonId}`);

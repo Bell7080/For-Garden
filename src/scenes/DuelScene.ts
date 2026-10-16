@@ -348,6 +348,7 @@ export class DuelScene extends Phaser.Scene {
   }
 
   private errorMessage(error: unknown): string {
+    if (error && typeof error === "object" && "code" in error && error.code === "DUEL_UNAVAILABLE") return t("duel.error.unavailable");
     if (error instanceof GameApiError) {
       if (error.code === "INSUFFICIENT_CURRENCY") return t("duel.error.noGems");
       if (error.code === "DUEL_ATTEMPT_LIMIT") return t("duel.error.attemptLimit");

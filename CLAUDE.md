@@ -2644,6 +2644,7 @@
 **표본 친구·가짜 레이드 참가자·시작 재화·임시 지급도 같은 스위치 뒤에만 둔다** — 일반 빌드는 실서버가 붙기 전까지
 아무것도 얹지 않는다. 실서버 연동의 순서와 방침은 `docs/supabase-plan.md`가 갖는다.
 
+- **모의 경쟁·지급은 QA 전용이다.** 결투 NPC/가짜 방어전·고정 1위·그 순위 우편·고정 환영/업데이트 우편·시작 친구 포인트 120·테스트 광고/결제 서명은 일반/서버 빌드에서 사용하지 않는다. 실제 순위를 확인하지 못하면 null을 반환한다. `docs/release-fixture-cleanup.md`와 `npm run test:release-fixtures`를 따른다. 업적·길드·설명용 PvP 진입점은 사용자 요청으로 유지한다.
 - **로컬 저장도 빌드별로 분리한다.** `src/core/saveStorage.ts`의 production/qa/test 키를 사용한다. 구형 공용 `eternal-city.local-save`는 출처가 없어 자동 이관·삭제하지 않는다. 일반·QA·test 모두 새 키에서 시작하며, 구형 정상 진행의 복원은 별도 검증·명시적 이관을 요구한다. `SaveData`/원격 DTO에는 키나 로컬 빌드 필드를 섞지 않는다.
 - `npm run dev`는 QA 도구와 qa 저장을 사용한다. `vite --mode production`도 DEV가 true면 QA다. 일반 조건 검증은 `npm run build` 산출물로 한다. E2E의 Node 헬퍼는 `tests/e2e/openingSave.ts`의 `E2E_SAVE_STORAGE_KEY`를 브라우저에 인자로 넘긴다. 키를 문자열로 복제하거나 Node의 `import.meta.env`로 추측하지 않는다.
 - `src/debug.ts`의 관측 함수와 `?perf=1`은 QA/test/dev 전용이다. 새 관측 함수를 만들 때도 `QA_TOOLS_ENABLED`로 보호한다. 일반 빌드에 `__PF_DEBUG`와 측정 오버레이가 남으면 안 된다.

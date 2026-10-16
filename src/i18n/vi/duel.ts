@@ -10,6 +10,7 @@ export const DUEL_VI = {
   "duel.party.saveDefense": "Lưu đội phòng thủ",
   "duel.blind.slot": "Ẩn {index}",
   "duel.blind.open": "Hé lộ",
+  "duel.error.unavailable": "Đấu trường chưa mở giao chiến.",
   "duel.error.noAttempts": "Bạn đã dùng hết vé khiêu chiến của hôm nay.",
   "duel.error.opponentFought": "Bạn đã đấu với đối thủ này rồi. Hãy chọn người khác.",
   "duel.error.opponentGone": "Danh sách đối thủ đã thay đổi. Hãy chọn lại.",

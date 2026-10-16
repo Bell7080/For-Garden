@@ -10,6 +10,7 @@ export const DUEL_ZH_HANS = {
   "duel.party.saveDefense": "保存防守队",
   "duel.blind.slot": "隐藏 {index}",
   "duel.blind.open": "公开",
+  "duel.error.unavailable": "决斗场对战尚未开放。",
   "duel.error.noAttempts": "今天的挑战券已全部用完。",
   "duel.error.opponentFought": "已经战斗过的对手。请选择其他对手。",
   "duel.error.opponentGone": "对手列表已更新。请重新选择。",

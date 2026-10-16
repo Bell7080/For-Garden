@@ -10,6 +10,7 @@ export const DUEL_EN = {
   "duel.party.saveDefense": "Save Defense Team",
   "duel.blind.slot": "Hidden {index}",
   "duel.blind.open": "Reveal",
+  "duel.error.unavailable": "Arena battles are not available yet.",
   "duel.error.noAttempts": "You have used all of today's challenge tickets.",
   "duel.error.opponentFought": "You have already fought this opponent. Please choose another.",
   "duel.error.opponentGone": "The opponent list has changed. Please choose again.",

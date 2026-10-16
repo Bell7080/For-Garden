@@ -2299,6 +2299,7 @@ var DUEL_KO = {
   "duel.party.saveDefense": "\uBC29\uC5B4\uB371 \uC800\uC7A5",
   "duel.blind.slot": "\uAC00\uB9BC {index}",
   "duel.blind.open": "\uACF5\uAC1C",
+  "duel.error.unavailable": "\uACB0\uD22C\uC7A5 \uB300\uC804\uC740 \uC544\uC9C1 \uC900\uBE44 \uC911\uC785\uB2C8\uB2E4.",
   "duel.error.noAttempts": "\uC624\uB298\uC758 \uB3C4\uC804\uAD8C\uC744 \uBAA8\uB450 \uC37C\uC2B5\uB2C8\uB2E4.",
   "duel.error.opponentFought": "\uC774\uBBF8 \uC2F8\uC6B4 \uC0C1\uB300\uC785\uB2C8\uB2E4. \uB2E4\uB978 \uC0C1\uB300\uB97C \uACE8\uB77C \uC8FC\uC138\uC694.",
   "duel.error.opponentGone": "\uC0C1\uB300 \uBAA9\uB85D\uC774 \uBC14\uB00C\uC5C8\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uACE8\uB77C \uC8FC\uC138\uC694.",
@@ -15251,7 +15252,7 @@ var FakeSocialServer = class {
     }
   }
   now;
-  friendPoints = 120;
+  friendPoints = QA_TOOLS_ENABLED ? 120 : 0;
   helperUsesToday = 0;
   profiles = /* @__PURE__ */ new Map();
   friendIds = /* @__PURE__ */ new Set();
@@ -25257,6 +25258,7 @@ var DUEL_NPC_COUNT = 240;
 var DUEL_NPC_TOP_SCORE = 3200;
 var cache = /* @__PURE__ */ new Map();
 function duelNpcPool(seasonId) {
+  if (!QA_TOOLS_ENABLED) return [];
   const cached = cache.get(seasonId);
   if (cached) return cached;
   const random = expeditionRewardRandom(`duel-npc:${seasonId}`);
@@ -25300,6 +25302,7 @@ function pickTeam(random) {
 init_define_import_meta_env();
 var HOUR_MS2 = 36e5;
 function simulateDuelDefenses(state, now, pool, defensePower, random) {
+  if (!QA_TOOLS_ENABLED) return { state, entries: [], reachedTiers: [] };
   const nowMs = now.getTime();
   const simMs = Date.parse(state.defenseSimAt);
   if (!Number.isFinite(simMs) || simMs > nowMs) {
@@ -26354,11 +26357,11 @@ var FakeServer = class {
     this.latencyMs = options.latencyMs ?? 180;
     this.random = options.random ?? Math.random;
     this.now = options.now ?? serverNow;
-    this.verifyAdToken = options.verifyAdToken ?? ((token, slotId) => token === `verified:${slotId}`);
-    this.verifyReceipt = options.verifyPurchaseReceipt ?? ((receipt, productId) => receipt.startsWith(`verified-receipt:${productId}:`) ? receipt.slice(`verified-receipt:${productId}:`.length) : null);
+    this.verifyAdToken = options.verifyAdToken ?? ((token, slotId) => QA_TOOLS_ENABLED && token === `verified:${slotId}`);
+    this.verifyReceipt = options.verifyPurchaseReceipt ?? ((receipt, productId) => QA_TOOLS_ENABLED && receipt.startsWith(`verified-receipt:${productId}:`) ? receipt.slice(`verified-receipt:${productId}:`.length) : null);
     this.persistSession = options.persistSession;
     this.notificationScheduler = options.notificationScheduler ?? (state === session ? settingsManager : void 0);
-    this.mails = [
+    this.mails = QA_TOOLS_ENABLED ? [
       { id: "launch-gift", title: t("mail.launch.title"), sender: t("mail.launch.sender"), body: t("mail.launch.body"), sentAt: "2026-08-30T00:00:00.000Z", expiresAt: "2099-12-31T23:59:59.000Z", read: false, claimed: false, rewards: [
         // 첫 접속 감사 패키지 — 화석 10·호박석 10(연구 20번 값, 젬 6,000)을 뼈대로 젬·골드·치즈케이크도 그 무게에 맞춰 화려하게 얹는다.
         { kind: "currency", currency: "gems", amount: 700 },
@@ -26368,14 +26371,12 @@ var FakeServer = class {
         { kind: "currency", currency: "amber", amount: 10 }
       ] },
       { id: "update-notice", title: t("mail.update.title"), sender: t("mail.update.sender"), body: t("mail.update.body"), sentAt: "2026-08-30T00:00:00.000Z", expiresAt: null, read: false, claimed: false, rewards: [] },
-      // 아래는 우편함의 여러 모양(받을 것·안내·받은 것·만료)을 만져 보는 표본이다 — QA 빌드에만 선다.
-      ...QA_TOOLS_ENABLED ? [
-        { id: "welcome-supply", title: t("mail.welcome.title"), sender: t("mail.welcome.sender"), body: t("mail.welcome.body"), sentAt: "2026-08-29T00:00:00.000Z", expiresAt: "2099-12-31T23:59:59.000Z", read: false, claimed: false, rewards: [{ kind: "currency", currency: "gold", amount: 1200 }] },
-        { id: "field-notice", title: t("mail.notice.title"), sender: t("mail.notice.sender"), body: t("mail.notice.body"), sentAt: "2026-08-28T00:00:00.000Z", expiresAt: null, read: false, claimed: false, rewards: [] },
-        { id: "archive-gift", title: t("mail.archive.title"), sender: t("mail.archive.sender"), body: t("mail.archive.body"), sentAt: "2026-08-27T00:00:00.000Z", expiresAt: null, read: true, claimed: true, rewards: [{ kind: "currency", currency: "gems", amount: 10 }] },
-        { id: "expired-supply", title: t("mail.expired.title"), sender: t("mail.expired.sender"), body: t("mail.expired.body"), sentAt: "2026-08-01T00:00:00.000Z", expiresAt: "2026-08-10T00:00:00.000Z", read: true, claimed: false, rewards: [{ kind: "currency", currency: "fossil", amount: 1 }] }
-      ] : []
-    ];
+      // 받을 것·안내·받은 것·만료 상태를 확인하는 QA 표본.
+      { id: "welcome-supply", title: t("mail.welcome.title"), sender: t("mail.welcome.sender"), body: t("mail.welcome.body"), sentAt: "2026-08-29T00:00:00.000Z", expiresAt: "2099-12-31T23:59:59.000Z", read: false, claimed: false, rewards: [{ kind: "currency", currency: "gold", amount: 1200 }] },
+      { id: "field-notice", title: t("mail.notice.title"), sender: t("mail.notice.sender"), body: t("mail.notice.body"), sentAt: "2026-08-28T00:00:00.000Z", expiresAt: null, read: false, claimed: false, rewards: [] },
+      { id: "archive-gift", title: t("mail.archive.title"), sender: t("mail.archive.sender"), body: t("mail.archive.body"), sentAt: "2026-08-27T00:00:00.000Z", expiresAt: null, read: true, claimed: true, rewards: [{ kind: "currency", currency: "gems", amount: 10 }] },
+      { id: "expired-supply", title: t("mail.expired.title"), sender: t("mail.expired.sender"), body: t("mail.expired.body"), sentAt: "2026-08-01T00:00:00.000Z", expiresAt: "2026-08-10T00:00:00.000Z", read: true, claimed: false, rewards: [{ kind: "currency", currency: "fossil", amount: 1 }] }
+    ] : [];
     this.applySavedMailClaims();
   }
   state;
@@ -26791,7 +26792,7 @@ var FakeServer = class {
     }
     if (nextState.expedition.run && bossSalvage > 0) nextState.expedition.run.pendingRewards.salvageRecord = (nextState.expedition.run.pendingRewards.salvageRecord ?? 0) + bossSalvage;
     const bestScore = nextState.expedition.bestScore;
-    const response = { ...result.actualDamage !== void 0 ? { verifiedDamage: result.actualDamage } : {}, weekKey: nextState.expedition.weekKey, score: runScore.runScore, normalNodeScoreTotal: runScore.normalNodeScoreTotal, bossDamageScore: runScore.bossDamageScore, runScore: runScore.runScore, bestScore, bossSalvage, improved, endedAtMs: result.endedAtMs, rankBefore: weekly.bestScore > 0 ? this.expeditionRank(weekly.bestScore) : null, rankAfter: this.expeditionRank(bestScore) ?? 1 };
+    const response = { ...result.actualDamage !== void 0 ? { verifiedDamage: result.actualDamage } : {}, weekKey: nextState.expedition.weekKey, score: runScore.runScore, normalNodeScoreTotal: runScore.normalNodeScoreTotal, bossDamageScore: runScore.bossDamageScore, runScore: runScore.runScore, bestScore, bossSalvage, improved, endedAtMs: result.endedAtMs, rankBefore: weekly.bestScore > 0 ? this.expeditionRank(weekly.bestScore) : null, rankAfter: this.expeditionRank(bestScore) };
     this.recordReceipt(nextState, "expeditionBoss", request.requestId, identity, response);
     try {
       this.persist(nextState);
@@ -26825,11 +26826,11 @@ var FakeServer = class {
     const response = { weekKey: this.state.expedition.weekKey, stageId: stage.id, claimedStageIds: [...this.state.expedition.claimedRewardStageIds], reward: { ...stage.reward, amount }, alreadyClaimed, wallet: { ...this.state.wallet } };
     return response;
   }
-  /** 단일 개발 계정도 운영과 같은 점수 내림차순/최초 달성 오름차순 정책을 명시한다. */
+  /** 단일 계정 순위표는 QA 표본이다. 실제 순위 서버가 없으면 일반 빌드에 순위를 만들지 않는다. */
   async getExpeditionLeaderboard(limit = 100) {
     await this.delay();
     const expedition = this.rollExpedition(this.now());
-    const entries = expedition.bestScore > 0 ? [{ rank: 1, playerId: "local-player", displayName: t("profile.defaultName"), score: expedition.bestScore, achievedAt: expedition.bestAchievedAt, isMe: true, favoriteRelicId: this.state.favorite }] : [];
+    const entries = QA_TOOLS_ENABLED && expedition.bestScore > 0 ? [{ rank: 1, playerId: "local-player", displayName: t("profile.defaultName"), score: expedition.bestScore, achievedAt: expedition.bestAchievedAt, isMe: true, favoriteRelicId: this.state.favorite }] : [];
     return { weekKey: expedition.weekKey, tieBreakPolicy: "earliest-achieved-at", entries: entries.slice(0, Math.max(0, limit)) };
   }
   /**
@@ -28217,6 +28218,7 @@ var FakeServer = class {
    * 다섯째 상대와의 판은 입장에서 싸운 것으로 적히므로 그 판이 끝난 뒤의 첫 조회가 새 상대를 세운다.
    */
   duelNow(now) {
+    if (!QA_TOOLS_ENABLED) return this.state.duel ?? normalizeDuelState(void 0, [...this.state.owned]);
     const current = this.state.duel ?? normalizeDuelState(void 0, [...this.state.owned]);
     let next = rollDuelPeriods(current, now);
     const pool = duelNpcPool(next.seasonId);
@@ -28290,14 +28292,14 @@ var FakeServer = class {
       defenseIsDefault: !duel2.defenseCustomized,
       blindChoice: [...duel2.blindChoice],
       defenseBlindOrder: duelBlindOrder(duel2.defense.map((relicId) => ({ relicId, power: this.duelRelicPower(relicId) })), duel2.blindChoice),
-      pendingSeasonReward: reward && rewardTier ? { ...reward, duelEmblem: rewardTier.seasonReward.duelEmblem, gems: rewardTier.seasonReward.gems } : null,
-      history: duel2.history.map((entry) => ({ ...entry, ...entry.opponentUnits ? { opponentUnits: entry.opponentUnits.map((unit) => ({ ...unit })) } : {} })),
+      pendingSeasonReward: QA_TOOLS_ENABLED && reward && rewardTier ? { ...reward, duelEmblem: rewardTier.seasonReward.duelEmblem, gems: rewardTier.seasonReward.gems } : null,
+      history: (QA_TOOLS_ENABLED ? duel2.history : []).map((entry) => ({ ...entry, ...entry.opponentUnits ? { opponentUnits: entry.opponentUnits.map((unit) => ({ ...unit })) } : {} })),
       serverTime: now.toISOString()
     };
   }
   /** 표본과 합친 내 순위. 이번 시즌에 한 판도 치르지 않았으면 순위표에 서지 않는다. */
   duelMyRank(duel2) {
-    if (duel2.wins + duel2.losses === 0) return null;
+    if (!QA_TOOLS_ENABLED || duel2.wins + duel2.losses === 0) return null;
     return duelNpcPool(duel2.seasonId).filter(({ score }) => score > duel2.score).length + 1;
   }
   async getDuelStatus() {
@@ -28307,6 +28309,7 @@ var FakeServer = class {
   }
   async refreshDuelOpponents() {
     await this.delay();
+    if (!QA_TOOLS_ENABLED) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
     const now = this.now();
     const duel2 = this.duelNow(now);
     const price = duelRefreshPrice(duel2.refreshesUsed);
@@ -28321,6 +28324,7 @@ var FakeServer = class {
   }
   async buyDuelAttempt() {
     await this.delay();
+    if (!QA_TOOLS_ENABLED) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
     const now = this.now();
     const duel2 = this.duelNow(now);
     const price = duelExtraAttemptPrice(duel2.attemptsPurchased);
@@ -28351,6 +28355,7 @@ var FakeServer = class {
   }
   async enterDuel(request) {
     await this.delay();
+    if (!QA_TOOLS_ENABLED) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
     const cached = this.duelAdmissionResults.get(request.requestId);
     if (cached) return structuredClone(cached);
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "\uC785\uC7A5 \uC694\uCCAD ID\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
@@ -28379,6 +28384,7 @@ var FakeServer = class {
   }
   async resolveDuel(request) {
     await this.delay();
+    if (!QA_TOOLS_ENABLED) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
     const cached = this.duelResolveResults.get(request.requestId);
     if (cached) return structuredClone(cached);
     const pending = this.pendingDuels.get(request.requestId);
@@ -28443,6 +28449,7 @@ var FakeServer = class {
   }
   async getDuelRanking() {
     await this.delay();
+    if (!QA_TOOLS_ENABLED) return { entries: [], me: null, seasonEndsAt: duelSeasonEndsAt(this.now()).toISOString() };
     const now = this.now();
     const duel2 = this.duelNow(now);
     const meRank = this.duelMyRank(duel2);
@@ -28457,6 +28464,7 @@ var FakeServer = class {
   }
   async claimDuelSeasonReward() {
     await this.delay();
+    if (!QA_TOOLS_ENABLED) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
     const duel2 = this.duelNow(this.now());
     const pending = duel2.pendingSeasonReward;
     const tier = pending ? getDuelTier(pending.tierId) : void 0;
@@ -29437,11 +29445,11 @@ var FakeServer = class {
     return this.state.expedition;
   }
   /**
-   * 순위. 이 개발 서버에는 다른 연구원이 없어 기록을 남긴 나는 늘 1위다 — 실제 서버는 주간 순위표에서
-   * 같은 점수·동점 규칙(`earliest-achieved-at`)으로 매긴다(`docs/server-migration.md`).
+   * QA의 단일 계정 순위만 1위로 세운다. 일반 빌드는 실제 순위 서버가 연결되기 전까지 null이다.
+   * 실제 순위표는 점수·동점 규칙(`earliest-achieved-at`)으로 매긴다(`docs/server-migration.md`).
    */
   expeditionRank(score) {
-    return score > 0 ? 1 : null;
+    return QA_TOOLS_ENABLED && score > 0 ? 1 : null;
   }
   /** 빠른 원정·광고 보상이 기준으로 삼는 점수 — 이번 주 최고, 없으면 받지 않은 지난주 기록. */
   expeditionReferenceScore(now) {
@@ -29453,6 +29461,7 @@ var FakeServer = class {
    * 저장(`pendingRankReward`)이 갖고 우편은 매번 거기서 다시 세운다 — 받으면 대기가 비워진다.
    */
   syncExpeditionRankMail() {
+    if (!QA_TOOLS_ENABLED) return;
     for (const pending of expeditionRankRewardQueue(this.state.expedition)) {
       const id = `expedition-rank:${pending.weekKey}`;
       if (this.mails.some((mail) => mail.id === id)) continue;

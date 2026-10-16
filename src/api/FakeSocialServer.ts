@@ -1,3 +1,4 @@
+import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import {
   FRIEND_LIMIT, FRIEND_POINTS_PER_RENTAL, FRIEND_REQUEST_LIMIT, helperRentalAvailability, matchesUserQuery,
   type FriendRelation,
@@ -66,7 +67,7 @@ const RECOMMENDATION_COUNT = 10;
  * 상호 신청의 자동 수락은 서버가 판정하고 화면은 결과만 그린다.
  */
 export class FakeSocialServer {
-  private friendPoints = 120;
+  private friendPoints = QA_TOOLS_ENABLED ? 120 : 0;
   private helperUsesToday = 0;
   private readonly profiles = new Map<string, FriendProfile>();
   private readonly friendIds = new Set<string>();

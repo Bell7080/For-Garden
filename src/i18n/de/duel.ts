@@ -10,6 +10,7 @@ export const DUEL_DE = {
   "duel.party.saveDefense": "Verteidigungsteam speichern",
   "duel.blind.slot": "Verdeckt {index}",
   "duel.blind.open": "Aufdecken",
+  "duel.error.unavailable": "Arenakämpfe sind noch nicht verfügbar.",
   "duel.error.noAttempts": "Du hast alle heutigen Herausforderungstickets verbraucht.",
   "duel.error.opponentFought": "Gegen diesen Gegner hast du schon gekämpft. Wähle einen anderen.",
   "duel.error.opponentGone": "Die Gegnerliste hat sich geändert. Bitte wähle erneut.",

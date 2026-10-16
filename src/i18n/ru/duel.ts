@@ -10,6 +10,7 @@ export const DUEL_RU = {
   "duel.party.saveDefense": "Сохранить защиту",
   "duel.blind.slot": "Скрыто {index}",
   "duel.blind.open": "Открыть",
+  "duel.error.unavailable": "Бои на арене пока недоступны.",
   "duel.error.noAttempts": "Все билеты вызова на сегодня использованы.",
   "duel.error.opponentFought": "Вы уже сражались с этим соперником. Выберите другого.",
   "duel.error.opponentGone": "Список соперников изменился. Выберите снова.",

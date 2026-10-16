@@ -10,6 +10,7 @@ export const DUEL_JA = {
   "duel.party.saveDefense": "防衛デッキを保存",
   "duel.blind.slot": "伏せ {index}",
   "duel.blind.open": "公開",
+  "duel.error.unavailable": "決闘場の対戦は準備中です。",
   "duel.error.noAttempts": "本日の挑戦券をすべて使い切りました。",
   "duel.error.opponentFought": "すでに戦った相手です。別の相手を選んでください。",
   "duel.error.opponentGone": "対戦相手の一覧が更新されました。選び直してください。",

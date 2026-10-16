@@ -10,6 +10,7 @@ export const DUEL_TH = {
   "duel.party.saveDefense": "บันทึกทีมป้องกัน",
   "duel.blind.slot": "ซ่อน {index}",
   "duel.blind.open": "เปิดเผย",
+  "duel.error.unavailable": "การต่อสู้ในอารีนายังไม่เปิดให้บริการ",
   "duel.error.noAttempts": "ใช้ตั๋วท้าดวลของวันนี้หมดแล้ว",
   "duel.error.opponentFought": "คุณเคยสู้กับคู่ต่อสู้คนนี้แล้ว โปรดเลือกคนอื่น",
   "duel.error.opponentGone": "รายชื่อคู่ต่อสู้มีการเปลี่ยนแปลง โปรดเลือกใหม่อีกครั้ง",

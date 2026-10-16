@@ -10,6 +10,7 @@ export const DUEL_ID = {
   "duel.party.saveDefense": "Simpan Tim Pertahanan",
   "duel.blind.slot": "Tersembunyi {index}",
   "duel.blind.open": "Ungkap",
+  "duel.error.unavailable": "Pertarungan arena belum tersedia.",
   "duel.error.noAttempts": "Semua tiket tantangan hari ini sudah terpakai.",
   "duel.error.opponentFought": "Lawan ini sudah kamu lawan. Silakan pilih lawan lain.",
   "duel.error.opponentGone": "Daftar lawan telah berubah. Silakan pilih lagi.",

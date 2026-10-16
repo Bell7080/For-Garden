@@ -1,6 +1,6 @@
 # 버전 관리
 
-현재 버전: **v0.288.1**
+현재 버전: **v0.289.0**
 
 `VERSION.md`와 `package.json`의 `version`은 항상 같은 값을 쓰고, 타이틀(로딩) 화면 좌측
 하단 표기는 그 값을 그대로 읽는다. 화면에 손으로 적어 두지 않는다.
@@ -31,6 +31,15 @@
   그 이전의 초기 프로토타입 단계는 `v0.1.0` 항목 하나로 묶었다.
 
 ## 변경 이력
+
+## v0.289.0 — 서버 소유 상태(5단계): 서버가 FakeServer 규칙을 대신 실행
+
+- 상태는 서버가 가진다. `api/game.js`(Vercel 함수, `npm run build:server`로 `src/server/vercelEntry.ts`를 묶은 생성물)가 JWT를 Supabase Auth로 확인하고, 저장된 상태를 세션으로 되살려 FakeServer 메서드 하나를 실행한 뒤 낙관적 잠금(revision)으로 다시 저장한다. 규칙을 SQL로 다시 쓰지 않는다.
+- `src/server/gameHandler.ts`(저장소 주입 순수 처리기·계정별 직렬화·충돌 재시도·멱등 영수증), `gameMethods.ts`(허용 메서드 목록, GameApi와 같은지 테스트), `supabaseStore.ts`(서비스 롤 RPC).
+- DB: `request_receipts`, `server_load_state`·`server_find_receipt`·`server_commit_state`(서비스 롤 전용). 클라이언트의 `upload_my_save`·`remove_my_save` 실행 권한 회수 — 클라이언트는 상태를 직접 쓰지 못한다. forgarden-test 적용.
+- 클라이언트 `RemoteGameApi`(응답의 전체 상태를 세션에 반영, 네트워크 단절은 같은 requestId로 재전송). 아직 설치하지 않는다 — 웹 빌드에 안전한 토큰 저장소가 없어 연결은 다음 단계에서 한다.
+- 서버 환경 변수: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`(서버 전용), `SUPABASE_ANON_KEY`(없으면 `VITE_SUPABASE_PUBLISHABLE_KEY`).
+- `SaveManager.parse` 추가(저장 없이 마이그레이션·검증).
 
 ## v0.288.1 — 클라우드 저장 충돌 응답 코드 수정(실서버 검증)
 

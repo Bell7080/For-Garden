@@ -260,6 +260,13 @@ export class SaveManager {
     return this.toSaveData(state);
   }
 
+  /** 저장소에 쓰지 않고 마이그레이션·검증만 거쳐 세션으로 되돌린다. 서버가 보관한 상태를 읽을 때 쓴다. */
+  parse(input: unknown): Session {
+    const data = this.migrate(input);
+    this.validate(data);
+    return this.toSession(data);
+  }
+
   /** 다운로드 본문은 불신 입력으로 취급하고 마이그레이션·검증 후에만 로컬 저장으로 확정한다. */
   importRemote(input: unknown): Session {
     const data = this.migrate(input);

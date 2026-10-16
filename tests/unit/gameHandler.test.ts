@@ -80,3 +80,11 @@ describe("서버 호출 처리기", () => {
     expect(out.ok).toBe(true);
   });
 });
+
+describe("서버 함수 묶음", () => {
+  it("package.json이 type=module이라 api/game.js는 ESM이어야 한다", () => {
+    const text = readFileSync("api/game.js", "utf8");
+    expect(text).toMatch(/\nexport \{[^}]*as default[^}]*\}|\nexport default /);
+    expect(text).not.toMatch(/\nmodule\.exports\s*=/);
+  });
+});

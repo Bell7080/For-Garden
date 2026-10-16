@@ -6,10 +6,10 @@ await build({
   outfile: "api/game.js",
   bundle: true,
   platform: "node",
-  format: "cjs",
+  format: "esm",
   target: "node20",
   legalComments: "none",
   define: { "import.meta.env": "{}", "import.meta.env.MODE": '"production"', "import.meta.env.DEV": "false", "import.meta.env.PROD": "true" },
-  banner: { js: "/* 생성물: npm run build:server */" },
+  banner: { js: "/* 생성물: npm run build:server */\nimport { createRequire as __cr } from \"node:module\";\nconst require = __cr(import.meta.url);" },
 });
 console.log("[build-server] api/game.js");

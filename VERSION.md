@@ -1,6 +1,6 @@
 # 버전 관리
 
-현재 버전: **v0.289.0**
+현재 버전: **v0.290.0**
 
 `VERSION.md`와 `package.json`의 `version`은 항상 같은 값을 쓰고, 타이틀(로딩) 화면 좌측
 하단 표기는 그 값을 그대로 읽는다. 화면에 손으로 적어 두지 않는다.
@@ -32,12 +32,22 @@
 
 ## 변경 이력
 
-## v0.289.0 — 일반·QA·자동화 저장 공간 분리와 운영 빌드 관측 차단
+## v0.290.0 — 일반·QA·자동화 저장 공간 분리와 운영 빌드 관측 차단
 
 - 같은 origin에서 일반·QA·E2E가 `eternal-city.local-save` 하나를 공유하던 경로를 모드별 새 키로 분리했다. 저장 내용의 형식(`SaveData` v50)과 원격 계정 API는 바꾸지 않았다. 구형 공용 기록은 QA 출처를 증명할 수 없으므로 자동 이관하지 않고 원래 키에 보존한다. **업데이트 뒤 각 모드는 새 로컬 기록으로 시작하며, 과거 진행 복원은 별도 검증·명시적 이관이 필요하다.** 모드 초기화도 자기 키만 지운다.
 - 일반 빌드에서는 모든 디버그 관측 진입점이 즉시 끝나도록 묶었다. `window.__PF_DEBUG`, `?perf=1` DOM 오버레이·Puppet 측정, WebGL 복귀 진단용 이벤트 구독은 QA/test/dev에만 남는다. 실제 WebGL 렌더 복귀와 게임 로직은 그대로다. QA 관측 계약은 유지하고 디버그 오버레이 글자도 12px로 올렸다.
 - Playwright 준비 헬퍼와 저장 검증은 Node 실행 환경의 모드 추측 대신 test 키를 명시적으로 사용한다. 기존 공용 키의 하드코딩도 제거했다.
 - 클로드가 진행하는 Supabase 계정·지갑·우편·쿠폰·가챠 이전은 변경하지 않는다. 로컬 저장 분리는 원격 프로젝트 분리나 서버 저장의 신뢰 검증을 대신하지 않는다. 검증 범위와 이관 주의사항은 `docs/local-save-isolation.md`에 기록한다.
+
+
+## v0.289.0 — 서버 소유 상태(5단계): 서버가 FakeServer 규칙을 대신 실행
+
+- 상태는 서버가 가진다. `api/game.js`(Vercel 함수, `npm run build:server`로 `src/server/vercelEntry.ts`를 묶은 생성물)가 JWT를 Supabase Auth로 확인하고, 저장된 상태를 세션으로 되살려 FakeServer 메서드 하나를 실행한 뒤 낙관적 잠금(revision)으로 다시 저장한다. 규칙을 SQL로 다시 쓰지 않는다.
+- `src/server/gameHandler.ts`(저장소 주입 순수 처리기·계정별 직렬화·충돌 재시도·멱등 영수증), `gameMethods.ts`(허용 메서드 목록, GameApi와 같은지 테스트), `supabaseStore.ts`(서비스 롤 RPC).
+- DB: `request_receipts`, `server_load_state`·`server_find_receipt`·`server_commit_state`(서비스 롤 전용). 클라이언트의 `upload_my_save`·`remove_my_save` 실행 권한 회수 — 클라이언트는 상태를 직접 쓰지 못한다. forgarden-test 적용.
+- 클라이언트 `RemoteGameApi`(응답의 전체 상태를 세션에 반영, 네트워크 단절은 같은 requestId로 재전송). 아직 설치하지 않는다 — 웹 빌드에 안전한 토큰 저장소가 없어 연결은 다음 단계에서 한다.
+- 서버 환경 변수: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`(서버 전용), `SUPABASE_ANON_KEY`(없으면 `VITE_SUPABASE_PUBLISHABLE_KEY`).
+- `SaveManager.parse` 추가(저장 없이 마이그레이션·검증).
 
 ## v0.288.1 — 클라우드 저장 충돌 응답 코드 수정(실서버 검증)
 

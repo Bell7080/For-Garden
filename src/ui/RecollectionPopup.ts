@@ -13,6 +13,8 @@ import { chipPoints, drawFrameVignette, drawLayer, drawShapeOutline } from "./ho
 import type { PopupLayer } from "./PopupLayer";
 import { POPUP_TITLE_SIZE } from "./PopupLayer";
 import { shapeClipMask } from "./popupArt";
+import { addClippedHit } from "./clippedHit";
+import type { ClipRect } from "./clipRect";
 import { pressIn, pressOut } from "./pressFeedback";
 import { recollectionArtCrop, recollectionArtFocus, recollectionListHeight, recollectionRowAt, recollectionRowY, recollectionViewportHeight, RECOLLECTION_LAYOUT } from "./recollectionLayout";
 import { COLOR, textStyle } from "./theme";
@@ -108,8 +110,14 @@ export class RecollectionPopup {
     body.add(frame);
     const viewHeight = recollectionViewportHeight();
     const half = layer.width / 2 + 24;
-    const drag = this.scene.add.rectangle(0, viewHeight / 2, half * 2, viewHeight, 0xffffff, 0).setInteractive({ draggable: true });
-    frame.add(drag);
+    // 창 전체가 끌기를 받되, 입력면도 창 안에서만 손을 받는다(`addClippedHit` — 판이 떠오르는 동안의 자리도 따라간다).
+    const clip = (): ClipRect => {
+      const matrix = frame.getWorldTransformMatrix();
+      const scale = matrix.scaleY || 1;
+      return { left: matrix.tx - half * scale, right: matrix.tx + half * scale, top: matrix.ty, bottom: matrix.ty + viewHeight * scale };
+    };
+    const drag = addClippedHit(this.scene, frame, 0, viewHeight / 2, half * 2, viewHeight, clip, { useHandCursor: false });
+    this.scene.input.setDraggable(drag);
     const content = this.scene.add.container(0, 0);
     frame.add(content);
     content.setMask(shapeClipMask(this.scene, frame, [-half, 0, half, 0, half, viewHeight, -half, viewHeight]));

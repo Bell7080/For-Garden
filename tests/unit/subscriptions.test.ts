@@ -56,14 +56,16 @@ describe("구독 상품과 일일 우편", () => {
     const mail = (await api.getMails()).mails.filter((entry) => entry.id.startsWith("subscription:"));
     expect(mail).toHaveLength(1); expect(mail[0].rewards).toEqual([{ kind: "item", itemId: ticket, amount: 1 }]);
     const reloaded = h.reload(); const recovered = h.api(reloaded);
+    // 발굴권은 가방 스택이 아니라 고고학 입장 횟수에 더해진다(최대치를 넘겨 쌓인다).
+    const owned = (): number => ticket === "strata-ticket" ? reloaded.archaeology.charges : reloaded.itemInventory.find((entry) => entry.itemId === ticket)!.quantity;
     expect((await recovered.getMails()).mails.filter((entry) => entry.id.startsWith("subscription:"))).toHaveLength(1);
     await recovered.claimMailRewards({ mailIds: [mail[0].id], requestId: "mail" });
-    const count = reloaded.itemInventory.find((entry) => entry.itemId === ticket)!.quantity;
+    const count = owned();
     await expect(recovered.claimPassDailyBonus({ productId: id, requestId: "from-other-tab" })).rejects.toMatchObject({ code: "PASS_BONUS_CLAIMED" });
-    expect(reloaded.itemInventory.find((entry) => entry.itemId === ticket)!.quantity).toBe(count);
+    expect(owned()).toBe(count);
     h.clock("2026-10-15T00:00:00Z");
     await recovered.claimPassDailyBonus({ productId: id, requestId: "tomorrow" });
-    expect(reloaded.itemInventory.find((entry) => entry.itemId === ticket)!.quantity).toBe(count + 1);
+    expect(owned()).toBe(count + 1);
     h.clock("2026-11-14T12:00:00Z");
     expect((await recovered.getMails()).mails.some((entry) => entry.id.endsWith("2026-11-14"))).toBe(false);
   });

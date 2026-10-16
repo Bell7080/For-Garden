@@ -393,7 +393,8 @@ export function createArchaeologyState(): ArchaeologyState {
 
 /** 서버 시각까지 끝난 구간만 채운다. 시각이 역행하면 기준점을 뒤로 옮기지 않는다. */
 export function settleStrataCharges(charges: number, updatedAt: string | null, now: Date): { charges: number; updatedAt: string } {
-  const safe = Math.min(STRATA_CHARGE.max, Math.max(0, Math.floor(Number.isFinite(charges) ? charges : 0)));
+  // 상한(`max`)은 시간이 채우는 몫에만 걸린다. 발굴권으로 넘겨 쌓인 횟수는 깎지 않는다(보유 끝까지).
+  const safe = Math.min(STRATA_CHARGE.holdLimit, Math.max(0, Math.floor(Number.isFinite(charges) ? charges : 0)));
   const accrual = timeAccrualWindow(updatedAt, now, Math.max(0, STRATA_CHARGE.max - safe) * STRATA_CHARGE.intervalMs);
   if (!accrual.accepted) return { charges: safe, updatedAt: updatedAt ?? now.toISOString() };
   const nowIso = new Date(accrual.window.serverNowMs).toISOString();
@@ -401,6 +402,16 @@ export function settleStrataCharges(charges: number, updatedAt: string | null, n
   const recovered = Math.min(STRATA_CHARGE.max - safe, Math.floor(accrual.window.elapsedMs / STRATA_CHARGE.intervalMs));
   const nextMs = safe + recovered >= STRATA_CHARGE.max ? accrual.window.serverNowMs : accrual.window.startMs + recovered * STRATA_CHARGE.intervalMs;
   return { charges: safe + recovered, updatedAt: new Date(nextMs).toISOString() };
+}
+
+/**
+ * 발굴권 아이템을 탐사 횟수로 옮긴다. **발굴권은 고고학 입장 횟수 그 자체**라 가방에 남지 않고, 시간 충전이
+ * 가득 차 있어도 `max`를 넘겨 쌓인다(보유 끝 `holdLimit`까지, 넘치는 몫은 가방에 남긴다).
+ */
+export function absorbStrataTickets(charges: number, tickets: number): { charges: number; absorbed: number } {
+  const room = Math.max(0, STRATA_CHARGE.holdLimit - Math.max(0, Math.floor(charges)));
+  const absorbed = Math.min(room, Math.max(0, Math.floor(tickets)));
+  return { charges: charges + absorbed, absorbed };
 }
 
 /** 다음 한 번이 차는 시각이다. 가득 찼으면 null이다. */

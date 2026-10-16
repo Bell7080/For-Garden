@@ -204,9 +204,16 @@ export class InventoryManager {
       if (stack.lots?.length) return [...stack.lots].sort((a, b) => Date.parse(a.expiresAt) - Date.parse(b.expiresAt)).map((lot) => ({ kind: "stack" as const, category, id: stack.itemId, definition, quantity: lot.quantity, lot }));
       return [{ kind: "stack" as const, category, id: stack.itemId, definition, quantity: stack.quantity }];
     });
+    // 발굴권은 가방 스택이 아니라 고고학 입장 횟수 그 자체다(`state.archaeology.charges`, 시간 충전 + 초과분).
+    // 스테미나처럼 가방에는 지금 가진 횟수로 서고, 저장 스택을 따로 두지 않아 두 곳이 갈리지 않는다.
+    const ticket = findItem(STRATA_TICKET_ITEM);
+    const charges = this.state.archaeology?.charges ?? 0;
+    if (ticket?.category === category && charges > 0) rows.push({ kind: "stack", category, id: ticket.id, definition: ticket, quantity: charges });
     return rows;
   }
 }
+
+const STRATA_TICKET_ITEM = "strata-ticket";
 
 /** 재시도해도 같은 충전이 두 번 확정되지 않도록 브라우저 난수와 시각을 함께 쓴다. */
 function rechargeRequestId(): string {

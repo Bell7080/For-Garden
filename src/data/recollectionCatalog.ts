@@ -1,3 +1,4 @@
+import type { DialogueStory } from "../core/dialogue";
 import { OPENING_TRAIN } from "./dialogues/openingTrain";
 import { OPENING_RETREAT } from "./dialogues/openingRetreat";
 import { GREENHOUSE_ECHO } from "./dialogues/greenhouseEcho";
@@ -48,4 +49,23 @@ export const RECOLLECTION_ENTRIES: readonly RecollectionEntry[] = buildRecollect
 
 export function recollectionEntriesOf(group: RecollectionGroup): readonly RecollectionEntry[] {
   return RECOLLECTION_ENTRIES.filter((entry) => entry.group === group);
+}
+
+/**
+ * 회고 줄에 은은하게 깔리는 대사 한 줄.
+ *
+ * 화자가 있는 대사 가운데 **한 줄에 들어오는 가장 긴 말**을 고른다 — 짧은 감탄사(「으윽…」)는 그 이야기를
+ * 말하지 못하고, 너무 긴 말은 판 오른쪽에 들어가지 않는다. 이야기 데이터에서 고르므로 대사를 고치면 따라온다.
+ */
+export const RECOLLECTION_ECHO_MAX_LENGTH = 24;
+
+export function recollectionEcho(story: DialogueStory): string | undefined {
+  let best: string | undefined;
+  for (const node of story.nodes) {
+    if (!node.speaker) continue;
+    const body = node.body.trim();
+    if (body.length > RECOLLECTION_ECHO_MAX_LENGTH || body.length < 8) continue;
+    if (!best || body.length > best.length) best = body;
+  }
+  return best;
 }

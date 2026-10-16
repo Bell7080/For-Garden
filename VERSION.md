@@ -1,6 +1,6 @@
 # 버전 관리
 
-현재 버전: **v0.287.0**
+현재 버전: **v0.288.0**
 
 `VERSION.md`와 `package.json`의 `version`은 항상 같은 값을 쓰고, 타이틀(로딩) 화면 좌측
 하단 표기는 그 값을 그대로 읽는다. 화면에 손으로 적어 두지 않는다.
@@ -31,6 +31,13 @@
   그 이전의 초기 프로토타입 단계는 `v0.1.0` 항목 하나로 묶었다.
 
 ## 변경 이력
+
+## v0.288.0 — 게임 서버 연결 2·3단계 바닥: 게스트 계정 어댑터와 클라우드 저장 DB
+
+- `supabase/migrations/20261017130000_player_saves.sql`(`forgarden-test` 적용·SQL로 생성/갱신/낡은 revision 거절/삭제/비로그인 거절 검증): 계정당 저장 한 줄(`player_saves`), 표 직접 접근 전면 차단, 읽기·쓰기는 `get_my_save_meta`·`download_my_save`·`upload_my_save`·`remove_my_save` 함수만. 쓰기는 읽은 revision을 조건으로 보내야 하고(낙관적 잠금, 불일치는 `save_conflict`), 정지·차단 계정은 쓰지 못하며 본문은 2MB까지다.
+- `src/api/SupabaseAccountApi.ts`: `AccountApi` 구현. 토큰이 없으면 게스트(익명)로 가입하고 만료 1분 전에 갱신하며, 동시 요청에도 가입·갱신은 한 번만 한다. 토큰은 주입받은 `TokenStore`(보안 저장소)에만 맡기고 `Session`·`SaveData`·`localStorage`에는 두지 않는다. 소셜 로그인·탈퇴·게스트 병합은 `unsupported`.
+- `installAccountApi`: 플랫폼 보안 저장소 어댑터가 있을 때만 부른다. 토큰을 둘 안전한 곳이 없는 웹 빌드는 부르지 않으므로 지금까지처럼 `UnsupportedAccountApi`에 머문다 — 게임 동작은 그대로다.
+- 서버에서 익명 가입이 꺼져 있으면 게스트 계정을 만들지 않고 `unsupported`를 돌려준다(`forgarden-test`는 아직 꺼져 있다).
 
 ## v0.287.0 — 게임 서버 연결 1단계: 서버 시계 + 시작 관문(점검·강제 업데이트)
 

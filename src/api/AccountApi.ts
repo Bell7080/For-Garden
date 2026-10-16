@@ -105,4 +105,12 @@ export class UnsupportedAccountApi implements AccountApi {
 }
 
 /** 실제 SDK 어댑터가 주입되기 전 사용하는 유일한 기본 구현이다. */
-export const accountApi: AccountApi = new UnsupportedAccountApi();
+export let accountApi: AccountApi = new UnsupportedAccountApi();
+
+/**
+ * 플랫폼 보안 저장소 어댑터가 준비됐을 때만 부른다(네이티브 부트스트랩). 토큰을 둘 안전한 곳이 없는
+ * 웹 빌드는 부르지 않으므로 `UnsupportedAccountApi`에 머문다 — 토큰을 `localStorage`로 대신하지 않는다.
+ */
+export function installAccountApi(api: AccountApi): void {
+  accountApi = api;
+}

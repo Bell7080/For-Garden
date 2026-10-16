@@ -46,8 +46,8 @@ var RESEARCH_TICKET_GEM_PRICE = 300;
 function pullPayment(wallet, banner, count2) {
   const cost = pullCost(banner, count2);
   const tickets = Math.max(0, Math.min(cost, wallet[banner.currency]));
-  const gems = (cost - tickets) * RESEARCH_TICKET_GEM_PRICE;
-  return { tickets, gems, affordable: wallet.gems >= gems };
+  const gems2 = (cost - tickets) * RESEARCH_TICKET_GEM_PRICE;
+  return { tickets, gems: gems2, affordable: wallet.gems >= gems2 };
 }
 function bannerPullsRemaining(banner, pity) {
   if (banner.pullLimit === void 0) return Number.POSITIVE_INFINITY;
@@ -2388,7 +2388,34 @@ var RECOLLECTION_KO = {
   "recollection.title.openingTrain": "\uC218\uC1A1 \uC5F4\uCC28",
   "recollection.title.openingRetreat": "\uACF5\uBA78\uC758 \uD1F4\uAC01",
   "recollection.title.greenhouse": "\uC628\uC2E4\uC758 \uC794\uD5A5",
-  "recollection.title.greatAuk": "\uD070\uBC14\uB2E4\uC1E0\uC624\uB9AC \uBCF4\uACE0"
+  "recollection.title.greatAuk": "\uD070\uBC14\uB2E4\uC1E0\uC624\uB9AC \uBCF4\uACE0",
+  "recollection.summary.opening-train": "\uC774\uD130\uB110 \uC2DC\uD2F0\uB85C \uD5A5\uD558\uB358 \uC218\uC1A1 \uC5F4\uCC28\uC5D0 \uACBD\uBCF4\uAC00 \uC6B8\uB9B0\uB2E4.",
+  "recollection.summary.opening-retreat": "\uACF5\uBA78 \uC0BC\uC778\uC870\uAC00 \uC544\uC26C\uC6B4 \uC678\uCE68\uC744 \uB0A8\uAE30\uACE0 \uD558\uB298\uB85C \uB0A0\uC544\uAC04\uB2E4.",
+  "recollection.summary.stage-1-2-post": "\uC720\uB9AC \uC9C0\uBD95\uC5D0\uC11C \uB5A8\uC5B4\uC9C4 \uC0BC\uC778\uC870\uAC00 \uCF54\uB9C8\uB77C\uB294 \uC774\uB984\uC744 \uD758\uB9B0\uB2E4.",
+  "recollection.summary.stage-1-4-pre": "\uD45C\uBCF8 \uBCF4\uAD00\uACE0\uC5D0 \uB0A8\uC740 \uC190\uC790\uAD6D\uC744 \uB3C4\uB514\uAC00 \uC77D\uC5B4 \uB0B8\uB2E4.",
+  "recollection.summary.stage-1-5-pre": "\uD63C\uC790 \uBA3C\uC800 \uB2EC\uB824\uC628 \uD1A0\uBE44\uAC00 \uBC29\uBCBD \uC7A5\uCE58\uB97C \uAC74\uB4DC\uB9B0\uB2E4.",
+  "recollection.summary.stage-1-5-post": "\uB118\uC5B4\uB728\uB9B0 \uC7A5\uBE44\uB97C \uBAB0\uB798 \uC138\uC6B0\uB358 \uD1A0\uBE44\uAC00 \uB4E4\uD0A8\uB2E4.",
+  "recollection.summary.stage-1-6-post": "\uB418\uC0B4\uC544\uB09C \uC548\uD14C\uB098 \uB108\uBA38\uB85C \uB3C4\uC2DC\uC758 \uBAA9\uC18C\uB9AC\uAC00 \uCC98\uC74C \uB2FF\uB294\uB2E4.",
+  "recollection.summary.stage-1-7-pre": "\uD3D0\uAE30 \uD45C\uC2DD \uB354\uBBF8 \uC55E\uC5D0\uC11C \uC544\uBAA8\uC758 \uB9D0\uC218\uAC00 \uC904\uC5B4\uB4E0\uB2E4.",
+  "recollection.summary.stage-1-8-pre": "\uBC30\uC218\uB85C\uC5D0\uC11C \uBCF4\uAE09\uC744 \uD68C\uC218\uD558\uB358 \uD2F0\uC544\uC640 \uB9C8\uC8FC\uCE5C\uB2E4.",
+  "recollection.summary.stage-1-9-pre": "\uBD09\uC1C4\uBB38 \uB108\uBA38\uC5D0\uC11C \uB204\uAD70\uAC00 \uBB38\uC744 \uB450\uB4DC\uB9B0\uB2E4.",
+  "recollection.summary.stage-1-9-post": "\uAC07\uD600 \uC788\uB358 \uC624\uBE44\uAC00 \uB0A8\uC740 \uC7AC\uACE0\uB97C \uB098\uB220 \uC900\uB2E4.",
+  "recollection.summary.stage-1-10-pre": "\uACBD\uACC4\uBB38 \uC55E\uC5D0\uC11C \uBCA0\uC77C\uC744 \uBC97\uC740 \uCF54\uB9C8\uC640 \uB9C8\uC8FC \uC120\uB2E4.",
+  "recollection.summary.stage-1-10-post": "\uC5F0\uAD6C\uC6D0\uC758 \uCCAB\uB9C8\uB514, \uADF8\uB9AC\uACE0 \uB809\uC2DC\uC544\uAC00 \uBAA8\uC2B5\uC744 \uB4DC\uB7EC\uB0B8\uB2E4.",
+  "recollection.summary.stage-2-1-pre": "\uACBD\uACC4\uBB38 \uC548\uCABD, \uCF54\uB9C8\uC758 \uBC1C\uC790\uAD6D\uC774 \uBA48\uCD98 \uC790\uB9AC\uB97C \uB530\uB77C\uAC04\uB2E4.",
+  "recollection.summary.stage-2-2-post": "\uD1A0\uBE44\uAC00 \uBA48\uCD98 \uB77C\uC778\uC744 \uCF1C \uBC84\uB9AC\uACE0, \uC0C1\uC790 \uC18D \uC2DC\uC81C\uD488\uC774 \uB4DC\uB7EC\uB09C\uB2E4.",
+  "recollection.summary.stage-2-4-pre": "\uC815\uC804\uB41C \uC911\uACC4\uC2E4\uC5D0 \uBD88\uC774 \uB4E4\uC5B4\uC624\uC790 \uC0BC\uC778\uC870\uAC00 \uB208\uC55E\uC5D0 \uC788\uB2E4.",
+  "recollection.summary.stage-2-5-pre": "\uC2B9\uAC15\uC7A5 \uB05D\uC5D0\uC11C \uC544\uBAA8\uAC00 \uD640\uB85C \uC120\uB85C\uB97C \uB9C9\uC544\uC120\uB2E4.",
+  "recollection.summary.stage-2-5-post": "\uC2F8\uC6C0\uC774 \uB05D\uB09C \uC2B9\uAC15\uC7A5\uC5D0\uC11C \uC544\uBAA8\uAC00 \uB450\uAC74\uC744 \uC62C\uB9B0\uB2E4.",
+  "recollection.summary.stage-2-6-post": "\uBB34\uC778 \uC0DD\uC0B0\uC120\uC758 \uADF8\uB298 \uC18D\uC744 \uC228\uC8FD\uC5EC \uC9C0\uB09C\uB2E4.",
+  "recollection.summary.stage-2-7-pre": "\uBB38\uC774 \uB2EB\uD788\uACE0, \uC5F0\uAD6C\uC6D0\uB9CC \uD640\uB85C \uACA9\uC2E4\uC5D0 \uAC07\uD78C\uB2E4.",
+  "recollection.summary.stage-2-7-post": "\uD1A0\uBE44\uAC00 \uBB38\uC744 \uB72F\uC5B4\uB0B4\uACE0 \uC5F0\uAD6C\uC6D0\uC744 \uAEBC\uB0B8\uB2E4.",
+  "recollection.summary.stage-2-8-pre": "\uC6A9\uAD11\uB85C \uACC1\uC5D0\uC11C \uCF54\uB9C8\uAC00 \uB9D0\uC5C6\uC774 \uD45C\uC2DD\uC744 \uB2E6\uACE0 \uC788\uB2E4.",
+  "recollection.summary.stage-2-9-post": "\uCEE8\uBCA0\uC774\uC5B4\uAC00 \uB05D\uB098\uB294 \uACF3\uC5D0 \uAE4A\uC740 \uAD6C\uBA4D\uC774 \uC785\uC744 \uBC8C\uB9B0\uB2E4.",
+  "recollection.summary.stage-2-10-pre": "\uCF54\uB9C8 \uC5C6\uC774, \uC0BC\uC778\uC870\uAC00 \uCC98\uC74C\uC73C\uB85C \uC14B\uC774\uC11C \uC120\uB2E4.",
+  "recollection.summary.stage-2-10-post": "\u300C\uB530\uB77C\uAC00\uB3C4 \uB3FC?\u300D \uC774\uC81C \uC5F0\uAD6C\uC6D0\uC774 \uB300\uB2F5\uD560 \uCC28\uB840\uB2E4.",
+  "recollection.summary.stage-1-5-greenhouse-echo": "\uC8FC \uD1B5\uB85C \uC606 \uC628\uC2E4\uC5D0\uC11C \uC624\uB798\uB41C \uC0DD\uCCB4 \uC2E0\uD638\uAC00 \uB4E4\uB824\uC628\uB2E4.",
+  "recollection.summary.event-great-auk-report": "\uBD81\uB300\uC11C\uC591 \uD45C\uBCF8\uD568\uC5D0\uC11C \uD070\uBC14\uB2E4\uC1E0\uC624\uB9AC\uC758 \uACE8\uACA9 \uD45C\uC9C0\uAC00 \uB098\uC628\uB2E4."
 };
 
 // src/i18n/ko/dialogue.ts
@@ -2401,8 +2428,64 @@ var DIALOGUE_KO = {
   "dialogue.sign.tower": "\uAD00\uC81C\uD0D1"
 };
 
+// src/i18n/ko/achievement.ts
+init_define_import_meta_env();
+var ACHIEVEMENT_KO = {
+  "achievement.title": "\uC5C5\uC801",
+  "achievement.tab.all": "\uC804\uCCB4",
+  "achievement.category.growth": "\uC131\uC7A5",
+  "achievement.category.battle": "\uC804\uD22C",
+  "achievement.category.explore": "\uD0D0\uC0AC",
+  "achievement.category.daily": "\uC77C\uC0C1",
+  "achievement.claimAll": "\uBAA8\uB450 \uBC1B\uAE30",
+  "achievement.rewardTitle": "\uC5C5\uC801 \uBCF4\uC0C1",
+  "achievement.summary.tiers": "\uB2EC\uC131 \uB2E8\uACC4",
+  "achievement.summary.modifiers": "\uC218\uC2DD\uC5B4 {earned}/{total}",
+  "achievement.state.complete": "\uC644\uB8CC",
+  "achievement.tier": "{current}/{total}\uB2E8\uACC4",
+  "achievement.modifierEarned": "\uC218\uC2DD\uC5B4 \u300C{name}\u300D \uD68D\uB4DD!",
+  "achievement.series.wealth": "\uBD80\uC758 \uCD95\uC801",
+  "achievement.series.collector": "\uD45C\uBCF8 \uC218\uC9D1",
+  "achievement.series.nurture": "\uC131\uC7A5\uC758 \uAE30\uB85D",
+  "achievement.series.limit-break": "\uD55C\uACC4 \uB108\uBA38",
+  "achievement.series.bond": "\uAE4A\uC5B4\uC9C0\uB294 \uC720\uB300",
+  "achievement.series.research-level": "\uC5F0\uAD6C\uC6D0\uC758 \uAE38",
+  "achievement.series.victories": "\uC2B9\uB9AC\uC758 \uAE30\uB85D",
+  "achievement.series.frontline": "\uC81C1\uC9C0\uBD80 \uC804\uC120",
+  "achievement.series.duelist": "\uACB0\uD22C\uC7A5\uC758 \uC774\uB984",
+  "achievement.series.raider": "\uD1A0\uBC8C\uC758 \uB098\uB0A0",
+  "achievement.series.salvager": "\uC2EC\uD574 \uC778\uC591",
+  "achievement.series.fossil-lab": "\uD654\uC11D \uC5F0\uAD6C",
+  "achievement.series.harvest": "\uBC1C\uAD74 \uC218\uD655",
+  "achievement.series.dispatch": "\uAD50\uB958 \uD30C\uACAC",
+  "achievement.series.storyteller": "\uB418\uC9DA\uC740 \uC774\uC57C\uAE30",
+  "achievement.series.feeding": "\uAE09\uC5EC \uC77C\uC9C0",
+  "achievement.series.stamina": "\uC26C\uC9C0 \uC54A\uB294 \uC190",
+  "achievement.series.diligence": "\uC131\uC2E4\uD55C \uD558\uB8E8",
+  "achievement.series.greetings": "\uB85C\uBE44\uC758 \uC778\uC0AC",
+  "achievement.objective.goldPeak": "\uACE8\uB4DC {value} \uBCF4\uC720",
+  "achievement.objective.relicsOwned": "\uB810\uB9AD {value}\uC885 \uBCF4\uC720",
+  "achievement.objective.maxRelicLevel": "\uB810\uB9AD \uD55C \uBA85\uC744 \uB808\uBCA8 {value}\uAE4C\uC9C0 \uC131\uC7A5",
+  "achievement.objective.relicsMaxBreakthrough": "\uB810\uB9AD {value}\uBA85\uC758 \uD55C\uACC4 \uB3CC\uD30C \uC644\uB8CC",
+  "achievement.objective.relicsMaxBond": "\uB810\uB9AD {value}\uBA85\uACFC \uC720\uB300 \uCD5C\uB300",
+  "achievement.objective.playerLevel": "\uC5F0\uAD6C\uC6D0 \uB808\uBCA8 {value} \uB2EC\uC131",
+  "achievement.objective.victories": "\uC804\uD22C \uC2B9\uB9AC {value}\uD68C",
+  "achievement.objective.storyStagesCleared": "\uC2A4\uD1A0\uB9AC \uAD00\uBB38 {value}\uAC1C \uD074\uB9AC\uC5B4",
+  "achievement.objective.duelWins": "\uACB0\uD22C \uC2B9\uB9AC {value}\uD68C",
+  "achievement.objective.raidRuns": "\uB808\uC774\uB4DC \uCD9C\uACA9 {value}\uD68C",
+  "achievement.objective.expeditionBest": "\uC6D0\uC815 \uCD5C\uACE0 \uC810\uC218 {value}\uC810",
+  "achievement.objective.researchPulls": "\uC5F0\uAD6C {value}\uD68C",
+  "achievement.objective.harvests": "\uBC1C\uAD74 \uC218\uD655 {value}\uD68C",
+  "achievement.objective.dispatches": "\uAD50\uB958 \uD30C\uACAC {value}\uD68C",
+  "achievement.objective.storiesRead": "\uC774\uC57C\uAE30 {value}\uD3B8 \uC5F4\uB78C",
+  "achievement.objective.feedings": "\uAE09\uC5EC {value}\uD68C",
+  "achievement.objective.staminaSpent": "\uC2A4\uD14C\uBBF8\uB098 {value} \uC0AC\uC6A9",
+  "achievement.objective.dailyMissionsClaimed": "\uC77C\uC77C \uC784\uBB34 {value}\uD68C \uC644\uB8CC",
+  "achievement.objective.lobbyGreetings": "\uB85C\uBE44 \uAD50\uB958 {value}\uD68C"
+};
+
 // src/i18n/ko/index.ts
-var KO = { ...SETTINGS_KO, ...LOBBY_KO, ...COMMON_KO, ...INFO_KO, ...STATUS_KO, ...LAB_KO, ...EXPEDITION_KO, ...BATTLE_KO, ...CAKE_OPERATION_KO, ...EXCAVATION_KO, ...AUGMENT_KO, ...FRIENDS_KO, ...RUNE_KO, ...PARTY_KO, ...EXPEDITION_REWARD_KO, ...SAVE_CONFLICT_KO, ...INTERACTION_KO, ...SHOP_KO, ...MISSIONS_KO, ...INVENTORY_KO, ...MISC_KO, ...SKILL_KO, ...SYSTEM_KO, ...RAID_KO, ...BOUNTY_KO, ...DUNGEON_KO, ...DUEL_KO, ...RECOLLECTION_KO, ...DIALOGUE_KO };
+var KO = { ...SETTINGS_KO, ...LOBBY_KO, ...COMMON_KO, ...INFO_KO, ...STATUS_KO, ...LAB_KO, ...EXPEDITION_KO, ...BATTLE_KO, ...CAKE_OPERATION_KO, ...EXCAVATION_KO, ...AUGMENT_KO, ...FRIENDS_KO, ...RUNE_KO, ...PARTY_KO, ...EXPEDITION_REWARD_KO, ...SAVE_CONFLICT_KO, ...INTERACTION_KO, ...SHOP_KO, ...MISSIONS_KO, ...INVENTORY_KO, ...MISC_KO, ...SKILL_KO, ...SYSTEM_KO, ...RAID_KO, ...BOUNTY_KO, ...DUNGEON_KO, ...DUEL_KO, ...RECOLLECTION_KO, ...DIALOGUE_KO, ...ACHIEVEMENT_KO };
 
 // src/i18n/catalog.ts
 var loaded = /* @__PURE__ */ new Map([[DEFAULT_LANGUAGE, KO]]);
@@ -2414,9 +2497,9 @@ var PLACEHOLDER = /\{(\w+)([:!])?([^}\s]+)?\}/g;
 function t(key, params) {
   const text = loaded.get(active)?.[key] ?? KO[key];
   if (!params) return text;
-  return text.replace(PLACEHOLDER, (whole, name, mode, particle) => {
+  return text.replace(PLACEHOLDER, (whole2, name, mode, particle) => {
     const value = params[name];
-    if (value === void 0) return whole;
+    if (value === void 0) return whole2;
     const filled = String(value);
     if (mode === void 0 || particle === void 0) return filled;
     return (mode === "!" ? "" : filled) + pickParticle(filled, particle);
@@ -2829,11 +2912,11 @@ function relicLevelCap(breakthrough) {
 function nextBreakthrough(breakthrough) {
   return BREAKTHROUGH_STEPS[breakthrough];
 }
-function canBreakThrough(rarity, progress, fragments, cheesecake) {
+function canBreakThrough(rarity, progress, fragments, cheesecake2) {
   const step2 = nextBreakthrough(progress.breakthrough);
   if (!step2) return false;
   if (progress.level < relicLevelCap(progress.breakthrough)) return false;
-  return fragments >= breakthroughFragmentCost(rarity, progress.breakthrough) && cheesecake >= step2.cheesecake;
+  return fragments >= breakthroughFragmentCost(rarity, progress.breakthrough) && cheesecake2 >= step2.cheesecake;
 }
 function openedBreakthroughSlots(breakthrough) {
   return BREAKTHROUGH_STEPS.slice(0, Math.max(0, Math.min(BREAKTHROUGH_CAP, breakthrough))).map((step2) => step2.slot);
@@ -2843,35 +2926,35 @@ function isBreakthroughSlotOpen(breakthrough, slot) {
 }
 function remainingBreakthroughCost(rarity, progress) {
   let fragments = 0;
-  let cheesecake = 0;
+  let cheesecake2 = 0;
   let level = progress.level;
   let exp = progress.exp;
   for (let step2 = progress.breakthrough; step2 < BREAKTHROUGH_CAP; step2 += 1) {
     const cap = relicLevelCap(step2);
     while (level < cap) {
-      cheesecake += Math.ceil((relicExpToNext(level) - exp) / FEED_UNIT.exp) * FEED_UNIT.cheesecake;
+      cheesecake2 += Math.ceil((relicExpToNext(level) - exp) / FEED_UNIT.exp) * FEED_UNIT.cheesecake;
       level += 1;
       exp = 0;
     }
     fragments += breakthroughFragmentCost(rarity, step2);
-    cheesecake += BREAKTHROUGH_STEPS[step2].cheesecake;
+    cheesecake2 += BREAKTHROUGH_STEPS[step2].cheesecake;
   }
   const finalCap = relicLevelCap(BREAKTHROUGH_CAP);
   while (level < finalCap) {
-    cheesecake += Math.ceil((relicExpToNext(level) - exp) / FEED_UNIT.exp) * FEED_UNIT.cheesecake;
+    cheesecake2 += Math.ceil((relicExpToNext(level) - exp) / FEED_UNIT.exp) * FEED_UNIT.cheesecake;
     level += 1;
     exp = 0;
   }
-  return { fragments, cheesecake };
+  return { fragments, cheesecake: cheesecake2 };
 }
 var FEED_UNIT = { cheesecake: 10, exp: 20 };
 function relicExpToNext(level) {
   if (!Number.isInteger(level) || level < 1 || level > relicLevelCap(BREAKTHROUGH_CAP)) throw new RangeError("\uB808\uBCA8\uC774 \uC131\uC7A5 \uBC94\uC704\uB97C \uBC97\uC5B4\uB0AC\uC2B5\uB2C8\uB2E4.");
   return 40 + level * 20;
 }
-function feedRelic(progress, cheesecake, feeds) {
+function feedRelic(progress, cheesecake2, feeds) {
   if (!Number.isInteger(feeds) || feeds < 1) throw new RangeError("\uAE09\uC5EC \uD69F\uC218\uB294 1 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
-  if (!Number.isInteger(cheesecake) || cheesecake < 0) throw new RangeError("\uCE58\uC988\uCF00\uC774\uD06C\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+  if (!Number.isInteger(cheesecake2) || cheesecake2 < 0) throw new RangeError("\uCE58\uC988\uCF00\uC774\uD06C\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
   const cap = relicLevelCap(progress.breakthrough);
   let level = progress.level;
   let exp = progress.exp;
@@ -2879,7 +2962,7 @@ function feedRelic(progress, cheesecake, feeds) {
   let used = 0;
   for (let i = 0; i < feeds; i += 1) {
     if (level >= cap) break;
-    if (cheesecake - spent < FEED_UNIT.cheesecake) break;
+    if (cheesecake2 - spent < FEED_UNIT.cheesecake) break;
     spent += FEED_UNIT.cheesecake;
     used += 1;
     exp += FEED_UNIT.exp;
@@ -2891,13 +2974,13 @@ function feedRelic(progress, cheesecake, feeds) {
   }
   return {
     progress: { ...progress, level, exp, heartGemSlots: [...progress.heartGemSlots] },
-    cheesecake: cheesecake - spent,
+    cheesecake: cheesecake2 - spent,
     feeds: used,
     levelsGained: level - progress.level
   };
 }
-function canFeedRelic(progress, cheesecake) {
-  return progress.level < relicLevelCap(progress.breakthrough) && Number.isInteger(cheesecake) && cheesecake >= FEED_UNIT.cheesecake;
+function canFeedRelic(progress, cheesecake2) {
+  return progress.level < relicLevelCap(progress.breakthrough) && Number.isInteger(cheesecake2) && cheesecake2 >= FEED_UNIT.cheesecake;
 }
 var STAT_KEYS = ["hp", "def", "res", "atk", "ap", "attackSpeed", "moveSpeed", "critChance", "critDamage", "energyGain", "lifeSteal", "ferocityGain"];
 function applyStatPercent(stats, effect) {
@@ -2917,9 +3000,9 @@ function applyBreakthrough(stats, breakthrough) {
   if (!Number.isInteger(breakthrough) || breakthrough < 0 || breakthrough > BREAKTHROUGH_CAP) throw new RangeError("\uB3CC\uD30C \uB2E8\uACC4\uAC00 \uBC94\uC704\uB97C \uBC97\uC5B4\uB0AC\uC2B5\uB2C8\uB2E4.");
   return { ...stats };
 }
-function applyHeartGems(stats, gems) {
+function applyHeartGems(stats, gems2) {
   const result = { ...stats };
-  for (const gem of gems) {
+  for (const gem of gems2) {
     assertValidRuneInstance(gem);
     for (const option of [...gem.mainStats, ...gem.subStats]) {
       const rule = RUNE_STAT_RULES[option.key];
@@ -2932,9 +3015,9 @@ function applyHeartGems(stats, gems) {
   }
   return result;
 }
-function calculateFinalStats(base, progress, gems, rarity) {
+function calculateFinalStats(base, progress, gems2, rarity) {
   if (progress.heartGemSlots.length !== 3) throw new RangeError("Heart Gem \uC2AC\uB86F\uC740 \uC815\uD655\uD788 3\uAC1C\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
-  return applyHeartGems(applyBreakthrough(applyLevelGrowth(base, progress.level, rarity), progress.breakthrough), gems);
+  return applyHeartGems(applyBreakthrough(applyLevelGrowth(base, progress.level, rarity), progress.breakthrough), gems2);
 }
 
 // src/data/friends.ts
@@ -16329,6 +16412,7 @@ function normalizeMissions(state, now) {
   const resetIds = new Set(MISSIONS.filter((mission) => mission.period === "daily" ? dailyChanged : weeklyChanged).map((mission) => mission.id));
   return {
     ...keys,
+    ...state.lifetime ? { lifetime: { ...state.lifetime } } : {},
     progress: Object.fromEntries(Object.entries(state.progress).filter(([id]) => !resetIds.has(id))),
     claimedIds: state.claimedIds.filter((id) => !resetIds.has(id)),
     researchPoints: {
@@ -16338,11 +16422,13 @@ function normalizeMissions(state, now) {
     claimedResearchStageIds: claimedResearchStageIds.filter((id) => !(dailyChanged && id.startsWith("daily:")) && !(weeklyChanged && id.startsWith("weekly:")))
   };
 }
+var LIFETIME_COUNT_CAP = 1e9;
 function applyMissionEvent(state, event, now) {
   const next = normalizeMissions(state, now);
   if (event.type === "battle_completed" && !event.victory) return next;
   const amount = "count" in event ? event.count : "amount" in event ? event.amount : 1;
   if (amount <= 0) return next;
+  next.lifetime = { ...next.lifetime, [event.type]: Math.min(LIFETIME_COUNT_CAP, (next.lifetime?.[event.type] ?? 0) + amount) };
   for (const mission of MISSIONS) {
     if (mission.event !== event.type) continue;
     next.progress[mission.id] = Math.min(mission.target, (next.progress[mission.id] ?? 0) + amount);
@@ -16655,8 +16741,8 @@ function captureExpeditionRelicSnapshot(def, progress, runeInventory, skinId) {
 function isExpeditionRelicSnapshot(value) {
   if (!value || typeof value !== "object") return false;
   const snapshot = value;
-  const whole = (n) => Number.isInteger(n) && n >= 0;
-  return whole(snapshot.level) && snapshot.level >= 1 && whole(snapshot.breakthrough) && whole(snapshot.bondLevel) && !!snapshot.stats && typeof snapshot.stats === "object" && Object.values(snapshot.stats).every((stat) => Number.isFinite(stat)) && Array.isArray(snapshot.runes) && (snapshot.skinId === null || typeof snapshot.skinId === "string");
+  const whole2 = (n) => Number.isInteger(n) && n >= 0;
+  return whole2(snapshot.level) && snapshot.level >= 1 && whole2(snapshot.breakthrough) && whole2(snapshot.bondLevel) && !!snapshot.stats && typeof snapshot.stats === "object" && Object.values(snapshot.stats).every((stat) => Number.isFinite(stat)) && Array.isArray(snapshot.runes) && (snapshot.skinId === null || typeof snapshot.skinId === "string");
 }
 
 // src/core/serverJournal.ts
@@ -16667,6 +16753,67 @@ function isValidServerJournal(value) {
   const record2 = (v) => !!v && typeof v === "object" && !Array.isArray(v);
   const json = (v) => v === null || typeof v === "string" || typeof v === "boolean" || typeof v === "number" && Number.isFinite(v) || (Array.isArray(v) ? v.every(json) : record2(v) && Object.values(v).every(json));
   return (journal.subscriptionEntitlements === void 0 || record2(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record2(entry) && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt)) && (entry.expiresAt === null || Number.isFinite(Date.parse(entry.expiresAt))) && typeof entry.active === "boolean" && typeof entry.serverTime === "string")) && (journal.subscriptionBonusDates === void 0 || record2(journal.subscriptionBonusDates) && Object.values(journal.subscriptionBonusDates).every((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date))) && (journal.subscriptionMails === void 0 || record2(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record2(mail) && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string" && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0)) && record2(journal.receipts) && record2(journal.raidAdmissions) && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record2(receipt) && typeof receipt.identity === "string" && record2(receipt.result) && json(receipt.result)) && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record2(admission) && typeof admission.raidId === "string" && (admission.replayVersion === void 0 || admission.replayVersion === 2) && Number.isFinite(admission.seasonHp) && admission.seasonHp >= 0 && Number.isFinite(Date.parse(admission.expiresAt)) && Array.isArray(admission.relics) && admission.relics.length === 3 && admission.relics.every((relic) => typeof relic.relicId === "string" && isExpeditionRelicSnapshot(relic.snapshot)));
+}
+
+// src/core/achievementState.ts
+init_define_import_meta_env();
+
+// src/data/achievements.ts
+init_define_import_meta_env();
+var gems = (amount) => ({ currency: "gems", amount });
+var gold = (amount) => ({ currency: "gold", amount });
+var cheesecake = (amount) => ({ currency: "cheesecake", amount });
+var tiers = (targets, rewards) => targets.map((target, index) => ({ target, reward: rewards[index] ?? rewards.at(-1) }));
+var ACHIEVEMENT_SERIES = [
+  // ── 성장 ──
+  { id: "wealth", category: "growth", metric: "goldPeak", tiers: tiers([1e4, 1e5, 1e6, 1e7, 1e8], [gems(5), gems(10), gems(20), gems(40), gems(80)]), modifierId: "millionaire" },
+  { id: "collector", category: "growth", metric: "relicsOwned", tiers: tiers([5, 10, 15, 20, 25], [gems(10), gems(15), gems(20), gems(30), gems(50)]), modifierId: "specimen-curator" },
+  { id: "nurture", category: "growth", metric: "maxRelicLevel", tiers: tiers([10, 20, 40, 60], [cheesecake(50), cheesecake(100), cheesecake(200), cheesecake(400)]) },
+  { id: "limit-break", category: "growth", metric: "relicsMaxBreakthrough", tiers: tiers([1, 3, 5, 10], [gems(20), gems(30), gems(40), gems(60)]), modifierId: "limit-breaker" },
+  { id: "bond", category: "growth", metric: "relicsMaxBond", tiers: tiers([1, 5, 10], [gems(20), gems(30), gems(50)]), modifierId: "kind-researcher" },
+  { id: "research-level", category: "growth", metric: "playerLevel", tiers: tiers([10, 20, 30, 40, 50, 60], [gems(10), gems(15), gems(20), gems(25), gems(30), gems(50)]), modifierId: "chief-researcher" },
+  // ── 전투 ──
+  { id: "victories", category: "battle", metric: "victories", tiers: tiers([10, 50, 200, 500, 1e3, 3e3], [gems(5), gems(10), gems(15), gems(20), gems(30), gems(50)]), modifierId: "veteran" },
+  { id: "frontline", category: "battle", metric: "storyStagesCleared", tiers: tiers([10, 20, 30], [gems(20), gems(30), gems(50)]), modifierId: "front-breaker" },
+  { id: "duelist", category: "battle", metric: "duelWins", tiers: tiers([1, 10, 50, 150, 300], [gems(5), gems(10), gems(20), gems(30), gems(50)]), modifierId: "arena-ruler" },
+  { id: "raider", category: "battle", metric: "raidRuns", tiers: tiers([1, 10, 50, 150], [gems(5), gems(15), gems(25), gems(40)]), modifierId: "raid-captain" },
+  { id: "salvager", category: "battle", metric: "expeditionBest", tiers: tiers([1e4, 3e4, 65e3, 11e4, 2e5], [gems(10), gems(15), gems(20), gems(30), gems(50)]), modifierId: "deep-salvager" },
+  // ── 탐사 ──
+  { id: "fossil-lab", category: "explore", metric: "researchPulls", tiers: tiers([10, 50, 100, 300, 1e3], [gems(5), gems(10), gems(15), gems(25), gems(40)]), modifierId: "fossil-appraiser" },
+  { id: "harvest", category: "explore", metric: "harvests", tiers: tiers([10, 50, 200, 500], [gold(1e4), gold(3e4), gold(6e4), gold(1e5)]) },
+  { id: "dispatch", category: "explore", metric: "dispatches", tiers: tiers([5, 30, 100, 300], [gems(5), gems(10), gems(20), gems(30)]), modifierId: "city-envoy" },
+  { id: "storyteller", category: "explore", metric: "storiesRead", tiers: tiers([5, 15, 25], [gems(10), gems(20), gems(30)]), modifierId: "story-collector" },
+  // ── 일상 ──
+  { id: "feeding", category: "daily", metric: "feedings", tiers: tiers([10, 100, 500, 2e3], [gems(5), gems(10), gems(20), gems(30)]), modifierId: "cheesecake-artisan" },
+  { id: "stamina", category: "daily", metric: "staminaSpent", tiers: tiers([1e3, 1e4, 5e4, 2e5], [gems(5), gems(15), gems(30), gems(50)]), modifierId: "tireless" },
+  { id: "diligence", category: "daily", metric: "dailyMissionsClaimed", tiers: tiers([20, 100, 500, 2e3], [gems(10), gems(20), gems(30), gems(50)]), modifierId: "diligent-researcher" },
+  { id: "greetings", category: "daily", metric: "lobbyGreetings", tiers: tiers([10, 50, 200, 500], [gold(1e4), gold(3e4), gold(5e4), gold(1e5)]) }
+];
+
+// src/core/achievementState.ts
+function createEmptyAchievementState() {
+  return { claimed: {}, goldPeak: 0 };
+}
+var whole = (value) => Number.isInteger(value) && value >= 0 ? value : 0;
+function normalizeAchievementState(value) {
+  const source = value && typeof value === "object" ? value : {};
+  const claimedSource = source.claimed && typeof source.claimed === "object" ? source.claimed : {};
+  const claimed = {};
+  for (const series of ACHIEVEMENT_SERIES) {
+    const count2 = Math.min(series.tiers.length, whole(claimedSource[series.id]));
+    if (count2 > 0) claimed[series.id] = count2;
+  }
+  return { claimed, goldPeak: Math.min(LIFETIME_COUNT_CAP, whole(source.goldPeak)) };
+}
+function isValidAchievementState(value) {
+  if (!value || typeof value !== "object") return false;
+  const state = value;
+  if (!Number.isInteger(state.goldPeak) || state.goldPeak < 0) return false;
+  if (!state.claimed || typeof state.claimed !== "object") return false;
+  return Object.entries(state.claimed).every(([id, count2]) => {
+    const series = ACHIEVEMENT_SERIES.find((candidate) => candidate.id === id);
+    return series !== void 0 && Number.isInteger(count2) && count2 >= 0 && count2 <= series.tiers.length;
+  });
 }
 
 // src/core/playerLevel.ts
@@ -17615,7 +17762,8 @@ function createDefaultSession() {
     claimedMailIds: [],
     attendance: createEmptyAttendanceState(),
     serverJournal: emptyServerJournal(),
-    raidTicketDrops: createEmptyRaidTicketDropState()
+    raidTicketDrops: createEmptyRaidTicketDropState(),
+    achievements: createEmptyAchievementState()
   };
 }
 var session = createDefaultSession();
@@ -18440,7 +18588,27 @@ var PROFILE_MODIFIERS = [
   { id: "field-pioneer", displayName: "\uD604\uC7A5 \uAC1C\uCC99\uC790", rarity: "rare", acquisitionConditionId: "mission:daily-battle" },
   { id: "steady-researcher", displayName: "\uAFB8\uC900\uD55C \uC5F0\uAD6C\uC790", rarity: "common", acquisitionConditionId: "mission:daily-research" },
   { id: "deep-record", displayName: "\uC2EC\uCE35 \uAE30\uB85D\uC790", rarity: "epic", acquisitionConditionId: "research:weekly:60" },
-  { id: "garden-legend", displayName: "\uC815\uC6D0\uC758 \uC804\uC124", rarity: "legendary", acquisitionConditionId: "research:weekly:120" }
+  { id: "garden-legend", displayName: "\uC815\uC6D0\uC758 \uC804\uC124", rarity: "legendary", acquisitionConditionId: "research:weekly:120" },
+  /*
+   * 업적의 마지막 단계를 받는 순간 열리는 수식어(`data/achievements.ts`의 `modifierId`). 희귀도는 그 줄을
+   * 끝내는 데 드는 시간을 말한다 — 1억 골드·결투 300승·원정 20만 점처럼 오래 걸리는 줄만 전설이다.
+   */
+  { id: "millionaire", displayName: "\uBC31\uB9CC\uC7A5\uC790", rarity: "legendary", acquisitionConditionId: "achievement:wealth" },
+  { id: "specimen-curator", displayName: "\uD45C\uBCF8 \uAD00\uB9AC\uC778", rarity: "epic", acquisitionConditionId: "achievement:collector" },
+  { id: "limit-breaker", displayName: "\uD55C\uACC4\uB97C \uB118\uC740 \uC790", rarity: "epic", acquisitionConditionId: "achievement:limit-break" },
+  { id: "kind-researcher", displayName: "\uB2E4\uC815\uD55C \uC5F0\uAD6C\uC6D0", rarity: "rare", acquisitionConditionId: "achievement:bond" },
+  { id: "chief-researcher", displayName: "\uC218\uC11D \uC5F0\uAD6C\uC6D0", rarity: "epic", acquisitionConditionId: "achievement:research-level" },
+  { id: "veteran", displayName: "\uBC31\uC804\uB178\uC7A5", rarity: "epic", acquisitionConditionId: "achievement:victories" },
+  { id: "front-breaker", displayName: "\uC804\uC120 \uB3CC\uD30C\uC790", rarity: "rare", acquisitionConditionId: "achievement:frontline" },
+  { id: "arena-ruler", displayName: "\uACB0\uD22C\uC7A5\uC758 \uC9C0\uBC30\uC790", rarity: "legendary", acquisitionConditionId: "achievement:duelist" },
+  { id: "raid-captain", displayName: "\uD1A0\uBC8C\uB300\uC7A5", rarity: "rare", acquisitionConditionId: "achievement:raider" },
+  { id: "deep-salvager", displayName: "\uC2EC\uD574 \uC778\uC591\uAC00", rarity: "legendary", acquisitionConditionId: "achievement:salvager" },
+  { id: "fossil-appraiser", displayName: "\uD654\uC11D \uAC10\uC815\uC0AC", rarity: "epic", acquisitionConditionId: "achievement:fossil-lab" },
+  { id: "city-envoy", displayName: "\uB3C4\uC2DC\uC758 \uC0AC\uC808", rarity: "rare", acquisitionConditionId: "achievement:dispatch" },
+  { id: "story-collector", displayName: "\uC774\uC57C\uAE30 \uC218\uC9D1\uAC00", rarity: "rare", acquisitionConditionId: "achievement:storyteller" },
+  { id: "cheesecake-artisan", displayName: "\uCE58\uC988\uCF00\uC774\uD06C \uC7A5\uC778", rarity: "rare", acquisitionConditionId: "achievement:feeding" },
+  { id: "tireless", displayName: "\uC9C0\uCE60 \uC904 \uBAA8\uB974\uB294", rarity: "epic", acquisitionConditionId: "achievement:stamina" },
+  { id: "diligent-researcher", displayName: "\uC131\uC2E4\uD55C \uC5F0\uAD6C\uC6D0", rarity: "epic", acquisitionConditionId: "achievement:diligence" }
 ];
 function findProfileModifier(id) {
   return PROFILE_MODIFIERS.find((definition) => definition.id === id);
@@ -24281,7 +24449,7 @@ var SaveManager = class {
       // 깬 등급 목록도 저장 뒤 호출자가 바꾸지 못하도록 복사한다.
       bounty: { ...state.bounty, clearedTierIds: [...state.bounty.clearedTierIds] },
       // 임무 진행 객체와 수령 배열도 호출자가 저장 후 바꾸지 못하도록 복사한다.
-      missions: { ...state.missions, progress: { ...state.missions.progress }, claimedIds: [...state.missions.claimedIds], researchPoints: { ...state.missions.researchPoints }, claimedResearchStageIds: [...state.missions.claimedResearchStageIds] },
+      missions: { ...state.missions, ...state.missions.lifetime ? { lifetime: { ...state.missions.lifetime } } : {}, progress: { ...state.missions.progress }, claimedIds: [...state.missions.claimedIds], researchPoints: { ...state.missions.researchPoints }, claimedResearchStageIds: [...state.missions.claimedResearchStageIds] },
       // 구매 제한도 지급과 같은 저장 단위에 포함해 재실행으로 제한이 풀리지 않게 한다.
       productPurchases: Object.fromEntries(Object.entries(state.productPurchases).map(([id, value]) => [id, { ...value }])),
       // 광고 검증 토큰은 제외하고 UTC 일자·횟수·멱등 ID만 독립 복사한다.
@@ -24296,6 +24464,7 @@ var SaveManager = class {
       claimedMailIds: [...new Set(state.claimedMailIds ?? [])],
       attendance: cloneAttendanceState(state.attendance ?? createEmptyAttendanceState()),
       raidTicketDrops: { ...state.raidTicketDrops ?? createEmptyRaidTicketDropState() },
+      achievements: normalizeAchievementState(state.achievements ?? createEmptyAchievementState()),
       serverJournal: structuredClone(state.serverJournal ?? emptyServerJournal())
     };
     this.validate(data);
@@ -24388,10 +24557,11 @@ var SaveManager = class {
     const claimedMailIds = Array.isArray(legacy.claimedMailIds) ? [...new Set(legacy.claimedMailIds.filter((id) => typeof id === "string"))] : [];
     const attendance = normalizeAttendanceState(legacy.attendance);
     const raidTicketDrops = normalizeRaidTicketDropState(legacy.raidTicketDrops);
+    const achievements = normalizeAchievementState(legacy.achievements);
     const savedBounty = legacy.bounty;
     const bounty = { clearedTierIds: savedBounty?.clearedTierIds ?? [] };
     const savedMissions = legacy.missions;
-    const missions = { dailyKey: savedMissions?.dailyKey ?? "", weeklyKey: savedMissions?.weeklyKey ?? "", progress: savedMissions?.progress ?? {}, claimedIds: savedMissions?.claimedIds ?? [], researchPoints: clampResearchPoints(savedMissions?.researchPoints), claimedResearchStageIds: savedMissions?.claimedResearchStageIds ?? [] };
+    const missions = { dailyKey: savedMissions?.dailyKey ?? "", weeklyKey: savedMissions?.weeklyKey ?? "", progress: savedMissions?.progress ?? {}, claimedIds: savedMissions?.claimedIds ?? [], researchPoints: clampResearchPoints(savedMissions?.researchPoints), claimedResearchStageIds: savedMissions?.claimedResearchStageIds ?? [], ...savedMissions?.lifetime && typeof savedMissions.lifetime === "object" ? { lifetime: Object.fromEntries(Object.entries(savedMissions.lifetime).filter(([, value]) => Number.isInteger(value) && value >= 0)) } : {} };
     const productPurchases = legacy.productPurchases && typeof legacy.productPurchases === "object" ? legacy.productPurchases : {};
     const savedAds = legacy.dailyAdRewards;
     const dailyAdRewards = { date: savedAds?.date ?? "", claimsBySlot: savedAds?.claimsBySlot ?? {}, requestIds: savedAds?.requestIds ?? [] };
@@ -24450,10 +24620,10 @@ var SaveManager = class {
     const relicFragments = savedFragments ?? Object.fromEntries(Object.entries(savedProgress).map(([id, progress]) => [id, progress.awakening ?? 0]).filter(([, count2]) => count2 > 0));
     const itemInventory = repairLegacyLotStacks((Array.isArray(legacy.itemInventory) ? legacy.itemInventory : []).filter((stack) => stack?.itemId !== "raid-sigil"));
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
-    if (legacy.saveVersion === void 0) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops };
+    if (legacy.saveVersion === void 0) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops, achievements };
     const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion)) throw new SaveDataError(`\uC9C0\uC6D0\uD558\uC9C0 \uC54A\uB294 \uC800\uC7A5 \uBC84\uC804\uC785\uB2C8\uB2E4: ${String(legacy.saveVersion)}`);
-    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops };
+    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops, achievements };
   }
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
   validate(data) {
@@ -24531,6 +24701,8 @@ var SaveManager = class {
     if (!Array.isArray(data.claimedMailIds) || data.claimedMailIds.some((id) => typeof id !== "string") || new Set(data.claimedMailIds).size !== data.claimedMailIds.length) fail("\uC6B0\uD3B8 \uC218\uB839 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!isValidAttendanceState(data.attendance)) fail("\uCD9C\uC11D \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!isValidRaidTicketDropState(data.raidTicketDrops)) fail("\uD1A0\uBC8C\uAD8C \uD68D\uB4DD \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!isValidAchievementState(data.achievements)) fail("\uC5C5\uC801 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (data.missions.lifetime !== void 0 && (typeof data.missions.lifetime !== "object" || data.missions.lifetime === null || Object.values(data.missions.lifetime).some((value) => !Number.isInteger(value) || value < 0))) fail("\uC784\uBB34 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (data.serverJournal !== void 0 && !isValidServerJournal(data.serverJournal)) fail("\uC11C\uBC84 \uCC98\uB9AC \uC601\uC218\uC99D\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (data.expedition.pendingRankRewards !== void 0 && (!Array.isArray(data.expedition.pendingRankRewards) || data.expedition.pendingRankRewards.some((reward) => !reward || typeof reward.weekKey !== "string" || !Number.isInteger(reward.score) || reward.score <= 0 || typeof reward.achievedAt !== "string") || new Set([data.expedition.pendingRankReward, ...data.expedition.pendingRankRewards].filter(Boolean).map((reward) => reward.weekKey)).size !== data.expedition.pendingRankRewards.length + (data.expedition.pendingRankReward ? 1 : 0))) fail("\uC6D0\uC815 \uC8FC\uAC04 \uBCF4\uC0C1 \uB300\uAE30\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
   }
@@ -24596,7 +24768,7 @@ var SaveManager = class {
       gachaPityByGroup: Object.fromEntries(Object.entries(data.gachaPityByGroup).map(([id, pity]) => [id, { ...pity }])),
       dailyContent: { ...data.dailyContent, completedIds: [...data.dailyContent.completedIds], claimedRewardIds: [...data.dailyContent.claimedRewardIds] },
       bounty: { ...data.bounty, clearedTierIds: [...data.bounty.clearedTierIds] },
-      missions: { ...data.missions, progress: { ...data.missions.progress }, claimedIds: [...data.missions.claimedIds], researchPoints: { ...data.missions.researchPoints }, claimedResearchStageIds: [...data.missions.claimedResearchStageIds] },
+      missions: { ...data.missions, ...data.missions.lifetime ? { lifetime: { ...data.missions.lifetime } } : {}, progress: { ...data.missions.progress }, claimedIds: [...data.missions.claimedIds], researchPoints: { ...data.missions.researchPoints }, claimedResearchStageIds: [...data.missions.claimedResearchStageIds] },
       productPurchases: Object.fromEntries(Object.entries(data.productPurchases).map(([id, value]) => [id, { ...value }])),
       dailyAdRewards: { ...data.dailyAdRewards, claimsBySlot: { ...data.dailyAdRewards.claimsBySlot }, requestIds: [...data.dailyAdRewards.requestIds] },
       expedition: { ...data.expedition, claimedRewardStageIds: [...data.expedition.claimedRewardStageIds], pendingRankReward: data.expedition.pendingRankReward ? { ...data.expedition.pendingRankReward } : null, lastParty: [...data.expedition.lastParty], run: data.expedition.run ? cloneExpeditionRun(data.expedition.run) : null },
@@ -24608,7 +24780,8 @@ var SaveManager = class {
       claimedMailIds: [...data.claimedMailIds],
       attendance: cloneAttendanceState(data.attendance),
       serverJournal: structuredClone(data.serverJournal ?? emptyServerJournal()),
-      raidTicketDrops: { ...data.raidTicketDrops }
+      raidTicketDrops: { ...data.raidTicketDrops },
+      achievements: { claimed: { ...data.achievements.claimed }, goldPeak: data.achievements.goldPeak }
     };
   }
 };
@@ -24740,7 +24913,7 @@ var ProfileModifierManager = class {
   }
   /** 보상 조건과 일치한 획득 ID를 보상 스냅샷에 합쳐 호출자의 단일 persist에 포함한다. */
   static applyRewardReceipt(state, receipt) {
-    const conditions = /* @__PURE__ */ new Set([...receipt.claimedIds.map((id) => `mission:${id}`), ...receipt.claimedResearchStageIds.map((id) => `research:${id}`)]);
+    const conditions = /* @__PURE__ */ new Set([...receipt.claimedIds.map((id) => `mission:${id}`), ...receipt.claimedResearchStageIds.map((id) => `research:${id}`), ...(receipt.completedAchievementIds ?? []).map((id) => `achievement:${id}`)]);
     const earned = new Set(state.earnedProfileModifierIds);
     PROFILE_MODIFIERS.forEach((definition) => {
       if (conditions.has(definition.acquisitionConditionId)) earned.add(definition.id);
@@ -25461,6 +25634,632 @@ function findEventByProductId(productId) {
   return EVENTS.find(({ exchangeProductIds }) => exchangeProductIds.includes(productId));
 }
 
+// src/core/achievements.ts
+init_define_import_meta_env();
+
+// src/data/recollectionCatalog.ts
+init_define_import_meta_env();
+
+// src/data/dialogues/openingTrain.ts
+init_define_import_meta_env();
+var ROGUE_TRIO = [
+  { id: "dodi", slot: "left" },
+  { id: "torika", slot: "center" },
+  { id: "parua", slot: "right" }
+];
+var RAID_TRIO = [
+  { id: "amo", slot: "left" },
+  { id: "toby", slot: "center" },
+  { id: "ripa", slot: "right" }
+];
+var OPENING_TRAIN = {
+  id: "opening-train",
+  startNodeId: "wake",
+  backdrop: "train",
+  titleCard: { title: "\uCD94\uB77D\uD558\uB294 \uBC29\uC8FC", subtitle: "\uC774\uD130\uB110 \uC2DC\uD2F0\uC640 \uC5F0\uAD6C\uC6D0" },
+  nodes: [
+    // ── 열차 안: 토리카 ───────────────────────────────────────────────
+    { id: "wake", speaker: "???", body: "\uC5F0\uAD6C\uC6D0\uB2D8, \uC5F0\uAD6C\uC6D0\uB2D8! \uB208 \uC880 \uB5A0 \uBCF4\uC138\uC694. \uCC3D\uBC16\uC5D0 \uB3C4\uC2DC\uAC00 \uBCF4\uC5EC\uC694!", standing: "torika", cast: [{ id: "torika", slot: "center" }], act: "hop", nextId: "greet" },
+    { id: "greet", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC800\uB294 \uD1A0\uB9AC\uCE74\uC608\uC694! \uC624\uB298\uBD80\uD130 \uC5F0\uAD6C\uC6D0\uB2D8\uC744 \uC9C0\uD0A4\uB294 \uD638\uC704 \uB810\uB9AD\uC774\uC5D0\uC694. \uB3C4\uCC29\uD560 \uB54C\uAE4C\uC9C0 \uC606\uC5D0 \uAF2D \uBD99\uC5B4 \uC788\uC744\uAC8C\uC694.", standing: "torika", act: "nod", nextId: "window" },
+    { id: "window", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC800\uAE30, \uD558\uC580 \uBF08\uCC98\uB7FC \uC19F\uC740 \uD0D1\uB4E4 \uBCF4\uC774\uC138\uC694? \uBA78\uC885\uC758 \uAE30\uC5B5 \uC704\uC5D0 \uC138\uC6B4 \uB3C4\uC2DC, \uC774\uD130\uB110 \uC2DC\uD2F0\uC608\uC694.", standing: "torika", act: "lean", nextId: "answer" },
+    {
+      id: "answer",
+      speaker: "\uD1A0\uB9AC\uCE74",
+      body: "\uB3C4\uCC29\uD558\uBA74 \uC81C\uC77C \uBA3C\uC800 \uBB58 \uD558\uACE0 \uC2F6\uC73C\uC138\uC694?",
+      standing: "torika",
+      choices: [
+        { id: "promise", label: "\uB108\uD76C\uB97C \uB354 \uC54C\uACE0 \uC2F6\uC5B4", nextId: "warm", effect: { type: "bondXp", relicId: "torika", amount: 5 } },
+        { id: "work", label: "\uB3C4\uC2DC\uBD80\uD130 \uB458\uB7EC\uBCFC\uAC8C", nextId: "ready" }
+      ]
+    },
+    { id: "warm", speaker: "\uD1A0\uB9AC\uCE74", body: "\uD5E4\uD5E4, \uADF8\uB7FC \uC800\uBD80\uD130 \uC54C\uB824 \uB4DC\uB9B4\uAC8C\uC694! \uC88B\uC544\uD558\uB294 \uAC74 \uAC04\uC2DD\uC774\uB791\u2026 \uC5F0\uAD6C\uC6D0\uB2D8 \uC606\uC790\uB9AC\uC694!", standing: "torika", act: "hopTwice", nextId: "peek" },
+    { id: "ready", speaker: "\uD1A0\uB9AC\uCE74", body: "\uADF8\uB7FC \uC81C\uAC00 \uC548\uB0B4\uD560\uAC8C\uC694! \uB9DB\uC788\uB294 \uAC00\uAC8C\uBD80\uD130\u2026 \uC544, \uC544\uB2C8, \uC911\uC694\uD55C \uC5F0\uAD6C\uC18C\uBD80\uD130\uC694!", standing: "torika", act: "shake", nextId: "peek" },
+    // ── 도디: 부끄럽지만 반짝반짝한 1호 팬 ──────────────────────────────
+    { id: "peek", speaker: "???", body: "\uC800, \uC800\uAE30\u2026 \uD1A0\uB9AC\uCE74. \uD639\uC2DC \uADF8\uBD84\uC774\u2026 \uADF8 \uC5F0\uAD6C\uC6D0\uB2D8\uC774\uC57C?", standing: "dodi", cast: [{ id: "dodi", slot: "left" }, { id: "torika", slot: "right" }], act: "tremble", nextId: "callDodi" },
+    { id: "callDodi", speaker: "\uD1A0\uB9AC\uCE74", body: "\uB3C4\uB514! \uB4A4\uC5D0 \uC228\uC5B4 \uC788\uC9C0 \uB9D0\uACE0 \uB098\uC640\uC11C \uC778\uC0AC\uD574\uC57C\uC9C0!", standing: "torika", act: "hop", nextId: "fan" },
+    { id: "fan", speaker: "\uB3C4\uB514", body: "\uC640\uC544\u2026 \uC9C4\uC9DC\uB2E4. \uC9C4\uC9DC \uC5F0\uAD6C\uC6D0\uB2D8\uC774\uB2E4! \uC800, \uC800\uB294 \uAE30\uB85D\uBCD1 \uB3C4\uB514\uC608\uC694! \uC5F0\uAD6C\uC6D0\uB2D8\uC774 \uC4F0\uC2E0 \uBCF5\uC6D0 \uBCF4\uACE0\uC11C\uB294 \uD55C \uC904\uB3C4 \uBE7C\uB193\uC9C0 \uC54A\uACE0 \uB2E4 \uC77D\uC5C8\uC5B4\uC694!", standing: "dodi", act: "hopTwice", nextId: "shy" },
+    { id: "shy", speaker: "\uB3C4\uB514", body: "\uADF8, \uADF8\uB7EC\uB2C8\uAE4C\u2026 \uC81C \uC77C\uC9C0 \uCCAB \uC7A5\uC5D0\u2026 \uC774\uB984 \uD55C \uBC88\uB9CC \uC801\uC5B4 \uC8FC\uC2DC\uBA74 \uC548 \uB420\uAE4C\uC694\u2026?", standing: "dodi", act: "shrink", nextId: "title" },
+    { id: "title", speaker: "\uB3C4\uB514", body: "\uC624\uB298\uBD80\uD130 \uC5F0\uAD6C\uC6D0\uB2D8\uC740 \uC800\uD76C \uB300\uC7A5\uB2D8\uC774\uC5D0\uC694! \uB300\uC7A5\uB2D8, \uB300\uC7A5\uB2D8\u2026 \uD5E4\uD5E4, \uBC8C\uC368 \uC785\uC5D0 \uBD99\uC5C8\uC5B4\uC694!", standing: "dodi", act: "hop", nextId: "halt" },
+    // ── 파루아: 도디를 붙잡으며 연구원에게 흥미를 ───────────────────────
+    { id: "halt", speaker: "???", body: "\uB3C4\uB514. \uB108\uBB34 \uAC00\uAE4C\uC6CC. \uC5F0\uAD6C\uC6D0\uB2D8\uC774 \uB4A4\uB85C \uAE30\uC6B8\uC5B4\uC9C0\uACE0 \uC788\uC5B4.", standing: "parua", cast: ROGUE_TRIO, act: "lean", nextId: "sorry" },
+    { id: "sorry", speaker: "\uB3C4\uB514", body: "\uC557, \uC8C4, \uC8C4\uC1A1\uD574\uC694! \uB108\uBB34 \uBC18\uAC00\uC6CC\uC11C \uADF8\uB9CC\u2026!", standing: "dodi", act: "recoil", nextId: "parua" },
+    { id: "parua", speaker: "\uD30C\uB8E8\uC544", body: "\uC800\uB294 \uD30C\uB8E8\uC544\uC608\uC694. \uB4A4\uB97C \uC0B4\uD53C\uB294 \uAC8C \uC81C \uC77C\uC774\uC5D0\uC694.", standing: "parua", act: "nod", nextId: "sniff" },
+    { id: "sniff", speaker: "\uD30C\uB8E8\uC544", body: "\uADF8\uB7F0\uB370 \uC774\uC0C1\uD574\uC694. \uC5F0\uAD6C\uC6D0\uB2D8\uD55C\uD14C\uC11C\uB294 \uB2E4\uB978 \uC5F0\uAD6C\uC6D0\uB4E4\uC774\uB791 \uB2E4\uB978 \uB0C4\uC0C8\uAC00 \uB098\uC694. \u2026\uC870\uAE08\uB9CC \uB354 \uAC00\uAE4C\uC774 \uBD10\uB3C4 \uB3FC\uC694?", standing: "parua", act: "lean", nextId: "scold" },
+    { id: "scold", speaker: "\uD1A0\uB9AC\uCE74", body: "\uD30C\uB8E8\uC544\uAE4C\uC9C0! \uC5F0\uAD6C\uC6D0\uB2D8 \uACE4\uB780\uD558\uC2DC\uC796\uC544!", standing: "torika", act: "shake", nextId: "quake" },
+    // ── 경보: 큰 진동, 그리고 검은 베일 ───────────────────────────────
+    { id: "quake", speaker: "", body: "\uCFE0\uAD6C\uAD6C\uAD81\u2026!! \uAC1D\uCC28 \uC804\uCCB4\uAC00 \uD06C\uAC8C \uB4E4\uC369\uC778\uB2E4.", cue: "rumble", nextId: "alarm" },
+    { id: "alarm", speaker: "\uC548\uB0B4 \uBC29\uC1A1", body: "\uACBD\uBCF4. \uACBD\uBCF4. \uC120\uB85C \uC804\uBC29\uC5D0 \uBBF8\uD655\uC778 \uAC1C\uCCB4 \uC811\uADFC. \uC2B9\uAC1D \uC5EC\uB7EC\uBD84\uC740 \uC989\uC2DC \uC790\uB9AC\uB97C \uC9C0\uCF1C \uC8FC\uC2ED\uC2DC\uC624.", cue: "alarm", sign: "broadcast", nextId: "sense" },
+    { id: "sense", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uC55E\uC5D0\uC11C \uBB54\uAC00 \uC640\uC694. \uD558\uB098\uAC00 \uC544\uB2C8\uC5D0\uC694.", standing: "parua", act: "tremble", nextId: "guard" },
+    { id: "guard", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC5F0\uAD6C\uC6D0\uB2D8, \uC81C \uB4A4\uB85C \uC624\uC138\uC694! \uBB34\uC2A8 \uC77C\uC774 \uC788\uC5B4\uB3C4 \uC81C\uAC00 \uB9C9\uC744\uAC8C\uC694!", standing: "torika", act: "hop", nextId: "veil" },
+    { id: "veil", speaker: "???", body: "\uCC3E\uC558\uB2E4. Garden\uC774 \uB0B4\uB824\uBCF4\uB0B8 \uC5F0\uAD6C\uC6D0.", standing: "koma", cast: [{ id: "koma", slot: "center", veiled: true }], cue: "rumble", nextId: "order" },
+    { id: "order", speaker: "???", body: "\uBAA9\uD45C \uD68C\uC218 \uC791\uC804\uC744 \uAC1C\uC2DC\uD55C\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 \uBC18\uB4DC\uC2DC \uC0AC\uB85C\uC7A1\uC544\uB77C. \u2026\uBC29\uC8FC\uC9F8\uB85C \uB5A8\uC5B4\uB728\uB824.", standing: "koma", act: "nod", nextId: "blast" },
+    // ── 폭파: 열차에서 전장으로 ──────────────────────────────────────
+    { id: "blast", speaker: "", body: "\uCF70\uC544\uC544\uC544\uC559!!", cast: [], cue: "explosion", backdrop: "battlefield", nextId: "aftermath" },
+    { id: "aftermath", speaker: "\uD1A0\uB9AC\uCE74", body: "\uCF5C\uB85D, \uCF5C\uB85D\u2026 \uC5F0\uAD6C\uC6D0\uB2D8, \uAD1C\uCC2E\uC73C\uC138\uC694?! \uC5F4\uCC28\uAC00\u2026 \uC120\uB85C \uBC16\uC73C\uB85C \uB5A8\uC5B4\uC84C\uC5B4\uC694\u2026!", standing: "torika", cast: [{ id: "torika", slot: "center" }], act: "shake", nextId: "record" },
+    { id: "record", speaker: "\uB3C4\uB514", body: "\uB300, \uB300\uC7A5\uB2D8\uC740 \uBB34\uC0AC\uD574\uC694! \uAE30\uB85D\u2026 \uAE30\uB85D\uD574\uC57C \uD558\uB294\uB370\u2026 \uC544\uB2C8, \uC9C0\uAE08\uC740 \uADF8\uB7F4 \uB54C\uAC00 \uC544\uB2C8\uC9C0!", standing: "dodi", cast: ROGUE_TRIO, act: "tremble", nextId: "three" },
+    { id: "three", speaker: "\uD30C\uB8E8\uC544", body: "\uC27F. \uC14B\uC774\uC5D0\uC694. \uC5F0\uAE30 \uB108\uBA38\uC5D0\uC11C \uC774\uCABD\uC73C\uB85C \uC624\uACE0 \uC788\uC5B4\uC694.", standing: "parua", act: "lean", nextId: "toby" },
+    // ── 공멸의 우당탕탕 삼인조 ──────────────────────────────────────
+    { id: "toby", speaker: "\uD1A0\uBE44", body: "\uCC3E\uC558\uB2E4\uC544! \uC800\uAE30 \uC788\uB2E4, \uADF8 \uC5F0\uAD6C\uC6D0! \uC774\uBC88\uC5D4 \uB0B4\uAC00 \uC81C\uC77C \uBA3C\uC800 \uC7A1\uB294\uB2E4!", standing: "toby", cast: RAID_TRIO, act: "hopTwice", cue: "impact", nextId: "amo" },
+    { id: "amo", speaker: "\uC544\uBAA8", body: "\uD1A0, \uD1A0\uBE44\u2026 \uBAA9\uC18C\uB9AC \uC880 \uC904\uC5EC. \uCF54\uB9C8\uAC00 \uC870\uC6A9\uD788 \uC6C0\uC9C1\uC774\uB7AC\uC796\uC544\u2026", standing: "amo", act: "tremble", nextId: "ripa" },
+    { id: "ripa", speaker: "\uB9AC\uD30C", body: "\uC5D0\uC774, \uC5B4\uCC28\uD53C \uB2E4 \uB4E4\uCF30\uB294\uAC78? \uC800\uCABD \uC14B \uD45C\uC815 \uC880 \uBD10. \uC644\uC804 \uC7AC\uBC0C\uB2E4!", standing: "ripa", act: "hop", nextId: "demand" },
+    { id: "demand", speaker: "\uD1A0\uBE44", body: "\uC6B0\uB9AC\uB294 \uACF5\uBA78! \uADF8 \uC5F0\uAD6C\uC6D0\uB9CC \uB118\uAE30\uBA74 \uB108\uD76C\uB294 \uACF1\uAC8C \uBCF4\uB0B4 \uC904\uAC8C!", standing: "toby", act: "shake", nextId: "refuse" },
+    // ── 맞서는 쁘띠 로그 ──────────────────────────────────────────
+    { id: "refuse", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC2EB\uC5B4\uC694! \uC5F0\uAD6C\uC6D0\uB2D8\uC740\u2026 \uC6B0\uB9AC \uB300\uC7A5\uB2D8\uC774\uC5D0\uC694. \uD55C \uBC1C\uC9DD\uB3C4 \uBABB \uC9C0\uB098\uAC00\uC694!", standing: "torika", cast: ROGUE_TRIO, act: "hop", cue: "impact", nextId: "brave" },
+    { id: "brave", speaker: "\uB3C4\uB514", body: "\uBB34, \uBB34\uC12D\uC9C0\uB9CC\u2026 \uB300\uC7A5\uB2D8\uC744 \uC9C0\uD0A8 \uCCAB \uAE30\uB85D\uC740 \uC81C\uAC00 \uC4F8 \uAC70\uC608\uC694!", standing: "dodi", act: "tremble", nextId: "aim" },
+    { id: "aim", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uD654\uC0B4\uC740 \uC900\uBE44\uB410\uC5B4\uC694. \uC5B8\uC81C\uB4E0\uC9C0\uC694.", standing: "parua", act: "nod", nextId: "end" },
+    // 전투를 여는 외침은 토리카 한 마디뿐이다 — 곧바로 1-1이 시작되므로 구호를 길게 늘이지 않는다.
+    { id: "end", speaker: "\uD1A0\uB9AC\uCE74", body: "\uB300\uC7A5\uB2D8\uC740 \uC81C \uB4A4\uC5D0 \uACC4\uC138\uC694. \u2026\uC804\uD22C \uAC1C\uC2DC!", standing: "torika", act: "hop", cue: "impact" }
+  ]
+};
+registerDialogueTexts(OPENING_TRAIN);
+
+// src/data/dialogues/openingRetreat.ts
+init_define_import_meta_env();
+var OPENING_RETREAT = {
+  id: "opening-retreat",
+  startNodeId: "groan",
+  backdrop: "battlefield",
+  nodes: [
+    { id: "groan", speaker: "\uD1A0\uBE44", body: "\uB044\uC544\uC545! \uC774, \uC774\uB7F4 \uB9AC\uAC00 \uC5C6\uB294\uB370!", standing: "toby", cast: RAID_TRIO, act: "shake", cue: "impact", nextId: "sigh" },
+    { id: "sigh", speaker: "\uC544\uBAA8", body: "\uADF8\uB7EC\uB2C8\uAE4C\u2026 \uC870\uC6A9\uD788 \uAC00\uC790\uACE0 \uD588\uC796\uC544\u2026", standing: "amo", act: "shrink", nextId: "grin" },
+    { id: "grin", speaker: "\uB9AC\uD30C", body: "\uC5D0\uC774, \uADF8\uB798\uB3C4 \uC7AC\uBC0C\uC5C8\uC796\uC544? \uC800\uCABD \uC14B, \uC0DD\uAC01\uBCF4\uB2E4 \uC138\uB354\uB77C~", standing: "ripa", act: "hop", nextId: "vow" },
+    { id: "vow", speaker: "\uD1A0\uBE44", body: "\uAE30\uC5B5\uD574 \uB46C, \uC5F0\uAD6C\uC6D0! \uB2E4\uC74C\uC5D4 \uAF2D \uB370\uB824\uAC04\uB2E4!", standing: "toby", act: "hopTwice", nextId: "away" },
+    { id: "away", speaker: "\uD1A0\uBE44\xB7\uC544\uBAA8\xB7\uB9AC\uD30C", body: "\uB450\uACE0 \uBCF4\uC790\uC544\uC544\uC544~!!", cast: [], leave: "blastOff", cue: "impact", nextId: "gone" },
+    { id: "gone", speaker: "\uD1A0\uB9AC\uCE74", body: "\u2026\uB0A0\uC544\uAC00 \uBC84\uB838\uB124\uC694. \uB300\uC7A5\uB2D8, \uB2E4\uCE58\uC2E0 \uB370\uB294 \uC5C6\uC8E0?", standing: "torika", cast: ROGUE_TRIO, act: "hop", nextId: "log" },
+    { id: "log", speaker: "\uB3C4\uB514", body: "\uCCAB \uC804\uD22C \uAE30\uB85D \uC644\uB8CC! \uC801\uC740 \uD558\uB298\uC758 \uBCC4\uC774 \uB418\uC5C8\uB2E4\u2026 \uC774\uB807\uAC8C \uC801\uC5B4 \uB46C\uC57C\uC9C0!", standing: "dodi", act: "hopTwice", nextId: "watch" },
+    { id: "watch", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uB610 \uC62C \uAC70\uC608\uC694. \uD3EC\uAE30\uD560 \uC5BC\uAD74\uC774 \uC544\uB2C8\uC5C8\uC5B4\uC694.", standing: "parua", act: "nod", nextId: "onward" },
+    { id: "onward", speaker: "\uD1A0\uB9AC\uCE74", body: "\uADF8\uB7FC \uC6B0\uB9AC\uB3C4 \uC11C\uB458\uB7EC\uC694. \uC774\uD130\uB110 \uC2DC\uD2F0\uAE4C\uC9C0 \uC81C\uAC00 \uC548\uB0B4\uD560\uAC8C\uC694!", standing: "torika", act: "nod" }
+  ]
+};
+registerDialogueTexts(OPENING_RETREAT);
+
+// src/data/dialogues/greenhouseEcho.ts
+init_define_import_meta_env();
+var GREENHOUSE_ECHO = {
+  id: "stage-1-5-greenhouse-echo",
+  startNodeId: "signal",
+  nodes: [
+    { id: "signal", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC7A0\uAE50, \uC8FC \uD1B5\uB85C \uC606 \uC628\uC2E4\uC5D0\uC11C \uC624\uB798\uB41C \uC0DD\uCCB4 \uC2E0\uD638\uAC00 \uB4E4\uB824.", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "lexia", slot: "right" }], nextId: "seed" },
+    { id: "seed", speaker: "\uB809\uC2DC\uC544", body: "\uC804\uD22C \uD754\uC801\uC740 \uC5C6\uC5B4. \uB204\uAD70\uAC00 \uB0A8\uACA8 \uB454 \uC528\uC557\uC758 \uAE30\uC5B5 \uAC19\uB124.", standing: "lexia", nextId: "promise" },
+    { id: "promise", speaker: "\uD1A0\uB9AC\uCE74", body: "\uAE30\uB85D\uD574 \uB450\uC790. \uAE38\uC744 \uACC4\uC18D \uAC00\uB354\uB77C\uB3C4, \uC774 \uC791\uC740 \uC815\uC6D0\uC740 \uC78A\uD788\uC9C0 \uC54A\uAC8C.", standing: "torika" }
+  ]
+};
+registerDialogueTexts(GREENHOUSE_ECHO);
+
+// src/data/stageStories.ts
+init_define_import_meta_env();
+
+// src/data/dialogues/chapter1.ts
+init_define_import_meta_env();
+
+// src/data/dialogues/linear.ts
+init_define_import_meta_env();
+function linear(nodes) {
+  return nodes.map((node, index) => {
+    const next = nodes[index + 1];
+    if (!next || node.nextId || node.choices?.length) return node;
+    return { ...node, nextId: next.id };
+  });
+}
+
+// src/data/dialogues/chapter1.ts
+var VOICE = (voice, left, right) => [
+  { id: left, slot: "left" },
+  { id: voice, slot: "center", remote: true },
+  { id: right, slot: "right" }
+];
+var TIA_TRIO = [{ id: "torika", slot: "left" }, { id: "tia", slot: "center" }, { id: "parua", slot: "right" }];
+var ALONE = (id) => [{ id, slot: "center" }];
+var STAGE_1_2_POST = {
+  id: "stage-1-2-post",
+  startNodeId: "fall",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "fall", speaker: "\uD1A0\uBE44", body: "\uC73C\uC73D\u2026 \uC720\uB9AC \uC9C0\uBD95\uC774 \uC774\uB807\uAC8C \uC57D\uD560 \uC904\uC740 \uBAB0\uB790\uC5B4!", standing: "toby", cast: RAID_TRIO, act: "squash", cue: "impact" },
+    { id: "hush", speaker: "\uC544\uBAA8", body: "\uB0B4\uAC00 \uBC1F\uC9C0 \uB9D0\uB7AC\uC796\uC544\u2026 \uC18C\uB9AC \uB098\uBA74 \uB4E4\uD0A8\uB2E4\uACE0.", standing: "amo", act: "shrink" },
+    { id: "late", speaker: "\uB9AC\uD30C", body: "\uC774\uBBF8 \uB4E4\uCF30\uB294\uAC78? \uC704\uC5D0\uC11C \uBCF4\uB2C8\uAE4C \uC7E4\uB124 \uC6B0\uB9AC \uCABD\uC73C\uB85C \uACE7\uC7A5 \uC624\uB358\uB370.", standing: "ripa", act: "hop" },
+    { id: "where", speaker: "\uD1A0\uBE44", body: "\uADF8\uBCF4\uB2E4 \uCF54\uB9C8\uB294 \uC5B4\uB514 \uAC14\uC5B4? \uC544\uC9C1\uB3C4 \uC548 \uC654\uC5B4?", standing: "toby", act: "hopTwice" },
+    { id: "door", speaker: "\uC544\uBAA8", body: "\u2026\uBB38 \uC55E\uC5D0 \uBA3C\uC800 \uAC00 \uC788\uC744 \uAC70\uC57C. \uC5B8\uC81C\uB098 \uADF8\uB7AC\uC796\uC544.", standing: "amo", act: "nod" },
+    { id: "heard", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uC800 \uC774\uB984, \uB4E4\uC5C8\uC5B4\uC694. \uCF54\uB9C8. \uC55E\uC5D0\uC11C \uAE38\uC744 \uBCF4\uB294 \uCABD\uC774\uC5D0\uC694.", standing: "parua", cast: ROGUE_TRIO, act: "lean" },
+    { id: "log", speaker: "\uB3C4\uB514", body: "\uC801\uC5B4 \uB458\uAC8C\uC694! \uC120\uBD09\uC740 \uCF54\uB9C8, \uC800 \uC14B\uC740 \uADF8 \uB4A4\uB97C \uCAD3\uB294 \uCABD\u2026 \uB9DE\uC8E0?", standing: "dodi", act: "hop" },
+    { id: "go", speaker: "\uD1A0\uB9AC\uCE74", body: "\uBA3C \uC2E0\uD638\uAC00 \uAD00\uC81C\uD0D1 \uCABD\uC5D0\uC11C \uACC4\uC18D \uAE5C\uBE61\uC774\uB124\uC694. \uB300\uC7A5\uB2D8, \uADF8\uCABD\uC73C\uB85C \uAC00 \uBD10\uC694!", standing: "torika", act: "nod" }
+  ])
+};
+var STAGE_1_4_PRE = {
+  id: "stage-1-4-pre",
+  startNodeId: "cases",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "cases", speaker: "\uB3C4\uB514", body: "\uB300\uC7A5\uB2D8, \uC774 \uC9C4\uC5F4\uC7A5 \uC880 \uBCF4\uC138\uC694! \uAC19\uC740 \uC190\uC790\uAD6D\uC774 \uC904\uC904\uC774 \uB0A8\uC544 \uC788\uC5B4\uC694.", standing: "dodi", cast: ROGUE_TRIO, act: "hopTwice" },
+    { id: "size", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uD06C\uAE30\uAC00 \uAC19\uC544\uC694. \uD55C \uBA85\uC774 \uC774 \uBC29\uC744 \uACC4\uC18D \uB3CC\uC558\uC5B4\uC694.", standing: "parua", act: "lean" },
+    { id: "habit", speaker: "\uB3C4\uB514", body: "\uC190\uAC00\uB77D\uC774 \uBE44\uC2A4\uB4EC\uD558\uACE0, \uC720\uB9AC \uAC00\uC7A5\uC790\uB9AC\uB9C8\uB2E4 \uB20C\uB9B0 \uC790\uAD6D\uC774 \uC788\uC5B4\uC694. \uB0AF\uC120 \uAC74 \uC77C\uB2E8 \uBA3C\uC800 \uB9CC\uC9C0\uACE0 \uBCF4\uB294 \uC190\uC774\uC5D0\uC694.", standing: "dodi", act: "nod" },
+    { id: "ask", speaker: "\uD1A0\uB9AC\uCE74", body: "\uBC29\uAE08 \uB9CC\uB09C \uC0AC\uB78C \uBC84\uB987\uC744 \uC5B4\uB5BB\uAC8C \uC54C\uC544?", standing: "torika", act: "shake" },
+    { id: "train", speaker: "\uB3C4\uB514", body: "\uC544\uAE4C \uC5F4\uCC28\uC5D0\uC11C \uBB38 \uC190\uC7A1\uC774\uB97C \uC81C\uC77C \uBA3C\uC800 \uB9CC\uC9C4 \uC190\uC774\uB791 \uAC19\uC544\uC694. \uAE30\uB85D\uD574 \uB480\uAC70\uB4E0\uC694!", standing: "dodi", act: "hop" },
+    { id: "alarm", speaker: "\uD1A0\uB9AC\uCE74", body: "\uADF8\uB7FC \uC774 \uBC29 \uACBD\uBCF4\uB3C4 \uADF8 \uC560\uAC00 \uCF30\uACA0\uB124\uC694. \uB300\uC7A5\uB2D8, \uC870\uC2EC\uC870\uC2EC \uAC00\uC694!", standing: "torika", act: "nod" }
+  ])
+};
+var STAGE_1_5_PRE = {
+  id: "stage-1-5-pre",
+  startNodeId: "hi",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "hi", speaker: "\uD1A0\uBE44", body: "\uC5EC\uC5B4, \uC5F0\uAD6C\uC6D0! \uB180\uB790\uC9C0? \uBA3C\uC800 \uC640\uC11C \uBB38\uC744 \uC5F4\uC5B4 \uB450\uACA0\uB2E4\uACE0 \uD588\uAC70\uB4E0!", standing: "toby", cast: ALONE("toby"), act: "bounce" },
+    { id: "torn", speaker: "\uD1A0\uBE44", body: "\u2026\uC5F4\uC5B4 \uB450\uB824\uACE0 \uD588\uB294\uB370, \uC5F4\uB838\uB2E4\uAE30\uBCF4\uB2E4 \uB72F\uACBC\uB2E4\uB294 \uCABD\uC774 \uB9DE\uC744 \uAC70\uC57C.", standing: "toby", act: "shrink" },
+    { id: "guard", speaker: "\uD1A0\uB9AC\uCE74", body: "\uB300\uC7A5\uB2D8\uC740 \uC81C \uB4A4\uB85C \uC624\uC138\uC694! \uD63C\uC790 \uC624\uC2E0 \uAC70\uC608\uC694? \uB2E4\uB978 \uB450 \uBD84\uC740\uC694?", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "toby", slot: "right" }], act: "hop" },
+    { id: "split", speaker: "\uD1A0\uBE44", body: "\uC544\uBAA8\uB791 \uB9AC\uD30C\uB294 \uCF54\uB9C8\uAC00 \uC2DC\uD0A8 \uB300\uB85C \uB534 \uAE38\uB85C \uAC14\uC5B4. \uB098 \uD63C\uC790\uC11C\uB3C4 \uCDA9\uBD84\uD558\uB2E4\uACE0!", standing: "toby", act: "puff" },
+    { id: "denial", speaker: "\uD1A0\uBE44", body: "\uADF8, \uADF8\uB9AC\uACE0 \uC774 \uBC29\uBCBD \uC7A5\uCE58\uB294 \uB0B4\uAC00 \uB9CC\uC9C4 \uAC8C \uC544\uB2C8\uC57C. \uC6D0\uB798 \uCF1C\uC838 \uC788\uC5C8\uC5B4.", standing: "toby", act: "fright" },
+    { id: "beep", speaker: "\uD1A0\uB9AC\uCE74", body: '\uBC29\uAE08 \uC7A5\uCE58\uC5D0\uC11C "\uC090\u2014" \uD558\uACE0 \uC18C\uB9AC\uAC00 \uB0AC\uB294\uB370\uC694.', standing: "torika", act: "recoil" },
+    { id: "fight", speaker: "\uD1A0\uBE44", body: "\uC73C\uC544\uC544 \uBA48\uCD94\uB294 \uBC95\uC774 \uC5B4\uB514 \uC788\uB354\uB77C?! \uC2F8, \uC2F8\uC6B0\uC790! \uC2F8\uC6B0\uB294 \uB3D9\uC548\uC740 \uC7A5\uCE58\uAC00 \uC2E0\uACBD \uC548 \uC4F0\uC774\uB2C8\uAE4C!", standing: "toby", act: "rage", cue: "impact" }
+  ])
+};
+var STAGE_1_5_POST = {
+  id: "stage-1-5-post",
+  startNodeId: "tidy",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "tidy", speaker: "", body: "\uB118\uC5B4\uC9C4 \uC7A5\uBE44\uAC00 \uAD6C\uC11D\uC5D0 \uC313\uC5EC \uC788\uB2E4. \uD1A0\uBE44\uAC00 \uC5F0\uAD6C\uC6D0 \uB208\uCE58\uB97C \uBCF4\uBA70 \uD558\uB098\uC529 \uC77C\uC73C\uCF1C \uC138\uC6B4\uB2E4.", standing: "toby", cast: [{ id: "toby", slot: "right" }, { id: "torika", slot: "left" }] },
+    { id: "what", speaker: "\uD1A0\uB9AC\uCE74", body: "\u2026\uC9C0\uAE08 \uBB50 \uD558\uC138\uC694?", standing: "torika", act: "lean" },
+    { id: "excuse", speaker: "\uD1A0\uBE44", body: "\uC544, \uC544\uBB34\uAC83\uB3C4! \uC815\uB9AC\uC57C! \uC6D0\uB798 \uC774\uB807\uAC8C \uC788\uC5C8\uB358 \uAC70\uB77C\uACE0!", standing: "toby", act: "shake" },
+    { id: "label", speaker: "\uB3C4\uB514", body: "\uBC29\uAE08 \uC120\uBC18 \uC774\uB984\uD45C\uB791 \uB9DE\uCDB0\uC11C \uB193\uC73C\uC168\uB294\uB370\uC694. \uAF3C\uAF3C\uD558\uC2DC\uB124\uC694.", standing: "dodi", cast: [{ id: "dodi", slot: "center" }, { id: "torika", slot: "left" }, { id: "toby", slot: "right" }], act: "nod" },
+    { id: "away", speaker: "\uD1A0\uBE44", body: "\uBCF4, \uBCF4\uC9C0 \uB9C8! \uCF54\uB9C8\uD55C\uD14C\uB294 \uB9D0\uD558\uC9C0 \uB9C8! \uB2E4\uC74C\uC5D4 \uC9C4\uC9DC \uC774\uAE34\uB2E4~!", standing: "toby", cast: [{ id: "dodi", slot: "center" }, { id: "torika", slot: "left" }], act: "hopTwice", leave: "blastOff", cue: "impact" }
+  ])
+};
+var STAGE_1_6_POST = {
+  id: "stage-1-6-post",
+  startNodeId: "hum",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "hum", speaker: "", body: "\uC548\uD14C\uB098\uAC00 \uB0AE\uC740 \uC18C\uB9AC\uB97C \uB0B4\uBA70 \uC77C\uC5B4\uC120\uB2E4. \uC7A1\uC74C \uC0AC\uC774\uB85C \uBAA9\uC18C\uB9AC\uAC00 \uBC88\uC9C4\uB2E4.", standing: "torika", cast: ROGUE_TRIO },
+    { id: "stella", speaker: "\uC2A4\uD14C\uB77C", body: "\u2026\uC5F0\uACB0\uB410\uC5B4\uC694. \uC81C1\uC9C0\uBD80 \uAD00\uC81C\uC758 \uC2A4\uD14C\uB77C\uC608\uC694. \uC704\uCE58 \uC2E0\uD638 \uD655\uC778\uD588\uC5B4\uC694. \uC678\uACFD\uC5D0\uC11C \uC624\uC2DC\uB294 \uBD84\uB4E4\uC774\uC8E0?", cast: VOICE("stella", "torika", "dodi"), act: "nod", cue: "impact" },
+    { id: "torika", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC2A4\uD14C\uB77C \uB2D8! \uC5F4\uCC28\uAC00 \uB5A8\uC5B4\uC84C\uC5B4\uC694. \uB300\uC7A5\uB2D8\uC740 \uBB34\uC0AC\uD558\uC138\uC694!", standing: "torika", act: "hop" },
+    { id: "kento", speaker: "\uCF04\uD1A0", body: "\uC5EC\uAE30\uB294 \uCF04\uD1A0\uB2E4. \uC678\uBCBD \uCABD\uC774 \uC2DC\uB044\uB7EC\uC6CC\uC11C \uC9C0\uC6D0\uC740 \uC870\uAE08 \uB2A6\uB294\uB2E4. \uC774 \uC548\uCABD \uAE38\uC740 \uC815\uAC70\uC7A5\uAE4C\uC9C0 \uC774\uC5B4\uC838 \uC788\uC5B4.", cast: VOICE("kento", "torika", "dodi"), act: "lean" },
+    { id: "station", speaker: "\uC2A4\uD14C\uB77C", body: "\uBD09\uC1C4\uB41C \uC815\uAC70\uC7A5\uC774 \uC6D0\uB798 \uBAA9\uC801\uC9C0\uC600\uC5B4\uC694. \uBB38\uC740 \uC7A0\uACBC\uACA0\uC9C0\uB9CC \uC548\uCABD\uC5D0 \uBCF4\uAE09 \uB2F4\uB2F9\uC774 \uAC07\uD600 \uC788\uC744\uC9C0\uB3C4 \uBAB0\uB77C\uC694.", cast: VOICE("stella", "torika", "dodi") },
+    { id: "dodi", speaker: "\uB3C4\uB514", body: "\uBCF4\uAE09 \uB2F4\uB2F9\uC774 \uAC07\uD600 \uC788\uB300\uC694! \uAE30\uB85D\uD574 \uB458\uAC8C\uC694!", standing: "dodi", act: "hopTwice" },
+    { id: "order", speaker: "\uCF04\uD1A0", body: "\uC5F0\uAD6C\uC6D0, \uB4E4\uB9AC\uB098. \uC77C\uB2E8 \uC0B4\uC544\uC11C \uB3C4\uCC29\uD574\uB77C. \uB098\uBA38\uC9C0\uB294 \uB3C4\uCC29\uD558\uACE0 \uB098\uC11C \uC598\uAE30\uD558\uC790.", cast: VOICE("kento", "torika", "dodi"), act: "nod" },
+    { id: "parua", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uB9D0\uC740 \uAC70\uCE5C\uB370 \uBAA9\uC18C\uB9AC\uB294 \uAC71\uC815\uD558\uB294 \uCABD\uC774\uC5D0\uC694.", standing: "parua", cast: ROGUE_TRIO, act: "nod" },
+    { id: "go", speaker: "\uD1A0\uB9AC\uCE74", body: "\uADF8\uB7FC \uC815\uAC70\uC7A5\uC73C\uB85C \uAC00\uC694! \uC774\uC81C \uAE38\uC7A1\uC774\uB3C4 \uC0DD\uACBC\uC73C\uB2C8\uAE4C\uC694!", standing: "torika", act: "hop" }
+  ])
+};
+var STAGE_1_7_PRE = {
+  id: "stage-1-7-pre",
+  startNodeId: "pile",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "pile", speaker: "", body: "\uCC98\uB9AC\uC7A5 \uD55C\uCABD\uC5D0 \uAC19\uC740 \uBAA8\uC591\uC758 \uCCA0\uC81C \uD45C\uC2DD\uC774 \uC0B0\uCC98\uB7FC \uC313\uC5EC \uC788\uB2E4. \uAC00\uC6B4\uB370\uC5D0 \uAC00\uC704\uD45C \uD648 \uD558\uB098\uAC00 \uC0C8\uACA8\uC838 \uC788\uB2E4.", standing: "dodi", cast: ROGUE_TRIO },
+    { id: "mark", speaker: "\uB3C4\uB514", body: '\uC774\uAC74 "\uD3D0\uAE30 \uD45C\uC2DD"\uC774\uC5D0\uC694. \uBCF5\uC6D0\uC774 \uC548 \uB41C \uAC1C\uCCB4\uC5D0\uAC8C \uB2EC\uC544\uC11C \uBCF4\uB0B4\uB358 \uAC70\uC608\uC694. \uC81C \uC77C\uC9C0\uC5D0 \uC788\uC5B4\uC694.', standing: "dodi", act: "tremble" },
+    { id: "count", speaker: "\uD1A0\uB9AC\uCE74", body: "\uBCF5\uC6D0\uC774 \uC548 \uB41C \uAC1C\uCCB4\uB77C\uBA74\u2026 \uC774 \uB354\uBBF8\uB294 \uC804\uBD80\u2026", standing: "torika", act: "faint" },
+    { id: "line", speaker: "\uB3C4\uB514", body: "\uC5EC\uAE30\uB85C \uBCF4\uB0B4\uC9C4 \uC544\uC774\uB4E4\uC758 \uBAAB\uC774\uC5D0\uC694. \uC904\uC774 \uB05D\uC774 \uC5C6\uC5B4\uC694.", standing: "dodi", act: "shrink" },
+    { id: "hood", speaker: "", body: "\uB354\uBBF8 \uB4A4\uC5D0\uC11C \uB450\uAC74\uC774 \uCC9C\uCC9C\uD788 \uC62C\uB77C\uC628\uB2E4. \uC544\uBAA8\uAC00 \uD45C\uC2DD \uD558\uB098\uB97C \uB0B4\uB824\uB2E4\uBCF4\uBA70 \uC11C \uC788\uB2E4.", standing: "amo", cast: [{ id: "dodi", slot: "left" }, { id: "torika", slot: "center" }, { id: "amo", slot: "right" }] },
+    { id: "touch", speaker: "\uC544\uBAA8", body: "\u2026\uADF8\uAC70, \uB9CC\uC9C0\uC9C0 \uB9C8.", standing: "amo", act: "shrink" },
+    { id: "ask", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC544\uBAA8 \uC528\u2026?", standing: "torika", act: "lean" },
+    { id: "quiet", speaker: "\uC544\uBAA8", body: "\u2026\uC544\uBB34\uAC83\uB3C4 \uC544\uB2C8\uC57C. \uC2F8\uC6B8 \uAC70\uBA74 \uC870\uC6A9\uD788 \uD574. \uB098, \uD070 \uC18C\uB9AC\uB294 \uC2EB\uC5B4.", standing: "amo", act: "tremble" }
+  ])
+};
+var STAGE_1_8_PRE = {
+  id: "stage-1-8-pre",
+  startNodeId: "sit",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "sit", speaker: "", body: "\uC9C0\uD558 \uBC30\uC218\uB85C. \uC218\uBB38 \uC190\uC7A1\uC774 \uC704\uC5D0 \uBCA0\uC77C\uC744 \uC4F4 \uC791\uC740 \uADF8\uB9BC\uC790\uAC00 \uC549\uC544 \uC788\uB2E4. \uBC18\uC9DD\uC774\uB294 \uC870\uAC01\uC744 \uC18C\uB9E4\uC5D0 \uD558\uB098\uC529 \uB123\uB294 \uC911\uC774\uB2E4.", standing: "torika", cast: ROGUE_TRIO },
+    { id: "tia", speaker: "\uD2F0\uC544", body: "\uC557, \uB4E4\uCF30\uB2E4\u2026! \uC5F0\uAD6C\uC6D0\uB2D8\uB3C4 \uACC4\uC168\uB124\uC694! \uC800, \uC800\uB294 \uADF8\uB0E5 \uBCF4\uAE09 \uD68C\uC218 \uC911\uC774\uC5D0\uC694! \uC218\uBB38 \uC810\uAC80\uB3C4 \uD558\uB294 \uC911\uC774\uACE0\uC694!", cast: TIA_TRIO, act: "recoil" },
+    { id: "same", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC5B4, \uD2F0\uC544\uC796\uC544! \uC5EC\uAE30\uC11C \uBB50 \uD574? \uC124\uB9C8 \uB610 \uBC18\uC9DD\uC774\uB294 \uAC70 \uC8FC\uC6CC?", standing: "torika", act: "hop" },
+    { id: "veil", speaker: "\uD2F0\uC544", body: "\uD1A0\uB9AC\uCE74\uB3C4 \uC788\uC5C8\uB124! \uC544\uB2C8, \uC5F0\uAD6C\uC6D0\uB2D8\uC774 \uC81C \uC774\uB984\uC744 \uBD88\uB7EC \uC8FC\uC2DC\uBA74 \uC800\uB3C4 \uBAA8\uB974\uAC8C \uB2EC\uB824\uAC00 \uBC84\uB824\uC694. \uADF8\uB7EC\uB2C8\uAE4C \uC870\uAE08\uB9CC \uC788\uB2E4\uAC00\uC694! \uB9C8\uC74C\uC758 \uC900\uBE44\uAC00 \uD544\uC694\uD574\uC694!", act: "bounce" },
+    { id: "useless", speaker: "\uD1A0\uB9AC\uCE74", body: "\uADF8 \uBC18\uC9DD\uC774\uB294 \uC870\uAC01\uB4E4\uC740 \uC5B4\uB514\uC5D0 \uC4F0\uB294 \uAC70\uC57C? \uBCC4 \uC4F8\uBAA8\uB294 \uC5C6\uC5B4 \uBCF4\uC774\uB294\uB370\u2026", standing: "torika", act: "lean" },
+    { id: "droop", speaker: "\uD2F0\uC544", body: "\uC4F8\uBAA8\u2026 \uC5C6\uC5B4? \uC774\uAC70 \uB2E4 \uB0B4 \uBCF4\uBB3C\uC778\uB370\u2026", act: "faint" },
+    { id: "oops", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC544, \uC544\uB2C8\uC57C! \uBC18\uC9DD\uBC18\uC9DD\uD574\uC11C \uC608\uC058\uB2E4\uB294 \uB73B\uC774\uC5C8\uC5B4!", standing: "torika", act: "shake" },
+    { id: "cheer", speaker: "\uD2F0\uC544", body: "\uC815\uB9D0? \uC5D0\uD5E4\uD5E4\u2026 \uADF8\uB7FC \uD1A0\uB9AC\uCE74\uD55C\uD14C\uB3C4 \uD2B9\uBCC4\uD788 \uD558\uB098 \uBCF4\uC5EC \uC904\uAC8C! \uC5F0\uAD6C\uC6D0\uB2D8\uB3C4 \uAC19\uC774 \uBCF4\uC138\uC694!", act: "hopTwice" },
+    { id: "trail", speaker: "\uD2F0\uC544", body: "\uCF54\uB9C8\uAC00 \uC9C0\uB098\uAC04 \uAE38\uC774\uB77C\uBA74 \uC774 \uC218\uBB38 \uC544\uB798\uB85C \uC774\uC5B4\uC838 \uC788\uC5B4\uC694, \uC5F0\uAD6C\uC6D0\uB2D8. \uB0B4\uAC00 \uC544\uB294 \uAC74 \uADF8\uAC8C \uB2E4\uC57C, \uC9C4\uC9DC\uB85C!", act: "nod" },
+    { id: "scent", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uBB3C \uB0C4\uC0C8 \uC704\uB85C \uB2E4\uB978 \uBC1C\uC790\uAD6D\uC774 \uC788\uC5B4\uC694. \uC544\uAE4C \uADF8 \uBB3C\uC18D \uC7A5\uB09C\uAFBC \uAC19\uAE30\uB3C4 \uD558\uACE0\uC694.", standing: "parua", act: "lean" },
+    { id: "laugh", speaker: "\uD2F0\uC544", body: "\uC544\uAE4C \uBB3C\uC18D\uC5D0\uC11C \uB204\uAC00 \uC6C3\uC5C8\uC5B4. \uB098 \uC544\uB2C8\uC57C! \uC9C4\uC9DC \uB098 \uC544\uB2C8\uACE0\u2026 \uD30C\uB8E8\uC544\uB3C4 \uC870\uC2EC\uD574. \uC5F0\uAD6C\uC6D0\uB2D8\uB3C4\uC694.", act: "shake" },
+    { id: "gift", speaker: "\uD2F0\uC544", body: "\uC218\uBB38\uC740 \uB0B4\uAC00 \uC5F4\uC5B4 \uC904\uAC8C! \uC5F0\uAD6C\uC6D0\uB2D8, \uC774\uAC74 \uAC00\uB294 \uAE38\uC5D0 \uC4F0\uC138\uC694. \uC544, \uCC98\uC74C \uC8FC\uC6B4 \uC870\uAC01\uC740 \uC548 \uB3FC! \uADF8\uAC74 \uB0B4 \uC18C\uB9E4\uC5D0 \uC788\uC5B4\uC57C \uD574!", act: "puff" }
+  ])
+};
+var STAGE_1_9_PRE = {
+  id: "stage-1-9-pre",
+  startNodeId: "knock",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "knock", speaker: "", body: "\uC624\uD504\uB2DD \uC5F4\uCC28\uAC00 \uB2FF\uC558\uC5B4\uC57C \uD560 \uC815\uAC70\uC7A5. \uD50C\uB7AB\uD3FC \uB05D \uBD09\uC1C4\uBB38\uC774 \uC548\uCABD\uC5D0\uC11C \uCFF5\uCFF5 \uC6B8\uB9B0\uB2E4.", standing: "dodi", cast: ROGUE_TRIO },
+    { id: "inside", speaker: "\uC624\uBE44", body: "\uC544\uC640\uC640\u2026 \uB204, \uB204\uAD6C \uC788\uC5B4\uC694? \uC5F4\uCC28\uAC00 \uC624\uB298 \uC548 \uC640\uC11C \uBB38\uC774 \uC7A0\uACA8 \uBC84\uB838\uC5B4\uC694\u2026 \uB3C4\uC640\uC918\u2026!", cast: VOICE("obi", "dodi", "parua"), act: "tremble" },
+    { id: "who", speaker: "\uB3C4\uB514", body: "\uC624\uBE44\uC57C? \uAC70\uAE30 \uAC07\uD78C \uAC70\uC57C? \uC6B0\uB9AC \uC058\uB760 \uB85C\uADF8\uC57C, \uC870\uAE08\uB9CC \uAE30\uB2E4\uB824!", standing: "dodi", act: "hopTwice" },
+    { id: "watch", speaker: "\uC624\uBE44", body: '\uB2E4\uD589\uC774\uB2E4\u2026 \uB3C4\uB514, \uD30C\uB8E8\uC544\uB3C4 \uC788\uAD6C\uB098! \uADF8\uB7F0\uB370 \uBB38 \uC55E\uC5D0 \uBB54\uAC00 \uC11C\uC131\uC774\uB294 \uC18C\uB9AC\uAC00 \uB098. \uC544\uAE4C\uBD80\uD130 "\uC774 \uBB38\uC740 \uC548 \uC5F4\uB824 \uC788\uC5B4\uC57C \uD574" \uD558\uACE0 \uC911\uC5BC\uAC70\uB824\u2026!', act: "fright" },
+    { id: "sense", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uBC1C\uC18C\uB9AC\uAC00 \uBB38 \uC55E\uC5D0 \uBAA8\uC5EC \uC788\uC5B4\uC694. \uC5F4\uB824\uBA74 \uC2F8\uC6CC\uC57C \uD574\uC694.", standing: "parua", act: "lean" }
+  ])
+};
+var STAGE_1_9_POST = {
+  id: "stage-1-9-post",
+  startNodeId: "open",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "open", speaker: "", body: "\uBB38\uC774 \uC5F4\uB9B0\uB2E4. \uC548\uC5D0\uC11C \uC0C1\uC790\uB97C \uB04C\uC5B4\uC548\uC740 \uC573\uB41C \uC544\uC774\uAC00 \uBE44\uD2C0\uAC70\uB9AC\uBA70 \uB098\uC628\uB2E4.", standing: "torika", cast: ROGUE_TRIO },
+    { id: "obi", speaker: "\uC624\uBE44", body: "\uACE0, \uACE0\uB9C8\uC6CC\u2026! \uC544, \uC5F0\uAD6C\uC6D0\uB2D8\uB3C4 \uACE0\uB9D9\uC2B5\uB2C8\uB2E4! \uC800\uB294 \uC624\uBE44\uC608\uC694. \uC774 \uC815\uAC70\uC7A5 \uBCF4\uAE09 \uAC80\uC218\uB97C \uD558\uB358 \uC911\uC774\uC5C8\uC5B4\uC694.", cast: [{ id: "torika", slot: "left" }, { id: "obi", slot: "center" }, { id: "dodi", slot: "right" }], act: "bounce" },
+    { id: "store", speaker: "\uD1A0\uB9AC\uCE74", body: "A-LAB24 \uD3B8\uC758\uC810 \uC720\uB2C8\uD3FC\uC774\uB2E4! \uB3C4\uC2DC\uC5D0\uB3C4 \uC788\uC5C8\uC5B4?", standing: "torika", act: "hop" },
+    { id: "lab", speaker: "\uC624\uBE44", body: "\uC751, \uC911\uC559 \uC5F0\uAD6C\uC18C 1\uCE35\uC774\uC57C. \uC624\uB298 \uC5F4\uCC28 \uC7AC\uACE0\uAC00 \uBABB \uB4E4\uC5B4\uC640\uC11C\u2026 \uC5F0\uAD6C\uC6D0\uB2D8, \uC774\uAC74 \uD3D0\uAE30 \uC9C1\uC804\uC774\uB77C \uBAB0\uB798 \uCC59\uAE34 \uAC70\uC608\uC694.", act: "shrink" },
+    { id: "gift", speaker: "\uC624\uBE44", body: "\uCE58\uC988\uCF00\uC774\uD06C\uB791 \uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C\uC608\uC694. \uAE30\uD55C\uC774 \uC624\uB298\uAE4C\uC9C0\uB77C\uC11C\uC694. \uB4DC\uC138\uC694, \uC544\uAE5D\uC796\uC544\uC694.", act: "nod" },
+    { id: "dodi", speaker: "\uB3C4\uB514", body: '\uAE30\uD55C \uC9C1\uC804 \uC7AC\uACE0! \uC774\uAC74 "\uAD6C\uD638 \uBB3C\uC790"\uB85C \uC801\uC5B4 \uB458\uAC8C!', standing: "dodi", act: "hopTwice" },
+    { id: "wait", speaker: "\uC624\uBE44", body: "\uC5F0\uAD6C\uC18C\uC5D0\uC11C \uAE30\uB2E4\uB9B4\uAC8C\uC694. \uAC70\uAE30 \uC624\uC2DC\uBA74 \uC815\uC2DD\uC73C\uB85C \uD314 \uC218 \uC788\uC5B4\uC694!", act: "bounce" }
+  ])
+};
+var STAGE_1_10_PRE = {
+  id: "stage-1-10-pre",
+  startNodeId: "wait",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "wait", speaker: "", body: "\uACBD\uACC4\uBB38 \uC55E. \uB2EB\uD78C \uBB38 \uC55E\uC5D0 \uCF54\uB9C8\uAC00 \uC11C \uC788\uB2E4. \uCC98\uC74C\uBD80\uD130 \uAC70\uAE30 \uC788\uC5C8\uB2E4\uB294 \uB4EF\uC774.", standing: "koma", cast: ALONE("koma") },
+    { id: "come", speaker: "\uCF54\uB9C8", body: "\uC5EC\uAE30\uAE4C\uC9C0 \uC62C \uC904\uC740 \uBAB0\uB790\uB2E4.", standing: "koma", act: "nod" },
+    { id: "name", speaker: "\uD1A0\uB9AC\uCE74", body: "\uCF54\uB9C8\u2026 \uB9DE\uC8E0? \uC5F4\uCC28\uB97C \uD3ED\uD30C\uD55C \uBD84.", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "koma", slot: "right" }], act: "lean" },
+    { id: "goal", speaker: "\uCF54\uB9C8", body: "\uBAA9\uD45C\uB294 \uC5F0\uAD6C\uC6D0. \uADF8\uAC83\uBFD0\uC774\uB2E4. \uD574\uCE58\uC9C0 \uC54A\uB294\uB2E4.", standing: "koma" },
+    { id: "train", speaker: "\uB3C4\uB514", body: "\uADF8, \uADF8\uCE58\uB9CC \uC5F4\uCC28\uB294 \uB5A8\uC5B4\uC84C\uC796\uC544\uC694!", standing: "dodi", cast: [{ id: "dodi", slot: "left" }, { id: "koma", slot: "right" }], act: "fright" },
+    { id: "order", speaker: "\uCF54\uB9C8", body: "\u2026\uB5A8\uC5B4\uB728\uB9AC\uB77C\uACE0 \uD588\uB2E4. \uB0B4\uAC00 \uC815\uD55C \uAC8C \uC544\uB2C8\uB2E4.", standing: "koma", act: "shrink" },
+    { id: "who", speaker: "\uD1A0\uB9AC\uCE74", body: "\uB204\uAC00\uC694?", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "koma", slot: "right" }] },
+    { id: "above", speaker: "\uCF54\uB9C8", body: "\u2026\uC704\uC5D0\uC11C. \uBB38\uC740 \uB0B4\uAC00 \uB9C9\uB294\uB2E4. \uB3CC\uC544\uAC00\uB77C, \uC5F0\uAD6C\uC6D0. \uB3CC\uC544\uAC00\uC9C0 \uC54A\uC73C\uBA74 \uB370\uB824\uAC04\uB2E4.", standing: "koma", cue: "impact" }
+  ])
+};
+var STAGE_1_10_POST = {
+  id: "stage-1-10-post",
+  startNodeId: "down",
+  backdrop: "battlefield",
+  nodes: [
+    { id: "down", speaker: "", body: "\uCF54\uB9C8\uAC00 \uC4F0\uB7EC\uC9C0\uC9C0 \uC54A\uACE0 \uC120 \uCC44\uB85C \uC228\uC744 \uACE0\uB978\uB2E4. \uAF2C\uB9AC \uB05D\uC758 \uD1B1\uB2C8\uAC00 \uAC00\uB298\uAC8C \uB5A8\uB9B0\uB2E4.", standing: "koma", cast: [{ id: "torika", slot: "left" }, { id: "koma", slot: "right" }], nextId: "report" },
+    { id: "report", speaker: "\uCF54\uB9C8", body: "\u2026\uC84C\uB2E4. \uBCF4\uACE0\uB294 \uB0B4\uAC00 \uD55C\uB2E4.", standing: "koma", act: "shrink", nextId: "ask" },
+    {
+      id: "ask",
+      speaker: "\uD1A0\uB9AC\uCE74",
+      body: "\uB300\uC7A5\uB2D8\u2026 \uD55C \uB9D0\uC500 \uD574 \uC8FC\uC2E4\uB798\uC694?",
+      standing: "torika",
+      act: "lean",
+      choices: [
+        { id: "notfail", label: "\uB108\uD76C\uB294 \uC2E4\uD328\uC791\uC774 \uC544\uB2C8\uC57C", nextId: "answerA", effect: { type: "bondXp", relicId: "torika", amount: 3 } },
+        { id: "talk", label: "\uB2E4\uC74C\uC5D4 \uAC19\uC774 \uC774\uC57C\uAE30\uD558\uC790", nextId: "answerB", effect: { type: "bondXp", relicId: "parua", amount: 3 } }
+      ]
+    },
+    { id: "answerA", speaker: "\uCF54\uB9C8", body: "\u2026\uADF8 \uB9D0\uC740 \uC704\uC5D0\uC11C \uC544\uBB34\uB3C4 \uC548 \uD588\uB2E4.", standing: "koma", act: "recoil", nextId: "leave" },
+    { id: "answerB", speaker: "\uCF54\uB9C8", body: "\u2026\uC774\uC57C\uAE30. \uADF8\uAC83\uB3C4 \uC704\uC5D0\uC11C\uB294 \uC5C6\uB358 \uC77C\uC774\uB2E4.", standing: "koma", act: "recoil", nextId: "leave" },
+    { id: "leave", speaker: "\uCF54\uB9C8", body: "\uC704\uC5D0 \uAC00\uC11C \uB9D0\uD558\uACA0\uB2E4. \uC5F0\uAD6C\uC6D0\uC774 \uBB38 \uB108\uBA38\uB85C \uC544\uC9C1 \uAC00\uC9C0 \uC54A\uC558\uB2E4\uACE0.", standing: "koma", cast: [{ id: "torika", slot: "left" }], nextId: "crash" },
+    { id: "crash", speaker: "", body: "\uACBD\uCCA9\uC9F8 \uBF51\uD78C \uBB38\uC9DD\uC774 \uB0A0\uC544\uC640 \uB545\uC5D0 \uBC15\uD78C\uB2E4.", cue: "explosion", nextId: "lexia" },
+    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uB0B4\uAC00 \uC654\uB2E4! \uBB38\uC740 \uC5F4\uC5B4 \uB480\uB2E4. \uC815\uD655\uD788\uB294 \uBB38\uC9DD\uC744 \uAC00\uC838\uC654\uB2E4.", standing: "lexia", cast: ALONE("lexia"), act: "puff", nextId: "hello" },
+    { id: "hello", speaker: "\uD1A0\uB9AC\uCE74", body: "\uB809\uC2DC\uC544 \uB2D8!", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "lexia", slot: "right" }], act: "hopTwice", nextId: "queen" },
+    { id: "queen", speaker: "\uB809\uC2DC\uC544", body: "\uC571\uC194\uB8E8\uD2B8 \uD33D\uC758 \uB809\uC2DC\uC544\uB2E4. \uC774\uC81C\uBD80\uD130 \uC774\uD130\uB110 \uC2DC\uD2F0\uB294 \uB0B4\uAC00 \uCC45\uC784\uC9C4\uB2E4. \uC5F0\uAD6C\uC6D0, \uB530\uB77C\uC640\uB77C.", standing: "lexia", act: "nod", nextId: "door" },
+    { id: "door", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uBB38\uC9DD\uC774 \uC544\uC9C1 \uC190\uC5D0 \uC788\uC5B4\uC694.", standing: "parua", cast: [{ id: "parua", slot: "left" }, { id: "lexia", slot: "right" }], act: "lean", nextId: "drop" },
+    { id: "drop", speaker: "\uB809\uC2DC\uC544", body: "\u2026\uB2F9\uB2F9\uD55C \uC785\uC131\uC5D0\uB294 \uC18C\uD488\uC774 \uD544\uC694\uD558\uC9C0. \uB193\uB294\uB2E4.", standing: "lexia", act: "shrink", nextId: "go" },
+    { id: "go", speaker: "\uD1A0\uB9AC\uCE74", body: "\uADF8\uB7FC \uB3C4\uC2DC\uB85C \uAC00\uC694! \uC774\uBC88\uC5D4 \uC6B0\uB9AC\uC5D0\uAC8C \uB4E0\uB4E0\uD55C \uAE38\uC7A1\uC774\uAC00 \uC788\uC73C\uB2C8\uAE4C\uC694.", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "lexia", slot: "right" }], act: "hop" }
+  ]
+};
+var CHAPTER_1_STORIES = [
+  STAGE_1_2_POST,
+  STAGE_1_4_PRE,
+  STAGE_1_5_PRE,
+  STAGE_1_5_POST,
+  STAGE_1_6_POST,
+  STAGE_1_7_PRE,
+  STAGE_1_8_PRE,
+  STAGE_1_9_PRE,
+  STAGE_1_9_POST,
+  STAGE_1_10_PRE,
+  STAGE_1_10_POST
+];
+
+// src/data/dialogues/chapter2.ts
+init_define_import_meta_env();
+var VOICE2 = (voice, left, right) => [{ id: left, slot: "left" }, { id: voice, slot: "center", remote: true }, { id: right, slot: "right" }];
+var SOLO = (id) => [{ id, slot: "center" }];
+var PAIR = (id, other = "torika") => [
+  { id: other, slot: "left" },
+  { id, slot: "right" }
+];
+var STAGE_2_1_PRE = {
+  id: "stage-2-1-pre",
+  startNodeId: "enter",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "enter", speaker: "\uB809\uC2DC\uC544", body: "\uBB38\uC740 \uB0B4\uAC00 \uC5F4\uC5C8\uB2E4. \uC774\uC81C\uBD80\uD130\uB294 \uB0B4\uAC00 \uC55E\uC7A5\uC120\uB2E4!", standing: "lexia", cast: PAIR("lexia"), act: "hop" },
+    { id: "rule", speaker: "\uD1A0\uB9AC\uCE74", body: "\uB809\uC2DC\uC544 \uB2D8, \uBB38\uC740 \uBF51\uB294 \uAC8C \uC544\uB2C8\uB77C \uC5EC\uB294 \uAC70\uC608\uC694.", standing: "torika", act: "lean" },
+    { id: "huh", speaker: "\uB809\uC2DC\uC544", body: "\u2026\uC5EC\uB294 \uAC83\uACFC \uBF51\uB294 \uAC83\uC740 \uACB0\uACFC\uAC00 \uAC19\uB2E4. \uB2E4\uB9CC \uC18C\uB9AC\uAC00 \uB2E4\uB97C \uBFD0\uC774\uB2E4.", standing: "lexia", act: "shrink" },
+    { id: "print", speaker: "\uB3C4\uB514", body: "\uB300\uC7A5\uB2D8, \uC5EC\uAE30 \uBC1C\uC790\uAD6D\uC774\uC694. \uCF54\uB9C8\uC758 \uBC1C\uC790\uAD6D\uC774 \uC785\uAD6C\uC5D0\uC11C \uB531 \uBA48\uCDB0 \uC788\uC5B4\uC694.", standing: "dodi", cast: [{ id: "dodi", slot: "left" }, { id: "lexia", slot: "right" }], act: "lean" },
+    { id: "lost", speaker: "\uB3C4\uB514", body: "\uADF8\uB9AC\uACE0 \uADF8 \uB4A4\uB85C \uC5B4\uC9C0\uB7EC\uC6B4 \uBC1C\uC790\uAD6D\uC774 \uC14B\uC774\uC5D0\uC694. \uC774\uCABD\uC800\uCABD \uD5E4\uB9E8 \uD754\uC801\u2026 \uC7E4\uB124\uB3C4 \uAE38\uC744 \uC783\uC740 \uAC83 \uAC19\uC544\uC694.", standing: "dodi", act: "hopTwice" },
+    { id: "again", speaker: "\uB809\uC2DC\uC544", body: "\uADF8\uB807\uB2E4\uBA74 \uB2E4\uC2DC \uCAD3\uC544\uC62C \uAC83\uC774\uB2E4. \uB9DE\uC774\uD560 \uC900\uBE44\uB97C \uD558\uB77C.", standing: "lexia", act: "nod", cue: "rumble" }
+  ])
+};
+var STAGE_2_2_POST = {
+  id: "stage-2-2-post",
+  startNodeId: "line",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "line", speaker: "", body: "\uBA48\uCDB0 \uC788\uB358 \uC870\uB9BD \uB77C\uC778\uC774 \uB35C\uCEF9, \uD558\uACE0 \uB3CC\uAE30 \uC2DC\uC791\uD55C\uB2E4. \uB808\uBC84 \uC55E\uC5D0 \uD1A0\uBE44\uAC00 \uC11C \uC788\uB2E4.", standing: "toby", cast: PAIR("toby"), act: "squash", cue: "rumble" },
+    { id: "denial", speaker: "\uD1A0\uBE44", body: "\uC774, \uC774\uAC74 \uC544\uB2C8\uC57C! \uAE30\uB300\uC5B4 \uC130\uB294\uB370 \uC800\uC808\uB85C \uB0B4\uB824\uAC04 \uAC70\uB77C\uACE0!", standing: "toby", act: "shake" },
+    { id: "radio", speaker: "\uC2A4\uD53C\uB098", body: "\u2026\uBB34\uC804 \uD655\uC778. \uB77C\uC778\uC774 \uB3CC\uACE0 \uC788\uC73C\uB2C8 \uC18C\uB9AC\uAC00 \uB2E4 \uD37C\uC9C4\uB2E4. \uC5F0\uAD6C\uC6D0, \uC0C1\uC790\uB97C \uBC1B\uC544\uB77C. \uC774\uCABD\uC5D0\uC11C \uBCF4\uB0B4\uB294 \uBCF4\uAE09\uC774\uB2E4.", cast: VOICE2("seira", "torika", "toby"), act: "nod" },
+    { id: "box", speaker: "", body: "\uCEE8\uBCA0\uC774\uC5B4\uB97C \uD0C0\uACE0 \uC0C1\uC790 \uD558\uB098\uAC00 \uC5F0\uAD6C\uC6D0 \uBC1C\uCE58\uAE4C\uC9C0 \uD758\uB7EC\uC628\uB2E4. \uC548\uC5D0\uB294 \uAC13 \uAD6C\uC6B4 \uCE58\uC988\uCF00\uC774\uD06C \uC2DC\uC81C\uD488\uC774 \uB4E4\uC5B4 \uC788\uB2E4.", standing: "torika" },
+    { id: "torika", speaker: "\uD1A0\uB9AC\uCE74", body: "\uCE58\uC988\uCF00\uC774\uD06C\uC608\uC694! \uB204\uAC00 \uBCF4\uB0B4\uC2E0 \uAC70\uC8E0?", standing: "torika", act: "hopTwice" },
+    { id: "spina", speaker: "\uC2A4\uD53C\uB098", body: "\uB098\uC774\uD2B8 \uAE30\uC5B4\uC758 \uC778\uC0AC\uB2E4. \uC774 \uD68C\uB791\uC5D0\uC11C\uB294 \uC870\uC6A9\uD788, \uBE68\uB9AC\uAC00 \uADDC\uCE59\uC774\uB2E4. \uD1A0\uBE44\uB77C\uB294 \uC544\uC774\uC5D0\uAC8C\uB3C4 \uC804\uD574\uB77C." },
+    { id: "toby", speaker: "\uD1A0\uBE44", body: "\u2026\uB2E4 \uB4E4\uC5C8\uAC70\uB4E0?! \uB098\uB3C4 \uC870\uC6A9\uD788 \uD560 \uC218 \uC788\uC5B4!", standing: "toby", act: "rage" }
+  ])
+};
+var STAGE_2_4_PRE = {
+  id: "stage-2-4-pre",
+  startNodeId: "dark",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "dark", speaker: "", body: "\uC911\uACC4\uC2E4\uC740 \uCE84\uCE84\uD558\uB2E4. \uC5B4\uB518\uAC00\uC5D0\uC11C \uC228\uC18C\uB9AC\uAC00 \uC14B \uB4E4\uB9B0\uB2E4.", cast: [] },
+    { id: "dodi", speaker: "\uB3C4\uB514", body: "\uB300\uC7A5\uB2D8, \uBCBD\uC5D0 \uD45C\uC2DD\uC774 \uC788\uC5B4\uC694. \uC810 \uD558\uB098\uB294 \u300C\uC4F8 \uC218 \uC5C6\uC74C\u300D, \uC120 \uD558\uB098\uB294 \u300C\uC62E\uAE40\u300D\uC774\uB798\uC694.", standing: "dodi", cast: PAIR("dodi", "parua"), act: "lean" },
+    { id: "parua", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uB3C4\uB514, \uC228\uC18C\uB9AC\uAC00 \uC14B\uC774\uC5D0\uC694. \uC6B0\uB9AC \uC228\uC18C\uB9AC \uB9D0\uACE0.", standing: "parua", act: "tremble" },
+    { id: "light", speaker: "", body: "\uC2A4\uC704\uCE58 \uC18C\uB9AC\uC640 \uD568\uAED8 \uBD88\uC774 \uB4E4\uC5B4\uC628\uB2E4. \uB208\uC55E\uC5D0 \uC544\uBAA8\uC640 \uD1A0\uBE44, \uB9AC\uD30C\uAC00 \uB098\uB780\uD788 \uC11C \uC788\uB2E4.", cast: RAID_TRIO, cue: "impact" },
+    { id: "toby", speaker: "\uD1A0\uBE44", body: "\uC73C\uC545! \uBD88 \uCF1C\uC9C0 \uB9D0\uB7AC\uC796\uC544!", standing: "toby", act: "fright" },
+    { id: "ripa", speaker: "\uB9AC\uD30C", body: "\uBA3C\uC800 \uCF20 \uAC74 \uC7E4\uB124\uC796\uC544? \uC544, \uADF8\uB0E5 \uC5BC\uAD74 \uBCF4\uB2C8\uAE4C \uBC18\uAC11\uB2E4.", standing: "ripa", act: "hop" },
+    { id: "amo", speaker: "\uC544\uBAA8", body: "\u2026\uC2F8\uC6CC\uC57C \uD558\uC9C0? \uC815\uB9D0 \uC2F8\uC6CC\uC57C \uD574?", standing: "amo", act: "shrink" }
+  ])
+};
+var STAGE_2_5_PRE = {
+  id: "stage-2-5-pre",
+  startNodeId: "end",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "end", speaker: "", body: "\uD30C\uC190\uB41C \uC2B9\uAC15\uC7A5\uC758 \uB05D. \uB450\uAC74\uC744 \uB20C\uB7EC \uC4F4 \uC544\uBAA8\uAC00 \uC120\uB85C \uD55C\uAC00\uC6B4\uB370\uC5D0 \uD63C\uC790 \uC11C \uC788\uB2E4.", standing: "amo", cast: SOLO("amo") },
+    { id: "alone", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC544\uBAA8 \uC528 \uD63C\uC790\uC608\uC694? \uD1A0\uBE44 \uC528\uC640 \uB9AC\uD30C \uC528\uB294\uC694?", standing: "torika", cast: PAIR("amo"), act: "lean" },
+    { id: "away", speaker: "\uC544\uBAA8", body: "\u2026\uB0B4\uAC00 \uC624\uC9C0 \uB9D0\uB77C\uACE0 \uD588\uC5B4. \uC5EC\uAE30\uB294 \uB0B4\uAC00 \uD63C\uC790 \uC11C\uC57C \uD558\uB294 \uACF3\uC774\uC57C.", standing: "amo", act: "nod" },
+    { id: "why", speaker: "\uC544\uBAA8", body: "\uC800\uAE30 \uB77C\uC778 \uB05D, \uC800 \uC790\uB9AC\uC5D0\uC11C \uB0B4\uAC00 \uCC98\uC74C \uC62C\uB77C\uAC00 \uD45C\uC2DD\uC744 \uB2EC\uACE0 \uB0B4\uB824\uC84C\uC5B4. \uC4F8 \uC218 \uC5C6\uC74C\uC774\uB77C\uACE0.", standing: "amo", act: "shrink" },
+    { id: "ask", speaker: "\uC544\uBAA8", body: "\uC5F0\uAD6C\uC6D0\uC774 \uD55C \uB9D0, \uC9C4\uC9DC\uC778\uC9C0 \uD655\uC778\uD558\uB7EC \uC654\uC5B4. \uC9C0\uB098\uAC00\uB824\uBA74\u2026 \uB0B4\uAC00 \uD655\uC778\uD574\uC57C \uD574.", standing: "amo", act: "tremble" }
+  ])
+};
+var STAGE_2_5_POST = {
+  id: "stage-2-5-post",
+  startNodeId: "down",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "down", speaker: "", body: "\uC544\uBAA8\uAC00 \uBB34\uB98E\uC744 \uAFC7\uC740 \uCC44 \uC228\uC744 \uACE0\uB978\uB2E4. \uB20C\uB7EC \uC4F4 \uB450\uAC74\uC774 \uD758\uB7EC\uB0B4\uB9B0\uB2E4.", standing: "amo", cast: PAIR("amo", "parua") },
+    { id: "hood", speaker: "\uC544\uBAA8", body: "\u2026\uC774\uAC78 \uBC97\uC740 \uC801\uC774 \uC5C6\uC5C8\uC5B4. \uD45C\uC2DD\uC774 \uBCF4\uC77C\uAE4C \uBD10.", standing: "amo", act: "shrink" },
+    { id: "see", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uC9C0\uAE08\uC740 \uC548 \uBCF4\uC5EC\uC694. \uBCF4\uC774\uB294 \uAC74 \uC544\uBAA8 \uC528 \uC5BC\uAD74\uC774\uC5D0\uC694.", standing: "parua", act: "lean" },
+    { id: "up", speaker: "\uC544\uBAA8", body: "\u2026\uADF8\uB807\uAD6C\uB098. \uADF8\uB7FC \uACC4\uC18D \uC62C\uB824 \uB458\uAE4C.", standing: "amo", act: "nod" },
+    { id: "pass", speaker: "\uC544\uBAA8", body: "\uC9C0\uB098\uAC00\uB3C4 \uB3FC. \uB300\uC2E0\u2026 \uD1A0\uBE44\uAC00 \uB2E4\uCE58\uC9C0 \uC54A\uAC8C \uD574 \uC918.", standing: "amo", act: "hop" }
+  ])
+};
+var STAGE_2_6_POST = {
+  id: "stage-2-6-post",
+  startNodeId: "belt",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "belt", speaker: "", body: "\uC544\uBB34\uB3C4 \uC5C6\uB294 \uC0DD\uC0B0\uC120\uC774 \uC0C1\uC790\uB97C \uC26C\uC9C0 \uC54A\uACE0 \uB0B4\uBCF4\uB0B8\uB2E4. \uC0C1\uC790\uB9C8\uB2E4 \uAC19\uC740 \uD45C\uC2DD\uC774 \uBD99\uC5B4 \uC788\uB2E4.", standing: "dodi", cast: PAIR("dodi", "parua") },
+    { id: "delopi", speaker: "\uB378\uB85C\uD53C", body: "\uC73C\uD788\uD788, \uB77C\uC778\uC744 \uAC70\uAFB8\uB85C \uB3CC\uB838\uB354\uB2C8 \uC0C1\uC790\uAC00 \uB2E4 \uC6C3\uC73C\uBA74\uC11C \uB3CC\uC544\uC624\uB124? \uC5F0\uAD6C\uC6D0, \uB180\uB790\uC9C0?", cast: VOICE2("delopi", "parua", "dodi"), act: "bounce" },
+    { id: "parua", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uB378\uB85C\uD53C \uC528, \uADF8\uAC74 \uC800\uD76C\uB97C \uC704\uD5D8\uD558\uAC8C \uD574\uC694.", standing: "parua", act: "tremble" },
+    { id: "luka", speaker: "\uB8E8\uCE74", body: "\uB378\uB85C\uD53C\uB294 \uB0B4\uAC00 \uB9E1\uACA0\uB2E4. \uC5F0\uAD6C\uC6D0, \uC774\uC81C\uBD80\uD130\uB294 \uB0B4 \uC2E0\uD638\uB97C \uB530\uB77C\uC640\uB77C. \uB9D0 \uC5C6\uC774, \uBE68\uB9AC.", cast: VOICE2("luka", "parua", "dodi"), act: "nod" },
+    { id: "hush", speaker: "\uB3C4\uB514", body: '\uADF8, \uADF8\uB7FC \uC228 \uC8FD\uC774\uACE0\u2026 \uC774\uAC74 "\uCE68\uBB35 \uC774\uB3D9"\uC73C\uB85C \uC801\uC5B4 \uB458\uAC8C\uC694!', standing: "dodi", act: "hop" },
+    { id: "quiet", speaker: "\uB8E8\uCE74", body: "\uADF8 \uC18C\uB9AC\uAC00 \uC81C\uC77C \uD06C\uB2E4.", act: "lean" }
+  ])
+};
+var STAGE_2_7_PRE = {
+  id: "stage-2-7-pre",
+  startNodeId: "room",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "room", speaker: "", body: "\uC555\uB825 \uACA9\uC2E4\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 \uB4F1 \uB4A4\uC5D0\uC11C \uBB38\uC774 \uB2EB\uD78C\uB2E4. \uC548\uCABD\uC5D0\uB294 \uC5F0\uAD6C\uC6D0 \uD63C\uC790\uB2E4.", cast: [], cue: "impact" },
+    { id: "toby", speaker: "\uD1A0\uBE44", body: "\uC5B4, \uC5B4! \uBB38\uC774 \uB2EB\uD614\uC5B4! \uC548\uC5D0\uC11C \uC18C\uB9AC\uAC00 \uC548 \uB098, \uC5F4\uC5B4! \uC5F4\uB77C\uACE0!", standing: "toby", cast: RAID_TRIO, act: "shake" },
+    { id: "amo", speaker: "\uC544\uBAA8", body: "\u2026\uB0B4\uAC00 \uC548 \uADF8\uB7AC\uC5B4. \uB808\uBC84\uB294 \uC548 \uAC74\uB4DC\uB838\uC5B4.", standing: "amo", act: "shrink" },
+    { id: "ripa", speaker: "\uB9AC\uD30C", body: "\uC124\uBE44\uAC00 \uC624\uC791\uB3D9\uD55C \uAC70\uC57C. \uC6B0\uB9AC\uAC00 \uC2F8\uC6B0\uB824\uB358 \uAC83\uB3C4 \uC544\uB2CC\uB370?", standing: "ripa", act: "recoil" },
+    { id: "toby2", speaker: "\uD1A0\uBE44", body: "\uBE44\uCF1C \uBD10! \uB0B4\uAC00 \uC5F4\uAC8C!", standing: "toby", act: "rage", cue: "rumble" }
+  ])
+};
+var STAGE_2_7_POST = {
+  id: "stage-2-7-post",
+  startNodeId: "tear",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "tear", speaker: "", body: "\uACBD\uCCA9\uC9F8 \uBF51\uD78C \uACA9\uC2E4 \uBB38\uC774 \uBC14\uB2E5\uC5D0 \uC4F0\uB7EC\uC9C4\uB2E4. \uBB38 \uC55E\uC5D0 \uD1A0\uBE44\uAC00 \uC228\uC744 \uBAB0\uC544\uC26C\uBA70 \uC11C \uC788\uB2E4.", standing: "toby", cast: PAIR("toby"), cue: "explosion" },
+    { id: "safe", speaker: "\uD1A0\uBE44", body: "\uAD18, \uAD1C\uCC2E\uC544?! \uB2E4\uCE5C \uB370\uB294 \uC5C6\uC9C0?", standing: "toby", act: "fright" },
+    { id: "torika", speaker: "\uD1A0\uB9AC\uCE74", body: "\uD1A0\uBE44 \uC528\uAC00 \uBB38\uC744 \uB72F\uC5C8\uC5B4\uC694\u2026 \uB300\uC7A5\uB2D8\uC744 \uAD6C\uD558\uB824\uACE0\uC694.", standing: "torika", act: "lean" },
+    { id: "awkward", speaker: "\uD1A0\uBE44", body: "\uADF8, \uADF8\uAC8C \uC544\uB2C8\uB77C! \uBB38\uC774 \uAC70\uC2AC\uB824\uC11C \uADF8\uB7F0 \uAC70\uC57C! \u2026\uBCC4 \uB73B \uC5C6\uC5B4!", standing: "toby", act: "tremble" },
+    { id: "silence", speaker: "", body: "\uC544\uBB34\uB3C4 \uB9D0\uD558\uC9C0 \uC54A\uB294\uB2E4. \uBF51\uD78C \uBB38\uC9DD\uB9CC \uCC9C\uCC9C\uD788 \uC4F0\uB7EC\uC9C4 \uC790\uB9AC\uC5D0\uC11C \uC2DD\uB294\uB2E4." },
+    { id: "thanks", speaker: "\uD1A0\uB9AC\uCE74", body: "\uACE0\uB9C8\uC6CC\uC694, \uD1A0\uBE44 \uC528. \uC774\uC81C \uAC00\uC694.", standing: "torika", act: "nod" }
+  ])
+};
+var STAGE_2_8_PRE = {
+  id: "stage-2-8-pre",
+  startNodeId: "furnace",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "furnace", speaker: "", body: "\uAEBC\uC838 \uAC00\uB294 \uC6A9\uAD11\uB85C \uACC1. \uCF54\uB9C8\uAC00 \uCABC\uADF8\uB824 \uC549\uC544 \uBCBD\uC758 \uD3D0\uAE30 \uD45C\uC2DD\uC744 \uB2E6\uACE0 \uC788\uB2E4.", standing: "koma", cast: SOLO("koma") },
+    { id: "see", speaker: "\uCF54\uB9C8", body: "\u2026\uC654\uB098.", standing: "koma", act: "nod" },
+    { id: "fight", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC2F8\uC6B0\uC2E4 \uAC74\uAC00\uC694, \uCF54\uB9C8 \uC528?", standing: "torika", cast: PAIR("koma"), act: "lean" },
+    { id: "no", speaker: "\uCF54\uB9C8", body: "\uC2F8\uC6B0\uC9C0 \uC54A\uB294\uB2E4. \uC9C0\uAE08\uC740.", standing: "koma" },
+    { id: "above", speaker: "\uCF54\uB9C8", body: "\uC704\uC5D0\uC11C\uB294 \uC544\uC9C1 \uBAA8\uB978\uB2E4. \uC774 \uD45C\uC2DD\uC744 \uB2E6\uB294 \uAC83\uB3C4. \uB108\uD76C\uAC00 \uC5EC\uAE30\uAE4C\uC9C0 \uC628 \uAC83\uB3C4.", standing: "koma", act: "shrink" },
+    { id: "trio", speaker: "\uB9AC\uD30C", body: "\u2026\uCF54\uB9C8, \uB108 \uC9C0\uAE08 \uBB50 \uD558\uB294 \uAC70\uC57C? \uC704\uC5D0\uC11C \uBAA8\uB974\uB294 \uC77C\uC744 \uD574\uB3C4 \uB3FC?", standing: "ripa", cast: [{ id: "ripa", slot: "left" }, { id: "koma", slot: "right" }], act: "recoil" },
+    { id: "leave", speaker: "\uCF54\uB9C8", body: "\u2026\uAC00\uB77C. \uB300\uC2E0 \uC774\uCABD\uC73C\uB85C \uC624\uC9C0 \uB9C8\uB77C.", standing: "koma", cast: [{ id: "ripa", slot: "left" }], act: "nod" }
+  ])
+};
+var STAGE_2_9_POST = {
+  id: "stage-2-9-post",
+  startNodeId: "hole",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "hole", speaker: "", body: "\uCEE8\uBCA0\uC774\uC5B4\uAC00 \uB05D\uB098\uB294 \uACF3\uC5D0 \uBC14\uB2E5\uC774 \uC5C6\uB2E4. \uD3D0\uAE30 \uD45C\uC2DD\uC774 \uBD99\uC740 \uC0C1\uC790\uB4E4\uC774 \uC18C\uB9AC \uC5C6\uC774 \uC5B4\uB460\uC73C\uB85C \uB5A8\uC5B4\uC9C4\uB2E4.", standing: "dodi", cast: PAIR("dodi", "lexia") },
+    { id: "dodi", speaker: "\uB3C4\uB514", body: "\uB2E4\uB4E4 \uC774 \uC544\uB798\uB85C \uD758\uB7EC\uAC04 \uAC70\uC608\uC694. \uC4F8 \uC218 \uC5C6\uC74C\uC774\uB77C\uACE0 \uC801\uD78C \uCC44\uB85C\u2026", standing: "dodi", act: "shrink" },
+    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uC544\uB798\uC5D0\uB294 \uBB34\uC5C7\uC774 \uC788\uB290\uB0D0.", standing: "lexia", act: "lean" },
+    { id: "dei", speaker: "\uB370\uC774", body: "\uAD6C\uBA4D \uAC00\uC7A5\uC790\uB9AC\uC5D0 \uB099\uC11C \uAC19\uC740 \uD654\uC0B4\uD45C\uAC00 \uC788\uC5B4. \uB0B4\uAC00 \uADF8\uB9B0 \uAC70 \uC544\uB2C8\uC57C. \uB204\uAD70\uAC00\uAC00 \uC544\uB798\uB85C \uD5A5\uD558\uB294 \uAE38\uC744 \uD45C\uC2DC\uD574 \uB480\uC5B4.", cast: VOICE2("deina", "lexia", "dodi"), act: "lean" },
+    { id: "stay", speaker: "", body: "\uC5F0\uAD6C\uC6D0\uC740 \uAD6C\uBA4D \uC55E\uC5D0\uC11C \uC624\uB798 \uC11C \uC788\uB2E4. \uB300\uB2F5\uD558\uB294 \uC774\uB294 \uC5C6\uB2E4." },
+    { id: "torika", speaker: "\uD1A0\uB9AC\uCE74", body: "\u2026\uAC00\uC694, \uB300\uC7A5\uB2D8. \uC544\uC9C1\uC740 \uC704\uC5D0\uC11C \uD560 \uC77C\uC774 \uC788\uC5B4\uC694.", standing: "torika", cast: PAIR("lexia"), act: "nod" }
+  ])
+};
+var STAGE_2_10_PRE = {
+  id: "stage-2-10-pre",
+  startNodeId: "gate",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "gate", speaker: "", body: "\uC794\uD5A5 \uC9C0\uAD6C\uC758 \uAD00\uBB38. \uC544\uBAA8\uC640 \uD1A0\uBE44, \uB9AC\uD30C\uAC00 \uB098\uB780\uD788 \uC11C\uC11C \uAE38\uC744 \uB9C9\uACE0 \uC788\uB2E4. \uCF54\uB9C8\uB294 \uBCF4\uC774\uC9C0 \uC54A\uB294\uB2E4.", cast: RAID_TRIO },
+    { id: "toby", speaker: "\uD1A0\uBE44", body: "\uCF54\uB9C8\uD55C\uD14C \uC548 \uBB3C\uC5B4\uBD24\uC5B4. \uC6B0\uB9AC\uAC00 \uC815\uD588\uC5B4. \uC5EC\uAE30\uC11C \uB9C9\uC790\uACE0.", standing: "toby", act: "puff" },
+    { id: "amo", speaker: "\uC544\uBAA8", body: "\u2026\uB098\uB791 \uD1A0\uBE44\uB791 \uB9AC\uD30C, \uC14B\uC774\uC11C.", standing: "amo", act: "nod" },
+    { id: "ripa", speaker: "\uB9AC\uD30C", body: "\uC774\uAE30\uB824\uB294 \uAC8C \uC544\uB2C8\uC57C. \uD655\uC778\uD558\uB824\uB294 \uAC70\uC57C. \uC6B0\uB9AC\uAC00 \uC815\uB9D0 \uC6B0\uB9AC\uC778\uC9C0.", standing: "ripa", act: "lean" },
+    { id: "torika", speaker: "\uD1A0\uB9AC\uCE74", body: "\u2026\uC54C\uACA0\uC5B4\uC694. \uBC1B\uC544 \uB0BC\uAC8C\uC694.", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "toby", slot: "right" }], act: "nod" }
+  ])
+};
+var STAGE_2_10_POST = {
+  id: "stage-2-10-post",
+  startNodeId: "lose",
+  backdrop: "battlefield",
+  nodes: [
+    { id: "lose", speaker: "", body: "\uC14B\uC740 \uC4F0\uB7EC\uC9C0\uC9C0 \uC54A\uACE0 \uC11C\uB85C\uB97C \uBD99\uB4E0 \uCC44 \uC549\uB294\uB2E4. \uC544\uBB34\uB3C4 \uB3C4\uB9DD\uCE58\uC9C0 \uC54A\uB294\uB2E4.", cast: RAID_TRIO, nextId: "toby" },
+    { id: "toby", speaker: "\uD1A0\uBE44", body: "\u2026\uC84C\uB124. \uADF8\uB7F0\uB370 \uC774\uC0C1\uD558\uB2E4. \uB418\uAC8C \uC548 \uBD84\uD574.", standing: "toby", act: "shrink", nextId: "ripa" },
+    { id: "ripa", speaker: "\uB9AC\uD30C", body: "\uC6B0\uB9AC\uB07C\uB9AC \uB9C9\uC544 \uB0B8 \uAC74 \uC774\uBC88\uC774 \uCC98\uC74C\uC774\uC57C. \uADF8\uB798\uC11C \uADF8\uB7F0\uAC00.", standing: "ripa", act: "nod", nextId: "amo" },
+    { id: "amo", speaker: "\uC544\uBAA8", body: "\u2026\uC5F0\uAD6C\uC6D0.", standing: "amo", act: "tremble", nextId: "ask" },
+    { id: "ask", speaker: "\uC544\uBAA8", body: "\uC6B0\uB9AC, \uB530\uB77C\uAC00\uB3C4 \uB3FC? \uC544\uC9C1 \u300C\uADF8\uB798\u300D\uB77C\uACE0\uB294 \uBABB \uD558\uACA0\uB294\uB370\u2026 \uADF8\uB798\uB3C4 \uB530\uB77C\uAC00\uB3C4 \uB3FC?", standing: "amo", act: "lean", nextId: "choose" },
+    {
+      id: "choose",
+      speaker: "\uD1A0\uB9AC\uCE74",
+      body: "\uB300\uC7A5\uB2D8, \uBB50\uB77C\uACE0 \uD558\uC2E4 \uAC70\uC608\uC694?",
+      standing: "torika",
+      cast: [{ id: "torika", slot: "left" }, { id: "amo", slot: "right" }],
+      choices: [
+        { id: "yes", label: "\uB530\uB77C\uC640\uB3C4 \uB3FC", nextId: "answerA", effect: { type: "bondXp", relicId: "torika", amount: 3 } },
+        { id: "own", label: "\uB108\uD76C\uAC00 \uC815\uD574\uB3C4 \uB3FC", nextId: "answerB", effect: { type: "bondXp", relicId: "dodi", amount: 3 } }
+      ]
+    },
+    { id: "answerA", speaker: "\uC544\uBAA8", body: "\u2026\uADF8\uB798. \uADF8\uB7FC \uB530\uB77C\uAC08\uAC8C.", standing: "amo", act: "nod", nextId: "walk" },
+    { id: "answerB", speaker: "\uC544\uBAA8", body: "\u2026\uC6B0\uB9AC\uAC00 \uC815\uD574\uB3C4 \uB41C\uB2E4\uB294 \uB9D0, \uCC98\uC74C \uB4E4\uC5B4 \uBD10.", standing: "amo", act: "nod", nextId: "walk" },
+    { id: "walk", speaker: "\uD1A0\uBE44", body: "\uADF8, \uADF8\uB807\uB2E4\uACE0 \uC6B0\uB9AC\uAC00 \uD55C\uD3B8 \uB418\uB294 \uAC74 \uC544\uB2C8\uC57C! \uB4A4\uC5D0\uC11C \uB530\uB77C\uAC00\uAE30\uB9CC \uD558\uB294 \uAC70\uC57C!", standing: "toby", cast: RAID_TRIO, act: "hopTwice", nextId: "hole" },
+    { id: "hole", speaker: "", body: "\uC77C\uD589\uC774 \uAC78\uC74C\uC744 \uC62E\uAE34\uB2E4. \uB4A4\uC5D0\uC11C \uAD6C\uBA4D\uC758 \uC5B4\uB460\uC774 \uD55C \uBC88 \uC228\uC744 \uC26C\uB4EF \uC77C\uB801\uC778\uB2E4. \uBB34\uC5B8\uAC00\uAC00 \uC62C\uB824\uB2E4\uBCF4\uACE0 \uC788\uB2E4.", cue: "rumble" }
+  ]
+};
+var CHAPTER_2_STORIES = [
+  STAGE_2_1_PRE,
+  STAGE_2_2_POST,
+  STAGE_2_4_PRE,
+  STAGE_2_5_PRE,
+  STAGE_2_5_POST,
+  STAGE_2_6_POST,
+  STAGE_2_7_PRE,
+  STAGE_2_7_POST,
+  STAGE_2_8_PRE,
+  STAGE_2_9_POST,
+  STAGE_2_10_PRE,
+  STAGE_2_10_POST
+];
+
+// src/data/stageStories.ts
+var LINKS = {
+  "1-2": { post: "stage-1-2-post" },
+  "1-4": { pre: "stage-1-4-pre" },
+  "1-5": { pre: "stage-1-5-pre", post: "stage-1-5-post" },
+  "1-6": { post: "stage-1-6-post" },
+  "1-7": { pre: "stage-1-7-pre" },
+  "1-8": { pre: "stage-1-8-pre" },
+  "1-9": { pre: "stage-1-9-pre", post: "stage-1-9-post" },
+  "1-10": { pre: "stage-1-10-pre", post: "stage-1-10-post" },
+  "2-1": { pre: "stage-2-1-pre" },
+  "2-2": { post: "stage-2-2-post" },
+  "2-4": { pre: "stage-2-4-pre" },
+  "2-5": { pre: "stage-2-5-pre", post: "stage-2-5-post" },
+  "2-6": { post: "stage-2-6-post" },
+  "2-7": { pre: "stage-2-7-pre", post: "stage-2-7-post" },
+  "2-8": { pre: "stage-2-8-pre" },
+  "2-9": { post: "stage-2-9-post" },
+  "2-10": { pre: "stage-2-10-pre", post: "stage-2-10-post" }
+};
+var STAGE_STORY_LINKS = LINKS;
+var MAIN_STORY_BUNDLES = [...CHAPTER_1_STORIES, ...CHAPTER_2_STORIES];
+
+// src/data/recollectionCatalog.ts
+function buildRecollectionEntries() {
+  const entries = [
+    { storyId: OPENING_TRAIN.id, group: "chapter1", titleKey: "recollection.title.openingTrain" },
+    { storyId: OPENING_RETREAT.id, group: "chapter1", stageId: "1-1", titleKey: "recollection.title.openingRetreat" }
+  ];
+  for (const chapter of CHAPTERS) {
+    const group = chapter.id === 1 ? "chapter1" : chapter.id === 2 ? "chapter2" : void 0;
+    if (!group) continue;
+    for (const stage of chapter.stages) {
+      const link = STAGE_STORY_LINKS[stage.id];
+      if (link?.pre) entries.push({ storyId: link.pre, group, stageId: stage.id, phase: "pre" });
+      if (link?.post) entries.push({ storyId: link.post, group, stageId: stage.id, phase: "post" });
+    }
+  }
+  entries.push({ storyId: GREENHOUSE_ECHO.id, group: "side", stageId: SIDE_STORY_STAGE.id, titleKey: "recollection.title.greenhouse" });
+  entries.push({ storyId: GREAT_AUK_REPORT.id, group: "side", titleKey: "recollection.title.greatAuk" });
+  return entries;
+}
+var RECOLLECTION_ENTRIES = buildRecollectionEntries();
+
+// src/core/achievements.ts
+function achievementFacts(state) {
+  const lifetime = state.missions.lifetime ?? {};
+  const playable = PLAYABLE_RELICS.filter(({ id }) => state.owned.has(id));
+  const progress = playable.map(({ id }) => state.relicProgress[id]).filter((entry) => entry !== void 0);
+  const maxBreakthrough = BREAKTHROUGH_STEPS.length;
+  const storyStageIds = CHAPTERS.flatMap(({ stages }) => stages.map(({ id }) => id));
+  return {
+    goldPeak: Math.max(state.achievements?.goldPeak ?? 0, state.wallet.gold),
+    relicsOwned: playable.length,
+    maxRelicLevel: progress.reduce((best, entry) => Math.max(best, entry.level), 0),
+    relicsMaxBreakthrough: progress.filter((entry) => entry.breakthrough >= maxBreakthrough).length,
+    relicsMaxBond: progress.filter((entry) => entry.bondLevel >= BOND_LEVEL_CAP).length,
+    playerLevel: state.playerResearch.level,
+    victories: lifetime.battle_completed ?? 0,
+    storyStagesCleared: storyStageIds.filter((id) => state.cleared.has(id)).length,
+    duelWins: lifetime.duel_won ?? 0,
+    raidRuns: state.progressPasses?.raidRuns ?? 0,
+    expeditionBest: Math.max(state.expedition.allTimeBestScore ?? 0, state.expedition.bestScore ?? 0),
+    researchPulls: lifetime.relic_research_completed ?? 0,
+    harvests: lifetime.excavation_harvested ?? 0,
+    dispatches: lifetime.interaction_dispatched ?? 0,
+    storiesRead: RECOLLECTION_ENTRIES.filter(({ storyId }) => state.completedStoryIds.has(storyId)).length,
+    feedings: lifetime.salary_given ?? 0,
+    staminaSpent: lifetime.stamina_spent ?? 0,
+    dailyMissionsClaimed: lifetime.daily_mission_claimed ?? 0,
+    lobbyGreetings: lifetime.lobby_interaction ?? 0
+  };
+}
+function achievedTierCount(series, value) {
+  let count2 = 0;
+  for (const tier of series.tiers) {
+    if (value < tier.target) break;
+    count2 += 1;
+  }
+  return count2;
+}
+function claimableTierCount(series, value, claimed) {
+  return Math.max(0, achievedTierCount(series, value) - claimed);
+}
+function claimableAchievementCount(state, facts) {
+  return ACHIEVEMENT_SERIES.reduce((sum, series) => sum + claimableTierCount(series, facts[series.metric], state.claimed[series.id] ?? 0), 0);
+}
+function claimAchievements(state, facts, seriesIds) {
+  const requested = seriesIds ? new Set(seriesIds) : void 0;
+  const claimed = { ...state.claimed };
+  const claimedTiers = {};
+  const completedSeriesIds = [];
+  const rewards = [];
+  for (const series of ACHIEVEMENT_SERIES) {
+    if (requested && !requested.has(series.id)) continue;
+    const already = claimed[series.id] ?? 0;
+    const reached = achievedTierCount(series, facts[series.metric]);
+    if (reached <= already) continue;
+    claimedTiers[series.id] = [];
+    for (let index = already; index < reached; index += 1) {
+      claimedTiers[series.id].push(index);
+      rewards.push(series.tiers[index].reward);
+    }
+    claimed[series.id] = reached;
+    if (reached === series.tiers.length) completedSeriesIds.push(series.id);
+  }
+  return { state: { ...state, claimed }, claimedTiers, completedSeriesIds, rewards: mergeMissionRewards(rewards) };
+}
+
 // src/core/shopRotation.ts
 init_define_import_meta_env();
 var ROTATION_EPOCH = "2026-01-05";
@@ -25594,6 +26393,7 @@ function deriveNotificationState(conditions) {
     newEvent: conditions.unseenEventCount > 0,
     mail: conditions.unreadMailCount > 0 || (conditions.claimableMailCount ?? 0) > 0,
     passReward: (conditions.claimablePassCount ?? 0) > 0,
+    achievementReward: (conditions.claimableAchievementCount ?? 0) > 0,
     premiumNotice: (conditions.freeSupplyCategories?.length ?? 0) > 0 || (conditions.claimablePassCount ?? 0) > 0,
     premiumFree: (conditions.freeSupplyCategories?.length ?? 0) > 0,
     premiumFreeDaily: conditions.freeSupplyCategories?.includes("daily") ?? false,
@@ -25993,13 +26793,13 @@ var RelicProgressionManager = class {
   /** UI와 전투가 공유할 최종 능력치를 순수 코어 계산기로 구한다. */
   getFinalStats(relicId) {
     const progress = this.getProgress(relicId);
-    const gems = progress.heartGemSlots.flatMap((id) => {
+    const gems2 = progress.heartGemSlots.flatMap((id) => {
       const rune = id === null ? void 0 : this.state.runeInventory.find((candidate) => candidate.instanceId === id);
       if (!rune) return [];
       return [rune];
     });
     const def = getRelic(relicId);
-    return calculateFinalStats(def.stats, progress, gems, def.rarity);
+    return calculateFinalStats(def.stats, progress, gems2, def.rarity);
   }
   /**
    * 그 개체를 별 다섯까지 키우는 데 필요한 재료를 한 번에 지급한다 — **테스트 전용 진입점**이다.
@@ -27167,11 +27967,11 @@ var FakeServer = class {
     const remainingNow = this.raidDto(instance, now).remainingHp;
     const runDamage = Math.min(admission.seasonHp, Math.max(0, Math.floor(result.totalDamage)));
     const appliedDamage = Math.min(remainingNow, runDamage);
-    const gold = raidRunGold(runDamage, RAID_RUN_GOLD_PER_DAMAGE);
+    const gold2 = raidRunGold(runDamage, RAID_RUN_GOLD_PER_DAMAGE);
     const updated = { ...instance, myDamage: instance.myDamage + runDamage, appliedDamage: (instance.appliedDamage ?? instance.myDamage) + appliedDamage };
     const nextState = structuredClone(this.state);
     nextState.raid = { instances: [...nextState.raid.instances.filter(({ id }) => id !== updated.id), updated] };
-    const appliedGold = Math.min(gold, WALLET_CAPS.gold - nextState.wallet.gold);
+    const appliedGold = Math.min(gold2, WALLET_CAPS.gold - nextState.wallet.gold);
     nextState.wallet = { ...nextState.wallet, gold: nextState.wallet.gold + appliedGold };
     const resultReceipt = { raid: this.raidDto(updated, now), runDamage, sharedDamage: appliedDamage, endedAtMs: result.endedAtMs, granted: appliedGold > 0 ? [{ currency: "gold", name: findItem("gold")?.name ?? "gold", amount: appliedGold }] : [] };
     this.recordReceipt(nextState, "raidSubmit", request.requestId, request.raidId, resultReceipt);
@@ -28414,8 +29214,8 @@ var FakeServer = class {
     const wallet = { ...this.state.wallet };
     const emblem = Math.max(0, Math.min(request.won ? DUEL_BATTLE_REWARD.win : DUEL_BATTLE_REWARD.loss, WALLET_CAPS.duelEmblem - wallet.duelEmblem));
     wallet.duelEmblem += emblem;
-    const gems = Math.max(0, Math.min(reached.reduce((sum, tier) => sum + tier.firstReachGems, 0), WALLET_CAPS.gems - wallet.gems));
-    wallet.gems += gems;
+    const gems2 = Math.max(0, Math.min(reached.reduce((sum, tier) => sum + tier.firstReachGems, 0), WALLET_CAPS.gems - wallet.gems));
+    wallet.gems += gems2;
     const entry = {
       at: now.toISOString(),
       opponentName: pending.opponentName,
@@ -28439,7 +29239,8 @@ var FakeServer = class {
       ...duelTierRose(scoreBefore, scoreAfter) ? { candidateIds: pickDuelOpponents(duelNpcPool(duel2.seasonId), scoreAfter, this.random, duel2.candidateIds).map(({ id }) => id), foughtIds: [] } : {},
       history: [entry, ...duel2.history].slice(0, DUEL_HISTORY_LIMIT)
     };
-    const missions = applyMissionEvent(this.state.missions, { type: "battle_completed", victory: request.won }, now);
+    const fought = applyMissionEvent(this.state.missions, { type: "battle_completed", victory: request.won }, now);
+    const missions = request.won ? applyMissionEvent(fought, { type: "duel_won" }, now) : fought;
     this.persist({ ...this.state, wallet, duel: next, missions });
     this.state.wallet = wallet;
     this.state.duel = next;
@@ -28454,7 +29255,7 @@ var FakeServer = class {
       tierBefore: duelTier(scoreBefore).id,
       tierAfter: duelTier(scoreAfter).id,
       duelEmblem: emblem,
-      gems,
+      gems: gems2,
       winStreak,
       streakBonus,
       newlyReachedTierIds: reached.map(({ id }) => id)
@@ -28486,14 +29287,14 @@ var FakeServer = class {
     if (!pending || !tier) throw new GameApiError("NOTHING_TO_CLAIM", "\uBC1B\uC744 \uC2DC\uC98C \uBCF4\uC0C1\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
     const wallet = { ...this.state.wallet };
     const emblem = Math.max(0, Math.min(tier.seasonReward.duelEmblem, WALLET_CAPS.duelEmblem - wallet.duelEmblem));
-    const gems = Math.max(0, Math.min(tier.seasonReward.gems, WALLET_CAPS.gems - wallet.gems));
+    const gems2 = Math.max(0, Math.min(tier.seasonReward.gems, WALLET_CAPS.gems - wallet.gems));
     wallet.duelEmblem += emblem;
-    wallet.gems += gems;
+    wallet.gems += gems2;
     const next = { ...duel2, pendingSeasonReward: null };
     this.persist({ ...this.state, wallet, duel: next });
     this.state.wallet = wallet;
     this.state.duel = next;
-    return { ...this.snapshot(), seasonId: pending.seasonId, tierId: tier.id, duelEmblem: emblem, gems };
+    return { ...this.snapshot(), seasonId: pending.seasonId, tierId: tier.id, duelEmblem: emblem, gems: gems2 };
   }
   /** 정적 이벤트에 서버가 판정한 상태를 결합해 클라이언트 시계 의존을 없앤다. */
   async getEvents() {
@@ -28529,7 +29330,8 @@ var FakeServer = class {
     const attendance = this.attendanceDto(this.attendanceNow(now), now);
     const mail = this.mailListDto();
     const claimablePassCount = this.progressPassDtos(this.state).reduce((sum, pass) => sum + pass.milestones.filter((stage) => stage.freeState === "claimable" || stage.state === "claimable").length, 0);
-    return { claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length, unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now) };
+    const claimableAchievements = claimableAchievementCount(normalizeAchievementState(this.state.achievements), achievementFacts(this.state));
+    return { claimableAchievementCount: claimableAchievements, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length, unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now) };
   }
   /** 받을 수 있는 무료 보급이 남은 프리미엄 탭 — 목록의 `purchasable`과 같은 판정을 읽는다. */
   freeSupplyCategories(now) {
@@ -28580,6 +29382,69 @@ var FakeServer = class {
     this.state.wallet = nextWallet;
     this.state.earnedProfileModifierIds = nextState.earnedProfileModifierIds;
     return { ...this.snapshot(), claimedIds: uniqueIds, claimedResearchStageIds, rewards: { mission, research }, granted: mergeMissionRewards([...mission, ...research]) };
+  }
+  /** 업적 목록 — 지금 값과 받은 단계·받을 단계를 서버가 판정한다. */
+  async getAchievements() {
+    await this.delay();
+    return this.achievementListDto(this.state);
+  }
+  /**
+   * 닿은 업적 단계를 받는다. 단계마다의 보상·수령 표시·수식어를 같은 nextState와 단 한 번의 persist로
+   * 확정해 재요청으로 같은 단계를 두 번 받지 못하게 한다. 상한을 넘기는 몫은 깎아서 준다.
+   */
+  async claimAchievementRewards(seriesIds) {
+    await this.delay();
+    for (const id of seriesIds ?? []) if (!ACHIEVEMENT_SERIES.some((series) => series.id === id)) throw new GameApiError("NOTHING_TO_CLAIM", "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uC5C5\uC801\uC785\uB2C8\uB2E4.");
+    const current = normalizeAchievementState(this.state.achievements);
+    const claim = claimAchievements(current, achievementFacts(this.state), seriesIds);
+    if (claim.rewards.length === 0 && Object.keys(claim.claimedTiers).length === 0) throw new GameApiError("NOTHING_TO_CLAIM", "\uBC1B\uC744 \uC5C5\uC801 \uBCF4\uC0C1\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    const nextWallet = { ...this.state.wallet };
+    const granted = claim.rewards.map(({ currency: currency3, amount }) => {
+      const applied = Math.max(0, Math.min(amount, WALLET_CAPS[currency3] - nextWallet[currency3]));
+      nextWallet[currency3] += applied;
+      return { currency: currency3, amount: applied };
+    });
+    const before = new Set(this.state.earnedProfileModifierIds);
+    const nextState = ProfileModifierManager.applyRewardReceipt({ ...this.state, wallet: nextWallet, achievements: claim.state }, { claimedIds: [], claimedResearchStageIds: [], completedAchievementIds: claim.completedSeriesIds });
+    this.persist(nextState);
+    this.state.wallet = nextWallet;
+    this.state.achievements = nextState.achievements;
+    this.state.earnedProfileModifierIds = nextState.earnedProfileModifierIds;
+    return {
+      ...this.snapshot(),
+      claimedTiers: claim.claimedTiers,
+      completedSeriesIds: claim.completedSeriesIds,
+      newModifierIds: nextState.earnedProfileModifierIds.filter((id) => !before.has(id)),
+      granted
+    };
+  }
+  achievementListDto(state) {
+    const achievements = normalizeAchievementState(state.achievements);
+    const facts = achievementFacts(state);
+    const earned = new Set(state.earnedProfileModifierIds);
+    const series = ACHIEVEMENT_SERIES.map((definition) => {
+      const claimedTiers = achievements.claimed[definition.id] ?? 0;
+      const value = facts[definition.metric];
+      return {
+        id: definition.id,
+        category: definition.category,
+        metric: definition.metric,
+        value,
+        tiers: definition.tiers.map(({ target, reward }) => ({ target, reward: { ...reward } })),
+        claimedTiers,
+        claimableTiers: claimableTierCount(definition, value, claimedTiers),
+        ...definition.modifierId ? { modifier: { id: definition.modifierId, earned: earned.has(definition.modifierId) } } : {}
+      };
+    });
+    const withModifier = series.filter(({ modifier }) => modifier !== void 0);
+    return {
+      series,
+      claimableCount: claimableAchievementCount(achievements, facts),
+      completedTiers: series.reduce((sum, entry) => sum + entry.claimedTiers, 0),
+      totalTiers: series.reduce((sum, entry) => sum + entry.tiers.length, 0),
+      earnedModifierCount: withModifier.filter(({ modifier }) => modifier.earned).length,
+      totalModifierCount: withModifier.length
+    };
   }
   /** 진행 패스 셋의 진행도·열림·마디 상태를 서버가 판정해 내려 준다. */
   async getProgressPasses() {
@@ -29442,7 +30307,7 @@ var FakeServer = class {
   /** 저장을 마친 뒤 받을 보상 수가 바뀌었을 때만 알린다 — 조회가 다시 저장해도 수가 같으면 되풀이되지 않는다. */
   signalMissionNotice(next) {
     if (this.missionNoticeListeners.size === 0) return;
-    const count2 = this.missionNoticeCount(next.missions);
+    const count2 = claimableAchievementCount(normalizeAchievementState(next.achievements), achievementFacts(next)) * 1e3 + this.missionNoticeCount(next.missions);
     if (count2 === this.lastMissionNotice) return;
     this.lastMissionNotice = count2;
     this.missionNoticeListeners.forEach((listener) => listener());
@@ -29565,6 +30430,7 @@ var FakeServer = class {
   }
   persist(next) {
     this.absorbStrataTicketsInto(next);
+    this.raiseGoldPeak(next);
     this.validateState(next);
     try {
       if (this.persistSession) this.persistSession(next);
@@ -29572,7 +30438,14 @@ var FakeServer = class {
     } catch (error) {
       throw persistenceFailed(error);
     }
+    if (next.achievements) this.state.achievements = next.achievements;
     this.signalMissionNotice(next);
+  }
+  raiseGoldPeak(next) {
+    const achievements = normalizeAchievementState(next.achievements);
+    if (next.wallet.gold <= achievements.goldPeak && next.achievements) return;
+    const raised = { ...achievements, goldPeak: Math.max(achievements.goldPeak, next.wallet.gold) };
+    next.achievements = raised;
   }
   absorbStrataTicketsInto(next) {
     const stack = next.itemInventory.find((entry) => entry.itemId === STRATA_TICKET_ITEM2);
@@ -29620,6 +30493,7 @@ var SERVER_GAME_METHODS = [
   "archaeologyState",
   "breakThroughRelic",
   "buyDuelAttempt",
+  "claimAchievementRewards",
   "claimAdReward",
   "claimAttendance",
   "claimAttendanceAd",
@@ -29650,6 +30524,7 @@ var SERVER_GAME_METHODS = [
   "equipRune",
   "feedRelic",
   "fulfillPlatformPurchase",
+  "getAchievements",
   "getAdOperationsConfig",
   "getAsyncArenaServerState",
   "getAttendance",

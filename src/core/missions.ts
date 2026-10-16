@@ -14,7 +14,9 @@ export type MissionEvent =
   | { type: "excavation_harvested" }
   | { type: "interaction_dispatched" }
   /** 일일 임무를 수령한 수. 주간 임무가 "매일 들어와 끝냈는가"를 세는 데 쓴다. */
-  | { type: "daily_mission_claimed"; count: number };
+  | { type: "daily_mission_claimed"; count: number }
+  /** 결투에서 이긴 판. 임무는 이 사건을 세지 않고 업적의 누적 기록만 센다. */
+  | { type: "duel_won" };
 
 export type MissionPeriod = "daily" | "weekly";
 
@@ -34,6 +36,13 @@ export interface MissionState {
   researchPoints: Record<MissionPeriod, number>;
   /** 연구도 단계 보상이 실제 지급된 ID다. */
   claimedResearchStageIds: string[];
+  /**
+   * 기간과 무관하게 이제껏 쌓인 사건 수(업적이 읽는다 — `core/achievements.ts`). 임무 진행은 목표에서
+   * 잘리고 기간마다 비워지므로 그 값으로는 "평생 몇 번"을 셀 수 없다. 모든 사건이 지나는
+   * `applyMissionEvent` 한 곳에서 오르게 해 새 호출부가 빠뜨리지 않게 한다. **선택 필드다** — 도입 전
+   * 세이브는 0에서 센다.
+   */
+  lifetime?: Partial<Record<MissionEvent["type"], number>>;
 }
 
 /** 화면과 서버가 함께 쓰는 정적 임무 규격이다. */
@@ -157,6 +166,7 @@ export function normalizeMissions(state: MissionState, now: Date): MissionState 
   const resetIds = new Set(MISSIONS.filter((mission) => (mission.period === "daily" ? dailyChanged : weeklyChanged)).map((mission) => mission.id));
   return {
     ...keys,
+    ...(state.lifetime ? { lifetime: { ...state.lifetime } } : {}),
     progress: Object.fromEntries(Object.entries(state.progress).filter(([id]) => !resetIds.has(id))),
     claimedIds: state.claimedIds.filter((id) => !resetIds.has(id)),
     researchPoints: {
@@ -167,6 +177,9 @@ export function normalizeMissions(state: MissionState, now: Date): MissionState 
   };
 }
 
+/** 누적 기록의 끝. 저장 검증이 같은 값을 읽는다 — 정수 범위를 넘지 않게만 막는다. */
+export const LIFETIME_COUNT_CAP = 1_000_000_000;
+
 /** 하나의 성공 이벤트를 관련 임무에 한 번만 반영하고 목표 이상은 잘라 낸다. */
 export function applyMissionEvent(state: MissionState, event: MissionEvent, now: Date): MissionState {
   const next = normalizeMissions(state, now);
@@ -174,6 +187,7 @@ export function applyMissionEvent(state: MissionState, event: MissionEvent, now:
   if (event.type === "battle_completed" && !event.victory) return next;
   const amount = "count" in event ? event.count : "amount" in event ? event.amount : 1;
   if (amount <= 0) return next;
+  next.lifetime = { ...next.lifetime, [event.type]: Math.min(LIFETIME_COUNT_CAP, (next.lifetime?.[event.type] ?? 0) + amount) };
   for (const mission of MISSIONS) {
     if (mission.event !== event.type) continue;
     next.progress[mission.id] = Math.min(mission.target, (next.progress[mission.id] ?? 0) + amount);

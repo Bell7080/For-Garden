@@ -5,11 +5,11 @@
  */
 export const SERVER_GAME_METHODS = [
   "abandonStrataRun", "activatePass", "answerRelicQuestion", "archaeologyState", "breakThroughRelic", "buyDuelAttempt",
-  "claimAdReward", "claimAttendance", "claimAttendanceAd", "claimDuelSeasonReward", "claimExpeditionReward", "claimInstantAdReward",
+  "claimAchievementRewards", "claimAdReward", "claimAttendance", "claimAttendanceAd", "claimDuelSeasonReward", "claimExpeditionReward", "claimInstantAdReward",
   "claimInteractionDispatch", "claimMailRewards", "claimMissionRewards", "claimPassDailyBonus", "claimProgressPass", "claimRelicChapter",
   "claimRelicQuestionReward", "completeBounty", "completeCakeOperation", "completeExpeditionNode", "completeStage", "digStrataTile",
   "engraveRune", "enhanceRune", "enterBounty", "enterCakeOperation", "enterDailyRestoration", "enterDuel", "enterEventStage", "enterRaid",
-  "enterStage", "equipRune", "feedRelic", "fulfillPlatformPurchase", "getAdOperationsConfig", "getAsyncArenaServerState", "getAttendance",
+  "enterStage", "equipRune", "feedRelic", "fulfillPlatformPurchase", "getAchievements", "getAdOperationsConfig", "getAsyncArenaServerState", "getAttendance",
   "getBountyStatus", "getDuelRanking", "getDuelStatus", "getEvents", "getExpeditionLeaderboard", "getExpeditionWeeklyBest",
   "getIdleExcavation", "getInteractionCities", "getInteractionDispatch", "getInventory", "getMails", "getMissions", "getNotificationSignals",
   "getPlayerState", "getProducts", "getProgressPasses", "getRaids", "getStaminaRechargeStatus", "grantRuneTrait", "harvestExcavation",

@@ -3,6 +3,7 @@ import type { RaidDifficulty } from "../data/raid";
 import type { AcquisitionResult, GachaPityState, QuantityRewardKind, Wallet } from "../core/gacha";
 import type { RelicProgress, RelicSkinId, Stats } from "../core/types";
 import type { MissionPeriod, MissionReward } from "../core/missions";
+import type { AchievementCategory, AchievementMetric } from "../data/achievements";
 import type { PassBenefitDefinition, LootCategory, PremiumCategory, ProductAcquisition, ProductGrant, ProductRefresh, ProductStorefront, ShopCategory, ShopProductIconKey } from "../data/products";
 /** storefront와 상점 카테고리는 클라이언트·서버가 함께 쓰는 공용 계약으로 다시 공개한다. */
 export type { PremiumCategory, ProductStorefront, ShopCategory } from "../data/products";
@@ -489,9 +490,29 @@ export interface PeriodResearchDto { points: number; maxPoints: number; stages: 
 /** 목록 응답은 로비 배지에서 바로 쓸 미수령 개수를 포함한다. */
 export interface MissionListResponse { missions: MissionDto[]; claimableCount: number; research: Record<MissionPeriod, PeriodResearchDto>; }
 /** 받은 편지함 데이터가 없는 화면이 상태를 추측하지 않도록 마련한 명시적 서버 계약이다. */
-export interface NotificationSignalsResponse { pendingFriendRequestCount: number; unseenEventCount: number; unreadMailCount: number; claimableMailCount?: number; claimablePassCount?: number; /** 아직 받지 않은 무료 보급이 있는 프리미엄 탭(일간·주간·월간). */ freeSupplyCategories: Array<"daily" | "weekly" | "monthly">; }
+export interface NotificationSignalsResponse { pendingFriendRequestCount: number; /** 받을 수 있는 업적 단계 수. */ claimableAchievementCount?: number; unseenEventCount: number; unreadMailCount: number; claimableMailCount?: number; claimablePassCount?: number; /** 아직 받지 않은 무료 보급이 있는 프리미엄 탭(일간·주간·월간). */ freeSupplyCategories: Array<"daily" | "weekly" | "monthly">; }
 /** 일괄 또는 선택 수령 뒤 지급 총액과 최신 상태를 반환한다. */
 export interface ClaimMissionRewardsResponse extends PlayerStateDto { claimedIds: string[]; claimedResearchStageIds: string[]; /** 임무·연구도 단계가 각각 준 것과 그 합(같은 재화는 한 줄). 상한에 깎인 뒤의 실제 지급분이다. */ rewards: { mission: MissionReward[]; research: MissionReward[] }; granted: MissionReward[]; }
+
+/** 업적 한 단계 — 문턱과 그 단계가 주는 것. */
+export interface AchievementTierDto { target: number; reward: MissionReward; }
+/** 업적 한 줄. 지금 값·받은 단계 수·받을 수 있는 단계 수를 서버가 판정해 내려 준다. */
+export interface AchievementSeriesDto {
+  id: string;
+  category: AchievementCategory;
+  metric: AchievementMetric;
+  value: number;
+  tiers: AchievementTierDto[];
+  /** 받은 단계 수(0 ~ 단계 수). */
+  claimedTiers: number;
+  /** 닿았지만 아직 받지 않은 단계 수. */
+  claimableTiers: number;
+  /** 마지막 단계를 받으면 열리는 수식어와, 이미 얻었는가. */
+  modifier?: { id: string; earned: boolean };
+}
+export interface AchievementListResponse { series: AchievementSeriesDto[]; claimableCount: number; completedTiers: number; totalTiers: number; earnedModifierCount: number; totalModifierCount: number; }
+/** 업적 수령 뒤의 상태. 받은 단계·끝난 업적·열린 수식어와 실제 지급분(상한에 깎인 뒤)을 싣는다. */
+export interface ClaimAchievementRewardsResponse extends PlayerStateDto { claimedTiers: Record<string, number[]>; completedSeriesIds: string[]; newModifierIds: string[]; granted: MissionReward[]; }
 
 /** 상품 목록은 정적 정의에 서버가 계산한 현재 구매 가능 횟수를 결합한다. */
 export interface ProductDto { id: string; storefront: ProductStorefront; category: ShopCategory; lootCategory?: LootCategory; premiumCategory?: PremiumCategory; iconKey: ShopProductIconKey; name: string; description: string; acquisition: ProductAcquisition; grants: readonly ProductGrant[]; defaultQuantity: number; passBenefit?: PassBenefitDefinition; purchaseLimit: number; refresh: ProductRefresh; remaining: number; purchasable: boolean; disabledReason?: string; firstPurchaseBonus?: readonly ProductGrant[]; /** 서버가 구매 기록에서 판정한 값 — 아직 첫 구매 보너스를 받지 않았는가. */ firstBonusAvailable?: boolean; /** 룬 상품이 이 기간에 내놓는 룬의 자리. 서버가 로테이션 칸에서 정해 내려 주며, 사는 쪽은 고르지 않는다. */ runePart?: RunePart; /** 활성 구독이면 만료 시각(null은 영구)과 오늘 몫 수령 여부. */ subscription?: { expiresAt: string | null; dailyBonusClaimed: boolean }; /** 노출이 끝나는 시각 — 한정 상품의 남은 시간이 읽는다. */ visibleUntil?: string; }
@@ -1031,6 +1052,10 @@ export interface GameApi extends AsyncArenaProfileApi {
   subscribeMissionNotice?(listener: () => void): () => void;
   /** ID를 생략하면 현재 완료된 모든 미수령 임무를 한 저장 처리로 받는다. */
   claimMissionRewards(missionIds?: string[], researchPeriod?: MissionPeriod, researchStageIds?: string[]): Promise<ClaimMissionRewardsResponse>;
+  /** 업적 목록과 받을 단계 수를 조회한다. */
+  getAchievements(): Promise<AchievementListResponse>;
+  /** ID를 생략하면 닿은 모든 업적 단계를 한 저장 처리로 받는다. 마지막 단계를 받은 업적은 수식어도 연다. */
+  claimAchievementRewards(seriesIds?: string[]): Promise<ClaimAchievementRewardsResponse>;
   /** 서버 시각과 구매 이력을 반영한 공용 카탈로그를 조회한다. */
   getProducts(storefront: ProductStorefront): Promise<ProductListResponse>;
   /** 인게임 재화 상품만 구매한다. 유료 상품은 플랫폼 결제/영수증 검증 경계를 사용해야 한다. */

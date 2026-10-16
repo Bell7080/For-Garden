@@ -5,7 +5,7 @@ import { session, type Session } from "../state/session";
 /** 좁은 공개 프로필 헤더가 허용하는 장착 수이며 manager와 UI가 같은 제한을 공유한다. */
 export const MAX_EQUIPPED_PROFILE_MODIFIERS = 3;
 /** API 보상 영수증 중 수식어 조건 판정에 필요한 ID만 받는다. */
-export interface ModifierRewardReceipt { claimedIds: readonly string[]; claimedResearchStageIds: readonly string[]; }
+export interface ModifierRewardReceipt { claimedIds: readonly string[]; claimedResearchStageIds: readonly string[]; /** 이번 수령으로 마지막 단계까지 받은 업적. */ completedAchievementIds?: readonly string[]; }
 /** 희귀도를 임의 색 문자열이 아닌 theme 의미 역할로 변환한다. */
 export const PROFILE_MODIFIER_RARITY_ROLE: Readonly<Record<ProfileModifierRarity, "neutral" | "research" | "expedition" | "prestige">> = { common: "neutral", rare: "research", epic: "expedition", legendary: "prestige" };
 
@@ -28,7 +28,7 @@ export class ProfileModifierManager {
   }
   /** 보상 조건과 일치한 획득 ID를 보상 스냅샷에 합쳐 호출자의 단일 persist에 포함한다. */
   static applyRewardReceipt(state: Session, receipt: ModifierRewardReceipt): Session {
-    const conditions = new Set([...receipt.claimedIds.map((id) => `mission:${id}`), ...receipt.claimedResearchStageIds.map((id) => `research:${id}`)]);
+    const conditions = new Set([...receipt.claimedIds.map((id) => `mission:${id}`), ...receipt.claimedResearchStageIds.map((id) => `research:${id}`), ...(receipt.completedAchievementIds ?? []).map((id) => `achievement:${id}`)]);
     const earned = new Set(state.earnedProfileModifierIds);
     PROFILE_MODIFIERS.forEach((definition) => { if (conditions.has(definition.acquisitionConditionId)) earned.add(definition.id); });
     return { ...state, earnedProfileModifierIds: PROFILE_MODIFIERS.filter(({ id }) => earned.has(id)).map(({ id }) => id) };

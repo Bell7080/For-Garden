@@ -47,6 +47,9 @@ import type { AnswerRelicQuestionRequest, AnswerRelicQuestionResponse, ClaimReli
 import { EVENTS, findEventByProductId, findEventByStageId } from "../data/events";
 import type { EventDefinition } from "../data/events/types";
 import type { EnterEventStageResponse, EventListResponse } from "./contracts";
+import type { AchievementListResponse, AchievementSeriesDto, ClaimAchievementRewardsResponse } from "./contracts";
+import { achievementFacts, claimAchievements, claimableAchievementCount, claimableTierCount, normalizeAchievementState } from "../core/achievements";
+import { ACHIEVEMENT_SERIES } from "../data/achievements";
 import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, runePartLabel, RUNE_MAIN_STAT_KEYS, type RuneMainStatKey, type RunePart, engraveRune as applyRuneEngraving, enhanceRune as applyRuneEnhancement, runeEnhancementAttempts, runeEnhancementIncrease, type RuneInstance, type RuneRarity } from "../core/runes";
 import { runeEnhancementGoldCost, runeSellValue } from "../data/runes";
 import { rotationOffer, rotationRunePart } from "../core/shopRotation";
@@ -2123,7 +2126,9 @@ export class FakeServer implements GameApi {
         : {}),
       history: [entry, ...duel.history].slice(0, DUEL_HISTORY_LIMIT),
     };
-    const missions = applyMissionEvent(this.state.missions, { type: "battle_completed", victory: request.won }, now);
+    const fought = applyMissionEvent(this.state.missions, { type: "battle_completed", victory: request.won }, now);
+    // 결투 승리는 임무가 세지 않고 업적의 누적 기록만 센다.
+    const missions = request.won ? applyMissionEvent(fought, { type: "duel_won" }, now) : fought;
     this.persist({ ...this.state, wallet, duel: next, missions });
     this.state.wallet = wallet; this.state.duel = next; this.state.missions = missions;
     this.pendingDuels.delete(request.requestId);
@@ -2210,7 +2215,8 @@ export class FakeServer implements GameApi {
     const attendance = this.attendanceDto(this.attendanceNow(now), now);
     const mail = this.mailListDto();
     const claimablePassCount = this.progressPassDtos(this.state).reduce((sum, pass) => sum + pass.milestones.filter((stage) => stage.freeState === "claimable" || stage.state === "claimable").length, 0);
-    return { claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length, unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now) };
+    const claimableAchievements = claimableAchievementCount(normalizeAchievementState(this.state.achievements), achievementFacts(this.state));
+    return { claimableAchievementCount: claimableAchievements, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length, unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now) };
   }
 
   /** 받을 수 있는 무료 보급이 남은 프리미엄 탭 — 목록의 `purchasable`과 같은 판정을 읽는다. */
@@ -2266,6 +2272,66 @@ export class FakeServer implements GameApi {
     this.persist(nextState);
     this.state.missions = nextMissions; this.state.wallet = nextWallet; this.state.earnedProfileModifierIds = nextState.earnedProfileModifierIds;
     return { ...this.snapshot(), claimedIds: uniqueIds, claimedResearchStageIds, rewards: { mission, research }, granted: mergeMissionRewards([...mission, ...research]) };
+  }
+
+  /** 업적 목록 — 지금 값과 받은 단계·받을 단계를 서버가 판정한다. */
+  async getAchievements(): Promise<AchievementListResponse> {
+    await this.delay();
+    return this.achievementListDto(this.state);
+  }
+
+  /**
+   * 닿은 업적 단계를 받는다. 단계마다의 보상·수령 표시·수식어를 같은 nextState와 단 한 번의 persist로
+   * 확정해 재요청으로 같은 단계를 두 번 받지 못하게 한다. 상한을 넘기는 몫은 깎아서 준다.
+   */
+  async claimAchievementRewards(seriesIds?: string[]): Promise<ClaimAchievementRewardsResponse> {
+    await this.delay();
+    for (const id of seriesIds ?? []) if (!ACHIEVEMENT_SERIES.some((series) => series.id === id)) throw new GameApiError("NOTHING_TO_CLAIM", "존재하지 않는 업적입니다.");
+    const current = normalizeAchievementState(this.state.achievements);
+    const claim = claimAchievements(current, achievementFacts(this.state), seriesIds);
+    if (claim.rewards.length === 0 && Object.keys(claim.claimedTiers).length === 0) throw new GameApiError("NOTHING_TO_CLAIM", "받을 업적 보상이 없습니다.");
+    const nextWallet = { ...this.state.wallet };
+    const granted = claim.rewards.map(({ currency, amount }) => {
+      const applied = Math.max(0, Math.min(amount, WALLET_CAPS[currency] - nextWallet[currency]));
+      nextWallet[currency] += applied;
+      return { currency, amount: applied };
+    });
+    const before = new Set(this.state.earnedProfileModifierIds);
+    const nextState = ProfileModifierManager.applyRewardReceipt({ ...this.state, wallet: nextWallet, achievements: claim.state }, { claimedIds: [], claimedResearchStageIds: [], completedAchievementIds: claim.completedSeriesIds });
+    this.persist(nextState);
+    this.state.wallet = nextWallet; this.state.achievements = nextState.achievements; this.state.earnedProfileModifierIds = nextState.earnedProfileModifierIds;
+    return {
+      ...this.snapshot(),
+      claimedTiers: claim.claimedTiers,
+      completedSeriesIds: claim.completedSeriesIds,
+      newModifierIds: nextState.earnedProfileModifierIds.filter((id) => !before.has(id)),
+      granted,
+    };
+  }
+
+  private achievementListDto(state: Session): AchievementListResponse {
+    const achievements = normalizeAchievementState(state.achievements);
+    const facts = achievementFacts(state);
+    const earned = new Set(state.earnedProfileModifierIds);
+    const series = ACHIEVEMENT_SERIES.map((definition): AchievementSeriesDto => {
+      const claimedTiers = achievements.claimed[definition.id] ?? 0;
+      const value = facts[definition.metric];
+      return {
+        id: definition.id, category: definition.category, metric: definition.metric, value,
+        tiers: definition.tiers.map(({ target, reward }) => ({ target, reward: { ...reward } })),
+        claimedTiers, claimableTiers: claimableTierCount(definition, value, claimedTiers),
+        ...(definition.modifierId ? { modifier: { id: definition.modifierId, earned: earned.has(definition.modifierId) } } : {}),
+      };
+    });
+    const withModifier = series.filter(({ modifier }) => modifier !== undefined);
+    return {
+      series,
+      claimableCount: claimableAchievementCount(achievements, facts),
+      completedTiers: series.reduce((sum, entry) => sum + entry.claimedTiers, 0),
+      totalTiers: series.reduce((sum, entry) => sum + entry.tiers.length, 0),
+      earnedModifierCount: withModifier.filter(({ modifier }) => modifier!.earned).length,
+      totalModifierCount: withModifier.length,
+    };
   }
 
   /** 진행 패스 셋의 진행도·열림·마디 상태를 서버가 판정해 내려 준다. */
@@ -3233,7 +3299,9 @@ export class FakeServer implements GameApi {
   /** 저장을 마친 뒤 받을 보상 수가 바뀌었을 때만 알린다 — 조회가 다시 저장해도 수가 같으면 되풀이되지 않는다. */
   private signalMissionNotice(next: Session): void {
     if (this.missionNoticeListeners.size === 0) return;
-    const count = this.missionNoticeCount(next.missions);
+    // 업적 단계도 같은 신호를 탄다 — 로비의 판 위에서 골드가 차거나 레벨이 올라도 업적 점이 곧바로 서게 한다.
+    // 두 수를 한 값으로 묶어 어느 쪽이 바뀌어도 신호가 나가게 한다(임무 수는 1,000을 넘지 않는다).
+    const count = claimableAchievementCount(normalizeAchievementState(next.achievements), achievementFacts(next)) * 1000 + this.missionNoticeCount(next.missions);
     if (count === this.lastMissionNotice) return;
     this.lastMissionNotice = count;
     this.missionNoticeListeners.forEach((listener) => listener());
@@ -3358,6 +3426,8 @@ export class FakeServer implements GameApi {
   private persist(next: Session): void {
     // 발굴권은 고고학 입장 횟수 그 자체다 — 어느 경로로 받았든 가방에 남기지 않고 횟수에 더한다(`max` 초과 허용).
     this.absorbStrataTicketsInto(next);
+    // 최고 보유 골드는 지갑만 보고는 알 수 없다 — 모든 쓰기가 지나는 이 자리에서 최고치만 올린다(업적).
+    this.raiseGoldPeak(next);
     // 모든 쓰기 API가 공유하는 마지막 경계에서 음수·상한·중복을 저장 전에 차단한다.
     this.validateState(next);
     // validateState의 도메인 오류는 그대로 두고 실제 저장 장치 오류만 공용 API 실패로 분류한다.
@@ -3367,7 +3437,16 @@ export class FakeServer implements GameApi {
     } catch (error) {
       throw persistenceFailed(error);
     }
+    // 호출자는 nextState의 몇 칸만 this.state에 옮겨 담으므로, 저장 경계가 올린 최고 골드는 여기서 맞춘다.
+    if (next.achievements) this.state.achievements = next.achievements;
     this.signalMissionNotice(next);
+  }
+
+  private raiseGoldPeak(next: Session): void {
+    const achievements = normalizeAchievementState(next.achievements);
+    if (next.wallet.gold <= achievements.goldPeak && next.achievements) return;
+    const raised = { ...achievements, goldPeak: Math.max(achievements.goldPeak, next.wallet.gold) };
+    next.achievements = raised;
   }
 
   private absorbStrataTicketsInto(next: Session): void {

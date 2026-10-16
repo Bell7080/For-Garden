@@ -57,6 +57,7 @@ export class NotificationManager {
       unreadMailCount: signals.status === "fulfilled" ? signals.value.unreadMailCount : Number(previous.mail),
       claimableMailCount: signals.status === "fulfilled" ? signals.value.claimableMailCount ?? 0 : Number(previous.mail),
       claimablePassCount: signals.status === "fulfilled" ? signals.value.claimablePassCount ?? 0 : Number(previous.passReward),
+      claimableAchievementCount: signals.status === "fulfilled" ? signals.value.claimableAchievementCount ?? 0 : Number(previous.achievementReward),
       freeSupplyCategories: signals.status === "fulfilled" ? signals.value.freeSupplyCategories ?? [] : FREE_CATEGORIES.filter((_, index) => previous[FREE_KEYS[index]]),
     });
     // 전체 조회 결과도 같은 manager 이벤트 계약으로 발행해 UI 구독 경로를 하나로 유지한다.

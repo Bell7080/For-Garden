@@ -1,3 +1,4 @@
+import { serverNow } from "./serverClock";
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { bannerAcceptsCount, canPull, pull, resolveAcquisitions, spend } from "../core/gacha";
 import { socialApi } from "./FakeSocialServer";
@@ -189,7 +190,7 @@ export class FakeServer implements GameApi {
   ) {
     this.latencyMs = options.latencyMs ?? 180;
     this.random = options.random ?? Math.random;
-    this.now = options.now ?? (() => new Date());
+    this.now = options.now ?? serverNow;
     // FakeServer 기본값은 테스트용 서명 형식이며 프로덕션 HTTP 서버는 반드시 SSV 검증기를 주입한다.
     this.verifyAdToken = options.verifyAdToken ?? ((token, slotId) => token === `verified:${slotId}`);
     this.verifyReceipt = options.verifyPurchaseReceipt ?? ((receipt, productId) => receipt.startsWith(`verified-receipt:${productId}:`) ? receipt.slice(`verified-receipt:${productId}:`.length) : null);

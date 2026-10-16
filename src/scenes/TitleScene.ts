@@ -17,6 +17,7 @@ import { LOADING_STEPS, refreshTextTextures, runLoadingSteps } from "./loadingSt
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { drawCornerShroud, drawVignette } from "../ui/holo";
 import packageInfo from "../../package.json";
+import { checkStartupGate, type StartupGateResult } from "../api/startupGate";
 import { startScene } from "../ui/screenTransition";
 import { settingsManager } from "../managers/SettingsManager";
 import { LANGUAGE_NATIVE_NAME, SELECTABLE_LANGUAGE_IDS } from "../core/language";
@@ -119,6 +120,8 @@ export class TitleScene extends Phaser.Scene {
   private localized: Array<{ text: Phaser.GameObjects.Text; read: () => string }> = [];
   private actionRow?: TitleActionRow;
   private popups?: PopupLayer;
+  /** 시작 관문(점검·최소 버전). 로딩과 나란히 한 번 묻고, 입장을 누를 때 결과를 읽는다. */
+  private gate?: Promise<StartupGateResult>;
 
   constructor() {
     super("title");
@@ -213,6 +216,8 @@ export class TitleScene extends Phaser.Scene {
     // 검은 화면은 타이틀이 다 선 뒤에 걷는다. 걷히는 순간 화면은 이미 완성돼 있다.
     this.tweens.add({ targets: curtain, alpha: 0, duration: 220, onComplete: () => curtain.destroy() });
 
+    // 서버에 점검·최소 버전을 묻는 일은 로딩과 나란히 돌려, 입장을 누를 때는 대개 답이 와 있다.
+    this.gate = checkStartupGate(packageInfo.version);
     void runLoadingSteps(
       this,
       (done) => {
@@ -424,13 +429,45 @@ export class TitleScene extends Phaser.Scene {
       .zone(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT)
       .setInteractive({ useHandCursor: true })
       .setDepth(-1);
-    tapAnywhere.once("pointerup", () => {
-      startScene(this, storyManager.isCompleted(OPENING_TRAIN.id) ? "lobby" : "opening");
-    });
+    const enter = () => {
+      void (this.gate ??= checkStartupGate(packageInfo.version)).then((result) => {
+        if (result.gate === "open") {
+          startScene(this, storyManager.isCompleted(OPENING_TRAIN.id) ? "lobby" : "opening");
+          return;
+        }
+        // 막힌 동안에도 다시 누르면 새로 묻는다 — 점검이 끝났는데 앱을 다시 켜게 하지 않는다.
+        this.gate = undefined;
+        this.showGateNotice(result);
+        tapAnywhere.once("pointerup", enter);
+      });
+    };
+    tapAnywhere.once("pointerup", enter);
 
     // 로딩 중 먼저 그려진 글자(부제)가 문구표보다 앞섰을 수 있으므로 한 번 더 읽는다.
     this.relocalize();
     setDebugReady(true);
+  }
+
+  private showGateNotice(result: StartupGateResult): void {
+    if (!this.popups) return;
+    const config = result.config;
+    if (result.gate === "maintenance") {
+      const until = config?.maintenanceEndsAt ? new Date(config.maintenanceEndsAt).toLocaleString() : "";
+      const base = config?.maintenanceMessage || t("title.gate.maintenance.default");
+      this.popups.confirm({
+        title: t("title.gate.maintenance.title"),
+        message: until ? `${base}\n${t("title.gate.maintenance.until", { time: until })}` : base,
+        confirmLabel: t("title.gate.confirm"),
+        cancelLabel: false,
+      });
+      return;
+    }
+    this.popups.confirm({
+      title: t("title.gate.update.title"),
+      message: t("title.gate.update.body", { version: config?.latestAppVersion || config?.minAppVersion || "" }),
+      confirmLabel: t("title.gate.confirm"),
+      cancelLabel: false,
+    });
   }
 
   /** 설정의 언어 줄과 같은 선택창·같은 저장 경로다. 둘이 어긋나지 않는다. */

@@ -32,8 +32,10 @@ describe("기다림 오버레이 타이밍", () => {
   });
 
   it("화면은 오버레이를 직접 세우지 않고 withBusy로만 부른다", () => {
-    const shop = readFileSync("src/scenes/ShopScene.ts", "utf8");
-    expect(shop).toContain("withBusy(this,");
-    expect(shop).not.toContain("new BusyOverlay");
+    for (const file of ["scenes/ShopScene", "scenes/PremiumScene", "scenes/ExpeditionScene", "scenes/DuelScene", "scenes/ArchaeologyScene", "ui/IdleExcavationPopup", "ui/TradePopup", "ui/AchievementsPopup", "ui/MissionsPopup", "ui/MailPopup"]) {
+      const source = readFileSync(`src/${file}.ts`, "utf8");
+      expect(source, file).toContain("withBusy(this");
+      expect(source, file).not.toContain("new BusyOverlay");
+    }
   });
 });

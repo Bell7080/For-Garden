@@ -83,6 +83,7 @@ import { FeedTapEffect } from "./feedTapEffect";
 import { settingsManager } from "../managers/SettingsManager";
 import { FEED_TAP, FeedHoldRepeater } from "./feedTapStyle";
 import { addSdFootShadow } from "./SdFootShadow";
+import { withBusy } from "./BusyOverlay";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -1072,7 +1073,7 @@ export class InfoManager {
     const def = this.currentDef;
     if (!def) return;
     try {
-      await gameApi.breakThroughRelic(def.id);
+      await withBusy(this.scene, gameApi.breakThroughRelic(def.id));
       // 성공한 서버 처리만 알린다. 실패했을 때는 지갑 값이 바뀌지 않는다.
       this.onWalletChange?.();
       this.playBreakthroughBurst();

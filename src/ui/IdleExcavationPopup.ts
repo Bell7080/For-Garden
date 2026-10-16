@@ -44,6 +44,7 @@ import { moveFormationSlot } from "../core/formation";
 import { bindFormationDrag, type FormationDragSlot } from "./formationDrag";
 import { FORMATION_DRAG_VISUAL } from "./formationDragVisual";
 import { createFormationDragVisualController, type FormationDragVisualController } from "./formationDragVisualController";
+import { withBusy } from "./BusyOverlay";
 
 /** 한 팝업 안에서 현황과 편집 그리드가 교대하므로 모바일 안전 영역을 넘지 않는 고정 크기를 쓴다. */
 const PANEL = { width: 900, height: 1320 } as const;
@@ -219,7 +220,7 @@ export class IdleExcavationPopup {
   private async fetch(): Promise<void> {
     const generation = ++this.requestGeneration;
     try {
-      const response = await this.api.getIdleExcavation();
+      const response = await withBusy(this.scene, this.api.getIdleExcavation());
       // 운영 설정 실패는 선택 광고만 숨기며 기본 보관 시간 생산과 일반 수확 진입은 그대로 계속한다.
       try { this.adOperations = await this.api.getAdOperationsConfig(); } catch { this.adOperations = undefined; }
       if (!this.body || generation !== this.requestGeneration) return;
@@ -905,7 +906,7 @@ export class IdleExcavationPopup {
     this.saving = true; this.renderEditor();
     const submitted = copyFormation(this.draft);
     try {
-      const response = await this.api.saveExcavationFormation({ requestId: requestId(), assignedRelicIds: submitted });
+      const response = await withBusy(this.scene, this.api.saveExcavationFormation({ requestId: requestId(), assignedRelicIds: submitted }));
       if (!this.body) return;
       this.confirmed = response;
       session.idleExcavation = { ...response.excavation, assignedRelicIds: copyFormation(response.excavation.assignedRelicIds), unclaimed: { ...response.excavation.unclaimed } };
@@ -923,7 +924,7 @@ export class IdleExcavationPopup {
     // 네트워크 실패 뒤 사용자가 다시 누르면 최초 요청의 ID를 그대로 재전송한다.
     this.harvestRequestId ??= requestId();
     try {
-      const result = await this.api.harvestExcavation({ requestId: this.harvestRequestId });
+      const result = await withBusy(this.scene, this.api.harvestExcavation({ requestId: this.harvestRequestId }));
       if (!this.body) return;
       session.wallet = { ...result.wallet };
       session.idleExcavation = { ...result.excavation, assignedRelicIds: copyFormation(result.excavation.assignedRelicIds), unclaimed: { ...result.excavation.unclaimed } };

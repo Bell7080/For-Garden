@@ -22,6 +22,7 @@ import { openRewardPopup } from "./RewardPopup";
 import { squeezeTextToWidth } from "./textFit";
 import { COLOR, PROFILE_MODIFIER_RARITY_COLOR, textStyle } from "./theme";
 import { ACHIEVEMENT_CATEGORY_TONE, ACHIEVEMENTS_POPUP_LAYOUT, achievementListContentHeight, achievementRowY, achievementsTabX, orderAchievements, type AchievementTab } from "./achievementsPopupLayout";
+import { withBusy } from "./BusyOverlay";
 
 const TABS: readonly AchievementTab[] = ["all", ...ACHIEVEMENT_CATEGORIES];
 
@@ -67,7 +68,7 @@ export class AchievementsPopup {
   }
 
   private async refresh(): Promise<void> {
-    this.data = await this.api.getAchievements();
+    this.data = await withBusy(this.scene, this.api.getAchievements());
     this.render();
   }
 
@@ -299,7 +300,7 @@ export class AchievementsPopup {
     if (this.claiming || ids.length === 0) return;
     this.claiming = true;
     let result: ClaimAchievementRewardsResponse;
-    try { result = await this.api.claimAchievementRewards(ids); } catch { this.claiming = false; await this.refresh(); return; }
+    try { result = await withBusy(this.scene, this.api.claimAchievementRewards(ids)); } catch { this.claiming = false; await this.refresh(); return; }
     session.wallet = { ...result.wallet }; this.onWalletChanged?.();
     this.data = await this.api.getAchievements();
     this.claiming = false;

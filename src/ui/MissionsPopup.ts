@@ -26,6 +26,7 @@ import { MISSIONS_POPUP_LAYOUT, missionListContentHeight, missionRowY, missionsT
  */
 const MISSION_ORDER_MEMORY = new Map<string, MissionOrderMemory>();
 import { shapeClipMask } from "./popupArt";
+import { withBusy } from "./BusyOverlay";
 
 const PERIODS: readonly MissionPeriod[] = ["daily", "weekly"];
 
@@ -89,7 +90,7 @@ export class MissionsPopup {
   }
 
   private async refresh(): Promise<void> {
-    const result = await this.api.getMissions();
+    const result = await withBusy(this.scene, this.api.getMissions());
     this.missions = result.missions; this.research = result.research;
     this.render(); setDebugMissionsPeriod(this.period);
   }

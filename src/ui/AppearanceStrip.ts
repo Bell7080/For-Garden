@@ -20,6 +20,7 @@ import {
 import {
   canEquipAppearance, isAppearanceDimmed, isAppearanceUnrevealed, type AppearanceEntry, type AppearanceState,
 } from "./appearanceModel";
+import { withBusy } from "./BusyOverlay";
 
 /** 상태마다 한 낱말. 화면이 상태별로 문장을 새로 짓지 않는다. */
 const STATE_TEXT: Record<AppearanceState, "info.skin.equipped" | "info.skin.owned" | "info.skin.purchasable" | "info.skin.locked" | "info.skin.comingSoon"> = {
@@ -366,7 +367,7 @@ export class AppearanceStrip {
     this.busy = true;
     this.paint();
     try {
-      const result = await gameApi.purchaseRelicSkin({ relicId: this.def.id, skinId, requestId: `skin:${this.def.id}:${skinId}` });
+      const result = await withBusy(this.scene, gameApi.purchaseRelicSkin({ relicId: this.def.id, skinId, requestId: `skin:${this.def.id}:${skinId}` }));
       relicSkinManager.markPurchased(this.def.id, result.skinId);
       this.hooks.onWalletChange?.();
     } catch {

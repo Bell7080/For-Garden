@@ -11,6 +11,7 @@ import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { expeditionRewardTrackFillY, expeditionRewardTrackHeight, expeditionRewardTrackNodes, REWARD_TRACK } from "./expeditionRewardTrack";
 import { chipPoints, drawLayer } from "./holo";
 import { COLOR, textStyle } from "./theme";
+import { withBusy } from "./BusyOverlay";
 
 /** 판 안에서 길이 보이는 창의 규격이다. 길이 더 길면 이 창 안에서만 위아래로 흐른다. */
 const VIEW = { width: 900, maxHeight: 1160, chromeTop: 168, chromeBottom: 64 } as const;
@@ -261,7 +262,7 @@ export class ExpeditionRewardPopup {
     if (this.claiming) return;
     this.claiming = true;
     try {
-      const result = await this.api.claimExpeditionReward({ requestId: `expedition-reward:${new Date().toISOString().slice(0, 10)}:${stageId}:${Date.now()}`, stageId });
+      const result = await withBusy(this.scene, this.api.claimExpeditionReward({ requestId: `expedition-reward:${new Date().toISOString().slice(0, 10)}:${stageId}:${Date.now()}`, stageId }));
       session.wallet = { ...result.wallet };
       this.onClaimed?.();
       await this.refresh(result.alreadyClaimed ? t("expeditionReward.claimed") : t("expeditionReward.claimedAmount", { amount: result.reward.amount.toLocaleString() }));

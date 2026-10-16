@@ -53,6 +53,7 @@ import type { ArchaeologyStateResponse } from "../api/contracts";
 import { formatCountdown } from "../core/formatCountdown";
 import { archaeologyProgressManager } from "../managers/ArchaeologyProgressManager";
 import { playSceneEntrance, startScene, slideTabPage } from "../ui/screenTransition";
+import { withBusy } from "../ui/BusyOverlay";
 
 /**
  * 고고학. 하단 탭 첫 슬롯이다.
@@ -357,7 +358,7 @@ export class ArchaeologyScene extends Phaser.Scene {
 
   /** 서버에서 지금 상태를 받아 다시 그린다. 씬이 횟수나 판을 스스로 계산하지 않는다. */
   private async refresh(): Promise<void> {
-    const state = await gameApi.archaeologyState();
+    const state = await withBusy(this, gameApi.archaeologyState());
     this.applyArchaeologyState(state);
     this.paintView();
   }
@@ -812,7 +813,7 @@ export class ArchaeologyScene extends Phaser.Scene {
   private async finishRun(board: StrataBoardView): Promise<void> {
     this.digging = true;
     try {
-      const response = await gameApi.abandonStrataRun({ requestId: `strata-finish-${Date.now()}` });
+      const response = await withBusy(this, gameApi.abandonStrataRun({ requestId: `strata-finish-${Date.now()}` }));
       this.applyArchaeologyState(response);
       this.paintView();
       const items = haulToRewardItems(strataBoardHaul(board), this.grantedRunes);

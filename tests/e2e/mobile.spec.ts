@@ -533,7 +533,7 @@ const settingsTab = (id: keyof typeof TAB): number => settingsTabX(TAB[id], Obje
 const PLAY_ROW = { screenShake: 0, damageNumbers: 1, shortenExcavation: 2, powerSaving: 3, graphicsQuality: 4, frameRateLimit: 5, battleUiMotion: 6, battleSpeed: 7, autoUltimate: 8, textSpeed: 9, language: 10 } as const;
 const SETTINGS_TAB_Y = 176;
 /** 지원 탭 글자 줄 차례. `SettingsScene.buildSupportRows`의 순서를 그대로 옮긴다. */
-const SUPPORT_ROW = { clearCache: 0, terms: 1, privacy: 2, resetSettings: 3, resetSave: 4, grantAll: 5, breakthroughSet: 6, withdraw: 7 } as const;
+const SUPPORT_ROW = { inquiry: 0, clearCache: 1, terms: 2, privacy: 3, resetSettings: 4, resetSave: 5, grantAll: 6, breakthroughSet: 7, withdraw: 8 } as const;
 /** 공용 확인 팝업의 「확인」 버튼. 판은 화면 가운데에 서고 버튼은 그 아래 105px이다. */
 const CONFIRM_BUTTON = { x: 690, y: 1065 } as const;
 

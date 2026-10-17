@@ -20,6 +20,7 @@ import { platformFeedback } from "../api/PlatformFeedback";
 import { accountApi, type AccountFailureCode, type AccountState } from "../api/AccountApi";
 import { AccountSaveSync } from "../api/AccountSaveSync";
 import { session } from "../state/session";
+import { openSupportPopup } from "../ui/SupportPopup";
 import { openSaveConflictPopup, type SaveConflictChoice } from "../ui/SaveConflictPopup";
 import { PopupLayer } from "../ui/PopupLayer";
 import { SETTINGS_HEAD, SETTINGS_ROW, SETTINGS_SECTION, SETTINGS_SUPPORT, SETTINGS_TEXT, settingsSectionHeight, settingsTabSlot } from "../ui/settingsLayout";
@@ -314,6 +315,7 @@ export class SettingsScene extends Phaser.Scene {
     // 밀려나며(`section`의 `Math.max`), 그 밖에는 줄 자리가 언제나 같아 E2E가 짚을 수 있다.
     y = Math.max(y, SETTINGS_SUPPORT.sectionTop);
     y = section(t("settings.section.support"));
+    this.addTextAction(90, y, t("settings.support.inquiry"), () => openSupportPopup(this, this.popups)); y += SETTINGS_SUPPORT.actionStep;
     this.addTextAction(90, y, t("settings.support.clearCache"), () => void this.clearCache()); y += SETTINGS_SUPPORT.actionStep;
     this.addTextAction(90, y, t("settings.support.terms"), () => this.openPolicy("/terms")); y += SETTINGS_SUPPORT.actionStep;
     this.addTextAction(90, y, t("settings.support.privacy"), () => this.openPolicy("/privacy")); y += SETTINGS_SUPPORT.actionStep;

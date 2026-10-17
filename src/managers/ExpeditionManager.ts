@@ -13,6 +13,7 @@ import { createInitialRelicProgress, session, type ExpeditionRunState, type Sess
 import { GameApiError, type ApiErrorCode, type GameApi, type SettleExpeditionRunResponse, type SubmitExpeditionBossScoreResponse } from "../api/contracts";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import { t } from "../i18n";
+import { resolveServerApi, type ExpeditionApi } from "./serverApi";
 
 /** UI가 소비하는 원정 요약이며 변경 가능한 Session 참조는 노출하지 않는다. */
 export interface ExpeditionStatus {
@@ -299,7 +300,45 @@ export class ExpeditionManager {
   }
 }
 
-export const expeditionManager = new ExpeditionManager();
+/**
+ * 화면이 쓰는 원정 진입점이다. **읽기**(`status`·`snapshotFor`)는 동기화된 세션을 그대로 읽고 — 저장하지 않는 규칙
+ * 인스턴스라 주·일 주기를 넘겨도 기기에는 아무것도 쓰지 않는다 — **쓰기**는 모두 서버 호출이며 서버가 답한 뒤
+ * 세션이 서버 상태로 맞춰진다. 규칙 자체는 위 `ExpeditionManager`가 갖고 서버가 같은 클래스를 실행한다.
+ */
+export class ExpeditionClient {
+  private readonly view: ExpeditionManager;
+  private readonly apiCache: { api?: ExpeditionApi } = {};
+  constructor(private readonly state: Session = session, private readonly injectedApi?: ExpeditionApi, serverNow: () => Date = () => new Date()) {
+    this.view = new ExpeditionManager(state, { save: () => undefined }, serverNow, false);
+  }
+
+  private get api(): ExpeditionApi { return resolveServerApi<ExpeditionApi>(this.state, this.injectedApi, this.apiCache); }
+
+  status(): ExpeditionStatus { return this.view.status(); }
+  snapshotFor(relicId: string): ExpeditionRelicSnapshot { return this.view.snapshotFor(relicId); }
+
+  start(relicIds: readonly string[]): Promise<StartExpeditionResult> {
+    return this.api.startExpeditionRun({ relicIds: [...relicIds] }) as Promise<StartExpeditionResult>;
+  }
+
+  /** 개발용 20층 바로가기. 일반 서버는 `developmentOnly`로 거절한다. */
+  prepareDevelopmentBossShortcut(relicIds: readonly string[]): Promise<DevelopmentBossShortcutResult> {
+    return this.api.startExpeditionRun({ relicIds: [...relicIds], shortcut: "boss" });
+  }
+
+  async completeRestNode(nodeId: string): Promise<boolean> { return (await this.api.completeExpeditionRest({ nodeId })).ok; }
+  async beginAugmentReward(nodeId: string): Promise<ExpeditionRunState["pendingAugmentReward"]> { return (await this.api.beginExpeditionAugment({ nodeId })).pending; }
+  async chooseAugment(selection: ExpeditionAugmentSelection): Promise<boolean> { return (await this.api.chooseExpeditionAugment({ selection })).ok; }
+  async prepareBossRequests(nodeId: string): Promise<{ requestId: string; settlementId: string; replayVersion: 2 } | null> { return (await this.api.prepareExpeditionBoss({ nodeId })).ids; }
+
+  /** 서버가 점수와 보스 방문을 한 저장으로 확정했으므로, 세션이 그 점수와 같은지만 확인한다. */
+  applyBossScore(nodeId: string, response: SubmitExpeditionBossScoreResponse): boolean {
+    const run = this.state.expedition.run;
+    return !!run && run.visitedNodeIds.includes(nodeId) && run.bossDamageScore === response.bossDamageScore;
+  }
+}
+
+export const expeditionManager = new ExpeditionClient();
 
 /** 어느 원격 경계에서 멈췄는지 UI와 테스트가 문자열 추측 없이 구분하는 실패다. */
 export class ExpeditionBossSettlementError extends Error {
@@ -328,7 +367,7 @@ export class ExpeditionBossSettlementFlow {
   private readonly scores = new Map<string, SubmitExpeditionBossScoreResponse>();
   private readonly settlements = new Map<string, SettleExpeditionRunResponse>();
 
-  constructor(private readonly api: Pick<GameApi, "submitExpeditionBossScore" | "settleExpeditionRun">, private readonly manager: Pick<ExpeditionManager, "applyBossScore">) {}
+  constructor(private readonly api: Pick<GameApi, "submitExpeditionBossScore" | "settleExpeditionRun">, private readonly manager: Pick<ExpeditionClient, "applyBossScore">) {}
 
   async finish(input: { replayVersion?: 2; requestId: string; settlementId: string; runId: string; nodeId: string }, actions: readonly ExpeditionBossAction[]): Promise<ExpeditionBossFinalResult> {
     let score = this.scores.get(input.requestId);

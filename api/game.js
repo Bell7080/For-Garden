@@ -86,9 +86,9 @@ function pull(banner, count2, currentPity, rng) {
     if (!pityForcesSsr && count2 === 10 && slot === 9 && (grade === "GRAY" || grade === "R")) grade = "SR";
     if (grade === "GRAY") {
       const totalWeight = banner.grayRewards.reduce((sum, reward2) => sum + reward2.weight, 0);
-      const roll2 = rng() * totalWeight;
+      const roll3 = rng() * totalWeight;
       let cursor = 0;
-      const reward = banner.grayRewards.find((candidate) => (cursor += candidate.weight) > roll2) ?? banner.grayRewards.at(-1);
+      const reward = banner.grayRewards.find((candidate) => (cursor += candidate.weight) > roll3) ?? banner.grayRewards.at(-1);
       if (!reward) throw new Error("\uD68C\uC0C9 \uBCF4\uC0C1 \uD480\uC774 \uBE44\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.");
       const amount = rewardAmount(reward, rng());
       slots.push({ kind: "currency", currency: reward.kind, amount, grade: "GRAY" });
@@ -2717,9 +2717,9 @@ function sampleKeys(keys, count2, random) {
   const pool = [...keys];
   const picked = [];
   while (picked.length < count2) {
-    const roll2 = random();
-    if (!Number.isFinite(roll2) || roll2 < 0 || roll2 >= 1) throw new RangeError("\uB8EC \uB09C\uC218\uB294 0 \uC774\uC0C1 1 \uBBF8\uB9CC\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
-    picked.push(pool.splice(Math.floor(roll2 * pool.length), 1)[0]);
+    const roll3 = random();
+    if (!Number.isFinite(roll3) || roll3 < 0 || roll3 >= 1) throw new RangeError("\uB8EC \uB09C\uC218\uB294 0 \uC774\uC0C1 1 \uBBF8\uB9CC\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
+    picked.push(pool.splice(Math.floor(roll3 * pool.length), 1)[0]);
   }
   return picked;
 }
@@ -3230,9 +3230,9 @@ function drainFerocityFever(unit, seconds) {
 }
 
 // src/core/damage.ts
-function isCriticalHit(critChance, roll2) {
-  if (roll2 < 0 || roll2 >= 1) throw new RangeError("critical roll\uC740 0 \uC774\uC0C1 1 \uBBF8\uB9CC\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
-  return roll2 < critChance / 100;
+function isCriticalHit(critChance, roll3) {
+  if (roll3 < 0 || roll3 >= 1) throw new RangeError("critical roll\uC740 0 \uC774\uC0C1 1 \uBBF8\uB9CC\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
+  return roll3 < critChance / 100;
 }
 function currentAbilityPower(combatant) {
   return combatant.def.stats.ap + (combatant.bonusAp ?? 0);
@@ -3518,6 +3518,29 @@ function bleedOnAttackEffect(effects, relicId) {
   const strengthRank = { minor: 0, standard: 1 };
   const reapplicationRank = { refresh: 1 };
   return effects.filter((effect) => effect.kind === "bleedOnAttack" && augmentAppliesTo(effect, relicId)).sort((a, b) => strengthRank[b.strength] - strengthRank[a.strength] || a.everyNAttacks - b.everyNAttacks || reapplicationRank[b.reapplication] - reapplicationRank[a.reapplication])[0];
+}
+var EXPEDITION_AFTER_BATTLE_HEAL_CAP_PERCENT = 50;
+function expeditionAfterBattleHealPercent(selections) {
+  const total = selections.reduce((sum, selection) => {
+    const augment = getExpeditionAugment(selection.augmentId);
+    return augment?.target === "party" && augment.effect.kind === "healAfterBattlePercent" && selection.targetRelicId === void 0 ? sum + augment.effect.percent : sum;
+  }, 0);
+  return Math.min(EXPEDITION_AFTER_BATTLE_HEAL_CAP_PERCENT, total);
+}
+function applyExpeditionAfterBattleHeal(relics, healPercent) {
+  return relics.map((relic) => relic.alive && relic.currentHp > 0 ? { ...relic, currentHp: Math.min(100, relic.currentHp + healPercent) } : { ...relic, currentHp: 0, alive: false });
+}
+function applyExpeditionRest(relics, healPercent = 30, revivePercent = 25) {
+  if (!relics.some(({ alive, currentHp }) => alive && currentHp > 0)) return relics.map((relic) => ({ ...relic, currentHp: 0, alive: false }));
+  let revived = false;
+  return relics.map((relic) => {
+    if (relic.alive && relic.currentHp > 0) return { ...relic, currentHp: Math.min(100, relic.currentHp + healPercent), alive: true };
+    if (!revived) {
+      revived = true;
+      return { ...relic, currentHp: revivePercent, alive: true };
+    }
+    return { ...relic, currentHp: 0, alive: false };
+  });
 }
 function highHpDamageMultiplier(effects, relicId, targetHpPercent) {
   const percent = effects.filter((effect) => effect.kind === "damageVsHighHpPercent" && augmentAppliesTo(effect, relicId) && targetHpPercent >= effect.aboveHpPercent).reduce((sum, effect) => sum + effect.percent, 0);
@@ -18543,7 +18566,7 @@ function raidWorldBossId(dayKey) {
   return RAID_BOSS_POOL[(day % RAID_BOSS_POOL.length + RAID_BOSS_POOL.length) % RAID_BOSS_POOL.length];
 }
 function rollRaidSummon(bossRoll, difficultyRoll) {
-  const pick2 = (list, roll2) => list[Math.min(list.length - 1, Math.max(0, Math.floor(roll2 * list.length)))];
+  const pick2 = (list, roll3) => list[Math.min(list.length - 1, Math.max(0, Math.floor(roll3 * list.length)))];
   return { bossRelicId: pick2(RAID_BOSS_POOL, bossRoll), difficulty: pick2(RAID_SUMMON_DIFFICULTIES, difficultyRoll) };
 }
 function raidSeasonProgress(dealtDamage, totalHp = RAID_SEASON_TOTAL_HP) {
@@ -18744,6 +18767,7 @@ var EXPEDITION_NODE_SCORE_MULTIPLIERS = {
   /** 보스 점수는 별도의 서버 검증 피해 점수가 소유한다. */
   boss: 0
 };
+var EXPEDITION_REST_RULES = { healPercent: 30, revivePercent: 25, maxRevives: 1, cannotReviveAfterWipe: true };
 var EXPEDITION_NON_COMBAT_TYPES = ["rest", "treasure"];
 var EXPEDITION_AUGMENT_IDS = EXPEDITION_AUGMENTS.map(({ id }) => id);
 var EXPEDITION_REWARD_IDS = ["gold", "fossil", "amber", "gems", "cheesecake", "salvageRecord"];
@@ -24407,6 +24431,70 @@ function relicStoryFor(relicId) {
 // src/core/expeditionMap.ts
 init_define_import_meta_env();
 var ROUTE_TYPES = [...EXPEDITION_COMBAT_TYPES, ...EXPEDITION_NON_COMBAT_TYPES];
+function roll2(random) {
+  const value = random();
+  if (!Number.isFinite(value) || value < 0 || value >= 1) throw new RangeError("\uC6D0\uC815 \uB09C\uC218\uB294 0 \uC774\uC0C1 1 \uBBF8\uB9CC\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
+  return value;
+}
+function chooseColumns(count2, random) {
+  const columns = Array.from({ length: EXPEDITION_MAP_BALANCE.columns }, (_, column) => column);
+  for (let index = columns.length - 1; index > 0; index -= 1) {
+    const target = Math.floor(roll2(random) * (index + 1));
+    [columns[index], columns[target]] = [columns[target], columns[index]];
+  }
+  return columns.slice(0, count2).sort((left, right) => left - right);
+}
+function chooseType(previous, streak, nonCombatStreak, random) {
+  const candidates = ROUTE_TYPES.filter((type) => {
+    if (type === previous && streak >= EXPEDITION_MAP_BALANCE.maxConsecutiveSameType) return false;
+    return !(EXPEDITION_NON_COMBAT_TYPES.includes(type) && nonCombatStreak >= EXPEDITION_MAP_BALANCE.maxConsecutiveNonCombat);
+  });
+  const total = candidates.reduce((sum, type) => sum + EXPEDITION_MAP_BALANCE.typeWeights[type], 0);
+  let target = roll2(random) * total;
+  for (const type of candidates) {
+    target -= EXPEDITION_MAP_BALANCE.typeWeights[type];
+    if (target < 0) return type;
+  }
+  return candidates[candidates.length - 1];
+}
+function connectFloors(previous, next) {
+  const nearest = (node, candidates) => candidates.reduce((best, candidate) => Math.abs(candidate.column - node.column) < Math.abs(best.column - node.column) ? candidate : best);
+  const connect = (from, to) => {
+    if (!from.successorIds.includes(to.id)) from.successorIds.push(to.id);
+    if (!to.predecessorIds.includes(from.id)) to.predecessorIds.push(from.id);
+  };
+  previous.forEach((node) => connect(node, nearest(node, next)));
+  next.forEach((node) => connect(nearest(node, previous), node));
+}
+function generateExpeditionMap(input) {
+  if (input.seed.length === 0) throw new Error("\uBCF5\uC6D0 \uAC00\uB2A5\uD55C \uC6D0\uC815 \uB9F5\uC5D0\uB294 \uBE44\uC5B4 \uC788\uC9C0 \uC54A\uC740 seed\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+  const floors = [];
+  const columnHistory = /* @__PURE__ */ new Map();
+  for (let floor = 1; floor <= EXPEDITION_MAP_BALANCE.routeFloors; floor += 1) {
+    const span = EXPEDITION_MAP_BALANCE.nodesPerFloor.max - EXPEDITION_MAP_BALANCE.nodesPerFloor.min + 1;
+    const count2 = EXPEDITION_MAP_BALANCE.nodesPerFloor.min + Math.floor(roll2(input.random) * span);
+    const requiredCombat = EXPEDITION_MAP_BALANCE.requiredCombatFloors.includes(floor);
+    const nodes = chooseColumns(count2, input.random).map((column) => {
+      const history = columnHistory.get(column);
+      const type = requiredCombat ? EXPEDITION_COMBAT_TYPES[Math.floor(roll2(input.random) * EXPEDITION_COMBAT_TYPES.length)] : chooseType(history?.type, history?.streak ?? 0, history?.nonCombatStreak ?? 0, input.random);
+      const nonCombat = EXPEDITION_NON_COMBAT_TYPES.includes(type);
+      columnHistory.set(column, {
+        type,
+        streak: history?.type === type ? history.streak + 1 : 1,
+        nonCombatStreak: nonCombat ? (history?.nonCombatStreak ?? 0) + 1 : 0
+      });
+      return { id: `f${floor}-c${column}`, floor, column, type, predecessorIds: [], successorIds: [] };
+    });
+    floors.push(nodes);
+    if (floor > 1) connectFloors(floors[floor - 2], nodes);
+  }
+  const boss = { id: "f20-boss", floor: EXPEDITION_MAP_BALANCE.bossFloor, column: 2, type: "boss", predecessorIds: [], successorIds: [] };
+  connectFloors(floors[floors.length - 1], [boss]);
+  const map = { seed: input.seed, nodes: [...floors.flat(), boss] };
+  const errors = validateExpeditionMap(map);
+  if (errors.length > 0) throw new Error(`\uC720\uD6A8\uD558\uC9C0 \uC54A\uC740 \uC6D0\uC815 \uB9F5: ${errors.join("; ")}`);
+  return map;
+}
 function validateExpeditionMap(map) {
   const errors = [];
   const byId = new Map(map.nodes.map((node) => [node.id, node]));
@@ -25276,6 +25364,88 @@ var ProfileModifierManager = class {
 };
 var profileModifierManager = new ProfileModifierManager();
 
+// src/managers/ExpeditionManager.ts
+init_define_import_meta_env();
+
+// src/core/expeditionRewards.ts
+init_define_import_meta_env();
+function rollInteger(min, max, random) {
+  const normalized = Math.min(1 - Number.EPSILON, Math.max(0, random()));
+  return min + Math.floor(normalized * (max - min + 1));
+}
+function calculateExpeditionNodeRewards(input) {
+  for (const [currency3, amount] of Object.entries(input.accumulated)) {
+    if (!(currency3 in EXPEDITION_NODE_REWARD_BALANCE) || !Number.isFinite(amount) || amount < 0) throw new Error("INVALID_EXPEDITION_REWARD_STATE");
+  }
+  if (input.nodeType === "rest" || input.nodeType === "boss") return {};
+  const source = input.nodeType === "treasure" ? EXPEDITION_TREASURE_REWARD_BALANCE : Object.fromEntries(Object.entries(EXPEDITION_NODE_REWARD_BALANCE).map(([currency3, rule]) => [currency3, rule.perNode]));
+  const multiplier = input.nodeType === "treasure" ? 1 : EXPEDITION_COMBAT_REWARD_MULTIPLIERS[input.nodeType];
+  const result = {};
+  for (const [currency3, range] of Object.entries(source)) {
+    const key = currency3;
+    const remaining = EXPEDITION_NODE_REWARD_BALANCE[key].runCap - (input.accumulated[key] ?? 0);
+    const rolled = Math.floor(rollInteger(range.min, range.max, input.random) * multiplier);
+    result[key] = Math.max(0, Math.min(remaining, rolled));
+  }
+  return result;
+}
+function calculateExpeditionRunScore(input) {
+  const normalNodeScoreTotal = Math.max(0, Math.floor(input.normalNodeScoreTotal));
+  const bossDamageScore = Math.max(0, Math.floor(input.bossDamageScore));
+  return { normalNodeScoreTotal, bossDamageScore, runScore: normalNodeScoreTotal + bossDamageScore };
+}
+function expeditionRewardRule(nodeType) {
+  if (nodeType === "normal") return { selections: 1, rarity: "sr" };
+  if (nodeType === "horde") return { selections: 2, rarity: "sr" };
+  if (nodeType === "elite") return { selections: 1, rarity: "ssr" };
+  return { selections: 0, rarity: null };
+}
+function eligibleExpeditionTargets(relics) {
+  if (!relics.some(({ alive, currentHp }) => alive && currentHp > 0)) return [];
+  return relics.filter(({ alive, currentHp }) => alive || currentHp === 0).map(({ relicId }) => relicId);
+}
+function augmentAvailable(augmentId, prior) {
+  const def = getExpeditionAugment(augmentId);
+  if (!def) return false;
+  const stackCount = prior.filter((selection) => selection.augmentId === def.id).length;
+  if (stackCount >= def.maxStacks) return false;
+  if (!def.exclusiveGroup) return true;
+  return !prior.some((selection) => {
+    const selected = getExpeditionAugment(selection.augmentId);
+    return selected !== void 0 && selected.exclusiveGroup === def.exclusiveGroup && selected.id !== def.id;
+  });
+}
+function generateExpeditionAugmentOffers(input) {
+  const targets = eligibleExpeditionTargets(input.relics);
+  const pool = EXPEDITION_AUGMENTS.filter((def) => def.rarity === input.rarity && (def.target === "party" || targets.length > 0) && augmentAvailable(def.id, input.selections));
+  for (let index = pool.length - 1; index > 0; index -= 1) {
+    const chosen = Math.floor(input.random() * (index + 1));
+    [pool[index], pool[chosen]] = [pool[chosen], pool[index]];
+  }
+  const requestedCount = Math.max(0, Math.floor(input.candidateCount ?? 3));
+  return pool.slice(0, requestedCount).map((def) => ({
+    augmentId: def.id,
+    eligibleTargetRelicIds: def.target === "relic" ? targets : []
+  }));
+}
+function validateExpeditionAugmentChoice(offer, selection, prior) {
+  const def = getExpeditionAugment(offer.augmentId);
+  if (!def || selection.augmentId !== offer.augmentId || !augmentAvailable(def.id, prior)) return false;
+  if (def.target === "party") return selection.targetRelicId === void 0;
+  return selection.targetRelicId !== void 0 && offer.eligibleTargetRelicIds.includes(selection.targetRelicId);
+}
+function expeditionRewardRandom(seed) {
+  let value = 2166136261;
+  for (const character of seed) value = Math.imul(value ^ character.charCodeAt(0), 16777619);
+  return () => {
+    value += 1831565813;
+    let next = value;
+    next = Math.imul(next ^ next >>> 15, next | 1);
+    next ^= next + Math.imul(next ^ next >>> 7, next | 61);
+    return ((next ^ next >>> 14) >>> 0) / 4294967296;
+  };
+}
+
 // src/api/contracts.ts
 init_define_import_meta_env();
 var GameApiError = class extends Error {
@@ -25290,6 +25460,308 @@ function persistenceFailed(error, messageKey = "error.persist.state") {
   const message = t(messageKey);
   return error instanceof GameApiError && error.code === "PERSISTENCE_FAILED" ? error : new GameApiError("PERSISTENCE_FAILED", message, { cause: error });
 }
+
+// src/managers/ExpeditionManager.ts
+function expeditionWeekKey2(serverNow2) {
+  const date = new Date(Date.UTC(serverNow2.getUTCFullYear(), serverNow2.getUTCMonth(), serverNow2.getUTCDate()));
+  date.setUTCDate(date.getUTCDate() - (date.getUTCDay() + 6) % 7);
+  return date.toISOString().slice(0, 10);
+}
+function seededRandom(seed) {
+  let value = 2166136261;
+  for (const character of seed) value = Math.imul(value ^ character.charCodeAt(0), 16777619);
+  return () => {
+    value += 1831565813;
+    let next = value;
+    next = Math.imul(next ^ next >>> 15, next | 1);
+    next ^= next + Math.imul(next ^ next >>> 7, next | 61);
+    return ((next ^ next >>> 14) >>> 0) / 4294967296;
+  };
+}
+var ExpeditionManager = class {
+  constructor(state = session, saves = saveManager, serverNow2 = () => /* @__PURE__ */ new Date(), developmentToolsEnabled = QA_TOOLS_ENABLED) {
+    this.state = state;
+    this.saves = saves;
+    this.serverNow = serverNow2;
+    this.developmentToolsEnabled = developmentToolsEnabled;
+  }
+  state;
+  saves;
+  serverNow;
+  developmentToolsEnabled;
+  /** 주차를 서버 UTC에 맞춘 뒤 UI용 독립 사본을 반환한다. */
+  status() {
+    this.normalizeWeek();
+    if (this.state.expedition.run?.settled) this.commit({ ...this.state.expedition, run: null });
+    this.backfillSnapshots();
+    const run2 = this.state.expedition.run;
+    const copy = run2 ? structuredClone(run2) : null;
+    const { weekKey, playsToday, bestScore, allTimeBestScore } = this.state.expedition;
+    return { weekKey, playsToday, bestScore, allTimeBestScore, run: copy, active: copy ? { relicIds: copy.relics.map(({ relicId }) => relicId), score: copy.runScore } : null, quickAvailable: this.state.expedition.bestScore > 0 && run2 === null, canStartRun: playsToday < EXPEDITION_DAILY_POLICY.maxPlaysPerDay };
+  }
+  /** 정확히 세 보유 렐릭을 검증하고 서버 주간 키가 포함된 결정적 맵을 생성한다. */
+  start(relicIds) {
+    this.normalizeWeek();
+    if (this.state.expedition.run) return { ok: false, reason: "alreadyActive" };
+    if (this.state.expedition.playsToday >= EXPEDITION_DAILY_POLICY.maxPlaysPerDay) return { ok: false, reason: "dailyLimitReached" };
+    if (relicIds.length !== 3) return { ok: false, reason: "exactlyThree" };
+    if (new Set(relicIds).size !== 3) return { ok: false, reason: "duplicate" };
+    if (relicIds.some((id) => !this.state.owned.has(id))) return { ok: false, reason: "notOwned" };
+    const weekKey = expeditionWeekKey2(this.serverNow());
+    const mapSeed = `${expeditionDayKey(this.serverNow())}:1`;
+    const map = generateExpeditionMap({ seed: mapSeed, random: seededRandom(mapSeed) });
+    const run2 = { runId: `run:${mapSeed}`, weekKey, mapSeed, nodes: map.nodes, currentNodeId: null, visitedNodeIds: [], relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true, snapshot: this.capture(relicId) })), selectedAugmentIds: [], selectedAugments: [], pendingAugmentReward: null, pendingRewards: {}, lastNodeRewards: null, bossDamage: 0, normalNodeScoreTotal: 0, bossDamageScore: 0, runScore: 0, bestScore: 0, settled: false, settlementId: null, bossSubmissionId: null, bossSettlementId: null };
+    this.commit({ ...this.state.expedition, lastParty: [...relicIds], run: run2 });
+    return { ok: true, run: structuredClone(run2) };
+  }
+  /**
+   * 임시 개발 도구: 정식 노드 완료·점수 제출을 흉내 내지 않고 20층 보스 직전의 저장 스냅샷만 원자적으로 만든다.
+   * production에서는 직접 호출해도 거부하며, 이후 출격은 일반 보스 DTO/서버 정산 규칙을 그대로 통과한다.
+   */
+  prepareDevelopmentBossShortcut(relicIds) {
+    if (!this.developmentToolsEnabled) return { ok: false, reason: "developmentOnly" };
+    this.normalizeWeek();
+    if (this.state.expedition.run) return { ok: false, reason: "alreadyActive" };
+    if (relicIds.length !== 3) return { ok: false, reason: "exactlyThree" };
+    if (new Set(relicIds).size !== 3) return { ok: false, reason: "duplicate" };
+    if (relicIds.some((id) => !this.state.owned.has(id))) return { ok: false, reason: "notOwned" };
+    const weekKey = expeditionWeekKey2(this.serverNow());
+    const mapSeed = `${expeditionDayKey(this.serverNow())}:${this.state.expedition.playsToday + 1}:dev-boss`;
+    const map = generateExpeditionMap({ seed: mapSeed, random: seededRandom(mapSeed) });
+    const boss = map.nodes.find(({ type, floor }) => type === "boss" && floor === 20);
+    const route = [boss];
+    while (route[0].floor > 1) {
+      const predecessor = map.nodes.find(({ id }) => id === route[0].predecessorIds[0]);
+      if (!predecessor) throw new Error("\uAC1C\uBC1C\uC6A9 \uBCF4\uC2A4 \uACBD\uB85C\uB97C \uC0DD\uC131\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+      route.unshift(predecessor);
+    }
+    const reached = route.at(-2);
+    const runId = `run:${mapSeed}`;
+    const run2 = {
+      runId,
+      weekKey,
+      mapSeed,
+      nodes: map.nodes,
+      currentNodeId: reached.id,
+      visitedNodeIds: route.slice(0, -1).map(({ id }) => id),
+      relics: relicIds.map((relicId) => ({ relicId, currentHp: 100, alive: true, snapshot: this.capture(relicId) })),
+      selectedAugmentIds: [],
+      selectedAugments: [],
+      pendingAugmentReward: null,
+      pendingRewards: {},
+      lastNodeRewards: null,
+      bossDamage: 0,
+      normalNodeScoreTotal: 0,
+      bossDamageScore: 0,
+      runScore: 0,
+      bestScore: 0,
+      settled: false,
+      settlementId: null,
+      bossSubmissionId: `${runId}:${boss.id}:boss-score`,
+      bossSettlementId: `${runId}:boss-completed`
+    };
+    this.commit({ ...this.state.expedition, lastParty: [...relicIds], run: run2 });
+    return { ok: true, run: structuredClone(run2) };
+  }
+  /** 도달한 노드의 결과만 반영하며 씬이 HP·보상·점수를 직접 쓸 필요가 없게 한다. */
+  completeNode(nodeId, update) {
+    const run2 = this.state.expedition.run;
+    const node = run2?.nodes.find(({ id }) => id === nodeId);
+    if (!run2 || run2.settled || !node || run2.visitedNodeIds.includes(nodeId) || run2.currentNodeId !== null && !run2.nodes.find(({ id }) => id === run2.currentNodeId)?.successorIds.includes(nodeId) || update.relicHp.length !== 3) return false;
+    if (update.augmentId && !EXPEDITION_AUGMENT_IDS.includes(update.augmentId)) return false;
+    if (update.relicHp.some((hp) => !Number.isFinite(hp) || hp < 0) || !Number.isFinite(update.bossDamage ?? 0) || (update.bossDamage ?? 0) < 0) return false;
+    const next = structuredClone(run2);
+    next.currentNodeId = nodeId;
+    next.visitedNodeIds.push(nodeId);
+    next.relics.forEach((relic, index) => {
+      relic.currentHp = update.relicHp[index];
+      relic.alive = relic.currentHp > 0;
+    });
+    if (update.augmentId && !next.selectedAugmentIds.includes(update.augmentId)) next.selectedAugmentIds.push(update.augmentId);
+    if (node.type === "boss") next.bossDamageScore = Math.max(next.bossDamageScore, update.bossDamage ?? 0);
+    const score = calculateExpeditionRunScore(next);
+    next.bossDamage = score.bossDamageScore;
+    next.runScore = score.runScore;
+    next.bestScore = score.runScore;
+    this.commit({ ...this.state.expedition, run: next });
+    return true;
+  }
+  /**
+   * 난전 결과를 검증한 뒤 전투 후 회복과 노드 완료를 한 저장으로 확정한다.
+   * 승패와 무관하게 유효한 전투 결과에는 회복한다. 따라서 생존자가 남은 실패·보스 시간 종료도
+   * 회복하지만, 전멸은 사망자를 되살리지 않아 실질 회복이 없다.
+   */
+  completeBattle(nodeId, results) {
+    const run2 = this.state.expedition.run;
+    const node = run2?.nodes.find(({ id }) => id === nodeId);
+    const battleTypes = ["normal", "elite", "horde", "boss"];
+    if (!run2 || !node || !battleTypes.includes(node.type) || results.length !== run2.relics.length || results.some((result, index) => result.relicId !== run2.relics[index].relicId || !Number.isFinite(result.currentHp) || result.currentHp < 0 || result.currentHp > 100 || result.alive !== result.currentHp > 0)) return false;
+    const healPercent = expeditionAfterBattleHealPercent(run2.selectedAugments);
+    const healed = applyExpeditionAfterBattleHeal(results, healPercent);
+    const relicHp = healed.map(({ currentHp }) => currentHp);
+    return this.completeNode(nodeId, { relicHp });
+  }
+  /** 보스를 누르는 순간 두 멱등 키를 먼저 저장해 어느 비동기 경계에서 종료돼도 복원한다. */
+  prepareBossRequests(nodeId) {
+    const run2 = this.state.expedition.run;
+    const node = run2?.nodes.find(({ id }) => id === nodeId);
+    if (!run2 || node?.type !== "boss" || run2.settled) return null;
+    const next = structuredClone(run2);
+    next.bossReplayVersion = 2;
+    next.bossSubmissionId ??= `${run2.runId}:${nodeId}:boss-score`;
+    next.bossSettlementId ??= `${run2.runId}:boss-completed`;
+    this.commit({ ...this.state.expedition, run: next });
+    return { requestId: next.bossSubmissionId, settlementId: next.bossSettlementId, replayVersion: 2 };
+  }
+  /** 서버가 검증한 보스 피해만 진행 저장에 합치며, 재응답은 같은 노드를 두 번 완료하지 않는다. */
+  applyBossScore(nodeId, response) {
+    const run2 = this.state.expedition.run;
+    if (!run2) return false;
+    if (run2.visitedNodeIds.includes(nodeId)) return run2.bossDamageScore === response.bossDamageScore;
+    return this.completeNode(nodeId, { relicHp: [0, 0, 0], bossDamage: response.bossDamageScore });
+  }
+  /** 전투 노드의 첫 제안을 한 번만 만들고 seed와 결과를 같은 저장 트랜잭션에 고정한다. */
+  beginAugmentReward(nodeId, nodeType) {
+    const run2 = this.state.expedition.run;
+    const rule = expeditionRewardRule(nodeType);
+    if (!run2 || run2.settled || rule.selections === 0 || !rule.rarity) return null;
+    if (run2.pendingAugmentReward) return structuredClone(run2.pendingAugmentReward);
+    const seed = `${run2.mapSeed}:${nodeId}:augment:1`;
+    const offers = generateExpeditionAugmentOffers({ rarity: rule.rarity, relics: run2.relics, selections: run2.selectedAugments, random: expeditionRewardRandom(seed) });
+    if (offers.length === 0) return null;
+    const pending = { nodeId, seed, round: 1, totalRounds: rule.selections, offers };
+    const next = { ...structuredClone(run2), pendingAugmentReward: pending };
+    this.commit({ ...this.state.expedition, run: next });
+    return structuredClone(pending);
+  }
+  /** 제안에 포함된 증강만 확정하며 무리 전투는 첫 결과를 저장한 뒤 두 번째 제안을 연속 생성한다. */
+  chooseAugment(selection) {
+    const run2 = this.state.expedition.run;
+    const pending = run2?.pendingAugmentReward;
+    const offer = pending?.offers.find(({ augmentId }) => augmentId === selection.augmentId);
+    if (!run2 || !pending || !offer || !validateExpeditionAugmentChoice(offer, selection, run2.selectedAugments)) return false;
+    const next = structuredClone(run2);
+    next.selectedAugments.push({ ...selection });
+    next.selectedAugmentIds.push(selection.augmentId);
+    if (pending.round < pending.totalRounds) {
+      const nodeType = next.nodes.find(({ id }) => id === pending.nodeId)?.type;
+      const rule = nodeType ? expeditionRewardRule(nodeType) : { selections: 0, rarity: null };
+      if (!rule.rarity) return false;
+      const round = pending.round + 1;
+      const seed = `${run2.mapSeed}:${pending.nodeId}:augment:${round}`;
+      const offers = generateExpeditionAugmentOffers({ rarity: rule.rarity, relics: next.relics, selections: next.selectedAugments, random: expeditionRewardRandom(seed) });
+      next.pendingAugmentReward = offers.length > 0 ? { nodeId: pending.nodeId, seed, round, totalRounds: pending.totalRounds, offers } : null;
+    } else next.pendingAugmentReward = null;
+    this.commit({ ...this.state.expedition, run: next });
+    return true;
+  }
+  /** 휴식 노드는 전멸하지 않은 런에만 정적 회복/부활 규칙을 적용한다. */
+  rest() {
+    const run2 = this.state.expedition.run;
+    if (!run2 || run2.settled || run2.relics.every(({ alive }) => !alive)) return false;
+    const next = structuredClone(run2);
+    next.relics = applyExpeditionRest(next.relics, EXPEDITION_REST_RULES.healPercent, EXPEDITION_REST_RULES.revivePercent);
+    this.commit({ ...this.state.expedition, run: next });
+    return true;
+  }
+  /** 휴식 효과와 노드 방문 완료를 한 번만 저장한다. 이 메서드가 휴식 재시도의 상태 소유자다. */
+  completeRestNode(nodeId) {
+    const run2 = this.state.expedition.run;
+    const node = run2?.nodes.find(({ id }) => id === nodeId);
+    if (!run2 || node?.type !== "rest" || run2.settled || run2.visitedNodeIds.includes(nodeId) || run2.currentNodeId !== null && !run2.nodes.find(({ id }) => id === run2.currentNodeId)?.successorIds.includes(nodeId) || run2.relics.every(({ alive }) => !alive)) return false;
+    const next = structuredClone(run2);
+    next.relics = applyExpeditionRest(next.relics, EXPEDITION_REST_RULES.healPercent, EXPEDITION_REST_RULES.revivePercent);
+    next.currentNodeId = nodeId;
+    next.visitedNodeIds.push(nodeId);
+    this.commit({ ...this.state.expedition, run: next });
+    return true;
+  }
+  // 종료와 포기는 로컬 쓰기 메서드를 두지 않는다. 호출자는 GameApi.settleExpeditionRun만 사용해
+  // 임시 보상 이전과 완료 표식이 서로 갈라지는 부분 저장을 만들 수 없게 한다.
+  /**
+   * 이 렐릭이 지금 싸울 모습. 진행 중인 런에 있으면 **떠날 때 굳힌 값**이고, 아니면 지금 성장이다.
+   * 전투·지도·서버 재현·정보창이 모두 이 한 곳을 지나므로 둘이 다른 값을 읽지 않는다.
+   */
+  snapshotFor(relicId) {
+    const frozen = this.state.expedition.run?.relics.find((relic) => relic.relicId === relicId)?.snapshot;
+    return structuredClone(frozen ?? this.capture(relicId));
+  }
+  capture(relicId) {
+    const progress = this.state.relicProgress[relicId] ?? createInitialRelicProgress();
+    return captureExpeditionRelicSnapshot(getRelic(relicId), progress, this.state.runeInventory, this.state.equippedRelicSkinIds[relicId]);
+  }
+  /**
+   * 스냅샷이 생기기 전에 떠난 런(또는 손상된 스냅샷)은 **지금** 굳힌다. 그 뒤로는 바뀌지 않는다 —
+   * 거슬러 올라가 떠난 날의 값을 알 방법이 없으므로, 적어도 남은 층만큼은 한 모습으로 싸운다.
+   */
+  backfillSnapshots() {
+    const run2 = this.state.expedition.run;
+    if (!run2 || run2.relics.every((relic) => isExpeditionRelicSnapshot(relic.snapshot))) return;
+    const next = structuredClone(run2);
+    next.relics.forEach((relic) => {
+      if (!isExpeditionRelicSnapshot(relic.snapshot)) relic.snapshot = this.capture(relic.relicId);
+    });
+    this.commit({ ...this.state.expedition, run: next });
+  }
+  commit(expedition) {
+    this.state.expedition = expedition;
+    this.saves.save(this.state);
+  }
+  /**
+   * 하루·주 주기를 넘긴다. 서버와 **같은 함수**(`rollExpeditionPeriods`)라, 어느 쪽이 먼저 주를 넘기든
+   * 지난주 최고 기록은 순위 보상 대기로 옮겨 간다 — 여기서 0으로 지우기만 하면 그 주의 보상이 사라진다.
+   */
+  normalizeWeek() {
+    const current = normalizeExpeditionState(this.state.expedition);
+    const next = rollExpeditionPeriods(current, this.serverNow());
+    if (next !== current || !("dayKey" in this.state.expedition)) this.commit(next);
+  }
+};
+var ExpeditionClient = class {
+  constructor(state = session, injectedApi, serverNow2 = () => /* @__PURE__ */ new Date()) {
+    this.state = state;
+    this.injectedApi = injectedApi;
+    this.view = new ExpeditionManager(state, { save: () => void 0 }, serverNow2, false);
+  }
+  state;
+  injectedApi;
+  view;
+  apiCache = {};
+  get api() {
+    return resolveServerApi(this.state, this.injectedApi, this.apiCache);
+  }
+  status() {
+    return this.view.status();
+  }
+  snapshotFor(relicId) {
+    return this.view.snapshotFor(relicId);
+  }
+  start(relicIds) {
+    return this.api.startExpeditionRun({ relicIds: [...relicIds] });
+  }
+  /** 개발용 20층 바로가기. 일반 서버는 `developmentOnly`로 거절한다. */
+  prepareDevelopmentBossShortcut(relicIds) {
+    return this.api.startExpeditionRun({ relicIds: [...relicIds], shortcut: "boss" });
+  }
+  async completeRestNode(nodeId) {
+    return (await this.api.completeExpeditionRest({ nodeId })).ok;
+  }
+  async beginAugmentReward(nodeId) {
+    return (await this.api.beginExpeditionAugment({ nodeId })).pending;
+  }
+  async chooseAugment(selection) {
+    return (await this.api.chooseExpeditionAugment({ selection })).ok;
+  }
+  async prepareBossRequests(nodeId) {
+    return (await this.api.prepareExpeditionBoss({ nodeId })).ids;
+  }
+  /** 서버가 점수와 보스 방문을 한 저장으로 확정했으므로, 세션이 그 점수와 같은지만 확인한다. */
+  applyBossScore(nodeId, response) {
+    const run2 = this.state.expedition.run;
+    return !!run2 && run2.visitedNodeIds.includes(nodeId) && run2.bossDamageScore === response.bossDamageScore;
+  }
+};
+var expeditionManager = new ExpeditionClient();
 
 // src/data/shopCatalog.ts
 init_define_import_meta_env();
@@ -25736,45 +26208,6 @@ var WEIGHTS = {
 };
 function combatPower(stats) {
   return Math.round(Object.keys(WEIGHTS).reduce((sum, key) => sum + stats[key] * WEIGHTS[key], 0));
-}
-
-// src/core/expeditionRewards.ts
-init_define_import_meta_env();
-function rollInteger(min, max, random) {
-  const normalized = Math.min(1 - Number.EPSILON, Math.max(0, random()));
-  return min + Math.floor(normalized * (max - min + 1));
-}
-function calculateExpeditionNodeRewards(input) {
-  for (const [currency3, amount] of Object.entries(input.accumulated)) {
-    if (!(currency3 in EXPEDITION_NODE_REWARD_BALANCE) || !Number.isFinite(amount) || amount < 0) throw new Error("INVALID_EXPEDITION_REWARD_STATE");
-  }
-  if (input.nodeType === "rest" || input.nodeType === "boss") return {};
-  const source = input.nodeType === "treasure" ? EXPEDITION_TREASURE_REWARD_BALANCE : Object.fromEntries(Object.entries(EXPEDITION_NODE_REWARD_BALANCE).map(([currency3, rule]) => [currency3, rule.perNode]));
-  const multiplier = input.nodeType === "treasure" ? 1 : EXPEDITION_COMBAT_REWARD_MULTIPLIERS[input.nodeType];
-  const result = {};
-  for (const [currency3, range] of Object.entries(source)) {
-    const key = currency3;
-    const remaining = EXPEDITION_NODE_REWARD_BALANCE[key].runCap - (input.accumulated[key] ?? 0);
-    const rolled = Math.floor(rollInteger(range.min, range.max, input.random) * multiplier);
-    result[key] = Math.max(0, Math.min(remaining, rolled));
-  }
-  return result;
-}
-function calculateExpeditionRunScore(input) {
-  const normalNodeScoreTotal = Math.max(0, Math.floor(input.normalNodeScoreTotal));
-  const bossDamageScore = Math.max(0, Math.floor(input.bossDamageScore));
-  return { normalNodeScoreTotal, bossDamageScore, runScore: normalNodeScoreTotal + bossDamageScore };
-}
-function expeditionRewardRandom(seed) {
-  let value = 2166136261;
-  for (const character of seed) value = Math.imul(value ^ character.charCodeAt(0), 16777619);
-  return () => {
-    value += 1831565813;
-    let next = value;
-    next = Math.imul(next ^ next >>> 15, next | 1);
-    next ^= next + Math.imul(next ^ next >>> 7, next | 61);
-    return ((next ^ next >>> 14) >>> 0) / 4294967296;
-  };
 }
 
 // src/core/partyAffinity.ts
@@ -27946,6 +28379,42 @@ var FakeServer = class {
     const rank = this.expeditionRank(expedition.bestScore);
     return { weekKey: expedition.weekKey, bestScore: expedition.bestScore, resetsAt: reset.toISOString(), rank, rankRewards: rank === null ? {} : expeditionRankRewards(rank), rewardStages: EXPEDITION_BEST_SCORE_REWARD_STAGES.map((stage) => ({ ...stage, reward: { ...stage.reward }, claimed: expedition.claimedRewardStageIds.includes(stage.id) })) };
   }
+  /**
+   * 원정 런의 규칙은 `ExpeditionManager`가 갖는다. 서버는 그 규칙을 자기 상태에 대해 실행하고 저장만 한다 —
+   * 같은 규칙을 두 곳에 적지 않기 위해서다. 매 호출 앞에서 주·일 주기와 스냅샷 복구를 먼저 지난다.
+   */
+  expeditionRules() {
+    const rules = new ExpeditionManager(this.state, { save: (next) => this.persist(next) }, this.now, QA_TOOLS_ENABLED);
+    rules.status();
+    return rules;
+  }
+  async startExpeditionRun(request) {
+    await this.delay();
+    const ids = Array.isArray(request.relicIds) ? request.relicIds.filter((id) => typeof id === "string") : [];
+    const rules = this.expeditionRules();
+    const result = request.shortcut === "boss" ? rules.prepareDevelopmentBossShortcut(ids) : rules.start(ids);
+    return result;
+  }
+  async completeExpeditionRest(request) {
+    await this.delay();
+    return { ok: this.expeditionRules().completeRestNode(request.nodeId) };
+  }
+  async beginExpeditionAugment(request) {
+    await this.delay();
+    const rules = this.expeditionRules();
+    const node = this.state.expedition.run?.nodes.find(({ id }) => id === request.nodeId);
+    return { pending: node ? rules.beginAugmentReward(node.id, node.type) : null };
+  }
+  async chooseExpeditionAugment(request) {
+    await this.delay();
+    const selection = request.selection;
+    if (typeof selection?.augmentId !== "string" || selection.targetRelicId !== void 0 && typeof selection.targetRelicId !== "string") return { ok: false };
+    return { ok: this.expeditionRules().chooseAugment({ augmentId: selection.augmentId, ...selection.targetRelicId !== void 0 ? { targetRelicId: selection.targetRelicId } : {} }) };
+  }
+  async prepareExpeditionBoss(request) {
+    await this.delay();
+    return { ids: this.expeditionRules().prepareBossRequests(request.nodeId) };
+  }
   /** 제출된 피해 숫자를 신뢰하지 않고 서버 편성의 정적 전투력으로 동작열을 완전히 재생한다. */
   async submitExpeditionBossScore(request) {
     await this.delay();
@@ -28004,6 +28473,15 @@ var FakeServer = class {
       nextState.expedition.run.bossDamageScore = runScore.bossDamageScore;
       nextState.expedition.run.runScore = runScore.runScore;
       nextState.expedition.run.bestScore = runScore.runScore;
+      const bossRun = nextState.expedition.run;
+      if (request.nodeId && !bossRun.visitedNodeIds.includes(request.nodeId)) {
+        bossRun.currentNodeId = request.nodeId;
+        bossRun.visitedNodeIds.push(request.nodeId);
+        bossRun.relics.forEach((relic) => {
+          relic.currentHp = 0;
+          relic.alive = false;
+        });
+      }
     }
     nextState.expedition = { ...weekly, run: nextState.expedition.run, allTimeBestScore: Math.max(weekly.allTimeBestScore, runScore.runScore) };
     if (improved) {
@@ -31074,6 +31552,7 @@ var SERVER_GAME_METHODS = [
   "answerRelicQuestion",
   "applyStoryEffect",
   "archaeologyState",
+  "beginExpeditionAugment",
   "breakThroughRelic",
   "buyDuelAttempt",
   "claimAchievementRewards",
@@ -31090,9 +31569,11 @@ var SERVER_GAME_METHODS = [
   "claimProgressPass",
   "claimRelicChapter",
   "claimRelicQuestionReward",
+  "chooseExpeditionAugment",
   "completeBounty",
   "completeCakeOperation",
   "completeExpeditionNode",
+  "completeExpeditionRest",
   "completeObservation",
   "completeStage",
   "completeStory",
@@ -31140,6 +31621,7 @@ var SERVER_GAME_METHODS = [
   "markInteractionJournalRead",
   "markMailsRead",
   "markRune",
+  "prepareExpeditionBoss",
   "pullRelics",
   "purchaseProduct",
   "purchaseRelicSkin",
@@ -31158,6 +31640,7 @@ var SERVER_GAME_METHODS = [
   "setRelicBookmark",
   "settleExpeditionRun",
   "settleRaid",
+  "startExpeditionRun",
   "startInteractionDispatch",
   "startStrataRun",
   "submitExpeditionBossScore",

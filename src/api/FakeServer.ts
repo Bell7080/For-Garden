@@ -33,6 +33,8 @@ import { interactionDurationMs, isInteractionCityUnlocked, isInteractionDispatch
 import type {
   PurchaseRelicSkinRequest, PurchaseRelicSkinResponse, CompleteStoryRequest, CompleteStoryResponse, ApplyStoryEffectRequest, ApplyStoryEffectResponse, CompleteObservationRequest, CompleteObservationResponse, MarkInteractionJournalReadRequest, MarkInteractionJournalReadResponse, SelectArchaeologySiteRequest, SelectArchaeologySiteResponse, SetPartyRequest, SetPartyResponse, SetFavoriteRequest, SetRelicBookmarkRequest, RelicMarkResponse, UpdatePlayerCardRequest, UpdatePlayerCardResponse, EquipProfileModifiersRequest, EquipProfileModifiersResponse, EquipRelicSkinRequest, ClaimInteractionDispatchRequest, ClaimInteractionDispatchResponse, InteractionCitiesResponse, InteractionDispatchResponse, StartInteractionDispatchRequest } from "./contracts";
 import { MAX_EQUIPPED_PROFILE_MODIFIERS, ProfileModifierManager } from "../managers/ProfileModifierManager";
+import { ExpeditionManager } from "../managers/ExpeditionManager";
+import type { BeginExpeditionAugmentRequest, BeginExpeditionAugmentResponse, ChooseExpeditionAugmentRequest, CompleteExpeditionRestRequest, PrepareExpeditionBossRequest, PrepareExpeditionBossResponse, StartExpeditionRunRequest, StartExpeditionRunResponse } from "./contracts";
 import { GameApiError, persistenceFailed, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type EnterBountyRequest, type EnterBountyResponse, type CompleteBountyRequest, type CompleteBountyResponse, type BountyStatusResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse, type RechargeStaminaRequest, type RechargeStaminaResponse, type StaminaRechargeStatusDto, type ClaimProgressPassRequest, type ClaimProgressPassResponse, type ProgressPassDto, type ProgressPassListResponse } from "./contracts";
 import type { ProductDefinition, ProductGrant } from "../data/shopCatalog";
 import { PRODUCTS } from "../data/shopCatalog";
@@ -494,6 +496,49 @@ export class FakeServer implements GameApi {
     return { weekKey: expedition.weekKey, bestScore: expedition.bestScore, resetsAt: reset.toISOString(), rank, rankRewards: rank === null ? {} : expeditionRankRewards(rank), rewardStages: EXPEDITION_BEST_SCORE_REWARD_STAGES.map((stage) => ({ ...stage, reward: { ...stage.reward }, claimed: expedition.claimedRewardStageIds.includes(stage.id) })) };
   }
 
+  /**
+   * 원정 런의 규칙은 `ExpeditionManager`가 갖는다. 서버는 그 규칙을 자기 상태에 대해 실행하고 저장만 한다 —
+   * 같은 규칙을 두 곳에 적지 않기 위해서다. 매 호출 앞에서 주·일 주기와 스냅샷 복구를 먼저 지난다.
+   */
+  private expeditionRules(): ExpeditionManager {
+    const rules = new ExpeditionManager(this.state, { save: (next) => this.persist(next) }, this.now, QA_TOOLS_ENABLED);
+    rules.status();
+    return rules;
+  }
+
+  async startExpeditionRun(request: StartExpeditionRunRequest): Promise<StartExpeditionRunResponse> {
+    await this.delay();
+    const ids = Array.isArray(request.relicIds) ? request.relicIds.filter((id): id is string => typeof id === "string") : [];
+    const rules = this.expeditionRules();
+    const result = request.shortcut === "boss" ? rules.prepareDevelopmentBossShortcut(ids) : rules.start(ids);
+    return result;
+  }
+
+  async completeExpeditionRest(request: CompleteExpeditionRestRequest): Promise<{ ok: boolean }> {
+    await this.delay();
+    return { ok: this.expeditionRules().completeRestNode(request.nodeId) };
+  }
+
+  async beginExpeditionAugment(request: BeginExpeditionAugmentRequest): Promise<BeginExpeditionAugmentResponse> {
+    await this.delay();
+    const rules = this.expeditionRules();
+    // 노드 종류는 클라이언트가 말한 값이 아니라 서버가 들고 있는 런의 지도에서 읽는다.
+    const node = this.state.expedition.run?.nodes.find(({ id }) => id === request.nodeId);
+    return { pending: node ? rules.beginAugmentReward(node.id, node.type) : null };
+  }
+
+  async chooseExpeditionAugment(request: ChooseExpeditionAugmentRequest): Promise<{ ok: boolean }> {
+    await this.delay();
+    const selection = request.selection;
+    if (typeof selection?.augmentId !== "string" || (selection.targetRelicId !== undefined && typeof selection.targetRelicId !== "string")) return { ok: false };
+    return { ok: this.expeditionRules().chooseAugment({ augmentId: selection.augmentId, ...(selection.targetRelicId !== undefined ? { targetRelicId: selection.targetRelicId } : {}) }) };
+  }
+
+  async prepareExpeditionBoss(request: PrepareExpeditionBossRequest): Promise<PrepareExpeditionBossResponse> {
+    await this.delay();
+    return { ids: this.expeditionRules().prepareBossRequests(request.nodeId) };
+  }
+
   /** 제출된 피해 숫자를 신뢰하지 않고 서버 편성의 정적 전투력으로 동작열을 완전히 재생한다. */
   async submitExpeditionBossScore(request: SubmitExpeditionBossScoreRequest): Promise<SubmitExpeditionBossScoreResponse> {
     await this.delay();
@@ -560,6 +605,13 @@ export class FakeServer implements GameApi {
       nextState.expedition.run.bossDamageScore = runScore.bossDamageScore;
       nextState.expedition.run.runScore = runScore.runScore;
       nextState.expedition.run.bestScore = runScore.runScore;
+      // 보스 노드 방문과 전멸 표식도 점수와 같은 저장에서 확정한다 — 점수만 닿고 방문이 없으면 재시도가 갈린다.
+      const bossRun = nextState.expedition.run;
+      if (request.nodeId && !bossRun.visitedNodeIds.includes(request.nodeId)) {
+        bossRun.currentNodeId = request.nodeId;
+        bossRun.visitedNodeIds.push(request.nodeId);
+        bossRun.relics.forEach((relic) => { relic.currentHp = 0; relic.alive = false; });
+      }
     }
     nextState.expedition = { ...weekly, run: nextState.expedition.run, allTimeBestScore: Math.max(weekly.allTimeBestScore, runScore.runScore) };
     if (improved) { nextState.expedition.bestScore = runScore.runScore; nextState.expedition.bestAchievedAt = now.toISOString(); }

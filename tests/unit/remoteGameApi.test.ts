@@ -47,4 +47,43 @@ describe("RemoteGameApi", () => {
     expect(await api.markAttendanceAutoShown()).toBe(1);
     expect(fetchImpl).toHaveBeenCalledTimes(2);
   });
+
+  it("서버 오류로 끝난 쓰기를 다시 부르면 같은 요청 키를 쓰고, 성공하면 새 키로 돌아간다", async () => {
+    let n = 0;
+    const ids: string[] = [];
+    const fetchImpl = vi.fn(async (_url: string, init: RequestInit) => {
+      ids.push(JSON.parse(String(init.body)).requestId);
+      return n++ === 0 ? new Response("<html>timeout</html>", { status: 504 }) : ok(1);
+    });
+    let seq = 0;
+    const api = createRemoteGameApi({ getAccessToken: async () => "t", applyState: () => undefined, fetchImpl: fetchImpl as never, newRequestId: () => `rid-0000000${++seq}` });
+    await expect(api.markAttendanceAutoShown()).rejects.toMatchObject({ status: 504 });
+    await api.markAttendanceAutoShown();
+    await api.markAttendanceAutoShown();
+    expect(ids).toEqual(["rid-00000001", "rid-00000001", "rid-00000002"]);
+  });
+
+  it("규칙으로 거절된 쓰기는 다음 호출에 새 요청 키를 쓴다", async () => {
+    const ids: string[] = [];
+    let n = 0;
+    const fetchImpl = vi.fn(async (_url: string, init: RequestInit) => {
+      ids.push(JSON.parse(String(init.body)).requestId);
+      return n++ === 0 ? new Response(JSON.stringify({ ok: false, code: "rejected" }), { status: 422 }) : ok(1);
+    });
+    let seq = 0;
+    const api = createRemoteGameApi({ getAccessToken: async () => "t", applyState: () => undefined, fetchImpl: fetchImpl as never, newRequestId: () => `rid-0000000${++seq}` });
+    await expect(api.markAttendanceAutoShown()).rejects.toMatchObject({ status: 422 });
+    await api.markAttendanceAutoShown();
+    expect(ids).toEqual(["rid-00000001", "rid-00000002"]);
+  });
+
+  it("같은 조회는 겹치면 한 번만 보내고, 쓰기가 나가면 답을 다시 쓰지 않는다", async () => {
+    const fetchImpl = vi.fn(async () => ok(1));
+    const api = createRemoteGameApi({ getAccessToken: async () => "t", applyState: () => undefined, fetchImpl: fetchImpl as never, newRequestId: () => "rid-00000009" });
+    await Promise.all([api.getInventory(), api.getInventory()]);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    await api.markAttendanceAutoShown();
+    await api.getInventory();
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
+  });
 });

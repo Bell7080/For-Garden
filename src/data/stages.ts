@@ -271,7 +271,7 @@ function subStory(anchor: string, suffix: string, name: string, storyId: string)
 }
 
 /** 1-5에서 갈라지는 선택 서사는 1-6의 선행 목록에 들어가지 않아 본편을 막지 않는다. */
-export const SIDE_STORY_STAGE: StageDef = subStory("1-5", "side-story", "온실의 잔향", "stage-1-5-greenhouse-echo");
+export const SIDE_STORY_STAGE: StageDef = subStory("1-5", "side-story", "온실의 호박 소동", "stage-1-5-greenhouse-echo");
 
 /** 지도 순서(아래에서 위로)대로다. 한 본편 노드에는 서브 하나만 단다. */
 export const SUB_STORY_STAGES: readonly StageDef[] = [

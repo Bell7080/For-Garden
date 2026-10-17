@@ -15,11 +15,14 @@ const STORY: DialogueStory = {
 describe("DialogueFlow", () => {
   it("1-5 서브 스토리 원문을 끝까지 순회할 수 있다", () => {
     const flow = new DialogueFlow(GREENHOUSE_ECHO);
-    expect(flow.current.id).toBe("signal");
-    flow.markCurrentNodeReady();
-    expect(flow.advance().node?.id).toBe("seed"); flow.markCurrentNodeReady();
-    expect(flow.advance().node?.id).toBe("promise"); flow.markCurrentNodeReady();
-    expect(flow.advance().completed).toBe(true);
+    expect(flow.current.id).toBe("hide");
+    let guard = 0;
+    for (;;) {
+      flow.markCurrentNodeReady();
+      if (flow.advance().completed) break;
+      if (++guard > 50) throw new Error("끝나지 않는 이야기");
+    }
+    expect(guard).toBe(GREENHOUSE_ECHO.nodes.length - 1);
   });
   it("선택한 분기로 이동하고 마지막 노드를 완료한다", () => {
     const flow = new DialogueFlow(STORY);

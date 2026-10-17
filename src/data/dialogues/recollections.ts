@@ -9,8 +9,8 @@ import { SUB_STORIES } from "./subStories";
 import { MAIN_STORY_BUNDLES } from "../stageStories";
 
 /** 회상 화면이 완료 ID로 찾아갈 수 있는 공용 스토리 레지스트리다. */
-const TRANSLATED_STORIES: readonly DialogueStory[] = [OPENING_TRAIN, OPENING_RETREAT, GREAT_AUK_REPORT, GREENHOUSE_ECHO];
-export const RECOLLECTION_STORIES: readonly DialogueStory[] = [...TRANSLATED_STORIES, ...SUB_STORIES, ...MAIN_STORY_BUNDLES];
+const TRANSLATED_STORIES: readonly DialogueStory[] = [OPENING_TRAIN, OPENING_RETREAT, GREAT_AUK_REPORT];
+export const RECOLLECTION_STORIES: readonly DialogueStory[] = [...TRANSLATED_STORIES, GREENHOUSE_ECHO, ...SUB_STORIES, ...MAIN_STORY_BUNDLES];
 
 /** 렐릭 이야기 묶음의 애착 스토리(`bond.<렐릭>.<유대 레벨>`)도 같은 재생 경로로 연다. */
 function bondStoryById(storyId: string): DialogueStory | undefined {

@@ -3046,12 +3046,12 @@ export const RELICS: RelicDef[] = [
      * **행동대장이라 SR 띠의 위쪽이다**(2319). 날개로 가르는 전사라 공격력과 체력에 얹고, 주문력은 쓰는 스킬이 없어 낮게 둔다.
      */
     stats: {
-      hp: 1000,
-      def: 55,
-      res: 50,
+      hp: 800,
+      def: 65,
+      res: 55,
       atk: 200,
       ap: 20,
-      attackSpeed: 108,
+      attackSpeed: 135,
       moveSpeed: 110,
       critChance: 10,
       critDamage: 150,
@@ -3068,30 +3068,48 @@ export const RELICS: RelicDef[] = [
       effectType: "buff",
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 반향이 남는 시간(초)을 담아 둔다.
       value: 5,
-      echoLocation: { shieldMaxHpPercent: 4, capMaxHpPercent: 20 },
-      desc: "기본 공격이 적중한 적에게 반향을 건다. 반향이 든 적을 친 아군은 보호막을 두른다.",
+      echoLocation: { shieldMaxHpPercent: 6, capMaxHpPercent: 30 },
+      desc: "기본 공격과 궁극기가 적중한 적에게 반향을 건다. 반향이 든 적을 친 아군은 보호막을 두른다.",
     },
     basic: {
       id: "ikanixia-basic",
       name: "날개 베기",
-      power: 115,
+      power: 150,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
       targeting: "single",
+      /*
+       * **세 번째 날개가 발을 묶는다.** 코마의 후려치기(밀어내기)와 갈리도록 이쪽은 찢어 놓고 붙잡는다 —
+       * 출혈과 짧은 기절이라 회수 대상을 도망치지 못하게 하는 손이다. 주기로 끊어 플레이어가 세 번째를 읽는다.
+       */
+      statusEffectEvery: 3,
+      statusEffects: [
+        { kind: "concussion", maxHpPercent: 5, criticalMaxHpPercent: 15 },
+        { kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2 },
+        { kind: "stun", seconds: 1 },
+      ],
     },
     ultimate: {
       id: "ikanixia-ult",
       name: "급강하 회수",
-      power: 200,
+      power: 340,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
-      cost: 120,
+      cost: 80,
+      /*
+       * **하늘에서 내리꽂아 줄 전체를 거둔다.** 단일 정예 자리라 한 명만 치는 궁극기로는 셋이 둘러싼 판에서
+       * 달라지는 것이 없다. 나아가는 거리는 이동 속도가 정하므로(`SKIRMISH.chargeSeconds` × 이속) 배율만 얹는다.
+       * 지나간 적은 모두 반향을 달아(패시브) 뒤따르는 평타가 아군의 막이 된다.
+       */
       targeting: "chargeLine",
-      radius: 80,
+      radius: 85,
+      chargeReachMultiplier: 1.6,
       // 거두어 가는 손이라 뚫고 지나간 만큼을 되돌려 받는다.
-      damageHealingPercent: 30,
+      damageHealingPercent: 40,
+      // 막을 깨고 박힌다 — 회수 대상이 두른 방벽은 의미가 없다.
+      breaksShield: true,
     },
     breakthroughEffects: {
       basic: { kind: "none" },
@@ -4703,11 +4721,11 @@ export const RELICS: RelicDef[] = [
       name: "수장의 아가리",
       // 코마의 통로(190)와 폰토스의 전장 해일(500) 사이다. 원 하나를 지정해 무는 기술이라
       // 전장 전체를 치지 않고, 그만큼 서 있는 자리가 답이 된다.
-      power: 300,
+      power: 340,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
-      cost: 100,
+      cost: 80,
       /*
        * **원을 지정해 문다.** 전장 전체를 치는 기술로 두면 편성이 무엇이든 똑같이 맞아 자리를
        * 옮길 이유가 사라진다 — 바닥에 그려지는 원이 곧 "여기 서 있으면 맞는다"가 되고,

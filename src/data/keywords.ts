@@ -165,7 +165,7 @@ export const KEYWORDS: readonly KeywordDef[] = [
   // `raiders.test`가 둘을 맞춰 본다.
   {
     id: "echo", term: "반향", kind: "debuff",
-    description: "피해가 없는 표식이다. 5초 동안 남고, 반향이 든 적을 친 이카닉시아 편 아군은 최대 체력의 4%만큼 [[shield|보호막]]을 두른다. 막은 최대 체력의 20%까지만 쌓인다.",
+    description: "피해가 없는 표식이다. 5초 동안 남고, 반향이 든 적을 친 이카닉시아 편 아군은 최대 체력의 6%만큼 [[shield|보호막]]을 두른다. 막은 최대 체력의 30%까지만 쌓인다.",
   },
   {
     id: "segment-barrier", term: "마디 방벽", kind: "buff",

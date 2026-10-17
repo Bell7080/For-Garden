@@ -111,7 +111,7 @@ const BATTLE_STAGES = CHAPTERS.flatMap(({ stages }) => stages)
   .filter((stage): stage is Extract<typeof stage, { kind: "battle" }> => stage.kind === "battle")
   .map((stage, index) => ({ stage, globalOrder: index }));
 
-/** 폰토스는 원정 최종층 개체라 바닥 파티가 어떤 레벨에서도 이기지 못한다. 스토리에서는 추후 뺀다. */
+/** 폰토스는 원정 최종층 개체라 바닥 파티가 어떤 레벨에서도 이기지 못한다. 스토리 3-10은 이카닉시아로 바꿨으므로 지금은 비어 있다. */
 const EXPEDITION_BOSS_STAGES = BATTLE_STAGES.filter(({ stage }) => stage.enemies.some(({ relicId }) => relicId === "pontos"));
 const STORY_STAGES = BATTLE_STAGES.filter((entry) => !EXPEDITION_BOSS_STAGES.includes(entry));
 
@@ -134,7 +134,7 @@ const STORY_STAGES = BATTLE_STAGES.filter((entry) => !EXPEDITION_BOSS_STAGES.inc
 const ELITE_STAGE_IDS = ["1-5", "1-10"] as const;
 
 /** 같은 셋이 아닌 편성이 서는 관문 — 2장 후반의 정예 둘과 3장의 회수조. */
-const LATE_FORMATION_IDS: ReadonlySet<string> = new Set(["2-7", "2-9", "3-5", "3-6", "3-7", "3-8", "3-9"]);
+const LATE_FORMATION_IDS: ReadonlySet<string> = new Set(["2-7", "2-9", "3-5", "3-6", "3-7", "3-8", "3-9", "3-10"]);
 
 /**
  * 대표 관문의 기록. 수치 조정이 의도하지 않은 체감 변화를 냈는지 즉시 드러낸다.
@@ -168,8 +168,10 @@ const BASELINES = {
   // v0.253.2: 2장을 레벨 21~30(돌파 1)으로 다시 그리며 녹화했다 — 잡졸 관문이 한 뼘 더 깎이며 지난다.
   "2-5": { win: 1, hp: [0.78, 0.9] },
   "2-10": { win: 1, hp: [0.79, 0.9] },
-  "3-5": { win: 1, hp: [0.81, 0.93] },
+  // 3-5는 부부대장 아트라가 혼자 서는 정예, 3-10은 행동대장 이카닉시아가 혼자 서는 장 마감 정예다. 3-10은 가운데 조합이 여덟 판 중 한 판만 연다(코마의 1-10과 같다).
+  "3-5": { win: 1, hp: [0.84, 0.95] },
   "3-9": { win: 1, hp: [0.80, 0.92] },
+  "3-10": { win: 0.125, hp: [0, 0.2] },
 } as const;
 
 describe("Phaser 없는 챕터 난이도 검수", () => {

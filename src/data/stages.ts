@@ -68,19 +68,20 @@ const CHAPTER_ONE_ELITES: Readonly<Record<number, string>> = {
  *
  * - 2-7·2-9는 **정예 둘**이다 — 새 유형을 만들지 않고 같은 정예 자리에 둘이 서며, 체력 몫은 둘이 나눠 갖는다
  *   (`encounterHpShare`). 레벨 사다리는 그대로다.
- * - 3-5는 회수조 행동대장 이카닉시아가 혼자 서는 정예, 3-6~3-9는 회수조 셋이다. 3-6·3-7은 아트라 앞 · 미르 가운데 ·
+ * - 3-5는 부부대장 아트라가 혼자 서는 정예, 3-10은 행동대장 이카닉시아가 혼자 서는 장 마감 정예, 3-6~3-9는 회수조 셋이다. 3-6·3-7은 아트라 앞 · 미르 가운데 ·
  *   펄시 뒤의 공격조이고, 3-8부터 네우리가 뒤에 서서 치유와 공명으로 받치며 가운데가 펄시로 바뀐다.
  *   네우리가 일찍 서면 바닥 파티가 3-7을 열었다(여덟 판 중 한 판) — 3장은 완전히 닫혀 있어야 해서 늦췄다.
- * 3-1~3-4(옛 셋)와 3-10(폰토스)은 그대로다.
+ * 3-1~3-4(옛 셋)는 그대로다.
  */
 const LATE_CHAPTER_FORMATIONS: Readonly<Record<string, readonly (readonly [string, 0 | 1 | 2])[]>> = {
   "2-7": [["amo", 0], ["ripa", 2]],
   "2-9": [["amo", 0], ["toby", 1]],
-  "3-5": [["ikanixia", 1]],
+  "3-5": [["atra", 1]],
   "3-6": [["atra", 0], ["mir", 1], ["pulsi", 2]],
   "3-7": [["atra", 0], ["mir", 1], ["pulsi", 2]],
   "3-8": [["atra", 0], ["pulsi", 1], ["neuri", 2]],
   "3-9": [["atra", 0], ["pulsi", 1], ["neuri", 2]],
+  "3-10": [["ikanixia", 1]],
 };
 
 /** 정예 둘이 서는 관문. 하나만 서는 정예는 적 수로 가른다. */
@@ -213,12 +214,8 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
      * 적 레벨에서 1-7보다 **쉬웠다** — 적 Lv40에서 1-7은 잔여 2%인데 3-7은 100%였다.
      * 앞이 무너지는 배치는 레벨을 아무리 올려도 난이도가 되지 않으므로 1장의 배치를 이어 쓴다.
      *
-     * 3-10의 폰토스는 원정 최종층 개체라 스토리에서는 추후 뺀다. 난이도 기준점으로도 쓰지
-     * 않았다 — 바닥 파티가 어떤 레벨에서도 이기지 못해 곡선을 그릴 수 없기 때문이다.
      */
-    const laterChapterIds = chapter === 3 && chapterOrder === 10
-      ? ["amo", "pontos", "ripa"]
-      : [...STAGE_ENEMY_FORMATION];
+    const laterChapterIds = [...STAGE_ENEMY_FORMATION];
     const lateFormation = LATE_CHAPTER_FORMATIONS[`${chapter}-${chapterOrder}`];
     /*
      * **돌파는 레벨에서 나온다**(`requiredBreakthroughForLevel`). 2장은 21~30이라 전 관문이 돌파 1단계

@@ -127,7 +127,7 @@ describe("stage enemy design", () => {
      * 찾지 못한 개체가 `undefined`로 빠져 검사 자체가 사라진다. 구성과 무관한 검사로 바꾼다.
      */
     const finalEnemies = getStageEnemies(battles[29]);
-    expect(finalEnemies).toHaveLength(3);
+    expect(finalEnemies).toHaveLength(1);
     for (const enemy of finalEnemies) {
       expect(enemy.stats.hp, enemy.name).toBeGreaterThan(getRelic(enemy.id).stats.hp);
     }

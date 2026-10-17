@@ -3229,7 +3229,8 @@ function reactRaiders(target: Fighter, attacker: Fighter, state: SkirmishState, 
       if (trait?.effectId === "commandStart") applyTeamBuff(attacker, { ...trait.resonance, sourceId: source.id });
     }
   }
-  if (!useUltimate && attacker.def.passive.echoLocation && isFighterAlive(target)) {
+  // 평타든 궁극기든 맞은 적에게 건다 — 궁극기가 뚫고 지나간 모두가 반향을 단다.
+  if (attacker.def.passive.echoLocation && isFighterAlive(target)) {
     applyCombatStatusEffect(target, { kind: "echo", seconds: ECHO_SECONDS }, events, state, attacker.id);
   }
   const barrier = target.def.passive.segmentBarrier;

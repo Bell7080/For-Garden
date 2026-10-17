@@ -366,7 +366,7 @@ export const SKILL_KO = {
   "skill.breakthrough.effect.ferocity.ankleShot": "[[ferocity|폭주]] 중 [[basic-attack|기본 공격]]이 치명타로 적중하면 맞은 적을 {seconds}초 동안 [[stagger|경직]]시킨다.",
   "skill.breakthrough.effect.passive.highTide": "[[fog-guard|해무 방벽]]이 상한까지 차 있는 동안 모든 피해가 {percent}% 늘어난다.",
   "skill.status.intimidate": "[[intimidation|위압]]을 한 겹 쌓는다",
-  "skill.passive.echoLocation": "[[basic-attack|기본 공격]]이 적중한 적에게 [[echo|반향]]을 건다. 반향이 든 적을 친 아군은 [[shield|보호막]]을 두른다.",
+  "skill.passive.echoLocation": "[[basic-attack|기본 공격]]과 궁극기가 적중한 적에게 [[echo|반향]]을 건다. 반향이 든 적을 친 아군은 [[shield|보호막]]을 두른다.",
   "skill.passive.segmentBarrier": "전투를 [[segment-barrier|마디 방벽]]을 두르고 시작한다. 막이 깎이면 마디가 하나씩 되살아나고, 맞을수록 더 빨리 돌아온다.",
   "skill.passive.vitalAim": "같은 적을 [[basic-attack|기본 공격]]으로 이어 칠 때마다 [[vital-aim|겨누기]]가 쌓여 그 적에게 주는 피해가 커진다. 표적이 바뀌면 처음부터 다시 쌓는다.",
   "skill.passive.wingHum": "{seconds}초마다 공격력이 가장 높은 아군에게 [[resonance|공명]]을 건다. 직접 적을 쓰러뜨리면 궁극기 게이지가 {energy} 찬다.",

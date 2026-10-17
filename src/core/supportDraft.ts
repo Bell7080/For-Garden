@@ -1,6 +1,7 @@
 /**
  * 문의 접수 입력의 순수 규칙. 길이 상한은 서버(`submit_ticket`)와 같은 값이고, 서버가 마지막으로 검증한다.
  * 화면은 글자를 세어 버튼을 켜고 끌 뿐 판정을 새로 만들지 않는다.
+ * 홈페이지(For-Garden-Web `server/support-rules.ts`)도 같은 종류·한도를 쓴다 — 한쪽을 바꾸면 함께 바꾼다.
  */
 
 export const TICKET_SUBJECT_MAX = 100;

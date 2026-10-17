@@ -1514,3 +1514,17 @@ describe("첫 플레이 튜토리얼 칸", () => {
     expect(response.granted).toEqual({ fossil: 3 });
   });
 });
+
+describe("콘텐츠 첫 방문 안내 기록", () => {
+  it("은 알려진 안내만 한 번 남기고 튜토리얼 칸을 지우지 않는다", async () => {
+    const state = makeSession(0);
+    state.tutorial = { completedStepIds: ["ultimate", "speed"] };
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-10-05T10:00:00Z") });
+    await expect(server.markContentIntroSeen({ introId: "nope" })).rejects.toMatchObject({ code: "INVALID_STATE" });
+    await server.markContentIntroSeen({ introId: "raid" });
+    const again = await server.markContentIntroSeen({ introId: "raid" });
+    expect(again.tutorial).toEqual({ completedStepIds: ["ultimate", "speed"], seenIntroIds: ["raid"] });
+    const next = await server.completeTutorialStep({ stepId: "auto" });
+    expect(next.tutorial.seenIntroIds).toEqual(["raid"]);
+  });
+});

@@ -34,6 +34,7 @@ import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
 import { LOBBY_RETURN } from "./lobbyEntry";
 import { withBusy } from "../ui/BusyOverlay";
+import { showContentIntro } from "../ui/contentIntro";
 
 /** 두 갈래. 씬 하나 안에서 판만 갈아 끼운다(가방·고고학과 같은 좌하단 라벨). */
 type DuelTab = "battle" | "history";
@@ -88,6 +89,7 @@ export class DuelScene extends Phaser.Scene {
     this.paintTabs();
     void this.fetchStatus();
     playSceneEntrance(this);
+    showContentIntro(this, "duel");
   }
 
   private async fetchStatus(): Promise<void> {

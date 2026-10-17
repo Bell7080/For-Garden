@@ -23,6 +23,7 @@ import { drawGlyph } from "../ui/glyphs";
 import { STAGES } from "../data/stages";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { pressIn, pressOut } from "../ui/pressFeedback";
+import { showContentIntro } from "../ui/contentIntro";
 
 /**
  * 여는 조건에 적을 관문 이름.
@@ -116,6 +117,7 @@ export class InteractionScene extends Phaser.Scene {
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
+    showContentIntro(this, "interaction");
   }
 
   /**

@@ -767,7 +767,7 @@ export class SaveManager {
       serverJournal: structuredClone(data.serverJournal ?? emptyServerJournal()),
       raidTicketDrops: { ...data.raidTicketDrops },
       achievements: { claimed: { ...data.achievements.claimed }, goldPeak: data.achievements.goldPeak },
-      tutorial: { completedStepIds: [...data.tutorial.completedStepIds] },
+      tutorial: { completedStepIds: [...data.tutorial.completedStepIds], ...(data.tutorial.seenIntroIds ? { seenIntroIds: [...data.tutorial.seenIntroIds] } : {}) },
     };
   }
 }

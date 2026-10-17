@@ -26,9 +26,32 @@ export const TUTORIAL_STEPS = [
 
 export type TutorialStepId = (typeof TUTORIAL_STEPS)[number];
 
+/**
+ * 콘텐츠 첫 방문 안내 — 처음 들어온 화면에서 한 번만 뜨는 짧은 쪽지. 순서가 없고(레벨이 열어 주는 순서가 사람마다
+ * 다르다), 첫 플레이 튜토리얼을 모두 마친 뒤에만 뜬다(진행 중인 안내와 겹치지 않게).
+ */
+export const CONTENT_INTRO_IDS = [
+  "stageMap", "party", "shop", "cakeOperation", "bounty", "interaction", "duel", "friends", "raid", "expedition", "archaeology", "premium",
+] as const;
+
+export type ContentIntroId = (typeof CONTENT_INTRO_IDS)[number];
+
 export interface TutorialState {
   /** 마친 칸의 ID. 순서대로 쌓이며 앞 칸이 비면 뒤 칸이 들어올 수 없다. */
   completedStepIds: TutorialStepId[];
+  /** 이미 본 첫 방문 안내. 비어 있으면 필드 자체를 두지 않는다(저장 모양을 늘리지 않는다). */
+  seenIntroIds?: ContentIntroId[];
+}
+
+const INTRO_SET: ReadonlySet<string> = new Set(CONTENT_INTRO_IDS);
+
+export function isContentIntroId(value: unknown): value is ContentIntroId { return typeof value === "string" && INTRO_SET.has(value); }
+
+export function isContentIntroSeen(state: TutorialState, id: ContentIntroId): boolean { return state.seenIntroIds?.includes(id) ?? false; }
+
+/** 첫 방문 안내를 띄울 차례인가: 첫 플레이 튜토리얼을 마쳤고 아직 안 본 것. */
+export function shouldShowContentIntro(state: TutorialState, id: ContentIntroId): boolean {
+  return isTutorialComplete(state) && !isContentIntroSeen(state, id);
 }
 
 /** 전투 화면의 조작 중 튜토리얼이 하나씩 여는 것. */
@@ -51,7 +74,7 @@ export const TUTORIAL_REWARDS: Readonly<Partial<Record<TutorialStepId, { fossil:
 export function createEmptyTutorialState(): TutorialState { return { completedStepIds: [] }; }
 
 /** 모든 칸을 마친 상태 — 튜토리얼이 필요 없는 저장·E2E 시작점이 쓴다. */
-export function createCompletedTutorialState(): TutorialState { return { completedStepIds: [...TUTORIAL_STEPS] }; }
+export function createCompletedTutorialState(): TutorialState { return { completedStepIds: [...TUTORIAL_STEPS], seenIntroIds: [...CONTENT_INTRO_IDS] }; }
 
 const STEP_SET: ReadonlySet<string> = new Set(TUTORIAL_STEPS);
 
@@ -67,7 +90,10 @@ export function normalizeTutorialState(value: unknown): TutorialState {
     if (!done.has(step)) break;
     completedStepIds.push(step);
   }
-  return { completedStepIds };
+  const rawIntros = (value && typeof value === "object" ? (value as { seenIntroIds?: unknown }).seenIntroIds : undefined);
+  const seen = new Set(Array.isArray(rawIntros) ? rawIntros.filter(isContentIntroId) : []);
+  const seenIntroIds = CONTENT_INTRO_IDS.filter((id) => seen.has(id));
+  return seenIntroIds.length > 0 ? { completedStepIds, seenIntroIds } : { completedStepIds };
 }
 
 export function isValidTutorialState(value: unknown): value is TutorialState {

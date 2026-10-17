@@ -54,6 +54,7 @@ import { formatCountdown } from "../core/formatCountdown";
 import { archaeologyProgressManager } from "../managers/ArchaeologyProgressManager";
 import { playSceneEntrance, startScene, slideTabPage } from "../ui/screenTransition";
 import { withBusy } from "../ui/BusyOverlay";
+import { showContentIntro } from "../ui/contentIntro";
 
 /**
  * 고고학. 하단 탭 첫 슬롯이다.
@@ -320,6 +321,7 @@ export class ArchaeologyScene extends Phaser.Scene {
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
+    showContentIntro(this, "archaeology");
   }
 
   /**

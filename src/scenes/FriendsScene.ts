@@ -37,6 +37,7 @@ import { SortControl } from "../ui/SortControl";
 import { squeezeTextToWidth } from "../ui/textFit";
 import { TextInputField } from "../ui/TextInputField";
 import { COLOR, PROFILE_MODIFIER_RARITY_COLOR, textStyle } from "../ui/theme";
+import { showContentIntro } from "../ui/contentIntro";
 
 const hex = (color: number): string => `#${color.toString(16).padStart(6, "0")}`;
 
@@ -136,6 +137,7 @@ export class FriendsScene extends Phaser.Scene {
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
+    showContentIntro(this, "friends");
   }
 
   /* ── 데이터 ───────────────────────────────────────────────────────────── */

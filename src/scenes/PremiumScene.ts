@@ -55,6 +55,7 @@ import { addRewardExpiryTag } from "../ui/rewardExpiry";
 import { wrapDialogueText } from "../core/dialogueTextWrap";
 import { settingsManager } from "../managers/SettingsManager";
 import { withBusy } from "../ui/BusyOverlay";
+import { showContentIntro } from "../ui/contentIntro";
 
 /**
  * 현금 결제 카탈로그를 인게임 재화 상점과 분리해 소유하는 독립 프리미엄 씬이다.
@@ -137,6 +138,7 @@ export class PremiumScene extends Phaser.Scene {
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
+    showContentIntro(this, "premium");
   }
 
   /** 관성은 프레임 시간에 맞춰 감쇠해 고주사율에서도 같은 거리로 멈춘다. */

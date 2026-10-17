@@ -46,11 +46,11 @@ import { simulateDuelDefenses } from "../core/duelDefense";
 import { combatPower } from "../core/combatPower";
 import type { ClaimDuelSeasonRewardResponse, DuelRankingResponse, DuelStatusResponse, EnterDuelRequest, EnterDuelResponse, ResolveDuelRequest, ResolveDuelResponse, SetDuelDefenseRequest } from "./contracts";
 import { WALLET_CAPS } from "../data/economy";
-import { canCompleteTutorialStep, isTutorialStepDone, isTutorialStepId, normalizeTutorialState, TUTORIAL_REWARDS, type TutorialState } from "../core/tutorial";
+import { canCompleteTutorialStep, isContentIntroId, isContentIntroSeen, isTutorialStepDone, isTutorialStepId, normalizeTutorialState, TUTORIAL_REWARDS, type TutorialState } from "../core/tutorial";
 import { mileageFragmentRelicId } from "../data/mileageClerk";
 import { BOND_STORY_GEM_REWARD, BOND_STORY_LEVELS, DIARY_QUESTION_GEM_REWARD, bondChapterId, diaryQuestionUnlockAt, type BondStoryLevel } from "../core/relicStory";
 import { relicStoryFor } from "../data/relicStories";
-import type { AnswerRelicQuestionRequest, AnswerRelicQuestionResponse, ClaimRelicChapterRequest, CompleteTutorialStepRequest, CompleteTutorialStepResponse, ClaimRelicChapterResponse, ClaimRelicQuestionRewardRequest, ClaimRelicQuestionRewardResponse } from "./contracts";
+import type { AnswerRelicQuestionRequest, AnswerRelicQuestionResponse, ClaimRelicChapterRequest, CompleteTutorialStepRequest, CompleteTutorialStepResponse, MarkContentIntroSeenRequest, MarkContentIntroSeenResponse, ClaimRelicChapterResponse, ClaimRelicQuestionRewardRequest, ClaimRelicQuestionRewardResponse } from "./contracts";
 import { EVENTS, findEventByProductId, findEventByStageId } from "../data/events";
 import type { EventDefinition } from "../data/events/types";
 import type { EnterEventStageResponse, EventListResponse } from "./contracts";
@@ -2925,7 +2925,7 @@ export class FakeServer implements GameApi {
     const current = normalizeTutorialState(this.state.tutorial);
     if (isTutorialStepDone(current, request.stepId)) return { tutorial: current, wallet: { ...this.state.wallet }, serverTime: this.now().toISOString() };
     if (!canCompleteTutorialStep(current, request.stepId)) throw new GameApiError("INVALID_STATE", "앞 단계를 먼저 마쳐야 합니다.");
-    const tutorial: TutorialState = { completedStepIds: [...current.completedStepIds, request.stepId] };
+    const tutorial: TutorialState = { ...current, completedStepIds: [...current.completedStepIds, request.stepId] };
     const reward = TUTORIAL_REWARDS[request.stepId];
     const fossil = reward ? Math.max(0, Math.min(reward.fossil, WALLET_CAPS.fossil - this.state.wallet.fossil)) : 0;
     const nextWallet = { ...this.state.wallet, fossil: this.state.wallet.fossil + fossil };
@@ -2933,6 +2933,19 @@ export class FakeServer implements GameApi {
     this.state.tutorial = tutorial;
     this.state.wallet = nextWallet;
     return { tutorial, ...(reward ? { granted: { fossil } } : {}), wallet: { ...nextWallet }, serverTime: this.now().toISOString() };
+  }
+
+  /** 콘텐츠 첫 방문 안내를 봤다고 남긴다. 순서·선물이 없어 알려진 ID면 그대로 기록한다. */
+  async markContentIntroSeen(request: MarkContentIntroSeenRequest): Promise<MarkContentIntroSeenResponse> {
+    await this.delay();
+    if (!isContentIntroId(request.introId)) throw new GameApiError("INVALID_STATE", "존재하지 않는 안내입니다.");
+    const current = normalizeTutorialState(this.state.tutorial);
+    if (!isContentIntroSeen(current, request.introId)) {
+      const tutorial = normalizeTutorialState({ ...current, seenIntroIds: [...(current.seenIntroIds ?? []), request.introId] });
+      this.persist({ ...this.state, tutorial });
+      this.state.tutorial = tutorial;
+    }
+    return { tutorial: normalizeTutorialState(this.state.tutorial), serverTime: this.now().toISOString() };
   }
 
   /** 애착 스토리 장 해금 — 유대 레벨을 서버 상태로 확인하고 장마다 한 번만 젬을 준다. */

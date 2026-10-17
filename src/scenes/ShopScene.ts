@@ -55,6 +55,7 @@ import { productIconTexture, runeProductOf } from "../ui/productIcon";
 import { addExpiryDaysTag } from "../ui/itemExpiry";
 import { productExpiryDays } from "../ui/productExpiry";
 import { formatRefreshCountdown, nextRefreshAt, shortestRefresh } from "../core/shopRefresh";
+import { showContentIntro } from "../ui/contentIntro";
 
 /** 가치 배지 — 무역 카드의 배지(`TradePackageCard`)와 같은 색이고 칸 우상단에 작게 선다. */
 const SHOP_VALUE_BADGE = { width: 150, height: 44, size: 24 } as const;
@@ -203,6 +204,7 @@ export class ShopScene extends Phaser.Scene {
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
+    showContentIntro(this, "shop");
   }
 
   /** 관성은 프레임 시간에 맞춰 감쇠해 고주사율에서도 같은 거리로 멈춘다. */

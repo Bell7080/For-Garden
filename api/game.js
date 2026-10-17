@@ -31551,12 +31551,6 @@ var FakeServer = class {
     const stageClaimable = Object.values(research).reduce((sum, value) => sum + value.stages.filter((stage) => stage.achieved && !stage.claimed).length, 0);
     return { missions: this.missionDtos(), claimableCount: claimableMissionIds(normalized).length + stageClaimable, research };
   }
-  /** 지금 받을 수 있는 임무 보상 수 — 임무와 연구도 마디를 함께 센다(`missionListDto`의 `claimableCount`와 같은 셈). */
-  missionNoticeCount(missions) {
-    const normalized = normalizeMissions(missions, this.now());
-    const stages = ["daily", "weekly"].reduce((sum, period) => sum + RESEARCH_REWARD_STAGES[period].filter((stage) => normalized.researchPoints[period] >= stage.threshold && !normalized.claimedResearchStageIds.includes(researchStageClaimId(period, stage.id))).length, 0);
-    return claimableMissionIds(normalized).length + stages;
-  }
   missionNoticeListeners = /* @__PURE__ */ new Set();
   lastMissionNotice;
   subscribeMissionNotice(listener) {
@@ -31568,7 +31562,7 @@ var FakeServer = class {
   /** 저장을 마친 뒤 받을 보상 수가 바뀌었을 때만 알린다 — 조회가 다시 저장해도 수가 같으면 되풀이되지 않는다. */
   signalMissionNotice(next) {
     if (this.missionNoticeListeners.size === 0) return;
-    const count2 = claimableAchievementCount(normalizeAchievementState(next.achievements), achievementFacts(next)) * 1e3 + this.missionNoticeCount(next.missions);
+    const count2 = missionNoticeScore(next, this.now());
     if (count2 === this.lastMissionNotice) return;
     this.lastMissionNotice = count2;
     this.missionNoticeListeners.forEach((listener) => listener());
@@ -31743,7 +31737,33 @@ var FakeServer = class {
     return new Promise((resolve) => globalThis.setTimeout(resolve, this.latencyMs));
   }
 };
-var gameApi = new FakeServer();
+function missionClaimCount(missions, now) {
+  const normalized = normalizeMissions(missions, now);
+  const stages = ["daily", "weekly"].reduce((sum, period) => sum + RESEARCH_REWARD_STAGES[period].filter((stage) => normalized.researchPoints[period] >= stage.threshold && !normalized.claimedResearchStageIds.includes(researchStageClaimId(period, stage.id))).length, 0);
+  return claimableMissionIds(normalized).length + stages;
+}
+function missionNoticeScore(next, now) {
+  return claimableAchievementCount(normalizeAchievementState(next.achievements), achievementFacts(next)) * 1e3 + missionClaimCount(next.missions, now);
+}
+var localGameApi = new FakeServer();
+var activeGameApi = localGameApi;
+var remoteMissionListeners = /* @__PURE__ */ new Set();
+var gameApi = new Proxy({}, {
+  get(_target, prop) {
+    if (typeof prop !== "string") return void 0;
+    if (prop === "subscribeMissionNotice") {
+      return (listener) => {
+        const stopLocal = localGameApi.subscribeMissionNotice(listener);
+        remoteMissionListeners.add(listener);
+        return () => {
+          stopLocal();
+          remoteMissionListeners.delete(listener);
+        };
+      };
+    }
+    return (...args) => activeGameApi[prop](...args);
+  }
+});
 
 // src/server/gameMethods.ts
 init_define_import_meta_env();

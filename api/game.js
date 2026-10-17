@@ -832,7 +832,20 @@ var BATTLE_KO = {
   "battle.gauge.ferocity": "\uC57C\uC131 {value} / {max}",
   "battle.result.saveFailed": "\uACB0\uACFC\uB97C \uC800\uC7A5\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4",
   "battle.result.retry": "\uB2E4\uC2DC \uC2DC\uB3C4",
-  "battle.result.nodeScore": "\uC6D0\uC815 \uC810\uC218 +{score}"
+  "battle.result.nodeScore": "\uC6D0\uC815 \uC810\uC218 +{score}",
+  "battle.pause.continue": "\uC774\uC5B4\uC11C",
+  "battle.pause.toTitle": "\uD0C0\uC774\uD2C0\uB85C",
+  "battle.pause.toTitleConfirm": "\uD0C0\uC774\uD2C0\uB85C \uB3CC\uC544\uAC11\uB2C8\uB2E4. \uC774 \uC804\uD22C\uB294 \uCC98\uC74C\uBD80\uD130 \uB2E4\uC2DC \uC2DC\uC791\uD569\uB2C8\uB2E4.",
+  "tutorial.battle.speed": "\uBC30\uC18D\uC774 \uC5F4\uB838\uC5B4\uC694! \uB20C\uB7EC\uC11C \uC804\uD22C\uB97C \uBE60\uB974\uAC8C \uD574 \uBCF4\uC138\uC694",
+  "tutorial.battle.auto": "\uC790\uB3D9 \uAD81\uADF9\uAE30\uAC00 \uC5F4\uB838\uC5B4\uC694! \uB20C\uB7EC\uC11C \uCF1C \uBCF4\uC138\uC694",
+  "tutorial.battle.presentation": "\uC5F0\uCD9C \uC2A4\uD0B5\uC774 \uC5F4\uB838\uC5B4\uC694! \uB20C\uB7EC\uC11C \uAD81\uADF9\uAE30 \uC5F0\uCD9C\uC744 \uAC74\uB108\uB6F0\uC5B4 \uBCF4\uC138\uC694",
+  "tutorial.battle.contribution": "\uAE30\uC5EC\uB3C4\uAC00 \uC5F4\uB838\uC5B4\uC694! \uB20C\uB7EC\uC11C \uB204\uAC00 \uD65C\uC57D\uD588\uB294\uC9C0 \uD655\uC778\uD574 \uBCF4\uC138\uC694",
+  "tutorial.skip": "\uAC74\uB108\uB6F0\uAE30",
+  "tutorial.lobby.relics": "\uB810\uB9AD\uC744 \uD0A4\uC6CC \uBCFC\uAE4C\uC694? \uB3C4\uAC10\uC744 \uB20C\uB7EC \uC8FC\uC138\uC694",
+  "tutorial.relics.feed": "\uCE58\uC988\uCF00\uC774\uD06C\uB97C \uBA39\uC5EC\uC11C \uB810\uB9AD\uC744 \uD0A4\uC6CC \uBCF4\uC138\uC694!",
+  "tutorial.gift.title": "\uBCF5\uC6D0 \uC7AC\uB8CC \uC120\uBB3C",
+  "tutorial.lobby.lab": "\uBC1B\uC740 \uD654\uC11D\uC73C\uB85C \uC0C8 \uB810\uB9AD\uC744 \uB9CC\uB098 \uBCFC\uAE4C\uC694? \uC5F0\uAD6C\uC18C\uB97C \uB20C\uB7EC \uC8FC\uC138\uC694",
+  "tutorial.lab.pull": "\uCCAB \uBCF5\uC6D0 \uC5F0\uAD6C\uC608\uC694! 10\uD68C \uBC84\uD2BC\uC744 \uB20C\uB7EC \uBCF4\uC138\uC694"
 };
 
 // src/i18n/ko/cakeOperation.ts
@@ -16918,6 +16931,68 @@ function isValidServerJournal(value) {
   return (journal.subscriptionEntitlements === void 0 || record2(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record2(entry) && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt)) && (entry.expiresAt === null || Number.isFinite(Date.parse(entry.expiresAt))) && typeof entry.active === "boolean" && typeof entry.serverTime === "string")) && (journal.subscriptionBonusDates === void 0 || record2(journal.subscriptionBonusDates) && Object.values(journal.subscriptionBonusDates).every((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date))) && (journal.subscriptionMails === void 0 || record2(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record2(mail) && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string" && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0)) && record2(journal.receipts) && record2(journal.raidAdmissions) && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record2(receipt) && typeof receipt.identity === "string" && record2(receipt.result) && json(receipt.result)) && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record2(admission) && typeof admission.raidId === "string" && (admission.replayVersion === void 0 || admission.replayVersion === 2) && Number.isFinite(admission.seasonHp) && admission.seasonHp >= 0 && Number.isFinite(Date.parse(admission.expiresAt)) && Array.isArray(admission.relics) && admission.relics.length === 3 && admission.relics.every((relic) => typeof relic.relicId === "string" && isExpeditionRelicSnapshot(relic.snapshot)));
 }
 
+// src/core/tutorial.ts
+init_define_import_meta_env();
+var TUTORIAL_STEPS = [
+  /** 오프닝 1-1: 빛나는 궁극기 카드를 눌러 쓴다. 이 판은 다른 조작을 모두 막는다. */
+  "ultimate",
+  /** 다음 스토리 전투: 배속 칩이 열린다. */
+  "speed",
+  /** 그다음 전투: 자동 궁극기 칩이 열린다. */
+  "auto",
+  /** 그다음 전투: 궁극기 연출 스킵 칩이 열린다. */
+  "presentation",
+  /** 그다음 전투: 기여도 판이 열린다. */
+  "contribution",
+  /** 로비 → 도감 → 급여: 치즈케이크로 렐릭을 키운다. */
+  "feed",
+  /** 로비에서 뽑기 재료를 선물로 받는다(`TUTORIAL_REWARDS.gift`). */
+  "gift",
+  /** 연구소에서 첫 복원 연구를 직접 돌린다. */
+  "pull"
+];
+var TUTORIAL_REWARDS = {
+  // 첫 복원 연구(배너 `welcome`)는 10연 전용이고 화석 8개가 든다 — 정확히 한 번 돌릴 몫이다.
+  gift: { fossil: 8 }
+};
+function createEmptyTutorialState() {
+  return { completedStepIds: [] };
+}
+function createCompletedTutorialState() {
+  return { completedStepIds: [...TUTORIAL_STEPS] };
+}
+var STEP_SET = new Set(TUTORIAL_STEPS);
+function isTutorialStepId(value) {
+  return typeof value === "string" && STEP_SET.has(value);
+}
+function normalizeTutorialState(value) {
+  const raw = value && typeof value === "object" ? value.completedStepIds : void 0;
+  const ids = Array.isArray(raw) ? raw : [];
+  const done = new Set(ids.filter(isTutorialStepId));
+  const completedStepIds = [];
+  for (const step2 of TUTORIAL_STEPS) {
+    if (!done.has(step2)) break;
+    completedStepIds.push(step2);
+  }
+  return { completedStepIds };
+}
+function isValidTutorialState(value) {
+  return !!value && typeof value === "object" && JSON.stringify(normalizeTutorialState(value)) === JSON.stringify(value);
+}
+function legacyTutorialState(clearedStageIds) {
+  if (clearedStageIds.some((id) => id !== "1-1")) return createCompletedTutorialState();
+  return clearedStageIds.includes("1-1") ? { completedStepIds: ["ultimate"] } : createEmptyTutorialState();
+}
+function isTutorialStepDone(state, step2) {
+  return state.completedStepIds.includes(step2);
+}
+function nextTutorialStep(state) {
+  return TUTORIAL_STEPS[state.completedStepIds.length];
+}
+function canCompleteTutorialStep(state, step2) {
+  return isTutorialStepDone(state, step2) || nextTutorialStep(state) === step2;
+}
+
 // src/core/achievementState.ts
 init_define_import_meta_env();
 
@@ -17936,7 +18011,8 @@ function createDefaultSession() {
     attendance: createEmptyAttendanceState(),
     serverJournal: emptyServerJournal(),
     raidTicketDrops: createEmptyRaidTicketDropState(),
-    achievements: createEmptyAchievementState()
+    achievements: createEmptyAchievementState(),
+    tutorial: createEmptyTutorialState()
   };
 }
 var session = createDefaultSession();
@@ -24562,6 +24638,7 @@ var SaveManager = class {
       attendance: cloneAttendanceState(state.attendance ?? createEmptyAttendanceState()),
       raidTicketDrops: { ...state.raidTicketDrops ?? createEmptyRaidTicketDropState() },
       achievements: normalizeAchievementState(state.achievements ?? createEmptyAchievementState()),
+      tutorial: normalizeTutorialState(state.tutorial ?? createEmptyTutorialState()),
       serverJournal: structuredClone(state.serverJournal ?? emptyServerJournal())
     };
     this.validate(data);
@@ -24655,6 +24732,7 @@ var SaveManager = class {
     const attendance = normalizeAttendanceState(legacy.attendance);
     const raidTicketDrops = normalizeRaidTicketDropState(legacy.raidTicketDrops);
     const achievements = normalizeAchievementState(legacy.achievements);
+    const tutorial = legacy.tutorial === void 0 ? legacyTutorialState(Array.isArray(legacy.clearedStageIds) ? legacy.clearedStageIds.filter((id) => typeof id === "string") : []) : normalizeTutorialState(legacy.tutorial);
     const savedBounty = legacy.bounty;
     const bounty = { clearedTierIds: savedBounty?.clearedTierIds ?? [] };
     const savedMissions = legacy.missions;
@@ -24717,10 +24795,10 @@ var SaveManager = class {
     const relicFragments = savedFragments ?? Object.fromEntries(Object.entries(savedProgress).map(([id, progress]) => [id, progress.awakening ?? 0]).filter(([, count2]) => count2 > 0));
     const itemInventory = repairLegacyLotStacks((Array.isArray(legacy.itemInventory) ? legacy.itemInventory : []).filter((stack) => stack?.itemId !== "raid-sigil"));
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
-    if (legacy.saveVersion === void 0) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops, achievements };
+    if (legacy.saveVersion === void 0) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops, achievements, tutorial };
     const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion)) throw new SaveDataError(`\uC9C0\uC6D0\uD558\uC9C0 \uC54A\uB294 \uC800\uC7A5 \uBC84\uC804\uC785\uB2C8\uB2E4: ${String(legacy.saveVersion)}`);
-    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops, achievements };
+    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops, achievements, tutorial };
   }
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
   validate(data) {
@@ -24799,6 +24877,7 @@ var SaveManager = class {
     if (!isValidAttendanceState(data.attendance)) fail("\uCD9C\uC11D \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!isValidRaidTicketDropState(data.raidTicketDrops)) fail("\uD1A0\uBC8C\uAD8C \uD68D\uB4DD \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!isValidAchievementState(data.achievements)) fail("\uC5C5\uC801 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!isValidTutorialState(data.tutorial)) fail("\uD29C\uD1A0\uB9AC\uC5BC \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (data.missions.lifetime !== void 0 && (typeof data.missions.lifetime !== "object" || data.missions.lifetime === null || Object.values(data.missions.lifetime).some((value) => !Number.isInteger(value) || value < 0))) fail("\uC784\uBB34 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (data.serverJournal !== void 0 && !isValidServerJournal(data.serverJournal)) fail("\uC11C\uBC84 \uCC98\uB9AC \uC601\uC218\uC99D\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (data.expedition.pendingRankRewards !== void 0 && (!Array.isArray(data.expedition.pendingRankRewards) || data.expedition.pendingRankRewards.some((reward) => !reward || typeof reward.weekKey !== "string" || !Number.isInteger(reward.score) || reward.score <= 0 || typeof reward.achievedAt !== "string") || new Set([data.expedition.pendingRankReward, ...data.expedition.pendingRankRewards].filter(Boolean).map((reward) => reward.weekKey)).size !== data.expedition.pendingRankRewards.length + (data.expedition.pendingRankReward ? 1 : 0))) fail("\uC6D0\uC815 \uC8FC\uAC04 \uBCF4\uC0C1 \uB300\uAE30\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
@@ -24878,7 +24957,8 @@ var SaveManager = class {
       attendance: cloneAttendanceState(data.attendance),
       serverJournal: structuredClone(data.serverJournal ?? emptyServerJournal()),
       raidTicketDrops: { ...data.raidTicketDrops },
-      achievements: { claimed: { ...data.achievements.claimed }, goldPeak: data.achievements.goldPeak }
+      achievements: { claimed: { ...data.achievements.claimed }, goldPeak: data.achievements.goldPeak },
+      tutorial: { completedStepIds: [...data.tutorial.completedStepIds] }
     };
   }
 };
@@ -30025,6 +30105,25 @@ var FakeServer = class {
     this.state.relicStory = nextStory;
     return { gemsGranted, wallet: { ...nextWallet }, serverTime: this.now().toISOString() };
   }
+  /**
+   * 튜토리얼 한 칸 — 순서를 서버 상태로 확인하고, 선물이 걸린 칸은 처음 마칠 때만 지갑에 넣는다.
+   * 이미 마친 칸은 던지지 않고 현재 진행을 그대로 돌려준다(화면이 두 번 눌러도 선물이 두 번 가지 않는다).
+   */
+  async completeTutorialStep(request) {
+    await this.delay();
+    if (!isTutorialStepId(request.stepId)) throw new GameApiError("INVALID_STATE", "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uD29C\uD1A0\uB9AC\uC5BC \uB2E8\uACC4\uC785\uB2C8\uB2E4.");
+    const current = normalizeTutorialState(this.state.tutorial);
+    if (isTutorialStepDone(current, request.stepId)) return { tutorial: current, wallet: { ...this.state.wallet }, serverTime: this.now().toISOString() };
+    if (!canCompleteTutorialStep(current, request.stepId)) throw new GameApiError("INVALID_STATE", "\uC55E \uB2E8\uACC4\uB97C \uBA3C\uC800 \uB9C8\uCCD0\uC57C \uD569\uB2C8\uB2E4.");
+    const tutorial = { completedStepIds: [...current.completedStepIds, request.stepId] };
+    const reward = TUTORIAL_REWARDS[request.stepId];
+    const fossil = reward ? Math.max(0, Math.min(reward.fossil, WALLET_CAPS.fossil - this.state.wallet.fossil)) : 0;
+    const nextWallet = { ...this.state.wallet, fossil: this.state.wallet.fossil + fossil };
+    this.persist({ ...this.state, tutorial, wallet: nextWallet });
+    this.state.tutorial = tutorial;
+    this.state.wallet = nextWallet;
+    return { tutorial, ...reward ? { granted: { fossil } } : {}, wallet: { ...nextWallet }, serverTime: this.now().toISOString() };
+  }
   /** 애착 스토리 장 해금 — 유대 레벨을 서버 상태로 확인하고 장마다 한 번만 젬을 준다. */
   async claimRelicChapter(request) {
     await this.delay();
@@ -30752,6 +30851,7 @@ var SERVER_GAME_METHODS = [
   "completeCakeOperation",
   "completeExpeditionNode",
   "completeStage",
+  "completeTutorialStep",
   "digStrataTile",
   "engraveRune",
   "enhanceRune",

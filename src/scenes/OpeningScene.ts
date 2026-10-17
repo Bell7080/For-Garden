@@ -93,13 +93,11 @@ export class OpeningScene extends Phaser.Scene {
   private skipToLobby(): void {
     if (this.transitioningOut) return;
     this.transitioningOut = true;
-    try {
-      if (!storyManager.isCompleted(OPENING_TRAIN.id)) storyManager.complete(OPENING_TRAIN.id);
-    } catch (error) {
-      console.error("오프닝 완료 저장 실패", error);
-    }
-    setDebugReady(false);
-    this.time.delayedCall(0, () => startScene(this, "lobby"));
+    const saving = storyManager.isCompleted(OPENING_TRAIN.id) ? Promise.resolve(false) : storyManager.complete(OPENING_TRAIN.id);
+    void saving.catch((error) => console.error("오프닝 완료 저장 실패", error)).then(() => {
+      setDebugReady(false);
+      this.time.delayedCall(0, () => startScene(this, "lobby"));
+    });
   }
 
   /** 제목표가 걷힌 뒤에 첫 대사를 연다. 막 뒤에서 글이 먼저 흘러가지 않게 한다. */
@@ -115,7 +113,7 @@ export class OpeningScene extends Phaser.Scene {
   private advance(choice?: DialogueChoice): void {
     if (this.transitioningOut) return;
     const result = this.flow.advance(choice?.id);
-    if (result.effect) storyManager.applyEffect(OPENING_TRAIN.id, result.effect);
+    if (result.effect) void storyManager.applyEffect(OPENING_TRAIN.id, result.effect).catch((error) => console.error("선택 효과 저장 실패", error));
     // 폭파로 전장이 드러나는 순간부터 곧 싸울 SD를 읽어 둔다 — 남은 몇 마디가 그 시간을 벌어 준다.
     if (result.node?.cue === "explosion" && !storyManager.isCompleted(OPENING_TRAIN.id)) {
       prefetchBattlePuppets(session.party, FIXED_STAGE_ENEMIES);
@@ -135,16 +133,13 @@ export class OpeningScene extends Phaser.Scene {
     const firstRun = !storyManager.isCompleted(OPENING_TRAIN.id);
     // 대사를 건너뛰어도 곧 싸울 SD는 읽어 둔다(폭파 큐를 지나지 않았을 수 있다).
     if (firstRun) prefetchBattlePuppets(session.party, FIXED_STAGE_ENEMIES);
-    try {
-      storyManager.complete(OPENING_TRAIN.id);
-    } catch (error) {
-      // 저장 실패는 다음 실행에서 오프닝을 다시 보여 주는 복구로 남기고 현재 세션의 진행은 계속한다.
-      console.error("오프닝 완료 저장 실패", error);
-    }
     // 로비의 비동기 Puppet까지 준비되기 전 오프닝의 true를 자동화가 재사용하지 않게 먼저 내린다.
     setDebugReady(false);
-    // 로딩을 기다리는 지연이 아니라 현재 pointerup 처리와 DialogueLayer 종료를 다음 Phaser 틱으로 분리한다.
-    this.time.delayedCall(0, () => { if (firstRun) void this.enterFirstBattle(); else startScene(this, "lobby"); });
+    // 완료가 서버에 닿은 뒤에 넘어간다. 저장 실패는 다음 실행에서 오프닝을 다시 보여 주는 복구로 남기고 현재 세션의 진행은 계속한다.
+    void storyManager.complete(OPENING_TRAIN.id).catch((error) => console.error("오프닝 완료 저장 실패", error)).then(() => {
+      // 현재 pointerup 처리와 DialogueLayer 종료를 다음 Phaser 틱으로 분리한다.
+      this.time.delayedCall(0, () => { if (firstRun) void this.enterFirstBattle(); else startScene(this, "lobby"); });
+    });
   }
 
   /**

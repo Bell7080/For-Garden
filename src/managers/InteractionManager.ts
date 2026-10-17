@@ -1,10 +1,7 @@
 import { gameApi } from "../api/FakeServer";
 import type { ClaimInteractionDispatchResponse, GameApi, InteractionCitiesResponse, InteractionDispatchResponse } from "../api/contracts";
 import { findInteractionCity } from "../data/interactionCities";
-import { saveManager, type SaveManager } from "../state/SaveManager";
 import { session, type InteractionDispatchSnapshot, type Session } from "../state/session";
-import { findInteractionJournal, journalsForCity } from "../data/interactionJournals";
-import { resolveJournalDiscovery, type JournalDiscoveryResolution } from "../core/interactionJournals";
 
 /** 씬이 신뢰하지 않은 API DTO를 세션에 넣기 전 확인하는 작은 런타임 경계다. */
 function assertDispatch(value: InteractionDispatchSnapshot | null): void {
@@ -14,37 +11,19 @@ function assertDispatch(value: InteractionDispatchSnapshot | null): void {
 
 /** API 검증·세션 반영·저장을 하나의 경계로 묶어 씬의 직접 상태 변경을 막는다. */
 export class InteractionManager {
-  constructor(private readonly api: GameApi = gameApi, private readonly state: Session = session, private readonly saves: Pick<SaveManager, "save"> = saveManager) {}
+  constructor(private readonly api: GameApi = gameApi, private readonly state: Session = session) {}
   async cities(): Promise<InteractionCitiesResponse> { const response = await this.api.getInteractionCities(); if (!Number.isFinite(Date.parse(response.serverTime)) || response.cities.some(city => !findInteractionCity(city.id))) throw new Error("교류 도시 응답이 올바르지 않습니다."); return response; }
   async refresh(): Promise<InteractionDispatchResponse> { return this.apply(await this.api.getInteractionDispatch()); }
   async start(cityId: string, party: string[]): Promise<InteractionDispatchResponse> { return this.apply(await this.api.startInteractionDispatch({ cityId, party: [...party] })); }
-  async claim(dispatchId: string, requestId: string): Promise<ClaimInteractionDispatchResponse> { const cityId = this.state.interaction.slots.find((slot) => slot?.dispatchId === dispatchId)?.cityId; const response = await this.api.claimInteractionDispatch({ dispatchId, requestId }); this.apply(response); this.state.wallet = { ...response.wallet }; if (cityId) this.discoverJournal(findInteractionCity(cityId)!.clueJournalId); this.saves.save(this.state); return response; }
-  /** 신규 해금과 중복 대체를 수행하는 유일한 경계다. 완전 소진된 도시는 별도 중복 아이템을 주지 않는다. */
-  discoverJournal(candidateId: string): JournalDiscoveryResolution {
-    const journal = findInteractionJournal(candidateId);
-    if (!journal) throw new RangeError("알 수 없는 교류 일지입니다.");
-    const resolution = resolveJournalDiscovery(candidateId, journalsForCity(journal.cityId).map(({ id }) => id), this.state.discoveredInteractionJournalIds);
-    if (!resolution.journalId) return resolution;
-    const discovered = new Set(this.state.discoveredInteractionJournalIds).add(resolution.journalId);
-    this.saves.save({ ...this.state, discoveredInteractionJournalIds: discovered });
-    this.state.discoveredInteractionJournalIds = discovered;
-    return resolution;
-  }
-  /** 열람 시작 시 읽음으로 확정해 도중 앱이 닫혀도 알림 점이 되살아나지 않게 한다. */
-  markJournalRead(journalId: string): boolean {
-    if (!this.state.discoveredInteractionJournalIds.has(journalId)) throw new RangeError("발견하지 않은 일지는 읽을 수 없습니다.");
-    if (this.state.readInteractionJournalIds.has(journalId)) return false;
-    const read = new Set(this.state.readInteractionJournalIds).add(journalId);
-    this.saves.save({ ...this.state, readInteractionJournalIds: read });
-    this.state.readInteractionJournalIds = read;
-    return true;
-  }
+  async claim(dispatchId: string, requestId: string): Promise<ClaimInteractionDispatchResponse> { const response = await this.api.claimInteractionDispatch({ dispatchId, requestId }); this.apply(response); this.state.wallet = { ...response.wallet }; return response; }
+  /** 열람 시작 시 읽음으로 확정해 도중 앱이 닫혀도 알림 점이 되살아나지 않게 한다. 발견·중복 대체는 수령 때 서버가 이미 끝냈다. */
+  async markJournalRead(journalId: string): Promise<boolean> { return (await this.api.markInteractionJournalRead({ journalId })).changed; }
   /** 서버가 보낸 목록을 통째로 세션 슬롯으로 삼는다 — 씬은 어느 도시가 나가 있는지만 읽는다. */
   private apply<T extends InteractionDispatchResponse>(response: T): T {
     for (const dispatch of response.dispatches) assertDispatch(dispatch);
     if (!Number.isFinite(Date.parse(response.serverTime))) throw new Error("교류 서버 시각이 올바르지 않습니다.");
     this.state.interaction.slots = response.dispatches.map((dispatch) => structuredClone(dispatch));
-    this.saves.save(this.state); return response;
+    return response;
   }
 }
 

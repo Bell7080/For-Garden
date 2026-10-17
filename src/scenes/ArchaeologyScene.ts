@@ -373,7 +373,7 @@ export class ArchaeologyScene extends Phaser.Scene {
     this.board = state.board;
     this.siteStates = state.sites;
     // 구 저장의 진행 판도 다음 지도 복귀 때 같은 유적을 가리키도록 의미 있는 ID로 승격한다.
-    if (state.board?.siteId) archaeologyProgressManager.selectSite(state.board.siteId);
+    if (state.board?.siteId) void archaeologyProgressManager.selectSite(state.board.siteId).catch(() => undefined);
     // 잘못된 서버 시각은 로컬 시각을 서버 시각이라고 추측하지 않고 안전한 정지 상태로 둔다.
     this.serverClockOffsetMs = Number.isFinite(serverTime) ? serverTime - receivedAt : 0;
     this.nextChargeAt = Number.isFinite(serverTime) && Number.isFinite(nextChargeAt) ? nextChargeAt : null;
@@ -474,7 +474,7 @@ export class ArchaeologyScene extends Phaser.Scene {
         session.archaeology.lastSelectedSiteId,
       );
       // 삭제되거나 다시 잠긴 선택은 화면에서만 우회하지 않고 안전한 유적으로 저장도 복구한다.
-      if (focus && focus.id !== session.archaeology.lastSelectedSiteId) archaeologyProgressManager.repairSelection(focus.id);
+      if (focus && focus.id !== session.archaeology.lastSelectedSiteId) void archaeologyProgressManager.repairSelection(focus.id).catch(() => undefined);
       const map = new ArchaeologyMapView(this, {
         top: ARCHAEOLOGY.chargePanel.y + ARCHAEOLOGY.chargePanel.height / 2 + 24,
         bottom: ARCHAEOLOGY.tabY - 64,
@@ -487,7 +487,7 @@ export class ArchaeologyScene extends Phaser.Scene {
         focusSiteId: focus?.id,
         onSelect: (site) => {
           // 서버가 확정한 해금 노드만 마지막 선택으로 남긴다. 잠긴 노드 열람은 진행 선택이 아니다.
-          if (this.siteStates.find(({ siteId }) => siteId === site.id)?.unlocked) archaeologyProgressManager.selectSite(site.id);
+          if (this.siteStates.find(({ siteId }) => siteId === site.id)?.unlocked) void archaeologyProgressManager.selectSite(site.id).catch(() => undefined);
           this.openSitePreview(site);
         },
         // 열세 자리가 얽힌 그물망에서 테스트가 좌표를 손으로 적지 않도록 실제 자리를 알린다.

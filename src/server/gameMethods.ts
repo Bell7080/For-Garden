@@ -4,18 +4,18 @@
  * `tests/unit/gameHandler.test.ts`가 GameApi 인터페이스와 이 목록이 같은지 지킨다.
  */
 export const SERVER_GAME_METHODS = [
-  "abandonStrataRun", "activatePass", "answerRelicQuestion", "archaeologyState", "breakThroughRelic", "buyDuelAttempt",
+  "abandonStrataRun", "activatePass", "answerRelicQuestion", "applyStoryEffect", "archaeologyState", "breakThroughRelic", "buyDuelAttempt",
   "claimAchievementRewards", "claimAdReward", "claimAttendance", "claimAttendanceAd", "claimDuelSeasonReward", "claimExpeditionReward", "claimInstantAdReward",
   "claimInteractionDispatch", "claimMailRewards", "claimMissionRewards", "claimPassDailyBonus", "claimProgressPass", "claimRelicChapter",
-  "claimRelicQuestionReward", "completeBounty", "completeCakeOperation", "completeExpeditionNode", "completeStage", "completeTutorialStep", "digStrataTile",
+  "claimRelicQuestionReward", "completeBounty", "completeCakeOperation", "completeExpeditionNode", "completeObservation", "completeStage", "completeStory", "completeTutorialStep", "digStrataTile",
   "engraveRune", "enhanceRune", "enterBounty", "enterCakeOperation", "enterDailyRestoration", "enterDuel", "enterEventStage", "enterRaid",
   "enterStage", "equipProfileModifiers", "equipRelicSkin", "equipRune", "feedRelic", "fulfillPlatformPurchase", "getAchievements", "getAdOperationsConfig", "getAsyncArenaServerState", "getAttendance",
   "getBountyStatus", "getDuelRanking", "getDuelStatus", "getEvents", "getExpeditionLeaderboard", "getExpeditionWeeklyBest",
   "getIdleExcavation", "getInteractionCities", "getInteractionDispatch", "getInventory", "getMails", "getMissions", "getNotificationSignals",
   "getPlayerState", "getProducts", "getProgressPasses", "getRaids", "getStaminaRechargeStatus", "grantRuneTrait", "harvestExcavation",
-  "interactInLobby", "markAttendanceAutoShown", "markMailsRead", "markRune", "pullRelics", "purchaseProduct", "purchaseRelicSkin",
+  "interactInLobby", "markAttendanceAutoShown", "markInteractionJournalRead", "markMailsRead", "markRune", "pullRelics", "purchaseProduct", "purchaseRelicSkin",
   "rechargeStamina", "refreshDuelOpponents", "renameRune", "rerollRuneTrait", "resolveDuel", "resolveRuneTraitReroll", "saveExcavationFormation",
-  "sellRunes", "setDuelDefense", "setFavorite", "setParty", "setRelicBookmark", "settleExpeditionRun", "settleRaid", "startInteractionDispatch", "startStrataRun", "submitExpeditionBossScore",
+  "selectArchaeologySite", "sellRunes", "setDuelDefense", "setFavorite", "setParty", "setRelicBookmark", "settleExpeditionRun", "settleRaid", "startInteractionDispatch", "startStrataRun", "submitExpeditionBossScore",
   "submitRaidDamage", "summonRaid", "sweepBounty", "sweepCakeOperation", "sweepExpedition", "unequipRune", "updatePlayerCard", "upgradeRuneTrait",
   "useConsumable", "verifyPurchaseReceipt",
 ] as const;

@@ -5,6 +5,9 @@ import { socialApi } from "./FakeSocialServer";
 import { MILEAGE_OVERFLOW_BY_RARITY, mileageForPull } from "../core/mileage";
 import { BANNERS } from "../data/banners";
 import { PLAYABLE_RELICS, RELICS } from "../data/relics";
+import { createObservationStory, observationDiscovery } from "../data/observations";
+import { findInteractionJournal, journalsForCity } from "../data/interactionJournals";
+import { resolveJournalDiscovery, type JournalDiscoveryResolution } from "../core/interactionJournals";
 import { cleanBio, cleanNickname, createPlayerUid, nicknameLockedUntil, nicknameProblem } from "../core/playerCard";
 import { findProfileFrame, isProfileFrameUnlocked } from "../data/profileFrames";
 import { findProfileModifier } from "../data/profileModifiers";
@@ -28,7 +31,7 @@ import { saveManager } from "../state/SaveManager";
 import { INTERACTION_CITIES, findInteractionCity } from "../data/interactionCities";
 import { interactionDurationMs, isInteractionCityUnlocked, isInteractionDispatchComplete, rollInteractionRewards, validateInteractionFormation, type InteractionMemberTraits } from "../core/interactionDispatch";
 import type {
-  PurchaseRelicSkinRequest, PurchaseRelicSkinResponse, SetPartyRequest, SetPartyResponse, SetFavoriteRequest, SetRelicBookmarkRequest, RelicMarkResponse, UpdatePlayerCardRequest, UpdatePlayerCardResponse, EquipProfileModifiersRequest, EquipProfileModifiersResponse, EquipRelicSkinRequest, ClaimInteractionDispatchRequest, ClaimInteractionDispatchResponse, InteractionCitiesResponse, InteractionDispatchResponse, StartInteractionDispatchRequest } from "./contracts";
+  PurchaseRelicSkinRequest, PurchaseRelicSkinResponse, CompleteStoryRequest, CompleteStoryResponse, ApplyStoryEffectRequest, ApplyStoryEffectResponse, CompleteObservationRequest, CompleteObservationResponse, MarkInteractionJournalReadRequest, MarkInteractionJournalReadResponse, SelectArchaeologySiteRequest, SelectArchaeologySiteResponse, SetPartyRequest, SetPartyResponse, SetFavoriteRequest, SetRelicBookmarkRequest, RelicMarkResponse, UpdatePlayerCardRequest, UpdatePlayerCardResponse, EquipProfileModifiersRequest, EquipProfileModifiersResponse, EquipRelicSkinRequest, ClaimInteractionDispatchRequest, ClaimInteractionDispatchResponse, InteractionCitiesResponse, InteractionDispatchResponse, StartInteractionDispatchRequest } from "./contracts";
 import { MAX_EQUIPPED_PROFILE_MODIFIERS, ProfileModifierManager } from "../managers/ProfileModifierManager";
 import { GameApiError, persistenceFailed, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type EnterBountyRequest, type EnterBountyResponse, type CompleteBountyRequest, type CompleteBountyResponse, type BountyStatusResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse, type RechargeStaminaRequest, type RechargeStaminaResponse, type StaminaRechargeStatusDto, type ClaimProgressPassRequest, type ClaimProgressPassResponse, type ProgressPassDto, type ProgressPassListResponse } from "./contracts";
 import type { ProductDefinition, ProductGrant } from "../data/shopCatalog";
@@ -281,9 +284,35 @@ export class FakeServer implements GameApi {
       this.state.wallet[currency] += applied;
       return { currency, amount: applied };
     });
-    if (!alreadyClaimed) { dispatch.claimed = true; this.state.interaction.claimedRequestIds.push(request.requestId); }
-    const response = { ...this.interactionDispatchResponse(), serverTime: now.toISOString(), granted, alreadyClaimed, wallet: { ...this.state.wallet } };
+    let journal: JournalDiscoveryResolution | undefined;
+    if (!alreadyClaimed) {
+      dispatch.claimed = true; this.state.interaction.claimedRequestIds.push(request.requestId);
+      // 도시의 단서 일지는 수령과 같은 처리 안에서 발견 처리한다 — 클라이언트가 따로 기록하지 않는다.
+      const city = findInteractionCity(dispatch.cityId);
+      if (city) journal = this.discoverInteractionJournal(city.clueJournalId);
+    }
+    const response = { ...this.interactionDispatchResponse(), serverTime: now.toISOString(), granted, alreadyClaimed, wallet: { ...this.state.wallet }, ...(journal ? { journal } : {}) };
     this.interactionClaimResults.set(request.requestId, structuredClone(response)); saveManager.save(this.state); return response;
+  }
+
+  /** 신규 해금과 중복 대체를 수행하는 유일한 자리다. 완전 소진된 도시는 별도 중복 아이템을 주지 않는다. */
+  private discoverInteractionJournal(candidateId: string): JournalDiscoveryResolution {
+    const journal = findInteractionJournal(candidateId);
+    if (!journal) throw new GameApiError("INVALID_STATE", "알 수 없는 교류 일지입니다.");
+    const resolution = resolveJournalDiscovery(candidateId, journalsForCity(journal.cityId).map(({ id }) => id), this.state.discoveredInteractionJournalIds);
+    if (resolution.journalId) this.state.discoveredInteractionJournalIds = new Set(this.state.discoveredInteractionJournalIds).add(resolution.journalId);
+    return resolution;
+  }
+
+  /** 열람 시작 시 읽음으로 확정해 도중 앱이 닫혀도 알림 점이 되살아나지 않게 한다. */
+  async markInteractionJournalRead(request: MarkInteractionJournalReadRequest): Promise<MarkInteractionJournalReadResponse> {
+    await this.delay();
+    if (!this.state.discoveredInteractionJournalIds.has(request.journalId)) throw new GameApiError("INVALID_STATE", "발견하지 않은 일지는 읽을 수 없습니다.");
+    if (this.state.readInteractionJournalIds.has(request.journalId)) return { changed: false };
+    const read = new Set(this.state.readInteractionJournalIds).add(request.journalId);
+    this.persist({ ...this.state, readInteractionJournalIds: read });
+    this.state.readInteractionJournalIds = read;
+    return { changed: true };
   }
 
   /** 읽음·수령·만료를 현재 서버 시각으로 집계한 복제본만 외부에 제공한다. */
@@ -1152,6 +1181,73 @@ export class FakeServer implements GameApi {
     this.persist({ ...this.state, wallet: nextWallet, ownedRelicSkinIds: nextSkins });
     this.state.wallet = nextWallet; this.state.ownedRelicSkinIds = nextSkins;
     return { ...this.snapshot(), skinId: request.skinId, spent: { currency, amount } };
+  }
+
+  /** 이야기 완료는 한 번만 기록한다. 이미 완료한 이야기를 다시 완료해도 아무것도 쓰지 않는다. */
+  async completeStory(request: CompleteStoryRequest): Promise<CompleteStoryResponse> {
+    await this.delay();
+    const id = request.storyId;
+    if (typeof id !== "string" || id.length === 0 || id.length > 120) throw new GameApiError("INVALID_STATE", "이야기 ID가 올바르지 않습니다.");
+    if (this.state.completedStoryIds.has(id)) return { firstCompletion: false };
+    const completedStoryIds = new Set(this.state.completedStoryIds).add(id);
+    this.persist({ ...this.state, completedStoryIds });
+    this.state.completedStoryIds = completedStoryIds;
+    return { firstCompletion: true };
+  }
+
+  /** 대사 선택의 유대 경험치 명령. 대상·범위를 확인하고 이미 완료한 이야기(재관람)는 보상하지 않는다. */
+  async applyStoryEffect(request: ApplyStoryEffectRequest): Promise<ApplyStoryEffectResponse> {
+    await this.delay();
+    if (this.state.completedStoryIds.has(request.storyId)) return { xpGained: 0 };
+    const effect = request.effect;
+    if (effect?.type !== "bondXp") throw new GameApiError("INVALID_STATE", "허용되지 않은 대사 효과입니다.");
+    const progress = this.state.relicProgress[effect.relicId];
+    if (!PLAYABLE_RELICS.some(({ id }) => id === effect.relicId) || !this.state.owned.has(effect.relicId) || !progress) throw new GameApiError("INVALID_STATE", "대사 효과 대상 렐릭이 올바르지 않습니다.");
+    // 콘텐츠 오타가 대량 보상으로 이어지지 않도록 한 선택의 유대 보상을 작은 정수로 제한한다.
+    if (!Number.isInteger(effect.amount) || effect.amount < 0 || effect.amount > 20) throw new GameApiError("INVALID_STATE", "대사 유대 보상은 0~20 정수여야 합니다.");
+    const result = grantBondXp(progress, effect.amount);
+    const relicProgress = { ...this.state.relicProgress, [effect.relicId]: result.progress };
+    this.persist({ ...this.state, relicProgress });
+    this.state.relicProgress = relicProgress;
+    return { xpGained: result.xpGained };
+  }
+
+  /**
+   * 관찰 인터뷰 완료. 같은 이야기 재완료는 기록·유대 EXP를 다시 만들지 않는 성공이고, 새 완료는 오늘의 한 번뿐이다.
+   * 날짜는 클라이언트가 고르지 않는다 — 서버 UTC 날짜가 아니면 거절해 날짜를 바꿔 한도를 비껴가지 못하게 한다.
+   */
+  async completeObservation(request: CompleteObservationRequest): Promise<CompleteObservationResponse> {
+    await this.delay();
+    const relic = PLAYABLE_RELICS.find(({ id }) => id === request.relicId);
+    if (!relic || !this.state.owned.has(request.relicId)) throw new GameApiError("INVALID_STATE", "관찰 대상은 보유한 렐릭이어야 합니다.");
+    const story = createObservationStory(request.relicId, relic.name, request.utcDate);
+    const previous = this.state.observationRecords.find((record) => record.storyId === story.id);
+    if (previous) return { record: structuredClone(previous), bondXpEarned: 0, firstCompletion: false };
+    if (request.utcDate !== utcDateKey(this.now())) throw new GameApiError("INVALID_STATE", "오늘 날짜의 관찰 인터뷰만 완료할 수 있습니다.");
+    if (this.state.observationRecords.some((record) => record.date === request.utcDate)) throw new GameApiError("DAILY_ENTRY_LIMIT", "오늘의 관찰 인터뷰는 이미 완료했습니다.");
+    let discovery: ReturnType<typeof observationDiscovery>;
+    try { discovery = observationDiscovery(request.relicId, request.utcDate, request.choiceId); } catch (error) { throw new GameApiError("INVALID_STATE", "존재하지 않는 관찰 선택지입니다.", { cause: error }); }
+    const record = { date: request.utcDate, relicId: request.relicId, storyId: story.id, questionId: discovery.question.id, question: discovery.question.prompt, choiceId: discovery.choice.id, answer: discovery.choice.label, personalityTag: discovery.choice.personalityTag, discoveredHabit: discovery.habit };
+    const progress = this.state.relicProgress[request.relicId];
+    if (!progress) throw new GameApiError("INVALID_STATE", "관찰 대상의 유대 정보가 없습니다.");
+    const reward = grantBondXp(progress, BOND_XP_REWARD.firstObservationInterview);
+    const completedStoryIds = new Set(this.state.completedStoryIds).add(story.id);
+    const observationRecords = [...this.state.observationRecords, record];
+    const relicProgress = { ...this.state.relicProgress, [request.relicId]: reward.progress };
+    this.persist({ ...this.state, completedStoryIds, observationRecords, relicProgress });
+    this.state.completedStoryIds = completedStoryIds; this.state.observationRecords = observationRecords; this.state.relicProgress = relicProgress;
+    return { record: structuredClone(record), bondXpEarned: reward.xpGained, firstCompletion: true };
+  }
+
+  /** 고고학 지도의 마지막 선택 유적. 삭제된 카탈로그 ID가 저장되지 않게 한다. */
+  async selectArchaeologySite(request: SelectArchaeologySiteRequest): Promise<SelectArchaeologySiteResponse> {
+    await this.delay();
+    if (findArchaeologySite(request.siteId) === undefined) return { ok: false };
+    if (this.state.archaeology.lastSelectedSiteId === request.siteId) return { ok: true };
+    const archaeology = { ...this.state.archaeology, lastSelectedSiteId: request.siteId };
+    this.persist({ ...this.state, archaeology });
+    this.state.archaeology = archaeology;
+    return { ok: true };
   }
 
   /** 편성은 서로 다른 보유 렐릭 세 명만 확정한다. 실패는 사유를 데이터로 돌려준다. */

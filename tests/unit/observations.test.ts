@@ -7,6 +7,7 @@ import {
   observationQuestionForDate,
   observationQuestionForRelicAndDate,
 } from "../../src/data/observations";
+import { FakeServer } from "../../src/api/FakeServer";
 import { ObservationManager } from "../../src/managers/ObservationManager";
 import { createDefaultSession } from "../../src/state/session";
 
@@ -17,6 +18,12 @@ function dateForQuestion(relicId: string, questionId: string): string {
     if (observationQuestionForRelicAndDate(relicId, date).id === questionId) return date;
   }
   throw new Error(`순환에서 질문을 찾지 못했습니다: ${questionId}`);
+}
+
+/** 서버가 오늘의 UTC 날짜만 받으므로 시험은 그 날짜에 시계를 맞춘 서버로 완료한다. */
+function managerAt(state: ReturnType<typeof createDefaultSession>, date: string): ObservationManager {
+  const server = new FakeServer(state, { latencyMs: 0, persistSession: () => undefined, now: () => new Date(`${date}T12:00:00Z`) });
+  return new ObservationManager(state, server);
 }
 
 describe("관찰 인터뷰", () => {
@@ -42,14 +49,14 @@ describe("관찰 인터뷰", () => {
     }
   });
 
-  it("각 신규 선택의 서로 다른 태그와 습성 문장을 기록한다", () => {
+  it("각 신규 선택의 서로 다른 태그와 습성 문장을 기록한다", async () => {
     for (const question of RELIC_OBSERVATION_QUESTIONS.torika) {
       const date = dateForQuestion("torika", question.id);
       for (const choice of question.choices) {
         // 선택마다 독립 저장을 만들어 하루 한 명 제한과 무관하게 스냅샷 내용을 검증한다.
         const state = createDefaultSession();
-        const manager = new ObservationManager(state, { save: () => undefined });
-        const result = manager.complete("torika", date, choice.id);
+        const manager = managerAt(state, date);
+        const result = await manager.complete("torika", date, choice.id);
         expect(result.record).toMatchObject({ questionId: question.id, choiceId: choice.id, personalityTag: choice.personalityTag });
         expect(result.record.discoveredHabit).not.toBe("새로운 반응 양식을 기록했다.");
         expect(result.record.discoveredHabit.length).toBeGreaterThan(10);
@@ -73,15 +80,15 @@ describe("관찰 인터뷰", () => {
     }
   });
 
-  it("렉시아의 각 선택을 고유한 성격 태그와 관찰 습성으로 저장한다", () => {
+  it("렉시아의 각 선택을 고유한 성격 태그와 관찰 습성으로 저장한다", async () => {
     for (const question of RELIC_OBSERVATION_QUESTIONS.rex) {
       const date = dateForQuestion("rex", question.id);
       const savedTags = new Set<string>();
       const savedHabits = new Set<string>();
       for (const choice of question.choices) {
         // 선택별 새 세션은 일일 완료 제한을 피하면서 실제 저장 경계까지 검증한다.
-        const manager = new ObservationManager(createDefaultSession(), { save: () => undefined });
-        const { record } = manager.complete("rex", date, choice.id);
+        const manager = managerAt(createDefaultSession(), date);
+        const { record } = await manager.complete("rex", date, choice.id);
         expect(record).toMatchObject({ questionId: question.id, choiceId: choice.id, personalityTag: choice.personalityTag });
         expect(record.discoveredHabit).not.toBe("새로운 반응 양식을 기록했다.");
         savedTags.add(record.personalityTag);
@@ -105,15 +112,15 @@ describe("관찰 인터뷰", () => {
     }
   });
 
-  it("스피나의 각 선택을 고유한 태그·습성·직접 답변으로 저장하고 제시한다", () => {
+  it("스피나의 각 선택을 고유한 태그·습성·직접 답변으로 저장하고 제시한다", async () => {
     const allReplies = new Set<string>();
     const allHabits = new Set<string>();
     for (const question of RELIC_OBSERVATION_QUESTIONS.spino) {
       const date = dateForQuestion("spino", question.id);
       for (const choice of question.choices) {
         // 새 세션으로 실제 저장 경계를 통과시키고, 대화 노드의 직접 답변도 fallback 문구가 아님을 함께 고정한다.
-        const manager = new ObservationManager(createDefaultSession(), { save: () => undefined });
-        const { record } = manager.complete("spino", date, choice.id);
+        const manager = managerAt(createDefaultSession(), date);
+        const { record } = await manager.complete("spino", date, choice.id);
         const story = createObservationStory("spino", "스피나", date);
         const reply = story.nodes.find(({ id }) => id === `reply-${choice.id}`)?.body;
         expect(record).toMatchObject({ questionId: question.id, choiceId: choice.id, personalityTag: choice.personalityTag });
@@ -141,14 +148,14 @@ describe("관찰 인터뷰", () => {
     expect(lukaQuestions.map(({ choices }) => choices.length)).toEqual([2, 2, 2]);
   });
 
-  it("루카의 모든 habitKey가 고유한 습성 문장과 전용 응답으로 이어진다", () => {
+  it("루카의 모든 habitKey가 고유한 습성 문장과 전용 응답으로 이어진다", async () => {
     const discoveredHabits = new Set<string>();
     for (const question of RELIC_OBSERVATION_QUESTIONS.luka) {
       const date = dateForQuestion("luka", question.id);
       for (const choice of question.choices) {
         // 실제 완료 경계를 통과시켜 habitKey 누락 시 쓰이는 fallback과 선택지 재사용을 동시에 방지한다.
-        const manager = new ObservationManager(createDefaultSession(), { save: () => undefined });
-        const { record } = manager.complete("luka", date, choice.id);
+        const manager = managerAt(createDefaultSession(), date);
+        const { record } = await manager.complete("luka", date, choice.id);
         const reply = createObservationStory("luka", "루카", date).nodes.find(({ id }) => id === `reply-${choice.id}`)?.body;
         expect(record).toMatchObject({ questionId: question.id, choiceId: choice.id, personalityTag: choice.personalityTag });
         expect(record.discoveredHabit).not.toBe("새로운 반응 양식을 기록했다.");
@@ -161,20 +168,20 @@ describe("관찰 인터뷰", () => {
     expect(discoveredHabits.size).toBe(RELIC_OBSERVATION_QUESTIONS.luka.flatMap(({ choices }) => choices).length);
   });
 
-  it("하루 한 명의 첫 완료만 기록과 작은 유대 보상을 지급하고 재관람은 무보상이다", () => {
+  it("하루 한 명의 첫 완료만 기록과 작은 유대 보상을 지급하고 재관람은 무보상이다", async () => {
     const state = createDefaultSession();
-    const manager = new ObservationManager(state, { save: () => undefined });
     const date = "2026-08-22";
+    const manager = managerAt(state, date);
     const choice = observationQuestionForRelicAndDate("torika", date).choices[0];
     const before = state.relicProgress.torika.bondXp;
-    const first = manager.complete("torika", date, choice.id);
+    const first = await manager.complete("torika", date, choice.id);
     expect(first.bondXpEarned).toBe(5);
     expect(first.record.personalityTag).toBe(choice.personalityTag);
     expect(state.relicProgress.torika.bondXp).toBe(before + 5);
     expect(manager.canStart("rex", date)).toBe(false);
-    expect(manager.complete("torika", date, choice.id)).toMatchObject({ bondXpEarned: 0, firstCompletion: false });
+    expect(await manager.complete("torika", date, choice.id)).toMatchObject({ bondXpEarned: 0, firstCompletion: false });
     const rexChoice = observationQuestionForRelicAndDate("rex", date).choices[0];
-    expect(() => manager.complete("rex", date, rexChoice.id)).toThrow("이미 완료");
+    await expect(manager.complete("rex", date, rexChoice.id)).rejects.toThrow("이미 완료");
   });
 
   it("과거 공용 질문 ID와 날짜 전용 API의 결과를 그대로 유지한다", () => {

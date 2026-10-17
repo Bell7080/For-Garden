@@ -1,5 +1,5 @@
 import { t } from "../i18n";
-import { MISSIONS } from "../core/missions";
+import { MISSIONS, RESEARCH_REWARD_STAGES } from "../core/missions";
 import type { ProfileFrameDefinition } from "../data/profileFrames";
 import type { ProfileModifierDefinition } from "../data/profileModifiers";
 
@@ -19,8 +19,9 @@ export function modifierUnlockText(modifier: ProfileModifierDefinition): string 
     return mission ? t("profile.unlock.mission", { name: mission.title }) : "";
   }
   if (kind === "research") {
-    const [period, value] = rest;
-    return t(period === "weekly" ? "profile.unlock.researchWeekly" : "profile.unlock.researchDaily", { value: Number(value).toLocaleString() });
+    const [period, stageId] = rest;
+    const stage = RESEARCH_REWARD_STAGES[period === "weekly" ? "weekly" : "daily"].find(({ id }) => id === stageId);
+    return stage ? t(period === "weekly" ? "profile.unlock.researchWeekly" : "profile.unlock.researchDaily", { value: stage.threshold.toLocaleString() }) : "";
   }
   if (kind === "achievement") return t("profile.unlock.achievement", { name: t(`achievement.series.${rest[0]}` as Parameters<typeof t>[0]) });
   return "";

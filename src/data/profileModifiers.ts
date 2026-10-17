@@ -11,9 +11,9 @@ export interface ProfileModifierDefinition { readonly id: string; readonly displ
 /** 운영 중 문구를 바꿔도 저장 호환성이 유지되는 수식어 카탈로그다. */
 export const PROFILE_MODIFIERS: readonly ProfileModifierDefinition[] = [
   { id: "field-pioneer", displayName: "현장 개척자", rarity: "rare", acquisitionConditionId: "mission:daily-battle" },
-  { id: "steady-researcher", displayName: "꾸준한 연구자", rarity: "common", acquisitionConditionId: "mission:daily-research" },
-  { id: "deep-record", displayName: "심층 기록자", rarity: "epic", acquisitionConditionId: "research:weekly:60" },
-  { id: "garden-legend", displayName: "정원의 전설", rarity: "legendary", acquisitionConditionId: "research:weekly:120" },
+  { id: "steady-researcher", displayName: "꾸준한 연구자", rarity: "common", acquisitionConditionId: "mission:daily-excavate" },
+  { id: "deep-record", displayName: "심층 기록자", rarity: "epic", acquisitionConditionId: "research:weekly:research-300" },
+  { id: "garden-legend", displayName: "정원의 전설", rarity: "legendary", acquisitionConditionId: "research:weekly:research-500" },
   /*
    * 업적의 마지막 단계를 받는 순간 열리는 수식어(`data/achievements.ts`의 `modifierId`). 희귀도는 그 줄을
    * 끝내는 데 드는 시간을 말한다 — 1억 골드·결투 300승·원정 20만 점처럼 오래 걸리는 줄만 전설이다.

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import { ACHIEVEMENT_CATEGORIES, ACHIEVEMENT_SERIES } from "../../src/data/achievements";
-import { ACHIEVEMENTS_POPUP_LAYOUT, achievementListContentHeight, achievementsTabX, orderAchievements } from "../../src/ui/achievementsPopupLayout";
+import { ACHIEVEMENTS_POPUP_LAYOUT, achievementListContentHeight, achievementsTabStrip, orderAchievements } from "../../src/ui/achievementsPopupLayout";
 
 describe("업적 창", () => {
   const { popup, summary, list, footer } = ACHIEVEMENTS_POPUP_LAYOUT;
@@ -16,10 +16,17 @@ describe("업적 창", () => {
     expect(footer.claim.y + footer.claim.height / 2).toBeLessThan(height / 2);
   });
 
-  it("의 탭(전체 + 갈래)은 판 안에 들고 오른쪽 아래 뒤로가기 자리를 비운다", () => {
-    const last = achievementsTabX(ACHIEVEMENT_CATEGORIES.length) + footer.tab.width / 2;
-    expect(achievementsTabX(0) - footer.tab.width / 2).toBeGreaterThan(-width / 2);
-    expect(last).toBeLessThan(width / 2 - 60);
+  it("의 탭 줄 창은 판 안에 들고 오른쪽 아래 뒤로가기 자리를 비운다", () => {
+    const spec = achievementsTabStrip();
+    expect(spec.count).toBe(ACHIEVEMENT_CATEGORIES.length + 1);
+    expect(spec.left).toBeGreaterThan(-width / 2);
+    expect(spec.right).toBeLessThan(width / 2 - 60);
+  });
+
+  it("의 탭은 촘촘히 박지 않고 넓게 세워 옆으로 흐른다", () => {
+    const spec = achievementsTabStrip();
+    expect(spec.width).toBeGreaterThanOrEqual(180);
+    expect(spec.count * spec.width + (spec.count - 1) * spec.gap).toBeGreaterThan(spec.right - spec.left);
   });
 
   it("의 목록은 모든 업적을 창 안에서 흘린다", () => {

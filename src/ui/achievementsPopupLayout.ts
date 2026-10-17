@@ -1,4 +1,5 @@
-import type { AchievementCategory } from "../data/achievements";
+import { ACHIEVEMENT_CATEGORIES, type AchievementCategory } from "../data/achievements";
+import type { TabStripSpec } from "../core/tabStrip";
 
 /**
  * 업적 창의 자리는 팝업 본문 원점(화면 중앙)을 기준으로 이 표 하나가 갖는다.
@@ -25,8 +26,11 @@ export const ACHIEVEMENTS_POPUP_LAYOUT = {
   },
   footer: {
     tabY: 652,
-    /** 일곱 칸(전체 + 갈래 여섯)이 오른쪽 아래 뒤로가기 자리를 비우고 한 줄에 든다. */
-    tab: { width: 122, height: 76, gap: 6, left: -470 },
+    /**
+     * 일곱 칸(전체 + 갈래 여섯)을 촘촘히 박지 않고 프리미엄 상점처럼 넓게 세워 옆으로 흘린다. 창은 오른쪽
+     * 아래 뒤로가기 자리를 비운 `left`~`right`이고, 고른 칸이 창 가운데로 모인다.
+     */
+    tab: { width: 196, height: 76, gap: 8, left: -470, right: 420 },
     claim: { x: 0, y: 772, width: 380, height: 92 },
   },
 } as const;
@@ -44,9 +48,10 @@ export const ACHIEVEMENT_CATEGORY_TONE: Readonly<Record<AchievementCategory, num
 /** 탭은 「전체」가 첫 칸이고 그 뒤로 갈래가 선다. */
 export type AchievementTab = "all" | AchievementCategory;
 
-export function achievementsTabX(index: number): number {
+/** 하단 갈래 탭 줄의 창과 칸 규격 — 흐르는 셈은 `core/tabStrip`이 맡는다. */
+export function achievementsTabStrip(): TabStripSpec {
   const { tab } = ACHIEVEMENTS_POPUP_LAYOUT.footer;
-  return tab.left + tab.width / 2 + index * (tab.width + tab.gap);
+  return { left: tab.left, right: tab.right, width: tab.width, gap: tab.gap, count: 1 + ACHIEVEMENT_CATEGORIES.length };
 }
 
 export function achievementRowY(index: number): number {

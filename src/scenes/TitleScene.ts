@@ -30,6 +30,7 @@ import { openChoicePicker } from "../ui/SettingsPicker";
 import { accountApi, type AccountFailureCode } from "../api/AccountApi";
 import { backendAccount, connectProgress, disconnectProgress } from "../api/backendSession";
 import { Button } from "../ui/Button";
+import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { motionPolicy } from "../core/settings";
 import { openSaveConflictPopup, type SaveConflictChoice } from "../ui/SaveConflictPopup";
 import { saveManager } from "../state/SaveManager";
@@ -471,7 +472,7 @@ export class TitleScene extends Phaser.Scene {
               return;
             }
             console.warn("[forgarden] connect failed", connected.code, connected.detail ?? "-");
-            this.showConnectFailure(connected.code);
+            this.showConnectFailure(connected.code, connected.detail);
             tapAnywhere.once("pointerup", enter);
           });
           return;
@@ -524,10 +525,10 @@ export class TitleScene extends Phaser.Scene {
   }
 
   /** 서버 연결이 서지 못한 이유를 알리고 다시 누르면 새로 시도한다. */
-  private showConnectFailure(code: AccountFailureCode): void {
+  private showConnectFailure(code: AccountFailureCode, detail?: string): void {
     this.popups?.confirm({
       title: t("settings.account.notice"),
-      message: t(code === "conflict-cancelled" ? "settings.account.conflictCancelled" : code === "network-error" ? "settings.account.network" : "settings.account.unavailable"),
+      message: t(code === "conflict-cancelled" ? "settings.account.conflictCancelled" : code === "network-error" ? "settings.account.network" : "settings.account.unavailable") + (QA_TOOLS_ENABLED && detail ? `\n${t("settings.account.errorCode", { code: detail })}` : ""),
       confirmLabel: t("settings.action.confirm"),
       cancelLabel: false,
     });

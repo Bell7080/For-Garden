@@ -99,18 +99,18 @@ export async function connectServerProgress(deps: ServerProgressDeps): Promise<S
   }
 
   const meta = await account.getRemoteSaveMetadata();
-  if (!meta.ok) return meta;
+  if (!meta.ok) return { ok: false, code: meta.code, detail: account.lastFailure?.() || `save-meta:${meta.code}` };
 
   if (meta.value === null || deps.marker.get() !== userId) {
     // 처음 만나는 기기이거나 서버가 비어 있다: 같은 해시면 그대로, 다르면 고르게 한다.
     const sync = new AccountSaveSync(account, deps.saves);
     const result = await sync.synchronize(target, deps.choose);
-    if (!result.ok) return result;
+    if (!result.ok) return { ok: false, code: result.code, detail: account.lastFailure?.() || `sync:${result.code}` };
   }
 
   // 위 동기화가 로컬 저장을 서버 쪽으로 맞췄으므로 서버 본문을 한 번 받아 세션과 맞춘다.
   const downloaded = await account.downloadRemoteSave();
-  if (!downloaded.ok) return downloaded;
+  if (!downloaded.ok) return { ok: false, code: downloaded.code, detail: account.lastFailure?.() || `download:${downloaded.code}` };
   let restored: Session;
   try { restored = deps.saves.importRemote(downloaded.value.data); }
   catch { return { ok: false, code: "invalid-remote-save" }; }

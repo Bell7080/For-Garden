@@ -34,10 +34,17 @@ describe("출시 초기화 세대", () => {
     expect(s.data.get("other")).toBe("keep");
   });
 
-  it("세대를 적은 적 없는 기기(이 기능 이전에 테스트하던 기기)도 초기화 뒤에는 걸러진다", () => {
+  it("세대를 적은 적 없는 기기(이 기능 이전에 테스트하던 기기)도 토큰이 있으면 초기화 뒤에는 걸러진다", () => {
     const s = memory({ [TOKENS]: "t", [SAVE]: "s" });
     expect(reconcileLaunchEpoch("E1", s)).toBe(true);
     expect(s.data.has(TOKENS)).toBe(false);
+  });
+
+  it("서버 계정과 이어진 적 없는 첫 실행 기기는 방금 만든 로컬 저장을 지우지 않는다", () => {
+    const s = memory({ [SAVE]: "first-run" });
+    expect(reconcileLaunchEpoch("E1", s)).toBe(false);
+    expect(s.data.get(SAVE)).toBe("first-run");
+    expect(s.data.get(LAUNCH_EPOCH_STORAGE_KEY)).toBe("E1");
   });
 
   it("지울 것이 없던 새 기기는 세대만 적고 다시 시작하지 않는다", () => {

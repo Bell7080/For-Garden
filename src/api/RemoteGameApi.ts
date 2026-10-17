@@ -18,6 +18,9 @@ export interface RemoteGameApiOptions {
   newRequestId?: () => string;
 }
 
+/** 같은 조회의 답을 다시 쓰는 시간이다. 쓰기가 나가면 곧바로 비운다. */
+const READ_REUSE_MS = 1500;
+
 export class RemoteGameApiError extends Error {
   constructor(readonly status: number, readonly code: string, message?: string) { super(message ?? code); }
 }
@@ -36,6 +39,8 @@ export function createRemoteGameApi(options: RemoteGameApiOptions): GameApi {
   const doFetch = options.fetchImpl ?? fetch;
   const endpoint = options.endpoint ?? "/api/game";
   const newId = options.newRequestId ?? defaultRequestId;
+  // 같은 조회가 화면 전환 때 겹쳐 나가면 한 번만 보내고, 쓰기가 상태를 바꾸기 전까지는 잠깐 그 답을 다시 쓴다.
+  const inflightReads = new Map<string, { at: number; promise: Promise<unknown> }>();
 
   async function call(method: string, args: unknown[]): Promise<unknown> {
     const token = await options.getAccessToken();
@@ -64,7 +69,22 @@ export function createRemoteGameApi(options: RemoteGameApiOptions): GameApi {
     throw lastError instanceof Error ? lastError : new RemoteGameApiError(0, "network");
   }
 
+  async function callCached(method: string, args: unknown[]): Promise<unknown> {
+    const key = JSON.stringify([method, args]);
+    const hit = inflightReads.get(key);
+    if (hit && Date.now() - hit.at < READ_REUSE_MS) return hit.promise;
+    const promise = call(method, args);
+    inflightReads.set(key, { at: Date.now(), promise });
+    // 실패한 답은 남기지 않는다. 다음 호출이 새로 묻는다.
+    promise.catch(() => { if (inflightReads.get(key)?.promise === promise) inflightReads.delete(key); });
+    return promise;
+  }
+
   const api: Record<string, unknown> = {};
-  for (const name of SERVER_GAME_METHODS) api[name] = (...args: unknown[]) => call(name, args);
+  for (const name of SERVER_GAME_METHODS) {
+    api[name] = isReadMethod(name)
+      ? (...args: unknown[]) => callCached(name, args)
+      : (...args: unknown[]) => { inflightReads.clear(); return call(name, args).finally(() => inflightReads.clear()); };
+  }
   return api as unknown as GameApi;
 }

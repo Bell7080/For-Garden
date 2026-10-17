@@ -1,12 +1,26 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": [
+    "icn1"
+  ],
   "buildCommand": "node scripts/vercel-build.mjs",
   "outputDirectory": "dist",
   "framework": "vite",
   "routes": [
-    { "src": "/terms/?", "dest": "/terms/index.html" },
-    { "src": "/privacy/?", "dest": "/privacy/index.html" },
-    { "handle": "filesystem" },
-    { "src": "/.*", "dest": "/index.html" }
+    {
+      "src": "/terms/?",
+      "dest": "/terms/index.html"
+    },
+    {
+      "src": "/privacy/?",
+      "dest": "/privacy/index.html"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/.*",
+      "dest": "/index.html"
+    }
   ]
 }

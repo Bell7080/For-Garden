@@ -33,6 +33,12 @@ export function reconcileLaunchEpoch(
   if (!storage || !serverEpoch) return false;
   try {
     if ((storage.getItem(LAUNCH_EPOCH_STORAGE_KEY) ?? "") === serverEpoch) return false;
+    // 서버 계정과 이어진 적이 없는 기기(토큰·연결 표식이 없음)에는 지울 옛 계정이 없다. 이때 로컬 저장은
+    // 부트가 방금 만든 첫 실행 상태일 뿐이라, 지우고 다시 시작하면 첫 방문자가 계정 선택 화면을 두 번 본다.
+    if (!keys.slice(0, 2).some((key) => storage.getItem(key) !== null)) {
+      storage.setItem(LAUNCH_EPOCH_STORAGE_KEY, serverEpoch);
+      return false;
+    }
     let wiped = false;
     for (const key of keys) {
       if (storage.getItem(key) !== null) wiped = true;

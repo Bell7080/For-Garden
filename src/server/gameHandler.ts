@@ -101,16 +101,21 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
   const attempts = deps.maxAttempts ?? 3;
   const fingerprint = JSON.stringify([req.method, req.args ?? []]);
   for (let attempt = 1; ; attempt += 1) {
-    if (req.requestId) {
-      const cached = await deps.store.findReceipt(playerId, req.requestId);
-      if (cached !== undefined) {
-        const receipt = cached as GameCallResponse & { _requestFingerprint?: string };
-        if (receipt._requestFingerprint !== fingerprint) throw new GameCallError(409, "request_id_conflict");
-        const { _requestFingerprint, ...response } = receipt;
-        return response;
-      }
+    // 서로 기다릴 이유가 없는 조회는 한꺼번에 나간다 — 순서대로 부르면 왕복 시간이 그대로 쌓인다.
+    const wantsRaid = /^(getRaids|summonRaid|enterRaid|submitRaidDamage|settleRaid)$/.test(req.method) && deps.store.raidContext;
+    const now = deps.now?.() ?? new Date();
+    const [cached, stored, identity, context] = await Promise.all([
+      req.requestId ? deps.store.findReceipt(playerId, req.requestId) : undefined,
+      deps.store.load(playerId),
+      deps.store.identity ? deps.store.identity(playerId) : undefined,
+      wantsRaid ? deps.store.raidContext!(playerId, now) : undefined,
+    ]);
+    if (cached !== undefined) {
+      const receipt = cached as GameCallResponse & { _requestFingerprint?: string };
+      if (receipt._requestFingerprint !== fingerprint) throw new GameCallError(409, "request_id_conflict");
+      const { _requestFingerprint, ...response } = receipt;
+      return response;
     }
-    const stored = await deps.store.load(playerId);
     let state: Session;
     try {
       state = stored ? saveManager.parse(stored.data) : createDefaultSession();
@@ -118,13 +123,10 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
       throw new GameCallError(500, "corrupt_state");
     }
     const before = JSON.stringify(saveManager.exportData(state));
-    const now = deps.now?.() ?? new Date();
-    if (deps.store.identity) {
-      const identity = await deps.store.identity(playerId);
+    if (identity) {
       state.playerCard.uid = identity.uid;
       state.playerCard.createdAt = identity.createdAt;
     }
-    const context = /^(getRaids|summonRaid|enterRaid|submitRaidDamage|settleRaid)$/.test(req.method) && deps.store.raidContext ? await deps.store.raidContext(playerId, now) : undefined;
     if (context) state.raid.instances = context.records.map(row => structuredClone(row.instance));
     const server = new FakeServer(state, {
       latencyMs: 0,

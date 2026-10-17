@@ -1,6 +1,6 @@
 # 버전 관리
 
-현재 버전: **v0.312.2**
+현재 버전: **v0.312.3**
 
 `VERSION.md`와 `package.json`의 `version`은 항상 같은 값을 쓰고, 타이틀(로딩) 화면 좌측
 하단 표기는 그 값을 그대로 읽는다. 화면에 손으로 적어 두지 않는다.
@@ -31,6 +31,12 @@
   그 이전의 초기 프로토타입 단계는 `v0.1.0` 항목 하나로 묶었다.
 
 ## 변경 이력
+
+## v0.312.3 — 브라우저에서 게스트 가입이 시작도 못 하던 fetch 호출 수정
+
+- Before: 서버 연결에서 `auth-exception:TypeError`로 실패했다. `SupabaseAccountApi`가 전역 `fetch`를 자기 속성에 담아 `this.fetchImpl(...)`로 불렀는데, 브라우저의 `fetch`는 `window`가 아닌 객체의 메서드로 부르면 "Illegal invocation"을 던진다. 그래서 가입·갱신·저장 조회 요청이 서버에 닿기 전에 죽었고 Supabase 로그에는 아무 흔적도 남지 않았다.
+- After: 기본 fetch를 한 번 감싸 `window.fetch`를 직접 부르는 꼴로 호출한다. 주입한 `fetchImpl`(테스트·E2E)은 그대로 쓴다.
+- How: `tests/unit/supabaseAccountApi.test.ts`에 `this`가 전역이 아니면 던지는 fetch를 꽂아 회귀를 지킨다(수정 전에는 실패 확인). 다른 `fetch` 호출부(RemoteGameApi·소셜·길드·ping·설정)는 함수로 직접 부르거나 감싸 쓰고 있어 같은 문제가 없다.
 
 ## v0.312.2 — 서버 연결 실패의 진단 코드
 

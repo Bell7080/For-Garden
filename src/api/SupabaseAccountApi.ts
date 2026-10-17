@@ -48,7 +48,8 @@ export class SupabaseAccountApi implements AccountApi {
   private failure = "";
 
   constructor(private readonly options: SupabaseAccountOptions) {
-    this.fetchImpl = options.fetchImpl ?? fetch;
+    // 브라우저의 fetch는 window가 아닌 객체의 메서드로 부르면 "Illegal invocation"으로 던진다 — 한 번 감싸 둔다.
+    this.fetchImpl = options.fetchImpl ?? ((input, init) => fetch(input, init));
     this.now = options.now ?? Date.now;
   }
 

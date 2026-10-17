@@ -23,6 +23,19 @@ function setup(handler: (path: string, init: RequestInit) => Response | Promise<
 }
 
 describe("SupabaseAccountApi", () => {
+  it("fetchImpl을 주지 않으면 전역 fetch를 객체 메서드로 부르지 않는다(브라우저 Illegal invocation)", async () => {
+    const original = globalThis.fetch;
+    // 브라우저의 fetch처럼, window가 아닌 this로 불리면 던진다.
+    globalThis.fetch = function (this: unknown) {
+      if (this !== undefined && this !== globalThis) throw new TypeError("Illegal invocation");
+      return Promise.resolve(json(session(1, 2_000_000)));
+    } as unknown as typeof fetch;
+    try {
+      const api = new SupabaseAccountApi({ url: "https://x", key: "k", store: new MemoryStore(), now: () => 1_000_000, saveVersion: () => 50 });
+      expect(await api.userId()).toBe("11111111-2222-3333-4444-555555555555");
+    } finally { globalThis.fetch = original; }
+  });
+
   it("토큰이 없으면 게스트로 가입해 보안 저장소에 맡기고 마스킹된 ID를 돌려준다", async () => {
     const { api, store, calls } = setup(() => json(session(1, 2_000_000)));
     const state = await api.getState();

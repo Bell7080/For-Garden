@@ -103,6 +103,13 @@ describe("서버 진행 연결", () => {
     expect(installed).toBe(false);
   });
 
+  it("게임 서버 호출 실패는 상태 코드와 서버 코드만 진단 문자열로 남긴다", async () => {
+    const { RemoteGameApiError } = await import("../../src/api/RemoteGameApi");
+    const { describeGameFailure } = await import("../../src/api/serverProgress");
+    expect(describeGameFailure(new RemoteGameApiError(503, "server_not_configured"))).toBe("game:503:server_not_configured");
+    expect(describeGameFailure(new TypeError("Failed to fetch"))).toBe("game-exception:TypeError");
+  });
+
   it("서버 상태를 얹어도 세션 객체는 그대로고 기기 값이 남는다", () => {
     const target = createDefaultSession();
     target.settings.accessibility.textScale = 1.3;

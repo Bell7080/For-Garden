@@ -1,6 +1,6 @@
 # 버전 관리
 
-현재 버전: **v0.312.1**
+현재 버전: **v0.312.2**
 
 `VERSION.md`와 `package.json`의 `version`은 항상 같은 값을 쓰고, 타이틀(로딩) 화면 좌측
 하단 표기는 그 값을 그대로 읽는다. 화면에 손으로 적어 두지 않는다.
@@ -31,6 +31,12 @@
   그 이전의 초기 프로토타입 단계는 `v0.1.0` 항목 하나로 묶었다.
 
 ## 변경 이력
+
+## v0.312.2 — 서버 연결 실패의 진단 코드
+
+- Before: 타이틀에서 서버 연결이 실패하면 원인과 상관없이 "네트워크 연결을 확인해 주세요."만 떠서, 게스트 가입이 막힌 건지 `/api/game`이 거절한 건지 알 수 없었다.
+- After: 같은 안내 아래에 "오류 코드: …" 한 줄이 서고 콘솔에도 같은 값이 남는다. 예: `game:503:server_not_configured`(서버 함수 환경 변수 없음), `game:401:not_authenticated`(토큰 거절), `auth:/auth/v1/signup:422:anonymous_provider_disabled`(익명 가입 꺼짐), `auth-exception:TypeError`(요청이 나가지 못함).
+- How: `SupabaseAccountApi.lastFailure()`와 `describeGameFailure`가 상태 코드·서버 코드만 짧게 줄인다. 토큰·키·URL은 담지 않는다. 실패 분기는 그대로이고 안내 문구만 늘었다.
 
 ## v0.312.1 — 운영·테스트 DB 주소를 환경 변수로 바꾼 뒤 재배포
 

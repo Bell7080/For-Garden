@@ -20,13 +20,14 @@ import { installSocialApi } from "./FakeSocialServer";
 import { createRemoteSocialApi } from "./RemoteSocialApi";
 import { createRemoteGuildApi } from "./RemoteGuildApi";
 import { installGuildApi } from "./guildApi";
-import { createRemoteGameApi } from "./RemoteGameApi";
+import { createRemoteGameApi, RemoteGameApiError } from "./RemoteGameApi";
 import type { GameApi } from "./contracts";
 
 /** 연결에 필요한 계정 쪽 능력만 좁힌 모양이다. `SupabaseAccountApi`가 그대로 맞는다. */
 export type ServerProgressAccount = AccountApi & {
   accessToken(): Promise<string | null>;
   userId(): Promise<string | null>;
+  lastFailure?(): string;
 };
 
 /** 어느 계정의 진행이 이 기기에 들어 있는지의 기억이다. 토큰이 아니라 식별자만 둔다. */
@@ -37,7 +38,7 @@ export interface LinkMarker {
 
 export type ServerProgressResult =
   | { ok: true; mode: "server" | "local" }
-  | { ok: false; code: AccountFailureCode };
+  | { ok: false; code: AccountFailureCode; /** 실패 지점을 가르는 짧은 진단 문자열이다. 토큰·키는 담지 않는다. */ detail?: string };
 
 export interface ServerProgressDeps {
   account: ServerProgressAccount | null;
@@ -68,6 +69,12 @@ export function applyServerState(target: Session, next: Session, saves: Pick<Sav
   saves.save(target);
 }
 
+/** `/api/game` 호출이 왜 실패했는지 한 줄로 줄인다. 상태 코드와 서버가 준 코드만 남긴다. */
+export function describeGameFailure(error: unknown): string {
+  if (error instanceof RemoteGameApiError) return `game:${error.status}:${error.code}`;
+  return `game-exception:${error instanceof Error ? error.name : "unknown"}`;
+}
+
 export async function connectServerProgress(deps: ServerProgressDeps): Promise<ServerProgressResult> {
   const account = deps.account;
   if (!account) return !QA_TOOLS_ENABLED ? { ok: false, code: "unsupported" } : { ok: true, mode: "local" };
@@ -75,13 +82,13 @@ export async function connectServerProgress(deps: ServerProgressDeps): Promise<S
   const install = deps.install ?? installGameApi;
 
   const userId = await account.userId();
-  if (!userId) return { ok: false, code: "network-error" };
+  if (!userId) return { ok: false, code: "network-error", detail: account.lastFailure?.() || "no-user" };
 
   // 운영 서버는 로컬 세이브 업로드로 시작하지 않는다. 첫 계정도 서버가 기본 상태를 생성한다.
   if (!QA_TOOLS_ENABLED) {
     const remote=createRemoteGameApi({getAccessToken:()=>account.accessToken(),applyState:next=>{applyServerState(target,next,deps.saves);signalRemoteMissionNotice(target);},fetchImpl:deps.fetchImpl});
     try { await remote.getPlayerState(); }
-    catch { return {ok:false,code:"network-error"}; }
+    catch (error) { return {ok:false,code:"network-error",detail:describeGameFailure(error)}; }
     install(remote);
     const social=createRemoteSocialApi({getAccessToken:()=>account.accessToken(),fetchImpl:deps.fetchImpl});
     installSocialApi(social);

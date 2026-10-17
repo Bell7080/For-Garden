@@ -45,6 +45,7 @@ export class SupabaseAccountApi implements AccountApi {
   private readonly now: () => number;
   private tokens: StoredTokens | null = null;
   private pending: Promise<AccountResult<StoredTokens>> | null = null;
+  private failure = "";
 
   constructor(private readonly options: SupabaseAccountOptions) {
     this.fetchImpl = options.fetchImpl ?? fetch;
@@ -56,6 +57,9 @@ export class SupabaseAccountApi implements AccountApi {
     if (!auth.ok) return auth;
     return { ok: true, value: { kind: "guest", provider: "guest", maskedId: `GUEST-${auth.value.userId.slice(0, 4)}••••` } };
   }
+
+  /** 가장 최근 인증 실패의 짧은 진단 문자열이다(토큰·키는 담지 않는다). 연결 실패 안내의 진단 코드로 쓴다. */
+  lastFailure(): string { return this.failure; }
 
   /** 서버 호출용 액세스 토큰을 그때그때 꺼내 준다. 보관하지 않고 만료 전이면 갱신한다. 실패하면 `null`이다. */
   async accessToken(): Promise<string | null> {
@@ -164,7 +168,8 @@ export class SupabaseAccountApi implements AccountApi {
       this.tokens = next.value;
       await this.options.store.save(next.value);
       return next;
-    } catch {
+    } catch (error) {
+      this.failure = `auth-exception:${error instanceof Error ? error.name : "unknown"}`;
       return fail("network-error", t("error.account.network"));
     }
   }
@@ -187,6 +192,7 @@ export class SupabaseAccountApi implements AccountApi {
     });
     const j = (await res.json().catch(() => null)) as Record<string, unknown> | null;
     if (!res.ok) {
+      this.failure = `auth:${path.split("?")[0]}:${res.status}:${typeof j?.error_code === "string" ? j.error_code : "-"}`;
       // 서버에서 익명 가입이 꺼져 있으면 게스트 계정을 만들 수 없다 — 실패를 성공으로 꾸미지 않는다.
       if (j?.error_code === "anonymous_provider_disabled" || j?.error_code === "signup_disabled") return fail("unsupported", t("error.account.guestDisabled"));
       return fail("network-error", t("error.account.authFailed", { status: res.status }));

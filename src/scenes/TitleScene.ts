@@ -456,7 +456,8 @@ export class TitleScene extends Phaser.Scene {
               startScene(this, openingPending(storyManager.isCompleted(OPENING_TRAIN.id), session.cleared) ? "opening" : "lobby");
               return;
             }
-            this.showConnectFailure(connected.code);
+            console.warn("[forgarden] connect failed", connected.code, connected.detail ?? "-");
+            this.showConnectFailure(connected.code, connected.detail);
             tapAnywhere.once("pointerup", enter);
           });
           return;
@@ -475,10 +476,10 @@ export class TitleScene extends Phaser.Scene {
   }
 
   /** 서버 연결이 서지 못한 이유를 알리고 다시 누르면 새로 시도한다. */
-  private showConnectFailure(code: AccountFailureCode): void {
+  private showConnectFailure(code: AccountFailureCode, detail?: string): void {
     this.popups?.confirm({
       title: t("settings.account.notice"),
-      message: t(code === "conflict-cancelled" ? "settings.account.conflictCancelled" : code === "network-error" ? "settings.account.network" : "settings.account.unavailable"),
+      message: t(code === "conflict-cancelled" ? "settings.account.conflictCancelled" : code === "network-error" ? "settings.account.network" : "settings.account.unavailable") + (detail ? `\n${t("settings.account.errorCode", { code: detail })}` : ""),
       confirmLabel: t("settings.action.confirm"),
       cancelLabel: false,
     });

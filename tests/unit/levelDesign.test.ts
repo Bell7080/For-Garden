@@ -124,21 +124,22 @@ function battleStage(id: string): BattleStageDef {
 
 /** [이름, 권장 파티 레벨, 적, 그 조우의 역할, 전장, 실측 전투 시간(초), 실측 잔여 체력] */
 const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole, BattleArenaMode, number, number][] = [
-  ["스토리 1-1", 5, () => getStageEnemies(battleStage("1-1")), "normal", "stage", 13.3, 0.88],
-  ["스토리 1-9", 14, () => getStageEnemies(battleStage("1-9")), "normal", "stage", 16.9, 0.87],
-  ["스토리 1-5 정예", 10, () => getStageEnemies(battleStage("1-5")), "elite", "stage", 14.5, 0.56],
+  ["스토리 1-1", 5, () => getStageEnemies(battleStage("1-1")), "normal", "stage", 14.6, 0.84],
+  ["스토리 1-9", 14, () => getStageEnemies(battleStage("1-9")), "normal", "stage", 18.8, 0.83],
+  ["스토리 1-5 정예", 10, () => getStageEnemies(battleStage("1-5")), "elite", "stage", 12.1, 0.59],
   // 엘라 「금강불괴」의 진입 막이 실제로 지급되면서(v0.250.2) 43.7 → 45.8로 늘었다.
-  ["스토리 1-10 정예", 15, () => getStageEnemies(battleStage("1-10")), "elite", "stage", 46.7, 0.07],
+  // v0.308.3: 정예 체력 ×4 → ×3, 코마 체력·방어 재분배와 폭주 문턱 320, 개체별 야성 게이지 — SSR 없이는 못 깨던 1-10(46.7초)이 12.3초로 내려왔다. 띠(18~32초) 아래라 재측정이 필요하다.
+  ["스토리 1-10 정예", 15, () => getStageEnemies(battleStage("1-10")), "elite", "stage", 12.3, 0.61],
   // 3-9는 회수조(아트라·펄시·네우리)로 바뀌었다 — 참조 파티가 거의 다치지 않아 잔여 체력이 띠 위로 올라갔다.
-  ["스토리 3-9", 44, () => getStageEnemies(battleStage("3-9")), "normal", "stage", 19.5, 0.97],
+  ["스토리 3-9", 44, () => getStageEnemies(battleStage("3-9")), "normal", "stage", 20.4, 0.97],
   ["현상수배 1단계", 5, () => [bountyRoundEnemy(BOUNTY_TIERS[0].rounds[0])], "normal", "bounty", 5.6, 0.83],
   ["현상수배 5단계", 60, () => [bountyRoundEnemy(BOUNTY_TIERS[4].rounds[0])], "normal", "bounty", 8.2, 0.74],
-  ["대작전 1단계", 5, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[0]), "swarm", "cake", 27.2, 0.82],
-  ["대작전 8단계", 60, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", "cake", 65.1, 0.61],
-  ["원정 일반 5층", 10, () => getExpeditionEncounterEnemies("normal", 5), "normal", "expedition", 14.3, 0.96],
+  ["대작전 1단계", 5, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[0]), "swarm", "cake", 30.1, 0.85],
+  ["대작전 8단계", 60, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", "cake", 74.8, 0.57],
+  ["원정 일반 5층", 10, () => getExpeditionEncounterEnemies("normal", 5), "normal", "expedition", 14.7, 0.95],
   // 정예가 보호막을 깨고(코마) 치유를 깎는 자리가 되어 평균이 37.3 → 29.5로 줄고 띠 안에 들었다.
-  ["원정 정예 10층", 20, () => getExpeditionEncounterEnemies("elite", 10), "elite", "expedition", 38.3, 0.36],
-  ["원정 무리 15층", 30, () => getExpeditionEncounterEnemies("horde", 15), "swarm", "expedition", 14.1, 0.76],
+  ["원정 정예 10층", 20, () => getExpeditionEncounterEnemies("elite", 10), "elite", "expedition", 12.3, 0.63],
+  ["원정 무리 15층", 30, () => getExpeditionEncounterEnemies("horde", 15), "swarm", "expedition", 16.3, 0.83],
 ];
 
 describe("콘텐츠별 전투 시간 실측", () => {
@@ -174,7 +175,7 @@ describe("콘텐츠별 전투 시간 실측", () => {
     const offTarget = AUDIT.filter(([, , , role, , ttk, hp]) => !isEncounterOnTarget(role, { ttkSeconds: ttk, remainingHp: hp }));
     expect(offTarget.map(([label]) => label)).toEqual([
       "스토리 1-9", "스토리 1-5 정예", "스토리 1-10 정예", "스토리 3-9",
-      "현상수배 1단계", "현상수배 5단계", "대작전 8단계", "원정 일반 5층", "원정 정예 10층",
+      "현상수배 1단계", "현상수배 5단계", "대작전 1단계", "대작전 8단계", "원정 정예 10층",
     ]);
   });
 });

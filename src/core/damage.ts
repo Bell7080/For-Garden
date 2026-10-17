@@ -1,5 +1,5 @@
 import { effectiveElement, elementMultiplier } from "./element";
-import { ferocityDamageBonus } from "./ferocity";
+import { ferocityDamageBonus, ferocityMaxOf } from "./ferocity";
 import type { Skill } from "./types";
 import type { Combatant, DamageInput } from "./combatTypes";
 
@@ -63,7 +63,7 @@ function offenseValue(attacker: Combatant, input: DamageInput): number {
 export function computeDamageContribution(attacker: Combatant, input: DamageInput): number {
   const critical = input.isCritical ? attacker.def.stats.critDamage / 100 : 1;
   // 타격별 반올림은 같은 총 계수의 다단히트를 더 크게 만들므로 기여도에는 소수 정밀도를 보존한다.
-  return Math.max(0, offenseValue(attacker, input) * critical * (1 + ferocityDamageBonus(attacker.ferocity)));
+  return Math.max(0, offenseValue(attacker, input) * critical * (1 + ferocityDamageBonus(attacker.ferocity, ferocityMaxOf(attacker.def))));
 }
 
 /** 실시간 난전의 공격력, 방어, 치명타, 각성, 야성, 속성 순서를 고정한 피해 공식이다. */
@@ -75,7 +75,7 @@ export function computeDamage(attacker: Combatant, target: Combatant, input: Dam
   const critical = input.isCritical ? attacker.def.stats.critDamage / 100 : 1;
   // **돌파는 공용 피해 배율을 주지 않는다** — 어느 개체를 뚫어도 같은 숫자가 오르면 그 개체를
   // 끝까지 키운 이유를 말하지 못한다. 돌파가 바꾸는 것은 `breakthroughEffects`뿐이다.
-  const raw = offenseValue(attacker, input) * critical * (1 + ferocityDamageBonus(attacker.ferocity));
+  const raw = offenseValue(attacker, input) * critical * (1 + ferocityDamageBonus(attacker.ferocity, ferocityMaxOf(attacker.def)));
   const afterDefense = (raw * 100) / (100 + defense);
   // 위치와 무관한 공용 방어·속성 공식만 적용한다. 특정 개체의 전방 경감은 더 이상 숨은 배율로 끼우지 않는다.
   return Math.max(1, Math.round(afterDefense * elementMultiplier(effectiveElement(attacker.def), effectiveElement(target.def))));

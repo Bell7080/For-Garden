@@ -173,9 +173,11 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
      * 같은 표를 읽기 때문이며, 원정 레벨을 다시 풀 때 함께 본다(`levelDesign.test`의 검수 기록).
      *
      * **v0.282.9에서 ×4로 내렸다**(응태 결정). 직접 R 토비로 1-5를 떠 봤는데 이기지 못해, ×8이 R 단독 편성에는 과했다.
+     *
+     * **v0.308.3에서 ×3으로 내렸다**(응태 결정). 1-10 코마가 SSR 없이는 깨지지 않았다.
      */
     count: 1, bodyScale: 1.18,
-    hpMultiplier: 4, attackMultiplier: 1.2,
+    hpMultiplier: 3, attackMultiplier: 1.2,
     ttkSeconds: [18, 32], remainingHp: [0.20, 0.60],
     /*
      * **혼자 서는 정예도 보스처럼 막아서되 훨씬 얕게.** 태생 20%에 제어 한 번마다 10% — 여섯 번이면 상한(80)이라

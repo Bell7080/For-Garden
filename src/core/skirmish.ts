@@ -4,7 +4,7 @@ import type { Combatant, DamageInput } from "./combatTypes";
 import { computeDamage, computeDamageContribution, currentAbilityPower, isCriticalHit } from "./damage";
 // 전투 HUD와 피해 공식이 동일한 현재 주문력 계산을 소비하도록 공용 헬퍼를 다시 노출한다.
 export { currentAbilityPower } from "./damage";
-import { drainFerocityFever, FEROCITY_RULES } from "./ferocity";
+import { drainFerocityFever, FEROCITY_RULES, feverDrainPerSecond, ferocityMaxOf, ferocityMirrored } from "./ferocity";
 import { isBreakthroughSlotOpen, type BreakthroughSlot } from "./relicProgression";
 import { ENCOUNTER_ROLE, type EncounterDamageReduction, type EncounterTenacity } from "./levelDesign";
 import { augmentAppliesTo, bleedOnAttackEffect, conditionalAttackPowerMultiplier, expeditionAugmentStatMultipliers, flatStatPoints, highHpDamageMultiplier, sameTargetStreakMultiplier, type ExpeditionAugmentEffect, type ExpeditionAugmentTrigger, type ExpeditionTriggeredEffect } from "./expeditionAugments";
@@ -2750,13 +2750,13 @@ function countedObservationStacks(state: SkirmishState, attacker: Fighter, limit
 function enterOverclock(fighter: Fighter, trait: Extract<RelicDef["ferocityTrait"], { effectId: "overclock" }>, state: SkirmishState, events: SkirmishEvent[]): void {
   const requested = Math.max(1, Math.round(offensiveDefinition(fighter).stats.atk * trait.shieldAttackPercent / 100));
   const drones = livingDrones(state, fighter);
-  const halfFever = FEROCITY_RULES.max / FEROCITY_RULES.feverDrainPerSecond / 2;
+  const halfFever = FEROCITY_RULES.feverSeconds / 2;
   for (const body of [fighter, ...drones]) {
     const granted = grantShield(state, body, fighter.id, requested, events, 1.5);
     if (granted > 0) body.shieldFade = { perSecond: granted / halfFever, remaining: halfFever };
   }
   for (const drone of drones) {
-    drone.ferocity = fighter.ferocity;
+    drone.ferocity = ferocityMirrored(fighter, drone);
     drone.ferocityFever = true;
   }
 }
@@ -4970,8 +4970,8 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
       description: "폭주 중 아군의 기본 공격 적중에 스타카토 추가타를 연주",
       timing: {
         kind: "ferocity",
-        remainingSeconds: player.ferocity / FEROCITY_RULES.feverDrainPerSecond,
-        totalSeconds: FEROCITY_RULES.max / FEROCITY_RULES.feverDrainPerSecond,
+        remainingSeconds: player.ferocity / feverDrainPerSecond(player.def),
+        totalSeconds: FEROCITY_RULES.feverSeconds,
       },
     });
   }
@@ -5969,9 +5969,10 @@ export function gainFerocity(fighter: Fighter, base: number, state: SkirmishStat
   const rallied = base + tailwindRally(state, fighter.side).ferocity;
   // 룬 야성 보정은 유대 보정 뒤의 사건별 충전량에 곱하며 단위는 percent다.
   const adjusted = amplifyFerocityGain(rallied, fighter.bondLevel) * (1 + fighter.def.stats.ferocityGain / 100);
-  fighter.ferocity = Math.min(FEROCITY_RULES.max, before + adjusted);
+  const ferocityMax = ferocityMaxOf(fighter.def);
+  fighter.ferocity = Math.min(ferocityMax, before + adjusted);
   // 처음 최대치에 닿은 순간 피버 카운트다운을 켠다.
-  if (before < FEROCITY_RULES.max && fighter.ferocity >= FEROCITY_RULES.max) {
+  if (before < ferocityMax && fighter.ferocity >= ferocityMax) {
     fighter.ferocityFever = true;
     // 이번 폭주에서 받는 피해만 센다. 지난 폭주의 몫이 남아 있으면 두 번째 폭주가 첫 번째의
     // 피해로 보호막을 짓는다.
@@ -6058,7 +6059,7 @@ export function gainFerocity(fighter: Fighter, base: number, state: SkirmishStat
     if (trait.effectId === "summonPackFrenzy") {
       // 지휘자는 자기 손이 달라지지 않는다. 대신 앞에 선 몸들이 주인의 시계를 그대로 받는다.
       for (const wolf of state.fighters.filter((unit) => unit.summonOwnerId === fighter.id && isFighterAlive(unit))) {
-        wolf.ferocity = fighter.ferocity;
+        wolf.ferocity = ferocityMirrored(fighter, wolf);
         wolf.ferocityFever = true;
       }
     }
@@ -6079,8 +6080,9 @@ export function gainFerocity(fighter: Fighter, base: number, state: SkirmishStat
       }
     }
   }
-  for (const { value } of FEROCITY_RULES.thresholds) {
-    if (before < value && fighter.ferocity >= value) state.log.push(`${fighter.def.name} 야성 ${value} 진입`);
+  for (const { ratio } of FEROCITY_RULES.thresholds) {
+    const value = Math.round(ratio * ferocityMax);
+    if (before < ratio * ferocityMax && fighter.ferocity >= ratio * ferocityMax) state.log.push(`${fighter.def.name} 야성 ${value} 진입`);
   }
 }
 
@@ -8665,7 +8667,7 @@ function spawnPups(state: SkirmishState, owner: Fighter, count: number, events: 
     pup.attackCooldown = 0;
     pup.facing = owner.facing;
     pup.ferocityFever = owner.ferocityFever;
-    pup.ferocity = owner.ferocity;
+    pup.ferocity = ferocityMirrored(owner, pup);
     events.push({ kind: "packSummon", fighterId: pup.id, ownerFighterId: owner.id, x: pup.x, y: pup.y });
     count -= 1;
   }
@@ -8718,7 +8720,7 @@ function reviveWolf(state: SkirmishState, owner: Fighter, wolf: Fighter, events:
   wolf.attackCooldown = 0;
   // 주인이 이미 폭주 중이면 돌아온 몸도 그 자리에서 함께 끓는다.
   wolf.ferocityFever = owner.ferocityFever;
-  wolf.ferocity = owner.ferocity;
+  wolf.ferocity = ferocityMirrored(owner, wolf);
   events.push({ kind: "packSummon", fighterId: wolf.id, ownerFighterId: owner.id, x: wolf.x, y: wolf.y });
 }
 

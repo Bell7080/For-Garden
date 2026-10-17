@@ -9,7 +9,7 @@ import { rememberPlayerExp } from "../managers/PlayerExpReceipts";
 import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
 import { raidRunStamina } from "../data/raid";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { FEROCITY_RULES } from "../core/ferocity";
+import { ferocityMaxOf } from "../core/ferocity";
 import {
   aliveFighters,
   activeCombatBuffs,
@@ -2490,13 +2490,15 @@ export class BattleScene extends Phaser.Scene {
       profile.chargeShown = stepUltimateCharge(profile.chargeShown, chargeTarget, deltaMs / 1000, motionFactor);
       profile.prefab.setChargeRatio(profile.chargeShown);
       const fever = fighter.ferocityFever;
-      const ferocityColor = fever ? COLOR.ferocityFever : fighter.ferocity >= 80 ? COLOR.ferocityWarning : COLOR.ferocityLow;
+      const ferocityMax = ferocityMaxOf(fighter.def);
+      const ferocityWarm = fighter.ferocity >= ferocityMax * 0.8;
+      const ferocityColor = fever ? COLOR.ferocityFever : ferocityWarm ? COLOR.ferocityWarning : COLOR.ferocityLow;
       // 값과 사망 표현의 최종 소유자는 공용 프리팹이며 폭주 문구만 전투가 덧씌운다.
       profile.prefab.setMeters(profile.hpShown, fighter.maxHp, profile.ferocityShown, !alive);
-      profile.ferocityBar.setValue(profile.ferocityShown / FEROCITY_RULES.max, ferocityColor);
+      profile.ferocityBar.setValue(profile.ferocityShown / ferocityMax, ferocityColor);
       // 피버는 플레이어가 끄고 켜는 것이 아니라 스스로 가라앉으므로, 보상 상태와 남은 양만 알린다.
-      profile.ferocityLabel.setText(t(fever ? "battle.gauge.frenzy" : "battle.gauge.ferocity", { value: Math.round(profile.ferocityShown), max: FEROCITY_RULES.max }))
-        .setColor(fever || fighter.ferocity >= 80 ? COLOR.ferocityHotText : FEROCITY_TEXT);
+      profile.ferocityLabel.setText(t(fever ? "battle.gauge.frenzy" : "battle.gauge.ferocity", { value: Math.round(profile.ferocityShown), max: ferocityMax }))
+        .setColor(fever || ferocityWarm ? COLOR.ferocityHotText : FEROCITY_TEXT);
     }
   }
 

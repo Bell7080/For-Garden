@@ -1490,15 +1490,75 @@
 "Titel",
 "Титулы"
 ],
-"profile.modifier.none": [
-"无称号",
-"ไม่มีฉายา",
-"Chưa có danh hiệu",
-"Tanpa gelar",
-"Sin título",
-"Sem título",
-"Kein Titel",
-"Нет титула"
+"profile.unlock.frameLevel": [
+"研究员 LV.{level} 时解锁",
+"ปลดล็อกเมื่อนักวิจัย LV.{level}",
+"Mở khóa khi Nghiên cứu viên đạt LV.{level}",
+"Terbuka di LV.{level} Periset",
+"Se desbloquea con Investigador LV.{level}",
+"Desbloqueia no Pesquisador LV.{level}",
+"Freigeschaltet ab Forscher-LV.{level}",
+"Открывается на уровне исследователя {level}"
+],
+"profile.unlock.mission": [
+"完成任务「{name}」后获得",
+"รับเมื่อทำภารกิจ「{name}」สำเร็จ",
+"Nhận khi hoàn thành nhiệm vụ 「{name}」",
+"Didapat setelah menyelesaikan misi 「{name}」",
+"Se obtiene al completar la misión «{name}»",
+"Obtido ao concluir a missão «{name}»",
+"Erhältlich durch Abschluss der Mission „{name}“",
+"Выдаётся за выполнение задания «{name}»"
+],
+"profile.unlock.researchDaily": [
+"每日任务研究度达到 {value} 时获得",
+"รับเมื่อค่าวิจัยภารกิจรายวันถึง {value}",
+"Nhận khi đạt {value} điểm nghiên cứu nhiệm vụ hằng ngày",
+"Didapat di {value} progres riset misi harian",
+"Se obtiene con {value} de progreso de investigación de misiones diarias",
+"Obtido com {value} de progresso de pesquisa das missões diárias",
+"Erhältlich bei {value} Forschungsfortschritt der Tagesmissionen",
+"Выдаётся при {value} прогресса исследований ежедневных заданий"
+],
+"profile.unlock.researchWeekly": [
+"每周任务研究度达到 {value} 时获得",
+"รับเมื่อค่าวิจัยภารกิจรายสัปดาห์ถึง {value}",
+"Nhận khi đạt {value} điểm nghiên cứu nhiệm vụ hằng tuần",
+"Didapat di {value} progres riset misi mingguan",
+"Se obtiene con {value} de progreso de investigación de misiones semanales",
+"Obtido com {value} de progresso de pesquisa das missões semanais",
+"Erhältlich bei {value} Forschungsfortschritt der Wochenmissionen",
+"Выдаётся при {value} прогресса исследований еженедельных заданий"
+],
+"profile.unlock.achievement": [
+"完成成就「{name}」全部阶段后获得",
+"รับเมื่อทำความสำเร็จ「{name}」ครบทุกขั้น",
+"Nhận khi hoàn thành mọi bậc của thành tựu 「{name}」",
+"Didapat setelah menamatkan semua tingkat pencapaian 「{name}」",
+"Se obtiene al completar todos los niveles del logro «{name}»",
+"Obtido ao concluir todos os níveis da conquista «{name}»",
+"Erhältlich durch alle Stufen der Errungenschaft „{name}“",
+"Выдаётся за все ступени достижения «{name}»"
+],
+"profile.picker.equipped": [
+"使用中",
+"กำลังใช้",
+"Đang dùng",
+"Dipakai",
+"Equipado",
+"Equipado",
+"Angelegt",
+"Надето"
+],
+"profile.picker.unlocked": [
+"已解锁",
+"ปลดล็อกแล้ว",
+"Đã mở khóa",
+"Terbuka",
+"Desbloqueado",
+"Desbloqueado",
+"Freigeschaltet",
+"Открыто"
 ],
 "profile.edit.frameLocked": [
 "LV.{level}",

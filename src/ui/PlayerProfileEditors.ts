@@ -18,7 +18,8 @@ import { AVATAR_PICKER, avatarPickerHeight, compactProfileText, TEXT_EDITOR } fr
 import { session } from "../state/session";
 import { playerProfileDisplay, profileAvatarContent } from "../state/playerProfile";
 import { pressIn, pressOut } from "./pressFeedback";
-import { PROFILE_MODIFIERS } from "../data/profileModifiers";
+import { PROFILE_MODIFIERS, type ProfileModifierDefinition } from "../data/profileModifiers";
+import { frameUnlockText, modifierUnlockText } from "./profileUnlockText";
 
 const hex = (color: number): string => `#${color.toString(16).padStart(6, "0")}`;
 
@@ -26,12 +27,15 @@ const hex = (color: number): string => `#${color.toString(16).padStart(6, "0")}`
  * 프로필 카드의 요소를 하나씩 고치는 작은 창들.
  *
  * **편집 탭을 따로 두지 않는다** — 고칠 것을 카드에서 바로 누르면 그것만 고치는 창이 뜬다.
- * 얼굴을 누르면 사진·테두리·수식어, 이름을 누르면 닉네임, 소개 줄을 누르면 한 줄 소개, 수식어 줄을 누르면
- * 같은 창의 수식어 탭이다. 창은 카드 위에 겹치지 않고 카드를 닫은 자리에 서며, 닫히면 카드가 새 값으로 다시 선다.
+ * 얼굴을 누르면 사진·테두리·수식어를 한 창에서 고치고, 이름을 누르면 닉네임, 소개 줄을 누르면 한 줄 소개다. 창은 카드 위에 겹치지 않고 카드를 닫은 자리에 서며, 닫히면 카드가 새 값으로 다시 선다.
  * 검증과 저장은 매니저가 한다.
  */
 
-/** 사진·테두리 선택창 — 위에 지금 모습의 미리보기, 그 아래 세 라벨로 목록을 갈아 끼운다. 누르는 즉시 입는다. */
+/**
+ * 사진·테두리·수식어 선택창 — 위에 미리보기, 그 아래 이름과 해금 조건, 그 아래 세 라벨로 목록을 갈아 끼운다.
+ * 사진·테두리 탭의 미리보기는 지금 모습이고, 수식어 탭은 얼굴 대신 수식어 칩이 선다. 열린 것은 누르는 즉시 입고,
+ * 잠긴 것은 입지 못하지만 눌러 보면 미리보기와 해금 조건이 뜬다.
+ */
 export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone: () => void, startTab: "photo" | "frame" | "modifier" = "photo"): void {
   const owned = relicCollection.owned;
   const frames = playerCardManager.frames();
@@ -39,21 +43,78 @@ export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone:
   const height = avatarPickerHeight(owned.length, frames.length, modifiers.length);
   const top = -height / 2;
   let tab = startTab;
+  // 목록에서 마지막으로 누른 것 — 미리보기와 아래 문장이 이것을 따라간다. 없으면 지금 입은 것이다.
+  let focusFrameId: string | undefined;
+  let focusModifierId: string | undefined;
+  let focusRelicId: string | undefined;
   layer.open({ width: AVATAR_PICKER.width, height, title: t("profile.picker.title"), dim: true, closeOnBackdrop: true, onClose: onDone }, (body) => {
     const preview = scene.add.container(0, top + AVATAR_PICKER.preview.y);
     const tabs = scene.add.container(0, top + AVATAR_PICKER.tabs.y);
     const list = scene.add.container(0, top);
-    body.add([preview, tabs, list]);
+    const info = scene.add.container(0, top);
+    body.add([preview, info, tabs, list]);
 
     const current = () => playerProfileDisplay(session, profileModifierManager.equipped());
+    const focusedFrame = () => frames.find(({ frame }) => frame.id === (focusFrameId ?? current().frameId))?.frame;
+    const focusedModifier = (): ProfileModifierDefinition | undefined => {
+      const id = focusModifierId ?? profileModifierManager.equipped()[0]?.id;
+      return modifiers.find((modifier) => modifier.id === id) ?? modifiers[0];
+    };
+
     const paintPreview = (): void => {
       preview.removeAll(true);
       const profile = current();
+      if (tab === "modifier") {
+        // 수식어 탭에서는 얼굴 대신 그 수식어의 레이어가 가운데에 선다.
+        const modifier = focusedModifier();
+        if (!modifier) return;
+        const { width, height: chipHeight } = AVATAR_PICKER.info.previewChip;
+        const color = PROFILE_MODIFIER_RARITY_COLOR[modifier.rarity];
+        preview.add(drawLayer(scene, 0, 0, chipPoints(width, chipHeight, { bevel: { topLeft: 20, topRight: 0, bottomRight: 20, bottomLeft: 0 } }), { fill: 0x161d26, alpha: 0.96, edge: color, edgeAlpha: 1 }));
+        preview.add(scene.add.text(0, 0, compactProfileText(modifier.displayName, 9), textStyle({ role: "display", size: 34, color: hex(color) })).setOrigin(0.5));
+        return;
+      }
+      // 테두리 탭은 누른 테두리를, 사진 탭은 누른 사진을 지금 얼굴에 씌워 보여 준다(잠긴 것도 미리 볼 수 있다).
+      const frameId = tab === "frame" ? focusedFrame()?.id ?? profile.frameId : profile.frameId;
+      const portraitAssetId = tab === "photo" && focusRelicId ? owned.find((relic) => relic.id === focusRelicId)?.portraitAssetId : undefined;
       preview.add(new ProfileAvatar(scene, 0, 0, {
-        size: AVATAR_PICKER.preview.size, frameId: profile.frameId, portraitAssetId: profile.avatar?.portraitAssetId,
+        size: AVATAR_PICKER.preview.size, frameId, portraitAssetId: portraitAssetId ?? profile.avatar?.portraitAssetId,
         fallback: profileAvatarContent(profile, () => false).fallback,
       }));
     };
+
+    /** 미리보기 아래 두 줄 — 고른 것의 이름과 입은 상태/해금 조건. */
+    const paintInfo = (): void => {
+      info.removeAll(true);
+      const profile = current();
+      let name = ""; let line = ""; let tone: string = COLOR.inkDim; let nameTone: string = COLOR.ink;
+      if (tab === "photo") {
+        const relic = owned.find((candidate) => candidate.id === (focusRelicId ?? profile.avatar?.relicId));
+        name = relic?.name ?? "";
+        if (relic && profile.avatar?.relicId === relic.id) line = t("profile.picker.equipped");
+      } else if (tab === "frame") {
+        const frame = focusedFrame();
+        if (frame) {
+          const unlocked = frames.find((entry) => entry.frame.id === frame.id)?.unlocked ?? false;
+          name = frame.displayName; nameTone = hex(frame.color);
+          line = !unlocked ? frameUnlockText(frame) : profile.frameId === frame.id ? t("profile.picker.equipped") : t("profile.picker.unlocked");
+          if (!unlocked) tone = COLOR.dangerText;
+        }
+      } else {
+        const modifier = focusedModifier();
+        if (modifier) {
+          const unlocked = profileModifierManager.earned().some(({ id }) => id === modifier.id);
+          name = modifier.displayName; nameTone = hex(PROFILE_MODIFIER_RARITY_COLOR[modifier.rarity]);
+          const condition = modifierUnlockText(modifier);
+          line = unlocked ? [t("profile.picker.unlocked"), condition].filter(Boolean).join(" · ") : condition;
+          if (!unlocked) tone = COLOR.dangerText;
+        }
+      }
+      const { nameY, conditionY } = AVATAR_PICKER.info;
+      info.add(scene.add.text(0, nameY, name, textStyle({ role: "display", size: 34, color: nameTone })).setOrigin(0.5));
+      info.add(scene.add.text(0, conditionY, line, textStyle({ role: "body", size: 24, color: tone, wrap: AVATAR_PICKER.width - 80, align: "center" })).setOrigin(0.5));
+    };
+    const repaintTop = (): void => { paintPreview(); paintInfo(); };
 
     const paintTabs = (): void => {
       tabs.removeAll(true);
@@ -62,7 +123,7 @@ export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone:
       ([["photo", "profile.picker.photo"], ["frame", "profile.picker.frame"], ["modifier", "profile.picker.modifier"]] as const).forEach(([id, labelKey], index) => {
         addCategoryTab(scene, tabs, {
           x: (index - 1) * (width + gap), y: 0, width, height: tabHeight, label: t(labelKey), selected: tab === id, face: "down",
-          onSelect: () => { if (tab === id) return; const from = order.indexOf(tab); tab = id; paintTabs(); paintList(); slideTabPage(scene, [list], from, index); },
+          onSelect: () => { if (tab === id) return; const from = order.indexOf(tab); tab = id; paintTabs(); repaintTop(); paintList(); slideTabPage(scene, [list], from, index); },
         });
       });
     };
@@ -88,8 +149,9 @@ export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone:
           hit.on("pointerout", () => pressOut(item, "normal", { pop: false }));
           hit.on("pointerup", () => {
             pressOut(item);
+            focusRelicId = relic.id; repaintTop();
             if (chosen) return;
-            void playerCardManager.setAvatar(relic.id).then(() => { paintPreview(); paintList(); }, () => undefined);
+            void playerCardManager.setAvatar(relic.id).then(() => { focusRelicId = undefined; repaintTop(); paintList(); }, () => undefined);
           });
           item.add(hit);
           list.add(item);
@@ -118,12 +180,13 @@ export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone:
           if (on) item.add(scene.add.text(width / 2 - 14, -cellHeight / 2 + 14, String(order + 1), textStyle({ role: "display", size: 18, color: hex(color) })).setOrigin(1, 0.5));
           const hit = scene.add.rectangle(0, 0, width, cellHeight, 0xffffff, 0).setInteractive({ useHandCursor: unlocked });
           hit.on("pointerup", () => {
+            focusModifierId = modifier.id; repaintTop();
             if (!unlocked) return;
             let next: string[];
             if (on) next = equippedIds.filter((id) => id !== modifier.id);
             else if (equippedIds.length < MAX_EQUIPPED_PROFILE_MODIFIERS) next = [...equippedIds, modifier.id];
             else return;
-            void profileModifierManager.equip(next).then(() => paintList(), () => undefined);
+            void profileModifierManager.equip(next).then(() => { repaintTop(); paintList(); }, () => undefined);
           });
           item.add(hit);
           list.add(item);
@@ -152,15 +215,16 @@ export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone:
         }
         const hit = scene.add.rectangle(0, 0, width, cellHeight, 0xffffff, 0).setInteractive({ useHandCursor: unlocked });
         hit.on("pointerup", () => {
+          focusFrameId = frame.id; repaintTop();
           if (!unlocked || chosen) return;
-          void playerCardManager.setFrame(frame.id).then(() => { paintPreview(); paintList(); }, () => undefined);
+          void playerCardManager.setFrame(frame.id).then(() => { repaintTop(); paintList(); }, () => undefined);
         });
         item.add(hit);
         list.add(item);
       });
     };
 
-    paintPreview();
+    repaintTop();
     paintTabs();
     paintList();
   });

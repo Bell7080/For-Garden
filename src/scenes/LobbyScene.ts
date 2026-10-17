@@ -387,7 +387,6 @@ export class LobbyScene extends Phaser.Scene {
         avatar: edit((done) => openAvatarPicker(this, layer, done)),
         nickname: edit((done) => openNicknameEditor(this, layer, done)),
         bio: edit((done) => openBioEditor(this, layer, done)),
-        modifiers: edit((done) => openAvatarPicker(this, layer, done, "modifier")),
       });
       this.playerProfilePopup.open({ instant });
     });

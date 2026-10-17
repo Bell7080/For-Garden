@@ -92,6 +92,16 @@ import {
   SUKUSUINO_SD_METADATA,
   TABOA_PORTRAIT_METADATA,
   TABOA_SD_METADATA,
+  IKANIXIA_PORTRAIT_METADATA,
+  IKANIXIA_SD_METADATA,
+  ATRA_PORTRAIT_METADATA,
+  ATRA_SD_METADATA,
+  PULSI_PORTRAIT_METADATA,
+  PULSI_SD_METADATA,
+  NEURI_PORTRAIT_METADATA,
+  NEURI_SD_METADATA,
+  MIR_PORTRAIT_METADATA,
+  MIR_SD_METADATA,
   QUETZALCOATLUS_PORTRAIT_METADATA,
   QUETZALCOATLUS_SD_METADATA,
   VENTIA_SD_METADATA,
@@ -492,6 +502,18 @@ export const SUKUSUINO_ASSET: PuppetAsset = { url: `${base}puppets/raid_001.zip`
 /** **타보아 전신.** 둘째 레이드 보스다(`raid_002`). */
 export const TABOA_ASSET: PuppetAsset = { url: `${base}puppets/raid_002.zip`, ...TABOA_PORTRAIT_METADATA };
 
+/** 회수조 다섯(`enemy_010`~`014` · `enemySD_010`~`014`). 번호는 이카닉시아·아트라·펄시·네우리·미르 순이다. */
+export const IKANIXIA_ASSET: PuppetAsset = { url: `${base}puppets/enemy_010.zip`, ...IKANIXIA_PORTRAIT_METADATA };
+export const IKANIXIA_SD_ASSET: PuppetAsset = { url: `${base}puppets/enemySD_010.zip`, ...IKANIXIA_SD_METADATA };
+export const ATRA_ASSET: PuppetAsset = { url: `${base}puppets/enemy_011.zip`, ...ATRA_PORTRAIT_METADATA };
+export const ATRA_SD_ASSET: PuppetAsset = { url: `${base}puppets/enemySD_011.zip`, ...ATRA_SD_METADATA };
+export const PULSI_ASSET: PuppetAsset = { url: `${base}puppets/enemy_012.zip`, ...PULSI_PORTRAIT_METADATA };
+export const PULSI_SD_ASSET: PuppetAsset = { url: `${base}puppets/enemySD_012.zip`, ...PULSI_SD_METADATA };
+export const NEURI_ASSET: PuppetAsset = { url: `${base}puppets/enemy_013.zip`, ...NEURI_PORTRAIT_METADATA };
+export const NEURI_SD_ASSET: PuppetAsset = { url: `${base}puppets/enemySD_013.zip`, ...NEURI_SD_METADATA };
+export const MIR_ASSET: PuppetAsset = { url: `${base}puppets/enemy_014.zip`, ...MIR_PORTRAIT_METADATA };
+export const MIR_SD_ASSET: PuppetAsset = { url: `${base}puppets/enemySD_014.zip`, ...MIR_SD_METADATA };
+
 /** **코아틀 전신.** 셋째 레이드 보스다(`raid_003`). */
 export const QUETZALCOATLUS_ASSET: PuppetAsset = { url: `${base}puppets/raid_003.zip`, ...QUETZALCOATLUS_PORTRAIT_METADATA };
 
@@ -535,6 +557,11 @@ const PORTRAIT_ASSETS = {
   pontos: PONTOS_ASSET,
   sukusuino: SUKUSUINO_ASSET,
   taboa: TABOA_ASSET,
+  ikanixia: IKANIXIA_ASSET,
+  atra: ATRA_ASSET,
+  pulsi: PULSI_ASSET,
+  neuri: NEURI_ASSET,
+  mir: MIR_ASSET,
   quetzalcoatlus: QUETZALCOATLUS_ASSET,
   parua: PARUA_ASSET,
   dian: DIAN_ASSET,
@@ -875,6 +902,11 @@ export const ENEMY_SD_ASSETS_BY_ID: Readonly<Record<string, PuppetAsset>> = {
   [ENEMY_SD_ASSET_IDS[11]]: TABOA_SD_ASSET,
   [ENEMY_SD_ASSET_IDS[12]]: QUETZALCOATLUS_SD_ASSET,
   ...RAITIA_SD_ASSETS,
+  ikanixia: IKANIXIA_SD_ASSET,
+  atra: ATRA_SD_ASSET,
+  pulsi: PULSI_SD_ASSET,
+  neuri: NEURI_SD_ASSET,
+  mir: MIR_SD_ASSET,
 };
 
 /** SD 스킨도 렐릭 ID 아래에만 등록해 다른 렐릭으로 폴백할 수 없게 한다. */

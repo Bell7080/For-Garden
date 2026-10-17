@@ -8,7 +8,7 @@ import { t } from "../i18n";
  * 겹 수와 남은 시간을 여기서 한 번만 만들고 둘 다 이 목록만 그린다. Phaser를 들여오지 않아
  * 순서·색·문구를 테스트가 그대로 고정할 수 있다.
  */
-export type UnitStatusId = "packKuro" | "packShiro" | "packDimo" | "shell" | "scar" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism" | "weakpoint" | "shimmer" | "observation" | "pressure" | "drowsy" | "sleep" | "groggy" | "intimidation" | "fear" | "plume" | "frostbite" | "biteMark" | "healCut" | "sunken";
+export type UnitStatusId = "packKuro" | "packShiro" | "packDimo" | "shell" | "scar" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism" | "weakpoint" | "shimmer" | "observation" | "echo" | "pressure" | "drowsy" | "sleep" | "groggy" | "intimidation" | "fear" | "plume" | "frostbite" | "biteMark" | "healCut" | "sunken";
 
 export interface UnitStatusView {
   /** 같은 상태를 제공자가 여럿 걸 수 있을 때도 HUD 객체를 덮어쓰지 않는 전투 내 키다. */
@@ -83,6 +83,8 @@ export const UNIT_STATUS_COLOR: Readonly<Record<UnitStatusId, number>> = {
   fear: 0x9a4fc9,
   // 관측은 지속 피해가 아니라 **모르페의 일반 공격이 켜는 표식**이라 바람 청록을 그대로 쓴다(피해 숫자의 색과 같은 계열).
   observation: 0x4fa3a8,
+  // 반향은 이카닉시아 편이 읽는 표식이라 박쥐의 초음파 같은 옅은 하늘빛을 쓴다.
+  echo: 0x7fb8e8,
 };
 
 function seconds(value: number): string {
@@ -312,6 +314,15 @@ export function unitStatusViews(fighter: Fighter, pack: readonly Fighter[] = [])
       stacks: observation.stacks,
       remaining: observation.remaining, total: Math.max(observation.total, observation.remaining),
       detail: t("status.observation.detail", { stacks: observation.stacks, max: observation.maxStacks, time: seconds(observation.remaining) }),
+    });
+  }
+  if (fighter.echo) {
+    const echo = fighter.echo;
+    views.push({
+      id: "echo", name: t("status.echo"), color: UNIT_STATUS_COLOR.echo,
+      stacks: 1,
+      remaining: echo.remaining, total: Math.max(echo.total, echo.remaining),
+      detail: t("status.echo.detail", { time: seconds(echo.remaining) }),
     });
   }
   if (fighter.pressure) {

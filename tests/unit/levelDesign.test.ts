@@ -129,7 +129,8 @@ const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole,
   ["스토리 1-5 정예", 10, () => getStageEnemies(battleStage("1-5")), "elite", "stage", 14.5, 0.56],
   // 엘라 「금강불괴」의 진입 막이 실제로 지급되면서(v0.250.2) 43.7 → 45.8로 늘었다.
   ["스토리 1-10 정예", 15, () => getStageEnemies(battleStage("1-10")), "elite", "stage", 46.7, 0.07],
-  ["스토리 3-9", 44, () => getStageEnemies(battleStage("3-9")), "normal", "stage", 20.1, 0.85],
+  // 3-9는 회수조(아트라·펄시·네우리)로 바뀌었다 — 참조 파티가 거의 다치지 않아 잔여 체력이 띠 위로 올라갔다.
+  ["스토리 3-9", 44, () => getStageEnemies(battleStage("3-9")), "normal", "stage", 19.5, 0.97],
   ["현상수배 1단계", 5, () => [bountyRoundEnemy(BOUNTY_TIERS[0].rounds[0])], "normal", "bounty", 5.6, 0.83],
   ["현상수배 5단계", 60, () => [bountyRoundEnemy(BOUNTY_TIERS[4].rounds[0])], "normal", "bounty", 8.2, 0.74],
   ["대작전 1단계", 5, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[0]), "swarm", "cake", 27.2, 0.82],

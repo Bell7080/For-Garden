@@ -161,6 +161,28 @@ export const KEYWORDS: readonly KeywordDef[] = [
     id: "fear", term: "공포", kind: "debuff",
     description: "2초 동안 건 쪽에게서 달아나며 [[basic-attack|기본 공격]]을 하지 못한다. 궁극기는 쓸 수 있다. 풀린 뒤 6초 동안 새 위압과 공포에 면역이 된다.",
   },
+  // 회수조 다섯의 규칙어는 쓰는 개체가 하나씩뿐이라 태그가 수치를 갖는다. 값은 각 패시브 계약과 같아야 하며
+  // `raiders.test`가 둘을 맞춰 본다.
+  {
+    id: "echo", term: "반향", kind: "debuff",
+    description: "피해가 없는 표식이다. 5초 동안 남고, 반향이 든 적을 친 이카닉시아 편 아군은 최대 체력의 4%만큼 [[shield|보호막]]을 두른다. 막은 최대 체력의 20%까지만 쌓인다.",
+  },
+  {
+    id: "segment-barrier", term: "마디 방벽", kind: "buff",
+    description: "최대 체력의 5%짜리 [[shield|보호막]] 마디 4개를 두른다. 막이 모자라면 6초마다 마디 하나가 되살아나고, 맞을 때마다 복구가 0.15초 앞당겨진다. 막이 깎이면 그만큼 피해를 받는다.",
+  },
+  {
+    id: "vital-aim", term: "겨누기", kind: "buff",
+    description: "같은 적을 [[basic-attack|기본 공격]]으로 칠 때마다 한 겹 쌓이고, 겹마다 그 적에게 주는 피해가 8% 커진다. 최대 6겹이며 표적이 바뀌면 사라진다.",
+  },
+  {
+    id: "resonance", term: "공명", kind: "buff",
+    description: "5초 동안 공격 속도가 30% 오르는 아군 강화다. 순풍·오더와 같은 칸을 쓰므로 남은 시간이 더 긴 쪽만 남는다.",
+  },
+  {
+    id: "worker-march", term: "행렬", kind: "buff",
+    description: "곁 220 안의 아군이 한 명 있을 때마다(최대 3명) 주는 피해가 8% 커지고 매초 최대 체력의 0.4%가 차오른다.",
+  },
   // 해무 방벽은 쓰는 개체가 이르나 하나뿐이라 태그가 수치를 갖는다. 값은 패시브의 `lifeStealShield` 계약과 같아야
   // 하며 `irna.test`가 둘을 맞춰 본다.
   {

@@ -249,15 +249,26 @@ export function enemyLevelMultiplier(level: number): number {
  * 같은 나머지는 그 개체의 정의가 그대로 갖는다. 유형 배수도 **체력과 공격 두 축에만** 걸어
  * 어디서 무엇이 얹혔는지 읽히게 둔다.
  */
-export function applyEncounterScaling(base: Stats, level: number, role: EncounterRole): Stats {
+export function applyEncounterScaling(base: Stats, level: number, role: EncounterRole, countOnField: number = ENCOUNTER_ROLE[role].count): Stats {
   const spec = ENCOUNTER_ROLE[role];
   const growth = enemyLevelMultiplier(level);
   const result = { ...base };
   for (const key of GROWTH_STAT_KEYS) result[key] = Math.round(base[key] * growth);
-  result.hp = Math.round(result.hp * spec.hpMultiplier);
+  result.hp = Math.round(result.hp * encounterHpShare(role, countOnField));
   result.atk = Math.round(result.atk * spec.attackMultiplier);
   result.ap = Math.round(result.ap * spec.attackMultiplier);
   return result;
+}
+
+/**
+ * **정예가 둘 이상 서는 관문의 체력 몫.** 정예의 체력 배수는 "셋이 나눠 내던 몫을 혼자 대신한다"는
+ * 뜻이라, 둘이 서면 그 몫을 **나눠 가진다**(둘이면 각각 절반). 새 유형을 만들지 않고 같은 정예 자리에
+ * 머릿수만 달리 얹는 계산이며, 하나일 때는 표 그대로다. 정예 아닌 유형은 머릿수와 무관하다.
+ */
+export function encounterHpShare(role: EncounterRole, countOnField: number): number {
+  const spec = ENCOUNTER_ROLE[role];
+  if (role !== "elite") return spec.hpMultiplier;
+  return spec.hpMultiplier / Math.max(1, countOnField);
 }
 
 /**

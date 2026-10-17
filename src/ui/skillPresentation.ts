@@ -285,6 +285,20 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   // 즉시 리필과 마지막 탄 규칙은 태그(리필·마지막 한 방울)가 말한다. 본문은 폭주가 바꾸는 것만 적는다.
   if (trait.effectId === "overtimeRefusal") return t("skill.ferocity.overtimeRefusal");
 
+  if (trait.effectId === "commandStart") {
+    return t("skill.ferocity.commandStart", { percent: trait.resonance.attackSpeedPercent, seconds: trait.resonance.seconds });
+  }
+  if (trait.effectId === "thornBristle") {
+    return t("skill.ferocity.thornBristle", { size: trait.segmentSizePercent, speed: trait.restoreSpeedPercent });
+  }
+  if (trait.effectId === "frenzyTail") {
+    return t("skill.ferocity.frenzyTail", { percent: trait.attackSpeedPercent, stacks: trait.extraStacksPerHit });
+  }
+  if (trait.effectId === "swiftFlight") return t("skill.ferocity.swiftFlight", { percent: trait.intervalReductionPercent });
+  if (trait.effectId === "marchOfAnts") {
+    return t("skill.ferocity.marchOfAnts", { radius: trait.radiusBonus, allies: trait.extraAllies });
+  }
+
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? ""
     : t("skill.ferocity.splash.speed", { percent: trait.attackSpeedBonusPercent });
@@ -588,6 +602,14 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
   if (passive.kind === "looming" && passive.looming !== undefined) {
     return t("skill.passive.looming", { seconds: passive.looming.intervalSeconds });
   }
+  // 반향·마디 방벽·겨누기·공명·행렬이 무엇인지는 태그가 말한다(쓰는 개체가 하나뿐이라 태그가 수치를 가진다).
+  if (passive.kind === "echoLocation" && passive.echoLocation !== undefined) return t("skill.passive.echoLocation");
+  if (passive.kind === "segmentBarrier" && passive.segmentBarrier !== undefined) return t("skill.passive.segmentBarrier");
+  if (passive.kind === "vitalAim" && passive.vitalAim !== undefined) return t("skill.passive.vitalAim");
+  if (passive.kind === "wingHum" && passive.wingHum !== undefined) {
+    return t("skill.passive.wingHum", { seconds: passive.wingHum.intervalSeconds, energy: passive.wingHum.energyOnKill });
+  }
+  if (passive.kind === "workerMarch" && passive.workerMarch !== undefined) return t("skill.passive.workerMarch");
   if (passive.kind === "whiteNoise" && passive.whiteNoise !== undefined) {
     const plan = passive.whiteNoise;
     const heal = guard === undefined

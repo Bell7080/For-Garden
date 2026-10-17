@@ -56,7 +56,9 @@ describe("덮어쓰기 표", () => {
     // 한 언어를 다 채우고 나면 그 뒤로는 **빠뜨린 자리가 곧 회귀**다 — 새 개체를 넣은 사람이
     // 그 언어만 한국어로 남기는 일을 막는다. 아직 채우는 중인 언어는 여기 오르지 않는다.
     const COMPLETE = ["en", "ja", "zh-Hant", "zh-Hans", "th", "vi", "id", "es", "pt-BR", "de", "ru"];
-    const known = registeredDataTexts().map(({ key }) => key);
+    // 공멸 회수조 다섯은 번역 일괄 단계에서 한꺼번에 채운다(응태 방침 — 개체마다 번역하지 않는다).
+    const DEFERRED_RELICS = [".ikanixia.", ".atra.", ".pulsi.", ".neuri.", ".mir.", "keyword.echo.", "keyword.segment-barrier.", "keyword.vital-aim.", "keyword.resonance.", "keyword.worker-march.", "squad.annihilation.title.1"];
+    const known = registeredDataTexts().map(({ key }) => key).filter((key) => !DEFERRED_RELICS.some((id) => key.includes(id)));
     for (const [path, overlay] of Object.entries(OVERLAYS)) {
       if (!COMPLETE.includes(languageOf(path))) continue;
       const missing = known.filter((key) => !(key in overlay));

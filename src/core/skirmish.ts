@@ -629,6 +629,18 @@ export interface Fighter extends Combatant {
    */
   observation: { stacks: number; remaining: number; total: number; maxStacks: number } | null;
   /**
+   * 지금 묻은 반향(이카닉시아). **피해가 없는 표식**이고 맞은 쪽이 든다 — 이 적을 친 이카닉시아 편의 손이
+   * 막을 두르고(폭주 중이면 공명도 받는다), 시간이 다하거나 다시 걸리면 갱신된다.
+   * 건 개체의 ID를 함께 드는 이유는 막의 크기와 폭주 계약이 그 개체의 패시브에서 나오기 때문이다.
+   */
+  echo: { remaining: number; total: number; sourceId: string } | null;
+  /** 지금 겨누고 있는 적과 쌓은 겹(펄시). 표적이 바뀌면 처음부터 다시 센다. */
+  aim: { targetId: string; stacks: number } | null;
+  /** 마디 방벽(아트라)이 다음 마디를 되살리기까지 남은 시간(초). 음수는 아직 한 번도 두르지 않았다는 뜻이다. */
+  barrierIn: number;
+  /** 날갯짓 울림(네우리)이 다음 공명을 걸기까지 남은 시간(초). */
+  wingHumIn: number;
+  /**
    * 서서히 줄어드는 보호막(오버클럭). 정해진 시간 동안 **매초 같은 양**이 깎이므로 막이 얼마나
    * 남았는지가 곧 폭주가 얼마나 흘렀는지다. 다른 막을 두르는 규칙은 이 값을 건드리지 않는다.
    */
@@ -1316,6 +1328,10 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     loomingIn: def.passive.looming?.intervalSeconds ?? 0,
     frozen: null,
     observation: null,
+    echo: null,
+    aim: null,
+    barrierIn: -1,
+    wingHumIn: def.passive.wingHum?.intervalSeconds ?? 0,
     shieldFade: null,
     overclockAuraTickIn: 1,
     droneLinkTickIn: 1,
@@ -1844,6 +1860,10 @@ export function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEf
   // 원정의 지속시간 배율(`potency`)은 시계가 있는 상태에만 든다. 밴덜리즘은 시간으로 사라지지
   // 않으므로 늘릴 시간 자체가 없다.
   if (effect.kind === "vandalism") applyVandalism(fighter, effect, events, state, sourceId);
+  if (effect.kind === "echo" && sourceId) {
+    const seconds = effect.seconds * potency;
+    fighter.echo = { remaining: seconds, total: seconds, sourceId };
+  }
   if (effect.kind === "observation") {
     const drone = sourceId ? findFighter(state, sourceId) : undefined;
     const owner = drone?.summonOwnerId ? findFighter(state, drone.summonOwnerId) : undefined;
@@ -3155,6 +3175,117 @@ function grantShield(
   return amount;
 }
 
+/** 반향이 한 번 걸려 있는 시간(초). 쓰는 개체가 하나뿐이라 계약이 아니라 상수로 둔다. */
+const ECHO_SECONDS = 5;
+
+/** 겨누기(펄시)가 같은 표적에게 쌓인 겹만큼 키우는 피해 배율. 평타에만 든다. */
+function vitalAimMultiplier(attacker: Fighter, target: Fighter, useUltimate: boolean): number {
+  const plan = attacker.def.passive.vitalAim;
+  if (!plan || useUltimate || attacker.aim?.targetId !== target.id) return 1;
+  return 1 + attacker.aim.stacks * plan.damagePercentPerStack / 100;
+}
+
+/** 행렬(미르)이 지금 세는 곁의 아군 수. 폭주 중이면 반경과 상한이 함께 는다. */
+function marchAllies(state: SkirmishState, fighter: Fighter): number {
+  const plan = fighter.def.passive.workerMarch;
+  if (!plan) return 0;
+  const trait = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "marchOfAnts" ? fighter.def.ferocityTrait : undefined;
+  const radius = plan.radius + (trait?.radiusBonus ?? 0);
+  const cap = plan.maxAllies + (trait?.extraAllies ?? 0);
+  const near = state.fighters.filter((ally) => ally.id !== fighter.id && ally.side === fighter.side && isFighterAlive(ally) && distance(fighter, ally) <= radius).length;
+  return Math.min(cap, near);
+}
+
+function workerMarchMultiplier(state: SkirmishState, attacker: Fighter): number {
+  const plan = attacker.def.passive.workerMarch;
+  return plan ? 1 + marchAllies(state, attacker) * plan.attackPercentPerAlly / 100 : 1;
+}
+
+/** 마디 한 칸의 크기(최대 체력 %)와 복구 주기(초). 폭주(`thornBristle`)가 둘을 함께 바꾼다. */
+function barrierShape(fighter: Fighter): { segment: number; cap: number; interval: number } | undefined {
+  const plan = fighter.def.passive.segmentBarrier;
+  if (!plan) return undefined;
+  const trait = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "thornBristle" ? fighter.def.ferocityTrait : undefined;
+  const sizeFactor = 1 + (trait?.segmentSizePercent ?? 0) / 100;
+  const base = fighter.shieldHpBasis ?? fighter.maxHp;
+  const segment = base * plan.segmentMaxHpPercent * sizeFactor / 100;
+  return { segment, cap: segment * plan.segments, interval: plan.restoreSeconds / (1 + (trait?.restoreSpeedPercent ?? 0) / 100) };
+}
+
+/**
+ * 회수조의 적중 반응. 평타든 궁극기든 이 자리를 한 번 지난다.
+ * 반향 걸기 → 반향 든 적을 친 몫의 막·공명 → 맞은 마디 방벽의 복구 앞당기기 → 겨누기 쌓기 순이다.
+ */
+function reactRaiders(target: Fighter, attacker: Fighter, state: SkirmishState, events: SkirmishEvent[], useUltimate: boolean): void {
+  const echo = target.echo;
+  if (echo && isFighterAlive(attacker)) {
+    const source = findFighter(state, echo.sourceId);
+    const plan = source?.def.passive.echoLocation;
+    if (source && plan && source.side === attacker.side) {
+      const room = attacker.maxHp * plan.capMaxHpPercent / 100 - attacker.shield.amount;
+      const amount = Math.min(attacker.maxHp * plan.shieldMaxHpPercent / 100, room);
+      if (amount > 0) grantShield(state, attacker, source.id, amount, events);
+      const trait = source.ferocityFever ? source.def.ferocityTrait : undefined;
+      if (trait?.effectId === "commandStart") applyTeamBuff(attacker, { ...trait.resonance, sourceId: source.id });
+    }
+  }
+  if (!useUltimate && attacker.def.passive.echoLocation && isFighterAlive(target)) {
+    applyCombatStatusEffect(target, { kind: "echo", seconds: ECHO_SECONDS }, events, state, attacker.id);
+  }
+  const barrier = target.def.passive.segmentBarrier;
+  if (barrier && target.barrierIn > 0) target.barrierIn = Math.max(0, target.barrierIn - barrier.hitRestoreSeconds);
+  const aim = attacker.def.passive.vitalAim;
+  if (aim && !useUltimate) {
+    const bonus = attacker.ferocityFever && attacker.def.ferocityTrait.effectId === "frenzyTail" ? attacker.def.ferocityTrait.extraStacksPerHit : 0;
+    const kept = attacker.aim?.targetId === target.id ? attacker.aim.stacks : 0;
+    attacker.aim = { targetId: target.id, stacks: Math.min(aim.maxStacks, kept + 1 + bonus) };
+  }
+}
+
+/** 회수조의 시계. 공용 시계 루프가 살아 있는 개체마다 한 번 부른다. */
+function tickRaiders(fighter: Fighter, dt: number, state: SkirmishState): SkirmishEvent[] {
+  const events: SkirmishEvent[] = [];
+  if (fighter.echo) {
+    const remaining = fighter.echo.remaining - dt;
+    fighter.echo = remaining <= EMERGENCY_RECOVERY.epsilon ? null : { ...fighter.echo, remaining };
+  }
+  const shape = barrierShape(fighter);
+  if (shape) {
+    if (fighter.barrierIn < 0) {
+      grantShield(state, fighter, fighter.id, shape.cap, events);
+      fighter.barrierIn = shape.interval;
+    } else if (fighter.shield.amount >= shape.cap) {
+      fighter.barrierIn = shape.interval;
+    } else {
+      fighter.barrierIn -= dt;
+      if (fighter.barrierIn <= 0) {
+        grantShield(state, fighter, fighter.id, Math.min(shape.segment, shape.cap - fighter.shield.amount), events);
+        fighter.barrierIn = shape.interval;
+      }
+    }
+  }
+  const hum = fighter.def.passive.wingHum;
+  if (hum && fighter.stunnedFor <= 0) {
+    fighter.wingHumIn -= dt;
+    if (fighter.wingHumIn <= 0) {
+      const fast = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "swiftFlight" ? fighter.def.ferocityTrait.intervalReductionPercent : 0;
+      fighter.wingHumIn += hum.intervalSeconds * (1 - fast / 100);
+      const allies = state.fighters.filter((ally) => ally.side === fighter.side && ally.id !== fighter.id && isFighterAlive(ally));
+      const best = allies.reduce<Fighter | undefined>((top, ally) => !top || ally.def.stats.atk > top.def.stats.atk ? ally : top, undefined);
+      applyTeamBuff(best ?? fighter, { ...hum.resonance, sourceId: fighter.id });
+    }
+  }
+  const march = fighter.def.passive.workerMarch;
+  if (march && dt > 0) {
+    const count = marchAllies(state, fighter);
+    if (count > 0) {
+      // 프레임마다 숫자를 띄우지 않는다 — 체력 바가 차오르는 것이 이 재생의 표시다.
+      applyHealing(state, fighter, fighter.maxHp * march.regenMaxHpPercentPerAllyPerSecond * count * dt / 100);
+    }
+  }
+  return events;
+}
+
 /** 기술을 쓴 순간 제 몸에 두르는 막(`selfShieldMaxHpPercent`). 궁극기를 치른 자리에서만 부른다. */
 function grantCastShield(attacker: Fighter, skill: Skill, state: SkirmishState, events: SkirmishEvent[]): void {
   const percent = skill.selfShieldMaxHpPercent ?? 0;
@@ -3895,6 +4026,9 @@ function openedBreakthrough<S extends BreakthroughSlot, T>(
 
 /** 처치 보상은 단일·광역 공격이 같은 경계를 지나며, 다음 표적 돌진도 이곳에서 다시 준비한다. */
 function triggerBreakthroughOnKill(attacker: Fighter, useUltimate: boolean, victim?: Fighter): void {
+  // 날갯짓 울림(네우리) — 직접 쓰러뜨린 몫이 궁극기 게이지로 돌아온다.
+  const hum = attacker.def.passive.wingHum;
+  if (hum && isFighterAlive(attacker)) giveEnergy(attacker, hum.energyOnKill);
   // 처치 가속(`killHaste`) — 어떤 경로로 쓰러뜨렸든 이 훅을 지나므로 평타·궁극기·지속 피해가 같은 값을 얻는다.
   const haste = attacker.def.passive.killHaste;
   if (haste && isFighterAlive(attacker)) {
@@ -4768,6 +4902,7 @@ function clearDefeatedStatuses(fighter: Fighter): void {
   fighter.chill = null;
   fighter.frozen = null;
   fighter.observation = null;
+  fighter.echo = null;
   fighter.shieldFade = null;
 }
 
@@ -5819,6 +5954,7 @@ function cleanseAllDebuffs(fighter: Fighter): void {
   fighter.bt.biteMark = null; fighter.bt.healCut = null; fighter.bt.sunken = null; fighter.bt.fangShave = null;
   fighter.vandalism = null; fighter.pressure = null; fighter.drowsy = null; fighter.sleep = null; fighter.groggy = null; fighter.butcher = null; fighter.frostPlume = null; fighter.frostbite = null; fighter.frenzy = null; fighter.taunted = null;
   fighter.observation = null;
+  fighter.echo = null;
   // 공포와 위압도 군중제어라 정화가 걷는다. 걷어 낸 공포는 면역을 남기지 않는다 — 정화가 면역을 만들 이유가 없다.
   fighter.intimidation = null; fighter.fear = null;
 }
@@ -7393,7 +7529,7 @@ function strike(
   const contributionAmount = Math.max(0, (computeDamageContribution(damageAttacker, damageInput)
     + (defenseBonus > 0 ? computeDamageContribution(attacker, { ...damageInput, power: splashTrait.effectId === "splashDamage" ? splashTrait.defenseDamagePercent ?? 0 : 0, scalingStat: "def", damageType: "physical" }) : 0)
     + (periodicBonusInput ? computeDamageContribution(damageAttacker, periodicBonusInput) : 0)
-    + (bashInput ? computeDamageContribution(damageAttacker, bashInput) : 0)) * nape * pounce * feastMultiplier * packStrengthMultiplier(state, attacker) * bossDamageMultiplier(attacker, target, useUltimate));
+    + (bashInput ? computeDamageContribution(damageAttacker, bashInput) : 0)) * nape * pounce * feastMultiplier * packStrengthMultiplier(state, attacker) * vitalAimMultiplier(attacker, target, useUltimate) * workerMarchMultiplier(state, attacker) * bossDamageMultiplier(attacker, target, useUltimate));
   // 방어·패시브·상성 뒤의 모든 개별 경감은 공용 HP 피해 경계에서 한 번만 적용한다.
   const resolution = resolveReceivedDamage(target, rawAmount);
   const amount = resolution.applied;
@@ -7426,6 +7562,7 @@ function strike(
   contagiousFrenzy(attacker, target, state, events);
   reactFrostCling(target, attacker, state, events);
   reactTouchBurst(target, attacker, state, events);
+  reactRaiders(target, attacker, state, events, useUltimate);
   if (!useUltimate && targetWasFrozen) sodaFizz(attacker, target, state, events);
   if (!useUltimate) pullStruck(attacker, target, state, events);
 
@@ -7999,6 +8136,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     contagiousFrenzy(attacker, target, state, events);
     reactFrostCling(target, attacker, state, events);
     reactTouchBurst(target, attacker, state, events);
+  reactRaiders(target, attacker, state, events, useUltimate);
     // 광역 걸음도 같은 규칙으로 끌어당긴다 — 단일과 광역에서 갈리면 같은 걸음이 대상 수에 따라 다른 일을 한다.
     if (!useUltimate) pullStruck(attacker, target, state, events);
     // 집중도 **적중마다** 쌓는다. 단일 타격 쪽에만 두면 갈래화살이 셋을 맞혀도 겹이 하나도
@@ -8843,6 +8981,8 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     tickShallows(fighter, dt);
     // 도발 회복 예산도 같은 시계로 되찬다.
     refillTauntHealBudget(fighter, dt);
+    // 회수조의 시계 — 반향이 마르고 마디가 돌아오며 공명이 걸리고 행렬이 몸을 돌본다.
+    if (isFighterAlive(fighter)) events.push(...tickRaiders(fighter, dt, state));
     // 순풍도 같은 공용 시계를 쓴다. 다 흐르면 수치까지 비워 남은 값이 다음 전투로 새지 않게 한다.
     if (isFighterAlive(fighter) && fighter.tailwindFor > 0) {
       // 회복 틱을 먼저 돌려야 남은 시간이 0이 되는 프레임의 마지막 한 틱을 잃지 않는다.

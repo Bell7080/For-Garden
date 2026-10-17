@@ -29,7 +29,7 @@ const LINKS: Readonly<Record<string, StageStoryLink>> = {
   "2-5": { pre: "stage-2-5-pre", post: "stage-2-5-post" },
   "2-6": { post: "stage-2-6-post" },
   "2-7": { pre: "stage-2-7-pre", post: "stage-2-7-post" },
-  "2-8": { pre: "stage-2-8-pre" },
+  "2-8": { pre: "stage-2-8-pre", post: "stage-2-8-post" },
   "2-9": { post: "stage-2-9-post" },
   "2-10": { pre: "stage-2-10-pre", post: "stage-2-10-post" },
 };

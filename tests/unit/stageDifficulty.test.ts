@@ -133,6 +133,9 @@ const STORY_STAGES = BATTLE_STAGES.filter((entry) => !EXPEDITION_BOSS_STAGES.inc
  */
 const ELITE_STAGE_IDS = ["1-5", "1-10"] as const;
 
+/** 같은 셋이 아닌 편성이 서는 관문 — 2장 후반의 정예 둘과 3장의 회수조. */
+const LATE_FORMATION_IDS: ReadonlySet<string> = new Set(["2-7", "2-9", "3-5", "3-6", "3-7", "3-8", "3-9"]);
+
 /**
  * 대표 관문의 기록. 수치 조정이 의도하지 않은 체감 변화를 냈는지 즉시 드러낸다.
  *
@@ -181,7 +184,7 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
    */
   it.each(BLENDED_COMBOS.map((combo) => [combo.join("+"), combo] as const))(
     "%s 조합은 잡졸 관문을 끝까지 민다", (_name, combo) => {
-      for (const stageId of ["1-1", "1-9", "2-5", "2-10", "3-5", "3-9"]) {
+      for (const stageId of ["1-1", "1-9", "2-5", "2-10", "3-4", "3-9"]) {
         const entry = STORY_STAGES.find(({ stage }) => stage.id === stageId)!;
         const report = summarizeStageDifficulty(blendedParty(entry.globalOrder, combo), getStageEnemies(entry.stage), SEEDS, "auto");
         expect(report.winRate, stageId).toBe(1);
@@ -318,6 +321,8 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
    */
   it("적 배치는 챕터가 바뀌어도 같은 순서를 지킨다", () => {
     for (const { stage } of STORY_STAGES) {
+      // 2-7·2-9(정예 둘)과 3-5~3-9(회수조)는 변칙 편성이다(`LATE_CHAPTER_FORMATIONS`).
+      if (LATE_FORMATION_IDS.has(stage.id)) continue;
       if (stage.elite === true) {
         expect(stage.enemies, stage.id).toHaveLength(1);
         expect(stage.enemies[0].formationSlot, stage.id).toBe(1);

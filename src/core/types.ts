@@ -52,7 +52,7 @@ export type RelicRarity = "R" | "SR" | "SSR";
  */
 export type RaitiaAssetId = "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind";
 
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti" | "teku";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti" | "teku" | "ikanixia" | "atra" | "pulsi" | "neuri" | "mir";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
@@ -588,6 +588,22 @@ export type TeamBuff =
       lifeStealPoints: number;
       /** 유지 시간(초). 겹쳐 걸면 남은 시간이 더 긴 쪽으로 갱신된다. */
       seconds: number;
+    }
+  | {
+      /**
+       * 「공명」. 순풍·오더와 같은 팀 강화 슬롯에 서는 **공격 속도 강화**다 — 걸어 준 쪽(`sourceId`)은 이 강화를 받은
+       * 아군이 적을 **처치하는 순간**을 알아듣는다(네우리의 「날개 소리」는 그때 궁극기 게이지를 얻는다).
+       *
+       * 이동 속도·회복·치명타는 올리지 않는다 — 순풍(걸음)·오더(화력)와 한 칸을 나눠 쓰되 서로 다른 축을 말한다.
+       * `sourceId`는 정의에 적지 않고 거는 순간 전투가 새긴다.
+       */
+      kind: "resonance";
+      /** 공격 속도에 곱하는 비율(%)이다. */
+      attackSpeedPercent: number;
+      /** 유지 시간(초). 겹쳐 걸면 남은 시간이 더 긴 쪽으로 갱신된다. */
+      seconds: number;
+      /** 공명을 건 개체의 전투 내 ID. 정의에는 적지 않는다. */
+      sourceId?: string;
     };
 
 /** 모든 스킬의 판별 유니온이며 `damageType in skill`로 공격 여부를 좁힌다. */
@@ -1060,6 +1076,16 @@ export type CombatStatusEffect =
     }
   | {
       /**
+       * 반향(이카닉시아). **피해가 없는 표식**이다 — 박쥐의 초음파가 울려 아직 그 적의 위치가 아군에게 선명한 동안
+       * 이어진다. 반향이 든 적을 **누가 때리든** 건 쪽(`sourceId`)의 「반향 정위」가 막을 두르고, 펄시의 「급소 겨누기」는
+       * 이 적을 먼저 노린다. 다시 걸면 시간이 갱신될 뿐 겹은 없다.
+       */
+      kind: "echo";
+      /** 반향이 남는 시간(초). 다시 걸면 처음부터 다시 흐른다. */
+      seconds: number;
+    }
+  | {
+      /**
        * 광란. 표적을 **자기 편으로 뒤집는다.**
        *
        * 군중제어와 다른 축이다 — 행동을 막는 것이 아니라 방향을 돌린다. 때릴 자기 편이 남지
@@ -1303,6 +1329,16 @@ export type PassiveKind =
    * 고르는 이름표일 뿐이다 — 렉시아의 종류에 얹으면 그 문장이 공속·공격력까지 함께 말하게 된다.
    */
   | "openingDive"
+  /** 이카닉시아 전용: 반향이 든 적을 누가 때리든 자신에게 보호막이 쌓인다. */
+  | "echoLocation"
+  /** 아트라 전용: 보호막이 마디로 나뉘어 시간이 지나면 한 마디씩 다시 차오른다. 피해는 횟수가 아니라 양으로 깎는다. */
+  | "segmentBarrier"
+  /** 펄시 전용: 반향이 든 적(없으면 체력이 가장 낮은 적)을 겨누고, 같은 적을 이어 때릴수록 피해가 오른다. */
+  | "vitalAim"
+  /** 네우리 전용: 몇 초마다 가장 센 아군에게 공명을 걸고, 공명 아군의 처치가 궁극기 게이지가 된다. */
+  | "wingHum"
+  /** 미르 전용: 곁에 선 아군 한 명마다 공격력이 오르고 매초 재생한다. */
+  | "workerMarch"
   /** 캐릭터 ID와 무관하게 구조화된 시약 중첩과 반응 보상을 해석한다. */
   | "reagentReaction"
   /**
@@ -1371,6 +1407,16 @@ export type FerocityEffectId =
   /** 파치 전용: 폭주 중 뇌진탕이 확정 치명타가 되고 그 적을 전장 밖으로 튕겨 날린다. */
   | "knockbackSlam"
   | "vanguardCharge"
+  /** 이카닉시아 전용: 폭주 중 반향이 든 적을 친 아군이 공명을 받는다. */
+  | "commandStart"
+  /** 아트라 전용: 폭주 중 마디가 더 크고 더 빨리 차오른다. */
+  | "thornBristle"
+  /** 펄시 전용: 폭주 중 공격 속도가 오르고 한 대에 겨누기 겹이 더 쌓인다. */
+  | "frenzyTail"
+  /** 네우리 전용: 폭주 중 공명을 거는 주기가 짧아진다. */
+  | "swiftFlight"
+  /** 미르 전용: 폭주 중 행렬이 더 넓고 더 많은 아군을 센다. */
+  | "marchOfAnts"
   /** 마키 전용: 폭주 중 손질이 터진 피해의 일부를 아군 전체의 회복으로 돌린다. */
   | "butcherFeast"
   /** 델로피 전용: 폭주 중 일반 공격이 중독을 걸거나, 이미 걸린 중독을 그 자리에서 청산한다. */
@@ -1642,6 +1688,34 @@ export type FerocityTrait = {
       missingHpShieldPercent: number;
       /** 폭주 중 공격 속도 증가율(%). 속도의 역수가 곧 공격 주기다. */
       attackSpeedPercent: number;
+    }
+  | {
+      /** 지휘 개시(이카닉시아). 폭주 중 **반향이 든 적을 친 아군**이 공명을 받는다. 수치는 공명 계약이 갖는다. */
+      effectId: "commandStart";
+      resonance: Extract<TeamBuff, { kind: "resonance" }>;
+    }
+  | {
+      /** 가시 곤두세우기(아트라). 폭주 중 마디가 이 비율만큼 커지고 복구 시계가 이 비율만큼 빨라진다. */
+      effectId: "thornBristle";
+      segmentSizePercent: number;
+      restoreSpeedPercent: number;
+    }
+  | {
+      /** 광폭한 꼬리(펄시). 폭주 중 공격 속도가 오르고 한 대에 겨누기 겹이 더 쌓인다. */
+      effectId: "frenzyTail";
+      attackSpeedPercent: number;
+      extraStacksPerHit: number;
+    }
+  | {
+      /** 가속 비행(네우리). 폭주 중 공명을 거는 주기가 이 비율만큼 짧아진다. */
+      effectId: "swiftFlight";
+      intervalReductionPercent: number;
+    }
+  | {
+      /** 개미 떼의 행진(미르). 폭주 중 행렬 반경이 늘고 더 많은 아군을 센다. */
+      effectId: "marchOfAnts";
+      radiusBonus: number;
+      extraAllies: number;
     }
   | {
       effectId: "knockbackSlam";
@@ -2109,6 +2183,60 @@ export interface Passive {
     radius: number;
     healResistancePercent: number;
     drowsy: Extract<CombatStatusEffect, { kind: "drowsy" }>;
+  };
+  /**
+   * 「반향 정위」 계약(이카닉시아). 이 개체가 건 반향이 든 적을 **아군 누구든** 때리면 이 개체가 최대 체력의
+   * `shieldMaxHpPercent`%만큼 보호막을 두른다. 막은 `capMaxHpPercent`에 닿은 만큼까지만 쌓이고 다른 막까지 합쳐 잰다.
+   */
+  echoLocation?: {
+    /** 한 번 맞을 때 두르는 막(최대 체력 비율 %). */
+    shieldMaxHpPercent: number;
+    /** 이 패시브가 채우는 상한(최대 체력 비율 %). */
+    capMaxHpPercent: number;
+  };
+  /**
+   * 「마디 방벽」 계약(아트라). 막이 **마디 `segments`개**로 나뉘어 있고 마디 하나는 최대 체력의 `segmentMaxHpPercent`%다.
+   * `restoreSeconds`마다 한 마디가 다시 차오르고, 일반 공격이 적중하면 시계가 `hitRestoreSeconds`만큼 당겨진다.
+   *
+   * **횟수로 막지 않는다** — 피해는 막의 양을 그대로 깎는 보호막이다. 마디는 막이 다시 차는 단위일 뿐이라 몇 대를
+   * 맞아도 통과하지 못하는 일은 없다(무적이 되는 설계를 걷어 냈다).
+   */
+  segmentBarrier?: {
+    segments: number;
+    /** 마디 하나의 크기(최대 체력 비율 %). */
+    segmentMaxHpPercent: number;
+    /** 한 마디가 다시 차는 시간(초). */
+    restoreSeconds: number;
+    /** 일반 공격이 적중할 때 복구 시계를 당기는 시간(초). */
+    hitRestoreSeconds: number;
+  };
+  /**
+   * 「급소 겨누기」 계약(펄시). 표적을 **반향이 든 적 → 체력이 가장 낮은 적** 순으로 겨누고, 겨눈 적을 이어 때릴수록
+   * 겹마다 피해가 오른다. 표적이 바뀌면 겹은 처음으로 돌아간다. 치명타 가산은 공용 필드(`criticalChancePercent`)가 갖는다.
+   */
+  vitalAim?: {
+    maxStacks: number;
+    /** 겹 하나가 더하는 피해(%). */
+    damagePercentPerStack: number;
+  };
+  /**
+   * 「날개 소리」 계약(네우리). `intervalSeconds`마다 공격력이 가장 높은 생존 아군에게 공명을 걸고, 공명을 받은 아군이
+   * 적을 처치하면 `energyOnKill`만큼 자신의 궁극기 게이지가 찬다.
+   */
+  wingHum?: {
+    intervalSeconds: number;
+    resonance: Extract<TeamBuff, { kind: "resonance" }>;
+    energyOnKill: number;
+  };
+  /**
+   * 「일꾼의 행렬」 계약(미르). 반경 안의 **다른 아군** 한 명마다(최대 `maxAllies`명) 공격력이 `attackPercentPerAlly`%
+   * 오르고 매초 최대 체력의 `regenMaxHpPercentPerAllyPerSecond`%를 되찾는다. 무리 지어 설수록 세지는 몸이다.
+   */
+  workerMarch?: {
+    radius: number;
+    maxAllies: number;
+    attackPercentPerAlly: number;
+    regenMaxHpPercentPerAllyPerSecond: number;
   };
   prickle?: {
     /** 겹 상한. */

@@ -64,6 +64,29 @@ const CHAPTER_ONE_ELITES: Readonly<Record<number, string>> = {
 };
 
 /**
+ * **2·3장 후반의 변칙 편성.** 적어 두지 않은 관문은 기본 셋(`STAGE_ENEMY_FORMATION`)이다.
+ *
+ * - 2-7·2-9는 **정예 둘**이다 — 새 유형을 만들지 않고 같은 정예 자리에 둘이 서며, 체력 몫은 둘이 나눠 갖는다
+ *   (`encounterHpShare`). 레벨 사다리는 그대로다.
+ * - 3-5는 회수조 행동대장 이카닉시아가 혼자 서는 정예, 3-6~3-9는 회수조 셋이다. 3-6·3-7은 아트라 앞 · 미르 가운데 ·
+ *   펄시 뒤의 공격조이고, 3-8부터 네우리가 뒤에 서서 치유와 공명으로 받치며 가운데가 펄시로 바뀐다.
+ *   네우리가 일찍 서면 바닥 파티가 3-7을 열었다(여덟 판 중 한 판) — 3장은 완전히 닫혀 있어야 해서 늦췄다.
+ * 3-1~3-4(옛 셋)와 3-10(폰토스)은 그대로다.
+ */
+const LATE_CHAPTER_FORMATIONS: Readonly<Record<string, readonly (readonly [string, 0 | 1 | 2])[]>> = {
+  "2-7": [["amo", 0], ["ripa", 2]],
+  "2-9": [["amo", 0], ["toby", 1]],
+  "3-5": [["ikanixia", 1]],
+  "3-6": [["atra", 0], ["mir", 1], ["pulsi", 2]],
+  "3-7": [["atra", 0], ["mir", 1], ["pulsi", 2]],
+  "3-8": [["atra", 0], ["pulsi", 1], ["neuri", 2]],
+  "3-9": [["atra", 0], ["pulsi", 1], ["neuri", 2]],
+};
+
+/** 정예 둘이 서는 관문. 하나만 서는 정예는 적 수로 가른다. */
+const ELITE_DUO_STAGE_IDS: ReadonlySet<string> = new Set(["2-7", "2-9"]);
+
+/**
  * 1장의 적 편성. 정예 관문만 하나가 서고 나머지는 같은 셋이 같은 자리에 선다.
  *
  * **돌파는 어느 관문에도 없다.** 돌파는 레벨 상한(20)을 채운 뒤에만 뚫리는데 1장의 적은
@@ -196,6 +219,7 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
     const laterChapterIds = chapter === 3 && chapterOrder === 10
       ? ["amo", "pontos", "ripa"]
       : [...STAGE_ENEMY_FORMATION];
+    const lateFormation = LATE_CHAPTER_FORMATIONS[`${chapter}-${chapterOrder}`];
     /*
      * **돌파는 레벨에서 나온다**(`requiredBreakthroughForLevel`). 2장은 21~30이라 전 관문이 돌파 1단계
      * (상한 30)이고, 화면의 `LV`와 돌파 등급이 맞는다. 1단계가 여는 것은 평타 효과 하나뿐이라
@@ -203,11 +227,13 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
      */
     const laterChapterLevel = STORY_RECOMMENDED_LEVELS[globalOrder] ?? 1;
     const laterChapterBreakthrough = chapter === 2 ? requiredBreakthroughForLevel(laterChapterLevel) : 0;
-    const laterChapterEnemies = laterChapterIds.map((relicId, slot) =>
-      enemyGrowth(relicId, laterChapterLevel, laterChapterBreakthrough, slot as 0 | 1 | 2));
+    const laterChapterEnemies = lateFormation
+      ? lateFormation.map(([relicId, slot]) => enemyGrowth(relicId, laterChapterLevel, laterChapterBreakthrough, slot))
+      : laterChapterIds.map((relicId, slot) =>
+        enemyGrowth(relicId, laterChapterLevel, laterChapterBreakthrough, slot as 0 | 1 | 2));
     const enemies = chapter === 1 ? CHAPTER_ONE_ENEMIES[orderIndex] : laterChapterEnemies;
     const id = `${chapter}-${chapterOrder}`;
-    const elite = enemies.length === 1;
+    const elite = enemies.length === 1 || ELITE_DUO_STAGE_IDS.has(id);
     return {
       kind: "battle",
       id, name, chapter, chapterOrder,
@@ -226,7 +252,7 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
          */
         firstClearCheesecake: 30 + globalOrder * 5,
         repeatClearCheesecake: 10 + globalOrder * 2,
-        firstClearBonus: storyFirstClearBonus(id, globalOrder, chapter, chapterOrder, elite),
+        firstClearBonus: storyFirstClearBonus(id, globalOrder, chapter, chapterOrder, enemies.length === 1),
       },
       // 아직 서사가 없는 장은 이 값이 비어 있고, 화면은 그 줄을 그리지 않는다.
       situation: CHAPTER_SITUATIONS[chapterIndex]?.[orderIndex],
@@ -294,7 +320,7 @@ export function getStageEnemies(stage: Extract<StageDef, { kind: "battle" }>): R
   return stageEnemyGrowth(stage).map((enemy) => {
     const base = getRelic(enemy.relicId);
     // 레벨로 자라고 유형으로 몫을 받는다. 스테이지 전용 배율은 만들지 않는다.
-    return { ...base, encounterRole: role, stats: applyBreakthrough(applyEncounterScaling(base.stats, enemy.level, role), enemy.breakthrough) };
+    return { ...base, encounterRole: role, stats: applyBreakthrough(applyEncounterScaling(base.stats, enemy.level, role, stage.enemies.length), enemy.breakthrough) };
   });
 }
 

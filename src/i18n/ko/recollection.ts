@@ -35,6 +35,7 @@ export const RECOLLECTION_KO = {
   "recollection.summary.stage-2-7-pre": "문이 닫히고, 연구원만 홀로 격실에 갇힌다.",
   "recollection.summary.stage-2-7-post": "토비가 문을 뜯어내고 연구원을 꺼낸다.",
   "recollection.summary.stage-2-8-pre": "용광로 곁에서 코마가 말없이 표식을 닦고 있다.",
+  "recollection.summary.stage-2-8-post": "용광로 위로 회수조 둘이 내려선다. 코마에게 정중한 한마디가 남는다.",
   "recollection.summary.stage-2-9-post": "컨베이어가 끝나는 곳에 깊은 구멍이 입을 벌린다.",
   "recollection.summary.stage-2-10-pre": "코마 없이, 삼인조가 처음으로 셋이서 선다.",
   "recollection.summary.stage-2-10-post": "「따라가도 돼?」 이제 연구원이 대답할 차례다.",

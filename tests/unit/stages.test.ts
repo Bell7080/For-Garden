@@ -26,7 +26,7 @@ describe("stage enemy design", () => {
     const has = (id: string, currency: string) => rewardsOf(id).some((reward) => reward.kind === "currency" && reward.currency === currency);
     for (const stage of stages) {
       for (const base of ["cheesecake", "gold", "gems"]) expect(has(stage.id, base), `${stage.id} ${base}`).toBe(true);
-      expect(has(stage.id, "fossil"), `${stage.id} fossil`).toBe(stage.elite === true);
+      expect(has(stage.id, "fossil"), `${stage.id} fossil`).toBe(stage.elite === true && stage.enemies.length === 1);
     }
     // 원석은 고고학이 주 수급처라 스토리는 2장부터 장마다 두 번만, 한 줌씩 맛보기로 준다.
     const rawStone = stages.filter((stage) => has(stage.id, "rawStone")).map(({ id }) => id);
@@ -279,8 +279,9 @@ describe("stage enemy design", () => {
   it("모든 전투는 중복 없는 formationSlot 0·1·2를 가지며 그 순서로 전투 복사본을 만든다", () => {
     for (const stage of battles) {
       const slots = stage.enemies.map(({ formationSlot }) => formationSlot);
-      // 셋이 서면 0·1·2를 나눠 갖고, 정예가 홀로 서면 가운데(1) 한 자리만 쓴다.
-      expect([...slots].sort(), stage.id).toEqual(stage.enemies.length === 1 ? [1] : [0, 1, 2]);
+      // 셋이 서면 0·1·2를 나눠 갖고, 정예가 홀로 서면 가운데(1) 한 자리만 쓴다. 정예 둘(2-7·2-9)은 둘만 쓴다.
+      if (stage.enemies.length === 2) expect(slots.every((slot) => slot >= 0 && slot <= 2), stage.id).toBe(true);
+      else expect([...slots].sort(), stage.id).toEqual(stage.enemies.length === 1 ? [1] : [0, 1, 2]);
       expect(new Set(slots).size, stage.id).toBe(slots.length);
       const expectedIds = [...stage.enemies].sort((a, b) => a.formationSlot - b.formationSlot).map(({ relicId }) => relicId);
       expect(getStageEnemies(stage).map(({ id }) => id)).toEqual(expectedIds);

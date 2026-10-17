@@ -106,6 +106,11 @@ export const ULTIMATE_PRESENTATIONS: Readonly<Record<string, UltimatePresentatio
   "amo": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, zoomScale: 1.24, zoomMs: 115, cameraShakeIntensity: 0.009 },
   "ripa": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.92, artworkOrigin: { x: 650, y: 770 }, zoomScale: 1.16, cameraShakeIntensity: 0.007 },
   // 코마는 작은 체형의 빠른 선봉이므로 짧은 컷인을 사용한다.
+  "ikanixia": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, zoomScale: 1.2, zoomMs: 105, cameraShakeIntensity: 0.008 },
+  "atra": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.92, zoomScale: 1.18, zoomMs: 110, cameraShakeIntensity: 0.008 },
+  "pulsi": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, zoomScale: 1.2, zoomMs: 105, cameraShakeIntensity: 0.008 },
+  "neuri": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, zoomScale: 1.18, zoomMs: 110 },
+  "mir": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, zoomScale: 1.18, zoomMs: 110, cameraShakeIntensity: 0.006 },
   "koma": { ...DEFAULT_ULTIMATE_PRESENTATION, artworkScale: 0.94, zoomScale: 1.22, zoomMs: 105, cameraShakeIntensity: 0.008 },
   // 작고 빠른 물량 개체라 컷인이 가장 짧고 확대도 얕다 — 한 판에 여럿이 쓰는 궁극기라
   // 하나하나가 무거우면 그 던전이 연출을 기다리는 시간으로 채워진다.

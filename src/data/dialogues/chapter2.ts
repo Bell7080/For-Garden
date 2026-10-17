@@ -109,6 +109,10 @@ export const STAGE_2_6_POST: DialogueStory = {
     { id: "luka", speaker: "루카", body: "델로피는 내가 맡겠다. 연구원, 이제부터는 내 신호를 따라와라. 말 없이, 빨리.", cast: VOICE("luka", "parua", "dodi"), act: "nod" },
     { id: "hush", speaker: "도디", body: "그, 그럼 숨 죽이고… 이건 \"침묵 이동\"으로 적어 둘게요!", standing: "dodi", act: "hop" },
     { id: "quiet", speaker: "루카", body: "그 소리가 제일 크다.", act: "lean" },
+    { id: "tail", speaker: "", body: "천장 배관 사이로 마디진 꼬리 하나가 지나간다. 끝이 갈고리처럼 휜 그림자가 벽을 훑고 사라진다.", cast: [{ id: "dodi", slot: "left" }, { id: "pulsi", slot: "right", veiled: true }], cue: "rumble" },
+    { id: "saw", speaker: "도디", body: "대, 대장님! 방금 위에서 꼬리가 지나갔어요! 이렇게, 이렇게 휘어진 거요!", standing: "dodi", act: "hopTwice" },
+    { id: "who", speaker: "파루아", body: "…라인이 돌아가는 소리에 섞여서 발소리가 안 들렸어요. 델로피 씨 장난은 아니에요.", standing: "parua", cast: PAIR("dodi", "parua"), act: "tremble" },
+    { id: "mark", speaker: "루카", body: "상자 위 표식을 봐라. 폐기 표식이 아니라 회수 표식이다. 이 회랑에는 우리 말고도 물건을 거두러 온 자가 있다.", cast: VOICE("luka", "parua", "dodi"), act: "nod" },
   ]),
 };
 
@@ -154,6 +158,24 @@ export const STAGE_2_8_PRE: DialogueStory = {
     { id: "above", speaker: "코마", body: "위에서는 아직 모른다. 이 표식을 닦는 것도. 너희가 여기까지 온 것도.", standing: "koma", act: "shrink" },
     { id: "trio", speaker: "리파", body: "…코마, 너 지금 뭐 하는 거야? 위에서 모르는 일을 해도 돼?", standing: "ripa", cast: [{ id: "ripa", slot: "left" }, { id: "koma", slot: "right" }], act: "recoil" },
     { id: "leave", speaker: "코마", body: "…가라. 대신 이쪽으로 오지 마라.", standing: "koma", cast: [{ id: "ripa", slot: "left" }], act: "nod" },
+  ]),
+};
+
+/** 2-8 후 — 회수조 둘이 처음으로 얼굴을 보인다. 싸우지 않고, 코마에게 한마디만 남기고 간다. */
+export const STAGE_2_8_POST: DialogueStory = {
+  id: "stage-2-8-post",
+  startNodeId: "drop",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "drop", speaker: "", body: "용광로 위 파이프에서 가벼운 날갯소리가 난다. 잠자리의 날개를 접은 그림자와, 몸집만 한 턱을 가진 그림자가 사뿐히 내려선다.", cast: [{ id: "koma", slot: "left" }, { id: "neuri", slot: "center" }, { id: "mir", slot: "right" }], cue: "impact" },
+    { id: "hello", speaker: "네우리", body: "후훗… 당신이… 연구원님이시군요? 역시… 듣던 대로… 어흠.", standing: "neuri", act: "hop" },
+    { id: "koma", speaker: "네우리", body: "그건 그렇고, 코마 님! 결국… 결국 실패하셨네요?", standing: "neuri", act: "lean" },
+    { id: "komaReply", speaker: "코마", body: "…네우리. 보고하러 온 것인가.", standing: "koma", act: "shrink" },
+    { id: "polite", speaker: "네우리", body: "어머, 보고라니요. 저희 같은 말단이 어찌 감히. 다만 위에서 「테러조는 이제 쉬셔도 된다」고 하셔서요. 아주, 아주 정중하게 전해 드리러 왔답니다.", standing: "neuri", act: "bounce" },
+    { id: "mir", speaker: "미르", body: "…길. 막혀 있다. 치운다.", standing: "mir", act: "nod" },
+    { id: "bye", speaker: "네우리", body: "아, 맞아요, 미르. 그럼 연구원님, 다음에 뵙지요. 그때는 저희 회수조가 직접 모시겠습니다. 연구원님.", standing: "neuri", act: "nod", leave: "blastOff", cast: [{ id: "koma", slot: "left" }] },
+    { id: "torika", speaker: "토리카", body: "코마 씨… 실패하셨다는 게 무슨 말이에요?", standing: "torika", cast: PAIR("koma"), act: "lean" },
+    { id: "later", speaker: "코마", body: "…나중에 말하지. 저 둘이 이 구역까지 내려왔다는 것만 기억해라.", standing: "koma", act: "shrink" },
   ]),
 };
 
@@ -207,13 +229,15 @@ export const STAGE_2_10_POST: DialogueStory = {
     { id: "answerA", speaker: "아모", body: "…그래. 그럼 따라갈게.", standing: "amo", act: "nod", nextId: "walk" },
     { id: "answerB", speaker: "아모", body: "…우리가 정해도 된다는 말, 처음 들어 봐.", standing: "amo", act: "nod", nextId: "walk" },
     { id: "walk", speaker: "토비", body: "그, 그렇다고 우리가 한편 되는 건 아니야! 뒤에서 따라가기만 하는 거야!", standing: "toby", cast: RAID_TRIO, act: "hopTwice", nextId: "hole" },
-    { id: "hole", speaker: "", body: "일행이 걸음을 옮긴다. 뒤에서 구멍의 어둠이 한 번 숨을 쉬듯 일렁인다. 무언가가 올려다보고 있다.", cue: "rumble" },
+    { id: "hole", speaker: "", body: "일행이 걸음을 옮긴다. 뒤에서 구멍의 어둠이 한 번 숨을 쉬듯 일렁인다. 무언가가 올려다보고 있다.", cue: "rumble", nextId: "wing" },
+    { id: "wing", speaker: "", body: "구멍 위로 거대한 날개의 그림자가 천천히 펼쳐졌다 접힌다. 소리는 나지 않는다. 박쥐의 날개처럼 보인다.", cast: [{ id: "ikanixia", slot: "center", veiled: true }], standing: "ikanixia", cue: "impact", nextId: "voice" },
+    { id: "voice", speaker: "???", body: "…회수 개시.", standing: "ikanixia", act: "nod" },
   ],
 };
 
 export const CHAPTER_2_STORIES: readonly DialogueStory[] = [
   STAGE_2_1_PRE, STAGE_2_2_POST, STAGE_2_4_PRE, STAGE_2_5_PRE, STAGE_2_5_POST, STAGE_2_6_POST,
-  STAGE_2_7_PRE, STAGE_2_7_POST, STAGE_2_8_PRE, STAGE_2_9_POST, STAGE_2_10_PRE, STAGE_2_10_POST,
+  STAGE_2_7_PRE, STAGE_2_7_POST, STAGE_2_8_PRE, STAGE_2_8_POST, STAGE_2_9_POST, STAGE_2_10_PRE, STAGE_2_10_POST,
 ];
 
 // 번역 등록(`registerDialogueTexts`)은 원고가 확정된 뒤에 한다 — 확정 전에 열한 언어를 채우면 고칠 때마다 전부 다시 옮겨야 한다.

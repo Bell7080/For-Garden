@@ -41,6 +41,8 @@ export const STATUS_KO = {
   "status.chill.detail": "{stacks} / {max}겹 · 공격 속도·이동 속도 -{percent}%",
   "status.submerged": "잠김",
   "status.submerged.detail": "이동 속도 -{percent}% · 여울에서 벗어나면 풀린다",
+  "status.echo": "반향",
+  "status.echo.detail": "{time} 남음",
   "status.observation": "관측",
   "status.observation.detail": "{stacks} / {max}겹 · {time} 남음",
   "status.vandalism": "밴덜리즘",

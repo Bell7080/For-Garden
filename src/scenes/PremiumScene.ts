@@ -9,7 +9,8 @@ import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { BottomNav } from "../ui/BottomNav";
 import { notificationManager } from "../managers/NotificationManager";
 import { TabStripEdgeHint } from "../ui/TabStripEdgeHint";
-import { hiddenDotSides, nearestHiddenDot, type TabStripSpec } from "../core/tabStrip";
+import { hiddenDotSides, nearestHiddenDot, tabStripMinScroll, type TabStripSpec } from "../core/tabStrip";
+import { attachTabStripDrag } from "../ui/tabStripDrag";
 import { bindNotificationDot } from "../ui/NotificationDot";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { addSectionTitle } from "../ui/SectionTitle";
@@ -72,6 +73,7 @@ export class PremiumScene extends Phaser.Scene {
   /** 창 밖에 가려진 라벨에 받을 것이 남았을 때 줄 끝이 붉게 숨 쉰다. */
   private tabEdgeHint?: TabStripEdgeHint;
   private tabDotted: boolean[] = [];
+  private tabDragging: () => boolean = () => false;
   /** 입력 한 번이 가로 쓸기인지 세로 스크롤인지. 14px 안에서 정한다. */
   private pointerAxis: "none" | "x" | "y" = "none";
   private pointerStartX = 0;
@@ -567,10 +569,17 @@ export class PremiumScene extends Phaser.Scene {
     const spec = this.tabStripSpec();
     const strip = premiumTabStrip();
     this.tabDotted = PREMIUM_TABS.map(() => false);
+    // 탭을 눌러 넘기는 것에 더해, 화면 밖으로 나간 줄을 손으로 끌어 넘길 수도 있다.
+    const drag = attachTabStripDrag(this, {
+      row, left: strip.left, right: strip.right, top: strip.top, bottom: strip.bottom, min: tabStripMinScroll(spec),
+      get: () => row.x, set: (value) => { row.x = value; this.syncTabEdgeHint(); },
+    });
+    this.tabDragging = drag.dragging;
     if (!this.tabEdgeHint) {
       this.tabEdgeHint = new TabStripEdgeHint(this, undefined, {
         left: strip.left, right: strip.right, y: premiumTabSpot(0).y, height: PREMIUM_TAB_ROW.height,
         onTap: (side) => {
+          if (this.tabDragging()) return;
           const index = this.tabRow ? nearestHiddenDot(spec, this.tabRow.x, this.tabDotted, side) : undefined;
           if (index !== undefined) this.selectCategory(PREMIUM_TABS[index].id);
         },
@@ -581,7 +590,7 @@ export class PremiumScene extends Phaser.Scene {
       const tabObject = addCategoryTab(this, row, {
         x, y, width: PREMIUM_TAB_ROW.width, height: PREMIUM_TAB_ROW.height,
         label: tab.label, selected: tab.id === this.selectedCategory,
-        onSelect: () => this.selectCategory(tab.id),
+        onSelect: () => { if (!drag.dragging()) this.selectCategory(tab.id); },
       });
       // 받을 무료 보급이 남은 일간·주간·월간 라벨에 점을 세운다.
       const dotKey = tab.id === "daily" ? "premiumFreeDaily" : tab.id === "weekly" ? "premiumFreeWeekly" : tab.id === "monthly" ? "premiumFreeMonthly" : tab.id === "pass" ? "passReward" : undefined;

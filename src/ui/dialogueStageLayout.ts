@@ -303,12 +303,12 @@ export const DIALOGUE_ACTS: Readonly<Record<DialogueAct, readonly DialogueActSte
  * 말하는 사람은 더 밝고, 나머지는 가라앉는다.
  */
 export const DIALOGUE_REMOTE = {
-  tint: 0xdff6ff,
-  dimTint: 0x8a9fa8,
-  alpha: 0.96,
-  /** 투영이 일렁이는 폭. 알파만 아주 조금 오간다. */
-  flickerAlpha: 0.04,
-  flickerMs: 1500,
+  tint: 0x6cc8ff,
+  dimTint: 0x3f7396,
+  alpha: 0.9,
+  /** 투영이 일렁이는 폭. 알파가 눈에 띄게 오가 홀로그램임이 읽힌다. */
+  flickerAlpha: 0.12,
+  flickerMs: 1100,
 } as const;
 
 /**

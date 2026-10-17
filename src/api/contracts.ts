@@ -18,6 +18,7 @@ import type { AdReward } from "../data/adRewards";
 import type { ItemCategory, ItemUseEffect, WalletItemKey } from "../data/items";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import type { ExpeditionRunState, ObservationRecord, PlayerCardState, PlayerResearchProgress } from "../state/session";
+import type { AccountGameSettings } from "../core/settingsOwnership";
 import type { ExpeditionAugmentSelection } from "../core/expeditionRewards";
 import type { DialogueEffect } from "../core/dialogue";
 import type { JournalDiscoveryResolution } from "../core/interactionJournals";
@@ -968,6 +969,9 @@ export interface ChooseExpeditionAugmentRequest { selection: ExpeditionAugmentSe
 export interface PrepareExpeditionBossRequest { nodeId: string }
 export interface PrepareExpeditionBossResponse { ids: { requestId: string; settlementId: string; replayVersion: 2 } | null }
 
+export interface UpdateAccountSettingsRequest { game: Partial<AccountGameSettings> }
+export interface UpdateAccountSettingsResponse { game: AccountGameSettings }
+
 export interface GameApi extends AsyncArenaProfileApi {
   getInteractionCities(): Promise<InteractionCitiesResponse>;
   startInteractionDispatch(request: StartInteractionDispatchRequest): Promise<InteractionDispatchResponse>;
@@ -1069,6 +1073,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   settleExpeditionRun(request: SettleExpeditionRunRequest): Promise<SettleExpeditionRunResponse>;
   /** 모든 노드의 방문·HP·보상을 서버가 한 처리로 확정한다. */
   completeExpeditionNode(request: CompleteExpeditionNodeRequest): Promise<CompleteExpeditionNodeResponse>;
+  /** 계정에 묶인 환경설정(전투 배속·자동 궁극기 등, `settingsOwnership`)만 서버에 저장한다. 기기 값은 보내지 않는다. */
+  updateAccountSettings(request: UpdateAccountSettingsRequest): Promise<UpdateAccountSettingsResponse>;
   /** 원정 출발. 편성(보유·중복·세 명)·하루 한 판·지도 생성·떠날 때의 성장 스냅샷을 서버가 한 처리로 굳힌다. */
   startExpeditionRun(request: StartExpeditionRunRequest): Promise<StartExpeditionRunResponse>;
   /** 휴식 노드의 회복과 방문을 한 번에 확정한다. */

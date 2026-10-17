@@ -34,6 +34,10 @@ import type {
   PurchaseRelicSkinRequest, PurchaseRelicSkinResponse, CompleteStoryRequest, CompleteStoryResponse, ApplyStoryEffectRequest, ApplyStoryEffectResponse, CompleteObservationRequest, CompleteObservationResponse, MarkInteractionJournalReadRequest, MarkInteractionJournalReadResponse, SelectArchaeologySiteRequest, SelectArchaeologySiteResponse, SetPartyRequest, SetPartyResponse, SetFavoriteRequest, SetRelicBookmarkRequest, RelicMarkResponse, UpdatePlayerCardRequest, UpdatePlayerCardResponse, EquipProfileModifiersRequest, EquipProfileModifiersResponse, EquipRelicSkinRequest, ClaimInteractionDispatchRequest, ClaimInteractionDispatchResponse, InteractionCitiesResponse, InteractionDispatchResponse, StartInteractionDispatchRequest } from "./contracts";
 import { MAX_EQUIPPED_PROFILE_MODIFIERS, ProfileModifierManager } from "../managers/ProfileModifierManager";
 import { ExpeditionManager } from "../managers/ExpeditionManager";
+import { accountGameSettings, accountPartOfPatch } from "../core/settingsOwnership";
+import { normalizeSettings } from "../core/settings";
+import type { GameSettings } from "../state/session";
+import type { UpdateAccountSettingsRequest, UpdateAccountSettingsResponse } from "./contracts";
 import type { BeginExpeditionAugmentRequest, BeginExpeditionAugmentResponse, ChooseExpeditionAugmentRequest, CompleteExpeditionRestRequest, PrepareExpeditionBossRequest, PrepareExpeditionBossResponse, StartExpeditionRunRequest, StartExpeditionRunResponse } from "./contracts";
 import { GameApiError, persistenceFailed, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type EnterBountyRequest, type EnterBountyResponse, type CompleteBountyRequest, type CompleteBountyResponse, type BountyStatusResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse, type RechargeStaminaRequest, type RechargeStaminaResponse, type StaminaRechargeStatusDto, type ClaimProgressPassRequest, type ClaimProgressPassResponse, type ProgressPassDto, type ProgressPassListResponse } from "./contracts";
 import type { ProductDefinition, ProductGrant } from "../data/shopCatalog";
@@ -505,6 +509,17 @@ export class FakeServer implements GameApi {
     const rules = new ExpeditionManager(this.state, { save: (next) => this.persist(next) }, this.now, QA_TOOLS_ENABLED);
     rules.status();
     return rules;
+  }
+
+  /** 계정의 환경설정만 받는다. 허용 목록 밖의 키와 범위 밖의 값은 정규화가 버리거나 기본값으로 돌린다. */
+  async updateAccountSettings(request: UpdateAccountSettingsRequest): Promise<UpdateAccountSettingsResponse> {
+    await this.delay();
+    const current = normalizeSettings(this.state.settings);
+    const patch = accountPartOfPatch({ game: (request?.game ?? {}) as Partial<GameSettings["game"]> }) ?? {};
+    const settings = normalizeSettings({ ...current, game: { ...current.game, ...patch } });
+    this.persist({ ...this.state, settings });
+    this.state.settings = settings;
+    return { game: accountGameSettings(settings.game) };
   }
 
   async startExpeditionRun(request: StartExpeditionRunRequest): Promise<StartExpeditionRunResponse> {

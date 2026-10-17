@@ -16,7 +16,7 @@ export const SERVER_GAME_METHODS = [
   "interactInLobby", "markAttendanceAutoShown", "markInteractionJournalRead", "markMailsRead", "markRune", "prepareExpeditionBoss", "pullRelics", "purchaseProduct", "purchaseRelicSkin",
   "rechargeStamina", "refreshDuelOpponents", "renameRune", "rerollRuneTrait", "resolveDuel", "resolveRuneTraitReroll", "saveExcavationFormation",
   "selectArchaeologySite", "sellRunes", "setDuelDefense", "setFavorite", "setParty", "setRelicBookmark", "settleExpeditionRun", "settleRaid", "startExpeditionRun", "startInteractionDispatch", "startStrataRun", "submitExpeditionBossScore",
-  "submitRaidDamage", "summonRaid", "sweepBounty", "sweepCakeOperation", "sweepExpedition", "unequipRune", "updatePlayerCard", "upgradeRuneTrait",
+  "submitRaidDamage", "summonRaid", "sweepBounty", "sweepCakeOperation", "sweepExpedition", "unequipRune", "updateAccountSettings", "updatePlayerCard", "upgradeRuneTrait",
   "useConsumable", "verifyPurchaseReceipt",
 ] as const;
 

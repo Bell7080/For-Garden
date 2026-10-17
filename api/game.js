@@ -25843,6 +25843,20 @@ var ExpeditionClient = class {
 };
 var expeditionManager = new ExpeditionClient();
 
+// src/core/settingsOwnership.ts
+init_define_import_meta_env();
+var ACCOUNT_GAME_SETTING_KEYS = ["battleSpeed", "autoUltimate", "formationRoleHint", "skipUltimatePresentation", "textSpeed", "dungeonTiers"];
+function accountGameSettings(game) {
+  return { battleSpeed: game.battleSpeed, autoUltimate: game.autoUltimate, formationRoleHint: game.formationRoleHint, skipUltimatePresentation: game.skipUltimatePresentation, textSpeed: game.textSpeed, dungeonTiers: { ...game.dungeonTiers } };
+}
+function accountPartOfPatch(patch) {
+  const game = patch.game;
+  if (!game) return null;
+  const out = {};
+  for (const key of ACCOUNT_GAME_SETTING_KEYS) if (key in game && game[key] !== void 0) out[key] = game[key];
+  return Object.keys(out).length > 0 ? out : null;
+}
+
 // src/data/shopCatalog.ts
 init_define_import_meta_env();
 
@@ -27939,19 +27953,42 @@ function applyFrameRateLimit(game, limit) {
 
 // src/managers/SettingsManager.ts
 var SettingsManager = class extends EventTarget {
-  constructor(state = session, saves = saveManager, platform = platformFeedback) {
+  constructor(state = session, saves = saveManager, platform = platformFeedback, injectedApi) {
     super();
     this.state = state;
     this.saves = saves;
     this.platform = platform;
+    this.injectedApi = injectedApi;
   }
   state;
   saves;
   platform;
+  injectedApi;
   /** 알림 변경을 한 줄로 세워 느린 플랫폼 취소가 뒤의 사용자 선택보다 늦게 반영되지 않게 한다. */
   notificationChanges = Promise.resolve();
   /** 부트가 등록한 Phaser 하나만 보관해 설정 변경을 코어 시계와 분리한다. */
   runtimeGame;
+  /** 계정의 값을 서버에 보내는 줄. 보낸 순서대로 닿아야 마지막으로 고른 값이 서버에 남는다. */
+  accountSync = Promise.resolve();
+  apiCache = {};
+  get api() {
+    return resolveServerApi(this.state, this.injectedApi, this.apiCache);
+  }
+  /**
+   * 계정의 값(`settingsOwnership`)만 서버로 보낸다. 화면은 곧바로 바뀌어야 하므로(전투 중 배속 칩) 기기에는 먼저
+   * 적용하고 서버는 뒤따른다 — 실패하면 다음에 서버 상태를 받을 때 서버 값으로 돌아간다.
+   */
+  syncAccountPart(patch) {
+    const game = accountPartOfPatch(patch);
+    if (!game) return;
+    this.accountSync = this.accountSync.then(() => this.api.updateAccountSettings({ game }), () => this.api.updateAccountSettings({ game })).catch((error) => {
+      console.error("\uACC4\uC815 \uC124\uC815 \uC800\uC7A5 \uC2E4\uD328", error);
+    });
+  }
+  /** 서버가 마지막으로 확정할 때까지 기다린다. 시험과 계정 전환 직전에 쓴다. */
+  settled() {
+    return this.accountSync.then(() => void 0);
+  }
   /** 외부 참조로 세션이 변경되지 않도록 정규화된 독립 스냅샷을 반환한다. */
   get() {
     return normalizeSettings(this.state.settings);
@@ -27977,6 +28014,7 @@ var SettingsManager = class extends EventTarget {
     setDataLanguage(this.state.settings.game.language);
     if (this.runtimeGame) applyFrameRateLimit(this.runtimeGame, this.state.settings.presentation.frameRateLimit);
     this.saves.save(this.state);
+    this.syncAccountPart(patch);
     this.dispatchEvent(new CustomEvent("change", { detail: this.get() }));
     return this.get();
   }
@@ -27990,6 +28028,7 @@ var SettingsManager = class extends EventTarget {
     setDataLanguage(this.state.settings.game.language);
     if (this.runtimeGame) applyFrameRateLimit(this.runtimeGame, this.state.settings.presentation.frameRateLimit);
     this.saves.save(this.state);
+    this.syncAccountPart({ game: accountGameSettings(this.state.settings.game) });
     this.dispatchEvent(new CustomEvent("change", { detail: this.get() }));
     return this.get();
   }
@@ -28467,6 +28506,16 @@ var FakeServer = class {
     const rules = new ExpeditionManager(this.state, { save: (next) => this.persist(next) }, this.now, QA_TOOLS_ENABLED);
     rules.status();
     return rules;
+  }
+  /** 계정의 환경설정만 받는다. 허용 목록 밖의 키와 범위 밖의 값은 정규화가 버리거나 기본값으로 돌린다. */
+  async updateAccountSettings(request) {
+    await this.delay();
+    const current = normalizeSettings(this.state.settings);
+    const patch = accountPartOfPatch({ game: request?.game ?? {} }) ?? {};
+    const settings = normalizeSettings({ ...current, game: { ...current.game, ...patch } });
+    this.persist({ ...this.state, settings });
+    this.state.settings = settings;
+    return { game: accountGameSettings(settings.game) };
   }
   async startExpeditionRun(request) {
     await this.delay();
@@ -31750,6 +31799,7 @@ var SERVER_GAME_METHODS = [
   "sweepCakeOperation",
   "sweepExpedition",
   "unequipRune",
+  "updateAccountSettings",
   "updatePlayerCard",
   "upgradeRuneTrait",
   "useConsumable",

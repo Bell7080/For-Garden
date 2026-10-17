@@ -153,8 +153,10 @@ export class SupabaseAccountApi implements AccountApi {
       const err = (await res.json().catch(() => null)) as { message?: string } | null;
       if (err?.message === "save_conflict") return fail("save-conflict", t("error.save.changed"));
       if (res.status === 401) this.tokens = null;
+      this.failure = `rpc:${name}:${res.status}:${String(err?.message ?? "-").slice(0, 60)}`;
       return fail("network-error", err?.message ?? t("error.account.requestFailed", { status: res.status }));
-    } catch {
+    } catch (error) {
+      this.failure = `rpc-exception:${name}:${error instanceof Error ? error.name : "unknown"}`;
       return fail("network-error", t("error.account.network"));
     }
   }

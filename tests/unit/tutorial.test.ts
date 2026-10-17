@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  battleFeatureOpen, battleFeatureToTeach, canCompleteTutorialStep, createCompletedTutorialState, createEmptyTutorialState,
+  battleFeatureOpen, battleFeatureToTeach, CONTENT_INTRO_IDS, shouldShowContentIntro, canCompleteTutorialStep, createCompletedTutorialState, createEmptyTutorialState,
   isTutorialComplete, legacyTutorialState, lobbyTutorialStep, nextTutorialStep, normalizeTutorialState, TUTORIAL_STEPS,
 } from "../../src/core/tutorial";
 
@@ -47,5 +47,23 @@ describe("첫 플레이 튜토리얼 순서표", () => {
     expect(legacyTutorialState([])).toEqual(createEmptyTutorialState());
     expect(legacyTutorialState(["1-1"]).completedStepIds).toEqual(["ultimate"]);
     expect(isTutorialComplete(legacyTutorialState(["1-1", "1-2"]))).toBe(true);
+  });
+});
+
+describe("콘텐츠 첫 방문 안내", () => {
+  it("은 튜토리얼을 마친 뒤 아직 안 본 것만 띄운다", () => {
+    expect(shouldShowContentIntro(createEmptyTutorialState(), "raid")).toBe(false);
+    const done = { completedStepIds: [...TUTORIAL_STEPS] };
+    expect(shouldShowContentIntro(done, "raid")).toBe(true);
+    expect(shouldShowContentIntro({ ...done, seenIntroIds: ["raid"] }, "raid")).toBe(false);
+  });
+
+  it("은 모르는 ID를 버리고 비면 필드를 두지 않는다", () => {
+    expect(normalizeTutorialState({ completedStepIds: [], seenIntroIds: ["nope"] })).toEqual({ completedStepIds: [] });
+    expect(normalizeTutorialState({ completedStepIds: [], seenIntroIds: ["duel", "raid", "x"] }).seenIntroIds).toEqual(["raid", "duel"].sort((a, b) => CONTENT_INTRO_IDS.indexOf(a as never) - CONTENT_INTRO_IDS.indexOf(b as never)));
+  });
+
+  it("은 모두 마친 상태에서 안내도 모두 본 것으로 시작한다", () => {
+    expect(createCompletedTutorialState().seenIntroIds).toEqual([...CONTENT_INTRO_IDS]);
   });
 });

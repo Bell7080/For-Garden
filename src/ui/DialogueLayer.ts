@@ -4,6 +4,9 @@ import type { DialogueBackdrop, DialogueChoice, DialogueNode, DialogueStandingAs
 import { DialoguePlaybackClock } from "../core/dialoguePlayback";
 import { settingsManager } from "../managers/SettingsManager";
 import { Button } from "./Button";
+import { ControlChip } from "./ControlChip";
+import { t } from "../i18n";
+import { anyPopupOpen } from "./PopupLayer";
 import { DIALOGUE_BUBBLE } from "./dialogueBubbleLayout";
 import { DialogueStage } from "./DialogueStage";
 import { DIALOGUE_OVERSCAN, DIALOGUE_PANEL_TOP } from "./dialogueStageLayout";
@@ -26,6 +29,19 @@ const PANEL_TOP = DIALOGUE_PANEL_TOP;
  */
 const PANEL_TEXT = { nameX: 82, bodyX: 92, bodyY: PANEL_TOP + 74, nameSize: 34, bodySize: 38 } as const;
 
+/**
+ * 자동 넘기기는 이야기를 오가도 유지되는 보기 습관이라 화면(레이어)이 아니라 모듈에 둔다. 저장하지 않는다 —
+ * 앱을 다시 켜면 꺼진 채로 시작하는 것이 업계 표준이고, 켜 둔 채 잊은 사람이 대사를 놓치지 않는다.
+ */
+let autoAdvance = false;
+
+/** 대사판 우상단 조작 칩 줄(자동·로그·숨기기). 판 윗선 바로 위, 오른쪽 끝에서 안쪽으로 붙는다. */
+const DIALOGUE_TOOLS = { y: PANEL_TOP - 62, right: BASE_WIDTH - 48, width: 150, height: 62, gap: 12 } as const;
+/** 자동 넘기기가 다음 줄로 넘어가기까지 기다리는 시간: 기본 + 글자당. 배속 설정은 타이핑에만 쓴다. */
+const AUTO_ADVANCE_MS = { base: 1100, perCharacter: 55, retry: 500 } as const;
+/** 로그에 남기는 지난 대사 수 상한. */
+const LOG_LIMIT = 40;
+
 /** 1080×1920 안전 영역 안에서 모든 스토리가 공유하는 대사/선택/스탠딩 표시다. */
 export class DialogueLayer extends Phaser.GameObjects.Container {
   /** 화자 이름표. 노드마다 글자 폭이 달라지므로 판 한 장을 다시 만든다. */
@@ -47,6 +63,11 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
   private terminated = false;
   /** Phaser가 Container의 scene 참조를 정리해도 생성 당시 씬의 실행 상태를 판정하는 기준이다. */
   private readonly ownerScene: Phaser.Scene;
+  private readonly history: { speaker: string; body: string }[] = [];
+  private autoTimer?: Phaser.Time.TimerEvent;
+  private autoChip?: ControlChip;
+  private logOverlay?: Phaser.GameObjects.Container;
+  private hideCatcher?: Phaser.GameObjects.Rectangle;
 
   constructor(
     scene: Phaser.Scene,
@@ -76,13 +97,17 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
     this.bodyText = scene.add.text(PANEL_TEXT.bodyX, PANEL_TEXT.bodyY, "", textStyle({ role: "body", size: PANEL_TEXT.bodySize, wrap: BASE_WIDTH - 184, lineSpacing: DIALOGUE_BUBBLE.lineSpacing + 6 }));
     this.bodyText.setWordWrapCallback((text: string, object: Phaser.GameObjects.Text) => wrapDialogueText(text, object.style.wordWrapWidth ?? BASE_WIDTH - 184,
       (value) => object.context.measureText(value).width, settingsManager.get().game.language));
-    this.nextMark = scene.add.text(BASE_WIDTH - 100, PANEL_TOP + 464, "▼", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5);
+    this.nextMark = scene.add.text(BASE_WIDTH - 100, PANEL_TOP + 424, "▼", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5);
     this.add([glass, topLine, blocker, this.bodyText, this.nextMark]);
+    this.addTools();
     this.setDepth(600);
     scene.add.existing(this);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       // 종료 세대는 진행 중인 show를 모두 무효화해 종료된 씬에서 비동기 Puppet 결과가 되살아나는 것을 막는다.
       this.terminated = true;
+      this.autoTimer?.remove(false);
+      this.logOverlay?.destroy();
+      this.hideCatcher?.destroy();
       this.renderGeneration += 1;
       this.cancelTyping();
     });
@@ -102,6 +127,8 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
     this.cancelTyping();
     this.clearChoices();
     this.setSpeaker(node.speaker);
+    this.history.push({ speaker: node.speaker, body: node.body });
+    if (this.history.length > LOG_LIMIT) this.history.shift();
     this.pendingChoices = node.choices ?? [];
     this.startTyping(node.body);
     await this.stage.present(node, () => generation === this.renderGeneration && this.isRenderOwnerActive());
@@ -153,10 +180,85 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
     this.bodyText.setText(this.fullBody);
     this.nextMark.setVisible(this.pendingChoices.length === 0);
     this.buildChoices(this.pendingChoices);
+    this.scheduleAutoAdvance();
+  }
+
+  /** 자동 넘기기: 본문이 다 서면 읽을 만큼 기다렸다가 다음 줄로. 선택지가 있으면 사람이 고를 때까지 선다. */
+  private scheduleAutoAdvance(): void {
+    this.autoTimer?.remove(false);
+    this.autoTimer = undefined;
+    if (!autoAdvance || this.pendingChoices.length > 0 || this.terminated) return;
+    const generation = this.renderGeneration;
+    const wait = AUTO_ADVANCE_MS.base + Array.from(this.fullBody).length * AUTO_ADVANCE_MS.perCharacter;
+    const tick = (delay: number): void => {
+      this.autoTimer = this.scene.time.delayedCall(delay, () => {
+        if (this.terminated || !autoAdvance || generation !== this.renderGeneration || this.isTyping || this.choiceObjects.length > 0) return;
+        // 확인 창·로그가 떠 있거나 판을 숨긴 동안에는 넘기지 않고 기다린다.
+        if (anyPopupOpen() || this.logOverlay || this.hideCatcher) { tick(AUTO_ADVANCE_MS.retry); return; }
+        this.onAdvance();
+      });
+    };
+    tick(wait);
+  }
+
+  private addTools(): void {
+    const { y, right, width, height, gap } = DIALOGUE_TOOLS;
+    const centerX = (index: number): number => right - width / 2 - index * (width + gap);
+    this.autoChip = new ControlChip(this.ownerScene, centerX(0), y, {
+      icon: "auto", label: t("dialogue.auto"), width, height,
+      onClick: () => {
+        autoAdvance = !autoAdvance;
+        this.autoChip?.setActive(autoAdvance);
+        // 켠 순간 이미 다 서 있는 대사는 바로 타이머를 건다.
+        if (autoAdvance && !this.isTyping) this.scheduleAutoAdvance();
+        else this.autoTimer?.remove(false);
+      },
+    });
+    this.autoChip.setActive(autoAdvance);
+    const logChip = new ControlChip(this.ownerScene, centerX(1), y, { icon: "scroll", label: t("dialogue.log"), width, height, onClick: () => this.openLog() });
+    const hideChip = new ControlChip(this.ownerScene, centerX(2), y, { icon: "caret-down", label: t("dialogue.hide"), width, height, onClick: () => this.hidePanel() });
+    this.add([this.autoChip, logChip, hideChip]);
+  }
+
+  /** 판을 숨기고 배경·스탠딩만 보여 준다. 화면 아무 곳이나 누르면 돌아온다. */
+  private hidePanel(): void {
+    if (this.hideCatcher || this.choiceObjects.length > 0) return;
+    this.setVisible(false);
+    this.hideCatcher = this.ownerScene.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, 0xffffff, 0).setDepth(605).setInteractive();
+    this.hideCatcher.once("pointerup", () => {
+      this.hideCatcher?.destroy();
+      this.hideCatcher = undefined;
+      this.setVisible(true);
+      if (autoAdvance && !this.isTyping) this.scheduleAutoAdvance();
+    });
+  }
+
+  /** 지난 대사 로그. 가장 최근 대사가 아래에 서고, 화면을 누르면 닫힌다. */
+  private openLog(): void {
+    if (this.logOverlay) return;
+    const scene = this.ownerScene;
+    const overlay = scene.add.container(0, 0).setDepth(720);
+    const dim = scene.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.86).setInteractive();
+    const text = scene.add.text(80, BASE_HEIGHT - 150, "", textStyle({ role: "body", size: 32, wrap: BASE_WIDTH - 160, lineSpacing: 10 })).setOrigin(0, 1);
+    overlay.add([dim, text]);
+    const entries = this.history.map(({ speaker, body }) => (speaker ? `${speaker}\n${body}` : body));
+    let shown = "";
+    for (let i = entries.length - 1; i >= 0; i -= 1) {
+      const next = shown ? `${entries[i]}\n\n${shown}` : entries[i];
+      text.setText(next);
+      if (text.height > BASE_HEIGHT - 340 && shown) break;
+      shown = next;
+    }
+    text.setText(shown);
+    overlay.add(scene.add.text(BASE_WIDTH / 2, 90, t("dialogue.log"), textStyle({ role: "display", size: 40, color: COLOR.accentText })).setOrigin(0.5));
+    dim.once("pointerup", () => { overlay.destroy(); this.logOverlay = undefined; });
+    this.logOverlay = overlay;
   }
 
   /** 노드 교체 시 타이머와 그 타이머가 참조하던 원문을 함께 폐기한다. */
   private cancelTyping(): void {
+    this.autoTimer?.remove(false);
+    this.autoTimer = undefined;
     this.typingEvent?.remove(false);
     this.typingEvent = undefined;
     this.isTyping = false;

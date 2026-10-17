@@ -39,6 +39,7 @@ import { findItem } from "../data/items";
 import { openItemGuide } from "../ui/currencyGuideEntry";
 import { pressIn, pressOut } from "../ui/pressFeedback";
 import { withBusy } from "../ui/BusyOverlay";
+import { showContentIntro } from "../ui/contentIntro";
 
 /**
  * 지난번에 받은 레이드 목록. 씬이 다시 설 때 이것으로 먼저 그려 빈 목록이 한 박자 서지 않게 한다.
@@ -117,6 +118,7 @@ export class RaidScene extends Phaser.Scene {
       addBackButton(this, () => startScene(this, "lobby", LOBBY_RETURN.sortie));
       void this.refreshList();
       playSceneEntrance(this);
+      showContentIntro(this, "raid");
       return;
     }
     // 판에서 나가는 길은 로비가 아니라 **레이드 목록**이다 — 편성에서 판으로 돌아오는 것과 같은

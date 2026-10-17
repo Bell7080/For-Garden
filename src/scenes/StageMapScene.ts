@@ -27,6 +27,7 @@ import { openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { gameApi } from "../api/FakeServer";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { LOBBY_RETURN } from "./lobbyEntry";
+import { showContentIntro } from "../ui/contentIntro";
 
 /** 지도가 보이는 세로 구간. 위쪽 제목과 아래쪽 버튼을 침범하지 않는다. */
 const WINDOW = { top: 500, bottom: 1560 } as const;
@@ -148,6 +149,7 @@ export class StageMapScene extends Phaser.Scene {
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
+    showContentIntro(this, "stageMap");
   }
 
   /** 클리어 상황에서 지금 도전할 수 있는 가장 뒤쪽 스테이지. */

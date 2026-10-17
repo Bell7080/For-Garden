@@ -26,6 +26,7 @@ import { CAKE_OPERATION_ENEMY_IDS } from "../data/cakeOperation";
 import { startScene } from "../ui/screenTransition";
 import type { PartySceneData } from "../data/partyContent";
 import { consumeSceneEntry } from "./sceneEntry";
+import { showContentIntro } from "../ui/contentIntro";
 
 /** 편성 화면·결과판에서 돌아올 때 고른 단계를 그대로 되살린다. */
 export interface CakeOperationSceneData {
@@ -95,6 +96,7 @@ export class CakeOperationScene extends Phaser.Scene {
       this.dailyAdRewards = state.dailyAdRewards;
       this.refresh();
     }).catch(() => undefined);
+    showContentIntro(this, "cakeOperation");
   }
 
   private selectedTier(): CakeOperationTier {

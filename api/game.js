@@ -1620,6 +1620,23 @@ var MISC_KO = {
   "opening.skip": "\uC2A4\uD0B5",
   "opening.skip.title": "\uC2A4\uD0B5",
   "opening.skip.message": "\uC815\uB9D0 \uC2A4\uD0B5\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?",
+  "dialogue.auto": "\uC790\uB3D9",
+  "dialogue.log": "\uB85C\uADF8",
+  "dialogue.hide": "\uC228\uAE30\uAE30",
+  "intro.title": "\uC548\uB0B4",
+  "intro.confirm": "\uC54C\uACA0\uC5B4\uC694",
+  "intro.stageMap": "\uAD00\uBB38\uC744 \uB20C\uB7EC \uC801\uC744 \uD655\uC778\uD558\uACE0, \uD3B8\uC131\uD55C \uB4A4 \uCD9C\uACA9\uD558\uC138\uC694. \uC774\uAE30\uBA74 \uB2E4\uC74C \uAD00\uBB38\uC774 \uC5F4\uB9AC\uACE0, \uCC98\uC74C \uAE6C \uAD00\uBB38\uC5D0\uB294 \uBCF4\uC0C1\uC774 \uC788\uC5B4\uC694.",
+  "intro.party": "\uAC00\uC6B4\uB370\uC5D0\uB294 \uD0F1\uCEE4\uB098 \uC804\uC0AC\uB97C, \uC591\uC606\uC5D0\uB294 \uC554\uC0B4\uC790\uC640 \uC9C0\uC6D0\uAC00\uB97C \uC138\uC6B0\uBA74 \uC798 \uC2F8\uC6CC\uC694. \uB04C\uC5B4\uC11C \uC790\uB9AC\uB97C \uBC14\uAFC0 \uC218 \uC788\uACE0 \uC790\uB3D9 \uBC30\uCE58\uB3C4 \uC788\uC5B4\uC694.",
+  "intro.shop": "\uC0C1\uC810\uC5D0\uC11C\uB294 \uC82C\uACFC \uACE8\uB4DC\uB85C \uCE58\uC988\uCF00\uC774\uD06C, \uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C \uAC19\uC740 \uBB3C\uAC74\uC744 \uC0B4 \uC218 \uC788\uC5B4\uC694. \uB9E4\uC77C \uC0C8\uB85C \uCC44\uC6CC\uC9C0\uB294 \uCE78\uB3C4 \uD655\uC778\uD574 \uBCF4\uC138\uC694.",
+  "intro.cakeOperation": "\uCE58\uC988\uCF00\uC774\uD06C \uB300\uC791\uC804\uC740 \uD55C\uAEBC\uBC88\uC5D0 \uBAB0\uB824\uC624\uB294 \uC801\uC744 \uB9C9\uC544 \uCE58\uC988\uCF00\uC774\uD06C\uB97C \uC5BB\uB294 \uB358\uC804\uC774\uC5D0\uC694. \uB2E8\uACC4\uAC00 \uB192\uC744\uC218\uB85D \uBCF4\uC0C1\uB3C4 \uC801\uB3C4 \uCEE4\uC838\uC694. \uC774\uAE34 \uD310\uC5D0\uC11C\uB9CC \uC2A4\uD14C\uBBF8\uB098\uB97C \uC368\uC694.",
+  "intro.bounty": "\uD604\uC0C1\uC218\uBC30\uB294 \uB77C\uC6B4\uB4DC\uB9C8\uB2E4 \uC815\uD574\uC9C4 \uC801\uC744 \uC0C1\uB300\uD558\uB294 \uB358\uC804\uC774\uC5D0\uC694. \uC774\uAE30\uBA74 \uACE8\uB4DC\uC640 \uC7AC\uB8CC\uB97C \uC5BB\uACE0, \uC774\uAE34 \uD310\uC5D0\uC11C\uB9CC \uC2A4\uD14C\uBBF8\uB098\uB97C \uC368\uC694. \uC18C\uD0D5\uC73C\uB85C \uBE60\uB974\uAC8C \uB3CC \uC218\uB3C4 \uC788\uC5B4\uC694.",
+  "intro.interaction": "\uAD50\uB958\uB294 \uB810\uB9AD\uC744 \uB2E4\uB978 \uB3C4\uC2DC\uB85C \uD30C\uACAC\uD574 \uC2DC\uAC04\uC774 \uC9C0\uB09C \uB4A4 \uBCF4\uC0C1\uC744 \uBC1B\uC544 \uC624\uB294 \uCF58\uD150\uCE20\uC608\uC694. \uBCF4\uB0B8 \uB4A4\uC5D0\uB294 \uB0A8\uC740 \uC2DC\uAC04\uC774 \uD750\uB974\uACE0, \uB3CC\uC544\uC624\uBA74 \uBC1B\uC544 \uAC00\uC138\uC694.",
+  "intro.duel": "\uACB0\uD22C\uC7A5\uC5D0\uC11C\uB294 \uB2E4\uB978 \uC5F0\uAD6C\uC6D0\uC758 \uBC29\uC5B4 \uD3B8\uC131\uACFC 3\uB3003\uC73C\uB85C \uACA8\uB904\uC694. \uBA3C\uC800 [\uBC29\uC5B4]\uC5D0\uC11C \uBC29\uC5B4 \uD3B8\uC131\uC744 \uC138\uC6B0\uACE0, [\uB3C4\uC804]\uC73C\uB85C \uC0C1\uB300\uB97C \uACE0\uB974\uC138\uC694. \uACB0\uD22C\uB294 \uB298 \uC790\uB3D9 \uAD81\uADF9\uAE30\uC608\uC694.",
+  "intro.friends": "\uCE5C\uAD6C\uB97C \uCD94\uAC00\uD558\uBA74 \uC11C\uB85C\uC758 \uD504\uB85C\uD544\uC744 \uBCFC \uC218 \uC788\uC5B4\uC694. \uCE5C\uAD6C \uCE74\uB4DC\uC5D0\uC11C \uC560\uCC29 \uB810\uB9AD\uC744 \uB20C\uB7EC \uC815\uBCF4\uB97C \uD655\uC778\uD574 \uBCF4\uC138\uC694.",
+  "intro.raid": "\uB808\uC774\uB4DC\uB294 \uC5EC\uB7FF\uC774 \uD55C \uBCF4\uC2A4\uC758 \uCCB4\uB825\uC744 \uD568\uAED8 \uAE4E\uB294 \uCF58\uD150\uCE20\uC608\uC694. \uD310\uB9C8\uB2E4 \uB3C4\uC804\uC740 \uB450 \uBC88\uC774\uACE0, \uCE5C \uB9CC\uD07C \uC810\uC218\uC640 \uBCF4\uC0C1\uC774 \uC313\uC5EC\uC694. \uD310\uC774 \uB05D\uB098\uBA74 \uC644\uB8CC \uD0ED\uC5D0\uC11C \uC815\uC0B0\uD558\uC138\uC694.",
+  "intro.expedition": "\uC6D0\uC815\uC740 \uD558\uB8E8\uC5D0 \uD55C \uBC88 \uB3C4\uB294 \uC2A4\uBB34 \uCE35\uC9DC\uB9AC \uAE38\uC774\uC5D0\uC694. \uB5A0\uB09C \uC21C\uAC04\uC758 \uBAA8\uC2B5\uC73C\uB85C \uB05D\uAE4C\uC9C0 \uC2F8\uC6B0\uB2C8, \uCD9C\uBC1C \uC804\uC5D0 \uD3B8\uC131\uACFC \uC131\uC7A5\uC744 \uB9C8\uCE58\uC138\uC694.",
+  "intro.archaeology": "\uACE0\uACE0\uD559\uC740 \uC9C0\uCE35\uC744 \uD30C\uC11C \uC6D0\uC11D, \uB8EC, \uC7AC\uD654\uB97C \uC5BB\uB294 \uD0D0\uC0AC\uC608\uC694. \uC548\uAC1C \uC0C9\uC740 \uC798 \uB098\uC624\uB294 \uBCF4\uC0C1\uC758 \uD78C\uD2B8\uC774\uACE0, \uD55C \uBC88 \uD310 \uC720\uC801\uC740 \uC2DC\uAC04\uC774 \uC9C0\uB098\uC57C \uB2E4\uC2DC \uC5F4\uB824\uC694.",
+  "intro.premium": "\uD504\uB9AC\uBBF8\uC5C4\uC5D0\uC11C\uB294 \uD328\uC2A4, \uAD6C\uB3C5, \uD2B9\uAC00 \uC0C1\uD488\uC744 \uBCFC \uC218 \uC788\uC5B4\uC694. \uBB34\uB8CC \uBCF4\uAE09\uC740 \uBD89\uC740 \uC810\uC73C\uB85C \uC54C\uB824 \uB4DC\uB824\uC694.",
   "rail.guild": "\uAE38\uB4DC",
   // 하단 탭·레일
   "nav.archaeology": "\uACE0\uACE0\uD559",
@@ -17291,6 +17308,27 @@ var TUTORIAL_STEPS = [
   /** 연구소에서 첫 복원 연구를 직접 돌린다. */
   "pull"
 ];
+var CONTENT_INTRO_IDS = [
+  "stageMap",
+  "party",
+  "shop",
+  "cakeOperation",
+  "bounty",
+  "interaction",
+  "duel",
+  "friends",
+  "raid",
+  "expedition",
+  "archaeology",
+  "premium"
+];
+var INTRO_SET = new Set(CONTENT_INTRO_IDS);
+function isContentIntroId(value) {
+  return typeof value === "string" && INTRO_SET.has(value);
+}
+function isContentIntroSeen(state, id) {
+  return state.seenIntroIds?.includes(id) ?? false;
+}
 var TUTORIAL_REWARDS = {
   // 첫 복원 연구(배너 `welcome`)는 10연 전용이고 화석 8개가 든다 — 정확히 한 번 돌릴 몫이다.
   gift: { fossil: 8 }
@@ -17299,7 +17337,7 @@ function createEmptyTutorialState() {
   return { completedStepIds: [] };
 }
 function createCompletedTutorialState() {
-  return { completedStepIds: [...TUTORIAL_STEPS] };
+  return { completedStepIds: [...TUTORIAL_STEPS], seenIntroIds: [...CONTENT_INTRO_IDS] };
 }
 var STEP_SET = new Set(TUTORIAL_STEPS);
 function isTutorialStepId(value) {
@@ -17314,7 +17352,10 @@ function normalizeTutorialState(value) {
     if (!done.has(step2)) break;
     completedStepIds.push(step2);
   }
-  return { completedStepIds };
+  const rawIntros = value && typeof value === "object" ? value.seenIntroIds : void 0;
+  const seen = new Set(Array.isArray(rawIntros) ? rawIntros.filter(isContentIntroId) : []);
+  const seenIntroIds = CONTENT_INTRO_IDS.filter((id) => seen.has(id));
+  return seenIntroIds.length > 0 ? { completedStepIds, seenIntroIds } : { completedStepIds };
 }
 function isValidTutorialState(value) {
   return !!value && typeof value === "object" && JSON.stringify(normalizeTutorialState(value)) === JSON.stringify(value);
@@ -25298,7 +25339,7 @@ var SaveManager = class {
       serverJournal: structuredClone(data.serverJournal ?? emptyServerJournal()),
       raidTicketDrops: { ...data.raidTicketDrops },
       achievements: { claimed: { ...data.achievements.claimed }, goldPeak: data.achievements.goldPeak },
-      tutorial: { completedStepIds: [...data.tutorial.completedStepIds] }
+      tutorial: { completedStepIds: [...data.tutorial.completedStepIds], ...data.tutorial.seenIntroIds ? { seenIntroIds: [...data.tutorial.seenIntroIds] } : {} }
     };
   }
 };
@@ -30983,7 +31024,7 @@ var FakeServer = class {
     const current = normalizeTutorialState(this.state.tutorial);
     if (isTutorialStepDone(current, request.stepId)) return { tutorial: current, wallet: { ...this.state.wallet }, serverTime: this.now().toISOString() };
     if (!canCompleteTutorialStep(current, request.stepId)) throw new GameApiError("INVALID_STATE", "\uC55E \uB2E8\uACC4\uB97C \uBA3C\uC800 \uB9C8\uCCD0\uC57C \uD569\uB2C8\uB2E4.");
-    const tutorial = { completedStepIds: [...current.completedStepIds, request.stepId] };
+    const tutorial = { ...current, completedStepIds: [...current.completedStepIds, request.stepId] };
     const reward = TUTORIAL_REWARDS[request.stepId];
     const fossil = reward ? Math.max(0, Math.min(reward.fossil, WALLET_CAPS.fossil - this.state.wallet.fossil)) : 0;
     const nextWallet = { ...this.state.wallet, fossil: this.state.wallet.fossil + fossil };
@@ -30991,6 +31032,18 @@ var FakeServer = class {
     this.state.tutorial = tutorial;
     this.state.wallet = nextWallet;
     return { tutorial, ...reward ? { granted: { fossil } } : {}, wallet: { ...nextWallet }, serverTime: this.now().toISOString() };
+  }
+  /** 콘텐츠 첫 방문 안내를 봤다고 남긴다. 순서·선물이 없어 알려진 ID면 그대로 기록한다. */
+  async markContentIntroSeen(request) {
+    await this.delay();
+    if (!isContentIntroId(request.introId)) throw new GameApiError("INVALID_STATE", "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uC548\uB0B4\uC785\uB2C8\uB2E4.");
+    const current = normalizeTutorialState(this.state.tutorial);
+    if (!isContentIntroSeen(current, request.introId)) {
+      const tutorial = normalizeTutorialState({ ...current, seenIntroIds: [...current.seenIntroIds ?? [], request.introId] });
+      this.persist({ ...this.state, tutorial });
+      this.state.tutorial = tutorial;
+    }
+    return { tutorial: normalizeTutorialState(this.state.tutorial), serverTime: this.now().toISOString() };
   }
   /** 애착 스토리 장 해금 — 유대 레벨을 서버 상태로 확인하고 장마다 한 번만 젬을 준다. */
   async claimRelicChapter(request) {
@@ -31767,6 +31820,7 @@ var SERVER_GAME_METHODS = [
   "harvestExcavation",
   "interactInLobby",
   "markAttendanceAutoShown",
+  "markContentIntroSeen",
   "markInteractionJournalRead",
   "markMailsRead",
   "markRune",

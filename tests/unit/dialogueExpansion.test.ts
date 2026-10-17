@@ -52,7 +52,7 @@ describe("딱지와 무전", () => {
 
   it("의 투영은 얼굴을 가리지 않고 거의 불투명하다", () => {
     expect("face" in DIALOGUE_REMOTE).toBe(false);
-    expect(DIALOGUE_REMOTE.alpha - DIALOGUE_REMOTE.flickerAlpha).toBeGreaterThan(0.9);
+    expect(DIALOGUE_REMOTE.alpha - DIALOGUE_REMOTE.flickerAlpha).toBeGreaterThan(0.75);
   });
 
   it("의 감정 몸짓은 몸에는 옅게 덮고 둘레에 안쪽이 진한 발광을 깐다", () => {

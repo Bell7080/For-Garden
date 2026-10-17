@@ -161,12 +161,12 @@ test("전투 기여도 판을 열고 세 분류를 바꾼 뒤 접어 1080×1920 
   // 판을 여는 칩은 전투 조작 줄(배속 칩 바로 위)에 선다 — 자리는 순수 배치표가 갖는다.
   await tap(page, CONTRIBUTION_TOGGLE.x, CONTRIBUTION_TOGGLE.y);
   await expect.poll(async () => (await battle(page))?.contributionPanel?.expanded).toBe(true);
-  // 84×76 직접 선택 영역의 중앙을 차례로 눌러 모바일에서 분류 순환을 검증한다.
-  await tap(page, 234, 620);
+  // 84×72 직접 선택 영역의 중앙을 차례로 눌러 모바일에서 분류 순환을 검증한다.
+  await tap(page, 174, 280);
   await expect.poll(async () => (await battle(page))?.contributionPanel?.category).toBe("defense");
-  await tap(page, 318, 620);
+  await tap(page, 258, 280);
   await expect.poll(async () => (await battle(page))?.contributionPanel?.category).toBe("healing");
-  await tap(page, 150, 620);
+  await tap(page, 90, 280);
   await expect.poll(async () => (await battle(page))?.contributionPanel?.category).toBe("attack");
   await captureGame(page, `test-results/${testInfo.project.name}-battle-contribution-expanded-1080x1920.png`);
   // 같은 칩을 다시 눌러 접는다. 판 밖 아무 곳이나 눌러도 접히지만, 그 칩은 판 밖이라

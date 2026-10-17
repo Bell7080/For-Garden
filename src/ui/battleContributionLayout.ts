@@ -3,40 +3,32 @@ export interface ContributionBounds { left: number; top: number; width: number; 
 
 /** 1080×1920 전투 화면에서 상단 HUD와 하단 프로필 사이에 고정한 기여도 판 배치표다. */
 export const BATTLE_CONTRIBUTION_LAYOUT = {
-  panel: { left: 24, top: 550, width: 360, height: 700 },
   /**
-   * 판을 **화면 밖으로 완전히 내보내는** 자리.
-   *
-   * 예전에는 컨테이너를 판 **폭만큼**(-360) 밀었는데, 판이 화면 왼쪽 여백(24) 안쪽에서
-   * 시작하므로 그만큼이 그대로 남아 접은 뒤에도 오른쪽 변 한 뼘이 전장에 걸쳐 있었다.
-   * 여백과 그림자까지 함께 밀어 접으면 확실히 사라진다.
+   * 판은 **화면 맨 위에서 내려오는 가로 띠**다. 예전에는 왼쪽 전장 옆에 세로로 서서 그 뒤의 SD를
+   * 가렸는데, 상단 HUD 아래·전장 위(아레나는 600 아래에서 시작한다)의 빈 하늘 띠는 아무것도
+   * 가리지 않는다. 다섯 전투원이 가로로 늘어서 순위가 바뀌면 옆으로 스르륵 자리를 바꾼다.
    */
-  slideOutX: -(24 + 360 + 24),
+  panel: { left: 24, top: 236, width: 1032, height: 216 },
+  /**
+   * 판을 **화면 위로 완전히 내보내는** 자리. 판 아랫변과 그림자까지 화면 밖으로 밀어
+   * 접은 뒤에는 흔적이 남지 않는다.
+   */
+  slideOutY: -(236 + 216 + 24),
   /**
    * 접힌 상태에서 화면에 남는 것 — **판이 아니라 여는 칩 하나**다.
    *
-   * 칩은 전투 조작 줄(배속·자동 궁극기)과 **같은 가로선의 왼쪽 끝**에 선다. 배속 칩 **위**에
-   * 얹었을 때는 오른쪽 아래가 칩 셋으로 쌓여 조작 덩어리가 두 층이 됐는데, 이 칩이 여는 것은
-   * 화면 **왼쪽**에서 나오는 판이라 자리와 결과가 반대쪽을 가리켰다. 왼쪽 끝에 두면 펼친 판이
-   * 그 칩 바로 위로 이어져 판과 손잡이가 한 덩어리로 읽히고, 눌러 접으면 자리를 비운다.
+   * 칩은 전투 조작 줄(배속·자동 궁극기)과 **같은 가로선의 왼쪽 끝**에 선다.
    */
   collapsed: { left: 24, top: 1288 - 38, width: 170, height: 76 },
-  categories: { left: 108, top: 582, width: 252, height: 76, itemWidth: 84 },
-  rows: { left: 116, top: 686, width: 244, height: 96, gap: 12, count: 5 },
-  /**
-   * 행 왼쪽의 얼굴 액자.
-   *
-   * 이름만 늘어서면 다섯 줄에서 누구인지 한눈에 읽히지 않는다 — 결과 화면의 기여도 판이
-   * 같은 이유로 액자를 붙인다.
-   *
-   * **전투 중 판의 액자는 결과 화면(120)보다 작다.** 이 판은 싸우는 동안 전장 옆에 붙어 있어
-   * 액자가 커진 만큼 그 뒤의 전장을 가린다 — 여기서 읽어야 하는 것은 순위가 바뀌는 흐름이고,
-   * 누구인지는 작은 얼굴로도 읽힌다. 전투가 끝난 뒤의 판은 전장을 가릴 것이 없으므로 그대로
-   * 크게 둔다.
-   */
-  face: { x: 62, size: 68, offsetY: 26 },
-  /** 막대는 액자가 줄어든 만큼 길어진다 — 다섯 줄의 길이 차이가 순위를 말한다. */
-  bar: { width: 236, height: 14, offsetY: 48 },
+  categories: { left: 48, top: 244, width: 252, height: 72, itemWidth: 84 },
+  /** 칸 하나가 한 전투원의 자리다. 왼쪽에서 오른쪽으로 순위 순이다. */
+  rows: { left: 46, top: 324, width: 188, height: 112, gap: 12, count: 5 },
+  /** 칸 안(왼쪽 위 기준) 얼굴 액자. 전장 위에 걸친 띠라 작게 둔다. */
+  face: { x: 34, y: 38, size: 60 },
+  /** 칸 안 이름·수치 열의 왼쪽 시작. */
+  text: { x: 72, nameY: 22, valueY: 56 },
+  /** 막대는 칸 맨 아래를 가로지른다 — 다섯 막대의 길이 차이가 순위를 말한다. */
+  bar: { width: 176, height: 14, y: 96 },
   protected: {
     stage: { left: 0, top: 0, width: 1080, height: 230 },
     bossHud: { left: 0, top: 70, width: 520, height: 150 },
@@ -57,10 +49,15 @@ export const CONTRIBUTION_TOGGLE = {
   y: BATTLE_CONTRIBUTION_LAYOUT.collapsed.top + BATTLE_CONTRIBUTION_LAYOUT.collapsed.height / 2,
 } as const;
 
-/** 행 하나의 가운데 y. 순위가 바뀌면 이 자리 사이를 스르륵 옮긴다. */
-export function contributionRowCenterY(index: number): number {
+/** 칸 하나의 왼쪽 x. 순위가 바뀌면 이 자리 사이를 스르륵 옮긴다. */
+export function contributionCellX(index: number): number {
   const { rows } = BATTLE_CONTRIBUTION_LAYOUT;
-  return rows.top + index * (rows.height + rows.gap) + rows.height / 2 - 18;
+  return rows.left + index * (rows.width + rows.gap);
+}
+
+/** 모든 칸이 같은 높이에 선다. */
+export function contributionCellY(): number {
+  return BATTLE_CONTRIBUTION_LAYOUT.rows.top;
 }
 
 /** 테스트와 프리팹이 같은 계산을 써 펼침 상태별 실제 화면 경계를 얻는다. */

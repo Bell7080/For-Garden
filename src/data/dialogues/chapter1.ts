@@ -129,7 +129,7 @@ export const STAGE_1_8_PRE: DialogueStory = {
     { id: "sit", speaker: "", body: "지하 배수로. 수문 손잡이 위에 베일을 쓴 작은 그림자가 앉아 있다. 반짝이는 조각을 소매에 하나씩 넣는 중이다.", standing: "torika", cast: ROGUE_TRIO },
     { id: "tia", speaker: "티아", body: "앗, 들켰다…! 연구원님도 계셨네요! 저, 저는 그냥 보급 회수 중이에요! 수문 점검도 하는 중이고요!", cast: TIA_TRIO, act: "recoil" },
     { id: "same", speaker: "토리카", body: "어, 티아잖아! 여기서 뭐 해? 설마 또 반짝이는 거 주워?", standing: "torika", act: "hop" },
-    { id: "veil", speaker: "티아", body: "토리카도 있었네! 아니, 연구원님이 제 이름을 불러 주시면 저도 모르게 달려가 버려요. 그러니까 조금만 있다가요! 마음의 준비가 필요해요!", act: "bounce" },
+    { id: "veil", speaker: "티아", body: "토리카도 있었네! 반짝이는 것만 줍는 건 아니에요. 이 수문 근처로 보급 상자가 떠내려와서, 쓸 만한 건 다 건져 두는 중이에요!", act: "bounce" },
     { id: "useless", speaker: "토리카", body: "그 반짝이는 조각들은 어디에 쓰는 거야? 별 쓸모는 없어 보이는데…", standing: "torika", act: "lean" },
     { id: "droop", speaker: "티아", body: "쓸모… 없어? 이거 다 내 보물인데…", act: "faint" },
     { id: "oops", speaker: "토리카", body: "아, 아니야! 반짝반짝해서 예쁘다는 뜻이었어!", standing: "torika", act: "shake" },

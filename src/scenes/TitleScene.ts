@@ -28,11 +28,13 @@ import { activeFontFamily, loadGameFonts } from "../ui/fonts";
 import { PopupLayer } from "../ui/PopupLayer";
 import { openChoicePicker } from "../ui/SettingsPicker";
 import { accountApi, type AccountFailureCode } from "../api/AccountApi";
-import { connectProgress, disconnectProgress } from "../api/backendSession";
+import { backendAccount, connectProgress, disconnectProgress } from "../api/backendSession";
+import { Button } from "../ui/Button";
+import { motionPolicy } from "../core/settings";
 import { openSaveConflictPopup, type SaveConflictChoice } from "../ui/SaveConflictPopup";
 import { saveManager } from "../state/SaveManager";
 import { TitleActionRow } from "../ui/TitleActionRow";
-import { TITLE_LOADING_LAYOUT } from "../ui/titleActionLayout";
+import { TITLE_LOADING_LAYOUT, TITLE_LOGIN_LAYOUT, titleLoginSlots } from "../ui/titleActionLayout";
 
 /** 타이틀 로고타입(글자 대신 쓰는 그림)의 텍스처 키다. 원본은 1536×1024 비율이다. */
 const TITLE_LOGOTYPE_KEY = "title-logotype";
@@ -126,6 +128,9 @@ export class TitleScene extends Phaser.Scene {
   /** 언어가 바뀌면 문장을 다시 읽어 갈아 끼울 글자들. 그릴 때 문장을 굳히지 않고 읽는 법을 들고 있다. */
   private localized: Array<{ text: Phaser.GameObjects.Text; read: () => string }> = [];
   private actionRow?: TitleActionRow;
+  private loginButtons: Button[] = [];
+  /** 언어가 바뀌면 로그인 버튼의 글자를 새로 짓는다. 첫 실행 화면에서만 채워진다. */
+  private loginRebuild?: () => void;
   private popups?: PopupLayer;
   /** 시작 관문(점검·최소 버전). 로딩과 나란히 한 번 묻고, 입장을 누를 때 결과를 읽는다. */
   private gate?: Promise<StartupGateResult>;
@@ -142,6 +147,8 @@ export class TitleScene extends Phaser.Scene {
     this.headerOpened = false;
     this.localized = [];
     this.actionRow = undefined;
+    this.loginButtons = [];
+    this.loginRebuild = undefined;
     this.popups = new PopupLayer(this, 3000);
 
     const cx = BASE_WIDTH / 2;
@@ -239,7 +246,13 @@ export class TitleScene extends Phaser.Scene {
       // 따라가기를 건너뛰고 정확히 100.00%에 멈춘 뒤 그 자리를 진입 문구에 넘긴다.
       percent.complete();
       percent.handOver();
-      this.showEntry(cx);
+      // 이 기기에 계정이 아직 없으면 입장 문구 대신 로그인 버튼이 선다. 한 번 만들어지면 다음부터는 문구만 선다.
+      const account = backendAccount();
+      void (account ? account.hasSession() : Promise.resolve(true)).then((hasAccount) => {
+        if (!this.scene.isActive()) return;
+        const reduced = motionPolicy(session.settings).nonEssentialDistanceFactor <= 0;
+        diamonds.finish(() => { if (this.scene.isActive()) this.showEntry(cx, !hasAccount); }, reduced);
+      });
     });
   }
 
@@ -406,7 +419,7 @@ export class TitleScene extends Phaser.Scene {
   }
 
   /** 다섯 칸이 다 찬 뒤에만 부른다. 이때부터 화면 어디를 눌러도 다음으로 넘어간다. */
-  private showEntry(cx: number): void {
+  private showEntry(cx: number, firstRun = false): void {
     const prompt = this.add
       .text(cx, LOADING_PROMPT_Y, t("title.enter"), textStyle({ role: "emphasis", size: 36 }))
       .setOrigin(0.5)
@@ -414,6 +427,7 @@ export class TitleScene extends Phaser.Scene {
       .setShadow(0, 3, "#000000", 6, true, true);
 
     this.localized.push({ text: prompt, read: () => t("title.enter") });
+    if (firstRun) prompt.setVisible(false);
     // 하단 버튼 줄. 지금은 언어 하나이고 로그인·계정 전환이 같은 줄에 이어 붙는다.
     this.actionRow = new TitleActionRow(this, [
       {
@@ -428,7 +442,7 @@ export class TitleScene extends Phaser.Scene {
       },
     ]);
 
-    this.tweens.add({
+    if (!firstRun) this.tweens.add({
       targets: prompt,
       alpha: { from: 1, to: 0.25 },
       duration: 900,
@@ -457,7 +471,7 @@ export class TitleScene extends Phaser.Scene {
               return;
             }
             console.warn("[forgarden] connect failed", connected.code, connected.detail ?? "-");
-            this.showConnectFailure(connected.code, connected.detail);
+            this.showConnectFailure(connected.code);
             tapAnywhere.once("pointerup", enter);
           });
           return;
@@ -468,18 +482,52 @@ export class TitleScene extends Phaser.Scene {
         tapAnywhere.once("pointerup", enter);
       });
     };
-    tapAnywhere.once("pointerup", enter);
+    if (firstRun) this.showLoginButtons(cx, enter);
+    else tapAnywhere.once("pointerup", enter);
 
     // 로딩 중 먼저 그려진 글자(부제)가 문구표보다 앞섰을 수 있으므로 한 번 더 읽는다.
     this.relocalize();
     setDebugReady(true);
   }
 
+  /**
+   * 처음 여는 기기의 로그인 버튼. 지금 되는 것은 게스트뿐이고 나머지는 자리만 잡은 임시 버튼이다 — 누르면
+   * 곧 지원된다고만 알린다(성공을 흉내 내지 않는다). 연결이 서면 그 버튼의 `onClick`만 바꾼다.
+   */
+  private showLoginButtons(cx: number, enter: () => void, fade = true): void {
+    this.loginButtons.forEach((button) => button.destroy());
+    this.loginButtons = [];
+    this.loginRebuild = () => this.showLoginButtons(cx, enter, false);
+    const soon = () => this.popups?.confirm({ title: t("settings.account.notice"), message: t("title.login.soon"), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
+    const entries: Array<{ labelKey: TextKey; onClick: () => void; primary?: boolean }> = [
+      { labelKey: "title.login.guest", onClick: enter, primary: true },
+      { labelKey: "title.login.google", onClick: soon },
+      { labelKey: "title.login.apple", onClick: soon },
+      { labelKey: "title.login.email", onClick: soon },
+    ];
+    const ys = titleLoginSlots(entries.length);
+    entries.forEach((entry, i) => {
+      const button = new Button(this, cx, ys[i], {
+        width: TITLE_LOGIN_LAYOUT.width,
+        height: TITLE_LOGIN_LAYOUT.height,
+        label: t(entry.labelKey),
+        fontSize: 34,
+        variant: entry.primary ? "primary" : "default",
+        onClick: entry.onClick,
+      });
+      this.loginButtons.push(button);
+      if (fade) {
+        button.setAlpha(0);
+        this.tweens.add({ targets: button, alpha: 1, duration: 260, delay: i * 70 });
+      }
+    });
+  }
+
   /** 서버 연결이 서지 못한 이유를 알리고 다시 누르면 새로 시도한다. */
-  private showConnectFailure(code: AccountFailureCode, detail?: string): void {
+  private showConnectFailure(code: AccountFailureCode): void {
     this.popups?.confirm({
       title: t("settings.account.notice"),
-      message: t(code === "conflict-cancelled" ? "settings.account.conflictCancelled" : code === "network-error" ? "settings.account.network" : "settings.account.unavailable") + (detail ? `\n${t("settings.account.errorCode", { code: detail })}` : ""),
+      message: t(code === "conflict-cancelled" ? "settings.account.conflictCancelled" : code === "network-error" ? "settings.account.network" : "settings.account.unavailable"),
       confirmLabel: t("settings.action.confirm"),
       cancelLabel: false,
     });
@@ -560,5 +608,6 @@ export class TitleScene extends Phaser.Scene {
       text.setFontFamily(activeFontFamily()).setText(read());
     });
     this.actionRow?.relocalize();
+    this.loginRebuild?.();
   }
 }

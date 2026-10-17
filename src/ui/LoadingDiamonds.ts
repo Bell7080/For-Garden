@@ -31,6 +31,9 @@ const PUNCH = {
   flashAlpha: 0.55,
 } as const;
 
+/** 다 찼을 때 모든 칸이 함께 한 번 빛나는 "핑" — 섬광은 옅게, 사라지는 데는 오래 걸리지 않는다. */
+const PING = { scale: 3.6, alpha: 0.6, flashMs: 420, holdMs: 140, fadeMs: 260 } as const;
+
 /**
  * 로딩 진행 칸. 별 하나가 로딩 단계 하나다.
  *
@@ -70,6 +73,29 @@ export class LoadingDiamonds extends Phaser.GameObjects.Container {
   setFilled(count: number): void {
     for (let i = this.filled; i < count && i < this.slots.length; i++) this.punch(i);
     this.filled = Math.min(count, this.slots.length);
+  }
+
+  /**
+   * 다 찬 칸이 핑! 하고 한 번 빛나고 사라진다. 사라진 자리는 진입 문구나 로그인 버튼이 이어받는다.
+   * `reduced`면 빛 없이 곧바로 걷는다.
+   */
+  finish(onDone: () => void, reduced = false): void {
+    const scene = this.scene;
+    if (reduced) { this.destroy(); onDone(); return; }
+    this.slots.forEach((slot) => {
+      const flash = scene.add
+        .star(slot.x, 0, 4, OUTER * 0.5, OUTER, 0xffffff, PING.alpha)
+        .setBlendMode(Phaser.BlendModes.ADD);
+      this.add(flash);
+      scene.tweens.add({ targets: flash, scale: PING.scale, alpha: 0, duration: PING.flashMs, ease: "Quad.Out", onComplete: () => flash.destroy() });
+    });
+    scene.tweens.add({
+      targets: this,
+      alpha: 0,
+      delay: PING.holdMs,
+      duration: PING.fadeMs,
+      onComplete: () => { this.destroy(); onDone(); },
+    });
   }
 
   /** 칸 하나가 박힌다 — 빈 테두리가 꺼지고, 별이 내리꽂히며, 섬광이 한 겹 퍼진다. */

@@ -45,3 +45,25 @@ export const TITLE_LOADING_LAYOUT = {
   /** 로딩 칸 아래 끝과 버튼 줄 윗변 사이에 최소로 남기는 여백. */
   buttonGap: 56,
 } as const;
+
+/**
+ * 처음 여는 기기의 로그인 버튼 줄. 로딩 칸이 사라진 자리에 세로로 쌓이고, 아래 끝은 하단 버튼 줄
+ * 윗변에서 `bottomGap` 위에 닿는다. 개수에서 자리를 구하므로 버튼을 더해도 좌표를 옮기지 않는다.
+ */
+export const TITLE_LOGIN_LAYOUT = {
+  width: 600,
+  height: 92,
+  gap: 20,
+  /** 하단 버튼 줄 윗변과 맨 아래 버튼 사이의 여백. */
+  bottomGap: 56,
+  /** 한 번에 서는 버튼의 상한. */
+  maxButtons: 5,
+} as const;
+
+/** 로그인 버튼 `count`개의 가운데 y를 위에서 아래로 돌려준다. 맨 아래가 하단 줄 위에 붙는다. */
+export function titleLoginSlots(count: number): readonly number[] {
+  const { height, gap, bottomGap, maxButtons } = TITLE_LOGIN_LAYOUT;
+  const n = Math.max(0, Math.min(Math.floor(count), maxButtons));
+  const bottom = TITLE_ACTION_ROW.centerY - TITLE_ACTION_ROW.height / 2 - bottomGap;
+  return Array.from({ length: n }, (_, i) => bottom - height / 2 - (n - 1 - i) * (height + gap));
+}

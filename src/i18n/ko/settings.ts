@@ -91,7 +91,6 @@ export const SETTINGS_KO = {
   "settings.account.mergeBlocked": "게스트 진행을 기존 계정에 합칠 수 없습니다.",
   "settings.account.conflictCancelled": "저장 충돌 선택을 취소했습니다.",
   "settings.account.stale": "다른 기기에서 저장이 갱신되었습니다. 다시 시도해 주세요.",
-  "settings.account.errorCode": "오류 코드: {code}",
   "settings.account.unavailable": "서버 저장을 확인할 수 없습니다.",
 
   "settings.section.support": "고객지원 · 데이터",

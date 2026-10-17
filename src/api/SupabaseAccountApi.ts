@@ -59,6 +59,12 @@ export class SupabaseAccountApi implements AccountApi {
     return { ok: true, value: { kind: "guest", provider: "guest", maskedId: `GUEST-${auth.value.userId.slice(0, 4)}••••` } };
   }
 
+  /** 이 기기에 이미 만들어진 계정(게스트 포함)이 있는가. 네트워크를 쓰지 않는다. 첫 실행 화면이 로그인 버튼을 세울지 정한다. */
+  async hasSession(): Promise<boolean> {
+    try { this.tokens ??= await this.options.store.load(); } catch { return false; }
+    return this.tokens !== null;
+  }
+
   /** 가장 최근 인증 실패의 짧은 진단 문자열이다(토큰·키는 담지 않는다). 연결 실패 안내의 진단 코드로 쓴다. */
   lastFailure(): string { return this.failure; }
 

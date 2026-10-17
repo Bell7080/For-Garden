@@ -5,15 +5,25 @@ import { BATTLE_CLOCK_LAYOUT, BATTLE_PAUSE_BUTTON, RAID_BATTLE_HUD } from "../..
 
 describe("전투 일시 정지 판", () => {
   it("은 이긴 판에서만 스테미나를 쓰는 콘텐츠에만 다시 하기와 나가기를 세운다", () => {
-    for (const mode of ["stage", "cake", "bounty"] as const) expect(battlePauseActions(mode)).toEqual({ retry: true, exit: "leave" });
+    for (const mode of ["stage", "cake", "bounty"] as const) expect(battlePauseActions(mode)).toEqual({ retry: true, settings: true, exit: "leave" });
   });
 
   it("은 친 만큼이 점수인 판에서 다시 하기를 빼고 나가기를 지금까지의 피해로 끝내는 조작으로 둔다", () => {
-    for (const mode of ["raid", "expeditionBoss"] as const) expect(battlePauseActions(mode)).toEqual({ retry: false, exit: "forfeit" });
+    for (const mode of ["raid", "expeditionBoss"] as const) expect(battlePauseActions(mode)).toEqual({ retry: false, settings: true, exit: "forfeit" });
   });
 
   it("은 원정 노드에서 그만두는 조작을 두지 않는다 — 스무 층 한 판이 통째로 끝난다", () => {
-    expect(battlePauseActions("expedition")).toEqual({ retry: false, exit: null });
+    expect(battlePauseActions("expedition")).toEqual({ retry: false, settings: true, exit: null });
+  });
+});
+
+describe("첫 궁극기 판의 일시 정지 판", () => {
+  it("은 설정과 다시 하기 없이 이어서 · 타이틀로만 세운다", () => {
+    expect(battlePauseActions("stage", true)).toEqual({ retry: false, settings: false, exit: "title" });
+  });
+
+  it("은 스토리 전투가 아니면 첫 궁극기 판 표시를 무시한다", () => {
+    expect(battlePauseActions("cake", true)).toEqual(battlePauseActions("cake"));
   });
 });
 

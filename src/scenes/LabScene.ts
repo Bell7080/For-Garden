@@ -44,6 +44,8 @@ import { formatCurrency } from "../core/formatCurrency";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
+import { TutorialSpotlight } from "../ui/TutorialSpotlight";
+import { tutorialManager } from "../managers/TutorialManager";
 
 /**
  * 연구소 — 화석과 호박석으로 렐릭을 복원하는 기존 연구 시설이다.
@@ -144,6 +146,9 @@ export class LabScene extends Phaser.Scene {
     exposeShowcasePreview((relicId) => void this.introduceRelic(relicId));
     // 열 배너가 목록에 없으면(다 쓴 한정 배너 등) 첫 배너로 선다.
     this.bannerIndex = Math.max(0, this.banners.findIndex(({ id }) => id === this.entryBannerId));
+    // 튜토리얼 「뽑기」 칸이면 첫 복원 연구 배너로 서서 10회 버튼을 가리킨다.
+    const teachPull = tutorialManager.next() === "pull";
+    if (teachPull) this.bannerIndex = Math.max(0, this.banners.findIndex(({ id }) => id === "welcome"));
     this.audioScope = audioManager?.createScope();
     this.popupLayer = new PopupLayer(this, 2400);
 
@@ -220,6 +225,24 @@ export class LabScene extends Phaser.Scene {
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
+    if (teachPull && this.banner.id === "welcome") {
+      this.time.delayedCall(700, () => {
+        if (!this.scene.isActive()) return;
+        const b = this.tenButton.getBounds();
+        this.pullSpotlight = new TutorialSpotlight(this, {
+          rect: { x: b.x, y: b.y, width: b.width, height: b.height }, text: t("tutorial.lab.pull"), side: "above",
+          onSkip: () => { this.clearPullSpotlight(); void tutorialManager.complete("pull"); }, skipLabel: t("tutorial.skip"),
+        });
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.clearPullSpotlight());
+      });
+    }
+  }
+
+  private pullSpotlight?: TutorialSpotlight;
+
+  private clearPullSpotlight(): void {
+    this.pullSpotlight?.destroy();
+    this.pullSpotlight = undefined;
   }
 
   /** 마일리지 상점 — 다른 상점과 같은 한 씬이고, 뒤로가기는 연구소로 돌아온다. */
@@ -380,6 +403,7 @@ export class LabScene extends Phaser.Scene {
   private requestPull(count: 1 | 10): void {
     const banner = this.banner;
     if (this.pullPending || !canPull(session.wallet, banner, count, this.pityOf(banner))) return;
+    this.clearPullSpotlight();
     const payment = pullPayment(session.wallet, banner, count);
     if (payment.gems <= 0 || !this.popupLayer) { void this.doPull(count); return; }
     // 치를 것은 문장이 아니라 액자가 말한다 — 문장에 수를 또 적으면 같은 값을 한 창에 두 번 읽는다.
@@ -402,6 +426,8 @@ export class LabScene extends Phaser.Scene {
       // 결과와 비용은 클라이언트에서 계산하지 않고 API 응답만 화면에 반영한다.
       const response = await gameApi.pullRelics({ bannerId: banner.id, count });
       this.topBar.refresh();
+      // 튜토리얼 「뽑기」 칸 — 첫 연구가 확정된 순간 마친다(연출을 건너뛰어도 칸은 마쳐진다).
+      if (tutorialManager.next() === "pull") void tutorialManager.complete("pull");
       // API가 상태 반영과 저장까지 끝낸 뒤 응답하므로 이후 건너뛰기는 보상에 영향을 주지 않는다.
       await this.playPresentation(response.results, response.mileageGained);
     } catch (error) {

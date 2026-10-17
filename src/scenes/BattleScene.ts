@@ -84,6 +84,9 @@ import { raidBossDef, raidBossGrowth, raidBossPercentHpBasis } from "../core/rai
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import { expeditionManager, ExpeditionBossSettlementError, ExpeditionBossSettlementFlow } from "../managers/ExpeditionManager";
 import { settingsManager } from "../managers/SettingsManager";
+import { tutorialManager } from "../managers/TutorialManager";
+import { BATTLE_FEATURE_STEP, type BattleTutorialFeature } from "../core/tutorial";
+import { TutorialSpotlight } from "../ui/TutorialSpotlight";
 import { motionPolicy, type MotionPolicy } from "../core/settings";
 import type { RaidDto, SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse, SubmitRaidDamageResponse } from "../api/contracts";
 import { GameApiError } from "../api/contracts";
@@ -363,6 +366,16 @@ export class BattleScene extends Phaser.Scene {
    * 오프닝 1-1의 궁극기 안내. 처음 켜진 카드 하나만 밝히고 나머지는 어둡게 덮은 채 시간을 멈춘다.
    * 한 번 쓰면(`done`) 다시 열리지 않는다.
    */
+  /**
+   * 첫 궁극기 안내가 도는 판인가. 오프닝에서 곧장 들어온 1-1이거나, 지도에서 처음 들어가는 스토리 전투인데
+   * 튜토리얼이 아직 궁극기 칸에 머물러 있을 때다(타이틀로 나갔다 돌아온 경우). 판이 시작할 때 한 번 굳힌다 —
+   * 도중에 칸이 끝나도 이 판의 조작이 갑자기 열리지 않는다.
+   */
+  private introBattleFlag = false;
+  /** 이번 전투에서 새로 열어 알려 줄 조작. 없으면 안내 없이 열린 조작만 쓴다. */
+  private teachFeature?: BattleTutorialFeature;
+  private featureSpotlight?: TutorialSpotlight;
+  private featureTaught = false;
   private ultimateTutorial: { fighterId: string; done: boolean; active: boolean; layer?: Phaser.GameObjects.GameObject[] } = { fighterId: "", done: false, active: false };
   /** 자동 동시 준비를 직렬화하고 오래된 async 완료를 구분하는 순수 상태다. */
   private ultimateSequence: UltimateSequenceState = createUltimateSequenceState();
@@ -486,6 +499,11 @@ export class BattleScene extends Phaser.Scene {
 
   create(): void {
     setDebugScene("battle");
+    this.introBattleFlag = this.battleInput.mode === "stage"
+      && (this.battleInput.epilogueStoryId !== undefined || tutorialManager.next() === "ultimate");
+    this.teachFeature = this.battleInput.mode === "stage" && !this.introBattleFlag ? tutorialManager.featureToTeach() : undefined;
+    this.featureSpotlight = undefined;
+    this.featureTaught = false;
     // Phaser가 같은 Scene 인스턴스를 다시 쓰므로 지난 판의 요청/UI 잠금을 새 전투로 넘기지 않는다.
     completeBossSettlementAttempt(this.bossSettlementFailureState);
     this.bossSettlementFailureUi = undefined;
@@ -588,10 +606,10 @@ export class BattleScene extends Phaser.Scene {
     // 멤버십은 서버에 물어야 알 수 있어 **닫힌 쪽에서 시작한다** — 저장에 3이 있으면 답이 올 때까지
     // 2로 싸우다가 멤버십이 확인되는 순간 3으로 돌아간다(`resolveBattleMembership`).
     this.battleMember = false;
-    this.battleSpeed = this.openingBattle() ? 1 : usableBattleSpeed(battleSettings.battleSpeed, false);
+    this.battleSpeed = this.featureOpen("speed") ? usableBattleSpeed(battleSettings.battleSpeed, false) : 1;
     // 결투는 양쪽 모두 자동 궁극기로만 싸운다 — 수동 개입이 비동기 상대와의 판을 가르지 않게 한다.
     // 오프닝 첫 전투는 궁극기를 손으로 쓰는 법을 익히는 판이라 자동도 꺼 둔다.
-    this.autoUltimate = this.battleInput.mode === "duel" || (!this.openingBattle() && battleSettings.autoUltimate);
+    this.autoUltimate = this.battleInput.mode === "duel" || (this.featureOpen("auto") && battleSettings.autoUltimate);
     this.ultimateTutorial = { fighterId: "", done: false, active: false };
     this.ultimateSequenceActive = false;
     this.ultimateSequence = createUltimateSequenceState();
@@ -643,12 +661,15 @@ export class BattleScene extends Phaser.Scene {
     });
 
     // 씬은 코어 스냅샷을 넘길 뿐 공격·방어·회복 합산을 복제하지 않는다.
-    this.contributionPanel = new BattleContributionPanel(this, (category) => {
-      this.contributionCategory = category;
+    // 기여도를 아직 열지 않은 튜토리얼 구간에서는 판을 세우지 않는다(칩도 감춘다).
+    if (this.featureOpen("contribution")) {
+      this.contributionPanel = new BattleContributionPanel(this, (category) => {
+        this.contributionCategory = category;
+        this.refreshContribution(true);
+        this.refreshDebug();
+      });
       this.refreshContribution(true);
-      this.refreshDebug();
-    });
-    this.refreshContribution(true);
+    }
 
     this.buildProfiles();
     void this.spawnFighters();
@@ -875,6 +896,7 @@ export class BattleScene extends Phaser.Scene {
         settingsManager.update({ game: { battleSpeed: this.battleSpeed } });
         this.refreshSpeedChip();
         this.refreshDebug();
+        this.featureTapped("speed");
       },
     });
     this.autoChip = new ControlChip(this, BATTLE_CONTROLS.rightX, BATTLE_CONTROLS.rowY, {
@@ -889,6 +911,7 @@ export class BattleScene extends Phaser.Scene {
         settingsManager.update({ game: { autoUltimate: this.autoUltimate } });
         this.autoChip.setLabel(this.autoUltimate ? t("battle.chip.autoOn") : t("battle.chip.autoOff")).setActive(this.autoUltimate);
         this.refreshDebug();
+        this.featureTapped("auto");
       },
     });
     const refreshPresentationChip = (): void => {
@@ -901,6 +924,7 @@ export class BattleScene extends Phaser.Scene {
         // 전투 흐름을 바꾸는 값은 세션을 직접 고치지 않고 공용 manager 경계에서 즉시 영속화한다.
         settingsManager.update({ game: { skipUltimatePresentation: !settingsManager.get().game.skipUltimatePresentation } });
         refreshPresentationChip(); this.refreshDebug();
+        this.featureTapped("presentation");
       },
     });
     // **기여도 판도 같은 줄에서 연다.** 예전에는 판 왼쪽에 전용 그래프 칩이 붙어 있어, 조작은
@@ -908,12 +932,13 @@ export class BattleScene extends Phaser.Scene {
     // 했다. 자리는 `CONTRIBUTION_TOGGLE` 한 곳이 정한다.
     this.contributionChip = new ControlChip(this, CONTRIBUTION_TOGGLE.x, CONTRIBUTION_TOGGLE.y, {
       icon: "bar-chart", label: t("battle.contribution"), width: CONTRIBUTION_TOGGLE.width, height: CONTRIBUTION_TOGGLE.height,
-      onClick: () => { this.contributionPanel?.toggle(); this.refreshContribution(true); this.contributionChip.setActive(this.contributionPanel?.state.expanded ?? false); this.refreshDebug(); },
+      onClick: () => { this.contributionPanel?.toggle(); this.refreshContribution(true); this.contributionChip.setActive(this.contributionPanel?.state.expanded ?? false); this.refreshDebug(); this.featureTapped("contribution"); },
     });
     // 전장 아래쪽에 서므로 SD·체력 바보다 앞에 둔다.
     for (const chip of [this.speedChip, this.autoChip, this.presentationChip, this.contributionChip]) chip.setDepth(BATTLE_CONTROLS.depth);
-    // 오프닝 첫 전투는 배속·자동 궁극기·연출 스킵을 막는다 — 칩을 감추고 입력도 받지 않는다.
-    if (this.openingBattle()) for (const chip of [this.speedChip, this.autoChip, this.presentationChip]) chip.setVisible(false).disableInteractive();
+    // 튜토리얼이 아직 열지 않은 조작은 칩을 감추고 입력도 받지 않는다(오프닝 첫 전투는 네 개 모두).
+    const chips: [BattleTutorialFeature, ControlChip][] = [["speed", this.speedChip], ["auto", this.autoChip], ["presentation", this.presentationChip], ["contribution", this.contributionChip]];
+    for (const [feature, chip] of chips) if (!this.featureOpen(feature)) chip.setVisible(false).disableInteractive();
     // 복원된 값도 첫 클릭 전부터 켜짐 색으로 읽히게 한다.
     this.refreshSpeedChip();
     this.autoChip.setActive(this.autoUltimate);
@@ -933,13 +958,14 @@ export class BattleScene extends Phaser.Scene {
     if (this.finished || !this.spawned || this.ultimateSequenceActive) return;
     const popups = this.pausePopups ??= new PopupLayer(this, 2400);
     if (popups.isOpen) return;
-    const actions = battlePauseActions(this.battleInput.mode);
+    const actions = battlePauseActions(this.battleInput.mode, this.openingBattle());
     const rows: { label: string; primary?: boolean; destructive?: boolean; onPress: (close: () => void) => void }[] = [
-      { label: t("battle.pause.resume"), primary: true, onPress: (close) => close() },
-      { label: t("battle.pause.settings"), onPress: (close) => { close(); this.openSettingsOverlay(); } },
+      { label: t(this.openingBattle() ? "battle.pause.continue" : "battle.pause.resume"), primary: true, onPress: (close) => close() },
     ];
+    if (actions.settings) rows.push({ label: t("battle.pause.settings"), onPress: (close) => { close(); this.openSettingsOverlay(); } });
     if (actions.retry) rows.push({ label: t("battle.pause.retry"), onPress: () => popups.confirm({ title: t("battle.pause.retry"), message: t("battle.pause.retryConfirm"), confirmLabel: t("battle.pause.retry") }, () => this.retryBattle()) });
     if (actions.exit === "leave") rows.push({ label: t("battle.pause.exit"), destructive: true, onPress: () => popups.confirm({ title: t("battle.pause.exit"), message: t("battle.pause.exitConfirm"), confirmLabel: t("battle.pause.exit"), destructive: true }, () => this.leaveBattle()) });
+    if (actions.exit === "title") rows.push({ label: t("battle.pause.toTitle"), destructive: true, onPress: () => popups.confirm({ title: t("battle.pause.toTitle"), message: t("battle.pause.toTitleConfirm"), confirmLabel: t("battle.pause.toTitle"), destructive: true }, () => startScene(this, "title")) });
     if (actions.exit === "forfeit") rows.push({ label: t("battle.pause.exit"), destructive: true, onPress: (close) => popups.confirm({ title: t("battle.pause.exit"), message: this.battleInput.mode === "duel" ? t("duel.pause.forfeitConfirm") : t("battle.pause.forfeitConfirm"), confirmLabel: t("battle.pause.exit"), destructive: true }, () => { close(); this.finishBattle("defeat"); }) });
     const button = { width: 420, height: 86, gap: 20, top: 120, bottom: 70 };
     const height = button.top + rows.length * button.height + (rows.length - 1) * button.gap + button.bottom;
@@ -978,8 +1004,8 @@ export class BattleScene extends Phaser.Scene {
     // 멈춰 있던 시간이 한 프레임에 한꺼번에 흘러들지 않게 한다.
     this.lastStepAt = now;
     const game = settingsManager.get().game;
-    this.battleSpeed = this.openingBattle() ? 1 : usableBattleSpeed(game.battleSpeed, this.battleMember);
-    this.autoUltimate = this.battleInput.mode === "duel" || (!this.openingBattle() && game.autoUltimate);
+    this.battleSpeed = this.featureOpen("speed") ? usableBattleSpeed(game.battleSpeed, this.battleMember) : 1;
+    this.autoUltimate = this.battleInput.mode === "duel" || (this.featureOpen("auto") && game.autoUltimate);
     this.refreshSpeedChip();
     this.autoChip.setLabel(this.autoUltimate ? t("battle.chip.autoOn") : t("battle.chip.autoOff")).setActive(this.autoUltimate);
     if (this.reopenPauseOnWake) { this.reopenPauseOnWake = false; this.openPauseMenu(); }
@@ -1024,7 +1050,7 @@ export class BattleScene extends Phaser.Scene {
    * 성공을 흉내 내어 여는 길을 두지 않는다.
    */
   private resolveBattleMembership(): void {
-    if (this.openingBattle()) return;
+    if (!this.featureOpen("speed")) return;
     const saved = settingsManager.get().game.battleSpeed;
     void gameApi.getPlayerState().then((state) => {
       if (!this.scene.isActive() || !this.speedChip) return;
@@ -1530,17 +1556,26 @@ export class BattleScene extends Phaser.Scene {
     // **펼친 기여도 판은 전투를 멈추지 않는다.** 그 판은 창이 아니라 화면 한쪽에 붙는 순위표라,
     // 열어 둔 채로 순위가 실시간으로 바뀌는 것을 보는 것이 그 판의 쓸모다 — 멈추면 열어 볼
     // 때마다 전투가 서고, 다시 접을 때까지 아무 일도 일어나지 않는다.
-    return anyPopupOpen() || (this.allyInfoRef?.isOpen ?? false) || this.ultimateTutorial.active;
+    return anyPopupOpen() || (this.allyInfoRef?.isOpen ?? false) || this.ultimateTutorial.active || (this.featureSpotlight?.active ?? false);
   }
 
   /** 오프닝에서 곧장 들어온 첫 전투(1-1). 이 판만 조작을 막고 궁극기 사용법을 안내한다. */
   private openingBattle(): boolean {
-    return this.battleInput.mode === "stage" && this.battleInput.epilogueStoryId !== undefined;
+    return this.introBattleFlag;
+  }
+
+  /**
+   * 이 판에서 그 조작이 열려 있나. 스토리 전투만 튜토리얼에 묶이고, 첫 궁극기 판은 전부 닫혀 있다.
+   * 지금 알려 주는 조작(`teachFeature`)은 그 판부터 열린다 — 안내가 가리킬 칩이 있어야 한다.
+   */
+  private featureOpen(feature: BattleTutorialFeature): boolean {
+    if (this.openingBattle()) return false;
+    return feature === this.teachFeature || tutorialManager.featureOpen(feature, this.battleInput.mode === "stage");
   }
 
   /** 오프닝 첫 전투는 컷인을 끄는 설정을 따르지 않는다. */
   private ultimatePresentationSkipped(): boolean {
-    return !this.openingBattle() && settingsManager.get().game.skipUltimatePresentation;
+    return this.featureOpen("presentation") && settingsManager.get().game.skipUltimatePresentation;
   }
 
   /**
@@ -1575,6 +1610,35 @@ export class BattleScene extends Phaser.Scene {
     tutorial.done = true;
     this.profiles.find((profile) => profile.fighter.id === tutorial.fighterId)?.prefab.setDepth(0);
     this.lastStepAt = performance.now();
+    void tutorialManager.complete("ultimate");
+  }
+
+  /**
+   * 이번 전투가 알려 줄 조작(속도·자동 궁극기·연출 스킵·기여도)의 칩을 밝혀 가리킨다. 전투 시간은 멈추고,
+   * 그 칩을 누르는 순간 안내가 걷히며 칸을 마친다. 전투가 시작되기 전(숨 고르기)에는 열지 않는다.
+   */
+  private maybeStartFeatureTutorial(): void {
+    const feature = this.teachFeature;
+    if (!feature || this.featureTaught || this.featureSpotlight || this.finished || this.ultimateSequenceActive || performance.now() < this.fightStartsAt) return;
+    if (tutorialManager.isDone(BATTLE_FEATURE_STEP[feature])) return;
+    const chip = { speed: this.speedChip, auto: this.autoChip, presentation: this.presentationChip, contribution: this.contributionChip }[feature];
+    const bounds = chip.getBounds();
+    this.featureSpotlight = new TutorialSpotlight(this, {
+      rect: { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height },
+      text: t(`tutorial.battle.${feature}`),
+      side: "above",
+    });
+  }
+
+  /** 조작 칩이 눌렸다. 그 조작을 가리키던 안내가 있으면 걷고 시간을 다시 흘리며 칸을 마친다. */
+  private featureTapped(feature: BattleTutorialFeature): void {
+    if (feature !== this.teachFeature || !this.featureSpotlight) return;
+    this.featureSpotlight.destroy();
+    this.featureSpotlight = undefined;
+    // 칸 저장이 늦거나 실패해도 이 판 안에서는 다시 가리키지 않고 조작도 닫히지 않는다.
+    this.featureTaught = true;
+    this.lastStepAt = performance.now();
+    void tutorialManager.complete(BATTLE_FEATURE_STEP[feature]);
   }
 
   /** 제한 주기 또는 카테고리 입력 때만 코어의 불변 표시 스냅샷을 프리팹에 전달한다. */
@@ -2338,6 +2402,7 @@ export class BattleScene extends Phaser.Scene {
     }
     this.refreshOpenBuff();
     this.maybeStartUltimateTutorial();
+    this.maybeStartFeatureTutorial();
   }
 
   /** 누른 순간의 객체를 보관하지 않고 안정적인 런타임 ID만 선택해 다음 프레임부터 다시 조회한다. */
@@ -2644,6 +2709,7 @@ export class BattleScene extends Phaser.Scene {
       growth: this.defeatGrowth("party", () => { chosen = true; }),
       fighters: this.stageCompleteFighters(),
       onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
+      contributionLocked: !this.featureOpen("contribution"),
       // 버튼을 고르지 않고 판을 닫으면 원래 가던 곳(지도, 오프닝에서 왔으면 로비)으로 돌아간다.
       onConfirm: () => { if (!chosen && this.scene.isActive()) startScene(this, this.stageExit()); },
     });
@@ -2659,6 +2725,8 @@ export class BattleScene extends Phaser.Scene {
   private async finishStageVictory(stage: ReturnType<typeof getBattleStage>): Promise<void> {
     try {
       const result = await gameApi.completeStage(stage.id, true);
+      // 첫 궁극기 판을 이겼는데 궁극기를 쓰지 못한 채 끝났어도(칸이 비어 있으면) 다음 칸으로 넘어가게 한다.
+      if (this.openingBattle()) await tutorialManager.complete("ultimate");
       if (!this.scene.isActive()) return;
       // 스테미나는 이긴 이 확정에서 빠졌다 — 그 경험치 영수증을 결과판이 꺼내도록 맡긴다.
       rememberPlayerExp(result.playerExp);
@@ -2691,6 +2759,7 @@ export class BattleScene extends Phaser.Scene {
         },
         fighters,
         onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
+        contributionLocked: !this.featureOpen("contribution"),
         onConfirm: () => {
           // 다음 단계·다시 하기를 골랐으면 그 길이 이미 시작됐다 — 기본 길을 또 세우지 않는다.
           if (chosen) return;

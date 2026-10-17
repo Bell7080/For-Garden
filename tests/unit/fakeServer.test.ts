@@ -1484,3 +1484,33 @@ describe("젬 충전 서버 경계", () => {
     await expect(server.rechargeStamina({ sourceId: "stamina-gems", requestId: "b" })).rejects.toMatchObject({ code: "INSUFFICIENT_CURRENCY" });
   });
 });
+
+describe("첫 플레이 튜토리얼 칸", () => {
+  const make = (done: string[], fossil = 0): FakeServer => {
+    const state = makeSession(fossil);
+    state.tutorial = { completedStepIds: done as never };
+    return new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-10-05T10:00:00Z") });
+  };
+  const ORDER = ["ultimate", "speed", "auto", "presentation", "contribution", "feed"];
+
+  it("은 앞 칸을 건너뛰고 뒤 칸을 마칠 수 없다", async () => {
+    await expect(make([]).completeTutorialStep({ stepId: "speed" })).rejects.toMatchObject({ code: "INVALID_STATE" });
+    await expect(make([]).completeTutorialStep({ stepId: "nope" as never })).rejects.toMatchObject({ code: "INVALID_STATE" });
+  });
+
+  it("은 선물 칸에서 화석을 한 번만 준다", async () => {
+    const server = make(ORDER, 0);
+    const first = await server.completeTutorialStep({ stepId: "gift" });
+    expect(first.granted).toEqual({ fossil: 8 });
+    expect(first.wallet.fossil).toBe(8);
+    const again = await server.completeTutorialStep({ stepId: "gift" });
+    expect(again.granted).toBeUndefined();
+    expect(again.wallet.fossil).toBe(8);
+  });
+
+  it("은 지갑 상한을 넘기는 선물을 깎아서 준다", async () => {
+    const server = make(ORDER, WALLET_CAPS.fossil - 3);
+    const response = await server.completeTutorialStep({ stepId: "gift" });
+    expect(response.granted).toEqual({ fossil: 3 });
+  });
+});

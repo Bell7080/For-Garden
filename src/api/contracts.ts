@@ -153,6 +153,10 @@ export interface AnswerRelicQuestionResponse { serverTime: string; }
 export interface ClaimRelicQuestionRewardRequest { relicId: string; questionId: string; }
 /** 실제로 지급한 젬(상한에서 깎일 수 있다)과 확정된 지갑이다. */
 export interface ClaimRelicQuestionRewardResponse { gemsGranted: number; wallet: Wallet; serverTime: string; }
+/** 튜토리얼 한 칸을 마친 것을 확정한다. 앞 칸이 비어 있으면 거절하고, 이미 마친 칸은 아무것도 다시 주지 않는다. */
+export interface CompleteTutorialStepRequest { stepId: string; }
+/** 확정된 진행과, 이번 호출이 새로 준 선물(있을 때만)과 지갑이다. */
+export interface CompleteTutorialStepResponse { tutorial: import("../core/tutorial").TutorialState; granted?: { fossil: number }; wallet: Wallet; serverTime: string; }
 /** 애착 스토리 한 장을 처음 읽은 것을 확정한다. 유대 레벨은 서버가 자기 상태로 확인한다. */
 export interface ClaimRelicChapterRequest { relicId: string; level: number; }
 export interface ClaimRelicChapterResponse { gemsGranted: number; wallet: Wallet; serverTime: string; }
@@ -1074,6 +1078,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   answerRelicQuestion(request: AnswerRelicQuestionRequest): Promise<AnswerRelicQuestionResponse>;
   /** 답한 질문의 젬 50개를 한 번만 받는다. */
   claimRelicQuestionReward(request: ClaimRelicQuestionRewardRequest): Promise<ClaimRelicQuestionRewardResponse>;
+  /** 첫 플레이 튜토리얼의 한 칸을 마친다. 선물이 걸린 칸은 처음 마칠 때 한 번만 지급한다. */
+  completeTutorialStep(request: CompleteTutorialStepRequest): Promise<CompleteTutorialStepResponse>;
   /** 유대 레벨이 닿은 애착 스토리 한 장의 해금 젬을 한 번만 받는다. */
   claimRelicChapter(request: ClaimRelicChapterRequest): Promise<ClaimRelicChapterResponse>;
   /** 한 룬이 전체 장착표에서 정확히 한 슬롯에만 있도록 장착한다. */

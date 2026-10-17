@@ -8,6 +8,8 @@ import type { RelicDef } from "../core/types";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { session } from "../state/session";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
+import { TutorialSpotlight } from "../ui/TutorialSpotlight";
+import { tutorialManager } from "../managers/TutorialManager";
 import { ScissorContainer } from "../ui/ScissorContainer";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { TopBar } from "../ui/TopBar";
@@ -220,6 +222,44 @@ export class RelicsScene extends Phaser.Scene {
     const openId = this.pendingOpenRelicId;
     this.pendingOpenRelicId = undefined;
     if (openId && relicCollection.owns(openId)) this.info.showRelic(getRelic(openId), true);
+    else this.startFeedTutorial();
+  }
+
+  /**
+   * 튜토리얼 「급여」 칸: 애착 렐릭의 정보창을 저절로 열고 급여 버튼을 가리킨다. 첫 급여가 확정되거나
+   * 건너뛰기를 누르면 칸을 마친다. 정보창을 닫아 버리면 안내도 함께 걷는다(다시 오면 이어진다).
+   */
+  private startFeedTutorial(): void {
+    if (tutorialManager.next() !== "feed") return;
+    const target = session.favorite && relicCollection.owns(session.favorite) ? session.favorite : relicCollection.validParty.find((id) => relicCollection.owns(id));
+    if (!target) return;
+    this.info.showRelic(getRelic(target), true);
+    let spotlight: TutorialSpotlight | undefined;
+    let finished = false;
+    const finish = (): void => {
+      if (finished) return;
+      finished = true;
+      spotlight?.destroy();
+      spotlight = undefined;
+      void tutorialManager.complete("feed");
+    };
+    this.info.onFed = finish;
+    const poll = (): void => {
+      if (finished || !this.scene.isActive()) return;
+      const bounds = this.info.feedButtonBounds();
+      if (bounds && !spotlight) {
+        spotlight = new TutorialSpotlight(this, {
+          rect: { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height },
+          text: t("tutorial.relics.feed"), side: "above", onSkip: finish, skipLabel: t("tutorial.skip"),
+        });
+      } else if (!bounds && spotlight) {
+        spotlight.destroy();
+        spotlight = undefined;
+      }
+      this.time.delayedCall(300, poll);
+    };
+    this.time.delayedCall(700, poll);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { finished = true; spotlight?.destroy(); });
   }
 
   /** 모바일 관성은 프레임 시간으로 감쇠하며, 이동한 프레임마다 카드 내부 마스크도 동기화한다. */

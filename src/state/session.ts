@@ -5,6 +5,7 @@ import type { DuelState } from "../core/duelState";
 import { createEmptyAttendanceState, type AttendanceState } from "../core/attendance";
 import { emptyServerJournal, type ServerJournal } from "../core/serverJournal";
 import { createEmptyRaidTicketDropState, type RaidTicketDropState } from "../core/raidTicketDrops";
+import { createEmptyTutorialState, type TutorialState } from "../core/tutorial";
 import { createEmptyAchievementState, type AchievementState } from "../core/achievementState";
 import type { RaidDifficulty } from "../data/raid";
 import type { GachaPityState, Wallet } from "../core/gacha";
@@ -211,6 +212,8 @@ export interface Session {
   raidTicketDrops?: RaidTicketDropState;
   /** 업적에서 받은 단계와 최고 보유 골드(`core/achievements.ts`). 선택 필드다. */
   achievements?: AchievementState;
+  /** 첫 플레이 튜토리얼에서 마친 칸(`core/tutorial.ts`). 선택 필드이며 도입 전 저장은 클리어 기록에서 시작점을 정한다. */
+  tutorial?: TutorialState;
   serverJournal?: ServerJournal;
 }
 
@@ -451,6 +454,7 @@ export interface SaveData {
   attendance: AttendanceState;
   raidTicketDrops: RaidTicketDropState;
   achievements: AchievementState;
+  tutorial: TutorialState;
   serverJournal?: ServerJournal;
   settings: GameSettings;
   completedStoryIds: string[];
@@ -588,6 +592,7 @@ export function createDefaultSession(): Session {
     serverJournal: emptyServerJournal(),
     raidTicketDrops: createEmptyRaidTicketDropState(),
     achievements: createEmptyAchievementState(),
+    tutorial: createEmptyTutorialState(),
   };
 }
 

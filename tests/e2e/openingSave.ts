@@ -1,3 +1,4 @@
+import { createCompletedTutorialState } from "../../src/core/tutorial";
 import { LOCAL_SAVE_STORAGE_KEYS } from "../../src/core/saveStorage";
 import type { Page } from "@playwright/test";
 import { OPENING_TRAIN } from "../../src/data/dialogues/openingTrain";
@@ -25,6 +26,8 @@ function completedOpeningSave(prepare?: (session: Session) => void): string {
   }, "test");
   const session = createDefaultSession();
   session.completedStoryIds.add(OPENING_TRAIN.id);
+  // 첫 플레이 튜토리얼은 끝난 상태로 시작한다 — 전투 조작·로비 안내가 화면별 검사를 가리지 않게.
+  session.tutorial = createCompletedTutorialState();
   // 콘텐츠가 연구원 레벨로 잠겨 있으므로 화면별 E2E는 기본으로 모두 열린 만렙에서 시작한다. 잠금을 확인하는 편만 prepare에서 되돌린다.
   session.playerResearch = normalizePlayerLevel({ level: PLAYER_LEVEL_CAP });
   // 화면별 E2E는 저장 JSON을 직접 만들지 않고 타입이 보장된 세션만 필요한 상태로 조정한다.

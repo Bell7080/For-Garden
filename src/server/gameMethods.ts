@@ -7,7 +7,7 @@ export const SERVER_GAME_METHODS = [
   "abandonStrataRun", "activatePass", "answerRelicQuestion", "archaeologyState", "breakThroughRelic", "buyDuelAttempt",
   "claimAchievementRewards", "claimAdReward", "claimAttendance", "claimAttendanceAd", "claimDuelSeasonReward", "claimExpeditionReward", "claimInstantAdReward",
   "claimInteractionDispatch", "claimMailRewards", "claimMissionRewards", "claimPassDailyBonus", "claimProgressPass", "claimRelicChapter",
-  "claimRelicQuestionReward", "completeBounty", "completeCakeOperation", "completeExpeditionNode", "completeStage", "digStrataTile",
+  "claimRelicQuestionReward", "completeBounty", "completeCakeOperation", "completeExpeditionNode", "completeStage", "completeTutorialStep", "digStrataTile",
   "engraveRune", "enhanceRune", "enterBounty", "enterCakeOperation", "enterDailyRestoration", "enterDuel", "enterEventStage", "enterRaid",
   "enterStage", "equipRune", "feedRelic", "fulfillPlatformPurchase", "getAchievements", "getAdOperationsConfig", "getAsyncArenaServerState", "getAttendance",
   "getBountyStatus", "getDuelRanking", "getDuelStatus", "getEvents", "getExpeditionLeaderboard", "getExpeditionWeeklyBest",

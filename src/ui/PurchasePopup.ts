@@ -186,11 +186,13 @@ export class PurchasePopup {
     this.addValueRow(view, quantityRowY(3), t("shop.purchase.remaining"), `${formatCurrency(product.remaining)} / ${formatCurrency(product.purchaseLimit)}`);
 
     // 수량 조작은 순수 모델이 계산한 실제 구매 가능 상한에서만 활성화한다.
-    const minus = new Button(this.scene, 105, quantityRowY(1), { width: 76, height: 58, label: "−", fontSize: 30, onClick: () => this.changeQuantity(product, -1) }).setEnabled(!this.pending && quote.quantity > 1);
-    const plus = new Button(this.scene, 205, quantityRowY(1), { width: 76, height: 58, label: "+", fontSize: 30, onClick: () => this.changeQuantity(product, 1) }).setEnabled(!this.pending && quote.quantity < quote.maxQuantity);
+    const minus = new Button(this.scene, 20, quantityRowY(1), { width: 76, height: 58, label: "−", fontSize: 30, onClick: () => this.changeQuantity(product, -1) }).setEnabled(!this.pending && quote.quantity > 1);
+    const plus = new Button(this.scene, 100, quantityRowY(1), { width: 76, height: 58, label: "+", fontSize: 30, onClick: () => this.changeQuantity(product, 1) }).setEnabled(!this.pending && quote.quantity < quote.maxQuantity);
+    // 살 수 있는 만큼(남은 횟수·가진 재화 중 작은 쪽)을 한 번에 채운다.
+    const max = new Button(this.scene, 195, quantityRowY(1), { width: 100, height: 58, label: "MAX", fontSize: 24, onClick: () => this.changeQuantity(product, Number.MAX_SAFE_INTEGER) }).setEnabled(!this.pending && quote.quantity < quote.maxQuantity);
     // 팝업 본문 원점은 화면 중앙이므로 사용자 입력 중심만 절대 좌표로 변환해 공개한다.
-    setDebugStorefrontControls({ purchase: { minus: { x: BASE_CENTER.x + 105, y: BASE_CENTER.y + quantityRowY(1) }, plus: { x: BASE_CENTER.x + 205, y: BASE_CENTER.y + quantityRowY(1) }, confirm: { x: BASE_CENTER.x, y: BASE_CENTER.y + QUANTITY.buyY } } });
-    view.add([minus, plus]);
+    setDebugStorefrontControls({ purchase: { minus: { x: BASE_CENTER.x + 20, y: BASE_CENTER.y + quantityRowY(1) }, plus: { x: BASE_CENTER.x + 100, y: BASE_CENTER.y + quantityRowY(1) }, confirm: { x: BASE_CENTER.x, y: BASE_CENTER.y + QUANTITY.buyY } } });
+    view.add([minus, plus, max]);
     const canPurchase = product.purchasable && quote.valid && !this.pending;
     const buy = new Button(this.scene, 0, QUANTITY.buyY, { width: 650, height: 86, label: this.pending ? t("shop.purchase.busy") : t("shop.purchase.buy"), fontSize: 31, variant: "primary", onClick: () => { void this.purchase(product, close, onPurchased); } }).setEnabled(canPurchase);
     view.add(buy);

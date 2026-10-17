@@ -1255,10 +1255,22 @@ export class InfoManager {
     await this.feed(this.feedsForLevels(levels));
   }
 
+  /**
+   * 급여 요청은 한 줄로 직렬화한다. 줄 비우기와 「N레벨」 버튼이 겹쳐 두 요청이 동시에 돌면
+   * 뒤의 요청이 `feeding` 가드에 걸려 **버려졌고**, 그만큼의 누름이 먹여지지 않은 채 사라졌다.
+   */
+  private feedChain: Promise<unknown> = Promise.resolve();
+
   /** Returns whether the server-confirmed response actually increased EXP or level. */
-  private async feed(feeds: number): Promise<boolean> {
+  private feed(feeds: number): Promise<boolean> {
+    const run = this.feedChain.then(() => this.feedNow(feeds));
+    this.feedChain = run.catch(() => false);
+    return run;
+  }
+
+  private async feedNow(feeds: number): Promise<boolean> {
     const def = this.currentDef;
-    if (!def || !this.ownedNow || this.feeding) return false;
+    if (!def || !this.ownedNow) return false;
     if (!canFeedRelic(relicProgression.getProgress(def.id), session.wallet.cheesecake)) return false;
     const before = relicProgression.getProgress(def.id);
     this.feeding = true;

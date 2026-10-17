@@ -89,8 +89,7 @@ export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone:
           hit.on("pointerup", () => {
             pressOut(item);
             if (chosen) return;
-            playerCardManager.setAvatar(relic.id);
-            paintPreview(); paintList();
+            void playerCardManager.setAvatar(relic.id).then(() => { paintPreview(); paintList(); }, () => undefined);
           });
           item.add(hit);
           list.add(item);
@@ -120,10 +119,11 @@ export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone:
           const hit = scene.add.rectangle(0, 0, width, cellHeight, 0xffffff, 0).setInteractive({ useHandCursor: unlocked });
           hit.on("pointerup", () => {
             if (!unlocked) return;
-            if (on) profileModifierManager.equip(equippedIds.filter((id) => id !== modifier.id));
-            else if (equippedIds.length < MAX_EQUIPPED_PROFILE_MODIFIERS) profileModifierManager.equip([...equippedIds, modifier.id]);
+            let next: string[];
+            if (on) next = equippedIds.filter((id) => id !== modifier.id);
+            else if (equippedIds.length < MAX_EQUIPPED_PROFILE_MODIFIERS) next = [...equippedIds, modifier.id];
             else return;
-            paintList();
+            void profileModifierManager.equip(next).then(() => paintList(), () => undefined);
           });
           item.add(hit);
           list.add(item);
@@ -153,8 +153,7 @@ export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone:
         const hit = scene.add.rectangle(0, 0, width, cellHeight, 0xffffff, 0).setInteractive({ useHandCursor: unlocked });
         hit.on("pointerup", () => {
           if (!unlocked || chosen) return;
-          playerCardManager.setFrame(frame.id);
-          paintPreview(); paintList();
+          void playerCardManager.setFrame(frame.id).then(() => { paintPreview(); paintList(); }, () => undefined);
         });
         item.add(hit);
         list.add(item);
@@ -173,7 +172,8 @@ interface TextEditorOptions {
   maxGlyphs: number;
   /** 문제가 있으면 그 문장을 돌려준다. 저장하지 않고 그 자리에 붉게 적는다. */
   validate?: (value: string) => string | undefined;
-  save: (value: string) => void;
+  /** 서버가 반영할 때까지 기다린다. 던지면 창을 닫지 않고 그 자리에 오류를 적는다. */
+  save: (value: string) => Promise<unknown>;
   /** 입력 칸 위에 서는 주의 한 줄(닉네임의 변경 주기). 비우면 그 줄이 없다. */
   notice?: string;
   /** 지금은 고칠 수 없으면 그 이유 — 저장이 꺼지고 이 문장이 붉게 선다. */
@@ -201,8 +201,11 @@ function openTextEditor(scene: Phaser.Scene, layer: PopupLayer, options: TextEdi
         if (options.locked) return;
         const problem = options.validate?.(field.value);
         if (problem) { error.setText(problem); return; }
-        options.save(field.value);
-        close();
+        save.setEnabled(false);
+        options.save(field.value).then(() => close(), (cause: unknown) => {
+          save.setEnabled(true);
+          error.setText(cause instanceof Error ? cause.message : "");
+        });
       },
     });
     save.setEnabled(!options.locked);
@@ -229,7 +232,7 @@ export function openNicknameEditor(scene: Phaser.Scene, layer: PopupLayer, onDon
       const problem = nicknameProblem(value);
       return problem ? t(NICKNAME_PROBLEM[problem], { min: NICKNAME_MIN_LENGTH, max: NICKNAME_MAX_LENGTH }) : undefined;
     },
-    save: (value) => { playerCardManager.setNickname(value); },
+    save: (value) => playerCardManager.setNickname(value),
   }, onDone);
 }
 

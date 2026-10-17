@@ -4,7 +4,10 @@ import { bannerAcceptsCount, canPull, pull, resolveAcquisitions, spend } from ".
 import { socialApi } from "./FakeSocialServer";
 import { MILEAGE_OVERFLOW_BY_RARITY, mileageForPull } from "../core/mileage";
 import { BANNERS } from "../data/banners";
-import { RELICS } from "../data/relics";
+import { PLAYABLE_RELICS, RELICS } from "../data/relics";
+import { cleanBio, cleanNickname, createPlayerUid, nicknameLockedUntil, nicknameProblem } from "../core/playerCard";
+import { findProfileFrame, isProfileFrameUnlocked } from "../data/profileFrames";
+import { findProfileModifier } from "../data/profileModifiers";
 import { AD_REWARD_SLOTS, findAdRewardSlot, type AdReward, type AdRewardSlot } from "../data/adRewards";
 import { consumeRestorationEntry, normalizeDailyContent, utcDateKey } from "../core/dailyContent";
 import { ATTENDANCE_TRACK_IDS, attendanceTrackView, claimAttendanceAdBonus, claimAttendanceDay, normalizeAttendanceState, rollAttendance, type AttendanceState } from "../core/attendance";
@@ -25,8 +28,8 @@ import { saveManager } from "../state/SaveManager";
 import { INTERACTION_CITIES, findInteractionCity } from "../data/interactionCities";
 import { interactionDurationMs, isInteractionCityUnlocked, isInteractionDispatchComplete, rollInteractionRewards, validateInteractionFormation, type InteractionMemberTraits } from "../core/interactionDispatch";
 import type {
-  PurchaseRelicSkinRequest, PurchaseRelicSkinResponse, ClaimInteractionDispatchRequest, ClaimInteractionDispatchResponse, InteractionCitiesResponse, InteractionDispatchResponse, StartInteractionDispatchRequest } from "./contracts";
-import { ProfileModifierManager } from "../managers/ProfileModifierManager";
+  PurchaseRelicSkinRequest, PurchaseRelicSkinResponse, SetPartyRequest, SetPartyResponse, SetFavoriteRequest, SetRelicBookmarkRequest, RelicMarkResponse, UpdatePlayerCardRequest, UpdatePlayerCardResponse, EquipProfileModifiersRequest, EquipProfileModifiersResponse, EquipRelicSkinRequest, ClaimInteractionDispatchRequest, ClaimInteractionDispatchResponse, InteractionCitiesResponse, InteractionDispatchResponse, StartInteractionDispatchRequest } from "./contracts";
+import { MAX_EQUIPPED_PROFILE_MODIFIERS, ProfileModifierManager } from "../managers/ProfileModifierManager";
 import { GameApiError, persistenceFailed, type AdOperationsConfigResponse, type BreakThroughResponse, type ClaimMissionRewardsResponse, type CompleteStageResponse, type EnterDailyRestorationResponse, type EnterBountyRequest, type EnterBountyResponse, type CompleteBountyRequest, type CompleteBountyResponse, type BountyStatusResponse, type FeedRelicResponse, type GameApi, type LobbyInteractionResponse, type MissionListResponse, type PlayerStateDto, type ClaimAdRewardRequest, type ClaimAdRewardResponse, type PullRequest, type PullResponse, type RechargeStaminaRequest, type RechargeStaminaResponse, type StaminaRechargeStatusDto, type ClaimProgressPassRequest, type ClaimProgressPassResponse, type ProgressPassDto, type ProgressPassListResponse } from "./contracts";
 import type { ProductDefinition, ProductGrant } from "../data/shopCatalog";
 import { PRODUCTS } from "../data/shopCatalog";
@@ -1148,6 +1151,119 @@ export class FakeServer implements GameApi {
     this.persist({ ...this.state, wallet: nextWallet, ownedRelicSkinIds: nextSkins });
     this.state.wallet = nextWallet; this.state.ownedRelicSkinIds = nextSkins;
     return { ...this.snapshot(), skinId: request.skinId, spent: { currency, amount } };
+  }
+
+  /** 편성은 서로 다른 보유 렐릭 세 명만 확정한다. 실패는 사유를 데이터로 돌려준다. */
+  async setParty(request: SetPartyRequest): Promise<SetPartyResponse> {
+    await this.delay();
+    const ids = request.relicIds;
+    if (!Array.isArray(ids) || ids.length !== 3) return { ok: false, reason: "wrong-size" };
+    if (new Set(ids).size !== 3) return { ok: false, reason: "duplicate" };
+    const notOwned = ids.find((id) => !this.state.owned.has(id));
+    if (notOwned !== undefined) return { ok: false, reason: "not-owned", relicId: notOwned };
+    const party = [...ids];
+    this.persist({ ...this.state, party });
+    this.state.party = party;
+    return { ok: true, party: [...party] };
+  }
+
+  /** 애착 렐릭은 보유한 플레이 가능 렐릭만 된다. 유대는 건드리지 않는다. */
+  async setFavorite(request: SetFavoriteRequest): Promise<RelicMarkResponse> {
+    await this.delay();
+    if (!this.state.owned.has(request.relicId) || !PLAYABLE_RELICS.some(({ id }) => id === request.relicId)) return { ok: false };
+    this.persist({ ...this.state, favorite: request.relicId });
+    this.state.favorite = request.relicId;
+    return { ok: true };
+  }
+
+  /** 즐겨찾기는 보유한 렐릭만 담는다. 이미 그 상태면 아무것도 쓰지 않는 멱등 성공이다. */
+  async setRelicBookmark(request: SetRelicBookmarkRequest): Promise<RelicMarkResponse> {
+    await this.delay();
+    if (!this.state.owned.has(request.relicId)) return { ok: false };
+    if (this.state.bookmarked.has(request.relicId) === request.bookmarked) return { ok: true };
+    const bookmarked = new Set(this.state.bookmarked);
+    if (request.bookmarked) bookmarked.add(request.relicId); else bookmarked.delete(request.relicId);
+    this.persist({ ...this.state, bookmarked });
+    this.state.bookmarked = bookmarked;
+    return { ok: true };
+  }
+
+  /**
+   * 플레이어 카드 한 칸을 바꾼다. 닉네임 형식·이레 주기·테두리 개방·사진 보유를 서버가 확인하고,
+   * UID와 연구 개시일은 처음 한 번만 서버가 정한다(시각도 서버 시계다).
+   */
+  async updatePlayerCard(request: UpdatePlayerCardRequest): Promise<UpdatePlayerCardResponse> {
+    await this.delay();
+    const card = this.state.playerCard;
+    let next = card;
+    switch (request.kind) {
+      case "identity":
+        if (card.uid && card.createdAt) return { ok: true, card: { ...card } };
+        next = { ...card, uid: card.uid || createPlayerUid(this.random), createdAt: card.createdAt || this.now().toISOString() };
+        break;
+      case "nickname": {
+        const problem = nicknameProblem(request.value);
+        if (problem) return { ok: false, reason: problem };
+        const nickname = cleanNickname(request.value);
+        if (nickname === card.nickname) return { ok: true, card: { ...card } };
+        const now = this.now();
+        if (nicknameLockedUntil(card, now)) return { ok: false, reason: "nicknameCooldown" };
+        next = { ...card, nickname, nicknameChangedAt: card.nickname === "" ? card.nicknameChangedAt : now.toISOString() };
+        break;
+      }
+      case "bio":
+        next = { ...card, bio: cleanBio(request.value) };
+        break;
+      case "frame": {
+        const frame = findProfileFrame(request.frameId);
+        if (!frame) return { ok: false, reason: "unknownFrame" };
+        if (!isProfileFrameUnlocked(frame, this.state.playerResearch.level)) return { ok: false, reason: "frameLocked" };
+        next = { ...card, frameId: request.frameId };
+        break;
+      }
+      case "avatar":
+        if (!this.state.owned.has(request.relicId)) return { ok: false, reason: "notOwned" };
+        next = { ...card, avatarRelicId: request.relicId };
+        break;
+      default:
+        throw new GameApiError("INVALID_STATE", "알 수 없는 플레이어 카드 요청입니다.");
+    }
+    this.persist({ ...this.state, playerCard: next });
+    this.state.playerCard = next;
+    return { ok: true, card: { ...next } };
+  }
+
+  /** 획득한 수식어만, 상한 안에서, 중복 없이 장착한다. */
+  async equipProfileModifiers(request: EquipProfileModifiersRequest): Promise<EquipProfileModifiersResponse> {
+    await this.delay();
+    const earned = new Set(this.state.earnedProfileModifierIds.filter((id) => findProfileModifier(id)));
+    const unique = [...new Set(request.modifierIds)];
+    if (unique.length > MAX_EQUIPPED_PROFILE_MODIFIERS || unique.some((id) => !earned.has(id))) {
+      throw new GameApiError("PROFILE_MODIFIER_INVALID", "획득하지 않은 수식어이거나 장착 상한을 넘었습니다.");
+    }
+    this.persist({ ...this.state, equippedProfileModifierIds: unique });
+    this.state.equippedProfileModifierIds = unique;
+    return { equippedModifierIds: [...unique] };
+  }
+
+  /** 렐릭·외형 소유와 대상 일치를 확인하고 외형을 입히거나(`skinId`) 벗긴다. */
+  async equipRelicSkin(request: EquipRelicSkinRequest): Promise<RelicMarkResponse> {
+    await this.delay();
+    if (!this.state.owned.has(request.relicId)) return { ok: false };
+    const current = this.state.equippedRelicSkinIds[request.relicId];
+    const next = { ...this.state.equippedRelicSkinIds };
+    if (request.skinId === undefined) {
+      if (current === undefined) return { ok: false };
+      delete next[request.relicId];
+    } else {
+      const skin = getRelicSkin(request.skinId);
+      if (!this.state.ownedRelicSkinIds.has(request.skinId) || skin?.relicId !== request.relicId) return { ok: false };
+      if (current === request.skinId) return { ok: true };
+      next[request.relicId] = request.skinId;
+    }
+    this.persist({ ...this.state, equippedRelicSkinIds: next });
+    this.state.equippedRelicSkinIds = next;
+    return { ok: true };
   }
 
   /**

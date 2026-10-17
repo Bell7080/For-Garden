@@ -17,7 +17,8 @@ import type { ExcavationCurrency, IdleExcavationState } from "../core/idleExcava
 import type { AdReward } from "../data/adRewards";
 import type { ItemCategory, ItemUseEffect, WalletItemKey } from "../data/items";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
-import type { PlayerResearchProgress } from "../state/session";
+import type { PlayerCardState, PlayerResearchProgress } from "../state/session";
+import type { NicknameProblem } from "../core/playerCard";
 import type { PlayerExpReceipt } from "../core/playerLevel";
 import type { ItemLot } from "../core/itemLots";
 import type { ExpeditionRelicSnapshot } from "../core/expeditionSnapshot";
@@ -78,6 +79,31 @@ export interface UseConsumableResponse extends InventoryResponse { itemId: strin
 export interface PurchaseRelicSkinRequest { relicId: string; skinId: RelicSkinId; requestId: string; }
 /** 치른 값을 함께 돌려줘 화면이 영수증을 다시 계산하지 않게 한다. */
 export interface PurchaseRelicSkinResponse extends PlayerStateDto { skinId: RelicSkinId; spent: { currency: keyof Wallet; amount: number }; }
+
+/** 편성 확정 요청. 서로 다른 보유 렐릭 세 명이어야 한다. */
+export interface SetPartyRequest { relicIds: string[]; }
+/** 검증 실패는 던지지 않고 사유를 데이터로 돌려준다 — 화면이 사유마다 다른 안내를 세운다. */
+export type SetPartyResponse = { ok: true; party: string[] } | { ok: false; reason: "wrong-size" | "duplicate" | "not-owned"; relicId?: string };
+/** 애착 렐릭 지정. 보유한 플레이 가능 렐릭만 받는다. */
+export interface SetFavoriteRequest { relicId: string; }
+/** 즐겨찾기 켜기·끄기. 보유하지 않은 렐릭은 담지 않는다. */
+export interface SetRelicBookmarkRequest { relicId: string; bookmarked: boolean; }
+/** 보유 검증을 통과해 반영되었는지만 말한다. */
+export interface RelicMarkResponse { ok: boolean; }
+/** 플레이어 카드의 바뀌는 칸 하나. `identity`는 UID·연구 개시일을 처음 한 번만 정한다. */
+export type UpdatePlayerCardRequest =
+  | { kind: "identity" }
+  | { kind: "nickname"; value: string }
+  | { kind: "bio"; value: string }
+  | { kind: "frame"; frameId: string }
+  | { kind: "avatar"; relicId: string };
+export type PlayerCardFailureReason = NicknameProblem | "nicknameCooldown" | "frameLocked" | "unknownFrame" | "notOwned";
+export type UpdatePlayerCardResponse = { ok: true; card: PlayerCardState } | { ok: false; reason: PlayerCardFailureReason };
+/** 장착 수식어 전체를 한 번에 바꾼다. 획득하지 않았거나 상한(3)을 넘으면 거절한다. */
+export interface EquipProfileModifiersRequest { modifierIds: string[]; }
+export interface EquipProfileModifiersResponse { equippedModifierIds: string[]; }
+/** 추가 외형 장착. `skinId`를 비우면 기본 외형으로 되돌린다. */
+export interface EquipRelicSkinRequest { relicId: string; skinId?: RelicSkinId; }
 
 /** 로컬 시계로 확정량을 만들지 않도록 서버가 완성해 주는 스테미나 시계다. 세부 명명 규칙은 docs/server-time-dto.md를 따른다. */
 /** 재화로 스테미나를 채우는 요청. 수단 ID는 서버 표와 대조하고 재전송은 requestId로 막는다. */
@@ -633,7 +659,7 @@ export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPE
   | "STRATA_NO_CHARGE" | "STRATA_CHARGE_FULL" | "STRATA_RUN_ACTIVE" | "STRATA_RUN_NOT_FOUND" | "STRATA_SITE_LOCKED" | "STRATA_SITE_COOLING" | "STRATA_TILE_UNAVAILABLE"
   | "RUNE_TRAIT_NOT_FOUND" | "RUNE_TRAIT_ITEM_INVALID" | "RUNE_TRAIT_MAX_GRADE" | "RUNE_TRAIT_GRADE_REACHED" | "RUNE_TRAIT_REROLL_PENDING"
   | "CAKE_TIER_NOT_FOUND" | "CAKE_TIER_LOCKED" | "DUNGEON_NOT_CLEARED" | "SWEEP_TICKET_SHORTAGE"
-  | "RELIC_STORY_NOT_FOUND" | "RELIC_STORY_LOCKED" | "RELIC_STORY_ALREADY_CLAIMED";
+  | "RELIC_STORY_NOT_FOUND" | "RELIC_STORY_LOCKED" | "RELIC_STORY_ALREADY_CLAIMED" | "PROFILE_MODIFIER_INVALID";
 
 /**
  * 급여 응답.
@@ -950,6 +976,18 @@ export interface GameApi extends AsyncArenaProfileApi {
   getStaminaRechargeStatus(): Promise<StaminaRechargeStatusDto>;
   /** 값 조회·차감·외형 지급을 한 처리 단위로 확정한다. 화면은 결과만 다시 읽는다. */
   purchaseRelicSkin(request: PurchaseRelicSkinRequest): Promise<PurchaseRelicSkinResponse>;
+  /** 편성은 서버가 보유·중복·인원을 확인해 확정한다. */
+  setParty(request: SetPartyRequest): Promise<SetPartyResponse>;
+  /** 로비에 서는 애착 렐릭을 정한다. 유대 경험치는 건드리지 않는다. */
+  setFavorite(request: SetFavoriteRequest): Promise<RelicMarkResponse>;
+  /** 목록을 추리는 즐겨찾기 표시. 애착과 섞이지 않는다. */
+  setRelicBookmark(request: SetRelicBookmarkRequest): Promise<RelicMarkResponse>;
+  /** 닉네임·소개·테두리·프로필 사진·최초 식별값을 서버 규칙으로 바꾼다. */
+  updatePlayerCard(request: UpdatePlayerCardRequest): Promise<UpdatePlayerCardResponse>;
+  /** 장착 수식어 목록을 확정한다. */
+  equipProfileModifiers(request: EquipProfileModifiersRequest): Promise<EquipProfileModifiersResponse>;
+  /** 추가 외형을 입히거나 벗긴다. */
+  equipRelicSkin(request: EquipRelicSkinRequest): Promise<RelicMarkResponse>;
   /** 장착 검증과 지갑 상한을 통과한 룬 판매를 서버가 원자 확정한다. */
   sellRunes(request: SellRunesRequest): Promise<SellRunesResponse>;
 

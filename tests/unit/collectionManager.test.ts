@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { createEmptyRaidState, createInitialPlayerResearchProgress, createEmptyPlayerCard, type Session } from "../../src/state/session";
 import { RelicCollectionManager } from "../../src/managers/RelicCollectionManager";
+import { FakeServer } from "../../src/api/FakeServer";
+
+/** 독립 세션을 소유하는 지연 없는 서버로 매니저를 만든다. */
+function managerFor(state: Session): RelicCollectionManager {
+  return new RelicCollectionManager(state, new FakeServer(state, { latencyMs: 0, persistSession: () => undefined }));
+}
 import { createDefaultSettings } from "../../src/core/settings";
 import { createArchaeologyState } from "../../src/core/strataDig";
 
@@ -49,60 +55,60 @@ function makeSession(): Session {
 }
 
 describe("RelicCollectionManager", () => {
-  it("미보유 렐릭을 애착 렐릭이나 파티에 넣지 않는다", () => {
+  it("미보유 렐릭을 애착 렐릭이나 파티에 넣지 않는다", async () => {
     const state = makeSession();
-    const manager = new RelicCollectionManager(state);
+    const manager = managerFor(state);
 
-    expect(manager.setFavorite("spino")).toBe(false);
-    expect(manager.setParty(["torika", "rex", "spino"])).toEqual({ ok: false, reason: "not-owned", relicId: "spino" });
+    expect(await manager.setFavorite("spino")).toBe(false);
+    expect(await manager.setParty(["torika", "rex", "spino"])).toEqual({ ok: false, reason: "not-owned", relicId: "spino" });
     expect(state.favorite).toBe("torika");
     expect(state.party).toEqual(["torika", "rex", "dodo"]);
   });
 
-  it("즐겨찾기는 여러 명을 담고 애착 렐릭과 섞이지 않는다", () => {
+  it("즐겨찾기는 여러 명을 담고 애착 렐릭과 섞이지 않는다", async () => {
     const state = makeSession();
-    const manager = new RelicCollectionManager(state);
+    const manager = managerFor(state);
 
-    expect(manager.toggleBookmark("rex")).toBe(true);
-    expect(manager.toggleBookmark("dodo")).toBe(true);
+    expect(await manager.toggleBookmark("rex")).toBe(true);
+    expect(await manager.toggleBookmark("dodo")).toBe(true);
     expect(manager.isBookmarked("rex")).toBe(true);
     // 즐겨찾기를 바꿔도 로비에 서는 애착 렐릭은 그대로다.
     expect(state.favorite).toBe("torika");
 
-    expect(manager.toggleBookmark("rex")).toBe(true);
+    expect(await manager.toggleBookmark("rex")).toBe(true);
     expect(manager.isBookmarked("rex")).toBe(false);
     expect(manager.isBookmarked("dodo")).toBe(true);
   });
 
-  it("미보유 렐릭은 즐겨찾기에 담지 않는다", () => {
+  it("미보유 렐릭은 즐겨찾기에 담지 않는다", async () => {
     const state = makeSession();
-    const manager = new RelicCollectionManager(state);
+    const manager = managerFor(state);
 
-    expect(manager.toggleBookmark("spino")).toBe(false);
+    expect(await manager.toggleBookmark("spino")).toBe(false);
     expect(state.bookmarked.size).toBe(0);
   });
 
-  it("서로 다른 보유 렐릭 세 명만 파티로 확정한다", () => {
+  it("서로 다른 보유 렐릭 세 명만 파티로 확정한다", async () => {
     const state = makeSession();
-    const manager = new RelicCollectionManager(state);
+    const manager = managerFor(state);
 
-    expect(manager.setParty(["rex", "dodo", "torika"])).toEqual({ ok: true });
-    expect(manager.setParty(["rex", "rex", "torika"])).toEqual({ ok: false, reason: "duplicate" });
+    expect(await manager.setParty(["rex", "dodo", "torika"])).toEqual({ ok: true });
+    expect(await manager.setParty(["rex", "rex", "torika"])).toEqual({ ok: false, reason: "duplicate" });
     expect(state.party).toEqual(["rex", "dodo", "torika"]);
   });
 
-  it("파티 인원 부족과 미보유를 서로 다른 실패 사유로 돌려준다", () => {
-    const manager = new RelicCollectionManager(makeSession());
+  it("파티 인원 부족과 미보유를 서로 다른 실패 사유로 돌려준다", async () => {
+    const manager = managerFor(makeSession());
 
     // UI가 같은 false를 추측하지 않고 각 원인에 맞는 안내를 표시할 수 있어야 한다.
-    expect(manager.setParty(["torika", "rex"])).toEqual({ ok: false, reason: "wrong-size" });
-    expect(manager.setParty(["torika", "rex", "quetzal"])).toEqual({ ok: false, reason: "not-owned", relicId: "quetzal" });
+    expect(await manager.setParty(["torika", "rex"])).toEqual({ ok: false, reason: "wrong-size" });
+    expect(await manager.setParty(["torika", "rex", "quetzal"])).toEqual({ ok: false, reason: "not-owned", relicId: "quetzal" });
   });
 
-  it("저장 파티에서 미보유 렐릭이 발견되면 초기 편성 후보를 비운다", () => {
+  it("저장 파티에서 미보유 렐릭이 발견되면 초기 편성 후보를 비운다", async () => {
     const state = makeSession();
     state.party = ["torika", "rex", "quetzal"];
-    const manager = new RelicCollectionManager(state);
+    const manager = managerFor(state);
     // 씬은 손상 배열 일부를 이어 쓰지 않고 이 빈 결과만 자동 편성으로 대체한다.
     expect(manager.validParty).toEqual([]);
   });

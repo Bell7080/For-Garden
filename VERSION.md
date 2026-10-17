@@ -1,6 +1,6 @@
 # 버전 관리
 
-현재 버전: **v0.296.2**
+현재 버전: **v0.297.0**
 
 `VERSION.md`와 `package.json`의 `version`은 항상 같은 값을 쓰고, 타이틀(로딩) 화면 좌측
 하단 표기는 그 값을 그대로 읽는다. 화면에 손으로 적어 두지 않는다.
@@ -31,6 +31,13 @@
   그 이전의 초기 프로토타입 단계는 `v0.1.0` 항목 하나로 묶었다.
 
 ## 변경 이력
+
+## v0.297.0 — 프로필·꾸미기 변경을 서버 호출로 옮긴다 (서버 연결 A묶음)
+
+- 기기에서 서버를 거치지 않고 직접 세션을 바꾸던 여섯 곳을 `GameApi`로 옮겼다: 편성(`setParty`), 애착(`setFavorite`), 즐겨찾기(`setRelicBookmark`), 플레이어 카드(`updatePlayerCard` — 식별·닉네임·소개·테두리·사진), 프로필 수식어 장착(`equipProfileModifiers`), 외형 장착·해제(`equipRelicSkin`). 검증(보유·중복·인원·테두리 개방·닉네임 이레 주기)은 `FakeServer`가 하고 서버 함수(`api/game.js`, 재생성)가 그대로 실행한다. 닉네임 주기와 연구 개시일은 이제 서버 시계로 잰다.
+- 매니저(`RelicCollectionManager`·`PlayerCardManager`·`ProfileModifierManager`·`RelicSkinManager`)는 요청을 보내고 결과를 데이터로 돌려줄 뿐 세션을 직접 쓰지 않는다. **메서드가 비동기가 되었다** — 화면은 서버가 답한 뒤에 다시 그린다. 검증 실패는 예전처럼 사유 데이터(`{ ok: false, reason }`)로 오고, 수식어 장착만 예외(`PROFILE_MODIFIER_INVALID`)로 온다. 저장 주입(`saves`) 인자는 없어지고 독립 세션 테스트는 그 세션을 소유하는 `FakeServer`를 넘긴다(`profileApi.ts`).
+- 서버 호출 목록(`SERVER_GAME_METHODS`)에 일곱 메서드를 더하고 `api/game.js`를 다시 구웠다. 서버 처리기 테스트가 편성·즐겨찾기·카드 식별이 서버 상태에 남고 재전송이 한 번만 반영되는지 지킨다.
+- 아직 게임은 서버 진행을 켜지 않았다(로컬 `FakeServer` 그대로). 다음: B묶음(관찰 인터뷰·스토리 완료·교류 일지·고고학 유적 선택).
 
 ## v0.296.2 — 출시 전환 점검 문서
 

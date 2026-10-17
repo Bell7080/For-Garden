@@ -1587,6 +1587,8 @@ var MISC_KO = {
   "title.saveRecovered": "\uC800\uC7A5 \uB370\uC774\uD130\uB97C \uD655\uC778\uD560 \uC218 \uC5C6\uC5B4 \uC548\uC804\uD55C \uCD08\uAE30 \uC0C1\uD0DC\uB85C \uBCF5\uAD6C\uD588\uC2B5\uB2C8\uB2E4.",
   "title.subtitle": "\uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC",
   "title.enter": "\uD0ED\uD558\uC5EC \uC785\uC7A5",
+  "title.switchAccount": "\uACC4\uC815 \uBCC0\uACBD",
+  "title.switchAccount.body": "\uB2E4\uB978 \uACC4\uC815\uC73C\uB85C \uC2DC\uC791\uD569\uB2C8\uB2E4. \uC774 \uAE30\uAE30\uC758 \uB85C\uCEEC \uC800\uC7A5 \uB370\uC774\uD130\uAC00 \uC0AD\uC81C\uB429\uB2C8\uB2E4. \uC11C\uBC84\uC5D0 \uC5F0\uB3D9\uB41C \uC9C4\uD589\uC740 \uC720\uC9C0\uB429\uB2C8\uB2E4.",
   "title.gate.maintenance.title": "\uC810\uAC80 \uC911",
   "title.gate.maintenance.default": "\uC11C\uBC84 \uC810\uAC80 \uC911\uC785\uB2C8\uB2E4. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
   "title.gate.maintenance.until": "\uC885\uB8CC \uC608\uC815: {time}",
@@ -15833,6 +15835,118 @@ for (const banner of BANNERS) {
   registerDataText(banner, "name", `banner.${banner.id}.name`);
 }
 
+// src/core/playerCard.ts
+init_define_import_meta_env();
+
+// src/data/profileFrames.ts
+init_define_import_meta_env();
+var DEFAULT_PROFILE_FRAME_ID = "field";
+var PROFILE_FRAMES = [
+  { id: "field", style: "plain", displayName: "\uD604\uC7A5 \uC5F0\uAD6C\uC6D0", unlockLevel: 1, color: 10466248, wash: 2766404 },
+  { id: "holo", style: "bracket", displayName: "\uD22C\uC601 \uAD00\uCE21", unlockLevel: 10, color: 6280447, wash: 1521736 },
+  { id: "amber", style: "gem", displayName: "\uD638\uBC15 \uD45C\uBCF8", unlockLevel: 20, color: 15905857, wash: 4008978 },
+  { id: "abyss", style: "wing", displayName: "\uC2EC\uD574 \uAE30\uB85D", unlockLevel: 30, color: 11566335, wash: 2759748 },
+  { id: "garden", style: "vine", displayName: "\uC815\uC6D0 \uC218\uD638", unlockLevel: 45, color: 5759136, wash: 1325612 },
+  { id: "eternal", style: "crown", displayName: "\uC774\uD130\uB110", unlockLevel: 60, color: 16740207, wash: 4331036 }
+];
+function findProfileFrame(id) {
+  return PROFILE_FRAMES.find((frame) => frame.id === id);
+}
+function isProfileFrameUnlocked(frame, playerLevel) {
+  return playerLevel >= frame.unlockLevel;
+}
+for (const frame of PROFILE_FRAMES) registerDataText(frame, "displayName", `profileFrame.${frame.id}.name`);
+
+// src/core/playerCard.ts
+var NICKNAME_MIN_LENGTH = 2;
+var NICKNAME_MAX_LENGTH = 12;
+var BIO_MAX_LENGTH = 40;
+var PLAYER_UID_LENGTH = 9;
+var glyphs = (value) => Array.from(value);
+var CONTROL = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/u;
+function cleanNickname(value) {
+  return value.replace(/\s+/gu, " ").trim();
+}
+function nicknameProblem(value) {
+  const cleaned = cleanNickname(value);
+  if (CONTROL.test(cleaned)) return "invalidCharacter";
+  const length = glyphs(cleaned).length;
+  if (length < NICKNAME_MIN_LENGTH) return "tooShort";
+  if (length > NICKNAME_MAX_LENGTH) return "tooLong";
+  return void 0;
+}
+function cleanBio(value) {
+  const flat = value.replace(/[\r\n\u2028\u2029]+/gu, " ").replace(CONTROL, "").replace(/\s+/gu, " ").trim();
+  return glyphs(flat).slice(0, BIO_MAX_LENGTH).join("");
+}
+function isPlayerUid(value) {
+  return new RegExp(`^[1-9][0-9]{${PLAYER_UID_LENGTH - 1}}$`).test(value);
+}
+function createPlayerUid(random) {
+  let uid = String(1 + Math.floor(random() * 9));
+  while (uid.length < PLAYER_UID_LENGTH) uid += String(Math.floor(random() * 10) % 10);
+  return uid;
+}
+var NICKNAME_CHANGE_COOLDOWN_MS = 7 * 864e5;
+function nicknameLockedUntil(card, now) {
+  if (card.nickname === "") return void 0;
+  const changed = Date.parse(card.nicknameChangedAt);
+  if (!Number.isFinite(changed)) return void 0;
+  const until = changed + NICKNAME_CHANGE_COOLDOWN_MS;
+  return until > now.getTime() ? new Date(until) : void 0;
+}
+function normalizePlayerCard(value) {
+  const raw = value && typeof value === "object" ? value : {};
+  const nickname = typeof raw.nickname === "string" && raw.nickname !== "" && nicknameProblem(raw.nickname) === void 0 ? cleanNickname(raw.nickname) : "";
+  return {
+    uid: typeof raw.uid === "string" && isPlayerUid(raw.uid) ? raw.uid : "",
+    nickname,
+    bio: typeof raw.bio === "string" ? cleanBio(raw.bio) : "",
+    frameId: typeof raw.frameId === "string" && findProfileFrame(raw.frameId) ? raw.frameId : DEFAULT_PROFILE_FRAME_ID,
+    avatarRelicId: typeof raw.avatarRelicId === "string" && RELICS.some(({ id }) => id === raw.avatarRelicId) ? raw.avatarRelicId : "",
+    createdAt: typeof raw.createdAt === "string" && Number.isFinite(Date.parse(raw.createdAt)) ? raw.createdAt : "",
+    nicknameChangedAt: typeof raw.nicknameChangedAt === "string" && Number.isFinite(Date.parse(raw.nicknameChangedAt)) ? raw.nicknameChangedAt : ""
+  };
+}
+
+// src/data/profileModifiers.ts
+init_define_import_meta_env();
+var PROFILE_MODIFIERS = [
+  { id: "field-pioneer", displayName: "\uD604\uC7A5 \uAC1C\uCC99\uC790", rarity: "rare", acquisitionConditionId: "mission:daily-battle" },
+  { id: "steady-researcher", displayName: "\uAFB8\uC900\uD55C \uC5F0\uAD6C\uC790", rarity: "common", acquisitionConditionId: "mission:daily-research" },
+  { id: "deep-record", displayName: "\uC2EC\uCE35 \uAE30\uB85D\uC790", rarity: "epic", acquisitionConditionId: "research:weekly:60" },
+  { id: "garden-legend", displayName: "\uC815\uC6D0\uC758 \uC804\uC124", rarity: "legendary", acquisitionConditionId: "research:weekly:120" },
+  /*
+   * 업적의 마지막 단계를 받는 순간 열리는 수식어(`data/achievements.ts`의 `modifierId`). 희귀도는 그 줄을
+   * 끝내는 데 드는 시간을 말한다 — 1억 골드·결투 300승·원정 20만 점처럼 오래 걸리는 줄만 전설이다.
+   */
+  { id: "millionaire", displayName: "\uBC31\uB9CC\uC7A5\uC790", rarity: "legendary", acquisitionConditionId: "achievement:wealth" },
+  { id: "specimen-curator", displayName: "\uD45C\uBCF8 \uAD00\uB9AC\uC778", rarity: "epic", acquisitionConditionId: "achievement:collector" },
+  { id: "limit-breaker", displayName: "\uD55C\uACC4\uB97C \uB118\uC740 \uC790", rarity: "epic", acquisitionConditionId: "achievement:limit-break" },
+  { id: "kind-researcher", displayName: "\uB2E4\uC815\uD55C \uC5F0\uAD6C\uC6D0", rarity: "rare", acquisitionConditionId: "achievement:bond" },
+  { id: "chief-researcher", displayName: "\uC218\uC11D \uC5F0\uAD6C\uC6D0", rarity: "epic", acquisitionConditionId: "achievement:research-level" },
+  { id: "veteran", displayName: "\uBC31\uC804\uB178\uC7A5", rarity: "epic", acquisitionConditionId: "achievement:victories" },
+  { id: "front-breaker", displayName: "\uC804\uC120 \uB3CC\uD30C\uC790", rarity: "rare", acquisitionConditionId: "achievement:frontline" },
+  { id: "arena-ruler", displayName: "\uACB0\uD22C\uC7A5\uC758 \uC9C0\uBC30\uC790", rarity: "legendary", acquisitionConditionId: "achievement:duelist" },
+  { id: "raid-captain", displayName: "\uD1A0\uBC8C\uB300\uC7A5", rarity: "rare", acquisitionConditionId: "achievement:raider" },
+  { id: "deep-salvager", displayName: "\uC2EC\uD574 \uC778\uC591\uAC00", rarity: "legendary", acquisitionConditionId: "achievement:salvager" },
+  { id: "fossil-appraiser", displayName: "\uD654\uC11D \uAC10\uC815\uC0AC", rarity: "epic", acquisitionConditionId: "achievement:fossil-lab" },
+  { id: "city-envoy", displayName: "\uB3C4\uC2DC\uC758 \uC0AC\uC808", rarity: "rare", acquisitionConditionId: "achievement:dispatch" },
+  { id: "story-collector", displayName: "\uC774\uC57C\uAE30 \uC218\uC9D1\uAC00", rarity: "rare", acquisitionConditionId: "achievement:storyteller" },
+  { id: "cheesecake-artisan", displayName: "\uCE58\uC988\uCF00\uC774\uD06C \uC7A5\uC778", rarity: "rare", acquisitionConditionId: "achievement:feeding" },
+  { id: "tireless", displayName: "\uC9C0\uCE60 \uC904 \uBAA8\uB974\uB294", rarity: "epic", acquisitionConditionId: "achievement:stamina" },
+  { id: "diligent-researcher", displayName: "\uC131\uC2E4\uD55C \uC5F0\uAD6C\uC6D0", rarity: "epic", acquisitionConditionId: "achievement:diligence" },
+  { id: "challenger", displayName: "\uC815\uC810\uC758 \uB3C4\uC804\uC790", rarity: "legendary", acquisitionConditionId: "achievement:duel-tier" },
+  { id: "stratum-explorer", displayName: "\uC9C0\uCE35 \uD0D0\uC0AC\uAC00", rarity: "rare", acquisitionConditionId: "achievement:archaeologist" },
+  { id: "walking-codex", displayName: "\uAC78\uC5B4 \uB2E4\uB2C8\uB294 \uB3C4\uAC10", rarity: "legendary", acquisitionConditionId: "achievement:codex-complete" }
+];
+function findProfileModifier(id) {
+  return PROFILE_MODIFIERS.find((definition) => definition.id === id);
+}
+for (const modifier of PROFILE_MODIFIERS) {
+  registerDataText(modifier, "displayName", `modifier.${modifier.id}.name`);
+}
+
 // src/data/adRewards.ts
 init_define_import_meta_env();
 var AD_REWARD_SLOTS = [
@@ -17018,22 +17132,6 @@ function isValidLotStack(stack) {
   return stack.lots.every((lot) => Number.isInteger(lot.quantity) && lot.quantity > 0 && Number.isFinite(Date.parse(lot.expiresAt))) && stack.lots.reduce((sum, lot) => sum + lot.quantity, 0) === stack.quantity;
 }
 
-// src/data/profileFrames.ts
-init_define_import_meta_env();
-var DEFAULT_PROFILE_FRAME_ID = "field";
-var PROFILE_FRAMES = [
-  { id: "field", style: "plain", displayName: "\uD604\uC7A5 \uC5F0\uAD6C\uC6D0", unlockLevel: 1, color: 10466248, wash: 2766404 },
-  { id: "holo", style: "bracket", displayName: "\uD22C\uC601 \uAD00\uCE21", unlockLevel: 10, color: 6280447, wash: 1521736 },
-  { id: "amber", style: "gem", displayName: "\uD638\uBC15 \uD45C\uBCF8", unlockLevel: 20, color: 15905857, wash: 4008978 },
-  { id: "abyss", style: "wing", displayName: "\uC2EC\uD574 \uAE30\uB85D", unlockLevel: 30, color: 11566335, wash: 2759748 },
-  { id: "garden", style: "vine", displayName: "\uC815\uC6D0 \uC218\uD638", unlockLevel: 45, color: 5759136, wash: 1325612 },
-  { id: "eternal", style: "crown", displayName: "\uC774\uD130\uB110", unlockLevel: 60, color: 16740207, wash: 4331036 }
-];
-function findProfileFrame(id) {
-  return PROFILE_FRAMES.find((frame) => frame.id === id);
-}
-for (const frame of PROFILE_FRAMES) registerDataText(frame, "displayName", `profileFrame.${frame.id}.name`);
-
 // src/core/stageProgress.ts
 init_define_import_meta_env();
 
@@ -18111,47 +18209,6 @@ function duelAttemptsLeft(state) {
   return Math.max(0, DUEL_DAILY_ATTEMPTS + state.attemptsPurchased + state.attemptsFromAds - state.attemptsUsed);
 }
 
-// src/core/playerCard.ts
-init_define_import_meta_env();
-var NICKNAME_MIN_LENGTH = 2;
-var NICKNAME_MAX_LENGTH = 12;
-var BIO_MAX_LENGTH = 40;
-var PLAYER_UID_LENGTH = 9;
-var glyphs = (value) => Array.from(value);
-var CONTROL = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/u;
-function cleanNickname(value) {
-  return value.replace(/\s+/gu, " ").trim();
-}
-function nicknameProblem(value) {
-  const cleaned = cleanNickname(value);
-  if (CONTROL.test(cleaned)) return "invalidCharacter";
-  const length = glyphs(cleaned).length;
-  if (length < NICKNAME_MIN_LENGTH) return "tooShort";
-  if (length > NICKNAME_MAX_LENGTH) return "tooLong";
-  return void 0;
-}
-function cleanBio(value) {
-  const flat = value.replace(/[\r\n\u2028\u2029]+/gu, " ").replace(CONTROL, "").replace(/\s+/gu, " ").trim();
-  return glyphs(flat).slice(0, BIO_MAX_LENGTH).join("");
-}
-function isPlayerUid(value) {
-  return new RegExp(`^[1-9][0-9]{${PLAYER_UID_LENGTH - 1}}$`).test(value);
-}
-var NICKNAME_CHANGE_COOLDOWN_MS = 7 * 864e5;
-function normalizePlayerCard(value) {
-  const raw = value && typeof value === "object" ? value : {};
-  const nickname = typeof raw.nickname === "string" && raw.nickname !== "" && nicknameProblem(raw.nickname) === void 0 ? cleanNickname(raw.nickname) : "";
-  return {
-    uid: typeof raw.uid === "string" && isPlayerUid(raw.uid) ? raw.uid : "",
-    nickname,
-    bio: typeof raw.bio === "string" ? cleanBio(raw.bio) : "",
-    frameId: typeof raw.frameId === "string" && findProfileFrame(raw.frameId) ? raw.frameId : DEFAULT_PROFILE_FRAME_ID,
-    avatarRelicId: typeof raw.avatarRelicId === "string" && RELICS.some(({ id }) => id === raw.avatarRelicId) ? raw.avatarRelicId : "",
-    createdAt: typeof raw.createdAt === "string" && Number.isFinite(Date.parse(raw.createdAt)) ? raw.createdAt : "",
-    nicknameChangedAt: typeof raw.nicknameChangedAt === "string" && Number.isFinite(Date.parse(raw.nicknameChangedAt)) ? raw.nicknameChangedAt : ""
-  };
-}
-
 // src/core/expeditionPeriods.ts
 init_define_import_meta_env();
 
@@ -18655,44 +18712,6 @@ function rollExpeditionPeriods(expedition, now) {
 }
 function expeditionRankRewardQueue(state) {
   return [...state.pendingRankReward ? [state.pendingRankReward] : [], ...state.pendingRankRewards ?? []].map((reward) => ({ ...reward }));
-}
-
-// src/data/profileModifiers.ts
-init_define_import_meta_env();
-var PROFILE_MODIFIERS = [
-  { id: "field-pioneer", displayName: "\uD604\uC7A5 \uAC1C\uCC99\uC790", rarity: "rare", acquisitionConditionId: "mission:daily-battle" },
-  { id: "steady-researcher", displayName: "\uAFB8\uC900\uD55C \uC5F0\uAD6C\uC790", rarity: "common", acquisitionConditionId: "mission:daily-research" },
-  { id: "deep-record", displayName: "\uC2EC\uCE35 \uAE30\uB85D\uC790", rarity: "epic", acquisitionConditionId: "research:weekly:60" },
-  { id: "garden-legend", displayName: "\uC815\uC6D0\uC758 \uC804\uC124", rarity: "legendary", acquisitionConditionId: "research:weekly:120" },
-  /*
-   * 업적의 마지막 단계를 받는 순간 열리는 수식어(`data/achievements.ts`의 `modifierId`). 희귀도는 그 줄을
-   * 끝내는 데 드는 시간을 말한다 — 1억 골드·결투 300승·원정 20만 점처럼 오래 걸리는 줄만 전설이다.
-   */
-  { id: "millionaire", displayName: "\uBC31\uB9CC\uC7A5\uC790", rarity: "legendary", acquisitionConditionId: "achievement:wealth" },
-  { id: "specimen-curator", displayName: "\uD45C\uBCF8 \uAD00\uB9AC\uC778", rarity: "epic", acquisitionConditionId: "achievement:collector" },
-  { id: "limit-breaker", displayName: "\uD55C\uACC4\uB97C \uB118\uC740 \uC790", rarity: "epic", acquisitionConditionId: "achievement:limit-break" },
-  { id: "kind-researcher", displayName: "\uB2E4\uC815\uD55C \uC5F0\uAD6C\uC6D0", rarity: "rare", acquisitionConditionId: "achievement:bond" },
-  { id: "chief-researcher", displayName: "\uC218\uC11D \uC5F0\uAD6C\uC6D0", rarity: "epic", acquisitionConditionId: "achievement:research-level" },
-  { id: "veteran", displayName: "\uBC31\uC804\uB178\uC7A5", rarity: "epic", acquisitionConditionId: "achievement:victories" },
-  { id: "front-breaker", displayName: "\uC804\uC120 \uB3CC\uD30C\uC790", rarity: "rare", acquisitionConditionId: "achievement:frontline" },
-  { id: "arena-ruler", displayName: "\uACB0\uD22C\uC7A5\uC758 \uC9C0\uBC30\uC790", rarity: "legendary", acquisitionConditionId: "achievement:duelist" },
-  { id: "raid-captain", displayName: "\uD1A0\uBC8C\uB300\uC7A5", rarity: "rare", acquisitionConditionId: "achievement:raider" },
-  { id: "deep-salvager", displayName: "\uC2EC\uD574 \uC778\uC591\uAC00", rarity: "legendary", acquisitionConditionId: "achievement:salvager" },
-  { id: "fossil-appraiser", displayName: "\uD654\uC11D \uAC10\uC815\uC0AC", rarity: "epic", acquisitionConditionId: "achievement:fossil-lab" },
-  { id: "city-envoy", displayName: "\uB3C4\uC2DC\uC758 \uC0AC\uC808", rarity: "rare", acquisitionConditionId: "achievement:dispatch" },
-  { id: "story-collector", displayName: "\uC774\uC57C\uAE30 \uC218\uC9D1\uAC00", rarity: "rare", acquisitionConditionId: "achievement:storyteller" },
-  { id: "cheesecake-artisan", displayName: "\uCE58\uC988\uCF00\uC774\uD06C \uC7A5\uC778", rarity: "rare", acquisitionConditionId: "achievement:feeding" },
-  { id: "tireless", displayName: "\uC9C0\uCE60 \uC904 \uBAA8\uB974\uB294", rarity: "epic", acquisitionConditionId: "achievement:stamina" },
-  { id: "diligent-researcher", displayName: "\uC131\uC2E4\uD55C \uC5F0\uAD6C\uC6D0", rarity: "epic", acquisitionConditionId: "achievement:diligence" },
-  { id: "challenger", displayName: "\uC815\uC810\uC758 \uB3C4\uC804\uC790", rarity: "legendary", acquisitionConditionId: "achievement:duel-tier" },
-  { id: "stratum-explorer", displayName: "\uC9C0\uCE35 \uD0D0\uC0AC\uAC00", rarity: "rare", acquisitionConditionId: "achievement:archaeologist" },
-  { id: "walking-codex", displayName: "\uAC78\uC5B4 \uB2E4\uB2C8\uB294 \uB3C4\uAC10", rarity: "legendary", acquisitionConditionId: "achievement:codex-complete" }
-];
-function findProfileModifier(id) {
-  return PROFILE_MODIFIERS.find((definition) => definition.id === id);
-}
-for (const modifier of PROFILE_MODIFIERS) {
-  registerDataText(modifier, "displayName", `modifier.${modifier.id}.name`);
 }
 
 // src/data/cakeOperation.ts
@@ -24951,14 +24970,28 @@ function isInteractionDispatchComplete(completesAt, nowMs) {
 
 // src/managers/ProfileModifierManager.ts
 init_define_import_meta_env();
+
+// src/managers/profileApi.ts
+init_define_import_meta_env();
+function resolveProfileApi(state, injected, cache2) {
+  if (injected) return injected;
+  if (state === session) return gameApi;
+  return cache2.api ??= new FakeServer(state, { latencyMs: 0, persistSession: () => void 0 });
+}
+
+// src/managers/ProfileModifierManager.ts
 var MAX_EQUIPPED_PROFILE_MODIFIERS = 3;
 var ProfileModifierManager = class {
-  constructor(state = session, saves = saveManager) {
+  constructor(state = session, injectedApi) {
     this.state = state;
-    this.saves = saves;
+    this.injectedApi = injectedApi;
   }
   state;
-  saves;
+  injectedApi;
+  apiCache = {};
+  get api() {
+    return resolveProfileApi(this.state, this.injectedApi, this.apiCache);
+  }
   /** 정적 정의에 남아 있는 고유 ID만 카탈로그 순서로 공개한다. */
   earned() {
     const ids = new Set(this.state.earnedProfileModifierIds);
@@ -24975,19 +25008,9 @@ var ProfileModifierManager = class {
       return [definition];
     });
   }
-  /** 선택 전체를 검증한 뒤 저장하며 실패 시 메모리도 이전 상태로 되돌린다. */
-  equip(ids) {
-    const earned = new Set(this.earned().map(({ id }) => id));
-    const unique = [...new Set(ids)];
-    if (unique.length > MAX_EQUIPPED_PROFILE_MODIFIERS || unique.some((id) => !earned.has(id))) throw new Error("\uD68D\uB4DD\uD558\uC9C0 \uC54A\uC740 \uC218\uC2DD\uC5B4\uC774\uAC70\uB098 \uC7A5\uCC29 \uC0C1\uD55C\uC744 \uB118\uC5C8\uC2B5\uB2C8\uB2E4.");
-    const previous = this.state.equippedProfileModifierIds;
-    this.state.equippedProfileModifierIds = unique;
-    try {
-      this.saves.save(this.state);
-    } catch (error) {
-      this.state.equippedProfileModifierIds = previous;
-      throw error;
-    }
+  /** 선택 전체를 서버가 검증·저장한다. 획득하지 않았거나 상한을 넘으면 서버가 거절해 예외로 전해진다. */
+  async equip(ids) {
+    await this.api.equipProfileModifiers({ modifierIds: [...ids] });
   }
   /** 보상 조건과 일치한 획득 ID를 보상 스냅샷에 합쳐 호출자의 단일 persist에 포함한다. */
   static applyRewardReceipt(state, receipt) {
@@ -25348,7 +25371,7 @@ var PREMIUM_PRODUCTS = [
   { id: "premium-excavation", storefront: "premium", category: "weekly", premiumCategory: "weekly", iconKey: "shop-product-rune", name: "\uBC1C\uAD74 \uC7A5\uBE44 \uBC88\uB4E4", description: "", acquisition: pay("premium-excavation", 2900), grants: [item2("strata-ticket", "\uBC1C\uAD74\uAD8C", 5), item2("sweep-ticket", "\uC18C\uD0D5\uAD8C", 5), currency2("fossil", 2), currency2("gems", 1e3)], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: FROM3, visibleUntil: UNTIL3 },
   { id: "premium-restore-deal", storefront: "premium", category: "weekly", premiumCategory: "weekly", iconKey: "shop-product-enhancement", name: "\uBCF5\uC6D0 \uAC00\uC18D \uD2B9\uAC00", description: "", acquisition: pay("premium-restore-deal", 2500), grants: [currency2("amber", 4), currency2("gold", 15e4), currency2("gems", 500)], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: FROM3, visibleUntil: UNTIL3 },
   // **원석은 이 패키지로만 준다**(일반 패키지에는 넣지 않는다). 고고학을 도는 사람의 지원 묶음이다.
-  { id: "premium-archaeology-support", storefront: "premium", category: "weekly", premiumCategory: "weekly", iconKey: "shop-product-rune", name: "\uACE0\uACE0\uD559 \uC9C0\uC6D0 \uD328\uD0A4\uC9C0", description: "", acquisition: pay("premium-archaeology-support", 2900), grants: [item2("strata-ticket", "\uBC1C\uAD74\uAD8C", 10), currency2("rawStone", 3e3), currency2("gems", 1e3)], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: FROM3, visibleUntil: UNTIL3 },
+  { id: "premium-archaeology-support", storefront: "premium", category: "weekly", premiumCategory: "weekly", iconKey: "shop-product-rune", name: "\uACE0\uACE0\uD559 \uC9C0\uC6D0 \uD328\uD0A4\uC9C0", description: "", acquisition: pay("premium-archaeology-support", 2900), grants: [item2("strata-ticket", "\uBC1C\uAD74\uAD8C", 5), currency2("rawStone", 3e3), currency2("gems", 1e3)], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: FROM3, visibleUntil: UNTIL3 },
   // ── 월간 ──
   freeClaim("premium-free-monthly", "\uC6D4\uAC04 \uBB34\uB8CC \uBCF4\uAE09", "monthly", [currency2("gold", 2e5), currency2("cheesecake", 600), currency2("gems", 200), item2("stamina-tonic", "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C", 8)]),
   { id: "premium-monthly-fossil", storefront: "premium", category: "special", premiumCategory: "monthly", iconKey: "shop-product-fossil", name: "\uC6D4\uAC04 \uD654\uC11D \uD328\uD0A4\uC9C0", description: "", acquisition: pay("premium-monthly-fossil", 3900), grants: [currency2("fossil", 10), currency2("gems", 1e3)], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: FROM3, visibleUntil: UNTIL3 },
@@ -28318,6 +28341,114 @@ var FakeServer = class {
     this.state.ownedRelicSkinIds = nextSkins;
     return { ...this.snapshot(), skinId: request.skinId, spent: { currency: currency3, amount } };
   }
+  /** 편성은 서로 다른 보유 렐릭 세 명만 확정한다. 실패는 사유를 데이터로 돌려준다. */
+  async setParty(request) {
+    await this.delay();
+    const ids = request.relicIds;
+    if (!Array.isArray(ids) || ids.length !== 3) return { ok: false, reason: "wrong-size" };
+    if (new Set(ids).size !== 3) return { ok: false, reason: "duplicate" };
+    const notOwned = ids.find((id) => !this.state.owned.has(id));
+    if (notOwned !== void 0) return { ok: false, reason: "not-owned", relicId: notOwned };
+    const party = [...ids];
+    this.persist({ ...this.state, party });
+    this.state.party = party;
+    return { ok: true, party: [...party] };
+  }
+  /** 애착 렐릭은 보유한 플레이 가능 렐릭만 된다. 유대는 건드리지 않는다. */
+  async setFavorite(request) {
+    await this.delay();
+    if (!this.state.owned.has(request.relicId) || !PLAYABLE_RELICS.some(({ id }) => id === request.relicId)) return { ok: false };
+    this.persist({ ...this.state, favorite: request.relicId });
+    this.state.favorite = request.relicId;
+    return { ok: true };
+  }
+  /** 즐겨찾기는 보유한 렐릭만 담는다. 이미 그 상태면 아무것도 쓰지 않는 멱등 성공이다. */
+  async setRelicBookmark(request) {
+    await this.delay();
+    if (!this.state.owned.has(request.relicId)) return { ok: false };
+    if (this.state.bookmarked.has(request.relicId) === request.bookmarked) return { ok: true };
+    const bookmarked = new Set(this.state.bookmarked);
+    if (request.bookmarked) bookmarked.add(request.relicId);
+    else bookmarked.delete(request.relicId);
+    this.persist({ ...this.state, bookmarked });
+    this.state.bookmarked = bookmarked;
+    return { ok: true };
+  }
+  /**
+   * 플레이어 카드 한 칸을 바꾼다. 닉네임 형식·이레 주기·테두리 개방·사진 보유를 서버가 확인하고,
+   * UID와 연구 개시일은 처음 한 번만 서버가 정한다(시각도 서버 시계다).
+   */
+  async updatePlayerCard(request) {
+    await this.delay();
+    const card = this.state.playerCard;
+    let next = card;
+    switch (request.kind) {
+      case "identity":
+        if (card.uid && card.createdAt) return { ok: true, card: { ...card } };
+        next = { ...card, uid: card.uid || createPlayerUid(this.random), createdAt: card.createdAt || this.now().toISOString() };
+        break;
+      case "nickname": {
+        const problem = nicknameProblem(request.value);
+        if (problem) return { ok: false, reason: problem };
+        const nickname = cleanNickname(request.value);
+        if (nickname === card.nickname) return { ok: true, card: { ...card } };
+        const now = this.now();
+        if (nicknameLockedUntil(card, now)) return { ok: false, reason: "nicknameCooldown" };
+        next = { ...card, nickname, nicknameChangedAt: card.nickname === "" ? card.nicknameChangedAt : now.toISOString() };
+        break;
+      }
+      case "bio":
+        next = { ...card, bio: cleanBio(request.value) };
+        break;
+      case "frame": {
+        const frame = findProfileFrame(request.frameId);
+        if (!frame) return { ok: false, reason: "unknownFrame" };
+        if (!isProfileFrameUnlocked(frame, this.state.playerResearch.level)) return { ok: false, reason: "frameLocked" };
+        next = { ...card, frameId: request.frameId };
+        break;
+      }
+      case "avatar":
+        if (!this.state.owned.has(request.relicId)) return { ok: false, reason: "notOwned" };
+        next = { ...card, avatarRelicId: request.relicId };
+        break;
+      default:
+        throw new GameApiError("INVALID_STATE", "\uC54C \uC218 \uC5C6\uB294 \uD50C\uB808\uC774\uC5B4 \uCE74\uB4DC \uC694\uCCAD\uC785\uB2C8\uB2E4.");
+    }
+    this.persist({ ...this.state, playerCard: next });
+    this.state.playerCard = next;
+    return { ok: true, card: { ...next } };
+  }
+  /** 획득한 수식어만, 상한 안에서, 중복 없이 장착한다. */
+  async equipProfileModifiers(request) {
+    await this.delay();
+    const earned = new Set(this.state.earnedProfileModifierIds.filter((id) => findProfileModifier(id)));
+    const unique = [...new Set(request.modifierIds)];
+    if (unique.length > MAX_EQUIPPED_PROFILE_MODIFIERS || unique.some((id) => !earned.has(id))) {
+      throw new GameApiError("PROFILE_MODIFIER_INVALID", "\uD68D\uB4DD\uD558\uC9C0 \uC54A\uC740 \uC218\uC2DD\uC5B4\uC774\uAC70\uB098 \uC7A5\uCC29 \uC0C1\uD55C\uC744 \uB118\uC5C8\uC2B5\uB2C8\uB2E4.");
+    }
+    this.persist({ ...this.state, equippedProfileModifierIds: unique });
+    this.state.equippedProfileModifierIds = unique;
+    return { equippedModifierIds: [...unique] };
+  }
+  /** 렐릭·외형 소유와 대상 일치를 확인하고 외형을 입히거나(`skinId`) 벗긴다. */
+  async equipRelicSkin(request) {
+    await this.delay();
+    if (!this.state.owned.has(request.relicId)) return { ok: false };
+    const current = this.state.equippedRelicSkinIds[request.relicId];
+    const next = { ...this.state.equippedRelicSkinIds };
+    if (request.skinId === void 0) {
+      if (current === void 0) return { ok: false };
+      delete next[request.relicId];
+    } else {
+      const skin = getRelicSkin(request.skinId);
+      if (!this.state.ownedRelicSkinIds.has(request.skinId) || skin?.relicId !== request.relicId) return { ok: false };
+      if (current === request.skinId) return { ok: true };
+      next[request.relicId] = request.skinId;
+    }
+    this.persist({ ...this.state, equippedRelicSkinIds: next });
+    this.state.equippedRelicSkinIds = next;
+    return { ok: true };
+  }
   /**
    * 재화로 스테미나를 채운다.
    *
@@ -30631,6 +30762,8 @@ var SERVER_GAME_METHODS = [
   "enterEventStage",
   "enterRaid",
   "enterStage",
+  "equipProfileModifiers",
+  "equipRelicSkin",
   "equipRune",
   "feedRelic",
   "fulfillPlatformPurchase",
@@ -30674,6 +30807,9 @@ var SERVER_GAME_METHODS = [
   "saveExcavationFormation",
   "sellRunes",
   "setDuelDefense",
+  "setFavorite",
+  "setParty",
+  "setRelicBookmark",
   "settleExpeditionRun",
   "settleRaid",
   "startInteractionDispatch",
@@ -30685,6 +30821,7 @@ var SERVER_GAME_METHODS = [
   "sweepCakeOperation",
   "sweepExpedition",
   "unequipRune",
+  "updatePlayerCard",
   "upgradeRuneTrait",
   "useConsumable",
   "verifyPurchaseReceipt"

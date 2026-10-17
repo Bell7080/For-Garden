@@ -68,6 +68,26 @@ describe("서버 호출 처리기", () => {
     expect(m.commits()).toBe(1);
   });
 
+  it("프로필·편성 변경은 서버 상태에 남고 같은 요청 재전송은 한 번만 반영한다", async () => {
+    const m = memoryStore();
+    const opts = { store: m.store, ...fixed };
+    const call = (method: string, args: unknown[], requestId: string) => handleGameCall(P, { method, args, requestId }, opts);
+    const party = await call("setParty", [{ relicIds: ["torika", "rex", "dodo"] }], "call-party-01");
+    expect((party.result as { ok: boolean }).ok).toBe(true);
+    // 보유하지 않은 개체를 편성에 넣는 요청은 사유만 돌려주고 상태를 건드리지 않는다.
+    const rejected = await call("setParty", [{ relicIds: ["torika", "rex", "pontos"] }], "call-party-02");
+    expect(rejected.result).toMatchObject({ ok: false, reason: "not-owned", relicId: "pontos" });
+    const mark = await call("setRelicBookmark", [{ relicId: "rex", bookmarked: true }], "call-mark-01");
+    const again = await call("setRelicBookmark", [{ relicId: "rex", bookmarked: true }], "call-mark-01");
+    expect(again.revision).toBe(mark.revision);
+    const card = await call("updatePlayerCard", [{ kind: "identity" }], "call-card-01");
+    expect(card.result).toMatchObject({ ok: true, card: { createdAt: "2026-10-16T00:00:00.000Z" } });
+    const saved = m.saves.get(P)?.data as { party: string[]; bookmarkedRelicIds: string[]; playerCard: { uid: string } };
+    expect(saved.party).toEqual(["torika", "rex", "dodo"]);
+    expect(saved.bookmarkedRelicIds).toEqual(["rex"]);
+    expect(saved.playerCard.uid).toMatch(/^[1-9]\d{8}$/);
+  });
+
   it("동시 충돌은 다시 읽고 재시도한다", async () => {
     const m = memoryStore();
     await handleGameCall(P, { method: "getInventory" }, { store: m.store, ...fixed });

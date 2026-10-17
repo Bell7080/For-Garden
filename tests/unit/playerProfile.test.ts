@@ -101,10 +101,11 @@ describe("profile modifier manager", () => {
 
   it("미획득 장착을 거부하고 유효한 ID 목록만 한 번 저장한다", async () => {
     const { ProfileModifierManager } = await import("../../src/managers/ProfileModifierManager");
+    const { FakeServer } = await import("../../src/api/FakeServer");
     const state = createDefaultSession(); state.earnedProfileModifierIds = ["field-pioneer"];
-    const saves = { save: vi.fn() }; const manager = new ProfileModifierManager(state, saves);
-    expect(() => manager.equip(["locked"])).toThrow();
-    manager.equip(["field-pioneer"]);
+    const saves = { save: vi.fn() }; const manager = new ProfileModifierManager(state, new FakeServer(state, { latencyMs: 0, persistSession: saves.save }));
+    await expect(manager.equip(["locked"])).rejects.toThrow();
+    await manager.equip(["field-pioneer"]);
     expect(state.equippedProfileModifierIds).toEqual(["field-pioneer"]); expect(saves.save).toHaveBeenCalledOnce();
   });
 });

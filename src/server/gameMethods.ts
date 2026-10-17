@@ -9,14 +9,14 @@ export const SERVER_GAME_METHODS = [
   "claimInteractionDispatch", "claimMailRewards", "claimMissionRewards", "claimPassDailyBonus", "claimProgressPass", "claimRelicChapter",
   "claimRelicQuestionReward", "completeBounty", "completeCakeOperation", "completeExpeditionNode", "completeStage", "digStrataTile",
   "engraveRune", "enhanceRune", "enterBounty", "enterCakeOperation", "enterDailyRestoration", "enterDuel", "enterEventStage", "enterRaid",
-  "enterStage", "equipRune", "feedRelic", "fulfillPlatformPurchase", "getAchievements", "getAdOperationsConfig", "getAsyncArenaServerState", "getAttendance",
+  "enterStage", "equipProfileModifiers", "equipRelicSkin", "equipRune", "feedRelic", "fulfillPlatformPurchase", "getAchievements", "getAdOperationsConfig", "getAsyncArenaServerState", "getAttendance",
   "getBountyStatus", "getDuelRanking", "getDuelStatus", "getEvents", "getExpeditionLeaderboard", "getExpeditionWeeklyBest",
   "getIdleExcavation", "getInteractionCities", "getInteractionDispatch", "getInventory", "getMails", "getMissions", "getNotificationSignals",
   "getPlayerState", "getProducts", "getProgressPasses", "getRaids", "getStaminaRechargeStatus", "grantRuneTrait", "harvestExcavation",
   "interactInLobby", "markAttendanceAutoShown", "markMailsRead", "markRune", "pullRelics", "purchaseProduct", "purchaseRelicSkin",
   "rechargeStamina", "refreshDuelOpponents", "renameRune", "rerollRuneTrait", "resolveDuel", "resolveRuneTraitReroll", "saveExcavationFormation",
-  "sellRunes", "setDuelDefense", "settleExpeditionRun", "settleRaid", "startInteractionDispatch", "startStrataRun", "submitExpeditionBossScore",
-  "submitRaidDamage", "summonRaid", "sweepBounty", "sweepCakeOperation", "sweepExpedition", "unequipRune", "upgradeRuneTrait",
+  "sellRunes", "setDuelDefense", "setFavorite", "setParty", "setRelicBookmark", "settleExpeditionRun", "settleRaid", "startInteractionDispatch", "startStrataRun", "submitExpeditionBossScore",
+  "submitRaidDamage", "summonRaid", "sweepBounty", "sweepCakeOperation", "sweepExpedition", "unequipRune", "updatePlayerCard", "upgradeRuneTrait",
   "useConsumable", "verifyPurchaseReceipt",
 ] as const;
 

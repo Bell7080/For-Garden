@@ -37,6 +37,6 @@ export async function loadPlayerProfileDisplay(state: Session, arenaApi: AsyncAr
   const tierId = arena?.seasonTierId?.trim();
   // 서버 데이터가 없거나 빈 ID면 항목을 통째로 생략한다. 표시명도 서버 확정 ID를 그대로 쓴다.
   // 공개 표시에는 manager가 검증하고 정적 정의로 해석한 장착 항목만 포함하며 전체 획득 목록은 넘기지 않는다.
-  const equipped = state === session ? profileModifierManager.equipped() : new ProfileModifierManager(state, { save: () => undefined }).equipped();
+  const equipped = state === session ? profileModifierManager.equipped() : new ProfileModifierManager(state).equipped();
   return playerProfileDisplay(state, equipped, tierId ? { tierId, displayName: tierId } : undefined);
 }

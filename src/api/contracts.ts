@@ -88,7 +88,8 @@ export interface PurchaseRelicSkinResponse extends PlayerStateDto { skinId: Reli
 
 /** 이야기 완료 기록. 같은 이야기를 다시 완료해도 한 번만 반영한다. */
 export interface CompleteStoryRequest { storyId: string; }
-export interface CompleteStoryResponse { firstCompletion: boolean; }
+/** 이야기 서브를 처음 완료하면 젬만 준다(`SUB_STORY_GEM_REWARDS`). 보상이 없는 이야기는 두 필드를 비운다. */
+export interface CompleteStoryResponse { firstCompletion: boolean; gemsGranted?: number; wallet?: Wallet; }
 /** 대사 선택이 일으키는 데이터 명령. 서버가 대상·범위·재관람 중복을 확인하고 이미 완료한 이야기는 보상하지 않는다. */
 export interface ApplyStoryEffectRequest { storyId: string; effect: DialogueEffect; }
 export interface ApplyStoryEffectResponse { xpGained: number; }

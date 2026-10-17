@@ -1,7 +1,7 @@
 import { applyBreakthrough } from "../core/relicProgression";
 import { registerDataText } from "../i18n";
 import { applyEncounterScaling, encounterRoleFor, requiredBreakthroughForLevel, type EncounterRole } from "../core/levelDesign";
-import { type ChapterDef, type RelicDef, type StageBonusReward, type StageDef, type StageEnemyDef } from "../core/types";
+import { type BattleStageDef, type ChapterDef, type RelicDef, type StageBonusReward, type StageDef, type StageEnemyDef } from "../core/types";
 import { getRelic } from "./relics";
 
 /** 챕터 1의 기본 악당 셋은 영구 캐릭터 ID만 공유하고 성장 상태는 각 스테이지가 소유한다. */
@@ -262,8 +262,8 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
  * 서브 노드(SUB) — 본편 노드 옆에서 갈라지는 선택 서사다. 선행 관문(`anchor`)을 깨면 열리지만 **다음 본편의 선행 목록에는
  * 들지 않아** 본편을 막지 않는다. 지도에서는 칸에 「SUB」만 적고 이름은 칸 아래에 선다.
  *
- * 지금은 이야기(`kind: "story"`)만 달 수 있다. 전투 SUB는 진행 순위·다음 단계·서버 입장·보상이 모두 `STAGES`를 읽어
- * 따로 다뤄야 하므로 아직 두지 않는다 — 두게 되면 본편 전투 노드와 같은 양식(`BattleStageDef`)으로 이 목록에 더한다.
+ * 이야기 SUB는 이 목록(`SUB_STORY_STAGES`)이고, 전투 SUB는 `sub: true`를 단 `BattleStageDef`(`SIDE_BATTLE_STAGE`)다.
+ * 전투 SUB는 진행 순위·「다음 단계」에서 빠진다(`stageProgress.ts`).
  */
 function subStory(anchor: string, suffix: string, name: string, storyId: string): StageDef {
   const [chapter, order] = anchor.split("-").map(Number);
@@ -283,8 +283,38 @@ export const SUB_STORY_STAGES: readonly StageDef[] = [
   subStory("3-8", "side-story", "시말서", "stage-3-8-apology"),
 ];
 
-/** 전투와 서브 스토리가 같은 고유 ID 공간에서 저장 검증과 지도 조회를 공유한다. */
-export const STAGES: readonly StageDef[] = [...CHAPTERS.flatMap(({ stages }) => stages), ...SUB_STORY_STAGES];
+/**
+ * 이야기 서브(SUB)의 처음 읽은 보상은 **젬뿐**이고, 같은 장의 일반 관문 초회 젬과 같은 값(30·40·50)이다.
+ * 서버(`completeStory`)와 화면이 이 표 하나를 읽는다. 덤이지 수급처가 아니라 값을 올리지 않는다.
+ */
+const SUB_STORY_GEM_BY_CHAPTER: readonly number[] = [30, 40, 50];
+export const SUB_STORY_GEM_REWARDS: Readonly<Record<string, number>> = Object.fromEntries(
+  SUB_STORY_STAGES.flatMap((stage) => stage.kind === "story" ? [[stage.storyId, SUB_STORY_GEM_BY_CHAPTER[(stage.chapter ?? 1) - 1] ?? 50]] : []),
+);
+
+/**
+ * 전투 서브 — 1-8 수문 아래에서 공멸 셋이 보급 상자를 두고 막아선다. **젬뿐인 초회 보상**이며 같은 장의 일반 관문
+ * 초회 젬(30)의 두 배다. 레벨은 1-8(19)보다 한 칸 높은 20(돌파 0의 상한 안)이라 본편보다 조금 더 단단하다.
+ * 치즈케이크는 주지 않는다 — 난이도 검수가 딛고 선 초회 치즈케이크 곡선(`stageDifficulty.test`)을 건드리지 않는다.
+ */
+const SUB_BATTLE_GEM_BY_CHAPTER: readonly number[] = [60, 80, 100];
+export const SIDE_BATTLE_STAGE: BattleStageDef = {
+  kind: "battle", sub: true,
+  id: "1-8-side-battle", name: "수문 밑 보급전", chapter: 1, chapterOrder: 8,
+  prerequisiteStageIds: ["1-8"],
+  enemies: STAGE_ENEMY_FORMATION.map((id, slot) => enemyGrowth(id, 20, 0, slot as 0 | 1 | 2)),
+  rewards: {
+    firstClearCheesecake: 0,
+    repeatClearCheesecake: 0,
+    firstClearBonus: [{ kind: "currency", currency: "gems", amount: SUB_BATTLE_GEM_BY_CHAPTER[0] }],
+  },
+};
+
+/** 지도에 서는 서브 전부 — 이야기와 전투를 함께 센다. */
+export const SUB_STAGES: readonly StageDef[] = [...SUB_STORY_STAGES, SIDE_BATTLE_STAGE];
+
+/** 전투와 서브가 같은 고유 ID 공간에서 저장 검증과 지도 조회를 공유한다. */
+export const STAGES: readonly StageDef[] = [...CHAPTERS.flatMap(({ stages }) => stages), ...SUB_STAGES];
 const STAGE_BY_ID = new Map(STAGES.map((stage) => [stage.id, stage]));
 
 /** 대규모 던전 대신 하루 세 번만 보상을 받을 수 있는 단일 복원 훈련이다. */
@@ -350,5 +380,5 @@ for (const chapter of CHAPTERS) {
 }
 
 /** 곁가지 스테이지와 일일 복원의 이름도 함께 등록한다. */
-for (const sub of SUB_STORY_STAGES) registerDataText(sub, "name", `stage.${sub.id}.name`);
+for (const sub of SUB_STAGES) registerDataText(sub, "name", `stage.${sub.id}.name`);
 registerDataText(DAILY_RESTORATION, "name", "stage.dailyRestoration.name");

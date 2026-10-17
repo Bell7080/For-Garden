@@ -46,6 +46,7 @@ export default {
   "stage.3-9.name": "Gartenkern",
   "stage.3-10.name": "Kontrollraum des Tiefengartens",
   "stage.1-5-side-story.name": "Der Kürbis-Zwischenfall",
+  "stage.1-8-side-battle.name": "Versorgungsgefecht am Schleusentor",
   "stage.2-3-side-story.name": "Der verlorene Ausweis",
   "stage.2-6-side-story.name": "Dieselbe Reihe",
   "stage.2-9-side-story.name": "Die zweite Verfolgung",

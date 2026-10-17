@@ -27,9 +27,12 @@ const TAP_SLOP = 14;
 export function recollectionRowEyebrow(entry: RecollectionEntry): string {
   if (!entry.stageId) return "";
   // 서브 노드의 이야기는 관문 번호가 아니라 지도 칸에 적히는 그대로 「SUB」다.
-  if (getStage(entry.stageId).kind === "story") return t("stageMap.sub");
+  const stage = getStage(entry.stageId);
+  if (stage.kind === "story") return t("stageMap.sub");
   const phase = entry.phase ? t(entry.phase === "pre" ? "recollection.phase.pre" : "recollection.phase.post") : "";
-  return phase ? `${entry.stageId} · ${phase}` : entry.stageId;
+  // 전투 서브는 출격 전·후 이야기가 둘이라 SUB 뒤에 어느 쪽인지 붙인다.
+  const label = stage.sub ? t("stageMap.sub") : entry.stageId;
+  return phase ? `${label} · ${phase}` : label;
 }
 
 /** 줄의 제목. 관문 대사는 관문 이름, 그 밖의 이야기는 제 제목 키다. */

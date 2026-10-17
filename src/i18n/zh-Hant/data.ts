@@ -46,6 +46,7 @@ export default {
   "stage.3-9.name": "庭園核心",
   "stage.3-10.name": "深層庭園控制室",
   "stage.1-5-side-story.name": "溫室南瓜風波",
+  "stage.1-8-side-battle.name": "水閘下的補給戰",
   "stage.2-3-side-story.name": "遺落的工牌",
   "stage.2-6-side-story.name": "同一條線",
   "stage.2-9-side-story.name": "第二次追擊",

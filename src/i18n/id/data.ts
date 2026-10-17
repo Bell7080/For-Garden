@@ -46,6 +46,7 @@ export default {
   "stage.3-9.name": "Inti Taman",
   "stage.3-10.name": "Ruang Kendali Taman Dalam",
   "stage.1-5-side-story.name": "Insiden Labu Raksasa",
+  "stage.1-8-side-battle.name": "Pertempuran Suplai di Bawah Pintu Air",
   "stage.2-3-side-story.name": "Kartu yang jatuh",
   "stage.2-6-side-story.name": "Satu barisan",
   "stage.2-9-side-story.name": "Pengejaran kedua",

@@ -21,7 +21,7 @@ import { BOUNTY, getBountyTier, type BountyTierDef } from "../data/bounty";
 import { BREAKTHROUGH_CAP, breakthroughFragmentCost, canBreakThrough, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap, BREAKTHROUGH_GRADE_CAP, breakthroughGrade } from "../core/relicProgression";
 import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond";
 import { MISSIONS, RESEARCH_REWARD_STAGES, maxResearchPoints, mergeMissionRewards, type MissionReward, addResearchPoints, applyMissionEvent, claimResearchStages, claimableMissionIds, normalizeMissions, researchPointsForClaim, researchStageClaimId, type MissionPeriod } from "../core/missions";
-import { CHAPTERS, DAILY_RESTORATION, getStage } from "../data/stages";
+import { CHAPTERS, DAILY_RESTORATION, getStage, SUB_STORY_GEM_REWARDS } from "../data/stages";
 import { PROGRESS_PASSES, findProgressPass, type ProgressPassDefinition } from "../data/progressPasses";
 import { claimableProgressPassFreeThresholds, claimableProgressPassThresholds, progressPassFreeStates, progressPassGoal, progressPassMilestoneStates } from "../core/progressPass";
 import { stageFirstClearRewards } from "../core/stageRewards";
@@ -1257,9 +1257,14 @@ export class FakeServer implements GameApi {
     if (typeof id !== "string" || id.length === 0 || id.length > 120) throw new GameApiError("INVALID_STATE", "이야기 ID가 올바르지 않습니다.");
     if (this.state.completedStoryIds.has(id)) return { firstCompletion: false };
     const completedStoryIds = new Set(this.state.completedStoryIds).add(id);
-    this.persist({ ...this.state, completedStoryIds });
+    // 이야기 서브만 처음 완료에 젬을 준다. 상한을 넘는 몫은 던지지 않고 깎는다.
+    const reward = SUB_STORY_GEM_REWARDS[id] ?? 0;
+    const gemsGranted = Math.max(0, Math.min(reward, WALLET_CAPS.gems - this.state.wallet.gems));
+    const nextWallet = gemsGranted > 0 ? { ...this.state.wallet, gems: this.state.wallet.gems + gemsGranted } : this.state.wallet;
+    this.persist({ ...this.state, completedStoryIds, wallet: nextWallet });
     this.state.completedStoryIds = completedStoryIds;
-    return { firstCompletion: true };
+    this.state.wallet = nextWallet;
+    return reward > 0 ? { firstCompletion: true, gemsGranted, wallet: { ...nextWallet } } : { firstCompletion: true };
   }
 
   /** 대사 선택의 유대 경험치 명령. 대상·범위를 확인하고 이미 완료한 이야기(재관람)는 보상하지 않는다. */

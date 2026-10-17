@@ -46,6 +46,7 @@ export default {
   "stage.3-9.name": "Núcleo del Jardín",
   "stage.3-10.name": "Sala de control del Jardín profundo",
   "stage.1-5-side-story.name": "El incidente de la calabaza",
+  "stage.1-8-side-battle.name": "Escaramuza de suministros en la esclusa",
   "stage.2-3-side-story.name": "La credencial caída",
   "stage.2-6-side-story.name": "La misma fila",
   "stage.2-9-side-story.name": "La segunda persecución",

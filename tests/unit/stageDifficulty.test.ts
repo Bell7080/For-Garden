@@ -3,7 +3,7 @@ import {
   CHAPTER_ONE_DIFFICULTY_GOALS, STAGE_DIFFICULTY_ADJUSTMENT_ORDER, inspectStageDifficulty,
   selectReferenceParties, selectableRPartyPairs, summarizeStageDifficulty,
 } from "../../src/core/stageDifficulty";
-import { CHAPTERS, getBattleStage, getStageEnemies } from "../../src/data/stages";
+import { CHAPTERS, SIDE_BATTLE_STAGE, getBattleStage, getStageEnemies } from "../../src/data/stages";
 import { getRelic, PLAYABLE_RELICS } from "../../src/data/relics";
 import { applyLevelGrowth } from "../../src/core/relicProgression";
 import { RUNE_GENERATION_RULES } from "../../src/core/runes";
@@ -359,6 +359,17 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     }
     expect(report.auto.runs.reduce((sum, run) => sum + run.ultimateUses, 0)).toBeGreaterThan(0);
     expect(report.manualDelta).toEqual(expect.objectContaining({ winRate: expect.any(Number), durationSeconds: expect.any(Number), playerHpRatio: expect.any(Number) }));
+  });
+
+  it("전투 서브(1-8 수문 밑 보급전)는 세 대표 조합이 모두 이기되 1-8보다 가볍지 않다", () => {
+    // 레벨 하나(19 → 20)만 한 칸 높고 편성은 같다 — 잡졸 관문이라 잔여 체력은 크게 움직이지 않는다.
+    for (const combo of BLENDED_COMBOS) {
+      const base = inspectStageDifficulty(blendedParty(8, combo), getStageEnemies(getBattleStage("1-8")), SEEDS);
+      const sub = inspectStageDifficulty(blendedParty(8, combo), getStageEnemies(SIDE_BATTLE_STAGE), SEEDS);
+      expect(sub.auto.winRate, combo.join("/")).toBe(1);
+      expect(sub.auto.playerHpRatio.mean, combo.join("/")).toBeLessThanOrEqual(base.auto.playerHpRatio.mean + 0.08);
+      expect(sub.auto.playerHpRatio.mean, combo.join("/")).toBeGreaterThan(0.4);
+    }
   });
 
   it("토리카와 선택 가능한 R 두 명의 최선·최악 기준 파티를 실제 조합 탐색으로 만든다", () => {

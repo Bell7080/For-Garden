@@ -1,6 +1,10 @@
+import type { Wallet } from "../core/gacha";
 import type { DialogueEffect } from "../core/dialogue";
 import { session, type Session } from "../state/session";
 import { resolveServerApi, type RecordApi } from "./serverApi";
+
+/** 이야기 완료 영수증. */
+export interface StoryCompletionReceipt { firstCompletion: boolean; gemsGranted: number; wallet?: Wallet; }
 
 /**
  * 대사 선택 명령과 이야기 완료 기록을 서버에 보내는 경계다. 대상·범위·재관람 중복 검증은 서버가 한다.
@@ -32,8 +36,16 @@ export class StoryManager {
 
   /** 처음 완료한 것이면 `true`다. 지금 줄에 선 효과가 모두 닿은 뒤에 서버가 기록한다. */
   complete(storyId: string): Promise<boolean> {
-    if (!storyId || this.isCompleted(storyId)) return Promise.resolve(false);
-    return this.enqueue(async () => (await this.api.completeStory({ storyId })).firstCompletion);
+    return this.completeWithReceipt(storyId).then(({ firstCompletion }) => firstCompletion);
+  }
+
+  /** `complete`와 같되 이야기 서브가 처음 준 젬과 서버가 확정한 지갑도 함께 돌려준다. */
+  completeWithReceipt(storyId: string): Promise<StoryCompletionReceipt> {
+    if (!storyId || this.isCompleted(storyId)) return Promise.resolve({ firstCompletion: false, gemsGranted: 0 });
+    return this.enqueue(async () => {
+      const response = await this.api.completeStory({ storyId });
+      return { firstCompletion: response.firstCompletion, gemsGranted: response.gemsGranted ?? 0, ...(response.wallet ? { wallet: response.wallet } : {}) };
+    });
   }
 }
 

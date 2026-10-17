@@ -14,7 +14,7 @@ export function isStageUnlockedByProgress(stages: readonly StageDef[], stageId: 
 /** 챕터 번호와 내부 순서를 정적 배열 위치 대신 비교하는 진행 좌표다. */
 function progressRank(stage: StageDef): number {
   // 서브 노드는 같은 본편 순번보다 뒤를 대표하지 않게 소수점 성격의 kind 가중치만 둔다.
-  return (stage.chapter ?? 0) * 10_000 + (stage.chapterOrder ?? 0) * 2 + (stage.kind === "story" ? 0 : 1);
+  return (stage.chapter ?? 0) * 10_000 + (stage.chapterOrder ?? 0) * 2 + (stage.kind === "story" || stage.sub ? 0 : 1);
 }
 
 /** 저장 Set 순서와 데이터 배열 배치에 관계없이 가장 높은 본편 클리어를 찾는다. */
@@ -32,7 +32,11 @@ export function latestUnlockedStage(stages: readonly StageDef[], cleared: Readon
  * 사이에 낀 서사 노드는 건너뛰고, 아직 잠긴 관문은 다음으로 세지 않는다(없으면 `undefined`).
  */
 export function nextBattleStage(stages: readonly StageDef[], currentId: string, isUnlocked: (stageId: string) => boolean): StageDef | undefined {
-  const index = stages.findIndex((stage) => stage.id === currentId);
+  const current = stages.find((stage) => stage.id === currentId);
+  if (!current) return undefined;
+  // 서브 전투는 갈라져 나온 본편 관문 바로 뒤에서 이어 간다 — 배열 끝에 붙어 있어도 「다음 단계」는 본편의 다음이다.
+  const anchorId = current.kind === "battle" && current.sub ? current.prerequisiteStageIds[0] : currentId;
+  const index = stages.findIndex((stage) => stage.id === anchorId);
   if (index < 0) return undefined;
-  return stages.slice(index + 1).find((stage) => stage.kind === "battle" && isUnlocked(stage.id));
+  return stages.slice(index + 1).find((stage) => stage.kind === "battle" && !stage.sub && isUnlocked(stage.id));
 }

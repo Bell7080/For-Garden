@@ -6,6 +6,8 @@ import { getRecollectionStory } from "../data/dialogues/recollections";
 import { bindDebugReadyLifecycle, setDebugReady, setDebugScene } from "../debug";
 import { relicStories } from "../managers/RelicStoryManager";
 import { storyManager } from "../managers/StoryManager";
+import { session } from "../state/session";
+import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
 import { DialogueLayer } from "../ui/DialogueLayer";
 import { COLOR } from "../ui/theme";
 import { addSkipButton } from "../ui/IconButton";
@@ -83,10 +85,23 @@ export class StageStoryScene extends Phaser.Scene {
     this.leaving = true;
     // StoryManager만 completedStoryIds를 변경하며 새 지도 씬이 해금/완료 표시를 다시 계산한다.
     // 완료가 서버에 닿은 뒤에 장 보상을 받고 넘어간다 — 실패해도 장면은 끊지 않는다.
-    void storyManager.complete(this.story.id).catch((error) => console.error("이야기 완료 저장 실패", error)).then(() => this.claimChapterGems()).finally(() => {
-      if (this.then) startScene(this, this.then.scene, this.then.data);
-      else startScene(this, this.exitTo);
-    });
+    let gems = 0;
+    void storyManager.completeWithReceipt(this.story.id)
+      .then((receipt) => {
+        gems = receipt.gemsGranted;
+        if (receipt.wallet) session.wallet = { ...receipt.wallet };
+      })
+      .catch((error) => console.error("이야기 완료 저장 실패", error))
+      .then(() => this.claimChapterGems())
+      .finally(() => {
+        const leave = (): void => {
+          if (this.then) startScene(this, this.then.scene, this.then.data);
+          else startScene(this, this.exitTo);
+        };
+        // 이야기 서브를 처음 읽었으면 받은 젬을 영수증으로 알리고, 닫으면 넘어간다.
+        if (gems > 0) openRewardPopup(this, this.popups, { items: currencyRecordToRewardItems({ gems }), onConfirm: leave });
+        else leave();
+      });
   }
 
   private advance(choice?: DialogueChoice): void {

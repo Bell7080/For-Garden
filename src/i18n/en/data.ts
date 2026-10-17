@@ -48,6 +48,7 @@ export default {
   "stage.3-9.name": "Garden Core",
   "stage.3-10.name": "Deep Garden Control Room",
   "stage.1-5-side-story.name": "The Great Pumpkin Incident",
+  "stage.1-8-side-battle.name": "Supply Skirmish at the Sluice",
   "stage.2-3-side-story.name": "The Dropped Badge",
   "stage.2-6-side-story.name": "The Same Line",
   "stage.2-9-side-story.name": "The Second Chase",

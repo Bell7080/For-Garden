@@ -1,17 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { requiredBreakthroughForLevel } from "../../src/core/levelDesign";
+import type { BattleStageDef } from "../../src/core/types";
 
 import { getRelic } from "../../src/data/relics";
-import { CHAPTERS, DAILY_RESTORATION, FIXED_STAGE_ENEMIES, SIDE_STORY_STAGE, STAGES, SUB_STORY_STAGES, getBattleStage, getStage, getStageEnemies } from "../../src/data/stages";
+import { CHAPTERS, DAILY_RESTORATION, FIXED_STAGE_ENEMIES, SIDE_BATTLE_STAGE, SIDE_STORY_STAGE, STAGES, SUB_STAGES, SUB_STORY_GEM_REWARDS, getBattleStage, getStage, getStageEnemies } from "../../src/data/stages";
 import { stageFirstClearRewards } from "../../src/core/stageRewards";
-import { isStageUnlockedByProgress } from "../../src/core/stageProgress";
+import { isStageUnlockedByProgress, nextBattleStage } from "../../src/core/stageProgress";
 import { stageChapterNavigationLayout } from "../../src/ui/stageChapterLayout";
 import { BREAKTHROUGH_CAP, relicLevelCap } from "../../src/core/relicProgression";
 
 /** 스테이지 편성과 공개 성장 설계가 콘텐츠 수정 중 흐트러지지 않도록 고정한다. */
 describe("stage enemy design", () => {
   /** 판별 유니온 테스트에서 전투 데이터만 안전하게 추려낸다. */
-  const battles = STAGES.filter((stage) => stage.kind === "battle");
+  const battles = STAGES.filter((stage): stage is BattleStageDef => stage.kind === "battle" && !stage.sub);
   it("최초/반복 보상과 단일 일일 복원 3회 제한을 정적 데이터로 제공한다", () => {
     expect(battles[0].rewards).toMatchObject({ firstClearCheesecake: 30, repeatClearCheesecake: 10 });
     expect(DAILY_RESTORATION).toMatchObject({ id: "daily-restoration", maxEntriesPerUtcDay: 3, rewardCheesecake: 40 });
@@ -297,10 +298,28 @@ describe("stage enemy design", () => {
 
   it("세 챕터의 본편 ID 30개를 유일한 평탄 인덱스로 제공하고 알 수 없는 ID를 거부한다", () => {
     expect(CHAPTERS.map(({ stages }) => stages.length)).toEqual([10, 10, 10]);
-    expect(STAGES).toHaveLength(30 + SUB_STORY_STAGES.length);
+    expect(STAGES).toHaveLength(30 + SUB_STAGES.length);
     expect(new Set(STAGES.map(({ id }) => id)).size).toBe(STAGES.length);
     expect(getStage("3-10").chapterOrder).toBe(10);
     expect(() => getStage("4-1")).toThrow("알 수 없는 스테이지 id");
+  });
+
+  it("전투 서브는 젬뿐인 초회 보상이고 본편 진행·다음 단계에 끼지 않는다", () => {
+    const sub = SIDE_BATTLE_STAGE;
+    expect(sub).toMatchObject({ kind: "battle", sub: true, prerequisiteStageIds: ["1-8"] });
+    expect(stageFirstClearRewards(sub)).toEqual([{ kind: "currency", currency: "gems", amount: 60 }]);
+    expect(sub.rewards.repeatClearCheesecake).toBe(0);
+    // 일반 관문 초회 젬(1장 30)의 두 배, 이야기 서브는 일반 관문과 같다.
+    expect(SUB_STORY_GEM_REWARDS["stage-1-5-greenhouse-echo"]).toBe(30);
+    expect(SUB_STORY_GEM_REWARDS["stage-2-3-lost-badge"]).toBe(40);
+    expect(SUB_STORY_GEM_REWARDS["stage-3-8-apology"]).toBe(50);
+    // 1-8보다 한 칸 높고, 돌파 0의 상한(20) 안이다.
+    expect(sub.enemies.every(({ level }) => level === 20)).toBe(true);
+    // 선행 목록에 들지 않아 본편이 막히지 않고, 「다음 단계」는 본편의 다음이다.
+    expect(STAGES.some((stage) => stage.prerequisiteStageIds.includes(sub.id))).toBe(false);
+    expect(nextBattleStage(STAGES, "1-8", () => true)?.id).toBe("1-9");
+    expect(nextBattleStage(STAGES, sub.id, () => true)?.id).toBe("1-9");
+    expect(nextBattleStage(STAGES, "3-10", () => true)).toBeUndefined();
   });
 
   it("1-5 전에는 서브 서사를 잠그고 이후에는 1-6과 함께 독립적으로 연다", () => {

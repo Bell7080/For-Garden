@@ -110,6 +110,36 @@ export const STAGE_3_8_APOLOGY: DialogueStory = {
   ]),
 };
 
+/** 1-8 전투 SUB 전 — 수문 아래 보급 상자를 두고 공멸 셋이 먼저 와 있다. */
+export const STAGE_1_8_SIDE_PRE: DialogueStory = {
+  id: "stage-1-8-side-pre",
+  startNodeId: "crate",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "crate", speaker: "", body: "수문 아래 물가. 티아가 건져 올리던 보급 상자 위에 낯익은 세 그림자가 걸터앉아 있다.", standing: "toby", cast: [{ id: "amo", slot: "left" }, { id: "toby", slot: "center" }, { id: "ripa", slot: "right" }] },
+    { id: "found", speaker: "토비", body: "찾았다! 이 상자 안에서 맛있는 냄새가 나! 우리가 먼저 발견한 거야!", standing: "toby", act: "bounce" },
+    { id: "tired", speaker: "아모", body: "…먼저가 아니라 떠내려온 거잖아. 그리고 배고픈 건 너뿐이야.", standing: "amo", act: "shrink" },
+    { id: "light", speaker: "리파", body: "어? 위에 연구원이다! 들켰네? 근데 상자는 우리가 먼저 앉았으니까 우리 거지?", standing: "ripa", act: "hop" },
+    { id: "torika", speaker: "토리카", body: "저 상자는 티아가 소중히 건져 둔 거예요! 돌려주세요!", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "toby", slot: "center" }, { id: "parua", slot: "right" }], act: "puff" },
+    { id: "stand", speaker: "토비", body: "그럼 정정당당하게 가위바위보… 아니, 힘으로 정하자! 이긴 쪽이 간식을 먹는다!", standing: "toby", act: "rage", cue: "impact" },
+  ]),
+};
+
+/** 1-8 전투 SUB 후 — 열어 본 상자에는 정작 반짝이는 조각뿐이었다. */
+export const STAGE_1_8_SIDE_POST: DialogueStory = {
+  id: "stage-1-8-side-post",
+  startNodeId: "open",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "open", speaker: "", body: "상자를 열자 반짝이는 조각이 가득 쏟아진다. 간식은 한 알도 없다.", standing: "toby", cast: [{ id: "amo", slot: "left" }, { id: "toby", slot: "center" }, { id: "ripa", slot: "right" }], act: "squash" },
+    { id: "cry", speaker: "토비", body: "이게 뭐야! 먹을 수가 없잖아! 나 아까 냄새 분명히 났는데!", standing: "toby", act: "faint" },
+    { id: "sniff", speaker: "리파", body: "음… 그 냄새, 아까 티아가 소매에 넣어 둔 간식 냄새 아니었어?", standing: "ripa", act: "lean" },
+    { id: "sigh", speaker: "아모", body: "…그럴 줄 알았어. 이제 그만 가자. 코마가 기다리겠다.", standing: "amo", act: "nod" },
+    { id: "tia", speaker: "티아", body: "으아앗, 내 보물! 다 흩어졌잖아요! 연구원님, 같이 주워 주실 거죠?", standing: "tia", cast: [{ id: "torika", slot: "left" }, { id: "tia", slot: "center" }, { id: "parua", slot: "right" }], act: "hopTwice" },
+    { id: "pick", speaker: "토리카", body: "물론이죠! 반짝반짝해서 줍는 보람이 있네요.", standing: "torika", act: "hop" },
+  ]),
+};
+
 export const SUB_STORIES: readonly DialogueStory[] = [
-  STAGE_2_3_LOST_BADGE, STAGE_2_6_SAME_LINE, STAGE_2_9_SECOND_CHASE, STAGE_3_5_BEHIND_SLEEVE, STAGE_3_8_APOLOGY,
+  STAGE_1_8_SIDE_PRE, STAGE_1_8_SIDE_POST, STAGE_2_3_LOST_BADGE, STAGE_2_6_SAME_LINE, STAGE_2_9_SECOND_CHASE, STAGE_3_5_BEHIND_SLEEVE, STAGE_3_8_APOLOGY,
 ];

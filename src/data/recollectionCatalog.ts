@@ -2,7 +2,7 @@ import type { DialogueStory } from "../core/dialogue";
 import { OPENING_TRAIN } from "./dialogues/openingTrain";
 import { OPENING_RETREAT } from "./dialogues/openingRetreat";
 import { GREAT_AUK_REPORT } from "./dialogues/greatAukReport";
-import { CHAPTERS, SUB_STORY_STAGES } from "./stages";
+import { CHAPTERS, SUB_STAGES } from "./stages";
 import { STAGE_STORY_LINKS } from "./stageStories";
 
 /** 회고의 탭. 본편은 장마다, 그 밖의 곁 이야기·행사 이야기는 한 탭에 모은다. */
@@ -38,9 +38,15 @@ export function buildRecollectionEntries(): readonly RecollectionEntry[] {
       if (link?.pre) entries.push({ storyId: link.pre, group, stageId: stage.id, phase: "pre" });
       if (link?.post) entries.push({ storyId: link.post, group, stageId: stage.id, phase: "post" });
       // 서브 노드는 갈라져 나온 본편 관문 바로 뒤에 선다 — 지도에서 읽는 순서와 같다.
-      for (const sub of SUB_STORY_STAGES) {
-        if (sub.kind !== "story" || sub.chapter !== chapter.id || sub.chapterOrder !== stage.chapterOrder) continue;
-        entries.push({ storyId: sub.storyId, group, stageId: sub.id, ...(sub.id === "1-5-side-story" ? { titleKey: "recollection.title.greenhouse" as const } : {}) });
+      for (const sub of SUB_STAGES) {
+        if (sub.chapter !== chapter.id || sub.chapterOrder !== stage.chapterOrder) continue;
+        if (sub.kind === "story") {
+          entries.push({ storyId: sub.storyId, group, stageId: sub.id, ...(sub.id === "1-5-side-story" ? { titleKey: "recollection.title.greenhouse" as const } : {}) });
+          continue;
+        }
+        const subLink = STAGE_STORY_LINKS[sub.id];
+        if (subLink?.pre) entries.push({ storyId: subLink.pre, group, stageId: sub.id, phase: "pre" });
+        if (subLink?.post) entries.push({ storyId: subLink.post, group, stageId: sub.id, phase: "post" });
       }
     }
   }

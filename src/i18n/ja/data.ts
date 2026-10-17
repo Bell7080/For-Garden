@@ -213,6 +213,7 @@ export default {
   "stage.3-9.name": "庭園の核心部",
   "stage.3-10.name": "深層庭園 制御室",
   "stage.1-5-side-story.name": "温室のかぼちゃ騒動",
+  "stage.1-8-side-battle.name": "水門下の補給戦",
   "stage.2-3-side-story.name": "落とした社員証",
   "stage.2-6-side-story.name": "同じ列",
   "stage.2-9-side-story.name": "二度目の追跡",

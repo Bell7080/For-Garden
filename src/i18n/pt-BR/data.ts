@@ -46,6 +46,7 @@ export default {
   "stage.3-9.name": "Núcleo do Jardim",
   "stage.3-10.name": "Sala de controle do Jardim profundo",
   "stage.1-5-side-story.name": "O incidente da abóbora",
+  "stage.1-8-side-battle.name": "Disputa de suprimentos na comporta",
   "stage.2-3-side-story.name": "O crachá caído",
   "stage.2-6-side-story.name": "A mesma fila",
   "stage.2-9-side-story.name": "A segunda perseguição",

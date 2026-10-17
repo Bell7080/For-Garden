@@ -46,6 +46,7 @@ export default {
   "stage.3-9.name": "Lõi Khu vườn",
   "stage.3-10.name": "Phòng điều khiển Khu vườn sâu",
   "stage.1-5-side-story.name": "Vụ bí ngô khổng lồ",
+  "stage.1-8-side-battle.name": "Trận giành tiếp tế dưới cống",
   "stage.2-3-side-story.name": "Thẻ nhân viên rơi",
   "stage.2-6-side-story.name": "Cùng một hàng",
   "stage.2-9-side-story.name": "Cuộc truy đuổi thứ hai",

@@ -46,6 +46,7 @@ export default {
   "stage.3-9.name": "Сердце сада",
   "stage.3-10.name": "Пульт глубинного сада",
   "stage.1-5-side-story.name": "Тыквенный переполох",
+  "stage.1-8-side-battle.name": "Схватка за припасы у шлюза",
   "stage.2-3-side-story.name": "Оброненный пропуск",
   "stage.2-6-side-story.name": "Одна линия",
   "stage.2-9-side-story.name": "Вторая погоня",

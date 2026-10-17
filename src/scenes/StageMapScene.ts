@@ -4,7 +4,7 @@ import { t, type TextKey } from "../i18n";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import type { StageDef } from "../core/types";
 import { setDebugScene } from "../debug";
-import { CHAPTERS, STAGES, SUB_STORY_STAGES, getStageEnemies, stageEnemyGrowth } from "../data/stages";
+import { CHAPTERS, STAGES, SUB_STAGES, getStageEnemies, stageEnemyGrowth } from "../data/stages";
 import { latestUnlockedStage } from "../core/stageProgress";
 import { EnemyInfoPopup } from "../ui/EnemyInfoPopup";
 import { storyManager } from "../managers/StoryManager";
@@ -50,6 +50,11 @@ const CHROME_DEPTH = 50;
  * 밀려나므로 지도 전체를 손으로 끌어 볼 수 있게 하고, 들어올 때는 가장 최근에 열린 곳으로
  * 자동으로 올라간다. 스테이지를 고르면 그 스테이지의 적이 위에서 내려온다.
  */
+/** 지도 옆가지(SUB)로 서는 노드 — 이야기 서브와 전투 서브. 본편 세로축에 끼지 않는다. */
+function isSubNode(stage: StageDef): boolean {
+  return stage.kind === "story" || stage.sub === true;
+}
+
 export class StageMapScene extends Phaser.Scene {
   private info!: EnemyInfoPopup;
   /** 적 팝업과 그 위에 쌓이는 스킬·용어 쪽지가 함께 사는 층이다. */
@@ -178,12 +183,12 @@ export class StageMapScene extends Phaser.Scene {
   /** 그 구역의 지도 노드 — 본편 관문에 서브(SUB)를 더한 것이다. 본편 순서는 그대로 둔다. */
   private chapterStages(chapterId: number): StageDef[] {
     const main = CHAPTERS.find(({ id }) => id === chapterId)?.stages ?? [];
-    return [...main, ...SUB_STORY_STAGES.filter((stage) => stage.chapter === chapterId)];
+    return [...main, ...SUB_STAGES.filter((stage) => stage.chapter === chapterId)];
   }
 
   /** 노드가 서는 세로 칸. 서브는 갈라져 나온 본편 관문과 같은 높이다. */
   private rowOf(stage: StageDef, index: number): number {
-    return stage.kind === "story" ? (stage.chapterOrder ?? 1) - 1 : index;
+    return isSubNode(stage) ? (stage.chapterOrder ?? 1) - 1 : index;
   }
 
   /** 서브 노드가 열려 있는가·읽었는가. 전투 관문은 클리어 기록이 말한다. */
@@ -223,12 +228,12 @@ export class StageMapScene extends Phaser.Scene {
       const mainIndex = this.rowOf(stage, index);
       const y = -mainIndex * NODE_GAP;
       // 서브 칩은 1-5에서 옆으로 뻗고 본편은 기존 세로축의 교차 배치를 유지한다.
-      const x = stage.kind === "story" ? cx + 360 : cx + (index % 2 === 0 ? -110 : 110);
+      const x = isSubNode(stage) ? cx + 360 : cx + (index % 2 === 0 ? -110 : 110);
       const unlocked = isStageUnlocked(stage.id);
       const cleared = this.isCompleted(stage);
 
       // 가지도 기록 보상 길 규칙처럼 얇은 실선만 써 본편 장축보다 가볍게 보인다.
-      this.map.add(this.add.line(0, 0, cx, y, x, y, COLOR.panelEdge).setOrigin(0).setLineWidth(stage.kind === "story" ? 2 : 4));
+      this.map.add(this.add.line(0, 0, cx, y, x, y, COLOR.panelEdge).setOrigin(0).setLineWidth(isSubNode(stage) ? 2 : 4));
       // 노드도 카드와 같은 칩 언어를 쓴다. 원형 테두리 대신 깎인 조각으로 둔다.
       this.map.add(drawLayer(this, x, y, chipPoints(96, 96, {
         bevel: { topLeft: 30, topRight: 0, bottomRight: 30, bottomLeft: 0 },
@@ -241,7 +246,7 @@ export class StageMapScene extends Phaser.Scene {
       // 입력과 선택 표시는 투명한 원이 계속 맡는다. 손가락이 모서리에서 빠지지 않게 한다.
       const ring = this.add.circle(x, y, 48, 0xffffff, 0);
       const label = this.add
-        .text(x, y, stage.kind === "story" ? t("stageMap.sub") : stage.id, textStyle({ role: "emphasis", size: 30, color: cleared ? "#1a1d21" : unlocked ? COLOR.ink : COLOR.inkDim }))
+        .text(x, y, isSubNode(stage) ? t("stageMap.sub") : stage.id, textStyle({ role: "emphasis", size: 30, color: cleared ? "#1a1d21" : unlocked ? COLOR.ink : COLOR.inkDim }))
         .setOrigin(0.5);
       const name = this.add
         .text(x, y + 66, stage.name, textStyle({ role: "display", size: 28, color: unlocked ? COLOR.ink : COLOR.inkDim }))
@@ -354,10 +359,10 @@ export class StageMapScene extends Phaser.Scene {
     }
     this.storyPreview.dismiss();
     const enemies = getStageEnemies(stage);
-    this.enemyPreview.showAt(scroll - index * NODE_GAP, {
+    this.enemyPreview.showAt(scroll - visualIndex * NODE_GAP, {
       // 성장 스냅샷은 능력치 사본과 **같은 자리 순서**로 넘긴다 — 배열 순서로 넘기면 아모의
       // 레벨이 리파 밑에 적힌다.
-      title: `${stage.id}  ${stage.name}`, growth: stageEnemyGrowth(stage), enemies, elite: stage.elite === true,
+      title: stage.sub ? `${t("stageMap.sub")}  ${stage.name}` : `${stage.id}  ${stage.name}`, growth: stageEnemyGrowth(stage), enemies, elite: stage.elite === true,
       // 서사가 없는 관문은 `undefined`가 그대로 넘어가 직전 노드의 줄이 남지 않는다.
       situation: stage.situation,
       // 초회 보상은 판 맨 아래 한 줄로 늘 선다. 이미 깬 관문이면 받은 표시(검은 막 + 노란 체크)다.

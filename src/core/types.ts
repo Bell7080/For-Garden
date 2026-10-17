@@ -3542,6 +3542,11 @@ export interface BattleStageDef extends StageBase {
    * 정규화라 관문마다 움직이지 않고, 관문을 조이는 것은 언제나 그 관문의 레벨 하나다.
    */
   elite?: true;
+  /**
+   * **서브(SUB) 전투 관문**이라는 표식. 선행 관문을 깨면 열리지만 본편의 선행 목록·「다음 단계」·진행 순위에는
+   * 들지 않는다 — 안 해도 본편이 막히지 않는 선택 전투다. 보상은 젬뿐인 초회 보상이다.
+   */
+  sub?: true;
   rewards: {
     firstClearCheesecake: number;
     repeatClearCheesecake: number;

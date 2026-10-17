@@ -22,6 +22,8 @@ export const RECOLLECTION_KO = {
   "recollection.summary.stage-1-5-post": "넘어뜨린 장비를 몰래 세우던 토비가 들킨다.",
   "recollection.summary.stage-1-6-post": "되살아난 안테나 너머로 도시의 목소리가 처음 닿는다.",
   "recollection.summary.stage-1-7-pre": "폐기 표식 더미 앞에서 아모의 말수가 줄어든다.",
+  "recollection.summary.stage-1-8-side-pre": "수문 아래 보급 상자를 두고 공멸 셋과 마주 선다.",
+  "recollection.summary.stage-1-8-side-post": "열어 본 상자에는 간식이 아니라 반짝이는 조각뿐이었다.",
   "recollection.summary.stage-1-8-pre": "배수로에서 보급을 회수하던 티아와 마주친다.",
   "recollection.summary.stage-1-9-pre": "봉쇄문 너머에서 누군가 문을 두드린다.",
   "recollection.summary.stage-1-9-post": "갇혀 있던 오비가 남은 재고를 나눠 준다.",

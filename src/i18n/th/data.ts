@@ -46,6 +46,7 @@ export default {
   "stage.3-9.name": "แกนกลางสวน",
   "stage.3-10.name": "ห้องควบคุมสวนชั้นลึก",
   "stage.1-5-side-story.name": "เหตุการณ์ฟักทองยักษ์",
+  "stage.1-8-side-battle.name": "ศึกแย่งเสบียงใต้ประตูน้ำ",
   "stage.2-3-side-story.name": "บัตรพนักงานที่ตกหล่น",
   "stage.2-6-side-story.name": "แถวเดียวกัน",
   "stage.2-9-side-story.name": "การไล่ล่าครั้งที่สอง",

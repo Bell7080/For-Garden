@@ -115,6 +115,8 @@ describe("언어와 표의 계약", () => {
 const KOREAN_ALLOWED: Readonly<Record<string, string>> = {
   // 그 언어 자신의 표기다. 번역하면 제 언어를 찾을 수 없다.
   "../../src/core/language.ts": "언어 이름은 그 언어로 적는다",
+  // QA 빌드에서만 서는 표본 길드의 이름·공지·멤버 이름이다. 운영 데이터가 아니라 번역 대상이 아니다.
+  "../../src/api/FakeGuildServer.ts": "QA 표본 길드",
   // ZIP 안의 실제 관절 키라 옮기면 찾지 못한다.
   "../../src/puppets/anchors.ts": "Puppet 관절 이름",
   // 화면에 그리지 않는다. E2E가 어느 단계인지 확인하는 데만 쓴다.

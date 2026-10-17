@@ -14,6 +14,8 @@ import { publicProfile } from "./publicProfile";
 import { raidChanges, type SharedRaidContext, type SharedRaidChange } from "./sharedRaids";
 import { isReadMethod, REQUEST_ID, validCall } from "./requestPolicy";
 import { isServerGameMethod } from "./gameMethods";
+import type { GuildBackend } from "../api/guildContracts";
+import { createUnavailableGuildBackend } from "../api/UnavailableGuildBackend";
 
 export interface StoredState {
   revision: string;
@@ -69,10 +71,13 @@ export interface GameHandlerDeps {
   /** 같은 계정의 동시 호출이 낙관적 잠금에서 겹칠 때 다시 시도하는 횟수다. */
   maxAttempts?: number;
   strict?: boolean;
+  /** 길드 저장소. 지갑이 얽힌 길드 조작(`createGuild` 등)이 쓰며, 없으면 모든 조작이 `UNAVAILABLE`로 거절된다. */
+  guild?: GuildBackend;
 }
 
 // 한 프로세스 안에서는 계정별로 호출을 줄 세운다. FakeServer가 모듈 단위 싱글턴을 일부 읽으므로
 // 서로 다른 계정이 한꺼번에 돌지도 않게 전역 한 줄로 직렬화한다(서버리스 인스턴스당 동시 1건).
+const unavailableGuild = createUnavailableGuildBackend();
 let chain: Promise<unknown> = Promise.resolve();
 function serialize<T>(task: () => Promise<T>): Promise<T> {
   const next = chain.then(task, task);
@@ -127,7 +132,11 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
       ...(deps.now ? { now: deps.now } : {}),
       persistSession: () => undefined,
       raidContext: context,
+      guild: deps.guild ?? unavailableGuild,
+      playerId,
     });
+    // 재전송이 같은 길드 변경을 두 번 반영하지 않도록 길드 백엔드의 멱등 키를 요청 id로 고정한다.
+    if (req.requestId) server.useGuildRequestId(req.requestId);
     let result: unknown;
     try {
       const timingState = deps.strict && (req.method === "submitRaidDamage" || req.method === "submitExpeditionBossScore") ? structuredClone(state) : state;

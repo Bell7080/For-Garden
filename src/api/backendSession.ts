@@ -6,6 +6,7 @@
 import { CURRENT_SAVE_VERSION, saveManager } from "../state/SaveManager";
 import { installSocialApi } from "./FakeSocialServer";
 import { installGameApi } from "./FakeServer";
+import { installGuildApi } from "./guildApi";
 import { connectServerProgress, createLinkMarker, type ServerProgressDeps, type ServerProgressResult } from "./serverProgress";
 import { installAccountApi } from "./AccountApi";
 import { createWebTokenStore } from "./webTokenStore";
@@ -40,5 +41,6 @@ export function connectProgress(choose: ServerProgressDeps["choose"]): Promise<S
 export function disconnectProgress(): void {
   installGameApi(null);
   installSocialApi(null);
+  installGuildApi(null);
   createLinkMarker().set(null);
 }

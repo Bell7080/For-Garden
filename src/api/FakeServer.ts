@@ -53,6 +53,12 @@ import { simulateDuelDefenses } from "../core/duelDefense";
 import { combatPower } from "../core/combatPower";
 import type { ClaimDuelSeasonRewardResponse, DuelRankingResponse, DuelStatusResponse, EnterDuelRequest, EnterDuelResponse, ResolveDuelRequest, ResolveDuelResponse, SetDuelDefenseRequest } from "./contracts";
 import { WALLET_CAPS } from "../data/economy";
+import { GUILD_ATTENDANCE_REWARD, GUILD_ATTENDANCE_WEEK_BONUS, GUILD_BADGE_CHANGE_GEMS, GUILD_CREATE_GEMS, findGuildProduct } from "../core/guild";
+import { sameGuildBadge } from "../core/guildBadge";
+import { localGuildBackend } from "./FakeGuildServer";
+import { guildActorFrom } from "./guildActor";
+import { GuildApiError, type GuildBackend } from "./guildContracts";
+import type { BuyGuildProductRequest, BuyGuildProductResponse, ChangeGuildBadgeRequest, CreateGuildRequest, GuildWalletResponse, StampGuildAttendanceRequest, StampGuildAttendanceResponse } from "./contracts";
 import { canCompleteTutorialStep, isContentIntroId, isContentIntroSeen, isTutorialStepDone, isTutorialStepId, normalizeTutorialState, TUTORIAL_REWARDS, type TutorialState } from "../core/tutorial";
 import { mileageFragmentRelicId } from "../data/mileageClerk";
 import { BOND_STORY_GEM_REWARD, BOND_STORY_LEVELS, DIARY_QUESTION_GEM_REWARD, bondChapterId, diaryQuestionUnlockAt, type BondStoryLevel } from "../core/relicStory";
@@ -130,6 +136,10 @@ export interface FakeServerOptions {
   verifyAdToken?: (token: string, slotId: string) => boolean | Promise<boolean>;
   /** 실제 백엔드에서는 Apple/Google 서버 검증으로 대체되는 테스트용 영수증 검증기다. */
   verifyPurchaseReceipt?: (receipt: string, productId: string) => string | null | Promise<string | null>;
+  /** 길드 백엔드. 생략하면 이 기기의 임시 구현이고, 서버 호출 단위에서는 DB 구현을 주입한다. */
+  guild?: GuildBackend;
+  /** 길드 호출자 id. 서버는 JWT의 사용자 id를 넘기고, 생략하면 이 기기의 하나뿐인 플레이어다. */
+  playerId?: string;
   /** 저장 성공/실패를 결정적으로 재현하는 테스트용 어댑터이며, 생략하면 공유 세션만 SaveManager에 저장한다. */
   persistSession?: (next: Session) => void;
   /** 콘텐츠 시각의 소유 경계가 플랫폼 예약을 갱신하도록 주입하는 좁은 알림 계약이다. */
@@ -162,6 +172,8 @@ export class FakeServer implements GameApi {
   private readonly verifyReceipt: (receipt: string, productId: string) => string | null | Promise<string | null>;
   /** 테스트가 브라우저 저장소 없이 커밋 실패를 주입할 수 있는 선택 저장 경계다. */
   private readonly persistSession?: (next: Session) => void;
+  private readonly guildBackend: GuildBackend;
+  private readonly guildUserId: string;
   private readonly notificationScheduler?: Pick<typeof settingsManager, "scheduleNotification" | "cancelNotification">;
   /** 아래 저장소들은 실제 서버의 고유 제약조건/트랜잭션을 흉내 내는 FakeServer 전용 멱등 기록이다. */
   private readonly receiptResults = new Map<string, VerifyPurchaseReceiptResponse>();
@@ -219,6 +231,8 @@ export class FakeServer implements GameApi {
     this.verifyAdToken = options.verifyAdToken ?? ((token, slotId) => QA_TOOLS_ENABLED && token === `verified:${slotId}`);
     this.verifyReceipt = options.verifyPurchaseReceipt ?? ((receipt, productId) => QA_TOOLS_ENABLED && receipt.startsWith(`verified-receipt:${productId}:`) ? receipt.slice(`verified-receipt:${productId}:`.length) : null);
     this.persistSession = options.persistSession;
+    this.guildBackend = options.guild ?? localGuildBackend;
+    this.guildUserId = options.playerId ?? options.raidContext?.playerId ?? "local-player";
     // 독립 상태 테스트는 공유 세션의 알림 저장을 건드리지 않고, 실제 공유 API만 기본 manager를 쓴다.
     for (const ticket of Object.values(state.serverJournal?.combat?.tickets ?? {})) {
       if (ticket.kind === "stage") this.pendingStageAdmissions.set(ticket.target, new Set([ticket.requestId]));
@@ -1420,6 +1434,85 @@ export class FakeServer implements GameApi {
     this.state.playerCard = next;
     return { ok: true, card: { ...next } };
   }
+
+  /** 길드 백엔드가 알아보는 호출자. 닉네임·레벨·애착은 저장된 진행에서 온다. */
+  private guildActor() { return guildActorFrom(this.state, this.guildUserId); }
+
+  /** 젬이 모자라면 길드 백엔드를 부르기 전에 거절한다(백엔드가 먼저 바뀌면 되돌릴 길이 없다). */
+  private assertGuildGems(cost: number): void {
+    if (this.state.wallet.gems < cost) throw new GuildApiError("INSUFFICIENT_GEMS", "INSUFFICIENT_GEMS");
+  }
+
+  async createGuild(request: CreateGuildRequest): Promise<GuildWalletResponse> {
+    await this.delay();
+    this.assertGuildGems(GUILD_CREATE_GEMS);
+    const guild = await this.guildBackend.createGuild(this.guildActor(), request, this.guildRequestId("create"));
+    const next = { ...this.state, wallet: { ...this.state.wallet, gems: this.state.wallet.gems - GUILD_CREATE_GEMS } };
+    this.persist(next);
+    this.state.wallet = next.wallet;
+    return { ...this.snapshot(), guild };
+  }
+
+  async changeGuildBadge(request: ChangeGuildBadgeRequest): Promise<GuildWalletResponse> {
+    await this.delay();
+    const actor = this.guildActor();
+    const current = await this.guildBackend.getGuild(actor);
+    const differs = current.guild !== null && !current.guild.badgeFree && !sameGuildBadge(current.guild.badge, request.badge);
+    if (differs) this.assertGuildGems(GUILD_BADGE_CHANGE_GEMS);
+    const { charged } = await this.guildBackend.changeBadge(actor, request.badge, this.guildRequestId("badge"));
+    if (charged) {
+      const next = { ...this.state, wallet: { ...this.state.wallet, gems: this.state.wallet.gems - GUILD_BADGE_CHANGE_GEMS } };
+      this.persist(next);
+      this.state.wallet = next.wallet;
+    }
+    return { ...this.snapshot(), guild: await this.guildBackend.getGuild(actor) };
+  }
+
+  async stampGuildAttendance(request: StampGuildAttendanceRequest): Promise<StampGuildAttendanceResponse> {
+    await this.delay();
+    const stamped = await this.guildBackend.stampAttendance(this.guildActor(), request.choice, this.guildRequestId("stamp"));
+    const gold = request.choice === "gold" ? GUILD_ATTENDANCE_REWARD.gold : 0;
+    const cheesecake = request.choice === "cheesecake" ? GUILD_ATTENDANCE_REWARD.cheesecake : 0;
+    const gems = stamped.weekBonus ? GUILD_ATTENDANCE_WEEK_BONUS.gems : 0;
+    // 상한을 넘기는 몫은 던지지 않고 깎아서 준다 — 던지면 가득 찬 계정은 도장을 찍을 수 없다.
+    const wallet = { ...this.state.wallet };
+    const granted = { gold: 0, cheesecake: 0, gems: 0 };
+    for (const [key, amount] of [["gold", gold], ["cheesecake", cheesecake], ["gems", gems]] as const) {
+      granted[key] = Math.max(0, Math.min(amount, WALLET_CAPS[key] - wallet[key]));
+      wallet[key] += granted[key];
+    }
+    const next = { ...this.state, wallet };
+    this.persist(next);
+    this.state.wallet = wallet;
+    return { ...this.snapshot(), attendance: stamped.attendance, granted, weekBonus: stamped.weekBonus };
+  }
+
+  async buyGuildProduct(request: BuyGuildProductRequest): Promise<BuyGuildProductResponse> {
+    await this.delay();
+    const product = findGuildProduct(request.productId);
+    if (!product) throw new GuildApiError("PRODUCT_NOT_FOUND", "PRODUCT_NOT_FOUND");
+    const bought = await this.guildBackend.purchase(this.guildActor(), product.id, this.guildRequestId("buy"));
+    const now = this.now();
+    const wallet = { ...this.state.wallet };
+    let inventory = this.state.itemInventory;
+    if (product.grant.gold) wallet.gold = Math.min(WALLET_CAPS.gold, wallet.gold + product.grant.gold);
+    if (product.grant.cheesecake) wallet.cheesecake = Math.min(WALLET_CAPS.cheesecake, wallet.cheesecake + product.grant.cheesecake);
+    if (product.grant.item) inventory = this.grantItem(inventory, product.grant.item.id, product.grant.item.quantity, now).inventory;
+    const next = { ...this.state, wallet, itemInventory: inventory };
+    this.persist(next);
+    this.state.wallet = wallet; this.state.itemInventory = inventory;
+    return { ...this.snapshot(), shop: bought.shop, productId: product.id };
+  }
+
+  /**
+   * 길드 백엔드의 멱등 키. 서버 호출 단위에서는 요청 id를 고정해(`useGuildRequestId`) 같은 재전송이 같은 키가
+   * 되고, 이 기기의 임시 구현에서는 호출마다 새 키를 쓴다(재전송이 없다).
+   */
+  private guildRequestId(kind: string): string {
+    return `${kind}:${this.fixedGuildRequestId ?? `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`}`;
+  }
+  private fixedGuildRequestId?: string;
+  useGuildRequestId(requestId: string): void { this.fixedGuildRequestId = requestId; }
 
   /** 획득한 수식어만, 상한 안에서, 중복 없이 장착한다. */
   async equipProfileModifiers(request: EquipProfileModifiersRequest): Promise<EquipProfileModifiersResponse> {

@@ -845,8 +845,7 @@ export class LobbyScene extends Phaser.Scene {
     const rail = createLobbyUtilityRail({
       openEvents: () => this.openEvents(),
       openMail: () => this.openMail(),
-      // 길드 화면은 아직 없다 — 잠금이 풀려도 누름은 아무 일도 하지 않는다(준비 중 문구는 화면에 세우지 않는다).
-      openGuild: this.guarded("guild", () => undefined),
+      openGuild: this.guarded("guild", () => startScene(this, "guild")),
       // 친구는 더 이상 준비 중 토스트가 아니라 목록과 공개 프로필 화면으로 연결된다.
       openFriends: this.guarded("friends", () => startScene(this, "friends")),
       // 가방은 씬 전환 없이 현재 로비 위에서 열린다.

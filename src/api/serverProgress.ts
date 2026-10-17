@@ -18,6 +18,8 @@ import { AccountSaveSync, type SaveSyncChoice } from "./AccountSaveSync";
 import { installGameApi, signalRemoteMissionNotice } from "./FakeServer";
 import { installSocialApi } from "./FakeSocialServer";
 import { createRemoteSocialApi } from "./RemoteSocialApi";
+import { createRemoteGuildApi } from "./RemoteGuildApi";
+import { installGuildApi } from "./guildApi";
 import { createRemoteGameApi } from "./RemoteGameApi";
 import type { GameApi } from "./contracts";
 
@@ -82,6 +84,7 @@ export async function connectServerProgress(deps: ServerProgressDeps): Promise<S
     install(remote);
     const social=createRemoteSocialApi({getAccessToken:()=>account.accessToken(),fetchImpl:deps.fetchImpl});
     installSocialApi(social);
+    installGuildApi(createRemoteGuildApi({getAccessToken:()=>account.accessToken(),fetchImpl:deps.fetchImpl}));
     void social.getRequests().catch(()=>undefined);
     deps.marker.set(userId);
     return {ok:true,mode:"server"};
@@ -112,5 +115,6 @@ export async function connectServerProgress(deps: ServerProgressDeps): Promise<S
     ...(deps.fetchImpl ? { fetchImpl: deps.fetchImpl } : {}),
   }));
   installSocialApi(createRemoteSocialApi({ getAccessToken: () => account.accessToken(), fetchImpl: deps.fetchImpl }));
+  installGuildApi(createRemoteGuildApi({ getAccessToken: () => account.accessToken(), fetchImpl: deps.fetchImpl }));
   return { ok: true, mode: "server" };
 }

@@ -1043,6 +1043,14 @@ export interface GameApi extends AsyncArenaProfileApi {
   setRelicBookmark(request: SetRelicBookmarkRequest): Promise<RelicMarkResponse>;
   /** 닉네임·소개·테두리·프로필 사진·최초 식별값을 서버 규칙으로 바꾼다. */
   updatePlayerCard(request: UpdatePlayerCardRequest): Promise<UpdatePlayerCardResponse>;
+  /** 길드를 만든다. 젬 2,000을 같은 호출 안에서 차감한다. */
+  createGuild(request: CreateGuildRequest): Promise<GuildWalletResponse>;
+  /** 길드 뱃지를 바꾼다(길드장). 실제로 바뀌면 젬을 차감한다. */
+  changeGuildBadge(request: ChangeGuildBadgeRequest): Promise<GuildWalletResponse>;
+  /** 오늘의 출석 도장을 찍고 고른 보상을 받는다. 길드 부흥도·기여도도 함께 오른다. */
+  stampGuildAttendance(request: StampGuildAttendanceRequest): Promise<StampGuildAttendanceResponse>;
+  /** 길드 코인으로 상점 상품을 산다. */
+  buyGuildProduct(request: BuyGuildProductRequest): Promise<BuyGuildProductResponse>;
   /** 장착 수식어 목록을 확정한다. */
   equipProfileModifiers(request: EquipProfileModifiersRequest): Promise<EquipProfileModifiersResponse>;
   /** 추가 외형을 입히거나 벗긴다. */
@@ -1216,3 +1224,17 @@ export function persistenceFailed(error: unknown, messageKey: TextKey = "error.p
     ? error
     : new GameApiError("PERSISTENCE_FAILED", message, { cause: error });
 }
+
+// ── 길드: 지갑이 얽힌 조작 ─────────────────────────────────────────────────────
+export interface CreateGuildRequest { name: string; joinMode: import("../core/guild").GuildJoinMode; badge: import("../core/guildBadge").GuildBadge }
+export interface ChangeGuildBadgeRequest { badge: import("../core/guildBadge").GuildBadge }
+export interface StampGuildAttendanceRequest { choice: import("../core/guild").GuildAttendanceChoice }
+export interface BuyGuildProductRequest { productId: string }
+export interface GuildWalletResponse extends PlayerStateDto { guild: import("./guildContracts").GuildStateResponse }
+export interface StampGuildAttendanceResponse extends PlayerStateDto {
+  attendance: import("./guildContracts").GuildAttendanceState;
+  /** 이번 도장으로 받은 몫(주 7칸 보너스의 젬 포함). */
+  granted: { gold: number; cheesecake: number; gems: number };
+  weekBonus: boolean;
+}
+export interface BuyGuildProductResponse extends PlayerStateDto { shop: import("./guildContracts").GuildShopState; productId: string }

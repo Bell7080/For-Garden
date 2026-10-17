@@ -1,0 +1,327 @@
+import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
+import { isContentUnlocked } from "../core/contentUnlock";
+import {
+  GUILD_ATTENDANCE_CHOICES, GUILD_ATTENDANCE_GAIN, GUILD_ATTENDANCE_WEEK_BONUS, GUILD_LEAVE_COOLDOWN_MS, GUILD_NOTICE_MAX, GUILD_ROLE_LIMIT,
+  GUILD_SHOP_PRODUCTS, GUILD_STAMP_DAYS, findGuildProduct, guildCan, guildCanKick, guildCapacity, guildDateKey, guildGlyphCount, guildLevelOf,
+  guildNameKey, guildWeekKey, guildWeekdayIndex, validateGuildName,
+  type GuildAttendanceChoice, type GuildJoinMode, type GuildRole,
+} from "../core/guild";
+import { isGuildBadge, sameGuildBadge, type GuildBadge } from "../core/guildBadge";
+import {
+  GuildApiError, type GuildActor, type GuildAttendanceState, type GuildBackend, type GuildDetail, type GuildErrorCode, type GuildJoinRequestView,
+  type GuildMemberView, type GuildMembersResponse, type GuildSearchResponse, type GuildShopState, type GuildStateResponse, type GuildSummary,
+} from "./guildContracts";
+
+interface MemberRow {
+  userId: string; name: string; level: number; role: GuildRole; avatarRelicId: string; frameId: string;
+  joinedAt: number; lastActiveAt: number; coin: number;
+  contributionWeekKey: string; contributionWeek: number; contributionTotal: number;
+  /** 날짜 키 → 고른 보상. 지난 주 기록도 남겨 두고 이번 주 칸만 읽는다. */
+  stamps: Map<string, GuildAttendanceChoice>;
+  weekBonusKey: string;
+  purchases: Map<string, number>; purchaseWeekKey: string;
+}
+interface GuildRow {
+  id: string; name: string; badge: GuildBadge; joinMode: GuildJoinMode; notice: string; prosperity: number; createdAt: number; badgeChanges: number;
+  members: Map<string, MemberRow>; requests: Map<string, { actor: GuildActor; requestedAt: number }>;
+}
+
+/** 서버가 모르는 요청을 거절하는 한 줄 도우미. */
+const fail = (code: GuildErrorCode, message?: string): never => { throw new GuildApiError(code, message); };
+
+/**
+ * 길드 백엔드의 메모리 구현. **QA 전용 임시 구현**이며 새로고침하면 초기화된다 — 서버가 연결된 빌드는 DB 함수가
+ * 같은 규칙을 대신 확정한다. 서버 쪽 규칙 테스트도 이 클래스를 기준 구현으로 쓴다(`tests/unit/guildServer.test.ts`).
+ */
+export class FakeGuildServer implements GuildBackend {
+  private readonly guilds = new Map<string, GuildRow>();
+  private readonly userGuild = new Map<string, string>();
+  private readonly leftAt = new Map<string, number>();
+  private readonly requestedBy = new Map<string, Set<string>>();
+  private readonly receipts = new Map<string, unknown>();
+  private sequence = 0;
+
+  constructor(private readonly now: () => number = Date.now, private readonly options: { seed?: boolean; levelGate?: boolean } = {}) {
+    if (options.seed ?? QA_TOOLS_ENABLED) this.seedSamples();
+  }
+
+  private seedSamples(): void {
+    const sample = (name: string, badge: GuildBadge, joinMode: GuildJoinMode, prosperity: number, count: number, notice: string) => {
+      const id = `sample-${++this.sequence}`;
+      const members = new Map<string, MemberRow>();
+      for (let i = 0; i < count; i++) {
+        const userId = `${id}-m${i}`;
+        members.set(userId, this.newMember({ userId, name: i === 0 ? `${name} 마스터` : `연구원${i + 1}`, level: 30 - i, avatarRelicId: "torika", frameId: "holo" }, i === 0 ? "leader" : i < 3 ? "officer" : "member", this.now() - i * 3_600_000));
+      }
+      this.guilds.set(id, { id, name, badge, joinMode, notice, prosperity, createdAt: this.now() - 30 * 86_400_000, badgeChanges: 0, members, requests: new Map() });
+      for (const userId of members.keys()) this.userGuild.set(userId, id);
+    };
+    sample("포가든 수호대", { shape: "shield", shapeColor: "blue", icon: "sword", iconColor: "silver" }, "open", 12_000, 14, "함께 성장해요!");
+    sample("이끼 연구소", { shape: "hexagon", shapeColor: "green", icon: "leaf", iconColor: "ink" }, "approval", 3_000, 8, "느긋하게 복원합니다.");
+    sample("새벽 발굴단", { shape: "banner", shapeColor: "violet", icon: "moon", iconColor: "amber" }, "open", 700, 3, "");
+  }
+
+  private newMember(actor: GuildActor, role: GuildRole, at: number): MemberRow {
+    return {
+      userId: actor.userId, name: actor.name, level: actor.level, role, avatarRelicId: actor.avatarRelicId, frameId: actor.frameId,
+      joinedAt: at, lastActiveAt: at, coin: 0, contributionWeekKey: guildWeekKey(at), contributionWeek: 0, contributionTotal: 0,
+      stamps: new Map(), weekBonusKey: "", purchases: new Map(), purchaseWeekKey: guildWeekKey(at),
+    };
+  }
+
+  // ── 조회 도우미 ──────────────────────────────────────────────────────────────
+  private myGuild(actor: GuildActor): GuildRow | undefined { const id = this.userGuild.get(actor.userId); return id ? this.guilds.get(id) : undefined; }
+  private requireGuild(actor: GuildActor): { guild: GuildRow; me: MemberRow } {
+    const guild = this.myGuild(actor);
+    const me = guild?.members.get(actor.userId);
+    if (!guild || !me) return fail("NOT_IN_GUILD");
+    this.touch(me, actor);
+    return { guild, me };
+  }
+  /** 호출마다 이름·레벨·마지막 접속을 최신으로 맞추고 주가 넘어갔으면 주간 기여도를 비운다. */
+  private touch(member: MemberRow, actor: GuildActor): void {
+    const now = this.now();
+    member.name = actor.name; member.level = actor.level; member.avatarRelicId = actor.avatarRelicId; member.frameId = actor.frameId; member.lastActiveAt = now;
+    const week = guildWeekKey(now);
+    if (member.contributionWeekKey !== week) { member.contributionWeekKey = week; member.contributionWeek = 0; }
+    if (member.purchaseWeekKey !== week) { member.purchaseWeekKey = week; member.purchases = new Map(); }
+  }
+  private leaderOf(guild: GuildRow): MemberRow { return [...guild.members.values()].find((m) => m.role === "leader")!; }
+  private level(guild: GuildRow): number { return guildLevelOf(guild.prosperity); }
+  private summary(guild: GuildRow): GuildSummary {
+    const level = this.level(guild);
+    return { id: guild.id, name: guild.name, badge: { ...guild.badge }, level, memberCount: guild.members.size, capacity: guildCapacity(level), joinMode: guild.joinMode, leaderName: this.leaderOf(guild).name, notice: guild.notice };
+  }
+  private detail(guild: GuildRow): GuildDetail { return { ...this.summary(guild), prosperity: guild.prosperity, createdAt: guild.createdAt, warScore: null, warRank: null, badgeFree: guild.badgeChanges === 0 }; }
+  private assertUnlocked(actor: GuildActor): void {
+    if (this.options.levelGate !== false && !isContentUnlocked("guild", actor.level)) fail("LEVEL_LOCKED");
+  }
+  private gain(guild: GuildRow, me: MemberRow, gain: { prosperity?: number; contribution?: number; coin?: number }): void {
+    guild.prosperity += gain.prosperity ?? 0;
+    me.contributionWeek += gain.contribution ?? 0; me.contributionTotal += gain.contribution ?? 0; me.coin += gain.coin ?? 0;
+  }
+  /** 같은 requestId의 재전송은 첫 응답을 그대로 돌려준다(서버 영수증 표). */
+  private once<T>(actor: GuildActor, requestId: string, run: () => T): T {
+    const key = `${actor.userId}:${requestId}`;
+    if (this.receipts.has(key)) return structuredClone(this.receipts.get(key)) as T;
+    const result = run();
+    this.receipts.set(key, structuredClone(result));
+    return result;
+  }
+  private pendingCount(guild: GuildRow | undefined, me: MemberRow | undefined): number { return guild && me && guildCan(me.role, "approve") ? guild.requests.size : 0; }
+
+  // ── GuildBackend ─────────────────────────────────────────────────────────────
+  async getGuild(actor: GuildActor): Promise<GuildStateResponse> {
+    const guild = this.myGuild(actor);
+    const me = guild?.members.get(actor.userId);
+    if (guild && me) this.touch(me, actor);
+    return {
+      guild: guild ? this.detail(guild) : null,
+      me: me ? { role: me.role, coin: me.coin, contributionWeek: me.contributionWeek, contributionTotal: me.contributionTotal, joinedAt: me.joinedAt } : null,
+      leaveCooldownUntil: Math.max(0, (this.leftAt.get(actor.userId) ?? 0) + GUILD_LEAVE_COOLDOWN_MS),
+      pendingRequests: this.pendingCount(guild, me),
+      requestedGuildIds: [...(this.requestedBy.get(actor.userId) ?? [])],
+      serverTime: this.now(),
+    };
+  }
+
+  async searchGuilds(_actor: GuildActor, query: string): Promise<GuildSearchResponse> {
+    const key = guildNameKey(query.slice(0, 40));
+    const list = [...this.guilds.values()]
+      .filter((guild) => !key || guildNameKey(guild.name).includes(key))
+      .sort((a, b) => b.prosperity - a.prosperity)
+      .slice(0, 20).map((guild) => this.summary(guild));
+    return { guilds: list, serverTime: this.now() };
+  }
+
+  async getMembers(actor: GuildActor): Promise<GuildMembersResponse> {
+    const { guild, me } = this.requireGuild(actor);
+    const members = [...guild.members.values()].sort((a, b) => roleRank(b.role) - roleRank(a.role) || b.contributionTotal - a.contributionTotal || a.joinedAt - b.joinedAt)
+      .map((m): GuildMemberView => ({ userId: m.userId, name: m.name, level: m.level, role: m.role, avatarRelicId: m.avatarRelicId, frameId: m.frameId, contributionWeek: m.contributionWeekKey === guildWeekKey(this.now()) ? m.contributionWeek : 0, contributionTotal: m.contributionTotal, lastActiveAt: m.lastActiveAt, isMe: m.userId === actor.userId }));
+    const requests: GuildJoinRequestView[] = guildCan(me.role, "approve")
+      ? [...guild.requests.values()].sort((a, b) => a.requestedAt - b.requestedAt).map(({ actor: a, requestedAt }) => ({ userId: a.userId, name: a.name, level: a.level, avatarRelicId: a.avatarRelicId, frameId: a.frameId, requestedAt }))
+      : [];
+    return { members, requests, serverTime: this.now() };
+  }
+
+  async createGuild(actor: GuildActor, input: { name: string; joinMode: GuildJoinMode; badge: GuildBadge }, requestId: string): Promise<GuildStateResponse> {
+    this.once(actor, requestId, () => {
+      this.assertUnlocked(actor);
+      if (this.myGuild(actor)) fail("ALREADY_IN_GUILD");
+      if (this.now() < (this.leftAt.get(actor.userId) ?? 0) + GUILD_LEAVE_COOLDOWN_MS) fail("LEAVE_COOLDOWN");
+      const checked = validateGuildName(input.name);
+      if (!checked.ok) return fail("NAME_INVALID");
+      if ([...this.guilds.values()].some((g) => guildNameKey(g.name) === guildNameKey(checked.name))) fail("NAME_TAKEN");
+      if (!isGuildBadge(input.badge)) fail("BADGE_INVALID");
+      if (input.joinMode !== "open" && input.joinMode !== "approval") fail("INVALID_REQUEST");
+      const id = `guild-${++this.sequence}-${Math.abs(Math.floor(this.now())).toString(36)}`;
+      const guild: GuildRow = { id, name: checked.name, badge: { ...input.badge }, joinMode: input.joinMode, notice: "", prosperity: 0, createdAt: this.now(), badgeChanges: 0, members: new Map(), requests: new Map() };
+      guild.members.set(actor.userId, this.newMember(actor, "leader", this.now()));
+      this.guilds.set(id, guild); this.userGuild.set(actor.userId, id);
+      this.requestedBy.delete(actor.userId);
+      return true;
+    });
+    return this.getGuild(actor);
+  }
+
+  async joinGuild(actor: GuildActor, guildId: string): Promise<{ status: "joined" | "requested" }> {
+    this.assertUnlocked(actor);
+    if (this.myGuild(actor)) fail("ALREADY_IN_GUILD");
+    if (this.now() < (this.leftAt.get(actor.userId) ?? 0) + GUILD_LEAVE_COOLDOWN_MS) fail("LEAVE_COOLDOWN");
+    const guild = this.guilds.get(guildId);
+    if (!guild) return fail("GUILD_NOT_FOUND");
+    if (guild.members.size >= guildCapacity(this.level(guild))) fail("GUILD_FULL");
+    if (guild.joinMode === "open") { this.admit(guild, actor); return { status: "joined" }; }
+    if (guild.requests.has(actor.userId)) fail("REQUEST_EXISTS");
+    guild.requests.set(actor.userId, { actor, requestedAt: this.now() });
+    (this.requestedBy.get(actor.userId) ?? this.requestedBy.set(actor.userId, new Set()).get(actor.userId)!).add(guildId);
+    return { status: "requested" };
+  }
+  private admit(guild: GuildRow, actor: GuildActor): void {
+    guild.members.set(actor.userId, this.newMember(actor, "member", this.now()));
+    this.userGuild.set(actor.userId, guild.id);
+    this.dropRequests(actor.userId);
+  }
+  private dropRequests(userId: string): void {
+    for (const id of this.requestedBy.get(userId) ?? []) this.guilds.get(id)?.requests.delete(userId);
+    this.requestedBy.delete(userId);
+  }
+
+  async cancelJoinRequest(actor: GuildActor, guildId: string): Promise<void> {
+    const guild = this.guilds.get(guildId);
+    if (!guild?.requests.delete(actor.userId)) fail("REQUEST_NOT_FOUND");
+    this.requestedBy.get(actor.userId)?.delete(guildId);
+  }
+
+  async leaveGuild(actor: GuildActor): Promise<void> {
+    const { guild, me } = this.requireGuild(actor);
+    if (me.role === "leader") {
+      if (guild.members.size > 1) fail("LEADER_CANNOT_LEAVE");
+      this.guilds.delete(guild.id);
+    } else guild.members.delete(actor.userId);
+    this.userGuild.delete(actor.userId);
+    this.leftAt.set(actor.userId, this.now());
+  }
+
+  async decideJoinRequest(actor: GuildActor, userId: string, approve: boolean): Promise<void> {
+    const { guild, me } = this.requireGuild(actor);
+    if (!guildCan(me.role, "approve")) fail("NO_PERMISSION");
+    const request = guild.requests.get(userId);
+    if (!request) return fail("REQUEST_NOT_FOUND");
+    guild.requests.delete(userId); this.requestedBy.get(userId)?.delete(guild.id);
+    if (!approve) return;
+    if (this.userGuild.has(userId)) return;
+    if (guild.members.size >= guildCapacity(this.level(guild))) fail("GUILD_FULL");
+    this.admit(guild, request.actor);
+  }
+
+  async kickMember(actor: GuildActor, userId: string): Promise<void> {
+    const { guild, me } = this.requireGuild(actor);
+    const target = guild.members.get(userId);
+    if (!target) return fail("MEMBER_NOT_FOUND");
+    if (!guildCanKick(me.role, target.role)) fail("NO_PERMISSION");
+    guild.members.delete(userId); this.userGuild.delete(userId); this.leftAt.set(userId, this.now());
+  }
+
+  async setMemberRole(actor: GuildActor, userId: string, role: Exclude<GuildRole, "leader">): Promise<void> {
+    const { guild, me } = this.requireGuild(actor);
+    if (!guildCan(me.role, "promote")) fail("NO_PERMISSION");
+    const target = guild.members.get(userId);
+    if (!target) return fail("MEMBER_NOT_FOUND");
+    if (target.role === "leader" || !(role in GUILD_ROLE_LIMIT) || role === ("leader" as string)) fail("INVALID_TARGET");
+    if (target.role !== role && [...guild.members.values()].filter((m) => m.role === role).length >= GUILD_ROLE_LIMIT[role]) fail("ROLE_FULL");
+    target.role = role;
+  }
+
+  async transferLeader(actor: GuildActor, userId: string): Promise<void> {
+    const { guild, me } = this.requireGuild(actor);
+    if (me.role !== "leader") fail("NO_PERMISSION");
+    const target = guild.members.get(userId);
+    if (!target || target === me) return fail("INVALID_TARGET");
+    target.role = "leader"; me.role = "vice";
+  }
+
+  async updateGuild(actor: GuildActor, update: { notice?: string; joinMode?: GuildJoinMode }): Promise<void> {
+    const { guild, me } = this.requireGuild(actor);
+    if (update.notice !== undefined) {
+      if (!guildCan(me.role, "notice")) fail("NO_PERMISSION");
+      const notice = update.notice.replace(/\s+/g, " ").trim();
+      if (guildGlyphCount(notice) > GUILD_NOTICE_MAX) fail("INVALID_REQUEST");
+      guild.notice = notice;
+    }
+    if (update.joinMode !== undefined) {
+      if (!guildCan(me.role, "joinMode")) fail("NO_PERMISSION");
+      if (update.joinMode !== "open" && update.joinMode !== "approval") fail("INVALID_REQUEST");
+      guild.joinMode = update.joinMode;
+      if (guild.joinMode === "open") guild.requests.clear();
+    }
+  }
+
+  async disbandGuild(actor: GuildActor): Promise<void> {
+    const { guild, me } = this.requireGuild(actor);
+    if (!guildCan(me.role, "disband")) fail("NO_PERMISSION");
+    if (guild.members.size > 1) fail("LEADER_CANNOT_LEAVE");
+    this.guilds.delete(guild.id); this.userGuild.delete(actor.userId); this.leftAt.set(actor.userId, this.now());
+  }
+
+  async changeBadge(actor: GuildActor, badge: GuildBadge, requestId: string): Promise<{ changed: boolean; charged: boolean }> {
+    return this.once(actor, requestId, () => {
+      const { guild, me } = this.requireGuild(actor);
+      if (!guildCan(me.role, "badge")) fail("NO_PERMISSION");
+      if (!isGuildBadge(badge)) fail("BADGE_INVALID");
+      if (sameGuildBadge(guild.badge, badge)) return { changed: false, charged: false };
+      const charged = guild.badgeChanges > 0;
+      guild.badge = { ...badge }; guild.badgeChanges += 1;
+      return { changed: true, charged };
+    });
+  }
+
+  private attendanceOf(me: MemberRow): GuildAttendanceState {
+    const now = this.now(), week = guildWeekKey(now), todayIndex = guildWeekdayIndex(now);
+    const monday = Date.parse(week);
+    const stamps = Array.from({ length: GUILD_STAMP_DAYS }, (_, i) => me.stamps.get(guildDateKey(monday + i * 86_400_000)) ?? null);
+    return { weekKey: week, stamps, todayIndex, stampedToday: stamps[todayIndex] !== null, weekBonusClaimed: me.weekBonusKey === week, serverTime: now };
+  }
+  async getAttendance(actor: GuildActor): Promise<GuildAttendanceState> { return this.attendanceOf(this.requireGuild(actor).me); }
+
+  async stampAttendance(actor: GuildActor, choice: GuildAttendanceChoice, requestId: string): Promise<{ attendance: GuildAttendanceState; weekBonus: boolean }> {
+    return this.once(actor, requestId, () => {
+      if (!GUILD_ATTENDANCE_CHOICES.includes(choice)) fail("INVALID_REQUEST");
+      const { guild, me } = this.requireGuild(actor);
+      const today = guildDateKey(this.now());
+      if (me.stamps.has(today)) fail("ALREADY_STAMPED");
+      me.stamps.set(today, choice);
+      this.gain(guild, me, GUILD_ATTENDANCE_GAIN);
+      const attendance = this.attendanceOf(me);
+      const complete = attendance.stamps.every((stamp) => stamp !== null) && !attendance.weekBonusClaimed;
+      if (complete) { me.weekBonusKey = attendance.weekKey; this.gain(guild, me, { contribution: GUILD_ATTENDANCE_WEEK_BONUS.contribution, coin: GUILD_ATTENDANCE_WEEK_BONUS.coin }); }
+      return { attendance: { ...attendance, weekBonusClaimed: attendance.weekBonusClaimed || complete }, weekBonus: complete };
+    });
+  }
+
+  private shopOf(me: MemberRow): GuildShopState {
+    return { coin: me.coin, items: GUILD_SHOP_PRODUCTS.map((p) => ({ productId: p.id, price: p.price, weeklyLimit: p.weeklyLimit, bought: me.purchases.get(p.id) ?? 0 })), serverTime: this.now() };
+  }
+  async getShop(actor: GuildActor): Promise<GuildShopState> { return this.shopOf(this.requireGuild(actor).me); }
+
+  async purchase(actor: GuildActor, productId: string, requestId: string): Promise<{ shop: GuildShopState }> {
+    return this.once(actor, requestId, () => {
+      const product = findGuildProduct(productId);
+      if (!product) return fail("PRODUCT_NOT_FOUND");
+      const { me } = this.requireGuild(actor);
+      const bought = me.purchases.get(product.id) ?? 0;
+      if (bought >= product.weeklyLimit) fail("PRODUCT_LIMIT");
+      if (me.coin < product.price) fail("INSUFFICIENT_COINS");
+      me.coin -= product.price; me.purchases.set(product.id, bought + 1);
+      return { shop: this.shopOf(me) };
+    });
+  }
+
+  /** 테스트·QA 도구용 — 한 길드에 부흥도를 얹는다. */
+  addProsperityForTest(guildId: string, amount: number): void { const guild = this.guilds.get(guildId); if (guild) guild.prosperity += amount; }
+}
+
+const roleRank = (role: GuildRole): number => ({ leader: 3, vice: 2, officer: 1, member: 0 })[role];
+
+/** 이 기기의 임시 길드 백엔드. 서버가 연결되지 않은 빌드(QA·개발)에서 `FakeServer`와 `guildApi`가 함께 쓴다. */
+export const localGuildBackend: FakeGuildServer = new FakeGuildServer();

@@ -28,6 +28,11 @@ export const READ_METHODS = new Set([
   "social.getRequests",
   "social.searchUsers",
   "social.getRecommendations",
+  "guild.getGuild",
+  "guild.searchGuilds",
+  "guild.getMembers",
+  "guild.getAttendance",
+  "guild.getShop",
 ]);
 export const isReadMethod = (method: string): boolean =>
   READ_METHODS.has(method);

@@ -75,6 +75,7 @@ export const GLOSSARY = {
   fossil: { note: "연구에 넣는 뽑기 재화.", forms: { ko: "화석", ja: "化石", en: "Fossil", "zh-Hans": "化石", "zh-Hant": "化石", th: "ฟอสซิล", vi: "Hóa thạch", id: "Fosil", es: "Fósil", "pt-BR": "Fóss", de: "Fossil", ru: "Окаменелост" } },
   amber: { note: "화석보다 귀한 연구 재화.", forms: { ko: "호박석", ja: "琥珀", en: "Amber", "zh-Hans": "琥珀", "zh-Hant": "琥珀", th: "อำพัน", vi: "Hổ phách", id: "Amber", es: "Ámbar", "pt-BR": "Âmbar", de: "Bernstein", ru: "Янтар" } },
   cheesecake: { note: "급여에 쓰는 경험치 아이템.", forms: { ko: "치즈케이크", ja: "チーズケーキ", en: "Cheesecake", "zh-Hans": "芝士蛋糕", "zh-Hant": "起司蛋糕", th: "ชีสเค้ก", vi: "Bánh phô mai", id: "Cheesecake", es: "Tarta de queso", "pt-BR": "Cheesecake", de: "Käsekuchen", ru: "Чизкейк" } },
+  guild: { note: "플레이어끼리 꾸리는 모임. 스쿼드(개체의 소속 조직)와 다르다. 부흥도로 레벨이 오르고 길드 코인을 쓰는 상점이 있다.", forms: { ko: "길드", ja: "ギルド", en: "Guild", "zh-Hans": "公会", "zh-Hant": "公會", th: "กิลด์", vi: "Bang hội", id: "Guild", es: "Gremio", "pt-BR": "Guilda", de: "Gilde", ru: "Гильди" } },
   mileage: { note: "연구마다 적립되고 돌파를 마친 렐릭의 중복이 바뀌는 공용 재화. 마일리지 상점에서 쓴다.", forms: { ko: "DNA 마일리지", ja: "DNAマイレージ", en: "DNA Mileage", "zh-Hans": "DNA里程", "zh-Hant": "DNA里程", th: "ไมล์ DNA", vi: "Dặm DNA", id: "Mil DNA", es: "Milla", "pt-BR": "Milha", de: "DNA-Meile", ru: "ДНК" } },
 
   // ── 전투 ──────────────────────────────────────────────────────────────

@@ -99,6 +99,11 @@ export function drawIcon(scene: Phaser.Scene, key: NavKey, x: number, y: number,
  * 보이되 아이콘과 글자는 읽힌다. 지금 화면인 탭은 강조색과 살짝 큰 크기로만 알린다.
  */
 export class BottomNav {
+  private readonly hits = new Map<NavKey, { x: number; y: number; width: number; height: number }>();
+
+  /** 탭이 눌리는 자리(씬 좌표). 튜토리얼이 가리킬 때 읽는다. */
+  tabRect(key: NavKey): { x: number; y: number; width: number; height: number } | undefined { return this.hits.get(key); }
+
   constructor(scene: Phaser.Scene, current: NavKey) {
     const height = BASE_HEIGHT - NAV_TOP;
     drawGlassFade(scene, BASE_WIDTH / 2, NAV_TOP + height / 2, BASE_WIDTH, height, {
@@ -165,6 +170,7 @@ export class BottomNav {
       const hit = scene.add
         .rectangle(x, NAV_TOP + 90, step - 8, 160, 0xffffff, 0)
         .setInteractive({ useHandCursor: true });
+      this.hits.set(tab.key, { x: x - (step - 8) / 2, y: NAV_TOP + 10, width: step - 8, height: 160 });
       if (!active) {
         // 누르는 동안 공용 눌림 연출로 눌린 자리를 알린다.
         hit.on("pointerdown", () => pressIn(group));

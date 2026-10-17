@@ -1,5 +1,6 @@
 import { LOCAL_SAVE_FLAVOR, LOCAL_SAVE_STORAGE_KEYS, type LocalSaveFlavor } from "../core/saveStorage";
 import { cloneAttendanceState, createEmptyAttendanceState, isValidAttendanceState, normalizeAttendanceState } from "../core/attendance";
+import { isValidTutorialState, legacyTutorialState, normalizeTutorialState, createEmptyTutorialState } from "../core/tutorial";
 import { createEmptyRaidTicketDropState, isValidRaidTicketDropState, normalizeRaidTicketDropState } from "../core/raidTicketDrops";
 import { createEmptyAchievementState, isValidAchievementState, normalizeAchievementState } from "../core/achievementState";
 import { cloneDuelState, isValidDuelState, normalizeDuelState } from "../core/duelState";
@@ -347,6 +348,7 @@ export class SaveManager {
       attendance: cloneAttendanceState(state.attendance ?? createEmptyAttendanceState()),
       raidTicketDrops: { ...(state.raidTicketDrops ?? createEmptyRaidTicketDropState()) },
       achievements: normalizeAchievementState(state.achievements ?? createEmptyAchievementState()),
+      tutorial: normalizeTutorialState(state.tutorial ?? createEmptyTutorialState()),
       serverJournal: structuredClone(state.serverJournal ?? emptyServerJournal()),
     };
     this.validate(data);
@@ -491,6 +493,10 @@ export class SaveManager {
     const attendance = normalizeAttendanceState(legacy.attendance);
     const raidTicketDrops = normalizeRaidTicketDropState(legacy.raidTicketDrops);
     const achievements = normalizeAchievementState(legacy.achievements);
+    // 튜토리얼 도입 전 저장은 클리어 기록으로 시작점을 정한다(저장 버전을 올리지 않는다). 이미 있는 값은 순서만 바로잡는다.
+    const tutorial = legacy.tutorial === undefined
+      ? legacyTutorialState(Array.isArray(legacy.clearedStageIds) ? (legacy.clearedStageIds as unknown[]).filter((id): id is string => typeof id === "string") : [])
+      : normalizeTutorialState(legacy.tutorial);
     // 현상수배 도입(v38) 전 저장은 깬 등급이 없으므로 1급만 열린 채로 시작한다. 하루 입장 제한을
     // 걷어 낸 뒤로는 예전 저장의 날짜·횟수(`date`·`entries`)를 버리고 깬 등급만 옮긴다.
     const savedBounty = legacy.bounty as Partial<SaveData["bounty"]> | undefined;
@@ -594,10 +600,10 @@ export class SaveManager {
     const itemInventory = repairLegacyLotStacks((Array.isArray(legacy.itemInventory) ? legacy.itemInventory : [])
       .filter((stack: { itemId?: unknown }) => stack?.itemId !== "raid-sigil"));
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
-    if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel, claimedMailIds, attendance, raidTicketDrops, achievements } as unknown as SaveData;
+    if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel, claimedMailIds, attendance, raidTicketDrops, achievements, tutorial } as unknown as SaveData;
     const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
-    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel, claimedMailIds, attendance, raidTicketDrops, achievements } as unknown as SaveData;
+    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel, claimedMailIds, attendance, raidTicketDrops, achievements, tutorial } as unknown as SaveData;
   }
 
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
@@ -682,6 +688,7 @@ export class SaveManager {
     if (!isValidAttendanceState(data.attendance)) fail("출석 정보가 올바르지 않습니다.");
     if (!isValidRaidTicketDropState(data.raidTicketDrops)) fail("토벌권 획득 정보가 올바르지 않습니다.");
     if (!isValidAchievementState(data.achievements)) fail("업적 정보가 올바르지 않습니다.");
+    if (!isValidTutorialState(data.tutorial)) fail("튜토리얼 진행 정보가 올바르지 않습니다.");
     if (data.missions.lifetime !== undefined && (typeof data.missions.lifetime !== "object" || data.missions.lifetime === null || Object.values(data.missions.lifetime).some((value) => !Number.isInteger(value) || (value as number) < 0))) fail("임무 진행 정보가 올바르지 않습니다.");
     if (data.serverJournal !== undefined && !isValidServerJournal(data.serverJournal)) fail("서버 처리 영수증이 올바르지 않습니다.");
     if (data.expedition.pendingRankRewards !== undefined && (!Array.isArray(data.expedition.pendingRankRewards)
@@ -760,6 +767,7 @@ export class SaveManager {
       serverJournal: structuredClone(data.serverJournal ?? emptyServerJournal()),
       raidTicketDrops: { ...data.raidTicketDrops },
       achievements: { claimed: { ...data.achievements.claimed }, goldPeak: data.achievements.goldPeak },
+      tutorial: { completedStepIds: [...data.tutorial.completedStepIds] },
     };
   }
 }

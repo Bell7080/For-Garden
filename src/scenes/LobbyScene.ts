@@ -7,6 +7,7 @@ import { enableHitOnClick, spawnPuppet } from "../puppets/assets";
 import { session } from "../state/session";
 import { latinEcho } from "../ui/latinEcho";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
+import { startLobbyTutorial } from "../ui/tutorialLobbyFlow";
 import { Button } from "../ui/Button";
 import { RailButton } from "../ui/RailButton";
 import { POPUP_BODY_BEVEL_RATIO } from "../ui/popupGeometry";
@@ -320,7 +321,7 @@ export class LobbyScene extends Phaser.Scene {
     this.gateEntrance("excavation", excavationButton);
     bindNotificationDot(this, excavationButton, excavationDot, (listener) => notificationManager.subscribe("excavationHarvestReady", listener));
 
-    new BottomNav(this, "lobby");
+    const bottomNav = new BottomNav(this, "lobby");
     // 한 번의 공용 조회가 모든 버튼을 갱신하며 실패 시 기존의 안전한 꺼짐 상태를 유지한다.
     void notificationManager.refresh().catch(() => undefined);
     // 로비의 조작 가능 시점은 동기 UI와 최초 애착 Puppet 시도가 모두 끝난 때다. Puppet 실패는
@@ -358,6 +359,7 @@ export class LobbyScene extends Phaser.Scene {
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
+    if (this.popupLayer) startLobbyTutorial(this, bottomNav, this.popupLayer);
 
     // 로비는 캐릭터를 보는 화면이라 대개 한참 머문다. 그 시간에 다음 전투가 쓸 SD를 한 장씩
     // 읽어 두면 출격 → 편성 → 전투로 가는 길이 이미 캐시를 집는다. **들어오는 연출이 끝난

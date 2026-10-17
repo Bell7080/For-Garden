@@ -25,7 +25,8 @@ import { ACHIEVEMENT_CATEGORY_TONE, ACHIEVEMENTS_POPUP_LAYOUT, achievementListCo
 import { withBusy } from "./BusyOverlay";
 import { NotificationDot } from "./NotificationDot";
 import { TabStripEdgeHint } from "./TabStripEdgeHint";
-import { hiddenDotSides, nearestHiddenDot, tabStripScrollFor, tabStripSpotX } from "../core/tabStrip";
+import { attachTabStripDrag } from "./tabStripDrag";
+import { hiddenDotSides, nearestHiddenDot, tabStripMinScroll, tabStripScrollFor, tabStripSpotX } from "../core/tabStrip";
 
 const TABS: readonly AchievementTab[] = ["all", ...ACHIEVEMENT_CATEGORIES];
 
@@ -59,6 +60,7 @@ export class AchievementsPopup {
   private scrollTab?: AchievementTab;
   /** 탭 줄의 지난 스크롤 — 갈래를 바꾸면 거기서 새 자리로 흘러간다. */
   private tabScroll?: number;
+  private tabScrollTab?: AchievementTab;
   private claiming = false;
 
   constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly api: GameApi = gameApi, private readonly onWalletChanged?: () => void, private readonly onClose?: () => void) {}
@@ -66,7 +68,7 @@ export class AchievementsPopup {
   open(): void {
     if (this.body) return;
     const { popup } = ACHIEVEMENTS_POPUP_LAYOUT;
-    this.popups.open({ width: BASE_WIDTH - popup.widthInset, height: BASE_HEIGHT - popup.heightInset, title: t("achievement.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.72, closeOnBackdrop: true, backButton: true, onClose: () => { this.destroyContent(); this.footer?.destroy(); this.footer = undefined; this.tabScroll = undefined; this.body = undefined; this.onClose?.(); } }, (body) => {
+    this.popups.open({ width: BASE_WIDTH - popup.widthInset, height: BASE_HEIGHT - popup.heightInset, title: t("achievement.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.72, closeOnBackdrop: true, backButton: true, onClose: () => { this.destroyContent(); this.footer?.destroy(); this.footer = undefined; this.tabScroll = undefined; this.tabScrollTab = undefined; this.body = undefined; this.onClose?.(); } }, (body) => {
       this.body = body;
       void this.refresh();
     });
@@ -305,17 +307,18 @@ export class AchievementsPopup {
     row.setMask(shapeClipMask(this.scene, strip, [spec.left, top, spec.right, top, spec.right, bottom, spec.left, bottom]));
     const dotted: boolean[] = [];
     const nodes: Phaser.GameObjects.Container[] = [];
+    let drag: { dragging: () => boolean } | undefined;
     TABS.forEach((tab, index) => {
       const pending = series.filter((entry) => (tab === "all" || entry.category === tab) && entry.claimableTiers > 0).length;
       const label = t(tab === "all" ? "achievement.tab.all" : `achievement.category.${tab}` as TextKey);
-      const node = addCategoryTab(this.scene, row, { x: tabStripSpotX(spec, index), y: 0, width: layout.tab.width, height: layout.tab.height, label, selected: tab === this.tab, onSelect: () => this.select(tab) });
+      const node = addCategoryTab(this.scene, row, { x: tabStripSpotX(spec, index), y: 0, width: layout.tab.width, height: layout.tab.height, label, selected: tab === this.tab, onSelect: () => { if (!drag?.dragging()) this.select(tab); } });
       dotted[index] = pending > 0 && tab !== this.tab;
       if (dotted[index]) new NotificationDot(this.scene, node, { x: layout.tab.width / 2 - 22, y: -layout.tab.height / 2 + 12 });
       nodes.push(node);
     });
     const hint = new TabStripEdgeHint(this.scene, strip, {
       left: spec.left, right: spec.right, y: 0, height: layout.tab.height,
-      onTap: (side) => { const index = nearestHiddenDot(spec, row.x, dotted, side); if (index !== undefined) this.select(TABS[index]); },
+      onTap: (side) => { if (drag?.dragging()) return; const index = nearestHiddenDot(spec, row.x, dotted, side); if (index !== undefined) this.select(TABS[index]); },
     });
     const sync = (): void => {
       if (!row.active) return;
@@ -324,14 +327,21 @@ export class AchievementsPopup {
       hint.setSides(hiddenDotSides(spec, row.x, dotted));
     };
     strip.once(Phaser.GameObjects.Events.DESTROY, () => hint.destroy());
-    const target = tabStripScrollFor(spec, TABS.indexOf(this.tab));
-    const from = this.tabScroll;
+    // 지금처럼 탭을 눌러 넘기는 것에 더해, 줄을 손으로 끌어 넘길 수도 있다.
+    drag = attachTabStripDrag(this.scene, {
+      row, frame: strip, left: spec.left, right: spec.right, top, bottom, min: tabStripMinScroll(spec),
+      get: () => row.x, set: (value) => { row.x = value; this.tabScroll = value; sync(); },
+    });
+    // 같은 갈래를 다시 그릴 때(받기 뒤)는 끌어 둔 자리를 지키고, 갈래를 바꿀 때만 고른 칸을 가운데로 모은다.
+    const keep = this.tabScrollTab === this.tab && this.tabScroll !== undefined;
+    const target = keep ? this.tabScroll! : tabStripScrollFor(spec, TABS.indexOf(this.tab));
+    const from = keep ? undefined : this.tabScroll;
     if (from === undefined || from === target) { row.x = target; sync(); }
     else {
       row.x = from; sync();
       this.scene.tweens.add({ targets: row, x: target, duration: 220, ease: "Cubic.easeOut", onUpdate: sync, onComplete: sync });
     }
-    this.tabScroll = target;
+    this.tabScroll = target; this.tabScrollTab = this.tab;
     const claim = new Button(this.scene, layout.claim.x, layout.claim.y, { width: layout.claim.width, height: layout.claim.height, label: t("achievement.claimAll"), variant: "primary", onClick: () => void this.claim(this.claimableIdsInTab()) });
     if (this.claimableIdsInTab().length === 0) claim.setEnabled(false);
     footer.add(claim);

@@ -48,10 +48,11 @@ import { simulateDuelDefenses } from "../core/duelDefense";
 import { combatPower } from "../core/combatPower";
 import type { ClaimDuelSeasonRewardResponse, DuelRankingResponse, DuelStatusResponse, EnterDuelRequest, EnterDuelResponse, ResolveDuelRequest, ResolveDuelResponse, SetDuelDefenseRequest } from "./contracts";
 import { WALLET_CAPS } from "../data/economy";
+import { canCompleteTutorialStep, isTutorialStepDone, isTutorialStepId, normalizeTutorialState, TUTORIAL_REWARDS, type TutorialState } from "../core/tutorial";
 import { mileageFragmentRelicId } from "../data/mileageClerk";
 import { BOND_STORY_GEM_REWARD, BOND_STORY_LEVELS, DIARY_QUESTION_GEM_REWARD, bondChapterId, diaryQuestionUnlockAt, type BondStoryLevel } from "../core/relicStory";
 import { relicStoryFor } from "../data/relicStories";
-import type { AnswerRelicQuestionRequest, AnswerRelicQuestionResponse, ClaimRelicChapterRequest, ClaimRelicChapterResponse, ClaimRelicQuestionRewardRequest, ClaimRelicQuestionRewardResponse } from "./contracts";
+import type { AnswerRelicQuestionRequest, AnswerRelicQuestionResponse, ClaimRelicChapterRequest, CompleteTutorialStepRequest, CompleteTutorialStepResponse, ClaimRelicChapterResponse, ClaimRelicQuestionRewardRequest, ClaimRelicQuestionRewardResponse } from "./contracts";
 import { EVENTS, findEventByProductId, findEventByStageId } from "../data/events";
 import type { EventDefinition } from "../data/events/types";
 import type { EnterEventStageResponse, EventListResponse } from "./contracts";
@@ -2964,6 +2965,26 @@ export class FakeServer implements GameApi {
     this.state.wallet = nextWallet;
     this.state.relicStory = nextStory;
     return { gemsGranted, wallet: { ...nextWallet }, serverTime: this.now().toISOString() };
+  }
+
+  /**
+   * 튜토리얼 한 칸 — 순서를 서버 상태로 확인하고, 선물이 걸린 칸은 처음 마칠 때만 지갑에 넣는다.
+   * 이미 마친 칸은 던지지 않고 현재 진행을 그대로 돌려준다(화면이 두 번 눌러도 선물이 두 번 가지 않는다).
+   */
+  async completeTutorialStep(request: CompleteTutorialStepRequest): Promise<CompleteTutorialStepResponse> {
+    await this.delay();
+    if (!isTutorialStepId(request.stepId)) throw new GameApiError("INVALID_STATE", "존재하지 않는 튜토리얼 단계입니다.");
+    const current = normalizeTutorialState(this.state.tutorial);
+    if (isTutorialStepDone(current, request.stepId)) return { tutorial: current, wallet: { ...this.state.wallet }, serverTime: this.now().toISOString() };
+    if (!canCompleteTutorialStep(current, request.stepId)) throw new GameApiError("INVALID_STATE", "앞 단계를 먼저 마쳐야 합니다.");
+    const tutorial: TutorialState = { completedStepIds: [...current.completedStepIds, request.stepId] };
+    const reward = TUTORIAL_REWARDS[request.stepId];
+    const fossil = reward ? Math.max(0, Math.min(reward.fossil, WALLET_CAPS.fossil - this.state.wallet.fossil)) : 0;
+    const nextWallet = { ...this.state.wallet, fossil: this.state.wallet.fossil + fossil };
+    this.persist({ ...this.state, tutorial, wallet: nextWallet });
+    this.state.tutorial = tutorial;
+    this.state.wallet = nextWallet;
+    return { tutorial, ...(reward ? { granted: { fossil } } : {}), wallet: { ...nextWallet }, serverTime: this.now().toISOString() };
   }
 
   /** 애착 스토리 장 해금 — 유대 레벨을 서버 상태로 확인하고 장마다 한 번만 젬을 준다. */

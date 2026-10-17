@@ -86,6 +86,8 @@ export interface StageCompletePopupOptions {
   fighters: readonly StageCompleteFighter[];
   /** 그래프 팝업을 연 뒤 그 팝업이 닫히면 반드시 `onClosed`를 불러야 버튼이 다시 보인다. */
   onOpenContribution: (onClosed: () => void) => void;
+  /** 튜토리얼에서 기여도를 아직 열지 않았으면 버튼을 세우지 않는다. */
+  contributionLocked?: boolean;
   onConfirm?: () => void;
   /**
    * **다시 하기** — 같은 편성·같은 단계로 한 판 더. 또 도전할 수 있을 때만 넘긴다(던전·레이드).
@@ -222,13 +224,16 @@ export class StageCompletePopup {
       // SD는 body 바깥, 팝업 층 바로 위에 화면 좌표로 세운다.
       puppetLayer = this.scene.add.container(0, 0).setDepth((body.parentContainer?.depth ?? 0) + 1);
       this.buildFighterPuppets(body, puppetLayer, puppets, () => disposed, options.fighters);
-      attackButton = new Button(this.scene, 0, CONTRIBUTION_Y, {
-        width: 360, height: 84, label: t("stageComplete.contribution"), fontSize: 26,
-        // 그래프를 보는 동안은 이 버튼이 뒤에서 겹쳐 눌리지 않도록 숨겼다가, 그래프를 닫으면
-        // 다시 보여준다.
-        onClick: () => { attackButton?.setVisible(false); options.onOpenContribution(() => { if (!disposed) attackButton?.setVisible(true); }); },
-      });
-      body.add(attackButton);
+      // 기여도를 아직 열지 않은 튜토리얼 구간에서는 버튼 자체를 세우지 않는다 — 자리는 그대로 비워 둔다.
+      if (!options.contributionLocked) {
+        attackButton = new Button(this.scene, 0, CONTRIBUTION_Y, {
+          width: 360, height: 84, label: t("stageComplete.contribution"), fontSize: 26,
+          // 그래프를 보는 동안은 이 버튼이 뒤에서 겹쳐 눌리지 않도록 숨겼다가, 그래프를 닫으면
+          // 다시 보여준다.
+          onClick: () => { attackButton?.setVisible(false); options.onOpenContribution(() => { if (!disposed) attackButton?.setVisible(true); }); },
+        });
+        body.add(attackButton);
+      }
       // 경험치를 올린 판이면 그 블록이, 아니면(원정처럼 스테미나를 쓰지 않는 판) 얇은 구분선이 같은 자리에 선다.
       if (options.standing) addDuelStandingRow(this.scene, body, STANDING_Y, options.standing);
       else if (expReceipt) addPlayerExpGainRow(this.scene, body, EXP_ROW_Y, expReceipt);

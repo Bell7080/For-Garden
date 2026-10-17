@@ -37,3 +37,15 @@ describe("흐르는 탭 줄", () => {
     expect(nearestHiddenDot(spec, 0, dotted, "left")).toBeUndefined();
   });
 });
+
+describe("화면 밖으로 나가는 하단 탭 줄", () => {
+  it("은 프리미엄·업적·패스 모두 끌어 넘기고 끝 발광을 단다", async () => {
+    const { readFileSync } = await import("node:fs");
+    for (const file of ["src/scenes/PremiumScene.ts", "src/ui/AchievementsPopup.ts", "src/ui/PassPopup.ts"]) {
+      const source = readFileSync(file, "utf8");
+      expect(source, file).toContain("new TabStripEdgeHint(");
+      // 끌다 놓은 손이 탭을 고르지 않는다.
+      expect(source, file).toMatch(/dragging\(\)\) (return|this\.select|goPass)|!drag\??\.dragging\(\)|!strip\.dragging\(\)/);
+    }
+  });
+});

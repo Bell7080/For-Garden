@@ -542,6 +542,14 @@ export class InfoManager {
   onOpen?: () => void;
   /** 급여·돌파가 지갑을 바꾼 직후 소유 씬의 상단 재화 줄을 갱신하는 경계다. */
   onWalletChange?: () => void;
+  /** 서버가 확정한 급여가 실제로 경험치·레벨을 올린 직후 불린다(튜토리얼이 첫 급여를 알아챈다). */
+  onFed?: () => void;
+
+  /** 급여 버튼이 지금 서 있는 자리(씬 좌표). 창이 닫혀 있으면 `undefined`. */
+  feedButtonBounds(): Phaser.Geom.Rectangle | undefined {
+    if (!this.feedButton.active || !this.isOpen || !this.feedButton.visible) return undefined;
+    return this.feedButton.getBounds();
+  }
 
   /**
    * `baseDepth`는 창 전체가 서는 층이다. 팝업 위에서 여는 창(발굴 배치처럼 팝업 안의 그리드를
@@ -1260,6 +1268,7 @@ export class InfoManager {
       addDebugFeedTaps(0, response.feeds);
       const after = relicProgression.getProgress(def.id);
       changed = after.level > before.level || after.exp > before.exp;
+      if (changed) this.onFed?.();
       // 정보창과 상단 줄 모두 확정된 단일 세션 지갑을 읽도록 성공 직후 알린다.
       this.onWalletChange?.();
     } catch {

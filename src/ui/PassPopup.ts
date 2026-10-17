@@ -9,6 +9,9 @@ import { platformPayment } from "../platform/payment";
 import { transitionTiming } from "../core/screenTransition";
 import { Button } from "./Button";
 import { addCategoryTab } from "./CategoryTab";
+import { NotificationDot } from "./NotificationDot";
+import { TabStripEdgeHint } from "./TabStripEdgeHint";
+import { hiddenDotSides, nearestHiddenDot, type TabStripSpec } from "../core/tabStrip";
 import { drawGlyph } from "./glyphs";
 import { addBannerArrow } from "./LabBannerTitle";
 import { chipPoints, drawLayer, drawShapeOutline, HoloBar, slantedRect, toPoints } from "./holo";
@@ -188,16 +191,32 @@ export async function openPassPopup(scene: Phaser.Scene, popups: PopupLayer, opt
       const P = PASS_POPUP.passRow;
       const tabs = passPopupPassTabs(passes.length);
       const strip = mountPassStrip(scene, root, passes.length, passes.findIndex(({ id }) => id === pass.id), stripScroll, (value) => { stripScroll = value; });
+      const dotted: boolean[] = [];
       passes.forEach((entry, index) => {
         const name = products.get(entry.productId)?.name ?? entry.id;
         const count = passReadyCount(entry);
-        strip.add(addCategoryTab(scene, undefined, {
+        const tab = addCategoryTab(scene, undefined, {
           x: tabs.xs[index]!, y: 0, width: tabs.width, height: P.tabHeight,
           label: count > 0 ? t("lobby.pass.tabCount", { name, count }) : name, selected: entry.id === pass.id,
           // 옆으로 끌다 놓은 손은 탭을 고르지 않는다.
           onSelect: () => { if (!strip.dragging()) goPass(entry.id); },
-        }));
+        });
+        // 받을 것이 남은 다른 패스에는 어디서나 같은 붉은 점이 선다.
+        dotted[index] = count > 0 && entry.id !== pass.id;
+        if (dotted[index]) new NotificationDot(scene, tab, { x: tabs.width / 2 - 22, y: -P.tabHeight / 2 + 12 });
+        strip.add(tab);
       });
+      // 그 패스가 창 밖에 가려져 있으면 그쪽 줄 끝이 붉게 숨 쉰다.
+      const hint = new TabStripEdgeHint(scene, strip.frame, {
+        left: strip.spec.left, right: strip.spec.right, y: 0, height: P.tabHeight,
+        onTap: (side) => {
+          if (strip.dragging()) return;
+          const index = nearestHiddenDot(strip.spec, strip.scroll(), dotted, side);
+          if (index !== undefined) goPass(passes[index]!.id);
+        },
+      });
+      strip.frame.once(Phaser.GameObjects.Events.DESTROY, () => hint.destroy());
+      strip.onScroll((scroll) => hint.setSides(hiddenDotSides(strip.spec, scroll, dotted)));
       strip.refresh();
       if (nav?.strip) strip.follow(passPopupPassFollow(nav.to, passes.length));
 
@@ -337,6 +356,7 @@ function mountScrollList(scene: Phaser.Scene, root: Phaser.GameObjects.Container
  */
 function mountPassStrip(scene: Phaser.Scene, root: Phaser.GameObjects.Container, count: number, selected: number, start: number | undefined, remember: (value: number) => void): {
   add: (tab: Phaser.GameObjects.Container) => void; dragging: () => boolean; refresh: () => void; follow: (target: number) => void;
+  frame: Phaser.GameObjects.Container; spec: TabStripSpec; scroll: () => number; onScroll: (listener: (scroll: number) => void) => void;
 } {
   const geometry = passPopupPassStrip();
   const centerY = PASS_POPUP.height / 2 - PASS_POPUP.passRow.fromBottom;
@@ -354,12 +374,14 @@ function mountPassStrip(scene: Phaser.Scene, root: Phaser.GameObjects.Container,
   let scroll = Phaser.Math.Clamp(initial, min, 0);
   let press: { x: number; scroll: number } | undefined;
   let moved = false;
+  const listeners: Array<(scroll: number) => void> = [];
   const apply = (value: number): void => {
     if (!content.active) return;
     scroll = Phaser.Math.Clamp(value, min, 0);
     content.x = scroll;
     remember(scroll);
     for (const tab of tabs) tab.setVisible(tab.x + scroll + width / 2 > 0 && tab.x + scroll - width / 2 < visibleRight);
+    listeners.forEach((listener) => listener(scroll));
   };
   const local = (pointer: Phaser.Input.Pointer): Phaser.Math.Vector2 => frame.getWorldTransformMatrix().applyInverse(pointer.x, pointer.y);
   const inside = (point: Phaser.Math.Vector2): boolean => point.x >= 0 && point.x <= visibleRight && point.y >= geometry.top - centerY && point.y <= geometry.bottom - centerY;
@@ -389,7 +411,11 @@ function mountPassStrip(scene: Phaser.Scene, root: Phaser.GameObjects.Container,
     const counter = scene.tweens.addCounter({ from: 0, to: 1, duration: Math.round(timing.duration * 1.6), ease: "Cubic.easeOut", onUpdate: () => apply(from + (target - from) * counter.getValue()!) });
     frame.once(Phaser.GameObjects.Events.DESTROY, () => counter.remove());
   };
-  return { add: (tab) => { tabs.push(tab); content.add(tab); }, dragging: () => moved, refresh: () => apply(scroll), follow };
+  const spec: TabStripSpec = { left: 0, right: visibleRight, width, gap: PASS_POPUP.passRow.tabGap, count };
+  return {
+    add: (tab) => { tabs.push(tab); content.add(tab); }, dragging: () => moved, refresh: () => apply(scroll), follow,
+    frame, spec, scroll: () => scroll, onScroll: (listener) => { listeners.push(listener); },
+  };
 }
 
 /** 보상 목록의 머리 줄(무료 · 레벨 · 패스). 열지 않은 패스면 유료 머리가 「잠김」이다 — 여는 곳은 오른쪽 위의 패키지 카드다. */

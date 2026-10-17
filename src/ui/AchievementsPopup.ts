@@ -21,8 +21,11 @@ import { RewardFrame } from "./RewardFrame";
 import { openRewardPopup } from "./RewardPopup";
 import { squeezeTextToWidth } from "./textFit";
 import { COLOR, PROFILE_MODIFIER_RARITY_COLOR, textStyle } from "./theme";
-import { ACHIEVEMENT_CATEGORY_TONE, ACHIEVEMENTS_POPUP_LAYOUT, achievementListContentHeight, achievementRowY, achievementsTabX, orderAchievements, type AchievementTab } from "./achievementsPopupLayout";
+import { ACHIEVEMENT_CATEGORY_TONE, ACHIEVEMENTS_POPUP_LAYOUT, achievementListContentHeight, achievementRowY, achievementsTabStrip, orderAchievements, type AchievementTab } from "./achievementsPopupLayout";
 import { withBusy } from "./BusyOverlay";
+import { NotificationDot } from "./NotificationDot";
+import { TabStripEdgeHint } from "./TabStripEdgeHint";
+import { hiddenDotSides, nearestHiddenDot, tabStripScrollFor, tabStripSpotX } from "../core/tabStrip";
 
 const TABS: readonly AchievementTab[] = ["all", ...ACHIEVEMENT_CATEGORIES];
 
@@ -54,6 +57,8 @@ export class AchievementsPopup {
   private scroll = 0;
   private minScroll = 0;
   private scrollTab?: AchievementTab;
+  /** 탭 줄의 지난 스크롤 — 갈래를 바꾸면 거기서 새 자리로 흘러간다. */
+  private tabScroll?: number;
   private claiming = false;
 
   constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly api: GameApi = gameApi, private readonly onWalletChanged?: () => void, private readonly onClose?: () => void) {}
@@ -61,7 +66,7 @@ export class AchievementsPopup {
   open(): void {
     if (this.body) return;
     const { popup } = ACHIEVEMENTS_POPUP_LAYOUT;
-    this.popups.open({ width: BASE_WIDTH - popup.widthInset, height: BASE_HEIGHT - popup.heightInset, title: t("achievement.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.72, closeOnBackdrop: true, backButton: true, onClose: () => { this.destroyContent(); this.footer?.destroy(); this.footer = undefined; this.body = undefined; this.onClose?.(); } }, (body) => {
+    this.popups.open({ width: BASE_WIDTH - popup.widthInset, height: BASE_HEIGHT - popup.heightInset, title: t("achievement.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.72, closeOnBackdrop: true, backButton: true, onClose: () => { this.destroyContent(); this.footer?.destroy(); this.footer = undefined; this.tabScroll = undefined; this.body = undefined; this.onClose?.(); } }, (body) => {
       this.body = body;
       void this.refresh();
     });
@@ -267,6 +272,8 @@ export class AchievementsPopup {
     const reward = new RewardFrame(this.scene, 0, 0, { icon: CURRENCY_ICON_BY_WALLET[rewardTier.reward.currency], amount: rewardTier.reward.amount, size: rewardSize, state: complete ? "claimed" : claimable ? "claimable" : "normal", onClick: claimable ? () => void this.claim([series.id]) : undefined });
     if (!claimable && !complete) reward.setAlpha(0.55);
     holder.add(reward);
+    // 받을 수 있는 액자에는 어디서나 같은 붉은 점이 선다 — 탭·로비 버튼의 점과 한 양식이다.
+    if (claimable) new NotificationDot(this.scene, holder, { x: rewardSize / 2 - 8, y: -rewardSize / 2 + 8 });
     // 한 번에 여러 단계가 열려 있으면 액자의 깎인 왼쪽 위 모서리에 몇 단계인지 붙인다 — 누르면 그만큼 함께 받는다.
     if (series.claimableTiers > 1) {
       const badge = this.scene.add.text(-rewardSize / 2 + 16, -rewardSize / 2 + 14, `×${series.claimableTiers}`, textStyle({ role: "display", size: 24, color: "#ffcf7a" })).setOrigin(0.5).setStroke("#05070a", 6);
@@ -277,24 +284,54 @@ export class AchievementsPopup {
     }
   }
 
-  /** 하단 줄 — 갈래 탭(전체 + 여섯)과 모두 받기. 다른 갈래에 받을 것이 남아 있으면 그 라벨에 호박빛 점이 선다. */
+  /**
+   * 하단 줄 — 갈래 탭(전체 + 여섯)과 모두 받기. 탭은 촘촘히 박지 않고 프리미엄 상점처럼 넓게 세워 옆으로
+   * 흐르며, 고른 칸이 창 가운데로 모인다. 다른 갈래에 받을 것이 남아 있으면 그 라벨에 공용 붉은 점이 서고,
+   * 그 라벨이 창 밖에 가려져 있으면 그 쪽 끝이 붉게 숨 쉰다(`TabStripEdgeHint`).
+   */
   private renderFooter(): void {
     if (!this.body || !this.data) return;
     this.footer?.destroy();
     const footer = this.scene.add.container(0, 0); this.footer = footer; this.body.add(footer);
     const { footer: layout } = ACHIEVEMENTS_POPUP_LAYOUT;
     const series = this.data.series;
+    const spec = achievementsTabStrip();
+    const strip = this.scene.add.container(0, layout.tabY);
+    footer.add(strip);
+    const row = this.scene.add.container(0, 0);
+    strip.add(row);
+    // 고른 라벨은 위로 솟고 점은 오른쪽 위에 서므로 창은 라벨보다 위로 한 뼘 더 품는다.
+    const top = -layout.tab.height / 2 - 30; const bottom = layout.tab.height / 2 + 14;
+    row.setMask(shapeClipMask(this.scene, strip, [spec.left, top, spec.right, top, spec.right, bottom, spec.left, bottom]));
+    const dotted: boolean[] = [];
+    const nodes: Phaser.GameObjects.Container[] = [];
     TABS.forEach((tab, index) => {
       const pending = series.filter((entry) => (tab === "all" || entry.category === tab) && entry.claimableTiers > 0).length;
       const label = t(tab === "all" ? "achievement.tab.all" : `achievement.category.${tab}` as TextKey);
-      const node = addCategoryTab(this.scene, footer, { x: achievementsTabX(index), y: layout.tabY, width: layout.tab.width, height: layout.tab.height, label, selected: tab === this.tab, onSelect: () => this.select(tab) });
-      if (pending > 0 && tab !== this.tab) {
-        const dot = this.scene.add.graphics({ x: layout.tab.width / 2 - 16, y: -layout.tab.height / 2 + 8 });
-        dot.fillStyle(0x05070a, 0.9).fillPoints(diamond(11), true);
-        dot.fillStyle(COLOR.missionClaim, 1).fillPoints(diamond(8), true);
-        node.add(dot);
-      }
+      const node = addCategoryTab(this.scene, row, { x: tabStripSpotX(spec, index), y: 0, width: layout.tab.width, height: layout.tab.height, label, selected: tab === this.tab, onSelect: () => this.select(tab) });
+      dotted[index] = pending > 0 && tab !== this.tab;
+      if (dotted[index]) new NotificationDot(this.scene, node, { x: layout.tab.width / 2 - 22, y: -layout.tab.height / 2 + 12 });
+      nodes.push(node);
     });
+    const hint = new TabStripEdgeHint(this.scene, strip, {
+      left: spec.left, right: spec.right, y: 0, height: layout.tab.height,
+      onTap: (side) => { const index = nearestHiddenDot(spec, row.x, dotted, side); if (index !== undefined) this.select(TABS[index]); },
+    });
+    const sync = (): void => {
+      if (!row.active) return;
+      // 창 밖으로 다 나간 라벨은 감춘다 — 마스크는 그림만 자르고 입력을 막지 않는다.
+      nodes.forEach((node) => node.setVisible(node.x + row.x + layout.tab.width / 2 > spec.left && node.x + row.x - layout.tab.width / 2 < spec.right));
+      hint.setSides(hiddenDotSides(spec, row.x, dotted));
+    };
+    strip.once(Phaser.GameObjects.Events.DESTROY, () => hint.destroy());
+    const target = tabStripScrollFor(spec, TABS.indexOf(this.tab));
+    const from = this.tabScroll;
+    if (from === undefined || from === target) { row.x = target; sync(); }
+    else {
+      row.x = from; sync();
+      this.scene.tweens.add({ targets: row, x: target, duration: 220, ease: "Cubic.easeOut", onUpdate: sync, onComplete: sync });
+    }
+    this.tabScroll = target;
     const claim = new Button(this.scene, layout.claim.x, layout.claim.y, { width: layout.claim.width, height: layout.claim.height, label: t("achievement.claimAll"), variant: "primary", onClick: () => void this.claim(this.claimableIdsInTab()) });
     if (this.claimableIdsInTab().length === 0) claim.setEnabled(false);
     footer.add(claim);

@@ -339,7 +339,7 @@ export class PartyScene extends Phaser.Scene {
         // 로컬 편성 저장과 서버 입장은 실패 원인과 복구 행동이 다르므로 서로 다른 예외 경계로 둔다.
         try {
           // 화면에 그린 뒤 보유 상태가 바뀔 수 있으므로 전환 직전에 매니저에서 다시 검증한다.
-          const result = relicCollection.setParty(formationMembers(this.picked));
+          const result = await relicCollection.setParty(formationMembers(this.picked));
           if (!result.ok) {
             this.isEnteringBattle = false;
             this.hint.setText(this.partyFailureMessage(result.reason, result.relicId));

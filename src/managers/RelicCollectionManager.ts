@@ -3,6 +3,7 @@ import type { RelicDef } from "../core/types";
 import { PLAYABLE_RELICS } from "../data/relics";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
+import { resolveProfileApi, type ProfileApi } from "./profileApi";
 
 /** 편성 실패를 UI와 테스트가 문자열 추측 없이 구분하기 위한 안정적인 사유 코드다. */
 export type SetPartyFailureReason = "wrong-size" | "duplicate" | "not-owned";
@@ -20,7 +21,10 @@ export type SetPartyResult =
  * 공개 메서드는 유지하고 내부 저장 방식만 바꿀 수 있도록 상태 규칙을 이곳에 모은다.
  */
 export class RelicCollectionManager {
-  constructor(private readonly state: Session = session) {}
+  private readonly apiCache: { api?: ProfileApi } = {};
+  constructor(private readonly state: Session = session, private readonly injectedApi?: ProfileApi) {}
+
+  private get api(): ProfileApi { return resolveProfileApi(this.state, this.injectedApi, this.apiCache); }
 
   /** 도감에 표시할 전체 플레이 가능 렐릭이다. 미보유 렐릭도 포함한다. */
   get catalog(): readonly RelicDef[] {
@@ -44,11 +48,8 @@ export class RelicCollectionManager {
   }
 
   /** 애착 렐릭은 반드시 보유한 플레이 가능 렐릭이어야 한다. */
-  setFavorite(relicId: string): boolean {
-    if (!this.owns(relicId) || !PLAYABLE_RELICS.some((relic) => relic.id === relicId)) return false;
-    this.state.favorite = relicId;
-    this.persistSharedSession();
-    return true;
+  async setFavorite(relicId: string): Promise<boolean> {
+    return (await this.api.setFavorite({ relicId })).ok;
   }
 
   /** 즐겨찾기 여부. 애착 렐릭과 달리 여러 명이 될 수 있다. */
@@ -62,32 +63,15 @@ export class RelicCollectionManager {
    * 애착 렐릭과 섞지 않는다. 애착은 로비에 서는 한 명이고 즐겨찾기는 목록을 추리는 표시라,
    * 하나를 바꿔도 다른 하나는 그대로 둔다.
    */
-  toggleBookmark(relicId: string): boolean {
-    if (!this.owns(relicId)) return false;
-    if (this.state.bookmarked.has(relicId)) this.state.bookmarked.delete(relicId);
-    else this.state.bookmarked.add(relicId);
-    this.persistSharedSession();
-    return true;
+  async toggleBookmark(relicId: string): Promise<boolean> {
+    return (await this.api.setRelicBookmark({ relicId, bookmarked: !this.state.bookmarked.has(relicId) })).ok;
   }
 
-  /** 파티는 서로 다른 보유 렐릭 3명으로만 확정하고, 실패하면 정확한 원인을 돌려준다. */
-  setParty(relicIds: readonly string[]): SetPartyResult {
-    const unique = new Set(relicIds);
-    if (relicIds.length !== 3) return { ok: false, reason: "wrong-size" };
-    if (unique.size !== 3) return { ok: false, reason: "duplicate" };
-    const notOwnedId = relicIds.find((id) => !this.owns(id));
-    if (notOwnedId !== undefined) return { ok: false, reason: "not-owned", relicId: notOwnedId };
-
-    // 저장이 실패하면 메모리 파티도 이전 값으로 되돌려 확정과 영속화를 하나의 처리로 보이게 한다.
-    const previousParty = [...this.state.party];
-    this.state.party = [...relicIds];
-    try {
-      this.persistSharedSession();
-    } catch (error) {
-      this.state.party = previousParty;
-      throw error;
-    }
-    return { ok: true };
+  /** 파티는 서로 다른 보유 렐릭 3명으로만 서버가 확정하고, 실패하면 정확한 원인을 돌려준다. */
+  async setParty(relicIds: readonly string[]): Promise<SetPartyResult> {
+    const result = await this.api.setParty({ relicIds: [...relicIds] });
+    if (result.ok) return { ok: true };
+    return result.relicId === undefined ? { ok: false, reason: result.reason } : { ok: false, reason: result.reason, relicId: result.relicId };
   }
 
   /**

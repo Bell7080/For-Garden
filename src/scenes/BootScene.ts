@@ -57,7 +57,7 @@ export class BootScene extends Phaser.Scene {
       relicProgression.grantSweepTicketTestKit();
     }
     // 공개 UID와 연구 개시일은 계정이 처음 설 때 한 번만 정해진다. 이전 저장도 여기서 채운다.
-    playerCardManager.ensureIdentity();
+    void playerCardManager.ensureIdentity().catch(() => undefined);
     // 저장에서 복원한 접근성 배율을 어떤 씬도 생성되기 전에 공용 텍스트 계층에 반영한다.
     setTextScale(session.settings.accessibility.textScale);
     // 저장이 없는 첫 실행에서만 기기 언어를 따른다. 한 번 고른 뒤로는 저장값이 언제나 우선한다 —

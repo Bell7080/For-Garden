@@ -1,50 +1,56 @@
 import { describe, expect, it, vi } from "vitest";
 import { RelicSkinManager } from "../../src/managers/RelicSkinManager";
-import { createDefaultSession } from "../../src/state/session";
+import { FakeServer } from "../../src/api/FakeServer";
+import { createDefaultSession, type Session } from "../../src/state/session";
+
+/** 독립 세션을 소유하는 지연 없는 서버와, 그 서버가 저장하는 횟수를 세는 자리다. */
+function setup(state: Session) {
+  const saves = { save: vi.fn() };
+  const manager = new RelicSkinManager(state, new FakeServer(state, { latencyMs: 0, persistSession: saves.save }));
+  return { saves, manager };
+}
 
 /** 외형 변경의 소유권 검증과 영속화 경계를 작은 독립 세션으로 고정한다. */
 describe("RelicSkinManager", () => {
   it("일반 신규 계정은 기본 해금 외형을 소유한다", () => {
-    const manager = new RelicSkinManager(createDefaultSession(), { save: vi.fn() });
+    const manager = setup(createDefaultSession()).manager;
     // 상품·이벤트 호출 없이도 데이터가 선언한 무료 지급 정책이 manager 소유권으로 이어진다.
     expect(manager.owns("torika-skin-001")).toBe(true);
   });
 
-  it("미보유 렐릭, 미보유 스킨, 다른 렐릭용 스킨은 장착하지도 저장하지도 않는다", () => {
+  it("미보유 렐릭, 미보유 스킨, 다른 렐릭용 스킨은 장착하지도 저장하지도 않는다", async () => {
     const state = createDefaultSession();
-    const saves = { save: vi.fn() };
-    const manager = new RelicSkinManager(state, saves);
+    const { saves, manager } = setup(state);
 
-    expect(manager.equip("tia", "torika-skin-001")).toBe(false);
+    expect(await manager.equip("tia", "torika-skin-001")).toBe(false);
     state.ownedRelicSkinIds.clear();
-    expect(manager.equip("torika", "torika-skin-001")).toBe(false);
+    expect(await manager.equip("torika", "torika-skin-001")).toBe(false);
     // 기본 해금 복구 뒤에도 다른 렐릭용 외형이라는 장착 규칙은 그대로 적용된다.
     state.ownedRelicSkinIds.add("torika-skin-001");
-    expect(manager.equip("rex", "torika-skin-001")).toBe(false);
+    expect(await manager.equip("rex", "torika-skin-001")).toBe(false);
     expect(state.equippedRelicSkinIds).toEqual({});
     expect(saves.save).not.toHaveBeenCalled();
   });
 
-  it("유효한 외형을 장착하고 해제할 때마다 변경된 세션을 저장한다", () => {
+  it("유효한 외형을 장착하고 해제할 때마다 변경된 세션을 저장한다", async () => {
     const state = createDefaultSession();
-    const saves = { save: vi.fn() };
-    const manager = new RelicSkinManager(state, saves);
+    const { saves, manager } = setup(state);
     const listener = vi.fn();
     const unsubscribe = manager.subscribe(listener);
 
     expect(manager.owns("torika-skin-001")).toBe(true);
     expect(manager.equippedFor("torika")).toBeUndefined();
-    expect(manager.equip("torika", "torika-skin-001")).toBe(true);
+    expect(await manager.equip("torika", "torika-skin-001")).toBe(true);
     expect(manager.equippedFor("torika")).toBe("torika-skin-001");
-    expect(manager.unequip("torika")).toBe(true);
+    expect(await manager.unequip("torika")).toBe(true);
     expect(manager.equippedFor("torika")).toBeUndefined();
     expect(saves.save).toHaveBeenCalledTimes(2);
-    expect(saves.save).toHaveBeenNthCalledWith(1, state);
+    expect(saves.save).toHaveBeenNthCalledWith(1, expect.objectContaining({ equippedRelicSkinIds: { torika: "torika-skin-001" } }));
     // 저장 뒤 사건만 발행해 정보창·도감·로비가 확정 상태를 함께 다시 읽는다.
     expect(listener).toHaveBeenNthCalledWith(1, { relicId: "torika", equippedSkinId: "torika-skin-001" });
     expect(listener).toHaveBeenNthCalledWith(2, { relicId: "torika", equippedSkinId: undefined });
     unsubscribe();
-    manager.equip("torika", "torika-skin-001");
+    await manager.equip("torika", "torika-skin-001");
     expect(listener).toHaveBeenCalledTimes(2);
   });
 });

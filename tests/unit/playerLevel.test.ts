@@ -5,6 +5,7 @@ import { CONTENT_LEVEL_GATES_ENABLED, CONTENT_STAGE_UNLOCKS, CONTENT_UNLOCKS, co
 import { cleanBio, createPlayerUid, isPlayerUid, nicknameProblem, normalizePlayerCard, researchDays } from "../../src/core/playerCard";
 import { PROFILE_FRAMES } from "../../src/data/profileFrames";
 import { PlayerCardManager } from "../../src/managers/PlayerCardManager";
+import { FakeServer } from "../../src/api/FakeServer";
 import { createDefaultSession } from "../../src/state/session";
 import { ABSOLUTE_STAMINA_MAX, staminaMaxForResearchLevel } from "../../src/core/stamina";
 import { ARCHAEOLOGY_SITES } from "../../src/data/archaeologySites";
@@ -114,43 +115,53 @@ describe("플레이어 카드", () => {
     expect(researchDays("2026-09-01T00:00:00.000Z", new Date("2026-09-03T12:00:00.000Z"))).toBe(3);
   });
 
-  it("매니저는 규칙을 통과한 값만 저장하고 테두리는 레벨이 연 것만 고른다", () => {
+  it("매니저는 규칙을 통과한 값만 서버에 보내 저장하고 테두리는 레벨이 연 것만 고른다", async () => {
     const state = createDefaultSession(); const saves = { save: vi.fn() };
-    const manager = new PlayerCardManager(state, saves);
-    manager.ensureIdentity(() => 0.5, new Date("2026-09-24T00:00:00.000Z"));
+    const clock = { now: new Date("2026-09-24T00:00:00.000Z") };
+    const server = new FakeServer(state, { latencyMs: 0, persistSession: saves.save, now: () => clock.now, random: () => 0.5 });
+    const manager = new PlayerCardManager(state, server);
+    await manager.ensureIdentity();
     expect(isPlayerUid(state.playerCard.uid)).toBe(true);
+    // 연구 개시일은 서버 시계로 정한다.
     expect(state.playerCard.createdAt).toBe("2026-09-24T00:00:00.000Z");
     const uid = state.playerCard.uid;
-    manager.ensureIdentity(() => 0.1);
+    clock.now = new Date("2026-10-01T00:00:00.000Z");
+    await manager.ensureIdentity();
     expect(state.playerCard.uid).toBe(uid);
-    expect(manager.setNickname("가")).toEqual({ ok: false, reason: "tooShort" });
-    expect(manager.setNickname("  화석  사냥꾼 ")).toEqual({ ok: true });
+    expect(state.playerCard.createdAt).toBe("2026-09-24T00:00:00.000Z");
+    expect(await manager.setNickname("가")).toEqual({ ok: false, reason: "tooShort" });
+    expect(await manager.setNickname("  화석  사냥꾼 ")).toEqual({ ok: true });
     expect(state.playerCard.nickname).toBe("화석 사냥꾼");
-    expect(manager.setFrame("amber")).toEqual({ ok: false, reason: "frameLocked" });
+    expect(await manager.setFrame("amber")).toEqual({ ok: false, reason: "frameLocked" });
     state.playerResearch = { level: 20, experience: 0, experienceToNext: 1 };
-    expect(manager.setFrame("amber")).toEqual({ ok: true });
+    expect(await manager.setFrame("amber")).toEqual({ ok: true });
     expect(state.playerCard.frameId).toBe("amber");
     // 프로필 사진은 보유한 렐릭만.
-    expect(manager.setAvatar("pontos")).toEqual({ ok: false, reason: "notOwned" });
-    expect(manager.setAvatar("rex")).toEqual({ ok: true });
+    expect(await manager.setAvatar("pontos")).toEqual({ ok: false, reason: "notOwned" });
+    expect(await manager.setAvatar("rex")).toEqual({ ok: true });
     expect(state.playerCard.avatarRelicId).toBe("rex");
+    // 거절된 요청은 저장하지 않는다 — 통과한 쓰기는 식별·닉네임·테두리·사진 네 번뿐이다.
+    expect(saves.save).toHaveBeenCalledTimes(4);
   });
 
-  it("닉네임은 처음 정하는 것은 자유롭고, 바꾸는 것은 이레에 한 번이다", () => {
-    const state = createDefaultSession(); const saves = { save: vi.fn() };
-    const manager = new PlayerCardManager(state, saves);
+  it("닉네임은 처음 정하는 것은 자유롭고, 바꾸는 것은 이레에 한 번이다", async () => {
+    const state = createDefaultSession();
     const day = (offset: number) => new Date(Date.parse("2026-09-24T00:00:00.000Z") + offset * 86_400_000);
+    const clock = { now: day(0) };
+    const manager = new PlayerCardManager(state, new FakeServer(state, { latencyMs: 0, persistSession: () => undefined, now: () => clock.now }));
     // 처음 정하는 이름은 세지 않는다 — 곧바로 한 번 더 바꿀 수 있다.
-    expect(manager.setNickname("화석사냥꾼", day(0))).toEqual({ ok: true });
+    expect(await manager.setNickname("화석사냥꾼")).toEqual({ ok: true });
     expect(state.playerCard.nicknameChangedAt).toBe("");
     expect(manager.nicknameLockedUntil(day(0))).toBeUndefined();
-    expect(manager.setNickname("호박석", day(0))).toEqual({ ok: true });
+    expect(await manager.setNickname("호박석")).toEqual({ ok: true });
     // 바꾼 뒤로는 이레가 지나야 한다. 같은 이름을 다시 적는 것은 바꾼 것이 아니다.
     expect(manager.nicknameLockedUntil(day(1))?.toISOString()).toBe(day(7).toISOString());
-    expect(manager.setNickname("원석", day(6))).toEqual({ ok: false, reason: "nicknameCooldown" });
-    expect(manager.setNickname("호박석", day(6))).toEqual({ ok: true });
+    clock.now = day(6);
+    expect(await manager.setNickname("원석")).toEqual({ ok: false, reason: "nicknameCooldown" });
+    expect(await manager.setNickname("호박석")).toEqual({ ok: true });
     expect(state.playerCard.nickname).toBe("호박석");
-    expect(manager.setNickname("원석", day(7))).toEqual({ ok: true });
+    clock.now = day(7);
+    expect(await manager.setNickname("원석")).toEqual({ ok: true });
     expect(normalizePlayerCard({ nickname: "원석", nicknameChangedAt: "nope" }).nicknameChangedAt).toBe("");
   });
 

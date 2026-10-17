@@ -1747,15 +1747,13 @@ export class InfoManager {
   private toggleBookmark(): void {
     if (!this.capabilities.mutateProgress) return;
     if (!this.currentDef || !this.ownedNow) return;
-    relicCollection.toggleBookmark(this.currentDef.id);
-    this.refreshBadges();
+    void relicCollection.toggleBookmark(this.currentDef.id).then(() => this.refreshBadges(), () => undefined);
   }
 
   private toggleFavorite(): void {
     if (!this.capabilities.mutateProgress) return;
     if (!this.currentDef || !this.ownedNow) return;
-    relicCollection.setFavorite(this.currentDef.id);
-    this.refreshBadges();
+    void relicCollection.setFavorite(this.currentDef.id).then(() => this.refreshBadges(), () => undefined);
   }
 
   private refreshBadges(): void {

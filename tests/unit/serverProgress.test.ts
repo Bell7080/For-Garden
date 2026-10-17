@@ -44,63 +44,23 @@ describe("서버 진행 연결", () => {
     expect(installed).toBe(0);
   });
 
-  it("서버가 비어 있으면 이 기기의 진행을 올리고 서버 호출로 바꾼다", async () => {
-    const { account, uploads } = fakeAccount(null);
-    const target = createDefaultSession();
-    target.wallet.gold = 777;
-    const m = marker(null);
-    let installed = false;
-    const result = await connectServerProgress({ account, saves: new SaveManager(memoryStorage()), marker: m, choose: async () => "cancel", target, install: (api) => { installed = api !== null; } });
-    expect(result).toEqual({ ok: true, mode: "server" });
-    expect(uploads).toHaveLength(1);
-    expect(installed).toBe(true);
-    expect(m.value).toBe("user-1");
-    expect(target.wallet.gold).toBe(777);
-  });
+  function stateFetch(status: number) {
+    return (async () => new Response(JSON.stringify({ code: "boom" }), { status })) as unknown as typeof fetch;
+  }
 
-  it("이미 연결된 기기는 서버 저장을 받되 기기 값은 지킨다", async () => {
-    const serverSession = createDefaultSession();
-    serverSession.wallet.gold = 5000;
-    serverSession.settings.game.battleSpeed = 2;
-    serverSession.settings.sound.masterVolume = 0.1;
-    const saves = new SaveManager(memoryStorage());
-    const { account } = fakeAccount({ data: saves.exportData(serverSession) });
-    const target = createDefaultSession();
-    target.settings.sound.masterVolume = 0.9;
-    target.settings.game.language = "en";
-    let chose = 0;
-    const result = await connectServerProgress({ account, saves, marker: marker("user-1"), choose: async () => { chose += 1; return "cancel"; }, target, install: () => undefined });
-    expect(result).toEqual({ ok: true, mode: "server" });
-    expect(chose).toBe(0);
-    expect(target.wallet.gold).toBe(5000);
-    expect(target.settings.game.battleSpeed).toBe(2);
-    expect(target.settings.sound.masterVolume).toBe(0.9);
-    expect(target.settings.game.language).toBe("en");
-  });
-
-  it("처음 만나는 기기에 서로 다른 진행이 있으면 고르게 하고 취소하면 서버로 바꾸지 않는다", async () => {
-    const saves = new SaveManager(memoryStorage());
-    const remoteSession = createDefaultSession();
-    remoteSession.wallet.gold = 9;
-    const { account, uploads } = fakeAccount({ data: saves.exportData(remoteSession) });
-    const target = createDefaultSession();
-    target.wallet.gold = 1234;
+  it("서버 호출이 막히면 이 기기에서 이어 가지 않고 진단 코드를 돌려준다", async () => {
+    const { account } = fakeAccount(null);
     let installed = false;
-    let asked = 0;
-    const result = await connectServerProgress({ account, saves, marker: marker(null), choose: async () => { asked += 1; return "cancel"; }, target, install: () => { installed = true; } });
-    expect(result).toMatchObject({ ok: false, code: "conflict-cancelled" });
-    expect(asked).toBe(1);
-    expect(installed).toBe(false);
-    expect(uploads).toHaveLength(0);
-    expect(target.wallet.gold).toBe(1234);
-  });
-
-  it("서버에 닿지 못하면 이 기기에서 이어 가지 않고 실패를 돌려준다", async () => {
-    const { account } = fakeAccount(null, { network: true });
-    let installed = false;
-    const result = await connectServerProgress({ account, saves: new SaveManager(memoryStorage()), marker: marker(null), choose: async () => "cancel", target: createDefaultSession(), install: () => { installed = true; } });
+    const result = await connectServerProgress({ account, saves: new SaveManager(memoryStorage()), marker: marker(null), choose: async () => "cancel", target: createDefaultSession(), install: () => { installed = true; }, fetchImpl: stateFetch(503) });
     expect(result).toMatchObject({ ok: false, code: "network-error" });
+    expect((result as { detail?: string }).detail).toMatch(/^game:/);
     expect(installed).toBe(false);
+  });
+
+  it("계정을 만들지 못하면 사유를 그대로 돌려준다", async () => {
+    const account = { userId: async () => null, accessToken: async () => null, lastFailure: () => "auth:/auth/v1/signup:422:-" } as unknown as ServerProgressAccount;
+    const result = await connectServerProgress({ account, saves: new SaveManager(memoryStorage()), marker: marker(null), choose: async () => "cancel", install: () => undefined });
+    expect(result).toEqual({ ok: false, code: "network-error", detail: "auth:/auth/v1/signup:422:-" });
   });
 
   it("게임 서버 호출 실패는 상태 코드와 서버 코드만 진단 문자열로 남긴다", async () => {

@@ -84,45 +84,16 @@ export async function connectServerProgress(deps: ServerProgressDeps): Promise<S
   const userId = await account.userId();
   if (!userId) return { ok: false, code: "network-error", detail: account.lastFailure?.() || "no-user" };
 
-  // 운영 서버는 로컬 세이브 업로드로 시작하지 않는다. 첫 계정도 서버가 기본 상태를 생성한다.
-  if (!QA_TOOLS_ENABLED) {
-    const remote=createRemoteGameApi({getAccessToken:()=>account.accessToken(),applyState:next=>{applyServerState(target,next,deps.saves);signalRemoteMissionNotice(target);},fetchImpl:deps.fetchImpl});
-    try { await remote.getPlayerState(); }
-    catch (error) { return {ok:false,code:"network-error",detail:describeGameFailure(error)}; }
-    install(remote);
-    const social=createRemoteSocialApi({getAccessToken:()=>account.accessToken(),fetchImpl:deps.fetchImpl});
-    installSocialApi(social);
-    installGuildApi(createRemoteGuildApi({getAccessToken:()=>account.accessToken(),fetchImpl:deps.fetchImpl}));
-    void social.getRequests().catch(()=>undefined);
-    deps.marker.set(userId);
-    return {ok:true,mode:"server"};
-  }
-
-  const meta = await account.getRemoteSaveMetadata();
-  if (!meta.ok) return { ok: false, code: meta.code, detail: account.lastFailure?.() || `save-meta:${meta.code}` };
-
-  if (meta.value === null || deps.marker.get() !== userId) {
-    // 처음 만나는 기기이거나 서버가 비어 있다: 같은 해시면 그대로, 다르면 고르게 한다.
-    const sync = new AccountSaveSync(account, deps.saves);
-    const result = await sync.synchronize(target, deps.choose);
-    if (!result.ok) return { ok: false, code: result.code, detail: account.lastFailure?.() || `sync:${result.code}` };
-  }
-
-  // 위 동기화가 로컬 저장을 서버 쪽으로 맞췄으므로 서버 본문을 한 번 받아 세션과 맞춘다.
-  const downloaded = await account.downloadRemoteSave();
-  if (!downloaded.ok) return { ok: false, code: downloaded.code, detail: account.lastFailure?.() || `download:${downloaded.code}` };
-  let restored: Session;
-  try { restored = deps.saves.importRemote(downloaded.value.data); }
-  catch { return { ok: false, code: "invalid-remote-save" }; }
-  applyServerState(target, restored, deps.saves);
+  // 서버는 로컬 세이브 업로드로 시작하지 않는다(클라이언트의 저장 쓰기 권한은 회수됐다). 첫 계정도 서버가 기본 상태를 생성한다. QA 빌드도 같은 길을 쓴다.
+  const remote=createRemoteGameApi({getAccessToken:()=>account.accessToken(),applyState:next=>{applyServerState(target,next,deps.saves);signalRemoteMissionNotice(target);},fetchImpl:deps.fetchImpl});
+  try { await remote.getPlayerState(); }
+  catch (error) { return {ok:false,code:"network-error",detail:describeGameFailure(error)}; }
+  install(remote);
+  const social=createRemoteSocialApi({getAccessToken:()=>account.accessToken(),fetchImpl:deps.fetchImpl});
+  installSocialApi(social);
+  installGuildApi(createRemoteGuildApi({getAccessToken:()=>account.accessToken(),fetchImpl:deps.fetchImpl}));
+  void social.getRequests().catch(()=>undefined);
   deps.marker.set(userId);
-
-  install(createRemoteGameApi({
-    getAccessToken: () => account.accessToken(),
-    applyState: (next) => { applyServerState(target, next, deps.saves); signalRemoteMissionNotice(target); },
-    ...(deps.fetchImpl ? { fetchImpl: deps.fetchImpl } : {}),
-  }));
-  installSocialApi(createRemoteSocialApi({ getAccessToken: () => account.accessToken(), fetchImpl: deps.fetchImpl }));
-  installGuildApi(createRemoteGuildApi({ getAccessToken: () => account.accessToken(), fetchImpl: deps.fetchImpl }));
-  return { ok: true, mode: "server" };
+  return {ok:true,mode:"server"};
 }
+

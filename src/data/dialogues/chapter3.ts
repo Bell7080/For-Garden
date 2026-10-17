@@ -116,7 +116,7 @@ export const STAGE_3_10_PRE: DialogueStory = {
   nodes: linear([
     { id: "hall", speaker: "", body: "회수 구간의 마지막 홀. 높은 천장에서 날개 그림자가 천천히 내려온다.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], cue: "rumble" },
     { id: "ika", speaker: "이카닉시아", body: "여기까지 오셨군요, 연구원님. 이제 쫓는 시간은 끝이에요. 제 앞에 서 주세요.", standing: "ikanixia", act: "lean" },
-    { id: "lexia", speaker: "렉시아", body: "그 부탁은 거절한다! 앱솔루트 팽, 전열 정렬!", standing: "lexia", cast: [{ id: "lexia", slot: "center" }], act: "hop" },
+    { id: "lexia", speaker: "렉시아", body: "그 부탁은 거절이야! 앱솔루트 팽, 전열 정렬!", standing: "lexia", cast: [{ id: "lexia", slot: "center" }], act: "hop" },
     { id: "line", speaker: "", body: "연구원의 앞에 렉시아, 엘라, 파치, 아크, 유티가 한 줄로 나란히 선다.", cast: [{ id: "ella", slot: "left" }, { id: "lexia", slot: "center" }, { id: "pachi", slot: "right" }], cue: "impact" },
     { id: "ika2", speaker: "이카닉시아", body: "어머, 줄까지 서 주시다니. 정말 정중하시네요… 이겠지요.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "nod" },
   ]),
@@ -132,7 +132,7 @@ export const STAGE_3_10_POST: DialogueStory = {
     { id: "wing", speaker: "", body: "날개 망토가 천천히 허공으로 올라간다. 회수조의 그림자가 하나씩 따라 사라진다.", standing: "ikanixia", leave: "blastOff", cast: [] },
     { id: "koma", speaker: "코마", body: "…당신은 아직 목록에 있다.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean" },
     { id: "koma2", speaker: "코마", body: "내 번호는, 지웠다. 그건 내가 정했다.", standing: "koma", act: "shrink" },
-    { id: "lexia", speaker: "렉시아", body: "…알 수 없는 소리다. 그러나 앞으로 같은 편이라면 환영한다.", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "koma", slot: "right" }], act: "nod" },
+    { id: "lexia", speaker: "렉시아", body: "…무슨 소린지는 모르겠어. 그래도 앞으로 같은 편이라면 환영이야.", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "koma", slot: "right" }], act: "nod" },
     { id: "koma3", speaker: "코마", body: "…편은 아니다. 아직은.", standing: "koma", act: "recoil" },
   ]),
 };

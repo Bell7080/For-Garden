@@ -28,12 +28,12 @@ export const STAGE_2_1_PRE: DialogueStory = {
   startNodeId: "enter",
   backdrop: "battlefield",
   nodes: linear([
-    { id: "enter", speaker: "렉시아", body: "문은 내가 열었다. 이제부터는 내가 앞장선다!", standing: "lexia", cast: PAIR("lexia"), act: "hop" },
+    { id: "enter", speaker: "렉시아", body: "문은 제가 열었어요, 마스터. 이제부터는 제가 앞장서요!", standing: "lexia", cast: PAIR("lexia"), act: "hop" },
     { id: "rule", speaker: "토리카", body: "렉시아 님, 문은 뽑는 게 아니라 여는 거예요.", standing: "torika", act: "lean" },
-    { id: "huh", speaker: "렉시아", body: "…여는 것과 뽑는 것은 결과가 같다. 다만 소리가 다를 뿐이다.", standing: "lexia", act: "shrink" },
+    { id: "huh", speaker: "렉시아", body: "…여는 거나 뽑는 거나 결과는 같아. 소리가 다를 뿐이지.", standing: "lexia", act: "shrink" },
     { id: "print", speaker: "도디", body: "대장님, 여기 발자국이요. 코마의 발자국이 입구에서 딱 멈춰 있어요.", standing: "dodi", cast: [{ id: "dodi", slot: "left" }, { id: "lexia", slot: "right" }], act: "lean" },
     { id: "lost", speaker: "도디", body: "그리고 그 뒤로 어지러운 발자국이 셋이에요. 이쪽저쪽 헤맨 흔적… 쟤네도 길을 잃은 것 같아요.", standing: "dodi", act: "hopTwice" },
-    { id: "again", speaker: "렉시아", body: "그렇다면 다시 쫓아올 것이다. 맞이할 준비를 하라.", standing: "lexia", act: "nod", cue: "rumble" },
+    { id: "again", speaker: "렉시아", body: "그럼 다시 쫓아오겠네. 맞이할 준비 해 둬.", standing: "lexia", act: "nod", cue: "rumble" },
   ]),
 };
 
@@ -187,7 +187,7 @@ export const STAGE_2_9_POST: DialogueStory = {
   nodes: linear([
     { id: "hole", speaker: "", body: "컨베이어가 끝나는 곳에 바닥이 없다. 폐기 표식이 붙은 상자들이 소리 없이 어둠으로 떨어진다.", standing: "dodi", cast: PAIR("dodi", "lexia") },
     { id: "dodi", speaker: "도디", body: "다들 이 아래로 흘러간 거예요. 쓸 수 없음이라고 적힌 채로…", standing: "dodi", act: "shrink" },
-    { id: "lexia", speaker: "렉시아", body: "아래에는 무엇이 있느냐.", standing: "lexia", act: "lean" },
+    { id: "lexia", speaker: "렉시아", body: "아래에는 뭐가 있어?", standing: "lexia", act: "lean" },
     { id: "dei", speaker: "데이", body: "구멍 가장자리에 낙서 같은 화살표가 있어. 내가 그린 거 아니야. 누군가가 아래로 향하는 길을 표시해 뒀어.", cast: VOICE("deina", "lexia", "dodi"), act: "lean" },
     { id: "stay", speaker: "", body: "연구원은 구멍 앞에서 오래 서 있다. 대답하는 이는 없다." },
     { id: "torika", speaker: "토리카", body: "…가요, 대장님. 아직은 위에서 할 일이 있어요.", standing: "torika", cast: PAIR("lexia"), act: "nod" },

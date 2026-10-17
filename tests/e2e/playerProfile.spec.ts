@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
 import { AVATAR_PICKER, avatarPickerHeight, PLAYER_PROFILE_LAYOUT } from "../../src/ui/playerProfileLayout";
 import { PROFILE_FRAMES } from "../../src/data/profileFrames";
+import { PROFILE_MODIFIERS } from "../../src/data/profileModifiers";
 import { POPUP_CLOSE_LAYOUT } from "../../src/ui/popupGeometry";
 import { captureGame, tap } from "./canvasInput";
 
@@ -43,11 +44,16 @@ test("프로필 얼굴을 누르면 사진·테두리 선택창이 뜨고 라벨
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles?.includes("프로필 꾸미기"))).toBe(true);
   await page.waitForTimeout(800);
   await captureGame(page, `test-results/${test.info().project.name}-player-profile-photo.png`);
-  // 시작 편성의 보유 렐릭 수(6)로 창 높이를 구해 테두리 라벨 자리를 얻는다.
-  const top = HEIGHT / 2 - avatarPickerHeight(6, PROFILE_FRAMES.length) / 2;
-  await tap(page, WIDTH / 2 + (AVATAR_PICKER.tabs.width + AVATAR_PICKER.tabs.gap) / 2, top + AVATAR_PICKER.tabs.y);
+  // 시작 편성의 보유 렐릭 수(6)와 세 목록으로 창 높이를 구해 라벨 자리를 얻는다.
+  const top = HEIGHT / 2 - avatarPickerHeight(6, PROFILE_FRAMES.length, PROFILE_MODIFIERS.length) / 2;
+  // 세 라벨은 가운데를 중심으로 사진·테두리·수식어 순이다.
+  const tabStep = AVATAR_PICKER.tabs.width + AVATAR_PICKER.tabs.gap;
+  await tap(page, WIDTH / 2, top + AVATAR_PICKER.tabs.y);
   await page.waitForTimeout(800);
   await captureGame(page, `test-results/${test.info().project.name}-player-profile-frames.png`);
+  await tap(page, WIDTH / 2 + tabStep, top + AVATAR_PICKER.tabs.y);
+  await page.waitForTimeout(800);
+  await captureGame(page, `test-results/${test.info().project.name}-player-profile-modifiers.png`);
 });
 
 test("레벨 칩은 레벨별 개방 가지나무를, 경험치 줄은 얼마 중 얼마인지 말풍선을 연다", async ({ page }) => {

@@ -36,13 +36,11 @@ const hex = (color: number): string => `#${color.toString(16).padStart(6, "0")}`
 import { contentNameKey } from "./contentLock";
 export { contentNameKey };
 
-/** 자기 카드의 각 요소를 눌렀을 때 여는 창. 편집 탭을 따로 두지 않고 고칠 것을 직접 누른다. */
+/** 자기 카드의 각 요소를 눌렀을 때 여는 창. 편집 탭을 따로 두지 않고 고칠 것을 직접 누른다. 얼굴을 누르면 사진·테두리·수식어를 한 창에서 고친다. */
 export interface ProfileEditors {
   avatar: () => void;
   nickname: () => void;
   bio: () => void;
-  /** 수식어 탭을 연다 — 얻은 것이 없어도 어떤 수식어가 있는지는 볼 수 있다. */
-  modifiers?: () => void;
 }
 
 /** 친구 카드 밑동의 조작 한 칸. 즐겨찾기·친구 삭제처럼 그 사람에게 하는 일이다. */
@@ -139,15 +137,6 @@ export class PlayerProfilePopup {
       body.add(drawLayer(this.scene, x, header.modifierY, chipPoints(modifiers.width, modifiers.height, { bevel: { topLeft: 12, topRight: 0, bottomRight: 12, bottomLeft: 0 } }), { fill: 0x161d26, alpha: 0.92, edge: color, edgeAlpha: 0.9 }));
       body.add(this.scene.add.text(x, header.modifierY, compactProfileText(modifier.displayName, 8), textStyle({ role: "emphasis", size: 20, color: hex(color) })).setOrigin(0.5));
     });
-
-    if (this.editors?.modifiers) {
-      const rowWidth = header.textRight - left;
-      if (this.profile.equippedModifiers.length === 0) {
-        body.add(this.scene.add.text(left, header.modifierY, t("profile.modifier.none"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
-        body.add(drawGlyph(this.scene, "edit", left + 150, header.modifierY, 24, COLOR.accent, 0.7));
-      }
-      this.bindEdit(body, undefined, left + rowWidth / 2, header.modifierY, rowWidth, modifiers.height + 8, this.editors.modifiers);
-    }
 
     // UID는 누르면 복사된다 — 친구 추가에 쓰는 수라 옮겨 적게 하지 않는다.
     const uid = this.scene.add.text(left, header.uidY, t("profile.uid", { uid: this.profile.displayId }), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5);

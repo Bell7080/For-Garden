@@ -69,7 +69,7 @@ $$;
 create function public.server_guild_capacity(p_level integer) returns integer language sql immutable set search_path='' as $$
   select (array[20,22,24,26,28,30,33,36,38,40])[least(greatest(p_level,1),10)];
 $$;
-create function public.server_guild_unlock_level() returns integer language sql immutable set search_path='' as $$ select 8; $$;
+create function public.server_guild_unlock_level() returns integer language sql immutable set search_path='' as $$ select 7; $$;
 create function public.server_guild_products() returns jsonb language sql immutable set search_path='' as $$
   select '[{"productId":"guild-gold","price":20,"weeklyLimit":5},{"productId":"guild-cheesecake","price":20,"weeklyLimit":5},{"productId":"guild-tonic","price":90,"weeklyLimit":2}]'::jsonb;
 $$;

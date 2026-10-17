@@ -70,10 +70,12 @@ export function profileProgressRatio(done: number, total: number): number {
 export const AVATAR_PICKER = {
   width: 940,
   preview: { y: 180, size: 190 },
-  tabs: { y: 356, width: 280, height: 70, gap: 18 },
-  photos: { top: 470, columns: 5, cell: 150, gap: 24 },
-  frames: { top: 480, columns: 3, width: 272, height: 286, gap: 18, avatarSize: 132 },
-  modifiers: { top: 480, columns: 3, width: 272, height: 76, gap: 18 },
+  /** 미리보기 바로 아래 — 고른 것의 이름과 해금 조건. 수식어 탭의 미리보기는 얼굴 대신 수식어 칩이다. */
+  info: { nameY: 340, conditionY: 386, previewChip: { width: 320, height: 76 } },
+  tabs: { y: 474, width: 280, height: 70, gap: 18 },
+  photos: { top: 588, columns: 5, cell: 150, gap: 24 },
+  frames: { top: 598, columns: 3, width: 272, height: 286, gap: 18, avatarSize: 132 },
+  modifiers: { top: 598, columns: 3, width: 272, height: 76, gap: 18 },
   bottomPad: 70,
 } as const;
 

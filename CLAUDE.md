@@ -365,7 +365,7 @@
 
 - **규칙은 `src/core/guild*.ts` 순수 모듈이 갖는다**(레벨·정원·혜택 표 `GUILD_LEVELS`, 직위 권한 `guildCan`, 상점 `GUILD_SHOP_PRODUCTS`, 뱃지 `guildBadge.ts`). 화면이 수를 다시 적지 않는다. DB 함수에 옮겨 적은 표는 `tests/unit/guildSql.test.ts`가 TS 표와 대조한다.
 - **길드 상태는 `GuildBackend`가 소유하고 지갑이 얽힌 네 조작(`createGuild`·`changeGuildBadge`·`stampGuildAttendance`·`buyGuildProduct`)만 `GameApi`가 한 호출 안에서 확정한다.** 호출자(이름·레벨·얼굴)는 클라이언트가 보내지 않고 서버가 저장된 진행에서 만든다(`guildActorFrom`). 길드 코인은 길드원 행이 들고 지갑에 두지 않는다.
-- **뱃지는 길드장만 바꾸고 첫 변경은 무료, 이후 젬 500이다.** 길드 만들기는 젬 2,000, 레벨 8부터 열린다(`CONTENT_UNLOCKS`). 이름은 2~12자의 문자·숫자·공백이고 문자 검증은 TS가 먼저 한다.
+- **뱃지는 길드장만 바꾸고 첫 변경은 무료, 이후 젬 500이다.** 길드 만들기는 젬 2,000, 레벨 7부터 열린다(`CONTENT_UNLOCKS`). 이름은 2~12자의 문자·숫자·공백이고 문자 검증은 TS가 먼저 한다.
 - 수호전·길드전·혜택 적용은 2~4단계다(`guildWar.ts`는 주기 계산만). 설계 원본은 `/mnt/project-files/guild/proposal.md`.
 
 ## 연구원 레벨과 플레이어 카드

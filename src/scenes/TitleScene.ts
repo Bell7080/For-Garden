@@ -5,6 +5,8 @@ import { bindDebugReadyLifecycle, setDebugReady, setDebugScene } from "../debug"
 import { COLOR, textStyle } from "../ui/theme";
 import { OPENING_TRAIN } from "../data/dialogues/openingTrain";
 import { storyManager } from "../managers/StoryManager";
+import { session } from "../state/session";
+import { openingPending } from "../core/openingFlow";
 import { LoadingDiamonds } from "../ui/LoadingDiamonds";
 import { LoadingPercent } from "../ui/LoadingPercent";
 import {
@@ -445,7 +447,7 @@ export class TitleScene extends Phaser.Scene {
           void connectProgress((local, remote) => new Promise<SaveConflictChoice>((resolve) => { if (this.popups) openSaveConflictPopup(this, this.popups, local, remote, resolve); else resolve("cancel"); })).then((connected) => {
             if (!this.scene.isActive()) return;
             if (connected.ok) {
-              startScene(this, storyManager.isCompleted(OPENING_TRAIN.id) ? "lobby" : "opening");
+              startScene(this, openingPending(storyManager.isCompleted(OPENING_TRAIN.id), session.cleared) ? "opening" : "lobby");
               return;
             }
             this.showConnectFailure(connected.code);

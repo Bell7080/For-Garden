@@ -10,6 +10,7 @@ import { prefetchBattlePuppets } from "../puppets/battlePrefetch";
 import { session } from "../state/session";
 import { bindDebugReadyLifecycle, setDebugDialogue, setDebugReady, setDebugScene } from "../debug";
 import { storyManager } from "../managers/StoryManager";
+import { openingPending } from "../core/openingFlow";
 import { COLOR } from "../ui/theme";
 import { DialogueLayer } from "../ui/DialogueLayer";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
@@ -115,7 +116,7 @@ export class OpeningScene extends Phaser.Scene {
     const result = this.flow.advance(choice?.id);
     if (result.effect) void storyManager.applyEffect(OPENING_TRAIN.id, result.effect).catch((error) => console.error("선택 효과 저장 실패", error));
     // 폭파로 전장이 드러나는 순간부터 곧 싸울 SD를 읽어 둔다 — 남은 몇 마디가 그 시간을 벌어 준다.
-    if (result.node?.cue === "explosion" && !storyManager.isCompleted(OPENING_TRAIN.id)) {
+    if (result.node?.cue === "explosion" && openingPending(storyManager.isCompleted(OPENING_TRAIN.id), session.cleared)) {
       prefetchBattlePuppets(session.party, FIXED_STAGE_ENEMIES);
     }
     if (result.completed) {
@@ -130,7 +131,7 @@ export class OpeningScene extends Phaser.Scene {
     if (this.transitioningOut) return;
     // 완료를 확인한 즉시 후속 입력을 영구 차단해 저장과 씬 전환을 한 번만 수행한다.
     this.transitioningOut = true;
-    const firstRun = !storyManager.isCompleted(OPENING_TRAIN.id);
+    const firstRun = openingPending(storyManager.isCompleted(OPENING_TRAIN.id), session.cleared);
     // 대사를 건너뛰어도 곧 싸울 SD는 읽어 둔다(폭파 큐를 지나지 않았을 수 있다).
     if (firstRun) prefetchBattlePuppets(session.party, FIXED_STAGE_ENEMIES);
     // 로비의 비동기 Puppet까지 준비되기 전 오프닝의 true를 자동화가 재사용하지 않게 먼저 내린다.

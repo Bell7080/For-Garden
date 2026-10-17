@@ -1,3 +1,6 @@
+import { prepareCombat, finishCombat } from "./combatAuthority";
+import { authoritativeArgs, recordBoundaryResult, verifyBossWallTime } from "./releaseBoundary";
+import type { CombatPrepare, CombatProof } from "../core/combatProtocol";
 /**
  * 서버가 소유하는 게임 상태를 한 번의 호출 단위로 실행한다.
  * 규칙은 새로 쓰지 않고 FakeServer를 그대로 돌린다 — 저장된 상태를 세션으로 되살려 메서드 하나를
@@ -7,6 +10,9 @@
 import { FakeServer } from "../api/FakeServer";
 import { saveManager } from "../state/SaveManager";
 import { createDefaultSession, type Session } from "../state/session";
+import { publicProfile } from "./publicProfile";
+import { raidChanges, type SharedRaidContext, type SharedRaidChange } from "./sharedRaids";
+import { isReadMethod, REQUEST_ID, validCall } from "./requestPolicy";
 import { isServerGameMethod } from "./gameMethods";
 
 export interface StoredState {
@@ -16,6 +22,9 @@ export interface StoredState {
 
 export interface StateStore {
   load(playerId: string): Promise<StoredState | null>;
+  identity?(playerId: string): Promise<{ uid: string; createdAt: string }>;
+  pendingRequests?(playerId: string): Promise<number>;
+  raidContext?(playerId: string, now: Date): Promise<SharedRaidContext>;
   findReceipt(playerId: string, requestId: string): Promise<unknown | undefined>;
   /** 상태와 영수증을 한 트랜잭션으로 확정한다. 읽은 revision이 달라졌으면 `StateConflictError`를 던진다. */
   commit(input: {
@@ -25,6 +34,8 @@ export interface StateStore {
     method: string;
     requestId: string | null;
     response: unknown;
+    publicProfile?: ReturnType<typeof publicProfile>;
+    raids?: SharedRaidChange[];
   }): Promise<{ revision: string }>;
 }
 
@@ -57,6 +68,7 @@ export interface GameHandlerDeps {
   random?: () => number;
   /** 같은 계정의 동시 호출이 낙관적 잠금에서 겹칠 때 다시 시도하는 횟수다. */
   maxAttempts?: number;
+  strict?: boolean;
 }
 
 // 한 프로세스 안에서는 계정별로 호출을 줄 세운다. FakeServer가 모듈 단위 싱글턴을 일부 읽으므로
@@ -68,9 +80,11 @@ function serialize<T>(task: () => Promise<T>): Promise<T> {
   return next;
 }
 
-const REQUEST_ID = /^[A-Za-z0-9_.:-]{8,64}$/;
+
 
 export function handleGameCall(playerId: string, req: GameCallRequest, deps: GameHandlerDeps): Promise<GameCallResponse> {
+  if (!validCall(req)) throw new GameCallError(400, "invalid_request");
+  if (deps.strict && !isReadMethod(req.method) && !req.requestId) throw new GameCallError(400, "request_id_required");
   if (!isServerGameMethod(req?.method)) throw new GameCallError(400, "unknown_method");
   if (req.args !== undefined && !Array.isArray(req.args)) throw new GameCallError(400, "invalid_args");
   if (req.args && req.args.length > 4) throw new GameCallError(400, "invalid_args");
@@ -80,10 +94,16 @@ export function handleGameCall(playerId: string, req: GameCallRequest, deps: Gam
 
 async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps): Promise<GameCallResponse> {
   const attempts = deps.maxAttempts ?? 3;
+  const fingerprint = JSON.stringify([req.method, req.args ?? []]);
   for (let attempt = 1; ; attempt += 1) {
     if (req.requestId) {
       const cached = await deps.store.findReceipt(playerId, req.requestId);
-      if (cached !== undefined) return cached as GameCallResponse;
+      if (cached !== undefined) {
+        const receipt = cached as GameCallResponse & { _requestFingerprint?: string };
+        if (receipt._requestFingerprint !== fingerprint) throw new GameCallError(409, "request_id_conflict");
+        const { _requestFingerprint, ...response } = receipt;
+        return response;
+      }
     }
     const stored = await deps.store.load(playerId);
     let state: Session;
@@ -93,15 +113,32 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
       throw new GameCallError(500, "corrupt_state");
     }
     const before = JSON.stringify(saveManager.exportData(state));
+    const now = deps.now?.() ?? new Date();
+    if (deps.store.identity) {
+      const identity = await deps.store.identity(playerId);
+      state.playerCard.uid = identity.uid;
+      state.playerCard.createdAt = identity.createdAt;
+    }
+    const context = /^(getRaids|summonRaid|enterRaid|submitRaidDamage|settleRaid)$/.test(req.method) && deps.store.raidContext ? await deps.store.raidContext(playerId, now) : undefined;
+    if (context) state.raid.instances = context.records.map(row => structuredClone(row.instance));
     const server = new FakeServer(state, {
       latencyMs: 0,
       random: deps.random ?? Math.random,
       ...(deps.now ? { now: deps.now } : {}),
       persistSession: () => undefined,
+      raidContext: context,
     });
     let result: unknown;
     try {
-      result = await (server as unknown as Record<string, (...a: unknown[]) => Promise<unknown>>)[req.method](...(req.args ?? []));
+      const timingState = deps.strict && (req.method === "submitRaidDamage" || req.method === "submitExpeditionBossScore") ? structuredClone(state) : state;
+      const args = deps.strict ? authoritativeArgs(state, req.method, req.args ?? []) : req.args ?? [];
+      if (req.method === "prepareCombat") result = prepareCombat(state, args[0] as CombatPrepare, now, globalThis.crypto.randomUUID());
+      else if (req.method === "finishCombat") result = finishCombat(state, args[0] as CombatProof, now);
+      else {
+        result = await (server as unknown as Record<string, (...a: unknown[]) => Promise<unknown>>)[req.method](...args);
+        if (req.method === "getNotificationSignals" && deps.store.pendingRequests) result = { ...(result as object), pendingFriendRequestCount: await deps.store.pendingRequests(playerId) };
+        if (deps.strict) { verifyBossWallTime(timingState, req.method, args, result, now); recordBoundaryResult(state, req.method, args, now); }
+      }
     } catch (error) {
       // 규칙이 거절한 호출은 상태를 바꾸지 않았으므로 저장하지 않고 거절 사유만 돌려준다.
       throw new GameCallError(422, "rejected", error instanceof Error ? error.message : String(error));
@@ -110,7 +147,7 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
     const changed = JSON.stringify(data) !== before;
     const fresh = stored === null;
     const response: GameCallResponse = { ok: true, result: result ?? null, state: data, revision: stored?.revision ?? "0" };
-    if (!changed && !fresh) return response;
+    if (!changed && !fresh && !req.requestId) return response;
     try {
       const committed = await deps.store.commit({
         playerId,
@@ -118,7 +155,9 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
         data,
         method: req.method,
         requestId: req.requestId ?? null,
-        response: { ...response, revision: undefined },
+        response: { ...response, revision: undefined, _requestFingerprint: fingerprint },
+        publicProfile: publicProfile(state, playerId, now),
+        raids: context ? raidChanges(context, state) : undefined,
       });
       return { ...response, revision: committed.revision };
     } catch (error) {

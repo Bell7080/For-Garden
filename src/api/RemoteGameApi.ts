@@ -3,6 +3,7 @@
  * 호출 뒤의 전체 상태를 로컬 세션에 반영한다. 규칙은 서버가 FakeServer 그대로 실행하므로 여기에는 없다.
  * 인증 토큰은 `getAccessToken`이 보안 저장소에서 그때그때 꺼내 주며 이 클래스는 보관하지 않는다.
  */
+import { isReadMethod } from "../server/requestPolicy";
 import { SERVER_GAME_METHODS } from "../server/gameMethods";
 import { saveManager } from "../state/SaveManager";
 import type { Session } from "../state/session";
@@ -22,7 +23,7 @@ export class RemoteGameApiError extends Error {
 }
 
 // 상태를 바꾸지 않는 조회는 재전송 키가 필요 없다.
-const READ_ONLY = /^get|^archaeologyState$|^verifyPurchaseReceipt$/;
+
 
 function defaultRequestId(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(12));
@@ -39,7 +40,7 @@ export function createRemoteGameApi(options: RemoteGameApiOptions): GameApi {
   async function call(method: string, args: unknown[]): Promise<unknown> {
     const token = await options.getAccessToken();
     if (!token) throw new RemoteGameApiError(401, "not_authenticated");
-    const requestId = READ_ONLY.test(method) ? undefined : newId();
+    const requestId = isReadMethod(method) ? undefined : newId();
     const body = JSON.stringify({ method, args, ...(requestId ? { requestId } : {}) });
     let lastError: unknown;
     // 네트워크 단절은 같은 requestId로 재전송해도 서버가 한 번만 반영한다.

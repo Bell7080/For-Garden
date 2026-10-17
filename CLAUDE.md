@@ -2672,6 +2672,12 @@
 - `npm run dev`는 QA 도구와 qa 저장을 사용한다. `vite --mode production`도 DEV가 true면 QA다. 일반 조건 검증은 `npm run build` 산출물로 한다. E2E의 Node 헬퍼는 `tests/e2e/openingSave.ts`의 `E2E_SAVE_STORAGE_KEY`를 브라우저에 인자로 넘긴다. 키를 문자열로 복제하거나 Node의 `import.meta.env`로 추측하지 않는다.
 - `src/debug.ts`의 관측 함수와 `?perf=1`은 QA/test/dev 전용이다. 새 관측 함수를 만들 때도 `QA_TOOLS_ENABLED`로 보호한다. 일반 빌드에 `__PF_DEBUG`와 측정 오버레이가 남으면 안 된다.
 
+## 운영 서버 경계
+
+- 친구·공유 레이드·전투 검증·속도 제한은 `docs/server-release.md`의 계약을 따른다. 새 RPC 마이그레이션을 먼저 적용한 뒤 서버/클라이언트를 같은 버전으로 배포한다.
+- 정식 서버의 승패·피해·HP·라운드는 클라이언트가 확정하지 않는다. 서버가 발급한 `CombatLease` 설정과 고정 틱 입력을 재현한다. 런타임 함수가 든 `SkirmishState`를 저장/전송하지 말고 `combatState`로 복원한다.
+- 공유 체력과 계정 보상은 따로 저장하지 않는다. `server_commit_state` 트랜잭션과 양쪽 revision 검사를 지킨다. 쓰기 요청은 requestId와 메서드/인자 바인딩을 유지한다.
+
 ## 변경 전 확인
 
 **main에는 작업 브랜치보다 먼저 올린다.** Vercel은 이미 빌드한 커밋을 다시 빌드하지 않아, 같은 커밋을

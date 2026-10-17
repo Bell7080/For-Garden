@@ -917,7 +917,7 @@ export interface SummonRaidResponse extends PlayerStateDto { raid: RaidDto; tick
  * 공짜였다. 다른 콘텐츠처럼 입장이 비용을 확정하고, 제출은 그 입장 영수증(`requestId`)으로만 받는다.
  */
 export interface EnterRaidRequest { replayVersion?: 2; requestId: string; raidId: string; }
-export interface EnterRaidResponse extends PlayerStateDto { replayVersion?: 2; raid: RaidDto; requestId: string; staminaSpent: number; playerExp: PlayerExpReceipt; refundPolicy: "no-refund-after-admission"; relics?: { relicId: string; snapshot: ExpeditionRelicSnapshot }[]; }
+export interface EnterRaidResponse extends PlayerStateDto { replaySeed?: string; replayVersion?: 2; raid: RaidDto; requestId: string; staminaSpent: number; playerExp: PlayerExpReceipt; refundPolicy: "no-refund-after-admission"; relics?: { relicId: string; snapshot: ExpeditionRelicSnapshot }[]; }
 /**
  * 원정 보스와 **같은 재현 규칙**을 쓴다 — 클라이언트 피해 숫자는 받지 않는다.
  * `requestId`는 그 판의 **입장 영수증**이다 — 입장하지 않은 판의 피해는 받지 않는다.
@@ -977,6 +977,8 @@ export interface UpdateAccountSettingsRequest { game: Partial<AccountGameSetting
 export interface UpdateAccountSettingsResponse { game: AccountGameSettings }
 
 export interface GameApi extends AsyncArenaProfileApi {
+  prepareCombat(request: import("../core/combatProtocol").CombatPrepare): Promise<import("../core/combatProtocol").CombatLease | null>;
+  finishCombat(request: import("../core/combatProtocol").CombatProof): Promise<import("../core/combatProtocol").CombatVerdict | null>;
   getInteractionCities(): Promise<InteractionCitiesResponse>;
   startInteractionDispatch(request: StartInteractionDispatchRequest): Promise<InteractionDispatchResponse>;
   getInteractionDispatch(): Promise<InteractionDispatchResponse>;

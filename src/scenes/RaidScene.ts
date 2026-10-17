@@ -578,7 +578,7 @@ export class RaidScene extends Phaser.Scene {
         if (this.busy) return;
         this.busy = true;
         void gameApi.enterRaid({ replayVersion: 2, raidId: raid.id, requestId: raid.pendingRequestId! }).then((admission) => {
-          if (this.scene.isActive()) startScene(this, "battle", { mode: "raid", raidId: raid.id, bossRelicId: raid.bossRelicId, difficulty: raid.difficulty, requestId: admission.requestId, seasonHp: admission.raid.remainingHp, relics: admission.relics, replayVersion: admission.replayVersion });
+          if (this.scene.isActive()) startScene(this, "battle", { mode: "raid", raidId: raid.id, bossRelicId: raid.bossRelicId, difficulty: raid.difficulty, requestId: admission.requestId, seasonHp: admission.raid.remainingHp, relics: admission.relics, replaySeed: admission.replaySeed, replayVersion: admission.replayVersion });
         }).catch(() => { this.busy = false; void this.refreshList(); });
       } }));
       return;

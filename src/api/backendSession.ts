@@ -4,6 +4,7 @@
  * 쓰며, 앱 빌드는 네이티브 어댑터를 `store`로 넘겨 같은 함수를 부른다.
  */
 import { CURRENT_SAVE_VERSION, saveManager } from "../state/SaveManager";
+import { installSocialApi } from "./FakeSocialServer";
 import { installGameApi } from "./FakeServer";
 import { connectServerProgress, createLinkMarker, type ServerProgressDeps, type ServerProgressResult } from "./serverProgress";
 import { installAccountApi } from "./AccountApi";
@@ -38,5 +39,6 @@ export function connectProgress(choose: ServerProgressDeps["choose"]): Promise<S
 /** 계정을 바꾸기 전에 서버 연결을 내린다. 이전 계정의 호출이 새 게스트로 나가지 않게 한다. */
 export function disconnectProgress(): void {
   installGameApi(null);
+  installSocialApi(null);
   createLinkMarker().set(null);
 }

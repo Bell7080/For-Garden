@@ -23,157 +23,194 @@ init_define_import_meta_env();
 // src/server/gameHandler.ts
 init_define_import_meta_env();
 
-// src/api/FakeServer.ts
+// src/server/combatAuthority.ts
 init_define_import_meta_env();
 
-// src/api/serverClock.ts
+// src/data/relics.ts
 init_define_import_meta_env();
-var offsetMs = 0;
-function serverNow() {
-  return new Date(Date.now() + offsetMs);
+
+// src/core/skirmish.ts
+init_define_import_meta_env();
+
+// src/core/bond.ts
+init_define_import_meta_env();
+var BOND_LEVEL_CAP = 10;
+var BOND_TOTAL_XP_BY_LEVEL = [0, 20, 50, 90, 140, 200, 270, 350, 440, 540, 650];
+var BOND_XP_REWARD = { firstAcquisition: 20, partyVictory: 12, firstLobbyInteraction: 5, firstObservationInterview: 5 };
+var BOND_FEROCITY_MULTIPLIER = [1, 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.45, 1.5];
+function bondLevelForXp(xp) {
+  if (!Number.isInteger(xp) || xp < 0) throw new RangeError("\uC720\uB300 \uACBD\uD5D8\uCE58\uB294 0 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
+  let level = 0;
+  while (level < BOND_LEVEL_CAP && xp >= BOND_TOTAL_XP_BY_LEVEL[level + 1]) level += 1;
+  return level;
+}
+function grantBondXp(progress, amount) {
+  if (!Number.isInteger(amount) || amount < 0) throw new RangeError("\uC720\uB300 \uACBD\uD5D8\uCE58 \uBCF4\uC0C1\uC740 0 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
+  const bondXp = Math.min(BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP], progress.bondXp + amount);
+  const bondLevel = bondLevelForXp(bondXp);
+  return { progress: { ...progress, bondXp, bondLevel, heartGemSlots: [...progress.heartGemSlots] }, xpGained: bondXp - progress.bondXp, levelsGained: bondLevel - progress.bondLevel };
+}
+function grantDailyLobbyBondXp(progress, utcDate) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(utcDate)) throw new RangeError("\uB85C\uBE44 \uC0C1\uD638\uC791\uC6A9 \uB0A0\uC9DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+  if (progress.lastLobbyInteractionDate === utcDate) return { progress: { ...progress, heartGemSlots: [...progress.heartGemSlots] }, xpGained: 0, levelsGained: 0 };
+  const result = grantBondXp(progress, BOND_XP_REWARD.firstLobbyInteraction);
+  return { ...result, progress: { ...result.progress, lastLobbyInteractionDate: utcDate } };
+}
+function amplifyFerocityGain(amount, bondLevel) {
+  if (!Number.isFinite(amount) || amount < 0 || !Number.isInteger(bondLevel) || bondLevel < 0) throw new RangeError("\uC57C\uC131 \uC99D\uAC00\uB7C9\uACFC \uC720\uB300 \uB808\uBCA8\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+  return Math.max(0, Math.round(amount * BOND_FEROCITY_MULTIPLIER[Math.min(BOND_LEVEL_CAP, bondLevel)]));
 }
 
-// src/core/buildFlavor.ts
+// src/core/battleClock.ts
 init_define_import_meta_env();
-var QA_TOOLS_ENABLED = false;
+var BATTLE_DEATH_CLOCK = {
+  /** 이 시각(초)을 넘기는 순간부터 돈다. */
+  startsAtSeconds: 90,
+  /** 몇 초마다 한 번 도는가. */
+  tickSeconds: 1,
+  /**
+   * 첫 번째가 깎는 비율(%). 아군의 최대 체력과 회복·보호막 성능을 **같은 비율로** 깎는다 —
+   * 체력 피해는 방어·경감을 지나지 않는 고정 피해다.
+   */
+  firstTickPercent: 1,
+  /**
+   * 한 번 돌 때마다 다음 번이 더 깎는 몫(%). **시계는 점점 세진다** — 처음 몇 번은 거의 이긴 판이
+   * 끝낼 틈을 주고, 그래도 끌리는 판은 가속이 붙어 빠르게 닫힌다. 고정 2%이던 때는 50번을 기다려야
+   * 했는데(2분 20초), 지금은 19번(1분 49초)이면 어떤 편성이든 닫힌다.
+   */
+  rampPercentPerTick: 0.5
+};
+function deathClockTickPercent(tick) {
+  if (tick < 1) return 0;
+  return BATTLE_DEATH_CLOCK.firstTickPercent + BATTLE_DEATH_CLOCK.rampPercentPerTick * (tick - 1);
+}
+function deathClockCumulativePercent(ticks) {
+  if (ticks < 1) return 0;
+  return ticks * BATTLE_DEATH_CLOCK.firstTickPercent + BATTLE_DEATH_CLOCK.rampPercentPerTick * ticks * (ticks - 1) / 2;
+}
+function deathClockTicksAt(elapsedSeconds) {
+  if (!Number.isFinite(elapsedSeconds)) return 0;
+  const past = elapsedSeconds - BATTLE_DEATH_CLOCK.startsAtSeconds;
+  if (past < 0) return 0;
+  return Math.floor(past / BATTLE_DEATH_CLOCK.tickSeconds) + 1;
+}
+function deathClockSurvivalMultiplier(elapsedSeconds) {
+  const lost = deathClockCumulativePercent(deathClockTicksAt(elapsedSeconds));
+  return Math.min(1, Math.max(0, 1 - lost / 100));
+}
+function deathClockClosesBySeconds() {
+  let ticks = 1;
+  while (deathClockCumulativePercent(ticks) < 100) ticks += 1;
+  return BATTLE_DEATH_CLOCK.startsAtSeconds + ticks * BATTLE_DEATH_CLOCK.tickSeconds;
+}
+var BOSS_REPLAY_SLACK_SECONDS = 30;
 
-// src/core/gacha.ts
+// src/core/damage.ts
 init_define_import_meta_env();
-function pullCost(banner, count2) {
-  return count2 === 10 ? banner.costTen : banner.costOne * count2;
-}
-var RESEARCH_TICKET_GEM_PRICE = 300;
-function pullPayment(wallet, banner, count2) {
-  const cost = pullCost(banner, count2);
-  const tickets = Math.max(0, Math.min(cost, wallet[banner.currency]));
-  const gems2 = (cost - tickets) * RESEARCH_TICKET_GEM_PRICE;
-  return { tickets, gems: gems2, affordable: wallet.gems >= gems2 };
-}
-function bannerPullsRemaining(banner, pity) {
-  if (banner.pullLimit === void 0) return Number.POSITIVE_INFINITY;
-  return Math.max(0, banner.pullLimit - (pity?.totalPulls ?? 0));
-}
-function bannerAcceptsCount(banner, count2, pity) {
-  if (banner.tenOnly && count2 !== 10) return false;
-  return count2 <= bannerPullsRemaining(banner, pity);
-}
-function canPull(wallet, banner, count2, pity) {
-  return pullPayment(wallet, banner, count2).affordable && bannerAcceptsCount(banner, count2, pity);
-}
-function choose(values, rng) {
-  if (values.length === 0) throw new Error("\uCD94\uCCA8\uD560 \uB810\uB9AD \uD480\uC774 \uBE44\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.");
-  return values[Math.min(values.length - 1, Math.floor(rng() * values.length))];
-}
-function determineGrade(banner, random) {
-  let cumulative = 0;
-  for (const grade of ["SSR", "SR", "R", "GRAY"]) {
-    cumulative = Number((cumulative + banner.slotRates[grade]).toFixed(12));
-    if (random < cumulative) return grade;
+
+// src/core/element.ts
+init_define_import_meta_env();
+var ELEMENT_ADVANTAGE_MULTIPLIER = 1.25;
+var ELEMENT_DISADVANTAGE_MULTIPLIER = 1 / ELEMENT_ADVANTAGE_MULTIPLIER;
+var ELEMENT_COUNTERS = {
+  fire: ["grass", "wind"],
+  water: ["fire", "earth"],
+  grass: ["water", "earth"],
+  earth: ["wind", "fire"],
+  wind: ["grass", "water"]
+};
+var ICE_ADVANTAGES = ["grass", "water", "earth"];
+var ICE_DISADVANTAGES = ["fire"];
+function elementMultiplier(attacker, defender) {
+  if (attacker === defender) return 1;
+  if (attacker === "ice") {
+    if (ICE_ADVANTAGES.includes(defender)) return ELEMENT_ADVANTAGE_MULTIPLIER;
+    if (ICE_DISADVANTAGES.includes(defender)) return ELEMENT_DISADVANTAGE_MULTIPLIER;
+    return 1;
   }
-  return "GRAY";
-}
-function rewardAmount(reward, random) {
-  return reward.min + Math.min(reward.max - reward.min, Math.floor(random * (reward.max - reward.min + 1)));
-}
-function pull(banner, count2, currentPity, rng) {
-  const relicIds = [];
-  const rarities = [];
-  const slots = [];
-  let pity = { ...currentPity };
-  for (let slot = 0; slot < count2; slot += 1) {
-    const pityForcesSsr = pity.pullsSinceSsr + 1 >= banner.highestRarityGuarantee;
-    let grade = pityForcesSsr ? "SSR" : determineGrade(banner, rng());
-    if (!pityForcesSsr && count2 === 10 && slot === 9 && (grade === "GRAY" || grade === "R")) grade = "SR";
-    if (grade === "GRAY") {
-      const totalWeight = banner.grayRewards.reduce((sum, reward2) => sum + reward2.weight, 0);
-      const roll3 = rng() * totalWeight;
-      let cursor = 0;
-      const reward = banner.grayRewards.find((candidate) => (cursor += candidate.weight) > roll3) ?? banner.grayRewards.at(-1);
-      if (!reward) throw new Error("\uD68C\uC0C9 \uBCF4\uC0C1 \uD480\uC774 \uBE44\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.");
-      const amount = rewardAmount(reward, rng());
-      slots.push({ kind: "currency", currency: reward.kind, amount, grade: "GRAY" });
-      pity = { ...pity, pullsSinceSsr: pity.pullsSinceSsr + 1 };
-      continue;
-    }
-    const rarity = grade;
-    const fullPool = banner.relicPools[rarity];
-    const pickupPool = banner.pickupRelicIds[rarity] ?? [];
-    const nonPickupPool = fullPool.filter((id) => !pickupPool.includes(id));
-    const guaranteesPickup = rarity === "SSR" && pity.pickupGuaranteed && pickupPool.length > 0;
-    const pickedUp = guaranteesPickup || pickupPool.length > 0 && rng() < banner.pickupRate;
-    const selectionPool = pickedUp ? pickupPool : nonPickupPool.length > 0 ? nonPickupPool : fullPool;
-    const relicId = choose(selectionPool, rng);
-    relicIds.push(relicId);
-    rarities.push(rarity);
-    slots.push({ kind: "relic", relicId, rarity });
-    if (rarity === "SSR") {
-      pity = { pullsSinceSsr: 0, pickupGuaranteed: pickupPool.length > 0 && !pickedUp };
-    } else {
-      pity = { ...pity, pullsSinceSsr: pity.pullsSinceSsr + 1 };
-    }
+  if (defender === "ice") {
+    if (ICE_ADVANTAGES.includes(attacker)) return ELEMENT_DISADVANTAGE_MULTIPLIER;
+    if (ICE_DISADVANTAGES.includes(attacker)) return ELEMENT_ADVANTAGE_MULTIPLIER;
+    return 1;
   }
-  return { slots, relicIds, rarities, pity };
+  return ELEMENT_COUNTERS[attacker].includes(defender) ? ELEMENT_ADVANTAGE_MULTIPLIER : ELEMENT_DISADVANTAGE_MULTIPLIER;
 }
-function spend(wallet, banner, count2) {
-  if (!canPull(wallet, banner, count2)) return wallet;
-  const payment = pullPayment(wallet, banner, count2);
-  return { ...wallet, [banner.currency]: wallet[banner.currency] - payment.tickets, gems: wallet.gems - payment.gems };
-}
-function resolveAcquisitions(ownedRelicIds, fragmentsById, results, breakthroughGradeById = {}, maxStars = 5, overflowAmountOf = () => 1) {
-  const owned = new Set(ownedRelicIds);
-  const fragments = { ...fragmentsById };
-  const slots = [];
-  const newRelicIds = [];
-  const duplicateRelicIds = [];
-  let overflowFragments = 0;
-  for (const relicId of results) {
-    if (!owned.has(relicId)) {
-      owned.add(relicId);
-      newRelicIds.push(relicId);
-      slots.push({ relicId, kind: "new", fragments: 0, overflowFragments: 0 });
-      continue;
-    }
-    duplicateRelicIds.push(relicId);
-    if ((breakthroughGradeById[relicId] ?? 1) >= maxStars) {
-      const amount = overflowAmountOf(relicId);
-      overflowFragments += amount;
-      slots.push({ relicId, kind: "overflow", fragments: 0, overflowFragments: amount });
-    } else {
-      fragments[relicId] = (fragments[relicId] ?? 0) + 1;
-      slots.push({ relicId, kind: "fragment", fragments: 1, overflowFragments: 0 });
-    }
-  }
-  return { slots, newRelicIds, duplicateRelicIds, ownedRelicIds: owned, fragmentsById: fragments, overflowFragments };
+function effectiveElement(relic) {
+  return relic.passive.elementOverride ?? relic.element;
 }
 
-// src/api/FakeSocialServer.ts
+// src/core/ferocity.ts
 init_define_import_meta_env();
+var FEROCITY_RULES = {
+  min: 0,
+  /** 개체가 `ferocityMax`를 적지 않았을 때의 아군 기본 최대치다. */
+  max: 100,
+  /** 적 전용 개체의 기본 최대치 — 아군보다 조금 더 높게 둬 폭주가 늦게 온다. */
+  enemyMax: 130,
+  basicGain: 12,
+  ultimateGain: 18,
+  hitGain: 8,
+  /** 최대치가 얼마든 가득 찬 피버가 이 시간(초) 만에 모두 소진된다. 높은 개체는 더 빨리 닳는다. */
+  feverSeconds: 8,
+  /** 구간은 최대치에 대한 비율이다 — 최대치가 달라도 같은 진행도에서 같은 보너스가 붙는다. */
+  thresholds: [
+    { ratio: 0.5, damageBonus: 0.1 },
+    { ratio: 0.8, damageBonus: 0.2 },
+    { ratio: 1, damageBonus: 0.35 }
+  ]
+};
+function ferocityMaxOf(def) {
+  return def.ferocityMax ?? (def.enemyOnly ? FEROCITY_RULES.enemyMax : FEROCITY_RULES.max);
+}
+function feverDrainPerSecond(def) {
+  return ferocityMaxOf(def) / FEROCITY_RULES.feverSeconds;
+}
+function ferocityMirrored(from, to) {
+  return from.ferocity / ferocityMaxOf(from.def) * ferocityMaxOf(to.def);
+}
+function ferocityDamageBonus(ferocity, max = FEROCITY_RULES.max) {
+  const active3 = [...FEROCITY_RULES.thresholds].reverse().find(({ ratio }) => ferocity >= ratio * max);
+  return active3?.damageBonus ?? 0;
+}
+function drainFerocityFever(unit, seconds) {
+  if (!unit.ferocityFever || seconds <= 0) return;
+  unit.ferocity = Math.max(FEROCITY_RULES.min, unit.ferocity - feverDrainPerSecond(unit.def) * seconds);
+  if (unit.ferocity <= FEROCITY_RULES.min) unit.ferocityFever = false;
+}
 
-// src/core/social.ts
-init_define_import_meta_env();
-var DAILY_HELPER_LIMIT = 3;
-var FRIEND_POINTS_PER_RENTAL = 10;
-function helperRentalAvailability(usedToday) {
-  const normalized = Math.max(0, Math.floor(usedToday));
-  const remaining = Math.max(0, DAILY_HELPER_LIMIT - normalized);
-  return { allowed: remaining > 0, remaining };
+// src/core/damage.ts
+function isCriticalHit(critChance, roll3) {
+  if (roll3 < 0 || roll3 >= 1) throw new RangeError("critical roll\uC740 0 \uC774\uC0C1 1 \uBBF8\uB9CC\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
+  return roll3 < critChance / 100;
 }
-var FRIEND_LIMIT = 50;
-var FRIEND_REQUEST_LIMIT = 30;
-var ONLINE_WINDOW_MS = 5 * 6e4;
-function normalizeSearchQuery(raw) {
-  return raw.trim();
+function currentAbilityPower(combatant) {
+  return combatant.def.stats.ap + (combatant.bonusAp ?? 0);
 }
-function matchesUserQuery(user, query) {
-  const normalized = normalizeSearchQuery(query);
-  if (normalized.length === 0) return false;
-  if (user.displayName.toLocaleLowerCase().includes(normalized.toLocaleLowerCase())) return true;
-  const digits = normalized.replace(/\D/g, "");
-  return digits.length > 0 && user.uid === digits;
+function scalingStatValue(attacker, stat, damageType) {
+  if (stat === "def") return attacker.def.stats.def;
+  if (stat === "res") return attacker.def.stats.res;
+  if (stat === "hp") return attacker.def.stats.hp;
+  if (stat === "atk") return attacker.def.stats.atk;
+  if (stat === "ap") return currentAbilityPower(attacker);
+  return damageType === "physical" ? attacker.def.stats.atk : currentAbilityPower(attacker);
 }
-
-// src/data/friendDirectory.ts
-init_define_import_meta_env();
+function offenseValue(attacker, input) {
+  const primary = scalingStatValue(attacker, input.scalingStat, input.damageType) * input.power / 100;
+  if (!input.secondaryScaling) return primary;
+  return primary + scalingStatValue(attacker, input.secondaryScaling.stat, input.damageType) * input.secondaryScaling.power / 100;
+}
+function computeDamageContribution(attacker, input) {
+  const critical = input.isCritical ? attacker.def.stats.critDamage / 100 : 1;
+  return Math.max(0, offenseValue(attacker, input) * critical * (1 + ferocityDamageBonus(attacker.ferocity, ferocityMaxOf(attacker.def))));
+}
+function computeDamage(attacker, target, input) {
+  const rawDefense = input.damageType === "physical" ? target.def.stats.def : target.def.stats.res;
+  const defense = input.ignoresDefense ? 0 : rawDefense * (1 - Math.min(100, Math.max(0, input.defenseIgnorePercent ?? 0)) / 100);
+  const critical = input.isCritical ? attacker.def.stats.critDamage / 100 : 1;
+  const raw = offenseValue(attacker, input) * critical * (1 + ferocityDamageBonus(attacker.ferocity, ferocityMaxOf(attacker.def)));
+  const afterDefense = raw * 100 / (100 + defense);
+  return Math.max(1, Math.round(afterDefense * elementMultiplier(effectiveElement(attacker.def), effectiveElement(target.def))));
+}
 
 // src/core/relicProgression.ts
 init_define_import_meta_env();
@@ -633,6 +670,8 @@ var STATUS_KO = {
   "status.chill.detail": "{stacks} / {max}\uACB9 \xB7 \uACF5\uACA9 \uC18D\uB3C4\xB7\uC774\uB3D9 \uC18D\uB3C4 -{percent}%",
   "status.submerged": "\uC7A0\uAE40",
   "status.submerged.detail": "\uC774\uB3D9 \uC18D\uB3C4 -{percent}% \xB7 \uC5EC\uC6B8\uC5D0\uC11C \uBC97\uC5B4\uB098\uBA74 \uD480\uB9B0\uB2E4",
+  "status.echo": "\uBC18\uD5A5",
+  "status.echo.detail": "{time} \uB0A8\uC74C",
   "status.observation": "\uAD00\uCE21",
   "status.observation.detail": "{stacks} / {max}\uACB9 \xB7 {time} \uB0A8\uC74C",
   "status.vandalism": "\uBC34\uB35C\uB9AC\uC998",
@@ -1669,7 +1708,9 @@ var MISC_KO = {
   "stageMap.prevZone": "\uC774\uC804 \uAD6C\uC5ED",
   "stageMap.nextZone": "\uB2E4\uC74C \uAD6C\uC5ED",
   "stageMap.replay": "\uB2E4\uC2DC \uBCF4\uAE30",
-  "stageMap.readRecord": "\uAE30\uB85D \uC77D\uAE30"
+  "stageMap.readRecord": "\uAE30\uB85D \uC77D\uAE30",
+  "stageMap.sub": "SUB",
+  "stageMap.subRead": "\uC77D\uC74C"
 };
 
 // src/i18n/ko/skill.ts
@@ -2011,10 +2052,20 @@ var SKILL_KO = {
   "skill.breakthrough.effect.ferocity.ankleShot": "[[ferocity|\uD3ED\uC8FC]] \uC911 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uCE58\uBA85\uD0C0\uB85C \uC801\uC911\uD558\uBA74 \uB9DE\uC740 \uC801\uC744 {seconds}\uCD08 \uB3D9\uC548 [[stagger|\uACBD\uC9C1]]\uC2DC\uD0A8\uB2E4.",
   "skill.breakthrough.effect.passive.highTide": "[[fog-guard|\uD574\uBB34 \uBC29\uBCBD]]\uC774 \uC0C1\uD55C\uAE4C\uC9C0 \uCC28 \uC788\uB294 \uB3D9\uC548 \uBAA8\uB4E0 \uD53C\uD574\uAC00 {percent}% \uB298\uC5B4\uB09C\uB2E4.",
   "skill.status.intimidate": "[[intimidation|\uC704\uC555]]\uC744 \uD55C \uACB9 \uC313\uB294\uB2E4",
+  "skill.passive.echoLocation": "[[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uACFC \uAD81\uADF9\uAE30\uAC00 \uC801\uC911\uD55C \uC801\uC5D0\uAC8C [[echo|\uBC18\uD5A5]]\uC744 \uAC74\uB2E4. \uBC18\uD5A5\uC774 \uB4E0 \uC801\uC744 \uCE5C \uC544\uAD70\uC740 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uB450\uB978\uB2E4.",
+  "skill.passive.segmentBarrier": "\uC804\uD22C\uB97C [[segment-barrier|\uB9C8\uB514 \uBC29\uBCBD]]\uC744 \uB450\uB974\uACE0 \uC2DC\uC791\uD55C\uB2E4. \uB9C9\uC774 \uAE4E\uC774\uBA74 \uB9C8\uB514\uAC00 \uD558\uB098\uC529 \uB418\uC0B4\uC544\uB098\uACE0, \uB9DE\uC744\uC218\uB85D \uB354 \uBE68\uB9AC \uB3CC\uC544\uC628\uB2E4.",
+  "skill.passive.vitalAim": "\uAC19\uC740 \uC801\uC744 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC73C\uB85C \uC774\uC5B4 \uCE60 \uB54C\uB9C8\uB2E4 [[vital-aim|\uACA8\uB204\uAE30]]\uAC00 \uC313\uC5EC \uADF8 \uC801\uC5D0\uAC8C \uC8FC\uB294 \uD53C\uD574\uAC00 \uCEE4\uC9C4\uB2E4. \uD45C\uC801\uC774 \uBC14\uB00C\uBA74 \uCC98\uC74C\uBD80\uD130 \uB2E4\uC2DC \uC313\uB294\uB2E4.",
+  "skill.passive.wingHum": "{seconds}\uCD08\uB9C8\uB2E4 \uACF5\uACA9\uB825\uC774 \uAC00\uC7A5 \uB192\uC740 \uC544\uAD70\uC5D0\uAC8C [[resonance|\uACF5\uBA85]]\uC744 \uAC74\uB2E4. \uC9C1\uC811 \uC801\uC744 \uC4F0\uB7EC\uB728\uB9AC\uBA74 \uAD81\uADF9\uAE30 \uAC8C\uC774\uC9C0\uAC00 {energy} \uCC2C\uB2E4.",
+  "skill.passive.workerMarch": "\uACC1\uC5D0 \uC120 \uC544\uAD70\uC774 \uB9CE\uC744\uC218\uB85D [[worker-march|\uD589\uB82C]]\uC774 \uAE38\uC5B4\uC838 \uC8FC\uB294 \uD53C\uD574\uAC00 \uCEE4\uC9C0\uACE0 \uCCB4\uB825\uC774 \uC11C\uC11C\uD788 \uCC28\uC624\uB978\uB2E4.",
   "skill.passive.looming": "{seconds}\uCD08\uB9C8\uB2E4 \uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C [[intimidation|\uC704\uC555]]\uC744 \uD55C \uACB9 \uC313\uB294\uB2E4. \uD53C\uD574\uB294 \uC8FC\uC9C0 \uC54A\uB294\uB2E4.",
   "skill.sentence.roar": "\uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC744 \uACE7\uBC14\uB85C [[fear|\uACF5\uD3EC]]\uC5D0 \uBE60\uB728\uB9B0\uB2E4. {base}\uC758 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uACE0, \uACF5\uD3EC\uC5D0 \uBE60\uC9C4 \uC801 \uD55C \uBA85\uB9C8\uB2E4 {per}\uC529 \uB354\uD55C\uB2E4(\uCD5C\uB300 {max}\uBA85).",
   "skill.sentence.roar.percent": "\uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%",
   "skill.keyword.shield.fromRoar": "\uD604\uC7AC \uCD5C\uB300 \uCCB4\uB825\uC758 {base}%\uC5D0, \uACF5\uD3EC\uC5D0 \uBE60\uC9C4 \uC801 \uD55C \uBA85\uB9C8\uB2E4 {per}%(\uCD5C\uB300 {max}\uBA85)\uB97C \uB354\uD574 \uACC4\uC0B0\uD55C \uBCF4\uD638\uB9C9 \uC218\uCE58\uB2E4.",
+  "skill.ferocity.commandStart": "\uD3ED\uC8FC \uC911 [[echo|\uBC18\uD5A5]]\uC774 \uB4E0 \uC801\uC744 \uCE5C \uC544\uAD70\uB3C4 {seconds}\uCD08 \uB3D9\uC548 [[resonance|\uACF5\uBA85]]\uC744 \uBC1B\uC544 \uACF5\uACA9 \uC18D\uB3C4\uAC00 {percent}% \uC624\uB978\uB2E4.",
+  "skill.ferocity.thornBristle": "\uD3ED\uC8FC \uC911 [[segment-barrier|\uB9C8\uB514 \uBC29\uBCBD]]\uC758 \uB9C8\uB514\uAC00 {size}% \uCEE4\uC9C0\uACE0 \uBCF5\uAD6C\uAC00 {speed}% \uBE68\uB77C\uC9C4\uB2E4.",
+  "skill.ferocity.frenzyTail": "\uD3ED\uC8FC \uC911 \uACF5\uACA9 \uC18D\uB3C4\uAC00 {percent}% \uC624\uB974\uACE0 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]] \uD55C \uB300\uC5D0 [[vital-aim|\uACA8\uB204\uAE30]]\uAC00 {stacks}\uACB9 \uB354 \uC313\uC778\uB2E4.",
+  "skill.ferocity.swiftFlight": "\uD3ED\uC8FC \uC911 [[resonance|\uACF5\uBA85]]\uC744 \uAC70\uB294 \uC8FC\uAE30\uAC00 {percent}% \uC9E7\uC544\uC9C4\uB2E4.",
+  "skill.ferocity.marchOfAnts": "\uD3ED\uC8FC \uC911 [[worker-march|\uD589\uB82C]]\uC758 \uBC18\uACBD\uC774 {radius} \uB298\uACE0 {allies}\uBA85 \uB354 \uC13C\uB2E4.",
   "skill.ferocity.huntInstinct": "\uD3ED\uC8FC \uC911 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 [[intimidation|\uC704\uC555]]\uC744 {stacks}\uACB9\uC529 \uC313\uACE0, [[fear|\uACF5\uD3EC]]\uAC00 \uD480\uB9B0 \uB4A4\uC758 \uBA74\uC5ED\uC774 {seconds}\uCD08\uB85C \uC9E7\uC544\uC9C4\uB2E4.",
   "skill.breakthrough.effect.basic.scoldTaunt": "\u300C{name}\u300D\uC5D0 \uB9DE\uC740 \uC801\uC744 {seconds}\uCD08 \uB3D9\uC548 [[taunt|\uB3C4\uBC1C]]\uD55C\uB2E4.",
   "skill.breakthrough.effect.ultimate.bulwarkPayback": "\u300C{name}\u300D\uC774 \uB05D\uB098\uB294 \uC21C\uAC04 \uADF8\uB3D9\uC548 \uB300\uC2E0 \uBC1B\uC740 \uD53C\uD574\uC758 {percent}%\uB97C \uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C [[fixed-damage|\uACE0\uC815 \uD53C\uD574]]\uB85C \uB3CC\uB824\uC900\uB2E4. \uC801 \uD55C \uBA85\uC774 \uBC1B\uB294 \uD53C\uD574\uB294 \uC790\uC2E0\uC758 \uCD5C\uB300 \uCCB4\uB825\uC758 {cap}%\uB97C \uB118\uC9C0 \uC54A\uB294\uB2E4.",
@@ -2413,13 +2464,14 @@ var RECOLLECTION_KO = {
   "recollection.title": "\uD68C\uACE0",
   "recollection.tab.chapter1": "1\uC7A5",
   "recollection.tab.chapter2": "2\uC7A5",
+  "recollection.tab.chapter3": "3\uC7A5",
   "recollection.tab.side": "\uACC1 \uC774\uC57C\uAE30",
   "recollection.phase.pre": "\uCD9C\uACA9 \uC804",
   "recollection.phase.post": "\uC804\uD22C \uD6C4",
   "recollection.locked": "???",
   "recollection.title.openingTrain": "\uC218\uC1A1 \uC5F4\uCC28",
   "recollection.title.openingRetreat": "\uACF5\uBA78\uC758 \uD1F4\uAC01",
-  "recollection.title.greenhouse": "\uC628\uC2E4\uC758 \uC794\uD5A5",
+  "recollection.title.greenhouse": "\uC628\uC2E4\uC758 \uD638\uBC15 \uC18C\uB3D9",
   "recollection.title.greatAuk": "\uD070\uBC14\uB2E4\uC1E0\uC624\uB9AC \uBCF4\uACE0",
   "recollection.summary.opening-train": "\uC774\uD130\uB110 \uC2DC\uD2F0\uB85C \uD5A5\uD558\uB358 \uC218\uC1A1 \uC5F4\uCC28\uC5D0 \uACBD\uBCF4\uAC00 \uC6B8\uB9B0\uB2E4.",
   "recollection.summary.opening-retreat": "\uACF5\uBA78 \uC0BC\uC778\uC870\uAC00 \uC544\uC26C\uC6B4 \uC678\uCE68\uC744 \uB0A8\uAE30\uACE0 \uD558\uB298\uB85C \uB0A0\uC544\uAC04\uB2E4.",
@@ -2429,6 +2481,8 @@ var RECOLLECTION_KO = {
   "recollection.summary.stage-1-5-post": "\uB118\uC5B4\uB728\uB9B0 \uC7A5\uBE44\uB97C \uBAB0\uB798 \uC138\uC6B0\uB358 \uD1A0\uBE44\uAC00 \uB4E4\uD0A8\uB2E4.",
   "recollection.summary.stage-1-6-post": "\uB418\uC0B4\uC544\uB09C \uC548\uD14C\uB098 \uB108\uBA38\uB85C \uB3C4\uC2DC\uC758 \uBAA9\uC18C\uB9AC\uAC00 \uCC98\uC74C \uB2FF\uB294\uB2E4.",
   "recollection.summary.stage-1-7-pre": "\uD3D0\uAE30 \uD45C\uC2DD \uB354\uBBF8 \uC55E\uC5D0\uC11C \uC544\uBAA8\uC758 \uB9D0\uC218\uAC00 \uC904\uC5B4\uB4E0\uB2E4.",
+  "recollection.summary.stage-1-8-side-pre": "\uC218\uBB38 \uC544\uB798 \uBCF4\uAE09 \uC0C1\uC790\uB97C \uB450\uACE0 \uC544\uBAA8\uC640 \uB9AC\uD30C\uAC00 \uAE38\uC744 \uB9C9\uB294\uB2E4.",
+  "recollection.summary.stage-1-8-side-post": "\uC5F4\uC5B4 \uBCF8 \uC0C1\uC790\uC5D0\uB294 \uAC04\uC2DD\uC774 \uC544\uB2C8\uB77C \uBC18\uC9DD\uC774\uB294 \uC870\uAC01\uBFD0\uC774\uC5C8\uB2E4.",
   "recollection.summary.stage-1-8-pre": "\uBC30\uC218\uB85C\uC5D0\uC11C \uBCF4\uAE09\uC744 \uD68C\uC218\uD558\uB358 \uD2F0\uC544\uC640 \uB9C8\uC8FC\uCE5C\uB2E4.",
   "recollection.summary.stage-1-9-pre": "\uBD09\uC1C4\uBB38 \uB108\uBA38\uC5D0\uC11C \uB204\uAD70\uAC00 \uBB38\uC744 \uB450\uB4DC\uB9B0\uB2E4.",
   "recollection.summary.stage-1-9-post": "\uAC07\uD600 \uC788\uB358 \uC624\uBE44\uAC00 \uB0A8\uC740 \uC7AC\uACE0\uB97C \uB098\uB220 \uC900\uB2E4.",
@@ -2443,10 +2497,25 @@ var RECOLLECTION_KO = {
   "recollection.summary.stage-2-7-pre": "\uBB38\uC774 \uB2EB\uD788\uACE0, \uC5F0\uAD6C\uC6D0\uB9CC \uD640\uB85C \uACA9\uC2E4\uC5D0 \uAC07\uD78C\uB2E4.",
   "recollection.summary.stage-2-7-post": "\uD1A0\uBE44\uAC00 \uBB38\uC744 \uB72F\uC5B4\uB0B4\uACE0 \uC5F0\uAD6C\uC6D0\uC744 \uAEBC\uB0B8\uB2E4.",
   "recollection.summary.stage-2-8-pre": "\uC6A9\uAD11\uB85C \uACC1\uC5D0\uC11C \uCF54\uB9C8\uAC00 \uB9D0\uC5C6\uC774 \uD45C\uC2DD\uC744 \uB2E6\uACE0 \uC788\uB2E4.",
+  "recollection.summary.stage-2-8-post": "\uC6A9\uAD11\uB85C \uC704\uB85C \uD68C\uC218\uC870 \uB458\uC774 \uB0B4\uB824\uC120\uB2E4. \uCF54\uB9C8\uC5D0\uAC8C \uC815\uC911\uD55C \uD55C\uB9C8\uB514\uAC00 \uB0A8\uB294\uB2E4.",
   "recollection.summary.stage-2-9-post": "\uCEE8\uBCA0\uC774\uC5B4\uAC00 \uB05D\uB098\uB294 \uACF3\uC5D0 \uAE4A\uC740 \uAD6C\uBA4D\uC774 \uC785\uC744 \uBC8C\uB9B0\uB2E4.",
   "recollection.summary.stage-2-10-pre": "\uCF54\uB9C8 \uC5C6\uC774, \uC0BC\uC778\uC870\uAC00 \uCC98\uC74C\uC73C\uB85C \uC14B\uC774\uC11C \uC120\uB2E4.",
+  "recollection.summary.stage-2-3-lost-badge": "\uB0C9\uAC01 \uC218\uB85C\uC5D0\uC11C \uADF8\uB9BC\uC790\uAC00 \uC0AC\uC6D0\uC99D\uC744 \uAC00\uC838\uAC00\uACE0, \uC190\uB4F1\uC758 \uC0C1\uCC98\uAC00 \uB208\uC5D0 \uB0A8\uB294\uB2E4.",
+  "recollection.summary.stage-2-6-same-line": "\uC0DD\uC0B0\uC120 \uB4A4\uD3B8\uC5D0\uC11C \uCF54\uB9C8\uAC00 \uBC88\uD638\uC640 \uD45C\uC2DD\uC744 \uB9DE\uCDB0 \uBCF8\uB2E4.",
+  "recollection.summary.stage-2-9-second-chase": "\uACE7\uAC8C \uB09C \uAE38\uC758 \uB05D\uC5D0\uC11C \uCF54\uB9C8\uB294 \uC81C\uAC00 \uBBF8\uB07C\uC600\uC74C\uC744 \uC548\uB2E4.",
+  "recollection.summary.stage-3-5-behind-sleeve": "\uC18C\uB9E4 \uB4A4\uC758 \uB208\uC774 \uC5F0\uAD6C\uC6D0\uC758 \uC774\uB984\uC744 \uBAA9\uB85D\uC5D0 \uC801\uB294\uB2E4.",
+  "recollection.summary.stage-3-8-apology": "\uBD80\uC11C\uC9C4 \uBCBD \uC55E\uC5D0\uC11C \uC2DC\uB9D0\uC11C\uAC00 \uB610 \uD55C \uC7A5 \uB298\uC5B4\uB09C\uB2E4.",
+  "recollection.summary.stage-3-1-pre": "\uBB34\uB98E \uAFC7\uC740 \uCF54\uB9C8 \uB4A4\uB85C \uB0A0\uAC1C \uB9DD\uD1A0\uAC00 \uB0B4\uB824\uC120\uB2E4.",
+  "recollection.summary.stage-3-4-post": "\uB098\uC774\uD2B8 \uAE30\uC5B4\uAC00 \uC870\uBA85\uC744 \uB0B4\uB9AC\uACE0 \uD1F4\uB85C\uB97C \uC5F0\uB2E4.",
+  "recollection.summary.stage-3-5-pre": "\uD1B5\uB85C \uD55C\uBCF5\uD310\uC5D0\uC11C \uC544\uD2B8\uB77C\uAC00 \uC18C\uB9E4 \uB4A4\uB85C \uC55E\uC744 \uB9C9\uB294\uB2E4.",
+  "recollection.summary.stage-3-5-post": "\uC4F0\uB7EC\uC9C4 \uC544\uD2B8\uB77C\uB97C \uCF54\uB9C8\uAC00 \uB370\uB9AC\uB7EC \uC628\uB2E4.",
+  "recollection.summary.stage-3-6-post": "\uB9C9\uB2E4\uB978 \uACA9\uBCBD\uC774 \uC548\uCABD\uC5D0\uC11C \uD130\uC838 \uB098\uC628\uB2E4.",
+  "recollection.summary.stage-3-8-post": "\uD384\uC2DC\uC758 \uAE30\uC2B5 \uC55E\uC5D0 \uC5D8\uB77C\uAC00 \uBC29\uBCBD\uC73C\uB85C \uC120\uB2E4.",
+  "recollection.summary.stage-3-9-post": "\uCE21\uBA74\uC5D0\uC11C \uB2EC\uB824\uB4E0 \uC720\uD2F0\uC640 \uC544\uD06C\uAC00 \uB450 \uC870\uB97C \uAC08\uB77C \uB193\uB294\uB2E4.",
+  "recollection.summary.stage-3-10-pre": "\uB9C8\uC9C0\uB9C9 \uD640\uC5D0\uC11C \uC571\uC194\uB8E8\uD2B8 \uD33D\uC774 \uD55C \uC904\uB85C \uC120\uB2E4.",
+  "recollection.summary.stage-3-10-post": "\uD68C\uC218\uC870\uAC00 \uBB3C\uB7EC\uB098\uACE0, \uCF54\uB9C8\uB294 \uB05D\uB0B4 \uD3B8\uC774\uB77C \uB9D0\uD558\uC9C0 \uC54A\uB294\uB2E4.",
   "recollection.summary.stage-2-10-post": "\u300C\uB530\uB77C\uAC00\uB3C4 \uB3FC?\u300D \uC774\uC81C \uC5F0\uAD6C\uC6D0\uC774 \uB300\uB2F5\uD560 \uCC28\uB840\uB2E4.",
-  "recollection.summary.stage-1-5-greenhouse-echo": "\uC8FC \uD1B5\uB85C \uC606 \uC628\uC2E4\uC5D0\uC11C \uC624\uB798\uB41C \uC0DD\uCCB4 \uC2E0\uD638\uAC00 \uB4E4\uB824\uC628\uB2E4.",
+  "recollection.summary.stage-1-5-greenhouse-echo": "\uC228\uC5B4 \uC788\uB358 \uC628\uC2E4\uC5D0\uC11C \uAC70\uB300 \uD638\uBC15\uACFC \uC2A4\uD504\uB9C1\uD074\uB7EC\uAC00 \uC5F0\uB2EC\uC544 \uC0AC\uACE0\uB97C \uCE5C\uB2E4.",
   "recollection.summary.event-great-auk-report": "\uBD81\uB300\uC11C\uC591 \uD45C\uBCF8\uD568\uC5D0\uC11C \uD070\uBC14\uB2E4\uC1E0\uC624\uB9AC\uC758 \uACE8\uACA9 \uD45C\uC9C0\uAC00 \uB098\uC628\uB2E4."
 };
 
@@ -2565,8 +2634,51 @@ var ACHIEVEMENT_KO = {
   "achievement.objective.partySsr": "SSR \uB810\uB9AD {value}\uBA85\uC73C\uB85C \uD3B8\uC131"
 };
 
+// src/i18n/ko/support.ts
+init_define_import_meta_env();
+var SUPPORT_KO = {
+  "support.title": "\uACE0\uAC1D \uBB38\uC758",
+  "support.tab.compose": "\uBB38\uC758 \uC791\uC131",
+  "support.tab.mine": "\uB0B4 \uBB38\uC758",
+  "support.category.inquiry": "\uBB38\uC758",
+  "support.category.bug": "\uC624\uB958",
+  "support.category.report": "\uC2E0\uACE0",
+  "support.category.other": "\uAE30\uD0C0",
+  "support.field.subject": "\uC81C\uBAA9",
+  "support.field.body": "\uB0B4\uC6A9",
+  "support.field.reply": "\uB2F5\uAE00",
+  "support.counter": "{count} / {max}",
+  "support.submit": "\uBCF4\uB0B4\uAE30",
+  "support.reply.send": "\uB2F5\uAE00 \uBCF4\uB0B4\uAE30",
+  "support.back": "\uBAA9\uB85D",
+  "support.prev": "\uC774\uC804",
+  "support.next": "\uB2E4\uC74C",
+  "support.page": "{page} / {pages}",
+  "support.empty": "\uC811\uC218\uD55C \uBB38\uC758\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "support.loading": "\uBD88\uB7EC\uC624\uB294 \uC911",
+  "support.status.open": "\uC811\uC218\uB428",
+  "support.status.in_progress": "\uD655\uC778 \uC911",
+  "support.status.answered": "\uB2F5\uBCC0 \uC644\uB8CC",
+  "support.status.closed": "\uC885\uB8CC",
+  "support.ticket.no": "No. {no}",
+  "support.author.player": "\uB098",
+  "support.author.staff": "\uC6B4\uC601\uD300",
+  "support.sent.title": "\uBB38\uC758 \uC811\uC218",
+  "support.sent.body": "\uBB38\uC758\uAC00 \uC811\uC218\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uC811\uC218 \uBC88\uD638 {no}",
+  "support.error.title": "\uBB38\uC758 \uC548\uB0B4",
+  "support.error.unsupported": "\uC774 \uBE4C\uB4DC\uC5D0\uC11C\uB294 \uBB38\uC758\uB97C \uBCF4\uB0BC \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "support.error.network": "\uB124\uD2B8\uC6CC\uD06C \uC5F0\uACB0\uC744 \uD655\uC778\uD574 \uC8FC\uC138\uC694.",
+  "support.error.no_player": "\uACC4\uC815 \uC815\uBCF4\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "support.error.invalid_category": "\uBB38\uC758 \uC885\uB958\uB97C \uB2E4\uC2DC \uACE8\uB77C \uC8FC\uC138\uC694.",
+  "support.error.invalid_text": "\uC81C\uBAA9\uACFC \uB0B4\uC6A9\uC744 \uB2E4\uC2DC \uD655\uC778\uD574 \uC8FC\uC138\uC694.",
+  "support.error.rate_limited": "\uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uBCF4\uB0B4 \uC8FC\uC138\uC694.",
+  "support.error.not_found": "\uBB38\uC758\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "support.error.ticket_closed": "\uC885\uB8CC\uB41C \uBB38\uC758\uC5D0\uB294 \uB2F5\uAE00\uC744 \uB2EC \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "settings.support.inquiry": "\uACE0\uAC1D \uBB38\uC758"
+};
+
 // src/i18n/ko/index.ts
-var KO = { ...SETTINGS_KO, ...LOBBY_KO, ...COMMON_KO, ...INFO_KO, ...STATUS_KO, ...LAB_KO, ...EXPEDITION_KO, ...BATTLE_KO, ...CAKE_OPERATION_KO, ...EXCAVATION_KO, ...AUGMENT_KO, ...FRIENDS_KO, ...RUNE_KO, ...PARTY_KO, ...EXPEDITION_REWARD_KO, ...SAVE_CONFLICT_KO, ...INTERACTION_KO, ...SHOP_KO, ...MISSIONS_KO, ...INVENTORY_KO, ...MISC_KO, ...SKILL_KO, ...SYSTEM_KO, ...RAID_KO, ...BOUNTY_KO, ...DUNGEON_KO, ...DUEL_KO, ...RECOLLECTION_KO, ...DIALOGUE_KO, ...ACHIEVEMENT_KO };
+var KO = { ...SETTINGS_KO, ...LOBBY_KO, ...COMMON_KO, ...INFO_KO, ...STATUS_KO, ...LAB_KO, ...EXPEDITION_KO, ...BATTLE_KO, ...CAKE_OPERATION_KO, ...EXCAVATION_KO, ...AUGMENT_KO, ...FRIENDS_KO, ...RUNE_KO, ...PARTY_KO, ...EXPEDITION_REWARD_KO, ...SAVE_CONFLICT_KO, ...INTERACTION_KO, ...SHOP_KO, ...MISSIONS_KO, ...INVENTORY_KO, ...MISC_KO, ...SKILL_KO, ...SYSTEM_KO, ...RAID_KO, ...BOUNTY_KO, ...DUNGEON_KO, ...DUEL_KO, ...RECOLLECTION_KO, ...DIALOGUE_KO, ...ACHIEVEMENT_KO, ...SUPPORT_KO };
 
 // src/i18n/catalog.ts
 var loaded = /* @__PURE__ */ new Map([[DEFAULT_LANGUAGE, KO]]);
@@ -3101,198 +3213,6 @@ function calculateFinalStats(base, progress, gems2, rarity) {
   return applyHeartGems(applyBreakthrough(applyLevelGrowth(base, progress.level, rarity), progress.breakthrough), gems2);
 }
 
-// src/data/friends.ts
-init_define_import_meta_env();
-var NOW = Date.now();
-var SAMPLE_FRIENDS = [
-  // 샘플도 공개 화이트리스트만 명시해 실제 응답에 계정 키·재화·편성이 섞이는 일을 조기에 드러낸다.
-  { id: "friend-haneul", uid: "418207735", frameId: "holo", displayName: "\uD558\uB298\uC815\uC6D0", level: 27, status: "\uC0C8 \uD45C\uBCF8\uC758 \uD754\uC801\uC744 \uCC3E\uB294 \uC911", lastActiveAt: NOW - 3e4, equippedModifiers: [{ id: "field-pioneer", displayName: "\uD604\uC7A5 \uAC1C\uCC99\uC790", rarity: "rare" }], favoriteRelic: { relicId: "rex", level: 24, breakthroughGrade: 5, stats: { hp: 820, def: 42, res: 36, atk: 132, ap: 76, attackSpeed: 112, moveSpeed: 108, critChance: 20, critDamage: 160, energyGain: 28, lifeSteal: 0, ferocityGain: 0 }, skillIds: ["rex-basic", "rex-passive", "rex-ultimate"] }, competitiveStats: { highestStage: { stageId: "stage-2-5", displayValue: "2-5 \uBD89\uC740 \uD611\uACE1" }, arenaTier: { tierId: "gold-2", displayName: "\uACE8\uB4DC II" }, expeditionScore: 18420 } },
-  // 두 번째 샘플은 선택 기록과 수식어가 없는 정상 응답을 검수하며 빈 상태 문구 대신 렌더링 생략을 확인한다.
-  { id: "friend-moss", uid: "602913548", frameId: "field", displayName: "\uC774\uB07C\uC5F0\uAD6C\uC18C", level: 19, status: "\uC624\uB298\uB3C4 \uCC9C\uCC9C\uD788 \uBCF5\uC6D0", lastActiveAt: NOW - 12 * 6e4, equippedModifiers: [], favoriteRelic: { relicId: "torika", level: 18, breakthroughGrade: 4, stats: { hp: 1420, def: 128, res: 92, atk: 74, ap: 52, attackSpeed: 78, moveSpeed: 72, critChance: 5, critDamage: 140, energyGain: 20, lifeSteal: 0, ferocityGain: 0 }, skillIds: ["torika-basic", "torika-passive", "torika-ultimate"] }, competitiveStats: {} }
-];
-var PREVIEW_FRIENDS = QA_TOOLS_ENABLED ? SAMPLE_FRIENDS : [];
-for (const friend of PREVIEW_FRIENDS) {
-  registerDataText(friend, "status", `friend.${friend.id}.status`);
-}
-for (const friend of PREVIEW_FRIENDS) {
-  const stats = friend.competitiveStats;
-  if (stats.highestStage) registerDataText(stats.highestStage, "displayValue", `friend.${friend.id}.highestStage`);
-  if (stats.arenaTier) registerDataText(stats.arenaTier, "displayName", `friend.${friend.id}.arenaTier`);
-}
-
-// src/data/relics.ts
-init_define_import_meta_env();
-
-// src/core/skirmish.ts
-init_define_import_meta_env();
-
-// src/core/bond.ts
-init_define_import_meta_env();
-var BOND_LEVEL_CAP = 10;
-var BOND_TOTAL_XP_BY_LEVEL = [0, 20, 50, 90, 140, 200, 270, 350, 440, 540, 650];
-var BOND_XP_REWARD = { firstAcquisition: 20, partyVictory: 12, firstLobbyInteraction: 5, firstObservationInterview: 5 };
-var BOND_FEROCITY_MULTIPLIER = [1, 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.45, 1.5];
-function bondLevelForXp(xp) {
-  if (!Number.isInteger(xp) || xp < 0) throw new RangeError("\uC720\uB300 \uACBD\uD5D8\uCE58\uB294 0 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
-  let level = 0;
-  while (level < BOND_LEVEL_CAP && xp >= BOND_TOTAL_XP_BY_LEVEL[level + 1]) level += 1;
-  return level;
-}
-function grantBondXp(progress, amount) {
-  if (!Number.isInteger(amount) || amount < 0) throw new RangeError("\uC720\uB300 \uACBD\uD5D8\uCE58 \uBCF4\uC0C1\uC740 0 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
-  const bondXp = Math.min(BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP], progress.bondXp + amount);
-  const bondLevel = bondLevelForXp(bondXp);
-  return { progress: { ...progress, bondXp, bondLevel, heartGemSlots: [...progress.heartGemSlots] }, xpGained: bondXp - progress.bondXp, levelsGained: bondLevel - progress.bondLevel };
-}
-function grantDailyLobbyBondXp(progress, utcDate) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(utcDate)) throw new RangeError("\uB85C\uBE44 \uC0C1\uD638\uC791\uC6A9 \uB0A0\uC9DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-  if (progress.lastLobbyInteractionDate === utcDate) return { progress: { ...progress, heartGemSlots: [...progress.heartGemSlots] }, xpGained: 0, levelsGained: 0 };
-  const result = grantBondXp(progress, BOND_XP_REWARD.firstLobbyInteraction);
-  return { ...result, progress: { ...result.progress, lastLobbyInteractionDate: utcDate } };
-}
-function amplifyFerocityGain(amount, bondLevel) {
-  if (!Number.isFinite(amount) || amount < 0 || !Number.isInteger(bondLevel) || bondLevel < 0) throw new RangeError("\uC57C\uC131 \uC99D\uAC00\uB7C9\uACFC \uC720\uB300 \uB808\uBCA8\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-  return Math.max(0, Math.round(amount * BOND_FEROCITY_MULTIPLIER[Math.min(BOND_LEVEL_CAP, bondLevel)]));
-}
-
-// src/core/battleClock.ts
-init_define_import_meta_env();
-var BATTLE_DEATH_CLOCK = {
-  /** 이 시각(초)을 넘기는 순간부터 돈다. */
-  startsAtSeconds: 90,
-  /** 몇 초마다 한 번 도는가. */
-  tickSeconds: 1,
-  /**
-   * 첫 번째가 깎는 비율(%). 아군의 최대 체력과 회복·보호막 성능을 **같은 비율로** 깎는다 —
-   * 체력 피해는 방어·경감을 지나지 않는 고정 피해다.
-   */
-  firstTickPercent: 1,
-  /**
-   * 한 번 돌 때마다 다음 번이 더 깎는 몫(%). **시계는 점점 세진다** — 처음 몇 번은 거의 이긴 판이
-   * 끝낼 틈을 주고, 그래도 끌리는 판은 가속이 붙어 빠르게 닫힌다. 고정 2%이던 때는 50번을 기다려야
-   * 했는데(2분 20초), 지금은 19번(1분 49초)이면 어떤 편성이든 닫힌다.
-   */
-  rampPercentPerTick: 0.5
-};
-function deathClockTickPercent(tick) {
-  if (tick < 1) return 0;
-  return BATTLE_DEATH_CLOCK.firstTickPercent + BATTLE_DEATH_CLOCK.rampPercentPerTick * (tick - 1);
-}
-function deathClockCumulativePercent(ticks) {
-  if (ticks < 1) return 0;
-  return ticks * BATTLE_DEATH_CLOCK.firstTickPercent + BATTLE_DEATH_CLOCK.rampPercentPerTick * ticks * (ticks - 1) / 2;
-}
-function deathClockTicksAt(elapsedSeconds) {
-  if (!Number.isFinite(elapsedSeconds)) return 0;
-  const past = elapsedSeconds - BATTLE_DEATH_CLOCK.startsAtSeconds;
-  if (past < 0) return 0;
-  return Math.floor(past / BATTLE_DEATH_CLOCK.tickSeconds) + 1;
-}
-function deathClockSurvivalMultiplier(elapsedSeconds) {
-  const lost = deathClockCumulativePercent(deathClockTicksAt(elapsedSeconds));
-  return Math.min(1, Math.max(0, 1 - lost / 100));
-}
-function deathClockClosesBySeconds() {
-  let ticks = 1;
-  while (deathClockCumulativePercent(ticks) < 100) ticks += 1;
-  return BATTLE_DEATH_CLOCK.startsAtSeconds + ticks * BATTLE_DEATH_CLOCK.tickSeconds;
-}
-var BOSS_REPLAY_SLACK_SECONDS = 30;
-
-// src/core/damage.ts
-init_define_import_meta_env();
-
-// src/core/element.ts
-init_define_import_meta_env();
-var ELEMENT_ADVANTAGE_MULTIPLIER = 1.25;
-var ELEMENT_DISADVANTAGE_MULTIPLIER = 1 / ELEMENT_ADVANTAGE_MULTIPLIER;
-var ELEMENT_COUNTERS = {
-  fire: ["grass", "wind"],
-  water: ["fire", "earth"],
-  grass: ["water", "earth"],
-  earth: ["wind", "fire"],
-  wind: ["grass", "water"]
-};
-var ICE_ADVANTAGES = ["grass", "water", "earth"];
-var ICE_DISADVANTAGES = ["fire"];
-function elementMultiplier(attacker, defender) {
-  if (attacker === defender) return 1;
-  if (attacker === "ice") {
-    if (ICE_ADVANTAGES.includes(defender)) return ELEMENT_ADVANTAGE_MULTIPLIER;
-    if (ICE_DISADVANTAGES.includes(defender)) return ELEMENT_DISADVANTAGE_MULTIPLIER;
-    return 1;
-  }
-  if (defender === "ice") {
-    if (ICE_ADVANTAGES.includes(attacker)) return ELEMENT_DISADVANTAGE_MULTIPLIER;
-    if (ICE_DISADVANTAGES.includes(attacker)) return ELEMENT_ADVANTAGE_MULTIPLIER;
-    return 1;
-  }
-  return ELEMENT_COUNTERS[attacker].includes(defender) ? ELEMENT_ADVANTAGE_MULTIPLIER : ELEMENT_DISADVANTAGE_MULTIPLIER;
-}
-function effectiveElement(relic) {
-  return relic.passive.elementOverride ?? relic.element;
-}
-
-// src/core/ferocity.ts
-init_define_import_meta_env();
-var FEROCITY_RULES = {
-  min: 0,
-  max: 100,
-  basicGain: 12,
-  ultimateGain: 18,
-  hitGain: 8,
-  /** 최대치에서 시작한 피버가 8초 동안 유지되도록 정한 초당 감소량이다. */
-  feverDrainPerSecond: 12.5,
-  thresholds: [
-    { value: 50, damageBonus: 0.1 },
-    { value: 80, damageBonus: 0.2 },
-    { value: 100, damageBonus: 0.35 }
-  ]
-};
-function ferocityDamageBonus(ferocity) {
-  const active3 = [...FEROCITY_RULES.thresholds].reverse().find(({ value }) => ferocity >= value);
-  return active3?.damageBonus ?? 0;
-}
-function drainFerocityFever(unit, seconds) {
-  if (!unit.ferocityFever || seconds <= 0) return;
-  unit.ferocity = Math.max(FEROCITY_RULES.min, unit.ferocity - FEROCITY_RULES.feverDrainPerSecond * seconds);
-  if (unit.ferocity <= FEROCITY_RULES.min) unit.ferocityFever = false;
-}
-
-// src/core/damage.ts
-function isCriticalHit(critChance, roll3) {
-  if (roll3 < 0 || roll3 >= 1) throw new RangeError("critical roll\uC740 0 \uC774\uC0C1 1 \uBBF8\uB9CC\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
-  return roll3 < critChance / 100;
-}
-function currentAbilityPower(combatant) {
-  return combatant.def.stats.ap + (combatant.bonusAp ?? 0);
-}
-function scalingStatValue(attacker, stat, damageType) {
-  if (stat === "def") return attacker.def.stats.def;
-  if (stat === "res") return attacker.def.stats.res;
-  if (stat === "hp") return attacker.def.stats.hp;
-  if (stat === "atk") return attacker.def.stats.atk;
-  if (stat === "ap") return currentAbilityPower(attacker);
-  return damageType === "physical" ? attacker.def.stats.atk : currentAbilityPower(attacker);
-}
-function offenseValue(attacker, input) {
-  const primary = scalingStatValue(attacker, input.scalingStat, input.damageType) * input.power / 100;
-  if (!input.secondaryScaling) return primary;
-  return primary + scalingStatValue(attacker, input.secondaryScaling.stat, input.damageType) * input.secondaryScaling.power / 100;
-}
-function computeDamageContribution(attacker, input) {
-  const critical = input.isCritical ? attacker.def.stats.critDamage / 100 : 1;
-  return Math.max(0, offenseValue(attacker, input) * critical * (1 + ferocityDamageBonus(attacker.ferocity)));
-}
-function computeDamage(attacker, target, input) {
-  const rawDefense = input.damageType === "physical" ? target.def.stats.def : target.def.stats.res;
-  const defense = input.ignoresDefense ? 0 : rawDefense * (1 - Math.min(100, Math.max(0, input.defenseIgnorePercent ?? 0)) / 100);
-  const critical = input.isCritical ? attacker.def.stats.critDamage / 100 : 1;
-  const raw = offenseValue(attacker, input) * critical * (1 + ferocityDamageBonus(attacker.ferocity));
-  const afterDefense = raw * 100 / (100 + defense);
-  return Math.max(1, Math.round(afterDefense * elementMultiplier(effectiveElement(attacker.def), effectiveElement(target.def))));
-}
-
 // src/core/levelDesign.ts
 init_define_import_meta_env();
 var ENCOUNTER_ROLE = {
@@ -3340,10 +3260,12 @@ var ENCOUNTER_ROLE = {
      * 같은 표를 읽기 때문이며, 원정 레벨을 다시 풀 때 함께 본다(`levelDesign.test`의 검수 기록).
      *
      * **v0.282.9에서 ×4로 내렸다**(응태 결정). 직접 R 토비로 1-5를 떠 봤는데 이기지 못해, ×8이 R 단독 편성에는 과했다.
+     *
+     * **v0.308.6에서 ×3으로 내렸다**(응태 결정). 1-10 코마가 SSR 없이는 깨지지 않았다.
      */
     count: 1,
     bodyScale: 1.18,
-    hpMultiplier: 4,
+    hpMultiplier: 3,
     attackMultiplier: 1.2,
     ttkSeconds: [18, 32],
     remainingHp: [0.2, 0.6],
@@ -3406,15 +3328,20 @@ function enemyLevelMultiplier(level) {
   if (!Number.isInteger(level) || level < 1) throw new RangeError("\uC801 \uB808\uBCA8\uC740 1 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
   return 1 + (level - 1) * ENEMY_LEVEL_GROWTH_PERCENT / 100;
 }
-function applyEncounterScaling(base, level, role) {
+function applyEncounterScaling(base, level, role, countOnField = ENCOUNTER_ROLE[role].count) {
   const spec = ENCOUNTER_ROLE[role];
   const growth = enemyLevelMultiplier(level);
   const result = { ...base };
   for (const key of GROWTH_STAT_KEYS) result[key] = Math.round(base[key] * growth);
-  result.hp = Math.round(result.hp * spec.hpMultiplier);
+  result.hp = Math.round(result.hp * encounterHpShare(role, countOnField));
   result.atk = Math.round(result.atk * spec.attackMultiplier);
   result.ap = Math.round(result.ap * spec.attackMultiplier);
   return result;
+}
+function encounterHpShare(role, countOnField) {
+  const spec = ENCOUNTER_ROLE[role];
+  if (role !== "elite") return spec.hpMultiplier;
+  return spec.hpMultiplier / Math.max(1, countOnField);
 }
 function requiredBreakthroughForLevel(level) {
   if (level <= RELIC_LEVEL_CAP) return 0;
@@ -3587,6 +3514,9 @@ function flatStatPoints(effects, relicId, stat) {
 // src/core/ultimate.ts
 init_define_import_meta_env();
 var ULTIMATE_ENERGY_MAX = 300;
+function ultimateEnergyCap(unit) {
+  return Math.min(ULTIMATE_ENERGY_MAX, unit.def.ultimate.cost);
+}
 
 // src/core/summonStats.ts
 init_define_import_meta_env();
@@ -4035,6 +3965,10 @@ function makeFighter(def, side, index, x, y, bondLevel = 0, breakthrough = 0, bo
     loomingIn: def.passive.looming?.intervalSeconds ?? 0,
     frozen: null,
     observation: null,
+    echo: null,
+    aim: null,
+    barrierIn: -1,
+    wingHumIn: def.passive.wingHum?.intervalSeconds ?? 0,
     shieldFade: null,
     overclockAuraTickIn: 1,
     droneLinkTickIn: 1
@@ -4225,6 +4159,14 @@ function initializeSkirmishAugments(state) {
   }
   return events;
 }
+function skirmishRelicResults(state) {
+  return state.fighters.filter(({ side }) => side === "player").map((fighter) => ({
+    relicId: fighter.def.id,
+    // 저장은 서로 다른 최대 HP를 같은 휴식 규칙으로 다룰 수 있도록 백분율을 유지한다.
+    currentHp: Math.max(0, Math.min(100, fighter.hp / fighter.maxHp * 100)),
+    alive: isFighterAlive(fighter)
+  }));
+}
 function isFighterAlive(fighter) {
   return fighter.hp > 0 || fighter.immortal === true;
 }
@@ -4345,6 +4287,10 @@ function applyCombatStatusEffect(fighter, effect, events, state, sourceId, criti
     healOnTaunt(state, sourceId, events);
   }
   if (effect.kind === "vandalism") applyVandalism(fighter, effect, events, state, sourceId);
+  if (effect.kind === "echo" && sourceId) {
+    const seconds = effect.seconds * potency;
+    fighter.echo = { remaining: seconds, total: seconds, sourceId };
+  }
   if (effect.kind === "observation") {
     const drone = sourceId ? findFighter(state, sourceId) : void 0;
     const owner = drone?.summonOwnerId ? findFighter(state, drone.summonOwnerId) : void 0;
@@ -4945,13 +4891,13 @@ function countedObservationStacks(state, attacker, limit) {
 function enterOverclock(fighter, trait, state, events) {
   const requested = Math.max(1, Math.round(offensiveDefinition(fighter).stats.atk * trait.shieldAttackPercent / 100));
   const drones = livingDrones(state, fighter);
-  const halfFever = FEROCITY_RULES.max / FEROCITY_RULES.feverDrainPerSecond / 2;
+  const halfFever = FEROCITY_RULES.feverSeconds / 2;
   for (const body of [fighter, ...drones]) {
     const granted = grantShield(state, body, fighter.id, requested, events, 1.5);
     if (granted > 0) body.shieldFade = { perSecond: granted / halfFever, remaining: halfFever };
   }
   for (const drone of drones) {
-    drone.ferocity = fighter.ferocity;
+    drone.ferocity = ferocityMirrored(fighter, drone);
     drone.ferocityFever = true;
   }
 }
@@ -5240,6 +5186,100 @@ function grantShield(state, target, providerId, requested, events, weight = 1) {
     effect: { tag: "shieldGain", intensity: restoreCueIntensity(amount, target.maxHp, weight) }
   });
   return amount;
+}
+var ECHO_SECONDS = 5;
+function vitalAimMultiplier(attacker, target, useUltimate) {
+  const plan = attacker.def.passive.vitalAim;
+  if (!plan || useUltimate || attacker.aim?.targetId !== target.id) return 1;
+  return 1 + attacker.aim.stacks * plan.damagePercentPerStack / 100;
+}
+function marchAllies(state, fighter) {
+  const plan = fighter.def.passive.workerMarch;
+  if (!plan) return 0;
+  const trait = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "marchOfAnts" ? fighter.def.ferocityTrait : void 0;
+  const radius = plan.radius + (trait?.radiusBonus ?? 0);
+  const cap = plan.maxAllies + (trait?.extraAllies ?? 0);
+  const near = state.fighters.filter((ally) => ally.id !== fighter.id && ally.side === fighter.side && isFighterAlive(ally) && distance(fighter, ally) <= radius).length;
+  return Math.min(cap, near);
+}
+function workerMarchMultiplier(state, attacker) {
+  const plan = attacker.def.passive.workerMarch;
+  return plan ? 1 + marchAllies(state, attacker) * plan.attackPercentPerAlly / 100 : 1;
+}
+function barrierShape(fighter) {
+  const plan = fighter.def.passive.segmentBarrier;
+  if (!plan) return void 0;
+  const trait = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "thornBristle" ? fighter.def.ferocityTrait : void 0;
+  const sizeFactor = 1 + (trait?.segmentSizePercent ?? 0) / 100;
+  const base = fighter.shieldHpBasis ?? fighter.maxHp;
+  const segment = base * plan.segmentMaxHpPercent * sizeFactor / 100;
+  return { segment, cap: segment * plan.segments, interval: plan.restoreSeconds / (1 + (trait?.restoreSpeedPercent ?? 0) / 100) };
+}
+function reactRaiders(target, attacker, state, events, useUltimate) {
+  const echo = target.echo;
+  if (echo && isFighterAlive(attacker)) {
+    const source = findFighter(state, echo.sourceId);
+    const plan = source?.def.passive.echoLocation;
+    if (source && plan && source.side === attacker.side) {
+      const room = attacker.maxHp * plan.capMaxHpPercent / 100 - attacker.shield.amount;
+      const amount = Math.min(attacker.maxHp * plan.shieldMaxHpPercent / 100, room);
+      if (amount > 0) grantShield(state, attacker, source.id, amount, events);
+      const trait = source.ferocityFever ? source.def.ferocityTrait : void 0;
+      if (trait?.effectId === "commandStart") applyTeamBuff(attacker, { ...trait.resonance, sourceId: source.id });
+    }
+  }
+  if (attacker.def.passive.echoLocation && isFighterAlive(target)) {
+    applyCombatStatusEffect(target, { kind: "echo", seconds: ECHO_SECONDS }, events, state, attacker.id);
+  }
+  const barrier = target.def.passive.segmentBarrier;
+  if (barrier && target.barrierIn > 0) target.barrierIn = Math.max(0, target.barrierIn - barrier.hitRestoreSeconds);
+  const aim = attacker.def.passive.vitalAim;
+  if (aim && !useUltimate) {
+    const bonus = attacker.ferocityFever && attacker.def.ferocityTrait.effectId === "frenzyTail" ? attacker.def.ferocityTrait.extraStacksPerHit : 0;
+    const kept = attacker.aim?.targetId === target.id ? attacker.aim.stacks : 0;
+    attacker.aim = { targetId: target.id, stacks: Math.min(aim.maxStacks, kept + 1 + bonus) };
+  }
+}
+function tickRaiders(fighter, dt, state) {
+  const events = [];
+  if (fighter.echo) {
+    const remaining = fighter.echo.remaining - dt;
+    fighter.echo = remaining <= EMERGENCY_RECOVERY.epsilon ? null : { ...fighter.echo, remaining };
+  }
+  const shape = barrierShape(fighter);
+  if (shape) {
+    if (fighter.barrierIn < 0) {
+      grantShield(state, fighter, fighter.id, shape.cap, events);
+      fighter.barrierIn = shape.interval;
+    } else if (fighter.shield.amount >= shape.cap) {
+      fighter.barrierIn = shape.interval;
+    } else {
+      fighter.barrierIn -= dt;
+      if (fighter.barrierIn <= 0) {
+        grantShield(state, fighter, fighter.id, Math.min(shape.segment, shape.cap - fighter.shield.amount), events);
+        fighter.barrierIn = shape.interval;
+      }
+    }
+  }
+  const hum = fighter.def.passive.wingHum;
+  if (hum && fighter.stunnedFor <= 0) {
+    fighter.wingHumIn -= dt;
+    if (fighter.wingHumIn <= 0) {
+      const fast = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "swiftFlight" ? fighter.def.ferocityTrait.intervalReductionPercent : 0;
+      fighter.wingHumIn += hum.intervalSeconds * (1 - fast / 100);
+      const allies = state.fighters.filter((ally) => ally.side === fighter.side && ally.id !== fighter.id && isFighterAlive(ally));
+      const best = allies.reduce((top, ally) => !top || ally.def.stats.atk > top.def.stats.atk ? ally : top, void 0);
+      applyTeamBuff(best ?? fighter, { ...hum.resonance, sourceId: fighter.id });
+    }
+  }
+  const march = fighter.def.passive.workerMarch;
+  if (march && dt > 0) {
+    const count2 = marchAllies(state, fighter);
+    if (count2 > 0) {
+      applyHealing(state, fighter, fighter.maxHp * march.regenMaxHpPercentPerAllyPerSecond * count2 * dt / 100);
+    }
+  }
+  return events;
 }
 function grantCastShield(attacker, skill, state, events) {
   const percent = skill.selfShieldMaxHpPercent ?? 0;
@@ -5879,6 +5919,8 @@ function openedBreakthrough(fighter, slot, pick2) {
   return effects ? pick2(effects) : void 0;
 }
 function triggerBreakthroughOnKill(attacker, useUltimate, victim) {
+  const hum = attacker.def.passive.wingHum;
+  if (hum && isFighterAlive(attacker)) giveEnergy(attacker, hum.energyOnKill);
   const haste = attacker.def.passive.killHaste;
   if (haste && isFighterAlive(attacker)) {
     attacker.killHaste = { remaining: haste.seconds, attackSpeedPercent: haste.attackSpeedPercent, moveSpeedPercent: haste.moveSpeedPercent };
@@ -6594,6 +6636,7 @@ function clearDefeatedStatuses(fighter) {
   fighter.chill = null;
   fighter.frozen = null;
   fighter.observation = null;
+  fighter.echo = null;
   fighter.shieldFade = null;
 }
 function aliveFighters(state, side) {
@@ -6948,12 +6991,12 @@ function gainEnergy(fighter, state) {
   const chargeThreshold = fighter.def.ultimate.chargeStartsAtHpPercent;
   if (chargeThreshold !== void 0 && fighter.hp / fighter.maxHp * 100 > chargeThreshold) return;
   const rally = tailwindRally(state, fighter.side).energy;
-  fighter.energy = Math.min(ULTIMATE_ENERGY_MAX, fighter.energy + fighter.def.stats.energyGain + rally);
+  fighter.energy = Math.min(ultimateEnergyCap(fighter), fighter.energy + fighter.def.stats.energyGain + rally);
 }
 function giveEnergy(ally, amount) {
   const threshold = ally.def.ultimate.chargeStartsAtHpPercent;
   if (threshold !== void 0 && ally.hp / ally.maxHp * 100 > threshold) return;
-  ally.energy = Math.min(ULTIMATE_ENERGY_MAX, ally.energy + amount);
+  ally.energy = Math.min(ultimateEnergyCap(ally), ally.energy + amount);
 }
 function grantAllyEnergy(attacker, skill, state) {
   const amount = skill.allyEnergyGain ?? 0;
@@ -7120,7 +7163,7 @@ function grantDuoCharge(attacker, skill, state, events) {
   if (duo === void 0 || !isFighterAlive(duo)) return;
   const threshold = duo.def.ultimate.chargeStartsAtHpPercent;
   if (charge.energy > 0 && (threshold === void 0 || duo.hp / duo.maxHp * 100 <= threshold)) {
-    duo.energy = Math.min(ULTIMATE_ENERGY_MAX, duo.energy + charge.energy);
+    duo.energy = Math.min(ultimateEnergyCap(duo), duo.energy + charge.energy);
   }
   if (charge.ferocity > 0) gainFerocity(duo, charge.ferocity, state, events);
 }
@@ -7197,6 +7240,7 @@ function cleanseAllDebuffs(fighter) {
   fighter.frenzy = null;
   fighter.taunted = null;
   fighter.observation = null;
+  fighter.echo = null;
   fighter.intimidation = null;
   fighter.fear = null;
 }
@@ -7205,8 +7249,9 @@ function gainFerocity(fighter, base, state, events) {
   if (fighter.ferocityFever) return;
   const rallied = base + tailwindRally(state, fighter.side).ferocity;
   const adjusted = amplifyFerocityGain(rallied, fighter.bondLevel) * (1 + fighter.def.stats.ferocityGain / 100);
-  fighter.ferocity = Math.min(FEROCITY_RULES.max, before + adjusted);
-  if (before < FEROCITY_RULES.max && fighter.ferocity >= FEROCITY_RULES.max) {
+  const ferocityMax = ferocityMaxOf(fighter.def);
+  fighter.ferocity = Math.min(ferocityMax, before + adjusted);
+  if (before < ferocityMax && fighter.ferocity >= ferocityMax) {
     fighter.ferocityFever = true;
     fighter.feverDamageTaken = 0;
     fighter.bt.feverHealingDone = 0;
@@ -7287,7 +7332,7 @@ function gainFerocity(fighter, base, state, events) {
     if (trait.effectId === "overclock") enterOverclock(fighter, trait, state, events);
     if (trait.effectId === "summonPackFrenzy") {
       for (const wolf of state.fighters.filter((unit) => unit.summonOwnerId === fighter.id && isFighterAlive(unit))) {
-        wolf.ferocity = fighter.ferocity;
+        wolf.ferocity = ferocityMirrored(fighter, wolf);
         wolf.ferocityFever = true;
       }
     }
@@ -7306,8 +7351,9 @@ function gainFerocity(fighter, base, state, events) {
       }
     }
   }
-  for (const { value } of FEROCITY_RULES.thresholds) {
-    if (before < value && fighter.ferocity >= value) state.log.push(`${fighter.def.name} \uC57C\uC131 ${value} \uC9C4\uC785`);
+  for (const { ratio } of FEROCITY_RULES.thresholds) {
+    const value = Math.round(ratio * ferocityMax);
+    if (before < ratio * ferocityMax && fighter.ferocity >= ratio * ferocityMax) state.log.push(`${fighter.def.name} \uC57C\uC131 ${value} \uC9C4\uC785`);
   }
 }
 function applyStreak(attacker, target, events) {
@@ -8340,7 +8386,7 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
   const bashInput = bashPlan?.kind === "helmetBash" ? { ...damageInput, power: bashPlan.attackPercent, scalingStat: "atk", secondaryScaling: void 0, damageType: "physical" } : void 0;
   const bashBonus = bashInput ? computeDamage(damageAttacker, damageTarget, bashInput) : 0;
   const rawAmount = Math.max(1, Math.round((computeDamage(damageAttacker, damageTarget, damageInput) + defenseBonus + periodicBonus + bashBonus) * traitDamageMultiplier(state, attacker, target) * nape * pounce * feastMultiplier * packStrengthMultiplier(state, attacker) * bossDamageMultiplier(attacker, target, useUltimate)));
-  const contributionAmount = Math.max(0, (computeDamageContribution(damageAttacker, damageInput) + (defenseBonus > 0 ? computeDamageContribution(attacker, { ...damageInput, power: splashTrait.effectId === "splashDamage" ? splashTrait.defenseDamagePercent ?? 0 : 0, scalingStat: "def", damageType: "physical" }) : 0) + (periodicBonusInput ? computeDamageContribution(damageAttacker, periodicBonusInput) : 0) + (bashInput ? computeDamageContribution(damageAttacker, bashInput) : 0)) * nape * pounce * feastMultiplier * packStrengthMultiplier(state, attacker) * bossDamageMultiplier(attacker, target, useUltimate));
+  const contributionAmount = Math.max(0, (computeDamageContribution(damageAttacker, damageInput) + (defenseBonus > 0 ? computeDamageContribution(attacker, { ...damageInput, power: splashTrait.effectId === "splashDamage" ? splashTrait.defenseDamagePercent ?? 0 : 0, scalingStat: "def", damageType: "physical" }) : 0) + (periodicBonusInput ? computeDamageContribution(damageAttacker, periodicBonusInput) : 0) + (bashInput ? computeDamageContribution(damageAttacker, bashInput) : 0)) * nape * pounce * feastMultiplier * packStrengthMultiplier(state, attacker) * vitalAimMultiplier(attacker, target, useUltimate) * workerMarchMultiplier(state, attacker) * bossDamageMultiplier(attacker, target, useUltimate));
   const resolution = resolveReceivedDamage(target, rawAmount);
   const amount = resolution.applied;
   const targetHpBefore = target.hp;
@@ -8365,6 +8411,7 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
   contagiousFrenzy(attacker, target, state, events);
   reactFrostCling(target, attacker, state, events);
   reactTouchBurst(target, attacker, state, events);
+  reactRaiders(target, attacker, state, events, useUltimate);
   if (!useUltimate && targetWasFrozen) sodaFizz(attacker, target, state, events);
   if (!useUltimate) pullStruck(attacker, target, state, events);
   const transfer = useUltimate ? attacker.def.ultimate.damageTransfer : void 0;
@@ -8797,6 +8844,7 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
     contagiousFrenzy(attacker, target, state, events);
     reactFrostCling(target, attacker, state, events);
     reactTouchBurst(target, attacker, state, events);
+    reactRaiders(target, attacker, state, events, useUltimate);
     if (!useUltimate) pullStruck(attacker, target, state, events);
     if (!useUltimate && attacker.def.passive.kind === "farthestFocus") {
       attacker.focus = Math.min(FOCUS.maxStacks, attacker.focus + 1);
@@ -9182,7 +9230,7 @@ function spawnPups(state, owner, count2, events) {
     pup.attackCooldown = 0;
     pup.facing = owner.facing;
     pup.ferocityFever = owner.ferocityFever;
-    pup.ferocity = owner.ferocity;
+    pup.ferocity = ferocityMirrored(owner, pup);
     events.push({ kind: "packSummon", fighterId: pup.id, ownerFighterId: owner.id, x: pup.x, y: pup.y });
     count2 -= 1;
   }
@@ -9223,7 +9271,7 @@ function reviveWolf(state, owner, wolf, events) {
   wolf.engaged = false;
   wolf.attackCooldown = 0;
   wolf.ferocityFever = owner.ferocityFever;
-  wolf.ferocity = owner.ferocity;
+  wolf.ferocity = ferocityMirrored(owner, wolf);
   events.push({ kind: "packSummon", fighterId: wolf.id, ownerFighterId: owner.id, x: wolf.x, y: wolf.y });
 }
 function napeBonus(attacker, target, skill, state, events) {
@@ -9428,6 +9476,7 @@ function advance(state, dt, rng, events) {
     }
     tickShallows(fighter, dt);
     refillTauntHealBudget(fighter, dt);
+    if (isFighterAlive(fighter)) events.push(...tickRaiders(fighter, dt, state));
     if (isFighterAlive(fighter) && fighter.tailwindFor > 0) {
       events.push(...tickTailwind(fighter, dt, state));
       const remaining = fighter.tailwindFor - dt;
@@ -9557,7 +9606,7 @@ function advance(state, dt, rng, events) {
       const passive = fighter.def.passive;
       if (passive.kind === "tagAndRun") {
         if (passive.moveEnergyPerSecond) {
-          fighter.energy = Math.min(ULTIMATE_ENERGY_MAX, fighter.energy + passive.moveEnergyPerSecond * dt);
+          fighter.energy = Math.min(ultimateEnergyCap(fighter), fighter.energy + passive.moveEnergyPerSecond * dt);
         }
         if (passive.moveFerocityPerSecond) gainFerocity(fighter, passive.moveFerocityPerSecond * dt, state, events);
       }
@@ -10258,6 +10307,7 @@ var RELICS = [
     catalogSummary: "\uC2E0\uC7A5 1.63m, \uCCB4\uC911 54kg\uC758 \uADE0\uD615 \uC7A1\uD78C \uC778\uAC04\uD615 \uCCB4\uACA9\uACFC \uBC1C\uB2EC\uD55C \uD131 \uAD6C\uC870\uAC00 \uD655\uC778\uB41C, \uC131\uCCB4 \uCD08\uAE30 \uD2F0\uB77C\uB178\uC0AC\uC6B0\uB8E8\uC2A4 \uD654\uC11D \uAE30\uBC18 \uD45C\uBCF8.",
     unlockRecord: { status: "recorded", text: "\uB809\uC2DC\uC544\uB294 \uBA3C\uC800 \uC55E\uC7A5\uC11C\uACE0 \uC2B9\uBD80\uB97C \uC120\uC5B8\uD558\uB294 \uC77C\uC774 \uC7A6\uB2E4. \uC2A4\uC2A4\uB85C\uB97C \uC5EC\uC655\uC774\uB77C \uBD80\uB974\uB294 \uB2F9\uB2F9\uD55C \uB9D0\uD22C \uADF8\uB300\uB85C, \uBB38 \uC55E\uC5D0\uC11C\uB3C4 \uC120\uC5B8\uBD80\uD130 \uD558\uACE0 \uBB38\uC744 \uC5F4\uB2E4 \uACBD\uCCA9\uC9F8 \uBF51\uC544 \uB4E0\uB2E4. \uADF8\uB7EC\uACE0\uB294 \uB208\uCE58\uB97C \uBCF4\uBA70 \uC2DC\uB9D0\uC11C \uCCA0\uC744 \uAEBC\uB0B4 \uC624\uB294\uB370, \uCCA0\uC740 \uBC8C\uC368 \uB450 \uAD8C\uC9F8\uB2E4. \uB9E8 \uC55E \uC7A5\uC5D0\uB294 \uC790\uB791\uC2A4\uB7EC\uC6B4 \uCCAB \uC2DC\uB9D0\uC11C\uAC00 \uBD99\uC5B4 \uC788\uB2E4. \uBB38\uC740 \uBD80\uC218\uBA74\uC11C\uB3C4 \uADC0\uC5EC\uC6B4 \uC811\uC2DC\uC640 \uCC3B\uC794\uB9CC\uC740 \uC190\uAC00\uB77D \uB450 \uAC1C\uB85C \uC870\uC2EC\uC870\uC2EC \uB2E4\uB8EC\uB2E4. \uC608\uC804\uC5D0 \uB0B4\uAC00 \uBE14\uB80C\uB529A\uC758 \uD64D\uCC28\uAC00 \uB9DB\uC788\uB2E4\uACE0 \uD55C\uB9C8\uB514 \uD588\uB354\uB2C8 \uADF8 \uBE0C\uB79C\uB4DC\uC758 \uD55C\uC815\uD310\uC744 \uC904 \uC11C\uC11C \uAD6C\uD574 \uC640 \uD55C \uBC88\uB3C4 \uC5F4\uC9C0 \uC54A\uC740 \uCC44 \uC544\uB07C\uACE0 \uC788\uB2E4. \uC9C0\uAE08\uAE4C\uC9C0 \uAE68\uC9C4 \uCC3B\uC794\uC740 \uD558\uB098\uB3C4 \uC5C6\uB2E4. \uB3D9\uB8CC\uC758 \uC2E0\uD638\uAC00 \uB4E4\uB9AC\uBA74 \uACE7\uBC14\uB85C \uBCF4\uD3ED\uC744 \uB9DE\uCD94\uACE0, \uC804\uD22C\uAC00 \uAE38\uC5B4\uC9C8\uC218\uB85D \uC57C\uC131\uC744 \uC990\uAE30\uBA74\uC11C\uB3C4 \uB4A4\uCC98\uC9C4 \uB3D9\uB8CC\uB97C \uBA87 \uBC88\uC774\uACE0 \uB3CC\uC544\uBCF8\uB2E4. \uCE6D\uCC2C \uD55C\uB9C8\uB514\uC5D0\uB294 \uC785\uAF2C\uB9AC\uB97C \uB204\uB974\uB290\uB77C \uAF2C\uB9AC \uB05D\uC774 \uBA3C\uC800 \uC0B4\uB791\uAC70\uB9B0\uB2E4." },
     rarity: "SSR",
+    ferocityMax: 100,
     portraitAssetId: "lexia",
     origin: "\uD2F0\uB77C\uB178\uC0AC\uC6B0\uB8E8\uC2A4",
     element: "fire",
@@ -10363,6 +10413,7 @@ var RELICS = [
     // 스쿼드가 주인공을 부르는 대표 호칭.
     researcherTitle: "\uB300\uC7A5\uB2D8",
     rarity: "SR",
+    ferocityMax: 100,
     portraitAssetId: "torika",
     origin: "\uD2B8\uB9AC\uCF00\uB77C\uD1B1\uC2A4",
     element: "earth",
@@ -10492,6 +10543,7 @@ var RELICS = [
     // 해금 기록은 유일한 연구원인 주인공이 직접 포착한 직업·태도·취미·관계를 1인칭으로 남긴다.
     unlockRecord: { status: "recorded", text: "\uC2A4\uD53C\uB098\uB294 \uC5F0\uAD6C\uC18C \uC218\uC911\uACBD\uBE44\uB300\uB85C \uADFC\uBB34\uD55C\uB2E4. \uACFC\uBB35\uD55C \uD3B8\uC774\uC9C0\uB9CC \uB9E1\uC740 \uC77C\uC740 \uC5B8\uC81C\uB098 \uC815\uD655\uD558\uAC8C \uC218\uD589\uD558\uBA70, \uC21C\uCC30 \uACBD\uB85C\uC640 \uC218\uBB38 \uC810\uAC80 \uAE30\uB85D\uC5D0\uB3C4 \uBE48\uD2C8\uC774 \uC5C6\uB2E4. \uB098\uB294 \uC2A4\uD53C\uB098\uAC00 \uC544\uBB34\uB3C4 \uBAA8\uB978\uB2E4\uACE0 \uC0DD\uAC01\uD558\uB294 \uB4EF \uADFC\uBB34\uAC00 \uB05D\uB09C \uB4A4 \uC791\uC740 \uC5B4\uD56D\uC744 \uC624\uB798 \uAFB8\uBBF8\uB294 \uBAA8\uC2B5\uC744 \uC9C0\uCF1C\uBCF4\uC558\uB2E4. \uC544\uB294 \uCCB4\uD558\uC9C0 \uC54A\uC740 \uCC44 \uC8FC\uBCC0\uC758 \uBB3C\uC790\uAD6D\uACFC \uBAA8\uB798\uB97C \uC870\uC6A9\uD788 \uCCAD\uC18C\uD574 \uB450\uC5C8\uB354\uB2C8, \uC5EC\uC804\uD788 \uB4E4\uD0A4\uC9C0 \uC54A\uC558\uB2E4\uACE0 \uC5EC\uAE34 \uBAA8\uC591\uC774\uB2E4. \uB2E4\uC74C \uB0A0 \uB0B4 \uCC45\uC0C1\uC5D0\uB294 \uAC00\uC7A5 \uBC18\uB4EF\uD55C \uC870\uAC1C \uD558\uB098\uAC00 \uB193\uC5EC \uC788\uC5C8\uB2E4. \uAC04\uC2DD\uC740 \uBD95\uC5B4\uBE75\uC744 \uC88B\uC544\uD558\uB294\uB370, \uD325\uC774\uB098 \uC288\uD06C\uB9BC\uC740 \uC0AC\uC591\uD558\uACE0 \uD53C\uC790 \uBD95\uC5B4\uBE75\uB9CC \uBC1B\uB294\uB2E4. \uBC1B\uC790\uB9C8\uC790 \uBA38\uB9AC\uBD80\uD130 \uD55C \uC785 \uBB34\uB294 \uBAA8\uC2B5\uC774 \uC601\uB77D\uC5C6\uB294 \uAC15\uAC00\uC758 \uC0AC\uB0E5\uAFBC\uC774\uB2E4." },
     rarity: "SSR",
+    ferocityMax: 130,
     portraitAssetId: "seira",
     origin: "\uC2A4\uD53C\uB178\uC0AC\uC6B0\uB8E8\uC2A4",
     element: "water",
@@ -10645,6 +10697,7 @@ var RELICS = [
     // 해금 기록은 유일한 연구원인 주인공이 루카의 생활과 관계를 직접 관찰한 1인칭 시점으로 남긴다.
     unlockRecord: { status: "recorded", text: "\uBCF5\uC6D0 \uD6C4 \uB8E8\uCE74\uB294 \uC9D1\uACFC \uD734\uC2DD\uC744 \uBB34\uC5C7\uBCF4\uB2E4 \uC88B\uC544\uD558\uB294 \uB2E8\uAC70\uB9AC \uB2EC\uB9AC\uAE30 \uC120\uC218\uB85C \uAD00\uCC30\uB41C\uB2E4. \uB2E8\uAC70\uB9AC \uC120\uC218\uB2F5\uAC8C \uD558\uCCB4 \uADFC\uC721\uB7C9\uC774 \uD0C4\uD0C4\uD55C \uB8E8\uCE74\uB294 \uB2E4\uB978 \uC721\uC2DD \uACC4\uC5F4 \uB810\uB9AD\uB4E4\uACFC\uB3C4 \uB300\uCCB4\uB85C \uC6D0\uB9CC\uD558\uAC8C \uC9C0\uB0B8\uB2E4. \uC5F0\uAD6C\uC18C \uC18C\uD30C\uC5D0 \uAE38\uAC8C \uB204\uC6CC \uC26C\uB2E4\uAC00\uB3C4 \uB0B4\uAC00 \uC9C0\uB098\uAC00\uBA74 \uB298 \uBA3C\uC800 \uB9D0\uC744 \uAC78\uC5B4 \uC624\uB294 \uAC83\uC774 \uC2B5\uAD00\uC774\uB2E4. \uC88B\uC544\uD558\uB294 \uCE58\uC988\uCF00\uC774\uD06C\uB97C \uBA39\uC73C\uBA74\uC11C\uB3C4 \uC0B4\uC774 \uCC0C\uBA74 \uB2EC\uB9AC\uAE30\uAC00 \uB454\uD574\uC9C0\uC9C0 \uC54A\uACA0\uB0D0\uBA70 \uAC00\uBCCD\uAC8C \uAC71\uC815\uD558\uC9C0\uB9CC, \uC774\uB0B4 \uD55C \uC785 \uB354 \uBA39\uACE0\uB294 \uB2E4\uC74C \uC9C8\uC8FC\uB85C \uCDA9\uBD84\uD788 \uC6C0\uC9C1\uC774\uBA74 \uB41C\uB2E4\uBA70 \uC6C3\uB294\uB2E4." },
     rarity: "SR",
+    ferocityMax: 110,
     portraitAssetId: "luka",
     origin: "\uBCA8\uB85C\uD0A4\uB78D\uD1A0\uB974",
     element: "wind",
@@ -10740,6 +10793,7 @@ var RELICS = [
     // 다른 스쿼드를 향한 동경도 독립 라벨이 아닌, 연구원이 직접 본 행동으로 관찰 기록 문장 안에 남긴다.
     unlockRecord: { status: "recorded", text: "\uB3C4\uB514\uB294 \uC0C8\uB85C\uC6B4 \uBB3C\uAC74\uB9CC \uBCF4\uBA74 \u201C\uB300\uC7A5\uB2D8, \uC774\uAC83 \uC880 \uBCF4\uC138\uC694!\u201D \uD558\uACE0 \uB2EC\uB824\uC624\uB294 \uC544\uC774\uB2E4. \uBC18\uC9DD\uC774\uB294 \uC7A1\uB3D9\uC0AC\uB2C8\uB3C4 \uBC1C\uACAC \uAE30\uB85D\uC774\uB77C\uBA70 \uAE43\uD39C\uC73C\uB85C \uC77C\uC9C0\uC5D0 \uB610\uBC15\uB610\uBC15 \uC801\uC5B4 \uB123\uB294\uB370, \uC815\uC791 \uC81C \uBC25\uB54C\uB294 \uC801\uC5B4 \uB450\uC9C0 \uC54A\uC544\uC11C \uC790\uAFB8 \uB193\uCE5C\uB2E4. \uB3D9\uB8CC\uC758 \uC0AC\uC18C\uD55C \uBC84\uB987\uACFC \uB0AF\uC120 \uC0C1\uB300\uC758 \uBC18\uC751\uAE4C\uC9C0 \uBC1B\uC544 \uC801\uB2E4 \uBCF4\uB2C8 \uC190\uAC00\uB77D\uC5D0\uB294 \uB298 \uC789\uD06C\uAC00 \uBB3B\uC5B4 \uC788\uB2E4. \uB108\uBB34 \uBC18\uAC00\uC6B4 \uB098\uBA38\uC9C0 \uD55C \uAC78\uC74C \uB354 \uB2E4\uAC00\uC11C\uB2E4\uAC00 \uC0C1\uB300\uB97C \uB180\uB77C\uAC8C \uD558\uACE0 \uC800\uB3C4 \uB180\uB77C \uBB3C\uB7EC\uC11C\uB294 \uC77C\uB3C4 \uC7A6\uB2E4. \uC694\uC998\uC740 \uAD00\uC81C\uD0D1\uC758 \uC2DC\uADF8\uB110 \uC544\uC774\uAC00 \uC5EC\uB7EC \uC2E0\uD638\uB97C \uD55C\uAEBC\uBC88\uC5D0 \uC0B4\uD53C\uACE0 \uD310\uB2E8\uD558\uB294 \uBAA8\uC2B5\uC744 \uC624\uB798 \uC62C\uB824\uB2E4\uBCF4\uB354\uB2C8, \uB192\uC740 \uACF3\uC5D0 \uC62C\uB77C \uB3D9\uB8CC\uB4E4\uC758 \uC6C0\uC9C1\uC784\uC744 \uC77C\uC77C\uC774 \uD655\uC778\uD558\uACE0 \uBA3C\uC800 \uAC08 \uAE38\uC744 \uC815\uD558\uB824 \uD55C\uB2E4. \uC544\uC9C1\uC740 \uAE38\uBCF4\uB2E4 \uB3C4\uB514\uAC00 \uBA3C\uC800 \uAE38\uC744 \uC783\uB294\uB2E4. \uC77C\uC9C0 \uCCAB \uC7A5 \uB9E8 \uC704\uC5D0\uB294 \uB098\uB97C \uBD80\uB974\uB294 \uB9D0\uC778 '\uB300\uC7A5\uB2D8'\uC774 \uD06C\uAC8C \uC801\uD600 \uC788\uACE0, \uC774\uB984 \uC4F8 \uCE78\uC740 \uBE44\uC5B4 \uC788\uB2E4. 1\uD638 \uD32C\uC774\uB77C\uB294 \uB9D0\uC740 \uBCF8\uC778\uC774 \uBD99\uC600\uB2E4." },
     rarity: "R",
+    ferocityMax: 70,
     portraitAssetId: "dodi",
     origin: "\uB3C4\uB3C4\uC0C8",
     element: "wind",
@@ -10848,6 +10902,7 @@ var RELICS = [
     squadNote: "\uC058\uB760 \uB85C\uADF8\uC758 \uBB3C\uAC00 \uB2F4\uB2F9. \uBC18\uC9DD\uC774\uB294 \uAC83\uB9CC \uBCF4\uBA74 \uC8FC\uC6CC \uC640 \uB300\uC7A5\uB2D8\uC758 \uBCF4\uAE09\uD488\uC774\uB77C \uC6B0\uAE30\uACE0, \uC815\uC791 \uCE6D\uCC2C\uC740 \uBCA0\uC77C \uB4A4\uC5D0 \uC228\uC5B4\uC11C \uB4E3\uB294\uB2E4.",
     researcherTitle: "\uC5F0\uAD6C\uC6D0\uB2D8",
     rarity: "R",
+    ferocityMax: 90,
     portraitAssetId: "tia",
     origin: "\uC774\uD06C\uD2F0\uC624\uC0AC\uC6B0\uB8E8\uC2A4",
     element: "water",
@@ -10960,6 +11015,7 @@ var RELICS = [
     // 시그널 아이의 새내기라 연구원을 "선배"라 부른다 — 그 호칭 자체가 이적한 지 얼마 안 됐음을 말한다.
     researcherTitle: "\uC120\uBC30",
     rarity: "SR",
+    ferocityMax: 90,
     portraitAssetId: "stella",
     origin: "\uAC8C\uC624\uC2A4\uD14C\uB978\uBCA0\uB974\uAE30\uC544",
     element: "wind",
@@ -11060,6 +11116,7 @@ var RELICS = [
     // 관제 호칭 중 가장 실무적인 것을 골라, 귀찮다면서도 일은 끝까지 하는 선임의 결을 말한다.
     researcherTitle: "\uB2F4\uB2F9\uAD00",
     rarity: "R",
+    ferocityMax: 90,
     portraitAssetId: "kento",
     origin: "\uCF04\uD2B8\uB85C\uC0AC\uC6B0\uB974\uC2A4",
     element: "fire",
@@ -11185,6 +11242,7 @@ var RELICS = [
     // 말을 아끼는 작업자라 스쿼드 호칭 중 가장 짧고 건조한 쪽을 쓴다.
     researcherTitle: "\uB2F9\uC2E0",
     rarity: "SR",
+    ferocityMax: 110,
     portraitAssetId: "mosana",
     origin: "\uBAA8\uC0AC\uC0AC\uC6B0\uB8E8\uC2A4",
     element: "water",
@@ -11295,6 +11353,7 @@ var RELICS = [
     // 졸린 말투에 어울리는 늘어지는 호칭이라 사일런트 룬의 「연구원 씨」를 쓴다.
     researcherTitle: "\uC5F0\uAD6C\uC6D0 \uC528",
     rarity: "R",
+    ferocityMax: 90,
     portraitAssetId: "anka",
     origin: "\uC548\uD0AC\uB85C\uC0AC\uC6B0\uB8E8\uC2A4",
     element: "earth",
@@ -11405,6 +11464,7 @@ var RELICS = [
     // 선원 모자를 쓰고 지시를 되읊는 버릇이라 시그널 아이가 지시자에게 쓰는 「오더」를 그대로 연구원에게 돌려 쓴다.
     researcherTitle: "\uC624\uB354",
     rarity: "SR",
+    ferocityMax: 110,
     portraitAssetId: "irna",
     origin: "\uC774\uD06C\uD2F0\uC624\uB974\uB2C8\uC2A4",
     element: "water",
@@ -11509,6 +11569,7 @@ var RELICS = [
     squadNote: '\uC571\uC194\uB8E8\uD2B8 \uD33D\uC758 \uC804\uC120 \uC218\uBE44 \uB2F4\uB2F9. \uBC00\uACE0 \uB4E4\uC5B4\uAC00\uB294 \uB3D9\uB8CC\uB4E4 \uC55E\uC5D0 \uC11C\uC11C \uC0C1\uB300\uAC00 \uBA3C\uC800 \uBB3C\uB7EC\uC11C\uAC8C \uB9CC\uB4E4\uC5B4 \uC804\uC5F4\uC744 \uC9C0\uD0A4\uACE0, \uC5F0\uAD6C\uC6D0\uC744 "\uB9C8\uC2A4\uD130"\uB77C \uBD80\uB974\uBA70 \uC9C0\uC2DC\uC5D0\uB294 \uACE0\uAC1C\uBD80\uD130 \uB044\uB355\uC778\uB2E4.',
     researcherTitle: "\uB9C8\uC2A4\uD130",
     rarity: "SSR",
+    ferocityMax: 120,
     portraitAssetId: "ark",
     origin: "\uC544\uB974\uD06C\uD1A0\uB450\uC2A4",
     element: "earth",
@@ -11612,6 +11673,7 @@ var RELICS = [
     squadNote: '\uC571\uC194\uB8E8\uD2B8 \uD33D\uC758 \uCE21\uBA74 \uCE68\uD22C \uB2F4\uB2F9. \uC815\uBA74\uC5D0\uC11C \uBD80\uB52A\uD788\uB294 \uB3D9\uB8CC\uB4E4\uC758 \uD2C8\uC73C\uB85C \uBC14\uB78C\uCC98\uB7FC \uD30C\uACE0\uB4E4\uC5B4 \uC57D\uD574\uC9C4 \uC0C1\uB300\uB97C \uB05D\uB0B4\uACE0, \uC5F0\uAD6C\uC6D0\uC744 "\uBCF4\uC2A4"\uB77C \uBD80\uB978\uB2E4.',
     researcherTitle: "\uBCF4\uC2A4",
     rarity: "SSR",
+    ferocityMax: 120,
     portraitAssetId: "yuti",
     origin: "\uC720\uD2F0\uB77C\uB204\uC2A4",
     element: "wind",
@@ -11708,6 +11770,7 @@ var RELICS = [
     squadNote: '\uC058\uB760 \uB85C\uADF8\uC5D0\uC11C \uC720\uC77C\uD558\uAC8C \uB290\uAE0B\uD55C \uCD95. \uC18C\uB780\uC2A4\uB7EC\uC6B4 \uD0D0\uD5D8\uB300 \uD55C\uCF20\uC5D0\uC11C \uC74C\uB8CC\uB97C \uB098\uB220 \uC8FC\uBA70 \uBD84\uC704\uAE30\uB97C \uAC00\uB77C\uC549\uD788\uACE0, \uC5F0\uAD6C\uC6D0\uC744 "\uB300\uC7A5\uB2D8"\uC774\uB77C \uBD80\uB978\uB2E4.',
     researcherTitle: "\uB300\uC7A5\uB2D8",
     rarity: "SR",
+    ferocityMax: 100,
     portraitAssetId: "teku",
     origin: "\uAE30\uAC04\uD1A0\uD53C\uD14C\uCFE0\uC2A4",
     element: "grass",
@@ -11801,6 +11864,7 @@ var RELICS = [
     squadNote: "\uC0AC\uC77C\uB7F0\uD2B8 \uB8EC\uC758 \uAE30\uB85D \uB2F4\uB2F9. \uCF00\uC5B4\uC2E4\uC744 \uB4DC\uB098\uB4E0 \uB810\uB9AD\uC758 \uC5BC\uAD74\uC744 \uD55C \uC7A5\uC529 \uADF8\uB824 \uBCBD\uC5D0 \uBD99\uC5EC \uB450\uACE0, \uC815\uC791 \uC790\uAE30 \uADF8\uB9BC \uC774\uC57C\uAE30\uAC00 \uB098\uC624\uBA74 \uD6C4\uB4DC\uB97C \uB4A4\uC9D1\uC5B4\uC4F4\uB2E4.",
     researcherTitle: "\uC5F0\uAD6C\uC6D0 \uC528",
     rarity: "SSR",
+    ferocityMax: 100,
     portraitAssetId: "meron",
     origin: "\uBA54\uAC08\uB85C\uB3C8",
     element: "water",
@@ -11901,6 +11965,7 @@ var RELICS = [
     squadNote: '\uC571\uC194\uB8E8\uD2B8 \uD33D\uC758 \uB3CC\uD30C \uB2F4\uB2F9. \uC804\uC120\uC774 \uC5F4\uB824\uC57C \uD560 \uC790\uB9AC\uB97C \uBA38\uB9AC\uB85C \uB6AB\uC5B4 \uB193\uACE0, \uC5F0\uAD6C\uC6D0\uC744 \uAD73\uC774 "\uBCF4\uC2A4"\uB77C \uBD80\uB974\uBA70 \uC9C0\uC2DC\uC5D0\uB294 \uD234\uD234\uAC70\uB9AC\uBA74\uC11C\uB3C4 \uAF2D \uB530\uB978\uB2E4.',
     researcherTitle: "\uBCF4\uC2A4",
     rarity: "SR",
+    ferocityMax: 100,
     portraitAssetId: "pachi",
     origin: "\uD30C\uD0A4\uCF00\uD314\uB85C\uC0AC\uC6B0\uB8E8\uC2A4",
     element: "earth",
@@ -12016,6 +12081,7 @@ var RELICS = [
     squadNote: '\uB098\uC774\uD2B8 \uAE30\uC5B4\uC758 \uC57C\uC804 \uB2F4\uB2F9\uC758. \uC778\uC591\uC870\uAC00 \uB2E4\uCE58\uBA74 \uADF8 \uC790\uB9AC\uC5D0\uC11C \uBD99\uC5EC \uB193\uACE0, \uC5F0\uAD6C\uC6D0\uB9CC\uC740 "\uC5F0\uAD6C\uC6D0\uB2D8"\uC774\uB77C \uBD80\uB974\uBA70 \uC9C4\uB8CC \uC608\uC57D\uC744 \uC870\uB978\uB2E4.',
     researcherTitle: "\uC5F0\uAD6C\uC6D0\uB2D8",
     rarity: "SSR",
+    ferocityMax: 120,
     portraitAssetId: "maki",
     origin: "\uB9C8\uCE74\uC774\uB85C\uB450\uC2A4",
     element: "earth",
@@ -12121,6 +12187,7 @@ var RELICS = [
     // 관제탑의 잡담에 끼지 못하는 성격이라 스쿼드가 쓰는 호칭 중 가장 사적인 "선배"를 쓴다.
     researcherTitle: "\uC120\uBC30",
     rarity: "SR",
+    ferocityMax: 110,
     portraitAssetId: "keris",
     origin: "\uBA54\uAC08\uB85C\uCF00\uB85C\uC2A4",
     element: "earth",
@@ -12241,6 +12308,7 @@ var RELICS = [
     // 낯을 가리는 스쿼드에서 혼자 말이 많은 막내라, 스쿼드가 쓰는 호칭 중 가장 격식 있는 쪽을 골라 장난스럽게 부른다.
     researcherTitle: "\uC5F0\uAD6C\uC6D0\uB2D8",
     rarity: "SR",
+    ferocityMax: 110,
     portraitAssetId: "delopi",
     origin: "\uB51C\uB85C\uD3EC\uC0AC\uC6B0\uB8E8\uC2A4",
     element: "grass",
@@ -12351,6 +12419,7 @@ var RELICS = [
     // 케어하는 스쿼드에서 스스로 돌봄을 받지 않는 쪽이라, 아이를 부르듯 하는 호칭을 골라 쓴다.
     researcherTitle: "\uC544\uAC00",
     rarity: "SSR",
+    ferocityMax: 110,
     portraitAssetId: "nodonia",
     origin: "\uD504\uD14C\uB77C\uB178\uB3C8",
     element: "wind",
@@ -12473,6 +12542,7 @@ var RELICS = [
     // 힘을 숨기지 않는 스쿼드에서 유일하게 물러서지 않는 쪽이라, 호칭도 가장 격의 없는 것을 쓴다.
     researcherTitle: "\uC5F0\uAD6C\uC6D0",
     rarity: "SSR",
+    ferocityMax: 120,
     portraitAssetId: "ella",
     origin: "\uCF54\uC5D8\uB85C\uB3C8\uD0C0",
     element: "grass",
@@ -12964,7 +13034,7 @@ var RELICS = [
      * 다른 공멸 셋과 같은 층위(복원 후 관찰 · 소속 행동 · 호칭)로 채운다.
      */
     unlockRecord: { status: "recorded", text: "\uC2DD\uBCC4 \uAE30\uB85D 204. \uACF5\uBA78 \uC18C\uC18D\uC73C\uB85C \uD655\uC778\uB418\uC5C8\uB2E4. \uC5BC\uB8E9\uBB34\uB2AC \uD6C4\uB4DC \uCF54\uD2B8\uC758 \uC9C0\uD37C\uB97C \uBAA9 \uB05D\uAE4C\uC9C0 \uC62C\uB824 \uB208\uB9CC \uB4DC\uB7EC\uB0B4\uACE0 \uC11C\uBA70, \uB450 \uC190\uC740 \uB4A4\uB85C \uB3CC\uB9B0 \uCC44 \uAF2C\uB9AC \uB05D\uC774 \uD1B1\uB2C8\uCC98\uB7FC \uAC08\uB77C\uC838 \uC788\uB2E4. \uBB38\uC774 \uC5F4\uB9AC\uB294 \uC18C\uB9AC\uBCF4\uB2E4 \uBA3C\uC800 \uADF8 \uC55E\uC5D0 \uAC00 \uC788\uC5C8\uACE0, \uB9C9\uB2E4\uB978 \uAE38\uC774\uBA74 \uB418\uB3CC\uC544\uC640 \uB2E4\uB978 \uAE38\uC744 \uACE8\uB77C \uB2EC\uB838\uB2E4. \uD55C \uBC88 \uB4A4\uB97C \uBC1F\uC740 \uC0C1\uB300\uB294 \uC2DC\uC57C\uC5D0\uC11C \uC0AC\uB77C\uC838\uB3C4 \uB193\uC9C0 \uC54A\uC558\uB2E4. \uB204\uAD6C\uC758 \uC9C0\uC2DC\uB97C \uBC1B\uC544 \uBA3C\uC800 \uC6C0\uC9C1\uC774\uB294\uC9C0\uB294 \uD655\uC778\uB418\uC9C0 \uC54A\uC558\uB2E4." },
-    squadNote: "\uACF5\uBA78\uC758 \uD589\uB3D9\uB300\uC7A5\uC73C\uB85C \uD655\uC778\uB41C\uB2E4. \uB3CC\uC785\uB85C\uAC00 \uC815\uD574\uC9C0\uAE30 \uC804\uC5D0 \uBA3C\uC800 \uB4E4\uC5B4\uAC00 \uC548\uC744 \uBCF4\uACE0 \uC624\uBA70, \uD769\uC5B4\uC9C4 \uC801\uC744 \uD55C \uBC29\uD5A5\uC73C\uB85C \uBAB0\uC544 \uB4A4\uB530\uB974\uB294 \uB3D9\uB8CC \uC55E\uC5D0 \uC138\uC6B4\uB2E4.",
+    squadNote: "\uACF5\uBA78 \uD14C\uB7EC\uC870\uC758 \uD589\uB3D9\uB300\uC7A5\uC73C\uB85C \uD655\uC778\uB41C\uB2E4. \uB3CC\uC785\uB85C\uAC00 \uC815\uD574\uC9C0\uAE30 \uC804\uC5D0 \uBA3C\uC800 \uB4E4\uC5B4\uAC00 \uC548\uC744 \uBCF4\uACE0 \uC624\uBA70, \uD769\uC5B4\uC9C4 \uC801\uC744 \uD55C \uBC29\uD5A5\uC73C\uB85C \uBAB0\uC544 \uB4A4\uB530\uB974\uB294 \uB3D9\uB8CC \uC55E\uC5D0 \uC138\uC6B4\uB2E4.",
     researcherTitle: "\uC5F0\uAD6C\uC6D0",
     /*
      * **중간보스는 SR급이다.** 공멸 3인조(토비·아모·리파)가 R 띠를 지키는 잡졸이라면 이쪽은
@@ -12972,6 +13042,8 @@ var RELICS = [
      * 등급을 R로 두면 레벨 성장률(1.8)까지 잡졸과 같아져 관문이 올라갈수록 격차가 벌어진다.
      */
     rarity: "SR",
+    // 폭주가 열리려면 야성 320(기본 100의 3.2배). 막다른 길에서도 놓지 않는 급습형이라 늦게 터진다. 폭주는 8초에 다 닳는다.
+    ferocityMax: 320,
     portraitAssetId: "koma",
     origin: "\uCF64\uD504\uC18C\uADF8\uB098\uD22C\uC2A4",
     /*
@@ -13002,11 +13074,12 @@ var RELICS = [
      */
     stats: {
       // 중간보스는 SR 띠의 위쪽이다. 암살자가 쓰는 공격력과 그 정체성인 공격 속도에만 얹는다.
-      hp: 1100,
-      def: 55,
-      res: 46,
+      // 응태 결정(v0.308.6): SSR 없이 못 깰 만큼 단단해 체력을 덜어 방어·저항·주문력에 조금 나눴다(1100/55/46/52 → 900/60/52/62).
+      hp: 900,
+      def: 60,
+      res: 52,
       atk: 150,
-      ap: 52,
+      ap: 62,
       attackSpeed: 118,
       moveSpeed: 124,
       critChance: 10,
@@ -13102,6 +13175,443 @@ var RELICS = [
     }
   },
   {
+    id: "ikanixia",
+    enemyOnly: true,
+    squad: "annihilation",
+    name: "\uC774\uCE74\uB2C9\uC2DC\uC544",
+    specimenNumber: "213",
+    projectName: "ANNIHILATION RETRIEVAL 213",
+    excavationSite: "\uC624\uB514\uB514 \uACA9\uB9AC \uC5F0\uAD6C\uB3D9 \uD68C\uC218 \uACA9\uB0A9\uACE0",
+    fossilRecord: "\uACA9\uB0A9\uACE0 \uCC9C\uC7A5 \uACE8\uC870\uC5D0 \uB9E4\uB2EC\uB9B0 \uCC44 \uAD73\uC740 \uB0A0\uAC1C\uB9C9 \uD754\uC801\uACFC \uAC00\uB290\uB2E4\uB780 \uC190\uAC00\uB77D\uBF08\uAC00 \uD568\uAED8 \uD68C\uC218\uB418\uC5C8\uB2E4. \uC18C\uB9AC\uB85C \uAC70\uB9AC\uB97C \uC7AC\uB294 \uADC0\uBF08\uAC00 \uC720\uB09C\uD788 \uD06C\uAC8C \uBCF5\uC6D0\uB418\uC5B4 \uC788\uC5B4, \uC5F0\uAD6C\uB294 \uC774 \uAC1C\uCCB4\uAC00 \uC5B4\uB460 \uC18D\uC5D0\uC11C \uBB34\uC5C7\uC744 \uBA3C\uC800 \uCC3E\uC558\uB294\uC9C0\uB97C \uC7AC\uB294 \uAC83\uC73C\uB85C \uC2DC\uC791\uD588\uB2E4.",
+    observationProfile: {
+      originYear: "\uC57D 5,200\uB9CC \uB144 \uC804",
+      // E.C.는 차분하게 판을 읽고 아랫사람을 다루는 성숙한 인상을 분류하며, 복원 경과 연도가 아니다.
+      restorationYear: "E.C. 17\uB144",
+      lifeStage: "\uC131\uCCB4",
+      height: "1.62 m",
+      weight: "44 kg"
+    },
+    catalogSummary: "\uB113\uC740 \uB0A0\uAC1C\uB9C9\uACFC \uC608\uBBFC\uD55C \uADC0\uB97C \uC9C0\uB2CC \uCC44 \uBCF5\uC6D0\uB41C, \uACF5\uBA78 \uD68C\uC218\uC870\uC758 \uD589\uB3D9\uB300\uC7A5 \uC774\uCE74\uB85C\uB2C9\uD14C\uB9AC\uC2A4 \uAE30\uBC18 \uD45C\uBCF8.",
+    unlockRecord: { status: "recorded", text: '\uC2DD\uBCC4 \uAE30\uB85D 213. \uACF5\uBA78 \uC18C\uC18D\uC73C\uB85C \uD655\uC778\uB418\uC5C8\uB2E4. \uB0A0\uAC1C\uB9C9\uC744 \uB9DD\uD1A0\uCC98\uB7FC \uC811\uC5B4 \uC5B4\uAE68\uC5D0 \uB450\uB974\uACE0 \uC11C\uBA70, \uC870\uC6A9\uD788 \uAC77\uB294\uB370\uB3C4 \uBCF5\uB3C4 \uB05D\uC758 \uC18C\uB9AC\uB97C \uBA3C\uC800 \uC54C\uC544\uCC44\uACE0 \uACE0\uAC1C\uB97C \uB3CC\uB838\uB2E4. \uC2E4\uD328\uD55C \uD300\uC758 \uB4A4\uB97C \uB530\uB77C\uAC00 \uC0AC\uB78C\uACFC \uC7A5\uBE44\uB97C \uAC70\uB450\uC5B4 \uC624\uB294 \uC77C\uC744 \uB9E1\uC73C\uBA70, \uC5F0\uAD6C\uC6D0\uC5D0\uAC8C\uB294 "\uC5F0\uAD6C\uC6D0\uB2D8"\uC774\uB77C \uAE4D\uB4EF\uD558\uAC8C \uBD80\uB974\uC9C0\uB9CC \uB9D0\uB05D\uC5D0 \uC11C\uB298\uD55C \uC6C3\uC74C\uC774 \uBB3B\uC5B4 \uC788\uC5C8\uB2E4. \uD68C\uC218\uC758 \uB300\uC0C1\uC5D0 \uBB34\uC5C7\uC774 \uD3EC\uD568\uB418\uB294\uC9C0\uB294 \uD655\uC778\uB418\uC9C0 \uC54A\uC558\uB2E4.' },
+    squadNote: '\uACF5\uBA78 \uD68C\uC218\uC870\uC758 \uD589\uB3D9\uB300\uC7A5\uC73C\uB85C \uD655\uC778\uB41C\uB2E4. \uC791\uC804\uC5D0 \uC2E4\uD328\uD55C \uD300\uC744 \uCC3E\uC544 \uAC70\uB450\uC5B4 \uC624\uACE0, \uAC19\uC740 \uC190\uC73C\uB85C \uC5F0\uAD6C\uC6D0\uC744 \uB370\uB824\uAC00\uB294 \uC77C\uB3C4 \uB9E1\uB294\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 "\uC5F0\uAD6C\uC6D0\uB2D8"\uC774\uB77C \uAE4D\uB4EF\uC774 \uBD80\uB978\uB2E4.',
+    researcherTitle: "\uC5F0\uAD6C\uC6D0\uB2D8",
+    rarity: "SR",
+    portraitAssetId: "ikanixia",
+    origin: "\uC774\uCE74\uB85C\uB2C9\uD14C\uB9AC\uC2A4",
+    element: "wind",
+    role: "warrior",
+    reachTier: "melee",
+    strike: "slash",
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1 },
+    /*
+     * **행동대장이라 SR 띠의 위쪽이다**(2319). 날개로 가르는 전사라 공격력과 체력에 얹고, 주문력은 쓰는 스킬이 없어 낮게 둔다.
+     */
+    stats: {
+      hp: 800,
+      def: 65,
+      res: 55,
+      atk: 200,
+      ap: 20,
+      attackSpeed: 135,
+      moveSpeed: 110,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0
+    },
+    ferocityTrait: { name: "\uB9CC\uCC2C \uAC1C\uC2DC", effectId: "commandStart", resonance: { kind: "resonance", attackSpeedPercent: 25, seconds: 4 } },
+    passive: {
+      id: "ikanixia-passive",
+      name: "\uADC0\uC871\uC758 \uCCAD\uAC01",
+      kind: "echoLocation",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 반향이 남는 시간(초)을 담아 둔다.
+      value: 5,
+      echoLocation: { shieldMaxHpPercent: 6, capMaxHpPercent: 30 },
+      desc: "\uAE30\uBCF8 \uACF5\uACA9\uACFC \uAD81\uADF9\uAE30\uAC00 \uC801\uC911\uD55C \uC801\uC5D0\uAC8C \uBC18\uD5A5\uC744 \uAC74\uB2E4. \uBC18\uD5A5\uC774 \uB4E0 \uC801\uC744 \uCE5C \uC544\uAD70\uC740 \uBCF4\uD638\uB9C9\uC744 \uB450\uB978\uB2E4."
+    },
+    basic: {
+      id: "ikanixia-basic",
+      name: "\uC6B0\uC544\uD55C \uC808\uAC1C",
+      power: 150,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+      /*
+       * **세 번째 날개가 발을 묶는다.** 코마의 후려치기(밀어내기)와 갈리도록 이쪽은 찢어 놓고 붙잡는다 —
+       * 출혈과 짧은 기절이라 회수 대상을 도망치지 못하게 하는 손이다. 주기로 끊어 플레이어가 세 번째를 읽는다.
+       */
+      statusEffectEvery: 3,
+      statusEffects: [
+        { kind: "concussion", maxHpPercent: 5, criticalMaxHpPercent: 15 },
+        { kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2 },
+        { kind: "stun", seconds: 1 }
+      ]
+    },
+    ultimate: {
+      id: "ikanixia-ult",
+      name: "\uAE09\uAC15\uD558 \uB9CC\uCC2C",
+      power: 340,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      cost: 80,
+      /*
+       * **하늘에서 내리꽂아 줄 전체를 거둔다.** 단일 정예 자리라 한 명만 치는 궁극기로는 셋이 둘러싼 판에서
+       * 달라지는 것이 없다. 나아가는 거리는 이동 속도가 정하므로(`SKIRMISH.chargeSeconds` × 이속) 배율만 얹는다.
+       * 지나간 적은 모두 반향을 달아(패시브) 뒤따르는 평타가 아군의 막이 된다.
+       */
+      targeting: "chargeLine",
+      radius: 85,
+      chargeReachMultiplier: 1.6,
+      // 거두어 가는 손이라 뚫고 지나간 만큼을 되돌려 받는다.
+      damageHealingPercent: 40,
+      // 막을 깨고 박힌다 — 회수 대상이 두른 방벽은 의미가 없다.
+      breaksShield: true
+    },
+    breakthroughEffects: {
+      basic: { kind: "none" },
+      ultimate: { kind: "none" },
+      ferocity: { kind: "none" },
+      passive: { kind: "none" }
+    }
+  },
+  {
+    id: "atra",
+    enemyOnly: true,
+    squad: "annihilation",
+    name: "\uC544\uD2B8\uB77C",
+    specimenNumber: "214",
+    projectName: "ANNIHILATION RETRIEVAL 214",
+    excavationSite: "\uC624\uB514\uB514 \uACA9\uB9AC \uC5F0\uAD6C\uB3D9 \uD68C\uC218 \uACA9\uB0A9\uACE0",
+    fossilRecord: "\uACA9\uB0A9\uACE0 \uBC14\uB2E5\uC744 \uAC00\uB85C\uC9C8\uB7EC \uB9C8\uB514\uB9C8\uB514 \uC774\uC5B4\uC9C4 \uAE34 \uC678\uACE8\uACA9 \uC778\uC0C1\uC774 \uD55C \uC904\uB85C \uAD73\uC5B4 \uB098\uC654\uB2E4. \uB9C8\uB514 \uD558\uB098\uD558\uB098\uAC00 \uB530\uB85C \uB5A8\uC5B4\uC838\uB3C4 \uC6C0\uC9C1\uC784\uC774 \uC774\uC5B4\uC9C4 \uD754\uC801\uC774 \uB0A8\uC544 \uC788\uC5B4, \uBCF5\uC6D0 \uC5F0\uAD6C\uB294 \uC774 \uBAB8\uC774 \uC5B4\uB514\uAE4C\uC9C0 \uB04A\uAE30\uC9C0 \uC54A\uACE0 \uBC84\uD17C\uB294\uC9C0\uB97C \uC7AC\uB294 \uAC83\uC73C\uB85C \uC2DC\uC791\uD588\uB2E4.",
+    observationProfile: {
+      originYear: "\uC57D 3\uC5B5 \uB144 \uC804",
+      // E.C.는 한 걸음 물러서 대장을 받치는 침착한 인상을 분류하며, 복원 경과 연도가 아니다.
+      restorationYear: "E.C. 15\uB144",
+      lifeStage: "\uC131\uCCB4",
+      height: "1.74 m",
+      weight: "63 kg"
+    },
+    catalogSummary: "\uB9C8\uB514\uC9C4 \uC678\uACE8\uACA9\uACFC \uAE34 \uAF2C\uB9AC\uB97C \uC9C0\uB2CC \uCC44 \uBCF5\uC6D0\uB41C, \uACF5\uBA78 \uD68C\uC218\uC870\uC758 \uBD80\uBD80\uB300\uC7A5 \uC544\uD2B8\uB85C\uD50C\uB808\uC6B0\uB77C \uAE30\uBC18 \uD45C\uBCF8.",
+    unlockRecord: { status: "recorded", text: '\uC2DD\uBCC4 \uAE30\uB85D 214. \uACF5\uBA78 \uC18C\uC18D\uC73C\uB85C \uD655\uC778\uB418\uC5C8\uB2E4. \uC5B4\uAE68\uC640 \uB4F1\uC744 \uB36E\uC740 \uB9C8\uB514 \uC7A5\uC2DD\uC774 \uAC78\uC744 \uB54C\uB9C8\uB2E4 \uCC28\uB840\uB85C \uC6B8\uB838\uACE0, \uB300\uC7A5 \uACC1\uC5D0\uC11C \uBC18 \uAC78\uC74C \uB4A4\uB97C \uC9C0\uCF30\uB2E4. \uB204\uAC00 \uBA3C\uC800 \uB9DE\uC544\uB3C4 \uADF8 \uC55E\uC73C\uB85C \uBAB8\uC744 \uBC00\uC5B4 \uB123\uC5C8\uC73C\uBA70, \uC5F0\uAD6C\uC6D0\uC5D0\uAC8C\uB294 "\uC5F0\uAD6C\uC6D0\uB2D8"\uC774\uB77C \uBD80\uB974\uB418 \uB208\uC740 \uCD9C\uAD6C \uCABD\uC744 \uBCF4\uACE0 \uC788\uC5C8\uB2E4. \uB9C8\uB514\uAC00 \uAE4E\uC5EC \uB098\uAC00\uB3C4 \uC5BC\uAD74\uBE5B\uC744 \uBC14\uAFB8\uC9C0 \uC54A\uC558\uB2E4.' },
+    squadNote: '\uACF5\uBA78 \uD68C\uC218\uC870\uC758 \uBD80\uBD80\uB300\uC7A5\uC73C\uB85C \uD655\uC778\uB41C\uB2E4. \uD589\uB3D9\uB300\uC7A5\uC774 \uC55E\uC73C\uB85C \uB098\uAC00\uBA74 \uADF8 \uB4A4\uB97C \uBC1B\uCCD0 \uD68C\uC218 \uB300\uC0C1 \uC55E\uC5D0 \uC120\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 "\uC5F0\uAD6C\uC6D0\uB2D8"\uC774\uB77C \uAE4D\uB4EF\uC774 \uBD80\uB978\uB2E4.',
+    researcherTitle: "\uC5F0\uAD6C\uC6D0\uB2D8",
+    rarity: "SR",
+    portraitAssetId: "atra",
+    origin: "\uC544\uD2B8\uB85C\uD50C\uB808\uC6B0\uB77C",
+    element: "grass",
+    role: "tank",
+    reachTier: "melee",
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1 },
+    /*
+     * **버티는 값은 체력·방어·저항, 한 방은 느리다**(2323). 무적은 없다 — 마디 방벽은 막이 깎이는 만큼 피해를 받고
+     * 마디가 되살아나는 속도로만 버틴다.
+     */
+    stats: {
+      hp: 1450,
+      def: 120,
+      res: 100,
+      atk: 120,
+      ap: 20,
+      attackSpeed: 66,
+      moveSpeed: 56,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0
+    },
+    ferocityTrait: { name: "\uBD80\uB044\uB7EC\uC6B4 \uAC00\uC2DC", effectId: "thornBristle", segmentSizePercent: 50, restoreSpeedPercent: 50 },
+    passive: {
+      id: "atra-passive",
+      name: "\uC218\uC90D\uC740 \uAC11\uC637",
+      kind: "segmentBarrier",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 마디가 되살아나는 주기(초)를 담아 둔다.
+      value: 6,
+      segmentBarrier: { segments: 4, segmentMaxHpPercent: 5, restoreSeconds: 6, hitRestoreSeconds: 0.15 },
+      desc: "\uC804\uD22C\uB97C \uB9C8\uB514 \uBC29\uBCBD\uC744 \uB450\uB974\uACE0 \uC2DC\uC791\uD55C\uB2E4. \uB9C9\uC774 \uAE4E\uC774\uBA74 \uB9C8\uB514\uAC00 \uD558\uB098\uC529 \uB418\uC0B4\uC544\uB09C\uB2E4."
+    },
+    basic: {
+      id: "atra-basic",
+      name: "\uC800, \uC800\uAE30 \uCC44\uCC0D",
+      power: 190,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single"
+    },
+    ultimate: {
+      id: "atra-ult",
+      name: "\uB193, \uB193\uC9C0 \uC54A\uC544\uC694",
+      power: 100,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      cost: 150,
+      targeting: "nearbyEnemies",
+      radius: 260,
+      statusEffects: [{ kind: "taunt", seconds: 3 }, { kind: "stagger", seconds: 0.1 }]
+    },
+    breakthroughEffects: {
+      basic: { kind: "none" },
+      ultimate: { kind: "none" },
+      ferocity: { kind: "none" },
+      passive: { kind: "none" }
+    }
+  },
+  {
+    id: "pulsi",
+    enemyOnly: true,
+    squad: "annihilation",
+    name: "\uD384\uC2DC",
+    specimenNumber: "215",
+    projectName: "ANNIHILATION RETRIEVAL 215",
+    excavationSite: "\uC624\uB514\uB514 \uACA9\uB9AC \uC5F0\uAD6C\uB3D9 \uD68C\uC218 \uACA9\uB0A9\uACE0",
+    fossilRecord: "\uACA9\uB0A9\uACE0 \uBC30\uAD00 \uD2C8\uC5D0 \uB9D0\uB824 \uB4E4\uC5B4\uAC04 \uAF2C\uB9AC \uB9C8\uB514\uC640 \uC9D1\uAC8C \uC870\uAC01\uC774 \uAD73\uC740 \uCC44 \uD68C\uC218\uB418\uC5C8\uB2E4. \uAF2C\uB9AC \uB05D \uCE68\uC774 \uC9C0\uB098\uAC04 \uC790\uB9AC\uAC00 \uD55C \uC810\uC73C\uB85C \uBAA8\uC5EC \uC788\uC5B4, \uBCF5\uC6D0 \uC5F0\uAD6C\uB294 \uC774 \uAC1C\uCCB4\uAC00 \uC5B4\uB514\uB97C \uB178\uB838\uB294\uC9C0\uB97C \uC7AC\uB294 \uAC83\uC73C\uB85C \uC2DC\uC791\uD588\uB2E4.",
+    observationProfile: {
+      originYear: "\uC57D 3\uC5B5 3,000\uB9CC \uB144 \uC804",
+      // E.C.는 말수가 적고 한 곳만 바라보는 소년기형 인상을 분류하며, 복원 경과 연도가 아니다.
+      restorationYear: "E.C. 12\uB144",
+      lifeStage: "\uC131\uCCB4",
+      height: "1.38 m",
+      weight: "33 kg"
+    },
+    catalogSummary: "\uAD6C\uBD80\uB7EC\uC9C4 \uAE34 \uAF2C\uB9AC\uC640 \uC9D1\uAC8C \uC7A5\uC2DD\uC744 \uC9C0\uB2CC \uCC44 \uBCF5\uC6D0\uB41C, \uACF5\uBA78 \uD68C\uC218\uC870\uC758 \uC554\uC0B4\uC790 \uD480\uBAA8\uB178\uC2A4\uCF54\uB974\uD53C\uC6B0\uC2A4 \uAE30\uBC18 \uD45C\uBCF8.",
+    unlockRecord: { status: "recorded", text: '\uC2DD\uBCC4 \uAE30\uB85D 215. \uACF5\uBA78 \uC18C\uC18D\uC73C\uB85C \uD655\uC778\uB418\uC5C8\uB2E4. \uAF2C\uB9AC \uB05D\uC744 \uBC14\uB2E5\uC5D0 \uB04C\uC9C0 \uC54A\uACE0 \uD5C8\uACF5\uC5D0 \uC138\uC6B4 \uCC44 \uAC78\uC5C8\uACE0, \uB9D0\uC740 \uAC70\uC758 \uC5C6\uC5C8\uC73C\uBA70 \uB208\uC740 \uD55C \uBC88\uC5D0 \uD558\uB098\uB9CC \uCAD3\uC558\uB2E4. \uD55C \uBC88 \uB178\uB9B0 \uC0C1\uB300\uB294 \uB2E4\uB978 \uC0AC\uB78C\uC774 \uAC00\uB85C\uB9C9\uC544\uB3C4 \uC2DC\uC120\uC774 \uC62E\uACA8 \uAC00\uC9C0 \uC54A\uC558\uB2E4. \uC5F0\uAD6C\uC6D0\uC5D0\uAC8C\uB294 "\uC5F0\uAD6C\uC6D0\uB2D8"\uC774\uB77C \uBD80\uB974\uACE0\uB294 \uACE7\uBC14\uB85C \uACE0\uAC1C\uB97C \uC219\uC600\uB2E4.' },
+    squadNote: '\uACF5\uBA78 \uD68C\uC218\uC870\uC758 \uC800\uACA9 \uB2F4\uB2F9\uC73C\uB85C \uD655\uC778\uB41C\uB2E4. \uD68C\uC218 \uB300\uC0C1\uC774 \uB3C4\uB9DD\uCE58\uB824\uB294 \uC21C\uAC04 \uD55C \uACF3\uB9CC \uB178\uB824 \uADF8 \uBC1C\uC744 \uBB36\uB294\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 "\uC5F0\uAD6C\uC6D0\uB2D8"\uC774\uB77C \uAE4D\uB4EF\uC774 \uBD80\uB978\uB2E4.',
+    researcherTitle: "\uC5F0\uAD6C\uC6D0\uB2D8",
+    rarity: "R",
+    portraitAssetId: "pulsi",
+    origin: "\uD480\uBAA8\uB178\uC2A4\uCF54\uB974\uD53C\uC6B0\uC2A4",
+    element: "fire",
+    role: "assassin",
+    reachTier: "melee",
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1 },
+    /* R 띠의 위쪽이다(2189). 한 표적에 쌓는 암살자라 공격력과 공격 속도에 얹는다. */
+    stats: {
+      hp: 900,
+      def: 48,
+      res: 44,
+      atk: 185,
+      ap: 20,
+      attackSpeed: 120,
+      moveSpeed: 108,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0
+    },
+    ferocityTrait: { name: "\uC2E0\uB09C \uAF2C\uB9AC", effectId: "frenzyTail", attackSpeedPercent: 30, extraStacksPerHit: 1 },
+    passive: {
+      id: "pulsi-passive",
+      name: "\uC7A5\uB09C\uC2A4\uB7EC\uC6B4 \uC870\uC900",
+      kind: "vitalAim",
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 겨누기의 최대 겹 수를 담아 둔다.
+      value: 6,
+      vitalAim: { maxStacks: 6, damagePercentPerStack: 8 },
+      criticalChancePercent: 10,
+      desc: "\uAC19\uC740 \uC801\uC744 \uAE30\uBCF8 \uACF5\uACA9\uC73C\uB85C \uC774\uC5B4 \uCE60\uC218\uB85D \uADF8 \uC801\uC5D0\uAC8C \uC8FC\uB294 \uD53C\uD574\uAC00 \uCEE4\uC9C4\uB2E4."
+    },
+    basic: {
+      id: "pulsi-basic",
+      name: "\uCF55\uCF55 \uCC0C\uB974\uAE30",
+      power: 100,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single"
+    },
+    ultimate: {
+      id: "pulsi-ult",
+      name: "\uAE5C\uC9DD \uC120\uBB3C",
+      power: 260,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      cost: 100,
+      targeting: "single"
+    },
+    breakthroughEffects: {
+      basic: { kind: "none" },
+      ultimate: { kind: "none" },
+      ferocity: { kind: "none" },
+      passive: { kind: "none" }
+    }
+  },
+  {
+    id: "neuri",
+    enemyOnly: true,
+    squad: "annihilation",
+    name: "\uB124\uC6B0\uB9AC",
+    specimenNumber: "216",
+    projectName: "ANNIHILATION RETRIEVAL 216",
+    excavationSite: "\uC624\uB514\uB514 \uACA9\uB9AC \uC5F0\uAD6C\uB3D9 \uD68C\uC218 \uACA9\uB0A9\uACE0",
+    fossilRecord: "\uACA9\uB0A9\uACE0 \uD658\uAE30\uAD6C \uC548\uCABD\uC5D0\uC11C \uADF8\uBB3C\uB9E5\uC774 \uC120\uBA85\uD55C \uB113\uC740 \uB0A0\uAC1C \uB450 \uC30D\uC758 \uC778\uC0C1\uC774 \uACB9\uCCD0 \uAD73\uC740 \uCC44 \uD68C\uC218\uB418\uC5C8\uB2E4. \uB0A0\uAC1C \uADFC\uC721\uC774 \uBD99\uC740 \uD754\uC801\uC774 \uC720\uB09C\uD788 \uB450\uAEBC\uC6CC, \uBCF5\uC6D0 \uC5F0\uAD6C\uB294 \uC774 \uAC1C\uCCB4\uAC00 \uC5BC\uB9C8\uB098 \uBE60\uB974\uAC8C \uB0A0\uAC2F\uC9D3\uD588\uB294\uC9C0\uB97C \uC7AC\uB294 \uAC83\uC73C\uB85C \uC2DC\uC791\uD588\uB2E4.",
+    observationProfile: {
+      originYear: "\uC57D 3\uC5B5 \uB144 \uC804",
+      // E.C.는 예의 바른 말투 뒤에 제 우월함을 숨기는 청소년 후반기형 인상을 분류하며, 복원 경과 연도가 아니다.
+      restorationYear: "E.C. 14\uB144",
+      lifeStage: "\uC131\uCCB4",
+      height: "1.55 m",
+      weight: "40 kg"
+    },
+    catalogSummary: "\uB113\uC740 \uADF8\uBB3C\uB9E5 \uB0A0\uAC1C\uC640 \uAC00\uB294 \uBAB8\uC744 \uC9C0\uB2CC \uCC44 \uBCF5\uC6D0\uB41C, \uACF5\uBA78 \uD68C\uC218\uC870\uC758 \uC9C0\uC6D0\uAC00 \uBA54\uAC00\uB124\uC6B0\uB77C \uAE30\uBC18 \uD45C\uBCF8.",
+    unlockRecord: { status: "recorded", text: '\uC2DD\uBCC4 \uAE30\uB85D 216. \uACF5\uBA78 \uC18C\uC18D\uC73C\uB85C \uD655\uC778\uB418\uC5C8\uB2E4. \uB9D0\uB05D\uB9C8\uB2E4 "\uD6C4\uD6D7" \uD558\uACE0 \uC6C3\uC73C\uBA70 \uC874\uB313\uB9D0\uC744 \uC37C\uC9C0\uB9CC, \uB2E4\uB978 \uC870\uC758 \uB300\uC7A5 \uC55E\uC5D0\uC11C\uB3C4 \uC2DC\uC120\uC744 \uD55C \uB2E8\uACC4 \uC704\uC5D0 \uB450\uACE0 \uC788\uC5C8\uB2E4. \uB0A0\uAC1C\uAC00 \uB0AE\uAC8C \uC6B8\uB9AC\uBA74 \uACC1\uC5D0 \uC120 \uB3D9\uB8CC\uC758 \uAC78\uC74C\uC774 \uD568\uAED8 \uBE68\uB77C\uC84C\uB2E4. \uC5F0\uAD6C\uC6D0\uC5D0\uAC8C\uB294 "\uC5F0\uAD6C\uC6D0\uB2D8"\uC774\uB77C \uBD80\uB974\uBA70 \uACE0\uAC1C\uB97C \uC0B4\uC9DD \uAE30\uC6B8\uC600\uB2E4.' },
+    squadNote: '\uACF5\uBA78 \uD68C\uC218\uC870\uC758 \uBC15\uC790 \uB2F4\uB2F9\uC73C\uB85C \uD655\uC778\uB41C\uB2E4. \uB0A0\uAC2F\uC9D3 \uC18C\uB9AC\uB85C \uC55E\uC120 \uB3D9\uB8CC\uC758 \uC190\uC744 \uBE60\uB974\uAC8C \uB9CC\uB4E4\uACE0, \uC790\uAE30 \uC870\uC758 \uB300\uC7A5\uB4E4\uC774 \uB354 \uB6F0\uC5B4\uB098\uB2E4\uACE0 \uBBFF\uB294\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 "\uC5F0\uAD6C\uC6D0\uB2D8"\uC774\uB77C \uAE4D\uB4EF\uC774 \uBD80\uB978\uB2E4.',
+    researcherTitle: "\uC5F0\uAD6C\uC6D0\uB2D8",
+    rarity: "R",
+    portraitAssetId: "neuri",
+    origin: "\uBA54\uAC00\uB124\uC6B0\uB77C",
+    element: "water",
+    role: "support",
+    reachTier: "mid",
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1 },
+    /* R 띠의 위쪽이다(2172). 주문력으로 쏘는 지원가라 공격력은 낮게 둔다. */
+    stats: {
+      hp: 900,
+      def: 48,
+      res: 60,
+      atk: 25,
+      ap: 190,
+      attackSpeed: 92,
+      moveSpeed: 110,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0
+    },
+    ferocityTrait: { name: "\uB9C8\uC74C\uC774 \uAE09\uD574\uC11C\uC694", effectId: "swiftFlight", intervalReductionPercent: 40 },
+    passive: {
+      id: "neuri-passive",
+      name: "\uC815\uC911\uD55C \uC719\uC719",
+      kind: "wingHum",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 공명을 거는 주기(초)를 담아 둔다.
+      value: 6,
+      wingHum: { intervalSeconds: 6, resonance: { kind: "resonance", attackSpeedPercent: 30, seconds: 5 }, energyOnKill: 60 },
+      desc: "\uC8FC\uAE30\uB9C8\uB2E4 \uACF5\uACA9\uB825\uC774 \uAC00\uC7A5 \uB192\uC740 \uC544\uAD70\uC5D0\uAC8C \uACF5\uBA85\uC744 \uAC74\uB2E4."
+    },
+    basic: {
+      id: "neuri-basic",
+      name: "\uC0C1\uB0E5\uD55C \uD30C\uB3D9",
+      power: 70,
+      scalingStat: "ap",
+      iconAssetId: "skill-icon-magical",
+      effectType: "magical",
+      damageType: "magical",
+      targeting: "single",
+      allyEnergyGain: 4
+    },
+    ultimate: {
+      id: "neuri-ult",
+      name: "\uC0BC\uAC00 \uC62C\uB9AC\uB294 \uBE44\uD589",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      cost: 160,
+      targeting: "battlefieldAllies",
+      teamBuff: { kind: "tailwind", attackSpeedPercent: 20, moveSpeedPercent: 20, seconds: 8, maxHpRegenPercentPerSecond: 1.5 }
+    },
+    breakthroughEffects: {
+      basic: { kind: "none" },
+      ultimate: { kind: "none" },
+      ferocity: { kind: "none" },
+      passive: { kind: "none" }
+    }
+  },
+  {
+    id: "mir",
+    enemyOnly: true,
+    squad: "annihilation",
+    name: "\uBBF8\uB974",
+    specimenNumber: "217",
+    projectName: "ANNIHILATION RETRIEVAL 217",
+    excavationSite: "\uC624\uB514\uB514 \uACA9\uB9AC \uC5F0\uAD6C\uB3D9 \uD68C\uC218 \uACA9\uB0A9\uACE0",
+    fossilRecord: "\uACA9\uB0A9\uACE0 \uBC14\uB2E5\uC758 \uADE0\uC5F4\uC744 \uB530\uB77C \uAC19\uC740 \uBC29\uD5A5\uC73C\uB85C \uC904\uC9C0\uC5B4 \uAD73\uC740 \uC791\uC740 \uD131 \uC870\uAC01\uC774 \uC5EC\uB7FF \uD68C\uC218\uB418\uC5C8\uB2E4. \uADF8\uC911 \uD558\uB098\uB9CC \uC720\uB09C\uD788 \uD06C\uAC8C \uBCF5\uC6D0\uB418\uC5B4 \uC788\uC5B4, \uC5F0\uAD6C\uB294 \uC774 \uAC1C\uCCB4\uAC00 \uBB34\uB9AC \uC18D\uC5D0\uC11C \uC5B4\uB514\uC5D0 \uC11C \uC788\uC5C8\uB294\uC9C0\uB97C \uC7AC\uB294 \uAC83\uC73C\uB85C \uC2DC\uC791\uD588\uB2E4.",
+    observationProfile: {
+      originYear: "\uC57D 5,000\uB9CC \uB144 \uC804",
+      // E.C.는 앞뒤 가리지 않고 동료 곁에 붙어 다니는 아동기형 인상을 분류하며, 복원 경과 연도가 아니다.
+      restorationYear: "E.C. 8\uB144",
+      lifeStage: "\uC544\uC131\uCCB4",
+      height: "1.22 m",
+      weight: "30 kg"
+    },
+    catalogSummary: "\uB2E8\uB2E8\uD55C \uD131\uACFC \uC9E7\uACE0 \uAD75\uC740 \uD314\uB2E4\uB9AC\uB97C \uC9C0\uB2CC \uCC44 \uBCF5\uC6D0\uB41C, \uACF5\uBA78 \uD68C\uC218\uC870\uC758 \uC804\uC0AC \uD2F0\uD0C0\uB178\uBBF8\uB974\uB9C8 \uAE30\uBC18 \uD45C\uBCF8.",
+    unlockRecord: { status: "recorded", text: '\uC2DD\uBCC4 \uAE30\uB85D 217. \uACF5\uBA78 \uC18C\uC18D\uC73C\uB85C \uD655\uC778\uB418\uC5C8\uB2E4. \uD63C\uC790 \uC788\uC744 \uB54C\uB294 \uAC00\uB9CC\uD788 \uC11C \uC788\uB2E4\uAC00 \uB3D9\uB8CC\uAC00 \uACC1\uC5D0 \uC624\uBA74 \uADF8 \uAC78\uC74C\uC5D0 \uB9DE\uCDB0 \uC904\uC744 \uC130\uB2E4. \uC9D0\uC744 \uB4E0 \uB3D9\uB8CC \uB4A4\uC5D0\uC11C \uAC78\uC74C\uC744 \uC138\uC5B4 \uB530\uB77C\uAC00\uB294 \uBC84\uB987\uC774 \uAD00\uCC30\uB418\uC5C8\uB2E4. \uC5F0\uAD6C\uC6D0\uC5D0\uAC8C\uB294 "\uC5F0\uAD6C\uC6D0\uB2D8"\uC774\uB77C \uBD80\uB974\uBA70 \uC5B4\uC0C9\uD558\uAC8C \uACBD\uB840\uD588\uB2E4.' },
+    squadNote: '\uACF5\uBA78 \uD68C\uC218\uC870\uC758 \uC6B4\uBC18 \uB2F4\uB2F9\uC73C\uB85C \uD655\uC778\uB41C\uB2E4. \uB3D9\uB8CC \uACC1\uC5D0 \uBD99\uC5B4 \uC904\uC9C0\uC5B4 \uC6C0\uC9C1\uC774\uBA70, \uACC1\uC5D0 \uC120 \uB3D9\uB8CC\uAC00 \uB9CE\uC744\uC218\uB85D \uB354 \uB2E8\uB2E8\uD574\uC9C4\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 "\uC5F0\uAD6C\uC6D0\uB2D8"\uC774\uB77C \uAE4D\uB4EF\uC774 \uBD80\uB978\uB2E4.',
+    researcherTitle: "\uC5F0\uAD6C\uC6D0\uB2D8",
+    rarity: "R",
+    portraitAssetId: "mir",
+    origin: "\uD2F0\uD0C0\uB178\uBBF8\uB974\uB9C8",
+    element: "earth",
+    role: "warrior",
+    reachTier: "melee",
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1 },
+    /* R 띠의 위쪽이다(2186). 곁의 아군이 곧 이 개체의 수급이라 체력과 방어에 얹는다. */
+    stats: {
+      hp: 1e3,
+      def: 80,
+      res: 60,
+      atk: 170,
+      ap: 20,
+      attackSpeed: 90,
+      moveSpeed: 80,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0
+    },
+    ferocityTrait: { name: "\uB354 \uB9CE\uC774 \uC601\uCC28", effectId: "marchOfAnts", radiusBonus: 120, extraAllies: 2 },
+    passive: {
+      id: "mir-passive",
+      name: "\uC904 \uB9DE\uCDB0 \uCD1D\uCD1D",
+      kind: "workerMarch",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 행렬을 세는 반경(px)을 담아 둔다.
+      value: 220,
+      workerMarch: { radius: 220, maxAllies: 3, attackPercentPerAlly: 8, regenMaxHpPercentPerAllyPerSecond: 0.4 },
+      desc: "\uACC1\uC5D0 \uC120 \uC544\uAD70\uC774 \uB9CE\uC744\uC218\uB85D \uC8FC\uB294 \uD53C\uD574\uAC00 \uCEE4\uC9C0\uACE0 \uCCB4\uB825\uC774 \uC11C\uC11C\uD788 \uCC2C\uB2E4."
+    },
+    basic: {
+      id: "mir-basic",
+      name: "\uB0E0\uB0E0 \uAE68\uBB3C\uAE30",
+      power: 100,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single"
+    },
+    ultimate: {
+      id: "mir-ult",
+      name: "\uB2E4 \uAC19\uC774 \uC601\uCC28",
+      power: 180,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      cost: 100,
+      targeting: "nearbyEnemies",
+      radius: 200
+    },
+    breakthroughEffects: {
+      basic: { kind: "none" },
+      ultimate: { kind: "none" },
+      ferocity: { kind: "none" },
+      passive: { kind: "none" }
+    }
+  },
+  {
     // 신규 저장 키 `mette`는 표시명이나 에셋 번호와 분리한 안정적인 내부 ID다.
     id: "mette",
     squad: "rune",
@@ -13123,6 +13633,7 @@ var RELICS = [
     catalogSummary: "\uC2E0\uC7A5 1.76m\uC758 \uACAC\uACE0\uD55C \uC778\uAC04\uD615 \uCCB4\uACA9\uACFC \uD604\uC545 \uC5F0\uC8FC\uC5D0 \uC801\uD569\uD55C \uC12C\uC138\uD55C \uC190\uB05D\uC744 \uC9C0\uB2CC, \uC131\uCCB4 \uBA54\uAC00\uD14C\uB9AC\uC6C0 \uD654\uC11D \uAE30\uBC18 \uD45C\uBCF8.",
     unlockRecord: { status: "recorded", text: "\uBA54\uD14C\uB294 \uBCF5\uC6D0 \uC9C1\uD6C4\uBD80\uD130 \uBC14\uC774\uC62C\uB9B0\uC758 \uC6B8\uB9BC\uC5D0 \uC720\uB09C\uD788 \uC624\uB798 \uADC0\uB97C \uAE30\uC6B8\uC600\uB2E4. \uD65C\uC744 \uC62C\uB9AC\uAE30 \uC804\uC5D0 \uC1A1\uC9C4\uC744 \uD55C\uCC38 \uBC14\uB974\uB294 \uBC84\uB987\uC774 \uC788\uC5B4, \uADF8\uB3D9\uC548\uC740 \uB204\uAC00 \uB9D0\uC744 \uAC78\uC5B4\uB3C4 \uB300\uB2F5\uD558\uC9C0 \uC54A\uB294\uB2E4. \uD3C9\uC18C\uC5D0\uB294 \uCF00\uC5B4\uC2E4 \uBC14\uB2E5\uC5D0 \uB290\uAE0B\uD558\uAC8C \uB4B9\uAD74\uBA70 \uADC0\uCC2E\uB2E4\uB294 \uB9D0\uC744 \uB2EC\uACE0 \uC0B4\uC9C0\uB9CC, \uC544\uD508 \uB810\uB9AD\uC774 \uC2E4\uB824 \uC624\uBA74 \uB9D0\uC5C6\uC774 \uC77C\uC5B4\uB098 \uACC1\uC5D0 \uC549\uB294\uB2E4. \uADF8 \uD070 \uBAB8\uC73C\uB85C \uAC00\uB298\uB514\uAC00\uB294 \uD65C\uC744 \uCF1C\uB294\uB370, \uC5F0\uC8FC\uAC00 \uC2DC\uC791\uB418\uBA74 \uB9D0\uC218\uAC00 \uB69D \uB04A\uAE30\uACE0 \uD65C\uB05D\uB9CC \uB530\uB77C\uAC04\uB2E4. \uC804\uC7A5\uC5D0\uC11C\uB3C4 \uD754\uB4E4\uB9AC\uB294 \uBC95\uC774 \uC5C6\uC5B4 \uBC15\uC790\uAC00 \uD750\uD2B8\uB7EC\uC9C4 \uB3D9\uB8CC \uC606\uC5D0 \uC11C\uC11C \uAC78\uC74C\uC744 \uB9DE\uCDB0 \uC900\uB2E4. \uC9C0\uAE08\uC740 \uB098\uB97C \uC704\uD55C \uB2E8 \uD558\uB098\uBFD0\uC778 \uBB34\uB300\uB97C \uC900\uBE44\uD558\uBA70, \uC790\uC2E0\uC758 \uC5F0\uC8FC\uAC00 \uC628\uC804\uD788 \uB2FF\uC744 \uB0A0\uC744 \uACE0\uB300\uD558\uACE0 \uC788\uB2E4." },
     rarity: "SSR",
+    ferocityMax: 110,
     // 6번 전신과 SD를 함께 사용해 도감과 전투에서 같은 메테가 보이도록 한다.
     portraitAssetId: "mette",
     origin: "\uBA54\uAC00\uD14C\uB9AC\uC6C0",
@@ -13228,6 +13739,7 @@ var RELICS = [
     // 안에 있는 개체라, 혼나는 자리에서도 부르는 말은 흐트러지지 않는다.
     researcherTitle: "\uC5F0\uAD6C\uC6D0\uB2D8",
     rarity: "SSR",
+    ferocityMax: 110,
     portraitAssetId: "deina",
     origin: "\uB370\uC774\uB178\uB2C8\uCFE0\uC2A4",
     element: "fire",
@@ -13429,6 +13941,7 @@ var RELICS = [
     squadNote: "\uB8EC\uC758 \uC800\uC628 \uBCF4\uC874\uC2E4 \uB0C9\uC7A5\uACE0\uB97C \uC544\uC774\uC2A4\uD06C\uB9BC\uC73C\uB85C \uCC44\uC6B0\uB294 \uC790\uCE6D \uAD00\uB9AC\uC778. \uC628\uB3C4\uB97C \uCD5C\uC800\uB85C \uB0B4\uB824 \uC120\uBC30\uB4E4\uC744 \uB5A8\uAC8C \uD574 \uB193\uACE0\uB294 \uC815\uC791 \uBAA8\uD53C \uCF54\uD2B8 \uC18D\uC5D0\uC11C \uC81C\uC77C \uBA3C\uC800 \uC874\uB2E4.",
     researcherTitle: "\uC5F0\uAD6C\uC6D0 \uC528",
     rarity: "SR",
+    ferocityMax: 100,
     portraitAssetId: "maddy",
     origin: "\uB9E4\uBA38\uB4DC",
     element: "water",
@@ -13527,6 +14040,7 @@ var RELICS = [
     squadNote: "\uC0AC\uC77C\uB7F0\uD2B8 \uB8EC\uC758 \uC7AC\uBD09 \uB2F4\uB2F9. \uCF00\uC5B4\uC2E4\uC5D0 \uC2E4\uB824 \uC628 \uAC1C\uCCB4\uC758 \uC637\uACFC \uBAB8\uC744 \uB9D0\uC5C6\uC774 \uAFF0\uB9E4\uACE0, \uC2E4\uC774 \uB5A8\uC5B4\uC9C0\uBA74 \uC81C \uC218\uB3C4\uBCF5\uC744 \uADF8\uC5B4 \uB72F\uC5B4 \uC4F4\uB2E4.",
     researcherTitle: "\uC544\uAC00",
     rarity: "SR",
+    ferocityMax: 90,
     portraitAssetId: "terisa",
     origin: "\uD14C\uB9AC\uC9C0\uB178\uC0AC\uC6B0\uB8E8\uC2A4",
     // 불은 갈퀴를 달궈 지지는 쪽에서 온다 — 자르는 손과 지혈하는 손이 같은 손이다.
@@ -13648,6 +14162,7 @@ var RELICS = [
     // 목소리를 크게 내지 못하는 아이라 스쿼드가 쓰는 호칭 중 가장 짧고 부르기 쉬운 쪽을 고른다.
     researcherTitle: "\uB300\uC7A5\uB2D8",
     rarity: "R",
+    ferocityMax: 90,
     portraitAssetId: "parua",
     origin: "\uD30C\uB77C\uC0AC\uC6B0\uB864\uB85C\uD478\uC2A4",
     element: "grass",
@@ -13781,6 +14296,7 @@ var RELICS = [
     // 관제 절차를 통째로 외워 오는 개체라 스쿼드가 지시자에게 쓰는 호칭을 그대로 연구원에게 돌린다.
     researcherTitle: "\uC624\uB354",
     rarity: "SSR",
+    ferocityMax: 100,
     portraitAssetId: "shute",
     origin: "\uC2A4\uD14C\uACE0\uC0AC\uC6B0\uB8E8\uC2A4",
     element: "earth",
@@ -13896,6 +14412,7 @@ var RELICS = [
     // 직접 오르내리지 않고 화면으로만 상대하는 개체라 스쿼드에서 가장 사무적인 호칭을 쓴다.
     researcherTitle: "\uB2F4\uB2F9\uAD00",
     rarity: "SSR",
+    ferocityMax: 120,
     portraitAssetId: "morphe",
     origin: "\uB514\uBAB0\uD3EC\uB3C8",
     element: "wind",
@@ -14034,6 +14551,7 @@ var RELICS = [
     // “두목”은 관계 인식이고 실제 발화 호칭은 쁘띠 로그의 허용 목록과 일치시킨다.
     researcherTitle: "\uB300\uC7A5\uB2D8",
     rarity: "SSR",
+    ferocityMax: 150,
     // 디안 전용 전신은 늑대 SD와 분리해 도감·컷인에서만 사용한다.
     portraitAssetId: "dian",
     origin: "\uB2E4\uC774\uC5B4\uC6B8\uD504",
@@ -14421,11 +14939,11 @@ var RELICS = [
       name: "\uC218\uC7A5\uC758 \uC544\uAC00\uB9AC",
       // 코마의 통로(190)와 폰토스의 전장 해일(500) 사이다. 원 하나를 지정해 무는 기술이라
       // 전장 전체를 치지 않고, 그만큼 서 있는 자리가 답이 된다.
-      power: 300,
+      power: 340,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
-      cost: 100,
+      cost: 80,
       /*
        * **원을 지정해 문다.** 전장 전체를 치는 기술로 두면 편성이 무엇이든 똑같이 맞아 자리를
        * 옮길 이유가 사라진다 — 바닥에 그려지는 원이 곧 "여기 서 있으면 맞는다"가 되고,
@@ -15364,214 +15882,1603 @@ for (const relic of RELICS) {
   registerDataText(relic, "projectName", key("projectName"));
 }
 
-// src/data/friendDirectory.ts
-var NOW2 = Date.now();
-var MINUTE = 6e4;
-function preview(id, uid, displayName, level, frameId, status, relicId, relicLevel, breakthroughGrade2, lastActiveAt) {
-  const relic = getRelic(relicId);
+// src/data/stages.ts
+init_define_import_meta_env();
+var STAGE_ENEMY_FORMATION = ["amo", "toby", "ripa"];
+function enemyGrowth(relicId, level, breakthrough, formationSlot) {
+  return { relicId, level, breakthrough, formationSlot };
+}
+var STORY_RECOMMENDED_LEVELS = [
+  // 1-1은 오프닝에서 곧장 들어오는 첫 전투라 막 시작한 레벨 1 편성이 넘어야 한다 — 7이던 때는
+  // 아슬아슬했고 3이던 때는 싸움이 되지 않았다. 5는 1-2(8)와의 턱도 크지 않다.
+  // 사다리는 여기서부터 오르기만 한다. 1-3~2-2는 검수를 실제 전장 크기로 옮기며(v0.172.6) 한 뼘씩
+  // 올렸다 — 넓은 틀에서 재던 때는 같은 관문이 실제보다 훨씬 어렵게 읽혀 사다리가 낮게 잡혀 있었다.
+  5,
+  8,
+  11,
+  13,
+  17,
+  17,
+  18,
+  19,
+  20,
+  20,
+  // 2장은 21~30 — 돌파 1단계(상한 30) 안에서 끝난다. 1장 끝(20)에서 한 칸씩 오르는 곡선이다.
+  21,
+  22,
+  23,
+  24,
+  25,
+  26,
+  27,
+  28,
+  29,
+  30,
+  36,
+  37,
+  38,
+  39,
+  40,
+  41,
+  42,
+  43,
+  44,
+  47
+];
+var CHAPTER_ONE_ELITES = {
+  5: "toby",
+  10: "koma"
+};
+var LATE_CHAPTER_FORMATIONS = {
+  "2-7": [["amo", 0], ["ripa", 2]],
+  "2-9": [["amo", 0], ["toby", 1]],
+  "3-5": [["atra", 1]],
+  "3-6": [["atra", 0], ["mir", 1], ["pulsi", 2]],
+  "3-7": [["atra", 0], ["mir", 1], ["pulsi", 2]],
+  "3-8": [["atra", 0], ["pulsi", 1], ["neuri", 2]],
+  "3-9": [["atra", 0], ["pulsi", 1], ["neuri", 2]],
+  "3-10": [["ikanixia", 1]]
+};
+var ELITE_DUO_STAGE_IDS = /* @__PURE__ */ new Set(["2-7", "2-9"]);
+var CHAPTER_ONE_ENEMIES = STORY_RECOMMENDED_LEVELS.slice(0, 10).map((recommended, index) => {
+  const chapterOrder = index + 1;
+  const eliteId = CHAPTER_ONE_ELITES[chapterOrder];
+  if (eliteId) return [enemyGrowth(eliteId, recommended, 0, 1)];
+  return STAGE_ENEMY_FORMATION.map((id, slot) => enemyGrowth(id, recommended, 0, slot));
+});
+var STORY_RUNE_REWARDS = {
+  "1-5": { kind: "rune", rarity: "uncommon", part: 0 },
+  "1-10": { kind: "rune", rarity: "uncommon", part: 1, trait: true },
+  "2-5": { kind: "rune", rarity: "uncommon", part: 2 },
+  "2-10": { kind: "rune", rarity: "rare", part: 0, trait: true },
+  "3-5": { kind: "rune", rarity: "rare", part: 1 },
+  "3-10": { kind: "rune", rarity: "rare", part: 2, trait: true }
+};
+var STORY_RAW_STONE = {
+  "2-1": 30,
+  "2-6": 40,
+  "3-1": 50,
+  "3-6": 60
+};
+function storyFirstClearBonus(id, globalOrder, chapter, chapterOrder, elite) {
+  const heavy = elite || chapterOrder === 10;
+  const bonus = [
+    { kind: "currency", currency: "gold", amount: (3e3 + globalOrder * 1e3) * (heavy ? 2 : 1) },
+    { kind: "currency", currency: "gems", amount: heavy ? [150, 200, 300][chapter - 1] ?? 300 : [30, 40, 50][chapter - 1] ?? 50 }
+  ];
+  const rawStone = STORY_RAW_STONE[id];
+  if (rawStone) bonus.push({ kind: "currency", currency: "rawStone", amount: rawStone });
+  if (elite) bonus.push({ kind: "currency", currency: "fossil", amount: 1 });
+  const rune = STORY_RUNE_REWARDS[id];
+  if (rune) bonus.push(rune);
+  return bonus;
+}
+var CHAPTER_SITUATIONS = [
+  [
+    "\uBD88\uD0C0\uB294 \uAC1D\uCC28\uC5D0\uC11C \uBE60\uC838\uB098\uC654\uB2E4. \uB3C4\uC2DC\uB294 \uC544\uC9C1 \uBA40\uB2E4.",
+    "\uCD94\uACA9\uC870\uAC00 \uAE68\uC9C4 \uC720\uB9AC \uC9C0\uBD95\uC744 \uBC1F\uACE0 \uB0B4\uB824\uC628\uB2E4.",
+    "\uBB3C\uC5D0 \uC7A0\uAE34 \uBC30\uC591\uC870 \uC0AC\uC774\uB85C \uBC1C\uC18C\uB9AC\uAC00 \uD769\uC5B4\uC9C4\uB2E4.",
+    "\uBD80\uC11C\uC9C4 \uC9C4\uC5F4\uC7A5\uB9C8\uB2E4 \uAC19\uC740 \uC190\uC790\uAD6D\uC774 \uB0A8\uC544 \uC788\uB2E4.",
+    "\uAD00\uC81C\uD0D1 \uBB38\uC744 \uB72F\uC5B4\uB0B8 \uAC83\uC774 \uC544\uC9C1 \uADF8 \uC55E\uC5D0 \uD63C\uC790 \uC11C \uC788\uB2E4.",
+    "\uAD6C\uC870 \uC2E0\uD638\uB97C \uBCF4\uB0B4\uB824\uBA74 \uBB34\uB108\uC9C4 \uC548\uD14C\uB098\uBD80\uD130 \uB418\uC0B4\uB824\uC57C \uD55C\uB2E4.",
+    "\uD3D0\uAE30\uB41C \uAC83\uB4E4\uC774 \uC77C\uC5B4\uB098 \uAE38\uC744 \uB9C9\uB294\uB2E4.",
+    "\uCF54\uB9C8\uC758 \uD754\uC801\uC774 \uBC30\uC218\uB85C \uC544\uB798\uB85C \uC774\uC5B4\uC9C4\uB2E4.",
+    "\uBD09\uC1C4\uBB38 \uB108\uBA38\uC5D0\uC11C \uBB34\uC5B8\uAC00\uAC00 \uAE30\uB2E4\uB9AC\uACE0 \uC788\uB2E4.",
+    "\uACBD\uACC4\uBB38 \uC55E. \uCF54\uB9C8\uAC00 \uD640\uB85C \uAE38\uC744 \uB9C9\uACE0 \uC11C \uC788\uB2E4."
+  ],
+  [],
+  []
+];
+var CHAPTER_CONTENT = [
+  { title: "\uC81C1\uC9C0\uBD80 \uC678\uACFD", subtitle: "\uAC80\uC5ED\uC120 \u2014 \uB3C4\uC2DC\uB85C \uB4E4\uC5B4\uAC00\uB294 \uB9C8\uC9C0\uB9C9 \uAD6C\uAC04", names: ["\uCD94\uB77D\uD558\uB294 \uBC29\uC8FC", "\uBD95\uAD34\uD55C \uC628\uC2E4", "\uCE68\uC218\uB41C \uBC30\uC591\uC2E4", "\uD45C\uBCF8 \uBCF4\uAD00\uACE0", "\uC81C1\uAD6C\uC5ED \uAD00\uC81C\uD0D1", "\uBB34\uB108\uC9C4 \uD1B5\uC2E0\uC18C", "\uD3D0\uAE30\uBB3C \uCC98\uB9AC\uC7A5", "\uC9C0\uD558 \uBC30\uC218\uB85C", "\uBD09\uC1C4\uB41C \uC815\uAC70\uC7A5", "\uAD6C\uC5ED \uACBD\uACC4\uBB38"] },
+  { title: "\uC794\uD5A5 \uC9C0\uAD6C", subtitle: "\uCE68\uBB35\uD55C \uC0B0\uC5C5 \uD68C\uB791", names: ["\uC794\uD5A5 \uC9C4\uC785\uB85C", "\uB179\uC2A8 \uC870\uB9BD\uB3D9", "\uB0C9\uAC01 \uC218\uB85C", "\uB3D9\uB825 \uC911\uACC4\uC2E4", "\uD30C\uC190\uB41C \uC2B9\uAC15\uC7A5", "\uBB34\uC778 \uC0DD\uC0B0\uC120", "\uC555\uB825 \uACA9\uC2E4", "\uC7AC\uCC98\uB9AC \uC6A9\uAD11\uB85C", "\uC911\uC559 \uC6B4\uC1A1\uB85C", "\uC794\uD5A5 \uC9C0\uAD6C \uAD00\uBB38"] },
+  { title: "\uC81C 3 \uAD6C\uC5ED", subtitle: "\uC2EC\uCE35 \uC815\uC6D0 \u2014 \uB3C4\uC2DC \uC544\uB798\uC758 \uBFCC\uB9AC", names: ["\uC2EC\uCE35 \uD558\uAC15\uB85C", "\uBC1C\uAD11 \uADE0\uC0AC\uAD74", "\uACE0\uB300 \uAE09\uC218\uC6D0", "\uBFCC\uB9AC \uAD00\uCE21\uC18C", "\uC720\uC804\uC790 \uC800\uC7A5\uACE0", "\uD3EC\uC790 \uD655\uC0B0\uC2E4", "\uC0DD\uCCB4 \uBC18\uC751\uB85C", "\uC2EC\uCE35 \uC5F0\uAD6C\uB3D9", "\uC815\uC6D0 \uD575\uC2EC\uBD80", "\uC2EC\uCE35 \uC815\uC6D0 \uC81C\uC5B4\uC2E4"] }
+];
+var CHAPTERS = CHAPTER_CONTENT.map((content, chapterIndex) => {
+  const chapter = chapterIndex + 1;
+  const prerequisiteStageId = chapter === 1 ? void 0 : `${chapter - 1}-10`;
+  const stages = content.names.map((name, orderIndex) => {
+    const chapterOrder = orderIndex + 1;
+    const globalOrder = chapterIndex * 10 + orderIndex;
+    const laterChapterIds = [...STAGE_ENEMY_FORMATION];
+    const lateFormation = LATE_CHAPTER_FORMATIONS[`${chapter}-${chapterOrder}`];
+    const laterChapterLevel = STORY_RECOMMENDED_LEVELS[globalOrder] ?? 1;
+    const laterChapterBreakthrough = chapter === 2 ? requiredBreakthroughForLevel(laterChapterLevel) : 0;
+    const laterChapterEnemies = lateFormation ? lateFormation.map(([relicId, slot]) => enemyGrowth(relicId, laterChapterLevel, laterChapterBreakthrough, slot)) : laterChapterIds.map((relicId, slot) => enemyGrowth(relicId, laterChapterLevel, laterChapterBreakthrough, slot));
+    const enemies = chapter === 1 ? CHAPTER_ONE_ENEMIES[orderIndex] : laterChapterEnemies;
+    const id = `${chapter}-${chapterOrder}`;
+    const elite = enemies.length === 1 || ELITE_DUO_STAGE_IDS.has(id);
+    return {
+      kind: "battle",
+      id,
+      name,
+      chapter,
+      chapterOrder,
+      // 첫 노드는 이전 챕터 끝을, 나머지는 같은 챕터의 직전 노드를 선행 조건으로 삼는다.
+      prerequisiteStageIds: chapterOrder === 1 ? prerequisiteStageId ? [prerequisiteStageId] : [] : [`${chapter}-${chapterOrder - 1}`],
+      // 마지막 심층 관문은 원정 최종층과 같은 폰토스를 세워 등록된 보스가 스테이지에서도 고립되지 않게 한다.
+      enemies,
+      // 혼자 서면 정예다. 화면은 이 표식으로 몸집과 표식만 바꾸고 수치는 건드리지 않는다.
+      ...elite ? { elite: true } : {},
+      rewards: {
+        /*
+         * 초회 치즈케이크는 **난이도 검수가 딛고 선 값**이라 그대로 둔다. `stageDifficulty.test`가 관문마다
+         * "그 자리에 닿은 사람이 스토리로 받은 치즈케이크"로 파티를 키워 1-10·2장의 벽을 재므로, 여기를
+         * 올리면 벽이 조용히 낮아진다(1-10의 땅 딜러 조합이 여덟 판 중 한 판 → 여섯 판으로 열렸다).
+         * 초회의 몫은 나머지 보상(`firstClearBonus`)이 늘리고, 성장 재화의 숨통은 대작전이 튼다.
+         */
+        firstClearCheesecake: 30 + globalOrder * 5,
+        repeatClearCheesecake: 10 + globalOrder * 2,
+        firstClearBonus: storyFirstClearBonus(id, globalOrder, chapter, chapterOrder, enemies.length === 1)
+      },
+      // 아직 서사가 없는 장은 이 값이 비어 있고, 화면은 그 줄을 그리지 않는다.
+      situation: CHAPTER_SITUATIONS[chapterIndex]?.[orderIndex]
+    };
+  });
+  return { id: chapter, title: content.title, subtitle: content.subtitle, prerequisiteStageId, stages };
+});
+function subStory(anchor, suffix, name, storyId) {
+  const [chapter, order] = anchor.split("-").map(Number);
+  return { kind: "story", id: `${anchor}-${suffix}`, name, chapter, chapterOrder: order, prerequisiteStageIds: [anchor], storyId };
+}
+var SIDE_STORY_STAGE = subStory("1-5", "side-story", "\uC628\uC2E4\uC758 \uD638\uBC15 \uC18C\uB3D9", "stage-1-5-greenhouse-echo");
+var SUB_STORY_STAGES = [
+  SIDE_STORY_STAGE,
+  subStory("2-3", "side-story", "\uB5A8\uC5B4\uC9C4 \uC0AC\uC6D0\uC99D", "stage-2-3-lost-badge"),
+  subStory("2-6", "side-story", "\uAC19\uC740 \uC904", "stage-2-6-same-line"),
+  subStory("2-9", "side-story", "\uB450 \uBC88\uC9F8 \uCD94\uACA9", "stage-2-9-second-chase"),
+  subStory("3-5", "side-story", "\uC18C\uB9E4 \uB4A4\uC758 \uB9C8\uC74C", "stage-3-5-behind-sleeve"),
+  subStory("3-8", "side-story", "\uC2DC\uB9D0\uC11C", "stage-3-8-apology")
+];
+var SUB_GEM_REWARD = 50;
+var SUB_STORY_GEM_REWARDS = Object.fromEntries(
+  SUB_STORY_STAGES.flatMap((stage) => stage.kind === "story" ? [[stage.storyId, SUB_GEM_REWARD]] : [])
+);
+var SIDE_BATTLE_STAGE = {
+  kind: "battle",
+  sub: true,
+  elite: true,
+  id: "1-8-side-battle",
+  name: "\uC218\uBB38 \uBC11 \uBCF4\uAE09\uC804",
+  chapter: 1,
+  chapterOrder: 8,
+  prerequisiteStageIds: ["1-8"],
+  enemies: [enemyGrowth("amo", 18, 0, 0), enemyGrowth("ripa", 18, 0, 2)],
+  rewards: {
+    firstClearCheesecake: 0,
+    repeatClearCheesecake: 0,
+    firstClearBonus: [{ kind: "currency", currency: "gems", amount: SUB_GEM_REWARD }]
+  }
+};
+var SUB_STAGES = [...SUB_STORY_STAGES, SIDE_BATTLE_STAGE];
+var STAGES = [...CHAPTERS.flatMap(({ stages }) => stages), ...SUB_STAGES];
+var STAGE_BY_ID = new Map(STAGES.map((stage) => [stage.id, stage]));
+var DAILY_RESTORATION = {
+  id: "daily-restoration",
+  name: "\uC77C\uC77C \uBCF5\uC6D0",
+  maxEntriesPerUtcDay: 3,
+  rewardCheesecake: 40
+};
+function getStage(id) {
+  const found = STAGE_BY_ID.get(id);
+  if (!found) throw new Error(`\uC54C \uC218 \uC5C6\uB294 \uC2A4\uD14C\uC774\uC9C0 id: ${id}`);
+  return found;
+}
+function getBattleStage(id) {
+  const stage = getStage(id);
+  if (stage.kind !== "battle") throw new Error(`\uC804\uD22C \uC2A4\uD14C\uC774\uC9C0\uAC00 \uC544\uB2CC id: ${id}`);
+  return stage;
+}
+function stageEnemyGrowth(stage) {
+  return [...stage.enemies].sort((a, b) => a.formationSlot - b.formationSlot);
+}
+function stageEnemyRole(stage) {
+  return encounterRoleFor(stage.enemies.length, { elite: stage.elite === true });
+}
+function getStageEnemies(stage) {
+  const role = stageEnemyRole(stage);
+  return stageEnemyGrowth(stage).map((enemy) => {
+    const base = getRelic(enemy.relicId);
+    return { ...base, encounterRole: role, stats: applyBreakthrough(applyEncounterScaling(base.stats, enemy.level, role, stage.enemies.length), enemy.breakthrough) };
+  });
+}
+for (const chapter of CHAPTERS) {
+  registerDataText(chapter, "title", `chapter.${chapter.id}.title`);
+  registerDataText(chapter, "subtitle", `chapter.${chapter.id}.subtitle`);
+  for (const stage of chapter.stages) {
+    registerDataText(stage, "name", `stage.${stage.id}.name`);
+    registerDataText(stage, "situation", `stage.${stage.id}.situation`);
+  }
+}
+for (const sub of SUB_STAGES) registerDataText(sub, "name", `stage.${sub.id}.name`);
+registerDataText(DAILY_RESTORATION, "name", "stage.dailyRestoration.name");
+
+// src/data/cakeOperation.ts
+init_define_import_meta_env();
+
+// src/core/dungeonShortcut.ts
+init_define_import_meta_env();
+var SWEEP_TICKET_ITEM = "sweep-ticket";
+var SWEEP_TICKET_TEST_KIT = { itemId: SWEEP_TICKET_ITEM, quantity: 10 };
+var SWEEP_COUNT_LIMIT = 50;
+var DUNGEON_RUN_STAMINA = 10;
+function normalizeSweepCount(value) {
+  return Number.isInteger(value) && value >= 1 && value <= SWEEP_COUNT_LIMIT ? value : void 0;
+}
+function settleSweep(cost, count2, adFreeMembership) {
+  return {
+    count: count2,
+    staminaCost: cost.staminaCost * count2,
+    ticketCost: adFreeMembership ? 0 : count2,
+    rewards: Object.fromEntries(Object.entries(cost.rewards).map(([currency3, amount]) => [currency3, amount * count2]))
+  };
+}
+function sweepRefusal(input) {
+  if (!input.cleared) return "not_cleared";
+  if (normalizeSweepCount(input.count) === void 0) return "invalid_count";
+  const settlement = settleSweep(input.cost, input.count, input.adFreeMembership);
+  if (input.tickets < settlement.ticketCost) return "not_enough_tickets";
+  if (input.stamina < settlement.staminaCost) return "not_enough_stamina";
+  return null;
+}
+
+// src/data/cakeOperation.ts
+var CAKE_OPERATION_TIERS = [
+  { id: "cake-1", name: "1\uB2E8\uACC4", enemyLevel: 5, enemyCount: 10, rewardCheesecake: 30 },
+  { id: "cake-2", name: "2\uB2E8\uACC4", enemyLevel: 12, enemyCount: 10, rewardCheesecake: 44 },
+  { id: "cake-3", name: "3\uB2E8\uACC4", enemyLevel: 20, enemyCount: 11, rewardCheesecake: 58 },
+  { id: "cake-4", name: "4\uB2E8\uACC4", enemyLevel: 28, enemyCount: 12, rewardCheesecake: 72 },
+  { id: "cake-5", name: "5\uB2E8\uACC4", enemyLevel: 36, enemyCount: 13, rewardCheesecake: 88 },
+  { id: "cake-6", name: "6\uB2E8\uACC4", enemyLevel: 44, enemyCount: 14, rewardCheesecake: 108 },
+  { id: "cake-7", name: "7\uB2E8\uACC4", enemyLevel: 52, enemyCount: 15, rewardCheesecake: 128 },
+  { id: "cake-8", name: "8\uB2E8\uACC4", enemyLevel: 60, enemyCount: 15, rewardCheesecake: 150 }
+];
+var CAKE_OPERATION_ENEMY_IDS = [
+  "raitia-grass",
+  "raitia-water",
+  "raitia-fire",
+  "raitia-earth",
+  "raitia-wind"
+];
+var BY_ID2 = new Map(CAKE_OPERATION_TIERS.map((tier) => [tier.id, tier]));
+function getCakeOperationTier(id) {
+  const found = BY_ID2.get(id);
+  if (!found) throw new Error(`\uC54C \uC218 \uC5C6\uB294 \uCE58\uC988\uCF00\uC774\uD06C \uB300\uC791\uC804 \uB2E8\uACC4: ${id}`);
+  return found;
+}
+function cakeOperationTierIndex(id) {
+  return CAKE_OPERATION_TIERS.findIndex((tier) => tier.id === id);
+}
+function isCakeTierUnlocked(id, clearedIndex) {
+  const index = cakeOperationTierIndex(id);
+  return index >= 0 && index <= clearedIndex + 1;
+}
+function cakeOperationRunCost(tier) {
+  return { staminaCost: DUNGEON_RUN_STAMINA, rewards: { cheesecake: tier.rewardCheesecake } };
+}
+for (const tier of CAKE_OPERATION_TIERS) registerDataText(tier, "name", `cakeOperation.${tier.id}.name`);
+function cakeOperationRole(tier) {
+  return encounterRoleFor(tier.enemyCount);
+}
+function cakeOperationEnemies(tier) {
+  const role = cakeOperationRole(tier);
+  const level = tier.enemyLevel;
+  const grown = CAKE_OPERATION_ENEMY_IDS.map((id) => {
+    const base = getRelic(id);
+    return { ...base, encounterRole: role, stats: applyEncounterScaling(base.stats, level, role) };
+  });
+  return Array.from({ length: tier.enemyCount }, (_, index) => {
+    const sister = grown[index % grown.length];
+    return { ...sister, stats: { ...sister.stats } };
+  });
+}
+function cakeOperationEnemyDisplayLevel(tier) {
+  return { level: tier.enemyLevel };
+}
+
+// src/data/bounty.ts
+init_define_import_meta_env();
+var BOUNTY = {
+  roundCount: 3
+};
+var BOUNTY_TIERS = [
+  // 1급은 스토리 1장을 막 민 파티(레벨 15 언저리)가 들어서는 자리다.
+  { id: "bounty-1", order: 1, name: "\uD604\uC0C1\uC218\uBC30 1\uAE09", rewardGold: 1200, rounds: [
+    { relicId: "toby", level: 5 },
+    { relicId: "amo", level: 5 },
+    { relicId: "koma", level: 5 }
+  ] },
+  // 2급부터 돌파 없는 상한(20)을 넘는다.
+  { id: "bounty-2", order: 2, name: "\uD604\uC0C1\uC218\uBC30 2\uAE09", rewardGold: 3300, rounds: [
+    { relicId: "toby", level: 18 },
+    { relicId: "amo", level: 18 },
+    { relicId: "koma", level: 18 }
+  ] },
+  { id: "bounty-3", order: 3, name: "\uD604\uC0C1\uC218\uBC30 3\uAE09", rewardGold: 6400, rounds: [
+    { relicId: "toby", level: 32 },
+    { relicId: "amo", level: 32 },
+    { relicId: "koma", level: 32 }
+  ] },
+  { id: "bounty-4", order: 4, name: "\uD604\uC0C1\uC218\uBC30 4\uAE09", rewardGold: 14400, rounds: [
+    { relicId: "toby", level: 46 },
+    { relicId: "amo", level: 46 },
+    { relicId: "koma", level: 46 }
+  ] },
+  // 5급은 돌파로 상한을 연 만렙 셋의 자리다.
+  { id: "bounty-5", order: 5, name: "\uD604\uC0C1\uC218\uBC30 5\uAE09", rewardGold: 26400, rounds: [
+    { relicId: "toby", level: 60 },
+    { relicId: "amo", level: 60 },
+    { relicId: "koma", level: 60 }
+  ] }
+];
+var BOUNTY_TIER_BY_ID = new Map(BOUNTY_TIERS.map((tier) => [tier.id, tier]));
+function getBountyTier(id) {
+  const tier = BOUNTY_TIER_BY_ID.get(id);
+  if (!tier) throw new Error(`\uC54C \uC218 \uC5C6\uB294 \uD604\uC0C1\uC218\uBC30 \uB4F1\uAE09 id: ${id}`);
+  return tier;
+}
+function bountyRoundEnemy(round) {
+  const base = getRelic(round.relicId);
+  return { ...base, encounterRole: BOUNTY_ROLE, stats: applyEncounterScaling(base.stats, bountyRoundLevel(round), BOUNTY_ROLE) };
+}
+var BOUNTY_ROLE = encounterRoleFor(1);
+function bountyRoundLevel(round) {
+  return round.level;
+}
+for (const tier of BOUNTY_TIERS) registerDataText(tier, "name", `bounty.tier.${tier.id}.name`);
+
+// src/data/expeditionEnemies.ts
+init_define_import_meta_env();
+
+// src/data/expedition.ts
+init_define_import_meta_env();
+var EXPEDITION_MAP_BALANCE = {
+  /** 시작과 보스 사이의 층 수 및 각 층의 가로 노드 범위다. */
+  routeFloors: 19,
+  bossFloor: 20,
+  columns: 5,
+  nodesPerFloor: { min: 2, max: 4 },
+  /** 가중치는 상대값이며 생성기가 합계를 직접 가정하지 않는다. */
+  typeWeights: {
+    normal: 48,
+    elite: 12,
+    horde: 14,
+    rest: 14,
+    treasure: 12
+  },
+  /** 같은 종류와 비전투 노드가 한 세로 흐름에 지나치게 몰리지 않게 하는 상한이다. */
+  maxConsecutiveSameType: 2,
+  maxConsecutiveNonCombat: 1,
+  /** 이 층은 모든 갈래를 전투로 만들어 어느 경로든 최소 전투 수를 만족시킨다. */
+  requiredCombatFloors: [1, 4, 7, 10, 13, 16, 19],
+  minimumCombatsPerRoute: 7
+};
+var EXPEDITION_COMBAT_TYPES = ["normal", "elite", "horde"];
+var EXPEDITION_COMBAT_BALANCE = {
+  normal: { enemyCount: 3, statScale: 1, bodyScale: 1 },
+  elite: { enemyCount: 1, statScale: 1.65, bodyScale: 1.1 },
+  horde: { enemyCount: 5, statScale: 0.82, bodyScale: 0.94 }
+};
+var EXPEDITION_SCORE_BALANCE = {
+  /** 노드 한 층당 기본 점수. */
+  perFloor: 40,
+  /** 원정대 평균 잔여 HP 1%당 점수. */
+  perRemainingHpPercent: 1.5,
+  /** 폰토스에게 넣은 피해 1점이 점수판에서 갖는 값. */
+  bossDamagePerPoint: 200
+};
+var EXPEDITION_NODE_SCORE_MULTIPLIERS = {
+  /** 표준 교전은 층과 잔여 HP의 기준 가치를 그대로 사용한다. */
+  normal: 1,
+  /** 단일 강적의 높은 실패 위험을 표준 교전보다 50% 높게 보상한다. */
+  elite: 1.5,
+  /** 다수전의 추가 부담은 정예보다 낮은 25% 가산으로 보상한다. */
+  horde: 1.25,
+  /** 휴식은 전투 성과가 아니므로 점수를 만들지 않는다. */
+  rest: 0,
+  /** 보물의 가치는 전리품에만 있으며 RNG 결과를 점수로 환산하지 않는다. */
+  treasure: 0,
+  /** 보스 점수는 별도의 서버 검증 피해 점수가 소유한다. */
+  boss: 0
+};
+var EXPEDITION_REST_RULES = { healPercent: 30, revivePercent: 25, maxRevives: 1, cannotReviveAfterWipe: true };
+var EXPEDITION_NON_COMBAT_TYPES = ["rest", "treasure"];
+var EXPEDITION_AUGMENT_IDS = EXPEDITION_AUGMENTS.map(({ id }) => id);
+var EXPEDITION_REWARD_IDS = ["gold", "fossil", "amber", "gems", "cheesecake", "salvageRecord"];
+var EXPEDITION_NODE_REWARD_BALANCE = {
+  cheesecake: { perNode: { min: 4, max: 12 }, runCap: 180 },
+  gold: { perNode: { min: 120, max: 420 }, runCap: 7500 },
+  fossil: { perNode: { min: 0, max: 1 }, runCap: 1 },
+  gems: { perNode: { min: 0, max: 2 }, runCap: 24 },
+  /**
+   * 인양 기록 — 노드를 넘을 때마다 **소소하게** 쌓인다. 전리품 상점의 재화라 한 판에 몇 개라도 손에
+   * 쥐어져야 원정을 돌 이유가 상점까지 이어진다. 큰 몫은 폰토스 피해와 주간 보상이 맡는다.
+   */
+  salvageRecord: { perNode: { min: 2, max: 5 }, runCap: 90 }
+};
+var EXPEDITION_BOSS_SALVAGE = { perScore: 1 / 500, cap: 200 };
+function expeditionBossSalvage(bossDamageScore) {
+  return Math.max(0, Math.min(EXPEDITION_BOSS_SALVAGE.cap, Math.floor(Math.max(0, bossDamageScore) * EXPEDITION_BOSS_SALVAGE.perScore)));
+}
+var EXPEDITION_COMBAT_REWARD_MULTIPLIERS = {
+  normal: 1,
+  elite: 1.75,
+  horde: 1.4
+};
+var EXPEDITION_TREASURE_REWARD_BALANCE = {
+  gold: { min: 520, max: 900 },
+  fossil: { min: 1, max: 1 },
+  gems: { min: 3, max: 5 },
+  salvageRecord: { min: 6, max: 10 }
+};
+var QUICK_EXPEDITION_POLICY = { scoreRatio: 0.25, dailyLimitUtc: 2, weeklyLimitUtc: 5 };
+var EXPEDITION_BOSS_BALANCE = {
+  /** 서버 검증이 허용하는 전투 길이와 입력량 상한이다. */
+  maximumDurationMs: (deathClockClosesBySeconds() + BOSS_REPLAY_SLACK_SECONDS) * 1e3,
+  maximumActions: 2e3,
+  maximumAcceptedScore: 1e8,
+  /** 단계는 이름표다. 공격은 폰토스 정적 스킬이, 끝은 데스 카운트가 맡는다. */
+  phases: [
+    { startsAtMs: 0, attackPerSecond: 0, label: "\uAD00\uCE21" },
+    { startsAtMs: 3e4, attackPerSecond: 0, label: "\uACFC\uBD80\uD558" },
+    { startsAtMs: 6e4, attackPerSecond: 0, label: "\uBD95\uAD34" }
+  ]
+};
+var EXPEDITION_BEST_SCORE_REWARD_STAGES = [
+  { id: "best-2k", threshold: 2e3, reward: { currency: "salvageRecord", amount: 10 } },
+  { id: "best-4k", threshold: 4e3, reward: { currency: "gold", amount: 3e3 } },
+  { id: "best-6k", threshold: 6e3, reward: { currency: "salvageRecord", amount: 10 } },
+  { id: "best-8k", threshold: 8e3, reward: { currency: "cheesecake", amount: 30 } },
+  { id: "best-10k", threshold: 1e4, reward: { currency: "salvageRecord", amount: 15 } },
+  { id: "best-13k", threshold: 13e3, reward: { currency: "dnaFragments", amount: 5 } },
+  { id: "best-16k", threshold: 16e3, reward: { currency: "salvageRecord", amount: 15 } },
+  { id: "best-20k", threshold: 2e4, reward: { currency: "gems", amount: 20 } },
+  { id: "best-24k", threshold: 24e3, reward: { currency: "salvageRecord", amount: 20 } },
+  { id: "best-28k", threshold: 28e3, reward: { currency: "gold", amount: 6e3 } },
+  { id: "best-33k", threshold: 33e3, reward: { currency: "salvageRecord", amount: 20 } },
+  { id: "best-38k", threshold: 38e3, reward: { currency: "fossil", amount: 1 } },
+  { id: "best-44k", threshold: 44e3, reward: { currency: "salvageRecord", amount: 25 } },
+  { id: "best-50k", threshold: 5e4, reward: { currency: "gems", amount: 40 } },
+  { id: "best-57k", threshold: 57e3, reward: { currency: "salvageRecord", amount: 25 } },
+  { id: "best-65k", threshold: 65e3, reward: { currency: "cheesecake", amount: 60 } },
+  { id: "best-74k", threshold: 74e3, reward: { currency: "salvageRecord", amount: 30 } },
+  { id: "best-84k", threshold: 84e3, reward: { currency: "dnaFragments", amount: 10 } },
+  { id: "best-95k", threshold: 95e3, reward: { currency: "salvageRecord", amount: 30 } },
+  { id: "best-110k", threshold: 11e4, reward: { currency: "amber", amount: 1 } },
+  { id: "best-125k", threshold: 125e3, reward: { currency: "salvageRecord", amount: 40 } },
+  { id: "best-145k", threshold: 145e3, reward: { currency: "gems", amount: 60 } },
+  { id: "best-170k", threshold: 17e4, reward: { currency: "salvageRecord", amount: 50 } },
+  { id: "best-200k", threshold: 2e5, reward: { currency: "fossil", amount: 2 } }
+];
+var EXPEDITION_DAILY_POLICY = { maxPlaysPerDay: 1 };
+var EXPEDITION_WEEKLY_RANK_REWARDS = [
+  { upTo: 1, rewards: { gems: 500, salvageRecord: 400 } },
+  { upTo: 3, rewards: { gems: 400, salvageRecord: 320 } },
+  { upTo: 10, rewards: { gems: 300, salvageRecord: 250 } },
+  { upTo: 50, rewards: { gems: 200, salvageRecord: 180 } },
+  { upTo: 100, rewards: { gems: 150, salvageRecord: 130 } },
+  { upTo: null, rewards: { gems: 80, salvageRecord: 80 } }
+];
+function expeditionRankRewards(rank) {
+  const row = EXPEDITION_WEEKLY_RANK_REWARDS.find(({ upTo }) => upTo === null || rank <= upTo) ?? EXPEDITION_WEEKLY_RANK_REWARDS.at(-1);
+  return { ...row.rewards };
+}
+var EXPEDITION_SWEEP_POLICY = { nodeRewardRatio: 0.75 };
+EXPEDITION_BOSS_BALANCE.phases.forEach((phase, index) => registerDataText(phase, "label", `expedition.phase.${index}`));
+
+// src/data/expeditionEnemies.ts
+var EXPEDITION_ENEMY_FORMATIONS = {
+  normal: ["toby", "amo", "ripa"],
+  /*
+   * **정예 조우에는 때릴 줄 아는 개체가 첫 자리에 선다.** 혼자 서는 자리인데 아모(탱커)가
+   * 앞에 있던 때는 실측에서 스물일곱 초를 싸우고도 파티 체력이 **한 점도 깎이지 않았다** —
+   * 정예가 묻는 것은 단일 딜과 유지력인데 그 조우가 아무것도 묻지 않았다.
+   */
+  elite: ["koma", "amo", "ripa"],
+  horde: ["ripa", "toby", "amo"],
+  boss: ["amo", "ripa", "toby"],
+  // 비전투 노드는 표시/전투 함수에서 호출하지 않지만 완전한 타입 표를 유지한다.
+  rest: ["toby", "amo", "ripa"],
+  treasure: ["toby", "amo", "ripa"]
+};
+var FINAL_FLOOR_BOSS_ID = "pontos";
+function expeditionNodeRole(type, floor) {
+  if (type === "boss") return floor >= 20 ? "endless" : "boss";
+  return encounterRoleFor(type === "horde" ? ENCOUNTER_HORDE_COUNT : 3, { elite: type === "elite" });
+}
+function expeditionRecommendedLevel(floor) {
+  return Math.max(1, Math.round(floor * EXPEDITION_LEVEL_PER_FLOOR));
+}
+var EXPEDITION_LEVEL_PER_FLOOR = 2;
+var ENCOUNTER_HORDE_COUNT = 5;
+function expeditionEnemyLevel(_type, floor) {
+  return expeditionRecommendedLevel(floor);
+}
+function getExpeditionNodeEnemies(type, floor) {
+  const level = expeditionEnemyLevel(type, floor);
+  const ids = type === "boss" && floor === 20 ? [FINAL_FLOOR_BOSS_ID] : EXPEDITION_ENEMY_FORMATIONS[type];
+  const role = expeditionNodeRole(type, floor);
+  return ids.map((id) => {
+    const enemy = getRelic(id);
+    return { ...enemy, encounterRole: role, stats: applyEncounterScaling(enemy.stats, level, role) };
+  });
+}
+function expeditionBossGrowth() {
+  const level = expeditionEnemyLevel("boss", 20);
+  return { level, breakthrough: requiredBreakthroughForLevel(level) };
+}
+
+// src/core/expeditionBattle.ts
+init_define_import_meta_env();
+
+// src/data/raid.ts
+init_define_import_meta_env();
+var RAID_SEASON_BOSS_LEVEL = 60;
+var RAID_SEASON_BOSS = {
+  relicId: "sukusuino",
+  level: RAID_SEASON_BOSS_LEVEL,
+  /**
+   * **돌파는 레벨에서 나온다**(`requiredBreakthroughForLevel`). 2로 적어 두었을 때는 정보창이
+   * `48 / 40`을 세워 상한을 넘긴 레벨을 말했다 — 적도 플레이어와 같은 성장 축을 지나야 한다.
+   */
+  breakthrough: requiredBreakthroughForLevel(RAID_SEASON_BOSS_LEVEL)
+};
+var RAID_BOSS_BALANCE = {
+  maximumDurationMs: (deathClockClosesBySeconds() + BOSS_REPLAY_SLACK_SECONDS) * 1e3,
+  maximumActions: 2e3,
+  maximumAcceptedScore: 1e8,
+  phases: [
+    { startsAtMs: 0, attackPerSecond: 0, label: "\uAD50\uC804" },
+    { startsAtMs: 3e4, attackPerSecond: 0, label: "\uACA9\uD654" },
+    { startsAtMs: 6e4, attackPerSecond: 0, label: "\uCD5C\uD6C4" }
+  ]
+};
+var raidDifficulty = (spec) => ({ ...spec, totalHp: spec.bodyHp * spec.kills });
+var RAID_DIFFICULTY = {
+  easy: raidDifficulty({ level: 20, bodyHp: 25e3, kills: 6, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 1e4, total: 8, kill: 5 } }),
+  normal: raidDifficulty({ level: 30, bodyHp: 5e4, kills: 8, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15e3, total: 14, kill: 8 } }),
+  hard: raidDifficulty({ level: 40, bodyHp: 1e5, kills: 10, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22e3, total: 22, kill: 12 } }),
+  rampage: raidDifficulty({ level: 60, bodyHp: 25e4, kills: 40, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 45e3, total: 60, kill: 30 } })
+};
+function isRaidDifficulty(value) {
+  return typeof value === "string" && Object.prototype.hasOwnProperty.call(RAID_DIFFICULTY, value);
+}
+var RAID_SUMMON_DIFFICULTIES = ["easy", "normal", "hard"];
+var RAID_BOSS_POOL = ["sukusuino", "taboa", "quetzalcoatlus"];
+var RAID_TICKET_ITEM = "raid-ticket";
+var RAID_SELECT_TICKET_ITEM = "raid-select-ticket";
+var RAID_TICKET_TEST_KIT = [
+  { itemId: RAID_TICKET_ITEM, quantity: 3 },
+  { itemId: RAID_SELECT_TICKET_ITEM, quantity: 1 }
+];
+var RAID_SEASON_TOTAL_HP = RAID_DIFFICULTY.rampage.totalHp;
+var RAID_ATTEMPTS_PER_RAID = 2;
+var RAID_RUN_STAMINA = 10;
+function raidRunStamina(_difficulty) {
+  return RAID_RUN_STAMINA;
+}
+var RAID_RUN_GOLD_PER_DAMAGE = 0.2;
+var RAID_COMPLETED_KEEP_HOURS = 48;
+var RAID_MOCK_PARTICIPANTS = [
+  { id: "raider-haneul", displayName: "\uD558\uB298\uC815\uC6D0", favoriteRelicId: "rex", pace: 1.32 },
+  { id: "raider-moss", displayName: "\uC774\uB07C\uC5F0\uAD6C\uC18C", favoriteRelicId: "torika", pace: 0.71 },
+  { id: "raider-viola", displayName: "\uBE44\uC62C\uB77C", favoriteRelicId: "spino", pace: 1.18 },
+  { id: "raider-kettle", displayName: "\uC8FC\uC804\uC790", favoriteRelicId: "luka", pace: 0.94 },
+  { id: "raider-noon", displayName: "\uC815\uC624\uC758\uD45C\uBCF8", favoriteRelicId: "dodo", pace: 1.07 },
+  { id: "raider-dust", displayName: "\uBA3C\uC9C0\uB5A8\uC774", favoriteRelicId: "tia", pace: 0.62 },
+  { id: "raider-ember", displayName: "\uC794\uBD88", favoriteRelicId: "stella", pace: 1.24 },
+  { id: "raider-quartz", displayName: "\uC11D\uC601", favoriteRelicId: "meron", pace: 0.88 },
+  { id: "raider-tidal", displayName: "\uBC00\uBB3C", favoriteRelicId: "pachi", pace: 1.02 },
+  { id: "raider-orchid", displayName: "\uB09C\uCD08", favoriteRelicId: "maki", pace: 0.79 },
+  { id: "raider-cinder", displayName: "\uC7AC", favoriteRelicId: "keris", pace: 1.15 },
+  { id: "raider-fern", displayName: "\uACE0\uC0AC\uB9AC", favoriteRelicId: "delopi", pace: 0.68 },
+  { id: "raider-halo", displayName: "\uB2EC\uBB34\uB9AC", favoriteRelicId: "nodonia", pace: 1.29 },
+  { id: "raider-pebble", displayName: "\uC870\uC57D\uB3CC", favoriteRelicId: "ella", pace: 0.84 },
+  { id: "raider-signal", displayName: "\uC2E0\uD638\uD0D1", favoriteRelicId: "mette", pace: 1.11 },
+  { id: "raider-lantern", displayName: "\uB4F1\uBD88", favoriteRelicId: "deina", pace: 0.75 },
+  { id: "raider-marrow", displayName: "\uACE8\uC218\uC5F0\uAD6C", favoriteRelicId: "maddy", pace: 0.97 },
+  { id: "raider-willow", displayName: "\uBC84\uB4DC\uB098\uBB34", favoriteRelicId: "terisa", pace: 1.21 },
+  { id: "raider-gale", displayName: "\uB3CC\uD48D", favoriteRelicId: "parua", pace: 0.66 },
+  { id: "raider-amberly", displayName: "\uD638\uBC15\uBE5B", favoriteRelicId: "shute", pace: 1.06 },
+  { id: "raider-slate", displayName: "\uC810\uD310\uC554", favoriteRelicId: "dian", pace: 0.81 },
+  { id: "raider-vellum", displayName: "\uC591\uD53C\uC9C0", favoriteRelicId: "rex", pace: 1.13 },
+  { id: "raider-drift", displayName: "\uD45C\uB958", favoriteRelicId: "torika", pace: 0.73 },
+  { id: "raider-kiln", displayName: "\uAC00\uB9C8", favoriteRelicId: "spino", pace: 1.27 }
+];
+RAID_BOSS_BALANCE.phases.forEach((phase, index) => registerDataText(phase, "label", `raid.phase.${index}`));
+
+// src/core/raid.ts
+init_define_import_meta_env();
+
+// src/core/buildFlavor.ts
+init_define_import_meta_env();
+var QA_TOOLS_ENABLED = false;
+
+// src/data/friends.ts
+init_define_import_meta_env();
+var NOW = Date.now();
+var SAMPLE_FRIENDS = [
+  // 샘플도 공개 화이트리스트만 명시해 실제 응답에 계정 키·재화·편성이 섞이는 일을 조기에 드러낸다.
+  { id: "friend-haneul", uid: "418207735", frameId: "holo", displayName: "\uD558\uB298\uC815\uC6D0", level: 27, status: "\uC0C8 \uD45C\uBCF8\uC758 \uD754\uC801\uC744 \uCC3E\uB294 \uC911", lastActiveAt: NOW - 3e4, equippedModifiers: [{ id: "field-pioneer", displayName: "\uD604\uC7A5 \uAC1C\uCC99\uC790", rarity: "rare" }], favoriteRelic: { relicId: "rex", level: 24, breakthroughGrade: 5, stats: { hp: 820, def: 42, res: 36, atk: 132, ap: 76, attackSpeed: 112, moveSpeed: 108, critChance: 20, critDamage: 160, energyGain: 28, lifeSteal: 0, ferocityGain: 0 }, skillIds: ["rex-basic", "rex-passive", "rex-ultimate"] }, competitiveStats: { highestStage: { stageId: "stage-2-5", displayValue: "2-5 \uBD89\uC740 \uD611\uACE1" }, arenaTier: { tierId: "gold-2", displayName: "\uACE8\uB4DC II" }, expeditionScore: 18420 } },
+  // 두 번째 샘플은 선택 기록과 수식어가 없는 정상 응답을 검수하며 빈 상태 문구 대신 렌더링 생략을 확인한다.
+  { id: "friend-moss", uid: "602913548", frameId: "field", displayName: "\uC774\uB07C\uC5F0\uAD6C\uC18C", level: 19, status: "\uC624\uB298\uB3C4 \uCC9C\uCC9C\uD788 \uBCF5\uC6D0", lastActiveAt: NOW - 12 * 6e4, equippedModifiers: [], favoriteRelic: { relicId: "torika", level: 18, breakthroughGrade: 4, stats: { hp: 1420, def: 128, res: 92, atk: 74, ap: 52, attackSpeed: 78, moveSpeed: 72, critChance: 5, critDamage: 140, energyGain: 20, lifeSteal: 0, ferocityGain: 0 }, skillIds: ["torika-basic", "torika-passive", "torika-ultimate"] }, competitiveStats: {} }
+];
+var PREVIEW_FRIENDS = QA_TOOLS_ENABLED ? SAMPLE_FRIENDS : [];
+for (const friend of PREVIEW_FRIENDS) {
+  registerDataText(friend, "status", `friend.${friend.id}.status`);
+}
+for (const friend of PREVIEW_FRIENDS) {
+  const stats = friend.competitiveStats;
+  if (stats.highestStage) registerDataText(stats.highestStage, "displayValue", `friend.${friend.id}.highestStage`);
+  if (stats.arenaTier) registerDataText(stats.arenaTier, "displayName", `friend.${friend.id}.arenaTier`);
+}
+
+// src/core/raid.ts
+var RAID_BOSS_ROLE = "boss";
+function raidSeasonKey(now) {
+  return now.toISOString().slice(0, 10);
+}
+function raidWorldBossId(dayKey) {
+  const day = Math.floor(Date.parse(`${dayKey}T00:00:00.000Z`) / 864e5);
+  return RAID_BOSS_POOL[(day % RAID_BOSS_POOL.length + RAID_BOSS_POOL.length) % RAID_BOSS_POOL.length];
+}
+function rollRaidSummon(bossRoll, difficultyRoll) {
+  const pick2 = (list, roll3) => list[Math.min(list.length - 1, Math.max(0, Math.floor(roll3 * list.length)))];
+  return { bossRelicId: pick2(RAID_BOSS_POOL, bossRoll), difficulty: pick2(RAID_SUMMON_DIFFICULTIES, difficultyRoll) };
+}
+function raidSeasonProgress(dealtDamage, totalHp = RAID_SEASON_TOTAL_HP) {
+  const total = Math.max(0, Math.floor(totalHp));
+  const dealt = Math.min(total, Math.max(0, Math.floor(dealtDamage)));
+  const remainingHp = Math.max(0, total - dealt);
+  return { totalHp: total, dealtDamage: dealt, remainingHp, remainingRatio: total > 0 ? remainingHp / total : 0, defeated: total > 0 && dealt >= total };
+}
+function raidContributionBoard(entries, limit = 100) {
+  return [...entries].filter(({ damage }) => Number.isFinite(damage) && damage > 0).sort((a, b) => b.damage - a.damage || a.playerId.localeCompare(b.playerId)).slice(0, Math.max(0, limit)).map((entry, index) => ({
+    rank: index + 1,
+    playerId: entry.playerId,
+    displayName: entry.displayName,
+    damage: Math.floor(entry.damage),
+    isMe: entry.isMe === true,
+    favoriteRelicId: entry.favoriteRelicId
+  }));
+}
+function seedHash(seed) {
+  let hash = 2166136261;
+  for (let index = 0; index < seed.length; index += 1) {
+    hash ^= seed.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) / 4294967296;
+}
+function mockRaidContributions(dayKey, dayProgress, twoRunBase = 3e4) {
+  if (!QA_TOOLS_ENABLED) return [];
+  const played = Math.min(1, Math.max(0.15, dayProgress / 0.7));
+  return RAID_MOCK_PARTICIPANTS.map(({ id, displayName, favoriteRelicId, pace }) => {
+    const jitter = 0.78 + seedHash(`${dayKey}:${id}`) * 0.44;
+    return { playerId: id, displayName, favoriteRelicId, damage: Math.floor(twoRunBase * pace * jitter * played) };
+  });
+}
+function mockRaidWorldDamage(dayKey, dayProgress, totalHp = RAID_SEASON_TOTAL_HP) {
+  if (!QA_TOOLS_ENABLED) return 0;
+  const reach = 0.55 + seedHash(`${dayKey}:world`) * 0.55;
+  const curve = 1 - (1 - Math.min(1, Math.max(0, dayProgress))) ** 2;
+  return Math.floor(totalHp * reach * curve);
+}
+function raidBossGrowth(difficulty) {
+  const level = RAID_DIFFICULTY[difficulty].level;
+  return { level, breakthrough: requiredBreakthroughForLevel(level) };
+}
+function raidBossScaledStats(base, difficulty) {
+  return applyEncounterScaling(base.stats, raidBossGrowth(difficulty).level, RAID_BOSS_ROLE);
+}
+function raidBossPercentHpBasis(base, difficulty = "rampage") {
+  return Math.max(1, Math.round(raidBossScaledStats(base, difficulty).hp));
+}
+function raidBossDef(base, difficulty = "rampage") {
+  const scaled = raidBossScaledStats(base, difficulty);
+  return { ...base, encounterRole: RAID_BOSS_ROLE, stats: { ...scaled, hp: RAID_DIFFICULTY[difficulty].bodyHp } };
+}
+function mockSummonRaidDamage(raidId, elapsedRatio, totalHp) {
+  if (!QA_TOOLS_ENABLED) return 0;
+  const reach = 0.6 + seedHash(`${raidId}:reach`) * 0.7;
+  const curve = 1 - (1 - Math.min(1, Math.max(0, elapsedRatio))) ** 2;
+  return Math.floor(totalHp * reach * curve);
+}
+function mockFriendRaids(dayKey) {
+  const start = Date.parse(`${dayKey}T00:00:00.000Z`);
+  return PREVIEW_FRIENDS.map((friend, index) => {
+    const pick2 = seedHash(`${dayKey}:${friend.id}:raid`);
+    const difficulty = RAID_SUMMON_DIFFICULTIES[Math.floor(pick2 * RAID_SUMMON_DIFFICULTIES.length) % RAID_SUMMON_DIFFICULTIES.length];
+    const bossRelicId = RAID_BOSS_POOL[Math.floor(seedHash(`${dayKey}:${friend.id}:boss`) * RAID_BOSS_POOL.length) % RAID_BOSS_POOL.length];
+    return {
+      id: `friend-${friend.id}-${dayKey}`,
+      friendId: friend.id,
+      friendName: friend.displayName,
+      bossRelicId,
+      difficulty,
+      openedAt: new Date(start + (2 + index * 5) * 36e5).toISOString()
+    };
+  });
+}
+function mockSummonContributions(raidId, othersDamage) {
+  const weights = PREVIEW_FRIENDS.map((friend) => 0.5 + seedHash(`${raidId}:${friend.id}`));
+  const sum = weights.reduce((total, weight) => total + weight, 0);
+  return PREVIEW_FRIENDS.map((friend, index) => ({
+    playerId: friend.id,
+    displayName: friend.displayName,
+    favoriteRelicId: friend.favoriteRelic?.relicId,
+    damage: Math.floor(othersDamage * weights[index] / sum)
+  }));
+}
+function raidSettlement(difficulty, myDamage, dealtRatio, defeated) {
+  if (!(myDamage > 0)) return void 0;
+  const spec = RAID_DIFFICULTY[difficulty].settlement;
+  const mine = Math.round(spec.mine * Math.min(1, myDamage / spec.mineTarget));
+  const total = Math.round(spec.total * Math.min(1, Math.max(0, dealtRatio)));
+  return { raidSigil: Math.max(1, mine + total + (defeated ? spec.kill : 0)) };
+}
+function raidRunGold(runDamage, goldPerDamage) {
+  return Math.max(0, Math.floor(runDamage * goldPerDamage));
+}
+var RAID_HISTORY_PREVIEW_PREFIX = "preview-done-";
+function previewCompletedRaids(now) {
+  const hours = (value) => new Date(now.getTime() - value * 36e5).toISOString();
+  const friend = (index) => PREVIEW_FRIENDS[index % PREVIEW_FRIENDS.length]?.displayName;
+  return [
+    {
+      id: `${RAID_HISTORY_PREVIEW_PREFIX}slain-1`,
+      kind: "summon",
+      bossRelicId: "sukusuino",
+      difficulty: "hard",
+      openedAt: hours(27),
+      endsAt: hours(3),
+      summonedByMe: true,
+      myDamage: 26400,
+      attemptsUsed: 2,
+      settled: false
+    },
+    {
+      id: `${RAID_HISTORY_PREVIEW_PREFIX}expired-2`,
+      kind: "summon",
+      bossRelicId: "taboa",
+      difficulty: "normal",
+      openedAt: hours(34),
+      endsAt: hours(10),
+      summonerName: friend(0),
+      summonedByMe: false,
+      myDamage: 8700,
+      attemptsUsed: 1,
+      settled: false
+    },
+    {
+      id: `${RAID_HISTORY_PREVIEW_PREFIX}world`,
+      kind: "world",
+      bossRelicId: RAID_BOSS_POOL[0],
+      difficulty: "rampage",
+      openedAt: hours(30),
+      endsAt: hours(6),
+      summonedByMe: false,
+      myDamage: 41500,
+      attemptsUsed: 2,
+      settled: false
+    },
+    {
+      id: `${RAID_HISTORY_PREVIEW_PREFIX}settled`,
+      kind: "summon",
+      bossRelicId: "taboa",
+      difficulty: "easy",
+      openedAt: hours(40),
+      endsAt: hours(16),
+      summonerName: friend(1),
+      summonedByMe: false,
+      myDamage: 12e3,
+      attemptsUsed: 2,
+      settled: true
+    }
+  ];
+}
+
+// src/core/expeditionBattle.ts
+function createExpeditionSkirmishConfig(input, playerDefs, enemyPool) {
+  if (enemyPool.length === 0) throw new RangeError("\uC6D0\uC815 \uC801 \uC6D0\uBCF8\uC774 \uBE44\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.");
+  const balance = EXPEDITION_COMBAT_BALANCE[input.nodeType];
+  const activeIds = new Set(input.relics.filter(({ alive, currentHp }) => alive && currentHp > 0).map(({ relicId }) => relicId));
+  const scaleStats = (def) => ({ ...def, stats: Object.fromEntries(Object.entries(def.stats).map(([key, value]) => [key, value * balance.statScale])) });
+  return {
+    playerDefs: playerDefs.filter(({ id }) => activeIds.has(id)),
+    enemyDefs: Array.from({ length: balance.enemyCount }, (_, index) => scaleStats(enemyPool[index % enemyPool.length])),
+    playerInitialStates: input.relics.filter(({ relicId }) => activeIds.has(relicId)).map((state) => ({ ...state })),
+    augmentEffects: expeditionBattleEffects(input.augments),
+    enemyBodyScale: balance.bodyScale
+  };
+}
+function expeditionBattleEffects(selections) {
+  return selections.flatMap(({ augmentId, targetRelicId }) => {
+    const augment = getExpeditionAugment(augmentId);
+    const effect = augment?.effect;
+    if (!augment || !effect || effect.kind === "healAfterBattlePercent") return [];
+    const scope = targetRelicId ? { kind: "relic", relicId: targetRelicId } : { kind: "all" };
+    return [{ ...effect, scope, stacking: augment.stacking, stackKey: `${augment.id}:${targetRelicId ?? "party"}` }];
+  });
+}
+
+// src/core/runeTraitEffects.ts
+init_define_import_meta_env();
+function onceLimits(target, cooldownSeconds = 0) {
+  return { maxTriggers: 1, cooldownSeconds, maxStacks: 1, target };
+}
+function runeTraitCombatEffects(trait, relicId) {
+  const def = findRuneTrait(trait.id);
+  if (def === void 0) return [];
+  const value = runeTraitValue(trait.id, trait.grade);
+  const scope = { kind: "relic", relicId };
+  switch (def.effect.kind) {
+    case "hasteOnBattleStart":
+      return [{
+        kind: "triggered",
+        trigger: "battleStart",
+        scope,
+        limits: onceLimits("self"),
+        payload: { kind: "haste", attackSpeedPercent: value, moveSpeedPercent: 0, seconds: def.effect.seconds }
+      }];
+    case "hasteOnKill":
+      return [{
+        kind: "triggered",
+        trigger: "onKill",
+        scope,
+        limits: { maxTriggers: Number.MAX_SAFE_INTEGER, cooldownSeconds: def.effect.cooldownSeconds, maxStacks: 1, target: "self" },
+        payload: { kind: "haste", attackSpeedPercent: value, moveSpeedPercent: value, seconds: def.effect.seconds }
+      }];
+    case "damageVsHighHp":
+      return [{ kind: "damageVsHighHpPercent", percent: value, aboveHpPercent: def.effect.aboveHpPercent, scope }];
+    case "sameTargetStreak":
+      return [{ kind: "sameTargetStreakPercent", percentPerStack: value, maxStacks: def.effect.maxStacks, scope }];
+    case "shieldLowestAllyOnBattleStart":
+      return [{
+        kind: "triggered",
+        trigger: "battleStart",
+        scope,
+        limits: onceLimits("lowestHpAlly"),
+        payload: { kind: "shield", maxHpPercent: value }
+      }];
+    case "shieldOnLowHp":
+      return [{
+        kind: "triggered",
+        trigger: "onLowHp",
+        scope,
+        limits: onceLimits("self"),
+        payload: { kind: "shield", maxHpPercent: value }
+      }];
+    case "healOnLowHp":
+      return [{
+        kind: "triggered",
+        trigger: "onLowHp",
+        scope,
+        limits: onceLimits("self"),
+        payload: { kind: "heal", maxHpPercent: value }
+      }];
+    case "shieldOnCritical":
+      return [{
+        kind: "triggered",
+        trigger: "onCritical",
+        scope,
+        limits: { maxTriggers: Number.MAX_SAFE_INTEGER, cooldownSeconds: def.effect.cooldownSeconds, maxStacks: 1, target: "self" },
+        payload: { kind: "shield", maxHpPercent: value }
+      }];
+    case "flatStat":
+      return [{ kind: "flatStat", stat: def.effect.stat, points: value, scope }];
+    case "bleedEveryNAttacks":
+      return [{ kind: "bleedOnAttack", strength: "standard", everyNAttacks: value, reapplication: "refresh", scope }];
+  }
+}
+function partyRuneTraitEffects(equipped) {
+  return equipped.flatMap(({ relicId, runes }) => runes.flatMap((rune) => rune.trait === void 0 ? [] : runeTraitCombatEffects(rune.trait, relicId)));
+}
+
+// src/data/placedEnemies.ts
+init_define_import_meta_env();
+function placedEnemyIndex(input, stage, enemyDefs) {
+  if (input.mode === "cake") {
+    const tier = getCakeOperationTier(input.tierId);
+    const level = cakeOperationEnemyDisplayLevel(tier).level;
+    return new Map(enemyDefs.map((def, index) => [`enemy-${index}`, {
+      def,
+      level,
+      breakthrough: requiredBreakthroughForLevel(level)
+    }]));
+  }
+  if (input.mode === "bounty") {
+    const round = getBountyTier(input.tierId).rounds[input.round];
+    const level = bountyRoundLevel(round);
+    return new Map(enemyDefs.map((def, index) => [`enemy-${index}`, {
+      def,
+      level,
+      breakthrough: requiredBreakthroughForLevel(level)
+    }]));
+  }
+  if (input.mode === "duel") {
+    return new Map(enemyDefs.map((def, index) => [`enemy-${index}`, {
+      def,
+      level: input.units[index]?.level ?? 1,
+      breakthrough: input.units[index]?.breakthrough ?? 0
+    }]));
+  }
+  const expeditionLevel = input.mode === "expedition" ? expeditionEnemyLevel(input.nodeType, input.floor) : input.mode === "expeditionBoss" ? expeditionEnemyLevel("boss", 20) : void 0;
+  const placed = expeditionLevel === void 0 ? stageEnemyGrowth(stage) : void 0;
+  return new Map(enemyDefs.map((def, index) => {
+    const growth = placed?.[index];
+    const level = growth?.level ?? expeditionLevel ?? 1;
+    return [`enemy-${index}`, {
+      def,
+      level,
+      breakthrough: growth?.breakthrough ?? requiredBreakthroughForLevel(level)
+    }];
+  }));
+}
+
+// src/managers/RelicProgressionManager.ts
+init_define_import_meta_env();
+
+// src/state/session.ts
+init_define_import_meta_env();
+
+// src/core/attendance.ts
+init_define_import_meta_env();
+
+// src/core/dailyContent.ts
+init_define_import_meta_env();
+function utcDateKey(now) {
+  if (Number.isNaN(now.getTime())) throw new RangeError("\uC720\uD6A8\uD55C \uC11C\uBC84 \uB0A0\uC9DC\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+  return now.toISOString().slice(0, 10);
+}
+function normalizeDailyContent(state, serverNow2) {
+  const date = utcDateKey(serverNow2);
+  return state.date === date ? { ...state, completedIds: [...state.completedIds], claimedRewardIds: [...state.claimedRewardIds] } : { date, restorationEntries: 0, completedIds: [], claimedRewardIds: [] };
+}
+function consumeRestorationEntry(state, serverNow2) {
+  const normalized = normalizeDailyContent(state, serverNow2);
+  if (normalized.restorationEntries >= DAILY_RESTORATION.maxEntriesPerUtcDay) throw new RangeError("\uC624\uB298\uC758 \uC77C\uC77C \uBCF5\uC6D0 \uC785\uC7A5 \uD69F\uC218\uB97C \uBAA8\uB450 \uC0AC\uC6A9\uD588\uC2B5\uB2C8\uB2E4.");
+  return { ...normalized, restorationEntries: normalized.restorationEntries + 1 };
+}
+
+// src/core/attendance.ts
+var ATTENDANCE_DAYS = 7;
+var REGULAR_ATTENDANCE_WINDOW_DAYS = 10;
+var ATTENDANCE_TRACK_IDS = ["newcomer", "regular"];
+function createEmptyAttendanceState() {
+  return { newcomer: emptyTrack(), regular: emptyTrack(), autoShownDay: "" };
+}
+function emptyTrack(lastClaimDay = "") {
+  return { startDay: "", claimed: 0, lastClaimDay, adClaimed: [] };
+}
+var DAY_KEY = /^\d{4}-\d{2}-\d{2}$/;
+var dayKeyOrEmpty = (value) => typeof value === "string" && DAY_KEY.test(value) ? value : "";
+var claimedCount = (value) => Number.isInteger(value) && value >= 0 ? Math.min(ATTENDANCE_DAYS, value) : 0;
+function normalizeTrack(value) {
+  const source = value && typeof value === "object" ? value : {};
+  const claimed = claimedCount(source.claimed);
+  const adClaimed = Array.isArray(source.adClaimed) ? [...new Set(source.adClaimed.filter((day) => Number.isInteger(day) && day >= 1 && day <= claimed))].sort((a, b) => a - b) : [];
+  return { startDay: dayKeyOrEmpty(source.startDay), claimed, lastClaimDay: dayKeyOrEmpty(source.lastClaimDay), adClaimed };
+}
+function normalizeAttendanceState(value) {
+  const source = value && typeof value === "object" ? value : {};
+  return { newcomer: normalizeTrack(source.newcomer), regular: normalizeTrack(source.regular), autoShownDay: dayKeyOrEmpty(source.autoShownDay) };
+}
+function isValidAttendanceState(value) {
+  if (!value || typeof value !== "object") return false;
+  const normalized = normalizeAttendanceState(value);
+  return JSON.stringify(normalized) === JSON.stringify(value);
+}
+function cloneAttendanceState(state) {
+  return { newcomer: { ...state.newcomer, adClaimed: [...state.newcomer.adClaimed ?? []] }, regular: { ...state.regular, adClaimed: [...state.regular.adClaimed ?? []] }, autoShownDay: state.autoShownDay };
+}
+function dayKeyDistance(from, to) {
+  return Math.round((Date.parse(`${to}T00:00:00.000Z`) - Date.parse(`${from}T00:00:00.000Z`)) / 864e5);
+}
+function rollAttendance(state, now) {
+  const today = utcDateKey(now);
+  const next = cloneAttendanceState(state);
+  if (!next.newcomer.startDay) next.newcomer.startDay = today;
+  const regular = next.regular;
+  if (regular.startDay) {
+    const lapDone = regular.claimed >= ATTENDANCE_DAYS && regular.lastClaimDay !== today;
+    const expired = dayKeyDistance(regular.startDay, today) >= REGULAR_ATTENDANCE_WINDOW_DAYS;
+    if (lapDone || expired) next.regular = emptyTrack(regular.lastClaimDay);
+  }
+  return next;
+}
+function windowEnd(startDay, days) {
+  const end = /* @__PURE__ */ new Date(`${startDay}T00:00:00.000Z`);
+  end.setUTCDate(end.getUTCDate() + days);
+  return end.toISOString();
+}
+function attendanceTrackView(state, id, now) {
+  const today = utcDateKey(now);
+  const track = state[id];
+  const claimedToday = track.lastClaimDay === today;
+  if (id === "newcomer") {
+    const done = track.claimed >= ATTENDANCE_DAYS;
+    const open = !done || claimedToday;
+    return { id, open, claimed: track.claimed, claimableToday: open && !done && !claimedToday, endsAt: null, adClaimed: [], adClaimableToday: false };
+  }
   return {
     id,
-    uid,
-    frameId,
-    displayName,
-    level,
-    status,
-    lastActiveAt,
-    equippedModifiers: [],
-    favoriteRelic: {
-      relicId,
-      level: relicLevel,
-      breakthroughGrade: breakthroughGrade2,
-      stats: applyLevelGrowth(relic.stats, relicLevel, relic.rarity),
-      skillIds: [`${relicId}-basic`, `${relicId}-passive`, `${relicId}-ultimate`]
-    },
-    competitiveStats: {}
+    open: true,
+    claimed: track.claimed,
+    claimableToday: track.claimed < ATTENDANCE_DAYS && !claimedToday,
+    endsAt: track.startDay ? windowEnd(track.startDay, REGULAR_ATTENDANCE_WINDOW_DAYS) : null,
+    adClaimed: [...track.adClaimed],
+    adClaimableToday: claimedToday && track.claimed >= 1 && !track.adClaimed.includes(track.claimed)
   };
 }
-var SAMPLE_DIRECTORY = [
-  { relation: "friend", profile: preview("friend-dawn", "275810396", "\uC0C8\uBCBD\uD45C\uBCF8", 22, "field", "\uC544\uCE68 \uC21C\uCC30 \uC911", "parua", 20, 3, NOW2 - 3 * 60 * MINUTE) },
-  { relation: "friend", favorite: true, profile: preview("friend-amber", "930274815", "\uD638\uBC15\uC0C1\uC790", 35, "amber", "\uBC1C\uAD74 \uC77C\uC9C0 \uC815\uB9AC", "stella", 32, 4, NOW2 - 2 * 24 * 60 * MINUTE) },
-  { relation: "friend", profile: preview("friend-wave", "514602783", "\uD30C\uB3C4\uC18C\uB9AC", 14, "field", "\uCC9C\uCC9C\uD788 \uD0A4\uC6B0\uB294 \uC911", "dodo", 12, 2, NOW2 - 2e4) },
-  { relation: "incoming", requestedAt: NOW2 - 25 * MINUTE, profile: preview("user-fog", "187305926", "\uC548\uAC1C\uAE30\uB85D", 24, "holo", "\uAC19\uC774 \uD574\uC694", "luka", 21, 3, NOW2 - 8 * MINUTE) },
-  { relation: "incoming", requestedAt: NOW2 - 5 * 60 * MINUTE, profile: preview("user-sand", "706418259", "\uBAA8\uB798\uC2DC\uACC4", 11, "field", "\uCC98\uC74C \uC2DC\uC791\uD588\uC5B4\uC694", "toby", 9, 1, NOW2 - 2 * 60 * MINUTE) },
-  { relation: "outgoing", requestedAt: NOW2 - 3 * 60 * MINUTE, profile: preview("user-lighthouse", "362591048", "\uD478\uB978\uB4F1\uB300", 40, "abyss", "\uB808\uC774\uB4DC \uAC19\uC774 \uB3CC \uBD84", "rex", 38, 5, NOW2 - 4e4) },
-  { relation: "none", profile: preview("user-stars", "849062317", "\uBCC4\uBB34\uB9AC", 29, "holo", "\uD45C\uBCF8 \uC218\uC9D1\uAC00", "torika", 26, 4, NOW2 - 15 * MINUTE) },
-  { relation: "none", profile: preview("user-fern", "621874503", "\uACE0\uC0AC\uB9AC\uC232", 18, "field", "\uC870\uC6A9\uD788 \uD50C\uB808\uC774", "kento", 16, 2, NOW2 - 26 * 60 * MINUTE) },
-  { relation: "none", profile: preview("user-late", "453719806", "\uB2A6\uC740\uD45C\uBCF8", 31, "amber", "\uBC24\uC5D0 \uC811\uC18D\uD574\uC694", "mosana", 28, 3, NOW2 - 4 * 24 * 60 * MINUTE) },
-  { relation: "none", profile: preview("user-garden", "198456230", "\uC815\uC6D0\uC0AC\uD558\uB8E8", 47, "garden", "\uC815\uC6D0 \uAD00\uB9AC \uC911", "ella", 44, 5, NOW2 - 9e4) }
-];
-var PREVIEW_DIRECTORY = QA_TOOLS_ENABLED ? [
-  ...PREVIEW_FRIENDS.map((profile) => ({ profile, relation: "friend", favorite: profile.id === "friend-haneul" })),
-  ...SAMPLE_DIRECTORY
-] : [];
-
-// src/api/FakeSocialServer.ts
-var SocialApiError = class extends Error {
-  constructor(code, message) {
-    super(message);
-    this.code = code;
-    this.name = "SocialApiError";
-  }
-  code;
-};
-function cloneProfile(friend) {
-  return {
-    ...friend,
-    equippedModifiers: friend.equippedModifiers.map((modifier) => ({ ...modifier })),
-    favoriteRelic: { ...friend.favoriteRelic, stats: { ...friend.favoriteRelic.stats }, skillIds: [...friend.favoriteRelic.skillIds] },
-    competitiveStats: {
-      ...friend.competitiveStats,
-      highestStage: friend.competitiveStats.highestStage ? { ...friend.competitiveStats.highestStage } : void 0,
-      arenaTier: friend.competitiveStats.arenaTier ? { ...friend.competitiveStats.arenaTier } : void 0
-    }
-  };
+function claimAttendanceDay(state, id, now) {
+  const rolled = rollAttendance(state, now);
+  if (!attendanceTrackView(rolled, id, now).claimableToday) return null;
+  const today = utcDateKey(now);
+  const track = rolled[id];
+  const day = track.claimed + 1;
+  rolled[id] = { startDay: track.startDay || today, claimed: day, lastClaimDay: today, adClaimed: [...track.adClaimed] };
+  return { state: rolled, day };
 }
-var RECOMMENDATION_COUNT = 10;
-var FakeSocialServer = class {
-  constructor(now = Date.now) {
-    this.now = now;
-    for (const entry of PREVIEW_DIRECTORY) {
-      this.profiles.set(entry.profile.id, entry.profile);
-      if (entry.relation === "friend") this.friendIds.add(entry.profile.id);
-      if (entry.relation === "friend" && entry.favorite) this.favoriteIds.add(entry.profile.id);
-      if (entry.relation === "incoming") this.incoming.set(entry.profile.id, entry.requestedAt ?? this.now());
-      if (entry.relation === "outgoing") this.outgoing.set(entry.profile.id, entry.requestedAt ?? this.now());
-    }
-  }
-  now;
-  friendPoints = QA_TOOLS_ENABLED ? 120 : 0;
-  helperUsesToday = 0;
-  profiles = /* @__PURE__ */ new Map();
-  friendIds = /* @__PURE__ */ new Set();
-  favoriteIds = /* @__PURE__ */ new Set();
-  incoming = /* @__PURE__ */ new Map();
-  outgoing = /* @__PURE__ */ new Map();
-  listeners = /* @__PURE__ */ new Set();
-  /** 받은 신청 수가 바뀔 때 부르는 신호. 로비 빨간 점이 이 신호로 다시 읽는다. */
-  subscribe(listener) {
-    this.listeners.add(listener);
-    return () => {
-      this.listeners.delete(listener);
-    };
-  }
-  emit() {
-    for (const listener of this.listeners) listener();
-  }
-  /** 받은 신청 수. 알림 신호가 읽는 값이다. */
-  pendingRequestCount() {
-    return this.incoming.size;
-  }
-  relationOf(userId) {
-    if (this.friendIds.has(userId)) return "friend";
-    if (this.incoming.has(userId)) return "incoming";
-    if (this.outgoing.has(userId)) return "outgoing";
-    return "none";
-  }
-  profileOf(userId) {
-    const profile = this.profiles.get(userId);
-    if (!profile) throw new SocialApiError("USER_NOT_FOUND", "\uC774\uC6A9\uC790 \uC815\uBCF4\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
-    return profile;
-  }
-  async getFriends() {
-    const friends = [...this.friendIds].map((id) => cloneProfile(this.profileOf(id)));
-    return { friends, favoriteIds: [...this.favoriteIds], friendPoints: this.friendPoints, helperUsesToday: this.helperUsesToday, friendLimit: FRIEND_LIMIT, serverTime: this.now() };
-  }
-  /** 받은 신청·보낸 신청. 둘 다 최근에 오간 것이 위다. */
-  async getRequests() {
-    const list = (source) => [...source.entries()].sort((a, b) => b[1] - a[1]).map(([id, requestedAt]) => ({ profile: cloneProfile(this.profileOf(id)), requestedAt }));
-    return { incoming: list(this.incoming), outgoing: list(this.outgoing), requestLimit: FRIEND_REQUEST_LIMIT, serverTime: this.now() };
-  }
-  /** 한 검색어로 이름(부분 일치)과 고유 ID(정확히 일치)를 함께 찾는다. `selfUid`는 자기 자신을 결과에서 뺀다. */
-  async searchUsers(request) {
-    const users = [...this.profiles.values()].filter((profile) => profile.uid !== request.selfUid && matchesUserQuery(profile, request.query)).sort((a, b) => b.lastActiveAt - a.lastActiveAt).map((profile) => ({ profile: cloneProfile(profile), relation: this.relationOf(profile.id) }));
-    return { users, serverTime: this.now() };
-  }
-  /** 아직 아무 관계도 아닌 이용자를 최근 접속순으로 추천한다. */
-  async getRecommendations(selfUid) {
-    const users = [...this.profiles.values()].filter((profile) => profile.uid !== selfUid && this.relationOf(profile.id) === "none").sort((a, b) => b.lastActiveAt - a.lastActiveAt).slice(0, RECOMMENDATION_COUNT).map((profile) => ({ profile: cloneProfile(profile), relation: "none" }));
-    return { users, serverTime: this.now() };
-  }
-  /**
-   * 친구 신청. 상대가 이미 나에게 신청했다면 **서로 원한 것이라 곧바로 친구가 된다**.
-   */
-  async sendRequest(userId, selfUid) {
-    const profile = this.profileOf(userId);
-    if (profile.uid === selfUid) throw new SocialApiError("SELF_REQUEST", "\uC790\uAE30 \uC790\uC2E0\uC5D0\uAC8C\uB294 \uC2E0\uCCAD\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
-    const relation = this.relationOf(userId);
-    if (relation === "friend") throw new SocialApiError("ALREADY_FRIEND", "\uC774\uBBF8 \uCE5C\uAD6C\uC785\uB2C8\uB2E4.");
-    if (relation === "outgoing") throw new SocialApiError("ALREADY_REQUESTED", "\uC774\uBBF8 \uC2E0\uCCAD\uD588\uC2B5\uB2C8\uB2E4.");
-    if (relation === "incoming") {
-      await this.acceptRequest(userId);
-      return { relation: "friend" };
-    }
-    if (this.friendIds.size >= FRIEND_LIMIT) throw new SocialApiError("FRIEND_LIMIT", "\uCE5C\uAD6C \uBAA9\uB85D\uC774 \uAC00\uB4DD \uCC3C\uC2B5\uB2C8\uB2E4.");
-    if (this.outgoing.size >= FRIEND_REQUEST_LIMIT) throw new SocialApiError("REQUEST_LIMIT", "\uBCF4\uB0B8 \uC2E0\uCCAD\uC774 \uB108\uBB34 \uB9CE\uC2B5\uB2C8\uB2E4.");
-    this.outgoing.set(userId, this.now());
-    return { relation: "outgoing" };
-  }
-  /** 보낸 신청을 거둔다. */
-  async cancelRequest(userId) {
-    if (!this.outgoing.delete(userId)) throw new SocialApiError("REQUEST_NOT_FOUND", "\uCDE8\uC18C\uD560 \uC2E0\uCCAD\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
-  }
-  async acceptRequest(userId) {
-    if (!this.incoming.has(userId)) throw new SocialApiError("REQUEST_NOT_FOUND", "\uBC1B\uC740 \uC2E0\uCCAD\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
-    if (this.friendIds.size >= FRIEND_LIMIT) throw new SocialApiError("FRIEND_LIMIT", "\uCE5C\uAD6C \uBAA9\uB85D\uC774 \uAC00\uB4DD \uCC3C\uC2B5\uB2C8\uB2E4.");
-    this.incoming.delete(userId);
-    this.outgoing.delete(userId);
-    this.friendIds.add(userId);
-    this.emit();
-  }
-  async declineRequest(userId) {
-    if (!this.incoming.delete(userId)) throw new SocialApiError("REQUEST_NOT_FOUND", "\uBC1B\uC740 \uC2E0\uCCAD\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
-    this.emit();
-  }
-  /** 받은 신청을 오래된 순으로 모두 수락한다. 친구 상한에 닿으면 멈추고 남은 몫은 `skipped`다. */
-  async acceptAllRequests() {
-    const ids = [...this.incoming.entries()].sort((a, b) => a[1] - b[1]).map(([id]) => id);
-    let processed = 0;
-    for (const id of ids) {
-      if (this.friendIds.size >= FRIEND_LIMIT) break;
-      await this.acceptRequest(id);
-      processed += 1;
-    }
-    return { processed, skipped: ids.length - processed };
-  }
-  async declineAllRequests() {
-    const processed = this.incoming.size;
-    this.incoming.clear();
-    if (processed > 0) this.emit();
-    return { processed, skipped: 0 };
-  }
-  async setFavorite(friendId, favorite) {
-    if (!this.friendIds.has(friendId)) throw new SocialApiError("FRIEND_NOT_FOUND", "\uCE5C\uAD6C \uC815\uBCF4\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
-    if (favorite) this.favoriteIds.add(friendId);
-    else this.favoriteIds.delete(friendId);
-  }
-  /** 친구 관계만 끊는다. 상대가 다시 신청하면 받은 신청으로 들어온다. */
-  async removeFriend(friendId) {
-    if (!this.friendIds.delete(friendId)) throw new SocialApiError("FRIEND_NOT_FOUND", "\uCE5C\uAD6C \uC815\uBCF4\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
-    this.favoriteIds.delete(friendId);
-  }
-  /** 일일 제한 확인, 양쪽 포인트 지급, 사용 횟수 증가를 실제 서버의 단일 처리처럼 묶는다. */
-  async rentFavoriteRelic(friendId) {
-    const friend = this.friendIds.has(friendId) ? this.profiles.get(friendId) : void 0;
-    if (!friend) throw new SocialApiError("FRIEND_NOT_FOUND", "\uCE5C\uAD6C \uC815\uBCF4\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
-    const availability = helperRentalAvailability(this.helperUsesToday);
-    if (!availability.allowed) throw new SocialApiError("DAILY_HELPER_LIMIT", "\uC624\uB298\uC758 \uC870\uB825\uC790 \uB300\uC5EC\uB97C \uBAA8\uB450 \uC0AC\uC6A9\uD588\uC2B5\uB2C8\uB2E4.");
-    this.helperUsesToday += 1;
-    this.friendPoints += FRIEND_POINTS_PER_RENTAL;
-    return { friendId, relicId: friend.favoriteRelic.relicId, renterPointsEarned: FRIEND_POINTS_PER_RENTAL, ownerPointsEarned: FRIEND_POINTS_PER_RENTAL, friendPoints: this.friendPoints, remaining: helperRentalAvailability(this.helperUsesToday).remaining };
-  }
-};
-var socialApi = new FakeSocialServer();
+function claimAttendanceAdBonus(state, now) {
+  const rolled = rollAttendance(state, now);
+  if (!attendanceTrackView(rolled, "regular", now).adClaimableToday) return null;
+  const day = rolled.regular.claimed;
+  rolled.regular = { ...rolled.regular, adClaimed: [...rolled.regular.adClaimed, day].sort((a, b) => a - b) };
+  return { state: rolled, day };
+}
 
-// src/core/mileage.ts
+// src/core/serverJournal.ts
 init_define_import_meta_env();
-var MILEAGE_PER_PULL = 1;
-var MILEAGE_OVERFLOW_BY_RARITY = { SSR: 30, SR: 8, R: 2 };
-function mileageForPull(count2, overflowTotal) {
-  return count2 * MILEAGE_PER_PULL + overflowTotal;
+
+// src/core/expeditionSnapshot.ts
+init_define_import_meta_env();
+function captureExpeditionRelicSnapshot(def, progress, runeInventory, skinId) {
+  const runes = progress.heartGemSlots.flatMap((id) => {
+    const rune = id === null ? void 0 : runeInventory.find((candidate) => candidate.instanceId === id);
+    return rune ? [structuredClone(rune)] : [];
+  });
+  return {
+    level: progress.level,
+    breakthrough: progress.breakthrough,
+    bondLevel: progress.bondLevel,
+    stats: { ...calculateFinalStats(def.stats, progress, runes, def.rarity) },
+    runes,
+    skinId: skinId ?? null
+  };
 }
+function isExpeditionRelicSnapshot(value) {
+  if (!value || typeof value !== "object") return false;
+  const snapshot = value;
+  const whole2 = (n) => Number.isInteger(n) && n >= 0;
+  return whole2(snapshot.level) && snapshot.level >= 1 && whole2(snapshot.breakthrough) && whole2(snapshot.bondLevel) && !!snapshot.stats && typeof snapshot.stats === "object" && Object.values(snapshot.stats).every((stat) => Number.isFinite(stat)) && Array.isArray(snapshot.runes) && (snapshot.skinId === null || typeof snapshot.skinId === "string");
+}
+
+// src/core/serverJournal.ts
+var emptyServerJournal = () => ({ receipts: {}, raidAdmissions: {} });
+function isValidServerJournal(value) {
+  if (!value || typeof value !== "object") return false;
+  const journal = value;
+  const record2 = (v) => !!v && typeof v === "object" && !Array.isArray(v);
+  const json = (v) => v === null || typeof v === "string" || typeof v === "boolean" || typeof v === "number" && Number.isFinite(v) || (Array.isArray(v) ? v.every(json) : record2(v) && Object.values(v).every(json));
+  return (journal.combat === void 0 || record2(journal.combat) && record2(journal.combat.tickets) && record2(journal.combat.records) && json(journal.combat)) && (journal.subscriptionEntitlements === void 0 || record2(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record2(entry) && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt)) && (entry.expiresAt === null || Number.isFinite(Date.parse(entry.expiresAt))) && typeof entry.active === "boolean" && typeof entry.serverTime === "string")) && (journal.subscriptionBonusDates === void 0 || record2(journal.subscriptionBonusDates) && Object.values(journal.subscriptionBonusDates).every((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date))) && (journal.subscriptionMails === void 0 || record2(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record2(mail) && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string" && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0)) && record2(journal.receipts) && record2(journal.raidAdmissions) && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record2(receipt) && typeof receipt.identity === "string" && record2(receipt.result) && json(receipt.result)) && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record2(admission) && typeof admission.raidId === "string" && (admission.seed === void 0 || typeof admission.seed === "string" && admission.seed.length <= 64) && (admission.admittedAt === void 0 || typeof admission.admittedAt === "string" && Number.isFinite(Date.parse(admission.admittedAt))) && (admission.replayVersion === void 0 || admission.replayVersion === 2) && Number.isFinite(admission.seasonHp) && admission.seasonHp >= 0 && Number.isFinite(Date.parse(admission.expiresAt)) && Array.isArray(admission.relics) && admission.relics.length === 3 && admission.relics.every((relic) => typeof relic.relicId === "string" && isExpeditionRelicSnapshot(relic.snapshot)));
+}
+
+// src/core/raidTicketDrops.ts
+init_define_import_meta_env();
+var RAID_TICKET_DROP = {
+  /** 한 판(스테미나 10)마다 일반 토벌권이 떨어질 확률 — 스테미나 100당 약 0.8장. */
+  normalChancePerRun: 0.08,
+  /** 한 판마다 선택 토벌권이 떨어질 확률. */
+  selectChancePerRun: 0.012,
+  dailyNormalCap: 3,
+  dailySelectCap: 1,
+  /** 지층 탐사판 한 장에 토벌권 칸이 섞일 확률(일반 · 선택). */
+  strataNormalChance: 0.3,
+  strataSelectChance: 0.06
+};
+function createEmptyRaidTicketDropState() {
+  return { day: "", normal: 0, select: 0 };
+}
+var count = (value) => Number.isInteger(value) && value >= 0 ? value : 0;
+function normalizeRaidTicketDropState(value) {
+  const source = value && typeof value === "object" ? value : {};
+  return { day: typeof source.day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(source.day) ? source.day : "", normal: count(source.normal), select: count(source.select) };
+}
+function isValidRaidTicketDropState(value) {
+  return !!value && typeof value === "object" && JSON.stringify(normalizeRaidTicketDropState(value)) === JSON.stringify(value);
+}
+function rollRaidTicketDrops(state, runs, now, random) {
+  const today = utcDateKey(now);
+  const next = state.day === today ? { ...state } : { day: today, normal: 0, select: 0 };
+  let normal = 0;
+  let select = 0;
+  for (let run2 = 0; run2 < Math.max(0, Math.floor(runs)); run2 += 1) {
+    if (next.normal < RAID_TICKET_DROP.dailyNormalCap && random() > 1 - RAID_TICKET_DROP.normalChancePerRun) {
+      next.normal += 1;
+      normal += 1;
+    }
+    if (next.select < RAID_TICKET_DROP.dailySelectCap && random() > 1 - RAID_TICKET_DROP.selectChancePerRun) {
+      next.select += 1;
+      select += 1;
+    }
+  }
+  const drops = [];
+  if (normal > 0) drops.push({ itemId: RAID_TICKET_ITEM, amount: normal });
+  if (select > 0) drops.push({ itemId: RAID_SELECT_TICKET_ITEM, amount: select });
+  return { state: next, drops };
+}
+function strataRaidTicketTile(random) {
+  const value = random();
+  if (value > 1 - RAID_TICKET_DROP.strataSelectChance) return RAID_SELECT_TICKET_ITEM;
+  if (value > 1 - RAID_TICKET_DROP.strataSelectChance - RAID_TICKET_DROP.strataNormalChance) return RAID_TICKET_ITEM;
+  return null;
+}
+
+// src/core/tutorial.ts
+init_define_import_meta_env();
+var TUTORIAL_STEPS = [
+  /** 오프닝 1-1: 빛나는 궁극기 카드를 눌러 쓴다. 이 판은 다른 조작을 모두 막는다. */
+  "ultimate",
+  /** 다음 스토리 전투: 자동 궁극기 칩이 열린다. */
+  "auto",
+  /** 그다음 전투: 궁극기 연출 스킵 칩이 열린다. */
+  "presentation",
+  /** 그다음 전투: 배속 칩이 열린다. */
+  "speed",
+  /** 그다음 전투: 기여도 판이 열린다. */
+  "contribution",
+  /** 로비 → 도감 → 급여: 치즈케이크로 렐릭을 키운다. */
+  "feed",
+  /** 로비에서 뽑기 재료를 선물로 받는다(`TUTORIAL_REWARDS.gift`). */
+  "gift",
+  /** 연구소에서 첫 복원 연구를 직접 돌린다. */
+  "pull"
+];
+var CONTENT_INTRO_IDS = [
+  "stageMap",
+  "party",
+  "shop",
+  "cakeOperation",
+  "bounty",
+  "interaction",
+  "duel",
+  "friends",
+  "raid",
+  "expedition",
+  "archaeology",
+  "premium"
+];
+var INTRO_SET = new Set(CONTENT_INTRO_IDS);
+function isContentIntroId(value) {
+  return typeof value === "string" && INTRO_SET.has(value);
+}
+function isContentIntroSeen(state, id) {
+  return state.seenIntroIds?.includes(id) ?? false;
+}
+var TUTORIAL_REWARDS = {
+  // 첫 복원 연구(배너 `welcome`)는 10연 전용이고 화석 8개가 든다 — 정확히 한 번 돌릴 몫이다.
+  gift: { fossil: 8 }
+};
+function createEmptyTutorialState() {
+  return { completedStepIds: [] };
+}
+function createCompletedTutorialState() {
+  return { completedStepIds: [...TUTORIAL_STEPS], seenIntroIds: [...CONTENT_INTRO_IDS] };
+}
+var STEP_SET = new Set(TUTORIAL_STEPS);
+function isTutorialStepId(value) {
+  return typeof value === "string" && STEP_SET.has(value);
+}
+function normalizeTutorialState(value) {
+  const raw = value && typeof value === "object" ? value.completedStepIds : void 0;
+  const ids = Array.isArray(raw) ? raw : [];
+  const done = new Set(ids.filter(isTutorialStepId));
+  const completedStepIds = [];
+  for (const step2 of TUTORIAL_STEPS) {
+    if (!done.has(step2)) break;
+    completedStepIds.push(step2);
+  }
+  const rawIntros = value && typeof value === "object" ? value.seenIntroIds : void 0;
+  const seen = new Set(Array.isArray(rawIntros) ? rawIntros.filter(isContentIntroId) : []);
+  const seenIntroIds = CONTENT_INTRO_IDS.filter((id) => seen.has(id));
+  return seenIntroIds.length > 0 ? { completedStepIds, seenIntroIds } : { completedStepIds };
+}
+function isValidTutorialState(value) {
+  return !!value && typeof value === "object" && JSON.stringify(normalizeTutorialState(value)) === JSON.stringify(value);
+}
+function legacyTutorialState(clearedStageIds) {
+  if (clearedStageIds.some((id) => id !== "1-1")) return createCompletedTutorialState();
+  return clearedStageIds.includes("1-1") ? { completedStepIds: ["ultimate"] } : createEmptyTutorialState();
+}
+function isTutorialStepDone(state, step2) {
+  return state.completedStepIds.includes(step2);
+}
+function nextTutorialStep(state) {
+  return TUTORIAL_STEPS[state.completedStepIds.length];
+}
+function canCompleteTutorialStep(state, step2) {
+  return isTutorialStepDone(state, step2) || nextTutorialStep(state) === step2;
+}
+
+// src/core/achievementState.ts
+init_define_import_meta_env();
+
+// src/data/achievements.ts
+init_define_import_meta_env();
+var gems = (amount) => ({ currency: "gems", amount });
+var gold = (amount) => ({ currency: "gold", amount });
+var cheesecake = (amount) => ({ currency: "cheesecake", amount });
+var tiers = (targets, rewards) => targets.map((target, index) => ({ target, reward: rewards[index] ?? rewards.at(-1) }));
+var ACHIEVEMENT_SERIES = [
+  // ── 성장 ──
+  { id: "wealth", category: "growth", metric: "goldPeak", tiers: tiers([1e4, 1e5, 1e6, 1e7, 1e8], [gems(5), gems(10), gems(20), gems(40), gems(80)]), modifierId: "millionaire" },
+  { id: "nurture", category: "growth", metric: "maxRelicLevel", tiers: tiers([10, 20, 40, 60], [cheesecake(50), cheesecake(100), cheesecake(200), cheesecake(400)]) },
+  { id: "level-cap", category: "growth", metric: "relicsAtLevelCap", tiers: tiers([1, 3, 5, 10], [gems(10), gems(15), gems(20), gems(30)]) },
+  { id: "limit-break", category: "growth", metric: "relicsMaxBreakthrough", tiers: tiers([1, 3, 5, 10], [gems(20), gems(30), gems(40), gems(60)]), modifierId: "limit-breaker" },
+  { id: "bond", category: "growth", metric: "relicsMaxBond", tiers: tiers([1, 5, 10], [gems(20), gems(30), gems(50)]), modifierId: "kind-researcher" },
+  { id: "rune-artisan", category: "growth", metric: "runesEngraved", tiers: tiers([1, 5, 20, 50], [gold(1e4), gold(3e4), gold(6e4), gold(1e5)]) },
+  { id: "research-level", category: "growth", metric: "playerLevel", tiers: tiers([10, 20, 30, 40, 50, 60], [gems(10), gems(15), gems(20), gems(25), gems(30), gems(50)]), modifierId: "chief-researcher" },
+  // ── 전투 ──
+  { id: "victories", category: "battle", metric: "victories", tiers: tiers([10, 50, 200, 500, 1e3, 3e3], [gems(5), gems(10), gems(15), gems(20), gems(30), gems(50)]), modifierId: "veteran" },
+  { id: "frontline", category: "battle", metric: "storyStagesCleared", tiers: tiers([10, 20, 30], [gems(20), gems(30), gems(50)]), modifierId: "front-breaker" },
+  { id: "bounty-hunter", category: "battle", metric: "bountyTiersCleared", tiers: tiers([1, 2, 3, 4, 5], [gems(5), gems(10), gems(15), gems(20), gems(30)]) },
+  { id: "cake-operation", category: "battle", metric: "cakeTiersCleared", tiers: tiers([1, 3, 5, 8], [cheesecake(100), cheesecake(200), cheesecake(300), cheesecake(500)]) },
+  { id: "duelist", category: "battle", metric: "duelWins", tiers: tiers([1, 10, 50, 150, 300], [gems(5), gems(10), gems(20), gems(30), gems(50)]), modifierId: "arena-ruler" },
+  // 결투장 티어는 0(브론즈)부터 센다 — 실버(1)에서 시작해 챌린저(7)에서 끝난다.
+  { id: "duel-tier", category: "battle", metric: "duelTierReached", tiers: tiers([1, 2, 3, 4, 5, 6, 7], [gems(5), gems(5), gems(10), gems(10), gems(15), gems(20), gems(30)]), modifierId: "challenger" },
+  { id: "raider", category: "battle", metric: "raidRuns", tiers: tiers([1, 10, 50, 150], [gems(5), gems(15), gems(25), gems(40)]), modifierId: "raid-captain" },
+  { id: "salvager", category: "battle", metric: "expeditionBest", tiers: tiers([1e4, 3e4, 65e3, 11e4, 2e5], [gems(10), gems(15), gems(20), gems(30), gems(50)]), modifierId: "deep-salvager" },
+  // ── 탐사 ──
+  { id: "fossil-lab", category: "explore", metric: "researchPulls", tiers: tiers([10, 50, 100, 300, 1e3], [gems(5), gems(10), gems(15), gems(25), gems(40)]), modifierId: "fossil-appraiser" },
+  { id: "archaeologist", category: "explore", metric: "archaeologySitesCompleted", tiers: tiers([1, 3, 5, 8], [gems(10), gems(15), gems(20), gems(30)]), modifierId: "stratum-explorer" },
+  { id: "harvest", category: "explore", metric: "harvests", tiers: tiers([10, 50, 200, 500], [gold(1e4), gold(3e4), gold(6e4), gold(1e5)]) },
+  { id: "dispatch", category: "explore", metric: "dispatches", tiers: tiers([5, 30, 100, 300], [gems(5), gems(10), gems(20), gems(30)]), modifierId: "city-envoy" },
+  { id: "journals", category: "explore", metric: "journalsRead", tiers: tiers([1, 3, 5], [gold(1e4), gold(2e4), gold(4e4)]) },
+  { id: "storyteller", category: "explore", metric: "storiesRead", tiers: tiers([5, 15, 25], [gems(10), gems(20), gems(30)]), modifierId: "story-collector" },
+  { id: "interviewer", category: "explore", metric: "observationAnswers", tiers: tiers([5, 20, 50, 100], [gems(5), gems(10), gems(15), gems(20)]) },
+  { id: "chapter-reader", category: "explore", metric: "relicChaptersRead", tiers: tiers([1, 5, 15, 30], [gems(5), gems(10), gems(15), gems(20)]) },
+  // ── 수집 ──
+  { id: "collector", category: "collection", metric: "relicsOwned", tiers: tiers([5, 10, 15, 20], [gems(10), gems(15), gems(20), gems(30)]), modifierId: "specimen-curator" },
+  { id: "ssr-collector", category: "collection", metric: "ssrOwned", tiers: tiers([1, 3, 6, 9, 12], [gems(10), gems(15), gems(20), gems(30), gems(40)]) },
+  { id: "rune-hoarder", category: "collection", metric: "runesOwned", tiers: tiers([10, 50, 150], [gold(1e4), gold(3e4), gold(6e4)]) },
+  { id: "legendary-runes", category: "collection", metric: "legendaryRunes", tiers: tiers([1, 5, 10], [gems(10), gems(20), gems(30)]) },
+  { id: "modifiers", category: "collection", metric: "modifiersEarned", tiers: tiers([3, 8, 15], [gems(10), gems(20), gems(30)]) },
+  // ── 일상 ──
+  { id: "feeding", category: "daily", metric: "feedings", tiers: tiers([10, 100, 500, 2e3], [gems(5), gems(10), gems(20), gems(30)]), modifierId: "cheesecake-artisan" },
+  { id: "stamina", category: "daily", metric: "staminaSpent", tiers: tiers([1e3, 1e4, 5e4, 2e5], [gems(5), gems(15), gems(30), gems(50)]), modifierId: "tireless" },
+  { id: "diligence", category: "daily", metric: "dailyMissionsClaimed", tiers: tiers([20, 100, 500, 2e3], [gems(10), gems(20), gems(30), gems(50)]), modifierId: "diligent-researcher" },
+  { id: "greetings", category: "daily", metric: "lobbyGreetings", tiers: tiers([10, 50, 200, 500], [gold(1e4), gold(3e4), gold(5e4), gold(1e5)]) },
+  // ── 기록 — 단계 없이 한 번 밟으면 끝난다 ──
+  { id: "codex-complete", category: "feat", metric: "codexComplete", tiers: tiers([1], [gems(50)]), modifierId: "walking-codex" },
+  { id: "all-elements", category: "feat", metric: "elementsOwned", tiers: tiers([5], [gems(20)]) },
+  { id: "all-squads", category: "feat", metric: "squadsOwned", tiers: tiers([5], [gems(20)]) },
+  { id: "perfect-relic", category: "feat", metric: "perfectRelics", tiers: tiers([1], [gems(30)]) },
+  { id: "rune-set", category: "feat", metric: "fullyRunedRelics", tiers: tiers([1], [gold(3e4)]) },
+  { id: "named", category: "feat", metric: "nicknameSet", tiers: tiers([1], [gold(1e4)]) },
+  // 숨은 편성 장난 — 신규 계정의 기본 편성(같은 스쿼드 · 속성 셋)으로는 밟지 못하는 것만 둔다.
+  { id: "mono-element-party", category: "feat", metric: "partySameElement", tiers: tiers([1], [gems(10)]), hidden: true },
+  { id: "allied-party", category: "feat", metric: "partySquads", tiers: tiers([3], [gems(10)]), hidden: true },
+  { id: "ssr-party", category: "feat", metric: "partySsr", tiers: tiers([3], [gems(10)]), hidden: true }
+];
+
+// src/core/missions.ts
+init_define_import_meta_env();
+var MISSIONS = [
+  { id: "daily-battle", period: "daily", title: "\uC804\uD22C \uC2B9\uB9AC 1\uD68C", target: 1, reward: { currency: "gold", amount: 5e3 }, researchPoints: 20, event: "battle_completed" },
+  { id: "daily-excavate", period: "daily", title: "\uC5F0\uAD6C\uC18C \uCE90\uB9AD\uD130 \uC5F0\uAD6C 1\uD68C", target: 1, reward: { currency: "gems", amount: 10 }, researchPoints: 20, event: "relic_research_completed" },
+  { id: "daily-salary", period: "daily", title: "\uAE09\uC5EC 1\uD68C", target: 1, reward: { currency: "cheesecake", amount: 20 }, researchPoints: 20, event: "salary_given" },
+  { id: "daily-lobby", period: "daily", title: "\uB85C\uBE44 \uAD50\uB958 1\uD68C", target: 1, reward: { currency: "gold", amount: 3e3 }, researchPoints: 20, event: "lobby_interaction" },
+  { id: "daily-stamina", period: "daily", title: "\uC2A4\uD14C\uBBF8\uB098 60 \uC0AC\uC6A9", target: 60, reward: { currency: "cheesecake", amount: 30 }, researchPoints: 20, event: "stamina_spent" },
+  { id: "daily-harvest", period: "daily", title: "\uBC1C\uAD74 \uC218\uD655 1\uD68C", target: 1, reward: { currency: "gems", amount: 10 }, researchPoints: 20, event: "excavation_harvested" },
+  { id: "daily-dispatch", period: "daily", title: "\uAD50\uB958 \uD30C\uACAC 1\uD68C", target: 1, reward: { currency: "gold", amount: 3e3 }, researchPoints: 20, event: "interaction_dispatched" },
+  { id: "weekly-daily", period: "weekly", title: "\uC77C\uC77C \uC784\uBB34 20\uD68C \uC644\uB8CC", target: 20, reward: { currency: "gems", amount: 50 }, researchPoints: 150, event: "daily_mission_claimed" },
+  { id: "weekly-battle", period: "weekly", title: "\uC804\uD22C \uC2B9\uB9AC 20\uD68C", target: 20, reward: { currency: "gold", amount: 3e4 }, researchPoints: 100, event: "battle_completed" },
+  { id: "weekly-excavate", period: "weekly", title: "\uC5F0\uAD6C\uC18C \uCE90\uB9AD\uD130 \uC5F0\uAD6C 10\uD68C", target: 10, reward: { currency: "fossil", amount: 1 }, researchPoints: 100, event: "relic_research_completed" },
+  { id: "weekly-stamina", period: "weekly", title: "\uC2A4\uD14C\uBBF8\uB098 600 \uC0AC\uC6A9", target: 600, reward: { currency: "cheesecake", amount: 150 }, researchPoints: 100, event: "stamina_spent" },
+  { id: "weekly-dispatch", period: "weekly", title: "\uAD50\uB958 \uD30C\uACAC 5\uD68C", target: 5, reward: { currency: "dnaFragments", amount: 10 }, researchPoints: 100, event: "interaction_dispatched" },
+  { id: "weekly-salary", period: "weekly", title: "\uAE09\uC5EC 10\uD68C", target: 10, reward: { currency: "cheesecake", amount: 100 }, researchPoints: 50, event: "salary_given" },
+  { id: "weekly-harvest", period: "weekly", title: "\uBC1C\uAD74 \uC218\uD655 5\uD68C", target: 5, reward: { currency: "gems", amount: 30 }, researchPoints: 50, event: "excavation_harvested" }
+];
+for (const mission of MISSIONS) {
+  registerDataText(mission, "title", `mission.${mission.id}.title`);
+}
+var RESEARCH_REWARD_STAGES = {
+  daily: [
+    { id: "research-20", threshold: 20, rewards: [{ currency: "gold", amount: 1e4 }] },
+    { id: "research-40", threshold: 40, rewards: [{ currency: "cheesecake", amount: 30 }] },
+    { id: "research-60", threshold: 60, rewards: [{ currency: "gems", amount: 20 }] },
+    { id: "research-80", threshold: 80, rewards: [{ currency: "gems", amount: 30 }] },
+    { id: "research-100", threshold: 100, rewards: [{ currency: "fossil", amount: 1 }] }
+  ],
+  weekly: [
+    { id: "research-100", threshold: 100, rewards: [{ currency: "gold", amount: 5e4 }] },
+    { id: "research-200", threshold: 200, rewards: [{ currency: "cheesecake", amount: 150 }] },
+    { id: "research-300", threshold: 300, rewards: [{ currency: "gems", amount: 100 }] },
+    { id: "research-400", threshold: 400, rewards: [{ currency: "dnaFragments", amount: 20 }] },
+    { id: "research-500", threshold: 500, rewards: [{ currency: "fossil", amount: 5 }] }
+  ]
+};
+function maxResearchPoints(period) {
+  return RESEARCH_REWARD_STAGES[period].at(-1)?.threshold ?? 0;
+}
+function mergeMissionRewards(rewards) {
+  const merged = /* @__PURE__ */ new Map();
+  for (const { currency: currency3, amount } of rewards) if (amount > 0) merged.set(currency3, (merged.get(currency3) ?? 0) + amount);
+  return [...merged].map(([currency3, amount]) => ({ currency: currency3, amount }));
+}
+function researchStageClaimId(period, stageId) {
+  return `${period}:${stageId}`;
+}
+function missionPeriodKeys(now) {
+  const dailyKey = now.toISOString().slice(0, 10);
+  const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const daysFromMonday = (monday.getUTCDay() + 6) % 7;
+  monday.setUTCDate(monday.getUTCDate() - daysFromMonday);
+  return { dailyKey, weeklyKey: monday.toISOString().slice(0, 10) };
+}
+function normalizeMissions(state, now) {
+  const researchPoints = state.researchPoints ?? { daily: 0, weekly: 0 };
+  const claimedResearchStageIds = state.claimedResearchStageIds ?? [];
+  const keys = missionPeriodKeys(now);
+  const dailyChanged = state.dailyKey !== keys.dailyKey;
+  const weeklyChanged = state.weeklyKey !== keys.weeklyKey;
+  if (!dailyChanged && !weeklyChanged) return { ...state, progress: { ...state.progress }, claimedIds: [...state.claimedIds], researchPoints: { ...researchPoints }, claimedResearchStageIds: [...claimedResearchStageIds] };
+  const resetIds = new Set(MISSIONS.filter((mission) => mission.period === "daily" ? dailyChanged : weeklyChanged).map((mission) => mission.id));
+  return {
+    ...keys,
+    ...state.lifetime ? { lifetime: { ...state.lifetime } } : {},
+    progress: Object.fromEntries(Object.entries(state.progress).filter(([id]) => !resetIds.has(id))),
+    claimedIds: state.claimedIds.filter((id) => !resetIds.has(id)),
+    researchPoints: {
+      daily: dailyChanged ? 0 : researchPoints.daily,
+      weekly: weeklyChanged ? 0 : researchPoints.weekly
+    },
+    claimedResearchStageIds: claimedResearchStageIds.filter((id) => !(dailyChanged && id.startsWith("daily:")) && !(weeklyChanged && id.startsWith("weekly:")))
+  };
+}
+var LIFETIME_COUNT_CAP = 1e9;
+function applyMissionEvent(state, event, now) {
+  const next = normalizeMissions(state, now);
+  if (event.type === "battle_completed" && !event.victory) return next;
+  const amount = "count" in event ? event.count : "amount" in event ? event.amount : 1;
+  if (amount <= 0) return next;
+  next.lifetime = { ...next.lifetime, [event.type]: Math.min(LIFETIME_COUNT_CAP, (next.lifetime?.[event.type] ?? 0) + amount) };
+  for (const mission of MISSIONS) {
+    if (mission.event !== event.type) continue;
+    next.progress[mission.id] = Math.min(mission.target, (next.progress[mission.id] ?? 0) + amount);
+  }
+  return next;
+}
+function claimResearchStages(state, period, stageIds) {
+  const stages = RESEARCH_REWARD_STAGES[period];
+  const requested = stageIds ?? stages.map(({ id }) => id);
+  const claimedStageIds = [...new Set(requested)].filter((id) => {
+    const stage = stages.find((candidate) => candidate.id === id);
+    return stage !== void 0 && state.researchPoints[period] >= stage.threshold && !state.claimedResearchStageIds.includes(researchStageClaimId(period, id));
+  });
+  const ids = claimedStageIds.map((id) => researchStageClaimId(period, id));
+  return {
+    state: { ...state, progress: { ...state.progress }, claimedIds: [...state.claimedIds], researchPoints: { ...state.researchPoints }, claimedResearchStageIds: [...state.claimedResearchStageIds, ...ids] },
+    claimedStageIds,
+    rewards: mergeMissionRewards(claimedStageIds.flatMap((id) => stages.find((stage) => stage.id === id)?.rewards ?? []))
+  };
+}
+function researchPointsForClaim(claimedMissionIds) {
+  const gained = { daily: 0, weekly: 0 };
+  for (const id of new Set(claimedMissionIds)) {
+    const mission = MISSIONS.find((candidate) => candidate.id === id);
+    if (mission) gained[mission.period] += mission.researchPoints;
+  }
+  return gained;
+}
+function addResearchPoints(state, gained) {
+  return {
+    ...state,
+    progress: { ...state.progress },
+    claimedIds: [...state.claimedIds],
+    claimedResearchStageIds: [...state.claimedResearchStageIds],
+    researchPoints: {
+      daily: Math.min(maxResearchPoints("daily"), state.researchPoints.daily + gained.daily),
+      weekly: Math.min(maxResearchPoints("weekly"), state.researchPoints.weekly + gained.weekly)
+    }
+  };
+}
+function claimableMissionIds(state) {
+  return MISSIONS.filter((mission) => (state.progress[mission.id] ?? 0) >= mission.target && !state.claimedIds.includes(mission.id)).map((mission) => mission.id);
+}
+
+// src/core/achievementState.ts
+function createEmptyAchievementState() {
+  return { claimed: {}, goldPeak: 0 };
+}
+var whole = (value) => Number.isInteger(value) && value >= 0 ? value : 0;
+function normalizeAchievementState(value) {
+  const source = value && typeof value === "object" ? value : {};
+  const claimedSource = source.claimed && typeof source.claimed === "object" ? source.claimed : {};
+  const claimed = {};
+  for (const series of ACHIEVEMENT_SERIES) {
+    const count2 = Math.min(series.tiers.length, whole(claimedSource[series.id]));
+    if (count2 > 0) claimed[series.id] = count2;
+  }
+  return { claimed, goldPeak: Math.min(LIFETIME_COUNT_CAP, whole(source.goldPeak)) };
+}
+function isValidAchievementState(value) {
+  if (!value || typeof value !== "object") return false;
+  const state = value;
+  if (!Number.isInteger(state.goldPeak) || state.goldPeak < 0) return false;
+  if (!state.claimed || typeof state.claimed !== "object") return false;
+  return Object.entries(state.claimed).every(([id, count2]) => {
+    const series = ACHIEVEMENT_SERIES.find((candidate) => candidate.id === id);
+    return series !== void 0 && Number.isInteger(count2) && count2 >= 0 && count2 <= series.tiers.length;
+  });
+}
+
+// src/core/playerLevel.ts
+init_define_import_meta_env();
+var PLAYER_LEVEL_CAP = 60;
+var PLAYER_LEVEL_UP_REWARD = { itemId: "stamina-tonic", quantity: 1, expiresInDays: 7 };
+var PLAYER_EXP_PER_STAMINA = 1;
+var EARLY_EXP_TO_NEXT = [18, 36, 60, 85];
+function playerExpToNext(level) {
+  const early = EARLY_EXP_TO_NEXT[Math.floor(level) - 1];
+  if (early !== void 0) return early;
+  const k = Math.max(0, Math.min(PLAYER_LEVEL_CAP, Math.floor(level)) - 1);
+  return Math.round(50 + 15 * k + 0.9 * k * k);
+}
+function normalizePlayerLevel(progress) {
+  const level = Math.max(1, Math.min(PLAYER_LEVEL_CAP, Math.floor(Number(progress?.level) || 1)));
+  const experienceToNext = playerExpToNext(level);
+  const raw = Math.max(0, Math.floor(Number(progress?.experience) || 0));
+  return { level, experience: level >= PLAYER_LEVEL_CAP ? 0 : Math.min(raw, experienceToNext - 1), experienceToNext };
+}
+function grantPlayerExperience(progress, amount) {
+  const start = normalizePlayerLevel(progress);
+  const gain = Math.max(0, Math.floor(Number.isFinite(amount) ? amount : 0));
+  let { level, experience } = start;
+  if (level >= PLAYER_LEVEL_CAP || gain === 0) return { progress: start, levelsGained: 0, granted: 0 };
+  experience += gain;
+  while (level < PLAYER_LEVEL_CAP && experience >= playerExpToNext(level)) {
+    experience -= playerExpToNext(level);
+    level += 1;
+  }
+  if (level >= PLAYER_LEVEL_CAP) experience = 0;
+  return { progress: { level, experience, experienceToNext: playerExpToNext(level) }, levelsGained: level - start.level, granted: gain };
+}
+function playerExpForStamina(stamina) {
+  return Math.max(0, Math.floor(stamina)) * PLAYER_EXP_PER_STAMINA;
+}
+
+// src/core/itemLots.ts
+init_define_import_meta_env();
+function repairLegacyLotStacks(inventory) {
+  const groups = /* @__PURE__ */ new Map();
+  for (const stack of inventory) groups.set(stack.itemId, [...groups.get(stack.itemId) ?? [], stack]);
+  return [...groups.values()].flatMap((group) => {
+    const first = group[0];
+    const lots = first.lots;
+    if (group.length > 1 && lots?.length && group.every((stack) => JSON.stringify(stack.lots) === JSON.stringify(lots)) && group.reduce((sum, stack) => sum + stack.quantity, 0) === lots.reduce((sum, lot) => sum + lot.quantity, 0)) {
+      return [{ ...first, quantity: lots.reduce((sum, lot) => sum + lot.quantity, 0), lots: lots.map((lot) => ({ ...lot })) }];
+    }
+    return group.map((stack) => ({ ...stack, ...stack.lots ? { lots: stack.lots.map((lot) => ({ ...lot })) } : {} }));
+  });
+}
+var DAY_MS = 864e5;
+var ITEM_EXPIRY_DAYS = { min: 1, max: 7 };
+function clampExpiryDays(days) {
+  return Math.max(ITEM_EXPIRY_DAYS.min, Math.min(ITEM_EXPIRY_DAYS.max, Math.floor(days)));
+}
+function lotExpiresAt(now, days) {
+  return new Date(now.getTime() + clampExpiryDays(days) * DAY_MS).toISOString();
+}
+function normalizeLots(lots) {
+  return lots.filter((lot) => lot.quantity > 0).map((lot) => ({ ...lot })).sort((a, b) => Date.parse(a.expiresAt) - Date.parse(b.expiresAt));
+}
+function addItemLot(inventory, itemId, quantity, options) {
+  const next = inventory.map((stack2) => ({ ...stack2, ...stack2.lots ? { lots: stack2.lots.map((lot2) => ({ ...lot2 })) } : {} }));
+  const stack = next.find((entry) => entry.itemId === itemId);
+  const held = stack?.quantity ?? 0;
+  const added = Math.max(0, Math.min(options.cap, held + Math.floor(quantity)) - held);
+  if (added <= 0) return { inventory: next, added: 0 };
+  const lot = options.expiryDays !== void 0 ? { quantity: added, expiresAt: lotExpiresAt(options.now, options.expiryDays) } : void 0;
+  if (stack) {
+    stack.quantity += added;
+    if (lot) stack.lots = normalizeLots([...stack.lots ?? [], lot]);
+  } else {
+    next.push({ itemId, quantity: added, ...lot ? { lots: [lot] } : {} });
+  }
+  return { inventory: next, added };
+}
+function removeItemLot(inventory, itemId, quantity) {
+  const count2 = Math.floor(quantity);
+  const stack = inventory.find((entry) => entry.itemId === itemId);
+  if (!stack || count2 <= 0 || stack.quantity < count2) return count2 <= 0 ? inventory.map((entry) => ({ ...entry })) : void 0;
+  return inventory.flatMap((entry) => {
+    if (entry.itemId !== itemId) return [{ ...entry }];
+    const left = entry.quantity - count2;
+    if (left <= 0) return [];
+    if (!entry.lots) return [{ ...entry, quantity: left }];
+    let owed = count2;
+    const lots = normalizeLots(entry.lots).map((lot) => {
+      const take = Math.min(owed, lot.quantity);
+      owed -= take;
+      return { ...lot, quantity: lot.quantity - take };
+    });
+    return [{ ...entry, quantity: left, lots: normalizeLots(lots) }];
+  });
+}
+function removeItemLotAt(inventory, itemId, quantity, expiresAt) {
+  const count2 = Math.floor(quantity);
+  const stack = inventory.find((entry) => entry.itemId === itemId);
+  const target = stack?.lots?.find((lot) => lot.expiresAt === expiresAt);
+  if (!stack || !target || count2 <= 0 || target.quantity < count2) return void 0;
+  return inventory.flatMap((entry) => {
+    if (entry.itemId !== itemId) return [{ ...entry }];
+    const left = entry.quantity - count2;
+    if (left <= 0) return [];
+    const lots = normalizeLots(entry.lots.map((lot) => lot.expiresAt === expiresAt ? { ...lot, quantity: lot.quantity - count2 } : lot));
+    return [{ ...entry, quantity: left, lots }];
+  });
+}
+function purgeExpiredLots(inventory, now) {
+  let expired = 0;
+  const nowMs = now.getTime();
+  const next = inventory.flatMap((entry) => {
+    if (!entry.lots) return [{ ...entry }];
+    const alive = normalizeLots(entry.lots.filter((lot) => {
+      const dead = Date.parse(lot.expiresAt) <= nowMs;
+      if (dead) expired += lot.quantity;
+      return !dead;
+    }));
+    const quantity = alive.reduce((sum, lot) => sum + lot.quantity, 0);
+    return quantity > 0 ? [{ ...entry, quantity, lots: alive }] : [];
+  });
+  return { inventory: next, expired };
+}
+function isValidLotStack(stack) {
+  if (stack.lots === void 0) return true;
+  if (!Array.isArray(stack.lots) || stack.lots.length === 0) return false;
+  return stack.lots.every((lot) => Number.isInteger(lot.quantity) && lot.quantity > 0 && Number.isFinite(Date.parse(lot.expiresAt))) && stack.lots.reduce((sum, lot) => sum + lot.quantity, 0) === stack.quantity;
+}
+
+// src/data/profileFrames.ts
+init_define_import_meta_env();
+var DEFAULT_PROFILE_FRAME_ID = "field";
+var PROFILE_FRAMES = [
+  { id: "field", style: "plain", displayName: "\uD604\uC7A5 \uC5F0\uAD6C\uC6D0", unlockLevel: 1, color: 10466248, wash: 2766404 },
+  { id: "holo", style: "bracket", displayName: "\uD22C\uC601 \uAD00\uCE21", unlockLevel: 10, color: 6280447, wash: 1521736 },
+  { id: "amber", style: "gem", displayName: "\uD638\uBC15 \uD45C\uBCF8", unlockLevel: 20, color: 15905857, wash: 4008978 },
+  { id: "abyss", style: "wing", displayName: "\uC2EC\uD574 \uAE30\uB85D", unlockLevel: 30, color: 11566335, wash: 2759748 },
+  { id: "garden", style: "vine", displayName: "\uC815\uC6D0 \uC218\uD638", unlockLevel: 45, color: 5759136, wash: 1325612 },
+  { id: "eternal", style: "crown", displayName: "\uC774\uD130\uB110", unlockLevel: 60, color: 16740207, wash: 4331036 }
+];
+function findProfileFrame(id) {
+  return PROFILE_FRAMES.find((frame) => frame.id === id);
+}
+function isProfileFrameUnlocked(frame, playerLevel) {
+  return playerLevel >= frame.unlockLevel;
+}
+for (const frame of PROFILE_FRAMES) registerDataText(frame, "displayName", `profileFrame.${frame.id}.name`);
 
 // src/data/banners.ts
 init_define_import_meta_env();
@@ -15886,1706 +17793,6 @@ var BANNERS = [
 ];
 for (const banner of BANNERS) {
   registerDataText(banner, "name", `banner.${banner.id}.name`);
-}
-
-// src/data/observations.ts
-init_define_import_meta_env();
-var COMMON_OBSERVATION_QUESTIONS = [
-  { id: "unknown-sound", prompt: "\uB0AF\uC120 \uC18C\uB9AC\uAC00 \uB4E4\uB9AC\uBA74 \uC5B4\uB5BB\uAC8C \uD560 \uAC70\uC57C?", choices: [
-    { id: "approach", label: "\uC18C\uB9AC\uAC00 \uB09C \uACF3\uC744 \uBA3C\uC800 \uC0B4\uD540\uB2E4", personalityTag: "\uD638\uAE30\uC2EC", habitKey: "approach" },
-    { id: "wait", label: "\uC548\uC804\uD55C \uACF3\uC5D0\uC11C \uD55C\uB3D9\uC548 \uAE30\uB2E4\uB9B0\uB2E4", personalityTag: "\uC2E0\uC911\uD568", habitKey: "wait" }
-  ] },
-  { id: "shared-food", prompt: "\uBA39\uC774\uB97C \uB3D9\uB8CC\uC640 \uB098\uB220\uC57C \uD55C\uB2E4\uBA74?", choices: [
-    { id: "share", label: "\uBA3C\uC800 \uB3D9\uB8CC\uC758 \uBAAB\uC744 \uB0A8\uAE34\uB2E4", personalityTag: "\uBC30\uB824", habitKey: "share" },
-    { id: "guard", label: "\uC8FC\uBCC0\uC744 \uC9C0\uD0A4\uBA70 \uCC28\uB840\uB97C \uC815\uD55C\uB2E4", personalityTag: "\uC9C8\uC11C", habitKey: "guard" }
-  ] }
-];
-var RELIC_OBSERVATION_QUESTIONS = {
-  torika: [
-    // 먹이 화제에서 토리카의 왕성한 식욕과 동료 배려, 부끄러움 중 어느 면이 앞서는지 검증한다.
-    { id: "torika-meal-appetite", prompt: "\uD3C9\uC18C \uBA39\uB294 \uC591\uACFC \uC88B\uC544\uD558\uB294 \uBA39\uC774\uB97C \uBB3C\uC73C\uBA74 \uC5B4\uB5A4 \uBC18\uC751\uC744 \uBCF4\uC5EC?", choices: [
-      { id: "torika-meal-eager", label: "\uC88B\uC544\uD558\uB294 \uBA39\uC774\uBD80\uD130 \uC2E0\uB098\uAC8C \uC774\uC57C\uAE30\uD55C\uB2E4", personalityTag: "\uC655\uC131\uD55C \uC2DD\uC695", habitKey: "torikaMealEager" },
-      { id: "torika-meal-share", label: "\uB3D9\uB8CC\uB4E4\uC774 \uBA39\uC744 \uBAAB\uBD80\uD130 \uD5E4\uC544\uB9B0\uB2E4", personalityTag: "\uB3D9\uB8CC \uBC30\uB824", habitKey: "torikaMealShare" },
-      { id: "torika-meal-shy", label: "\uBA39\uC740 \uC591\uC740 \uC791\uAC8C \uB9D0\uD558\uACE0 \uC88B\uC544\uD558\uB294 \uC78E\uB9CC \uC54C\uB824 \uC900\uB2E4", personalityTag: "\uC465\uC2A4\uB7EC\uC6C0", habitKey: "torikaMealShy" }
-    ] },
-    // 몸무게 화제에서 볏이 붉어진다는 기존 관찰 기록을 서로 다른 대처 방식으로 이어 간다.
-    { id: "torika-weight-reaction", prompt: "\uBAB8\uBB34\uAC8C \uC774\uC57C\uAE30\uAC00 \uB098\uC624\uBA74 \uD1A0\uB9AC\uCE74\uB294 \uC5B4\uB5BB\uAC8C \uBC18\uC751\uD574?", choices: [
-      { id: "torika-weight-honest", label: "\uBD89\uC5B4\uC9C4 \uCC44\uB85C \uC9C0\uAE08 \uC218\uCE58\uB97C \uB610\uBC15\uB610\uBC15 \uB9D0\uD55C\uB2E4", personalityTag: "\uC194\uC9C1\uD568", habitKey: "torikaWeightHonest" },
-      { id: "torika-weight-deflect", label: "\uBCCF\uC744 \uAC00\uB9AC\uBA70 \uC5BC\uB978 \uB2E4\uB978 \uC774\uC57C\uAE30\uB97C \uAEBC\uB0B8\uB2E4", personalityTag: "\uC465\uC2A4\uB7EC\uC6C0", habitKey: "torikaWeightDeflect" }
-    ] },
-    // 한 걸음 물러나도 앞을 막는 설정에서 두려움의 인정과 보호 행동을 각각 관찰한다.
-    { id: "torika-frightened-shield", prompt: "\uAC81\uC774 \uB098\uB294\uB370\uB3C4 \uB204\uAD70\uAC00\uC758 \uC55E\uC744 \uB9C9\uC544\uC11C\uC57C \uD560 \uB54C \uC5B4\uB5A4 \uBC18\uC751\uC744 \uBCF4\uC5EC?", choices: [
-      { id: "torika-shield-admit", label: "\uBB34\uC12D\uB2E4\uACE0 \uB9D0\uD55C \uB4A4 \uD55C \uAC78\uC74C \uBB3C\uB7EC\uC11C \uC790\uB9AC\uB97C \uC9C0\uD0A8\uB2E4", personalityTag: "\uB450\uB824\uC6C0 \uC778\uC815", habitKey: "torikaShieldAdmit" },
-      { id: "torika-shield-protect", label: "\uB5A8\uB9AC\uB294 \uB2E4\uB9AC\uB97C \uBC84\uD2F0\uBA70 \uC0C1\uB300\uC758 \uC55E\uC744 \uAC00\uB85C\uB9C9\uB294\uB2E4", personalityTag: "\uBCF4\uD638\uBCF8\uB2A5", habitKey: "torikaShieldProtect" }
-    ] }
-  ],
-  rex: [
-    // 큰 상대를 마주한 렉시아가 격식을 지키는 경쟁심과 체격 자체의 승부욕 중 어느 쪽을 보이는지 검증한다.
-    { id: "rex-size-rivalry", prompt: "\uC790\uC2E0\uBCF4\uB2E4 \uD6E8\uC52C \uD070 \uC0C1\uB300\uAC00 \uC55E\uC744 \uB9C9\uC73C\uBA74 \uC5B4\uB5BB\uAC8C \uBC18\uC751\uD574?", choices: [
-      { id: "rex-size-formal", label: "\uC790\uC138\uB97C \uACE7\uAC8C \uC138\uC6B0\uACE0 \uBA3C\uC800 \uC815\uC2DD\uC73C\uB85C \uC2B9\uBD80\uB97C \uCCAD\uD55C\uB2E4", personalityTag: "\uACA9\uC2DD \uC788\uB294 \uACBD\uC7C1\uC2EC", habitKey: "rexSizeFormal" },
-      { id: "rex-size-wrestle", label: "\uCCB4\uACA9 \uCC28\uC774\uB97C \uC9C0\uC801\uD558\uC790 \uACE7\uBC14\uB85C \uD798\uACA8\uB8E8\uAE30\uB97C \uC694\uAD6C\uD55C\uB2E4", personalityTag: "\uCCB4\uACA9 \uC2B9\uBD80\uC695", habitKey: "rexSizeWrestle" }
-    ] },
-    // 압도적인 강자 앞에서 공정한 조건을 중시하는지, 강자와 즉시 겨루고 싶어 하는지 검증한다.
-    { id: "rex-strong-challenge", prompt: "\uC555\uB3C4\uC801\uC73C\uB85C \uAC15\uD55C \uC0C1\uB300\uB97C \uBC1C\uACAC\uD558\uBA74 \uC5B4\uB5BB\uAC8C \uD560 \uAC70\uC57C?", choices: [
-      { id: "rex-strong-fair", label: "\uC0C1\uB300\uC758 \uC7A5\uC810\uC744 \uC0B4\uD540 \uB4A4 \uAC19\uC740 \uC870\uAC74\uC73C\uB85C \uACA8\uB8EC\uB2E4", personalityTag: "\uACF5\uC815\uD55C \uB3C4\uC804", habitKey: "rexStrongFair" },
-      { id: "rex-strong-eager", label: "\uB208\uC744 \uBE5B\uB0B4\uBA70 \uB2F9\uC7A5 \uC5B4\uB290 \uCABD\uC774 \uAC15\uD55C\uC9C0 \uD655\uC778\uD558\uB824 \uD55C\uB2E4", personalityTag: "\uAC15\uC790 \uC120\uD638", habitKey: "rexStrongEager" }
-    ] },
-    // 작은 렐릭의 실수 앞에서 에티켓을 가르치면서도 약자를 위압하지 않는 배려 방식을 검증한다.
-    { id: "rex-small-etiquette", prompt: "\uC791\uC740 \uB810\uB9AD\uC774 \uC2E4\uC218\uB85C \uC608\uC808\uC744 \uC9C0\uD0A4\uC9C0 \uBABB\uD558\uBA74?", choices: [
-      { id: "rex-small-guide", label: "\uBA3C\uC800 \uC790\uC138\uB97C \uB0AE\uCD94\uACE0 \uCC9C\uCC9C\uD788 \uC62C\uBC14\uB978 \uC778\uC0AC\uBC95\uC744 \uC54C\uB824 \uC900\uB2E4", personalityTag: "\uC628\uD654\uD55C \uC9C0\uB3C4", habitKey: "rexSmallGuide" },
-      { id: "rex-small-example", label: "\uC790\uC2E0\uC774 \uBA3C\uC800 \uC815\uC911\uD788 \uC778\uC0AC\uD574 \uB530\uB77C \uD560 \uC218 \uC788\uAC8C \uAE30\uB2E4\uB9B0\uB2E4", personalityTag: "\uC194\uC120\uD558\uB294 \uC608\uC808", habitKey: "rexSmallExample" }
-    ] }
-  ],
-  spino: [
-    // 동시에 울린 경보 앞에서 스피나의 임무 집중과 과묵한 현장 지휘가 각각 어떻게 드러나는지 관찰한다.
-    { id: "spino-night-alarm", prompt: "\uC57C\uAC04 \uC21C\uCC30 \uC911 \uC218\uC870 \uACBD\uBCF4\uC640 \uB2E4\uB978 \uAD6C\uC5ED\uC758 \uAD6C\uC870 \uC694\uCCAD\uC774 \uB3D9\uC2DC\uC5D0 \uB4E4\uC5B4\uC624\uBA74?", choices: [
-      { id: "spino-alarm-rescue", label: "\uAD6C\uC870 \uC694\uCCAD \uC704\uCE58\uB97C \uC9E7\uAC8C \uBCF4\uACE0\uD558\uACE0 \uC989\uC2DC \uD604\uC7A5\uC73C\uB85C \uD5A5\uD55C\uB2E4", personalityTag: "\uC784\uBB34 \uC6B0\uC120", habitKey: "spinoAlarmRescue" },
-      { id: "spino-alarm-command", label: "\uAC00\uAE4C\uC6B4 \uACBD\uBE44\uB300\uC6D0\uC5D0\uAC8C \uC218\uC870 \uC810\uAC80\uC744 \uB9E1\uAE30\uACE0 \uAD6C\uC870 \uB3D9\uC120\uC744 \uD655\uBCF4\uD55C\uB2E4", personalityTag: "\uCE68\uCC29\uD55C \uC9C0\uD718", habitKey: "spinoAlarmCommand" }
-    ] },
-    // 연구원만 이미 아는 어항 장식 취미를 숨기려는 시치미와 물고기를 향한 다정함으로 나누어 관찰한다.
-    { id: "spino-aquarium-decoration", prompt: "\uC5F0\uAD6C\uC6D0\uC774 \uC5B4\uD56D \uC18D\uC5D0 \uC0C8\uB85C \uB193\uC778 \uC7A5\uC2DD\uC744 \uC54C\uC544\uBCF4\uBA74?", choices: [
-      { id: "spino-decoration-deny", label: "\uC6D0\uB798 \uC788\uB358 \uAC83\uC774\uB77C\uBA70 \uC2DC\uC120\uC744 \uD53C\uD558\uACE0 \uC7A5\uC2DD \uAC01\uB3C4\uB9CC \uBC14\uB85C\uC7A1\uB294\uB2E4", personalityTag: "\uC11C\uD22C\uB978 \uC2DC\uCE58\uBBF8", habitKey: "spinoDecorationDeny" },
-      { id: "spino-decoration-shelter", label: "\uBB3C\uACE0\uAE30\uC758 \uC740\uC2E0\uCC98\uAC00 \uD544\uC694\uD588\uC744 \uBFD0\uC774\uB77C\uACE0 \uC9E7\uAC8C \uC124\uBA85\uD55C\uB2E4", personalityTag: "\uC228\uACA8 \uB454 \uB2E4\uC815\uD568", habitKey: "spinoDecorationShelter" }
-    ] },
-    // 함께하는 청소에서도 취미가 들키지 않았다고 믿는 스피나의 신뢰와 실무적인 배려를 행동으로 관찰한다.
-    { id: "spino-aquarium-cleaning", prompt: "\uC775\uC219\uD558\uC9C0 \uC54A\uC740 \uC5B4\uD56D \uCCAD\uC18C\uB97C \uC5F0\uAD6C\uC6D0\uC774 \uB3C4\uC640\uC8FC\uACA0\uB2E4\uACE0 \uD558\uBA74?", choices: [
-      { id: "spino-cleaning-gloves", label: "\uAC70\uC808\uD558\uB824\uB2E4 \uC5EC\uBD84\uC758 \uC7A5\uAC11\uC744 \uC870\uC6A9\uD788 \uAC74\uB128\uB2E4", personalityTag: "\uB9D0\uC5C6\uB294 \uC2E0\uB8B0", habitKey: "spinoCleaningGloves" },
-      { id: "spino-cleaning-roles", label: "\uC790\uC2E0\uC774 \uC218\uCD08\uB97C \uB9E1\uACA0\uB2E4\uBA70 \uC5ED\uD560\uC744 \uC815\uD655\uD788 \uB098\uB208\uB2E4", personalityTag: "\uC2E4\uBB34\uC801\uC778 \uBC30\uB824", habitKey: "spinoCleaningRoles" }
-    ] }
-  ],
-  luka: [
-    // 소파에서 먼저 말을 건 뒤 루카가 침묵과 대화 중 어느 방식으로 연구원과 휴식을 나누는지 관찰한다.
-    { id: "luka-sofa-conversation", prompt: "\uC5F0\uAD6C\uC18C \uC18C\uD30C\uC5D0 \uB204\uC6B4 \uB8E8\uCE74\uC5D0\uAC8C \uC5F0\uAD6C\uC6D0\uC774 \uB9D0\uC744 \uAC78\uBA74 \uC5B4\uB5BB\uAC8C \uBC18\uC751\uD574?", choices: [
-      { id: "luka-sofa-silence", label: "\uC790\uB9AC\uB97C \uB0B4\uC5B4 \uC8FC\uACE0 \uB098\uB780\uD788 \uD3B8\uD55C \uCE68\uBB35\uC744 \uC990\uAE34\uB2E4", personalityTag: "\uB290\uAE0B\uD55C \uCE5C\uBC00\uAC10", habitKey: "lukaSofaSilence" },
-      { id: "luka-sofa-chat", label: "\uC18C\uD30C\uC5D0 \uB204\uC6B4 \uCC44 \uC0C8\uB85C\uC6B4 \uC774\uC57C\uAE43\uAC70\uB9AC\uB97C \uACC4\uC18D \uAEBC\uB0B8\uB2E4", personalityTag: "\uC218\uB2E4\uC2A4\uB7EC\uC6B4 \uD638\uC758", habitKey: "lukaSofaChat" }
-    ] },
-    // 육식 계열 렐릭과의 단거리 달리기에서 기록 경쟁과 상대를 향한 배려가 행동으로 갈리는 순간을 관찰한다.
-    { id: "luka-sprint-rival", prompt: "\uB2E4\uB978 \uC721\uC2DD \uACC4\uC5F4 \uB810\uB9AD\uACFC \uB2E8\uAC70\uB9AC \uCD9C\uBC1C\uC120\uC5D0 \uC11C\uBA74 \uC5B4\uB5BB\uAC8C \uB2EC\uB824?", choices: [
-      { id: "luka-sprint-compete", label: "\uCD9C\uBC1C \uC2E0\uD638\uC640 \uD568\uAED8 \uAE30\uB85D\uC744 \uB178\uB9AC\uBA70 \uC804\uB825\uC73C\uB85C \uCE58\uACE0 \uB098\uAC04\uB2E4", personalityTag: "\uC815\uBA74 \uC2B9\uBD80\uC695", habitKey: "lukaSprintCompete" },
-      { id: "luka-sprint-pace", label: "\uC606 \uC8FC\uC790\uC758 \uBCF4\uD3ED\uC744 \uC0B4\uD53C\uBA70 \uB098\uB780\uD788 \uACB0\uC2B9\uC120\uC744 \uD5A5\uD55C\uB2E4", personalityTag: "\uBCF4\uD3ED\uC744 \uB9DE\uCD94\uB294 \uBC30\uB824", habitKey: "lukaSprintPace" }
-    ] },
-    // 치즈케이크 뒤의 걱정을 즉시 훈련으로 잇는지, 즐거움을 한 조각 더 누린 뒤 미루는지 관찰한다.
-    { id: "luka-cheesecake-weight", prompt: "\uCE58\uC988\uCF00\uC774\uD06C\uB97C \uBA39\uC740 \uB8E8\uCE74\uAC00 \uBAB8\uBB34\uAC8C\uB97C \uAC71\uC815\uD558\uAE30 \uC2DC\uC791\uD558\uBA74 \uC5B4\uB5BB\uAC8C \uD574?", choices: [
-      { id: "luka-cake-training", label: "\uB0A8\uC740 \uC811\uC2DC\uB97C \uCE58\uC6B0\uACE0 \uB2E4\uC74C \uB2E8\uAC70\uB9AC \uD6C8\uB828 \uACC4\uD68D\uC744 \uC801\uB294\uB2E4", personalityTag: "\uACC4\uD68D\uC801\uC778 \uC790\uAE30\uAD00\uB9AC", habitKey: "lukaCakeTraining" },
-      { id: "luka-cake-more", label: "\uD55C \uC870\uAC01\uB9CC \uB354 \uC811\uC2DC\uC5D0 \uB193\uACE0 \uACE0\uBBFC\uC740 \uC2DD\uC0AC \uB4A4\uB85C \uBBF8\uB8EC\uB2E4", personalityTag: "\uD604\uC7AC\uB97C \uC990\uAE30\uB294 \uB099\uCC9C\uC131", habitKey: "lukaCakeMore" }
-    ] }
-  ]
-};
-var OBSERVATION_FALLBACK = { intro: "\uBB34\uC5C7\uC774 \uAD81\uAE08\uD55C\uC9C0 \uB9D0\uD574 \uC918.", habit: "\uC0C8\uB85C\uC6B4 \uBC18\uC751 \uC591\uC2DD\uC744 \uAE30\uB85D\uD588\uB2E4." };
-var REACTIONS = {
-  torika: { intro: "\uCC9C\uCC9C\uD788 \uBB3C\uC5B4\uBD10. \uC0DD\uAC01\uD574 \uBCFC\uAC8C.", replies: {
-    approach: "\uBFD4\uC744 \uB0AE\uCD94\uACE0 \uAC00\uAE4C\uC774 \uAC00 \uBCFC\uB798.",
-    wait: "\uBC1C\uBC11\uC758 \uB5A8\uB9BC\uBD80\uD130 \uD655\uC778\uD560\uB798.",
-    share: "\uC5B4\uB9B0 \uAC1C\uCCB4\uAC00 \uBA3C\uC800 \uBA39\uC5B4\uC57C \uD574.",
-    guard: "\uB0B4\uAC00 \uBC14\uAE65\uCABD\uC744 \uC9C0\uD0AC\uAC8C.",
-    "torika-meal-eager": "\uB9CE\uC774 \uBA39\uC5B4! \uC544\uC0AD\uD55C \uC5B4\uB9B0 \uC78E\uC774 \uC81C\uC77C \uC88B\uC544.",
-    "torika-meal-share": "\uB0B4 \uBAAB\uC740 \uCEE4\uB3C4 \uB3FC. \uD558\uC9C0\uB9CC \uB2E4\uB4E4 \uBA39\uC744 \uAC74 \uB0A8\uACA8 \uB458\uB798.",
-    "torika-meal-shy": "\uC870\uAE08... \uC544\uB2C8, \uBCF4\uD1B5\uB9CC\uD07C \uBA39\uC5B4. \uC5B4\uB9B0 \uC78E\uC740 \uC88B\uC544\uD574.",
-    "torika-weight-honest": "\uBCCF\uC774 \uB728\uAC70\uC6CC\uB3C4 \uB9D0\uD560 \uC218 \uC788\uC5B4. \uC9C0\uAE08 \uBAB8\uBB34\uAC8C\uB294 \uAE30\uB85D\uB300\uB85C\uC57C.",
-    "torika-weight-deflect": "\uADF8, \uADF8\uBCF4\uB2E4 \uC624\uB298 \uC78E \uC0C1\uD0DC\uAC00 \uC815\uB9D0 \uC88B\uC9C0 \uC54A\uC544?",
-    "torika-shield-admit": "\uBB34\uC11C\uC6CC. \uADF8\uB798\uB3C4 \uD55C \uAC78\uC74C\uB9CC \uBB3C\uB7EC\uC11C\uC11C \uC5EC\uAE30 \uC788\uC744\uB798.",
-    "torika-shield-protect": "\uB0B4 \uB4A4\uC5D0 \uC788\uC5B4. \uB2E4\uB9AC\uAC00 \uB5A8\uB824\uB3C4 \uAE38\uC740 \uC548 \uBE44\uD0AC \uAC70\uC57C."
-  }, habits: {
-    approach: "\uB0AF\uC120 \uC9C4\uB3D9\uC744 \uC55E\uBC1C\uB85C \uB450 \uBC88 \uD655\uC778\uD55C\uB2E4.",
-    wait: "\uC704\uD5D8\uC744 \uB290\uB07C\uBA74 \uBB34\uB9AC\uC758 \uBC14\uAE65\uC744 \uD5A5\uD574 \uC120\uB2E4.",
-    share: "\uBA39\uC774 \uAC00\uC6B4\uB370 \uBD80\uB4DC\uB7EC\uC6B4 \uC78E\uC744 \uC5B4\uB9B0 \uAC1C\uCCB4\uC5D0\uAC8C \uB0A8\uAE34\uB2E4.",
-    guard: "\uC2DD\uC0AC \uC911\uC5D0\uB3C4 \uC77C\uC815\uD55C \uAC04\uACA9\uC73C\uB85C \uACE0\uAC1C\uB97C \uB4E4\uC5B4 \uACBD\uACC4\uD55C\uB2E4.",
-    torikaMealEager: "\uC2DD\uC0AC\uB7C9\uC744 \uC228\uAE30\uC9C0 \uC54A\uACE0 \uC544\uC0AD\uD55C \uC5B4\uB9B0 \uC78E\uC744 \uAC00\uC7A5 \uBA3C\uC800 \uCC3E\uB294\uB2E4.",
-    torikaMealShare: "\uBA39\uACE0 \uC2F6\uC740 \uC591\uC774 \uB9CE\uC544\uB3C4 \uB3D9\uB8CC\uC758 \uBAAB\uC744 \uBA3C\uC800 \uB530\uB85C \uB454\uB2E4.",
-    torikaMealShy: "\uC2DD\uC0AC\uB7C9\uC744 \uC791\uAC8C \uB9D0\uD560 \uB54C\uB3C4 \uC88B\uC544\uD558\uB294 \uC5B4\uB9B0 \uC78E\uC740 \uBE60\uB728\uB9AC\uC9C0 \uC54A\uB294\uB2E4.",
-    torikaWeightHonest: "\uBAB8\uBB34\uAC8C\uB97C \uB9D0\uD560 \uB54C \uBCCF \uB05D\uAE4C\uC9C0 \uBD89\uC5B4\uC9C0\uC9C0\uB9CC \uC218\uCE58\uB294 \uB610\uBC15\uB610\uBC15 \uD655\uC778\uD55C\uB2E4.",
-    torikaWeightDeflect: "\uBAB8\uBB34\uAC8C\uAC00 \uC5B8\uAE09\uB418\uBA74 \uBCCF \uB05D\uAE4C\uC9C0 \uBD89\uC5B4\uC9C4 \uCC44 \uBA39\uC774 \uC774\uC57C\uAE30\uB85C \uD654\uC81C\uB97C \uB3CC\uB9B0\uB2E4.",
-    torikaShieldAdmit: "\uAC81\uC774 \uB09C\uB2E4\uACE0 \uC778\uC815\uD558\uACE0 \uD55C \uAC78\uC74C \uBB3C\uB7EC\uC11C\uC9C0\uB9CC \uBCF4\uD638\uD560 \uB300\uC0C1\uC758 \uC55E\uC740 \uBE44\uC6B0\uC9C0 \uC54A\uB294\uB2E4.",
-    torikaShieldProtect: "\uB2E4\uB9AC\uAC00 \uB5A8\uB824\uB3C4 \uBAB8\uC744 \uB0AE\uCDB0 \uBCF4\uD638\uD560 \uB300\uC0C1\uC758 \uC55E\uC744 \uB9C9\uC544\uC120\uB2E4."
-  } },
-  // 경쟁심·강자 선호에는 정중한 승부 절차를, 에티켓·약자 배려에는 위압하지 않는 태도를 대응시킨다.
-  rex: { intro: "\uAD00\uCC30\uC774\uB77C\uB2C8, \uC7AC\uBBF8\uC788\uB294 \uAC78 \uBB3B\uB124.", replies: {
-    approach: "\uC228\uAE30 \uC804\uC5D0 \uB0B4\uAC00 \uCC3E\uC544\uB0B4\uC9C0.",
-    wait: "\uBC14\uB78C\uC774 \uB0C4\uC0C8\uB97C \uAC00\uC838\uC62C \uB54C\uAE4C\uC9C0 \uAE30\uB2E4\uB824.",
-    share: "\uB0B4 \uBB34\uB9AC\uB77C\uBA74 \uAD76\uAE30\uC9C0 \uC54A\uC544.",
-    guard: "\uAC15\uD55C \uC21C\uC11C\uAC00 \uC544\uB2C8\uB77C \uD544\uC694\uD55C \uC21C\uC11C\uB85C \uBA39\uC5B4.",
-    "rex-size-formal": "\uD6CC\uB96D\uD55C \uCCB4\uACA9\uC774\uAD70. \uC774\uB984\uC744 \uBC1D\uD788\uACE0 \uC815\uC2DD\uC73C\uB85C \uD55C \uD310 \uCCAD\uD558\uACA0\uC5B4.",
-    "rex-size-wrestle": "\uADF8 \uCCB4\uACA9\uC774 \uC5BC\uB9C8\uB098 \uB300\uB2E8\uD55C\uC9C0, \uAD1C\uCC2E\uB2E4\uBA74 \uD798\uC73C\uB85C \uACA8\uB904 \uBCF4\uC790.",
-    "rex-strong-fair": "\uB124 \uAC15\uC810\uC744 \uCDA9\uBD84\uD788 \uBCF8 \uB4A4 \uAC19\uC740 \uC870\uAC74\uC5D0\uC11C \uC815\uC815\uB2F9\uB2F9\uD788 \uB3C4\uC804\uD558\uACA0\uC5B4.",
-    "rex-strong-eager": "\uB208\uC744 \uB5C4 \uC218 \uC5C6\uB294 \uAC15\uD568\uC774\uAD70. \uC900\uBE44\uAC00 \uB410\uB2E4\uBA74 \uC9C0\uAE08 \uC2B9\uBD80\uB97C \uCCAD\uD558\uC9C0.",
-    "rex-small-guide": "\uB180\uB77C\uC9C0 \uC54A\uC544\uB3C4 \uB3FC. \uB0B4\uAC00 \uBAB8\uC744 \uB0AE\uCD9C \uD14C\uB2C8 \uCC9C\uCC9C\uD788 \uC778\uC0AC\uBD80\uD130 \uD574 \uBCF4\uC790.",
-    "rex-small-example": "\uB0B4\uAC00 \uBA3C\uC800 \uC778\uC0AC\uD560\uAC8C. \uD3B8\uD574\uC9C0\uBA74 \uAC19\uC740 \uBC29\uC2DD\uC73C\uB85C \uB2F5\uD574 \uC918."
-  }, habits: {
-    approach: "\uC18C\uB9AC\uBCF4\uB2E4 \uBC14\uB78C\uC5D0 \uC2E4\uB9B0 \uB0C4\uC0C8\uB97C \uBA3C\uC800 \uC887\uB294\uB2E4.",
-    wait: "\uC0AC\uB0E5 \uC804 \uBAB8\uC744 \uB0AE\uCD94\uACE0 \uD48D\uD5A5\uC774 \uBC14\uB00C\uAE30\uB97C \uAE30\uB2E4\uB9B0\uB2E4.",
-    share: "\uBB34\uB9AC\uC758 \uBA39\uC774\uAC00 \uBD80\uC871\uD558\uBA74 \uC790\uC2E0\uC758 \uBAAB\uC744 \uB4A4\uB85C \uBBF8\uB8EC\uB2E4.",
-    guard: "\uBA39\uC774 \uC8FC\uBCC0\uC744 \uD55C \uBC14\uD034 \uB3C8 \uB4A4\uC5D0\uC57C \uC2DD\uC0AC\uB97C \uC2DC\uC791\uD55C\uB2E4.",
-    rexSizeFormal: "\uD070 \uC0C1\uB300\uAC00 \uB2E4\uAC00\uC624\uBA74 \uC5B4\uAE68\uB97C \uD3B4\uACE0 \uBC1C\uB05D\uC744 \uAC00\uC9C0\uB7F0\uD788 \uB9DE\uCD98\uB2E4.",
-    rexSizeWrestle: "\uCCB4\uACA9\uC774 \uD070 \uC0C1\uB300 \uC55E\uC5D0\uC11C\uB294 \uC911\uC2EC\uC744 \uB0AE\uCD94\uACE0 \uB9DE\uC7A1\uC744 \uAC70\uB9AC\uB97C \uAC00\uB2A0\uD55C\uB2E4.",
-    rexStrongFair: "\uAC15\uC790\uC758 \uC6C0\uC9C1\uC784\uC744 \uB05D\uAE4C\uC9C0 \uC9C0\uCF1C\uBCF8 \uB4A4 \uC7A5\uBE44\uC640 \uCD9C\uBC1C \uC704\uCE58\uBD80\uD130 \uD655\uC778\uD55C\uB2E4.",
-    rexStrongEager: "\uAC15\uD55C \uAE30\uCC99\uC744 \uC54C\uC544\uCC44\uBA74 \uB208\uBE5B\uC774 \uBC1D\uC544\uC9C0\uACE0 \uACE7\uBC14\uB85C \uC0C1\uB300\uC758 \uC900\uBE44 \uC5EC\uBD80\uB97C \uC0B4\uD540\uB2E4.",
-    rexSmallGuide: "\uC791\uC740 \uB810\uB9AD\uACFC \uC774\uC57C\uAE30\uD560 \uB54C \uBB34\uB98E\uC744 \uAD7D\uD600 \uC2DC\uC120\uC744 \uAC19\uC740 \uB192\uC774\uC5D0 \uB454\uB2E4.",
-    rexSmallExample: "\uC791\uC740 \uB810\uB9AD \uC55E\uC5D0\uC11C\uB294 \uBAA9\uC18C\uB9AC\uB97C \uB0AE\uCD94\uACE0 \uBA3C\uC800 \uCC9C\uCC9C\uD788 \uACE0\uAC1C\uB97C \uC219\uC778\uB2E4."
-  } },
-  // 연구원은 어항 취미를 알지만, 스피나는 임무와 물고기 관리라는 짧은 해명으로 아직 감췄다고 믿는다.
-  spino: { intro: "\uC9C8\uBB38\uC740 \uC9E7\uAC8C. \uC21C\uCC30 \uC2DC\uAC04\uC774\uB2C8\uAE4C.", replies: {
-    approach: "\uBC1C\uC2E0 \uC9C0\uC810\uBD80\uD130 \uD655\uC778\uD55C\uB2E4. \uC218\uC870 \uCABD\uC740 \uC544\uB2C8\uACA0\uC9C0.",
-    wait: "\uC8FC\uBCC0\uC774 \uC7A0\uC7A0\uD574\uC9C8 \uB54C\uAE4C\uC9C0 \uB300\uAE30\uD55C\uB2E4. \uC5B4\uD56D\uC744 \uBCF4\uB294 \uAC74 \uC544\uB2C8\uB2E4.",
-    share: "\uD544\uC694\uD55C \uBAAB\uB9CC \uB098\uB208\uB2E4. \uBB3C\uACE0\uAE30 \uBA39\uC774\uB3C4 \uAC19\uC740 \uC6D0\uCE59\uC774\uB2E4.",
-    guard: "\uBB3C\uAC00\uB97C \uBA3C\uC800 \uD655\uBCF4\uD55C\uB2E4. \uC218\uC870 \uC0C1\uD0DC\uB294 \uC21C\uCC30 \uD56D\uBAA9\uC77C \uBFD0\uC774\uB2E4.",
-    "spino-alarm-rescue": "\uAD6C\uC870 \uC694\uCCAD \uC704\uCE58 \uBCF4\uACE0. \uC7A5\uBE44 \uD655\uC778\uD588\uB2E4. \uBC14\uB85C \uAC04\uB2E4.",
-    "spino-alarm-command": "\uAC00\uAE4C\uC6B4 \uACBD\uBE44\uB294 \uC218\uC870 \uD655\uC778. \uB098\uB294 \uAD6C\uC870 \uD1B5\uB85C\uB97C \uD655\uBCF4\uD55C\uB2E4.",
-    "spino-decoration-deny": "\uC6D0\uB798 \uC788\uB358 \uAC70\uB2E4. ...\uAC01\uB3C4\uAC00 \uD2C0\uC5B4\uC84C\uAD70.",
-    "spino-decoration-shelter": "\uBB3C\uACE0\uAE30\uC5D0\uAC8C \uC740\uC2E0\uCC98\uAC00 \uD544\uC694\uD588\uC744 \uBFD0\uC774\uB2E4. \uADF8 \uC774\uC0C1\uC740 \uC5C6\uC5B4.",
-    "spino-cleaning-gloves": "\uD63C\uC790 \uD574\uB3C4 \uB41C\uB2E4. ...\uC5EC\uBD84 \uC7A5\uAC11\uC740 \uAC70\uAE30 \uC788\uB2E4.",
-    "spino-cleaning-roles": "\uB098\uB294 \uC218\uCD08\uB97C \uB9E1\uC9C0. \uB2F9\uC2E0\uC740 \uC720\uB9AC\uBA74. \uADF8\uAC8C \uD6A8\uC728\uC801\uC774\uB2E4."
-  }, habits: {
-    approach: "\uBC1C\uC2E0\uC9C0\uB97C \uC887\uC73C\uBA74\uC11C\uB3C4 \uC5F0\uAD6C\uC6D0\uC758 \uC2DC\uC120\uC774 \uBA40\uC5B4\uC9C0\uBA74 \uC218\uC870 \uC7A5\uBE44 \uC7A0\uAE08\uC744 \uD55C \uBC88 \uB354 \uD655\uC778\uD55C\uB2E4.",
-    wait: "\uB300\uAE30 \uC911 \uC5B4\uD56D \uCABD\uC744 \uBCF4\uC9C0 \uC54A\uB294 \uCC99\uD558\uBA74\uC11C \uC720\uB9AC\uC5D0 \uBE44\uCE5C \uBB3C\uACE0\uAE30\uC758 \uC6C0\uC9C1\uC784\uC744 \uD655\uC778\uD55C\uB2E4.",
-    share: "\uBC30\uBD84\uC744 \uB9C8\uCE5C \uB4A4 \uC544\uBB34\uB3C4 \uBCF4\uC9C0 \uC54A\uC744 \uB54C \uBB3C\uACE0\uAE30 \uBA39\uC774\uC758 \uD06C\uAE30\uAE4C\uC9C0 \uACE0\uB974\uAC8C \uB9DE\uCD98\uB2E4.",
-    guard: "\uC21C\uCC30 \uC810\uAC80\uC774\uB77C\uACE0 \uB458\uB7EC\uB300\uBA70 \uC5F0\uAD6C\uC6D0\uC774 \uB5A0\uB09C \uB4A4 \uC218\uC870 \uAC00\uC7A5\uC790\uB9AC\uC758 \uBB3C\uAE30\uB97C \uB2E6\uB294\uB2E4.",
-    spinoAlarmRescue: "\uBCF4\uACE0\uB97C \uB9C8\uCE58\uAE30 \uC804 \uC774\uBBF8 \uC7A5\uBE44 \uC7A0\uAE08\uC744 \uD655\uC778\uD558\uACE0 \uAD6C\uC870 \uD604\uC7A5\uC73C\uB85C \uBAB8\uC744 \uB3CC\uB9B0\uB2E4.",
-    spinoAlarmCommand: "\uD544\uC694\uD55C \uC9C0\uC2DC\uB9CC \uC9E7\uAC8C \uB0A8\uAE30\uACE0 \uAD6C\uC870 \uC778\uB825\uC774 \uC9C0\uB0A0 \uD1B5\uB85C\uB97C \uBE44\uC6B4\uB2E4.",
-    spinoDecorationDeny: "\uB300\uD654\uAC00 \uB05D\uB098 \uC5F0\uAD6C\uC6D0\uC774 \uBB3C\uB7EC\uB09C \uB4A4 \uC7A5\uC2DD\uC744 \uB2E4\uC2DC \uC5B4\uD56D \uC911\uC559\uC5D0 \uB9DE\uCD98\uB2E4.",
-    spinoDecorationShelter: "\uAD00\uC2EC \uC5C6\uB294 \uCC99 \uC790\uB9AC\uB97C \uB72C \uB4A4 \uBB3C\uACE0\uAE30\uAC00 \uC7A5\uC2DD\uC744 \uC4F0\uB294\uC9C0 \uBA40\uB9AC\uC11C \uD655\uC778\uD55C\uB2E4.",
-    spinoCleaningGloves: "\uC5F0\uAD6C\uC6D0\uC774 \uB2E6\uC740 \uC720\uB9AC\uC758 \uBB3C\uC790\uAD6D\uC744 \uBCF4\uC9C0 \uBABB\uD55C \uCC99\uD558\uB2E4\uAC00 \uBAB0\uB798 \uB9C8\uBB34\uB9AC\uD55C\uB2E4.",
-    spinoCleaningRoles: "\uC5F0\uAD6C\uC6D0\uC774 \uC5B4\uB824\uC6CC\uD558\uB294 \uAD6C\uC5ED\uC744 \uBC1C\uACAC\uD558\uBA74 \uC124\uBA85 \uC5C6\uC774 \uC790\uC2E0\uC758 \uAD6C\uC5ED\uACFC \uBC14\uAFB8\uC5B4 \uB9E1\uB294\uB2E4."
-  } },
-  // 유일한 연구원인 플레이어와 나누는 휴식·훈련·간식 반응을 루카의 말투와 관찰 문장에 함께 대응시킨다.
-  luka: { intro: "\uC654\uC5B4, \uC5F0\uAD6C\uC6D0? \uC5EC\uAE30 \uC549\uC544\uC11C \uCC9C\uCC9C\uD788 \uBB3C\uC5B4\uBD10.", replies: {
-    approach: "\uAC19\uC774 \uAC00 \uBCF4\uC790. \uBCC4\uC77C \uC544\uB2C8\uBA74 \uC0B0\uCC45\uD55C \uC148 \uCE58\uACE0.",
-    wait: "\uC870\uAE08 \uB204\uC6CC\uC11C \uAE30\uB2E4\uB9AC\uBA74 \uBB34\uC2A8 \uC18C\uB9AC\uC778\uC9C0 \uC54C\uAC8C \uB420 \uAC70\uC57C.",
-    share: "\uB124 \uBAAB\uBD80\uD130 \uB5BC\uC5B4 \uB458\uAC8C. \uAC19\uC774 \uBA39\uB294 \uAC8C \uB354 \uB9DB\uC788\uC796\uC544.",
-    guard: "\uB0B4\uAC00 \uBCF4\uACE0 \uC788\uC744 \uD14C\uB2C8 \uC5F0\uAD6C\uC6D0\uBD80\uD130 \uD3B8\uD558\uAC8C \uBA39\uC5B4.",
-    "luka-sofa-silence": "\uB9D0\uD558\uC9C0 \uC54A\uC544\uB3C4 \uAD1C\uCC2E\uC544. \uC5F0\uAD6C\uC6D0\uC774 \uC606\uC5D0 \uC788\uC73C\uBA74 \uD3B8\uD558\uAC70\uB4E0.",
-    "luka-sofa-chat": "\uB9C8\uCE68 \uD560 \uC774\uC57C\uAE30\uAC00 \uB9CE\uC558\uC5B4. \uC624\uB298 \uD6C8\uB828\uBD80\uD130 \uC18C\uD30C \uCFE0\uC158 \uC774\uC57C\uAE30\uAE4C\uC9C0 \uB4E4\uC5B4 \uBCFC\uB798?",
-    "luka-sprint-compete": "\uB2EC\uB9AC\uAE30\uB77C\uBA74 \uBD10\uC8FC\uAE30 \uC5C6\uC9C0. \uACB0\uC2B9\uC120\uC5D0\uC11C \uBA3C\uC800 \uAE30\uB2E4\uB9AC\uACE0 \uC788\uC744\uAC8C.",
-    "luka-sprint-pace": "\uD63C\uC790 \uC55E\uC11C\uBA74 \uAE08\uBC29 \uB05D\uB098\uC796\uC544. \uC774\uBC88\uC5D0\uB294 \uC606\uC5D0\uC11C \uAC19\uC774 \uB2EC\uB9B4\uB798.",
-    "luka-cake-training": "\uC811\uC2DC\uB294 \uC5EC\uAE30\uAE4C\uC9C0. \uB2E4\uC74C \uD6C8\uB828\uC5D0 \uC9C8\uC8FC \uD55C \uBC88\uC744 \uB354 \uB123\uC73C\uBA74 \uB418\uACA0\uC5B4.",
-    "luka-cake-more": "\uAC71\uC815\uC740 \uB2E4 \uBA39\uACE0 \uD574\uB3C4 \uB2A6\uC9C0 \uC54A\uC544. \uC5F0\uAD6C\uC6D0\uB3C4 \uD55C \uC870\uAC01 \uB354 \uBA39\uC744\uB798?"
-  }, habits: {
-    approach: "\uB0AF\uC120 \uC18C\uB9AC\uAC00 \uB098\uBA74 \uC5F0\uAD6C\uC6D0\uACFC \uB098\uB780\uD788 \uCC9C\uCC9C\uD788 \uBC1C\uC2E0\uC9C0\uB97C \uCC3E\uC544\uAC04\uB2E4.",
-    wait: "\uD655\uC778\uD560 \uB54C\uAE4C\uC9C0 \uC18C\uD30C\uC5D0 \uB204\uC6CC \uC18C\uB9AC\uC758 \uAC04\uACA9\uC744 \uC138\uBA70 \uAE30\uB2E4\uB9B0\uB2E4.",
-    share: "\uAC04\uC2DD\uC744 \uD3BC\uCE58\uBA74 \uC5F0\uAD6C\uC6D0\uC758 \uBAAB\uC744 \uBA3C\uC800 \uAC00\uAE4C\uC6B4 \uC811\uC2DC\uC5D0 \uB35C\uC5B4 \uB454\uB2E4.",
-    guard: "\uC5F0\uAD6C\uC6D0\uC774 \uC2DD\uC0AC\uB97C \uB9C8\uCE60 \uB54C\uAE4C\uC9C0 \uC8FC\uBCC0\uC744 \uC0B4\uD53C\uBA74\uC11C\uB3C4 \uC790\uB9AC\uB97C \uBE44\uC6B0\uC9C0 \uC54A\uB294\uB2E4.",
-    lukaSofaSilence: "\uC5F0\uAD6C\uC6D0\uC774 \uACC1\uC5D0 \uC549\uC73C\uBA74 \uC18C\uD30C \uD55C\uCABD\uC744 \uBE44\uC6B0\uACE0 \uB9D0\uC5C6\uC774 \uAC19\uC740 \uC2DC\uAC04\uC744 \uBCF4\uB0B8\uB2E4.",
-    lukaSofaChat: "\uC5F0\uAD6C\uC6D0\uC774 \uC18C\uD30C \uACC1\uC5D0 \uC624\uBA74 \uB204\uC6B4 \uCC44\uB85C\uB3C4 \uC0AC\uC18C\uD55C \uC774\uC57C\uAE43\uAC70\uB9AC\uB97C \uC5F0\uB2EC\uC544 \uAEBC\uB0B8\uB2E4.",
-    lukaSprintCompete: "\uC721\uC2DD \uACC4\uC5F4 \uB810\uB9AD\uACFC \uCD9C\uBC1C\uC120\uC5D0 \uC11C\uBA74 \uC790\uC138\uB97C \uB0AE\uCD94\uACE0 \uC790\uC2E0\uC758 \uCD5C\uACE0 \uAE30\uB85D\uBD80\uD130 \uB178\uB9B0\uB2E4.",
-    lukaSprintPace: "\uD568\uAED8 \uB2EC\uB9AC\uB294 \uB810\uB9AD\uC774 \uB4A4\uCC98\uC9C0\uBA74 \uC18D\uB3C4\uB97C \uB0AE\uCDB0 \uC0C1\uB300\uC758 \uBCF4\uD3ED \uC606\uC5D0 \uB9DE\uCD98\uB2E4.",
-    lukaCakeTraining: "\uCE58\uC988\uCF00\uC774\uD06C\uB97C \uBA39\uACE0 \uBAB8\uBB34\uAC8C\uAC00 \uC2E0\uACBD \uC4F0\uC774\uBA74 \uACE7\uBC14\uB85C \uB2E4\uC74C \uB2E8\uAC70\uB9AC \uD6C8\uB828 \uD69F\uC218\uB97C \uC801\uB294\uB2E4.",
-    lukaCakeMore: "\uCE58\uC988\uCF00\uC774\uD06C \uB4A4\uC5D0 \uBAB8\uBB34\uAC8C\uB97C \uAC71\uC815\uD558\uBA74\uC11C\uB3C4 \uD55C \uC870\uAC01\uC744 \uB354 \uB098\uB208 \uB4A4 \uC0DD\uAC01\uD558\uAE30\uB85C \uD55C\uB2E4."
-  } }
-};
-function utcDayNumber(utcDate) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(utcDate)) throw new RangeError("\uAD00\uCC30 \uC778\uD130\uBDF0 \uB0A0\uC9DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-  const timestamp = Date.parse(`${utcDate}T00:00:00Z`);
-  if (!Number.isFinite(timestamp) || new Date(timestamp).toISOString().slice(0, 10) !== utcDate) throw new RangeError("\uAD00\uCC30 \uC778\uD130\uBDF0 \uB0A0\uC9DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-  return Math.floor(timestamp / 864e5);
-}
-function observationQuestionForDate(utcDate) {
-  utcDayNumber(utcDate);
-  const index = [...utcDate].reduce((sum, char) => sum + char.charCodeAt(0), 0) % COMMON_OBSERVATION_QUESTIONS.length;
-  return COMMON_OBSERVATION_QUESTIONS[index];
-}
-function observationQuestionForRelicAndDate(relicId, utcDate) {
-  const day = utcDayNumber(utcDate);
-  const relicQuestions = RELIC_OBSERVATION_QUESTIONS[relicId];
-  if (!relicQuestions?.length || day % 2 !== 0) return observationQuestionForDate(utcDate);
-  return relicQuestions[Math.floor(day / 2) % relicQuestions.length];
-}
-function createObservationStory(relicId, relicName, utcDate) {
-  const question = observationQuestionForRelicAndDate(relicId, utcDate);
-  const reaction = REACTIONS[relicId] ?? { intro: OBSERVATION_FALLBACK.intro, replies: {}, habits: {} };
-  return { id: `observation.${utcDate}.${relicId}`, startNodeId: "intro", nodes: [
-    { id: "intro", speaker: relicName, body: reaction.intro, nextId: "question" },
-    { id: "question", speaker: "\uC5F0\uAD6C\uC6D0", body: question.prompt, choices: question.choices.map((choice) => ({ id: choice.id, label: choice.label, nextId: `reply-${choice.id}` })) },
-    ...question.choices.map((choice) => ({ id: `reply-${choice.id}`, speaker: relicName, body: reaction.replies[choice.id] ?? choice.label }))
-  ] };
-}
-function observationDiscovery(relicId, utcDate, choiceId) {
-  const question = observationQuestionForRelicAndDate(relicId, utcDate);
-  const choice = question.choices.find(({ id }) => id === choiceId);
-  if (!choice) throw new RangeError("\uD604\uC7AC \uAD00\uCC30 \uC9C8\uBB38\uC5D0 \uC5C6\uB294 \uB2F5\uBCC0\uC785\uB2C8\uB2E4.");
-  return { question, choice, habit: REACTIONS[relicId]?.habits[choice.habitKey] ?? OBSERVATION_FALLBACK.habit };
-}
-function registerQuestions(questions) {
-  for (const question of questions) {
-    registerDataText(question, "prompt", `observation.${question.id}.prompt`);
-    for (const choice of question.choices) {
-      registerDataText(choice, "label", `observation.${question.id}.${choice.id}.label`);
-      registerDataText(choice, "personalityTag", `observation.${question.id}.${choice.id}.tag`);
-    }
-  }
-}
-registerQuestions(COMMON_OBSERVATION_QUESTIONS);
-for (const [relicId, questions] of Object.entries(RELIC_OBSERVATION_QUESTIONS)) {
-  void relicId;
-  registerQuestions(questions);
-}
-for (const [relicId, reaction] of Object.entries(REACTIONS)) {
-  registerDataText(reaction, "intro", `reaction.${relicId}.intro`);
-  for (const key of Object.keys(reaction.replies)) registerDataText(reaction.replies, key, `reaction.${relicId}.reply.${key}`);
-  for (const key of Object.keys(reaction.habits)) registerDataText(reaction.habits, key, `reaction.${relicId}.habit.${key}`);
-}
-registerDataText(OBSERVATION_FALLBACK, "intro", "observation.fallback.intro");
-registerDataText(OBSERVATION_FALLBACK, "habit", "observation.fallback.habit");
-
-// src/data/interactionJournals.ts
-init_define_import_meta_env();
-
-// src/data/dialogues/interactionCentralJournal.ts
-init_define_import_meta_env();
-
-// src/data/dialogues/registerDialogue.ts
-init_define_import_meta_env();
-
-// src/data/dialogues/speakerStanding.ts
-init_define_import_meta_env();
-var BY_NAME = /* @__PURE__ */ new Map();
-for (const relic of RELICS) {
-  if (relic.enemyOnly || relic.summonOnly) continue;
-  BY_NAME.set(relic.name, relic.portraitAssetId);
-}
-BY_NAME.set("\uC624\uBE44", "obi");
-function speakerStanding(speaker) {
-  return BY_NAME.get(speaker);
-}
-
-// src/data/dialogues/registerDialogue.ts
-function registerDialogueTexts(story) {
-  if (story.titleCard) {
-    registerDataText(story.titleCard, "title", `dialogue.${story.id}.title`);
-    registerDataText(story.titleCard, "subtitle", `dialogue.${story.id}.subtitle`);
-  }
-  for (const node of story.nodes) {
-    if (!node.standing && node.speaker) node.standing = speakerStanding(node.speaker);
-    const key = `dialogue.${story.id}.${node.id}`;
-    if (node.speaker) registerDataText(node, "speaker", `${key}.speaker`);
-    registerDataText(node, "body", `${key}.body`);
-    node.choices?.forEach((choice, index) => registerDataText(choice, "label", `${key}.choice.${index}`));
-  }
-}
-
-// src/data/dialogues/interactionCentralJournal.ts
-var INTERACTION_CENTRAL_JOURNAL = {
-  id: "interaction-central-dialogue-02",
-  startNodeId: "signal",
-  nodes: [
-    { id: "signal", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC720\uB9AC \uD68C\uB791 \uC544\uB798\uC5D0\uC11C \uC624\uB798\uB41C \uD638\uCD9C \uC2E0\uD638\uAC00 \uBC18\uBCF5\uB418\uACE0 \uC788\uC5B4\uC694.", standing: "torika", act: "lean", nextId: "choice" },
-    { id: "choice", speaker: "\uC5F0\uAD6C\uC6D0", body: "\uAE30\uB85D \uC7A5\uCE58\uC758 \uC5B4\uB290 \uCE35\uBD80\uD130 \uBCF5\uC6D0\uD560\uAE4C?", choices: [
-      { id: "voice", label: "\uC74C\uC131\uCE35\uC744 \uBA3C\uC800 \uBCF5\uC6D0\uD55C\uB2E4", nextId: "voice-result" },
-      { id: "route", label: "\uC774\uB3D9 \uACBD\uB85C\uB97C \uBA3C\uC800 \uBCF5\uC6D0\uD55C\uB2E4", nextId: "route-result" }
-    ] },
-    { id: "voice-result", speaker: "\uD1A0\uB9AC\uCE74", body: "\uAC19\uC740 \uC778\uC0AC\uAC00 \uB9E4\uC77C \uB2E4\uB978 \uBAA9\uC18C\uB9AC\uB85C \uB0A8\uC544 \uC788\uC5B4\uC694. \uC2DC\uBBFC\uB4E4\uC774 \uBCF5\uC6D0 \uAC1C\uCCB4\uC5D0\uAC8C \uB9D0\uC744 \uAC74 \uAE30\uB85D\uC774\uC5D0\uC694.", standing: "torika", act: "nod" },
-    { id: "route-result", speaker: "\uD1A0\uB9AC\uCE74", body: "\uBC1C\uC790\uAD6D\uC740 \uBAA8\uB450 \uC628\uC2E4 \uAC00\uC6B4\uB370\uB85C \uD5A5\uD574\uC694. \uCCAB \uB9CC\uB0A8\uC744 \uAE30\uB2E4\uB9AC\uB358 \uC0AC\uB78C\uB4E4\uC758 \uB3D9\uC120 \uAC19\uC544\uC694.", standing: "torika", act: "nod" }
-  ]
-};
-registerDialogueTexts(INTERACTION_CENTRAL_JOURNAL);
-
-// src/data/interactionJournals.ts
-var INTERACTION_JOURNALS = [
-  { id: "interaction-doppel-01", cityId: "doppel-parlor", title: "\uC751\uC811\uC2E4\uC758 \uC5F0\uAD6C \uC77C\uC9C0", discoveryOrder: 1, body: "\uC190\uB2D8 \uD0C1\uC790\uC5D0 \uB193\uC544 \uB454 \uC77C\uC9C0\uC758 \uCCAB \uC7A5. \uC5B4\uB5A4 \uD45C\uBCF8\uC744 \uC5B4\uB5A4 \uC21C\uC11C\uB85C \uB418\uC0B4\uB838\uB294\uC9C0\uAC00 \uB2F4\uB2F4\uD558\uAC8C \uC801\uD600 \uC788\uACE0, \uB2F4\uB2F9\uC790 \uCE78\uB9CC \uC774\uB984 \uC5C6\uC774 \uBE44\uC5B4 \uC788\uB2E4." },
-  { id: "interaction-doppel-02", cityId: "doppel-parlor", title: "\uB418\uD480\uC774\uB418\uB294 \uC778\uC0AC", discoveryOrder: 2, dialogueStory: INTERACTION_CENTRAL_JOURNAL },
-  // 내부 연구기관은 이터널에 파견됐던 도플갱어 연구원들의 일기가 모이는 자리다(2단계).
-  // 3~8단계 일지는 세계관 원고가 들어올 때 이 목록에 더한다.
-  { id: "interaction-doppel-lab-01", cityId: "doppel-lab", title: "\uB3CC\uC544\uC624\uC9C0 \uBABB\uD55C \uD30C\uACAC \uC77C\uAE30", discoveryOrder: 1, body: '\uC774\uD130\uB110\uC5D0 \uD30C\uACAC\uB410\uB358 \uC5F0\uAD6C\uC6D0\uC758 \uC77C\uAE30. \uB9C8\uC9C0\uB9C9 \uC7A5\uC740 "\uAD50\uB300 \uC778\uC6D0\uC774 \uB3C4\uCC29\uD588\uB2E4"\uB294 \uD55C \uC904\uC774\uACE0, \uADF8 \uC544\uB798 \uC11C\uBA85\uB780\uC740 \uBE44\uC5B4 \uC788\uB2E4.' }
-];
-function journalsForCity(cityId) {
-  return INTERACTION_JOURNALS.filter((journal) => journal.cityId === cityId).sort((a, b) => a.discoveryOrder - b.discoveryOrder || a.id.localeCompare(b.id));
-}
-function findInteractionJournal(id) {
-  return INTERACTION_JOURNALS.find((journal) => journal.id === id);
-}
-for (const journal of INTERACTION_JOURNALS) {
-  registerDataText(journal, "title", `journal.${journal.id}.title`);
-  registerDataText(journal, "body", `journal.${journal.id}.body`);
-}
-
-// src/core/interactionJournals.ts
-init_define_import_meta_env();
-function resolveJournalDiscovery(candidateId, cityJournalIds, discovered) {
-  if (!cityJournalIds.includes(candidateId)) throw new RangeError("\uD6C4\uBCF4 \uC77C\uC9C0\uAC00 \uD574\uB2F9 \uB3C4\uC2DC\uC5D0 \uC5C6\uC2B5\uB2C8\uB2E4.");
-  if (!discovered.has(candidateId)) return { kind: "new", journalId: candidateId };
-  const replacement = cityJournalIds.find((id) => !discovered.has(id));
-  return replacement ? { kind: "replacement", journalId: replacement } : { kind: "exhausted", journalId: null };
-}
-
-// src/core/playerCard.ts
-init_define_import_meta_env();
-
-// src/data/profileFrames.ts
-init_define_import_meta_env();
-var DEFAULT_PROFILE_FRAME_ID = "field";
-var PROFILE_FRAMES = [
-  { id: "field", style: "plain", displayName: "\uD604\uC7A5 \uC5F0\uAD6C\uC6D0", unlockLevel: 1, color: 10466248, wash: 2766404 },
-  { id: "holo", style: "bracket", displayName: "\uD22C\uC601 \uAD00\uCE21", unlockLevel: 10, color: 6280447, wash: 1521736 },
-  { id: "amber", style: "gem", displayName: "\uD638\uBC15 \uD45C\uBCF8", unlockLevel: 20, color: 15905857, wash: 4008978 },
-  { id: "abyss", style: "wing", displayName: "\uC2EC\uD574 \uAE30\uB85D", unlockLevel: 30, color: 11566335, wash: 2759748 },
-  { id: "garden", style: "vine", displayName: "\uC815\uC6D0 \uC218\uD638", unlockLevel: 45, color: 5759136, wash: 1325612 },
-  { id: "eternal", style: "crown", displayName: "\uC774\uD130\uB110", unlockLevel: 60, color: 16740207, wash: 4331036 }
-];
-function findProfileFrame(id) {
-  return PROFILE_FRAMES.find((frame) => frame.id === id);
-}
-function isProfileFrameUnlocked(frame, playerLevel) {
-  return playerLevel >= frame.unlockLevel;
-}
-for (const frame of PROFILE_FRAMES) registerDataText(frame, "displayName", `profileFrame.${frame.id}.name`);
-
-// src/core/playerCard.ts
-var NICKNAME_MIN_LENGTH = 2;
-var NICKNAME_MAX_LENGTH = 12;
-var BIO_MAX_LENGTH = 40;
-var PLAYER_UID_LENGTH = 9;
-var glyphs = (value) => Array.from(value);
-var CONTROL = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/u;
-function cleanNickname(value) {
-  return value.replace(/\s+/gu, " ").trim();
-}
-function nicknameProblem(value) {
-  const cleaned = cleanNickname(value);
-  if (CONTROL.test(cleaned)) return "invalidCharacter";
-  const length = glyphs(cleaned).length;
-  if (length < NICKNAME_MIN_LENGTH) return "tooShort";
-  if (length > NICKNAME_MAX_LENGTH) return "tooLong";
-  return void 0;
-}
-function cleanBio(value) {
-  const flat = value.replace(/[\r\n\u2028\u2029]+/gu, " ").replace(CONTROL, "").replace(/\s+/gu, " ").trim();
-  return glyphs(flat).slice(0, BIO_MAX_LENGTH).join("");
-}
-function isPlayerUid(value) {
-  return new RegExp(`^[1-9][0-9]{${PLAYER_UID_LENGTH - 1}}$`).test(value);
-}
-function createPlayerUid(random) {
-  let uid = String(1 + Math.floor(random() * 9));
-  while (uid.length < PLAYER_UID_LENGTH) uid += String(Math.floor(random() * 10) % 10);
-  return uid;
-}
-var NICKNAME_CHANGE_COOLDOWN_MS = 7 * 864e5;
-function nicknameLockedUntil(card, now) {
-  if (card.nickname === "") return void 0;
-  const changed = Date.parse(card.nicknameChangedAt);
-  if (!Number.isFinite(changed)) return void 0;
-  const until = changed + NICKNAME_CHANGE_COOLDOWN_MS;
-  return until > now.getTime() ? new Date(until) : void 0;
-}
-function normalizePlayerCard(value) {
-  const raw = value && typeof value === "object" ? value : {};
-  const nickname = typeof raw.nickname === "string" && raw.nickname !== "" && nicknameProblem(raw.nickname) === void 0 ? cleanNickname(raw.nickname) : "";
-  return {
-    uid: typeof raw.uid === "string" && isPlayerUid(raw.uid) ? raw.uid : "",
-    nickname,
-    bio: typeof raw.bio === "string" ? cleanBio(raw.bio) : "",
-    frameId: typeof raw.frameId === "string" && findProfileFrame(raw.frameId) ? raw.frameId : DEFAULT_PROFILE_FRAME_ID,
-    avatarRelicId: typeof raw.avatarRelicId === "string" && RELICS.some(({ id }) => id === raw.avatarRelicId) ? raw.avatarRelicId : "",
-    createdAt: typeof raw.createdAt === "string" && Number.isFinite(Date.parse(raw.createdAt)) ? raw.createdAt : "",
-    nicknameChangedAt: typeof raw.nicknameChangedAt === "string" && Number.isFinite(Date.parse(raw.nicknameChangedAt)) ? raw.nicknameChangedAt : ""
-  };
-}
-
-// src/data/profileModifiers.ts
-init_define_import_meta_env();
-var PROFILE_MODIFIERS = [
-  { id: "field-pioneer", displayName: "\uD604\uC7A5 \uAC1C\uCC99\uC790", rarity: "rare", acquisitionConditionId: "mission:daily-battle" },
-  { id: "steady-researcher", displayName: "\uAFB8\uC900\uD55C \uC5F0\uAD6C\uC790", rarity: "common", acquisitionConditionId: "mission:daily-research" },
-  { id: "deep-record", displayName: "\uC2EC\uCE35 \uAE30\uB85D\uC790", rarity: "epic", acquisitionConditionId: "research:weekly:60" },
-  { id: "garden-legend", displayName: "\uC815\uC6D0\uC758 \uC804\uC124", rarity: "legendary", acquisitionConditionId: "research:weekly:120" },
-  /*
-   * 업적의 마지막 단계를 받는 순간 열리는 수식어(`data/achievements.ts`의 `modifierId`). 희귀도는 그 줄을
-   * 끝내는 데 드는 시간을 말한다 — 1억 골드·결투 300승·원정 20만 점처럼 오래 걸리는 줄만 전설이다.
-   */
-  { id: "millionaire", displayName: "\uBC31\uB9CC\uC7A5\uC790", rarity: "legendary", acquisitionConditionId: "achievement:wealth" },
-  { id: "specimen-curator", displayName: "\uD45C\uBCF8 \uAD00\uB9AC\uC778", rarity: "epic", acquisitionConditionId: "achievement:collector" },
-  { id: "limit-breaker", displayName: "\uD55C\uACC4\uB97C \uB118\uC740 \uC790", rarity: "epic", acquisitionConditionId: "achievement:limit-break" },
-  { id: "kind-researcher", displayName: "\uB2E4\uC815\uD55C \uC5F0\uAD6C\uC6D0", rarity: "rare", acquisitionConditionId: "achievement:bond" },
-  { id: "chief-researcher", displayName: "\uC218\uC11D \uC5F0\uAD6C\uC6D0", rarity: "epic", acquisitionConditionId: "achievement:research-level" },
-  { id: "veteran", displayName: "\uBC31\uC804\uB178\uC7A5", rarity: "epic", acquisitionConditionId: "achievement:victories" },
-  { id: "front-breaker", displayName: "\uC804\uC120 \uB3CC\uD30C\uC790", rarity: "rare", acquisitionConditionId: "achievement:frontline" },
-  { id: "arena-ruler", displayName: "\uACB0\uD22C\uC7A5\uC758 \uC9C0\uBC30\uC790", rarity: "legendary", acquisitionConditionId: "achievement:duelist" },
-  { id: "raid-captain", displayName: "\uD1A0\uBC8C\uB300\uC7A5", rarity: "rare", acquisitionConditionId: "achievement:raider" },
-  { id: "deep-salvager", displayName: "\uC2EC\uD574 \uC778\uC591\uAC00", rarity: "legendary", acquisitionConditionId: "achievement:salvager" },
-  { id: "fossil-appraiser", displayName: "\uD654\uC11D \uAC10\uC815\uC0AC", rarity: "epic", acquisitionConditionId: "achievement:fossil-lab" },
-  { id: "city-envoy", displayName: "\uB3C4\uC2DC\uC758 \uC0AC\uC808", rarity: "rare", acquisitionConditionId: "achievement:dispatch" },
-  { id: "story-collector", displayName: "\uC774\uC57C\uAE30 \uC218\uC9D1\uAC00", rarity: "rare", acquisitionConditionId: "achievement:storyteller" },
-  { id: "cheesecake-artisan", displayName: "\uCE58\uC988\uCF00\uC774\uD06C \uC7A5\uC778", rarity: "rare", acquisitionConditionId: "achievement:feeding" },
-  { id: "tireless", displayName: "\uC9C0\uCE60 \uC904 \uBAA8\uB974\uB294", rarity: "epic", acquisitionConditionId: "achievement:stamina" },
-  { id: "diligent-researcher", displayName: "\uC131\uC2E4\uD55C \uC5F0\uAD6C\uC6D0", rarity: "epic", acquisitionConditionId: "achievement:diligence" },
-  { id: "challenger", displayName: "\uC815\uC810\uC758 \uB3C4\uC804\uC790", rarity: "legendary", acquisitionConditionId: "achievement:duel-tier" },
-  { id: "stratum-explorer", displayName: "\uC9C0\uCE35 \uD0D0\uC0AC\uAC00", rarity: "rare", acquisitionConditionId: "achievement:archaeologist" },
-  { id: "walking-codex", displayName: "\uAC78\uC5B4 \uB2E4\uB2C8\uB294 \uB3C4\uAC10", rarity: "legendary", acquisitionConditionId: "achievement:codex-complete" }
-];
-function findProfileModifier(id) {
-  return PROFILE_MODIFIERS.find((definition) => definition.id === id);
-}
-for (const modifier of PROFILE_MODIFIERS) {
-  registerDataText(modifier, "displayName", `modifier.${modifier.id}.name`);
-}
-
-// src/data/adRewards.ts
-init_define_import_meta_env();
-var AD_REWARD_SLOTS = [
-  { id: "daily-stamina", displayText: "\uC2A4\uD14C\uBBF8\uB098 10", reward: { kind: "currency", currency: "stamina", amount: 10 }, dailyLimitUtc: 3, placement: "shop_free_supplies" },
-  { id: "daily-cheesecake", displayText: "\uCE58\uC988\uCF00\uC774\uD06C 20", reward: { kind: "currency", currency: "cheesecake", amount: 20 }, dailyLimitUtc: 3, placement: "daily_mission_rewards" },
-  // 수확 배율은 광고 완료 전에 서버가 확정한 현재 미수확분에만 소비되는 일회성 규칙이다.
-  { id: "excavation-harvest", displayText: "\uD604\uC7AC \uC218\uD655 1.5\uBC30", reward: { kind: "excavation_effect", effect: { kind: "harvest_multiplier", multiplier: 1.5, appliesTo: "current_confirmed_harvest_once" } }, dailyLimitUtc: 3, placement: "idle_excavation" },
-  // 확장은 다음 정산 한 번에서만 기본 보관 시간의 두 배(8 → 16시간)를 허용하며 기존 생산분을
-  // 소급하지 않는다. 두 값이 갈리면 `tests/unit/adRewards.test.ts`가 실패한다.
-  { id: "excavation-storage", displayText: "\uB2E4\uC74C \uC815\uC0B0 \uBCF4\uAD00 \uCD5C\uB300 16\uC2DC\uAC04", reward: { kind: "excavation_effect", effect: { kind: "storage_extension", maxStorageSeconds: 57600, appliesTo: "next_settlement_window" } }, dailyLimitUtc: 2, placement: "idle_excavation" },
-  // 같은 효과 재수령은 배율을 곱하지 않고, 수확과 같은 1.5배로 서버 시각부터 만료만 교체한다.
-  { id: "excavation-speed", displayText: "\uC0DD\uC0B0 1.5\uBC30 \xB7 60\uBD84", reward: { kind: "excavation_effect", effect: { kind: "production_speed", multiplier: 1.5, durationSeconds: 3600, refresh: "replace_expiry" } }, dailyLimitUtc: 2, placement: "idle_excavation" },
-  // 소탕권 다섯 장. 멤버십이 없는 사람이 던전 소탕을 쓰는 길이다 — 한 번에 한 장이 든다.
-  { id: "sweep-tickets", displayText: "\uC18C\uD0D5\uAD8C 5", reward: { kind: "item", itemId: "sweep-ticket", quantity: 5 }, dailyLimitUtc: 3, placement: "dungeon_sweep" },
-  // 결투 도전권 한 장. 젬 구매와 따로 세어 젬 값의 누진을 밀어 올리지 않는다.
-  { id: "duel-attempt", displayText: "\uACB0\uD22C \uB3C4\uC804\uAD8C 1", reward: { kind: "duel_attempt", quantity: 1 }, dailyLimitUtc: 3, placement: "duel_arena" },
-  // 프리미엄 젬 탭·일반 상점 골드 탭의 광고. 값은 깔끔한 단위로 끊는다(`premiumAmounts.test`).
-  // 젬 광고만 특별히 후하다(젬 50) — 젬 탭 맨 위에서 광고를 볼 이유가 되는 칸이라 다른 광고(젬 10 가치)와 맞추지 않는다.
-  { id: "gem-ad", displayText: "\uC82C 50", reward: { kind: "currency", currency: "gems", amount: 50 }, dailyLimitUtc: 3, placement: "premium_gems" },
-  // 일간 탭: 「일일 무료 보급」을 받은 뒤에만 하루 두 번 같은 묶음을 더 받는다.
-  { id: "daily-bonus-ad", displayText: "\uC77C\uC77C \uBCF4\uAE09 \uCD94\uAC00", reward: { kind: "currencies", grants: [{ currency: "gold", amount: 1e4 }, { currency: "cheesecake", amount: 30 }, { currency: "gems", amount: 10 }], items: [{ itemId: "stamina-tonic", quantity: 1 }] }, dailyLimitUtc: 2, placement: "premium_daily", requiresClaimedProductId: "premium-free-daily" },
-  { id: "gold-ad", displayText: "\uACE8\uB4DC 5,000", reward: { kind: "currency", currency: "gold", amount: 5e3 }, dailyLimitUtc: 3, placement: "shop_gold" },
-  // 고고학 상점의 원석, 전리품 상점의 토벌·인양 증표. 모두 하루 세 번이다.
-  { id: "archaeology-ad", displayText: "\uC6D0\uC11D 100", reward: { kind: "currency", currency: "rawStone", amount: 100 }, dailyLimitUtc: 3, placement: "archaeology_shop" },
-  { id: "loot-ad", displayText: "\uD1A0\uBC8C \uC99D\uD45C 5 \xB7 \uC778\uC591 \uC99D\uD45C 5", reward: { kind: "currencies", grants: [{ currency: "raidSigil", amount: 5 }, { currency: "salvageRecord", amount: 5 }] }, dailyLimitUtc: 3, placement: "loot_shop" },
-  // 기준 점수가 없거나 광고 검증이 실패하면 서버가 지급을 거절하며 횟수도 소비하지 않는다.
-  { id: "quick-expedition", displayText: "\uBE60\uB978 \uC6D0\uC815", reward: { kind: "quick_expedition", scoreRatio: 0.25 }, dailyLimitUtc: 2, weeklyLimitUtc: 5, placement: "quick_expedition" }
-];
-function findAdRewardSlot(slotId) {
-  return AD_REWARD_SLOTS.find((slot) => slot.id === slotId);
-}
-for (const slot of AD_REWARD_SLOTS) registerDataText(slot, "displayText", `adReward.${slot.id}.text`);
-
-// src/core/dailyContent.ts
-init_define_import_meta_env();
-
-// src/data/stages.ts
-init_define_import_meta_env();
-var STAGE_ENEMY_FORMATION = ["amo", "toby", "ripa"];
-function enemyGrowth(relicId, level, breakthrough, formationSlot) {
-  return { relicId, level, breakthrough, formationSlot };
-}
-var STORY_RECOMMENDED_LEVELS = [
-  // 1-1은 오프닝에서 곧장 들어오는 첫 전투라 막 시작한 레벨 1 편성이 넘어야 한다 — 7이던 때는
-  // 아슬아슬했고 3이던 때는 싸움이 되지 않았다. 5는 1-2(8)와의 턱도 크지 않다.
-  // 사다리는 여기서부터 오르기만 한다. 1-3~2-2는 검수를 실제 전장 크기로 옮기며(v0.172.6) 한 뼘씩
-  // 올렸다 — 넓은 틀에서 재던 때는 같은 관문이 실제보다 훨씬 어렵게 읽혀 사다리가 낮게 잡혀 있었다.
-  5,
-  8,
-  11,
-  13,
-  15,
-  17,
-  18,
-  19,
-  20,
-  20,
-  // 2장은 21~30 — 돌파 1단계(상한 30) 안에서 끝난다. 1장 끝(20)에서 한 칸씩 오르는 곡선이다.
-  21,
-  22,
-  23,
-  24,
-  25,
-  26,
-  27,
-  28,
-  29,
-  30,
-  36,
-  37,
-  38,
-  39,
-  40,
-  41,
-  42,
-  43,
-  44,
-  45
-];
-var CHAPTER_ONE_ELITES = {
-  5: "toby",
-  10: "koma"
-};
-var CHAPTER_ONE_ENEMIES = STORY_RECOMMENDED_LEVELS.slice(0, 10).map((recommended, index) => {
-  const chapterOrder = index + 1;
-  const eliteId = CHAPTER_ONE_ELITES[chapterOrder];
-  if (eliteId) return [enemyGrowth(eliteId, recommended, 0, 1)];
-  return STAGE_ENEMY_FORMATION.map((id, slot) => enemyGrowth(id, recommended, 0, slot));
-});
-var STORY_RUNE_REWARDS = {
-  "1-5": { kind: "rune", rarity: "uncommon", part: 0 },
-  "1-10": { kind: "rune", rarity: "uncommon", part: 1, trait: true },
-  "2-5": { kind: "rune", rarity: "uncommon", part: 2 },
-  "2-10": { kind: "rune", rarity: "rare", part: 0, trait: true },
-  "3-5": { kind: "rune", rarity: "rare", part: 1 },
-  "3-10": { kind: "rune", rarity: "rare", part: 2, trait: true }
-};
-var STORY_RAW_STONE = {
-  "2-1": 30,
-  "2-6": 40,
-  "3-1": 50,
-  "3-6": 60
-};
-function storyFirstClearBonus(id, globalOrder, chapter, chapterOrder, elite) {
-  const heavy = elite || chapterOrder === 10;
-  const bonus = [
-    { kind: "currency", currency: "gold", amount: (3e3 + globalOrder * 1e3) * (heavy ? 2 : 1) },
-    { kind: "currency", currency: "gems", amount: heavy ? [150, 200, 300][chapter - 1] ?? 300 : [30, 40, 50][chapter - 1] ?? 50 }
-  ];
-  const rawStone = STORY_RAW_STONE[id];
-  if (rawStone) bonus.push({ kind: "currency", currency: "rawStone", amount: rawStone });
-  if (elite) bonus.push({ kind: "currency", currency: "fossil", amount: 1 });
-  const rune = STORY_RUNE_REWARDS[id];
-  if (rune) bonus.push(rune);
-  return bonus;
-}
-var CHAPTER_SITUATIONS = [
-  [
-    "\uBD88\uD0C0\uB294 \uAC1D\uCC28\uC5D0\uC11C \uBE60\uC838\uB098\uC654\uB2E4. \uB3C4\uC2DC\uB294 \uC544\uC9C1 \uBA40\uB2E4.",
-    "\uCD94\uACA9\uC870\uAC00 \uAE68\uC9C4 \uC720\uB9AC \uC9C0\uBD95\uC744 \uBC1F\uACE0 \uB0B4\uB824\uC628\uB2E4.",
-    "\uBB3C\uC5D0 \uC7A0\uAE34 \uBC30\uC591\uC870 \uC0AC\uC774\uB85C \uBC1C\uC18C\uB9AC\uAC00 \uD769\uC5B4\uC9C4\uB2E4.",
-    "\uBD80\uC11C\uC9C4 \uC9C4\uC5F4\uC7A5\uB9C8\uB2E4 \uAC19\uC740 \uC190\uC790\uAD6D\uC774 \uB0A8\uC544 \uC788\uB2E4.",
-    "\uAD00\uC81C\uD0D1 \uBB38\uC744 \uB72F\uC5B4\uB0B8 \uAC83\uC774 \uC544\uC9C1 \uADF8 \uC55E\uC5D0 \uD63C\uC790 \uC11C \uC788\uB2E4.",
-    "\uAD6C\uC870 \uC2E0\uD638\uB97C \uBCF4\uB0B4\uB824\uBA74 \uBB34\uB108\uC9C4 \uC548\uD14C\uB098\uBD80\uD130 \uB418\uC0B4\uB824\uC57C \uD55C\uB2E4.",
-    "\uD3D0\uAE30\uB41C \uAC83\uB4E4\uC774 \uC77C\uC5B4\uB098 \uAE38\uC744 \uB9C9\uB294\uB2E4.",
-    "\uCF54\uB9C8\uC758 \uD754\uC801\uC774 \uBC30\uC218\uB85C \uC544\uB798\uB85C \uC774\uC5B4\uC9C4\uB2E4.",
-    "\uBD09\uC1C4\uBB38 \uB108\uBA38\uC5D0\uC11C \uBB34\uC5B8\uAC00\uAC00 \uAE30\uB2E4\uB9AC\uACE0 \uC788\uB2E4.",
-    "\uACBD\uACC4\uBB38 \uC55E. \uCF54\uB9C8\uAC00 \uD640\uB85C \uAE38\uC744 \uB9C9\uACE0 \uC11C \uC788\uB2E4."
-  ],
-  [],
-  []
-];
-var CHAPTER_CONTENT = [
-  { title: "\uC81C1\uC9C0\uBD80 \uC678\uACFD", subtitle: "\uAC80\uC5ED\uC120 \u2014 \uB3C4\uC2DC\uB85C \uB4E4\uC5B4\uAC00\uB294 \uB9C8\uC9C0\uB9C9 \uAD6C\uAC04", names: ["\uCD94\uB77D\uD558\uB294 \uBC29\uC8FC", "\uBD95\uAD34\uD55C \uC628\uC2E4", "\uCE68\uC218\uB41C \uBC30\uC591\uC2E4", "\uD45C\uBCF8 \uBCF4\uAD00\uACE0", "\uC81C1\uAD6C\uC5ED \uAD00\uC81C\uD0D1", "\uBB34\uB108\uC9C4 \uD1B5\uC2E0\uC18C", "\uD3D0\uAE30\uBB3C \uCC98\uB9AC\uC7A5", "\uC9C0\uD558 \uBC30\uC218\uB85C", "\uBD09\uC1C4\uB41C \uC815\uAC70\uC7A5", "\uAD6C\uC5ED \uACBD\uACC4\uBB38"] },
-  { title: "\uC794\uD5A5 \uC9C0\uAD6C", subtitle: "\uCE68\uBB35\uD55C \uC0B0\uC5C5 \uD68C\uB791", names: ["\uC794\uD5A5 \uC9C4\uC785\uB85C", "\uB179\uC2A8 \uC870\uB9BD\uB3D9", "\uB0C9\uAC01 \uC218\uB85C", "\uB3D9\uB825 \uC911\uACC4\uC2E4", "\uD30C\uC190\uB41C \uC2B9\uAC15\uC7A5", "\uBB34\uC778 \uC0DD\uC0B0\uC120", "\uC555\uB825 \uACA9\uC2E4", "\uC7AC\uCC98\uB9AC \uC6A9\uAD11\uB85C", "\uC911\uC559 \uC6B4\uC1A1\uB85C", "\uC794\uD5A5 \uC9C0\uAD6C \uAD00\uBB38"] },
-  { title: "\uC81C 3 \uAD6C\uC5ED", subtitle: "\uC2EC\uCE35 \uC815\uC6D0 \u2014 \uB3C4\uC2DC \uC544\uB798\uC758 \uBFCC\uB9AC", names: ["\uC2EC\uCE35 \uD558\uAC15\uB85C", "\uBC1C\uAD11 \uADE0\uC0AC\uAD74", "\uACE0\uB300 \uAE09\uC218\uC6D0", "\uBFCC\uB9AC \uAD00\uCE21\uC18C", "\uC720\uC804\uC790 \uC800\uC7A5\uACE0", "\uD3EC\uC790 \uD655\uC0B0\uC2E4", "\uC0DD\uCCB4 \uBC18\uC751\uB85C", "\uC2EC\uCE35 \uC5F0\uAD6C\uB3D9", "\uC815\uC6D0 \uD575\uC2EC\uBD80", "\uC2EC\uCE35 \uC815\uC6D0 \uC81C\uC5B4\uC2E4"] }
-];
-var CHAPTERS = CHAPTER_CONTENT.map((content, chapterIndex) => {
-  const chapter = chapterIndex + 1;
-  const prerequisiteStageId = chapter === 1 ? void 0 : `${chapter - 1}-10`;
-  const stages = content.names.map((name, orderIndex) => {
-    const chapterOrder = orderIndex + 1;
-    const globalOrder = chapterIndex * 10 + orderIndex;
-    const laterChapterIds = chapter === 3 && chapterOrder === 10 ? ["amo", "pontos", "ripa"] : [...STAGE_ENEMY_FORMATION];
-    const laterChapterLevel = STORY_RECOMMENDED_LEVELS[globalOrder] ?? 1;
-    const laterChapterBreakthrough = chapter === 2 ? requiredBreakthroughForLevel(laterChapterLevel) : 0;
-    const laterChapterEnemies = laterChapterIds.map((relicId, slot) => enemyGrowth(relicId, laterChapterLevel, laterChapterBreakthrough, slot));
-    const enemies = chapter === 1 ? CHAPTER_ONE_ENEMIES[orderIndex] : laterChapterEnemies;
-    const id = `${chapter}-${chapterOrder}`;
-    const elite = enemies.length === 1;
-    return {
-      kind: "battle",
-      id,
-      name,
-      chapter,
-      chapterOrder,
-      // 첫 노드는 이전 챕터 끝을, 나머지는 같은 챕터의 직전 노드를 선행 조건으로 삼는다.
-      prerequisiteStageIds: chapterOrder === 1 ? prerequisiteStageId ? [prerequisiteStageId] : [] : [`${chapter}-${chapterOrder - 1}`],
-      // 마지막 심층 관문은 원정 최종층과 같은 폰토스를 세워 등록된 보스가 스테이지에서도 고립되지 않게 한다.
-      enemies,
-      // 혼자 서면 정예다. 화면은 이 표식으로 몸집과 표식만 바꾸고 수치는 건드리지 않는다.
-      ...elite ? { elite: true } : {},
-      rewards: {
-        /*
-         * 초회 치즈케이크는 **난이도 검수가 딛고 선 값**이라 그대로 둔다. `stageDifficulty.test`가 관문마다
-         * "그 자리에 닿은 사람이 스토리로 받은 치즈케이크"로 파티를 키워 1-10·2장의 벽을 재므로, 여기를
-         * 올리면 벽이 조용히 낮아진다(1-10의 땅 딜러 조합이 여덟 판 중 한 판 → 여섯 판으로 열렸다).
-         * 초회의 몫은 나머지 보상(`firstClearBonus`)이 늘리고, 성장 재화의 숨통은 대작전이 튼다.
-         */
-        firstClearCheesecake: 30 + globalOrder * 5,
-        repeatClearCheesecake: 10 + globalOrder * 2,
-        firstClearBonus: storyFirstClearBonus(id, globalOrder, chapter, chapterOrder, elite)
-      },
-      // 아직 서사가 없는 장은 이 값이 비어 있고, 화면은 그 줄을 그리지 않는다.
-      situation: CHAPTER_SITUATIONS[chapterIndex]?.[orderIndex]
-    };
-  });
-  return { id: chapter, title: content.title, subtitle: content.subtitle, prerequisiteStageId, stages };
-});
-var SIDE_STORY_STAGE = {
-  kind: "story",
-  id: "1-5-side-story",
-  name: "\uC628\uC2E4\uC758 \uC794\uD5A5",
-  chapter: 1,
-  chapterOrder: 5,
-  prerequisiteStageIds: ["1-5"],
-  storyId: "stage-1-5-greenhouse-echo"
-};
-var STAGES = [...CHAPTERS.flatMap(({ stages }) => stages), SIDE_STORY_STAGE];
-var STAGE_BY_ID = new Map(STAGES.map((stage) => [stage.id, stage]));
-var DAILY_RESTORATION = {
-  id: "daily-restoration",
-  name: "\uC77C\uC77C \uBCF5\uC6D0",
-  maxEntriesPerUtcDay: 3,
-  rewardCheesecake: 40
-};
-function getStage(id) {
-  const found = STAGE_BY_ID.get(id);
-  if (!found) throw new Error(`\uC54C \uC218 \uC5C6\uB294 \uC2A4\uD14C\uC774\uC9C0 id: ${id}`);
-  return found;
-}
-for (const chapter of CHAPTERS) {
-  registerDataText(chapter, "title", `chapter.${chapter.id}.title`);
-  registerDataText(chapter, "subtitle", `chapter.${chapter.id}.subtitle`);
-  for (const stage of chapter.stages) {
-    registerDataText(stage, "name", `stage.${stage.id}.name`);
-    registerDataText(stage, "situation", `stage.${stage.id}.situation`);
-  }
-}
-registerDataText(SIDE_STORY_STAGE, "name", `stage.${SIDE_STORY_STAGE.id}.name`);
-registerDataText(DAILY_RESTORATION, "name", "stage.dailyRestoration.name");
-
-// src/core/dailyContent.ts
-function utcDateKey(now) {
-  if (Number.isNaN(now.getTime())) throw new RangeError("\uC720\uD6A8\uD55C \uC11C\uBC84 \uB0A0\uC9DC\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
-  return now.toISOString().slice(0, 10);
-}
-function normalizeDailyContent(state, serverNow2) {
-  const date = utcDateKey(serverNow2);
-  return state.date === date ? { ...state, completedIds: [...state.completedIds], claimedRewardIds: [...state.claimedRewardIds] } : { date, restorationEntries: 0, completedIds: [], claimedRewardIds: [] };
-}
-function consumeRestorationEntry(state, serverNow2) {
-  const normalized = normalizeDailyContent(state, serverNow2);
-  if (normalized.restorationEntries >= DAILY_RESTORATION.maxEntriesPerUtcDay) throw new RangeError("\uC624\uB298\uC758 \uC77C\uC77C \uBCF5\uC6D0 \uC785\uC7A5 \uD69F\uC218\uB97C \uBAA8\uB450 \uC0AC\uC6A9\uD588\uC2B5\uB2C8\uB2E4.");
-  return { ...normalized, restorationEntries: normalized.restorationEntries + 1 };
-}
-
-// src/core/attendance.ts
-init_define_import_meta_env();
-var ATTENDANCE_DAYS = 7;
-var REGULAR_ATTENDANCE_WINDOW_DAYS = 10;
-var ATTENDANCE_TRACK_IDS = ["newcomer", "regular"];
-function createEmptyAttendanceState() {
-  return { newcomer: emptyTrack(), regular: emptyTrack(), autoShownDay: "" };
-}
-function emptyTrack(lastClaimDay = "") {
-  return { startDay: "", claimed: 0, lastClaimDay, adClaimed: [] };
-}
-var DAY_KEY = /^\d{4}-\d{2}-\d{2}$/;
-var dayKeyOrEmpty = (value) => typeof value === "string" && DAY_KEY.test(value) ? value : "";
-var claimedCount = (value) => Number.isInteger(value) && value >= 0 ? Math.min(ATTENDANCE_DAYS, value) : 0;
-function normalizeTrack(value) {
-  const source = value && typeof value === "object" ? value : {};
-  const claimed = claimedCount(source.claimed);
-  const adClaimed = Array.isArray(source.adClaimed) ? [...new Set(source.adClaimed.filter((day) => Number.isInteger(day) && day >= 1 && day <= claimed))].sort((a, b) => a - b) : [];
-  return { startDay: dayKeyOrEmpty(source.startDay), claimed, lastClaimDay: dayKeyOrEmpty(source.lastClaimDay), adClaimed };
-}
-function normalizeAttendanceState(value) {
-  const source = value && typeof value === "object" ? value : {};
-  return { newcomer: normalizeTrack(source.newcomer), regular: normalizeTrack(source.regular), autoShownDay: dayKeyOrEmpty(source.autoShownDay) };
-}
-function isValidAttendanceState(value) {
-  if (!value || typeof value !== "object") return false;
-  const normalized = normalizeAttendanceState(value);
-  return JSON.stringify(normalized) === JSON.stringify(value);
-}
-function cloneAttendanceState(state) {
-  return { newcomer: { ...state.newcomer, adClaimed: [...state.newcomer.adClaimed ?? []] }, regular: { ...state.regular, adClaimed: [...state.regular.adClaimed ?? []] }, autoShownDay: state.autoShownDay };
-}
-function dayKeyDistance(from, to) {
-  return Math.round((Date.parse(`${to}T00:00:00.000Z`) - Date.parse(`${from}T00:00:00.000Z`)) / 864e5);
-}
-function rollAttendance(state, now) {
-  const today = utcDateKey(now);
-  const next = cloneAttendanceState(state);
-  if (!next.newcomer.startDay) next.newcomer.startDay = today;
-  const regular = next.regular;
-  if (regular.startDay) {
-    const lapDone = regular.claimed >= ATTENDANCE_DAYS && regular.lastClaimDay !== today;
-    const expired = dayKeyDistance(regular.startDay, today) >= REGULAR_ATTENDANCE_WINDOW_DAYS;
-    if (lapDone || expired) next.regular = emptyTrack(regular.lastClaimDay);
-  }
-  return next;
-}
-function windowEnd(startDay, days) {
-  const end = /* @__PURE__ */ new Date(`${startDay}T00:00:00.000Z`);
-  end.setUTCDate(end.getUTCDate() + days);
-  return end.toISOString();
-}
-function attendanceTrackView(state, id, now) {
-  const today = utcDateKey(now);
-  const track = state[id];
-  const claimedToday = track.lastClaimDay === today;
-  if (id === "newcomer") {
-    const done = track.claimed >= ATTENDANCE_DAYS;
-    const open = !done || claimedToday;
-    return { id, open, claimed: track.claimed, claimableToday: open && !done && !claimedToday, endsAt: null, adClaimed: [], adClaimableToday: false };
-  }
-  return {
-    id,
-    open: true,
-    claimed: track.claimed,
-    claimableToday: track.claimed < ATTENDANCE_DAYS && !claimedToday,
-    endsAt: track.startDay ? windowEnd(track.startDay, REGULAR_ATTENDANCE_WINDOW_DAYS) : null,
-    adClaimed: [...track.adClaimed],
-    adClaimableToday: claimedToday && track.claimed >= 1 && !track.adClaimed.includes(track.claimed)
-  };
-}
-function claimAttendanceDay(state, id, now) {
-  const rolled = rollAttendance(state, now);
-  if (!attendanceTrackView(rolled, id, now).claimableToday) return null;
-  const today = utcDateKey(now);
-  const track = rolled[id];
-  const day = track.claimed + 1;
-  rolled[id] = { startDay: track.startDay || today, claimed: day, lastClaimDay: today, adClaimed: [...track.adClaimed] };
-  return { state: rolled, day };
-}
-function claimAttendanceAdBonus(state, now) {
-  const rolled = rollAttendance(state, now);
-  if (!attendanceTrackView(rolled, "regular", now).adClaimableToday) return null;
-  const day = rolled.regular.claimed;
-  rolled.regular = { ...rolled.regular, adClaimed: [...rolled.regular.adClaimed, day].sort((a, b) => a - b) };
-  return { state: rolled, day };
-}
-
-// src/data/attendance.ts
-init_define_import_meta_env();
-var ATTENDANCE_REWARDS = {
-  newcomer: [
-    { kind: "currency", currency: "gems", amount: 1500 },
-    { kind: "item", itemId: "stamina-tonic", amount: 6, expiresInDays: 7 },
-    { kind: "currency", currency: "fossil", amount: 5 },
-    { kind: "currency", currency: "gems", amount: 2e3 },
-    { kind: "currency", currency: "amber", amount: 5 },
-    { kind: "item", itemId: "strata-ticket", amount: 3 },
-    { kind: "currency", currency: "gems", amount: 5e3 }
-  ],
-  regular: [
-    { kind: "currency", currency: "gems", amount: 300 },
-    { kind: "currency", currency: "fossil", amount: 1 },
-    { kind: "item", itemId: "stamina-tonic", amount: 3, expiresInDays: 7 },
-    { kind: "currency", currency: "gems", amount: 500 },
-    { kind: "currency", currency: "amber", amount: 1 },
-    { kind: "item", itemId: "strata-ticket", amount: 2 },
-    { kind: "currency", currency: "fossil", amount: 5 }
-  ]
-};
-var ATTENDANCE_AD_REWARDS = [
-  { kind: "currency", currency: "gold", amount: 3e4 },
-  { kind: "currency", currency: "gems", amount: 100 },
-  { kind: "currency", currency: "cheesecake", amount: 200 },
-  { kind: "currency", currency: "gems", amount: 150 },
-  { kind: "item", itemId: "stamina-tonic", amount: 1, expiresInDays: 7 },
-  { kind: "currency", currency: "gems", amount: 200 },
-  { kind: "currency", currency: "fossil", amount: 1 }
-];
-var ATTENDANCE_AD_SLOT_ID = "attendance-ad";
-
-// src/core/raidTicketDrops.ts
-init_define_import_meta_env();
-
-// src/data/raid.ts
-init_define_import_meta_env();
-var RAID_SEASON_BOSS_LEVEL = 60;
-var RAID_SEASON_BOSS = {
-  relicId: "sukusuino",
-  level: RAID_SEASON_BOSS_LEVEL,
-  /**
-   * **돌파는 레벨에서 나온다**(`requiredBreakthroughForLevel`). 2로 적어 두었을 때는 정보창이
-   * `48 / 40`을 세워 상한을 넘긴 레벨을 말했다 — 적도 플레이어와 같은 성장 축을 지나야 한다.
-   */
-  breakthrough: requiredBreakthroughForLevel(RAID_SEASON_BOSS_LEVEL)
-};
-var RAID_BOSS_BALANCE = {
-  maximumDurationMs: (deathClockClosesBySeconds() + BOSS_REPLAY_SLACK_SECONDS) * 1e3,
-  maximumActions: 2e3,
-  maximumAcceptedScore: 1e8,
-  phases: [
-    { startsAtMs: 0, attackPerSecond: 0, label: "\uAD50\uC804" },
-    { startsAtMs: 3e4, attackPerSecond: 0, label: "\uACA9\uD654" },
-    { startsAtMs: 6e4, attackPerSecond: 0, label: "\uCD5C\uD6C4" }
-  ]
-};
-var raidDifficulty = (spec) => ({ ...spec, totalHp: spec.bodyHp * spec.kills });
-var RAID_DIFFICULTY = {
-  easy: raidDifficulty({ level: 20, bodyHp: 25e3, kills: 6, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 1e4, total: 8, kill: 5 } }),
-  normal: raidDifficulty({ level: 30, bodyHp: 5e4, kills: 8, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15e3, total: 14, kill: 8 } }),
-  hard: raidDifficulty({ level: 40, bodyHp: 1e5, kills: 10, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22e3, total: 22, kill: 12 } }),
-  rampage: raidDifficulty({ level: 60, bodyHp: 25e4, kills: 40, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 45e3, total: 60, kill: 30 } })
-};
-function isRaidDifficulty(value) {
-  return typeof value === "string" && Object.prototype.hasOwnProperty.call(RAID_DIFFICULTY, value);
-}
-var RAID_SUMMON_DIFFICULTIES = ["easy", "normal", "hard"];
-var RAID_BOSS_POOL = ["sukusuino", "taboa", "quetzalcoatlus"];
-var RAID_TICKET_ITEM = "raid-ticket";
-var RAID_SELECT_TICKET_ITEM = "raid-select-ticket";
-var RAID_TICKET_TEST_KIT = [
-  { itemId: RAID_TICKET_ITEM, quantity: 3 },
-  { itemId: RAID_SELECT_TICKET_ITEM, quantity: 1 }
-];
-var RAID_SEASON_TOTAL_HP = RAID_DIFFICULTY.rampage.totalHp;
-var RAID_ATTEMPTS_PER_RAID = 2;
-var RAID_RUN_STAMINA = 10;
-function raidRunStamina(_difficulty) {
-  return RAID_RUN_STAMINA;
-}
-var RAID_RUN_GOLD_PER_DAMAGE = 0.2;
-var RAID_COMPLETED_KEEP_HOURS = 48;
-var RAID_MOCK_PARTICIPANTS = [
-  { id: "raider-haneul", displayName: "\uD558\uB298\uC815\uC6D0", favoriteRelicId: "rex", pace: 1.32 },
-  { id: "raider-moss", displayName: "\uC774\uB07C\uC5F0\uAD6C\uC18C", favoriteRelicId: "torika", pace: 0.71 },
-  { id: "raider-viola", displayName: "\uBE44\uC62C\uB77C", favoriteRelicId: "spino", pace: 1.18 },
-  { id: "raider-kettle", displayName: "\uC8FC\uC804\uC790", favoriteRelicId: "luka", pace: 0.94 },
-  { id: "raider-noon", displayName: "\uC815\uC624\uC758\uD45C\uBCF8", favoriteRelicId: "dodo", pace: 1.07 },
-  { id: "raider-dust", displayName: "\uBA3C\uC9C0\uB5A8\uC774", favoriteRelicId: "tia", pace: 0.62 },
-  { id: "raider-ember", displayName: "\uC794\uBD88", favoriteRelicId: "stella", pace: 1.24 },
-  { id: "raider-quartz", displayName: "\uC11D\uC601", favoriteRelicId: "meron", pace: 0.88 },
-  { id: "raider-tidal", displayName: "\uBC00\uBB3C", favoriteRelicId: "pachi", pace: 1.02 },
-  { id: "raider-orchid", displayName: "\uB09C\uCD08", favoriteRelicId: "maki", pace: 0.79 },
-  { id: "raider-cinder", displayName: "\uC7AC", favoriteRelicId: "keris", pace: 1.15 },
-  { id: "raider-fern", displayName: "\uACE0\uC0AC\uB9AC", favoriteRelicId: "delopi", pace: 0.68 },
-  { id: "raider-halo", displayName: "\uB2EC\uBB34\uB9AC", favoriteRelicId: "nodonia", pace: 1.29 },
-  { id: "raider-pebble", displayName: "\uC870\uC57D\uB3CC", favoriteRelicId: "ella", pace: 0.84 },
-  { id: "raider-signal", displayName: "\uC2E0\uD638\uD0D1", favoriteRelicId: "mette", pace: 1.11 },
-  { id: "raider-lantern", displayName: "\uB4F1\uBD88", favoriteRelicId: "deina", pace: 0.75 },
-  { id: "raider-marrow", displayName: "\uACE8\uC218\uC5F0\uAD6C", favoriteRelicId: "maddy", pace: 0.97 },
-  { id: "raider-willow", displayName: "\uBC84\uB4DC\uB098\uBB34", favoriteRelicId: "terisa", pace: 1.21 },
-  { id: "raider-gale", displayName: "\uB3CC\uD48D", favoriteRelicId: "parua", pace: 0.66 },
-  { id: "raider-amberly", displayName: "\uD638\uBC15\uBE5B", favoriteRelicId: "shute", pace: 1.06 },
-  { id: "raider-slate", displayName: "\uC810\uD310\uC554", favoriteRelicId: "dian", pace: 0.81 },
-  { id: "raider-vellum", displayName: "\uC591\uD53C\uC9C0", favoriteRelicId: "rex", pace: 1.13 },
-  { id: "raider-drift", displayName: "\uD45C\uB958", favoriteRelicId: "torika", pace: 0.73 },
-  { id: "raider-kiln", displayName: "\uAC00\uB9C8", favoriteRelicId: "spino", pace: 1.27 }
-];
-RAID_BOSS_BALANCE.phases.forEach((phase, index) => registerDataText(phase, "label", `raid.phase.${index}`));
-
-// src/core/raidTicketDrops.ts
-var RAID_TICKET_DROP = {
-  /** 한 판(스테미나 10)마다 일반 토벌권이 떨어질 확률 — 스테미나 100당 약 0.8장. */
-  normalChancePerRun: 0.08,
-  /** 한 판마다 선택 토벌권이 떨어질 확률. */
-  selectChancePerRun: 0.012,
-  dailyNormalCap: 3,
-  dailySelectCap: 1,
-  /** 지층 탐사판 한 장에 토벌권 칸이 섞일 확률(일반 · 선택). */
-  strataNormalChance: 0.3,
-  strataSelectChance: 0.06
-};
-function createEmptyRaidTicketDropState() {
-  return { day: "", normal: 0, select: 0 };
-}
-var count = (value) => Number.isInteger(value) && value >= 0 ? value : 0;
-function normalizeRaidTicketDropState(value) {
-  const source = value && typeof value === "object" ? value : {};
-  return { day: typeof source.day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(source.day) ? source.day : "", normal: count(source.normal), select: count(source.select) };
-}
-function isValidRaidTicketDropState(value) {
-  return !!value && typeof value === "object" && JSON.stringify(normalizeRaidTicketDropState(value)) === JSON.stringify(value);
-}
-function rollRaidTicketDrops(state, runs, now, random) {
-  const today = utcDateKey(now);
-  const next = state.day === today ? { ...state } : { day: today, normal: 0, select: 0 };
-  let normal = 0;
-  let select = 0;
-  for (let run2 = 0; run2 < Math.max(0, Math.floor(runs)); run2 += 1) {
-    if (next.normal < RAID_TICKET_DROP.dailyNormalCap && random() > 1 - RAID_TICKET_DROP.normalChancePerRun) {
-      next.normal += 1;
-      normal += 1;
-    }
-    if (next.select < RAID_TICKET_DROP.dailySelectCap && random() > 1 - RAID_TICKET_DROP.selectChancePerRun) {
-      next.select += 1;
-      select += 1;
-    }
-  }
-  const drops = [];
-  if (normal > 0) drops.push({ itemId: RAID_TICKET_ITEM, amount: normal });
-  if (select > 0) drops.push({ itemId: RAID_SELECT_TICKET_ITEM, amount: select });
-  return { state: next, drops };
-}
-function strataRaidTicketTile(random) {
-  const value = random();
-  if (value > 1 - RAID_TICKET_DROP.strataSelectChance) return RAID_SELECT_TICKET_ITEM;
-  if (value > 1 - RAID_TICKET_DROP.strataSelectChance - RAID_TICKET_DROP.strataNormalChance) return RAID_TICKET_ITEM;
-  return null;
-}
-
-// src/core/bountyRun.ts
-init_define_import_meta_env();
-
-// src/data/bounty.ts
-init_define_import_meta_env();
-var BOUNTY = {
-  roundCount: 3
-};
-var BOUNTY_TIERS = [
-  // 1급은 스토리 1장을 막 민 파티(레벨 15 언저리)가 들어서는 자리다.
-  { id: "bounty-1", order: 1, name: "\uD604\uC0C1\uC218\uBC30 1\uAE09", rewardGold: 1200, rounds: [
-    { relicId: "toby", level: 5 },
-    { relicId: "amo", level: 5 },
-    { relicId: "koma", level: 5 }
-  ] },
-  // 2급부터 돌파 없는 상한(20)을 넘는다.
-  { id: "bounty-2", order: 2, name: "\uD604\uC0C1\uC218\uBC30 2\uAE09", rewardGold: 3300, rounds: [
-    { relicId: "toby", level: 18 },
-    { relicId: "amo", level: 18 },
-    { relicId: "koma", level: 18 }
-  ] },
-  { id: "bounty-3", order: 3, name: "\uD604\uC0C1\uC218\uBC30 3\uAE09", rewardGold: 6400, rounds: [
-    { relicId: "toby", level: 32 },
-    { relicId: "amo", level: 32 },
-    { relicId: "koma", level: 32 }
-  ] },
-  { id: "bounty-4", order: 4, name: "\uD604\uC0C1\uC218\uBC30 4\uAE09", rewardGold: 14400, rounds: [
-    { relicId: "toby", level: 46 },
-    { relicId: "amo", level: 46 },
-    { relicId: "koma", level: 46 }
-  ] },
-  // 5급은 돌파로 상한을 연 만렙 셋의 자리다.
-  { id: "bounty-5", order: 5, name: "\uD604\uC0C1\uC218\uBC30 5\uAE09", rewardGold: 26400, rounds: [
-    { relicId: "toby", level: 60 },
-    { relicId: "amo", level: 60 },
-    { relicId: "koma", level: 60 }
-  ] }
-];
-var BOUNTY_TIER_BY_ID = new Map(BOUNTY_TIERS.map((tier) => [tier.id, tier]));
-function getBountyTier(id) {
-  const tier = BOUNTY_TIER_BY_ID.get(id);
-  if (!tier) throw new Error(`\uC54C \uC218 \uC5C6\uB294 \uD604\uC0C1\uC218\uBC30 \uB4F1\uAE09 id: ${id}`);
-  return tier;
-}
-var BOUNTY_ROLE = encounterRoleFor(1);
-for (const tier of BOUNTY_TIERS) registerDataText(tier, "name", `bounty.tier.${tier.id}.name`);
-
-// src/core/dungeonShortcut.ts
-init_define_import_meta_env();
-var SWEEP_TICKET_ITEM = "sweep-ticket";
-var SWEEP_TICKET_TEST_KIT = { itemId: SWEEP_TICKET_ITEM, quantity: 10 };
-var SWEEP_COUNT_LIMIT = 50;
-var DUNGEON_RUN_STAMINA = 10;
-function normalizeSweepCount(value) {
-  return Number.isInteger(value) && value >= 1 && value <= SWEEP_COUNT_LIMIT ? value : void 0;
-}
-function settleSweep(cost, count2, adFreeMembership) {
-  return {
-    count: count2,
-    staminaCost: cost.staminaCost * count2,
-    ticketCost: adFreeMembership ? 0 : count2,
-    rewards: Object.fromEntries(Object.entries(cost.rewards).map(([currency3, amount]) => [currency3, amount * count2]))
-  };
-}
-function sweepRefusal(input) {
-  if (!input.cleared) return "not_cleared";
-  if (normalizeSweepCount(input.count) === void 0) return "invalid_count";
-  const settlement = settleSweep(input.cost, input.count, input.adFreeMembership);
-  if (input.tickets < settlement.ticketCost) return "not_enough_tickets";
-  if (input.stamina < settlement.staminaCost) return "not_enough_stamina";
-  return null;
-}
-
-// src/core/bountyRun.ts
-function isBountyTierUnlocked(tier, clearedTierIds) {
-  const previous = BOUNTY_TIERS.find(({ order }) => order === tier.order - 1);
-  return previous === void 0 || clearedTierIds.includes(previous.id);
-}
-function bountyRunCost(tier) {
-  return { staminaCost: DUNGEON_RUN_STAMINA, rewards: { gold: tier.rewardGold } };
-}
-function markBountyTierCleared(state, tierId2) {
-  getBountyTier(tierId2);
-  return state.clearedTierIds.includes(tierId2) ? { clearedTierIds: [...state.clearedTierIds] } : { clearedTierIds: [...state.clearedTierIds, tierId2] };
-}
-
-// src/core/missions.ts
-init_define_import_meta_env();
-var MISSIONS = [
-  { id: "daily-battle", period: "daily", title: "\uC804\uD22C \uC2B9\uB9AC 1\uD68C", target: 1, reward: { currency: "gold", amount: 5e3 }, researchPoints: 20, event: "battle_completed" },
-  { id: "daily-excavate", period: "daily", title: "\uC5F0\uAD6C\uC18C \uCE90\uB9AD\uD130 \uC5F0\uAD6C 1\uD68C", target: 1, reward: { currency: "gems", amount: 10 }, researchPoints: 20, event: "relic_research_completed" },
-  { id: "daily-salary", period: "daily", title: "\uAE09\uC5EC 1\uD68C", target: 1, reward: { currency: "cheesecake", amount: 20 }, researchPoints: 20, event: "salary_given" },
-  { id: "daily-lobby", period: "daily", title: "\uB85C\uBE44 \uAD50\uB958 1\uD68C", target: 1, reward: { currency: "gold", amount: 3e3 }, researchPoints: 20, event: "lobby_interaction" },
-  { id: "daily-stamina", period: "daily", title: "\uC2A4\uD14C\uBBF8\uB098 60 \uC0AC\uC6A9", target: 60, reward: { currency: "cheesecake", amount: 30 }, researchPoints: 20, event: "stamina_spent" },
-  { id: "daily-harvest", period: "daily", title: "\uBC1C\uAD74 \uC218\uD655 1\uD68C", target: 1, reward: { currency: "gems", amount: 10 }, researchPoints: 20, event: "excavation_harvested" },
-  { id: "daily-dispatch", period: "daily", title: "\uAD50\uB958 \uD30C\uACAC 1\uD68C", target: 1, reward: { currency: "gold", amount: 3e3 }, researchPoints: 20, event: "interaction_dispatched" },
-  { id: "weekly-daily", period: "weekly", title: "\uC77C\uC77C \uC784\uBB34 20\uD68C \uC644\uB8CC", target: 20, reward: { currency: "gems", amount: 50 }, researchPoints: 150, event: "daily_mission_claimed" },
-  { id: "weekly-battle", period: "weekly", title: "\uC804\uD22C \uC2B9\uB9AC 20\uD68C", target: 20, reward: { currency: "gold", amount: 3e4 }, researchPoints: 100, event: "battle_completed" },
-  { id: "weekly-excavate", period: "weekly", title: "\uC5F0\uAD6C\uC18C \uCE90\uB9AD\uD130 \uC5F0\uAD6C 10\uD68C", target: 10, reward: { currency: "fossil", amount: 1 }, researchPoints: 100, event: "relic_research_completed" },
-  { id: "weekly-stamina", period: "weekly", title: "\uC2A4\uD14C\uBBF8\uB098 600 \uC0AC\uC6A9", target: 600, reward: { currency: "cheesecake", amount: 150 }, researchPoints: 100, event: "stamina_spent" },
-  { id: "weekly-dispatch", period: "weekly", title: "\uAD50\uB958 \uD30C\uACAC 5\uD68C", target: 5, reward: { currency: "dnaFragments", amount: 10 }, researchPoints: 100, event: "interaction_dispatched" },
-  { id: "weekly-salary", period: "weekly", title: "\uAE09\uC5EC 10\uD68C", target: 10, reward: { currency: "cheesecake", amount: 100 }, researchPoints: 50, event: "salary_given" },
-  { id: "weekly-harvest", period: "weekly", title: "\uBC1C\uAD74 \uC218\uD655 5\uD68C", target: 5, reward: { currency: "gems", amount: 30 }, researchPoints: 50, event: "excavation_harvested" }
-];
-for (const mission of MISSIONS) {
-  registerDataText(mission, "title", `mission.${mission.id}.title`);
-}
-var RESEARCH_REWARD_STAGES = {
-  daily: [
-    { id: "research-20", threshold: 20, rewards: [{ currency: "gold", amount: 1e4 }] },
-    { id: "research-40", threshold: 40, rewards: [{ currency: "cheesecake", amount: 30 }] },
-    { id: "research-60", threshold: 60, rewards: [{ currency: "gems", amount: 20 }] },
-    { id: "research-80", threshold: 80, rewards: [{ currency: "gems", amount: 30 }] },
-    { id: "research-100", threshold: 100, rewards: [{ currency: "fossil", amount: 1 }] }
-  ],
-  weekly: [
-    { id: "research-100", threshold: 100, rewards: [{ currency: "gold", amount: 5e4 }] },
-    { id: "research-200", threshold: 200, rewards: [{ currency: "cheesecake", amount: 150 }] },
-    { id: "research-300", threshold: 300, rewards: [{ currency: "gems", amount: 100 }] },
-    { id: "research-400", threshold: 400, rewards: [{ currency: "dnaFragments", amount: 20 }] },
-    { id: "research-500", threshold: 500, rewards: [{ currency: "fossil", amount: 5 }] }
-  ]
-};
-function maxResearchPoints(period) {
-  return RESEARCH_REWARD_STAGES[period].at(-1)?.threshold ?? 0;
-}
-function mergeMissionRewards(rewards) {
-  const merged = /* @__PURE__ */ new Map();
-  for (const { currency: currency3, amount } of rewards) if (amount > 0) merged.set(currency3, (merged.get(currency3) ?? 0) + amount);
-  return [...merged].map(([currency3, amount]) => ({ currency: currency3, amount }));
-}
-function researchStageClaimId(period, stageId) {
-  return `${period}:${stageId}`;
-}
-function missionPeriodKeys(now) {
-  const dailyKey = now.toISOString().slice(0, 10);
-  const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  const daysFromMonday = (monday.getUTCDay() + 6) % 7;
-  monday.setUTCDate(monday.getUTCDate() - daysFromMonday);
-  return { dailyKey, weeklyKey: monday.toISOString().slice(0, 10) };
-}
-function normalizeMissions(state, now) {
-  const researchPoints = state.researchPoints ?? { daily: 0, weekly: 0 };
-  const claimedResearchStageIds = state.claimedResearchStageIds ?? [];
-  const keys = missionPeriodKeys(now);
-  const dailyChanged = state.dailyKey !== keys.dailyKey;
-  const weeklyChanged = state.weeklyKey !== keys.weeklyKey;
-  if (!dailyChanged && !weeklyChanged) return { ...state, progress: { ...state.progress }, claimedIds: [...state.claimedIds], researchPoints: { ...researchPoints }, claimedResearchStageIds: [...claimedResearchStageIds] };
-  const resetIds = new Set(MISSIONS.filter((mission) => mission.period === "daily" ? dailyChanged : weeklyChanged).map((mission) => mission.id));
-  return {
-    ...keys,
-    ...state.lifetime ? { lifetime: { ...state.lifetime } } : {},
-    progress: Object.fromEntries(Object.entries(state.progress).filter(([id]) => !resetIds.has(id))),
-    claimedIds: state.claimedIds.filter((id) => !resetIds.has(id)),
-    researchPoints: {
-      daily: dailyChanged ? 0 : researchPoints.daily,
-      weekly: weeklyChanged ? 0 : researchPoints.weekly
-    },
-    claimedResearchStageIds: claimedResearchStageIds.filter((id) => !(dailyChanged && id.startsWith("daily:")) && !(weeklyChanged && id.startsWith("weekly:")))
-  };
-}
-var LIFETIME_COUNT_CAP = 1e9;
-function applyMissionEvent(state, event, now) {
-  const next = normalizeMissions(state, now);
-  if (event.type === "battle_completed" && !event.victory) return next;
-  const amount = "count" in event ? event.count : "amount" in event ? event.amount : 1;
-  if (amount <= 0) return next;
-  next.lifetime = { ...next.lifetime, [event.type]: Math.min(LIFETIME_COUNT_CAP, (next.lifetime?.[event.type] ?? 0) + amount) };
-  for (const mission of MISSIONS) {
-    if (mission.event !== event.type) continue;
-    next.progress[mission.id] = Math.min(mission.target, (next.progress[mission.id] ?? 0) + amount);
-  }
-  return next;
-}
-function claimResearchStages(state, period, stageIds) {
-  const stages = RESEARCH_REWARD_STAGES[period];
-  const requested = stageIds ?? stages.map(({ id }) => id);
-  const claimedStageIds = [...new Set(requested)].filter((id) => {
-    const stage = stages.find((candidate) => candidate.id === id);
-    return stage !== void 0 && state.researchPoints[period] >= stage.threshold && !state.claimedResearchStageIds.includes(researchStageClaimId(period, id));
-  });
-  const ids = claimedStageIds.map((id) => researchStageClaimId(period, id));
-  return {
-    state: { ...state, progress: { ...state.progress }, claimedIds: [...state.claimedIds], researchPoints: { ...state.researchPoints }, claimedResearchStageIds: [...state.claimedResearchStageIds, ...ids] },
-    claimedStageIds,
-    rewards: mergeMissionRewards(claimedStageIds.flatMap((id) => stages.find((stage) => stage.id === id)?.rewards ?? []))
-  };
-}
-function researchPointsForClaim(claimedMissionIds) {
-  const gained = { daily: 0, weekly: 0 };
-  for (const id of new Set(claimedMissionIds)) {
-    const mission = MISSIONS.find((candidate) => candidate.id === id);
-    if (mission) gained[mission.period] += mission.researchPoints;
-  }
-  return gained;
-}
-function addResearchPoints(state, gained) {
-  return {
-    ...state,
-    progress: { ...state.progress },
-    claimedIds: [...state.claimedIds],
-    claimedResearchStageIds: [...state.claimedResearchStageIds],
-    researchPoints: {
-      daily: Math.min(maxResearchPoints("daily"), state.researchPoints.daily + gained.daily),
-      weekly: Math.min(maxResearchPoints("weekly"), state.researchPoints.weekly + gained.weekly)
-    }
-  };
-}
-function claimableMissionIds(state) {
-  return MISSIONS.filter((mission) => (state.progress[mission.id] ?? 0) >= mission.target && !state.claimedIds.includes(mission.id)).map((mission) => mission.id);
-}
-
-// src/data/progressPasses.ts
-init_define_import_meta_env();
-
-// src/data/items.ts
-init_define_import_meta_env();
-var ITEMS = [
-  { id: "rune", name: "\uB8EC", description: "\uB810\uB9AD\uC758 \uD558\uD2B8 \uC82C \uC2AC\uB86F\uC5D0 \uC7A5\uCC29\uD558\uB294 \uAC1C\uBCC4 \uB8EC\uC785\uB2C8\uB2E4.", category: "rune", icon: { kind: "glyph", key: "heart" }, maxStack: 1, useEffect: { kind: "none" } },
-  { id: "fossil", name: "\uD654\uC11D", description: "\uC5F0\uAD6C\uC18C\uC758 \uCE90\uB9AD\uD130 \uD68D\uB4DD \uC5F0\uAD6C\uC5D0 \uC0AC\uC6A9\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "fossil" }, maxStack: 9999999, useEffect: { kind: "none" } },
-  { id: "amber", name: "\uD638\uBC15\uC11D", description: "\uD76C\uADC0 \uC5F0\uAD6C\uC5D0 \uC0AC\uC6A9\uD558\uB294 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "amber" }, maxStack: 999999, useEffect: { kind: "none" } },
-  { id: "gems", name: "\uBCF4\uC11D", description: "\uB3C4\uC2DC \uC804\uC5ED\uC5D0\uC11C \uD1B5\uC6A9\uB418\uB294 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "gems" }, maxStack: 9999999, useEffect: { kind: "none" } },
-  { id: "gold", name: "\uACE8\uB4DC", description: "\uB8EC \uC138\uACF5\uACFC \uC131\uC7A5\uC5D0 \uC0AC\uC6A9\uD558\uB294 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "gold" }, maxStack: 999999999, useEffect: { kind: "none" } },
-  { id: "stamina", name: "\uC2A4\uD14C\uBBF8\uB098", description: "\uD0D0\uC0AC\uC5D0 \uD544\uC694\uD55C \uD589\uB3D9\uB825\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "stamina" }, maxStack: 9999, useEffect: { kind: "none" } },
-  { id: "dnaFragments", name: "DNA \uB9C8\uC77C\uB9AC\uC9C0", description: "\uB9C8\uC77C\uB9AC\uC9C0 \uC0C1\uC810\uC5D0\uC11C \uC4F0\uB294 \uAD50\uD658 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "dnaFragments" }, maxStack: 99999, useEffect: { kind: "none" } },
-  { id: "cheesecake", name: "\uCE58\uC988\uCF00\uC774\uD06C", description: "\uB810\uB9AD\uC5D0\uAC8C \uAE09\uC5EC\uD574 \uC131\uC7A5\uC2DC\uD0B5\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "cheesecake" }, maxStack: 9999999, useEffect: { kind: "none" } },
-  { id: "rawStone", name: "\uC6D0\uC11D", description: "\uC9C0\uCE35 \uD0D0\uC0AC\uB85C \uCE90\uB0B8 \uBBF8\uAC00\uACF5 \uAD11\uBB3C\uC785\uB2C8\uB2E4. \uB8EC \uD2B9\uC131 \uC7AC\uD574\uC11D\uC5D0 \uC0AC\uC6A9\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "rawStone" }, maxStack: 9999999, useEffect: { kind: "none" } },
-  // 에너지 드링크는 **기본과 쎈 것 둘**이다. 회복량만 다른 같은 물건이라 한 칸에서 좌우로
-  // 갈아 끼우고(`StaminaPopup`), 그래서 둘의 이름도 같은 낱말에 표시만 다르게 붙인다.
-  { id: "stamina-tonic", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C", description: "\uC2A4\uD14C\uBBF8\uB098\uB97C 60 \uD68C\uBCF5\uD569\uB2C8\uB2E4.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic" }, maxStack: 999, expiresInDays: 7, useEffect: { kind: "restore_stamina", amount: 60 } },
-  { id: "stamina-tonic-large", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C+", description: "\uC2A4\uD14C\uBBF8\uB098\uB97C 120 \uD68C\uBCF5\uD569\uB2C8\uB2E4.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic-large" }, maxStack: 999, expiresInDays: 7, useEffect: { kind: "restore_stamina", amount: 120 } },
-  { id: "ancient-core", name: "\uBBF8\uC9C0\uC758 \uACE0\uB300 \uD575", description: "\uB8EC\uC5D0 \uD2B9\uC131 \uD55C \uC904\uC744 \uC0C8\uB85C \uBD80\uC5EC\uD569\uB2C8\uB2E4. \uC774\uBBF8 \uD2B9\uC131\uC774 \uC788\uC73C\uBA74 \uC9C0\uC6B0\uACE0 \uB2E4\uC2DC \uBD80\uC5EC\uD569\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-ancient-core" }, maxStack: 999, useEffect: { kind: "none" } },
-  { id: "refined-core", name: "\uC815\uC81C\uB41C \uACE0\uB300 \uD575", description: "\uC601\uC6C5 \uC774\uC0C1 \uB4F1\uAE09\uC758 \uD2B9\uC131\uC744 \uD655\uC815\uC73C\uB85C \uBD80\uC5EC\uD569\uB2C8\uB2E4. \uC774\uBBF8 \uC601\uC6C5 \uC774\uC0C1\uC778 \uD2B9\uC131\uC5D0\uB294 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-refined-core" }, maxStack: 999, useEffect: { kind: "none" } },
-  { id: "restoration-crystal", name: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815", description: "\uD2B9\uC131\uC758 \uC885\uB958\uB294 \uADF8\uB300\uB85C \uB450\uACE0 \uB4F1\uAE09\uC744 \uC804\uC124\uB85C \uD655\uC815 \uC0C1\uC2B9\uC2DC\uD0B5\uB2C8\uB2E4. \uC774\uBBF8 \uC804\uC124\uC778 \uD2B9\uC131\uC5D0\uB294 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-restoration-crystal" }, maxStack: 999, useEffect: { kind: "none" } },
-  // 레이드를 여는 두 토벌권. 소모하는 입장권이라 지갑이 아니라 가방의 재료다 — 상단 줄에 늘
-  // 서는 재화가 아니고, 레이드 목록 머리에서만 몇 장 남았는지 말한다.
-  { id: "raid-ticket", name: "\uD1A0\uBC8C\uAD8C", description: "\uCE5C\uAD6C\uC640 \uD568\uAED8 \uCE58\uB294 \uB808\uC774\uB4DC\uB97C \uC5FD\uB2C8\uB2E4. \uBCF4\uC2A4\uC640 \uB09C\uC774\uB3C4\uB294 \uBB34\uC791\uC704\uB85C \uC815\uD574\uC9D1\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-raid-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
-  { id: "raid-select-ticket", name: "\uC120\uD0DD \uD1A0\uBC8C\uAD8C", description: "\uCE5C\uAD6C\uC640 \uD568\uAED8 \uCE58\uB294 \uB808\uC774\uB4DC\uB97C \uC5FD\uB2C8\uB2E4. \uBCF4\uC2A4\uC640 \uB09C\uC774\uB3C4\uB97C \uACE8\uB77C\uC11C \uC5FD\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-raid-select-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
-  // 소탕 한 번에 한 장. 멤버십이 없을 때만 들고, 던전 입구에서 광고를 보면 다섯 장씩 채워진다.
-  // 고고학 지층 탐사 한 번. 시간이 채우는 횟수와 같은 몫이라 그림도 탐사 횟수 칸의 입장권 그대로다 —
-  // 그 칸의 그림을 누르면 이 안내창이 열린다(`guideForIcon`).
-  { id: "strata-ticket", name: "\uBC1C\uAD74\uAD8C", description: "\uACE0\uACE0\uD559 \uC720\uC801\uC744 \uC5EC\uB294 \uD69F\uC218\uC785\uB2C8\uB2E4. 3\uC2DC\uAC04\uB9C8\uB2E4 \uD558\uB098\uC529 3\uAC1C\uAE4C\uC9C0 \uCC28\uACE0, \uC0C1\uC810\xB7\uBCF4\uC0C1\uC73C\uB85C \uBC1B\uC740 \uAC83\uC740 3\uAC1C\uB97C \uB118\uACA8 \uC313\uC785\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-strata-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
-  // 결투장 도전 한 번. 하루 다섯 장이 채워지는 몫과 같은 것이라 결투장의 도전권 줄이 이 그림을 쓴다 —
-  // 그 줄의 그림을 누르면 이 안내창이 열린다. 전용 원화가 오기 전까지 입장권 그림을 빌려 쓴다.
-  { id: "duel-ticket", name: "\uACB0\uD22C \uB3C4\uC804\uAD8C", description: "\uACB0\uD22C\uC7A5\uC5D0\uC11C \uC0C1\uB300\uC5D0\uAC8C \uB3C4\uC804\uD560 \uB54C \uD55C \uC7A5 \uC501\uB2C8\uB2E4. \uB9E4\uC77C \uB2E4\uC12F \uC7A5\uC774 \uCC44\uC6CC\uC9D1\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-duel-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
-  { id: "sweep-ticket", name: "\uC18C\uD0D5\uAD8C", description: "\uC774\uBBF8 \uC774\uAE34 \uB358\uC804 \uB2E8\uACC4\uB97C \uC804\uD22C \uC5C6\uC774 \uD55C \uBC88 \uC18C\uD0D5\uD569\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-sweep-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
-  // 전리품 상점의 두 증표. 상한을 두지 않는 이유가 곧 지갑에 둔 이유다 — 가끔 들어가 터는
-  // 자리라 몇 주치가 쌓여도 버려지면 안 된다.
-  { id: "raidSigil", name: "\uD1A0\uBC8C \uC99D\uD45C", description: "\uB808\uC774\uB4DC \uBCF4\uC2A4\uB97C \uBC00\uC5B4\uB0B8 \uBAAB\uC73C\uB85C \uBC1B\uB294 \uC99D\uD45C\uC785\uB2C8\uB2E4. \uC804\uB9AC\uD488 \uC0C1\uC810\uC5D0\uC11C \uAD50\uD658\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "raidSigil" }, maxStack: 9999999, useEffect: { kind: "none" } },
-  { id: "salvageRecord", name: "\uC778\uC591 \uAE30\uB85D", description: "\uC218\uC7A5\uB41C \uC9C0\uBD80\uC5D0\uC11C \uAC74\uC838 \uC62C\uB9B0 \uAC83\uC744 \uC801\uC5B4 \uB454 \uAE30\uB85D\uC785\uB2C8\uB2E4. \uC804\uB9AC\uD488 \uC0C1\uC810\uC5D0\uC11C \uAD50\uD658\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "salvageRecord" }, maxStack: 9999999, useEffect: { kind: "none" } },
-  // 결투장의 전용 재화. 시즌마다 갈아엎지 않는 영구 재화라 증표들과 같이 지갑에 둔다.
-  { id: "duelEmblem", name: "\uD22C\uC0AC\uC758 \uD718\uC7A5", description: "\uACB0\uD22C\uC7A5\uC5D0\uC11C \uC2F8\uC6B4 \uBAAB\uC73C\uB85C \uBC1B\uB294 \uD718\uC7A5\uC785\uB2C8\uB2E4. \uACB0\uD22C \uC0C1\uC810\uC5D0\uC11C \uAD50\uD658\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "duelEmblem" }, maxStack: 9999999, useEffect: { kind: "none" } }
-];
-function findItem(id) {
-  return ITEMS.find((item3) => item3.id === id);
-}
-for (const item3 of ITEMS) {
-  registerDataText(item3, "name", `item.${item3.id}.name`);
-  registerDataText(item3, "description", `item.${item3.id}.description`);
-}
-
-// src/data/progressPasses.ts
-var currency = (key, amount) => ({ kind: "currency", currency: key, amount });
-var item = (itemId, amount) => ({
-  kind: "item",
-  itemId,
-  amount,
-  get name() {
-    return findItem(itemId)?.name ?? itemId;
-  }
-});
-var step = (threshold, free, ...rewards) => ({ threshold, free: [free], rewards });
-var PROGRESS_PASSES = [
-  {
-    // 스토리 클리어 수가 곧 관문 순서다(본편이 한 줄로 이어진다) — 화면은 문턱을 「1-1 클리어」처럼 관문 이름으로 읽는다.
-    id: "story",
-    productId: "premium-story-pass",
-    metric: "storyClears",
-    milestones: [
-      step(1, currency("gold", 5e3), currency("gold", 5e4), currency("gems", 100)),
-      step(2, currency("cheesecake", 40), currency("cheesecake", 300), currency("gems", 150)),
-      step(4, currency("gems", 30), currency("fossil", 1), currency("gems", 200)),
-      step(6, currency("gold", 1e4), item("stamina-tonic", 3), currency("gems", 200)),
-      step(8, item("stamina-tonic", 1), currency("amber", 1), currency("gems", 250)),
-      step(10, currency("gems", 50), currency("cheesecake", 500), currency("gems", 250)),
-      step(12, currency("cheesecake", 80), currency("gold", 1e5), currency("gems", 300)),
-      step(14, currency("gold", 15e3), currency("fossil", 1), currency("gems", 300)),
-      step(16, currency("fossil", 1), currency("dnaFragments", 20), currency("gems", 350)),
-      step(18, currency("gems", 60), currency("cheesecake", 600), currency("gems", 350)),
-      step(20, currency("cheesecake", 100), item("stamina-tonic-large", 2), currency("gems", 400)),
-      step(22, currency("gold", 2e4), item("stamina-tonic", 5), currency("gems", 400)),
-      step(24, currency("gems", 80), currency("amber", 1), currency("gems", 450)),
-      step(27, item("stamina-tonic", 1), currency("gold", 1e5), currency("gems", 500)),
-      step(30, currency("gems", 150), currency("fossil", 2), currency("gems", 1e3))
-    ]
-  },
-  {
-    id: "level",
-    productId: "premium-level-pass",
-    metric: "playerLevel",
-    milestones: [
-      step(3, currency("gold", 5e3), currency("cheesecake", 300), currency("gems", 100)),
-      step(5, currency("cheesecake", 40), currency("fossil", 1), currency("gems", 150)),
-      step(8, currency("gems", 30), currency("gold", 5e4), currency("gems", 200)),
-      step(10, currency("gold", 1e4), currency("amber", 1), currency("gems", 200)),
-      step(13, item("stamina-tonic", 1), item("stamina-tonic-large", 1), currency("gems", 250)),
-      step(15, currency("gems", 50), currency("cheesecake", 500), currency("gems", 250)),
-      step(18, currency("cheesecake", 80), currency("fossil", 1), currency("gems", 300)),
-      step(20, currency("gold", 15e3), currency("dnaFragments", 20), currency("gems", 300)),
-      step(25, currency("fossil", 1), item("stamina-tonic-large", 1), currency("gems", 350)),
-      step(30, currency("gems", 60), currency("gold", 1e5), currency("gems", 350)),
-      step(35, currency("cheesecake", 150), currency("amber", 1), currency("gems", 400)),
-      step(40, currency("gold", 25e3), currency("cheesecake", 600), currency("gems", 400)),
-      step(45, currency("gems", 80), item("stamina-tonic-large", 2), currency("gems", 450)),
-      step(50, item("stamina-tonic", 1), currency("fossil", 2), currency("gems", 500)),
-      step(60, currency("gems", 150), item("restoration-crystal", 1), currency("gems", 1e3))
-    ]
-  },
-  {
-    id: "raid",
-    productId: "premium-raid-pass",
-    metric: "raidRuns",
-    milestones: [
-      step(1, currency("gold", 5e3), item("raid-ticket", 2), currency("gems", 80)),
-      step(2, currency("raidSigil", 15), currency("raidSigil", 80), currency("gems", 150)),
-      step(3, currency("gems", 30), item("raid-select-ticket", 1), currency("gems", 200)),
-      step(5, item("raid-ticket", 1), currency("cheesecake", 300), currency("gems", 200)),
-      step(7, currency("gold", 1e4), item("raid-ticket", 2), currency("gems", 200)),
-      step(9, currency("raidSigil", 25), currency("fossil", 1), currency("gems", 200)),
-      step(12, currency("gems", 50), currency("raidSigil", 150), currency("gems", 250)),
-      step(15, currency("raidSigil", 30), item("raid-ticket", 2), currency("gems", 250)),
-      step(18, item("raid-ticket", 1), item("raid-select-ticket", 1), currency("gems", 300)),
-      step(21, currency("gold", 2e4), currency("amber", 1), currency("gems", 300)),
-      step(25, currency("gems", 60), currency("gold", 1e5), currency("gems", 350)),
-      step(30, currency("raidSigil", 40), currency("raidSigil", 200), currency("gems", 350)),
-      step(35, item("raid-ticket", 1), item("raid-ticket", 3), currency("gems", 400)),
-      step(40, currency("gold", 3e4), currency("fossil", 1), currency("gems", 400)),
-      step(50, currency("gems", 150), item("raid-select-ticket", 2), currency("gems", 800))
-    ]
-  },
-  {
-    // 임시 — 패스 탭 줄이 네 칸일 때 옆으로 흐르는 스크롤을 확인하려고 더한 항목이다. 진행도는 새로 세지 않고 연구원
-    // 레벨을 빌려 쓰며(저장 구조를 건드리지 않는다), 정식 고고학 패스가 정해지면 이 항목째 지우거나 바꾼다.
-    id: "archaeology",
-    productId: "premium-archaeology-pass",
-    metric: "playerLevel",
-    milestones: [
-      step(3, currency("gold", 5e3), item("strata-ticket", 2), currency("gems", 60)),
-      step(5, currency("cheesecake", 40), currency("fossil", 1), currency("gems", 90)),
-      step(8, currency("gems", 30), item("strata-ticket", 2), currency("gems", 150)),
-      step(10, currency("gold", 1e4), currency("amber", 1), currency("gems", 150)),
-      step(13, item("stamina-tonic", 1), item("strata-ticket", 2), currency("gems", 150)),
-      step(15, currency("gems", 50), currency("fossil", 2), currency("gems", 150)),
-      step(18, currency("cheesecake", 80), item("strata-ticket", 2), currency("gems", 200)),
-      step(20, currency("gold", 15e3), currency("amber", 1), currency("gems", 200)),
-      step(25, currency("fossil", 1), item("strata-ticket", 2), currency("gems", 250)),
-      step(30, currency("gems", 60), currency("fossil", 2), currency("gems", 250)),
-      step(35, currency("cheesecake", 150), currency("gold", 1e5), currency("gems", 250)),
-      step(40, currency("gold", 25e3), currency("amber", 1), currency("gems", 250)),
-      step(45, currency("gems", 80), currency("fossil", 2), currency("gems", 300)),
-      step(50, item("stamina-tonic", 1), currency("fossil", 3), currency("gems", 300)),
-      step(60, currency("gems", 150), currency("amber", 3), currency("gems", 600))
-    ]
-  }
-];
-function findProgressPass(id) {
-  return PROGRESS_PASSES.find((pass) => pass.id === id);
-}
-
-// src/core/progressPass.ts
-init_define_import_meta_env();
-function progressPassMilestoneStates(pass, progress, owned, claimed) {
-  const taken = new Set(claimed);
-  return pass.milestones.map(({ threshold }) => {
-    if (taken.has(threshold)) return "claimed";
-    if (progress < threshold) return "locked";
-    return owned ? "claimable" : "reached";
-  });
-}
-function claimableProgressPassThresholds(pass, progress, owned, claimed) {
-  const states = progressPassMilestoneStates(pass, progress, owned, claimed);
-  return pass.milestones.flatMap(({ threshold }, index) => states[index] === "claimable" ? [threshold] : []);
-}
-function progressPassGoal(pass) {
-  return pass.milestones[pass.milestones.length - 1]?.threshold ?? 0;
-}
-function progressPassFreeStates(pass, progress, claimed) {
-  const taken = new Set(claimed);
-  return pass.milestones.map(({ threshold }) => taken.has(threshold) ? "claimed" : progress >= threshold ? "claimable" : "locked");
-}
-function claimableProgressPassFreeThresholds(pass, progress, claimed) {
-  const states = progressPassFreeStates(pass, progress, claimed);
-  return pass.milestones.flatMap(({ threshold }, index) => states[index] === "claimable" ? [threshold] : []);
-}
-
-// src/core/stageRewards.ts
-init_define_import_meta_env();
-
-// src/data/rewardPriority.ts
-init_define_import_meta_env();
-var REWARD_PRIORITY = [
-  // 핵심 재화
-  "gems",
-  "fossil",
-  "amber",
-  "gold",
-  "cheesecake",
-  // 성장 재료
-  "restoration-crystal",
-  "refined-core",
-  "ancient-core",
-  // 행동력
-  "stamina-tonic-large",
-  "stamina-tonic",
-  "stamina",
-  // 입장권
-  "strata-ticket",
-  "sweep-ticket",
-  "duel-ticket",
-  "raid-select-ticket",
-  "raid-ticket",
-  // 보조 재화
-  "rawStone",
-  "dnaFragments",
-  // 콘텐츠 전리품 증표 — 쓰는 곳이 한정되어 후순위다
-  "duelEmblem",
-  "raidSigil",
-  "salvageRecord",
-  // 단품 — 파편·룬·장식은 재화가 아니라 한 점씩 받는 물건이라 가장 마지막이다
-  "relicFragment",
-  "rune",
-  "profileDecoration"
-];
-var RANK = new Map(REWARD_PRIORITY.map((key, index) => [key, index]));
-function rewardRank(key) {
-  return RANK.get(key) ?? REWARD_PRIORITY.length;
-}
-function sortByRewardPriority(list, keyOf) {
-  return list.map((entry, index) => ({ entry, index, rank: rewardRank(keyOf(entry)) })).sort((a, b) => a.rank - b.rank || a.index - b.index).map(({ entry }) => entry);
-}
-
-// src/core/stageRewards.ts
-function stageFirstClearRewards(stage) {
-  const rewards = [];
-  if (stage.rewards.firstClearCheesecake > 0) rewards.push({ kind: "currency", currency: "cheesecake", amount: stage.rewards.firstClearCheesecake });
-  for (const bonus of stage.rewards.firstClearBonus ?? []) {
-    if (bonus.kind === "rune" || bonus.amount > 0) rewards.push(bonus);
-  }
-  return sortByRewardPriority(rewards, (reward) => reward.kind === "rune" ? "rune" : reward.currency);
-}
-
-// src/data/contentCosts.ts
-init_define_import_meta_env();
-var CONTENT_STAMINA_COSTS = { normalStage: 6, dailyGrowth: 10, normalExpeditionStart: 12 };
-
-// src/state/session.ts
-init_define_import_meta_env();
-
-// src/core/serverJournal.ts
-init_define_import_meta_env();
-
-// src/core/expeditionSnapshot.ts
-init_define_import_meta_env();
-function captureExpeditionRelicSnapshot(def, progress, runeInventory, skinId) {
-  const runes = progress.heartGemSlots.flatMap((id) => {
-    const rune = id === null ? void 0 : runeInventory.find((candidate) => candidate.instanceId === id);
-    return rune ? [structuredClone(rune)] : [];
-  });
-  return {
-    level: progress.level,
-    breakthrough: progress.breakthrough,
-    bondLevel: progress.bondLevel,
-    stats: { ...calculateFinalStats(def.stats, progress, runes, def.rarity) },
-    runes,
-    skinId: skinId ?? null
-  };
-}
-function isExpeditionRelicSnapshot(value) {
-  if (!value || typeof value !== "object") return false;
-  const snapshot = value;
-  const whole2 = (n) => Number.isInteger(n) && n >= 0;
-  return whole2(snapshot.level) && snapshot.level >= 1 && whole2(snapshot.breakthrough) && whole2(snapshot.bondLevel) && !!snapshot.stats && typeof snapshot.stats === "object" && Object.values(snapshot.stats).every((stat) => Number.isFinite(stat)) && Array.isArray(snapshot.runes) && (snapshot.skinId === null || typeof snapshot.skinId === "string");
-}
-
-// src/core/serverJournal.ts
-var emptyServerJournal = () => ({ receipts: {}, raidAdmissions: {} });
-function isValidServerJournal(value) {
-  if (!value || typeof value !== "object") return false;
-  const journal = value;
-  const record2 = (v) => !!v && typeof v === "object" && !Array.isArray(v);
-  const json = (v) => v === null || typeof v === "string" || typeof v === "boolean" || typeof v === "number" && Number.isFinite(v) || (Array.isArray(v) ? v.every(json) : record2(v) && Object.values(v).every(json));
-  return (journal.subscriptionEntitlements === void 0 || record2(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record2(entry) && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt)) && (entry.expiresAt === null || Number.isFinite(Date.parse(entry.expiresAt))) && typeof entry.active === "boolean" && typeof entry.serverTime === "string")) && (journal.subscriptionBonusDates === void 0 || record2(journal.subscriptionBonusDates) && Object.values(journal.subscriptionBonusDates).every((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date))) && (journal.subscriptionMails === void 0 || record2(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record2(mail) && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string" && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0)) && record2(journal.receipts) && record2(journal.raidAdmissions) && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record2(receipt) && typeof receipt.identity === "string" && record2(receipt.result) && json(receipt.result)) && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record2(admission) && typeof admission.raidId === "string" && (admission.replayVersion === void 0 || admission.replayVersion === 2) && Number.isFinite(admission.seasonHp) && admission.seasonHp >= 0 && Number.isFinite(Date.parse(admission.expiresAt)) && Array.isArray(admission.relics) && admission.relics.length === 3 && admission.relics.every((relic) => typeof relic.relicId === "string" && isExpeditionRelicSnapshot(relic.snapshot)));
-}
-
-// src/core/tutorial.ts
-init_define_import_meta_env();
-var TUTORIAL_STEPS = [
-  /** 오프닝 1-1: 빛나는 궁극기 카드를 눌러 쓴다. 이 판은 다른 조작을 모두 막는다. */
-  "ultimate",
-  /** 다음 스토리 전투: 배속 칩이 열린다. */
-  "speed",
-  /** 그다음 전투: 자동 궁극기 칩이 열린다. */
-  "auto",
-  /** 그다음 전투: 궁극기 연출 스킵 칩이 열린다. */
-  "presentation",
-  /** 그다음 전투: 기여도 판이 열린다. */
-  "contribution",
-  /** 로비 → 도감 → 급여: 치즈케이크로 렐릭을 키운다. */
-  "feed",
-  /** 로비에서 뽑기 재료를 선물로 받는다(`TUTORIAL_REWARDS.gift`). */
-  "gift",
-  /** 연구소에서 첫 복원 연구를 직접 돌린다. */
-  "pull"
-];
-var CONTENT_INTRO_IDS = [
-  "stageMap",
-  "party",
-  "shop",
-  "cakeOperation",
-  "bounty",
-  "interaction",
-  "duel",
-  "friends",
-  "raid",
-  "expedition",
-  "archaeology",
-  "premium"
-];
-var INTRO_SET = new Set(CONTENT_INTRO_IDS);
-function isContentIntroId(value) {
-  return typeof value === "string" && INTRO_SET.has(value);
-}
-function isContentIntroSeen(state, id) {
-  return state.seenIntroIds?.includes(id) ?? false;
-}
-var TUTORIAL_REWARDS = {
-  // 첫 복원 연구(배너 `welcome`)는 10연 전용이고 화석 8개가 든다 — 정확히 한 번 돌릴 몫이다.
-  gift: { fossil: 8 }
-};
-function createEmptyTutorialState() {
-  return { completedStepIds: [] };
-}
-function createCompletedTutorialState() {
-  return { completedStepIds: [...TUTORIAL_STEPS], seenIntroIds: [...CONTENT_INTRO_IDS] };
-}
-var STEP_SET = new Set(TUTORIAL_STEPS);
-function isTutorialStepId(value) {
-  return typeof value === "string" && STEP_SET.has(value);
-}
-function normalizeTutorialState(value) {
-  const raw = value && typeof value === "object" ? value.completedStepIds : void 0;
-  const ids = Array.isArray(raw) ? raw : [];
-  const done = new Set(ids.filter(isTutorialStepId));
-  const completedStepIds = [];
-  for (const step2 of TUTORIAL_STEPS) {
-    if (!done.has(step2)) break;
-    completedStepIds.push(step2);
-  }
-  const rawIntros = value && typeof value === "object" ? value.seenIntroIds : void 0;
-  const seen = new Set(Array.isArray(rawIntros) ? rawIntros.filter(isContentIntroId) : []);
-  const seenIntroIds = CONTENT_INTRO_IDS.filter((id) => seen.has(id));
-  return seenIntroIds.length > 0 ? { completedStepIds, seenIntroIds } : { completedStepIds };
-}
-function isValidTutorialState(value) {
-  return !!value && typeof value === "object" && JSON.stringify(normalizeTutorialState(value)) === JSON.stringify(value);
-}
-function legacyTutorialState(clearedStageIds) {
-  if (clearedStageIds.some((id) => id !== "1-1")) return createCompletedTutorialState();
-  return clearedStageIds.includes("1-1") ? { completedStepIds: ["ultimate"] } : createEmptyTutorialState();
-}
-function isTutorialStepDone(state, step2) {
-  return state.completedStepIds.includes(step2);
-}
-function nextTutorialStep(state) {
-  return TUTORIAL_STEPS[state.completedStepIds.length];
-}
-function canCompleteTutorialStep(state, step2) {
-  return isTutorialStepDone(state, step2) || nextTutorialStep(state) === step2;
-}
-
-// src/core/achievementState.ts
-init_define_import_meta_env();
-
-// src/data/achievements.ts
-init_define_import_meta_env();
-var gems = (amount) => ({ currency: "gems", amount });
-var gold = (amount) => ({ currency: "gold", amount });
-var cheesecake = (amount) => ({ currency: "cheesecake", amount });
-var tiers = (targets, rewards) => targets.map((target, index) => ({ target, reward: rewards[index] ?? rewards.at(-1) }));
-var ACHIEVEMENT_SERIES = [
-  // ── 성장 ──
-  { id: "wealth", category: "growth", metric: "goldPeak", tiers: tiers([1e4, 1e5, 1e6, 1e7, 1e8], [gems(5), gems(10), gems(20), gems(40), gems(80)]), modifierId: "millionaire" },
-  { id: "nurture", category: "growth", metric: "maxRelicLevel", tiers: tiers([10, 20, 40, 60], [cheesecake(50), cheesecake(100), cheesecake(200), cheesecake(400)]) },
-  { id: "level-cap", category: "growth", metric: "relicsAtLevelCap", tiers: tiers([1, 3, 5, 10], [gems(10), gems(15), gems(20), gems(30)]) },
-  { id: "limit-break", category: "growth", metric: "relicsMaxBreakthrough", tiers: tiers([1, 3, 5, 10], [gems(20), gems(30), gems(40), gems(60)]), modifierId: "limit-breaker" },
-  { id: "bond", category: "growth", metric: "relicsMaxBond", tiers: tiers([1, 5, 10], [gems(20), gems(30), gems(50)]), modifierId: "kind-researcher" },
-  { id: "rune-artisan", category: "growth", metric: "runesEngraved", tiers: tiers([1, 5, 20, 50], [gold(1e4), gold(3e4), gold(6e4), gold(1e5)]) },
-  { id: "research-level", category: "growth", metric: "playerLevel", tiers: tiers([10, 20, 30, 40, 50, 60], [gems(10), gems(15), gems(20), gems(25), gems(30), gems(50)]), modifierId: "chief-researcher" },
-  // ── 전투 ──
-  { id: "victories", category: "battle", metric: "victories", tiers: tiers([10, 50, 200, 500, 1e3, 3e3], [gems(5), gems(10), gems(15), gems(20), gems(30), gems(50)]), modifierId: "veteran" },
-  { id: "frontline", category: "battle", metric: "storyStagesCleared", tiers: tiers([10, 20, 30], [gems(20), gems(30), gems(50)]), modifierId: "front-breaker" },
-  { id: "bounty-hunter", category: "battle", metric: "bountyTiersCleared", tiers: tiers([1, 2, 3, 4, 5], [gems(5), gems(10), gems(15), gems(20), gems(30)]) },
-  { id: "cake-operation", category: "battle", metric: "cakeTiersCleared", tiers: tiers([1, 3, 5, 8], [cheesecake(100), cheesecake(200), cheesecake(300), cheesecake(500)]) },
-  { id: "duelist", category: "battle", metric: "duelWins", tiers: tiers([1, 10, 50, 150, 300], [gems(5), gems(10), gems(20), gems(30), gems(50)]), modifierId: "arena-ruler" },
-  // 결투장 티어는 0(브론즈)부터 센다 — 실버(1)에서 시작해 챌린저(7)에서 끝난다.
-  { id: "duel-tier", category: "battle", metric: "duelTierReached", tiers: tiers([1, 2, 3, 4, 5, 6, 7], [gems(5), gems(5), gems(10), gems(10), gems(15), gems(20), gems(30)]), modifierId: "challenger" },
-  { id: "raider", category: "battle", metric: "raidRuns", tiers: tiers([1, 10, 50, 150], [gems(5), gems(15), gems(25), gems(40)]), modifierId: "raid-captain" },
-  { id: "salvager", category: "battle", metric: "expeditionBest", tiers: tiers([1e4, 3e4, 65e3, 11e4, 2e5], [gems(10), gems(15), gems(20), gems(30), gems(50)]), modifierId: "deep-salvager" },
-  // ── 탐사 ──
-  { id: "fossil-lab", category: "explore", metric: "researchPulls", tiers: tiers([10, 50, 100, 300, 1e3], [gems(5), gems(10), gems(15), gems(25), gems(40)]), modifierId: "fossil-appraiser" },
-  { id: "archaeologist", category: "explore", metric: "archaeologySitesCompleted", tiers: tiers([1, 3, 5, 8], [gems(10), gems(15), gems(20), gems(30)]), modifierId: "stratum-explorer" },
-  { id: "harvest", category: "explore", metric: "harvests", tiers: tiers([10, 50, 200, 500], [gold(1e4), gold(3e4), gold(6e4), gold(1e5)]) },
-  { id: "dispatch", category: "explore", metric: "dispatches", tiers: tiers([5, 30, 100, 300], [gems(5), gems(10), gems(20), gems(30)]), modifierId: "city-envoy" },
-  { id: "journals", category: "explore", metric: "journalsRead", tiers: tiers([1, 3, 5], [gold(1e4), gold(2e4), gold(4e4)]) },
-  { id: "storyteller", category: "explore", metric: "storiesRead", tiers: tiers([5, 15, 25], [gems(10), gems(20), gems(30)]), modifierId: "story-collector" },
-  { id: "interviewer", category: "explore", metric: "observationAnswers", tiers: tiers([5, 20, 50, 100], [gems(5), gems(10), gems(15), gems(20)]) },
-  { id: "chapter-reader", category: "explore", metric: "relicChaptersRead", tiers: tiers([1, 5, 15, 30], [gems(5), gems(10), gems(15), gems(20)]) },
-  // ── 수집 ──
-  { id: "collector", category: "collection", metric: "relicsOwned", tiers: tiers([5, 10, 15, 20], [gems(10), gems(15), gems(20), gems(30)]), modifierId: "specimen-curator" },
-  { id: "ssr-collector", category: "collection", metric: "ssrOwned", tiers: tiers([1, 3, 6, 9, 12], [gems(10), gems(15), gems(20), gems(30), gems(40)]) },
-  { id: "rune-hoarder", category: "collection", metric: "runesOwned", tiers: tiers([10, 50, 150], [gold(1e4), gold(3e4), gold(6e4)]) },
-  { id: "legendary-runes", category: "collection", metric: "legendaryRunes", tiers: tiers([1, 5, 10], [gems(10), gems(20), gems(30)]) },
-  { id: "modifiers", category: "collection", metric: "modifiersEarned", tiers: tiers([3, 8, 15], [gems(10), gems(20), gems(30)]) },
-  // ── 일상 ──
-  { id: "feeding", category: "daily", metric: "feedings", tiers: tiers([10, 100, 500, 2e3], [gems(5), gems(10), gems(20), gems(30)]), modifierId: "cheesecake-artisan" },
-  { id: "stamina", category: "daily", metric: "staminaSpent", tiers: tiers([1e3, 1e4, 5e4, 2e5], [gems(5), gems(15), gems(30), gems(50)]), modifierId: "tireless" },
-  { id: "diligence", category: "daily", metric: "dailyMissionsClaimed", tiers: tiers([20, 100, 500, 2e3], [gems(10), gems(20), gems(30), gems(50)]), modifierId: "diligent-researcher" },
-  { id: "greetings", category: "daily", metric: "lobbyGreetings", tiers: tiers([10, 50, 200, 500], [gold(1e4), gold(3e4), gold(5e4), gold(1e5)]) },
-  // ── 기록 — 단계 없이 한 번 밟으면 끝난다 ──
-  { id: "codex-complete", category: "feat", metric: "codexComplete", tiers: tiers([1], [gems(50)]), modifierId: "walking-codex" },
-  { id: "all-elements", category: "feat", metric: "elementsOwned", tiers: tiers([5], [gems(20)]) },
-  { id: "all-squads", category: "feat", metric: "squadsOwned", tiers: tiers([5], [gems(20)]) },
-  { id: "perfect-relic", category: "feat", metric: "perfectRelics", tiers: tiers([1], [gems(30)]) },
-  { id: "rune-set", category: "feat", metric: "fullyRunedRelics", tiers: tiers([1], [gold(3e4)]) },
-  { id: "named", category: "feat", metric: "nicknameSet", tiers: tiers([1], [gold(1e4)]) },
-  // 숨은 편성 장난 — 신규 계정의 기본 편성(같은 스쿼드 · 속성 셋)으로는 밟지 못하는 것만 둔다.
-  { id: "mono-element-party", category: "feat", metric: "partySameElement", tiers: tiers([1], [gems(10)]), hidden: true },
-  { id: "allied-party", category: "feat", metric: "partySquads", tiers: tiers([3], [gems(10)]), hidden: true },
-  { id: "ssr-party", category: "feat", metric: "partySsr", tiers: tiers([3], [gems(10)]), hidden: true }
-];
-
-// src/core/achievementState.ts
-function createEmptyAchievementState() {
-  return { claimed: {}, goldPeak: 0 };
-}
-var whole = (value) => Number.isInteger(value) && value >= 0 ? value : 0;
-function normalizeAchievementState(value) {
-  const source = value && typeof value === "object" ? value : {};
-  const claimedSource = source.claimed && typeof source.claimed === "object" ? source.claimed : {};
-  const claimed = {};
-  for (const series of ACHIEVEMENT_SERIES) {
-    const count2 = Math.min(series.tiers.length, whole(claimedSource[series.id]));
-    if (count2 > 0) claimed[series.id] = count2;
-  }
-  return { claimed, goldPeak: Math.min(LIFETIME_COUNT_CAP, whole(source.goldPeak)) };
-}
-function isValidAchievementState(value) {
-  if (!value || typeof value !== "object") return false;
-  const state = value;
-  if (!Number.isInteger(state.goldPeak) || state.goldPeak < 0) return false;
-  if (!state.claimed || typeof state.claimed !== "object") return false;
-  return Object.entries(state.claimed).every(([id, count2]) => {
-    const series = ACHIEVEMENT_SERIES.find((candidate) => candidate.id === id);
-    return series !== void 0 && Number.isInteger(count2) && count2 >= 0 && count2 <= series.tiers.length;
-  });
-}
-
-// src/core/playerLevel.ts
-init_define_import_meta_env();
-var PLAYER_LEVEL_CAP = 60;
-var PLAYER_LEVEL_UP_REWARD = { itemId: "stamina-tonic", quantity: 1, expiresInDays: 7 };
-var PLAYER_EXP_PER_STAMINA = 1;
-var EARLY_EXP_TO_NEXT = [18, 36, 60, 85];
-function playerExpToNext(level) {
-  const early = EARLY_EXP_TO_NEXT[Math.floor(level) - 1];
-  if (early !== void 0) return early;
-  const k = Math.max(0, Math.min(PLAYER_LEVEL_CAP, Math.floor(level)) - 1);
-  return Math.round(50 + 15 * k + 0.9 * k * k);
-}
-function normalizePlayerLevel(progress) {
-  const level = Math.max(1, Math.min(PLAYER_LEVEL_CAP, Math.floor(Number(progress?.level) || 1)));
-  const experienceToNext = playerExpToNext(level);
-  const raw = Math.max(0, Math.floor(Number(progress?.experience) || 0));
-  return { level, experience: level >= PLAYER_LEVEL_CAP ? 0 : Math.min(raw, experienceToNext - 1), experienceToNext };
-}
-function grantPlayerExperience(progress, amount) {
-  const start = normalizePlayerLevel(progress);
-  const gain = Math.max(0, Math.floor(Number.isFinite(amount) ? amount : 0));
-  let { level, experience } = start;
-  if (level >= PLAYER_LEVEL_CAP || gain === 0) return { progress: start, levelsGained: 0, granted: 0 };
-  experience += gain;
-  while (level < PLAYER_LEVEL_CAP && experience >= playerExpToNext(level)) {
-    experience -= playerExpToNext(level);
-    level += 1;
-  }
-  if (level >= PLAYER_LEVEL_CAP) experience = 0;
-  return { progress: { level, experience, experienceToNext: playerExpToNext(level) }, levelsGained: level - start.level, granted: gain };
-}
-function playerExpForStamina(stamina) {
-  return Math.max(0, Math.floor(stamina)) * PLAYER_EXP_PER_STAMINA;
-}
-
-// src/core/itemLots.ts
-init_define_import_meta_env();
-function repairLegacyLotStacks(inventory) {
-  const groups = /* @__PURE__ */ new Map();
-  for (const stack of inventory) groups.set(stack.itemId, [...groups.get(stack.itemId) ?? [], stack]);
-  return [...groups.values()].flatMap((group) => {
-    const first = group[0];
-    const lots = first.lots;
-    if (group.length > 1 && lots?.length && group.every((stack) => JSON.stringify(stack.lots) === JSON.stringify(lots)) && group.reduce((sum, stack) => sum + stack.quantity, 0) === lots.reduce((sum, lot) => sum + lot.quantity, 0)) {
-      return [{ ...first, quantity: lots.reduce((sum, lot) => sum + lot.quantity, 0), lots: lots.map((lot) => ({ ...lot })) }];
-    }
-    return group.map((stack) => ({ ...stack, ...stack.lots ? { lots: stack.lots.map((lot) => ({ ...lot })) } : {} }));
-  });
-}
-var DAY_MS = 864e5;
-var ITEM_EXPIRY_DAYS = { min: 1, max: 7 };
-function clampExpiryDays(days) {
-  return Math.max(ITEM_EXPIRY_DAYS.min, Math.min(ITEM_EXPIRY_DAYS.max, Math.floor(days)));
-}
-function lotExpiresAt(now, days) {
-  return new Date(now.getTime() + clampExpiryDays(days) * DAY_MS).toISOString();
-}
-function normalizeLots(lots) {
-  return lots.filter((lot) => lot.quantity > 0).map((lot) => ({ ...lot })).sort((a, b) => Date.parse(a.expiresAt) - Date.parse(b.expiresAt));
-}
-function addItemLot(inventory, itemId, quantity, options) {
-  const next = inventory.map((stack2) => ({ ...stack2, ...stack2.lots ? { lots: stack2.lots.map((lot2) => ({ ...lot2 })) } : {} }));
-  const stack = next.find((entry) => entry.itemId === itemId);
-  const held = stack?.quantity ?? 0;
-  const added = Math.max(0, Math.min(options.cap, held + Math.floor(quantity)) - held);
-  if (added <= 0) return { inventory: next, added: 0 };
-  const lot = options.expiryDays !== void 0 ? { quantity: added, expiresAt: lotExpiresAt(options.now, options.expiryDays) } : void 0;
-  if (stack) {
-    stack.quantity += added;
-    if (lot) stack.lots = normalizeLots([...stack.lots ?? [], lot]);
-  } else {
-    next.push({ itemId, quantity: added, ...lot ? { lots: [lot] } : {} });
-  }
-  return { inventory: next, added };
-}
-function removeItemLot(inventory, itemId, quantity) {
-  const count2 = Math.floor(quantity);
-  const stack = inventory.find((entry) => entry.itemId === itemId);
-  if (!stack || count2 <= 0 || stack.quantity < count2) return count2 <= 0 ? inventory.map((entry) => ({ ...entry })) : void 0;
-  return inventory.flatMap((entry) => {
-    if (entry.itemId !== itemId) return [{ ...entry }];
-    const left = entry.quantity - count2;
-    if (left <= 0) return [];
-    if (!entry.lots) return [{ ...entry, quantity: left }];
-    let owed = count2;
-    const lots = normalizeLots(entry.lots).map((lot) => {
-      const take = Math.min(owed, lot.quantity);
-      owed -= take;
-      return { ...lot, quantity: lot.quantity - take };
-    });
-    return [{ ...entry, quantity: left, lots: normalizeLots(lots) }];
-  });
-}
-function removeItemLotAt(inventory, itemId, quantity, expiresAt) {
-  const count2 = Math.floor(quantity);
-  const stack = inventory.find((entry) => entry.itemId === itemId);
-  const target = stack?.lots?.find((lot) => lot.expiresAt === expiresAt);
-  if (!stack || !target || count2 <= 0 || target.quantity < count2) return void 0;
-  return inventory.flatMap((entry) => {
-    if (entry.itemId !== itemId) return [{ ...entry }];
-    const left = entry.quantity - count2;
-    if (left <= 0) return [];
-    const lots = normalizeLots(entry.lots.map((lot) => lot.expiresAt === expiresAt ? { ...lot, quantity: lot.quantity - count2 } : lot));
-    return [{ ...entry, quantity: left, lots }];
-  });
-}
-function purgeExpiredLots(inventory, now) {
-  let expired = 0;
-  const nowMs = now.getTime();
-  const next = inventory.flatMap((entry) => {
-    if (!entry.lots) return [{ ...entry }];
-    const alive = normalizeLots(entry.lots.filter((lot) => {
-      const dead = Date.parse(lot.expiresAt) <= nowMs;
-      if (dead) expired += lot.quantity;
-      return !dead;
-    }));
-    const quantity = alive.reduce((sum, lot) => sum + lot.quantity, 0);
-    return quantity > 0 ? [{ ...entry, quantity, lots: alive }] : [];
-  });
-  return { inventory: next, expired };
-}
-function isValidLotStack(stack) {
-  if (stack.lots === void 0) return true;
-  if (!Array.isArray(stack.lots) || stack.lots.length === 0) return false;
-  return stack.lots.every((lot) => Number.isInteger(lot.quantity) && lot.quantity > 0 && Number.isFinite(Date.parse(lot.expiresAt))) && stack.lots.reduce((sum, lot) => sum + lot.quantity, 0) === stack.quantity;
 }
 
 // src/core/stageProgress.ts
@@ -18666,308 +18873,64 @@ function duelAttemptsLeft(state) {
   return Math.max(0, DUEL_DAILY_ATTEMPTS + state.attemptsPurchased + state.attemptsFromAds - state.attemptsUsed);
 }
 
+// src/core/playerCard.ts
+init_define_import_meta_env();
+var NICKNAME_MIN_LENGTH = 2;
+var NICKNAME_MAX_LENGTH = 12;
+var BIO_MAX_LENGTH = 40;
+var PLAYER_UID_LENGTH = 9;
+var glyphs = (value) => Array.from(value);
+var CONTROL = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/u;
+function cleanNickname(value) {
+  return value.replace(/\s+/gu, " ").trim();
+}
+function nicknameProblem(value) {
+  const cleaned = cleanNickname(value);
+  if (CONTROL.test(cleaned)) return "invalidCharacter";
+  const length = glyphs(cleaned).length;
+  if (length < NICKNAME_MIN_LENGTH) return "tooShort";
+  if (length > NICKNAME_MAX_LENGTH) return "tooLong";
+  return void 0;
+}
+function cleanBio(value) {
+  const flat = value.replace(/[\r\n\u2028\u2029]+/gu, " ").replace(CONTROL, "").replace(/\s+/gu, " ").trim();
+  return glyphs(flat).slice(0, BIO_MAX_LENGTH).join("");
+}
+function isPlayerUid(value) {
+  return new RegExp(`^[1-9][0-9]{${PLAYER_UID_LENGTH - 1}}$`).test(value);
+}
+function createPlayerUid(random) {
+  let uid = String(1 + Math.floor(random() * 9));
+  while (uid.length < PLAYER_UID_LENGTH) uid += String(Math.floor(random() * 10) % 10);
+  return uid;
+}
+var NICKNAME_CHANGE_COOLDOWN_MS = 7 * 864e5;
+function nicknameLockedUntil(card, now) {
+  if (card.nickname === "") return void 0;
+  const changed = Date.parse(card.nicknameChangedAt);
+  if (!Number.isFinite(changed)) return void 0;
+  const until = changed + NICKNAME_CHANGE_COOLDOWN_MS;
+  return until > now.getTime() ? new Date(until) : void 0;
+}
+function normalizePlayerCard(value) {
+  const raw = value && typeof value === "object" ? value : {};
+  const nickname = typeof raw.nickname === "string" && raw.nickname !== "" && nicknameProblem(raw.nickname) === void 0 ? cleanNickname(raw.nickname) : "";
+  return {
+    uid: typeof raw.uid === "string" && isPlayerUid(raw.uid) ? raw.uid : "",
+    nickname,
+    bio: typeof raw.bio === "string" ? cleanBio(raw.bio) : "",
+    frameId: typeof raw.frameId === "string" && findProfileFrame(raw.frameId) ? raw.frameId : DEFAULT_PROFILE_FRAME_ID,
+    avatarRelicId: typeof raw.avatarRelicId === "string" && RELICS.some(({ id }) => id === raw.avatarRelicId) ? raw.avatarRelicId : "",
+    createdAt: typeof raw.createdAt === "string" && Number.isFinite(Date.parse(raw.createdAt)) ? raw.createdAt : "",
+    nicknameChangedAt: typeof raw.nicknameChangedAt === "string" && Number.isFinite(Date.parse(raw.nicknameChangedAt)) ? raw.nicknameChangedAt : ""
+  };
+}
+
 // src/core/expeditionPeriods.ts
 init_define_import_meta_env();
 
 // src/core/expeditionBoss.ts
 init_define_import_meta_env();
-
-// src/core/raid.ts
-init_define_import_meta_env();
-var RAID_BOSS_ROLE = "boss";
-function raidSeasonKey(now) {
-  return now.toISOString().slice(0, 10);
-}
-function raidWorldBossId(dayKey) {
-  const day = Math.floor(Date.parse(`${dayKey}T00:00:00.000Z`) / 864e5);
-  return RAID_BOSS_POOL[(day % RAID_BOSS_POOL.length + RAID_BOSS_POOL.length) % RAID_BOSS_POOL.length];
-}
-function rollRaidSummon(bossRoll, difficultyRoll) {
-  const pick2 = (list, roll3) => list[Math.min(list.length - 1, Math.max(0, Math.floor(roll3 * list.length)))];
-  return { bossRelicId: pick2(RAID_BOSS_POOL, bossRoll), difficulty: pick2(RAID_SUMMON_DIFFICULTIES, difficultyRoll) };
-}
-function raidSeasonProgress(dealtDamage, totalHp = RAID_SEASON_TOTAL_HP) {
-  const total = Math.max(0, Math.floor(totalHp));
-  const dealt = Math.min(total, Math.max(0, Math.floor(dealtDamage)));
-  const remainingHp = Math.max(0, total - dealt);
-  return { totalHp: total, dealtDamage: dealt, remainingHp, remainingRatio: total > 0 ? remainingHp / total : 0, defeated: total > 0 && dealt >= total };
-}
-function raidContributionBoard(entries, limit = 100) {
-  return [...entries].filter(({ damage }) => Number.isFinite(damage) && damage > 0).sort((a, b) => b.damage - a.damage || a.playerId.localeCompare(b.playerId)).slice(0, Math.max(0, limit)).map((entry, index) => ({
-    rank: index + 1,
-    playerId: entry.playerId,
-    displayName: entry.displayName,
-    damage: Math.floor(entry.damage),
-    isMe: entry.isMe === true,
-    favoriteRelicId: entry.favoriteRelicId
-  }));
-}
-function seedHash(seed) {
-  let hash = 2166136261;
-  for (let index = 0; index < seed.length; index += 1) {
-    hash ^= seed.charCodeAt(index);
-    hash = Math.imul(hash, 16777619);
-  }
-  return (hash >>> 0) / 4294967296;
-}
-function mockRaidContributions(dayKey, dayProgress, twoRunBase = 3e4) {
-  if (!QA_TOOLS_ENABLED) return [];
-  const played = Math.min(1, Math.max(0.15, dayProgress / 0.7));
-  return RAID_MOCK_PARTICIPANTS.map(({ id, displayName, favoriteRelicId, pace }) => {
-    const jitter = 0.78 + seedHash(`${dayKey}:${id}`) * 0.44;
-    return { playerId: id, displayName, favoriteRelicId, damage: Math.floor(twoRunBase * pace * jitter * played) };
-  });
-}
-function mockRaidWorldDamage(dayKey, dayProgress, totalHp = RAID_SEASON_TOTAL_HP) {
-  if (!QA_TOOLS_ENABLED) return 0;
-  const reach = 0.55 + seedHash(`${dayKey}:world`) * 0.55;
-  const curve = 1 - (1 - Math.min(1, Math.max(0, dayProgress))) ** 2;
-  return Math.floor(totalHp * reach * curve);
-}
-function raidBossGrowth(difficulty) {
-  const level = RAID_DIFFICULTY[difficulty].level;
-  return { level, breakthrough: requiredBreakthroughForLevel(level) };
-}
-function raidBossScaledStats(base, difficulty) {
-  return applyEncounterScaling(base.stats, raidBossGrowth(difficulty).level, RAID_BOSS_ROLE);
-}
-function raidBossPercentHpBasis(base, difficulty = "rampage") {
-  return Math.max(1, Math.round(raidBossScaledStats(base, difficulty).hp));
-}
-function raidBossDef(base, difficulty = "rampage") {
-  const scaled = raidBossScaledStats(base, difficulty);
-  return { ...base, encounterRole: RAID_BOSS_ROLE, stats: { ...scaled, hp: RAID_DIFFICULTY[difficulty].bodyHp } };
-}
-function mockSummonRaidDamage(raidId, elapsedRatio, totalHp) {
-  if (!QA_TOOLS_ENABLED) return 0;
-  const reach = 0.6 + seedHash(`${raidId}:reach`) * 0.7;
-  const curve = 1 - (1 - Math.min(1, Math.max(0, elapsedRatio))) ** 2;
-  return Math.floor(totalHp * reach * curve);
-}
-function mockFriendRaids(dayKey) {
-  const start = Date.parse(`${dayKey}T00:00:00.000Z`);
-  return PREVIEW_FRIENDS.map((friend, index) => {
-    const pick2 = seedHash(`${dayKey}:${friend.id}:raid`);
-    const difficulty = RAID_SUMMON_DIFFICULTIES[Math.floor(pick2 * RAID_SUMMON_DIFFICULTIES.length) % RAID_SUMMON_DIFFICULTIES.length];
-    const bossRelicId = RAID_BOSS_POOL[Math.floor(seedHash(`${dayKey}:${friend.id}:boss`) * RAID_BOSS_POOL.length) % RAID_BOSS_POOL.length];
-    return {
-      id: `friend-${friend.id}-${dayKey}`,
-      friendId: friend.id,
-      friendName: friend.displayName,
-      bossRelicId,
-      difficulty,
-      openedAt: new Date(start + (2 + index * 5) * 36e5).toISOString()
-    };
-  });
-}
-function mockSummonContributions(raidId, othersDamage) {
-  const weights = PREVIEW_FRIENDS.map((friend) => 0.5 + seedHash(`${raidId}:${friend.id}`));
-  const sum = weights.reduce((total, weight) => total + weight, 0);
-  return PREVIEW_FRIENDS.map((friend, index) => ({
-    playerId: friend.id,
-    displayName: friend.displayName,
-    favoriteRelicId: friend.favoriteRelic?.relicId,
-    damage: Math.floor(othersDamage * weights[index] / sum)
-  }));
-}
-function raidSettlement(difficulty, myDamage, dealtRatio, defeated) {
-  if (!(myDamage > 0)) return void 0;
-  const spec = RAID_DIFFICULTY[difficulty].settlement;
-  const mine = Math.round(spec.mine * Math.min(1, myDamage / spec.mineTarget));
-  const total = Math.round(spec.total * Math.min(1, Math.max(0, dealtRatio)));
-  return { raidSigil: Math.max(1, mine + total + (defeated ? spec.kill : 0)) };
-}
-function raidRunGold(runDamage, goldPerDamage) {
-  return Math.max(0, Math.floor(runDamage * goldPerDamage));
-}
-var RAID_HISTORY_PREVIEW_PREFIX = "preview-done-";
-function previewCompletedRaids(now) {
-  const hours = (value) => new Date(now.getTime() - value * 36e5).toISOString();
-  const friend = (index) => PREVIEW_FRIENDS[index % PREVIEW_FRIENDS.length]?.displayName;
-  return [
-    {
-      id: `${RAID_HISTORY_PREVIEW_PREFIX}slain-1`,
-      kind: "summon",
-      bossRelicId: "sukusuino",
-      difficulty: "hard",
-      openedAt: hours(27),
-      endsAt: hours(3),
-      summonedByMe: true,
-      myDamage: 26400,
-      attemptsUsed: 2,
-      settled: false
-    },
-    {
-      id: `${RAID_HISTORY_PREVIEW_PREFIX}expired-2`,
-      kind: "summon",
-      bossRelicId: "taboa",
-      difficulty: "normal",
-      openedAt: hours(34),
-      endsAt: hours(10),
-      summonerName: friend(0),
-      summonedByMe: false,
-      myDamage: 8700,
-      attemptsUsed: 1,
-      settled: false
-    },
-    {
-      id: `${RAID_HISTORY_PREVIEW_PREFIX}world`,
-      kind: "world",
-      bossRelicId: RAID_BOSS_POOL[0],
-      difficulty: "rampage",
-      openedAt: hours(30),
-      endsAt: hours(6),
-      summonedByMe: false,
-      myDamage: 41500,
-      attemptsUsed: 2,
-      settled: false
-    },
-    {
-      id: `${RAID_HISTORY_PREVIEW_PREFIX}settled`,
-      kind: "summon",
-      bossRelicId: "taboa",
-      difficulty: "easy",
-      openedAt: hours(40),
-      endsAt: hours(16),
-      summonerName: friend(1),
-      summonedByMe: false,
-      myDamage: 12e3,
-      attemptsUsed: 2,
-      settled: true
-    }
-  ];
-}
-
-// src/data/expedition.ts
-init_define_import_meta_env();
-var EXPEDITION_MAP_BALANCE = {
-  /** 시작과 보스 사이의 층 수 및 각 층의 가로 노드 범위다. */
-  routeFloors: 19,
-  bossFloor: 20,
-  columns: 5,
-  nodesPerFloor: { min: 2, max: 4 },
-  /** 가중치는 상대값이며 생성기가 합계를 직접 가정하지 않는다. */
-  typeWeights: {
-    normal: 48,
-    elite: 12,
-    horde: 14,
-    rest: 14,
-    treasure: 12
-  },
-  /** 같은 종류와 비전투 노드가 한 세로 흐름에 지나치게 몰리지 않게 하는 상한이다. */
-  maxConsecutiveSameType: 2,
-  maxConsecutiveNonCombat: 1,
-  /** 이 층은 모든 갈래를 전투로 만들어 어느 경로든 최소 전투 수를 만족시킨다. */
-  requiredCombatFloors: [1, 4, 7, 10, 13, 16, 19],
-  minimumCombatsPerRoute: 7
-};
-var EXPEDITION_COMBAT_TYPES = ["normal", "elite", "horde"];
-var EXPEDITION_SCORE_BALANCE = {
-  /** 노드 한 층당 기본 점수. */
-  perFloor: 40,
-  /** 원정대 평균 잔여 HP 1%당 점수. */
-  perRemainingHpPercent: 1.5,
-  /** 폰토스에게 넣은 피해 1점이 점수판에서 갖는 값. */
-  bossDamagePerPoint: 200
-};
-var EXPEDITION_NODE_SCORE_MULTIPLIERS = {
-  /** 표준 교전은 층과 잔여 HP의 기준 가치를 그대로 사용한다. */
-  normal: 1,
-  /** 단일 강적의 높은 실패 위험을 표준 교전보다 50% 높게 보상한다. */
-  elite: 1.5,
-  /** 다수전의 추가 부담은 정예보다 낮은 25% 가산으로 보상한다. */
-  horde: 1.25,
-  /** 휴식은 전투 성과가 아니므로 점수를 만들지 않는다. */
-  rest: 0,
-  /** 보물의 가치는 전리품에만 있으며 RNG 결과를 점수로 환산하지 않는다. */
-  treasure: 0,
-  /** 보스 점수는 별도의 서버 검증 피해 점수가 소유한다. */
-  boss: 0
-};
-var EXPEDITION_REST_RULES = { healPercent: 30, revivePercent: 25, maxRevives: 1, cannotReviveAfterWipe: true };
-var EXPEDITION_NON_COMBAT_TYPES = ["rest", "treasure"];
-var EXPEDITION_AUGMENT_IDS = EXPEDITION_AUGMENTS.map(({ id }) => id);
-var EXPEDITION_REWARD_IDS = ["gold", "fossil", "amber", "gems", "cheesecake", "salvageRecord"];
-var EXPEDITION_NODE_REWARD_BALANCE = {
-  cheesecake: { perNode: { min: 4, max: 12 }, runCap: 180 },
-  gold: { perNode: { min: 120, max: 420 }, runCap: 7500 },
-  fossil: { perNode: { min: 0, max: 1 }, runCap: 1 },
-  gems: { perNode: { min: 0, max: 2 }, runCap: 24 },
-  /**
-   * 인양 기록 — 노드를 넘을 때마다 **소소하게** 쌓인다. 전리품 상점의 재화라 한 판에 몇 개라도 손에
-   * 쥐어져야 원정을 돌 이유가 상점까지 이어진다. 큰 몫은 폰토스 피해와 주간 보상이 맡는다.
-   */
-  salvageRecord: { perNode: { min: 2, max: 5 }, runCap: 90 }
-};
-var EXPEDITION_BOSS_SALVAGE = { perScore: 1 / 500, cap: 200 };
-function expeditionBossSalvage(bossDamageScore) {
-  return Math.max(0, Math.min(EXPEDITION_BOSS_SALVAGE.cap, Math.floor(Math.max(0, bossDamageScore) * EXPEDITION_BOSS_SALVAGE.perScore)));
-}
-var EXPEDITION_COMBAT_REWARD_MULTIPLIERS = {
-  normal: 1,
-  elite: 1.75,
-  horde: 1.4
-};
-var EXPEDITION_TREASURE_REWARD_BALANCE = {
-  gold: { min: 520, max: 900 },
-  fossil: { min: 1, max: 1 },
-  gems: { min: 3, max: 5 },
-  salvageRecord: { min: 6, max: 10 }
-};
-var QUICK_EXPEDITION_POLICY = { scoreRatio: 0.25, dailyLimitUtc: 2, weeklyLimitUtc: 5 };
-var EXPEDITION_BOSS_BALANCE = {
-  /** 서버 검증이 허용하는 전투 길이와 입력량 상한이다. */
-  maximumDurationMs: (deathClockClosesBySeconds() + BOSS_REPLAY_SLACK_SECONDS) * 1e3,
-  maximumActions: 2e3,
-  maximumAcceptedScore: 1e8,
-  /** 단계는 이름표다. 공격은 폰토스 정적 스킬이, 끝은 데스 카운트가 맡는다. */
-  phases: [
-    { startsAtMs: 0, attackPerSecond: 0, label: "\uAD00\uCE21" },
-    { startsAtMs: 3e4, attackPerSecond: 0, label: "\uACFC\uBD80\uD558" },
-    { startsAtMs: 6e4, attackPerSecond: 0, label: "\uBD95\uAD34" }
-  ]
-};
-var EXPEDITION_BEST_SCORE_REWARD_STAGES = [
-  { id: "best-2k", threshold: 2e3, reward: { currency: "salvageRecord", amount: 10 } },
-  { id: "best-4k", threshold: 4e3, reward: { currency: "gold", amount: 3e3 } },
-  { id: "best-6k", threshold: 6e3, reward: { currency: "salvageRecord", amount: 10 } },
-  { id: "best-8k", threshold: 8e3, reward: { currency: "cheesecake", amount: 30 } },
-  { id: "best-10k", threshold: 1e4, reward: { currency: "salvageRecord", amount: 15 } },
-  { id: "best-13k", threshold: 13e3, reward: { currency: "dnaFragments", amount: 5 } },
-  { id: "best-16k", threshold: 16e3, reward: { currency: "salvageRecord", amount: 15 } },
-  { id: "best-20k", threshold: 2e4, reward: { currency: "gems", amount: 20 } },
-  { id: "best-24k", threshold: 24e3, reward: { currency: "salvageRecord", amount: 20 } },
-  { id: "best-28k", threshold: 28e3, reward: { currency: "gold", amount: 6e3 } },
-  { id: "best-33k", threshold: 33e3, reward: { currency: "salvageRecord", amount: 20 } },
-  { id: "best-38k", threshold: 38e3, reward: { currency: "fossil", amount: 1 } },
-  { id: "best-44k", threshold: 44e3, reward: { currency: "salvageRecord", amount: 25 } },
-  { id: "best-50k", threshold: 5e4, reward: { currency: "gems", amount: 40 } },
-  { id: "best-57k", threshold: 57e3, reward: { currency: "salvageRecord", amount: 25 } },
-  { id: "best-65k", threshold: 65e3, reward: { currency: "cheesecake", amount: 60 } },
-  { id: "best-74k", threshold: 74e3, reward: { currency: "salvageRecord", amount: 30 } },
-  { id: "best-84k", threshold: 84e3, reward: { currency: "dnaFragments", amount: 10 } },
-  { id: "best-95k", threshold: 95e3, reward: { currency: "salvageRecord", amount: 30 } },
-  { id: "best-110k", threshold: 11e4, reward: { currency: "amber", amount: 1 } },
-  { id: "best-125k", threshold: 125e3, reward: { currency: "salvageRecord", amount: 40 } },
-  { id: "best-145k", threshold: 145e3, reward: { currency: "gems", amount: 60 } },
-  { id: "best-170k", threshold: 17e4, reward: { currency: "salvageRecord", amount: 50 } },
-  { id: "best-200k", threshold: 2e5, reward: { currency: "fossil", amount: 2 } }
-];
-var EXPEDITION_DAILY_POLICY = { maxPlaysPerDay: 1 };
-var EXPEDITION_WEEKLY_RANK_REWARDS = [
-  { upTo: 1, rewards: { gems: 500, salvageRecord: 400 } },
-  { upTo: 3, rewards: { gems: 400, salvageRecord: 320 } },
-  { upTo: 10, rewards: { gems: 300, salvageRecord: 250 } },
-  { upTo: 50, rewards: { gems: 200, salvageRecord: 180 } },
-  { upTo: 100, rewards: { gems: 150, salvageRecord: 130 } },
-  { upTo: null, rewards: { gems: 80, salvageRecord: 80 } }
-];
-function expeditionRankRewards(rank) {
-  const row = EXPEDITION_WEEKLY_RANK_REWARDS.find(({ upTo }) => upTo === null || rank <= upTo) ?? EXPEDITION_WEEKLY_RANK_REWARDS.at(-1);
-  return { ...row.rewards };
-}
-var EXPEDITION_SWEEP_POLICY = { nodeRewardRatio: 0.75 };
-EXPEDITION_BOSS_BALANCE.phases.forEach((phase, index) => registerDataText(phase, "label", `expedition.phase.${index}`));
 
 // src/core/bossSimulation.ts
 init_define_import_meta_env();
@@ -19025,9 +18988,9 @@ function passOnReplayEnergy(giver, kind, state) {
   const skill = kind === "ultimate" ? giver.def.ultimate : giver.def.basic;
   const living = state.fighters.filter((ally) => ally.side === giver.side && isFighterAlive(ally));
   const allyGain = skill.allyEnergyGain ?? 0;
-  if (allyGain > 0) for (const ally of living) ally.energy = Math.min(ULTIMATE_ENERGY_MAX, ally.energy + allyGain);
+  if (allyGain > 0) for (const ally of living) ally.energy = Math.min(ultimateEnergyCap(ally), ally.energy + allyGain);
   const duo = giver.duoId ? living.find(({ id }) => id === giver.duoId) : void 0;
-  if (duo && (skill.duoCharge?.energy ?? 0) > 0) duo.energy = Math.min(ULTIMATE_ENERGY_MAX, duo.energy + skill.duoCharge.energy);
+  if (duo && (skill.duoCharge?.energy ?? 0) > 0) duo.energy = Math.min(ultimateEnergyCap(duo), duo.energy + skill.duoCharge.energy);
 }
 var ULTIMATE_REPLAY_ENERGY_TOLERANCE = 0.4;
 var REPLAY_ROUNDING_MS = 1;
@@ -19172,35 +19135,122 @@ function expeditionRankRewardQueue(state) {
   return [...state.pendingRankReward ? [state.pendingRankReward] : [], ...state.pendingRankRewards ?? []].map((reward) => ({ ...reward }));
 }
 
-// src/data/cakeOperation.ts
+// src/data/profileModifiers.ts
 init_define_import_meta_env();
-var CAKE_OPERATION_TIERS = [
-  { id: "cake-1", name: "1\uB2E8\uACC4", enemyLevel: 5, enemyCount: 10, rewardCheesecake: 30 },
-  { id: "cake-2", name: "2\uB2E8\uACC4", enemyLevel: 12, enemyCount: 10, rewardCheesecake: 44 },
-  { id: "cake-3", name: "3\uB2E8\uACC4", enemyLevel: 20, enemyCount: 11, rewardCheesecake: 58 },
-  { id: "cake-4", name: "4\uB2E8\uACC4", enemyLevel: 28, enemyCount: 12, rewardCheesecake: 72 },
-  { id: "cake-5", name: "5\uB2E8\uACC4", enemyLevel: 36, enemyCount: 13, rewardCheesecake: 88 },
-  { id: "cake-6", name: "6\uB2E8\uACC4", enemyLevel: 44, enemyCount: 14, rewardCheesecake: 108 },
-  { id: "cake-7", name: "7\uB2E8\uACC4", enemyLevel: 52, enemyCount: 15, rewardCheesecake: 128 },
-  { id: "cake-8", name: "8\uB2E8\uACC4", enemyLevel: 60, enemyCount: 15, rewardCheesecake: 150 }
+var PROFILE_MODIFIERS = [
+  { id: "field-pioneer", displayName: "\uD604\uC7A5 \uAC1C\uCC99\uC790", rarity: "rare", acquisitionConditionId: "mission:daily-battle" },
+  { id: "steady-researcher", displayName: "\uAFB8\uC900\uD55C \uC5F0\uAD6C\uC790", rarity: "common", acquisitionConditionId: "mission:daily-research" },
+  { id: "deep-record", displayName: "\uC2EC\uCE35 \uAE30\uB85D\uC790", rarity: "epic", acquisitionConditionId: "research:weekly:60" },
+  { id: "garden-legend", displayName: "\uC815\uC6D0\uC758 \uC804\uC124", rarity: "legendary", acquisitionConditionId: "research:weekly:120" },
+  /*
+   * 업적의 마지막 단계를 받는 순간 열리는 수식어(`data/achievements.ts`의 `modifierId`). 희귀도는 그 줄을
+   * 끝내는 데 드는 시간을 말한다 — 1억 골드·결투 300승·원정 20만 점처럼 오래 걸리는 줄만 전설이다.
+   */
+  { id: "millionaire", displayName: "\uBC31\uB9CC\uC7A5\uC790", rarity: "legendary", acquisitionConditionId: "achievement:wealth" },
+  { id: "specimen-curator", displayName: "\uD45C\uBCF8 \uAD00\uB9AC\uC778", rarity: "epic", acquisitionConditionId: "achievement:collector" },
+  { id: "limit-breaker", displayName: "\uD55C\uACC4\uB97C \uB118\uC740 \uC790", rarity: "epic", acquisitionConditionId: "achievement:limit-break" },
+  { id: "kind-researcher", displayName: "\uB2E4\uC815\uD55C \uC5F0\uAD6C\uC6D0", rarity: "rare", acquisitionConditionId: "achievement:bond" },
+  { id: "chief-researcher", displayName: "\uC218\uC11D \uC5F0\uAD6C\uC6D0", rarity: "epic", acquisitionConditionId: "achievement:research-level" },
+  { id: "veteran", displayName: "\uBC31\uC804\uB178\uC7A5", rarity: "epic", acquisitionConditionId: "achievement:victories" },
+  { id: "front-breaker", displayName: "\uC804\uC120 \uB3CC\uD30C\uC790", rarity: "rare", acquisitionConditionId: "achievement:frontline" },
+  { id: "arena-ruler", displayName: "\uACB0\uD22C\uC7A5\uC758 \uC9C0\uBC30\uC790", rarity: "legendary", acquisitionConditionId: "achievement:duelist" },
+  { id: "raid-captain", displayName: "\uD1A0\uBC8C\uB300\uC7A5", rarity: "rare", acquisitionConditionId: "achievement:raider" },
+  { id: "deep-salvager", displayName: "\uC2EC\uD574 \uC778\uC591\uAC00", rarity: "legendary", acquisitionConditionId: "achievement:salvager" },
+  { id: "fossil-appraiser", displayName: "\uD654\uC11D \uAC10\uC815\uC0AC", rarity: "epic", acquisitionConditionId: "achievement:fossil-lab" },
+  { id: "city-envoy", displayName: "\uB3C4\uC2DC\uC758 \uC0AC\uC808", rarity: "rare", acquisitionConditionId: "achievement:dispatch" },
+  { id: "story-collector", displayName: "\uC774\uC57C\uAE30 \uC218\uC9D1\uAC00", rarity: "rare", acquisitionConditionId: "achievement:storyteller" },
+  { id: "cheesecake-artisan", displayName: "\uCE58\uC988\uCF00\uC774\uD06C \uC7A5\uC778", rarity: "rare", acquisitionConditionId: "achievement:feeding" },
+  { id: "tireless", displayName: "\uC9C0\uCE60 \uC904 \uBAA8\uB974\uB294", rarity: "epic", acquisitionConditionId: "achievement:stamina" },
+  { id: "diligent-researcher", displayName: "\uC131\uC2E4\uD55C \uC5F0\uAD6C\uC6D0", rarity: "epic", acquisitionConditionId: "achievement:diligence" },
+  { id: "challenger", displayName: "\uC815\uC810\uC758 \uB3C4\uC804\uC790", rarity: "legendary", acquisitionConditionId: "achievement:duel-tier" },
+  { id: "stratum-explorer", displayName: "\uC9C0\uCE35 \uD0D0\uC0AC\uAC00", rarity: "rare", acquisitionConditionId: "achievement:archaeologist" },
+  { id: "walking-codex", displayName: "\uAC78\uC5B4 \uB2E4\uB2C8\uB294 \uB3C4\uAC10", rarity: "legendary", acquisitionConditionId: "achievement:codex-complete" }
 ];
-var BY_ID2 = new Map(CAKE_OPERATION_TIERS.map((tier) => [tier.id, tier]));
-function getCakeOperationTier(id) {
-  const found = BY_ID2.get(id);
-  if (!found) throw new Error(`\uC54C \uC218 \uC5C6\uB294 \uCE58\uC988\uCF00\uC774\uD06C \uB300\uC791\uC804 \uB2E8\uACC4: ${id}`);
-  return found;
+function findProfileModifier(id) {
+  return PROFILE_MODIFIERS.find((definition) => definition.id === id);
 }
-function cakeOperationTierIndex(id) {
-  return CAKE_OPERATION_TIERS.findIndex((tier) => tier.id === id);
+for (const modifier of PROFILE_MODIFIERS) {
+  registerDataText(modifier, "displayName", `modifier.${modifier.id}.name`);
 }
-function isCakeTierUnlocked(id, clearedIndex) {
-  const index = cakeOperationTierIndex(id);
-  return index >= 0 && index <= clearedIndex + 1;
+
+// src/data/adRewards.ts
+init_define_import_meta_env();
+var AD_REWARD_SLOTS = [
+  { id: "daily-stamina", displayText: "\uC2A4\uD14C\uBBF8\uB098 10", reward: { kind: "currency", currency: "stamina", amount: 10 }, dailyLimitUtc: 3, placement: "shop_free_supplies" },
+  { id: "daily-cheesecake", displayText: "\uCE58\uC988\uCF00\uC774\uD06C 20", reward: { kind: "currency", currency: "cheesecake", amount: 20 }, dailyLimitUtc: 3, placement: "daily_mission_rewards" },
+  // 수확 배율은 광고 완료 전에 서버가 확정한 현재 미수확분에만 소비되는 일회성 규칙이다.
+  { id: "excavation-harvest", displayText: "\uD604\uC7AC \uC218\uD655 1.5\uBC30", reward: { kind: "excavation_effect", effect: { kind: "harvest_multiplier", multiplier: 1.5, appliesTo: "current_confirmed_harvest_once" } }, dailyLimitUtc: 3, placement: "idle_excavation" },
+  // 확장은 다음 정산 한 번에서만 기본 보관 시간의 두 배(8 → 16시간)를 허용하며 기존 생산분을
+  // 소급하지 않는다. 두 값이 갈리면 `tests/unit/adRewards.test.ts`가 실패한다.
+  { id: "excavation-storage", displayText: "\uB2E4\uC74C \uC815\uC0B0 \uBCF4\uAD00 \uCD5C\uB300 16\uC2DC\uAC04", reward: { kind: "excavation_effect", effect: { kind: "storage_extension", maxStorageSeconds: 57600, appliesTo: "next_settlement_window" } }, dailyLimitUtc: 2, placement: "idle_excavation" },
+  // 같은 효과 재수령은 배율을 곱하지 않고, 수확과 같은 1.5배로 서버 시각부터 만료만 교체한다.
+  { id: "excavation-speed", displayText: "\uC0DD\uC0B0 1.5\uBC30 \xB7 60\uBD84", reward: { kind: "excavation_effect", effect: { kind: "production_speed", multiplier: 1.5, durationSeconds: 3600, refresh: "replace_expiry" } }, dailyLimitUtc: 2, placement: "idle_excavation" },
+  // 소탕권 다섯 장. 멤버십이 없는 사람이 던전 소탕을 쓰는 길이다 — 한 번에 한 장이 든다.
+  { id: "sweep-tickets", displayText: "\uC18C\uD0D5\uAD8C 5", reward: { kind: "item", itemId: "sweep-ticket", quantity: 5 }, dailyLimitUtc: 3, placement: "dungeon_sweep" },
+  // 결투 도전권 한 장. 젬 구매와 따로 세어 젬 값의 누진을 밀어 올리지 않는다.
+  { id: "duel-attempt", displayText: "\uACB0\uD22C \uB3C4\uC804\uAD8C 1", reward: { kind: "duel_attempt", quantity: 1 }, dailyLimitUtc: 3, placement: "duel_arena" },
+  // 프리미엄 젬 탭·일반 상점 골드 탭의 광고. 값은 깔끔한 단위로 끊는다(`premiumAmounts.test`).
+  // 젬 광고만 특별히 후하다(젬 50) — 젬 탭 맨 위에서 광고를 볼 이유가 되는 칸이라 다른 광고(젬 10 가치)와 맞추지 않는다.
+  { id: "gem-ad", displayText: "\uC82C 50", reward: { kind: "currency", currency: "gems", amount: 50 }, dailyLimitUtc: 3, placement: "premium_gems" },
+  // 일간 탭: 「일일 무료 보급」을 받은 뒤에만 하루 두 번 같은 묶음을 더 받는다.
+  { id: "daily-bonus-ad", displayText: "\uC77C\uC77C \uBCF4\uAE09 \uCD94\uAC00", reward: { kind: "currencies", grants: [{ currency: "gold", amount: 1e4 }, { currency: "cheesecake", amount: 30 }, { currency: "gems", amount: 10 }], items: [{ itemId: "stamina-tonic", quantity: 1 }] }, dailyLimitUtc: 2, placement: "premium_daily", requiresClaimedProductId: "premium-free-daily" },
+  { id: "gold-ad", displayText: "\uACE8\uB4DC 5,000", reward: { kind: "currency", currency: "gold", amount: 5e3 }, dailyLimitUtc: 3, placement: "shop_gold" },
+  // 고고학 상점의 원석, 전리품 상점의 토벌·인양 증표. 모두 하루 세 번이다.
+  { id: "archaeology-ad", displayText: "\uC6D0\uC11D 100", reward: { kind: "currency", currency: "rawStone", amount: 100 }, dailyLimitUtc: 3, placement: "archaeology_shop" },
+  { id: "loot-ad", displayText: "\uD1A0\uBC8C \uC99D\uD45C 5 \xB7 \uC778\uC591 \uC99D\uD45C 5", reward: { kind: "currencies", grants: [{ currency: "raidSigil", amount: 5 }, { currency: "salvageRecord", amount: 5 }] }, dailyLimitUtc: 3, placement: "loot_shop" },
+  // 기준 점수가 없거나 광고 검증이 실패하면 서버가 지급을 거절하며 횟수도 소비하지 않는다.
+  { id: "quick-expedition", displayText: "\uBE60\uB978 \uC6D0\uC815", reward: { kind: "quick_expedition", scoreRatio: 0.25 }, dailyLimitUtc: 2, weeklyLimitUtc: 5, placement: "quick_expedition" }
+];
+function findAdRewardSlot(slotId) {
+  return AD_REWARD_SLOTS.find((slot) => slot.id === slotId);
 }
-function cakeOperationRunCost(tier) {
-  return { staminaCost: DUNGEON_RUN_STAMINA, rewards: { cheesecake: tier.rewardCheesecake } };
+for (const slot of AD_REWARD_SLOTS) registerDataText(slot, "displayText", `adReward.${slot.id}.text`);
+
+// src/data/items.ts
+init_define_import_meta_env();
+var ITEMS = [
+  { id: "rune", name: "\uB8EC", description: "\uB810\uB9AD\uC758 \uD558\uD2B8 \uC82C \uC2AC\uB86F\uC5D0 \uC7A5\uCC29\uD558\uB294 \uAC1C\uBCC4 \uB8EC\uC785\uB2C8\uB2E4.", category: "rune", icon: { kind: "glyph", key: "heart" }, maxStack: 1, useEffect: { kind: "none" } },
+  { id: "fossil", name: "\uD654\uC11D", description: "\uC5F0\uAD6C\uC18C\uC758 \uCE90\uB9AD\uD130 \uD68D\uB4DD \uC5F0\uAD6C\uC5D0 \uC0AC\uC6A9\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "fossil" }, maxStack: 9999999, useEffect: { kind: "none" } },
+  { id: "amber", name: "\uD638\uBC15\uC11D", description: "\uD76C\uADC0 \uC5F0\uAD6C\uC5D0 \uC0AC\uC6A9\uD558\uB294 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "amber" }, maxStack: 999999, useEffect: { kind: "none" } },
+  { id: "gems", name: "\uBCF4\uC11D", description: "\uB3C4\uC2DC \uC804\uC5ED\uC5D0\uC11C \uD1B5\uC6A9\uB418\uB294 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "gems" }, maxStack: 9999999, useEffect: { kind: "none" } },
+  { id: "gold", name: "\uACE8\uB4DC", description: "\uB8EC \uC138\uACF5\uACFC \uC131\uC7A5\uC5D0 \uC0AC\uC6A9\uD558\uB294 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "gold" }, maxStack: 999999999, useEffect: { kind: "none" } },
+  { id: "stamina", name: "\uC2A4\uD14C\uBBF8\uB098", description: "\uD0D0\uC0AC\uC5D0 \uD544\uC694\uD55C \uD589\uB3D9\uB825\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "stamina" }, maxStack: 9999, useEffect: { kind: "none" } },
+  { id: "dnaFragments", name: "DNA \uB9C8\uC77C\uB9AC\uC9C0", description: "\uB9C8\uC77C\uB9AC\uC9C0 \uC0C1\uC810\uC5D0\uC11C \uC4F0\uB294 \uAD50\uD658 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "dnaFragments" }, maxStack: 99999, useEffect: { kind: "none" } },
+  { id: "cheesecake", name: "\uCE58\uC988\uCF00\uC774\uD06C", description: "\uB810\uB9AD\uC5D0\uAC8C \uAE09\uC5EC\uD574 \uC131\uC7A5\uC2DC\uD0B5\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "cheesecake" }, maxStack: 9999999, useEffect: { kind: "none" } },
+  { id: "rawStone", name: "\uC6D0\uC11D", description: "\uC9C0\uCE35 \uD0D0\uC0AC\uB85C \uCE90\uB0B8 \uBBF8\uAC00\uACF5 \uAD11\uBB3C\uC785\uB2C8\uB2E4. \uB8EC \uD2B9\uC131 \uC7AC\uD574\uC11D\uC5D0 \uC0AC\uC6A9\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "rawStone" }, maxStack: 9999999, useEffect: { kind: "none" } },
+  // 에너지 드링크는 **기본과 쎈 것 둘**이다. 회복량만 다른 같은 물건이라 한 칸에서 좌우로
+  // 갈아 끼우고(`StaminaPopup`), 그래서 둘의 이름도 같은 낱말에 표시만 다르게 붙인다.
+  { id: "stamina-tonic", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C", description: "\uC2A4\uD14C\uBBF8\uB098\uB97C 60 \uD68C\uBCF5\uD569\uB2C8\uB2E4.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic" }, maxStack: 999, expiresInDays: 7, useEffect: { kind: "restore_stamina", amount: 60 } },
+  { id: "stamina-tonic-large", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C+", description: "\uC2A4\uD14C\uBBF8\uB098\uB97C 120 \uD68C\uBCF5\uD569\uB2C8\uB2E4.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic-large" }, maxStack: 999, expiresInDays: 7, useEffect: { kind: "restore_stamina", amount: 120 } },
+  { id: "ancient-core", name: "\uBBF8\uC9C0\uC758 \uACE0\uB300 \uD575", description: "\uB8EC\uC5D0 \uD2B9\uC131 \uD55C \uC904\uC744 \uC0C8\uB85C \uBD80\uC5EC\uD569\uB2C8\uB2E4. \uC774\uBBF8 \uD2B9\uC131\uC774 \uC788\uC73C\uBA74 \uC9C0\uC6B0\uACE0 \uB2E4\uC2DC \uBD80\uC5EC\uD569\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-ancient-core" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "refined-core", name: "\uC815\uC81C\uB41C \uACE0\uB300 \uD575", description: "\uC601\uC6C5 \uC774\uC0C1 \uB4F1\uAE09\uC758 \uD2B9\uC131\uC744 \uD655\uC815\uC73C\uB85C \uBD80\uC5EC\uD569\uB2C8\uB2E4. \uC774\uBBF8 \uC601\uC6C5 \uC774\uC0C1\uC778 \uD2B9\uC131\uC5D0\uB294 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-refined-core" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "restoration-crystal", name: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815", description: "\uD2B9\uC131\uC758 \uC885\uB958\uB294 \uADF8\uB300\uB85C \uB450\uACE0 \uB4F1\uAE09\uC744 \uC804\uC124\uB85C \uD655\uC815 \uC0C1\uC2B9\uC2DC\uD0B5\uB2C8\uB2E4. \uC774\uBBF8 \uC804\uC124\uC778 \uD2B9\uC131\uC5D0\uB294 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-restoration-crystal" }, maxStack: 999, useEffect: { kind: "none" } },
+  // 레이드를 여는 두 토벌권. 소모하는 입장권이라 지갑이 아니라 가방의 재료다 — 상단 줄에 늘
+  // 서는 재화가 아니고, 레이드 목록 머리에서만 몇 장 남았는지 말한다.
+  { id: "raid-ticket", name: "\uD1A0\uBC8C\uAD8C", description: "\uCE5C\uAD6C\uC640 \uD568\uAED8 \uCE58\uB294 \uB808\uC774\uB4DC\uB97C \uC5FD\uB2C8\uB2E4. \uBCF4\uC2A4\uC640 \uB09C\uC774\uB3C4\uB294 \uBB34\uC791\uC704\uB85C \uC815\uD574\uC9D1\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-raid-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "raid-select-ticket", name: "\uC120\uD0DD \uD1A0\uBC8C\uAD8C", description: "\uCE5C\uAD6C\uC640 \uD568\uAED8 \uCE58\uB294 \uB808\uC774\uB4DC\uB97C \uC5FD\uB2C8\uB2E4. \uBCF4\uC2A4\uC640 \uB09C\uC774\uB3C4\uB97C \uACE8\uB77C\uC11C \uC5FD\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-raid-select-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  // 소탕 한 번에 한 장. 멤버십이 없을 때만 들고, 던전 입구에서 광고를 보면 다섯 장씩 채워진다.
+  // 고고학 지층 탐사 한 번. 시간이 채우는 횟수와 같은 몫이라 그림도 탐사 횟수 칸의 입장권 그대로다 —
+  // 그 칸의 그림을 누르면 이 안내창이 열린다(`guideForIcon`).
+  { id: "strata-ticket", name: "\uBC1C\uAD74\uAD8C", description: "\uACE0\uACE0\uD559 \uC720\uC801\uC744 \uC5EC\uB294 \uD69F\uC218\uC785\uB2C8\uB2E4. 3\uC2DC\uAC04\uB9C8\uB2E4 \uD558\uB098\uC529 3\uAC1C\uAE4C\uC9C0 \uCC28\uACE0, \uC0C1\uC810\xB7\uBCF4\uC0C1\uC73C\uB85C \uBC1B\uC740 \uAC83\uC740 3\uAC1C\uB97C \uB118\uACA8 \uC313\uC785\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-strata-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  // 결투장 도전 한 번. 하루 다섯 장이 채워지는 몫과 같은 것이라 결투장의 도전권 줄이 이 그림을 쓴다 —
+  // 그 줄의 그림을 누르면 이 안내창이 열린다. 전용 원화가 오기 전까지 입장권 그림을 빌려 쓴다.
+  { id: "duel-ticket", name: "\uACB0\uD22C \uB3C4\uC804\uAD8C", description: "\uACB0\uD22C\uC7A5\uC5D0\uC11C \uC0C1\uB300\uC5D0\uAC8C \uB3C4\uC804\uD560 \uB54C \uD55C \uC7A5 \uC501\uB2C8\uB2E4. \uB9E4\uC77C \uB2E4\uC12F \uC7A5\uC774 \uCC44\uC6CC\uC9D1\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-duel-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "sweep-ticket", name: "\uC18C\uD0D5\uAD8C", description: "\uC774\uBBF8 \uC774\uAE34 \uB358\uC804 \uB2E8\uACC4\uB97C \uC804\uD22C \uC5C6\uC774 \uD55C \uBC88 \uC18C\uD0D5\uD569\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-sweep-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  // 전리품 상점의 두 증표. 상한을 두지 않는 이유가 곧 지갑에 둔 이유다 — 가끔 들어가 터는
+  // 자리라 몇 주치가 쌓여도 버려지면 안 된다.
+  { id: "raidSigil", name: "\uD1A0\uBC8C \uC99D\uD45C", description: "\uB808\uC774\uB4DC \uBCF4\uC2A4\uB97C \uBC00\uC5B4\uB0B8 \uBAAB\uC73C\uB85C \uBC1B\uB294 \uC99D\uD45C\uC785\uB2C8\uB2E4. \uC804\uB9AC\uD488 \uC0C1\uC810\uC5D0\uC11C \uAD50\uD658\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "raidSigil" }, maxStack: 9999999, useEffect: { kind: "none" } },
+  { id: "salvageRecord", name: "\uC778\uC591 \uAE30\uB85D", description: "\uC218\uC7A5\uB41C \uC9C0\uBD80\uC5D0\uC11C \uAC74\uC838 \uC62C\uB9B0 \uAC83\uC744 \uC801\uC5B4 \uB454 \uAE30\uB85D\uC785\uB2C8\uB2E4. \uC804\uB9AC\uD488 \uC0C1\uC810\uC5D0\uC11C \uAD50\uD658\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "salvageRecord" }, maxStack: 9999999, useEffect: { kind: "none" } },
+  // 결투장의 전용 재화. 시즌마다 갈아엎지 않는 영구 재화라 증표들과 같이 지갑에 둔다.
+  { id: "duelEmblem", name: "\uD22C\uC0AC\uC758 \uD718\uC7A5", description: "\uACB0\uD22C\uC7A5\uC5D0\uC11C \uC2F8\uC6B4 \uBAAB\uC73C\uB85C \uBC1B\uB294 \uD718\uC7A5\uC785\uB2C8\uB2E4. \uACB0\uD22C \uC0C1\uC810\uC5D0\uC11C \uAD50\uD658\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "duelEmblem" }, maxStack: 9999999, useEffect: { kind: "none" } }
+];
+function findItem(id) {
+  return ITEMS.find((item3) => item3.id === id);
 }
-for (const tier of CAKE_OPERATION_TIERS) registerDataText(tier, "name", `cakeOperation.${tier.id}.name`);
+for (const item3 of ITEMS) {
+  registerDataText(item3, "name", `item.${item3.id}.name`);
+  registerDataText(item3, "description", `item.${item3.id}.description`);
+}
 
 // src/core/relicStory.ts
 init_define_import_meta_env();
@@ -24490,6 +24540,38 @@ var TEKU_STORY = {
 
 // src/data/relicStories/registerStory.ts
 init_define_import_meta_env();
+
+// src/data/dialogues/registerDialogue.ts
+init_define_import_meta_env();
+
+// src/data/dialogues/speakerStanding.ts
+init_define_import_meta_env();
+var BY_NAME = /* @__PURE__ */ new Map();
+for (const relic of RELICS) {
+  if (relic.enemyOnly || relic.summonOnly) continue;
+  BY_NAME.set(relic.name, relic.portraitAssetId);
+}
+BY_NAME.set("\uC624\uBE44", "obi");
+function speakerStanding(speaker) {
+  return BY_NAME.get(speaker);
+}
+
+// src/data/dialogues/registerDialogue.ts
+function registerDialogueTexts(story) {
+  if (story.titleCard) {
+    registerDataText(story.titleCard, "title", `dialogue.${story.id}.title`);
+    registerDataText(story.titleCard, "subtitle", `dialogue.${story.id}.subtitle`);
+  }
+  for (const node of story.nodes) {
+    if (!node.standing && node.speaker) node.standing = speakerStanding(node.speaker);
+    const key = `dialogue.${story.id}.${node.id}`;
+    if (node.speaker) registerDataText(node, "speaker", `${key}.speaker`);
+    registerDataText(node, "body", `${key}.body`);
+    node.choices?.forEach((choice, index) => registerDataText(choice, "label", `${key}.choice.${index}`));
+  }
+}
+
+// src/data/relicStories/registerStory.ts
 function registerRelicStoryTexts(story) {
   const id = story.relicId;
   registerDataText(story, "closingLine", `story.${id}.closingLine`);
@@ -24775,6 +24857,154 @@ for (const [department, label] of Object.entries(INTERACTION_DEPARTMENT_LABEL)) 
   registerDataText(INTERACTION_DEPARTMENT_LABEL, department, `city.department.${department}`);
 }
 for (const city of INTERACTION_CITIES) registerDataText(city, "displayName", `city.${city.id}.displayName`);
+
+// src/data/progressPasses.ts
+init_define_import_meta_env();
+var currency = (key, amount) => ({ kind: "currency", currency: key, amount });
+var item = (itemId, amount) => ({
+  kind: "item",
+  itemId,
+  amount,
+  get name() {
+    return findItem(itemId)?.name ?? itemId;
+  }
+});
+var step = (threshold, free, ...rewards) => ({ threshold, free: [free], rewards });
+var PROGRESS_PASSES = [
+  {
+    // 스토리 클리어 수가 곧 관문 순서다(본편이 한 줄로 이어진다) — 화면은 문턱을 「1-1 클리어」처럼 관문 이름으로 읽는다.
+    id: "story",
+    productId: "premium-story-pass",
+    metric: "storyClears",
+    milestones: [
+      step(1, currency("gold", 5e3), currency("gold", 5e4), currency("gems", 100)),
+      step(2, currency("cheesecake", 40), currency("cheesecake", 300), currency("gems", 150)),
+      step(4, currency("gems", 30), currency("fossil", 1), currency("gems", 200)),
+      step(6, currency("gold", 1e4), item("stamina-tonic", 3), currency("gems", 200)),
+      step(8, item("stamina-tonic", 1), currency("amber", 1), currency("gems", 250)),
+      step(10, currency("gems", 50), currency("cheesecake", 500), currency("gems", 250)),
+      step(12, currency("cheesecake", 80), currency("gold", 1e5), currency("gems", 300)),
+      step(14, currency("gold", 15e3), currency("fossil", 1), currency("gems", 300)),
+      step(16, currency("fossil", 1), currency("dnaFragments", 20), currency("gems", 350)),
+      step(18, currency("gems", 60), currency("cheesecake", 600), currency("gems", 350)),
+      step(20, currency("cheesecake", 100), item("stamina-tonic-large", 2), currency("gems", 400)),
+      step(22, currency("gold", 2e4), item("stamina-tonic", 5), currency("gems", 400)),
+      step(24, currency("gems", 80), currency("amber", 1), currency("gems", 450)),
+      step(27, item("stamina-tonic", 1), currency("gold", 1e5), currency("gems", 500)),
+      step(30, currency("gems", 150), currency("fossil", 2), currency("gems", 1e3))
+    ]
+  },
+  {
+    id: "level",
+    productId: "premium-level-pass",
+    metric: "playerLevel",
+    milestones: [
+      step(3, currency("gold", 5e3), currency("cheesecake", 300), currency("gems", 100)),
+      step(5, currency("cheesecake", 40), currency("fossil", 1), currency("gems", 150)),
+      step(8, currency("gems", 30), currency("gold", 5e4), currency("gems", 200)),
+      step(10, currency("gold", 1e4), currency("amber", 1), currency("gems", 200)),
+      step(13, item("stamina-tonic", 1), item("stamina-tonic-large", 1), currency("gems", 250)),
+      step(15, currency("gems", 50), currency("cheesecake", 500), currency("gems", 250)),
+      step(18, currency("cheesecake", 80), currency("fossil", 1), currency("gems", 300)),
+      step(20, currency("gold", 15e3), currency("dnaFragments", 20), currency("gems", 300)),
+      step(25, currency("fossil", 1), item("stamina-tonic-large", 1), currency("gems", 350)),
+      step(30, currency("gems", 60), currency("gold", 1e5), currency("gems", 350)),
+      step(35, currency("cheesecake", 150), currency("amber", 1), currency("gems", 400)),
+      step(40, currency("gold", 25e3), currency("cheesecake", 600), currency("gems", 400)),
+      step(45, currency("gems", 80), item("stamina-tonic-large", 2), currency("gems", 450)),
+      step(50, item("stamina-tonic", 1), currency("fossil", 2), currency("gems", 500)),
+      step(60, currency("gems", 150), item("restoration-crystal", 1), currency("gems", 1e3))
+    ]
+  },
+  {
+    id: "raid",
+    productId: "premium-raid-pass",
+    metric: "raidRuns",
+    milestones: [
+      step(1, currency("gold", 5e3), item("raid-ticket", 2), currency("gems", 80)),
+      step(2, currency("raidSigil", 15), currency("raidSigil", 80), currency("gems", 150)),
+      step(3, currency("gems", 30), item("raid-select-ticket", 1), currency("gems", 200)),
+      step(5, item("raid-ticket", 1), currency("cheesecake", 300), currency("gems", 200)),
+      step(7, currency("gold", 1e4), item("raid-ticket", 2), currency("gems", 200)),
+      step(9, currency("raidSigil", 25), currency("fossil", 1), currency("gems", 200)),
+      step(12, currency("gems", 50), currency("raidSigil", 150), currency("gems", 250)),
+      step(15, currency("raidSigil", 30), item("raid-ticket", 2), currency("gems", 250)),
+      step(18, item("raid-ticket", 1), item("raid-select-ticket", 1), currency("gems", 300)),
+      step(21, currency("gold", 2e4), currency("amber", 1), currency("gems", 300)),
+      step(25, currency("gems", 60), currency("gold", 1e5), currency("gems", 350)),
+      step(30, currency("raidSigil", 40), currency("raidSigil", 200), currency("gems", 350)),
+      step(35, item("raid-ticket", 1), item("raid-ticket", 3), currency("gems", 400)),
+      step(40, currency("gold", 3e4), currency("fossil", 1), currency("gems", 400)),
+      step(50, currency("gems", 150), item("raid-select-ticket", 2), currency("gems", 800))
+    ]
+  },
+  {
+    // 임시 — 패스 탭 줄이 네 칸일 때 옆으로 흐르는 스크롤을 확인하려고 더한 항목이다. 진행도는 새로 세지 않고 연구원
+    // 레벨을 빌려 쓰며(저장 구조를 건드리지 않는다), 정식 고고학 패스가 정해지면 이 항목째 지우거나 바꾼다.
+    id: "archaeology",
+    productId: "premium-archaeology-pass",
+    metric: "playerLevel",
+    milestones: [
+      step(3, currency("gold", 5e3), item("strata-ticket", 2), currency("gems", 60)),
+      step(5, currency("cheesecake", 40), currency("fossil", 1), currency("gems", 90)),
+      step(8, currency("gems", 30), item("strata-ticket", 2), currency("gems", 150)),
+      step(10, currency("gold", 1e4), currency("amber", 1), currency("gems", 150)),
+      step(13, item("stamina-tonic", 1), item("strata-ticket", 2), currency("gems", 150)),
+      step(15, currency("gems", 50), currency("fossil", 2), currency("gems", 150)),
+      step(18, currency("cheesecake", 80), item("strata-ticket", 2), currency("gems", 200)),
+      step(20, currency("gold", 15e3), currency("amber", 1), currency("gems", 200)),
+      step(25, currency("fossil", 1), item("strata-ticket", 2), currency("gems", 250)),
+      step(30, currency("gems", 60), currency("fossil", 2), currency("gems", 250)),
+      step(35, currency("cheesecake", 150), currency("gold", 1e5), currency("gems", 250)),
+      step(40, currency("gold", 25e3), currency("amber", 1), currency("gems", 250)),
+      step(45, currency("gems", 80), currency("fossil", 2), currency("gems", 300)),
+      step(50, item("stamina-tonic", 1), currency("fossil", 3), currency("gems", 300)),
+      step(60, currency("gems", 150), currency("amber", 3), currency("gems", 600))
+    ]
+  }
+];
+function findProgressPass(id) {
+  return PROGRESS_PASSES.find((pass) => pass.id === id);
+}
+
+// src/data/interactionJournals.ts
+init_define_import_meta_env();
+
+// src/data/dialogues/interactionCentralJournal.ts
+init_define_import_meta_env();
+var INTERACTION_CENTRAL_JOURNAL = {
+  id: "interaction-central-dialogue-02",
+  startNodeId: "signal",
+  nodes: [
+    { id: "signal", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC720\uB9AC \uD68C\uB791 \uC544\uB798\uC5D0\uC11C \uC624\uB798\uB41C \uD638\uCD9C \uC2E0\uD638\uAC00 \uBC18\uBCF5\uB418\uACE0 \uC788\uC5B4\uC694.", standing: "torika", act: "lean", nextId: "choice" },
+    { id: "choice", speaker: "\uC5F0\uAD6C\uC6D0", body: "\uAE30\uB85D \uC7A5\uCE58\uC758 \uC5B4\uB290 \uCE35\uBD80\uD130 \uBCF5\uC6D0\uD560\uAE4C?", choices: [
+      { id: "voice", label: "\uC74C\uC131\uCE35\uC744 \uBA3C\uC800 \uBCF5\uC6D0\uD55C\uB2E4", nextId: "voice-result" },
+      { id: "route", label: "\uC774\uB3D9 \uACBD\uB85C\uB97C \uBA3C\uC800 \uBCF5\uC6D0\uD55C\uB2E4", nextId: "route-result" }
+    ] },
+    { id: "voice-result", speaker: "\uD1A0\uB9AC\uCE74", body: "\uAC19\uC740 \uC778\uC0AC\uAC00 \uB9E4\uC77C \uB2E4\uB978 \uBAA9\uC18C\uB9AC\uB85C \uB0A8\uC544 \uC788\uC5B4\uC694. \uC2DC\uBBFC\uB4E4\uC774 \uBCF5\uC6D0 \uAC1C\uCCB4\uC5D0\uAC8C \uB9D0\uC744 \uAC74 \uAE30\uB85D\uC774\uC5D0\uC694.", standing: "torika", act: "nod" },
+    { id: "route-result", speaker: "\uD1A0\uB9AC\uCE74", body: "\uBC1C\uC790\uAD6D\uC740 \uBAA8\uB450 \uC628\uC2E4 \uAC00\uC6B4\uB370\uB85C \uD5A5\uD574\uC694. \uCCAB \uB9CC\uB0A8\uC744 \uAE30\uB2E4\uB9AC\uB358 \uC0AC\uB78C\uB4E4\uC758 \uB3D9\uC120 \uAC19\uC544\uC694.", standing: "torika", act: "nod" }
+  ]
+};
+registerDialogueTexts(INTERACTION_CENTRAL_JOURNAL);
+
+// src/data/interactionJournals.ts
+var INTERACTION_JOURNALS = [
+  { id: "interaction-doppel-01", cityId: "doppel-parlor", title: "\uC751\uC811\uC2E4\uC758 \uC5F0\uAD6C \uC77C\uC9C0", discoveryOrder: 1, body: "\uC190\uB2D8 \uD0C1\uC790\uC5D0 \uB193\uC544 \uB454 \uC77C\uC9C0\uC758 \uCCAB \uC7A5. \uC5B4\uB5A4 \uD45C\uBCF8\uC744 \uC5B4\uB5A4 \uC21C\uC11C\uB85C \uB418\uC0B4\uB838\uB294\uC9C0\uAC00 \uB2F4\uB2F4\uD558\uAC8C \uC801\uD600 \uC788\uACE0, \uB2F4\uB2F9\uC790 \uCE78\uB9CC \uC774\uB984 \uC5C6\uC774 \uBE44\uC5B4 \uC788\uB2E4." },
+  { id: "interaction-doppel-02", cityId: "doppel-parlor", title: "\uB418\uD480\uC774\uB418\uB294 \uC778\uC0AC", discoveryOrder: 2, dialogueStory: INTERACTION_CENTRAL_JOURNAL },
+  // 내부 연구기관은 이터널에 파견됐던 도플갱어 연구원들의 일기가 모이는 자리다(2단계).
+  // 3~8단계 일지는 세계관 원고가 들어올 때 이 목록에 더한다.
+  { id: "interaction-doppel-lab-01", cityId: "doppel-lab", title: "\uB3CC\uC544\uC624\uC9C0 \uBABB\uD55C \uD30C\uACAC \uC77C\uAE30", discoveryOrder: 1, body: '\uC774\uD130\uB110\uC5D0 \uD30C\uACAC\uB410\uB358 \uC5F0\uAD6C\uC6D0\uC758 \uC77C\uAE30. \uB9C8\uC9C0\uB9C9 \uC7A5\uC740 "\uAD50\uB300 \uC778\uC6D0\uC774 \uB3C4\uCC29\uD588\uB2E4"\uB294 \uD55C \uC904\uC774\uACE0, \uADF8 \uC544\uB798 \uC11C\uBA85\uB780\uC740 \uBE44\uC5B4 \uC788\uB2E4.' }
+];
+function journalsForCity(cityId) {
+  return INTERACTION_JOURNALS.filter((journal) => journal.cityId === cityId).sort((a, b) => a.discoveryOrder - b.discoveryOrder || a.id.localeCompare(b.id));
+}
+function findInteractionJournal(id) {
+  return INTERACTION_JOURNALS.find((journal) => journal.id === id);
+}
+for (const journal of INTERACTION_JOURNALS) {
+  registerDataText(journal, "title", `journal.${journal.id}.title`);
+  registerDataText(journal, "body", `journal.${journal.id}.body`);
+}
 
 // src/state/SaveManager.ts
 var LEGACY_V12_RUNES = {
@@ -25188,80 +25418,80 @@ var SaveManager = class {
     const skinsById = new Map(RELIC_SKINS.map((skin) => [skin.id, skin]));
     const stageIds = new Set(STAGES.map(({ id }) => id));
     const journalIds = new Set(INTERACTION_JOURNALS.map(({ id }) => id));
-    const fail = (message) => {
+    const fail2 = (message) => {
       throw new SaveDataError(message);
     };
     const excavation = data.idleExcavation;
     const interaction = data.interaction;
-    if (!Array.isArray(data.discoveredInteractionJournalIds) || !Array.isArray(data.readInteractionJournalIds) || data.discoveredInteractionJournalIds.some((id) => !journalIds.has(id)) || data.readInteractionJournalIds.some((id) => !data.discoveredInteractionJournalIds.includes(id)) || new Set(data.discoveredInteractionJournalIds).size !== data.discoveredInteractionJournalIds.length || new Set(data.readInteractionJournalIds).size !== data.readInteractionJournalIds.length) fail("\uAD50\uB958 \uC77C\uC9C0 \uC9C4\uD589\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!interaction || !Array.isArray(interaction.slots) || interaction.slots.length > INTERACTION_SLOT_LIMIT || new Set(interaction.slots.filter((slot) => slot !== null).map((slot) => slot.dispatchId)).size !== interaction.slots.filter((slot) => slot !== null).length || !Array.isArray(interaction.claimedRequestIds) || interaction.claimedRequestIds.some((id) => typeof id !== "string") || interaction.slots.some((slot) => slot !== null && (typeof slot.dispatchId !== "string" || typeof slot.cityId !== "string" || !Array.isArray(slot.party) || slot.party.length < 1 || slot.party.length > 3 || new Set(slot.party).size !== slot.party.length || slot.party.some((id) => !data.ownedRelicIds.includes(id)) || !Number.isFinite(Date.parse(slot.startedAt)) || !Number.isFinite(Date.parse(slot.completesAt)) || Date.parse(slot.completesAt) <= Date.parse(slot.startedAt) || typeof slot.claimed !== "boolean"))) fail("\uAD50\uB958 \uC9C4\uD589\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (typeof data.staminaUpdatedAt !== "string" || data.staminaUpdatedAt !== "" && !Number.isFinite(Date.parse(data.staminaUpdatedAt))) fail("\uC2A4\uD14C\uBBF8\uB098 \uC815\uC0B0 \uC2DC\uAC01\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!data.playerCard || typeof data.playerCard !== "object" || JSON.stringify(data.playerCard) !== JSON.stringify(normalizePlayerCard(data.playerCard))) fail("\uD50C\uB808\uC774\uC5B4 \uCE74\uB4DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!data.playerResearch || !Number.isInteger(data.playerResearch.level) || data.playerResearch.level < 1 || !Number.isInteger(data.playerResearch.experience) || data.playerResearch.experience < 0 || !Number.isInteger(data.playerResearch.experienceToNext) || data.playerResearch.experienceToNext <= 0 || data.playerResearch.experience >= data.playerResearch.experienceToNext) fail("\uD50C\uB808\uC774\uC5B4 \uC5F0\uAD6C \uC9C4\uD589\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!excavation || !Array.isArray(excavation.assignedRelicIds) || excavation.assignedRelicIds.length !== 3 || excavation.assignedRelicIds.some((id) => id !== null && (!relicIds.has(id) || !data.ownedRelicIds.includes(id))) || excavation.assignedRelicIds.filter(Boolean).length !== new Set(excavation.assignedRelicIds.filter(Boolean)).size || excavation.lastSettledAt !== null && !Number.isFinite(Date.parse(excavation.lastSettledAt)) || !excavation.unclaimed || EXCAVATION_CURRENCIES.some((currency3) => !Number.isFinite(excavation.unclaimed[currency3]) || excavation.unclaimed[currency3] < 0) || !Number.isInteger(excavation.retroactiveExcavationGrantVersion) || excavation.retroactiveExcavationGrantVersion < 0 || excavation.retroactiveExcavationGrantVersion > RETROACTIVE_EXCAVATION_GRANT_VERSION || !Number.isFinite(excavation.baseStorageSeconds) || excavation.baseStorageSeconds <= 0 || !Number.isFinite(excavation.activeProductionMultiplier) || excavation.activeProductionMultiplier <= 0 || excavation.storageExtensionExpiresAt !== null && !Number.isFinite(Date.parse(excavation.storageExtensionExpiresAt))) fail("\uBC1C\uAD74 \uC0C1\uD0DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (data.saveVersion !== CURRENT_SAVE_VERSION || !Array.isArray(data.ownedRelicIds) || data.ownedRelicIds.some((id) => !relicIds.has(id))) fail("\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uB810\uB9AD ID\uAC00 \uC788\uC2B5\uB2C8\uB2E4.");
-    if (!Array.isArray(data.ownedRelicSkinIds) || defaultUnlockedRelicSkinIds().some((id) => !data.ownedRelicSkinIds.includes(id)) || new Set(data.ownedRelicSkinIds).size !== data.ownedRelicSkinIds.length || data.ownedRelicSkinIds.some((id) => !skinsById.has(id))) fail("\uB810\uB9AD \uC2A4\uD0A8 \uC18C\uC720 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!Array.isArray(data.discoveredInteractionJournalIds) || !Array.isArray(data.readInteractionJournalIds) || data.discoveredInteractionJournalIds.some((id) => !journalIds.has(id)) || data.readInteractionJournalIds.some((id) => !data.discoveredInteractionJournalIds.includes(id)) || new Set(data.discoveredInteractionJournalIds).size !== data.discoveredInteractionJournalIds.length || new Set(data.readInteractionJournalIds).size !== data.readInteractionJournalIds.length) fail2("\uAD50\uB958 \uC77C\uC9C0 \uC9C4\uD589\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!interaction || !Array.isArray(interaction.slots) || interaction.slots.length > INTERACTION_SLOT_LIMIT || new Set(interaction.slots.filter((slot) => slot !== null).map((slot) => slot.dispatchId)).size !== interaction.slots.filter((slot) => slot !== null).length || !Array.isArray(interaction.claimedRequestIds) || interaction.claimedRequestIds.some((id) => typeof id !== "string") || interaction.slots.some((slot) => slot !== null && (typeof slot.dispatchId !== "string" || typeof slot.cityId !== "string" || !Array.isArray(slot.party) || slot.party.length < 1 || slot.party.length > 3 || new Set(slot.party).size !== slot.party.length || slot.party.some((id) => !data.ownedRelicIds.includes(id)) || !Number.isFinite(Date.parse(slot.startedAt)) || !Number.isFinite(Date.parse(slot.completesAt)) || Date.parse(slot.completesAt) <= Date.parse(slot.startedAt) || typeof slot.claimed !== "boolean"))) fail2("\uAD50\uB958 \uC9C4\uD589\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (typeof data.staminaUpdatedAt !== "string" || data.staminaUpdatedAt !== "" && !Number.isFinite(Date.parse(data.staminaUpdatedAt))) fail2("\uC2A4\uD14C\uBBF8\uB098 \uC815\uC0B0 \uC2DC\uAC01\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.playerCard || typeof data.playerCard !== "object" || JSON.stringify(data.playerCard) !== JSON.stringify(normalizePlayerCard(data.playerCard))) fail2("\uD50C\uB808\uC774\uC5B4 \uCE74\uB4DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.playerResearch || !Number.isInteger(data.playerResearch.level) || data.playerResearch.level < 1 || !Number.isInteger(data.playerResearch.experience) || data.playerResearch.experience < 0 || !Number.isInteger(data.playerResearch.experienceToNext) || data.playerResearch.experienceToNext <= 0 || data.playerResearch.experience >= data.playerResearch.experienceToNext) fail2("\uD50C\uB808\uC774\uC5B4 \uC5F0\uAD6C \uC9C4\uD589\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!excavation || !Array.isArray(excavation.assignedRelicIds) || excavation.assignedRelicIds.length !== 3 || excavation.assignedRelicIds.some((id) => id !== null && (!relicIds.has(id) || !data.ownedRelicIds.includes(id))) || excavation.assignedRelicIds.filter(Boolean).length !== new Set(excavation.assignedRelicIds.filter(Boolean)).size || excavation.lastSettledAt !== null && !Number.isFinite(Date.parse(excavation.lastSettledAt)) || !excavation.unclaimed || EXCAVATION_CURRENCIES.some((currency3) => !Number.isFinite(excavation.unclaimed[currency3]) || excavation.unclaimed[currency3] < 0) || !Number.isInteger(excavation.retroactiveExcavationGrantVersion) || excavation.retroactiveExcavationGrantVersion < 0 || excavation.retroactiveExcavationGrantVersion > RETROACTIVE_EXCAVATION_GRANT_VERSION || !Number.isFinite(excavation.baseStorageSeconds) || excavation.baseStorageSeconds <= 0 || !Number.isFinite(excavation.activeProductionMultiplier) || excavation.activeProductionMultiplier <= 0 || excavation.storageExtensionExpiresAt !== null && !Number.isFinite(Date.parse(excavation.storageExtensionExpiresAt))) fail2("\uBC1C\uAD74 \uC0C1\uD0DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (data.saveVersion !== CURRENT_SAVE_VERSION || !Array.isArray(data.ownedRelicIds) || data.ownedRelicIds.some((id) => !relicIds.has(id))) fail2("\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uB810\uB9AD ID\uAC00 \uC788\uC2B5\uB2C8\uB2E4.");
+    if (!Array.isArray(data.ownedRelicSkinIds) || defaultUnlockedRelicSkinIds().some((id) => !data.ownedRelicSkinIds.includes(id)) || new Set(data.ownedRelicSkinIds).size !== data.ownedRelicSkinIds.length || data.ownedRelicSkinIds.some((id) => !skinsById.has(id))) fail2("\uB810\uB9AD \uC2A4\uD0A8 \uC18C\uC720 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!data.equippedRelicSkinIds || typeof data.equippedRelicSkinIds !== "object" || Array.isArray(data.equippedRelicSkinIds) || Object.entries(data.equippedRelicSkinIds).some(([relicId, skinId]) => {
       const skin = skinId && skinsById.get(skinId);
       return !data.ownedRelicIds.includes(relicId) || !skin || !data.ownedRelicSkinIds.includes(skinId) || skin.relicId !== relicId;
-    })) fail("\uB810\uB9AD \uC2A4\uD0A8 \uC7A5\uCC29 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!Array.isArray(data.earnedProfileModifierIds) || !Array.isArray(data.equippedProfileModifierIds) || data.earnedProfileModifierIds.some((id) => !modifierIds.has(id)) || data.equippedProfileModifierIds.some((id) => !data.earnedProfileModifierIds.includes(id)) || new Set(data.earnedProfileModifierIds).size !== data.earnedProfileModifierIds.length || new Set(data.equippedProfileModifierIds).size !== data.equippedProfileModifierIds.length || data.equippedProfileModifierIds.length > 3) fail("\uD504\uB85C\uD544 \uC218\uC2DD\uC5B4 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (JSON.stringify(data.settings) !== JSON.stringify(normalizeSettings(data.settings))) fail("\uC124\uC815 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!Array.isArray(data.completedStoryIds) || data.completedStoryIds.some((id) => typeof id !== "string") || new Set(data.completedStoryIds).size !== data.completedStoryIds.length) fail("\uC644\uB8CC \uC2A4\uD1A0\uB9AC \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!Array.isArray(data.observationRecords) || data.observationRecords.some((record2) => !record2 || typeof record2.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(record2.date) || !relicIds.has(record2.relicId) || typeof record2.storyId !== "string" || typeof record2.questionId !== "string" || typeof record2.question !== "string" || typeof record2.choiceId !== "string" || typeof record2.answer !== "string" || typeof record2.personalityTag !== "string" || typeof record2.discoveredHabit !== "string")) fail("\uAD00\uCC30 \uC778\uD130\uBDF0 \uAE30\uB85D\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (new Set(data.observationRecords.map(({ date }) => date)).size !== data.observationRecords.length) fail("\uD558\uB8E8\uC5D0 \uAD00\uCC30 \uC778\uD130\uBDF0\uB97C \uB450 \uBC88 \uAE30\uB85D\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
-    if (!Array.isArray(data.party) || data.party.length !== 3 || new Set(data.party).size !== 3 || data.party.some((id) => !data.ownedRelicIds.includes(id))) fail("\uD30C\uD2F0\uB294 \uC11C\uB85C \uB2E4\uB978 \uBCF4\uC720 \uB810\uB9AD 3\uBA85\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
-    if (!relicIds.has(data.favorite) || !data.ownedRelicIds.includes(data.favorite)) fail("\uC560\uCC29 \uB810\uB9AD\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!Array.isArray(data.bookmarkedRelicIds) || data.bookmarkedRelicIds.some((id) => !data.ownedRelicIds.includes(id)) || new Set(data.bookmarkedRelicIds).size !== data.bookmarkedRelicIds.length) fail("\uC990\uACA8\uCC3E\uAE30 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (data.selectedStageId !== null && !stageIds.has(data.selectedStageId)) fail("\uC2A4\uD14C\uC774\uC9C0 ID\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!Array.isArray(data.clearedStageIds) || data.clearedStageIds.some((id) => !stageIds.has(id))) fail("\uD074\uB9AC\uC5B4 \uC9C4\uD589\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!data.wallet || !Number.isFinite(data.wallet.fossil) || data.wallet.fossil < 0 || !Number.isFinite(data.wallet.amber) || data.wallet.amber < 0 || !Number.isInteger(data.wallet.dnaFragments) || data.wallet.dnaFragments < 0 || !Number.isInteger(data.wallet.cheesecake) || data.wallet.cheesecake < 0) fail("\uC7AC\uD654\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!Number.isInteger(data.wallet.raidSigil) || data.wallet.raidSigil < 0 || !Number.isInteger(data.wallet.salvageRecord) || data.wallet.salvageRecord < 0 || !Number.isInteger(data.wallet.duelEmblem) || data.wallet.duelEmblem < 0) fail("\uC804\uB9AC\uD488 \uC99D\uD45C\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!data.gachaPityByGroup || [...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].some((id) => !Number.isInteger(data.gachaPityByGroup[id]?.pullsSinceSsr) || data.gachaPityByGroup[id].pullsSinceSsr < 0 || typeof data.gachaPityByGroup[id].pickupGuaranteed !== "boolean" || data.gachaPityByGroup[id].totalPulls !== void 0 && (!Number.isInteger(data.gachaPityByGroup[id].totalPulls) || data.gachaPityByGroup[id].totalPulls < 0))) fail("\uBC30\uB108 \uADF8\uB8F9 \uCC9C\uC7A5 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!data.relicProgress || typeof data.relicProgress !== "object") fail("\uC131\uC7A5 \uC815\uBCF4\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
-    if (data.ownedRelicIds.some((id) => !data.relicProgress[id]) || Object.keys(data.relicProgress).some((id) => !data.ownedRelicIds.includes(id))) fail("\uBCF4\uC720 \uB810\uB9AD\uACFC \uC131\uC7A5 \uC815\uBCF4\uAC00 \uC77C\uCE58\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    })) fail2("\uB810\uB9AD \uC2A4\uD0A8 \uC7A5\uCC29 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!Array.isArray(data.earnedProfileModifierIds) || !Array.isArray(data.equippedProfileModifierIds) || data.earnedProfileModifierIds.some((id) => !modifierIds.has(id)) || data.equippedProfileModifierIds.some((id) => !data.earnedProfileModifierIds.includes(id)) || new Set(data.earnedProfileModifierIds).size !== data.earnedProfileModifierIds.length || new Set(data.equippedProfileModifierIds).size !== data.equippedProfileModifierIds.length || data.equippedProfileModifierIds.length > 3) fail2("\uD504\uB85C\uD544 \uC218\uC2DD\uC5B4 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (JSON.stringify(data.settings) !== JSON.stringify(normalizeSettings(data.settings))) fail2("\uC124\uC815 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!Array.isArray(data.completedStoryIds) || data.completedStoryIds.some((id) => typeof id !== "string") || new Set(data.completedStoryIds).size !== data.completedStoryIds.length) fail2("\uC644\uB8CC \uC2A4\uD1A0\uB9AC \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!Array.isArray(data.observationRecords) || data.observationRecords.some((record2) => !record2 || typeof record2.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(record2.date) || !relicIds.has(record2.relicId) || typeof record2.storyId !== "string" || typeof record2.questionId !== "string" || typeof record2.question !== "string" || typeof record2.choiceId !== "string" || typeof record2.answer !== "string" || typeof record2.personalityTag !== "string" || typeof record2.discoveredHabit !== "string")) fail2("\uAD00\uCC30 \uC778\uD130\uBDF0 \uAE30\uB85D\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (new Set(data.observationRecords.map(({ date }) => date)).size !== data.observationRecords.length) fail2("\uD558\uB8E8\uC5D0 \uAD00\uCC30 \uC778\uD130\uBDF0\uB97C \uB450 \uBC88 \uAE30\uB85D\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    if (!Array.isArray(data.party) || data.party.length !== 3 || new Set(data.party).size !== 3 || data.party.some((id) => !data.ownedRelicIds.includes(id))) fail2("\uD30C\uD2F0\uB294 \uC11C\uB85C \uB2E4\uB978 \uBCF4\uC720 \uB810\uB9AD 3\uBA85\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
+    if (!relicIds.has(data.favorite) || !data.ownedRelicIds.includes(data.favorite)) fail2("\uC560\uCC29 \uB810\uB9AD\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!Array.isArray(data.bookmarkedRelicIds) || data.bookmarkedRelicIds.some((id) => !data.ownedRelicIds.includes(id)) || new Set(data.bookmarkedRelicIds).size !== data.bookmarkedRelicIds.length) fail2("\uC990\uACA8\uCC3E\uAE30 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (data.selectedStageId !== null && !stageIds.has(data.selectedStageId)) fail2("\uC2A4\uD14C\uC774\uC9C0 ID\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!Array.isArray(data.clearedStageIds) || data.clearedStageIds.some((id) => !stageIds.has(id))) fail2("\uD074\uB9AC\uC5B4 \uC9C4\uD589\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.wallet || !Number.isFinite(data.wallet.fossil) || data.wallet.fossil < 0 || !Number.isFinite(data.wallet.amber) || data.wallet.amber < 0 || !Number.isInteger(data.wallet.dnaFragments) || data.wallet.dnaFragments < 0 || !Number.isInteger(data.wallet.cheesecake) || data.wallet.cheesecake < 0) fail2("\uC7AC\uD654\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!Number.isInteger(data.wallet.raidSigil) || data.wallet.raidSigil < 0 || !Number.isInteger(data.wallet.salvageRecord) || data.wallet.salvageRecord < 0 || !Number.isInteger(data.wallet.duelEmblem) || data.wallet.duelEmblem < 0) fail2("\uC804\uB9AC\uD488 \uC99D\uD45C\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.gachaPityByGroup || [...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].some((id) => !Number.isInteger(data.gachaPityByGroup[id]?.pullsSinceSsr) || data.gachaPityByGroup[id].pullsSinceSsr < 0 || typeof data.gachaPityByGroup[id].pickupGuaranteed !== "boolean" || data.gachaPityByGroup[id].totalPulls !== void 0 && (!Number.isInteger(data.gachaPityByGroup[id].totalPulls) || data.gachaPityByGroup[id].totalPulls < 0))) fail2("\uBC30\uB108 \uADF8\uB8F9 \uCC9C\uC7A5 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.relicProgress || typeof data.relicProgress !== "object") fail2("\uC131\uC7A5 \uC815\uBCF4\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    if (data.ownedRelicIds.some((id) => !data.relicProgress[id]) || Object.keys(data.relicProgress).some((id) => !data.ownedRelicIds.includes(id))) fail2("\uBCF4\uC720 \uB810\uB9AD\uACFC \uC131\uC7A5 \uC815\uBCF4\uAC00 \uC77C\uCE58\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     for (const [id, progress] of Object.entries(data.relicProgress)) {
-      if (!relicIds.has(id) || !Number.isInteger(progress.breakthrough) || progress.breakthrough < 0 || progress.breakthrough > BREAKTHROUGH_CAP || !Number.isInteger(progress.exp) || progress.exp < 0 || !Number.isInteger(progress.bondLevel) || progress.bondLevel < 0 || progress.bondLevel > 10 || !Number.isInteger(progress.bondXp) || progress.bondXp < 0 || progress.bondXp > 650 || typeof progress.lastLobbyInteractionDate !== "string" || !Number.isInteger(progress.level) || progress.level < 1 || !Array.isArray(progress.heartGemSlots) || progress.heartGemSlots.length !== 3) fail("\uB810\uB9AD \uC131\uC7A5 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+      if (!relicIds.has(id) || !Number.isInteger(progress.breakthrough) || progress.breakthrough < 0 || progress.breakthrough > BREAKTHROUGH_CAP || !Number.isInteger(progress.exp) || progress.exp < 0 || !Number.isInteger(progress.bondLevel) || progress.bondLevel < 0 || progress.bondLevel > 10 || !Number.isInteger(progress.bondXp) || progress.bondXp < 0 || progress.bondXp > 650 || typeof progress.lastLobbyInteractionDate !== "string" || !Number.isInteger(progress.level) || progress.level < 1 || !Array.isArray(progress.heartGemSlots) || progress.heartGemSlots.length !== 3) fail2("\uB810\uB9AD \uC131\uC7A5 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     }
-    if (!data.relicFragments || typeof data.relicFragments !== "object" || Object.entries(data.relicFragments).some(([id, count2]) => !data.ownedRelicIds.includes(id) || !Number.isInteger(count2) || count2 < 0)) fail("\uB810\uB9AD \uD30C\uD3B8 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!Array.isArray(data.runeInventory)) fail("\uB8EC \uC778\uBCA4\uD1A0\uB9AC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.relicFragments || typeof data.relicFragments !== "object" || Object.entries(data.relicFragments).some(([id, count2]) => !data.ownedRelicIds.includes(id) || !Number.isInteger(count2) || count2 < 0)) fail2("\uB810\uB9AD \uD30C\uD3B8 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!Array.isArray(data.runeInventory)) fail2("\uB8EC \uC778\uBCA4\uD1A0\uB9AC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!Array.isArray(data.itemInventory) || new Set(data.itemInventory.map(({ itemId }) => itemId)).size !== data.itemInventory.length || data.itemInventory.some((stack) => {
       const { itemId, quantity } = stack;
       const item3 = findItem(itemId);
       return !item3 || item3.category === "rune" || item3.category === "currency" || !Number.isInteger(quantity) || quantity <= 0 || quantity > item3.maxStack || !isValidLotStack(stack);
-    })) fail("\uC911\uCCA9 \uC544\uC774\uD15C \uC778\uBCA4\uD1A0\uB9AC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    })) fail2("\uC911\uCCA9 \uC544\uC774\uD15C \uC778\uBCA4\uD1A0\uB9AC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     try {
       data.runeInventory.forEach(assertValidRuneInstance);
     } catch {
-      fail("\uB8EC \uC778\uBCA4\uD1A0\uB9AC\uC5D0 \uC190\uC0C1\uB41C \uC778\uC2A4\uD134\uC2A4\uAC00 \uC788\uC2B5\uB2C8\uB2E4.");
+      fail2("\uB8EC \uC778\uBCA4\uD1A0\uB9AC\uC5D0 \uC190\uC0C1\uB41C \uC778\uC2A4\uD134\uC2A4\uAC00 \uC788\uC2B5\uB2C8\uB2E4.");
     }
     const runeIds = data.runeInventory.map(({ instanceId }) => instanceId);
-    if (new Set(runeIds).size !== runeIds.length) fail("\uB8EC \uC778\uC2A4\uD134\uC2A4 ID\uAC00 \uC911\uBCF5\uB418\uC5C8\uC2B5\uB2C8\uB2E4.");
+    if (new Set(runeIds).size !== runeIds.length) fail2("\uB8EC \uC778\uC2A4\uD134\uC2A4 ID\uAC00 \uC911\uBCF5\uB418\uC5C8\uC2B5\uB2C8\uB2E4.");
     const equipped = Object.values(data.relicProgress).flatMap(({ heartGemSlots }) => heartGemSlots.filter((id) => id !== null));
-    if (equipped.some((id) => !runeIds.includes(id)) || new Set(equipped).size !== equipped.length) fail("\uB8EC \uC7A5\uCC29 \uC18C\uC720\uAD8C \uB610\uB294 \uC911\uBCF5\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!data.dailyContent || typeof data.dailyContent.date !== "string" || !Number.isInteger(data.dailyContent.restorationEntries) || data.dailyContent.restorationEntries < 0 || data.dailyContent.restorationEntries > 3 || !Array.isArray(data.dailyContent.completedIds) || !Array.isArray(data.dailyContent.claimedRewardIds)) fail("\uC77C\uC77C \uCF58\uD150\uCE20 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!data.bounty || !Array.isArray(data.bounty.clearedTierIds) || data.bounty.clearedTierIds.some((id) => typeof id !== "string" || !BOUNTY_TIERS.some((tier) => tier.id === id)) || new Set(data.bounty.clearedTierIds).size !== data.bounty.clearedTierIds.length) fail("\uD604\uC0C1\uC218\uBC30 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (equipped.some((id) => !runeIds.includes(id)) || new Set(equipped).size !== equipped.length) fail2("\uB8EC \uC7A5\uCC29 \uC18C\uC720\uAD8C \uB610\uB294 \uC911\uBCF5\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.dailyContent || typeof data.dailyContent.date !== "string" || !Number.isInteger(data.dailyContent.restorationEntries) || data.dailyContent.restorationEntries < 0 || data.dailyContent.restorationEntries > 3 || !Array.isArray(data.dailyContent.completedIds) || !Array.isArray(data.dailyContent.claimedRewardIds)) fail2("\uC77C\uC77C \uCF58\uD150\uCE20 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.bounty || !Array.isArray(data.bounty.clearedTierIds) || data.bounty.clearedTierIds.some((id) => typeof id !== "string" || !BOUNTY_TIERS.some((tier) => tier.id === id)) || new Set(data.bounty.clearedTierIds).size !== data.bounty.clearedTierIds.length) fail2("\uD604\uC0C1\uC218\uBC30 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!data.missions || typeof data.missions.dailyKey !== "string" || typeof data.missions.weeklyKey !== "string" || !data.missions.progress || typeof data.missions.progress !== "object" || Object.values(data.missions.progress).some((value) => !Number.isInteger(value) || value < 0) || !Array.isArray(data.missions.claimedIds) || new Set(data.missions.claimedIds).size !== data.missions.claimedIds.length || !data.missions.researchPoints || ["daily", "weekly"].some((period) => {
       const value = data.missions.researchPoints[period];
       return !Number.isInteger(value) || value < 0 || value > maxResearchPoints(period);
-    }) || !Array.isArray(data.missions.claimedResearchStageIds) || data.missions.claimedResearchStageIds.some((id) => typeof id !== "string") || new Set(data.missions.claimedResearchStageIds).size !== data.missions.claimedResearchStageIds.length) fail("\uC784\uBB34 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!data.productPurchases || typeof data.productPurchases !== "object" || Object.values(data.productPurchases).some((value) => typeof value.periodKey !== "string" || !Number.isInteger(value.count) || value.count < 0)) fail("\uC0C1\uD488 \uAD6C\uB9E4 \uC81C\uD55C \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    }) || !Array.isArray(data.missions.claimedResearchStageIds) || data.missions.claimedResearchStageIds.some((id) => typeof id !== "string") || new Set(data.missions.claimedResearchStageIds).size !== data.missions.claimedResearchStageIds.length) fail2("\uC784\uBB34 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.productPurchases || typeof data.productPurchases !== "object" || Object.values(data.productPurchases).some((value) => typeof value.periodKey !== "string" || !Number.isInteger(value.count) || value.count < 0)) fail2("\uC0C1\uD488 \uAD6C\uB9E4 \uC81C\uD55C \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     const adLimits = Object.fromEntries(AD_REWARD_SLOTS.map(({ id, dailyLimitUtc }) => [id, dailyLimitUtc]));
-    if (!data.dailyAdRewards || typeof data.dailyAdRewards.date !== "string" || !data.dailyAdRewards.claimsBySlot || Object.entries(data.dailyAdRewards.claimsBySlot).some(([id, count2]) => !(id in adLimits) || !Number.isInteger(count2) || count2 < 0 || count2 > adLimits[id]) || !Array.isArray(data.dailyAdRewards.requestIds) || data.dailyAdRewards.requestIds.some((id) => typeof id !== "string" || id.length === 0) || new Set(data.dailyAdRewards.requestIds).size !== data.dailyAdRewards.requestIds.length) fail("\uC77C\uC77C \uAD11\uACE0 \uC218\uB839 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!data.expedition || typeof data.expedition.weekKey !== "string" || typeof data.expedition.dayKey !== "string" || !Number.isInteger(data.expedition.playsToday) || data.expedition.playsToday < 0 || !Array.isArray(data.expedition.claimedRewardStageIds) || typeof data.expedition.bestAchievedAt !== "string" || !Number.isInteger(data.expedition.bestScore) || data.expedition.bestScore < 0 || !Number.isInteger(data.expedition.allTimeBestScore) || data.expedition.allTimeBestScore < 0 || !Array.isArray(data.expedition.lastParty) || data.expedition.lastParty.length > 3 || new Set(data.expedition.lastParty).size !== data.expedition.lastParty.length || data.expedition.lastParty.some((id) => !data.ownedRelicIds.includes(id)) || data.expedition.run !== null && normalizeExpeditionRun(data.expedition.run, data.ownedRelicIds) === null) fail("\uC6D0\uC815 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!data.raid || !Array.isArray(data.raid.instances) || !data.raid.instances.every(isRaidInstance) || new Set(data.raid.instances.map(({ id }) => id)).size !== data.raid.instances.length) fail("\uB808\uC774\uB4DC \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!data.cakeOperation || !Number.isInteger(data.cakeOperation.clearedIndex) || data.cakeOperation.clearedIndex < -1 || data.cakeOperation.clearedIndex >= CAKE_OPERATION_TIERS.length) fail("\uCE58\uC988\uCF00\uC774\uD06C \uB300\uC791\uC804 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.dailyAdRewards || typeof data.dailyAdRewards.date !== "string" || !data.dailyAdRewards.claimsBySlot || Object.entries(data.dailyAdRewards.claimsBySlot).some(([id, count2]) => !(id in adLimits) || !Number.isInteger(count2) || count2 < 0 || count2 > adLimits[id]) || !Array.isArray(data.dailyAdRewards.requestIds) || data.dailyAdRewards.requestIds.some((id) => typeof id !== "string" || id.length === 0) || new Set(data.dailyAdRewards.requestIds).size !== data.dailyAdRewards.requestIds.length) fail2("\uC77C\uC77C \uAD11\uACE0 \uC218\uB839 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.expedition || typeof data.expedition.weekKey !== "string" || typeof data.expedition.dayKey !== "string" || !Number.isInteger(data.expedition.playsToday) || data.expedition.playsToday < 0 || !Array.isArray(data.expedition.claimedRewardStageIds) || typeof data.expedition.bestAchievedAt !== "string" || !Number.isInteger(data.expedition.bestScore) || data.expedition.bestScore < 0 || !Number.isInteger(data.expedition.allTimeBestScore) || data.expedition.allTimeBestScore < 0 || !Array.isArray(data.expedition.lastParty) || data.expedition.lastParty.length > 3 || new Set(data.expedition.lastParty).size !== data.expedition.lastParty.length || data.expedition.lastParty.some((id) => !data.ownedRelicIds.includes(id)) || data.expedition.run !== null && normalizeExpeditionRun(data.expedition.run, data.ownedRelicIds) === null) fail2("\uC6D0\uC815 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.raid || !Array.isArray(data.raid.instances) || !data.raid.instances.every(isRaidInstance) || new Set(data.raid.instances.map(({ id }) => id)).size !== data.raid.instances.length) fail2("\uB808\uC774\uB4DC \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.cakeOperation || !Number.isInteger(data.cakeOperation.clearedIndex) || data.cakeOperation.clearedIndex < -1 || data.cakeOperation.clearedIndex >= CAKE_OPERATION_TIERS.length) fail2("\uCE58\uC988\uCF00\uC774\uD06C \uB300\uC791\uC804 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     this.validateRelicStory(data);
     this.validateProgressPasses(data);
-    if (!isValidDuelState(data.duel, data.ownedRelicIds)) fail("\uACB0\uD22C\uC7A5 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!Array.isArray(data.claimedMailIds) || data.claimedMailIds.some((id) => typeof id !== "string") || new Set(data.claimedMailIds).size !== data.claimedMailIds.length) fail("\uC6B0\uD3B8 \uC218\uB839 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!isValidAttendanceState(data.attendance)) fail("\uCD9C\uC11D \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!isValidRaidTicketDropState(data.raidTicketDrops)) fail("\uD1A0\uBC8C\uAD8C \uD68D\uB4DD \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!isValidAchievementState(data.achievements)) fail("\uC5C5\uC801 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!isValidTutorialState(data.tutorial)) fail("\uD29C\uD1A0\uB9AC\uC5BC \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (data.missions.lifetime !== void 0 && (typeof data.missions.lifetime !== "object" || data.missions.lifetime === null || Object.values(data.missions.lifetime).some((value) => !Number.isInteger(value) || value < 0))) fail("\uC784\uBB34 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (data.serverJournal !== void 0 && !isValidServerJournal(data.serverJournal)) fail("\uC11C\uBC84 \uCC98\uB9AC \uC601\uC218\uC99D\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (data.expedition.pendingRankRewards !== void 0 && (!Array.isArray(data.expedition.pendingRankRewards) || data.expedition.pendingRankRewards.some((reward) => !reward || typeof reward.weekKey !== "string" || !Number.isInteger(reward.score) || reward.score <= 0 || typeof reward.achievedAt !== "string") || new Set([data.expedition.pendingRankReward, ...data.expedition.pendingRankRewards].filter(Boolean).map((reward) => reward.weekKey)).size !== data.expedition.pendingRankRewards.length + (data.expedition.pendingRankReward ? 1 : 0))) fail("\uC6D0\uC815 \uC8FC\uAC04 \uBCF4\uC0C1 \uB300\uAE30\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!isValidDuelState(data.duel, data.ownedRelicIds)) fail2("\uACB0\uD22C\uC7A5 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!Array.isArray(data.claimedMailIds) || data.claimedMailIds.some((id) => typeof id !== "string") || new Set(data.claimedMailIds).size !== data.claimedMailIds.length) fail2("\uC6B0\uD3B8 \uC218\uB839 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!isValidAttendanceState(data.attendance)) fail2("\uCD9C\uC11D \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!isValidRaidTicketDropState(data.raidTicketDrops)) fail2("\uD1A0\uBC8C\uAD8C \uD68D\uB4DD \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!isValidAchievementState(data.achievements)) fail2("\uC5C5\uC801 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!isValidTutorialState(data.tutorial)) fail2("\uD29C\uD1A0\uB9AC\uC5BC \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (data.missions.lifetime !== void 0 && (typeof data.missions.lifetime !== "object" || data.missions.lifetime === null || Object.values(data.missions.lifetime).some((value) => !Number.isInteger(value) || value < 0))) fail2("\uC784\uBB34 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (data.serverJournal !== void 0 && !isValidServerJournal(data.serverJournal)) fail2("\uC11C\uBC84 \uCC98\uB9AC \uC601\uC218\uC99D\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (data.expedition.pendingRankRewards !== void 0 && (!Array.isArray(data.expedition.pendingRankRewards) || data.expedition.pendingRankRewards.some((reward) => !reward || typeof reward.weekKey !== "string" || !Number.isInteger(reward.score) || reward.score <= 0 || typeof reward.achievedAt !== "string") || new Set([data.expedition.pendingRankReward, ...data.expedition.pendingRankRewards].filter(Boolean).map((reward) => reward.weekKey)).size !== data.expedition.pendingRankRewards.length + (data.expedition.pendingRankReward ? 1 : 0))) fail2("\uC6D0\uC815 \uC8FC\uAC04 \uBCF4\uC0C1 \uB300\uAE30\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
   }
   /** 받은 마디는 그 패스의 실제 문턱값만, 한 번씩만 허용한다. 레이드 입장 수는 0 이상의 정수다. */
   validateProgressPasses(data) {
@@ -25379,6 +25609,756 @@ function isRaidInstance(value) {
   const raid = value;
   return typeof raid.id === "string" && raid.id.length > 0 && (raid.kind === "world" || raid.kind === "summon") && typeof raid.bossRelicId === "string" && isRaidDifficulty(raid.difficulty) && typeof raid.openedAt === "string" && Number.isFinite(Date.parse(raid.openedAt)) && typeof raid.endsAt === "string" && Number.isFinite(Date.parse(raid.endsAt)) && (raid.summonerName === void 0 || typeof raid.summonerName === "string") && typeof raid.summonedByMe === "boolean" && Number.isInteger(raid.myDamage) && raid.myDamage >= 0 && (raid.appliedDamage === void 0 || Number.isInteger(raid.appliedDamage) && raid.appliedDamage >= 0 && raid.appliedDamage <= raid.myDamage) && Number.isInteger(raid.attemptsUsed) && raid.attemptsUsed >= 0 && typeof raid.settled === "boolean";
 }
+
+// src/api/FakeServer.ts
+init_define_import_meta_env();
+
+// src/api/serverClock.ts
+init_define_import_meta_env();
+var offsetMs = 0;
+function serverNow() {
+  return new Date(Date.now() + offsetMs);
+}
+
+// src/core/gacha.ts
+init_define_import_meta_env();
+function pullCost(banner, count2) {
+  return count2 === 10 ? banner.costTen : banner.costOne * count2;
+}
+var RESEARCH_TICKET_GEM_PRICE = 300;
+function pullPayment(wallet, banner, count2) {
+  const cost = pullCost(banner, count2);
+  const tickets = Math.max(0, Math.min(cost, wallet[banner.currency]));
+  const gems2 = (cost - tickets) * RESEARCH_TICKET_GEM_PRICE;
+  return { tickets, gems: gems2, affordable: wallet.gems >= gems2 };
+}
+function bannerPullsRemaining(banner, pity) {
+  if (banner.pullLimit === void 0) return Number.POSITIVE_INFINITY;
+  return Math.max(0, banner.pullLimit - (pity?.totalPulls ?? 0));
+}
+function bannerAcceptsCount(banner, count2, pity) {
+  if (banner.tenOnly && count2 !== 10) return false;
+  return count2 <= bannerPullsRemaining(banner, pity);
+}
+function canPull(wallet, banner, count2, pity) {
+  return pullPayment(wallet, banner, count2).affordable && bannerAcceptsCount(banner, count2, pity);
+}
+function choose(values, rng) {
+  if (values.length === 0) throw new Error("\uCD94\uCCA8\uD560 \uB810\uB9AD \uD480\uC774 \uBE44\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.");
+  return values[Math.min(values.length - 1, Math.floor(rng() * values.length))];
+}
+function determineGrade(banner, random) {
+  let cumulative = 0;
+  for (const grade of ["SSR", "SR", "R", "GRAY"]) {
+    cumulative = Number((cumulative + banner.slotRates[grade]).toFixed(12));
+    if (random < cumulative) return grade;
+  }
+  return "GRAY";
+}
+function rewardAmount(reward, random) {
+  return reward.min + Math.min(reward.max - reward.min, Math.floor(random * (reward.max - reward.min + 1)));
+}
+function pull(banner, count2, currentPity, rng) {
+  const relicIds = [];
+  const rarities = [];
+  const slots = [];
+  let pity = { ...currentPity };
+  for (let slot = 0; slot < count2; slot += 1) {
+    const pityForcesSsr = pity.pullsSinceSsr + 1 >= banner.highestRarityGuarantee;
+    let grade = pityForcesSsr ? "SSR" : determineGrade(banner, rng());
+    if (!pityForcesSsr && count2 === 10 && slot === 9 && (grade === "GRAY" || grade === "R")) grade = "SR";
+    if (grade === "GRAY") {
+      const totalWeight = banner.grayRewards.reduce((sum, reward2) => sum + reward2.weight, 0);
+      const roll3 = rng() * totalWeight;
+      let cursor = 0;
+      const reward = banner.grayRewards.find((candidate) => (cursor += candidate.weight) > roll3) ?? banner.grayRewards.at(-1);
+      if (!reward) throw new Error("\uD68C\uC0C9 \uBCF4\uC0C1 \uD480\uC774 \uBE44\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.");
+      const amount = rewardAmount(reward, rng());
+      slots.push({ kind: "currency", currency: reward.kind, amount, grade: "GRAY" });
+      pity = { ...pity, pullsSinceSsr: pity.pullsSinceSsr + 1 };
+      continue;
+    }
+    const rarity = grade;
+    const fullPool = banner.relicPools[rarity];
+    const pickupPool = banner.pickupRelicIds[rarity] ?? [];
+    const nonPickupPool = fullPool.filter((id) => !pickupPool.includes(id));
+    const guaranteesPickup = rarity === "SSR" && pity.pickupGuaranteed && pickupPool.length > 0;
+    const pickedUp = guaranteesPickup || pickupPool.length > 0 && rng() < banner.pickupRate;
+    const selectionPool = pickedUp ? pickupPool : nonPickupPool.length > 0 ? nonPickupPool : fullPool;
+    const relicId = choose(selectionPool, rng);
+    relicIds.push(relicId);
+    rarities.push(rarity);
+    slots.push({ kind: "relic", relicId, rarity });
+    if (rarity === "SSR") {
+      pity = { pullsSinceSsr: 0, pickupGuaranteed: pickupPool.length > 0 && !pickedUp };
+    } else {
+      pity = { ...pity, pullsSinceSsr: pity.pullsSinceSsr + 1 };
+    }
+  }
+  return { slots, relicIds, rarities, pity };
+}
+function spend(wallet, banner, count2) {
+  if (!canPull(wallet, banner, count2)) return wallet;
+  const payment = pullPayment(wallet, banner, count2);
+  return { ...wallet, [banner.currency]: wallet[banner.currency] - payment.tickets, gems: wallet.gems - payment.gems };
+}
+function resolveAcquisitions(ownedRelicIds, fragmentsById, results, breakthroughGradeById = {}, maxStars = 5, overflowAmountOf = () => 1) {
+  const owned = new Set(ownedRelicIds);
+  const fragments = { ...fragmentsById };
+  const slots = [];
+  const newRelicIds = [];
+  const duplicateRelicIds = [];
+  let overflowFragments = 0;
+  for (const relicId of results) {
+    if (!owned.has(relicId)) {
+      owned.add(relicId);
+      newRelicIds.push(relicId);
+      slots.push({ relicId, kind: "new", fragments: 0, overflowFragments: 0 });
+      continue;
+    }
+    duplicateRelicIds.push(relicId);
+    if ((breakthroughGradeById[relicId] ?? 1) >= maxStars) {
+      const amount = overflowAmountOf(relicId);
+      overflowFragments += amount;
+      slots.push({ relicId, kind: "overflow", fragments: 0, overflowFragments: amount });
+    } else {
+      fragments[relicId] = (fragments[relicId] ?? 0) + 1;
+      slots.push({ relicId, kind: "fragment", fragments: 1, overflowFragments: 0 });
+    }
+  }
+  return { slots, newRelicIds, duplicateRelicIds, ownedRelicIds: owned, fragmentsById: fragments, overflowFragments };
+}
+
+// src/api/FakeSocialServer.ts
+init_define_import_meta_env();
+
+// src/core/social.ts
+init_define_import_meta_env();
+var DAILY_HELPER_LIMIT = 3;
+var FRIEND_POINTS_PER_RENTAL = 10;
+function helperRentalAvailability(usedToday) {
+  const normalized = Math.max(0, Math.floor(usedToday));
+  const remaining = Math.max(0, DAILY_HELPER_LIMIT - normalized);
+  return { allowed: remaining > 0, remaining };
+}
+var FRIEND_LIMIT = 50;
+var FRIEND_REQUEST_LIMIT = 30;
+var ONLINE_WINDOW_MS = 5 * 6e4;
+function normalizeSearchQuery(raw) {
+  return raw.trim();
+}
+function matchesUserQuery(user, query) {
+  const normalized = normalizeSearchQuery(query);
+  if (normalized.length === 0) return false;
+  if (user.displayName.toLocaleLowerCase().includes(normalized.toLocaleLowerCase())) return true;
+  const digits = normalized.replace(/\D/g, "");
+  return digits.length > 0 && user.uid === digits;
+}
+
+// src/data/friendDirectory.ts
+init_define_import_meta_env();
+var NOW2 = Date.now();
+var MINUTE = 6e4;
+function preview(id, uid, displayName, level, frameId, status, relicId, relicLevel, breakthroughGrade2, lastActiveAt) {
+  const relic = getRelic(relicId);
+  return {
+    id,
+    uid,
+    frameId,
+    displayName,
+    level,
+    status,
+    lastActiveAt,
+    equippedModifiers: [],
+    favoriteRelic: {
+      relicId,
+      level: relicLevel,
+      breakthroughGrade: breakthroughGrade2,
+      stats: applyLevelGrowth(relic.stats, relicLevel, relic.rarity),
+      skillIds: [`${relicId}-basic`, `${relicId}-passive`, `${relicId}-ultimate`]
+    },
+    competitiveStats: {}
+  };
+}
+var SAMPLE_DIRECTORY = [
+  { relation: "friend", profile: preview("friend-dawn", "275810396", "\uC0C8\uBCBD\uD45C\uBCF8", 22, "field", "\uC544\uCE68 \uC21C\uCC30 \uC911", "parua", 20, 3, NOW2 - 3 * 60 * MINUTE) },
+  { relation: "friend", favorite: true, profile: preview("friend-amber", "930274815", "\uD638\uBC15\uC0C1\uC790", 35, "amber", "\uBC1C\uAD74 \uC77C\uC9C0 \uC815\uB9AC", "stella", 32, 4, NOW2 - 2 * 24 * 60 * MINUTE) },
+  { relation: "friend", profile: preview("friend-wave", "514602783", "\uD30C\uB3C4\uC18C\uB9AC", 14, "field", "\uCC9C\uCC9C\uD788 \uD0A4\uC6B0\uB294 \uC911", "dodo", 12, 2, NOW2 - 2e4) },
+  { relation: "incoming", requestedAt: NOW2 - 25 * MINUTE, profile: preview("user-fog", "187305926", "\uC548\uAC1C\uAE30\uB85D", 24, "holo", "\uAC19\uC774 \uD574\uC694", "luka", 21, 3, NOW2 - 8 * MINUTE) },
+  { relation: "incoming", requestedAt: NOW2 - 5 * 60 * MINUTE, profile: preview("user-sand", "706418259", "\uBAA8\uB798\uC2DC\uACC4", 11, "field", "\uCC98\uC74C \uC2DC\uC791\uD588\uC5B4\uC694", "toby", 9, 1, NOW2 - 2 * 60 * MINUTE) },
+  { relation: "outgoing", requestedAt: NOW2 - 3 * 60 * MINUTE, profile: preview("user-lighthouse", "362591048", "\uD478\uB978\uB4F1\uB300", 40, "abyss", "\uB808\uC774\uB4DC \uAC19\uC774 \uB3CC \uBD84", "rex", 38, 5, NOW2 - 4e4) },
+  { relation: "none", profile: preview("user-stars", "849062317", "\uBCC4\uBB34\uB9AC", 29, "holo", "\uD45C\uBCF8 \uC218\uC9D1\uAC00", "torika", 26, 4, NOW2 - 15 * MINUTE) },
+  { relation: "none", profile: preview("user-fern", "621874503", "\uACE0\uC0AC\uB9AC\uC232", 18, "field", "\uC870\uC6A9\uD788 \uD50C\uB808\uC774", "kento", 16, 2, NOW2 - 26 * 60 * MINUTE) },
+  { relation: "none", profile: preview("user-late", "453719806", "\uB2A6\uC740\uD45C\uBCF8", 31, "amber", "\uBC24\uC5D0 \uC811\uC18D\uD574\uC694", "mosana", 28, 3, NOW2 - 4 * 24 * 60 * MINUTE) },
+  { relation: "none", profile: preview("user-garden", "198456230", "\uC815\uC6D0\uC0AC\uD558\uB8E8", 47, "garden", "\uC815\uC6D0 \uAD00\uB9AC \uC911", "ella", 44, 5, NOW2 - 9e4) }
+];
+var PREVIEW_DIRECTORY = QA_TOOLS_ENABLED ? [
+  ...PREVIEW_FRIENDS.map((profile) => ({ profile, relation: "friend", favorite: profile.id === "friend-haneul" })),
+  ...SAMPLE_DIRECTORY
+] : [];
+
+// src/api/FakeSocialServer.ts
+var SocialApiError = class extends Error {
+  constructor(code, message) {
+    super(message);
+    this.code = code;
+    this.name = "SocialApiError";
+  }
+  code;
+};
+function cloneProfile(friend) {
+  return {
+    ...friend,
+    equippedModifiers: friend.equippedModifiers.map((modifier) => ({ ...modifier })),
+    favoriteRelic: { ...friend.favoriteRelic, stats: { ...friend.favoriteRelic.stats }, skillIds: [...friend.favoriteRelic.skillIds] },
+    competitiveStats: {
+      ...friend.competitiveStats,
+      highestStage: friend.competitiveStats.highestStage ? { ...friend.competitiveStats.highestStage } : void 0,
+      arenaTier: friend.competitiveStats.arenaTier ? { ...friend.competitiveStats.arenaTier } : void 0
+    }
+  };
+}
+var RECOMMENDATION_COUNT = 10;
+var FakeSocialServer = class {
+  constructor(now = Date.now) {
+    this.now = now;
+    for (const entry of PREVIEW_DIRECTORY) {
+      this.profiles.set(entry.profile.id, entry.profile);
+      if (entry.relation === "friend") this.friendIds.add(entry.profile.id);
+      if (entry.relation === "friend" && entry.favorite) this.favoriteIds.add(entry.profile.id);
+      if (entry.relation === "incoming") this.incoming.set(entry.profile.id, entry.requestedAt ?? this.now());
+      if (entry.relation === "outgoing") this.outgoing.set(entry.profile.id, entry.requestedAt ?? this.now());
+    }
+  }
+  now;
+  friendPoints = QA_TOOLS_ENABLED ? 120 : 0;
+  helperUsesToday = 0;
+  profiles = /* @__PURE__ */ new Map();
+  friendIds = /* @__PURE__ */ new Set();
+  favoriteIds = /* @__PURE__ */ new Set();
+  incoming = /* @__PURE__ */ new Map();
+  outgoing = /* @__PURE__ */ new Map();
+  listeners = /* @__PURE__ */ new Set();
+  /** 받은 신청 수가 바뀔 때 부르는 신호. 로비 빨간 점이 이 신호로 다시 읽는다. */
+  subscribe(listener) {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  }
+  emit() {
+    for (const listener of this.listeners) listener();
+  }
+  /** 받은 신청 수. 알림 신호가 읽는 값이다. */
+  pendingRequestCount() {
+    return this.incoming.size;
+  }
+  relationOf(userId) {
+    if (this.friendIds.has(userId)) return "friend";
+    if (this.incoming.has(userId)) return "incoming";
+    if (this.outgoing.has(userId)) return "outgoing";
+    return "none";
+  }
+  profileOf(userId) {
+    const profile = this.profiles.get(userId);
+    if (!profile) throw new SocialApiError("USER_NOT_FOUND", "\uC774\uC6A9\uC790 \uC815\uBCF4\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    return profile;
+  }
+  async getFriends() {
+    const friends = [...this.friendIds].map((id) => cloneProfile(this.profileOf(id)));
+    return { friends, favoriteIds: [...this.favoriteIds], friendPoints: this.friendPoints, helperUsesToday: this.helperUsesToday, friendLimit: FRIEND_LIMIT, serverTime: this.now() };
+  }
+  /** 받은 신청·보낸 신청. 둘 다 최근에 오간 것이 위다. */
+  async getRequests() {
+    const list = (source) => [...source.entries()].sort((a, b) => b[1] - a[1]).map(([id, requestedAt]) => ({ profile: cloneProfile(this.profileOf(id)), requestedAt }));
+    return { incoming: list(this.incoming), outgoing: list(this.outgoing), requestLimit: FRIEND_REQUEST_LIMIT, serverTime: this.now() };
+  }
+  /** 한 검색어로 이름(부분 일치)과 고유 ID(정확히 일치)를 함께 찾는다. `selfUid`는 자기 자신을 결과에서 뺀다. */
+  async searchUsers(request) {
+    const users = [...this.profiles.values()].filter((profile) => profile.uid !== request.selfUid && matchesUserQuery(profile, request.query)).sort((a, b) => b.lastActiveAt - a.lastActiveAt).map((profile) => ({ profile: cloneProfile(profile), relation: this.relationOf(profile.id) }));
+    return { users, serverTime: this.now() };
+  }
+  /** 아직 아무 관계도 아닌 이용자를 최근 접속순으로 추천한다. */
+  async getRecommendations(selfUid) {
+    const users = [...this.profiles.values()].filter((profile) => profile.uid !== selfUid && this.relationOf(profile.id) === "none").sort((a, b) => b.lastActiveAt - a.lastActiveAt).slice(0, RECOMMENDATION_COUNT).map((profile) => ({ profile: cloneProfile(profile), relation: "none" }));
+    return { users, serverTime: this.now() };
+  }
+  /**
+   * 친구 신청. 상대가 이미 나에게 신청했다면 **서로 원한 것이라 곧바로 친구가 된다**.
+   */
+  async sendRequest(userId, selfUid) {
+    const profile = this.profileOf(userId);
+    if (profile.uid === selfUid) throw new SocialApiError("SELF_REQUEST", "\uC790\uAE30 \uC790\uC2E0\uC5D0\uAC8C\uB294 \uC2E0\uCCAD\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    const relation = this.relationOf(userId);
+    if (relation === "friend") throw new SocialApiError("ALREADY_FRIEND", "\uC774\uBBF8 \uCE5C\uAD6C\uC785\uB2C8\uB2E4.");
+    if (relation === "outgoing") throw new SocialApiError("ALREADY_REQUESTED", "\uC774\uBBF8 \uC2E0\uCCAD\uD588\uC2B5\uB2C8\uB2E4.");
+    if (relation === "incoming") {
+      await this.acceptRequest(userId);
+      return { relation: "friend" };
+    }
+    if (this.friendIds.size >= FRIEND_LIMIT) throw new SocialApiError("FRIEND_LIMIT", "\uCE5C\uAD6C \uBAA9\uB85D\uC774 \uAC00\uB4DD \uCC3C\uC2B5\uB2C8\uB2E4.");
+    if (this.outgoing.size >= FRIEND_REQUEST_LIMIT) throw new SocialApiError("REQUEST_LIMIT", "\uBCF4\uB0B8 \uC2E0\uCCAD\uC774 \uB108\uBB34 \uB9CE\uC2B5\uB2C8\uB2E4.");
+    this.outgoing.set(userId, this.now());
+    return { relation: "outgoing" };
+  }
+  /** 보낸 신청을 거둔다. */
+  async cancelRequest(userId) {
+    if (!this.outgoing.delete(userId)) throw new SocialApiError("REQUEST_NOT_FOUND", "\uCDE8\uC18C\uD560 \uC2E0\uCCAD\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
+  }
+  async acceptRequest(userId) {
+    if (!this.incoming.has(userId)) throw new SocialApiError("REQUEST_NOT_FOUND", "\uBC1B\uC740 \uC2E0\uCCAD\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    if (this.friendIds.size >= FRIEND_LIMIT) throw new SocialApiError("FRIEND_LIMIT", "\uCE5C\uAD6C \uBAA9\uB85D\uC774 \uAC00\uB4DD \uCC3C\uC2B5\uB2C8\uB2E4.");
+    this.incoming.delete(userId);
+    this.outgoing.delete(userId);
+    this.friendIds.add(userId);
+    this.emit();
+  }
+  async declineRequest(userId) {
+    if (!this.incoming.delete(userId)) throw new SocialApiError("REQUEST_NOT_FOUND", "\uBC1B\uC740 \uC2E0\uCCAD\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    this.emit();
+  }
+  /** 받은 신청을 오래된 순으로 모두 수락한다. 친구 상한에 닿으면 멈추고 남은 몫은 `skipped`다. */
+  async acceptAllRequests() {
+    const ids = [...this.incoming.entries()].sort((a, b) => a[1] - b[1]).map(([id]) => id);
+    let processed = 0;
+    for (const id of ids) {
+      if (this.friendIds.size >= FRIEND_LIMIT) break;
+      await this.acceptRequest(id);
+      processed += 1;
+    }
+    return { processed, skipped: ids.length - processed };
+  }
+  async declineAllRequests() {
+    const processed = this.incoming.size;
+    this.incoming.clear();
+    if (processed > 0) this.emit();
+    return { processed, skipped: 0 };
+  }
+  async setFavorite(friendId, favorite) {
+    if (!this.friendIds.has(friendId)) throw new SocialApiError("FRIEND_NOT_FOUND", "\uCE5C\uAD6C \uC815\uBCF4\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    if (favorite) this.favoriteIds.add(friendId);
+    else this.favoriteIds.delete(friendId);
+  }
+  /** 친구 관계만 끊는다. 상대가 다시 신청하면 받은 신청으로 들어온다. */
+  async removeFriend(friendId) {
+    if (!this.friendIds.delete(friendId)) throw new SocialApiError("FRIEND_NOT_FOUND", "\uCE5C\uAD6C \uC815\uBCF4\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    this.favoriteIds.delete(friendId);
+  }
+  /** 일일 제한 확인, 양쪽 포인트 지급, 사용 횟수 증가를 실제 서버의 단일 처리처럼 묶는다. */
+  async rentFavoriteRelic(friendId) {
+    const friend = this.friendIds.has(friendId) ? this.profiles.get(friendId) : void 0;
+    if (!friend) throw new SocialApiError("FRIEND_NOT_FOUND", "\uCE5C\uAD6C \uC815\uBCF4\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    const availability = helperRentalAvailability(this.helperUsesToday);
+    if (!availability.allowed) throw new SocialApiError("DAILY_HELPER_LIMIT", "\uC624\uB298\uC758 \uC870\uB825\uC790 \uB300\uC5EC\uB97C \uBAA8\uB450 \uC0AC\uC6A9\uD588\uC2B5\uB2C8\uB2E4.");
+    this.helperUsesToday += 1;
+    this.friendPoints += FRIEND_POINTS_PER_RENTAL;
+    return { friendId, relicId: friend.favoriteRelic.relicId, renterPointsEarned: FRIEND_POINTS_PER_RENTAL, ownerPointsEarned: FRIEND_POINTS_PER_RENTAL, friendPoints: this.friendPoints, remaining: helperRentalAvailability(this.helperUsesToday).remaining };
+  }
+};
+var localSocial = new FakeSocialServer();
+var activeSocial = localSocial;
+var subscribers = /* @__PURE__ */ new Set();
+var stopSignal;
+var socialApi = new Proxy({}, {
+  get(_target, key) {
+    if (key === "subscribe") return (listener) => {
+      subscribers.add(listener);
+      if (!stopSignal) stopSignal = activeSocial.subscribe(() => subscribers.forEach((next) => next()));
+      return () => {
+        subscribers.delete(listener);
+      };
+    };
+    const value = activeSocial[key];
+    return typeof value === "function" ? value.bind(activeSocial) : void 0;
+  }
+});
+
+// src/core/mileage.ts
+init_define_import_meta_env();
+var MILEAGE_PER_PULL = 1;
+var MILEAGE_OVERFLOW_BY_RARITY = { SSR: 30, SR: 8, R: 2 };
+function mileageForPull(count2, overflowTotal) {
+  return count2 * MILEAGE_PER_PULL + overflowTotal;
+}
+
+// src/data/observations.ts
+init_define_import_meta_env();
+var COMMON_OBSERVATION_QUESTIONS = [
+  { id: "unknown-sound", prompt: "\uB0AF\uC120 \uC18C\uB9AC\uAC00 \uB4E4\uB9AC\uBA74 \uC5B4\uB5BB\uAC8C \uD560 \uAC70\uC57C?", choices: [
+    { id: "approach", label: "\uC18C\uB9AC\uAC00 \uB09C \uACF3\uC744 \uBA3C\uC800 \uC0B4\uD540\uB2E4", personalityTag: "\uD638\uAE30\uC2EC", habitKey: "approach" },
+    { id: "wait", label: "\uC548\uC804\uD55C \uACF3\uC5D0\uC11C \uD55C\uB3D9\uC548 \uAE30\uB2E4\uB9B0\uB2E4", personalityTag: "\uC2E0\uC911\uD568", habitKey: "wait" }
+  ] },
+  { id: "shared-food", prompt: "\uBA39\uC774\uB97C \uB3D9\uB8CC\uC640 \uB098\uB220\uC57C \uD55C\uB2E4\uBA74?", choices: [
+    { id: "share", label: "\uBA3C\uC800 \uB3D9\uB8CC\uC758 \uBAAB\uC744 \uB0A8\uAE34\uB2E4", personalityTag: "\uBC30\uB824", habitKey: "share" },
+    { id: "guard", label: "\uC8FC\uBCC0\uC744 \uC9C0\uD0A4\uBA70 \uCC28\uB840\uB97C \uC815\uD55C\uB2E4", personalityTag: "\uC9C8\uC11C", habitKey: "guard" }
+  ] }
+];
+var RELIC_OBSERVATION_QUESTIONS = {
+  torika: [
+    // 먹이 화제에서 토리카의 왕성한 식욕과 동료 배려, 부끄러움 중 어느 면이 앞서는지 검증한다.
+    { id: "torika-meal-appetite", prompt: "\uD3C9\uC18C \uBA39\uB294 \uC591\uACFC \uC88B\uC544\uD558\uB294 \uBA39\uC774\uB97C \uBB3C\uC73C\uBA74 \uC5B4\uB5A4 \uBC18\uC751\uC744 \uBCF4\uC5EC?", choices: [
+      { id: "torika-meal-eager", label: "\uC88B\uC544\uD558\uB294 \uBA39\uC774\uBD80\uD130 \uC2E0\uB098\uAC8C \uC774\uC57C\uAE30\uD55C\uB2E4", personalityTag: "\uC655\uC131\uD55C \uC2DD\uC695", habitKey: "torikaMealEager" },
+      { id: "torika-meal-share", label: "\uB3D9\uB8CC\uB4E4\uC774 \uBA39\uC744 \uBAAB\uBD80\uD130 \uD5E4\uC544\uB9B0\uB2E4", personalityTag: "\uB3D9\uB8CC \uBC30\uB824", habitKey: "torikaMealShare" },
+      { id: "torika-meal-shy", label: "\uBA39\uC740 \uC591\uC740 \uC791\uAC8C \uB9D0\uD558\uACE0 \uC88B\uC544\uD558\uB294 \uC78E\uB9CC \uC54C\uB824 \uC900\uB2E4", personalityTag: "\uC465\uC2A4\uB7EC\uC6C0", habitKey: "torikaMealShy" }
+    ] },
+    // 몸무게 화제에서 볏이 붉어진다는 기존 관찰 기록을 서로 다른 대처 방식으로 이어 간다.
+    { id: "torika-weight-reaction", prompt: "\uBAB8\uBB34\uAC8C \uC774\uC57C\uAE30\uAC00 \uB098\uC624\uBA74 \uD1A0\uB9AC\uCE74\uB294 \uC5B4\uB5BB\uAC8C \uBC18\uC751\uD574?", choices: [
+      { id: "torika-weight-honest", label: "\uBD89\uC5B4\uC9C4 \uCC44\uB85C \uC9C0\uAE08 \uC218\uCE58\uB97C \uB610\uBC15\uB610\uBC15 \uB9D0\uD55C\uB2E4", personalityTag: "\uC194\uC9C1\uD568", habitKey: "torikaWeightHonest" },
+      { id: "torika-weight-deflect", label: "\uBCCF\uC744 \uAC00\uB9AC\uBA70 \uC5BC\uB978 \uB2E4\uB978 \uC774\uC57C\uAE30\uB97C \uAEBC\uB0B8\uB2E4", personalityTag: "\uC465\uC2A4\uB7EC\uC6C0", habitKey: "torikaWeightDeflect" }
+    ] },
+    // 한 걸음 물러나도 앞을 막는 설정에서 두려움의 인정과 보호 행동을 각각 관찰한다.
+    { id: "torika-frightened-shield", prompt: "\uAC81\uC774 \uB098\uB294\uB370\uB3C4 \uB204\uAD70\uAC00\uC758 \uC55E\uC744 \uB9C9\uC544\uC11C\uC57C \uD560 \uB54C \uC5B4\uB5A4 \uBC18\uC751\uC744 \uBCF4\uC5EC?", choices: [
+      { id: "torika-shield-admit", label: "\uBB34\uC12D\uB2E4\uACE0 \uB9D0\uD55C \uB4A4 \uD55C \uAC78\uC74C \uBB3C\uB7EC\uC11C \uC790\uB9AC\uB97C \uC9C0\uD0A8\uB2E4", personalityTag: "\uB450\uB824\uC6C0 \uC778\uC815", habitKey: "torikaShieldAdmit" },
+      { id: "torika-shield-protect", label: "\uB5A8\uB9AC\uB294 \uB2E4\uB9AC\uB97C \uBC84\uD2F0\uBA70 \uC0C1\uB300\uC758 \uC55E\uC744 \uAC00\uB85C\uB9C9\uB294\uB2E4", personalityTag: "\uBCF4\uD638\uBCF8\uB2A5", habitKey: "torikaShieldProtect" }
+    ] }
+  ],
+  rex: [
+    // 큰 상대를 마주한 렉시아가 격식을 지키는 경쟁심과 체격 자체의 승부욕 중 어느 쪽을 보이는지 검증한다.
+    { id: "rex-size-rivalry", prompt: "\uC790\uC2E0\uBCF4\uB2E4 \uD6E8\uC52C \uD070 \uC0C1\uB300\uAC00 \uC55E\uC744 \uB9C9\uC73C\uBA74 \uC5B4\uB5BB\uAC8C \uBC18\uC751\uD574?", choices: [
+      { id: "rex-size-formal", label: "\uC790\uC138\uB97C \uACE7\uAC8C \uC138\uC6B0\uACE0 \uBA3C\uC800 \uC815\uC2DD\uC73C\uB85C \uC2B9\uBD80\uB97C \uCCAD\uD55C\uB2E4", personalityTag: "\uACA9\uC2DD \uC788\uB294 \uACBD\uC7C1\uC2EC", habitKey: "rexSizeFormal" },
+      { id: "rex-size-wrestle", label: "\uCCB4\uACA9 \uCC28\uC774\uB97C \uC9C0\uC801\uD558\uC790 \uACE7\uBC14\uB85C \uD798\uACA8\uB8E8\uAE30\uB97C \uC694\uAD6C\uD55C\uB2E4", personalityTag: "\uCCB4\uACA9 \uC2B9\uBD80\uC695", habitKey: "rexSizeWrestle" }
+    ] },
+    // 압도적인 강자 앞에서 공정한 조건을 중시하는지, 강자와 즉시 겨루고 싶어 하는지 검증한다.
+    { id: "rex-strong-challenge", prompt: "\uC555\uB3C4\uC801\uC73C\uB85C \uAC15\uD55C \uC0C1\uB300\uB97C \uBC1C\uACAC\uD558\uBA74 \uC5B4\uB5BB\uAC8C \uD560 \uAC70\uC57C?", choices: [
+      { id: "rex-strong-fair", label: "\uC0C1\uB300\uC758 \uC7A5\uC810\uC744 \uC0B4\uD540 \uB4A4 \uAC19\uC740 \uC870\uAC74\uC73C\uB85C \uACA8\uB8EC\uB2E4", personalityTag: "\uACF5\uC815\uD55C \uB3C4\uC804", habitKey: "rexStrongFair" },
+      { id: "rex-strong-eager", label: "\uB208\uC744 \uBE5B\uB0B4\uBA70 \uB2F9\uC7A5 \uC5B4\uB290 \uCABD\uC774 \uAC15\uD55C\uC9C0 \uD655\uC778\uD558\uB824 \uD55C\uB2E4", personalityTag: "\uAC15\uC790 \uC120\uD638", habitKey: "rexStrongEager" }
+    ] },
+    // 작은 렐릭의 실수 앞에서 에티켓을 가르치면서도 약자를 위압하지 않는 배려 방식을 검증한다.
+    { id: "rex-small-etiquette", prompt: "\uC791\uC740 \uB810\uB9AD\uC774 \uC2E4\uC218\uB85C \uC608\uC808\uC744 \uC9C0\uD0A4\uC9C0 \uBABB\uD558\uBA74?", choices: [
+      { id: "rex-small-guide", label: "\uBA3C\uC800 \uC790\uC138\uB97C \uB0AE\uCD94\uACE0 \uCC9C\uCC9C\uD788 \uC62C\uBC14\uB978 \uC778\uC0AC\uBC95\uC744 \uC54C\uB824 \uC900\uB2E4", personalityTag: "\uC628\uD654\uD55C \uC9C0\uB3C4", habitKey: "rexSmallGuide" },
+      { id: "rex-small-example", label: "\uC790\uC2E0\uC774 \uBA3C\uC800 \uC815\uC911\uD788 \uC778\uC0AC\uD574 \uB530\uB77C \uD560 \uC218 \uC788\uAC8C \uAE30\uB2E4\uB9B0\uB2E4", personalityTag: "\uC194\uC120\uD558\uB294 \uC608\uC808", habitKey: "rexSmallExample" }
+    ] }
+  ],
+  spino: [
+    // 동시에 울린 경보 앞에서 스피나의 임무 집중과 과묵한 현장 지휘가 각각 어떻게 드러나는지 관찰한다.
+    { id: "spino-night-alarm", prompt: "\uC57C\uAC04 \uC21C\uCC30 \uC911 \uC218\uC870 \uACBD\uBCF4\uC640 \uB2E4\uB978 \uAD6C\uC5ED\uC758 \uAD6C\uC870 \uC694\uCCAD\uC774 \uB3D9\uC2DC\uC5D0 \uB4E4\uC5B4\uC624\uBA74?", choices: [
+      { id: "spino-alarm-rescue", label: "\uAD6C\uC870 \uC694\uCCAD \uC704\uCE58\uB97C \uC9E7\uAC8C \uBCF4\uACE0\uD558\uACE0 \uC989\uC2DC \uD604\uC7A5\uC73C\uB85C \uD5A5\uD55C\uB2E4", personalityTag: "\uC784\uBB34 \uC6B0\uC120", habitKey: "spinoAlarmRescue" },
+      { id: "spino-alarm-command", label: "\uAC00\uAE4C\uC6B4 \uACBD\uBE44\uB300\uC6D0\uC5D0\uAC8C \uC218\uC870 \uC810\uAC80\uC744 \uB9E1\uAE30\uACE0 \uAD6C\uC870 \uB3D9\uC120\uC744 \uD655\uBCF4\uD55C\uB2E4", personalityTag: "\uCE68\uCC29\uD55C \uC9C0\uD718", habitKey: "spinoAlarmCommand" }
+    ] },
+    // 연구원만 이미 아는 어항 장식 취미를 숨기려는 시치미와 물고기를 향한 다정함으로 나누어 관찰한다.
+    { id: "spino-aquarium-decoration", prompt: "\uC5F0\uAD6C\uC6D0\uC774 \uC5B4\uD56D \uC18D\uC5D0 \uC0C8\uB85C \uB193\uC778 \uC7A5\uC2DD\uC744 \uC54C\uC544\uBCF4\uBA74?", choices: [
+      { id: "spino-decoration-deny", label: "\uC6D0\uB798 \uC788\uB358 \uAC83\uC774\uB77C\uBA70 \uC2DC\uC120\uC744 \uD53C\uD558\uACE0 \uC7A5\uC2DD \uAC01\uB3C4\uB9CC \uBC14\uB85C\uC7A1\uB294\uB2E4", personalityTag: "\uC11C\uD22C\uB978 \uC2DC\uCE58\uBBF8", habitKey: "spinoDecorationDeny" },
+      { id: "spino-decoration-shelter", label: "\uBB3C\uACE0\uAE30\uC758 \uC740\uC2E0\uCC98\uAC00 \uD544\uC694\uD588\uC744 \uBFD0\uC774\uB77C\uACE0 \uC9E7\uAC8C \uC124\uBA85\uD55C\uB2E4", personalityTag: "\uC228\uACA8 \uB454 \uB2E4\uC815\uD568", habitKey: "spinoDecorationShelter" }
+    ] },
+    // 함께하는 청소에서도 취미가 들키지 않았다고 믿는 스피나의 신뢰와 실무적인 배려를 행동으로 관찰한다.
+    { id: "spino-aquarium-cleaning", prompt: "\uC775\uC219\uD558\uC9C0 \uC54A\uC740 \uC5B4\uD56D \uCCAD\uC18C\uB97C \uC5F0\uAD6C\uC6D0\uC774 \uB3C4\uC640\uC8FC\uACA0\uB2E4\uACE0 \uD558\uBA74?", choices: [
+      { id: "spino-cleaning-gloves", label: "\uAC70\uC808\uD558\uB824\uB2E4 \uC5EC\uBD84\uC758 \uC7A5\uAC11\uC744 \uC870\uC6A9\uD788 \uAC74\uB128\uB2E4", personalityTag: "\uB9D0\uC5C6\uB294 \uC2E0\uB8B0", habitKey: "spinoCleaningGloves" },
+      { id: "spino-cleaning-roles", label: "\uC790\uC2E0\uC774 \uC218\uCD08\uB97C \uB9E1\uACA0\uB2E4\uBA70 \uC5ED\uD560\uC744 \uC815\uD655\uD788 \uB098\uB208\uB2E4", personalityTag: "\uC2E4\uBB34\uC801\uC778 \uBC30\uB824", habitKey: "spinoCleaningRoles" }
+    ] }
+  ],
+  luka: [
+    // 소파에서 먼저 말을 건 뒤 루카가 침묵과 대화 중 어느 방식으로 연구원과 휴식을 나누는지 관찰한다.
+    { id: "luka-sofa-conversation", prompt: "\uC5F0\uAD6C\uC18C \uC18C\uD30C\uC5D0 \uB204\uC6B4 \uB8E8\uCE74\uC5D0\uAC8C \uC5F0\uAD6C\uC6D0\uC774 \uB9D0\uC744 \uAC78\uBA74 \uC5B4\uB5BB\uAC8C \uBC18\uC751\uD574?", choices: [
+      { id: "luka-sofa-silence", label: "\uC790\uB9AC\uB97C \uB0B4\uC5B4 \uC8FC\uACE0 \uB098\uB780\uD788 \uD3B8\uD55C \uCE68\uBB35\uC744 \uC990\uAE34\uB2E4", personalityTag: "\uB290\uAE0B\uD55C \uCE5C\uBC00\uAC10", habitKey: "lukaSofaSilence" },
+      { id: "luka-sofa-chat", label: "\uC18C\uD30C\uC5D0 \uB204\uC6B4 \uCC44 \uC0C8\uB85C\uC6B4 \uC774\uC57C\uAE43\uAC70\uB9AC\uB97C \uACC4\uC18D \uAEBC\uB0B8\uB2E4", personalityTag: "\uC218\uB2E4\uC2A4\uB7EC\uC6B4 \uD638\uC758", habitKey: "lukaSofaChat" }
+    ] },
+    // 육식 계열 렐릭과의 단거리 달리기에서 기록 경쟁과 상대를 향한 배려가 행동으로 갈리는 순간을 관찰한다.
+    { id: "luka-sprint-rival", prompt: "\uB2E4\uB978 \uC721\uC2DD \uACC4\uC5F4 \uB810\uB9AD\uACFC \uB2E8\uAC70\uB9AC \uCD9C\uBC1C\uC120\uC5D0 \uC11C\uBA74 \uC5B4\uB5BB\uAC8C \uB2EC\uB824?", choices: [
+      { id: "luka-sprint-compete", label: "\uCD9C\uBC1C \uC2E0\uD638\uC640 \uD568\uAED8 \uAE30\uB85D\uC744 \uB178\uB9AC\uBA70 \uC804\uB825\uC73C\uB85C \uCE58\uACE0 \uB098\uAC04\uB2E4", personalityTag: "\uC815\uBA74 \uC2B9\uBD80\uC695", habitKey: "lukaSprintCompete" },
+      { id: "luka-sprint-pace", label: "\uC606 \uC8FC\uC790\uC758 \uBCF4\uD3ED\uC744 \uC0B4\uD53C\uBA70 \uB098\uB780\uD788 \uACB0\uC2B9\uC120\uC744 \uD5A5\uD55C\uB2E4", personalityTag: "\uBCF4\uD3ED\uC744 \uB9DE\uCD94\uB294 \uBC30\uB824", habitKey: "lukaSprintPace" }
+    ] },
+    // 치즈케이크 뒤의 걱정을 즉시 훈련으로 잇는지, 즐거움을 한 조각 더 누린 뒤 미루는지 관찰한다.
+    { id: "luka-cheesecake-weight", prompt: "\uCE58\uC988\uCF00\uC774\uD06C\uB97C \uBA39\uC740 \uB8E8\uCE74\uAC00 \uBAB8\uBB34\uAC8C\uB97C \uAC71\uC815\uD558\uAE30 \uC2DC\uC791\uD558\uBA74 \uC5B4\uB5BB\uAC8C \uD574?", choices: [
+      { id: "luka-cake-training", label: "\uB0A8\uC740 \uC811\uC2DC\uB97C \uCE58\uC6B0\uACE0 \uB2E4\uC74C \uB2E8\uAC70\uB9AC \uD6C8\uB828 \uACC4\uD68D\uC744 \uC801\uB294\uB2E4", personalityTag: "\uACC4\uD68D\uC801\uC778 \uC790\uAE30\uAD00\uB9AC", habitKey: "lukaCakeTraining" },
+      { id: "luka-cake-more", label: "\uD55C \uC870\uAC01\uB9CC \uB354 \uC811\uC2DC\uC5D0 \uB193\uACE0 \uACE0\uBBFC\uC740 \uC2DD\uC0AC \uB4A4\uB85C \uBBF8\uB8EC\uB2E4", personalityTag: "\uD604\uC7AC\uB97C \uC990\uAE30\uB294 \uB099\uCC9C\uC131", habitKey: "lukaCakeMore" }
+    ] }
+  ]
+};
+var OBSERVATION_FALLBACK = { intro: "\uBB34\uC5C7\uC774 \uAD81\uAE08\uD55C\uC9C0 \uB9D0\uD574 \uC918.", habit: "\uC0C8\uB85C\uC6B4 \uBC18\uC751 \uC591\uC2DD\uC744 \uAE30\uB85D\uD588\uB2E4." };
+var REACTIONS = {
+  torika: { intro: "\uCC9C\uCC9C\uD788 \uBB3C\uC5B4\uBD10. \uC0DD\uAC01\uD574 \uBCFC\uAC8C.", replies: {
+    approach: "\uBFD4\uC744 \uB0AE\uCD94\uACE0 \uAC00\uAE4C\uC774 \uAC00 \uBCFC\uB798.",
+    wait: "\uBC1C\uBC11\uC758 \uB5A8\uB9BC\uBD80\uD130 \uD655\uC778\uD560\uB798.",
+    share: "\uC5B4\uB9B0 \uAC1C\uCCB4\uAC00 \uBA3C\uC800 \uBA39\uC5B4\uC57C \uD574.",
+    guard: "\uB0B4\uAC00 \uBC14\uAE65\uCABD\uC744 \uC9C0\uD0AC\uAC8C.",
+    "torika-meal-eager": "\uB9CE\uC774 \uBA39\uC5B4! \uC544\uC0AD\uD55C \uC5B4\uB9B0 \uC78E\uC774 \uC81C\uC77C \uC88B\uC544.",
+    "torika-meal-share": "\uB0B4 \uBAAB\uC740 \uCEE4\uB3C4 \uB3FC. \uD558\uC9C0\uB9CC \uB2E4\uB4E4 \uBA39\uC744 \uAC74 \uB0A8\uACA8 \uB458\uB798.",
+    "torika-meal-shy": "\uC870\uAE08... \uC544\uB2C8, \uBCF4\uD1B5\uB9CC\uD07C \uBA39\uC5B4. \uC5B4\uB9B0 \uC78E\uC740 \uC88B\uC544\uD574.",
+    "torika-weight-honest": "\uBCCF\uC774 \uB728\uAC70\uC6CC\uB3C4 \uB9D0\uD560 \uC218 \uC788\uC5B4. \uC9C0\uAE08 \uBAB8\uBB34\uAC8C\uB294 \uAE30\uB85D\uB300\uB85C\uC57C.",
+    "torika-weight-deflect": "\uADF8, \uADF8\uBCF4\uB2E4 \uC624\uB298 \uC78E \uC0C1\uD0DC\uAC00 \uC815\uB9D0 \uC88B\uC9C0 \uC54A\uC544?",
+    "torika-shield-admit": "\uBB34\uC11C\uC6CC. \uADF8\uB798\uB3C4 \uD55C \uAC78\uC74C\uB9CC \uBB3C\uB7EC\uC11C\uC11C \uC5EC\uAE30 \uC788\uC744\uB798.",
+    "torika-shield-protect": "\uB0B4 \uB4A4\uC5D0 \uC788\uC5B4. \uB2E4\uB9AC\uAC00 \uB5A8\uB824\uB3C4 \uAE38\uC740 \uC548 \uBE44\uD0AC \uAC70\uC57C."
+  }, habits: {
+    approach: "\uB0AF\uC120 \uC9C4\uB3D9\uC744 \uC55E\uBC1C\uB85C \uB450 \uBC88 \uD655\uC778\uD55C\uB2E4.",
+    wait: "\uC704\uD5D8\uC744 \uB290\uB07C\uBA74 \uBB34\uB9AC\uC758 \uBC14\uAE65\uC744 \uD5A5\uD574 \uC120\uB2E4.",
+    share: "\uBA39\uC774 \uAC00\uC6B4\uB370 \uBD80\uB4DC\uB7EC\uC6B4 \uC78E\uC744 \uC5B4\uB9B0 \uAC1C\uCCB4\uC5D0\uAC8C \uB0A8\uAE34\uB2E4.",
+    guard: "\uC2DD\uC0AC \uC911\uC5D0\uB3C4 \uC77C\uC815\uD55C \uAC04\uACA9\uC73C\uB85C \uACE0\uAC1C\uB97C \uB4E4\uC5B4 \uACBD\uACC4\uD55C\uB2E4.",
+    torikaMealEager: "\uC2DD\uC0AC\uB7C9\uC744 \uC228\uAE30\uC9C0 \uC54A\uACE0 \uC544\uC0AD\uD55C \uC5B4\uB9B0 \uC78E\uC744 \uAC00\uC7A5 \uBA3C\uC800 \uCC3E\uB294\uB2E4.",
+    torikaMealShare: "\uBA39\uACE0 \uC2F6\uC740 \uC591\uC774 \uB9CE\uC544\uB3C4 \uB3D9\uB8CC\uC758 \uBAAB\uC744 \uBA3C\uC800 \uB530\uB85C \uB454\uB2E4.",
+    torikaMealShy: "\uC2DD\uC0AC\uB7C9\uC744 \uC791\uAC8C \uB9D0\uD560 \uB54C\uB3C4 \uC88B\uC544\uD558\uB294 \uC5B4\uB9B0 \uC78E\uC740 \uBE60\uB728\uB9AC\uC9C0 \uC54A\uB294\uB2E4.",
+    torikaWeightHonest: "\uBAB8\uBB34\uAC8C\uB97C \uB9D0\uD560 \uB54C \uBCCF \uB05D\uAE4C\uC9C0 \uBD89\uC5B4\uC9C0\uC9C0\uB9CC \uC218\uCE58\uB294 \uB610\uBC15\uB610\uBC15 \uD655\uC778\uD55C\uB2E4.",
+    torikaWeightDeflect: "\uBAB8\uBB34\uAC8C\uAC00 \uC5B8\uAE09\uB418\uBA74 \uBCCF \uB05D\uAE4C\uC9C0 \uBD89\uC5B4\uC9C4 \uCC44 \uBA39\uC774 \uC774\uC57C\uAE30\uB85C \uD654\uC81C\uB97C \uB3CC\uB9B0\uB2E4.",
+    torikaShieldAdmit: "\uAC81\uC774 \uB09C\uB2E4\uACE0 \uC778\uC815\uD558\uACE0 \uD55C \uAC78\uC74C \uBB3C\uB7EC\uC11C\uC9C0\uB9CC \uBCF4\uD638\uD560 \uB300\uC0C1\uC758 \uC55E\uC740 \uBE44\uC6B0\uC9C0 \uC54A\uB294\uB2E4.",
+    torikaShieldProtect: "\uB2E4\uB9AC\uAC00 \uB5A8\uB824\uB3C4 \uBAB8\uC744 \uB0AE\uCDB0 \uBCF4\uD638\uD560 \uB300\uC0C1\uC758 \uC55E\uC744 \uB9C9\uC544\uC120\uB2E4."
+  } },
+  // 경쟁심·강자 선호에는 정중한 승부 절차를, 에티켓·약자 배려에는 위압하지 않는 태도를 대응시킨다.
+  rex: { intro: "\uAD00\uCC30\uC774\uB77C\uB2C8, \uC7AC\uBBF8\uC788\uB294 \uAC78 \uBB3B\uB124.", replies: {
+    approach: "\uC228\uAE30 \uC804\uC5D0 \uB0B4\uAC00 \uCC3E\uC544\uB0B4\uC9C0.",
+    wait: "\uBC14\uB78C\uC774 \uB0C4\uC0C8\uB97C \uAC00\uC838\uC62C \uB54C\uAE4C\uC9C0 \uAE30\uB2E4\uB824.",
+    share: "\uB0B4 \uBB34\uB9AC\uB77C\uBA74 \uAD76\uAE30\uC9C0 \uC54A\uC544.",
+    guard: "\uAC15\uD55C \uC21C\uC11C\uAC00 \uC544\uB2C8\uB77C \uD544\uC694\uD55C \uC21C\uC11C\uB85C \uBA39\uC5B4.",
+    "rex-size-formal": "\uD6CC\uB96D\uD55C \uCCB4\uACA9\uC774\uAD70. \uC774\uB984\uC744 \uBC1D\uD788\uACE0 \uC815\uC2DD\uC73C\uB85C \uD55C \uD310 \uCCAD\uD558\uACA0\uC5B4.",
+    "rex-size-wrestle": "\uADF8 \uCCB4\uACA9\uC774 \uC5BC\uB9C8\uB098 \uB300\uB2E8\uD55C\uC9C0, \uAD1C\uCC2E\uB2E4\uBA74 \uD798\uC73C\uB85C \uACA8\uB904 \uBCF4\uC790.",
+    "rex-strong-fair": "\uB124 \uAC15\uC810\uC744 \uCDA9\uBD84\uD788 \uBCF8 \uB4A4 \uAC19\uC740 \uC870\uAC74\uC5D0\uC11C \uC815\uC815\uB2F9\uB2F9\uD788 \uB3C4\uC804\uD558\uACA0\uC5B4.",
+    "rex-strong-eager": "\uB208\uC744 \uB5C4 \uC218 \uC5C6\uB294 \uAC15\uD568\uC774\uAD70. \uC900\uBE44\uAC00 \uB410\uB2E4\uBA74 \uC9C0\uAE08 \uC2B9\uBD80\uB97C \uCCAD\uD558\uC9C0.",
+    "rex-small-guide": "\uB180\uB77C\uC9C0 \uC54A\uC544\uB3C4 \uB3FC. \uB0B4\uAC00 \uBAB8\uC744 \uB0AE\uCD9C \uD14C\uB2C8 \uCC9C\uCC9C\uD788 \uC778\uC0AC\uBD80\uD130 \uD574 \uBCF4\uC790.",
+    "rex-small-example": "\uB0B4\uAC00 \uBA3C\uC800 \uC778\uC0AC\uD560\uAC8C. \uD3B8\uD574\uC9C0\uBA74 \uAC19\uC740 \uBC29\uC2DD\uC73C\uB85C \uB2F5\uD574 \uC918."
+  }, habits: {
+    approach: "\uC18C\uB9AC\uBCF4\uB2E4 \uBC14\uB78C\uC5D0 \uC2E4\uB9B0 \uB0C4\uC0C8\uB97C \uBA3C\uC800 \uC887\uB294\uB2E4.",
+    wait: "\uC0AC\uB0E5 \uC804 \uBAB8\uC744 \uB0AE\uCD94\uACE0 \uD48D\uD5A5\uC774 \uBC14\uB00C\uAE30\uB97C \uAE30\uB2E4\uB9B0\uB2E4.",
+    share: "\uBB34\uB9AC\uC758 \uBA39\uC774\uAC00 \uBD80\uC871\uD558\uBA74 \uC790\uC2E0\uC758 \uBAAB\uC744 \uB4A4\uB85C \uBBF8\uB8EC\uB2E4.",
+    guard: "\uBA39\uC774 \uC8FC\uBCC0\uC744 \uD55C \uBC14\uD034 \uB3C8 \uB4A4\uC5D0\uC57C \uC2DD\uC0AC\uB97C \uC2DC\uC791\uD55C\uB2E4.",
+    rexSizeFormal: "\uD070 \uC0C1\uB300\uAC00 \uB2E4\uAC00\uC624\uBA74 \uC5B4\uAE68\uB97C \uD3B4\uACE0 \uBC1C\uB05D\uC744 \uAC00\uC9C0\uB7F0\uD788 \uB9DE\uCD98\uB2E4.",
+    rexSizeWrestle: "\uCCB4\uACA9\uC774 \uD070 \uC0C1\uB300 \uC55E\uC5D0\uC11C\uB294 \uC911\uC2EC\uC744 \uB0AE\uCD94\uACE0 \uB9DE\uC7A1\uC744 \uAC70\uB9AC\uB97C \uAC00\uB2A0\uD55C\uB2E4.",
+    rexStrongFair: "\uAC15\uC790\uC758 \uC6C0\uC9C1\uC784\uC744 \uB05D\uAE4C\uC9C0 \uC9C0\uCF1C\uBCF8 \uB4A4 \uC7A5\uBE44\uC640 \uCD9C\uBC1C \uC704\uCE58\uBD80\uD130 \uD655\uC778\uD55C\uB2E4.",
+    rexStrongEager: "\uAC15\uD55C \uAE30\uCC99\uC744 \uC54C\uC544\uCC44\uBA74 \uB208\uBE5B\uC774 \uBC1D\uC544\uC9C0\uACE0 \uACE7\uBC14\uB85C \uC0C1\uB300\uC758 \uC900\uBE44 \uC5EC\uBD80\uB97C \uC0B4\uD540\uB2E4.",
+    rexSmallGuide: "\uC791\uC740 \uB810\uB9AD\uACFC \uC774\uC57C\uAE30\uD560 \uB54C \uBB34\uB98E\uC744 \uAD7D\uD600 \uC2DC\uC120\uC744 \uAC19\uC740 \uB192\uC774\uC5D0 \uB454\uB2E4.",
+    rexSmallExample: "\uC791\uC740 \uB810\uB9AD \uC55E\uC5D0\uC11C\uB294 \uBAA9\uC18C\uB9AC\uB97C \uB0AE\uCD94\uACE0 \uBA3C\uC800 \uCC9C\uCC9C\uD788 \uACE0\uAC1C\uB97C \uC219\uC778\uB2E4."
+  } },
+  // 연구원은 어항 취미를 알지만, 스피나는 임무와 물고기 관리라는 짧은 해명으로 아직 감췄다고 믿는다.
+  spino: { intro: "\uC9C8\uBB38\uC740 \uC9E7\uAC8C. \uC21C\uCC30 \uC2DC\uAC04\uC774\uB2C8\uAE4C.", replies: {
+    approach: "\uBC1C\uC2E0 \uC9C0\uC810\uBD80\uD130 \uD655\uC778\uD55C\uB2E4. \uC218\uC870 \uCABD\uC740 \uC544\uB2C8\uACA0\uC9C0.",
+    wait: "\uC8FC\uBCC0\uC774 \uC7A0\uC7A0\uD574\uC9C8 \uB54C\uAE4C\uC9C0 \uB300\uAE30\uD55C\uB2E4. \uC5B4\uD56D\uC744 \uBCF4\uB294 \uAC74 \uC544\uB2C8\uB2E4.",
+    share: "\uD544\uC694\uD55C \uBAAB\uB9CC \uB098\uB208\uB2E4. \uBB3C\uACE0\uAE30 \uBA39\uC774\uB3C4 \uAC19\uC740 \uC6D0\uCE59\uC774\uB2E4.",
+    guard: "\uBB3C\uAC00\uB97C \uBA3C\uC800 \uD655\uBCF4\uD55C\uB2E4. \uC218\uC870 \uC0C1\uD0DC\uB294 \uC21C\uCC30 \uD56D\uBAA9\uC77C \uBFD0\uC774\uB2E4.",
+    "spino-alarm-rescue": "\uAD6C\uC870 \uC694\uCCAD \uC704\uCE58 \uBCF4\uACE0. \uC7A5\uBE44 \uD655\uC778\uD588\uB2E4. \uBC14\uB85C \uAC04\uB2E4.",
+    "spino-alarm-command": "\uAC00\uAE4C\uC6B4 \uACBD\uBE44\uB294 \uC218\uC870 \uD655\uC778. \uB098\uB294 \uAD6C\uC870 \uD1B5\uB85C\uB97C \uD655\uBCF4\uD55C\uB2E4.",
+    "spino-decoration-deny": "\uC6D0\uB798 \uC788\uB358 \uAC70\uB2E4. ...\uAC01\uB3C4\uAC00 \uD2C0\uC5B4\uC84C\uAD70.",
+    "spino-decoration-shelter": "\uBB3C\uACE0\uAE30\uC5D0\uAC8C \uC740\uC2E0\uCC98\uAC00 \uD544\uC694\uD588\uC744 \uBFD0\uC774\uB2E4. \uADF8 \uC774\uC0C1\uC740 \uC5C6\uC5B4.",
+    "spino-cleaning-gloves": "\uD63C\uC790 \uD574\uB3C4 \uB41C\uB2E4. ...\uC5EC\uBD84 \uC7A5\uAC11\uC740 \uAC70\uAE30 \uC788\uB2E4.",
+    "spino-cleaning-roles": "\uB098\uB294 \uC218\uCD08\uB97C \uB9E1\uC9C0. \uB2F9\uC2E0\uC740 \uC720\uB9AC\uBA74. \uADF8\uAC8C \uD6A8\uC728\uC801\uC774\uB2E4."
+  }, habits: {
+    approach: "\uBC1C\uC2E0\uC9C0\uB97C \uC887\uC73C\uBA74\uC11C\uB3C4 \uC5F0\uAD6C\uC6D0\uC758 \uC2DC\uC120\uC774 \uBA40\uC5B4\uC9C0\uBA74 \uC218\uC870 \uC7A5\uBE44 \uC7A0\uAE08\uC744 \uD55C \uBC88 \uB354 \uD655\uC778\uD55C\uB2E4.",
+    wait: "\uB300\uAE30 \uC911 \uC5B4\uD56D \uCABD\uC744 \uBCF4\uC9C0 \uC54A\uB294 \uCC99\uD558\uBA74\uC11C \uC720\uB9AC\uC5D0 \uBE44\uCE5C \uBB3C\uACE0\uAE30\uC758 \uC6C0\uC9C1\uC784\uC744 \uD655\uC778\uD55C\uB2E4.",
+    share: "\uBC30\uBD84\uC744 \uB9C8\uCE5C \uB4A4 \uC544\uBB34\uB3C4 \uBCF4\uC9C0 \uC54A\uC744 \uB54C \uBB3C\uACE0\uAE30 \uBA39\uC774\uC758 \uD06C\uAE30\uAE4C\uC9C0 \uACE0\uB974\uAC8C \uB9DE\uCD98\uB2E4.",
+    guard: "\uC21C\uCC30 \uC810\uAC80\uC774\uB77C\uACE0 \uB458\uB7EC\uB300\uBA70 \uC5F0\uAD6C\uC6D0\uC774 \uB5A0\uB09C \uB4A4 \uC218\uC870 \uAC00\uC7A5\uC790\uB9AC\uC758 \uBB3C\uAE30\uB97C \uB2E6\uB294\uB2E4.",
+    spinoAlarmRescue: "\uBCF4\uACE0\uB97C \uB9C8\uCE58\uAE30 \uC804 \uC774\uBBF8 \uC7A5\uBE44 \uC7A0\uAE08\uC744 \uD655\uC778\uD558\uACE0 \uAD6C\uC870 \uD604\uC7A5\uC73C\uB85C \uBAB8\uC744 \uB3CC\uB9B0\uB2E4.",
+    spinoAlarmCommand: "\uD544\uC694\uD55C \uC9C0\uC2DC\uB9CC \uC9E7\uAC8C \uB0A8\uAE30\uACE0 \uAD6C\uC870 \uC778\uB825\uC774 \uC9C0\uB0A0 \uD1B5\uB85C\uB97C \uBE44\uC6B4\uB2E4.",
+    spinoDecorationDeny: "\uB300\uD654\uAC00 \uB05D\uB098 \uC5F0\uAD6C\uC6D0\uC774 \uBB3C\uB7EC\uB09C \uB4A4 \uC7A5\uC2DD\uC744 \uB2E4\uC2DC \uC5B4\uD56D \uC911\uC559\uC5D0 \uB9DE\uCD98\uB2E4.",
+    spinoDecorationShelter: "\uAD00\uC2EC \uC5C6\uB294 \uCC99 \uC790\uB9AC\uB97C \uB72C \uB4A4 \uBB3C\uACE0\uAE30\uAC00 \uC7A5\uC2DD\uC744 \uC4F0\uB294\uC9C0 \uBA40\uB9AC\uC11C \uD655\uC778\uD55C\uB2E4.",
+    spinoCleaningGloves: "\uC5F0\uAD6C\uC6D0\uC774 \uB2E6\uC740 \uC720\uB9AC\uC758 \uBB3C\uC790\uAD6D\uC744 \uBCF4\uC9C0 \uBABB\uD55C \uCC99\uD558\uB2E4\uAC00 \uBAB0\uB798 \uB9C8\uBB34\uB9AC\uD55C\uB2E4.",
+    spinoCleaningRoles: "\uC5F0\uAD6C\uC6D0\uC774 \uC5B4\uB824\uC6CC\uD558\uB294 \uAD6C\uC5ED\uC744 \uBC1C\uACAC\uD558\uBA74 \uC124\uBA85 \uC5C6\uC774 \uC790\uC2E0\uC758 \uAD6C\uC5ED\uACFC \uBC14\uAFB8\uC5B4 \uB9E1\uB294\uB2E4."
+  } },
+  // 유일한 연구원인 플레이어와 나누는 휴식·훈련·간식 반응을 루카의 말투와 관찰 문장에 함께 대응시킨다.
+  luka: { intro: "\uC654\uC5B4, \uC5F0\uAD6C\uC6D0? \uC5EC\uAE30 \uC549\uC544\uC11C \uCC9C\uCC9C\uD788 \uBB3C\uC5B4\uBD10.", replies: {
+    approach: "\uAC19\uC774 \uAC00 \uBCF4\uC790. \uBCC4\uC77C \uC544\uB2C8\uBA74 \uC0B0\uCC45\uD55C \uC148 \uCE58\uACE0.",
+    wait: "\uC870\uAE08 \uB204\uC6CC\uC11C \uAE30\uB2E4\uB9AC\uBA74 \uBB34\uC2A8 \uC18C\uB9AC\uC778\uC9C0 \uC54C\uAC8C \uB420 \uAC70\uC57C.",
+    share: "\uB124 \uBAAB\uBD80\uD130 \uB5BC\uC5B4 \uB458\uAC8C. \uAC19\uC774 \uBA39\uB294 \uAC8C \uB354 \uB9DB\uC788\uC796\uC544.",
+    guard: "\uB0B4\uAC00 \uBCF4\uACE0 \uC788\uC744 \uD14C\uB2C8 \uC5F0\uAD6C\uC6D0\uBD80\uD130 \uD3B8\uD558\uAC8C \uBA39\uC5B4.",
+    "luka-sofa-silence": "\uB9D0\uD558\uC9C0 \uC54A\uC544\uB3C4 \uAD1C\uCC2E\uC544. \uC5F0\uAD6C\uC6D0\uC774 \uC606\uC5D0 \uC788\uC73C\uBA74 \uD3B8\uD558\uAC70\uB4E0.",
+    "luka-sofa-chat": "\uB9C8\uCE68 \uD560 \uC774\uC57C\uAE30\uAC00 \uB9CE\uC558\uC5B4. \uC624\uB298 \uD6C8\uB828\uBD80\uD130 \uC18C\uD30C \uCFE0\uC158 \uC774\uC57C\uAE30\uAE4C\uC9C0 \uB4E4\uC5B4 \uBCFC\uB798?",
+    "luka-sprint-compete": "\uB2EC\uB9AC\uAE30\uB77C\uBA74 \uBD10\uC8FC\uAE30 \uC5C6\uC9C0. \uACB0\uC2B9\uC120\uC5D0\uC11C \uBA3C\uC800 \uAE30\uB2E4\uB9AC\uACE0 \uC788\uC744\uAC8C.",
+    "luka-sprint-pace": "\uD63C\uC790 \uC55E\uC11C\uBA74 \uAE08\uBC29 \uB05D\uB098\uC796\uC544. \uC774\uBC88\uC5D0\uB294 \uC606\uC5D0\uC11C \uAC19\uC774 \uB2EC\uB9B4\uB798.",
+    "luka-cake-training": "\uC811\uC2DC\uB294 \uC5EC\uAE30\uAE4C\uC9C0. \uB2E4\uC74C \uD6C8\uB828\uC5D0 \uC9C8\uC8FC \uD55C \uBC88\uC744 \uB354 \uB123\uC73C\uBA74 \uB418\uACA0\uC5B4.",
+    "luka-cake-more": "\uAC71\uC815\uC740 \uB2E4 \uBA39\uACE0 \uD574\uB3C4 \uB2A6\uC9C0 \uC54A\uC544. \uC5F0\uAD6C\uC6D0\uB3C4 \uD55C \uC870\uAC01 \uB354 \uBA39\uC744\uB798?"
+  }, habits: {
+    approach: "\uB0AF\uC120 \uC18C\uB9AC\uAC00 \uB098\uBA74 \uC5F0\uAD6C\uC6D0\uACFC \uB098\uB780\uD788 \uCC9C\uCC9C\uD788 \uBC1C\uC2E0\uC9C0\uB97C \uCC3E\uC544\uAC04\uB2E4.",
+    wait: "\uD655\uC778\uD560 \uB54C\uAE4C\uC9C0 \uC18C\uD30C\uC5D0 \uB204\uC6CC \uC18C\uB9AC\uC758 \uAC04\uACA9\uC744 \uC138\uBA70 \uAE30\uB2E4\uB9B0\uB2E4.",
+    share: "\uAC04\uC2DD\uC744 \uD3BC\uCE58\uBA74 \uC5F0\uAD6C\uC6D0\uC758 \uBAAB\uC744 \uBA3C\uC800 \uAC00\uAE4C\uC6B4 \uC811\uC2DC\uC5D0 \uB35C\uC5B4 \uB454\uB2E4.",
+    guard: "\uC5F0\uAD6C\uC6D0\uC774 \uC2DD\uC0AC\uB97C \uB9C8\uCE60 \uB54C\uAE4C\uC9C0 \uC8FC\uBCC0\uC744 \uC0B4\uD53C\uBA74\uC11C\uB3C4 \uC790\uB9AC\uB97C \uBE44\uC6B0\uC9C0 \uC54A\uB294\uB2E4.",
+    lukaSofaSilence: "\uC5F0\uAD6C\uC6D0\uC774 \uACC1\uC5D0 \uC549\uC73C\uBA74 \uC18C\uD30C \uD55C\uCABD\uC744 \uBE44\uC6B0\uACE0 \uB9D0\uC5C6\uC774 \uAC19\uC740 \uC2DC\uAC04\uC744 \uBCF4\uB0B8\uB2E4.",
+    lukaSofaChat: "\uC5F0\uAD6C\uC6D0\uC774 \uC18C\uD30C \uACC1\uC5D0 \uC624\uBA74 \uB204\uC6B4 \uCC44\uB85C\uB3C4 \uC0AC\uC18C\uD55C \uC774\uC57C\uAE43\uAC70\uB9AC\uB97C \uC5F0\uB2EC\uC544 \uAEBC\uB0B8\uB2E4.",
+    lukaSprintCompete: "\uC721\uC2DD \uACC4\uC5F4 \uB810\uB9AD\uACFC \uCD9C\uBC1C\uC120\uC5D0 \uC11C\uBA74 \uC790\uC138\uB97C \uB0AE\uCD94\uACE0 \uC790\uC2E0\uC758 \uCD5C\uACE0 \uAE30\uB85D\uBD80\uD130 \uB178\uB9B0\uB2E4.",
+    lukaSprintPace: "\uD568\uAED8 \uB2EC\uB9AC\uB294 \uB810\uB9AD\uC774 \uB4A4\uCC98\uC9C0\uBA74 \uC18D\uB3C4\uB97C \uB0AE\uCDB0 \uC0C1\uB300\uC758 \uBCF4\uD3ED \uC606\uC5D0 \uB9DE\uCD98\uB2E4.",
+    lukaCakeTraining: "\uCE58\uC988\uCF00\uC774\uD06C\uB97C \uBA39\uACE0 \uBAB8\uBB34\uAC8C\uAC00 \uC2E0\uACBD \uC4F0\uC774\uBA74 \uACE7\uBC14\uB85C \uB2E4\uC74C \uB2E8\uAC70\uB9AC \uD6C8\uB828 \uD69F\uC218\uB97C \uC801\uB294\uB2E4.",
+    lukaCakeMore: "\uCE58\uC988\uCF00\uC774\uD06C \uB4A4\uC5D0 \uBAB8\uBB34\uAC8C\uB97C \uAC71\uC815\uD558\uBA74\uC11C\uB3C4 \uD55C \uC870\uAC01\uC744 \uB354 \uB098\uB208 \uB4A4 \uC0DD\uAC01\uD558\uAE30\uB85C \uD55C\uB2E4."
+  } }
+};
+function utcDayNumber(utcDate) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(utcDate)) throw new RangeError("\uAD00\uCC30 \uC778\uD130\uBDF0 \uB0A0\uC9DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+  const timestamp = Date.parse(`${utcDate}T00:00:00Z`);
+  if (!Number.isFinite(timestamp) || new Date(timestamp).toISOString().slice(0, 10) !== utcDate) throw new RangeError("\uAD00\uCC30 \uC778\uD130\uBDF0 \uB0A0\uC9DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+  return Math.floor(timestamp / 864e5);
+}
+function observationQuestionForDate(utcDate) {
+  utcDayNumber(utcDate);
+  const index = [...utcDate].reduce((sum, char) => sum + char.charCodeAt(0), 0) % COMMON_OBSERVATION_QUESTIONS.length;
+  return COMMON_OBSERVATION_QUESTIONS[index];
+}
+function observationQuestionForRelicAndDate(relicId, utcDate) {
+  const day = utcDayNumber(utcDate);
+  const relicQuestions = RELIC_OBSERVATION_QUESTIONS[relicId];
+  if (!relicQuestions?.length || day % 2 !== 0) return observationQuestionForDate(utcDate);
+  return relicQuestions[Math.floor(day / 2) % relicQuestions.length];
+}
+function createObservationStory(relicId, relicName, utcDate) {
+  const question = observationQuestionForRelicAndDate(relicId, utcDate);
+  const reaction = REACTIONS[relicId] ?? { intro: OBSERVATION_FALLBACK.intro, replies: {}, habits: {} };
+  return { id: `observation.${utcDate}.${relicId}`, startNodeId: "intro", nodes: [
+    { id: "intro", speaker: relicName, body: reaction.intro, nextId: "question" },
+    { id: "question", speaker: "\uC5F0\uAD6C\uC6D0", body: question.prompt, choices: question.choices.map((choice) => ({ id: choice.id, label: choice.label, nextId: `reply-${choice.id}` })) },
+    ...question.choices.map((choice) => ({ id: `reply-${choice.id}`, speaker: relicName, body: reaction.replies[choice.id] ?? choice.label }))
+  ] };
+}
+function observationDiscovery(relicId, utcDate, choiceId) {
+  const question = observationQuestionForRelicAndDate(relicId, utcDate);
+  const choice = question.choices.find(({ id }) => id === choiceId);
+  if (!choice) throw new RangeError("\uD604\uC7AC \uAD00\uCC30 \uC9C8\uBB38\uC5D0 \uC5C6\uB294 \uB2F5\uBCC0\uC785\uB2C8\uB2E4.");
+  return { question, choice, habit: REACTIONS[relicId]?.habits[choice.habitKey] ?? OBSERVATION_FALLBACK.habit };
+}
+function registerQuestions(questions) {
+  for (const question of questions) {
+    registerDataText(question, "prompt", `observation.${question.id}.prompt`);
+    for (const choice of question.choices) {
+      registerDataText(choice, "label", `observation.${question.id}.${choice.id}.label`);
+      registerDataText(choice, "personalityTag", `observation.${question.id}.${choice.id}.tag`);
+    }
+  }
+}
+registerQuestions(COMMON_OBSERVATION_QUESTIONS);
+for (const [relicId, questions] of Object.entries(RELIC_OBSERVATION_QUESTIONS)) {
+  void relicId;
+  registerQuestions(questions);
+}
+for (const [relicId, reaction] of Object.entries(REACTIONS)) {
+  registerDataText(reaction, "intro", `reaction.${relicId}.intro`);
+  for (const key of Object.keys(reaction.replies)) registerDataText(reaction.replies, key, `reaction.${relicId}.reply.${key}`);
+  for (const key of Object.keys(reaction.habits)) registerDataText(reaction.habits, key, `reaction.${relicId}.habit.${key}`);
+}
+registerDataText(OBSERVATION_FALLBACK, "intro", "observation.fallback.intro");
+registerDataText(OBSERVATION_FALLBACK, "habit", "observation.fallback.habit");
+
+// src/core/interactionJournals.ts
+init_define_import_meta_env();
+function resolveJournalDiscovery(candidateId, cityJournalIds, discovered) {
+  if (!cityJournalIds.includes(candidateId)) throw new RangeError("\uD6C4\uBCF4 \uC77C\uC9C0\uAC00 \uD574\uB2F9 \uB3C4\uC2DC\uC5D0 \uC5C6\uC2B5\uB2C8\uB2E4.");
+  if (!discovered.has(candidateId)) return { kind: "new", journalId: candidateId };
+  const replacement = cityJournalIds.find((id) => !discovered.has(id));
+  return replacement ? { kind: "replacement", journalId: replacement } : { kind: "exhausted", journalId: null };
+}
+
+// src/data/attendance.ts
+init_define_import_meta_env();
+var ATTENDANCE_REWARDS = {
+  newcomer: [
+    { kind: "currency", currency: "gems", amount: 1500 },
+    { kind: "item", itemId: "stamina-tonic", amount: 6, expiresInDays: 7 },
+    { kind: "currency", currency: "fossil", amount: 5 },
+    { kind: "currency", currency: "gems", amount: 2e3 },
+    { kind: "currency", currency: "amber", amount: 5 },
+    { kind: "item", itemId: "strata-ticket", amount: 3 },
+    { kind: "currency", currency: "gems", amount: 5e3 }
+  ],
+  regular: [
+    { kind: "currency", currency: "gems", amount: 300 },
+    { kind: "currency", currency: "fossil", amount: 1 },
+    { kind: "item", itemId: "stamina-tonic", amount: 3, expiresInDays: 7 },
+    { kind: "currency", currency: "gems", amount: 500 },
+    { kind: "currency", currency: "amber", amount: 1 },
+    { kind: "item", itemId: "strata-ticket", amount: 2 },
+    { kind: "currency", currency: "fossil", amount: 5 }
+  ]
+};
+var ATTENDANCE_AD_REWARDS = [
+  { kind: "currency", currency: "gold", amount: 3e4 },
+  { kind: "currency", currency: "gems", amount: 100 },
+  { kind: "currency", currency: "cheesecake", amount: 200 },
+  { kind: "currency", currency: "gems", amount: 150 },
+  { kind: "item", itemId: "stamina-tonic", amount: 1, expiresInDays: 7 },
+  { kind: "currency", currency: "gems", amount: 200 },
+  { kind: "currency", currency: "fossil", amount: 1 }
+];
+var ATTENDANCE_AD_SLOT_ID = "attendance-ad";
+
+// src/core/bountyRun.ts
+init_define_import_meta_env();
+function isBountyTierUnlocked(tier, clearedTierIds) {
+  const previous = BOUNTY_TIERS.find(({ order }) => order === tier.order - 1);
+  return previous === void 0 || clearedTierIds.includes(previous.id);
+}
+function bountyRunCost(tier) {
+  return { staminaCost: DUNGEON_RUN_STAMINA, rewards: { gold: tier.rewardGold } };
+}
+function markBountyTierCleared(state, tierId2) {
+  getBountyTier(tierId2);
+  return state.clearedTierIds.includes(tierId2) ? { clearedTierIds: [...state.clearedTierIds] } : { clearedTierIds: [...state.clearedTierIds, tierId2] };
+}
+
+// src/core/progressPass.ts
+init_define_import_meta_env();
+function progressPassMilestoneStates(pass, progress, owned, claimed) {
+  const taken = new Set(claimed);
+  return pass.milestones.map(({ threshold }) => {
+    if (taken.has(threshold)) return "claimed";
+    if (progress < threshold) return "locked";
+    return owned ? "claimable" : "reached";
+  });
+}
+function claimableProgressPassThresholds(pass, progress, owned, claimed) {
+  const states = progressPassMilestoneStates(pass, progress, owned, claimed);
+  return pass.milestones.flatMap(({ threshold }, index) => states[index] === "claimable" ? [threshold] : []);
+}
+function progressPassGoal(pass) {
+  return pass.milestones[pass.milestones.length - 1]?.threshold ?? 0;
+}
+function progressPassFreeStates(pass, progress, claimed) {
+  const taken = new Set(claimed);
+  return pass.milestones.map(({ threshold }) => taken.has(threshold) ? "claimed" : progress >= threshold ? "claimable" : "locked");
+}
+function claimableProgressPassFreeThresholds(pass, progress, claimed) {
+  const states = progressPassFreeStates(pass, progress, claimed);
+  return pass.milestones.flatMap(({ threshold }, index) => states[index] === "claimable" ? [threshold] : []);
+}
+
+// src/core/stageRewards.ts
+init_define_import_meta_env();
+
+// src/data/rewardPriority.ts
+init_define_import_meta_env();
+var REWARD_PRIORITY = [
+  // 핵심 재화
+  "gems",
+  "fossil",
+  "amber",
+  "gold",
+  "cheesecake",
+  // 성장 재료
+  "restoration-crystal",
+  "refined-core",
+  "ancient-core",
+  // 행동력
+  "stamina-tonic-large",
+  "stamina-tonic",
+  "stamina",
+  // 입장권
+  "strata-ticket",
+  "sweep-ticket",
+  "duel-ticket",
+  "raid-select-ticket",
+  "raid-ticket",
+  // 보조 재화
+  "rawStone",
+  "dnaFragments",
+  // 콘텐츠 전리품 증표 — 쓰는 곳이 한정되어 후순위다
+  "duelEmblem",
+  "raidSigil",
+  "salvageRecord",
+  // 단품 — 파편·룬·장식은 재화가 아니라 한 점씩 받는 물건이라 가장 마지막이다
+  "relicFragment",
+  "rune",
+  "profileDecoration"
+];
+var RANK = new Map(REWARD_PRIORITY.map((key, index) => [key, index]));
+function rewardRank(key) {
+  return RANK.get(key) ?? REWARD_PRIORITY.length;
+}
+function sortByRewardPriority(list, keyOf) {
+  return list.map((entry, index) => ({ entry, index, rank: rewardRank(keyOf(entry)) })).sort((a, b) => a.rank - b.rank || a.index - b.index).map(({ entry }) => entry);
+}
+
+// src/core/stageRewards.ts
+function stageFirstClearRewards(stage) {
+  const rewards = [];
+  if (stage.rewards.firstClearCheesecake > 0) rewards.push({ kind: "currency", currency: "cheesecake", amount: stage.rewards.firstClearCheesecake });
+  for (const bonus of stage.rewards.firstClearBonus ?? []) {
+    if (bonus.kind === "rune" || bonus.amount > 0) rewards.push(bonus);
+  }
+  return sortByRewardPriority(rewards, (reward) => reward.kind === "rune" ? "rune" : reward.currency);
+}
+
+// src/data/contentCosts.ts
+init_define_import_meta_env();
+var CONTENT_STAMINA_COSTS = { normalStage: 6, dailyGrowth: 10, normalExpeditionStart: 12 };
 
 // src/core/interactionDispatch.ts
 init_define_import_meta_env();
@@ -26654,19 +27634,6 @@ var OPENING_RETREAT = {
 };
 registerDialogueTexts(OPENING_RETREAT);
 
-// src/data/dialogues/greenhouseEcho.ts
-init_define_import_meta_env();
-var GREENHOUSE_ECHO = {
-  id: "stage-1-5-greenhouse-echo",
-  startNodeId: "signal",
-  nodes: [
-    { id: "signal", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC7A0\uAE50, \uC8FC \uD1B5\uB85C \uC606 \uC628\uC2E4\uC5D0\uC11C \uC624\uB798\uB41C \uC0DD\uCCB4 \uC2E0\uD638\uAC00 \uB4E4\uB824.", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "lexia", slot: "right" }], nextId: "seed" },
-    { id: "seed", speaker: "\uB809\uC2DC\uC544", body: "\uC804\uD22C \uD754\uC801\uC740 \uC5C6\uC5B4. \uB204\uAD70\uAC00 \uB0A8\uACA8 \uB454 \uC528\uC557\uC758 \uAE30\uC5B5 \uAC19\uB124.", standing: "lexia", nextId: "promise" },
-    { id: "promise", speaker: "\uD1A0\uB9AC\uCE74", body: "\uAE30\uB85D\uD574 \uB450\uC790. \uAE38\uC744 \uACC4\uC18D \uAC00\uB354\uB77C\uB3C4, \uC774 \uC791\uC740 \uC815\uC6D0\uC740 \uC78A\uD788\uC9C0 \uC54A\uAC8C.", standing: "torika" }
-  ]
-};
-registerDialogueTexts(GREENHOUSE_ECHO);
-
 // src/data/stageStories.ts
 init_define_import_meta_env();
 
@@ -26784,7 +27751,7 @@ var STAGE_1_8_PRE = {
     { id: "sit", speaker: "", body: "\uC9C0\uD558 \uBC30\uC218\uB85C. \uC218\uBB38 \uC190\uC7A1\uC774 \uC704\uC5D0 \uBCA0\uC77C\uC744 \uC4F4 \uC791\uC740 \uADF8\uB9BC\uC790\uAC00 \uC549\uC544 \uC788\uB2E4. \uBC18\uC9DD\uC774\uB294 \uC870\uAC01\uC744 \uC18C\uB9E4\uC5D0 \uD558\uB098\uC529 \uB123\uB294 \uC911\uC774\uB2E4.", standing: "torika", cast: ROGUE_TRIO },
     { id: "tia", speaker: "\uD2F0\uC544", body: "\uC557, \uB4E4\uCF30\uB2E4\u2026! \uC5F0\uAD6C\uC6D0\uB2D8\uB3C4 \uACC4\uC168\uB124\uC694! \uC800, \uC800\uB294 \uADF8\uB0E5 \uBCF4\uAE09 \uD68C\uC218 \uC911\uC774\uC5D0\uC694! \uC218\uBB38 \uC810\uAC80\uB3C4 \uD558\uB294 \uC911\uC774\uACE0\uC694!", cast: TIA_TRIO, act: "recoil" },
     { id: "same", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC5B4, \uD2F0\uC544\uC796\uC544! \uC5EC\uAE30\uC11C \uBB50 \uD574? \uC124\uB9C8 \uB610 \uBC18\uC9DD\uC774\uB294 \uAC70 \uC8FC\uC6CC?", standing: "torika", act: "hop" },
-    { id: "veil", speaker: "\uD2F0\uC544", body: "\uD1A0\uB9AC\uCE74\uB3C4 \uC788\uC5C8\uB124! \uC544\uB2C8, \uC5F0\uAD6C\uC6D0\uB2D8\uC774 \uC81C \uC774\uB984\uC744 \uBD88\uB7EC \uC8FC\uC2DC\uBA74 \uC800\uB3C4 \uBAA8\uB974\uAC8C \uB2EC\uB824\uAC00 \uBC84\uB824\uC694. \uADF8\uB7EC\uB2C8\uAE4C \uC870\uAE08\uB9CC \uC788\uB2E4\uAC00\uC694! \uB9C8\uC74C\uC758 \uC900\uBE44\uAC00 \uD544\uC694\uD574\uC694!", act: "bounce" },
+    { id: "veil", speaker: "\uD2F0\uC544", body: "\uD1A0\uB9AC\uCE74\uB3C4 \uC788\uC5C8\uB124! \uBC18\uC9DD\uC774\uB294 \uAC83\uB9CC \uC90D\uB294 \uAC74 \uC544\uB2C8\uC5D0\uC694. \uC774 \uC218\uBB38 \uADFC\uCC98\uB85C \uBCF4\uAE09 \uC0C1\uC790\uAC00 \uB5A0\uB0B4\uB824\uC640\uC11C, \uC4F8 \uB9CC\uD55C \uAC74 \uB2E4 \uAC74\uC838 \uB450\uB294 \uC911\uC774\uC5D0\uC694!", act: "bounce" },
     { id: "useless", speaker: "\uD1A0\uB9AC\uCE74", body: "\uADF8 \uBC18\uC9DD\uC774\uB294 \uC870\uAC01\uB4E4\uC740 \uC5B4\uB514\uC5D0 \uC4F0\uB294 \uAC70\uC57C? \uBCC4 \uC4F8\uBAA8\uB294 \uC5C6\uC5B4 \uBCF4\uC774\uB294\uB370\u2026", standing: "torika", act: "lean" },
     { id: "droop", speaker: "\uD2F0\uC544", body: "\uC4F8\uBAA8\u2026 \uC5C6\uC5B4? \uC774\uAC70 \uB2E4 \uB0B4 \uBCF4\uBB3C\uC778\uB370\u2026", act: "faint" },
     { id: "oops", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC544, \uC544\uB2C8\uC57C! \uBC18\uC9DD\uBC18\uC9DD\uD574\uC11C \uC608\uC058\uB2E4\uB294 \uB73B\uC774\uC5C8\uC5B4!", standing: "torika", act: "shake" },
@@ -26858,11 +27825,11 @@ var STAGE_1_10_POST = {
     { id: "answerB", speaker: "\uCF54\uB9C8", body: "\u2026\uC774\uC57C\uAE30. \uADF8\uAC83\uB3C4 \uC704\uC5D0\uC11C\uB294 \uC5C6\uB358 \uC77C\uC774\uB2E4.", standing: "koma", act: "recoil", nextId: "leave" },
     { id: "leave", speaker: "\uCF54\uB9C8", body: "\uC704\uC5D0 \uAC00\uC11C \uB9D0\uD558\uACA0\uB2E4. \uC5F0\uAD6C\uC6D0\uC774 \uBB38 \uB108\uBA38\uB85C \uC544\uC9C1 \uAC00\uC9C0 \uC54A\uC558\uB2E4\uACE0.", standing: "koma", cast: [{ id: "torika", slot: "left" }], nextId: "crash" },
     { id: "crash", speaker: "", body: "\uACBD\uCCA9\uC9F8 \uBF51\uD78C \uBB38\uC9DD\uC774 \uB0A0\uC544\uC640 \uB545\uC5D0 \uBC15\uD78C\uB2E4.", cue: "explosion", nextId: "lexia" },
-    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uB0B4\uAC00 \uC654\uB2E4! \uBB38\uC740 \uC5F4\uC5B4 \uB480\uB2E4. \uC815\uD655\uD788\uB294 \uBB38\uC9DD\uC744 \uAC00\uC838\uC654\uB2E4.", standing: "lexia", cast: ALONE("lexia"), act: "puff", nextId: "hello" },
+    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uC81C\uAC00 \uC654\uC5B4\uC694! \uBB38\uC740 \uC5F4\uC5B4 \uB480\uC5B4\uC694. \uC815\uD655\uD788\uB294\u2026 \uBB38\uC9DD\uC744 \uAC00\uC838\uC654\uC5B4\uC694.", standing: "lexia", cast: ALONE("lexia"), act: "puff", nextId: "hello" },
     { id: "hello", speaker: "\uD1A0\uB9AC\uCE74", body: "\uB809\uC2DC\uC544 \uB2D8!", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "lexia", slot: "right" }], act: "hopTwice", nextId: "queen" },
-    { id: "queen", speaker: "\uB809\uC2DC\uC544", body: "\uC571\uC194\uB8E8\uD2B8 \uD33D\uC758 \uB809\uC2DC\uC544\uB2E4. \uC774\uC81C\uBD80\uD130 \uC774\uD130\uB110 \uC2DC\uD2F0\uB294 \uB0B4\uAC00 \uCC45\uC784\uC9C4\uB2E4. \uC5F0\uAD6C\uC6D0, \uB530\uB77C\uC640\uB77C.", standing: "lexia", act: "nod", nextId: "door" },
+    { id: "queen", speaker: "\uB809\uC2DC\uC544", body: "\uC571\uC194\uB8E8\uD2B8 \uD33D\uC758 \uB809\uC2DC\uC544\uC608\uC694. \uC774\uC81C\uBD80\uD130 \uC774\uD130\uB110 \uC2DC\uD2F0\uB294 \uC81C\uAC00 \uCC45\uC784\uC9C8\uAC8C\uC694. \uB9C8\uC2A4\uD130, \uB530\uB77C\uC624\uC138\uC694.", standing: "lexia", act: "nod", nextId: "door" },
     { id: "door", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uBB38\uC9DD\uC774 \uC544\uC9C1 \uC190\uC5D0 \uC788\uC5B4\uC694.", standing: "parua", cast: [{ id: "parua", slot: "left" }, { id: "lexia", slot: "right" }], act: "lean", nextId: "drop" },
-    { id: "drop", speaker: "\uB809\uC2DC\uC544", body: "\u2026\uB2F9\uB2F9\uD55C \uC785\uC131\uC5D0\uB294 \uC18C\uD488\uC774 \uD544\uC694\uD558\uC9C0. \uB193\uB294\uB2E4.", standing: "lexia", act: "shrink", nextId: "go" },
+    { id: "drop", speaker: "\uB809\uC2DC\uC544", body: "\u2026\uB2F9\uB2F9\uD55C \uC785\uC131\uC5D4 \uC18C\uD488\uC774 \uD544\uC694\uD558\uC796\uC544. \uB0B4\uB824\uB193\uC744\uAC8C.", standing: "lexia", act: "shrink", nextId: "go" },
     { id: "go", speaker: "\uD1A0\uB9AC\uCE74", body: "\uADF8\uB7FC \uB3C4\uC2DC\uB85C \uAC00\uC694! \uC774\uBC88\uC5D4 \uC6B0\uB9AC\uC5D0\uAC8C \uB4E0\uB4E0\uD55C \uAE38\uC7A1\uC774\uAC00 \uC788\uC73C\uB2C8\uAE4C\uC694.", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "lexia", slot: "right" }], act: "hop" }
   ]
 };
@@ -26893,12 +27860,12 @@ var STAGE_2_1_PRE = {
   startNodeId: "enter",
   backdrop: "battlefield",
   nodes: linear([
-    { id: "enter", speaker: "\uB809\uC2DC\uC544", body: "\uBB38\uC740 \uB0B4\uAC00 \uC5F4\uC5C8\uB2E4. \uC774\uC81C\uBD80\uD130\uB294 \uB0B4\uAC00 \uC55E\uC7A5\uC120\uB2E4!", standing: "lexia", cast: PAIR("lexia"), act: "hop" },
+    { id: "enter", speaker: "\uB809\uC2DC\uC544", body: "\uBB38\uC740 \uC81C\uAC00 \uC5F4\uC5C8\uC5B4\uC694, \uB9C8\uC2A4\uD130. \uC774\uC81C\uBD80\uD130\uB294 \uC81C\uAC00 \uC55E\uC7A5\uC11C\uC694!", standing: "lexia", cast: PAIR("lexia"), act: "hop" },
     { id: "rule", speaker: "\uD1A0\uB9AC\uCE74", body: "\uB809\uC2DC\uC544 \uB2D8, \uBB38\uC740 \uBF51\uB294 \uAC8C \uC544\uB2C8\uB77C \uC5EC\uB294 \uAC70\uC608\uC694.", standing: "torika", act: "lean" },
-    { id: "huh", speaker: "\uB809\uC2DC\uC544", body: "\u2026\uC5EC\uB294 \uAC83\uACFC \uBF51\uB294 \uAC83\uC740 \uACB0\uACFC\uAC00 \uAC19\uB2E4. \uB2E4\uB9CC \uC18C\uB9AC\uAC00 \uB2E4\uB97C \uBFD0\uC774\uB2E4.", standing: "lexia", act: "shrink" },
+    { id: "huh", speaker: "\uB809\uC2DC\uC544", body: "\u2026\uC5EC\uB294 \uAC70\uB098 \uBF51\uB294 \uAC70\uB098 \uACB0\uACFC\uB294 \uAC19\uC544. \uC18C\uB9AC\uAC00 \uB2E4\uB97C \uBFD0\uC774\uC9C0.", standing: "lexia", act: "shrink" },
     { id: "print", speaker: "\uB3C4\uB514", body: "\uB300\uC7A5\uB2D8, \uC5EC\uAE30 \uBC1C\uC790\uAD6D\uC774\uC694. \uCF54\uB9C8\uC758 \uBC1C\uC790\uAD6D\uC774 \uC785\uAD6C\uC5D0\uC11C \uB531 \uBA48\uCDB0 \uC788\uC5B4\uC694.", standing: "dodi", cast: [{ id: "dodi", slot: "left" }, { id: "lexia", slot: "right" }], act: "lean" },
     { id: "lost", speaker: "\uB3C4\uB514", body: "\uADF8\uB9AC\uACE0 \uADF8 \uB4A4\uB85C \uC5B4\uC9C0\uB7EC\uC6B4 \uBC1C\uC790\uAD6D\uC774 \uC14B\uC774\uC5D0\uC694. \uC774\uCABD\uC800\uCABD \uD5E4\uB9E8 \uD754\uC801\u2026 \uC7E4\uB124\uB3C4 \uAE38\uC744 \uC783\uC740 \uAC83 \uAC19\uC544\uC694.", standing: "dodi", act: "hopTwice" },
-    { id: "again", speaker: "\uB809\uC2DC\uC544", body: "\uADF8\uB807\uB2E4\uBA74 \uB2E4\uC2DC \uCAD3\uC544\uC62C \uAC83\uC774\uB2E4. \uB9DE\uC774\uD560 \uC900\uBE44\uB97C \uD558\uB77C.", standing: "lexia", act: "nod", cue: "rumble" }
+    { id: "again", speaker: "\uB809\uC2DC\uC544", body: "\uADF8\uB7FC \uB2E4\uC2DC \uCAD3\uC544\uC624\uACA0\uB124. \uB9DE\uC774\uD560 \uC900\uBE44 \uD574 \uB46C.", standing: "lexia", act: "nod", cue: "rumble" }
   ])
 };
 var STAGE_2_2_POST = {
@@ -26963,7 +27930,11 @@ var STAGE_2_6_POST = {
     { id: "parua", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uB378\uB85C\uD53C \uC528, \uADF8\uAC74 \uC800\uD76C\uB97C \uC704\uD5D8\uD558\uAC8C \uD574\uC694.", standing: "parua", act: "tremble" },
     { id: "luka", speaker: "\uB8E8\uCE74", body: "\uB378\uB85C\uD53C\uB294 \uB0B4\uAC00 \uB9E1\uACA0\uB2E4. \uC5F0\uAD6C\uC6D0, \uC774\uC81C\uBD80\uD130\uB294 \uB0B4 \uC2E0\uD638\uB97C \uB530\uB77C\uC640\uB77C. \uB9D0 \uC5C6\uC774, \uBE68\uB9AC.", cast: VOICE2("luka", "parua", "dodi"), act: "nod" },
     { id: "hush", speaker: "\uB3C4\uB514", body: '\uADF8, \uADF8\uB7FC \uC228 \uC8FD\uC774\uACE0\u2026 \uC774\uAC74 "\uCE68\uBB35 \uC774\uB3D9"\uC73C\uB85C \uC801\uC5B4 \uB458\uAC8C\uC694!', standing: "dodi", act: "hop" },
-    { id: "quiet", speaker: "\uB8E8\uCE74", body: "\uADF8 \uC18C\uB9AC\uAC00 \uC81C\uC77C \uD06C\uB2E4.", act: "lean" }
+    { id: "quiet", speaker: "\uB8E8\uCE74", body: "\uADF8 \uC18C\uB9AC\uAC00 \uC81C\uC77C \uD06C\uB2E4.", act: "lean" },
+    { id: "tail", speaker: "", body: "\uCC9C\uC7A5 \uBC30\uAD00 \uC0AC\uC774\uB85C \uB9C8\uB514\uC9C4 \uAF2C\uB9AC \uD558\uB098\uAC00 \uC9C0\uB098\uAC04\uB2E4. \uB05D\uC774 \uAC08\uACE0\uB9AC\uCC98\uB7FC \uD71C \uADF8\uB9BC\uC790\uAC00 \uBCBD\uC744 \uD6D1\uACE0 \uC0AC\uB77C\uC9C4\uB2E4.", cast: [{ id: "dodi", slot: "left" }, { id: "pulsi", slot: "right", veiled: true }], cue: "rumble" },
+    { id: "saw", speaker: "\uB3C4\uB514", body: "\uB300, \uB300\uC7A5\uB2D8! \uBC29\uAE08 \uC704\uC5D0\uC11C \uAF2C\uB9AC\uAC00 \uC9C0\uB098\uAC14\uC5B4\uC694! \uC774\uB807\uAC8C, \uC774\uB807\uAC8C \uD718\uC5B4\uC9C4 \uAC70\uC694!", standing: "dodi", act: "hopTwice" },
+    { id: "who", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uB77C\uC778\uC774 \uB3CC\uC544\uAC00\uB294 \uC18C\uB9AC\uC5D0 \uC11E\uC5EC\uC11C \uBC1C\uC18C\uB9AC\uAC00 \uC548 \uB4E4\uB838\uC5B4\uC694. \uB378\uB85C\uD53C \uC528 \uC7A5\uB09C\uC740 \uC544\uB2C8\uC5D0\uC694.", standing: "parua", cast: PAIR("dodi", "parua"), act: "tremble" },
+    { id: "mark", speaker: "\uB8E8\uCE74", body: "\uC0C1\uC790 \uC704 \uD45C\uC2DD\uC744 \uBD10\uB77C. \uD3D0\uAE30 \uD45C\uC2DD\uC774 \uC544\uB2C8\uB77C \uD68C\uC218 \uD45C\uC2DD\uC774\uB2E4. \uC774 \uD68C\uB791\uC5D0\uB294 \uC6B0\uB9AC \uB9D0\uACE0\uB3C4 \uBB3C\uAC74\uC744 \uAC70\uB450\uB7EC \uC628 \uC790\uAC00 \uC788\uB2E4.", cast: VOICE2("luka", "parua", "dodi"), act: "nod" }
   ])
 };
 var STAGE_2_7_PRE = {
@@ -27005,6 +27976,22 @@ var STAGE_2_8_PRE = {
     { id: "leave", speaker: "\uCF54\uB9C8", body: "\u2026\uAC00\uB77C. \uB300\uC2E0 \uC774\uCABD\uC73C\uB85C \uC624\uC9C0 \uB9C8\uB77C.", standing: "koma", cast: [{ id: "ripa", slot: "left" }], act: "nod" }
   ])
 };
+var STAGE_2_8_POST = {
+  id: "stage-2-8-post",
+  startNodeId: "drop",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "drop", speaker: "", body: "\uC6A9\uAD11\uB85C \uC704 \uD30C\uC774\uD504\uC5D0\uC11C \uAC00\uBCBC\uC6B4 \uB0A0\uAC2F\uC18C\uB9AC\uAC00 \uB09C\uB2E4. \uC7A0\uC790\uB9AC\uC758 \uB0A0\uAC1C\uB97C \uC811\uC740 \uADF8\uB9BC\uC790\uC640, \uBAB8\uC9D1\uB9CC \uD55C \uD131\uC744 \uAC00\uC9C4 \uADF8\uB9BC\uC790\uAC00 \uC0AC\uBFD0\uD788 \uB0B4\uB824\uC120\uB2E4.", cast: [{ id: "koma", slot: "left" }, { id: "neuri", slot: "center" }, { id: "mir", slot: "right" }], cue: "impact" },
+    { id: "hello", speaker: "\uB124\uC6B0\uB9AC", body: "\uD6C4\uD6D7\u2026 \uB2F9\uC2E0\uC774\u2026 \uC5F0\uAD6C\uC6D0\uB2D8\uC774\uC2DC\uAD70\uC694? \uC5ED\uC2DC\u2026 \uB4E3\uB358 \uB300\uB85C\u2026 \uC5B4\uD760.", standing: "neuri", act: "hop" },
+    { id: "koma", speaker: "\uB124\uC6B0\uB9AC", body: "\uADF8\uAC74 \uADF8\uB807\uACE0, \uCF54\uB9C8 \uB2D8! \uACB0\uAD6D\u2026 \uACB0\uAD6D \uC2E4\uD328\uD558\uC168\uB124\uC694?", standing: "neuri", act: "lean" },
+    { id: "komaReply", speaker: "\uCF54\uB9C8", body: "\u2026\uB124\uC6B0\uB9AC. \uBCF4\uACE0\uD558\uB7EC \uC628 \uAC83\uC778\uAC00.", standing: "koma", act: "shrink" },
+    { id: "polite", speaker: "\uB124\uC6B0\uB9AC", body: "\uC5B4\uBA38, \uBCF4\uACE0\uB77C\uB2C8\uC694. \uC800\uD76C \uAC19\uC740 \uB9D0\uB2E8\uC774 \uC5B4\uCC0C \uAC10\uD788. \uB2E4\uB9CC \uC704\uC5D0\uC11C \u300C\uD14C\uB7EC\uC870\uB294 \uC774\uC81C \uC26C\uC154\uB3C4 \uB41C\uB2E4\u300D\uACE0 \uD558\uC154\uC11C\uC694. \uC544\uC8FC, \uC544\uC8FC \uC815\uC911\uD558\uAC8C \uC804\uD574 \uB4DC\uB9AC\uB7EC \uC654\uB2F5\uB2C8\uB2E4.", standing: "neuri", act: "bounce" },
+    { id: "mir", speaker: "\uBBF8\uB974", body: "\u2026\uAE38. \uB9C9\uD600 \uC788\uB2E4. \uCE58\uC6B4\uB2E4.", standing: "mir", act: "nod" },
+    { id: "bye", speaker: "\uB124\uC6B0\uB9AC", body: "\uC544, \uB9DE\uC544\uC694, \uBBF8\uB974. \uADF8\uB7FC \uC5F0\uAD6C\uC6D0\uB2D8, \uB2E4\uC74C\uC5D0 \uBD59\uC9C0\uC694. \uADF8\uB54C\uB294 \uC800\uD76C \uD68C\uC218\uC870\uAC00 \uC9C1\uC811 \uBAA8\uC2DC\uACA0\uC2B5\uB2C8\uB2E4. \uC5F0\uAD6C\uC6D0\uB2D8.", standing: "neuri", act: "nod", leave: "blastOff", cast: [{ id: "koma", slot: "left" }] },
+    { id: "torika", speaker: "\uD1A0\uB9AC\uCE74", body: "\uCF54\uB9C8 \uC528\u2026 \uC2E4\uD328\uD558\uC168\uB2E4\uB294 \uAC8C \uBB34\uC2A8 \uB9D0\uC774\uC5D0\uC694?", standing: "torika", cast: PAIR("koma"), act: "lean" },
+    { id: "later", speaker: "\uCF54\uB9C8", body: "\u2026\uB098\uC911\uC5D0 \uB9D0\uD558\uC9C0. \uC800 \uB458\uC774 \uC774 \uAD6C\uC5ED\uAE4C\uC9C0 \uB0B4\uB824\uC654\uB2E4\uB294 \uAC83\uB9CC \uAE30\uC5B5\uD574\uB77C.", standing: "koma", act: "shrink" }
+  ])
+};
 var STAGE_2_9_POST = {
   id: "stage-2-9-post",
   startNodeId: "hole",
@@ -27012,7 +27999,7 @@ var STAGE_2_9_POST = {
   nodes: linear([
     { id: "hole", speaker: "", body: "\uCEE8\uBCA0\uC774\uC5B4\uAC00 \uB05D\uB098\uB294 \uACF3\uC5D0 \uBC14\uB2E5\uC774 \uC5C6\uB2E4. \uD3D0\uAE30 \uD45C\uC2DD\uC774 \uBD99\uC740 \uC0C1\uC790\uB4E4\uC774 \uC18C\uB9AC \uC5C6\uC774 \uC5B4\uB460\uC73C\uB85C \uB5A8\uC5B4\uC9C4\uB2E4.", standing: "dodi", cast: PAIR("dodi", "lexia") },
     { id: "dodi", speaker: "\uB3C4\uB514", body: "\uB2E4\uB4E4 \uC774 \uC544\uB798\uB85C \uD758\uB7EC\uAC04 \uAC70\uC608\uC694. \uC4F8 \uC218 \uC5C6\uC74C\uC774\uB77C\uACE0 \uC801\uD78C \uCC44\uB85C\u2026", standing: "dodi", act: "shrink" },
-    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uC544\uB798\uC5D0\uB294 \uBB34\uC5C7\uC774 \uC788\uB290\uB0D0.", standing: "lexia", act: "lean" },
+    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uC544\uB798\uC5D0\uB294 \uBB50\uAC00 \uC788\uC5B4?", standing: "lexia", act: "lean" },
     { id: "dei", speaker: "\uB370\uC774", body: "\uAD6C\uBA4D \uAC00\uC7A5\uC790\uB9AC\uC5D0 \uB099\uC11C \uAC19\uC740 \uD654\uC0B4\uD45C\uAC00 \uC788\uC5B4. \uB0B4\uAC00 \uADF8\uB9B0 \uAC70 \uC544\uB2C8\uC57C. \uB204\uAD70\uAC00\uAC00 \uC544\uB798\uB85C \uD5A5\uD558\uB294 \uAE38\uC744 \uD45C\uC2DC\uD574 \uB480\uC5B4.", cast: VOICE2("deina", "lexia", "dodi"), act: "lean" },
     { id: "stay", speaker: "", body: "\uC5F0\uAD6C\uC6D0\uC740 \uAD6C\uBA4D \uC55E\uC5D0\uC11C \uC624\uB798 \uC11C \uC788\uB2E4. \uB300\uB2F5\uD558\uB294 \uC774\uB294 \uC5C6\uB2E4." },
     { id: "torika", speaker: "\uD1A0\uB9AC\uCE74", body: "\u2026\uAC00\uC694, \uB300\uC7A5\uB2D8. \uC544\uC9C1\uC740 \uC704\uC5D0\uC11C \uD560 \uC77C\uC774 \uC788\uC5B4\uC694.", standing: "torika", cast: PAIR("lexia"), act: "nod" }
@@ -27054,7 +28041,9 @@ var STAGE_2_10_POST = {
     { id: "answerA", speaker: "\uC544\uBAA8", body: "\u2026\uADF8\uB798. \uADF8\uB7FC \uB530\uB77C\uAC08\uAC8C.", standing: "amo", act: "nod", nextId: "walk" },
     { id: "answerB", speaker: "\uC544\uBAA8", body: "\u2026\uC6B0\uB9AC\uAC00 \uC815\uD574\uB3C4 \uB41C\uB2E4\uB294 \uB9D0, \uCC98\uC74C \uB4E4\uC5B4 \uBD10.", standing: "amo", act: "nod", nextId: "walk" },
     { id: "walk", speaker: "\uD1A0\uBE44", body: "\uADF8, \uADF8\uB807\uB2E4\uACE0 \uC6B0\uB9AC\uAC00 \uD55C\uD3B8 \uB418\uB294 \uAC74 \uC544\uB2C8\uC57C! \uB4A4\uC5D0\uC11C \uB530\uB77C\uAC00\uAE30\uB9CC \uD558\uB294 \uAC70\uC57C!", standing: "toby", cast: RAID_TRIO, act: "hopTwice", nextId: "hole" },
-    { id: "hole", speaker: "", body: "\uC77C\uD589\uC774 \uAC78\uC74C\uC744 \uC62E\uAE34\uB2E4. \uB4A4\uC5D0\uC11C \uAD6C\uBA4D\uC758 \uC5B4\uB460\uC774 \uD55C \uBC88 \uC228\uC744 \uC26C\uB4EF \uC77C\uB801\uC778\uB2E4. \uBB34\uC5B8\uAC00\uAC00 \uC62C\uB824\uB2E4\uBCF4\uACE0 \uC788\uB2E4.", cue: "rumble" }
+    { id: "hole", speaker: "", body: "\uC77C\uD589\uC774 \uAC78\uC74C\uC744 \uC62E\uAE34\uB2E4. \uB4A4\uC5D0\uC11C \uAD6C\uBA4D\uC758 \uC5B4\uB460\uC774 \uD55C \uBC88 \uC228\uC744 \uC26C\uB4EF \uC77C\uB801\uC778\uB2E4. \uBB34\uC5B8\uAC00\uAC00 \uC62C\uB824\uB2E4\uBCF4\uACE0 \uC788\uB2E4.", cue: "rumble", nextId: "wing" },
+    { id: "wing", speaker: "", body: "\uAD6C\uBA4D \uC704\uB85C \uAC70\uB300\uD55C \uB0A0\uAC1C\uC758 \uADF8\uB9BC\uC790\uAC00 \uCC9C\uCC9C\uD788 \uD3BC\uCCD0\uC84C\uB2E4 \uC811\uD78C\uB2E4. \uC18C\uB9AC\uB294 \uB098\uC9C0 \uC54A\uB294\uB2E4. \uBC15\uC950\uC758 \uB0A0\uAC1C\uCC98\uB7FC \uBCF4\uC778\uB2E4.", cast: [{ id: "ikanixia", slot: "center", veiled: true }], standing: "ikanixia", cue: "impact", nextId: "voice" },
+    { id: "voice", speaker: "???", body: "\u2026\uD68C\uC218 \uAC1C\uC2DC.", standing: "ikanixia", act: "nod" }
   ]
 };
 var CHAPTER_2_STORIES = [
@@ -27067,9 +28056,134 @@ var CHAPTER_2_STORIES = [
   STAGE_2_7_PRE,
   STAGE_2_7_POST,
   STAGE_2_8_PRE,
+  STAGE_2_8_POST,
   STAGE_2_9_POST,
   STAGE_2_10_PRE,
   STAGE_2_10_POST
+];
+
+// src/data/dialogues/chapter3.ts
+init_define_import_meta_env();
+var REMOTE_PAIR = (voice, other) => [
+  { id: other, slot: "left" },
+  { id: voice, slot: "right", remote: true }
+];
+var STAGE_3_1_PRE = {
+  id: "stage-3-1-pre",
+  startNodeId: "land",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "land", speaker: "", body: "\uBB34\uB98E \uAFC7\uC740 \uCF54\uB9C8\uC758 \uB4A4\uB85C \uCC22\uC5B4\uC9C4 \uB0A0\uAC1C \uB9DD\uD1A0\uAC00 \uCC9C\uCC9C\uD788 \uB0B4\uB824\uC120\uB2E4. \uC11C\uB450\uB974\uB294 \uAE30\uC0C9\uC774\uB77C\uACE0\uB294 \uC5C6\uB2E4.", standing: "ikanixia", cast: [{ id: "koma", slot: "left" }, { id: "ikanixia", slot: "right" }], cue: "rumble" },
+    { id: "greet", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uC218\uACE0\uD558\uC168\uC5B4\uC694, \uCF54\uB9C8 \uB2D8. \uC2E4\uD328\uD55C \uBD84\uC758 \uC5BC\uAD74\uB3C4 \uAC00\uB054\uC740 \uACF1\uB2F5\uB2C8\uB2E4.", standing: "ikanixia", act: "lean" },
+    { id: "mask", speaker: "", body: "\uCF54\uB9C8\uAC00 \uC785\uC744 \uAC00\uB9B0 \uAC00\uB9AC\uAC1C\uB97C \uCC98\uC74C\uC73C\uB85C \uCC9C\uCC9C\uD788 \uB0B4\uB9B0\uB2E4.", standing: "koma", act: "recoil" },
+    { id: "atra", speaker: "\uC544\uD2B8\uB77C", body: "\uC544, \uC548 \uB3FC\uC694\u2026 \uC120, \uC120\uBC30\uB294 \uC544\uC9C1\u2026 \uD68C\uC218 \uC804\uC774\uB77C\uC11C\u2026", standing: "atra", cast: [{ id: "koma", slot: "left" }, { id: "atra", slot: "center" }, { id: "ikanixia", slot: "right" }], act: "tremble" },
+    { id: "smile", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uC5B4\uBA38, \uC6B0\uB9AC \uC544\uD2B8\uB77C\uB294 \uC0C1\uB0E5\uD558\uAE30\uB3C4 \uD558\uC9C0. \uADF8\uB7FC \uC11C\uB450\uB974\uC9C0 \uC54A\uC744\uAC8C\uC694.", standing: "ikanixia", act: "nod" },
+    { id: "you", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uC5F0\uAD6C\uC6D0\uB2D8\uC774\uC2DC\uAD70\uC694. \uC18C\uBB38\uC740 \uB9CE\uC774 \uB4E4\uC5C8\uC5B4\uC694. \uC774\uBC88\uC5D0\uB294 \uC81C\uAC00 \uC815\uC911\uD788 \uBAA8\uC154 \uAC00\uACA0\uC2B5\uB2C8\uB2E4.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "lean" }
+  ])
+};
+var STAGE_3_4_POST = {
+  id: "stage-3-4-post",
+  startNodeId: "radio",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "radio", speaker: "\uC2A4\uD53C\uB098", body: "\u2026\uBB34\uC804 \uD655\uC778. 3\uBC88 \uD1B5\uB85C\uC758 \uC870\uBA85\uC744 \uB0B4\uB838\uB2E4. \uB208\uC774 \uC801\uC751\uD558\uBA74 \uC624\uB978\uCABD\uC73C\uB85C \uBE60\uC838\uB77C.", standing: "seira", cast: REMOTE_PAIR("seira", "torika"), act: "nod", cue: "alarm" },
+    { id: "luka", speaker: "\uB8E8\uCE74", body: "\uBB38 \uC7A0\uAE08\uC740 \uB0B4\uAC00 \uD480\uC5B4 \uB1A8\uC5B4. \uB300\uC2E0 \uC18C\uB9AC\uB294 \uB0B4\uC9C0 \uB9C8. \uC7E4\uB124 \uADC0\uAC00 \uC88B\uAC70\uB4E0.", standing: "luka", cast: REMOTE_PAIR("luka", "dodi"), act: "lean" },
+    { id: "thanks", speaker: "\uD1A0\uB9AC\uCE74", body: "\uACE0\uB9D9\uC2B5\uB2C8\uB2E4! \uADF8\uB7F0\uB370 \uB450 \uBD84\uC740 \uC5B4\uB514 \uACC4\uC138\uC694?", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "dodi", slot: "right" }], act: "hop" },
+    { id: "gone", speaker: "\uC2A4\uD53C\uB098", body: "\u2026\uC5B4\uB460 \uC18D\uC774\uB2E4. \uADF8\uAC83\uC774 \uC6B0\uB9AC \uC77C\uC774\uB2E4.", standing: "seira", cast: REMOTE_PAIR("seira", "torika"), act: "shrink" }
+  ])
+};
+var STAGE_3_5_PRE = {
+  id: "stage-3-5-pre",
+  startNodeId: "block",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "block", speaker: "", body: "\uD1B5\uB85C \uD55C\uBCF5\uD310\uC5D0 \uC18C\uB9E4\uB85C \uC5BC\uAD74\uC744 \uBC18\uCBE4 \uAC00\uB9B0 \uC544\uD2B8\uB77C\uAC00 \uC11C \uC788\uB2E4. \uD55C \uAC78\uC74C\uB3C4 \uBE44\uD0A4\uC9C0 \uC54A\uB294\uB2E4.", standing: "atra", cast: [{ id: "atra", slot: "center" }], cue: "rumble" },
+    { id: "stutter", speaker: "\uC544\uD2B8\uB77C", body: "\uADF8, \uADF8\uB7EC\uB2C8\uAE4C\u2026 \uAC19\uC774 \uAC00, \uAC00 \uC8FC\uC2DC\uBA74\u2026 \uC544\uD504\uC9C0 \uC54A\uC544\uC694.", standing: "atra", act: "tremble" },
+    { id: "refuse", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC8C4\uC1A1\uD574\uC694, \uC9C0\uAE08\uC740 \uAC08 \uC218 \uC5C6\uC5B4\uC694!", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "atra", slot: "right" }], act: "shake" },
+    { id: "sorry", speaker: "\uC544\uD2B8\uB77C", body: "\uC544, \uC544\uB2C8\uC5D0\uC694\u2026 \uAD1C\uCC2E\uC544\uC694. \uC870, \uC870\uAE08 \uC544\uD50C \uC218\uB294 \uC788\uB294\uB370\u2026", standing: "atra", act: "shrink" }
+  ])
+};
+var STAGE_3_5_POST = {
+  id: "stage-3-5-post",
+  startNodeId: "down",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "down", speaker: "\uC544\uD2B8\uB77C", body: "\u2026\uC544, \uC544\uD504\uC9C0 \uC54A\uC544\uC694. \uC9C0, \uC9C4\uC9DC\u2026 \uC9C0\uB124\uB294 \uB9C8\uB514\uAC00 \uB9CE\uC544\uC11C\u2026 \uAD1C, \uAD1C\uCC2E\uC544\uC694\u2026", standing: "atra", cast: [{ id: "atra", slot: "center" }], act: "faint" },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uADF8\uB9CC \uC77C\uC5B4\uB098\uB77C.", standing: "koma", cast: [{ id: "atra", slot: "left" }, { id: "koma", slot: "right" }], act: "lean" },
+    { id: "atra", speaker: "\uC544\uD2B8\uB77C", body: "\uC120, \uC120\uBC30\u2026 \uC800, \uC800 \uC84C\uC5B4\uC694\u2026 \uADF8\uB798\uB3C4 \uC120\uBC30\uBCF4\uB2E4\uB294\u2026 \uC624\uB798 \uBC84\uD17C\uC8E0?", standing: "atra", act: "hop" },
+    { id: "koma2", speaker: "\uCF54\uB9C8", body: "\u2026\uADF8\uAC74 \uB9DE\uB2E4.", standing: "koma", act: "shrink" }
+  ])
+};
+var STAGE_3_6_POST = {
+  id: "stage-3-6-post",
+  startNodeId: "dead",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "dead", speaker: "", body: "\uB9C9\uB2E4\uB978 \uAE38. \uB208\uC55E\uC5D0\uB294 \uACA9\uBCBD\uC774 \uCC9C\uC7A5\uAE4C\uC9C0 \uC11C \uC788\uB2E4. \uB4F1 \uB4A4\uC5D0\uC11C\uB294 \uD68C\uC218\uC870\uC758 \uBC1C\uC18C\uB9AC\uAC00 \uAC00\uAE4C\uC6CC\uC9C4\uB2E4.", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "dodi", slot: "right" }], cue: "alarm" },
+    { id: "mir", speaker: "\uBBF8\uB974", body: "\uC5F0\uAD6C\uC6D0\uB2D8~ \uAC70\uAE30 \uACC4\uC168\uB124\uC694! \uAC19\uC774 \uAC00\uC694! \uC800\uD76C\uAC00 \uBAA8\uC2E4\uAC8C\uC694!", standing: "mir", cast: [{ id: "mir", slot: "center" }], act: "hop" },
+    { id: "pulsi", speaker: "\uD384\uC2DC", body: "\uB9C9\uB2E4\uB978 \uAE38\uC774\uC796\uC544? \uB3C4\uB9DD \uC5F0\uC2B5\uC740 \uC774\uCBE4 \uD558\uACE0 \uC774\uC81C \uB180\uC790\uACE0.", standing: "pulsi", cast: [{ id: "pulsi", slot: "center" }], act: "hopTwice" },
+    { id: "crash", speaker: "", body: "\uAD49\uC74C\uACFC \uD568\uAED8 \uACA9\uBCBD \uD55C\uAC00\uC6B4\uB370\uAC00 \uC548\uCABD\uC73C\uB85C \uD130\uC838 \uB098\uC628\uB2E4. \uBA3C\uC9C0 \uC18D\uC5D0\uC11C \uBA38\uB9AC\uB97C \uAC10\uC2FC \uADF8\uB9BC\uC790\uAC00 \uD280\uC5B4\uB098\uC628\uB2E4.", cue: "explosion", cast: [{ id: "pachi", slot: "center" }] },
+    { id: "pachi", speaker: "\uD30C\uCE58", body: "\uBCF4\uC2A4, \uAE38 \uC5F4\uC5C8\uC5B4! \uB2A6\uC5B4\uC11C \uBBF8\uC548!", standing: "pachi", act: "bounce" },
+    { id: "pulsi2", speaker: "\uD384\uC2DC", body: "\u2026\uBCBD\uC744 \uBA38\uB9AC\uB85C \uAE7C\uC5B4? \uC9C4\uC9DC\uB85C?", standing: "pulsi", cast: [{ id: "pulsi", slot: "left" }, { id: "pachi", slot: "right" }], act: "fright" }
+  ])
+};
+var STAGE_3_8_POST = {
+  id: "stage-3-8-post",
+  startNodeId: "ambush",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "ambush", speaker: "\uD384\uC2DC", body: "\uAE5C\uC9DD \uC120\uBB3C\uC774\uC57C, \uC5F0\uAD6C\uC6D0! \uBC1B\uC544!", standing: "pulsi", cast: [{ id: "pulsi", slot: "right" }, { id: "torika", slot: "left" }], act: "hop", cue: "impact" },
+    { id: "block", speaker: "\uC5D8\uB77C", body: "\u2026\uC5F0\uAD6C\uC6D0\uB2D8, \uB4A4\uB85C. \uC774\uCABD\uC740 \uC81C\uAC00 \uB9C9\uACA0\uC2B5\uB2C8\uB2E4.", standing: "ella", cast: [{ id: "ella", slot: "center" }], act: "lean" },
+    { id: "neuri", speaker: "\uB124\uC6B0\uB9AC", body: "\uD6C4\uD6D7\u2026 \uBC29\uBCBD\uC774\uB77C\uB2C8, \uC815\uB9D0 \uC874\uACBD\uC2A4\uB7FD\uB124\uC694. \uB2E4 \uBD80\uC218\uACE0 \uB098\uBA74 \uC5B4\uB5A4 \uC11C\uB958\uAC00 \uB098\uC62C\uC9C0 \uAE30\uB300\uB3FC\uC694.", standing: "neuri", cast: [{ id: "ella", slot: "left" }, { id: "neuri", slot: "right" }], act: "nod" },
+    { id: "ella", speaker: "\uC5D8\uB77C", body: "\uADF8 \uC11C\uB958\uB294 \uC81C\uAC00 \uC4F0\uACA0\uC2B5\uB2C8\uB2E4. \uC774\uBC88 \uB2EC \uC2DC\uB9D0\uC11C\uB294 \uC774\uBBF8 \uB2E4 \uC815\uD574 \uB450\uC5C8\uAC70\uB4E0\uC694.", standing: "ella", act: "shake" }
+  ])
+};
+var STAGE_3_9_POST = {
+  id: "stage-3-9-post",
+  startNodeId: "split",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "split", speaker: "\uB124\uC6B0\uB9AC", body: "\uC5B4\uD760, \uADF8\uAC74 \uADF8\uB807\uACE0\u2026 \uC5B4\uBA38, \uC67C\uCABD\uC5D0\uC11C \uC624\uB294 \uC800 \uC18C\uB9AC\uB294 \uBB58\uAE4C\uC694?", standing: "neuri", cast: [{ id: "neuri", slot: "left" }, { id: "mir", slot: "right" }], act: "lean", cue: "rumble" },
+    { id: "yuti", speaker: "\uC720\uD2F0", body: "\uBCF4, \uBCF4\uC2A4! \uC544\uB2C8 \uC5F0\uAD6C\uC6D0\uB2D8! \uC81C\uAC00 \uC606\uC5D0\uC11C \uAC08\uB77C \uB193\uC744\uAC8C\uC694!", standing: "yuti", cast: [{ id: "yuti", slot: "center" }], act: "bounce", cue: "impact" },
+    { id: "ark", speaker: "\uC544\uD06C", body: "\u2026\uB354\uB294 \uBABB \uC9C0\uB098\uAC11\uB2C8\uB2E4. \uB9C8\uC2A4\uD130, \uC55E\uC740 \uC81C\uAC00 \uC11C\uACA0\uC2B5\uB2C8\uB2E4.", standing: "ark", cast: [{ id: "ark", slot: "left" }, { id: "yuti", slot: "right" }], act: "nod" },
+    { id: "mir", speaker: "\uBBF8\uB974", body: "\uC5D0\uC774, \uB193\uCCE4\uB124\uC694! \uADFC\uB370 \uC774 \uC0AC\uB78C\uB4E4 \uC9C4\uC9DC \uD2BC\uD2BC\uD558\uB2E4!", standing: "mir", cast: [{ id: "mir", slot: "center" }], act: "hopTwice" }
+  ])
+};
+var STAGE_3_10_PRE = {
+  id: "stage-3-10-pre",
+  startNodeId: "hall",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "hall", speaker: "", body: "\uD68C\uC218 \uAD6C\uAC04\uC758 \uB9C8\uC9C0\uB9C9 \uD640. \uB192\uC740 \uCC9C\uC7A5\uC5D0\uC11C \uB0A0\uAC1C \uADF8\uB9BC\uC790\uAC00 \uCC9C\uCC9C\uD788 \uB0B4\uB824\uC628\uB2E4.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], cue: "rumble" },
+    { id: "ika", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uC5EC\uAE30\uAE4C\uC9C0 \uC624\uC168\uAD70\uC694, \uC5F0\uAD6C\uC6D0\uB2D8. \uC774\uC81C \uCAD3\uB294 \uC2DC\uAC04\uC740 \uB05D\uC774\uC5D0\uC694. \uC81C \uC55E\uC5D0 \uC11C \uC8FC\uC138\uC694.", standing: "ikanixia", act: "lean" },
+    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uADF8 \uBD80\uD0C1\uC740 \uAC70\uC808\uC774\uC57C! \uC571\uC194\uB8E8\uD2B8 \uD33D, \uC804\uC5F4 \uC815\uB82C!", standing: "lexia", cast: [{ id: "lexia", slot: "center" }], act: "hop" },
+    { id: "line", speaker: "", body: "\uC5F0\uAD6C\uC6D0\uC758 \uC55E\uC5D0 \uB809\uC2DC\uC544, \uC5D8\uB77C, \uD30C\uCE58, \uC544\uD06C, \uC720\uD2F0\uAC00 \uD55C \uC904\uB85C \uB098\uB780\uD788 \uC120\uB2E4.", cast: [{ id: "ella", slot: "left" }, { id: "lexia", slot: "center" }, { id: "pachi", slot: "right" }], cue: "impact" },
+    { id: "ika2", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uC5B4\uBA38, \uC904\uAE4C\uC9C0 \uC11C \uC8FC\uC2DC\uB2E4\uB2C8. \uC815\uB9D0 \uC815\uC911\uD558\uC2DC\uB124\uC694\u2026 \uC774\uACA0\uC9C0\uC694.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "nod" }
+  ])
+};
+var STAGE_3_10_POST = {
+  id: "stage-3-10-post",
+  startNodeId: "fall",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "fall", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\u2026\uD6C4\uD6D7. \uC624\uB298\uC740 \uC5EC\uAE30\uAE4C\uC9C0\uB85C \uD574 \uB450\uC8E0. \uC544\uC27D\uC9C0\uB9CC \uC11C\uB450\uB97C \uC774\uC720\uB294 \uC5C6\uC73C\uB2C8\uAE4C\uC694.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "lean" },
+    { id: "wing", speaker: "", body: "\uB0A0\uAC1C \uB9DD\uD1A0\uAC00 \uCC9C\uCC9C\uD788 \uD5C8\uACF5\uC73C\uB85C \uC62C\uB77C\uAC04\uB2E4. \uD68C\uC218\uC870\uC758 \uADF8\uB9BC\uC790\uAC00 \uD558\uB098\uC529 \uB530\uB77C \uC0AC\uB77C\uC9C4\uB2E4.", standing: "ikanixia", leave: "blastOff", cast: [] },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uB2F9\uC2E0\uC740 \uC544\uC9C1 \uBAA9\uB85D\uC5D0 \uC788\uB2E4.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean" },
+    { id: "koma2", speaker: "\uCF54\uB9C8", body: "\uB0B4 \uBC88\uD638\uB294, \uC9C0\uC6E0\uB2E4. \uADF8\uAC74 \uB0B4\uAC00 \uC815\uD588\uB2E4.", standing: "koma", act: "shrink" },
+    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\u2026\uBB34\uC2A8 \uC18C\uB9B0\uC9C0\uB294 \uBAA8\uB974\uACA0\uC5B4. \uADF8\uB798\uB3C4 \uC55E\uC73C\uB85C \uAC19\uC740 \uD3B8\uC774\uB77C\uBA74 \uD658\uC601\uC774\uC57C.", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "koma", slot: "right" }], act: "nod" },
+    { id: "koma3", speaker: "\uCF54\uB9C8", body: "\u2026\uD3B8\uC740 \uC544\uB2C8\uB2E4. \uC544\uC9C1\uC740.", standing: "koma", act: "recoil" }
+  ])
+};
+var CHAPTER_3_STORIES = [
+  STAGE_3_1_PRE,
+  STAGE_3_4_POST,
+  STAGE_3_5_PRE,
+  STAGE_3_5_POST,
+  STAGE_3_6_POST,
+  STAGE_3_8_POST,
+  STAGE_3_9_POST,
+  STAGE_3_10_PRE,
+  STAGE_3_10_POST
 ];
 
 // src/data/stageStories.ts
@@ -27080,6 +28194,7 @@ var LINKS = {
   "1-6": { post: "stage-1-6-post" },
   "1-7": { pre: "stage-1-7-pre" },
   "1-8": { pre: "stage-1-8-pre" },
+  "1-8-side-battle": { pre: "stage-1-8-side-pre", post: "stage-1-8-side-post" },
   "1-9": { pre: "stage-1-9-pre", post: "stage-1-9-post" },
   "1-10": { pre: "stage-1-10-pre", post: "stage-1-10-post" },
   "2-1": { pre: "stage-2-1-pre" },
@@ -27088,12 +28203,19 @@ var LINKS = {
   "2-5": { pre: "stage-2-5-pre", post: "stage-2-5-post" },
   "2-6": { post: "stage-2-6-post" },
   "2-7": { pre: "stage-2-7-pre", post: "stage-2-7-post" },
-  "2-8": { pre: "stage-2-8-pre" },
+  "2-8": { pre: "stage-2-8-pre", post: "stage-2-8-post" },
   "2-9": { post: "stage-2-9-post" },
-  "2-10": { pre: "stage-2-10-pre", post: "stage-2-10-post" }
+  "2-10": { pre: "stage-2-10-pre", post: "stage-2-10-post" },
+  "3-1": { pre: "stage-3-1-pre" },
+  "3-4": { post: "stage-3-4-post" },
+  "3-5": { pre: "stage-3-5-pre", post: "stage-3-5-post" },
+  "3-6": { post: "stage-3-6-post" },
+  "3-8": { post: "stage-3-8-post" },
+  "3-9": { post: "stage-3-9-post" },
+  "3-10": { pre: "stage-3-10-pre", post: "stage-3-10-post" }
 };
 var STAGE_STORY_LINKS = LINKS;
-var MAIN_STORY_BUNDLES = [...CHAPTER_1_STORIES, ...CHAPTER_2_STORIES];
+var MAIN_STORY_BUNDLES = [...CHAPTER_1_STORIES, ...CHAPTER_2_STORIES, ...CHAPTER_3_STORIES];
 
 // src/data/recollectionCatalog.ts
 function buildRecollectionEntries() {
@@ -27102,15 +28224,24 @@ function buildRecollectionEntries() {
     { storyId: OPENING_RETREAT.id, group: "chapter1", stageId: "1-1", titleKey: "recollection.title.openingRetreat" }
   ];
   for (const chapter of CHAPTERS) {
-    const group = chapter.id === 1 ? "chapter1" : chapter.id === 2 ? "chapter2" : void 0;
+    const group = chapter.id === 1 ? "chapter1" : chapter.id === 2 ? "chapter2" : chapter.id === 3 ? "chapter3" : void 0;
     if (!group) continue;
     for (const stage of chapter.stages) {
       const link = STAGE_STORY_LINKS[stage.id];
       if (link?.pre) entries.push({ storyId: link.pre, group, stageId: stage.id, phase: "pre" });
       if (link?.post) entries.push({ storyId: link.post, group, stageId: stage.id, phase: "post" });
+      for (const sub of SUB_STAGES) {
+        if (sub.chapter !== chapter.id || sub.chapterOrder !== stage.chapterOrder) continue;
+        if (sub.kind === "story") {
+          entries.push({ storyId: sub.storyId, group, stageId: sub.id, ...sub.id === "1-5-side-story" ? { titleKey: "recollection.title.greenhouse" } : {} });
+          continue;
+        }
+        const subLink = STAGE_STORY_LINKS[sub.id];
+        if (subLink?.pre) entries.push({ storyId: subLink.pre, group, stageId: sub.id, phase: "pre" });
+        if (subLink?.post) entries.push({ storyId: subLink.post, group, stageId: sub.id, phase: "post" });
+      }
     }
   }
-  entries.push({ storyId: GREENHOUSE_ECHO.id, group: "side", stageId: SIDE_STORY_STAGE.id, titleKey: "recollection.title.greenhouse" });
   entries.push({ storyId: GREAT_AUK_REPORT.id, group: "side", titleKey: "recollection.title.greatAuk" });
   return entries;
 }
@@ -27346,7 +28477,8 @@ function deriveNotificationState(conditions) {
     mail: conditions.unreadMailCount > 0 || (conditions.claimableMailCount ?? 0) > 0,
     passReward: (conditions.claimablePassCount ?? 0) > 0,
     achievementReward: (conditions.claimableAchievementCount ?? 0) > 0,
-    premiumNotice: (conditions.freeSupplyCategories?.length ?? 0) > 0 || (conditions.claimablePassCount ?? 0) > 0,
+    // 패스 달성 보상은 로비 패스 카드에서 받으므로 프리미엄 쪽에는 알리지 않는다.
+    premiumNotice: (conditions.freeSupplyCategories?.length ?? 0) > 0,
     premiumFree: (conditions.freeSupplyCategories?.length ?? 0) > 0,
     premiumFreeDaily: conditions.freeSupplyCategories?.includes("daily") ?? false,
     premiumFreeWeekly: conditions.freeSupplyCategories?.includes("weekly") ?? false,
@@ -27554,49 +28686,6 @@ function rechargeRequestId() {
   return globalThis.crypto?.randomUUID?.() ?? `stamina-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-// src/data/expeditionEnemies.ts
-init_define_import_meta_env();
-var EXPEDITION_ENEMY_FORMATIONS = {
-  normal: ["toby", "amo", "ripa"],
-  /*
-   * **정예 조우에는 때릴 줄 아는 개체가 첫 자리에 선다.** 혼자 서는 자리인데 아모(탱커)가
-   * 앞에 있던 때는 실측에서 스물일곱 초를 싸우고도 파티 체력이 **한 점도 깎이지 않았다** —
-   * 정예가 묻는 것은 단일 딜과 유지력인데 그 조우가 아무것도 묻지 않았다.
-   */
-  elite: ["koma", "amo", "ripa"],
-  horde: ["ripa", "toby", "amo"],
-  boss: ["amo", "ripa", "toby"],
-  // 비전투 노드는 표시/전투 함수에서 호출하지 않지만 완전한 타입 표를 유지한다.
-  rest: ["toby", "amo", "ripa"],
-  treasure: ["toby", "amo", "ripa"]
-};
-var FINAL_FLOOR_BOSS_ID = "pontos";
-function expeditionNodeRole(type, floor) {
-  if (type === "boss") return floor >= 20 ? "endless" : "boss";
-  return encounterRoleFor(type === "horde" ? ENCOUNTER_HORDE_COUNT : 3, { elite: type === "elite" });
-}
-function expeditionRecommendedLevel(floor) {
-  return Math.max(1, Math.round(floor * EXPEDITION_LEVEL_PER_FLOOR));
-}
-var EXPEDITION_LEVEL_PER_FLOOR = 2;
-var ENCOUNTER_HORDE_COUNT = 5;
-function expeditionEnemyLevel(_type, floor) {
-  return expeditionRecommendedLevel(floor);
-}
-function getExpeditionNodeEnemies(type, floor) {
-  const level = expeditionEnemyLevel(type, floor);
-  const ids = type === "boss" && floor === 20 ? [FINAL_FLOOR_BOSS_ID] : EXPEDITION_ENEMY_FORMATIONS[type];
-  const role = expeditionNodeRole(type, floor);
-  return ids.map((id) => {
-    const enemy = getRelic(id);
-    return { ...enemy, encounterRole: role, stats: applyEncounterScaling(enemy.stats, level, role) };
-  });
-}
-function expeditionBossGrowth() {
-  const level = expeditionEnemyLevel("boss", 20);
-  return { level, breakthrough: requiredBreakthroughForLevel(level) };
-}
-
 // src/core/expeditionScore.ts
 init_define_import_meta_env();
 function calculateExpeditionNodeScore(input) {
@@ -27609,259 +28698,6 @@ function calculateExpeditionNodeScore(input) {
 function expeditionBossDamageScore(totalDamage) {
   if (!Number.isFinite(totalDamage) || totalDamage <= 0) return 0;
   return Math.round(totalDamage * EXPEDITION_SCORE_BALANCE.bossDamagePerPoint);
-}
-
-// src/managers/RelicProgressionManager.ts
-init_define_import_meta_env();
-var RelicProgressionManager = class {
-  constructor(state = session) {
-    this.state = state;
-  }
-  state;
-  /** 읽기는 상태를 변경하지 않는다. 미보유 도감 미리보기에는 저장되지 않는 기본값만 돌려준다. */
-  getProgress(relicId) {
-    getRelic(relicId);
-    return this.state.relicProgress[relicId] ?? createInitialRelicProgress();
-  }
-  /** 성장 변경은 보유 렐릭에만 허용해 보유 목록과 성장 레코드의 저장 불변식을 지킨다. */
-  ownedProgress(relicId) {
-    getRelic(relicId);
-    const progress = this.state.relicProgress[relicId];
-    if (!this.state.owned.has(relicId) || !progress) throw new Error(`\uBCF4\uC720\uD558\uC9C0 \uC54A\uC740 \uB810\uB9AD\uC785\uB2C8\uB2E4: ${relicId}`);
-    return progress;
-  }
-  /** 레벨은 정수만 저장한다. 경험치는 레벨이 바뀌면 그 레벨의 시작점으로 되돌린다. */
-  setLevel(relicId, level) {
-    if (!Number.isInteger(level) || level < 1) throw new RangeError("\uB808\uBCA8\uC740 1 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
-    Object.assign(this.ownedProgress(relicId), { level, exp: 0 });
-    this.persistSharedSession();
-  }
-  /** 지금 별(1~5). 화면은 돌파 단계가 아니라 이 값을 읽는다. */
-  getBreakthroughGrade(relicId) {
-    return breakthroughGrade(this.getProgress(relicId).breakthrough);
-  }
-  /** 그 개체의 파편 보유량. 없으면 0이다 — 없는 개체를 위해 표를 만들지 않는다. */
-  getFragments(relicId) {
-    return this.state.relicFragments[relicId] ?? 0;
-  }
-  /**
-   * 가방이 비어 있을 때만 시작 룬을 넣어 준다(임시 지급).
-   *
-   * 세공 화면을 만져 볼 룬이 없으면 기능이 있는지조차 알 수 없다. 정식 획득 경로가 생기면
-   * 이 메서드와 `createStarterRunes`를 함께 지운다. 이미 룬이 있으면 아무것도 하지 않으므로
-   * 저장을 여러 번 열어도 가방이 불어나지 않는다.
-   */
-  grantStarterRunes(random = Math.random) {
-    if (this.state.runeInventory.length > 0) return 0;
-    this.state.runeInventory = createStarterRunes(random);
-    this.persistSharedSession();
-    return this.state.runeInventory.length;
-  }
-  /**
-   * 룬 특성을 만져 볼 원석과 아이템을 표의 하한까지 채워 준다(임시 지급).
-   *
-   * 시작 룬과 달리 이 둘은 **이미 저장이 있는 계정에도** 채운다 — 신규 지갑만 늘리면 지금
-   * 플레이하던 저장으로는 재해석을 한 번도 굴려 볼 수 없다. 하한까지만 올리므로 써서 줄어든
-   * 뒤에 다시 채워지긴 해도 여러 번 열었다고 불어나지는 않는다. 정식 수급(지층 탐사·상점
-   * 교환)이 붙으면 이 메서드와 `STARTER_RUNE_TRAIT_KIT`을 함께 지운다.
-   */
-  grantRuneTraitTestKit(random = Math.random) {
-    this.state.runeInventory = backfillStarterRuneTraits(this.state.runeInventory, random);
-    const wallet = this.state.wallet.rawStone < STARTER_RUNE_TRAIT_KIT.rawStone ? { ...this.state.wallet, rawStone: STARTER_RUNE_TRAIT_KIT.rawStone } : this.state.wallet;
-    const items = this.state.itemInventory.map((entry) => ({ ...entry }));
-    for (const { itemId, quantity } of STARTER_RUNE_TRAIT_KIT.items) {
-      const owned = items.find((entry) => entry.itemId === itemId);
-      if (!owned) items.push({ itemId, quantity });
-      else if (owned.quantity < quantity) owned.quantity = quantity;
-    }
-    this.state.wallet = wallet;
-    this.state.itemInventory = items;
-    this.persistSharedSession();
-  }
-  /** 임시 지급: 두 토벌권을 하한까지 채운다. 정식 수급이 붙으면 이 메서드와 부트의 호출을 함께 지운다. */
-  grantRaidTicketTestKit() {
-    const items = this.state.itemInventory.map((entry) => ({ ...entry }));
-    let changed = false;
-    for (const { itemId, quantity } of RAID_TICKET_TEST_KIT) {
-      const owned = items.find((entry) => entry.itemId === itemId);
-      if (!owned) {
-        items.push({ itemId, quantity });
-        changed = true;
-      } else if (owned.quantity < quantity) {
-        owned.quantity = quantity;
-        changed = true;
-      }
-    }
-    if (!changed) return;
-    this.state.itemInventory = items;
-    this.persistSharedSession();
-  }
-  /**
-   * 임시 지급: 소탕권을 하한까지 채운다. 웹 빌드에는 광고 SDK가 없어 광고로는 채울 수 없으므로,
-   * 소탕을 만져 보려면 가방에 몇 장이 있어야 한다. 광고 SDK가 붙으면 이 메서드와 부트의 호출을 지운다.
-   */
-  grantSweepTicketTestKit() {
-    const { itemId, quantity } = SWEEP_TICKET_TEST_KIT;
-    const owned = this.state.itemInventory.find((entry) => entry.itemId === itemId);
-    if (owned && owned.quantity >= quantity) return;
-    this.state.itemInventory = owned ? this.state.itemInventory.map((entry) => entry.itemId === itemId ? { ...entry, quantity } : entry) : [...this.state.itemInventory, { itemId, quantity }];
-    this.persistSharedSession();
-  }
-  /**
-   * 임시 지급: 완료 탭을 확인할 끝난 레이드 표본을 넣는다(`previewCompletedRaids`). 표본이 하나라도
-   * 남아 있으면 건드리지 않는다 — 정산한 뒤 다시 채우면 받은 판이 도로 받을 판이 된다. 정식 기록이
-   * 붙으면 이 메서드와 부트의 호출을 함께 지운다.
-   */
-  grantRaidHistoryTestKit(now = /* @__PURE__ */ new Date()) {
-    if (this.state.raid.instances.some(({ id }) => id.startsWith(RAID_HISTORY_PREVIEW_PREFIX))) return;
-    this.state.raid = { instances: [...this.state.raid.instances, ...previewCompletedRaids(now)] };
-    this.persistSharedSession();
-  }
-  /** 서버가 검증한 장착 응답만 로컬 세션에 적용해 UI가 슬롯 불변식을 재구현하지 않게 한다. */
-  async equipRune(relicId, slotIndex, runeInstanceId, api = gameApi) {
-    const response = await api.equipRune({ relicId, slotIndex, runeInstanceId });
-    this.applyRuneInventory(response.inventory);
-  }
-  /** 빈 슬롯 결과 역시 서버 응답의 전체 장착표를 적용한다. */
-  async unequipRune(relicId, slotIndex, api = gameApi) {
-    const response = await api.unequipRune({ relicId, slotIndex });
-    this.applyRuneInventory(response.inventory);
-  }
-  /** 인벤토리 DTO를 기존 공유 객체에 복사해 씬 참조를 보존하고 응답 단위로 저장한다. */
-  applyRuneInventory(inventory) {
-    this.state.runeInventory = inventory.runes.map((rune) => ({
-      ...rune,
-      mainStats: [{ ...rune.mainStats[0] }, { ...rune.mainStats[1] }],
-      subStats: rune.subStats.map((stat) => ({ ...stat })),
-      enhancementHistory: Object.fromEntries(Object.entries(rune.enhancementHistory).map(([key, history]) => [key, history?.map((record2) => ({ ...record2 }))])),
-      engravings: rune.engravings.map((engraving) => ({ ...engraving }))
-    }));
-    for (const equipment of inventory.equipment) {
-      const progress = this.ownedProgress(equipment.relicId);
-      progress.heartGemSlots = [...equipment.slots];
-    }
-    this.persistSharedSession();
-  }
-  /** UI와 전투가 공유할 최종 능력치를 순수 코어 계산기로 구한다. */
-  getFinalStats(relicId) {
-    const progress = this.getProgress(relicId);
-    const gems2 = progress.heartGemSlots.flatMap((id) => {
-      const rune = id === null ? void 0 : this.state.runeInventory.find((candidate) => candidate.instanceId === id);
-      if (!rune) return [];
-      return [rune];
-    });
-    const def = getRelic(relicId);
-    return calculateFinalStats(def.stats, progress, gems2, def.rarity);
-  }
-  /**
-   * 그 개체를 별 다섯까지 키우는 데 필요한 재료를 한 번에 지급한다 — **테스트 전용 진입점**이다.
-   *
-   * 돌파는 레벨 상한 → 파편 → 치즈케이크 셋이 동시에 맞아야 되는 조작이라, 지급 없이 확인하려면
-   * 연구소에서 같은 개체를 여러 번 뽑고 수십 번 급여해야 한다. 여기서는 **재료만** 주고 돌파
-   * 자체는 사람이 누른다 — 자동으로 뚫어 버리면 확인하려는 그 화면을 지나쳐 버린다.
-   *
-   * 수치는 화면이 아니라 순수 규칙(`remainingBreakthroughCost`)에서 나오므로, 단계표나 등급별
-   * 파편 수를 고치면 지급량도 함께 따라간다. 정식 획득 경로가 충분해지면 이 메서드를 지운다.
-   */
-  grantBreakthroughSetForDebug(relicId) {
-    const def = getRelic(relicId);
-    const progress = this.ownedProgress(relicId);
-    const cost = remainingBreakthroughCost(def.rarity, progress);
-    this.state.relicFragments[relicId] = (this.state.relicFragments[relicId] ?? 0) + cost.fragments;
-    this.state.wallet.cheesecake += cost.cheesecake;
-    this.persistSharedSession();
-    return cost;
-  }
-  /** 성장 트랜잭션이 끝난 뒤에만 저장해 중간 상태가 남지 않게 한다. */
-  persistSharedSession() {
-    if (this.state === session) saveManager.save(this.state);
-  }
-};
-var relicProgression = new RelicProgressionManager();
-
-// src/core/runeTraitEffects.ts
-init_define_import_meta_env();
-function onceLimits(target, cooldownSeconds = 0) {
-  return { maxTriggers: 1, cooldownSeconds, maxStacks: 1, target };
-}
-function runeTraitCombatEffects(trait, relicId) {
-  const def = findRuneTrait(trait.id);
-  if (def === void 0) return [];
-  const value = runeTraitValue(trait.id, trait.grade);
-  const scope = { kind: "relic", relicId };
-  switch (def.effect.kind) {
-    case "hasteOnBattleStart":
-      return [{
-        kind: "triggered",
-        trigger: "battleStart",
-        scope,
-        limits: onceLimits("self"),
-        payload: { kind: "haste", attackSpeedPercent: value, moveSpeedPercent: 0, seconds: def.effect.seconds }
-      }];
-    case "hasteOnKill":
-      return [{
-        kind: "triggered",
-        trigger: "onKill",
-        scope,
-        limits: { maxTriggers: Number.MAX_SAFE_INTEGER, cooldownSeconds: def.effect.cooldownSeconds, maxStacks: 1, target: "self" },
-        payload: { kind: "haste", attackSpeedPercent: value, moveSpeedPercent: value, seconds: def.effect.seconds }
-      }];
-    case "damageVsHighHp":
-      return [{ kind: "damageVsHighHpPercent", percent: value, aboveHpPercent: def.effect.aboveHpPercent, scope }];
-    case "sameTargetStreak":
-      return [{ kind: "sameTargetStreakPercent", percentPerStack: value, maxStacks: def.effect.maxStacks, scope }];
-    case "shieldLowestAllyOnBattleStart":
-      return [{
-        kind: "triggered",
-        trigger: "battleStart",
-        scope,
-        limits: onceLimits("lowestHpAlly"),
-        payload: { kind: "shield", maxHpPercent: value }
-      }];
-    case "shieldOnLowHp":
-      return [{
-        kind: "triggered",
-        trigger: "onLowHp",
-        scope,
-        limits: onceLimits("self"),
-        payload: { kind: "shield", maxHpPercent: value }
-      }];
-    case "healOnLowHp":
-      return [{
-        kind: "triggered",
-        trigger: "onLowHp",
-        scope,
-        limits: onceLimits("self"),
-        payload: { kind: "heal", maxHpPercent: value }
-      }];
-    case "shieldOnCritical":
-      return [{
-        kind: "triggered",
-        trigger: "onCritical",
-        scope,
-        limits: { maxTriggers: Number.MAX_SAFE_INTEGER, cooldownSeconds: def.effect.cooldownSeconds, maxStacks: 1, target: "self" },
-        payload: { kind: "shield", maxHpPercent: value }
-      }];
-    case "flatStat":
-      return [{ kind: "flatStat", stat: def.effect.stat, points: value, scope }];
-    case "bleedEveryNAttacks":
-      return [{ kind: "bleedOnAttack", strength: "standard", everyNAttacks: value, reapplication: "refresh", scope }];
-  }
-}
-function partyRuneTraitEffects(equipped) {
-  return equipped.flatMap(({ relicId, runes }) => runes.flatMap((rune) => rune.trait === void 0 ? [] : runeTraitCombatEffects(rune.trait, relicId)));
-}
-
-// src/core/expeditionBattle.ts
-init_define_import_meta_env();
-function expeditionBattleEffects(selections) {
-  return selections.flatMap(({ augmentId, targetRelicId }) => {
-    const augment = getExpeditionAugment(augmentId);
-    const effect = augment?.effect;
-    if (!augment || !effect || effect.kind === "healAfterBattlePercent") return [];
-    const scope = targetRelicId ? { kind: "relic", relicId: targetRelicId } : { kind: "all" };
-    return [{ ...effect, scope, stacking: augment.stacking, stackKey: `${augment.id}:${targetRelicId ?? "party"}` }];
-  });
 }
 
 // src/managers/SettingsManager.ts
@@ -28152,6 +28988,12 @@ var FakeServer = class {
     this.verifyAdToken = options.verifyAdToken ?? ((token, slotId) => QA_TOOLS_ENABLED && token === `verified:${slotId}`);
     this.verifyReceipt = options.verifyPurchaseReceipt ?? ((receipt, productId) => QA_TOOLS_ENABLED && receipt.startsWith(`verified-receipt:${productId}:`) ? receipt.slice(`verified-receipt:${productId}:`.length) : null);
     this.persistSession = options.persistSession;
+    for (const ticket of Object.values(state.serverJournal?.combat?.tickets ?? {})) {
+      if (ticket.kind === "stage") this.pendingStageAdmissions.set(ticket.target, /* @__PURE__ */ new Set([ticket.requestId]));
+      if (ticket.kind === "cake") this.pendingCakeAdmissions.set(ticket.target, /* @__PURE__ */ new Set([ticket.requestId]));
+      if (ticket.kind === "bounty") this.pendingBountyRuns.set(ticket.requestId, ticket.target);
+    }
+    this.raidContext = options.raidContext;
     this.notificationScheduler = options.notificationScheduler ?? (state === session ? settingsManager : void 0);
     this.mails = QA_TOOLS_ENABLED ? [
       { id: "launch-gift", title: t("mail.launch.title"), sender: t("mail.launch.sender"), body: t("mail.launch.body"), sentAt: "2026-08-30T00:00:00.000Z", expiresAt: "2099-12-31T23:59:59.000Z", read: false, claimed: false, rewards: [
@@ -28172,6 +29014,13 @@ var FakeServer = class {
     this.applySavedMailClaims();
   }
   state;
+  /** 로컬 QA는 권위 영수증을 흉내 내지 않는다. 운영 HTTP 처리기만 발급/검증한다. */
+  async prepareCombat(_request) {
+    return null;
+  }
+  async finishCombat(_request) {
+    return null;
+  }
   /** 완료 수령 requestId의 최초 응답을 보존해 네트워크 재시도와 연타를 같은 영수증으로 묶는다. */
   interactionClaimResults = /* @__PURE__ */ new Map();
   /** 같은 밀리초에 출발한 파견끼리도 id가 갈리게 하는 증가 번호다. */
@@ -28181,6 +29030,7 @@ var FakeServer = class {
   async getAsyncArenaServerState() {
     return null;
   }
+  raidContext;
   latencyMs;
   random;
   now;
@@ -28709,6 +29559,7 @@ var FakeServer = class {
    * 거기에 내가 민 몫과 정산 여부가 있다.
    */
   raidInstances(now) {
+    if (this.raidContext) return this.state.raid.instances.map((instance) => ({ ...instance }));
     const byId = /* @__PURE__ */ new Map();
     const today = raidSeasonKey(now);
     const yesterday = raidSeasonKey(new Date(now.getTime() - 864e5));
@@ -28749,6 +29600,10 @@ var FakeServer = class {
   }
   /** 그 판을 **다른 참가자들**이 지금까지 깎은 몫. 월드 폭주는 서버 전체, 소환 레이드는 친구들이다. */
   raidOthersDamage(instance, now) {
+    if (this.raidContext) {
+      const shared = this.raidContext.records.find((row) => row.instance.id === instance.id);
+      return Math.max(0, (shared?.damage ?? 0) - (shared?.instance.appliedDamage ?? shared?.instance.myDamage ?? 0));
+    }
     const spec = RAID_DIFFICULTY[instance.difficulty];
     const opened = Date.parse(instance.openedAt);
     const elapsed = Math.min(1, Math.max(0, (now.getTime() - opened) / (spec.lifetimeHours * 36e5)));
@@ -28779,8 +29634,8 @@ var FakeServer = class {
     const growth = raidBossGrowth(instance.difficulty);
     const rewardOf = (currency3, amount) => ({ currency: currency3, name: findItem(currency3)?.name ?? currency3, amount });
     const settlement = instance.myDamage > 0 ? raidSettlement(instance.difficulty, instance.myDamage, progress.totalHp > 0 ? progress.dealtDamage / progress.totalHp : 0, progress.defeated) : void 0;
-    const board = instance.kind === "world" ? mockRaidContributions(instance.openedAt.slice(0, 10), Math.min(1, Math.max(0, (now.getTime() - Date.parse(instance.openedAt)) / 864e5))) : mockSummonContributions(instance.id, others);
-    const mine = { playerId: "local-player", displayName: t("profile.defaultName"), damage: instance.myDamage, isMe: true, favoriteRelicId: this.state.favorite };
+    const board = this.raidContext ? (this.raidContext.records.find((row) => row.instance.id === instance.id)?.entries ?? []).filter((entry) => entry.playerId !== this.raidContext.playerId) : instance.kind === "world" ? mockRaidContributions(instance.openedAt.slice(0, 10), Math.min(1, Math.max(0, (now.getTime() - Date.parse(instance.openedAt)) / 864e5))) : mockSummonContributions(instance.id, others);
+    const mine = { playerId: this.raidContext?.playerId ?? "local-player", displayName: this.state.playerCard.nickname || t("profile.defaultName"), damage: instance.myDamage, isMe: true, favoriteRelicId: this.state.favorite };
     return {
       ...(() => {
         const pending = Object.entries(this.state.serverJournal?.raidAdmissions ?? {}).find(([, admission]) => admission.raidId === instance.id && Date.parse(admission.expiresAt) >= now.getTime());
@@ -28847,7 +29702,7 @@ var FakeServer = class {
     const now = this.now();
     const { bossRelicId, difficulty } = select ? { bossRelicId: request.bossRelicId, difficulty: request.difficulty } : rollRaidSummon(this.random(), this.random());
     const instance = {
-      id: `summon-${request.requestId}`,
+      id: `summon-${this.raidContext ? `${this.raidContext.playerId}-` : ""}${request.requestId}`,
       kind: "summon",
       bossRelicId,
       difficulty,
@@ -28919,7 +29774,7 @@ var FakeServer = class {
     const cached = this.readReceipt("raidEnter", request.requestId, request.raidId);
     if (cached) {
       const admission = this.state.serverJournal?.raidAdmissions[request.requestId];
-      return { ...cached, ...this.snapshot(), replayVersion: admission?.replayVersion, relics: structuredClone(admission?.relics) };
+      return { ...cached, ...this.snapshot(), replaySeed: admission?.seed, replayVersion: admission?.replayVersion, relics: structuredClone(admission?.relics) };
     }
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "\uC785\uC7A5 \uC694\uCCAD ID\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     const now = this.now();
@@ -28943,6 +29798,8 @@ var FakeServer = class {
     const result = { raid: raidDto, requestId: request.requestId, staminaSpent: cost, playerExp: spent.playerExp, refundPolicy: "no-refund-after-admission" };
     this.recordReceipt(nextState, "raidEnter", request.requestId, request.raidId, result);
     nextState.serverJournal.raidAdmissions[request.requestId] = {
+      seed: this.raidContext ? globalThis.crypto.randomUUID() : request.requestId,
+      admittedAt: now.toISOString(),
       raidId: updated.id,
       seasonHp: raidDto.remainingHp,
       ...request.replayVersion === 2 ? { replayVersion: 2 } : {},
@@ -28959,6 +29816,7 @@ var FakeServer = class {
       playerExp: spent.playerExp,
       refundPolicy: "no-refund-after-admission",
       relics: structuredClone(nextState.serverJournal.raidAdmissions[request.requestId].relics),
+      replaySeed: nextState.serverJournal.raidAdmissions[request.requestId].seed,
       replayVersion: nextState.serverJournal.raidAdmissions[request.requestId].replayVersion
     };
     return response;
@@ -29011,7 +29869,7 @@ var FakeServer = class {
         // 레이드의 보스는 남은 공유 게이지를 다 깎으면 쓰러진다 — 재현도 입장한 순간의 게이지로 그 끝을 받는다.
         bossKillable: true,
         seasonHp: admission.seasonHp,
-        ...admission.replayVersion === 2 ? { replayIdentity: request.requestId } : {}
+        ...admission.replayVersion === 2 ? { replayIdentity: admission.seed ?? request.requestId } : {}
       }, request.actions);
       if (result.totalDamage > RAID_BOSS_BALANCE.maximumAcceptedScore) throw new Error("ABNORMAL_SCORE");
     } catch (error) {
@@ -29269,9 +30127,13 @@ var FakeServer = class {
     if (typeof id !== "string" || id.length === 0 || id.length > 120) throw new GameApiError("INVALID_STATE", "\uC774\uC57C\uAE30 ID\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (this.state.completedStoryIds.has(id)) return { firstCompletion: false };
     const completedStoryIds = new Set(this.state.completedStoryIds).add(id);
-    this.persist({ ...this.state, completedStoryIds });
+    const reward = SUB_STORY_GEM_REWARDS[id] ?? 0;
+    const gemsGranted = Math.max(0, Math.min(reward, WALLET_CAPS.gems - this.state.wallet.gems));
+    const nextWallet = gemsGranted > 0 ? { ...this.state.wallet, gems: this.state.wallet.gems + gemsGranted } : this.state.wallet;
+    this.persist({ ...this.state, completedStoryIds, wallet: nextWallet });
     this.state.completedStoryIds = completedStoryIds;
-    return { firstCompletion: true };
+    this.state.wallet = nextWallet;
+    return reward > 0 ? { firstCompletion: true, gemsGranted, wallet: { ...nextWallet } } : { firstCompletion: true };
   }
   /** 대사 선택의 유대 경험치 명령. 대상·범위를 확인하고 이미 완료한 이야기(재관람)는 보상하지 않는다. */
   async applyStoryEffect(request) {
@@ -31765,9 +32627,612 @@ var gameApi = new Proxy({}, {
   }
 });
 
+// src/managers/RelicProgressionManager.ts
+var RelicProgressionManager = class {
+  constructor(state = session) {
+    this.state = state;
+  }
+  state;
+  /** 읽기는 상태를 변경하지 않는다. 미보유 도감 미리보기에는 저장되지 않는 기본값만 돌려준다. */
+  getProgress(relicId) {
+    getRelic(relicId);
+    return this.state.relicProgress[relicId] ?? createInitialRelicProgress();
+  }
+  /** 성장 변경은 보유 렐릭에만 허용해 보유 목록과 성장 레코드의 저장 불변식을 지킨다. */
+  ownedProgress(relicId) {
+    getRelic(relicId);
+    const progress = this.state.relicProgress[relicId];
+    if (!this.state.owned.has(relicId) || !progress) throw new Error(`\uBCF4\uC720\uD558\uC9C0 \uC54A\uC740 \uB810\uB9AD\uC785\uB2C8\uB2E4: ${relicId}`);
+    return progress;
+  }
+  /** 레벨은 정수만 저장한다. 경험치는 레벨이 바뀌면 그 레벨의 시작점으로 되돌린다. */
+  setLevel(relicId, level) {
+    if (!Number.isInteger(level) || level < 1) throw new RangeError("\uB808\uBCA8\uC740 1 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
+    Object.assign(this.ownedProgress(relicId), { level, exp: 0 });
+    this.persistSharedSession();
+  }
+  /** 지금 별(1~5). 화면은 돌파 단계가 아니라 이 값을 읽는다. */
+  getBreakthroughGrade(relicId) {
+    return breakthroughGrade(this.getProgress(relicId).breakthrough);
+  }
+  /** 그 개체의 파편 보유량. 없으면 0이다 — 없는 개체를 위해 표를 만들지 않는다. */
+  getFragments(relicId) {
+    return this.state.relicFragments[relicId] ?? 0;
+  }
+  /**
+   * 가방이 비어 있을 때만 시작 룬을 넣어 준다(임시 지급).
+   *
+   * 세공 화면을 만져 볼 룬이 없으면 기능이 있는지조차 알 수 없다. 정식 획득 경로가 생기면
+   * 이 메서드와 `createStarterRunes`를 함께 지운다. 이미 룬이 있으면 아무것도 하지 않으므로
+   * 저장을 여러 번 열어도 가방이 불어나지 않는다.
+   */
+  grantStarterRunes(random = Math.random) {
+    if (this.state.runeInventory.length > 0) return 0;
+    this.state.runeInventory = createStarterRunes(random);
+    this.persistSharedSession();
+    return this.state.runeInventory.length;
+  }
+  /**
+   * 룬 특성을 만져 볼 원석과 아이템을 표의 하한까지 채워 준다(임시 지급).
+   *
+   * 시작 룬과 달리 이 둘은 **이미 저장이 있는 계정에도** 채운다 — 신규 지갑만 늘리면 지금
+   * 플레이하던 저장으로는 재해석을 한 번도 굴려 볼 수 없다. 하한까지만 올리므로 써서 줄어든
+   * 뒤에 다시 채워지긴 해도 여러 번 열었다고 불어나지는 않는다. 정식 수급(지층 탐사·상점
+   * 교환)이 붙으면 이 메서드와 `STARTER_RUNE_TRAIT_KIT`을 함께 지운다.
+   */
+  grantRuneTraitTestKit(random = Math.random) {
+    this.state.runeInventory = backfillStarterRuneTraits(this.state.runeInventory, random);
+    const wallet = this.state.wallet.rawStone < STARTER_RUNE_TRAIT_KIT.rawStone ? { ...this.state.wallet, rawStone: STARTER_RUNE_TRAIT_KIT.rawStone } : this.state.wallet;
+    const items = this.state.itemInventory.map((entry) => ({ ...entry }));
+    for (const { itemId, quantity } of STARTER_RUNE_TRAIT_KIT.items) {
+      const owned = items.find((entry) => entry.itemId === itemId);
+      if (!owned) items.push({ itemId, quantity });
+      else if (owned.quantity < quantity) owned.quantity = quantity;
+    }
+    this.state.wallet = wallet;
+    this.state.itemInventory = items;
+    this.persistSharedSession();
+  }
+  /** 임시 지급: 두 토벌권을 하한까지 채운다. 정식 수급이 붙으면 이 메서드와 부트의 호출을 함께 지운다. */
+  grantRaidTicketTestKit() {
+    const items = this.state.itemInventory.map((entry) => ({ ...entry }));
+    let changed = false;
+    for (const { itemId, quantity } of RAID_TICKET_TEST_KIT) {
+      const owned = items.find((entry) => entry.itemId === itemId);
+      if (!owned) {
+        items.push({ itemId, quantity });
+        changed = true;
+      } else if (owned.quantity < quantity) {
+        owned.quantity = quantity;
+        changed = true;
+      }
+    }
+    if (!changed) return;
+    this.state.itemInventory = items;
+    this.persistSharedSession();
+  }
+  /**
+   * 임시 지급: 소탕권을 하한까지 채운다. 웹 빌드에는 광고 SDK가 없어 광고로는 채울 수 없으므로,
+   * 소탕을 만져 보려면 가방에 몇 장이 있어야 한다. 광고 SDK가 붙으면 이 메서드와 부트의 호출을 지운다.
+   */
+  grantSweepTicketTestKit() {
+    const { itemId, quantity } = SWEEP_TICKET_TEST_KIT;
+    const owned = this.state.itemInventory.find((entry) => entry.itemId === itemId);
+    if (owned && owned.quantity >= quantity) return;
+    this.state.itemInventory = owned ? this.state.itemInventory.map((entry) => entry.itemId === itemId ? { ...entry, quantity } : entry) : [...this.state.itemInventory, { itemId, quantity }];
+    this.persistSharedSession();
+  }
+  /**
+   * 임시 지급: 완료 탭을 확인할 끝난 레이드 표본을 넣는다(`previewCompletedRaids`). 표본이 하나라도
+   * 남아 있으면 건드리지 않는다 — 정산한 뒤 다시 채우면 받은 판이 도로 받을 판이 된다. 정식 기록이
+   * 붙으면 이 메서드와 부트의 호출을 함께 지운다.
+   */
+  grantRaidHistoryTestKit(now = /* @__PURE__ */ new Date()) {
+    if (this.state.raid.instances.some(({ id }) => id.startsWith(RAID_HISTORY_PREVIEW_PREFIX))) return;
+    this.state.raid = { instances: [...this.state.raid.instances, ...previewCompletedRaids(now)] };
+    this.persistSharedSession();
+  }
+  /** 서버가 검증한 장착 응답만 로컬 세션에 적용해 UI가 슬롯 불변식을 재구현하지 않게 한다. */
+  async equipRune(relicId, slotIndex, runeInstanceId, api = gameApi) {
+    const response = await api.equipRune({ relicId, slotIndex, runeInstanceId });
+    this.applyRuneInventory(response.inventory);
+  }
+  /** 빈 슬롯 결과 역시 서버 응답의 전체 장착표를 적용한다. */
+  async unequipRune(relicId, slotIndex, api = gameApi) {
+    const response = await api.unequipRune({ relicId, slotIndex });
+    this.applyRuneInventory(response.inventory);
+  }
+  /** 인벤토리 DTO를 기존 공유 객체에 복사해 씬 참조를 보존하고 응답 단위로 저장한다. */
+  applyRuneInventory(inventory) {
+    this.state.runeInventory = inventory.runes.map((rune) => ({
+      ...rune,
+      mainStats: [{ ...rune.mainStats[0] }, { ...rune.mainStats[1] }],
+      subStats: rune.subStats.map((stat) => ({ ...stat })),
+      enhancementHistory: Object.fromEntries(Object.entries(rune.enhancementHistory).map(([key, history]) => [key, history?.map((record2) => ({ ...record2 }))])),
+      engravings: rune.engravings.map((engraving) => ({ ...engraving }))
+    }));
+    for (const equipment of inventory.equipment) {
+      const progress = this.ownedProgress(equipment.relicId);
+      progress.heartGemSlots = [...equipment.slots];
+    }
+    this.persistSharedSession();
+  }
+  /** UI와 전투가 공유할 최종 능력치를 순수 코어 계산기로 구한다. */
+  getFinalStats(relicId) {
+    const progress = this.getProgress(relicId);
+    const gems2 = progress.heartGemSlots.flatMap((id) => {
+      const rune = id === null ? void 0 : this.state.runeInventory.find((candidate) => candidate.instanceId === id);
+      if (!rune) return [];
+      return [rune];
+    });
+    const def = getRelic(relicId);
+    return calculateFinalStats(def.stats, progress, gems2, def.rarity);
+  }
+  /**
+   * 그 개체를 별 다섯까지 키우는 데 필요한 재료를 한 번에 지급한다 — **테스트 전용 진입점**이다.
+   *
+   * 돌파는 레벨 상한 → 파편 → 치즈케이크 셋이 동시에 맞아야 되는 조작이라, 지급 없이 확인하려면
+   * 연구소에서 같은 개체를 여러 번 뽑고 수십 번 급여해야 한다. 여기서는 **재료만** 주고 돌파
+   * 자체는 사람이 누른다 — 자동으로 뚫어 버리면 확인하려는 그 화면을 지나쳐 버린다.
+   *
+   * 수치는 화면이 아니라 순수 규칙(`remainingBreakthroughCost`)에서 나오므로, 단계표나 등급별
+   * 파편 수를 고치면 지급량도 함께 따라간다. 정식 획득 경로가 충분해지면 이 메서드를 지운다.
+   */
+  grantBreakthroughSetForDebug(relicId) {
+    const def = getRelic(relicId);
+    const progress = this.ownedProgress(relicId);
+    const cost = remainingBreakthroughCost(def.rarity, progress);
+    this.state.relicFragments[relicId] = (this.state.relicFragments[relicId] ?? 0) + cost.fragments;
+    this.state.wallet.cheesecake += cost.cheesecake;
+    this.persistSharedSession();
+    return cost;
+  }
+  /** 성장 트랜잭션이 끝난 뒤에만 저장해 중간 상태가 남지 않게 한다. */
+  persistSharedSession() {
+    if (this.state === session) saveManager.save(this.state);
+  }
+};
+var relicProgression = new RelicProgressionManager();
+
+// src/core/combatProtocol.ts
+init_define_import_meta_env();
+function combatState(lease) {
+  const s = lease.setup;
+  return createSkirmish(
+    s.players,
+    s.enemies,
+    s.arena,
+    s.bonds,
+    s.breakthroughs,
+    s.options
+  );
+}
+var emptyCombatJournal = () => ({
+  tickets: {},
+  records: {}
+});
+var COMBAT_STEP_MS = 20;
+var MAX_COMBAT_TICKS = 18e3;
+var MAX_COMBAT_ACTIONS = 512;
+
+// src/server/combatAuthority.ts
+var fail = () => {
+  throw new Error("COMBAT_REJECTED");
+};
+function combatJournal(state) {
+  const journal = state.serverJournal;
+  return journal.combat ??= emptyCombatJournal();
+}
+function combatKey(input) {
+  const b = input.input;
+  return b.mode === "stage" ? `stage:${input.stageId}` : b.mode === "expedition" ? `expedition:${b.runId}:${b.nodeId}` : b.mode === "cake" || b.mode === "bounty" ? `${b.mode}:${b.requestId}` : fail();
+}
+function prepareCombat(state, request, now, id) {
+  if (!request || !request.input || !["stage", "cake", "bounty", "expedition"].includes(request.input.mode))
+    return fail();
+  const records = combatJournal(state), input = structuredClone(request), key = combatKey(input), mode = input.input.mode;
+  const active3 = Object.values(records.records).find(
+    (row) => combatKey(row.input) === key && (row.input.input.mode !== "bounty" || input.input.mode !== "bounty" || row.input.input.round === input.input.round) && Date.parse(row.lease.expiresAt) > now.getTime()
+  );
+  if (active3) return structuredClone(active3.lease);
+  let b = input.input;
+  const ticket = records.tickets[key];
+  if (mode !== "expedition" && !ticket) return fail();
+  if (b.mode === "stage" && ticket.target !== input.stageId || (b.mode === "cake" || b.mode === "bounty") && ticket.target !== b.tierId)
+    return fail();
+  if (b.mode === "bounty") {
+    const bounty = b;
+    if (!Number.isInteger(b.round) || b.round < 0 || b.round > 2) return fail();
+    if (b.round > 0 && !Object.values(records.records).some(
+      (row) => row.input.input.mode === "bounty" && row.input.input.requestId === bounty.requestId && row.input.input.round === bounty.round - 1 && row.verdict?.victory
+    ))
+      return fail();
+  }
+  if (b.mode === "expedition") {
+    const expeditionInput = b;
+    const run2 = state.expedition.run, node = run2?.nodes.find((n) => n.id === expeditionInput.nodeId), prev = run2?.nodes.find((n) => n.id === run2.currentNodeId);
+    if (!run2 || run2.runId !== b.runId || run2.settled || !node || !["normal", "elite", "horde"].includes(node.type) || run2.visitedNodeIds.includes(node.id) || (!prev ? node.floor !== 1 : !prev.successorIds.includes(node.id)))
+      return fail();
+    b = {
+      mode: "expedition",
+      runId: run2.runId,
+      nodeId: node.id,
+      nodeType: node.type,
+      floor: node.floor,
+      relics: structuredClone(run2.relics),
+      augments: structuredClone(run2.selectedAugments)
+    };
+    input.input = b;
+  }
+  const party = b.mode === "expedition" ? b.relics.map((r) => r.relicId) : b.mode === "bounty" ? [state.party[b.round]] : state.party;
+  if (party.some((r) => !r || !state.owned.has(r)) || new Set(party).size !== party.length)
+    return fail();
+  const progression = new RelicProgressionManager(state);
+  const frozen = b.mode === "expedition" ? new Map(
+    state.expedition.run.relics.map((r) => [r.relicId, r.snapshot])
+  ) : void 0;
+  const players = party.map((relicId) => ({
+    ...getRelic(relicId),
+    stats: structuredClone(
+      frozen?.get(relicId)?.stats ?? progression.getFinalStats(relicId)
+    )
+  }));
+  const bonds = Object.fromEntries(
+    party.map((r) => [
+      r,
+      frozen?.get(r)?.bondLevel ?? state.relicProgress[r]?.bondLevel ?? 0
+    ])
+  );
+  const breakthroughs = Object.fromEntries(
+    party.map((r) => [
+      r,
+      frozen?.get(r)?.breakthrough ?? state.relicProgress[r]?.breakthrough ?? 0
+    ])
+  );
+  const traits = partyRuneTraitEffects(
+    party.map((relicId) => ({
+      relicId,
+      runes: frozen?.get(relicId)?.runes ?? (state.relicProgress[relicId]?.heartGemSlots ?? []).flatMap(
+        (id2) => state.runeInventory.filter((r) => r.instanceId === id2)
+      )
+    }))
+  );
+  const stage = getBattleStage(input.stageId ?? state.selectedStageId ?? "1-1");
+  const cake = b.mode === "cake" ? getCakeOperationTier(b.tierId) : void 0;
+  const enemies = cake ? cakeOperationEnemies(cake) : b.mode === "bounty" ? [bountyRoundEnemy(getBountyTier(b.tierId).rounds[b.round])] : b.mode === "expedition" ? getExpeditionNodeEnemies(b.nodeType, b.floor) : getStageEnemies(stage);
+  const expedition = b.mode === "expedition" ? createExpeditionSkirmishConfig(b, players, enemies) : void 0;
+  const setup = {
+    players: expedition?.playerDefs ?? players,
+    enemies: expedition?.enemyDefs ?? enemies,
+    arena: battleArena(b.mode),
+    bonds,
+    breakthroughs,
+    options: expedition ? {
+      playerInitialStates: expedition.playerInitialStates,
+      augmentEffects: [...expedition.augmentEffects, ...traits],
+      enemyBodyScale: expedition.enemyBodyScale
+    } : {
+      augmentEffects: traits,
+      enemyBreakthroughs: cake || b.mode === "bounty" ? [...placedEnemyIndex(b, stage, enemies).values()].map(
+        (e) => e.breakthrough
+      ) : stageEnemyGrowth(stage).map((e) => e.breakthrough),
+      enemyBodyScale: ENCOUNTER_ROLE[cake ? cakeOperationRole(cake) : encounterRoleFor(enemies.length, {
+        elite: stage.elite === true || b.mode === "bounty"
+      })].bodyScale
+    }
+  };
+  const lease = JSON.parse(
+    JSON.stringify({
+      id,
+      seed: id,
+      setup,
+      expiresAt: new Date(now.getTime() + 36e5).toISOString()
+    })
+  );
+  records.records = Object.fromEntries(
+    Object.entries(records.records).filter(
+      ([, r]) => Date.parse(r.lease.expiresAt) > now.getTime()
+    )
+  );
+  if (Object.keys(records.records).length >= 8) return fail();
+  records.records[id] = {
+    lease: structuredClone(lease),
+    input,
+    issuedAt: now.toISOString()
+  };
+  return lease;
+}
+function finishCombat(state, proof, now) {
+  if (!proof || typeof proof.id !== "string" || !Array.isArray(proof.actions) || proof.actions.length > MAX_COMBAT_ACTIONS || !Number.isInteger(proof.ticks) || proof.ticks < 0 || proof.ticks > MAX_COMBAT_TICKS || proof.abandoned !== void 0 && typeof proof.abandoned !== "boolean")
+    return fail();
+  const record2 = combatJournal(state).records[proof.id];
+  if (!record2 || Date.parse(record2.lease.expiresAt) < now.getTime())
+    return fail();
+  if (record2.verdict) return structuredClone(record2.verdict);
+  if (proof.ticks * COMBAT_STEP_MS > Math.max(0, now.getTime() - Date.parse(record2.issuedAt)) * 3 + 2e3)
+    return fail();
+  const battle = combatState(record2.lease), rng = bossBattleRandom(record2.lease.seed);
+  let index = 0, previous = -1;
+  for (const action of proof.actions) {
+    if (!action || !Number.isInteger(action.tick) || action.tick < 0 || action.tick < previous || action.tick > proof.ticks || typeof action.actorId !== "string")
+      return fail();
+    previous = action.tick;
+  }
+  for (let tick = 0; tick <= proof.ticks; tick++) {
+    while (index < proof.actions.length && proof.actions[index].tick === tick) {
+      const action = proof.actions[index++], actor = battle.fighters.find(
+        (f) => f.id === action.actorId && f.side === "player"
+      );
+      if (!actor || battle.phase !== "fight" || !canFireUltimate(battle, actor))
+        return fail();
+      fireUltimate(battle, actor.id, rng);
+    }
+    if (tick < proof.ticks) {
+      if (battle.phase !== "fight") return fail();
+      stepSkirmish(battle, COMBAT_STEP_MS / 1e3, rng);
+    }
+  }
+  if (index !== proof.actions.length || !proof.abandoned && battle.phase === "fight")
+    return fail();
+  const victory = !proof.abandoned && battle.phase === "victory";
+  const results = skirmishRelicResults(battle);
+  const party = record2.input.input.mode === "expedition" ? record2.input.input.relics.map((r) => r.relicId) : record2.lease.setup.players.map((f) => f.id);
+  const verdict = {
+    victory,
+    relicHp: party.map(
+      (id) => victory ? results.find((r) => r.relicId === id)?.currentHp ?? 0 : 0
+    ),
+    elapsedMs: proof.ticks * COMBAT_STEP_MS
+  };
+  record2.verdict = verdict;
+  return structuredClone(verdict);
+}
+function consumeCombat(state, key) {
+  const journal = combatJournal(state);
+  delete journal.tickets[key];
+  for (const [id, record2] of Object.entries(journal.records))
+    if (combatKey(record2.input) === key) delete journal.records[id];
+}
+
+// src/server/releaseBoundary.ts
+init_define_import_meta_env();
+var reject = () => {
+  throw new Error("COMBAT_NOT_VERIFIED");
+};
+function authoritativeArgs(state, method, args) {
+  const journal = combatJournal(state), request = args[0];
+  let key;
+  if (method === "prepareExpeditionBoss") {
+    const run2 = state.expedition.run;
+    if (!run2?.nodes.find((node) => node.id === run2.currentNodeId)?.successorIds.includes(String(request?.nodeId)))
+      return reject();
+  }
+  if (method === "completeStage") key = `stage:${args[0]}`;
+  if (method === "completeCakeOperation") key = `cake:${request?.requestId}`;
+  if (method === "completeBounty") key = `bounty:${request?.requestId}`;
+  if (method === "completeExpeditionNode") {
+    const node = state.expedition.run?.nodes.find(
+      (n) => n.id === request?.nodeId
+    );
+    if (node?.type === "boss") return reject();
+    if (node && !["normal", "elite", "horde"].includes(node.type))
+      return [
+        {
+          ...request,
+          relicHp: state.expedition.run.relics.map((r) => r.currentHp)
+        }
+      ];
+    if (node && ["normal", "elite", "horde"].includes(node.type))
+      key = `expedition:${request?.runId}:${request?.nodeId}`;
+  }
+  if (key) {
+    const records = Object.values(journal.records).filter(
+      (record2) => combatKey(record2.input) === key && record2.verdict
+    );
+    if (!records.length) return reject();
+    if (method === "completeStage")
+      return [args[0], records[0].verdict.victory];
+    if (method === "completeBounty") {
+      const rounds = new Map(
+        records.map((record2) => [
+          record2.input.input.mode === "bounty" ? record2.input.input.round : -1,
+          record2.verdict
+        ])
+      );
+      const wins = [0, 1, 2].filter(
+        (round) => rounds.get(round)?.victory
+      ).length;
+      const terminal = rounds.get(2)?.victory || [...rounds.values()].some((verdict) => !verdict.victory);
+      if (!terminal || journal.tickets[key]?.target !== request?.tierId)
+        return reject();
+      return [{ ...request, victory: wins === 3, clearedRounds: wins }];
+    }
+    if (method === "completeCakeOperation" && journal.tickets[key]?.target !== request?.tierId)
+      return reject();
+    return [
+      {
+        ...request,
+        ...method === "completeExpeditionNode" ? { relicHp: records[0].verdict.relicHp } : { victory: records[0].verdict.victory }
+      }
+    ];
+  }
+  if (method === "enterRaid" || method === "submitRaidDamage" || method === "submitExpeditionBossScore") {
+    if (request?.replayVersion !== 2)
+      throw new Error("REPLAY_VERSION_REQUIRED");
+    if (method !== "enterRaid" && (!Array.isArray(request.actions) || request.actions.length > 4096))
+      throw new Error("INVALID_ACTIONS");
+  }
+  return args;
+}
+function recordBoundaryResult(state, method, args, now = /* @__PURE__ */ new Date()) {
+  const journal = combatJournal(state), request = args[0];
+  if (method === "prepareExpeditionBoss" && state.expedition.run?.bossSubmissionId) {
+    const issued = journal.bossIssuedAt ??= {};
+    issued[state.expedition.run.bossSubmissionId] ??= now.toISOString();
+  }
+  if (method === "completeExpeditionNode") {
+    const node = state.expedition.run?.nodes.find(
+      (n) => n.id === request?.nodeId
+    );
+    if (node && !["normal", "elite", "horde"].includes(node.type))
+      consumeCombat(state, `expedition:${request?.runId}:${request?.nodeId}`);
+  }
+  if (method === "enterStage" || method === "enterEventStage") {
+    const stageId = String(request?.stageId ?? "");
+    const key = `stage:${stageId}`;
+    for (const [old, ticket] of Object.entries(journal.tickets))
+      if (ticket.kind === "stage") consumeCombat(state, old);
+    journal.tickets[key] = {
+      kind: "stage",
+      target: stageId,
+      requestId: String(request?.requestId ?? "")
+    };
+    state.selectedStageId = stageId;
+  }
+  if (method === "enterCakeOperation" || method === "enterBounty") {
+    const kind = method === "enterBounty" ? "bounty" : "cake";
+    for (const [old, ticket] of Object.entries(journal.tickets))
+      if (ticket.kind === kind) consumeCombat(state, old);
+    journal.tickets[`${kind}:${request?.requestId}`] = {
+      kind,
+      target: String(request?.tierId),
+      requestId: String(request?.requestId)
+    };
+  }
+  if (method === "completeStage") consumeCombat(state, `stage:${args[0]}`);
+  if (method === "completeCakeOperation")
+    consumeCombat(state, `cake:${request?.requestId}`);
+  if (method === "completeBounty")
+    consumeCombat(state, `bounty:${request?.requestId}`);
+  if (method === "completeExpeditionNode")
+    consumeCombat(state, `expedition:${request?.runId}:${request?.nodeId}`);
+}
+function verifyBossWallTime(state, method, args, result, now) {
+  if (method !== "submitRaidDamage" && method !== "submitExpeditionBossScore")
+    return;
+  const request = args[0];
+  const admission = state.serverJournal?.raidAdmissions[request.requestId];
+  const issued = method === "submitRaidDamage" ? admission?.admittedAt : combatJournal(state).bossIssuedAt?.[request.requestId];
+  const duration = result.endedAtMs;
+  if (!issued || typeof duration !== "number" || !Number.isFinite(duration) || duration > Math.max(0, now.getTime() - Date.parse(issued)) * 3 + 2e3)
+    throw new Error("COMBAT_TOO_FAST");
+}
+
+// src/server/publicProfile.ts
+init_define_import_meta_env();
+function publicProfile(state, playerId, now) {
+  const relic = getRelic(state.favorite);
+  const progress = state.relicProgress[relic.id];
+  return {
+    id: playerId,
+    uid: state.playerCard.uid,
+    frameId: state.playerCard.frameId,
+    displayName: state.playerCard.nickname || t("profile.defaultName"),
+    status: state.playerCard.bio || "",
+    level: state.playerResearch.level,
+    lastActiveAt: now.getTime(),
+    equippedModifiers: new ProfileModifierManager(state).equipped().map(({ id, displayName, rarity }) => ({ id, displayName, rarity })),
+    favoriteRelic: {
+      relicId: relic.id,
+      level: progress?.level ?? 1,
+      breakthroughGrade: progress?.breakthrough ?? 0,
+      stats: new RelicProgressionManager(state).getFinalStats(relic.id),
+      skillIds: [relic.basic.id, relic.passive.id, relic.ultimate.id]
+    },
+    competitiveStats: {}
+  };
+}
+
+// src/server/sharedRaids.ts
+init_define_import_meta_env();
+function worldRaidDefinitions(now) {
+  return [new Date(now.getTime() - 864e5), now].map((date) => {
+    const day = raidSeasonKey(date), opened = Date.parse(`${day}T00:00:00.000Z`);
+    return {
+      id: `world-${day}`,
+      kind: "world",
+      bossRelicId: raidWorldBossId(day),
+      difficulty: "rampage",
+      openedAt: new Date(opened).toISOString(),
+      endsAt: new Date(opened + 864e5).toISOString(),
+      summonedByMe: false,
+      myDamage: 0,
+      attemptsUsed: 0,
+      settled: false
+    };
+  });
+}
+function raidChanges(context, state) {
+  const old = new Map(context.records.map((row) => [row.instance.id, row]));
+  return state.raid.instances.flatMap((instance) => {
+    const previous = old.get(instance.id), before = previous?.instance;
+    if (!previous && !instance.summonedByMe) return [];
+    const damageDelta = instance.myDamage - (before?.myDamage ?? 0), appliedDelta = (instance.appliedDamage ?? instance.myDamage) - (before?.appliedDamage ?? before?.myDamage ?? 0), attemptsDelta = instance.attemptsUsed - (before?.attemptsUsed ?? 0);
+    if (previous && damageDelta === 0 && appliedDelta === 0 && attemptsDelta === 0 && instance.settled === before.settled)
+      return [];
+    return [
+      {
+        instance,
+        expectedRevision: previous?.revision ?? null,
+        damageDelta,
+        appliedDelta,
+        attemptsDelta,
+        totalHp: RAID_DIFFICULTY[instance.difficulty].totalHp
+      }
+    ];
+  });
+}
+
+// src/server/requestPolicy.ts
+init_define_import_meta_env();
+var READ_METHODS = /* @__PURE__ */ new Set([
+  "archaeologyState",
+  "getAchievements",
+  "getAdOperationsConfig",
+  "getAsyncArenaServerState",
+  "getAttendance",
+  "getBountyStatus",
+  "getDuelRanking",
+  "getDuelStatus",
+  "getEvents",
+  "getExpeditionLeaderboard",
+  "getExpeditionWeeklyBest",
+  "getIdleExcavation",
+  "getInteractionCities",
+  "getInteractionDispatch",
+  "getInventory",
+  "getMails",
+  "getMissions",
+  "getNotificationSignals",
+  "getPlayerState",
+  "getProducts",
+  "getProgressPasses",
+  "getRaids",
+  "getStaminaRechargeStatus",
+  "verifyPurchaseReceipt",
+  "social.getFriends",
+  "social.getRequests",
+  "social.searchUsers",
+  "social.getRecommendations"
+]);
+var isReadMethod = (method) => READ_METHODS.has(method);
+var REQUEST_ID = /^[A-Za-z0-9_.:-]{8,64}$/;
+var MAX_BODY_BYTES = 128 * 1024;
+function validCall(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const call = value;
+  return typeof call.method === "string" && call.method.length <= 64 && (call.args === void 0 || Array.isArray(call.args) && call.args.length <= 4) && (call.requestId === void 0 || typeof call.requestId === "string" && REQUEST_ID.test(call.requestId));
+}
+function requestBudget(method) {
+  if (method === "social.searchUsers") return { windowSeconds: 60, limit: 20 };
+  return { windowSeconds: 60, limit: isReadMethod(method) ? 180 : 60 };
+}
+
 // src/server/gameMethods.ts
 init_define_import_meta_env();
 var SERVER_GAME_METHODS = [
+  "prepareCombat",
+  "finishCombat",
   "abandonStrataRun",
   "activatePass",
   "answerRelicQuestion",
@@ -31905,8 +33370,9 @@ function serialize(task) {
   chain = next.catch(() => void 0);
   return next;
 }
-var REQUEST_ID = /^[A-Za-z0-9_.:-]{8,64}$/;
 function handleGameCall(playerId, req, deps) {
+  if (!validCall(req)) throw new GameCallError(400, "invalid_request");
+  if (deps.strict && !isReadMethod(req.method) && !req.requestId) throw new GameCallError(400, "request_id_required");
   if (!isServerGameMethod(req?.method)) throw new GameCallError(400, "unknown_method");
   if (req.args !== void 0 && !Array.isArray(req.args)) throw new GameCallError(400, "invalid_args");
   if (req.args && req.args.length > 4) throw new GameCallError(400, "invalid_args");
@@ -31915,10 +33381,16 @@ function handleGameCall(playerId, req, deps) {
 }
 async function run(playerId, req, deps) {
   const attempts = deps.maxAttempts ?? 3;
+  const fingerprint = JSON.stringify([req.method, req.args ?? []]);
   for (let attempt = 1; ; attempt += 1) {
     if (req.requestId) {
       const cached = await deps.store.findReceipt(playerId, req.requestId);
-      if (cached !== void 0) return cached;
+      if (cached !== void 0) {
+        const receipt = cached;
+        if (receipt._requestFingerprint !== fingerprint) throw new GameCallError(409, "request_id_conflict");
+        const { _requestFingerprint, ...response2 } = receipt;
+        return response2;
+      }
     }
     const stored = await deps.store.load(playerId);
     let state;
@@ -31928,15 +33400,35 @@ async function run(playerId, req, deps) {
       throw new GameCallError(500, "corrupt_state");
     }
     const before = JSON.stringify(saveManager.exportData(state));
+    const now = deps.now?.() ?? /* @__PURE__ */ new Date();
+    if (deps.store.identity) {
+      const identity = await deps.store.identity(playerId);
+      state.playerCard.uid = identity.uid;
+      state.playerCard.createdAt = identity.createdAt;
+    }
+    const context = /^(getRaids|summonRaid|enterRaid|submitRaidDamage|settleRaid)$/.test(req.method) && deps.store.raidContext ? await deps.store.raidContext(playerId, now) : void 0;
+    if (context) state.raid.instances = context.records.map((row) => structuredClone(row.instance));
     const server = new FakeServer(state, {
       latencyMs: 0,
       random: deps.random ?? Math.random,
       ...deps.now ? { now: deps.now } : {},
-      persistSession: () => void 0
+      persistSession: () => void 0,
+      raidContext: context
     });
     let result;
     try {
-      result = await server[req.method](...req.args ?? []);
+      const timingState = deps.strict && (req.method === "submitRaidDamage" || req.method === "submitExpeditionBossScore") ? structuredClone(state) : state;
+      const args = deps.strict ? authoritativeArgs(state, req.method, req.args ?? []) : req.args ?? [];
+      if (req.method === "prepareCombat") result = prepareCombat(state, args[0], now, globalThis.crypto.randomUUID());
+      else if (req.method === "finishCombat") result = finishCombat(state, args[0], now);
+      else {
+        result = await server[req.method](...args);
+        if (req.method === "getNotificationSignals" && deps.store.pendingRequests) result = { ...result, pendingFriendRequestCount: await deps.store.pendingRequests(playerId) };
+        if (deps.strict) {
+          verifyBossWallTime(timingState, req.method, args, result, now);
+          recordBoundaryResult(state, req.method, args, now);
+        }
+      }
     } catch (error) {
       throw new GameCallError(422, "rejected", error instanceof Error ? error.message : String(error));
     }
@@ -31944,7 +33436,7 @@ async function run(playerId, req, deps) {
     const changed = JSON.stringify(data) !== before;
     const fresh = stored === null;
     const response = { ok: true, result: result ?? null, state: data, revision: stored?.revision ?? "0" };
-    if (!changed && !fresh) return response;
+    if (!changed && !fresh && !req.requestId) return response;
     try {
       const committed = await deps.store.commit({
         playerId,
@@ -31952,7 +33444,9 @@ async function run(playerId, req, deps) {
         data,
         method: req.method,
         requestId: req.requestId ?? null,
-        response: { ...response, revision: void 0 }
+        response: { ...response, revision: void 0, _requestFingerprint: fingerprint },
+        publicProfile: publicProfile(state, playerId, now),
+        raids: context ? raidChanges(context, state) : void 0
       });
       return { ...response, revision: committed.revision };
     } catch (error) {
@@ -31976,14 +33470,29 @@ function createSupabaseStore(env) {
     const res = await f(`${env.url}/rest/v1/rpc/${name}`, {
       method: "POST",
       headers: { apikey: env.serviceKey, authorization: `Bearer ${env.serviceKey}`, "content-type": "application/json" },
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(15e3)
     });
-    if (res.status === 409) throw new StateConflictError();
-    if (!res.ok) throw new Error(`rpc_${name}_${res.status}`);
+    if (res.status === 409 && name === "server_commit_state") throw new StateConflictError();
+    if (!res.ok) {
+      const body2 = await res.json().catch(() => null);
+      if ([400, 403, 409, 422, 429].includes(res.status)) throw new GameCallError(res.status, body2?.message ?? "rejected");
+      throw new Error(`rpc_${name}_${res.status}`);
+    }
     const text = await res.text();
     return text ? JSON.parse(text) : null;
   }
-  return {
+  const store = {
+    async pendingRequests(playerId) {
+      const response = await rpc("server_social_call", { p_player: playerId, p_method: "getRequests", p_args: [], p_request: null });
+      return response.incomingCount;
+    },
+    async identity(playerId) {
+      return await rpc("server_player_identity", { p_player: playerId });
+    },
+    async raidContext(playerId, now) {
+      return await rpc("server_raid_context", { p_player: playerId, p_worlds: worldRaidDefinitions(now) });
+    },
     async load(playerId) {
       const r = await rpc("server_load_state", { p_player: playerId });
       return r ? { revision: r.revision, data: r.data } : null;
@@ -32000,7 +33509,7 @@ function createSupabaseStore(env) {
         p_data: input.data,
         p_hash: await sha256Hex(JSON.stringify(input.data)),
         p_version: data.saveVersion ?? 1,
-        p_summary: { level: data.playerResearch?.level ?? 1, gems: data.wallet?.gems ?? 0, gold: data.wallet?.gold ?? 0 },
+        p_summary: { _profile: input.publicProfile, _raids: input.raids, level: data.playerResearch?.level ?? 1, gems: data.wallet?.gems ?? 0, gold: data.wallet?.gold ?? 0 },
         p_method: input.method,
         p_request: input.requestId,
         p_response: input.response
@@ -32008,43 +33517,87 @@ function createSupabaseStore(env) {
       return { revision: r.revision };
     }
   };
+  return Object.assign(store, {
+    async takeRate(playerId, method) {
+      const budget = requestBudget(method);
+      for (const [bucket, window, limit] of [["all", 60, 300], [method, budget.windowSeconds, budget.limit]]) {
+        const out = await rpc("server_take_rate", { p_player: playerId, p_bucket: bucket, p_window: window, p_limit: limit });
+        if (!out.allowed) return out;
+      }
+      return { allowed: true, retryAfter: 0 };
+    },
+    async socialCall(playerId, method, args, requestId) {
+      return rpc("server_social_call", { p_player: playerId, p_method: method, p_args: args, p_request: requestId ?? null });
+    }
+  });
 }
+
+// src/api/RemoteSocialApi.ts
+init_define_import_meta_env();
+var SOCIAL_METHODS = [
+  "getFriends",
+  "getRequests",
+  "searchUsers",
+  "getRecommendations",
+  "sendRequest",
+  "cancelRequest",
+  "acceptRequest",
+  "declineRequest",
+  "acceptAllRequests",
+  "declineAllRequests",
+  "setFavorite",
+  "removeFriend",
+  "rentFavoriteRelic"
+];
+var isSocialMethod = (value) => SOCIAL_METHODS.includes(value);
 
 // src/server/vercelEntry.ts
 async function handler(req, res) {
   res.setHeader("cache-control", "no-store");
   if (req.method !== "POST") {
+    res.setHeader("allow", "POST");
     res.status(405).json({ ok: false, code: "method_not_allowed" });
     return;
   }
-  const url = process.env.SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const anonKey = process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? serviceKey;
-  if (!url || !serviceKey) {
-    res.status(503).json({ ok: false, code: "server_not_configured" });
-    return;
-  }
-  const auth = String(req.headers.authorization ?? "");
-  if (!auth.startsWith("Bearer ")) {
-    res.status(401).json({ ok: false, code: "not_authenticated" });
-    return;
-  }
-  const who = await fetch(`${url}/auth/v1/user`, { headers: { apikey: anonKey ?? "", authorization: auth } });
-  const user = who.ok ? await who.json() : null;
-  if (!user?.id) {
-    res.status(401).json({ ok: false, code: "not_authenticated" });
-    return;
-  }
   try {
-    const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
-    const out = await handleGameCall(user.id, body, { store: createSupabaseStore({ url, serviceKey }) });
-    res.status(200).json(out);
+    const raw = typeof req.body === "string" ? req.body : JSON.stringify(req.body ?? null);
+    if (Number(req.headers["content-length"] ?? 0) > MAX_BODY_BYTES || new TextEncoder().encode(raw).length > MAX_BODY_BYTES) throw new GameCallError(413, "body_too_large");
+    let body;
+    try {
+      body = JSON.parse(raw);
+    } catch {
+      throw new GameCallError(400, "invalid_json");
+    }
+    if (!validCall(body)) throw new GameCallError(400, "invalid_request");
+    if (!isServerGameMethod(body.method) && !(body.method.startsWith("social.") && isSocialMethod(body.method.slice(7)))) throw new GameCallError(400, "unknown_method");
+    if (!isReadMethod(body.method) && !body.requestId) throw new GameCallError(400, "request_id_required");
+    const url = process.env.SUPABASE_URL, serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const anonKey = process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? serviceKey;
+    if (!url || !serviceKey) throw new GameCallError(503, "server_not_configured");
+    const auth = typeof req.headers.authorization === "string" ? req.headers.authorization : "";
+    if (!/^Bearer \S+$/.test(auth)) throw new GameCallError(401, "not_authenticated");
+    const who = await fetch(`${url}/auth/v1/user`, { headers: { apikey: anonKey ?? "", authorization: auth }, signal: AbortSignal.timeout(1e4) });
+    const user = who.ok ? await who.json() : null;
+    if (!user?.id) throw new GameCallError(401, "not_authenticated");
+    const store = createSupabaseStore({ url, serviceKey });
+    const rate = await store.takeRate(user.id, body.method);
+    if (!rate.allowed) {
+      res.setHeader("retry-after", String(rate.retryAfter));
+      throw new GameCallError(429, "rate_limited");
+    }
+    if (body.method.startsWith("social.")) {
+      const method = body.method.slice(7);
+      if (!isSocialMethod(method)) throw new GameCallError(400, "unknown_method");
+      res.status(200).json(await store.socialCall(user.id, method, body.args ?? [], body.requestId));
+    } else {
+      res.status(200).json(await handleGameCall(user.id, body, { store, strict: true }));
+    }
   } catch (error) {
     if (error instanceof GameCallError) {
       res.status(error.status).json({ ok: false, code: error.code, message: error.message });
       return;
     }
-    res.status(500).json({ ok: false, code: "internal" });
+    res.status(503).json({ ok: false, code: "service_unavailable" });
   }
 }
 export {

@@ -71,9 +71,9 @@ export const SYSTEM_DE = {
   "error.save.invalid": "Der Server-Speicherstand konnte nicht geprüft werden.",
   "error.save.mergeInvalid": "Der zusammengeführte Server-Speicherstand konnte nicht geprüft werden.",
   "error.expedition.submit": "Die Punktzahl konnte nicht übermittelt werden.",
-  "error.expedition.settle": "Die Punkte wurden übermittelt, aber die Abrechnung wurde nicht abgeschlossen.",
+  "error.expedition.settle": "Punkte gesendet, aber Expeditionsbelohnungen konnten nicht erhalten werden. Bitte erneut versuchen.",
   "error.persist.state": "Der Spielstand konnte nicht gespeichert werden.",
   "error.persist.expeditionScore": "Die Expedition-Punkte konnten nicht gespeichert werden.",
-  "mail.subscription.title": "{product}: Tagesvorrat",
-  "mail.subscription.body": "Deine tägliche Anmeldebelohnung. Hole dein Ticket ab, bevor diese Post abläuft.",
+  "mail.subscription.title": "Täglicher Vorrat: {product}",
+  "mail.subscription.body": "Deine tägliche Anmeldebelohnung. Ticket vor Ablauf der Post abholen.",
 } as const;

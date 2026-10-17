@@ -108,4 +108,5 @@ export const SETTINGS_ES = {
   "settings.debug.maxLevelDone": "Nivel de jugador subido a LV.{level}. Vuelve al vestíbulo para ver el contenido desbloqueado.",
   "settings.debug.unlockStories": "Vínculo 10 · Desbloquear todas las preguntas/historias",
   "settings.debug.unlockedStories": "Se subió el Vínculo de {count} personajes. Se desbloquearon todas las preguntas de observación y las historias Favoritas.",
+  "settings.account.errorCode": "Código de error: {code}",
 } as const;

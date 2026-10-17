@@ -108,4 +108,5 @@ export const SETTINGS_ZH_HANS = {
   "settings.debug.maxLevelDone": "已将玩家等级提升至LV.{level}。返回大厅后即可看到已开放的内容。",
   "settings.debug.unlockStories": "羁绊10 · 开放全部提问/故事",
   "settings.debug.unlockedStories": "已提升羁绊的角色有{count}名。所有观察提问和最爱故事均已开放。",
+  "settings.account.errorCode": "错误代码：{code}",
 } as const;

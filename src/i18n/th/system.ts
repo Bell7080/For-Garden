@@ -71,9 +71,9 @@ export const SYSTEM_TH = {
   "error.save.invalid": "ตรวจสอบเซฟบนเซิร์ฟเวอร์ไม่ได้",
   "error.save.mergeInvalid": "ตรวจสอบเซฟเซิร์ฟเวอร์ที่รวมแล้วไม่ได้",
   "error.expedition.submit": "ส่งคะแนนไม่ได้",
-  "error.expedition.settle": "ส่งคะแนนแล้วแต่สรุปผลไม่เสร็จ",
+  "error.expedition.settle": "ส่งคะแนนแล้วแต่รับรางวัลออกสำรวจไม่ได้ กรุณาลองใหม่",
   "error.persist.state": "บันทึกสถานะเกมไม่ได้",
   "error.persist.expeditionScore": "บันทึกคะแนนออกสำรวจไม่ได้",
   "mail.subscription.title": "เสบียงประจำวัน {product}",
-  "mail.subscription.body": "รางวัลล็อกอินประจำวัน รับตั๋วก่อนจดหมายหมดอายุ",
+  "mail.subscription.body": "รางวัลเข้าสู่ระบบวันนี้ รับตั๋วก่อนจดหมายหมดอายุ",
 } as const;

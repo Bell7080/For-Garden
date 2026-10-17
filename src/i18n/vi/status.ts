@@ -62,4 +62,6 @@ export const STATUS_VI = {
   "status.healCut.detail": "Hồi phục nhận −{percent}% · còn {time}",
   "status.sunken": "Sức nặng chìm",
   "status.sunken.detail": "Tốc độ di chuyển và tấn công −{percent}% · còn {time}",
+  "status.echo": "Tiếng vọng",
+  "status.echo.detail": "Còn {time}",
 } as const;

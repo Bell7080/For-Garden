@@ -15,7 +15,7 @@ export const MISC_KO = {
 
   // 전투 기여도
   "contribution.title": "전투 기여도",
-  "contribution.totals": "서버 확정 {confirmed} · 행동 재생 {replay}",
+  "contribution.totals": "최종 피해 {confirmed} · 전투 중 표시 {replay}",
   "contribution.allies": "아군 기여도",
 
   // 원정 증강 선택
@@ -141,7 +141,7 @@ export const MISC_KO = {
 
   // 전투 진입 실패
   "partyEntry.noStamina": "스테미나가 부족하다. 충전 수단을 확인해 주세요.",
-  "partyEntry.failed": "전투 입장에 실패했다. 통신 상태를 확인한 뒤 다시 시도해 주세요.",
+  "partyEntry.failed": "전투에 입장하지 못했습니다. 연결 상태를 확인한 뒤 다시 시도해 주세요.",
 
   // 전투 버프 쪽지
   "buff.activeCount": "활성 버프  {count}",
@@ -215,7 +215,7 @@ export const MISC_KO = {
   "stageComplete.replay": "다시 하기",
   "stageComplete.next": "다음 단계",
   "stageComplete.exit": "나가기",
-  "stageComplete.settlement": "정산",
+  "stageComplete.settlement": "획득 보상",
   "growth.relicEnhance": "렐릭 강화",
   "growth.runeCraft": "룬 세공",
   "growth.party": "편성 바꾸기",
@@ -321,7 +321,7 @@ export const MISC_KO = {
   "intro.interaction": "교류는 렐릭을 다른 도시로 파견해 시간이 지난 뒤 보상을 받아 오는 콘텐츠예요. 보낸 뒤에는 남은 시간이 흐르고, 돌아오면 받아 가세요.",
   "intro.duel": "결투장에서는 다른 연구원의 방어 편성과 3대3으로 겨뤄요. 먼저 [방어]에서 방어 편성을 세우고, [도전]으로 상대를 고르세요. 결투는 늘 자동 궁극기예요.",
   "intro.friends": "친구를 추가하면 서로의 프로필을 볼 수 있어요. 친구 카드에서 애착 렐릭을 눌러 정보를 확인해 보세요.",
-  "intro.raid": "레이드는 여럿이 한 보스의 체력을 함께 깎는 콘텐츠예요. 판마다 도전은 두 번이고, 친 만큼 점수와 보상이 쌓여요. 판이 끝나면 완료 탭에서 정산하세요.",
+  "intro.raid": "레이드는 여럿이 한 보스의 체력을 함께 깎는 콘텐츠예요. 판마다 도전은 두 번이고, 친 만큼 점수와 보상이 쌓여요. 판이 끝나면 완료 탭에서 보상을 받으세요.",
   "intro.expedition": "원정은 하루에 한 번 도는 스무 층짜리 길이에요. 떠난 순간의 모습으로 끝까지 싸우니, 출발 전에 편성과 성장을 마치세요.",
   "intro.archaeology": "고고학은 지층을 파서 원석, 룬, 재화를 얻는 탐사예요. 안개 색은 잘 나오는 보상의 힌트이고, 한 번 판 유적은 시간이 지나야 다시 열려요.",
   "intro.premium": "프리미엄에서는 패스, 구독, 특가 상품을 볼 수 있어요. 무료 보급은 붉은 점으로 알려 드려요.",

@@ -71,9 +71,9 @@ export const SYSTEM_ZH_HANT = {
   "error.save.invalid": "無法驗證伺服器存檔。",
   "error.save.mergeInvalid": "無法驗證合併後的伺服器存檔。",
   "error.expedition.submit": "無法提交分數。",
-  "error.expedition.settle": "分數已提交，但結算未完成。",
+  "error.expedition.settle": "分數已提交，但未能領取遠征獎勵。請重試。",
   "error.persist.state": "無法儲存遊戲狀態。",
   "error.persist.expeditionScore": "無法儲存遠征分數。",
-  "mail.subscription.title": "{product} 每日補給",
-  "mail.subscription.body": "今日登入獎勵。請在郵件到期前領取票券。",
+  "mail.subscription.title": "{product}每日補給",
+  "mail.subscription.body": "今天的登入獎勵。請在郵件過期前領取票券。",
 } as const;

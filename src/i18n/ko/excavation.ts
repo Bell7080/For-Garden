@@ -1,7 +1,7 @@
 /** 발굴(방치형 자원 수집) 팝업의 문구. */
 export const EXCAVATION_KO = {
   "excavation.title": "발굴",
-  "excavation.settling": "발굴 현황을 정산하고 있습니다…",
+  "excavation.settling": "발굴 현황을 확인하고 있습니다…",
   "excavation.loadFailed": "발굴 기록을 불러오지 못했습니다.",
   "excavation.retry": "다시 시도",
 

@@ -71,9 +71,9 @@ export const SYSTEM_ES = {
   "error.save.invalid": "No se pudo verificar el guardado del servidor.",
   "error.save.mergeInvalid": "No se pudo verificar el guardado combinado del servidor.",
   "error.expedition.submit": "No se pudo enviar la puntuación.",
-  "error.expedition.settle": "Se envió la puntuación pero la liquidación no terminó.",
+  "error.expedition.settle": "Puntuación enviada, pero no se recibieron las recompensas de expedición. Inténtalo de nuevo.",
   "error.persist.state": "No se pudo guardar el estado del juego.",
   "error.persist.expeditionScore": "No se pudo guardar la puntuación de la expedición.",
   "mail.subscription.title": "Suministro diario de {product}",
-  "mail.subscription.body": "Tu recompensa diaria de inicio de sesión. Recoge tu ticket antes de que caduque el correo.",
+  "mail.subscription.body": "Tu recompensa diaria. Recoge el boleto antes de que caduque el correo.",
 } as const;

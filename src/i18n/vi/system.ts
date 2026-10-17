@@ -71,9 +71,9 @@ export const SYSTEM_VI = {
   "error.save.invalid": "Không thể xác minh bản lưu máy chủ.",
   "error.save.mergeInvalid": "Không thể xác minh bản lưu máy chủ đã gộp.",
   "error.expedition.submit": "Không thể gửi điểm.",
-  "error.expedition.settle": "Đã gửi điểm nhưng quyết toán chưa xong.",
+  "error.expedition.settle": "Đã gửi điểm nhưng chưa nhận được thưởng Viễn chinh. Hãy thử lại.",
   "error.persist.state": "Không thể lưu trạng thái trò chơi.",
   "error.persist.expeditionScore": "Không thể lưu điểm Viễn chinh.",
-  "mail.subscription.title": "Tiếp tế hằng ngày: {product}",
-  "mail.subscription.body": "Phần thưởng đăng nhập hôm nay. Nhận vé trước khi thư hết hạn.",
+  "mail.subscription.title": "Tiếp tế hằng ngày {product}",
+  "mail.subscription.body": "Thưởng đăng nhập hôm nay. Nhận vé trước khi Thư hết hạn.",
 } as const;

@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { GUILD_BADGE_COLORS, GUILD_BADGE_ICON_POINTS, GUILD_BADGE_SHAPE_POINTS, type BadgePoint, type GuildBadge } from "../core/guildBadge";
 
 /** 뱃지 크기에 대한 비율. 내부 아이콘은 배경 안에 앉고, 배경은 두꺼운 잉크선·아이콘은 얇은 잉크선을 두른다. */
-const BADGE_STYLE = { iconScale: 0.46, iconLift: 0.02, shapeInk: 0.07, iconInk: 0.035, shadow: 0.05, shadowAlpha: 0.5 } as const;
+const BADGE_STYLE = { iconScale: 0.46, iconLift: 0.02, shapeInk: 0.035, iconInk: 0.025, shadow: 0.05, shadowAlpha: 0.5 } as const;
 
 const scaled = (points: readonly BadgePoint[], radius: number, dy = 0): Phaser.Types.Math.Vector2Like[] =>
   points.map(([x, y]) => ({ x: x * radius, y: y * radius + dy }));

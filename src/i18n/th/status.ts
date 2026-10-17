@@ -62,4 +62,6 @@ export const STATUS_TH = {
   "status.healCut.detail": "การรักษาที่ได้รับ −{percent}% · เหลือ {time}",
   "status.sunken": "น้ำหนักที่จม",
   "status.sunken.detail": "ความเร็วเคลื่อนที่และโจมตี −{percent}% · เหลือ {time}",
+  "status.echo": "เสียงสะท้อน",
+  "status.echo.detail": "เหลือ {time}",
 } as const;

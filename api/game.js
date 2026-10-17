@@ -373,6 +373,7 @@ var SETTINGS_KO = {
   "settings.account.mergeBlocked": "\uAC8C\uC2A4\uD2B8 \uC9C4\uD589\uC744 \uAE30\uC874 \uACC4\uC815\uC5D0 \uD569\uCE60 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
   "settings.account.conflictCancelled": "\uC800\uC7A5 \uCDA9\uB3CC \uC120\uD0DD\uC744 \uCDE8\uC18C\uD588\uC2B5\uB2C8\uB2E4.",
   "settings.account.stale": "\uB2E4\uB978 \uAE30\uAE30\uC5D0\uC11C \uC800\uC7A5\uC774 \uAC31\uC2E0\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
+  "settings.account.errorCode": "\uC624\uB958 \uCF54\uB4DC: {code}",
   "settings.account.unavailable": "\uC11C\uBC84 \uC800\uC7A5\uC744 \uD655\uC778\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
   "settings.section.support": "\uACE0\uAC1D\uC9C0\uC6D0 \xB7 \uB370\uC774\uD130",
   "settings.support.clearCache": "\uCE90\uC2DC \uC815\uB9AC",
@@ -777,7 +778,7 @@ var EXPEDITION_KO = {
   "expedition.weekly.best": "\uC8FC\uAC04 \uCD5C\uACE0 \uC810\uC218 {score}",
   "expedition.weekly.myBest": "\uB0B4 \uC8FC\uAC04 \uCD5C\uACE0 \uC810\uC218",
   "expedition.weekly.rank": "\uC8FC\uAC04 {rank}\uC704",
-  "expedition.weekly.rankReward": "\uC8FC\uAC04 \uBCF4\uC0C1 \xB7 \uBCF4\uC11D {gems} \xB7 \uC778\uC591 \uAE30\uB85D {salvage}",
+  "expedition.weekly.rankReward": "\uC8FC\uAC04 \uBCF4\uC0C1 \xB7 \uC82C {gems} \xB7 \uC778\uC591 \uAE30\uB85D {salvage}",
   "expedition.weekly.unranked": "\uBBF8\uB4F1\uC7AC",
   "expedition.weekly.rolled": "\uC8FC\uCC28\uAC00 \uBC14\uB00C\uC5C8\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uB4E4\uC5B4\uC640 \uC8FC\uC138\uC694.",
   "expedition.weekly.loadFailed": "\uAE30\uB85D\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4",
@@ -789,9 +790,9 @@ var EXPEDITION_KO = {
   "expedition.syncing": "\uAE30\uB85D \uB3D9\uAE30\uD654 \uC911",
   "expedition.abandon": "\uD3EC\uAE30\uD558\uAE30",
   "expedition.abandon.title": "\uC6D0\uC815 \uD3EC\uAE30",
-  "expedition.abandon.body": "\uC784\uC2DC \uBCF4\uC0C1 {reward}\uAC1C\uAC00 \uC9C0\uAC11\uC73C\uB85C \uC774\uC804\uB429\uB2C8\uB2E4.\n\uC774\uBC88 \uB7F0\uC758 \uCD5C\uACE0 \uC810\uC218\uB294 \uC8FC\uAC04 \uAE30\uB85D\uC5D0 \uBC18\uC601\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
+  "expedition.abandon.body": "\uC6D0\uC815\uC744 \uC885\uB8CC\uD558\uACE0 \uC9C0\uAE08\uAE4C\uC9C0 \uBAA8\uC740 \uBCF4\uC0C1\uC744 \uBC1B\uC2B5\uB2C8\uB2E4.\n\uC774\uBC88 \uC6D0\uC815 \uC810\uC218\uB294 \uC8FC\uAC04 \uAE30\uB85D\uC5D0 \uBC18\uC601\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.\n\uD45C\uC2DC\uB41C \uBCF4\uC0C1\uC740 \uBCF4\uC720 \uD55C\uB3C4\uC5D0 \uB530\uB77C \uC904\uC5B4\uB4E4 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
   "expedition.abandon.confirm": "\uD3EC\uAE30 \uD655\uC815",
-  "expedition.abandon.settle": "\uD3EC\uAE30 \uC804\uB9AC\uD488 \uC815\uC0B0",
+  "expedition.abandon.settle": "\uC6D0\uC815 \uC885\uB8CC \uBCF4\uC0C1",
   "expedition.loot": "\uD68D\uB4DD \uC804\uB9AC\uD488",
   "expedition.nodeScore": "\uB178\uB4DC \uC810\uC218",
   "expedition.score": "\uC6D0\uC815 \uC810\uC218",
@@ -841,13 +842,13 @@ var BATTLE_KO = {
   "battle.boss.tideWarning": " \xB7 \uD574\uC77C \uC608\uACE0",
   "battle.boss.limit": " \xB7 LIMIT",
   "battle.settle.failed": "\uACB0\uACFC \uD654\uBA74\uC744 \uBCF5\uAD6C\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.",
-  "battle.settle.scoreRejected": "\uC804\uD22C \uAE30\uB85D\uC774 \uC11C\uBC84 \uAC80\uC99D\uC5D0\uC11C \uAC70\uC808\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
-  "battle.settle.persistenceFailed": "\uACB0\uACFC\uB97C \uC800\uC7A5\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uAC70\uB098 \uC0C1\uD0DC \uBCF5\uAD6C \uD6C4 \uB85C\uBE44\uB85C \uC774\uB3D9\uD574 \uC8FC\uC138\uC694.",
-  "battle.settle.retry": "\uC815\uC0B0 \uB2E4\uC2DC \uC2DC\uB3C4",
-  "battle.settle.recoverLobby": "\uC0C1\uD0DC \uBCF5\uAD6C \uD6C4 \uB85C\uBE44",
+  "battle.settle.scoreRejected": "\uC804\uD22C \uAE30\uB85D\uC744 \uD655\uC778\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
+  "battle.settle.persistenceFailed": "\uACB0\uACFC\uB97C \uC800\uC7A5\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uAC70\uB098 \uB85C\uBE44\uB85C \uB3CC\uC544\uAC00 \uAC8C\uC784 \uC815\uBCF4\uB97C \uB2E4\uC2DC \uBD88\uB7EC\uC640 \uC8FC\uC138\uC694.",
+  "battle.settle.retry": "\uACB0\uACFC \uB2E4\uC2DC \uD655\uC778",
+  "battle.settle.recoverLobby": "\uB85C\uBE44\uB85C \uB3CC\uC544\uAC00\uAE30",
   "battle.settle.done": "\uC6D0\uC815 \uAD00\uCE21 \uC644\uB8CC",
-  "battle.settle.reward": "\uC815\uC0B0 \uBCF4\uC0C1",
-  "battle.settle.noReward": "\uC815\uC0B0 \uC7AC\uD654 \uC5C6\uC74C",
+  "battle.settle.reward": "\uD68D\uB4DD \uBCF4\uC0C1",
+  "battle.settle.noReward": "\uD68D\uB4DD\uD55C \uBCF4\uC0C1\uC774 \uC5C6\uC2B5\uB2C8\uB2E4",
   "battle.settle.score": "\uC774\uBC88 \uC6D0\uC815 \uC810\uC218",
   "battle.settle.detail": "\uC0C1\uC138",
   "battle.settle.toLobby": "\uB85C\uBE44\uB85C",
@@ -897,7 +898,7 @@ var CAKE_OPERATION_KO = {
 init_define_import_meta_env();
 var EXCAVATION_KO = {
   "excavation.title": "\uBC1C\uAD74",
-  "excavation.settling": "\uBC1C\uAD74 \uD604\uD669\uC744 \uC815\uC0B0\uD558\uACE0 \uC788\uC2B5\uB2C8\uB2E4\u2026",
+  "excavation.settling": "\uBC1C\uAD74 \uD604\uD669\uC744 \uD655\uC778\uD558\uACE0 \uC788\uC2B5\uB2C8\uB2E4\u2026",
   "excavation.loadFailed": "\uBC1C\uAD74 \uAE30\uB85D\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.",
   "excavation.retry": "\uB2E4\uC2DC \uC2DC\uB3C4",
   "excavation.storage": "\uBCF4\uAD00\uB7C9 {percent}%",
@@ -1005,6 +1006,162 @@ var FRIENDS_KO = {
   "friends.error.gone": "\uC774\uBBF8 \uCC98\uB9AC\uB418\uC5C8\uAC70\uB098 \uC5C6\uB294 \uB300\uC0C1\uC785\uB2C8\uB2E4."
 };
 
+// src/i18n/ko/guild.ts
+init_define_import_meta_env();
+var GUILD_KO = {
+  "guild.title": "\uAE38\uB4DC",
+  "guild.tab.info": "\uC815\uBCF4",
+  "guild.tab.members": "\uBA64\uBC84",
+  "guild.tab.attendance": "\uCD9C\uC11D",
+  "guild.tab.shop": "\uC0C1\uC810",
+  "guild.role.leader": "\uAE38\uB4DC\uC7A5",
+  "guild.role.vice": "\uBD80\uAE38\uB4DC\uC7A5",
+  "guild.role.officer": "\uC784\uC6D0",
+  "guild.role.member": "\uAE38\uB4DC\uC6D0",
+  "guild.joinMode.open": "\uC790\uC720 \uAC00\uC785",
+  "guild.joinMode.approval": "\uC2B9\uC778 \uAC00\uC785",
+  "guild.levelShort": "LV.{level}",
+  "guild.capacity": "{count}/{capacity}\uBA85",
+  // 길드가 없을 때
+  "guild.browse.summary": "\uCD94\uCC9C \uAE38\uB4DC",
+  "guild.browse.results": "\uAC80\uC0C9 \uACB0\uACFC {count}\uACF3",
+  "guild.browse.cooldown": "{time} \uB4A4\uC5D0 \uB2E4\uB978 \uAE38\uB4DC\uC5D0 \uB4E4\uC5B4\uAC08 \uC218 \uC788\uC2B5\uB2C8\uB2E4",
+  "guild.browse.search": "\uAC80\uC0C9",
+  "guild.browse.create": "\uAE38\uB4DC \uB9CC\uB4E4\uAE30",
+  "guild.browse.searchAria": "\uAE38\uB4DC \uC774\uB984",
+  "guild.browse.empty": "\uC870\uAC74\uC5D0 \uB9DE\uB294 \uAE38\uB4DC\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4",
+  "guild.browse.join": "\uAC00\uC785",
+  "guild.browse.apply": "\uC2E0\uCCAD",
+  "guild.browse.cancel": "\uCDE8\uC18C",
+  "guild.browse.full": "\uC815\uC6D0 \uB9C8\uAC10",
+  "guild.browse.joined": "\uAE38\uB4DC\uC5D0 \uAC00\uC785\uD588\uC2B5\uB2C8\uB2E4",
+  "guild.browse.applied": "\uAC00\uC785\uC744 \uC2E0\uCCAD\uD588\uC2B5\uB2C8\uB2E4",
+  // 만들기·배지
+  "guild.create.title": "\uAE38\uB4DC \uB9CC\uB4E4\uAE30",
+  "guild.create.nameLabel": "\uAE38\uB4DC \uC774\uB984",
+  "guild.create.nameAria": "\uAE38\uB4DC \uC774\uB984 \uC785\uB825",
+  "guild.create.confirmTitle": "\uAE38\uB4DC \uB9CC\uB4E4\uAE30",
+  "guild.create.confirmMessage": "\u300C{name}\u300D \uAE38\uB4DC\uB97C \uB9CC\uB4ED\uB2C8\uB2E4.",
+  "guild.create.submit": "\uB9CC\uB4E4\uAE30",
+  "guild.create.done": "\uAE38\uB4DC\uB97C \uB9CC\uB4E4\uC5C8\uC2B5\uB2C8\uB2E4",
+  "guild.name.empty": "\uC774\uB984\uC744 \uC785\uB825\uD558\uC138\uC694",
+  "guild.name.short": "\uC774\uB984\uC774 \uB108\uBB34 \uC9E7\uC2B5\uB2C8\uB2E4",
+  "guild.name.long": "\uC774\uB984\uC774 \uB108\uBB34 \uAE41\uB2C8\uB2E4",
+  "guild.name.invalid": "\uC4F8 \uC218 \uC5C6\uB294 \uAE00\uC790\uAC00 \uC788\uC2B5\uB2C8\uB2E4",
+  "guild.badge.title": "\uAE38\uB4DC \uBC30\uC9C0",
+  "guild.badge.shape": "\uBAA8\uC591",
+  "guild.badge.shapeColor": "\uBC14\uD0D5\uC0C9",
+  "guild.badge.icon": "\uBB38\uC591",
+  "guild.badge.iconColor": "\uBB38\uC591\uC0C9",
+  "guild.badge.index": "{index}/{count}",
+  "guild.badge.apply": "\uBC30\uC9C0 \uBCC0\uACBD",
+  "guild.badge.free": "\uCCAB \uBCC0\uACBD\uC740 \uBB34\uB8CC\uC785\uB2C8\uB2E4",
+  "guild.badge.confirmTitle": "\uBC30\uC9C0 \uBCC0\uACBD",
+  "guild.badge.confirmMessage": "\uAE38\uB4DC \uBC30\uC9C0\uB97C \uBC14\uAFC9\uB2C8\uB2E4.",
+  "guild.badge.done": "\uBC30\uC9C0\uB97C \uBC14\uAFE8\uC2B5\uB2C8\uB2E4",
+  "guild.badge.same": "\uC9C0\uAE08\uACFC \uAC19\uC740 \uBC30\uC9C0\uC785\uB2C8\uB2E4",
+  // 정보
+  "guild.info.prosperity": "\uBD80\uD765\uB3C4 {value}",
+  "guild.info.nextLevel": "\uB2E4\uC74C \uB808\uBCA8\uAE4C\uC9C0 {value}",
+  "guild.info.maxLevel": "\uCD5C\uACE0 \uB808\uBCA8",
+  "guild.info.leader": "\uAE38\uB4DC\uC7A5 {name}",
+  "guild.info.me": "{role} \xB7 \uAE38\uB4DC \uCF54\uC778 {coin} \xB7 \uC774\uBC88 \uC8FC \uAE30\uC5EC\uB3C4 {week}",
+  "guild.info.perkExcavation": "\uBC1C\uAD74 \uC0DD\uC0B0 +{value}%",
+  "guild.info.perkDispatch": "\uAD50\uB958 \uD30C\uACAC \uC2DC\uAC04 \u2212{value}%",
+  "guild.info.perkNone": "\uD61C\uD0DD\uC740 \uB808\uBCA8 3\uBD80\uD130 \uC5F4\uB9BD\uB2C8\uB2E4",
+  "guild.info.noticeEmpty": "\uACF5\uC9C0\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4",
+  "guild.info.settings": "\uAE38\uB4DC \uC124\uC815",
+  "guild.info.leave": "\uD0C8\uD1F4",
+  "guild.info.disband": "\uD574\uC0B0",
+  "guild.info.leaveConfirm": "\uAE38\uB4DC\uB97C \uB5A0\uB0A9\uB2C8\uB2E4. 24\uC2DC\uAC04 \uB3D9\uC548 \uB2E4\uB978 \uAE38\uB4DC\uC5D0 \uB4E4\uC5B4\uAC08 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "guild.info.leaveTitle": "\uAE38\uB4DC \uD0C8\uD1F4",
+  "guild.info.disbandConfirm": "\uAE38\uB4DC\uB97C \uD574\uC0B0\uD569\uB2C8\uB2E4. \uB418\uB3CC\uB9B4 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "guild.info.disbandTitle": "\uAE38\uB4DC \uD574\uC0B0",
+  "guild.settings.title": "\uAE38\uB4DC \uC124\uC815",
+  "guild.settings.notice": "\uACF5\uC9C0",
+  "guild.settings.noticeAria": "\uAE38\uB4DC \uACF5\uC9C0 \uC785\uB825",
+  "guild.settings.joinMode": "\uAC00\uC785 \uBC29\uC2DD",
+  "guild.settings.save": "\uC800\uC7A5",
+  "guild.settings.saved": "\uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4",
+  // 멤버
+  "guild.members.summary": "\uBA64\uBC84 {count}/{capacity}",
+  "guild.members.requests": "\uAC00\uC785 \uC2E0\uCCAD {count}",
+  "guild.members.contribution": "\uC8FC\uAC04 \uAE30\uC5EC {value}",
+  "guild.members.approve": "\uC218\uB77D",
+  "guild.members.decline": "\uAC70\uC808",
+  "guild.members.me": "\uB098",
+  "guild.members.actionTitle": "{name}",
+  "guild.members.promoteVice": "\uBD80\uAE38\uB4DC\uC7A5\uC73C\uB85C",
+  "guild.members.promoteOfficer": "\uC784\uC6D0\uC73C\uB85C",
+  "guild.members.demote": "\uAE38\uB4DC\uC6D0\uC73C\uB85C",
+  "guild.members.transfer": "\uAE38\uB4DC\uC7A5 \uC704\uC784",
+  "guild.members.transferTitle": "\uAE38\uB4DC\uC7A5 \uC704\uC784",
+  "guild.members.transferConfirm": "{name}\uC5D0\uAC8C \uAE38\uB4DC\uC7A5 \uAD8C\uD55C\uC744 \uC704\uC784\uD569\uB2C8\uB2E4.",
+  "guild.members.kick": "\uCD94\uBC29",
+  "guild.members.kickTitle": "\uBA64\uBC84 \uCD94\uBC29",
+  "guild.members.kickConfirm": "{name:\uC744} \uAE38\uB4DC\uC5D0\uC11C \uB0B4\uBCF4\uB0C5\uB2C8\uB2E4.",
+  "guild.members.close": "\uB2EB\uAE30",
+  // 출석
+  "guild.attendance.summary": "\uC774\uBC88 \uC8FC {count}/{total}\uC77C \uCD9C\uC11D",
+  "guild.attendance.day": "{day}",
+  "guild.attendance.today": "\uC624\uB298",
+  "guild.attendance.stamped": "\uC644\uB8CC",
+  "guild.attendance.pickGold": "\uACE8\uB4DC {value}",
+  "guild.attendance.pickCheesecake": "\uCE58\uC988\uCF00\uC774\uD06C {value}",
+  "guild.attendance.gain": "\uB3C4\uC7A5 1\uAC1C \xB7 \uBD80\uD765\uB3C4 +{prosperity} \xB7 \uAE30\uC5EC\uB3C4 +{contribution} \xB7 \uAE38\uB4DC \uCF54\uC778 +{coin}",
+  "guild.attendance.weekBonus": "7\uC77C \uBAA8\uB450 \uCD9C\uC11D \xB7 \uC82C {gems} \xB7 \uCF54\uC778 {coin}",
+  "guild.attendance.weekClaimed": "\uC774\uBC88 \uC8FC \uBCF4\uB108\uC2A4 \uC218\uB839 \uC644\uB8CC",
+  "guild.attendance.done": "\uCD9C\uC11D \uB3C4\uC7A5\uC744 \uCC0D\uC5C8\uC2B5\uB2C8\uB2E4",
+  "guild.attendance.bonus": "\uC8FC\uAC04 \uCD9C\uC11D \uBCF4\uB108\uC2A4\uB97C \uBC1B\uC558\uC2B5\uB2C8\uB2E4",
+  "guild.day.0": "\uC6D4",
+  "guild.day.1": "\uD654",
+  "guild.day.2": "\uC218",
+  "guild.day.3": "\uBAA9",
+  "guild.day.4": "\uAE08",
+  "guild.day.5": "\uD1A0",
+  "guild.day.6": "\uC77C",
+  "guild.time.hm": "{h}\uC2DC\uAC04 {m}\uBD84",
+  "guild.time.m": "{m}\uBD84",
+  // 상점
+  "guild.shop.coin": "\uAE38\uB4DC \uCF54\uC778 {coin}",
+  "guild.shop.price": "\uCF54\uC778 {price}",
+  "guild.shop.limit": "\uC774\uBC88 \uC8FC {bought}/{limit}",
+  "guild.shop.buy": "\uAD6C\uB9E4",
+  "guild.shop.bought": "\uAD6C\uB9E4\uD588\uC2B5\uB2C8\uB2E4",
+  "guild.shop.product.guild-gold": "\uACE8\uB4DC \uBB36\uC74C",
+  "guild.shop.product.guild-cheesecake": "\uCE58\uC988\uCF00\uC774\uD06C \uBB36\uC74C",
+  "guild.shop.product.guild-tonic": "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C",
+  "guild.shop.grantGold": "\uACE8\uB4DC {value}",
+  "guild.shop.grantCheesecake": "\uCE58\uC988\uCF00\uC774\uD06C {value}",
+  "guild.shop.grantTonic": "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C {value}\uAC1C",
+  // 오류
+  "guild.error.generic": "\uC9C0\uAE08\uC740 \uAE38\uB4DC\uB97C \uC774\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
+  "guild.error.UNAVAILABLE": "\uC9C0\uAE08\uC740 \uAE38\uB4DC\uB97C \uC774\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
+  "guild.error.LEVEL_LOCKED": "\uC5F0\uAD6C\uC6D0 \uB808\uBCA8\uC774 \uBAA8\uC790\uB78D\uB2C8\uB2E4",
+  "guild.error.ALREADY_IN_GUILD": "\uC774\uBBF8 \uAE38\uB4DC\uC5D0 \uC18D\uD574 \uC788\uC2B5\uB2C8\uB2E4",
+  "guild.error.NOT_IN_GUILD": "\uAE38\uB4DC\uC5D0 \uC18D\uD574 \uC788\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4",
+  "guild.error.NAME_INVALID": "\uC4F8 \uC218 \uC5C6\uB294 \uC774\uB984\uC785\uB2C8\uB2E4",
+  "guild.error.NAME_TAKEN": "\uC774\uBBF8 \uC788\uB294 \uC774\uB984\uC785\uB2C8\uB2E4",
+  "guild.error.NAME_BLOCKED": "\uC4F8 \uC218 \uC5C6\uB294 \uC774\uB984\uC785\uB2C8\uB2E4",
+  "guild.error.BADGE_INVALID": "\uACE0\uB97C \uC218 \uC5C6\uB294 \uBC30\uC9C0\uC785\uB2C8\uB2E4",
+  "guild.error.GUILD_NOT_FOUND": "\uAE38\uB4DC\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
+  "guild.error.GUILD_FULL": "\uC815\uC6D0\uC774 \uAC00\uB4DD \uCC3C\uC2B5\uB2C8\uB2E4",
+  "guild.error.LEAVE_COOLDOWN": "\uAE38\uB4DC\uB97C \uB5A0\uB09C \uC9C0 \uC5BC\uB9C8 \uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4",
+  "guild.error.REQUEST_EXISTS": "\uC774\uBBF8 \uC2E0\uCCAD\uD588\uC2B5\uB2C8\uB2E4",
+  "guild.error.REQUEST_NOT_FOUND": "\uC2E0\uCCAD\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
+  "guild.error.MEMBER_NOT_FOUND": "\uBA64\uBC84\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
+  "guild.error.NO_PERMISSION": "\uAD8C\uD55C\uC774 \uC5C6\uC2B5\uB2C8\uB2E4",
+  "guild.error.ROLE_FULL": "\uADF8 \uC9C1\uC704\uB294 \uAC00\uB4DD \uCC3C\uC2B5\uB2C8\uB2E4",
+  "guild.error.INVALID_TARGET": "\uADF8 \uBA64\uBC84\uC5D0\uAC8C\uB294 \uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
+  "guild.error.LEADER_CANNOT_LEAVE": "\uAE38\uB4DC\uC7A5\uC740 \uAE38\uB4DC\uC6D0\uC774 \uB0A8\uC544 \uC788\uC73C\uBA74 \uB5A0\uB0A0 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
+  "guild.error.ALREADY_STAMPED": "\uC624\uB298\uC740 \uC774\uBBF8 \uCD9C\uC11D\uD588\uC2B5\uB2C8\uB2E4",
+  "guild.error.PRODUCT_NOT_FOUND": "\uC0C1\uD488\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
+  "guild.error.PRODUCT_LIMIT": "\uC774\uBC88 \uC8FC \uAD6C\uB9E4 \uD55C\uB3C4\uB97C \uB2E4 \uC37C\uC2B5\uB2C8\uB2E4",
+  "guild.error.INSUFFICIENT_COINS": "\uAE38\uB4DC \uCF54\uC778\uC774 \uBAA8\uC790\uB78D\uB2C8\uB2E4",
+  "guild.error.INSUFFICIENT_GEMS": "\uC82C\uC774 \uBAA8\uC790\uB78D\uB2C8\uB2E4",
+  "guild.error.INVALID_REQUEST": "\uC694\uCCAD\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4"
+};
+
 // src/i18n/ko/rune.ts
 init_define_import_meta_env();
 var RUNE_KO = {
@@ -1097,16 +1254,16 @@ var PARTY_KO = {
   "party.roleHint.hide": "\uCD94\uCC9C \uB044\uAE30",
   "party.roleHint.show": "\uCD94\uCC9C \uCF1C\uAE30",
   "party.start": "\uC804\uD22C \uC2DC\uC791",
-  "party.saveFailed": "\uD30C\uD2F0 \uC800\uC7A5\uC5D0 \uC2E4\uD328\uD588\uB2E4. \uC800\uC7A5 \uACF5\uAC04\uC744 \uD655\uC778\uD55C \uB4A4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
+  "party.saveFailed": "\uD3B8\uC131\uC744 \uC800\uC7A5\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
   "party.slot": "{index}\uBC88 \uC790\uB9AC",
   "party.enemyPower": "\uC801 {power}",
   "party.allyPower": "{power} \uC544\uAD70",
   "party.ready": "\uD3B8\uC131 \uC644\uB8CC",
-  "party.needMore": "{count}\uBA85 \uB354 \uACE8\uB77C\uC57C \uD55C\uB2E4",
-  "party.needExactlyThree": "\uC815\uD655\uD788 3\uBA85\uC744 \uACE8\uB77C\uC57C \uC804\uD22C\uB97C \uC2DC\uC791\uD560 \uC218 \uC788\uB2E4.",
-  "party.noDuplicate": "\uAC19\uC740 \uB810\uB9AD\uC744 \uB450 \uC790\uB9AC \uC774\uC0C1 \uD3B8\uC131\uD560 \uC218 \uC5C6\uB2E4.",
+  "party.needMore": "\uB810\uB9AD\uC744 {count}\uBA85 \uB354 \uC120\uD0DD\uD574 \uC8FC\uC138\uC694",
+  "party.needExactlyThree": "\uB810\uB9AD 3\uBA85\uC744 \uC120\uD0DD\uD574\uC57C \uC804\uD22C\uB97C \uC2DC\uC791\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
+  "party.noDuplicate": "\uAC19\uC740 \uB810\uB9AD\uC744 \uC911\uBCF5 \uD3B8\uC131\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
   "party.selected": "\uC120\uD0DD\uD55C \uB810\uB9AD",
-  "party.notOwned": "{name}\uC740(\uB294) \uD604\uC7AC \uBCF4\uC720\uD558\uACE0 \uC788\uC9C0 \uC54A\uC544 \uD3B8\uC131\uD560 \uC218 \uC5C6\uB2E4."
+  "party.notOwned": "{name:\uC744} \uBCF4\uC720\uD558\uACE0 \uC788\uC9C0 \uC54A\uC544 \uD3B8\uC131\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."
 };
 
 // src/i18n/ko/expeditionReward.ts
@@ -1129,7 +1286,7 @@ init_define_import_meta_env();
 var SAVE_CONFLICT_KO = {
   "saveConflict.title": "\uC800\uC7A5 \uB370\uC774\uD130 \uCDA9\uB3CC",
   "saveConflict.notice": "\uC790\uB3D9\uC73C\uB85C \uB36E\uC5B4\uC4F0\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. \uC0AC\uC6A9\uD560 \uC9C4\uD589\uC744 \uBE44\uAD50\uD574 \uC120\uD0DD\uD574 \uC8FC\uC138\uC694.",
-  "saveConflict.summary": "\uD50C\uB808\uC774\uC5B4 \uB808\uBCA8  {level}\n\uBCF4\uC11D  {gems}  \xB7  \uACE8\uB4DC  {gold}\n\uCD5C\uADFC \uD50C\uB808\uC774  {lastPlayed}",
+  "saveConflict.summary": "\uD50C\uB808\uC774\uC5B4 \uB808\uBCA8  {level}\n\uC82C  {gems}  \xB7  \uACE8\uB4DC  {gold}\n\uCD5C\uADFC \uD50C\uB808\uC774  {lastPlayed}",
   "saveConflict.local": "\uC774 \uAE30\uAE30",
   "saveConflict.remote": "\uC11C\uBC84",
   "saveConflict.useLocal": "\uC774 \uAE30\uAE30 \uC0AC\uC6A9",
@@ -1351,7 +1508,7 @@ var INVENTORY_KO = {
   "stamina.uses": "\uC0AC\uC6A9\uCC98",
   "stamina.recharge": "\uCDA9\uC804",
   "stamina.gemTitle": "\uC82C\uC73C\uB85C \uCDA9\uC804",
-  "stamina.gemMessage": "\uC82C\uC744 \uC368\uC11C \uC2A4\uD14C\uBBF8\uB098 {amount}\uC744 \uCC44\uC6C1\uB2C8\uB2E4.",
+  "stamina.gemMessage": "\uC82C\uC744 \uC0AC\uC6A9\uD574 \uC2A4\uD14C\uBBF8\uB098\uB97C {amount} \uD68C\uBCF5\uD569\uB2C8\uB2E4.",
   "stamina.gemDetail": "\uC624\uB298 {count}\uD68C \xB7 {reset} \uCD08\uAE30\uD654",
   "stamina.spend": "\uC0AC\uC6A9",
   "stamina.adRemaining": "\uC624\uB298 {left}/{limit}",
@@ -1393,7 +1550,7 @@ var MISC_KO = {
   "ranking.medal.3": "3\uC704",
   // 전투 기여도
   "contribution.title": "\uC804\uD22C \uAE30\uC5EC\uB3C4",
-  "contribution.totals": "\uC11C\uBC84 \uD655\uC815 {confirmed} \xB7 \uD589\uB3D9 \uC7AC\uC0DD {replay}",
+  "contribution.totals": "\uCD5C\uC885 \uD53C\uD574 {confirmed} \xB7 \uC804\uD22C \uC911 \uD45C\uC2DC {replay}",
   "contribution.allies": "\uC544\uAD70 \uAE30\uC5EC\uB3C4",
   // 원정 증강 선택
   "augment.pick.title": "\uC99D\uAC15 \uC120\uD0DD {round} / {total}",
@@ -1512,7 +1669,7 @@ var MISC_KO = {
   "journal.city.locked": "\uBCF8\uBB38 \uC7A0\uAE40",
   // 전투 진입 실패
   "partyEntry.noStamina": "\uC2A4\uD14C\uBBF8\uB098\uAC00 \uBD80\uC871\uD558\uB2E4. \uCDA9\uC804 \uC218\uB2E8\uC744 \uD655\uC778\uD574 \uC8FC\uC138\uC694.",
-  "partyEntry.failed": "\uC804\uD22C \uC785\uC7A5\uC5D0 \uC2E4\uD328\uD588\uB2E4. \uD1B5\uC2E0 \uC0C1\uD0DC\uB97C \uD655\uC778\uD55C \uB4A4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
+  "partyEntry.failed": "\uC804\uD22C\uC5D0 \uC785\uC7A5\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uC5F0\uACB0 \uC0C1\uD0DC\uB97C \uD655\uC778\uD55C \uB4A4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
   // 전투 버프 쪽지
   "buff.activeCount": "\uD65C\uC131 \uBC84\uD504  {count}",
   "buff.title": "\uBC84\uD504 \uC815\uBCF4",
@@ -1540,7 +1697,13 @@ var MISC_KO = {
   "profile.picker.photo": "\uD504\uB85C\uD544 \uC0AC\uC9C4",
   "profile.picker.frame": "\uD14C\uB450\uB9AC",
   "profile.picker.modifier": "\uC218\uC2DD\uC5B4",
-  "profile.modifier.none": "\uD638\uCE6D\uC5C6\uC74C",
+  "profile.unlock.frameLevel": "\uC5F0\uAD6C\uC6D0 LV.{level} \uB2EC\uC131 \uC2DC \uD574\uAE08",
+  "profile.unlock.mission": "\uC784\uBB34 \u300C{name}\u300D \uC644\uB8CC \uC2DC \uD68D\uB4DD",
+  "profile.unlock.researchDaily": "\uC77C\uC77C \uC784\uBB34 \uC5F0\uAD6C\uB3C4 {value} \uB2EC\uC131 \uC2DC \uD68D\uB4DD",
+  "profile.unlock.researchWeekly": "\uC8FC\uAC04 \uC784\uBB34 \uC5F0\uAD6C\uB3C4 {value} \uB2EC\uC131 \uC2DC \uD68D\uB4DD",
+  "profile.unlock.achievement": "\uC5C5\uC801 \u300C{name}\u300D \uB05D\uAE4C\uC9C0 \uB2EC\uC131 \uC2DC \uD68D\uB4DD",
+  "profile.picker.equipped": "\uCC29\uC6A9 \uC911",
+  "profile.picker.unlocked": "\uD574\uAE08 \uC644\uB8CC",
   "profile.edit.nickname": "\uB2C9\uB124\uC784",
   "profile.edit.bio": "\uD55C \uC904 \uC18C\uAC1C",
   "profile.lastActive": "\uB9C8\uC9C0\uB9C9 \uC811\uC18D \xB7 {time}",
@@ -1577,7 +1740,7 @@ var MISC_KO = {
   "stageComplete.replay": "\uB2E4\uC2DC \uD558\uAE30",
   "stageComplete.next": "\uB2E4\uC74C \uB2E8\uACC4",
   "stageComplete.exit": "\uB098\uAC00\uAE30",
-  "stageComplete.settlement": "\uC815\uC0B0",
+  "stageComplete.settlement": "\uD68D\uB4DD \uBCF4\uC0C1",
   "growth.relicEnhance": "\uB810\uB9AD \uAC15\uD654",
   "growth.runeCraft": "\uB8EC \uC138\uACF5",
   "growth.party": "\uD3B8\uC131 \uBC14\uAFB8\uAE30",
@@ -1639,6 +1802,11 @@ var MISC_KO = {
   "title.saveRecovered": "\uC800\uC7A5 \uB370\uC774\uD130\uB97C \uD655\uC778\uD560 \uC218 \uC5C6\uC5B4 \uC548\uC804\uD55C \uCD08\uAE30 \uC0C1\uD0DC\uB85C \uBCF5\uAD6C\uD588\uC2B5\uB2C8\uB2E4.",
   "title.subtitle": "\uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC",
   "title.enter": "\uD0ED\uD558\uC5EC \uC785\uC7A5",
+  "title.login.guest": "\uAC8C\uC2A4\uD2B8\uB85C \uC2DC\uC791",
+  "title.login.google": "Google\uB85C \uACC4\uC18D",
+  "title.login.apple": "Apple\uB85C \uACC4\uC18D",
+  "title.login.email": "\uC774\uBA54\uC77C\uB85C \uACC4\uC18D",
+  "title.login.soon": "\uACE7 \uC9C0\uC6D0\uB429\uB2C8\uB2E4.",
   "title.switchAccount": "\uACC4\uC815 \uBCC0\uACBD",
   "title.switchAccount.body": "\uB2E4\uB978 \uACC4\uC815\uC73C\uB85C \uC2DC\uC791\uD569\uB2C8\uB2E4. \uC774 \uAE30\uAE30\uC758 \uB85C\uCEEC \uC800\uC7A5 \uB370\uC774\uD130\uAC00 \uC0AD\uC81C\uB429\uB2C8\uB2E4. \uC11C\uBC84\uC5D0 \uC5F0\uB3D9\uB41C \uC9C4\uD589\uC740 \uC720\uC9C0\uB429\uB2C8\uB2E4.",
   "title.gate.maintenance.title": "\uC810\uAC80 \uC911",
@@ -1672,7 +1840,7 @@ var MISC_KO = {
   "intro.interaction": "\uAD50\uB958\uB294 \uB810\uB9AD\uC744 \uB2E4\uB978 \uB3C4\uC2DC\uB85C \uD30C\uACAC\uD574 \uC2DC\uAC04\uC774 \uC9C0\uB09C \uB4A4 \uBCF4\uC0C1\uC744 \uBC1B\uC544 \uC624\uB294 \uCF58\uD150\uCE20\uC608\uC694. \uBCF4\uB0B8 \uB4A4\uC5D0\uB294 \uB0A8\uC740 \uC2DC\uAC04\uC774 \uD750\uB974\uACE0, \uB3CC\uC544\uC624\uBA74 \uBC1B\uC544 \uAC00\uC138\uC694.",
   "intro.duel": "\uACB0\uD22C\uC7A5\uC5D0\uC11C\uB294 \uB2E4\uB978 \uC5F0\uAD6C\uC6D0\uC758 \uBC29\uC5B4 \uD3B8\uC131\uACFC 3\uB3003\uC73C\uB85C \uACA8\uB904\uC694. \uBA3C\uC800 [\uBC29\uC5B4]\uC5D0\uC11C \uBC29\uC5B4 \uD3B8\uC131\uC744 \uC138\uC6B0\uACE0, [\uB3C4\uC804]\uC73C\uB85C \uC0C1\uB300\uB97C \uACE0\uB974\uC138\uC694. \uACB0\uD22C\uB294 \uB298 \uC790\uB3D9 \uAD81\uADF9\uAE30\uC608\uC694.",
   "intro.friends": "\uCE5C\uAD6C\uB97C \uCD94\uAC00\uD558\uBA74 \uC11C\uB85C\uC758 \uD504\uB85C\uD544\uC744 \uBCFC \uC218 \uC788\uC5B4\uC694. \uCE5C\uAD6C \uCE74\uB4DC\uC5D0\uC11C \uC560\uCC29 \uB810\uB9AD\uC744 \uB20C\uB7EC \uC815\uBCF4\uB97C \uD655\uC778\uD574 \uBCF4\uC138\uC694.",
-  "intro.raid": "\uB808\uC774\uB4DC\uB294 \uC5EC\uB7FF\uC774 \uD55C \uBCF4\uC2A4\uC758 \uCCB4\uB825\uC744 \uD568\uAED8 \uAE4E\uB294 \uCF58\uD150\uCE20\uC608\uC694. \uD310\uB9C8\uB2E4 \uB3C4\uC804\uC740 \uB450 \uBC88\uC774\uACE0, \uCE5C \uB9CC\uD07C \uC810\uC218\uC640 \uBCF4\uC0C1\uC774 \uC313\uC5EC\uC694. \uD310\uC774 \uB05D\uB098\uBA74 \uC644\uB8CC \uD0ED\uC5D0\uC11C \uC815\uC0B0\uD558\uC138\uC694.",
+  "intro.raid": "\uB808\uC774\uB4DC\uB294 \uC5EC\uB7FF\uC774 \uD55C \uBCF4\uC2A4\uC758 \uCCB4\uB825\uC744 \uD568\uAED8 \uAE4E\uB294 \uCF58\uD150\uCE20\uC608\uC694. \uD310\uB9C8\uB2E4 \uB3C4\uC804\uC740 \uB450 \uBC88\uC774\uACE0, \uCE5C \uB9CC\uD07C \uC810\uC218\uC640 \uBCF4\uC0C1\uC774 \uC313\uC5EC\uC694. \uD310\uC774 \uB05D\uB098\uBA74 \uC644\uB8CC \uD0ED\uC5D0\uC11C \uBCF4\uC0C1\uC744 \uBC1B\uC73C\uC138\uC694.",
   "intro.expedition": "\uC6D0\uC815\uC740 \uD558\uB8E8\uC5D0 \uD55C \uBC88 \uB3C4\uB294 \uC2A4\uBB34 \uCE35\uC9DC\uB9AC \uAE38\uC774\uC5D0\uC694. \uB5A0\uB09C \uC21C\uAC04\uC758 \uBAA8\uC2B5\uC73C\uB85C \uB05D\uAE4C\uC9C0 \uC2F8\uC6B0\uB2C8, \uCD9C\uBC1C \uC804\uC5D0 \uD3B8\uC131\uACFC \uC131\uC7A5\uC744 \uB9C8\uCE58\uC138\uC694.",
   "intro.archaeology": "\uACE0\uACE0\uD559\uC740 \uC9C0\uCE35\uC744 \uD30C\uC11C \uC6D0\uC11D, \uB8EC, \uC7AC\uD654\uB97C \uC5BB\uB294 \uD0D0\uC0AC\uC608\uC694. \uC548\uAC1C \uC0C9\uC740 \uC798 \uB098\uC624\uB294 \uBCF4\uC0C1\uC758 \uD78C\uD2B8\uC774\uACE0, \uD55C \uBC88 \uD310 \uC720\uC801\uC740 \uC2DC\uAC04\uC774 \uC9C0\uB098\uC57C \uB2E4\uC2DC \uC5F4\uB824\uC694.",
   "intro.premium": "\uD504\uB9AC\uBBF8\uC5C4\uC5D0\uC11C\uB294 \uD328\uC2A4, \uAD6C\uB3C5, \uD2B9\uAC00 \uC0C1\uD488\uC744 \uBCFC \uC218 \uC788\uC5B4\uC694. \uBB34\uB8CC \uBCF4\uAE09\uC740 \uBD89\uC740 \uC810\uC73C\uB85C \uC54C\uB824 \uB4DC\uB824\uC694.",
@@ -2276,7 +2444,7 @@ var SYSTEM_KO = {
   "error.save.invalid": "\uC11C\uBC84 \uC800\uC7A5\uC744 \uAC80\uC99D\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
   "error.save.mergeInvalid": "\uC11C\uBC84 \uBCD1\uD569 \uC800\uC7A5\uC744 \uAC80\uC99D\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
   "error.expedition.submit": "\uC810\uC218\uB97C \uC81C\uCD9C\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.",
-  "error.expedition.settle": "\uC810\uC218\uB294 \uC81C\uCD9C\uD588\uC9C0\uB9CC \uC815\uC0B0\uC744 \uB9C8\uCE58\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.",
+  "error.expedition.settle": "\uC810\uC218\uB294 \uC81C\uCD9C\uD588\uC9C0\uB9CC \uBCF4\uC0C1\uC744 \uBC1B\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
   "error.persist.state": "\uAC8C\uC784 \uC0C1\uD0DC\uB97C \uC800\uC7A5\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.",
   "error.persist.expeditionScore": "\uC6D0\uC815 \uC810\uC218\uB97C \uC800\uC7A5\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.",
   "mail.subscription.title": "{product} \uC77C\uC77C \uBCF4\uAE09",
@@ -2304,12 +2472,12 @@ var RAID_KO = {
   "raid.summon.difficulty": "{difficulty} \xB7 LV.{level}",
   "raid.pick.levels": "LV.{min}~{max}",
   "raid.pick.hp": "\uBCF4\uC2A4 \uCCB4\uB825 {hp}",
-  "raid.settle.button": "\uC815\uC0B0",
-  "raid.settle.title": "\uB808\uC774\uB4DC \uC815\uC0B0",
-  "raid.settle.done": "\uC815\uC0B0 \uC644\uB8CC",
-  "raid.settle.ready": "\uC815\uC0B0 \uBCF4\uC0C1",
-  "raid.settle.expected": "\uC608\uC0C1 \uC815\uC0B0",
-  "raid.settle.max": "\uCD5C\uB300 \uC815\uC0B0",
+  "raid.settle.button": "\uBCF4\uC0C1 \uBC1B\uAE30",
+  "raid.settle.title": "\uB808\uC774\uB4DC \uBCF4\uC0C1",
+  "raid.settle.done": "\uBCF4\uC0C1 \uC218\uB839 \uC644\uB8CC",
+  "raid.settle.ready": "\uD68D\uB4DD \uBCF4\uC0C1",
+  "raid.settle.expected": "\uC608\uC0C1 \uBCF4\uC0C1",
+  "raid.settle.max": "\uCD5C\uB300 \uBCF4\uC0C1",
   "raid.settle.contribution": "\uAE30\uC5EC\uB3C4",
   "raid.settle.rank": "{rank}\uC704",
   "raid.settle.participants": "\uCC38\uAC00 {count}\uBA85",
@@ -2324,13 +2492,13 @@ var RAID_KO = {
   "raid.contribution.mine": "\uB0B4 \uAE30\uC5EC",
   "raid.contribution.value": "\uB0B4 \uAE30\uC5EC {damage}",
   "raid.contribution.empty": "\uC544\uC9C1 \uC544\uBB34\uB3C4 \uBC00\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4",
-  "raid.reward.title": "\uC815\uC0B0 \uBCF4\uC0C1",
+  "raid.reward.title": "\uD68D\uB4DD \uBCF4\uC0C1",
   "raid.reward.progress": "\uC804\uCCB4 \uC9C4\uD589",
   "raid.reward.kill": "\uD1A0\uBC8C",
   "raid.reward.killYes": "\uC131\uACF5",
   "raid.reward.killNo": "\uC9C4\uD589 \uC911",
   "raid.reward.killFailed": "\uC2E4\uD328",
-  "raid.reward.note": "\uB808\uC774\uB4DC\uAC00 \uB05D\uB098\uBA74 \uC644\uB8CC \uD0ED\uC5D0\uC11C \uC815\uC0B0\uD574 \uBC1B\uC2B5\uB2C8\uB2E4",
+  "raid.reward.note": "\uB808\uC774\uB4DC\uAC00 \uB05D\uB098\uBA74 \uC644\uB8CC \uD0ED\uC5D0\uC11C \uBCF4\uC0C1\uC744 \uBC1B\uC2B5\uB2C8\uB2E4",
   "raid.result.score": "\uC810\uC218 {score}",
   "shop.loot.title": "\uC804\uB9AC\uD488 \uC0C1\uC810"
 };
@@ -2678,7 +2846,7 @@ var SUPPORT_KO = {
 };
 
 // src/i18n/ko/index.ts
-var KO = { ...SETTINGS_KO, ...LOBBY_KO, ...COMMON_KO, ...INFO_KO, ...STATUS_KO, ...LAB_KO, ...EXPEDITION_KO, ...BATTLE_KO, ...CAKE_OPERATION_KO, ...EXCAVATION_KO, ...AUGMENT_KO, ...FRIENDS_KO, ...RUNE_KO, ...PARTY_KO, ...EXPEDITION_REWARD_KO, ...SAVE_CONFLICT_KO, ...INTERACTION_KO, ...SHOP_KO, ...MISSIONS_KO, ...INVENTORY_KO, ...MISC_KO, ...SKILL_KO, ...SYSTEM_KO, ...RAID_KO, ...BOUNTY_KO, ...DUNGEON_KO, ...DUEL_KO, ...RECOLLECTION_KO, ...DIALOGUE_KO, ...ACHIEVEMENT_KO, ...SUPPORT_KO };
+var KO = { ...SETTINGS_KO, ...LOBBY_KO, ...COMMON_KO, ...INFO_KO, ...STATUS_KO, ...LAB_KO, ...EXPEDITION_KO, ...BATTLE_KO, ...CAKE_OPERATION_KO, ...EXCAVATION_KO, ...AUGMENT_KO, ...FRIENDS_KO, ...GUILD_KO, ...RUNE_KO, ...PARTY_KO, ...EXPEDITION_REWARD_KO, ...SAVE_CONFLICT_KO, ...INTERACTION_KO, ...SHOP_KO, ...MISSIONS_KO, ...INVENTORY_KO, ...MISC_KO, ...SKILL_KO, ...SYSTEM_KO, ...RAID_KO, ...BOUNTY_KO, ...DUNGEON_KO, ...DUEL_KO, ...RECOLLECTION_KO, ...DIALOGUE_KO, ...ACHIEVEMENT_KO, ...SUPPORT_KO };
 
 // src/i18n/catalog.ts
 var loaded = /* @__PURE__ */ new Map([[DEFAULT_LANGUAGE, KO]]);
@@ -17368,6 +17536,7 @@ function grantPlayerExperience(progress, amount) {
 function playerExpForStamina(stamina) {
   return Math.max(0, Math.floor(stamina)) * PLAYER_EXP_PER_STAMINA;
 }
+var STARTING_STAMINA = 122;
 
 // src/core/itemLots.ts
 init_define_import_meta_env();
@@ -18570,7 +18739,7 @@ function createDefaultSession() {
     bookmarked: /* @__PURE__ */ new Set(),
     // 임시 뽑기 테스트 지급: 화석·호박석 배너를 각각 100회의 10연속 복원까지 확인할 수 있다.
     // 정식 경제 밸런스를 적용할 때는 fossil 12 / amber 5으로 되돌리고 이 주석도 제거한다.
-    wallet: QA_TOOLS_ENABLED ? { fossil: 900, amber: 450, gems: 120, gold: 25400, stamina: 60, dnaFragments: 0, cheesecake: 0, rawStone: STARTER_RUNE_TRAIT_KIT.rawStone, raidSigil: 0, salvageRecord: 0, duelEmblem: 0 } : { fossil: 0, amber: 0, gems: 0, gold: 0, stamina: 60, dnaFragments: 0, cheesecake: 0, rawStone: 0, raidSigil: 0, salvageRecord: 0, duelEmblem: 0 },
+    wallet: QA_TOOLS_ENABLED ? { fossil: 900, amber: 450, gems: 120, gold: 25400, stamina: STARTING_STAMINA, dnaFragments: 0, cheesecake: 0, rawStone: STARTER_RUNE_TRAIT_KIT.rawStone, raidSigil: 0, salvageRecord: 0, duelEmblem: 0 } : { fossil: 0, amber: 0, gems: 0, gold: 0, stamina: STARTING_STAMINA, dnaFragments: 0, cheesecake: 0, rawStone: 0, raidSigil: 0, salvageRecord: 0, duelEmblem: 0 },
     // 첫 FakeServer 요청이 서버 시각으로 안전하게 초기화한다.
     staminaUpdatedAt: "",
     gachaPityByGroup: Object.fromEntries([...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].map((id) => [id, { pullsSinceSsr: 0, pickupGuaranteed: false }])),
@@ -19139,9 +19308,9 @@ function expeditionRankRewardQueue(state) {
 init_define_import_meta_env();
 var PROFILE_MODIFIERS = [
   { id: "field-pioneer", displayName: "\uD604\uC7A5 \uAC1C\uCC99\uC790", rarity: "rare", acquisitionConditionId: "mission:daily-battle" },
-  { id: "steady-researcher", displayName: "\uAFB8\uC900\uD55C \uC5F0\uAD6C\uC790", rarity: "common", acquisitionConditionId: "mission:daily-research" },
-  { id: "deep-record", displayName: "\uC2EC\uCE35 \uAE30\uB85D\uC790", rarity: "epic", acquisitionConditionId: "research:weekly:60" },
-  { id: "garden-legend", displayName: "\uC815\uC6D0\uC758 \uC804\uC124", rarity: "legendary", acquisitionConditionId: "research:weekly:120" },
+  { id: "steady-researcher", displayName: "\uAFB8\uC900\uD55C \uC5F0\uAD6C\uC790", rarity: "common", acquisitionConditionId: "mission:daily-excavate" },
+  { id: "deep-record", displayName: "\uC2EC\uCE35 \uAE30\uB85D\uC790", rarity: "epic", acquisitionConditionId: "research:weekly:research-300" },
+  { id: "garden-legend", displayName: "\uC815\uC6D0\uC758 \uC804\uC124", rarity: "legendary", acquisitionConditionId: "research:weekly:research-500" },
   /*
    * 업적의 마지막 단계를 받는 순간 열리는 수식어(`data/achievements.ts`의 `modifierId`). 희귀도는 그 줄을
    * 끝내는 데 드는 시간을 말한다 — 1억 골드·결투 300승·원정 20만 점처럼 오래 걸리는 줄만 전설이다.
@@ -19212,7 +19381,7 @@ var ITEMS = [
   { id: "rune", name: "\uB8EC", description: "\uB810\uB9AD\uC758 \uD558\uD2B8 \uC82C \uC2AC\uB86F\uC5D0 \uC7A5\uCC29\uD558\uB294 \uAC1C\uBCC4 \uB8EC\uC785\uB2C8\uB2E4.", category: "rune", icon: { kind: "glyph", key: "heart" }, maxStack: 1, useEffect: { kind: "none" } },
   { id: "fossil", name: "\uD654\uC11D", description: "\uC5F0\uAD6C\uC18C\uC758 \uCE90\uB9AD\uD130 \uD68D\uB4DD \uC5F0\uAD6C\uC5D0 \uC0AC\uC6A9\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "fossil" }, maxStack: 9999999, useEffect: { kind: "none" } },
   { id: "amber", name: "\uD638\uBC15\uC11D", description: "\uD76C\uADC0 \uC5F0\uAD6C\uC5D0 \uC0AC\uC6A9\uD558\uB294 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "amber" }, maxStack: 999999, useEffect: { kind: "none" } },
-  { id: "gems", name: "\uBCF4\uC11D", description: "\uB3C4\uC2DC \uC804\uC5ED\uC5D0\uC11C \uD1B5\uC6A9\uB418\uB294 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "gems" }, maxStack: 9999999, useEffect: { kind: "none" } },
+  { id: "gems", name: "\uC82C", description: "\uB3C4\uC2DC \uC804\uC5ED\uC5D0\uC11C \uD1B5\uC6A9\uB418\uB294 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "gems" }, maxStack: 9999999, useEffect: { kind: "none" } },
   { id: "gold", name: "\uACE8\uB4DC", description: "\uB8EC \uC138\uACF5\uACFC \uC131\uC7A5\uC5D0 \uC0AC\uC6A9\uD558\uB294 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "gold" }, maxStack: 999999999, useEffect: { kind: "none" } },
   { id: "stamina", name: "\uC2A4\uD14C\uBBF8\uB098", description: "\uD0D0\uC0AC\uC5D0 \uD544\uC694\uD55C \uD589\uB3D9\uB825\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "stamina" }, maxStack: 9999, useEffect: { kind: "none" } },
   { id: "dnaFragments", name: "DNA \uB9C8\uC77C\uB9AC\uC9C0", description: "\uB9C8\uC77C\uB9AC\uC9C0 \uC0C1\uC810\uC5D0\uC11C \uC4F0\uB294 \uAD50\uD658 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "dnaFragments" }, maxStack: 99999, useEffect: { kind: "none" } },
@@ -25418,80 +25587,80 @@ var SaveManager = class {
     const skinsById = new Map(RELIC_SKINS.map((skin) => [skin.id, skin]));
     const stageIds = new Set(STAGES.map(({ id }) => id));
     const journalIds = new Set(INTERACTION_JOURNALS.map(({ id }) => id));
-    const fail2 = (message) => {
+    const fail3 = (message) => {
       throw new SaveDataError(message);
     };
     const excavation = data.idleExcavation;
     const interaction = data.interaction;
-    if (!Array.isArray(data.discoveredInteractionJournalIds) || !Array.isArray(data.readInteractionJournalIds) || data.discoveredInteractionJournalIds.some((id) => !journalIds.has(id)) || data.readInteractionJournalIds.some((id) => !data.discoveredInteractionJournalIds.includes(id)) || new Set(data.discoveredInteractionJournalIds).size !== data.discoveredInteractionJournalIds.length || new Set(data.readInteractionJournalIds).size !== data.readInteractionJournalIds.length) fail2("\uAD50\uB958 \uC77C\uC9C0 \uC9C4\uD589\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!interaction || !Array.isArray(interaction.slots) || interaction.slots.length > INTERACTION_SLOT_LIMIT || new Set(interaction.slots.filter((slot) => slot !== null).map((slot) => slot.dispatchId)).size !== interaction.slots.filter((slot) => slot !== null).length || !Array.isArray(interaction.claimedRequestIds) || interaction.claimedRequestIds.some((id) => typeof id !== "string") || interaction.slots.some((slot) => slot !== null && (typeof slot.dispatchId !== "string" || typeof slot.cityId !== "string" || !Array.isArray(slot.party) || slot.party.length < 1 || slot.party.length > 3 || new Set(slot.party).size !== slot.party.length || slot.party.some((id) => !data.ownedRelicIds.includes(id)) || !Number.isFinite(Date.parse(slot.startedAt)) || !Number.isFinite(Date.parse(slot.completesAt)) || Date.parse(slot.completesAt) <= Date.parse(slot.startedAt) || typeof slot.claimed !== "boolean"))) fail2("\uAD50\uB958 \uC9C4\uD589\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (typeof data.staminaUpdatedAt !== "string" || data.staminaUpdatedAt !== "" && !Number.isFinite(Date.parse(data.staminaUpdatedAt))) fail2("\uC2A4\uD14C\uBBF8\uB098 \uC815\uC0B0 \uC2DC\uAC01\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!data.playerCard || typeof data.playerCard !== "object" || JSON.stringify(data.playerCard) !== JSON.stringify(normalizePlayerCard(data.playerCard))) fail2("\uD50C\uB808\uC774\uC5B4 \uCE74\uB4DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!data.playerResearch || !Number.isInteger(data.playerResearch.level) || data.playerResearch.level < 1 || !Number.isInteger(data.playerResearch.experience) || data.playerResearch.experience < 0 || !Number.isInteger(data.playerResearch.experienceToNext) || data.playerResearch.experienceToNext <= 0 || data.playerResearch.experience >= data.playerResearch.experienceToNext) fail2("\uD50C\uB808\uC774\uC5B4 \uC5F0\uAD6C \uC9C4\uD589\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!excavation || !Array.isArray(excavation.assignedRelicIds) || excavation.assignedRelicIds.length !== 3 || excavation.assignedRelicIds.some((id) => id !== null && (!relicIds.has(id) || !data.ownedRelicIds.includes(id))) || excavation.assignedRelicIds.filter(Boolean).length !== new Set(excavation.assignedRelicIds.filter(Boolean)).size || excavation.lastSettledAt !== null && !Number.isFinite(Date.parse(excavation.lastSettledAt)) || !excavation.unclaimed || EXCAVATION_CURRENCIES.some((currency3) => !Number.isFinite(excavation.unclaimed[currency3]) || excavation.unclaimed[currency3] < 0) || !Number.isInteger(excavation.retroactiveExcavationGrantVersion) || excavation.retroactiveExcavationGrantVersion < 0 || excavation.retroactiveExcavationGrantVersion > RETROACTIVE_EXCAVATION_GRANT_VERSION || !Number.isFinite(excavation.baseStorageSeconds) || excavation.baseStorageSeconds <= 0 || !Number.isFinite(excavation.activeProductionMultiplier) || excavation.activeProductionMultiplier <= 0 || excavation.storageExtensionExpiresAt !== null && !Number.isFinite(Date.parse(excavation.storageExtensionExpiresAt))) fail2("\uBC1C\uAD74 \uC0C1\uD0DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (data.saveVersion !== CURRENT_SAVE_VERSION || !Array.isArray(data.ownedRelicIds) || data.ownedRelicIds.some((id) => !relicIds.has(id))) fail2("\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uB810\uB9AD ID\uAC00 \uC788\uC2B5\uB2C8\uB2E4.");
-    if (!Array.isArray(data.ownedRelicSkinIds) || defaultUnlockedRelicSkinIds().some((id) => !data.ownedRelicSkinIds.includes(id)) || new Set(data.ownedRelicSkinIds).size !== data.ownedRelicSkinIds.length || data.ownedRelicSkinIds.some((id) => !skinsById.has(id))) fail2("\uB810\uB9AD \uC2A4\uD0A8 \uC18C\uC720 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!Array.isArray(data.discoveredInteractionJournalIds) || !Array.isArray(data.readInteractionJournalIds) || data.discoveredInteractionJournalIds.some((id) => !journalIds.has(id)) || data.readInteractionJournalIds.some((id) => !data.discoveredInteractionJournalIds.includes(id)) || new Set(data.discoveredInteractionJournalIds).size !== data.discoveredInteractionJournalIds.length || new Set(data.readInteractionJournalIds).size !== data.readInteractionJournalIds.length) fail3("\uAD50\uB958 \uC77C\uC9C0 \uC9C4\uD589\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!interaction || !Array.isArray(interaction.slots) || interaction.slots.length > INTERACTION_SLOT_LIMIT || new Set(interaction.slots.filter((slot) => slot !== null).map((slot) => slot.dispatchId)).size !== interaction.slots.filter((slot) => slot !== null).length || !Array.isArray(interaction.claimedRequestIds) || interaction.claimedRequestIds.some((id) => typeof id !== "string") || interaction.slots.some((slot) => slot !== null && (typeof slot.dispatchId !== "string" || typeof slot.cityId !== "string" || !Array.isArray(slot.party) || slot.party.length < 1 || slot.party.length > 3 || new Set(slot.party).size !== slot.party.length || slot.party.some((id) => !data.ownedRelicIds.includes(id)) || !Number.isFinite(Date.parse(slot.startedAt)) || !Number.isFinite(Date.parse(slot.completesAt)) || Date.parse(slot.completesAt) <= Date.parse(slot.startedAt) || typeof slot.claimed !== "boolean"))) fail3("\uAD50\uB958 \uC9C4\uD589\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (typeof data.staminaUpdatedAt !== "string" || data.staminaUpdatedAt !== "" && !Number.isFinite(Date.parse(data.staminaUpdatedAt))) fail3("\uC2A4\uD14C\uBBF8\uB098 \uC815\uC0B0 \uC2DC\uAC01\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.playerCard || typeof data.playerCard !== "object" || JSON.stringify(data.playerCard) !== JSON.stringify(normalizePlayerCard(data.playerCard))) fail3("\uD50C\uB808\uC774\uC5B4 \uCE74\uB4DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.playerResearch || !Number.isInteger(data.playerResearch.level) || data.playerResearch.level < 1 || !Number.isInteger(data.playerResearch.experience) || data.playerResearch.experience < 0 || !Number.isInteger(data.playerResearch.experienceToNext) || data.playerResearch.experienceToNext <= 0 || data.playerResearch.experience >= data.playerResearch.experienceToNext) fail3("\uD50C\uB808\uC774\uC5B4 \uC5F0\uAD6C \uC9C4\uD589\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!excavation || !Array.isArray(excavation.assignedRelicIds) || excavation.assignedRelicIds.length !== 3 || excavation.assignedRelicIds.some((id) => id !== null && (!relicIds.has(id) || !data.ownedRelicIds.includes(id))) || excavation.assignedRelicIds.filter(Boolean).length !== new Set(excavation.assignedRelicIds.filter(Boolean)).size || excavation.lastSettledAt !== null && !Number.isFinite(Date.parse(excavation.lastSettledAt)) || !excavation.unclaimed || EXCAVATION_CURRENCIES.some((currency3) => !Number.isFinite(excavation.unclaimed[currency3]) || excavation.unclaimed[currency3] < 0) || !Number.isInteger(excavation.retroactiveExcavationGrantVersion) || excavation.retroactiveExcavationGrantVersion < 0 || excavation.retroactiveExcavationGrantVersion > RETROACTIVE_EXCAVATION_GRANT_VERSION || !Number.isFinite(excavation.baseStorageSeconds) || excavation.baseStorageSeconds <= 0 || !Number.isFinite(excavation.activeProductionMultiplier) || excavation.activeProductionMultiplier <= 0 || excavation.storageExtensionExpiresAt !== null && !Number.isFinite(Date.parse(excavation.storageExtensionExpiresAt))) fail3("\uBC1C\uAD74 \uC0C1\uD0DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (data.saveVersion !== CURRENT_SAVE_VERSION || !Array.isArray(data.ownedRelicIds) || data.ownedRelicIds.some((id) => !relicIds.has(id))) fail3("\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uB810\uB9AD ID\uAC00 \uC788\uC2B5\uB2C8\uB2E4.");
+    if (!Array.isArray(data.ownedRelicSkinIds) || defaultUnlockedRelicSkinIds().some((id) => !data.ownedRelicSkinIds.includes(id)) || new Set(data.ownedRelicSkinIds).size !== data.ownedRelicSkinIds.length || data.ownedRelicSkinIds.some((id) => !skinsById.has(id))) fail3("\uB810\uB9AD \uC2A4\uD0A8 \uC18C\uC720 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!data.equippedRelicSkinIds || typeof data.equippedRelicSkinIds !== "object" || Array.isArray(data.equippedRelicSkinIds) || Object.entries(data.equippedRelicSkinIds).some(([relicId, skinId]) => {
       const skin = skinId && skinsById.get(skinId);
       return !data.ownedRelicIds.includes(relicId) || !skin || !data.ownedRelicSkinIds.includes(skinId) || skin.relicId !== relicId;
-    })) fail2("\uB810\uB9AD \uC2A4\uD0A8 \uC7A5\uCC29 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!Array.isArray(data.earnedProfileModifierIds) || !Array.isArray(data.equippedProfileModifierIds) || data.earnedProfileModifierIds.some((id) => !modifierIds.has(id)) || data.equippedProfileModifierIds.some((id) => !data.earnedProfileModifierIds.includes(id)) || new Set(data.earnedProfileModifierIds).size !== data.earnedProfileModifierIds.length || new Set(data.equippedProfileModifierIds).size !== data.equippedProfileModifierIds.length || data.equippedProfileModifierIds.length > 3) fail2("\uD504\uB85C\uD544 \uC218\uC2DD\uC5B4 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (JSON.stringify(data.settings) !== JSON.stringify(normalizeSettings(data.settings))) fail2("\uC124\uC815 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!Array.isArray(data.completedStoryIds) || data.completedStoryIds.some((id) => typeof id !== "string") || new Set(data.completedStoryIds).size !== data.completedStoryIds.length) fail2("\uC644\uB8CC \uC2A4\uD1A0\uB9AC \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!Array.isArray(data.observationRecords) || data.observationRecords.some((record2) => !record2 || typeof record2.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(record2.date) || !relicIds.has(record2.relicId) || typeof record2.storyId !== "string" || typeof record2.questionId !== "string" || typeof record2.question !== "string" || typeof record2.choiceId !== "string" || typeof record2.answer !== "string" || typeof record2.personalityTag !== "string" || typeof record2.discoveredHabit !== "string")) fail2("\uAD00\uCC30 \uC778\uD130\uBDF0 \uAE30\uB85D\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (new Set(data.observationRecords.map(({ date }) => date)).size !== data.observationRecords.length) fail2("\uD558\uB8E8\uC5D0 \uAD00\uCC30 \uC778\uD130\uBDF0\uB97C \uB450 \uBC88 \uAE30\uB85D\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
-    if (!Array.isArray(data.party) || data.party.length !== 3 || new Set(data.party).size !== 3 || data.party.some((id) => !data.ownedRelicIds.includes(id))) fail2("\uD30C\uD2F0\uB294 \uC11C\uB85C \uB2E4\uB978 \uBCF4\uC720 \uB810\uB9AD 3\uBA85\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
-    if (!relicIds.has(data.favorite) || !data.ownedRelicIds.includes(data.favorite)) fail2("\uC560\uCC29 \uB810\uB9AD\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!Array.isArray(data.bookmarkedRelicIds) || data.bookmarkedRelicIds.some((id) => !data.ownedRelicIds.includes(id)) || new Set(data.bookmarkedRelicIds).size !== data.bookmarkedRelicIds.length) fail2("\uC990\uACA8\uCC3E\uAE30 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (data.selectedStageId !== null && !stageIds.has(data.selectedStageId)) fail2("\uC2A4\uD14C\uC774\uC9C0 ID\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!Array.isArray(data.clearedStageIds) || data.clearedStageIds.some((id) => !stageIds.has(id))) fail2("\uD074\uB9AC\uC5B4 \uC9C4\uD589\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!data.wallet || !Number.isFinite(data.wallet.fossil) || data.wallet.fossil < 0 || !Number.isFinite(data.wallet.amber) || data.wallet.amber < 0 || !Number.isInteger(data.wallet.dnaFragments) || data.wallet.dnaFragments < 0 || !Number.isInteger(data.wallet.cheesecake) || data.wallet.cheesecake < 0) fail2("\uC7AC\uD654\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!Number.isInteger(data.wallet.raidSigil) || data.wallet.raidSigil < 0 || !Number.isInteger(data.wallet.salvageRecord) || data.wallet.salvageRecord < 0 || !Number.isInteger(data.wallet.duelEmblem) || data.wallet.duelEmblem < 0) fail2("\uC804\uB9AC\uD488 \uC99D\uD45C\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!data.gachaPityByGroup || [...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].some((id) => !Number.isInteger(data.gachaPityByGroup[id]?.pullsSinceSsr) || data.gachaPityByGroup[id].pullsSinceSsr < 0 || typeof data.gachaPityByGroup[id].pickupGuaranteed !== "boolean" || data.gachaPityByGroup[id].totalPulls !== void 0 && (!Number.isInteger(data.gachaPityByGroup[id].totalPulls) || data.gachaPityByGroup[id].totalPulls < 0))) fail2("\uBC30\uB108 \uADF8\uB8F9 \uCC9C\uC7A5 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!data.relicProgress || typeof data.relicProgress !== "object") fail2("\uC131\uC7A5 \uC815\uBCF4\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
-    if (data.ownedRelicIds.some((id) => !data.relicProgress[id]) || Object.keys(data.relicProgress).some((id) => !data.ownedRelicIds.includes(id))) fail2("\uBCF4\uC720 \uB810\uB9AD\uACFC \uC131\uC7A5 \uC815\uBCF4\uAC00 \uC77C\uCE58\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    })) fail3("\uB810\uB9AD \uC2A4\uD0A8 \uC7A5\uCC29 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!Array.isArray(data.earnedProfileModifierIds) || !Array.isArray(data.equippedProfileModifierIds) || data.earnedProfileModifierIds.some((id) => !modifierIds.has(id)) || data.equippedProfileModifierIds.some((id) => !data.earnedProfileModifierIds.includes(id)) || new Set(data.earnedProfileModifierIds).size !== data.earnedProfileModifierIds.length || new Set(data.equippedProfileModifierIds).size !== data.equippedProfileModifierIds.length || data.equippedProfileModifierIds.length > 3) fail3("\uD504\uB85C\uD544 \uC218\uC2DD\uC5B4 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (JSON.stringify(data.settings) !== JSON.stringify(normalizeSettings(data.settings))) fail3("\uC124\uC815 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!Array.isArray(data.completedStoryIds) || data.completedStoryIds.some((id) => typeof id !== "string") || new Set(data.completedStoryIds).size !== data.completedStoryIds.length) fail3("\uC644\uB8CC \uC2A4\uD1A0\uB9AC \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!Array.isArray(data.observationRecords) || data.observationRecords.some((record2) => !record2 || typeof record2.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(record2.date) || !relicIds.has(record2.relicId) || typeof record2.storyId !== "string" || typeof record2.questionId !== "string" || typeof record2.question !== "string" || typeof record2.choiceId !== "string" || typeof record2.answer !== "string" || typeof record2.personalityTag !== "string" || typeof record2.discoveredHabit !== "string")) fail3("\uAD00\uCC30 \uC778\uD130\uBDF0 \uAE30\uB85D\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (new Set(data.observationRecords.map(({ date }) => date)).size !== data.observationRecords.length) fail3("\uD558\uB8E8\uC5D0 \uAD00\uCC30 \uC778\uD130\uBDF0\uB97C \uB450 \uBC88 \uAE30\uB85D\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    if (!Array.isArray(data.party) || data.party.length !== 3 || new Set(data.party).size !== 3 || data.party.some((id) => !data.ownedRelicIds.includes(id))) fail3("\uD30C\uD2F0\uB294 \uC11C\uB85C \uB2E4\uB978 \uBCF4\uC720 \uB810\uB9AD 3\uBA85\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
+    if (!relicIds.has(data.favorite) || !data.ownedRelicIds.includes(data.favorite)) fail3("\uC560\uCC29 \uB810\uB9AD\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!Array.isArray(data.bookmarkedRelicIds) || data.bookmarkedRelicIds.some((id) => !data.ownedRelicIds.includes(id)) || new Set(data.bookmarkedRelicIds).size !== data.bookmarkedRelicIds.length) fail3("\uC990\uACA8\uCC3E\uAE30 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (data.selectedStageId !== null && !stageIds.has(data.selectedStageId)) fail3("\uC2A4\uD14C\uC774\uC9C0 ID\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!Array.isArray(data.clearedStageIds) || data.clearedStageIds.some((id) => !stageIds.has(id))) fail3("\uD074\uB9AC\uC5B4 \uC9C4\uD589\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.wallet || !Number.isFinite(data.wallet.fossil) || data.wallet.fossil < 0 || !Number.isFinite(data.wallet.amber) || data.wallet.amber < 0 || !Number.isInteger(data.wallet.dnaFragments) || data.wallet.dnaFragments < 0 || !Number.isInteger(data.wallet.cheesecake) || data.wallet.cheesecake < 0) fail3("\uC7AC\uD654\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!Number.isInteger(data.wallet.raidSigil) || data.wallet.raidSigil < 0 || !Number.isInteger(data.wallet.salvageRecord) || data.wallet.salvageRecord < 0 || !Number.isInteger(data.wallet.duelEmblem) || data.wallet.duelEmblem < 0) fail3("\uC804\uB9AC\uD488 \uC99D\uD45C\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.gachaPityByGroup || [...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].some((id) => !Number.isInteger(data.gachaPityByGroup[id]?.pullsSinceSsr) || data.gachaPityByGroup[id].pullsSinceSsr < 0 || typeof data.gachaPityByGroup[id].pickupGuaranteed !== "boolean" || data.gachaPityByGroup[id].totalPulls !== void 0 && (!Number.isInteger(data.gachaPityByGroup[id].totalPulls) || data.gachaPityByGroup[id].totalPulls < 0))) fail3("\uBC30\uB108 \uADF8\uB8F9 \uCC9C\uC7A5 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.relicProgress || typeof data.relicProgress !== "object") fail3("\uC131\uC7A5 \uC815\uBCF4\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    if (data.ownedRelicIds.some((id) => !data.relicProgress[id]) || Object.keys(data.relicProgress).some((id) => !data.ownedRelicIds.includes(id))) fail3("\uBCF4\uC720 \uB810\uB9AD\uACFC \uC131\uC7A5 \uC815\uBCF4\uAC00 \uC77C\uCE58\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     for (const [id, progress] of Object.entries(data.relicProgress)) {
-      if (!relicIds.has(id) || !Number.isInteger(progress.breakthrough) || progress.breakthrough < 0 || progress.breakthrough > BREAKTHROUGH_CAP || !Number.isInteger(progress.exp) || progress.exp < 0 || !Number.isInteger(progress.bondLevel) || progress.bondLevel < 0 || progress.bondLevel > 10 || !Number.isInteger(progress.bondXp) || progress.bondXp < 0 || progress.bondXp > 650 || typeof progress.lastLobbyInteractionDate !== "string" || !Number.isInteger(progress.level) || progress.level < 1 || !Array.isArray(progress.heartGemSlots) || progress.heartGemSlots.length !== 3) fail2("\uB810\uB9AD \uC131\uC7A5 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+      if (!relicIds.has(id) || !Number.isInteger(progress.breakthrough) || progress.breakthrough < 0 || progress.breakthrough > BREAKTHROUGH_CAP || !Number.isInteger(progress.exp) || progress.exp < 0 || !Number.isInteger(progress.bondLevel) || progress.bondLevel < 0 || progress.bondLevel > 10 || !Number.isInteger(progress.bondXp) || progress.bondXp < 0 || progress.bondXp > 650 || typeof progress.lastLobbyInteractionDate !== "string" || !Number.isInteger(progress.level) || progress.level < 1 || !Array.isArray(progress.heartGemSlots) || progress.heartGemSlots.length !== 3) fail3("\uB810\uB9AD \uC131\uC7A5 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     }
-    if (!data.relicFragments || typeof data.relicFragments !== "object" || Object.entries(data.relicFragments).some(([id, count2]) => !data.ownedRelicIds.includes(id) || !Number.isInteger(count2) || count2 < 0)) fail2("\uB810\uB9AD \uD30C\uD3B8 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!Array.isArray(data.runeInventory)) fail2("\uB8EC \uC778\uBCA4\uD1A0\uB9AC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.relicFragments || typeof data.relicFragments !== "object" || Object.entries(data.relicFragments).some(([id, count2]) => !data.ownedRelicIds.includes(id) || !Number.isInteger(count2) || count2 < 0)) fail3("\uB810\uB9AD \uD30C\uD3B8 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!Array.isArray(data.runeInventory)) fail3("\uB8EC \uC778\uBCA4\uD1A0\uB9AC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!Array.isArray(data.itemInventory) || new Set(data.itemInventory.map(({ itemId }) => itemId)).size !== data.itemInventory.length || data.itemInventory.some((stack) => {
       const { itemId, quantity } = stack;
       const item3 = findItem(itemId);
       return !item3 || item3.category === "rune" || item3.category === "currency" || !Number.isInteger(quantity) || quantity <= 0 || quantity > item3.maxStack || !isValidLotStack(stack);
-    })) fail2("\uC911\uCCA9 \uC544\uC774\uD15C \uC778\uBCA4\uD1A0\uB9AC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    })) fail3("\uC911\uCCA9 \uC544\uC774\uD15C \uC778\uBCA4\uD1A0\uB9AC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     try {
       data.runeInventory.forEach(assertValidRuneInstance);
     } catch {
-      fail2("\uB8EC \uC778\uBCA4\uD1A0\uB9AC\uC5D0 \uC190\uC0C1\uB41C \uC778\uC2A4\uD134\uC2A4\uAC00 \uC788\uC2B5\uB2C8\uB2E4.");
+      fail3("\uB8EC \uC778\uBCA4\uD1A0\uB9AC\uC5D0 \uC190\uC0C1\uB41C \uC778\uC2A4\uD134\uC2A4\uAC00 \uC788\uC2B5\uB2C8\uB2E4.");
     }
     const runeIds = data.runeInventory.map(({ instanceId }) => instanceId);
-    if (new Set(runeIds).size !== runeIds.length) fail2("\uB8EC \uC778\uC2A4\uD134\uC2A4 ID\uAC00 \uC911\uBCF5\uB418\uC5C8\uC2B5\uB2C8\uB2E4.");
+    if (new Set(runeIds).size !== runeIds.length) fail3("\uB8EC \uC778\uC2A4\uD134\uC2A4 ID\uAC00 \uC911\uBCF5\uB418\uC5C8\uC2B5\uB2C8\uB2E4.");
     const equipped = Object.values(data.relicProgress).flatMap(({ heartGemSlots }) => heartGemSlots.filter((id) => id !== null));
-    if (equipped.some((id) => !runeIds.includes(id)) || new Set(equipped).size !== equipped.length) fail2("\uB8EC \uC7A5\uCC29 \uC18C\uC720\uAD8C \uB610\uB294 \uC911\uBCF5\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!data.dailyContent || typeof data.dailyContent.date !== "string" || !Number.isInteger(data.dailyContent.restorationEntries) || data.dailyContent.restorationEntries < 0 || data.dailyContent.restorationEntries > 3 || !Array.isArray(data.dailyContent.completedIds) || !Array.isArray(data.dailyContent.claimedRewardIds)) fail2("\uC77C\uC77C \uCF58\uD150\uCE20 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!data.bounty || !Array.isArray(data.bounty.clearedTierIds) || data.bounty.clearedTierIds.some((id) => typeof id !== "string" || !BOUNTY_TIERS.some((tier) => tier.id === id)) || new Set(data.bounty.clearedTierIds).size !== data.bounty.clearedTierIds.length) fail2("\uD604\uC0C1\uC218\uBC30 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (equipped.some((id) => !runeIds.includes(id)) || new Set(equipped).size !== equipped.length) fail3("\uB8EC \uC7A5\uCC29 \uC18C\uC720\uAD8C \uB610\uB294 \uC911\uBCF5\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.dailyContent || typeof data.dailyContent.date !== "string" || !Number.isInteger(data.dailyContent.restorationEntries) || data.dailyContent.restorationEntries < 0 || data.dailyContent.restorationEntries > 3 || !Array.isArray(data.dailyContent.completedIds) || !Array.isArray(data.dailyContent.claimedRewardIds)) fail3("\uC77C\uC77C \uCF58\uD150\uCE20 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.bounty || !Array.isArray(data.bounty.clearedTierIds) || data.bounty.clearedTierIds.some((id) => typeof id !== "string" || !BOUNTY_TIERS.some((tier) => tier.id === id)) || new Set(data.bounty.clearedTierIds).size !== data.bounty.clearedTierIds.length) fail3("\uD604\uC0C1\uC218\uBC30 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!data.missions || typeof data.missions.dailyKey !== "string" || typeof data.missions.weeklyKey !== "string" || !data.missions.progress || typeof data.missions.progress !== "object" || Object.values(data.missions.progress).some((value) => !Number.isInteger(value) || value < 0) || !Array.isArray(data.missions.claimedIds) || new Set(data.missions.claimedIds).size !== data.missions.claimedIds.length || !data.missions.researchPoints || ["daily", "weekly"].some((period) => {
       const value = data.missions.researchPoints[period];
       return !Number.isInteger(value) || value < 0 || value > maxResearchPoints(period);
-    }) || !Array.isArray(data.missions.claimedResearchStageIds) || data.missions.claimedResearchStageIds.some((id) => typeof id !== "string") || new Set(data.missions.claimedResearchStageIds).size !== data.missions.claimedResearchStageIds.length) fail2("\uC784\uBB34 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!data.productPurchases || typeof data.productPurchases !== "object" || Object.values(data.productPurchases).some((value) => typeof value.periodKey !== "string" || !Number.isInteger(value.count) || value.count < 0)) fail2("\uC0C1\uD488 \uAD6C\uB9E4 \uC81C\uD55C \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    }) || !Array.isArray(data.missions.claimedResearchStageIds) || data.missions.claimedResearchStageIds.some((id) => typeof id !== "string") || new Set(data.missions.claimedResearchStageIds).size !== data.missions.claimedResearchStageIds.length) fail3("\uC784\uBB34 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.productPurchases || typeof data.productPurchases !== "object" || Object.values(data.productPurchases).some((value) => typeof value.periodKey !== "string" || !Number.isInteger(value.count) || value.count < 0)) fail3("\uC0C1\uD488 \uAD6C\uB9E4 \uC81C\uD55C \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     const adLimits = Object.fromEntries(AD_REWARD_SLOTS.map(({ id, dailyLimitUtc }) => [id, dailyLimitUtc]));
-    if (!data.dailyAdRewards || typeof data.dailyAdRewards.date !== "string" || !data.dailyAdRewards.claimsBySlot || Object.entries(data.dailyAdRewards.claimsBySlot).some(([id, count2]) => !(id in adLimits) || !Number.isInteger(count2) || count2 < 0 || count2 > adLimits[id]) || !Array.isArray(data.dailyAdRewards.requestIds) || data.dailyAdRewards.requestIds.some((id) => typeof id !== "string" || id.length === 0) || new Set(data.dailyAdRewards.requestIds).size !== data.dailyAdRewards.requestIds.length) fail2("\uC77C\uC77C \uAD11\uACE0 \uC218\uB839 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!data.expedition || typeof data.expedition.weekKey !== "string" || typeof data.expedition.dayKey !== "string" || !Number.isInteger(data.expedition.playsToday) || data.expedition.playsToday < 0 || !Array.isArray(data.expedition.claimedRewardStageIds) || typeof data.expedition.bestAchievedAt !== "string" || !Number.isInteger(data.expedition.bestScore) || data.expedition.bestScore < 0 || !Number.isInteger(data.expedition.allTimeBestScore) || data.expedition.allTimeBestScore < 0 || !Array.isArray(data.expedition.lastParty) || data.expedition.lastParty.length > 3 || new Set(data.expedition.lastParty).size !== data.expedition.lastParty.length || data.expedition.lastParty.some((id) => !data.ownedRelicIds.includes(id)) || data.expedition.run !== null && normalizeExpeditionRun(data.expedition.run, data.ownedRelicIds) === null) fail2("\uC6D0\uC815 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!data.raid || !Array.isArray(data.raid.instances) || !data.raid.instances.every(isRaidInstance) || new Set(data.raid.instances.map(({ id }) => id)).size !== data.raid.instances.length) fail2("\uB808\uC774\uB4DC \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!data.cakeOperation || !Number.isInteger(data.cakeOperation.clearedIndex) || data.cakeOperation.clearedIndex < -1 || data.cakeOperation.clearedIndex >= CAKE_OPERATION_TIERS.length) fail2("\uCE58\uC988\uCF00\uC774\uD06C \uB300\uC791\uC804 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.dailyAdRewards || typeof data.dailyAdRewards.date !== "string" || !data.dailyAdRewards.claimsBySlot || Object.entries(data.dailyAdRewards.claimsBySlot).some(([id, count2]) => !(id in adLimits) || !Number.isInteger(count2) || count2 < 0 || count2 > adLimits[id]) || !Array.isArray(data.dailyAdRewards.requestIds) || data.dailyAdRewards.requestIds.some((id) => typeof id !== "string" || id.length === 0) || new Set(data.dailyAdRewards.requestIds).size !== data.dailyAdRewards.requestIds.length) fail3("\uC77C\uC77C \uAD11\uACE0 \uC218\uB839 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.expedition || typeof data.expedition.weekKey !== "string" || typeof data.expedition.dayKey !== "string" || !Number.isInteger(data.expedition.playsToday) || data.expedition.playsToday < 0 || !Array.isArray(data.expedition.claimedRewardStageIds) || typeof data.expedition.bestAchievedAt !== "string" || !Number.isInteger(data.expedition.bestScore) || data.expedition.bestScore < 0 || !Number.isInteger(data.expedition.allTimeBestScore) || data.expedition.allTimeBestScore < 0 || !Array.isArray(data.expedition.lastParty) || data.expedition.lastParty.length > 3 || new Set(data.expedition.lastParty).size !== data.expedition.lastParty.length || data.expedition.lastParty.some((id) => !data.ownedRelicIds.includes(id)) || data.expedition.run !== null && normalizeExpeditionRun(data.expedition.run, data.ownedRelicIds) === null) fail3("\uC6D0\uC815 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.raid || !Array.isArray(data.raid.instances) || !data.raid.instances.every(isRaidInstance) || new Set(data.raid.instances.map(({ id }) => id)).size !== data.raid.instances.length) fail3("\uB808\uC774\uB4DC \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.cakeOperation || !Number.isInteger(data.cakeOperation.clearedIndex) || data.cakeOperation.clearedIndex < -1 || data.cakeOperation.clearedIndex >= CAKE_OPERATION_TIERS.length) fail3("\uCE58\uC988\uCF00\uC774\uD06C \uB300\uC791\uC804 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     this.validateRelicStory(data);
     this.validateProgressPasses(data);
-    if (!isValidDuelState(data.duel, data.ownedRelicIds)) fail2("\uACB0\uD22C\uC7A5 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!Array.isArray(data.claimedMailIds) || data.claimedMailIds.some((id) => typeof id !== "string") || new Set(data.claimedMailIds).size !== data.claimedMailIds.length) fail2("\uC6B0\uD3B8 \uC218\uB839 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!isValidAttendanceState(data.attendance)) fail2("\uCD9C\uC11D \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!isValidRaidTicketDropState(data.raidTicketDrops)) fail2("\uD1A0\uBC8C\uAD8C \uD68D\uB4DD \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!isValidAchievementState(data.achievements)) fail2("\uC5C5\uC801 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!isValidTutorialState(data.tutorial)) fail2("\uD29C\uD1A0\uB9AC\uC5BC \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (data.missions.lifetime !== void 0 && (typeof data.missions.lifetime !== "object" || data.missions.lifetime === null || Object.values(data.missions.lifetime).some((value) => !Number.isInteger(value) || value < 0))) fail2("\uC784\uBB34 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (data.serverJournal !== void 0 && !isValidServerJournal(data.serverJournal)) fail2("\uC11C\uBC84 \uCC98\uB9AC \uC601\uC218\uC99D\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (data.expedition.pendingRankRewards !== void 0 && (!Array.isArray(data.expedition.pendingRankRewards) || data.expedition.pendingRankRewards.some((reward) => !reward || typeof reward.weekKey !== "string" || !Number.isInteger(reward.score) || reward.score <= 0 || typeof reward.achievedAt !== "string") || new Set([data.expedition.pendingRankReward, ...data.expedition.pendingRankRewards].filter(Boolean).map((reward) => reward.weekKey)).size !== data.expedition.pendingRankRewards.length + (data.expedition.pendingRankReward ? 1 : 0))) fail2("\uC6D0\uC815 \uC8FC\uAC04 \uBCF4\uC0C1 \uB300\uAE30\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!isValidDuelState(data.duel, data.ownedRelicIds)) fail3("\uACB0\uD22C\uC7A5 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!Array.isArray(data.claimedMailIds) || data.claimedMailIds.some((id) => typeof id !== "string") || new Set(data.claimedMailIds).size !== data.claimedMailIds.length) fail3("\uC6B0\uD3B8 \uC218\uB839 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!isValidAttendanceState(data.attendance)) fail3("\uCD9C\uC11D \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!isValidRaidTicketDropState(data.raidTicketDrops)) fail3("\uD1A0\uBC8C\uAD8C \uD68D\uB4DD \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!isValidAchievementState(data.achievements)) fail3("\uC5C5\uC801 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!isValidTutorialState(data.tutorial)) fail3("\uD29C\uD1A0\uB9AC\uC5BC \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (data.missions.lifetime !== void 0 && (typeof data.missions.lifetime !== "object" || data.missions.lifetime === null || Object.values(data.missions.lifetime).some((value) => !Number.isInteger(value) || value < 0))) fail3("\uC784\uBB34 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (data.serverJournal !== void 0 && !isValidServerJournal(data.serverJournal)) fail3("\uC11C\uBC84 \uCC98\uB9AC \uC601\uC218\uC99D\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (data.expedition.pendingRankRewards !== void 0 && (!Array.isArray(data.expedition.pendingRankRewards) || data.expedition.pendingRankRewards.some((reward) => !reward || typeof reward.weekKey !== "string" || !Number.isInteger(reward.score) || reward.score <= 0 || typeof reward.achievedAt !== "string") || new Set([data.expedition.pendingRankReward, ...data.expedition.pendingRankRewards].filter(Boolean).map((reward) => reward.weekKey)).size !== data.expedition.pendingRankRewards.length + (data.expedition.pendingRankReward ? 1 : 0))) fail3("\uC6D0\uC815 \uC8FC\uAC04 \uBCF4\uC0C1 \uB300\uAE30\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
   }
   /** 받은 마디는 그 패스의 실제 문턱값만, 한 번씩만 허용한다. 레이드 입장 수는 0 이상의 정수다. */
   validateProgressPasses(data) {
@@ -27431,6 +27600,501 @@ function simulateDuelDefenses(state, now, pool, defensePower, random) {
   return { state: next, entries, reachedTiers };
 }
 
+// src/core/guild.ts
+init_define_import_meta_env();
+var GUILD_CREATE_GEMS = 2e3;
+var GUILD_BADGE_CHANGE_GEMS = 500;
+var GUILD_NAME_MIN = 2;
+var GUILD_NAME_MAX = 12;
+var GUILD_NOTICE_MAX = 120;
+var GUILD_LEAVE_COOLDOWN_MS = 24 * 36e5;
+var GUILD_MAX_LEVEL = 10;
+var GUILD_ROLE_LIMIT = { leader: 1, vice: 2, officer: 5, member: Number.POSITIVE_INFINITY };
+var ROLE_RANK = { leader: 3, vice: 2, officer: 1, member: 0 };
+var ROLE_ACTIONS = {
+  leader: ["approve", "kick", "notice", "formation", "promote", "badge", "joinMode", "disband"],
+  vice: ["approve", "kick", "notice", "formation"],
+  officer: ["approve", "notice", "formation"],
+  member: []
+};
+var guildCan = (role, action) => ROLE_ACTIONS[role].includes(action);
+var guildCanKick = (actor, target) => guildCan(actor, "kick") && ROLE_RANK[actor] > ROLE_RANK[target];
+var GUILD_LEVELS = [
+  { level: 1, prosperity: 0, capacity: 20 },
+  { level: 2, prosperity: 2500, capacity: 22 },
+  { level: 3, prosperity: 6e3, capacity: 24 },
+  { level: 4, prosperity: 10500, capacity: 26 },
+  { level: 5, prosperity: 16e3, capacity: 28 },
+  { level: 6, prosperity: 22500, capacity: 30 },
+  { level: 7, prosperity: 3e4, capacity: 33 },
+  { level: 8, prosperity: 39e3, capacity: 36 },
+  { level: 9, prosperity: 49e3, capacity: 38 },
+  { level: 10, prosperity: 6e4, capacity: 40 }
+];
+function guildLevelOf(prosperity) {
+  let level = 1;
+  for (const def of GUILD_LEVELS) if (prosperity >= def.prosperity) level = def.level;
+  return level;
+}
+var levelDef = (level) => GUILD_LEVELS[Math.min(GUILD_MAX_LEVEL, Math.max(1, Math.floor(level))) - 1];
+var guildCapacity = (level) => levelDef(level).capacity;
+var guildGlyphCount = (text) => typeof Intl !== "undefined" && "Segmenter" in Intl ? [...new Intl.Segmenter(void 0, { granularity: "grapheme" }).segment(text)].length : Array.from(text).length;
+var normalizeGuildName = (raw) => raw.normalize("NFC").replace(/\s+/g, " ").trim();
+function validateGuildName(raw) {
+  const name = normalizeGuildName(raw);
+  if (!name) return { ok: false, problem: "empty" };
+  if (!/^[\p{L}\p{N} ]+$/u.test(name)) return { ok: false, problem: "invalid" };
+  const count2 = guildGlyphCount(name);
+  if (count2 < GUILD_NAME_MIN) return { ok: false, problem: "short" };
+  if (count2 > GUILD_NAME_MAX) return { ok: false, problem: "long" };
+  return { ok: true, name };
+}
+var guildNameKey = (name) => normalizeGuildName(name).replace(/ /g, "").toLowerCase();
+var guildDateKey = (ms) => new Date(ms).toISOString().slice(0, 10);
+function guildWeekKey(ms) {
+  const day = new Date(ms).getUTCDay();
+  return guildDateKey(ms - (day + 6) % 7 * 864e5);
+}
+var guildWeekdayIndex = (ms) => (new Date(ms).getUTCDay() + 6) % 7;
+var GUILD_ATTENDANCE_CHOICES = ["gold", "cheesecake"];
+var GUILD_ATTENDANCE_REWARD = { gold: 8e3, cheesecake: 32 };
+var GUILD_ATTENDANCE_GAIN = { prosperity: 10, contribution: 10, coin: 5 };
+var GUILD_ATTENDANCE_WEEK_BONUS = { gems: 20, contribution: 20, coin: 10 };
+var GUILD_STAMP_DAYS = 7;
+var GUILD_SHOP_PRODUCTS = [
+  { id: "guild-gold", price: 20, weeklyLimit: 5, grant: { gold: 5500 } },
+  { id: "guild-cheesecake", price: 20, weeklyLimit: 5, grant: { cheesecake: 24 } },
+  { id: "guild-tonic", price: 90, weeklyLimit: 2, grant: { item: { id: "stamina-tonic", quantity: 1 } } }
+];
+var findGuildProduct = (id) => GUILD_SHOP_PRODUCTS.find((p) => p.id === id);
+
+// src/core/guildBadge.ts
+init_define_import_meta_env();
+var GUILD_BADGE_SHAPES = ["shield", "hexagon", "diamond", "chip", "octagon", "banner", "crownShield", "wing"];
+var GUILD_BADGE_ICONS = ["sword", "star", "crown", "heart", "bolt", "flame", "drop", "leaf", "mountain", "cheesecake", "moon", "bone"];
+var GUILD_BADGE_COLORS = {
+  crimson: 14239071,
+  orange: 15764028,
+  amber: 15909198,
+  lime: 12048716,
+  green: 5226346,
+  teal: 4177838,
+  sky: 6079728,
+  blue: 4881376,
+  violet: 9069529,
+  pink: 15764160,
+  silver: 14673646,
+  ink: 1844272
+};
+var GUILD_BADGE_COLOR_IDS = Object.keys(GUILD_BADGE_COLORS);
+var GUILD_BADGE_COMBINATIONS = GUILD_BADGE_SHAPES.length * GUILD_BADGE_ICONS.length * GUILD_BADGE_COLOR_IDS.length * (GUILD_BADGE_COLOR_IDS.length - 1);
+var has = (list, value) => typeof value === "string" && list.includes(value);
+function isGuildBadge(value) {
+  if (!value || typeof value !== "object") return false;
+  const badge = value;
+  return has(GUILD_BADGE_SHAPES, badge.shape) && has(GUILD_BADGE_ICONS, badge.icon) && has(GUILD_BADGE_COLOR_IDS, badge.shapeColor) && has(GUILD_BADGE_COLOR_IDS, badge.iconColor) && badge.shapeColor !== badge.iconColor;
+}
+var sameGuildBadge = (a, b) => a.shape === b.shape && a.shapeColor === b.shapeColor && a.icon === b.icon && a.iconColor === b.iconColor;
+
+// src/api/FakeGuildServer.ts
+init_define_import_meta_env();
+
+// src/core/contentUnlock.ts
+init_define_import_meta_env();
+var CONTENT_UNLOCKS = [
+  { id: "excavation", level: 2 },
+  { id: "shop", level: 3 },
+  { id: "trade", level: 3 },
+  { id: "cakeOperation", level: 3 },
+  { id: "bounty", level: 3 },
+  { id: "friends", level: 4 },
+  { id: "interaction", level: 5 },
+  { id: "duel", level: 6 },
+  { id: "guild", level: 7 },
+  { id: "raid", level: 8 },
+  { id: "expedition", level: 9 }
+];
+var CONTENT_STAGE_UNLOCKS = { archaeology: "1-10" };
+var ALL_GATED_CONTENT = [...CONTENT_UNLOCKS.map((entry) => entry.id), ...Object.keys(CONTENT_STAGE_UNLOCKS)];
+var CONTENT_LEVEL_GATES_ENABLED = true;
+function contentUnlockLevel(id) {
+  return CONTENT_UNLOCKS.find((entry) => entry.id === id)?.level ?? 1;
+}
+function isContentUnlocked(id, playerLevel, gates = CONTENT_LEVEL_GATES_ENABLED, clearedStages = /* @__PURE__ */ new Set()) {
+  if (!gates) return true;
+  const stage = CONTENT_STAGE_UNLOCKS[id];
+  if (stage !== void 0) return clearedStages.has(stage);
+  return playerLevel >= contentUnlockLevel(id);
+}
+
+// src/api/guildContracts.ts
+init_define_import_meta_env();
+var GuildApiError = class extends Error {
+  constructor(code, message = code) {
+    super(message);
+    this.code = code;
+    this.name = "GuildApiError";
+  }
+  code;
+};
+var GUILD_API_METHODS = [
+  "getGuild",
+  "searchGuilds",
+  "getMembers",
+  "joinGuild",
+  "cancelJoinRequest",
+  "leaveGuild",
+  "decideJoinRequest",
+  "kickMember",
+  "setMemberRole",
+  "transferLeader",
+  "updateGuild",
+  "disbandGuild",
+  "getAttendance",
+  "getShop"
+];
+var isGuildApiMethod = (value) => GUILD_API_METHODS.includes(value);
+
+// src/api/FakeGuildServer.ts
+var fail = (code, message) => {
+  throw new GuildApiError(code, message);
+};
+var FakeGuildServer = class {
+  constructor(now = Date.now, options = {}) {
+    this.now = now;
+    this.options = options;
+    if (options.seed ?? QA_TOOLS_ENABLED) this.seedSamples();
+  }
+  now;
+  options;
+  guilds = /* @__PURE__ */ new Map();
+  userGuild = /* @__PURE__ */ new Map();
+  leftAt = /* @__PURE__ */ new Map();
+  requestedBy = /* @__PURE__ */ new Map();
+  receipts = /* @__PURE__ */ new Map();
+  sequence = 0;
+  seedSamples() {
+    const sample = (name, badge, joinMode, prosperity, count2, notice) => {
+      const id = `sample-${++this.sequence}`;
+      const members = /* @__PURE__ */ new Map();
+      for (let i = 0; i < count2; i++) {
+        const userId = `${id}-m${i}`;
+        members.set(userId, this.newMember({ userId, name: i === 0 ? `${name} \uB9C8\uC2A4\uD130` : `\uC5F0\uAD6C\uC6D0${i + 1}`, level: 30 - i, avatarRelicId: "torika", frameId: "holo" }, i === 0 ? "leader" : i < 3 ? "officer" : "member", this.now() - i * 36e5));
+      }
+      this.guilds.set(id, { id, name, badge, joinMode, notice, prosperity, createdAt: this.now() - 30 * 864e5, badgeChanges: 0, members, requests: /* @__PURE__ */ new Map() });
+      for (const userId of members.keys()) this.userGuild.set(userId, id);
+    };
+    sample("\uD3EC\uAC00\uB4E0 \uC218\uD638\uB300", { shape: "shield", shapeColor: "blue", icon: "sword", iconColor: "silver" }, "open", 12e3, 14, "\uD568\uAED8 \uC131\uC7A5\uD574\uC694!");
+    sample("\uC774\uB07C \uC5F0\uAD6C\uC18C", { shape: "hexagon", shapeColor: "green", icon: "leaf", iconColor: "ink" }, "approval", 3e3, 8, "\uB290\uAE0B\uD558\uAC8C \uBCF5\uC6D0\uD569\uB2C8\uB2E4.");
+    sample("\uC0C8\uBCBD \uBC1C\uAD74\uB2E8", { shape: "banner", shapeColor: "violet", icon: "moon", iconColor: "amber" }, "open", 700, 3, "");
+  }
+  newMember(actor, role, at) {
+    return {
+      userId: actor.userId,
+      name: actor.name,
+      level: actor.level,
+      role,
+      avatarRelicId: actor.avatarRelicId,
+      frameId: actor.frameId,
+      joinedAt: at,
+      lastActiveAt: at,
+      coin: 0,
+      contributionWeekKey: guildWeekKey(at),
+      contributionWeek: 0,
+      contributionTotal: 0,
+      stamps: /* @__PURE__ */ new Map(),
+      weekBonusKey: "",
+      purchases: /* @__PURE__ */ new Map(),
+      purchaseWeekKey: guildWeekKey(at)
+    };
+  }
+  // ── 조회 도우미 ──────────────────────────────────────────────────────────────
+  myGuild(actor) {
+    const id = this.userGuild.get(actor.userId);
+    return id ? this.guilds.get(id) : void 0;
+  }
+  requireGuild(actor) {
+    const guild = this.myGuild(actor);
+    const me = guild?.members.get(actor.userId);
+    if (!guild || !me) return fail("NOT_IN_GUILD");
+    this.touch(me, actor);
+    return { guild, me };
+  }
+  /** 호출마다 이름·레벨·마지막 접속을 최신으로 맞추고 주가 넘어갔으면 주간 기여도를 비운다. */
+  touch(member, actor) {
+    const now = this.now();
+    member.name = actor.name;
+    member.level = actor.level;
+    member.avatarRelicId = actor.avatarRelicId;
+    member.frameId = actor.frameId;
+    member.lastActiveAt = now;
+    const week = guildWeekKey(now);
+    if (member.contributionWeekKey !== week) {
+      member.contributionWeekKey = week;
+      member.contributionWeek = 0;
+    }
+    if (member.purchaseWeekKey !== week) {
+      member.purchaseWeekKey = week;
+      member.purchases = /* @__PURE__ */ new Map();
+    }
+  }
+  leaderOf(guild) {
+    return [...guild.members.values()].find((m) => m.role === "leader");
+  }
+  level(guild) {
+    return guildLevelOf(guild.prosperity);
+  }
+  summary(guild) {
+    const level = this.level(guild);
+    return { id: guild.id, name: guild.name, badge: { ...guild.badge }, level, memberCount: guild.members.size, capacity: guildCapacity(level), joinMode: guild.joinMode, leaderName: this.leaderOf(guild).name, notice: guild.notice };
+  }
+  detail(guild) {
+    return { ...this.summary(guild), prosperity: guild.prosperity, createdAt: guild.createdAt, warScore: null, warRank: null, badgeFree: guild.badgeChanges === 0 };
+  }
+  assertUnlocked(actor) {
+    if (this.options.levelGate !== false && !isContentUnlocked("guild", actor.level)) fail("LEVEL_LOCKED");
+  }
+  gain(guild, me, gain) {
+    guild.prosperity += gain.prosperity ?? 0;
+    me.contributionWeek += gain.contribution ?? 0;
+    me.contributionTotal += gain.contribution ?? 0;
+    me.coin += gain.coin ?? 0;
+  }
+  /** 같은 requestId의 재전송은 첫 응답을 그대로 돌려준다(서버 영수증 표). */
+  once(actor, requestId, run2) {
+    const key = `${actor.userId}:${requestId}`;
+    if (this.receipts.has(key)) return structuredClone(this.receipts.get(key));
+    const result = run2();
+    this.receipts.set(key, structuredClone(result));
+    return result;
+  }
+  pendingCount(guild, me) {
+    return guild && me && guildCan(me.role, "approve") ? guild.requests.size : 0;
+  }
+  // ── GuildBackend ─────────────────────────────────────────────────────────────
+  async getGuild(actor) {
+    const guild = this.myGuild(actor);
+    const me = guild?.members.get(actor.userId);
+    if (guild && me) this.touch(me, actor);
+    return {
+      guild: guild ? this.detail(guild) : null,
+      me: me ? { role: me.role, coin: me.coin, contributionWeek: me.contributionWeek, contributionTotal: me.contributionTotal, joinedAt: me.joinedAt } : null,
+      leaveCooldownUntil: Math.max(0, (this.leftAt.get(actor.userId) ?? 0) + GUILD_LEAVE_COOLDOWN_MS),
+      pendingRequests: this.pendingCount(guild, me),
+      requestedGuildIds: [...this.requestedBy.get(actor.userId) ?? []],
+      serverTime: this.now()
+    };
+  }
+  async searchGuilds(_actor, query) {
+    const key = guildNameKey(query.slice(0, 40));
+    const list = [...this.guilds.values()].filter((guild) => !key || guildNameKey(guild.name).includes(key)).sort((a, b) => b.prosperity - a.prosperity).slice(0, 20).map((guild) => this.summary(guild));
+    return { guilds: list, serverTime: this.now() };
+  }
+  async getMembers(actor) {
+    const { guild, me } = this.requireGuild(actor);
+    const members = [...guild.members.values()].sort((a, b) => roleRank(b.role) - roleRank(a.role) || b.contributionTotal - a.contributionTotal || a.joinedAt - b.joinedAt).map((m) => ({ userId: m.userId, name: m.name, level: m.level, role: m.role, avatarRelicId: m.avatarRelicId, frameId: m.frameId, contributionWeek: m.contributionWeekKey === guildWeekKey(this.now()) ? m.contributionWeek : 0, contributionTotal: m.contributionTotal, lastActiveAt: m.lastActiveAt, isMe: m.userId === actor.userId }));
+    const requests = guildCan(me.role, "approve") ? [...guild.requests.values()].sort((a, b) => a.requestedAt - b.requestedAt).map(({ actor: a, requestedAt }) => ({ userId: a.userId, name: a.name, level: a.level, avatarRelicId: a.avatarRelicId, frameId: a.frameId, requestedAt })) : [];
+    return { members, requests, serverTime: this.now() };
+  }
+  async createGuild(actor, input, requestId) {
+    this.once(actor, requestId, () => {
+      this.assertUnlocked(actor);
+      if (this.myGuild(actor)) fail("ALREADY_IN_GUILD");
+      if (this.now() < (this.leftAt.get(actor.userId) ?? 0) + GUILD_LEAVE_COOLDOWN_MS) fail("LEAVE_COOLDOWN");
+      const checked = validateGuildName(input.name);
+      if (!checked.ok) return fail("NAME_INVALID");
+      if ([...this.guilds.values()].some((g) => guildNameKey(g.name) === guildNameKey(checked.name))) fail("NAME_TAKEN");
+      if (!isGuildBadge(input.badge)) fail("BADGE_INVALID");
+      if (input.joinMode !== "open" && input.joinMode !== "approval") fail("INVALID_REQUEST");
+      const id = `guild-${++this.sequence}-${Math.abs(Math.floor(this.now())).toString(36)}`;
+      const guild = { id, name: checked.name, badge: { ...input.badge }, joinMode: input.joinMode, notice: "", prosperity: 0, createdAt: this.now(), badgeChanges: 0, members: /* @__PURE__ */ new Map(), requests: /* @__PURE__ */ new Map() };
+      guild.members.set(actor.userId, this.newMember(actor, "leader", this.now()));
+      this.guilds.set(id, guild);
+      this.userGuild.set(actor.userId, id);
+      this.requestedBy.delete(actor.userId);
+      return true;
+    });
+    return this.getGuild(actor);
+  }
+  async joinGuild(actor, guildId) {
+    this.assertUnlocked(actor);
+    if (this.myGuild(actor)) fail("ALREADY_IN_GUILD");
+    if (this.now() < (this.leftAt.get(actor.userId) ?? 0) + GUILD_LEAVE_COOLDOWN_MS) fail("LEAVE_COOLDOWN");
+    const guild = this.guilds.get(guildId);
+    if (!guild) return fail("GUILD_NOT_FOUND");
+    if (guild.members.size >= guildCapacity(this.level(guild))) fail("GUILD_FULL");
+    if (guild.joinMode === "open") {
+      this.admit(guild, actor);
+      return { status: "joined" };
+    }
+    if (guild.requests.has(actor.userId)) fail("REQUEST_EXISTS");
+    guild.requests.set(actor.userId, { actor, requestedAt: this.now() });
+    (this.requestedBy.get(actor.userId) ?? this.requestedBy.set(actor.userId, /* @__PURE__ */ new Set()).get(actor.userId)).add(guildId);
+    return { status: "requested" };
+  }
+  admit(guild, actor) {
+    guild.members.set(actor.userId, this.newMember(actor, "member", this.now()));
+    this.userGuild.set(actor.userId, guild.id);
+    this.dropRequests(actor.userId);
+  }
+  dropRequests(userId) {
+    for (const id of this.requestedBy.get(userId) ?? []) this.guilds.get(id)?.requests.delete(userId);
+    this.requestedBy.delete(userId);
+  }
+  async cancelJoinRequest(actor, guildId) {
+    const guild = this.guilds.get(guildId);
+    if (!guild?.requests.delete(actor.userId)) fail("REQUEST_NOT_FOUND");
+    this.requestedBy.get(actor.userId)?.delete(guildId);
+  }
+  async leaveGuild(actor) {
+    const { guild, me } = this.requireGuild(actor);
+    if (me.role === "leader") {
+      if (guild.members.size > 1) fail("LEADER_CANNOT_LEAVE");
+      this.guilds.delete(guild.id);
+    } else guild.members.delete(actor.userId);
+    this.userGuild.delete(actor.userId);
+    this.leftAt.set(actor.userId, this.now());
+  }
+  async decideJoinRequest(actor, userId, approve) {
+    const { guild, me } = this.requireGuild(actor);
+    if (!guildCan(me.role, "approve")) fail("NO_PERMISSION");
+    const request = guild.requests.get(userId);
+    if (!request) return fail("REQUEST_NOT_FOUND");
+    guild.requests.delete(userId);
+    this.requestedBy.get(userId)?.delete(guild.id);
+    if (!approve) return;
+    if (this.userGuild.has(userId)) return;
+    if (guild.members.size >= guildCapacity(this.level(guild))) fail("GUILD_FULL");
+    this.admit(guild, request.actor);
+  }
+  async kickMember(actor, userId) {
+    const { guild, me } = this.requireGuild(actor);
+    const target = guild.members.get(userId);
+    if (!target) return fail("MEMBER_NOT_FOUND");
+    if (!guildCanKick(me.role, target.role)) fail("NO_PERMISSION");
+    guild.members.delete(userId);
+    this.userGuild.delete(userId);
+    this.leftAt.set(userId, this.now());
+  }
+  async setMemberRole(actor, userId, role) {
+    const { guild, me } = this.requireGuild(actor);
+    if (!guildCan(me.role, "promote")) fail("NO_PERMISSION");
+    const target = guild.members.get(userId);
+    if (!target) return fail("MEMBER_NOT_FOUND");
+    if (target.role === "leader" || !(role in GUILD_ROLE_LIMIT) || role === "leader") fail("INVALID_TARGET");
+    if (target.role !== role && [...guild.members.values()].filter((m) => m.role === role).length >= GUILD_ROLE_LIMIT[role]) fail("ROLE_FULL");
+    target.role = role;
+  }
+  async transferLeader(actor, userId) {
+    const { guild, me } = this.requireGuild(actor);
+    if (me.role !== "leader") fail("NO_PERMISSION");
+    const target = guild.members.get(userId);
+    if (!target || target === me) return fail("INVALID_TARGET");
+    target.role = "leader";
+    me.role = "vice";
+  }
+  async updateGuild(actor, update) {
+    const { guild, me } = this.requireGuild(actor);
+    if (update.notice !== void 0) {
+      if (!guildCan(me.role, "notice")) fail("NO_PERMISSION");
+      const notice = update.notice.replace(/\s+/g, " ").trim();
+      if (guildGlyphCount(notice) > GUILD_NOTICE_MAX) fail("INVALID_REQUEST");
+      guild.notice = notice;
+    }
+    if (update.joinMode !== void 0) {
+      if (!guildCan(me.role, "joinMode")) fail("NO_PERMISSION");
+      if (update.joinMode !== "open" && update.joinMode !== "approval") fail("INVALID_REQUEST");
+      guild.joinMode = update.joinMode;
+      if (guild.joinMode === "open") guild.requests.clear();
+    }
+  }
+  async disbandGuild(actor) {
+    const { guild, me } = this.requireGuild(actor);
+    if (!guildCan(me.role, "disband")) fail("NO_PERMISSION");
+    if (guild.members.size > 1) fail("LEADER_CANNOT_LEAVE");
+    this.guilds.delete(guild.id);
+    this.userGuild.delete(actor.userId);
+    this.leftAt.set(actor.userId, this.now());
+  }
+  async changeBadge(actor, badge, requestId) {
+    return this.once(actor, requestId, () => {
+      const { guild, me } = this.requireGuild(actor);
+      if (!guildCan(me.role, "badge")) fail("NO_PERMISSION");
+      if (!isGuildBadge(badge)) fail("BADGE_INVALID");
+      if (sameGuildBadge(guild.badge, badge)) return { changed: false, charged: false };
+      const charged = guild.badgeChanges > 0;
+      guild.badge = { ...badge };
+      guild.badgeChanges += 1;
+      return { changed: true, charged };
+    });
+  }
+  attendanceOf(me) {
+    const now = this.now(), week = guildWeekKey(now), todayIndex = guildWeekdayIndex(now);
+    const monday = Date.parse(week);
+    const stamps = Array.from({ length: GUILD_STAMP_DAYS }, (_, i) => me.stamps.get(guildDateKey(monday + i * 864e5)) ?? null);
+    return { weekKey: week, stamps, todayIndex, stampedToday: stamps[todayIndex] !== null, weekBonusClaimed: me.weekBonusKey === week, serverTime: now };
+  }
+  async getAttendance(actor) {
+    return this.attendanceOf(this.requireGuild(actor).me);
+  }
+  async stampAttendance(actor, choice, requestId) {
+    return this.once(actor, requestId, () => {
+      if (!GUILD_ATTENDANCE_CHOICES.includes(choice)) fail("INVALID_REQUEST");
+      const { guild, me } = this.requireGuild(actor);
+      const today = guildDateKey(this.now());
+      if (me.stamps.has(today)) fail("ALREADY_STAMPED");
+      me.stamps.set(today, choice);
+      this.gain(guild, me, GUILD_ATTENDANCE_GAIN);
+      const attendance = this.attendanceOf(me);
+      const complete = attendance.stamps.every((stamp) => stamp !== null) && !attendance.weekBonusClaimed;
+      if (complete) {
+        me.weekBonusKey = attendance.weekKey;
+        this.gain(guild, me, { contribution: GUILD_ATTENDANCE_WEEK_BONUS.contribution, coin: GUILD_ATTENDANCE_WEEK_BONUS.coin });
+      }
+      return { attendance: { ...attendance, weekBonusClaimed: attendance.weekBonusClaimed || complete }, weekBonus: complete };
+    });
+  }
+  shopOf(me) {
+    return { coin: me.coin, items: GUILD_SHOP_PRODUCTS.map((p) => ({ productId: p.id, price: p.price, weeklyLimit: p.weeklyLimit, bought: me.purchases.get(p.id) ?? 0 })), serverTime: this.now() };
+  }
+  async getShop(actor) {
+    return this.shopOf(this.requireGuild(actor).me);
+  }
+  async purchase(actor, productId, requestId) {
+    return this.once(actor, requestId, () => {
+      const product = findGuildProduct(productId);
+      if (!product) return fail("PRODUCT_NOT_FOUND");
+      const { me } = this.requireGuild(actor);
+      const bought = me.purchases.get(product.id) ?? 0;
+      if (bought >= product.weeklyLimit) fail("PRODUCT_LIMIT");
+      if (me.coin < product.price) fail("INSUFFICIENT_COINS");
+      me.coin -= product.price;
+      me.purchases.set(product.id, bought + 1);
+      return { shop: this.shopOf(me) };
+    });
+  }
+  /** 테스트·QA 도구용 — 한 길드에 부흥도를 얹는다. */
+  addProsperityForTest(guildId, amount) {
+    const guild = this.guilds.get(guildId);
+    if (guild) guild.prosperity += amount;
+  }
+};
+var roleRank = (role) => ({ leader: 3, vice: 2, officer: 1, member: 0 })[role];
+var localGuildBackend = new FakeGuildServer();
+
+// src/api/guildActor.ts
+init_define_import_meta_env();
+function guildActorFrom(state, userId) {
+  const card = state.playerCard;
+  return {
+    userId,
+    name: card.nickname || t("profile.defaultName"),
+    level: state.playerResearch.level,
+    avatarRelicId: card.avatarRelicId || state.favorite,
+    frameId: card.frameId
+  };
+}
+
 // src/data/mileageClerk.ts
 init_define_import_meta_env();
 var DAY_MS3 = 864e5;
@@ -28988,6 +29652,8 @@ var FakeServer = class {
     this.verifyAdToken = options.verifyAdToken ?? ((token, slotId) => QA_TOOLS_ENABLED && token === `verified:${slotId}`);
     this.verifyReceipt = options.verifyPurchaseReceipt ?? ((receipt, productId) => QA_TOOLS_ENABLED && receipt.startsWith(`verified-receipt:${productId}:`) ? receipt.slice(`verified-receipt:${productId}:`.length) : null);
     this.persistSession = options.persistSession;
+    this.guildBackend = options.guild ?? localGuildBackend;
+    this.guildUserId = options.playerId ?? options.raidContext?.playerId ?? "local-player";
     for (const ticket of Object.values(state.serverJournal?.combat?.tickets ?? {})) {
       if (ticket.kind === "stage") this.pendingStageAdmissions.set(ticket.target, /* @__PURE__ */ new Set([ticket.requestId]));
       if (ticket.kind === "cake") this.pendingCakeAdmissions.set(ticket.target, /* @__PURE__ */ new Set([ticket.requestId]));
@@ -29038,6 +29704,8 @@ var FakeServer = class {
   verifyReceipt;
   /** 테스트가 브라우저 저장소 없이 커밋 실패를 주입할 수 있는 선택 저장 경계다. */
   persistSession;
+  guildBackend;
+  guildUserId;
   notificationScheduler;
   /** 아래 저장소들은 실제 서버의 고유 제약조건/트랜잭션을 흉내 내는 FakeServer 전용 멱등 기록이다. */
   receiptResults = /* @__PURE__ */ new Map();
@@ -30268,6 +30936,82 @@ var FakeServer = class {
     this.persist({ ...this.state, playerCard: next });
     this.state.playerCard = next;
     return { ok: true, card: { ...next } };
+  }
+  /** 길드 백엔드가 알아보는 호출자. 닉네임·레벨·애착은 저장된 진행에서 온다. */
+  guildActor() {
+    return guildActorFrom(this.state, this.guildUserId);
+  }
+  /** 젬이 모자라면 길드 백엔드를 부르기 전에 거절한다(백엔드가 먼저 바뀌면 되돌릴 길이 없다). */
+  assertGuildGems(cost) {
+    if (this.state.wallet.gems < cost) throw new GuildApiError("INSUFFICIENT_GEMS", "INSUFFICIENT_GEMS");
+  }
+  async createGuild(request) {
+    await this.delay();
+    this.assertGuildGems(GUILD_CREATE_GEMS);
+    const guild = await this.guildBackend.createGuild(this.guildActor(), request, this.guildRequestId("create"));
+    const next = { ...this.state, wallet: { ...this.state.wallet, gems: this.state.wallet.gems - GUILD_CREATE_GEMS } };
+    this.persist(next);
+    this.state.wallet = next.wallet;
+    return { ...this.snapshot(), guild };
+  }
+  async changeGuildBadge(request) {
+    await this.delay();
+    const actor = this.guildActor();
+    const current = await this.guildBackend.getGuild(actor);
+    const differs = current.guild !== null && !current.guild.badgeFree && !sameGuildBadge(current.guild.badge, request.badge);
+    if (differs) this.assertGuildGems(GUILD_BADGE_CHANGE_GEMS);
+    const { charged } = await this.guildBackend.changeBadge(actor, request.badge, this.guildRequestId("badge"));
+    if (charged) {
+      const next = { ...this.state, wallet: { ...this.state.wallet, gems: this.state.wallet.gems - GUILD_BADGE_CHANGE_GEMS } };
+      this.persist(next);
+      this.state.wallet = next.wallet;
+    }
+    return { ...this.snapshot(), guild: await this.guildBackend.getGuild(actor) };
+  }
+  async stampGuildAttendance(request) {
+    await this.delay();
+    const stamped = await this.guildBackend.stampAttendance(this.guildActor(), request.choice, this.guildRequestId("stamp"));
+    const gold2 = request.choice === "gold" ? GUILD_ATTENDANCE_REWARD.gold : 0;
+    const cheesecake2 = request.choice === "cheesecake" ? GUILD_ATTENDANCE_REWARD.cheesecake : 0;
+    const gems2 = stamped.weekBonus ? GUILD_ATTENDANCE_WEEK_BONUS.gems : 0;
+    const wallet = { ...this.state.wallet };
+    const granted = { gold: 0, cheesecake: 0, gems: 0 };
+    for (const [key, amount] of [["gold", gold2], ["cheesecake", cheesecake2], ["gems", gems2]]) {
+      granted[key] = Math.max(0, Math.min(amount, WALLET_CAPS[key] - wallet[key]));
+      wallet[key] += granted[key];
+    }
+    const next = { ...this.state, wallet };
+    this.persist(next);
+    this.state.wallet = wallet;
+    return { ...this.snapshot(), attendance: stamped.attendance, granted, weekBonus: stamped.weekBonus };
+  }
+  async buyGuildProduct(request) {
+    await this.delay();
+    const product = findGuildProduct(request.productId);
+    if (!product) throw new GuildApiError("PRODUCT_NOT_FOUND", "PRODUCT_NOT_FOUND");
+    const bought = await this.guildBackend.purchase(this.guildActor(), product.id, this.guildRequestId("buy"));
+    const now = this.now();
+    const wallet = { ...this.state.wallet };
+    let inventory = this.state.itemInventory;
+    if (product.grant.gold) wallet.gold = Math.min(WALLET_CAPS.gold, wallet.gold + product.grant.gold);
+    if (product.grant.cheesecake) wallet.cheesecake = Math.min(WALLET_CAPS.cheesecake, wallet.cheesecake + product.grant.cheesecake);
+    if (product.grant.item) inventory = this.grantItem(inventory, product.grant.item.id, product.grant.item.quantity, now).inventory;
+    const next = { ...this.state, wallet, itemInventory: inventory };
+    this.persist(next);
+    this.state.wallet = wallet;
+    this.state.itemInventory = inventory;
+    return { ...this.snapshot(), shop: bought.shop, productId: product.id };
+  }
+  /**
+   * 길드 백엔드의 멱등 키. 서버 호출 단위에서는 요청 id를 고정해(`useGuildRequestId`) 같은 재전송이 같은 키가
+   * 되고, 이 기기의 임시 구현에서는 호출마다 새 키를 쓴다(재전송이 없다).
+   */
+  guildRequestId(kind) {
+    return `${kind}:${this.fixedGuildRequestId ?? `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`}`;
+  }
+  fixedGuildRequestId;
+  useGuildRequestId(requestId) {
+    this.fixedGuildRequestId = requestId;
   }
   /** 획득한 수식어만, 상한 안에서, 중복 없이 장착한다. */
   async equipProfileModifiers(request) {
@@ -32816,7 +33560,7 @@ var MAX_COMBAT_TICKS = 18e3;
 var MAX_COMBAT_ACTIONS = 512;
 
 // src/server/combatAuthority.ts
-var fail = () => {
+var fail2 = () => {
   throw new Error("COMBAT_REJECTED");
 };
 function combatJournal(state) {
@@ -32825,11 +33569,11 @@ function combatJournal(state) {
 }
 function combatKey(input) {
   const b = input.input;
-  return b.mode === "stage" ? `stage:${input.stageId}` : b.mode === "expedition" ? `expedition:${b.runId}:${b.nodeId}` : b.mode === "cake" || b.mode === "bounty" ? `${b.mode}:${b.requestId}` : fail();
+  return b.mode === "stage" ? `stage:${input.stageId}` : b.mode === "expedition" ? `expedition:${b.runId}:${b.nodeId}` : b.mode === "cake" || b.mode === "bounty" ? `${b.mode}:${b.requestId}` : fail2();
 }
 function prepareCombat(state, request, now, id) {
   if (!request || !request.input || !["stage", "cake", "bounty", "expedition"].includes(request.input.mode))
-    return fail();
+    return fail2();
   const records = combatJournal(state), input = structuredClone(request), key = combatKey(input), mode = input.input.mode;
   const active3 = Object.values(records.records).find(
     (row) => combatKey(row.input) === key && (row.input.input.mode !== "bounty" || input.input.mode !== "bounty" || row.input.input.round === input.input.round) && Date.parse(row.lease.expiresAt) > now.getTime()
@@ -32837,22 +33581,22 @@ function prepareCombat(state, request, now, id) {
   if (active3) return structuredClone(active3.lease);
   let b = input.input;
   const ticket = records.tickets[key];
-  if (mode !== "expedition" && !ticket) return fail();
+  if (mode !== "expedition" && !ticket) return fail2();
   if (b.mode === "stage" && ticket.target !== input.stageId || (b.mode === "cake" || b.mode === "bounty") && ticket.target !== b.tierId)
-    return fail();
+    return fail2();
   if (b.mode === "bounty") {
     const bounty = b;
-    if (!Number.isInteger(b.round) || b.round < 0 || b.round > 2) return fail();
+    if (!Number.isInteger(b.round) || b.round < 0 || b.round > 2) return fail2();
     if (b.round > 0 && !Object.values(records.records).some(
       (row) => row.input.input.mode === "bounty" && row.input.input.requestId === bounty.requestId && row.input.input.round === bounty.round - 1 && row.verdict?.victory
     ))
-      return fail();
+      return fail2();
   }
   if (b.mode === "expedition") {
     const expeditionInput = b;
     const run2 = state.expedition.run, node = run2?.nodes.find((n) => n.id === expeditionInput.nodeId), prev = run2?.nodes.find((n) => n.id === run2.currentNodeId);
     if (!run2 || run2.runId !== b.runId || run2.settled || !node || !["normal", "elite", "horde"].includes(node.type) || run2.visitedNodeIds.includes(node.id) || (!prev ? node.floor !== 1 : !prev.successorIds.includes(node.id)))
-      return fail();
+      return fail2();
     b = {
       mode: "expedition",
       runId: run2.runId,
@@ -32866,7 +33610,7 @@ function prepareCombat(state, request, now, id) {
   }
   const party = b.mode === "expedition" ? b.relics.map((r) => r.relicId) : b.mode === "bounty" ? [state.party[b.round]] : state.party;
   if (party.some((r) => !r || !state.owned.has(r)) || new Set(party).size !== party.length)
-    return fail();
+    return fail2();
   const progression = new RelicProgressionManager(state);
   const frozen = b.mode === "expedition" ? new Map(
     state.expedition.run.relics.map((r) => [r.relicId, r.snapshot])
@@ -32934,7 +33678,7 @@ function prepareCombat(state, request, now, id) {
       ([, r]) => Date.parse(r.lease.expiresAt) > now.getTime()
     )
   );
-  if (Object.keys(records.records).length >= 8) return fail();
+  if (Object.keys(records.records).length >= 8) return fail2();
   records.records[id] = {
     lease: structuredClone(lease),
     input,
@@ -32944,18 +33688,18 @@ function prepareCombat(state, request, now, id) {
 }
 function finishCombat(state, proof, now) {
   if (!proof || typeof proof.id !== "string" || !Array.isArray(proof.actions) || proof.actions.length > MAX_COMBAT_ACTIONS || !Number.isInteger(proof.ticks) || proof.ticks < 0 || proof.ticks > MAX_COMBAT_TICKS || proof.abandoned !== void 0 && typeof proof.abandoned !== "boolean")
-    return fail();
+    return fail2();
   const record2 = combatJournal(state).records[proof.id];
   if (!record2 || Date.parse(record2.lease.expiresAt) < now.getTime())
-    return fail();
+    return fail2();
   if (record2.verdict) return structuredClone(record2.verdict);
   if (proof.ticks * COMBAT_STEP_MS > Math.max(0, now.getTime() - Date.parse(record2.issuedAt)) * 3 + 2e3)
-    return fail();
+    return fail2();
   const battle = combatState(record2.lease), rng = bossBattleRandom(record2.lease.seed);
   let index = 0, previous = -1;
   for (const action of proof.actions) {
     if (!action || !Number.isInteger(action.tick) || action.tick < 0 || action.tick < previous || action.tick > proof.ticks || typeof action.actorId !== "string")
-      return fail();
+      return fail2();
     previous = action.tick;
   }
   for (let tick = 0; tick <= proof.ticks; tick++) {
@@ -32964,16 +33708,16 @@ function finishCombat(state, proof, now) {
         (f) => f.id === action.actorId && f.side === "player"
       );
       if (!actor || battle.phase !== "fight" || !canFireUltimate(battle, actor))
-        return fail();
+        return fail2();
       fireUltimate(battle, actor.id, rng);
     }
     if (tick < proof.ticks) {
-      if (battle.phase !== "fight") return fail();
+      if (battle.phase !== "fight") return fail2();
       stepSkirmish(battle, COMBAT_STEP_MS / 1e3, rng);
     }
   }
   if (index !== proof.actions.length || !proof.abandoned && battle.phase === "fight")
-    return fail();
+    return fail2();
   const victory = !proof.abandoned && battle.phase === "victory";
   const results = skirmishRelicResults(battle);
   const party = record2.input.input.mode === "expedition" ? record2.input.input.relics.map((r) => r.relicId) : record2.lease.setup.players.map((f) => f.id);
@@ -33213,7 +33957,12 @@ var READ_METHODS = /* @__PURE__ */ new Set([
   "social.getFriends",
   "social.getRequests",
   "social.searchUsers",
-  "social.getRecommendations"
+  "social.getRecommendations",
+  "guild.getGuild",
+  "guild.searchGuilds",
+  "guild.getMembers",
+  "guild.getAttendance",
+  "guild.getShop"
 ]);
 var isReadMethod = (method) => READ_METHODS.has(method);
 var REQUEST_ID = /^[A-Za-z0-9_.:-]{8,64}$/;
@@ -33241,6 +33990,10 @@ var SERVER_GAME_METHODS = [
   "beginExpeditionAugment",
   "breakThroughRelic",
   "buyDuelAttempt",
+  "buyGuildProduct",
+  "changeGuildBadge",
+  "createGuild",
+  "stampGuildAttendance",
   "claimAchievementRewards",
   "claimAdReward",
   "claimAttendance",
@@ -33349,6 +34102,17 @@ function isServerGameMethod(name) {
   return typeof name === "string" && METHOD_SET.has(name);
 }
 
+// src/api/UnavailableGuildBackend.ts
+init_define_import_meta_env();
+function createUnavailableGuildBackend() {
+  const refuse = async () => {
+    throw new GuildApiError("UNAVAILABLE", "UNAVAILABLE");
+  };
+  const backend = {};
+  for (const name of [...GUILD_API_METHODS, "createGuild", "changeBadge", "stampAttendance", "purchase"]) backend[name] = refuse;
+  return backend;
+}
+
 // src/server/gameHandler.ts
 var StateConflictError = class extends Error {
   constructor() {
@@ -33364,6 +34128,7 @@ var GameCallError = class extends Error {
   status;
   code;
 };
+var unavailableGuild = createUnavailableGuildBackend();
 var chain = Promise.resolve();
 function serialize(task) {
   const next = chain.then(task, task);
@@ -33413,8 +34178,11 @@ async function run(playerId, req, deps) {
       random: deps.random ?? Math.random,
       ...deps.now ? { now: deps.now } : {},
       persistSession: () => void 0,
-      raidContext: context
+      raidContext: context,
+      guild: deps.guild ?? unavailableGuild,
+      playerId
     });
+    if (req.requestId) server.useGuildRequestId(req.requestId);
     let result;
     try {
       const timingState = deps.strict && (req.method === "submitRaidDamage" || req.method === "submitExpeditionBossScore") ? structuredClone(state) : state;
@@ -33526,6 +34294,9 @@ function createSupabaseStore(env) {
       }
       return { allowed: true, retryAfter: 0 };
     },
+    async guildCall(playerId, method, actor, args, requestId) {
+      return rpc("server_guild_call", { p_player: playerId, p_method: method, p_actor: actor, p_args: args, p_request: requestId });
+    },
     async socialCall(playerId, method, args, requestId) {
       return rpc("server_social_call", { p_player: playerId, p_method: method, p_args: args, p_request: requestId ?? null });
     }
@@ -33551,6 +34322,85 @@ var SOCIAL_METHODS = [
 ];
 var isSocialMethod = (value) => SOCIAL_METHODS.includes(value);
 
+// src/api/SupabaseGuildBackend.ts
+init_define_import_meta_env();
+var ASSIGNABLE_ROLES = ["vice", "officer", "member"];
+var invalid = () => {
+  throw new GuildApiError("INVALID_REQUEST", "INVALID_REQUEST");
+};
+var isJoinMode = (value) => value === "open" || value === "approval";
+var isId = (value) => typeof value === "string" && value.length > 0 && value.length <= 64;
+function createSupabaseGuildBackend(call) {
+  const run2 = (actor, method, args = [], requestId = null) => call(actor, method, args, requestId);
+  return {
+    getGuild: (actor) => run2(actor, "getGuild"),
+    searchGuilds: (actor, query) => run2(actor, "searchGuilds", [typeof query === "string" ? query.slice(0, 40) : ""]),
+    getMembers: (actor) => run2(actor, "getMembers"),
+    joinGuild: (actor, guildId) => isId(guildId) ? run2(actor, "joinGuild", [guildId]) : invalid(),
+    cancelJoinRequest: async (actor, guildId) => {
+      if (!isId(guildId)) invalid();
+      await run2(actor, "cancelJoinRequest", [guildId]);
+    },
+    leaveGuild: async (actor) => {
+      await run2(actor, "leaveGuild");
+    },
+    decideJoinRequest: async (actor, userId, approve) => {
+      if (!isId(userId) || typeof approve !== "boolean") invalid();
+      await run2(actor, "decideJoinRequest", [userId, approve]);
+    },
+    kickMember: async (actor, userId) => {
+      if (!isId(userId)) invalid();
+      await run2(actor, "kickMember", [userId]);
+    },
+    setMemberRole: async (actor, userId, role) => {
+      if (!isId(userId) || !ASSIGNABLE_ROLES.includes(role)) invalid();
+      await run2(actor, "setMemberRole", [userId, role]);
+    },
+    transferLeader: async (actor, userId) => {
+      if (!isId(userId)) invalid();
+      await run2(actor, "transferLeader", [userId]);
+    },
+    updateGuild: async (actor, update) => {
+      const clean = {};
+      if (update.notice !== void 0) {
+        if (typeof update.notice !== "string") invalid();
+        const notice = update.notice.replace(/\s+/g, " ").trim();
+        if (guildGlyphCount(notice) > GUILD_NOTICE_MAX) invalid();
+        clean.notice = notice;
+      }
+      if (update.joinMode !== void 0) {
+        if (!isJoinMode(update.joinMode)) invalid();
+        clean.joinMode = update.joinMode;
+      }
+      await run2(actor, "updateGuild", [clean]);
+    },
+    disbandGuild: async (actor) => {
+      await run2(actor, "disbandGuild");
+    },
+    getAttendance: (actor) => run2(actor, "getAttendance"),
+    getShop: (actor) => run2(actor, "getShop"),
+    createGuild: (actor, input, requestId) => {
+      const checked = validateGuildName(String(input?.name ?? ""));
+      if (!checked.ok) throw new GuildApiError("NAME_INVALID", "NAME_INVALID");
+      if (!isJoinMode(input.joinMode)) invalid();
+      if (!isGuildBadge(input.badge)) throw new GuildApiError("BADGE_INVALID", "BADGE_INVALID");
+      return run2(actor, "createGuild", [{ name: checked.name, nameKey: guildNameKey(checked.name), joinMode: input.joinMode, badge: input.badge }], requestId);
+    },
+    changeBadge: (actor, badge, requestId) => {
+      if (!isGuildBadge(badge)) throw new GuildApiError("BADGE_INVALID", "BADGE_INVALID");
+      return run2(actor, "changeBadge", [badge], requestId);
+    },
+    stampAttendance: (actor, choice, requestId) => {
+      if (!GUILD_ATTENDANCE_CHOICES.includes(choice)) invalid();
+      return run2(actor, "stampAttendance", [choice], requestId);
+    },
+    purchase: (actor, productId, requestId) => {
+      if (!findGuildProduct(productId)) throw new GuildApiError("PRODUCT_NOT_FOUND", "PRODUCT_NOT_FOUND");
+      return run2(actor, "purchase", [productId], requestId);
+    }
+  };
+}
+
 // src/server/vercelEntry.ts
 async function handler(req, res) {
   res.setHeader("cache-control", "no-store");
@@ -33569,7 +34419,7 @@ async function handler(req, res) {
       throw new GameCallError(400, "invalid_json");
     }
     if (!validCall(body)) throw new GameCallError(400, "invalid_request");
-    if (!isServerGameMethod(body.method) && !(body.method.startsWith("social.") && isSocialMethod(body.method.slice(7)))) throw new GameCallError(400, "unknown_method");
+    if (!isServerGameMethod(body.method) && !(body.method.startsWith("social.") && isSocialMethod(body.method.slice(7))) && !(body.method.startsWith("guild.") && isGuildApiMethod(body.method.slice(6)))) throw new GameCallError(400, "unknown_method");
     if (!isReadMethod(body.method) && !body.requestId) throw new GameCallError(400, "request_id_required");
     const url = process.env.SUPABASE_URL, serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     const anonKey = process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? serviceKey;
@@ -33585,12 +34435,26 @@ async function handler(req, res) {
       res.setHeader("retry-after", String(rate.retryAfter));
       throw new GameCallError(429, "rate_limited");
     }
-    if (body.method.startsWith("social.")) {
+    const uid = user.id;
+    const guild = createSupabaseGuildBackend(async (actor, method, args, requestId) => store.guildCall(uid, method, actor, args, requestId));
+    if (body.method.startsWith("guild.")) {
+      const method = body.method.slice(6);
+      if (!isGuildApiMethod(method)) throw new GameCallError(400, "unknown_method");
+      const stored = await store.load(user.id);
+      const actor = guildActorFrom(stored ? saveManager.parse(stored.data) : createDefaultSession(), user.id);
+      try {
+        const result = await guild[method](actor, ...body.args ?? []);
+        res.status(200).json({ ok: true, result: result ?? null });
+      } catch (error) {
+        if (error instanceof GuildApiError) throw new GameCallError(422, error.code, error.message);
+        throw error;
+      }
+    } else if (body.method.startsWith("social.")) {
       const method = body.method.slice(7);
       if (!isSocialMethod(method)) throw new GameCallError(400, "unknown_method");
       res.status(200).json(await store.socialCall(user.id, method, body.args ?? [], body.requestId));
     } else {
-      res.status(200).json(await handleGameCall(user.id, body, { store, strict: true }));
+      res.status(200).json(await handleGameCall(user.id, body, { store, strict: true, guild }));
     }
   } catch (error) {
     if (error instanceof GameCallError) {

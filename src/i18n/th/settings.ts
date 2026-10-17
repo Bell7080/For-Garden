@@ -108,4 +108,5 @@ export const SETTINGS_TH = {
   "settings.debug.maxLevelDone": "เพิ่มเลเวลผู้เล่นเป็น LV.{level} แล้ว กลับไปที่ล็อบบี้เพื่อดูคอนเทนต์ที่ปลดล็อก",
   "settings.debug.unlockStories": "สายสัมพันธ์ 10 · ปลดล็อกคำถาม/เรื่องราวทั้งหมด",
   "settings.debug.unlockedStories": "ตัวละครที่เพิ่มสายสัมพันธ์: {count} ตัว ปลดล็อกคำถามการสังเกตและเรื่องราวโปรดทั้งหมดแล้ว",
+  "settings.account.errorCode": "รหัสข้อผิดพลาด: {code}",
 } as const;

@@ -27,4 +27,14 @@ import { BOUNTY_EN } from "./bounty";
 import { DUNGEON_EN } from "./dungeon";
 import { DUEL_EN } from "./duel";
 
-export default { ...SETTINGS_EN, ...LOBBY_EN, ...COMMON_EN, ...INFO_EN, ...STATUS_EN, ...LAB_EN, ...EXPEDITION_EN, ...BATTLE_EN, ...CAKE_OPERATION_EN, ...EXCAVATION_EN, ...AUGMENT_EN, ...FRIENDS_EN, ...RUNE_EN, ...PARTY_EN, ...EXPEDITION_REWARD_EN, ...SAVE_CONFLICT_EN, ...INTERACTION_EN, ...SHOP_EN, ...MISSIONS_EN, ...INVENTORY_EN, ...MISC_EN, ...SKILL_EN, ...SYSTEM_EN, ...RAID_EN, ...BOUNTY_EN, ...DUNGEON_EN, ...DUEL_EN };
+import { GUILD_EN } from "./guild";
+
+import { SUPPORT_EN } from "./support";
+
+import { ACHIEVEMENT_EN } from "./achievement";
+
+import { RECOLLECTION_EN } from "./recollection";
+
+import { DIALOGUE_EN } from "./dialogue";
+
+export default { ...DIALOGUE_EN, ...RECOLLECTION_EN, ...ACHIEVEMENT_EN, ...SUPPORT_EN, ...GUILD_EN, ...SETTINGS_EN, ...LOBBY_EN, ...COMMON_EN, ...INFO_EN, ...STATUS_EN, ...LAB_EN, ...EXPEDITION_EN, ...BATTLE_EN, ...CAKE_OPERATION_EN, ...EXCAVATION_EN, ...AUGMENT_EN, ...FRIENDS_EN, ...RUNE_EN, ...PARTY_EN, ...EXPEDITION_REWARD_EN, ...SAVE_CONFLICT_EN, ...INTERACTION_EN, ...SHOP_EN, ...MISSIONS_EN, ...INVENTORY_EN, ...MISC_EN, ...SKILL_EN, ...SYSTEM_EN, ...RAID_EN, ...BOUNTY_EN, ...DUNGEON_EN, ...DUEL_EN };

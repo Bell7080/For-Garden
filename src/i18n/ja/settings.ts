@@ -118,4 +118,5 @@ export const SETTINGS_JA = {
   "settings.debug.maxLevelDone": "プレイヤーレベルをLV.{level}に上げました。ロビーに戻ると開放されたコンテンツが表示されます。",
   "settings.debug.unlockStories": "絆10 · 質問/ストーリー全開放",
   "settings.debug.unlockedStories": "絆を上げたキャラクター{count}体。すべての観察質問とお気に入りストーリーが開放されました。",
+  "settings.account.errorCode": "エラーコード：{code}",
 } as const;

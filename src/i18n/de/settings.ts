@@ -108,4 +108,5 @@ export const SETTINGS_DE = {
   "settings.debug.maxLevelDone": "Spielerlevel auf LV.{level} erhöht. Kehre in die Lobby zurück, um die freigeschalteten Inhalte zu sehen.",
   "settings.debug.unlockStories": "Bindung 10 · Alle Fragen/Geschichten freischalten",
   "settings.debug.unlockedStories": "Bei {count} Charakteren wurde die Bindung erhöht. Alle Beobachtungsfragen und Favorit-Geschichten sind freigeschaltet.",
+  "settings.account.errorCode": "Fehlercode: {code}",
 } as const;

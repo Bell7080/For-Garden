@@ -62,4 +62,6 @@ export const STATUS_DE = {
   "status.healCut.detail": "Erhaltene Heilung −{percent}% · noch {time}",
   "status.sunken": "Sinkende Last",
   "status.sunken.detail": "Bewegungs- und Angriffstempo −{percent}% · noch {time}",
+  "status.echo": "Echo",
+  "status.echo.detail": "Noch {time}",
 } as const;

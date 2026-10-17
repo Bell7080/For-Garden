@@ -62,4 +62,6 @@ export const STATUS_ID = {
   "status.healCut.detail": "Pemulihan diterima −{percent}% · sisa {time}",
   "status.sunken": "Beban Tenggelam",
   "status.sunken.detail": "Kecepatan gerak dan serang −{percent}% · sisa {time}",
+  "status.echo": "Gema",
+  "status.echo.detail": "Tersisa {time}",
 } as const;

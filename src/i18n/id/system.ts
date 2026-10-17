@@ -71,9 +71,9 @@ export const SYSTEM_ID = {
   "error.save.invalid": "Simpanan server tidak dapat diverifikasi.",
   "error.save.mergeInvalid": "Simpanan server gabungan tidak dapat diverifikasi.",
   "error.expedition.submit": "Tidak dapat mengirim skor.",
-  "error.expedition.settle": "Skor terkirim tetapi penyelesaian belum tuntas.",
+  "error.expedition.settle": "Skor terkirim, tetapi hadiah Ekspedisi belum diterima. Coba lagi.",
   "error.persist.state": "Tidak dapat menyimpan status permainan.",
   "error.persist.expeditionScore": "Tidak dapat menyimpan skor ekspedisi.",
-  "mail.subscription.title": "Pasokan harian {product}",
-  "mail.subscription.body": "Hadiah login harianmu. Ambil tiket sebelum surat ini kedaluwarsa.",
+  "mail.subscription.title": "Suplai harian {product}",
+  "mail.subscription.body": "Hadiah login harianmu. Ambil tiket sebelum Surat kedaluwarsa.",
 } as const;

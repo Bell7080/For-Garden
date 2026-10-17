@@ -20,6 +20,17 @@ describe("공용 보상 팝업 표시 모델", () => {
     expect(currencyRecordToRewardItems({ dnaFragments: 5 })).toEqual([{ icon: "currency-dna", amount: 5 }]);
   });
 
+  it("원정 종료 전에 서로 다른 재화의 수량을 개별 액자로 유지한다", () => {
+    const items = currencyRecordToRewardItems({ gold: 120, cheesecake: 4, gems: 2, fossil: 0, salvageRecord: 5 });
+    expect(items).toHaveLength(4);
+    expect(items).toEqual(expect.arrayContaining([
+      { icon: "currency-gold", amount: 120 },
+      { icon: "currency-cheesecake", amount: 4 },
+      { icon: "currency-gems", amount: 2 },
+      { icon: "currency-salvage-record", amount: 5 },
+    ]));
+  });
+
   it("서버 상품 영수증의 재화·아이템·룬·프로필 장식을 정의 재계산 없이 변환한다", () => {
     // amount는 구매 수량을 다시 곱하지 않고 서버가 준 확정 총량 그대로여야 한다.
     expect(productGrantsToRewardItems([

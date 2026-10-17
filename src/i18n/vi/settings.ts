@@ -108,4 +108,5 @@ export const SETTINGS_VI = {
   "settings.debug.maxLevelDone": "Đã nâng cấp người chơi lên LV.{level}. Quay lại sảnh để xem nội dung đã mở khóa.",
   "settings.debug.unlockStories": "Gắn kết 10 · Mở khóa mọi câu hỏi/câu chuyện",
   "settings.debug.unlockedStories": "Đã nâng Gắn kết cho {count} nhân vật. Mọi câu hỏi quan sát và câu chuyện Yêu thích đã được mở khóa.",
+  "settings.account.errorCode": "Mã lỗi: {code}",
 } as const;

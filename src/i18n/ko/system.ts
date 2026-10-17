@@ -92,7 +92,7 @@ export const SYSTEM_KO = {
   "error.save.invalid": "서버 저장을 검증할 수 없습니다.",
   "error.save.mergeInvalid": "서버 병합 저장을 검증할 수 없습니다.",
   "error.expedition.submit": "점수를 제출하지 못했습니다.",
-  "error.expedition.settle": "점수는 제출했지만 정산을 마치지 못했습니다.",
+  "error.expedition.settle": "점수는 제출했지만 보상을 받지 못했습니다. 다시 시도해 주세요.",
   "error.persist.state": "게임 상태를 저장하지 못했습니다.",
   "error.persist.expeditionScore": "원정 점수를 저장하지 못했습니다.",
   "mail.subscription.title": "{product} 일일 보급",

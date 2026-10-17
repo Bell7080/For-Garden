@@ -108,4 +108,5 @@ export const SETTINGS_ZH_HANT = {
   "settings.debug.maxLevelDone": "已將玩家等級提升至LV.{level}。返回大廳後即可看到已開放的內容。",
   "settings.debug.unlockStories": "羈絆10 · 開放全部提問/故事",
   "settings.debug.unlockedStories": "已提升羈絆的角色有{count}名。所有觀察提問和最愛故事均已開放。",
+  "settings.account.errorCode": "錯誤程式碼：{code}",
 } as const;

@@ -5,7 +5,7 @@ export const EXPEDITION_JA = {
   "expedition.weekly.best": "週間最高スコア {score}",
   "expedition.weekly.myBest": "自分の週間最高スコア",
   "expedition.weekly.rank": "週間 {rank}位",
-  "expedition.weekly.rankReward": "週間報酬 · 宝石 {gems} · 引き揚げ記録 {salvage}",
+  "expedition.weekly.rankReward": "週間報酬 · ジェム {gems} · 引き揚げ記録 {salvage}",
   "expedition.weekly.unranked": "未登録",
   "expedition.weekly.rolled": "週が変わりました。入り直してください。",
   "expedition.weekly.loadFailed": "記録を読み込めませんでした",
@@ -19,9 +19,9 @@ export const EXPEDITION_JA = {
 
   "expedition.abandon": "撤退する",
   "expedition.abandon.title": "遠征を撤退",
-  "expedition.abandon.body": "仮報酬 {reward}個が財布へ移されます。\nこのランの最高スコアは週間記録に反映されません。",
+  "expedition.abandon.body": "遠征を終了し、ここまでの報酬を受け取ります。\n今回の遠征スコアは週間記録に反映されません。\n所持上限により表示報酬が減る場合があります。",
   "expedition.abandon.confirm": "撤退を確定",
-  "expedition.abandon.settle": "撤退戦利品の精算",
+  "expedition.abandon.settle": "遠征終了報酬",
 
   "expedition.loot": "獲得戦利品",
   "expedition.nodeScore": "ノードスコア",

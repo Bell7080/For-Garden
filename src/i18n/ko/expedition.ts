@@ -5,7 +5,7 @@ export const EXPEDITION_KO = {
   "expedition.weekly.best": "주간 최고 점수 {score}",
   "expedition.weekly.myBest": "내 주간 최고 점수",
   "expedition.weekly.rank": "주간 {rank}위",
-  "expedition.weekly.rankReward": "주간 보상 · 보석 {gems} · 인양 기록 {salvage}",
+  "expedition.weekly.rankReward": "주간 보상 · 젬 {gems} · 인양 기록 {salvage}",
   "expedition.weekly.unranked": "미등재",
   "expedition.weekly.rolled": "주차가 바뀌었습니다. 다시 들어와 주세요.",
   "expedition.weekly.loadFailed": "기록을 불러오지 못했습니다",
@@ -19,9 +19,9 @@ export const EXPEDITION_KO = {
 
   "expedition.abandon": "포기하기",
   "expedition.abandon.title": "원정 포기",
-  "expedition.abandon.body": "임시 보상 {reward}개가 지갑으로 이전됩니다.\n이번 런의 최고 점수는 주간 기록에 반영되지 않습니다.",
+  "expedition.abandon.body": "원정을 종료하고 지금까지 모은 보상을 받습니다.\n이번 원정 점수는 주간 기록에 반영되지 않습니다.\n표시된 보상은 보유 한도에 따라 줄어들 수 있습니다.",
   "expedition.abandon.confirm": "포기 확정",
-  "expedition.abandon.settle": "포기 전리품 정산",
+  "expedition.abandon.settle": "원정 종료 보상",
 
   "expedition.loot": "획득 전리품",
   "expedition.nodeScore": "노드 점수",

@@ -71,9 +71,9 @@ export const SYSTEM_ZH_HANS = {
   "error.save.invalid": "无法验证服务器存档。",
   "error.save.mergeInvalid": "无法验证合并后的服务器存档。",
   "error.expedition.submit": "无法提交分数。",
-  "error.expedition.settle": "分数已提交，但结算未完成。",
+  "error.expedition.settle": "分数已提交，但未能领取远征奖励。请重试。",
   "error.persist.state": "无法保存游戏状态。",
   "error.persist.expeditionScore": "无法保存远征分数。",
-  "mail.subscription.title": "{product} 每日补给",
-  "mail.subscription.body": "今日登录奖励。请在邮件到期前领取票券。",
+  "mail.subscription.title": "{product}每日补给",
+  "mail.subscription.body": "今天的登录奖励。请在邮件过期前领取票券。",
 } as const;

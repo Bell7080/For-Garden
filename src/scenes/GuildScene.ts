@@ -28,6 +28,7 @@ import { addFriendChip, addRowButton, type RowButtonTone } from "../ui/friendsWi
 import { addBackButton } from "../ui/IconButton";
 import { addFramedIcon } from "../ui/itemFrame";
 import { addGuildBadge } from "../ui/GuildBadge";
+import { openGuildBadgePicker } from "../ui/GuildBadgePicker";
 import {
   GUILD_ATTENDANCE as A, GUILD_EDITOR as E, GUILD_INFO as I, GUILD_ROW as R, GUILD_SCREEN as S, guildMinScroll, guildRowButtonX, guildRowY,
   guildStampSlot, guildTabX,
@@ -50,7 +51,7 @@ const TABS = [
 
 const TAP_SLOP = 14;
 const FULL_CLIP: ClipRect = { left: -1e6, right: 1e6, top: -1e6, bottom: 1e6 };
-const BADGE_CYCLERS = [
+const BADGE_CHOICES = [
   { labelKey: "guild.badge.shape", field: "shape", values: GUILD_BADGE_SHAPES },
   { labelKey: "guild.badge.shapeColor", field: "shapeColor", values: GUILD_BADGE_COLOR_IDS },
   { labelKey: "guild.badge.icon", field: "icon", values: GUILD_BADGE_ICONS },
@@ -247,8 +248,9 @@ export class GuildScene extends Phaser.Scene {
   private guildRowText(row: Phaser.GameObjects.Container, guild: GuildSummary, rightRoom: number): void {
     const room = S.width / 2 - rightRoom - R.textX;
     row.add(squeezeTextToWidth(this.add.text(R.textX, R.nameY, guild.name, textStyle({ role: "display", size: 36 })).setOrigin(0, 0.5), room));
-    this.label(row, R.textX, R.subY, `${t("guild.levelShort", { level: guild.level })} · ${t("guild.capacity", { count: guild.memberCount, capacity: guild.capacity })} · ${t(`guild.joinMode.${guild.joinMode}`)}`, { role: "emphasis", size: 24, color: COLOR.accentText });
-    if (guild.notice) row.add(squeezeTextToWidth(this.add.text(R.textX, R.noteY, guild.notice, textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5), room));
+    const detail = this.label(row, R.textX, R.subY, `${t("guild.levelShort", { level: guild.level })} · ${t("guild.capacity", { count: guild.memberCount, capacity: guild.capacity })} · ${t(`guild.joinMode.${guild.joinMode}`)}`, { role: "emphasis", size: 28, color: COLOR.accentText });
+    squeezeTextToWidth(detail, room);
+    if (guild.notice) row.add(squeezeTextToWidth(this.add.text(R.textX, R.noteY, guild.notice, textStyle({ role: "body", size: 28, color: COLOR.ink })).setOrigin(0, 0.5), room));
   }
 
   /* ── 정보 ─────────────────────────────────────────────────────────────── */
@@ -344,21 +346,26 @@ export class GuildScene extends Phaser.Scene {
       let preview: Phaser.GameObjects.Container | undefined;
       const paintPreview = (): void => { preview?.destroy(); preview = addGuildBadge(this, body, 0, E.preview.y + top, badge, E.preview.size); };
       paintPreview();
-      BADGE_CYCLERS.forEach((cycler, row) => {
+      BADGE_CHOICES.forEach((cycler, row) => {
         const y = E.cyclers.top + top + row * E.cyclers.gap;
         this.label(body, -400, y, t(cycler.labelKey), { role: "emphasis", size: 28 });
-        const values = cycler.values as readonly string[];
-        const index = this.add.text(190, y, "", textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0.5);
-        body.add(index);
-        const sync = (): void => { index.setText(t("guild.badge.index", { index: values.indexOf(badge[cycler.field]) + 1, count: values.length })); };
-        sync();
-        const step = (delta: number): void => {
-          const next = (values.indexOf(badge[cycler.field]) + delta + values.length) % values.length;
-          (badge as unknown as Record<string, string>)[cycler.field] = values[next];
-          sync(); paintPreview();
+        const values: readonly GuildBadge[keyof GuildBadge][] = cycler.values;
+        let selector: Phaser.GameObjects.Container;
+        const paintSelector = (): void => {
+          selector?.destroy();
+          const index = values.indexOf(badge[cycler.field]);
+          selector = addFriendChip(this, body, 190, y, 420, 76, t("guild.badge.index", { index: index + 1, count: values.length }), false, () => {
+            openGuildBadgePicker(this, this.popups, {
+              title: t(cycler.labelKey), badge, field: cycler.field, choices: values,
+              onPick: (value) => {
+                // 값 목록과 field는 위의 같은 정의에서 온다. 서버 검증·저장 계약은 그대로 둔다.
+                Object.assign(badge, { [cycler.field]: value });
+                paintSelector(); paintPreview();
+              },
+            });
+          });
         };
-        addFriendChip(this, body, 60, y, 90, 64, "<", false, () => step(-1));
-        addFriendChip(this, body, 320, y, 90, 64, ">", false, () => step(1));
+        paintSelector();
       });
       if (!creating) this.label(body, 0, E.note + top - 120, free ? t("guild.badge.free") : "", { role: "body", size: 26, color: COLOR.accentText }, [0.5, 0.5]);
       const submitY = (creating ? E.submit : 380) + (creating ? 0 : 0);
@@ -406,14 +413,14 @@ export class GuildScene extends Phaser.Scene {
       const room = S.width / 2 - (R.button.width * 2 + 60) - R.textX;
       row.add(squeezeTextToWidth(this.add.text(R.textX, R.nameY, person.name, textStyle({ role: "display", size: 34 })).setOrigin(0, 0.5), room));
       if ("request" in entry) {
-        this.label(row, R.textX, R.subY, t("guild.levelShort", { level: person.level }), { role: "emphasis", size: 24, color: COLOR.accentText });
+        this.label(row, R.textX, R.subY, t("guild.levelShort", { level: person.level }), { role: "emphasis", size: 28, color: COLOR.accentText });
         addRowButton(this, row, guildRowButtonX(1), 0, R.button.width, R.button.height, t("guild.members.decline"), "danger", this.clip, this.canTap, () => { void this.act(() => guildApi.decideJoinRequest(person.userId, false)); });
         addRowButton(this, row, guildRowButtonX(0), 0, R.button.width, R.button.height, t("guild.members.approve"), "accent", this.clip, this.canTap, () => { void this.act(() => guildApi.decideJoinRequest(person.userId, true)); });
         return;
       }
       const member = entry.member;
-      this.label(row, R.textX, R.subY, `${t(`guild.role.${member.role}`)} · ${t("guild.levelShort", { level: member.level })}`, { role: "emphasis", size: 24, color: COLOR.accentText });
-      this.label(row, R.textX, R.noteY, t("guild.members.contribution", { value: member.contributionWeek.toLocaleString() }), { role: "body", size: 24, color: COLOR.inkDim });
+      this.label(row, R.textX, R.subY, `${t(`guild.role.${member.role}`)} · ${t("guild.levelShort", { level: member.level })}`, { role: "emphasis", size: 28, color: COLOR.accentText });
+      this.label(row, R.textX, R.noteY, t("guild.members.contribution", { value: member.contributionWeek.toLocaleString() }), { role: "body", size: 28, color: COLOR.ink });
       if (member.isMe) { this.label(row, S.width / 2 - 40, 0, t("guild.members.me"), { role: "display", size: 30, color: COLOR.accentText }, [1, 0.5]); return; }
       if (this.memberActions(member).length > 0) {
         addRowButton(this, row, guildRowButtonX(0), 0, R.button.width, R.button.height, "···", "neutral", this.clip, this.canTap, () => this.openMemberActions(member));
@@ -473,7 +480,7 @@ export class GuildScene extends Phaser.Scene {
       cell.add(drawLayer(this, 0, 0, chipPoints(slot.width, A.slots.height, { bevel: { topLeft: 22, topRight: 0, bottomRight: 22, bottomLeft: 0 } }), { fill: stamp ? 0x2b2a1b : 0x1a1f27, alpha: HOLO.glass, edge: today ? COLOR.accent : undefined, edgeAlpha: 0.9 }));
       this.label(cell, 0, -A.slots.height / 2 + 40, t(DAY_KEYS[index]), { role: "display", size: 30, color: today ? COLOR.accentText : COLOR.ink }, [0.5, 0.5]);
       if (stamp) cell.add(this.add.image(0, 20, stamp === "gold" ? CURRENCY_ICON_BY_WALLET.gold : CURRENCY_ICON_BY_WALLET.cheesecake).setDisplaySize(slot.width * 0.62, slot.width * 0.62));
-      else if (today) this.label(cell, 0, 20, t("guild.attendance.today"), { role: "emphasis", size: 24, color: COLOR.accentText }, [0.5, 0.5]);
+      else if (today) this.label(cell, 0, 20, t("guild.attendance.today"), { role: "emphasis", size: 28, color: COLOR.accentText }, [0.5, 0.5]);
     });
     this.label(v, S.side, A.info.y, t("guild.attendance.gain", { prosperity: GUILD_ATTENDANCE_GAIN.prosperity, contribution: GUILD_ATTENDANCE_GAIN.contribution, coin: GUILD_ATTENDANCE_GAIN.coin }), { role: "body", size: 28, color: COLOR.inkDim });
     if (data.stampedToday) {
@@ -510,7 +517,7 @@ export class GuildScene extends Phaser.Scene {
       this.label(row, R.textX, R.nameY, t(`guild.shop.product.${product.id}` as "guild.shop.product.guild-gold"), { role: "display", size: 34 });
       const grant = product.grant.gold ? t("guild.shop.grantGold", { value: product.grant.gold.toLocaleString() }) : product.grant.cheesecake ? t("guild.shop.grantCheesecake", { value: product.grant.cheesecake }) : t("guild.shop.grantTonic", { value: product.grant.item?.quantity ?? 1 });
       this.label(row, R.textX, R.subY, grant, { role: "emphasis", size: 26, color: COLOR.accentText });
-      this.label(row, R.textX, R.noteY, `${t("guild.shop.price", { price: product.price })} · ${t("guild.shop.limit", { bought, limit: product.weeklyLimit })}`, { role: "body", size: 24, color: COLOR.inkDim });
+      this.label(row, R.textX, R.noteY, `${t("guild.shop.price", { price: product.price })} · ${t("guild.shop.limit", { bought, limit: product.weeklyLimit })}`, { role: "body", size: 28, color: COLOR.ink });
       const affordable = data.coin >= product.price && bought < product.weeklyLimit;
       addRowButton(this, row, guildRowButtonX(0), 0, R.button.width, R.button.height, t("guild.shop.buy"), affordable ? "accent" : "disabled", () => FULL_CLIP, () => true, () => {
         void this.act(() => gameApi.buyGuildProduct({ productId: product.id }), () => this.toast(t("guild.shop.bought"), "unlocked"));

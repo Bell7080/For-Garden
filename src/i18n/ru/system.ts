@@ -71,9 +71,9 @@ export const SYSTEM_RU = {
   "error.save.invalid": "Не удалось проверить сохранение на сервере.",
   "error.save.mergeInvalid": "Не удалось проверить объединённое сохранение.",
   "error.expedition.submit": "Не удалось отправить счёт.",
-  "error.expedition.settle": "Счёт отправлен, но расчёт не завершён.",
+  "error.expedition.settle": "Очки отправлены, но награды экспедиции не получены. Попробуйте ещё раз.",
   "error.persist.state": "Не удалось сохранить состояние игры.",
   "error.persist.expeditionScore": "Не удалось сохранить очки экспедиции.",
-  "mail.subscription.title": "Ежедневное снабжение: {product}",
+  "mail.subscription.title": "Ежедневное снабжение {product}",
   "mail.subscription.body": "Награда за ежедневный вход. Заберите билет до истечения срока почты.",
 } as const;

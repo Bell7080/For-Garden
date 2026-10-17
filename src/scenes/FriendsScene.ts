@@ -376,19 +376,19 @@ export class FriendsScene extends Phaser.Scene {
     }));
     const room = textRight - R.textX;
     row.add(squeezeTextToWidth(this.add.text(R.textX, R.nameY, compactProfileText(profile.displayName, 12), textStyle({ role: "display", size: 36 })).setOrigin(0, 0.5), room));
-    const level = this.add.text(R.textX, R.levelY, t("friends.researchLevel", { level: profile.level }), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0.5);
+    const level = this.add.text(R.textX, R.levelY, t("friends.researchLevel", { level: profile.level }), textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0, 0.5);
     row.add(level);
     let cursor = R.textX + level.width + 20;
     const modifier = profile.equippedModifiers[0];
     if (modifier) {
-      const chip = this.add.text(cursor, R.levelY, compactProfileText(modifier.displayName, 8), textStyle({ role: "emphasis", size: 22, color: hex(PROFILE_MODIFIER_RARITY_COLOR[modifier.rarity]) })).setOrigin(0, 0.5);
+      const chip = this.add.text(cursor, R.levelY, compactProfileText(modifier.displayName, 8), textStyle({ role: "emphasis", size: 28, color: hex(PROFILE_MODIFIER_RARITY_COLOR[modifier.rarity]) })).setOrigin(0, 0.5);
       row.add(squeezeTextToWidth(chip, Math.max(40, textRight - cursor)));
       cursor += chip.displayWidth + 20;
     }
     if (extra && cursor < textRight - 60) {
-      row.add(squeezeTextToWidth(this.add.text(cursor, R.levelY, extra, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5), textRight - cursor));
+      row.add(squeezeTextToWidth(this.add.text(cursor, R.levelY, extra, textStyle({ role: "body", size: 28, color: COLOR.ink })).setOrigin(0, 0.5), textRight - cursor));
     }
-    row.add(squeezeTextToWidth(this.add.text(R.textX, R.bioY, t("profile.bio.quoted", { bio: profile.status }), textStyle({ role: "emphasis", size: 25, color: COLOR.ink })).setOrigin(0, 0.5), room));
+    row.add(squeezeTextToWidth(this.add.text(R.textX, R.bioY, t("profile.bio.quoted", { bio: profile.status }), textStyle({ role: "emphasis", size: 28, color: COLOR.ink })).setOrigin(0, 0.5), room));
   }
 
   /** 줄 전체를 덮는 입력면 — 누르면 카드가 열린다. 버튼·별은 이 위에 얹혀 먼저 손을 받는다. */
@@ -415,7 +415,7 @@ export class FriendsScene extends Phaser.Scene {
       star.on("pointerup", () => { if (this.canTap()) void this.mutate(() => socialApi.setFavorite(friend.id, !favorite), true); });
       const age = this.ageText(friend.lastActiveAt);
       const online = isOnline(friend.lastActiveAt, this.nowMs);
-      const ageLabel = this.add.text(S.width / 2 - R.padRight, R.age.y, age, textStyle({ role: "body", size: 22, color: online ? hex(ONLINE_COLOR) : COLOR.inkDim })).setOrigin(1, 0.5);
+      const ageLabel = this.add.text(S.width / 2 - R.padRight, R.age.y, age, textStyle({ role: "body", size: 28, color: online ? hex(ONLINE_COLOR) : COLOR.ink })).setOrigin(1, 0.5);
       row.add(ageLabel);
       // 접속 중 초록 점은 얼굴이 아니라 접속 상태 글자 왼쪽에 선다.
       if (online) row.add(this.add.circle(ageLabel.x - ageLabel.displayWidth - R.online.gap - R.online.radius, R.age.y, R.online.radius, ONLINE_COLOR));

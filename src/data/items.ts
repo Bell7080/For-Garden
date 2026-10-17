@@ -53,7 +53,7 @@ export const ITEMS = [
   { id: "rune", name: "룬", description: "렐릭의 하트 젬 슬롯에 장착하는 개별 룬입니다.", category: "rune", icon: { kind: "glyph", key: "heart" }, maxStack: 1, useEffect: { kind: "none" } },
   { id: "fossil", name: "화석", description: "연구소의 캐릭터 획득 연구에 사용합니다.", category: "currency", icon: { kind: "currency", key: "fossil" }, maxStack: 9_999_999, useEffect: { kind: "none" } },
   { id: "amber", name: "호박석", description: "희귀 연구에 사용하는 재화입니다.", category: "currency", icon: { kind: "currency", key: "amber" }, maxStack: 999_999, useEffect: { kind: "none" } },
-  { id: "gems", name: "보석", description: "도시 전역에서 통용되는 재화입니다.", category: "currency", icon: { kind: "currency", key: "gems" }, maxStack: 9_999_999, useEffect: { kind: "none" } },
+  { id: "gems", name: "젬", description: "도시 전역에서 통용되는 재화입니다.", category: "currency", icon: { kind: "currency", key: "gems" }, maxStack: 9_999_999, useEffect: { kind: "none" } },
   { id: "gold", name: "골드", description: "룬 세공과 성장에 사용하는 재화입니다.", category: "currency", icon: { kind: "currency", key: "gold" }, maxStack: 999_999_999, useEffect: { kind: "none" } },
   { id: "stamina", name: "스테미나", description: "탐사에 필요한 행동력입니다.", category: "currency", icon: { kind: "currency", key: "stamina" }, maxStack: 9_999, useEffect: { kind: "none" } },
   { id: "dnaFragments", name: "DNA 마일리지", description: "마일리지 상점에서 쓰는 교환 재화입니다.", category: "currency", icon: { kind: "currency", key: "dnaFragments" }, maxStack: 99_999, useEffect: { kind: "none" } },

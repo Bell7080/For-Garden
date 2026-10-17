@@ -1,0 +1,1442 @@
+{
+  "guild.title": [
+    "公会",
+    "กิลด์",
+    "Bang hội",
+    "Guild",
+    "Gremio",
+    "Guilda",
+    "Gilde",
+    "Гильдия"
+  ],
+  "guild.tab.info": [
+    "信息",
+    "ข้อมูล",
+    "Thông tin",
+    "Info",
+    "Información",
+    "Informações",
+    "Info",
+    "Информация"
+  ],
+  "guild.tab.members": [
+    "成员",
+    "สมาชิก",
+    "Thành viên",
+    "Anggota",
+    "Miembros",
+    "Membros",
+    "Mitglieder",
+    "Участники"
+  ],
+  "guild.tab.attendance": [
+    "签到",
+    "เช็กชื่อ",
+    "Điểm danh",
+    "Absensi",
+    "Asistencia",
+    "Presença",
+    "Anwesenheit",
+    "Посещаемость"
+  ],
+  "guild.tab.shop": [
+    "商店",
+    "ร้านค้า",
+    "Cửa hàng",
+    "Toko",
+    "Tienda",
+    "Loja",
+    "Shop",
+    "Магазин"
+  ],
+  "guild.role.leader": [
+    "公会会长",
+    "หัวหน้ากิลด์",
+    "Thủ lĩnh Bang hội",
+    "Ketua guild",
+    "Líder del gremio",
+    "Líder da guilda",
+    "Gildenleitung",
+    "Глава гильдии"
+  ],
+  "guild.role.vice": [
+    "公会副会长",
+    "รองหัวหน้ากิลด์",
+    "Phó Bang hội",
+    "Wakil ketua guild",
+    "Sublíder del gremio",
+    "Vice-líder da guilda",
+    "Gildenstellvertretung",
+    "Заместитель главы гильдии"
+  ],
+  "guild.role.officer": [
+    "干部",
+    "เจ้าหน้าที่",
+    "Cán bộ",
+    "Pengurus",
+    "Oficial",
+    "Oficial",
+    "Offizier",
+    "Офицер"
+  ],
+  "guild.role.member": [
+    "公会成员",
+    "สมาชิกกิลด์",
+    "Thành viên Bang hội",
+    "Anggota guild",
+    "Miembro del gremio",
+    "Membro da guilda",
+    "Gildenmitglied",
+    "Участник гильдии"
+  ],
+  "guild.joinMode.open": [
+    "自由加入",
+    "เข้าร่วมได้ทันที",
+    "Tham gia tự do",
+    "Bebas bergabung",
+    "Ingreso libre",
+    "Entrada livre",
+    "Offener Beitritt",
+    "Свободный вход"
+  ],
+  "guild.joinMode.approval": [
+    "审批加入",
+    "ต้องได้รับอนุมัติ",
+    "Cần phê duyệt",
+    "Perlu persetujuan",
+    "Requiere aprobación",
+    "Exige aprovação",
+    "Genehmigung nötig",
+    "По заявке"
+  ],
+  "guild.levelShort": [
+    "LV.{level}",
+    "LV.{level}",
+    "LV.{level}",
+    "LV.{level}",
+    "LV.{level}",
+    "LV.{level}",
+    "LV.{level}",
+    "LV.{level}"
+  ],
+  "guild.capacity": [
+    "{count}/{capacity}人",
+    "{count}/{capacity} คน",
+    "{count}/{capacity} người",
+    "{count}/{capacity} anggota",
+    "{count}/{capacity} miembros",
+    "{count}/{capacity} membros",
+    "{count}/{capacity} Mitglieder",
+    "Участники: {count}/{capacity}"
+  ],
+  "guild.browse.summary": [
+    "推荐公会",
+    "กิลด์แนะนำ",
+    "Bang hội đề xuất",
+    "Guild rekomendasi",
+    "Gremios recomendados",
+    "Guildas recomendadas",
+    "Empfohlene Gilden",
+    "Рекомендуемые гильдии"
+  ],
+  "guild.browse.results": [
+    "找到{count}个公会",
+    "พบ {count} กิลด์",
+    "Tìm thấy {count} Bang hội",
+    "Ditemukan {count} guild",
+    "{count} gremios encontrados",
+    "{count} guildas encontradas",
+    "{count} Gilden gefunden",
+    "Найдено гильдий: {count}"
+  ],
+  "guild.browse.cooldown": [
+    "{time}后可加入其他公会",
+    "เข้ากิลด์อื่นได้ในอีก {time}",
+    "Có thể tham gia Bang hội khác sau {time}",
+    "Bisa bergabung ke guild lain dalam {time}",
+    "Podrás unirte a otro gremio en {time}",
+    "Poderá entrar em outra guilda em {time}",
+    "Beitritt zu einer anderen Gilde in {time}",
+    "Вступить в другую гильдию можно через {time}"
+  ],
+  "guild.browse.search": [
+    "搜索",
+    "ค้นหา",
+    "Tìm kiếm",
+    "Cari",
+    "Buscar",
+    "Buscar",
+    "Suchen",
+    "Поиск"
+  ],
+  "guild.browse.create": [
+    "创建公会",
+    "สร้างกิลด์",
+    "Tạo Bang hội",
+    "Buat guild",
+    "Crear gremio",
+    "Criar guilda",
+    "Gilde gründen",
+    "Создать гильдию"
+  ],
+  "guild.browse.searchAria": [
+    "公会名称",
+    "ชื่อกิลด์",
+    "Tên Bang hội",
+    "Nama guild",
+    "Nombre del gremio",
+    "Nome da guilda",
+    "Gildenname",
+    "Название гильдии"
+  ],
+  "guild.browse.empty": [
+    "没有符合条件的公会",
+    "ไม่พบกิลด์ที่ตรงกัน",
+    "Không có Bang hội phù hợp",
+    "Tidak ada guild yang cocok",
+    "No hay gremios coincidentes",
+    "Nenhuma guilda encontrada",
+    "Keine passende Gilde",
+    "Подходящих гильдий нет"
+  ],
+  "guild.browse.join": [
+    "加入",
+    "เข้าร่วม",
+    "Tham gia",
+    "Gabung",
+    "Unirse",
+    "Entrar",
+    "Beitreten",
+    "Вступить"
+  ],
+  "guild.browse.apply": [
+    "申请",
+    "สมัคร",
+    "Xin vào",
+    "Ajukan",
+    "Solicitar",
+    "Solicitar",
+    "Anfragen",
+    "Подать заявку"
+  ],
+  "guild.browse.cancel": [
+    "取消",
+    "ยกเลิก",
+    "Hủy",
+    "Batal",
+    "Cancelar",
+    "Cancelar",
+    "Abbrechen",
+    "Отмена"
+  ],
+  "guild.browse.full": [
+    "已满员",
+    "สมาชิกเต็ม",
+    "Đã đầy",
+    "Penuh",
+    "Completo",
+    "Lotado",
+    "Voll",
+    "Мест нет"
+  ],
+  "guild.browse.joined": [
+    "已加入公会",
+    "เข้ากิลด์แล้ว",
+    "Đã tham gia Bang hội",
+    "Berhasil bergabung dengan guild",
+    "Te has unido al gremio",
+    "Entrou na guilda",
+    "Gilde beigetreten",
+    "Вы вступили в гильдию"
+  ],
+  "guild.browse.applied": [
+    "已提交加入申请",
+    "ส่งคำขอแล้ว",
+    "Đã gửi đơn",
+    "Permohonan terkirim",
+    "Solicitud enviada",
+    "Solicitação enviada",
+    "Anfrage gesendet",
+    "Заявка отправлена"
+  ],
+  "guild.create.title": [
+    "创建公会",
+    "สร้างกิลด์",
+    "Tạo Bang hội",
+    "Buat guild",
+    "Crear gremio",
+    "Criar guilda",
+    "Gilde gründen",
+    "Создать гильдию"
+  ],
+  "guild.create.nameLabel": [
+    "公会名称",
+    "ชื่อกิลด์",
+    "Tên Bang hội",
+    "Nama guild",
+    "Nombre del gremio",
+    "Nome da guilda",
+    "Gildenname",
+    "Название гильдии"
+  ],
+  "guild.create.nameAria": [
+    "输入公会名称",
+    "กรอกชื่อกิลด์",
+    "Nhập tên Bang hội",
+    "Masukkan nama guild",
+    "Escribe el nombre del gremio",
+    "Digite o nome da guilda",
+    "Gildennamen eingeben",
+    "Введите название гильдии"
+  ],
+  "guild.create.confirmTitle": [
+    "创建公会",
+    "สร้างกิลด์",
+    "Tạo Bang hội",
+    "Buat guild",
+    "Crear gremio",
+    "Criar guilda",
+    "Gilde gründen",
+    "Создать гильдию"
+  ],
+  "guild.create.confirmMessage": [
+    "创建公会“{name}”。",
+    "สร้างกิลด์ “{name}”",
+    "Tạo Bang hội “{name}”.",
+    "Buat guild “{name}”.",
+    "Crear el gremio «{name}».",
+    "Criar a guilda “{name}”.",
+    "Gilde „{name}“ gründen.",
+    "Создать гильдию «{name}»."
+  ],
+  "guild.create.submit": [
+    "创建",
+    "สร้าง",
+    "Tạo",
+    "Buat",
+    "Crear",
+    "Criar",
+    "Erstellen",
+    "Создать"
+  ],
+  "guild.create.done": [
+    "已创建公会",
+    "สร้างกิลด์แล้ว",
+    "Đã tạo Bang hội",
+    "Guild dibuat",
+    "Gremio creado",
+    "Guilda criada",
+    "Gilde gegründet",
+    "Гильдия создана"
+  ],
+  "guild.name.empty": [
+    "请输入名称",
+    "กรุณากรอกชื่อ",
+    "Hãy nhập tên",
+    "Masukkan nama",
+    "Escribe un nombre",
+    "Digite um nome",
+    "Namen eingeben",
+    "Введите название"
+  ],
+  "guild.name.short": [
+    "名称太短",
+    "ชื่อสั้นเกินไป",
+    "Tên quá ngắn",
+    "Nama terlalu pendek",
+    "Nombre demasiado corto",
+    "Nome muito curto",
+    "Name zu kurz",
+    "Слишком короткое название"
+  ],
+  "guild.name.long": [
+    "名称太长",
+    "ชื่อยาวเกินไป",
+    "Tên quá dài",
+    "Nama terlalu panjang",
+    "Nombre demasiado largo",
+    "Nome muito longo",
+    "Name zu lang",
+    "Слишком длинное название"
+  ],
+  "guild.name.invalid": [
+    "含有无法使用的字符",
+    "มีตัวอักษรที่ใช้ไม่ได้",
+    "Có ký tự không dùng được",
+    "Berisi karakter yang tidak dapat digunakan",
+    "Contiene caracteres no válidos",
+    "Contém caracteres inválidos",
+    "Enthält unzulässige Zeichen",
+    "Есть недопустимые символы"
+  ],
+  "guild.badge.title": [
+    "公会徽章",
+    "ตรากิลด์",
+    "Huy hiệu Bang hội",
+    "Lencana guild",
+    "Emblema del gremio",
+    "Emblema da guilda",
+    "Gildenabzeichen",
+    "Эмблема гильдии"
+  ],
+  "guild.badge.shape": [
+    "形状",
+    "รูปทรง",
+    "Hình dạng",
+    "Bentuk",
+    "Forma",
+    "Forma",
+    "Form",
+    "Форма"
+  ],
+  "guild.badge.shapeColor": [
+    "底色",
+    "สีพื้น",
+    "Màu nền",
+    "Warna latar",
+    "Color de fondo",
+    "Cor de fundo",
+    "Hintergrundfarbe",
+    "Цвет фона"
+  ],
+  "guild.badge.icon": [
+    "图案",
+    "สัญลักษณ์",
+    "Biểu tượng",
+    "Simbol",
+    "Símbolo",
+    "Símbolo",
+    "Symbol",
+    "Символ"
+  ],
+  "guild.badge.iconColor": [
+    "图案颜色",
+    "สีสัญลักษณ์",
+    "Màu biểu tượng",
+    "Warna simbol",
+    "Color del símbolo",
+    "Cor do símbolo",
+    "Symbolfarbe",
+    "Цвет символа"
+  ],
+  "guild.badge.index": [
+    "{index}/{count}",
+    "{index}/{count}",
+    "{index}/{count}",
+    "{index}/{count}",
+    "{index}/{count}",
+    "{index}/{count}",
+    "{index}/{count}",
+    "{index}/{count}"
+  ],
+  "guild.badge.apply": [
+    "更换徽章",
+    "เปลี่ยนตรา",
+    "Đổi huy hiệu",
+    "Ubah lencana",
+    "Cambiar emblema",
+    "Alterar emblema",
+    "Abzeichen ändern",
+    "Сменить эмблему"
+  ],
+  "guild.badge.free": [
+    "首次更换免费",
+    "เปลี่ยนครั้งแรกฟรี",
+    "Lần đổi đầu miễn phí",
+    "Perubahan pertama gratis",
+    "El primer cambio es gratis",
+    "A primeira alteração é grátis",
+    "Erste Änderung kostenlos",
+    "Первая смена бесплатно"
+  ],
+  "guild.badge.confirmTitle": [
+    "更换徽章",
+    "เปลี่ยนตรา",
+    "Đổi huy hiệu",
+    "Ubah lencana",
+    "Cambiar emblema",
+    "Alterar emblema",
+    "Abzeichen ändern",
+    "Сменить эмблему"
+  ],
+  "guild.badge.confirmMessage": [
+    "更换公会徽章。",
+    "เปลี่ยนตรากิลด์",
+    "Đổi huy hiệu Bang hội.",
+    "Ubah lencana guild.",
+    "Cambiar el emblema del gremio.",
+    "Alterar o emblema da guilda.",
+    "Gildenabzeichen ändern.",
+    "Сменить эмблему гильдии."
+  ],
+  "guild.badge.done": [
+    "已更换徽章",
+    "เปลี่ยนตราแล้ว",
+    "Đã đổi huy hiệu",
+    "Lencana diubah",
+    "Emblema cambiado",
+    "Emblema alterado",
+    "Abzeichen geändert",
+    "Эмблема изменена"
+  ],
+  "guild.badge.same": [
+    "与当前徽章相同",
+    "เป็นตราที่ใช้อยู่แล้ว",
+    "Đang dùng huy hiệu này",
+    "Lencana ini sedang digunakan",
+    "Ya usas este emblema",
+    "Este emblema já está em uso",
+    "Dieses Abzeichen ist bereits aktiv",
+    "Эта эмблема уже используется"
+  ],
+  "guild.info.prosperity": [
+    "繁荣度 {value}",
+    "ความรุ่งเรือง {value}",
+    "Phồn vinh {value}",
+    "Kemakmuran {value}",
+    "Prosperidad {value}",
+    "Prosperidade {value}",
+    "Wohlstand {value}",
+    "Процветание: {value}"
+  ],
+  "guild.info.nextLevel": [
+    "距下一级{value}",
+    "อีก {value} ถึงเลเวลถัดไป",
+    "Còn {value} đến cấp tiếp",
+    "{value} ke level berikutnya",
+    "{value} para el siguiente nivel",
+    "{value} para o próximo nível",
+    "{value} bis zur nächsten Stufe",
+    "До нового уровня: {value}"
+  ],
+  "guild.info.maxLevel": [
+    "最高等级",
+    "เลเวลสูงสุด",
+    "Cấp tối đa",
+    "Level maksimal",
+    "Nivel máximo",
+    "Nível máximo",
+    "Höchste Stufe",
+    "Максимальный уровень"
+  ],
+  "guild.info.leader": [
+    "公会会长 {name}",
+    "หัวหน้ากิลด์ {name}",
+    "Thủ lĩnh Bang hội {name}",
+    "Ketua guild {name}",
+    "Líder del gremio {name}",
+    "Líder da guilda {name}",
+    "Gildenleitung {name}",
+    "Глава гильдии {name}"
+  ],
+  "guild.info.me": [
+    "{role} · 公会币 {coin} · 本周贡献 {week}",
+    "{role} · เหรียญกิลด์ {coin} · ผลงานสัปดาห์นี้ {week}",
+    "{role} · Xu Bang hội {coin} · Cống hiến tuần {week}",
+    "{role} · Koin guild {coin} · Kontribusi mingguan {week}",
+    "{role} · Monedas del gremio {coin} · Contribución semanal {week}",
+    "{role} · Moedas da guilda {coin} · Contribuição semanal {week}",
+    "{role} · Gildenmünzen {coin} · Wochenbeitrag {week}",
+    "{role} · Монеты гильдии {coin} · Вклад за неделю {week}"
+  ],
+  "guild.info.perkExcavation": [
+    "采掘产量 +{value}%",
+    "ผลผลิตการขุดค้น +{value}%",
+    "Sản lượng Khai thác +{value}%",
+    "Produksi Gali +{value}%",
+    "Producción de Excavación +{value}%",
+    "Produção de Escavação +{value}%",
+    "Grabungsproduktion +{value}%",
+    "Добыча раскопок +{value}%"
+  ],
+  "guild.info.perkDispatch": [
+    "交流派遣时间 −{value}%",
+    "เวลาส่งออกแลกเปลี่ยน −{value}%",
+    "Thời gian Phái cử giao lưu −{value}%",
+    "Waktu Pengiriman pertukaran −{value}%",
+    "Tiempo de Envío de intercambio −{value}%",
+    "Tempo de Despacho de intercâmbio −{value}%",
+    "Austauschentsendungszeit −{value}%",
+    "Время обменной отправки −{value}%"
+  ],
+  "guild.info.perkNone": [
+    "福利在3级解锁",
+    "ปลดล็อกสิทธิพิเศษที่เลเวล 3",
+    "Đặc quyền mở ở cấp 3",
+    "Manfaat terbuka di level 3",
+    "Beneficios desde el nivel 3",
+    "Benefícios no nível 3",
+    "Vorteile ab Stufe 3",
+    "Бонусы открываются на уровне 3"
+  ],
+  "guild.info.noticeEmpty": [
+    "暂无公告",
+    "ไม่มีประกาศ",
+    "Chưa có thông báo",
+    "Belum ada pengumuman",
+    "No hay anuncios",
+    "Sem avisos",
+    "Keine Mitteilung",
+    "Объявлений нет"
+  ],
+  "guild.info.settings": [
+    "公会设置",
+    "ตั้งค่ากิลด์",
+    "Cài đặt Bang hội",
+    "Pengaturan guild",
+    "Ajustes del gremio",
+    "Configurações da guilda",
+    "Gildeneinstellungen",
+    "Настройки гильдии"
+  ],
+  "guild.info.leave": [
+    "退出",
+    "ออก",
+    "Rời Bang hội",
+    "Keluar",
+    "Salir",
+    "Sair",
+    "Verlassen",
+    "Покинуть"
+  ],
+  "guild.info.disband": [
+    "解散",
+    "ยุบ",
+    "Giải tán",
+    "Bubarkan",
+    "Disolver",
+    "Dissolver",
+    "Auflösen",
+    "Распустить"
+  ],
+  "guild.info.leaveConfirm": [
+    "退出公会后24小时内无法加入其他公会。",
+    "ออกจากกิลด์แล้วจะเข้ากิลด์อื่นไม่ได้เป็นเวลา 24 ชั่วโมง",
+    "Rời Bang hội. Bạn không thể tham gia Bang hội khác trong 24 giờ.",
+    "Keluar dari guild. Tidak bisa bergabung ke guild lain selama 24 jam.",
+    "Salir del gremio. No podrás unirte a otro durante 24 horas.",
+    "Sair da guilda. Não poderá entrar em outra por 24 horas.",
+    "Gilde verlassen. Ein neuer Beitritt ist 24 Stunden lang gesperrt.",
+    "Покинуть гильдию. Вступление в другую будет недоступно 24 часа."
+  ],
+  "guild.info.leaveTitle": [
+    "退出公会",
+    "ออกจากกิลด์",
+    "Rời Bang hội",
+    "Keluar guild",
+    "Salir del gremio",
+    "Sair da guilda",
+    "Gilde verlassen",
+    "Покинуть гильдию"
+  ],
+  "guild.info.disbandConfirm": [
+    "解散公会。此操作无法撤销。",
+    "ยุบกิลด์ การกระทำนี้ย้อนกลับไม่ได้",
+    "Giải tán Bang hội. Không thể hoàn tác.",
+    "Bubarkan guild. Tindakan ini tidak bisa dibatalkan.",
+    "Disolver el gremio. No se puede deshacer.",
+    "Dissolver a guilda. Não é possível desfazer.",
+    "Gilde auflösen. Dies kann nicht rückgängig gemacht werden.",
+    "Распустить гильдию. Это действие необратимо."
+  ],
+  "guild.info.disbandTitle": [
+    "解散公会",
+    "ยุบกิลด์",
+    "Giải tán Bang hội",
+    "Bubarkan guild",
+    "Disolver gremio",
+    "Dissolver guilda",
+    "Gilde auflösen",
+    "Распустить гильдию"
+  ],
+  "guild.settings.title": [
+    "公会设置",
+    "ตั้งค่ากิลด์",
+    "Cài đặt Bang hội",
+    "Pengaturan guild",
+    "Ajustes del gremio",
+    "Configurações da guilda",
+    "Gildeneinstellungen",
+    "Настройки гильдии"
+  ],
+  "guild.settings.notice": [
+    "公告",
+    "ประกาศ",
+    "Thông báo",
+    "Pengumuman",
+    "Anuncio",
+    "Aviso",
+    "Mitteilung",
+    "Объявление"
+  ],
+  "guild.settings.noticeAria": [
+    "输入公会公告",
+    "กรอกประกาศกิลด์",
+    "Nhập thông báo Bang hội",
+    "Masukkan pengumuman guild",
+    "Escribe el anuncio del gremio",
+    "Digite o aviso da guilda",
+    "Gildenmitteilung eingeben",
+    "Введите объявление гильдии"
+  ],
+  "guild.settings.joinMode": [
+    "加入方式",
+    "วิธีเข้าร่วม",
+    "Cách tham gia",
+    "Cara bergabung",
+    "Política de ingreso",
+    "Forma de entrada",
+    "Beitrittsregel",
+    "Правила вступления"
+  ],
+  "guild.settings.save": [
+    "保存",
+    "บันทึก",
+    "Lưu",
+    "Simpan",
+    "Guardar",
+    "Salvar",
+    "Speichern",
+    "Сохранить"
+  ],
+  "guild.settings.saved": [
+    "已保存",
+    "บันทึกแล้ว",
+    "Đã lưu",
+    "Disimpan",
+    "Guardado",
+    "Salvo",
+    "Gespeichert",
+    "Сохранено"
+  ],
+  "guild.members.summary": [
+    "成员 {count}/{capacity}",
+    "สมาชิก {count}/{capacity}",
+    "Thành viên {count}/{capacity}",
+    "Anggota {count}/{capacity}",
+    "Miembros {count}/{capacity}",
+    "Membros {count}/{capacity}",
+    "Mitglieder {count}/{capacity}",
+    "Участники {count}/{capacity}"
+  ],
+  "guild.members.requests": [
+    "加入申请 {count}",
+    "คำขอ {count}",
+    "Đơn xin {count}",
+    "Permohonan {count}",
+    "Solicitudes {count}",
+    "Solicitações {count}",
+    "Anfragen {count}",
+    "Заявки: {count}"
+  ],
+  "guild.members.contribution": [
+    "本周贡献 {value}",
+    "ผลงานสัปดาห์นี้ {value}",
+    "Cống hiến tuần {value}",
+    "Kontribusi mingguan {value}",
+    "Contribución semanal {value}",
+    "Contribuição semanal {value}",
+    "Wochenbeitrag {value}",
+    "Вклад за неделю: {value}"
+  ],
+  "guild.members.approve": [
+    "接受",
+    "ยอมรับ",
+    "Chấp nhận",
+    "Terima",
+    "Aceptar",
+    "Aceitar",
+    "Annehmen",
+    "Принять"
+  ],
+  "guild.members.decline": [
+    "拒绝",
+    "ปฏิเสธ",
+    "Từ chối",
+    "Tolak",
+    "Rechazar",
+    "Recusar",
+    "Ablehnen",
+    "Отклонить"
+  ],
+  "guild.members.me": [
+    "我",
+    "ฉัน",
+    "Tôi",
+    "Saya",
+    "Yo",
+    "Eu",
+    "Ich",
+    "Я"
+  ],
+  "guild.members.actionTitle": [
+    "{name}",
+    "{name}",
+    "{name}",
+    "{name}",
+    "{name}",
+    "{name}",
+    "{name}",
+    "{name}"
+  ],
+  "guild.members.promoteVice": [
+    "公会副会长",
+    "รองหัวหน้ากิลด์",
+    "Phó Bang hội",
+    "Wakil ketua guild",
+    "Sublíder del gremio",
+    "Vice-líder da guilda",
+    "Gildenstellvertretung",
+    "Заместитель главы гильдии"
+  ],
+  "guild.members.promoteOfficer": [
+    "设为干部",
+    "ตั้งเป็นเจ้าหน้าที่",
+    "Đặt cán bộ",
+    "Jadikan pengurus",
+    "Nombrar oficial",
+    "Nomear oficial",
+    "Zum Offizier",
+    "Назначить офицером"
+  ],
+  "guild.members.demote": [
+    "公会成员",
+    "สมาชิกกิลด์",
+    "Thành viên Bang hội",
+    "Anggota guild",
+    "Miembro del gremio",
+    "Membro da guilda",
+    "Gildenmitglied",
+    "Участник гильдии"
+  ],
+  "guild.members.transfer": [
+    "转让公会会长",
+    "โอนหัวหน้ากิลด์",
+    "Chuyển quyền Bang hội",
+    "Alihkan ketua guild",
+    "Transferir liderazgo del gremio",
+    "Transferir liderança da guilda",
+    "Gildenleitung übertragen",
+    "Передать руководство гильдией"
+  ],
+  "guild.members.transferTitle": [
+    "转让公会会长",
+    "โอนหัวหน้ากิลด์",
+    "Chuyển quyền Bang hội",
+    "Alihkan ketua guild",
+    "Transferir liderazgo del gremio",
+    "Transferir liderança da guilda",
+    "Gildenleitung übertragen",
+    "Передать руководство гильдией"
+  ],
+  "guild.members.transferConfirm": [
+    "将公会会长权限转让给{name}。",
+    "โอนตำแหน่งหัวหน้ากิลด์ให้ {name}",
+    "Chuyển quyền Bang hội trưởng cho {name}.",
+    "Alihkan kepemimpinan guild ke {name}.",
+    "Transferir el liderazgo del gremio a {name}.",
+    "Transferir a liderança da guilda a {name}.",
+    "Gildenleitung an {name} übertragen.",
+    "Передать руководство гильдией игроку {name}."
+  ],
+  "guild.members.kick": [
+    "移出",
+    "นำออก",
+    "Loại",
+    "Keluarkan",
+    "Expulsar",
+    "Expulsar",
+    "Entfernen",
+    "Исключить"
+  ],
+  "guild.members.kickTitle": [
+    "移出成员",
+    "นำสมาชิกออก",
+    "Loại thành viên",
+    "Keluarkan anggota",
+    "Expulsar miembro",
+    "Expulsar membro",
+    "Mitglied entfernen",
+    "Исключить участника"
+  ],
+  "guild.members.kickConfirm": [
+    "将{name}移出公会。",
+    "นำ {name} ออกจากกิลด์",
+    "Loại {name} khỏi Bang hội.",
+    "Keluarkan {name} dari guild.",
+    "Expulsar a {name} del gremio.",
+    "Expulsar {name} da guilda.",
+    "{name} aus der Gilde entfernen.",
+    "Исключить {name} из гильдии."
+  ],
+  "guild.members.close": [
+    "关闭",
+    "ปิด",
+    "Đóng",
+    "Tutup",
+    "Cerrar",
+    "Fechar",
+    "Schließen",
+    "Закрыть"
+  ],
+  "guild.attendance.summary": [
+    "本周签到{count}/{total}天",
+    "เช็กชื่อสัปดาห์นี้ {count}/{total} วัน",
+    "Điểm danh tuần này {count}/{total} ngày",
+    "Hadir {count}/{total} hari minggu ini",
+    "Asistencia semanal: {count}/{total} días",
+    "Presença semanal: {count}/{total} dias",
+    "Diese Woche {count}/{total} Tage anwesend",
+    "Посещений за неделю: {count}/{total}"
+  ],
+  "guild.attendance.day": [
+    "{day}",
+    "{day}",
+    "{day}",
+    "{day}",
+    "{day}",
+    "{day}",
+    "{day}",
+    "{day}"
+  ],
+  "guild.attendance.today": [
+    "今天",
+    "วันนี้",
+    "Hôm nay",
+    "Hari ini",
+    "Hoy",
+    "Hoje",
+    "Heute",
+    "Сегодня"
+  ],
+  "guild.attendance.stamped": [
+    "已完成",
+    "เสร็จสิ้น",
+    "Hoàn thành",
+    "Selesai",
+    "Completadas",
+    "Concluídas",
+    "Abgeschlossen",
+    "Завершены"
+  ],
+  "guild.attendance.pickGold": [
+    "金币 {value}",
+    "ทอง {value}",
+    "Vàng {value}",
+    "Emas {value}",
+    "Oro {value}",
+    "Ouro {value}",
+    "Gold {value}",
+    "Золото {value}"
+  ],
+  "guild.attendance.pickCheesecake": [
+    "芝士蛋糕 {value}",
+    "ชีสเค้ก {value}",
+    "Bánh phô mai {value}",
+    "Cheesecake {value}",
+    "Tarta de queso {value}",
+    "Cheesecake {value}",
+    "Käsekuchen {value}",
+    "Чизкейк {value}"
+  ],
+  "guild.attendance.gain": [
+    "印章1个 · 繁荣度 +{prosperity} · 贡献 +{contribution} · 公会币 +{coin}",
+    "ตรา 1 ดวง · ความรุ่งเรือง +{prosperity} · ผลงาน +{contribution} · เหรียญกิลด์ +{coin}",
+    "1 dấu · Phồn vinh +{prosperity} · Cống hiến +{contribution} · Xu Bang hội +{coin}",
+    "1 stempel · Kemakmuran +{prosperity} · Kontribusi +{contribution} · Koin guild +{coin}",
+    "1 sello · Prosperidad +{prosperity} · Contribución +{contribution} · Monedas del gremio +{coin}",
+    "1 selo · Prosperidade +{prosperity} · Contribuição +{contribution} · Moedas da guilda +{coin}",
+    "1 Stempel · Wohlstand +{prosperity} · Beitrag +{contribution} · Gildenmünzen +{coin}",
+    "1 отметка · Процветание +{prosperity} · Вклад +{contribution} · Монеты гильдии +{coin}"
+  ],
+  "guild.attendance.weekBonus": [
+    "全勤7天 · 宝石 {gems} · 硬币 {coin}",
+    "ครบ 7 วัน · เจม {gems} · เหรียญ {coin}",
+    "Đủ 7 ngày · Ngọc {gems} · Xu {coin}",
+    "Hadir 7 hari · Permata {gems} · Koin {coin}",
+    "7 días · Gemas {gems} · Monedas {coin}",
+    "7 dias · Gemas {gems} · Moedas {coin}",
+    "Alle 7 Tage · Juwelen {gems} · Münzen {coin}",
+    "Все 7 дней · Самоцветы {gems} · Монеты {coin}"
+  ],
+  "guild.attendance.weekClaimed": [
+    "已领取本周奖励",
+    "รับโบนัสสัปดาห์นี้แล้ว",
+    "Đã nhận thưởng tuần",
+    "Bonus mingguan diklaim",
+    "Bono semanal recibido",
+    "Bônus semanal recebido",
+    "Wochenbonus erhalten",
+    "Недельный бонус получен"
+  ],
+  "guild.attendance.done": [
+    "已签到",
+    "เช็กชื่อแล้ว",
+    "Đã điểm danh",
+    "Kehadiran tercatat",
+    "Asistencia registrada",
+    "Presença registrada",
+    "Anwesenheit erfasst",
+    "Посещение отмечено"
+  ],
+  "guild.attendance.bonus": [
+    "已领取每周签到奖励",
+    "รับโบนัสเช็กชื่อรายสัปดาห์แล้ว",
+    "Đã nhận thưởng điểm danh tuần",
+    "Bonus absensi mingguan diklaim",
+    "Bono de asistencia recibido",
+    "Bônus de presença recebido",
+    "Anwesenheitsbonus erhalten",
+    "Бонус посещаемости получен"
+  ],
+  "guild.day.0": [
+    "周一",
+    "จ.",
+    "T2",
+    "Sen",
+    "Lun",
+    "Seg",
+    "Mo",
+    "Пн"
+  ],
+  "guild.day.1": [
+    "周二",
+    "อ.",
+    "T3",
+    "Sel",
+    "Mar",
+    "Ter",
+    "Di",
+    "Вт"
+  ],
+  "guild.day.2": [
+    "周三",
+    "พ.",
+    "T4",
+    "Rab",
+    "Mié",
+    "Qua",
+    "Mi",
+    "Ср"
+  ],
+  "guild.day.3": [
+    "周四",
+    "พฤ.",
+    "T5",
+    "Kam",
+    "Jue",
+    "Qui",
+    "Do",
+    "Чт"
+  ],
+  "guild.day.4": [
+    "周五",
+    "ศ.",
+    "T6",
+    "Jum",
+    "Vie",
+    "Sex",
+    "Fr",
+    "Пт"
+  ],
+  "guild.day.5": [
+    "周六",
+    "ส.",
+    "T7",
+    "Sab",
+    "Sáb",
+    "Sáb",
+    "Sa",
+    "Сб"
+  ],
+  "guild.day.6": [
+    "周日",
+    "อา.",
+    "CN",
+    "Min",
+    "Dom",
+    "Dom",
+    "So",
+    "Вс"
+  ],
+  "guild.time.hm": [
+    "{h}小时{m}分钟",
+    "{h} ชม. {m} นาที",
+    "{h} giờ {m} phút",
+    "{h} j {m} m",
+    "{h} h {m} min",
+    "{h} h {m} min",
+    "{h} Std. {m} Min.",
+    "{h} ч {m} мин"
+  ],
+  "guild.time.m": [
+    "{m}分钟",
+    "{m} นาที",
+    "{m} phút",
+    "{m} m",
+    "{m} min",
+    "{m} min",
+    "{m} Min.",
+    "{m} мин"
+  ],
+  "guild.shop.coin": [
+    "公会币 {coin}",
+    "เหรียญกิลด์ {coin}",
+    "Xu Bang hội {coin}",
+    "Koin guild {coin}",
+    "Monedas del gremio {coin}",
+    "Moedas da guilda {coin}",
+    "Gildenmünzen {coin}",
+    "Монеты гильдии {coin}"
+  ],
+  "guild.shop.price": [
+    "硬币 {price}",
+    "เหรียญ {price}",
+    "Xu {price}",
+    "Koin {price}",
+    "Monedas {price}",
+    "Moedas {price}",
+    "Münzen {price}",
+    "Монеты {price}"
+  ],
+  "guild.shop.limit": [
+    "本周 {bought}/{limit}",
+    "สัปดาห์นี้ {bought}/{limit}",
+    "Tuần này {bought}/{limit}",
+    "Minggu ini {bought}/{limit}",
+    "Esta semana {bought}/{limit}",
+    "Esta semana {bought}/{limit}",
+    "Diese Woche {bought}/{limit}",
+    "На этой неделе {bought}/{limit}"
+  ],
+  "guild.shop.buy": [
+    "购买",
+    "ซื้อ",
+    "Mua",
+    "Beli",
+    "Comprar",
+    "Comprar",
+    "Kaufen",
+    "Купить"
+  ],
+  "guild.shop.bought": [
+    "已购买",
+    "ซื้อแล้ว",
+    "Đã mua",
+    "Dibeli",
+    "Comprado",
+    "Comprado",
+    "Gekauft",
+    "Куплено"
+  ],
+  "guild.shop.product.guild-gold": [
+    "金币礼包",
+    "แพ็กทอง",
+    "Gói Vàng",
+    "Bundel Emas",
+    "Paquete de oro",
+    "Pacote de ouro",
+    "Goldpaket",
+    "Набор золота"
+  ],
+  "guild.shop.product.guild-cheesecake": [
+    "芝士蛋糕礼包",
+    "แพ็กชีสเค้ก",
+    "Gói Bánh phô mai",
+    "Bundel Cheesecake",
+    "Paquete de tarta de queso",
+    "Pacote de cheesecake",
+    "Käsekuchenpaket",
+    "Набор чизкейков"
+  ],
+  "guild.shop.product.guild-tonic": [
+    "能量饮料",
+    "เครื่องดื่มชูกำลัง",
+    "Nước tăng lực",
+    "Minuman energi",
+    "Bebida energética",
+    "Bebida energética",
+    "Energydrink",
+    "Энергетик"
+  ],
+  "guild.shop.grantGold": [
+    "金币 {value}",
+    "ทอง {value}",
+    "Vàng {value}",
+    "Emas {value}",
+    "Oro {value}",
+    "Ouro {value}",
+    "Gold {value}",
+    "Золото {value}"
+  ],
+  "guild.shop.grantCheesecake": [
+    "芝士蛋糕 {value}",
+    "ชีสเค้ก {value}",
+    "Bánh phô mai {value}",
+    "Cheesecake {value}",
+    "Tarta de queso {value}",
+    "Cheesecake {value}",
+    "Käsekuchen {value}",
+    "Чизкейк {value}"
+  ],
+  "guild.shop.grantTonic": [
+    "能量饮料 ×{value}",
+    "เครื่องดื่มชูกำลัง ×{value}",
+    "Nước tăng lực ×{value}",
+    "Minuman energi ×{value}",
+    "Bebidas energéticas ×{value}",
+    "Bebidas energéticas ×{value}",
+    "Energydrinks ×{value}",
+    "Энергетики ×{value}"
+  ],
+  "guild.error.generic": [
+    "暂时无法使用公会",
+    "ไม่สามารถใช้กิลด์ได้ในขณะนี้",
+    "Hiện không thể sử dụng Bang hội",
+    "Guild belum tersedia",
+    "Gremios no disponibles ahora",
+    "Guildas indisponíveis agora",
+    "Gilden derzeit nicht verfügbar",
+    "Гильдии сейчас недоступны"
+  ],
+  "guild.error.UNAVAILABLE": [
+    "暂时无法使用公会",
+    "ไม่สามารถใช้กิลด์ได้ในขณะนี้",
+    "Hiện không thể sử dụng Bang hội",
+    "Guild belum tersedia",
+    "Gremios no disponibles ahora",
+    "Guildas indisponíveis agora",
+    "Gilden derzeit nicht verfügbar",
+    "Гильдии сейчас недоступны"
+  ],
+  "guild.error.LEVEL_LOCKED": [
+    "研究员等级不足",
+    "เลเวลนักวิจัยไม่เพียงพอ",
+    "Cấp Nhà nghiên cứu chưa đủ",
+    "Level Periset terlalu rendah",
+    "Nivel de Investigador insuficiente",
+    "Nível de Pesquisador insuficiente",
+    "Forscherstufe zu niedrig",
+    "Недостаточный уровень исследователя"
+  ],
+  "guild.error.ALREADY_IN_GUILD": [
+    "已加入公会",
+    "คุณมีกิลด์อยู่แล้ว",
+    "Bạn đã có Bang hội",
+    "Sudah bergabung dengan guild",
+    "Ya perteneces a un gremio",
+    "Você já está em uma guilda",
+    "Du bist bereits in einer Gilde",
+    "Вы уже в гильдии"
+  ],
+  "guild.error.NOT_IN_GUILD": [
+    "尚未加入公会",
+    "คุณยังไม่มีกิลด์",
+    "Bạn chưa có Bang hội",
+    "Belum bergabung dengan guild",
+    "No perteneces a un gremio",
+    "Você não está em uma guilda",
+    "Du bist in keiner Gilde",
+    "Вы не в гильдии"
+  ],
+  "guild.error.NAME_INVALID": [
+    "无法使用此名称",
+    "ใช้ชื่อนี้ไม่ได้",
+    "Không thể dùng tên này",
+    "Nama ini tidak dapat digunakan",
+    "No se puede usar este nombre",
+    "Este nome não pode ser usado",
+    "Dieser Name ist nicht erlaubt",
+    "Это название недопустимо"
+  ],
+  "guild.error.NAME_TAKEN": [
+    "名称已被使用",
+    "ชื่อนี้ถูกใช้แล้ว",
+    "Tên đã được dùng",
+    "Nama sudah digunakan",
+    "Este nombre ya está en uso",
+    "Este nome já está em uso",
+    "Dieser Name ist bereits vergeben",
+    "Это название уже занято"
+  ],
+  "guild.error.NAME_BLOCKED": [
+    "无法使用此名称",
+    "ใช้ชื่อนี้ไม่ได้",
+    "Không thể dùng tên này",
+    "Nama ini tidak dapat digunakan",
+    "No se puede usar este nombre",
+    "Este nome não pode ser usado",
+    "Dieser Name ist nicht erlaubt",
+    "Это название недопустимо"
+  ],
+  "guild.error.BADGE_INVALID": [
+    "无法选择此徽章",
+    "เลือกตรานี้ไม่ได้",
+    "Không thể chọn huy hiệu này",
+    "Lencana tidak dapat dipilih",
+    "No se puede elegir este emblema",
+    "Este emblema não pode ser escolhido",
+    "Dieses Abzeichen ist nicht verfügbar",
+    "Эту эмблему выбрать нельзя"
+  ],
+  "guild.error.GUILD_NOT_FOUND": [
+    "找不到公会",
+    "ไม่พบกิลด์",
+    "Không tìm thấy Bang hội",
+    "Guild tidak ditemukan",
+    "Gremio no encontrado",
+    "Guilda não encontrada",
+    "Gilde nicht gefunden",
+    "Гильдия не найдена"
+  ],
+  "guild.error.GUILD_FULL": [
+    "公会已满员",
+    "กิลด์เต็มแล้ว",
+    "Bang hội đã đầy",
+    "Guild sudah penuh",
+    "El gremio está completo",
+    "A guilda está lotada",
+    "Die Gilde ist voll",
+    "В гильдии нет мест"
+  ],
+  "guild.error.LEAVE_COOLDOWN": [
+    "退出公会后请稍候",
+    "กรุณารอหลังออกจากกิลด์",
+    "Hãy chờ sau khi rời Bang hội",
+    "Tunggu setelah keluar guild",
+    "Espera tras salir de un gremio",
+    "Aguarde após sair de uma guilda",
+    "Nach dem Austritt aus der Gilde bitte warten",
+    "Подождите после выхода из гильдии"
+  ],
+  "guild.error.REQUEST_EXISTS": [
+    "已提交申请",
+    "คุณส่งคำขอแล้ว",
+    "Bạn đã gửi đơn",
+    "Sudah mengajukan permohonan",
+    "Ya enviaste una solicitud",
+    "Você já enviou uma solicitação",
+    "Anfrage bereits gesendet",
+    "Вы уже подали заявку"
+  ],
+  "guild.error.REQUEST_NOT_FOUND": [
+    "找不到申请",
+    "ไม่พบคำขอ",
+    "Không tìm thấy đơn",
+    "Permohonan tidak ditemukan",
+    "Solicitud no encontrada",
+    "Solicitação não encontrada",
+    "Anfrage nicht gefunden",
+    "Заявка не найдена"
+  ],
+  "guild.error.MEMBER_NOT_FOUND": [
+    "找不到成员",
+    "ไม่พบสมาชิก",
+    "Không tìm thấy thành viên",
+    "Anggota tidak ditemukan",
+    "Miembro no encontrado",
+    "Membro não encontrado",
+    "Mitglied nicht gefunden",
+    "Участник не найден"
+  ],
+  "guild.error.NO_PERMISSION": [
+    "没有权限",
+    "ไม่มีสิทธิ์",
+    "Bạn không có quyền",
+    "Tidak memiliki izin",
+    "No tienes permiso",
+    "Você não tem permissão",
+    "Keine Berechtigung",
+    "Недостаточно прав"
+  ],
+  "guild.error.ROLE_FULL": [
+    "该职位已满",
+    "ตำแหน่งนี้เต็มแล้ว",
+    "Chức vụ này đã đủ người",
+    "Posisi ini sudah penuh",
+    "No hay plazas para este cargo",
+    "Este cargo está lotado",
+    "Für diesen Rang ist kein Platz frei",
+    "Для этой должности нет мест"
+  ],
+  "guild.error.INVALID_TARGET": [
+    "无法对该成员执行此操作",
+    "ทำกับสมาชิกนี้ไม่ได้",
+    "Không thể áp dụng cho thành viên này",
+    "Tidak bisa dilakukan pada anggota ini",
+    "No puedes hacerlo a este miembro",
+    "Não pode fazer isso com este membro",
+    "Bei diesem Mitglied nicht möglich",
+    "Нельзя применить к этому участнику"
+  ],
+  "guild.error.LEADER_CANNOT_LEAVE": [
+    "仍有成员时请先转让公会会长再退出",
+    "หากยังมีสมาชิกกิลด์ต้องโอนหัวหน้าก่อนออก",
+    "Hãy chuyển quyền Bang hội trước khi rời nếu còn thành viên",
+    "Alihkan ketua guild sebelum keluar jika masih ada anggota",
+    "Transfiere el liderazgo del gremio antes de salir si quedan miembros",
+    "Transfira a liderança da guilda antes de sair se houver membros",
+    "Bei verbleibenden Gildenmitgliedern erst die Leitung übertragen",
+    "Перед выходом из гильдии передайте руководство, если остались участники"
+  ],
+  "guild.error.ALREADY_STAMPED": [
+    "今天已签到",
+    "วันนี้เช็กชื่อแล้ว",
+    "Hôm nay đã điểm danh",
+    "Hari ini sudah hadir",
+    "Ya registraste la asistencia hoy",
+    "Já registrou presença hoje",
+    "Heute bereits anwesend gemeldet",
+    "Сегодня вы уже отметились"
+  ],
+  "guild.error.PRODUCT_NOT_FOUND": [
+    "找不到商品",
+    "ไม่พบสินค้า",
+    "Không tìm thấy sản phẩm",
+    "Produk tidak ditemukan",
+    "Producto no encontrado",
+    "Produto não encontrado",
+    "Artikel nicht gefunden",
+    "Товар не найден"
+  ],
+  "guild.error.PRODUCT_LIMIT": [
+    "已达本周购买上限",
+    "ถึงขีดจำกัดซื้อรายสัปดาห์แล้ว",
+    "Đã hết lượt mua tuần này",
+    "Batas pembelian mingguan tercapai",
+    "Límite semanal de compra alcanzado",
+    "Limite semanal de compra atingido",
+    "Wöchentliches Kauflimit erreicht",
+    "Достигнут недельный лимит покупок"
+  ],
+  "guild.error.INSUFFICIENT_COINS": [
+    "公会币不足",
+    "เหรียญกิลด์ไม่พอ",
+    "Không đủ Xu Bang hội",
+    "Koin guild tidak cukup",
+    "Monedas del gremio insuficientes",
+    "Moedas da guilda insuficientes",
+    "Nicht genug Gildenmünzen",
+    "Недостаточно монет гильдии"
+  ],
+  "guild.error.INSUFFICIENT_GEMS": [
+    "宝石不足",
+    "เจมไม่พอ",
+    "Không đủ Ngọc",
+    "Permata tidak cukup",
+    "Gemas insuficientes",
+    "Gemas insuficientes",
+    "Nicht genug Juwelen",
+    "Недостаточно самоцветов"
+  ],
+  "guild.error.INVALID_REQUEST": [
+    "请求无效",
+    "คำขอไม่ถูกต้อง",
+    "Yêu cầu không hợp lệ",
+    "Permintaan tidak valid",
+    "Solicitud no válida",
+    "Solicitação inválida",
+    "Ungültige Anfrage",
+    "Некорректный запрос"
+  ]
+}

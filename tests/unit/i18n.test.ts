@@ -70,6 +70,14 @@ describe("자리 표시", () => {
 });
 
 describe("번역 표", () => {
+  it("은 선택 가능한 모든 언어에 전체 UI 문구를 갖춘다", () => {
+    // 대체 한국어가 화면을 살려 주더라도, 번역 누락 자체가 정상인 것은 아니다.
+    for (const [path, catalog] of Object.entries(CATALOGS)) {
+      const missing = Object.keys(KO).filter((key) => !(key in catalog));
+      expect(missing, path).toEqual([]);
+    }
+  });
+
   it("은 한국어에 없는 키를 만들지 않는다", () => {
     // 한국어 표가 원본이라, 여기 없는 키는 화면이 부르지 않으므로 영영 보이지 않는다.
     for (const [path, catalog] of Object.entries(CATALOGS)) {

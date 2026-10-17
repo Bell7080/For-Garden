@@ -108,4 +108,5 @@ export const SETTINGS_RU = {
   "settings.debug.maxLevelDone": "Уровень игрока повышен до LV.{level}. Вернитесь в лобби, чтобы увидеть открывшийся контент.",
   "settings.debug.unlockStories": "Связь 10 · Открыть все вопросы и истории",
   "settings.debug.unlockedStories": "Связь повышена у персонажей: {count}. Все вопросы наблюдения и истории Любимчика открыты.",
+  "settings.account.errorCode": "Код ошибки: {code}",
 } as const;

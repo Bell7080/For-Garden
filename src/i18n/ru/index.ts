@@ -27,4 +27,14 @@ import { BOUNTY_RU } from "./bounty";
 import { DUNGEON_RU } from "./dungeon";
 import { DUEL_RU } from "./duel";
 
-export default { ...SETTINGS_RU, ...LOBBY_RU, ...COMMON_RU, ...INFO_RU, ...STATUS_RU, ...LAB_RU, ...EXPEDITION_RU, ...BATTLE_RU, ...CAKE_OPERATION_RU, ...EXCAVATION_RU, ...AUGMENT_RU, ...FRIENDS_RU, ...RUNE_RU, ...PARTY_RU, ...EXPEDITION_REWARD_RU, ...SAVE_CONFLICT_RU, ...INTERACTION_RU, ...SHOP_RU, ...MISSIONS_RU, ...INVENTORY_RU, ...MISC_RU, ...SKILL_RU, ...SYSTEM_RU, ...RAID_RU, ...BOUNTY_RU, ...DUNGEON_RU, ...DUEL_RU };
+import { GUILD_RU } from "./guild";
+
+import { SUPPORT_RU } from "./support";
+
+import { ACHIEVEMENT_RU } from "./achievement";
+
+import { RECOLLECTION_RU } from "./recollection";
+
+import { DIALOGUE_RU } from "./dialogue";
+
+export default { ...DIALOGUE_RU, ...RECOLLECTION_RU, ...ACHIEVEMENT_RU, ...SUPPORT_RU, ...GUILD_RU, ...SETTINGS_RU, ...LOBBY_RU, ...COMMON_RU, ...INFO_RU, ...STATUS_RU, ...LAB_RU, ...EXPEDITION_RU, ...BATTLE_RU, ...CAKE_OPERATION_RU, ...EXCAVATION_RU, ...AUGMENT_RU, ...FRIENDS_RU, ...RUNE_RU, ...PARTY_RU, ...EXPEDITION_REWARD_RU, ...SAVE_CONFLICT_RU, ...INTERACTION_RU, ...SHOP_RU, ...MISSIONS_RU, ...INVENTORY_RU, ...MISC_RU, ...SKILL_RU, ...SYSTEM_RU, ...RAID_RU, ...BOUNTY_RU, ...DUNGEON_RU, ...DUEL_RU };

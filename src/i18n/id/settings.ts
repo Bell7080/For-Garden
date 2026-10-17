@@ -108,4 +108,5 @@ export const SETTINGS_ID = {
   "settings.debug.maxLevelDone": "Level pemain dinaikkan ke LV.{level}. Kembali ke lobi untuk melihat konten yang terbuka.",
   "settings.debug.unlockStories": "Ikatan 10 · Buka semua pertanyaan/cerita",
   "settings.debug.unlockedStories": "{count} karakter dinaikkan Ikatannya. Semua pertanyaan observasi dan cerita Favorit telah terbuka.",
+  "settings.account.errorCode": "Kode kesalahan: {code}",
 } as const;

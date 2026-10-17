@@ -78,9 +78,9 @@ export const SYSTEM_JA = {
   "error.save.invalid": "サーバーのセーブを検証できません。",
   "error.save.mergeInvalid": "サーバーの統合セーブを検証できません。",
   "error.expedition.submit": "スコアを送信できませんでした。",
-  "error.expedition.settle": "スコアは送信しましたが精算を終えられませんでした。",
+  "error.expedition.settle": "スコアは送信しましたが、遠征報酬を受け取れませんでした。再試行してください。",
   "error.persist.state": "ゲームの状態を保存できませんでした。",
   "error.persist.expeditionScore": "遠征スコアを保存できませんでした。",
   "mail.subscription.title": "{product} デイリー補給",
-  "mail.subscription.body": "本日のログイン報酬です。メールの保管期限内にチケットをお受け取りください。",
+  "mail.subscription.body": "本日のログイン報酬です。保管期限内にメールからチケットを受け取ってください。",
 } as const;

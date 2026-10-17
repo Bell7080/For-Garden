@@ -689,16 +689,7 @@
 "Die Punktzahl konnte nicht übermittelt werden.",
 "Не удалось отправить счёт."
 ],
-"error.expedition.settle": [
-"分数已提交，但结算未完成。",
-"ส่งคะแนนแล้วแต่สรุปผลไม่เสร็จ",
-"Đã gửi điểm nhưng quyết toán chưa xong.",
-"Skor terkirim tetapi penyelesaian belum tuntas.",
-"Se envió la puntuación pero la liquidación no terminó.",
-"A pontuação foi enviada, mas o acerto não terminou.",
-"Die Punkte wurden übermittelt, aber die Abrechnung wurde nicht abgeschlossen.",
-"Счёт отправлен, но расчёт не завершён."
-],
+"error.expedition.settle": ["分数已提交，但未能领取远征奖励。请重试。", "ส่งคะแนนแล้วแต่รับรางวัลออกสำรวจไม่ได้ กรุณาลองใหม่", "Đã gửi điểm nhưng chưa nhận được thưởng Viễn chinh. Hãy thử lại.", "Skor terkirim, tetapi hadiah Ekspedisi belum diterima. Coba lagi.", "Puntuación enviada, pero no se recibieron las recompensas de expedición. Inténtalo de nuevo.", "Pontuação enviada, mas as recompensas da expedição não foram recebidas. Tente novamente.", "Punkte gesendet, aber Expeditionsbelohnungen konnten nicht erhalten werden. Bitte erneut versuchen.", "Очки отправлены, но награды экспедиции не получены. Попробуйте ещё раз."],
 "error.persist.state": [
 "无法保存游戏状态。",
 "บันทึกสถานะเกมไม่ได้",
@@ -738,5 +729,7 @@
 "{amount} {item}",
 "{amount} {item}",
 "{amount} {item}"
-]
+],
+  "mail.subscription.title": ["{product}每日补给", "เสบียงประจำวัน {product}", "Tiếp tế hằng ngày {product}", "Suplai harian {product}", "Suministro diario de {product}", "Suprimento diário de {product}", "Täglicher Vorrat: {product}", "Ежедневное снабжение {product}"],
+  "mail.subscription.body": ["今天的登录奖励。请在邮件过期前领取票券。", "รางวัลเข้าสู่ระบบวันนี้ รับตั๋วก่อนจดหมายหมดอายุ", "Thưởng đăng nhập hôm nay. Nhận vé trước khi Thư hết hạn.", "Hadiah login harianmu. Ambil tiket sebelum Surat kedaluwarsa.", "Tu recompensa diaria. Recoge el boleto antes de que caduque el correo.", "Sua recompensa diária. Receba o bilhete antes que o correio expire.", "Deine tägliche Anmeldebelohnung. Ticket vor Ablauf der Post abholen.", "Награда за ежедневный вход. Заберите билет до истечения срока почты."]
 }

@@ -71,9 +71,9 @@ export const SYSTEM_PT_BR = {
   "error.save.invalid": "Não foi possível verificar o salvamento do servidor.",
   "error.save.mergeInvalid": "Não foi possível verificar o salvamento mesclado do servidor.",
   "error.expedition.submit": "Não foi possível enviar a pontuação.",
-  "error.expedition.settle": "A pontuação foi enviada, mas o acerto não terminou.",
+  "error.expedition.settle": "Pontuação enviada, mas as recompensas da expedição não foram recebidas. Tente novamente.",
   "error.persist.state": "Não foi possível salvar o estado do jogo.",
   "error.persist.expeditionScore": "Não foi possível salvar a pontuação da expedição.",
   "mail.subscription.title": "Suprimento diário de {product}",
-  "mail.subscription.body": "Sua recompensa diária de login. Resgate seu bilhete antes de o correio expirar.",
+  "mail.subscription.body": "Sua recompensa diária. Receba o bilhete antes que o correio expire.",
 } as const;

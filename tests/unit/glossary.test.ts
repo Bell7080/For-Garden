@@ -53,8 +53,11 @@ describe("용어 사전", () => {
  * 있는지로 본다 — `Restore`는 `Restoration`과 같은 어간이다. CJK에는 아무 영향이 없다.
  */
 const usesForm = (translated: string, expected: string): boolean => {
-  const stem = expected.toLowerCase().replace(/e$/, "");
-  return translated.toLowerCase().includes(stem);
+  // 스페인어 espécimen → especímenes처럼 복수형에서 강세 위치가 바뀌어도 같은 용어다.
+  const latin = /\p{Script=Latin}/u.test(expected);
+  const normalize = (value: string): string => latin ? value.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "") : value.toLowerCase();
+  const stem = normalize(expected).replace(/e$/, "");
+  return normalize(translated).includes(stem);
 };
 
 describe("번역 표의 용어", () => {

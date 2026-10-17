@@ -64,4 +64,6 @@ export const STATUS_JA = {
   "status.healCut.detail": "受ける回復 −{percent}% · 残り{time}",
   "status.sunken": "沈む重み",
   "status.sunken.detail": "移動・攻撃速度 −{percent}% · 残り{time}",
+  "status.echo": "反響",
+  "status.echo.detail": "残り{time}",
 } as const;

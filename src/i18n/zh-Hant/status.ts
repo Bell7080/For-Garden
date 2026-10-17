@@ -62,4 +62,6 @@ export const STATUS_ZH_HANT = {
   "status.healCut.detail": "受到的治療 −{percent}% · 剩餘{time}",
   "status.sunken": "下沉之重",
   "status.sunken.detail": "移動與攻擊速度 −{percent}% · 剩餘{time}",
+  "status.echo": "迴響",
+  "status.echo.detail": "剩餘{time}",
 } as const;

@@ -71,7 +71,7 @@ export const SYSTEM_EN = {
   "error.save.invalid": "The server save could not be verified.",
   "error.save.mergeInvalid": "The merged server save could not be verified.",
   "error.expedition.submit": "Could not submit the score.",
-  "error.expedition.settle": "The score was submitted but the settlement did not finish.",
+  "error.expedition.settle": "Score submitted, but rewards could not be claimed. Please try again.",
   "error.persist.state": "Could not save the game state.",
   "error.persist.expeditionScore": "Could not save the expedition score.",
   "mail.subscription.title": "{product} daily supply",

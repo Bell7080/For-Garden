@@ -312,7 +312,7 @@ export class ExpeditionScene extends Phaser.Scene {
     if (run.pendingAugmentReward) this.openAugmentReward();
     // 포기는 전리품 판(획득 전리품 + 점수) 위, 화면 우상단 구석에 작게 둔다 — 판과 겹치지
     // 않으면서도 작고 붉은 파괴 조작이라 손이 쉽게 닿지 않게 한다.
-    new Button(this, BASE_WIDTH - 90, 46, { width: 140, height: 44, label: t("expedition.abandon"), fontSize: 16, fill: 0x431d20, accentColor: COLOR.danger, accentTextColor: COLOR.dangerText, onClick: () => this.confirmAbandon() });
+    new Button(this, BASE_WIDTH - 120, 50, { width: 200, height: 64, label: t("expedition.abandon"), fontSize: 28, fill: 0x431d20, accentColor: COLOR.danger, accentTextColor: COLOR.dangerText, onClick: () => this.confirmAbandon() });
   }
 
   /** 런에서만 누적되는 네 재화를 보상 팝업과 같은 액자·우하단 수량 문법으로 묶는다. */
@@ -630,8 +630,13 @@ export class ExpeditionScene extends Phaser.Scene {
   /** 임시 보상과 포기 결과를 먼저 보여 준 뒤 서버 원자 정산만 호출한다. */
   private confirmAbandon(): void {
     const run = expeditionManager.status().run; if (!run) return;
-    const reward = Object.values(run.pendingRewards).reduce((sum, amount) => sum + Math.floor(amount), 0);
-    this.popups.confirm({ title: t("expedition.abandon.title"), message: t("expedition.abandon.body", { reward: reward.toLocaleString() }), confirmLabel: t("expedition.abandon.confirm"), destructive: true }, async () => {
+    const rewards = currencyRecordToRewardItems(run.pendingRewards);
+    this.popups.confirm({
+      title: t("expedition.abandon.title"), message: t("expedition.abandon.body"),
+      // 확인창의 공용 재화 액자는 소비·획득 모두 수량을 그대로 표시한다. 종류가 다른 재화는 합치지 않는다.
+      costs: rewards.flatMap((item) => typeof item.icon === "string" ? [{ iconKey: item.icon, amount: item.amount }] : []),
+      confirmLabel: t("expedition.abandon.confirm"), destructive: true,
+    }, async () => {
       const settlement = await withBusy(this, gameApi.settleExpeditionRun({ runId: run.runId, settlementId: `${run.runId}:abandon`, outcome: "abandoned" }));
       // 지갑 상한 적용 뒤 실제 들어온 양만 영수증에 표시하고 확인 후 로비로 돌아간다.
       openRewardPopup(this, this.popups, { title: t("expedition.abandon.settle"), items: currencyRecordToRewardItems(settlement.granted), onConfirm: () => startScene(this, "lobby") });

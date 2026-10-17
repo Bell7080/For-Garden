@@ -1,3 +1,4 @@
+import { STARTING_STAMINA } from "../../src/core/playerLevel";
 import { describe, it, expect } from "vitest";
 import { createDefaultSession } from "../../src/state/session";
 import {
@@ -290,7 +291,7 @@ describe("운영 HTTP 처리기의 전투·멱등 경계", () => {
     ).toBe(client.state.phase === "victory");
     expect(
       (result.state as { wallet: { stamina: number } }).wallet.stamina,
-    ).toBeLessThan(60);
+    ).toBeLessThan(STARTING_STAMINA);
     await expect(call("completeStage", ["1-1", true])).rejects.toThrow();
   });
   it("쓰기 키 누락·다른 메서드/본문에 같은 키 재사용을 거절한다", async () => {

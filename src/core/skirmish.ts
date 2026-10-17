@@ -9,7 +9,7 @@ import { isBreakthroughSlotOpen, type BreakthroughSlot } from "./relicProgressio
 import { ENCOUNTER_ROLE, type EncounterDamageReduction, type EncounterTenacity } from "./levelDesign";
 import { augmentAppliesTo, bleedOnAttackEffect, conditionalAttackPowerMultiplier, expeditionAugmentStatMultipliers, flatStatPoints, highHpDamageMultiplier, sameTargetStreakMultiplier, type ExpeditionAugmentEffect, type ExpeditionAugmentTrigger, type ExpeditionTriggeredEffect } from "./expeditionAugments";
 import type { AttackSkill, BasicAttack, BasicAttackStep, BreakthroughEffects, CombatStatusEffect, FerocityTrait, ReachTier, RelicDef, Side, Skill, Stats, TeamBuff } from "./types";
-import { ULTIMATE_ENERGY_MAX } from "./ultimate";
+import { ULTIMATE_ENERGY_MAX, ultimateEnergyCap } from "./ultimate";
 import { deriveSummonStats } from "./summonStats";
 import { PUP } from "./pup";
 import { restoreCueIntensity, stealthTransition, type CombatEffectCue } from "./combatEffects";
@@ -5689,14 +5689,14 @@ function gainEnergy(fighter: Fighter, state?: SkirmishState): void {
   // 보스의 체력 단계형 궁극기는 전투 시작부터 미리 충전되지 않도록 적중 순간의 현재 HP를 확인한다.
   if (chargeThreshold !== undefined && fighter.hp / fighter.maxHp * 100 > chargeThreshold) return;
   const rally = tailwindRally(state, fighter.side).energy;
-  fighter.energy = Math.min(ULTIMATE_ENERGY_MAX, fighter.energy + fighter.def.stats.energyGain + rally);
+  fighter.energy = Math.min(ultimateEnergyCap(fighter), fighter.energy + fighter.def.stats.energyGain + rally);
 }
 
 /** 체력 단계형 궁극기의 충전 문턱을 지켜 게이지를 더한다. 아군에게 게이지를 나눠 주는 모든 경로가 이 함수 하나를 지난다. */
 function giveEnergy(ally: Fighter, amount: number): void {
   const threshold = ally.def.ultimate.chargeStartsAtHpPercent;
   if (threshold !== undefined && ally.hp / ally.maxHp * 100 > threshold) return;
-  ally.energy = Math.min(ULTIMATE_ENERGY_MAX, ally.energy + amount);
+  ally.energy = Math.min(ultimateEnergyCap(ally), ally.energy + amount);
 }
 
 /** 기본 공격 한 번이 생존 아군 전체에게 나눠 주는 궁극기 게이지다. 시전자 자신도 포함한다. */
@@ -5869,7 +5869,7 @@ function grantDuoCharge(attacker: Fighter, skill: Skill, state: SkirmishState, e
   if (duo === undefined || !isFighterAlive(duo)) return;
   const threshold = duo.def.ultimate.chargeStartsAtHpPercent;
   if (charge.energy > 0 && (threshold === undefined || duo.hp / duo.maxHp * 100 <= threshold)) {
-    duo.energy = Math.min(ULTIMATE_ENERGY_MAX, duo.energy + charge.energy);
+    duo.energy = Math.min(ultimateEnergyCap(duo), duo.energy + charge.energy);
   }
   if (charge.ferocity > 0) gainFerocity(duo, charge.ferocity, state, events);
 }
@@ -9177,7 +9177,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       const passive = fighter.def.passive;
       if (passive.kind === "tagAndRun") {
         if (passive.moveEnergyPerSecond) {
-          fighter.energy = Math.min(ULTIMATE_ENERGY_MAX, fighter.energy + passive.moveEnergyPerSecond * dt);
+          fighter.energy = Math.min(ultimateEnergyCap(fighter), fighter.energy + passive.moveEnergyPerSecond * dt);
         }
         if (passive.moveFerocityPerSecond) gainFerocity(fighter, passive.moveFerocityPerSecond * dt, state, events);
       }

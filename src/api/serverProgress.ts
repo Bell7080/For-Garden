@@ -3,17 +3,21 @@
  * 이후 모든 조작이 `/api/game`을 지난다. 연결할 서버가 없는 빌드(설정·보안 저장소 없음, E2E)는
  * 아무것도 하지 않고 이 기기의 임시 구현에 머문다.
  *
- * - 처음 연결(서버에 저장이 없음): 이 기기의 진행을 그대로 올려 서버 계정의 시작점으로 삼는다.
+ * - 정식 빌드: 로컬 업로드 없이 서버가 새 계정의 기본 상태를 생성한다.
+ * - 개발/QA 연결 흐름: 기존 충돌 선택 경로를 유지한다. 운영 DB의 클라이언트 업로드 권한은 닫혀 있다.
  * - 이 기기가 이미 이 계정과 연결된 적이 있음: 서버 저장을 그대로 받는다(서버가 진실이다).
  * - 이 기기에 아직 연결된 적 없는 진행이 있고 서버에도 다른 진행이 있음: 자동으로 덮어쓰지 않고 고르게 한다.
  * 기기 값(소리·그래픽·글자 크기·언어)은 어느 쪽이든 이 기기 것을 지킨다(`mergeServerSettings`).
  */
+import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { mergeServerSettings } from "../core/settingsOwnership";
 import { session, type Session } from "../state/session";
 import type { SaveManager } from "../state/SaveManager";
 import type { AccountApi, AccountFailureCode } from "./AccountApi";
 import { AccountSaveSync, type SaveSyncChoice } from "./AccountSaveSync";
 import { installGameApi, signalRemoteMissionNotice } from "./FakeServer";
+import { installSocialApi } from "./FakeSocialServer";
+import { createRemoteSocialApi } from "./RemoteSocialApi";
 import { createRemoteGameApi } from "./RemoteGameApi";
 import type { GameApi } from "./contracts";
 
@@ -63,12 +67,25 @@ export function applyServerState(target: Session, next: Session, saves: Pick<Sav
 
 export async function connectServerProgress(deps: ServerProgressDeps): Promise<ServerProgressResult> {
   const account = deps.account;
-  if (!account) return { ok: true, mode: "local" };
+  if (!account) return !QA_TOOLS_ENABLED ? { ok: false, code: "unsupported" } : { ok: true, mode: "local" };
   const target = deps.target ?? session;
   const install = deps.install ?? installGameApi;
 
   const userId = await account.userId();
   if (!userId) return { ok: false, code: "network-error" };
+
+  // 운영 서버는 로컬 세이브 업로드로 시작하지 않는다. 첫 계정도 서버가 기본 상태를 생성한다.
+  if (!QA_TOOLS_ENABLED) {
+    const remote=createRemoteGameApi({getAccessToken:()=>account.accessToken(),applyState:next=>{applyServerState(target,next,deps.saves);signalRemoteMissionNotice(target);},fetchImpl:deps.fetchImpl});
+    try { await remote.getPlayerState(); }
+    catch { return {ok:false,code:"network-error"}; }
+    install(remote);
+    const social=createRemoteSocialApi({getAccessToken:()=>account.accessToken(),fetchImpl:deps.fetchImpl});
+    installSocialApi(social);
+    void social.getRequests().catch(()=>undefined);
+    deps.marker.set(userId);
+    return {ok:true,mode:"server"};
+  }
 
   const meta = await account.getRemoteSaveMetadata();
   if (!meta.ok) return meta;
@@ -94,5 +111,6 @@ export async function connectServerProgress(deps: ServerProgressDeps): Promise<S
     applyState: (next) => { applyServerState(target, next, deps.saves); signalRemoteMissionNotice(target); },
     ...(deps.fetchImpl ? { fetchImpl: deps.fetchImpl } : {}),
   }));
+  installSocialApi(createRemoteSocialApi({ getAccessToken: () => account.accessToken(), fetchImpl: deps.fetchImpl }));
   return { ok: true, mode: "server" };
 }

@@ -136,6 +136,7 @@ export interface StageBattleInputDto {
  * 체력을 이어받지 않고 늘 온전한 상태로 시작하기 때문이다.
  */
 export interface RaidBattleInputDto {
+  replaySeed?: string;
   replayVersion?: 2;
   relics?: readonly { relicId: string; snapshot: ExpeditionRelicSnapshot }[];
   mode: "raid";

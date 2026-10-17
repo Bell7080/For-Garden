@@ -1,3 +1,4 @@
+import type { SharedRaidContext } from "../server/sharedRaids";
 import { serverNow } from "./serverClock";
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { bannerAcceptsCount, canPull, pull, resolveAcquisitions, spend } from "../core/gacha";
@@ -120,6 +121,8 @@ export const MAX_RUNE_NAME_LENGTH = 20;
 /** FakeServer의 지연과 난수원을 테스트에서 결정적으로 바꾸기 위한 선택 설정이다. */
 export interface FakeServerOptions {
   latencyMs?: number;
+  /** 실제 DB의 공유 체력·참가자 스냅샷. 서버 호출 단위에서만 주입한다. */
+  raidContext?: SharedRaidContext;
   random?: () => number;
   /** 실제 서버 시각 대신 테스트에서 UTC 경계를 주입하는 날짜 공급자다. */
   now?: () => Date;
@@ -141,6 +144,9 @@ interface StaminaSpend {
 }
 
 export class FakeServer implements GameApi {
+  /** 로컬 QA는 권위 영수증을 흉내 내지 않는다. 운영 HTTP 처리기만 발급/검증한다. */
+  async prepareCombat(_request: import("../core/combatProtocol").CombatPrepare): Promise<import("../core/combatProtocol").CombatLease | null> { return null; }
+  async finishCombat(_request: import("../core/combatProtocol").CombatProof): Promise<import("../core/combatProtocol").CombatVerdict | null> { return null; }
   /** 완료 수령 requestId의 최초 응답을 보존해 네트워크 재시도와 연타를 같은 영수증으로 묶는다. */
   private readonly interactionClaimResults = new Map<string, ClaimInteractionDispatchResponse>();
   /** 같은 밀리초에 출발한 파견끼리도 id가 갈리게 하는 증가 번호다. */
@@ -148,6 +154,7 @@ export class FakeServer implements GameApi {
   /** 실제 서버의 고유 requestId 영수증과 기간별 사용량 테이블을 흉내 낸다. */
   /** 임시 서버에는 결투장 백엔드가 없으므로 티어를 합성하지 않고 명시적으로 미제공한다. */
   async getAsyncArenaServerState(): Promise<null> { return null; }
+  private readonly raidContext?: SharedRaidContext;
   private readonly latencyMs: number;
   private readonly random: () => number;
   private readonly now: () => Date;
@@ -213,6 +220,12 @@ export class FakeServer implements GameApi {
     this.verifyReceipt = options.verifyPurchaseReceipt ?? ((receipt, productId) => QA_TOOLS_ENABLED && receipt.startsWith(`verified-receipt:${productId}:`) ? receipt.slice(`verified-receipt:${productId}:`.length) : null);
     this.persistSession = options.persistSession;
     // 독립 상태 테스트는 공유 세션의 알림 저장을 건드리지 않고, 실제 공유 API만 기본 manager를 쓴다.
+    for (const ticket of Object.values(state.serverJournal?.combat?.tickets ?? {})) {
+      if (ticket.kind === "stage") this.pendingStageAdmissions.set(ticket.target, new Set([ticket.requestId]));
+      if (ticket.kind === "cake") this.pendingCakeAdmissions.set(ticket.target, new Set([ticket.requestId]));
+      if (ticket.kind === "bounty") this.pendingBountyRuns.set(ticket.requestId, ticket.target);
+    }
+    this.raidContext = options.raidContext;
     this.notificationScheduler = options.notificationScheduler ?? (state === session ? settingsManager : undefined);
     // 고정 환영 선물·업데이트 공지와 우편 표본은 모두 QA 전용이다. 실제 지급 우편은 서버에서 받는다.
     this.mails = QA_TOOLS_ENABLED ? [
@@ -685,6 +698,7 @@ export class FakeServer implements GameApi {
    * 거기에 내가 민 몫과 정산 여부가 있다.
    */
   private raidInstances(now: Date): RaidInstanceState[] {
+    if (this.raidContext) return this.state.raid.instances.map(instance => ({ ...instance }));
     const byId = new Map<string, RaidInstanceState>();
     const today = raidSeasonKey(now);
     const yesterday = raidSeasonKey(new Date(now.getTime() - 86_400_000));
@@ -711,6 +725,10 @@ export class FakeServer implements GameApi {
 
   /** 그 판을 **다른 참가자들**이 지금까지 깎은 몫. 월드 폭주는 서버 전체, 소환 레이드는 친구들이다. */
   private raidOthersDamage(instance: RaidInstanceState, now: Date): number {
+    if (this.raidContext) {
+      const shared = this.raidContext.records.find(row => row.instance.id === instance.id);
+      return Math.max(0, (shared?.damage ?? 0) - (shared?.instance.appliedDamage ?? shared?.instance.myDamage ?? 0));
+    }
     const spec = RAID_DIFFICULTY[instance.difficulty];
     const opened = Date.parse(instance.openedAt);
     const elapsed = Math.min(1, Math.max(0, (now.getTime() - opened) / (spec.lifetimeHours * 3_600_000)));
@@ -747,10 +765,10 @@ export class FakeServer implements GameApi {
     // 진행 중인 판도 **지금까지의 몫**을 싣는다 — 층이 "끝나면 이만큼"을 미리 말한다. 받는 것은
     // 끝난 뒤의 정산 한 번뿐이다(`settleRaid`가 상태를 다시 본다).
     const settlement = instance.myDamage > 0 ? raidSettlement(instance.difficulty, instance.myDamage, progress.totalHp > 0 ? progress.dealtDamage / progress.totalHp : 0, progress.defeated) : undefined;
-    const board = instance.kind === "world"
+    const board = this.raidContext ? (this.raidContext.records.find(row => row.instance.id === instance.id)?.entries ?? []).filter(entry => entry.playerId !== this.raidContext!.playerId) : instance.kind === "world"
       ? mockRaidContributions(instance.openedAt.slice(0, 10), Math.min(1, Math.max(0, (now.getTime() - Date.parse(instance.openedAt)) / 86_400_000)))
       : mockSummonContributions(instance.id, others);
-    const mine = { playerId: "local-player", displayName: t("profile.defaultName"), damage: instance.myDamage, isMe: true, favoriteRelicId: this.state.favorite };
+    const mine = { playerId: this.raidContext?.playerId ?? "local-player", displayName: this.state.playerCard.nickname || t("profile.defaultName"), damage: instance.myDamage, isMe: true, favoriteRelicId: this.state.favorite };
     return {
       ...(() => {
         const pending = Object.entries(this.state.serverJournal?.raidAdmissions ?? {}).find(([, admission]) => admission.raidId === instance.id && Date.parse(admission.expiresAt) >= now.getTime());
@@ -817,7 +835,7 @@ export class FakeServer implements GameApi {
       ? { bossRelicId: request.bossRelicId!, difficulty: request.difficulty! }
       : rollRaidSummon(this.random(), this.random());
     const instance: RaidInstanceState = {
-      id: `summon-${request.requestId}`, kind: "summon", bossRelicId, difficulty,
+      id: `summon-${this.raidContext ? `${this.raidContext.playerId}-` : ""}${request.requestId}`, kind: "summon", bossRelicId, difficulty,
       openedAt: now.toISOString(), endsAt: new Date(now.getTime() + RAID_DIFFICULTY[difficulty].lifetimeHours * 3_600_000).toISOString(),
       summonedByMe: true, myDamage: 0, attemptsUsed: 0, settled: false,
     };
@@ -892,7 +910,7 @@ export class FakeServer implements GameApi {
     const cached = this.readReceipt<EnterRaidResponse>("raidEnter", request.requestId, request.raidId);
     if (cached) {
       const admission = this.state.serverJournal?.raidAdmissions[request.requestId];
-      return { ...cached, ...this.snapshot(), replayVersion: admission?.replayVersion, relics: structuredClone(admission?.relics) };
+      return { ...cached, ...this.snapshot(), replaySeed: admission?.seed, replayVersion: admission?.replayVersion, relics: structuredClone(admission?.relics) };
     }
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "입장 요청 ID가 필요합니다.");
     const now = this.now();
@@ -917,7 +935,7 @@ export class FakeServer implements GameApi {
     const result = { raid: raidDto, requestId: request.requestId, staminaSpent: cost, playerExp: spent.playerExp, refundPolicy: "no-refund-after-admission" as const };
     this.recordReceipt(nextState, "raidEnter", request.requestId, request.raidId, result);
     nextState.serverJournal!.raidAdmissions[request.requestId] = {
-      raidId: updated.id, seasonHp: raidDto.remainingHp, ...(request.replayVersion === 2 ? { replayVersion: 2 as const } : {}),
+      seed: this.raidContext ? globalThis.crypto.randomUUID() : request.requestId, admittedAt: now.toISOString(), raidId: updated.id, seasonHp: raidDto.remainingHp, ...(request.replayVersion === 2 ? { replayVersion: 2 as const } : {}),
       expiresAt: new Date(now.getTime() + RAID_BOSS_BALANCE.maximumDurationMs + 600_000).toISOString(),
       relics: this.state.party.map((relicId) => ({ relicId, snapshot: captureExpeditionRelicSnapshot(RELICS.find(({ id }) => id === relicId)!, this.state.relicProgress[relicId] ?? createInitialRelicProgress(), this.state.runeInventory, this.state.equippedRelicSkinIds[relicId]) })),
     };
@@ -928,6 +946,7 @@ export class FakeServer implements GameApi {
       ...this.snapshot(), raid: raidDto, requestId: request.requestId,
       staminaSpent: cost, playerExp: spent.playerExp, refundPolicy: "no-refund-after-admission",
       relics: structuredClone(nextState.serverJournal!.raidAdmissions[request.requestId].relics),
+      replaySeed: nextState.serverJournal!.raidAdmissions[request.requestId].seed,
       replayVersion: nextState.serverJournal!.raidAdmissions[request.requestId].replayVersion,
     };
 
@@ -983,7 +1002,7 @@ export class FakeServer implements GameApi {
         // 레이드의 보스는 남은 공유 게이지를 다 깎으면 쓰러진다 — 재현도 입장한 순간의 게이지로 그 끝을 받는다.
         bossKillable: true,
         seasonHp: admission.seasonHp,
-        ...(admission.replayVersion === 2 ? { replayIdentity: request.requestId } : {}),
+        ...(admission.replayVersion === 2 ? { replayIdentity: admission.seed ?? request.requestId } : {}),
       }, request.actions);
       if (result.totalDamage > RAID_BOSS_BALANCE.maximumAcceptedScore) throw new Error("ABNORMAL_SCORE");
     } catch (error) {
@@ -3823,6 +3842,8 @@ export function signalRemoteMissionNotice(next: Session, now: Date = new Date())
 }
 
 /** 서버가 상태를 소유하는 구현으로 갈아 끼운다. `null`이면 이 기기의 임시 구현으로 돌아간다. */
+export function usesRemoteGameApi(): boolean { return activeGameApi !== localGameApi; }
+
 export function installGameApi(api: GameApi | null): void {
   activeGameApi = api ?? localGameApi;
   lastRemoteMissionScore = undefined;

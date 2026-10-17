@@ -14,7 +14,8 @@ try {
     const outfile = join(directory, `${mode}.mjs`);
     await build({
       stdin: {
-        contents: `export {FakeServer} from './src/api/FakeServer';
+        contents: `export {connectServerProgress} from './src/api/serverProgress';
+          export {FakeServer} from './src/api/FakeServer';
           export {FakeSocialServer} from './src/api/FakeSocialServer';
           export {createDefaultSession} from './src/state/session';
           export {duelNpcPool} from './src/core/duelNpcPool';
@@ -39,6 +40,7 @@ try {
       },
     });
     const module = await import(pathToFileURL(outfile).href);
+    assert.deepEqual(await module.connectServerProgress({ account: null }), qa ? { ok: true, mode: "local" } : { ok: false, code: "unsupported" }, `${mode}: offline progression boundary`);
     const {
       FakeServer,
       FakeSocialServer,

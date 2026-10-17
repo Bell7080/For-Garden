@@ -1,4 +1,6 @@
-import { StateConflictError, type StateStore } from "./gameHandler";
+import { requestBudget } from "./requestPolicy";
+import { worldRaidDefinitions, type SharedRaidContext } from "./sharedRaids";
+import { GameCallError, StateConflictError, type StateStore } from "./gameHandler";
 
 interface Env { url: string; serviceKey: string; fetchImpl?: typeof fetch }
 
@@ -9,20 +11,31 @@ async function sha256Hex(text: string): Promise<string> {
 }
 
 /** 서비스 롤 키로 DB 함수를 부르는 저장소다. 키는 서버 환경 변수에만 있고 클라이언트로 나가지 않는다. */
-export function createSupabaseStore(env: Env): StateStore {
+export function createSupabaseStore(env: Env) {
   const f = env.fetchImpl ?? fetch;
   async function rpc(name: string, body: Record<string, unknown>): Promise<unknown> {
     const res = await f(`${env.url}/rest/v1/rpc/${name}`, {
       method: "POST",
       headers: { apikey: env.serviceKey, authorization: `Bearer ${env.serviceKey}`, "content-type": "application/json" },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(15000),
     });
-    if (res.status === 409) throw new StateConflictError();
-    if (!res.ok) throw new Error(`rpc_${name}_${res.status}`);
+    if (res.status === 409 && name === "server_commit_state") throw new StateConflictError();
+    if (!res.ok) {
+      const body = await res.json().catch(() => null) as { message?: string } | null;
+      if ([400,403,409,422,429].includes(res.status)) throw new GameCallError(res.status, body?.message ?? "rejected");
+      throw new Error(`rpc_${name}_${res.status}`);
+    }
     const text = await res.text();
     return text ? JSON.parse(text) : null;
   }
-  return {
+  const store: StateStore = {
+    async pendingRequests(playerId) {
+      const response = await rpc("server_social_call", { p_player: playerId, p_method: "getRequests", p_args: [], p_request: null }) as { incomingCount: number };
+      return response.incomingCount;
+    },
+    async identity(playerId) { return await rpc("server_player_identity", { p_player: playerId }) as { uid: string; createdAt: string }; },
+    async raidContext(playerId, now) { return await rpc("server_raid_context", { p_player: playerId, p_worlds: worldRaidDefinitions(now) }) as SharedRaidContext; },
     async load(playerId) {
       const r = (await rpc("server_load_state", { p_player: playerId })) as { revision: string; data: unknown } | null;
       return r ? { revision: r.revision, data: r.data } : null;
@@ -39,7 +52,7 @@ export function createSupabaseStore(env: Env): StateStore {
         p_data: input.data,
         p_hash: await sha256Hex(JSON.stringify(input.data)),
         p_version: data.saveVersion ?? 1,
-        p_summary: { level: data.playerResearch?.level ?? 1, gems: data.wallet?.gems ?? 0, gold: data.wallet?.gold ?? 0 },
+        p_summary: { _profile: input.publicProfile, _raids: input.raids, level: data.playerResearch?.level ?? 1, gems: data.wallet?.gems ?? 0, gold: data.wallet?.gold ?? 0 },
         p_method: input.method,
         p_request: input.requestId,
         p_response: input.response,
@@ -47,4 +60,17 @@ export function createSupabaseStore(env: Env): StateStore {
       return { revision: r.revision };
     },
   };
+  return Object.assign(store, {
+    async takeRate(playerId: string, method: string) {
+      const budget = requestBudget(method);
+      for (const [bucket, window, limit] of [["all",60,300],[method,budget.windowSeconds,budget.limit]] as const) {
+        const out = await rpc("server_take_rate", { p_player: playerId, p_bucket: bucket, p_window: window, p_limit: limit }) as { allowed: boolean; retryAfter: number };
+        if (!out.allowed) return out;
+      }
+      return { allowed: true, retryAfter: 0 };
+    },
+    async socialCall(playerId: string, method: string, args: unknown[], requestId?: string) {
+      return rpc("server_social_call", { p_player: playerId, p_method: method, p_args: args, p_request: requestId ?? null });
+    },
+  });
 }

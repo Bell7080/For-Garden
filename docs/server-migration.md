@@ -1,5 +1,7 @@
 # FakeServer를 실제 서버로 바꿀 때
 
+> 2026-10-18: 친구·공유 레이드·전투 재현·속도 제한의 새 구현과 DB 선행 적용 순서는 [server-release.md](server-release.md)를 따른다. 아래는 이관 전 문제를 설명하는 기록이다. 운영 DB 적용/실계정 검증 완료를 뜻하지 않는다.
+
 `src/api/FakeServer.ts`는 백엔드가 생기기 전까지 `GameApi`를 메모리에서 흉내 내는 어댑터다.
 씬은 이미 `GameApi`만 바라보므로 **구현을 HTTP로 갈아 끼우는 것 자체는 한 줄이다**
 (`export const gameApi: GameApi = new FakeServer()`). 문제는 그 한 줄이 아니라, 지금 구현이

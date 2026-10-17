@@ -220,4 +220,25 @@ export class FakeSocialServer {
 }
 
 /** 현재 브라우저 세션에서 친구 화면이 공유하는 임시 API 인스턴스다. */
-export const socialApi = new FakeSocialServer();
+export type SocialApi = Pick<FakeSocialServer, "subscribe" | "pendingRequestCount" | "getFriends" | "getRequests" | "searchUsers" | "getRecommendations" | "sendRequest" | "cancelRequest" | "acceptRequest" | "declineRequest" | "acceptAllRequests" | "declineAllRequests" | "setFavorite" | "removeFriend" | "rentFavoriteRelic">;
+const localSocial = new FakeSocialServer();
+let activeSocial: SocialApi = localSocial;
+const subscribers = new Set<() => void>();
+let stopSignal: (() => void) | undefined;
+export function installSocialApi(api: SocialApi | null): void {
+  stopSignal?.();
+  activeSocial = api ?? localSocial;
+  stopSignal = activeSocial.subscribe(() => subscribers.forEach(listener => listener()));
+  subscribers.forEach(listener => listener());
+}
+export const socialApi = new Proxy({} as SocialApi, {
+  get(_target, key) {
+    if (key === "subscribe") return (listener: () => void) => {
+      subscribers.add(listener);
+      if (!stopSignal) stopSignal = activeSocial.subscribe(() => subscribers.forEach(next => next()));
+      return () => { subscribers.delete(listener); };
+    };
+    const value = activeSocial[key as keyof SocialApi];
+    return typeof value === "function" ? value.bind(activeSocial) : undefined;
+  },
+});

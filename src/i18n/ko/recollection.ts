@@ -12,7 +12,7 @@ export const RECOLLECTION_KO = {
   "recollection.locked": "???",
   "recollection.title.openingTrain": "수송 열차",
   "recollection.title.openingRetreat": "공멸의 퇴각",
-  "recollection.title.greenhouse": "온실의 잔향",
+  "recollection.title.greenhouse": "온실의 호박 소동",
   "recollection.title.greatAuk": "큰바다쇠오리 보고",
   "recollection.summary.opening-train": "이터널 시티로 향하던 수송 열차에 경보가 울린다.",
   "recollection.summary.opening-retreat": "공멸 삼인조가 아쉬운 외침을 남기고 하늘로 날아간다.",
@@ -54,6 +54,6 @@ export const RECOLLECTION_KO = {
   "recollection.summary.stage-3-10-pre": "마지막 홀에서 앱솔루트 팽이 한 줄로 선다.",
   "recollection.summary.stage-3-10-post": "회수조가 물러나고, 코마는 끝내 편이라 말하지 않는다.",
   "recollection.summary.stage-2-10-post": "「따라가도 돼?」 이제 연구원이 대답할 차례다.",
-  "recollection.summary.stage-1-5-greenhouse-echo": "주 통로 옆 온실에서 오래된 생체 신호가 들려온다.",
+  "recollection.summary.stage-1-5-greenhouse-echo": "숨어 있던 온실에서 거대 호박과 스프링클러가 연달아 사고를 친다.",
   "recollection.summary.event-great-auk-report": "북대서양 표본함에서 큰바다쇠오리의 골격 표지가 나온다.",
 } as const;

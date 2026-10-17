@@ -112,6 +112,7 @@ const NOT_DISPLAYED: Readonly<Record<string, "all" | readonly string[]>> = {
   "../../src/data/dialogues/chapter2.ts": "all",
   "../../src/data/dialogues/chapter3.ts": "all",
   "../../src/data/dialogues/subStories.ts": "all",
+  "../../src/data/dialogues/greenhouseEcho.ts": "all",
 };
 
 /** 소스에 적힌 이스케이프를 실제 문자열로 되돌린다 — 그러지 않으면 줄바꿈이 든 글이 어긋난다. */

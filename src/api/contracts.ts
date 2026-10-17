@@ -17,7 +17,9 @@ import type { ExcavationCurrency, IdleExcavationState } from "../core/idleExcava
 import type { AdReward } from "../data/adRewards";
 import type { ItemCategory, ItemUseEffect, WalletItemKey } from "../data/items";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
-import type { PlayerCardState, PlayerResearchProgress } from "../state/session";
+import type { ObservationRecord, PlayerCardState, PlayerResearchProgress } from "../state/session";
+import type { DialogueEffect } from "../core/dialogue";
+import type { JournalDiscoveryResolution } from "../core/interactionJournals";
 import type { NicknameProblem } from "../core/playerCard";
 import type { PlayerExpReceipt } from "../core/playerLevel";
 import type { ItemLot } from "../core/itemLots";
@@ -40,7 +42,9 @@ export interface StartInteractionDispatchRequest { cityId: string; party: string
 export interface InteractionDispatchResponse { dispatches: InteractionDispatchSnapshot[]; serverTime: string; }
 /** 수령 재전송을 한 지급으로 묶는 멱등 요청이다. */
 export interface ClaimInteractionDispatchRequest { dispatchId: string; requestId: string; }
-export interface ClaimInteractionDispatchResponse extends InteractionDispatchResponse { granted: { currency: keyof Wallet; amount: number }[]; alreadyClaimed: boolean; wallet: Wallet; }
+export interface ClaimInteractionDispatchResponse extends InteractionDispatchResponse { granted: { currency: keyof Wallet; amount: number }[]; alreadyClaimed: boolean; wallet: Wallet;
+  /** 수령으로 서버가 발견 처리한 교류 일지. 이미 받은 파견이면 없다. */
+  journal?: JournalDiscoveryResolution; }
 
 /** 정적 표시 메타데이터를 중복 전송하지 않고 서버 보유량과 인스턴스만 전달하는 인벤토리 조회 행이다. */
 /** 기한이 있는 아이템(에너지 드링크)은 받은 묶음마다 사라지는 시각을 `lots`로 싣는다. */
@@ -79,6 +83,22 @@ export interface UseConsumableResponse extends InventoryResponse { itemId: strin
 export interface PurchaseRelicSkinRequest { relicId: string; skinId: RelicSkinId; requestId: string; }
 /** 치른 값을 함께 돌려줘 화면이 영수증을 다시 계산하지 않게 한다. */
 export interface PurchaseRelicSkinResponse extends PlayerStateDto { skinId: RelicSkinId; spent: { currency: keyof Wallet; amount: number }; }
+
+/** 이야기 완료 기록. 같은 이야기를 다시 완료해도 한 번만 반영한다. */
+export interface CompleteStoryRequest { storyId: string; }
+export interface CompleteStoryResponse { firstCompletion: boolean; }
+/** 대사 선택이 일으키는 데이터 명령. 서버가 대상·범위·재관람 중복을 확인하고 이미 완료한 이야기는 보상하지 않는다. */
+export interface ApplyStoryEffectRequest { storyId: string; effect: DialogueEffect; }
+export interface ApplyStoryEffectResponse { xpGained: number; }
+/** 오늘의 관찰 인터뷰 완료. 날짜는 서버 UTC 날짜여야 한다(재관람은 기록된 날짜를 그대로 받는다). */
+export interface CompleteObservationRequest { relicId: string; utcDate: string; choiceId: string; }
+export interface CompleteObservationResponse { record: ObservationRecord; bondXpEarned: number; firstCompletion: boolean; }
+/** 발견한 교류 일지를 읽음으로 확정한다. */
+export interface MarkInteractionJournalReadRequest { journalId: string; }
+export interface MarkInteractionJournalReadResponse { changed: boolean; }
+/** 고고학 지도에서 마지막으로 고른 유적. 삭제된 ID는 받지 않는다. */
+export interface SelectArchaeologySiteRequest { siteId: string; }
+export interface SelectArchaeologySiteResponse { ok: boolean; }
 
 /** 편성 확정 요청. 서로 다른 보유 렐릭 세 명이어야 한다. */
 export interface SetPartyRequest { relicIds: string[]; }
@@ -976,6 +996,16 @@ export interface GameApi extends AsyncArenaProfileApi {
   getStaminaRechargeStatus(): Promise<StaminaRechargeStatusDto>;
   /** 값 조회·차감·외형 지급을 한 처리 단위로 확정한다. 화면은 결과만 다시 읽는다. */
   purchaseRelicSkin(request: PurchaseRelicSkinRequest): Promise<PurchaseRelicSkinResponse>;
+  /** 이야기 완료를 서버 기록으로 남긴다. */
+  completeStory(request: CompleteStoryRequest): Promise<CompleteStoryResponse>;
+  /** 대사 선택의 유대 경험치 명령을 서버가 검증해 적용한다. */
+  applyStoryEffect(request: ApplyStoryEffectRequest): Promise<ApplyStoryEffectResponse>;
+  /** 오늘의 관찰 인터뷰를 일일 한도와 최초 보상까지 한 처리 단위로 확정한다. */
+  completeObservation(request: CompleteObservationRequest): Promise<CompleteObservationResponse>;
+  /** 교류 일지를 읽음으로 확정한다. 발견하지 않은 일지는 거절한다. */
+  markInteractionJournalRead(request: MarkInteractionJournalReadRequest): Promise<MarkInteractionJournalReadResponse>;
+  /** 고고학 지도의 마지막 선택 유적을 기록한다. */
+  selectArchaeologySite(request: SelectArchaeologySiteRequest): Promise<SelectArchaeologySiteResponse>;
   /** 편성은 서버가 보유·중복·인원을 확인해 확정한다. */
   setParty(request: SetPartyRequest): Promise<SetPartyResponse>;
   /** 로비에 서는 애착 렐릭을 정한다. 유대 경험치는 건드리지 않는다. */

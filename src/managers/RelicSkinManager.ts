@@ -1,6 +1,6 @@
 import type { RelicSkinId } from "../core/types";
 import { getRelicSkin } from "../data/relicSkins";
-import { resolveProfileApi, type ProfileApi } from "./profileApi";
+import { resolveServerApi, type ProfileApi } from "./serverApi";
 import { session, type Session } from "../state/session";
 
 /** 외형 변경을 소비하는 화면들이 저장 구현을 알지 않도록 manager가 발행하는 공개 사건이다. */
@@ -12,7 +12,7 @@ export class RelicSkinManager {
   private readonly listeners = new Set<(change: RelicSkinChange) => void>();
   private readonly apiCache: { api?: ProfileApi } = {};
   constructor(private readonly state: Session = session, private readonly injectedApi?: ProfileApi) {}
-  private get api(): ProfileApi { return resolveProfileApi(this.state, this.injectedApi, this.apiCache); }
+  private get api(): ProfileApi { return resolveServerApi<ProfileApi>(this.state, this.injectedApi, this.apiCache); }
 
   /** 콘텐츠 표에 존재하는 스킨을 현재 계정이 획득했는지 반환한다. */
   owns(skinId: RelicSkinId): boolean { return this.state.ownedRelicSkinIds.has(skinId); }

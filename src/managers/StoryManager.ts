@@ -1,37 +1,39 @@
-import { grantBondXp } from "../core/bond";
 import type { DialogueEffect } from "../core/dialogue";
-import { PLAYABLE_RELICS } from "../data/relics";
-import { saveManager, type SaveManager } from "../state/SaveManager";
 import { session, type Session } from "../state/session";
+import { resolveServerApi, type RecordApi } from "./serverApi";
 
-/** 대사 선택 명령의 검증·저장과 최초 완료 판정을 독점하는 경계다. */
+/**
+ * 대사 선택 명령과 이야기 완료 기록을 서버에 보내는 경계다. 대상·범위·재관람 중복 검증은 서버가 한다.
+ *
+ * 한 장면 안의 선택 효과와 완료는 **보낸 순서대로** 서버에 닿아야 한다(완료가 먼저 닿으면 그 뒤의 효과는
+ * 재관람으로 읽혀 보상이 사라진다). 그래서 이 매니저의 서버 호출은 하나의 줄로 직렬화한다.
+ */
 export class StoryManager {
-  constructor(private readonly state: Session = session, private readonly saves: Pick<SaveManager, "save"> = saveManager) {}
+  private readonly apiCache: { api?: RecordApi } = {};
+  private tail: Promise<unknown> = Promise.resolve();
+  constructor(private readonly state: Session = session, private readonly injectedApi?: RecordApi) {}
+
+  private get api(): RecordApi { return resolveServerApi<RecordApi>(this.state, this.injectedApi, this.apiCache); }
+
+  /** 앞선 호출이 실패해도 줄은 끊기지 않는다. 호출한 쪽은 자기 몫의 실패만 받는다. */
+  private enqueue<T>(job: () => Promise<T>): Promise<T> {
+    const run = this.tail.then(job, job);
+    this.tail = run.catch(() => undefined);
+    return run;
+  }
 
   isCompleted(storyId: string): boolean { return this.state.completedStoryIds.has(storyId); }
 
-  /** 회상에서는 선택 결과를 보여 주되 보상을 다시 지급하지 않는다. */
-  applyEffect(storyId: string, effect: DialogueEffect): number {
-    if (this.isCompleted(storyId)) return 0;
-    if (effect.type !== "bondXp") throw new RangeError("허용되지 않은 대사 효과입니다.");
-    const relicExists = PLAYABLE_RELICS.some(({ id }) => id === effect.relicId);
-    const progress = this.state.relicProgress[effect.relicId];
-    if (!relicExists || !this.state.owned.has(effect.relicId) || !progress) throw new RangeError("대사 효과 대상 렐릭이 올바르지 않습니다.");
-    // 콘텐츠 오타가 대량 보상으로 이어지지 않도록 한 선택의 유대 보상을 작은 정수로 제한한다.
-    if (!Number.isInteger(effect.amount) || effect.amount < 0 || effect.amount > 20) throw new RangeError("대사 유대 보상은 0~20 정수여야 합니다.");
-    const result = grantBondXp(progress, effect.amount);
-    const next = { ...this.state, relicProgress: { ...this.state.relicProgress, [effect.relicId]: result.progress } };
-    this.saves.save(next);
-    this.state.relicProgress = next.relicProgress;
-    return result.xpGained;
+  /** 회상에서는 선택 결과를 보여 주되 서버가 보상을 다시 지급하지 않는다. */
+  applyEffect(storyId: string, effect: DialogueEffect): Promise<number> {
+    if (this.isCompleted(storyId)) return Promise.resolve(0);
+    return this.enqueue(async () => (await this.api.applyStoryEffect({ storyId, effect })).xpGained);
   }
 
-  complete(storyId: string): boolean {
-    if (!storyId || this.isCompleted(storyId)) return false;
-    const completedStoryIds = new Set(this.state.completedStoryIds).add(storyId);
-    this.saves.save({ ...this.state, completedStoryIds });
-    this.state.completedStoryIds = completedStoryIds;
-    return true;
+  /** 처음 완료한 것이면 `true`다. 지금 줄에 선 효과가 모두 닿은 뒤에 서버가 기록한다. */
+  complete(storyId: string): Promise<boolean> {
+    if (!storyId || this.isCompleted(storyId)) return Promise.resolve(false);
+    return this.enqueue(async () => (await this.api.completeStory({ storyId })).firstCompletion);
   }
 }
 

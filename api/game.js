@@ -15835,6 +15835,323 @@ for (const banner of BANNERS) {
   registerDataText(banner, "name", `banner.${banner.id}.name`);
 }
 
+// src/data/observations.ts
+init_define_import_meta_env();
+var COMMON_OBSERVATION_QUESTIONS = [
+  { id: "unknown-sound", prompt: "\uB0AF\uC120 \uC18C\uB9AC\uAC00 \uB4E4\uB9AC\uBA74 \uC5B4\uB5BB\uAC8C \uD560 \uAC70\uC57C?", choices: [
+    { id: "approach", label: "\uC18C\uB9AC\uAC00 \uB09C \uACF3\uC744 \uBA3C\uC800 \uC0B4\uD540\uB2E4", personalityTag: "\uD638\uAE30\uC2EC", habitKey: "approach" },
+    { id: "wait", label: "\uC548\uC804\uD55C \uACF3\uC5D0\uC11C \uD55C\uB3D9\uC548 \uAE30\uB2E4\uB9B0\uB2E4", personalityTag: "\uC2E0\uC911\uD568", habitKey: "wait" }
+  ] },
+  { id: "shared-food", prompt: "\uBA39\uC774\uB97C \uB3D9\uB8CC\uC640 \uB098\uB220\uC57C \uD55C\uB2E4\uBA74?", choices: [
+    { id: "share", label: "\uBA3C\uC800 \uB3D9\uB8CC\uC758 \uBAAB\uC744 \uB0A8\uAE34\uB2E4", personalityTag: "\uBC30\uB824", habitKey: "share" },
+    { id: "guard", label: "\uC8FC\uBCC0\uC744 \uC9C0\uD0A4\uBA70 \uCC28\uB840\uB97C \uC815\uD55C\uB2E4", personalityTag: "\uC9C8\uC11C", habitKey: "guard" }
+  ] }
+];
+var RELIC_OBSERVATION_QUESTIONS = {
+  torika: [
+    // 먹이 화제에서 토리카의 왕성한 식욕과 동료 배려, 부끄러움 중 어느 면이 앞서는지 검증한다.
+    { id: "torika-meal-appetite", prompt: "\uD3C9\uC18C \uBA39\uB294 \uC591\uACFC \uC88B\uC544\uD558\uB294 \uBA39\uC774\uB97C \uBB3C\uC73C\uBA74 \uC5B4\uB5A4 \uBC18\uC751\uC744 \uBCF4\uC5EC?", choices: [
+      { id: "torika-meal-eager", label: "\uC88B\uC544\uD558\uB294 \uBA39\uC774\uBD80\uD130 \uC2E0\uB098\uAC8C \uC774\uC57C\uAE30\uD55C\uB2E4", personalityTag: "\uC655\uC131\uD55C \uC2DD\uC695", habitKey: "torikaMealEager" },
+      { id: "torika-meal-share", label: "\uB3D9\uB8CC\uB4E4\uC774 \uBA39\uC744 \uBAAB\uBD80\uD130 \uD5E4\uC544\uB9B0\uB2E4", personalityTag: "\uB3D9\uB8CC \uBC30\uB824", habitKey: "torikaMealShare" },
+      { id: "torika-meal-shy", label: "\uBA39\uC740 \uC591\uC740 \uC791\uAC8C \uB9D0\uD558\uACE0 \uC88B\uC544\uD558\uB294 \uC78E\uB9CC \uC54C\uB824 \uC900\uB2E4", personalityTag: "\uC465\uC2A4\uB7EC\uC6C0", habitKey: "torikaMealShy" }
+    ] },
+    // 몸무게 화제에서 볏이 붉어진다는 기존 관찰 기록을 서로 다른 대처 방식으로 이어 간다.
+    { id: "torika-weight-reaction", prompt: "\uBAB8\uBB34\uAC8C \uC774\uC57C\uAE30\uAC00 \uB098\uC624\uBA74 \uD1A0\uB9AC\uCE74\uB294 \uC5B4\uB5BB\uAC8C \uBC18\uC751\uD574?", choices: [
+      { id: "torika-weight-honest", label: "\uBD89\uC5B4\uC9C4 \uCC44\uB85C \uC9C0\uAE08 \uC218\uCE58\uB97C \uB610\uBC15\uB610\uBC15 \uB9D0\uD55C\uB2E4", personalityTag: "\uC194\uC9C1\uD568", habitKey: "torikaWeightHonest" },
+      { id: "torika-weight-deflect", label: "\uBCCF\uC744 \uAC00\uB9AC\uBA70 \uC5BC\uB978 \uB2E4\uB978 \uC774\uC57C\uAE30\uB97C \uAEBC\uB0B8\uB2E4", personalityTag: "\uC465\uC2A4\uB7EC\uC6C0", habitKey: "torikaWeightDeflect" }
+    ] },
+    // 한 걸음 물러나도 앞을 막는 설정에서 두려움의 인정과 보호 행동을 각각 관찰한다.
+    { id: "torika-frightened-shield", prompt: "\uAC81\uC774 \uB098\uB294\uB370\uB3C4 \uB204\uAD70\uAC00\uC758 \uC55E\uC744 \uB9C9\uC544\uC11C\uC57C \uD560 \uB54C \uC5B4\uB5A4 \uBC18\uC751\uC744 \uBCF4\uC5EC?", choices: [
+      { id: "torika-shield-admit", label: "\uBB34\uC12D\uB2E4\uACE0 \uB9D0\uD55C \uB4A4 \uD55C \uAC78\uC74C \uBB3C\uB7EC\uC11C \uC790\uB9AC\uB97C \uC9C0\uD0A8\uB2E4", personalityTag: "\uB450\uB824\uC6C0 \uC778\uC815", habitKey: "torikaShieldAdmit" },
+      { id: "torika-shield-protect", label: "\uB5A8\uB9AC\uB294 \uB2E4\uB9AC\uB97C \uBC84\uD2F0\uBA70 \uC0C1\uB300\uC758 \uC55E\uC744 \uAC00\uB85C\uB9C9\uB294\uB2E4", personalityTag: "\uBCF4\uD638\uBCF8\uB2A5", habitKey: "torikaShieldProtect" }
+    ] }
+  ],
+  rex: [
+    // 큰 상대를 마주한 렉시아가 격식을 지키는 경쟁심과 체격 자체의 승부욕 중 어느 쪽을 보이는지 검증한다.
+    { id: "rex-size-rivalry", prompt: "\uC790\uC2E0\uBCF4\uB2E4 \uD6E8\uC52C \uD070 \uC0C1\uB300\uAC00 \uC55E\uC744 \uB9C9\uC73C\uBA74 \uC5B4\uB5BB\uAC8C \uBC18\uC751\uD574?", choices: [
+      { id: "rex-size-formal", label: "\uC790\uC138\uB97C \uACE7\uAC8C \uC138\uC6B0\uACE0 \uBA3C\uC800 \uC815\uC2DD\uC73C\uB85C \uC2B9\uBD80\uB97C \uCCAD\uD55C\uB2E4", personalityTag: "\uACA9\uC2DD \uC788\uB294 \uACBD\uC7C1\uC2EC", habitKey: "rexSizeFormal" },
+      { id: "rex-size-wrestle", label: "\uCCB4\uACA9 \uCC28\uC774\uB97C \uC9C0\uC801\uD558\uC790 \uACE7\uBC14\uB85C \uD798\uACA8\uB8E8\uAE30\uB97C \uC694\uAD6C\uD55C\uB2E4", personalityTag: "\uCCB4\uACA9 \uC2B9\uBD80\uC695", habitKey: "rexSizeWrestle" }
+    ] },
+    // 압도적인 강자 앞에서 공정한 조건을 중시하는지, 강자와 즉시 겨루고 싶어 하는지 검증한다.
+    { id: "rex-strong-challenge", prompt: "\uC555\uB3C4\uC801\uC73C\uB85C \uAC15\uD55C \uC0C1\uB300\uB97C \uBC1C\uACAC\uD558\uBA74 \uC5B4\uB5BB\uAC8C \uD560 \uAC70\uC57C?", choices: [
+      { id: "rex-strong-fair", label: "\uC0C1\uB300\uC758 \uC7A5\uC810\uC744 \uC0B4\uD540 \uB4A4 \uAC19\uC740 \uC870\uAC74\uC73C\uB85C \uACA8\uB8EC\uB2E4", personalityTag: "\uACF5\uC815\uD55C \uB3C4\uC804", habitKey: "rexStrongFair" },
+      { id: "rex-strong-eager", label: "\uB208\uC744 \uBE5B\uB0B4\uBA70 \uB2F9\uC7A5 \uC5B4\uB290 \uCABD\uC774 \uAC15\uD55C\uC9C0 \uD655\uC778\uD558\uB824 \uD55C\uB2E4", personalityTag: "\uAC15\uC790 \uC120\uD638", habitKey: "rexStrongEager" }
+    ] },
+    // 작은 렐릭의 실수 앞에서 에티켓을 가르치면서도 약자를 위압하지 않는 배려 방식을 검증한다.
+    { id: "rex-small-etiquette", prompt: "\uC791\uC740 \uB810\uB9AD\uC774 \uC2E4\uC218\uB85C \uC608\uC808\uC744 \uC9C0\uD0A4\uC9C0 \uBABB\uD558\uBA74?", choices: [
+      { id: "rex-small-guide", label: "\uBA3C\uC800 \uC790\uC138\uB97C \uB0AE\uCD94\uACE0 \uCC9C\uCC9C\uD788 \uC62C\uBC14\uB978 \uC778\uC0AC\uBC95\uC744 \uC54C\uB824 \uC900\uB2E4", personalityTag: "\uC628\uD654\uD55C \uC9C0\uB3C4", habitKey: "rexSmallGuide" },
+      { id: "rex-small-example", label: "\uC790\uC2E0\uC774 \uBA3C\uC800 \uC815\uC911\uD788 \uC778\uC0AC\uD574 \uB530\uB77C \uD560 \uC218 \uC788\uAC8C \uAE30\uB2E4\uB9B0\uB2E4", personalityTag: "\uC194\uC120\uD558\uB294 \uC608\uC808", habitKey: "rexSmallExample" }
+    ] }
+  ],
+  spino: [
+    // 동시에 울린 경보 앞에서 스피나의 임무 집중과 과묵한 현장 지휘가 각각 어떻게 드러나는지 관찰한다.
+    { id: "spino-night-alarm", prompt: "\uC57C\uAC04 \uC21C\uCC30 \uC911 \uC218\uC870 \uACBD\uBCF4\uC640 \uB2E4\uB978 \uAD6C\uC5ED\uC758 \uAD6C\uC870 \uC694\uCCAD\uC774 \uB3D9\uC2DC\uC5D0 \uB4E4\uC5B4\uC624\uBA74?", choices: [
+      { id: "spino-alarm-rescue", label: "\uAD6C\uC870 \uC694\uCCAD \uC704\uCE58\uB97C \uC9E7\uAC8C \uBCF4\uACE0\uD558\uACE0 \uC989\uC2DC \uD604\uC7A5\uC73C\uB85C \uD5A5\uD55C\uB2E4", personalityTag: "\uC784\uBB34 \uC6B0\uC120", habitKey: "spinoAlarmRescue" },
+      { id: "spino-alarm-command", label: "\uAC00\uAE4C\uC6B4 \uACBD\uBE44\uB300\uC6D0\uC5D0\uAC8C \uC218\uC870 \uC810\uAC80\uC744 \uB9E1\uAE30\uACE0 \uAD6C\uC870 \uB3D9\uC120\uC744 \uD655\uBCF4\uD55C\uB2E4", personalityTag: "\uCE68\uCC29\uD55C \uC9C0\uD718", habitKey: "spinoAlarmCommand" }
+    ] },
+    // 연구원만 이미 아는 어항 장식 취미를 숨기려는 시치미와 물고기를 향한 다정함으로 나누어 관찰한다.
+    { id: "spino-aquarium-decoration", prompt: "\uC5F0\uAD6C\uC6D0\uC774 \uC5B4\uD56D \uC18D\uC5D0 \uC0C8\uB85C \uB193\uC778 \uC7A5\uC2DD\uC744 \uC54C\uC544\uBCF4\uBA74?", choices: [
+      { id: "spino-decoration-deny", label: "\uC6D0\uB798 \uC788\uB358 \uAC83\uC774\uB77C\uBA70 \uC2DC\uC120\uC744 \uD53C\uD558\uACE0 \uC7A5\uC2DD \uAC01\uB3C4\uB9CC \uBC14\uB85C\uC7A1\uB294\uB2E4", personalityTag: "\uC11C\uD22C\uB978 \uC2DC\uCE58\uBBF8", habitKey: "spinoDecorationDeny" },
+      { id: "spino-decoration-shelter", label: "\uBB3C\uACE0\uAE30\uC758 \uC740\uC2E0\uCC98\uAC00 \uD544\uC694\uD588\uC744 \uBFD0\uC774\uB77C\uACE0 \uC9E7\uAC8C \uC124\uBA85\uD55C\uB2E4", personalityTag: "\uC228\uACA8 \uB454 \uB2E4\uC815\uD568", habitKey: "spinoDecorationShelter" }
+    ] },
+    // 함께하는 청소에서도 취미가 들키지 않았다고 믿는 스피나의 신뢰와 실무적인 배려를 행동으로 관찰한다.
+    { id: "spino-aquarium-cleaning", prompt: "\uC775\uC219\uD558\uC9C0 \uC54A\uC740 \uC5B4\uD56D \uCCAD\uC18C\uB97C \uC5F0\uAD6C\uC6D0\uC774 \uB3C4\uC640\uC8FC\uACA0\uB2E4\uACE0 \uD558\uBA74?", choices: [
+      { id: "spino-cleaning-gloves", label: "\uAC70\uC808\uD558\uB824\uB2E4 \uC5EC\uBD84\uC758 \uC7A5\uAC11\uC744 \uC870\uC6A9\uD788 \uAC74\uB128\uB2E4", personalityTag: "\uB9D0\uC5C6\uB294 \uC2E0\uB8B0", habitKey: "spinoCleaningGloves" },
+      { id: "spino-cleaning-roles", label: "\uC790\uC2E0\uC774 \uC218\uCD08\uB97C \uB9E1\uACA0\uB2E4\uBA70 \uC5ED\uD560\uC744 \uC815\uD655\uD788 \uB098\uB208\uB2E4", personalityTag: "\uC2E4\uBB34\uC801\uC778 \uBC30\uB824", habitKey: "spinoCleaningRoles" }
+    ] }
+  ],
+  luka: [
+    // 소파에서 먼저 말을 건 뒤 루카가 침묵과 대화 중 어느 방식으로 연구원과 휴식을 나누는지 관찰한다.
+    { id: "luka-sofa-conversation", prompt: "\uC5F0\uAD6C\uC18C \uC18C\uD30C\uC5D0 \uB204\uC6B4 \uB8E8\uCE74\uC5D0\uAC8C \uC5F0\uAD6C\uC6D0\uC774 \uB9D0\uC744 \uAC78\uBA74 \uC5B4\uB5BB\uAC8C \uBC18\uC751\uD574?", choices: [
+      { id: "luka-sofa-silence", label: "\uC790\uB9AC\uB97C \uB0B4\uC5B4 \uC8FC\uACE0 \uB098\uB780\uD788 \uD3B8\uD55C \uCE68\uBB35\uC744 \uC990\uAE34\uB2E4", personalityTag: "\uB290\uAE0B\uD55C \uCE5C\uBC00\uAC10", habitKey: "lukaSofaSilence" },
+      { id: "luka-sofa-chat", label: "\uC18C\uD30C\uC5D0 \uB204\uC6B4 \uCC44 \uC0C8\uB85C\uC6B4 \uC774\uC57C\uAE43\uAC70\uB9AC\uB97C \uACC4\uC18D \uAEBC\uB0B8\uB2E4", personalityTag: "\uC218\uB2E4\uC2A4\uB7EC\uC6B4 \uD638\uC758", habitKey: "lukaSofaChat" }
+    ] },
+    // 육식 계열 렐릭과의 단거리 달리기에서 기록 경쟁과 상대를 향한 배려가 행동으로 갈리는 순간을 관찰한다.
+    { id: "luka-sprint-rival", prompt: "\uB2E4\uB978 \uC721\uC2DD \uACC4\uC5F4 \uB810\uB9AD\uACFC \uB2E8\uAC70\uB9AC \uCD9C\uBC1C\uC120\uC5D0 \uC11C\uBA74 \uC5B4\uB5BB\uAC8C \uB2EC\uB824?", choices: [
+      { id: "luka-sprint-compete", label: "\uCD9C\uBC1C \uC2E0\uD638\uC640 \uD568\uAED8 \uAE30\uB85D\uC744 \uB178\uB9AC\uBA70 \uC804\uB825\uC73C\uB85C \uCE58\uACE0 \uB098\uAC04\uB2E4", personalityTag: "\uC815\uBA74 \uC2B9\uBD80\uC695", habitKey: "lukaSprintCompete" },
+      { id: "luka-sprint-pace", label: "\uC606 \uC8FC\uC790\uC758 \uBCF4\uD3ED\uC744 \uC0B4\uD53C\uBA70 \uB098\uB780\uD788 \uACB0\uC2B9\uC120\uC744 \uD5A5\uD55C\uB2E4", personalityTag: "\uBCF4\uD3ED\uC744 \uB9DE\uCD94\uB294 \uBC30\uB824", habitKey: "lukaSprintPace" }
+    ] },
+    // 치즈케이크 뒤의 걱정을 즉시 훈련으로 잇는지, 즐거움을 한 조각 더 누린 뒤 미루는지 관찰한다.
+    { id: "luka-cheesecake-weight", prompt: "\uCE58\uC988\uCF00\uC774\uD06C\uB97C \uBA39\uC740 \uB8E8\uCE74\uAC00 \uBAB8\uBB34\uAC8C\uB97C \uAC71\uC815\uD558\uAE30 \uC2DC\uC791\uD558\uBA74 \uC5B4\uB5BB\uAC8C \uD574?", choices: [
+      { id: "luka-cake-training", label: "\uB0A8\uC740 \uC811\uC2DC\uB97C \uCE58\uC6B0\uACE0 \uB2E4\uC74C \uB2E8\uAC70\uB9AC \uD6C8\uB828 \uACC4\uD68D\uC744 \uC801\uB294\uB2E4", personalityTag: "\uACC4\uD68D\uC801\uC778 \uC790\uAE30\uAD00\uB9AC", habitKey: "lukaCakeTraining" },
+      { id: "luka-cake-more", label: "\uD55C \uC870\uAC01\uB9CC \uB354 \uC811\uC2DC\uC5D0 \uB193\uACE0 \uACE0\uBBFC\uC740 \uC2DD\uC0AC \uB4A4\uB85C \uBBF8\uB8EC\uB2E4", personalityTag: "\uD604\uC7AC\uB97C \uC990\uAE30\uB294 \uB099\uCC9C\uC131", habitKey: "lukaCakeMore" }
+    ] }
+  ]
+};
+var OBSERVATION_FALLBACK = { intro: "\uBB34\uC5C7\uC774 \uAD81\uAE08\uD55C\uC9C0 \uB9D0\uD574 \uC918.", habit: "\uC0C8\uB85C\uC6B4 \uBC18\uC751 \uC591\uC2DD\uC744 \uAE30\uB85D\uD588\uB2E4." };
+var REACTIONS = {
+  torika: { intro: "\uCC9C\uCC9C\uD788 \uBB3C\uC5B4\uBD10. \uC0DD\uAC01\uD574 \uBCFC\uAC8C.", replies: {
+    approach: "\uBFD4\uC744 \uB0AE\uCD94\uACE0 \uAC00\uAE4C\uC774 \uAC00 \uBCFC\uB798.",
+    wait: "\uBC1C\uBC11\uC758 \uB5A8\uB9BC\uBD80\uD130 \uD655\uC778\uD560\uB798.",
+    share: "\uC5B4\uB9B0 \uAC1C\uCCB4\uAC00 \uBA3C\uC800 \uBA39\uC5B4\uC57C \uD574.",
+    guard: "\uB0B4\uAC00 \uBC14\uAE65\uCABD\uC744 \uC9C0\uD0AC\uAC8C.",
+    "torika-meal-eager": "\uB9CE\uC774 \uBA39\uC5B4! \uC544\uC0AD\uD55C \uC5B4\uB9B0 \uC78E\uC774 \uC81C\uC77C \uC88B\uC544.",
+    "torika-meal-share": "\uB0B4 \uBAAB\uC740 \uCEE4\uB3C4 \uB3FC. \uD558\uC9C0\uB9CC \uB2E4\uB4E4 \uBA39\uC744 \uAC74 \uB0A8\uACA8 \uB458\uB798.",
+    "torika-meal-shy": "\uC870\uAE08... \uC544\uB2C8, \uBCF4\uD1B5\uB9CC\uD07C \uBA39\uC5B4. \uC5B4\uB9B0 \uC78E\uC740 \uC88B\uC544\uD574.",
+    "torika-weight-honest": "\uBCCF\uC774 \uB728\uAC70\uC6CC\uB3C4 \uB9D0\uD560 \uC218 \uC788\uC5B4. \uC9C0\uAE08 \uBAB8\uBB34\uAC8C\uB294 \uAE30\uB85D\uB300\uB85C\uC57C.",
+    "torika-weight-deflect": "\uADF8, \uADF8\uBCF4\uB2E4 \uC624\uB298 \uC78E \uC0C1\uD0DC\uAC00 \uC815\uB9D0 \uC88B\uC9C0 \uC54A\uC544?",
+    "torika-shield-admit": "\uBB34\uC11C\uC6CC. \uADF8\uB798\uB3C4 \uD55C \uAC78\uC74C\uB9CC \uBB3C\uB7EC\uC11C\uC11C \uC5EC\uAE30 \uC788\uC744\uB798.",
+    "torika-shield-protect": "\uB0B4 \uB4A4\uC5D0 \uC788\uC5B4. \uB2E4\uB9AC\uAC00 \uB5A8\uB824\uB3C4 \uAE38\uC740 \uC548 \uBE44\uD0AC \uAC70\uC57C."
+  }, habits: {
+    approach: "\uB0AF\uC120 \uC9C4\uB3D9\uC744 \uC55E\uBC1C\uB85C \uB450 \uBC88 \uD655\uC778\uD55C\uB2E4.",
+    wait: "\uC704\uD5D8\uC744 \uB290\uB07C\uBA74 \uBB34\uB9AC\uC758 \uBC14\uAE65\uC744 \uD5A5\uD574 \uC120\uB2E4.",
+    share: "\uBA39\uC774 \uAC00\uC6B4\uB370 \uBD80\uB4DC\uB7EC\uC6B4 \uC78E\uC744 \uC5B4\uB9B0 \uAC1C\uCCB4\uC5D0\uAC8C \uB0A8\uAE34\uB2E4.",
+    guard: "\uC2DD\uC0AC \uC911\uC5D0\uB3C4 \uC77C\uC815\uD55C \uAC04\uACA9\uC73C\uB85C \uACE0\uAC1C\uB97C \uB4E4\uC5B4 \uACBD\uACC4\uD55C\uB2E4.",
+    torikaMealEager: "\uC2DD\uC0AC\uB7C9\uC744 \uC228\uAE30\uC9C0 \uC54A\uACE0 \uC544\uC0AD\uD55C \uC5B4\uB9B0 \uC78E\uC744 \uAC00\uC7A5 \uBA3C\uC800 \uCC3E\uB294\uB2E4.",
+    torikaMealShare: "\uBA39\uACE0 \uC2F6\uC740 \uC591\uC774 \uB9CE\uC544\uB3C4 \uB3D9\uB8CC\uC758 \uBAAB\uC744 \uBA3C\uC800 \uB530\uB85C \uB454\uB2E4.",
+    torikaMealShy: "\uC2DD\uC0AC\uB7C9\uC744 \uC791\uAC8C \uB9D0\uD560 \uB54C\uB3C4 \uC88B\uC544\uD558\uB294 \uC5B4\uB9B0 \uC78E\uC740 \uBE60\uB728\uB9AC\uC9C0 \uC54A\uB294\uB2E4.",
+    torikaWeightHonest: "\uBAB8\uBB34\uAC8C\uB97C \uB9D0\uD560 \uB54C \uBCCF \uB05D\uAE4C\uC9C0 \uBD89\uC5B4\uC9C0\uC9C0\uB9CC \uC218\uCE58\uB294 \uB610\uBC15\uB610\uBC15 \uD655\uC778\uD55C\uB2E4.",
+    torikaWeightDeflect: "\uBAB8\uBB34\uAC8C\uAC00 \uC5B8\uAE09\uB418\uBA74 \uBCCF \uB05D\uAE4C\uC9C0 \uBD89\uC5B4\uC9C4 \uCC44 \uBA39\uC774 \uC774\uC57C\uAE30\uB85C \uD654\uC81C\uB97C \uB3CC\uB9B0\uB2E4.",
+    torikaShieldAdmit: "\uAC81\uC774 \uB09C\uB2E4\uACE0 \uC778\uC815\uD558\uACE0 \uD55C \uAC78\uC74C \uBB3C\uB7EC\uC11C\uC9C0\uB9CC \uBCF4\uD638\uD560 \uB300\uC0C1\uC758 \uC55E\uC740 \uBE44\uC6B0\uC9C0 \uC54A\uB294\uB2E4.",
+    torikaShieldProtect: "\uB2E4\uB9AC\uAC00 \uB5A8\uB824\uB3C4 \uBAB8\uC744 \uB0AE\uCDB0 \uBCF4\uD638\uD560 \uB300\uC0C1\uC758 \uC55E\uC744 \uB9C9\uC544\uC120\uB2E4."
+  } },
+  // 경쟁심·강자 선호에는 정중한 승부 절차를, 에티켓·약자 배려에는 위압하지 않는 태도를 대응시킨다.
+  rex: { intro: "\uAD00\uCC30\uC774\uB77C\uB2C8, \uC7AC\uBBF8\uC788\uB294 \uAC78 \uBB3B\uB124.", replies: {
+    approach: "\uC228\uAE30 \uC804\uC5D0 \uB0B4\uAC00 \uCC3E\uC544\uB0B4\uC9C0.",
+    wait: "\uBC14\uB78C\uC774 \uB0C4\uC0C8\uB97C \uAC00\uC838\uC62C \uB54C\uAE4C\uC9C0 \uAE30\uB2E4\uB824.",
+    share: "\uB0B4 \uBB34\uB9AC\uB77C\uBA74 \uAD76\uAE30\uC9C0 \uC54A\uC544.",
+    guard: "\uAC15\uD55C \uC21C\uC11C\uAC00 \uC544\uB2C8\uB77C \uD544\uC694\uD55C \uC21C\uC11C\uB85C \uBA39\uC5B4.",
+    "rex-size-formal": "\uD6CC\uB96D\uD55C \uCCB4\uACA9\uC774\uAD70. \uC774\uB984\uC744 \uBC1D\uD788\uACE0 \uC815\uC2DD\uC73C\uB85C \uD55C \uD310 \uCCAD\uD558\uACA0\uC5B4.",
+    "rex-size-wrestle": "\uADF8 \uCCB4\uACA9\uC774 \uC5BC\uB9C8\uB098 \uB300\uB2E8\uD55C\uC9C0, \uAD1C\uCC2E\uB2E4\uBA74 \uD798\uC73C\uB85C \uACA8\uB904 \uBCF4\uC790.",
+    "rex-strong-fair": "\uB124 \uAC15\uC810\uC744 \uCDA9\uBD84\uD788 \uBCF8 \uB4A4 \uAC19\uC740 \uC870\uAC74\uC5D0\uC11C \uC815\uC815\uB2F9\uB2F9\uD788 \uB3C4\uC804\uD558\uACA0\uC5B4.",
+    "rex-strong-eager": "\uB208\uC744 \uB5C4 \uC218 \uC5C6\uB294 \uAC15\uD568\uC774\uAD70. \uC900\uBE44\uAC00 \uB410\uB2E4\uBA74 \uC9C0\uAE08 \uC2B9\uBD80\uB97C \uCCAD\uD558\uC9C0.",
+    "rex-small-guide": "\uB180\uB77C\uC9C0 \uC54A\uC544\uB3C4 \uB3FC. \uB0B4\uAC00 \uBAB8\uC744 \uB0AE\uCD9C \uD14C\uB2C8 \uCC9C\uCC9C\uD788 \uC778\uC0AC\uBD80\uD130 \uD574 \uBCF4\uC790.",
+    "rex-small-example": "\uB0B4\uAC00 \uBA3C\uC800 \uC778\uC0AC\uD560\uAC8C. \uD3B8\uD574\uC9C0\uBA74 \uAC19\uC740 \uBC29\uC2DD\uC73C\uB85C \uB2F5\uD574 \uC918."
+  }, habits: {
+    approach: "\uC18C\uB9AC\uBCF4\uB2E4 \uBC14\uB78C\uC5D0 \uC2E4\uB9B0 \uB0C4\uC0C8\uB97C \uBA3C\uC800 \uC887\uB294\uB2E4.",
+    wait: "\uC0AC\uB0E5 \uC804 \uBAB8\uC744 \uB0AE\uCD94\uACE0 \uD48D\uD5A5\uC774 \uBC14\uB00C\uAE30\uB97C \uAE30\uB2E4\uB9B0\uB2E4.",
+    share: "\uBB34\uB9AC\uC758 \uBA39\uC774\uAC00 \uBD80\uC871\uD558\uBA74 \uC790\uC2E0\uC758 \uBAAB\uC744 \uB4A4\uB85C \uBBF8\uB8EC\uB2E4.",
+    guard: "\uBA39\uC774 \uC8FC\uBCC0\uC744 \uD55C \uBC14\uD034 \uB3C8 \uB4A4\uC5D0\uC57C \uC2DD\uC0AC\uB97C \uC2DC\uC791\uD55C\uB2E4.",
+    rexSizeFormal: "\uD070 \uC0C1\uB300\uAC00 \uB2E4\uAC00\uC624\uBA74 \uC5B4\uAE68\uB97C \uD3B4\uACE0 \uBC1C\uB05D\uC744 \uAC00\uC9C0\uB7F0\uD788 \uB9DE\uCD98\uB2E4.",
+    rexSizeWrestle: "\uCCB4\uACA9\uC774 \uD070 \uC0C1\uB300 \uC55E\uC5D0\uC11C\uB294 \uC911\uC2EC\uC744 \uB0AE\uCD94\uACE0 \uB9DE\uC7A1\uC744 \uAC70\uB9AC\uB97C \uAC00\uB2A0\uD55C\uB2E4.",
+    rexStrongFair: "\uAC15\uC790\uC758 \uC6C0\uC9C1\uC784\uC744 \uB05D\uAE4C\uC9C0 \uC9C0\uCF1C\uBCF8 \uB4A4 \uC7A5\uBE44\uC640 \uCD9C\uBC1C \uC704\uCE58\uBD80\uD130 \uD655\uC778\uD55C\uB2E4.",
+    rexStrongEager: "\uAC15\uD55C \uAE30\uCC99\uC744 \uC54C\uC544\uCC44\uBA74 \uB208\uBE5B\uC774 \uBC1D\uC544\uC9C0\uACE0 \uACE7\uBC14\uB85C \uC0C1\uB300\uC758 \uC900\uBE44 \uC5EC\uBD80\uB97C \uC0B4\uD540\uB2E4.",
+    rexSmallGuide: "\uC791\uC740 \uB810\uB9AD\uACFC \uC774\uC57C\uAE30\uD560 \uB54C \uBB34\uB98E\uC744 \uAD7D\uD600 \uC2DC\uC120\uC744 \uAC19\uC740 \uB192\uC774\uC5D0 \uB454\uB2E4.",
+    rexSmallExample: "\uC791\uC740 \uB810\uB9AD \uC55E\uC5D0\uC11C\uB294 \uBAA9\uC18C\uB9AC\uB97C \uB0AE\uCD94\uACE0 \uBA3C\uC800 \uCC9C\uCC9C\uD788 \uACE0\uAC1C\uB97C \uC219\uC778\uB2E4."
+  } },
+  // 연구원은 어항 취미를 알지만, 스피나는 임무와 물고기 관리라는 짧은 해명으로 아직 감췄다고 믿는다.
+  spino: { intro: "\uC9C8\uBB38\uC740 \uC9E7\uAC8C. \uC21C\uCC30 \uC2DC\uAC04\uC774\uB2C8\uAE4C.", replies: {
+    approach: "\uBC1C\uC2E0 \uC9C0\uC810\uBD80\uD130 \uD655\uC778\uD55C\uB2E4. \uC218\uC870 \uCABD\uC740 \uC544\uB2C8\uACA0\uC9C0.",
+    wait: "\uC8FC\uBCC0\uC774 \uC7A0\uC7A0\uD574\uC9C8 \uB54C\uAE4C\uC9C0 \uB300\uAE30\uD55C\uB2E4. \uC5B4\uD56D\uC744 \uBCF4\uB294 \uAC74 \uC544\uB2C8\uB2E4.",
+    share: "\uD544\uC694\uD55C \uBAAB\uB9CC \uB098\uB208\uB2E4. \uBB3C\uACE0\uAE30 \uBA39\uC774\uB3C4 \uAC19\uC740 \uC6D0\uCE59\uC774\uB2E4.",
+    guard: "\uBB3C\uAC00\uB97C \uBA3C\uC800 \uD655\uBCF4\uD55C\uB2E4. \uC218\uC870 \uC0C1\uD0DC\uB294 \uC21C\uCC30 \uD56D\uBAA9\uC77C \uBFD0\uC774\uB2E4.",
+    "spino-alarm-rescue": "\uAD6C\uC870 \uC694\uCCAD \uC704\uCE58 \uBCF4\uACE0. \uC7A5\uBE44 \uD655\uC778\uD588\uB2E4. \uBC14\uB85C \uAC04\uB2E4.",
+    "spino-alarm-command": "\uAC00\uAE4C\uC6B4 \uACBD\uBE44\uB294 \uC218\uC870 \uD655\uC778. \uB098\uB294 \uAD6C\uC870 \uD1B5\uB85C\uB97C \uD655\uBCF4\uD55C\uB2E4.",
+    "spino-decoration-deny": "\uC6D0\uB798 \uC788\uB358 \uAC70\uB2E4. ...\uAC01\uB3C4\uAC00 \uD2C0\uC5B4\uC84C\uAD70.",
+    "spino-decoration-shelter": "\uBB3C\uACE0\uAE30\uC5D0\uAC8C \uC740\uC2E0\uCC98\uAC00 \uD544\uC694\uD588\uC744 \uBFD0\uC774\uB2E4. \uADF8 \uC774\uC0C1\uC740 \uC5C6\uC5B4.",
+    "spino-cleaning-gloves": "\uD63C\uC790 \uD574\uB3C4 \uB41C\uB2E4. ...\uC5EC\uBD84 \uC7A5\uAC11\uC740 \uAC70\uAE30 \uC788\uB2E4.",
+    "spino-cleaning-roles": "\uB098\uB294 \uC218\uCD08\uB97C \uB9E1\uC9C0. \uB2F9\uC2E0\uC740 \uC720\uB9AC\uBA74. \uADF8\uAC8C \uD6A8\uC728\uC801\uC774\uB2E4."
+  }, habits: {
+    approach: "\uBC1C\uC2E0\uC9C0\uB97C \uC887\uC73C\uBA74\uC11C\uB3C4 \uC5F0\uAD6C\uC6D0\uC758 \uC2DC\uC120\uC774 \uBA40\uC5B4\uC9C0\uBA74 \uC218\uC870 \uC7A5\uBE44 \uC7A0\uAE08\uC744 \uD55C \uBC88 \uB354 \uD655\uC778\uD55C\uB2E4.",
+    wait: "\uB300\uAE30 \uC911 \uC5B4\uD56D \uCABD\uC744 \uBCF4\uC9C0 \uC54A\uB294 \uCC99\uD558\uBA74\uC11C \uC720\uB9AC\uC5D0 \uBE44\uCE5C \uBB3C\uACE0\uAE30\uC758 \uC6C0\uC9C1\uC784\uC744 \uD655\uC778\uD55C\uB2E4.",
+    share: "\uBC30\uBD84\uC744 \uB9C8\uCE5C \uB4A4 \uC544\uBB34\uB3C4 \uBCF4\uC9C0 \uC54A\uC744 \uB54C \uBB3C\uACE0\uAE30 \uBA39\uC774\uC758 \uD06C\uAE30\uAE4C\uC9C0 \uACE0\uB974\uAC8C \uB9DE\uCD98\uB2E4.",
+    guard: "\uC21C\uCC30 \uC810\uAC80\uC774\uB77C\uACE0 \uB458\uB7EC\uB300\uBA70 \uC5F0\uAD6C\uC6D0\uC774 \uB5A0\uB09C \uB4A4 \uC218\uC870 \uAC00\uC7A5\uC790\uB9AC\uC758 \uBB3C\uAE30\uB97C \uB2E6\uB294\uB2E4.",
+    spinoAlarmRescue: "\uBCF4\uACE0\uB97C \uB9C8\uCE58\uAE30 \uC804 \uC774\uBBF8 \uC7A5\uBE44 \uC7A0\uAE08\uC744 \uD655\uC778\uD558\uACE0 \uAD6C\uC870 \uD604\uC7A5\uC73C\uB85C \uBAB8\uC744 \uB3CC\uB9B0\uB2E4.",
+    spinoAlarmCommand: "\uD544\uC694\uD55C \uC9C0\uC2DC\uB9CC \uC9E7\uAC8C \uB0A8\uAE30\uACE0 \uAD6C\uC870 \uC778\uB825\uC774 \uC9C0\uB0A0 \uD1B5\uB85C\uB97C \uBE44\uC6B4\uB2E4.",
+    spinoDecorationDeny: "\uB300\uD654\uAC00 \uB05D\uB098 \uC5F0\uAD6C\uC6D0\uC774 \uBB3C\uB7EC\uB09C \uB4A4 \uC7A5\uC2DD\uC744 \uB2E4\uC2DC \uC5B4\uD56D \uC911\uC559\uC5D0 \uB9DE\uCD98\uB2E4.",
+    spinoDecorationShelter: "\uAD00\uC2EC \uC5C6\uB294 \uCC99 \uC790\uB9AC\uB97C \uB72C \uB4A4 \uBB3C\uACE0\uAE30\uAC00 \uC7A5\uC2DD\uC744 \uC4F0\uB294\uC9C0 \uBA40\uB9AC\uC11C \uD655\uC778\uD55C\uB2E4.",
+    spinoCleaningGloves: "\uC5F0\uAD6C\uC6D0\uC774 \uB2E6\uC740 \uC720\uB9AC\uC758 \uBB3C\uC790\uAD6D\uC744 \uBCF4\uC9C0 \uBABB\uD55C \uCC99\uD558\uB2E4\uAC00 \uBAB0\uB798 \uB9C8\uBB34\uB9AC\uD55C\uB2E4.",
+    spinoCleaningRoles: "\uC5F0\uAD6C\uC6D0\uC774 \uC5B4\uB824\uC6CC\uD558\uB294 \uAD6C\uC5ED\uC744 \uBC1C\uACAC\uD558\uBA74 \uC124\uBA85 \uC5C6\uC774 \uC790\uC2E0\uC758 \uAD6C\uC5ED\uACFC \uBC14\uAFB8\uC5B4 \uB9E1\uB294\uB2E4."
+  } },
+  // 유일한 연구원인 플레이어와 나누는 휴식·훈련·간식 반응을 루카의 말투와 관찰 문장에 함께 대응시킨다.
+  luka: { intro: "\uC654\uC5B4, \uC5F0\uAD6C\uC6D0? \uC5EC\uAE30 \uC549\uC544\uC11C \uCC9C\uCC9C\uD788 \uBB3C\uC5B4\uBD10.", replies: {
+    approach: "\uAC19\uC774 \uAC00 \uBCF4\uC790. \uBCC4\uC77C \uC544\uB2C8\uBA74 \uC0B0\uCC45\uD55C \uC148 \uCE58\uACE0.",
+    wait: "\uC870\uAE08 \uB204\uC6CC\uC11C \uAE30\uB2E4\uB9AC\uBA74 \uBB34\uC2A8 \uC18C\uB9AC\uC778\uC9C0 \uC54C\uAC8C \uB420 \uAC70\uC57C.",
+    share: "\uB124 \uBAAB\uBD80\uD130 \uB5BC\uC5B4 \uB458\uAC8C. \uAC19\uC774 \uBA39\uB294 \uAC8C \uB354 \uB9DB\uC788\uC796\uC544.",
+    guard: "\uB0B4\uAC00 \uBCF4\uACE0 \uC788\uC744 \uD14C\uB2C8 \uC5F0\uAD6C\uC6D0\uBD80\uD130 \uD3B8\uD558\uAC8C \uBA39\uC5B4.",
+    "luka-sofa-silence": "\uB9D0\uD558\uC9C0 \uC54A\uC544\uB3C4 \uAD1C\uCC2E\uC544. \uC5F0\uAD6C\uC6D0\uC774 \uC606\uC5D0 \uC788\uC73C\uBA74 \uD3B8\uD558\uAC70\uB4E0.",
+    "luka-sofa-chat": "\uB9C8\uCE68 \uD560 \uC774\uC57C\uAE30\uAC00 \uB9CE\uC558\uC5B4. \uC624\uB298 \uD6C8\uB828\uBD80\uD130 \uC18C\uD30C \uCFE0\uC158 \uC774\uC57C\uAE30\uAE4C\uC9C0 \uB4E4\uC5B4 \uBCFC\uB798?",
+    "luka-sprint-compete": "\uB2EC\uB9AC\uAE30\uB77C\uBA74 \uBD10\uC8FC\uAE30 \uC5C6\uC9C0. \uACB0\uC2B9\uC120\uC5D0\uC11C \uBA3C\uC800 \uAE30\uB2E4\uB9AC\uACE0 \uC788\uC744\uAC8C.",
+    "luka-sprint-pace": "\uD63C\uC790 \uC55E\uC11C\uBA74 \uAE08\uBC29 \uB05D\uB098\uC796\uC544. \uC774\uBC88\uC5D0\uB294 \uC606\uC5D0\uC11C \uAC19\uC774 \uB2EC\uB9B4\uB798.",
+    "luka-cake-training": "\uC811\uC2DC\uB294 \uC5EC\uAE30\uAE4C\uC9C0. \uB2E4\uC74C \uD6C8\uB828\uC5D0 \uC9C8\uC8FC \uD55C \uBC88\uC744 \uB354 \uB123\uC73C\uBA74 \uB418\uACA0\uC5B4.",
+    "luka-cake-more": "\uAC71\uC815\uC740 \uB2E4 \uBA39\uACE0 \uD574\uB3C4 \uB2A6\uC9C0 \uC54A\uC544. \uC5F0\uAD6C\uC6D0\uB3C4 \uD55C \uC870\uAC01 \uB354 \uBA39\uC744\uB798?"
+  }, habits: {
+    approach: "\uB0AF\uC120 \uC18C\uB9AC\uAC00 \uB098\uBA74 \uC5F0\uAD6C\uC6D0\uACFC \uB098\uB780\uD788 \uCC9C\uCC9C\uD788 \uBC1C\uC2E0\uC9C0\uB97C \uCC3E\uC544\uAC04\uB2E4.",
+    wait: "\uD655\uC778\uD560 \uB54C\uAE4C\uC9C0 \uC18C\uD30C\uC5D0 \uB204\uC6CC \uC18C\uB9AC\uC758 \uAC04\uACA9\uC744 \uC138\uBA70 \uAE30\uB2E4\uB9B0\uB2E4.",
+    share: "\uAC04\uC2DD\uC744 \uD3BC\uCE58\uBA74 \uC5F0\uAD6C\uC6D0\uC758 \uBAAB\uC744 \uBA3C\uC800 \uAC00\uAE4C\uC6B4 \uC811\uC2DC\uC5D0 \uB35C\uC5B4 \uB454\uB2E4.",
+    guard: "\uC5F0\uAD6C\uC6D0\uC774 \uC2DD\uC0AC\uB97C \uB9C8\uCE60 \uB54C\uAE4C\uC9C0 \uC8FC\uBCC0\uC744 \uC0B4\uD53C\uBA74\uC11C\uB3C4 \uC790\uB9AC\uB97C \uBE44\uC6B0\uC9C0 \uC54A\uB294\uB2E4.",
+    lukaSofaSilence: "\uC5F0\uAD6C\uC6D0\uC774 \uACC1\uC5D0 \uC549\uC73C\uBA74 \uC18C\uD30C \uD55C\uCABD\uC744 \uBE44\uC6B0\uACE0 \uB9D0\uC5C6\uC774 \uAC19\uC740 \uC2DC\uAC04\uC744 \uBCF4\uB0B8\uB2E4.",
+    lukaSofaChat: "\uC5F0\uAD6C\uC6D0\uC774 \uC18C\uD30C \uACC1\uC5D0 \uC624\uBA74 \uB204\uC6B4 \uCC44\uB85C\uB3C4 \uC0AC\uC18C\uD55C \uC774\uC57C\uAE43\uAC70\uB9AC\uB97C \uC5F0\uB2EC\uC544 \uAEBC\uB0B8\uB2E4.",
+    lukaSprintCompete: "\uC721\uC2DD \uACC4\uC5F4 \uB810\uB9AD\uACFC \uCD9C\uBC1C\uC120\uC5D0 \uC11C\uBA74 \uC790\uC138\uB97C \uB0AE\uCD94\uACE0 \uC790\uC2E0\uC758 \uCD5C\uACE0 \uAE30\uB85D\uBD80\uD130 \uB178\uB9B0\uB2E4.",
+    lukaSprintPace: "\uD568\uAED8 \uB2EC\uB9AC\uB294 \uB810\uB9AD\uC774 \uB4A4\uCC98\uC9C0\uBA74 \uC18D\uB3C4\uB97C \uB0AE\uCDB0 \uC0C1\uB300\uC758 \uBCF4\uD3ED \uC606\uC5D0 \uB9DE\uCD98\uB2E4.",
+    lukaCakeTraining: "\uCE58\uC988\uCF00\uC774\uD06C\uB97C \uBA39\uACE0 \uBAB8\uBB34\uAC8C\uAC00 \uC2E0\uACBD \uC4F0\uC774\uBA74 \uACE7\uBC14\uB85C \uB2E4\uC74C \uB2E8\uAC70\uB9AC \uD6C8\uB828 \uD69F\uC218\uB97C \uC801\uB294\uB2E4.",
+    lukaCakeMore: "\uCE58\uC988\uCF00\uC774\uD06C \uB4A4\uC5D0 \uBAB8\uBB34\uAC8C\uB97C \uAC71\uC815\uD558\uBA74\uC11C\uB3C4 \uD55C \uC870\uAC01\uC744 \uB354 \uB098\uB208 \uB4A4 \uC0DD\uAC01\uD558\uAE30\uB85C \uD55C\uB2E4."
+  } }
+};
+function utcDayNumber(utcDate) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(utcDate)) throw new RangeError("\uAD00\uCC30 \uC778\uD130\uBDF0 \uB0A0\uC9DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+  const timestamp = Date.parse(`${utcDate}T00:00:00Z`);
+  if (!Number.isFinite(timestamp) || new Date(timestamp).toISOString().slice(0, 10) !== utcDate) throw new RangeError("\uAD00\uCC30 \uC778\uD130\uBDF0 \uB0A0\uC9DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+  return Math.floor(timestamp / 864e5);
+}
+function observationQuestionForDate(utcDate) {
+  utcDayNumber(utcDate);
+  const index = [...utcDate].reduce((sum, char) => sum + char.charCodeAt(0), 0) % COMMON_OBSERVATION_QUESTIONS.length;
+  return COMMON_OBSERVATION_QUESTIONS[index];
+}
+function observationQuestionForRelicAndDate(relicId, utcDate) {
+  const day = utcDayNumber(utcDate);
+  const relicQuestions = RELIC_OBSERVATION_QUESTIONS[relicId];
+  if (!relicQuestions?.length || day % 2 !== 0) return observationQuestionForDate(utcDate);
+  return relicQuestions[Math.floor(day / 2) % relicQuestions.length];
+}
+function createObservationStory(relicId, relicName, utcDate) {
+  const question = observationQuestionForRelicAndDate(relicId, utcDate);
+  const reaction = REACTIONS[relicId] ?? { intro: OBSERVATION_FALLBACK.intro, replies: {}, habits: {} };
+  return { id: `observation.${utcDate}.${relicId}`, startNodeId: "intro", nodes: [
+    { id: "intro", speaker: relicName, body: reaction.intro, nextId: "question" },
+    { id: "question", speaker: "\uC5F0\uAD6C\uC6D0", body: question.prompt, choices: question.choices.map((choice) => ({ id: choice.id, label: choice.label, nextId: `reply-${choice.id}` })) },
+    ...question.choices.map((choice) => ({ id: `reply-${choice.id}`, speaker: relicName, body: reaction.replies[choice.id] ?? choice.label }))
+  ] };
+}
+function observationDiscovery(relicId, utcDate, choiceId) {
+  const question = observationQuestionForRelicAndDate(relicId, utcDate);
+  const choice = question.choices.find(({ id }) => id === choiceId);
+  if (!choice) throw new RangeError("\uD604\uC7AC \uAD00\uCC30 \uC9C8\uBB38\uC5D0 \uC5C6\uB294 \uB2F5\uBCC0\uC785\uB2C8\uB2E4.");
+  return { question, choice, habit: REACTIONS[relicId]?.habits[choice.habitKey] ?? OBSERVATION_FALLBACK.habit };
+}
+function registerQuestions(questions) {
+  for (const question of questions) {
+    registerDataText(question, "prompt", `observation.${question.id}.prompt`);
+    for (const choice of question.choices) {
+      registerDataText(choice, "label", `observation.${question.id}.${choice.id}.label`);
+      registerDataText(choice, "personalityTag", `observation.${question.id}.${choice.id}.tag`);
+    }
+  }
+}
+registerQuestions(COMMON_OBSERVATION_QUESTIONS);
+for (const [relicId, questions] of Object.entries(RELIC_OBSERVATION_QUESTIONS)) {
+  void relicId;
+  registerQuestions(questions);
+}
+for (const [relicId, reaction] of Object.entries(REACTIONS)) {
+  registerDataText(reaction, "intro", `reaction.${relicId}.intro`);
+  for (const key of Object.keys(reaction.replies)) registerDataText(reaction.replies, key, `reaction.${relicId}.reply.${key}`);
+  for (const key of Object.keys(reaction.habits)) registerDataText(reaction.habits, key, `reaction.${relicId}.habit.${key}`);
+}
+registerDataText(OBSERVATION_FALLBACK, "intro", "observation.fallback.intro");
+registerDataText(OBSERVATION_FALLBACK, "habit", "observation.fallback.habit");
+
+// src/data/interactionJournals.ts
+init_define_import_meta_env();
+
+// src/data/dialogues/interactionCentralJournal.ts
+init_define_import_meta_env();
+
+// src/data/dialogues/registerDialogue.ts
+init_define_import_meta_env();
+
+// src/data/dialogues/speakerStanding.ts
+init_define_import_meta_env();
+var BY_NAME = /* @__PURE__ */ new Map();
+for (const relic of RELICS) {
+  if (relic.enemyOnly || relic.summonOnly) continue;
+  BY_NAME.set(relic.name, relic.portraitAssetId);
+}
+BY_NAME.set("\uC624\uBE44", "obi");
+function speakerStanding(speaker) {
+  return BY_NAME.get(speaker);
+}
+
+// src/data/dialogues/registerDialogue.ts
+function registerDialogueTexts(story) {
+  if (story.titleCard) {
+    registerDataText(story.titleCard, "title", `dialogue.${story.id}.title`);
+    registerDataText(story.titleCard, "subtitle", `dialogue.${story.id}.subtitle`);
+  }
+  for (const node of story.nodes) {
+    if (!node.standing && node.speaker) node.standing = speakerStanding(node.speaker);
+    const key = `dialogue.${story.id}.${node.id}`;
+    if (node.speaker) registerDataText(node, "speaker", `${key}.speaker`);
+    registerDataText(node, "body", `${key}.body`);
+    node.choices?.forEach((choice, index) => registerDataText(choice, "label", `${key}.choice.${index}`));
+  }
+}
+
+// src/data/dialogues/interactionCentralJournal.ts
+var INTERACTION_CENTRAL_JOURNAL = {
+  id: "interaction-central-dialogue-02",
+  startNodeId: "signal",
+  nodes: [
+    { id: "signal", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC720\uB9AC \uD68C\uB791 \uC544\uB798\uC5D0\uC11C \uC624\uB798\uB41C \uD638\uCD9C \uC2E0\uD638\uAC00 \uBC18\uBCF5\uB418\uACE0 \uC788\uC5B4\uC694.", standing: "torika", act: "lean", nextId: "choice" },
+    { id: "choice", speaker: "\uC5F0\uAD6C\uC6D0", body: "\uAE30\uB85D \uC7A5\uCE58\uC758 \uC5B4\uB290 \uCE35\uBD80\uD130 \uBCF5\uC6D0\uD560\uAE4C?", choices: [
+      { id: "voice", label: "\uC74C\uC131\uCE35\uC744 \uBA3C\uC800 \uBCF5\uC6D0\uD55C\uB2E4", nextId: "voice-result" },
+      { id: "route", label: "\uC774\uB3D9 \uACBD\uB85C\uB97C \uBA3C\uC800 \uBCF5\uC6D0\uD55C\uB2E4", nextId: "route-result" }
+    ] },
+    { id: "voice-result", speaker: "\uD1A0\uB9AC\uCE74", body: "\uAC19\uC740 \uC778\uC0AC\uAC00 \uB9E4\uC77C \uB2E4\uB978 \uBAA9\uC18C\uB9AC\uB85C \uB0A8\uC544 \uC788\uC5B4\uC694. \uC2DC\uBBFC\uB4E4\uC774 \uBCF5\uC6D0 \uAC1C\uCCB4\uC5D0\uAC8C \uB9D0\uC744 \uAC74 \uAE30\uB85D\uC774\uC5D0\uC694.", standing: "torika", act: "nod" },
+    { id: "route-result", speaker: "\uD1A0\uB9AC\uCE74", body: "\uBC1C\uC790\uAD6D\uC740 \uBAA8\uB450 \uC628\uC2E4 \uAC00\uC6B4\uB370\uB85C \uD5A5\uD574\uC694. \uCCAB \uB9CC\uB0A8\uC744 \uAE30\uB2E4\uB9AC\uB358 \uC0AC\uB78C\uB4E4\uC758 \uB3D9\uC120 \uAC19\uC544\uC694.", standing: "torika", act: "nod" }
+  ]
+};
+registerDialogueTexts(INTERACTION_CENTRAL_JOURNAL);
+
+// src/data/interactionJournals.ts
+var INTERACTION_JOURNALS = [
+  { id: "interaction-doppel-01", cityId: "doppel-parlor", title: "\uC751\uC811\uC2E4\uC758 \uC5F0\uAD6C \uC77C\uC9C0", discoveryOrder: 1, body: "\uC190\uB2D8 \uD0C1\uC790\uC5D0 \uB193\uC544 \uB454 \uC77C\uC9C0\uC758 \uCCAB \uC7A5. \uC5B4\uB5A4 \uD45C\uBCF8\uC744 \uC5B4\uB5A4 \uC21C\uC11C\uB85C \uB418\uC0B4\uB838\uB294\uC9C0\uAC00 \uB2F4\uB2F4\uD558\uAC8C \uC801\uD600 \uC788\uACE0, \uB2F4\uB2F9\uC790 \uCE78\uB9CC \uC774\uB984 \uC5C6\uC774 \uBE44\uC5B4 \uC788\uB2E4." },
+  { id: "interaction-doppel-02", cityId: "doppel-parlor", title: "\uB418\uD480\uC774\uB418\uB294 \uC778\uC0AC", discoveryOrder: 2, dialogueStory: INTERACTION_CENTRAL_JOURNAL },
+  // 내부 연구기관은 이터널에 파견됐던 도플갱어 연구원들의 일기가 모이는 자리다(2단계).
+  // 3~8단계 일지는 세계관 원고가 들어올 때 이 목록에 더한다.
+  { id: "interaction-doppel-lab-01", cityId: "doppel-lab", title: "\uB3CC\uC544\uC624\uC9C0 \uBABB\uD55C \uD30C\uACAC \uC77C\uAE30", discoveryOrder: 1, body: '\uC774\uD130\uB110\uC5D0 \uD30C\uACAC\uB410\uB358 \uC5F0\uAD6C\uC6D0\uC758 \uC77C\uAE30. \uB9C8\uC9C0\uB9C9 \uC7A5\uC740 "\uAD50\uB300 \uC778\uC6D0\uC774 \uB3C4\uCC29\uD588\uB2E4"\uB294 \uD55C \uC904\uC774\uACE0, \uADF8 \uC544\uB798 \uC11C\uBA85\uB780\uC740 \uBE44\uC5B4 \uC788\uB2E4.' }
+];
+function journalsForCity(cityId) {
+  return INTERACTION_JOURNALS.filter((journal) => journal.cityId === cityId).sort((a, b) => a.discoveryOrder - b.discoveryOrder || a.id.localeCompare(b.id));
+}
+function findInteractionJournal(id) {
+  return INTERACTION_JOURNALS.find((journal) => journal.id === id);
+}
+for (const journal of INTERACTION_JOURNALS) {
+  registerDataText(journal, "title", `journal.${journal.id}.title`);
+  registerDataText(journal, "body", `journal.${journal.id}.body`);
+}
+
+// src/core/interactionJournals.ts
+init_define_import_meta_env();
+function resolveJournalDiscovery(candidateId, cityJournalIds, discovered) {
+  if (!cityJournalIds.includes(candidateId)) throw new RangeError("\uD6C4\uBCF4 \uC77C\uC9C0\uAC00 \uD574\uB2F9 \uB3C4\uC2DC\uC5D0 \uC5C6\uC2B5\uB2C8\uB2E4.");
+  if (!discovered.has(candidateId)) return { kind: "new", journalId: candidateId };
+  const replacement = cityJournalIds.find((id) => !discovered.has(id));
+  return replacement ? { kind: "replacement", journalId: replacement } : { kind: "exhausted", journalId: null };
+}
+
 // src/core/playerCard.ts
 init_define_import_meta_env();
 
@@ -24032,38 +24349,6 @@ var TEKU_STORY = {
 
 // src/data/relicStories/registerStory.ts
 init_define_import_meta_env();
-
-// src/data/dialogues/registerDialogue.ts
-init_define_import_meta_env();
-
-// src/data/dialogues/speakerStanding.ts
-init_define_import_meta_env();
-var BY_NAME = /* @__PURE__ */ new Map();
-for (const relic of RELICS) {
-  if (relic.enemyOnly || relic.summonOnly) continue;
-  BY_NAME.set(relic.name, relic.portraitAssetId);
-}
-BY_NAME.set("\uC624\uBE44", "obi");
-function speakerStanding(speaker) {
-  return BY_NAME.get(speaker);
-}
-
-// src/data/dialogues/registerDialogue.ts
-function registerDialogueTexts(story) {
-  if (story.titleCard) {
-    registerDataText(story.titleCard, "title", `dialogue.${story.id}.title`);
-    registerDataText(story.titleCard, "subtitle", `dialogue.${story.id}.subtitle`);
-  }
-  for (const node of story.nodes) {
-    if (!node.standing && node.speaker) node.standing = speakerStanding(node.speaker);
-    const key = `dialogue.${story.id}.${node.id}`;
-    if (node.speaker) registerDataText(node, "speaker", `${key}.speaker`);
-    registerDataText(node, "body", `${key}.body`);
-    node.choices?.forEach((choice, index) => registerDataText(choice, "label", `${key}.choice.${index}`));
-  }
-}
-
-// src/data/relicStories/registerStory.ts
 function registerRelicStoryTexts(story) {
   const id = story.relicId;
   registerDataText(story, "closingLine", `story.${id}.closingLine`);
@@ -24285,39 +24570,6 @@ for (const [department, label] of Object.entries(INTERACTION_DEPARTMENT_LABEL)) 
   registerDataText(INTERACTION_DEPARTMENT_LABEL, department, `city.department.${department}`);
 }
 for (const city of INTERACTION_CITIES) registerDataText(city, "displayName", `city.${city.id}.displayName`);
-
-// src/data/interactionJournals.ts
-init_define_import_meta_env();
-
-// src/data/dialogues/interactionCentralJournal.ts
-init_define_import_meta_env();
-var INTERACTION_CENTRAL_JOURNAL = {
-  id: "interaction-central-dialogue-02",
-  startNodeId: "signal",
-  nodes: [
-    { id: "signal", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC720\uB9AC \uD68C\uB791 \uC544\uB798\uC5D0\uC11C \uC624\uB798\uB41C \uD638\uCD9C \uC2E0\uD638\uAC00 \uBC18\uBCF5\uB418\uACE0 \uC788\uC5B4\uC694.", standing: "torika", act: "lean", nextId: "choice" },
-    { id: "choice", speaker: "\uC5F0\uAD6C\uC6D0", body: "\uAE30\uB85D \uC7A5\uCE58\uC758 \uC5B4\uB290 \uCE35\uBD80\uD130 \uBCF5\uC6D0\uD560\uAE4C?", choices: [
-      { id: "voice", label: "\uC74C\uC131\uCE35\uC744 \uBA3C\uC800 \uBCF5\uC6D0\uD55C\uB2E4", nextId: "voice-result" },
-      { id: "route", label: "\uC774\uB3D9 \uACBD\uB85C\uB97C \uBA3C\uC800 \uBCF5\uC6D0\uD55C\uB2E4", nextId: "route-result" }
-    ] },
-    { id: "voice-result", speaker: "\uD1A0\uB9AC\uCE74", body: "\uAC19\uC740 \uC778\uC0AC\uAC00 \uB9E4\uC77C \uB2E4\uB978 \uBAA9\uC18C\uB9AC\uB85C \uB0A8\uC544 \uC788\uC5B4\uC694. \uC2DC\uBBFC\uB4E4\uC774 \uBCF5\uC6D0 \uAC1C\uCCB4\uC5D0\uAC8C \uB9D0\uC744 \uAC74 \uAE30\uB85D\uC774\uC5D0\uC694.", standing: "torika", act: "nod" },
-    { id: "route-result", speaker: "\uD1A0\uB9AC\uCE74", body: "\uBC1C\uC790\uAD6D\uC740 \uBAA8\uB450 \uC628\uC2E4 \uAC00\uC6B4\uB370\uB85C \uD5A5\uD574\uC694. \uCCAB \uB9CC\uB0A8\uC744 \uAE30\uB2E4\uB9AC\uB358 \uC0AC\uB78C\uB4E4\uC758 \uB3D9\uC120 \uAC19\uC544\uC694.", standing: "torika", act: "nod" }
-  ]
-};
-registerDialogueTexts(INTERACTION_CENTRAL_JOURNAL);
-
-// src/data/interactionJournals.ts
-var INTERACTION_JOURNALS = [
-  { id: "interaction-doppel-01", cityId: "doppel-parlor", title: "\uC751\uC811\uC2E4\uC758 \uC5F0\uAD6C \uC77C\uC9C0", discoveryOrder: 1, body: "\uC190\uB2D8 \uD0C1\uC790\uC5D0 \uB193\uC544 \uB454 \uC77C\uC9C0\uC758 \uCCAB \uC7A5. \uC5B4\uB5A4 \uD45C\uBCF8\uC744 \uC5B4\uB5A4 \uC21C\uC11C\uB85C \uB418\uC0B4\uB838\uB294\uC9C0\uAC00 \uB2F4\uB2F4\uD558\uAC8C \uC801\uD600 \uC788\uACE0, \uB2F4\uB2F9\uC790 \uCE78\uB9CC \uC774\uB984 \uC5C6\uC774 \uBE44\uC5B4 \uC788\uB2E4." },
-  { id: "interaction-doppel-02", cityId: "doppel-parlor", title: "\uB418\uD480\uC774\uB418\uB294 \uC778\uC0AC", discoveryOrder: 2, dialogueStory: INTERACTION_CENTRAL_JOURNAL },
-  // 내부 연구기관은 이터널에 파견됐던 도플갱어 연구원들의 일기가 모이는 자리다(2단계).
-  // 3~8단계 일지는 세계관 원고가 들어올 때 이 목록에 더한다.
-  { id: "interaction-doppel-lab-01", cityId: "doppel-lab", title: "\uB3CC\uC544\uC624\uC9C0 \uBABB\uD55C \uD30C\uACAC \uC77C\uAE30", discoveryOrder: 1, body: '\uC774\uD130\uB110\uC5D0 \uD30C\uACAC\uB410\uB358 \uC5F0\uAD6C\uC6D0\uC758 \uC77C\uAE30. \uB9C8\uC9C0\uB9C9 \uC7A5\uC740 "\uAD50\uB300 \uC778\uC6D0\uC774 \uB3C4\uCC29\uD588\uB2E4"\uB294 \uD55C \uC904\uC774\uACE0, \uADF8 \uC544\uB798 \uC11C\uBA85\uB780\uC740 \uBE44\uC5B4 \uC788\uB2E4.' }
-];
-for (const journal of INTERACTION_JOURNALS) {
-  registerDataText(journal, "title", `journal.${journal.id}.title`);
-  registerDataText(journal, "body", `journal.${journal.id}.body`);
-}
 
 // src/state/SaveManager.ts
 var LEGACY_V12_RUNES = {
@@ -24971,9 +25223,9 @@ function isInteractionDispatchComplete(completesAt, nowMs) {
 // src/managers/ProfileModifierManager.ts
 init_define_import_meta_env();
 
-// src/managers/profileApi.ts
+// src/managers/serverApi.ts
 init_define_import_meta_env();
-function resolveProfileApi(state, injected, cache2) {
+function resolveServerApi(state, injected, cache2) {
   if (injected) return injected;
   if (state === session) return gameApi;
   return cache2.api ??= new FakeServer(state, { latencyMs: 0, persistSession: () => void 0 });
@@ -24990,7 +25242,7 @@ var ProfileModifierManager = class {
   injectedApi;
   apiCache = {};
   get api() {
-    return resolveProfileApi(this.state, this.injectedApi, this.apiCache);
+    return resolveServerApi(this.state, this.injectedApi, this.apiCache);
   }
   /** 정적 정의에 남아 있는 고유 ID만 카탈로그 순서로 공개한다. */
   earned() {
@@ -27455,14 +27707,35 @@ var FakeServer = class {
       this.state.wallet[currency3] += applied;
       return { currency: currency3, amount: applied };
     });
+    let journal;
     if (!alreadyClaimed) {
       dispatch.claimed = true;
       this.state.interaction.claimedRequestIds.push(request.requestId);
+      const city = findInteractionCity(dispatch.cityId);
+      if (city) journal = this.discoverInteractionJournal(city.clueJournalId);
     }
-    const response = { ...this.interactionDispatchResponse(), serverTime: now.toISOString(), granted, alreadyClaimed, wallet: { ...this.state.wallet } };
+    const response = { ...this.interactionDispatchResponse(), serverTime: now.toISOString(), granted, alreadyClaimed, wallet: { ...this.state.wallet }, ...journal ? { journal } : {} };
     this.interactionClaimResults.set(request.requestId, structuredClone(response));
     saveManager.save(this.state);
     return response;
+  }
+  /** 신규 해금과 중복 대체를 수행하는 유일한 자리다. 완전 소진된 도시는 별도 중복 아이템을 주지 않는다. */
+  discoverInteractionJournal(candidateId) {
+    const journal = findInteractionJournal(candidateId);
+    if (!journal) throw new GameApiError("INVALID_STATE", "\uC54C \uC218 \uC5C6\uB294 \uAD50\uB958 \uC77C\uC9C0\uC785\uB2C8\uB2E4.");
+    const resolution = resolveJournalDiscovery(candidateId, journalsForCity(journal.cityId).map(({ id }) => id), this.state.discoveredInteractionJournalIds);
+    if (resolution.journalId) this.state.discoveredInteractionJournalIds = new Set(this.state.discoveredInteractionJournalIds).add(resolution.journalId);
+    return resolution;
+  }
+  /** 열람 시작 시 읽음으로 확정해 도중 앱이 닫혀도 알림 점이 되살아나지 않게 한다. */
+  async markInteractionJournalRead(request) {
+    await this.delay();
+    if (!this.state.discoveredInteractionJournalIds.has(request.journalId)) throw new GameApiError("INVALID_STATE", "\uBC1C\uACAC\uD558\uC9C0 \uC54A\uC740 \uC77C\uC9C0\uB294 \uC77D\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    if (this.state.readInteractionJournalIds.has(request.journalId)) return { changed: false };
+    const read = new Set(this.state.readInteractionJournalIds).add(request.journalId);
+    this.persist({ ...this.state, readInteractionJournalIds: read });
+    this.state.readInteractionJournalIds = read;
+    return { changed: true };
   }
   /** 읽음·수령·만료를 현재 서버 시각으로 집계한 복제본만 외부에 제공한다. */
   async getMails() {
@@ -28340,6 +28613,74 @@ var FakeServer = class {
     this.state.wallet = nextWallet;
     this.state.ownedRelicSkinIds = nextSkins;
     return { ...this.snapshot(), skinId: request.skinId, spent: { currency: currency3, amount } };
+  }
+  /** 이야기 완료는 한 번만 기록한다. 이미 완료한 이야기를 다시 완료해도 아무것도 쓰지 않는다. */
+  async completeStory(request) {
+    await this.delay();
+    const id = request.storyId;
+    if (typeof id !== "string" || id.length === 0 || id.length > 120) throw new GameApiError("INVALID_STATE", "\uC774\uC57C\uAE30 ID\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (this.state.completedStoryIds.has(id)) return { firstCompletion: false };
+    const completedStoryIds = new Set(this.state.completedStoryIds).add(id);
+    this.persist({ ...this.state, completedStoryIds });
+    this.state.completedStoryIds = completedStoryIds;
+    return { firstCompletion: true };
+  }
+  /** 대사 선택의 유대 경험치 명령. 대상·범위를 확인하고 이미 완료한 이야기(재관람)는 보상하지 않는다. */
+  async applyStoryEffect(request) {
+    await this.delay();
+    if (this.state.completedStoryIds.has(request.storyId)) return { xpGained: 0 };
+    const effect = request.effect;
+    if (effect?.type !== "bondXp") throw new GameApiError("INVALID_STATE", "\uD5C8\uC6A9\uB418\uC9C0 \uC54A\uC740 \uB300\uC0AC \uD6A8\uACFC\uC785\uB2C8\uB2E4.");
+    const progress = this.state.relicProgress[effect.relicId];
+    if (!PLAYABLE_RELICS.some(({ id }) => id === effect.relicId) || !this.state.owned.has(effect.relicId) || !progress) throw new GameApiError("INVALID_STATE", "\uB300\uC0AC \uD6A8\uACFC \uB300\uC0C1 \uB810\uB9AD\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!Number.isInteger(effect.amount) || effect.amount < 0 || effect.amount > 20) throw new GameApiError("INVALID_STATE", "\uB300\uC0AC \uC720\uB300 \uBCF4\uC0C1\uC740 0~20 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
+    const result = grantBondXp(progress, effect.amount);
+    const relicProgress = { ...this.state.relicProgress, [effect.relicId]: result.progress };
+    this.persist({ ...this.state, relicProgress });
+    this.state.relicProgress = relicProgress;
+    return { xpGained: result.xpGained };
+  }
+  /**
+   * 관찰 인터뷰 완료. 같은 이야기 재완료는 기록·유대 EXP를 다시 만들지 않는 성공이고, 새 완료는 오늘의 한 번뿐이다.
+   * 날짜는 클라이언트가 고르지 않는다 — 서버 UTC 날짜가 아니면 거절해 날짜를 바꿔 한도를 비껴가지 못하게 한다.
+   */
+  async completeObservation(request) {
+    await this.delay();
+    const relic = PLAYABLE_RELICS.find(({ id }) => id === request.relicId);
+    if (!relic || !this.state.owned.has(request.relicId)) throw new GameApiError("INVALID_STATE", "\uAD00\uCC30 \uB300\uC0C1\uC740 \uBCF4\uC720\uD55C \uB810\uB9AD\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
+    const story = createObservationStory(request.relicId, relic.name, request.utcDate);
+    const previous = this.state.observationRecords.find((record3) => record3.storyId === story.id);
+    if (previous) return { record: structuredClone(previous), bondXpEarned: 0, firstCompletion: false };
+    if (request.utcDate !== utcDateKey(this.now())) throw new GameApiError("INVALID_STATE", "\uC624\uB298 \uB0A0\uC9DC\uC758 \uAD00\uCC30 \uC778\uD130\uBDF0\uB9CC \uC644\uB8CC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
+    if (this.state.observationRecords.some((record3) => record3.date === request.utcDate)) throw new GameApiError("DAILY_ENTRY_LIMIT", "\uC624\uB298\uC758 \uAD00\uCC30 \uC778\uD130\uBDF0\uB294 \uC774\uBBF8 \uC644\uB8CC\uD588\uC2B5\uB2C8\uB2E4.");
+    let discovery;
+    try {
+      discovery = observationDiscovery(request.relicId, request.utcDate, request.choiceId);
+    } catch (error) {
+      throw new GameApiError("INVALID_STATE", "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uAD00\uCC30 \uC120\uD0DD\uC9C0\uC785\uB2C8\uB2E4.", { cause: error });
+    }
+    const record2 = { date: request.utcDate, relicId: request.relicId, storyId: story.id, questionId: discovery.question.id, question: discovery.question.prompt, choiceId: discovery.choice.id, answer: discovery.choice.label, personalityTag: discovery.choice.personalityTag, discoveredHabit: discovery.habit };
+    const progress = this.state.relicProgress[request.relicId];
+    if (!progress) throw new GameApiError("INVALID_STATE", "\uAD00\uCC30 \uB300\uC0C1\uC758 \uC720\uB300 \uC815\uBCF4\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    const reward = grantBondXp(progress, BOND_XP_REWARD.firstObservationInterview);
+    const completedStoryIds = new Set(this.state.completedStoryIds).add(story.id);
+    const observationRecords = [...this.state.observationRecords, record2];
+    const relicProgress = { ...this.state.relicProgress, [request.relicId]: reward.progress };
+    this.persist({ ...this.state, completedStoryIds, observationRecords, relicProgress });
+    this.state.completedStoryIds = completedStoryIds;
+    this.state.observationRecords = observationRecords;
+    this.state.relicProgress = relicProgress;
+    return { record: structuredClone(record2), bondXpEarned: reward.xpGained, firstCompletion: true };
+  }
+  /** 고고학 지도의 마지막 선택 유적. 삭제된 카탈로그 ID가 저장되지 않게 한다. */
+  async selectArchaeologySite(request) {
+    await this.delay();
+    if (findArchaeologySite(request.siteId) === void 0) return { ok: false };
+    if (this.state.archaeology.lastSelectedSiteId === request.siteId) return { ok: true };
+    const archaeology = { ...this.state.archaeology, lastSelectedSiteId: request.siteId };
+    this.persist({ ...this.state, archaeology });
+    this.state.archaeology = archaeology;
+    return { ok: true };
   }
   /** 편성은 서로 다른 보유 렐릭 세 명만 확정한다. 실패는 사유를 데이터로 돌려준다. */
   async setParty(request) {
@@ -30731,6 +31072,7 @@ var SERVER_GAME_METHODS = [
   "abandonStrataRun",
   "activatePass",
   "answerRelicQuestion",
+  "applyStoryEffect",
   "archaeologyState",
   "breakThroughRelic",
   "buyDuelAttempt",
@@ -30751,7 +31093,9 @@ var SERVER_GAME_METHODS = [
   "completeBounty",
   "completeCakeOperation",
   "completeExpeditionNode",
+  "completeObservation",
   "completeStage",
+  "completeStory",
   "digStrataTile",
   "engraveRune",
   "enhanceRune",
@@ -30793,6 +31137,7 @@ var SERVER_GAME_METHODS = [
   "harvestExcavation",
   "interactInLobby",
   "markAttendanceAutoShown",
+  "markInteractionJournalRead",
   "markMailsRead",
   "markRune",
   "pullRelics",
@@ -30805,6 +31150,7 @@ var SERVER_GAME_METHODS = [
   "resolveDuel",
   "resolveRuneTraitReroll",
   "saveExcavationFormation",
+  "selectArchaeologySite",
   "sellRunes",
   "setDuelDefense",
   "setFavorite",

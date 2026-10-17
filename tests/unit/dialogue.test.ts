@@ -49,22 +49,33 @@ describe("DialogueFlow", () => {
 });
 
 describe("StoryManager", () => {
-  it("완료 상태를 저장하고 회상 선택 보상은 지급하지 않는다", () => {
+  it("완료 상태를 저장하고 회상 선택 보상은 지급하지 않는다", async () => {
     const state = createDefaultSession();
-    const saved: string[][] = [];
-    const manager = new StoryManager(state, { save: (next) => saved.push([...next.completedStoryIds]) });
+    const manager = new StoryManager(state);
     const before = state.relicProgress.torika.bondXp;
-    expect(manager.applyEffect(STORY.id, { type: "bondXp", relicId: "torika", amount: 5 })).toBe(5);
-    expect(manager.complete(STORY.id)).toBe(true);
-    expect(manager.complete(STORY.id)).toBe(false);
-    expect(manager.applyEffect(STORY.id, { type: "bondXp", relicId: "torika", amount: 5 })).toBe(0);
+    expect(await manager.applyEffect(STORY.id, { type: "bondXp", relicId: "torika", amount: 5 })).toBe(5);
+    expect(await manager.complete(STORY.id)).toBe(true);
+    expect(await manager.complete(STORY.id)).toBe(false);
+    expect(await manager.applyEffect(STORY.id, { type: "bondXp", relicId: "torika", amount: 5 })).toBe(0);
     expect(state.relicProgress.torika.bondXp).toBe(before + 5);
-    expect(saved.at(-1)).toEqual([STORY.id]);
+    expect([...state.completedStoryIds]).toEqual([STORY.id]);
   });
 
-  it("검증되지 않은 대상과 과도한 유대 명령을 거부한다", () => {
-    const manager = new StoryManager(createDefaultSession(), { save: () => undefined });
-    expect(() => manager.applyEffect(STORY.id, { type: "bondXp", relicId: "missing", amount: 5 })).toThrow("대상 렐릭");
-    expect(() => manager.applyEffect(STORY.id, { type: "bondXp", relicId: "torika", amount: 999 })).toThrow("0~20");
+  it("검증되지 않은 대상과 과도한 유대 명령을 거부한다", async () => {
+    const manager = new StoryManager(createDefaultSession());
+    await expect(manager.applyEffect(STORY.id, { type: "bondXp", relicId: "missing", amount: 5 })).rejects.toThrow("대상 렐릭");
+    await expect(manager.applyEffect(STORY.id, { type: "bondXp", relicId: "torika", amount: 999 })).rejects.toThrow("0~20");
+  });
+
+  it("효과와 완료는 보낸 순서대로 서버에 닿는다", async () => {
+    const state = createDefaultSession();
+    const manager = new StoryManager(state);
+    const before = state.relicProgress.torika.bondXp;
+    // 기다리지 않고 연달아 보내도 효과가 완료보다 먼저 닿아야 보상이 사라지지 않는다.
+    const effect = manager.applyEffect(STORY.id, { type: "bondXp", relicId: "torika", amount: 5 });
+    const done = manager.complete(STORY.id);
+    expect(await effect).toBe(5);
+    expect(await done).toBe(true);
+    expect(state.relicProgress.torika.bondXp).toBe(before + 5);
   });
 });

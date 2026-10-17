@@ -1,5 +1,5 @@
 import { PROFILE_MODIFIERS, findProfileModifier, type ProfileModifierDefinition, type ProfileModifierRarity } from "../data/profileModifiers";
-import { resolveProfileApi, type ProfileApi } from "./profileApi";
+import { resolveServerApi, type ProfileApi } from "./serverApi";
 import { session, type Session } from "../state/session";
 
 /** 좁은 공개 프로필 헤더가 허용하는 장착 수이며 manager와 UI가 같은 제한을 공유한다. */
@@ -13,7 +13,7 @@ export const PROFILE_MODIFIER_RARITY_ROLE: Readonly<Record<ProfileModifierRarity
 export class ProfileModifierManager {
   private readonly apiCache: { api?: ProfileApi } = {};
   constructor(private readonly state: Session = session, private readonly injectedApi?: ProfileApi) {}
-  private get api(): ProfileApi { return resolveProfileApi(this.state, this.injectedApi, this.apiCache); }
+  private get api(): ProfileApi { return resolveServerApi<ProfileApi>(this.state, this.injectedApi, this.apiCache); }
   /** 정적 정의에 남아 있는 고유 ID만 카탈로그 순서로 공개한다. */
   earned(): ProfileModifierDefinition[] { const ids = new Set(this.state.earnedProfileModifierIds); return PROFILE_MODIFIERS.filter(({ id }) => ids.has(id)); }
   /** 미획득·삭제·중복 ID를 제거하고 사용자 장착 순서를 상한까지 유지한다. */

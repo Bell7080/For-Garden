@@ -2,7 +2,7 @@ import { nicknameLockedUntil } from "../core/playerCard";
 import { isProfileFrameUnlocked, PROFILE_FRAMES, type ProfileFrameDefinition } from "../data/profileFrames";
 import type { PlayerCardFailureReason, UpdatePlayerCardRequest } from "../api/contracts";
 import { session, type PlayerCardState, type Session } from "../state/session";
-import { resolveProfileApi, type ProfileApi } from "./profileApi";
+import { resolveServerApi, type ProfileApi } from "./serverApi";
 
 export type PlayerCardResult = { ok: true } | { ok: false; reason: PlayerCardFailureReason };
 
@@ -16,7 +16,7 @@ export class PlayerCardManager {
   private readonly apiCache: { api?: ProfileApi } = {};
   constructor(private readonly state: Session = session, private readonly injectedApi?: ProfileApi) {}
 
-  private get api(): ProfileApi { return resolveProfileApi(this.state, this.injectedApi, this.apiCache); }
+  private get api(): ProfileApi { return resolveServerApi<ProfileApi>(this.state, this.injectedApi, this.apiCache); }
 
   get card(): Readonly<PlayerCardState> { return this.state.playerCard; }
 

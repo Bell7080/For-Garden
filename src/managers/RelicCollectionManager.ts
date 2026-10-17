@@ -3,7 +3,7 @@ import type { RelicDef } from "../core/types";
 import { PLAYABLE_RELICS } from "../data/relics";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
-import { resolveProfileApi, type ProfileApi } from "./profileApi";
+import { resolveServerApi, type ProfileApi } from "./serverApi";
 
 /** 편성 실패를 UI와 테스트가 문자열 추측 없이 구분하기 위한 안정적인 사유 코드다. */
 export type SetPartyFailureReason = "wrong-size" | "duplicate" | "not-owned";
@@ -24,7 +24,7 @@ export class RelicCollectionManager {
   private readonly apiCache: { api?: ProfileApi } = {};
   constructor(private readonly state: Session = session, private readonly injectedApi?: ProfileApi) {}
 
-  private get api(): ProfileApi { return resolveProfileApi(this.state, this.injectedApi, this.apiCache); }
+  private get api(): ProfileApi { return resolveServerApi<ProfileApi>(this.state, this.injectedApi, this.apiCache); }
 
   /** 도감에 표시할 전체 플레이 가능 렐릭이다. 미보유 렐릭도 포함한다. */
   get catalog(): readonly RelicDef[] {

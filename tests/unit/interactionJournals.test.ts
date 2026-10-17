@@ -1,6 +1,7 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { resolveJournalDiscovery } from "../../src/core/interactionJournals";
 import { journalsForCity } from "../../src/data/interactionJournals";
+import { FakeServer } from "../../src/api/FakeServer";
 import { InteractionManager } from "../../src/managers/InteractionManager";
 import { SaveManager } from "../../src/state/SaveManager";
 import { createDefaultSession } from "../../src/state/session";
@@ -14,14 +15,14 @@ describe("interaction journals", () => {
     expect(resolveJournalDiscovery(ids[0], ids, new Set(ids))).toEqual({ kind: "exhausted", journalId: null });
   });
 
-  it("manager만 발견과 읽음을 저장하며 미발견 읽음을 거부한다", () => {
-    const state = createDefaultSession(); const save = vi.fn();
-    const manager = new InteractionManager({} as never, state, { save });
-    expect(manager.discoverJournal("interaction-doppel-01").kind).toBe("new");
-    expect(manager.markJournalRead("interaction-doppel-01")).toBe(true);
-    expect(manager.markJournalRead("interaction-doppel-01")).toBe(false);
-    expect(() => manager.markJournalRead("interaction-doppel-lab-01")).toThrow();
-    expect(save).toHaveBeenCalledTimes(2);
+  it("읽음은 서버가 확정하고 미발견 표본의 읽음을 거부한다", async () => {
+    const state = createDefaultSession();
+    const server = new FakeServer(state, { latencyMs: 0, persistSession: () => undefined });
+    const manager = new InteractionManager(server, state);
+    state.discoveredInteractionJournalIds.add("interaction-doppel-01");
+    expect(await manager.markJournalRead("interaction-doppel-01")).toBe(true);
+    expect(await manager.markJournalRead("interaction-doppel-01")).toBe(false);
+    await expect(manager.markJournalRead("interaction-doppel-lab-01")).rejects.toThrow();
   });
 
   it("저장 후 Set을 복원한다", () => {

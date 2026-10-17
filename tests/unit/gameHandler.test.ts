@@ -88,6 +88,25 @@ describe("서버 호출 처리기", () => {
     expect(saved.playerCard.uid).toMatch(/^[1-9]\d{8}$/);
   });
 
+  it("이야기 선택·완료와 고고학 선택은 서버 상태에 남고 재전송은 한 번만 반영한다", async () => {
+    const m = memoryStore();
+    const opts = { store: m.store, ...fixed };
+    const call = (method: string, args: unknown[], requestId: string) => handleGameCall(P, { method, args, requestId }, opts);
+    const effect = await call("applyStoryEffect", [{ storyId: "story-test", effect: { type: "bondXp", relicId: "torika", amount: 5 } }], "call-story-01");
+    expect((effect.result as { xpGained: number }).xpGained).toBe(5);
+    const again = await call("applyStoryEffect", [{ storyId: "story-test", effect: { type: "bondXp", relicId: "torika", amount: 5 } }], "call-story-01");
+    expect(again.revision).toBe(effect.revision);
+    const done = await call("completeStory", [{ storyId: "story-test" }], "call-story-02");
+    expect((done.result as { firstCompletion: boolean }).firstCompletion).toBe(true);
+    // 완료한 이야기의 선택은 재관람이라 보상이 없다.
+    const replay = await call("applyStoryEffect", [{ storyId: "story-test", effect: { type: "bondXp", relicId: "torika", amount: 5 } }], "call-story-03");
+    expect((replay.result as { xpGained: number }).xpGained).toBe(0);
+    await call("selectArchaeologySite", [{ siteId: "sunken-archive" }], "call-site-01");
+    const saved = m.saves.get(P)?.data as { completedStoryIds: string[]; archaeology: { lastSelectedSiteId?: string } };
+    expect(saved.completedStoryIds).toEqual(["story-test"]);
+    expect(saved.archaeology.lastSelectedSiteId).toBe("sunken-archive");
+  });
+
   it("동시 충돌은 다시 읽고 재시도한다", async () => {
     const m = memoryStore();
     await handleGameCall(P, { method: "getInventory" }, { store: m.store, ...fixed });

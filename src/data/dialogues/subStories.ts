@@ -43,7 +43,7 @@ export const STAGE_2_6_SAME_LINE: DialogueStory = {
   nodes: linear([
     { id: "back", speaker: "", body: "무인 생산선 뒤편, 불 꺼진 정비 통로. 코마가 벽에 기대 사원증과 제 목덜미의 폐기 표식을 번갈아 본다.", standing: "koma", cast: SOLO("koma") },
     { id: "compare", speaker: "코마", body: "…같은 줄에 있어서.", standing: "koma", cast: WITH_KOMA("lexia"), act: "lean" },
-    { id: "what", speaker: "렉시아", body: "줄이라니, 무슨 줄이냐. 설명하라!", standing: "lexia", act: "hop" },
+    { id: "what", speaker: "렉시아", body: "줄이라니, 무슨 줄이야? 설명해!", standing: "lexia", act: "hop" },
     { id: "count", speaker: "코마", body: "위에서는 번호로 센다. 나도, 당신도.", standing: "koma", act: "nod" },
     {
       id: "choose", speaker: "", body: "연구원이 한 걸음 다가선다.", standing: "koma",

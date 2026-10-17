@@ -405,9 +405,8 @@ export class ExpeditionScene extends Phaser.Scene {
     if (node.type === "rest") {
       this.popups.confirm({ title: t("expedition.node.rest"), message: t("expedition.node.restBody"), confirmLabel: t("expedition.node.restConfirm") }, () => {
         this.nodeTransitionPending = true;
-        // 매니저의 단일 저장이 실패하면 잠금을 풀 뿐, 부분 회복 상태는 존재하지 않는다.
-        if (expeditionManager.completeRestNode(node.id)) restartScene(this);
-        else this.nodeTransitionPending = false;
+        // 서버의 단일 저장이 실패하면 잠금을 풀 뿐, 부분 회복 상태는 존재하지 않는다.
+        void withBusy(this, expeditionManager.completeRestNode(node.id)).then((ok) => { if (ok) restartScene(this); else this.nodeTransitionPending = false; }).catch(() => { this.nodeTransitionPending = false; });
       });
       this.nodeTransitionPending = false;
       return;
@@ -420,8 +419,7 @@ export class ExpeditionScene extends Phaser.Scene {
     if (this.nodeTransitionPending) return;
     this.nodeTransitionPending = true;
     if (node.type === "boss") { this.enterBossBattle(node); return; }
-    const pending = expeditionManager.beginAugmentReward(node.id, node.type);
-    if (pending) restartScene(this); else this.enterBattle(node);
+    void withBusy(this, expeditionManager.beginAugmentReward(node.id)).then((pending) => { if (pending) restartScene(this); else this.enterBattle(node); }).catch(() => { this.nodeTransitionPending = false; });
   }
 
   /** 선택이 모두 저장된 바로 그 노드로 진입해, 후보 확정 뒤 다른 지도 노드를 누를 틈을 만들지 않는다. */
@@ -434,9 +432,14 @@ export class ExpeditionScene extends Phaser.Scene {
 
   /** 서버 제출과 완료 정산의 멱등 키를 먼저 런에 고정한 뒤 불사 보스 전장으로 이동한다. */
   private enterBossBattle(node: ExpeditionMapNode): void {
-    const run = expeditionManager.status().run;
-    const ids = expeditionManager.prepareBossRequests(node.id);
-    if (!run || !ids || node.floor !== 20) { this.nodeTransitionPending = false; return; }
+    void withBusy(this, expeditionManager.prepareBossRequests(node.id)).then((ids) => {
+      const run = expeditionManager.status().run;
+      if (!run || !ids || node.floor !== 20) { this.nodeTransitionPending = false; return; }
+      this.startBossBattle(node, run, ids);
+    }).catch(() => { this.nodeTransitionPending = false; });
+  }
+
+  private startBossBattle(node: ExpeditionMapNode, run: NonNullable<ReturnType<typeof expeditionManager.status>["run"]>, ids: { requestId: string; settlementId: string; replayVersion: 2 }): void {
     const input: ExpeditionBossBattleInputDto = { mode: "expeditionBoss", runId: run.runId, nodeId: node.id, floor: 20, relics: run.relics.map(({ relicId, currentHp, alive }) => ({ relicId, currentHp, alive })), augments: run.selectedAugments, ...ids };
     startScene(this, "battle", input);
   }
@@ -467,11 +470,13 @@ export class ExpeditionScene extends Phaser.Scene {
     new ExpeditionAugmentPopup(this, { round: pending.round, totalRounds: pending.totalRounds, offers: pending.offers, targets: this.augmentTargetPicker(), onChoose: (selection) => {
       if (this.nodeTransitionPending) return;
       this.nodeTransitionPending = true;
-      // 확정은 UI가 Session을 쓰지 않고 매니저의 후보·대상·중첩 검증을 반드시 통과한다.
-      if (!expeditionManager.chooseAugment(selection)) { this.nodeTransitionPending = false; return; }
-      const next = expeditionManager.status().run?.pendingAugmentReward;
-      if (next) restartScene(this);
-      else this.enterBattle(node);
+      // 확정은 UI가 Session을 쓰지 않고 서버의 후보·대상·중첩 검증을 반드시 통과한다.
+      void withBusy(this, expeditionManager.chooseAugment(selection)).then((ok) => {
+        if (!ok) { this.nodeTransitionPending = false; return; }
+        const next = expeditionManager.status().run?.pendingAugmentReward;
+        if (next) restartScene(this);
+        else this.enterBattle(node);
+      }).catch(() => { this.nodeTransitionPending = false; });
     } }).open();
   }
 
@@ -898,13 +903,14 @@ export class ExpeditionScene extends Phaser.Scene {
   private openDevelopmentBossShortcut(): void {
     const members = formationMembers(this.selected);
     const relicIds = members.length === 3 ? members : [...session.owned].slice(0, 3);
-    const result = expeditionManager.prepareDevelopmentBossShortcut(relicIds);
-    if (result.ok) {
-      // 재시작 뒤 실제 보스 노드를 눌러 적 미리보기를 확인하고, 기존 enterBossBattle 출격 DTO로 진입한다.
-      restartScene(this);
-      return;
-    }
-    this.hint?.setText(result.reason === "developmentOnly" ? t("expedition.devOnly") : this.failureMessage(result.reason));
+    void withBusy(this, expeditionManager.prepareDevelopmentBossShortcut(relicIds)).then((result) => {
+      if (result.ok) {
+        // 재시작 뒤 실제 보스 노드를 눌러 적 미리보기를 확인하고, 기존 enterBossBattle 출격 DTO로 진입한다.
+        restartScene(this);
+        return;
+      }
+      this.hint?.setText(result.reason === "developmentOnly" ? t("expedition.devOnly") : this.failureMessage(result.reason));
+    }).catch(() => undefined);
   }
 
   /** 서버가 활성화한 슬롯의 문구·비율·일일/주간 한도만 준비 화면에 결합한다. */
@@ -1153,13 +1159,14 @@ export class ExpeditionScene extends Phaser.Scene {
 
   /** 선택 배열을 직접 저장하지 않고 매니저의 검증 완료 상태 전이만 요청한다. */
   private startExpedition(): void {
-    const result = expeditionManager.start(formationMembers(this.selected));
-    if (result.ok) {
-      // 성공 결과는 이미 저장까지 완료되었으므로 같은 씬을 다시 그려 이어하기 상태로 전환한다.
-      restartScene(this);
-      return;
-    }
-    this.hint.setText(this.failureMessage(result.reason));
+    void withBusy(this, expeditionManager.start(formationMembers(this.selected))).then((result) => {
+      if (result.ok) {
+        // 성공 결과는 이미 서버 저장까지 완료되었으므로 같은 씬을 다시 그려 이어하기 상태로 전환한다.
+        restartScene(this);
+        return;
+      }
+      this.hint.setText(this.failureMessage(result.reason));
+    }).catch(() => undefined);
   }
 
   /** 공개 실패 코드를 화면에 필요한 짧은 행동 문구로만 바꾼다. */

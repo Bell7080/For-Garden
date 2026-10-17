@@ -107,6 +107,35 @@ describe("서버 호출 처리기", () => {
     expect(saved.archaeology.lastSelectedSiteId).toBe("sunken-archive");
   });
 
+  it("원정 출발과 증강·휴식·보스 준비는 서버가 런을 소유하고 재전송은 한 번만 반영한다", async () => {
+    const m = memoryStore();
+    const opts = { store: m.store, ...fixed };
+    const call = (method: string, args: unknown[], requestId: string) => handleGameCall(P, { method, args, requestId }, opts);
+    const bad = await call("startExpeditionRun", [{ relicIds: ["torika", "torika", "rex"] }], "call-exp-00");
+    expect(bad.result).toMatchObject({ ok: false, reason: "duplicate" });
+    const start = await call("startExpeditionRun", [{ relicIds: ["torika", "rex", "dodo"] }], "call-exp-01");
+    expect(start.result).toMatchObject({ ok: true });
+    const again = await call("startExpeditionRun", [{ relicIds: ["torika", "rex", "dodo"] }], "call-exp-01");
+    expect(again.revision).toBe(start.revision);
+    const second = await call("startExpeditionRun", [{ relicIds: ["torika", "rex", "dodo"] }], "call-exp-02");
+    expect(second.result).toMatchObject({ ok: false, reason: "alreadyActive" });
+    const saved = () => m.saves.get(P)?.data as { expedition: { run: { nodes: { id: string; type: string; floor: number }[]; relics: { snapshot?: unknown }[]; pendingAugmentReward: unknown; bossSubmissionId: string | null } } };
+    const run = saved().expedition.run;
+    // 떠나는 순간 성장 스냅샷이 서버 상태에 굳는다.
+    expect(run.relics.every(({ snapshot }) => snapshot !== undefined)).toBe(true);
+    // 노드 종류는 클라이언트가 아니라 서버의 지도에서 읽는다 — 모르는 노드와 보스 아닌 노드는 열리지 않는다.
+    expect((await call("beginExpeditionAugment", [{ nodeId: "missing" }], "call-exp-03")).result).toEqual({ pending: null });
+    const battle = run.nodes.find(({ type }) => type === "normal" || type === "elite")!;
+    const pending = (await call("beginExpeditionAugment", [{ nodeId: battle.id }], "call-exp-04")).result as { pending: { offers: { augmentId: string }[] } | null };
+    expect(pending.pending?.offers.length ?? 0).toBeGreaterThan(0);
+    expect(saved().expedition.run.pendingAugmentReward).not.toBeNull();
+    expect((await call("chooseExpeditionAugment", [{ selection: { augmentId: "not-offered" } }], "call-exp-05")).result).toEqual({ ok: false });
+    expect((await call("prepareExpeditionBoss", [{ nodeId: battle.id }], "call-exp-06")).result).toEqual({ ids: null });
+    const boss = run.nodes.find(({ type }) => type === "boss")!;
+    const ids = (await call("prepareExpeditionBoss", [{ nodeId: boss.id }], "call-exp-07")).result as { ids: { requestId: string } | null };
+    expect(ids.ids?.requestId).toBe(saved().expedition.run.bossSubmissionId);
+  });
+
   it("동시 충돌은 다시 읽고 재시도한다", async () => {
     const m = memoryStore();
     await handleGameCall(P, { method: "getInventory" }, { store: m.store, ...fixed });

@@ -4,6 +4,10 @@ import { session, type Session } from "../state/session";
 
 /** 프로필·편성·꾸미기 매니저가 서버에 시키는 일만 모은 좁은 인터페이스다. */
 export type ProfileApi = Pick<GameApi, "setParty" | "setFavorite" | "setRelicBookmark" | "updatePlayerCard" | "equipProfileModifiers" | "equipRelicSkin">;
+/** 설정 매니저가 서버에 시키는 일만 모은 좁은 인터페이스다(계정의 값만). */
+export type SettingsApi = Pick<GameApi, "updateAccountSettings">;
+/** 원정 매니저가 서버에 시키는 일만 모은 좁은 인터페이스다. */
+export type ExpeditionApi = Pick<GameApi, "startExpeditionRun" | "completeExpeditionRest" | "beginExpeditionAugment" | "chooseExpeditionAugment" | "prepareExpeditionBoss">;
 /** 읽음·기록 매니저가 서버에 시키는 일만 모은 좁은 인터페이스다. */
 export type RecordApi = Pick<GameApi, "completeStory" | "applyStoryEffect" | "completeObservation" | "markInteractionJournalRead" | "selectArchaeologySite">;
 

@@ -17,7 +17,9 @@ import type { ExcavationCurrency, IdleExcavationState } from "../core/idleExcava
 import type { AdReward } from "../data/adRewards";
 import type { ItemCategory, ItemUseEffect, WalletItemKey } from "../data/items";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
-import type { ObservationRecord, PlayerCardState, PlayerResearchProgress } from "../state/session";
+import type { ExpeditionRunState, ObservationRecord, PlayerCardState, PlayerResearchProgress } from "../state/session";
+import type { AccountGameSettings } from "../core/settingsOwnership";
+import type { ExpeditionAugmentSelection } from "../core/expeditionRewards";
 import type { DialogueEffect } from "../core/dialogue";
 import type { JournalDiscoveryResolution } from "../core/interactionJournals";
 import type { NicknameProblem } from "../core/playerCard";
@@ -956,6 +958,23 @@ export interface ClaimAttendanceResponse extends AttendanceStatusResponse { trac
 export interface ClaimAttendanceAdRequest { verificationToken: string; requestId: string; }
 
 /** 실제 HTTP API로 교체할 때도 씬이 의존할 단 하나의 통신 인터페이스다. */
+export type StartExpeditionFailure = "exactlyThree" | "duplicate" | "notOwned" | "alreadyActive" | "dailyLimitReached" | "developmentOnly";
+export interface StartExpeditionRunRequest {
+  relicIds: string[];
+  /** 개발용 20층 바로가기다. QA 도구가 켜진 서버만 받고 일반 서버는 `developmentOnly`로 거절한다. */
+  shortcut?: "boss";
+}
+export type StartExpeditionRunResponse = { ok: true; run: ExpeditionRunState } | { ok: false; reason: StartExpeditionFailure };
+export interface CompleteExpeditionRestRequest { nodeId: string }
+export interface BeginExpeditionAugmentRequest { nodeId: string }
+export interface BeginExpeditionAugmentResponse { pending: ExpeditionRunState["pendingAugmentReward"] }
+export interface ChooseExpeditionAugmentRequest { selection: ExpeditionAugmentSelection }
+export interface PrepareExpeditionBossRequest { nodeId: string }
+export interface PrepareExpeditionBossResponse { ids: { requestId: string; settlementId: string; replayVersion: 2 } | null }
+
+export interface UpdateAccountSettingsRequest { game: Partial<AccountGameSettings> }
+export interface UpdateAccountSettingsResponse { game: AccountGameSettings }
+
 export interface GameApi extends AsyncArenaProfileApi {
   getInteractionCities(): Promise<InteractionCitiesResponse>;
   startInteractionDispatch(request: StartInteractionDispatchRequest): Promise<InteractionDispatchResponse>;
@@ -1057,6 +1076,18 @@ export interface GameApi extends AsyncArenaProfileApi {
   settleExpeditionRun(request: SettleExpeditionRunRequest): Promise<SettleExpeditionRunResponse>;
   /** 모든 노드의 방문·HP·보상을 서버가 한 처리로 확정한다. */
   completeExpeditionNode(request: CompleteExpeditionNodeRequest): Promise<CompleteExpeditionNodeResponse>;
+  /** 계정에 묶인 환경설정(전투 배속·자동 궁극기 등, `settingsOwnership`)만 서버에 저장한다. 기기 값은 보내지 않는다. */
+  updateAccountSettings(request: UpdateAccountSettingsRequest): Promise<UpdateAccountSettingsResponse>;
+  /** 원정 출발. 편성(보유·중복·세 명)·하루 한 판·지도 생성·떠날 때의 성장 스냅샷을 서버가 한 처리로 굳힌다. */
+  startExpeditionRun(request: StartExpeditionRunRequest): Promise<StartExpeditionRunResponse>;
+  /** 휴식 노드의 회복과 방문을 한 번에 확정한다. */
+  completeExpeditionRest(request: CompleteExpeditionRestRequest): Promise<{ ok: boolean }>;
+  /** 전투 노드의 증강 제안을 서버 난수로 한 번만 연다. 노드 종류는 서버가 런에서 읽는다. */
+  beginExpeditionAugment(request: BeginExpeditionAugmentRequest): Promise<BeginExpeditionAugmentResponse>;
+  /** 열려 있는 제안 중 하나를 확정한다. 후보·대상·중첩 검증은 서버가 한다. */
+  chooseExpeditionAugment(request: ChooseExpeditionAugmentRequest): Promise<{ ok: boolean }>;
+  /** 보스 출격 직전에 점수 제출·정산의 멱등 키를 런에 굳힌다. */
+  prepareExpeditionBoss(request: PrepareExpeditionBossRequest): Promise<PrepareExpeditionBossResponse>;
   /** 진행 중인 런이 없을 때만 주간 횟수 하나를 소비해 역대 최고점 일부와 절반의 전리품을 즉시 정산한다. */
   sweepExpedition(request: SweepExpeditionRequest): Promise<SweepExpeditionResponse>;
   /** 실제 결제 서버가 플랫폼 원본 영수증을 검증하며 요청 ID 재시도에는 같은 결과를 반환한다. */

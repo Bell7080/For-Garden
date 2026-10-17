@@ -8,6 +8,8 @@ import { PREMIUM_TABS, type PremiumCategory } from "../data/shopCatalog";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { BottomNav } from "../ui/BottomNav";
 import { notificationManager } from "../managers/NotificationManager";
+import { TabStripEdgeHint } from "../ui/TabStripEdgeHint";
+import { hiddenDotSides, nearestHiddenDot, type TabStripSpec } from "../core/tabStrip";
 import { bindNotificationDot } from "../ui/NotificationDot";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { addSectionTitle } from "../ui/SectionTitle";
@@ -67,6 +69,9 @@ export class PremiumScene extends Phaser.Scene {
   private tabRow?: Phaser.GameObjects.Container;
   private tabDotDisposers: Array<() => void> = [];
   private tabMask?: Phaser.GameObjects.Graphics;
+  /** 창 밖에 가려진 라벨에 받을 것이 남았을 때 줄 끝이 붉게 숨 쉰다. */
+  private tabEdgeHint?: TabStripEdgeHint;
+  private tabDotted: boolean[] = [];
   /** 입력 한 번이 가로 쓸기인지 세로 스크롤인지. 14px 안에서 정한다. */
   private pointerAxis: "none" | "x" | "y" = "none";
   private pointerStartX = 0;
@@ -125,6 +130,7 @@ export class PremiumScene extends Phaser.Scene {
       this.removeScrollInput();
       this.viewportMask?.destroy(); this.viewportMask = undefined;
       this.tabMask?.destroy(); this.tabMask = undefined;
+      this.tabEdgeHint?.destroy(); this.tabEdgeHint = undefined;
     });
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
@@ -558,6 +564,18 @@ export class PremiumScene extends Phaser.Scene {
       this.tabMask.fillStyle(0xffffff, 1).fillRect(strip.left, strip.top, strip.right - strip.left, strip.bottom - strip.top);
     }
     row.setMask(this.tabMask.createGeometryMask());
+    const spec = this.tabStripSpec();
+    const strip = premiumTabStrip();
+    this.tabDotted = PREMIUM_TABS.map(() => false);
+    if (!this.tabEdgeHint) {
+      this.tabEdgeHint = new TabStripEdgeHint(this, undefined, {
+        left: strip.left, right: strip.right, y: premiumTabSpot(0).y, height: PREMIUM_TAB_ROW.height,
+        onTap: (side) => {
+          const index = this.tabRow ? nearestHiddenDot(spec, this.tabRow.x, this.tabDotted, side) : undefined;
+          if (index !== undefined) this.selectCategory(PREMIUM_TABS[index].id);
+        },
+      }).setDepth(10);
+    }
     PREMIUM_TABS.forEach((tab, index) => {
       const { x, y } = premiumTabSpot(index);
       const tabObject = addCategoryTab(this, row, {
@@ -567,12 +585,27 @@ export class PremiumScene extends Phaser.Scene {
       });
       // 받을 무료 보급이 남은 일간·주간·월간 라벨에 점을 세운다.
       const dotKey = tab.id === "daily" ? "premiumFreeDaily" : tab.id === "weekly" ? "premiumFreeWeekly" : tab.id === "monthly" ? "premiumFreeMonthly" : tab.id === "pass" ? "passReward" : undefined;
-      if (dotKey) this.tabDotDisposers.push(bindNotificationDot(this, tabObject, { x: PREMIUM_TAB_ROW.width / 2 - 22, y: -PREMIUM_TAB_ROW.height / 2 + 12 }, (listener) => notificationManager.subscribe(dotKey, listener)));
+      if (dotKey) this.tabDotDisposers.push(bindNotificationDot(this, tabObject, { x: PREMIUM_TAB_ROW.width / 2 - 22, y: -PREMIUM_TAB_ROW.height / 2 + 12 }, (listener) => notificationManager.subscribe(dotKey, (visible) => {
+        listener(visible);
+        this.tabDotted[index] = visible;
+        this.syncTabEdgeHint();
+      })));
     });
     const target = premiumTabScrollFor(this.selectedIndex(), PREMIUM_TABS.length);
-    if (animateFrom === undefined || animateFrom === target) { row.x = target; return; }
+    if (animateFrom === undefined || animateFrom === target) { row.x = target; this.syncTabEdgeHint(); return; }
     row.x = animateFrom;
-    this.tweens.add({ targets: row, x: target, duration: 220, ease: "Cubic.easeOut" });
+    this.syncTabEdgeHint();
+    this.tweens.add({ targets: row, x: target, duration: 220, ease: "Cubic.easeOut", onUpdate: () => this.syncTabEdgeHint(), onComplete: () => this.syncTabEdgeHint() });
+  }
+
+  private tabStripSpec(): TabStripSpec {
+    const strip = premiumTabStrip();
+    return { left: strip.left, right: strip.right, width: PREMIUM_TAB_ROW.width, gap: PREMIUM_TAB_ROW.gap, count: PREMIUM_TABS.length };
+  }
+
+  private syncTabEdgeHint(): void {
+    if (!this.tabRow?.active || !this.tabEdgeHint) return;
+    this.tabEdgeHint.setSides(hiddenDotSides(this.tabStripSpec(), this.tabRow.x, this.tabDotted));
   }
 
   private selectedIndex(): number { return PREMIUM_TABS.findIndex((tab) => tab.id === this.selectedCategory); }

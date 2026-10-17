@@ -117,8 +117,8 @@ export function cumulativeExpToReach(level: number): number {
   return total;
 }
 
-/** 신규 계정이 들고 시작하는 스테미나(`createDefaultSession`의 지갑과 같은 값). */
-export const STARTING_STAMINA = 60;
+/** 신규 계정이 들고 시작하는 스테미나 — 1레벨 상한(`staminaMaxForResearchLevel(1)`)까지 가득. `createDefaultSession`의 지갑과 같은 값. */
+export const STARTING_STAMINA = 122;
 /** 에너지 드링크 한 병이 채우는 양. 레벨업 보상(`PLAYER_LEVEL_UP_REWARD`)이 이 병이다. */
 export const LEVEL_UP_DRINK_STAMINA = 60;
 

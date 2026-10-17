@@ -57,6 +57,18 @@ export class SupabaseAccountApi implements AccountApi {
     return { ok: true, value: { kind: "guest", provider: "guest", maskedId: `GUEST-${auth.value.userId.slice(0, 4)}••••` } };
   }
 
+  /** 서버 호출용 액세스 토큰을 그때그때 꺼내 준다. 보관하지 않고 만료 전이면 갱신한다. 실패하면 `null`이다. */
+  async accessToken(): Promise<string | null> {
+    const auth = await this.ensureTokens();
+    return auth.ok ? auth.value.accessToken : null;
+  }
+
+  /** 이 기기에 연결된 계정 ID. 토큰이 아니라 식별자라 기기에 어느 계정의 진행이 있는지 기억하는 데만 쓴다. */
+  async userId(): Promise<string | null> {
+    const auth = await this.ensureTokens();
+    return auth.ok ? auth.value.userId : null;
+  }
+
   async login(_request: LoginRequest): Promise<AccountResult<AccountState>> { return this.unsupported(); }
   async requestWithdrawal(): Promise<AccountResult<void>> { return this.unsupported(); }
   async mergeGuestSave(_request: GuestSaveMergeRequest): Promise<AccountResult<RemoteSaveDocument>> { return fail("guest-merge-unavailable", t("error.account.mergeUnavailable")); }

@@ -30,6 +30,8 @@ function defaultRequestId(): string {
 }
 
 export function createRemoteGameApi(options: RemoteGameApiOptions): GameApi {
+  // 동시에 나간 호출의 응답이 뒤바뀌어 도착해도 더 오래된 상태가 새 상태를 덮지 않게 한다.
+  let appliedRevision = -1;
   const doFetch = options.fetchImpl ?? fetch;
   const endpoint = options.endpoint ?? "/api/game";
   const newId = options.newRequestId ?? defaultRequestId;
@@ -51,7 +53,11 @@ export function createRemoteGameApi(options: RemoteGameApiOptions): GameApi {
       }
       const json = (await res.json().catch(() => null)) as { ok?: boolean; result?: unknown; state?: unknown; code?: string; message?: string } | null;
       if (!res.ok || !json?.ok) throw new RemoteGameApiError(res.status, json?.code ?? "request_failed", json?.message);
-      options.applyState(saveManager.parse(json.state));
+      const revision = Number((json as { revision?: unknown }).revision);
+      if (!Number.isFinite(revision) || revision >= appliedRevision) {
+        if (Number.isFinite(revision)) appliedRevision = revision;
+        options.applyState(saveManager.parse(json.state));
+      }
       return json.result;
     }
     throw lastError instanceof Error ? lastError : new RemoteGameApiError(0, "network");

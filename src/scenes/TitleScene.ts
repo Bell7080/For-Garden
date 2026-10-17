@@ -24,7 +24,9 @@ import { LANGUAGE_NATIVE_NAME, SELECTABLE_LANGUAGE_IDS } from "../core/language"
 import { activeFontFamily, loadGameFonts } from "../ui/fonts";
 import { PopupLayer } from "../ui/PopupLayer";
 import { openChoicePicker } from "../ui/SettingsPicker";
-import { accountApi } from "../api/AccountApi";
+import { accountApi, type AccountFailureCode } from "../api/AccountApi";
+import { connectProgress, disconnectProgress } from "../api/backendSession";
+import { openSaveConflictPopup, type SaveConflictChoice } from "../ui/SaveConflictPopup";
 import { saveManager } from "../state/SaveManager";
 import { TitleActionRow } from "../ui/TitleActionRow";
 import { TITLE_LOADING_LAYOUT } from "../ui/titleActionLayout";
@@ -439,7 +441,16 @@ export class TitleScene extends Phaser.Scene {
     const enter = () => {
       void (this.gate ??= checkStartupGate(packageInfo.version)).then((result) => {
         if (result.gate === "open") {
-          startScene(this, storyManager.isCompleted(OPENING_TRAIN.id) ? "lobby" : "opening");
+          // 서버가 진행을 소유하는 빌드는 연결이 선 뒤에만 들어간다. 실패하면 이 기기에서 이어 가지 않는다.
+          void connectProgress((local, remote) => new Promise<SaveConflictChoice>((resolve) => { if (this.popups) openSaveConflictPopup(this, this.popups, local, remote, resolve); else resolve("cancel"); })).then((connected) => {
+            if (!this.scene.isActive()) return;
+            if (connected.ok) {
+              startScene(this, storyManager.isCompleted(OPENING_TRAIN.id) ? "lobby" : "opening");
+              return;
+            }
+            this.showConnectFailure(connected.code);
+            tapAnywhere.once("pointerup", enter);
+          });
           return;
         }
         // 막힌 동안에도 다시 누르면 새로 묻는다 — 점검이 끝났는데 앱을 다시 켜게 하지 않는다.
@@ -453,6 +464,16 @@ export class TitleScene extends Phaser.Scene {
     // 로딩 중 먼저 그려진 글자(부제)가 문구표보다 앞섰을 수 있으므로 한 번 더 읽는다.
     this.relocalize();
     setDebugReady(true);
+  }
+
+  /** 서버 연결이 서지 못한 이유를 알리고 다시 누르면 새로 시도한다. */
+  private showConnectFailure(code: AccountFailureCode): void {
+    this.popups?.confirm({
+      title: t("settings.account.notice"),
+      message: t(code === "conflict-cancelled" ? "settings.account.conflictCancelled" : code === "network-error" ? "settings.account.network" : "settings.account.unavailable"),
+      confirmLabel: t("settings.action.confirm"),
+      cancelLabel: false,
+    });
   }
 
   private showGateNotice(result: StartupGateResult): void {
@@ -507,6 +528,7 @@ export class TitleScene extends Phaser.Scene {
         void accountApi.logout().then((result) => {
           if (!this.scene.isActive()) return;
           if (result.ok) {
+            disconnectProgress();
             saveManager.reset();
             startScene(this, "boot");
             return;

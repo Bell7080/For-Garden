@@ -3581,14 +3581,6 @@ export class FakeServer implements GameApi {
     return { missions: this.missionDtos(), claimableCount: claimableMissionIds(normalized).length + stageClaimable, research };
   }
 
-  /** 지금 받을 수 있는 임무 보상 수 — 임무와 연구도 마디를 함께 센다(`missionListDto`의 `claimableCount`와 같은 셈). */
-  private missionNoticeCount(missions: Session["missions"]): number {
-    const normalized = normalizeMissions(missions, this.now());
-    const stages = (["daily", "weekly"] as const).reduce((sum, period) => sum + RESEARCH_REWARD_STAGES[period]
-      .filter((stage) => normalized.researchPoints[period] >= stage.threshold && !normalized.claimedResearchStageIds.includes(researchStageClaimId(period, stage.id))).length, 0);
-    return claimableMissionIds(normalized).length + stages;
-  }
-
   private readonly missionNoticeListeners = new Set<() => void>();
   private lastMissionNotice?: number;
 
@@ -3602,7 +3594,7 @@ export class FakeServer implements GameApi {
     if (this.missionNoticeListeners.size === 0) return;
     // 업적 단계도 같은 신호를 탄다 — 로비의 판 위에서 골드가 차거나 레벨이 올라도 업적 점이 곧바로 서게 한다.
     // 두 수를 한 값으로 묶어 어느 쪽이 바뀌어도 신호가 나가게 한다(임무 수는 1,000을 넘지 않는다).
-    const count = claimableAchievementCount(normalizeAchievementState(next.achievements), achievementFacts(next)) * 1000 + this.missionNoticeCount(next.missions);
+    const count = missionNoticeScore(next, this.now());
     if (count === this.lastMissionNotice) return;
     this.lastMissionNotice = count;
     this.missionNoticeListeners.forEach((listener) => listener());
@@ -3785,5 +3777,53 @@ export class FakeServer implements GameApi {
   }
 }
 
-/** 씬이 공유하는 임시 API 구현체다. 나중에는 이 한 줄을 HTTP 구현으로 교체한다. */
-export const gameApi: GameApi = new FakeServer();
+/** 받을 임무 보상 수(단계 보상 포함). 서버 쪽 신호와 원격 모드의 신호가 같은 셈을 쓴다. */
+function missionClaimCount(missions: Session["missions"], now: Date): number {
+  const normalized = normalizeMissions(missions, now);
+  const stages = (["daily", "weekly"] as const).reduce((sum, period) => sum + RESEARCH_REWARD_STAGES[period]
+    .filter((stage) => normalized.researchPoints[period] >= stage.threshold && !normalized.claimedResearchStageIds.includes(researchStageClaimId(period, stage.id))).length, 0);
+  return claimableMissionIds(normalized).length + stages;
+}
+
+/** 업적 단계도 같은 신호를 탄다 — 두 수를 한 값으로 묶어 어느 쪽이 바뀌어도 신호가 나가게 한다(임무 수는 1,000을 넘지 않는다). */
+export function missionNoticeScore(next: Session, now: Date): number {
+  return claimableAchievementCount(normalizeAchievementState(next.achievements), achievementFacts(next)) * 1000 + missionClaimCount(next.missions, now);
+}
+
+const localGameApi = new FakeServer();
+let activeGameApi: GameApi = localGameApi;
+const remoteMissionListeners = new Set<() => void>();
+let lastRemoteMissionScore: number | undefined;
+
+/** 서버 상태를 반영한 뒤 받을 보상 수가 바뀌었을 때만 알린다 — 조회가 되풀이 조회를 부르지 않게 한다. */
+export function signalRemoteMissionNotice(next: Session, now: Date = new Date()): void {
+  if (remoteMissionListeners.size === 0) return;
+  const score = missionNoticeScore(next, now);
+  if (score === lastRemoteMissionScore) return;
+  lastRemoteMissionScore = score;
+  remoteMissionListeners.forEach((listener) => listener());
+}
+
+/** 서버가 상태를 소유하는 구현으로 갈아 끼운다. `null`이면 이 기기의 임시 구현으로 돌아간다. */
+export function installGameApi(api: GameApi | null): void {
+  activeGameApi = api ?? localGameApi;
+  lastRemoteMissionScore = undefined;
+}
+
+/**
+ * 씬과 매니저가 공유하는 API 진입점이다. 부르는 순간 그때의 구현으로 넘기므로, 서버 연결이 서는 시점에
+ * 이미 이 값을 쥐고 있는 매니저도 같은 길로 서버를 부른다.
+ */
+export const gameApi: GameApi = new Proxy({} as GameApi, {
+  get(_target, prop) {
+    if (typeof prop !== "string") return undefined;
+    if (prop === "subscribeMissionNotice") {
+      return (listener: () => void) => {
+        const stopLocal = localGameApi.subscribeMissionNotice(listener);
+        remoteMissionListeners.add(listener);
+        return () => { stopLocal(); remoteMissionListeners.delete(listener); };
+      };
+    }
+    return (...args: unknown[]) => (activeGameApi as unknown as Record<string, (...a: unknown[]) => unknown>)[prop](...args);
+  },
+});

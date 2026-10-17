@@ -350,4 +350,6 @@ export const MISC_KO = {
   "stageMap.nextZone": "다음 구역",
   "stageMap.replay": "다시 보기",
   "stageMap.readRecord": "기록 읽기",
+  "stageMap.sub": "SUB",
+  "stageMap.subRead": "읽음",
 } as const;

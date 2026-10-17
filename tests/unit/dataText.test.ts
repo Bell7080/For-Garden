@@ -110,6 +110,8 @@ const NOT_DISPLAYED: Readonly<Record<string, "all" | readonly string[]>> = {
   // 번역 등록(`registerDialogueTexts`)을 미뤘다. 확정되면 이 두 줄을 지우고 등록해 번역을 채운다.
   "../../src/data/dialogues/chapter1.ts": "all",
   "../../src/data/dialogues/chapter2.ts": "all",
+  "../../src/data/dialogues/chapter3.ts": "all",
+  "../../src/data/dialogues/subStories.ts": "all",
 };
 
 /** 소스에 적힌 이스케이프를 실제 문자열로 되돌린다 — 그러지 않으면 줄바꿈이 든 글이 어긋난다. */

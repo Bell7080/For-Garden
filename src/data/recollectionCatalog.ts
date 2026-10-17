@@ -1,15 +1,14 @@
 import type { DialogueStory } from "../core/dialogue";
 import { OPENING_TRAIN } from "./dialogues/openingTrain";
 import { OPENING_RETREAT } from "./dialogues/openingRetreat";
-import { GREENHOUSE_ECHO } from "./dialogues/greenhouseEcho";
 import { GREAT_AUK_REPORT } from "./dialogues/greatAukReport";
-import { CHAPTERS, SIDE_STORY_STAGE } from "./stages";
+import { CHAPTERS, SUB_STORY_STAGES } from "./stages";
 import { STAGE_STORY_LINKS } from "./stageStories";
 
 /** 회고의 탭. 본편은 장마다, 그 밖의 곁 이야기·행사 이야기는 한 탭에 모은다. */
-export type RecollectionGroup = "chapter1" | "chapter2" | "side";
+export type RecollectionGroup = "chapter1" | "chapter2" | "chapter3" | "side";
 
-export const RECOLLECTION_GROUPS: readonly RecollectionGroup[] = ["chapter1", "chapter2", "side"];
+export const RECOLLECTION_GROUPS: readonly RecollectionGroup[] = ["chapter1", "chapter2", "chapter3", "side"];
 
 /** 회고에 모이는 이야기 한 편. 제목은 관문 이름에서 나오고, 관문이 없는 이야기만 제 제목 키를 갖는다. */
 export interface RecollectionEntry {
@@ -32,15 +31,19 @@ export function buildRecollectionEntries(): readonly RecollectionEntry[] {
     { storyId: OPENING_RETREAT.id, group: "chapter1", stageId: "1-1", titleKey: "recollection.title.openingRetreat" },
   ];
   for (const chapter of CHAPTERS) {
-    const group: RecollectionGroup | undefined = chapter.id === 1 ? "chapter1" : chapter.id === 2 ? "chapter2" : undefined;
+    const group: RecollectionGroup | undefined = chapter.id === 1 ? "chapter1" : chapter.id === 2 ? "chapter2" : chapter.id === 3 ? "chapter3" : undefined;
     if (!group) continue;
     for (const stage of chapter.stages) {
       const link = STAGE_STORY_LINKS[stage.id];
       if (link?.pre) entries.push({ storyId: link.pre, group, stageId: stage.id, phase: "pre" });
       if (link?.post) entries.push({ storyId: link.post, group, stageId: stage.id, phase: "post" });
+      // 서브 노드는 갈라져 나온 본편 관문 바로 뒤에 선다 — 지도에서 읽는 순서와 같다.
+      for (const sub of SUB_STORY_STAGES) {
+        if (sub.kind !== "story" || sub.chapter !== chapter.id || sub.chapterOrder !== stage.chapterOrder) continue;
+        entries.push({ storyId: sub.storyId, group, stageId: sub.id, ...(sub.id === "1-5-side-story" ? { titleKey: "recollection.title.greenhouse" as const } : {}) });
+      }
     }
   }
-  entries.push({ storyId: GREENHOUSE_ECHO.id, group: "side", stageId: SIDE_STORY_STAGE.id, titleKey: "recollection.title.greenhouse" });
   entries.push({ storyId: GREAT_AUK_REPORT.id, group: "side", titleKey: "recollection.title.greatAuk" });
   return entries;
 }

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { requiredBreakthroughForLevel } from "../../src/core/levelDesign";
 
 import { getRelic } from "../../src/data/relics";
-import { CHAPTERS, DAILY_RESTORATION, FIXED_STAGE_ENEMIES, SIDE_STORY_STAGE, STAGES, getBattleStage, getStage, getStageEnemies } from "../../src/data/stages";
+import { CHAPTERS, DAILY_RESTORATION, FIXED_STAGE_ENEMIES, SIDE_STORY_STAGE, STAGES, SUB_STORY_STAGES, getBattleStage, getStage, getStageEnemies } from "../../src/data/stages";
 import { stageFirstClearRewards } from "../../src/core/stageRewards";
 import { isStageUnlockedByProgress } from "../../src/core/stageProgress";
 import { stageChapterNavigationLayout } from "../../src/ui/stageChapterLayout";
@@ -297,8 +297,8 @@ describe("stage enemy design", () => {
 
   it("세 챕터의 본편 ID 30개를 유일한 평탄 인덱스로 제공하고 알 수 없는 ID를 거부한다", () => {
     expect(CHAPTERS.map(({ stages }) => stages.length)).toEqual([10, 10, 10]);
-    expect(STAGES).toHaveLength(31);
-    expect(new Set(STAGES.map(({ id }) => id)).size).toBe(31);
+    expect(STAGES).toHaveLength(30 + SUB_STORY_STAGES.length);
+    expect(new Set(STAGES.map(({ id }) => id)).size).toBe(STAGES.length);
     expect(getStage("3-10").chapterOrder).toBe(10);
     expect(() => getStage("4-1")).toThrow("알 수 없는 스테이지 id");
   });

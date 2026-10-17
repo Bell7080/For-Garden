@@ -9,6 +9,7 @@ import { platformPayment } from "../platform/payment";
 import { transitionTiming } from "../core/screenTransition";
 import { Button } from "./Button";
 import { addCategoryTab } from "./CategoryTab";
+import { notificationManager } from "../managers/NotificationManager";
 import { NotificationDot } from "./NotificationDot";
 import { TabStripEdgeHint } from "./TabStripEdgeHint";
 import { hiddenDotSides, nearestHiddenDot, type TabStripSpec } from "../core/tabStrip";
@@ -236,6 +237,8 @@ export async function openPassPopup(scene: Phaser.Scene, popups: PopupLayer, opt
       try {
         const result = await options.api.claimProgressPass({ passId: pass.id, requestId: `pass-${pass.id}-${Date.now()}` });
         passes = result.passes;
+        // 받은 몫을 점에 곧바로 반영한다 — 새로 읽지 않으면 다 받은 패스의 점이 다음 조회까지 남는다.
+        void notificationManager.refresh().catch(() => undefined);
         render();
         openRewardPopup(scene, popups, { title: t("shop.premium.pass.rewardTitle"), items: productGrantsToRewardItems(result.granted) });
       } catch (error) {
@@ -252,6 +255,8 @@ export async function openPassPopup(scene: Phaser.Scene, popups: PopupLayer, opt
         const outcome = await runPlatformPurchase(options.api, options.payment ?? platformPayment(), product);
         if (outcome.status === "purchased") {
           passes = (await options.api.getProgressPasses()).passes;
+          // 패스를 열면 지나온 유료 칸이 한꺼번에 받을 수 있게 된다 — 점도 그 자리에서 선다.
+          void notificationManager.refresh().catch(() => undefined);
           passId = pass.id;
           render();
           return;

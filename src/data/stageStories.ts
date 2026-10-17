@@ -1,5 +1,6 @@
 import { CHAPTER_1_STORIES } from "./dialogues/chapter1";
 import { CHAPTER_2_STORIES } from "./dialogues/chapter2";
+import { CHAPTER_3_STORIES } from "./dialogues/chapter3";
 
 /**
  * 관문에 달린 전(前)·후(後) 대사. **초회에만** 흐른다.
@@ -32,12 +33,19 @@ const LINKS: Readonly<Record<string, StageStoryLink>> = {
   "2-8": { pre: "stage-2-8-pre", post: "stage-2-8-post" },
   "2-9": { post: "stage-2-9-post" },
   "2-10": { pre: "stage-2-10-pre", post: "stage-2-10-post" },
+  "3-1": { pre: "stage-3-1-pre" },
+  "3-4": { post: "stage-3-4-post" },
+  "3-5": { pre: "stage-3-5-pre", post: "stage-3-5-post" },
+  "3-6": { post: "stage-3-6-post" },
+  "3-8": { post: "stage-3-8-post" },
+  "3-9": { post: "stage-3-9-post" },
+  "3-10": { pre: "stage-3-10-pre", post: "stage-3-10-post" },
 };
 
 export const STAGE_STORY_LINKS: Readonly<Record<string, StageStoryLink>> = LINKS;
 
 /** 회고가 모아 보여 주는 본편 대사 묶음. 관문 순서대로다. */
-export const MAIN_STORY_BUNDLES = [...CHAPTER_1_STORIES, ...CHAPTER_2_STORIES];
+export const MAIN_STORY_BUNDLES = [...CHAPTER_1_STORIES, ...CHAPTER_2_STORIES, ...CHAPTER_3_STORIES];
 
 /** 아직 보지 않은 전 대사의 ID. 없으면 `undefined`. */
 export function pendingPreStory(stageId: string, completed: ReadonlySet<string>): string | undefined {

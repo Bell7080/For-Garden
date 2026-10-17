@@ -258,15 +258,33 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
   return { id: chapter, title: content.title, subtitle: content.subtitle, prerequisiteStageId, stages };
 });
 
-/** 저장 검증과 전투 조회가 모든 챕터를 같은 ID 공간에서 찾도록 제공하는 평탄 인덱스다. */
+/**
+ * 서브 노드(SUB) — 본편 노드 옆에서 갈라지는 선택 서사다. 선행 관문(`anchor`)을 깨면 열리지만 **다음 본편의 선행 목록에는
+ * 들지 않아** 본편을 막지 않는다. 지도에서는 칸에 「SUB」만 적고 이름은 칸 아래에 선다.
+ *
+ * 지금은 이야기(`kind: "story"`)만 달 수 있다. 전투 SUB는 진행 순위·다음 단계·서버 입장·보상이 모두 `STAGES`를 읽어
+ * 따로 다뤄야 하므로 아직 두지 않는다 — 두게 되면 본편 전투 노드와 같은 양식(`BattleStageDef`)으로 이 목록에 더한다.
+ */
+function subStory(anchor: string, suffix: string, name: string, storyId: string): StageDef {
+  const [chapter, order] = anchor.split("-").map(Number);
+  return { kind: "story", id: `${anchor}-${suffix}`, name, chapter, chapterOrder: order, prerequisiteStageIds: [anchor], storyId };
+}
+
 /** 1-5에서 갈라지는 선택 서사는 1-6의 선행 목록에 들어가지 않아 본편을 막지 않는다. */
-export const SIDE_STORY_STAGE: StageDef = {
-  kind: "story", id: "1-5-side-story", name: "온실의 잔향", chapter: 1, chapterOrder: 5,
-  prerequisiteStageIds: ["1-5"], storyId: "stage-1-5-greenhouse-echo",
-};
+export const SIDE_STORY_STAGE: StageDef = subStory("1-5", "side-story", "온실의 잔향", "stage-1-5-greenhouse-echo");
+
+/** 지도 순서(아래에서 위로)대로다. 한 본편 노드에는 서브 하나만 단다. */
+export const SUB_STORY_STAGES: readonly StageDef[] = [
+  SIDE_STORY_STAGE,
+  subStory("2-3", "side-story", "떨어진 사원증", "stage-2-3-lost-badge"),
+  subStory("2-6", "side-story", "같은 줄", "stage-2-6-same-line"),
+  subStory("2-9", "side-story", "두 번째 추격", "stage-2-9-second-chase"),
+  subStory("3-5", "side-story", "소매 뒤의 마음", "stage-3-5-behind-sleeve"),
+  subStory("3-8", "side-story", "시말서", "stage-3-8-apology"),
+];
 
 /** 전투와 서브 스토리가 같은 고유 ID 공간에서 저장 검증과 지도 조회를 공유한다. */
-export const STAGES: readonly StageDef[] = [...CHAPTERS.flatMap(({ stages }) => stages), SIDE_STORY_STAGE];
+export const STAGES: readonly StageDef[] = [...CHAPTERS.flatMap(({ stages }) => stages), ...SUB_STORY_STAGES];
 const STAGE_BY_ID = new Map(STAGES.map((stage) => [stage.id, stage]));
 
 /** 대규모 던전 대신 하루 세 번만 보상을 받을 수 있는 단일 복원 훈련이다. */
@@ -332,5 +350,5 @@ for (const chapter of CHAPTERS) {
 }
 
 /** 곁가지 스테이지와 일일 복원의 이름도 함께 등록한다. */
-registerDataText(SIDE_STORY_STAGE, "name", `stage.${SIDE_STORY_STAGE.id}.name`);
+for (const sub of SUB_STORY_STAGES) registerDataText(sub, "name", `stage.${sub.id}.name`);
 registerDataText(DAILY_RESTORATION, "name", "stage.dailyRestoration.name");

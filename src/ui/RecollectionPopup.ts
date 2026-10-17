@@ -26,6 +26,8 @@ const TAP_SLOP = 14;
 /** 줄의 눈썹 줄 — 관문과 묶인 이야기는 `1-5 · 출격 전`, 관문이 없는 이야기는 비운다. */
 export function recollectionRowEyebrow(entry: RecollectionEntry): string {
   if (!entry.stageId) return "";
+  // 서브 노드의 이야기는 관문 번호가 아니라 지도 칸에 적히는 그대로 「SUB」다.
+  if (getStage(entry.stageId).kind === "story") return t("stageMap.sub");
   const phase = entry.phase ? t(entry.phase === "pre" ? "recollection.phase.pre" : "recollection.phase.post") : "";
   return phase ? `${entry.stageId} · ${phase}` : entry.stageId;
 }

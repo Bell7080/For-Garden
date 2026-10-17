@@ -1,10 +1,10 @@
 import { goRoute, partyRoute } from "./stageStoryRoute";
 import Phaser from "phaser";
-import { t } from "../i18n";
+import { t, type TextKey } from "../i18n";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import type { StageDef } from "../core/types";
 import { setDebugScene } from "../debug";
-import { CHAPTERS, SIDE_STORY_STAGE, STAGES, getStageEnemies, stageEnemyGrowth } from "../data/stages";
+import { CHAPTERS, STAGES, SUB_STORY_STAGES, getStageEnemies, stageEnemyGrowth } from "../data/stages";
 import { latestUnlockedStage } from "../core/stageProgress";
 import { EnemyInfoPopup } from "../ui/EnemyInfoPopup";
 import { storyManager } from "../managers/StoryManager";
@@ -15,6 +15,7 @@ import { chipPoints, drawLayer, drawVignette } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
 import { useBackgroundTexture, BACKGROUND } from "../ui/backgrounds";
 import { NodeEnemyPreview } from "../ui/NodeEnemyPreview";
+import { NodeStoryPreview } from "../ui/NodeStoryPreview";
 import { isEnemyPreviewNodeVisible } from "../ui/nodeEnemyPreviewLayout";
 import { stageChapterNavigationLayout } from "../ui/stageChapterLayout";
 import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
@@ -67,6 +68,8 @@ export class StageMapScene extends Phaser.Scene {
 
   /** 노드 편성의 렌더와 비동기 SD 수명은 공용 프리팹이 소유한다. */
   private enemyPreview!: NodeEnemyPreview;
+  /** 서브(SUB) 노드의 줄거리 판. 전투 판과 한 번에 하나만 선다. */
+  private storyPreview!: NodeStoryPreview;
   /** 서사 노드용 출전 버튼. 전투 버튼과 같은 자리에 서고 비용이 없다. */
   private storyButton!: Button;
 
@@ -102,6 +105,7 @@ export class StageMapScene extends Phaser.Scene {
       .setDepth(CHROME_DEPTH);
 
     this.enemyPreview = new NodeEnemyPreview(this, { title: "", growth: [], enemies: [], top: WINDOW.top - 40, bottom: WINDOW.bottom + 40, onEnemyClick: () => undefined });
+    this.storyPreview = new NodeStoryPreview(this, { title: "", summary: "", read: false, top: WINDOW.top - 40, bottom: WINDOW.bottom + 40 });
 
     // **전투 관문의 출전은 드는 스테미나를 버튼 위에 박는다** — 던전 입구·레이드 판과 같은 비용 표기다.
     // 이긴 판에서만 빠지지만(`charged-on-victory`) 얼마가 걸려 있는지는 누르기 전에 읽혀야 한다.
@@ -163,6 +167,7 @@ export class StageMapScene extends Phaser.Scene {
     if (!chapter || (chapter.prerequisiteStageId && !session.cleared.has(chapter.prerequisiteStageId))) return;
     this.currentChapter = chapterId;
     this.enemyPreview.dismiss();
+    this.storyPreview.dismiss();
     this.map.destroy(true);
     this.nodes.clear();
     this.buildMap();
@@ -170,19 +175,34 @@ export class StageMapScene extends Phaser.Scene {
     this.select(target, true);
   }
 
+  /** 그 구역의 지도 노드 — 본편 관문에 서브(SUB)를 더한 것이다. 본편 순서는 그대로 둔다. */
+  private chapterStages(chapterId: number): StageDef[] {
+    const main = CHAPTERS.find(({ id }) => id === chapterId)?.stages ?? [];
+    return [...main, ...SUB_STORY_STAGES.filter((stage) => stage.chapter === chapterId)];
+  }
+
+  /** 노드가 서는 세로 칸. 서브는 갈라져 나온 본편 관문과 같은 높이다. */
+  private rowOf(stage: StageDef, index: number): number {
+    return stage.kind === "story" ? (stage.chapterOrder ?? 1) - 1 : index;
+  }
+
+  /** 서브 노드가 열려 있는가·읽었는가. 전투 관문은 클리어 기록이 말한다. */
+  private isCompleted(stage: StageDef): boolean {
+    return stage.kind === "story" ? session.completedStoryIds.has(stage.storyId) : session.cleared.has(stage.id);
+  }
+
   /** 아래에서 위로 이어지는 노드 줄. 창 밖으로 나가는 부분은 잘라 낸다. */
   private buildMap(): void {
     const cx = BASE_WIDTH / 2;
     const chapter = CHAPTERS.find(({ id }) => id === this.currentChapter) ?? CHAPTERS[0];
-    // 첫 구역만 본편 배열 옆에 선택 서사 노드를 합치며 원본 본편 순서는 그대로 둔다.
-    const chapterStages = this.currentChapter === 1 ? [...chapter.stages, SIDE_STORY_STAGE] : [...chapter.stages];
+    const chapterStages = this.chapterStages(this.currentChapter);
     this.chapterTitle.setText(chapter.title);
     this.chapterSubtitle.setText(chapter.subtitle);
     this.previousChapterButton?.setEnabled(this.currentChapter > CHAPTERS[0].id);
     const next = CHAPTERS.find(({ id }) => id === this.currentChapter + 1);
     this.nextChapterButton?.setEnabled(!!next && (!next.prerequisiteStageId || session.cleared.has(next.prerequisiteStageId)));
     this.map = this.add.container(0, 0);
-    const height = (chapterStages.length - 1) * NODE_GAP;
+    const height = (chapter.stages.length - 1) * NODE_GAP;
     // 원화 하단을 1-1보다 조금 아래에 고정한다. 위 스테이지로 스크롤할수록 배경도 같은 거리만큼
     // 올라간다. 지도가 화면을 가득 채워야 하므로, 폭에 맞춘 배율로 모자라면 세로를 기준으로 키운다.
     const artBottom = 460;
@@ -200,12 +220,12 @@ export class StageMapScene extends Phaser.Scene {
     this.map.add(this.add.line(0, 0, cx, 0, cx, -height, COLOR.panelEdge).setOrigin(0).setLineWidth(6));
 
     chapterStages.forEach((stage, index) => {
-      const mainIndex = stage.kind === "story" ? 4 : index;
+      const mainIndex = this.rowOf(stage, index);
       const y = -mainIndex * NODE_GAP;
       // 서브 칩은 1-5에서 옆으로 뻗고 본편은 기존 세로축의 교차 배치를 유지한다.
       const x = stage.kind === "story" ? cx + 360 : cx + (index % 2 === 0 ? -110 : 110);
       const unlocked = isStageUnlocked(stage.id);
-      const cleared = stage.kind === "story" ? session.completedStoryIds.has(stage.storyId) : session.cleared.has(stage.id);
+      const cleared = this.isCompleted(stage);
 
       // 가지도 기록 보상 길 규칙처럼 얇은 실선만 써 본편 장축보다 가볍게 보인다.
       this.map.add(this.add.line(0, 0, cx, y, x, y, COLOR.panelEdge).setOrigin(0).setLineWidth(stage.kind === "story" ? 2 : 4));
@@ -221,7 +241,7 @@ export class StageMapScene extends Phaser.Scene {
       // 입력과 선택 표시는 투명한 원이 계속 맡는다. 손가락이 모서리에서 빠지지 않게 한다.
       const ring = this.add.circle(x, y, 48, 0xffffff, 0);
       const label = this.add
-        .text(x, y, stage.id, textStyle({ role: "emphasis", size: 30, color: cleared ? "#1a1d21" : unlocked ? COLOR.ink : COLOR.inkDim }))
+        .text(x, y, stage.kind === "story" ? t("stageMap.sub") : stage.id, textStyle({ role: "emphasis", size: 30, color: cleared ? "#1a1d21" : unlocked ? COLOR.ink : COLOR.inkDim }))
         .setOrigin(0.5);
       const name = this.add
         .text(x, y + 66, stage.name, textStyle({ role: "display", size: 28, color: unlocked ? COLOR.ink : COLOR.inkDim }))
@@ -258,8 +278,9 @@ export class StageMapScene extends Phaser.Scene {
       if (this.info?.isOpen) return;
       if (pointer.y < WINDOW.top || pointer.y > WINDOW.bottom) return;
       // 편성판 밖 지도 탭은 현재 판을 먼저 닫고, 노드 탭이면 pointerup에서 새 판을 연다.
-      if (this.enemyPreview?.containsScreenPoint(pointer.worldX, pointer.worldY)) return;
+      if (this.enemyPreview?.containsScreenPoint(pointer.worldX, pointer.worldY) || this.storyPreview?.containsScreenPoint(pointer.worldX, pointer.worldY)) return;
       this.enemyPreview?.dismiss();
+      this.storyPreview?.dismiss();
       this.dragging = true;
       this.dragMoved = 0;
       this.dragOrigin = this.map.y - pointer.y;
@@ -288,11 +309,12 @@ export class StageMapScene extends Phaser.Scene {
   /** 지도 이동 중 선택 노드의 실제 화면 Y를 계산해 판과 SD를 계속 같은 노드에 붙인다. */
   private trackSelectedPreview(): void {
     if (!this.enemyPreview || !this.selected) return;
-    const main = CHAPTERS.find(({ id }) => id === this.currentChapter)?.stages ?? [];
-    const chapterStages = this.currentChapter === 1 ? [...main, SIDE_STORY_STAGE] : [...main];
+    const chapterStages = this.chapterStages(this.currentChapter);
     const index = chapterStages.findIndex((stage) => stage.id === this.selected);
-    const nodeY = this.map.y - (chapterStages[index]?.kind === "story" ? 4 : index) * NODE_GAP;
-    this.enemyPreview.trackNode(nodeY, isEnemyPreviewNodeVisible(nodeY, WINDOW.top, WINDOW.bottom));
+    const nodeY = this.map.y - this.rowOf(chapterStages[index], index) * NODE_GAP;
+    const visible = isEnemyPreviewNodeVisible(nodeY, WINDOW.top, WINDOW.bottom);
+    if (chapterStages[index]?.kind === "story") this.storyPreview.trackNode(nodeY, visible);
+    else this.enemyPreview.trackNode(nodeY, visible);
   }
 
   /** 고른 스테이지를 중앙으로 옮기고 공용 노드 미리보기의 내용과 꼬리를 함께 갱신한다. */
@@ -300,18 +322,16 @@ export class StageMapScene extends Phaser.Scene {
     this.selected = stage.id;
     // 저장의 전투 선택에는 스토리 노드를 넣지 않아 BattleScene이 잘못 열 가능성을 없앤다.
     session.selectedStageId = stage.kind === "battle" ? stage.id : null;
-    const main = CHAPTERS.find(({ id }) => id === this.currentChapter)?.stages ?? [];
-    const chapterStages = this.currentChapter === 1 ? [...main, SIDE_STORY_STAGE] : [...main];
-    const index = chapterStages.findIndex((candidate) => candidate.id === stage.id);
+    const index = this.chapterStages(this.currentChapter).findIndex((candidate) => candidate.id === stage.id);
     for (const [id, node] of this.nodes) {
       const chosen = id === stage.id;
       // 선택은 외곽선 추가가 아니라 기존 홀로그램 규칙의 확대와 글자색으로만 알린다.
       node.label.setScale(chosen ? 1.25 : 1);
       const nodeStage = STAGES.find((candidate) => candidate.id === id);
-      const completed = nodeStage?.kind === "story" ? session.completedStoryIds.has(nodeStage.storyId) : session.cleared.has(id);
+      const completed = nodeStage ? this.isCompleted(nodeStage) : false;
       node.label.setColor(chosen ? COLOR.accentText : completed ? COLOR.ink : COLOR.inkDim);
     }
-    const visualIndex = stage.kind === "story" ? 4 : index;
+    const visualIndex = this.rowOf(stage, index);
     // **전투 관문은 창 아래쪽에 세운다.** 스토리 판은 적 칸·줄거리·초회 보상까지 서서 원정 판보다
     // 한참 높아, 노드를 창 가운데에 두면 위에도 아래에도 자리가 모자라 판이 노드를 덮는다. 아래에
     // 두면 판이 노드 위로 온전히 선다(맨 위 관문은 스크롤 끝에 걸려 판이 아래로 뒤집힌다).
@@ -324,8 +344,15 @@ export class StageMapScene extends Phaser.Scene {
     if (stage.kind === "story") {
       this.enemyPreview.dismiss();
       this.storyButton.setLabel(storyManager.isCompleted(stage.storyId) ? t("stageMap.replay") : t("stageMap.readRecord"));
+      // 전투 판에서 캐릭터를 뺀 모양 — 이름과 줄거리가 판으로 선다.
+      this.storyPreview.showAt(scroll - visualIndex * NODE_GAP, {
+        title: `${t("stageMap.sub")}  ${stage.name}`,
+        summary: t(`recollection.summary.${stage.storyId}` as TextKey),
+        read: storyManager.isCompleted(stage.storyId),
+      });
       return;
     }
+    this.storyPreview.dismiss();
     const enemies = getStageEnemies(stage);
     this.enemyPreview.showAt(scroll - index * NODE_GAP, {
       // 성장 스냅샷은 능력치 사본과 **같은 자리 순서**로 넘긴다 — 배열 순서로 넘기면 아모의

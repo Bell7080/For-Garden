@@ -126,15 +126,16 @@ function battleStage(id: string): BattleStageDef {
 const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole, BattleArenaMode, number, number][] = [
   ["스토리 1-1", 5, () => getStageEnemies(battleStage("1-1")), "normal", "stage", 13.3, 0.88],
   ["스토리 1-9", 14, () => getStageEnemies(battleStage("1-9")), "normal", "stage", 16.9, 0.87],
-  ["스토리 1-5 정예", 10, () => getStageEnemies(battleStage("1-5")), "elite", "stage", 14.5, 0.56],
+  ["스토리 1-5 정예", 10, () => getStageEnemies(battleStage("1-5")), "elite", "stage", 14.3, 0.7],
   // 엘라 「금강불괴」의 진입 막이 실제로 지급되면서(v0.250.2) 43.7 → 45.8로 늘었다.
-  ["스토리 1-10 정예", 15, () => getStageEnemies(battleStage("1-10")), "elite", "stage", 46.7, 0.07],
+  // v0.308.2: 궁극기 게이지가 비용까지만 차면서(처치 환급 제외) 46.7 → 42.0으로 줄었다. 1-5는 레벨을 15 → 17로 올려 띠를 지켰다.
+  ["스토리 1-10 정예", 15, () => getStageEnemies(battleStage("1-10")), "elite", "stage", 42, 0.08],
   // 3-9는 회수조(아트라·펄시·네우리)로 바뀌었다 — 참조 파티가 거의 다치지 않아 잔여 체력이 띠 위로 올라갔다.
   ["스토리 3-9", 44, () => getStageEnemies(battleStage("3-9")), "normal", "stage", 19.5, 0.97],
   ["현상수배 1단계", 5, () => [bountyRoundEnemy(BOUNTY_TIERS[0].rounds[0])], "normal", "bounty", 5.6, 0.83],
   ["현상수배 5단계", 60, () => [bountyRoundEnemy(BOUNTY_TIERS[4].rounds[0])], "normal", "bounty", 8.2, 0.74],
   ["대작전 1단계", 5, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[0]), "swarm", "cake", 27.2, 0.82],
-  ["대작전 8단계", 60, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", "cake", 65.1, 0.61],
+  ["대작전 8단계", 60, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", "cake", 88.9, 0.57],
   ["원정 일반 5층", 10, () => getExpeditionEncounterEnemies("normal", 5), "normal", "expedition", 14.3, 0.96],
   // 정예가 보호막을 깨고(코마) 치유를 깎는 자리가 되어 평균이 37.3 → 29.5로 줄고 띠 안에 들었다.
   ["원정 정예 10층", 20, () => getExpeditionEncounterEnemies("elite", 10), "elite", "expedition", 38.3, 0.36],

@@ -2,7 +2,7 @@ import { ENCOUNTER_ROLE } from "./levelDesign";
 import { RAID_BOSS_ROLE } from "./raid";
 import { EXPEDITION_BOSS_BALANCE } from "../data/expedition";
 import type { ExpeditionAugmentEffect } from "./expeditionAugments";
-import { ULTIMATE_ENERGY_MAX } from "./ultimate";
+import { ultimateEnergyCap } from "./ultimate";
 import { BOSS_STEP_MS, bossBattleRandom } from "./bossSimulation";
 import { canFireUltimate, fireUltimate, attackInterval, createSkirmish, isFighterAlive, replayLoggedBossAction, stepSkirmish, type Arena, type Fighter } from "./skirmish";
 import type { RelicDef } from "./types";
@@ -152,9 +152,9 @@ function passOnReplayEnergy(giver: Fighter, kind: ExpeditionBossAction["kind"], 
   const skill = kind === "ultimate" ? giver.def.ultimate : giver.def.basic;
   const living = state.fighters.filter((ally) => ally.side === giver.side && isFighterAlive(ally));
   const allyGain = skill.allyEnergyGain ?? 0;
-  if (allyGain > 0) for (const ally of living) ally.energy = Math.min(ULTIMATE_ENERGY_MAX, ally.energy + allyGain);
+  if (allyGain > 0) for (const ally of living) ally.energy = Math.min(ultimateEnergyCap(ally), ally.energy + allyGain);
   const duo = giver.duoId ? living.find(({ id }) => id === giver.duoId) : undefined;
-  if (duo && (skill.duoCharge?.energy ?? 0) > 0) duo.energy = Math.min(ULTIMATE_ENERGY_MAX, duo.energy + skill.duoCharge!.energy);
+  if (duo && (skill.duoCharge?.energy ?? 0) > 0) duo.energy = Math.min(ultimateEnergyCap(duo), duo.energy + skill.duoCharge!.energy);
 }
 
 /** 재현 속 게이지가 비용의 이만큼만 차 있어도 궁극기를 받아 준다(자리·처치 환급의 어긋남). */

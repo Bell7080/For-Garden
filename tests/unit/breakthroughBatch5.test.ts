@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { attackInterval, createSkirmish, findFighter, resolveReceivedDamage, stepSkirmish, type Arena, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
-import { FEROCITY_RULES } from "../../src/core/ferocity";
+import { ferocityMaxOf } from "../../src/core/ferocity";
 import { getRelic } from "../../src/data/relics";
 import { breakthroughEffectText } from "../../src/ui/skillPresentation";
 
@@ -48,7 +48,7 @@ describe("마키 한계 돌파", () => {
     const interval = (breakthrough: number) => {
       const state = setup(["maki"], ["amo"], breakthrough);
       const maki = findFighter(state, "player-0")!;
-      maki.ferocityFever = true; maki.ferocity = FEROCITY_RULES.max;
+      maki.ferocityFever = true; maki.ferocity = ferocityMaxOf(maki.def);
       return attackInterval(maki, state);
     };
     expect(interval(2) / interval(3)).toBeCloseTo(1.15, 2);

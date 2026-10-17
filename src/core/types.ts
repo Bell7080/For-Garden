@@ -2570,6 +2570,12 @@ export interface RelicDef {
    * 다르므로 정적 정의로 두고, 정보창은 패시브 아이콘 위에 작은 뱃지로 이것만 알린다.
    */
   ferocityTrait: FerocityTrait;
+  /**
+   * 폭주가 열리기까지 채워야 하는 야성 게이지의 크기다(궁극기 게이지 `cost`와 같은 결). 클수록 늦게 열리고,
+   * 열린 폭주는 크기와 무관하게 8초에 다 닳는다. 생략하면 아군 100, 적 130이다 — 값은 그 폭주가 판을
+   * 얼마나 뒤집는지에 맞춰 개체마다 정한다.
+   */
+  ferocityMax?: number;
   basic: BasicAttack;
   ultimate: Ultimate;
   /**

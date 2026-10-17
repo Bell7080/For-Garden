@@ -48,7 +48,7 @@ import { unitStatusViews } from "../../src/ui/unitStatusModel";
 import { applyExpeditionRest, type ExpeditionAugmentEffect } from "../../src/core/expeditionAugments";
 import { RELICS, getRelic } from "../../src/data/relics";
 import { applyLevelGrowth } from "../../src/core/relicProgression";
-import { FEROCITY_RULES } from "../../src/core/ferocity";
+import { FEROCITY_RULES, feverDrainPerSecond, ferocityMaxOf } from "../../src/core/ferocity";
 import { ULTIMATE_ENERGY_MAX } from "../../src/core/ultimate";
 import { computeDamage } from "../../src/core/damage";
 import { createExpeditionBossSkirmishConfig, type ExpeditionBossBattleInputDto } from "../../src/core/expeditionBattle";
@@ -220,7 +220,7 @@ describe("디안 무리 생명주기", () => {
     const dian = state.fighters[0];
     const wolves = wolvesOf(state, dian.id);
     // 폭주는 최대치에 **닿는 순간** 열린다. 값을 직접 100으로 적으면 그 경계를 지나지 않는다.
-    dian.ferocity = 99;
+    dian.ferocity = ferocityMaxOf(dian.def) - 1;
     dian.x = state.fighters[1].x + 40; dian.y = state.fighters[1].y;
     dian.attackCooldown = 0;
     stepSkirmish(state, 1 / 60);
@@ -783,7 +783,7 @@ describe("루카 전투 계약", () => {
 
   it("는 폭주 진입 때 은신·재지정·적 추적 해제를 적용하고 도약하지 않는다", () => {
     const state = newSkirmish(["luka", "rex"], ["amo", "ripa"]); const [luka, leader, enemy] = state.fighters;
-    luka.ferocity = 99; leader.targetId = "enemy-1"; enemy.targetId = luka.id; luka.x = 300; luka.y = 700;
+    luka.ferocity = ferocityMaxOf(luka.def) - 1; leader.targetId = "enemy-1"; enemy.targetId = luka.id; luka.x = 300; luka.y = 700;
     const position = { x: luka.x, y: luka.y }; hitOnce(state);
     expect(luka.stealthFor).toBeGreaterThan(2.9); expect(luka.targetId).toBe("enemy-1");
     expect(enemy.targetId).not.toBe(luka.id); expect({ x: luka.x, y: luka.y }).toEqual(position);
@@ -855,14 +855,14 @@ describe("루카 전투 계약", () => {
 describe("전투 활성 버프 셀렉터", () => {
   it("메테 크레센도의 남은 폭주 시간을 현재 야성에서 감소시킨다", () => {
     const state = newSkirmish(["mette"], ["amo"]); const mette = state.fighters[0];
-    mette.ferocityFever = true; mette.ferocity = FEROCITY_RULES.max;
+    mette.ferocityFever = true; mette.ferocity = ferocityMaxOf(mette.def);
     const full = activeCombatBuffs(state, mette.id)[0];
-    mette.ferocity -= FEROCITY_RULES.feverDrainPerSecond * 2;
+    mette.ferocity -= feverDrainPerSecond(mette.def) * 2;
     const drained = activeCombatBuffs(state, mette.id)[0];
 
     // 코어의 초당 소모 공식을 한 번만 사용해 UI가 정확히 2초 감소한 값을 받는지 고정한다.
-    expect(full.timing).toEqual({ kind: "ferocity", remainingSeconds: FEROCITY_RULES.max / FEROCITY_RULES.feverDrainPerSecond, totalSeconds: FEROCITY_RULES.max / FEROCITY_RULES.feverDrainPerSecond });
-    expect(drained.timing).toEqual({ kind: "ferocity", remainingSeconds: full.timing.kind === "ferocity" ? full.timing.remainingSeconds - 2 : -1, totalSeconds: FEROCITY_RULES.max / FEROCITY_RULES.feverDrainPerSecond });
+    expect(full.timing).toEqual({ kind: "ferocity", remainingSeconds: FEROCITY_RULES.feverSeconds, totalSeconds: FEROCITY_RULES.feverSeconds });
+    expect(drained.timing).toEqual({ kind: "ferocity", remainingSeconds: full.timing.kind === "ferocity" ? full.timing.remainingSeconds - 2 : -1, totalSeconds: FEROCITY_RULES.feverSeconds });
   });
 });
 
@@ -934,7 +934,7 @@ describe("메테 전투 계약", () => {
       const battle = metteBattle(); configure(battle.mette);
       return stepSkirmish(battle.state, 1 / 60).filter((event) => event.kind === "attack");
     };
-    const feverHits = run((mette) => { mette.ferocityFever = true; mette.ferocity = 100; });
+    const feverHits = run((mette) => { mette.ferocityFever = true; mette.ferocity = ferocityMaxOf(mette.def); });
     expect(feverHits.map((hit) => hit.kind === "attack" ? hit.skill : "")).toEqual(["basic", "staccato"]);
     expect(feverHits.filter((hit) => hit.kind === "attack" && hit.skill === "staccato")).toHaveLength(1); // 추가타는 재귀하지 않는다.
     expect(run((mette) => { mette.ferocityFever = false; })).toHaveLength(1);
@@ -944,7 +944,7 @@ describe("메테 전투 계약", () => {
   it("의 스타카토는 폭주 동안 아군 모두에게 선다 — 연주를 부르는 손은 아군의 손이다", () => {
     const { state, mette, ally } = metteBattle();
     expect(activeCombatBuffs(state, ally.id).some((buff) => buff.skillId === "crescendoStaccato")).toBe(false);
-    mette.ferocityFever = true; mette.ferocity = 100;
+    mette.ferocityFever = true; mette.ferocity = ferocityMaxOf(mette.def);
     const onAlly = activeCombatBuffs(state, ally.id).find((buff) => buff.skillId === "crescendoStaccato");
     expect(onAlly).toBeDefined();
     // 표식은 아군이 들지만 그 값의 주인은 메테다 — 남은 시간도 메테의 게이지에서 나온다.
@@ -1543,7 +1543,7 @@ describe("능력치 반영", () => {
     const state = newSkirmish(["torika"], ["amo", "toby"]);
     const [attacker, primary, secondary] = state.fighters;
     attacker.def = { ...attacker.def, stats: { ...attacker.def.stats, lifeSteal: 100 } };
-    attacker.hp = 1; attacker.ferocity = 100; attacker.ferocityFever = true;
+    attacker.hp = 1; attacker.ferocity = ferocityMaxOf(attacker.def); attacker.ferocityFever = true;
     attacker.x = 400; attacker.y = 1000; attacker.attackCooldown = 0;
     primary.x = 460; primary.y = 1000; primary.attackCooldown = 99;
     secondary.x = 500; secondary.y = 1000; secondary.attackCooldown = 99;
@@ -1571,14 +1571,16 @@ describe("실시간 야성 공용 규칙", () => {
   }
 
   it("은 50/80/100 경계에서 공격 피해를 올리고 타격 양쪽의 게이지를 채운다", () => {
-    const calm = oneHit(49);
-    const first = oneHit(50);
-    const second = oneHit(80);
-    const fever = oneHit(100);
+    // 구간은 최대치에 대한 비율이다 — 렉시아의 게이지(130)에서 50%·80%·100% 자리를 읽는다.
+    const max = ferocityMaxOf(getRelic("rex"));
+    const calm = oneHit(max * 0.5 - 1);
+    const first = oneHit(max * 0.5);
+    const second = oneHit(max * 0.8);
+    const fever = oneHit(max);
     expect(first.amount).toBeGreaterThan(calm.amount);
     expect(second.amount).toBeGreaterThan(first.amount);
     expect(fever.amount).toBeGreaterThan(second.amount);
-    expect(calm.attacker.ferocity).toBe(49 + FEROCITY_RULES.basicGain);
+    expect(calm.attacker.ferocity).toBe(max * 0.5 - 1 + FEROCITY_RULES.basicGain);
     expect(calm.target.ferocity).toBe(FEROCITY_RULES.hitGain);
   });
 });
@@ -1601,7 +1603,7 @@ describe("효과 ID별 야성 특성", () => {
     const before = attackInterval(rex);
     // 기본 112에 25퍼센트포인트를 더한 137로 나눠 곱연산(140)과 의미가 바뀌지 않게 고정한다.
     expect(before).toBeCloseTo(SKIRMISH.attackInterval * 100 / 137);
-    rex.ferocity = 100; rex.ferocityFever = true;
+    rex.ferocity = ferocityMaxOf(rex.def); rex.ferocityFever = true;
     expect(attackInterval(rex)).toBe(before); // 렉시아 폭주는 공속이 아니라 치명타와 흡혈만 바꾼다.
     rex.ferocityFever = false;
     expect(attackInterval(rex)).toBe(before);
@@ -1613,7 +1615,7 @@ describe("효과 ID별 야성 특성", () => {
     first.x = torika.x + 100; first.y = torika.y;
     second.x = torika.x + 300; second.y = torika.y;
     outside.x = torika.x + 321; outside.y = torika.y;
-    torika.ferocity = 99;
+    torika.ferocity = ferocityMaxOf(torika.def) - 1;
 
     // 첫 평타의 야성 획득으로 폭주에 진입해야 진입 훅과 공용 도발 경로를 함께 검증할 수 있다.
     stepSkirmish(state, 1 / 60);
@@ -1660,7 +1662,7 @@ describe("효과 ID별 야성 특성", () => {
     const state = prepareHit("spino", ["amo", "toby"], ["torika"]);
     const [spino, , first, lowest] = state.fighters;
     lowest.hp = lowest.maxHp * 0.2; lowest.x = 700; lowest.y = 900;
-    first.targetId = spino.id; lowest.targetId = spino.id; spino.ferocity = 99;
+    first.targetId = spino.id; lowest.targetId = spino.id; spino.ferocity = ferocityMaxOf(spino.def) - 1;
     const takeoff = { x: spino.x, y: spino.y };
     // 단 한 번의 발동 프레임 호출만으로 출발점과 다른 착지점이 확정되어 중간 이동 상태가 없음을 고정한다.
     stepSkirmish(state, 1 / 60, () => 0.99);
@@ -2121,7 +2123,7 @@ describe("궁극기", () => {
   it("는 최대 야성에서도 적에게 궁극기를 쓰며 피버 게이지가 자동으로 진정된다", () => {
     const state = charged();
     const [ally, foe] = state.fighters;
-    ally.ferocity = 100;
+    ally.ferocity = ferocityMaxOf(ally.def);
     ally.ferocityFever = true;
     const foeHp = foe.hp;
 
@@ -2243,7 +2245,7 @@ describe("렉시아 전투 계약", () => {
 
   it("은 폭주 중 출혈 중인 적을 물면 확정 치명타가 되고 패시브·폭주를 더해 50% 흡혈한다", () => {
     const { state, rex, foe } = readyRex();
-    rex.hp = rex.maxHp / 2; rex.ferocity = 100; rex.ferocityFever = true;
+    rex.hp = rex.maxHp / 2; rex.ferocity = ferocityMaxOf(rex.def); rex.ferocityFever = true;
     // 이미 물어뜯어 피가 흐르는 자리를 다시 무는 상황이다. 확률이 아니라 이 상태가 조건이므로
     // 태생 10% + 패시브 25퍼센트포인트로는 절대 터지지 않을 난수에서도 치명타가 나와야 한다.
     foe.bleed = { remaining: 3, total: 3, tickIn: 1, percent: 2, sourceId: rex.id };
@@ -2261,7 +2263,7 @@ describe("렉시아 전투 계약", () => {
 
   it("은 폭주 중이어도 출혈이 없는 적에게는 확정 치명타를 주지 않는다", () => {
     const { state, rex, foe } = readyRex();
-    rex.ferocity = 100; rex.ferocityFever = true;
+    rex.ferocity = ferocityMaxOf(rex.def); rex.ferocityFever = true;
     foe.bleed = null;
     // 폭주가 확률 자체를 올리지 않으므로 태생 10% + 패시브 25퍼센트포인트(=35%)를 넘는
     // 난수에서는 평타로 남는다. 예전 계약(확률 +25퍼센트포인트)이라면 여기서 치명타였다.
@@ -2273,7 +2275,7 @@ describe("렉시아 전투 계약", () => {
     const { state, rex } = readyRex();
     // 기본 90% + 패시브 25퍼센트포인트 = 115%를 마지막에 100%로 제한한다.
     rex.def = { ...rex.def, stats: { ...rex.def.stats, critChance: 90 } };
-    rex.ferocity = 100; rex.ferocityFever = true;
+    rex.ferocity = ferocityMaxOf(rex.def); rex.ferocityFever = true;
     const hit = stepSkirmish(state, 1 / 60, () => 0.999).find((event) => event.kind === "attack")!;
     expect(hit).toMatchObject({ critical: true });
   });
@@ -2291,7 +2293,7 @@ describe("렉시아 전투 계약", () => {
 
     const capped = readyRex();
     capped.rex.def = { ...capped.rex.def, stats: { ...capped.rex.def.stats, lifeSteal: 10 } };
-    capped.rex.ferocity = 100; capped.rex.ferocityFever = true; capped.rex.energy = capped.rex.def.ultimate.cost;
+    capped.rex.ferocity = ferocityMaxOf(capped.rex.def); capped.rex.ferocityFever = true; capped.rex.energy = capped.rex.def.ultimate.cost;
     capped.rex.hp = capped.rex.maxHp - 1;
     fireUltimate(capped.state, capped.rex.id, () => 0.99);
     // 기본 10 + 패시브 25 + 폭주 25 + 궁극기 50퍼센트포인트를 합산해도 최대 체력을 넘지 않는다.
@@ -2305,7 +2307,7 @@ describe("렉시아 전투 계약", () => {
     // 대상의 전방 경감 패시브도 제거해 문서의 방어력 0·동일 속성 산술만 분리한다.
     foe.def = { ...foe.def, element: "fire", passive: rex.def.passive, stats: { ...foe.def.stats, def: 0 } };
     foe.hp = foe.maxHp = 2_000;
-    rex.hp = 100; rex.ferocity = 100; rex.ferocityFever = true; rex.energy = rex.def.ultimate.cost;
+    rex.hp = 100; rex.ferocity = ferocityMaxOf(rex.def); rex.ferocityFever = true; rex.energy = rex.def.ultimate.cost;
     const hit = fireUltimate(state, rex.id, () => 0.99).find((event) => event.kind === "attack")!;
     expect(hit).toMatchObject({ critical: false, amount: 800 });
     // 기본 10 + 패시브 25 + 폭주 25 + 궁극기 50퍼센트포인트 = 110%이며 회복량 자체는 재반올림하지 않는다.
@@ -2513,7 +2515,7 @@ describe("폰토스 실전 스킬과 심해 압력", () => {
 
   it("는 폭주 1초마다 방어력과 저항력을 무시하고 모든 생존 적의 최대 체력 2%를 깎는다", () => {
     const { state, pontos, allies } = pontosBattle();
-    pontos.ferocity = 100; pontos.ferocityFever = true;
+    pontos.ferocity = ferocityMaxOf(pontos.def); pontos.ferocityFever = true;
     // 극단적인 방어 수치도 폰토스 고정 피해 경계에는 들어가지 않아야 한다.
     allies[0].def = { ...allies[0].def, stats: { ...allies[0].def.stats, def: 1_000_000, res: 1_000_000 } };
     const before = allies.map(({ hp }) => hp);
@@ -2526,7 +2528,7 @@ describe("폰토스 실전 스킬과 심해 압력", () => {
   it("는 큰 허용 프레임과 잘게 분할한 프레임에서 같은 수의 폭주 틱을 만든다", () => {
     const simulate = (frames: readonly number[]) => {
       const { state, pontos, allies } = pontosBattle();
-      pontos.ferocity = 100; pontos.ferocityFever = true;
+      pontos.ferocity = ferocityMaxOf(pontos.def); pontos.ferocityFever = true;
       frames.forEach((dt) => stepSkirmish(state, dt));
       return allies.map(({ hp }) => hp);
     };
@@ -2537,7 +2539,7 @@ describe("폰토스 실전 스킬과 심해 압력", () => {
 
   it("는 기존 고정 피해 정책처럼 보호막을 먼저 소모하고 치명타 틱에는 사망 사건과 로그를 남긴다", () => {
     const { state, pontos, allies } = pontosBattle();
-    pontos.ferocity = 100; pontos.ferocityFever = true;
+    pontos.ferocity = ferocityMaxOf(pontos.def); pontos.ferocityFever = true;
     allies[0].shield = { amount: allies[0].maxHp * 0.01, providerId: allies[0].id };
     allies[1].hp = allies[1].maxHp * 0.01;
     const protectedHp = allies[0].hp;
@@ -2552,7 +2554,7 @@ describe("폰토스 실전 스킬과 심해 압력", () => {
     const state = newSkirmish(["dodo", "rex"], ["pontos", "amo"]);
     const [dodo, rex, pontos, victim] = state.fighters;
     for (const fighter of state.fighters) { fighter.attackCooldown = 999; fighter.x = 400; fighter.y = 900; }
-    pontos.ferocity = 100; pontos.ferocityFever = true;
+    pontos.ferocity = ferocityMaxOf(pontos.def); pontos.ferocityFever = true;
     dodo.hp = dodo.maxHp / 2; dodo.energy = dodo.def.ultimate.cost;
     expect(fireUltimate(state, dodo.id).filter((event) => event.kind === "heal")).toEqual([]);
     expect(dodo.hp).toBe(dodo.maxHp / 2);
@@ -2660,7 +2662,7 @@ describe("티아 정적 전투 계약", () => {
     tia.hp = tia.maxHp / 2;
     const calm = currentAttackSpeed(tia, state);
     const allyCalm = currentAttackSpeed(ally, state);
-    tia.ferocity = 100; tia.ferocityFever = true;
+    tia.ferocity = ferocityMaxOf(tia.def); tia.ferocityFever = true;
     // 손은 폭주한 본인만 빨라진다 — 팀 오라가 아니다.
     expect(currentAttackSpeed(tia, state)).toBeCloseTo(calm * 1.2);
     expect(currentAttackSpeed(ally, state)).toBe(allyCalm);
@@ -2681,7 +2683,7 @@ describe("티아 정적 전투 계약", () => {
 
   it("은 적이 하나뿐이면 표적을 풀지 않는다", () => {
     const { state, tia, fighters } = tiaBattle(["amo"]);
-    tia.ferocity = 100; tia.ferocityFever = true;
+    tia.ferocity = ferocityMaxOf(tia.def); tia.ferocityFever = true;
     expect(shimmerHits(state)).toHaveLength(1);
     expect(tia.targetId).toBe(fighters[1].id);
   });
@@ -2792,7 +2794,7 @@ describe("스테라 정적 전투 계약", () => {
     const baseEnergy = plain.ally.energy; const baseFerocity = plain.ally.ferocity;
 
     const rallied = stellaBattle();
-    rallied.stella.ferocity = 100; rallied.stella.ferocityFever = true;
+    rallied.stella.ferocity = ferocityMaxOf(rallied.stella.def); rallied.stella.ferocityFever = true;
     rallied.stella.attackCooldown = 99;
     rallied.ally.attackCooldown = 0; rallied.ally.targetId = rallied.state.fighters[2].id;
     rallied.ally.x = 420; rallied.ally.y = 1000;
@@ -2851,7 +2853,7 @@ describe("메론 정적 전투 계약", () => {
     expect(enemy.overpaint).toMatchObject({ stacks: 1, percentPerStack: paint.damageTakenPercent, maxStacks: paint.maxStacks });
 
     // 같은 대상을 계속 때리면 겹치되 상한을 넘지 않는다.
-    run(state, 30);
+    run(state, 60);
     expect(enemy.overpaint!.stacks).toBe(paint.maxStacks);
     // 다시 칠할 때마다 지속 시간이 처음으로 되돌아간다.
     expect(enemy.overpaint!.remaining).toBeGreaterThan(0);
@@ -2970,7 +2972,7 @@ describe("메론 정적 전투 계약", () => {
     stepSkirmish(state, 1 / 60);
     expect(enemy.overpaint).toBeNull();
 
-    meron.ferocity = 100; meron.ferocityFever = true;
+    meron.ferocity = ferocityMaxOf(meron.def); meron.ferocityFever = true;
     ally.attackCooldown = 0;
     stepSkirmish(state, 1 / 60);
     expect(enemy.overpaint).toMatchObject({ stacks: 1, percentPerStack: trait.overpaint.damageTakenPercent });
@@ -3123,7 +3125,7 @@ describe("파치 정적 전투 계약", () => {
     expect(trait.loadsStatusCycleOnEntry).toBe(true);
     // 폭주 직전까지 한 대도 때리지 않은 자리에서 연다 — 장전이 없으면 세 대를 더 때려야 한다.
     expect(pachi.statusHitCount).toBe(0);
-    pachi.ferocity = FEROCITY_RULES.max - FEROCITY_RULES.basicGain;
+    pachi.ferocity = ferocityMaxOf(pachi.def) - FEROCITY_RULES.basicGain;
     pachi.attackCooldown = 0; enemy.stunnedFor = 0;
     const entry = stepSkirmish(state, 1 / 60, () => 0.999999);
 
@@ -3139,7 +3141,7 @@ describe("파치 정적 전투 계약", () => {
     const { state, pachi, enemy } = pachiBattle();
     const every = pachi.def.basic.statusEffectEvery!;
     // 맞아서 차오른 야성으로 폭주에 들면 그 프레임에는 때린 타격이 없다.
-    pachi.ferocity = FEROCITY_RULES.max - FEROCITY_RULES.hitGain;
+    pachi.ferocity = ferocityMaxOf(pachi.def) - FEROCITY_RULES.hitGain;
     pachi.attackCooldown = 99;
     enemy.attackCooldown = 0; enemy.targetId = pachi.id; enemy.engaged = true;
     enemy.x = pachi.x + 10;
@@ -3157,7 +3159,7 @@ describe("파치 정적 전투 계약", () => {
     const { state, pachi, enemy, foes } = pachiBattle(["amo", "toby"]);
     const trait = getRelic("pachi").ferocityTrait;
     if (trait.effectId !== "knockbackSlam") throw new Error("파치의 폭주 특성이 아니다");
-    pachi.ferocity = 100; pachi.ferocityFever = true;
+    pachi.ferocity = ferocityMaxOf(pachi.def); pachi.ferocityFever = true;
 
     const events: SkirmishEvent[] = [];
     for (let hit = 0; hit < pachi.def.basic.statusEffectEvery!; hit += 1) {
@@ -3192,7 +3194,7 @@ describe("파치 정적 전투 계약", () => {
     const { state, pachi, enemy } = pachiBattle(["amo"]);
     const trait = getRelic("pachi").ferocityTrait;
     if (trait.effectId !== "knockbackSlam") throw new Error("파치의 폭주 특성이 아니다");
-    pachi.ferocity = 100; pachi.ferocityFever = true;
+    pachi.ferocity = ferocityMaxOf(pachi.def); pachi.ferocityFever = true;
     for (let hit = 0; hit < pachi.def.basic.statusEffectEvery!; hit += 1) {
       pachi.attackCooldown = 0; enemy.stunnedFor = 0;
       stepSkirmish(state, 1 / 60);
@@ -3340,7 +3342,7 @@ describe("마키 정적 전투 계약", () => {
     maki.targetId = enemy.id;
     const trait = getRelic("maki").ferocityTrait;
     if (trait.effectId !== "butcherFeast") throw new Error("마키의 폭주 특성이 아니다");
-    maki.ferocity = 100; maki.ferocityFever = true;
+    maki.ferocity = ferocityMaxOf(maki.def); maki.ferocityFever = true;
     maki.hp = 1; ally.hp = 1;
 
     const events: SkirmishEvent[] = [];
@@ -3360,7 +3362,7 @@ describe("마키 정적 전투 계약", () => {
     const trait = maki.def.ferocityTrait;
     if (trait.effectId !== "butcherFeast") throw new Error("마키의 폭주 특성이 아니다");
     // 첫 공격으로 폭주에 들어가며, 그 공격 자체는 진입 전에 시작했으므로 평소처럼 한 겹만 쌓는다.
-    maki.ferocity = 99;
+    maki.ferocity = ferocityMaxOf(maki.def) - 1;
     stepSkirmish(state, 1 / 60);
     expect(maki.instantButcherAttacksLeft).toBe(trait.instantButcherAttacks);
 
@@ -3433,7 +3435,7 @@ describe("델로피의 중독과 청산", () => {
 
     const burstFight = applied();
     const perSecond = burstFight.enemy.poison!.amountPerSecond;
-    burstFight.delopi.ferocity = 100; burstFight.delopi.ferocityFever = true; burstFight.delopi.attackCooldown = 0;
+    burstFight.delopi.ferocity = ferocityMaxOf(burstFight.delopi.def); burstFight.delopi.ferocityFever = true; burstFight.delopi.attackCooldown = 0;
     const hpBeforeBurst = burstFight.enemy.hp;
     const events = stepSkirmish(burstFight.state, 1 / 60);
     const burst = events.find((event): event is Extract<SkirmishEvent, { kind: "poisonLiquidated" }> => event.kind === "poisonLiquidated")!;
@@ -3450,7 +3452,7 @@ describe("델로피의 중독과 청산", () => {
 
   it("는 폭주 중 바르는 타격과 청산하는 타격을 번갈아 낸다", () => {
     const { state, delopi } = poisoned();
-    delopi.ferocity = 100; delopi.ferocityFever = true;
+    delopi.ferocity = ferocityMaxOf(delopi.def); delopi.ferocityFever = true;
     const seen: string[] = [];
     for (let hit = 0; hit < 4; hit += 1) {
       delopi.attackCooldown = 0;
@@ -3710,7 +3712,7 @@ describe("엘라의 프로젝트 TALISMAN", () => {
     expect(trait).toMatchObject({ effectId: "adamantBody", shieldMaxHpPercent: 25, hastenedAttacks: 3, attackSpeedPercent: 150 });
     const calmInterval = attackInterval(ella);
 
-    ella.ferocity = 100; ella.ferocityFever = true;
+    ella.ferocity = ferocityMaxOf(ella.def); ella.ferocityFever = true;
     ella.hastenedAttacksLeft = trait.effectId === "adamantBody" ? trait.hastenedAttacks : 0;
     // 몰아치는 것은 정해진 타수뿐이라 폭주 내내 빨라지지 않는다.
     expect(attackInterval(ella)).toBeLessThan(calmInterval);
@@ -3842,7 +3844,7 @@ describe("노도니아의 프로젝트 REVERIE", () => {
     near.x = 200; near.y = 700 + 400; // 반경 안
     far.x = 900; far.y = 1300; // 반경 밖(대각선 약 922)
     hitter.x = 200 + 60; hitter.y = 700; // 붙어 서서 한 대를 쳐 폭주를 연다
-    taboa.ferocity = FEROCITY_RULES.max - FEROCITY_RULES.hitGain;
+    taboa.ferocity = ferocityMaxOf(taboa.def) - FEROCITY_RULES.hitGain;
     hitter.targetId = taboa.id; hitter.attackCooldown = 0;
     const events = stepSkirmish(state, 1 / 60);
     expect(taboa.ferocityFever).toBe(true);
@@ -3872,7 +3874,7 @@ describe("노도니아의 프로젝트 REVERIE", () => {
     if (outside) { outside.x = nodonia.x + 2_000; outside.y = nodonia.y; }
 
     // 한 대 맞아 폭주에 들어서는 순간 도발 반경 안의 적이 모두 노도니아를 본다.
-    nodonia.ferocity = FEROCITY_RULES.max - FEROCITY_RULES.hitGain;
+    nodonia.ferocity = ferocityMaxOf(nodonia.def) - FEROCITY_RULES.hitGain;
     foe.targetId = nodonia.id; foe.attackCooldown = 0;
     const events = stepSkirmish(state, 1 / 60);
     foe.attackCooldown = 99;
@@ -4048,7 +4050,7 @@ describe("데이", () => {
     const state = createSkirmish([getRelic("deina")], [getRelic("toby")], arena);
     const [deina, enemy] = state.fighters;
     deina.x = 400; deina.y = 700; enemy.x = 450; enemy.y = 700;
-    deina.ferocity = FEROCITY_RULES.max; deina.ferocityFever = true;
+    deina.ferocity = ferocityMaxOf(deina.def); deina.ferocityFever = true;
     const rng = seeded(11);
     const events: SkirmishEvent[] = [];
     for (let t = 0; t < 1.2; t += 0.05) events.push(...stepSkirmish(state, 0.05, rng));
@@ -4425,7 +4427,7 @@ describe("아모 조가비 전투 계약", () => {
     const state = createSkirmish([getRelic("amo")], [getRelic("rex")], ARENA);
     const [amo] = state.fighters;
     amo.stunnedFor = 5; amo.poison = { remaining: 5, total: 5, tickIn: 1, amountPerSecond: 1 };
-    amo.ferocity = FEROCITY_RULES.max - FEROCITY_RULES.hitGain;
+    amo.ferocity = ferocityMaxOf(amo.def) - FEROCITY_RULES.hitGain;
     const events = hitAmo(state);
     expect(amo.ferocityFever).toBe(true);
     expect(amo.stunnedFor).toBe(0); expect(amo.poison).toBeNull();
@@ -4599,7 +4601,7 @@ describe("리파 — 제공자별 시약 반응", () => {
     targets[2].hp = 0;
     const ownBefore = currentAttackSpeed(ripa, state);
     const allyBefore = currentAttackSpeed(ally, state);
-    ripa.ferocity = FEROCITY_RULES.max - FEROCITY_RULES.basicGain;
+    ripa.ferocity = ferocityMaxOf(ripa.def) - FEROCITY_RULES.basicGain;
     basicHit(state, ripa, targets[0]);
 
     expect(ripa.ferocityFever).toBe(true);
@@ -4791,7 +4793,7 @@ describe("슈테 전투 계약 — 듀오 랭크", () => {
     strong.x = 480; strong.y = 1000;
     // 폭주는 슈테가 직접 손을 낼 때 차오르므로 한 대 때릴 자리에 세운다.
     shute.x = strong.x - 100; shute.y = strong.y; shute.attackCooldown = 0;
-    shute.ferocity = FEROCITY_RULES.max - 1;
+    shute.ferocity = ferocityMaxOf(shute.def) - 1;
     const events = run(state, 0.2, () => 0);
     expect(shute.ferocityFever).toBe(true);
     // 표적이 갈아 끼워지고, 슈테 자신은 제자리에 남는다 — 지원가의 폭주가 제 화력을 올리지 않는다.

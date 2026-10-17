@@ -178,6 +178,7 @@ export const RELICS: RelicDef[] = [
     catalogSummary: "신장 1.63m, 체중 54kg의 균형 잡힌 인간형 체격과 발달한 턱 구조가 확인된, 성체 초기 티라노사우루스 화석 기반 표본.",
     unlockRecord: { status: "recorded", text: "렉시아는 먼저 앞장서고 승부를 선언하는 일이 잦다. 스스로를 여왕이라 부르는 당당한 말투 그대로, 문 앞에서도 선언부터 하고 문을 열다 경첩째 뽑아 든다. 그러고는 눈치를 보며 시말서 철을 꺼내 오는데, 철은 벌써 두 권째다. 맨 앞 장에는 자랑스러운 첫 시말서가 붙어 있다. 문은 부수면서도 귀여운 접시와 찻잔만은 손가락 두 개로 조심조심 다룬다. 예전에 내가 블렌딩A의 홍차가 맛있다고 한마디 했더니 그 브랜드의 한정판을 줄 서서 구해 와 한 번도 열지 않은 채 아끼고 있다. 지금까지 깨진 찻잔은 하나도 없다. 동료의 신호가 들리면 곧바로 보폭을 맞추고, 전투가 길어질수록 야성을 즐기면서도 뒤처진 동료를 몇 번이고 돌아본다. 칭찬 한마디에는 입꼬리를 누르느라 꼬리 끝이 먼저 살랑거린다." },
     rarity: "SSR",
+    ferocityMax: 100,
     portraitAssetId: "lexia",
     origin: "티라노사우루스",
     element: "fire",
@@ -283,6 +284,7 @@ export const RELICS: RelicDef[] = [
     // 스쿼드가 주인공을 부르는 대표 호칭.
     researcherTitle: "대장님",
     rarity: "SR",
+    ferocityMax: 100,
     portraitAssetId: "torika",
     origin: "트리케라톱스",
     element: "earth",
@@ -412,6 +414,7 @@ export const RELICS: RelicDef[] = [
     // 해금 기록은 유일한 연구원인 주인공이 직접 포착한 직업·태도·취미·관계를 1인칭으로 남긴다.
     unlockRecord: { status: "recorded", text: "스피나는 연구소 수중경비대로 근무한다. 과묵한 편이지만 맡은 일은 언제나 정확하게 수행하며, 순찰 경로와 수문 점검 기록에도 빈틈이 없다. 나는 스피나가 아무도 모른다고 생각하는 듯 근무가 끝난 뒤 작은 어항을 오래 꾸미는 모습을 지켜보았다. 아는 체하지 않은 채 주변의 물자국과 모래를 조용히 청소해 두었더니, 여전히 들키지 않았다고 여긴 모양이다. 다음 날 내 책상에는 가장 반듯한 조개 하나가 놓여 있었다. 간식은 붕어빵을 좋아하는데, 팥이나 슈크림은 사양하고 피자 붕어빵만 받는다. 받자마자 머리부터 한 입 무는 모습이 영락없는 강가의 사냥꾼이다." },
     rarity: "SSR",
+    ferocityMax: 130,
     portraitAssetId: "seira",
     origin: "스피노사우루스",
     element: "water",
@@ -565,6 +568,7 @@ export const RELICS: RelicDef[] = [
     // 해금 기록은 유일한 연구원인 주인공이 루카의 생활과 관계를 직접 관찰한 1인칭 시점으로 남긴다.
     unlockRecord: { status: "recorded", text: "복원 후 루카는 집과 휴식을 무엇보다 좋아하는 단거리 달리기 선수로 관찰된다. 단거리 선수답게 하체 근육량이 탄탄한 루카는 다른 육식 계열 렐릭들과도 대체로 원만하게 지낸다. 연구소 소파에 길게 누워 쉬다가도 내가 지나가면 늘 먼저 말을 걸어 오는 것이 습관이다. 좋아하는 치즈케이크를 먹으면서도 살이 찌면 달리기가 둔해지지 않겠냐며 가볍게 걱정하지만, 이내 한 입 더 먹고는 다음 질주로 충분히 움직이면 된다며 웃는다." },
     rarity: "SR",
+    ferocityMax: 110,
     portraitAssetId: "luka",
     origin: "벨로키랍토르",
     element: "wind",
@@ -660,6 +664,7 @@ export const RELICS: RelicDef[] = [
     // 다른 스쿼드를 향한 동경도 독립 라벨이 아닌, 연구원이 직접 본 행동으로 관찰 기록 문장 안에 남긴다.
     unlockRecord: { status: "recorded", text: "도디는 새로운 물건만 보면 “대장님, 이것 좀 보세요!” 하고 달려오는 아이다. 반짝이는 잡동사니도 발견 기록이라며 깃펜으로 일지에 또박또박 적어 넣는데, 정작 제 밥때는 적어 두지 않아서 자꾸 놓친다. 동료의 사소한 버릇과 낯선 상대의 반응까지 받아 적다 보니 손가락에는 늘 잉크가 묻어 있다. 너무 반가운 나머지 한 걸음 더 다가서다가 상대를 놀라게 하고 저도 놀라 물러서는 일도 잦다. 요즘은 관제탑의 시그널 아이가 여러 신호를 한꺼번에 살피고 판단하는 모습을 오래 올려다보더니, 높은 곳에 올라 동료들의 움직임을 일일이 확인하고 먼저 갈 길을 정하려 한다. 아직은 길보다 도디가 먼저 길을 잃는다. 일지 첫 장 맨 위에는 나를 부르는 말인 '대장님'이 크게 적혀 있고, 이름 쓸 칸은 비어 있다. 1호 팬이라는 말은 본인이 붙였다." },
     rarity: "R",
+    ferocityMax: 70,
     portraitAssetId: "dodi",
     origin: "도도새",
     element: "wind",
@@ -768,6 +773,7 @@ export const RELICS: RelicDef[] = [
     squadNote: "쁘띠 로그의 물가 담당. 반짝이는 것만 보면 주워 와 대장님의 보급품이라 우기고, 정작 칭찬은 베일 뒤에 숨어서 듣는다.",
     researcherTitle: "연구원님",
     rarity: "R",
+    ferocityMax: 90,
     portraitAssetId: "tia",
     origin: "이크티오사우루스",
     element: "water",
@@ -881,6 +887,7 @@ export const RELICS: RelicDef[] = [
     // 시그널 아이의 새내기라 연구원을 "선배"라 부른다 — 그 호칭 자체가 이적한 지 얼마 안 됐음을 말한다.
     researcherTitle: "선배",
     rarity: "SR",
+    ferocityMax: 90,
     portraitAssetId: "stella",
     origin: "게오스테른베르기아",
     element: "wind",
@@ -982,6 +989,7 @@ export const RELICS: RelicDef[] = [
     // 관제 호칭 중 가장 실무적인 것을 골라, 귀찮다면서도 일은 끝까지 하는 선임의 결을 말한다.
     researcherTitle: "담당관",
     rarity: "R",
+    ferocityMax: 90,
     portraitAssetId: "kento",
     origin: "켄트로사우르스",
     element: "fire",
@@ -1103,6 +1111,7 @@ export const RELICS: RelicDef[] = [
     // 말을 아끼는 작업자라 스쿼드 호칭 중 가장 짧고 건조한 쪽을 쓴다.
     researcherTitle: "당신",
     rarity: "SR",
+    ferocityMax: 110,
     portraitAssetId: "mosana",
     origin: "모사사우루스",
     element: "water",
@@ -1208,6 +1217,7 @@ export const RELICS: RelicDef[] = [
     // 졸린 말투에 어울리는 늘어지는 호칭이라 사일런트 룬의 「연구원 씨」를 쓴다.
     researcherTitle: "연구원 씨",
     rarity: "R",
+    ferocityMax: 90,
     portraitAssetId: "anka",
     origin: "안킬로사우루스",
     element: "earth",
@@ -1314,6 +1324,7 @@ export const RELICS: RelicDef[] = [
     // 선원 모자를 쓰고 지시를 되읊는 버릇이라 시그널 아이가 지시자에게 쓰는 「오더」를 그대로 연구원에게 돌려 쓴다.
     researcherTitle: "오더",
     rarity: "SR",
+    ferocityMax: 110,
     portraitAssetId: "irna",
     origin: "이크티오르니스",
     element: "water",
@@ -1419,6 +1430,7 @@ export const RELICS: RelicDef[] = [
     squadNote: "앱솔루트 팽의 전선 수비 담당. 밀고 들어가는 동료들 앞에 서서 상대가 먼저 물러서게 만들어 전열을 지키고, 연구원을 \"마스터\"라 부르며 지시에는 고개부터 끄덕인다.",
     researcherTitle: "마스터",
     rarity: "SSR",
+    ferocityMax: 120,
     portraitAssetId: "ark",
     origin: "아르크토두스",
     element: "earth",
@@ -1523,6 +1535,7 @@ export const RELICS: RelicDef[] = [
     squadNote: "앱솔루트 팽의 측면 침투 담당. 정면에서 부딪히는 동료들의 틈으로 바람처럼 파고들어 약해진 상대를 끝내고, 연구원을 \"보스\"라 부른다.",
     researcherTitle: "보스",
     rarity: "SSR",
+    ferocityMax: 120,
     portraitAssetId: "yuti",
     origin: "유티라누스",
     element: "wind",
@@ -1619,6 +1632,7 @@ export const RELICS: RelicDef[] = [
     squadNote: "쁘띠 로그에서 유일하게 느긋한 축. 소란스러운 탐험대 한켠에서 음료를 나눠 주며 분위기를 가라앉히고, 연구원을 \"대장님\"이라 부른다.",
     researcherTitle: "대장님",
     rarity: "SR",
+    ferocityMax: 100,
     portraitAssetId: "teku",
     origin: "기간토피테쿠스",
     element: "grass",
@@ -1712,6 +1726,7 @@ export const RELICS: RelicDef[] = [
     squadNote: "사일런트 룬의 기록 담당. 케어실을 드나든 렐릭의 얼굴을 한 장씩 그려 벽에 붙여 두고, 정작 자기 그림 이야기가 나오면 후드를 뒤집어쓴다.",
     researcherTitle: "연구원 씨",
     rarity: "SSR",
+    ferocityMax: 100,
     portraitAssetId: "meron",
     origin: "메갈로돈",
     element: "water",
@@ -1813,6 +1828,7 @@ export const RELICS: RelicDef[] = [
     squadNote: "앱솔루트 팽의 돌파 담당. 전선이 열려야 할 자리를 머리로 뚫어 놓고, 연구원을 굳이 \"보스\"라 부르며 지시에는 툴툴거리면서도 꼭 따른다.",
     researcherTitle: "보스",
     rarity: "SR",
+    ferocityMax: 100,
     portraitAssetId: "pachi",
     origin: "파키케팔로사우루스",
     element: "earth",
@@ -1929,6 +1945,7 @@ export const RELICS: RelicDef[] = [
     squadNote: "나이트 기어의 야전 담당의. 인양조가 다치면 그 자리에서 붙여 놓고, 연구원만은 \"연구원님\"이라 부르며 진료 예약을 조른다.",
     researcherTitle: "연구원님",
     rarity: "SSR",
+    ferocityMax: 120,
     portraitAssetId: "maki",
     origin: "마카이로두스",
     element: "earth",
@@ -2035,6 +2052,7 @@ export const RELICS: RelicDef[] = [
     // 관제탑의 잡담에 끼지 못하는 성격이라 스쿼드가 쓰는 호칭 중 가장 사적인 "선배"를 쓴다.
     researcherTitle: "선배",
     rarity: "SR",
+    ferocityMax: 110,
     portraitAssetId: "keris",
     origin: "메갈로케로스",
     element: "earth",
@@ -2156,6 +2174,7 @@ export const RELICS: RelicDef[] = [
     // 낯을 가리는 스쿼드에서 혼자 말이 많은 막내라, 스쿼드가 쓰는 호칭 중 가장 격식 있는 쪽을 골라 장난스럽게 부른다.
     researcherTitle: "연구원님",
     rarity: "SR",
+    ferocityMax: 110,
     portraitAssetId: "delopi",
     origin: "딜로포사우루스",
     element: "grass",
@@ -2267,6 +2286,7 @@ export const RELICS: RelicDef[] = [
     // 케어하는 스쿼드에서 스스로 돌봄을 받지 않는 쪽이라, 아이를 부르듯 하는 호칭을 골라 쓴다.
     researcherTitle: "아가",
     rarity: "SSR",
+    ferocityMax: 110,
     portraitAssetId: "nodonia",
     origin: "프테라노돈",
     element: "wind",
@@ -2385,6 +2405,7 @@ export const RELICS: RelicDef[] = [
     // 힘을 숨기지 않는 스쿼드에서 유일하게 물러서지 않는 쪽이라, 호칭도 가장 격의 없는 것을 쓴다.
     researcherTitle: "연구원",
     rarity: "SSR",
+    ferocityMax: 120,
     portraitAssetId: "ella",
     origin: "코엘로돈타",
     element: "grass",
@@ -2884,6 +2905,8 @@ export const RELICS: RelicDef[] = [
      * 등급을 R로 두면 레벨 성장률(1.8)까지 잡졸과 같아져 관문이 올라갈수록 격차가 벌어진다.
      */
     rarity: "SR",
+    // 폭주가 열리려면 야성 320(기본 100의 3.2배). 막다른 길에서도 놓지 않는 급습형이라 늦게 터진다. 폭주는 8초에 다 닳는다.
+    ferocityMax: 320,
     portraitAssetId: "koma",
     origin: "콤프소그나투스",
     /*
@@ -2914,11 +2937,12 @@ export const RELICS: RelicDef[] = [
      */
     stats: {
       // 중간보스는 SR 띠의 위쪽이다. 암살자가 쓰는 공격력과 그 정체성인 공격 속도에만 얹는다.
-      hp: 1100,
-      def: 55,
-      res: 46,
+      // 응태 결정(v0.308.6): SSR 없이 못 깰 만큼 단단해 체력을 덜어 방어·저항·주문력에 조금 나눴다(1100/55/46/52 → 900/60/52/62).
+      hp: 900,
+      def: 60,
+      res: 52,
       atk: 150,
-      ap: 52,
+      ap: 62,
       attackSpeed: 118,
       moveSpeed: 124,
       critChance: 10,
@@ -3472,6 +3496,7 @@ export const RELICS: RelicDef[] = [
     catalogSummary: "신장 1.76m의 견고한 인간형 체격과 현악 연주에 적합한 섬세한 손끝을 지닌, 성체 메가테리움 화석 기반 표본.",
     unlockRecord: { status: "recorded", text: "메테는 복원 직후부터 바이올린의 울림에 유난히 오래 귀를 기울였다. 활을 올리기 전에 송진을 한참 바르는 버릇이 있어, 그동안은 누가 말을 걸어도 대답하지 않는다. 평소에는 케어실 바닥에 느긋하게 뒹굴며 귀찮다는 말을 달고 살지만, 아픈 렐릭이 실려 오면 말없이 일어나 곁에 앉는다. 그 큰 몸으로 가늘디가는 활을 켜는데, 연주가 시작되면 말수가 뚝 끊기고 활끝만 따라간다. 전장에서도 흔들리는 법이 없어 박자가 흐트러진 동료 옆에 서서 걸음을 맞춰 준다. 지금은 나를 위한 단 하나뿐인 무대를 준비하며, 자신의 연주가 온전히 닿을 날을 고대하고 있다." },
     rarity: "SSR",
+    ferocityMax: 110,
     // 6번 전신과 SD를 함께 사용해 도감과 전투에서 같은 메테가 보이도록 한다.
     portraitAssetId: "mette",
     origin: "메가테리움",
@@ -3550,6 +3575,7 @@ export const RELICS: RelicDef[] = [
     // 안에 있는 개체라, 혼나는 자리에서도 부르는 말은 흐트러지지 않는다.
     researcherTitle: "연구원님",
     rarity: "SSR",
+    ferocityMax: 110,
     portraitAssetId: "deina",
     origin: "데이노니쿠스",
     element: "fire",
@@ -3751,6 +3777,7 @@ export const RELICS: RelicDef[] = [
     squadNote: "룬의 저온 보존실 냉장고를 아이스크림으로 채우는 자칭 관리인. 온도를 최저로 내려 선배들을 떨게 해 놓고는 정작 모피 코트 속에서 제일 먼저 존다.",
     researcherTitle: "연구원 씨",
     rarity: "SR",
+    ferocityMax: 100,
     portraitAssetId: "maddy",
     origin: "매머드",
     element: "water",
@@ -3849,6 +3876,7 @@ export const RELICS: RelicDef[] = [
     squadNote: "사일런트 룬의 재봉 담당. 케어실에 실려 온 개체의 옷과 몸을 말없이 꿰매고, 실이 떨어지면 제 수도복을 그어 뜯어 쓴다.",
     researcherTitle: "아가",
     rarity: "SR",
+    ferocityMax: 90,
     portraitAssetId: "terisa",
     origin: "테리지노사우루스",
     // 불은 갈퀴를 달궈 지지는 쪽에서 온다 — 자르는 손과 지혈하는 손이 같은 손이다.
@@ -3970,6 +3998,7 @@ export const RELICS: RelicDef[] = [
     // 목소리를 크게 내지 못하는 아이라 스쿼드가 쓰는 호칭 중 가장 짧고 부르기 쉬운 쪽을 고른다.
     researcherTitle: "대장님",
     rarity: "R",
+    ferocityMax: 90,
     portraitAssetId: "parua",
     origin: "파라사우롤로푸스",
     element: "grass",
@@ -4103,6 +4132,7 @@ export const RELICS: RelicDef[] = [
     // 관제 절차를 통째로 외워 오는 개체라 스쿼드가 지시자에게 쓰는 호칭을 그대로 연구원에게 돌린다.
     researcherTitle: "오더",
     rarity: "SSR",
+    ferocityMax: 100,
     portraitAssetId: "shute",
     origin: "스테고사우루스",
     element: "earth",
@@ -4219,6 +4249,7 @@ export const RELICS: RelicDef[] = [
     // 직접 오르내리지 않고 화면으로만 상대하는 개체라 스쿼드에서 가장 사무적인 호칭을 쓴다.
     researcherTitle: "담당관",
     rarity: "SSR",
+    ferocityMax: 120,
     portraitAssetId: "morphe",
     origin: "디몰포돈",
     element: "wind",
@@ -4358,6 +4389,7 @@ export const RELICS: RelicDef[] = [
     // “두목”은 관계 인식이고 실제 발화 호칭은 쁘띠 로그의 허용 목록과 일치시킨다.
     researcherTitle: "대장님",
     rarity: "SSR",
+    ferocityMax: 150,
     // 디안 전용 전신은 늑대 SD와 분리해 도감·컷인에서만 사용한다.
     portraitAssetId: "dian",
     origin: "다이어울프",

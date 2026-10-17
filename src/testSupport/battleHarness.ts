@@ -1,5 +1,5 @@
 import type { SkirmishState } from "../core/skirmish";
-import { FEROCITY_RULES } from "../core/ferocity";
+import { ferocityMaxOf } from "../core/ferocity";
 
 /**
  * Playwright가 전투 씬 연결만 빠르게 확인할 때 쓰는 테스트 전용 입력이다.
@@ -48,7 +48,7 @@ export function applyBattleTestPreset(state: SkirmishState): void {
   }
   if (preset === "fever") {
     // 폭주 연출을 캡처하는 E2E만 아군 야성을 채워 둔다. 차오른 뒤의 규칙은 전투가 그대로 돈다.
-    for (const fighter of state.fighters) if (fighter.side === "player") fighter.ferocity = FEROCITY_RULES.max;
+    for (const fighter of state.fighters) if (fighter.side === "player") fighter.ferocity = ferocityMaxOf(fighter.def);
     return;
   }
   if (preset !== "result") return;

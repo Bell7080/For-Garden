@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { unitStatusViews } from "../../src/ui/unitStatusModel";
 import { applyCombatStatusEffect, applyFrenzy, bossDamageMultiplier, breakthroughSkill, currentAttackSpeed, gainFerocity, moveSpeed, receivedDamage, createSkirmish, fighterReach, fireUltimate, findFighter, refreshBleed, stepSkirmish, tryTriggerEmergencyRecovery, tryTriggerLowHpVanish, type Arena, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
-import { FEROCITY_RULES } from "../../src/core/ferocity";
+import { FEROCITY_RULES, ferocityMaxOf } from "../../src/core/ferocity";
 import { BREAKTHROUGH_STEPS, isBreakthroughSlotOpen } from "../../src/core/relicProgression";
 import { getRelic, RELICS } from "../../src/data/relics";
 import { breakthroughEffectText } from "../../src/ui/skillPresentation";
@@ -110,7 +110,7 @@ describe("한계 돌파 — 폭주(별 IV)", () => {
     const enemy = findFighter(state, "enemy-0")!;
     enemy.attackCooldown = 999;
     // 폭주에 들어간 뒤 피해를 받고, 게이지가 다 빠질 때까지 굴린다.
-    torika.ferocity = FEROCITY_RULES.max;
+    torika.ferocity = ferocityMaxOf(torika.def);
     torika.ferocityFever = true;
     torika.feverDamageTaken = 400;
     torika.shield.amount = 0;
@@ -129,7 +129,7 @@ describe("한계 돌파 — 폭주(별 IV)", () => {
     const state = battle(3);
     const torika = findFighter(state, "player-0")!;
     torika.feverDamageTaken = 999;
-    torika.ferocity = FEROCITY_RULES.max - 1;
+    torika.ferocity = ferocityMaxOf(torika.def) - 1;
     // 게이지를 채워 폭주에 들어가게 한다(공격 사건이 아니라 직접 임계를 넘긴다).
     torika.ferocityFever = false;
     stepSkirmish(state, 0.05);
@@ -263,7 +263,7 @@ describe("렉시아 한계 돌파", () => {
       enemy.x = lexia.x + 50 + index * 30; enemy.y = lexia.y; enemy.attackCooldown = 999;
     }
     enemies[0].hp = 1;
-    lexia.ferocity = FEROCITY_RULES.max; lexia.ferocityFever = true;
+    lexia.ferocity = ferocityMaxOf(lexia.def); lexia.ferocityFever = true;
     lexia.openingChargeReady = false; lexia.attackCooldown = 0;
     const attacks = stepSkirmish(state, 0.05, () => 0.99)
       .filter((event) => event.kind === "attack" && event.attackerId === lexia.id && event.skill === "basic");
@@ -321,7 +321,7 @@ describe("도디 한계 돌파", () => {
     const enemy = findFighter(state, "enemy-0")!;
     enemy.attackCooldown = 999;
     for (const fighter of state.fighters) fighter.shield.amount = 0;
-    dodo.ferocity = FEROCITY_RULES.max; dodo.ferocityFever = true; dodo.bt.feverHealingDone = 300;
+    dodo.ferocity = ferocityMaxOf(dodo.def); dodo.ferocityFever = true; dodo.bt.feverHealingDone = 300;
     let ended = false;
     for (let tick = 0; tick < 400 && !ended; tick += 1) { stepSkirmish(state, 0.05); ended = !dodo.ferocityFever; }
     expect(ended).toBe(true);
@@ -404,7 +404,7 @@ describe("파루아 한계 돌파", () => {
     const state = paruaBattle(3);
     setUp(state);
     const parua = findFighter(state, "player-0")!;
-    parua.ferocity = FEROCITY_RULES.max - 0.001; parua.attackCooldown = 0;
+    parua.ferocity = ferocityMaxOf(parua.def) - 0.001; parua.attackCooldown = 0;
     for (let tick = 0; tick < 40 && !parua.ferocityFever; tick += 1) stepSkirmish(state, 0.05, () => 0.99);
     expect(parua.ferocityFever).toBe(true);
     expect(parua.stealthFor).toBeGreaterThan(2);
@@ -412,7 +412,7 @@ describe("파루아 한계 돌파", () => {
     const plain = paruaBattle(2);
     setUp(plain);
     const other = findFighter(plain, "player-0")!;
-    other.ferocity = FEROCITY_RULES.max - 0.001; other.attackCooldown = 0;
+    other.ferocity = ferocityMaxOf(other.def) - 0.001; other.attackCooldown = 0;
     for (let tick = 0; tick < 40 && !other.ferocityFever; tick += 1) stepSkirmish(plain, 0.05, () => 0.99);
     expect(other.stealthFor).toBe(0);
   });
@@ -523,7 +523,7 @@ describe("스피나 한계 돌파", () => {
     const state = spinoBattle(3, ["torika"]);
     engageAll(state);
     const spino = findFighter(state, "player-0")!;
-    spino.ferocity = FEROCITY_RULES.max - 0.001; spino.attackCooldown = 0;
+    spino.ferocity = ferocityMaxOf(spino.def) - 0.001; spino.attackCooldown = 0;
     expect(spino.bt.ambushCritReady).toBe(false);
     let firstBasic: boolean | undefined;
     for (let tick = 0; tick < 200 && firstBasic === undefined; tick += 1) {
@@ -623,7 +623,7 @@ describe("슈테 한계 돌파", () => {
       const shute = findFighter(state, "player-1")!; const duo = findFighter(state, "player-0")!;
       const enemy = findFighter(state, "enemy-0")!;
       enemy.x = shute.x + 100; enemy.y = shute.y; duo.attackCooldown = 999;
-      shute.ferocityFever = true; shute.ferocity = FEROCITY_RULES.max; shute.attackCooldown = 0; shute.targetId = enemy.id;
+      shute.ferocityFever = true; shute.ferocity = ferocityMaxOf(shute.def); shute.attackCooldown = 0; shute.targetId = enemy.id;
       stepSkirmish(state, 0.05, () => 0.99);
       return enemy.weakpoint === null ? 0 : 1;
     };
@@ -722,7 +722,7 @@ describe("메테 한계 돌파", () => {
       freeze(state);
       const mette = findFighter(state, "player-0")!; const enemy = findFighter(state, "enemy-0")!;
       enemy.x = mette.x; enemy.y = mette.y - 200;
-      mette.ferocityFever = true; mette.ferocity = FEROCITY_RULES.max; mette.bt.crescendoHits = hits;
+      mette.ferocityFever = true; mette.ferocity = ferocityMaxOf(mette.def); mette.bt.crescendoHits = hits;
       mette.attackCooldown = 0; mette.targetId = enemy.id;
       const events = stepSkirmish(state, 0.05, () => 0.99);
       const extra = events.find((event) => event.kind === "attack" && event.skill === "staccato");
@@ -935,7 +935,7 @@ describe("노도니아 한계 돌파", () => {
     nodonia.ferocityFever = true;
     let peak = 0;
     for (let tick = 0; tick < 1_200 && peak < 15; tick += 1) {
-      nodonia.ferocity = FEROCITY_RULES.max; nodonia.hp = nodonia.maxHp;
+      nodonia.ferocity = ferocityMaxOf(nodonia.def); nodonia.hp = nodonia.maxHp;
       stepSkirmish(state, 0.05);
       peak = Math.max(peak, nodonia.elation?.stacks ?? 0);
     }
@@ -1047,7 +1047,7 @@ describe("루카 한계 돌파", () => {
       const crits: boolean[] = [];
       for (let tick = 0; tick < 600 && crits.length < 2; tick += 1) {
         luka.x = 500; luka.y = 1_000; foe.x = 540; foe.y = 1_000;
-        if (fever) luka.ferocity = FEROCITY_RULES.max;
+        if (fever) luka.ferocity = ferocityMaxOf(luka.def);
         for (const event of stepSkirmish(state, 0.05, NEVER)) {
           if (event.kind === "attack" && event.attackerId === luka.id && event.skill === "basic") crits.push(event.critical);
         }
@@ -1244,7 +1244,7 @@ describe("탱커 계약 한계 돌파 — 모사나·켄토·안카", () => {
         const foe = findFighter(state, "enemy-0")!;
         const effect = pressure();
         if (effect.kind !== "pressure") throw new Error("pressure");
-        mosana.ferocityFever = true; mosana.ferocity = FEROCITY_RULES.max;
+        mosana.ferocityFever = true; mosana.ferocity = ferocityMaxOf(mosana.def);
         foe.x = 900; foe.stunnedFor = 5;
         foe.pressure = { stacks: 2, remaining: 4, total: 4, sourceId: mosana.id, effect };
         run(state, 1);
@@ -1301,7 +1301,7 @@ describe("탱커 계약 한계 돌파 — 모사나·켄토·안카", () => {
       const result = (breakthrough: number) => {
         const state = setup(["kento"], ["toby"], breakthrough);
         const kento = withPrickle(state, 9);
-        kento.ferocityFever = true; kento.ferocity = FEROCITY_RULES.max;
+        kento.ferocityFever = true; kento.ferocity = ferocityMaxOf(kento.def);
         const foe = findFighter(state, "enemy-0")!;
         foe.attackCooldown = 0; foe.targetId = kento.id;
         run(state, 0.3);
@@ -1369,7 +1369,7 @@ describe("탱커 계약 한계 돌파 — 모사나·켄토·안카", () => {
       const result = (breakthrough: number) => {
         const state = setup(["anka"], ["toby", "amo"], breakthrough);
         const anka = findFighter(state, "player-0")!;
-        anka.ferocityFever = true; anka.ferocity = FEROCITY_RULES.max;
+        anka.ferocityFever = true; anka.ferocity = ferocityMaxOf(anka.def);
         const sleeper = lullToSleep(state, "enemy-0");
         sleeper.sleep!.remaining = 0.01;
         run(state, 0.2);
@@ -1465,7 +1465,7 @@ describe("전사 한계 돌파 — 파치·케리스·매디", () => {
       const struck = (breakthrough: number) => {
         const state = setup(["pachi"], ["toby", "amo"], breakthrough);
         const pachi = findFighter(state, "player-0")!;
-        pachi.ferocityFever = true; pachi.ferocity = FEROCITY_RULES.max;
+        pachi.ferocityFever = true; pachi.ferocity = ferocityMaxOf(pachi.def);
         pachi.statusHitCount = 2;
         const second = findFighter(state, "enemy-1")!;
         second.x = 690; second.y = 1_000;
@@ -1520,7 +1520,7 @@ describe("전사 한계 돌파 — 파치·케리스·매디", () => {
       const stacks = (breakthrough: number) => {
         const state = setup(["keris"], ["toby", "amo"], breakthrough);
         const keris = findFighter(state, "player-0")!;
-        keris.ferocityFever = true; keris.ferocity = FEROCITY_RULES.max;
+        keris.ferocityFever = true; keris.ferocity = ferocityMaxOf(keris.def);
         const [a, b] = [findFighter(state, "enemy-0")!, findFighter(state, "enemy-1")!];
         a.maxHp = 100; a.hp = 1;
         applyFrenzy(a, { kind: "frenzy", seconds: 4, attackSpeedPercent: 50 }, keris.id);
@@ -1585,7 +1585,7 @@ describe("전사 한계 돌파 — 파치·케리스·매디", () => {
       const chill = (breakthrough: number) => {
         const state = setup(["maddy"], ["toby"], breakthrough);
         const maddy = findFighter(state, "player-0")!;
-        maddy.ferocityFever = true; maddy.ferocity = FEROCITY_RULES.max;
+        maddy.ferocityFever = true; maddy.ferocity = ferocityMaxOf(maddy.def);
         maddy.shield = { amount: 5_000, providerId: maddy.id };
         const foe = findFighter(state, "enemy-0")!;
         foe.attackCooldown = 0; foe.targetId = maddy.id;
@@ -1834,7 +1834,7 @@ describe("보스 한계 돌파 — 폰토스·수쿠스이노·타보아·코아
       const boss = findFighter(state, "enemy-0")!;
       const ally = findFighter(state, "player-0")!;
       place(state, "enemy-0", 500, 400); place(state, "player-0", 500, 887);
-      gainFerocity(boss, 100, state, []);
+      gainFerocity(boss, ferocityMaxOf(boss.def), state, []);
       expect(boss.ferocityFever).toBe(true);
       return 887 - ally.y;
     };

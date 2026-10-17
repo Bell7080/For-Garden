@@ -14,7 +14,7 @@ import {
   type SkirmishEvent,
   type SkirmishState,
 } from "../../src/core/skirmish";
-import { FEROCITY_RULES } from "../../src/core/ferocity";
+import { ferocityMaxOf } from "../../src/core/ferocity";
 import { getRelic } from "../../src/data/relics";
 
 /**
@@ -276,7 +276,7 @@ describe("모르페 — 오버클럭", () => {
   function enterFever() {
     const context = setup();
     const { state, morphe, enemies } = context;
-    morphe.ferocity = FEROCITY_RULES.max - 1;
+    morphe.ferocity = ferocityMaxOf(morphe.def) - 1;
     morphe.attackCooldown = 0;
     morphe.targetId = enemies[0].id;
     step(state, 0.05);

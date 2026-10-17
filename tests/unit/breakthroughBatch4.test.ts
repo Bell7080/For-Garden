@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createSkirmish, findFighter, fireUltimate, resolveReceivedDamage, stepSkirmish, type Arena, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
-import { FEROCITY_RULES } from "../../src/core/ferocity";
+import { ferocityMaxOf } from "../../src/core/ferocity";
 import { getRelic } from "../../src/data/relics";
 import { breakthroughEffectText } from "../../src/ui/skillPresentation";
 
@@ -24,7 +24,7 @@ function swing(state: SkirmishState, attackerId: string, targetId: string, rng: 
 }
 
 const mark = (state: SkirmishState, targetId: string, sourceId: string) => { findFighter(state, targetId)!.shimmer = { sourceId }; };
-const enterFever = (state: SkirmishState, id: string) => { const fighter = findFighter(state, id)!; fighter.ferocityFever = true; fighter.ferocity = FEROCITY_RULES.max; };
+const enterFever = (state: SkirmishState, id: string) => { const fighter = findFighter(state, id)!; fighter.ferocityFever = true; fighter.ferocity = ferocityMaxOf(fighter.def); };
 const paint = (stacks: number) => ({ remaining: 10, total: 10, stacks, percentPerStack: 6, maxStacks: 4 });
 const amounts = (events: SkirmishEvent[], filter: (event: Extract<SkirmishEvent, { kind: "attack" }>) => boolean) =>
   events.flatMap((event) => event.kind === "attack" && filter(event) ? [event.amount] : []);

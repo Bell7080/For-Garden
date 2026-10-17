@@ -1,3 +1,4 @@
+import { ferocityMaxOf } from "../core/ferocity";
 import { Button } from "./Button";
 import Phaser from "phaser";
 import type { PuppetAsset, PuppetCreature } from "../puppets/assets";
@@ -2724,6 +2725,8 @@ export function openFerocityTraitPopup(
     tint: skillArtTint(def.element, def.role),
     effectType: "buff",
     valueLabel: t("skill.ferocity.valueLabel"),
+    // 궁극기의 `게이지 N`과 같은 자리 — 폭주가 열리려면 채워야 하는 야성 게이지의 크기다.
+    gaugeCost: ferocityMaxOf(def),
     contextualKeywords: contextualKeywords.length > 0 ? contextualKeywords : undefined,
     keywordActions: options.summonActions,
     // 폭주도 돌파가 효과를 붙이는 슬롯이라 같은 노란 줄을 얻는다.

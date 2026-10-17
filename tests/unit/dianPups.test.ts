@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createSkirmish, findFighter, fireUltimate, isFighterAlive, isPartyFighter, isPupFighter, stepSkirmish, type Arena, type SkirmishState } from "../../src/core/skirmish";
-import { FEROCITY_RULES } from "../../src/core/ferocity";
+import { ferocityMaxOf } from "../../src/core/ferocity";
 import { PUP } from "../../src/core/pup";
 import { getRelic } from "../../src/data/relics";
 import { breakthroughEffectText } from "../../src/ui/skillPresentation";
@@ -62,7 +62,7 @@ describe("디안 새끼 늑대", () => {
     expect(pups(state)).toHaveLength(PUP.maxAlive);
     for (let i = 0; i < 6; i += 1) basic(state);
     expect(standing(state)).toHaveLength(0);
-    dian.ferocityFever = true; dian.ferocity = FEROCITY_RULES.max;
+    dian.ferocityFever = true; dian.ferocity = ferocityMaxOf(dian.def);
     for (let i = 0; i < 5; i += 1) basic(state);
     expect(standing(state)).toHaveLength(0);
     basic(state);

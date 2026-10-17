@@ -307,14 +307,13 @@ describe("stage enemy design", () => {
   it("전투 서브는 젬뿐인 초회 보상이고 본편 진행·다음 단계에 끼지 않는다", () => {
     const sub = SIDE_BATTLE_STAGE;
     expect(sub).toMatchObject({ kind: "battle", sub: true, prerequisiteStageIds: ["1-8"] });
-    expect(stageFirstClearRewards(sub)).toEqual([{ kind: "currency", currency: "gems", amount: 60 }]);
+    expect(stageFirstClearRewards(sub)).toEqual([{ kind: "currency", currency: "gems", amount: 50 }]);
     expect(sub.rewards.repeatClearCheesecake).toBe(0);
-    // 일반 관문 초회 젬(1장 30)의 두 배, 이야기 서브는 일반 관문과 같다.
-    expect(SUB_STORY_GEM_REWARDS["stage-1-5-greenhouse-echo"]).toBe(30);
-    expect(SUB_STORY_GEM_REWARDS["stage-2-3-lost-badge"]).toBe(40);
-    expect(SUB_STORY_GEM_REWARDS["stage-3-8-apology"]).toBe(50);
-    // 1-8보다 한 칸 높고, 돌파 0의 상한(20) 안이다.
-    expect(sub.enemies.every(({ level }) => level === 20)).toBe(true);
+    // 모든 서브(이야기·전투, 어느 장이든)의 초회 젬은 50 하나다.
+    for (const gems of Object.values(SUB_STORY_GEM_REWARDS)) expect(gems).toBe(50);
+    // 아모·리파 정예 둘이 1-8(LV.19)보다 한 칸 낮은 LV.18로 선다.
+    expect(sub.enemies.map(({ relicId, level }) => [relicId, level])).toEqual([["amo", 18], ["ripa", 18]]);
+    expect(sub.elite).toBe(true);
     // 선행 목록에 들지 않아 본편이 막히지 않고, 「다음 단계」는 본편의 다음이다.
     expect(STAGES.some((stage) => stage.prerequisiteStageIds.includes(sub.id))).toBe(false);
     expect(nextBattleStage(STAGES, "1-8", () => true)?.id).toBe("1-9");

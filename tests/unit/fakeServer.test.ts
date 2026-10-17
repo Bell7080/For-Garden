@@ -1533,8 +1533,8 @@ describe("FakeServer 이야기 서브 보상", () => {
   it("는 이야기 서브를 처음 완료할 때만 젬을 주고 보상 없는 이야기와 재완료는 주지 않는다", async () => {
     const server = new FakeServer(makeSession(), { latencyMs: 0 });
     const first = await server.completeStory({ storyId: "stage-2-3-lost-badge" });
-    expect(first).toMatchObject({ firstCompletion: true, gemsGranted: 40 });
-    expect(first.wallet?.gems).toBe(40);
+    expect(first).toMatchObject({ firstCompletion: true, gemsGranted: 50 });
+    expect(first.wallet?.gems).toBe(50);
     expect(await server.completeStory({ storyId: "stage-2-3-lost-badge" })).toEqual({ firstCompletion: false });
     expect(await server.completeStory({ storyId: "stage-1-5-pre" })).toEqual({ firstCompletion: true });
   });

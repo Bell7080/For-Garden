@@ -362,13 +362,11 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     expect(report.manualDelta).toEqual(expect.objectContaining({ winRate: expect.any(Number), durationSeconds: expect.any(Number), playerHpRatio: expect.any(Number) }));
   });
 
-  it("전투 서브(1-8 수문 밑 보급전)는 세 대표 조합이 모두 이기되 1-8보다 가볍지 않다", () => {
-    // 레벨 하나(19 → 20)만 한 칸 높고 편성은 같다 — 잡졸 관문이라 잔여 체력은 크게 움직이지 않는다.
+  it("전투 서브(1-8 수문 밑 보급전)는 세 대표 조합이 모두 이기고 막히지 않는다", () => {
+    // 아모·리파 정예 둘(LV.18) 변칙 — 셋이 서는 1-8과 편성이 달라 잔여 체력은 견주지 않고 이기는지와 여유만 본다.
     for (const combo of BLENDED_COMBOS) {
-      const base = inspectStageDifficulty(blendedParty(8, combo), getStageEnemies(getBattleStage("1-8")), SEEDS);
       const sub = inspectStageDifficulty(blendedParty(8, combo), getStageEnemies(SIDE_BATTLE_STAGE), SEEDS);
       expect(sub.auto.winRate, combo.join("/")).toBe(1);
-      expect(sub.auto.playerHpRatio.mean, combo.join("/")).toBeLessThanOrEqual(base.auto.playerHpRatio.mean + 0.08);
       expect(sub.auto.playerHpRatio.mean, combo.join("/")).toBeGreaterThan(0.4);
     }
   });

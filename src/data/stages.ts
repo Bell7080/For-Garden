@@ -284,29 +284,28 @@ export const SUB_STORY_STAGES: readonly StageDef[] = [
 ];
 
 /**
- * 이야기 서브(SUB)의 처음 읽은 보상은 **젬뿐**이고, 같은 장의 일반 관문 초회 젬과 같은 값(30·40·50)이다.
- * 서버(`completeStory`)와 화면이 이 표 하나를 읽는다. 덤이지 수급처가 아니라 값을 올리지 않는다.
+ * **모든 서브(SUB)의 처음 보상은 젬 50 하나다** — 이야기든 전투든, 어느 장이든 같은 값이다. 서브는 덤이지 수급처가 아니고
+ * 장마다 값이 갈리면 어느 서브가 이득인지를 따지게 된다. 서버(`completeStory`·전투 초회)와 화면이 이 상수 하나를 읽는다.
  */
-const SUB_STORY_GEM_BY_CHAPTER: readonly number[] = [30, 40, 50];
+export const SUB_GEM_REWARD = 50;
 export const SUB_STORY_GEM_REWARDS: Readonly<Record<string, number>> = Object.fromEntries(
-  SUB_STORY_STAGES.flatMap((stage) => stage.kind === "story" ? [[stage.storyId, SUB_STORY_GEM_BY_CHAPTER[(stage.chapter ?? 1) - 1] ?? 50]] : []),
+  SUB_STORY_STAGES.flatMap((stage) => stage.kind === "story" ? [[stage.storyId, SUB_GEM_REWARD]] : []),
 );
 
 /**
- * 전투 서브 — 1-8 수문 아래에서 공멸 셋이 보급 상자를 두고 막아선다. **젬뿐인 초회 보상**이며 같은 장의 일반 관문
- * 초회 젬(30)의 두 배다. 레벨은 1-8(19)보다 한 칸 높은 20(돌파 0의 상한 안)이라 본편보다 조금 더 단단하다.
- * 치즈케이크는 주지 않는다 — 난이도 검수가 딛고 선 초회 치즈케이크 곡선(`stageDifficulty.test`)을 건드리지 않는다.
+ * 전투 서브 — 1-8 수문 아래에서 아모와 리파가 보급 상자를 두고 길을 막는다. 본편 1-8(LV.19)의 공멸 셋과 달리
+ * **둘만 서는 정예 변칙**이고 레벨은 한 칸 낮은 LV.18이다(2-7·2-9 정예 둘과 같은 자리 규칙 — 새 유형을 만들지 않는다).
+ * 보상은 젬 50뿐이고 치즈케이크는 주지 않는다 — 난이도 검수가 딛고 선 초회 치즈케이크 곡선(`stageDifficulty.test`)을 건드리지 않는다.
  */
-const SUB_BATTLE_GEM_BY_CHAPTER: readonly number[] = [60, 80, 100];
 export const SIDE_BATTLE_STAGE: BattleStageDef = {
-  kind: "battle", sub: true,
+  kind: "battle", sub: true, elite: true,
   id: "1-8-side-battle", name: "수문 밑 보급전", chapter: 1, chapterOrder: 8,
   prerequisiteStageIds: ["1-8"],
-  enemies: STAGE_ENEMY_FORMATION.map((id, slot) => enemyGrowth(id, 20, 0, slot as 0 | 1 | 2)),
+  enemies: [enemyGrowth("amo", 18, 0, 0), enemyGrowth("ripa", 18, 0, 2)],
   rewards: {
     firstClearCheesecake: 0,
     repeatClearCheesecake: 0,
-    firstClearBonus: [{ kind: "currency", currency: "gems", amount: SUB_BATTLE_GEM_BY_CHAPTER[0] }],
+    firstClearBonus: [{ kind: "currency", currency: "gems", amount: SUB_GEM_REWARD }],
   },
 };
 

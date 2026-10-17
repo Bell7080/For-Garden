@@ -51,7 +51,8 @@ export interface ServerProgressDeps {
   fetchImpl?: typeof fetch;
 }
 
-const MARKER_KEY = "forgarden.server-link";
+export const SERVER_LINK_STORAGE_KEY = "forgarden.server-link";
+const MARKER_KEY = SERVER_LINK_STORAGE_KEY;
 
 export function createLinkMarker(storage: Pick<Storage, "getItem" | "setItem" | "removeItem"> | undefined = typeof localStorage === "undefined" ? undefined : localStorage): LinkMarker {
   return {

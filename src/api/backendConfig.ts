@@ -9,6 +9,8 @@ export interface PublicConfig {
   maintenanceEndsAt: string | null;
   minAppVersion: string;
   latestAppVersion: string;
+  /** 서버가 출시 초기화를 한 세대. 빈 문자열이면 한 번도 하지 않았거나 서버가 값을 주지 않았다. */
+  launchEpoch: string;
 }
 export type BackendConfigResult =
   | { ok: true; config: PublicConfig }
@@ -56,6 +58,7 @@ export async function fetchPublicConfig(
         maintenanceEndsAt: typeof b.ends_at === "string" ? b.ends_at : null,
         minAppVersion: typeof b.min_version === "string" ? b.min_version : "",
         latestAppVersion: typeof b.latest_version === "string" ? b.latest_version : "",
+        launchEpoch: typeof b.launch_epoch === "string" ? b.launch_epoch : "",
       },
     };
   } catch {

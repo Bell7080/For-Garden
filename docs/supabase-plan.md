@@ -11,7 +11,7 @@
   나온다.** 재화 차감·가챠 난수·전투 결과 검증은 전부 서버가 한다. 클라이언트는 요청하고 그린다.
 - **빌드 두 벌.** 일반 빌드(`npm run build`)는 실서비스, QA 빌드(`npm run build:qa`)는 테스트다
   (`src/core/buildFlavor.ts`의 `QA_TOOLS_ENABLED`). 치트·표본 친구·시작 재화·임시 지급은 QA에서만 선다.
-- **Supabase 프로젝트도 두 개.** 운영(`forgarden-prod`)과 테스트(`forgarden-test`)를 따로 만든다.
+- **Supabase 프로젝트도 두 개.** 운영(`forgarden-prod`)과 테스트(`forgarden-test`)를 따로 만든다. 운영은 베타 시연으로 먼저 쓰고 오픈 직전에 전부 초기화한다(`docs/launch-reset.md`).
   일반 빌드는 운영, QA 빌드는 테스트 프로젝트의 URL·anon key를 쓴다(Vercel 프로젝트별 환경변수).
   치트로 만든 계정이 운영 데이터에 섞이는 일을 구조로 막는다.
 - **경계는 이미 있다.** 씬은 `GameApi`·`AccountApi`·`SocialApi`만 본다. 구현을 HTTP/Supabase로 갈아

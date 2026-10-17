@@ -2685,6 +2685,13 @@
 - 정식 서버의 승패·피해·HP·라운드는 클라이언트가 확정하지 않는다. 서버가 발급한 `CombatLease` 설정과 고정 틱 입력을 재현한다. 런타임 함수가 든 `SkirmishState`를 저장/전송하지 말고 `combatState`로 복원한다.
 - 공유 체력과 계정 보상은 따로 저장하지 않는다. `server_commit_state` 트랜잭션과 양쪽 revision 검사를 지킨다. 쓰기 요청은 requestId와 메서드/인자 바인딩을 유지한다.
 
+## 출시 전 전체 초기화
+
+- 운영 DB는 베타로 먼저 쓰고 오픈 직전에 `supabase/ops/launch_reset.sql`로 한 번 0으로 비운다(`docs/launch-reset.md`). **새 마이그레이션이
+  표를 만들면 같은 변경에서 그 스크립트와 `launch_reset_verify.sql`의 목록(reset/ops/keep)에 분류를 더한다** — 빠뜨리면 `launchReset.test.ts`가
+  실패하고, 스크립트도 분류 안 된 표가 있으면 아무것도 지우지 않고 멈춘다. 독립 시퀀스는 만들지 않는다(처음으로 되돌릴 수 없다).
+- 실제 운영 DB 실행은 사람이 정한 한 번의 순간에만 한다. 클라이언트는 `app_config.launch_epoch`가 달라지면 옛 토큰·저장을 지운다(`src/api/launchEpoch.ts`).
+
 ## 변경 전 확인
 
 **main에는 작업 브랜치보다 먼저 올린다.** Vercel은 이미 빌드한 커밋을 다시 빌드하지 않아, 같은 커밋을

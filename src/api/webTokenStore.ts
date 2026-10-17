@@ -10,7 +10,8 @@
  */
 import type { StoredTokens, TokenStore } from "./SupabaseAccountApi";
 
-const KEY = "forgarden.web.tokens";
+export const WEB_TOKEN_STORAGE_KEY = "forgarden.web.tokens";
+const KEY = WEB_TOKEN_STORAGE_KEY;
 
 export function createWebTokenStore(storage: Pick<Storage, "getItem" | "setItem" | "removeItem"> | undefined = typeof localStorage === "undefined" ? undefined : localStorage): TokenStore | null {
   if (!storage) return null;

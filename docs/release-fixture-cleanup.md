@@ -49,6 +49,7 @@
 
 ## 출시 전환 점검 — 테스트 계정이 운영에 섞이지 않게
 
-- 운영 Supabase 프로젝트(`forgarden-prod`)는 출시 직전에 **새로 만든다**. 테스트 프로젝트의 계정·토큰은 운영에서 쓸 수 없다(낡은 토큰은 거절되고 게임이 지운 뒤 새 게스트로 시작한다).
-- 실서비스 Vercel 프로젝트(포가든)의 `SUPABASE_URL`·`SUPABASE_SERVICE_ROLE_KEY`·`VITE_SUPABASE_*`는 지금 테스트 DB 값이다. **출시 직전에 운영 프로젝트 값으로 바꾸고 재배포한다.**
-- 베타 기기에 남은 로컬 저장이 새 운영 서버로 올라가지 않도록 **출시 때 로컬 저장 키를 교체(일괄 초기화)한다**(`src/core/saveStorage.ts`의 production 키). 같은 주소를 계속 쓰는 베타 기기에서 진행이 섞이는 것을 막는다.
+- **방침이 바뀌었다(2026-10-17, 응태 결정).** 운영 Supabase(`forgarden-prod`)를 출시 직전에 새로 만들지 않고 **지금 만들어 베타 시연에 쓴 뒤, 출시 직전에 한 번 전부 0으로 초기화한다.** 정식 주소(포가든)는 운영 DB, QA 주소(`forgarden-test`)는 테스트 DB를 본다 — 검증용 익명 계정은 테스트 DB에만 둔다. 절차·범위·점검은 `docs/launch-reset.md`가 갖는다.
+- 실서비스 Vercel 프로젝트(포가든)의 `SUPABASE_URL`·`SUPABASE_SERVICE_ROLE_KEY`·`VITE_SUPABASE_*`는 v0.311.0 시점에 테스트 DB 값이었다. **운영 DB를 만든 뒤 운영 값으로 바꾸고 재배포한다**(출시 차단 항목).
+- 베타 기기에 남은 토큰·로컬 저장은 초기화 때 서버의 `launch_epoch`가 바뀌는 것으로 걸러진다(`src/api/launchEpoch.ts`). 출시 때 로컬 저장 키(`src/core/saveStorage.ts`의 production 키)를 교체하는 방법을 함께 써도 된다.
+- **초기화는 `supabase/ops/launch_reset.sql`(실행)과 `launch_reset_verify.sql`(점검)이 한다. 실제 운영 DB 실행은 사람이 결정한 한 번의 순간에만 한다.**

@@ -19,6 +19,7 @@ import { LOADING_STEPS, refreshTextTextures, runLoadingSteps } from "./loadingSt
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { drawCornerShroud, drawVignette } from "../ui/holo";
 import packageInfo from "../../package.json";
+import { reconcileLaunchEpoch } from "../api/launchEpoch";
 import { checkStartupGate, type StartupGateResult } from "../api/startupGate";
 import { startScene } from "../ui/screenTransition";
 import { settingsManager } from "../managers/SettingsManager";
@@ -443,6 +444,11 @@ export class TitleScene extends Phaser.Scene {
     const enter = () => {
       void (this.gate ??= checkStartupGate(packageInfo.version)).then((result) => {
         if (result.gate === "open") {
+          // 서버가 출시 초기화를 한 뒤에 처음 여는 기기는 초기화 이전의 토큰·저장을 지우고 처음부터 다시 시작한다.
+          if (result.config && reconcileLaunchEpoch(result.config.launchEpoch)) {
+            window.location.reload();
+            return;
+          }
           // 서버가 진행을 소유하는 빌드는 연결이 선 뒤에만 들어간다. 실패하면 이 기기에서 이어 가지 않는다.
           void connectProgress((local, remote) => new Promise<SaveConflictChoice>((resolve) => { if (this.popups) openSaveConflictPopup(this, this.popups, local, remote, resolve); else resolve("cancel"); })).then((connected) => {
             if (!this.scene.isActive()) return;

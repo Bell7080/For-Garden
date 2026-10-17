@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { compareVersions, configGate, fetchPublicConfig, type PublicConfig } from "../../src/api/backendConfig";
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
-const base: PublicConfig = { maintenance: false, maintenanceMessage: "", maintenanceEndsAt: null, minAppVersion: "", latestAppVersion: "" };
+const base: PublicConfig = { maintenance: false, maintenanceMessage: "", maintenanceEndsAt: null, minAppVersion: "", latestAppVersion: "", launchEpoch: "" };
 
 describe("fetchPublicConfig", () => {
   it("설정이 없으면 unsupported", async () => {
@@ -10,10 +10,10 @@ describe("fetchPublicConfig", () => {
   });
   it("DB 응답 필드를 해석한다", async () => {
     const f = (async () =>
-      json({ maintenance: true, message: "점검", ends_at: "2026-10-20T00:00:00Z", min_version: "0.286.0", latest_version: "0.287.0" })) as typeof fetch;
+      json({ maintenance: true, message: "점검", ends_at: "2026-10-20T00:00:00Z", min_version: "0.286.0", latest_version: "0.287.0", launch_epoch: "20261101T000000-ab12cd34" })) as typeof fetch;
     expect(await fetchPublicConfig(f, "https://x", "k")).toEqual({
       ok: true,
-      config: { maintenance: true, maintenanceMessage: "점검", maintenanceEndsAt: "2026-10-20T00:00:00Z", minAppVersion: "0.286.0", latestAppVersion: "0.287.0" },
+      config: { maintenance: true, maintenanceMessage: "점검", maintenanceEndsAt: "2026-10-20T00:00:00Z", minAppVersion: "0.286.0", latestAppVersion: "0.287.0", launchEpoch: "20261101T000000-ab12cd34" },
     });
   });
   it("형식이 틀린 응답과 예외는 network-error", async () => {

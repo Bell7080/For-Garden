@@ -595,7 +595,7 @@ export class PremiumScene extends Phaser.Scene {
         onSelect: () => { if (!drag.dragging()) this.selectCategory(tab.id); },
       });
       // 받을 무료 보급이 남은 일간·주간·월간 라벨에 점을 세운다.
-      const dotKey = tab.id === "daily" ? "premiumFreeDaily" : tab.id === "weekly" ? "premiumFreeWeekly" : tab.id === "monthly" ? "premiumFreeMonthly" : tab.id === "pass" ? "passReward" : undefined;
+      const dotKey = tab.id === "daily" ? "premiumFreeDaily" : tab.id === "weekly" ? "premiumFreeWeekly" : tab.id === "monthly" ? "premiumFreeMonthly" : undefined;
       if (dotKey) this.tabDotDisposers.push(bindNotificationDot(this, tabObject, { x: PREMIUM_TAB_ROW.width / 2 - 22, y: -PREMIUM_TAB_ROW.height / 2 + 12 }, (listener) => notificationManager.subscribe(dotKey, (visible) => {
         listener(visible);
         this.tabDotted[index] = visible;

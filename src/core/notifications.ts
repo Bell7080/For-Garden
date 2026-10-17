@@ -30,7 +30,8 @@ export function deriveNotificationState(conditions: NotificationConditions): Not
     mail: conditions.unreadMailCount > 0 || (conditions.claimableMailCount ?? 0) > 0,
     passReward: (conditions.claimablePassCount ?? 0) > 0,
     achievementReward: (conditions.claimableAchievementCount ?? 0) > 0,
-    premiumNotice: (conditions.freeSupplyCategories?.length ?? 0) > 0 || (conditions.claimablePassCount ?? 0) > 0,
+    // 패스 달성 보상은 로비 패스 카드에서 받으므로 프리미엄 쪽에는 알리지 않는다.
+    premiumNotice: (conditions.freeSupplyCategories?.length ?? 0) > 0,
     premiumFree: (conditions.freeSupplyCategories?.length ?? 0) > 0,
     premiumFreeDaily: conditions.freeSupplyCategories?.includes("daily") ?? false,
     premiumFreeWeekly: conditions.freeSupplyCategories?.includes("weekly") ?? false,

@@ -21,7 +21,7 @@ describe("notifications", () => {
 
   it("읽은 우편의 미수령 보상과 패스 보상도 알리고 전부 수령하면 꺼진다", () => {
     const base = { claimableMissionCount: 0, excavationHarvestReady: false, pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0 };
-    expect(deriveNotificationState({ ...base, claimableMailCount: 1, claimablePassCount: 1 })).toMatchObject({ mail: true, passReward: true, premiumNotice: true, premiumFree: false });
+    expect(deriveNotificationState({ ...base, claimableMailCount: 1, claimablePassCount: 1 })).toMatchObject({ mail: true, passReward: true, premiumNotice: false, premiumFree: false });
     expect(deriveNotificationState({ ...base, claimableMailCount: 0, claimablePassCount: 0 })).toMatchObject({ mail: false, passReward: false, premiumNotice: false });
   });
 

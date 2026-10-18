@@ -93,6 +93,16 @@ describe("SaveManager", () => {
     expect(createDefaultSession().wallet).toMatchObject({ fossil: 900, amber: 450 });
   });
 
+  it("수식어를 여럿 장착한 옛 저장은 맨 앞 하나만 남긴다", () => {
+    const legacy = validData() as unknown as Record<string, unknown>;
+    legacy.earnedProfileModifierIds = ["field-pioneer", "steady-researcher"];
+    legacy.equippedProfileModifierIds = ["field-pioneer", "steady-researcher"];
+    const manager = new SaveManager(new MemoryStorage());
+    const migrated = manager.migrate(legacy);
+    expect(migrated.equippedProfileModifierIds).toEqual(["field-pioneer"]);
+    expect(() => manager.validate(migrated)).not.toThrow();
+  });
+
   it("v32 외형 없는 저장도 토리카 기본 해금을 보유하고 손상된 레거시 선택은 폐기한다", () => {
     const legacy = validData() as unknown as Record<string, unknown>;
     legacy.saveVersion = 32;

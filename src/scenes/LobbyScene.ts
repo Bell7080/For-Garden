@@ -17,6 +17,7 @@ import { COLOR, textStyle } from "../ui/theme";
 import { t } from "../i18n";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { gameApi } from "../api/FakeServer";
+import { presentRewardedAd } from "../platform/rewardedAds";
 import { loadPlayerProfileDisplay } from "../managers/PlayerProfileManager";
 import { bondDialogue } from "../data/bonds";
 import { PopupLayer, POPUP_TITLE_SIZE } from "../ui/PopupLayer";
@@ -501,7 +502,7 @@ export class LobbyScene extends Phaser.Scene {
       this.excavationBackButton?.destroy(); this.excavationBackButton = undefined;
       // 열람 자체로 점을 지우지 않고, 닫힌 직후 서버 잔량으로 다시 확정한다.
       void notificationManager.refresh().catch(() => undefined);
-    });
+    }, presentRewardedAd);
     this.idleExcavationPopup.open();
     if (!this.excavationBackButton) {
       // 발굴도 다른 화면과 같은 우하단 뒤로가기 자리를 쓴다. 자리와 생김새를 화면마다 다시 정하지 않는다.

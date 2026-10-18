@@ -8,7 +8,7 @@ import {
 } from "../api/guildContracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import {
-  GUILD_ATTENDANCE_CYCLE, GUILD_BADGE_CHANGE_GEMS, GUILD_CREATE_GEMS, GUILD_NAME_MAX, GUILD_NOTICE_MAX, GUILD_SHOP_PRODUCTS,
+  GUILD_ATTENDANCE_CYCLE, GUILD_BADGE_CHANGE_GEMS, GUILD_CREATE_GEMS, GUILD_NAME_MAX, GUILD_NOTICE_MAX,
   guildAttendanceDay, guildCan, guildCanKick, guildLevelProgress, guildPerks, validateGuildName, type GuildJoinMode, type GuildRole,
 } from "../core/guild";
 import {
@@ -16,6 +16,7 @@ import {
 } from "../core/guildBadge";
 import { guildGuardElement, guildGuardEndsAt, guildPageEventKey, guildPageHasNews, guildWarNow, type GuildPage } from "../core/guildPages";
 import { GUILD_WAR_MIN_MEMBERS, guildWarTotalSlots } from "../core/guildWar";
+import { guildAttendanceRace } from "../core/guildRace";
 import { isOnline, lastActiveAge } from "../core/social";
 import { RELICS } from "../data/relics";
 import { setDebugScene } from "../debug";
@@ -202,6 +203,8 @@ export class GuildScene extends Phaser.Scene {
       if (this.state.guild && !this.stampChecked) {
         this.stampChecked = true;
         attendance = await guildApi.getAttendance();
+        // 도장판 위 기여도 경쟁 줄이 길드원 이번 주 기여를 읽는다 — 아직 받지 않았으면 함께 받는다.
+        if (!attendance.stampedToday && !this.members) this.members = await guildApi.getMembers();
       }
     } catch (error) {
       if (this.scene.isActive()) this.fail(error);
@@ -459,63 +462,44 @@ export class GuildScene extends Phaser.Scene {
   }
 
   /** 길드 순위 — 레벨이 높은 순, 같으면 길드원이 많은 순. 내 길드 줄은 강조색 테를 두른다. */
+  /**
+   * 길드 순위 — 부흥도(=레벨)로 줄을 세우고 같으면 총 기여도로 가른다. 줄마다 레벨·인원 아래에 총 기여도·길드전·
+   * 수호전 점수가 함께 선다. 길드전·수호전은 아직 판이 열리지 않아 점수가 없으면 「-」다.
+   */
   private openRanking(): void {
     if (this.busy) return;
     void this.act(async () => {
-      const guilds = [...(await guildApi.searchGuilds("")).guilds].sort((a, b) => b.level - a.level || b.memberCount - a.memberCount || a.name.localeCompare(b.name)).slice(0, 8);
+      // 요약에 순위 값이 실리기 전의 서버가 답해도 줄이 서도록 빈 값을 0·null로 채운다.
+      const guilds = (await guildApi.searchGuilds("")).guilds
+        .map((guild) => ({ ...guild, prosperity: guild.prosperity ?? 0, contributionTotal: guild.contributionTotal ?? 0, warScore: guild.warScore ?? null, guardScore: guild.guardScore ?? null }))
+        .sort((a, b) => b.prosperity - a.prosperity || b.contributionTotal - a.contributionTotal || a.name.localeCompare(b.name)).slice(0, 8);
       if (!this.scene.isActive()) return;
-      const rowGap = 120;
+      const rowGap = 156;
       const height = 220 + Math.max(1, guilds.length) * rowGap;
       const mine = this.state?.guild?.id;
-      this.popups.open({ width: 900, height, title: t("guild.ranking.title"), closeOnBackdrop: true, dim: true }, (body) => {
+      const score = (value: number | null): string => value === null ? t("guild.ranking.none") : value.toLocaleString();
+      this.popups.open({ width: 940, height, title: t("guild.ranking.title"), closeOnBackdrop: true, dim: true }, (body) => {
         if (guilds.length === 0) { this.label(body, 0, 0, t("guild.browse.empty"), { role: "body", size: 28, color: COLOR.inkDim }, [0.5, 0.5]); return; }
         guilds.forEach((guild, index) => {
-          const y = -height / 2 + 140 + index * rowGap;
-          this.plate(body, 0, y, 800, rowGap - 12, guild.id === mine ? COLOR.accent : undefined);
-          this.label(body, -360, y, `${index + 1}`, { role: "display", size: 40, color: index < 3 ? COLOR.accentText : COLOR.ink }, [0.5, 0.5]);
-          addGuildBadge(this, body, -270, y, guild.badge, 84);
-          body.add(squeezeTextToWidth(this.add.text(-210, y - 18, guild.name, textStyle({ role: "display", size: 32 })).setOrigin(0, 0.5), 400));
-          this.label(body, -210, y + 22, t("guild.capacity", { count: guild.memberCount, capacity: guild.capacity }), { role: "body", size: 24, color: COLOR.inkDim });
-          this.label(body, 370, y, t("guild.levelShort", { level: guild.level }), { role: "display", size: 34, color: COLOR.accentText }, [1, 0.5]);
+          const y = -height / 2 + 150 + index * rowGap;
+          this.plate(body, 0, y, 860, rowGap - 14, guild.id === mine ? COLOR.accent : undefined);
+          this.label(body, -390, y, `${index + 1}`, { role: "display", size: 40, color: index < 3 ? COLOR.accentText : COLOR.ink }, [0.5, 0.5]);
+          addGuildBadge(this, body, -300, y, guild.badge, 88);
+          body.add(squeezeTextToWidth(this.add.text(-236, y - 40, guild.name, textStyle({ role: "display", size: 32 })).setOrigin(0, 0.5), 440));
+          this.label(body, 400, y - 40, t("guild.levelShort", { level: guild.level }), { role: "display", size: 34, color: COLOR.accentText }, [1, 0.5]);
+          this.label(body, -236, y + 2, `${t("guild.capacity", { count: guild.memberCount, capacity: guild.capacity })} · ${t("guild.ranking.prosperity", { value: guild.prosperity.toLocaleString() })}`, { role: "body", size: 24, color: COLOR.inkDim });
+          body.add(squeezeTextToWidth(this.add.text(-236, y + 40, t("guild.ranking.scores", {
+            contribution: guild.contributionTotal.toLocaleString(), war: score(guild.warScore), guard: score(guild.guardScore),
+          }), textStyle({ role: "emphasis", size: 24, color: COIN_TEXT })).setOrigin(0, 0.5), 636));
         });
       });
     }).then(() => undefined);
   }
 
-  /** 길드 상점 — 길드 코인으로 사는 주간 한도 상품. 지갑이 얽혀 구매는 `gameApi`가 확정한다. */
+  /** 길드 상점 — 일반 상점과 같은 무대·전시대(`ShopScene`)를 쓰고, 돌아오는 길은 길드 화면이다. */
   private openShop(): void {
     if (this.busy) return;
-    this.busy = true;
-    void withBusy(this, guildApi.getShop()).then((shop) => {
-      this.busy = false;
-      if (!this.scene.isActive()) return;
-      const rowGap = 170;
-      const height = 220 + GUILD_SHOP_PRODUCTS.length * rowGap;
-      this.popups.open({ width: 920, height, title: t("guild.shop.title"), closeOnBackdrop: true, dim: true }, (body, close) => {
-        GUILD_SHOP_PRODUCTS.forEach((product, index) => {
-          const y = -height / 2 + 150 + index * rowGap;
-          const item = shop.items.find((candidate) => candidate.productId === product.id);
-          const bought = item?.bought ?? 0;
-          this.plate(body, 0, y, 820, rowGap - 14);
-          const texture = product.grant.gold ? CURRENCY_ICON_BY_WALLET.gold : product.grant.cheesecake ? CURRENCY_ICON_BY_WALLET.cheesecake : "item-stamina-tonic";
-          const amount = product.grant.gold ? product.grant.gold.toLocaleString() : product.grant.cheesecake ? `${product.grant.cheesecake}` : `${product.grant.item?.quantity ?? 1}`;
-          addFramedIcon(this, body, -330, y, 112, texture, { amount, plain: true });
-          this.label(body, -250, y - 28, t(`guild.shop.product.${product.id}` as "guild.shop.product.guild-gold"), { role: "display", size: 32 });
-          this.label(body, -250, y + 12, t("guild.shop.price", { price: product.price }), { role: "emphasis", size: 26, color: COIN_TEXT });
-          this.label(body, -250, y + 48, t("guild.shop.limit", { bought, limit: product.weeklyLimit }), { role: "body", size: 24, color: COLOR.inkDim });
-          const affordable = shop.coin >= product.price && bought < product.weeklyLimit;
-          addRowButton(this, body, 300, y, 170, 72, t("guild.shop.buy"), affordable ? "accent" : "disabled", () => FULL_CLIP, () => true, () => {
-            close();
-            void this.act(() => gameApi.buyGuildProduct({ productId: product.id }), () => this.toast(t("guild.shop.bought"), "unlocked")).then((done) => {
-              if (done && this.scene.isActive()) this.openShop();
-            });
-          });
-        });
-      });
-    }, (error: unknown) => {
-      this.busy = false;
-      if (this.scene.isActive()) this.fail(error);
-    });
+    startScene(this, "shop", { storefront: "guild", returnScene: "guild" });
   }
 
   /* ── 출석 도장판 ──────────────────────────────────────────────────────── */
@@ -550,13 +534,15 @@ export class GuildScene extends Phaser.Scene {
       const regular = GUILD_ATTENDANCE_CYCLE[0], final = GUILD_ATTENDANCE_CYCLE[GUILD_ATTENDANCE_CYCLE.length - 1];
       this.label(body, 0, A.info, t("guild.attendance.gain", { contribution: regular.contribution, coin: regular.coin, finalContribution: final.contribution, finalCoin: final.coin }), { role: "body", size: 24, color: COLOR.inkDim, align: "center", wrap: A.width - 80 }, [0.5, 0.5]);
 
+      const race = this.paintRace(body, guildAttendanceDay(today).contribution);
+
       const slot = cells[today - 1];
       this.time.delayedCall(420, () => {
         if (!this.scene.isActive()) return;
         gameApi.stampGuildAttendance({}).then((result) => {
           if (!this.scene.isActive() || !body.active) return;
           playAttendanceStamp(this, body, slot.x, slot.y + 8, A.stampSize, COLOR.accent, {
-            onDone: () => this.time.delayedCall(320, () => {
+            onDone: () => race(() => this.time.delayedCall(320, () => {
               close();
               this.busy = false;
               if (!this.scene.isActive()) return;
@@ -572,7 +558,7 @@ export class GuildScene extends Phaser.Scene {
                 footnote: t("guild.attendance.footnote", { contribution: gain.contribution, prosperity: gain.prosperity }),
               });
               void this.reload(true);
-            }),
+            })),
           });
         }, (error: unknown) => {
           close();
@@ -581,6 +567,71 @@ export class GuildScene extends Phaser.Scene {
         });
       });
     });
+  }
+
+  /**
+   * 도장판 맨 위의 기여도 경쟁 줄 — 나와 바로 위 한 사람(내가 1위면 2위)이 이번 주 기여도로 마주 선다. 돌려주는 함수가
+   * 도장이 박힌 뒤의 연출이다: 내 수가 **뽀로롱** 한 칸씩 튀며 오르고, 위 사람을 넘으면 두 줄이 자리를 바꾸며 「역전!」이 선다.
+   * 길드원을 받지 못했으면 줄을 세우지 않고 연출도 곧바로 넘어간다.
+   */
+  private paintRace(body: Phaser.GameObjects.Container, gain: number): (onDone: () => void) => void {
+    const race = this.members ? guildAttendanceRace(this.members.members, gain) : null;
+    if (!race) return (onDone) => onDone();
+    const RA = A.race;
+    const rowY = (top: boolean): number => RA.rows[top ? 0 : 1];
+    const makeRow = (member: GuildMemberView, top: boolean, rank: number, mine: boolean) => {
+      const row = this.add.container(0, rowY(top));
+      body.add(row);
+      row.add(drawLayer(this, 0, 0, chipPoints(RA.width, RA.height, { bevel: { topLeft: 22, topRight: 0, bottomRight: 22, bottomLeft: 0 } }), {
+        fill: mine ? 0x162a2a : 0x141b24, alpha: 0.96, edge: mine ? COLOR.accent : undefined, edgeAlpha: 0.9,
+      }));
+      const rankText = this.label(row, -RA.width / 2 + 46, 0, t("guild.attendance.raceRank", { rank }), { role: "display", size: 32, color: mine ? COLOR.accentText : COLOR.ink }, [0.5, 0.5]);
+      const relic = RELICS.find((candidate) => candidate.id === member.avatarRelicId);
+      row.add(new ProfileAvatar(this, -RA.width / 2 + 132, 0, { size: RA.avatar, frameId: member.frameId, portraitAssetId: relic?.portraitAssetId, fallback: Array.from(member.name.trim())[0] ?? "?" }));
+      row.add(squeezeTextToWidth(this.add.text(-RA.width / 2 + 190, 0, member.name, textStyle({ role: "display", size: 30, color: mine ? COLOR.ink : COLOR.inkDim })).setOrigin(0, 0.5), 330));
+      this.label(row, RA.width / 2 - 150, 0, t("guild.attendance.raceLabel"), { role: "body", size: 22, color: COLOR.inkDim }, [1, 0.5]);
+      const value = this.label(row, RA.width / 2 - 30, 0, member.contributionWeek.toLocaleString(), { role: "display", size: 38, color: mine ? COIN_TEXT : COLOR.ink }, [1, 0.5]);
+      return { row, rankText, value };
+    };
+    const rival = race.rival ? makeRow(race.rival, !race.meOnTopBefore, race.rivalRankBefore, false) : undefined;
+    const me = makeRow(race.me, race.meOnTopBefore, race.rankBefore, true);
+    return (onDone) => {
+      if (!body.active) { onDone(); return; }
+      const from = race.me.contributionWeek;
+      // 오른 몫이 위로 떠오른다.
+      const plus = this.label(me.row, RA.width / 2 - 30, -10, `+${gain}`, { role: "display", size: 30, color: COIN_TEXT }, [1, 0.5]).setAlpha(0);
+      this.tweens.add({ targets: plus, y: -54, alpha: { from: 1, to: 0 }, duration: 900, ease: "Cubic.easeOut" });
+      let shown = from;
+      this.tweens.addCounter({
+        from, to: race.after, duration: Math.min(900, 120 + gain * 24), ease: "Linear",
+        onUpdate: (tween) => {
+          const next = Math.round(tween.getValue() ?? from);
+          if (next === shown || !me.value.active) return;
+          shown = next;
+          me.value.setText(next.toLocaleString()).setScale(1.28);
+          this.tweens.add({ targets: me.value, scale: 1, duration: 110, ease: "Back.easeOut" });
+        },
+        onComplete: () => {
+          if (!body.active) { onDone(); return; }
+          me.value.setText(race.after.toLocaleString());
+          if (!race.overtook || !rival) { this.time.delayedCall(260, onDone); return; }
+          // 역전 — 두 줄이 서로의 자리로 미끄러지고, 내 줄이 한 번 부풀었다 가라앉는다.
+          body.bringToTop(me.row);
+          this.tweens.add({ targets: me.row, y: rowY(true), duration: 460, ease: "Back.easeInOut" });
+          this.tweens.add({ targets: rival.row, y: rowY(false), duration: 460, ease: "Back.easeInOut" });
+          this.tweens.add({ targets: me.row, scale: { from: 1, to: 1.06 }, duration: 230, yoyo: true, ease: "Sine.easeInOut" });
+          this.time.delayedCall(300, () => {
+            if (!body.active) return;
+            me.rankText.setText(t("guild.attendance.raceRank", { rank: race.rankAfter }));
+            rival.rankText.setText(t("guild.attendance.raceRank", { rank: race.rivalRankAfter }));
+          });
+          const banner = this.label(body, -RA.width / 2 + 10, rowY(true) - RA.height / 2 - 6, t("guild.attendance.overtake"), { role: "display", size: 34, color: "#ffd36e" }, [0, 0.5])
+            .setStroke("#2a1600", 6).setScale(0).setAngle(-6);
+          this.tweens.add({ targets: banner, scale: 1, delay: 380, duration: 260, ease: "Back.easeOut" });
+          this.time.delayedCall(1200, onDone);
+        },
+      });
+    };
   }
 
   /* ── 만들기 · 뱃지 ────────────────────────────────────────────────────── */

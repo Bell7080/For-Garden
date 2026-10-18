@@ -53,12 +53,10 @@ const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
     { key: "fossil", icon: "currency-fossil", compact: true, color: "#e6dcc4" },
     { key: "amber", icon: "currency-amber", color: "#ffc98a" },
   ],
-  // 고고학은 제 경제를 갖는다 — 원석이 첫 칸에 서고, 탐사가 함께 캐내는 화석과
-  // 늘 쓰는 골드가 뒤를 잇는다. 스테미나는 이 화면의 조작을 정하지 않으므로 세우지 않는다.
+  // 고고학은 제 경제를 갖는다 — **원석 한 칸만 세운다**(응태 결정). 탐사가 함께 캐내는 화석·골드는
+  // 이 화면의 조작을 정하지 않아 칸만 먹고 정작 볼 수를 밀어냈다.
   archaeology: [
     { key: "rawStone", icon: "currency-orestone", compact: true, color: "#a9d8e8" },
-    { key: "fossil", icon: "currency-fossil", compact: true, color: "#e6dcc4" },
-    { key: "gold", icon: "currency-gold", compact: true, color: "#ffdf9a" },
   ],
   /**
    * 고고학 상점.

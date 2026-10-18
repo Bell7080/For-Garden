@@ -38,6 +38,8 @@ export const SYSTEM_RU = {
   "product.price.ad": "Реклама · {count}/день",
   "product.price.currency": "{amount} {currency}",
   "product.price.item": "{amount} {item}",
+  "product.action.guild_coin": "Обменять",
+  "product.price.guildCoin": "{amount} монет гильдии",
   "mail.launch.title": "Благодарственный набор за начало исследований",
   "mail.expeditionRank.title": "Награда за место в экспедиции недели",
   "mail.expeditionRank.sender": "Отряд разведки затонувшего филиала",

@@ -90,9 +90,10 @@ export class FakeGuildServer implements GuildBackend {
   private level(guild: GuildRow): number { return guildLevelOf(guild.prosperity); }
   private summary(guild: GuildRow): GuildSummary {
     const level = this.level(guild);
-    return { id: guild.id, name: guild.name, badge: { ...guild.badge }, level, memberCount: guild.members.size, capacity: guildCapacity(level), joinMode: guild.joinMode, leaderName: this.leaderOf(guild).name, notice: guild.notice };
+    return { id: guild.id, name: guild.name, badge: { ...guild.badge }, level, memberCount: guild.members.size, capacity: guildCapacity(level), joinMode: guild.joinMode, leaderName: this.leaderOf(guild).name, notice: guild.notice,
+      prosperity: guild.prosperity, contributionTotal: [...guild.members.values()].reduce((sum, m) => sum + m.contributionTotal, 0), warScore: null, guardScore: null };
   }
-  private detail(guild: GuildRow): GuildDetail { return { ...this.summary(guild), prosperity: guild.prosperity, createdAt: guild.createdAt, warScore: null, warRank: null, badgeFree: guild.badgeChanges === 0 }; }
+  private detail(guild: GuildRow): GuildDetail { return { ...this.summary(guild), createdAt: guild.createdAt, warRank: null, badgeFree: guild.badgeChanges === 0 }; }
   private assertUnlocked(actor: GuildActor): void {
     if (this.options.levelGate !== false && !isContentUnlocked("guild", actor.level)) fail("LEVEL_LOCKED");
   }

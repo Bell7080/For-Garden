@@ -38,6 +38,8 @@ export const SYSTEM_TH = {
   "product.price.ad": "โฆษณา · {count}/วัน",
   "product.price.currency": "{amount} {currency}",
   "product.price.item": "{amount} {item}",
+  "product.action.guild_coin": "แลก",
+  "product.price.guildCoin": "เหรียญกิลด์ {amount}",
   "mail.launch.title": "แพ็กเกจขอบคุณการเริ่มวิจัย",
   "mail.expeditionRank.title": "รางวัลอันดับออกสำรวจประจำสัปดาห์",
   "mail.expeditionRank.sender": "ทีมสำรวจสาขาที่จมน้ำ",

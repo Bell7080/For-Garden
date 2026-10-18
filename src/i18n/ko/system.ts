@@ -55,6 +55,8 @@ export const SYSTEM_KO = {
   "product.price.ad": "광고 · 일 {count}회",
   "product.price.currency": "{amount} {currency}",
   "product.price.item": "{amount} {item}",
+  "product.action.guild_coin": "교환",
+  "product.price.guildCoin": "길드 코인 {amount}",
 
   // ── 임시 서버가 보내는 우편·알림 ─────────────────────────────────────────
   "mail.launch.title": "연구 시작 감사 패키지",

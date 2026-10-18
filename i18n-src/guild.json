@@ -869,26 +869,6 @@
     "{m} Min.",
     "{m} мин"
   ],
-  "guild.shop.price": [
-    "硬币 {price}",
-    "เหรียญ {price}",
-    "Xu {price}",
-    "Koin {price}",
-    "Monedas {price}",
-    "Moedas {price}",
-    "Münzen {price}",
-    "Монеты {price}"
-  ],
-  "guild.shop.limit": [
-    "本周 {bought}/{limit}",
-    "สัปดาห์นี้ {bought}/{limit}",
-    "Tuần này {bought}/{limit}",
-    "Minggu ini {bought}/{limit}",
-    "Esta semana {bought}/{limit}",
-    "Esta semana {bought}/{limit}",
-    "Diese Woche {bought}/{limit}",
-    "На этой неделе {bought}/{limit}"
-  ],
   "guild.shop.buy": [
     "购买",
     "ซื้อ",
@@ -898,16 +878,6 @@
     "Comprar",
     "Kaufen",
     "Купить"
-  ],
-  "guild.shop.bought": [
-    "已购买",
-    "ซื้อแล้ว",
-    "Đã mua",
-    "Dibeli",
-    "Comprado",
-    "Comprado",
-    "Gekauft",
-    "Куплено"
   ],
   "guild.shop.product.guild-gold": [
     "金币礼包",
@@ -1558,5 +1528,125 @@
     "Recompensas · Moedas da guilda · Prosperidade",
     "Belohnungen · Gildenmünzen · Wohlstand",
     "Награды · Монеты гильдии · Процветание"
+  ],
+  "guild.ranking.prosperity": [
+    "复兴度 {value}",
+    "ระดับฟื้นฟู {value}",
+    "Độ phục hưng {value}",
+    "Kebangkitan {value}",
+    "Renacimiento {value}",
+    "Renascimento {value}",
+    "Wiederaufbau {value}",
+    "Возрождение {value}"
+  ],
+  "guild.ranking.scores": [
+    "总贡献 {contribution} · 公会战 {war} · 守护战 {guard}",
+    "รวม {contribution} · สงครามกิลด์ {war} · ศึกพิทักษ์ {guard}",
+    "Tổng {contribution} · Chiến bang hội {war} · Thủ hộ {guard}",
+    "Total {contribution} · Perang Guild {war} · Pertahanan {guard}",
+    "Total {contribution} · Guerra de gremio {war} · Defensa {guard}",
+    "Total {contribution} · Guerra de guilda {war} · Defesa {guard}",
+    "Gesamt {contribution} · Gildenkrieg {war} · Verteidigung {guard}",
+    "Всего {contribution} · Война гильдий {war} · Защита {guard}"
+  ],
+  "guild.ranking.none": [
+    "-",
+    "-",
+    "-",
+    "-",
+    "-",
+    "-",
+    "-",
+    "-"
+  ],
+  "guild.attendance.raceRank": [
+    "第{rank}名",
+    "อันดับ {rank}",
+    "Hạng {rank}",
+    "#{rank}",
+    "N.º {rank}",
+    "N.º {rank}",
+    "Platz {rank}",
+    "№{rank}"
+  ],
+  "guild.attendance.raceLabel": [
+    "本周贡献",
+    "ผลงานสัปดาห์นี้",
+    "Đóng góp tuần này",
+    "Minggu ini",
+    "Esta semana",
+    "Esta semana",
+    "Diese Woche",
+    "За неделю"
+  ],
+  "guild.attendance.overtake": [
+    "逆转！",
+    "แซงแล้ว!",
+    "Vượt mặt!",
+    "Menyalip!",
+    "¡Remontada!",
+    "Virada!",
+    "Überholt!",
+    "Обгон!"
+  ],
+  "guild.shop.line1": [
+    "收公会硬币哦。这是本周的货。",
+    "รับเหรียญกิลด์ค่ะ นี่ของสัปดาห์นี้",
+    "Nhận xu bang hội ạ. Hàng tuần này đây.",
+    "Koin guild diterima. Ini stok minggu ini.",
+    "Acepto monedas de gremio. Es el surtido de esta semana.",
+    "Aceito moedas de guilda. É o estoque desta semana.",
+    "Gildenmünzen werden angenommen. Das ist die Ware dieser Woche.",
+    "Принимаю монеты гильдии. Это товары этой недели."
+  ],
+  "guild.shop.line2": [
+    "大家都是盖完出勤章再来的。",
+    "ทุกคนมาหลังประทับตราเข้าร่วมแล้ว",
+    "Mọi người đều đóng dấu điểm danh rồi mới ghé.",
+    "Semua mampir setelah cap absen.",
+    "Todos vienen después de sellar la asistencia.",
+    "Todo mundo passa aqui depois do carimbo de presença.",
+    "Alle kommen nach dem Anwesenheitsstempel vorbei.",
+    "Все заходят после отметки посещения."
+  ],
+  "guild.shop.line3": [
+    "下周会再补货的。",
+    "สัปดาห์หน้าจะเติมของให้อีกนะ",
+    "Tuần sau em lại bổ sung nhé.",
+    "Minggu depan akan diisi lagi.",
+    "La próxima semana repongo.",
+    "Semana que vem eu reponho.",
+    "Nächste Woche fülle ich wieder auf.",
+    "На следующей неделе пополню."
+  ],
+  "guild.shop.confirm": [
+    "要购买「{name}」吗？",
+    "ซื้อ \"{name}\" ไหม?",
+    "Mua \"{name}\"?",
+    "Beli \"{name}\"?",
+    "¿Comprar \"{name}\"?",
+    "Comprar \"{name}\"?",
+    "\"{name}\" kaufen?",
+    "Купить «{name}»?"
+  ],
+  "guild.shop.short": [
+    "公会硬币不足",
+    "เหรียญกิลด์ไม่พอ",
+    "Không đủ xu bang hội",
+    "Koin guild tidak cukup",
+    "No tienes suficientes monedas de gremio",
+    "Moedas de guilda insuficientes",
+    "Nicht genug Gildenmünzen",
+    "Недостаточно монет гильдии"
+  ],
+  "guild.shop.failed": [
+    "购买失败",
+    "ซื้อไม่สำเร็จ",
+    "Mua không thành công",
+    "Pembelian gagal",
+    "No se pudo comprar",
+    "Não foi possível comprar",
+    "Kauf fehlgeschlagen",
+    "Не удалось купить"
   ]
 }

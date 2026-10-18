@@ -26,6 +26,7 @@ function acquisitionText(acquisition: ProductAcquisition): string {
   if (acquisition.kind === "platform_payment") return formatStorePrice(acquisition.basePriceKrw);
   // 아이템 값은 재화 이름표가 아니라 그 아이템의 이름을 그대로 세운다 — 지갑 키가 아니라서
   // `currency.*` 표에 이름이 없고, 있는 척 만들면 같은 말이 두 표에 살게 된다.
+  if (acquisition.kind === "guild_coin") return t("product.price.guildCoin", { amount: acquisition.amount.toLocaleString() });
   if (acquisition.kind === "item") return t("product.price.item", { amount: acquisition.amount.toLocaleString(), item: findItem(acquisition.itemId)?.name ?? acquisition.itemId });
   return t("product.price.currency", { amount: acquisition.amount.toLocaleString(), currency: currencyName(acquisition.currency) });
 }

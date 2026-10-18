@@ -7,6 +7,9 @@ import { drawLayer, HOLO, slantedRect } from "./holo";
 import { addFramedIcon, addItemFrame, ITEM_FRAME } from "./itemFrame";
 import { COLOR, textStyle } from "./theme";
 
+/** 길드 코인 그림. 상단 줄(`topBarSlots`의 `guild`)과 같은 키다. */
+export const GUILD_COIN_ICON = "currency-guild-coin";
+
 /**
  * **값과 재화가 서는 자리는 글자가 아니라 액자다.**
  *
@@ -146,7 +149,8 @@ export function addPriceBar(
   y: number,
   width: number,
   label: string | undefined,
-  currency: WalletItemKey,
+  /** 지갑 칸이거나 길드 코인. 길드 코인은 길드원 행이 들고 있어 지갑 키가 아니다. */
+  currency: WalletItemKey | "guildCoin",
   amount: number,
   options: { short?: boolean; height?: number; iconAlpha?: number; valueSize?: number; plate?: boolean } = {},
 ): Phaser.GameObjects.Container {
@@ -165,7 +169,7 @@ export function addPriceBar(
     .setScale(1, 1.08)
     .setAlpha(options.iconAlpha ?? 1)
     .setShadow(2, 3, "#04060a", 0, true, true);
-  const iconKey = CURRENCY_ICON_BY_WALLET[currency];
+  const iconKey = currency === "guildCoin" ? GUILD_COIN_ICON : CURRENCY_ICON_BY_WALLET[currency];
   const hasIcon = scene.textures.exists(iconKey);
   // 그림과 수를 한 덩어리로 재고 나서 세운다 — 이름표가 있으면 오른쪽 변에, 없으면 가운데에.
   const span = value.width + (hasIcon ? PRICE_BAR.gap + PRICE_BAR.icon : 0);

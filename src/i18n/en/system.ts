@@ -38,6 +38,8 @@ export const SYSTEM_EN = {
   "product.price.ad": "Ad · {count}/day",
   "product.price.currency": "{amount} {currency}",
   "product.price.item": "{amount} {item}",
+  "product.action.guild_coin": "Exchange",
+  "product.price.guildCoin": "{amount} Guild Coins",
   "mail.launch.title": "Research Kickoff Thank-You Pack",
   "mail.expeditionRank.title": "Weekly Expedition Rank Reward",
   "mail.expeditionRank.sender": "Sunken Branch Survey Team",

@@ -85,14 +85,18 @@ export const GUILD_INFO = {
   actions: { y: 1440, width: 280, height: 84, gap: 20 },
 } as const;
 
-/** 출석 도장 레이어 — 창 가운데가 0이다. 일곱 칸이 위 넷 · 아래 셋으로 서고, 7일차 칸은 아래 줄 끝에서 한 뼘 크다. */
+/**
+ * 출석 도장 레이어 — 창 가운데가 0이다. 맨 위에 기여도 경쟁 줄 둘(나 · 바로 위 한 사람)이 서고, 그 아래 일곱 칸이
+ * 위 넷 · 아래 셋으로 서며, 7일차 칸은 아래 줄 끝에서 한 뼘 크다.
+ */
 export const GUILD_ATTENDANCE = {
   width: 920,
-  height: 900,
+  height: 1160,
+  race: { rows: [-424, -326], width: 820, height: 86, avatar: 64 },
   cell: { width: 200, height: 230, gap: 14 },
-  rows: [-170, 90],
-  info: 300,
-  hint: 390,
+  rows: [-40, 220],
+  info: 430,
+  hint: 520,
   stampSize: 120,
 } as const;
 

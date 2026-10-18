@@ -164,6 +164,12 @@ const MILEAGE_TABS: readonly { id: string; label: string }[] = [
   { id: "daily", label: "일일" }, { id: "weekly", label: "주간" },
 ];
 
+/** 길드 상점은 주간 한 갈래다 — 상품이 모두 주간 한도로 돌아온다(`GUILD_SHOP_PRODUCTS`). */
+const GUILD_TABS: readonly { id: string; label: string }[] = [{ id: "weekly", label: "주간" }];
+
+/** 길드 상점의 임시 점원(오비)이 하는 말. 순서만 여기 있고 문장은 `src/i18n`이 갖는다. */
+const GUILD_MERCHANT_LINE_KEYS: readonly TextKey[] = ["guild.shop.line1", "guild.shop.line2", "guild.shop.line3"];
+
 export interface ShopStagePresentation {
   readonly merchant: { readonly name: string; readonly asset: PuppetAsset };
   readonly lineKeys: readonly TextKey[];
@@ -217,7 +223,7 @@ export interface ShopStagePresentation {
  * 쓰기 시작하면 자리가 하나 늘 때마다 씬이 길어지고, 점원만 바꾸고 배경을 빠뜨리는 사고가
  * 난다. 한 자리가 갖는 것 전부가 여기 한 줄이다.
  */
-export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "loot" | "mileage" | "duel", ShopStagePresentation>> = {
+export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "loot" | "mileage" | "duel" | "guild", ShopStagePresentation>> = {
   shop: {
     merchant: SHOP_MERCHANT,
     lineKeys: SHOP_MERCHANT_LINE_KEYS,
@@ -274,6 +280,16 @@ export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "
     // 아니라 몸이라 잘려도 무엇이 잘렸는지 흐려지지 않는다. 뿔 끝은 재화 줄 아래(머리끝 y≈167)에 든다.
     merchantSpot: { headX: 744, height: 1560 },
   },
+  guild: {
+    // 길드 전용 점원 원화가 오기 전까지 오비가 임시로 선다. 대사는 길드 상점 문구다.
+    merchant: SHOP_MERCHANT,
+    lineKeys: GUILD_MERCHANT_LINE_KEYS,
+    background: BACKGROUND.lobby,
+    titleKey: "guild.shop.title",
+    tabs: GUILD_TABS,
+    // 값은 길드 코인 하나라 그 칸만 세운다(`topBarSlots`의 `guild`).
+    currencies: "guild",
+  },
 };
 
 /** 무역·프리미엄은 이 씬을 쓰지 않으므로 일반 상점 무대로 떨어뜨린다. */
@@ -282,6 +298,7 @@ export function shopStagePresentation(storefront: ProductStorefront): ShopStageP
   if (storefront === "loot") return SHOP_STAGE_PRESENTATION.loot;
   if (storefront === "mileage") return SHOP_STAGE_PRESENTATION.mileage;
   if (storefront === "duel") return SHOP_STAGE_PRESENTATION.duel;
+  if (storefront === "guild") return SHOP_STAGE_PRESENTATION.guild;
   return SHOP_STAGE_PRESENTATION.shop;
 }
 
@@ -289,4 +306,5 @@ export function shopStagePresentation(storefront: ProductStorefront): ShopStageP
 for (const tab of [...SHOP_CURRENCY_TABS, ...SHOP_REFRESH_TABS]) registerDataText(tab, "label", `shop.tab.${tab.id}`);
 for (const tab of LOOT_CATEGORY_TABS) registerDataText(tab, "label", `shop.loot.tab.${tab.id}`);
 for (const tab of DUEL_TABS) registerDataText(tab, "label", `shop.tab.${tab.id}`);
+for (const tab of GUILD_TABS) registerDataText(tab, "label", `shop.tab.${tab.id}`);
 for (const tab of MILEAGE_TABS) registerDataText(tab, "label", `shop.tab.${tab.id}`);

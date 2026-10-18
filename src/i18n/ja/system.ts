@@ -43,6 +43,8 @@ export const SYSTEM_JA = {
   "product.price.ad": "広告 · 1日{count}回",
   "product.price.currency": "{amount} {currency}",
   "product.price.item": "{amount} {item}",
+  "product.action.guild_coin": "交換",
+  "product.price.guildCoin": "ギルドコイン {amount}",
 
   "mail.launch.title": "研究開始の感謝パッケージ",
   "mail.expeditionRank.title": "週間遠征ランキング報酬",

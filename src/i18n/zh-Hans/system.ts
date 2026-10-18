@@ -38,6 +38,8 @@ export const SYSTEM_ZH_HANS = {
   "product.price.ad": "广告 · 每日{count}次",
   "product.price.currency": "{amount} {currency}",
   "product.price.item": "{amount} {item}",
+  "product.action.guild_coin": "兑换",
+  "product.price.guildCoin": "公会硬币 {amount}",
   "mail.launch.title": "研究启动感谢礼包",
   "mail.expeditionRank.title": "每周远征排名奖励",
   "mail.expeditionRank.sender": "沉没分部调查团",

@@ -10,7 +10,7 @@ import { DUEL_PRODUCTS } from "./duelShop";
  * 아래가 전시대」라는 규칙이 이미 깊이 박혀 있어, 둘로 갈리면 선반·격자·값줄 규칙이 두 곳이
  * 되고 한쪽만 고치는 사고가 난다.
  */
-export type ProductStorefront = "shop" | "trade" | "premium" | "archaeology" | "loot" | "mileage" | "duel";
+export type ProductStorefront = "shop" | "trade" | "premium" | "archaeology" | "loot" | "mileage" | "duel" | "guild";
 
 /** 일반 인게임 상점과 무역소가 공유하는 안정적인 카테고리 계약이다. */
 /**
@@ -59,7 +59,12 @@ export type ProductAcquisition =
   | { kind: "item"; itemId: string; amount: number }
   | { kind: "platform_payment"; platformProductId: string; basePriceKrw: number; /** 할인 전 정가(원화). 있으면 카드가 정가를 긋고 할인율을 단다. */ listPriceKrw?: number }
   | { kind: "free" }
-  | { kind: "rewarded_ad"; slotId: string; dailyLimitUtc: number };
+  | { kind: "rewarded_ad"; slotId: string; dailyLimitUtc: number }
+  /**
+   * 길드 코인으로 사는 상품(길드 상점). 코인은 지갑이 아니라 길드원 행이 들고 있어 `currency` 갈래에 넣지 않는다 —
+   * 차감·주간 한도는 길드 백엔드가, 지급은 `GameApi.buyGuildProduct`가 한 호출로 확정한다.
+   */
+  | { kind: "guild_coin"; amount: number };
 
 /** API 경계에서 확정할 수 있는 상품 지급 항목이다. */
 export type ProductGrant =

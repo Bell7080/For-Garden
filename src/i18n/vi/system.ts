@@ -38,6 +38,8 @@ export const SYSTEM_VI = {
   "product.price.ad": "Quảng cáo · {count}/ngày",
   "product.price.currency": "{amount} {currency}",
   "product.price.item": "{amount} {item}",
+  "product.action.guild_coin": "Đổi",
+  "product.price.guildCoin": "{amount} xu bang hội",
   "mail.launch.title": "Gói quà tri ân khởi đầu nghiên cứu",
   "mail.expeditionRank.title": "Thưởng hạng Viễn chinh tuần",
   "mail.expeditionRank.sender": "Đội khảo sát chi nhánh chìm",

@@ -38,6 +38,8 @@ export const SYSTEM_DE = {
   "product.price.ad": "Werbung · {count}/Tag",
   "product.price.currency": "{amount} {currency}",
   "product.price.item": "{amount} {item}",
+  "product.action.guild_coin": "Tauschen",
+  "product.price.guildCoin": "{amount} Gildenmünzen",
   "mail.launch.title": "Dankeschön-Paket zum Forschungsstart",
   "mail.expeditionRank.title": "Wöchentliche Expedition-Rangbelohnung",
   "mail.expeditionRank.sender": "Erkundungstrupp der versunkenen Zweigstelle",

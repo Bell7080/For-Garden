@@ -38,6 +38,8 @@ export const SYSTEM_ID = {
   "product.price.ad": "Iklan · {count}/hari",
   "product.price.currency": "{amount} {currency}",
   "product.price.item": "{amount} {item}",
+  "product.action.guild_coin": "Tukar",
+  "product.price.guildCoin": "{amount} Koin Guild",
   "mail.launch.title": "Paket Terima Kasih Awal Riset",
   "mail.expeditionRank.title": "Hadiah Peringkat Ekspedisi Mingguan",
   "mail.expeditionRank.sender": "Tim Survei Cabang Tenggelam",

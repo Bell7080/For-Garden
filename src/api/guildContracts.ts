@@ -39,11 +39,13 @@ export interface GuildMemberCard {
 export interface GuildSummary {
   id: string; name: string; badge: GuildBadge; level: number; memberCount: number; capacity: number;
   joinMode: GuildJoinMode; leaderName: string; notice: string;
+  /** 순위 줄이 읽는 값 — 부흥도, 길드원 누적 기여도의 합, 길드전·수호전 점수(열리기 전에는 null). */
+  prosperity: number; contributionTotal: number; warScore: number | null; guardScore: number | null;
 }
 export interface GuildDetail extends GuildSummary {
-  prosperity: number; createdAt: number;
-  /** 길드전 점수와 등수(길드전이 열리기 전에는 null). */
-  warScore: number | null; warRank: number | null;
+  createdAt: number;
+  /** 길드전 등수(길드전이 열리기 전에는 null). 점수는 요약이 갖는다. */
+  warRank: number | null;
   /** 뱃지를 아직 한 번도 바꾸지 않았으면 처음 한 번은 무료다. */
   badgeFree: boolean;
 }

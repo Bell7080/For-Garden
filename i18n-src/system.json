@@ -735,5 +735,7 @@
   "ad.temp.title": ["正在播放临时广告！", "กำลังเล่นโฆษณาชั่วคราว!", "Đang phát quảng cáo tạm thời!", "Memutar iklan sementara!", "¡Reproduciendo un anuncio temporal!", "Reproduzindo um anúncio temporário!", "Temporäre Werbung läuft!", "Идёт временная реклама!"],
   "ad.temp.done": ["看完啦！", "เสร็จแล้ว!", "Xem xong rồi!", "Selesai!", "¡Listo!", "Pronto!", "Geschafft!", "Готово!"],
   "ad.temp.claim": ["领取广告奖励！", "รับรางวัลโฆษณา!", "Nhận thưởng quảng cáo!", "Ambil hadiah iklan!", "¡Reclamar recompensa del anuncio!", "Receber recompensa do anúncio!", "Werbebelohnung abholen!", "Забрать награду за рекламу!"],
-  "ad.temp.waiting": ["正在领取奖励…", "กำลังรับรางวัล…", "Đang nhận thưởng…", "Mengambil hadiah…", "Recibiendo recompensa…", "Recebendo recompensa…", "Belohnung wird abgeholt…", "Получаем награду…"]
+  "ad.temp.waiting": ["正在领取奖励…", "กำลังรับรางวัล…", "Đang nhận thưởng…", "Mengambil hadiah…", "Recibiendo recompensa…", "Recebendo recompensa…", "Belohnung wird abgeholt…", "Получаем награду…"],
+  "product.action.guild_coin": ["兑换", "แลก", "Đổi", "Tukar", "Canjear", "Trocar", "Tauschen", "Обменять"],
+  "product.price.guildCoin": ["公会硬币 {amount}", "เหรียญกิลด์ {amount}", "{amount} xu bang hội", "{amount} Koin Guild", "{amount} monedas de gremio", "{amount} moedas de guilda", "{amount} Gildenmünzen", "{amount} монет гильдии"]
 }

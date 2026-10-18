@@ -38,6 +38,8 @@ export const SYSTEM_ZH_HANT = {
   "product.price.ad": "廣告 · 每日{count}次",
   "product.price.currency": "{amount} {currency}",
   "product.price.item": "{amount} {item}",
+  "product.action.guild_coin": "兌換",
+  "product.price.guildCoin": "公會硬幣 {amount}",
   "mail.launch.title": "研究啟動感謝禮包",
   "mail.expeditionRank.title": "每週遠征排名獎勵",
   "mail.expeditionRank.sender": "沉沒分部調查團",

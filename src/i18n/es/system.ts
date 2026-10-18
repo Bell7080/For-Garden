@@ -38,6 +38,8 @@ export const SYSTEM_ES = {
   "product.price.ad": "Anuncio · {count}/día",
   "product.price.currency": "{amount} {currency}",
   "product.price.item": "{amount} {item}",
+  "product.action.guild_coin": "Canjear",
+  "product.price.guildCoin": "{amount} monedas de gremio",
   "mail.launch.title": "Paquete de agradecimiento por iniciar la investigación",
   "mail.expeditionRank.title": "Recompensa semanal de clasificación de Expedición",
   "mail.expeditionRank.sender": "Equipo de sondeo de la sede hundida",

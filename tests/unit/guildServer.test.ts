@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { FakeGuildServer } from "../../src/api/FakeGuildServer";
 import { FakeServer } from "../../src/api/FakeServer";
 import { GuildApiError, type GuildActor } from "../../src/api/guildContracts";
-import { GUILD_CREATE_GEMS, GUILD_ATTENDANCE_REWARD } from "../../src/core/guild";
+import { GUILD_ATTENDANCE_CYCLE, GUILD_CREATE_GEMS } from "../../src/core/guild";
 import { createDefaultSession } from "../../src/state/session";
 
 const BADGE = { shape: "shield", shapeColor: "blue", icon: "sword", iconColor: "silver" } as const;
@@ -35,13 +35,37 @@ describe("길드 메모리 서버", () => {
   it("출석은 하루 한 번이고 코인·부흥도를 올리며 상점 한도를 센다", async () => {
     const { server } = make();
     await server.createGuild(actor("a"), { name: "별빛", joinMode: "open", badge: BADGE }, "r1");
-    const stamped = await server.stampAttendance(actor("a"), "gold", "s1");
+    const stamped = await server.stampAttendance(actor("a"), "s1");
     expect(stamped.attendance.stampedToday).toBe(true);
-    expect(await code(() => server.stampAttendance(actor("a"), "gold", "s2"))).toBe("ALREADY_STAMPED");
+    expect(await code(() => server.stampAttendance(actor("a"), "s2"))).toBe("ALREADY_STAMPED");
     const state = await server.getGuild(actor("a"));
     expect(state.me!.coin).toBe(5);
     expect(state.guild!.prosperity).toBe(10);
     expect(await code(() => server.purchase(actor("a"), "guild-gold", "p1"))).toBe("INSUFFICIENT_COINS");
+  });
+});
+
+describe("길드 출석 순환", () => {
+  it("빠진 날이 있어도 이어서 찍고 7일차 다음 날 1일차로 돌아간다", async () => {
+    const { t, server } = make();
+    await server.createGuild(actor("a"), { name: "별빛", joinMode: "open", badge: BADGE }, "r1");
+    const days: number[] = [];
+    for (let i = 0; i < 9; i++) {
+      days.push((await server.stampAttendance(actor("a"), `s${i}`)).day);
+      t.now += (i === 2 ? 3 : 1) * 86_400_000; // 사흘째 뒤에 이틀을 빠진다
+    }
+    expect(days).toEqual([1, 2, 3, 4, 5, 6, 7, 1, 2]);
+    const coin = GUILD_ATTENDANCE_CYCLE.reduce((sum, d) => sum + d.coin, 0) + GUILD_ATTENDANCE_CYCLE[0].coin + GUILD_ATTENDANCE_CYCLE[1].coin;
+    expect((await server.getGuild(actor("a"))).me!.coin).toBe(coin);
+  });
+
+  it("7일차를 찍은 날은 7칸이 다 찬 판이고 다음 날 빈 판에서 1일차다", async () => {
+    const { t, server } = make();
+    await server.createGuild(actor("a"), { name: "별빛", joinMode: "open", badge: BADGE }, "r1");
+    for (let i = 0; i < 7; i++) { await server.stampAttendance(actor("a"), `s${i}`); if (i < 6) t.now += 86_400_000; }
+    expect(await server.getAttendance(actor("a"))).toMatchObject({ filled: 7, day: 7, stampedToday: true });
+    t.now += 86_400_000;
+    expect(await server.getAttendance(actor("a"))).toMatchObject({ filled: 0, day: 1, stampedToday: false });
   });
 });
 
@@ -55,8 +79,9 @@ describe("FakeServer 길드 조작", () => {
     await server.createGuild({ name: "별빛", joinMode: "open", badge: { ...BADGE } });
     expect(state.wallet.gems).toBe(5_000 - GUILD_CREATE_GEMS);
     const gold = state.wallet.gold;
-    await server.stampGuildAttendance({ choice: "gold" });
-    expect(state.wallet.gold).toBe(gold + GUILD_ATTENDANCE_REWARD.gold);
+    const stamped = await server.stampGuildAttendance({});
+    expect(stamped.day).toBe(1);
+    expect(state.wallet.gold).toBe(gold + GUILD_ATTENDANCE_CYCLE[0].reward.gold!);
     state.wallet.gems = 10;
     // 첫 변경은 무료, 그 뒤는 젬 500이 든다.
     expect(await code(() => server.changeGuildBadge({ badge: { shape: "hexagon", shapeColor: "crimson", icon: "leaf", iconColor: "ink" } }))).toBe("ok");

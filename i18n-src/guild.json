@@ -29,26 +29,6 @@
     "Mitglieder",
     "Участники"
   ],
-  "guild.tab.attendance": [
-    "签到",
-    "เช็กชื่อ",
-    "Điểm danh",
-    "Absensi",
-    "Asistencia",
-    "Presença",
-    "Anwesenheit",
-    "Посещаемость"
-  ],
-  "guild.tab.shop": [
-    "商店",
-    "ร้านค้า",
-    "Cửa hàng",
-    "Toko",
-    "Tienda",
-    "Loja",
-    "Shop",
-    "Магазин"
-  ],
   "guild.role.leader": [
     "公会会长",
     "หัวหน้ากิลด์",
@@ -529,16 +509,6 @@
     "Gildenleitung {name}",
     "Глава гильдии {name}"
   ],
-  "guild.info.me": [
-    "{role} · 公会币 {coin} · 本周贡献 {week}",
-    "{role} · เหรียญกิลด์ {coin} · ผลงานสัปดาห์นี้ {week}",
-    "{role} · Xu Bang hội {coin} · Cống hiến tuần {week}",
-    "{role} · Koin guild {coin} · Kontribusi mingguan {week}",
-    "{role} · Monedas del gremio {coin} · Contribución semanal {week}",
-    "{role} · Moedas da guilda {coin} · Contribuição semanal {week}",
-    "{role} · Gildenmünzen {coin} · Wochenbeitrag {week}",
-    "{role} · Монеты гильдии {coin} · Вклад за неделю {week}"
-  ],
   "guild.info.perkExcavation": [
     "采掘产量 +{value}%",
     "ผลผลิตการขุดค้น +{value}%",
@@ -879,186 +849,6 @@
     "Schließen",
     "Закрыть"
   ],
-  "guild.attendance.summary": [
-    "本周签到{count}/{total}天",
-    "เช็กชื่อสัปดาห์นี้ {count}/{total} วัน",
-    "Điểm danh tuần này {count}/{total} ngày",
-    "Hadir {count}/{total} hari minggu ini",
-    "Asistencia semanal: {count}/{total} días",
-    "Presença semanal: {count}/{total} dias",
-    "Diese Woche {count}/{total} Tage anwesend",
-    "Посещений за неделю: {count}/{total}"
-  ],
-  "guild.attendance.day": [
-    "{day}",
-    "{day}",
-    "{day}",
-    "{day}",
-    "{day}",
-    "{day}",
-    "{day}",
-    "{day}"
-  ],
-  "guild.attendance.today": [
-    "今天",
-    "วันนี้",
-    "Hôm nay",
-    "Hari ini",
-    "Hoy",
-    "Hoje",
-    "Heute",
-    "Сегодня"
-  ],
-  "guild.attendance.stamped": [
-    "已完成",
-    "เสร็จสิ้น",
-    "Hoàn thành",
-    "Selesai",
-    "Completadas",
-    "Concluídas",
-    "Abgeschlossen",
-    "Завершены"
-  ],
-  "guild.attendance.pickGold": [
-    "金币 {value}",
-    "ทอง {value}",
-    "Vàng {value}",
-    "Emas {value}",
-    "Oro {value}",
-    "Ouro {value}",
-    "Gold {value}",
-    "Золото {value}"
-  ],
-  "guild.attendance.pickCheesecake": [
-    "芝士蛋糕 {value}",
-    "ชีสเค้ก {value}",
-    "Bánh phô mai {value}",
-    "Cheesecake {value}",
-    "Tarta de queso {value}",
-    "Cheesecake {value}",
-    "Käsekuchen {value}",
-    "Чизкейк {value}"
-  ],
-  "guild.attendance.gain": [
-    "印章1个 · 繁荣度 +{prosperity} · 贡献 +{contribution} · 公会币 +{coin}",
-    "ตรา 1 ดวง · ความรุ่งเรือง +{prosperity} · ผลงาน +{contribution} · เหรียญกิลด์ +{coin}",
-    "1 dấu · Phồn vinh +{prosperity} · Cống hiến +{contribution} · Xu Bang hội +{coin}",
-    "1 stempel · Kemakmuran +{prosperity} · Kontribusi +{contribution} · Koin guild +{coin}",
-    "1 sello · Prosperidad +{prosperity} · Contribución +{contribution} · Monedas del gremio +{coin}",
-    "1 selo · Prosperidade +{prosperity} · Contribuição +{contribution} · Moedas da guilda +{coin}",
-    "1 Stempel · Wohlstand +{prosperity} · Beitrag +{contribution} · Gildenmünzen +{coin}",
-    "1 отметка · Процветание +{prosperity} · Вклад +{contribution} · Монеты гильдии +{coin}"
-  ],
-  "guild.attendance.weekBonus": [
-    "全勤7天 · 宝石 {gems} · 硬币 {coin}",
-    "ครบ 7 วัน · เจม {gems} · เหรียญ {coin}",
-    "Đủ 7 ngày · Ngọc {gems} · Xu {coin}",
-    "Hadir 7 hari · Permata {gems} · Koin {coin}",
-    "7 días · Gemas {gems} · Monedas {coin}",
-    "7 dias · Gemas {gems} · Moedas {coin}",
-    "Alle 7 Tage · Juwelen {gems} · Münzen {coin}",
-    "Все 7 дней · Самоцветы {gems} · Монеты {coin}"
-  ],
-  "guild.attendance.weekClaimed": [
-    "已领取本周奖励",
-    "รับโบนัสสัปดาห์นี้แล้ว",
-    "Đã nhận thưởng tuần",
-    "Bonus mingguan diklaim",
-    "Bono semanal recibido",
-    "Bônus semanal recebido",
-    "Wochenbonus erhalten",
-    "Недельный бонус получен"
-  ],
-  "guild.attendance.done": [
-    "已签到",
-    "เช็กชื่อแล้ว",
-    "Đã điểm danh",
-    "Kehadiran tercatat",
-    "Asistencia registrada",
-    "Presença registrada",
-    "Anwesenheit erfasst",
-    "Посещение отмечено"
-  ],
-  "guild.attendance.bonus": [
-    "已领取每周签到奖励",
-    "รับโบนัสเช็กชื่อรายสัปดาห์แล้ว",
-    "Đã nhận thưởng điểm danh tuần",
-    "Bonus absensi mingguan diklaim",
-    "Bono de asistencia recibido",
-    "Bônus de presença recebido",
-    "Anwesenheitsbonus erhalten",
-    "Бонус посещаемости получен"
-  ],
-  "guild.day.0": [
-    "周一",
-    "จ.",
-    "T2",
-    "Sen",
-    "Lun",
-    "Seg",
-    "Mo",
-    "Пн"
-  ],
-  "guild.day.1": [
-    "周二",
-    "อ.",
-    "T3",
-    "Sel",
-    "Mar",
-    "Ter",
-    "Di",
-    "Вт"
-  ],
-  "guild.day.2": [
-    "周三",
-    "พ.",
-    "T4",
-    "Rab",
-    "Mié",
-    "Qua",
-    "Mi",
-    "Ср"
-  ],
-  "guild.day.3": [
-    "周四",
-    "พฤ.",
-    "T5",
-    "Kam",
-    "Jue",
-    "Qui",
-    "Do",
-    "Чт"
-  ],
-  "guild.day.4": [
-    "周五",
-    "ศ.",
-    "T6",
-    "Jum",
-    "Vie",
-    "Sex",
-    "Fr",
-    "Пт"
-  ],
-  "guild.day.5": [
-    "周六",
-    "ส.",
-    "T7",
-    "Sab",
-    "Sáb",
-    "Sáb",
-    "Sa",
-    "Сб"
-  ],
-  "guild.day.6": [
-    "周日",
-    "อา.",
-    "CN",
-    "Min",
-    "Dom",
-    "Dom",
-    "So",
-    "Вс"
-  ],
   "guild.time.hm": [
     "{h}小时{m}分钟",
     "{h} ชม. {m} นาที",
@@ -1078,16 +868,6 @@
     "{m} min",
     "{m} Min.",
     "{m} мин"
-  ],
-  "guild.shop.coin": [
-    "公会币 {coin}",
-    "เหรียญกิลด์ {coin}",
-    "Xu Bang hội {coin}",
-    "Koin guild {coin}",
-    "Monedas del gremio {coin}",
-    "Moedas da guilda {coin}",
-    "Gildenmünzen {coin}",
-    "Монеты гильдии {coin}"
   ],
   "guild.shop.price": [
     "硬币 {price}",
@@ -1158,36 +938,6 @@
     "Bebida energética",
     "Energydrink",
     "Энергетик"
-  ],
-  "guild.shop.grantGold": [
-    "金币 {value}",
-    "ทอง {value}",
-    "Vàng {value}",
-    "Emas {value}",
-    "Oro {value}",
-    "Ouro {value}",
-    "Gold {value}",
-    "Золото {value}"
-  ],
-  "guild.shop.grantCheesecake": [
-    "芝士蛋糕 {value}",
-    "ชีสเค้ก {value}",
-    "Bánh phô mai {value}",
-    "Cheesecake {value}",
-    "Tarta de queso {value}",
-    "Cheesecake {value}",
-    "Käsekuchen {value}",
-    "Чизкейк {value}"
-  ],
-  "guild.shop.grantTonic": [
-    "能量饮料 ×{value}",
-    "เครื่องดื่มชูกำลัง ×{value}",
-    "Nước tăng lực ×{value}",
-    "Minuman energi ×{value}",
-    "Bebidas energéticas ×{value}",
-    "Bebidas energéticas ×{value}",
-    "Energydrinks ×{value}",
-    "Энергетики ×{value}"
   ],
   "guild.error.generic": [
     "暂时无法使用公会",
@@ -1438,5 +1188,375 @@
     "Solicitação inválida",
     "Ungültige Anfrage",
     "Некорректный запрос"
+  ],
+  "guild.page.info": [
+    "信息",
+    "ข้อมูล",
+    "Thông tin",
+    "Info",
+    "Información",
+    "Informações",
+    "Info",
+    "Информация"
+  ],
+  "guild.page.war": [
+    "公会战",
+    "สงครามกิลด์",
+    "Chiến Bang hội",
+    "Perang Guild",
+    "Guerra de gremios",
+    "Guerra de guildas",
+    "Gildenkrieg",
+    "Война гильдий"
+  ],
+  "guild.page.guard": [
+    "公会守护战",
+    "ศึกพิทักษ์กิลด์",
+    "Trận Hộ vệ Bang hội",
+    "Pertahanan Guild",
+    "Defensa del gremio",
+    "Defesa da guilda",
+    "Gildenwacht",
+    "Защита гильдии"
+  ],
+  "guild.menu.chip": [
+    "公会菜单",
+    "เมนูกิลด์",
+    "Menu Bang hội",
+    "Menu Guild",
+    "Menú del gremio",
+    "Menu da guilda",
+    "Gildenmenü",
+    "Меню гильдии"
+  ],
+  "guild.menu.title": [
+    "公会菜单",
+    "เมนูกิลด์",
+    "Menu Bang hội",
+    "Menu Guild",
+    "Menú del gremio",
+    "Menu da guilda",
+    "Gildenmenü",
+    "Меню гильдии"
+  ],
+  "guild.menu.back": [
+    "返回",
+    "กลับ",
+    "Quay lại",
+    "Kembali",
+    "Volver",
+    "Voltar",
+    "Zurück",
+    "Назад"
+  ],
+  "guild.menu.browse": [
+    "查找其他公会",
+    "ค้นหากิลด์อื่น",
+    "Tìm Bang hội khác",
+    "Cari guild lain",
+    "Buscar otros gremios",
+    "Procurar outras guildas",
+    "Andere Gilden suchen",
+    "Найти другие гильдии"
+  ],
+  "guild.ranking.title": [
+    "公会排名",
+    "อันดับกิลด์",
+    "Xếp hạng Bang hội",
+    "Peringkat Guild",
+    "Clasificación de gremios",
+    "Ranking de guildas",
+    "Gildenrangliste",
+    "Рейтинг гильдий"
+  ],
+  "guild.shop.title": [
+    "公会商店",
+    "ร้านค้ากิลด์",
+    "Cửa hàng Bang hội",
+    "Toko Guild",
+    "Tienda del gremio",
+    "Loja da guilda",
+    "Gildenshop",
+    "Магазин гильдии"
+  ],
+  "guild.info.me": [
+    "我的职位 · {role}",
+    "ตำแหน่งของฉัน · {role}",
+    "Chức vụ của tôi · {role}",
+    "Jabatanku · {role}",
+    "Mi cargo · {role}",
+    "Meu cargo · {role}",
+    "Meine Rolle · {role}",
+    "Моя должность · {role}"
+  ],
+  "guild.info.contribution": [
+    "本周贡献 {week} · 累计 {total}",
+    "ผลงานสัปดาห์นี้ {week} · สะสม {total}",
+    "Cống hiến tuần {week} · Tổng {total}",
+    "Kontribusi mingguan {week} · Total {total}",
+    "Contribución semanal {week} · Total {total}",
+    "Contribuição semanal {week} · Total {total}",
+    "Wochenbeitrag {week} · Gesamt {total}",
+    "Вклад за неделю {week} · Всего {total}"
+  ],
+  "guild.info.coin": [
+    "持有公会币 {coin}",
+    "เหรียญกิลด์ที่มี {coin}",
+    "Xu Bang hội đang có {coin}",
+    "Koin guild dimiliki {coin}",
+    "Monedas del gremio: {coin}",
+    "Moedas da guilda: {coin}",
+    "Gildenmünzen: {coin}",
+    "Монеты гильдии: {coin}"
+  ],
+  "guild.attendance.title": [
+    "公会签到",
+    "เช็กชื่อกิลด์",
+    "Điểm danh Bang hội",
+    "Absen Guild",
+    "Asistencia del gremio",
+    "Presença na guilda",
+    "Gildenanwesenheit",
+    "Отметка в гильдии"
+  ],
+  "guild.attendance.dayLabel": [
+    "第{day}天",
+    "วันที่ {day}",
+    "Ngày {day}",
+    "Hari {day}",
+    "Día {day}",
+    "Dia {day}",
+    "Tag {day}",
+    "День {day}"
+  ],
+  "guild.attendance.cellGain": [
+    "贡献 +{contribution} · 币 +{coin}",
+    "ผลงาน +{contribution} · เหรียญ +{coin}",
+    "Cống hiến +{contribution} · Xu +{coin}",
+    "Kontrib. +{contribution} · Koin +{coin}",
+    "Contrib. +{contribution} · Monedas +{coin}",
+    "Contrib. +{contribution} · Moedas +{coin}",
+    "Beitrag +{contribution} · Münzen +{coin}",
+    "Вклад +{contribution} · Монеты +{coin}"
+  ],
+  "guild.attendance.gain": [
+    "每天 贡献 +{contribution} · 公会币 +{coin}\n第7天 贡献 +{finalContribution} · 公会币 +{finalCoin} · 中途缺勤也会接着盖章",
+    "ทุกวัน ผลงาน +{contribution} · เหรียญกิลด์ +{coin}\nวันที่ 7 ผลงาน +{finalContribution} · เหรียญกิลด์ +{finalCoin} · ขาดบางวันก็นับต่อได้",
+    "Mỗi ngày: cống hiến +{contribution} · Xu Bang hội +{coin}\nNgày 7: cống hiến +{finalContribution} · Xu Bang hội +{finalCoin} · Bỏ lỡ ngày vẫn được tính tiếp",
+    "Harian: kontribusi +{contribution} · Koin guild +{coin}\nHari 7: kontribusi +{finalContribution} · Koin guild +{finalCoin} · Hari yang terlewat tidak mengulang",
+    "Cada día: contribución +{contribution} · Monedas del gremio +{coin}\nDía 7: contribución +{finalContribution} · Monedas del gremio +{finalCoin} · Los días perdidos no reinician",
+    "Todo dia: contribuição +{contribution} · Moedas da guilda +{coin}\nDia 7: contribuição +{finalContribution} · Moedas da guilda +{finalCoin} · Dias perdidos não reiniciam",
+    "Täglich: Beitrag +{contribution} · Gildenmünzen +{coin}\nTag 7: Beitrag +{finalContribution} · Gildenmünzen +{finalCoin} · Verpasste Tage setzen nicht zurück",
+    "Каждый день: вклад +{contribution} · Монеты гильдии +{coin}\nДень 7: вклад +{finalContribution} · Монеты гильдии +{finalCoin} · Пропуски не сбрасывают отметки"
+  ],
+  "guild.attendance.receipt": [
+    "第{day}天签到",
+    "เช็กชื่อวันที่ {day}",
+    "Điểm danh ngày {day}",
+    "Absen hari {day}",
+    "Asistencia del día {day}",
+    "Presença do dia {day}",
+    "Anwesenheit Tag {day}",
+    "Отметка: день {day}"
+  ],
+  "guild.attendance.footnote": [
+    "贡献 +{contribution} · 繁荣度 +{prosperity}",
+    "ผลงาน +{contribution} · ความรุ่งเรือง +{prosperity}",
+    "Cống hiến +{contribution} · Phồn vinh +{prosperity}",
+    "Kontribusi +{contribution} · Kemakmuran +{prosperity}",
+    "Contribución +{contribution} · Prosperidad +{prosperity}",
+    "Contribuição +{contribution} · Prosperidade +{prosperity}",
+    "Beitrag +{contribution} · Wohlstand +{prosperity}",
+    "Вклад +{contribution} · Процветание +{prosperity}"
+  ],
+  "guild.members.applied": [
+    "申请加入",
+    "คำขอเข้าร่วม",
+    "Xin gia nhập",
+    "Permintaan gabung",
+    "Solicitud",
+    "Pedido de entrada",
+    "Beitrittsanfrage",
+    "Заявка"
+  ],
+  "guild.members.week": [
+    "本周贡献",
+    "สัปดาห์นี้",
+    "Tuần này",
+    "Minggu ini",
+    "Esta semana",
+    "Esta semana",
+    "Diese Woche",
+    "За неделю"
+  ],
+  "guild.members.total": [
+    "累计 {value}",
+    "สะสม {value}",
+    "Tổng {value}",
+    "Total {value}",
+    "Total {value}",
+    "Total {value}",
+    "Gesamt {value}",
+    "Всего {value}"
+  ],
+  "guild.members.manage": [
+    "管理",
+    "จัดการ",
+    "Quản lý",
+    "Kelola",
+    "Gestionar",
+    "Gerenciar",
+    "Verwalten",
+    "Управление"
+  ],
+  "guild.profile.title": [
+    "公会成员信息",
+    "ข้อมูลสมาชิกกิลด์",
+    "Thông tin thành viên Bang hội",
+    "Info anggota guild",
+    "Miembro del gremio",
+    "Membro da guilda",
+    "Gildenmitglied",
+    "Участник гильдии"
+  ],
+  "guild.profile.role": [
+    "职位",
+    "ตำแหน่ง",
+    "Chức vụ",
+    "Jabatan",
+    "Cargo",
+    "Cargo",
+    "Rolle",
+    "Должность"
+  ],
+  "guild.profile.contribution": [
+    "本周贡献",
+    "ผลงานสัปดาห์นี้",
+    "Cống hiến tuần",
+    "Kontribusi mingguan",
+    "Contribución semanal",
+    "Contribuição semanal",
+    "Wochenbeitrag",
+    "Вклад за неделю"
+  ],
+  "guild.war.battle": [
+    "战斗日",
+    "วันรบ",
+    "Ngày giao chiến",
+    "Hari pertempuran",
+    "Día de batalla",
+    "Dia de batalha",
+    "Kampftag",
+    "День битвы"
+  ],
+  "guild.war.prep": [
+    "整备日",
+    "วันเตรียมพร้อม",
+    "Ngày chuẩn bị",
+    "Hari persiapan",
+    "Día de preparación",
+    "Dia de preparação",
+    "Vorbereitungstag",
+    "День подготовки"
+  ],
+  "guild.war.battleEnds": [
+    "距战斗结束 {time}",
+    "สิ้นสุดการรบใน {time}",
+    "Kết thúc giao chiến sau {time}",
+    "Pertempuran berakhir dalam {time}",
+    "La batalla termina en {time}",
+    "A batalha termina em {time}",
+    "Kampf endet in {time}",
+    "До конца битвы {time}"
+  ],
+  "guild.war.prepEnds": [
+    "距战斗开始 {time}",
+    "เริ่มการรบใน {time}",
+    "Giao chiến bắt đầu sau {time}",
+    "Pertempuran dimulai dalam {time}",
+    "La batalla empieza en {time}",
+    "A batalha começa em {time}",
+    "Kampf beginnt in {time}",
+    "До начала битвы {time}"
+  ],
+  "guild.war.noScore": [
+    "暂无公会战记录",
+    "ยังไม่มีบันทึกสงครามกิลด์",
+    "Chưa có thành tích Chiến Bang hội",
+    "Belum ada catatan Perang Guild",
+    "Sin registro de guerra de gremios",
+    "Sem registro de guerra de guildas",
+    "Noch kein Gildenkrieg-Eintrag",
+    "Нет записей войны гильдий"
+  ],
+  "guild.war.score": [
+    "公会战积分 {score} · 第{rank}名",
+    "คะแนนสงครามกิลด์ {score} · อันดับ {rank}",
+    "Điểm Chiến Bang hội {score} · Hạng {rank}",
+    "Skor Perang Guild {score} · Peringkat {rank}",
+    "Puntos de guerra de gremios {score} · Puesto {rank}",
+    "Pontos de guerra de guildas {score} · {rank}º",
+    "Gildenkrieg-Punkte {score} · Rang {rank}",
+    "Очки войны гильдий {score} · Место {rank}"
+  ],
+  "guild.war.slots": [
+    "防守阵 {count}格",
+    "ช่องแนวป้องกัน {count}",
+    "Ô phòng thủ {count}",
+    "Slot pertahanan {count}",
+    "Puestos defensivos {count}",
+    "Posições de defesa {count}",
+    "Verteidigungsplätze {count}",
+    "Ячеек обороны: {count}"
+  ],
+  "guild.war.members": [
+    "参加条件 公会成员{need}人以上 · 当前{count}人",
+    "ต้องมีสมาชิกกิลด์ {need} คนขึ้นไป · ตอนนี้ {count}",
+    "Cần từ {need} thành viên Bang hội · Hiện {count}",
+    "Perlu {need}+ anggota guild · Kini {count}",
+    "Requiere {need}+ miembros del gremio · Ahora {count}",
+    "Requer {need}+ membros da guilda · Agora {count}",
+    "Benötigt {need}+ Gildenmitglieder · Jetzt {count}",
+    "Нужно {need}+ участников гильдии · Сейчас {count}"
+  ],
+  "guild.guard.boss": [
+    "今日首领 · {element}属性",
+    "บอสวันนี้ · ธาตุ{element}",
+    "Trùm hôm nay · Hệ {element}",
+    "Bos hari ini · {element}",
+    "Jefe de hoy · {element}",
+    "Chefe de hoje · {element}",
+    "Heutiger Boss · {element}",
+    "Босс дня · {element}"
+  ],
+  "guild.guard.next": [
+    "距下一场 {time}",
+    "รอบถัดไปใน {time}",
+    "Lượt tiếp theo sau {time}",
+    "Babak berikutnya dalam {time}",
+    "Próxima ronda en {time}",
+    "Próxima rodada em {time}",
+    "Nächste Runde in {time}",
+    "До следующего раунда {time}"
+  ],
+  "guild.guard.rule": [
+    "每天1次 · 3人队伍2组",
+    "วันละ 1 ครั้ง · ทีม 3 คน 2 ชุด",
+    "1 lần/ngày · 2 đội 3 người",
+    "Sekali sehari · Dua dek 3 orang",
+    "Una vez al día · Dos equipos de 3",
+    "Uma vez por dia · Dois times de 3",
+    "Einmal täglich · Zwei 3er-Decks",
+    "Раз в день · Две команды по 3"
+  ],
+  "guild.guard.reward": [
+    "奖励 · 公会币 · 繁荣度",
+    "รางวัล · เหรียญกิลด์ · ความรุ่งเรือง",
+    "Thưởng · Xu Bang hội · Phồn vinh",
+    "Hadiah · Koin guild · Kemakmuran",
+    "Recompensas · Monedas del gremio · Prosperidad",
+    "Recompensas · Moedas da guilda · Prosperidade",
+    "Belohnungen · Gildenmünzen · Wohlstand",
+    "Награды · Монеты гильдии · Процветание"
   ]
 }

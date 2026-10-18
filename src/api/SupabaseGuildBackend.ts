@@ -1,5 +1,5 @@
-import { GUILD_ATTENDANCE_CHOICES, GUILD_NOTICE_MAX, findGuildProduct, guildGlyphCount, guildNameKey, validateGuildName } from "../core/guild";
-import type { GuildAttendanceChoice, GuildJoinMode, GuildRole } from "../core/guild";
+import { GUILD_NOTICE_MAX, findGuildProduct, guildGlyphCount, guildNameKey, validateGuildName } from "../core/guild";
+import type { GuildJoinMode, GuildRole } from "../core/guild";
 import { isGuildBadge, type GuildBadge } from "../core/guildBadge";
 import { GuildApiError, type GuildActor, type GuildBackend } from "./guildContracts";
 
@@ -63,10 +63,7 @@ export function createSupabaseGuildBackend(call: GuildCaller): GuildBackend {
       if (!isGuildBadge(badge)) throw new GuildApiError("BADGE_INVALID", "BADGE_INVALID");
       return run(actor, "changeBadge", [badge], requestId);
     },
-    stampAttendance: (actor, choice: GuildAttendanceChoice, requestId) => {
-      if (!GUILD_ATTENDANCE_CHOICES.includes(choice)) invalid();
-      return run(actor, "stampAttendance", [choice], requestId);
-    },
+    stampAttendance: (actor, requestId) => run(actor, "stampAttendance", [], requestId),
     purchase: (actor, productId, requestId) => {
       if (!findGuildProduct(productId)) throw new GuildApiError("PRODUCT_NOT_FOUND", "PRODUCT_NOT_FOUND");
       return run(actor, "purchase", [productId], requestId);

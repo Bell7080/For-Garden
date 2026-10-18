@@ -55,7 +55,7 @@ import { simulateDuelDefenses } from "../core/duelDefense";
 import { combatPower } from "../core/combatPower";
 import type { ClaimDuelSeasonRewardResponse, DuelRankingResponse, DuelStatusResponse, EnterDuelRequest, EnterDuelResponse, ResolveDuelRequest, ResolveDuelResponse, SetDuelDefenseRequest } from "./contracts";
 import { WALLET_CAPS } from "../data/economy";
-import { GUILD_ATTENDANCE_REWARD, GUILD_ATTENDANCE_WEEK_BONUS, GUILD_BADGE_CHANGE_GEMS, GUILD_CREATE_GEMS, findGuildProduct } from "../core/guild";
+import { GUILD_BADGE_CHANGE_GEMS, guildAttendanceDay, GUILD_CREATE_GEMS, findGuildProduct } from "../core/guild";
 import { sameGuildBadge } from "../core/guildBadge";
 import { localGuildBackend } from "./FakeGuildServer";
 import { guildActorFrom } from "./guildActor";
@@ -1470,12 +1470,12 @@ export class FakeServer implements GameApi {
     return { ...this.snapshot(), guild: await this.guildBackend.getGuild(actor) };
   }
 
-  async stampGuildAttendance(request: StampGuildAttendanceRequest): Promise<StampGuildAttendanceResponse> {
+  async stampGuildAttendance(_request: StampGuildAttendanceRequest = {}): Promise<StampGuildAttendanceResponse> {
     await this.delay();
-    const stamped = await this.guildBackend.stampAttendance(this.guildActor(), request.choice, this.guildRequestId("stamp"));
-    const gold = request.choice === "gold" ? GUILD_ATTENDANCE_REWARD.gold : 0;
-    const cheesecake = request.choice === "cheesecake" ? GUILD_ATTENDANCE_REWARD.cheesecake : 0;
-    const gems = stamped.weekBonus ? GUILD_ATTENDANCE_WEEK_BONUS.gems : 0;
+    const stamped = await this.guildBackend.stampAttendance(this.guildActor(), this.guildRequestId("stamp"));
+    // 몫은 백엔드가 확정한 칸 번호에서만 읽는다 — 클라이언트가 고르는 값이 없다.
+    const { reward } = guildAttendanceDay(stamped.day);
+    const gold = reward.gold ?? 0, cheesecake = reward.cheesecake ?? 0, gems = reward.gems ?? 0;
     // 상한을 넘기는 몫은 던지지 않고 깎아서 준다 — 던지면 가득 찬 계정은 도장을 찍을 수 없다.
     const wallet = { ...this.state.wallet };
     const granted = { gold: 0, cheesecake: 0, gems: 0 };
@@ -1486,7 +1486,7 @@ export class FakeServer implements GameApi {
     const next = { ...this.state, wallet };
     this.persist(next);
     this.state.wallet = wallet;
-    return { ...this.snapshot(), attendance: stamped.attendance, granted, weekBonus: stamped.weekBonus };
+    return { ...this.snapshot(), attendance: stamped.attendance, granted, day: stamped.day };
   }
 
   async buyGuildProduct(request: BuyGuildProductRequest): Promise<BuyGuildProductResponse> {

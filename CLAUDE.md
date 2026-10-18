@@ -366,6 +366,8 @@
 - **규칙은 `src/core/guild*.ts` 순수 모듈이 갖는다**(레벨·정원·혜택 표 `GUILD_LEVELS`, 직위 권한 `guildCan`, 상점 `GUILD_SHOP_PRODUCTS`, 뱃지 `guildBadge.ts`). 화면이 수를 다시 적지 않는다. DB 함수에 옮겨 적은 표는 `tests/unit/guildSql.test.ts`가 TS 표와 대조한다.
 - **길드 상태는 `GuildBackend`가 소유하고 지갑이 얽힌 네 조작(`createGuild`·`changeGuildBadge`·`stampGuildAttendance`·`buyGuildProduct`)만 `GameApi`가 한 호출 안에서 확정한다.** 호출자(이름·레벨·얼굴)는 클라이언트가 보내지 않고 서버가 저장된 진행에서 만든다(`guildActorFrom`). 길드 코인은 길드원 행이 들고 지갑에 두지 않는다.
 - **뱃지는 길드장만 바꾸고 첫 변경은 무료, 이후 젬 500이다.** 길드 만들기는 젬 2,000, 레벨 7부터 열린다(`CONTENT_UNLOCKS`). 이름은 2~12자의 문자·숫자·공백이고 문자 검증은 TS가 먼저 한다.
+- **출석은 탭이 아니라 7일 순환 도장판이다**(`GUILD_ATTENDANCE_CYCLE`). 길드 화면에 처음 들어온 날 판이 떠 도장이 찍히고, 빠진 날은 초기화하지 않으며 7일차 다음 날 1일차로 돌아간다. 고를 것이 없다(골드·치즈케이크가 번갈아, 7일차 젬) — 기여도·코인·부흥도는 7일차만 더 크다.
+- **화면은 큰 탭 셋(정보·길드전·수호전, `GUILD_PAGES`)이 가르고 정보 안에 작은 탭(정보·멤버)이 선다.** 길드전·수호전의 붉은 점은 그 판의 주기 키(`guildPageEventKey`)가 기기에 남은 본 값(`settings.game.guildSeen` — 계정 설정에 섞지 않는다)과 다를 때만 선다. 상점·순위는 정보 왼쪽 칩, 다른 길드 찾기·탈퇴는 오른쪽 위 메뉴 칩이 연다. 멤버 줄을 누르면 친구 카드와 같은 `PlayerProfilePopup`이 연다(`guildMemberProfileDisplay`).
 - 수호전·길드전·혜택 적용은 2~4단계다(`guildWar.ts`는 주기 계산만). 설계 원본은 `/mnt/project-files/guild/proposal.md`.
 
 ## 연구원 레벨과 플레이어 카드

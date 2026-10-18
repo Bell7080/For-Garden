@@ -1228,13 +1228,14 @@ export function persistenceFailed(error: unknown, messageKey: TextKey = "error.p
 // ── 길드: 지갑이 얽힌 조작 ─────────────────────────────────────────────────────
 export interface CreateGuildRequest { name: string; joinMode: import("../core/guild").GuildJoinMode; badge: import("../core/guildBadge").GuildBadge }
 export interface ChangeGuildBadgeRequest { badge: import("../core/guildBadge").GuildBadge }
-export interface StampGuildAttendanceRequest { choice: import("../core/guild").GuildAttendanceChoice }
+export type StampGuildAttendanceRequest = Record<string, never>;
 export interface BuyGuildProductRequest { productId: string }
 export interface GuildWalletResponse extends PlayerStateDto { guild: import("./guildContracts").GuildStateResponse }
 export interface StampGuildAttendanceResponse extends PlayerStateDto {
   attendance: import("./guildContracts").GuildAttendanceState;
-  /** 이번 도장으로 받은 몫(주 7칸 보너스의 젬 포함). */
+  /** 이번 도장으로 받은 몫(상한에 걸리면 깎인 값). */
   granted: { gold: number; cheesecake: number; gems: number };
-  weekBonus: boolean;
+  /** 찍은 칸의 번호(1~7). 길드 쪽 몫(기여도·코인)은 `guildAttendanceDay(day)`가 말한다. */
+  day: number;
 }
 export interface BuyGuildProductResponse extends PlayerStateDto { shop: import("./guildContracts").GuildShopState; productId: string }

@@ -1,5 +1,5 @@
 import type { GuildBadge } from "../core/guildBadge";
-import type { GuildAttendanceChoice, GuildJoinMode, GuildRole } from "../core/guild";
+import type { GuildJoinMode, GuildRole } from "../core/guild";
 
 /**
  * 길드 서버 경계의 계약. 규칙은 `src/core/guild*.ts` 순수 모듈이 갖고, 이 파일은 응답 모양과 오류 코드만 갖는다.
@@ -22,7 +22,19 @@ export class GuildApiError extends Error {
 }
 
 /** 길드 백엔드가 호출자를 알아보는 값. 서버는 JWT의 사용자와 저장된 진행에서 만들고 클라이언트의 말을 쓰지 않는다. */
-export interface GuildActor { userId: string; name: string; level: number; avatarRelicId: string; frameId: string }
+export interface GuildActor { userId: string; name: string; level: number; avatarRelicId: string; frameId: string; card?: GuildMemberCard }
+
+/**
+ * 길드원이 서로 보는 공개 카드 — 친구 카드와 같은 값만 담는다(인증·계정 내부 키는 없다).
+ * 서버가 저장된 진행에서 굳혀 호출마다 길드원 행에 새로 적는다.
+ */
+export interface GuildMemberCard {
+  uid: string;
+  bio: string;
+  favorite: { relicId: string; level: number; breakthroughGrade: number; power: number; skinId: string | null } | null;
+  highestStageId: string | null;
+  expeditionBest: number;
+}
 
 export interface GuildSummary {
   id: string; name: string; badge: GuildBadge; level: number; memberCount: number; capacity: number;
@@ -51,20 +63,21 @@ export interface GuildStateResponse {
 export interface GuildMemberView {
   userId: string; name: string; level: number; role: GuildRole; avatarRelicId: string; frameId: string;
   contributionWeek: number; contributionTotal: number; lastActiveAt: number; isMe: boolean;
+  /** 카드를 아직 한 번도 적지 않은 길드원(가입 직후)은 null이다. */
+  card: GuildMemberCard | null;
 }
 export interface GuildJoinRequestView { userId: string; name: string; level: number; avatarRelicId: string; frameId: string; requestedAt: number }
 export interface GuildMembersResponse { members: GuildMemberView[]; requests: GuildJoinRequestView[]; serverTime: number }
 
 export interface GuildSearchResponse { guilds: GuildSummary[]; serverTime: number }
 
+/** 일곱 칸을 도는 출석 도장판(`guildAttendanceView`). */
 export interface GuildAttendanceState {
-  weekKey: string;
-  /** 월요일부터 7칸. 찍은 칸은 고른 보상, 아니면 null이다. */
-  stamps: (GuildAttendanceChoice | null)[];
-  /** 오늘이 도장판의 몇 번째 칸인가(월요일 0). */
-  todayIndex: number;
+  /** 이번 바퀴에 찍혀 보이는 칸 수(0~7). */
+  filled: number;
+  /** 오늘 찍을(또는 찍은) 칸의 번호(1~7). */
+  day: number;
   stampedToday: boolean;
-  weekBonusClaimed: boolean;
   serverTime: number;
 }
 export interface GuildShopItem { productId: string; price: number; weeklyLimit: number; bought: number }
@@ -119,6 +132,7 @@ export interface GuildBackend {
   createGuild(actor: GuildActor, input: { name: string; joinMode: GuildJoinMode; badge: GuildBadge }, requestId: string): Promise<GuildStateResponse>;
   /** 길드장만. 바뀌었는지와 값을 치러야 했는지(첫 변경은 무료)를 돌려줘 부르는 쪽이 젬을 받을지 정한다. */
   changeBadge(actor: GuildActor, badge: GuildBadge, requestId: string): Promise<{ changed: boolean; charged: boolean }>;
-  stampAttendance(actor: GuildActor, choice: GuildAttendanceChoice, requestId: string): Promise<{ attendance: GuildAttendanceState; weekBonus: boolean }>;
+  /** 오늘 칸을 찍는다. 돌려주는 `day`가 지갑에 들 몫을 정한다(`guildAttendanceDay`). */
+  stampAttendance(actor: GuildActor, requestId: string): Promise<{ attendance: GuildAttendanceState; day: number }>;
   purchase(actor: GuildActor, productId: string, requestId: string): Promise<{ shop: GuildShopState }>;
 }

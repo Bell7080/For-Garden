@@ -130,15 +130,42 @@ export const guildWeekdayIndex = (ms: number): number => (new Date(ms).getUTCDay
 
 // ── 출석 도장 ──────────────────────────────────────────────────────────────────
 
-export type GuildAttendanceChoice = "gold" | "cheesecake";
-export const GUILD_ATTENDANCE_CHOICES: readonly GuildAttendanceChoice[] = ["gold", "cheesecake"];
-/** 하루 도장 하나. 골드와 치즈케이크는 같은 환산 가치(일일 상점 소 구매분 정도, 젬 16)다. */
-export const GUILD_ATTENDANCE_REWARD: Readonly<Record<GuildAttendanceChoice, number>> = { gold: 8_000, cheesecake: 32 };
-/** 출석 한 번이 길드에 얹는 몫. 길드 코인은 상점의 씨앗이라 소량이다(수호전·길드전이 본 수급처). */
-export const GUILD_ATTENDANCE_GAIN = { prosperity: 10, contribution: 10, coin: 5 } as const;
-/** 한 주 7칸을 모두 찍으면 얹는 소량 보너스. */
-export const GUILD_ATTENDANCE_WEEK_BONUS = { gems: 20, contribution: 20, coin: 10 } as const;
-export const GUILD_STAMP_DAYS = 7;
+/** 하루 도장이 주는 것. `reward`는 지갑에, 나머지 셋은 길드(부흥도)와 길드원 행(기여도·코인)에 든다. */
+export interface GuildAttendanceDay {
+  reward: { gold?: number; cheesecake?: number; gems?: number };
+  prosperity: number;
+  contribution: number;
+  coin: number;
+}
+/**
+ * 일곱 칸을 도는 출석 — 빠진 날이 있어도 처음으로 돌아가지 않고, 7일차를 찍은 다음 날 1일차로 돌아간다.
+ * 1~6일차는 골드·치즈케이크가 번갈아(둘 다 젬 15 값), 7일차는 젬과 기여도·코인을 조금 더 얹는다.
+ * 길드 코인은 상점의 씨앗이라 소량이다(수호전·길드전이 본 수급처).
+ */
+const DAY = { prosperity: 10, contribution: 10, coin: 5 } as const;
+export const GUILD_ATTENDANCE_CYCLE: readonly GuildAttendanceDay[] = [
+  { reward: { gold: 7_500 }, ...DAY },
+  { reward: { cheesecake: 30 }, ...DAY },
+  { reward: { gold: 7_500 }, ...DAY },
+  { reward: { cheesecake: 30 }, ...DAY },
+  { reward: { gold: 7_500 }, ...DAY },
+  { reward: { cheesecake: 30 }, ...DAY },
+  { reward: { gems: 50 }, prosperity: 20, contribution: 30, coin: 15 },
+];
+export const GUILD_STAMP_DAYS = GUILD_ATTENDANCE_CYCLE.length;
+export const guildAttendanceDay = (day: number): GuildAttendanceDay =>
+  GUILD_ATTENDANCE_CYCLE[Math.min(GUILD_STAMP_DAYS, Math.max(1, Math.floor(day))) - 1];
+
+/**
+ * 이번 바퀴에 찍은 수(`count`, 0~7)와 마지막으로 찍은 날에서 오늘의 도장판을 셈한다.
+ * `filled`는 판에 찍혀 보이는 칸 수, `day`는 오늘 찍을(또는 찍은) 칸의 번호(1~7)다.
+ */
+export function guildAttendanceView(count: number, lastDay: string | null, today: string): { filled: number; day: number; stampedToday: boolean } {
+  const done = Math.min(GUILD_STAMP_DAYS, Math.max(0, Math.floor(count)));
+  if (lastDay === today && done > 0) return { filled: done, day: done, stampedToday: true };
+  const base = done >= GUILD_STAMP_DAYS ? 0 : done;
+  return { filled: base, day: base + 1, stampedToday: false };
+}
 
 // ── 상점 (길드 코인) ────────────────────────────────────────────────────────────
 

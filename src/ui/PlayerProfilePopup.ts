@@ -390,27 +390,29 @@ export class PlayerProfilePopup {
     const story = stats.storyProgress;
     const collection = this.profile.collection;
     // 공개하지 않은 기록은 칸째 뺀다 — 0이나 "기록 없음"으로 채우면 없는 기록을 있는 것처럼 말한다.
-    const tiles: { labelKey: TextKey; value: string; sub?: string; progress?: number }[] = [
+    const tiles: { label: string; value: string; sub?: string; progress?: number }[] = [
+      // 길드원 카드는 길드 안의 자리(직책·기여도)를 먼저 세운다 — 길드 화면에서 연 카드가 말해야 하는 것이 그것이다.
+      ...(this.profile.leadRecords ?? []),
       {
-        labelKey: "profile.record.story",
+        label: t("profile.record.story"),
         value: stats.highestStage ? compactProfileText(stats.highestStage.displayValue, 12) : t("profile.noRecord"),
         ...(story ? { sub: `${story.cleared} / ${story.total}`, progress: profileProgressRatio(story.cleared, story.total) } : {}),
       },
-      ...(stats.expedition ? [{ labelKey: "profile.record.expedition" as TextKey, value: stats.expedition.score.toLocaleString() }] : []),
+      ...(stats.expedition ? [{ label: t("profile.record.expedition"), value: stats.expedition.score.toLocaleString() }] : []),
       ...(collection ? [{
-        labelKey: "profile.record.collection" as TextKey,
+        label: t("profile.record.collection"),
         value: `${collection.owned} / ${collection.total}`,
         progress: profileProgressRatio(collection.owned, collection.total),
       }] : []),
-      { labelKey: "profile.arenaTier", value: stats.arenaTier?.displayName ?? t("profile.record.unranked") },
-    ];
+      { label: t("profile.arenaTier"), value: stats.arenaTier?.displayName ?? t("profile.record.unranked") },
+    ].slice(0, 4);
     tiles.forEach((tile, index) => {
       const x = (index % 2 === 0 ? -1 : 1) * records.columnX;
       const y = records.firstY + Math.floor(index / 2) * records.rowGap;
       const shape = chipPoints(records.width, records.height, { bevel: { topLeft: 20, topRight: 0, bottomRight: 20, bottomLeft: 0 } });
       body.add(drawLayer(this.scene, x, y, shape, { fill: 0x121a24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.45 }));
       const left = x - records.width / 2 + 30;
-      body.add(this.scene.add.text(left, y - 40, t(tile.labelKey), textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
+      body.add(this.scene.add.text(left, y - 40, tile.label, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
       body.add(this.scene.add.text(left, y + 4, tile.value, textStyle({ role: "display", size: 34, color: COLOR.ink })).setOrigin(0, 0.5));
       if (tile.sub) body.add(this.scene.add.text(x + records.width / 2 - 26, y - 40, tile.sub, textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(1, 0.5));
       if (tile.progress !== undefined) {

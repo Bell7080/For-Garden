@@ -25,6 +25,8 @@ export interface TopBarOptions {
   onSettings?: () => void; onProfile?: (profile: PlayerProfileDisplay) => void; onCurrency?: (currency: WalletItemKey) => void; currencies?: TopBarCurrencyContext; profile?: boolean;
   /** 결투 도전권 칸의 누름. 지갑 칸이 아니라 `onCurrency`로 넘길 수 없다. */
   onDuelTicket?: () => void;
+  /** 길드 코인 칸이 읽는 값. 지갑이 아니라 길드원 행이 들고 있어 화면이 서버에서 받은 값을 건넨다. */
+  guildCoin?: () => number;
   /**
    * 줄 전체를 올려 앉힐 깊이. 흐르는 지도처럼 그 위로 다른 층이 지나가는 화면에서만 준다 —
    * 비우면 예전처럼 만든 순서대로 쌓인다.
@@ -71,8 +73,10 @@ export class TopBar {
   private avatar?: Phaser.GameObjects.Container;
   private avatarSize = 84;
   private avatarKey?: string;
+  private readonly readGuildCoin?: () => number;
 
   constructor(scene: Phaser.Scene, y = 40, options: TopBarOptions = {}) {
+    this.readGuildCoin = options.guildCoin;
     // 줄이 세우는 조각은 여럿이라 하나씩 깊이를 적지 않고, 이 생성자가 더한 것만 골라 한 번에 올린다.
     const before = options.depth === undefined ? undefined : new Set(scene.children.list);
     drawGlassFade(scene, BASE_WIDTH / 2, y + 30, BASE_WIDTH, 150, { topAlpha: 0.92, bottomAlpha: 0 });
@@ -122,6 +126,7 @@ export class TopBar {
     // 스테미나·도전권은 한 칸에 두 수(현재/최대)를 적으므로 글자를 한 뼘 줄인다.
     const valueRatio = slot.key === "stamina" || slot.key === "duelTicket" ? 0.32 : undefined;
     if (slot.key === "duelTicket") return addCurrencyChip(scene, cx, cy, slot.icon, { color: slot.color, valueRatio, onPress: options.onDuelTicket });
+    if (slot.key === "guildCoin") return addCurrencyChip(scene, cx, cy, slot.icon, { color: slot.color });
     return addCurrencyChip(scene, cx, cy, slot.icon, { color: slot.color, currency: slot.key, onClick: options.onCurrency, valueRatio });
   }
 
@@ -172,6 +177,7 @@ export class TopBar {
   refresh(): void {
     for (const { slot, text } of this.slots) {
       // 도전권은 하루 기본 몫과 함께 읽어야 뜻이 서는 횟수다 — 스테미나와 같은 `남은/기본` 한 덩어리.
+      if (slot.key === "guildCoin") { text.setText(formatCurrency(Math.max(0, this.readGuildCoin?.() ?? 0))); continue; }
       if (slot.key === "duelTicket") { text.setText(`${duelAttemptsLeft(rollDuelPeriods(session.duel ?? createEmptyDuelState(), new Date()))}/${DUEL_DAILY_ATTEMPTS}`); continue; }
       const amount = session.wallet[slot.key];
       // 스테미나만 상한과 함께 읽어야 뜻이 서는 재화다. 현재와 최대를 **같은 양식·같은 색**으로

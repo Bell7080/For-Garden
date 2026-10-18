@@ -11,10 +11,11 @@ import type { CurrencyIconKey } from "./currencyIcons";
 import type { WalletItemKey } from "../data/items";
 
 /**
- * 칸 하나가 읽는 값. 대개 지갑 칸이지만 **결투 도전권**만 지갑이 아니라 결투장의 오늘 횟수다
- * (`duelAttemptsLeft`) — 하루가 지나면 사라지는 횟수라 지갑에 두면 저장에 남는다.
+ * 칸 하나가 읽는 값. 대개 지갑 칸이지만 **결투 도전권**은 결투장의 오늘 횟수(`duelAttemptsLeft`)이고 —
+ * 하루가 지나면 사라지는 횟수라 지갑에 두면 저장에 남는다 — **길드 코인**은 길드원 행이 든 값이라
+ * 화면이 받은 값을 `TopBarOptions.guildCoin`으로 넘긴다.
  */
-export type TopBarSlotKey = WalletItemKey | "duelTicket";
+export type TopBarSlotKey = WalletItemKey | "duelTicket" | "guildCoin";
 
 export interface CurrencySlot {
   key: TopBarSlotKey;
@@ -34,7 +35,7 @@ export interface CurrencySlot {
  * 치즈케이크는 정보창의 급여 버튼이 "가진 수/드는 수"로 직접 말하므로, 위에 또 적으면 같은
  * 값을 두 곳에서 읽게 되고 정작 봐야 할 카드 그리드의 자리만 좁아진다.
  */
-export type TopBarCurrencyContext = "default" | "shop" | "recruit" | "none" | "archaeology" | "archaeologyShop" | "loot" | "mileage" | "duel" | "duelArena";
+export type TopBarCurrencyContext = "default" | "shop" | "recruit" | "none" | "archaeology" | "archaeologyShop" | "loot" | "mileage" | "duel" | "duelArena" | "guild";
 
 const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
   /** 일반 상점은 골드와 젬만 세운다 — 여기서 쓰는 재화는 그 둘뿐이라 스테미나 칸이 자리만 먹는다. */
@@ -99,6 +100,10 @@ const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
   mileage: [
     { key: "dnaFragments", icon: "currency-dna", compact: true, color: "#ffe9a3" },
   ],
+  /** 길드. **길드 코인 한 칸** — 길드 상점의 값이고 길드원 행이 들고 있어 지갑 칸이 아니다. */
+  guild: [
+    { key: "guildCoin", icon: "currency-guild-coin", compact: true, color: "#a8f0c0" },
+  ],
   none: [],
 };
 
@@ -115,5 +120,6 @@ export const TOP_BAR_SLOT_KEYS: Record<TopBarCurrencyContext, readonly TopBarSlo
   mileage: SLOTS.mileage.map(({ key }) => key),
   duel: SLOTS.duel.map(({ key }) => key),
   duelArena: SLOTS.duelArena.map(({ key }) => key),
+  guild: SLOTS.guild.map(({ key }) => key),
   none: SLOTS.none.map(({ key }) => key),
 };

@@ -49,6 +49,8 @@ export interface PlayerProfileDisplay {
   /** 레벨이 아니라 스테이지 클리어로 여는 다음 콘텐츠(고고학). */
   nextStageUnlock?: { contentId: ContentId; stageId: string };
   equippedModifiers: PublicProfileModifier[];
+  /** 기록 칸 앞에 먼저 세우는 칸 — 길드원 카드의 직책·기여도. 기록 칸은 넷까지라 뒤쪽 기록이 밀려난다. */
+  leadRecords?: { label: string; value: string; sub?: string }[];
 }
 
 export interface FavoriteRelicShowcase {
@@ -192,5 +194,45 @@ export function friendProfileDisplay(friend: {
       ...(stats.expeditionScore !== undefined ? { expedition: { label: t("profile.expeditionBest"), score: stats.expeditionScore } } : {}),
     },
     equippedModifiers: friend.equippedModifiers.map((modifier) => ({ ...modifier })),
+  };
+}
+
+/**
+ * 길드원 카드 — 친구 카드와 같은 한 장이다. 공개 값은 길드원이 마지막으로 길드에 들렀을 때 서버가 적어 둔 카드
+ * (`GuildMemberCard`)뿐이라, 거기 없는 것(경험치·도감·결투 티어)은 칸째 세우지 않는다. 기록 칸 앞에는 길드 안의
+ * 자리(직책·기여도)가 먼저 선다.
+ */
+export function guildMemberProfileDisplay(member: {
+  name: string; level: number; frameId: string; avatarRelicId: string;
+  card: { uid: string; bio: string; favorite: { relicId: string; level: number; breakthroughGrade: number; power: number; skinId: string | null } | null; highestStageId: string | null; expeditionBest: number } | null;
+}, lastActive: string, leadRecords: { label: string; value: string; sub?: string }[]): PlayerProfileDisplay {
+  const card = member.card;
+  const relic = card?.favorite ? RELICS.find(({ id }) => id === card.favorite!.relicId) : undefined;
+  const favorite: FavoriteRelicShowcase | null = relic && card?.favorite ? {
+    relicId: relic.id, displayName: relic.name, portraitAssetId: relic.portraitAssetId,
+    level: card.favorite.level, breakthroughGrade: card.favorite.breakthroughGrade, skinId: card.favorite.skinId,
+    rarity: relic.rarity, element: relic.element, role: relic.role, power: card.favorite.power,
+  } : null;
+  const avatarRelic = RELICS.find(({ id }) => id === member.avatarRelicId) ?? relic;
+  const stage = card?.highestStageId ? STAGES.find(({ id }) => id === card.highestStageId) : undefined;
+  return {
+    displayName: member.name,
+    level: member.level,
+    experience: 0,
+    experienceToNext: 0,
+    levelCapped: member.level >= PLAYER_LEVEL_CAP,
+    displayId: card?.uid || "-",
+    bio: card?.bio ?? "",
+    frameId: profileFrameOrDefault(member.frameId).id,
+    avatar: avatarRelic ? { relicId: avatarRelic.id, portraitAssetId: avatarRelic.portraitAssetId } : null,
+    representativeRelic: favorite?.displayName ?? t("profile.noFavorite"),
+    lastActive,
+    competitiveStats: {
+      favoriteRelic: favorite,
+      highestStage: stage ? { stageId: stage.id, displayValue: `${stage.id} ${stage.name}` } : null,
+      ...(card ? { expedition: { label: t("profile.expeditionBest"), score: card.expeditionBest } } : {}),
+    },
+    equippedModifiers: [],
+    leadRecords,
   };
 }

@@ -59,7 +59,9 @@ export interface GameSettings {
      * 한 칸 내려 고르지 않게 한다. 서버 진행이 아니라 화면 선호라 여기 둔다 — 없는 ID는 입구가
      * 열린 가장 높은 단계로 되돌린다.
      */
-    dungeonTiers: { bounty: string; cake: string } };
+    dungeonTiers: { bounty: string; cake: string };
+    /** 길드 화면의 길드전·수호전 탭에서 마지막으로 본 판 번호(`guildPageEventKey`). 다르면 붉은 점이 선다 — 기기 선호다. */
+    guildSeen: { war: number; guard: number } };
   account: { provider: "guest" | "google" | "apple"; displayId: string };
 }
 

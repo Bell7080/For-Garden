@@ -15,7 +15,8 @@ export type CurrencyIconKey =
   | "currency-orestone"
   | "currency-raid-sigil"
   | "currency-salvage-record"
-  | "currency-duel-emblem";
+  | "currency-duel-emblem"
+  | "currency-guild-coin";
 
 export const CURRENCY_ICON_ASSETS: ReadonlyArray<readonly [CurrencyIconKey, string]> = [
   ["currency-gems", "/sprites/currency/crystal.webp"],
@@ -30,6 +31,9 @@ export const CURRENCY_ICON_ASSETS: ReadonlyArray<readonly [CurrencyIconKey, stri
   ["currency-salvage-record", "/sprites/currency/salvage-record.webp"],
   // 투사의 휘장 — 결투장의 붉은 뿔 해골 깃발을 줄인 자리표시 원화다. 전용 원화가 오면 이 파일만 바꾼다.
   ["currency-duel-emblem", "/sprites/currency/duel-emblem.webp"],
+  // 길드 코인 — 골드 원화를 에메랄드빛으로 돌린 자리표시 원화다. 지갑이 아니라 길드원 행에 있는 값이라
+  // `CURRENCY_ICON_BY_WALLET`에는 들지 않는다. 전용 원화가 오면 이 파일만 바꾼다.
+  ["currency-guild-coin", "/sprites/currency/guild-coin.webp"],
 ];
 
 /** 저장 지갑 키를 실제 구운 WebP 텍스처로 바꾸는 공용 단일 매핑이다. */

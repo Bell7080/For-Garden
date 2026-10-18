@@ -3,50 +3,68 @@ import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import { guildApi } from "../api/guildApi";
 import {
-  GuildApiError, isGuildErrorCode, type GuildAttendanceState, type GuildMemberView, type GuildMembersResponse, type GuildShopState,
+  GuildApiError, isGuildErrorCode, type GuildAttendanceState, type GuildMemberView, type GuildMembersResponse,
   type GuildStateResponse, type GuildSummary,
 } from "../api/guildContracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import {
-  GUILD_ATTENDANCE_GAIN, GUILD_ATTENDANCE_REWARD, GUILD_ATTENDANCE_WEEK_BONUS, GUILD_BADGE_CHANGE_GEMS, GUILD_CREATE_GEMS, GUILD_NAME_MAX,
-  GUILD_NOTICE_MAX, GUILD_SHOP_PRODUCTS, GUILD_STAMP_DAYS, guildCan, guildCanKick, guildLevelProgress, guildPerks, validateGuildName,
-  type GuildJoinMode, type GuildRole,
+  GUILD_ATTENDANCE_CYCLE, GUILD_BADGE_CHANGE_GEMS, GUILD_CREATE_GEMS, GUILD_NAME_MAX, GUILD_NOTICE_MAX, GUILD_SHOP_PRODUCTS,
+  guildAttendanceDay, guildCan, guildCanKick, guildLevelProgress, guildPerks, validateGuildName, type GuildJoinMode, type GuildRole,
 } from "../core/guild";
 import {
   DEFAULT_GUILD_BADGE, GUILD_BADGE_COLOR_IDS, GUILD_BADGE_ICONS, GUILD_BADGE_SHAPES, isGuildBadge, type GuildBadge,
 } from "../core/guildBadge";
+import { guildGuardElement, guildGuardEndsAt, guildPageEventKey, guildPageHasNews, guildWarNow, type GuildPage } from "../core/guildPages";
+import { GUILD_WAR_MIN_MEMBERS, guildWarTotalSlots } from "../core/guildWar";
+import { isOnline, lastActiveAge } from "../core/social";
 import { RELICS } from "../data/relics";
 import { setDebugScene } from "../debug";
+import { settingsManager } from "../managers/SettingsManager";
+import { guildMemberProfileDisplay } from "../state/playerProfile";
 import { session } from "../state/session";
+import { AffinityBadge } from "../ui/AffinityBadge";
+import { ELEMENT_ICON } from "../ui/affinityIcons";
+import { addAttendanceStamp, playAttendanceStamp } from "../ui/attendanceStamp";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { withBusy } from "../ui/BusyOverlay";
 import { addCategoryTab } from "../ui/CategoryTab";
+import { addClippedHit } from "../ui/clippedHit";
 import type { ClipRect } from "../ui/clipRect";
 import { showContentToast } from "../ui/ContentToast";
+import { openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
 import { addFriendChip, addRowButton, type RowButtonTone } from "../ui/friendsWidgets";
-import { addBackButton } from "../ui/IconButton";
-import { addFramedIcon } from "../ui/itemFrame";
 import { addGuildBadge } from "../ui/GuildBadge";
 import { openGuildBadgePicker } from "../ui/GuildBadgePicker";
 import {
-  GUILD_ATTENDANCE as A, GUILD_EDITOR as E, GUILD_INFO as I, GUILD_ROW as R, GUILD_SCREEN as S, guildMinScroll, guildRowButtonX, guildRowY,
-  guildStampSlot, guildTabX,
+  GUILD_ATTENDANCE as A, GUILD_EDITOR as E, GUILD_EVENT_PAGE as P, GUILD_INFO as I, GUILD_ROW as R, GUILD_SCREEN as S, guildMinScroll,
+  guildPageX, guildRowButtonX, guildRowY, guildStampSlot, guildTabX,
 } from "../ui/guildLayout";
 import { chipPoints, drawLayer, HoloBar, HOLO } from "../ui/holo";
+import { addBackButton } from "../ui/IconButton";
+import { addFramedIcon } from "../ui/itemFrame";
+import { PlayerProfilePopup, type ProfileAction } from "../ui/PlayerProfilePopup";
 import { PopupLayer } from "../ui/PopupLayer";
+import { pressIn, pressOut } from "../ui/pressFeedback";
 import { ProfileAvatar } from "../ui/ProfileAvatar";
+import { RailButton } from "../ui/RailButton";
+import { openRewardPopup, type RewardPopupItem } from "../ui/RewardPopup";
 import { playSceneEntrance, slideTabPage, startScene } from "../ui/screenTransition";
+import { addSideShopButton } from "../ui/sideShop";
 import { squeezeTextToWidth } from "../ui/textFit";
 import { TextInputField } from "../ui/TextInputField";
+import { TopBar } from "../ui/TopBar";
 import { COLOR, textStyle } from "../ui/theme";
 
-type GuildTab = "info" | "members" | "attendance" | "shop";
+type GuildTab = "info" | "members";
+const PAGES = [
+  { key: "info", labelKey: "guild.page.info" },
+  { key: "war", labelKey: "guild.page.war" },
+  { key: "guard", labelKey: "guild.page.guard" },
+] as const;
 const TABS = [
   { key: "info", labelKey: "guild.tab.info" },
   { key: "members", labelKey: "guild.tab.members" },
-  { key: "attendance", labelKey: "guild.tab.attendance" },
-  { key: "shop", labelKey: "guild.tab.shop" },
 ] as const;
 
 const TAP_SLOP = 14;
@@ -57,35 +75,58 @@ const BADGE_CHOICES = [
   { labelKey: "guild.badge.icon", field: "icon", values: GUILD_BADGE_ICONS },
   { labelKey: "guild.badge.iconColor", field: "iconColor", values: GUILD_BADGE_COLOR_IDS },
 ] as const;
-const DAY_KEYS = ["guild.day.0", "guild.day.1", "guild.day.2", "guild.day.3", "guild.day.4", "guild.day.5", "guild.day.6"] as const;
 const ASSIGNABLE_ROLES = ["vice", "officer", "member"] as const;
+const RED_DOT = 0xe5484d;
+const ONLINE_COLOR = COLOR.hpFill;
+const hex = (color: number): string => `#${color.toString(16).padStart(6, "0")}`;
+/** 길드 코인의 결 — 상단 줄 칸과 같은 초록빛. */
+const COIN_TEXT = "#a8f0c0";
 
 const hmText = (ms: number): string => {
   const minutes = Math.max(1, Math.ceil(ms / 60_000));
   return minutes >= 60 ? t("guild.time.hm", { h: Math.floor(minutes / 60), m: minutes % 60 }) : t("guild.time.m", { m: minutes });
 };
 
+/** 출석 한 날의 보상 그림과 수 — 판과 영수증이 같은 표(`GUILD_ATTENDANCE_CYCLE`)를 읽는다. */
+function attendanceRewardIcon(day: number): { texture: string; amount: number } {
+  const { reward } = guildAttendanceDay(day);
+  if (reward.gems) return { texture: CURRENCY_ICON_BY_WALLET.gems, amount: reward.gems };
+  if (reward.cheesecake) return { texture: CURRENCY_ICON_BY_WALLET.cheesecake, amount: reward.cheesecake };
+  return { texture: CURRENCY_ICON_BY_WALLET.gold, amount: reward.gold ?? 0 };
+}
+
 /**
  * 로비의 길드 버튼에서 진입하는 길드 화면. 규칙은 `src/core/guild*.ts`가, 가입·직위·출석 기록은 길드 백엔드(`guildApi`)가,
  * 지갑이 얽힌 네 조작(만들기·뱃지 변경·출석 보상·상점 구매)은 `gameApi`가 맡고 이 화면은 결과를 그리기만 한다.
  *
  * - 길드가 없으면 추천 길드를 훑고 검색·가입·신청, 또는 직접 만든다.
- * - 길드가 있으면 **정보 · 멤버 · 출석 · 상점** 네 탭(좌하단 라벨)이다.
+ * - 길드가 있으면 맨 아래 **큰 탭 셋**(정보 · 길드전 · 수호전)이 화면을 가르고, 정보 안에서 **정보 · 멤버** 작은 탭이 갈린다.
+ *   길드전·수호전은 판이 바뀌면(시작·끝) 큰 탭에 붉은 점이 선다(`guildPageHasNews`).
+ * - 출석은 탭이 아니다. 그날 처음 들어오면 도장판이 떠 오늘 칸에 **쾅** 찍히고 영수증이 뒤따른다(일곱 날을 도는 순환).
+ * - 상점·길드 순위는 정보 탭 왼쪽 옆줄의 칩, 다른 길드 찾기·탈퇴는 오른쪽 위 작은 칩이 여는 창에 있다.
  */
 export class GuildScene extends Phaser.Scene {
   private state?: GuildStateResponse;
   private members?: GuildMembersResponse;
-  private attendance?: GuildAttendanceState;
-  private shop?: GuildShopState;
   private browse: GuildSummary[] = [];
   private query = "";
+  private page: GuildPage = "info";
   private tab: GuildTab = "info";
+  /** 길드에 있으면서 다른 길드를 둘러보는 중. 큰 탭을 감추고 목록만 세운다. */
+  private browsing = false;
+  /** 이번 진입에서 출석판을 이미 띄웠는가 — 같은 날 다시 그려도 두 번 뜨지 않는다. */
+  private stampChecked = false;
+  /** 서버 시각 − 기기 시각. 남은 시간을 매초 다시 적을 때 쓴다. */
+  private clockOffset = 0;
 
   private popups!: PopupLayer;
+  private topBar!: TopBar;
   private view!: Phaser.GameObjects.Container;
   private controls!: Phaser.GameObjects.Container;
   private tabRow!: Phaser.GameObjects.Container;
+  private ticker?: Phaser.Time.TimerEvent;
   private list?: Phaser.GameObjects.Container;
+  private listBottom: number = S.body.bottom;
   private scrollOffset = 0;
   private minScroll = 0;
   private dragging = false;
@@ -97,16 +138,21 @@ export class GuildScene extends Phaser.Scene {
 
   create(): void {
     setDebugScene("guild");
-    this.state = undefined; this.members = undefined; this.attendance = undefined; this.shop = undefined;
-    this.browse = []; this.query = ""; this.tab = "info"; this.list = undefined; this.scrollOffset = 0; this.minScroll = 0; this.busy = false;
+    this.state = undefined; this.members = undefined; this.browse = []; this.query = ""; this.page = "info"; this.tab = "info";
+    this.browsing = false; this.stampChecked = false; this.list = undefined; this.scrollOffset = 0; this.minScroll = 0; this.busy = false;
+    this.ticker = undefined;
     addSceneBackground(this, BACKGROUND.lobby);
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.74).setDepth(-29);
-    this.add.text(S.title.x, S.title.y, t("guild.title"), textStyle({ role: "display", size: 52 })).setOrigin(0, 0);
+    this.popups = new PopupLayer(this);
+    this.topBar = new TopBar(this, 40, {
+      profile: false, currencies: "guild", guildCoin: () => this.state?.me?.coin ?? 0,
+      onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency),
+    });
+    this.add.text(S.title.x, S.title.y, t("guild.title"), textStyle({ role: "display", size: 52 })).setOrigin(0, 0.5).setShadow(0, 4, "#05070a", 6, false, true);
     addBackButton(this, () => startScene(this, "lobby"));
     this.view = this.add.container(0, 0);
     this.controls = this.add.container(0, 0);
     this.tabRow = this.add.container(0, 0);
-    this.popups = new PopupLayer(this);
     this.bindScroll();
     void this.reload();
     playSceneEntrance(this);
@@ -115,7 +161,8 @@ export class GuildScene extends Phaser.Scene {
   /* ── 데이터·오류 ──────────────────────────────────────────────────────── */
 
   private get myRole(): GuildRole | undefined { return this.state?.me?.role; }
-  private get now(): number { return this.state?.serverTime ?? Date.now(); }
+  private get now(): number { return Date.now() + this.clockOffset; }
+  private get inGuild(): boolean { return Boolean(this.state?.guild); }
 
   private toast(message: string, tone: "locked" | "unlocked" = "locked"): void { showContentToast(this, message, tone); }
 
@@ -142,42 +189,79 @@ export class GuildScene extends Phaser.Scene {
     return true;
   }
 
-  /** 길드 상태를 다시 받고 지금 탭의 자료도 새로 받아 그린다. */
+  /** 길드 상태를 다시 받고 지금 쪽의 자료도 새로 받아 그린다. 그날 처음 들어왔으면 출석판을 띄운다. */
   private async reload(keep = false): Promise<void> {
+    let attendance: GuildAttendanceState | undefined;
     try {
       this.state = await guildApi.getGuild();
+      this.clockOffset = this.state.serverTime - Date.now();
       if (!this.scene.isActive()) return;
-      if (!this.state.guild) this.browse = (await guildApi.searchGuilds(this.query)).guilds;
-      else await this.loadTab();
+      if (!this.state.guild) this.browsing = false;
+      if (!this.state.guild || this.browsing) this.browse = (await guildApi.searchGuilds(this.query)).guilds;
+      else if (this.page === "info" && this.tab === "members") this.members = await guildApi.getMembers();
+      if (this.state.guild && !this.stampChecked) {
+        this.stampChecked = true;
+        attendance = await guildApi.getAttendance();
+      }
     } catch (error) {
       if (this.scene.isActive()) this.fail(error);
       return;
     }
-    if (this.scene.isActive()) this.paint(keep);
-  }
-
-  private async loadTab(): Promise<void> {
-    if (this.tab === "members") this.members = await guildApi.getMembers();
-    else if (this.tab === "attendance") this.attendance = await guildApi.getAttendance();
-    else if (this.tab === "shop") this.shop = await guildApi.getShop();
+    if (!this.scene.isActive()) return;
+    this.topBar.refresh();
+    this.paint(keep);
+    if (attendance && !attendance.stampedToday) this.openStampBoard(attendance);
   }
 
   /* ── 그리기 ───────────────────────────────────────────────────────────── */
 
   private paint(keep = false): void {
-    setDebugScene("guild", this.state?.guild ? this.tab : "browse");
+    const debug = !this.state?.guild || this.browsing ? "browse" : this.page === "info" ? this.tab : this.page;
+    setDebugScene("guild", debug);
+    this.ticker?.remove(); this.ticker = undefined;
     this.controls.removeAll(true);
     this.tabRow.removeAll(true);
     this.view.removeAll(true);
     this.list = undefined;
-    if (!this.state?.guild) { this.paintBrowse(keep); return; }
-    this.paintTabs();
-    if (this.tab === "info") this.paintInfo();
-    else if (this.tab === "members") this.paintMembers(keep);
-    else if (this.tab === "attendance") this.paintAttendance();
-    else this.paintShop();
+    if (!this.state?.guild || this.browsing) { this.paintBrowse(keep); return; }
+    this.paintMenuChip();
+    this.paintPages();
+    if (this.page === "info") {
+      this.paintTabs();
+      if (this.tab === "info") this.paintInfo();
+      else this.paintMembers(keep);
+    } else if (this.page === "war") this.paintWar();
+    else this.paintGuard();
   }
 
+  /** 맨 아래 큰 탭 셋. 길드전·수호전은 판이 바뀐 뒤 아직 보지 않았으면 붉은 점이 선다. */
+  private paintPages(): void {
+    const seen = settingsManager.get().game.guildSeen;
+    PAGES.forEach(({ key, labelKey }, index) => {
+      const x = guildPageX(index);
+      addCategoryTab(this, this.tabRow, {
+        x, y: S.pages.y, width: S.pages.width, height: S.pages.height, label: t(labelKey), selected: this.page === key, labelSize: S.pages.labelSize,
+        onSelect: () => {
+          if (this.page === key || this.busy) return;
+          const from = PAGES.findIndex((candidate) => candidate.key === this.page);
+          this.page = key;
+          this.markSeen();
+          void this.reload().then(() => { if (this.scene.isActive()) slideTabPage(this, [this.view, this.controls], from, index); });
+        },
+      });
+      if (key !== "info" && this.page !== key && guildPageHasNews(key, seen[key], this.now)) {
+        this.tabRow.add(this.add.circle(x + S.pages.width / 2 - 24, S.pages.y - S.pages.height / 2 - 4, 11, RED_DOT));
+      }
+    });
+  }
+
+  /** 지금 연 길드전·수호전 판을 봤다고 적는다. */
+  private markSeen(): void {
+    if (this.page === "info") return;
+    settingsManager.rememberGuildSeen(this.page, guildPageEventKey(this.page, this.now));
+  }
+
+  /** 정보 안의 작은 탭(정보 · 멤버). 가입 신청이 있으면 멤버에 붉은 점. */
   private paintTabs(): void {
     TABS.forEach(({ key, labelKey }, index) => {
       addCategoryTab(this, this.tabRow, {
@@ -186,15 +270,24 @@ export class GuildScene extends Phaser.Scene {
           if (this.tab === key || this.busy) return;
           const from = TABS.findIndex((candidate) => candidate.key === this.tab);
           this.tab = key;
-          void this.reload().then(() => { if (this.scene.isActive()) slideTabPage(this, [this.view], from, index); });
+          void this.reload().then(() => { if (this.scene.isActive()) slideTabPage(this, [this.view, this.controls], from, index); });
         },
       });
     });
     const pending = this.state?.pendingRequests ?? 0;
-    if (pending > 0) {
-      const x = guildTabX(1) + S.tabs.width / 2 - 26;
-      this.tabRow.add(this.add.circle(x, S.tabs.y - 30, 9, 0xe5484d));
-    }
+    if (pending > 0) this.tabRow.add(this.add.circle(guildTabX(1) + S.tabs.width / 2 - 22, S.tabs.y - S.tabs.height / 2 + 2, 9, RED_DOT));
+  }
+
+  /** 오른쪽 위 작은 칩 — 길드 안이면 다른 길드 찾기·탈퇴를 여는 창, 둘러보는 중이면 돌아가기다. */
+  private paintMenuChip(): void {
+    const { right, y, width, height } = S.menuChip;
+    const back = this.browsing;
+    const chip = addFriendChip(this, this.controls, right - width / 2, y, width, height, t(back ? "guild.menu.back" : "guild.menu.chip"), false, () => {
+      if (this.busy) return;
+      if (back) { this.browsing = false; void this.reload(); return; }
+      this.openGuildMenu();
+    });
+    chip.setDepth(1);
   }
 
   private label(parent: Phaser.GameObjects.Container, x: number, y: number, text: string, options: Parameters<typeof textStyle>[0], origin: [number, number] = [0, 0.5]): Phaser.GameObjects.Text {
@@ -208,32 +301,49 @@ export class GuildScene extends Phaser.Scene {
     parent.add(drawLayer(this, x, y, chipPoints(width, height, { bevel: { topLeft: unit, topRight: 0, bottomRight: unit, bottomLeft: 0 } }), { fill: 0x1a1f27, alpha: HOLO.glass, edge }));
   }
 
-  /* ── 길드가 없을 때 ───────────────────────────────────────────────────── */
+  private ageText(lastActiveAt: number): string {
+    const age = lastActiveAge(lastActiveAt, this.now);
+    return age.unit === "online" ? t("friends.age.online") : t(`friends.age.${age.unit}`, { value: age.value });
+  }
+
+  /** 남은 시간 줄 하나를 매초 다시 적는다. 쪽이 바뀌면 `paint`가 멈춘다. */
+  private tick(text: Phaser.GameObjects.Text, write: () => string): void {
+    text.setText(write());
+    this.ticker = this.time.addEvent({ delay: 1_000, loop: true, callback: () => { if (text.active) text.setText(write()); } });
+  }
+
+  /* ── 길드가 없을 때 · 다른 길드 찾기 ─────────────────────────────────── */
 
   private paintBrowse(keep: boolean): void {
+    this.listBottom = S.body.browseBottom;
+    const looking = this.browsing && this.inGuild;
+    if (looking) this.paintMenuChip();
     const cooldown = (this.state?.leaveCooldownUntil ?? 0) - this.now;
-    const summary = cooldown > 0 ? t("guild.browse.cooldown", { time: hmText(cooldown) }) : this.query ? t("guild.browse.results", { count: this.browse.length }) : t("guild.browse.summary");
-    this.label(this.controls, S.side, S.summary.y, summary, { role: "body", size: 28, color: cooldown > 0 ? COLOR.dangerText : COLOR.inkDim });
+    const summary = !looking && cooldown > 0 ? t("guild.browse.cooldown", { time: hmText(cooldown) }) : this.query ? t("guild.browse.results", { count: this.browse.length }) : t("guild.browse.summary");
+    this.label(this.controls, S.side, S.summary.y, summary, { role: "body", size: 28, color: !looking && cooldown > 0 ? COLOR.dangerText : COLOR.inkDim });
     const y = S.controls.y;
     const buttonWidth = 200;
-    const inputWidth = S.width - buttonWidth * 2 - 24;
+    const inputWidth = S.width - buttonWidth * (looking ? 1 : 2) - (looking ? 12 : 24);
     const field = new TextInputField(this, S.side + inputWidth / 2, y, {
       width: inputWidth, height: S.controls.height - 4, value: this.query, maxGlyphs: GUILD_NAME_MAX, ariaLabel: t("guild.browse.searchAria"), fontSize: 28,
     });
     this.controls.add(field);
     const search = (): void => { this.query = field.value; void this.reload(); };
     addRowButton(this, this.controls, S.side + inputWidth + 12 + buttonWidth / 2, y, buttonWidth, S.controls.height - 4, t("guild.browse.search"), "neutral", () => FULL_CLIP, () => true, search);
-    addRowButton(this, this.controls, S.side + S.width - buttonWidth / 2, y, buttonWidth, S.controls.height - 4, t("guild.browse.create"), "accent", () => FULL_CLIP, () => true, () => this.openEditor("create"));
+    if (!looking) addRowButton(this, this.controls, S.side + S.width - buttonWidth / 2, y, buttonWidth, S.controls.height - 4, t("guild.browse.create"), "accent", () => FULL_CLIP, () => true, () => this.openEditor("create"));
     if (this.browse.length === 0) {
-      this.label(this.view, BASE_WIDTH / 2, 700, t("guild.browse.empty"), { role: "body", size: 32, color: COLOR.inkDim }, [0.5, 0.5]);
+      this.label(this.view, BASE_WIDTH / 2, 760, t("guild.browse.empty"), { role: "body", size: 32, color: COLOR.inkDim }, [0.5, 0.5]);
       return;
     }
     const pending = new Set(this.state?.requestedGuildIds ?? []);
+    const mine = this.state?.guild?.id;
     this.mountList(this.browse.length, keep, (row, index) => {
       const guild = this.browse[index];
-      this.plate(row, 0, 0, S.width, S.row.height - 4);
+      this.plate(row, 0, 0, S.width, S.row.height - 4, guild.id === mine ? COLOR.accent : undefined);
       addGuildBadge(this, row, R.badge.x, 0, guild.badge, R.badge.size);
-      this.guildRowText(row, guild, R.button.width + R.button.padRight + 24);
+      // 이미 길드에 있으면 둘러보기만 한다 — 가입 버튼을 세우면 누를 때마다 거절된다.
+      this.guildRowText(row, guild, looking ? 24 : R.button.width + R.button.padRight + 24);
+      if (looking) return;
       const requested = pending.has(guild.id);
       const full = guild.memberCount >= guild.capacity;
       const label = requested ? t("guild.browse.cancel") : full ? t("guild.browse.full") : guild.joinMode === "open" ? t("guild.browse.join") : t("guild.browse.apply");
@@ -253,42 +363,23 @@ export class GuildScene extends Phaser.Scene {
     if (guild.notice) row.add(squeezeTextToWidth(this.add.text(R.textX, R.noteY, guild.notice, textStyle({ role: "body", size: 28, color: COLOR.ink })).setOrigin(0, 0.5), room));
   }
 
-  /* ── 정보 ─────────────────────────────────────────────────────────────── */
-
-  private paintInfo(): void {
-    const guild = this.state!.guild!, me = this.state!.me!;
-    const v = this.view;
-    addGuildBadge(this, v, I.badge.x, I.badge.y, guild.badge, I.badge.size);
-    this.label(v, I.name.x, I.name.y, guild.name, { role: "display", size: 52 });
-    this.label(v, I.level.x, I.level.y, t("guild.levelShort", { level: guild.level }), { role: "display", size: 38, color: COLOR.accentText });
-    this.label(v, I.capacity.x, I.capacity.y, `${t("guild.capacity", { count: guild.memberCount, capacity: guild.capacity })} · ${t(`guild.joinMode.${guild.joinMode}`)}`, { role: "emphasis", size: 28, color: COLOR.ink });
-    this.label(v, I.leader.x, I.leader.y, t("guild.info.leader", { name: guild.leaderName }), { role: "body", size: 26, color: COLOR.inkDim });
-
-    const progress = guildLevelProgress(guild.prosperity);
-    new HoloBar(this, S.side + S.width / 2, I.bar.y, S.width, I.bar.height, { color: COLOR.accent, trackAlpha: 0.85, outline: true }).setValue(progress.next === null ? 1 : progress.into / progress.span);
-    this.label(v, S.side, I.barText.y, t("guild.info.prosperity", { value: guild.prosperity.toLocaleString() }), { role: "emphasis", size: 28 });
-    this.label(v, S.side + S.width, I.barText.y, progress.next === null ? t("guild.info.maxLevel") : t("guild.info.nextLevel", { value: (progress.span - progress.into).toLocaleString() }), { role: "body", size: 26, color: COLOR.inkDim }, [1, 0.5]);
-
-    const perks = guildPerks(guild.level);
-    const perkLines = [
-      perks.excavationBonusPercent > 0 ? t("guild.info.perkExcavation", { value: perks.excavationBonusPercent }) : "",
-      perks.dispatchTimeReductionPercent > 0 ? t("guild.info.perkDispatch", { value: perks.dispatchTimeReductionPercent }) : "",
-    ].filter(Boolean);
-    (perkLines.length > 0 ? perkLines : [t("guild.info.perkNone")]).forEach((line, index) => this.label(v, S.side, I.perks.y + index * I.perks.gap, line, { role: "emphasis", size: 30, color: COLOR.accentText }));
-
-    this.plate(v, BASE_WIDTH / 2, I.notice.y + I.notice.height / 2 - 60, S.width, I.notice.height);
-    const notice = guild.notice || t("guild.info.noticeEmpty");
-    v.add(this.add.text(S.side + 36, I.notice.y - 60 + 36, notice, textStyle({ role: "body", size: 30, color: guild.notice ? COLOR.ink : COLOR.inkDim, wrap: S.width - 72 })).setOrigin(0, 0));
-    this.label(v, S.side, I.me.y, t("guild.info.me", { role: t(`guild.role.${me.role}`), coin: me.coin.toLocaleString(), week: me.contributionWeek.toLocaleString() }), { role: "body", size: 28, color: COLOR.inkDim });
-
-    const buttons: { label: string; tone: RowButtonTone; run: () => void }[] = [];
-    if (guildCan(me.role, "notice") || guildCan(me.role, "joinMode")) buttons.push({ label: t("guild.info.settings"), tone: "neutral", run: () => this.openSettings() });
-    if (guildCan(me.role, "badge")) buttons.push({ label: t("guild.badge.apply"), tone: "neutral", run: () => this.openEditor("badge") });
-    if (guildCan(me.role, "disband") && guild.memberCount === 1) buttons.push({ label: t("guild.info.disband"), tone: "danger", run: () => this.confirmLeave(true) });
-    else if (me.role !== "leader") buttons.push({ label: t("guild.info.leave"), tone: "danger", run: () => this.confirmLeave(false) });
-    buttons.forEach((button, index) => {
-      const x = S.side + I.actions.width / 2 + index * (I.actions.width + I.actions.gap);
-      addRowButton(this, v, x, I.actions.y, I.actions.width, I.actions.height, button.label, button.tone, () => FULL_CLIP, () => true, button.run);
+  /** 오른쪽 위 칩이 여는 창 — 다른 길드 찾기 · 탈퇴(혼자 남은 길드장은 해산). */
+  private openGuildMenu(): void {
+    const guild = this.state!.guild!, role = this.myRole!;
+    const alone = guild.memberCount === 1;
+    const leaderStuck = role === "leader" && !alone;
+    const leaveLabel = t(role === "leader" && alone ? "guild.info.disband" : "guild.info.leave");
+    this.popups.open({ width: 700, height: 420, title: t("guild.menu.title"), closeOnBackdrop: true, dim: true }, (body, close) => {
+      addRowButton(this, body, 0, -40, 560, 90, t("guild.menu.browse"), "neutral", () => FULL_CLIP, () => true, () => {
+        close();
+        this.browsing = true; this.query = "";
+        void this.reload();
+      });
+      addRowButton(this, body, 0, 80, 560, 90, leaveLabel, leaderStuck ? "disabled" : "danger", () => FULL_CLIP, () => true, () => {
+        close();
+        this.confirmLeave(role === "leader" && alone);
+      });
+      if (leaderStuck) this.label(body, 0, 160, t("guild.error.LEADER_CANNOT_LEAVE"), { role: "body", size: 24, color: COLOR.inkDim }, [0.5, 0.5]);
     });
   }
 
@@ -297,7 +388,53 @@ export class GuildScene extends Phaser.Scene {
       title: t(disband ? "guild.info.disbandTitle" : "guild.info.leaveTitle"),
       message: t(disband ? "guild.info.disbandConfirm" : "guild.info.leaveConfirm"),
       confirmLabel: t(disband ? "guild.info.disband" : "guild.info.leave"), destructive: true,
-    }, () => { void this.act(() => (disband ? guildApi.disbandGuild() : guildApi.leaveGuild())); });
+    }, () => { void this.act(() => (disband ? guildApi.disbandGuild() : guildApi.leaveGuild()), () => { this.page = "info"; this.tab = "info"; }); });
+  }
+
+  /* ── 정보 ─────────────────────────────────────────────────────────────── */
+
+  private paintInfo(): void {
+    const guild = this.state!.guild!, me = this.state!.me!;
+    const v = this.view;
+    v.add(new RailButton(this, I.rail.x, I.rail.ranking, { icon: "bar-chart", label: t("guild.ranking.title"), size: I.rail.size, onClick: () => this.openRanking() }));
+    v.add(addSideShopButton(this, I.rail.x, I.rail.shop, I.rail.size, t("guild.shop.title"), () => this.openShop()));
+
+    addGuildBadge(this, v, I.badge.x, I.badge.y, guild.badge, I.badge.size);
+    const textRoom = I.left + I.width - I.name.x;
+    v.add(squeezeTextToWidth(this.add.text(I.name.x, I.name.y, guild.name, textStyle({ role: "display", size: 52 })).setOrigin(0, 0.5), textRoom));
+    this.label(v, I.level.x, I.level.y, t("guild.levelShort", { level: guild.level }), { role: "display", size: 38, color: COLOR.accentText });
+    this.label(v, I.capacity.x, I.capacity.y, `${t("guild.capacity", { count: guild.memberCount, capacity: guild.capacity })} · ${t(`guild.joinMode.${guild.joinMode}`)}`, { role: "emphasis", size: 28, color: COLOR.ink });
+    this.label(v, I.leader.x, I.leader.y, t("guild.info.leader", { name: guild.leaderName }), { role: "body", size: 26, color: COLOR.inkDim });
+
+    // 게이지도 이 쪽의 일부다 — 장면에 바로 세우면 탭을 바꿔도 남는다(예전 버그).
+    const progress = guildLevelProgress(guild.prosperity);
+    new HoloBar(this, I.left + I.width / 2, I.bar.y, I.width, I.bar.height, { color: COLOR.accent, trackAlpha: 0.85, outline: true })
+      .addTo(v).setValue(progress.next === null ? 1 : progress.into / progress.span);
+    this.label(v, I.left, I.barText.y, t("guild.info.prosperity", { value: guild.prosperity.toLocaleString() }), { role: "emphasis", size: 28 });
+    this.label(v, I.left + I.width, I.barText.y, progress.next === null ? t("guild.info.maxLevel") : t("guild.info.nextLevel", { value: (progress.span - progress.into).toLocaleString() }), { role: "body", size: 26, color: COLOR.inkDim }, [1, 0.5]);
+
+    const perks = guildPerks(guild.level);
+    const perkLines = [
+      perks.excavationBonusPercent > 0 ? t("guild.info.perkExcavation", { value: perks.excavationBonusPercent }) : "",
+      perks.dispatchTimeReductionPercent > 0 ? t("guild.info.perkDispatch", { value: perks.dispatchTimeReductionPercent }) : "",
+    ].filter(Boolean);
+    (perkLines.length > 0 ? perkLines : [t("guild.info.perkNone")]).forEach((line, index) => this.label(v, I.left, I.perks.y + index * I.perks.gap, line, { role: "emphasis", size: 30, color: COLOR.accentText }));
+
+    this.plate(v, I.left + I.width / 2, I.notice.y + I.notice.height / 2, I.width, I.notice.height);
+    const notice = guild.notice || t("guild.info.noticeEmpty");
+    v.add(this.add.text(I.left + 36, I.notice.y + 36, notice, textStyle({ role: "body", size: 30, color: guild.notice ? COLOR.ink : COLOR.inkDim, wrap: I.width - 72 })).setOrigin(0, 0));
+
+    this.label(v, I.left, I.me.y, t("guild.info.me", { role: t(`guild.role.${me.role}`) }), { role: "display", size: 32, color: COLOR.ink });
+    this.label(v, I.left, I.me.y + I.me.gap, t("guild.info.contribution", { week: me.contributionWeek.toLocaleString(), total: me.contributionTotal.toLocaleString() }), { role: "emphasis", size: 28, color: COLOR.accentText });
+    this.label(v, I.left, I.me.y + I.me.gap * 2, t("guild.info.coin", { coin: me.coin.toLocaleString() }), { role: "emphasis", size: 28, color: COIN_TEXT });
+
+    const buttons: { label: string; run: () => void }[] = [];
+    if (guildCan(me.role, "notice") || guildCan(me.role, "joinMode")) buttons.push({ label: t("guild.info.settings"), run: () => this.openSettings() });
+    if (guildCan(me.role, "badge")) buttons.push({ label: t("guild.badge.apply"), run: () => this.openEditor("badge") });
+    buttons.forEach((button, index) => {
+      const x = I.left + I.actions.width / 2 + index * (I.actions.width + I.actions.gap);
+      addRowButton(this, v, x, I.actions.y, I.actions.width, I.actions.height, button.label, "neutral", () => FULL_CLIP, () => true, button.run);
+    });
   }
 
   private openSettings(): void {
@@ -317,6 +454,131 @@ export class GuildScene extends Phaser.Scene {
       addRowButton(this, body, 0, 280, 420, 90, t("guild.settings.save"), "accent", () => FULL_CLIP, () => true, () => {
         const update = { notice: input.value, joinMode };
         void this.act(() => guildApi.updateGuild(update), () => { close(); this.toast(t("guild.settings.saved"), "unlocked"); });
+      });
+    });
+  }
+
+  /** 길드 순위 — 레벨이 높은 순, 같으면 길드원이 많은 순. 내 길드 줄은 강조색 테를 두른다. */
+  private openRanking(): void {
+    if (this.busy) return;
+    void this.act(async () => {
+      const guilds = [...(await guildApi.searchGuilds("")).guilds].sort((a, b) => b.level - a.level || b.memberCount - a.memberCount || a.name.localeCompare(b.name)).slice(0, 8);
+      if (!this.scene.isActive()) return;
+      const rowGap = 120;
+      const height = 220 + Math.max(1, guilds.length) * rowGap;
+      const mine = this.state?.guild?.id;
+      this.popups.open({ width: 900, height, title: t("guild.ranking.title"), closeOnBackdrop: true, dim: true }, (body) => {
+        if (guilds.length === 0) { this.label(body, 0, 0, t("guild.browse.empty"), { role: "body", size: 28, color: COLOR.inkDim }, [0.5, 0.5]); return; }
+        guilds.forEach((guild, index) => {
+          const y = -height / 2 + 140 + index * rowGap;
+          this.plate(body, 0, y, 800, rowGap - 12, guild.id === mine ? COLOR.accent : undefined);
+          this.label(body, -360, y, `${index + 1}`, { role: "display", size: 40, color: index < 3 ? COLOR.accentText : COLOR.ink }, [0.5, 0.5]);
+          addGuildBadge(this, body, -270, y, guild.badge, 84);
+          body.add(squeezeTextToWidth(this.add.text(-210, y - 18, guild.name, textStyle({ role: "display", size: 32 })).setOrigin(0, 0.5), 400));
+          this.label(body, -210, y + 22, t("guild.capacity", { count: guild.memberCount, capacity: guild.capacity }), { role: "body", size: 24, color: COLOR.inkDim });
+          this.label(body, 370, y, t("guild.levelShort", { level: guild.level }), { role: "display", size: 34, color: COLOR.accentText }, [1, 0.5]);
+        });
+      });
+    }).then(() => undefined);
+  }
+
+  /** 길드 상점 — 길드 코인으로 사는 주간 한도 상품. 지갑이 얽혀 구매는 `gameApi`가 확정한다. */
+  private openShop(): void {
+    if (this.busy) return;
+    this.busy = true;
+    void withBusy(this, guildApi.getShop()).then((shop) => {
+      this.busy = false;
+      if (!this.scene.isActive()) return;
+      const rowGap = 170;
+      const height = 220 + GUILD_SHOP_PRODUCTS.length * rowGap;
+      this.popups.open({ width: 920, height, title: t("guild.shop.title"), closeOnBackdrop: true, dim: true }, (body, close) => {
+        GUILD_SHOP_PRODUCTS.forEach((product, index) => {
+          const y = -height / 2 + 150 + index * rowGap;
+          const item = shop.items.find((candidate) => candidate.productId === product.id);
+          const bought = item?.bought ?? 0;
+          this.plate(body, 0, y, 820, rowGap - 14);
+          const texture = product.grant.gold ? CURRENCY_ICON_BY_WALLET.gold : product.grant.cheesecake ? CURRENCY_ICON_BY_WALLET.cheesecake : "item-stamina-tonic";
+          const amount = product.grant.gold ? product.grant.gold.toLocaleString() : product.grant.cheesecake ? `${product.grant.cheesecake}` : `${product.grant.item?.quantity ?? 1}`;
+          addFramedIcon(this, body, -330, y, 112, texture, { amount, plain: true });
+          this.label(body, -250, y - 28, t(`guild.shop.product.${product.id}` as "guild.shop.product.guild-gold"), { role: "display", size: 32 });
+          this.label(body, -250, y + 12, t("guild.shop.price", { price: product.price }), { role: "emphasis", size: 26, color: COIN_TEXT });
+          this.label(body, -250, y + 48, t("guild.shop.limit", { bought, limit: product.weeklyLimit }), { role: "body", size: 24, color: COLOR.inkDim });
+          const affordable = shop.coin >= product.price && bought < product.weeklyLimit;
+          addRowButton(this, body, 300, y, 170, 72, t("guild.shop.buy"), affordable ? "accent" : "disabled", () => FULL_CLIP, () => true, () => {
+            close();
+            void this.act(() => gameApi.buyGuildProduct({ productId: product.id }), () => this.toast(t("guild.shop.bought"), "unlocked")).then((done) => {
+              if (done && this.scene.isActive()) this.openShop();
+            });
+          });
+        });
+      });
+    }, (error: unknown) => {
+      this.busy = false;
+      if (this.scene.isActive()) this.fail(error);
+    });
+  }
+
+  /* ── 출석 도장판 ──────────────────────────────────────────────────────── */
+
+  /**
+   * 그날 처음 들어오면 뜨는 도장판. 일곱 칸 중 지난 칸은 이미 찍혀 있고, 판이 서면 곧바로 서버에 찍고(고를 것이 없다)
+   * 오늘 칸에 인장이 **쾅** 박힌 뒤 영수증으로 넘어간다. 7일차를 찍은 다음 날은 빈 판의 1일차부터 다시 돈다.
+   */
+  private openStampBoard(attendance: GuildAttendanceState): void {
+    if (this.popups.isOpen) return;
+    this.busy = true;
+    const today = attendance.day;
+    this.popups.open({ width: A.width, height: A.height, title: t("guild.attendance.title"), closeOnBackdrop: false, dim: true }, (body, close) => {
+      const cells: { x: number; y: number }[] = [];
+      GUILD_ATTENDANCE_CYCLE.forEach((day, index) => {
+        const slot = guildStampSlot(index);
+        cells.push(slot);
+        const number = index + 1;
+        const isToday = number === today;
+        const last = index === GUILD_ATTENDANCE_CYCLE.length - 1;
+        const cell = this.add.container(slot.x, slot.y);
+        body.add(cell);
+        cell.add(drawLayer(this, 0, 0, chipPoints(slot.width, slot.height, { bevel: { topLeft: 26, topRight: 0, bottomRight: 26, bottomLeft: 0 } }), {
+          fill: last ? 0x2b2616 : 0x141b24, alpha: 0.96, edge: isToday ? COLOR.accent : last ? 0xf2c14e : undefined, edgeAlpha: 0.9,
+        }));
+        this.label(cell, 0, -slot.height / 2 + 30, t("guild.attendance.dayLabel", { day: number }), { role: "display", size: 26, color: isToday ? COLOR.accentText : COLOR.ink }, [0.5, 0.5]);
+        const reward = attendanceRewardIcon(number);
+        addFramedIcon(this, cell, 0, 8, last ? 116 : 104, reward.texture, { amount: reward.amount.toLocaleString(), plain: true });
+        this.label(cell, 0, slot.height / 2 - 26, t("guild.attendance.cellGain", { contribution: day.contribution, coin: day.coin }), { role: "emphasis", size: 20, color: COIN_TEXT }, [0.5, 0.5]);
+        if (number <= attendance.filled) body.add(addAttendanceStamp(this, slot.x, slot.y + 8, A.stampSize, COLOR.accent).setAlpha(0.92));
+      });
+      const regular = GUILD_ATTENDANCE_CYCLE[0], final = GUILD_ATTENDANCE_CYCLE[GUILD_ATTENDANCE_CYCLE.length - 1];
+      this.label(body, 0, A.info, t("guild.attendance.gain", { contribution: regular.contribution, coin: regular.coin, finalContribution: final.contribution, finalCoin: final.coin }), { role: "body", size: 24, color: COLOR.inkDim, align: "center", wrap: A.width - 80 }, [0.5, 0.5]);
+
+      const slot = cells[today - 1];
+      this.time.delayedCall(420, () => {
+        if (!this.scene.isActive()) return;
+        gameApi.stampGuildAttendance({}).then((result) => {
+          if (!this.scene.isActive() || !body.active) return;
+          playAttendanceStamp(this, body, slot.x, slot.y + 8, A.stampSize, COLOR.accent, {
+            onDone: () => this.time.delayedCall(320, () => {
+              close();
+              this.busy = false;
+              if (!this.scene.isActive()) return;
+              const gain = guildAttendanceDay(result.day);
+              const items: RewardPopupItem[] = [
+                ...(result.granted.gold > 0 ? [{ icon: CURRENCY_ICON_BY_WALLET.gold, amount: result.granted.gold }] : []),
+                ...(result.granted.cheesecake > 0 ? [{ icon: CURRENCY_ICON_BY_WALLET.cheesecake, amount: result.granted.cheesecake }] : []),
+                ...(result.granted.gems > 0 ? [{ icon: CURRENCY_ICON_BY_WALLET.gems, amount: result.granted.gems }] : []),
+                { icon: "currency-guild-coin", amount: gain.coin },
+              ];
+              openRewardPopup(this, this.popups, {
+                title: t("guild.attendance.receipt", { day: result.day }), items,
+                footnote: t("guild.attendance.footnote", { contribution: gain.contribution, prosperity: gain.prosperity }),
+              });
+              void this.reload(true);
+            }),
+          });
+        }, (error: unknown) => {
+          close();
+          this.busy = false;
+          if (this.scene.isActive()) this.fail(error);
+        });
       });
     });
   }
@@ -368,7 +630,7 @@ export class GuildScene extends Phaser.Scene {
         paintSelector();
       });
       if (!creating) this.label(body, 0, E.note + top - 120, free ? t("guild.badge.free") : "", { role: "body", size: 26, color: COLOR.accentText }, [0.5, 0.5]);
-      const submitY = (creating ? E.submit : 380) + (creating ? 0 : 0);
+      const submitY = creating ? E.submit : 380;
       addRowButton(this, body, 0, submitY, 460, 92, t(creating ? "guild.create.submit" : "guild.badge.apply"), "accent", () => FULL_CLIP, () => true, () => {
         if (!isGuildBadge(badge)) { this.toast(t("guild.error.BADGE_INVALID")); return; }
         if (creating) {
@@ -399,6 +661,7 @@ export class GuildScene extends Phaser.Scene {
   /* ── 멤버 ─────────────────────────────────────────────────────────────── */
 
   private paintMembers(keep: boolean): void {
+    this.listBottom = S.body.bottom;
     const data = this.members, me = this.state?.me;
     if (!data || !me) return;
     const guild = this.state!.guild!;
@@ -406,26 +669,57 @@ export class GuildScene extends Phaser.Scene {
     const rows = [...data.requests.map((request) => ({ request })), ...data.members.map((member) => ({ member }))];
     this.mountList(rows.length, keep, (row, index) => {
       const entry = rows[index];
-      this.plate(row, 0, 0, S.width, S.row.height - 4);
       const person = "request" in entry ? entry.request : entry.member;
+      this.plate(row, 0, 0, S.width, S.row.height - 4, "member" in entry && entry.member.isMe ? COLOR.accent : undefined);
       const relic = RELICS.find((candidate) => candidate.id === person.avatarRelicId);
       row.add(new ProfileAvatar(this, R.badge.x, 0, { size: 104, frameId: person.frameId, portraitAssetId: relic?.portraitAssetId, fallback: Array.from(person.name.trim())[0] ?? "?" }));
-      const room = S.width / 2 - (R.button.width * 2 + 60) - R.textX;
-      row.add(squeezeTextToWidth(this.add.text(R.textX, R.nameY, person.name, textStyle({ role: "display", size: 34 })).setOrigin(0, 0.5), room));
       if ("request" in entry) {
+        const room = S.width / 2 - (R.button.width * 2 + 60) - R.textX;
+        row.add(squeezeTextToWidth(this.add.text(R.textX, R.nameY, person.name, textStyle({ role: "display", size: 34 })).setOrigin(0, 0.5), room));
         this.label(row, R.textX, R.subY, t("guild.levelShort", { level: person.level }), { role: "emphasis", size: 28, color: COLOR.accentText });
+        this.label(row, R.textX, R.noteY, t("guild.members.applied"), { role: "body", size: 26, color: COLOR.inkDim });
         addRowButton(this, row, guildRowButtonX(1), 0, R.button.width, R.button.height, t("guild.members.decline"), "danger", this.clip, this.canTap, () => { void this.act(() => guildApi.decideJoinRequest(person.userId, false)); });
         addRowButton(this, row, guildRowButtonX(0), 0, R.button.width, R.button.height, t("guild.members.approve"), "accent", this.clip, this.canTap, () => { void this.act(() => guildApi.decideJoinRequest(person.userId, true)); });
         return;
       }
-      const member = entry.member;
-      this.label(row, R.textX, R.subY, `${t(`guild.role.${member.role}`)} · ${t("guild.levelShort", { level: member.level })}`, { role: "emphasis", size: 28, color: COLOR.accentText });
-      this.label(row, R.textX, R.noteY, t("guild.members.contribution", { value: member.contributionWeek.toLocaleString() }), { role: "body", size: 28, color: COLOR.ink });
-      if (member.isMe) { this.label(row, S.width / 2 - 40, 0, t("guild.members.me"), { role: "display", size: 30, color: COLOR.accentText }, [1, 0.5]); return; }
-      if (this.memberActions(member).length > 0) {
-        addRowButton(this, row, guildRowButtonX(0), 0, R.button.width, R.button.height, "···", "neutral", this.clip, this.canTap, () => this.openMemberActions(member));
-      }
+      this.paintMemberRow(row, entry.member);
     });
+  }
+
+  /** 길드원 줄 — 이름 · 직책 · 레벨 · 접속 상태, 오른쪽에 이번 주 기여도와 누적. 줄 전체를 누르면 카드가 열린다. */
+  private paintMemberRow(row: Phaser.GameObjects.Container, member: GuildMemberView): void {
+    const hit = addClippedHit(this, row, 0, 0, S.width, S.row.height - 4, this.clip);
+    hit.on("pointerdown", () => pressIn(row));
+    hit.on("pointerout", () => pressOut(row, "normal", { pop: false }));
+    hit.on("pointerup", () => { pressOut(row); if (this.canTap()) this.openMemberProfile(member); });
+    const right = S.width / 2 - 36;
+    const room = right - 250 - R.textX;
+    row.add(squeezeTextToWidth(this.add.text(R.textX, R.nameY, member.name, textStyle({ role: "display", size: 34 })).setOrigin(0, 0.5), room));
+    const roleText = this.label(row, R.textX, R.subY, t(`guild.role.${member.role}`), { role: "emphasis", size: 28, color: member.role === "leader" ? "#f2c14e" : COLOR.accentText });
+    this.label(row, R.textX + roleText.displayWidth + 18, R.subY, t("friends.researchLevel", { level: member.level }), { role: "emphasis", size: 26, color: COLOR.ink });
+    const online = member.isMe || isOnline(member.lastActiveAt, this.now);
+    this.label(row, R.textX + (online ? 24 : 0), R.noteY, member.isMe ? t("guild.members.me") : this.ageText(member.lastActiveAt), { role: "body", size: 26, color: online ? hex(ONLINE_COLOR) : COLOR.inkDim });
+    if (online) row.add(this.add.circle(R.textX + 8, R.noteY, 8, ONLINE_COLOR));
+    this.label(row, right, -34, t("guild.members.week"), { role: "body", size: 22, color: COLOR.inkDim }, [1, 0.5]);
+    this.label(row, right, 4, member.contributionWeek.toLocaleString(), { role: "display", size: 40, color: COLOR.accentText }, [1, 0.5]);
+    this.label(row, right, 46, t("guild.members.total", { value: member.contributionTotal.toLocaleString() }), { role: "body", size: 22, color: COLOR.ink }, [1, 0.5]);
+  }
+
+  /** 길드원 카드 — 친구 카드와 같은 한 장에 직책·기여도가 먼저 서고, 관리 권한이 있으면 밑동에 조작이 선다. */
+  private openMemberProfile(member: GuildMemberView): void {
+    if (this.popups.isOpen) return;
+    const lastActive = member.isMe ? t("friends.age.online") : this.ageText(member.lastActiveAt);
+    const records = [
+      { label: t("guild.profile.role"), value: t(`guild.role.${member.role}`), sub: t("guild.levelShort", { level: this.state?.guild?.level ?? 1 }) },
+      { label: t("guild.profile.contribution"), value: member.contributionWeek.toLocaleString(), sub: t("guild.members.total", { value: member.contributionTotal.toLocaleString() }) },
+    ];
+    const actions: ProfileAction[] = member.isMe ? [] : this.memberActions(member).map((action) => ({
+      label: action.label, destructive: action.tone === "danger", onClick: () => { popup.close(); action.run(); },
+    }));
+    const popup = new PlayerProfilePopup(this, this.popups, guildMemberProfileDisplay(member, lastActive, records), () => undefined, undefined, {
+      title: t("guild.profile.title"), actions: actions.length > 3 ? [{ label: t("guild.members.manage"), onClick: () => { popup.close(); this.openMemberActions(member); } }] : actions,
+    });
+    popup.open();
   }
 
   private memberActions(member: GuildMemberView): { label: string; tone: RowButtonTone; run: () => void }[] {
@@ -464,70 +758,46 @@ export class GuildScene extends Phaser.Scene {
     });
   }
 
-  /* ── 출석 ─────────────────────────────────────────────────────────────── */
+  /* ── 길드전 · 수호전 ──────────────────────────────────────────────────── */
 
-  private paintAttendance(): void {
-    const data = this.attendance;
-    if (!data) return;
+  private paintEventPlate(heading: string): Phaser.GameObjects.Container {
     const v = this.view;
-    const count = data.stamps.filter((stamp) => stamp !== null).length;
-    this.label(this.controls, S.side, S.summary.y, t("guild.attendance.summary", { count, total: GUILD_STAMP_DAYS }), { role: "body", size: 28, color: COLOR.inkDim });
-    data.stamps.forEach((stamp, index) => {
-      const slot = guildStampSlot(index);
-      const cell = this.add.container(slot.x, A.slots.y);
-      v.add(cell);
-      const today = index === data.todayIndex;
-      cell.add(drawLayer(this, 0, 0, chipPoints(slot.width, A.slots.height, { bevel: { topLeft: 22, topRight: 0, bottomRight: 22, bottomLeft: 0 } }), { fill: stamp ? 0x2b2a1b : 0x1a1f27, alpha: HOLO.glass, edge: today ? COLOR.accent : undefined, edgeAlpha: 0.9 }));
-      this.label(cell, 0, -A.slots.height / 2 + 40, t(DAY_KEYS[index]), { role: "display", size: 30, color: today ? COLOR.accentText : COLOR.ink }, [0.5, 0.5]);
-      if (stamp) cell.add(this.add.image(0, 20, stamp === "gold" ? CURRENCY_ICON_BY_WALLET.gold : CURRENCY_ICON_BY_WALLET.cheesecake).setDisplaySize(slot.width * 0.62, slot.width * 0.62));
-      else if (today) this.label(cell, 0, 20, t("guild.attendance.today"), { role: "emphasis", size: 28, color: COLOR.accentText }, [0.5, 0.5]);
-    });
-    this.label(v, S.side, A.info.y, t("guild.attendance.gain", { prosperity: GUILD_ATTENDANCE_GAIN.prosperity, contribution: GUILD_ATTENDANCE_GAIN.contribution, coin: GUILD_ATTENDANCE_GAIN.coin }), { role: "body", size: 28, color: COLOR.inkDim });
-    if (data.stampedToday) {
-      this.label(v, BASE_WIDTH / 2, A.pick.y, t("guild.attendance.stamped"), { role: "display", size: 44, color: COLOR.accentText }, [0.5, 0.5]);
-    } else {
-      (["gold", "cheesecake"] as const).forEach((choice, index) => {
-        const x = BASE_WIDTH / 2 + (index === 0 ? -1 : 1) * (A.pick.width / 2 + A.pick.gap / 2);
-        const label = t(choice === "gold" ? "guild.attendance.pickGold" : "guild.attendance.pickCheesecake", { value: GUILD_ATTENDANCE_REWARD[choice].toLocaleString() });
-        addRowButton(this, v, x, A.pick.y, A.pick.width, A.pick.height, label, "accent", () => FULL_CLIP, () => true, () => {
-          void this.act(async () => {
-            const result = await gameApi.stampGuildAttendance({ choice });
-            if (result.weekBonus) this.time.delayedCall(450, () => { if (this.scene.isActive()) this.toast(t("guild.attendance.bonus"), "unlocked"); });
-          }, () => this.toast(t("guild.attendance.done"), "unlocked"));
-        });
-      });
-    }
-    this.label(v, S.side, A.bonus.y, data.weekBonusClaimed ? t("guild.attendance.weekClaimed") : t("guild.attendance.weekBonus", { gems: GUILD_ATTENDANCE_WEEK_BONUS.gems, coin: GUILD_ATTENDANCE_WEEK_BONUS.coin }), { role: "emphasis", size: 28, color: data.weekBonusClaimed ? COLOR.inkDim : COLOR.accentText });
+    this.plate(v, BASE_WIDTH / 2, P.plate.y, S.width, P.plate.height, COLOR.accent);
+    this.label(v, S.side + 48, P.heading, heading, { role: "display", size: 48 });
+    return v;
   }
 
-  /* ── 상점 ─────────────────────────────────────────────────────────────── */
+  private paintWar(): void {
+    const guild = this.state!.guild!;
+    const v = this.paintEventPlate(t("guild.page.war"));
+    const war = guildWarNow(this.now);
+    const phase = t(war.phase === "battle" ? "guild.war.battle" : "guild.war.prep");
+    this.label(v, S.side + 48, P.phase, phase, { role: "display", size: 40, color: war.phase === "battle" ? COLOR.dangerText : COLOR.accentText });
+    const timer = this.label(v, S.side + 48, P.timer, "", { role: "emphasis", size: 28, color: COLOR.ink });
+    this.tick(timer, () => t(war.phase === "battle" ? "guild.war.battleEnds" : "guild.war.prepEnds", { time: hmText(war.endsAt - this.now) }));
+    const lines = [
+      guild.warScore === null ? t("guild.war.noScore") : t("guild.war.score", { score: guild.warScore.toLocaleString(), rank: guild.warRank ?? "-" }),
+      t("guild.war.slots", { count: guildWarTotalSlots(guild.level) }),
+      t("guild.war.members", { need: GUILD_WAR_MIN_MEMBERS, count: guild.memberCount }),
+    ];
+    lines.forEach((line, index) => this.label(v, S.side + 48, P.lines.y + index * P.lines.gap, line, {
+      role: "body", size: 30, color: index === 2 && guild.memberCount < GUILD_WAR_MIN_MEMBERS ? COLOR.dangerText : COLOR.ink,
+    }));
+  }
 
-  private paintShop(): void {
-    const data = this.shop;
-    if (!data) return;
-    this.label(this.controls, S.side, S.summary.y, t("guild.shop.coin", { coin: data.coin.toLocaleString() }), { role: "emphasis", size: 30, color: COLOR.accentText });
-    GUILD_SHOP_PRODUCTS.forEach((product, index) => {
-      const item = data.items.find((candidate) => candidate.productId === product.id);
-      const bought = item?.bought ?? 0;
-      const row = this.add.container(BASE_WIDTH / 2, S.body.top + guildRowY(index));
-      this.view.add(row);
-      this.plate(row, 0, 0, S.width, S.row.height - 4);
-      const texture = product.grant.gold ? CURRENCY_ICON_BY_WALLET.gold : product.grant.cheesecake ? CURRENCY_ICON_BY_WALLET.cheesecake : "item-stamina-tonic";
-      addFramedIcon(this, row, R.badge.x, 0, 112, texture);
-      this.label(row, R.textX, R.nameY, t(`guild.shop.product.${product.id}` as "guild.shop.product.guild-gold"), { role: "display", size: 34 });
-      const grant = product.grant.gold ? t("guild.shop.grantGold", { value: product.grant.gold.toLocaleString() }) : product.grant.cheesecake ? t("guild.shop.grantCheesecake", { value: product.grant.cheesecake }) : t("guild.shop.grantTonic", { value: product.grant.item?.quantity ?? 1 });
-      this.label(row, R.textX, R.subY, grant, { role: "emphasis", size: 26, color: COLOR.accentText });
-      this.label(row, R.textX, R.noteY, `${t("guild.shop.price", { price: product.price })} · ${t("guild.shop.limit", { bought, limit: product.weeklyLimit })}`, { role: "body", size: 28, color: COLOR.ink });
-      const affordable = data.coin >= product.price && bought < product.weeklyLimit;
-      addRowButton(this, row, guildRowButtonX(0), 0, R.button.width, R.button.height, t("guild.shop.buy"), affordable ? "accent" : "disabled", () => FULL_CLIP, () => true, () => {
-        void this.act(() => gameApi.buyGuildProduct({ productId: product.id }), () => this.toast(t("guild.shop.bought"), "unlocked"));
-      });
-    });
+  private paintGuard(): void {
+    const v = this.paintEventPlate(t("guild.page.guard"));
+    const element = guildGuardElement(this.now);
+    v.add(new AffinityBadge(this, S.side + 84, P.phase + 6, ELEMENT_ICON[element], 84));
+    this.label(v, S.side + 150, P.phase, t("guild.guard.boss", { element: t(`element.${element}`) }), { role: "display", size: 40, color: COLOR.accentText });
+    const timer = this.label(v, S.side + 48, P.timer, "", { role: "emphasis", size: 28, color: COLOR.ink });
+    this.tick(timer, () => t("guild.guard.next", { time: hmText(guildGuardEndsAt(this.now) - this.now) }));
+    [t("guild.guard.rule"), t("guild.guard.reward")].forEach((line, index) => this.label(v, S.side + 48, P.lines.y + index * P.lines.gap, line, { role: "body", size: 30, color: COLOR.ink }));
   }
 
   /* ── 스크롤 목록 ──────────────────────────────────────────────────────── */
 
-  private clip = (): ClipRect => ({ left: S.side, right: S.side + S.width, top: S.body.top, bottom: S.body.bottom });
+  private clip = (): ClipRect => ({ left: S.side, right: S.side + S.width, top: S.body.top, bottom: this.listBottom });
   private canTap = (): boolean => this.dragMoved < TAP_SLOP && !this.busy;
 
   private mountList(count: number, keep: boolean, build: (row: Phaser.GameObjects.Container, index: number) => void): void {
@@ -539,17 +809,17 @@ export class GuildScene extends Phaser.Scene {
       list.add(row);
       build(row, index);
     }
-    const viewport = S.body.bottom - S.body.top;
+    const viewport = this.listBottom - S.body.top;
     const maskShape = this.add.rectangle(BASE_WIDTH / 2, S.body.top + viewport / 2, BASE_WIDTH, viewport, 0xffffff).setVisible(false);
     list.setMask(maskShape.createGeometryMask());
     list.once(Phaser.GameObjects.Events.DESTROY, () => { list.clearMask(true); maskShape.destroy(); });
-    this.minScroll = guildMinScroll(count);
+    this.minScroll = guildMinScroll(count, this.listBottom);
     this.scrollOffset = keep ? Phaser.Math.Clamp(this.scrollOffset, this.minScroll, 0) : 0;
     list.y = S.body.top + this.scrollOffset;
   }
 
   private bindScroll(): void {
-    const inside = (pointer: Phaser.Input.Pointer): boolean => pointer.y >= S.body.top && pointer.y <= S.body.bottom;
+    const inside = (pointer: Phaser.Input.Pointer): boolean => pointer.y >= S.body.top && pointer.y <= this.listBottom;
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => { this.dragMoved = 0; this.dragging = inside(pointer) && !this.popups.isOpen; this.dragLastY = pointer.y; });
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
       if (!this.dragging || !pointer.isDown) return;

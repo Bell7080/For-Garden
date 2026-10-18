@@ -1011,8 +1011,6 @@ var GUILD_KO = {
   "guild.title": "\uAE38\uB4DC",
   "guild.tab.info": "\uC815\uBCF4",
   "guild.tab.members": "\uBA64\uBC84",
-  "guild.tab.attendance": "\uCD9C\uC11D",
-  "guild.tab.shop": "\uC0C1\uC810",
   "guild.role.leader": "\uAE38\uB4DC\uC7A5",
   "guild.role.vice": "\uBD80\uAE38\uB4DC\uC7A5",
   "guild.role.officer": "\uC784\uC6D0",
@@ -1064,7 +1062,6 @@ var GUILD_KO = {
   "guild.info.nextLevel": "\uB2E4\uC74C \uB808\uBCA8\uAE4C\uC9C0 {value}",
   "guild.info.maxLevel": "\uCD5C\uACE0 \uB808\uBCA8",
   "guild.info.leader": "\uAE38\uB4DC\uC7A5 {name}",
-  "guild.info.me": "{role} \xB7 \uAE38\uB4DC \uCF54\uC778 {coin} \xB7 \uC774\uBC88 \uC8FC \uAE30\uC5EC\uB3C4 {week}",
   "guild.info.perkExcavation": "\uBC1C\uAD74 \uC0DD\uC0B0 +{value}%",
   "guild.info.perkDispatch": "\uAD50\uB958 \uD30C\uACAC \uC2DC\uAC04 \u2212{value}%",
   "guild.info.perkNone": "\uD61C\uD0DD\uC740 \uB808\uBCA8 3\uBD80\uD130 \uC5F4\uB9BD\uB2C8\uB2E4",
@@ -1101,28 +1098,9 @@ var GUILD_KO = {
   "guild.members.kickConfirm": "{name:\uC744} \uAE38\uB4DC\uC5D0\uC11C \uB0B4\uBCF4\uB0C5\uB2C8\uB2E4.",
   "guild.members.close": "\uB2EB\uAE30",
   // 출석
-  "guild.attendance.summary": "\uC774\uBC88 \uC8FC {count}/{total}\uC77C \uCD9C\uC11D",
-  "guild.attendance.day": "{day}",
-  "guild.attendance.today": "\uC624\uB298",
-  "guild.attendance.stamped": "\uC644\uB8CC",
-  "guild.attendance.pickGold": "\uACE8\uB4DC {value}",
-  "guild.attendance.pickCheesecake": "\uCE58\uC988\uCF00\uC774\uD06C {value}",
-  "guild.attendance.gain": "\uB3C4\uC7A5 1\uAC1C \xB7 \uBD80\uD765\uB3C4 +{prosperity} \xB7 \uAE30\uC5EC\uB3C4 +{contribution} \xB7 \uAE38\uB4DC \uCF54\uC778 +{coin}",
-  "guild.attendance.weekBonus": "7\uC77C \uBAA8\uB450 \uCD9C\uC11D \xB7 \uC82C {gems} \xB7 \uCF54\uC778 {coin}",
-  "guild.attendance.weekClaimed": "\uC774\uBC88 \uC8FC \uBCF4\uB108\uC2A4 \uC218\uB839 \uC644\uB8CC",
-  "guild.attendance.done": "\uCD9C\uC11D \uB3C4\uC7A5\uC744 \uCC0D\uC5C8\uC2B5\uB2C8\uB2E4",
-  "guild.attendance.bonus": "\uC8FC\uAC04 \uCD9C\uC11D \uBCF4\uB108\uC2A4\uB97C \uBC1B\uC558\uC2B5\uB2C8\uB2E4",
-  "guild.day.0": "\uC6D4",
-  "guild.day.1": "\uD654",
-  "guild.day.2": "\uC218",
-  "guild.day.3": "\uBAA9",
-  "guild.day.4": "\uAE08",
-  "guild.day.5": "\uD1A0",
-  "guild.day.6": "\uC77C",
   "guild.time.hm": "{h}\uC2DC\uAC04 {m}\uBD84",
   "guild.time.m": "{m}\uBD84",
   // 상점
-  "guild.shop.coin": "\uAE38\uB4DC \uCF54\uC778 {coin}",
   "guild.shop.price": "\uCF54\uC778 {price}",
   "guild.shop.limit": "\uC774\uBC88 \uC8FC {bought}/{limit}",
   "guild.shop.buy": "\uAD6C\uB9E4",
@@ -1130,9 +1108,6 @@ var GUILD_KO = {
   "guild.shop.product.guild-gold": "\uACE8\uB4DC \uBB36\uC74C",
   "guild.shop.product.guild-cheesecake": "\uCE58\uC988\uCF00\uC774\uD06C \uBB36\uC74C",
   "guild.shop.product.guild-tonic": "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C",
-  "guild.shop.grantGold": "\uACE8\uB4DC {value}",
-  "guild.shop.grantCheesecake": "\uCE58\uC988\uCF00\uC774\uD06C {value}",
-  "guild.shop.grantTonic": "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C {value}\uAC1C",
   // 오류
   "guild.error.generic": "\uC9C0\uAE08\uC740 \uAE38\uB4DC\uB97C \uC774\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
   "guild.error.UNAVAILABLE": "\uC9C0\uAE08\uC740 \uAE38\uB4DC\uB97C \uC774\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
@@ -1158,7 +1133,44 @@ var GUILD_KO = {
   "guild.error.PRODUCT_LIMIT": "\uC774\uBC88 \uC8FC \uAD6C\uB9E4 \uD55C\uB3C4\uB97C \uB2E4 \uC37C\uC2B5\uB2C8\uB2E4",
   "guild.error.INSUFFICIENT_COINS": "\uAE38\uB4DC \uCF54\uC778\uC774 \uBAA8\uC790\uB78D\uB2C8\uB2E4",
   "guild.error.INSUFFICIENT_GEMS": "\uC82C\uC774 \uBAA8\uC790\uB78D\uB2C8\uB2E4",
-  "guild.error.INVALID_REQUEST": "\uC694\uCCAD\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4"
+  "guild.error.INVALID_REQUEST": "\uC694\uCCAD\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4",
+  "guild.page.info": "\uC815\uBCF4",
+  "guild.page.war": "\uAE38\uB4DC\uC804",
+  "guild.page.guard": "\uC218\uD638\uC804",
+  "guild.menu.chip": "\uAE38\uB4DC \uBA54\uB274",
+  "guild.menu.title": "\uAE38\uB4DC \uBA54\uB274",
+  "guild.menu.back": "\uB3CC\uC544\uAC00\uAE30",
+  "guild.menu.browse": "\uB2E4\uB978 \uAE38\uB4DC \uCC3E\uAE30",
+  "guild.ranking.title": "\uAE38\uB4DC \uC21C\uC704",
+  "guild.shop.title": "\uAE38\uB4DC \uC0C1\uC810",
+  "guild.info.me": "\uB0B4 \uC9C1\uCC45 \xB7 {role}",
+  "guild.info.contribution": "\uC774\uBC88 \uC8FC \uAE30\uC5EC\uB3C4 {week} \xB7 \uB204\uC801 {total}",
+  "guild.info.coin": "\uBCF4\uC720 \uAE38\uB4DC \uCF54\uC778 {coin}",
+  "guild.attendance.title": "\uAE38\uB4DC \uCD9C\uC11D",
+  "guild.attendance.dayLabel": "{day}\uC77C\uCC28",
+  "guild.attendance.cellGain": "\uAE30\uC5EC +{contribution} \xB7 \uCF54\uC778 +{coin}",
+  "guild.attendance.gain": "\uB9E4\uC77C \uAE30\uC5EC\uB3C4 +{contribution} \xB7 \uAE38\uB4DC \uCF54\uC778 +{coin}\n7\uC77C\uCC28 \uAE30\uC5EC\uB3C4 +{finalContribution} \xB7 \uAE38\uB4DC \uCF54\uC778 +{finalCoin} \xB7 \uBE60\uC9C4 \uB0A0\uC774 \uC788\uC5B4\uB3C4 \uC774\uC5B4\uC11C \uCC0D\uD799\uB2C8\uB2E4",
+  "guild.attendance.receipt": "{day}\uC77C\uCC28 \uCD9C\uC11D",
+  "guild.attendance.footnote": "\uAE30\uC5EC\uB3C4 +{contribution} \xB7 \uBD80\uD765\uB3C4 +{prosperity}",
+  "guild.members.applied": "\uAC00\uC785 \uC2E0\uCCAD",
+  "guild.members.week": "\uC774\uBC88 \uC8FC \uAE30\uC5EC",
+  "guild.members.total": "\uB204\uC801 {value}",
+  "guild.members.manage": "\uAD00\uB9AC",
+  "guild.profile.title": "\uAE38\uB4DC\uC6D0 \uC815\uBCF4",
+  "guild.profile.role": "\uC9C1\uCC45",
+  "guild.profile.contribution": "\uC774\uBC88 \uC8FC \uAE30\uC5EC\uB3C4",
+  "guild.war.battle": "\uC804\uD22C\uC77C",
+  "guild.war.prep": "\uC815\uBE44\uC77C",
+  "guild.war.battleEnds": "\uC804\uD22C \uC885\uB8CC\uAE4C\uC9C0 {time}",
+  "guild.war.prepEnds": "\uC804\uD22C \uC2DC\uC791\uAE4C\uC9C0 {time}",
+  "guild.war.noScore": "\uAE38\uB4DC\uC804 \uAE30\uB85D \uC5C6\uC74C",
+  "guild.war.score": "\uAE38\uB4DC\uC804 \uC810\uC218 {score} \xB7 {rank}\uC704",
+  "guild.war.slots": "\uBC29\uC5B4\uC9C4 {count}\uCE78",
+  "guild.war.members": "\uCC38\uAC00 \uC870\uAC74 \uAE38\uB4DC\uC6D0 {need}\uBA85 \uC774\uC0C1 \xB7 \uC9C0\uAE08 {count}\uBA85",
+  "guild.guard.boss": "\uC624\uB298\uC758 \uBCF4\uC2A4 \xB7 {element} \uC18D\uC131",
+  "guild.guard.next": "\uB2E4\uC74C \uD310\uAE4C\uC9C0 {time}",
+  "guild.guard.rule": "\uD558\uB8E8 1\uD68C \xB7 3\uC778 \uB371 2\uBC8C",
+  "guild.guard.reward": "\uBCF4\uC0C1 \xB7 \uAE38\uB4DC \uCF54\uC778 \xB7 \uBD80\uD765\uB3C4"
 };
 
 // src/i18n/ko/rune.ts
@@ -17653,6 +17665,9 @@ var PROFILE_FRAMES = [
 function findProfileFrame(id) {
   return PROFILE_FRAMES.find((frame) => frame.id === id);
 }
+function profileFrameOrDefault(id) {
+  return findProfileFrame(id) ?? PROFILE_FRAMES[0];
+}
 function isProfileFrameUnlocked(frame, playerLevel) {
   return playerLevel >= frame.unlockLevel;
 }
@@ -17975,6 +17990,12 @@ for (const banner of BANNERS) {
 
 // src/core/stageProgress.ts
 init_define_import_meta_env();
+function progressRank(stage) {
+  return (stage.chapter ?? 0) * 1e4 + (stage.chapterOrder ?? 0) * 2 + (stage.kind === "story" || stage.sub ? 0 : 1);
+}
+function highestClearedStage(stages, cleared) {
+  return stages.filter((stage) => cleared.has(stage.id)).reduce((latest, stage) => !latest || progressRank(stage) > progressRank(latest) ? stage : latest, void 0);
+}
 
 // src/core/settings.ts
 init_define_import_meta_env();
@@ -17999,7 +18020,7 @@ function createDefaultSettings() {
     // 현재 대사는 보이스의 보조 자막이 아니라 필수 진행 정보이므로 숨김 설정을 제공하지 않는다.
     accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
-    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" } },
+    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0 } },
     // 이름을 적어 두지 않는다 — 저장에 굳으면 언어를 바꿔도 그 줄만 옛 언어로 남는다.
     // 빈 값은 화면이 부를 때 `profile.guest`로 메운다.
     account: { provider: "guest", displayId: "" }
@@ -18009,6 +18030,7 @@ var record = (value) => value && typeof value === "object" && !Array.isArray(val
 var bool = (value, fallback) => typeof value === "boolean" ? value : fallback;
 var volume = (value, fallback) => typeof value === "number" && Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : fallback;
 var tierId = (value) => typeof value === "string" && value.length <= 40 ? value : "";
+var seenKey = (value) => typeof value === "number" && Number.isInteger(value) && value >= 0 && value < 1e7 ? value : 0;
 var allowed = (value, values, fallback) => values.includes(value) ? value : fallback;
 function normalizeSettings(value) {
   const d = createDefaultSettings();
@@ -18049,7 +18071,8 @@ function normalizeSettings(value) {
       // 지원 언어 목록은 language.ts 하나가 가지므로 여기에 코드를 다시 적지 않는다.
       language: normalizeLanguage(g.language),
       // 단계가 실제로 있는지는 입구가 가린다 — 여기서는 짧은 문자열인지만 본다.
-      dungeonTiers: { bounty: tierId(record(g.dungeonTiers).bounty), cake: tierId(record(g.dungeonTiers).cake) }
+      dungeonTiers: { bounty: tierId(record(g.dungeonTiers).bounty), cake: tierId(record(g.dungeonTiers).cake) },
+      guildSeen: { war: seenKey(record(g.guildSeen).war), guard: seenKey(record(g.guildSeen).guard) }
     },
     // 인증 토큰은 이 모델에 애초에 자리를 만들지 않아 로컬 저장으로 새는 경로를 차단한다.
     account: { provider: allowed(a.provider, ["guest", "google", "apple"], d.account.provider), displayId: typeof a.displayId === "string" && a.displayId.length <= 80 ? a.displayId : d.account.displayId }
@@ -19102,6 +19125,11 @@ function normalizePlayerCard(value) {
     createdAt: typeof raw.createdAt === "string" && Number.isFinite(Date.parse(raw.createdAt)) ? raw.createdAt : "",
     nicknameChangedAt: typeof raw.nicknameChangedAt === "string" && Number.isFinite(Date.parse(raw.nicknameChangedAt)) ? raw.nicknameChangedAt : ""
   };
+}
+function researchDays(createdAt, now) {
+  const start = Date.parse(createdAt);
+  if (!Number.isFinite(start)) return 1;
+  return Math.max(1, Math.floor((now.getTime() - start) / 864e5) + 1);
 }
 
 // src/core/expeditionPeriods.ts
@@ -26473,6 +26501,15 @@ function isContentUnlocked(id, playerLevel, gates = CONTENT_LEVEL_GATES_ENABLED,
   if (stage !== void 0) return clearedStages.has(stage);
   return playerLevel >= contentUnlockLevel(id);
 }
+function nextContentUnlock(playerLevel, gates = CONTENT_LEVEL_GATES_ENABLED) {
+  if (!gates) return void 0;
+  return CONTENT_UNLOCKS.find((entry) => entry.level > playerLevel);
+}
+function nextStageUnlock(clearedStages, gates = CONTENT_LEVEL_GATES_ENABLED) {
+  if (!gates) return void 0;
+  for (const [id, stageId] of Object.entries(CONTENT_STAGE_UNLOCKS)) if (!clearedStages.has(stageId)) return { id, stageId };
+  return void 0;
+}
 
 // src/core/bountyRun.ts
 init_define_import_meta_env();
@@ -27699,12 +27736,24 @@ function guildWeekKey(ms) {
   const day = new Date(ms).getUTCDay();
   return guildDateKey(ms - (day + 6) % 7 * 864e5);
 }
-var guildWeekdayIndex = (ms) => (new Date(ms).getUTCDay() + 6) % 7;
-var GUILD_ATTENDANCE_CHOICES = ["gold", "cheesecake"];
-var GUILD_ATTENDANCE_REWARD = { gold: 8e3, cheesecake: 32 };
-var GUILD_ATTENDANCE_GAIN = { prosperity: 10, contribution: 10, coin: 5 };
-var GUILD_ATTENDANCE_WEEK_BONUS = { gems: 20, contribution: 20, coin: 10 };
-var GUILD_STAMP_DAYS = 7;
+var DAY = { prosperity: 10, contribution: 10, coin: 5 };
+var GUILD_ATTENDANCE_CYCLE = [
+  { reward: { gold: 7500 }, ...DAY },
+  { reward: { cheesecake: 30 }, ...DAY },
+  { reward: { gold: 7500 }, ...DAY },
+  { reward: { cheesecake: 30 }, ...DAY },
+  { reward: { gold: 7500 }, ...DAY },
+  { reward: { cheesecake: 30 }, ...DAY },
+  { reward: { gems: 50 }, prosperity: 20, contribution: 30, coin: 15 }
+];
+var GUILD_STAMP_DAYS = GUILD_ATTENDANCE_CYCLE.length;
+var guildAttendanceDay = (day) => GUILD_ATTENDANCE_CYCLE[Math.min(GUILD_STAMP_DAYS, Math.max(1, Math.floor(day))) - 1];
+function guildAttendanceView(count2, lastDay, today) {
+  const done = Math.min(GUILD_STAMP_DAYS, Math.max(0, Math.floor(count2)));
+  if (lastDay === today && done > 0) return { filled: done, day: done, stampedToday: true };
+  const base = done >= GUILD_STAMP_DAYS ? 0 : done;
+  return { filled: base, day: base + 1, stampedToday: false };
+}
 var GUILD_SHOP_PRODUCTS = [
   { id: "guild-gold", price: 20, weeklyLimit: 5, grant: { gold: 5500 } },
   { id: "guild-cheesecake", price: 20, weeklyLimit: 5, grant: { cheesecake: 24 } },
@@ -27818,8 +27867,9 @@ var FakeGuildServer = class {
       contributionWeekKey: guildWeekKey(at),
       contributionWeek: 0,
       contributionTotal: 0,
-      stamps: /* @__PURE__ */ new Map(),
-      weekBonusKey: "",
+      attendanceCount: 0,
+      attendanceLast: null,
+      card: actor.card ? structuredClone(actor.card) : null,
       purchases: /* @__PURE__ */ new Map(),
       purchaseWeekKey: guildWeekKey(at)
     };
@@ -27844,6 +27894,7 @@ var FakeGuildServer = class {
     member.avatarRelicId = actor.avatarRelicId;
     member.frameId = actor.frameId;
     member.lastActiveAt = now;
+    if (actor.card) member.card = structuredClone(actor.card);
     const week = guildWeekKey(now);
     if (member.contributionWeekKey !== week) {
       member.contributionWeekKey = week;
@@ -27908,7 +27959,7 @@ var FakeGuildServer = class {
   }
   async getMembers(actor) {
     const { guild, me } = this.requireGuild(actor);
-    const members = [...guild.members.values()].sort((a, b) => roleRank(b.role) - roleRank(a.role) || b.contributionTotal - a.contributionTotal || a.joinedAt - b.joinedAt).map((m) => ({ userId: m.userId, name: m.name, level: m.level, role: m.role, avatarRelicId: m.avatarRelicId, frameId: m.frameId, contributionWeek: m.contributionWeekKey === guildWeekKey(this.now()) ? m.contributionWeek : 0, contributionTotal: m.contributionTotal, lastActiveAt: m.lastActiveAt, isMe: m.userId === actor.userId }));
+    const members = [...guild.members.values()].sort((a, b) => roleRank(b.role) - roleRank(a.role) || b.contributionTotal - a.contributionTotal || a.joinedAt - b.joinedAt).map((m) => ({ userId: m.userId, name: m.name, level: m.level, role: m.role, avatarRelicId: m.avatarRelicId, frameId: m.frameId, contributionWeek: m.contributionWeekKey === guildWeekKey(this.now()) ? m.contributionWeek : 0, contributionTotal: m.contributionTotal, lastActiveAt: m.lastActiveAt, isMe: m.userId === actor.userId, card: m.card ? structuredClone(m.card) : null }));
     const requests = guildCan(me.role, "approve") ? [...guild.requests.values()].sort((a, b) => a.requestedAt - b.requestedAt).map(({ actor: a, requestedAt }) => ({ userId: a.userId, name: a.name, level: a.level, avatarRelicId: a.avatarRelicId, frameId: a.frameId, requestedAt })) : [];
     return { members, requests, serverTime: this.now() };
   }
@@ -28045,29 +28096,22 @@ var FakeGuildServer = class {
     });
   }
   attendanceOf(me) {
-    const now = this.now(), week = guildWeekKey(now), todayIndex = guildWeekdayIndex(now);
-    const monday = Date.parse(week);
-    const stamps = Array.from({ length: GUILD_STAMP_DAYS }, (_, i) => me.stamps.get(guildDateKey(monday + i * 864e5)) ?? null);
-    return { weekKey: week, stamps, todayIndex, stampedToday: stamps[todayIndex] !== null, weekBonusClaimed: me.weekBonusKey === week, serverTime: now };
+    const now = this.now();
+    return { ...guildAttendanceView(me.attendanceCount, me.attendanceLast, guildDateKey(now)), serverTime: now };
   }
   async getAttendance(actor) {
     return this.attendanceOf(this.requireGuild(actor).me);
   }
-  async stampAttendance(actor, choice, requestId) {
+  async stampAttendance(actor, requestId) {
     return this.once(actor, requestId, () => {
-      if (!GUILD_ATTENDANCE_CHOICES.includes(choice)) fail("INVALID_REQUEST");
       const { guild, me } = this.requireGuild(actor);
-      const today = guildDateKey(this.now());
-      if (me.stamps.has(today)) fail("ALREADY_STAMPED");
-      me.stamps.set(today, choice);
-      this.gain(guild, me, GUILD_ATTENDANCE_GAIN);
-      const attendance = this.attendanceOf(me);
-      const complete = attendance.stamps.every((stamp) => stamp !== null) && !attendance.weekBonusClaimed;
-      if (complete) {
-        me.weekBonusKey = attendance.weekKey;
-        this.gain(guild, me, { contribution: GUILD_ATTENDANCE_WEEK_BONUS.contribution, coin: GUILD_ATTENDANCE_WEEK_BONUS.coin });
-      }
-      return { attendance: { ...attendance, weekBonusClaimed: attendance.weekBonusClaimed || complete }, weekBonus: complete };
+      const view = this.attendanceOf(me);
+      if (view.stampedToday) fail("ALREADY_STAMPED");
+      me.attendanceCount = view.day;
+      me.attendanceLast = guildDateKey(this.now());
+      const day = guildAttendanceDay(view.day);
+      this.gain(guild, me, { prosperity: day.prosperity, contribution: day.contribution, coin: day.coin });
+      return { attendance: this.attendanceOf(me), day: view.day };
     });
   }
   shopOf(me) {
@@ -28100,6 +28144,72 @@ var localGuildBackend = new FakeGuildServer();
 
 // src/api/guildActor.ts
 init_define_import_meta_env();
+
+// src/state/playerProfile.ts
+init_define_import_meta_env();
+function favoriteShowcase(state) {
+  const relic = RELICS.find(({ id }) => id === state.favorite);
+  if (!relic) return null;
+  const progress = state.relicProgress[relic.id];
+  const gems2 = (progress?.heartGemSlots ?? []).flatMap((id) => {
+    const rune = id === null ? void 0 : state.runeInventory.find((candidate) => candidate.instanceId === id);
+    return rune ? [rune] : [];
+  });
+  const stats = progress ? calculateFinalStats(relic.stats, progress, gems2, relic.rarity) : relic.stats;
+  return {
+    relicId: relic.id,
+    displayName: relic.name,
+    portraitAssetId: relic.portraitAssetId,
+    level: progress?.level ?? 1,
+    breakthroughGrade: breakthroughGrade(progress?.breakthrough ?? 0),
+    bondLevel: progress?.bondLevel ?? 0,
+    rarity: relic.rarity,
+    element: relic.element,
+    role: relic.role,
+    power: combatPower(stats)
+  };
+}
+function profileAvatarRelic(state) {
+  const chosen = state.playerCard.avatarRelicId && state.owned.has(state.playerCard.avatarRelicId) ? state.playerCard.avatarRelicId : state.favorite;
+  const relic = RELICS.find(({ id }) => id === chosen);
+  return relic ? { relicId: relic.id, portraitAssetId: relic.portraitAssetId } : null;
+}
+function playerProfileDisplay(state, equippedModifiers = [], arenaTier, now = /* @__PURE__ */ new Date()) {
+  const favorite = favoriteShowcase(state);
+  const stage = highestClearedStage(STAGES, state.cleared);
+  const card = state.playerCard;
+  const research = state.playerResearch;
+  const next = nextContentUnlock(research.level);
+  const nextStage = nextStageUnlock(state.cleared);
+  return {
+    // 기본 이름은 표가 아니라 부를 때 고른다 — 표는 모듈을 읽는 순간 굳어 언어를 따라오지 않는다.
+    displayName: card.nickname || t("profile.defaultName"),
+    level: research.level,
+    experience: research.experience,
+    experienceToNext: research.experienceToNext,
+    levelCapped: research.level >= PLAYER_LEVEL_CAP,
+    displayId: card.uid || state.settings.account.displayId.trim() || t("profile.guest"),
+    bio: card.bio,
+    frameId: profileFrameOrDefault(card.frameId).id,
+    avatar: profileAvatarRelic(state),
+    representativeRelic: favorite?.displayName ?? t("profile.noFavorite"),
+    researchDays: researchDays(card.createdAt, now),
+    competitiveStats: {
+      favoriteRelic: favorite,
+      ...arenaTier ? { arenaTier: { ...arenaTier } } : {},
+      highestStage: stage ? { stageId: stage.id, displayValue: `${stage.id} ${stage.name}` } : null,
+      storyProgress: { cleared: STAGES.filter(({ id }) => state.cleared.has(id)).length, total: STAGES.length },
+      // 장기 성취 프로필이므로 주간 초기화 값이 아닌 명시적인 역대 최고만 표시한다.
+      expedition: { label: t("profile.expeditionBest"), score: Math.max(0, state.expedition.allTimeBestScore) }
+    },
+    collection: { owned: PLAYABLE_RELICS.filter(({ id }) => state.owned.has(id)).length, total: PLAYABLE_RELICS.length },
+    ...next ? { nextUnlock: { contentId: next.id, level: next.level } } : {},
+    ...nextStage ? { nextStageUnlock: { contentId: nextStage.id, stageId: nextStage.stageId } } : {},
+    equippedModifiers: equippedModifiers.map((modifier) => ({ ...modifier }))
+  };
+}
+
+// src/api/guildActor.ts
 function guildActorFrom(state, userId) {
   const card = state.playerCard;
   return {
@@ -28107,7 +28217,25 @@ function guildActorFrom(state, userId) {
     name: card.nickname || t("profile.defaultName"),
     level: state.playerResearch.level,
     avatarRelicId: card.avatarRelicId || state.favorite,
-    frameId: card.frameId
+    frameId: card.frameId,
+    card: guildMemberCardFrom(state)
+  };
+}
+function guildMemberCardFrom(state) {
+  const profile = playerProfileDisplay(state);
+  const favorite = profile.competitiveStats.favoriteRelic;
+  return {
+    uid: state.playerCard.uid.slice(0, 32),
+    bio: state.playerCard.bio.slice(0, 80),
+    favorite: favorite ? {
+      relicId: favorite.relicId,
+      level: favorite.level,
+      power: favorite.power,
+      breakthroughGrade: favorite.breakthroughGrade,
+      skinId: state.equippedRelicSkinIds[favorite.relicId] ?? null
+    } : null,
+    highestStageId: profile.competitiveStats.highestStage?.stageId ?? null,
+    expeditionBest: Math.max(0, Math.floor(state.expedition.allTimeBestScore))
   };
 }
 
@@ -29575,6 +29703,12 @@ var SettingsManager = class extends EventTarget {
     if (current[dungeon] === tierId2) return;
     this.update({ game: { dungeonTiers: { ...current, [dungeon]: tierId2 } } });
   }
+  /** 길드전·수호전 탭에서 지금 판을 봤다고 적는다 — 붉은 점이 꺼진다. */
+  rememberGuildSeen(page, key) {
+    const current = this.get().game.guildSeen;
+    if (current[page] === key) return;
+    this.update({ game: { guildSeen: { ...current, [page]: key } } });
+  }
   update(patch) {
     const merged = Object.fromEntries(Object.entries(this.get()).map(([key, value]) => [key, { ...value, ...patch[key] ?? {} }]));
     this.state.settings = normalizeSettings(merged);
@@ -30997,12 +31131,11 @@ var FakeServer = class {
     }
     return { ...this.snapshot(), guild: await this.guildBackend.getGuild(actor) };
   }
-  async stampGuildAttendance(request) {
+  async stampGuildAttendance(_request = {}) {
     await this.delay();
-    const stamped = await this.guildBackend.stampAttendance(this.guildActor(), request.choice, this.guildRequestId("stamp"));
-    const gold2 = request.choice === "gold" ? GUILD_ATTENDANCE_REWARD.gold : 0;
-    const cheesecake2 = request.choice === "cheesecake" ? GUILD_ATTENDANCE_REWARD.cheesecake : 0;
-    const gems2 = stamped.weekBonus ? GUILD_ATTENDANCE_WEEK_BONUS.gems : 0;
+    const stamped = await this.guildBackend.stampAttendance(this.guildActor(), this.guildRequestId("stamp"));
+    const { reward } = guildAttendanceDay(stamped.day);
+    const gold2 = reward.gold ?? 0, cheesecake2 = reward.cheesecake ?? 0, gems2 = reward.gems ?? 0;
     const wallet = { ...this.state.wallet };
     const granted = { gold: 0, cheesecake: 0, gems: 0 };
     for (const [key, amount] of [["gold", gold2], ["cheesecake", cheesecake2], ["gems", gems2]]) {
@@ -31012,7 +31145,7 @@ var FakeServer = class {
     const next = { ...this.state, wallet };
     this.persist(next);
     this.state.wallet = wallet;
-    return { ...this.snapshot(), attendance: stamped.attendance, granted, weekBonus: stamped.weekBonus };
+    return { ...this.snapshot(), attendance: stamped.attendance, granted, day: stamped.day };
   }
   async buyGuildProduct(request) {
     await this.delay();
@@ -34423,10 +34556,7 @@ function createSupabaseGuildBackend(call) {
       if (!isGuildBadge(badge)) throw new GuildApiError("BADGE_INVALID", "BADGE_INVALID");
       return run2(actor, "changeBadge", [badge], requestId);
     },
-    stampAttendance: (actor, choice, requestId) => {
-      if (!GUILD_ATTENDANCE_CHOICES.includes(choice)) invalid();
-      return run2(actor, "stampAttendance", [choice], requestId);
-    },
+    stampAttendance: (actor, requestId) => run2(actor, "stampAttendance", [], requestId),
     purchase: (actor, productId, requestId) => {
       if (!findGuildProduct(productId)) throw new GuildApiError("PRODUCT_NOT_FOUND", "PRODUCT_NOT_FOUND");
       return run2(actor, "purchase", [productId], requestId);

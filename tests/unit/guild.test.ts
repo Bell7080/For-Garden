@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  GUILD_ATTENDANCE_REWARD, GUILD_COIN_GEM_VALUE, GUILD_LEVELS, GUILD_MAX_LEVEL, GUILD_SHOP_PRODUCTS, guildCan, guildCanKick,
+  GUILD_ATTENDANCE_CYCLE, GUILD_COIN_GEM_VALUE, GUILD_LEVELS, GUILD_MAX_LEVEL, GUILD_SHOP_PRODUCTS, guildCan, guildCanKick,
   guildCapacity, guildLevelOf, guildLevelProgress, guildPerks, guildSuccessor, guildWeekKey, guildWeekdayIndex, validateGuildName,
 } from "../../src/core/guild";
 import { TRADE_GEM_RATE } from "../../src/data/tradePackages";
@@ -77,10 +77,13 @@ describe("길드 시각 키", () => {
 });
 
 describe("길드 보상 값", () => {
-  it("출석 골드와 치즈케이크는 같은 환산 가치다", () => {
-    const gold = GUILD_ATTENDANCE_REWARD.gold / TRADE_GEM_RATE.gold;
-    const cake = GUILD_ATTENDANCE_REWARD.cheesecake / TRADE_GEM_RATE.cheesecake;
-    expect(Math.abs(gold - cake) / gold).toBeLessThan(0.05);
+  it("출석 1~6일차는 같은 환산 가치이고 7일차가 가장 크다", () => {
+    const value = (r: { gold?: number; cheesecake?: number; gems?: number }) => (r.gold ?? 0) / TRADE_GEM_RATE.gold + (r.cheesecake ?? 0) / TRADE_GEM_RATE.cheesecake + (r.gems ?? 0);
+    const days = GUILD_ATTENDANCE_CYCLE.map((d) => value(d.reward));
+    expect(GUILD_ATTENDANCE_CYCLE).toHaveLength(7);
+    for (const v of days.slice(0, 6)) expect(Math.abs(v - days[0]) / days[0]).toBeLessThan(0.05);
+    expect(days[6]).toBeGreaterThan(days[0]);
+    for (const d of GUILD_ATTENDANCE_CYCLE.slice(0, 6)) expect(d.contribution).toBeLessThan(GUILD_ATTENDANCE_CYCLE[6].contribution);
   });
 
   it("상점은 받는 것의 젬 값이 낸 값의 1.0~1.25배 안이다", () => {

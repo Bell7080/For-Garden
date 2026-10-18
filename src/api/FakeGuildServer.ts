@@ -1,24 +1,23 @@
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { isContentUnlocked } from "../core/contentUnlock";
 import {
-  GUILD_ATTENDANCE_CHOICES, GUILD_ATTENDANCE_GAIN, GUILD_ATTENDANCE_WEEK_BONUS, GUILD_LEAVE_COOLDOWN_MS, GUILD_NOTICE_MAX, GUILD_ROLE_LIMIT,
-  GUILD_SHOP_PRODUCTS, GUILD_STAMP_DAYS, findGuildProduct, guildCan, guildCanKick, guildCapacity, guildDateKey, guildGlyphCount, guildLevelOf,
-  guildNameKey, guildWeekKey, guildWeekdayIndex, validateGuildName,
-  type GuildAttendanceChoice, type GuildJoinMode, type GuildRole,
+  GUILD_LEAVE_COOLDOWN_MS, GUILD_NOTICE_MAX, GUILD_ROLE_LIMIT, GUILD_SHOP_PRODUCTS, findGuildProduct, guildAttendanceDay, guildAttendanceView,
+  guildCan, guildCanKick, guildCapacity, guildDateKey, guildGlyphCount, guildLevelOf, guildNameKey, guildWeekKey, validateGuildName,
+  type GuildJoinMode, type GuildRole,
 } from "../core/guild";
 import { isGuildBadge, sameGuildBadge, type GuildBadge } from "../core/guildBadge";
 import {
   GuildApiError, type GuildActor, type GuildAttendanceState, type GuildBackend, type GuildDetail, type GuildErrorCode, type GuildJoinRequestView,
-  type GuildMemberView, type GuildMembersResponse, type GuildSearchResponse, type GuildShopState, type GuildStateResponse, type GuildSummary,
+  type GuildMemberCard, type GuildMemberView, type GuildMembersResponse, type GuildSearchResponse, type GuildShopState, type GuildStateResponse, type GuildSummary,
 } from "./guildContracts";
 
 interface MemberRow {
   userId: string; name: string; level: number; role: GuildRole; avatarRelicId: string; frameId: string;
   joinedAt: number; lastActiveAt: number; coin: number;
   contributionWeekKey: string; contributionWeek: number; contributionTotal: number;
-  /** 날짜 키 → 고른 보상. 지난 주 기록도 남겨 두고 이번 주 칸만 읽는다. */
-  stamps: Map<string, GuildAttendanceChoice>;
-  weekBonusKey: string;
+  /** 이번 바퀴에 찍은 수(0~7)와 마지막으로 찍은 날짜 키. */
+  attendanceCount: number; attendanceLast: string | null;
+  card: GuildMemberCard | null;
   purchases: Map<string, number>; purchaseWeekKey: string;
 }
 interface GuildRow {
@@ -65,7 +64,7 @@ export class FakeGuildServer implements GuildBackend {
     return {
       userId: actor.userId, name: actor.name, level: actor.level, role, avatarRelicId: actor.avatarRelicId, frameId: actor.frameId,
       joinedAt: at, lastActiveAt: at, coin: 0, contributionWeekKey: guildWeekKey(at), contributionWeek: 0, contributionTotal: 0,
-      stamps: new Map(), weekBonusKey: "", purchases: new Map(), purchaseWeekKey: guildWeekKey(at),
+      attendanceCount: 0, attendanceLast: null, card: actor.card ? structuredClone(actor.card) : null, purchases: new Map(), purchaseWeekKey: guildWeekKey(at),
     };
   }
 
@@ -82,6 +81,7 @@ export class FakeGuildServer implements GuildBackend {
   private touch(member: MemberRow, actor: GuildActor): void {
     const now = this.now();
     member.name = actor.name; member.level = actor.level; member.avatarRelicId = actor.avatarRelicId; member.frameId = actor.frameId; member.lastActiveAt = now;
+    if (actor.card) member.card = structuredClone(actor.card);
     const week = guildWeekKey(now);
     if (member.contributionWeekKey !== week) { member.contributionWeekKey = week; member.contributionWeek = 0; }
     if (member.purchaseWeekKey !== week) { member.purchaseWeekKey = week; member.purchases = new Map(); }
@@ -137,7 +137,7 @@ export class FakeGuildServer implements GuildBackend {
   async getMembers(actor: GuildActor): Promise<GuildMembersResponse> {
     const { guild, me } = this.requireGuild(actor);
     const members = [...guild.members.values()].sort((a, b) => roleRank(b.role) - roleRank(a.role) || b.contributionTotal - a.contributionTotal || a.joinedAt - b.joinedAt)
-      .map((m): GuildMemberView => ({ userId: m.userId, name: m.name, level: m.level, role: m.role, avatarRelicId: m.avatarRelicId, frameId: m.frameId, contributionWeek: m.contributionWeekKey === guildWeekKey(this.now()) ? m.contributionWeek : 0, contributionTotal: m.contributionTotal, lastActiveAt: m.lastActiveAt, isMe: m.userId === actor.userId }));
+      .map((m): GuildMemberView => ({ userId: m.userId, name: m.name, level: m.level, role: m.role, avatarRelicId: m.avatarRelicId, frameId: m.frameId, contributionWeek: m.contributionWeekKey === guildWeekKey(this.now()) ? m.contributionWeek : 0, contributionTotal: m.contributionTotal, lastActiveAt: m.lastActiveAt, isMe: m.userId === actor.userId, card: m.card ? structuredClone(m.card) : null }));
     const requests: GuildJoinRequestView[] = guildCan(me.role, "approve")
       ? [...guild.requests.values()].sort((a, b) => a.requestedAt - b.requestedAt).map(({ actor: a, requestedAt }) => ({ userId: a.userId, name: a.name, level: a.level, avatarRelicId: a.avatarRelicId, frameId: a.frameId, requestedAt }))
       : [];
@@ -277,25 +277,20 @@ export class FakeGuildServer implements GuildBackend {
   }
 
   private attendanceOf(me: MemberRow): GuildAttendanceState {
-    const now = this.now(), week = guildWeekKey(now), todayIndex = guildWeekdayIndex(now);
-    const monday = Date.parse(week);
-    const stamps = Array.from({ length: GUILD_STAMP_DAYS }, (_, i) => me.stamps.get(guildDateKey(monday + i * 86_400_000)) ?? null);
-    return { weekKey: week, stamps, todayIndex, stampedToday: stamps[todayIndex] !== null, weekBonusClaimed: me.weekBonusKey === week, serverTime: now };
+    const now = this.now();
+    return { ...guildAttendanceView(me.attendanceCount, me.attendanceLast, guildDateKey(now)), serverTime: now };
   }
   async getAttendance(actor: GuildActor): Promise<GuildAttendanceState> { return this.attendanceOf(this.requireGuild(actor).me); }
 
-  async stampAttendance(actor: GuildActor, choice: GuildAttendanceChoice, requestId: string): Promise<{ attendance: GuildAttendanceState; weekBonus: boolean }> {
+  async stampAttendance(actor: GuildActor, requestId: string): Promise<{ attendance: GuildAttendanceState; day: number }> {
     return this.once(actor, requestId, () => {
-      if (!GUILD_ATTENDANCE_CHOICES.includes(choice)) fail("INVALID_REQUEST");
       const { guild, me } = this.requireGuild(actor);
-      const today = guildDateKey(this.now());
-      if (me.stamps.has(today)) fail("ALREADY_STAMPED");
-      me.stamps.set(today, choice);
-      this.gain(guild, me, GUILD_ATTENDANCE_GAIN);
-      const attendance = this.attendanceOf(me);
-      const complete = attendance.stamps.every((stamp) => stamp !== null) && !attendance.weekBonusClaimed;
-      if (complete) { me.weekBonusKey = attendance.weekKey; this.gain(guild, me, { contribution: GUILD_ATTENDANCE_WEEK_BONUS.contribution, coin: GUILD_ATTENDANCE_WEEK_BONUS.coin }); }
-      return { attendance: { ...attendance, weekBonusClaimed: attendance.weekBonusClaimed || complete }, weekBonus: complete };
+      const view = this.attendanceOf(me);
+      if (view.stampedToday) fail("ALREADY_STAMPED");
+      me.attendanceCount = view.day; me.attendanceLast = guildDateKey(this.now());
+      const day = guildAttendanceDay(view.day);
+      this.gain(guild, me, { prosperity: day.prosperity, contribution: day.contribution, coin: day.coin });
+      return { attendance: this.attendanceOf(me), day: view.day };
     });
   }
 

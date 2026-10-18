@@ -53,6 +53,13 @@ export class SettingsManager extends EventTarget {
     this.update({ game: { dungeonTiers: { ...current, [dungeon]: tierId } } });
   }
 
+  /** 길드전·수호전 탭에서 지금 판을 봤다고 적는다 — 붉은 점이 꺼진다. */
+  rememberGuildSeen(page: "war" | "guard", key: number): void {
+    const current = this.get().game.guildSeen;
+    if (current[page] === key) return;
+    this.update({ game: { guildSeen: { ...current, [page]: key } } });
+  }
+
   update(patch: SettingsPatch): GameSettings {
     const merged = Object.fromEntries(Object.entries(this.get()).map(([key, value]) => [key, { ...value, ...(patch[key as keyof GameSettings] ?? {}) }])) as unknown as GameSettings;
     this.state.settings = normalizeSettings(merged);

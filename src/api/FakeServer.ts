@@ -59,7 +59,7 @@ import { localGuildBackend } from "./FakeGuildServer";
 import { guildActorFrom } from "./guildActor";
 import { GuildApiError, type GuildBackend } from "./guildContracts";
 import type { BuyGuildProductRequest, BuyGuildProductResponse, ChangeGuildBadgeRequest, CreateGuildRequest, GuildWalletResponse, StampGuildAttendanceRequest, StampGuildAttendanceResponse } from "./contracts";
-import { canCompleteTutorialStep, isContentIntroId, isContentIntroSeen, isTutorialStepDone, isTutorialStepId, normalizeTutorialState, TUTORIAL_REWARDS, type TutorialState } from "../core/tutorial";
+import { advanceTutorialOnStageClear, stageClearAdvancesTutorial, canCompleteTutorialStep, isContentIntroId, isContentIntroSeen, isTutorialStepDone, isTutorialStepId, normalizeTutorialState, TUTORIAL_REWARDS, type TutorialState } from "../core/tutorial";
 import { mileageFragmentRelicId } from "../data/mileageClerk";
 import { BOND_STORY_GEM_REWARD, BOND_STORY_LEVELS, DIARY_QUESTION_GEM_REWARD, bondChapterId, diaryQuestionUnlockAt, type BondStoryLevel } from "../core/relicStory";
 import { relicStoryFor } from "../data/relicStories";
@@ -2052,9 +2052,13 @@ export class FakeServer implements GameApi {
     const nextProgress = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, progress]) => [id,
       victory && this.state.party.includes(id) ? grantBondXp(progress, BOND_XP_REWARD.partyVictory).progress : progress]));
     const nextMissions = applyMissionEvent(base.missions, { type: "battle_completed", victory }, this.now());
-    this.persist({ ...this.state, cleared: nextCleared, wallet: nextWallet, relicProgress: nextProgress, missions: nextMissions, playerResearch: base.playerResearch, itemInventory: base.itemInventory, runeInventory: nextRunes });
+    // 튜토리얼 전투 조작은 **관문의 첫 클리어마다 한 칸씩** 열린다 — 입장·퇴장으로는 열리지 않는다.
+    const currentTutorial = normalizeTutorialState(this.state.tutorial);
+    const nextTutorial = firstClear && !owningEvent && stageClearAdvancesTutorial(stage) ? advanceTutorialOnStageClear(currentTutorial) : currentTutorial;
+    this.persist({ ...this.state, tutorial: nextTutorial, cleared: nextCleared, wallet: nextWallet, relicProgress: nextProgress, missions: nextMissions, playerResearch: base.playerResearch, itemInventory: base.itemInventory, runeInventory: nextRunes });
     this.state.cleared = nextCleared; this.state.wallet = nextWallet; this.state.relicProgress = nextProgress; this.state.missions = nextMissions;
     this.state.playerResearch = base.playerResearch; this.state.itemInventory = base.itemInventory; this.state.runeInventory = nextRunes;
+    this.state.tutorial = nextTutorial;
     if (admissionId) pending?.delete(admissionId);
     if (pending?.size === 0) this.pendingStageAdmissions.delete(stageId);
     const staminaSpent = spent ? cost : 0;

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   battleFeatureOpen, battleFeatureToTeach, CONTENT_INTRO_IDS, shouldShowContentIntro, canCompleteTutorialStep, createCompletedTutorialState, createEmptyTutorialState,
-  isTutorialComplete, legacyTutorialState, lobbyTutorialStep, nextTutorialStep, normalizeTutorialState, TUTORIAL_STEPS,
+  advanceTutorialOnStageClear, stageClearAdvancesTutorial, isTutorialComplete, legacyTutorialState, lobbyTutorialStep, nextTutorialStep, normalizeTutorialState, TUTORIAL_STEPS,
 } from "../../src/core/tutorial";
 
 describe("첫 플레이 튜토리얼 순서표", () => {
@@ -48,6 +48,23 @@ describe("첫 플레이 튜토리얼 순서표", () => {
     expect(legacyTutorialState([])).toEqual(createEmptyTutorialState());
     expect(legacyTutorialState(["1-1"]).completedStepIds).toEqual(["ultimate"]);
     expect(isTutorialComplete(legacyTutorialState(["1-1", "1-2"]))).toBe(true);
+  });
+});
+
+describe("스테이지 클리어가 여는 전투 조작", () => {
+  it("은 오프닝 1-1·SUB·알 수 없는 관문의 클리어로는 열지 않는다", () => {
+    expect(stageClearAdvancesTutorial({ id: "1-2" })).toBe(true);
+    expect(stageClearAdvancesTutorial({ id: "1-1" })).toBe(false);
+    expect(stageClearAdvancesTutorial({ id: "1-8-sub", sub: true })).toBe(false);
+    expect(stageClearAdvancesTutorial(undefined)).toBe(false);
+  });
+
+  it("은 한 번에 한 칸만 앞으로 가고 전투 칸이 끝나면 멈춘다", () => {
+    const one = advanceTutorialOnStageClear({ completedStepIds: ["ultimate"] });
+    expect(one.completedStepIds).toEqual(["ultimate", "auto"]);
+    const last = { completedStepIds: ["ultimate", "auto", "presentation", "speed", "contribution"] as const };
+    expect(advanceTutorialOnStageClear({ completedStepIds: [...last.completedStepIds] }).completedStepIds).toEqual(last.completedStepIds);
+    expect(advanceTutorialOnStageClear(createEmptyTutorialState())).toEqual(createEmptyTutorialState());
   });
 });
 

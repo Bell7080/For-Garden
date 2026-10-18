@@ -132,6 +132,24 @@ export function battleFeatureToTeach(state: TutorialState): BattleTutorialFeatur
   return (Object.keys(BATTLE_FEATURE_STEP) as BattleTutorialFeature[]).find((feature) => BATTLE_FEATURE_STEP[feature] === next);
 }
 
+/**
+ * 이 관문의 **첫 클리어**가 전투 조작 칸을 열 수 있나. 오프닝 1-1(궁극기 칸이 따로 연다)·SUB·이벤트 관문은 아니다.
+ * 입장·퇴장·재도전으로는 열리지 않고 클리어 확정만 연다 — 1-2에 들어갔다 나오기를 되풀이해 칸을 다 여는 길을 막는다.
+ */
+export function stageClearAdvancesTutorial(stage: { id: string; sub?: boolean } | undefined): boolean {
+  return stage !== undefined && stage.id !== "1-1" && !stage.sub;
+}
+
+/**
+ * 관문을 처음 깼을 때 한 칸만 앞으로 간다. 지금 차례가 전투 조작 칸일 때만 열고 아니면 그대로 돌려준다.
+ * 한 번에 하나라서 여러 칸이 같은 클리어로 함께 열리지 않는다.
+ */
+export function advanceTutorialOnStageClear(state: TutorialState): TutorialState {
+  const next = nextTutorialStep(state);
+  const isBattleStep = next !== undefined && (Object.values(BATTLE_FEATURE_STEP) as TutorialStepId[]).includes(next);
+  return isBattleStep ? { ...state, completedStepIds: [...state.completedStepIds, next] } : state;
+}
+
 /** 전투 튜토리얼을 모두 마치고 도감·연구소 안내만 남은 상태인가(로비가 안내를 시작할 때). */
 export function lobbyTutorialStep(state: TutorialState): "feed" | "gift" | "pull" | undefined {
   const next = nextTutorialStep(state);
